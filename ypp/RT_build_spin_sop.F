@@ -24,15 +24,20 @@ subroutine RT_build_spin_sop(spin_sop)
  use pars,           ONLY:SP,pi,cI,cONe,cZERO
  use matrix_operate, ONLY:m3det
  use D_lattice,      ONLY:dl_sop,nsym,i_time_rev,sop_inv
- use electrons,      ONLY:n_sp_pol
+ use electrons,      ONLY:n_spin,n_sp_pol
  !
  implicit none
  !
- complex(SP)    ::spin_sop(2,2,nsym)
+ complex(SP)    ::spin_sop(n_spin,n_spin,nsym)
  complex(SP)    ::sigma_0(2,2),sigma_x(2,2),sigma_y(2,2),sigma_z(2,2),t_rev(2,2)
  complex(SP)    ::spin_RX_delta(2,2),spin_RY_beta(2,2),spin_RZ_alpha(2,2)
  real(SP)       ::alpha,beta,delta,tmp_sop(3,3)
  integer        ::is,i1,i2
+ !
+ if(n_spin==1) then
+   spin_sop(1,1,:)=cONe
+   return
+ endif
  !
  ! Pauli matrices
  sigma_0=reshape((/ cONe , cZERO, cZERO, cONe /),(/2,2/))
@@ -56,7 +61,7 @@ subroutine RT_build_spin_sop(spin_sop)
    !
    !           "Tait–Bryan angles"
    !    x,y,z --> x'y'z' --> x''y''z'' -->  X,Y,Z  
-   ! R_x(delta)  R_y'(beta)   R_z''(alpha)   =  R_z(delta) R_y(beta) R_x(alpha)
+   ! R_x''(delta)  R_y'(beta)   R_z(alpha)   =  R_z(delta) R_y(beta) R_x(alpha)
    !
    if (tmp_sop(3,1)==-1.) then
      alpha=0._SP

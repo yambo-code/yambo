@@ -44,7 +44,6 @@ subroutine RT_fix_symmetries(E,k)
  use stderr,              ONLY:intc,set_real_printed_length
  use parser_m,            ONLY:parser
  use zeros,               ONLY:k_iku_zero
- use FFT_m,               ONLY:fft_size,fft_rot_r,fft_dim,fftw_plan,fft_g_table,fft_norm
  use timing,              ONLY:live_timing
  !
  implicit none
@@ -61,11 +60,11 @@ subroutine RT_fix_symmetries(E,k)
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:),ic_rot_table(:)
  real(SP)              :: v1(3),v2(3),m(3,3)
  real(SP)              :: B_cart(3)
- integer               :: symm_M_factor,symm_B_factor,igfft,ig,ig_rot,ic,ic_rot
+ integer               :: symm_M_factor,symm_B_factor,ig,ig_rot,ic,ic_rot
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
 &                         S_contains_TR(nsym),Trev_2_spatial=.false.,Rm_inv_BM_axis
- complex(SP)           :: spin_sop(2,2,nsym)
+ complex(SP)           :: spin_sop(n_spin,n_spin,nsym)
  type(bz_samp)         :: k_save
  type(levels)          :: en_sc,en_sc_expanded
  character(lchlen)     :: core_io_path_save,fragment_name
@@ -88,8 +87,6 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Do not consider symmtries which invert the axis along the magnetization or the field B
  call parser('RmInvMBaxis',Rm_inv_BM_axis)
- !
- !call fft_setup(wf_ng,1,.false.)
  !
  ! Check if we are using mag symmetries
  !
@@ -193,7 +190,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Construct spin_sop in spinor-space
  !
- if(n_spin>1) call RT_build_spin_sop(spin_sop)
+ call RT_build_spin_sop(spin_sop)
  !
  ! Remove Symmetries
  !
@@ -551,6 +548,7 @@ subroutine RT_fix_symmetries(E,k)
    !
    wf_nc_k(i1)              = min(ng_closed,wf_nc_k_save(ik))
    wf_igk(1:wf_nc_k(i1),i1) = g_rot(is,wf_igk_save(1:wf_nc_k(i1),ik))
+   !
    call i_sort( wf_igk(1:wf_nc_k(i1),i1) )
    !
  enddo
@@ -598,25 +596,22 @@ subroutine RT_fix_symmetries(E,k)
    enddo
    !
    do ib=1,E%nb
+     !
+     wf_tmp=(0._SP,0._SP)
+     !
      do i_spin=1,n_spin
        !
        i_wf=wf_state(ib,ik,i_spin)
        !
-       do ic=1,wf_nc_k(ik)
-         wf_disk(1,ib,ic_rot_table(ic),i_spin)=  real(wf(ic,i_wf))
-         wf_disk(2,ib,ic_rot_table(ic),i_spin)= aimag(wf(ic,i_wf))
-       enddo
-       !
-       if ( S_contains_TR(is) ) wf_disk(2,ib,:,i_spin)=-wf_disk(2,ib,:,i_spin)
+       forall(ic=1:wf_nc_k(ik)) wf_tmp(ic_rot_table(ic),i_spin)=wf(ic,i_wf)
        !
      enddo
      !
-     if(n_spin>1) then
-       forall(ic=1:wf_nc_k(i1)) wf_tmp(ic,:)=&
-&          matmul(spin_sop(:,:,is),cmplx(wf_disk(1,ib,ic,:),wf_disk(2,ib,ic,:)))
-       wf_disk(1,ib,1:wf_ncx,:)= real(wf_tmp(:wf_ncx,:))
-       wf_disk(2,ib,1:wf_ncx,:)= aimag(wf_tmp(:wf_ncx,:))
-     endif
+     if ( S_contains_TR(is) ) wf_tmp=conjg(wf_tmp)
+     !
+     forall(ic=1:wf_nc_k(i1)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
+     wf_disk(1,ib,1:wf_ncx,:)= real(wf_tmp(:wf_ncx,:))
+     wf_disk(2,ib,1:wf_ncx,:)= aimag(wf_tmp(:wf_ncx,:))
      !
      call live_timing(steps=1)
      !

@@ -29,7 +29,7 @@ subroutine RT_fix_symmetries(E,k)
  use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol,n_spinor
  use vec_operate,         ONLY:v_norm,v_is_zero,i_sort
  use matrix_operate,      ONLY:m3det
- use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,mag_syms,&
+ use D_lattice,           ONLY:nsym,dl_sop,spin_sop,i_time_rev,a,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,g_rot,&
 &                              ng_closed,bz_samp_duplicate,rl_sop
@@ -64,7 +64,6 @@ subroutine RT_fix_symmetries(E,k)
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
 &                         S_contains_TR(nsym),Trev_2_spatial=.false.,Rm_inv_BM_axis
- complex(SP)           :: spin_sop(n_spin,n_spin,nsym)
  type(bz_samp)         :: k_save
  type(levels)          :: en_sc,en_sc_expanded
  character(lchlen)     :: core_io_path_save,fragment_name
@@ -74,7 +73,7 @@ subroutine RT_fix_symmetries(E,k)
  real(SP),    allocatable :: dl_sop_tmp(:,:,:)
  complex(SP), allocatable :: wf_tmp(:,:)
  !
- !
+ mag_syms=.FALSE.
  use_E_field=.FALSE.
  use_B_field=.FALSE.
  has_magnetization=.FALSE.
@@ -92,7 +91,6 @@ subroutine RT_fix_symmetries(E,k)
  !
  if ( (use_B_field.or.(n_spinor==2.and.has_magnetization)).and. &
 &      i_time_rev==1.and..not.Rm_TR) mag_syms=.true.
- if ( i_time_rev==0.or.Rm_TR.or.RM_all_symm) mag_syms=.false.
  if (mag_syms) call msg('s','There are a magnetic field or SOC in a magnetic system with T-rev')
  !
  if (Rm_all_symm) then
@@ -190,7 +188,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Construct spin_sop in spinor-space
  !
- call RT_build_spin_sop(spin_sop)
+ call build_spin_sop()
  !
  ! Remove Symmetries
  !
@@ -570,7 +568,7 @@ subroutine RT_fix_symmetries(E,k)
  allocate(ic_rot_table(wf_ncx))
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
- if(n_spin>1) allocate(wf_tmp(wf_ncx,n_spin))
+ allocate(wf_tmp(wf_ncx,n_spin))
  !
  wf_disk=(0.,0.)
  !
@@ -607,9 +605,9 @@ subroutine RT_fix_symmetries(E,k)
        !
      enddo
      !
+     forall(ic=1:wf_nc_k(i1)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
      if ( S_contains_TR(is) ) wf_tmp=conjg(wf_tmp)
      !
-     forall(ic=1:wf_nc_k(i1)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
      wf_disk(1,ib,1:wf_ncx,:)= real(wf_tmp(:wf_ncx,:))
      wf_disk(2,ib,1:wf_ncx,:)= aimag(wf_tmp(:wf_ncx,:))
      !
@@ -630,7 +628,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  deallocate(ic_rot_table,wf_disk)
  call mem_est("wf_disk")
- if(n_spin>1) deallocate(wf_tmp)
+ deallocate(wf_tmp)
  !
  if(ioKB_err==0) then 
    !

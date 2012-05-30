@@ -27,7 +27,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
  use par_proc_m,     ONLY:pp_redux_wait
- use D_lattice,      ONLY:nsym,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
  use fields,         ONLY:grid_path,global_gauge
  use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&

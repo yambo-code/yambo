@@ -44,7 +44,8 @@ module D_lattice
  integer :: inv_index   ! Index of the symmetry corresponding to -I (independently 
                         ! on the value of i_time_rev and i_space_inv
  logical :: mag_syms    ! If .true. the T-rev symmetries are not the spatial symmetries multiplied by -1
- real(SP),allocatable :: dl_sop(:,:,:)
+ real(SP),allocatable    :: dl_sop(:,:,:)
+ complex(SP),allocatable :: spin_sop(:,:,:)
  integer, allocatable :: sop_tab(:,:)
  integer, allocatable :: sop_inv(:)
  !
@@ -162,6 +163,22 @@ module D_lattice
       end if
      end do
      atomic_number = 0
+   end function
+   !
+   integer function symmetrize_spin(is,i_spin)
+     !
+     use electrons,  ONLY:n_sp_pol
+     !
+     integer ::is,i_spin
+     !
+     if(n_sp_pol==1.or.is<=nsym/(1+i_time_rev)) then
+       symmetrize_spin=i_spin
+       return
+     endif
+     !
+     if(i_spin==1) symmetrize_spin=2
+     if(i_spin==2) symmetrize_spin=1
+     !
    end function
    !
    subroutine load_PT_elements()

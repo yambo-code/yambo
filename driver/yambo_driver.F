@@ -249,6 +249,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! GAME OVER :(
  !==============
  !
+ call free_memory()
  call section('X','Game Over & Game summary')
  !
  ! Update init defs

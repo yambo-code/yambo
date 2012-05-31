@@ -52,11 +52,6 @@ function tddft_alda_r_space(iq,ic,ik,iv,is,mode)
  integer     :: i1,iv1fft,ic1fft,i2fft,j2fft
  logical     :: l_s_tr(2)
  complex(SP) :: rhotwr1(fft_size),rhotwr2(fft_size)
-#if defined _DOUBLE
- complex(SP):: zdotc,zdotu
-#else
- complex(SP):: cdotc,cdotu
-#endif
  !
  ! Init
  !

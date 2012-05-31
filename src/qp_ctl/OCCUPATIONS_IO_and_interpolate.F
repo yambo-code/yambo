@@ -203,7 +203,6 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
      call interpolate(E%E_RIM(:Nb_to_int,:,1),E%f_RIM(:Nb_to_int,:,1),Nb_to_int,BZ_RIM_tot_nkpts,.TRUE.)
    endif
    !
-   deallocate(RT_occupations,RT_k,RT_E,RT_E_indx,RT_E_table)
    call mem_est("RT_occupations")
    ! 
    call E_reset(RT_db1_E) 
@@ -223,7 +222,11 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    !
    call msg('r','')
    if (.not.input_Tel_is_negative) call REPORT_Occupations(E,2,.TRUE.)
-   call msg('r','Integarted N. of e-    :',sum(E%f(:,:,:))/real(nXkibz))
+   call msg('r','Integarted N. of e-   [input]:',sum(RT_occupations(:,:))/real(RT_nk)+(SC_bands(1)-1)*2._SP)
+   call msg('r','               [interpolated]:',sum(E%f(:,:,:))/real(nXkibz))
+   if (associated(E%f_RIM)) then
+      call msg('r','                        [RIM]:',sum(E%f_RIM(:,:,:))/real(BZ_RIM_tot_nkpts))
+   endif
    !
    n_met_bands =E%nbm
    n_full_bands=E%nbf
@@ -238,31 +241,31 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  contains
    !
    subroutine interpolate(En,Fn,Nb,Nk,REPORT)
-     real(SP) :: En(Nb,Nk),Fn(Nb,Nk)
+     real(SP) :: En(Nb,Nk),Fn(Nb,Nk),E_diff,E_bottom
      integer  :: Nb,Nk,ib_occ(2),ik_occ(2)
      logical  :: REPORT
+     !
+     E_bottom=minval(En(:,:))
+     Fn(SC_bands(1)+1:,:)=0.
      !
      do ik=1,Nk
         do ib=SC_bands(1),min(SC_bands(2),Nb)
           !
-          do i1=1,size(RT_E)-1
+          E_diff=1000.
+          !
+          do i1=1,size(RT_E)
             !
-            if ( RT_E(i1)<En(ib,ik).and.En(ib,ik)<=RT_E(i1+1) ) then
+            if (RT_E_table(RT_E_indx(i1),1)<SC_bands(1)) cycle
+            !
+            if (abs( RT_E(i1)-En(ib,ik)-RT_E(1)+E_bottom ) < E_diff) then
               !
-              ib_occ=(/RT_E_table(RT_E_indx(i1),1),RT_E_table(RT_E_indx(i1+1),1)/)
-              ik_occ=(/RT_E_table(RT_E_indx(i1),2),RT_E_table(RT_E_indx(i1+1),2)/)
+              Fn(ib,ik)=RT_occupations( RT_E_table(RT_E_indx(i1),1), RT_E_table(RT_E_indx(i1),2) )
               !
-              if (any(ib_occ<SC_bands(1))) cycle
-              !
-              Fn(ib,ik)=(RT_occupations(ib_occ(1),ik_occ(1))+&
-&                        RT_occupations(ib_occ(2),ik_occ(2)))/2.
-              !
-              exit
+              E_diff= abs( RT_E(i1)-En(ib,ik)-RT_E(1)+E_bottom )
               !
             endif
+            !
           enddo
-          !
-          !if (REPORT) write (100,*) En(ib,ik)*HA2EV,Fn(ib,ik)
           !
         enddo
       enddo

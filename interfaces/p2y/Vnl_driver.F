@@ -203,7 +203,7 @@ subroutine Vnl_driver(en,k)
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
  io_err=io_Vnl(X,en,ID)
  !
- call msg("ln","done")
+ call msg("l","done")
  !
  return
  !

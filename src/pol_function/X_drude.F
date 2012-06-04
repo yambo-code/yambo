@@ -21,7 +21,7 @@
 !
 subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,cZERO
  use units,         ONLY:HA2EV
  use com,           ONLY:msg
  use BS,            ONLY:BS_drude_dim
@@ -48,7 +48,7 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF)
  logical              :: Drude_term
  integer              :: iw,Drude_dim
  !
- drude_GreenF = cmplx(0.,0.,SP)
+ drude_GreenF = cZERO
  !
  ! Drude Contrib. if all of following conditions hold
  !===============

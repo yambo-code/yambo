@@ -563,7 +563,7 @@ subroutine RT_fix_symmetries(E,k)
  core_io_path=more_io_path
  !
  n_steps=(k%nibz-k_save%nibz)*E%nb
- call live_timing('WFs rotation',n_steps)
+ if(n_steps>0) call live_timing('WFs rotation',n_steps)
  !
  allocate(ic_rot_table(wf_ncx))
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
@@ -619,7 +619,7 @@ subroutine RT_fix_symmetries(E,k)
    !
  enddo
  !
- call live_timing()
+ if(n_steps>0) call live_timing()
  ! 
  if(Fragmented_IO) then
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)

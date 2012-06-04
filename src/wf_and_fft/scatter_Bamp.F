@@ -33,7 +33,7 @@ subroutine scatterBamp(isc)
  !                                        /:\
  !  iq_is = ik_is-ok_os-Go
  !
- use pars,           ONLY:DP,SP
+ use pars,           ONLY:DP,SP,cZERO,cONe
  use electrons,      ONLY:n_spinor
  use collision,      ONLY:ggwinfo
  use D_lattice,      ONLY:nsym,i_time_rev,mag_syms,symmetrize_spin,spin_sop
@@ -84,6 +84,9 @@ subroutine scatterBamp(isc)
  i_wf=wf_state(ib,ik,i_sp)
  o_wf=wf_state(ob,ok,o_sp)
  !
+ wf_tmp_i=cZERO
+ wf_tmp_o=cZERO
+ !
  wf_tmp_i(:,1)=wf(fft_rot_r(is,:),i_wf)
  wf_tmp_o(:,1)=wf(fft_rot_r(os,:),o_wf)
  !
@@ -101,14 +104,14 @@ subroutine scatterBamp(isc)
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE
  !
- if(litr) wf_tmp_i=conjg(wf_tmp_i)
- if(lotr) wf_tmp_o=conjg(wf_tmp_o)
+ if(.not.litr) wf_tmp_i=conjg(wf_tmp_i)
+ if(     lotr) wf_tmp_o=conjg(wf_tmp_o)
  !
- rho_tw_rs=conjg(wf_tmp_i(:,1))*wf_tmp_o(:,1)
+ rho_tw_rs(:)=wf_tmp_i(:,1)*wf_tmp_o(:,1)
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
- if (n_spinor==2) rho_tw_rs=rho_tw_rs+conjg(wf_tmp_i(:,2))*wf_tmp_o(:,2)
+ if (n_spinor==2) rho_tw_rs(:)=rho_tw_rs+wf_tmp_i(:,2)*wf_tmp_o(:,2)
  ! 
  ! GPL_EXCLUDE_END SPIN_IGNORE
  !
@@ -123,7 +126,7 @@ subroutine scatterBamp(isc)
  !
  ! q=0, G=0 case
  !
- if (all((/isc%qs(2)==1,ib==ob/))) isc%rhotw(1)=(1.,0.)
- if (all((/isc%qs(2)==1,ib/=ob/))) isc%rhotw(1)=(0.,0.)
+ if (all((/isc%qs(2)==1,ib==ob/))) isc%rhotw(1)=cONe
+ if (all((/isc%qs(2)==1,ib/=ob/))) isc%rhotw(1)=cZERO
  !
 end subroutine

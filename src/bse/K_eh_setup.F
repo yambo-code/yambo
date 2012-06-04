@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_eh_setup(iq,Ken,Xk)
+subroutine K_eh_setup(iq,Ken,Xk,Wd)
  !
  ! Out: 
  !
@@ -45,6 +45,7 @@ subroutine K_eh_setup(iq,Ken,Xk)
  implicit none
  type(levels) ::Ken
  type(bz_samp)::Xk
+ complex(SP)  ::Wd
  integer      ::iq
  !
  ! Work Space
@@ -91,7 +92,7 @@ subroutine K_eh_setup(iq,Ken,Xk)
            E_eh=Ken%E(ic,ik,i_sp)-Ken%E(iv,ikp,i_sp)
            if (abs(E_eh)<1.E-5) then
              if(any((/ic/=Ken%bf,iv/=Ken%bf,ik/=Ken%kf,i_sp/=Ken%sf/)) ) cycle
-             !if(real(X%Wd)==0..and.aimag(X%Wd)==0.) cycle
+             if(real(Wd)==0..and.aimag(Wd)==0.) cycle
              BS_drude_dim=BS_drude_dim+1
            endif
            !

@@ -326,9 +326,15 @@ integer function variables_SC(ID,local_description,what)
 &    VAR=' [RT] Cache size                 :',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,R0=RAD_LifeTime,&
-&    VAR=' [RT] QP life time           [fs]:', CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+   if (ver_is_gt_or_eq(ID,revision=1270)) then
+     call io_elemental(ID,R0=RAD_LifeTime,&
+&      VAR=' [RT] Radiative life time    [fs]:', CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+   else
+     call io_elemental(ID,R0=RAD_LifeTime,&
+&      VAR=' [RT] QP life time           [fs]:', CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+   endif
    i_desc=i_desc+1
    if (ver_is_gt_or_eq(ID,revision=605)) then
      call io_elemental(ID,R0=Phase_LifeTime,&

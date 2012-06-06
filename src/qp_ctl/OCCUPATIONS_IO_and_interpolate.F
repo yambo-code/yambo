@@ -110,11 +110,15 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    io_err_occ=io_SC_components('occupations',E,ID(6))
    !
    if (io_err_occ<0) then
+#if !defined _YPP_RT 
      call warning ('Occupations database not found in folder: '//trim(jobstr))
+#endif
      jobstr=jobstr_save
      return
    else
+#if !defined _YPP_RT 
      call msg('s','Occupations database read from folder: '//trim(jobstr))
+#endif
    endif
    ! 
    ! DB1 I/O 

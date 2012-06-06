@@ -28,6 +28,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! Mode = 1 -> Mode 0 +
  !  Define E%f and reports variations in Ef/nbf/nbm
  !  Output : E%Efermi(2:) E%nbf,E%nbm
+ !  E%E are shifted 
  !
  ! Mode > 1 -> Mode 1 +
  !  Full report of system electronic character
@@ -43,9 +44,10 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
  implicit none
+ !
  type(levels) ::E
  type(bz_samp)::K
- integer :: mode
+ integer      ::mode
  !
  ! Work Space
  !
@@ -53,7 +55,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
  real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),f_met,n_of_el_from_zero(2),Ef(2),Efdist
  logical :: Fermi_is_converged
- real(SP),parameter :: Telstep=0.0001/HA2EV
+ real(SP),parameter :: Tel_step=0.0001/HA2EV
  real(SP),parameter :: nel_diff_zero=1.E-5
  !
  !     n_spin n_sp_pol n_spinor  spin_occ 
@@ -111,6 +113,13 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! 
  i_trials=1
  Fermi_is_converged=.false.
+ !
+ ! BUG-fix [Andrea 1/6/2012]: when the system is semiconductive it may happen the
+ ! Efermi falls below or above the CBM/VBM of the RIM energy levels. To avoid this
+ ! a very small temperature is imposed forcing the Fermi level to fall within the
+ ! gap.
+ !
+ if (BZ_RIM_nbands>0) Tel=Tel_step
  !
  do while (.not.Fermi_is_converged)
    !
@@ -171,7 +180,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    !
    if (Fermi_is_converged) exit
    !
-   Tel=Tel+Telstep
+   Tel=Tel+Tel_step
    if (i_trials(1)==100) call error('Impossible to converge the Fermi Level')
    !
  enddo
@@ -179,7 +188,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! Mode = 0. Check only for the Fermi energy
  !
  if (Bose_Temp<0.) Bose_Temp=Tel
- Finite_Tel=any((/Tel,Bose_Temp/)>=1.E-5)
+ Finite_Tel=any((/Tel,Bose_Temp/)>=Tel_step*3._SP)
  !
  if (mode==0) return
  !
@@ -211,6 +220,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! If %E_RIM is associated I simply extend the %E occupations to %E_RIM
  !
  if (BZ_RIM_nbands>0) then
+   ! 
    E%E_RIM(:,:,:)=E%E_RIM(:,:,:)-E%Efermi(1)
    do ik=1,BZ_RIM_tot_nkpts
      do ib=1,BZ_RIM_nbands
@@ -219,6 +229,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
        enddo
      enddo
    enddo
+   !
  endif
  !
  ! Mode = 1. Define E%f and exits

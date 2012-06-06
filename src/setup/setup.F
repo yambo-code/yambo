@@ -23,7 +23,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  use drivers,        ONLY:l_sc_run
  use pars,           ONLY:SP,pi,schlen
- use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate
+ use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
 &                         atoms_spatial_invertion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
@@ -49,8 +49,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Work Space
  !
- real(SP)          :: rv(3),m(3,3),Tel_SAVE,E_fermi_SAVE(3)
+ real(SP)          :: rv(3),m(3,3),Tel_SAVE
  integer           :: i1,i2,i3,is,ia,i_err,nbf_m_SAVE(2)
+ type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch1,dumb_ch2
  integer, external :: k_lattice
  !
@@ -251,28 +252,26 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  input_Tel_is_negative=Tel<0.
  Tel=abs(Tel)
+ Tel_SAVE=Tel
  !
  if (input_Tel_is_negative) then
-   Tel_SAVE=Tel
+   call E_duplicate(Xen,Xen_COPY)
    Tel=0.
-   call OCCUPATIONS_Fermi(Xen,Xk,1)
-   nbf_m_SAVE  =(/Xen%nbf,Xen%nbm/)
-   E_fermi_SAVE=Xen%Efermi
+   call OCCUPATIONS_Fermi(Xen_COPY,Xk,1)
+   nbf_m_SAVE  =(/Xen_COPY%nbf,Xen_COPY%nbm/)
+   call E_reset(Xen_COPY)
  endif
  !
  Tel=Tel_SAVE
  call OCCUPATIONS_Fermi(Xen,Xk,2)
+ call OCCUPATIONS_Extend(Xen,en)
  !
  if (input_Tel_is_negative) then
-   Xen%Efermi=E_fermi_SAVE
-   en%Efermi=E_fermi_SAVE
    Xen%nbf=nbf_m_SAVE(1)
    Xen%nbm=nbf_m_SAVE(2)
    en%nbf =nbf_m_SAVE(1)
    en%nbm =nbf_m_SAVE(2)
  endif
- !
- call OCCUPATIONS_Extend(Xen,en)
  !
  n_met_bands =en%nbm
  n_full_bands=en%nbf

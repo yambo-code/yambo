@@ -123,7 +123,6 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  if(l_NE_with_fields) then
    !                    
-   !E_mg=DL_vol/(8._SP*pi*SPEED_OF_LIGHT**2)*abs(sum(A_vecpot%vecpot))
    call RT_Fluence(Fluence,it_now)
    !
  endif

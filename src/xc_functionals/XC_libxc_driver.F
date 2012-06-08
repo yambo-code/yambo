@@ -45,7 +45,8 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  ! Work Space
  !
- integer  :: i1,i2,is,ic,is1,is2,ixc
+ integer      :: i1,i2,is,ic,is1,is2,ixc,ifft
+ real(SP)  :: mod_mag
  !
  ! XC routines arrays
  !
@@ -87,8 +88,11 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  if(n_spin==1) rho_sp(:,1)=rho_tmp(:)
  if(n_spin> 1) then
    call spin_density(en,Xk)
-   rho_sp(:,1)=0.5*(rho_tmp(:)+two_spin_density(:,3))
-   rho_sp(:,2)=0.5*(rho_tmp(:)-two_spin_density(:,3))
+   do ifft=1,fft_size
+     mod_mag=sqrt(two_spin_density(ifft,1)**2+two_spin_density(ifft,2)**2+two_spin_density(ifft,3)**2)
+     rho_sp(ifft,1)=0.5*(rho_tmp(ifft)+mod_mag)
+     rho_sp(ifft,2)=0.5*(rho_tmp(ifft)-mod_mag)
+   enddo
  endif
 #endif
  !

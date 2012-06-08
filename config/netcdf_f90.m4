@@ -128,6 +128,9 @@ if test "x$netcdf" = xyes; then
   if test "`$with_netcdf_include/../bin/nc-config --flibs`"; then
     NCLIBS="`$with_netcdf_include/../bin/nc-config --flibs`"
     NCLIBS="${NCLIBS} `$with_netcdf_include/../bin/nc-config --libs`"
+  elif test "`$with_netcdf_include/../bin/nf-config --flibs`"; then
+    NCLIBS="`$with_netcdf_include/../bin/nf-config --flibs`"
+    NCLIBS="${NCLIBS} `$with_netcdf_include/../bin/nf-config --libs`"
   else
     NCLIBS="-lnetcdf ${NCLIBS}"
   fi

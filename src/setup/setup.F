@@ -46,7 +46,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  use parser_m,       ONLY:parser
- use xc_functionals, ONLY:two_spin_density
+ use xc_functionals, ONLY:magn
  use electrons,      ONLY:Total_magn,eval_magn,n_spin
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:WF_load,WF_free
@@ -286,10 +286,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call parser('EvalMagn',eval_magn)
  if(n_spin>1.and.eval_magn) then
    call WF_load(0,1,(/1,en%nbm/),(/1,Xk%nibz/),title='-Magn')
-   allocate(two_spin_density(fft_size,3))
-   call spin_density(en,Xk)
+   allocate(magn(fft_size,3))
+   call el_magnetization(en,Xk)
    call msg('r','Total magnetization (x,y,z) [Bohr_magneton] :',real(Total_magn(:),SP))
-   deallocate(two_spin_density)
+   deallocate(magn)
    call WF_free()
  endif
  !

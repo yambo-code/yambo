@@ -130,7 +130,7 @@ module SC
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc,QP_state,QP_nb
      use memory_m,       ONLY:mem_est
-     use xc_functionals, ONLY:two_spin_density,V_xc
+     use xc_functionals, ONLY:magn,V_xc
      implicit none
      !
      type(levels) :: E
@@ -162,8 +162,8 @@ module SC
      call mem_est("rho",(/fft_size/),(/SP/))
      !
      if(n_spin>1) then
-       allocate(two_spin_density(fft_size,3))
-       call mem_est("two_spin_density",(/fft_size*3/),(/SP/))
+       allocate(magn(fft_size,3))
+       call mem_est("magn",(/fft_size*3/),(/SP/))
      endif
      !
      allocate(V_xc_sc(fft_size,n_spin))
@@ -194,7 +194,7 @@ module SC
      use drivers,        ONLY:l_real_time,l_sc_cohsex,l_sc_srpa
      use QP_m,           ONLY:QP_Sc
      use memory_m,       ONLY:mem_est
-     use xc_functionals, ONLY:two_spin_density,V_xc
+     use xc_functionals, ONLY:magn,V_xc
      use X_m,            ONLY:X_alloc
      implicit none
      !
@@ -213,9 +213,9 @@ module SC
        call mem_est("rho")
      endif
      !
-     if(allocated(two_spin_density)) then
-       deallocate(two_spin_density)
-       call mem_est("two_spin_density")
+     if(allocated(magn)) then
+       deallocate(magn)
+       call mem_est("magn")
      endif
      !
      if(allocated(V_xc)) then 

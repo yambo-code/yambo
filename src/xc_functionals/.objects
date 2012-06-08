@@ -3,5 +3,5 @@ BOLTZMANN_objects =
 BOLTZMANN_objects = el_current.o
 #endif
 objs =  xc_rpa_kp.o \
-        spin_density.o el_density.o eval_Gradient.o XC_potential_driver.o\
+        el_magnetization.o el_density.o eval_Gradient.o XC_potential_driver.o\
         XC_libxc_driver.o XC_eval_gga_potential.o $(BOLTZMANN_objects)

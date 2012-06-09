@@ -28,7 +28,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  use stderr,        ONLY:intc
  use QP_m,          ONLY:QP_t,QP_dSc,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_table,&
 &                        QP_n_states,QP_dSc_steps,use_GreenF_to_eval_QP,On_Mass_Shell_approx,&
-&                        QP_solver,report_Vnlxc,report_Sc,report_dSc,Vxc_kind,Vnlxc_kind
+&                        QP_solver,report_Vnlxc,report_Sc,report_dSc,Vxc_kind,Vnlxc_kind,l_QP_Expand
  use electrons,     ONLY:n_sp_pol,spin,levels
  use stderr,        ONLY:gen_fmt
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
@@ -52,6 +52,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  integer          ::iqp,i_sh
  real(SP)         ::shadow(10)
  logical          ::print_title
+ type(QP_t)       ::qp_expanded
  !
  !I/O
  integer, external::ioQP
@@ -204,7 +205,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      shadow_fmt(3:n_shadows) ='(a,'//trim(data_fmt)//')'
    endif
    !
-   ! Spin Strins
+   ! Spin Strings
    !
    spin_string= ' '
    if (i_spin==1) spin_string='[up]'
@@ -240,6 +241,13 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    if (iqp==QP_n_states) call msg('rn',trim(line_string))
    !
  enddo
+ !
+ ! QP Expantion
+ !==============
+ !
+ ! GPL_EXCLUDE_START
+ if (l_QP_Expand) call QP_expand(qp,qp_expanded)
+ ! GPL_EXCLUDE_END
  !
  ! QP DATABASE i/o
  !=================

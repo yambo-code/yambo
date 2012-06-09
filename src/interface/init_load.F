@@ -224,6 +224,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GWoIter',    '[GW] GWo SC iterations',GWo_iterations,verb_level=V_qp)
  call it(defs,'GreenFTresh','[GW] [o/o] Treshold to define the new zoomed energy range',QP_G_Zoom_treshold,verb_level=V_qp)
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
+ call it('f',defs,'QPExpand','[F GW] The QP corrections are expanded all over the BZ before being dumped in the DB',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
  !
  ! GPL_EXCLUDE_END

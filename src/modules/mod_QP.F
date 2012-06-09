@@ -47,6 +47,7 @@ module QP_m
  logical           :: COHSEX_use_empties
  logical           :: PPa_terminator
  logical           :: On_Mass_Shell_approx
+ logical           :: l_QP_Expand
  logical           :: use_GreenF_to_eval_QP
  logical           :: use_GreenF_Zoom
  logical           :: GF_is_causal

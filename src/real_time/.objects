@@ -12,6 +12,6 @@ objs = RT_initialize.o RT_phase_space.o RT_start_and_restart.o RT_update.o \
        RT_average_operator.o RT_databases_IO.o RT_Ext_fields.o \
        RT_Field_Commensurable_Frequencies.o \
        RT_G_retarded.o \
-       RT_Rabi_Function.o DephMatrix_setup.o RT_Fluence.o \
+       RT_Rabi_Function.o RT_Dephasing_Matrix.o RT_Fluence.o \
        $(ELPH_objs)
 #endif

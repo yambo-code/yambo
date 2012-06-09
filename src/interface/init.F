@@ -526,7 +526,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
        else
          call initactivate(1,'GWoIter')
-         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell')
+         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
        endif
        !
      endif

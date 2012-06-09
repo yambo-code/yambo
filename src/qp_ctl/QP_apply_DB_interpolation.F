@@ -69,6 +69,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
        idist(i2)=min(idist(i2),kmin_distance(qp%k(i2,:),k%ptbz(ikbz,:)))
      enddo
    enddo
+   !
    if (qp%nk>1) then
      call sort(idist,odist,order)
      k_near(:min(qp%nk,n_neigh))=order(:min(qp%nk,n_neigh))

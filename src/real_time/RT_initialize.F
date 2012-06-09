@@ -1,4 +1,4 @@
-!Xk,
+!
 !       Copyright (C) 2000-2012 the YAMBO team 
 !            http://www.yambo-code.org
 ! 
@@ -254,7 +254,7 @@ subroutine RT_initialize(Xen,Xk,q)
  ! 
  if (trim(global_gauge) == 'length' ) theta_function_iTo_ref=0
  !
- if(RT_ave_dephasing/=0._SP) call DephMatrix_setup() 
+ if(RT_ave_dephasing/=0._SP.or.associated(Xen%W)) call RT_Dephasing_Matrix(Xen) 
  !
  ! Checking extended COLLISIONS
  !==============================

@@ -30,7 +30,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
 #endif
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
- use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,spin_sop,sop_inv,symmetrize_spin
+ use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,spin_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
  use fields,         ONLY:global_gauge
  use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR,DIP_P
@@ -45,7 +45,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
  ! Work Space
  !
- integer                   :: ik,i1,ic,iv,is,i_spin,j_spin
+ integer                   :: ik,i1,ic,iv,is,i_spin
  real(SP)                  :: field_dir_rot(3)
  logical                   :: t_rev
 #if defined _KERR
@@ -114,36 +114,33 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
        !
        ! GPL_INCLUDE_START SPIN_IGNORE
        ! i_spin=1
-       ! j_spin=1
        ! GPL_INCLUDE_END SPIN_IGNORE
        ! 
        ! GPL_EXCLUDE_START SPIN_IGNORE
        !
        do i_spin=1,n_sp_pol
          !
-         j_spin=symmetrize_spin(is,i_spin)
-         ! 
          ! GPL_EXCLUDE_END SPIN_IGNORE
          !
          ! DIP_iq_dot_r = i q . < v k | r | c  k >
          ! E is invariant under T-rev but the minus is compensted by the conjg of (iq) which should not be.
          !
-         if(.not.t_rev) DIP_q_dot_iR(ic,iv,i1,j_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin) )
-         if(     t_rev) DIP_q_dot_iR(ic,iv,i1,j_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), field_dir_rot ) 
+         if(.not.t_rev) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin) )
+         if(     t_rev) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), field_dir_rot ) 
          !
 #if defined _KERR
          if(chi_jj) then
-           if(.not.t_rev) DIP_P_symm(1,ic,iv,i1,j_spin) = dot_product(field_dir_rot, DIP_P(:,ic,iv,ik,i_spin))
-           if(     t_rev) DIP_P_symm(1,ic,iv,i1,j_spin) = dot_product( DIP_P(:,ic,iv,ik,i_spin), field_dir_rot )
+           if(.not.t_rev) DIP_P_symm(1,ic,iv,i1,i_spin) = dot_product(field_dir_rot, DIP_P(:,ic,iv,ik,i_spin))
+           if(     t_rev) DIP_P_symm(1,ic,iv,i1,i_spin) = dot_product( DIP_P(:,ic,iv,ik,i_spin), field_dir_rot )
          endif
          !
          if(l_kerr) then
-           if(.not.t_rev) DIP_q_dot_iR_kerr(ic,iv,i1,j_spin) = dot_product(dipole_dir_rot, DIP_iR(:,ic,iv,ik,i_spin) )
-           if(     t_rev) DIP_q_dot_iR_kerr(ic,iv,i1,j_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), dipole_dir_rot)
+           if(.not.t_rev) DIP_q_dot_iR_kerr(ic,iv,i1,i_spin) = dot_product(dipole_dir_rot, DIP_iR(:,ic,iv,ik,i_spin) )
+           if(     t_rev) DIP_q_dot_iR_kerr(ic,iv,i1,i_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), dipole_dir_rot)
            !
            if(chi_jj) then
-             if(.not.t_rev) DIP_P_symm(2,ic,iv,i1,j_spin) = dot_product(dipole_dir_rot, DIP_P(:,ic,iv,ik,i_spin))
-             if(     t_rev) DIP_P_symm(2,ic,iv,i1,j_spin) = dot_product(DIP_P(:,ic,iv,ik,i_spin), dipole_dir_rot)
+             if(.not.t_rev) DIP_P_symm(2,ic,iv,i1,i_spin) = dot_product(dipole_dir_rot, DIP_P(:,ic,iv,ik,i_spin))
+             if(     t_rev) DIP_P_symm(2,ic,iv,i1,i_spin) = dot_product(DIP_P(:,ic,iv,ik,i_spin), dipole_dir_rot)
            endif
          endif
 #endif

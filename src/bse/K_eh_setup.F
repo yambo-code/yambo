@@ -40,7 +40,6 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
 &                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z,BS_drude_dim
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
  use R_lattice,    ONLY:qindx_X,bz_samp
- use D_lattice,    ONLY:symmetrize_spin
  !
  implicit none
  type(levels) ::Ken
@@ -51,7 +50,7 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
  ! Work Space
  !
  integer :: Iic(BS_bands(2),n_sp_pol),Iiv(BS_bands(2),n_sp_pol)
- integer :: ikbz,iv,ic,ik,ikp,i_sp,j_sp,is
+ integer :: ikbz,iv,ic,ik,ikp,i_sp,is
  real(SP):: E_eh,f_eh
  !
  ! GPL_INCLUDE_START SPIN_IGNORE
@@ -85,7 +84,6 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
          ! GPL_EXCLUDE_START SPIN_IGNORE
          !
          do i_sp=1,n_sp_pol
-           j_sp=symmetrize_spin(is,i_sp)
            !
            ! GPL_EXCLUDE_END SPIN_IGNORE
            !
@@ -123,7 +121,7 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
            BS_blk_dim(ik)=BS_blk_dim(ik)+1
            !
            if (allocated(BS_eh_table)) then
-             if (n_sp_pol==2) BS_eh_table(BS_K_dim,:)=(/ikbz,iv,ic,j_sp/)
+             if (n_sp_pol==2) BS_eh_table(BS_K_dim,:)=(/ikbz,iv,ic,i_sp/)
              if (n_sp_pol==1) BS_eh_table(BS_K_dim,:)=(/ikbz,iv,ic/)
            endif
            !
@@ -155,13 +153,12 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
        ! GPL_EXCLUDE_START SPIN_IGNORE
        !
        do i_sp=1,n_sp_pol
-         j_sp=symmetrize_spin(is,i_sp)
          !
          ! GPL_EXCLUDE_END SPIN_IGNORE
          !
          if (Iiv(iv,i_sp)==1) then
-           O_n_v_states(ikbz,j_sp)=O_n_v_states(ikbz,j_sp)+1
-           if (allocated(O_v_state)) O_v_state(ikbz,O_n_v_states(ikbz,j_sp),j_sp)=iv
+           O_n_v_states(ikbz,i_sp)=O_n_v_states(ikbz,i_sp)+1
+           if (allocated(O_v_state)) O_v_state(ikbz,O_n_v_states(ikbz,i_sp),i_sp)=iv
          endif
          !
          ! GPL_EXCLUDE_START SPIN_IGNORE
@@ -176,13 +173,12 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
        ! GPL_EXCLUDE_START SPIN_IGNORE
        !
        do i_sp=1,n_sp_pol
-         j_sp=symmetrize_spin(is,i_sp)
          !
          ! GPL_EXCLUDE_END SPIN_IGNORE
          !
          if (Iic(ic,i_sp)==1) then
-            O_n_c_states(ikbz,j_sp)=O_n_c_states(ikbz,j_sp)+1
-            if (allocated(O_c_state)) O_c_state(ikbz,O_n_c_states(ikbz,j_sp),i_sp)=ic
+            O_n_c_states(ikbz,i_sp)=O_n_c_states(ikbz,i_sp)+1
+            if (allocated(O_c_state)) O_c_state(ikbz,O_n_c_states(ikbz,i_sp),i_sp)=ic
          endif
          !
          ! GPL_EXCLUDE_START SPIN_IGNORE

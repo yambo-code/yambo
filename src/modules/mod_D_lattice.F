@@ -165,22 +165,6 @@ module D_lattice
      atomic_number = 0
    end function
    !
-   integer function symmetrize_spin(is,i_spin)
-     !
-     use electrons,  ONLY:n_sp_pol
-     !
-     integer ::is,i_spin
-     !
-     if(n_sp_pol==1.or.is<=nsym/(1+i_time_rev)) then
-       symmetrize_spin=i_spin
-       return
-     endif
-     !
-     if(i_spin==1) symmetrize_spin=2
-     if(i_spin==2) symmetrize_spin=1
-     !
-   end function
-   !
    subroutine load_PT_elements()
      PT_elements(0)    ='**'
      PT_elements(1:2)  =(/'H ',                              'He'/)

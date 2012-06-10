@@ -186,10 +186,6 @@ subroutine RT_fix_symmetries(E,k)
  !
  forall (is=1:nsym) S_contains_TR(is)=is>nsym/(1+i_time_rev)
  !
- ! Construct spin_sop in spinor-space
- !
- call build_spin_sop()
- !
  ! Remove Symmetries
  !
  spatial_nsym=nsym/(1+i_time_rev)
@@ -371,7 +367,7 @@ subroutine RT_fix_symmetries(E,k)
  call section('=',"Energies")
  !===========================
  !
- call map_energies(E,E_expanded,k,kpoints_map,S_contains_TR)
+ call map_energies(E,E_expanded,k,kpoints_map)
  !
  if (trim(core_io_path)/=trim(more_io_path)) then
    call mk_dir(more_io_path)
@@ -393,7 +389,7 @@ subroutine RT_fix_symmetries(E,k)
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID)
    io_SC_E_err=io_SC_components('E',en_sc,ID)
    !
-   call map_energies(en_sc,en_sc_expanded,k,kpoints_map,S_contains_TR)
+   call map_energies(en_sc,en_sc_expanded,k,kpoints_map)
    !
    nkibz=k%nibz
    !
@@ -686,7 +682,7 @@ subroutine RT_fix_symmetries(E,k)
  !
 end subroutine
  
-subroutine map_energies(E,E_expanded,k,kpoints_map,S_contains_TR)
+subroutine map_energies(E,E_expanded,k,kpoints_map)
  !
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp
@@ -697,11 +693,10 @@ subroutine map_energies(E,E_expanded,k,kpoints_map,S_contains_TR)
  type(levels), intent(out)    :: E_expanded
  type(bz_samp)                :: k
  integer,       intent(in)    :: kpoints_map(2,k%nibz)
- logical,       intent(in)    :: S_contains_TR(100)
  !
  ! Work Space
  !
- integer :: ik,is
+ integer :: ik
  !
  call E_reset(E_expanded)
  E_expanded%nb=E%nb
@@ -709,17 +704,7 @@ subroutine map_energies(E,E_expanded,k,kpoints_map,S_contains_TR)
  allocate(E_expanded%E(E%nb,k%nibz,n_sp_pol))
  !
  do ik=1,k%nibz
-   if(n_sp_pol==1) then
-     E_expanded%E(:,ik,1)=E%E(:,kpoints_map(1,ik),1)
-     cycle
-   endif
-   is=kpoints_map(2,ik)
-   if(.not.S_contains_TR(is)) E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
-   ! T-rev flips the spin
-   if(     S_contains_TR(is)) then
-     E_expanded%E(:,ik,1)=E%E(:,kpoints_map(1,ik),2)
-     E_expanded%E(:,ik,2)=E%E(:,kpoints_map(1,ik),1)
-   endif
+   E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
  enddo
  !
 end subroutine map_energies

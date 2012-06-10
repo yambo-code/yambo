@@ -43,7 +43,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:wf_state,wf
  use FFT_m,         ONLY:fft_rot_r,fft_size
- use D_lattice,     ONLY:nsym,sop_inv,sop_tab,symmetrize_spin,spin_sop,i_time_rev
+ use D_lattice,     ONLY:nsym,sop_inv,sop_tab,spin_sop,i_time_rev
  use R_lattice,     ONLY:b,qindx_B,bz_samp,ik_is_table
  use BS,            ONLY:O_n_scatt,O_table,O_phase,BS_O,O_n_c_states,O_c_state,&
 &                        O_n_v_states,O_v_state,O_ng,BS_bands,&
@@ -61,8 +61,8 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  !
  type(ggwinfo)   ::isc
  type(pp_indexes)::p_index
- integer     :: i1,i2,i3,i4,b_ref,ik1bz,ik2bz,i_wf,k_wf,is1,is2,is1xis2,&
-&               iss_tab,is_coll,ib1,ib2,i_spin2,i_spin1,j_spin2,j_spin1,k_spin2
+ integer     :: i1,i2,i3,i4,b_ref,ik1bz,ik2bz,i_wf,is1,is2,is1xis2,ifft,&
+&               iss_tab,is_coll,ib1,ib2,i_spin2,i_spin1
  integer     :: scatt_stat(BS_bands(2)-BS_bands(1)+1,BS_bands(2)-BS_bands(1)+1,nsym,n_sp_pol)
  complex(SP) :: wf_cmp,wf_tmp1(fft_size,n_spinor),wf_tmp2(fft_size,n_spinor)
  logical     :: eval_collision
@@ -96,10 +96,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  !
  ! GPL_INCLUDE_START SPIN_IGNORE
  !i_spin1=1
- !j_spin1=1
  !i_spin2=1
- !j_spin2=1
- !k_spin2=1
  ! GPL_INCLUDE_END SPIN_IGNORE
  !
  O_table=0
@@ -113,8 +110,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
    !
    ! GPL_EXCLUDE_START SPIN_IGNORE
    !
-   do j_spin1=1,n_sp_pol
-     i_spin1=symmetrize_spin(is1,j_spin1)
+   do i_spin1=1,n_sp_pol
      !
      ! GPL_EXCLUDE_END SPIN_IGNORE
      !
@@ -132,9 +128,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
          !
          ! GPL_EXCLUDE_START SPIN_IGNORE
          !
-         do j_spin2=1,n_sp_pol
-           i_spin2=symmetrize_spin(is1xis2,j_spin2)
-           k_spin2=symmetrize_spin(iss_tab,j_spin2)
+         do i_spin2=1,n_sp_pol
            !
            ! GPL_EXCLUDE_END SPIN_IGNORE
            !
@@ -142,20 +136,18 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
              !
              if (O_phase(is1xis2,ib1,i_spin2)/=0) cycle
              i_wf=wf_state(ib1,ik2,i_spin2)
-             k_wf=wf_state(ib1,ik2,k_spin2)
              !
              wf_tmp1(:,1)=wf(fft_rot_r(is1xis2,:),i_wf)
-             wf_tmp2(:,1)=wf(fft_rot_r(iss_tab,:),k_wf)
+             wf_tmp2(:,1)=wf(fft_rot_r(iss_tab,:),i_wf)
              !
              ! GPL_EXCLUDE_START SPIN_IGNORE
              !
              if(n_spinor>1) then
                i_wf=wf_state(ib1,ik2,2)
-               k_wf=wf_state(ib1,ik2,2)
                wf_tmp1(:,2)=wf(fft_rot_r(is1xis2,:),i_wf)
-               wf_tmp2(:,2)=wf(fft_rot_r(iss_tab,:),k_wf)
-               wf_tmp1=matmul(spin_sop(:,:,is1xis2),wf_tmp1)
-               wf_tmp2=matmul(spin_sop(:,:,iss_tab),wf_tmp2)
+               wf_tmp2(:,2)=wf(fft_rot_r(iss_tab,:),i_wf)
+               forall(ifft=1:fft_size) wf_tmp1(ifft,:)=matmul(spin_sop(:,:,is1xis2),wf_tmp1(ifft,:))
+               forall(ifft=1:fft_size) wf_tmp2(ifft,:)=matmul(spin_sop(:,:,iss_tab),wf_tmp2(ifft,:))
              endif
              !
              ! GPL_EXCLUDE_END SPIN_IGNORE
@@ -172,9 +164,9 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
              ! GPL_EXCLUDE_END SPIN_IGNORE
              !
              if (abs(abs(wf_cmp)-1.)<=1.E-3) then
-               O_phase(is1xis2,ib1,j_spin2)=nint(real(wf_cmp))
+               O_phase(is1xis2,ib1,i_spin2)=nint(real(wf_cmp))
              else
-               O_phase(is1xis2,ib1,j_spin2)=-99
+               O_phase(is1xis2,ib1,i_spin2)=-99
              endif
            enddo
            !
@@ -191,45 +183,44 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
        isc%qs=(/1, q%sstar( qindx_B(ik1bz,ik2bz,1) ,1) ,1/) 
        !
        ! <ib1 ik1bz | ib2 ik2bz>
-       i_spin2=symmetrize_spin(is1xis2,j_spin1)
        !
        do i3=1,O_n_v_states(ik1bz,i_spin1)+O_n_c_states(ik1bz,i_spin1)
          !
          if (i3<=O_n_v_states(ik1bz,i_spin1)) ib1=O_v_state(ik1bz,i3,i_spin1)
          if (i3> O_n_v_states(ik1bz,i_spin1)) ib1=O_c_state(ik1bz,i3-O_n_v_states(ik1bz,i_spin1),i_spin1)
          !
-         do i4=1,O_n_v_states(ik2bz,i_spin2)+O_n_c_states(ik2bz,i_spin2)
+         do i4=1,O_n_v_states(ik2bz,i_spin1)+O_n_c_states(ik2bz,i_spin1)
            !
-           if (i4<=O_n_v_states(ik2bz,i_spin2)) ib2=O_v_state(ik2bz,i4,i_spin2)
-           if (i4> O_n_v_states(ik2bz,i_spin2)) ib2=O_c_state(ik2bz,i4-O_n_v_states(ik2bz,i_spin2),i_spin2)
+           if (i4<=O_n_v_states(ik2bz,i_spin1)) ib2=O_v_state(ik2bz,i4,i_spin1)
+           if (i4> O_n_v_states(ik2bz,i_spin1)) ib2=O_c_state(ik2bz,i4-O_n_v_states(ik2bz,i_spin1),i_spin1)
            !
            ! Prevent the calculation of c->v or v->c oscillators in the resonant
            ! only calculation
            !
            if (.not.BS_cpl_K_corr.and. (&
-&              (i3> O_n_v_states(ik1bz,i_spin1).and.i4<=O_n_v_states(ik2bz,i_spin2)).or.&
-&              (i3<=O_n_v_states(ik1bz,i_spin1).and.i4> O_n_v_states(ik2bz,i_spin2)))) cycle
+&              (i3> O_n_v_states(ik1bz,i_spin1).and.i4<=O_n_v_states(ik2bz,i_spin1)).or.&
+&              (i3<=O_n_v_states(ik1bz,i_spin1).and.i4> O_n_v_states(ik2bz,i_spin1)))) cycle
            !
            is_coll=iss_tab
            !
-           if (O_phase(is1xis2,ib2,j_spin1)==-99) is_coll=is1xis2
-           if(scatt_stat(ib1-b_ref,ib2-b_ref,is_coll,j_spin1)==0) then
+           if (O_phase(is1xis2,ib2,i_spin1)==-99) is_coll=is1xis2
+           if(scatt_stat(ib1-b_ref,ib2-b_ref,is_coll,i_spin1)==0) then
              !
              O_n_scatt=O_n_scatt+1
-             O_table(ib1-b_ref,is1,ib2-b_ref,is2,j_spin1)   =O_n_scatt
-             scatt_stat(ib1-b_ref,ib2-b_ref,is_coll,j_spin1)=O_n_scatt
+             O_table(ib1-b_ref,is1,ib2-b_ref,is2,i_spin1)   =O_n_scatt
+             scatt_stat(ib1-b_ref,ib2-b_ref,is_coll,i_spin1)=O_n_scatt
              if (.not.allocated(BS_O)) cycle
              if (.not.eval_collision) cycle
              if (.not.p_index%element_1D(O_n_scatt)) cycle
              !
-             isc%is=(/ib1,ik1,1,j_spin1/)
-             isc%os=(/ib2,ik2,is_coll,j_spin1/)
+             isc%is=(/ib1,ik1,1,i_spin1/)
+             isc%os=(/ib2,ik2,is_coll,i_spin1/)
              call scatterBamp(isc)
              BS_O(:,O_n_scatt)=isc%rhotw 
              !
            else
              !
-             O_table(ib1-b_ref,is1,ib2-b_ref,is2,j_spin1)=scatt_stat(ib1-b_ref,ib2-b_ref,is_coll,j_spin1)
+             O_table(ib1-b_ref,is1,ib2-b_ref,is2,i_spin1)=scatt_stat(ib1-b_ref,ib2-b_ref,is_coll,i_spin1)
              !
            endif
          enddo

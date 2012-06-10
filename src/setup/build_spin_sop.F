@@ -24,7 +24,7 @@ subroutine build_spin_sop()
  use pars,           ONLY:SP,pi,cI,cONe,cZERO
  use matrix_operate, ONLY:m3det
  use D_lattice,      ONLY:dl_sop,spin_sop,nsym,i_time_rev,sop_inv
- use electrons,      ONLY:n_spin,n_sp_pol
+ use electrons,      ONLY:n_spin,n_sp_pol,n_spinor
  !
  implicit none
  !
@@ -35,13 +35,17 @@ subroutine build_spin_sop()
  !
  if(.not.allocated(spin_sop)) allocate(spin_sop(n_spin,n_spin,nsym))
  !
+ sigma_0=reshape((/ cONe , cZERO, cZERO, cONe /),(/2,2/))
+ !
  if(n_spin==1) then
    spin_sop(1,1,:)=cONe
+   return
+ else if(n_sp_pol==2) then
+   forall(is=1:nsym) spin_sop(:,:,is)=sigma_0
    return
  endif
  !
  ! Pauli matrices
- sigma_0=reshape((/ cONe , cZERO, cZERO, cONe /),(/2,2/))
  sigma_x=reshape((/ cZERO, cONe , cONe , cZERO/),(/2,2/))
  sigma_y=reshape((/ cZERO,-cI   , cI   , cZERO/),(/2,2/))
  sigma_z=reshape((/ cONe , cZERO, cZERO,-cONe /),(/2,2/))
@@ -50,12 +54,6 @@ subroutine build_spin_sop()
  t_rev=-cI*sigma_y
  !
  do is=1,nsym
-   !
-   if (n_sp_pol==2) then
-     if(is<=nsym/(1+i_time_rev)) spin_sop(:,:,is)=sigma_0
-     if(is> nsym/(1+i_time_rev)) spin_sop(:,:,is)=t_rev
-     cycle
-   endif
    !
    ! Spin is invariant under spatial inversion. I need only the rotations.
    tmp_sop= dl_sop(:,:,is)*m3det(dl_sop(:,:,is))
@@ -85,9 +83,9 @@ subroutine build_spin_sop()
    delta=-delta/2._SP
    !
    ! Sakurai p.166, eq. 3.2.44 + pag 159 eq. 3.2.3
-   spin_RX_delta=sigma_0*cos(delta)-cI*sigma_x*sin(delta)
-   spin_RY_beta =sigma_0*cos(beta) -cI*sigma_y*sin(beta)
-   spin_RZ_alpha=sigma_0*cos(alpha)-cI*sigma_z*sin(alpha)
+   spin_RX_delta=sigma_0*cos(delta)+cI*sigma_x*sin(delta)
+   spin_RY_beta =sigma_0*cos(beta) +cI*sigma_y*sin(beta)
+   spin_RZ_alpha=sigma_0*cos(alpha)+cI*sigma_z*sin(alpha)
    spin_sop(:,:,is)=matmul(spin_RX_delta,matmul(spin_RY_beta,spin_RZ_alpha))
    !
    if(is>nsym/(1+i_time_rev)) spin_sop(:,:,is)=matmul(t_rev,spin_sop(:,:,is))

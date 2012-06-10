@@ -347,7 +347,7 @@ subroutine K_diagonalization(iq,W)
      !
 #if defined _KERR
      if(l_kerr) then
-       call live_timing('BSK L x overlap',px%n_of_elements(myid+1))
+       call live_timing('BSK L kerr x overlap',px%n_of_elements(myid+1))
        do i1=1,BS_H_dim
          BS_R_left_kerr(i1)=cmplx(0.,0.,SP)
          if (.not.px%element_1D(i1)) cycle
@@ -449,7 +449,7 @@ subroutine K_diagonalization(iq,W)
 #endif
    !
 #if defined _KERR
-   ! I need the term missing in the lenght gauge
+   ! I need the term missing in the lenght gauge (this should be zero...)
    if (chi_nn) then
      if (K_is_not_hermitian)      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/W%p(:)
      if (.not.K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/W%p(:)
@@ -458,6 +458,7 @@ subroutine K_diagonalization(iq,W)
    if(l_kerr) then
      if (K_is_not_hermitian)      X_epsilon(5,:)=X_epsilon(5,:)-BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
      if (.not.K_is_not_hermitian) X_epsilon(5,:)=X_epsilon(5,:)-BS_R(i1)*BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
+     ! I need the term missing in the lenght gauge
      if (chi_nn) then
        if (K_is_not_hermitian)      X_epsilon(5,:)=X_epsilon(5,:)-BS_R_kerr(i1)/W%p(:)
        if (.not.K_is_not_hermitian) X_epsilon(5,:)=X_epsilon(5,:)-BS_R(i1)*BS_R_kerr(i1)/W%p(:)

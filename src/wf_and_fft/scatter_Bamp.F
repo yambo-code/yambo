@@ -36,7 +36,7 @@ subroutine scatterBamp(isc)
  use pars,           ONLY:DP,SP,cZERO,cONe
  use electrons,      ONLY:n_spinor
  use collision,      ONLY:ggwinfo
- use D_lattice,      ONLY:nsym,i_time_rev,mag_syms,symmetrize_spin,spin_sop
+ use D_lattice,      ONLY:nsym,i_time_rev,mag_syms,spin_sop
  use R_lattice,      ONLY:g_rot
  use wave_func,      ONLY:wf,wf_state
  use FFT_m,          ONLY:fft_size,fft_rot_r,fft_dim,fftw_plan,fft_g_table
@@ -63,7 +63,7 @@ subroutine scatterBamp(isc)
  ib=isc%is(1)
  ik=isc%is(2)
  is=isc%is(3)
- i_sp=symmetrize_spin(is,isc%is(4))
+ i_sp=isc%is(4)
  litr=is>nsym/(i_time_rev+1)
  !
  ! | ob ok_os o_sp>   
@@ -71,7 +71,7 @@ subroutine scatterBamp(isc)
  ob=isc%os(1)
  ok=isc%os(2)
  os=isc%os(3)
- o_sp=symmetrize_spin(os,isc%os(4))
+ o_sp=isc%os(4)
  lotr=os>nsym/(i_time_rev+1)
  !
  ! e^[I(Rs(G-G0)).r]
@@ -83,9 +83,6 @@ subroutine scatterBamp(isc)
  !
  i_wf=wf_state(ib,ik,i_sp)
  o_wf=wf_state(ob,ok,o_sp)
- !
- wf_tmp_i=cZERO
- wf_tmp_o=cZERO
  !
  wf_tmp_i(:,1)=wf(fft_rot_r(is,:),i_wf)
  wf_tmp_o(:,1)=wf(fft_rot_r(os,:),o_wf)

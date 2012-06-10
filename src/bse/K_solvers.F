@@ -60,9 +60,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  integer           ::ik,iv,ic,i1,i_sp,ioBS_err,ID 
 #if defined _KERR
  integer           ::iw
- real(SP)          ::factor
  complex(SP)       ::factor_jj
 #endif
+ real(SP)          ::factor
  complex(SP)       ::drude_GreenF(W_bss%n(2))
  real(SP)          ::v(3)
  logical           ::run_Haydock,run_Diago,Pert_inversion,BSE_IP
@@ -162,8 +162,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
      !
    enddo
    !
-#if defined _KERR
    factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
+#if defined _KERR
    if(chi_jj) then
      if(all(abs(real(W_bss%p(:)))>0.01))&
 &      call error(' No w close to 0 included in your frequency grid')
@@ -188,7 +188,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
    if(l_kerr) call K_kerr_IP(W_bss%p)
 #else
-   X_epsilon(3,:)=1.+X_epsilon(3,:)*real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
+   !
+   X_epsilon(3,:)=1.+X_epsilon(3,:)*factor/(q_norm(1))**2
 #endif
  !
  endif

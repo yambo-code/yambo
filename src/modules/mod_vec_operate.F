@@ -262,6 +262,36 @@ module vec_operate
      deallocate(l_indx,l_arrout)
    end subroutine sort
    !
+   subroutine i_sort(arrin,arrout,indx)                             
+     integer           ::  arrin(:)
+     integer,  optional::  indx(:)
+     real(SP), optional::  arrout(:)
+     !
+     integer :: n
+     !
+     real(SP), allocatable :: l_arrin(:)
+     real(SP), allocatable :: l_arrout(:)
+     !
+     n=size(arrin)
+     !
+     allocate(l_arrin(n),l_arrout(n))
+     !
+     l_arrin=real(arrin)
+     if(present(arrout)) then
+       l_arrout=real(arrout)
+       if(     present(indx)) call sort(l_arrin,arrout=l_arrout,indx=indx)
+       if(.not.present(indx)) call sort(l_arrin,arrout=l_arrout)
+       arrout=int(l_arrout)
+     else
+       if(     present(indx)) call sort(l_arrin,indx=indx)
+       if(.not.present(indx)) call sort(l_arrin)
+       arrin=int(l_arrin)
+     endif
+     !
+     return
+     !
+   end subroutine i_sort
+   !
    subroutine degeneration_finder(E,n,first_deg_el,deg_elmnts,deg_grps,deg_accuracy)
      !
      ! E = ( 0 1 1 2 3 3 3 ) , n = 7

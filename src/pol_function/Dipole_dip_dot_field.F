@@ -80,7 +80,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
          !
          ! DIP_iq_dot_r = i q . < v k | r | c k >
          !
-         DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin) )
+         if ( is<= nsym/(i_time_rev+1) ) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin)  )
          if ( is > nsym/(i_time_rev+1) ) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), field_dir_rot ) 
          !
          ! GPL_EXCLUDE_START SPIN_IGNORE

@@ -22,7 +22,7 @@
 subroutine RT_Dephasing_Matrix(E)
  !
  use pars,          ONLY:SP
- use units,         ONLY:FS2AUT,HBAR_eVfs
+ use units,         ONLY:FS2AUT,HBAR_eVfs,HA2EV
  use com,           ONLY:error,msg
  use memory_m,      ONLY:mem_est
  use electrons,     ONLY:levels
@@ -133,8 +133,8 @@ subroutine RT_Dephasing_Matrix(E)
        ! Life[eV]=HBAR_eVfs/Life[AUT]*FS2AUT => Life[AUT]=HBAR_eVfs/Life[eV]*FS2AUT
        !
        do ik=1,nkibz
-         RT_Deph_Matrix(ib_1,ib_2,ik)=HBAR_eVfs/(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))*FS2AUT
-         RT_Deph_Matrix(ib_2,ib_1,ik)=HBAR_eVfs/(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))*FS2AUT
+         RT_Deph_Matrix(ib_1,ib_2,ik)=HBAR_eVfs/(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))/HA2EV*FS2AUT
+         RT_Deph_Matrix(ib_2,ib_1,ik)=HBAR_eVfs/(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))/HA2EV*FS2AUT
        enddo     
        !
      enddo

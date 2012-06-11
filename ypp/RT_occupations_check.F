@@ -25,7 +25,7 @@ integer function RT_occupations_check(E,k)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use QP_m,           ONLY:OCC_ctl
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,RT_IO_steps,l_ELPH_CCA_kernel,&
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,RT_IO_steps,l_ELPH_CCA_Kernel,&
 &                         Hole_lifetime,Electron_lifetime,Phonon_lifetime
  use SC,             ONLY:SC_bands,RT_occupations
  use IO_m,           ONLY:LOG,NONE
@@ -49,7 +49,7 @@ integer function RT_occupations_check(E,k)
    !
  endif
  !
- if (l_ph_corr.and.l_ELPH_CCA_kernel.and..not.allocated(Hole_lifetime)) then
+ if (l_ph_corr.and.l_ELPH_CCA_Kernel.and..not.allocated(Hole_lifetime)) then
    allocate(Hole_lifetime(SC_bands(1):SC_bands(2),k%nibz))
    allocate(Electron_lifetime(SC_bands(1):SC_bands(2),k%nibz))
    allocate(Phonon_lifetime(SC_bands(1):SC_bands(2),k%nibz))

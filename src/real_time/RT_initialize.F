@@ -34,7 +34,7 @@ subroutine RT_initialize(Xen,Xk,q)
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
 &                         l_RT_induced_field,NE_Hxc_jumps,l_NE_simulate_TDDFT,      &
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
-&                         Phase_LifeTime,RT_ave_dephasing,NE_MEM_Treshold,          &
+&                         Phase_LifeTime,NE_MEM_Treshold,          &
 &                         NE_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,            &
 &                         l_RT_skip_JandP_IO
  use D_lattice,      ONLY:DL_vol
@@ -105,11 +105,15 @@ subroutine RT_initialize(Xen,Xk,q)
  !
  if (NE_Hxc_jumps<=0) NE_Hxc_jumps=1
  !
- ! Lifetimes
- !===========
+ ! Dephasing Matrix. Including user-defined matrix-likfe dephasing factors, constant
+ !==================
+ ! radiative/phase, polaronic based
  !
- RT_is_dumped=RAD_LifeTime>1.E-8_SP.or.Phase_LifeTime>1.E-8_SP.or.associated(Xen%W)
- if (.not.associated(Xen%W).and.l_ph_corr) then
+ call section('=','Dephasing matrix setup')
+ !
+ call RT_Dephasing_Matrix(Xen) 
+ !
+ if (.not.RT_is_dumped.and.l_ph_corr) then
   l_ph_corr=.FALSE.
   call warning('No QP lifetime provided. El-Ph scattering switched off')
  endif
@@ -253,8 +257,6 @@ subroutine RT_initialize(Xen,Xk,q)
  ! a correct definition is needed to obtain the same result in both gauges.
  ! 
  if (trim(global_gauge) == 'length' ) theta_function_iTo_ref=0
- !
- if(RT_ave_dephasing/=0._SP.or.associated(Xen%W)) call RT_Dephasing_Matrix(Xen) 
  !
  ! Checking extended COLLISIONS
  !==============================

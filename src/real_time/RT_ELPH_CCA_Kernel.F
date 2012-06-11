@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
+subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
  !  
  use pars,           ONLY:SP,cI,pi
  use electrons,      ONLY:levels,spin_occ,n_full_bands
@@ -92,4 +92,4 @@ subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
    !
  enddo
  !
-end subroutine RT_ELPH_CCA_kernel
+end subroutine RT_ELPH_CCA_Kernel

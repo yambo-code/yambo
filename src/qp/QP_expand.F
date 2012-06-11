@@ -19,14 +19,78 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_expand(qp,qp_expanded)
+subroutine QP_expand(k,qp,qp_expanded)
  !
- use QP_m,      ONLY:QP_t
+ use QP_m,          ONLY:QP_t
+ use R_lattice,     ONLY:bz_samp
+ use electrons,     ONLY:n_sp_pol
  implicit none
- type(QP_t)   ::qp,qp_expanded
+ !
+ type(bz_samp)    ::k
+ type(QP_t)       ::qp,qp_expanded
  !
  ! Work Space
  !
- stop
+ integer :: i_qp,ik,ib(2),is,ik_bz,n_qp_expanded,i1,max_ik
+ !
+ ! Components of QP_t
+ !
+ !  character(schlen)  :: description(max_qp_descs)
+ !  integer,    pointer:: table(:,:) => null()
+ !  real(SP)   ,pointer:: k(:,:)     => null()
+ !  real(SP)   ,pointer:: E_bare(:)  => null()
+ !  complex(SP),pointer:: E(:)       => null()
+ !  complex(SP),pointer:: Z(:)       => null()
+ !  integer  :: n_descs
+ !  integer  :: nk
+ !  integer  :: nb
+ !  integer  :: n_states
+ !
+ qp_expanded%n_descs=qp%n_descs
+ qp_expanded%nb=qp%nb
+ qp_expanded%description=qp%description
+ !
+ call k_ibz2bz(k,'i',.false.)
+ !
+ do i1=1,2
+   !
+   n_qp_expanded=0
+   max_ik=-1
+   !
+   do i_qp=1,qp%n_states
+     ib=qp%table(i_qp,1:2)
+     ik=qp%table(i_qp,3)
+     do is=1,k%nstar(ik)
+       if (ik>1 ) ik_bz=sum(k%nstar(1:ik-1))+is
+       if (ik==1) ik_bz=is
+       n_qp_expanded=n_qp_expanded+1
+       !
+       max_ik=max(ik_bz,max_ik)
+       !
+       if (i1==2) then
+         qp_expanded%k(ik_bz,:)=k%ptbz(ik_bz,:)
+         qp_expanded%table(n_qp_expanded,:3)=(/ib,ik_bz/)
+         if (n_sp_pol==2) qp_expanded%table(n_qp_expanded,4)=qp%table(i_qp,4)
+         qp_expanded%E_bare(n_qp_expanded)=qp%E_bare(i_qp)
+         qp_expanded%E(n_qp_expanded)=qp%E(i_qp)
+         qp_expanded%Z(n_qp_expanded)=qp%Z(i_qp)
+       endif
+       !
+     enddo
+   enddo
+   !
+   if (i1==1) then
+     !
+     qp_expanded%nk=max_ik
+     qp_expanded%n_states=n_qp_expanded
+     !
+     allocate(qp_expanded%k(max_ik,3),&
+&             qp_expanded%table(qp_expanded%n_states,3+n_sp_pol-1),&
+&             qp_expanded%E_bare(qp_expanded%n_states),&
+&             qp_expanded%E(qp_expanded%n_states),&
+&             qp_expanded%Z(qp_expanded%n_states))
+   endif
+   !
+ enddo
  !
 end subroutine

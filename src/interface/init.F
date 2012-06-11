@@ -632,13 +632,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(-1,'SCmixing')
    call initactivate(1,'Integrator RADLifeTime PhLifeTime RTmaxEn RTpumpEh') 
    call initactivate(1,'RTstep NEsteps NETime')
-   if (l_ph_corr) call initactivate(1,'MemTresh RandQpts RTCCA ElPhModes')
+   if (l_ph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes')
    call initactivate(1,'HXCjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
    call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField SkipGFIO SkipOCCIO')
    if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
    if (              l_RT_pump_and_probe) call Afield_activate('Pump')
    !
-   call initactivate(1,'RTAveDeph')
    call initactivate(1,'ShiftedPath')
    !
  endif

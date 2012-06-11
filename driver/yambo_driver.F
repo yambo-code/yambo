@@ -231,7 +231,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    !==========
    !
 #if defined _RT
-   if (     l_real_time) call RT_driver(en,Xen,X,k,xk,q,Xw(:2))
+   if (     l_real_time) call RT_driver(en,Xen,X,k,xk,q)
 #endif
    !
  endif

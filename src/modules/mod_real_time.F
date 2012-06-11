@@ -137,7 +137,7 @@ module real_time
  ! ELPH kernel...
  !----------------
  !
- logical     :: l_ELPH_CCA_kernel
+ logical     :: l_ELPH_CCA_Kernel
  real(SP)    :: Eh_pumped_pair_energy(2)
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
@@ -163,7 +163,6 @@ module real_time
  ! Relaxation: Dephasing Matrix
  !------------------------------
  !
- real(SP)    :: RT_ave_dephasing
  real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
  !
  ! GFs
@@ -310,7 +309,7 @@ module real_time
      allocate(RT_occupations(SC_bands(1):SC_bands(2),QP_nk))
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
      !
-     if (l_ELPH_CCA_kernel) then
+     if (l_ELPH_CCA_Kernel) then
        allocate(Hole_lifetime(SC_bands(1):SC_bands(2),QP_nk))
        allocate(Electron_lifetime(SC_bands(1):SC_bands(2),QP_nk))
        allocate(Phonon_lifetime(SC_bands(1):SC_bands(2),QP_nk))

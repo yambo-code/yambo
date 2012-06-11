@@ -21,16 +21,14 @@
 !
 subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
- use pars,           ONLY:SP,pi,cI,zero_dfl
- use units,          ONLY:SPEED_OF_LIGHT,HA2EV
+ use pars,           ONLY:SP,cI,zero_dfl
+ use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands,it_now
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,l_NE_with_fields, &
 &                         l_NE_simulate_IP 
- use fields,         ONLY:A_vecpot
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc,QP_Sc,QP_nk
  use xc_functionals, ONLY:E_xc

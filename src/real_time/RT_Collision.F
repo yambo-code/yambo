@@ -54,9 +54,9 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
- use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,RAD_LifeTime,full_rho,          &
+ use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,full_rho,          &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
-&                         G_lesser_reference,Phase_LifeTime,NE_Hxc_jumps,                      &
+&                         G_lesser_reference,NE_Hxc_jumps,                      &
 &                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start, &
 &                         RT_Deph_Matrix,l_RT_needs_XC0,RT_k_px
  use fields,         ONLY:gauge_field
@@ -78,7 +78,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  ! Work Space
  !
  logical          :: XC_needs_density
- integer          :: i1,i2,ik
+ integer          :: i1,i2,ik,ikp
  !
  ! Density (needed bu Hartree and local XCs)
  !=========
@@ -215,29 +215,11 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    if(RT_is_dumped.and.NE_dynamics) then
      !
-     if ( RAD_LifeTime > 1.E-5_SP) then
-       forall(i1=SC_bands(1):SC_bands(2)) &
-         I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-cI/RAD_LifeTime*(G_input(i1,i1,ik)-G_lesser_reference(i1,i1,ik))
-     endif
-     !
-     if(Phase_LifeTime > 1.E-5_SP) then
-       !
-       do i1=SC_bands(1),SC_bands(2)
-         do i2=i1+1,SC_bands(2)
-           I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI/Phase_LifeTime*(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))
-           I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)-cI/Phase_LifeTime*(G_input(i2,i1,ik)-G_lesser_reference(i2,i1,ik))
-         enddo 
+     do i1=SC_bands(1),SC_bands(2)
+       do i2=SC_bands(1),SC_bands(2)
+         I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI/RT_Deph_Matrix(i1,i2,ik)*(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))
        enddo
-       !
-     endif
-     !
-     if(allocated(RT_Deph_Matrix)) then
-        do i1=SC_bands(1),SC_bands(2)
-          do i2=SC_bands(1),SC_bands(2)
-            I1_lesser(i1,i2,:)=I1_lesser(i1,i2,:)-cI/RT_Deph_Matrix(i1,i2,:)*(G_input(i1,i2,:)-G_lesser_reference(i1,i2,:))
-          enddo
-        enddo
-     endif
+     enddo
      !
    endif
    !

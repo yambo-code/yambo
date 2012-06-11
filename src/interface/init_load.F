@@ -55,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,NE_Hxc_jumps,&
-&                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time
+&                        NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time
  use fields,        ONLY:Efield
 #endif
 #if defined _MAGNETIC
@@ -254,7 +254,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                            Verb_level=V_real_time,unit=E_unit)
  call it(defs,'RTpumpEh',   '[RT] Energy of the full and empty level to be inverted by hand',Eh_pumped_pair_energy,&
 &                            Verb_level=V_real_time,unit=E_unit)
- call it('f',defs,'RTCCA','[RT] Eval the ELPH kernel in the Complete Collision Approximation')
+ call it('f',defs,'RT_T_evol','[RT] Eval the ELPH kernel using a complete Time evolution instead of the CCA')
  !
  ! I/O
  !
@@ -267,8 +267,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'SwitchOnTime', '[RT Therm] Adiabatic switch on time ',SwitchOnTime,verb_level=V_real_time,unit=Time_unit)
  call it(defs,'RTDiagoSteps', '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)
- call it(defs,'RTAveDeph','[RT] Dephasing for all elements not included in RTDePhMatrix' &
-&                        ,RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit)
  call it('f',defs,'Diamagnetic', '[RT] Include the diamagnetic term in current and coupling',verb_level=V_real_time)
  call it('f',defs,'InducedField', '[RT] Include induced field in coupling and current',verb_level=V_real_time)
  !

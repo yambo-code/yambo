@@ -30,7 +30,7 @@ subroutine RT_occupations_analyze(k,E)
  use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT
  use com,            ONLY:msg,of_open_close
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,Hole_lifetime,Electron_lifetime,&
-&                         Phonon_lifetime,l_ELPH_CCA_kernel
+&                         Phonon_lifetime,l_ELPH_CCA_Kernel
  use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions
  implicit none
  !
@@ -90,7 +90,7 @@ subroutine RT_occupations_analyze(k,E)
        titles(1)='T[fs]'
        titles(2)='Occ.'
        call msg('o '//trim(output_fname),'#')
-       if (l_ELPH_CCA_kernel) then
+       if (l_ELPH_CCA_Kernel) then
          titles(3)='Hole[meV]'
          titles(4)='El.[meV]'
          titles(5)='Ph.[meV]'
@@ -105,7 +105,7 @@ subroutine RT_occupations_analyze(k,E)
      data_to_plot(:2)=(/io_TIME/FS2AUT,RT_occupations(ib,ik)/spin_occ/)
      RT_occupations_sum(i_T)=RT_occupations_sum(i_T)+RT_occupations(ib,ik)/spin_occ
      !
-     if (l_ELPH_CCA_kernel) then
+     if (l_ELPH_CCA_Kernel) then
        data_to_plot(3:)=(/Hole_lifetime(ib,ik)*HA2EV,Electron_lifetime(ib,ik)*HA2EV,&
 &                                              Phonon_lifetime(ib,ik)*HA2EV/)
        call msg('o '//trim(output_fname),'',data_to_plot,INDENT=-2,USE_TABS=.true.)

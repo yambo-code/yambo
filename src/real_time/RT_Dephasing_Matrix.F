@@ -19,22 +19,25 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Dephasing_Matrix()
+subroutine RT_Dephasing_Matrix(E)
  !
  use pars,          ONLY:SP
- use units,         ONLY:FS2AUT
- use com,           ONLY:error,msg,warning
+ use units,         ONLY:FS2AUT,HBAR_eVfs
+ use com,           ONLY:error,msg
  use memory_m,      ONLY:mem_est
  use electrons,     ONLY:levels
  use parser_m,      ONLY:parser
  use SC,            ONLY:SC_bands
  use QP_m,          ONLY:QP_nk
- use real_time,     ONLY:RT_Deph_Matrix,RT_ave_dephasing,RT_is_dumped
+ use R_lattice,     ONLY:nkibz
+ use real_time,     ONLY:RT_Deph_Matrix,RT_is_dumped,Phase_LifeTime,RAD_LifeTime
  implicit none
+ !
+ type(levels), intent(in) :: E
  !
  ! Work Space
  !
- integer :: dm_rng_lines,ik,ib(2),i1
+ integer :: dm_rng_lines,ik,ib_1,ib_2,i1
  real(SP):: rcheck
  real(SP), allocatable :: DephM_r_limits(:,:)
  !
@@ -53,32 +56,89 @@ subroutine RT_Dephasing_Matrix()
  !
  dm_rng_lines=dm_rng_lines-2
  !
- ! Non null %DephMatrix fields
- !
- if(dm_rng_lines/=0.and.RT_ave_dephasing/=0._SP) then
-   !
-   ! Dephasing Matrix
-   !
-   call msg('s','[RT] Apply External Dephasing')
-   !
-   RT_is_dumped=.true.
+ if (dm_rng_lines/=0.or.RAD_LifeTime > 1.E-5_SP.or.Phase_LifeTime > 1.E-5_SP.or.associated(E%W)) then
    !
    allocate(RT_Deph_Matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
    call mem_est("DephMatrix",(/size(RT_Deph_Matrix)/))
-   RT_Deph_Matrix=RT_ave_dephasing
+   !
+   RT_Deph_Matrix(:,:,:)=(0._SP,0._SP)
+   !
+   RT_is_dumped=.TRUE.
+   !
+ else
+   !
+   return
+   !
+ endif
+ !
+ ! DIAGONAL 
+ !==========
+ !
+ if (Phase_LifeTime > 1.E-5_SP) then
+   !
+   call msg('rs','[RT] External scalar Radiative lifetime applied')
+   !
+   do ib_1=SC_bands(1),SC_bands(2)
+     RT_Deph_Matrix(ib_1,ib_1,:)=RAD_LifeTime
+   enddo
+   !
+ endif
+ !
+ ! OFF-DIAGONAL
+ !==============
+ !
+ if (Phase_LifeTime > 1.E-5_SP) then
+   !
+   ! Scalar Phase value
+   !--------------------
+   !
+   call msg('rs','[RT] External scalar Dephasing applied')
+   !
+   do ib_1=SC_bands(1),SC_bands(2)
+     do ib_2=ib_1+1,SC_bands(2)
+       RT_Deph_Matrix(ib_1,ib_2,:)=Phase_LifeTime
+       RT_Deph_Matrix(ib_2,ib_1,:)=Phase_LifeTime
+     enddo
+   enddo
+   !
+ else if (dm_rng_lines/=0) then
+   !
+   ! Non null %DephMatrix fields
+   !------------------------------
+   call msg('rs','[RT] External Matricial Dephasing applied')
    !
    do i1=1,dm_rng_lines
-     ib(1)=int(DephM_r_limits(i1,1))
-     ib(2)=int(DephM_r_limits(i1,2))
+     ib_1=int(DephM_r_limits(i1,1))
+     ib_2=int(DephM_r_limits(i1,2))
      ik=int(DephM_r_limits(i1,3))
-     if(any(ib(:)>SC_bands(2)).or.any(ib(:)<SC_bands(1))) &
+     if(any((/ib_1,ib_2/)>SC_bands(2)).or.any((/ib_1,ib_2/)<SC_bands(1))) &
 &                          call error("DephMatrix indexes out of the range! Wrong band assignment") 
      if(ik<=0.or.ik>QP_nk) call error("DephMatrix indexes out of the range! Wrong kpoint assignment") 
-     RT_Deph_Matrix(ib(1),ib(2),ik)  =DephM_r_limits(i1,4)*FS2AUT
-     RT_Deph_Matrix(ib(2),ib(1),ik)  =DephM_r_limits(i1,4)*FS2AUT
+     RT_Deph_Matrix(ib_1,ib_2,ik)  =DephM_r_limits(i1,4)*FS2AUT
+     RT_Deph_Matrix(ib_2,ib_1,ik)  =DephM_r_limits(i1,4)*FS2AUT
    enddo
    !
    deallocate(DephM_r_limits)
+   !
+ else if (associated(E%W)) then
+   !
+   ! QP database 
+   !-------------
+   !
+   call msg('rs','[RT] Quasiparticle database Dephasing applied')
+   !
+   do ib_1=SC_bands(1),SC_bands(2)
+     do ib_2=ib_1+1,SC_bands(2)
+       !
+       ! Life[eV]=HBAR_eVfs/Life[AUT]*FS2AUT => Life[AUT]=HBAR_eVfs/Life[eV]*FS2AUT
+       !
+       do ik=1,nkibz
+         RT_Deph_Matrix(ib_1,ib_2,ik)=HBAR_eVfs/(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))*FS2AUT
+         RT_Deph_Matrix(ib_2,ib_1,ik)=HBAR_eVfs/(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))*FS2AUT
+       enddo     
+       !
+     enddo
+   enddo
    !
  endif
  !

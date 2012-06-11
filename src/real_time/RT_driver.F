@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
+subroutine RT_driver(en,Xen,X,k,Xk,q)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_collisions_IO,l_ph_corr
@@ -53,7 +53,6 @@ subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
  ! Notice that Xen is never changed!
  !
  type(levels)  :: en,Xen
- type(w_samp)  :: Xw(2) 
  type(bz_samp) :: k,Xk,q
  type(X_t):: X(4)
  logical, external  ::stop_now

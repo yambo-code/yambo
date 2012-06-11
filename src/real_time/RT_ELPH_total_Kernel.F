@@ -41,7 +41,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,it_now 
- use real_time,      ONLY:I1_lesser,q_weight,elph_gkkp_expanded,GKKP_matrix_index,RT_q_px,l_ELPH_CCA_kernel,&
+ use real_time,      ONLY:I1_lesser,q_weight,elph_gkkp_expanded,GKKP_matrix_index,RT_q_px,l_ELPH_CCA_Kernel,&
 &                         Hole_lifetime,Electron_lifetime,Phonon_lifetime,G_lesser,MEM_index
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
@@ -124,7 +124,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
        ! Complete Collision Approximation (CCA)
        !=======================================
        !
-       call RT_ELPH_CCA_kernel(ik,ik_m_q,f_k,N_q(1),E,ph_freq,Gkkp)
+       call RT_ELPH_CCA_Kernel(ik,ik_m_q,f_k,N_q(1),E,ph_freq,Gkkp)
        !
      else
        !

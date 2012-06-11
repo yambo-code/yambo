@@ -95,12 +95,10 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
    !
  enddo
  !
- call msg('sr','[QP] Kpts covered exactly  [o/o]:',&
-&              real(nk_exact)/real(k%nibz)*100._SP)
+ call msg('sr','[QP] Kpts covered exactly  [o/o]:',real(nk_exact)/real(k%nibz)*100._SP)
  if (l_plan_todo_EWZI(4).and.nk_interpolated>0) then
    call msg('r','[Interpolate] Nighbours         :',n_neigh)
-   call msg('r','[Interpolate] Kpts covered [o/o]:',&
-&               real(nk_interpolated)/real(k%nibz)*100._SP)
+   call msg('r','[Interpolate] Kpts covered [o/o]:',real(nk_interpolated)/real(k%nibz)*100._SP)
  endif
  !
  if (all(DB_corrected(band_range(1):band_range(2),:,:)==1)) l_plan_todo_EWZI(:3)=.false.
@@ -138,12 +136,14 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
          !
          if (l_plan_todo_EWZI(1)) Dl(bqp,i_spin)=Dl(bqp,i_spin)+real(qp%E(i3)-qp%E_bare(i3))
          !
-         if (l_plan_todo_EWZI(2).and.real(qp%E(i3))>0..and.aimag(qp%E(i3))>0) then
-           if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
-           Wl(bqp,i_spin)=Wl(bqp,i_spin)-aimag(qp%E(i3))
-           wrong_width_sign_warn=.true.
-         else
-           Wl(bqp,i_spin)=Wl(bqp,i_spin)+aimag(qp%E(i3))
+         if (l_plan_todo_EWZI(2))then
+           if (real(qp%E(i3))>0..and.aimag(qp%E(i3))>0) then
+             if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
+             Wl(bqp,i_spin)=Wl(bqp,i_spin)-aimag(qp%E(i3))
+             wrong_width_sign_warn=.true.
+           else
+             Wl(bqp,i_spin)=Wl(bqp,i_spin)+aimag(qp%E(i3))
+           endif
          endif
          !
          if (l_plan_todo_EWZI(3)) Zl(bqp,i_spin)=Zl(bqp,i_spin)+qp%Z(i3)

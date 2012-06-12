@@ -217,7 +217,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
      !
      do i1=SC_bands(1),SC_bands(2)
        do i2=SC_bands(1),SC_bands(2)
-         I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI/RT_Deph_Matrix(i1,i2,ik)*(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))
+         I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI*RT_Deph_Matrix(i1,i2,ik)*(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))
        enddo
      enddo
      !

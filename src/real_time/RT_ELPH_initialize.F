@@ -44,11 +44,13 @@ subroutine RT_ELPH_initialize(k,q)
  integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s,i_n,i_np
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes)
  integer, external   ::ioELPH
+ logical             ::l_Full_RT_T_evolution
  !
  ! Logicals
  !==========
  !
- call parser('RTCCA',l_ELPH_CCA_Kernel)
+ call parser('RT_T_evol',l_Full_RT_T_evolution)
+ l_ELPH_CCA_Kernel=.not.l_Full_RT_T_evolution
  !
  ! Pre-allocation of CPU tables
  !==============================

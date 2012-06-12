@@ -40,6 +40,7 @@ subroutine RT_Dephasing_Matrix(E)
  integer :: dm_rng_lines,ik,ib_1,ib_2,i1
  real(SP):: rcheck
  real(SP), allocatable :: DephM_r_limits(:,:)
+ real(SP), parameter   :: tresh=1.E-5_SP
  !
  ! %DephMatrix fields
  !
@@ -56,7 +57,7 @@ subroutine RT_Dephasing_Matrix(E)
  !
  dm_rng_lines=dm_rng_lines-2
  !
- if (dm_rng_lines/=0.or.RAD_LifeTime > 1.E-5_SP.or.Phase_LifeTime > 1.E-5_SP.or.associated(E%W)) then
+ if (dm_rng_lines/=0.or.RAD_LifeTime > tresh.or.Phase_LifeTime > tresh.or.associated(E%W)) then
    !
    allocate(RT_Deph_Matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
    call mem_est("DephMatrix",(/size(RT_Deph_Matrix)/))
@@ -74,12 +75,12 @@ subroutine RT_Dephasing_Matrix(E)
  ! DIAGONAL 
  !==========
  !
- if (Phase_LifeTime > 1.E-5_SP) then
+ if (RAD_LifeTime > tresh) then
    !
    call msg('rs','[RT] External scalar Radiative lifetime applied')
    !
    do ib_1=SC_bands(1),SC_bands(2)
-     RT_Deph_Matrix(ib_1,ib_1,:)=RAD_LifeTime
+     RT_Deph_Matrix(ib_1,ib_1,:)=1._SP/RAD_LifeTime
    enddo
    !
  endif
@@ -87,7 +88,7 @@ subroutine RT_Dephasing_Matrix(E)
  ! OFF-DIAGONAL
  !==============
  !
- if (Phase_LifeTime > 1.E-5_SP) then
+ if (Phase_LifeTime > tresh) then
    !
    ! Scalar Phase value
    !--------------------
@@ -96,8 +97,8 @@ subroutine RT_Dephasing_Matrix(E)
    !
    do ib_1=SC_bands(1),SC_bands(2)
      do ib_2=ib_1+1,SC_bands(2)
-       RT_Deph_Matrix(ib_1,ib_2,:)=Phase_LifeTime
-       RT_Deph_Matrix(ib_2,ib_1,:)=Phase_LifeTime
+       RT_Deph_Matrix(ib_1,ib_2,:)=1._SP/Phase_LifeTime
+       RT_Deph_Matrix(ib_2,ib_1,:)=1._SP/Phase_LifeTime
      enddo
    enddo
    !
@@ -114,8 +115,8 @@ subroutine RT_Dephasing_Matrix(E)
      if(any((/ib_1,ib_2/)>SC_bands(2)).or.any((/ib_1,ib_2/)<SC_bands(1))) &
 &                          call error("DephMatrix indexes out of the range! Wrong band assignment") 
      if(ik<=0.or.ik>QP_nk) call error("DephMatrix indexes out of the range! Wrong kpoint assignment") 
-     RT_Deph_Matrix(ib_1,ib_2,ik)  =DephM_r_limits(i1,4)*FS2AUT
-     RT_Deph_Matrix(ib_2,ib_1,ik)  =DephM_r_limits(i1,4)*FS2AUT
+     RT_Deph_Matrix(ib_1,ib_2,ik)  =1._SP/DephM_r_limits(i1,4)/FS2AUT
+     RT_Deph_Matrix(ib_2,ib_1,ik)  =1._SP/DephM_r_limits(i1,4)/FS2AUT
    enddo
    !
    deallocate(DephM_r_limits)
@@ -130,11 +131,11 @@ subroutine RT_Dephasing_Matrix(E)
    do ib_1=SC_bands(1),SC_bands(2)
      do ib_2=ib_1+1,SC_bands(2)
        !
-       ! Life[eV]=HBAR_eVfs/Life[AUT]*FS2AUT => Life[AUT]=HBAR_eVfs/Life[eV]*FS2AUT
+       ! Life[eV]=HBAR_eVfs/Life[AUT]*FS2AUT => Life[AUT]=HBAR_eVfs/Life[eV]*FS2AUT => 1/Life[AUT]=Life[eV]/FS2AUT/HBAR_eVfs
        !
        do ik=1,nkibz
-         RT_Deph_Matrix(ib_1,ib_2,ik)=HBAR_eVfs/(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))/HA2EV*FS2AUT
-         RT_Deph_Matrix(ib_2,ib_1,ik)=HBAR_eVfs/(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))/HA2EV*FS2AUT
+         RT_Deph_Matrix(ib_1,ib_2,ik)=( (abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))*HA2EV)/HBAR_eVfs/FS2AUT
+         RT_Deph_Matrix(ib_2,ib_1,ik)=( (abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))*HA2EV)/HBAR_eVfs/FS2AUT
        enddo     
        !
      enddo

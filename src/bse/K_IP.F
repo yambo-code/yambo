@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_IP(iq,Ken,Xk)
+subroutine K_IP(iq,Ken,Xk,Wd)
  !
  use pars,         ONLY:SP,IP
  use LOGO,         ONLY:pickup_a_random
@@ -38,6 +38,7 @@ subroutine K_IP(iq,Ken,Xk)
  type(bz_samp) ::Xk
  integer       ::iq
  !
+ complex(SP):: Wd
  real(SP)   :: E_eh_range(2),S_eh_range(2)
  !
 #if defined _KERR
@@ -54,7 +55,7 @@ subroutine K_IP(iq,Ken,Xk)
  !
  call mem_est("BS_blk_dim",(/Xk%nbz/),(/IP/))
  !
- call K_eh_setup(iq,Ken,Xk)
+ call K_eh_setup(iq,Ken,Xk,Wd)
  if (any(BS_blk_dim==0)) then
    call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
  endif

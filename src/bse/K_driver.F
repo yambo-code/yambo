@@ -173,7 +173,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  iq=BS_q(1)
  ! 
  if(trim(BSS_mode)=='none') then
-   call K_IP(iq,Ken,Xk)
+   call K_IP(iq,Ken,Xk,X_static_pp%Wd)
  else
    call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
  endif

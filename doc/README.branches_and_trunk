@@ -1,0 +1,14 @@
+
+How to create patches based on a branch for the trunk
+=====================================================
+
+svn diff svn://qe-forge.org/svn/yambo-devel/trunk svn://qe-forge.org/svn/yambo-devel/branches/devel-andrea > PATCH
+
+
+How to update the branch incorporating previous commits of the trunk
+====================================================================
+
+svn merge svn://qe-forge.org/svn/yambo-devel/trunk/ -r xxx:HEAD   (pagina 104 della guida che ha likato Andrea)
+
+where xxx is the revision of the trunk to which the branch was previously syncronized. Note that the inital
+one, for who never updated the branch, is the 1011.

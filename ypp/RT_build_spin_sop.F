@@ -45,12 +45,6 @@ subroutine RT_build_spin_sop(spin_sop)
  !
  do is=1,nsym
    !
-   if (n_sp_pol==2) then
-     if(is<=nsym/(1+i_time_rev)) spin_sop(:,:,is)=sigma_0
-     if(is> nsym/(1+i_time_rev)) spin_sop(:,:,is)=t_rev
-     cycle
-   endif
-   !
    ! Spin is invariant under spatial inversion. I need only the rotations.
    tmp_sop= dl_sop(:,:,is)*m3det(dl_sop(:,:,is))
    !
@@ -79,9 +73,9 @@ subroutine RT_build_spin_sop(spin_sop)
    delta=-delta/2._SP
    !
    ! Sakurai p.166, eq. 3.2.44 + pag 159 eq. 3.2.3
-   spin_RX_delta=sigma_0*cos(delta)-cI*sigma_x*sin(delta)
-   spin_RY_beta =sigma_0*cos(beta) -cI*sigma_y*sin(beta)
-   spin_RZ_alpha=sigma_0*cos(alpha)-cI*sigma_z*sin(alpha)
+   spin_RX_delta=sigma_0*cos(delta)+cI*sigma_x*sin(delta)
+   spin_RY_beta =sigma_0*cos(beta) +cI*sigma_y*sin(beta)
+   spin_RZ_alpha=sigma_0*cos(alpha)+cI*sigma_z*sin(alpha)
    spin_sop(:,:,is)=matmul(spin_RX_delta,matmul(spin_RY_beta,spin_RZ_alpha))
    !
    if(is>nsym/(1+i_time_rev)) spin_sop(:,:,is)=matmul(spin_sop(:,:,is),t_rev)

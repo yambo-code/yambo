@@ -100,7 +100,7 @@ subroutine barriers()
  ! If the system is non magnetic you can safely comment the nex line
  ! Otherwise you have to run ypp_rt to remove the trev symmetry when SO is present
  !
- if(i_time_rev==1.and.n_spin>1) call switch_off_runlevel('all',on_name=' ')
+ if(i_time_rev==1.and.n_spinor>1) call switch_off_runlevel('all',on_name=' ')
  !
 #if defined _RT
  call switch_off_runlevel('gw0',on_name=' ')

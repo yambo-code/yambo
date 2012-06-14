@@ -82,6 +82,9 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM.or.associated(Xen%GreenF)
  skip_WF_load=.false.
  !
+#if defined _DISTRIBUTED
+ if(Distributed_Memory) force_bare_X_G=.true.
+#endif
  ! Project's dependent presets
  !=============================
 #if defined _MANYK
@@ -122,6 +125,10 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !  the q-loop of X_em1
    !
    call FREQUENCIES_setup(Xw)
+   !
+#if defined _DISTRIBUTED
+   if(Distributed_Memory) call X_poles_sort(cg_npts,bg_npts,n_poles,Xen,X,Xw)
+#endif
    !
  endif 
  !

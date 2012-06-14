@@ -50,8 +50,8 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  ! XC routines arrays
  !
- real(SP) :: rho_spin_sp(fft_size,n_spin),rspts(fft_size),rho(fft_size)
- real(DP) :: rho_spin_dp(n_spin,fft_size)
+ real(SP) :: spin_rho_SP(fft_size,n_spin),rspts(fft_size),rho(fft_size)
+ real(DP) :: spin_rho_DP(n_spin,fft_size)
  real(SP),allocatable:: drho(:,:,:)
  real(DP),allocatable:: sigma(:,:)
  !
@@ -81,22 +81,22 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
 #if defined _RT
  do i1=1,n_spin
-   rho_spin_sp(:,i1)=rho_n(:)
+   spin_rho_SP(:,i1)=rho_n(:)
  enddo
 #else
  call el_density(en,Xk,rho,.false.)
- if(n_spin==1) rho_spin_sp(:,1)=rho(:)
+ if(n_spin==1) spin_rho_SP(:,1)=rho(:)
  if(n_spin> 1) then
    call el_magnetization(en,Xk)
    do ifft=1,fft_size
      mod_mag=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
-     rho_spin_sp(ifft,1)=0.5*(rho(ifft)+mod_mag)
-     rho_spin_sp(ifft,2)=0.5*(rho(ifft)-mod_mag)
+     spin_rho_SP(ifft,1)=0.5*(rho(ifft)+mod_mag)
+     spin_rho_SP(ifft,2)=0.5*(rho(ifft)-mod_mag)
    enddo
  endif
 #endif
  !
- forall(i1=1:fft_size,i2=1:n_spin)  rho_spin_dp(i2,i1)=rho_spin_sp(i1,i2)*real(fft_size,DP)/real(DL_vol,DP)
+ forall(i1=1:fft_size,i2=1:n_spin)  spin_rho_DP(i2,i1)=spin_rho_SP(i1,i2)*real(fft_size,DP)/real(DL_vol,DP)
  !
  !=============================
  ! Electronic density gradient
@@ -107,7 +107,7 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    if (ORDER==1) allocate(vdrho(3,fft_size),vsigma(n_spin*(n_spin+1)/2,fft_size))
    !
    do is1 = 1,n_spin
-     call eval_Gradient(rho_spin_sp(:,is1),drho(:,is1,:))
+     call eval_Gradient(spin_rho_SP(:,is1),drho(:,is1,:))
      forall (i1=1:fft_size) drho(:,is1,i1) = drho(:,is1,i1)*real(fft_size,DP)/real(DL_vol,DP)*2._SP*PI/alat(:)
    end do
    !
@@ -133,7 +133,7 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  ! GPL_EXCLUDE_START
  !
  if (FUNCTIONAL == XC_LDA_C_KP) then ! Special case, XC_LDA_C_KP not available from libxc
-   forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi/rho_spin_sp(i1,1)/DL_vol)**(1._DP/3._DP)
+   forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi/spin_rho_SP(i1,1)/DL_vol)**(1._DP/3._DP)
    call xc_rpa_kp(rspts,tmp_exc)
    E_xc = tmp_exc 
    return
@@ -146,22 +146,22 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    if (fnctl(ixc)%family==XC_FAMILY_LDA) then 
      select case(ORDER)
        case(0)
-         call xc_f90_lda_exc(fnctl(ixc)%conf, fft_size, rho_spin_dp(1,1), tmp_exc(1))
+         call xc_f90_lda_exc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_exc(1))
          E_xc = E_xc + tmp_exc    
        case(1)
-         call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, rho_spin_dp(1,1), tmp_vxc(1,1))
+         call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_vxc(1,1))
          forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + tmp_vxc(i2,i1)         
        case(2) 
-         call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, rho_spin_dp(1,1), tmp_dvxc(1))
+         call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_dvxc(1))
          F_xc = F_xc + tmp_dvxc
      end select
    elseif (fnctl(ixc)%family==XC_FAMILY_GGA) then
      select case(ORDER)
        case(0)
-         call xc_f90_gga_exc(fnctl(ixc)%conf, fft_size, rho_spin_dp(1,1), sigma(1,1), tmp_exc(1))
+         call xc_f90_gga_exc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_exc(1))
          E_xc = E_xc + tmp_exc    
        case(1)
-         call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, rho_spin_dp(1,1), sigma(1,1), tmp_vxc(1,1), vsigma(1,1))
+         call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_vxc(1,1), vsigma(1,1))
          do is1 = 1,n_spin
            vdrho(:,:) = 0._SP 
            do is2 = 1,n_spin

@@ -23,6 +23,7 @@ module X_m
  !
  use pars,  ONLY:SP,lchlen,schlen
  use units, ONLY:HA2EV
+ !
  implicit none
  !
  ! Polarizability
@@ -44,6 +45,7 @@ module X_m
  !
  logical                  :: Dipole_bands_ordered
  logical                  :: Dipole_uses_shifted_grids
+ real(SP)                 :: Dipole_Energy_treshold
  complex(SP), allocatable :: DIP_q_dot_iR(:,:,:,:)
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)

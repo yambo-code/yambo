@@ -42,8 +42,8 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  use pars,          ONLY:SP,IP
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:wf_state,wf
- use FFT_m,         ONLY:fft_rot_r
- use D_lattice,     ONLY:nsym,sop_inv,sop_tab
+ use FFT_m,         ONLY:fft_rot_r,fft_size
+ use D_lattice,     ONLY:nsym,sop_inv,sop_tab,i_time_rev
  use R_lattice,     ONLY:b,qindx_B,bz_samp,ik_is_table
  use BS,            ONLY:O_n_scatt,O_table,O_phase,BS_O,O_n_c_states,O_c_state,&
 &                        O_n_v_states,O_v_state,O_ng,BS_bands,&
@@ -64,7 +64,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  integer     :: i1,i2,i3,i4,b_ref,ik1bz,ik2bz,ifft,is1,is2,is1xis2,&
 &               iss_tab,is_coll,ib1,ib2,i_spin2,i_spin1
  integer     :: scatt_stat(BS_bands(2)-BS_bands(1)+1,BS_bands(2)-BS_bands(1)+1,nsym,n_sp_pol)
- complex(SP) :: wf_cmp
+ complex(SP) :: wf_cmp,wf_tmp1(fft_size),wf_tmp2(fft_size)
  logical     :: eval_collision
  !
  if (.not.BS_res_K_corr) return 
@@ -137,7 +137,12 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
              if (O_phase(is1xis2,ib1,i_spin2)/=0) cycle
              ifft=wf_state(ib1,ik2,i_spin2)
              !
-             wf_cmp=dot_product(wf(fft_rot_r(is1xis2,:),ifft),wf(fft_rot_r(iss_tab,:),ifft))
+             wf_tmp1=wf(fft_rot_r(is1xis2,:),ifft)
+             wf_tmp2=wf(fft_rot_r(iss_tab,:),ifft)
+             if(is1xis2>nsym/(1+i_time_rev)) wf_tmp1=conjg(wf_tmp1)
+             if(iss_tab>nsym/(1+i_time_rev)) wf_tmp2=conjg(wf_tmp2)
+             !
+             wf_cmp=dot_product(wf_tmp1,wf_tmp2)
              if (abs(abs(wf_cmp)-1.)<=1.E-3) then
                O_phase(is1xis2,ib1,i_spin2)=nint(real(wf_cmp))
              else

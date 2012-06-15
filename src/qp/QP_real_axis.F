@@ -29,7 +29,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use pars,          ONLY:SP,schlen,pi,IP
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_life
- use electrons,     ONLY:levels,spin
+ use electrons,     ONLY:levels,spin,spin_occ
  use frequency,     ONLY:w_samp,cg_index_bg,cg_npts,W_reset
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
@@ -49,6 +49,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev
  use wave_func,     ONLY:WF_load,WF_free
  use stderr,        ONLY:intc
+ use wrapper,       ONLY:Vstar_dot_V,V_dot_V
  !
  implicit none
  type(levels) ::en,Xen
@@ -66,11 +67,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  integer :: i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,iq_to_start,iqs,&
 &           iv4(4),io_err,XID,WID,QP_n_W_freqs_redux
  complex(SP) :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng)
-#if defined _DOUBLE
- complex(SP) :: zdotc,zdotu
-#else
- complex(SP) :: cdotc,cdotu
-#endif
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
  integer, external   ::ioX,QP_state_extract,ioQP,X_em1,QP_life_transitions
@@ -320,11 +316,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          !
          i2=life_W_table(iqibz,QP_n_W_freqs)
          do i3=1,X%ng
-#if defined _DOUBLE
-           lrhotw(i3)=zdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
-#else
-           lrhotw(i3)=cdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
-#endif
+           lrhotw(i3)=V_dot_V(X%ng,isc%rhotw,X_mat(1,i3,i2))
          enddo
          !       
          ! To compensate the Tel/w divergence of the Bose function at finite
@@ -333,33 +325,19 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          ! Note that the same procedure is applied in QP_W2Sc when S_c is
          ! calculated
          ! 
-#if defined _DOUBLE
          qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*&
 &                 bose_decay( real(X_life_W(iqibz)%p(i2)) )*&
-&                 zdotc(X%ng,iscp%rhotw,1,lrhotw,1)
-#else
-         qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*&
-&                 bose_decay( real(X_life_W(iqibz)%p(i2)) )*&
-&                 cdotc(X%ng,iscp%rhotw,1,lrhotw,1)
-#endif
+&                 Vstar_dot_V(X%ng,iscp%rhotw,lrhotw)
          !
        else ! .not.l_life
          !
          do i2=1,QP_n_W_freqs
            !
            do i3=1,X%ng
-#if defined _DOUBLE
-             lrhotw(i3)=zdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
-#else
-             lrhotw(i3)=cdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
-#endif
+             lrhotw(i3)=V_dot_V(X%ng,isc%rhotw,X_mat(1,i3,i2))
            enddo
            !
-#if defined _DOUBLE
-           QP_W(i1,ib,i2)=-2.*zdotc(X%ng,iscp%rhotw,1,lrhotw,1)
-#else
-           QP_W(i1,ib,i2)=-2.*cdotc(X%ng,iscp%rhotw,1,lrhotw,1)
-#endif
+           QP_W(i1,ib,i2)=-4._SP/spin_occ*Vstar_dot_V(X%ng,iscp%rhotw,lrhotw)
          enddo
          !
        endif

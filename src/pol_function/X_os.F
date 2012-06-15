@@ -45,9 +45,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use SC,            ONLY:it_now
  use fields,        ONLY:global_gauge
 #endif
-#if defined _DISTRIBUTED
  use WF_distribute, ONLY: Distributed_Memory,WF_states_setup
-#endif
  implicit none
  type(levels)         :: Xen
  type(bz_samp)        :: Xk
@@ -84,9 +82,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM.or.associated(Xen%GreenF)
  skip_WF_load=.false.
  !
-#if defined _DISTRIBUTED
  if(Distributed_Memory) force_bare_X_G=.true.
-#endif
+ !
  ! Project's dependent presets
  !=============================
 #if defined _MANYK
@@ -124,12 +121,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !
  endif
  !
-#if !defined _DISTRIBUTED
- ! WF load
- !=========
- if (.not.skip_WF_load) call WF_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
-#endif
- !
  ! Poles tabulation
  !==================
  if (iq/=current_iq) then
@@ -152,13 +143,10 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !
    call FREQUENCIES_setup(Xw)
    !
-#if defined _DISTRIBUTED
    if(Distributed_Memory) call X_poles_sort(cg_npts,bg_npts,n_poles,Xen,X,Xw)
-#endif
    !
  endif 
  !
-#if defined _DISTRIBUTED
  ! WF load
  !=========
  if (.not.skip_WF_load) then
@@ -170,8 +158,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
     call WF_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
     !
  endif
- !
-#endif
  !
  ! GPL_EXCLUDE_START
  !

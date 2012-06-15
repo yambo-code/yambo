@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integrator,Time)
+subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integrator,Time)
  !
  !  This subroutine perform integration using different methods
  !
@@ -31,30 +31,16 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
  !
  !    y(t+dt) = y(t) + dt * f(t+dt/2,y(t+dt/2))
  !
- ! elseif(Integrator=="EXACT")    Exact Integration
- !
- ! It diagonalizes the Hamiltonian and integrates in the 
- ! eigenstate space
- !
- ! elseif(Integrator=="RK2EXACT") 
- ! 
- ! Runge-Kutta with Exact Integration instead of the Euler step
- ! The full Hamiltonian is diagonalized Ho + Sigma_s
- ! and the G_lesser is integrated in this diagonal bases
- !
- !
  ! Notice that G_old is never overwritten       
  ! ------------------------------------------------------------
  !
  use pars,           ONLY:SP,schlen
  use com,            ONLY:error
- use SC,             ONLY:SC_bands,H_rotate,SC_R,SC_nbands
+ use SC,             ONLY:SC_bands,SC_nbands
  use R_lattice,      ONLY:bz_samp  
- use real_time,      ONLY:I1_lesser,I2_lesser,EULER,RK2,EXACT,RK2EXACT, &
-&                         l_NE_with_fields
+ use real_time,      ONLY:Ho_plus_Sigma,EULER,RK2,l_NE_with_fields
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:levels
- use matrix_operate, ONLY:mat_dia_inv,USE_LK,DIAGO
  implicit none
  !
  character(schlen),    intent(in) :: Integrator
@@ -68,26 +54,20 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
  ! 
  ! Work Space
  !
- complex(SP) :: TmpMatrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  integer     :: ik,i1,i2,SC_bands2_dot_nibz
+ complex(SP) :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP) :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
  SC_bands2_dot_nibz=SC_nbands**2*k%nibz
  !
  if(trim(Integrator)==EULER) then
    !
-   ! Gf_{n,m}(T+dt) = G_{n,m}(T) 
-   !
-   G_new=G_old
-   !
    ! G(T+dt) = G(T) - i dt *(I1(T) - I2(T))
    !
-#if defined _DOUBLE
-   call zaxpy(SC_bands2_dot_nibz,dcmplx(0._SP,-T_step),I1_lesser,1,G_new,1)
-   call zaxpy(SC_bands2_dot_nibz,dcmplx(0._SP,+T_step),I2_lesser,1,G_new,1)
-#else
-   call caxpy(SC_bands2_dot_nibz,cmplx(0._SP,-T_step),I1_lesser,1,G_new,1)
-   call caxpy(SC_bands2_dot_nibz,cmplx(0._SP,+T_step),I2_lesser,1,G_new,1)
-#endif
+   do ik=1,k%nibz
+     call build_I1_and_I2(G_old(:,:,ik),ik,I1_k,I2_k)
+     call EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step)
+   enddo
    !
    if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
    !
@@ -95,67 +75,24 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
    !
    ! Evaluate G(t+dt/2)
    !
-   call RT_Integrator(G_new,G_old,A_new,A_old,T_step/2._SP,Xen,k,q,EULER,Time) 
-   !
-   ! Recalculate I1(t+dt/2) and I2(t+dt/2) using  G(t+dt/2) 
-   !
-   call RT_Collision(G_new,A_new,Xen,k,q,Time+T_step/2._SP)
-   !
-   ! final step G(t+dt)=G(t) + dt * (I1(t+dt/2) - I2(t+dt/2))
-   !
-   call RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,EULER,Time)
-   !
- elseif(trim(Integrator)==EXACT) then
-   !
-   ! Diagonalize the Self-Energy SC_R and make a step 
-   ! in the space of its eigenstates
-   !
-   G_new=G_old
-   !
-   do ik=1,Xen%nk
-     !
-     TmpMatrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))=SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)
-     !
-     call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=Xen%E(SC_bands(1):SC_bands(2),ik,1))
-     !
-     call H_rotate(TmpMatrix,G_new(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik),SC_nbands,1)
-     !
-     forall(i1=SC_bands(1):SC_bands(2),i2=SC_bands(1):SC_bands(2))
-       G_new(i1,i2,ik)=G_new(i1,i2,ik)*exp(-(0._SP,1._SP)*(Xen%E(i1,ik,1)-Xen%E(i2,ik,1))*T_step)
-     end forall
-     !
-     call H_rotate(TmpMatrix,G_new(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik),SC_nbands,-1)
-     !
-     ! Symmetrization
-     !
-     do i1=SC_bands(1),SC_bands(2)
-       G_new(i1,i1,ik)=(0._SP,1._SP)*aimag(G_new(i1,i1,ik))
-       !
-       do i2=i1+1,SC_bands(2)
-         G_new(i1,i2,ik)=(G_new(i1,i2,ik)-conjg(G_new(i2,i1,ik)))/2._SP
-         G_new(i2,i1,ik)=-conjg(G_new(i1,i2,ik))
-       enddo
-       !
-     enddo
-     !
+   do ik=1,k%nibz
+     call build_I1_and_I2(G_old(:,:,ik),ik,I1_k,I2_k)
+     call EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step/2._SP)
    enddo
    !
-   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
-   !
- elseif(trim(Integrator)==RK2EXACT) then
-   !
-   ! Evaluate G(t+dt/2)
-   !
-   call RT_Integrator(G_new,G_old,A_new,A_old,T_step/2._SP,Xen,k,q,EXACT,Time) 
-   !
    ! Recalculate I1(t+dt/2) and I2(t+dt/2) using  G(t+dt/2) 
+   !
+   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step/2._SP)
    !
    call RT_Collision(G_new,A_new,Xen,k,q,Time+T_step/2._SP)
    !
    ! final step G(t+dt)=G(t) + dt * (I1(t+dt/2) - I2(t+dt/2))
    !
-   call RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,EXACT,Time)
-   !                                                        
+    do ik=1,k%nibz
+     call build_I1_and_I2(G_new(:,:,ik),ik,I1_k,I2_k)
+     call EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step)
+   enddo
+   !
  else
    !
    call error(" Unknown Integrator!")
@@ -164,3 +101,48 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
  !
 end subroutine RT_Integrator
 
+subroutine build_I1_and_I2(G_input_k,ik,I1_k,I2_k)
+  !
+  use pars,           ONLY:SP,cZERO
+  use real_time,      ONLY:Ho_plus_Sigma,Sigma_relax
+  use SC,             ONLY:SC_bands,SC_nbands
+  use wrapper,        ONLY:M_by_M
+  implicit none
+  !
+  integer, intent(in)     :: ik
+  complex(SP), intent(in)  :: G_input_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+  complex(SP), intent(out) :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+  complex(SP), intent(out) :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+  !
+  I1_k=cZERO
+  I2_k=cZERO
+  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),G_input_k,I1_k)
+  call M_by_M('n','n',SC_nbands,G_input_k,Ho_plus_Sigma(:,:,ik,1),I2_k)     
+  !
+  if(allocated(Sigma_relax))  I1_k = I1_k + Sigma_relax(:,:,ik)
+  !
+end subroutine build_I1_and_I2
+
+subroutine EULER_step(G_new_k,G_old_k,I1_k,I2_k,deltaT)
+ !
+ use pars,           ONLY:SP,cI
+ use wrapper,        ONLY:V_by_V_plus_V
+ use SC,             ONLY:SC_bands,SC_nbands
+ !
+ implicit none
+ !
+ real(SP),    intent(in)  :: deltaT
+ complex(SP), intent(in)  :: G_old_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP), intent(in)  :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP), intent(in)  :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP), intent(out) :: G_new_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ !
+ ! G(T+dt) = G(T)
+ !
+ G_new_k=G_old_k
+ !
+ ! G(T+dt) = G(T) - i dt *(I1(T) - I2(T))
+ !
+ call V_by_V_plus_V(SC_nbands, -cI*deltaT, I1_k-I2_k, G_new_k)
+ !
+end subroutine EULER_step   

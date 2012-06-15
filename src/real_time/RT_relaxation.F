@@ -75,8 +75,11 @@ subroutine RT_relaxation(G_input,Xen,k,q,Time)
  !
  ! El-Ph
  !=======
- if (l_ph_corr) call RT_ELPH_Kernel(ik,Xen,k,q,Time)
- !
+ if (l_ph_corr) then
+   do ik=1,QP_nk
+     call RT_ELPH_Kernel(ik,Xen,k,q,Time) 
+   enddo
+ endif
 #endif
  !
 end subroutine RT_relaxation

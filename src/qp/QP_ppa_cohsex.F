@@ -374,7 +374,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        else
          do ig1=1,X%ng
            do ig2=1,X%ng
-             dc(1)=dc(1)+2.*pi*isc%rhotw(G_m_G(ig1,ig2))*PPaR(ig1,ig2)
+             dc(1)=dc(1)+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*PPaR(ig1,ig2)
            enddo
          enddo
          if (master_cpu.and..not.l_collisions_IO) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
@@ -432,7 +432,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          do ig1=1,X%ng
            do ig2=1,X%ng
              do i4=1,QP_dSc_steps
-               dc(i4)=dc(i4)+4./spin_occ*pi*isc%rhotw(ig1)*PPaR(ig1,ig2)*conjg(iscp%rhotw(ig2))*&
+               dc(i4)=dc(i4)+4._SP/spin_occ*pi*isc%rhotw(ig1)*PPaR(ig1,ig2)*conjg(iscp%rhotw(ig2))*&
 &                     (Gfm(E_(i4),E,isc%os,PPaP(ig1,ig2))+Gfp(E_(i4),E,isc%os,PPaP(ig1,ig2)))
              enddo
            enddo

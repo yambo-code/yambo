@@ -35,7 +35,7 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  use electrons,     ONLY:levels,n_spin
  use FFT_m,         ONLY:fft_size
  use wrapper,        ONLY:real_V_dot_V
- use xc_functionals,ONLY:E_xc,F_xc,V_xc,two_spin_density,&
+ use xc_functionals,ONLY:E_xc,F_xc,V_xc,magn,&
 &                        xc_string,XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
  use xc_f90_lib_m   ,  ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA
  implicit none
@@ -46,7 +46,7 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  ! Work Space
  !
  integer      :: i1,i2,is,ic,is1,is2,ixc,ifft
- real(SP)  :: mod_mag
+ real(SP)  :: mod_magn
  !
  ! XC routines arrays
  !
@@ -87,11 +87,11 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  call el_density(en,Xk,rho,.false.)
  if(n_spin==1) spin_rho_SP(:,1)=rho(:)
  if(n_spin> 1) then
-   call spin_density(en,Xk)
+   call el_magnetization(en,Xk)
    do ifft=1,fft_size
-     mod_mag=sqrt(two_spin_density(ifft,1)**2+two_spin_density(ifft,2)**2+two_spin_density(ifft,3)**2)
-     spin_rho_SP(ifft,1)=0.5*(rho(ifft)+mod_mag)
-     spin_rho_SP(ifft,2)=0.5*(rho(ifft)-mod_mag)
+     mod_magn=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
+     spin_rho_SP(ifft,1)=0.5*(rho(ifft)+mod_magn)
+     spin_rho_SP(ifft,2)=0.5*(rho(ifft)-mod_magn)
    enddo
  endif
 #endif

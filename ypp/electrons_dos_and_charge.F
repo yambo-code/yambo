@@ -36,7 +36,6 @@ subroutine electrons_dos_and_charge(Xk,Xen)
 #endif
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
- use xc_functionals, ONLY:two_spin_density
  use QP_CTL_m,       ONLY:QP_apply
  use QP_m,           ONLY:OCC_ctl
 #if defined _YPP_RT

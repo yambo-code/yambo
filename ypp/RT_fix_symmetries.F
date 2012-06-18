@@ -76,6 +76,7 @@ subroutine RT_fix_symmetries(E,k)
  complex(SP), allocatable :: wf_tmp(:,:)
  !
  !
+ mag_syms=.FALSE.
  use_E_field=.FALSE.
  use_B_field=.FALSE.
  has_magnetization=.FALSE.
@@ -90,7 +91,6 @@ subroutine RT_fix_symmetries(E,k)
  !
  if ( (use_B_field.or.(n_spinor==2.and.has_magnetization)).and. &
 &      i_time_rev==1.and..not.Rm_TR) mag_syms=.true.
- if ( i_time_rev==0.or.Rm_TR.or.RM_all_symm) mag_syms=.false.
  if (mag_syms) call msg('s','There are a magnetic field or SOC in a magnetic system with T-rev')
  !
  if (Rm_all_symm) then

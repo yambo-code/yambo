@@ -74,6 +74,7 @@ subroutine RT_fix_symmetries(E,k)
  complex(SP), allocatable :: wf_tmp(:,:)
  !
  mag_syms=.FALSE.
+ mag_syms=.FALSE.
  use_E_field=.FALSE.
  use_B_field=.FALSE.
  has_magnetization=.FALSE.

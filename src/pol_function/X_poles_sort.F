@@ -25,7 +25,7 @@ subroutine X_poles_sort(cg_npts,bg_npts,n_poles,Xen,X,Xw)
  !  this subroutine assumes force_bare_X_G=.true.
  !
  use pars,            ONLY:SP,schlen
- use electrons,       ONLY:levels
+ use electrons,       ONLY:levels,n_sp_pol
  use R_lattice,       ONLY:nkibz,qindx_X    
  use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset,myid,pp_redux_wait,ncpu
  use par_indexes_m,   ONLY:par_indexes
@@ -45,8 +45,8 @@ subroutine X_poles_sort(cg_npts,bg_npts,n_poles,Xen,X,Xw)
  !
  ! Work Space
  !
- integer :: i1,i2,ik,ikp,ikbz,ic,ic2
- integer :: n_cond,n_cond_x_proc,cpu_id
+ integer :: i1,i2,ic,i_spin
+ integer :: n_cond,cpu_id
  integer :: tab_tmp(4)
  integer :: poles_cpu_map(n_poles) 
  type(pp_indexes)  :: px
@@ -60,10 +60,6 @@ subroutine X_poles_sort(cg_npts,bg_npts,n_poles,Xen,X,Xw)
  !
  n_cond=X%ib(2)-Xen%nbf
  !
- ! Distribute conduction bands among processors
- !
- n_cond_x_proc=int(n_cond/real(ncpu))
- !
  poles_cpu_map=0
  do i1 = 1,n_poles
    if(.not.px%element_1D(i1)) cycle
@@ -73,8 +69,10 @@ subroutine X_poles_sort(cg_npts,bg_npts,n_poles,Xen,X,Xw)
  !
  do i1=1,n_poles 
    ! 
-   ic=X_poles_tab(i1,3)
-   cpu_id=mod(ic-Xen%nbf-1,ncpu)
+   ic     = X_poles_tab(i1,3)-Xen%nbf-1  
+   i_spin = X_poles_tab(n_poles,4)
+   !
+   cpu_id=mod(ic+(i_spin-1)*n_cond,ncpu)
    !
    if(cpu_id/=poles_cpu_map(i1)) then
      do i2=i1+1,n_poles 

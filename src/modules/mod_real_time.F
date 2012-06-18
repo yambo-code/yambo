@@ -138,8 +138,8 @@ module real_time
  ! GFs
  !
  complex(SP), allocatable :: G_lesser_reference(:,:,:)
- complex(SP), allocatable :: I1_lesser(:,:,:)
- complex(SP), allocatable :: I2_lesser(:,:,:)
+ complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
+ complex(SP), allocatable :: Sigma_relax(:,:,:)
  !
  real(SP),    allocatable :: rho_reference(:)    ! reference density from SC_lw_band:SC_bands(2)
  real(SP),    allocatable :: full_rho(:)         ! density of all bands from 1:SC_bands(2)
@@ -148,8 +148,6 @@ module real_time
  !
  character(schlen), parameter :: EULER    = "EULER"
  character(schlen), parameter :: RK2      = "RK2"
- character(schlen), parameter :: EXACT    = "EXACT"
- character(schlen), parameter :: RK2EXACT = "RK2EXACT"
  !
  ! Integrate exactly the part of the dynamics due to H_o 
  ! as it is done in Comp. Phys. Comm. 123(1999)
@@ -281,6 +279,14 @@ module real_time
      allocate(RT_occupations(1:SC_bands(2),QP_nk))
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
      !
+     allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
+     call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
+     !
+     if(RT_is_dumped.or.l_ph_corr) then
+       allocate(Sigma_relax(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
+       call mem_est("Sigma_relax",(/size(Sigma_relax)/),(/2*SP/))
+     endif
+     !
      if(l_RT_needs_XC0) then
        allocate(XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
        call mem_est("XC0_and_HARTREE0",(/size(XC0_and_HARTREE0)/),(/2*SP/))
@@ -288,12 +294,6 @@ module real_time
      !
      allocate(SC_R(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("SC_R",(/size(SC_R)/),(/2*SP/))
-     !
-     allocate(I1_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
-     call mem_est("I1_lesser",(/size(I1_lesser)/),(/2*SP/))
-     !
-     allocate(I2_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
-     call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
      !
 #if defined _ELPH   
      if (l_ph_corr) then
@@ -350,11 +350,17 @@ module real_time
      deallocate(E_xc)
      call mem_est('Exc')
      !
+     deallocate(Ho_plus_Sigma)
+     call mem_est("Ho_plus_Sigma")
+     !
+     if(allocated(Sigma_relax)) then
+       deallocate(Sigma_relax)
+       call mem_est("Sigma_relax")
+     endif
+     !  
      if(allocated(XC0_and_HARTREE0)) then
-       !      
        deallocate(XC0_and_HARTREE0)
        call mem_est("XC0_and_HARTREE0")
-       !
      endif
      !
      if(allocated(SC_R)) then
@@ -368,18 +374,12 @@ module real_time
      deallocate(G_lesser)
      call mem_est("G_lesser")
      !
-     deallocate(I1_lesser)
-     call mem_est("I1_lesser")
-     !
      if (allocated(q_weight)) deallocate(q_weight)
      !
      if (allocated(THETA_matrix)) then
        deallocate(THETA_matrix)
        call mem_est("THETA_matrix")
      endif
-     !
-     deallocate(I2_lesser)
-     call mem_est("I2_lesser")
      !
      deallocate(G_lesser_reference)
      call mem_est("Gf_l_ref")

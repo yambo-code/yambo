@@ -96,10 +96,14 @@ subroutine RT_initialize(Xen,q)
  !
  if (NE_Hxc_jumps<=0) NE_Hxc_jumps=1
  !
- ! Lifetimes
- !===========
+ ! Dephasing Matrix. Including user-defined matrix-likfe dephasing factors, constant
+ !==================
+ ! radiative/phase, polaronic based
  !
- RT_is_dumped=RAD_LifeTime>1.E-8_SP.or.Phase_LifeTime>1.E-8_SP.or.associated(Xen%W)
+ call section('=','Dephasing matrix setup')
+ !
+ call RT_Dephasing_Matrix(Xen)
+ !
  if (.not.associated(Xen%W).and.l_ph_corr) then
   l_ph_corr=.FALSE.
   call warning('No QP lifetime provided. El-Ph scattering switched off')

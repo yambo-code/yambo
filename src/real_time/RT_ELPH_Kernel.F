@@ -43,7 +43,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,it_now
  use parser_m,       ONLY:parser
- use real_time,      ONLY:RT_step,THETA_matrix,I1_lesser,Integrator_name,q_weight,&
+ use real_time,      ONLY:RT_step,THETA_matrix,Sigma_relax,Integrator_name,q_weight,&
 &                         G_lesser,MEM_index
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,ph_modes
  use functions,      ONLY:bose_f
@@ -178,7 +178,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
          do i_np=SC_bands(1),SC_bands(2)
            i_n_m=i_n-SC_bands(1)+1
            i_np_m=i_np-SC_bands(1)+1
-           I1_lesser(i_n,i_np,ik)=I1_lesser(i_n,i_np,ik)+exp(cI*i_s*ph_freq*TIME)*(S_mat(i_map(i_s),i_n_m,i_np_m)+&
+           Sigma_relax(i_n,i_np,ik)=Sigma_relax(i_n,i_np,ik)+exp(cI*i_s*ph_freq*TIME)*(S_mat(i_map(i_s),i_n_m,i_np_m)+&
 &                                                                            conjg(S_mat(i_map(-i_s),i_np_m,i_n_m)))
          enddo 
        enddo

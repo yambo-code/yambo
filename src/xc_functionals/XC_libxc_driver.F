@@ -46,7 +46,7 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  ! Work Space
  !
  integer      :: i1,i2,is,ic,is1,is2,ixc,ifft
- real(SP)  :: mod_mag
+ real(SP)  :: mod_magn
  !
  ! XC routines arrays
  !
@@ -89,9 +89,9 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  if(n_spin> 1) then
    call el_magnetization(en,Xk)
    do ifft=1,fft_size
-     mod_mag=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
-     spin_rho_SP(ifft,1)=0.5*(rho(ifft)+mod_mag)
-     spin_rho_SP(ifft,2)=0.5*(rho(ifft)-mod_mag)
+     mod_magn=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
+     spin_rho_SP(ifft,1)=0.5*(rho(ifft)+mod_magn)
+     spin_rho_SP(ifft,2)=0.5*(rho(ifft)-mod_magn)
    enddo
  endif
 #endif

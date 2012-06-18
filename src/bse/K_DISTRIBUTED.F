@@ -37,7 +37,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
 &                       RIM_anisotropy,ik_is_table,bare_qpg,minus_G
- use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu,master_cpu
+ use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu,master_cpu,pp_bcast
  use com,          ONLY:msg,warning,error
  use timing,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
@@ -73,6 +73,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer    :: iOcv, iOvc
  complex(SP):: Co,H_res_x,H_res_c,H_cpl_x,H_cpl_c
  logical    :: BSK_CO_first_step 
+ integer, allocatable :: cols_id(:)
  !
  ! Kernel
  !
@@ -318,6 +319,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  i8nc=ncpu
  i8id=myid
  !
+ allocate(cols_id(maxval(BS_blk_dim)))
+ call mem_est("cols_id",(/size(cols_id)/),(/IP/))
+ !
  if (.not.BS_K_coupling) call mem_est('BS_mat',(/O_x_dim**2/))
  if (BS_K_coupling) call mem_est('BS_mat',(/2*O_x_dim**2/)) 
  !
@@ -377,9 +381,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        if (BS_K_coupling) BS_cpl_mat=(0.,0.)
        !
        call pp_redux_wait
-       do icv1=1,BS_blk_dim(ik1)
+       !
+       call cols_distribution(BS_blk_dim(ik2))
+       !
+       do icv2=1,BS_blk_dim(ik2)
          !
-         do icv2=1,BS_blk_dim(ik2)
+         if(cols_id(icv2)/=myid) cycle
+         !
+         do icv1=1,BS_blk_dim(ik1)
            !
            if(.not.build_BS_indexes(ikk1,ikk2,icv1,icv2)) cycle
            !
@@ -415,8 +424,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            ! :::ALDA        (resonant):::
            ! 
            if (BS_K_is_ALDA) H_res_x=H_res_x+&
-&                            tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
-&                                                  (/iv1,iv2/),(/is1,is2,is1,is2/),1)
+&                          tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
+&                                                (/iv1,iv2/),(/is1,is2,is1,is2/),1)
            !
            ! :::ALDA        (coupling):::
            !
@@ -429,8 +438,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            if (BS_K_coupling) BS_cpl_mat(icv1,icv2)=H_cpl_x*real(spin_occ)*Co
          enddo
        enddo
-       call pp_redux_wait(BS_mat)
-       if (BS_K_coupling) call pp_redux_wait(BS_cpl_mat)
+       !
+       do icv2=1,BS_blk_dim(ik2)
+         call pp_bcast(BS_mat(:,icv2),cols_id(icv2))
+         if (BS_K_coupling) call pp_bcast(BS_cpl_mat(:,icv2),cols_id(icv2))
+       enddo
        !
        if (l_bs_fxc) then
          !
@@ -602,15 +614,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        endif
        ioBS_Fxc_err=ioBS_DISTRIBUTED(iq,X,ID_read,blk_only=.true.)
        !
-       if(.not.master_cpu) then
-         BS_mat=(0.,0.)
-         if (BS_K_coupling) BS_cpl_mat=(0.,0.)
-       endif
-       !
        call pp_redux_wait
-       do icv1=1,BS_blk_dim(ik1)
+       !
+       call cols_distribution(BS_blk_dim(ik2))
+       !
+       do icv2=1,BS_blk_dim(ik2)
          !
-         do icv2=1,BS_blk_dim(ik2)
+         if(cols_id(icv2)/=myid) cycle
+         !
+         do icv1=1,BS_blk_dim(ik1)
            !
            if(.not.build_BS_indexes(ikk1,ikk2,icv1,icv2)) cycle
            !
@@ -658,9 +670,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
              is1xis2=sop_tab(sop_inv(is1),is2)
              !
              forall(i1=1:BS_n_g_W) Ocv(i1)=&
- &           BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOcv)*O_phase(is1xis2,iv2,i_sp1)
+             BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOcv)*O_phase(is1xis2,iv2,i_sp1)
              forall(i1=1:BS_n_g_W) Ovc(i1)=&
- &           BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOvc)*O_phase(is1xis2,ic2,i_sp2)
+             BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOvc)*O_phase(is1xis2,ic2,i_sp2)
              !
              if (is1>nsym/(i_time_rev+1)) Ocv=conjg(Ocv)
              if (is1>nsym/(i_time_rev+1)) Ovc=conjg(Ovc)
@@ -687,8 +699,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            if (BS_K_coupling) BS_cpl_mat(icv1,icv2)=BS_cpl_mat(icv1,icv2)-H_cpl_c
          enddo
        enddo
-       call pp_redux_wait(BS_mat)
-       if (BS_K_coupling) call pp_redux_wait(BS_cpl_mat)
+       !
+       do icv2=1,BS_blk_dim(ik2)
+         call pp_bcast(BS_mat(:,icv2),cols_id(icv2))
+         if (BS_K_coupling) call pp_bcast(BS_cpl_mat(:,icv2),cols_id(icv2))
+       enddo
        !
        if (ik2==1.and.ik1==1) then
           call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,BS_IO_index(1,1)/),ID=ID)
@@ -716,6 +731,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  deallocate(O_table)
  call mem_est("O_table")
  call mem_est("BS_mat")
+ !
+ deallocate(cols_id)
+ call mem_est("cols_id")
  !
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
    deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
@@ -768,8 +786,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
     !
     ! ::: Parallel Switch :::
     !
-    tot_n_K_elements=tot_n_K_elements+1
-    if (mod(tot_n_K_elements-i8id,i8nc)/=1.and.ncpu>1)  build_BS_indexes=.FALSE.
+!    tot_n_K_elements=tot_n_K_elements+1
+!    if (mod(tot_n_K_elements-i8id,i8nc)/=1.and.ncpu>1)  build_BS_indexes=.FALSE.
     !
     if(.not.build_BS_indexes) return
     !
@@ -807,5 +825,37 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
     iqs  =q%sstar( qindx_B(ik1bz,ik2bz,1) ,2)
     !
   end function build_BS_indexes
+  !
+  subroutine cols_distribution(ncols)
+    implicit none
+    integer, intent(in) :: ncols
+    !
+    ! Work Space
+    !
+    integer :: half_cols,i1
+    !
+    if(ncpu==1) then
+        cols_id=0
+        return
+    endif
+    !
+    cols_id=-1
+    half_cols=int(ncols/2._SP)
+    !
+    ! Balanced distribution for an Hermitian matrix 
+    ! or any matrix we I calculate only upper(lower) half
+    !
+    do i1=1,half_cols
+      cols_id(i1)              =mod(i1,ncpu)
+      cols_id(half_cols*2-i1+1)=cols_id(i1)
+    enddo
+    !
+    ! If cols are odd
+    !
+    do i1=2*half_cols+1,ncols
+      cols_id(i1) = 1
+    enddo
+    !
+  end subroutine cols_distribution
   !
 end subroutine

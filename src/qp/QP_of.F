@@ -197,9 +197,12 @@ subroutine QP_of(qp,en,QPdb_read_err)
        endif
      enddo
      call of_open_close(G_Sc_name)
+     !
    enddo
    !
    call set_real_printed_length()
+   !
+   call QP_Green_DOS(qp)
    !
  endif
  !

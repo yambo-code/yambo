@@ -80,7 +80,7 @@ subroutine RT_fix_symmetries(E,k)
  has_magnetization=.FALSE.
  if (any(E_field/=0.)) use_E_field=.TRUE.
  if (B_field/=0.)      use_B_field=.TRUE.
- if (any(Magnetization/=0.))  has_magnetization=.TRUE.
+ if (any(Magnetization/=0.).and.n_spinor==2)  has_magnetization=.TRUE.
  !
  call parser('RmAllSymm',Rm_all_symm)
  call parser('RmTimeRev',Rm_TR)
@@ -113,7 +113,7 @@ subroutine RT_fix_symmetries(E,k)
    B_cart(2)=B_field*sin(B_theta)*sin(B_psi) 
    B_cart(3)=B_field*cos(B_theta)
  endif
- if(has_magnetization) call section('*',"== Magnetized system: BZ sampling remapping ==")
+ if(has_magnetization.and.n_spinor==2) call section('*',"== Magnetized system: BZ sampling remapping ==")
  !
  if (i_time_rev==0) Rm_TR=.false.
  if (Rm_TR)       call section('*',"== Remove Time Reversal ==")

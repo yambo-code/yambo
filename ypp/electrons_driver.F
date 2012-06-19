@@ -26,7 +26,7 @@ subroutine electrons_driver(Xk,Xen)
  use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state
  use FFT_m,          ONLY:fft_size,fft_dim
  use R_lattice,      ONLY:bz_samp,nkibz
- use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
+ use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol,Total_magn
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
@@ -286,6 +286,8 @@ subroutine electrons_driver(Xk,Xen)
    call section('*','Single Particle Magnetization along '//mag_dir)
    !
    call el_magnetization(Xen,Xk)
+   !
+   call msg('s','Total magnetization (x,y,z) [Bohr_magneton] :',real(Total_magn(:),SP))
    !
    v2plot=magn(:,mag_i_dir)
    !

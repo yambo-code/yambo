@@ -155,6 +155,8 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (l_bzrim) call k_random(Xk,Xen)
  !
+ if (l_bxsf)  call read_bxsf(Xk,Xen)
+ !
  if (l_qpdb)  call qpdb_setup(en,k)
  !
  if (l_wannier) call WANNIER_driver(k,en)

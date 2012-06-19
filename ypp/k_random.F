@@ -32,7 +32,8 @@ subroutine k_random(Xk,Xen)
  use YPP,                 ONLY:BZ_RIM_nkpts,BZ_RIM_path,gamma_radius,K_transform
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
-&                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling
+&                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling,&
+&                              BZ_RIM_ipol_weight                       
  use timing,              ONLY:live_timing
  use IO_m,                ONLY:io_control,NONE,OP_WR_CL
  !
@@ -224,6 +225,11 @@ subroutine k_random(Xk,Xen)
  if (add_X_grid) BZ_RIM_max_filling=BZ_RIM_max_filling+1
  call msg('s',':: Blocks filling range  :',(/minval(BZ_RIM_nkpt),BZ_RIM_max_filling/))
  !
+ ! RIM double grid interpolation weights, not used here, but must be defined.
+ !
+ allocate(BZ_RIM_ipol_weight(BZ_RIM_max_filling))
+ BZ_RIM_ipol_weight = 1.0_SP
+ !
  !  At the end I add to the Xen%E_RIM array the Xen%E energies
  !
  allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
@@ -244,7 +250,7 @@ subroutine k_random(Xk,Xen)
  !
  ! CLEAN
  !
- deallocate(BZ_RIM_nkpt,BZ_RIM_table,Xen%E_RIM)
+ deallocate(BZ_RIM_nkpt,BZ_RIM_table,Xen%E_RIM,BZ_RIM_ipol_weight)
  call k_ibz2bz(Xk,'d',.false.) 
  call k_ibz2bz(RIM_k,'d',.false.) 
  !

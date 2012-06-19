@@ -174,7 +174,7 @@ subroutine K_diagonalization(iq,W)
    lib_driver=USE_LK
    if (ncpu>1) lib_driver=USE_SLK
 #if defined _DISTRIBUTED
-   if(ncpu>=4.and..not.K_is_not_hermitian) lib_driver=USE_PWDIAGO
+!   if(ncpu>=4.and..not.K_is_not_hermitian) lib_driver=USE_PWDIAGO
 #endif 
    call live_timing('BSK diagonalize',1)
    if (K_is_not_hermitian) then

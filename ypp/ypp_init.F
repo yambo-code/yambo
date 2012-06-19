@@ -185,6 +185,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  BZ_RIM_path="."
  gamma_radius=0.
  !
+ ! BXSF interpolation
+ !
+ w90_fname="./w90.bxsf"
+ wannier_bands=(/1,n_bands/)
+ ord_dgrid_ipol = 0
+ !
  ! GPL_EXCLUDE_START
  !
 #if defined _YPP_RT
@@ -454,6 +460,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #endif	 
  !	   
  l_bzrim     =runlevel_is_on('bzrim')
+ !
+ l_bxsf      =runlevel_is_on('bxsf')
+ !
+ if (l_bxsf) call initactivate(1,"W90_fname WannBnds DgridOrd")
  !
  l_qpdb = runlevel_is_on('qpdb')
  !

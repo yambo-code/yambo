@@ -28,6 +28,9 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use BS,            ONLY:BS_mat,BS_res_K_exchange,BS_n_g_exch,&
 &                        BS_bands,BS_blk_dim,BS_K_dim,BS_k_and_row_restart,&
 &                        BS_IO_index
+#if defined _DISTRIBUTED
+ use BS,            ONLY:ioBS_DISTRIBUTED
+#endif
  use com,           ONLY:isec
  use timing,        ONLY:live_timing
  use par_proc_m,    ONLY:pp_redux_wait
@@ -101,7 +104,11 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  call mem_est('BS_mat',(/O_x_dim**2/))
  !
  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
+#if defined _DISTRIBUTED
+ ioBS_err=ioBS_DISTRIBUTED(iq,X_static,ID)
+#else
  ioBS_err=ioBS(iq,X_static,ID)
+#endif
  !
  call live_timing('Fxc',(nXkibz**2-nXkibz)/2+nXkibz)
  BS_k_and_row_restart=0
@@ -119,7 +126,11 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
      call io_control(ACTION=ACTION,COM=NONE,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
+#if defined _DISTRIBUTED
+     ioBS_err=ioBS_DISTRIBUTED(iq,X_static,ID)
+#else
      ioBS_err=ioBS(iq,X_static,ID)
+#endif
      !
      if (BS_res_K_exchange) then
        do icv1=1,BS_blk_dim(ik1)

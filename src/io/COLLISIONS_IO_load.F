@@ -50,7 +50,7 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  ! When COLLISIONS_cache_size<0 automatically 
  ! it fills up to 1.7 Gb processor with COLLISIONS_cache_size states
  !
- real(SP),parameter :: mem_proc   =1.7 
+ real(SP),parameter :: mem_proc   =.7 
  !
  ! Work Space
  !

@@ -457,6 +457,7 @@ module IO_m
        do i1=1,max_io_units
          if (io_unit(i1)==0) then
            ID=i1
+           call io_reset(ID)
            io_unit(ID)=40+i1
            exit
          endif

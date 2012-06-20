@@ -55,6 +55,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use TDDFT,          ONLY:ioBS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BSS_mode,BSS_q0,&
 &                         BS_eh_en,BS_res_mode,BS_cpl_mode
+#if defined _DISTRIBUTED
+ use BS,             ONLY:ioBS_DISTRIBUTED
+#endif
 #if defined  _ELPH 
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
@@ -326,7 +329,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! bs
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+#if defined _DISTRIBUTED
+ ioBS_err=ioBS_DISTRIBUTED(1,Xbsk,io_ID)
+#else
  ioBS_err=ioBS(1,Xbsk,io_ID)
+#endif
  !
  ! GPL_EXCLUDE_START
  !

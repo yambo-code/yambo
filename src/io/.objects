@@ -8,7 +8,7 @@ ELPH_objects = ioELPH.o
 #endif
 DISTRIBUTED_objects = ioBS.o
 #if defined _DISTRIBUTED
-DISTRIBUTED_objects = ioBS.o ioBS_DISTRIBUTED.o
+DISTRIBUTED_objects = ioBS_DISTRIBUTED.o
 #endif
 KERR_objects =
 #if defined _KERR

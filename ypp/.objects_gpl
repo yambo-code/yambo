@@ -9,4 +9,5 @@ objs = mod_YPP.o     ypp_i.o   ypp_init.o ypp_init_load.o \
        excitons_driver.o electrons_driver.o electrons_charge.o electrons_dos_and_charge.o \
        plot_check_and_launch.o plot_gnuplot.o plot_xcrysden.o plot_cube.o \
        excitons_sort_and_report.o $(SPIN_objects)   k_random.o WANNIER_driver.o \
+       read_bxsf.o double_k_grid.o \
        $(ELPH_objects) $(RT_objects)  $(magnetic_objects) $(boltz_objects)

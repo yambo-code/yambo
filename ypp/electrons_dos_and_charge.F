@@ -54,7 +54,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  real(SP), allocatable :: el_den(:)
  real(SP)              :: el_dos(n_sp_pol),dos_E,delta_E,f_occ,io_Time
  integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps
- character(schlen)     :: ch_ws,titles(4)
+ character(schlen)     :: ch_ws,titles(4),out_units(2)
  logical               :: l_3D_plot
  !
  ! DOS
@@ -102,16 +102,19 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      output_fname='el_dos'
      call of_open_close(trim(output_fname),'ot')
      if (n_sp_pol==1) then
-       titles(1)='E[eV]'
+       titles(1)='E'
        titles(2)='DOS'
        call msg('o dos','#',titles(:2),INDENT=0,USE_TABS=.true.)    
      else
-       titles(1)='E[eV]'
+       titles(1)='E'
        titles(2)='DOS [up]'
        titles(3)='DOS [dn]'
        titles(4)='DOS [up+dn]'
        call msg('o dos','#',titles(:4),INDENT=0,USE_TABS=.true.)    
      endif
+     out_units(1)='[eV]'
+     out_units(2)='[(DL_vol*eV)^-1]'
+     call msg('o dos','#',out_units(:2),INDENT=0,USE_TABS=.true.)    
      call msg('o dos',"#")
    endif
    !
@@ -152,6 +155,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
            enddo
          enddo
        enddo
+       !
+       el_dos(:)=el_dos(:)*DL_vol/HA2EV
        !
        if (l_3D_plot) then
 #if defined _YPP_RT

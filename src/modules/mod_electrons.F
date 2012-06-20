@@ -99,6 +99,7 @@ module electrons
  integer  :: BZ_RIM_nbands
  integer ,allocatable :: BZ_RIM_nkpt(:)
  integer ,allocatable :: BZ_RIM_table(:,:)
+ real(SP), allocatable :: BZ_RIM_ipol_weight(:)
  !
  contains
    !

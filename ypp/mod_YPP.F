@@ -135,6 +135,14 @@ module YPP
  !
  logical     :: l_qpdb
  !
+ !
+ ! Wannier bands
+ !
+ logical     :: l_bxsf
+ character(lchlen) :: w90_fname
+ integer     :: wannier_bands(2)   ! Bands Range
+ integer     :: ord_dgrid_ipol     ! order of interpolation using double grid
+ !
  ! GPL_EXCLUDE_START RAS_IGNORE
  !
  ! (RT) Reduce Symmetries

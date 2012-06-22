@@ -496,11 +496,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  ! 
 #endif
  !
+ ! GPL_EXCLUDE_END
+ !
  ! Wannier 90 interface
  !
  if (l_wannier) call initactivate(1,"Seed WriteAMU QPdbPath")
- !
- ! GPL_EXCLUDE_END
  !
  if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat NoWeights GammaRadius")
  !

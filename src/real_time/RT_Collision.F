@@ -129,6 +129,8 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  do ik=1,QP_nk 
    !
+   if (.not.px%element_1D(ik)) cycle
+   !
    ! Here I fill H_nl_sc (which defined I1 and I2) with...
    !
    H_nl_sc=cZERO

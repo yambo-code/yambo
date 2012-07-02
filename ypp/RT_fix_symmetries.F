@@ -554,6 +554,7 @@ subroutine RT_fix_symmetries(E,k)
    enddo
    !
    wf_igk(1:wf_nc_k(i1),i1) = g_rot(is,wf_igk_save(1:wf_nc_k(i1),ik))
+   call i_sort( wf_igk(1:wf_nc_k(i1),i1) )
    !
  enddo
  !

@@ -70,7 +70,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  ! Work Space
  !
  logical          :: XC_needs_density
- integer          :: i1,i2,ik
+ integer          :: i1,ik
  type(pp_indexes) :: px
  !
  ! Density (needed bu Hartree and local XCs)

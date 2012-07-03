@@ -30,7 +30,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use X_m,           ONLY:X_t,q_plus_G_direction,Q_Shift_Order
  use fields,        ONLY:global_gauge,grid_path
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
-&                        QP_n_G_bands,QP_ng_Sx,&
+&                        QP_n_G_bands,QP_ng_Sx,GW_en_comp,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
 &                        SC_E_threshold,QP_dSc_delta,QP_G_Zoom_treshold,OCC_T_ref
  use timing,        ONLY:nhash
@@ -154,7 +154,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'DysSolver','[GW] Dyson Equation solver (`n`,`s`,`g`)',QP_solver,protect=.FALSE.)
  call it(defs,'GEnSteps',   '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',    '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
- call it('f',defs,'GWTerm',   '[GW] Use 0-order EET terminator for the self-energy',verb_level=V_qp)
+ call it('f',defs,'GWTerm',   '[GW] Use a terminator for the self-energy',verb_level=V_qp)
+ call it(defs,'GwEnComp',   '[GW] If < 0 use 0-order EET ; > 0 the Bruneval-Gonze terminator', &
+&                        GW_en_comp,E_unit,verb_level=V_qp)
  call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
  !

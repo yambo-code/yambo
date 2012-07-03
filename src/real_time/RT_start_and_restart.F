@@ -75,10 +75,10 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  G_lesser          =(0._SP,0._SP)
  G_lesser_reference=(0._SP,0._SP)
- rho_reference     =(0._SP)
- if(allocated(full_rho)) full_rho=(0._SP,0._SP)
- V_xc_sc           =(0._SP)
- V_hartree_sc      =(0._SP)
+ rho_reference     =0._SP
+ if(allocated(full_rho)) full_rho=0._SP
+ V_xc_sc           =0._SP
+ V_hartree_sc      =0._SP
  H_nl_sc           =(0._SP,0._SP)
  !
  ! Set to zero current and fields

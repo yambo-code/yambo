@@ -28,7 +28,7 @@ integer function ioQP(what,qp,ID)
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,QP_G_dr,QP_Sc_steps,&
 &                         QP_n_G_bands,QP_n_states,QP_W,QP_G_er,&
-&                         QP_n_W_freqs,QP_W_dr,QP_W_er,QP_W_partially_done,&
+&                         QP_n_W_freqs,QP_W_dr,QP_W_er,QP_W_partially_done,Gw_en_comp,&
 &                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold,QP_Sc,PPa_terminator
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
@@ -114,7 +114,7 @@ integer function ioQP(what,qp,ID)
    !
    var_size=4
    if (what/="W".and.ver_is_gt_or_eq(ID,(/3,0,1/))) var_size=5 
-   if (what/="W".and.ver_is_gt_or_eq(ID,(/3,2,5/))) var_size=6 
+   if (what/="W".and.ver_is_gt_or_eq(ID,(/3,2,5/))) var_size=7 
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=var_size,MENU=0)
    !
@@ -130,9 +130,12 @@ integer function ioQP(what,qp,ID)
 &    call io_elemental(ID,I0=GWo_iterations,&
 &       VAR=' GW SC iterations       :',CHECK=.true.,OP=(/"=="/))
    !
-   if (ver_is_gt_or_eq(ID,(/3,2,5/)).and.what/="W") &
-&    call io_elemental(ID,L0=PPa_terminator,&
+   if (ver_is_gt_or_eq(ID,(/3,2,5/)).and.what/="W") then
+     call io_elemental(ID,L0=PPa_terminator,&
 &       VAR=' Self-energy terminator :',CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,R0=Gw_en_comp,&
+&       VAR=' Self-energy terminator pole:',CHECK=.true.,OP=(/"=="/))
+   endif
    !    
    call io_elemental(ID,I0=qp%n_descs,DB_I0=n_descs_disk,CHECK=.true.,OP=OP)
    !

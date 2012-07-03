@@ -25,7 +25,7 @@ module memory_m
  use stderr,     ONLY:string_split
  implicit none
  !
- integer, parameter :: max_mem_elements=10000
+ integer, parameter :: max_mem_elements=5000
  integer, parameter :: preset_kind=2*SP
  character(schlen), private  :: mem_element(max_mem_elements)
  integer          , private  :: element_loaded

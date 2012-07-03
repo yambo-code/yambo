@@ -124,6 +124,8 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
     enddo
  endif
  !
+ Ho_plus_Sigma=cZERO
+ !
  call pp_indexes_reset(px)
  call par_indexes(px,(/QP_nk/))
  !

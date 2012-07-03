@@ -32,7 +32,7 @@ function eet_terminator(W,e,vs,Ep,ig1,ig2,iq,cutoff)
  use vec_operate,   ONLY:iku_v_norm
  use functions,     ONLY:bose_f
  use drivers,       ONLY:Finite_Tel
- use QP_m,          ONLY:Gw_en_comp
+ use QP_m,          ONLY:GW_en_comp
  !
  implicit none
  !
@@ -61,9 +61,9 @@ function eet_terminator(W,e,vs,Ep,ig1,ig2,iq,cutoff)
  !
  if(eet_energy<cutoff) eet_energy=cutoff+2._SP
  !
- ! If Gw_en_comp>0 use Bruneval-Gonze terminator PRB 78, 085125 (2008)
+ ! If GW_en_comp>0 use Bruneval-Gonze terminator PRB 78, 085125 (2008)
  !
- if(Gw_en_comp>0._SP) eet_energy=Gw_en_comp
+ if(GW_en_comp>0._SP) eet_energy=GW_en_comp
  !
  lW=W
  if (Finite_Tel) lW=conjg(W)

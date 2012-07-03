@@ -25,7 +25,7 @@ module memory_m
  use stderr,     ONLY:string_split
  implicit none
  !
- integer, parameter :: max_mem_elements=5000
+ integer, parameter :: max_mem_elements=10000
  integer, parameter :: preset_kind=2*SP
  character(schlen), private  :: mem_element(max_mem_elements)
  integer          , private  :: element_loaded
@@ -78,6 +78,8 @@ module memory_m
            if (trim(mem_element(i2))==trim(input_name(i1))) exit
          enddo
          if (i2==element_loaded+1) element_loaded=element_loaded+1
+         !
+         if (i2>max_mem_elements) call error(" Too many elements in memory!! ")
          !
          mem_element(i2)=trim(input_name(i1))
          local_kind=preset_kind

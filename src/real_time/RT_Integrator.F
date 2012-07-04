@@ -105,6 +105,8 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integrator,Time)
      call EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step)
    enddo
    !
+   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
+   !
  elseif(trim(Integrator)==RK2EXP) then
    !
    ! Evaluate G(t+dt/2)
@@ -126,6 +128,8 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integrator,Time)
      call build_U1_and_U2(ik,I1_k,I2_k,T_step)
      call EULEREXP_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,T_step)
    enddo
+   !
+   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
    !
  else
    !

@@ -30,7 +30,7 @@ subroutine RT_fix_symmetries(E,k)
  use vec_operate,         ONLY:v_norm,v_is_zero,i_sort
  use matrix_operate,      ONLY:m3det
  use D_lattice,           ONLY:nsym,dl_sop,spin_sop,i_time_rev,a,alat,mag_syms,&
-&                              i_space_inv,sop_inv,inv_index,symmetry_group_table
+&                              i_space_inv,sop_inv,inv_index,symmetry_group_table,atoms_spatial_invertion
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,g_rot,&
 &                              ng_closed,bz_samp_duplicate,rl_sop
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
@@ -47,7 +47,7 @@ subroutine RT_fix_symmetries(E,k)
  use timing,              ONLY:live_timing
  !
  implicit none
- type(levels)                 :: E,E_expanded
+ type(levels)                 :: E,E_expanded,E_reduced
  type(bz_samp)                :: k
  !
  integer, external :: ioDB1,io_SC_components,ioKB_PP
@@ -63,7 +63,7 @@ subroutine RT_fix_symmetries(E,k)
  integer               :: symm_M_factor,symm_B_factor,ig,ig_rot,ic,ic_rot
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
-&                         S_contains_TR(nsym),Trev_2_spatial=.false.,Rm_inv_BM_axis
+&                         S_contains_TR(nsym),Trev_2_spatial=.false.,Rm_inv_BM_axis,sym_expanded
  type(bz_samp)         :: k_save
  type(levels)          :: en_sc,en_sc_expanded
  character(lchlen)     :: core_io_path_save,fragment_name
@@ -72,6 +72,9 @@ subroutine RT_fix_symmetries(E,k)
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  real(SP),    allocatable :: dl_sop_tmp(:,:,:)
  complex(SP), allocatable :: wf_tmp(:,:)
+ real(SP)                 :: symm_to_check(3,3,3)
+ integer                  :: found_symm
+ integer, allocatable     :: k_table(:)
  !
  mag_syms=.FALSE.
  mag_syms=.FALSE.
@@ -120,7 +123,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  if (.not.any((/use_B_field,use_E_field,has_magnetization,Rm_all_symm,Rm_TR/))) return 
  !
- if (use_B_field.and.has_magnetization) call warning('Magnetic field in magnetic system!')
+ if (use_B_field.and.has_magnetization) call warning('Magnetic field in magnetic system')
  !
  if (wf_nb_io/=E%nb) then
    call warning('Splitted wavefunctions still not supported')
@@ -194,6 +197,75 @@ subroutine RT_fix_symmetries(E,k)
  old_spatial_nsym=spatial_nsym
  old_trev_nsym=nsym-spatial_nsym
  !
+ ! Check if I need to add magnetic symmetries
+ sym_expanded=.false.
+ if(n_spinor==2) then
+   ! I add the spatial inversion or the time reversal if not included
+   if (  (i_space_inv==1.and.inv_index==-1)  .or.                        &
+&         i_time_rev==0 .and..not.has_magnetization.and.i_space_inv==0 ) then
+     sym_expanded=.true.
+     nsym=2*nsym
+     if(i_space_inv==1) then
+       spatial_nsym=2*spatial_nsym
+       call msg('s',' Spatial inversion is now a symmetry of the system')
+     else
+       call msg('s',' T-rev is now a symmetry of the system')
+     endif
+     allocate(dl_sop_tmp(3,3,nsym))
+     dl_sop_tmp(1:3,1:3,1:nsym/2)=dl_sop(1:3,1:3,1:nsym/2)
+     do is=nsym/2+1,nsym
+       dl_sop_tmp(1:3,1:3,is)=-dl_sop(1:3,1:3,is-nsym/2)
+     enddo
+     !
+     deallocate(dl_sop,rl_sop)
+     allocate(dl_sop(3,3,nsym),rl_sop(3,3,nsym))
+     dl_sop=dl_sop_tmp
+     deallocate(dl_sop_tmp)
+   endif
+   !
+   if(.not.mag_syms.and.has_magnetization) then
+     ! Fake symm for the moment, for future use
+     symm_to_check(:,:,3)=1.E-3
+     !
+     ! I check if exist an inversion in the plane perperndicular to the magnetization
+     if(all(Magnetization(1:2)==0)) then
+       symm_to_check(:,:,1)=reshape((/-1.,0.,0.,0., 1.,0.,0.,0., 1./),(/3,3/))
+       symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0.,-1.,0.,0.,0., 1./),(/3,3/))
+     endif
+     if(all(Magnetization(2:3)==0)) then
+       symm_to_check(:,:,1)=reshape((/ 1.,0.,0.,0.,-1.,0.,0.,0., 1./),(/3,3/))
+       symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0., 1.,0.,0.,0.,-1./),(/3,3/))
+     endif
+     if(Magnetization(1)==0.and.Magnetization(3)==0) then
+       symm_to_check(:,:,1)=reshape((/-1.,0.,0.,0., 1.,0.,0.,0., 1./),(/3,3/))
+       symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0., 1.,0.,0.,0.,-1./),(/3,3/))
+     endif
+     !
+     call atoms_check_symm(symm_to_check,found_symm)
+     !
+     if(found_symm>0) then
+       sym_expanded=.true.
+       mag_syms=.true.
+       i_time_rev=1
+       nsym=2*nsym
+       call msg('s',' Magnetic symmetries are now included in the symm group')
+       !
+       allocate(dl_sop_tmp(3,3,nsym))
+       dl_sop_tmp(1:3,1:3,1:nsym/2)=dl_sop(1:3,1:3,1:nsym/2)
+       do is=nsym/2+1,nsym
+         dl_sop_tmp(1:3,1:3,is)=matmul(dl_sop(1:3,1:3,is-nsym/2),-symm_to_check(1:3,1:3,found_symm))
+       enddo
+       !
+       deallocate(dl_sop,rl_sop)
+       allocate(dl_sop(3,3,nsym),rl_sop(3,3,nsym))
+       dl_sop=dl_sop_tmp
+       deallocate(dl_sop_tmp)
+     endif
+   endif
+   !
+ endif
+ !
+ ! Remove symmetries
  if(Rm_TR) then   ! No time reversal 
    if(i_space_inv==1.and.inv_index>spatial_nsym.and..not.mag_syms) then
      call msg('s',trim(intc(spatial_nsym))//' T-rev are now spatial symm')
@@ -270,10 +342,10 @@ subroutine RT_fix_symmetries(E,k)
  endif
  !
  if(.not.RM_all_symm)&
-& call msg('s',trim(intc(old_spatial_nsym))//' spatial symmetries reduced to ...'//trim(intc(spatial_nsym)))
+& call msg('s',trim(intc(old_spatial_nsym))//' spatial symmetries reduced/increased to ...'//trim(intc(spatial_nsym)))
  !
  if(i_time_rev==1)&
-& call msg('s',trim(intc(old_trev_nsym))//' T-rev symmetries reduced to ...'//trim(intc(nsym-spatial_nsym)))
+& call msg('s',trim(intc(old_trev_nsym))//' T-rev symmetries reduced/increased to ...'//trim(intc(nsym-spatial_nsym)))
  !
  allocate(dl_sop_tmp(3,3,nsym))
  dl_sop_tmp(1:3,1:3,1:nsym)=dl_sop(1:3,1:3,1:nsym)
@@ -322,10 +394,95 @@ subroutine RT_fix_symmetries(E,k)
  call section('=',"K-points")
  !===========================
  !
- call msg('s',trim(intc(k%nibz))//' k-points are now expanded to ...')
+ call msg('s',trim(intc(k%nibz))//' k-points are now expanded/reduced to ...')
  deallocate(k%pt)
  call k_reduce(k)
  call msg('l'," "//trim(intc(k%nibz)))
+ !
+ allocate(k_table(k_save%nibz))
+ !
+ if(sym_expanded) then
+   k_table=0
+   do ik=1,k%nibz 
+     do ik_save=1,k_save%nibz
+       if (v_is_zero(k%pt(ik,:)-k_save%pt(ik_save,:),zero_=k_iku_zero)) then
+         k_table(ik) = ik_save
+         exit 
+       endif
+     enddo
+   enddo
+   !
+   call E_reset(E_reduced)
+   E_reduced%nb=E%nb
+   E_reduced%nk=k%nibz
+   allocate(E_reduced%E(E%nb,k%nibz,n_sp_pol))
+   !
+   do ik=1,k%nibz
+     E_reduced%E(:,ik,:)=E%E(:,k_table(ik),:)
+   enddo
+   !
+   call WF_load(wf_ng,1,(/1,E%nb/),(/1,k_save%nibz/),space='C',title='')
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
+   Fragmented_IO=io_fragmented(ID)
+   io_err=ioWF(ID)
+   !
+   if (trim(core_io_path)==trim(more_io_path)) call warning(':: Existing database will be overwritten')
+   !
+   if (trim(core_io_path)/=trim(more_io_path)) then
+     call mk_dir(more_io_path)
+     call mk_dir(trim(more_io_path)//'/SAVE')
+     core_io_path_save=core_io_path
+     core_io_path=more_io_path
+   endif
+   !
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
+   io_err=ioWF(ID)
+   !
+   allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+   !
+   ACTION_=OP_APP_WR_CL
+   if(Fragmented_IO) ACTION_=OP_WR_CL
+   !
+   do ik=1,k%nibz
+     !
+     call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
+     !
+     wf_disk=0._SP
+     !
+     do ib=1,E%nb
+       do i_spin=1,n_spin
+         i_wf=wf_state(ib,k_table(ik),i_spin)
+         wf_disk(1,ib,1:wf_ncx,i_spin)= real(wf(1:wf_ncx,i_wf))
+         wf_disk(2,ib,1:wf_ncx,i_spin)= aimag(wf(1:wf_ncx,i_wf))
+       enddo
+     enddo
+     !
+     call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
+     io_err=ioWF(ID,wf=wf_disk)
+     !
+     pp_kb(:,:,:,:) =pp_kb_store(:,:,:,:,k_table(ik))
+     pp_kbd(:,:,:,:)=pp_kbd_store(:,:,:,:,k_table(ik))     
+     !
+     call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/k_table(ik)+1/),ID=ID)      
+     ioKB_err=ioKB_PP(ID)
+     !
+   enddo
+   !
+   if(Fragmented_IO) then
+     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
+     io_err=ioWF(ID)
+   endif
+   !
+   call msg('s',':: DB1 ...')
+   !
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+   io_err=ioDB1(E_reduced,k,ID)
+   !
+   deallocate(k_table)
+   goto 1000
+   !  
+ endif
  !
  ! Map k-point using the save BZ
  !
@@ -498,7 +655,7 @@ subroutine RT_fix_symmetries(E,k)
    call cp_file(trim(core_io_path)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
    call cp_file(trim(core_io_path)//"/SAVE/s.wf",trim(more_io_path)//"/SAVE",ierr)
    call cp_file(trim(core_io_path)//"/SAVE/ns.wf",trim(more_io_path)//"/SAVE",ierr)
-   do ik=1,k%nibz
+   do ik=1,k_save%nibz
      do i1=1,wf_nb_io_groups
        fragment_name='ns.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
        call cp_directory(trim(core_io_path)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
@@ -567,8 +724,6 @@ subroutine RT_fix_symmetries(E,k)
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  allocate(wf_tmp(wf_ncx,n_spin))
  !
- wf_disk=(0.,0.)
- !
  ACTION_=OP_APP_WR_CL
  if(Fragmented_IO) ACTION_=OP_WR_CL
  !
@@ -589,6 +744,8 @@ subroutine RT_fix_symmetries(E,k)
      enddo
      ic_rot_table(ic)=ic_rot
    enddo
+   !
+   wf_disk=(0.,0.)
    !
    do ib=1,E%nb
      !
@@ -631,9 +788,13 @@ subroutine RT_fix_symmetries(E,k)
    !
    call msg('s',':: PseudoPotentials ...')
    !
-   do i1=k_save%nibz+1,k%nibz 
+   do i1=k_save%nibz+1,k%nibz
      !
      ik=kpoints_map(1,i1)
+     is=kpoints_map(2,i1)
+     !
+     pp_kb(1:wf_ng,:,:,:) =pp_kb_store(g_rot(is,1:wf_ng),:,:,:,ik)
+     pp_kbd(1:wf_ng,:,:,:)=pp_kbd_store(g_rot(is,1:wf_ng),:,:,:,ik)
      !
      call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/i1+1/),ID=ID)      
      ioKB_err=ioKB_PP(ID)
@@ -654,7 +815,7 @@ subroutine RT_fix_symmetries(E,k)
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
  io_err=ioDB1(E_expanded,k,ID)
  !
- core_io_path=core_io_path_save
+1000 core_io_path=core_io_path_save
  !
  call msg('l','done')
  !
@@ -676,9 +837,10 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! CLEAN
  !=======
- deallocate(kpoints_map)
+ if(.not.sym_expanded) deallocate(kpoints_map)
  call bz_samp_reset(k_save)
  call E_reset(E_expanded)
+ call E_reset(E_reduced)
  call WF_free()
  !
 end subroutine
@@ -709,3 +871,51 @@ subroutine map_energies(E,E_expanded,k,kpoints_map)
  enddo
  !
 end subroutine map_energies
+
+subroutine atoms_check_symm(symm_to_check,found_symm)
+ use pars,           ONLY:zero_dfl
+ use matrix_operate, ONLY:m3inv
+ use pars,           ONLY:SP
+ use D_lattice,      ONLY:atom_pos,a,n_atomic_species,n_atoms_species,alat
+ !
+ implicit none
+ !
+ real(SP) :: symm_to_check(3,3,3)
+ integer  :: found_symm
+ !
+ ! Work Space
+ !
+ integer  :: ia,iap,is,isymm
+ real(SP) :: at_diff(3),a_m1(3,3),tmp_pos(3,2),shift(3)
+ !
+ found_symm=3
+ !
+ call m3inv(transpose(a),a_m1)
+ !
+ shift=2*(a(1,:)+a(2,:)+a(3,:))
+ !
+ do is=1,n_atomic_species
+   symm_loop: do isymm=3,1,-1
+     atoms_loop: do ia=1,n_atoms_species(is)
+       do iap=1,n_atoms_species(is) 
+         !
+         tmp_pos(:,1)=atom_pos(:,ia,is)
+         tmp_pos(:,2)=matmul(symm_to_check(:,:,isymm),atom_pos(:,iap,is)+shift)
+         !
+         at_diff=matmul(a_m1,tmp_pos(:,1)-tmp_pos(:,2))
+         !
+         at_diff(1)=abs(at_diff(1)-nint(at_diff(1)))     
+         at_diff(2)=abs(at_diff(2)-nint(at_diff(2)))     
+         at_diff(3)=abs(at_diff(3)-nint(at_diff(3)))     
+         !
+         if (all(at_diff<=zero_dfl)) cycle atoms_loop
+         !
+       enddo
+       found_symm=found_symm-1
+       cycle symm_loop
+     enddo atoms_loop
+     return
+   enddo symm_loop
+ enddo
+ !
+end subroutine atoms_check_symm

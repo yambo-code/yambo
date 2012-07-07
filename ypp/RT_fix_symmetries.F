@@ -496,7 +496,7 @@ subroutine RT_fix_symmetries(E,k)
    call cp_file(trim(core_io_path)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
    call cp_file(trim(core_io_path)//"/SAVE/s.wf",trim(more_io_path)//"/SAVE",ierr)
    call cp_file(trim(core_io_path)//"/SAVE/ns.wf",trim(more_io_path)//"/SAVE",ierr)
-   do ik=1,k%nibz
+   do ik=1,k_save%nibz
      do i1=1,wf_nb_io_groups
        fragment_name='ns.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
        call cp_directory(trim(core_io_path)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
@@ -647,6 +647,10 @@ subroutine RT_fix_symmetries(E,k)
    do i1=k_save%nibz+1,k%nibz 
      !
      ik=kpoints_map(1,i1)
+     is=kpoints_map(2,i1)
+     !
+     pp_kb(1:wf_ng,:,:,:) =pp_kb_store(g_rot(is,1:wf_ng),:,:,:,ik)
+     pp_kbd(1:wf_ng,:,:,:)=pp_kbd_store(g_rot(is,1:wf_ng),:,:,:,ik)
      !
      call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/i1+1/),ID=ID)      
      ioKB_err=ioKB_PP(ID)

@@ -32,7 +32,7 @@ subroutine RT_fix_symmetries(E,k)
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,g_rot,&
-&                              ng_closed,bz_samp_duplicate,rl_sop
+&                              ng_closed,bz_samp_duplicate,rl_sop,ng_vec
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
 &                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO,mk_dir, &
 &                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP,RD_CL_IF_END,WR_CL_IF_END
@@ -129,10 +129,11 @@ subroutine RT_fix_symmetries(E,k)
  call section('+',"Symmetries")
  !=============================
  !
- ! Seek for all possible shells
+ ! This is needed to construct grot for all wf_ngs.
+ ! Recall that wf_ng could increase as symmetries are removed.
  !
- if (wf_ncx>ng_closed) then
-   ng_closed=wf_ncx
+ if (ng_vec>ng_closed) then
+   ng_closed=ng_vec
    call G_shells_finder()
  endif
  !
@@ -531,12 +532,6 @@ subroutine RT_fix_symmetries(E,k)
    !
    wf_igk(1:wf_ncx,i1) = wf_igk_save(1:wf_ncx,ik)
    wf_nc_k(i1)         = min(ng_closed,wf_nc_k_save(ik))
-   do i2=1,wf_nc_k(i1)
-     if(wf_igk_save(i2,ik)>ng_closed) then
-       wf_nc_k(i1)=i2-1
-       exit
-     endif  
-   enddo
    !
  enddo
  !
@@ -546,12 +541,6 @@ subroutine RT_fix_symmetries(E,k)
    is=kpoints_map(2,i1)
    !
    wf_nc_k(i1)              = min(ng_closed,wf_nc_k_save(ik))
-   do i2=1,wf_nc_k(i1)
-     if(wf_igk_save(i2,ik)>ng_closed) then
-       wf_nc_k(i1)=i2-1
-       exit
-     endif  
-   enddo
    !
    wf_igk(1:wf_nc_k(i1),i1) = g_rot(is,wf_igk_save(1:wf_nc_k(i1),ik))
    call i_sort( wf_igk(1:wf_nc_k(i1),i1) )

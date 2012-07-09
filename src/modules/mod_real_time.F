@@ -147,7 +147,9 @@ module real_time
  ! Integrator Variables
  !
  character(schlen), parameter :: EULER    = "EULER"
+ character(schlen), parameter :: EULEREXP = "EULEREXP"
  character(schlen), parameter :: RK2      = "RK2"
+ character(schlen), parameter :: RK2EXP   = "RK2EXP"
  !
  ! Integrate exactly the part of the dynamics due to H_o 
  ! as it is done in Comp. Phys. Comm. 123(1999)

@@ -58,7 +58,7 @@ subroutine RT_fix_symmetries(E,k)
 &                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
  integer               :: spatial_nsym,old_spatial_nsym,old_trev_nsym
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:),ic_rot_table(:)
- real(SP)              :: v1(3),v2(3),m(3,3)
+ real(SP)              :: v1(3),v2(3)
  real(SP)              :: B_cart(3)
  integer               :: symm_M_factor,symm_B_factor,ig,ig_rot,ic,ic_rot
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)

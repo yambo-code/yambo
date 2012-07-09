@@ -70,7 +70,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  ! Work Space
  !
  logical          :: XC_needs_density
- integer          :: i1,i2,ik
+ integer          :: i1,ik
  type(pp_indexes) :: px
  !
  ! Density (needed bu Hartree and local XCs)
@@ -124,10 +124,14 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
     enddo
  endif
  !
+ Ho_plus_Sigma=cZERO
+ !
  call pp_indexes_reset(px)
  call par_indexes(px,(/QP_nk/))
  !
  do ik=1,QP_nk 
+   !
+   if (.not.px%element_1D(ik)) cycle
    !
    ! Here I fill H_nl_sc (which defined I1 and I2) with...
    !

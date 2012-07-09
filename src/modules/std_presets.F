@@ -37,7 +37,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
 &                     COHSEX_use_empties,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,On_Mass_Shell_approx,&
-&                     Vnlxc_kind,Vxc_kind,l_extended_output,OCC_ctl,OCC_T_ref,PPa_terminator
+&                     Vnlxc_kind,Vxc_kind,l_extended_output,OCC_ctl,OCC_T_ref,PPa_terminator,&
+&                     GW_en_comp
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_commands_over_header,non_periodic_directions,lattice,Bose_Temp
@@ -360,6 +361,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  Vxc_kind='LDA'
  l_extended_output=.FALSE.
  PPa_terminator=.FALSE.
+ GW_en_comp=-1._SP
  !
  ! QP_ctl control
  !

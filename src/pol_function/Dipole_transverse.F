@@ -32,7 +32,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,PP_free,pp_table, &
 &                              Vnl,pp_n_l_comp,kbv_spin
- use R_lattice,           ONLY:g_vec,bz_samp,ng_vec
+ use R_lattice,           ONLY:g_vec,bz_samp
  use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD,OP_RD_CL
  use memory_m,            ONLY:mem_est
@@ -91,7 +91,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
      enddo
    enddo
    !
-   allocate(kbv(ng_vec,pp_kbv_dim,7),stat=alloc_err)
+   allocate(kbv(wf_ng,pp_kbv_dim,7),stat=alloc_err)
    allocate(kbv_spin(pp_kbv_dim))
    !
    call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))

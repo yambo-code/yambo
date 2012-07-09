@@ -431,6 +431,12 @@ subroutine RT_fix_symmetries(E,k)
    if (trim(core_io_path)/=trim(more_io_path)) then
      call mk_dir(more_io_path)
      call mk_dir(trim(more_io_path)//'/SAVE')
+     call rm_file((trim(more_io_path))//"/SAVE/ns.db1")
+     call rm_file((trim(more_io_path))//"/SAVE/ns.wf")
+     call rm_file((trim(more_io_path))//"/SAVE/ns.kb_pp")
+     call rm_file((trim(more_io_path))//"/SAVE/s.db1")
+     call rm_file((trim(more_io_path))//"/SAVE/s.wf")
+     call rm_file((trim(more_io_path))//"/SAVE/s.kb_pp")
      core_io_path_save=core_io_path
      core_io_path=more_io_path
    endif
@@ -474,6 +480,23 @@ subroutine RT_fix_symmetries(E,k)
      io_err=ioWF(ID)
    endif
    !
+   allocate(wf_nc_k_save(k_save%nibz),wf_igk_save(wf_ncx,k_save%nibz))
+   call mem_est("wf_nc_k_save wf_igk_save",(/size(wf_nc_k_save),size(wf_igk_save)/),(/IP,IP/))
+   wf_nc_k_save=wf_nc_k
+   wf_igk_save =wf_igk
+   !
+   deallocate(wf_nc_k,wf_igk)
+   allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
+   !
+   wf_igk=-1
+   do ik=1,k%nibz
+     wf_igk(1:wf_ncx,ik) = wf_igk_save(1:wf_ncx,k_table(ik))
+     wf_nc_k(ik)         = min(ng_closed,wf_nc_k_save(k_table(ik)))
+   enddo
+   wf_ng=maxval(wf_igk)
+   !
+   deallocate(wf_igk_save,wf_nc_k_save)
+   call mem_est("wf_nc_k_save wf_igk_save")
    call msg('s',':: DB1 ...')
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)

@@ -46,7 +46,10 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !Work Space
  !
  real(SP)                       :: cp(3)
- integer                        :: i1, ik, i2, i3, inel,i_spin
+ integer                        :: i1,ik,i2,i3,inel,i_spin,i_spinor,ic,ig
+ integer                        :: nb_to_read
+ complex(DP),allocatable        :: wf_disk_DP(:,:)
+ integer, allocatable           :: wf_igk_tmp(:,:)
  !
  !ABINIT
  !
@@ -186,7 +189,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! ALLOCATION
  !
  allocate(wf_nc_k(k%nibz),g_vec(ng_vec,3),rstr(en%nb))
- allocate(en%E(en%nb,k%nibz,n_spin),rel_gvec(3,ng_vec))
+ allocate(en%E(en%nb,k%nibz,n_sp_pol),rel_gvec(3,ng_vec))
  !
  call msg('s','Symmetries...')
  !============================
@@ -211,11 +214,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
  do i1=1,ng_vec
    g_vec(i1,:)=matmul(transpose(b),rel_gvec(:,i1))*alat(:)/2./pi
  enddo
- wf_nc_k=ng_vec
- wf_ncx=maxval(wf_nc_k)
- wf_ng=wf_ncx
- allocate(wf_igk(wf_ncx,k%nibz))
- forall(i1=1:ng_vec) wf_igk(i1,:)=i1
  call msg('l','done')
  !
  call msg('s','Energies...')
@@ -226,6 +224,11 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! GPL_INCLUDE_END SPIN_IGNORE
  ! 
  ! GPL_EXCLUDE_START SPIN_IGNORE
+ !
+ allocate(WF_disk_DP(ng_vec,n_spinor))
+ allocate(wf_igk_tmp(ng_vec,k%nibz))
+ wf_igk_tmp=-1
+ WF_disk_DP=0._SP
  !
  do i_spin=1,n_sp_pol
    !
@@ -246,9 +249,29 @@ subroutine a2y_db1(en,k,KSS_file_name)
      read(11) rstr
      en%E(:,ik,i_spin)=rstr(:)
      do i1=1,en%nb
-       read(11) 
+       if(i1==1.and.i_spin==1) read(11) (wf_disk_DP(:,i_spinor),i_spinor=1,n_spinor)
+       if(i1/=1.or. i_spin==2) read(11)
      enddo
+     if(i_spin==1) then
+       ic=0
+       do ig=1,ng_vec
+         if(all(wf_disk_DP(ig,:)==0)) cycle
+         ic=ic+1
+         wf_igk_tmp(ic,ik)=ig
+       enddo
+       wf_nc_k(ik)=ic
+     endif
    enddo
+   !
+   if(i_spin==1) then
+     wf_ncx=maxval(wf_nc_k)
+     wf_ng=maxval(wf_igk_tmp)
+     !
+     allocate(wf_igk(wf_ncx,k%nibz))
+     do ik=1,k%nibz
+       wf_igk(1:wf_ncx,ik)=wf_igk_tmp(1:wf_ncx,ik)
+     enddo
+   endif
    ! 
    ! GPL_EXCLUDE_START SPIN_IGNORE
    !
@@ -256,8 +279,11 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! 
  ! GPL_EXCLUDE_END SPIN_IGNORE
  !
+ !
  ! CLEAN
  !
+ deallocate(wf_igk_tmp)
+ deallocate(wf_disk_DP)
  deallocate(rel_gvec,rstr)
  !
  close(11)

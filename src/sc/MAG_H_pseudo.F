@@ -24,10 +24,10 @@ subroutine MAG_H_pseudo(Xk)
  use pars,          ONLY:SP
  use electrons,     ONLY:n_spin,n_spinor
  use wrapper,       ONLY:V_dot_V
- use wave_func,     ONLY:wf,wf_ng,WF_load,WF_free,wf_state,wf_n_states
+ use wave_func,     ONLY:wf,WF_load,WF_free,wf_state,wf_n_states
  use FFT_m,         ONLY:fft_size
  use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table,kbv_spin
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,ng_vec
  use timing,        ONLY:live_timing
  use SC,            ONLY:SC_bands,Ho
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos
@@ -76,7 +76,7 @@ subroutine MAG_H_pseudo(Xk)
  !
  call fft_setup(0,1,.true.)  ! fft_size
  !
- allocate(kbv(wf_ng,pp_kbv_dim,7),stat=alloc_err)
+ allocate(kbv(ng_vec,pp_kbv_dim,7),stat=alloc_err)
  allocate(kbv_spin(pp_kbv_dim))
  !
  call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))

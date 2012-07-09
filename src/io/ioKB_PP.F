@@ -25,10 +25,10 @@ integer function ioKB_PP(ID)
  use stderr,           ONLY:intc
  use D_lattice,        ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species,&
 &                           atom_pos
+ use R_lattice,        ONLY:ng_vec
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,PP_alloc,pp_kbd
  use memory_m,         ONLY:mem_est
- use wave_func,        ONLY:wf_ng
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
 &                           io_elemental,io_bulk,io_header,io_fragmented,&
 &                           read_is_on,write_is_on,ver_is_gt_or_eq,io_extension
@@ -124,7 +124,7 @@ integer function ioKB_PP(ID)
    call io_bulk(ID,R2=pp_kbs)
  endif
  !
- allocate(pp_disk(wf_ng,n_atomic_species,pp_n_l_times_proj_max))
+ allocate(pp_disk(ng_vec,n_atomic_species,pp_n_l_times_proj_max))
  !
  if (io_fragmented(ID)) call io_fragment(ID,i_fragment=ik)
  !

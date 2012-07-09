@@ -55,8 +55,8 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  use D_lattice,             ONLY:n_atomic_species
  use pseudo,                ONLY:pp_n_l_times_proj_max,PP_alloc,pp_kbs,pp_kb,pp_kbd,&
 &                                l_many_proj,pp_table
- use R_lattice,             ONLY:nkibz
- use wave_func,             ONLY:wf_ng,wf_ncx,wf_nc_k,wf_nb_io,wf_nb_io_groups,wf_igk
+ use R_lattice,             ONLY:nkibz,ng_vec
+ use wave_func,             ONLY:wf_ncx,wf_nc_k,wf_nb_io,wf_nb_io_groups,wf_igk
  use defs_datatypes,        ONLY:hdr_type, wffile_type
  use mod_com2y,             ONLY:artificial_spin_pol
  implicit none
@@ -73,7 +73,7 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  !
  type(hdr_type)     :: ahdr
  type(wffile_type)  :: wff
- real(DP)           :: pp_kb_kdb_disk(wf_ng),&
+ real(DP)           :: pp_kb_kdb_disk(ng_vec),&
 &                      pp_kbs_disk(n_atomic_species,pp_n_l_times_proj_max)
  complex(DP)        :: wf_disk_DP(ng_vec,n_spinor)
  integer            :: fform,i_spin,i_spinor

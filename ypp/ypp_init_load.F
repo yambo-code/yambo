@@ -24,6 +24,7 @@ subroutine ypp_init_load(defs)
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
 &                        Time_unit,Bfield_unit,Efield_unit,V_real_time
  use wave_func,     ONLY:wf_ng
+ use electrons,     ONLY:n_spinor
  use YPP
 #if defined _YPP_BOLTZMANN
  use electrons,            ONLY: nel,Boltz_Efield,Boltz_tau
@@ -224,6 +225,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'Bpsi',      '[MAG] Magnetic field psi angle [degree]',B_psi,unit='deg')
  call it(defs,'Btheta',    '[MAG] Magnetic field theta angle [degree]',B_theta,unit='deg')
  call it(defs,'Magnetization','Direction of the magnetization',Magnetization)
+ if(n_spinor==2) call it('f',defs,'ExpandSymm' , 'Add inv and magnetic symms if possible') 
  call it('f',defs,'RmAllSymm' , 'Remove all symmetries') 
  call it('f',defs,'RmTimeRev' , 'Remove Time Reversal')
  call it('f',defs,'RmInvMBaxis','Remove symmtries which invert the axis parallel to M/B') 

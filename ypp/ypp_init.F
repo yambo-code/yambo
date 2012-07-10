@@ -34,7 +34,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
- use electrons,      ONLY:n_spin,n_bands
+ use electrons,      ONLY:n_spin,n_bands,n_spinor
  use par_proc_m,     ONLY:master_cpu,pp_redux_wait
  use timing,         ONLY:what_is_running
 #if defined _YPP_SC
@@ -491,6 +491,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_RT
  !             
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta Magnetization RmAllSymm RmTimeRev RmInvMBaxis")
+ if (l_fix_syms.and.n_spinor==2) call initactivate(1,"ExpandSymm")
  !
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")

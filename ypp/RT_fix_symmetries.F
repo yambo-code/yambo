@@ -132,7 +132,8 @@ subroutine RT_fix_symmetries(E,k)
  call section('+',"Symmetries")
  !=============================
  !
- ! Seek for all possible shells
+ ! This is needed to construct grot for all wf_ngs.
+ ! Recall that wf_ng could increase as symmetries are removed.
  !
  if (ng_vec>ng_closed) then
    ng_closed=ng_vec
@@ -781,7 +782,6 @@ subroutine RT_fix_symmetries(E,k)
    ic_rot_table=-1
    do ic=1,wf_nc_k(ik)
      ig_rot=g_rot(is,wf_igk(ic,ik))
-     if(ig_rot>wf_ng) cycle
      do ic_rot=1,wf_nc_k(i1)
        ig=wf_igk(ic_rot,i1)
        if(ig==ig_rot) exit
@@ -829,18 +829,20 @@ subroutine RT_fix_symmetries(E,k)
  !
  if(ioKB_err==0) then 
    !
-   call msg('s',':: PseudoPotentials ...')
+   if(n_steps>0) call live_timing('PseudoPotentials',n_steps)
    !
    do i1=k_save%nibz+1,k%nibz
      !
      ik=kpoints_map(1,i1)
      is=kpoints_map(2,i1)
      !
-     pp_kb(1:ng_vec,:,:,:) =pp_kb_store(g_rot(is,1:ng_vec),:,:,:,ik)
-     pp_kbd(1:ng_vec,:,:,:)=pp_kbd_store(g_rot(is,1:ng_vec),:,:,:,ik)
+     pp_kb(1:ng_vec,:,:,:) =pp_kb_store(g_rot(sop_inv_save(is),1:ng_vec),:,:,:,ik)
+     pp_kbd(1:ng_vec,:,:,:)=pp_kbd_store(g_rot(sop_inv_save(is),1:ng_vec),:,:,:,ik)
      !
      call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/i1+1/),ID=ID)      
      ioKB_err=ioKB_PP(ID)
+     !
+     call live_timing(steps=1)
      !
    enddo
    !
@@ -849,7 +851,7 @@ subroutine RT_fix_symmetries(E,k)
    !
    call PP_free()
    !
-   call msg('l','done')
+   if(n_steps>0) call live_timing()
    !
  endif
  !

@@ -37,8 +37,8 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  !  do ikpt=1,nkpt
  !    do is=1,ntypat
  !     do il=1,mpsang   (or mpsang*m_proj*n_spinor for HGH)
- !      write(untkss) (vkb (trsl(ig),is,il),ig=1,npwkss)
- !      write(untkss) (vkbd(trsl(ig),is,il),ig=1,npwkss)
+ !      write(untkss) (vkb (ig,is,il),ig=1,npwkss) !trsl(ig) is not used anymore in m_io_kss
+ !      write(untkss) (vkbd(ig,is,il),ig=1,npwkss) !trsl(ig) is not used anymore in m_io_kss
  !     end do
  !    end do
  !    write(untkss) (en(ib),ib=1,nbandksseff)
@@ -51,11 +51,12 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  !
  use pars,                  ONLY:SP,DP
  use electrons,             ONLY:n_bands,n_spin,n_spinor,n_sp_pol
+ use R_lattice,             ONLY:ng_vec
  use D_lattice,             ONLY:n_atomic_species
  use pseudo,                ONLY:pp_n_l_times_proj_max,PP_alloc,pp_kbs,pp_kb,pp_kbd,&
 &                                l_many_proj,pp_table
- use R_lattice,             ONLY:nkibz
- use wave_func,             ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
+ use R_lattice,             ONLY:nkibz,ng_vec
+ use wave_func,             ONLY:wf_ncx,wf_nc_k,wf_nb_io,wf_nb_io_groups,wf_igk
  use defs_datatypes,        ONLY:hdr_type, wffile_type
  use mod_com2y,             ONLY:artificial_spin_pol
  implicit none
@@ -72,9 +73,9 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  !
  type(hdr_type)     :: ahdr
  type(wffile_type)  :: wff
- real(DP)           :: pp_kb_kdb_disk(wf_ncx),&
+ real(DP)           :: pp_kb_kdb_disk(ng_vec),&
 &                      pp_kbs_disk(n_atomic_species,pp_n_l_times_proj_max)
- complex(DP)        :: wf_disk_DP(wf_ncx,n_spinor)
+ complex(DP)        :: wf_disk_DP(ng_vec,n_spinor)
  integer            :: fform,i_spin,i_spinor
  !
  ! Number of records for each k-point
@@ -111,9 +112,9 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    !
  endif
  !
- wf_disk=0.
- pp_kb=0.
- pp_kbd=0.
+ wf_disk=0._SP
+ pp_kb=0._SP
+ pp_kbd=0._SP
  !
  ! GPL_INCLUDE_START SPIN_IGNORE
  ! i_spin=1
@@ -150,14 +151,15 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    if (ib_grp*wf_nb_io>n_bands) nb_to_read=n_bands-wf_nb_io*(ib_grp-1) 
    !
    do i1=1,nb_to_read
+     !
      read(11) (wf_disk_DP(:,i_spinor),i_spinor=1,n_spinor)
      !
-     wf_disk(1,i1,:,i_spin)=real(wf_disk_DP(:,1))
-     wf_disk(2,i1,:,i_spin)=aimag(wf_disk_DP(:,1))
+     wf_disk(1,i1,:,i_spin)=real(wf_disk_DP(wf_igk(:wf_nc_k(ikibz),ikibz),1))
+     wf_disk(2,i1,:,i_spin)=aimag(wf_disk_DP(wf_igk(:wf_nc_k(ikibz),ikibz),1))
      !
      if (n_spinor==2) then
-       wf_disk(1,i1,:,2)=real(wf_disk_DP(:,2))
-       wf_disk(2,i1,:,2)=aimag(wf_disk_DP(:,2))
+       wf_disk(1,i1,:,2)=real(wf_disk_DP(wf_igk(:wf_nc_k(ikibz),ikibz),2))
+       wf_disk(2,i1,:,2)=aimag(wf_disk_DP(wf_igk(:wf_nc_k(ikibz),ikibz),2))
      endif
    enddo
    !

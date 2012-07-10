@@ -117,7 +117,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  ! Exchange Scattering states are distributed
  ! 
- call WF_states_setup(qp_to_load=(/1,QP_n_states/),b_to_load=(/1,Sx_upper_band/),k=k)
+ call WF_states_setup(b_to_load=(/Sx_lower_band,Sx_upper_band/),qp_to_load=(/1,QP_n_states/),q_to_load=(/1,q%nbz/),k=k)
  !
  ! States required by the density
  !

@@ -42,9 +42,9 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  ! 
  integer :: nstep_f(3)  ! all quantities on fine grid have f
  integer :: nkpoint_c(3)              ! on coarse have c
- real :: deltak_f(3), deltak_c(3)
- real, allocatable :: kpts_c(:,:)
- real :: tmp_ipol_weight(3)
+ real(SP) :: deltak_f(3), deltak_c(3)
+ real(SP), allocatable :: kpts_c(:,:)
+ real(SP) :: tmp_ipol_weight(3)
  integer :: nx, ny, nz, ii, ii_c
  integer :: nx_f, ny_f, nz_f, npts_around_coarse, nx_c, ny_c, nz_c
  integer :: nx_period, ny_period, nz_period

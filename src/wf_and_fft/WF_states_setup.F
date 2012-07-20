@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
-&                          bg_npts,qpoint,par_loop,report)
+&                          bg_npts,q_to_load,qpoint,par_loop,report)
  !
  ! Generic subroutine to distribute WF among different processors
  !
@@ -48,7 +48,7 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
  type(w_samp),  intent(in),optional :: Xw
  logical, intent(in), optional :: par_loop,report
  integer, intent(in), optional :: k_to_load(2),b_to_load(2),qp_to_load(2)
- integer, intent(in), optional :: qpoint,cg_npts,bg_npts(*)
+ integer, intent(in), optional :: qpoint,cg_npts,bg_npts(*),q_to_load(2)
  !
  ! Work Space
  !
@@ -62,7 +62,7 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
  !
  if (present(report)) then
    N_loaded=0.
-   N_loaded(myid+1)=real(count(states_to_load.eqv..TRUE.))/real(n_sp_pol*nkibz* (b_to_load(2)-b_to_load(1)+1))*100.
+   N_loaded(myid+1)=real(count(states_to_load.eqv..TRUE.))/real(n_sp_pol*nkibz*(b_to_load(2)-b_to_load(1)+1))*100.
    call pp_redux_wait(N_loaded) 
    call msg('rs','[Distribute] Average allocated memory is [o/o]:',sum(N_loaded)/real(ncpu))
    return
@@ -80,7 +80,8 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
  !
  parallel_type="none"
  if(present(qp_to_load).and..not.present(b_to_load))                     parallel_type="quasiparticle"
- if(present(qp_to_load).and.present(b_to_load).and.present(k))           parallel_type="scattering"
+ if(present(qp_to_load).and.present(b_to_load).and.present(q_to_load).and.present(k))   &
+&   parallel_type="scattering"
  if(.not.present(qp_to_load).and.present(b_to_load).and..not.present(k)) parallel_type="bands"
  if(present(b_to_load).and.present(k_to_load))                           parallel_type="bands-kpoints"
  if(present(cg_npts).and.present(bg_npts).and.present(k).and.present(qpoint).and.present(Xw)) &
@@ -107,11 +108,11 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
    ! 
    ! Parallelization on scattering states
    !
-   call par_indexes(px,(/nqbz,b_to_load(2)/),(/1,b_to_load(1)/))
+   call par_indexes(px,(/q_to_load(2),b_to_load(2)/),(/q_to_load(1),b_to_load(1)/))
    !
    do i_qp=qp_to_load(1),qp_to_load(2)
      !
-     do iq=1,nqbz
+     do iq=q_to_load(1),q_to_load(2)
        do ib=b_to_load(1),b_to_load(2)
          !
          if(.not.px%element_2D(iq,ib).and.par_loops) cycle 

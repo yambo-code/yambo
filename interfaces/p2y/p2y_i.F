@@ -88,6 +88,8 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  lch='P(W) 2 Y(ambo) Ver. 3.2'
 #elif defined _P2Y_V40
  lch='P(W) 2 Y(ambo) Ver. 4.0'
+#elif defined _P2Y_V50
+ lch='P(W) 2 Y(ambo) Ver. 5.0'
 #else
  call error('Unknown version of P2Y. Stopping.')
 #endif
@@ -181,7 +183,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  endif
  !
  if (l_Vnl) then
-#if defined _P2Y_V40
+#if defined _P2Y_V40 || defined _P2Y_V50
    call msg('s','=== Non-local pseudo-potential commutator === ')
    call Vnl_driver(en,k)
 #else

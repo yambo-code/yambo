@@ -1589,8 +1589,11 @@ CONTAINS
       CALL iotk_scan_dat( iunit, "BRAVAIS_LATTICE", bravais_latt_, IERR=ierr )
       IF ( ierr /= 0 ) RETURN
       !
+#if defined _P2Y_V40
+! This tag is not present for QE v5.0
       CALL iotk_scan_dat( iunit, "CELL_SYMMETRY", symm_type_, IERR=ierr )
       IF ( ierr /= 0 ) RETURN
+#endif
       !
       CALL iotk_scan_dat( iunit, "LATTICE_PARAMETER", alat_, ATTR=attr, IERR=ierr )
       IF (ierr/=0) RETURN

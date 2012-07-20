@@ -81,6 +81,7 @@ module fields
 &                        trim(E_field%ef_name) == 'RES' ,& 
 &                        trim(E_field%ef_name) == 'DELTA' ,& 
 &                        trim(E_field%ef_name) == 'GAUSS' ,& 
+&                        trim(E_field%ef_name) == 'PULSE' ,& 
 &                        trim(E_field%ef_name) == 'QSSIN' /))
    end function
    !
@@ -178,6 +179,19 @@ module fields
          if (order==2 ) local_a= (freq*cos(freq*(T_or_W-T_0)) &
 &            -(T_or_W-T_0)* sin(freq*(T_or_W-T_0))/sigma**2)*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
          if (order==-1) order=-2
+       case('PULSE')
+         if(abs((real(T_or_W)-T_0))< sigma) then
+           if (order==0 ) local_a= 0.
+           if (order==1 ) local_a=(T_or_W-T_0 + sigma)**2 *(T_or_W-T_0 - sigma)**2/sigma**4*cos(freq*(T_or_W-T_0))
+           if (order==2 ) local_a=(2*(T_or_W-T_0 + sigma)*    (T_or_W-T_0 - sigma)**2/sigma**4  + &
+&                                  2*(T_or_W-T_0 + sigma)**2 *(T_or_W-T_0 - sigma)   /sigma**4) * &
+&                                  cos(freq*(T_or_W-T_0))    &
+&                                   -(T_or_W-T_0 + sigma)**2 *(T_or_W-T_0 - sigma)**2/sigma**4  * &
+&                                  freq*sin(freq*(T_or_W-T_0))
+         else 
+           local_a=0._SP
+         endif        
+           if (order==-1) order=-2
      end select
      !
      small_a=local_a

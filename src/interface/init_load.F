@@ -382,7 +382,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &    Efield(i_field)%intensity,unit=I_unit)
      call it(defs,trim(name)//'_Damp',             '[RT '//trim(name)//'] Damping',&
 &    Efield(i_field)%damping,unit=Time_unit,verb_level=V_real_time)
-     call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
+     call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] (SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN|PULSE)',&
 &    Efield(i_field)%ef_name,verb_level=0)
      call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
 &    Efield(i_field)%versor,verb_level=0)

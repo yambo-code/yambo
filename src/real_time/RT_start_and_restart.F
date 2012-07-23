@@ -122,7 +122,11 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! Build Ho and save initial energies 
  !====================================
  !
- E_bare=Xen%E(:SC_bands(2),:,:)
+ if(associated(Xen%Eo)) then
+   E_bare=Xen%Eo(:SC_bands(2),:,:)
+ else
+   E_bare=Xen%E(:SC_bands(2),:,:)
+ endif
  !
  call SC_bare_Hamiltonian(Xen,Xk,k)
  !

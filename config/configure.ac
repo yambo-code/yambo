@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.2.5 r.1377 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.5 r.1378 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="2"
 SSUBLEVEL="5"
-SREVISION="1377"
+SREVISION="1378"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -130,10 +130,10 @@ AC_SUBST(iotk_dir)
 # check for p2y versions
 #
 AC_ARG_WITH(p2y, AC_HELP_STRING([--with-p2y=<mode>],
- [Interface mode in PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0>]))
+ [Interface mode in PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0> <5.0>]))
 
-PW_VER="4.0"
-PW_CPP="_P2Y_V40"
+PW_VER="5.0"
+PW_CPP="_P2Y_V50"
 if test "$compile_p2y" = "yes"; then
  if test "$with_p2y" = "export"; then
   PW_VER="export"
@@ -154,6 +154,10 @@ if test "$compile_p2y" = "yes"; then
  if test "$with_p2y" = "4.0"; then
   PW_VER="4.0"
   PW_CPP="_P2Y_V40"
+ fi
+ if test "$with_p2y" = "5.0"; then
+  PW_VER="5.0"
+  PW_CPP="_P2Y_V50"
  fi
 fi
 AC_SUBST(PW_VER)

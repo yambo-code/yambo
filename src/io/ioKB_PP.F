@@ -25,10 +25,10 @@ integer function ioKB_PP(ID)
  use stderr,           ONLY:intc
  use D_lattice,        ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species,&
 &                           atom_pos
+ use R_lattice,        ONLY:ng_vec
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,PP_alloc,pp_kbd
  use memory_m,         ONLY:mem_est
- use wave_func,        ONLY:wf_ncx,wf_igk,wf_nc_k,wf_ng
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
 &                           io_elemental,io_bulk,io_header,io_fragmented,&
 &                           read_is_on,write_is_on,ver_is_gt_or_eq,io_extension
@@ -124,7 +124,7 @@ integer function ioKB_PP(ID)
    call io_bulk(ID,R2=pp_kbs)
  endif
  !
- allocate(pp_disk(wf_ncx,n_atomic_species,pp_n_l_times_proj_max))
+ allocate(pp_disk(ng_vec,n_atomic_species,pp_n_l_times_proj_max))
  !
  if (io_fragmented(ID)) call io_fragment(ID,i_fragment=ik)
  !
@@ -153,12 +153,7 @@ integer function ioKB_PP(ID)
    endif
    call io_bulk(ID,R3=pp_disk)
    !
-   if (read_is_on(ID)) then
-     do i1=1,wf_nc_k(ik)
-       if (wf_igk(i1,ik) > wf_ng) cycle
-       pp_kb( wf_igk(i1,ik) ,:,:,i_spin) = pp_disk(i1,:,:)
-     enddo
-   endif
+   if (read_is_on(ID)) pp_kb(:,:,:,i_spin) = pp_disk(:,:,:)
    !
    if (write_is_on(ID)) pp_disk=pp_kbd(:,:,:,i_spin)
    !
@@ -170,12 +165,7 @@ integer function ioKB_PP(ID)
    endif
    call io_bulk(ID,R3=pp_disk)
    !
-   if (read_is_on(ID)) then
-     do i1=1,wf_nc_k(ik)
-       if (wf_igk(i1,ik) > wf_ng) cycle
-       pp_kbd( wf_igk(i1,ik) ,:,:,i_spin) = pp_disk(i1,:,:)
-     enddo
-   endif
+   if (read_is_on(ID)) pp_kbd(:,:,:,i_spin) = pp_disk(:,:,:)
    ! 
    ! GPL_EXCLUDE_START SPIN_IGNORE
    !

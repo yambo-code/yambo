@@ -23,7 +23,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Plasmon Pole & COHSEX Correlation Self-Energy
  !
- use pars,          ONLY:SP,pi,schlen
+ use pars,          ONLY:SP,pi,schlen,cZERO,cI
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc
@@ -90,7 +90,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call pp_indexes_reset(px)
  i_qp_to_start=1
  iq_to_start  =1
- if(.not.l_collisions_IO) QP_Sc        =cmplx(0.,0.,SP)
+ if(.not.l_collisions_IO) QP_Sc        =cZERO
  !
  ! COHSEX: bands setup
  !
@@ -129,7 +129,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    ! Only the master keeps in memory the QP_Sc in order 
    ! to avoid double countings in the final ALL 2 ALL
    !
-   if(.not.master_cpu) QP_Sc=(0._SP,0._SP)
+   if(.not.master_cpu) QP_Sc=cZERO
    !
  endif
  !
@@ -175,11 +175,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Quasi-particle list
  ! (all processors have all qp-states)
  !
- call WF_states_setup(qp_to_load=(/i_qp_to_start,QP_n_states/),par_loop=.FALSE.)
+ call WF_states_setup(qp_to_load=(/1,QP_n_states/),par_loop=.FALSE.)
  !
  ! Scattering states are distributed
  ! 
- call WF_states_setup(b_to_load=QP_n_G_bands)
+ call WF_states_setup(b_to_load=QP_n_G_bands,qp_to_load=(/1,QP_n_states/),q_to_load=(/iq_to_start,q%nbz/),k=k)
  !
  ! Report
  !
@@ -278,7 +278,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
       cycle
    endif
    !
-   TEMP_COLLISIONS_v=(0._SP,0._SP)
+   TEMP_COLLISIONS_v=cZERO
    !
 #endif                     
  !
@@ -302,7 +302,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if (l_ppa) then
        forall(i1=1:X%ng,i2=1:X%ng) PPaP(i1,i2)=PPaPf(X_mat(i1,i2,1),X_mat(i1,i2,2),X%ppaE)
-       forall(i1=1:X%ng,i2=1:X%ng) PPaR(i1,i2)=-X_mat(i1,i2,1)/2.*PPaP(i1,i2)*isc%gamp(i1,i2)
+       forall(i1=1:X%ng,i2=1:X%ng) PPaR(i1,i2)=-X_mat(i1,i2,1)/2._SP*PPaP(i1,i2)*isc%gamp(i1,i2)
      else
        forall(i1=1:X%ng,i2=1:X%ng) PPaR(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
      endif
@@ -351,7 +351,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      iscp%is=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
      iscp%qs=isc%qs
      !
-     dc=cmplx(0.,0.,SP)
+     dc=cZERO
      !
      ! COH (using completeness relation)
      !
@@ -368,7 +368,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            eet_cutoff(is)=minval(E%E(E%nbf+1,:,is))
          enddo
          eet_cutoff(1)=minval(eet_cutoff(:))
-         eet_factor=(0._SP,0._SP)
+         eet_factor=cZERO
          if(master_cpu) forall(ig1=1:X%ng,ig2=1:X%ng) &
 &          eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
        else
@@ -378,7 +378,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            enddo
          enddo
          if (master_cpu.and..not.l_collisions_IO) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
-         dc=cmplx(0.,0.,SP)
+         dc=cZERO
          !
        endif
        !
@@ -416,7 +416,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        if (any(isc%is/=iscp%is)) call scatterBamp(iscp)
        !
 #endif
-       dc=(0.,0.)
+       dc=cZERO
        !
        if (l_ppa) then
          !
@@ -427,7 +427,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          endif
          !
          forall (i4=1:QP_dSc_steps) E_(i4)=qp%E_bare(i_qp)+&
-&                                          (i4-1)*QP_dSc_delta+cmplx(0.,QP_G_damp,SP)
+&                                          (i4-1._SP)*QP_dSc_delta+cI*QP_G_damp
          !
          do ig1=1,X%ng
            do ig2=1,X%ng
@@ -477,11 +477,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      enddo ! loop on scattering states
      !
      if(PPa_terminator) then
-       forall (i4=1:QP_dSc_steps) E_(i4)=qp%E_bare(i_qp)+(i4-1)*QP_dSc_delta+cmplx(0.,QP_G_damp,SP)
+       forall (i4=1:QP_dSc_steps) E_(i4)=qp%E_bare(i_qp)+(i4-1._SP)*QP_dSc_delta+cI*QP_G_damp
        do ig1=1,X%ng
          do ig2=1,X%ng
            do i4=1,QP_dSc_steps
-             QP_Sc(i_qp,i4)=QP_Sc(i_qp,i4)+4./spin_occ*pi*PPaR(ig1,ig2)*eet_factor(ig1,ig2)* &
+             QP_Sc(i_qp,i4)=QP_Sc(i_qp,i4)+4._SP/spin_occ*pi*PPaR(ig1,ig2)*eet_factor(ig1,ig2)* &
 &                     eet_terminator(E_(i4),E,isc%is,PPaP(ig1,ig2),ig1,ig2,isc%qs(2),eet_cutoff(1))
              enddo
            enddo
@@ -507,7 +507,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! ALL 2 ALL of QP_Sc
      !
      call pp_redux_wait(QP_Sc)
-     if(.not.master_cpu) QP_Sc=(0._SP,0._SP)
+     if(.not.master_cpu) QP_Sc=cZERO
      !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,- (i_qp+QP_n_states*(iqbz-1 ))/),ID=qp_ID)
      io_err=ioQP('QP',qp,qp_ID)
@@ -570,20 +570,20 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      implicit none
      real(SP)   :: PPaPf
-     real(SP),intent(in)   :: Eo
-     complex(SP),intent(in):: e1,e2
-     PPaPf=Eo/sqrt(e1/e2-1.)
-     if (real(e1/e2)<=1.d0) PPaPf=1.d0
+     real(SP),   intent(in)   :: Eo
+     complex(SP),intent(in)   :: e1,e2
+     PPaPf=Eo/sqrt(e1/e2-1._SP)
+     if (real(e1/e2)<=1._SP) PPaPf=1._SP
      !
    end function
    !
    function Gfm(W,e,vs,Ep)
      !
      implicit none
-     type(levels) ::e
-     integer      ::vs(4)
-     complex(SP)  ::W
-     real(SP)     ::Ep
+     type(levels), intent(in) ::e
+     integer     , intent(in) ::vs(4)
+     complex(SP) , intent(in) ::W
+     real(SP)    , intent(in) ::Ep
      complex(SP)  ::Gfm
      complex(SP)  ::lW !ws
      lW=W
@@ -596,10 +596,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    function Gfp(W,e,vs,Ep)
      !
      implicit none
-     type(levels) ::e
-     integer      ::vs(4)
-     complex(SP)  ::W
-     real(SP)     ::Ep
+     type(levels), intent(in) ::e
+     integer,      intent(in) ::vs(4)
+     complex(SP),  intent(in) ::W
+     real(SP),     intent(in) ::Ep
      complex(SP)  ::Gfp
      Gfp=(e%f(vs(1),vs(2),vs(4))+bose_f(Ep))/(conjg(W)-e%E(vs(1),vs(2),vs(4))+Ep)
      !

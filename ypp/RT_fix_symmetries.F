@@ -32,7 +32,7 @@ subroutine RT_fix_symmetries(E,k)
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,g_rot,&
-&                              ng_closed,bz_samp_duplicate,rl_sop
+&                              ng_closed,bz_samp_duplicate,rl_sop,ng_vec
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
 &                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO,mk_dir, &
 &                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP,RD_CL_IF_END,WR_CL_IF_END
@@ -76,7 +76,6 @@ subroutine RT_fix_symmetries(E,k)
  complex(SP), allocatable :: wf_tmp(:,:)
  !
  !
- mag_syms=.FALSE.
  use_E_field=.FALSE.
  use_B_field=.FALSE.
  has_magnetization=.FALSE.
@@ -112,14 +111,14 @@ subroutine RT_fix_symmetries(E,k)
    B_cart(2)=B_field*sin(B_theta)*sin(B_psi) 
    B_cart(3)=B_field*cos(B_theta)
  endif
- if(has_magnetization) call section('*',"== Magnetized system: BZ sampling remapping ==")
+ if(has_magnetization.and.n_spinor==2) call section('*',"== Magnetized system: BZ sampling remapping ==")
  !
  if (i_time_rev==0) Rm_TR=.false.
  if (Rm_TR)       call section('*',"== Remove Time Reversal ==")
  !
  if (.not.any((/use_B_field,use_E_field,has_magnetization,Rm_all_symm,Rm_TR/))) return 
  !
- if (use_B_field.and.has_magnetization) call warning('Magnetic field in magnetic system!')
+ if (use_B_field.and.has_magnetization) call warning('Magnetic field in magnetic system')
  !
  if (wf_nb_io/=E%nb) then
    call warning('Splitted wavefunctions still not supported')
@@ -129,10 +128,11 @@ subroutine RT_fix_symmetries(E,k)
  call section('+',"Symmetries")
  !=============================
  !
- ! Seek for all possible shells
+ ! This is needed to construct grot for all wf_ngs.
+ ! Recall that wf_ng could increase as symmetries are removed.
  !
- if (wf_ncx>ng_closed) then
-   ng_closed=wf_ncx
+ if (ng_vec>ng_closed) then
+   ng_closed=ng_vec
    call G_shells_finder()
  endif
  !
@@ -165,8 +165,8 @@ subroutine RT_fix_symmetries(E,k)
  if(ioKB_err==0) then
    ! 
    call section('=',"PseudoPotentials")
-   allocate(pp_kb_store(wf_ng,n_atomic_species,pp_n_l_times_proj_max,n_spin,k%nibz))
-   allocate(pp_kbd_store(wf_ng,n_atomic_species,pp_n_l_times_proj_max,n_spin,k%nibz))
+   allocate(pp_kb_store(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin,k%nibz))
+   allocate(pp_kbd_store(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin,k%nibz))
    call mem_est("pp_kb_store pp_kbd_store",(/size(pp_kb),size(pp_kbd)/),elements_kind=(/SP,SP/))
    !
    do ik=1,k_save%nibz
@@ -531,12 +531,6 @@ subroutine RT_fix_symmetries(E,k)
    !
    wf_igk(1:wf_ncx,i1) = wf_igk_save(1:wf_ncx,ik)
    wf_nc_k(i1)         = min(ng_closed,wf_nc_k_save(ik))
-   do i2=1,wf_nc_k(i1)
-     if(wf_igk_save(i2,ik)>ng_closed) then
-       wf_nc_k(i1)=i2-1
-       exit
-     endif  
-   enddo
    !
  enddo
  !
@@ -546,12 +540,6 @@ subroutine RT_fix_symmetries(E,k)
    is=kpoints_map(2,i1)
    !
    wf_nc_k(i1)              = min(ng_closed,wf_nc_k_save(ik))
-   do i2=1,wf_nc_k(i1)
-     if(wf_igk_save(i2,ik)>ng_closed) then
-       wf_nc_k(i1)=i2-1
-       exit
-     endif  
-   enddo
    !
    wf_igk(1:wf_nc_k(i1),i1) = g_rot(is,wf_igk_save(1:wf_nc_k(i1),ik))
    call i_sort( wf_igk(1:wf_nc_k(i1),i1) )
@@ -569,15 +557,13 @@ subroutine RT_fix_symmetries(E,k)
  core_io_path_save=core_io_path
  core_io_path=more_io_path
  !
- n_steps=(k%nibz-k_save%nibz)*E%nb
+ n_steps=k%nibz-k_save%nibz
  if(n_steps>0) call live_timing('WFs rotation',n_steps)
  !
  allocate(ic_rot_table(wf_ncx))
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  allocate(wf_tmp(wf_ncx,n_spin))
- !
- wf_disk=0._SP
  !
  ACTION_=OP_APP_WR_CL
  if(Fragmented_IO) ACTION_=OP_WR_CL
@@ -592,13 +578,14 @@ subroutine RT_fix_symmetries(E,k)
    ic_rot_table=-1
    do ic=1,wf_nc_k(ik)
      ig_rot=g_rot(is,wf_igk(ic,ik))
-     if(ig_rot>wf_ng) cycle
      do ic_rot=1,wf_nc_k(i1)
        ig=wf_igk(ic_rot,i1)
        if(ig==ig_rot) exit
      enddo
      ic_rot_table(ic)=ic_rot
    enddo
+   !
+   wf_disk=0._SP
    !
    do ib=1,E%nb
      do i_spin=1,n_spin
@@ -621,11 +608,10 @@ subroutine RT_fix_symmetries(E,k)
        wf_disk(2,ib,1:wf_ncx,:)= aimag(wf_tmp(:wf_ncx,:))
      endif
      !
-     call live_timing(steps=1)
-     !
    enddo
    !
    io_err=ioWF(ID,wf=wf_disk)
+   call live_timing(steps=1)
    !
  enddo
  !
@@ -642,18 +628,20 @@ subroutine RT_fix_symmetries(E,k)
  !
  if(ioKB_err==0) then 
    !
-   call msg('s',':: PseudoPotentials ...')
+   if(n_steps>0) call live_timing('PseudoPotentials',n_steps)
    !
    do i1=k_save%nibz+1,k%nibz 
      !
      ik=kpoints_map(1,i1)
      is=kpoints_map(2,i1)
      !
-     pp_kb(1:wf_ng,:,:,:) =pp_kb_store(g_rot(is,1:wf_ng),:,:,:,ik)
-     pp_kbd(1:wf_ng,:,:,:)=pp_kbd_store(g_rot(is,1:wf_ng),:,:,:,ik)
+     pp_kb(1:ng_vec,:,:,:) =pp_kb_store(g_rot(sop_inv_save(is),1:ng_vec),:,:,:,ik)
+     pp_kbd(1:ng_vec,:,:,:)=pp_kbd_store(g_rot(sop_inv_save(is),1:ng_vec),:,:,:,ik)
      !
      call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/i1+1/),ID=ID)      
      ioKB_err=ioKB_PP(ID)
+     !
+     call live_timing(steps=1)
      !
    enddo
    !
@@ -662,7 +650,7 @@ subroutine RT_fix_symmetries(E,k)
    !
    call PP_free()
    !
-   call msg('l','done')
+   if(n_steps>0) call live_timing()
    !
  endif
  !

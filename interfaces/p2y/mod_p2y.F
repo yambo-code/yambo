@@ -85,10 +85,15 @@ contains
    index_filename = 'data-file.xml'
    write(lch,'(a,i3,a)') '== PWscf v.3.2 generated data =='
 
-#elif defined _P2Y_V40
+#elif defined _P2Y_V40 
 
    index_filename = 'data-file.xml'
-   write(lch,'(a,i3,a)') '== PWscf v.4.0 generated data =='
+   write(lch,'(a,i3,a)') '== PWscf v.4.x generated data =='
+
+#elif defined _P2Y_V50 
+
+   index_filename = 'data-file.xml'
+   write(lch,'(a,i3,a)') '== PWscf v.5.0 generated data =='
 
 #endif
 
@@ -122,7 +127,7 @@ contains
    call qexml_init(pw_unit,"./", rhounit_,.true.) ! sets unit numbers
    call qexml_openfile( index_filename, "read", .false., ierr)
     
-#elif defined _P2Y_V40
+#elif defined _P2Y_V40 || defined _P2Y_V50
 
    rhounit_ = 12
    call qexml_init(pw_unit) 
@@ -146,7 +151,7 @@ contains
 
    call pw_closeindex(pw_unit) ! close index.xml file
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_closefile("read",ierr) ! close index.xml file
 
@@ -188,7 +193,7 @@ contains
    call qexml_read_bands_info(nbnd=nbnd_, num_k_points=num_k_points_, &
 &                        nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
 
-#elif defined _P2Y_V40
+#elif defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_bands_info(nbnd=nbnd_, num_k_points=num_k_points_, &
 &                        nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
@@ -203,7 +208,7 @@ contains
      call errore('qexml_read_bands.','IOTK error:',ABS(ierr)) 
    endif
 
-#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_symmetry(nsym=nsym_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
@@ -304,7 +309,7 @@ contains
 
    deallocate(atom_type_,species_type_)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    tau_units = 1.0_DP
    allocate( atm_(n_atomic_species))
@@ -355,7 +360,7 @@ contains
 
    call pw_cell(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_cell','IOTK error',ABS(ierr))
@@ -400,7 +405,7 @@ contains
 
    call pw_symmetry(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_symmetry(invsym=invsym_, trasl=trasl_(:,1:nsym_),s=isym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
@@ -438,7 +443,7 @@ contains
 
    call pw_kpoints(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_bz(xk=xk_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
@@ -497,7 +502,7 @@ contains
    allocate(igv_(3,ng_vec))    
    call pw_gvectors(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    allocate(igv_(3,ngm_))    ! The PWscf array (ngm = ng_vec if not gamma_only)
    call qexml_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
@@ -588,7 +593,7 @@ contains
 !
 !  wf_ncx = maxval(wf_nc_k)  
 
-#elif defined _P2Y_V32 || defined _P2Y_V40
+#elif defined _P2Y_V32 || defined _P2Y_V40 || defined _P2Y_V50
 
    allocate( pw_igk_(npwx_, k%nibz))
    allocate( index_(npwx_) )     
@@ -673,7 +678,7 @@ contains
      deallocate(eig_s_)
    end select
 
-#elif defined _P2Y_V32  || defined _P2Y_V40
+#elif defined _P2Y_V32  || defined _P2Y_V40 || defined _P2Y_V50
 
    allocate(eigb_(en%nb))
    select case(n_sp_pol)
@@ -706,7 +711,7 @@ contains
    use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND
    use mod_xc2y, ONLY: XC_yamboID,  XC_yamboID2kind
    implicit none
-#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
+#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
    call qexml_read_xc(dft=pw_dft, ierr=ierr)
    GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
    GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)

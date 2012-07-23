@@ -10,6 +10,7 @@
 # [@DP_str@] Double precision
 # [@Red_str@] Redundant compilation  
 # [@MPI_str@] MPI 
+# [@OPENMP_str@] OpenMP 
 # [@PW_str@] PW (@PW_VER@) support
 # [@ETSF_str@] ETSF I/O support
 # [@SLK_str@] SCALAPACK

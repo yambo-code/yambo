@@ -277,7 +277,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      if (ik2<BS_k_and_row_restart(2).and.BS_exchange_done) cycle
      if (ik2==BS_k_and_row_restart(2).and.ik1>=BS_k_and_row_restart(1).and.BS_exchange_done) cycle
      !
-     call K_scattering(iq,ik1,ik2,Xk,q)  
+     call K_eval_scattering_amplitudes(iq,ik1,ik2,Xk,q)  
      O_dim=max(O_dim,O_n_scatt)
      !
    enddo
@@ -598,7 +598,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
        if (BS_K_coupling) allocate(BS_cpl_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
        !
-       if (BS_res_K_corr) call K_scattering(iq,ik1,ik2,Xk,q)  
+       if (BS_res_K_corr) call K_eval_scattering_amplitudes(iq,ik1,ik2,Xk,q)  
        !
        ! Read the exchange part
        !

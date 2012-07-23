@@ -43,6 +43,7 @@ llocal      = @LOCAL_LIBS@
 lblacs      = @BLACS_LIBS@
 lscalapack  = @SCALAPACK_LIBS@
 lmpi        = @MPILIBS@
+lopenmp     = @OPENMPLIBS@
 lnetcdf     = @NCLIBS@
 llibxc      = -lxc
 iotk_dir    = @iotk_dir@

@@ -26,7 +26,7 @@ netcdf      = @dnetcdf@
 scalapack   = @dscalapack@
 precision   = @dp_cpp@
 fft         = @FFT_CPP@
-xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@
+xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@
 debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
@@ -92,7 +92,7 @@ libs:
 	@if test "$(do_local)" = yes ; then LIBS2DO="local" ; \
 	DIR2GO="lib" ; $(mklib); fi
 yambo: libs
-	@LIBS2DO="$(MAIN_LIBS)" ; ADF="-D_TEST_1"; $(mksrc)
+	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
 #
 # PROJECTS #
@@ -155,7 +155,7 @@ interfaces: libs
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
 	XLIBS="$(2YLIBS)" ; $(mkx) ; fi
 ypp: libs
-	@LIBS2DO="$(YPPLIBS)" ; ADF="-D_TEST_1"; $(mksrc)
+	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
 #
 clean: clean_fast

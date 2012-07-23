@@ -125,11 +125,7 @@ subroutine K_diagonalization(iq,W)
    !
    ! Kernel loading
    !
-#if defined _TEST_1
    call K_BSload(iq)
-#else
-   call K_BSmat_by_V(iq)
-#endif
    !
    if (BS_not_const_eh_f) then
      !

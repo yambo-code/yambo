@@ -61,6 +61,7 @@ module BS
  integer  :: O_ng
  integer,    allocatable :: O_phase(:,:,:)
  integer,    allocatable :: O_table(:,:,:,:,:)
+ integer,    allocatable :: Scattering_table(:,:)
  !
  ! ... first table of possible c/v states
  !
@@ -109,7 +110,6 @@ module BS
    end function
 #endif
    !
-#if defined _TEST_1
    subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
      use pars,          ONLY:SP
      integer               ::iq
@@ -117,14 +117,6 @@ module BS
      complex(SP)           ::Vi(:),Vo(:)
      real(SP), optional     ::iter_par
    end subroutine
-#else
-   subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
-     use pars,          ONLY:SP
-     integer               ::iq
-     integer,     optional ::iter
-     complex(SP), optional ::Vi(:),Vo(:)
-   end subroutine
-#endif
    !
    integer function variables_BS(ID,local_description,X)
      use pars,       ONLY:lchlen

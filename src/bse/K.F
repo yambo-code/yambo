@@ -49,7 +49,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
 &                       BS_IO_index,BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0,&
-&                       O_n_scatt,BS_O,BS_cpl_K_corr
+&                       O_n_scatt,BS_O,BS_cpl_K_corr,Scattering_table
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
@@ -161,8 +161,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (ioBS_Fxc_err==0) then
    if (BS_res_K_corr) then
-     deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
-     call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
+     deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states,Scattering_table)
+     call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states Scattering_table")
    endif
    return
  endif
@@ -270,18 +270,30 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call mem_est('O_table',(/size(O_table)/),elements_kind=(/SP/),errors=(/alloc_err(1)/))
  !
+ ! Oscillator dimensions.
+ !
  O_dim=-1
  O_x_dim=maxval(BS_blk_dim)
- do ik2=1,BS_columns
-   do ik1=ik2,1,-1
-     !
-     if (ik2<BS_k_and_row_restart(2)) cycle
-     if (ik2==BS_k_and_row_restart(2).and.ik1>=BS_k_and_row_restart(1)) cycle
-     !
-     call K_scattering(iq,ik1,ik2,Xk,q)  
-     O_dim=max(O_dim,O_n_scatt)
-     !
+ !
+ do i1=1,2
+   !
+   do ik2=1,BS_columns
+     do ik1=ik2,1,-1
+       !
+       if (ik2<BS_k_and_row_restart(2)) cycle
+       if (ik2==BS_k_and_row_restart(2).and.ik1>=BS_k_and_row_restart(1)) cycle
+       !
+       call K_phases_and_dimensions(ik1,ik2,Xk,q)  
+       if (i1==1) O_dim=max(O_dim,O_n_scatt)
+       !
+     enddo
    enddo
+   !
+   if (i1==1) then
+     allocate(Scattering_table(O_dim,7))
+     call mem_est('Scattering_table',(/size(Scattering_table)/))
+   endif
+   !
  enddo
  !
  ! GPL_EXCLUDE_START
@@ -430,7 +442,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
      if (BS_K_coupling) allocate(BS_cpl_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
      !
-     if (BS_res_K_corr) call K_scattering(iq,ik1,ik2,Xk,q)  
+     if (BS_res_K_corr) then
+       call K_phases_and_dimensions(ik1,ik2,Xk,q)  
+       call K_eval_scattering_amplitudes()  
+     endif
      !
      if (load_O_X) then
        !

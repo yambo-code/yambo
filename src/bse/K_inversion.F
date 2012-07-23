@@ -27,11 +27,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BSS_uses_GreenF,&
 &                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,BSS_inversion_mode,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BS_eh_f,&
-#if defined _TEST_1
 &                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z
-#else
-&                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z,K_BSmat_by_V
-#endif
  use units
  use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
@@ -171,11 +167,8 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! Kernel loading
  !
-#if defined _TEST_1
-   call K_BSload(iq)
-#else
-   call K_BSmat_by_V(iq)
-#endif
+ call K_BSload(iq)
+ !
  forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
  if (BS_K_coupling) then
    forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(i1-BS_K_dim)

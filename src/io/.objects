@@ -8,7 +8,7 @@ ELPH_objects = ioELPH.o
 #endif
 DISTRIBUTED_objects = ioBS.o
 #if defined _DISTRIBUTED
-DISTRIBUTED_objects = ioBS.o ioBS_DISTRIBUTED.o
+DISTRIBUTED_objects = ioBS_DISTRIBUTED.o
 #endif
 objs = ver_is_gt_or_eq.o IO_and_Messaging_switch.o \
        io_Vnl.o \

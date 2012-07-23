@@ -175,7 +175,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    ! and spin density
    !
-   if(n_sp_pol>1) call spin_density(E,k)
+   if(n_sp_pol>1) call el_magnetization(E,k)
    !
 #endif
    !
@@ -350,7 +350,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! New spin density 
      !===================
      !
-     if(n_sp_pol>1) call spin_density(E,k)
+     if(n_sp_pol>1) call el_magnetization(E,k)
 #endif
      ! Convergences
      !==============

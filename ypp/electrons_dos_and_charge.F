@@ -33,7 +33,6 @@ subroutine electrons_dos_and_charge(Xk,Xen)
 &                         dos_E_range,dos_E_steps,OCC_T_ref,OCC_T_range,OCC_deltaT,RT_occupations_ref
  use com,            ONLY:msg,of_open_close
  use functions,      ONLY:Fermi_fnc_derivative
- use xc_functionals, ONLY:two_spin_density
  use QP_CTL_m,       ONLY:QP_apply
  use timing,         ONLY:live_timing
 #if defined _YPP_RT

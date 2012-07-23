@@ -79,6 +79,8 @@ module memory_m
          enddo
          if (i2==element_loaded+1) element_loaded=element_loaded+1
          !
+         if (i2>max_mem_elements) call error(" Too many elements in memory!! ")
+         !
          mem_element(i2)=trim(input_name(i1))
          local_kind=preset_kind
          if (present(elements_kind)) local_kind=elements_kind(i1)

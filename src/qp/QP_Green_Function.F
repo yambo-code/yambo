@@ -106,15 +106,15 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    !
    if (use_GreenF_Zoom.and.GFdb_read_err==0) then
      !
-     Amp_Peak=maxval(aimag(qp%GreenF(iqp,:)))
+     Amp_Peak=maxval(abs(aimag(qp%GreenF(iqp,:))))
      iw_start=0
      do iw=1,W%n(1)
-       if (iw_start==0.and.aimag(qp%GreenF(iqp,iw))>Amp_Peak*QP_G_Zoom_treshold/100.) iw_start=iw
+       if (iw_start==0.and.abs(aimag(qp%GreenF(iqp,iw)))>Amp_Peak*QP_G_Zoom_treshold/100.) iw_start=iw
        if (iw_start/=0) exit
      enddo
      iw_end=0
      do iw=W%n(1),1,-1
-       if (iw_end==0.and.aimag(qp%GreenF(iqp,iw))>Amp_Peak*QP_G_Zoom_treshold/100.) iw_end=iw
+       if (iw_end==0.and.abs(aimag(qp%GreenF(iqp,iw)))>Amp_Peak*QP_G_Zoom_treshold/100.) iw_end=iw
        if (iw_end/=0) exit
      enddo
      QP_G_zoom_er(iqp,:)=(/real(qp%GreenF_W(iqp,iw_start)),real(qp%GreenF_W(iqp,iw_end))/)

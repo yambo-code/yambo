@@ -59,9 +59,9 @@ subroutine RT_fix_symmetries(E,k)
 &                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
  integer               :: spatial_nsym,old_spatial_nsym,old_trev_nsym
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:),ic_rot_table(:)
- real(SP)              :: v1(3),v2(3),m(3,3)
+ real(SP)              :: v1(3),v2(3)
  real(SP)              :: B_cart(3)
- integer               :: symm_M_factor,symm_B_factor,igfft,ig,ig_rot,ic,ic_rot
+ integer               :: symm_M_factor,symm_B_factor,ig,ig_rot,ic,ic_rot
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
 &                         S_contains_TR(nsym),Trev_2_spatial=.false.
@@ -76,6 +76,7 @@ subroutine RT_fix_symmetries(E,k)
  complex(SP), allocatable :: wf_tmp(:,:)
  !
  !
+ mag_syms=.FALSE.
  use_E_field=.FALSE.
  use_B_field=.FALSE.
  has_magnetization=.FALSE.
@@ -90,7 +91,6 @@ subroutine RT_fix_symmetries(E,k)
  !
  if ( (use_B_field.or.(n_spinor==2.and.has_magnetization)).and. &
 &      i_time_rev==1.and..not.Rm_TR) mag_syms=.true.
- if ( i_time_rev==0.or.Rm_TR.or.RM_all_symm) mag_syms=.false.
  if (mag_syms) call msg('s','There are a magnetic field or SOC in a magnetic system with T-rev')
  !
  if (Rm_all_symm) then
@@ -496,7 +496,7 @@ subroutine RT_fix_symmetries(E,k)
    call cp_file(trim(core_io_path)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
    call cp_file(trim(core_io_path)//"/SAVE/s.wf",trim(more_io_path)//"/SAVE",ierr)
    call cp_file(trim(core_io_path)//"/SAVE/ns.wf",trim(more_io_path)//"/SAVE",ierr)
-   do ik=1,k%nibz
+   do ik=1,k_save%nibz
      do i1=1,wf_nb_io_groups
        fragment_name='ns.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
        call cp_directory(trim(core_io_path)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
@@ -531,6 +531,12 @@ subroutine RT_fix_symmetries(E,k)
    !
    wf_igk(1:wf_ncx,i1) = wf_igk_save(1:wf_ncx,ik)
    wf_nc_k(i1)         = min(ng_closed,wf_nc_k_save(ik))
+   do i2=1,wf_nc_k(i1)
+     if(wf_igk_save(i2,ik)>ng_closed) then
+       wf_nc_k(i1)=i2-1
+       exit
+     endif  
+   enddo
    !
  enddo
  !
@@ -540,6 +546,13 @@ subroutine RT_fix_symmetries(E,k)
    is=kpoints_map(2,i1)
    !
    wf_nc_k(i1)              = min(ng_closed,wf_nc_k_save(ik))
+   do i2=1,wf_nc_k(i1)
+     if(wf_igk_save(i2,ik)>ng_closed) then
+       wf_nc_k(i1)=i2-1
+       exit
+     endif  
+   enddo
+   !
    wf_igk(1:wf_nc_k(i1),i1) = g_rot(is,wf_igk_save(1:wf_nc_k(i1),ik))
    call i_sort( wf_igk(1:wf_nc_k(i1),i1) )
    !
@@ -564,7 +577,7 @@ subroutine RT_fix_symmetries(E,k)
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  allocate(wf_tmp(wf_ncx,n_spin))
  !
- wf_disk=(0.,0.)
+ wf_disk=0._SP
  !
  ACTION_=OP_APP_WR_CL
  if(Fragmented_IO) ACTION_=OP_WR_CL
@@ -634,6 +647,10 @@ subroutine RT_fix_symmetries(E,k)
    do i1=k_save%nibz+1,k%nibz 
      !
      ik=kpoints_map(1,i1)
+     is=kpoints_map(2,i1)
+     !
+     pp_kb(1:wf_ng,:,:,:) =pp_kb_store(g_rot(is,1:wf_ng),:,:,:,ik)
+     pp_kbd(1:wf_ng,:,:,:)=pp_kbd_store(g_rot(is,1:wf_ng),:,:,:,ik)
      !
      call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/i1+1/),ID=ID)      
      ioKB_err=ioKB_PP(ID)

@@ -171,6 +171,19 @@ module vec_operate
      !
    end subroutine k2bz
    !
+   subroutine rlu_k2bz(v_in,v_out) 
+     !
+     real(SP)           :: v_in(3)
+     real(SP), optional :: v_out(3)
+     !
+     if (present(v_out)) then
+       v_out=v_in-nint(v_in)                    
+     else
+       v_in =v_in-nint(v_in)                    
+     endif
+     !
+   end subroutine rlu_k2bz
+   !
    real(SP) function rlu_v_norm(k) 
      !
      ! Input k is rlu 

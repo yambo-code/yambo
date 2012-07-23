@@ -146,6 +146,13 @@ module YPP
  !
  real(SP) :: Fermi_fit_points(2)
  !
+ ! Wannier bands
+ !
+ logical           :: l_bxsf
+ character(lchlen) :: w90_fname
+ integer           :: wannier_bands(2)   ! Bands Range
+ integer           :: ord_dgrid_ipol     ! order of interpolation using double grid
+ !
  ! (RT) Occupations
  !
  logical     :: l_RT_occupations

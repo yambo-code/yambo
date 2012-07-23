@@ -41,7 +41,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,it_now 
- use real_time,      ONLY:I1_lesser,q_weight,elph_gkkp_expanded,GKKP_matrix_index,RT_q_px,l_ELPH_CCA_Kernel,&
+ use real_time,      ONLY:Sigma_relax,q_weight,elph_gkkp_expanded,GKKP_matrix_index,RT_q_px,l_ELPH_CCA_Kernel,&
 &                         Hole_lifetime,Electron_lifetime,Phonon_lifetime,G_lesser,MEM_index
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
@@ -82,7 +82,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  if (l_ELPH_CCA_Kernel) then
    Hole_lifetime(:,ik)    =rZero
    Electron_lifetime(:,ik)=rZero
-   Phonon_lifetime(:,ik)=rZero
+   Phonon_lifetime(:,ik)  =rZero
    do i_n=1,B_dim
      f_k(i_n)=-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,ik,MEM_index(it_now))/spin_occ
    enddo
@@ -171,10 +171,13 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !============
  !
  call pp_redux_wait(S_mat_sum(:,:))
+ call pp_redux_wait(Electron_lifetime(:,:))
+ call pp_redux_wait(Hole_lifetime(:,:))
+ call pp_redux_wait(Phonon_lifetime(:,:))
  !
  do i_n=SC_bands(1),SC_bands(2)
    do i_np=SC_bands(1),SC_bands(2)
-     I1_lesser(i_n,i_np,ik)=I1_lesser(i_n,i_np,ik)+S_mat_sum(i_n-SC_bands(1)+1,i_np-SC_bands(1)+1)
+     Sigma_relax(i_n,i_np,ik)=Sigma_relax(i_n,i_np,ik)+S_mat_sum(i_n-SC_bands(1)+1,i_np-SC_bands(1)+1)
    enddo 
  enddo
  !

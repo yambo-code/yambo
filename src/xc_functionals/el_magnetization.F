@@ -19,9 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine spin_density(en,Xk)
+subroutine el_magnetization(en,Xk)
  !
- ! Electronic Spin density for electronic Spinors
+ ! Electronic magnetization for electronic Spinors
  !
  !  SD = Sum_I (PSI^I)* Sigma_Pauli* PSI^I  I=occupied states
  !
@@ -34,7 +34,7 @@ subroutine spin_density(en,Xk)
  use D_lattice,      ONLY:nsym,DL_vol,dl_sop,i_time_rev,inv_index
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:wf_state,wf
- use xc_functionals, ONLY:two_spin_density
+ use xc_functionals, ONLY:magn
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
@@ -53,7 +53,7 @@ subroutine spin_density(en,Xk)
  integer :: i1,i2,ifft_up,ifft_dn
  real(SP):: cv(fft_size,3),tmp_sop(3,3)
  !
- two_spin_density=0.
+ magn=0.
  cv=0.
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
@@ -103,16 +103,16 @@ subroutine spin_density(en,Xk)
    if (n_spinor==2) then
      tmp_sop(:,:)=dl_sop(:,:,i1)*m3det(dl_sop(:,:,i1))
      if( i1> nsym/(1+i_time_rev) ) tmp_sop(:,:)=-tmp_sop(:,:)
-     forall(i2=1:fft_size) two_spin_density(i2,:)=two_spin_density(i2,:)+ &
+     forall(i2=1:fft_size) magn(i2,:)=magn(i2,:)+ &
 &                            matmul(tmp_sop,real( cv(fft_rot_r(i1,i2),:)/real(nsym) ))
    else
-     two_spin_density(:,3)=two_spin_density(:,3)+real(cv(fft_rot_r(i1,:),3)/real(nsym))
+     magn(:,3)=magn(:,3)+real(cv(fft_rot_r(i1,:),3)/real(nsym))
    endif
    !
  enddo
  !
  do i1=1,fft_size
-   Total_magn(:)=Total_magn(:)+two_spin_density(i1,:)
+   Total_magn(:)=Total_magn(:)+magn(i1,:)
  enddo
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE

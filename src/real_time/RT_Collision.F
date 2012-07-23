@@ -21,51 +21,42 @@
 !
 subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
- ! The BKE is coded in terms of I1(T) (left time) and I2(T) (right time) kernels.
+ ! The BKE is coded in terms of Ho + V + Sigma
+ ! This subroutine contruct Ho + V plus the diagonal part of Sigma(T=(t1 + t2)/2)
  ! In the TD-COHSEX we have that
  !
- !  i\partial_T G_k^<(T) = I1(T)-I2(T)
- !
- ! where
- !
- !  I1(T)=O_k G_^k + S_matrix_k(T)
- !  I2(T)=-G_^k O_k
- !
- ! and 
- !
- !   O_k=h_k+U_k+ V_k^H-V_k^H[G_ref]+\Sigma_k^{SEX}-\Sigma_k^{SEX}[G_ref]
+ !   H_k=Ho_k+U_k+ V_k^H-V_k^H[G_ref]+\Sigma_k^{SEX}-\Sigma_k^{SEX}[G_ref]
  !                ------ A --------- -------- B -------------------------
  !
  ! Note that IP\equiv A=0 & B=0
  ! Note that TDLDA\equiv A=0 &  \Sigma=V_xc
  ! Note that TDH\equiv B=0
  !
- ! S_matrix_k(T) is the el-ph term that includes memory.
- !
  ! Note that G_lesser_reference and rho_reference are zero during
  ! the thermalization
  !
  ! This subroutine also fills SC_R with the full Hamiltonian if this is allocated
  !
- use pars,           ONLY:SP,cI,cONE
- use wrapper,        ONLY:M_by_M,V_by_V_plus_V
+ use pars,           ONLY:SP,cONE,cZERO
+ use wrapper,        ONLY:V_by_V_plus_V
  use electrons,      ONLY:levels
- use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex,l_ph_corr
+ use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
- use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,full_rho,          &
+ use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,                             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
-&                         G_lesser_reference,NE_Hxc_jumps,                      &
-&                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start, &
-&                         RT_Deph_Matrix,l_RT_needs_XC0,RT_k_px
+&                         G_lesser_reference,NE_Hxc_jumps,                                     &
+&                         l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start,              &
+&                         l_RT_needs_XC0,Ho_plus_Sigma
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
+ use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
+ use par_indexes_m,  ONLY:par_indexes  
  use SC,             ONLY:SC_xc_functional,SC_nbands
  use xc_functionals, ONLY:XC_LDA_C_PZ
- use par_proc_m,     ONLY:pp_redux_wait 
  !
  implicit none
  !
@@ -78,7 +69,8 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  ! Work Space
  !
  logical          :: XC_needs_density
- integer          :: i1,i2,ik,ikp
+ integer          :: i1,ik
+ type(pp_indexes) :: px
  !
  ! Density (needed bu Hartree and local XCs)
  !=========
@@ -124,22 +116,25 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
  endif
  !
- I1_lesser=(0._SP,0._SP)
- I2_lesser=(0._SP,0._SP)
  if(allocated(SC_R)) then
-    SC_R =  (0._SP,0._SP) 
+    SC_R =cZERO
     do i1=1,SC_bands(1)-1
       SC_R(i1,i1,:,:)=cONE
     enddo
  endif
  !
+ Ho_plus_Sigma=cZERO
+ !
+ call pp_indexes_reset(px)
+ call par_indexes(px,(/QP_nk/))
+ !
  do ik=1,QP_nk 
    !
-   if (.not.RT_k_px%element_1D(ik)) cycle
+   if (.not.px%element_1D(ik)) cycle
    !
-   ! Here I fill H_nl_sc (which defined I1 and I2) with...
+   ! Here I fill H_nl_sc with...
    !
-   H_nl_sc=(0._SP,0._SP)
+   H_nl_sc=cZERO
    !
    ! Non-local XC potentials (like CHOSEX)
    !=======================================
@@ -158,7 +153,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.NE_dynamics) then 
      !      
      call V_by_V_plus_V(SC_nbands,cONE,-XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
-&                      H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+&                    H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
      !
      H_nl_sc=H_nl_sc*(1._SP+tanh((Time+(RT_step*real(Thermal_steps))/2._SP)/ &
 &            (RT_step*real(Thermal_steps))/SwitchOnTime))/2._SP
@@ -187,52 +182,18 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    if(allocated(SC_R))  SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)= &
 &                            H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
    !
-   ! Now I1 and I2 
-   !===============
-   !
-   call M_by_M('n','n',SC_nbands,H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1),G_input(:,:,ik),I1_lesser(:,:,ik))
-   call M_by_M('n','n',SC_nbands,G_input(:,:,ik),H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1),I2_lesser(:,:,ik))
-   !
-#if defined _ELPH
-   !
-   ! El-Ph
-   !=======
-   if (l_ph_corr) call RT_ELPH_total_Kernel(ik,Xen,k,q,Time)
-   !
-#endif
-   !
-   ! Damping
-   !=========
-   !
-   ! Fictitious lifetime equivalent to the broadening
-   ! in linear optics
-   !   
-   ! This term kill the induced polarization, namely off-diagonal term in the
-   ! Green function
-   !
-   ! This term send the electron distribution into the initial one
-   ! G_lesser_refence(:,:,:) 
-   !
-   if(RT_is_dumped.and.NE_dynamics) then
-     !
-     do i1=SC_bands(1),SC_bands(2)
-       do i2=SC_bands(1),SC_bands(2)
-         I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI*RT_Deph_Matrix(i1,i2,ik)*(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))
-       enddo
-     enddo
-     !
-   endif
-   !
+   Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)= &
+&        H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
+   !  
  enddo  !---- loop on k-points
  !
  if(allocated(SC_R)) call pp_redux_wait(SC_R(:,:,:,1))
- ! 
- ! When there is the el-ph Kernel the parallelization is done on the q-points 
- ! 
- if (.not.l_ph_corr) then
-   call pp_redux_wait(I1_lesser)
-   call pp_redux_wait(I2_lesser)
- endif
+ call pp_redux_wait(Ho_plus_Sigma(:,:,:,1))
+ call pp_indexes_reset(px) 
+ !
+ ! Calculate all relaxation terms
+ ! ==============================
+ call RT_relaxation(G_input,Xen,k,q,Time)  
  !
 end subroutine RT_Collision
 

@@ -98,8 +98,8 @@ module functions
    ! Lifetime functions e2et/h2ht
    !------------------------------
    !
-   ! Gamma_n = 2 i \sum_m  { -/+ i Im[e^-1(e_n -e_m) (2-f+bose_f) <- e2et
-   !                           + i Im[e^-1(e_m -e_n) (f+bose_f)   <- h2ht }
+   ! Gamma_n = 2 i \sum_m  { -/+ i Im[e^-1(e_n -e_m) (spin_occ-f+bose_f) <- e2et
+   !                           + i Im[e^-1(e_m -e_n) (         f+bose_f) <- h2ht }
    !
    ! where - for T-ordered theory, + for causal (finite Tel)
    !

@@ -29,7 +29,6 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,X_alloc
  use wave_func,      ONLY:WF_load,WF_free
- use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bz_samp,qindx_free
  use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &

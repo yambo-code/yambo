@@ -5458,9 +5458,12 @@ if test "${enable_open_mp+set}" = set; then :
 fi
 
 if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
-openmp_cpp="-D_OPENMP"
+openmp_cpp=" "
 OPENMPLIBS=" "
-if test x"$enable_open_mp" = "xyes"; then OPENMPLIBS="-openmp -lpthread"; fi
+if test x"$enable_open_mp" = "xyes"; then
+ OPENMPLIBS="-openmp -lpthread";
+ openmp_cpp="-D_OPENMP"
+fi
 
 # ============================================================================
 #

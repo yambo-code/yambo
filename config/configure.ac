@@ -169,9 +169,12 @@ AC_SUBST(PW_CPP)
 #
 AC_ARG_ENABLE(open-mp, AC_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
 if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
-openmp_cpp="-D_OPENMP"
+openmp_cpp=" "
 OPENMPLIBS=" "
-if test x"$enable_open_mp" = "xyes"; then OPENMPLIBS="-openmp -lpthread"; fi
+if test x"$enable_open_mp" = "xyes"; then 
+ OPENMPLIBS="-openmp -lpthread"; 
+ openmp_cpp="-D_OPENMP"
+fi
 AC_SUBST(OPENMPLIBS)
 # ============================================================================
 #

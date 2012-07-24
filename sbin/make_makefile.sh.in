@@ -52,7 +52,6 @@ for arg in $@; do
    fc="\$(pf90)" ;
    fcflags="\$(pf90flags)"
    llmpi="\$(lmpi)"
-   llopenmp="\$(lopenmp)"
    ;;
   -D_NETCDF_IO|-D_64BIT_OFFSET)
    dopts="$dopts $arg";
@@ -77,7 +76,7 @@ fi
 case $target in
   yambo*)
    llibs="$llibs \$(lscalapack) -lpwdiago \$(llapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec \$(llocal) \$(lfftw) $lopenmp -lm $llmpi"
+   llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
   a2y|elk2y|c2y)
    llibs="-lint_modules $llibs \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"

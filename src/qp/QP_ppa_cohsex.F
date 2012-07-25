@@ -62,7 +62,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  type(w_samp) ::Xw
  integer      ::GW_iter
  !
- complex(SP), external :: eet_terminator
+ complex(SP), external :: QP_ppa_EET_terminator
  !
  ! Work Space
  !
@@ -482,7 +482,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          do ig2=1,X%ng
            do i4=1,QP_dSc_steps
              QP_Sc(i_qp,i4)=QP_Sc(i_qp,i4)+4._SP/spin_occ*pi*PPaR(ig1,ig2)*eet_factor(ig1,ig2)* &
-&                     eet_terminator(E_(i4),E,isc%is,PPaP(ig1,ig2),ig1,ig2,isc%qs(2),eet_cutoff(1))
+&                     QP_ppa_EET_terminator(E_(i4),E,isc%is,PPaP(ig1,ig2),ig1,ig2,isc%qs(2),eet_cutoff(1))
              enddo
            enddo
          enddo

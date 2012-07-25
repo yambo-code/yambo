@@ -50,7 +50,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  type(QP_t)       ::qp_from_dbs(max_n_of_dbs)
  character(lchlen)::qp_msg,qp_db_name,dummy_db_name
  integer          :: i1,i2,i_sp,n_qp_db
- logical          :: l_plan_todo_EWZI(4),& ! = ( E W Z INTERPOLATION )
+ logical          :: l_plan_todo_EWZI(5),& ! = ( E W Z INTERPOLATION/k INTERPOLATION/E )
 &                    QPs_DB,GFs_DB
  logical,external :: QP_check_if_corrected
  !
@@ -174,7 +174,11 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
        if (.not.l_plan_todo_EWZI(2)) l_plan_todo_EWZI(2)=any((/trim(db_piece(i1))=="W",trim(db_piece(i1))=="w"/))
        if (.not.l_plan_todo_EWZI(3)) l_plan_todo_EWZI(3)=any((/trim(db_piece(i1))=="Z",trim(db_piece(i1))=="z"/))
        if (.not.l_plan_todo_EWZI(4)) l_plan_todo_EWZI(4)=any((/trim(db_piece(i1))=="ui",trim(db_piece(i1))=="uI",&
-&                                    trim(db_piece(i1))=="UI",trim(db_piece(i1))=="Ui"/))
+&                                                              trim(db_piece(i1))=="UI",trim(db_piece(i1))=="Ui",&
+&                                                              trim(db_piece(i1))=="uki",trim(db_piece(i1))=="ukI",&
+&                                                              trim(db_piece(i1))=="UkI",trim(db_piece(i1))=="Uki"/))
+       if (.not.l_plan_todo_EWZI(5)) l_plan_todo_EWZI(5)=any((/trim(db_piece(i1))=="uei",trim(db_piece(i1))=="ueI",&
+&                                                              trim(db_piece(i1))=="UeI",trim(db_piece(i1))=="Uei"/))
      else if (GFs_DB) then
        if (.not.GFs_from_DB) GFs_from_DB=any((/trim(db_piece(i1))=="G",trim(db_piece(i1))=="g"/))
      endif

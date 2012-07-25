@@ -24,7 +24,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_collisions_IO,l_ph_corr
  use stderr,         ONLY:set_real_printed_length
- use units,          ONLY:FS2AUT
+ use units,          ONLY:FS2AUT,HA2EV
  use timing,         ONLY:live_timing 
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,X_alloc
@@ -101,6 +101,13 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  !================
  !
  call QP_apply(SC_bands,Xen,Xk,"G",msg_fmt='s')
+ ! DEBUG >
+ !do ik=1,Xen%nk
+ !  do ib=SC_bands(1),SC_bands(2)
+ !    write (100,*) Xen%E(ib,ik,1)*HA2EV,Xen%W(ib,ik,1)*HA2EV/1000.
+ !  enddo
+ !enddo
+ ! DEBUG <
  !
  ! Core initialization
  !

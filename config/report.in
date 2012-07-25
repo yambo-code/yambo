@@ -17,7 +17,7 @@
 # [@NETCDF_str@@HDF5_str@@NETCDF_LF_str@] NETCDF/HDF5/Large Files 
 # [@BLAS_str@@LAPACK_str@@LOCAL_str@] Built-in BLAS/LAPACK/LOCAL
 #
-# [ CPP ] @C_AS_CPP@ @C_AS_CPP_FLAGS@
+# [ CPP ] @C_AS_CPP@ @C_AS_CPP_FLAGS@ @OPENMPLIBS@
 # [  C  ] @CC@ @CFLAGS@
 # [MPICC] @PCC@ @PCCFLAGS@
 # [ F90 ] @F90@ @FCFLAGS@ @OPENMPLIBS@

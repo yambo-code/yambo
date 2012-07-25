@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function eet_terminator(W,e,vs,Ep,ig1,ig2,iq,cutoff)
+function QP_ppa_EET_terminator(W,e,vs,Ep,ig1,ig2,iq,cutoff)
  !
  ! Terminator for the PPA self-energy using the zero order
  ! effective-energy technique(EET) PRB 85, 085126 (2012)
@@ -42,7 +42,7 @@ function eet_terminator(W,e,vs,Ep,ig1,ig2,iq,cutoff)
  type(levels),  intent(in) :: E
  integer,       intent(in) :: vs(4)
  !
- complex(SP) :: eet_terminator
+ complex(SP) :: QP_ppa_EET_terminator
  !
  ! Work space
  !
@@ -67,6 +67,6 @@ function eet_terminator(W,e,vs,Ep,ig1,ig2,iq,cutoff)
  !
  lW=W
  if (Finite_Tel) lW=conjg(W)
- eet_terminator=real(spin_occ)/(lW-eet_energy-Ep) 
+ QP_ppa_EET_terminator=real(spin_occ)/(lW-eet_energy-Ep) 
  !
 end function

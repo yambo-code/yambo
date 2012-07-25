@@ -40,11 +40,12 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  type(QP_t)  ::qp
  type(bz_samp)::k
  integer :: n_neigh,band_range(2),DB_corrected(en%nb,en%nk,n_sp_pol)
- logical :: l_plan_todo_EWZI(4),wrong_width_sign_warn
+ logical :: l_plan_todo_EWZI(5),wrong_width_sign_warn
  !
  ! Work Space
  !
- integer  :: i1,i2,i_spin,ikbz,order(qp%nk),k_near(n_neigh),nk_interpolated,nk_exact,i_err
+ integer  :: i1,i2,i_spin,ikbz,order(qp%nk),k_near(n_neigh),nk_interpolated,&
+&            nk_exact,i_err,ik_ref,ib_ref
  real(SP) :: idist(qp%nk),odist(qp%nk),k_dist(n_neigh)
  !
  integer, external :: k_the_nearest
@@ -59,46 +60,70 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  nk_interpolated=0
  nk_exact=0
  !
- do i1=1,k%nibz
-   k_near=0
-   k_dist=1.E5
-   idist=1.E5
+ if (l_plan_todo_EWZI(4)) then
    !
-   do i2=1,qp%nk
-     do ikbz=1+sum(k%nstar(:i1-1)),sum(k%nstar(:i1))
-       idist(i2)=min(idist(i2),kmin_distance(qp%k(i2,:),k%ptbz(ikbz,:)))
+   ! Nearest K-point interpolation
+   !===============================
+   !
+   do i1=1,k%nibz
+     !
+     k_near=0
+     k_dist=1.E5
+     idist=1.E5
+     !
+     do i2=1,qp%nk
+       do ikbz=1+sum(k%nstar(:i1-1)),sum(k%nstar(:i1))
+         idist(i2)=min(idist(i2),kmin_distance(qp%k(i2,:),k%ptbz(ikbz,:)))
+       enddo
+     enddo
+     !
+     if (qp%nk>1) then
+       call sort(idist,odist,order)
+       k_near(:min(qp%nk,n_neigh))=order(:min(qp%nk,n_neigh))
+       k_dist(:min(qp%nk,n_neigh))=odist(:min(qp%nk,n_neigh))
+     else
+       k_near(1)=1
+       k_dist(1)=idist(1)
+     endif
+     !
+     ! Transfer OR interpolate
+     !
+     ! First I check if there is an exact correposndance
+     ! between k%pt and qp%k. This exists when i_err==0
+     !
+     k_near(1)=k_the_nearest(k%pt(i1,:),qp%k,qp%nk,.TRUE.,i_err)
+     if (i_err==0.and.n_neigh==1) then
+       call qp_transfer(k_near(1),i1,1)
+       nk_exact=nk_exact+1
+     else if (l_plan_todo_EWZI(4)) then
+       call qp_transfer(k_near,i1,n_neigh)
+       nk_interpolated=nk_interpolated+1
+     endif
+     !
+   enddo
+   !
+   call msg('sr','[QP] Kpts covered exactly  [o/o]:',real(nk_exact)/real(k%nibz)*100._SP)
+   if (l_plan_todo_EWZI(4).and.nk_interpolated>0) then
+     call msg('r','[Interpolate] Nighbours         :',n_neigh)
+     call msg('r','[Interpolate] Kpts covered [o/o]:',real(nk_interpolated)/real(k%nibz)*100._SP)
+   endif
+   !
+ else if (l_plan_todo_EWZI(5)) then
+   !
+   ! Nearest Level interpolation
+   !===============================
+   !
+   do i1=1,k%nibz
+     do i2=band_range(1),band_range(2)
+       do i_spin=1,n_sp_pol
+         !
+         call Nearest_level_interpolation(En%Eo(i2,i1,i_spin)-minval(En%Eo(:,:,:)),&
+&                                         qp%E_bare,qp%n_states,1,ib_ref,ik_ref,.TRUE.)
+         !
+       enddo
      enddo
    enddo
    !
-   if (qp%nk>1) then
-     call sort(idist,odist,order)
-     k_near(:min(qp%nk,n_neigh))=order(:min(qp%nk,n_neigh))
-     k_dist(:min(qp%nk,n_neigh))=odist(:min(qp%nk,n_neigh))
-   else
-     k_near(1)=1
-     k_dist(1)=idist(1)
-   endif
-   !
-   ! Transfer OR interpolate
-   !
-   ! First I check if there is an exact correposndance
-   ! between k%pt and qp%k. This exists when i_err==0
-   !
-   k_near(1)=k_the_nearest(k%pt(i1,:),qp%k,qp%nk,.TRUE.,i_err)
-   if (i_err==0.and.n_neigh==1) then
-     call qp_transfer(k_near(1),i1,1)
-     nk_exact=nk_exact+1
-   else if (l_plan_todo_EWZI(4)) then
-     call qp_transfer(k_near,i1,n_neigh)
-     nk_interpolated=nk_interpolated+1
-   endif
-   !
- enddo
- !
- call msg('sr','[QP] Kpts covered exactly  [o/o]:',real(nk_exact)/real(k%nibz)*100._SP)
- if (l_plan_todo_EWZI(4).and.nk_interpolated>0) then
-   call msg('r','[Interpolate] Nighbours         :',n_neigh)
-   call msg('r','[Interpolate] Kpts covered [o/o]:',real(nk_interpolated)/real(k%nibz)*100._SP)
  endif
  !
  if (all(DB_corrected(band_range(1):band_range(2),:,:)==1)) l_plan_todo_EWZI(:3)=.false.

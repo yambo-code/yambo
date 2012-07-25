@@ -200,11 +200,11 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    !
    call sort(arrin=RT_E,indx=RT_E_indx)
    !
-   call interpolate(E%E(:SC_bands(2),:,1),E%f(:SC_bands(2),:,1),SC_bands(2),k%nibz,.FALSE.)
+   call interpolate(E%E(:SC_bands(2),:,1),E%f(:SC_bands(2),:,1),SC_bands(2),k%nibz)
    !
    if (associated(E%f_RIM)) then
      Nb_to_int=min(SC_bands(2),BZ_RIM_nbands)
-     call interpolate(E%E_RIM(:Nb_to_int,:,1),E%f_RIM(:Nb_to_int,:,1),Nb_to_int,BZ_RIM_tot_nkpts,.TRUE.)
+     call interpolate(E%E_RIM(:Nb_to_int,:,1),E%f_RIM(:Nb_to_int,:,1),Nb_to_int,BZ_RIM_tot_nkpts)
    endif
    !
    call mem_est("RT_occupations")
@@ -244,10 +244,9 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  !
  contains
    !
-   subroutine interpolate(En,Fn,Nb,Nk,REPORT)
+   subroutine interpolate(En,Fn,Nb,Nk)
      real(SP) :: En(Nb,Nk),Fn(Nb,Nk),E_diff,E_bottom
      integer  :: Nb,Nk,ib_occ(2),ik_occ(2)
-     logical  :: REPORT
      !
      E_bottom=minval(En(:,:))
      Fn(SC_bands(1)+1:,:)=0.

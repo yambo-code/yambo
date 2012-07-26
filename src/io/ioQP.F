@@ -118,7 +118,7 @@ integer function ioQP(what,qp,ID)
      if (ver_is_gt_or_eq(ID,revision=1255)) var_size=6 
      if (ver_is_gt_or_eq(ID,revision=1339)) var_size=7 
    endif
-   if (what/="W".and.ver_is_gt_or_eq(ID,(/3,2,5/))) var_size=7 
+   if (what/="W".and.ver_is_gt_or_eq(ID,(/3,2,5/))) var_size=9 
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=var_size,MENU=0)
    !

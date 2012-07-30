@@ -56,8 +56,8 @@ subroutine Nearest_level_interpolation(Energy,E_reference,Nb,Nk,ib_ref,ik_ref,SI
    if (E_diff<E_diff_tresh) then
      !
      if (SINGLE_ARRAY) then
-       ib_ref= i1
-       ik_ref= i1
+       ib_ref= E_indx(i1)
+       ik_ref= E_indx(i1)
      else
        ib_ref=E_table( E_indx(i1), 1)
        ik_ref=E_table( E_indx(i1), 2)
@@ -68,7 +68,5 @@ subroutine Nearest_level_interpolation(Energy,E_reference,Nb,Nk,ib_ref,ik_ref,SI
    endif
    !
  enddo
- !
- !write (*,*) Energy,E_single_array(ib_ref)+E_single_array(1)
  !
 end subroutine Nearest_level_interpolation

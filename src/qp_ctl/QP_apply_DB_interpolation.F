@@ -27,7 +27,6 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  !
  ! l_plan_todo_EWZI=( E W Z Interp )
  !
- use pars,          ONLY:SP
  use electrons,     ONLY:n_sp_pol,spin
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels
@@ -49,6 +48,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  real(SP) :: idist(qp%nk),odist(qp%nk),k_dist(n_neigh)
  !
  integer, external :: k_the_nearest
+ logical, external :: QP_check_if_corrected
  !
  ! IBZ -> BZ (iku)
  !
@@ -118,7 +118,31 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
        do i_spin=1,n_sp_pol
          !
          call Nearest_level_interpolation(En%Eo(i2,i1,i_spin)-minval(En%Eo(:,:,:)),&
-&                                         qp%E_bare,qp%n_states,1,ib_ref,ik_ref,.TRUE.)
+&                                         qp%E_bare(:),qp%n_states,1,ib_ref,ik_ref,.TRUE.)
+         !
+         if (l_plan_todo_EWZI(1)) then
+           if (QP_check_if_corrected((/i2,i2/),(/i1,i1/),(/i_spin,i_spin/),en,'E')) cycle
+           en%E(i2,i1,i_spin)=en%Eo(i2,i1,i_spin)+qp%E(ib_ref)-qp%E_bare(ib_ref)
+           DB_corrected(i2,i1,i_spin)=1
+         endif
+         !
+         if (l_plan_todo_EWZI(2)) then
+           if (QP_check_if_corrected((/i2,i2/),(/i1,i1/),(/i_spin,i_spin/),en,'W')) cycle
+           if (real(qp%E(ib_ref))>0..and.aimag(qp%E(ib_ref))>0) then
+             if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
+             en%W(i2,i1,i_spin)=-aimag(qp%E(ib_ref))
+             wrong_width_sign_warn=.true.
+           else
+             en%W(i2,i1,i_spin)=aimag(qp%E(ib_ref))
+           endif
+           DB_corrected(i2,i1,i_spin)=1
+         endif
+         !
+         if (l_plan_todo_EWZI(3)) then
+           if (QP_check_if_corrected((/i2,i2/),(/i1,i1/),(/i_spin,i_spin/),en,'E')) cycle
+           en%Z(i2,i1,i_spin)=qp%Z(ib_ref)
+           DB_corrected(i2,i1,i_spin)=1
+         endif
          !
        enddo
      enddo
@@ -144,7 +168,6 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
      real(SP)   :: Dl(band_range(2),n_sp_pol),Wl(band_range(2),n_sp_pol)
      complex(SP):: Zl(band_range(2),n_sp_pol)
      integer    :: i3,i4,bqp
-     logical    :: QP_check_if_corrected
      !
      Dl=0.
      Wl=0.

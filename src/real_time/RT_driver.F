@@ -101,13 +101,6 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  !================
  !
  call QP_apply(SC_bands,Xen,Xk,"G",msg_fmt='s')
- ! DEBUG >
- !do ik=1,Xen%nk
- !  do ib=SC_bands(1),SC_bands(2)
- !    write (100,*) Xen%E(ib,ik,1)*HA2EV,Xen%W(ib,ik,1)*HA2EV/1000.
- !  enddo
- !enddo
- ! DEBUG <
  !
  ! Core initialization
  !

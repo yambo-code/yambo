@@ -27,6 +27,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  !
  ! l_plan_todo_EWZI=( E W Z Interp )
  !
+ use pars,          ONLY:SP
  use electrons,     ONLY:n_sp_pol,spin
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels

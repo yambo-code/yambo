@@ -111,6 +111,15 @@ subroutine el_magnetization(en,Xk)
    !
  enddo
  !
+ ! Work around for systems with SO but no magnetization
+ if (n_spinor==2) then
+   do i1=1,3
+     do i2=1,fft_size
+       if(magn(i2,i1)==0) magn(i2,i1)=1.E-18*(-1.)**(i1+i2)
+     enddo
+   enddo
+ endif
+ !
  do i1=1,fft_size
    Total_magn(:)=Total_magn(:)+magn(i1,:)
  enddo

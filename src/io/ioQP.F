@@ -113,8 +113,12 @@ integer function ioQP(what,qp,ID)
    if (ioQP/=0) goto 1
    !
    var_size=4
-   if (what/="W".and.ver_is_gt_or_eq(ID,(/3,0,1/))) var_size=5 
-   if (what/="W".and.ver_is_gt_or_eq(ID,(/3,2,5/))) var_size=7 
+   if (what/="W")then
+     if (ver_is_gt_or_eq(ID,(/3,0,1/)))     var_size=5 
+     if (ver_is_gt_or_eq(ID,revision=1255)) var_size=6 
+     if (ver_is_gt_or_eq(ID,revision=1339)) var_size=7 
+   endif
+   if (what/="W".and.ver_is_gt_or_eq(ID,(/3,2,5/))) var_size=9 
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=var_size,MENU=0)
    !
@@ -126,10 +130,19 @@ integer function ioQP(what,qp,ID)
    call io_elemental(ID,I0=qp%n_states,DB_I0=QP_n_states_disk,&
 &       VAR=' QP tot states          :',CHECK=.true.,OP=OP)
    !
-   if (ver_is_gt_or_eq(ID,(/3,0,1/)).and.what/="W") &
-&    call io_elemental(ID,I0=GWo_iterations,&
-&       VAR=' GW SC iterations       :',CHECK=.true.,OP=(/"=="/))
-   !
+   if (what/="W") then
+     if (ver_is_gt_or_eq(ID,(/3,0,1/))) &
+&      call io_elemental(ID,I0=GWo_iterations,&
+&                        VAR=' GW SC iterations       :',CHECK=.true.,OP=(/"=="/))
+     !
+     if (ver_is_gt_or_eq(ID,revision=1255)) &
+&      call io_elemental(ID,L0=PPa_terminator,&
+&                        VAR=' Self-energy terminator :',CHECK=.true.,OP=(/"=="/))
+     if (ver_is_gt_or_eq(ID,revision=1339)) &
+        call io_elemental(ID,R0=GW_en_comp,&
+&                         VAR=' Self-energy terminator pole:',CHECK=.true.,OP=(/"=="/))
+   endif
+   !    
    if (ver_is_gt_or_eq(ID,(/3,2,5/)).and.what/="W") then
      call io_elemental(ID,L0=PPa_terminator,&
 &       VAR=' Self-energy terminator :',CHECK=.true.,OP=(/"=="/))

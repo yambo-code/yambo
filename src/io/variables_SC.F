@@ -67,6 +67,8 @@ integer function variables_SC(ID,local_description,what)
 #endif
  !
  i_desc=0
+ local_description=' '
+ !
  CHECK_=.TRUE.
  if (l_NSC_shot) CHECK_=.FALSE.
  !

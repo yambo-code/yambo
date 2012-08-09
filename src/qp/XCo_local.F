@@ -136,7 +136,8 @@ subroutine XCo_local(E,Xk)
    if (n_sp_pol==1) then
      do ifft=1,fft_size
        mod_mag=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
-       magn(ifft,:)=magn(ifft,:)/mod_mag
+       if(mod_mag==0) magn(ifft,:)=0
+       if(mod_mag/=0) magn(ifft,:)=magn(ifft,:)/mod_mag
      enddo
    else
      magn(:,3)=1.
@@ -203,6 +204,13 @@ subroutine XCo_local(E,Xk)
  !
 #if !defined _SC
  deallocate(V_xc,magn)
+#else
+ if(n_spinor==2) then
+   do ifft=1,fft_size
+     mod_mag=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
+     magn(ifft,:)=magn(ifft,:)*mod_mag
+   enddo
+ endif
 #endif
  ! 
  ! GPL_EXCLUDE_END SPIN_IGNORE

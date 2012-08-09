@@ -161,8 +161,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (ioBS_Fxc_err==0) then
    if (BS_res_K_corr) then
-     deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states,Scattering_table)
-     call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states Scattering_table")
+     deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
+     call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
    endif
    return
  endif
@@ -670,6 +670,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
+   deallocate(Scattering_table)
+   call mem_est("Scattering_table")
    deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
    call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
    deallocate(O_phase,ik_is_table)

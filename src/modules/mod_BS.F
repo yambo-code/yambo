@@ -115,7 +115,7 @@ module BS
      integer               ::iq
      integer               ::iter
      complex(SP)           ::Vi(:),Vo(:)
-     real(SP), optional     ::iter_par
+     real(SP),optional     ::iter_par
    end subroutine
    !
    integer function variables_BS(ID,local_description,X)

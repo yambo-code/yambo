@@ -33,7 +33,7 @@ subroutine k_random(Xk,Xen)
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
 &                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling,&
-&                              BZ_RIM_ipol_weight                       
+&                              BZ_RIM_ipol_weight,n_sp_pol
  use timing,              ONLY:live_timing
  use IO_m,                ONLY:io_control,NONE,OP_WR_CL
  !

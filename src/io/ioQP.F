@@ -117,8 +117,8 @@ integer function ioQP(what,qp,ID)
      if (ver_is_gt_or_eq(ID,(/3,0,1/)))     var_size=5 
      if (ver_is_gt_or_eq(ID,revision=1255)) var_size=6 
      if (ver_is_gt_or_eq(ID,revision=1339)) var_size=7 
+     if (ver_is_gt_or_eq(ID,revision=1385)) var_size=9 
    endif
-   if (what/="W".and.ver_is_gt_or_eq(ID,(/3,2,5/))) var_size=9 
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=var_size,MENU=0)
    !
@@ -141,13 +141,12 @@ integer function ioQP(what,qp,ID)
      if (ver_is_gt_or_eq(ID,revision=1339)) &
         call io_elemental(ID,R0=GW_en_comp,&
 &                         VAR=' Self-energy terminator pole:',CHECK=.true.,OP=(/"=="/))
-   endif
-   !    
-   if (ver_is_gt_or_eq(ID,(/3,2,5/)).and.what/="W") then
-     call io_elemental(ID,L0=PPa_terminator,&
-&       VAR=' Self-energy terminator :',CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,R0=GW_en_comp,&
-&       VAR=' Self-energy terminator pole:',CHECK=.true.,OP=(/"=="/))
+     if (ver_is_gt_or_eq(ID,revision=1385)) then
+       call io_elemental(ID,L0=PPa_terminator,&
+&         VAR=' Self-energy terminator :',CHECK=.true.,OP=(/"=="/))
+       call io_elemental(ID,R0=GW_en_comp,&
+&         VAR=' Self-energy terminator pole:',CHECK=.true.,OP=(/"=="/))
+     endif
    endif
    !    
    call io_elemental(ID,I0=qp%n_descs,DB_I0=n_descs_disk,CHECK=.true.,OP=OP)

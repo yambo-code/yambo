@@ -47,12 +47,12 @@ subroutine XCo_local(E,Xk)
  !
  ! Work Space
  !
- integer     ::i1,ifft,ifftp,ifft_sp1,ifftp_sp1,ifft_sp2,ib,ibp,ik,i_sp1
+ integer     ::i1,ifft,iwf,iwfp,iwf_sp1,iwfp_sp1,iwf_sp2,iwfp_sp2,ib,ibp,ik,i_sp
  complex(SP) ::c_ws(fft_size,n_spin)
  !
  ! Spin support (collinear and not collinear)
  !
- real(SP)    :: mod_mag,vxc_plus(fft_size),vxc_minus(fft_size)
+ real(SP)    :: mod_mag,magn_versor(fft_size,3),vxc_plus(fft_size),vxc_minus(fft_size)
  complex(SP) :: V_xc_mat(fft_size,n_spin,n_spin)
  logical     :: l_call_the_driver
  !
@@ -61,7 +61,7 @@ subroutine XCo_local(E,Xk)
  if (.not.allocated(V_xc))   allocate(V_xc(fft_size,n_spin))
  !
  ! GPL_EXCLUDE_START  SPIN_IGNORE
- if (.not.allocated(magn)) allocate(magn(fft_size,3))
+ if (n_spin>1.and..not.allocated(magn)) allocate(magn(fft_size,3))
  ! GPL_EXCLUDE_END  SPIN_IGNORE
  !
  ! Precompiler options in case a non-DFT potential is required
@@ -107,21 +107,15 @@ subroutine XCo_local(E,Xk)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
      !
-     ! <ifft|V_xc|ifftp>
+     ! <iwf|V_xc|iwfp>
      !
-     ifft =wf_state(ib,ik,1)
-     ifftp=wf_state(ibp,ik,1)
-     c_ws(:,1)=V_xc(:,1)*wf(:,ifftp)
+     iwf =wf_state(ib,ik,1)
+     iwfp=wf_state(ibp,ik,1)
+     c_ws(:,1)=V_xc(:,1)*wf(:,iwfp)
      !
-     QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,ifft),c_ws(:,1))
+     QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,iwf),c_ws(:,1))
      !
    enddo
-   !
-   ! GPL_EXCLUDE_START  SPIN_IGNORE
-   !
-   deallocate(magn)
-   !
-   ! GPL_EXCLUDE_END  SPIN_IGNORE
    !
    return
    !
@@ -131,68 +125,70 @@ subroutine XCo_local(E,Xk)
  !
  if (n_spin==2) then
    !
-   ! Magnetization, V_xc + and -
-   !
-   if (n_sp_pol==1) then
-     do ifft=1,fft_size
-       mod_mag=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
-       if(mod_mag==0) magn(ifft,:)=0
-       if(mod_mag/=0) magn(ifft,:)=magn(ifft,:)/mod_mag
-     enddo
-   else
-     magn(:,3)=1.
-   endif
-   !
-   ! Vxc^+=(Vxc_up+Vxc_down)/2
-   ! Vxc^+=(Vxc_up-Vxc_down)/2
-   !
-   vxc_plus(:) =(V_xc(:,1)+V_xc(:,2))/2._SP
-   vxc_minus(:)=(V_xc(:,1)-V_xc(:,2))/2._SP
-   !
    V_xc_mat=(0._SP,0._SP)
-   !
    !
    ! V_xc_mat ( 1 , 1 ) = up up
    ! V_xc_mat ( 1 , 2 ) = up dn
    ! V_xc_mat ( 2 , 1 ) = dn up
    ! V_xc_mat ( 2 , 2 ) = dn dn
    !
-   V_xc_mat(:,1,1)= (vxc_plus(:)+vxc_minus(:)*magn(:,3))
-   V_xc_mat(:,2,2)= (vxc_plus(:)-vxc_minus(:)*magn(:,3))
+   ! Magnetization, V_xc + and -
    !
-   if (n_spinor>1) then
+   if (n_spinor==1) then
      !
-     V_xc_mat(:,1,2)= vxc_minus(:)*(magn(:,1)-(0.,1.)*magn(:,2))
-     V_xc_mat(:,2,1)= vxc_minus(:)*(magn(:,1)+(0.,1.)*magn(:,2))
+     V_xc_mat(:,1,1)= V_xc(:,1)
+     V_xc_mat(:,2,2)= V_xc(:,2)
+     !
+   else if (n_spinor==2) then
+     !
+     magn_versor=0.
+     do ifft=1,fft_size
+       mod_mag=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
+       if(mod_mag==0) magn_versor(ifft,:)=0.
+       if(mod_mag/=0) magn_versor(ifft,:)=magn(ifft,:)/mod_mag
+     enddo
+     !
+     ! Vxc^+=(Vxc_up+Vxc_down)/2
+     ! Vxc^+=(Vxc_up-Vxc_down)/2
+     vxc_plus(:) =(V_xc(:,1)+V_xc(:,2))/2._SP
+     vxc_minus(:)=(V_xc(:,1)-V_xc(:,2))/2._SP
+     !
+     V_xc_mat(:,1,1)= (vxc_plus(:)+vxc_minus(:)*magn_versor(:,3))
+     V_xc_mat(:,2,2)= (vxc_plus(:)-vxc_minus(:)*magn_versor(:,3))
+     !
+     V_xc_mat(:,1,2)= vxc_minus(:)*(magn_versor(:,1)-(0.,1.)*magn_versor(:,2))
+     V_xc_mat(:,2,1)= vxc_minus(:)*(magn_versor(:,1)+(0.,1.)*magn_versor(:,2))
      !
    endif
    !
    do i1=1,QP_n_states
      !
-     ib=QP_table(i1,1)
+     ib =QP_table(i1,1)
      ibp=QP_table(i1,2)
-     ik=QP_table(i1,3)
+     ik =QP_table(i1,3)
      !
-     if (n_sp_pol==2) then
+     if (n_spinor==1) then
        !
-       i_sp1=spin(QP_table(i1,:))
-       ifft_sp1=wf_state(ib,ik,i_sp1)
-       ifftp_sp1=wf_state(ibp,ik,i_sp1)
+       i_sp=spin(QP_table(i1,:))
+       iwf =wf_state(ib,ik,i_sp)
+       iwfp=wf_state(ibp,ik,i_sp)
        !
-       c_ws(:,1)=wf(:,ifftp_sp1)*V_xc_mat(:,i_sp1,i_sp1)
+       c_ws(:,1)=V_xc_mat(:,i_sp,i_sp)*wf(:,iwfp)
        !
-       QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,ifft_sp1),c_ws(:,1))
+       QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,iwf),c_ws(:,1))
        !
      else
        !
-       ifft_sp1=wf_state(ib,ik,1)
-       ifft_sp2=wf_state(ib,ik,2)
+       iwf_sp1=wf_state(ib,ik,1)
+       iwf_sp2=wf_state(ib,ik,2)
+       iwfp_sp1=wf_state(ibp,ik,1)
+       iwfp_sp2=wf_state(ibp,ik,2)
        !
-       c_ws(:,1)=V_xc_mat(:,1,1)*wf(:,ifft_sp1)+V_xc_mat(:,1,2)*wf(:,ifft_sp2)
-       c_ws(:,2)=V_xc_mat(:,2,1)*wf(:,ifft_sp1)+V_xc_mat(:,2,2)*wf(:,ifft_sp2)
+       c_ws(:,1)=V_xc_mat(:,1,1)*wf(:,iwfp_sp1)+V_xc_mat(:,1,2)*wf(:,iwfp_sp2)
+       c_ws(:,2)=V_xc_mat(:,2,1)*wf(:,iwfp_sp1)+V_xc_mat(:,2,2)*wf(:,iwfp_sp2)
        !
-       QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,ifft_sp1),c_ws(:,1))+&
-&                 Vstar_dot_V(fft_size,wf(:,ifft_sp2),c_ws(:,2))
+       QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,iwf_sp1),c_ws(:,1))+&
+&                 Vstar_dot_V(fft_size,wf(:,iwf_sp2),c_ws(:,2))
        !
      endif
      !
@@ -203,14 +199,8 @@ subroutine XCo_local(E,Xk)
  ! Clean
  !
 #if !defined _SC
- deallocate(V_xc,magn)
-#else
- if(n_spinor==2) then
-   do ifft=1,fft_size
-     mod_mag=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
-     magn(ifft,:)=magn(ifft,:)*mod_mag
-   enddo
- endif
+ deallocate(V_xc)
+ if(n_spin>1) deallocate(magn)
 #endif
  ! 
  ! GPL_EXCLUDE_END SPIN_IGNORE

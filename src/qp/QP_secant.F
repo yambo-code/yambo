@@ -58,6 +58,8 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
 &                        QP_solver_state,QP_dSc_steps,QP_dSc,&
 &                        QP_W_dr,QP_W_er,QP_dSc_delta,QP_W_partially_done
  use IO_m,          ONLY:io_control,NONE,RD,RD_CL,OP_RD
+ use stderr,        ONLY:intc
+ use com,           ONLY:warning
  !
  implicit none
  type(levels)::en,Xen
@@ -68,7 +70,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  !
  ! Work Space 
  !
- integer      :: i1,i2,ID,io_err,iqbz
+ integer      :: i1,i2,ID,io_err,iqbz,nstep,nconv
  type(w_samp) :: Sc_W(qp%n_states)
  real(SP)     :: Eqp_raxis(qp%n_states,2),dQP_raxis(qp%n_states,2)
  complex(SP)  :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
@@ -128,15 +130,35 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  !
  ! Root
  !
+ nstep=0
+ nconv=0
  QP_solver_state=1
  call live_timing('[SECANT]  Root(s)',QP_n_states,SERIAL=.true.)
  do while(any(QP_solver_state>=0))
+   nstep=nstep+1
    do i1=1,qp%n_states
      i2=QP_solver_state(i1)
      QP_solver_state(i1)=secant(Eqp_raxis(i1,1),dQP_raxis(i1,1),&
-&                               Eqp_raxis(i1,2),dQP_raxis(i1,2),root_acc)
-     if (i2>0.and.QP_solver_state(i1)<0) call live_timing(steps=1)
+&                               Eqp_raxis(i1,2),dQP_raxis(i1,2),root_acc,nstep)
+     if (i2>0.and.QP_solver_state(i1)<0) then
+       nconv=nconv+1
+       call live_timing(steps=1)
+     endif
    enddo
+   if (nstep==500) then
+     call warning(' Step 500. '//trim(intc(QP_n_states-nconv))//' state(s) non converged. Max error= '//&
+&                 trim(intc(int(maxval(abs(dQP_raxis))*10E+4)))//"E-4 eV. At step 1500 I'll exit Root(s) loop.")
+   else if (nstep==1500) then
+     call warning(' Step 1500. '//trim(intc(QP_n_states-nconv))//&
+&                 ' state(s) non converged. Secan loop interrupted.')
+     do i1=1,qp%n_states
+       if(QP_solver_state(i1)<0) cycle
+       call warning(' State '//trim(intc(i1))//' not converged. Accuracy obtained'//&
+&                    trim(intc(int(maxval(abs(dQP_raxis(i1,:)))*10E+4)))//'E-4 eV.')
+       QP_solver_state(i1)=-1
+     enddo
+     call live_timing(steps=(QP_n_states-nconv))
+   endif
    call W2Sc_local_call()
  enddo
  call live_timing()

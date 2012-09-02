@@ -25,39 +25,12 @@ module KERR
  !
  implicit none
  !
- logical                  :: chi_nn
- logical                  :: chi_jj
+ logical                  :: l_anomalous_Hall
  integer                  :: iw_ref
- !
- ! BSE via X_nn
+ complex(SP)              :: B_Hall(2)
+ complex(SP), allocatable :: BSS_rhoq0_kerr(:)
  complex(SP), allocatable :: DIP_q_dot_iR_kerr(:,:,:,:)
- !
- ! BSE via X_jj
  complex(SP), allocatable :: DIP_P_symm(:,:,:,:,:)
- !
- ! X
- !
- complex(SP), allocatable :: Xo_head(:,:)
- complex(SP), allocatable :: Xo_wing_R(:,:,:)
- complex(SP), allocatable :: Xo_wing_L(:,:,:)
- !
- complex(SP), allocatable :: X_head(:,:)
- !
- ! BSE
- !
- complex(SP),allocatable  :: BSS_rhoq0_kerr(:)
- !
- interface
-   !
-   subroutine KERR_shadow(what,l_flag,n1,n2,c1)
-     use pars,  ONLY:SP
-     character(*)         :: what
-     integer,optional     :: n1,n2
-     complex(SP),optional :: c1(:)
-     logical,optional     :: l_flag
-   end subroutine
-   !
- end interface
  !
  contains
    !
@@ -74,15 +47,6 @@ module KERR
      !
      if (present(d)) then
        select case(what)
-       case('X')
-         if (allocated(Xo_head)) return
-         allocate(Xo_head(9,d(2)),stat=err)
-         allocate(X_head(9,d(2)) ,stat=err)
-         if(d(1)>1) then
-           allocate(Xo_wing_R(3,d(1)-1,d(2)),stat=err)
-           allocate(Xo_wing_L(3,d(1)-1,d(2)),stat=err)
-           call mem_est(what,(/2*product(d)-d(1)/),errors=(/err/))
-         endif
        case('DIP_q_dot_iR')
          if (allocated(DIP_q_dot_iR_kerr)) return
          allocate(DIP_q_dot_iR_kerr(d(1),d(2),d(3),n_sp_pol),stat=err)
@@ -94,11 +58,6 @@ module KERR
        end select
      else
        select case(what)
-       case('X')
-         if (.not.allocated(Xo_head)) return
-         deallocate(Xo_head,X_head)
-         if(allocated(Xo_wing_R)) deallocate(Xo_wing_R)
-         if(allocated(Xo_wing_L)) deallocate(Xo_wing_L)
        case('DIP_q_dot_iR')
          if (.not.allocated(DIP_q_dot_iR_kerr)) return
          deallocate(DIP_q_dot_iR_kerr)

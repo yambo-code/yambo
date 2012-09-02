@@ -199,10 +199,13 @@ subroutine XCo_local(E,Xk)
  ! Clean
  !
 #if !defined _SC
- deallocate(V_xc)
  if(n_spin>1) deallocate(magn)
 #endif
  ! 
  ! GPL_EXCLUDE_END SPIN_IGNORE
+ !
+#if !defined _SC
+ deallocate(V_xc)
+#endif
  !
 end subroutine

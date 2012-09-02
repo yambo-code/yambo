@@ -28,7 +28,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_bands,BSS_q0,BS_eh_table,BSS_mode,BS_eh_E,&
 &                         BSS_n_descs,BS_K_coupling,BSS_Vnl_included,BS_eh_W,&
-&                         BS_drude_dim
+&                         BS_drude_dim,BS_IP_antires
 #if defined _DISTRIBUTED
  use BS,             ONLY:ioBS_DISTRIBUTED
 #endif
@@ -38,13 +38,13 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use units,          ONLY:HA2EV
  use com,            ONLY:error
  use drivers,        ONLY:l_kerr
- use KERR,           ONLY:chi_jj,chi_nn,DIP_P_symm,KERR_alloc,iw_ref
+ use KERR,           ONLY:DIP_P_symm,KERR_alloc,iw_ref
 #endif
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels,spin_occ,spin
  use R_lattice,      ONLY:d3k_factor,bz_samp,q_norm
  use IO_m,           ONLY:io_control,OP_RD_CL,NONE
-#if defined _SC
+#if defined _SC || defined _KERR
  use fields,         ONLY:global_gauge
 #endif
  !
@@ -104,7 +104,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  call Drude(1,(/1,BSS_n_freqs/),Ken,Xk,W_bss,X_static,drude_GreenF)
  !
  X_oscillators%ib=BS_bands
- if (BS_K_coupling.or.allocated(BS_eh_W)) then
+ if (BS_K_coupling.or.allocated(BS_eh_W).or.BS_IP_antires) then
    allocate(BSS_rhoq0(2*BS_K_dim)) 
    call mem_est("BSS_rhoq0",(/2*BS_K_dim/))
  else
@@ -126,8 +126,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
      !   iq . <c|r|v> = - conjg( iq . <v | r |c> )
      !
 #if defined _KERR
-     if(chi_nn) BSS_rhoq0(i1)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))
-     if(chi_jj) BSS_rhoq0(i1)= conjg(DIP_P_symm(1,ic,iv,ik,i_sp))
+     if(trim(global_gauge)=='length') BSS_rhoq0(i1)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))
+     if(trim(global_gauge)=='velocity') BSS_rhoq0(i1)= conjg(DIP_P_symm(1,ic,iv,ik,i_sp))
 #else
      BSS_rhoq0(i1)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))
 #endif
@@ -135,12 +135,12 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
      ! minus comes from the occupation factor 
      !
 #if defined _KERR
-     if (BS_K_coupling) then
-       if(chi_nn) BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
-       if(chi_jj) BSS_rhoq0(BS_K_dim+i1)=DIP_P_symm(1,ic,iv,ik,i_sp)
+     if (BS_K_coupling.or.BS_IP_antires) then
+       if(trim(global_gauge)=='length') BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
+       if(trim(global_gauge)=='velocity') BSS_rhoq0(BS_K_dim+i1)=DIP_P_symm(1,ic,iv,ik,i_sp)
      endif
 #else
-     if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
+     if (BS_K_coupling.or.BS_IP_antires) BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
 #endif
      !
      ! Drude term
@@ -151,7 +151,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
        !
        X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*BS_eh_f(i1)/&
 &                                    (W_bss%p(:)-BS_eh_E(i1))
-       if (BS_K_coupling) then
+       if (BS_K_coupling.or.BS_IP_antires) then
          !
          ! Note the plus in "+BSS_rhoq0" coming from the BS_eh_f change of sign
          !
@@ -164,7 +164,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
    factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
 #if defined _KERR
-   if(chi_jj) then
+   if(trim(global_gauge)=='velocity') then
      if(all(abs(real(W_bss%p(:)))>0.01))&
 &      call error(' No w close to 0 included in your frequency grid')
      iw_ref=1
@@ -176,8 +176,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
      factor_jj=X_epsilon(3,iw_ref)
    endif
    !
-   if(chi_nn) X_epsilon(3,:)=1.+X_epsilon(3,:)*factor/q_norm(1)**2
-   if(chi_jj) then
+   if(trim(global_gauge)=='length') X_epsilon(3,:)=1.+X_epsilon(3,:)*factor/q_norm(1)**2
+   if(trim(global_gauge)=='velocity') then
      X_epsilon(3,:)=1.+(X_epsilon(3,:)-factor_jj)*factor/(real(W_bss%p(:))**2+epsilon(1.))
    endif
    ! Make Drude term causal
@@ -242,7 +242,24 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  if (Pert_inversion)     call K_inversion(iq,W_bss,Ken,Xk,q)
  !
- if (BSE_IP)             call K_solver_IP(iq,W_bss)
+ if (BSE_IP) then
+   !  
+   X_epsilon(1,:)=W_bss%p(:)
+#if defined _KERR
+   X_epsilon(5,:)=0.
+#endif
+   X_epsilon(2,:)=0.
+   !
+   ! Initialize & write the output file 
+   !
+   call K_output_file(iq,-2)
+   call K_output_file(iq,2)
+   !
+#if defined _KERR
+   if(l_kerr) call K_kerr_output()
+#endif
+   !
+ endif
  !
  ! CLEAN
  !

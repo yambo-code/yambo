@@ -24,9 +24,6 @@ subroutine K_IP(iq,Ken,Xk,Wd)
  use pars,         ONLY:SP,IP
  use LOGO,         ONLY:pickup_a_random
  use memory_m,     ONLY:mem_est
-#if defined _KERR
- use KERR,           ONLY:KERR_shadow
-#endif
  use electrons,    ONLY:levels,n_sp_pol
  use R_lattice,    ONLY:bz_samp
  use com,          ONLY:error
@@ -40,10 +37,6 @@ subroutine K_IP(iq,Ken,Xk,Wd)
  !
  complex(SP):: Wd
  real(SP)   :: E_eh_range(2),S_eh_range(2)
- !
-#if defined _KERR
- call KERR_shadow('setup')
-#endif
  !
  ! Setups
  !

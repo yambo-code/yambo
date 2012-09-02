@@ -68,7 +68,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  !
  ! Work Space 
  !
- integer      :: i1,i2,ID,io_err,iqbz
+ integer      :: i1,i2,ID,io_err,iqbz,nstep
  type(w_samp) :: Sc_W(qp%n_states)
  real(SP)     :: Eqp_raxis(qp%n_states,2),dQP_raxis(qp%n_states,2)
  complex(SP)  :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
@@ -128,13 +128,15 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  !
  ! Root
  !
+ nstep=0
  QP_solver_state=1
  call live_timing('[SECANT]  Root(s)',QP_n_states,SERIAL=.true.)
  do while(any(QP_solver_state>=0))
+   nstep=nstep+1
    do i1=1,qp%n_states
      i2=QP_solver_state(i1)
      QP_solver_state(i1)=secant(Eqp_raxis(i1,1),dQP_raxis(i1,1),&
-&                               Eqp_raxis(i1,2),dQP_raxis(i1,2),root_acc)
+&                               Eqp_raxis(i1,2),dQP_raxis(i1,2),root_acc,nstep)
      if (i2>0.and.QP_solver_state(i1)<0) call live_timing(steps=1)
    enddo
    call W2Sc_local_call()

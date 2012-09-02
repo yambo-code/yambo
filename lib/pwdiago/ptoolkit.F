@@ -1912,7 +1912,7 @@ CONTAINS
       IMPLICIT NONE
       REAL(SP) :: blk( :, : )
       CHARACTER(LEN=1), INTENT(IN) :: dir      ! shift direction
-      INTEGER,          INTENT(IN) :: ln       ! shift lenght
+      INTEGER,          INTENT(IN) :: ln       ! shift length
       INTEGER,          INTENT(IN) :: tag      ! communication tag
       !
       INTEGER :: icdst, irdst, icsrc, irsrc, idest, isour
@@ -2223,7 +2223,7 @@ CONTAINS
       IMPLICIT NONE
       COMPLEX(SP) :: blk( :, : )
       CHARACTER(LEN=1), INTENT(IN) :: dir      ! shift direction
-      INTEGER,          INTENT(IN) :: ln       ! shift lenght
+      INTEGER,          INTENT(IN) :: ln       ! shift length
       INTEGER,          INTENT(IN) :: tag      ! communication tag
       !
       INTEGER :: icdst, irdst, icsrc, irsrc, idest, isour

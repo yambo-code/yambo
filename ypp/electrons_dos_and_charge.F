@@ -23,14 +23,15 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  !
  use units,          ONLY:HA2EV,FS2AUT
  use pars,           ONLY:SP,schlen
- Use stderr,         ONLY:intc
+ use parser_m,       ONLY:parser
+ use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,nkibz
  use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:levels,spin,n_sp_pol
+ use electrons,      ONLY:levels,spin,n_sp_pol,spin_occ
  use FFT_m,          ONLY:fft_size
  use YPP,            ONLY:l_density,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,plot_title,l_dos,dos_broadening,dos_bands,&
-&                         dos_E_range,dos_E_steps
+&                         dos_E_range,dos_E_steps,l_only_occ
 #if defined _YPP_RT
  use YPP,            ONLY:OCC_T_range,OCC_deltaT
 #endif
@@ -63,6 +64,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  if (l_dos) then
    !
    call section('*','Electronic DOS')
+   !
+   call parser('DOSocc',l_only_occ)
    !
    l_3D_plot=.FALSE.
    n_T_steps=1
@@ -144,7 +147,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
          do ik=1,nkibz
            do i_spin=1,n_sp_pol
              !
-             f_occ=Xen%f(ib,ik,i_spin)/2.
+             if(     l_only_occ) f_occ=Xen%f(ib,ik,i_spin)/2.
+             if(.not.l_only_occ) f_occ=spin_occ/2.
 #if defined _YPP_RT
              if (l_3D_plot.and.i_T>1) f_occ=RT_occupations(ib,ik)/2.
 #endif

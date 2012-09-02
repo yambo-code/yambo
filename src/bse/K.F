@@ -28,9 +28,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use LOGO,         ONLY:pickup_a_random
  use memory_m,     ONLY:mem_est
  use drivers,      ONLY:l_bs_fxc,l_col_cut,l_td_hf
-#if defined _KERR
- use KERR,           ONLY:KERR_shadow
-#endif
  use frequency,    ONLY:w_samp
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,spin
  use FFT_m,        ONLY:fft_size
@@ -112,9 +109,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call parser('ALLGexx',l_USE_all_Gexx)
  !
-#if defined _KERR
- call KERR_shadow('setup')
-#endif
  ! GPL_EXCLUDE_START
  !
  if (l_bs_fxc)      call section('*','Bethe-Salpeter Kernel -> xc-kernel')

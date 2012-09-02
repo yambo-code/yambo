@@ -773,7 +773,7 @@
         IF( PRESENT( gid ) ) group = gid
 #endif
 
-        ! processors not taking part in the communication have 0 lenght message
+        ! processors not taking part in the communication have 0 length message
 
         msglen = 0
 
@@ -826,7 +826,7 @@
         IF( PRESENT( gid ) ) group = gid
 #endif
 
-        ! processors not taking part in the communication have 0 lenght message
+        ! processors not taking part in the communication have 0 length message
 
         msglen = 0
 
@@ -884,7 +884,7 @@
         endif
 #endif
 
-        ! processors not taking part in the communication have 0 lenght message
+        ! processors not taking part in the communication have 0 length message
 
         msglen = 0
 
@@ -943,7 +943,7 @@
         endif
 #endif
 
-        ! processors not taking part in the communication have 0 lenght message
+        ! processors not taking part in the communication have 0 length message
 
         msglen = 0
 
@@ -996,7 +996,7 @@
         IF( PRESENT( gid ) ) group = gid
 #endif
 
-        ! processors not taking part in the communication have 0 lenght message
+        ! processors not taking part in the communication have 0 length message
 
         msglen = 0
 
@@ -1048,7 +1048,7 @@
         IF( PRESENT( gid ) ) group = gid
 #endif
 
-        ! processors not taking part in the communication have 0 lenght message
+        ! processors not taking part in the communication have 0 length message
 
         msglen = 0
 
@@ -1096,7 +1096,7 @@
         group = mpi_comm_world
         IF( PRESENT( gid ) ) group = gid
 #endif
-        ! processors not taking part in the communication have 0 lenght message
+        ! processors not taking part in the communication have 0 length message
 
         msglen = 0
 
@@ -1151,7 +1151,7 @@
           local_type_complex=MPI_DOUBLE_COMPLEX
         endif
 #endif
-        ! processors not taking part in the communication have 0 lenght message
+        ! processors not taking part in the communication have 0 length message
 
         msglen = 0
 
@@ -1207,7 +1207,7 @@
           local_type_complex=MPI_DOUBLE_COMPLEX
         endif
 #endif
-        ! processors not taking part in the communication have 0 lenght message
+        ! processors not taking part in the communication have 0 length message
 
         msglen = 0
 
@@ -1257,7 +1257,7 @@
         group = mpi_comm_world
         IF( PRESENT( gid ) ) group = gid
 #endif
-        ! processors not taking part in the communication have 0 lenght message
+        ! processors not taking part in the communication have 0 length message
 
         msglen = 0
 

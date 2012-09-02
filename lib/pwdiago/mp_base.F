@@ -465,7 +465,7 @@ SUBROUTINE reduce_base_real_to( dim, ps, psout, comm, root )
   !
   ! ... sums a distributed variable ps(dim) over the processors,
   ! ... and store the results in variable psout.
-  ! ... This version uses a fixed-length buffer of appropriate (?) lenght
+  ! ... This version uses a fixed-length buffer of appropriate (?) length
   !
   USE kinds, ONLY : SP,DP
   !
@@ -559,7 +559,7 @@ SUBROUTINE reduce_base_integer_to( dim, ps, psout, comm, root )
   !
   ! ... sums a distributed integer variable ps(dim) over the processors, and
   ! ... saves the result on the output variable psout.
-  ! ... This version uses a fixed-length buffer of appropriate (?) lenght
+  ! ... This version uses a fixed-length buffer of appropriate (?) length
   !
   USE kinds, ONLY : SP,DP
   !

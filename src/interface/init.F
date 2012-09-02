@@ -436,8 +436,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! KERR
  !
 #if defined _KERR
- if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'EvalKerr')
- if (l_optics.and.l_bse)  call initactivate(1,'Xjj KrmKrn')
+ if (l_optics.and.l_bse)  call initactivate(1,'EvalKerr KrmKrn')
 #endif
  if (l_optics.and.l_bse)  call initactivate(1,'DrudeW')
  !
@@ -472,8 +471,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_optics.and.l_bse) then
    call QP_ctl_switch('K')
    call initactivate(1,'ShiftedPath')
-#if defined _SC
+#if defined _SC || defined _KERR
    call initactivate(1,'Gauge')
+#endif
+#if defined _KERR
+   call initactivate(1,'AnHall')
 #endif
    call initactivate(1,'BSresKmod BScplKmod BSEQptR BSEBands')
    call initactivate(1,'BSENGBlk BSENGexx ALLGexx BSEEhEny BSEClmns BSehWind')
@@ -1111,7 +1113,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if (index(BSS_mode,'h')==0.and.index(BSS_mode,'d')==0.and.&
 &            index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0.and.&
              index(BSS_mode,'n')==0) BSS_mode='h'
-         if (index(BSS_mode,'n')/=0) BSS_mode='none'
+         if (index(BSS_mode,'n')/=0) then
+           BSS_mode='none'
+           call initactivate(-1,'BScplKmod BSresKmod')
+           call initactivate(-1,'BSENGBlk BSENGexx ALLGexx BSEClmns')
+           call initactivate(1,'BSIPAres')
+         endif
          !
          ! With and ALDA Fxc the t solver is not permitted
          !

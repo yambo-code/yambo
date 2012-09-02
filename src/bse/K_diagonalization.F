@@ -31,7 +31,7 @@ subroutine K_diagonalization(iq,W)
 &                         BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_eh_W,K_BSmat_by_V,BS_eh_E
 #if defined _KERR
- use KERR,           ONLY:BSS_rhoq0_kerr,chi_nn,chi_jj,iw_ref
+ use KERR,           ONLY:BSS_rhoq0_kerr,iw_ref,B_Hall,l_anomalous_Hall
  use drivers,        ONLY:l_kerr
 #endif
  use memory_m,       ONLY:mem_est
@@ -45,7 +45,7 @@ subroutine K_diagonalization(iq,W)
  use par_indexes_m,  ONLY:par_indexes
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
-#if defined _SC
+#if defined _SC || defined _KERR
  use fields,         ONLY:global_gauge
 #endif
 #if defined _DISTRIBUTED
@@ -113,7 +113,6 @@ subroutine K_diagonalization(iq,W)
  !
  BS_H_dim=BS_K_dim
  if (BS_K_coupling) BS_H_dim=2*BS_K_dim
- !
  !
  allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
  call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
@@ -425,6 +424,7 @@ subroutine K_diagonalization(iq,W)
  if(l_kerr) then
    X_epsilon(4,:)=X_epsilon(4,:)/real(ncpu,SP)
    X_epsilon(5,:)=(0.,0.)
+   B_Hall(1)=B_Hall(1)/real(ncpu,SP)
  endif
 #endif
  !
@@ -449,19 +449,17 @@ subroutine K_diagonalization(iq,W)
 #endif
    !
 #if defined _KERR
-   ! I need the term missing in the lenght gauge (this should be zero...)
-   if (chi_nn) then
-     if (K_is_not_hermitian)      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/W%p(:)
-     if (.not.K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/W%p(:)
-   endif
-   !
    if(l_kerr) then
      if (K_is_not_hermitian)      X_epsilon(5,:)=X_epsilon(5,:)-BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
      if (.not.K_is_not_hermitian) X_epsilon(5,:)=X_epsilon(5,:)-BS_R(i1)*BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
-     ! I need the term missing in the lenght gauge
-     if (chi_nn) then
-       if (K_is_not_hermitian)      X_epsilon(5,:)=X_epsilon(5,:)-BS_R_kerr(i1)/W%p(:)
-       if (.not.K_is_not_hermitian) X_epsilon(5,:)=X_epsilon(5,:)-BS_R(i1)*BS_R_kerr(i1)/W%p(:)
+     if (l_anomalous_Hall) then
+       if(trim(global_gauge)=='length') then
+         if (K_is_not_hermitian)      B_Hall(2)=B_Hall(2)-BS_R_kerr(i1)
+         if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)-BS_R(i1)*BS_R_kerr(i1)
+       else if(trim(global_gauge)=='velocity') then
+         if (K_is_not_hermitian)      B_Hall(2)=B_Hall(2)-BS_R_kerr(i1)/BS_E(i1)**2
+         if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)-BS_R(i1)*BS_R_kerr(i1)/real(BS_E(i1))**2
+       endif
      endif
    endif
 #endif
@@ -470,19 +468,29 @@ subroutine K_diagonalization(iq,W)
  enddo
  call live_timing
  call pp_redux_wait(X_epsilon)
+#if defined _KERR
+ call pp_redux_wait(B_Hall)
+#endif
  !
 #if defined _KERR
- factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
- factor_jj=X_epsilon(3,iw_ref)
  !
- if(chi_nn) X_epsilon(2,:)=1.+X_epsilon(2,:)*factor/q_norm(1)**2
- if(chi_jj) X_epsilon(2,:)=1.+(X_epsilon(2,:)-factor_jj)*factor/(real(W%p(:))**2+epsilon(1.))
+ factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
+ if(trim(global_gauge)=='velocity') factor_jj=X_epsilon(3,iw_ref)
+ !
+ if(trim(global_gauge)=='length')   B_Hall(2)=B_Hall(2)*factor/q_norm(1)**2
+ if(trim(global_gauge)=='velocity') B_Hall(2)=B_Hall(2)*factor
+ !
+ if(trim(global_gauge)=='length')   X_epsilon(2,:)=1.+X_epsilon(2,:)*factor/q_norm(1)**2
+ if(trim(global_gauge)=='velocity') X_epsilon(2,:)=1.+(X_epsilon(2,:)-factor_jj)*factor/(real(W%p(:))**2+epsilon(1.))
+ ! I add the term describing the Anomalous Hall effect which is
+ ! missing in the length gauge (this should be zero for systems with a gap)
+ if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(5,:)=X_epsilon(5,:)-B_Hall(2)/W%p(:)
  ! Drude
  X_epsilon(2,:)=X_epsilon(2,:)+X_drude(:)*factor/q_norm(1)**2
  !
  if(l_kerr) then
-   if(chi_nn) X_epsilon(5,:)=X_epsilon(5,:)*factor/q_norm(1)**2
-   if(chi_jj) X_epsilon(5,:)=X_epsilon(5,:)*factor/(real(W%p(:))**2+epsilon(1.))
+   if(trim(global_gauge)=='length')   X_epsilon(5,:)=X_epsilon(5,:)*factor/q_norm(1)**2
+   if(trim(global_gauge)=='velocity') X_epsilon(5,:)=X_epsilon(5,:)*factor/(real(W%p(:))**2+epsilon(1.))
  endif
 #else
  X_epsilon(2,:)=1.+X_epsilon(2,:)*&

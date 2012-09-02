@@ -37,7 +37,8 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
  use BS,           ONLY:BS_K_dim,O_v_state,O_c_state,BS_res_K_corr,&
 &                       O_n_v_states,O_n_c_states,BS_eh_E,BS_eh_f,BS_eh_en,&
 &                       BS_eh_table,BS_bands,BS_blk_dim,BS_K_coupling,&
-&                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z,BS_drude_dim
+&                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z,BS_drude_dim,&
+&                       BS_IP_antires
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
  use R_lattice,    ONLY:qindx_X,bz_samp
  !
@@ -142,7 +143,7 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
        enddo
      enddo
      !
-     if (.not.BS_K_coupling.and.BS_not_const_eh_f) then
+     if ((.not.BS_K_coupling.and..not.BS_IP_antires).and.BS_not_const_eh_f) then
        call error('Fractional e/h occupations found. BS coupling forced.')
      endif
      !

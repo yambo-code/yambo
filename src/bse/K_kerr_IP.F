@@ -25,9 +25,10 @@ subroutine K_kerr_IP(w)
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_epsilon,DIP_q_dot_iR
  use KERR,           ONLY:BSS_rhoq0_kerr,DIP_q_dot_iR_kerr,DIP_P_symm,&
-&                         chi_nn,chi_jj
+&                         l_anomalous_Hall,B_Hall
+ use fields,         ONLY:global_gauge
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,BS_eh_table,&
-&                         BS_eh_E,BS_eh_W,BS_K_coupling
+&                         BS_eh_E,BS_eh_W,BS_K_coupling,BS_IP_antires
  use electrons,      ONLY:spin_occ,spin
  use R_lattice,      ONLY:d3k_factor,q_norm
  !
@@ -41,13 +42,15 @@ subroutine K_kerr_IP(w)
  !
  integer           ::ik,iv,ic,i1,i_sp
  !
- if (BS_K_coupling.or.allocated(BS_eh_W)) then
+ if (BS_K_coupling.or.allocated(BS_eh_W).or.BS_IP_antires) then
    allocate(BSS_rhoq0_kerr(2*BS_K_dim)) 
    call mem_est("BSS_rhoq0_kerr",(/2*BS_K_dim/))
  else
    allocate(BSS_rhoq0_kerr(BS_K_dim)) 
    call mem_est("BSS_rhoq0_kerr",(/BS_K_dim/))
  endif
+ !
+ B_Hall=(0._SP,0._SP)
  !
  ! eps0_xy
  !
@@ -57,31 +60,39 @@ subroutine K_kerr_IP(w)
    ic  =BS_eh_table(i1,3)
    i_sp=spin(BS_eh_table(i1,:))
    !
-   if(chi_nn) BSS_rhoq0_kerr(i1)=-conjg(DIP_q_dot_iR_kerr(ic,iv,ik,i_sp))
-   if(chi_jj) BSS_rhoq0_kerr(i1)= conjg(DIP_P_symm(2,ic,iv,ik,i_sp))
+   if(trim(global_gauge)=='length') BSS_rhoq0_kerr(i1)=-conjg(DIP_q_dot_iR_kerr(ic,iv,ik,i_sp))
+   if(trim(global_gauge)=='velocity') BSS_rhoq0_kerr(i1)= conjg(DIP_P_symm(2,ic,iv,ik,i_sp))
    !
-   if (BS_K_coupling) then
-     if(chi_nn) BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_q_dot_iR_kerr(ic,iv,ik,i_sp)
-     if(chi_jj) BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_P_symm(2,ic,iv,ik,i_sp)
+   if (BS_K_coupling.or.BS_IP_antires) then
+     if(trim(global_gauge)=='length') BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_q_dot_iR_kerr(ic,iv,ik,i_sp)
+     if(trim(global_gauge)=='velocity') BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_P_symm(2,ic,iv,ik,i_sp)
    endif
    !
    if (abs(BS_eh_E(i1))<1.E-5) cycle
    X_epsilon(4,:)=X_epsilon(4,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)/&
 &                                (w(:)-BS_eh_E(i1))
-   ! I need the term missing in the lenght gauge
-   if (chi_nn) X_epsilon(4,:)=X_epsilon(4,:)  &
-&              +BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)/w(:)
-   if (BS_K_coupling) then
+   if (l_anomalous_Hall) then
+     if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)
+     if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)/BS_eh_E(i1)**2
+   endif
+   if (BS_K_coupling.or.BS_IP_antires) then
      X_epsilon(4,:)=X_epsilon(4,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0_kerr(i1)*BS_eh_f(i1)/&
 &                                (w(:)+BS_eh_E(i1))
-     if (chi_nn) X_epsilon(4,:)=X_epsilon(4,:)  &
-&                 -conjg(BSS_rhoq0(i1))*BSS_rhoq0_kerr(i1)*BS_eh_f(i1)/w(:)
    endif
  enddo
  !
+ if (BS_K_coupling.or.BS_IP_antires) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
+ !
  factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
  !
- if(chi_nn) X_epsilon(4,:)= X_epsilon(4,:)*factor/q_norm(1)**2
- if(chi_jj) X_epsilon(4,:)= X_epsilon(4,:)*factor/(real(w(:))**2+epsilon(1.))
+ if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)*factor/q_norm(1)**2
+ if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)*factor
+ !
+ if(trim(global_gauge)=='length')   X_epsilon(4,:)= X_epsilon(4,:)*factor/q_norm(1)**2
+ if(trim(global_gauge)=='velocity') X_epsilon(4,:)= X_epsilon(4,:)*factor/(real(w(:))**2+epsilon(1.))
+ !
+ ! I add the term describing the Anomalous Hall effect which is
+ ! missing in the length gauge (this should be zero for systems with a gap)
+ if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(4,:)=X_epsilon(4,:)+B_Hall(1)/w(:)
  !
 end subroutine

@@ -38,6 +38,7 @@ module BS
  real(SP):: BS_eh_en(2)
  real(SP):: BS_eh_win(2)
  logical :: BS_W_is_diagonal
+ logical :: BS_IP_antires
  logical :: BS_K_coupling
  logical :: BS_res_K_exchange
  logical :: BS_res_K_corr

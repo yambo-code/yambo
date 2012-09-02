@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_Green_DOS(qp)
+subroutine QP_Green_DOS(qp,k)
  !
  ! This routine calcualtes the dos constructed from the Green functions
  !
@@ -31,19 +31,21 @@ subroutine QP_Green_DOS(qp)
  use stderr,      ONLY:intc
  use vec_operate, ONLY:sort
  use D_lattice,   ONLY:DL_vol
+ use R_lattice,   ONLY:bz_samp
  !
  implicit none
  !
  type(QP_t)            :: qp
+ type(bz_samp)         :: k
  !
  ! Work Space
  !
  integer               :: n_titles=4
  integer               :: n_zone,iw_start,iw_end
- integer               :: i1,iqp,i_sp,i_zone,iw,iw_G
+ integer               :: i1,iqp,i_sp,ik,i_zone,iw,iw_G
  integer               :: QP_zone_table(QP_n_states),QP_sort_table(QP_n_states)
  integer, allocatable  :: iw_table(:),n_steps(:)
- character(lchlen)     :: DOS_Green_name
+ character(lchlen)     :: DOS_Green_name,filename
  character(schlen)     :: titles(4),out_units(4)
  real(SP)              :: values(4),tmp_vect(QP_n_states)
  real(SP)              :: GreenF1,GreenF2,shifted_GreenF
@@ -62,7 +64,7 @@ subroutine QP_Green_DOS(qp)
    iqp=QP_sort_table(i1)
    i_zone=i_zone+1
    QP_zone_table(iqp)=i_zone
-   if(iqp==1) cycle
+   if(i1==1) cycle
    if(real(qp%GreenF_W(iqp,1))<=real(qp%GreenF_W(QP_sort_table(i1-1),QP_Sc_steps)) ) then
      QP_zone_table(iqp)=i_zone-1
      i_zone=i_zone-1
@@ -113,6 +115,7 @@ subroutine QP_Green_DOS(qp)
  do i1=1,QP_n_states
    iqp=QP_sort_table(i1)
    i_sp=spin(QP_table(iqp,:))
+   ik=QP_table(iqp,3)
    i_zone=QP_zone_table(iqp)
    !
    iw_start=1
@@ -139,9 +142,10 @@ subroutine QP_Green_DOS(qp)
    !
    do iw=iw_start,iw_end
      !
-     GreenF1=aimag(qp%GreenF(iqp,iw_table(iw)))/pi*spin_occ
-     GreenF2=aimag(qp%GreenF(iqp,iw_table(iw)+1))/pi*spin_occ
+     GreenF1=aimag(qp%GreenF(iqp,iw_table(iw)))
+     GreenF2=aimag(qp%GreenF(iqp,iw_table(iw)+1))
      shifted_GreenF=abs(GreenF1)+(abs(GreenF2)-abs(GreenF1))*off_set(iw)/deltaE(i_zone)
+     shifted_GreenF=shifted_GreenF/pi*spin_occ*k%weights(ik)
      !
      Green_DOS(iw,i_zone,i_sp,1)=Green_DOS(iw,i_zone,i_sp,1)+max(shifted_GreenF,0.)
      if( (GreenF1+(GreenF2-GreenF1)*off_set(iw)/deltaE(i_zone))<0 ) cycle
@@ -177,9 +181,11 @@ subroutine QP_Green_DOS(qp)
    !
    do i_sp=1,n_sp_pol
      !
-     if(n_sp_pol>1) DOS_Green_name=trim(DOS_Green_name)//'_sp'//trim(intc(i_sp))
+     filename=trim(DOS_Green_name)
+     !
+     if(n_sp_pol>1) filename=trim(DOS_Green_name)//'_sp'//trim(intc(i_sp))
      !       
-     call of_open_close(DOS_Green_name,'ot')
+     call of_open_close(filename,'ot')
      !
      call msg('o DOS','# GW [DOS from Greens functions]')
      call msg('o DOS','#')
@@ -201,7 +207,7 @@ subroutine QP_Green_DOS(qp)
        !
      enddo
      !
-     call of_open_close(DOS_Green_name)
+     call of_open_close(filename)
      !
    enddo
    !

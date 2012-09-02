@@ -833,11 +833,14 @@ subroutine RT_fix_symmetries(E,k)
    !
    do i1=k_save%nibz+1,k%nibz
      !
+     pp_kb=0._SP
+     pp_kbd=0._SP
+     !
      ik=kpoints_map(1,i1)
      is=kpoints_map(2,i1)
      !
-     pp_kb(1:ng_vec,:,:,:) =pp_kb_store(g_rot(sop_inv_save(is),1:ng_vec),:,:,:,ik)
-     pp_kbd(1:ng_vec,:,:,:)=pp_kbd_store(g_rot(sop_inv_save(is),1:ng_vec),:,:,:,ik)
+     pp_kb(1:ng_closed,:,:,:) =pp_kb_store(g_rot(sop_inv_save(is),1:ng_closed),:,:,:,ik)
+     pp_kbd(1:ng_closed,:,:,:)=pp_kbd_store(g_rot(sop_inv_save(is),1:ng_closed),:,:,:,ik)
      !
      call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/i1+1/),ID=ID)      
      ioKB_err=ioKB_PP(ID)

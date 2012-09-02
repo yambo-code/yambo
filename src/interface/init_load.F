@@ -166,6 +166,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`)',BS_res_mode)
  call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`)',BS_cpl_mode)
+ call it('f',defs,'BSIPAres','[BS] anti-resonant term in the IP part')
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
@@ -196,15 +197,16 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Optics: large Q momenta
  !
  call it(defs,'Qdirection', '[Xd] Transferred momentum direction (iku)',q_plus_G_direction,verb_level=V_resp)
- call it(defs,'QShiftOrder', '[Xd] Pick-up the (QShiftOrder)th q+G vector',Q_Shift_Order,verb_level=V_resp)
+ call it(defs,'QShiftOrder','[Xd] Pick-up the (QShiftOrder)th q+G vector',Q_Shift_Order,verb_level=V_resp)
  !
 #if defined _KERR
  !
- ! Optics or BSE: Kerr
+ ! BSE: Kerr
  !
- call it('f',defs,'EvalKerr', '[X/BSE] Kerr parameters',verb_level=V_resp)
- call it('f',defs,'Xjj',      '[BSE] Compute Kerr via Xjj',verb_level=V_resp) 
- call it('f',defs,'KrmKrn',   '[BSE] Use Kramers Kroening relations',verb_level=V_resp)
+ call it('f',defs,'EvalKerr', '[BSE] Kerr parameters',verb_level=V_resp)
+ call it(defs,'Gauge'       , '[BSE] Gauge (length|velocity). In metals length misses An-Hall',global_gauge)
+ call it('f',defs,'AnHall'  , '[BSE] Compute the anomalous Hall effect and if length add it to eps')
+ call it('f',defs,'KrmKrn'  , '[BSE] Use Kramers Kroening relations',verb_level=V_resp)
  !
 #endif
  !
@@ -363,7 +365,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 
  ! SC [common with RT]
  !
- call it(defs,'Gauge',     '[Xd,RT] Gauge type (lenght|velocity)',global_gauge,verb_level=V_real_time)
+ call it(defs,'Gauge',     '[Xd,RT] Gauge type (length|velocity)',global_gauge,verb_level=V_real_time)
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)

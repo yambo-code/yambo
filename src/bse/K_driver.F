@@ -34,7 +34,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns
+&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_IP_antires
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
@@ -46,6 +46,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate
  use QP_m,           ONLY:OCC_T_ref
  use IO_m,           ONLY:REP
+#endif
+#if defined _KERR
+ use KERR,           ONLY:l_anomalous_Hall
+ use drivers,        ONLY:l_kerr
 #endif
  implicit none
  type(levels)  ::Xen,Ken
@@ -140,7 +144,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! Logicals (Drivers)
  !
  if(trim(BSS_mode)=='none') then
-   BS_K_coupling=any((/index(BS_cpl_mode,'c')/=0,index(BS_cpl_mode,'x')/=0/)) 
+   BS_res_mode='none'
+   BS_cpl_mode='none'
+   BS_K_coupling=.FALSE.
+   call parser('BSIPAres',BS_IP_antires)
  else
    BS_res_K_corr=index(BS_res_mode,'c')/=0
    BS_res_K_exchange=index(BS_res_mode,'x')/=0
@@ -152,6 +159,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    !
    BS_K_is_ALDA=l_alda_fxc
  endif
+ !
+#if defined _KERR
+ call parser('EvalKerr',l_kerr)
+ call parser('AnHall',l_anomalous_Hall)
+#endif
  !
  ! Energy points
  !

@@ -182,10 +182,14 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call G_shells_finder()
  call msg('rn','Shells, format: [S#] G_RL(mHa)')
  !
- ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G. When there is no Spatial inversion
- ! the map is built in G_shells_finder
+ ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G.
+ ! Davide 17/08/2012
+ ! Also if there are neither the spaceInv nor the Trev ng_closed has been
+ ! already limited to the G vectors which are closed respect to the inversion.
+ ! Thus I can safely call eval_minus_G()
+ ! The I/O in io
  !
- if (inv_index>0) call eval_minus_G()
+ call eval_minus_G()
  !
  do i1=n_g_shells,max(n_g_shells-27,1),-4
    dumb_ch1=' '

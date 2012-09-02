@@ -28,7 +28,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use electrons,      ONLY:levels,n_sp_pol
  use par_proc_m,     ONLY:pp_redux_wait
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use fields,         ONLY:grid_path,global_gauge
+ use fields,         ONLY:grid_path
  use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
 &                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
@@ -39,7 +39,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #endif
  use WF_distribute,  ONLY:WF_states_setup
 #if defined _KERR
- use KERR,           ONLY:chi_jj
+ use fields,         ONLY:global_gauge
 #endif
  !
  implicit none
@@ -95,7 +95,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
 #endif
 #if defined _KERR
- if(chi_jj) then
+ if(trim(global_gauge)=='velocity') then
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
    io_err(2)=io_P_and_P2(X,Xen,ID)
  endif
@@ -123,7 +123,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #endif
    !
 #if defined _KERR
-   if(chi_jj) then
+   if(trim(global_gauge)=='velocity') then
      call X_alloc('DIP_P'   ,(/3,X%ib(2),X%ib(2),Xk%nibz/))
      DIP_P=(0._SP,0._SP)
      call X_alloc('P_square',(/X%ib(2),X%ib(2),Xk%nibz/))
@@ -186,7 +186,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    io_err(2)=io_P_and_P2(X,Xen,ID)
 #endif
 #if defined _KERR
-   if(chi_jj) then
+   if(trim(global_gauge)=='velocity') then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
      io_err(2)=io_P_and_P2(X,Xen,ID)
    endif
@@ -214,7 +214,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  call X_alloc('DIP_iR') 
  !
 #if defined _KERR
- if(chi_jj) call X_alloc('DIP_P') 
+ if(trim(global_gauge)=='velocity') call X_alloc('DIP_P') 
 #endif
  !
 end subroutine

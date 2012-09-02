@@ -40,7 +40,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use wrapper,             ONLY:M_by_V
  use com,                 ONLY:error
 #if defined _KERR
- use KERR,           ONLY:chi_jj
+ use fields,              ONLY:global_gauge
 #endif
  !
  implicit none
@@ -223,7 +223,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          DIP_P(:,ic,iv,ik,i_spin)=DIP_P(:,ic,iv,ik,i_spin)+rho(:3)
 #endif        
 #if defined _KERR
-         if(chi_jj) then
+         if(trim(global_gauge)=='velocity') then
            if (n_spinor==2) then
              DIP_P(:,ic,iv,ik,1)=DIP_P(:,ic,iv,ik,1)+rho(:3)
            else
@@ -298,7 +298,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          P_square(ic,iv,ik,:)= conjg(P_square(iv,ic,ik,:))
 #endif        
 #if defined _KERR
-         if(chi_jj) DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
+         if(trim(global_gauge)=='velocity') DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
 #endif        
        enddo
      enddo
@@ -329,7 +329,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
    call pp_redux_wait(P_square(:,:,:,i_spin))
 #endif
 #if defined _KERR
-   if(chi_jj) call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
+   if(trim(global_gauge)=='velocity') call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
 #endif
  enddo
  !

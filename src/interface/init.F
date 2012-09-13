@@ -620,6 +620,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'Potential FFTGvecs Gauge SCmixing SCBands SClwBand BandMix EXXCut')
    call initactivate(-1,'QpntsRXs')
    if (l_cohsex) call initactivate(1,'GbndRnge UseEbands')
+   if (l_collisions_IO) call initactivate(1,'DynKind')
    if (.not.l_collisions_IO) call initactivate(1,'CollPath CollCache')
    if (.not.l_real_time.and..not.l_collisions_IO) then
      call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
@@ -627,6 +628,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &        trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
    endif
    call initactivate(1,'MeanPotential')
+   if (l_collisions_IO) call initactivate(-1,'GbndRnge UseEbands MeanPotential') 
  endif
 #endif
  !
@@ -637,7 +639,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_real_time) then
    call QP_ctl_switch('G')
    call initactivate(-1,'SCmixing')
-   call initactivate(1,'Integrator RADLifeTime PhLifeTime RTmaxEn RTpumpEh') 
+   call initactivate(1,'Integrator DynKind RADLifeTime PhLifeTime RTmaxEn RTpumpEh') 
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
    if (l_ph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes')
    call initactivate(1,'HXCjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')

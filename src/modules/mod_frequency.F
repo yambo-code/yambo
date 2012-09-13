@@ -47,7 +47,7 @@ module frequency
    real(SP)     :: damp_reference
    real(SP)     :: dr(2)
    real(SP)     :: per_memstps
-   complex(SP),pointer :: p(:) 
+   complex(SP),pointer :: p(:) => null() 
  end type w_samp
  !
  contains

@@ -28,13 +28,12 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_collisions_IO,l_sc_srpa
  use com,             ONLY:warning,msg
  use global_XC,       ONLY:SC_HF,SC_COHSEX
- use QP_m,            ONLY:QP_n_states,QP_nb,QP_nk
- use SC,              ONLY:SC_bands
+ use QP_m,            ONLY:QP_n_states
  use memory_m,        ONLY:mem_sum,mem_est
  use collisions_IO,   ONLY:COLLISIONS_v,COLLISIONS_table,V_kind,collisions_IO_free,&
-&                          COLLISIONS_path,io_COLLISIONS
+&                          COLLISIONS_path,io_COLLISIONS,COLLISIONS_range,collisions_RANGES_setup
  use stderr,          ONLY:intc
- use IO_m,            ONLY:OP_RD_CL,io_control,VERIFY,REP,io_file
+ use IO_m,            ONLY:OP_RD_CL,io_control,VERIFY,REP
  use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset
  use par_indexes_m,   ONLY:par_indexes
  use collisions_CACHE,ONLY:COLLISIONS_cache_size,last_QP_mem,cache_memory,CACHE
@@ -54,8 +53,8 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  !
  ! Work Space
  !
- integer            :: i1,ic,i_qp,ib,ibp,ik,ID,n_tot_rho_states,io_err(max_V_kinds),V_kinds(max_V_kinds),n_V_kinds,&
-&                      max_COLLISION_cache
+ integer            :: i1,i2,i3,ic,i_qp,ID,n_tot_rho_states,io_err(max_V_kinds),V_kinds(max_V_kinds),n_V_kinds,&
+&                      max_COLLISION_cache,iv
  real(SP)           :: mem_before_cache
  type(pp_indexes)   :: px
  character(schlen)  :: dump_ch 
@@ -82,12 +81,12 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  !
  if (CHECK_EXISTENCE_ONLY) then
    !
-   do i1=1,n_V_kinds
+   do iv=1,n_V_kinds
      !
-     V_kind=V_kinds(i1)
+     V_kind=V_kinds(iv)
      !
      call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-     io_err(i1)=io_COLLISIONS(0,ID)
+     io_err(iv)=io_COLLISIONS(0,ID)
      !
    enddo
    !
@@ -115,10 +114,16 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
    return
  endif
  !
- max_COLLISION_cache=QP_nb**2*QP_nk
+ ! Array ranges setup
  !
- allocate(COLLISIONS_disk(SC_bands(1):QP_nb,SC_bands(1):QP_nb,QP_nk))
- call mem_est("COLLISIONS_disk",(/QP_nb-SC_bands(1)+1,QP_nb-SC_bands(1)+1,QP_nk/),(/2*SP/))
+ call collisions_RANGES_setup()
+ !
+ max_COLLISION_cache=sum(COLLISIONS_range(:,2)-COLLISIONS_range(:,1)+1)
+ !
+ allocate(COLLISIONS_disk(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
+&                         COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
+&                         COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
+ call mem_est("COLLISIONS_disk",(/size(COLLISIONS_disk)/),(/2*SP/))
  !
  i_qp=0
  !
@@ -130,29 +135,31 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
    !
    if(.not.px%element_1D(i_qp)) cycle  
    !
-   allocate(CACHE(i_qp)%COLLISIONS_table(SC_bands(1):QP_nb,SC_bands(1):QP_nb,QP_nk))
+   allocate(CACHE(i_qp)%COLLISIONS_table(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
+&                                        COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
+&                                        COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
    call mem_est(" QP_COLLISIONS_table_"//trim(intc(i_qp)),(/LP/))
    !
    CACHE(i_qp)%COLLISIONS_table(:,:,:)=0
    COLLISIONS_disk=(0.,0.)
    !
-   do i1=1,n_V_kinds
+   do iv=1,n_V_kinds
      !
-     V_kind=V_kinds(i1)
+     V_kind=V_kinds(iv)
      !
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
-     io_err(1)=io_COLLISIONS(i_qp,ID)
+     io_err(iv)=io_COLLISIONS(i_qp,ID)
      !
      ic=0
      !
-     do ib=SC_bands(1),QP_nb
-       do ibp=SC_bands(1),QP_nb
-         do ik=1,QP_nk
+     do i1=COLLISIONS_range(1,1),COLLISIONS_range(1,2)
+       do i2=COLLISIONS_range(2,1),COLLISIONS_range(2,2)
+         do i3=COLLISIONS_range(3,1),COLLISIONS_range(3,2)
            !
-           if(COLLISIONS_table(ib,ibp,ik)==1) then
+           if(COLLISIONS_table(i1,i2,i3)==1) then
              ic=ic+1
-             CACHE(i_qp)%COLLISIONS_table(ib,ibp,ik)=1
-             COLLISIONS_disk(ib,ibp,ik)=COLLISIONS_disk(ib,ibp,ik)+COLLISIONS_v(ic)
+             CACHE(i_qp)%COLLISIONS_table(i1,i2,i3)=1
+             COLLISIONS_disk(i1,i2,i3)=COLLISIONS_disk(i1,i2,i3)+COLLISIONS_v(ic)
            endif
            !
          enddo
@@ -168,12 +175,12 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
    !
    ic=0
    !
-   do ib=SC_bands(1),QP_nb
-     do ibp=SC_bands(1),QP_nb
-       do ik=1,QP_nk
-         if(CACHE(i_qp)%COLLISIONS_table(ib,ibp,ik)==1) then
+   do i1=COLLISIONS_range(1,1),COLLISIONS_range(1,2)
+     do i2=COLLISIONS_range(2,1),COLLISIONS_range(2,2)
+       do i3=COLLISIONS_range(3,1),COLLISIONS_range(3,2)
+         if(CACHE(i_qp)%COLLISIONS_table(i1,i2,i3)==1) then
            ic=ic+1
-           CACHE(i_qp)%COLLISIONS_v(ic)=COLLISIONS_disk(ib,ibp,ik)
+           CACHE(i_qp)%COLLISIONS_v(ic)=COLLISIONS_disk(i1,i2,i3)
          endif
        enddo
      enddo

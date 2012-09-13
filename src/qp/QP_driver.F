@@ -49,7 +49,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! Work Space
  !
  type(QP_t)        ::qp
- integer           ::i1,io_QP_err,io_G_err,ID_QP,ID_G,i_spin,dump_ng
+ integer           ::i1,io_QP_err,io_G_err,ID_QP,ID_G,i_spin
  integer, external ::ioQP,eval_G_minus_G
  !
  ! Driver Logicals
@@ -59,7 +59,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  call parser('OnMassShell',On_Mass_Shell_approx)
  call parser('QPExpand'   ,l_QP_Expand)
  call parser('UseEbands',  COHSEX_use_empties)
- call parser('GWTerm', PPa_terminator)
+ call parser('GWTerm', PPA_terminator)
  ! GPL_EXCLUDE_START
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
  use_GreenF_Zoom=QP_G_Zoom_treshold>0.

@@ -37,7 +37,10 @@ subroutine FREQUENCIES_reset(Xw)
  !
  type(w_samp)  :: Xw
  !
- if(associated(Xw%p)) deallocate(Xw%p)
+ if(associated(Xw%p)) then
+   deallocate(Xw%p)
+   nullify(Xw%p)
+ endif
  call mem_est("W-p")
  if (allocated(rg_index_bg)) deallocate(rg_index_bg)
  deallocate(X_poles_tab,bg_npts,cg_pt,cg_index_bg)

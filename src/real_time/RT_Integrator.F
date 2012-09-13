@@ -54,7 +54,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integrator,Time)
  ! 
  ! Work Space
  !
- integer     :: ik,i1,i2,SC_bands2_dot_nibz
+ integer     :: ik,SC_bands2_dot_nibz
  complex(SP) :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP) :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !

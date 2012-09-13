@@ -26,8 +26,6 @@ function QP_ppa_EET_terminator(W,e,vs,Ep,ig1,ig2,iq,cutoff)
  !
  use pars,          ONLY:SP
  use R_lattice,     ONLY:q_norm,q_pt,G_vec
- use D_lattice,     ONLY:alat
- use collision,     ONLY:ggwinfo
  use electrons,     ONLY:levels,spin_occ
  use vec_operate,   ONLY:iku_v_norm
  use functions,     ONLY:bose_f
@@ -49,8 +47,8 @@ function QP_ppa_EET_terminator(W,e,vs,Ep,ig1,ig2,iq,cutoff)
  real(SP) :: eet_energy,q_plus_G,q_plus_Gp
  complex(SP) :: lW
  !
- q_plus_G =iku_v_norm(q_pt(iq,:)+g_vec(ig1,:))
- q_plus_Gp=iku_v_norm(q_pt(iq,:)+g_vec(ig2,:))
+ q_plus_G =iku_v_norm(q_pt(iq,:)+G_vec(ig1,:))
+ q_plus_Gp=iku_v_norm(q_pt(iq,:)+G_vec(ig2,:))
  !
  if(iq==1.and.ig1==1) q_plus_G =q_norm(1)
  if(iq==1.and.ig2==1) q_plus_Gp=q_norm(1)

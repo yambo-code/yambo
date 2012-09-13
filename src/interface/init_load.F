@@ -54,7 +54,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
-&                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,NE_Hxc_jumps,&
+&                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,NE_Hxc_jumps,Dynamics_Kind,&
 &                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time
  use fields,        ONLY:Efield
 #endif
@@ -246,6 +246,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'Integrator', '[RT] Integrator (RK2 | EULER | EULEREXP | RK2EXP ) ',Integrator_name)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit)
  call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit)
+ call it(defs,'DynKind',    '[RT] Dynamics kind ((C)arriers/(P)olarization)',Dynamics_Kind)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT')
  call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT')
  !

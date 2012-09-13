@@ -24,7 +24,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_collisions_IO,l_ph_corr
  use stderr,         ONLY:set_real_printed_length
- use units,          ONLY:FS2AUT,HA2EV
+ use units,          ONLY:FS2AUT
  use timing,         ONLY:live_timing 
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,X_alloc
@@ -41,6 +41,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  use memory_m,        ONLY:mem_est
  use com,             ONLY:error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
+ use collisions_IO,   ONLY:collisions_IO_alloc,collisions_IO_free,collisions_RANGES_setup
  use collisions_CACHE,ONLY:free_COLLISIONS_v
  use QP_CTL_m,        ONLY:QP_apply
  !
@@ -110,6 +111,10 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  !
  call RT_alloc(Xen)
  !
+ call collisions_RANGES_setup()
+ !
+ call collisions_IO_alloc()
+ !
  ! Restart from a previous RT run or from a SC calculation
  ! 
  call section('=','Start and Restart')
@@ -136,6 +141,8 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  if(it_start>=Thermal_steps+NE_steps) then
    !      
    call RT_free()
+   !
+   call collisions_IO_free() 
    !
    call WF_free()
    !
@@ -304,6 +311,8 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  ! Finalize
  !-----------
  call RT_free()
+ !
+ call collisions_IO_free() 
  !
  call WF_free()
  !

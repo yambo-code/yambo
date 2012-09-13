@@ -24,7 +24,7 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,U1_k,U2_k,ik,deltaT)
  use pars,           ONLY:SP,cI,cZERO
  use wrapper,        ONLY:M_by_M
  use SC,             ONLY:SC_bands,SC_nbands
- use real_time,      ONLY:Sigma_relax,Ho_plus_Sigma
+ use real_time,      ONLY:Sigma_relax
  !
  implicit none
  !

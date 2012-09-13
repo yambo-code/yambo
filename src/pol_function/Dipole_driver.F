@@ -71,7 +71,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
 #if defined _SC 
  !
- if(l_sc_run.or.l_real_time) Dipole_bands_ordered=.FALSE.
+ if (l_sc_run.or.l_real_time) Dipole_bands_ordered=.FALSE.
  !
 #endif
  !

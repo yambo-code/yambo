@@ -36,6 +36,10 @@ module real_time
  logical           :: l_RT_pump_and_probe  
  logical           :: l_Dynamics_is_over  
  !
+ logical           :: l_carrier_dynamics  
+ !
+ character(schlen) :: Dynamics_Kind ! (C)arriers/(P)olarization
+ !
  ! Inital XC (SC or default) are requested
  !
  logical           :: l_RT_needs_XC0
@@ -283,7 +287,6 @@ module real_time
      use xc_functionals, ONLY:E_xc
      use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
      use R_lattice,      ONLY:nqbz
-     use collisions_IO,  ONLY:collisions_IO_alloc
      !
      type(levels), intent(in) :: en
      !
@@ -355,8 +358,6 @@ module real_time
        call mem_est("Occ_natural",(/size(Occ_natural_orb)/))
      endif
      !
-     call collisions_IO_alloc()
-     !
    end subroutine RT_alloc
    
    subroutine RT_free
@@ -366,7 +367,6 @@ module real_time
      use memory_m,       ONLY:mem_est
      use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
-     use collisions_IO,  ONLY:collisions_IO_free
      use par_proc_m,     ONLY:pp_indexes_reset
      !
      call SC_free()
@@ -460,12 +460,14 @@ module real_time
        deallocate(Q_io_map,K_io_map)
      endif
      !
-     call collisions_IO_free() 
-     !
      call pp_indexes_reset(RT_k_px) 
      call pp_indexes_reset(RT_q_px) 
      !
    end subroutine RT_free
+   !
+   subroutine Dynamics_setup()
+     l_carrier_dynamics     =trim(Dynamics_Kind)=="C"
+   end subroutine
    !
    integer function MEM_index(it)
      !

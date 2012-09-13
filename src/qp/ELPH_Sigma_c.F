@@ -38,7 +38,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR_CL
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
-&                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,QP_G_dr,&
+&                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
 &                        On_Mass_Shell_approx
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,RL_vol

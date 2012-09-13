@@ -33,7 +33,6 @@ subroutine RT_relaxation(G_input,Xen,k,q,Time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
- use par_proc_m,     ONLY:pp_redux_wait
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
 &                         RT_k_px
  !

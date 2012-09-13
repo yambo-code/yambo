@@ -111,8 +111,7 @@ subroutine RT_ELPH_initialize(k,q)
          ! where the band indexes have been exchanged. Instead of doing a global change of the notes
          ! and of the code I decided, here, to exchange the indexes:
          !
-         elph_gkkp_expanded((i_counter-1)*k%nbz+ik,:,i_n,i_np)=1./10000.
-!elph_gkkp(K_io_map(ik),:,i_np,i_n)
+         elph_gkkp_expanded((i_counter-1)*k%nbz+ik,:,i_n,i_np)=elph_gkkp(K_io_map(ik),:,i_np,i_n)
        enddo
      enddo
      !

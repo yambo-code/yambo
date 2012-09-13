@@ -99,7 +99,7 @@ integer function io_SC_components(what,E_sc,ID)
  !      
  ! Running NE_i_time=io_sec(ID,1)-1 => NE_time=(NE_i_time-1)*RT_step      
  !      
- file_number=(NE_i_Time-1)/RT_IO_steps
+ if (RT_IO_steps/=0) file_number=(NE_i_Time-1)/RT_IO_steps
  !
  ! Write only every RT_io_steps
  !

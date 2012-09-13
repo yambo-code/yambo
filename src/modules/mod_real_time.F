@@ -160,9 +160,11 @@ module real_time
  !
  ! Hole/Electron Time-dependent life-times
  !
- real(SP),    allocatable :: Hole_lifetime(:,:)
- real(SP),    allocatable :: Phonon_lifetime(:,:)
- real(SP),    allocatable :: Electron_lifetime(:,:)
+ real(SP),    allocatable :: E_E_Hole_lifetime(:,:)
+ real(SP),    allocatable :: E_E_Electron_lifetime(:,:)
+ real(SP),    allocatable :: E_P_Hole_lifetime(:,:)
+ real(SP),    allocatable :: E_P_Electron_lifetime(:,:)
+ real(SP),    allocatable :: E_P_Phonon_lifetime(:,:)
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
@@ -313,11 +315,17 @@ module real_time
      allocate(RT_occupations(SC_bands(1):SC_bands(2),QP_nk))
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
      !
+     if (l_carrier_dynamics) then
+       allocate(E_E_Hole_lifetime(SC_bands(1):SC_bands(2),QP_nk))
+       allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),QP_nk))
+       call mem_est("RT_E_E_lifetimes",(/2*size(E_E_Hole_lifetime)/),(/SP/))
+     endif
+     !
      if (l_ELPH_CCA_Kernel) then
-       allocate(Hole_lifetime(SC_bands(1):SC_bands(2),QP_nk))
-       allocate(Electron_lifetime(SC_bands(1):SC_bands(2),QP_nk))
-       allocate(Phonon_lifetime(SC_bands(1):SC_bands(2),QP_nk))
-       call mem_est("RT_lifetimes",(/3*size(Hole_lifetime)/),(/SP/))
+       allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),QP_nk))
+       allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),QP_nk))
+       allocate(E_P_Phonon_lifetime(SC_bands(1):SC_bands(2),QP_nk))
+       call mem_est("RT_E_P_lifetimes",(/3*size(E_P_Hole_lifetime)/),(/SP/))
      endif
     !
      allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
@@ -399,9 +407,14 @@ module real_time
        call mem_est("SC_R")
      endif
      !
-     if(allocated(Hole_lifetime)) then
-       deallocate(Hole_lifetime,Electron_lifetime,Phonon_lifetime)
-       call mem_est("RT_lifetimes")
+     if(allocated(E_E_Hole_lifetime)) then
+       deallocate(E_E_Hole_lifetime,E_E_Electron_lifetime)
+       call mem_est("RT_E_E_lifetimes")
+     endif
+     !
+     if(allocated(E_P_Hole_lifetime)) then
+       deallocate(E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime)
+       call mem_est("RT_E_P_lifetimes")
      endif
      !
      deallocate(RT_occupations)
@@ -464,10 +477,6 @@ module real_time
      call pp_indexes_reset(RT_q_px) 
      !
    end subroutine RT_free
-   !
-   subroutine Dynamics_setup()
-     l_carrier_dynamics     =trim(Dynamics_Kind)=="C"
-   end subroutine
    !
    integer function MEM_index(it)
      !

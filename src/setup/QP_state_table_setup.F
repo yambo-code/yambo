@@ -43,6 +43,10 @@ subroutine QP_state_table_setup(en)
 #if defined _SC
  use SC,            ONLY:SC_bands
 #endif
+#if defined _RT
+ use real_time,     ONLY:l_carrier_dynamics
+#endif
+ !
  implicit none
  type(levels)::en
  !
@@ -227,6 +231,16 @@ subroutine QP_state_table_setup(en)
          QP_table(QP_n_states,2)=i2+i3
          QP_table(QP_n_states,3)=i1
          if (n_sp_pol==2) QP_table(QP_n_states,4)=i_sp
+         !
+#if defined _RT
+         if (l_carrier_dynamics.and.i3>0) then
+           QP_n_states=QP_n_states+1
+           QP_table(QP_n_states,1)=i2+i3
+           QP_table(QP_n_states,2)=i2
+           QP_table(QP_n_states,3)=i1
+           if (n_sp_pol==2) QP_table(QP_n_states,4)=i_sp
+         endif
+#endif
          !
        enddo
        !

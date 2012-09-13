@@ -39,7 +39,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  use memory_m,      ONLY:mem_est
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
  use fragments,     ONLY:fragment_status
- use real_time,     ONLY:Dynamics_setup,l_carrier_dynamics
+ use real_time,     ONLY:l_carrier_dynamics
  !
  implicit none
  type(levels)  :: E
@@ -54,8 +54,6 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  !
  call section('*','Extended collisions')
  !=======================================
- !
- call Dynamics_setup()
  !
  ! QP states setup
  !

@@ -24,7 +24,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
  use pars,           ONLY:SP,cI,pi
  use electrons,      ONLY:levels,spin_occ,n_full_bands
  use SC,             ONLY:SC_bands,it_now
- use real_time,      ONLY:G_lesser,MEM_index,Hole_lifetime,Electron_lifetime,Phonon_lifetime
+ use real_time,      ONLY:G_lesser,MEM_index,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime
  !
  implicit none
  !
@@ -84,9 +84,9 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
      if (DELTA>1.E-10) P_ph_abs =GAMMA_/(GAMMA_**2+(DELTA-ph_freq)**2)
      if (DELTA<1.E-10) P_ph_emit=GAMMA_/(GAMMA_**2+(DELTA+ph_freq)**2)
      !
-     Hole_lifetime(i_n_shift,ik)=Hole_lifetime(i_n_shift,ik)+abs(Gkkp(i_np,i_n))**2*P_ph_abs*f_k_m_q
-     Electron_lifetime(i_n_shift,ik)=Electron_lifetime(i_n_shift,ik)+abs(Gkkp(i_np,i_n))**2*P_ph_emit*(1.-f_k_m_q)
-     Phonon_lifetime(i_n_shift,ik)=Phonon_lifetime(i_n_shift,ik)+abs(Gkkp(i_np,i_n))**2*Bose_f*(f_k(i_n)-f_k_m_q)*(P_ph_abs+P_ph_emit)
+     E_P_Hole_lifetime(i_n_shift,ik)=E_P_Hole_lifetime(i_n_shift,ik)+abs(Gkkp(i_np,i_n))**2*P_ph_abs*f_k_m_q
+     E_P_Electron_lifetime(i_n_shift,ik)=E_P_Electron_lifetime(i_n_shift,ik)+abs(Gkkp(i_np,i_n))**2*P_ph_emit*(1.-f_k_m_q)
+     E_P_Phonon_lifetime(i_n_shift,ik)=E_P_Phonon_lifetime(i_n_shift,ik)+abs(Gkkp(i_np,i_n))**2*Bose_f*(f_k(i_n)-f_k_m_q)*(P_ph_abs+P_ph_emit)
      !
    enddo
    !

@@ -49,7 +49,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,Eh_pumped_pair_energy
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
-&                         rho_convergence,H_rotate,local_V,V_hartree_sc,&
+&                         rho_convergence,H_rotate,V_hartree_sc,&
 &                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional,&
 &                         RT_nk,RT_k,RT_occupations,SC_nbands
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE

@@ -67,7 +67,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use collisions_IO,  ONLY:io_COLLISIONS,V_kind
 #endif
 #if defined _RT
- use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe
+ use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe,l_carrier_dynamics,Dynamics_Kind
  use fields,         ONLY:Efield,i_Pump,i_Probe,Efield_reset,Efield_duplicate
 #endif
 #if defined _MAGNETIC
@@ -833,6 +833,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _RT
        l_collisions_IO=runlevel_is_on('collisions_IO')
+       l_carrier_dynamics =trim(Dynamics_Kind)=="C"
 #endif
 #if defined  _ELPH  
        if (.not.CLOSE_Gs) then

@@ -31,12 +31,13 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  use QP_m,            ONLY:QP_n_states
  use memory_m,        ONLY:mem_sum,mem_est
  use collisions_IO,   ONLY:COLLISIONS_v,COLLISIONS_table,V_kind,collisions_IO_free,&
-&                          COLLISIONS_path,io_COLLISIONS,COLLISIONS_range,collisions_RANGES_setup
+&                          COLLISIONS_path,io_COLLISIONS,COLLISIONS_range,collisions_RANGES_setup,n_collisions
  use stderr,          ONLY:intc
  use IO_m,            ONLY:OP_RD_CL,io_control,VERIFY,REP
  use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset
  use par_indexes_m,   ONLY:par_indexes
  use collisions_CACHE,ONLY:COLLISIONS_cache_size,last_QP_mem,cache_memory,CACHE
+ use real_time,       ONLY:l_carrier_dynamics
  !
  implicit none
  !
@@ -85,6 +86,10 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
      !
      V_kind=V_kinds(iv)
      !
+     ! In the carrier dynamics only the HF part is not needed
+     !
+     if (l_carrier_dynamics.and.V_kind/=SC_COHSEX) cycle
+     !
      call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
      io_err(iv)=io_COLLISIONS(0,ID)
      !
@@ -97,6 +102,8 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
    return
    !
  endif
+ !           
+ call msg('sr','[RT] COLLISIONS loading ...')
  !
  if (COLLISIONS_cache_size==0..or..not.l_collisions_IO) return
  !
@@ -135,17 +142,24 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
    !
    if(.not.px%element_1D(i_qp)) cycle  
    !
-   allocate(CACHE(i_qp)%COLLISIONS_table(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
-&                                        COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
-&                                        COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
-   call mem_est(" QP_COLLISIONS_table_"//trim(intc(i_qp)),(/LP/))
-   !
-   CACHE(i_qp)%COLLISIONS_table(:,:,:)=0
+   if (.not.l_carrier_dynamics) then
+     !
+     allocate(CACHE(i_qp)%COLLISIONS_table(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
+&                                          COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
+&                                          COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
+     !
+     CACHE(i_qp)%COLLISIONS_table(:,:,:)=0
+     !
+   endif
    COLLISIONS_disk=(0.,0.)
    !
    do iv=1,n_V_kinds
      !
      V_kind=V_kinds(iv)
+     !
+     ! In the carrier dynamics only the HF part is not needed
+     !
+     if (l_carrier_dynamics.and.V_kind/=SC_COHSEX) cycle
      !
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
      io_err(iv)=io_COLLISIONS(i_qp,ID)
@@ -156,10 +170,15 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
        do i2=COLLISIONS_range(2,1),COLLISIONS_range(2,2)
          do i3=COLLISIONS_range(3,1),COLLISIONS_range(3,2)
            !
-           if(COLLISIONS_table(i1,i2,i3)==1) then
+           if (l_carrier_dynamics) then
              ic=ic+1
-             CACHE(i_qp)%COLLISIONS_table(i1,i2,i3)=1
              COLLISIONS_disk(i1,i2,i3)=COLLISIONS_disk(i1,i2,i3)+COLLISIONS_v(ic)
+           else
+             if(COLLISIONS_table(i1,i2,i3)==1) then
+               ic=ic+1
+               CACHE(i_qp)%COLLISIONS_table(i1,i2,i3)=1
+               COLLISIONS_disk(i1,i2,i3)=COLLISIONS_disk(i1,i2,i3)+COLLISIONS_v(ic)
+             endif
            endif
            !
          enddo
@@ -170,17 +189,26 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
    !
    n_tot_rho_states=sum(int(CACHE(i_qp)%COLLISIONS_table(:,:,:),IP))
    !
-   allocate(CACHE(i_qp)%COLLISIONS_v(n_tot_rho_states))
-   call mem_est("QP_COLLISIONS_v"//trim(intc(i_qp)),(/2*SP/))
+   if (l_carrier_dynamics) then
+     allocate(CACHE(i_qp)%COLLISIONS_v3(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
+&                                       COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
+&                                       COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
+   else
+     allocate(CACHE(i_qp)%COLLISIONS_v(n_tot_rho_states))
+   endif
    !
    ic=0
    !
    do i1=COLLISIONS_range(1,1),COLLISIONS_range(1,2)
      do i2=COLLISIONS_range(2,1),COLLISIONS_range(2,2)
        do i3=COLLISIONS_range(3,1),COLLISIONS_range(3,2)
-         if(CACHE(i_qp)%COLLISIONS_table(i1,i2,i3)==1) then
-           ic=ic+1
-           CACHE(i_qp)%COLLISIONS_v(ic)=COLLISIONS_disk(i1,i2,i3)
+         if (l_carrier_dynamics) then
+           CACHE(i_qp)%COLLISIONS_v3(i1,i2,i3)=COLLISIONS_disk(i1,i2,i3)
+         else
+           if(CACHE(i_qp)%COLLISIONS_table(i1,i2,i3)==1) then
+             ic=ic+1
+             CACHE(i_qp)%COLLISIONS_v(ic)=COLLISIONS_disk(i1,i2,i3)
+           endif
          endif
        enddo
      enddo
@@ -191,6 +219,13 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  end do
  !
  last_QP_mem=i_qp
+ !
+ if (l_carrier_dynamics) then
+   call mem_est("QP_COLLISIONS",(/size(CACHE(1)%COLLISIONS_v3)*QP_n_states/),(/2*SP/))
+ else
+   call mem_est("QP_COLLISIONS_table",(/size(CACHE(1)%COLLISIONS_table)*QP_n_states/),(/LP/))
+   call mem_est("QP_COLLISIONS",(/size(CACHE(1)%COLLISIONS_v)*QP_n_states/),(/2*SP/))
+ endif
  !
  deallocate(COLLISIONS_disk)
  call mem_est("COLLISIONS_disk")

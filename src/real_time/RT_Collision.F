@@ -48,7 +48,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
 &                         G_lesser_reference,NE_Hxc_jumps,                                     &
 &                         l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start,              &
-&                         l_RT_needs_XC0,Ho_plus_Sigma
+&                         l_RT_needs_XC0,Ho_plus_Sigma,l_carrier_dynamics
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
@@ -110,7 +110,8 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
      ! NOTICE THAT: this approximation is valid only for linear self-energies 
      !              in G_lesser as exchange or COHSEX(with W fixed) 
      !
-     if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_IO_compose(G_input-G_lesser_reference)
+     if ( (l_sc_hf.or.l_sc_cohsex) .and. &
+&          .not.l_carrier_dynamics) call COLLISIONS_IO_compose(G_input-G_lesser_reference)
      !
    endif
    !
@@ -138,7 +139,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    ! Non-local XC potentials (like CHOSEX)
    !=======================================
-   if(.not.local_V.and..not.XCfrozen) then
+   if(.not.local_V.and..not.XCfrozen.and..not.l_carrier_dynamics) then
      ! HF
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
      ! CHOSEX

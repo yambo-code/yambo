@@ -36,7 +36,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_steps,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
-&                         l_Dynamics_is_over,MEM_index
+&                         l_Dynamics_is_over,MEM_index,l_carrier_dynamics
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO,USE_LK
  use memory_m,        ONLY:mem_est
  use com,             ONLY:error
@@ -64,6 +64,8 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  !
  if (l_ph_corr) then
    call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph scattering')
+ else if  (l_carrier_dynamics) then
+   call section('*',trim(SC_potential)//' Real-Time Dynamics (carriers only)')
  else
    call section('*',trim(SC_potential)//' Real-Time Dynamics')
  endif

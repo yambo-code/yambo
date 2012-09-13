@@ -34,7 +34,7 @@ subroutine RT_relaxation(G_input,Xen,k,q,Time)
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
-&                         RT_k_px
+&                         RT_k_px,l_carrier_dynamics
  !
  implicit none
  !
@@ -59,9 +59,23 @@ subroutine RT_relaxation(G_input,Xen,k,q,Time)
  ! This term send the electron distribution into the initial one
  ! G_lesser_refence(:,:,:) 
  !
- if(.not.RT_is_dumped.and..not.l_ph_corr) return 
+ if(.not.RT_is_dumped.and..not.l_ph_corr.and..not.l_carrier_dynamics) return 
  !
  Sigma_relax=cZERO
+ !
+ ! El-El
+ !=======
+ if (l_carrier_dynamics) then
+   !
+   do ik=1,QP_nk
+     !
+     if (.not.RT_k_px%element_1D(ik)) cycle
+     !
+     call RT_Coulomb_relaxation(ik,Xen,k,q,Time) 
+     !
+   enddo
+   !
+ endif
  !
 #if defined _ELPH
  !

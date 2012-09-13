@@ -24,7 +24,7 @@ integer function RT_phase_space(E)
  use pars,           ONLY:zero_dfl,SP
  use drivers,        ONLY:l_ph_corr
  use electrons,      ONLY:levels,spin_occ
- use real_time,      ONLY:RT_eh_energy_max,RT_k_px
+ use real_time,      ONLY:RT_eh_energy_max,RT_k_px,l_carrier_dynamics
  use SC,             ONLY:SC_bands
  use R_lattice,      ONLY:nkibz
  use par_indexes_m,  ONLY:par_indexes
@@ -109,7 +109,7 @@ integer function RT_phase_space(E)
      ! q-points. Nevertheless the eventually reduced range of k-points remains
      ! defined for all CPUs.
      !
-     if (p_loc%element_1D(ik_todo).or.l_ph_corr) RT_k_px%element_1D(ik)=.TRUE.
+     if (p_loc%element_1D(ik_todo).or.l_ph_corr.or.l_carrier_dynamics) RT_k_px%element_1D(ik)=.TRUE.
      !
    else
      !

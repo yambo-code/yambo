@@ -40,7 +40,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  use pars,           ONLY:SP,cONE,cZERO
  use wrapper,        ONLY:V_by_V_plus_V
  use electrons,      ONLY:levels
- use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
+ use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex,l_carrier_dynamics 
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
@@ -48,7 +48,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
 &                         G_lesser_reference,NE_Hxc_jumps,                                     &
 &                         l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start,              &
-&                         l_RT_needs_XC0,Ho_plus_Sigma,l_carrier_dynamics
+&                         l_RT_needs_XC0,Ho_plus_Sigma
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc

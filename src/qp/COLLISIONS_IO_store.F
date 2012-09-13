@@ -26,7 +26,7 @@ subroutine COLLISIONS_IO_store(i_qp)
  use collisions_IO,   ONLY:COLLISIONS_cutoff,TEMP_COLLISIONS_v,COLLISIONS_table,&
 &                          COLLISIONS_v,n_collisions,io_COLLISIONS,COLLISIONS_range
  use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL
- use real_time,       ONLY:l_carrier_dynamics
+ use drivers,         ONLY:l_carrier_dynamics
  !
  implicit none                                              
  !

@@ -33,7 +33,8 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_sec,io_bulk,read_is_on,write_is_on,io_file,IO_NO_DATABASE,&
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found
  use fields,         ONLY:i_Probe,i_Pump
- use real_time,      ONLY:RT_IO_steps,NE_i_time,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime
+ use real_time,      ONLY:RT_IO_steps,NE_i_time,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes
 #endif
@@ -362,6 +363,17 @@ integer function io_SC_components(what,E_sc,ID)
    endif
    !
 #endif
+   !
+   if (ver_is_gt_or_eq(ID,revision=1449).and.allocated(E_E_Hole_lifetime)) then
+     !
+     call io_bulk(ID,VAR="RT_E_E_Hole_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+     call io_bulk(ID,R2=E_E_Hole_lifetime)
+     !
+     call io_bulk(ID,VAR="RT_E_E_Electron_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+     call io_bulk(ID,R2=E_E_Electron_lifetime)
+     !
+   endif
+   !
    !
  endif
  !

@@ -187,13 +187,11 @@ subroutine RT_initialize(Xen,Xk,q)
  ! Electron-phonon
  ! ===============
  !
- if (l_ph_corr) then
-   call section('=','El-Ph matrix elements loading and setup')
-   !==========================================================
-   call RT_ELPH_initialize(Xk,q)
- endif
- !
+ if (l_ph_corr) call section('=','El-Ph matrix elements loading and setup')
+ !                                =======================================
 #endif
+ !
+ call RT_ELPH_initialize(Xk,q)
  !
  call section('=','Phase space check')
  !

@@ -22,7 +22,7 @@
 subroutine RT_driver(en,Xen,X,k,Xk,q)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_collisions_IO,l_ph_corr
+ use drivers,        ONLY:l_collisions_IO,l_ph_corr,l_carrier_dynamics 
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use timing,         ONLY:live_timing 
@@ -36,7 +36,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_steps,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
-&                         l_Dynamics_is_over,MEM_index,l_carrier_dynamics
+&                         l_Dynamics_is_over,MEM_index
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO,USE_LK
  use memory_m,        ONLY:mem_est
  use com,             ONLY:error
@@ -136,7 +136,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  ! qindx_X and qindx_S not needed in real-time 
  ! they are used only in dipoles and collisions calculations
  !
- if (.not.l_ph_corr) call qindx_free()
+ if (.not.l_ph_corr.and..not.l_carrier_dynamics) call qindx_free()
  !
  ! Calculation already done
  !

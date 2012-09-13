@@ -36,8 +36,6 @@ module real_time
  logical           :: l_RT_pump_and_probe  
  logical           :: l_Dynamics_is_over  
  !
- logical           :: l_carrier_dynamics  
- !
  character(schlen) :: Dynamics_Kind ! (C)arriers/(P)olarization
  !
  ! Inital XC (SC or default) are requested
@@ -280,7 +278,7 @@ module real_time
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,schlen
-     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda,l_ph_corr
+     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda,l_ph_corr,l_carrier_dynamics
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n, &
 &                             SC_xc_functional,SC_xc_functional,RT_occupations
@@ -321,7 +319,7 @@ module real_time
        call mem_est("RT_E_E_lifetimes",(/2*size(E_E_Hole_lifetime)/),(/SP/))
      endif
      !
-     if (l_ELPH_CCA_Kernel) then
+     if (l_ELPH_CCA_Kernel.and.l_ph_corr) then
        allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),QP_nk))
        allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),QP_nk))
        allocate(E_P_Phonon_lifetime(SC_bands(1):SC_bands(2),QP_nk))

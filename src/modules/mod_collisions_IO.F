@@ -59,7 +59,7 @@ module collisions_IO
  contains
    !
    subroutine collisions_RANGES_setup()
-     use real_time,      ONLY:l_carrier_dynamics
+     use drivers,        ONLY:l_carrier_dynamics
      use SC,             ONLY:SC_bands
      use D_lattice,      ONLY:nsym
      use R_lattice,      ONLY:nqbz,nkibz

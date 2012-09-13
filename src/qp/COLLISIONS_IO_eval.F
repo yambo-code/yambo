@@ -21,7 +21,7 @@
 !
 subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  !
- use drivers,       ONLY:l_HF_and_locXC,l_cohsex
+ use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_carrier_dynamics 
  use com,           ONLY:error
  use pars,          ONLY:schlen,SP,IP
  use electrons,     ONLY:levels
@@ -39,7 +39,6 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  use memory_m,      ONLY:mem_est
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
  use fragments,     ONLY:fragment_status
- use real_time,     ONLY:l_carrier_dynamics
  !
  implicit none
  type(levels)  :: E

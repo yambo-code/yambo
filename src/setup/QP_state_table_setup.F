@@ -35,16 +35,13 @@ subroutine QP_state_table_setup(en)
  !
  use pars,          ONLY:SP,IP
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_sc_run,l_real_time,l_collisions_IO
+ use drivers,       ONLY:l_sc_run,l_real_time,l_collisions_IO,l_carrier_dynamics
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,SC_bands_mixed,SC_band_mixing 
  use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
 #if defined _SC
  use SC,            ONLY:SC_bands
-#endif
-#if defined _RT
- use real_time,     ONLY:l_carrier_dynamics
 #endif
  !
  implicit none

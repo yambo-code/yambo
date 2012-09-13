@@ -22,9 +22,9 @@
 integer function RT_phase_space(E)
  ! 
  use pars,           ONLY:zero_dfl,SP
- use drivers,        ONLY:l_ph_corr
+ use drivers,        ONLY:l_ph_corr,l_carrier_dynamics 
  use electrons,      ONLY:levels,spin_occ
- use real_time,      ONLY:RT_eh_energy_max,RT_k_px,l_carrier_dynamics
+ use real_time,      ONLY:RT_eh_energy_max,RT_k_px
  use SC,             ONLY:SC_bands
  use R_lattice,      ONLY:nkibz
  use par_indexes_m,  ONLY:par_indexes
@@ -59,7 +59,7 @@ integer function RT_phase_space(E)
    ! In the case of el-ph scattering the parallelization is already done on the
    ! q-points.
    !
-   if (l_ph_corr) RT_k_px%element_1D=.TRUE.
+   if (l_ph_corr.or.l_carrier_dynamics) RT_k_px%element_1D=.TRUE.
    !
    return
    !

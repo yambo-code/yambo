@@ -35,7 +35,7 @@ integer function io_COLLISIONS(i_qp,ID,X)
  use fragments,     ONLY:io_fragment,Fragments_Restart,Fragments_Synchronize
  use X_m,           ONLY:X_t,n_X_descs,X_description
  use stderr,        ONLY:intc
- use real_time,     ONLY:l_carrier_dynamics
+ use drivers,       ONLY:l_carrier_dynamics
  !
  implicit none
  !

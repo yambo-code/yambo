@@ -25,6 +25,7 @@ subroutine RT_ELPH_initialize(k,q)
  use real_time,      ONLY:q_weight,RT_q_px,elph_gkkp_expanded,THETA_matrix,&
 &                         GKKP_matrix_index,THETA_matrix_index,Q_io_map,K_io_map,&
 &                         l_ELPH_CCA_Kernel 
+ use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
  use R_lattice,      ONLY:RL_vol,bz_samp
  use par_indexes_m,  ONLY:par_indexes
  use par_proc_m,     ONLY:pp_indexes_reset,myid
@@ -49,6 +50,8 @@ subroutine RT_ELPH_initialize(k,q)
  ! Logicals
  !==========
  !
+ if (.not.l_ph_corr.and..not.l_carrier_dynamics) return
+ !
  call parser('RT_T_evol',l_Full_RT_T_evolution)
  l_ELPH_CCA_Kernel=.not.l_Full_RT_T_evolution
  !
@@ -58,6 +61,8 @@ subroutine RT_ELPH_initialize(k,q)
  call pp_indexes_reset(RT_q_px)
  !
  call par_indexes(RT_q_px,(/q%nbz/))
+ !
+ if (.not.l_ph_corr) return
  !
  ! Q/K grid remapping
  !====================

@@ -19,193 +19,107 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Coulomb_relaxation(ik,E,k,q,TIME)
+subroutine RT_Coulomb_relaxation(i_k,E,k,q,TIME)
  !  
- use pars,           ONLY:SP
-!,cI,cZero,rZero
- use electrons,      ONLY:levels
-!,spin_occ
- use R_lattice,      ONLY:bz_samp,nkibz
-!,qindx_S
- use SC,             ONLY:SC_bands
-!,it_now 
-! use real_time,      ONLY:Sigma_relax,q_weight,elph_gkkp_expanded,GKKP_matrix_index,RT_q_px,l_ELPH_CCA_Kernel,&
-!&                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,G_lesser,MEM_index
-! use par_proc_m,     ONLY:pp_redux_wait
- !
+ use pars,            ONLY:SP,cI,rZero
+ use electrons,       ONLY:levels,spin_occ
+ use R_lattice,       ONLY:qindx_S,bz_samp,qindx_X,nkibz
+ use SC,              ONLY:SC_bands,it_now 
+ use real_time,       ONLY:RT_q_px,G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,Sigma_relax
  use QP_m,            ONLY:QP_n_states,QP_table
+ use D_lattice,       ONLY:DL_vol
  use collisions_CACHE,ONLY:CACHE
+ use par_proc_m,      ONLY:pp_redux_wait
  !
  implicit none
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k,q
- integer,       intent(in) :: ik
+ integer,       intent(in) :: i_k
  real(SP),      intent(in) :: TIME
  !
  ! Work Space ...
  !
- integer               :: i_qp1,i_qp2,B_dim,i_p,i_kmq,i_pmq
- real(SP)              :: f_k(SC_bands(2)-SC_bands(1)+1),f_p(SC_bands(2)-SC_bands(1)+1),&
-&                         f_kmq(SC_bands(2)-SC_bands(1)+1),f_pmq(SC_bands(2)-SC_bands(1)+1)
+ integer               :: i_qp1,i_qp2,B_dim,i_p,i_kmq,i_pmq,i_n,i_m,i_mp,i_np,i_p_star,&
+&                         iqbz,i_p_s,iqibz,i_p_bz
+ real(SP)              :: f_k(SC_bands(2)),f_p,f_kmq,f_pmq,GAMMA_,DELTA_,pre_factor,lorentzian
+ !
+ ! Dimensioning and Zeroing
+ !==========================
  !
  B_dim=SC_bands(2)-SC_bands(1)+1
  !
- ! Select only the m.e. of QP_table relative to kpt ik
+ E_E_Hole_lifetime(:,i_k)    =rZero
+ E_E_Electron_lifetime(:,i_k)=rZero
  !
- write (*,*) allocated(CACHE(1)%COLLISIONS_v3)
- write (*,*) shape(CACHE(1)%COLLISIONS_v3)
- stop
-! do i_qp1=1,QP_n_states
-!   !
-!   do iqbz=1,q%nbz 
-!     iqibz    =q%sstar(iqbz,1)
-!     iqs      =q%sstar(iqbz,2)
-!     do i_qp2=1,QP_n_states
-!       !
-!       i_m     = QP_table(i_qp2,1)
-!       i_mp    = QP_table(i_qp2,2)
-!       i_p     = QP_table(i_qp2,3)
-!       do i_p_star=1,k%nstar(i_p)
-!         !
-!         ! Scattering geometry (II)
-!         !==========================
-!         !
-!         i_p_s =k%star(i_p,i_p_star)
-!         i_p_bz=i_p_star
-!       enddo
-!       !
-!     enddo
-!     !
-!   enddo
-!   !
-! enddo
- stop
+ ! Select only the m.e. of QP_table relative to kpt i_k
+ !======================================================
  !
-
-! integer               :: i_s,i_map(-1:1),il,i_gkkp,ik_bz
-! real(SP)              :: ph_freq,N_q(2),f_k(SC_bands(2)-SC_bands(1)+1)
-! !
-! complex(SP)           :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
-! complex(SP)           :: S_mat_out_of_eq(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
-! complex(SP)           :: S_mat_eq(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
-! complex(SP)           :: S_mat_sum(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
-! !
-! ! ... band index ...
-! integer               :: i_n,i_np,i_m,B_dim,i_np_m,i_n_m
-! ! ... BZ index ...
-! integer               :: iqbz,ik_m_q,ik_m_qs
-! !
-! B_dim=SC_bands(2)-SC_bands(1)+1
-! ik_bz=sum(k%nstar(:ik-1))+1
-! !
-! i_map(-1)=1
-! i_map( 0)=1
-! i_map( 1)=2
-! !
-! S_mat_eq=cZero
-! S_mat_out_of_eq=cZero
-! S_mat_sum=cZero
-! if (l_ELPH_CCA_Kernel) then
-!   E-P_Hole_lifetime(:,ik)    =rZero
-!   E-P_Electron_lifetime(:,ik)=rZero
-!   E-P_Phonon_lifetime(:,ik)  =rZero
-!   do i_n=1,B_dim
-!     f_k(i_n)=-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,ik,MEM_index(it_now))/spin_occ
-!   enddo
-! endif
-! !
-! do iqbz=1,q%nbz
-!   !
-!   if (.not.RT_q_px%element_1D(iqbz)) cycle
-!   !
-!   ik_m_q =k%sstar(qindx_S(ik,iqbz,1),1)
-!   ik_m_qs=k%sstar(qindx_S(ik,iqbz,1),2)
-!   !
-!   i_gkkp=GKKP_matrix_index(iqbz)
-!   !
-!   do il=elph_branches(1),elph_branches(2)
-!     !
-!     ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
-!     !
-!     if (abs(ph_freq)<epsilon(1._SP)) cycle
-!     !
-!     ! N+/-
-!     !
-!     N_q    = (bose_f(ph_freq)+(/0.,spin_occ/))/spin_occ
-!     !
-!     ! Note the m.e. in Gkkp are stored with indexes order exchanged
-!     !
-!     Gkkp=(0._SP,0._SP)
-!     do i_n=SC_bands(1),SC_bands(2)
-!       i_n_m=i_n-SC_bands(1)+1
-!       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded((i_gkkp-1)*k%nbz+ik_bz,il,i_n,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
-!       do i_np=SC_bands(1),SC_bands(2)
-!         i_np_m=i_np-SC_bands(1)+1
-!         Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded((i_gkkp-1)*k%nbz+ik_bz,il,i_np,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
-!       enddo 
-!     enddo
-!     !
-!     if (l_ELPH_CCA_Kernel) then
-!       !
-!       ! Complete Collision Approximation (CCA)
-!       !=======================================
-!       !
-!       call RT_ELPH_CCA_Kernel(ik,ik_m_q,f_k,N_q(1),E,ph_freq,Gkkp)
-!       !
-!     else
-!       !
-!       ! EQUILIBRIUM Kernel
-!       !=====================
-!       !
-!       call RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp,S_mat_eq)
-!       !
-!       ! OUT-OF-EQUILIBRIUM Kernel
-!       !===========================
-!       !
-!       call RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S_mat_out_of_eq)
-!       !
-!       ! SUM-UP
-!       !========
-!       !
-!       do i_s=-1,1,2
-!         do i_n=1,B_dim
-!           do i_np=1,B_dim
-!             S_mat_sum(i_n,i_np)=S_mat_sum(i_n,i_np)+&
-!&                                ( S_mat_out_of_eq(i_map( i_s),i_n,i_np)+conjg(S_mat_out_of_eq(i_map(-i_s),i_np,i_n))+&
-!&                                  S_mat_eq(i_map( i_s),i_n,i_np)+conjg(S_mat_eq(i_map(-i_s),i_np,i_n)) )
-!           enddo
-!         enddo
-!       enddo ! i_s
-!       !
-!     endif
-!     !
-!   enddo ! ph branch
-!   !
-! enddo ! iqbz
-! !
-! ! CCA kernel composition
-! !========================
-! !
-! if (l_ELPH_CCA_Kernel) then
-!   do i_n=1,B_dim
-!     i_n_m=i_n+SC_bands(1)-1
-!     S_mat_sum(i_n,i_n)=E-P_Hole_lifetime(i_n_m,ik)*(f_k(i_n)-1.)+E-P_Electron_lifetime(i_n_m,ik)*f_k(i_n)+E-P_Phonon_lifetime(i_n_m,ik)
-!   enddo
-! endif
-! !
-! ! All-to-All
-! !============
-! !
-! call pp_redux_wait(S_mat_sum(:,:))
-! call pp_redux_wait(E-P_Electron_lifetime(:,:))
-! call pp_redux_wait(E-P_Hole_lifetime(:,:))
-! call pp_redux_wait(E-P_Phonon_lifetime(:,:))
-! !
-! do i_n=SC_bands(1),SC_bands(2)
-!   do i_np=SC_bands(1),SC_bands(2)
-!     Sigma_relax(i_n,i_np,ik)=Sigma_relax(i_n,i_np,ik)+S_mat_sum(i_n-SC_bands(1)+1,i_np-SC_bands(1)+1)
-!   enddo 
-! enddo
-! !
+ do i_qp1=1,QP_n_states
+   !
+   if (QP_table(i_qp1,3)/=i_k) cycle
+   !
+   i_n =QP_table(i_qp1,1)
+   i_np=QP_table(i_qp1,2)
+   !
+   f_k(i_n)=-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,i_k,MEM_index(it_now))/spin_occ
+   !
+   do iqbz=1,q%nbz
+     !
+     if (.not.RT_q_px%element_1D(iqbz)) cycle
+     !
+     iqibz = q%sstar(iqbz,1)
+     i_kmq = k%sstar(qindx_S(i_k,iqbz,1),1)
+     !
+     f_kmq=-cI*G_lesser(i_np+SC_bands(1)-1,i_np+SC_bands(1)-1,i_kmq,MEM_index(it_now))/spin_occ
+     !
+     do i_qp2=1,QP_n_states
+       !
+       i_m  = QP_table(i_qp2,1)
+       i_mp = QP_table(i_qp2,2)
+       i_p  = QP_table(i_qp2,3)
+       !
+       f_p=-cI*G_lesser(i_m+SC_bands(1)-1,i_m+SC_bands(1)-1,i_p,MEM_index(it_now))/spin_occ
+       !
+       do i_p_star=1,k%nstar(i_p)
+         !
+         i_p_s =k%star(i_p,i_p_star)
+         i_p_bz=i_p_star
+         if (i_p>1) i_p_bz=sum(k%nstar(:i_p-1))+i_p_star
+         i_pmq   = k%sstar(qindx_X(iqibz,i_p_bz,1),1)
+         !
+         f_pmq=-cI*G_lesser(i_mp+SC_bands(1)-1,i_mp+SC_bands(1)-1,i_pmq,MEM_index(it_now))
+         !
+         pre_factor=1./(DL_vol*float(q%nbz))**2*abs(CACHE(i_qp1)%COLLISIONS_v3(i_qp2,i_p_s,iqbz))**2
+         !
+         DELTA_ = E%E(i_np,i_kmq,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)-E%E(i_n,i_k,1)
+         GAMMA_ = abs(E%W(i_np,i_kmq,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))+abs(E%W(i_n,i_k,1))
+         !
+         lorentzian=GAMMA_/(DELTA_**2+GAMMA_**2)
+         !
+         E_E_Electron_lifetime(i_n,i_k)= E_E_Electron_lifetime(i_n,i_k)+pre_factor*lorentzian*(1._SP-f_kmq)*(1._SP-f_p)*f_pmq
+         E_E_Hole_lifetime(i_n,i_k)    = E_E_Hole_lifetime(i_n,i_k)+pre_factor*lorentzian*f_kmq*f_p*(1._SP-f_pmq)
+         !
+       enddo
+       !
+     enddo
+     !
+   enddo
+   !
+ enddo
+ !
+ ! All-to-All
+ !============
+ !
+ call pp_redux_wait(E_E_Electron_lifetime(:,:))
+ call pp_redux_wait(E_E_Hole_lifetime(:,:))
+ !
+ ! Kernel composition
+ !====================
+ !
+ do i_n=SC_bands(1),SC_bands(2)
+   Sigma_relax(i_n,i_n,i_k)=Sigma_relax(i_n,i_n,i_k)+E_E_Hole_lifetime(i_n,i_k)*(f_k(i_n)-1._SP)+&
+&                                                    E_E_Electron_lifetime(i_n,i_k)*f_k(i_n)
+ enddo
+ !
 end subroutine RT_Coulomb_relaxation

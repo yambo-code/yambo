@@ -41,7 +41,7 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  use wrapper,       ONLY:M_by_V
  use collisions_IO, ONLY:TEMP_COLLISIONS_v
  use WF_distribute, ONLY:WF_states_setup
- use real_time,     ONLY:l_carrier_dynamics
+ use drivers,       ONLY:l_carrier_dynamics
  use SC,            ONLY:SC_bands
  use fragments,     ONLY:fragment_status
  !

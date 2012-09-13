@@ -25,7 +25,7 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  ! exchange, COHSEX etc.. and store them together in QP_rho(i_qp)
  !
  use pars,            ONLY:IP,SP,LP,schlen
- use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_collisions_IO,l_sc_srpa
+ use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_collisions_IO,l_sc_srpa,l_carrier_dynamics 
  use com,             ONLY:warning,msg
  use global_XC,       ONLY:SC_HF,SC_COHSEX
  use QP_m,            ONLY:QP_n_states
@@ -37,7 +37,6 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset
  use par_indexes_m,   ONLY:par_indexes
  use collisions_CACHE,ONLY:COLLISIONS_cache_size,last_QP_mem,cache_memory,CACHE
- use real_time,       ONLY:l_carrier_dynamics
  !
  implicit none
  !
@@ -103,7 +102,7 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
    !
  endif
  !           
- call msg('sr','[RT] COLLISIONS loading ...')
+ call msg('sr','[COLLISIONS] Loading ...')
  !
  if (COLLISIONS_cache_size==0..or..not.l_collisions_IO) return
  !

@@ -29,12 +29,12 @@ subroutine RT_relaxation(G_input,Xen,k,q,Time)
  !
  use pars,           ONLY:SP,cI,cZERO
  use electrons,      ONLY:levels
- use drivers,        ONLY:l_ph_corr
+ use drivers,        ONLY:l_ph_corr,l_carrier_dynamics 
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
-&                         RT_k_px,l_carrier_dynamics
+&                         RT_k_px
  !
  implicit none
  !

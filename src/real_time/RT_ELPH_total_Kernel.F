@@ -163,7 +163,8 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  if (l_ELPH_CCA_Kernel) then
    do i_n=1,B_dim
      i_n_m=i_n+SC_bands(1)-1
-     S_mat_sum(i_n,i_n)=E_P_Hole_lifetime(i_n_m,ik)*(f_k(i_n)-1.)+E_P_Electron_lifetime(i_n_m,ik)*f_k(i_n)+E_P_Phonon_lifetime(i_n_m,ik)
+     S_mat_sum(i_n,i_n)=E_P_Hole_lifetime(i_n_m,ik)*(f_k(i_n)-1.)+E_P_Electron_lifetime(i_n_m,ik)*f_k(i_n)+&
+&                       E_P_Phonon_lifetime(i_n_m,ik)
    enddo
  endif
  !

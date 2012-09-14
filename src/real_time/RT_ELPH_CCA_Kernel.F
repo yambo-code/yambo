@@ -84,9 +84,12 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
      if (DELTA>1.E-10) P_ph_abs =GAMMA_/(GAMMA_**2+(DELTA-ph_freq)**2)
      if (DELTA<1.E-10) P_ph_emit=GAMMA_/(GAMMA_**2+(DELTA+ph_freq)**2)
      !
-     E_P_Hole_lifetime(i_n_shift,ik)=E_P_Hole_lifetime(i_n_shift,ik)+abs(Gkkp(i_np,i_n))**2*P_ph_abs*f_k_m_q
-     E_P_Electron_lifetime(i_n_shift,ik)=E_P_Electron_lifetime(i_n_shift,ik)+abs(Gkkp(i_np,i_n))**2*P_ph_emit*(1.-f_k_m_q)
-     E_P_Phonon_lifetime(i_n_shift,ik)=E_P_Phonon_lifetime(i_n_shift,ik)+abs(Gkkp(i_np,i_n))**2*Bose_f*(f_k(i_n)-f_k_m_q)*(P_ph_abs+P_ph_emit)
+     E_P_Hole_lifetime(i_n_shift,ik)=E_P_Hole_lifetime(i_n_shift,ik)+&
+&                                    abs(Gkkp(i_np,i_n))**2*P_ph_abs*f_k_m_q
+     E_P_Electron_lifetime(i_n_shift,ik)=E_P_Electron_lifetime(i_n_shift,ik)+&
+&                                        abs(Gkkp(i_np,i_n))**2*P_ph_emit*(1.-f_k_m_q)
+     E_P_Phonon_lifetime(i_n_shift,ik)=E_P_Phonon_lifetime(i_n_shift,ik)+&
+&                 abs(Gkkp(i_np,i_n))**2*Bose_f*(f_k(i_n)-f_k_m_q)*(P_ph_abs+P_ph_emit)
      !
    enddo
    !

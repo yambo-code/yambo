@@ -26,7 +26,7 @@ integer function RT_occupations_check(E,k)
  use electrons,      ONLY:levels
  use QP_m,           ONLY:OCC_ctl
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,RT_IO_steps,l_ELPH_CCA_Kernel,&
-&                         E-P_Hole_lifetime,E-P_Electron_lifetime,E-P_Phonon_lifetime
+&                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime
  use SC,             ONLY:SC_bands,RT_occupations
  use IO_m,           ONLY:LOG,NONE
  use com,            ONLY:warning,error
@@ -49,10 +49,10 @@ integer function RT_occupations_check(E,k)
    !
  endif
  !
- if (l_ph_corr.and.l_ELPH_CCA_Kernel.and..not.allocated(E-P_Hole_lifetime)) then
-   allocate(E-P_Hole_lifetime(SC_bands(1):SC_bands(2),k%nibz))
-   allocate(E-P_Electron_lifetime(SC_bands(1):SC_bands(2),k%nibz))
-   allocate(E-P_Phonon_lifetime(SC_bands(1):SC_bands(2),k%nibz))
+ if (l_ph_corr.and.l_ELPH_CCA_Kernel.and..not.allocated(E_P_Hole_lifetime)) then
+   allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),k%nibz))
+   allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),k%nibz))
+   allocate(E_P_Phonon_lifetime(SC_bands(1):SC_bands(2),k%nibz))
  endif
  !
  if (OCC_T_ref>=0.) then

@@ -29,8 +29,8 @@ subroutine RT_occupations_analyze(k,E)
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT
  use com,            ONLY:msg,of_open_close
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E-P_Hole_lifetime,E-P_Electron_lifetime,&
-&                         E-P_Phonon_lifetime,l_ELPH_CCA_Kernel
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,E_P_Electron_lifetime,&
+&                         E_P_Phonon_lifetime,l_ELPH_CCA_Kernel
  use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions
  implicit none
  !
@@ -106,8 +106,8 @@ subroutine RT_occupations_analyze(k,E)
      RT_occupations_sum(i_T)=RT_occupations_sum(i_T)+RT_occupations(ib,ik)/spin_occ
      !
      if (l_ELPH_CCA_Kernel) then
-       data_to_plot(3:)=(/E-P_Hole_lifetime(ib,ik)*HA2EV,E-P_Electron_lifetime(ib,ik)*HA2EV,&
-&                                              E-P_Phonon_lifetime(ib,ik)*HA2EV/)
+       data_to_plot(3:)=(/E_P_Hole_lifetime(ib,ik)*HA2EV,E_P_Electron_lifetime(ib,ik)*HA2EV,&
+&                                              E_P_Phonon_lifetime(ib,ik)*HA2EV/)
        call msg('o '//trim(output_fname),'',data_to_plot,INDENT=-2,USE_TABS=.true.)
      else
        call msg('o '//trim(output_fname),'',data_to_plot(:2),INDENT=-2,USE_TABS=.true.)

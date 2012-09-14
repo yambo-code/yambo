@@ -37,6 +37,9 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset
  use par_indexes_m,   ONLY:par_indexes
  use collisions_CACHE,ONLY:COLLISIONS_cache_size,last_QP_mem,cache_memory,CACHE
+#if defined _RT
+ use real_time,       ONLY:RT_qp_px
+#endif
  !
  implicit none
  !
@@ -106,9 +109,13 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  !
  if (COLLISIONS_cache_size==0..or..not.l_collisions_IO) return
  !
+#if defined _RT
+ call pp_indexes_reset(RT_qp_px)
+ call par_indexes(RT_qp_px,(/QP_n_states/))
+#else
  call pp_indexes_reset(px)
- !
  call par_indexes(px,(/QP_n_states/))
+#endif
  !
  mem_before_cache=mem_sum
  !
@@ -139,7 +146,11 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
    !
    i_qp=i_qp+1
    !
+#if defined _RT
+   if(.not.RT_qp_px%element_1D(i_qp)) cycle  
+#else
    if(.not.px%element_1D(i_qp)) cycle  
+#endif
    !
    if (.not.l_carrier_dynamics) then
      !
@@ -233,7 +244,9 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  !
  if(last_QP_mem==QP_n_states) call collisions_IO_free()
  !
+#if !defined _RT
  call pp_indexes_reset(px)
+#endif
  !
  write (dump_ch,'(a,f10.2,a)') '[COLLISIONS] QP in memory :',real(last_QP_mem)/real(QP_n_states)*100.0,'%'
  call msg('s',dump_ch)

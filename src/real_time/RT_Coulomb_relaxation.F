@@ -25,7 +25,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,TIME)
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,bz_samp,qindx_X,nkibz
  use SC,              ONLY:SC_bands,it_now 
- use real_time,       ONLY:RT_q_px,G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,Sigma_relax
+ use real_time,       ONLY:RT_qp_px,G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,Sigma_relax
  use QP_m,            ONLY:QP_n_states,QP_table
  use D_lattice,       ONLY:DL_vol
  use collisions_CACHE,ONLY:CACHE
@@ -57,6 +57,8 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,TIME)
  !
  do i_qp1=1,QP_n_states
    !
+   if (.not.RT_qp_px%element_1D(i_qp1)) cycle
+   !
    if (QP_table(i_qp1,3)/=i_k) cycle
    !
    i_n =QP_table(i_qp1,1)
@@ -65,8 +67,6 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,TIME)
    f_k(i_n)=-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,i_k,MEM_index(it_now))/spin_occ
    !
    do iqbz=1,q%nbz
-     !
-     if (.not.RT_q_px%element_1D(iqbz)) cycle
      !
      iqibz = q%sstar(iqbz,1)
      i_kmq = k%sstar(qindx_S(i_k,iqbz,1),1)

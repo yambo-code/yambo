@@ -158,11 +158,15 @@ module real_time
  !
  ! Hole/Electron Time-dependent life-times
  !
- real(SP),    allocatable :: E_E_Hole_lifetime(:,:)
- real(SP),    allocatable :: E_E_Electron_lifetime(:,:)
  real(SP),    allocatable :: E_P_Hole_lifetime(:,:)
  real(SP),    allocatable :: E_P_Electron_lifetime(:,:)
  real(SP),    allocatable :: E_P_Phonon_lifetime(:,:)
+ !
+ ! Coulomb scattering kernel...
+ !----------------------------
+ type(pp_indexes),   SAVE :: RT_qp_px
+ real(SP),    allocatable :: E_E_Hole_lifetime(:,:)
+ real(SP),    allocatable :: E_E_Electron_lifetime(:,:)
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
@@ -473,6 +477,7 @@ module real_time
      !
      call pp_indexes_reset(RT_k_px) 
      call pp_indexes_reset(RT_q_px) 
+     call pp_indexes_reset(RT_qp_px) 
      !
    end subroutine RT_free
    !

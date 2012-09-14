@@ -265,6 +265,33 @@ subroutine Dipole_transverse(Xen,Xk,X)
    ! 
    ! GPL_EXCLUDE_END SPIN_IGNORE
    !
+ enddo          ! k-points
+ !
+ call live_timing
+ !
+ ! CLEAN
+ !
+ deallocate(wf_xyz)
+ call pp_indexes_reset(px)
+ if (ioKB_err==0) then
+   deallocate(kbv,pp_n_l_comp)
+   if (allocated(pp_table)) deallocate(pp_table)
+   call PP_free()
+   call mem_est("KBV pp_n_l_comp pp_table")
+ else if (io_Vnl_err==0) then
+   if (allocated(Vnl)) deallocate(Vnl)
+ endif 
+ !
+ do ik=1,Xk%nibz
+   !
+   do i_spin=1,n_sp_pol
+     call pp_redux_wait(DIP_iR(:,:,:,ik,i_spin))
+#if defined _SC
+     call pp_redux_wait(DIP_P(:,:,:,ik,i_spin))
+     call pp_redux_wait(P_square(:,:,ik,i_spin))
+#endif
+   enddo
+   !
    ! Symmetrization 
    !================
    !
@@ -283,29 +310,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
      enddo
    endif
    !
- enddo          ! k-points
- !
- call live_timing
- !
- ! CLEAN
- !
- deallocate(wf_xyz)
- call pp_indexes_reset(px)
- if (ioKB_err==0) then
-   deallocate(kbv,pp_n_l_comp)
-   if (allocated(pp_table)) deallocate(pp_table)
-   call PP_free()
-   call mem_est("KBV pp_n_l_comp pp_table")
- else if (io_Vnl_err==0) then
-   if (allocated(Vnl)) deallocate(Vnl)
- endif 
- !
- do i_spin=1,n_sp_pol
-   call pp_redux_wait(DIP_iR(:,:,:,:,i_spin))
-#if defined _SC
-   call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
-   call pp_redux_wait(P_square(:,:,:,i_spin))
-#endif
  enddo
  !
 end subroutine Dipole_transverse

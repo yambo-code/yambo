@@ -21,12 +21,13 @@
 !
 subroutine RT_output(what,VALUEs,TIME,E)
  ! 
+ use units,          ONLY:HA2EV
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close
  use SC,             ONLY:SC_description,n_SC_descriptions
  use fields,         ONLY:A_vecpot
  use stderr,         ONLY:set_real_printed_length,string_split,intc
- use real_time,      ONLY:RT_ind_J,RT_P
+ use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes
  use timing,         ONLY:what_is_running
  implicit none
  !
@@ -109,6 +110,18 @@ subroutine RT_output(what,VALUEs,TIME,E)
  short_file_name(next_file)=trim(append_ch)//'P_minus_P_pump'
  n_headings(next_file)=4
  headings(next_file,2:4)=(/"dPol_x","dPol_y","dPol_z"/)
+ next_file=next_file+1
+ !
+ if (initialize) file_name(next_file)=trim(append_ch)//'P_minus_P_pump'
+ short_file_name(next_file)=trim(append_ch)//'P_minus_P_pump'
+ n_headings(next_file)=4
+ headings(next_file,2:4)=(/"dPol_x","dPol_y","dPol_z"/)
+ next_file=next_file+1
+ !
+ if (initialize) file_name(next_file)=trim(append_ch)//'mean_lifetimes'
+ short_file_name(next_file)=trim(append_ch)//'mean_lifetimes'
+ n_headings(next_file)=6
+ headings(next_file,2:6)=(/"e-p Hole [meV]","e-p Elec [meV]","e-p Ph   [meV]","e-e Hole [meV]","e-e Elec [meV]"/)
  next_file=next_file+1
  !
  ! ... energy resolved ...
@@ -223,6 +236,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
    !--------
    if (present(TIME)) data_to_dump(1)=TIME
    if (present(E))    data_to_dump(1)=E
+
    select case (trim(short_file_name(i_f)))
      case('current','YPP-current')
        data_to_dump(2:4) =real(RT_ind_J)
@@ -247,6 +261,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
      case('YPP-X_effective','YPP-el_dos')
        data_to_dump(1:2)=(/Time,E/)
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
+     case('mean_lifetimes')
+       data_to_dump(2:n_headings(i_f)) = RT_mean_lifetimes(1:n_headings(i_f)-1)*HA2EV*1000.
    end select
    !
    call msg('o '//trim(short_file_name(i_f)),'',data_to_dump(1:n_headings(i_f)),USE_TABS=.TRUE.)

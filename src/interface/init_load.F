@@ -257,7 +257,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                            Verb_level=V_real_time,unit=E_unit)
  call it(defs,'RTpumpEh',   '[RT] Energy of the full and empty level to be inverted by hand',Eh_pumped_pair_energy,&
 &                            Verb_level=V_real_time,unit=E_unit)
- call it('f',defs,'RT_T_evol','[RT] Eval the ELPH kernel using a complete Time evolution instead of the CCA')
+ call it('f',defs,'RT_T_evol','[RT] Use a complete Time evolution instead of the CCA')
  !
  ! I/O
  !

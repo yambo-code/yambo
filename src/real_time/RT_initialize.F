@@ -21,7 +21,7 @@
 !
 subroutine RT_initialize(Xen,Xk,q)
  ! 
- use drivers,        ONLY:l_collisions_IO,l_ph_corr 
+ use drivers,        ONLY:l_collisions_IO,l_ph_corr,l_carrier_dynamics
  use SC,             ONLY:local_V,SC_bands
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
@@ -36,7 +36,9 @@ subroutine RT_initialize(Xen,Xk,q)
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_Treshold,          &
 &                         NE_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,            &
-&                         l_RT_skip_JandP_IO
+&                         l_RT_skip_JandP_IO,RT_q_px
+ use par_indexes_m,  ONLY:par_indexes
+ use par_proc_m,     ONLY:pp_indexes_reset
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp,nkibz
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
@@ -71,7 +73,7 @@ subroutine RT_initialize(Xen,Xk,q)
  !
  l_RT_diagonalize      =RT_diagonalization_steps>1
  !
- call UPDATE_flags()
+ call UPDATE_flags(.FALSE.)
  !
  ! If I am doing a NE loop in all cases I need to evaluate XC or Hartree correspoding to the
  ! starting basis. During the thermalization, instead, the potentials are updated
@@ -182,16 +184,31 @@ subroutine RT_initialize(Xen,Xk,q)
    use_X_RIM=.false.
  endif
  !
+ if (l_ph_corr.or.l_carrier_dynamics) then
+   !
+   ! Pre-allocation of CPU tables
+   !==============================
+   !
+   call pp_indexes_reset(RT_q_px)
+   !
+   call par_indexes(RT_q_px,(/q%nbz/))
+   !
+ endif
+ !
 #if defined _ELPH
  !
  ! Electron-phonon
  ! ===============
  !
- if (l_ph_corr) call section('=','El-Ph matrix elements loading and setup')
- !                                =======================================
-#endif
+ if (l_ph_corr) then
+   !
+   call section('=','El-Ph matrix elements loading and setup')
+   !                 =======================================
+   call RT_ELPH_initialize(Xk,q)
+   !
+ endif
  !
- call RT_ELPH_initialize(Xk,q)
+#endif
  !
  call section('=','Phase space check')
  !
@@ -263,7 +280,7 @@ subroutine RT_initialize(Xen,Xk,q)
  !
  call COLLISIONS_IO_load(.TRUE.)
  !
- call UPDATE_flags()
+ call UPDATE_flags(.TRUE.)
  !
  if(NE_steps>0) then
    call msg('nr','[RT] Simulate IP                :',l_NE_simulate_IP)
@@ -276,11 +293,18 @@ subroutine RT_initialize(Xen,Xk,q)
  !
  contains
    !
-   subroutine UPDATE_flags()
+   subroutine UPDATE_flags(COLLISIONS_checked)
      !
-     if (l_collisions_IO) then
-       XCfrozen=.FALSE.
-       if (Hfrozen) call warning('COLLISIONS used but Hartree frozen')
+     logical :: COLLISIONS_checked
+     !
+     if (COLLISIONS_checked) then
+       if (l_collisions_IO) then
+         XCfrozen=.FALSE.
+         if (Hfrozen) call warning('COLLISIONS used but Hartree frozen')
+       else if (l_carrier_dynamics) then
+         l_carrier_dynamics=.FALSE.
+         call warning('Coulomb carrier scatterings switched off')
+       endif
      endif
      !
      l_NE_simulate_RPA     =.not.Hfrozen.and.     XCfrozen

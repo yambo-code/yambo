@@ -50,19 +50,10 @@ subroutine RT_ELPH_initialize(k,q)
  ! Logicals
  !==========
  !
- if (.not.l_ph_corr.and..not.l_carrier_dynamics) return
+ if (.not.l_ph_corr) return
  !
  call parser('RT_T_evol',l_Full_RT_T_evolution)
  l_ELPH_CCA_Kernel=.not.l_Full_RT_T_evolution
- !
- ! Pre-allocation of CPU tables
- !==============================
- !
- call pp_indexes_reset(RT_q_px)
- !
- call par_indexes(RT_q_px,(/q%nbz/))
- !
- if (.not.l_ph_corr) return
  !
  ! Q/K grid remapping
  !====================

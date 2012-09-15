@@ -62,10 +62,12 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  integer                  :: it,ik,ib,it_mem,it_mem_p1
  complex(SP)              :: on_the_fly_operators(8)
  !
- if (l_ph_corr) then
+ if (l_ph_corr.and.l_carrier_dynamics) then
+   call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph AND e-e scattering')
+ else if (l_ph_corr) then
    call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph scattering')
- else if  (l_carrier_dynamics) then
-   call section('*',trim(SC_potential)//' Real-Time Dynamics (carriers only)')
+ else if (l_carrier_dynamics) then
+   call section('*',trim(SC_potential)//' Real-Time Dynamics including e-e scattering')
  else
    call section('*',trim(SC_potential)//' Real-Time Dynamics')
  endif
@@ -171,6 +173,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  !
  call RT_output(what="open dyn cur pol")
  if(l_NE_with_fields) call RT_output(what="open pot occ")
+ if (l_ph_corr.or.l_carrier_dynamics) call RT_output('open life')
  !
  ! Loop on time
  !==============
@@ -245,6 +248,15 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
    !==========================
    call RT_current_AND_polarization(Xk,Xen,G_lesser(:,:,:,it_mem),A_vecpot)
    !
+   if (l_ph_corr.or.l_carrier_dynamics) then
+     !
+     ! Mean Carrier Lifetimes
+     !=======================
+     call RT_mean_carrier_lifetimes(G_lesser(:,:,:,it_mem),Xen,k)
+     call RT_output('life',TIME=NE_time/FS2AUT)
+     !
+   endif
+   !
    ! Now print Energetics, current and (eventually) potential 
    !=========================================================
    !
@@ -252,7 +264,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
    !
    call RT_output('dyn',real(on_the_fly_operators),TIME=NE_time/FS2AUT)
    call RT_output('cur pol',TIME=NE_time/FS2AUT)
-   if(l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
+   if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
    !
    ! Calculate Collisions and fill SC_R
    !====================================
@@ -306,7 +318,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  !
  if(NE_steps/=0) call live_timing
  !
- call RT_output(what="close cur pol pot dyn occ")
+ call RT_output(what="close cur pol pot dyn occ life")
  !
  if (l_RT_diagonalize) call SC_History(-1,en)
  !

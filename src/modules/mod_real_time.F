@@ -168,6 +168,10 @@ module real_time
  real(SP),    allocatable :: E_E_Hole_lifetime(:,:)
  real(SP),    allocatable :: E_E_Electron_lifetime(:,:)
  !
+ ! ... ouput max/min lifetimes
+ !-----------------------------
+ real(SP)                 :: RT_mean_lifetimes(5)
+ !
  ! Relaxation: Dephasing Matrix
  !------------------------------
  !

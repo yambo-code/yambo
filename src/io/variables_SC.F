@@ -22,7 +22,7 @@
 integer function variables_SC(ID,local_description,what)
  !
  use pars,           ONLY:lchlen
- use drivers,        ONLY:l_ph_corr
+ use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
  use units,          ONLY:AU2Tesla,DEG2RAD,FS2AUT,AU2KWCMm2,HA2EV
  use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
@@ -201,6 +201,15 @@ integer function variables_SC(ID,local_description,what)
  endif
  !
 #endif
+ !
+ if (ver_is_gt_or_eq(ID,revision=1455)) then
+   call io_elemental(ID,VAR="CARRIER_scattering_vars",VAR_SZ=1,MENU=0) 
+   call io_elemental(ID,L0=l_carrier_dynamics,&
+&     VAR=" [CARRIERS] Coulomb scattering   :", CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ endif
  !
  if (io_status_save==0.and.io_status(ID)<0) then
    io_status(ID)=IO_INCOMPATIBLE_VAR

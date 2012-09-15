@@ -92,6 +92,8 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,TIME)
          !
          pre_factor=1./(DL_vol*float(q%nbz))**2*abs(CACHE(i_qp1)%COLLISIONS_v3(i_qp2,i_p_s,iqbz))**2
          !
+         if (iqbz==1.and.i_n==i_np.and.i_np==i_m.and.i_m==i_mp) cycle
+         !
          DELTA_ = E%E(i_np,i_kmq,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)-E%E(i_n,i_k,1)
          GAMMA_ = abs(E%W(i_np,i_kmq,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))+abs(E%W(i_n,i_k,1))
          !

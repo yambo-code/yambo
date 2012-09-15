@@ -107,7 +107,7 @@ subroutine RT_occupations_analyze(k,E)
      !
      if (l_ELPH_CCA_Kernel) then
        data_to_plot(3:)=(/E_P_Hole_lifetime(ib,ik)*HA2EV,E_P_Electron_lifetime(ib,ik)*HA2EV,&
-&                                              E_P_Phonon_lifetime(ib,ik)*HA2EV/)
+&                                              E_P_Phonon_lifetime(ib,ik)*HA2EV/)*1000.
        call msg('o '//trim(output_fname),'',data_to_plot,INDENT=-2,USE_TABS=.true.)
      else
        call msg('o '//trim(output_fname),'',data_to_plot(:2),INDENT=-2,USE_TABS=.true.)

@@ -90,7 +90,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
    !
  endif
  !
- if(XCfrozen) then
+ if (XCfrozen) then
    !
    ! Notice that XC0_and_HARTREE0 contains the Hartree part only in case
    ! of indipendent particles

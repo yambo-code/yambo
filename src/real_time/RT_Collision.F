@@ -40,7 +40,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  use pars,           ONLY:SP,cONE,cZERO
  use wrapper,        ONLY:V_by_V_plus_V
  use electrons,      ONLY:levels
- use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex,l_carrier_dynamics 
+ use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
@@ -110,8 +110,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
      ! NOTICE THAT: this approximation is valid only for linear self-energies 
      !              in G_lesser as exchange or COHSEX(with W fixed) 
      !
-     if ( (l_sc_hf.or.l_sc_cohsex) .and. &
-&          .not.l_carrier_dynamics) call COLLISIONS_IO_compose(G_input-G_lesser_reference)
+     if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_IO_compose(G_input-G_lesser_reference)
      !
    endif
    !
@@ -139,11 +138,14 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    ! Non-local XC potentials (like CHOSEX)
    !=======================================
-   if(.not.local_V.and..not.XCfrozen.and..not.l_carrier_dynamics) then
+   if(.not.local_V.and..not.XCfrozen) then
+     ! 
      ! HF
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
+     ! 
      ! CHOSEX
      if (l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc) 
+     !
    endif
    !
    ! Adiabatic Switching
@@ -169,7 +171,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    ! Local XC potentials 
    !=====================
-   if(.not.l_NE_simulate_IP) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
+   if (.not.l_NE_simulate_IP) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
    !  
    ! Add Ho = T+V_ion
    !==================

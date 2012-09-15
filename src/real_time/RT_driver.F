@@ -127,7 +127,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  !
  ! Collisions
  !
- if(.not.local_V.and..not.l_NE_simulate_IP) then
+ if((.not.local_V.and..not.l_NE_simulate_IP).or.l_carrier_dynamics) then
    !
    if (.not.l_collisions_IO) call error('COLLISIONs database missing')
    !

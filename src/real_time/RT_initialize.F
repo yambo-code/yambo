@@ -287,8 +287,9 @@ subroutine RT_initialize(Xen,Xk,q)
    call msg( 'r','[RT] Simulate RPA               :',l_NE_simulate_RPA)
    call msg( 'r','[RT] Simulate BSE               :',l_NE_simulate_BSE)
    call msg( 'r','[RT] Simulate TD-DFT            :',l_NE_simulate_TDDFT)
+   call msg( 'r','[RT] Carriers El-ph scattering  :',l_ph_corr)
+   call msg( 'r','[RT] Carriers El-El scattering  :',l_carrier_dynamics)
    call msg( 'r','[SC] Extended collisions I/O    :',l_collisions_IO)
-   call msg( 'r','[SC] Electron-phonon scattering :',l_ph_corr)
  endif
  !
  contains
@@ -298,14 +299,13 @@ subroutine RT_initialize(Xen,Xk,q)
      logical :: COLLISIONS_checked
      !
      if (COLLISIONS_checked) then
-       if (l_collisions_IO) then
+       if (l_collisions_IO.and..not.l_carrier_dynamics) then
          XCfrozen=.FALSE.
          if (Hfrozen) call warning('COLLISIONS used but Hartree frozen')
-       else if (l_carrier_dynamics) then
-         l_carrier_dynamics=.FALSE.
-         call warning('Coulomb carrier scatterings switched off')
        endif
      endif
+     !
+     if (l_carrier_dynamics) XCfrozen=.TRUE.
      !
      l_NE_simulate_RPA     =.not.Hfrozen.and.     XCfrozen
      l_NE_simulate_IP      =     Hfrozen.and.     XCfrozen

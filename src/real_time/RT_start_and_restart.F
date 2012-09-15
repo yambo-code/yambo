@@ -284,7 +284,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
    XC0_and_HARTREE0=(0._SP,0._SP)
    !
-   ! Rho_reference. Note that altough rh_n has been already calcualted 
+   ! Rho_reference. Note that altough rh_n has been already calculated 
    ! in sc_bare_Hamiltonian I need to recalculate it here when SC_lw_band>1
    ! as it it is also used in XC_potential_driver
    ! 

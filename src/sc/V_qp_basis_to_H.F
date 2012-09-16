@@ -42,6 +42,14 @@ subroutine V_qp_basis_to_H(ik,V,H)
    ib =QP_table(i1,1)
    ibp=QP_table(i1,2)
    i_spin = spin(QP_table(i1,:))
+   !
+   ! In the RT simulation the bands QP_table matrix is not ordered
+   ! when the carriers Couloumb scattering is calculated.
+   ! As a consequence the H matrix is not correctly imposed to be Hermitian
+   ! and the dynamics does not work.
+   !
+   if (ib>ibp) cycle
+   !
    H(ib,ibp,i_spin) = H(ib,ibp,i_spin) + V(i1)
    !
    ! Force to be Hermitian

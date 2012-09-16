@@ -386,11 +386,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
    !
    subroutine Afield(i_field)
      character(5) :: name
-     integer      :: verbosity_here,i_field
-     verbosity_here=0
+     integer      :: i_field
      if (i_field==1) name='Probe'
-     if (i_field==2)  name='Pump'
-     if (i_field==2) verbosity_here=V_real_time
+     if (i_field==2) name='Pump'
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &    Efield(i_field)%frequency,unit=E_unit)
      call it(defs,trim(name)//'_FrStep',          '[RT '//trim(name)//'] Frequency step',&
@@ -398,7 +396,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &    Efield(i_field)%intensity,unit=I_unit)
      call it(defs,trim(name)//'_Damp',             '[RT '//trim(name)//'] Damping',&
-&    Efield(i_field)%damping,unit=Time_unit,verb_level=V_real_time)
+&    Efield(i_field)%damping,unit=Time_unit)
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
 &    Efield(i_field)%ef_name,verb_level=0)
      call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&

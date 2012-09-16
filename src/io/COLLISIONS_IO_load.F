@@ -34,7 +34,7 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
 &                          COLLISIONS_path,io_COLLISIONS,COLLISIONS_range,collisions_RANGES_setup,n_collisions
  use stderr,          ONLY:intc
  use IO_m,            ONLY:OP_RD_CL,io_control,VERIFY,REP
- use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset
+ use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset,myid
  use par_indexes_m,   ONLY:par_indexes
  use collisions_CACHE,ONLY:COLLISIONS_cache_size,last_QP_mem,cache_memory,CACHE
 #if defined _RT
@@ -57,7 +57,7 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  ! Work Space
  !
  integer            :: i1,i2,i3,ic,i_qp,ID,n_tot_rho_states,io_err(max_V_kinds),V_kinds(max_V_kinds),n_V_kinds,&
-&                      max_COLLISION_cache,iv
+&                      max_COLLISION_cache,iv,QP_n_states_loaded
  real(SP)           :: mem_before_cache
  type(pp_indexes)   :: px
  character(schlen)  :: dump_ch 
@@ -112,9 +112,11 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
 #if defined _RT
  call pp_indexes_reset(RT_qp_px)
  call par_indexes(RT_qp_px,(/QP_n_states/))
+ QP_n_states_loaded=RT_qp_px%n_of_elements(myid+1)
 #else
  call pp_indexes_reset(px)
  call par_indexes(px,(/QP_n_states/))
+ QP_n_states_loaded=px%n_of_elements(myid+1)
 #endif
  !
  mem_before_cache=mem_sum
@@ -231,10 +233,10 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  last_QP_mem=i_qp
  !
  if (l_carrier_dynamics) then
-   call mem_est("QP_COLLISIONS",(/size(CACHE(1)%COLLISIONS_v3)*QP_n_states/),(/2*SP/))
+   call mem_est("QP_COLLISIONS",(/size(CACHE(1)%COLLISIONS_v3)*QP_n_states_loaded/),(/2*SP/))
  else
-   call mem_est("QP_COLLISIONS_table",(/size(CACHE(1)%COLLISIONS_table)*QP_n_states/),(/LP/))
-   call mem_est("QP_COLLISIONS",(/size(CACHE(1)%COLLISIONS_v)*QP_n_states/),(/2*SP/))
+   call mem_est("QP_COLLISIONS_table",(/size(CACHE(1)%COLLISIONS_table)*QP_n_states_loaded/),(/LP/))
+   call mem_est("QP_COLLISIONS",(/size(CACHE(1)%COLLISIONS_v)*QP_n_states_loaded/),(/2*SP/))
  endif
  !
  deallocate(COLLISIONS_disk)

@@ -29,7 +29,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp
- use com,           ONLY:msg
+ use com,           ONLY:msg,warning
  use X_m,           ONLY:X_t
  use parser_m,      ONLY:parser
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
@@ -72,6 +72,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! skipped
  !==============================================================
  if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_el_corr.and..not.l_life) return
+ !
+ if (.not.l_el_corr.and..not.l_ph_corr) then
+   call warning('Both e-p and e-e correlation switched off')
+   return
+ endif
  !
  ! Head message
  !==============

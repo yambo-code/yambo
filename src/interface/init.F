@@ -983,7 +983,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      use stderr, ONLY:string_split
      use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,&
-&                     V_real_time,V_all
+&                     V_real_time,V_all,rstatus
      implicit none
      integer     :: init_
      character(*):: rstr
@@ -991,7 +991,18 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! Work Space
      !
      integer          ::i1,i2,n_pieces
-     character(schlen)::rstr_piece(2*nrnlvls)
+     character(schlen)::rstr_piece(2*nrnlvls),strings_to_not_use_as_runlevels(nrnlvls)
+     !
+     ! Bug fix (17/9/2012). If any string following a -### identifier contains 
+     ! a string related to a runlevel this is erronously switched on. 
+     !
+     strings_to_not_use_as_runlevels=" "
+     strings_to_not_use_as_runlevels(1)="jobstr"
+     strings_to_not_use_as_runlevels(2)="ifile"
+     strings_to_not_use_as_runlevels(3)="idir"
+     strings_to_not_use_as_runlevels(4)="cdir"
+     strings_to_not_use_as_runlevels(5)="odir"
+     strings_to_not_use_as_runlevels(6)="cdir"
      !
      ! Split the string in pieces
      !
@@ -1002,7 +1013,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      enddo
      if (n_pieces==0) return
      !
-     do i1=1,n_pieces
+     INPUT_strings_loop: do i1=1,n_pieces
        !
        if (trim(rstr_piece(i1))=='ifile') cycle
        if (i1>1) then
@@ -1019,10 +1030,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        enddo
        !
        if (i1>1) then
-         if (trim(rstr_piece(i1-1)) == 'jobstr') cycle
+         do i2=1,nrnlvls
+           if (trim(rstr_piece(i1  )) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
+           if (trim(rstr_piece(i1-1)) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
+         enddo
        endif
        !
-       ! Run Level
+       ! Run Levels
        !
        call initactivate(1, trim(rstr_piece(i1)) )
        !
@@ -1208,7 +1222,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
 #endif
        !
-     enddo 
+     enddo INPUT_strings_loop
      !
      if (infile_editing) init_=1
      !

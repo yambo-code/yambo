@@ -119,9 +119,9 @@ subroutine scatterBamp(isc)
  ! GPL_EXCLUDE_END SPIN_IGNORE
  !
  if(qs==idt_index) then
-    isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(1:isc%ngrho,iGo),1)
+   isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(1:isc%ngrho,iGo),1)
  else
-    isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo),1)
+   isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo),1)
  endif
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE

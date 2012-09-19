@@ -30,7 +30,7 @@ cd lib/libxc
 if test -f Makefile; then 
 have_configured="yes"
 else
-./configure FC=$FC --prefix=$PWD/../../ >&/dev/null
+./configure FC=$F90 CC=$CC --prefix=$PWD/../../ 
 if test -f Makefile; then have_configured="yes";fi
 fi
 cd ../../

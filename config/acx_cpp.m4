@@ -79,14 +79,14 @@ AC_LANG(C)
 #
 acx_C_ok=no
 AC_MSG_CHECKING([if precompiler works on C source])
-AC_PREPROC_IFELSE(
- AC_LANG_SOURCE([[
+AC_PREPROC_IFELSE([
+ AC_LANG_SOURCE([
  #if defined _C_US
   #define F90_FUNC_(name,NAME) name ## _
  #else
   #define F90_FUNC_(name,NAME) name
  #endif
- ]]),
+ ])],
  [acx_C_ok=yes],[CPP_TESTS_PASSED=no])
 AC_MSG_RESULT([$acx_C_ok])
 #

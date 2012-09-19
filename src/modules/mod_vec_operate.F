@@ -44,15 +44,16 @@ module vec_operate
      !
    end function normalize_v
    !
-   function v_norm(v)
-     real(SP) :: v(3),v_norm
+   pure real(SP) function v_norm(v)
+     real(SP), intent(in) :: v(3)
      v_norm=sqrt(dot_product(v,v))
    end function v_norm
    !
-   function iku_v_norm(v)
+   pure real(SP) function iku_v_norm(v)
      use D_lattice,      ONLY:alat
-     real(SP) :: v(3),u(3),iku_v_norm
-     u(:)=v(:)*2.*pi/alat(:)
+     real(SP), intent(in) :: v(3)
+     real(SP) :: u(3)
+     u(:)=v(:)*2._SP*pi/alat(:)
      iku_v_norm=sqrt(dot_product(u,u))
    end function iku_v_norm
    !
@@ -64,9 +65,10 @@ module vec_operate
      cross_product(3) = a(1) * b(2) - a(2) * b(1)
    end function cross_product
    !
-   logical function v_is_zero(v,zero_)
-     real(SP)          :: v(3),local_zero(3)
-     real(SP),optional :: zero_(3)
+   pure logical function v_is_zero(v,zero_)
+     real(SP), intent(in) :: v(3)
+     real(SP), intent(in), optional :: zero_(3)
+     real(SP)          :: local_zero(3)
      !
      local_zero=zero_dfl
      if (present(zero_)) local_zero=zero_
@@ -76,9 +78,10 @@ module vec_operate
 &                    abs(v(3))<=local_zero(3)/))
    end function v_is_zero
    !
-   logical function rlu_v_is_zero(v,zero_)
-     real(SP)          :: v(3),u(3)
-     real(SP),optional :: zero_(3)
+   pure logical function rlu_v_is_zero(v,zero_)
+     real(SP), intent(in), optional :: zero_(3)
+     real(SP), intent(in)           :: v(3)
+     real(SP)          :: u(3)
      u=v-nint(v)
      if (.not.present(zero_)) rlu_v_is_zero=v_is_zero(u)
      if (     present(zero_)) rlu_v_is_zero=v_is_zero(u,zero_)

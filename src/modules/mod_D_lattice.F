@@ -46,6 +46,7 @@ module D_lattice
  logical :: mag_syms    ! If .true. the T-rev symmetries are not the spatial symmetries multiplied by -1
  real(SP),allocatable    :: dl_sop(:,:,:)
  complex(SP),allocatable :: spin_sop(:,:,:)
+ integer :: idt_index   ! Indentity I  index
  integer, allocatable :: sop_tab(:,:)
  integer, allocatable :: sop_inv(:)
  !

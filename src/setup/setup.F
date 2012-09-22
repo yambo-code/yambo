@@ -28,7 +28,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         atoms_spatial_invertion,i_space_inv,input_Tel_commands_over_header,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
-&                         symmetry_group_table
+&                         symmetry_group_table,idt_index
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
  use com,            ONLY:msg,error,warning
@@ -159,6 +159,14 @@ subroutine setup(en,Xen,Ken,k,Xk)
        if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
      enddo
  end select
+ !
+ ! Indentity index
+ !
+ idt_index=-1
+ do is=1,nsym
+   if (all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/1.,0.,0.,0.,1.,0.,0.,0.,1./)) ) idt_index=is
+ enddo
+ !
  !
  ! Space inversion
  !

@@ -84,16 +84,26 @@ subroutine scatterBamp(isc)
  i_wf=wf_state(ib,ik,i_sp)
  o_wf=wf_state(ob,ok,o_sp)
  !
- wf_tmp_i(:,1)=wf(fft_rot_r(is,:),i_wf)
- wf_tmp_o(:,1)=wf(fft_rot_r(os,:),o_wf)
+ if(is==idt_index) then
+   wf_tmp_i(:,1)=wf(:,i_wf)
+   wf_tmp_o(:,1)=wf(:,o_wf)
+ else
+   wf_tmp_i(:,1)=wf(fft_rot_r(is,:),i_wf)
+   wf_tmp_o(:,1)=wf(fft_rot_r(os,:),o_wf)
+ endif
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  if (n_spinor==2) then
    i_wf=wf_state(ib,ik,2)
    o_wf=wf_state(ob,ok,2)
-   wf_tmp_i(:,2)=wf(fft_rot_r(is,:),i_wf)
-   wf_tmp_o(:,2)=wf(fft_rot_r(os,:),o_wf)
+   if(is==idt_index) then
+     wf_tmp_i(:,2)=wf(:,i_wf)
+     wf_tmp_o(:,2)=wf(:,o_wf)
+   else
+     wf_tmp_i(:,2)=wf(fft_rot_r(is,:),i_wf)
+     wf_tmp_o(:,2)=wf(fft_rot_r(os,:),o_wf)
+   endif
    !
    forall(ifft=1:fft_size) wf_tmp_i(ifft,:)=matmul(spin_sop(:,:,is),wf_tmp_i(ifft,:))
    forall(ifft=1:fft_size) wf_tmp_o(ifft,:)=matmul(spin_sop(:,:,os),wf_tmp_o(ifft,:))
@@ -119,7 +129,11 @@ subroutine scatterBamp(isc)
 #endif
  !
  !
- isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo))
+ if(qs==idt_index) then
+   isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(1:isc%ngrho,iGo))
+ else
+   isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo))
+ endif
  !
  ! q=0, G=0 case
  !

@@ -36,7 +36,7 @@ subroutine scatterBamp(isc)
  use pars,           ONLY:DP,SP,cZERO,cONe
  use electrons,      ONLY:n_spinor
  use collision,      ONLY:ggwinfo
- use D_lattice,      ONLY:nsym,i_time_rev,mag_syms,spin_sop
+ use D_lattice,      ONLY:nsym,i_time_rev,mag_syms,spin_sop,idt_index
  use R_lattice,      ONLY:g_rot
  use wave_func,      ONLY:wf,wf_state
  use FFT_m,          ONLY:fft_size,fft_rot_r,fft_dim,fftw_plan,fft_g_table

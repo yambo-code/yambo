@@ -195,7 +195,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
      ! Real Axis 
      !============
      !
-     call QP_driver(X(3),Xen,Xk,en,k,q,Xw(3))
+     call QP_driver(X(1),Xen,Xk,en,k,q,Xw(3))
      !
    endif
    !

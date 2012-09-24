@@ -71,7 +71,7 @@ subroutine RT_relaxation(G_input,Xen,k,q,Time)
      !
      if (.not.RT_k_px%element_1D(ik)) cycle
      !
-     call RT_Coulomb_relaxation(ik,Xen,k,q,Time) 
+     call RT_Coulomb_relaxation(ik,Xen,k,q) 
      !
    enddo
    !

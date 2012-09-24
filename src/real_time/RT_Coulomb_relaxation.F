@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Coulomb_relaxation(i_k,E,k,q,TIME)
+subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !  
  use pars,            ONLY:SP,cI,rZero
  use electrons,       ONLY:levels,spin_occ
@@ -36,7 +36,6 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,TIME)
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k,q
  integer,       intent(in) :: i_k
- real(SP),      intent(in) :: TIME
  !
  ! Work Space ...
  !

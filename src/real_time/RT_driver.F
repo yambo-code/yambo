@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_driver(en,Xen,X,k,Xk,q)
+subroutine RT_driver(E,X,k,q)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_collisions_IO,l_ph_corr,l_carrier_dynamics 
@@ -50,10 +50,10 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  ! if l_RT_diagonalize=.true.  "en"  will contains new energies and occupations
  ! otherwise it will not be used
  !
- ! Notice that Xen is never changed!
+ ! Notice that E is never changed!
  !
- type(levels)  :: en,Xen
- type(bz_samp) :: k,Xk,q
+ type(levels)  :: E
+ type(bz_samp) :: k,q
  type(X_t):: X(4)
  logical, external  ::stop_now
  ! 
@@ -94,7 +94,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  ! the optical collisions that are done in G-space and would
  ! force the reloading of the WFs
  !
- call Dipole_driver(Xen,Xk,X(1),X(1)%q0)
+ call Dipole_driver(E,k,X(1),X(1)%q0)
  !
  !
  ! WFs loading
@@ -105,15 +105,15 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  ! QP-corrections 
  !================
  !
- call QP_apply(SC_bands,Xen,Xk,"G",msg_fmt='s')
+ call QP_apply(SC_bands,E,k,"G",msg_fmt='s')
  !
  ! Core initialization
  !
- call RT_initialize(Xen,Xk,q)
+ call RT_initialize(E,k,q)
  !
  ! Core allocations
  !
- call RT_alloc(Xen)
+ call RT_alloc(E)
  !
  call collisions_RANGES_setup()
  !
@@ -123,7 +123,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  ! 
  call section('=','Start and Restart')
  !
- call RT_start_and_restart(Xen,Xk,k,q,X)
+ call RT_start_and_restart(E,k,q,X)
  !
  ! Collisions
  !
@@ -135,6 +135,16 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
    !
  endif
  !
+ ! DEBUG>
+ !
+ !do ik=1,k%nibz
+ !  call RT_Coulomb_relaxation(ik,E,k,q)
+ !enddo
+ !call RT_mean_carrier_lifetimes(G_lesser,k,E)
+ !
+ !stop
+ ! DEBUG<
+ !
  ! qindx_X and qindx_S not needed in real-time 
  ! they are used only in dipoles and collisions calculations
  !
@@ -142,7 +152,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  !
  ! Calculation already done
  !
- if(it_start>=Thermal_steps+NE_steps) then
+ if (it_start>=Thermal_steps+NE_steps) then
    !      
    call RT_free()
    !
@@ -241,18 +251,18 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
    it_now=it ! used in RESTART
    !
    call set_real_printed_length()
-   call RT_databases_IO(Xen,it)
+   call RT_databases_IO(E,it)
    call set_real_printed_length(f_length=10,g_length=10)  
    !
    ! Current and Polarization
    !==========================
-   call RT_current_AND_polarization(Xk,Xen,G_lesser(:,:,:,it_mem),A_vecpot)
+   call RT_current_AND_polarization(k,E,G_lesser(:,:,:,it_mem),A_vecpot)
    !
    if (l_ph_corr.or.l_carrier_dynamics) then
      !
      ! Mean Carrier Lifetimes
      !=======================
-     call RT_mean_carrier_lifetimes(G_lesser(:,:,:,it_mem),Xen,k)
+     call RT_mean_carrier_lifetimes(G_lesser(:,:,:,it_mem),E,k)
      call RT_output('life',TIME=NE_time/FS2AUT)
      !
    endif
@@ -260,7 +270,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
    ! Now print Energetics, current and (eventually) potential 
    !=========================================================
    !
-   call RT_Observables(Xen,k,G_lesser(:,:,:,it_mem),on_the_fly_operators)
+   call RT_Observables(E,k,G_lesser(:,:,:,it_mem),on_the_fly_operators)
    !
    call RT_output('dyn',real(on_the_fly_operators),TIME=NE_time/FS2AUT)
    call RT_output('cur pol',TIME=NE_time/FS2AUT)
@@ -269,21 +279,21 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
    ! Calculate Collisions and fill SC_R
    !====================================
    !
-   call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,Xen,k,q,NE_time)
+   call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
    !
    ! Integration
    !=============
    ! T -> T+dT step 
    !
    call RT_Integrator(G_lesser(:,:,:,it_mem_p1),G_lesser(:,:,:,it_mem),A_vecpot,A_vecpot_previous,&
-&                     RT_step,Xen,k,q,Integrator_name,NE_time)
+&                     RT_step,E,k,q,Integrator_name,NE_time)
    !
    if(it==Thermal_steps) then
      !
      ! I freeze the last self-energy + hartree in XC0_and_HARTREE and I work
      ! only with the differences rho-rho_reference and G_lesser-G_lesser_reference
      ! 
-     call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,Xen,k,q,NE_time)
+     call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
      XC0_and_HARTREE0=SC_R-Ho
      !
    endif
@@ -292,18 +302,18 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
    ! ===============
    if(it==Thermal_steps.or. (mod(it,RT_diagonalization_steps)==0.and.RT_diagonalization_steps>0) ) then
      !
-     do ik=1,Xen%nk
-       call mat_dia_inv(DIAGO,USE_LK,SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),E_real=Xen%E(:SC_bands(2),ik,1))
+     do ik=1,E%nk
+       call mat_dia_inv(DIAGO,USE_LK,SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),E_real=E%E(:SC_bands(2),ik,1))
      enddo
      !
      ! Updating
      !===========
      !
      ! At the end of the thermalization update the reference G_lesser and dipoles
-     if (it==Thermal_steps) call RT_update(G_lesser_reference,SC_R,it,Xen,k,Xk,X(1),up_Gref=.true.,up_DIP=.true.)
+     if (it==Thermal_steps) call RT_update(G_lesser_reference,SC_R,it,E,k,X(1),up_Gref=.true.,up_DIP=.true.)
      !
      ! Analize quasi-particles
-     if (l_RT_diagonalize) call RT_update(G_lesser(:,:,:,it_mem),SC_R,it,Xen,k,Xk,X(1),an_QP=.true.)
+     if (l_RT_diagonalize) call RT_update(G_lesser(:,:,:,it_mem),SC_R,it,E,k,X(1),an_QP=.true.)
      !
    endif
    !
@@ -320,7 +330,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q)
  !
  call RT_output(what="close cur pol pot dyn occ life")
  !
- if (l_RT_diagonalize) call SC_History(-1,en)
+ if (l_RT_diagonalize) call SC_History(-1,E)
  !
  ! Finalize
  !-----------

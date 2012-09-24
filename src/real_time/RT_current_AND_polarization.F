@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_current_AND_polarization(Xk,Xen,G_input,A_input)
+subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! Evalute current and polarization. The current includes the diamagnetic contribution.
  !
@@ -39,8 +39,8 @@ subroutine RT_current_AND_polarization(Xk,Xen,G_input,A_input)
  use QP_m,           ONLY:QP_nk
  !
  implicit none           
- type(bz_samp),     intent(in) :: Xk
- type(levels),      intent(in) :: Xen
+ type(bz_samp),     intent(in) :: k
+ type(levels),      intent(in) :: E
  complex(SP),       intent(in) :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
  type(gauge_field), intent(in) :: A_input
  !
@@ -53,9 +53,9 @@ subroutine RT_current_AND_polarization(Xk,Xen,G_input,A_input)
  do id=1,3
    !
    call RT_average_operator(VALUE=RT_ind_J(id),O_MATRIX=-DIP_P(id,1:SC_bands(2),1:SC_bands(2),1:QP_nk,1:n_sp_pol),&
-&                           G=G_input,k=Xk,en=Xen,TRANS=.TRUE.)
+&                           G=G_input,k=k,en=E,TRANS=.TRUE.)
    call RT_average_operator(VALUE=RT_P(id),    O_MATRIX=cI*DIP_iR(id,1:SC_bands(2),1:SC_bands(2),1:QP_nk,1:n_sp_pol),&
-&                           G=G_input,k=Xk,en=Xen,TRANS=.TRUE.)
+&                           G=G_input,k=k,en=E,TRANS=.TRUE.)
 
  enddo
  !

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_initialize(Xen,Xk,q)
+subroutine RT_initialize(E,k,q)
  ! 
  use drivers,        ONLY:l_collisions_IO,l_ph_corr,l_carrier_dynamics
  use SC,             ONLY:local_V,SC_bands
@@ -47,8 +47,8 @@ subroutine RT_initialize(Xen,Xk,q)
  use parser_m,       ONLY:parser
  implicit none
  !
- type(levels), intent(in) :: Xen
- type(bz_samp),intent(in) :: q,Xk
+ type(levels), intent(in) :: E
+ type(bz_samp),intent(in) :: q,k
  !
  ! Work space
  !
@@ -113,7 +113,7 @@ subroutine RT_initialize(Xen,Xk,q)
  !
  call section('=','Dephasing matrix setup')
  !
- call RT_Dephasing_Matrix(Xen) 
+ call RT_Dephasing_Matrix(E) 
  !
  if (.not.RT_is_dumped.and.l_ph_corr) then
   l_ph_corr=.FALSE.
@@ -125,7 +125,7 @@ subroutine RT_initialize(Xen,Xk,q)
  !
  T_memory=0._SP
  if (l_ph_corr.and.NE_MEM_Treshold>0.) then
-   T_memory=-1./minval( abs(Xen%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_Treshold)
+   T_memory=-1./minval( abs(E%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_Treshold)
    NE_MEM_steps=T_memory/RT_step
  endif
  !
@@ -204,7 +204,7 @@ subroutine RT_initialize(Xen,Xk,q)
    !
    call section('=','El-Ph matrix elements loading and setup')
    !                 =======================================
-   call RT_ELPH_initialize(Xk,q)
+   call RT_ELPH_initialize(k,q)
    !
  endif
  !
@@ -212,7 +212,7 @@ subroutine RT_initialize(Xen,Xk,q)
  !
  call section('=','Phase space check')
  !
- nk_todo=RT_phase_space(Xen,q)
+ nk_todo=RT_phase_space(E,q)
  !
  if (nk_todo==0) call error('Too narrow energy window on evolved k-points')
  !
@@ -262,7 +262,7 @@ subroutine RT_initialize(Xen,Xk,q)
  !
  ! Generalized Rabi Function
  !============================
- if (l_NE_with_fields) call RT_Rabi_Function(Xen,Efield(i_Pump))
+ if (l_NE_with_fields) call RT_Rabi_Function(E,Efield(i_Pump))
  !
  ! If the gauge is length I need E(t) whose definition includes a delta(t). 
  ! The numerical definition of delta(t) in mod_fields depends on the 

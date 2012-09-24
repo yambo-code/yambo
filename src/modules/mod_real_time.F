@@ -249,7 +249,7 @@ module real_time
      logical,         optional, intent(in) :: TRANS
    end subroutine RT_average_operator
    !
-   subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
+   subroutine RT_update(G_input,SC_R,it,E,k,X,up_Gref,up_DIP,an_QP)
      use pars,       ONLY:SP
      use SC,         ONLY:SC_bands
      use R_lattice,  ONLY:bz_samp
@@ -259,8 +259,8 @@ module real_time
      type(X_t),      intent(inout)        :: X
      complex(SP),    intent(inout)        :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
      complex(SP),    intent(in)           :: SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
-     type(bz_samp),  intent(in)           :: k,Xk
-     type(levels),   intent(in)           :: Xen
+     type(bz_samp),  intent(in)           :: k
+     type(levels),   intent(in)           :: E
      integer,        intent(in)           :: it
      logical,        optional, intent(in) :: up_Gref,up_DIP,an_QP
    end subroutine RT_update

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
+subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  ! The BKE is coded in terms of Ho + V + Sigma
  ! This subroutine contruct Ho + V plus the diagonal part of Sigma(T=(t1 + t2)/2)
@@ -60,7 +60,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  implicit none
  !
- type(levels),  intent(in)    :: Xen
+ type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
  complex(SP),   intent(in)    :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
@@ -81,7 +81,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  if (it_now==it_start.or.mod(it_now-it_start+1,NE_Hxc_jumps)==0) then
    !
-   if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) call el_density(G_input,Xen,k,rho_n,SC_bands(1),.false.)
+   if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) call el_density(G_input,E,k,rho_n,SC_bands(1),.false.)
    !
    ! The Hartree term is written as
    !
@@ -100,7 +100,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
        if (SC_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
        !
        call IO_and_Messaging_switch("-report -log -io_in -io_out")
-       call XC_potential_driver(Xen,k,WF_KIND,WF_xc_functional,1)
+       call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
        call IO_and_Messaging_switch("+report +log +io_in +io_out")
        V_xc_sc=V_xc
        !
@@ -196,7 +196,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  ! Calculate all relaxation terms
  ! ==============================
- call RT_relaxation(G_input,Xen,k,q,Time)  
+ call RT_relaxation(G_input,E,k,q,Time)  
  !
 end subroutine RT_Collision
 

@@ -97,7 +97,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          lorentzian=GAMMA_/(DELTA_**2+GAMMA_**2)
          !
          E_E_Electron_lifetime(i_n,i_k)= E_E_Electron_lifetime(i_n,i_k)+pre_factor*lorentzian*(1._SP-f_kmq)*(1._SP-f_p)*f_pmq
-         E_E_Hole_lifetime(i_n,i_k)    = E_E_Hole_lifetime(i_n,i_k)+pre_factor*lorentzian*f_kmq*f_p*(1._SP-f_pmq)
+         E_E_Hole_lifetime(i_n,i_k)    = E_E_Hole_lifetime(i_n,i_k)+pre_factor*lorentzian*f_kmq*f_p*(2._SP-f_pmq)
          !
        enddo
        !

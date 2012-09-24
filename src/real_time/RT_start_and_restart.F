@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_start_and_restart(Xen,Xk,k,q,X)
+subroutine RT_start_and_restart(E,k,q,X)
  !
  ! This subroutine initialize some variables and restart from SC
  ! or from a previous RT calculation:
@@ -60,8 +60,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  use stderr,         ONLY:intc
  implicit none
  !
- type(levels)      :: Xen
- type(bz_samp)     :: Xk,k,q
+ type(levels)      :: E
+ type(bz_samp)     :: k,q
  type(X_t)         :: X
  integer, external :: io_SC_components
  !
@@ -88,9 +88,9 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  RT_P               =cZERO
  RT_ind_J           =cZERO
  ! 
- forall(ib=SC_bands(1):SC_bands(2),ik=1:Xen%nk)
-   G_lesser(ib,ib,ik,1) =cI*Xen%f(ib,ik,1)
-   RT_occupations(ib,ik)=Xen%f(ib,ik,1)
+ forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk)
+   G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
+   RT_occupations(ib,ik)=E%f(ib,ik,1)
  end forall
  !
  ! Possibility to pump by hand one or more electrons up
@@ -98,15 +98,15 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  if (Eh_pumped_pair_energy(2)>0.) then
    !
-   do ik=1,Xen%nk
+   do ik=1,E%nk
      !
      i1=0
      !
      do ib=SC_bands(1),SC_bands(2)
        if (i1==0) then
-         if(abs(Xen%E(ib,ik,1)-Eh_pumped_pair_energy(1))<.1/HA2EV) i1=ib
+         if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(1))<.1/HA2EV) i1=ib
        else
-         if(abs(Xen%E(ib,ik,1)-Eh_pumped_pair_energy(2))<.1/HA2EV) then
+         if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(2))<.1/HA2EV) then
            G_lesser(i1,i1,ik,1) = cZERO
            G_lesser(ib,ib,ik,1) = 2._SP*cI
            call msg('sr','[RT] Eh pair pumped `by hand` @ k'//trim(intc(ik))//&
@@ -122,42 +122,42 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! Build Ho and save initial energies 
  !====================================
  !
- if(associated(Xen%Eo)) then
-   E_bare=Xen%Eo(:SC_bands(2),:,:)
+ if(associated(E%Eo)) then
+   E_bare=E%Eo(:SC_bands(2),:,:)
  else
-   E_bare=Xen%E(:SC_bands(2),:,:)
+   E_bare=E%E(:SC_bands(2),:,:)
  endif
  !
- call SC_bare_Hamiltonian(Xen,Xk,k)
+ call SC_bare_Hamiltonian(E,k,k)
  !
  ! Save a copy of the k-grid
  !===========================
  ! 
- RT_nk=Xk%nibz
+ RT_nk=k%nibz
  allocate(RT_k(RT_nk,3))
- RT_k=Xk%pt
+ RT_k=k%pt
  !
  ! Perform a first I/O to check which DBs are present. 
  !=====================================================
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(1)) ! Energies
- io_E=io_SC_components('E' ,Xen,ID(1))
+ io_E=io_SC_components('E' ,E,ID(1))
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2)) ! WFs
- io_WF=io_SC_components('WF',Xen,ID(2))
+ io_WF=io_SC_components('WF',E,ID(2))
  call io_control(ACTION=OP_RD_CL,COM=REP ,SEC=(/1/),MODE=VERIFY,ID=ID(3)) ! Local potential
- io_V=io_SC_components('V' ,Xen,ID(3))
+ io_V=io_SC_components('V' ,E,ID(3))
  !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
- io_J_and_P=io_SC_components('J_and_P' ,Xen,ID(4))
+ io_J_and_P=io_SC_components('J_and_P' ,E,ID(4))
  if (io_J_and_P==0) COM_=NONE
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
- io_G=io_SC_components('G' ,Xen,ID(5))
+ io_G=io_SC_components('G' ,E,ID(5))
  !
  ! ELPH Theta matrix
  !
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(7)) ! G_lesser
- io_THETA=io_SC_components('THETA' ,Xen,ID(7))
+ io_THETA=io_SC_components('THETA' ,E,ID(7))
  !
  ! To restart from RT only the G_lesser is necessary
  !
@@ -187,11 +187,11 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !  rotating the non-integrating G_lesser
    !
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
-   io_WF=io_SC_components('WF',Xen,ID(2))
+   io_WF=io_SC_components('WF',E,ID(2))
    !
    do ik=1,QP_nk
      call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
-     io_WF=io_SC_components('WF',Xen,ID(2))
+     io_WF=io_SC_components('WF',E,ID(2))
    enddo
    !
    ! Now I build the G_lesser rotating the non interaction one
@@ -201,7 +201,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
      call H_rotate(SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),G_lesser(:,:,ik,1),SC_nbands,-1)
    enddo
    !
-   if (Hfrozen) call el_density(G_lesser(:,:,:,1),Xen,k,rho_n,1,.false.)
+   if (Hfrozen) call el_density(G_lesser(:,:,:,1),E,k,rho_n,1,.false.)
    if (Hfrozen) call V_Hartree(rho_n,V_hartree_sc)
    !
    V_xc_sc=(0._SP)
@@ -212,10 +212,10 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
      !
      if (local_V) then 
        call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID(3))  ! Local potential
-       io_V=io_SC_components('V' ,Xen,ID(3))
+       io_V=io_SC_components('V' ,E,ID(3))
      else
        call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID(3))  ! Non Local potential
-       io_V=io_SC_components('V' ,Xen,ID(3))
+       io_V=io_SC_components('V' ,E,ID(3))
      endif
      !
      do ik=1,QP_nk
@@ -223,7 +223,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
          call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf)
        elseif(.not.l_NE_simulate_Irredux) then
          call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(3))
-         io_V=io_SC_components('V',Xen,ID(3))
+         io_V=io_SC_components('V',E,ID(3))
          XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1:n_sp_pol)=  &
 &                         H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1:n_sp_pol)
        endif
@@ -241,8 +241,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! Now I update <i|r|j> dipoles using G_lesser_reference as
    ! Green function to construct the Hamiltonian
    !
-   call RT_update(G_lesser(:,:,:,1),SC_R,-1,Xen,k,Xk,X,up_DIP=.true.)
-   call RT_update(G_lesser_reference,SC_R,-1,Xen,k,Xk,X,up_Gref=.true.)
+   call RT_update(G_lesser(:,:,:,1),SC_R,-1,E,k,X,up_DIP=.true.)
+   call RT_update(G_lesser_reference,SC_R,-1,E,k,X,up_Gref=.true.)
    !
    V_xc_sc=(0._SP)
    !
@@ -288,11 +288,11 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! in sc_bare_Hamiltonian I need to recalculate it here when SC_lw_band>1
    ! as it it is also used in XC_potential_driver
    ! 
-   call el_density(G_lesser(:,:,:,1),Xen,Xk,rho_n,SC_bands(1),.false.)
+   call el_density(G_lesser(:,:,:,1),E,k,rho_n,SC_bands(1),.false.)
    rho_reference=rho_n
    !
    if (allocated(full_rho)) then
-     call el_density(G_lesser(:,:,:,1),Xen,Xk,rho_n,1,.false.)
+     call el_density(G_lesser(:,:,:,1),E,k,rho_n,1,.false.)
      full_rho=rho_n
    endif
    !
@@ -300,7 +300,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
    if(l_sc_contains_lda.and.SC_xc_functional/=0) then
      call IO_and_Messaging_switch("-report -log")
-     call XC_potential_driver(Xen,Xk,WF_KIND,WF_xc_functional,1)
+     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
      call IO_and_Messaging_switch("+report +log")
    endif
    !
@@ -345,11 +345,11 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! and I read it_now from the databases. 
    !
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5))
-   io_G=io_SC_components('G',Xen,ID(5))
+   io_G=io_SC_components('G',E,ID(5))
    !
    if (l_ph_corr.and..not.l_ELPH_CCA_Kernel) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(7))
-     io_THETA=io_SC_components('THETA',Xen,ID(7))
+     io_THETA=io_SC_components('THETA',E,ID(7))
    endif
    !
    ! Note that the G_lesser must be loaded at the correct time:
@@ -358,11 +358,11 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
    do ik=1,QP_nk
      call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
-     io_G=io_SC_components('G',Xen,ID(5))
+     io_G=io_SC_components('G',E,ID(5))
      !
      if (l_ph_corr.and..not.l_ELPH_CCA_Kernel) then
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(7))
-       io_THETA=io_SC_components('THETA',Xen,ID(7))
+       io_THETA=io_SC_components('THETA',E,ID(7))
      endif
      !
    enddo
@@ -387,7 +387,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
    if(it_start>Thermal_steps.and..not.l_NE_simulate_IP) & 
-&     call el_density(G_lesser_reference,Xen,Xk,rho_reference,SC_bands(1),.false.)
+&     call el_density(G_lesser_reference,E,k,rho_reference,SC_bands(1),.false.)
    !
  endif
  !
@@ -408,18 +408,18 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  do ib=SC_bands(1),SC_bands(2)
    Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &
-&                              -E_bare(ib,1:QP_nk,1:n_sp_pol)+Xen%E(ib,1:QP_nk,1:n_sp_pol)
+&                              -E_bare(ib,1:QP_nk,1:n_sp_pol)+E%E(ib,1:QP_nk,1:n_sp_pol)
  enddo
  !
  do ib=1,SC_bands(1)-1
    Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &
-&                              -E_bare(SC_bands(1),1:QP_nk,1:n_sp_pol)+Xen%E(SC_bands(1),1:QP_nk,1:n_sp_pol)
+&                              -E_bare(SC_bands(1),1:QP_nk,1:n_sp_pol)+E%E(SC_bands(1),1:QP_nk,1:n_sp_pol)
  enddo
  !
  ! Store the starting Eigenvalues in Eo
  !======================================
  !
- if(.not.associated(Xen%Eo)) allocate(Xen%Eo(SC_bands(2),QP_nk,n_sp_pol))
- Xen%Eo(1:SC_bands(2),1:QP_nk,1:n_sp_pol)=Xen%E(1:SC_bands(2),1:QP_nk,1:n_sp_pol)
+ if(.not.associated(E%Eo)) allocate(E%Eo(SC_bands(2),QP_nk,n_sp_pol))
+ E%Eo(1:SC_bands(2),1:QP_nk,1:n_sp_pol)=E%E(1:SC_bands(2),1:QP_nk,1:n_sp_pol)
  !
 end subroutine RT_start_and_restart

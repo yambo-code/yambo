@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_relaxation(G_input,Xen,k,q,Time)
+subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! This subroutine calculate relaxation term coming from off-diagonal part
  ! of the self-energy in time, from the electron-phonon coupling or simple 
@@ -38,7 +38,7 @@ subroutine RT_relaxation(G_input,Xen,k,q,Time)
  !
  implicit none
  !
- type(levels),  intent(in)    :: Xen
+ type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
  complex(SP),   intent(in)    :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
@@ -71,7 +71,7 @@ subroutine RT_relaxation(G_input,Xen,k,q,Time)
      !
      if (.not.RT_k_px%element_1D(ik)) cycle
      !
-     call RT_Coulomb_relaxation(ik,Xen,k,q) 
+     call RT_Coulomb_relaxation(ik,E,k,q) 
      !
    enddo
    !
@@ -87,7 +87,7 @@ subroutine RT_relaxation(G_input,Xen,k,q,Time)
      !
      if (.not.RT_k_px%element_1D(ik)) cycle
      !
-     call RT_ELPH_total_Kernel(ik,Xen,k,q,Time) 
+     call RT_ELPH_total_Kernel(ik,E,k,q,Time) 
      !
    enddo
    !

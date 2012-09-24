@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_databases_IO(Xen,it)
+subroutine RT_databases_IO(E,it)
  !
  use QP_m,           ONLY:QP_nk
  use drivers,        ONLY:l_ph_corr
@@ -37,7 +37,7 @@ subroutine RT_databases_IO(Xen,it)
  !
  integer, intent(in)      :: it
  integer, external        :: io_SC_components
- type(levels),intent(in)  :: Xen
+ type(levels),intent(in)  :: E
  !
  ! Work Space
  !
@@ -65,18 +65,18 @@ subroutine RT_databases_IO(Xen,it)
    COM_=NONE
    if (it==it_start) COM_=REP
    call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(5))
-   io_G=io_SC_components('G' ,Xen,ID(5))
+   io_G=io_SC_components('G' ,E,ID(5))
    !
 #if defined _ELPH
    if (l_ph_corr.and..not.l_ELPH_CCA_Kernel) then
      call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(7))
-     io_THETA=io_SC_components('THETA' ,Xen,ID(7))
+     io_THETA=io_SC_components('THETA' ,E,ID(7))
    endif
 #endif
    !
    do ik = 1, QP_nk 
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
-     io_G=io_SC_components('G',Xen,ID(5))
+     io_G=io_SC_components('G',E,ID(5))
 #if defined _ELPH
      if (l_ph_corr.and..not.l_ELPH_CCA_Kernel) then
        !
@@ -89,7 +89,7 @@ subroutine RT_databases_IO(Xen,it)
        call pp_redux_wait(THETA_matrix(:,:,:,ik))
        !
        call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(7))
-       io_THETA=io_SC_components('THETA' ,Xen,ID(7))
+       io_THETA=io_SC_components('THETA' ,E,ID(7))
        !
        call RT_ELPH_zeroing()
        !
@@ -101,7 +101,7 @@ subroutine RT_databases_IO(Xen,it)
  !
  ! Occupations
  !
- if (.not.l_RT_skip_OCC_IO) call OCCUPATIONS_IO_and_interpolate(Xen,'G')
+ if (.not.l_RT_skip_OCC_IO) call OCCUPATIONS_IO_and_interpolate(E,'G')
  !
  if(l_NE_with_fields.and.NE_dynamics.and..not.l_RT_skip_JandP_IO) then
    !
@@ -113,9 +113,9 @@ subroutine RT_databases_IO(Xen,it)
    ! Write current and polarization on disk
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
-   io_J_and_P=io_SC_components('J_and_P' ,Xen,ID(4))
+   io_J_and_P=io_SC_components('J_and_P' ,E,ID(4))
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
-   io_J_and_P=io_SC_components('J_and_P' ,Xen,ID(4))
+   io_J_and_P=io_SC_components('J_and_P' ,E,ID(4))
    !
  endif
  !

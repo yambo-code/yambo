@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_of(qp,en,QPdb_read_err)
+subroutine QP_of(qp,en,QPdb_read_err,k)
  !
  use pars,      ONLY:SP,lchlen,schlen
  use units,     ONLY:HA2EV,HBAR_eVfs
@@ -32,9 +32,11 @@ subroutine QP_of(qp,en,QPdb_read_err)
 &                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,QP_states_simmetrize 
  use stderr,    ONLY:set_real_printed_length
  use frequency, ONLY:w_samp,W_reset
+ use R_lattice, ONLY:bz_samp
  implicit none
  type(QP_t)   ::qp
  type(levels) ::en
+ type(bz_samp)::k
  integer      ::QPdb_read_err
  !
  ! Work Space
@@ -202,7 +204,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
    !
    call set_real_printed_length()
    !
-   call QP_Green_DOS(qp)
+   call QP_Green_DOS(qp,k)
    !
  endif
  !

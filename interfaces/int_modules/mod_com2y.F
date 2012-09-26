@@ -69,7 +69,7 @@ module mod_com2y
      !
      use com,       ONLY:msg,error
      use electrons, ONLY:spin_orbit
-     use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,mag_syms,&
+     use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,mag_syms,inv_index,&
 &                        atoms_spatial_invertion,i_space_inv,alat
      use R_lattice, ONLY:b,rl_sop
      !
@@ -77,12 +77,13 @@ module mod_com2y
      integer :: int_sop(3,3,nsym_) ! Symmetries in RLU
      integer, optional :: t_rev(nsym_)
      !
-     integer :: is,is_inv,is_spatial,is_trev,is_yambo,i2,i3
+     integer :: is,is_spatial,is_trev,is_yambo,i2,i3
      logical :: l_identity,l_inversion
      logical :: double_symmetries
      real(SP):: sop_mat(3,3)
      !
      mag_syms=.false.
+     inv_index=-1
      if(present(t_rev)) then
        i_time_rev=1
        if(any(t_rev(:)==1)) mag_syms=.true.
@@ -125,7 +126,7 @@ module mod_com2y
 &          int_sop(2,1,is)==0.and.int_sop(2,2,is)==-1.and.int_sop(2,3,is)==0.and.&
 &          int_sop(3,1,is)==0.and.int_sop(3,2,is)==0.and.int_sop(3,3,is)==-1) then
          l_inversion=.true.
-         is_inv=is
+         inv_index=is
        endif 
      enddo
      !
@@ -146,7 +147,11 @@ module mod_com2y
      ! Identity was stripped in outkss: swap all
      ! symmetries with their inversions
      !
-     if (.not.l_identity.and.l_inversion) int_sop=-int_sop
+     if (.not.l_identity.and.l_inversion) then
+       int_sop=-int_sop
+       l_identity=.true.
+       l_inversion=.false.
+     endif
      !
      if (force_noSYMM) i_time_rev=0
      ! 

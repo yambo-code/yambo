@@ -26,7 +26,7 @@ subroutine Vnl_driver(en,k)
  use pw_basis_module
  use pw_wfc_module
  use pw_pseudovelocity_module
- use electrons,             ONLY:levels, n_bands,  n_sp_pol
+ use electrons,             ONLY:levels,n_bands,n_sp_pol,n_spin,n_spinor
  use R_lattice,             ONLY:bz_samp
  use wave_func,             ONLY:wf_nc_k, wf_ncx, wf_igk, wf_ng
  use X_m,                   ONLY:X_t
@@ -132,57 +132,60 @@ subroutine Vnl_driver(en,k)
    !
    call pw_pseudovelocity_init(pseudovelocity,basis_con,atoms)
    !
-   ! Read a single wavefunction (ik) from disk:
-   ! fill the target wf_disk_SP(ik)
-   !
-   call read_wfc_k(ik,wf_disk_SP,wf_ncx, n_bands)
-   !
-   do iv=vb(1),vb(2)  ! Valence
+   ! Read a single wavefunction (ik,isp) from disk:
+   ! fill the target wf_disk_SP
+   do i_spin=1,n_spin
      !
-     ! Fill a single valence wavefunction array and basis.
-     ! Dimension is fixed by ngmax
+     call read_wfc_k_sp(ik,i_spin,wf_disk_SP,wf_ncx, n_bands)
      !
-     allocate(wfc_val) ! needed for pointer of a pointer, even for %npw
-     wfc_val%npw   =   basis_con%npw
-     wfc_val%basis => basis_con
-     wfc_val%val   => wf_disk_SP(1:wfc_val%npw,iv)
-     !
-     ! Check normalization
-     !
-     ! I_vk     = pw_wfc_braket(wfc_val,wfc_val) 
-     !
-     do ic=cb(1),cb(2)  ! Conduction 
+     do iv=vb(1),vb(2)  ! Valence
        !
-       allocate(wfc_con)
-       wfc_con%npw   =  basis_con%npw
-       wfc_con%basis => basis_con
-       wfc_con%val   => wf_disk_SP(1:wfc_con%npw,ic)
+       ! Fill a single valence wavefunction array and basis.
+       ! Dimension is fixed by ngmax
        !
-       !== Start consistency tests =====================!
+       allocate(wfc_val) ! needed for pointer of a pointer, even for %npw
+       wfc_val%npw   =   basis_con%npw
+       wfc_val%basis => basis_con
+       wfc_val%val   => wf_disk_SP(1:wfc_val%npw,iv)
        !
-       ! Check normalization and overlap 
+       ! Check normalization
        !
-       ! I_ck     = pw_wfc_braket(wfc_con,wfc_con) 
-       ! O_cvk    = pw_wfc_braket(wfc_val,wfc_con) 
+       ! I_vk     = pw_wfc_braket(wfc_val,wfc_val) 
        !
-       ! Calculate momentum/velocity moment <v|p|c>
-       !
-       ! Ev_m_Ec=en%E(iv,ik,1)-en%E(ic,ik,1)
-       ! P_cvk    = pw_wfc_p_braket(wfc_val,wfc_con) 
-       !
-       ! Calculate dipole moment i<v|r|c> = <v|p|c>/(Ev-Ec)
-       !
-       ! DIP_iR(:,ic,iv,ik,1) = P_cvk(:)/Ev_m_Ec
-       !== Stop consistency tests =====================!
-       !
-       ! Calculate pseudo dipole (velocity) moment <v|[Vnl,r]|c>
-       !
-       Vnl_cvk = pw_pseudovelocity_braket(pseudovelocity,wfc_val,wfc_con)
-       Vnl(:,ic,iv,ik,1) = Vnl_cvk(:)
-       !
-       if(associated(wfc_con%val)) nullify(wfc_con)
+       do ic=cb(1),cb(2)  ! Conduction 
+         !
+         allocate(wfc_con)
+         wfc_con%npw   =  basis_con%npw
+         wfc_con%basis => basis_con
+         wfc_con%val   => wf_disk_SP(1:wfc_con%npw,ic)
+         !
+         !== Start consistency tests =====================!
+         !
+         ! Check normalization and overlap 
+         !
+         ! I_ck     = pw_wfc_braket(wfc_con,wfc_con) 
+         ! O_cvk    = pw_wfc_braket(wfc_val,wfc_con) 
+         !
+         ! Calculate momentum/velocity moment <v|p|c>
+         !
+         ! Ev_m_Ec=en%E(iv,ik,i_spin)-en%E(ic,ik,i_spin)
+         ! P_cvk    = pw_wfc_p_braket(wfc_val,wfc_con) 
+         !
+         ! Calculate dipole moment i<v|r|c> = <v|p|c>/(Ev-Ec)
+         !
+         ! DIP_iR(:,ic,iv,ik,i_spin) = P_cvk(:)/Ev_m_Ec
+         !== Stop consistency tests =====================!
+         !
+         ! Calculate pseudo dipole (velocity) moment <v|[Vnl,r]|c>
+         !
+         Vnl_cvk = pw_pseudovelocity_braket(pseudovelocity,wfc_val,wfc_con)
+         if(n_sp_pol==2) Vnl(:,ic,iv,ik,i_spin) = Vnl_cvk(:)
+         if(n_spinor==2) Vnl(:,ic,iv,ik,1) = Vnl(:,ic,iv,ik,1) + Vnl_cvk(:)
+         !
+         if(associated(wfc_con%val)) nullify(wfc_con)
+       enddo
+       if(associated(wfc_val%val)) nullify(wfc_val)
      enddo
-     if(associated(wfc_val%val)) nullify(wfc_val)
    enddo
    call pw_pseudovelocity_destroy(pseudovelocity)
    call live_timing(steps=1)
@@ -358,19 +361,20 @@ subroutine fill_basis(basis,struct,ik,ngmax)
  return
 end subroutine fill_basis
 !
-subroutine read_wfc_k(ikibz,wf_disk_SP,wf_ncx,n_bands)
+subroutine read_wfc_k_sp(ikibz,i_spin,wf_disk_SP,wf_ncx,n_bands)
  ! Due to the kind type conversion from wf_disk_DP to wfc_val,
  ! cannot use direct pointer assignment => for wfc_val%val
- ! hence create a SP target in read_wfc_k
+ ! hence create a SP target in read_wfc_k_sp
  use p2y,                 only : verboseIO
  use qexml_module 
  use pars,                only : SP,DP
  use wave_func,           only : wf_nc_k, wf_igk, wf_nb_io_groups,wf_nb_io
  use mod_wf2y,            only : wf_splitter
  use memory_m,            only : mem_est
+ use electrons,           only : n_spin,n_sp_pol,n_spinor
  implicit none
  integer     :: npwk, ierr, ib1,ib2, n_b, ib_grp
- integer, intent(in)          :: ikibz,wf_ncx,n_bands
+ integer, intent(in)          :: ikibz,wf_ncx,n_bands,i_spin
  complex(DP), allocatable     :: wf_disk_DP(:,:)
  complex(SP),intent(inout)      :: wf_disk_SP(wf_ncx,n_bands)
  !
@@ -387,7 +391,11 @@ subroutine read_wfc_k(ikibz,wf_disk_SP,wf_ncx,n_bands)
    !
    call set_band_block
    !
-   call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, &
+   if (n_spin==1) call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, &
+&                       wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
+   if (n_sp_pol==2) call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=i_spin, &
+&                       wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
+   if (n_spinor==2) call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ipol=i_spin, &
 &                       wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
    !
    wf_disk_SP(:,ib1:ib2) = wf_disk_DP(:,1:n_b)  ! Type conversion
@@ -418,5 +426,5 @@ subroutine set_band_block
  endif
  end subroutine set_band_block
  !
-end subroutine read_wfc_k
+end subroutine read_wfc_k_sp
 

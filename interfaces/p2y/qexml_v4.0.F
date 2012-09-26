@@ -2708,12 +2708,12 @@ CONTAINS
       !
       ! few check
       !
-      IF ( PRESENT( ispin ) .AND. PRESENT( ipol )  ) THEN
-         !
-         ierr = 1
-         RETURN
-         !
-      ENDIF
+      !IF ( PRESENT( ispin ) .AND. PRESENT( ipol )  ) THEN
+      !   !
+      !   ierr = 1
+      !   RETURN
+      !   !
+      !ENDIF
       !
       !
       ! read the main data

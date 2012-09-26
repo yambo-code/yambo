@@ -213,7 +213,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
          if (ioKB_err==0 .and. n_spinor==2) call Dipole_kb_sum_SO(iv,ic,ik,i_spin,rho(:3),kbv)
-         if (io_Vnl_err==0) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,i_spin)*0.5
+         if (io_Vnl_err==0.and.n_spinor==1) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,i_spin)*0.5
+         if (io_Vnl_err==0.and.n_spinor==2.and.i_spin==2) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,1)*0.5
          !
          !=====
          ! <P>

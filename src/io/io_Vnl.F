@@ -23,7 +23,7 @@ integer function io_Vnl(X,Xen,ID)
  !
  use pars,          ONLY:SP,schlen
  use X_m,           ONLY:X_t,Dipole_bands_ordered
- use electrons,     ONLY:levels,n_sp_pol
+ use electrons,     ONLY:levels,n_spin
  use pseudo,        ONLY:Vnl
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
@@ -90,14 +90,14 @@ integer function io_Vnl(X,Xen,ID)
       !
       ! Fill an array Vnl to size required by yambo, ignore extra elements
       !
-      allocate(Vnl(3,X%ib(2),db_nbm,nXkibz,n_sp_pol))
+      allocate(Vnl(3,X%ib(2),db_nbm,nXkibz,n_spin))
    endif
    !
    do i1=1,nXkibz
      !
      do ixyz=1,3
        !
-       do i_spin=1,n_sp_pol
+       do i_spin=1,n_spin
          !
          if (write_is_on(ID)) call mat_c2r(Vnl(ixyz,:,:,i1,i_spin),Vnl_disk)
          !

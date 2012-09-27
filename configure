@@ -9831,7 +9831,8 @@ if test "x$netcdf" = xyes; then
     NCLIBS="${NCLIBS} ${NETCDF_LINKS}"
   fi
 fi
-
+#echo ${NETCDF_LINKS}                        #Davide
+NCLIBS="${NETCDF_LINKS}"   #Davide
 
 
 

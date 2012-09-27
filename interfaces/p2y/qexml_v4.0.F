@@ -2708,12 +2708,12 @@ CONTAINS
       !
       ! few check
       !
-      !IF ( PRESENT( ispin ) .AND. PRESENT( ipol )  ) THEN
-      !   !
-      !   ierr = 1
-      !   RETURN
-      !   !
-      !ENDIF
+      IF ( PRESENT( ispin ) .AND. PRESENT( ipol )  ) THEN
+         !
+         ierr = 1
+         RETURN
+         !
+      ENDIF
       !
       !
       ! read the main data
@@ -3034,13 +3034,13 @@ end subroutine read_upf_header_v1
   end function matches
 
 subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,&
-&          wmesh,vloc,lbeta,mesh_beta,beta,d) 
+&          wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d) 
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   !
   INTEGER, INTENT(OUT) :: nmesh,nbeta
   REAL, INTENT(OUT)    :: z
-  REAL, INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:)
+  REAL, INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
   INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
     !
     CHARACTER(256) :: filename
@@ -3055,7 +3055,7 @@ subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,&
     call read_pseudo_header(u,z,psfile, nmesh, nbeta)
     !
     call read_pseudo_parameters(u,nmesh,nbeta,mesh, &
-&                 wmesh,vloc,lbeta,mesh_beta,beta,d,psfile)
+&                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile)
     !
     close(unit)
     !
@@ -3063,12 +3063,12 @@ subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,&
 end subroutine read_pseudo_data
 
 subroutine read_pseudo_parameters(u,nmesh,nbeta,mesh, &
-&                 wmesh,vloc,lbeta,mesh_beta,beta,d,psfile)
+&                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile)
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   !
   INTEGER, INTENT(OUT) :: nmesh,nbeta
-  REAL, INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:)
+  REAL, INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
   INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
   !
   CHARACTER(256) :: filename
@@ -3086,9 +3086,10 @@ subroutine read_pseudo_parameters(u,nmesh,nbeta,mesh, &
 &                 'Cannot open file: '//TRIM(filename),1)
 
   CALL read_upf_parameters_v2(u,nmesh,nbeta,mesh, &
-&                 wmesh,vloc,lbeta,mesh_beta,beta,d,psfile,ierr)
+&                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
   if(ierr>0) THEN
       REWIND(u)
+      jbeta=0.
       CALL read_upf_parameters_v1(u,nmesh,nbeta,mesh, &
 &                 wmesh,vloc,lbeta,mesh_beta,beta,d,psfile,ierr)
    ENDIF
@@ -3157,7 +3158,7 @@ subroutine read_upf_parameters_v1(u,nmesh,nbeta,mesh, &
 end subroutine
 
 subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh, &
-&                 wmesh,vloc,lbeta,mesh_beta,beta,d,psfile,ierr)
+&                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
   !
   use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
   !
@@ -3165,7 +3166,7 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh, &
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   !
   INTEGER, INTENT(IN)  :: nmesh,nbeta
-  REAL, INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:)
+  REAL, INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
   INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
   !
   real  :: beta_tmp(nmesh,nbeta),d_tmp(nbeta,nbeta)
@@ -3222,10 +3223,23 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh, &
   CALL iotk_scan_dat(u, 'PP_DIJ', d_tmp , attr=attr)
   cd_tmp=cmplx(d_tmp,0.)
   call mat_dia_inv(DIAGO,USE_LK,cd_tmp,E_real=d)
-  d_tmp=abs(cd_tmp)
-  forall (i1=1:nmesh) beta(i1,:)=matmul(d_tmp,beta_tmp(i1,:))
+  d_tmp=real(cd_tmp)
+  !
+  lbeta=matmul(transpose(d_tmp)**2,lbeta)
+  forall (i1=1:nmesh) beta(i1,:)=matmul(transpose(d_tmp),beta_tmp(i1,:))
   !
   CALL iotk_scan_end(u, 'PP_NONLOCAL')
+  !
+  CALL iotk_scan_begin(u, 'PP_SPIN_ORB')
+  !
+  DO ibeta = 1,nbeta
+    CALL iotk_scan_empty(u, 'PP_RELBETA'//intc(ibeta),attr=attr)
+    CALL iotk_scan_attr(attr, 'jjj',   jbeta(ibeta))
+  ENDDO
+  jbeta=matmul(transpose(d_tmp)**2,jbeta)
+  !
+  CALL iotk_scan_end(u, 'PP_SPIN_ORB')
+  ! 
   ! Close the file (not the unit!)
   CALL iotk_close_read(u)
   !

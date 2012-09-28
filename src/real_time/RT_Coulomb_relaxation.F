@@ -21,7 +21,7 @@
 !
 subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !  
- use pars,            ONLY:SP,cI,rZero
+ use pars,            ONLY:SP,cI,rZero,pi
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,bz_samp,qindx_X,nkibz
  use SC,              ONLY:SC_bands,it_now 
@@ -30,9 +30,6 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  use D_lattice,       ONLY:DL_vol
  use collisions_CACHE,ONLY:CACHE
  use par_proc_m,      ONLY:pp_redux_wait
- !DEBUG>
- use units
- !DEBUG<
  !
  implicit none
  !
@@ -93,7 +90,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          !
          f_pmq=-cI*G_lesser(i_mp,i_mp,i_pmq,MEM_index(it_now))
          !
-         pre_factor=abs(CACHE(i_qp1)%COLLISIONS_v3(i_qp2,i_p_s,iqbz))**2
+         pre_factor=abs(4.*pi*CACHE(i_qp1)%COLLISIONS_v3(i_qp2,i_p_s,iqbz))**2
          !
          DELTA_ = E%E(i_np,i_kmq,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)-E%E(i_n,i_k,1)
          GAMMA_ = abs(E%W(i_np,i_kmq,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))+abs(E%W(i_n,i_k,1))
@@ -105,16 +102,6 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          !
          E_E_Electron_lifetime(i_n,i_k)= E_E_Electron_lifetime(i_n,i_k)+pre_factor*lorentzian*f_E_factor
          E_E_Hole_lifetime(i_n,i_k)    = E_E_Hole_lifetime(i_n,i_k)+pre_factor*lorentzian*F_H_factor
-  ! DEBUG>
-  !if (i_k==7.and.i_n==5.and.abs(f_E_factor)>1.E-5.and.i_p_s==1) then
-  !  write (*,*) 
-  !  write (*,*) 'k-mq',i_np,(1.-f_kmq)
-  !  write (*,*) 'p',i_m,(1.-f_p)
-  !  write (*,*) 'p-q',i_mp,f_pmq
-  !  write (*,*) 'E_k-E_k-q',(E%E(i_n,i_k,1)-E%E(i_np,i_kmq,1))*HA2EV
-  !  write (*,*) 'E_p-E_p-q',(E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1))*HA2EV
-  !endif
-  ! DEBUG<
          !
        enddo
        !

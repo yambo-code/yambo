@@ -70,7 +70,6 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,k,E)
      !
      !DEBUG>
      !if (ib<SC_bands(1)) cycle
-     !
      !if (allocated(E_P_Hole_lifetime)) then
      !  write (101,*) E%E(ib,ik,1)*HA2EV,E_P_Hole_lifetime(ib,ik)*HA2EV*1000 
      !  write (102,*) E%E(ib,ik,1)*HA2EV,E_P_Electron_lifetime(ib,ik)*HA2EV*1000 
@@ -83,38 +82,6 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,k,E)
      !
    enddo
  enddo
- !DEBUG>
-! if (it_now==2) then
-   !write (*,*)
-   !write (*,'(1x,a,f20.10)') 'E_P(hole)@k1b4',E_P_Hole_lifetime(4,1)*HA2EV*1000.
-   !write (*,'(1x,a,f20.10)') 'E_E(hole)@k1b4',E_E_Hole_lifetime(4,1)*HA2EV*1000.
-   !write (*,*)
-   !write (*,'(1x,a,f20.10)') 'E_P(hole)@k1b8',E_P_Hole_lifetime(8,1)*HA2EV*1000.
-   !write (*,'(1x,a,f20.10)') 'E_E(hole)@k1b8',E_E_Hole_lifetime(8,1)*HA2EV*1000.
-   !write (*,*)
-   !write (*,'(1x,a,f20.10)') 'E_P(electron)@k1b5',E_P_Electron_lifetime(4,1)*HA2EV*1000.
-   !write (*,'(1x,a,f20.10)') 'E_E(electron)@k1b5',E_E_Electron_lifetime(4,1)*HA2EV*1000.
-   !write (*,*)
-   !write (*,'(1x,a,f20.10)') 'E_P(hole)@k2b4',E_P_Hole_lifetime(4,2)*HA2EV*1000.
-   !write (*,'(1x,a,f20.10)') 'E_E(hole)@k2b4',E_E_Hole_lifetime(4,2)*HA2EV*1000.
-   !write (*,*)
-   !write (*,'(1x,a,f20.10)') 'E_P(electron)@k2b6',E_P_Electron_lifetime(6,2)*HA2EV*1000.
-   !write (*,'(1x,a,f20.10)') 'E_E(electron)@k2b6',E_E_Electron_lifetime(6,2)*HA2EV*1000.
-   !write (*,*)
-   !write (*,'(1x,a,f20.10)') 'E_P(hole)@k5b3',E_P_Hole_lifetime(3,5)*HA2EV*1000.
-   !write (*,'(1x,a,f20.10)') 'E_E(hole)@k5b3',E_E_Hole_lifetime(3,5)*HA2EV*1000.
-   !write (*,*)
-   !write (*,'(1x,a,f20.10)') 'E_P(hole)@k5b4',E_P_Hole_lifetime(4,5)*HA2EV*1000.
-   !write (*,'(1x,a,f20.10)') 'E_E(hole)@k5b4',E_E_Hole_lifetime(4,5)*HA2EV*1000.
-   !write (*,*)
-   !write (*,'(1x,a,f20.10)') 'E_P(electron)@k5b5',E_P_Electron_lifetime(5,5)*HA2EV*1000.
-   !write (*,'(1x,a,f20.10)') 'E_E(electron)@k5b5',E_E_Electron_lifetime(5,5)*HA2EV*1000.
-   !write (*,*)
-   !write (*,'(1x,a,f20.10)') 'E_P(electron)@k5b6',E_P_Electron_lifetime(6,5)*HA2EV*1000.
-   !write (*,'(1x,a,f20.10)') 'E_E(electron)@k5b6',E_E_Electron_lifetime(6,5)*HA2EV*1000.
-   !stop
-! endif
- !DEBUG<
  !
  if (n_states>0) RT_mean_lifetimes=RT_mean_lifetimes/float(n_states)
  !

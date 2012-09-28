@@ -174,13 +174,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! SELF-ENERGIES
  !===============
  !
- !DEBUG>
- !if (l_gw0.or.l_life) then
- ! call QP_test(X(1),Xen,Xk,q,Xw(3))
- !  stop
- !endif
- !DEBUG<
- !
  if (l_gw0.or.l_life) then
    !
    if (l_cohsex) then

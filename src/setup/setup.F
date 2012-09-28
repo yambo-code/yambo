@@ -23,7 +23,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  use drivers,        ONLY:l_sc_run
  use pars,           ONLY:SP,pi,schlen
- use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate
+ use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,n_sp_pol
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
 &                         atoms_spatial_invertion,i_space_inv,input_Tel_commands_over_header,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
@@ -41,6 +41,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use global_XC,      ONLY:G_kind,G_xc_functional,X_kind,&
 &                         X_xc_functional,setup_global_XC,MORE_NONE,K_kind,K_xc_functional,loaded_WF_xc_string,&
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
+ use memory_m,       ONLY:mem_est
 #endif
  !
  implicit none
@@ -247,6 +248,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  if (found_SC_DB) call setup_global_XC('G',G_kind,MORE_NONE,G_xc_functional,G_perturbation)
  call load_SC_components('E',E=Xen,COM_=NONE,MODE_=DUMP,ik=0,&
 &                         kind=X_kind,xc_functional=X_xc_functional,perturbation=X_perturbation)
+ if (.not.associated(Xen%Eo).and.found_SC_DB) then
+   allocate(Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
+   call mem_est("XenE-Eo",(/size(Xen%Eo)/),(/SP/))
+   Xen%Eo(:,:,:)=en%Eo(:,:en%nk,:)
+ endif
  if (found_SC_DB) call setup_global_XC('X',X_kind,MORE_NONE,X_xc_functional,X_perturbation)
 #endif
  !

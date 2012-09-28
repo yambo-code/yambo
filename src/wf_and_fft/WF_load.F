@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
-&                   spins_to_load,space,title,impose_free_and_alloc)
+&                   spins_to_load,space,title,impose_free_and_alloc,force_WFo)
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
@@ -53,7 +53,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  integer     ,optional :: spins_to_load(2)
  character(*),optional :: space,title
- logical     ,optional :: impose_free_and_alloc
+ logical     ,optional :: impose_free_and_alloc,force_WFo
  !
  ! Work Space
  !
@@ -183,7 +183,15 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (found_SC_DB.and.compatible_SC_DB) then
    !
-   if (any ( wf_b/=(/1,SC_bands(2)/) )) call warning(' [WF] Forced '//trim(intc(SC_bands(2)))//' bands to be loaded')
+   if(allocated(states_to_load).and..not.present(force_WFo)) then
+     deallocate(states_to_load)
+     call warning(' [WF] WF-distribution turned off, not compatible with SC wave functions')
+   endif
+   !
+   if (any ( wf_b/=(/1,SC_bands(2)/) )) then 
+     call warning(' [WF] Forced '//trim(intc(SC_bands(2)))//' bands to be loaded')
+     if(allocated(states_to_load)) states_to_load(wf_b(2)+1:SC_bands(2),:,:)=.TRUE.
+   endif
    wf_b=(/1,SC_bands(2)/)
    !
  else if (found_SC_DB.and..not.compatible_SC_DB) then
@@ -314,12 +322,12 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    deallocate(states_to_load)
  endif
  !
+#if defined _SC
+ !
  ! Rotate in the SC basis
  !========================
  !
-#if defined _SC
- !
- if (found_SC_DB) then
+ if (found_SC_DB.and..not.present(force_WFo)) then
    !
    call load_SC_components('WF',COM_=NONE,MODE_=DUMP,kind=WF_kind,xc_functional=WF_xc_functional,&
 &                          perturbation=WF_perturbation)

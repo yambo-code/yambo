@@ -37,7 +37,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
  use wrapper,             ONLY:M_by_V
- use com,                 ONLY:error
+ use com,                 ONLY:error,msg
  !
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -104,6 +104,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  call pp_indexes_reset(px)
  call par_indexes(px,(/Xk%nibz,X%ib(2)/),(/1,ic_min/))
+ !
+ if (associated(Xen%Eo)) call msg('rns','[X] Using Kohn-Sham energies for the dipoles ')
  !
 #if defined _SC
  call live_timing('P and P^2 (T):',px%n_of_elements(myid+1)*n_spin)

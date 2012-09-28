@@ -180,7 +180,7 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
       end do
     end do
   end do
-  if(any(iproj(:) /= nproj)) call errore("pw_pseudovelocity_init","iproj ne nproj",1)
+  if(any(iproj(:n_spinor) /= nproj)) call errore("pw_pseudovelocity_init","iproj ne nproj",1)
   deallocate(xlylm,dxlylm)
 end subroutine pw_pseudovelocity_init
 

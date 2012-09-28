@@ -133,6 +133,8 @@ subroutine Vnl_driver(en,k)
    ! Here the beta functions are moltiplied by spherical armonics
    ! In the case nspinor = 2 I use "spin-angle" and
    ! I've defined pseudovelocity(nspinor).
+   ! To include all the SO commutator I should modify
+   ! the call to pw_pseudovelocity_braket later and the call to read_wfc...
    call pw_pseudovelocity_init(pseudovelocity,basis_con,atoms)
    !
    ! Read a single wavefunction (ik,isp) from disk:

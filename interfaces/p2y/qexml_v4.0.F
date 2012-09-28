@@ -3161,6 +3161,7 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh, &
 &                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
   !
   use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
+  use electrons,      ONLY:spin_orbit
   !
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
@@ -3230,15 +3231,19 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh, &
   !
   CALL iotk_scan_end(u, 'PP_NONLOCAL')
   !
-  CALL iotk_scan_begin(u, 'PP_SPIN_ORB')
-  !
-  DO ibeta = 1,nbeta
-    CALL iotk_scan_empty(u, 'PP_RELBETA'//intc(ibeta),attr=attr)
-    CALL iotk_scan_attr(attr, 'jjj',   jbeta(ibeta))
-  ENDDO
-  jbeta=matmul(transpose(d_tmp)**2,jbeta)
-  !
-  CALL iotk_scan_end(u, 'PP_SPIN_ORB')
+  if(spin_orbit) then
+    !
+    CALL iotk_scan_begin(u, 'PP_SPIN_ORB')
+    !
+    DO ibeta = 1,nbeta
+      CALL iotk_scan_empty(u, 'PP_RELBETA'//intc(ibeta),attr=attr)
+      CALL iotk_scan_attr(attr, 'jjj',   jbeta(ibeta))
+    ENDDO
+    jbeta=matmul(transpose(d_tmp)**2,jbeta)
+    !
+    CALL iotk_scan_end(u, 'PP_SPIN_ORB')
+    !
+  endif
   ! 
   ! Close the file (not the unit!)
   CALL iotk_close_read(u)

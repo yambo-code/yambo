@@ -30,6 +30,9 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  use D_lattice,       ONLY:DL_vol
  use collisions_CACHE,ONLY:CACHE
  use par_proc_m,      ONLY:pp_redux_wait
+ !DEBUG>
+ use units
+ !DEBUG<
  !
  implicit none
  !
@@ -41,7 +44,8 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !
  integer               :: i_qp1,i_qp2,B_dim,i_p,i_kmq,i_pmq,i_n,i_m,i_mp,i_np,i_p_star,&
 &                         iqbz,i_p_s,iqibz,i_p_bz
- real(SP)              :: f_k(SC_bands(2)),f_p,f_kmq,f_pmq,GAMMA_,DELTA_,pre_factor,lorentzian
+ real(SP)              :: f_k(SC_bands(2)),f_p,f_kmq,f_pmq,GAMMA_,DELTA_,pre_factor,lorentzian,&
+&                         f_E_factor,f_H_factor
  !
  ! Dimensioning and Zeroing
  !==========================
@@ -63,14 +67,14 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
    i_n =QP_table(i_qp1,1)
    i_np=QP_table(i_qp1,2)
    !
-   f_k(i_n)=-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,i_k,MEM_index(it_now))/spin_occ
+   f_k(i_n)=-cI*G_lesser(i_n,i_n,i_k,MEM_index(it_now))/spin_occ
    !
    do iqbz=1,q%nbz
      !
      iqibz = q%sstar(iqbz,1)
      i_kmq = k%sstar(qindx_S(i_k,iqbz,1),1)
      !
-     f_kmq=-cI*G_lesser(i_np+SC_bands(1)-1,i_np+SC_bands(1)-1,i_kmq,MEM_index(it_now))/spin_occ
+     f_kmq=-cI*G_lesser(i_np,i_np,i_kmq,MEM_index(it_now))/spin_occ
      !
      do i_qp2=1,QP_n_states
        !
@@ -78,7 +82,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
        i_mp = QP_table(i_qp2,2)
        i_p  = QP_table(i_qp2,3)
        !
-       f_p=-cI*G_lesser(i_m+SC_bands(1)-1,i_m+SC_bands(1)-1,i_p,MEM_index(it_now))/spin_occ
+       f_p=-cI*G_lesser(i_m,i_m,i_p,MEM_index(it_now))/spin_occ
        !
        do i_p_star=1,k%nstar(i_p)
          !
@@ -87,17 +91,30 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          if (i_p>1) i_p_bz=sum(k%nstar(:i_p-1))+i_p_star
          i_pmq   = k%sstar(qindx_X(iqibz,i_p_bz,1),1)
          !
-         f_pmq=-cI*G_lesser(i_mp+SC_bands(1)-1,i_mp+SC_bands(1)-1,i_pmq,MEM_index(it_now))
+         f_pmq=-cI*G_lesser(i_mp,i_mp,i_pmq,MEM_index(it_now))
          !
-         pre_factor=1./(DL_vol*float(q%nbz))**2*abs(CACHE(i_qp1)%COLLISIONS_v3(i_qp2,i_p_s,iqbz))**2
+         pre_factor=abs(CACHE(i_qp1)%COLLISIONS_v3(i_qp2,i_p_s,iqbz))**2
          !
          DELTA_ = E%E(i_np,i_kmq,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)-E%E(i_n,i_k,1)
          GAMMA_ = abs(E%W(i_np,i_kmq,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))+abs(E%W(i_n,i_k,1))
          !
          lorentzian=GAMMA_/(DELTA_**2+GAMMA_**2)
          !
-         E_E_Electron_lifetime(i_n,i_k)= E_E_Electron_lifetime(i_n,i_k)+pre_factor*lorentzian*(1._SP-f_kmq)*(1._SP-f_p)*f_pmq
-         E_E_Hole_lifetime(i_n,i_k)    = E_E_Hole_lifetime(i_n,i_k)+pre_factor*lorentzian*f_kmq*f_p*(2._SP-f_pmq)
+         f_E_factor=(1._SP-f_kmq)*(1._SP-f_p)*f_pmq
+         f_H_factor=f_kmq*f_p*(2._SP-f_pmq)
+         !
+         E_E_Electron_lifetime(i_n,i_k)= E_E_Electron_lifetime(i_n,i_k)+pre_factor*lorentzian*f_E_factor
+         E_E_Hole_lifetime(i_n,i_k)    = E_E_Hole_lifetime(i_n,i_k)+pre_factor*lorentzian*F_H_factor
+  ! DEBUG>
+  !if (i_k==7.and.i_n==5.and.abs(f_E_factor)>1.E-5.and.i_p_s==1) then
+  !  write (*,*) 
+  !  write (*,*) 'k-mq',i_np,(1.-f_kmq)
+  !  write (*,*) 'p',i_m,(1.-f_p)
+  !  write (*,*) 'p-q',i_mp,f_pmq
+  !  write (*,*) 'E_k-E_k-q',(E%E(i_n,i_k,1)-E%E(i_np,i_kmq,1))*HA2EV
+  !  write (*,*) 'E_p-E_p-q',(E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1))*HA2EV
+  !endif
+  ! DEBUG<
          !
        enddo
        !

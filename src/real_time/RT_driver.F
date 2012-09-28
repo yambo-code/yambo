@@ -137,6 +137,8 @@ subroutine RT_driver(E,X,k,q)
  !
  ! DEBUG>
  !
+ !it_now=1
+ !
  !do ik=1,k%nibz
  !  call RT_Coulomb_relaxation(ik,E,k,q)
  !enddo

@@ -158,6 +158,9 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
        !
        ! Poles and Residuals
        !
+       !DEBUG>
+       !forall(i1=1:X%ng) X_mat(i1,i1,1)=1.
+       !DEBUG<
        forall(i1=1:X%ng) X_mat(i1,i1,1)=X_mat(i1,i1,1)+1.
        forall(i1=1:X%ng,i2=1:X%ng) EM1s(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
        !

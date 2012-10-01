@@ -41,15 +41,16 @@ integer function io_SC_components(what,E_sc,ID)
  use fields,         ONLY:A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
+ use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use fragments,      ONLY:io_fragment
  implicit none
  !
- integer               :: ID
- type(levels)          :: E_sc
- character(*)          :: what
+ integer, intent(in)      :: ID
+ type(levels)             :: E_sc
+ character(*), intent(in) :: what
  !
  ! Work Space
  !
@@ -210,6 +211,14 @@ integer function io_SC_components(what,E_sc,ID)
      !
      bands_to_load=size(E_sc%E,1)
      !
+     ! Make a copy of Kohn-Sham Energies in E_sc%Eo
+     !
+     if(.not.associated(E_sc%Eo)) then
+       allocate(E_sc%Eo(E_sc%nb,E_sc%nk,n_sp_pol))
+       call mem_est("E-Eo",(/size(E_sc%Eo)/),(/SP/))
+       E_sc%Eo=E_sc%E
+     endif
+     !
      if (bands_to_load>SC_bands(2)) then
        !
        ! For either the H_sc and WFs I first check to 
@@ -223,6 +232,7 @@ integer function io_SC_components(what,E_sc,ID)
      else
        E_sc%E(:bands_to_load,:,:)=E_disk(:bands_to_load,:,:)
      endif
+     !
      deallocate(E_disk)
    endif
    !

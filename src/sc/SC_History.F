@@ -107,6 +107,9 @@ subroutine SC_History(it,E)
 #endif
 &                             ((E%E(ib,ik,i_spin)*HA2EV,ib=b_range(1),b_range(2)),ik=1,max_kpt) &
 &                             /),INDENT=-2,USE_TABS=.true.)
+#if !defined _RT
+     call of_open_close(E_file_name(i_spin),'f')
+#endif
      !
 #if defined _RT
      call msg('o Occ_History','',(/RT_step*real(it,SP)/FS2AUT,&

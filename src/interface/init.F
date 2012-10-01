@@ -621,16 +621,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SC 
  if (l_sc_run) then
-   call initactivate(1,'Potential FFTGvecs Gauge SCmixing SCBands SClwBand BandMix EXXCut')
+   call initactivate(1,'Potential FFTGvecs Gauge SCmixing SCBands SClwBand SCnlMix BandMix EXXCut')
    call initactivate(-1,'QpntsRXs')
-   if (l_cohsex) call initactivate(1,'GbndRnge UseEbands')
+   if (l_cohsex) call initactivate(1,'GbndRnge UseEbands SCUpWIter')
    if (.not.l_collisions_IO) call initactivate(1,'CollPath CollCache')
    if (.not.l_real_time.and..not.l_collisions_IO) then
      call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
      if (trim(SC_potential)=='EXX'.or.trim(SC_potential)=='EXXC'.or.&
 &        trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
    endif
-   call initactivate(1,'MeanPotential')
+   call initactivate(1,'SCdiag MeanPotential')
  endif
 #endif
  !

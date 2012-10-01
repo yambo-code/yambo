@@ -47,12 +47,14 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
   use numerical_module
   use num_interpolation_module
   use pw_pseudo_module
+  use electrons,     ONLY:n_spinor
 ! use tools_module
-  type(pw_pseudovelocity), intent(out) :: velocity
+  type(pw_pseudovelocity), intent(out) :: velocity(n_spinor)
   type(pw_basis), target, intent(in) :: basis
   type(pw_atoms), intent(in) :: atoms
   type(pw_pseudo), pointer :: pseudo
-  integer :: nproj,iatom,ibeta,iproj,nbeta,ipw,npw,l,m
+  integer :: nproj,iatom,ibeta,iproj(2),nbeta,ipw,npw,l,m,mmin,mmax,i_spinor
+  real    :: j,spinor_factor
   complex :: tmp,tmp_vec(3)
   
   real :: b(3,3),kg(3),pos(3)
@@ -65,7 +67,9 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
 
 ! write(*,*) "pseudovel_init: start",lmax
   allocate(xlylm(basis%npw,-lmax:lmax,0:lmax),dxlylm(3,basis%npw,-lmax:lmax,0:lmax))
-  velocity%basis => basis
+  do i_spinor=1,n_spinor
+    velocity(i_spinor)%basis => basis
+  enddo
   b = basis%struct%b
   npw = basis%npw
   do ipw=1,npw
@@ -89,13 +93,15 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
     iproj = iproj + sum(2*pseudo%lbeta(:)+1)
   end do
 ! write(*,*) "pseudovel_init: velocity"
-  nproj = iproj
-  velocity%nproj = nproj
-  allocate(velocity%proj(nproj))
-  allocate(velocity%dproj(3,nproj))
-  call pw_wfc_init(velocity%proj,basis)
-  call pw_wfc_init(velocity%dproj,basis)
-  allocate(velocity%d(nproj))
+  nproj=iproj(1)
+  do i_spinor=1,n_spinor
+    velocity(i_spinor)%nproj = nproj
+    allocate(velocity(i_spinor)%proj(nproj))
+    allocate(velocity(i_spinor)%dproj(3,nproj))
+    call pw_wfc_init(velocity(i_spinor)%proj,basis)
+    call pw_wfc_init(velocity(i_spinor)%dproj,basis)
+    allocate(velocity(i_spinor)%d(nproj))
+  enddo
   iproj=0
 ! write(*,*) "pseudovel_init: loops atoms",1,atoms%natoms
   do iatom=1,atoms%natoms
@@ -107,7 +113,6 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
     end do
 !   write(*,*) "pseudovel_init: loops beta",1,nbeta
     do ibeta=1,nbeta
-      l = pseudo%lbeta(ibeta)
       do ipw=1,npw
 !       write(*,*) "pseudovel_init: num calc"
         fl(ipw) = num_interpolation_calc(pseudo%interpolation(ibeta),modq(ipw),3)
@@ -120,28 +125,60 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
                   num_interpolation_calc_der(pseudo%interpolation(ibeta),modq(ipw),3,ider=1)
         end if
       end do
-      do m=-l,l
-        iproj = iproj + 1
-        velocity%d(iproj) = pseudo%d(ibeta)
-! componente normale
-        do ipw=1,npw
-          tmp = (0.0,-1.0)**l * xlylm(ipw,m,l) * &
+      l = pseudo%lbeta(ibeta)
+      j=0
+      if(n_spinor==2) j = pseudo%jbeta(ibeta)
+      do i_spinor=1,n_spinor
+        if(n_spinor==1) then
+          mmin=-l
+          mmax= l
+        endif
+        if(n_spinor==2.and.j>l) then
+          mmin=-l-1+(i_spinor-1)
+          mmax= l+(i_spinor-1)
+        elseif(n_spinor==2.and.j<l) then
+          mmin=-l+(i_spinor-1)
+          mmax= l-1+(i_spinor-1)
+        endif
+        do m=mmin,mmax
+          iproj(i_spinor) = iproj(i_spinor) + 1
+          velocity(i_spinor)%d(iproj(i_spinor)) = pseudo%d(ibeta)
+          if(abs(m)>l) then
+            do ipw=1,npw
+              velocity(i_spinor)%proj(iproj(i_spinor))%val(ipw) = 0.
+              velocity(i_spinor)%dproj(1,iproj(i_spinor))%val(ipw) = 0.
+              velocity(i_spinor)%dproj(2,iproj(i_spinor))%val(ipw) = 0.
+              velocity(i_spinor)%dproj(3,iproj(i_spinor))%val(ipw) = 0.
+            enddo
+            cycle
+          endif
+          spinor_factor=1.
+          if(j>l.and.i_spinor==1) spinor_factor= sqrt(real((l+m+1))/real(2*l+1))
+          if(j>l.and.i_spinor==2) spinor_factor= sqrt(real((l-m+1))/real(2*l+1))
+          if(j<l.and.i_spinor==1) spinor_factor= sqrt(real((l-m  ))/real(2*l+1))
+          if(j<l.and.i_spinor==2) spinor_factor=-sqrt(real((l+m  ))/real(2*l+1))
+          ! componente normale
+          do ipw=1,npw
+            tmp = xlylm(ipw,m,l) * &
                 num_interpolation_calc(pseudo%interpolation(ibeta),modq(ipw),3) * &
                 struct_fact(ipw)
-          velocity%proj(iproj)%val(ipw) = tmp
-        end do
-! componenti derivate
-        do ipw=1,npw
-          tmp_vec = (0.0,-1.0)**l * struct_fact(ipw) * &
-                    (xlylm(ipw,m,l) * dfl(:,ipw) + dxlylm(:,ipw,m,l) * fl(ipw))
-          velocity%dproj(1,iproj)%val(ipw) = tmp_vec(1)
-          velocity%dproj(2,iproj)%val(ipw) = tmp_vec(2)
-          velocity%dproj(3,iproj)%val(ipw) = tmp_vec(3)
+            tmp=tmp*spinor_factor*(0.0,-1.0)**l
+            velocity(i_spinor)%proj(iproj(i_spinor))%val(ipw) = tmp
+          end do
+          ! componenti derivate
+          do ipw=1,npw
+            tmp_vec = struct_fact(ipw) * &
+                      (xlylm(ipw,m,l) * dfl(:,ipw) + dxlylm(:,ipw,m,l) * fl(ipw))
+            tmp_vec=tmp_vec*spinor_factor*(0.0,-1.0)**l
+            velocity(i_spinor)%dproj(1,iproj(i_spinor))%val(ipw) = tmp_vec(1)
+            velocity(i_spinor)%dproj(2,iproj(i_spinor))%val(ipw) = tmp_vec(2)
+            velocity(i_spinor)%dproj(3,iproj(i_spinor))%val(ipw) = tmp_vec(3)
+          enddo
         end do
       end do
     end do
   end do
-  if(iproj /= nproj) call errore("pw_pseudovelocity_init","iproj ne nproj",1)
+  if(any(iproj(:n_spinor) /= nproj)) call errore("pw_pseudovelocity_init","iproj ne nproj",1)
   deallocate(xlylm,dxlylm)
 end subroutine pw_pseudovelocity_init
 

@@ -282,7 +282,8 @@ contains
    ! Work Space
    !
    real(DP)                       :: tau_units
-   integer                        :: i1,i2
+   real                           :: z
+   integer                        :: i1,i2,u
 
    allocate( ityp_(nat_) )
    allocate( tau_(3,nat_) )  
@@ -318,7 +319,7 @@ contains
    call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
    ! Check USPP/NC pseudopotential
    do i1 =1,n_atomic_species
-     call read_pseudo_header(psfile(i1),nmesh(i1),nbeta(i1))
+     call read_pseudo_header(u,z,psfile(i1),nmesh(i1),nbeta(i1))
    enddo
 
 #endif

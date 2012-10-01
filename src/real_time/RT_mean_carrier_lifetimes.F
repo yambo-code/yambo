@@ -22,9 +22,6 @@
 subroutine RT_mean_carrier_lifetimes(G_lesser,k,E)
  ! 
  use pars,           ONLY:SP,cI
- !DEBUG>
- !use units
- !DEBUG<
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes
  use QP_m,           ONLY:QP_nk
@@ -67,18 +64,6 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,k,E)
          RT_mean_lifetimes(5)=RT_mean_lifetimes(5)+E_E_Electron_lifetime(ib,ik)
        endif
      endif
-     !
-     !DEBUG>
-     !if (ib<SC_bands(1)) cycle
-     !if (allocated(E_P_Hole_lifetime)) then
-     !  write (101,*) E%E(ib,ik,1)*HA2EV,E_P_Hole_lifetime(ib,ik)*HA2EV*1000 
-     !  write (102,*) E%E(ib,ik,1)*HA2EV,E_P_Electron_lifetime(ib,ik)*HA2EV*1000 
-     !endif
-     !if (allocated(E_E_Hole_lifetime)) then
-     !  write (201,*) E%E(ib,ik,1)*HA2EV,E_E_Hole_lifetime(ib,ik)*HA2EV*1000 
-     !  write (202,*) E%E(ib,ik,1)*HA2EV,E_E_Electron_lifetime(ib,ik)*HA2EV*1000 
-     !endif
-     !DEBUG<
      !
    enddo
  enddo

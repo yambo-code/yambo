@@ -135,18 +135,6 @@ subroutine RT_driver(E,X,k,q)
    !
  endif
  !
- ! DEBUG>
- !
- !it_now=1
- !
- !do ik=1,k%nibz
- !  call RT_Coulomb_relaxation(ik,E,k,q)
- !enddo
- !call RT_mean_carrier_lifetimes(G_lesser,k,E)
- !
- !stop
- ! DEBUG<
- !
  ! qindx_X and qindx_S not needed in real-time 
  ! they are used only in dipoles and collisions calculations
  !

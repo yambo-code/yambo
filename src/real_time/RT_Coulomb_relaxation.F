@@ -114,8 +114,8 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  ! All-to-All
  !============
  !
- call pp_redux_wait(E_E_Electron_lifetime(:,:))
- call pp_redux_wait(E_E_Hole_lifetime(:,:))
+ call pp_redux_wait(E_E_Electron_lifetime(:,i_k))
+ call pp_redux_wait(E_E_Hole_lifetime(:,i_k))
  !
  ! Kernel composition
  !====================

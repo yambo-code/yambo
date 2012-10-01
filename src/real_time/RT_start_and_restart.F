@@ -39,14 +39,14 @@ subroutine RT_start_and_restart(E,k,q,X)
  use drivers,        ONLY:l_sc_contains_lda,l_ph_corr
  use com,            ONLY:msg,warning,error
  use QP_m,           ONLY:QP_nk,COHSEX_use_empties
- use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:G_lesser,ID,NE_steps,RT_ind_J,    &
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_ELPH_CCA_Kernel,   &
-&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,Eh_pumped_pair_energy
+&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,Eh_pumped_pair_energy,&
+&                         Eh_pumped_pair_width
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
 &                         rho_convergence,H_rotate,V_hartree_sc,&
@@ -67,8 +67,8 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Work Space
  !
- integer :: ik,i1,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA
- logical :: RESTART,SC_DB_present
+ integer :: ik,i1,i2,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA
+ logical :: RESTART,SC_DB_present,Pumped_state(E%nb)
  !
  ! Initialize the Gf and potentials
  !==================================
@@ -101,18 +101,27 @@ subroutine RT_start_and_restart(E,k,q,X)
    do ik=1,E%nk
      !
      i1=0
+     Pumped_state=.FALSE.
      !
-     do ib=SC_bands(1),SC_bands(2)
-       if (i1==0) then
-         if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(1))<.1/HA2EV) i1=ib
-       else
-         if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(2))<.1/HA2EV) then
-           G_lesser(i1,i1,ik,1) = cZERO
-           G_lesser(ib,ib,ik,1) = 2._SP*cI
-           call msg('sr','[RT] Eh pair pumped `by hand` @ k'//trim(intc(ik))//&
-&                        ' bands '//trim(intc(i1))//' - '//trim(intc(ib)))
+     do i2=1,10
+       do ib=SC_bands(1),SC_bands(2)
+         !
+         if (Pumped_state(ib)) cycle
+         !
+         if (i1==0) then
+           if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(1))<Eh_pumped_pair_width) i1=ib
+         else
+           if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(2))<Eh_pumped_pair_width) then
+             G_lesser(i1,i1,ik,1) = cZERO
+             G_lesser(ib,ib,ik,1) = 2._SP*cI
+             Pumped_state(i1)=.TRUE.
+             Pumped_state(ib)=.TRUE.
+             call msg('sr','[RT] Eh pair pumped `by hand` @ k'//trim(intc(ik))//&
+&                          ' bands '//trim(intc(i1))//' - '//trim(intc(ib)))
+             i1=0
+           endif
          endif
-       endif
+       enddo
      enddo
      !
    enddo

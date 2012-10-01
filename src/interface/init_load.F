@@ -55,7 +55,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,NE_Hxc_jumps,Dynamics_Kind,&
-&                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time
+&                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
+&                        Eh_pumped_pair_width
  use fields,        ONLY:Efield
 #endif
 #if defined _MAGNETIC
@@ -255,7 +256,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_Treshold)
  call it(defs,'RTmaxEn',    '[RT] Max e/h energy to define the states that are evolved',RT_eh_energy_max,&
 &                            Verb_level=V_real_time,unit=E_unit)
- call it(defs,'RTpumpEh',   '[RT] Energy of the full and empty level to be inverted by hand',Eh_pumped_pair_energy,&
+ call it(defs,'RTpumpEhEn', '[RT] Energy centers of the levels to be inverted by hand',Eh_pumped_pair_energy,&
+&                            Verb_level=V_real_time,unit=E_unit)
+ call it(defs,'RTpumpEhWd', '[RT] Energy window of the levels to be inverted by hand',Eh_pumped_pair_width,&
 &                            Verb_level=V_real_time,unit=E_unit)
  call it('f',defs,'RT_T_evol','[RT] Use a complete Time evolution instead of the CCA')
  !

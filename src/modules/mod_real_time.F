@@ -141,6 +141,7 @@ module real_time
  !
  logical     :: l_ELPH_CCA_Kernel
  real(SP)    :: Eh_pumped_pair_energy(2)
+ real(SP)    :: Eh_pumped_pair_width
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
  !
@@ -325,6 +326,8 @@ module real_time
        allocate(E_E_Hole_lifetime(SC_bands(1):SC_bands(2),QP_nk))
        allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),QP_nk))
        call mem_est("RT_E_E_lifetimes",(/2*size(E_E_Hole_lifetime)/),(/SP/))
+       E_E_Hole_lifetime=0._SP
+       E_E_Electron_lifetime=0._SP
      endif
      !
      if (l_ELPH_CCA_Kernel.and.l_ph_corr) then

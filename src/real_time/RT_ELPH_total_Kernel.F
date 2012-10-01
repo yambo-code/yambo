@@ -172,9 +172,9 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !============
  !
  call pp_redux_wait(S_mat_sum(:,:))
- call pp_redux_wait(E_P_Electron_lifetime(:,:))
- call pp_redux_wait(E_P_Hole_lifetime(:,:))
- call pp_redux_wait(E_P_Phonon_lifetime(:,:))
+ call pp_redux_wait(E_P_Electron_lifetime(:,ik))
+ call pp_redux_wait(E_P_Hole_lifetime(:,ik))
+ call pp_redux_wait(E_P_Phonon_lifetime(:,ik))
  !
  do i_n=SC_bands(1),SC_bands(2)
    do i_np=SC_bands(1),SC_bands(2)

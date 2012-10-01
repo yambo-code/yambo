@@ -25,7 +25,7 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,k,E)
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes
  use QP_m,           ONLY:QP_nk
- use SC,             ONLY:SC_bands,it_now
+ use SC,             ONLY:SC_bands
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin_occ
  implicit none

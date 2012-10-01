@@ -23,11 +23,10 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !  
  use pars,            ONLY:SP,cI,rZero,pi
  use electrons,       ONLY:levels,spin_occ
- use R_lattice,       ONLY:qindx_S,bz_samp,qindx_X,nkibz
+ use R_lattice,       ONLY:qindx_S,bz_samp,qindx_X
  use SC,              ONLY:SC_bands,it_now 
  use real_time,       ONLY:RT_qp_px,G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,Sigma_relax
  use QP_m,            ONLY:QP_n_states,QP_table
- use D_lattice,       ONLY:DL_vol
  use collisions_CACHE,ONLY:CACHE
  use par_proc_m,      ONLY:pp_redux_wait
  !
@@ -39,15 +38,13 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !
  ! Work Space ...
  !
- integer               :: i_qp1,i_qp2,B_dim,i_p,i_kmq,i_pmq,i_n,i_m,i_mp,i_np,i_p_star,&
+ integer               :: i_qp1,i_qp2,i_p,i_kmq,i_pmq,i_n,i_m,i_mp,i_np,i_p_star,&
 &                         iqbz,i_p_s,iqibz,i_p_bz
- real(SP)              :: f_k(SC_bands(2)),f_p,f_kmq,f_pmq,GAMMA_,DELTA_,pre_factor,lorentzian,&
+ real(SP)              :: f_k,f_p,f_kmq,f_pmq,GAMMA_,DELTA_,pre_factor,lorentzian,&
 &                         f_E_factor,f_H_factor
  !
  ! Dimensioning and Zeroing
  !==========================
- !
- B_dim=SC_bands(2)-SC_bands(1)+1
  !
  E_E_Hole_lifetime(:,i_k)    =rZero
  E_E_Electron_lifetime(:,i_k)=rZero
@@ -63,8 +60,6 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
    !
    i_n =QP_table(i_qp1,1)
    i_np=QP_table(i_qp1,2)
-   !
-   f_k(i_n)=-cI*G_lesser(i_n,i_n,i_k,MEM_index(it_now))/spin_occ
    !
    do iqbz=1,q%nbz
      !
@@ -121,8 +116,9 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !====================
  !
  do i_n=SC_bands(1),SC_bands(2)
-   Sigma_relax(i_n,i_n,i_k)=Sigma_relax(i_n,i_n,i_k)+E_E_Hole_lifetime(i_n,i_k)*(f_k(i_n)-1._SP)+&
-&                                                    E_E_Electron_lifetime(i_n,i_k)*f_k(i_n)
+   f_k=-cI*G_lesser(i_n,i_n,i_k,MEM_index(it_now))/spin_occ
+   Sigma_relax(i_n,i_n,i_k)=Sigma_relax(i_n,i_n,i_k)+E_E_Hole_lifetime(i_n,i_k)*(f_k-1._SP)+&
+&                                                    E_E_Electron_lifetime(i_n,i_k)*f_k
  enddo
  !
 end subroutine RT_Coulomb_relaxation

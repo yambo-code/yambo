@@ -133,10 +133,10 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
           mmin=-l
           mmax= l
         endif
-        if(n_spinor==2.and.j<real(l)) then
+        if(n_spinor==2.and.j>l) then
           mmin=-l-1+(i_spinor-1)
           mmax= l+(i_spinor-1)
-        elseif(n_spinor==2.and.j>real(l)) then
+        elseif(n_spinor==2.and.j<l) then
           mmin=-l+(i_spinor-1)
           mmax= l-1+(i_spinor-1)
         endif

@@ -3226,7 +3226,7 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh, &
   call mat_dia_inv(DIAGO,USE_LK,cd_tmp,E_real=d)
   d_tmp=real(cd_tmp)
   !
-  lbeta=matmul(transpose(d_tmp)**2,lbeta)
+  lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))
   forall (i1=1:nmesh) beta(i1,:)=matmul(transpose(d_tmp),beta_tmp(i1,:))
   !
   CALL iotk_scan_end(u, 'PP_NONLOCAL')

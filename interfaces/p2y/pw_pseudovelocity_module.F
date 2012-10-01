@@ -162,16 +162,18 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
             tmp = xlylm(ipw,m,l) * &
                 num_interpolation_calc(pseudo%interpolation(ibeta),modq(ipw),3) * &
                 struct_fact(ipw)
-            if (n_spinor==1) tmp=tmp*(0.0,-1.0)**l
-            if (n_spinor==2) tmp=tmp*spinor_factor
+            ! Not sure about the (0.0,-1.0)**l factor in case n_spinor=2
+            ! However results seems to be independent from this factor
+            tmp=tmp*spinor_factor*(0.0,-1.0)**l
             velocity(i_spinor)%proj(iproj(i_spinor))%val(ipw) = tmp
           end do
           ! componenti derivate
           do ipw=1,npw
             tmp_vec = struct_fact(ipw) * &
                       (xlylm(ipw,m,l) * dfl(:,ipw) + dxlylm(:,ipw,m,l) * fl(ipw))
-            if (n_spinor==1) tmp_vec=tmp_vec*(0.0,-1.0)**l
-            if (n_spinor==2) tmp_vec=tmp_vec*spinor_factor
+            ! Not sure about the (0.0,-1.0)**l factor in case n_spinor=2
+            ! However results seems to be independent from this factor
+            tmp_vec=tmp_vec*spinor_factor*(0.0,-1.0)**l
             velocity(i_spinor)%dproj(1,iproj(i_spinor))%val(ipw) = tmp_vec(1)
             velocity(i_spinor)%dproj(2,iproj(i_spinor))%val(ipw) = tmp_vec(2)
             velocity(i_spinor)%dproj(3,iproj(i_spinor))%val(ipw) = tmp_vec(3)

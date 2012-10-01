@@ -204,10 +204,10 @@ integer function variables_SC(ID,local_description,what)
  !
  if (ver_is_gt_or_eq(ID,revision=1455)) then
    call io_elemental(ID,VAR="CARRIER_scattering_vars",VAR_SZ=1,MENU=0) 
+   i_desc=i_desc+1
    call io_elemental(ID,L0=l_carrier_dynamics,&
 &     VAR=" [CARRIERS] Coulomb scattering   :", CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
  !

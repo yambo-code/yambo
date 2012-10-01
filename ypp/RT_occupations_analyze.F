@@ -21,16 +21,17 @@
 !
 subroutine RT_occupations_analyze(k,E)
  !
+ use drivers,        ONLY:l_carrier_dynamics
  use units,          ONLY:FS2AUT,SP,HA2EV
  use pars,           ONLY:schlen
- Use stderr,         ONLY:intc
+ use stderr,         ONLY:intc,set_real_printed_length
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,spin_occ
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT
  use com,            ONLY:msg,of_open_close
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,E_P_Electron_lifetime,&
-&                         E_P_Phonon_lifetime,l_ELPH_CCA_Kernel
+&                         E_P_Phonon_lifetime,l_ELPH_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime
  use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions
  implicit none
  !
@@ -40,9 +41,9 @@ subroutine RT_occupations_analyze(k,E)
  ! Work Space
  !
  integer               :: ik,ib,i_spin,i_s,i_T,n_T_steps,i_fp
- real(SP)              :: io_Time,data_to_plot(5)
+ real(SP)              :: io_Time,data_to_plot(7)
  real(SP), allocatable :: RT_occupations_sum(:)
- character(schlen)     :: titles(5)
+ character(schlen)     :: titles(7)
  integer,     external :: RT_occupations_check
  !
  call section('*','Real-Time occupations')
@@ -59,6 +60,8 @@ subroutine RT_occupations_analyze(k,E)
  !
  allocate(RT_occupations_sum(n_T_steps)) 
  RT_occupations_sum=0._SP
+ !
+ call set_real_printed_length(f_length=10,g_length=10)
  !
  do i_T=1,n_T_steps
    !
@@ -87,15 +90,30 @@ subroutine RT_occupations_analyze(k,E)
          call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
        enddo
        !
-       titles(1)='T[fs]'
-       titles(2)='Occ.'
        call msg('o '//trim(output_fname),'#')
-       if (l_ELPH_CCA_Kernel) then
-         titles(3)='Hole[meV]'
-         titles(4)='El.[meV]'
-         titles(5)='Ph.[meV]'
+       !
+       ! Titles
+       !========
+       if (l_carrier_dynamics.and.l_ELPH_CCA_Kernel) then
+         titles(:)=(/'         ','         ','|--------','--El-Ph--','--------|','|-El-El--','--------|'/)
+         call msg('o '//trim(output_fname),'#',titles(:),INDENT=0,USE_TABS=.TRUE.)
+         titles(1)='T[fs]'
+         titles(2)='Occ.'
+         titles(3:7)=(/'Hole[meV]','El. [meV]','Ph. [meV]','Hole[meV]','El. [meV]'/)
+         call msg('o '//trim(output_fname),'#',titles(:7),INDENT=0,USE_TABS=.TRUE.)
+       else if (l_carrier_dynamics.and..not.l_ELPH_CCA_Kernel) then
+         titles(1)='T[fs]'
+         titles(2)='Occ.'
+         titles(3:4)=(/'Hole[meV]','El. [meV]'/)
+         call msg('o '//trim(output_fname),'#',titles(:4),INDENT=0,USE_TABS=.TRUE.)
+       else if (.not.l_carrier_dynamics.and.l_ELPH_CCA_Kernel) then
+         titles(1)='T[fs]'
+         titles(2)='Occ.'
+         titles(3:5)=(/'Hole[meV]','El. [meV]','Ph. [meV]'/)
          call msg('o '//trim(output_fname),'#',titles(:5),INDENT=0,USE_TABS=.TRUE.)
-       else
+       else if (.not.l_carrier_dynamics.and..not.l_ELPH_CCA_Kernel) then
+         titles(1)='T[fs]'
+         titles(2)='Occ.'
          call msg('o '//trim(output_fname),'#',titles(:2),INDENT=0,USE_TABS=.TRUE.)
        endif
        call msg('o '//trim(output_fname),'#')
@@ -106,9 +124,14 @@ subroutine RT_occupations_analyze(k,E)
      RT_occupations_sum(i_T)=RT_occupations_sum(i_T)+RT_occupations(ib,ik)/spin_occ
      !
      if (l_ELPH_CCA_Kernel) then
-       data_to_plot(3:)=(/E_P_Hole_lifetime(ib,ik)*HA2EV,E_P_Electron_lifetime(ib,ik)*HA2EV,&
+       data_to_plot(3:5)=(/E_P_Hole_lifetime(ib,ik)*HA2EV,E_P_Electron_lifetime(ib,ik)*HA2EV,&
 &                                              E_P_Phonon_lifetime(ib,ik)*HA2EV/)*1000.
-       call msg('o '//trim(output_fname),'',data_to_plot,INDENT=-2,USE_TABS=.true.)
+       if (l_carrier_dynamics) then
+         data_to_plot(6:7)=(/E_E_Hole_lifetime(ib,ik)*HA2EV,E_E_Electron_lifetime(ib,ik)*HA2EV/)*1000.
+         call msg('o '//trim(output_fname),'',data_to_plot(:),INDENT=-2,USE_TABS=.true.)
+       else
+         call msg('o '//trim(output_fname),'',data_to_plot(:5),INDENT=-2,USE_TABS=.true.) 
+       endif
      else
        call msg('o '//trim(output_fname),'',data_to_plot(:2),INDENT=-2,USE_TABS=.true.)
      endif
@@ -136,5 +159,7 @@ subroutine RT_occupations_analyze(k,E)
    call msg('o '//trim(output_fname),'',data_to_plot(:2),INDENT=-2,USE_TABS=.true.)
  enddo
  call of_open_close(trim(output_fname))
+ !
+ call set_real_printed_length()
  !
 end subroutine RT_occupations_analyze

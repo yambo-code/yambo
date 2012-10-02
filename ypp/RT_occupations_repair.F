@@ -48,7 +48,7 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
 &            first_el(SC_bands(2)*k%nibz),n_of_el(SC_bands(2)*k%nibz),n_deg_grp,&
 &            QP_table(SC_bands(2)*k%nibz,2),inx,i3
  real(SP) :: delta_Nel,Eo_sorted(SC_bands(2)*k%nibz),sym_value,gamma_f(2),E_f(2),&
-&            Eo_over_T,Eo,T_el,f_dist(2),delta_G
+&            Eo_over_T,Eo,T_el,f_dist(2),delta_G,tresh
  character(lchlen) ::output_fname 
  !
  n_states=SC_bands(2)*k%nibz
@@ -81,7 +81,15 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
  !
  if (print_fermi_distro) call msg('s','Number viol.   :',delta_Nel)
  !
- do while (abs(delta_Nel)>1.E-3) 
+ i3=1
+ tresh=1.E-3
+ !
+ do while (abs(delta_Nel)>tresh) 
+   !
+   if (i3>100) then
+     tresh=tresh*5
+     i3=1
+   endif
    !
    do ik=1,k%nibz
      do ib=SC_bands(1),n_full_bands
@@ -95,6 +103,8 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
    enddo
    !
    call eval_delta_Nel()
+   !
+   i3=i3+1
    !
  enddo
  !

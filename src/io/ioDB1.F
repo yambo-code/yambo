@@ -170,7 +170,7 @@ integer function ioDB1(E,k,ID)
      call io_elemental(ID,I0=n_atomic_species,CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' No. of atom species             :')
    endif
-   if (ver_is_gt_or_eq(ID,revision=1240)) then
+   if (ver_is_gt_or_eq(ID,revision=1240).and.ver_is_gt_or_eq(ID,(/3,2,5/))) then
      call io_elemental(ID, VAR="mag_syms",VAR_SZ=1,MENU=0)
      call io_elemental(ID, L0=mag_syms,VAR=' Magnetic symmetries             : ')
    endif

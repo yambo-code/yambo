@@ -123,7 +123,7 @@ subroutine RT_driver(E,X,k,q)
  ! 
  call section('=','Start and Restart')
  !
- call RT_start_and_restart(E,k,q,X)
+ call RT_start_and_restart(E,k,X)
  !
  ! Collisions
  !

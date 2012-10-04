@@ -505,7 +505,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  RT_nk=0
  RT_eh_energy_max=0.
  Eh_pumped_pair_energy=-1./HA2EV
- Eh_pumped_pair_width=0.
+ Eh_pumped_pair_width=0.1/HA2EV
  !
 #endif
  !

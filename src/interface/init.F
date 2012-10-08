@@ -436,7 +436,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! KERR
  !
 #if defined _KERR
- if (l_optics.and.l_bse)  call initactivate(1,'EvalKerr KrmKrn')
+ if (l_optics.and.l_bse)  call initactivate(1,'EvalKerr')
 #endif
  if (l_optics.and.l_bse)  call initactivate(1,'DrudeW')
  !

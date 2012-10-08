@@ -52,39 +52,27 @@ subroutine K_kerr_output()
    kerr_file_name=' '
  endif
  call of_open_close(off_file_name,'ot')
- call of_open_close(kerr_file_name,'ot')
- !
  call of_open_close(off_file_name,'oa')
- call of_open_close(kerr_file_name,'oa')
  !
- call msg('o off kerr','#')
+ call msg('o off','#')
  call X_setup_headers('off')
  call msg('o off','#',headers(:5),INDENT=0,USE_TABS=.true.)    
  !call msg('o off','#',headers(:3),INDENT=0,USE_TABS=.true.)    
- call X_setup_headers('kerr')
- call msg('o kerr','#',headers(:5),INDENT=0,USE_TABS=.true.)    
- !call msg('o kerr','#',headers(:3),INDENT=0,USE_TABS=.true.)    
- call msg('o off kerr','#')
+ call msg('o off','#')
  !
  call of_open_close(off_file_name)
  call of_open_close(kerr_file_name)
  !
  ! 2 - Data
  !
+ !! epsilon_xy
  call of_open_close(off_file_name,'oa')
- call of_open_close(kerr_file_name,'oa')
-
+ !
  do iw=1,BSS_n_freqs 
-   !! epsilon_xy
    output_data=(/real(X_epsilon(1,iw))*HA2EV,aimag(X_epsilon(5,iw)),real(X_epsilon(5,iw)),&
 &                  aimag(X_epsilon(4,iw)),real(X_epsilon(4,iw))/)
    !call msg('o off','',output_data(:3),INDENT=-2,USE_TABS=.true.)
    call msg('o off','',output_data,INDENT=-2,USE_TABS=.true.)
-   !! kerr_parameters
-   output_data=(/real(X_epsilon(1,iw))*HA2EV,real(X_epsilon(7,iw)),aimag(X_epsilon(7,iw)),&
-&                  real(X_epsilon(6,iw)),aimag(X_epsilon(6,iw))/)
-   !call msg('o kerr','',output_data(:3),INDENT=-2,USE_TABS=.true.)
-   call msg('o kerr','',output_data,INDENT=-2,USE_TABS=.true.)
  enddo
  !
  if(l_anomalous_Hall) then
@@ -104,6 +92,27 @@ subroutine K_kerr_output()
  endif
  !
  call of_open_close(off_file_name)
+ !
+ !! kerr_parameters
+ !
+ call of_open_close(kerr_file_name,'ot')
+ call of_open_close(kerr_file_name,'oa')
+ !
+ call msg('o kerr','#')
+ call X_setup_headers('kerr')
+ call msg('o kerr','#',headers(:5),INDENT=0,USE_TABS=.true.)    
+ !call msg('o kerr','#',headers(:3),INDENT=0,USE_TABS=.true.)    
+ call msg('o kerr','#')
+ !
+ call of_open_close(kerr_file_name,'oa')
+ !
+ do iw=1,BSS_n_freqs 
+   output_data=(/real(X_epsilon(1,iw))*HA2EV,real(X_epsilon(7,iw)),aimag(X_epsilon(7,iw)),&
+&                  real(X_epsilon(6,iw)),aimag(X_epsilon(6,iw))/)
+   !call msg('o kerr','',output_data(:3),INDENT=-2,USE_TABS=.true.)
+   call msg('o kerr','',output_data,INDENT=-2,USE_TABS=.true.)
+ enddo
+ !
  call of_open_close(kerr_file_name)
  !
  ! CLEAN

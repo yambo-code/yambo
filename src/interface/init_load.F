@@ -206,7 +206,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'EvalKerr', '[BSE] Kerr parameters',verb_level=V_resp)
  call it(defs,'Gauge'       , '[BSE] Gauge (length|velocity). In metals length misses An-Hall',global_gauge)
  call it('f',defs,'AnHall'  , '[BSE] Compute the anomalous Hall effect and if length add it to eps')
- call it('f',defs,'KrmKrn'  , '[BSE] Use Kramers Kroening relations',verb_level=V_resp)
  !
 #endif
  !

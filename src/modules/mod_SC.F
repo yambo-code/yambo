@@ -134,12 +134,28 @@ module SC
      use drivers,        ONLY:l_real_time,l_sc_cohsex,l_sc_srpa
      use electrons,      ONLY:n_spin,n_sp_pol,levels
      use FFT_m,          ONLY:fft_size
-     use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
+     use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc,QP_state,QP_nb
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
      implicit none
      !
      type(levels) :: E
+     !
+     SC_nbands=SC_bands(2)-SC_bands(1)+1
+     !
+     ! Build-up QP table
+     !
+     QP_nb=SC_bands(2)
+     QP_nk=nkibz
+     ! 
+     ! QP_state my be read from DBs at start-up
+     !
+     if (allocated(QP_state)) deallocate(QP_state)
+     !
+     allocate(QP_state(QP_nb,QP_nk))
+     call mem_est("QP_state",(/QP_nb*QP_nk/))
+     QP_state=.TRUE.
+     call QP_state_table_setup(E)
      !
      ! In the magnetic project Ho has already been allocated
      !

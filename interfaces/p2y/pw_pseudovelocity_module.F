@@ -91,6 +91,7 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
   do iatom=1,atoms%natoms
     pseudo => atoms%pseudo(atoms%type_map(iatom))
     iproj = iproj + sum(2*pseudo%lbeta(:)+1)
+    if (n_spinor==2) iproj=iproj+count(pseudo%lbeta(:)==0)
   end do
 ! write(*,*) "pseudovel_init: velocity"
   nproj=iproj(1)

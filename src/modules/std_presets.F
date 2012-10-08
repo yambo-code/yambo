@@ -29,7 +29,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,&
 &                      eval_alpha,Vnl_commutator_warning,Dipole_uses_shifted_grids,&
-&                      q_plus_G_direction,Q_Shift_Order,n_X_descs
+&                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,QP_n_states,&
@@ -41,7 +41,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     GW_en_comp
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,mag_syms,&
-&                     input_Tel_commands_over_header,non_periodic_directions,lattice,Bose_Temp
+&                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
@@ -66,7 +66,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
-&                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF
+&                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_causal
@@ -82,17 +82,18 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _SC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,RT_nk,&
-&                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,l_SC_nl_mix
+&                     l_Mean_Potential,l_RT_occupations_in_use,SC_up_W_iters,l_SC_diagonal,l_SC_nl_mix
  use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff,COLLISIONS_path
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
-#if defined _RT
- use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,            &
+#if defined _RT || defined _YPP_RT
+ use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,    &
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,  &
-&                     SwitchOnTime,max_rt_steps_disk,l_RT_induced_field,&
+&                     SwitchOnTime,RT_IO_steps,l_RT_induced_field,RT_IO_time,&
 &                     l_RT_diagonalize,RT_is_dumped,RAD_LifeTime,Phase_LifeTime,&
 &                     NE_Hxc_jumps,NE_tot_time,NE_MEM_steps,NE_MEM_treshold,&
-&                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe
+&                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,&
+&                     Eh_pumped_pair_energy,Dynamics_Kind,Eh_pumped_pair_width
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,theta_function_iTo_ref,i_Pump,i_Probe
 #endif
 #if defined _MAGNETIC
@@ -184,7 +185,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !D_lattice
  !
- input_Tel_commands_over_header=.false.
+ input_Tel_is_negative=.false.
  non_periodic_directions='none'
  lattice='Unknown'
  Bose_Temp=-1./HA2EV
@@ -251,6 +252,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_sc_magnetic=.false.
  l_collisions_IO=.false.
  l_elph_Hamiltonian=.false.
+ l_carrier_dynamics=.false.
  !
  !electrons
  !
@@ -318,6 +320,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  self_detect_E_range=.false.
  half_X_mat_only=.false.
  Dipole_bands_ordered=.true.
+ Dipole_Energy_treshold=1.E-5_SP/HA2EV
  Dipole_uses_shifted_grids=.false.
  use_X_RIM=.false.
  eps_2_alpha=1._SP
@@ -384,6 +387,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BS_cpl_mode='none'
  BS_K_dim=0
  BSS_mode=' '
+ BSS_inversion_mode='m'
  BSS_n_freqs=100
  BSS_n_descs=0
  BSS_er=(/0.,10./)/HA2EV
@@ -440,7 +444,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  SC_fft_size=0
  SC_iterations=100
- SC_cycle_mixing=0.7
+ SC_cycle_mixing=0.5
  SC_rho_threshold=1.E-5
  SC_up_W_iters=0
  SC_potential='none'
@@ -448,6 +452,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  compatible_SC_DB=.FALSE.
  found_SC_DB=.FALSE.
  l_Mean_Potential=.FALSE.
+ l_RT_occupations_in_use=.FALSE.
  COLLISIONS_cutoff=0.001
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
@@ -471,6 +476,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  enddo
  theta_function_iTo_ref=-2
  !
+ ! RT dynamics 
+ !
+ l_carrier_dynamics=.FALSE.
+ Dynamics_Kind="P"
+ !
  ! RT current 
  !
  l_RT_diamagnetic=.FALSE.
@@ -489,12 +499,16 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_NE_simulate_RPA=.FALSE.
  RT_diagonalization_steps=-1
  l_RT_diagonalize=.FALSE.
- max_rt_steps_disk=200
+ RT_IO_steps=-1
+ RT_IO_time=-1.
  l_RT_induced_field=.FALSE.
  NE_tot_time= 5*RAD_LifeTime
- NE_MEM_treshold=0.05
- NE_MEM_steps=2  ! By default only G_lesser@t and @t+1
+ NE_MEM_treshold=0.
+ NE_MEM_steps=2     ! By default only G_lesser@t and @t+1
  RT_nk=0
+ RT_eh_energy_max=0.
+ Eh_pumped_pair_energy=-1./HA2EV
+ Eh_pumped_pair_width=0.1/HA2EV
  !
 #endif
  !

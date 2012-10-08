@@ -32,7 +32,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,PP_free,pp_table,Vnl,pp_n_l_comp
  use R_lattice,           ONLY:g_vec,bz_samp
- use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P
+ use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P,Dipole_Energy_treshold
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD,OP_RD_CL
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
@@ -92,7 +92,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! Set up band limits
  !
- if (Dipole_bands_ordered) then
+ if (Dipole_bands_ordered.or.Dipole_Energy_treshold<0.) then
    iv_max=Xen%nbm
    ic_min=Xen%nbf+1
  else
@@ -163,7 +163,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
          !
-         if (abs(Ev_m_Ec)<=1.E-5_SP.and..not.l_real_time) cycle
+         if (abs(Ev_m_Ec)<=Dipole_Energy_treshold.and..not.l_real_time) cycle
          !
          ivfft=wf_state(iv,ik,i_spin)
          if(ivfft==0) call error(" Error in parallel wf distribution")
@@ -229,7 +229,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          rho(1:3)=rho(1:3)/Ev_m_Ec
          !
-         if (abs(Ev_m_Ec)<=1.E-5_SP) rho(1:3)=(0._SP,0._SP)
+         if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) rho(1:3)=(0._SP,0._SP)
          !
          ! GPL_EXCLUDE_START SPIN_IGNORE
          !
@@ -270,6 +270,33 @@ subroutine Dipole_transverse(Xen,Xk,X)
    ! 
    ! GPL_EXCLUDE_END SPIN_IGNORE
    !
+ enddo          ! k-points
+ !
+ call live_timing
+ !
+ ! CLEAN
+ !
+ deallocate(wf_xyz)
+ call pp_indexes_reset(px)
+ if (ioKB_err==0) then
+   deallocate(kbv,pp_n_l_comp)
+   if (allocated(pp_table)) deallocate(pp_table)
+   call PP_free()
+   call mem_est("KBV pp_n_l_comp pp_table")
+ else if (io_Vnl_err==0) then
+   if (allocated(Vnl)) deallocate(Vnl)
+ endif 
+ !
+ do ik=1,Xk%nibz
+   !
+   do i_spin=1,n_sp_pol
+     call pp_redux_wait(DIP_iR(:,:,:,ik,i_spin))
+#if defined _SC
+     call pp_redux_wait(DIP_P(:,:,:,ik,i_spin))
+     call pp_redux_wait(P_square(:,:,ik,i_spin))
+#endif
+   enddo
+   !
    ! Symmetrization 
    !================
    !
@@ -288,29 +315,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
      enddo
    endif
    !
- enddo          ! k-points
- !
- call live_timing
- !
- ! CLEAN
- !
- deallocate(wf_xyz)
- call pp_indexes_reset(px)
- if (ioKB_err==0) then
-   deallocate(kbv,pp_n_l_comp)
-   if (allocated(pp_table)) deallocate(pp_table)
-   call PP_free()
-   call mem_est("KBV pp_n_l_comp pp_table")
- else if (io_Vnl_err==0) then
-   if (allocated(Vnl)) deallocate(Vnl)
- endif 
- !
- do i_spin=1,n_sp_pol
-   call pp_redux_wait(DIP_iR(:,:,:,:,i_spin))
-#if defined _SC
-   call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
-   call pp_redux_wait(P_square(:,:,:,i_spin))
-#endif
  enddo
  !
 end subroutine Dipole_transverse

@@ -23,9 +23,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  use drivers,        ONLY:l_sc_run
  use pars,           ONLY:SP,pi,schlen
- use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,n_sp_pol
+ use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,n_sp_pol
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
-&                         atoms_spatial_invertion,i_space_inv,input_Tel_commands_over_header,&
+&                         atoms_spatial_invertion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table,mag_syms,idt_index
@@ -50,8 +50,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Work Space
  !
- real(SP)          :: rv(3),m(3,3)
- integer           :: i1,i2,i3,is,ia,i_err
+ real(SP)          :: rv(3),m(3,3),Tel_SAVE
+ integer           :: i1,i2,i3,is,ia,i_err,nbf_m_SAVE(2)
+ type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch1,dumb_ch2
  integer, external :: k_lattice
  !
@@ -260,11 +261,31 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! fixed in the calculation (not overwritten in io_header.F, for
  ! example).
  !
- input_Tel_commands_over_header=Tel<0.
- Tel=abs(Tel)
+ ! Moreover also %nbf and %nbm are kept at the value obtained at zero 
+ ! temperature
  !
+ input_Tel_is_negative=Tel<0.
+ Tel=abs(Tel)
+ Tel_SAVE=Tel
+ !
+ if (input_Tel_is_negative) then
+   call E_duplicate(Xen,Xen_COPY)
+   Tel=0.
+   call OCCUPATIONS_Fermi(Xen_COPY,Xk,1)
+   nbf_m_SAVE  =(/Xen_COPY%nbf,Xen_COPY%nbm/)
+   call E_reset(Xen_COPY)
+ endif
+ !
+ Tel=Tel_SAVE
  call OCCUPATIONS_Fermi(Xen,Xk,2)
  call OCCUPATIONS_Extend(Xen,en)
+ !
+ if (input_Tel_is_negative) then
+   Xen%nbf=nbf_m_SAVE(1)
+   Xen%nbm=nbf_m_SAVE(2)
+   en%nbf =nbf_m_SAVE(1)
+   en%nbm =nbf_m_SAVE(2)
+ endif
  !
  n_met_bands =en%nbm
  n_full_bands=en%nbf

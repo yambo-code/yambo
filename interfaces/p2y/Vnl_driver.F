@@ -26,7 +26,7 @@ subroutine Vnl_driver(en,k)
  use pw_basis_module
  use pw_wfc_module
  use pw_pseudovelocity_module
- use electrons,             ONLY:levels,n_bands,n_spin,n_spinor
+ use electrons,             ONLY:levels,n_bands,n_spin,n_spinor,n_sp_pol
  use R_lattice,             ONLY:bz_samp
  use wave_func,             ONLY:wf_nc_k, wf_ncx, wf_igk, wf_ng
  use X_m,                   ONLY:X_t
@@ -102,7 +102,7 @@ subroutine Vnl_driver(en,k)
  ! we use 1 as the lower band index in both cases for simplicity.
  ! Here vb(2) is always nbm
  !
- allocate(Vnl(3, cb(2), vb(2), k%nibz, n_spin))
+ allocate(Vnl(3, cb(2), vb(2), k%nibz, n_sp_pol))
  call mem_est("Vnl",(/size(Vnl)/),(/SP*2/))
  Vnl = 0.0
  !
@@ -186,7 +186,8 @@ subroutine Vnl_driver(en,k)
          ! Calculate pseudo dipole (velocity) moment <v|[Vnl,r]|c>
          !
          Vnl_cvk = pw_pseudovelocity_braket(pseudovelocity(i_spinor),wfc_val,wfc_con)
-         Vnl(:,ic,iv,ik,i_spin) = Vnl_cvk(:)
+         if(n_spinor==1) Vnl(:,ic,iv,ik,i_spin) = Vnl_cvk
+         if(n_spinor==2) Vnl(:,ic,iv,ik,1) = Vnl(:,ic,iv,ik,1)+Vnl_cvk
          !
          if(associated(wfc_con%val)) nullify(wfc_con)
        enddo
@@ -201,7 +202,7 @@ subroutine Vnl_driver(en,k)
  !
  call live_timing
  !
- do i_spin=1,n_spin
+ do i_spin=1,n_sp_pol
    call pp_redux_wait(Vnl(:,:,:,:,i_spin))
  enddo
  !

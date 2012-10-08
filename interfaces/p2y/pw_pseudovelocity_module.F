@@ -144,7 +144,7 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
         do m=mmin,mmax
           iproj(i_spinor) = iproj(i_spinor) + 1
           velocity(i_spinor)%d(iproj(i_spinor)) = pseudo%d(ibeta)
-          if(abs(m)>l) then
+          if( abs(m)>l) then
             do ipw=1,npw
               velocity(i_spinor)%proj(iproj(i_spinor))%val(ipw) = 0.
               velocity(i_spinor)%dproj(1,iproj(i_spinor))%val(ipw) = 0.
@@ -188,47 +188,56 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
 end subroutine pw_pseudovelocity_init
 
  subroutine pw_pseudovelocity_apply(wfc_new,velocity,wfc) 
-   type (pw_wfc),   intent(inout) :: wfc_new(3)
-   type (pw_pseudovelocity), intent(in)    :: velocity
-   type (pw_wfc),   intent(in)    :: wfc
+   use electrons,   ONLY:n_spinor
+   type (pw_wfc),   intent(inout) :: wfc_new(3,n_spinor)
+   type (pw_pseudovelocity), intent(in)    :: velocity(n_spinor)
+   type (pw_wfc),   intent(in)    :: wfc(n_spinor)
    integer :: iproj
    type (pw_wfc) :: wfc_tmp(3)
    type (pw_wfc) :: wfc_dtmp(3)
-   complex :: projection(velocity%nproj)
-   complex :: dprojection(3,velocity%nproj)
+   complex :: projection(velocity(1)%nproj)
+   complex :: dprojection(3,velocity(1)%nproj)
 !
    real :: d
+   integer :: i_spinor,j_spinor
 
-   do iproj=1,velocity%nproj
-     d = velocity%d(iproj) / wfc_new(1)%basis%struct%a_omega
-     projection(iproj) = pw_wfc_braket(velocity%proj(iproj),wfc) * d
-     dprojection(1,iproj) = pw_wfc_braket(velocity%dproj(1,iproj),wfc) * d
-     dprojection(2,iproj) = pw_wfc_braket(velocity%dproj(2,iproj),wfc) * d
-     dprojection(3,iproj) = pw_wfc_braket(velocity%dproj(3,iproj),wfc) * d
-   end do
+   do j_spinor=1,n_spinor
+     wfc_new(1,j_spinor)%val = 0.0
+     wfc_new(2,j_spinor)%val = 0.0
+     wfc_new(3,j_spinor)%val = 0.0
+   enddo
+   !
+   do i_spinor=1,n_spinor
+     do iproj=1,velocity(i_spinor)%nproj
+       d = velocity(i_spinor)%d(iproj) / wfc_new(1,i_spinor)%basis%struct%a_omega
+       projection(iproj) = pw_wfc_braket(velocity(i_spinor)%proj(iproj),wfc(i_spinor)) * d
+       dprojection(1,iproj) = pw_wfc_braket(velocity(i_spinor)%dproj(1,iproj),wfc(i_spinor)) * d
+       dprojection(2,iproj) = pw_wfc_braket(velocity(i_spinor)%dproj(2,iproj),wfc(i_spinor)) * d
+       dprojection(3,iproj) = pw_wfc_braket(velocity(i_spinor)%dproj(3,iproj),wfc(i_spinor)) * d
+     end do
 !  write(*,*) "VEL: ",d,velocity%nproj,"|",velocity%d,"|",projection,"|",velocity%proj(1)%val(1),wfc%val(1)
-   call pw_wfc_init(wfc_tmp,velocity%basis)
-   call pw_wfc_init(wfc_dtmp,velocity%basis)
-   wfc_new(1)%val = 0.0
-   wfc_new(2)%val = 0.0
-   wfc_new(3)%val = 0.0
-   do iproj=1,velocity%nproj
-     wfc_tmp(1) = velocity%proj(iproj)
-     wfc_tmp(2) = velocity%proj(iproj)
-     wfc_tmp(3) = velocity%proj(iproj)
-     wfc_dtmp(:) = velocity%dproj(:,iproj)
-     call pw_wfc_scale(wfc_tmp(1),dprojection(1,iproj))
-     call pw_wfc_scale(wfc_tmp(2),dprojection(2,iproj))
-     call pw_wfc_scale(wfc_tmp(3),dprojection(3,iproj))
-     call pw_wfc_scale(wfc_dtmp(1),projection(iproj))
-     call pw_wfc_scale(wfc_dtmp(2),projection(iproj))
-     call pw_wfc_scale(wfc_dtmp(3),projection(iproj))
-     wfc_new(1)%val = wfc_new(1)%val + wfc_tmp(1)%val + wfc_dtmp(1)%val
-     wfc_new(2)%val = wfc_new(2)%val + wfc_tmp(2)%val + wfc_dtmp(2)%val
-     wfc_new(3)%val = wfc_new(3)%val + wfc_tmp(3)%val + wfc_dtmp(3)%val
+     call pw_wfc_init(wfc_tmp,velocity(i_spinor)%basis)
+     call pw_wfc_init(wfc_dtmp,velocity(i_spinor)%basis)
+     do j_spinor=1,n_spinor
+       do iproj=1,velocity(j_spinor)%nproj
+         wfc_tmp(1) = velocity(j_spinor)%proj(iproj)
+         wfc_tmp(2) = velocity(j_spinor)%proj(iproj)
+         wfc_tmp(3) = velocity(j_spinor)%proj(iproj)
+         wfc_dtmp(:) = velocity(j_spinor)%dproj(:,iproj)
+         call pw_wfc_scale(wfc_tmp(1),dprojection(1,iproj))
+         call pw_wfc_scale(wfc_tmp(2),dprojection(2,iproj))
+         call pw_wfc_scale(wfc_tmp(3),dprojection(3,iproj))
+         call pw_wfc_scale(wfc_dtmp(1),projection(iproj))
+         call pw_wfc_scale(wfc_dtmp(2),projection(iproj))
+         call pw_wfc_scale(wfc_dtmp(3),projection(iproj))
+         wfc_new(1,j_spinor)%val = wfc_new(1,j_spinor)%val + wfc_tmp(1)%val + wfc_dtmp(1)%val
+         wfc_new(2,j_spinor)%val = wfc_new(2,j_spinor)%val + wfc_tmp(2)%val + wfc_dtmp(2)%val
+         wfc_new(3,j_spinor)%val = wfc_new(3,j_spinor)%val + wfc_tmp(3)%val + wfc_dtmp(3)%val
+       enddo
+     enddo
+     call pw_wfc_destroy(wfc_tmp)
+     call pw_wfc_destroy(wfc_dtmp)
    end do
-   call pw_wfc_destroy(wfc_tmp)
-   call pw_wfc_destroy(wfc_dtmp)
    return
  end subroutine pw_pseudovelocity_apply
 
@@ -242,16 +251,19 @@ subroutine pw_pseudovelocity_destroy(velocity)
 end subroutine pw_pseudovelocity_destroy
 
  function pw_pseudovelocity_braket(velocity,bra,ket)
-   type (pw_pseudovelocity), intent(in) :: velocity
-   type (pw_wfc), intent(in) :: bra,ket
+   use electrons,   ONLY:n_spinor
+   type (pw_pseudovelocity), intent(in) :: velocity(n_spinor)
+   type (pw_wfc), intent(in) :: bra(n_spinor),ket(n_spinor)
    complex :: pw_pseudovelocity_braket(3)
-   type (pw_wfc) :: wfc_Vnl_ck(3)
- 
+   type (pw_wfc) :: wfc_Vnl_ck(3,n_spinor)
+   integer :: i_spinor
 !  write(*,*) "Start pw_pseudovelocity_braket"
    !
    ! Initialize |wfc_tmp>
    !
-   call pw_wfc_init(wfc_Vnl_ck,bra%basis)
+   do i_spinor=1,n_spinor
+     call pw_wfc_init(wfc_Vnl_ck(:,i_spinor),bra(i_spinor)%basis)
+   enddo
 !  write(*,*) "Start pw_pseudovelocity_apply"
    !
    ! Here operate |wfc_tmp> = Vnl|ck>
@@ -261,10 +273,15 @@ end subroutine pw_pseudovelocity_destroy
    !
    ! Here compute <vk|Vnl|ck> = <wfc_val|wfc_tmp>
    !
-   pw_pseudovelocity_braket(1) = pw_wfc_braket(bra,wfc_Vnl_ck(1))
-   pw_pseudovelocity_braket(2) = pw_wfc_braket(bra,wfc_Vnl_ck(2))
-   pw_pseudovelocity_braket(3) = pw_wfc_braket(bra,wfc_Vnl_ck(3))
+   pw_pseudovelocity_braket=0
+   do i_spinor=1,n_spinor
+     pw_pseudovelocity_braket(1) = pw_pseudovelocity_braket(1)+pw_wfc_braket(bra(i_spinor),wfc_Vnl_ck(1,i_spinor))
+     pw_pseudovelocity_braket(2) = pw_pseudovelocity_braket(2)+pw_wfc_braket(bra(i_spinor),wfc_Vnl_ck(2,i_spinor))
+     pw_pseudovelocity_braket(3) = pw_pseudovelocity_braket(3)+pw_wfc_braket(bra(i_spinor),wfc_Vnl_ck(3,i_spinor))
+   enddo
+   !
    call pw_wfc_destroy(wfc_Vnl_ck)
+   !
  end function pw_pseudovelocity_braket
 !
 end module pw_pseudovelocity_module

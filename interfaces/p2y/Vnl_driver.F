@@ -26,7 +26,7 @@ subroutine Vnl_driver(en,k)
  use pw_basis_module
  use pw_wfc_module
  use pw_pseudovelocity_module
- use electrons,             ONLY:levels,n_bands,n_spin,n_spinor
+ use electrons,             ONLY:levels,n_bands,n_spin,n_spinor, n_sp_pol
  use R_lattice,             ONLY:bz_samp
  use wave_func,             ONLY:wf_nc_k, wf_ncx, wf_igk, wf_ng
  use X_m,                   ONLY:X_t
@@ -48,18 +48,20 @@ subroutine Vnl_driver(en,k)
  type(pw_basis), target  :: basis_con  ! Needs to be target for wfc%basis later
  type(pw_atoms)          :: atoms
  type(pw_wfc), pointer   :: wfc_val => null(), wfc_con => null() 
+ type(pw_wfc), pointer   :: wfc_val2 => null(), wfc_con2 => null() 
  !
  ! Work space
  !
  complex :: Vnl_cvk(3)
- integer :: ik, ib1, ib2, iv, ic, npwk,ngmax, vb(2), cb(2), i, ig,io_err,ID,i_spin, i_spinor
+ integer :: ik, ib1, ib2, iv, ic, npwk,ngmax, vb(2), cb(2), i, ig,io_err,ID
+ integer :: i_spin, i_spinor, j_spinor
  type(X_t)         :: X
  type(pp_indexes)  :: px
  integer, external :: io_Vnl
  !
  ! Holds wfc(k) from disk
  !
- complex(SP),allocatable,target  :: wf_disk_SP(:,:)
+ complex(SP),allocatable,target  :: wf_disk_SP(:,:,:)
 
  interface
     subroutine fill_basis(basis,struct,ik,ngmax)
@@ -92,7 +94,7 @@ subroutine Vnl_driver(en,k)
  !
  ! (1) Array storing columns of wfc on disk
  !
- allocate(wf_disk_SP(wf_ncx,n_bands))
+ allocate(wf_disk_SP(wf_ncx,n_bands,n_spinor))
  call mem_est("wf_disk_SP",(/size(wf_disk_SP)/),(/SP*2/))
  !
  ! (2) Vnl array to be written to disk. Size depends on input or nelec
@@ -139,9 +141,7 @@ subroutine Vnl_driver(en,k)
    !
    ! Read a single wavefunction (ik,isp) from disk:
    ! fill the target wf_disk_SP
-   i_spinor=1
-   do i_spin=1,n_spin
-     if(n_spinor==2) i_spinor=i_spin
+   do i_spin=1,n_sp_pol
      !
      call read_wfc_k_sp(ik,i_spin,wf_disk_SP,wf_ncx,n_bands)
      !
@@ -153,7 +153,13 @@ subroutine Vnl_driver(en,k)
        allocate(wfc_val) ! needed for pointer of a pointer, even for %npw
        wfc_val%npw   =   basis_con%npw
        wfc_val%basis => basis_con
-       wfc_val%val   => wf_disk_SP(1:wfc_val%npw,iv)
+       wfc_val%val   => wf_disk_SP(1:wfc_val%npw,iv,1)
+       if(n_spinor==2) then
+         allocate(wfc_val2) ! needed for pointer of a pointer, even for %npw
+         wfc_val2%npw   =   basis_con%npw
+         wfc_val2%basis => basis_con
+         wfc_val2%val   => wf_disk_SP(1:wfc_val%npw,iv,2)
+       endif
        !
        ! Check normalization
        !
@@ -164,7 +170,13 @@ subroutine Vnl_driver(en,k)
          allocate(wfc_con)
          wfc_con%npw   =  basis_con%npw
          wfc_con%basis => basis_con
-         wfc_con%val   => wf_disk_SP(1:wfc_con%npw,ic)
+         wfc_con%val   => wf_disk_SP(1:wfc_con%npw,ic,1)
+         if(n_spinor==2) then
+           allocate(wfc_con2)
+           wfc_con2%npw   =  basis_con%npw
+           wfc_con2%basis => basis_con
+           wfc_con2%val   => wf_disk_SP(1:wfc_con%npw,ic,2)
+         endif
          !
          !== Start consistency tests =====================!
          !
@@ -185,12 +197,19 @@ subroutine Vnl_driver(en,k)
          !
          ! Calculate pseudo dipole (velocity) moment <v|[Vnl,r]|c>
          !
-         Vnl_cvk = pw_pseudovelocity_braket(pseudovelocity(i_spinor),wfc_val,wfc_con)
-         Vnl(:,ic,iv,ik,i_spin) = Vnl_cvk(:)
+         if(n_spinor==2) then
+           Vnl_cvk = pw_pseudovelocity_braket(pseudovelocity,&
+&                               (/wfc_val,wfc_val2/),(/wfc_con,wfc_con2/))
+         else
+           Vnl_cvk = pw_pseudovelocity_braket(pseudovelocity,(/wfc_val/),(/wfc_con/))
+         endif
+         Vnl(:,ic,iv,ik,i_spin) = Vnl_cvk
          !
          if(associated(wfc_con%val)) nullify(wfc_con)
+         if(associated(wfc_con2%val)) nullify(wfc_con2)
        enddo
        if(associated(wfc_val%val)) nullify(wfc_val)
+       if(associated(wfc_val2%val)) nullify(wfc_val2)
      enddo
    enddo
    do i_spinor=1,n_spinor
@@ -201,7 +220,7 @@ subroutine Vnl_driver(en,k)
  !
  call live_timing
  !
- do i_spin=1,n_spin
+ do i_spin=1,n_sp_pol
    call pp_redux_wait(Vnl(:,:,:,:,i_spin))
  enddo
  !
@@ -379,18 +398,18 @@ subroutine read_wfc_k_sp(ikibz,i_spin,wf_disk_SP,wf_ncx,n_bands)
  use wave_func,           only : wf_nc_k, wf_igk, wf_nb_io_groups,wf_nb_io
  use mod_wf2y,            only : wf_splitter
  use memory_m,            only : mem_est
- use electrons,           only : n_spin
+ use electrons,           only : n_spin,n_sp_pol,n_spinor
  implicit none
- integer     :: npwk, ierr, ib1,ib2, n_b, ib_grp
+ integer     :: npwk, ierr, ib1,ib2, n_b, ib_grp, i_spinor
  integer, intent(in)          :: ikibz,wf_ncx,n_bands,i_spin
- complex(DP), allocatable     :: wf_disk_DP(:,:)
- complex(SP),intent(inout)      :: wf_disk_SP(wf_ncx,n_bands)
+ complex(DP), allocatable     :: wf_disk_DP(:,:,:)
+ complex(SP),intent(inout)      :: wf_disk_SP(wf_ncx,n_bands,n_spinor)
  !
  wf_nb_io_groups=1
  wf_nb_io=n_bands
  call wf_splitter()
  !
- allocate(wf_disk_DP(wf_ncx, wf_nb_io))
+ allocate(wf_disk_DP(wf_ncx, wf_nb_io,n_spinor))
  wf_disk_DP=0._DP
  call mem_est("wf_disk_DP",(/size(wf_disk_DP)/),(/DP*2/))
  !
@@ -401,11 +420,17 @@ subroutine read_wfc_k_sp(ikibz,i_spin,wf_disk_SP,wf_ncx,n_bands)
    call set_band_block
    !
    if (n_spin==1) call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, &
-&                       wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
-   if (n_spin==2) call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=i_spin, &
-&                       wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
+&                       wf = wf_disk_DP(1:npwk,1:n_b,1), ierr=ierr)
+   if (n_sp_pol==2) call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=i_spin, &
+&                         wf = wf_disk_DP(1:npwk,1:n_b,1), ierr=ierr)
+   if (n_spinor==2) then
+     do i_spinor=1,n_spinor
+       call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=i_spinor, &
+&                           wf = wf_disk_DP(1:npwk,1:n_b,i_spinor), ierr=ierr)
+     enddo
+   endif  
    !
-   wf_disk_SP(:,ib1:ib2) = wf_disk_DP(:,1:n_b)  ! Type conversion
+   wf_disk_SP(:,ib1:ib2,:) = wf_disk_DP(:,1:n_b,:)  ! Type conversion
    !
  enddo
  !

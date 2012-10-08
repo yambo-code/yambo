@@ -21,9 +21,11 @@
 !
 subroutine ELPH_Sigma_c(en,k,q,qp)
  !
- ! This routine calculates the QP shifts due to el-ph intercation
- ! following the Allen-Cardona formulation (see for example 
- ! PRB 23, 1495 (1981) )
+ ! This routine calculates the full dynamicsl el-ph self-energy
+ ! calculated in the Fan + DW approximation.
+ ! In the static and adiabatic limit it reduces to the 
+ ! Allen-Cardona formulation (see for example 
+ ! PRB 23, 1495 (1981) ).
  !
  use pars,          ONLY:SP,DP,schlen,pi
  use units,         ONLY:HA2EV,HA2THZ

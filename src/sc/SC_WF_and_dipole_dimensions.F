@@ -21,12 +21,14 @@
 !
 subroutine SC_WF_and_dipole_dimensions(X)
  !
- use drivers,      ONLY:l_real_time,l_sc_hf,l_sc_exx,l_sc_cohsex,l_sc_srpa
+ use drivers,      ONLY:l_real_time,l_sc_hf,l_sc_exx,l_sc_cohsex,l_sc_srpa,l_collisions_IO
+ use com,          ONLY:warning,msg
  use X_m,          ONLY:X_t
  use wave_func,    ONLY:wf_ng
  use QP_m,         ONLY:QP_ng_Sx,QP_n_G_bands,COHSEX_use_empties
  use R_lattice,    ONLY:qindx_S,G_m_G
- use SC,           ONLY:SC_bands,WF_Go_indx,WF_G_max,SC_X_bands,SC_ng_Sx,SC_X_size
+ use SC,           ONLY:SC_bands,WF_Go_indx,WF_G_max,SC_X_bands,SC_ng_Sx,SC_X_size, &
+&                       SC_up_W_iters
  implicit none
  !
  type(X_t)         :: X(2)
@@ -73,5 +75,20 @@ subroutine SC_WF_and_dipole_dimensions(X)
  SC_ng_Sx  =QP_ng_Sx
  SC_X_bands=X(2)%ib
  SC_X_size =X(2)%ng
+ !
+ if(SC_up_W_iters/=0) then
+   call msg('nr','[SC] Updating W each                   :',SC_up_W_iters)
+   !
+   if(l_collisions_IO) then
+     SC_up_W_iters=0
+     call warning(' Collisions not compatible with W updating, turned off ')
+   endif
+   !
+   if(.not.l_sc_cohsex) then
+     SC_up_W_iters=0
+     call warning(' Dipoles update implemented only for COHSEX self-energy ')
+   endif
+   !
+ endif    
  !
 end subroutine

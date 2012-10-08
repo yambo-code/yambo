@@ -30,7 +30,7 @@ subroutine RT_ELPH_initialize(k,q)
  use par_indexes_m,  ONLY:par_indexes
  use par_proc_m,     ONLY:pp_indexes_reset,myid
  use IO_m,           ONLY:io_control,OP_RD,REP,RD_CL_IF_END
- use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb
+ use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,max_ph_freq
  use memory_m,       ONLY:mem_est
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
@@ -45,7 +45,7 @@ subroutine RT_ELPH_initialize(k,q)
  integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s,i_n,i_np
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes)
  integer, external   ::ioELPH
- logical             ::l_Full_RT_T_evolution
+ logical             ::l_Full_RT_T_evolution,l_use_Debye_E
  !
  ! Logicals
  !==========
@@ -53,6 +53,7 @@ subroutine RT_ELPH_initialize(k,q)
  if (.not.l_ph_corr) return
  !
  call parser('RT_T_evol',l_Full_RT_T_evolution)
+ call parser('UseDebyE',l_use_Debye_E)
  l_ELPH_CCA_Kernel=.not.l_Full_RT_T_evolution
  !
  ! Q/K grid remapping
@@ -116,6 +117,10 @@ subroutine RT_ELPH_initialize(k,q)
  enddo
  !
  ph_freqs_sq=ph_Esq_local
+ !
+ ! Test of the effect of using a single optical mode
+ !
+ if (l_use_Debye_E) ph_freqs_sq=max_ph_freq**2.
  !
  ! RIM
  !=====

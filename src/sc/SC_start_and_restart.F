@@ -29,12 +29,13 @@ subroutine SC_start_and_restart(X,E,Xk)
 &                         l_oep_exact,l_oep_kli,l_oep_slater, l_oep_ceda
  use units,          ONLY:HA2EV
  use R_lattice,      ONLY:bz_samp,nkibz
- use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
- use SC,             ONLY:l_SC_RESTART,l_NSC_shot,SC_bands,&
-&                         SC_potential,E_bare,local_V,SC_iterations,l_TF_precond,l_oep_iterative,&
-&                         rho_convergence,E_convergence,SC_rho_threshold,&
-&                         SC_iterations,l_SC_cycle,SC_cycle_mixing,WF_G_max,WF_Go_indx,&
-&                         SC_fft_size,E_bare_Ef,l_oep_EWeight,l_Mean_Potential
+ use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties,QP_nb,QP_nk,QP_state
+ use SC,             ONLY:l_SC_RESTART,l_NSC_shot,SC_bands,l_SC_diagonal,&
+&                         SC_potential,E_bare,local_V,SC_iterations,l_TF_precond, &
+&                         l_oep_iterative,SC_up_W_iters,rho_convergence,E_convergence, &
+&                         SC_rho_threshold,SC_iterations,l_SC_cycle,SC_cycle_mixing,   &
+&                         WF_G_max,WF_Go_indx,SC_fft_size,E_bare_Ef,l_oep_EWeight,     &
+&                         l_Mean_Potential,SC_nbands,l_SC_nl_mix
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE
@@ -61,6 +62,10 @@ subroutine SC_start_and_restart(X,E,Xk)
  call parser('OEPItSolver',l_oep_iterative) 
  call parser('UseEbands', COHSEX_use_empties)
  call parser('MeanPotential', l_Mean_Potential)
+ call parser('SCdiag',        l_SC_diagonal)
+ call parser('SCnlMix',       l_SC_nl_mix)
+ !
+ if(local_V) l_SC_nl_mix=.FALSE.
  !
  ! Magnetic logical setup
  !========================
@@ -133,6 +138,25 @@ subroutine SC_start_and_restart(X,E,Xk)
    !
  endif
  !
+ ! Quasi-Particle setup
+ ! ============================
+ !
+ SC_nbands=SC_bands(2)-SC_bands(1)+1
+ !
+ ! Build-up QP table
+ !
+ QP_nb=SC_bands(2)
+ QP_nk=nkibz
+ ! 
+ ! QP_state my be read from DBs at start-up
+ !
+ if (allocated(QP_state)) deallocate(QP_state)
+ !
+ allocate(QP_state(QP_nb,QP_nk))
+ call mem_est("QP_state",(/QP_nb*QP_nk/))
+ QP_state=.TRUE.
+ call QP_state_table_setup(E)
+ !
  if (.not.l_SC_RESTART.and..not.l_NSC_shot) l_SC_cycle=SC_iterations>0
  !
  if (.not.any((/l_SC_RESTART,l_SC_cycle,l_NSC_shot/))) return
@@ -146,7 +170,9 @@ subroutine SC_start_and_restart(X,E,Xk)
  call msg('r' ,'[SC] Non SC single shot               :',l_NSC_shot)
  call msg('r' ,'[SC] Bands                            :',SC_bands)
  call msg('r' ,'[SC] Bands mixing                     :',SC_band_mixing)
+ call msg('r' ,'[SC] Use non-local mixing             :',l_SC_nl_mix)
  call msg('r' ,'[SC] Use Thomas-Fermi precondition    :',l_TF_precond) 
+ call msg('r' ,'[SC] Diagonal approximation           :',l_SC_diagonal)
  if (l_SC_cycle) then
    call msg('r' ,'[SC] N (N-1) order mixing             :',SC_cycle_mixing)
    call msg('r' ,'[SC] Imposed accuracy on density      :',SC_rho_threshold)
@@ -182,6 +208,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! force the reloading of the WFs
  !
  if (l_sc_exx.and.l_SC_cycle) call Dipole_driver(E, Xk, X(1), X(1)%q0)
+ if (SC_up_W_iters>0)         call Dipole_driver(E, Xk, X(2), X(2)%q0)
  !
 #if defined _MAGNETIC
  !

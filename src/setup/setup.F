@@ -23,9 +23,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  use drivers,        ONLY:l_sc_run
  use pars,           ONLY:SP,pi,schlen
- use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
+ use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,n_sp_pol
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
-&                         atoms_spatial_invertion,i_space_inv,input_Tel_is_negative,&
+&                         atoms_spatial_invertion,i_space_inv,input_Tel_commands_over_header,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table,mag_syms,idt_index
@@ -41,6 +41,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use global_XC,      ONLY:G_kind,G_xc_functional,X_kind,&
 &                         X_xc_functional,setup_global_XC,MORE_NONE,K_kind,K_xc_functional,loaded_WF_xc_string,&
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
+ use memory_m,       ONLY:mem_est
 #endif
  !
  implicit none
@@ -49,9 +50,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Work Space
  !
- real(SP)          :: rv(3),m(3,3),Tel_SAVE
- integer           :: i1,i2,i3,is,ia,i_err,nbf_m_SAVE(2)
- type(levels)      :: Xen_COPY
+ real(SP)          :: rv(3),m(3,3)
+ integer           :: i1,i2,i3,is,ia,i_err
  character(schlen) :: dumb_ch1,dumb_ch2
  integer, external :: k_lattice
  !
@@ -248,6 +248,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  if (found_SC_DB) call setup_global_XC('G',G_kind,MORE_NONE,G_xc_functional,G_perturbation)
  call load_SC_components('E',E=Xen,COM_=NONE,MODE_=DUMP,ik=0,&
 &                         kind=X_kind,xc_functional=X_xc_functional,perturbation=X_perturbation)
+ if (.not.associated(Xen%Eo).and.found_SC_DB) then
+   allocate(Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
+   call mem_est("XenE-Eo",(/size(Xen%Eo)/),(/SP/))
+   Xen%Eo(:,:,:)=en%Eo(:,:en%nk,:)
+ endif
  if (found_SC_DB) call setup_global_XC('X',X_kind,MORE_NONE,X_xc_functional,X_perturbation)
 #endif
  !
@@ -255,31 +260,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! fixed in the calculation (not overwritten in io_header.F, for
  ! example).
  !
- ! Moreover also %nbf and %nbm are kept at the value obtained at zero 
- ! temperature
- !
- input_Tel_is_negative=Tel<0.
+ input_Tel_commands_over_header=Tel<0.
  Tel=abs(Tel)
- Tel_SAVE=Tel
  !
- if (input_Tel_is_negative) then
-   call E_duplicate(Xen,Xen_COPY)
-   Tel=0.
-   call OCCUPATIONS_Fermi(Xen_COPY,Xk,1)
-   nbf_m_SAVE  =(/Xen_COPY%nbf,Xen_COPY%nbm/)
-   call E_reset(Xen_COPY)
- endif
- !
- Tel=Tel_SAVE
  call OCCUPATIONS_Fermi(Xen,Xk,2)
  call OCCUPATIONS_Extend(Xen,en)
- !
- if (input_Tel_is_negative) then
-   Xen%nbf=nbf_m_SAVE(1)
-   Xen%nbm=nbf_m_SAVE(2)
-   en%nbf =nbf_m_SAVE(1)
-   en%nbm =nbf_m_SAVE(2)
- endif
  !
  n_met_bands =en%nbm
  n_full_bands=en%nbf

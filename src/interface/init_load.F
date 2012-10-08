@@ -47,7 +47,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use functions,     ONLY:bose_E_cut
 #if defined _SC
- use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
+ use SC,            ONLY:SC_bands,SC_iterations,SC_potential,SC_up_W_iters,&
 &                        SC_rho_threshold,SC_cycle_mixing,OEP_approx
  use collisions_IO, ONLY:COLLISIONS_cutoff,COLLISIONS_path
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
@@ -156,7 +156,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GEnSteps',   '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',    '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
  call it('f',defs,'GWTerm',   '[GW] Use a terminator for the self-energy',verb_level=V_qp)
- call it(defs,'GwEnComp',   '[GW] If < 0 use 0-order EET ; > 0 the Bruneval-Gonze terminator', &
+ call it(defs,'GwEnComp',   '[GW] If <= 0 use 0-order EET ; > 0 the Bruneval-Gonze terminator', &
 &                        GW_en_comp,E_unit,verb_level=V_qp)
  call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
@@ -260,6 +260,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                            Verb_level=V_real_time,unit=E_unit)
  call it(defs,'RTpumpEhWd', '[RT] Energy window of the levels to be inverted by hand',Eh_pumped_pair_width,&
 &                            Verb_level=V_real_time,unit=E_unit)
+ call it('f',defs,'UseDebyeE','[RT] Use a single Debye energy for all phonon modes')
  call it('f',defs,'RT_T_evol','[RT] Use a complete Time evolution instead of the CCA')
  !
  ! I/O
@@ -367,7 +368,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
  call it('f',defs,'TF_precondition','[SC] Thomas Fermi precondition in density',verb_level=V_sc)
+ call it(defs,'SCUpWIter', "[SC] Update W(q,G,G') every SCUpWIter iteractions",SC_up_W_iters) 
  call it('f',defs,'MeanPotential','[SC] Real-space Mean Potential',verb_level=V_sc)
+ call it('f',defs,'SCnlMix','[SC] Use SC non-local mixing',verb_level=V_sc)
  ! 
  ! SC [common with RT]
  !
@@ -381,6 +384,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'CollPath',  '[SC,RT] Path to the collisions databases',COLLISIONS_path)
  call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
+ call it('f',defs,'SCdiag','[SC] Diagonal approximation for the self-energy(WF unchaged)',verb_level=V_sc)
 #endif
  ! 
  contains 

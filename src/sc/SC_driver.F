@@ -25,19 +25,19 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_cohsex,l_collisions_IO,l_sc_contains_lda
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,SC_rho_threshold,it_now,E_convergence, &
 &                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,l_Mean_Potential,&
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
 &                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,G_lesser,l_SC_RESTART,&
-&                         l_NSC_shot,l_TF_precond,V_mean
- use wave_func,      ONLY:wf,wf_n_states,WF_free
+&                         l_NSC_shot,l_TF_precond,V_mean,SC_up_W_iters,l_SC_nl_mix
+ use wave_func,      ONLY:wf,wf_n_states,WF_free,WF_load
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
  use com,            ONLY:msg,warning
- use X_m,            ONLY:X_t
+ use X_m,            ONLY:X_t,current_iq
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
  use xc_functionals, ONLY:V_xc,E_xc
@@ -66,13 +66,14 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:)
  real(SP),    allocatable :: delta_rho(:)
  complex(SP), allocatable :: WFo(:,:)
+ complex(SP), allocatable :: H_nl_nm1(:,:,:,:)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin,i_io
+ integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin,i_io,io_X
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch
- integer, external        :: io_SC_components
+ integer, external        :: io_SC_components,X_em1
  logical, external        :: stop_now
  !
  ! ws for states spread evaluation
@@ -281,12 +282,23 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        H_nl_sc = H_nl_sc + Ho(:,:,ik,:)
        !
+       ! Mixing for non-local self-energies
+       ! ====================
+       if(l_SC_nl_mix) then
+          !
+          if(it==1) H_nl_nm1(:,:,ik,:) = H_nl_sc
+          !
+          H_nl_sc = H_nl_nm1(:,:,ik,:) + SC_cycle_mixing*(H_nl_sc - H_nl_nm1(:,:,ik,:))
+          H_nl_nm1(:,:,ik,:)= H_nl_sc
+          !
+       endif
+       !
        ! Add V_Hartree
        !
        call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo)
        !
      endif
-     !
+     ! 
      ! Diagonalize H_nl_sc 
      !=====================
      !
@@ -340,6 +352,33 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      rho_nm1 = rho_n 
      !
      call el_density(E,k,rho_n,.false.)
+     !
+     ! Update dipoles and recalcolate the dielectric constant
+     ! ======================================================
+     !
+     if(SC_up_W_iters>0.and.mod(it,SC_up_W_iters)==0) then
+       !
+       ! Update dipoles
+       !
+       call Dipole_rotate(SC_R,E,Xk,X(2))
+       !
+       ! Recalcolate Xo and X  
+       !
+       current_iq=0
+       call IO_and_Messaging_switch("-report")
+       io_X=X_em1(E,Xk,q,X(2),Xw(2),.true.)
+       call IO_and_Messaging_switch("+report")
+       !
+       ! Reload and rotate wave-functions if W is updated
+       ! =======================================
+       !
+       call WF_load(WF_G_max,WF_Go_indx,(/1,max(SC_bands(2),E%nbm)/),(/1,nkibz/),title='-SC',force_WFo=.true.)
+       !
+       do ik=1,QP_nk
+          call WF_rotate(ik,WFo,fft_size)
+       enddo
+       !  
+     endif
      !
      ! Total Energy 
      !==============
@@ -503,6 +542,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
      endif
      !
+     if(l_SC_nl_mix) then
+       allocate(H_nl_nm1(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
+       call mem_est("H_nl_nm1",(/size(QP_Vnl_xc)/),(/2*SP/))
+     endif
+     !
    end subroutine
    !
    subroutine SC_local_free()
@@ -537,6 +581,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        call collisions_IO_free()
        !
+     endif
+     !
+     if(l_SC_nl_mix) then
+       deallocate(H_nl_nm1)
+       call mem_est("H_nl_nm1")
      endif
      !
    end subroutine

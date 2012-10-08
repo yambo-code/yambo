@@ -27,8 +27,8 @@ integer function variables_SC(ID,local_description,what)
  use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
- use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,&
-&                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,&
+ use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,l_sc_diagonal,&
+&                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,SC_up_W_iters,&
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,local_V,RT_nk
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,              &
@@ -155,7 +155,9 @@ integer function variables_SC(ID,local_description,what)
  endif
  !
  if ( SC_kind_disk==SC_COHSEX   ) then
-   if (ver_is_gt_or_eq(ID,revision=761)) then
+   if (ver_is_gt_or_eq(ID,revision=1400)) then
+     call io_elemental(ID,VAR="X_bands_size",VAR_SZ=6,MENU=0) 
+   elseif (ver_is_gt_or_eq(ID,revision=761)) then
      call io_elemental(ID,VAR="X_bands_size",VAR_SZ=4,MENU=0) 
    else
      call io_elemental(ID,VAR="X_bands_size",VAR_SZ=3,MENU=0) 
@@ -172,6 +174,16 @@ integer function variables_SC(ID,local_description,what)
      i_desc=i_desc+1
      call io_elemental(ID,L0=COHSEX_use_empties,&
 &       VAR=" COHSEX use empty bands          :", CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
+   endif
+   if (ver_is_gt_or_eq(ID,revision=1400)) then
+     i_desc=i_desc+1
+     call io_elemental(ID,I0=SC_up_W_iters,&
+&       VAR=' Updating W every                :',CHECK=CHECK_,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
+     i_desc=i_desc+1
+     call io_elemental(ID,L0=l_sc_diagonal,&
+&       VAR=' Diagonal approximation          :',CHECK=CHECK_,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
    endif
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -217,7 +229,8 @@ integer function variables_SC(ID,local_description,what)
  endif
  !
  if (all((/SC_kind_disk/=SC_HF,SC_kind_disk/=SC_COHSEX/)).or.l_MP) then
-   call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0) 
+   call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0,   &
+&       DESCRIPTION=local_description(i_desc))         
    i_desc=i_desc+1
    call io_elemental(ID,I0=SC_fft_size,&
 &       VAR=' FFT mesh points                 :',CHECK=.true.,OP=(/"=="/),&

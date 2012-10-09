@@ -250,7 +250,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #endif
    X_epsilon(2,:)=0.
    !
-   ! Initialize & write the output file 
+   ! Initialize & write the output file
    !
    call K_output_file(iq,-2)
    call K_output_file(iq,2)

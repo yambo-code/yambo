@@ -399,7 +399,7 @@ subroutine K_diagonalization(iq,W)
        do i1=1,BS_K_dim
          if (.not.px%element_1D(i1)) cycle
          !
-         BS_R_kerr(i1)=Vstar_dot_V(BS_K_dim,BS_mat(i1,:),BSS_rhoq0_kerr)
+         BS_R_kerr(i1)=Vstar_dot_V(BS_K_dim,BSS_rhoq0_kerr,BS_mat(:,i1))
          !
          call live_timing(steps=1)
        enddo
@@ -451,14 +451,14 @@ subroutine K_diagonalization(iq,W)
 #if defined _KERR
    if(l_kerr) then
      if (K_is_not_hermitian)      X_epsilon(5,:)=X_epsilon(5,:)-BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
-     if (.not.K_is_not_hermitian) X_epsilon(5,:)=X_epsilon(5,:)-BS_R(i1)*BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
+     if (.not.K_is_not_hermitian) X_epsilon(5,:)=X_epsilon(5,:)-conjg(BS_R(i1))*BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
      if (l_anomalous_Hall) then
        if(trim(global_gauge)=='length') then
          if (K_is_not_hermitian)      B_Hall(2)=B_Hall(2)-BS_R_kerr(i1)
-         if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)-BS_R(i1)*BS_R_kerr(i1)
+         if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)-conjg(BS_R(i1))*BS_R_kerr(i1)
        else if(trim(global_gauge)=='velocity') then
          if (K_is_not_hermitian)      B_Hall(2)=B_Hall(2)-BS_R_kerr(i1)/BS_E(i1)**2
-         if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)-BS_R(i1)*BS_R_kerr(i1)/real(BS_E(i1))**2
+         if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)-conjg(BS_R(i1))*BS_R_kerr(i1)/real(BS_E(i1))**2
        endif
      endif
    endif

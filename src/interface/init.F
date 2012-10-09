@@ -477,7 +477,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _KERR
    call initactivate(1,'AnHall')
 #endif
-   call initactivate(1,'BSresKmod BScplKmod BSEQptR BSEBands')
+   call initactivate(1,'BSIPAres BSresKmod BScplKmod BSEQptR BSEBands')
    call initactivate(1,'BSENGBlk BSENGexx ALLGexx BSEEhEny BSEClmns BSehWind')
 #if defined _ELPH 
    if (l_ph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
@@ -1113,11 +1113,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if (index(BSS_mode,'h')==0.and.index(BSS_mode,'d')==0.and.&
 &            index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0.and.&
              index(BSS_mode,'n')==0) BSS_mode='h'
+         if (index(BSS_mode,'n')==0) call initactivate(-1,'BSIPAres')
          if (index(BSS_mode,'n')/=0) then
            BSS_mode='none'
            call initactivate(-1,'BScplKmod BSresKmod')
            call initactivate(-1,'BSENGBlk BSENGexx ALLGexx BSEClmns')
-           call initactivate(1,'BSIPAres')
          endif
          !
          ! With and ALDA Fxc the t solver is not permitted

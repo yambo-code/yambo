@@ -33,6 +33,7 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF)
  use R_lattice,     ONLY:bz_samp,q_norm 
  use D_lattice,     ONLY:DL_vol
  use X_m,           ONLY:X_t
+ use com,           ONLY:warning
  !
  implicit none
  !
@@ -57,6 +58,10 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF)
  !  . Optical response @ q = Gamma
  !
  Drude_term=all((/real(X%Wd)>0.,aimag(X%Wd)>0.,Xen%kf>0,Xen%nbf/=Xen%nbm,iq==1/))
+ if(.not.Drude_term .and. Xen%nbf/=Xen%nbm .and. iq==1) then
+   if(real(X%Wd)>0. .and. aimag(X%Wd)>0.)   call warning(' Too low smearing. Drude term not included.')
+   if(real(X%Wd)==0. .or. aimag(X%Wd)==0.)  call warning(' The system is a metal but Drude term not included.')
+ endif
  !
  if(.not.Drude_term) return
  !

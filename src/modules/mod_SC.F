@@ -128,15 +128,11 @@ module SC
  !
  contains
    !
-   subroutine SC_alloc(E)
-     use pars,           ONLY:SP
+   subroutine SC_QP_setup(E)
      use R_lattice,      ONLY:nkibz
-     use drivers,        ONLY:l_real_time,l_sc_cohsex,l_sc_srpa
-     use electrons,      ONLY:n_spin,n_sp_pol,levels
-     use FFT_m,          ONLY:fft_size
-     use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc,QP_state,QP_nb
+     use electrons,      ONLY:levels
+     use QP_m,           ONLY:QP_nk,QP_state,QP_nb
      use memory_m,       ONLY:mem_est
-     use xc_functionals, ONLY:magn,V_xc
      implicit none
      !
      type(levels) :: E
@@ -156,6 +152,22 @@ module SC
      call mem_est("QP_state",(/QP_nb*QP_nk/))
      QP_state=.TRUE.
      call QP_state_table_setup(E)
+     !
+   end subroutine
+   !
+   subroutine SC_alloc(E)
+     use pars,           ONLY:SP
+     use drivers,        ONLY:l_real_time,l_sc_cohsex,l_sc_srpa
+     use electrons,      ONLY:n_spin,n_sp_pol,levels
+     use FFT_m,          ONLY:fft_size
+     use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
+     use memory_m,       ONLY:mem_est
+     use xc_functionals, ONLY:magn,V_xc
+     implicit none
+     !
+     type(levels) :: E
+     !
+     call SC_QP_setup(E)
      !
      ! In the magnetic project Ho has already been allocated
      !

@@ -25,24 +25,22 @@ subroutine SC_start_and_restart(X,E,Xk)
  use electrons,      ONLY:levels,n_sp_pol
  use parser_m,       ONLY:parser 
  use com,            ONLY:msg,warning
- use drivers,        ONLY:l_sc_exx,l_sc_hf,l_sc_cohsex,l_sc_magnetic,l_collisions_IO,&
+ use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_collisions_IO,&
 &                         l_oep_exact,l_oep_kli,l_oep_slater, l_oep_ceda
  use units,          ONLY:HA2EV
  use R_lattice,      ONLY:bz_samp,nkibz
- use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties,QP_nb,QP_nk,QP_state
- use SC,             ONLY:l_SC_RESTART,l_NSC_shot,SC_bands,l_SC_diagonal,&
+ use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
+ use SC,             ONLY:l_SC_RESTART,l_NSC_shot,SC_bands,l_SC_diagonal,SC_QP_setup,&
 &                         SC_potential,E_bare,local_V,SC_iterations,l_TF_precond, &
 &                         l_oep_iterative,SC_up_W_iters,rho_convergence,E_convergence, &
 &                         SC_rho_threshold,SC_iterations,l_SC_cycle,SC_cycle_mixing,   &
 &                         WF_G_max,WF_Go_indx,SC_fft_size,E_bare_Ef,l_oep_EWeight,     &
-&                         l_Mean_Potential,SC_nbands,l_SC_nl_mix
+&                         l_Mean_Potential,l_SC_nl_mix
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:WF_load,WF_free
- use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF
- use collisions_IO,  ONLY:V_kind
  !
  implicit none
  type(bz_samp)::Xk
@@ -139,23 +137,8 @@ subroutine SC_start_and_restart(X,E,Xk)
  endif
  !
  ! Quasi-Particle setup
- ! ============================
- !
- SC_nbands=SC_bands(2)-SC_bands(1)+1
- !
- ! Build-up QP table
- !
- QP_nb=SC_bands(2)
- QP_nk=nkibz
- ! 
- ! QP_state my be read from DBs at start-up
- !
- if (allocated(QP_state)) deallocate(QP_state)
- !
- allocate(QP_state(QP_nb,QP_nk))
- call mem_est("QP_state",(/QP_nb*QP_nk/))
- QP_state=.TRUE.
- call QP_state_table_setup(E)
+ ! ====================
+ call SC_QP_setup(E)
  !
  if (.not.l_SC_RESTART.and..not.l_NSC_shot) l_SC_cycle=SC_iterations>0
  !

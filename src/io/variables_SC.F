@@ -155,7 +155,7 @@ integer function variables_SC(ID,local_description,what)
  endif
  !
  if ( SC_kind_disk==SC_COHSEX   ) then
-   if (ver_is_gt_or_eq(ID,revision=1400)) then
+   if (ver_is_gt_or_eq(ID,revision=1518)) then
      call io_elemental(ID,VAR="X_bands_size",VAR_SZ=6,MENU=0) 
    elseif (ver_is_gt_or_eq(ID,revision=761)) then
      call io_elemental(ID,VAR="X_bands_size",VAR_SZ=4,MENU=0) 
@@ -176,7 +176,7 @@ integer function variables_SC(ID,local_description,what)
 &       VAR=" COHSEX use empty bands          :", CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
    endif
-   if (ver_is_gt_or_eq(ID,revision=1400)) then
+   if (ver_is_gt_or_eq(ID,revision=1518)) then
      i_desc=i_desc+1
      call io_elemental(ID,I0=SC_up_W_iters,&
 &       VAR=' Updating W every                :',CHECK=CHECK_,OP=(/"=="/),&
@@ -216,10 +216,10 @@ integer function variables_SC(ID,local_description,what)
  !
  if (ver_is_gt_or_eq(ID,revision=1455)) then
    call io_elemental(ID,VAR="CARRIER_scattering_vars",VAR_SZ=1,MENU=0) 
-   i_desc=i_desc+1
    call io_elemental(ID,L0=l_carrier_dynamics,&
 &     VAR=" [CARRIERS] Coulomb scattering   :", CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
  !
@@ -229,8 +229,7 @@ integer function variables_SC(ID,local_description,what)
  endif
  !
  if (all((/SC_kind_disk/=SC_HF,SC_kind_disk/=SC_COHSEX/)).or.l_MP) then
-   call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0,   &
-&       DESCRIPTION=local_description(i_desc))         
+   call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0,DESCRIPTION=local_description(i_desc))         
    i_desc=i_desc+1
    call io_elemental(ID,I0=SC_fft_size,&
 &       VAR=' FFT mesh points                 :',CHECK=.true.,OP=(/"=="/),&

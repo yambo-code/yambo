@@ -62,6 +62,7 @@ module drivers
  !
  logical :: l_optics
  logical :: l_kerr
+ logical :: l_anomalous_Hall
  logical :: l_chi
  logical :: l_em1d
  logical :: l_em1s

@@ -24,13 +24,13 @@ subroutine K_kerr_IP(w)
  use pars,           ONLY:SP,pi
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_epsilon,DIP_q_dot_iR
- use KERR,           ONLY:BSS_rhoq0_kerr,DIP_q_dot_iR_kerr,DIP_P_symm,&
-&                         l_anomalous_Hall,B_Hall
+ use KERR,           ONLY:BSS_rhoq0_kerr,DIP_q_dot_iR_kerr,DIP_P_symm,B_Hall
  use fields,         ONLY:global_gauge
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,BS_eh_table,&
 &                         BS_eh_E,BS_eh_W,BS_K_coupling,BS_IP_antires
  use electrons,      ONLY:spin_occ,spin
  use R_lattice,      ONLY:d3k_factor,q_norm
+ use drivers,        ONLY:l_anomalous_Hall
  !
  implicit none
  !

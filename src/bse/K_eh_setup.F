@@ -41,6 +41,10 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
 &                       BS_IP_antires
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
  use R_lattice,    ONLY:qindx_X,bz_samp
+#if defined _KERR
+ use com,          ONLY:warning
+ use drivers,      ONLY:l_anomalous_Hall
+#endif
  !
  implicit none
  type(levels) ::Ken
@@ -146,6 +150,13 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
      if ((.not.BS_K_coupling.and..not.BS_IP_antires).and.BS_not_const_eh_f) then
        call error('Fractional e/h occupations found. BS coupling forced.')
      endif
+     !
+#if defined _KERR
+     if (l_anomalous_Hall.and..not.BS_not_const_eh_f) then
+       call warning('System is not metal. The anomalous Hall effect is not computed')
+       l_anomalous_Hall=.false.
+     endif  
+#endif
      !
      if (.not.BS_res_K_corr) cycle
      !

@@ -252,6 +252,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_collisions_IO=.false.
  l_elph_Hamiltonian=.false.
  l_kerr=.false.
+ l_anomalous_Hall=.false.
  !
  !electrons
  !

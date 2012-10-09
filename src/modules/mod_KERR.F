@@ -25,7 +25,6 @@ module KERR
  !
  implicit none
  !
- logical                  :: l_anomalous_Hall
  integer                  :: iw_ref
  complex(SP)              :: B_Hall(2)
  complex(SP), allocatable :: BSS_rhoq0_kerr(:)

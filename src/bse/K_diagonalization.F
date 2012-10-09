@@ -31,8 +31,8 @@ subroutine K_diagonalization(iq,W)
 &                         BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_eh_W,K_BSmat_by_V,BS_eh_E
 #if defined _KERR
- use KERR,           ONLY:BSS_rhoq0_kerr,iw_ref,B_Hall,l_anomalous_Hall
- use drivers,        ONLY:l_kerr
+ use KERR,           ONLY:BSS_rhoq0_kerr,iw_ref,B_Hall
+ use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ

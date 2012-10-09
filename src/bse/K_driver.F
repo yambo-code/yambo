@@ -48,8 +48,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use IO_m,           ONLY:REP
 #endif
 #if defined _KERR
- use KERR,           ONLY:l_anomalous_Hall
- use drivers,        ONLY:l_kerr
+ use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
  implicit none
  type(levels)  ::Xen,Ken
@@ -162,7 +161,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
 #if defined _KERR
  call parser('EvalKerr',l_kerr)
- call parser('AnHall',l_anomalous_Hall)
+ if(l_kerr) call parser('AnHall',l_anomalous_Hall)
 #endif
  !
  ! Energy points

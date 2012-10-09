@@ -24,12 +24,11 @@ subroutine K_kerr_output()
  use pars,          ONLY:SP,pi,cI
  use memory_m,      ONLY:mem_est
  use units,         ONLY:DEG2RAD,HA2EV,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI
- use KERR,          ONLY:BSS_rhoq0_kerr
+ use KERR,          ONLY:BSS_rhoq0_kerr,KERR_alloc,B_Hall
  use X_m,           ONLY:X_epsilon
  use X_output,      ONLY:off_file_name,kerr_file_name,X_setup_headers,headers
  use BS,            ONLY:BSS_n_freqs,BSS_mode
- use drivers,       ONLY:l_kerr,l_optics,l_bse,l_bss
- use KERR,          ONLY:KERR_alloc,l_anomalous_Hall,B_Hall
+ use drivers,       ONLY:l_kerr,l_optics,l_bse,l_bss,l_anomalous_Hall
  use com,           ONLY:msg,of_open_close,warning,error
  !
  implicit none

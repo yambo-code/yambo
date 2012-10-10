@@ -36,7 +36,7 @@ subroutine RT_start_and_restart(E,k,X)
  !
  use pars,           ONLY:SP,cI,cZERO,rZERO
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_contains_lda,l_ph_corr
+ use drivers,        ONLY:l_sc_contains_lda,l_ph_corr,l_carrier_dynamics
  use com,            ONLY:msg,warning,error
  use QP_m,           ONLY:QP_nk,COHSEX_use_empties
  use electrons,      ONLY:levels,n_sp_pol
@@ -65,7 +65,7 @@ subroutine RT_start_and_restart(E,k,X)
  !
  ! Work Space
  !
- integer :: ik,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA
+ integer :: ik,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,io_OCCUPATIONS,ID_OCCUPATIONS
  logical :: RESTART,SC_DB_present
  !
  ! Initialize the Gf and potentials
@@ -323,14 +323,20 @@ subroutine RT_start_and_restart(E,k,X)
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5))
    io_G=io_SC_components('G',E,ID(5))
    !
+   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
+   io_OCCUPATIONS=io_SC_components('occupations',E,ID_OCCUPATIONS)
+   !
    if (l_ph_corr.and..not.l_ELPH_CCA_Kernel) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(7))
      io_THETA=io_SC_components('THETA',E,ID(7))
    endif
    !
-   ! Note that the G_lesser must be loaded at the correct time:
+   ! Note that the databases must be loaded at the correct time:
    !
    NE_i_time=it_now
+   !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
+   io_OCCUPATIONS=io_SC_components('occupations',E,ID_OCCUPATIONS)
    !
    do ik=1,QP_nk
      call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))

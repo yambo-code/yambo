@@ -89,7 +89,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _RT || defined _YPP_RT
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,    &
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,  &
-&                     SwitchOnTime,RT_IO_steps,l_RT_induced_field,RT_IO_time,&
+&                     SwitchOnTime,RT_IO_steps,RT_IO_steps_DB,l_RT_induced_field,RT_IO_time,&
 &                     l_RT_diagonalize,RT_is_dumped,RAD_LifeTime,Phase_LifeTime,&
 &                     NE_Hxc_jumps,NE_tot_time,NE_MEM_steps,NE_MEM_treshold,&
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,&
@@ -500,6 +500,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  RT_diagonalization_steps=-1
  l_RT_diagonalize=.FALSE.
  RT_IO_steps=-1
+ RT_IO_steps_DB=-1
  RT_IO_time=-1.
  l_RT_induced_field=.FALSE.
  NE_tot_time= 5*RAD_LifeTime

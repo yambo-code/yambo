@@ -34,7 +34,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
 &                         l_RT_induced_field,NE_Hxc_jumps,l_NE_simulate_TDDFT,      &
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
-&                         Phase_LifeTime,NE_MEM_Treshold,          &
+&                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
 &                         NE_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,            &
 &                         l_RT_skip_JandP_IO,RT_q_px
  use par_indexes_m,  ONLY:par_indexes
@@ -92,15 +92,25 @@ subroutine RT_initialize(E,k,q)
  if (RT_IO_time>0) RT_IO_steps=nint(RT_IO_time/RT_step)
  !
  if(RT_IO_steps>0.and.mod(Thermal_steps+NE_steps,RT_IO_steps)/=0) then
+   !
    rest=mod(Thermal_steps+NE_steps,RT_IO_steps)
    if(NE_steps/=0) then
      NE_steps = NE_steps+RT_IO_steps-rest
    elseif (NE_steps==0.and.Thermal_steps/=0) then
      Thermal_steps = Thermal_steps+RT_IO_steps-rest
    endif
- else if (RT_IO_time<0.) then
-   RT_IO_time=NE_tot_time/1000.
+   !
+   ! Set automatically RT_IO_time and RT_IO_steps 
+   !
+ else if (RT_IO_time<0) then
+   RT_IO_time =max(NE_tot_time/1000.,RT_step)
    RT_IO_steps=nint(RT_IO_time/RT_step)
+   if (RT_IO_steps_DB>0.and.RT_IO_steps/=RT_IO_steps_DB) then
+     call warning('IO steps read from the existing databases')
+     RT_IO_steps=RT_IO_steps_DB
+     RT_IO_time =RT_IO_steps*RT_step
+   endif
+   !
  endif
  !
  NE_tot_time=RT_step*NE_steps

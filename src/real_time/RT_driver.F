@@ -96,7 +96,6 @@ subroutine RT_driver(E,X,k,q)
  !
  call Dipole_driver(E,k,X(1),X(1)%q0)
  !
- !
  ! WFs loading
  !=============
  !

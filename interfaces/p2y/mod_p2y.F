@@ -173,6 +173,7 @@ contains
    use wave_func,             ONLY : wf_ncx 
    use com,                   ONLY : msg, error
    use timing,                ONLY : live_timing_is_on
+   use units,                 ONLY : HA2eV
    type(levels),     intent(out)  :: en     ! Energies
    type(bz_samp),    intent(out)  :: k      ! K/Q points
    !
@@ -267,6 +268,19 @@ contains
    ! GPL_EXCLUDE_END SPIN_IGNORE
    !
    input_GS_Tel = 0.d0
+   !
+#if defined _P2Y_V40 || defined _P2Y_V50
+   !
+   call qexml_read_occ(lgauss=lgauss_,degauss=degauss_,degauss_units=degauss_units_, ierr=ierr)
+   if (ierr.ne.0) call errore('qexml_read_occ','IOTK error',ABS(ierr))  
+   !
+   if (lgauss_) then
+     if(trim(degauss_units_)=='Hartree') input_GS_Tel=degauss_/HA2eV
+     if(trim(degauss_units_)=='Rydberg') input_GS_Tel=degauss_/HA2eV*2
+     if(trim(degauss_units_)=='eV')      input_GS_Tel=degauss_
+   endif
+   !
+#endif
    !
    return
  end subroutine get_dimensions

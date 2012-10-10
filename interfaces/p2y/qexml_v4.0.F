@@ -2375,7 +2375,7 @@ CONTAINS
       IF ( PRESENT( tfixed_occ ))       tfixed_occ  = tfixed_occ_
       IF ( PRESENT( ngauss ))           ngauss      = ngauss_
       IF ( PRESENT( ntetra ))           ntetra      = ntetra_
-      IF ( PRESENT( degauss ))          degauss     = degauss
+      IF ( PRESENT( degauss ))          degauss     = degauss_
       IF ( PRESENT( degauss_units ))    degauss_units  = TRIM(degauss_units_)
       IF ( PRESENT( nstates_up ))       nstates_up  = nstates_up_
       IF ( PRESENT( nstates_dw ))       nstates_dw  = nstates_dw_
@@ -3226,7 +3226,7 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh, &
   call mat_dia_inv(DIAGO,USE_LK,cd_tmp,E_real=d)
   d_tmp=real(cd_tmp)
   !
-  lbeta=nint(matmul(transpose(d_tmp)**2,lbeta))
+  lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))
   forall (i1=1:nmesh) beta(i1,:)=matmul(transpose(d_tmp),beta_tmp(i1,:))
   !
   CALL iotk_scan_end(u, 'PP_NONLOCAL')

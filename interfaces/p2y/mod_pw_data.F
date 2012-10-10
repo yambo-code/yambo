@@ -52,9 +52,14 @@ module pw_data
 
 ! Bandstructure
   integer                    :: nbnd_, num_k_points_, nspin_
-  real(DP)                  :: nelec_
-  real(DP), allocatable     :: eig_s_(:,:,:), eig_(:,:), eigb_(:)
-  real(DP), allocatable     :: xk_(:,:)
+  real(DP)                   :: nelec_
+  real(DP), allocatable      :: eig_s_(:,:,:), eig_(:,:), eigb_(:)
+  real(DP), allocatable      :: xk_(:,:)
+
+! Smearing parameters
+  logical                    :: lgauss_
+  character(256)             :: degauss_units_
+  real(dp)                   :: degauss_
 
 ! igk grids
   integer                    :: npwk_

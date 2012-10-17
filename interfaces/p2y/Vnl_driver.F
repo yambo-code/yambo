@@ -206,10 +206,10 @@ subroutine Vnl_driver(en,k)
          Vnl(:,ic,iv,ik,i_spin) = Vnl_cvk
          !
          if(associated(wfc_con%val)) nullify(wfc_con)
-         if(associated(wfc_con2%val)) nullify(wfc_con2)
+         if(n_spinor==2.and.associated(wfc_con2%val)) nullify(wfc_con2)
        enddo
        if(associated(wfc_val%val)) nullify(wfc_val)
-       if(associated(wfc_val2%val)) nullify(wfc_val2)
+       if(n_spinor==2.and.associated(wfc_val2%val)) nullify(wfc_val2)
      enddo
    enddo
    do i_spinor=1,n_spinor

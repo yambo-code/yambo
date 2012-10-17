@@ -2579,7 +2579,7 @@ CONTAINS
       IF (ierr/=0) RETURN
       !
       if(two_ef_) then
-        call errore('TWO_FERMI_ENERGY=.true. Action: run pwscf without fixed_magnetization.')
+        call errore('TWO_FERMI_ENERGY=.true. Action: run pwscf without fixed_magnetization.',1)
       else
         CALL iotk_scan_dat  ( iunit, "FERMI_ENERGY", ef_ , IERR=ierr )
         IF (ierr/=0) RETURN

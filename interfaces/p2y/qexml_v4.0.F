@@ -2537,7 +2537,7 @@ CONTAINS
       INTEGER,                INTENT(OUT) :: ierr
       !
       INTEGER        :: nbnd_, num_k_points_, nspin_, natomwfc_
-      LOGICAL        :: noncolin_
+      LOGICAL        :: noncolin_,two_ef_
       REAL(dbl)      :: ef_, nelec_
       CHARACTER(256) :: energy_units_, k_units_
 
@@ -2575,8 +2575,15 @@ CONTAINS
       CALL iotk_scan_attr ( attr,   "UNITS", energy_units_, IERR=ierr )
       IF (ierr/=0) RETURN
       !
-      CALL iotk_scan_dat  ( iunit, "FERMI_ENERGY", ef_ , IERR=ierr )
+      call iotk_scan_dat  ( iunit, "TWO_FERMI_ENERGY", two_ef_ , IERR=ierr )
       IF (ierr/=0) RETURN
+      !
+      if(two_ef_) then
+        call errore('TWO_FERMI_ENERGY=.true. Action: run pwscf without fixed_magnetization.')
+      else
+        CALL iotk_scan_dat  ( iunit, "FERMI_ENERGY", ef_ , IERR=ierr )
+        IF (ierr/=0) RETURN
+      endif
       !
       CALL iotk_scan_end( iunit, "BAND_STRUCTURE_INFO", IERR=ierr )
       IF (ierr/=0) RETURN

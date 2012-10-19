@@ -252,12 +252,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
    ! Initialize & write the output file
    !
-   call K_output_file(iq,-2)
-   call K_output_file(iq,2)
-   !
-#if defined _KERR
-   if(l_kerr) call K_kerr_output()
-#endif
+   call K_output_file(iq,-4)
+   call K_output_file(iq,4)
    !
  endif
  !

@@ -31,7 +31,11 @@ subroutine K_output_file(iq,mode)
 &                    eel_file_name,alpha_file_name,X_write_descriptions,&
 &                    X_write_messages_before_headers,X_write_q_plus_g
 #if defined _KERR
- use drivers,  ONLY:l_kerr
+ use pars,      ONLY:cI
+ use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,hbar_SI
+ use drivers,   ONLY:l_kerr,l_anomalous_Hall
+ use X_output,  ONLY:kerr_file_name,off_file_name
+ use KERR,      ONLY:B_Hall
 #endif
  !
  implicit none
@@ -61,6 +65,9 @@ subroutine K_output_file(iq,mode)
      ! Inversion
      call X_setup_file_names(1,'inv',' ','bse')
      if (BS_K_is_ALDA)  call X_setup_file_names(1,'inv','alda','bse')
+   case(4)
+     ! Independent-Particle
+     call X_setup_file_names(1,'IP',' ',' ')
  end select
  !
  ! EELS 
@@ -82,6 +89,13 @@ subroutine K_output_file(iq,mode)
    if (eval_alpha) call of_open_close(alpha_file_name,title_mode)
  endif
  !
+#if defined _KERR
+ if(l_kerr) then
+   call of_open_close(off_file_name,title_mode)
+   call of_open_close(kerr_file_name,title_mode)
+ endif
+#endif
+ !
  call X_write_q_plus_g(1,BSS_q0,ig=1)
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
  !
@@ -95,20 +109,67 @@ subroutine K_output_file(iq,mode)
    !
    call X_setup_headers('eps')
    if (mode==1) call msg("o eps",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (mode/=1) call msg("o eps",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (mode/=1.and.mode/=4) call msg("o eps",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (mode==4) call msg("o eps",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    !
    if (eval_eels) then 
      call X_setup_headers('eel')
      if (mode==1) call msg("o eel",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-     if (mode/=1) call msg("o eel",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode/=1.and.mode/=4) call msg("o eel",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==4) call msg("o eel",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    end if   
    !
    if (eval_alpha) then 
      call X_setup_headers('alpha')
      if (mode==1) call msg("o alpha",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-     if (mode/=1) call msg("o alpha",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode/=1.and.mode/=4) call msg("o alpha",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==4) call msg("o alpha",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    endif
-   call msg("o eps eel alpha",'#')
+   !
+#if defined _KERR
+   if(l_kerr) then
+     !
+     ! Hanomalous Hall term
+     !
+     if(l_anomalous_Hall) then
+       call msg('o off','#','Anomalous Hall effect sH',INDENT=0,USE_TABS=.true.)
+       !
+       n_output_data=6
+       if(mode==4) n_output_data=3
+       headers(:6)=(/'sH ','   ','   ','sH0','   ','   '/)
+       call msg("o off",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
+       headers(:6)=(/'  [fs]^-1  ','[Ohm*cm]^-1','[e^2/hbar] ','  [fs]^-1  ','[Ohm*cm]^-1','[e^2/hbar] '/)
+       call msg("o off",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
+       !
+       B_Hall(:)=B_Hall(:)*HA2EV/(4*pi*cI*HBAR_eVfs)
+       output_data(1)=real(B_Hall(2))
+       output_data(4)=real(B_Hall(1))
+       B_Hall(:)=B_Hall(:)*1.E5/(SPEED_OF_LIGHT_SI)**2/FEMTO
+       output_data(2)=real(B_Hall(2))
+       output_data(5)=real(B_Hall(1))
+       B_Hall(:)=B_Hall(:)*1.E2*HBAR_SI/e_SI**2
+       output_data(3)=real(B_Hall(2))
+       output_data(6)=real(B_Hall(1))
+       if(mode==4) output_data(1:3)=output_data(4:6)
+       call msg('o off','#',output_data(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o off','#')
+       !
+     endif
+     !
+     call X_setup_headers('off')
+     if (mode==1) call msg("o off",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+     if (mode/=1.and.mode/=4) call msg("o off",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==4) call msg("o off",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+     !
+     call X_setup_headers('kerr')
+     if (mode==1) call msg("o kerr",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+     if (mode/=1.and.mode/=4) call msg("o kerr",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==4) call msg("o kerr",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+     !
+   endif
+#endif
+   !
+   call msg("o eps eel alpha off kerr",'#')
    !
    ! ABSORPTION
    !------------
@@ -125,13 +186,15 @@ subroutine K_output_file(iq,mode)
      n_output_data=5
      if (mode==1) n_output_data=7
      if (mode==1) output_data(6:7)=(/aimag(X_epsilon(4,iw)),real(X_epsilon(4,iw))/)
+     if (mode==4) n_output_data=3
+     if (mode==4) output_data(2:3)=output_data(4:5)
      !
      call msg("o eps",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
      !
    enddo
    !
    ! EELS & POLARIZABILITY
-   !---------------------
+   !-----------------------
    !
    if (eval_eels) then
      !
@@ -152,6 +215,8 @@ subroutine K_output_file(iq,mode)
        n_output_data=5
        if (mode==1) n_output_data=7
        if (mode==1) output_data(6:7)=(/aimag(eels(3,iw)),real(eels(3,iw))/)
+       if (mode==4) n_output_data=3
+       if (mode==4) output_data(2:3)=output_data(4:5)
        call msg("o eel",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
        !
        ! ALPHA
@@ -161,15 +226,57 @@ subroutine K_output_file(iq,mode)
        n_output_data=5
        if (mode==1) n_output_data=7
        if (mode==1) output_data(6:7)=(/aimag(alpha(3,iw)),real(alpha(3,iw))/)
+       if (mode==4) n_output_data=3
+       if (mode==4) output_data(2:3)=output_data(4:5)
        call msg("o alpha",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
        !
      enddo
+     !
    endif
+   !
+#if defined _KERR
+   !
+   ! KERR 
+   !------
+   if(l_kerr) then
+     !
+     ! eps_xy
+     !
+     do iw=1,BSS_n_freqs 
+       output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,aimag(X_epsilon(5,iw)),real(X_epsilon(5,iw)),&
+&                    aimag(X_epsilon(4,iw)),real(X_epsilon(4,iw))/)
+       n_output_data=5
+       if (mode==4) n_output_data=3
+       if (mode==4) output_data(2:3)=output_data(4:5)
+       call msg('o off','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+     enddo
+     !
+     ! Kerr parameters
+     !
+     do iw=1,BSS_n_freqs 
+       output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,real(X_epsilon(7,iw)),aimag(X_epsilon(7,iw)),&
+&                    real(X_epsilon(6,iw)),aimag(X_epsilon(6,iw))/)
+       n_output_data=5
+       if (mode==4) n_output_data=3
+       if (mode==4) output_data(2:3)=output_data(4:5)
+       call msg('o kerr','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+     enddo
+     !
+   endif
+   !
+#endif
    !
  endif
  !
  call of_open_close(eps_file_name)
  call of_open_close(eel_file_name)
  call of_open_close(alpha_file_name)
+ !
+#if defined _KERR
+ if(l_kerr) then
+   call of_open_close(off_file_name)
+   call of_open_close(kerr_file_name)
+ endif
+#endif
  !
 end subroutine

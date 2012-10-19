@@ -22,6 +22,7 @@
 subroutine K_kerr_IP(w)
  !
  use pars,           ONLY:SP,pi
+ use units,          ONLY:DEG2RAD
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_epsilon,DIP_q_dot_iR
  use KERR,           ONLY:BSS_rhoq0_kerr,DIP_q_dot_iR_kerr,DIP_P_symm,B_Hall
@@ -94,5 +95,9 @@ subroutine K_kerr_IP(w)
  ! I add the term describing the Anomalous Hall effect which is
  ! missing in the length gauge (this should be zero for systems with a gap)
  if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(4,:)=X_epsilon(4,:)+B_Hall(1)/w(:)
+ !
+ ! Kerr parameters
+ !
+ X_epsilon(6,:)=-X_epsilon(4,:)/( (X_epsilon(3,:)-1.0_SP)*sqrt(X_epsilon(3,:)) ) /DEG2RAD
  !
 end subroutine

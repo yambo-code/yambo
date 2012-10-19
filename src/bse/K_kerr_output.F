@@ -36,22 +36,8 @@ subroutine K_kerr_output()
  integer           :: iw
  real(SP)          :: output_data(5)
  !
- ! Kerr parameters
- !
- X_epsilon(6,:)=-X_epsilon(4,:)/( (X_epsilon(3,:)-1.0_SP)*sqrt(X_epsilon(3,:)) ) /DEG2RAD
- if(.not.trim(BSS_mode)=='none') &
-&   X_epsilon(7,:)=-X_epsilon(5,:)/( (X_epsilon(2,:)-1.0_SP)*sqrt(X_epsilon(2,:)) ) /DEG2RAD
  !
  ! 1 - Headers
- !
- ! File names are defined in mod_X_output
- ! If .not. l_kerr I need to destroy the names
- if (.not.l_kerr) then
-   off_file_name=' '
-   kerr_file_name=' '
- endif
- call of_open_close(off_file_name,'ot')
- call of_open_close(off_file_name,'oa')
  !
  call msg('o off','#')
  call X_setup_headers('off')
@@ -73,22 +59,6 @@ subroutine K_kerr_output()
    !call msg('o off','',output_data(:3),INDENT=-2,USE_TABS=.true.)
    call msg('o off','',output_data,INDENT=-2,USE_TABS=.true.)
  enddo
- !
- if(l_anomalous_Hall) then
-   call msg('o off','#','Anomalous Hall effect sH',INDENT=0,USE_TABS=.true.)
-   headers(:4)=(/'sH ','   ','sH0','   '/)
-   call msg("o off",'#',headers(:4),INDENT=0,USE_TABS=.TRUE.)
-   headers(:4)=(/'  [fs]^-1  ','[Ohm*cm]^-1','  [fs]^-1  ','[Ohm*cm]^-1'/)
-   call msg("o off",'#',headers(:4),INDENT=0,USE_TABS=.TRUE.)
-   !
-   B_Hall(:)=B_Hall(:)*HA2EV/(4*pi*cI*HBAR_eVfs)
-   output_data(1)=real(B_Hall(2))
-   output_data(3)=real(B_Hall(1))
-   B_Hall(:)=B_Hall(:)*1.E5/(SPEED_OF_LIGHT_SI)**2/FEMTO
-   output_data(2)=real(B_Hall(2))
-   output_data(4)=real(B_Hall(1))
-   call msg('o off','#',output_data(:4),INDENT=0,USE_TABS=.TRUE.)
- endif
  !
  call of_open_close(off_file_name)
  !

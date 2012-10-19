@@ -47,6 +47,7 @@ subroutine K_diagonalization(iq,W)
  use parser_m,       ONLY:parser
 #if defined _SC || defined _KERR
  use fields,         ONLY:global_gauge
+ use units,          ONLY:DEG2RAD
 #endif
 #if defined _DISTRIBUTED
  use matrix_operate, ONLY:USE_PWDIAGO
@@ -424,6 +425,8 @@ subroutine K_diagonalization(iq,W)
  if(l_kerr) then
    X_epsilon(4,:)=X_epsilon(4,:)/real(ncpu,SP)
    X_epsilon(5,:)=(0.,0.)
+   X_epsilon(6,:)=X_epsilon(6,:)/real(ncpu,SP)
+   X_epsilon(7,:)=(0.,0.)
    B_Hall(1)=B_Hall(1)/real(ncpu,SP)
  endif
 #endif
@@ -491,6 +494,11 @@ subroutine K_diagonalization(iq,W)
  if(l_kerr) then
    if(trim(global_gauge)=='length')   X_epsilon(5,:)=X_epsilon(5,:)*factor/q_norm(1)**2
    if(trim(global_gauge)=='velocity') X_epsilon(5,:)=X_epsilon(5,:)*factor/(real(W%p(:))**2+epsilon(1.))
+   !
+   ! Kerr parameters
+   !
+   X_epsilon(7,:)=-X_epsilon(5,:)/( (X_epsilon(2,:)-1.0_SP)*sqrt(X_epsilon(2,:)) ) /DEG2RAD
+   !
  endif
 #else
  X_epsilon(2,:)=1.+X_epsilon(2,:)*&
@@ -502,10 +510,6 @@ subroutine K_diagonalization(iq,W)
  ! I write the output file 
  !
  call K_output_file(iq,2)
- !
-#if defined _KERR
- if(l_kerr) call K_kerr_output()
-#endif
  !
  ! Diagonalization DB (OUT)
  !

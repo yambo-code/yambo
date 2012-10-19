@@ -26,6 +26,9 @@ module X_output
  use com,     ONLY:msg
  use X_m,     ONLY:alpha_dim
  use fields,  ONLY:global_gauge
+#if defined _KERR
+ use drivers,   ONLY:l_kerr
+#endif
  implicit none
  !
  character(15)     :: headers(7)
@@ -47,14 +50,14 @@ module X_output
      !
      call msg('o eps eel alpha off kerr','#')
      if (GreenF) then
-       if (l_chi) call msg('o eps eel alpha off kerr','# ','- G. Functions  are '//trim(X_E_xc_string(4)),INDENT=0)
-       if (l_bss) call msg('o eps eel alpha','# ','- G. Functions  are '//trim(K_E_xc_string),INDENT=0)
+       if (l_chi) call msg('o eps eel alpha','# ','- G. Functions  are '//trim(X_E_xc_string(4)),INDENT=0)
+       if (l_bss) call msg('o eps eel alpha off kerr','# ','- G. Functions  are '//trim(K_E_xc_string),INDENT=0)
      else
-       if (l_chi) call msg('o eps eel alpha off kerr','# ','- Energies      are '//trim(X_E_xc_string(4)),INDENT=0)
-       if (l_bss) call msg('o eps eel alpha','# ','- Energies      are '//trim(K_E_xc_string),INDENT=0)
+       if (l_chi) call msg('o eps eel alpha','# ','- Energies      are '//trim(X_E_xc_string(4)),INDENT=0)
+       if (l_bss) call msg('o eps eel alpha off kerr','# ','- Energies      are '//trim(K_E_xc_string),INDENT=0)
      endif
-     if (l_chi) call msg('o eps eel alpha off kerr','# ','- Wavefunctions are '//trim(X_WF_xc_string(4)),INDENT=0)
-     if (l_bss) call msg('o eps eel alpha','# ','- Wavefunctions are '//trim(K_WF_xc_string),INDENT=0)
+     if (l_chi) call msg('o eps eel alpha','# ','- Wavefunctions are '//trim(X_WF_xc_string(4)),INDENT=0)
+     if (l_bss) call msg('o eps eel alpha off kerr','# ','- Wavefunctions are '//trim(K_WF_xc_string),INDENT=0)
      call msg('o eps eel alpha off kerr','# ')
      message='- The Green`s function is T-ordered -'
      if (trim(ordering)=='a') message='- The Green`s function is antiresonant -'
@@ -168,6 +171,13 @@ module X_output
        off_file_name  =  trim(off_file_name)//'_'//equation
        kerr_file_name =  trim(kerr_file_name)//'_'//equation
      endif
+     !
+#if defined _KERR
+     if (.not.l_kerr) then
+       off_file_name=' '
+       kerr_file_name=' '
+     endif
+#endif
      !
    end subroutine
    !

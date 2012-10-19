@@ -2537,7 +2537,7 @@ CONTAINS
       INTEGER,                INTENT(OUT) :: ierr
       !
       INTEGER        :: nbnd_, num_k_points_, nspin_, natomwfc_
-      LOGICAL        :: noncolin_,two_ef_
+      LOGICAL        :: noncolin_,two_ef_, found
       REAL(dbl)      :: ef_, nelec_
       CHARACTER(256) :: energy_units_, k_units_
 
@@ -2574,18 +2574,25 @@ CONTAINS
       IF (ierr/=0) RETURN
       CALL iotk_scan_attr ( attr,   "UNITS", energy_units_, IERR=ierr )
       IF (ierr/=0) RETURN
+
+      CALL iotk_scan_dat( iunit, "FERMI_ENERGY", ef_, FOUND = found )
       !
-      call iotk_scan_dat  ( iunit, "TWO_FERMI_ENERGIES", two_ef_ , IERR=ierr )
-      IF (ierr/=0) RETURN
+      IF ( found ) THEN
+         IF ( PRESENT( ef ) )               ef             = ef_
+      END IF
+         !
+      CALL iotk_scan_dat( iunit, "TWO_FERMI_ENERGIES", &
+               two_ef_, FOUND = found)
+      IF ( .not. found ) then 
+         two_ef_=.FALSE.
+      ELSE
       !
-      if(two_ef_) then
-        call errore('qexml_read_bands_info',&
-&      ' TWO_FERMI_ENERGIES=.true. Action: run pwscf without fixed_magnetization.',1)
-      else
-        CALL iotk_scan_dat  ( iunit, "FERMI_ENERGY", ef_ , IERR=ierr )
-        IF (ierr/=0) RETURN
-      endif
-      !
+        IF ( two_ef_ ) THEN
+          call errore('qexml_read_bands_info',&
+&         ' TWO_FERMI_ENERGIES=.true. Action: run pwscf without fixed_magnetization.',1)
+         ENDIF
+      ENDIF
+
       CALL iotk_scan_end( iunit, "BAND_STRUCTURE_INFO", IERR=ierr )
       IF (ierr/=0) RETURN
       !
@@ -2596,7 +2603,6 @@ CONTAINS
       IF ( PRESENT( noncolin ) )         noncolin       = noncolin_
       IF ( PRESENT( natomwfc ) )         natomwfc       = natomwfc_
       IF ( PRESENT( nelec ) )            nelec          = nelec_
-      IF ( PRESENT( ef ) )               ef             = ef_
       IF ( PRESENT( energy_units ) )     energy_units   = TRIM( energy_units_ )
       IF ( PRESENT( k_units ) )          k_units        = TRIM( k_units_ )
       !
@@ -2992,13 +2998,22 @@ subroutine read_upf_header_v1( u, z, nmesh, nbeta, psfile, ierr )
   INTEGER :: i,idummy,idummy2, iostat, u,ios,ierr
 
   !------->Search for Header
-  !     This version doesn't use the new routine scan_begin
-  !     because this search must set extra flags for
-  !     compatibility with other pp format reading
   ierr = 1
   rewind(u)
-    call iotk_scan_begin(u,"PP_HEADER",ierr=ierr)
-!   if(ierr==1) goto 200
+  !
+  ! Search for PP_HEADER, skipping PP_INFO which can contain badly formed tags
+  !
+  header_loop: do while (ios == 0)
+     read (u, *, iostat = ios, err = 200) dummy
+!    if (matches ("<PP_HEADER>", dummy) ) then
+     if (index(dummy,"<PP_HEADER>").ne.0) then
+        ierr = 0
+        exit header_loop
+     endif
+  enddo header_loop
+  if(ierr==1) call errore( 'check_pseudo : ','Problem finding PP_HEADER tag in pseudo',1)
+
+!   call iotk_scan_begin(u,"PP_HEADER",ierr=ierr)
     read(u,*,iostat=iostat) dummy
     read(u,*,iostat=iostat) dummy
     read(u,*,iostat=iostat) dummy

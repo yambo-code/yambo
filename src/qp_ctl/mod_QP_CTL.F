@@ -105,6 +105,7 @@ module QP_CTL_m
 #if defined _SC
      use SC,            ONLY:l_RT_occupations_in_use
 #endif
+     use interfaces,    ONLY:OCCUPATIONS_gaps
      integer       ::band_range(2)
      type(levels)  ::en
      type(bz_samp) ::k
@@ -344,7 +345,7 @@ module QP_CTL_m
      ! Reporting
      !
      call msg('r', '[QP] Fermi level variation [ev]:',en%Efermi(1)*HA2EV)
-     call msg('r',   '[QP] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
+     call msg('r', '[QP] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
      if (en%nbf==en%nbm) then
        if (n_sp_pol==1) then
          call msg('r','[QP] Ind. Gap Correction  [ev]:',&

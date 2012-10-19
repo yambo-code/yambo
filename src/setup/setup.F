@@ -272,7 +272,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call E_duplicate(Xen,Xen_COPY)
    Tel=0.
    call OCCUPATIONS_Fermi(Xen_COPY,Xk,1)
-   nbf_m_SAVE  =(/Xen_COPY%nbf,Xen_COPY%nbm/)
+   nbf_m_SAVE=(/Xen_COPY%nbf,Xen_COPY%nbm/)
    call E_reset(Xen_COPY)
  endif
  !

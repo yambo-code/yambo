@@ -2375,7 +2375,7 @@ CONTAINS
       IF ( PRESENT( tfixed_occ ))       tfixed_occ  = tfixed_occ_
       IF ( PRESENT( ngauss ))           ngauss      = ngauss_
       IF ( PRESENT( ntetra ))           ntetra      = ntetra_
-      IF ( PRESENT( degauss ))          degauss     = degauss
+      IF ( PRESENT( degauss ))          degauss     = degauss_
       IF ( PRESENT( degauss_units ))    degauss_units  = TRIM(degauss_units_)
       IF ( PRESENT( nstates_up ))       nstates_up  = nstates_up_
       IF ( PRESENT( nstates_dw ))       nstates_dw  = nstates_dw_
@@ -2537,7 +2537,7 @@ CONTAINS
       INTEGER,                INTENT(OUT) :: ierr
       !
       INTEGER        :: nbnd_, num_k_points_, nspin_, natomwfc_
-      LOGICAL        :: noncolin_
+      LOGICAL        :: noncolin_,two_ef_
       REAL(dbl)      :: ef_, nelec_
       CHARACTER(256) :: energy_units_, k_units_
 
@@ -2575,8 +2575,15 @@ CONTAINS
       CALL iotk_scan_attr ( attr,   "UNITS", energy_units_, IERR=ierr )
       IF (ierr/=0) RETURN
       !
-      CALL iotk_scan_dat  ( iunit, "FERMI_ENERGY", ef_ , IERR=ierr )
+      call iotk_scan_dat  ( iunit, "TWO_FERMI_ENERGY", two_ef_ , IERR=ierr )
       IF (ierr/=0) RETURN
+      !
+      if(two_ef_) then
+        call errore('TWO_FERMI_ENERGY=.true. Action: run pwscf without fixed_magnetization.',1)
+      else
+        CALL iotk_scan_dat  ( iunit, "FERMI_ENERGY", ef_ , IERR=ierr )
+        IF (ierr/=0) RETURN
+      endif
       !
       CALL iotk_scan_end( iunit, "BAND_STRUCTURE_INFO", IERR=ierr )
       IF (ierr/=0) RETURN
@@ -3226,7 +3233,7 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh, &
   call mat_dia_inv(DIAGO,USE_LK,cd_tmp,E_real=d)
   d_tmp=real(cd_tmp)
   !
-  lbeta=nint(matmul(transpose(d_tmp)**2,lbeta))
+  lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))
   forall (i1=1:nmesh) beta(i1,:)=matmul(transpose(d_tmp),beta_tmp(i1,:))
   !
   CALL iotk_scan_end(u, 'PP_NONLOCAL')

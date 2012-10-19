@@ -43,6 +43,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use com,           ONLY:msg,error,warning
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
+ use interfaces,    ONLY:OCCUPATIONS_gaps
  implicit none
  !
  type(levels) ::E
@@ -232,12 +233,13 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    !
  endif
  !
+ ! Eval Metallic/Filled bands and gaps
+ !
+ call OCCUPATIONS_gaps(E)
+ !
  ! Mode = 1. Define E%f and exits
  !
- if (mode==1) then
-   call REPORT_Occupations(E,1)
-   return
- endif
+ if (mode==1) return
  !
  ! Complete Report
  !
@@ -246,7 +248,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  call msg('r',  'Bosonic    Temp. [ev K]:',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
  call msg('r',  'El. density      [cm-3]:',(/nel/(DL_vol*BO2ANG**3*1.E-24)/))
  !
- call REPORT_Occupations(E,mode)
+ call REPORT_Occupations(E)
  !
  if (E%nbf/=E%nbm) then
    f_met= sum(E%f(E%nbf+1:E%nbm,:,:))/real(K%nibz*(E%nbm-E%nbf))

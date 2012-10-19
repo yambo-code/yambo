@@ -37,6 +37,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use timing,         ONLY:what_is_running
  use stderr,         ONLY:intc
  use vec_operate,    ONLY:sort
+ use interfaces,     ONLY:OCCUPATIONS_gaps
  !
  implicit none
  !
@@ -212,9 +213,6 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    call E_reset(RT_db1_E) 
    call bz_samp_reset(RT_db1_k)
    !
-   ! I need to redefine here several quantities related to the occupations
-   ! using REPORT_Occupations
-   !
    PE_nel=nel-sum(E%f(:n_met_bands,:,:))/real(nXkibz)
    !
    call msg('nr','Snapshot time            [fs]:',Time/FS2AUT)
@@ -225,7 +223,12 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    l_RT_occupations_in_use=.TRUE.
    !
    call msg('r','')
-   if (.not.input_Tel_is_negative) call REPORT_Occupations(E,2,.TRUE.)
+   !
+   ! I need to redefine here the met/filled number of bands related to the occupations
+   ! using OCCUPATIONS_gaps
+   !
+   if (.not.input_Tel_is_negative) call OCCUPATIONS_gaps(E)
+   !
    call msg('r','Integarted N. of e-   [input]:',sum(RT_occupations(:,:))/real(RT_nk)+(SC_bands(1)-1)*2._SP)
    call msg('r','               [interpolated]:',sum(E%f(:,:,:))/real(nXkibz))
    if (associated(E%f_RIM)) then

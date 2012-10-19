@@ -19,84 +19,47 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine REPORT_Occupations(E,mode)
+subroutine REPORT_Occupations(E)
  !
  use pars,          ONLY:SP,lchlen
- use units,         ONLY:HA2EV,BO2ANG,Bohr_magneton
+ use units,         ONLY:HA2EV
  use com,           ONLY:msg,warning
- use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
+ use electrons,     ONLY:levels,n_sp_pol
+ use interfaces,    ONLY:OCCUPATIONS_gaps
  !
  implicit none
  type(levels)::E
- integer     ::mode
  ! 
  ! Work Space
  ! 
- integer :: i1,nbm_(n_sp_pol),nbf_(n_sp_pol),i_s_pol
- real(SP):: r_nk,ind_gaps(2),dir_gaps(2)
- real(SP),parameter:: tresh=epsilon(1._SP)
- character(lchlen) :: ch_
- character(23)     :: prefix_
+ integer           ::i1,i_s
+ character(lchlen) ::ch_
+ character(23)     ::prefix_
+ real(SP)          ::E_g_dir(n_sp_pol,2) ! min - max
+ real(SP)          ::E_g_ind(n_sp_pol,2) ! min - max
+ integer           ::N_f(n_sp_pol)
+ integer           ::N_m(n_sp_pol)
  !
- ! Evaluate Metallic/Filled bands
- !
- nbm_=0
- nbf_=0
- do i_s_pol=1,n_sp_pol
-   do i1=1,E%nb
-     !
-     ! A single state (n k) weights 2 only when there is no spin
-     ! components 
-     !
-     r_nk=sum(E%f(i1,:,i_s_pol))
-     !
-     if (n_spin==1) r_nk=r_nk/2.
-     !
-     if (r_nk<=tresh) cycle
-     if (abs(r_nk-real(E%nk,SP))<=filled_tresh) then
-       nbf_(i_s_pol)=i1
-       cycle
-     endif
-     nbm_(i_s_pol)=i1
-   enddo
-   if (nbm_(i_s_pol)==0) nbm_(i_s_pol)=nbf_(i_s_pol)
- enddo
- !
- E%nbf=minval(nbf_)
- E%nbm=maxval(nbm_)
- !
- E%Efermi(2:)=E%Efermi(1)+(/maxval(E%E(E%nbf,:,:)),minval(E%E(E%nbf+1,:,:))/)
- if (E%nbf/=E%nbm) E%Efermi(2:)=0.
- !
- ! No Report
- !
- if (mode<=1) return
- !
- ! Report ...
- !
- ! E%Efermi(1) = Fermi Level
- ! E%Efermi(2) = VB max (with resepect to Efermi(1) )
- ! E%Efermi(3) = CB min (with resepect to Efermi(1) )
+ call OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,N_f,N_m)
  !
  call msg('r','States summary         : Full        Metallic    Empty')
  !
  ! [1] States occupations
  !
- do i_s_pol=1,n_sp_pol
+ do i_s=1,n_sp_pol
    i1=1
    !
    prefix_=''
-   if (n_sp_pol>1.and.i_s_pol==1) prefix_='             [spin up]'
-   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                  [dn]'
+   if (n_sp_pol>1.and.i_s==1) prefix_='             [spin up]'
+   if (n_sp_pol>1.and.i_s==2) prefix_='                  [dn]'
    !
-   if (nbf_(i_s_pol)==0) i1=0
-   if (nbf_(i_s_pol)/=nbm_(i_s_pol)) then
-     write (ch_,'(3(i4.4,a,i4.4,3x))') &
-&          i1,'-',nbf_(i_s_pol),&
-&          nbf_(i_s_pol)+1,'-',nbm_(i_s_pol),nbm_(i_s_pol)+1,'-',E%nb
+   if (N_f(i_s)==0) i1=0
+   if (N_f(i_s)/=N_m(i_s)) then
+     write (ch_,'(3(i4.4,a,i4.4,3x))') i1,'-',N_f(i_s),&
+&          N_f(i_s)+1,'-',N_m(i_s),N_m(i_s)+1,'-',E%nb
      call msg('r',prefix_//'  '//trim(ch_))
    else
-     write (ch_,'(2(i4.4,a,i4.4,15x))') i1,'-',nbf_(i_s_pol),nbf_(i_s_pol)+1,'-',E%nb
+     write (ch_,'(2(i4.4,a,i4.4,15x))') i1,'-',N_f(i_s),N_f(i_s)+1,'-',E%nb
      call msg('r',prefix_//'  '//trim(ch_))
    endif
    !
@@ -104,41 +67,32 @@ subroutine REPORT_Occupations(E,mode)
  !
  ! [2] Indirect Gaps (min/max)
  !
- do i_s_pol=1,n_sp_pol
+ do i_s=1,n_sp_pol
    !
-   if (nbf_(i_s_pol)/=nbm_(i_s_pol)) cycle
+   if (N_f(i_s)/=N_m(i_s)) cycle
    !
    prefix_=                               'Indirect Gaps      [ev]:'
-   if (n_sp_pol>1.and.i_s_pol==1) prefix_='Indirect Gaps [ev] [up]'
-   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                   [dn]'
-   ind_gaps(1)=minval(E%E(nbf_(i_s_pol)+1,:,i_s_pol))-maxval(E%E(nbf_(i_s_pol),:,i_s_pol))
-   ind_gaps(2)=maxval(E%E(nbf_(i_s_pol)+1,:,i_s_pol))-maxval(E%E(nbf_(i_s_pol),:,i_s_pol))
-   call msg('r',prefix_//':',ind_gaps*HA2EV)
+   if (n_sp_pol>1.and.i_s==1) prefix_='Indirect Gaps [ev] [up]'
+   if (n_sp_pol>1.and.i_s==2) prefix_='                   [dn]'
+   call msg('r',prefix_//':',E_g_ind(i_s,:)*HA2EV)
    !
  enddo
  !
  ! [3] Direct Gaps (min/max)
  !
- do i_s_pol=1,n_sp_pol
+ do i_s=1,n_sp_pol
    !
-   if (nbf_(i_s_pol)/=nbm_(i_s_pol)) cycle
+   if (N_f(i_s)/=N_m(i_s)) cycle
    !
    prefix_=                               'Direct Gaps        [ev]:'
-   if (n_sp_pol>1.and.i_s_pol==1) prefix_='Direct Gaps   [ev] [up]:'
-   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                   [dn]:'
-   dir_gaps=(/100.,-100./)
-   do i1=1,E%nk
-     dir_gaps(1)=min(dir_gaps(1),&
-&                    E%E(nbf_(i_s_pol)+1,i1,i_s_pol)-E%E(nbf_(i_s_pol),i1,i_s_pol) )
-     dir_gaps(2)=max(dir_gaps(2),&
-&                    E%E(nbf_(i_s_pol)+1,i1,i_s_pol)-E%E(nbf_(i_s_pol),i1,i_s_pol) )
-   enddo
-   call msg('r',prefix_//':',dir_gaps*HA2EV)
+   if (n_sp_pol>1.and.i_s==1) prefix_='Direct Gaps   [ev] [up]:'
+   if (n_sp_pol>1.and.i_s==2) prefix_='                   [dn]:'
+   call msg('r',prefix_//':',E_g_dir(i_s,:)*HA2EV)
    !
  enddo
  !
  ! [3] Report if the system is treated as a metal
  !
- if (E%nbf/=E%nbm.and..not.any(nbf_/=nbm_)) call warning('Merged spin levels are metallic')
+ if (E%nbf/=E%nbm.and..not.any(N_f/=N_m)) call warning('Merged spin levels are metallic')
  !
 end subroutine

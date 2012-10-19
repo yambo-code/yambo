@@ -39,6 +39,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  use com,        ONLY:msg,warning
  use D_lattice,  ONLY:Tel
  use functions,  ONLY:Fermi_fnc
+ use interfaces, ONLY:OCCUPATIONS_gaps
  implicit none
  type(levels)::Xe,E
  !
@@ -51,7 +52,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  !
  E%Efermi=Xe%Efermi
  call f_build(Xe%Efermi(1))
- call REPORT_Occupations(E,0)
+ call OCCUPATIONS_gaps(E)
  !
  ! If Xe and E have same metallic character then
  ! simply shift E components (Xe have been already shifted
@@ -70,7 +71,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  Ef_test=Xe%Efermi(2)+Ef_step
  do while(Ef_test<Xe%Efermi(3))
    call f_build(Ef_test)
-   call REPORT_Occupations(E,0)
+   call OCCUPATIONS_gaps(E)
    if (E%nbf==Xe%nbf.and.E%nbm==Xe%nbm) then
      E%Efermi(1)=Ef_test
      exit

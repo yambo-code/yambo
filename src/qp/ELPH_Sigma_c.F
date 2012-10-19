@@ -534,8 +534,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          do il=elph_branches(1),elph_branches(2)
            !
-           if (.not.elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq(iq_loop,il))
-           if (     elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq( q%sstar(iq_loop,1) ,il))
+           ph_freq=sqrt(ph_freqs_sq(iq_loop,il))
            !
            do iw=1,gsqF_energy_steps
              !

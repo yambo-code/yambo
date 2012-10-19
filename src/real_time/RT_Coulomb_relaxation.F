@@ -40,7 +40,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !
  integer               :: i_qp1,i_qp2,i_p,i_kmq,i_pmq,i_n,i_m,i_mp,i_np,i_p_star,&
 &                         iqbz,i_p_s,iqibz,i_p_bz
- real(SP)              :: f_k,f_p,f_kmq,f_pmq,GAMMA_,DELTA_,pre_factor,lorentzian,&
+ real(SP)              :: f_k,f_p,f_kmq,f_pmq,GAMMA_,DELTA(2),pre_factor,lorentzian,&
 &                         f_E_factor,f_H_factor
  !
  ! Dimensioning and Zeroing
@@ -87,10 +87,17 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          !
          pre_factor=abs(4.*pi*CACHE(i_qp1)%COLLISIONS_v3(i_qp2,i_p_s,iqbz))**2
          !
-         DELTA_ = E%E(i_np,i_kmq,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)-E%E(i_n,i_k,1)
+         DELTA(1) = E%E(i_np,i_kmq,1)-E%E(i_n,i_k,1)
+         DELTA(2) = E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)
+         !
+         ! Energy costrains to avoid gap jumping induced by a not conserved energy 
+         !
+         if (CV_transition(i_n,i_np).and.abs(DELTA(1))<E%Egap(1)) cycle
+         if (CV_transition(i_m,i_mp).and.abs(DELTA(2))<E%Egap(1)) cycle
+         !
          GAMMA_ = abs(E%W(i_np,i_kmq,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))+abs(E%W(i_n,i_k,1))
          !
-         lorentzian=GAMMA_/(DELTA_**2+GAMMA_**2)
+         lorentzian=GAMMA_/((DELTA(1)+DELTA(2))**2+GAMMA_**2)
          !
          f_E_factor=(1._SP-f_kmq)*(1._SP-f_p)*f_pmq
          f_H_factor=f_kmq*f_p*(2._SP-f_pmq)
@@ -121,4 +128,18 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
 &                                                    E_E_Electron_lifetime(i_n,i_k)*f_k
  enddo
  !
+ contains
+   !
+   pure function CV_transition(ib,ibp)
+     !
+     implicit none
+     logical            :: CV_transition
+     integer,intent(in) :: ib,ibp
+     !
+     CV_transition=.FALSE.
+     if (E%nbf/=E%nbm) return
+     CV_transition=(ib>E%nbf.and.ibp<=E%nbf).or.(ib<=E%nbf.and.ibp>E%nbf)
+     !
+   end function
+   !
 end subroutine RT_Coulomb_relaxation

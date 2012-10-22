@@ -2574,25 +2574,17 @@ CONTAINS
       IF (ierr/=0) RETURN
       CALL iotk_scan_attr ( attr,   "UNITS", energy_units_, IERR=ierr )
       IF (ierr/=0) RETURN
-
-      CALL iotk_scan_dat( iunit, "FERMI_ENERGY", ef_, FOUND = found )
       !
-      IF ( found ) THEN
-         IF ( PRESENT( ef ) )               ef             = ef_
-      END IF
-         !
-      CALL iotk_scan_dat( iunit, "TWO_FERMI_ENERGIES", &
-               two_ef_, FOUND = found)
-      IF ( .not. found ) then 
-         two_ef_=.FALSE.
-      ELSE
+      CALL iotk_scan_dat( iunit, "TWO_FERMI_ENERGIES", two_ef_, FOUND = found)
       !
-        IF ( two_ef_ ) THEN
-          call errore('qexml_read_bands_info',&
+      IF ( two_ef_ .and. found ) THEN
+        CALL errore('qexml_read_bands_info',&
 &         ' TWO_FERMI_ENERGIES=.true. Action: run pwscf without fixed_magnetization.',1)
-         ENDIF
+      ELSE
+        CALL iotk_scan_dat( iunit, "FERMI_ENERGY", ef_, IERR=ierr )
+        IF (ierr/=0) RETURN
       ENDIF
-
+      !
       CALL iotk_scan_end( iunit, "BAND_STRUCTURE_INFO", IERR=ierr )
       IF (ierr/=0) RETURN
       !
@@ -2602,6 +2594,7 @@ CONTAINS
       IF ( PRESENT( nspin ) )            nspin          = nspin_
       IF ( PRESENT( noncolin ) )         noncolin       = noncolin_
       IF ( PRESENT( natomwfc ) )         natomwfc       = natomwfc_
+      IF ( PRESENT( ef ) )               ef             = ef_
       IF ( PRESENT( nelec ) )            nelec          = nelec_
       IF ( PRESENT( energy_units ) )     energy_units   = TRIM( energy_units_ )
       IF ( PRESENT( k_units ) )          k_units        = TRIM( k_units_ )
@@ -3003,6 +2996,7 @@ subroutine read_upf_header_v1( u, z, nmesh, nbeta, psfile, ierr )
   !
   ! Search for PP_HEADER, skipping PP_INFO which can contain badly formed tags
   !
+  ios=0
   header_loop: do while (ios == 0)
      read (u, *, iostat = ios, err = 200) dummy
 !    if (matches ("<PP_HEADER>", dummy) ) then

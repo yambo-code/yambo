@@ -24,7 +24,6 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF)
  use pars,          ONLY:SP,cZERO
  use units,         ONLY:HA2EV
  use com,           ONLY:msg
- use BS,            ONLY:BS_drude_dim
  use frequency,     ONLY:bg_npts,cg_pt,cg_npts
  use stderr,        ONLY:intc
  use drivers,       ONLY:l_bss
@@ -47,7 +46,7 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF)
  !
  real(SP)             :: drude_factor
  logical              :: Drude_term
- integer              :: iw,Drude_dim
+ integer              :: iw
  !
  drude_GreenF = cZERO
  !
@@ -65,14 +64,7 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF)
  !
  if(.not.Drude_term) return
  !
- Drude_dim=0
- if(l_bss) then
-   Drude_dim=BS_drude_dim
- else
-   if(cg_pt(1)==0)  Drude_dim=bg_npts(1)
- endif
- !
- call msg('nrs','[X] Drude replaces '//trim(intc(Drude_dim))//' poles @[ev]:',(/real(X%Wd),aimag(X%Wd)/)*HA2EV)
+ call msg('nrs','[X] Drude contribution @[ev]:',(/real(X%Wd),aimag(X%Wd)/)*HA2EV)
  !
  ! drude_factor is the eh_occ factor calculated in the Xo loop
  ! evaluated at the fermi state

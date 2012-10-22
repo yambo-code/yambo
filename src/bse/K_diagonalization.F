@@ -26,7 +26,7 @@ subroutine K_diagonalization(iq,W)
  !
  use pars,           ONLY:SP,DP,pi
  use wrapper,        ONLY:M_by_M,Vstar_dot_V,V_dot_V
- use X_m,            ONLY:X_epsilon,X_drude
+ use X_m,            ONLY:X_epsilon,X_drude_term
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,&
 &                         BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_eh_W,K_BSmat_by_V,BS_eh_E
@@ -489,7 +489,7 @@ subroutine K_diagonalization(iq,W)
  ! missing in the length gauge (this should be zero for systems with a gap)
  if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(5,:)=X_epsilon(5,:)-B_Hall(2)/W%p(:)
  ! Drude
- X_epsilon(2,:)=X_epsilon(2,:)+X_drude(:)*factor/q_norm(1)**2
+ X_epsilon(2,:)=X_epsilon(2,:)+X_drude_term(:)*factor/q_norm(1)**2
  !
  if(l_kerr) then
    if(trim(global_gauge)=='length')   X_epsilon(5,:)=X_epsilon(5,:)*factor/q_norm(1)**2

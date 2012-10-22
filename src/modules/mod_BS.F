@@ -28,7 +28,6 @@ module BS
  !
  integer :: BS_n_g_exch
  integer :: BS_K_dim
- integer :: BS_drude_dim
  integer :: BS_bands(2)
  integer :: BS_columns
  integer :: BS_n_g_W
@@ -37,6 +36,7 @@ module BS
  integer :: BS_k_and_row_restart(2)
  real(SP):: BS_eh_en(2)
  real(SP):: BS_eh_win(2)
+ real(SP):: BS_drude_f_eh
  logical :: BS_W_is_diagonal
  logical :: BS_IP_antires
  logical :: BS_K_coupling

@@ -34,7 +34,7 @@ subroutine K_output_file(iq,mode)
  use pars,      ONLY:cI
  use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,hbar_SI
  use drivers,   ONLY:l_kerr,l_anomalous_Hall
- use X_output,  ONLY:kerr_file_name,off_file_name
+ use X_output,  ONLY:moke_file_name,off_file_name
  use KERR,      ONLY:B_Hall
 #endif
  !
@@ -92,7 +92,7 @@ subroutine K_output_file(iq,mode)
 #if defined _KERR
  if(l_kerr) then
    call of_open_close(off_file_name,title_mode)
-   call of_open_close(kerr_file_name,title_mode)
+   call of_open_close(moke_file_name,title_mode)
  endif
 #endif
  !
@@ -161,15 +161,15 @@ subroutine K_output_file(iq,mode)
      if (mode/=1.and.mode/=4) call msg("o off",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (mode==4) call msg("o off",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
      !
-     call X_setup_headers('kerr')
-     if (mode==1) call msg("o kerr",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-     if (mode/=1.and.mode/=4) call msg("o kerr",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
-     if (mode==4) call msg("o kerr",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+     call X_setup_headers('moke')
+     if (mode==1) call msg("o moke",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+     if (mode/=1.and.mode/=4) call msg("o moke",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==4) call msg("o moke",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
      !
    endif
 #endif
    !
-   call msg("o eps eel alpha off kerr",'#')
+   call msg("o eps eel alpha off moke",'#')
    !
    ! ABSORPTION
    !------------
@@ -259,7 +259,7 @@ subroutine K_output_file(iq,mode)
        n_output_data=5
        if (mode==4) n_output_data=3
        if (mode==4) output_data(2:3)=output_data(4:5)
-       call msg('o kerr','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+       call msg('o moke','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
      enddo
      !
    endif
@@ -275,7 +275,7 @@ subroutine K_output_file(iq,mode)
 #if defined _KERR
  if(l_kerr) then
    call of_open_close(off_file_name)
-   call of_open_close(kerr_file_name)
+   call of_open_close(moke_file_name)
  endif
 #endif
  !

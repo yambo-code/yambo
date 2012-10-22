@@ -52,7 +52,7 @@ module X_m
  ! Absorption & Polarizability
  !
  complex(SP), allocatable :: X_epsilon(:,:)
- complex(SP), allocatable :: X_drude(:)
+ complex(SP), allocatable :: X_drude_term(:)
  complex(SP), allocatable :: X_fxc(:)
  !
  ! Response function

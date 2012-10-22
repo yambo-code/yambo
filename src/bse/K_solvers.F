@@ -24,11 +24,11 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use pars,           ONLY:SP,pi,schlen
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t,X_epsilon,X_alloc,DIP_q_dot_iR,&
-&                         alpha_dim,eps_2_alpha,X_duplicate,X_drude
+&                         alpha_dim,eps_2_alpha,X_duplicate,X_drude_term
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_bands,BSS_q0,BS_eh_table,BSS_mode,BS_eh_E,&
 &                         BSS_n_descs,BS_K_coupling,BSS_Vnl_included,BS_eh_W,&
-&                         BS_drude_dim,BS_IP_antires
+&                         BS_drude_f_eh,BS_IP_antires
 #if defined _DISTRIBUTED
  use BS,             ONLY:ioBS_DISTRIBUTED
 #endif
@@ -96,9 +96,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #else
  allocate(X_epsilon(4,BSS_n_freqs))
 #endif
- allocate(X_drude(BSS_n_freqs))
+ allocate(X_drude_term(BSS_n_freqs))
  X_epsilon=cmplx(0.,0.,SP)
- X_drude=cmplx(0.,0.,SP)
+ X_drude_term=cmplx(0.,0.,SP)
  !
  call X_duplicate(X_static,X_oscillators) 
  call Drude(1,(/1,BSS_n_freqs/),Ken,Xk,W_bss,X_static,drude_GreenF)
@@ -126,7 +126,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
      !   iq . <c|r|v> = - conjg( iq . <v | r |c> )
      !
 #if defined _KERR
-     if(trim(global_gauge)=='length') BSS_rhoq0(i1)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))
+     if(trim(global_gauge)=='length')   BSS_rhoq0(i1)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))
      if(trim(global_gauge)=='velocity') BSS_rhoq0(i1)= conjg(DIP_P_symm(1,ic,iv,ik,i_sp))
 #else
      BSS_rhoq0(i1)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))
@@ -136,33 +136,28 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
      !
 #if defined _KERR
      if (BS_K_coupling.or.BS_IP_antires) then
-       if(trim(global_gauge)=='length') BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
+       if(trim(global_gauge)=='length')   BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
        if(trim(global_gauge)=='velocity') BSS_rhoq0(BS_K_dim+i1)=DIP_P_symm(1,ic,iv,ik,i_sp)
      endif
 #else
      if (BS_K_coupling.or.BS_IP_antires) BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
 #endif
      !
-     ! Drude term
-     if (abs(BS_eh_E(i1))<1.E-5) then
-       X_drude(:)=X_drude(:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*BS_eh_f(i1)* &
-&                                    drude_GreenF(:)/BS_drude_dim
-     else
+     X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*BS_eh_f(i1)/&
+&                                  (W_bss%p(:)-BS_eh_E(i1))
+     !
+     if (BS_K_coupling.or.BS_IP_antires) then
        !
-       X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*BS_eh_f(i1)/&
-&                                    (W_bss%p(:)-BS_eh_E(i1))
-       if (BS_K_coupling.or.BS_IP_antires) then
-         !
-         ! Note the plus in "+BSS_rhoq0" coming from the BS_eh_f change of sign
-         !
-         X_epsilon(3,:)=X_epsilon(3,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0(i1)*BS_eh_f(i1)/&
-&                                      (W_bss%p(:)+BS_eh_E(i1))
-       endif
+       ! Note the plus in "+BSS_rhoq0" coming from the BS_eh_f change of sign
+       !
+       X_epsilon(3,:)=X_epsilon(3,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0(i1)*BS_eh_f(i1)/&
+&                                    (W_bss%p(:)+BS_eh_E(i1))
      endif
      !
    enddo
    !
    factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
+   !
 #if defined _KERR
    if(trim(global_gauge)=='velocity') then
      if(all(abs(real(W_bss%p(:)))>0.01))&
@@ -180,11 +175,14 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    if(trim(global_gauge)=='velocity') then
      X_epsilon(3,:)=1.+(X_epsilon(3,:)-factor_jj)*factor/(real(W_bss%p(:))**2+epsilon(1.))
    endif
-   ! Make Drude term causal
+   !
+   ! Causal Drude term
+   !
+   X_drude_term(:)=-BS_drude_f_eh*drude_GreenF(:)
    do iw=1,iw_ref-1
-     X_drude(iw_ref-iw)=cmplx(real(X_drude(iw_ref-iw)),-aimag(X_drude(iw_ref+iw)))
+     X_drude_term(iw_ref-iw)=cmplx(real(X_drude_term(iw_ref-iw)),-aimag(X_drude_term(iw_ref+iw)))
    enddo
-   X_epsilon(3,:)=X_epsilon(3,:)+X_drude(:)*factor/q_norm(1)**2
+   X_epsilon(3,:)=X_epsilon(3,:)+X_drude_term(:)*factor/q_norm(1)**2
    !
    if(l_kerr) call K_kerr_IP(W_bss%p)
 #else
@@ -259,7 +257,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! CLEAN
  !
- deallocate(BSS_rhoq0,X_epsilon,X_drude)
+ deallocate(BSS_rhoq0,X_epsilon,X_drude_term)
  call mem_est("BSS_rhoq0")
  if (iq==1) call X_alloc('DIP_q_dot_iR')
 #if defined _KERR

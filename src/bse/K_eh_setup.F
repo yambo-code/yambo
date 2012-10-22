@@ -37,7 +37,7 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
  use BS,           ONLY:BS_K_dim,O_v_state,O_c_state,BS_res_K_corr,&
 &                       O_n_v_states,O_n_c_states,BS_eh_E,BS_eh_f,BS_eh_en,&
 &                       BS_eh_table,BS_bands,BS_blk_dim,BS_K_coupling,&
-&                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z,BS_drude_dim,&
+&                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z,BS_drude_f_eh,&
 &                       BS_IP_antires
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
  use R_lattice,    ONLY:qindx_X,bz_samp
@@ -61,7 +61,6 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
  do while(.TRUE.) 
    !
    BS_K_dim=0
-   BS_drude_dim=0
    !
    if (BS_res_K_corr) then
      O_n_v_states=0
@@ -92,7 +91,6 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
            if (abs(E_eh)<1.E-5) then
              if(any((/ic/=Ken%bf,iv/=Ken%bf,ik/=Ken%kf,i_sp/=Ken%sf/)) ) cycle
              if(real(Wd)==0..and.aimag(Wd)==0.) cycle
-             BS_drude_dim=BS_drude_dim+1
            endif
            !
            ! Same ordering procedure of the Xo case (see X_eh_setup.F)
@@ -109,7 +107,13 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
            ! A 5% fractional occupation swiches on the particular
            ! treatment of finite temp. BSE 
            !
-           f_eh=f_eh/spin_occ/spin_occ          
+           f_eh=f_eh/spin_occ/spin_occ
+           !
+           if (abs(E_eh)<1.E-5) then
+             BS_drude_f_eh=f_eh
+             cycle
+           endif
+           !
            if ( abs(f_eh-1.)> filled_tresh) BS_not_const_eh_f=.TRUE.
            !
            ! The e/h occ must be 1. in the T=0 case as the spin factor (spin_occ)

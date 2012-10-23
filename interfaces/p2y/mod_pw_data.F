@@ -58,6 +58,7 @@ module pw_data
 
 ! Smearing parameters
   logical                    :: lgauss_
+  integer                    :: ngauss_
   character(256)             :: degauss_units_
   real(dp)                   :: degauss_
 

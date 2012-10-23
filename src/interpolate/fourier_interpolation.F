@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2010 C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -19,58 +19,52 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine fourier_interpolation(USER_k,VALUES,engre,ndim)
+subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues)
   !
-  use pars,           ONLY:SP,pi
-  use interpolate,    ONLY:nwave,lattice_vectors,lpfac,stern1,int_sop
+  use pars,           ONLY:SP,pi,cI,cZERO
+  use interpolate,    ONLY:nshells,lattice_vectors,make_star,metric,int_sop
   use R_lattice,      ONLY:bz_samp
   use D_lattice,      ONLY:nsym
   use vec_operate,    ONLY:c2a
+  use memory_m,       ONLY:mem_est
   implicit none
   !
-  integer, intent(in)       :: ndim
+  integer,intent(in)        :: nvalues
   type(bz_samp), intent(in) :: USER_k
-  real(SP), intent(out)     :: VALUES(ndim,USER_k%nibz)
-  real(SP), intent(in)      :: engre(nwave,ndim)
+  real(SP), intent(out)     :: VALUES(nvalues,USER_k%nibz)
+  real(SP), parameter       :: twopi=2._SP*pi
+  complex(SP), intent(in)   :: engre(nshells,nvalues)
   !
   ! Work Space
   !
-  real(SP)                 :: arg,tempc
-  integer                  :: ikpt,nw,iband,i1
-  real(SP)                 :: Rdum(3),stg(3,nsym)
-  integer, allocatable     :: nstv(:)
-  real(SP), allocatable    :: spwre(:)
-  real(SP), allocatable    :: vec(:,:,:)
+  integer :: i1,iv,ik,is,nstar
+  real(SP) :: star_vec(3,nsym),v(3)
+  complex(SP), allocatable :: star(:,:)
   !
-  allocate (nstv(nwave))
-  allocate (spwre(nwave))
-  allocate (vec(3,nsym,nwave))
+  allocate (star(nshells,USER_k%nibz))
+  call mem_est("star",(/size(star)/),(/SP/))
   !
-  !precalc vec 
+  ! Make stars
   !
-  do nw=1,nwave
-     rdum(1:3)=lattice_vectors(1:3,nw)
-     call stern1(rdum,nsym,int_sop,nstv(nw),stg)
-     forall(i1=1:nstv(nw)) vec(1:3,i1,nw)=stg(1:3,i1)
-  enddo
-  !
-  do ikpt=1,user_k%nibz
-     spwre=0._SP
-     do nw=1,nwave
-       do i1=1,nstv(nw)     
-         arg=sum(2._SP*pi*user_k%pt(ikpt,1:3)*vec(1:3,i1,nw))      
-         tempc=cos(arg)
-         spwre(nw)=spwre(nw)+tempc
+  star=cZERO
+  do i1=1,nshells
+     call make_star(lattice_vectors(:,i1),nsym,int_sop,nstar,star_vec)  
+     do ik=1,USER_k%nibz
+       call c2a(v_in=USER_k%pt(ik,:),v_out=v,mode='ki2a')
+       do is=1,nstar
+         star(i1,ik)=star(i1,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,is)))
        enddo
-     enddo
-     !
-     spwre(1:nwave)=spwre(1:nwave)/nstv(1:nwave)
-     !
-     forall(iband=1:ndim) VALUES(iband,ikpt) = sum(spwre(1:nwave)*engre(1:nwave,iband))
-     !
+       star(i1,ik)=star(i1,ik)/real(nstar)
+    enddo
+  enddO
+  !
+  do ik=1,USER_k%nibz
+    do iv=1,nvalues
+      VALUES(iv,ik) = sum(engre(1:nshells,iv)*star(1:nshells,ik))
+    enddo
   enddo
   !
-  deallocate (nstv)
-  deallocate (spwre)
-  deallocate (vec)
+  deallocate (star)
+  call mem_est("star")
+  !
 end subroutine fourier_interpolation

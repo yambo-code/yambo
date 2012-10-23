@@ -23,7 +23,7 @@ subroutine bz_interpolation(R1D,R2D,C1D,C2D,USER_k,ID)
   use pars,        ONLY:SP
   use R_lattice,   ONLY:bz_samp
   use com,         ONLY:error
-  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nwave,get_ID
+  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells,get_ID
   implicit none
   type(bz_samp), intent(in)            :: USER_k
   real(SP),      intent(out), optional :: R1D(:,:),R2D(:,:,:)
@@ -33,7 +33,7 @@ subroutine bz_interpolation(R1D,R2D,C1D,C2D,USER_k,ID)
   ! Work Space
   !
   real(SP), allocatable :: RDATA(:,:)
-  integer               :: outdim(2),ik,i1,twoi1
+  integer               :: outdim(2),ik,i1,i2
   !
   if(interpls(ID)%ndim==0) call error("Interpolation coefficients not present!")
   !
@@ -43,7 +43,7 @@ subroutine bz_interpolation(R1D,R2D,C1D,C2D,USER_k,ID)
   endif
   !
   allocate(RDATA(interpls(ID)%ndim,USER_k%nibz))
-  call fourier_interpolation(USER_k,R1D,interpls(ID)%engre,interpls(ID)%ndim)
+  call fourier_interpolation(USER_k,RDATA,interpls(ID)%engre,interpls(ID)%ndim)
   !
   if(interpls(ID)%interp_type==CMPLX1D.and.present(C1D)) then
     !   
@@ -67,10 +67,9 @@ subroutine bz_interpolation(R1D,R2D,C1D,C2D,USER_k,ID)
     outdim(2)               =size(C2D(1,:,1))
     !
     do i1=1,outdim(2)
-      twoi1=i1+outdim(2)
-      do ik=1,USER_k%nibz
-        C2D(1:outdim(1),i1,ik)   =cmplx(RDATA((i1-1)*outdim(1)+1:i1*outdim(1),ik),RDATA((twoi1-1)*outdim(1)+1:twoi1*outdim(1),ik)) 
-      enddo
+      i2=i1+outdim(2)  
+      C2D(1:outdim(1),i1,1:USER_k%nibz)=cmplx(RDATA((i1-1)*outdim(1)+1:i1*outdim(1),1:USER_k%nibz),& 
+&                                             RDATA((i2-1)*outdim(1)+1:i2*outdim(1),1:USER_k%nibz)) 
     enddo
     !
   endif

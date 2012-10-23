@@ -55,6 +55,10 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Work Space
  !
+ type(bz_samp)         :: k_save
+ type(X_t)             :: X_Vnl
+ type(levels)          :: en_sc,en_sc_expanded
+ !
  integer               :: ik_save,iv(2),ierr,ib,ibm,i_wf,n_steps,i_spin,&
 &                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
  integer               :: spatial_nsym,old_spatial_nsym,old_trev_nsym
@@ -65,14 +69,12 @@ subroutine RT_fix_symmetries(E,k)
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
 &                         S_contains_TR(nsym),Trev_2_spatial=.false.,Rm_inv_BM_axis,Expand_symm
- type(bz_samp)         :: k_save
- type(X_t)             :: X_Vnl
- type(levels)          :: en_sc,en_sc_expanded
  character(lchlen)     :: core_io_path_save,fragment_name
  integer               :: ACTION_,ioKB_err,io_SC_E_err,io_SC_V_err,io_SC_WF_err,io_Vnl_err
  complex(SP), allocatable :: full_H(:,:,:,:)
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  real(SP),    allocatable :: old_dl_sop(:,:,:)
+ real(SP),    allocatable :: dl_sop_tmp(:,:,:)
  complex(SP), allocatable :: wf_tmp(:,:)
  complex(SP), allocatable :: Vnl_store(:,:,:,:,:)
  real(SP)                 :: symm_to_check(3,3,3)
@@ -370,9 +372,12 @@ subroutine RT_fix_symmetries(E,k)
  if(i_time_rev==1)&
 & call msg('s',trim(intc(old_trev_nsym))//' T-rev symmetries reduced/increased to ...'//trim(intc(nsym-spatial_nsym)))
  !
+ allocate(dl_sop_tmp(3,3,nsym))
+ dl_sop_tmp(1:3,1:3,1:nsym)=dl_sop(1:3,1:3,1:nsym)
  deallocate(dl_sop)
  allocate(dl_sop(3,3,nsym))
- dl_sop=old_dl_sop
+ dl_sop=dl_sop_tmp
+ deallocate(dl_sop_tmp)
  !
  call set_real_printed_length(f_length=7,g_length=8)
  call msg('s','[Symm] Spatial simmetries now are:')  
@@ -562,6 +567,20 @@ subroutine RT_fix_symmetries(E,k)
    io_err=ioDB1(E_reduced,k,ID)
    !
    deallocate(k_table)
+   !
+   if(ioKB_err==0) then
+     deallocate(pp_kb_store,pp_kbd_store)
+     call mem_est("pp_kb_store pp_kbd_store")
+     call PP_free()
+   endif
+   !
+   if(io_Vnl_err==0) then
+     deallocate(Vnl_store,Vnl)
+     call mem_est("Vnl_store Vnl") 
+   endif
+   !
+   deallocate(old_dl_sop)
+   !
    goto 1000
    !  
  endif
@@ -929,6 +948,8 @@ subroutine RT_fix_symmetries(E,k)
    if(n_steps>0) call live_timing()
    !
  endif
+ !
+ deallocate(old_dl_sop)
  !
  call msg('s',':: DB1 ...')
  !

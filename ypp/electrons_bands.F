@@ -23,8 +23,8 @@ subroutine electrons_bands(Xk,Xen)
  !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
- use YPP,            ONLY:BANDS_steps,coo_in,BANDS_range
- use electrons,      ONLY:levels
+ use YPP,            ONLY:BANDS_steps,coo_in,coo_out,BANDS_range,k_transform
+ use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use com,            ONLY:msg,of_open_close,error
  use vec_operate,    ONLY:c2a,v_norm
@@ -41,10 +41,10 @@ subroutine electrons_bands(Xk,Xen)
  !
  type(bz_samp)         :: USER_K,CIRCUIT_K
  real(SP)              :: real_ctl,v(3),max_dist
- real(SP), allocatable :: distances(:),values(:),bands(:,:)
- integer               :: i1,i2,ic,ID_interp
+ real(SP), allocatable :: distances(:),values(:),bands(:,:,:),tmp_bands(:,:,:)
+ integer               :: i1,i2,ic,is,ID_interp
  integer,  allocatable :: int_distances(:)
- character(schlen)     :: bands_f_name
+ character(schlen)     :: bands_f_name,bands_f_down
  character(schlen), allocatable :: headings(:)
  !
  if(BANDS_steps<=0)  call error("Set BANDS_steps > 0")
@@ -68,16 +68,10 @@ subroutine electrons_bands(Xk,Xen)
  !
  USER_K%nibz=USER_K%nibz-1
  !
+ coo_out="iku"
  do i1=1,USER_K%nibz
-   !      
-   v=USER_K%pt(i1,:)
-   if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(i1,:),v_out=v,mode="kc2a")
-   if (trim(coo_in)=="iku") call c2a(v_in=USER_K%pt(i1,:),v_out=v,mode="ki2a")
-   USER_K%pt(i1,:)=v
-   !
+   call k_transform(USER_K%pt(i1,:),coo_in)
  enddo
- !
- USER_K%units="a"
  !
  if(USER_K%nibz==0) return
  !
@@ -89,6 +83,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  do i1=1,USER_K%nibz-1
    v=USER_K%pt(i1,:)-USER_K%pt(i1+1,:)
+   call c2a(v_in=v,mode="ki2c")  
    distances(i1)=v_norm(v)
  enddo
  !
@@ -105,36 +100,38 @@ subroutine electrons_bands(Xk,Xen)
  do i1=1,USER_K%nibz-1
    v=(USER_K%pt(i1+1,:)-USER_K%pt(i1,:))/int_distances(i1)
    do i2=1,int_distances(i1)
-     CIRCUIT_K%pt(ic,:)=USER_K%pt(i1,:)+(i2-1)*v
+     CIRCUIT_K%pt(ic,:)= USER_K%pt(i1,:)+(i2-1._SP)*v
      ic=ic+1
    enddo
  enddo
- CIRCUIT_K%pt(ic,:)=USER_K%pt(USER_K%nibz,:)
+ CIRCUIT_K%pt(CIRCUIT_K%nibz,:)=USER_K%pt(USER_K%nibz,:)
  !
  deallocate(distances,int_distances)
  !
- do i1=1,Xk%nibz
-   v=Xk%pt(i1,:)
-   call c2a(v_in=Xk%pt(i1,:),v_out=v,mode="ki2a")
-   Xk%pt(i1,:)=v
- enddo
- !
  call QP_apply(BANDS_range,Xen,Xk,'G',msg_fmt='s')
- call bz_interp_setup(Xk)
- call eval_interpolation_coeff(R1D=Xen%E(BANDS_range(1):BANDS_range(2),1:Xk%nibz,1),k=Xk,ID=ID_interp)
  !
- do i1=1,Xk%nibz
-   v=Xk%pt(i1,:)
-   call c2a(v_in=Xk%pt(i1,:),v_out=v,mode="ka2i")
-   Xk%pt(i1,:)=v
+ call bz_interp_setup(Xk)
+ !
+ allocate(tmp_bands(Xen%nb,n_sp_pol,Xk%nibz))
+ tmp_bands=0._SP
+ do is=1,n_sp_pol
+   tmp_bands(BANDS_range(1):BANDS_range(2),is,1:Xk%nibz)=Xen%E(BANDS_range(1):BANDS_range(2),1:Xk%nibz,is)
  enddo
+ call eval_interpolation_coeff(R2D=tmp_bands(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Xk%nibz), &
+&                              k=Xk,ID=ID_interp)
+ deallocate(tmp_bands)
  !
  allocate(values(3+BANDS_range(2)-BANDS_range(1)+1),headings(3+BANDS_range(2)-BANDS_range(1)+1))
- allocate(bands(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz))
+ allocate(bands(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz))
  !
- call bz_interpolation(USER_k=CIRCUIT_k,R1D=bands,ID=ID_interp)
+ call bz_interpolation(USER_k=CIRCUIT_k,R2D=bands,ID=ID_interp)
  !
  bands_f_name="bands"
+ if(n_sp_pol>1) then
+   bands_f_name=bands_f_name//"_up"
+   bands_f_down="bands_down"
+   call of_open_close(bands_f_down,'ot')
+ endif
  call of_open_close(bands_f_name,'ot')
  !
  headings(1:3)=(/" kx  "," ky  "," kz  "/)
@@ -142,17 +139,35 @@ subroutine electrons_bands(Xk,Xen)
    headings(3+i1-BANDS_range(1)+1)=' b'//intc(i1)
  enddo
  !
- call msg('o bands',"#",headings,INDENT=0,USE_TABS=.true.)
+ if(n_sp_pol>1) then
+   call msg('o bands_up',"#",headings,INDENT=0,USE_TABS=.true.)
+   call msg('o bands_down',"#",headings,INDENT=0,USE_TABS=.true.)
+ else
+   call msg('o bands',"#",headings,INDENT=0,USE_TABS=.true.)
+ endif
  call msg('o path',"#"," ",INDENT=0)
  !
+ coo_out=coo_in
  do i1=1,CIRCUIT_K%nibz
    !
+   call k_transform(CIRCUIT_K%pt(i1,:),"iku")
    values(1:3)=CIRCUIT_K%pt(i1,:)
    values(3+1:3+BANDS_range(2)-BANDS_range(1)+1)= & 
-&    bands(BANDS_range(1):BANDS_range(2),i1)*HA2EV
+&    bands(BANDS_range(1):BANDS_range(2),1,i1)*HA2EV
+ if(n_sp_pol>1) then
+   call msg('o bands_up',"",values,INDENT=0,USE_TABS=.true.)
+   values(3+1:3+BANDS_range(2)-BANDS_range(1)+1)= & 
+&    bands(BANDS_range(1):BANDS_range(2),2,i1)*HA2EV
+   call msg('o bands_down',"",values,INDENT=0,USE_TABS=.true.)
+ else
    call msg('o bands',"",values,INDENT=0,USE_TABS=.true.)
+ endif
    !
  enddo
+ ! 
  call of_open_close(bands_f_name)
+ if(n_sp_pol>1) then
+   call of_open_close(bands_f_down)
+ endif
  !
 end subroutine

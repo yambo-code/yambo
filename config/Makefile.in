@@ -71,7 +71,7 @@ PJ_RTLIBS          = $(MAIN_LIBS) sc real_time
 #
 # YPP
 #
-YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface pol_function bse
+YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface interpolate pol_function bse
 YPPSCLIBS    = $(YPPLIBS) sc
 YPPRTLIBS    = $(YPPLIBS) sc real_time
 YPPTEST2     = $(YPPLIBS) interpolate

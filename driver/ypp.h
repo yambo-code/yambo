@@ -59,17 +59,13 @@
 #endif
 #if defined _YPP_ELPH 
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(e)lias,(g)kkp,(m)ag]",0,0,1,0,0}, 
-  {"electrons","s","Electrons [(w)ave,(d)ensity,(e)lias,(m)ag,do(s)]",0,0,1,0,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,(e)lias,(m)ag,do(s),(b)ands]",0,0,1,0,0}, 
 #endif
 #if defined _YPP_MAGNETIC 
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(m)ag]",0,0,1,0,0}, 
-  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),angu(l)ar,(p)osition]",0,0,1,0,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands,angu(l)ar,(p)osition]",0,0,1,0,0}, 
 #endif
 #if ! defined _YPP_ELPH && ! defined _YPP_MAGNETIC && ! defined _YPP_TEST_2
-  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave,(m)ag]",0,0,1,0,0}, 
-  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s)]",0,0,1,0,0}, 
-#endif
-#if  defined  _YPP_TEST_2
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave,(m)ag]",0,0,1,0,0}, 
   {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands]",0,0,1,0,0}, 
 #endif

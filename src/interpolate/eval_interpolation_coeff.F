@@ -22,7 +22,7 @@
 subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,k,ID)
   use pars,        ONLY:SP
   use R_lattice,   ONLY:bz_samp
-  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nwave,get_ID
+  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells,get_ID
   implicit none
   type(bz_samp), intent(in)           :: k
   real(SP),      intent(in), optional :: R1D(:,:),R2D(:,:,:)
@@ -32,7 +32,7 @@ subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,k,ID)
   ! Work Space
   !
   real(SP), allocatable :: RDATA(:,:)
-  integer               :: inpdim(2),i1
+  integer               :: inpdim(2),i1,i2
   !
   call get_ID(ID)
   !
@@ -40,7 +40,7 @@ subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,k,ID)
     !
     interpls(ID)%interp_type=REAL1D
     interpls(ID)%ndim       =size(R1D(:,1))
-    allocate(interpls(ID)%engre(nwave,interpls(ID)%ndim))
+    allocate(interpls(ID)%engre(nshells,interpls(ID)%ndim))
     call bz_interp_coeff(k,R1D,interpls(ID)%engre,interpls(ID)%ndim)
     return
     !
@@ -51,7 +51,7 @@ subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,k,ID)
     interpls(ID)%interp_type=CMPLX1D
     inpdim(1)               =size(C1D(:,1))
     interpls(ID)%ndim       =2*inpdim(1)
-    allocate(interpls(ID)%engre(nwave,interpls(ID)%ndim))
+    allocate(interpls(ID)%engre(nshells,interpls(ID)%ndim))
     allocate(RDATA(interpls(ID)%ndim,k%nibz))
     RDATA(1:inpdim(1),1:k%nibz)            = real(C1D(1:inpdim(1),1:k%nibz))
     RDATA(inpdim(1)+1:2*inpdim(1),1:k%nibz)=aimag(C1D(1:inpdim(1),1:k%nibz))
@@ -62,7 +62,7 @@ subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,k,ID)
     inpdim(1)               =size(R2D(:,1,1))
     inpdim(2)               =size(R2D(1,:,1))
     interpls(ID)%ndim       =inpdim(1)*inpdim(2)
-    allocate(interpls(ID)%engre(nwave,interpls(ID)%ndim))
+    allocate(interpls(ID)%engre(nshells,interpls(ID)%ndim))
     allocate(RDATA(interpls(ID)%ndim,k%nibz))
     do i1=1,inpdim(2)
       RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:k%nibz)            = R2D(1:inpdim(1),i1,1:k%nibz)
@@ -74,18 +74,17 @@ subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,k,ID)
     inpdim(1)               =size(C2D(:,1,1))
     inpdim(2)               =size(C2D(1,:,1))
     interpls(ID)%ndim       =2*inpdim(1)*inpdim(2)
-    allocate(interpls(ID)%engre(nwave,interpls(ID)%ndim))
+    allocate(interpls(ID)%engre(nshells,interpls(ID)%ndim))
     allocate(RDATA(interpls(ID)%ndim,k%nibz))
     do i1=1,inpdim(2)
+      i2=i1+inpdim(2)
       RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:k%nibz) =  real(C2D(1:inpdim(1),i1,1:k%nibz))
-    enddo
-    do i1=inpdim(2)+1,2*inpdim(2)
-      RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:k%nibz) = aimag(C2D(1:inpdim(1),i1,1:k%nibz))
+      RDATA((i2-1)*inpdim(1)+1:i2*inpdim(1),1:k%nibz) = aimag(C2D(1:inpdim(1),i1,1:k%nibz))
     enddo
     !
   endif
   !  
-  call bz_interp_coeff(k,R1D,interpls(ID)%engre,interpls(ID)%ndim)
+  call bz_interp_coeff(k,RDATA,interpls(ID)%engre,interpls(ID)%ndim)
   deallocate(RDATA)
   !
  end subroutine  eval_interpolation_coeff

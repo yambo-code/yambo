@@ -248,11 +248,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
  if (found_SC_DB) call setup_global_XC('G',G_kind,MORE_NONE,G_xc_functional,G_perturbation)
  call load_SC_components('E',E=Xen,COM_=NONE,MODE_=DUMP,ik=0,&
 &                         kind=X_kind,xc_functional=X_xc_functional,perturbation=X_perturbation)
- if (.not.associated(Xen%Eo).and.found_SC_DB) then
-   allocate(Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
-   call mem_est("XenE-Eo",(/size(Xen%Eo)/),(/SP/))
-   Xen%Eo(:,:,:)=en%Eo(:,:en%nk,:)
- endif
  if (found_SC_DB) call setup_global_XC('X',X_kind,MORE_NONE,X_xc_functional,X_perturbation)
 #endif
  !
@@ -299,6 +294,14 @@ subroutine setup(en,Xen,Ken,k,Xk)
      call warning(trim(loaded_WF_xc_string)//' wavefunctions found. Bands check at loading time.')
    endif
    !
+ endif
+ !
+ ! Copy Ho eigenvalues in Xen%Eo
+ !
+ if (.not.associated(Xen%Eo).and.found_SC_DB) then
+   allocate(Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
+   call mem_est("XenE-Eo",(/size(Xen%Eo)/),(/SP/))
+   Xen%Eo(:,:,:)=en%Eo(:,:en%nk,:)
  endif
  !
 #endif

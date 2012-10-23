@@ -49,9 +49,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'plot',         '[R] Plot')
  call it('r',defs,'density',      '[R] Density')
  call it('r',defs,'wannier',      '[R] Wannier 90 I/O')
-#if defined _YPP_TEST_2
  call it('r',defs,'bands',        '[R] Bands')
-#endif
  call it('r',defs,'wavefunction', '[R] Wavefunction')
 #if defined _YPP_ELPH
  call it('r',defs,'eliashberg',   '[R] Eliashberg')
@@ -103,11 +101,9 @@ subroutine ypp_init_load(defs)
  !
  ! BANDS
  !
-#if defined _YPP_TEST_2
  call it(defs,'BANDS_steps', 'Number of divisions',BANDS_steps) 
  call it(defs,'BANDS_range', 'Bands Range',BANDS_range) 
  call it(defs,'BKpts','Bands circuit',Kgw_1)
-#endif 
  !
  ! Wannier interface
  !

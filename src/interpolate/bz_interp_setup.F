@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2010 C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -21,44 +21,42 @@
 !
 subroutine bz_interp_setup(Xk)
  !
- ! Code taken from BolzTraP
+ ! Code inspired by BolzTraP
  ! http://www.icams.de/content/departments/ams/madsen/boltztrap.html
  !
- use pars,           ONLY:SP,pi
- use interpolate,    ONLY:nwave,lattice_vectors,lpfac,STERN1,int_sop
+ use pars,           ONLY:SP,IP,pi,zero_dfl
+ use interpolate,    ONLY:nshells,lattice_vectors,lpfac,int_sop,nshells,make_star,metric,int_sop
  use D_lattice,      ONLY:nsym,DL_vol,a,dl_sop
  use R_lattice,      ONLY:bz_samp,b
+ use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:sort
  use matrix_operate, ONLY:m3inv
- use timing,         ONLY:live_timing
+ use com,            ONLY:msg
  !
  implicit none
  type(bz_samp) :: Xk
  !
  !Work Space
  !
- real(SP)                  :: sphere_radius,metten(3,3),a_inv(3,3),b_inv(3,3)
- real(SP), POINTER         :: absk(:)
- real(SP)                  :: absm,m2(3),kdum(3),stg(3,nsym)
- integer                   :: i,j,i1,i2,i3,is
- integer                   :: ind,nradm,irad,istart,islut
- integer                   :: kmax1(3)
- integer                   :: m(3),nst
- real(SP), allocatable     :: radii(:),tmp_vec(:,:)
- integer,  allocatable     :: icnt(:),ihkl1(:,:),ihkl2(:,:)
- logical                   :: addvec,kdelta
- !
- sphere_radius=(Xk%nibz*nsym*lpfac*3.*DL_vol/4./pi)**(1./3.)
+ real(SP)                  :: sphere_radius,a_inv(3,3),b_inv(3,3)
+ real(SP)                  :: vec(3),vec_mod,star_vec(3,nsym)
+ real(SP), allocatable     :: all_vec(:,:),all_vec_mod(:),lattice_vec_mod(:),tmp_vec(:,:)
+ integer,  allocatable     :: indx(:)
+ integer                   :: i1,i2,i3,is,R_max(3),nR_max,n_vec,istart,iend,nstar
+ logical                   :: add_vec,vec_in_star
  !
  allocate(int_sop(3,3,nsym))
+ ! 
+ metric=matmul(a,transpose(a))
  !
- metten=matmul(a,transpose(a))
+ sphere_radius=(lpfac*Xk%nibz*nsym*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
+ !
  call m3inv(transpose(a),a_inv)
  a_inv=transpose(a_inv)
  call m3inv(b,b_inv)
  !
  do i1=1,3
-   kmax1(i1)=sphere_radius*sqrt(dot_product(a_inv(:,i1),a_inv(:,i1)))+1
+   R_max(i1)=sphere_radius*sqrt(dot_product(a_inv(:,i1),a_inv(:,i1)))+1
  enddo
  !
  do is=1,nsym
@@ -67,102 +65,122 @@ subroutine bz_interp_setup(Xk)
    int_sop(:,:,is)=matmul(transpose(a_inv),int_sop(:,:,is))
    int_sop(:,:,is)=nint(matmul(int_sop(:,:,is),b_inv))
    !
+!   write(*,*) ' symm ',is
+!   write(*,*) int_sop(1,:,is)
+!   write(*,*) int_sop(2,:,is)
+!   write(*,*) int_sop(3,:,is)
  enddo
+
  !
- nradm=product(2*kmax1+1)
- allocate(icnt(nradm),radii(nradm),ihkl1(3,nradm))
- irad=0
- call live_timing('BZ-INT',kmax1(3)*2+1)
- do i3=-kmax1(3),kmax1(3)
-   M(3)=i3
-   do i2=-kmax1(2),kmax1(2)
-     M(2)=i2
-     do i1=-kmax1(1),kmax1(1)
-       M(1)=i1
-       m2=m
-       absm=dot_product(m2(1:3),matmul(m2(1:3),metten(1:3,1:3)))
-       absm=sqrt(absm)
-       if(absm>sphere_radius) cycle
-       irad=irad+1
-       icnt(irad)=irad
-       radii(irad)=absm
-       ihkl1(1:3,irad)=m(1:3)
+ nR_max=product(2*R_max+1)
+ !
+ allocate(all_vec(3,nR_max),all_vec_mod(nR_max),indx(nR_max),tmp_vec(3,nR_max))
+ call mem_est("all_vec tmp_vec",(/size(all_vec),size(tmp_vec)/),(/SP,SP/))
+ call mem_est("all_vec_mod indx",(/size(all_vec_mod),size(indx)/),(/SP,IP/))
+ !
+ all_vec    =0._SP
+ all_vec_mod=0._SP
+ !
+ n_vec=0
+ !
+ do i3=-R_max(3),R_max(3)
+   do i2=-R_max(2),R_max(2)
+     do i1=-R_max(1),R_max(1)
+        vec(:)=(/i1,i2,i3/)
+        vec_mod=sqrt(dot_product(vec,matmul(metric,vec)))
+        if(vec_mod>sphere_radius) cycle
+        n_vec=n_vec+1
+        all_vec_mod(n_vec)=vec_mod
+        all_vec(:,n_vec)  =vec(:)
      enddo
    enddo
-   call live_timing(steps=1)
  enddo
- call live_timing
- ! 
- ! Quicksort over radii
  !
- call sort(arrin=radii(1:irad),indx=icnt(1:irad))
+ ! Sort according to the radius
  !
- !     Now re-order equal radii
- !     Copy a sorted hkl list from ihkl1 to ihkl2
+ call sort(arrin=all_vec_mod(1:n_vec),indx=indx(1:n_vec))
  !
- allocate (ihkl2(3,irad))
- do j=1,irad
-   i=icnt(j)
-   ihkl2(1:3,j)=ihkl1(1:3,i)
- enddo
- deallocate (ihkl1)
- !
- allocate(lattice_vectors(3,irad), absk(irad))
- absk=0._SP
- nwave=1
- m2(1:3)=ihkl2(1:3,1)
- lattice_vectors(1:3,nwave)=ihkl2(1:3,1)
- absk(nwave)=radii(1)
- do j=2,irad      
-   m2(1:3)=ihkl2(1:3,j)
-   absm=radii(j)
-   addvec=.false.
-!  new vector of diffent length
-   if(absm-absk(nwave)>0.0001) then
-     istart=nwave+1
-     addvec=.true.
-   endif
-! .... NEW VECTOR EQU. OLD ONE
-   if(.not.addvec) then
-     call stern1(m2,nsym,int_sop,nst,stg)
-     do i=istart,islut
-       kdum(1:3)=lattice_vectors(1:3,I)
-       if(kdelta(kdum,nst,stg)) goto 1
-     enddo
-     addvec=.TRUE.
-1  continue
-   endif
-! .... PUT NEW VECTOR IN LIST
-   if(addvec) then
-     nwave=nwave+1
-     lattice_vectors(1:3,nwave)=m2
-     absk(nwave)=absm
-     islut=nwave
-   endif
- enddo
- !   
- deallocate(absk,icnt,radii,ihkl2)
- !
- allocate(tmp_vec(3,nwave))
- tmp_vec(1:3,1:nwave)=lattice_vectors(1:3,1:nwave)
- deallocate(lattice_vectors)
- allocate(lattice_vectors(3,nwave))
- lattice_vectors(1:3,1:nwave)=tmp_vec(1:3,1:nwave)
+ tmp_vec(:,1:n_vec)=all_vec(:,indx(1:n_vec))
+ all_vec(:,1:n_vec)=tmp_vec(:,1:n_vec)
  deallocate(tmp_vec)
+ call mem_est("tmp_vec")
  !
-end subroutine
+ ! Find R sheels
+ !
+ allocate(lattice_vectors(3,n_vec),lattice_vec_mod(n_vec))
+ call mem_est("lattice_vectors lattice_vec_mod",(/3*n_vec,n_vec/),(/SP,SP/))
+ !
+ nshells=1
+ lattice_vectors(:,nshells)=all_vec(:,1)
+ lattice_vec_mod(nshells)  =all_vec_mod(1)
+ !
+ do i2=2,n_vec
+   !
+   add_vec=.false.
+   !
+   if((all_vec_mod(i2)-lattice_vec_mod(nshells))>zero_dfl) then
+     istart=nshells+1
+     add_vec=.true.
+   endif
+   !
+   if(.not.add_vec) then
+     !  
+     call make_star(all_vec(:,i2),nsym,int_sop,nstar,star_vec)
+     add_vec=.true.
+     !
+     do i3=istart,iend
+       !
+       if(vec_in_star(lattice_vectors(:,i3),nstar,star_vec)) then
+         add_vec=.false.
+         continue
+       endif
+       !
+     enddo
+     !
+   endif
+   !
+   if(add_vec) then
+     nshells=nshells+1
+     lattice_vectors(:,nshells)=all_vec(:,i2)
+     lattice_vec_mod(nshells)  =all_vec_mod(i2)
+     iend   =nshells
+   endif
+   !
+ enddo
+ !
+! do i1=1,n_vec
+!   write(*,*) 'lvec(',i1,') = ',lattice_vectors(:,i1),' mod ',lattice_vec_mod(i1)
+! enddo
+ call msg('sr','[Interp] Number of shells for interpolation : ',nshells)
+ !
+ all_vec(1:3,1:nshells)=lattice_vectors(1:3,1:nshells)
+ !
+ deallocate(lattice_vectors,lattice_vec_mod)
+ call mem_est("lattice_vectors lattice_vec_mod")
+ !
+ allocate(lattice_vectors(3,nshells))
+ call mem_est("lattice_vectors",(/3*nshells/),(/SP/))
+ !
+ lattice_vectors(1:3,1:nshells)=all_vec(1:3,1:nshells)
+ !
+ deallocate(all_vec,all_vec_mod,indx)
+ call mem_est("all_vec all_vec_mod indx")
+ !
+end subroutine bz_interp_setup
 
-logical function kdelta(k,nst,stg)
-  !.... test, if k is in star of g  (generated in stern)                  
-  use pars,         only:sp
-  use vec_operate,  only:v_is_zero
+logical function vec_in_star(vec,nstar,star_vec)
+  use pars,         ONLY:SP
+  use vec_operate,  ONLY:v_is_zero
   implicit none
-  integer          :: nst
-  real(sp)         :: k(3),stg(3,nst)
-  integer          :: i
+  integer,  intent(in)  :: nstar
+  real(SP), intent(in)  :: vec(3),star_vec(3,nstar)
+  !
+  ! Work Space
+  !
+  integer         :: i1
   !---------------------------------------------------------------------  
-  kdelta=.false.
-  do i=1,nst
-     if(v_is_zero(stg(:,i)-k(:))) kdelta=.true.
+  vec_in_star=.FALSE.
+  do i1=1,nstar
+    if(v_is_zero(star_vec(:,i1)-vec(:))) vec_in_star=.TRUE.
   enddo
-end function kdelta
+end function vec_in_star

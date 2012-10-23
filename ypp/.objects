@@ -11,9 +11,7 @@ RT_objects = RT_driver.o RT_paths.o RT_databases.o RT_fix_symmetries.o RT_X_LRR_
 #if defined _YPP_MAGNETIC
 magnetic_objects = electrons_angular_momentum.o electrons_position.o
 #endif
-#if defined _YPP_TEST_2
 bands_objects = electrons_bands.o
-#endif
 objs = mod_YPP.o  ypp_i.o ypp_init.o ypp_init_load.o \
        k_grids.o k_special.o qpdb_init.o qpdb_setup.o \
        excitons_driver.o electrons_driver.o electrons_charge.o electrons_dos_and_charge.o \

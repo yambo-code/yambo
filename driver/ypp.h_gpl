@@ -57,7 +57,7 @@
 #endif
 #if !defined _YPP_ELPH 
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(m)ag]",0,0,1,0,0}, 
-  {"electrons","s","Electrons [(w)ave,(d)ensity,do(s)]",0,0,1,0,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,do(s),(b)ands]",0,0,1,0,0}, 
 #endif
   {"freehole","f","Free hole position [excitons plot]",0,0,0,0,0}, 
   {"bzrim",   "r","BZ energy RIM analyzer",0,0,0,0,0}, 

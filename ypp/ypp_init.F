@@ -100,13 +100,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  dos_E_range=(/1.,-1./)/HA2EV
  dos_E_steps=500
  !
-#if defined _YPP_TEST_2
  ! BANDS
  !
  BANDS_steps=0
  BANDS_range=0
  !
-#endif
  !
  ! PLOT
  !
@@ -121,9 +119,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_exc_wf   =.false.
  l_density  =.false.
  V_value    ='RE'
-#if defined _YPP_TEST_2
  l_bands=.false.
-#endif
  l_mag=.false.
  l_sp_wf=.false.
 #if defined _YPP_SC
@@ -342,9 +338,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_density        =trim(rstr_piece(i1+1))=='d'
        l_dos            =trim(rstr_piece(i1+1))=='s'
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
-#if defined _YPP_TEST_2
        l_bands          =trim(rstr_piece(i1+1))=='b'
-#endif
        !
        ! GPL_EXCLUDE_START SPIN_IGNORE
        !
@@ -382,9 +376,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_dos)            call initactivate(1,'dos')
      endif
      if ( trim(rstr_piece(i1)) == 'electrons') then
-#if defined _YPP_TEST_2	     
        if (l_bands)          call initactivate(1,'bands')
-#endif	       
      endif
    enddo
  enddo
@@ -424,9 +416,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 &             runlevel_is_on('MeanPot'), &
 #endif
 &             runlevel_is_on('density')/))
-#if defined _YPP_TEST_2 
  l_bands     =runlevel_is_on('bands')
-#endif 
  l_free_hole=runlevel_is_on('freehole')
  l_amplitude=runlevel_is_on('amplitude')
  l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
@@ -455,9 +445,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    endif
  endif
  !
-#if defined _YPP_TEST_2
  if (l_bands) call initactivate(1,"cooIn BKpts BANDS_steps BANDS_range")
-#endif	 
  !	   
  l_bzrim     =runlevel_is_on('bzrim')
  !

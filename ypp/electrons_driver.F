@@ -139,9 +139,7 @@ subroutine electrons_driver(Xk,Xen)
  ! BANDS interpolation
  !======================
  !
-#if defined _YPP_TEST_2
  if(l_bands) call electrons_bands(Xk,Xen)
-#endif
  !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
  !==============================================================================

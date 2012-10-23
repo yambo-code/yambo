@@ -29,11 +29,11 @@ module interpolate
  !
  implicit none
  !
- integer               :: nwave
+ integer               :: nshells
  real(SP), allocatable :: int_sop(:,:,:)
  real(SP), pointer     :: lattice_vectors(:,:)
- real(SP), parameter   :: lpfac = 3.0_SP  ! Use 5 times more waves than nkibz
- real(SP), allocatable :: engre(:,:)
+ real(SP), parameter   :: lpfac = 5.0_SP  ! Use 5 times more waves than nkibz
+ real(SP) :: metric(3,3)
  !
  ! Interpolation type
  !
@@ -44,7 +44,7 @@ module interpolate
  ! 
  type interp_coeff
    character(schlen)     :: interp_type
-   real(SP), allocatable :: engre(:,:)
+   complex(SP), allocatable :: engre(:,:)
    integer               :: ndim
  end type interp_coeff
  !
@@ -70,7 +70,7 @@ module interpolate
      implicit none
      type(bz_samp), intent(in)            :: USER_k
      real(SP),      intent(out), optional :: R1D(:,:),R2D(:,:,:)
-     real(SP),      intent(out), optional :: C1D(:,:),C2D(:,:,:)
+     complex(SP),   intent(out), optional :: C1D(:,:),C2D(:,:,:)
      integer,       intent(in)            :: ID
    end subroutine bz_interpolation
    !
@@ -109,37 +109,38 @@ module interpolate
      !
    end subroutine get_ID
    !
-   subroutine stern1(G,nsym,symop,nst,stg)
-     !.... GENERATE STAR OF G
-     ! note: this is the only place symop is used
-     use pars,           ONLY:SP
+   subroutine make_star(R_vec,nsym,symop,nstar,star_vec)
      use vec_operate,    ONLY:v_is_zero
+     use D_lattice,      ONLY:i_time_rev
      implicit none
      !
-     integer, intent(in)    :: nsym
-     real(SP),INTENT(in)    :: g(3),symop(3,3,nsym) ! input vector and symmetry operations
-     real(SP),INTENT(out)   :: stg(3,nsym)          ! star vectors - maximum number is nsym
-     integer, intent(out)   :: nst                  ! number of vectors in star
+     integer,  intent(in)   :: nsym
+     real(SP), intent(in)   :: R_vec(3),symop(3,3,nsym) ! input vector and symmetry operations
+     real(SP), intent(out)  :: star_vec(3,nsym)         ! star vectors - maximum number is nsym
+     integer,  intent(out)  :: nstar                    ! number of vectors in star
      !
-     integer           :: I,M
-     real(SP)          :: try(1:3)
-     logical           :: add
+     ! Work Space
      !
-     nst=1
-     stg(1:3,1)=g(1:3)
+     integer  :: i1,is
+     logical  :: add_vec
+     real(SP) :: try(3)
      !
-     do I=1,nsym
-       try(1:3)=MATMUL(symop(1:3,1:3,i),G(1:3))
-       add=.TRUE.
-       do m=1,nst
-         if(v_is_zero(try(:)-stg(:,m))) add=.FALSE.
+     nstar=1
+     star_vec(1:3,1)=R_vec(1:3)
+     !
+     do is=1,nsym 
+       if(is>nsym/(i_time_rev+1)) cycle
+       try(1:3)=matmul(symop(:,:,is),R_vec(:))
+       add_vec=.TRUE.
+       do i1=1,nstar
+         if(v_is_zero(try(:)-star_vec(:,i1))) add_vec=.FALSE.
        enddo
        !
-     if(add) then
-       nst=nst+1                                                      
-       stg(1:3,nst)=try(1:3)
-     endif
-   enddo
- end subroutine stern1
- !
+       if(add_vec) then
+         nstar=nstar+1
+         star_vec(1:3,nstar)=try(1:3)
+       endif
+     enddo
+  end subroutine make_star
+  !
 end module interpolate

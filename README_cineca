@@ -1,0 +1,17 @@
+HOW TO COMPILE ON BGQ
+=====================
+
+module load profile/advanced bgq-xl/1.0 front-end-xl/1.0
+
+./configure FC=mpixlf90_r F77=bgxlf_r CC=bgxlc_r CPP="gcc -E" FCFLAGS="-O2 -q64 -qstrict -qsuffix=f=f" CFLAGS="-q64" --enable-msgs-comps --with-iotk=/cineca/prod/build/applications/qe/5.0bgq/bgq-xl--1.0/BA_WORK/qe-5.0bgq/espresso/iotk --with-p2y=5.0
+
+when compiling interfaces, it could happen an error when compiling ./interfaces/p2y/qexml_v4.0.f
+In this case, go in 
+
+./interfaces/p2y/qexml_v4.0.f
+
+compile "by hand" typing:
+
+mpixlf90_r -c -I /gpfs/scratch/userinternal/faffinit/yambo/devel-fabio/include -O2 -q64 -qstrict -qsuffix=f=f     qexml_v4.0.f -I/cineca/prod/build/applications/qe/5.0bgq/bgq-xl--1.0/BA_WORK/qe-5.0bgq/espresso/iotk/src
+
+then go back in the root directory and complete the compilation, by typing "make interfaces" 

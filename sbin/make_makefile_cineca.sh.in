@@ -1,0 +1,256 @@
+#! @SHELL@
+#
+# Copyright (C) 2000-2012 A. Marini and the YAMBO team 
+#              http://www.yambo-code.org
+# 
+# This file is distributed under the terms of the GNU 
+# General Public License. You can redistribute it and/or 
+# modify it under the terms of the GNU General Public 
+# License as published by the Free Software Foundation; 
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will 
+# be useful, but WITHOUT ANY WARRANTY; without even the 
+# implied warranty of MERCHANTABILITY or FITNESS FOR A 
+# PARTICULAR PURPOSE.  See the GNU General Public License 
+# for more details.
+#
+# You should have received a copy of the GNU General Public 
+# License along with this program; if not, write to the Free 
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#
+os="@build_os@"
+cpp="@CPP@"
+cppflags="@C_AS_CPP_FLAGS@"
+ECHO_N="@ECHO_N@"
+PREFIX="@MKMF_PREFIX@"
+#
+if [ $# = 0 ] ; then
+ echo $0 "dir target objectfile mode(l/x) Dflag1 Dflag2 Dflag3 ..."
+ exit 0
+fi
+cdir=$1
+target=$2
+ofile=$3
+mode=$4
+libs=$5
+if [ ! -f $cdir/$ofile ]; then exit 0; fi
+if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
+#
+fc="\$(f90)"
+fcflags="\$(f90flags)"
+fcuflags="\$(f90uflags)"
+lib_path="\$(libpath)"
+llibs=""
+lock_file="__lock"
+for arg in $@; do
+ case $arg in
+  -D_MPI)
+   dmpi="yes" ;
+   dopts="$dopts $arg";
+   fc="\$(pf90)" ;
+   fcflags="\$(pf90flags)"
+   llmpi="\$(lmpi)"
+   ;;
+  -D_NETCDF_IO|-D_64BIT_OFFSET)
+   dopts="$dopts $arg";
+   ;;
+  -D_*) 
+   dopts="$dopts $arg"
+   a=`echo $arg  | sed "s/-/_/"`
+   lock_file="$lock_file$a"
+   ;;
+  -l*) 
+   llibs="$arg $llibs"
+   ;;
+ esac
+done
+#
+llibs="$lib_path $llibs"
+lf90include="@F90_MODULE_FLAG@\$(includedir)"
+linclude="-I\$(includedir)"
+if [ @F90_MODULE_FLAG@ != "-I" ]; then
+lf90include="$lf90include $linclude"
+fi
+case $target in
+  yambo*)
+   llibs="$llibs \$(lscalapack) -lpwdiago \$(llapack) \$(lblacs) \$(lblas)"
+   llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec \$(llocal) \$(lfftw) -lm $llmpi"
+    ;;
+  a2y|elk2y|c2y)
+   llibs="-lint_modules $llibs \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
+    ;;
+  p2y*)
+   llibs="-lint_modules $llibs -liotk  \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
+   linclude="$linclude -I\$(iotk_dir)"
+    ;;
+  e2y)
+   llibs="-lint_modules $llibs -letsf_io \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
+   linclude="$linclude -I\$(etsf_dir)"
+    ;;
+  ypp*)
+   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
+    ;;
+esac
+
+cat config/setup >>$cdir/Makefile
+echo "fc=$fc" >> $cdir/Makefile
+echo "fcflags=$fcflags" >> $cdir/Makefile
+echo "fcuflags=$fcuflags" >> $cdir/Makefile
+echo "llibs=$llibs" >> $cdir/Makefile
+echo "linclude=$linclude" >> $cdir/Makefile
+echo "lf90include=$lf90include" >> $cdir/Makefile
+echo "mfiles=find . -name '*.mod'" >> $cdir/Makefile
+echo "target=$target" >> $cdir/Makefile
+echo "dmpi=$dmpi" >> $cdir/Makefile
+echo "dopts=$dopts -D_\$(os)" >> $cdir/Makefile
+echo "lock_file=$lock_file" >> $cdir/Makefile
+cp $cdir/$ofile $cdir/$ofile.c
+$cpp $cppflags $dopts -D_$os $cdir/$ofile.c >> $cdir/Makefile
+rm -f $cdir/$ofile.c
+
+if [ "$mode" = "x" ] ; then 
+cat << EOF >> $cdir/Makefile
+\$(target): locks \$(objs) 
+	\$(driver)\$
+	\$(link)\$
+	\$(modmove)\$ 
+	\$(dircheck)\$
+	@mv \$@ \$(exec_prefix)
+EOF
+else 
+rm -f ./lib/$target
+cat << EOF >> $cdir/Makefile
+\$(target): locks \$(objs) arcreate  
+	\$(modmove)\$ 
+EOF
+fi
+
+
+cat << EOF >> $cdir/Makefile
+locks:
+	${PREFIX}if test ! -f \$(lock_file) && test "\$(debug)" = "no" ; then \
+	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
+	touch \$(lock_file); fi
+	${PREFIX}if test "\$(debug)" = "yes"; \
+	then "\$(srcdir)"/sbin/objects_debug.sh \$(lock_file); fi
+arcreate:
+	${PREFIX}(eval \$(ar) \$(arflags) \$(target) \$(objs)) > /dev/null
+	${PREFIX}mv \$(target) \$(libdir) ; chmod u+x \$(libdir)/\$(target)
+#
+# Functions
+#
+define driver
+ ${PREFIX}if test -f \$(srcdir)/driver/yambo.h; then \$(cpp) \$(cppflags) \$(dopts) \
+                    \$(srcdir)/driver/yambo.h > \$(srcdir)/driver/yambo_cpp.h; fi
+ ${PREFIX}if test -f \$(srcdir)/driver/ypp.h; then \$(cpp) \$(cppflags) \$(dopts) \
+                   \$(srcdir)/driver/ypp.h > \$(srcdir)/driver/ypp_cpp.h; fi
+ ${PREFIX}( eval \$(cc) \$(cflags) -c \$(srcdir)/driver/getopt.c > /dev/null)
+ ${PREFIX}if test "\$(dmpi)" = ""; \
+  then \$(cc) \$(cflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
+ ${PREFIX}if test ! "\$(dmpi)" = ""; \
+  then \$(pcc) \$(pccflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
+ ${PREFIX}rm -f \$(srcdir)/driver/yambo_cpp.h \$(srcdir)/driver/ypp_cpp.h
+ @echo
+endef
+define link
+ ${PREFIX}(eval \$(fc) \$(fcflags) \$(lf90include) -o \$@ driver.o getopt.o \$(objs) \$(llibs) ) > /dev/null
+endef
+define modmove
+ ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 || mv *.mod \$(includedir)
+endef
+define dircheck
+ ${PREFIX}if test ! -d \$(exec_prefix); then mkdir \$(exec_prefix);fi
+endef
+#
+# Sources that do not want optimization
+#
+F77_NOOPT_SRC= xerbla.o slamch.o
+#
+\$(F77_NOOPT_SRC):
+	${PREFIX}(eval \$(f77) -c \$(f77uflags) \$*.f) > /dev/null
+#
+FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
+#
+\$(FC_NOOPT_SRC):
+	@rm -f \$*\$(f90suffix)
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(lf90include) \$*\$(f90suffix)) > /dev/null
+	@echo $ECHO_N \$* " "
+	@rm -f \$*\$(f90suffix)
+#
+# Suffixes
+#
+.SUFFIXES: .F .f90 .c .f .o .a
+#
+# Rules
+#
+EOF
+
+
+if [ "$target" == "libslatec.a" ] ; then
+cat << EOF >> $cdir/Makefile
+#test1
+.F.o:
+	@rm -f \$*\$(f90suffix)
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(\$(f77) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	@rm -f \$*\$(f90suffix)
+	@echo $ECHO_N \$*".F "
+.f.o:
+	${PREFIX}(eval \$(f77) -c \$(lf90include) \$(f90flags) \$*.f) > /dev/null
+	@echo $ECHO_N \$*".f "
+EOF
+
+elif [ "$target" ==  "liblapack.a" ] ; then
+cat << EOF >> $cdir/Makefile
+#test2
+.F.o:
+	@rm -f \$*\$(f90suffix)
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(\$(f77) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	@rm -f \$*\$(f90suffix)
+	@echo $ECHO_N \$*".F "
+.f.o:
+	${PREFIX}(eval \$(f77) -c \$(lf90include) \$(f90flags) \$*.f) > /dev/null
+	@echo $ECHO_N \$*".f "
+EOF
+
+elif [ "$target" == "libblas.a" ] ; then
+cat << EOF >> $cdir/Makefile
+#test3
+.F.o:
+	@rm -f \$*\$(f90suffix)
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(\$(f77) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	@rm -f \$*\$(f90suffix)
+	@echo $ECHO_N \$*".F "
+.f.o:
+	${PREFIX}(eval \$(f77) -c \$(lf90include) \$(f90flags) \$*.f) > /dev/null
+	@echo $ECHO_N \$*".f "
+EOF
+
+else
+
+cat << EOF >> $cdir/Makefile
+#test4
+.F.o:
+	@rm -f \$*\$(f90suffix)
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(\$(f90) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	@rm -f \$*\$(f90suffix)
+	@echo $ECHO_N \$*".F "
+.f.o:
+	${PREFIX}(eval \$(f90) -c \$(lf90include) \$(f90flags) \$*.f) > /dev/null
+	@echo $ECHO_N \$*".f "
+EOF
+
+fi
+
+cat << EOF >> $cdir/Makefile
+.c.o:
+	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$<) > /dev/null
+	@echo $ECHO_N \$< " "
+EOF
+

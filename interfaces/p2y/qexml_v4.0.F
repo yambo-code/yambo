@@ -2537,7 +2537,7 @@ CONTAINS
       INTEGER,                INTENT(OUT) :: ierr
       !
       INTEGER        :: nbnd_, num_k_points_, nspin_, natomwfc_
-      LOGICAL        :: noncolin_,two_ef_
+      LOGICAL        :: noncolin_,two_ef_, found
       REAL(dbl)      :: ef_, nelec_
       CHARACTER(256) :: energy_units_, k_units_
 
@@ -2575,15 +2575,15 @@ CONTAINS
       CALL iotk_scan_attr ( attr,   "UNITS", energy_units_, IERR=ierr )
       IF (ierr/=0) RETURN
       !
-      call iotk_scan_dat  ( iunit, "TWO_FERMI_ENERGY", two_ef_ , IERR=ierr )
-      IF (ierr/=0) RETURN
+      CALL iotk_scan_dat( iunit, "TWO_FERMI_ENERGIES", two_ef_, FOUND = found)
       !
-      if(two_ef_) then
-        call errore('TWO_FERMI_ENERGY=.true. Action: run pwscf without fixed_magnetization.',1)
-      else
-        CALL iotk_scan_dat  ( iunit, "FERMI_ENERGY", ef_ , IERR=ierr )
+      IF ( two_ef_ .and. found ) THEN
+        CALL errore('qexml_read_bands_info',&
+&         ' TWO_FERMI_ENERGIES=.true. Action: run pwscf without fixed_magnetization.',1)
+      ELSE
+        CALL iotk_scan_dat( iunit, "FERMI_ENERGY", ef_, IERR=ierr )
         IF (ierr/=0) RETURN
-      endif
+      ENDIF
       !
       CALL iotk_scan_end( iunit, "BAND_STRUCTURE_INFO", IERR=ierr )
       IF (ierr/=0) RETURN
@@ -2594,8 +2594,8 @@ CONTAINS
       IF ( PRESENT( nspin ) )            nspin          = nspin_
       IF ( PRESENT( noncolin ) )         noncolin       = noncolin_
       IF ( PRESENT( natomwfc ) )         natomwfc       = natomwfc_
-      IF ( PRESENT( nelec ) )            nelec          = nelec_
       IF ( PRESENT( ef ) )               ef             = ef_
+      IF ( PRESENT( nelec ) )            nelec          = nelec_
       IF ( PRESENT( energy_units ) )     energy_units   = TRIM( energy_units_ )
       IF ( PRESENT( k_units ) )          k_units        = TRIM( k_units_ )
       !
@@ -2988,16 +2988,26 @@ subroutine read_upf_header_v1( u, z, nmesh, nbeta, psfile, ierr )
   !
   character(50) :: dummy
   logical       :: ldummy
-  INTEGER :: i,idummy,idummy2, unit, iostat, u,ios,ierr
+  INTEGER :: i,idummy,idummy2, iostat, u,ios,ierr
 
   !------->Search for Header
-  !     This version doesn't use the new routine scan_begin
-  !     because this search must set extra flags for
-  !     compatibility with other pp format reading
   ierr = 1
   rewind(u)
-    call iotk_scan_begin(unit,"PP_HEADER",ierr=ierr)
-    if(ierr==1) goto 200
+  !
+  ! Search for PP_HEADER, skipping PP_INFO which can contain badly formed tags
+  !
+  ios=0
+  header_loop: do while (ios == 0)
+     read (u, *, iostat = ios, err = 200) dummy
+!    if (matches ("<PP_HEADER>", dummy) ) then
+     if (index(dummy,"<PP_HEADER>").ne.0) then
+        ierr = 0
+        exit header_loop
+     endif
+  enddo header_loop
+  if(ierr==1) call errore( 'check_pseudo : ','Problem finding PP_HEADER tag in pseudo',1)
+
+!   call iotk_scan_begin(u,"PP_HEADER",ierr=ierr)
     read(u,*,iostat=iostat) dummy
     read(u,*,iostat=iostat) dummy
     read(u,*,iostat=iostat) dummy
@@ -3045,7 +3055,7 @@ subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,&
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   !
-  INTEGER, INTENT(OUT) :: nmesh,nbeta
+  INTEGER, INTENT(INOUT) :: nmesh,nbeta
   REAL, INTENT(OUT)    :: z
   REAL, INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
   INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
@@ -3054,17 +3064,15 @@ subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,&
     character(50) :: dummy
     logical       :: ldummy
     INTEGER :: idummy,ibeta,idummy2
-    INTEGER        :: unit,i, iostat, u
+    INTEGER        :: i, iostat, u
 
     !
-    ! Header data
+    ! Header data (sets value of unit u)
     !
     call read_pseudo_header(u,z,psfile, nmesh, nbeta)
     !
     call read_pseudo_parameters(u,nmesh,nbeta,mesh, &
 &                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile)
-    !
-    close(unit)
     !
     return 
 end subroutine read_pseudo_data
@@ -3074,7 +3082,7 @@ subroutine read_pseudo_parameters(u,nmesh,nbeta,mesh, &
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   !
-  INTEGER, INTENT(OUT) :: nmesh,nbeta
+  INTEGER, INTENT(IN) :: nmesh,nbeta
   REAL, INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
   INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
   !
@@ -3082,7 +3090,7 @@ subroutine read_pseudo_parameters(u,nmesh,nbeta,mesh, &
   character(50) :: dummy
   logical       :: ldummy
   INTEGER :: idummy,ibeta,idummy2
-  INTEGER        :: unit,i, iostat, ierr, u
+  INTEGER        :: i, iostat, ierr, u
   
   !
   CALL iotk_free_unit(u)
@@ -3117,7 +3125,7 @@ subroutine read_upf_parameters_v1(u,nmesh,nbeta,mesh, &
   character(50) :: dummy
   logical       :: ldummy
   INTEGER :: idummy,ibeta,idummy2
-  INTEGER        :: unit,i, iostat, u ,ierr, ios
+  INTEGER        :: i, iostat, u ,ierr, ios
   !
 !    ierr = 0
 !    CALL iotk_open_read(u, attr=attr, root=root, ierr=ierr_)
@@ -3185,7 +3193,7 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh, &
   character(2)  :: intc(9)
   logical       :: ldummy
   INTEGER :: idummy,ibeta,idummy2,i1
-  INTEGER        :: unit,i, iostat, u, ierr, ierr_
+  INTEGER        :: i, iostat, u, ierr, ierr_
   CHARACTER(len=iotk_attlenx) :: attr
   CHARACTER(len=iotk_namlenx) :: root
   !

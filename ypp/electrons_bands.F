@@ -30,7 +30,7 @@ subroutine electrons_bands(Xk,Xen)
  use vec_operate,    ONLY:c2a,v_norm
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
- use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation
+ use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation,reset_interpolation
  use QP_CTL_m,       ONLY:QP_apply
  implicit none
  !
@@ -169,5 +169,7 @@ subroutine electrons_bands(Xk,Xen)
  if(n_sp_pol>1) then
    call of_open_close(bands_f_down)
  endif
+ !
+ call reset_interpolation(ID_interp)
  !
 end subroutine

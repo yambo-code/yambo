@@ -62,7 +62,7 @@ MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
 #
 # YPP
 #
-YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface pol_function bse
+YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface interpolate pol_function bse
 #
 # PROJECTS
 #

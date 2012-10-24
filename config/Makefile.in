@@ -49,9 +49,9 @@ TARGETS  = all yambo interfaces ypp
 UTILS    = changelog
 CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_magnetic yambo_rt yambo_distributed \
-           ypp_rt ypp_ph ypp_sc ypp_magnetic ypp_test_2
+           ypp_rt ypp_ph ypp_sc ypp_magnetic
 BROKEN   = yambo_manyk
-DEBUG    = yambo_test_1 yambo_test_2
+DEBUG    = yambo_test_1 
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
 INTERFCS = a2y p2y e2y c2y
 #
@@ -71,10 +71,9 @@ PJ_RTLIBS          = $(MAIN_LIBS) sc real_time
 #
 # YPP
 #
-YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface pol_function bse
+YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface interpolate pol_function bse
 YPPSCLIBS    = $(YPPLIBS) sc
 YPPRTLIBS    = $(YPPLIBS) sc real_time
-YPPTEST2     = $(YPPLIBS) interpolate
 
 nothing: 
 	@$(make_message)
@@ -124,9 +123,6 @@ ypp_sc: libs
 ypp_magnetic: libs
 	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_SC -D_MAGNETIC";$(mksrc)
 	@X2DO="ypp_magnetic" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_MAGNETIC";$(mkx)
-ypp_test_2: libs
-	@LIBS2DO="$(YPPTEST2)" ; ADF="-D_TEST_2";$(mksrc)
-	@X2DO="ypp_test_2" ;XPATH="ypp";XLIBS="$(YPPTEST2)"; ADF="-D_YPP_TEST_2";$(mkx)
 #
 # BROKEN #
 # 
@@ -139,9 +135,6 @@ yambo_manyk: libs
 yambo_test_1: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_TEST_1"; $(mksrc)
 	@X2DO="yambo_test_1"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_TEST_1";$(mkx)
-yambo_test_2: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_TEST_2"; $(mksrc)
-	@X2DO="yambo_test_2"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_TEST_2";$(mkx)
 #
 # Interfaces & ypp #
 #

@@ -31,7 +31,7 @@ subroutine RT_fix_symmetries(E,k)
  use matrix_operate,      ONLY:m3det
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,g_rot,&
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,g_rot,nXkibz,&
 &                              ng_closed,bz_samp_duplicate,rl_sop,ng_vec
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
 &                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO,mk_dir, &
@@ -39,23 +39,28 @@ subroutine RT_fix_symmetries(E,k)
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
 &                              wf_ng,wf_state,WF_load,wf_state,wf,WF_free,wf_ng ,wf_nb_io_groups
  use real_time,           ONLY:kpoints_map
- use pseudo,              ONLY:pp_kb,pp_kbd,n_atomic_species,pp_n_l_times_proj_max,PP_free
+ use pseudo,              ONLY:pp_kb,pp_kbd,n_atomic_species,pp_n_l_times_proj_max,PP_free,Vnl
  use SC,                  ONLY:local_V,SC_R,H_nl_sc,SC_bands
  use stderr,              ONLY:intc,set_real_printed_length
  use parser_m,            ONLY:parser
  use zeros,               ONLY:k_iku_zero
  use FFT_m,               ONLY:fft_size,fft_rot_r,fft_dim,fftw_plan,fft_g_table,fft_norm
  use timing,              ONLY:live_timing
+ use X_m,                 ONLY:X_t
  !
  implicit none
  type(levels)                 :: E,E_expanded
  type(bz_samp)                :: k
  !
- integer, external :: ioDB1,io_SC_components,ioKB_PP
+ integer, external :: ioDB1,io_SC_components,ioKB_PP,io_Vnl
  !
  ! Work Space
  !
- integer               :: ik_save,iv(2),ierr,ib,i_wf,n_steps,i_spin,&
+ type(bz_samp)         :: k_save
+ type(levels)          :: en_sc,en_sc_expanded
+ type(X_t)             :: X_Vnl
+ !
+ integer               :: ik_save,iv(2),ierr,ib,ibm,i_wf,n_steps,i_spin,&
 &                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
  integer               :: spatial_nsym,old_spatial_nsym,old_trev_nsym
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:),ic_rot_table(:)
@@ -66,14 +71,14 @@ subroutine RT_fix_symmetries(E,k)
  logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
 &                         S_contains_TR(nsym),Trev_2_spatial=.false.
  complex(SP)           :: spin_sop(2,2,nsym)
- type(bz_samp)         :: k_save
- type(levels)          :: en_sc,en_sc_expanded
  character(lchlen)     :: core_io_path_save,fragment_name
- integer               :: ACTION_,ioKB_err,io_SC_E_err,io_SC_V_err,io_SC_WF_err
+ integer               :: ACTION_,ioKB_err,io_SC_E_err,io_SC_V_err,io_SC_WF_err,io_Vnl_err
  complex(SP), allocatable :: full_H(:,:,:,:)
  real(SP),    allocatable :: wf_disk(:,:,:,:)
+ real(SP),    allocatable :: old_dl_sop(:,:,:)
  real(SP),    allocatable :: dl_sop_tmp(:,:,:)
  complex(SP), allocatable :: wf_tmp(:,:)
+ complex(SP), allocatable :: Vnl_store(:,:,:,:,:)
  !
  !
  use_E_field=.FALSE.
@@ -159,12 +164,20 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Read PseudoPotentials
  !
+ ! Abinit
  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  ioKB_err=ioKB_PP(ID) 
  !
+ ! PWscf
+ X_Vnl%ib=(/1,E%nb/)     ! full bands range
+ X_Vnl%ngostnts=wf_ng    ! all G-vectors
+ call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
+ io_Vnl_err=io_Vnl(X_Vnl,E,ID)
+ !
+ if(ioKB_err==0.or.io_Vnl_err==0) call section('=',"PseudoPotentials")
+ !
  if(ioKB_err==0) then
-   ! 
-   call section('=',"PseudoPotentials")
+   !  
    allocate(pp_kb_store(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin,k%nibz))
    allocate(pp_kbd_store(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin,k%nibz))
    call mem_est("pp_kb_store pp_kbd_store",(/size(pp_kb),size(pp_kbd)/),elements_kind=(/SP,SP/))
@@ -182,6 +195,22 @@ subroutine RT_fix_symmetries(E,k)
    !
  endif
  !
+ if(io_Vnl_err==0) then
+   !
+   allocate( Vnl_store(3,E%nb,E%nbm,k_save%nibz,n_sp_pol) )
+   Vnl_store=(0._SP,0._SP)
+   call mem_est("Vnl_store",(/size(Vnl_store)/),elements_kind=(/SP/))
+   !
+   call io_control(ACTION=RD_CL,SEC=(/1,2/),ID=ID)
+   io_Vnl_err=io_Vnl(X_Vnl,E,ID)
+   !
+   Vnl_store=Vnl
+   !
+   deallocate(Vnl)
+   !   
+ endif
+ !
+ !
  ! time reversal-related Symmetries
  !
  forall (is=1:nsym) S_contains_TR(is)=is>nsym/(1+i_time_rev)
@@ -196,6 +225,8 @@ subroutine RT_fix_symmetries(E,k)
  !
  old_spatial_nsym=spatial_nsym
  old_trev_nsym=nsym-spatial_nsym
+ allocate(old_dl_sop(3,3,nsym))
+ old_dl_sop=dl_sop
  !
  if(Rm_TR) then   ! No time reversal 
    if(i_space_inv==1.and.inv_index>spatial_nsym.and..not.mag_syms) then
@@ -628,7 +659,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  if(ioKB_err==0) then 
    !
-   if(n_steps>0) call live_timing('PseudoPotentials',n_steps)
+   if(n_steps>0) call live_timing('PseudoPotentials (abinit)',n_steps)
    !
    do i1=k_save%nibz+1,k%nibz 
      !
@@ -649,6 +680,41 @@ subroutine RT_fix_symmetries(E,k)
    call mem_est("pp_kb_store pp_kbd_store")
    !
    call PP_free()
+   !
+   if(n_steps>0) call live_timing()
+   !
+ endif
+ !
+ if(io_Vnl_err==0) then 
+   !
+   allocate(Vnl(3,E%nb,E%nbm,k%nibz,n_sp_pol))
+   !
+   Vnl(1:3, 1:E%nb, 1:E%nbm, 1:k_save%nibz, 1:n_sp_pol)=&
+&       Vnl_store(1:3, 1:E%nb, 1:E%nbm, 1:k_save%nibz, 1:n_sp_pol)
+   !
+   if(n_steps>0) call live_timing('PseudoPotentials (PWscf)',n_steps)
+   !
+   do i1=k_save%nibz+1,k%nibz
+     !
+     ik=kpoints_map(1,i1)
+     is=kpoints_map(2,i1)
+     !
+     forall(ib=1:E%nb,ibm=1:E%nbm,i_spin=1:n_sp_pol) &
+&          Vnl(:,ib,ibm,i1,i_spin) = matmul( old_dl_sop(:,:,is), Vnl_store(:,ib,ibm,ik,i_spin) ) 
+     ! Vnl is invariant under T-rev as iR and p ??
+     if ( S_contains_TR(is) ) Vnl(:,:,:,i1,:)=conjg( Vnl(:,:,:,i1,:) )
+     !
+     call live_timing(steps=1)
+     !
+   enddo
+   !
+   X_Vnl%ngostnts=wf_ng
+   nXkibz=k%nibz
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)      
+   io_Vnl_err=io_Vnl(X_Vnl,E,ID)
+   !
+   deallocate(Vnl,Vnl_store)
+   call mem_est("Vnl Vnl_store")
    !
    if(n_steps>0) call live_timing()
    !

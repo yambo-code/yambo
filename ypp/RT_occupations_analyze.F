@@ -22,12 +22,13 @@
 subroutine RT_occupations_analyze(k,E)
  !
  use drivers,        ONLY:l_carrier_dynamics
- use units,          ONLY:FS2AUT,SP,HA2EV
+ use units,          ONLY:FS2AUT,SP,HA2EV,BO2ANG
  use pars,           ONLY:schlen
  use stderr,         ONLY:intc,set_real_printed_length
  use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:levels,spin,spin_occ
- use QP_m,           ONLY:QP_table,QP_n_states,QP_state
+ use QP_m,           ONLY:QP_table,QP_n_states,QP_state,QP_nb
  use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT
  use com,            ONLY:msg,of_open_close
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,E_P_Electron_lifetime,&
@@ -81,6 +82,7 @@ subroutine RT_occupations_analyze(k,E)
      ik    =QP_table(i_s,3)
      i_spin=spin(QP_table(i_s,:))
      !
+     if (ib>SC_bands(2)) cycle
      if (ik>k%nibz) cycle
      !
      output_fname='YPP-RT_occupations_k'//trim(intc(ik))//'_b'//trim(intc(ib))
@@ -124,18 +126,12 @@ subroutine RT_occupations_analyze(k,E)
      endif
      !
      if (ib<SC_bands(1)) then
-       RT_occupations_sum(i_T)=RT_occupations_sum(i_T)+spin_occ
-       !DEBUG>
-       !*k%weights(ik)
-       !DEBUG<
+       RT_occupations_sum(i_T)=RT_occupations_sum(i_T)+spin_occ*k%weights(ik)
        cycle
      endif
      !
      data_to_plot(:2)=(/io_TIME/FS2AUT,RT_occupations(ib,ik)/spin_occ/)
-     RT_occupations_sum(i_T)=RT_occupations_sum(i_T)+RT_occupations(ib,ik)
-     !DEBUG>
-     !*k%weights(ik)
-     !DEBUG<
+     RT_occupations_sum(i_T)=RT_occupations_sum(i_T)+RT_occupations(ib,ik)*k%weights(ik)
      !
      if (l_ELPH_CCA_Kernel) then
        data_to_plot(3:5)=(/E_P_Hole_lifetime(ib,ik)*HA2EV,E_P_Electron_lifetime(ib,ik)*HA2EV,&
@@ -162,7 +158,7 @@ subroutine RT_occupations_analyze(k,E)
    call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
  enddo
  titles(1)='T[fs]'
- titles(2)='Tot. Occ.'
+ titles(2)='Tot. Occ. [cm^-3]'
  call msg('o '//trim(output_fname),'#')
  call msg('o '//trim(output_fname),'#',titles(:2),INDENT=0,USE_TABS=.TRUE.)
  call msg('o '//trim(output_fname),'#')
@@ -170,7 +166,7 @@ subroutine RT_occupations_analyze(k,E)
  do i_T=1,n_T_steps
    io_Time=0.
    if (i_T>1) io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-   data_to_plot(:2)=(/io_TIME/FS2AUT,RT_occupations_sum(i_T)/)
+   data_to_plot(:2)=(/io_TIME/FS2AUT,RT_occupations_sum(i_T)/(DL_vol*BO2ANG**3*1.E-24)/)
    call msg('o '//trim(output_fname),'',data_to_plot(:2),INDENT=-2,USE_TABS=.true.)
  enddo
  call of_open_close(trim(output_fname))

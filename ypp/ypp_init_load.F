@@ -49,7 +49,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'plot',         '[R] Plot')
  call it('r',defs,'density',      '[R] Density')
  call it('r',defs,'wannier',      '[R] Wannier 90 I/O')
- call it('r',defs,'bands',        '[R] Bands')
+ call it('r',defs,'bnds',        '[R] Bands')
  call it('r',defs,'wavefunction', '[R] Wavefunction')
 #if defined _YPP_ELPH
  call it('r',defs,'eliashberg',   '[R] Eliashberg')

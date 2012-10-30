@@ -104,6 +104,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  BANDS_steps=0
  BANDS_range=0
+ l_bands=.false.
  !
  !
  ! PLOT
@@ -119,7 +120,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_exc_wf   =.false.
  l_density  =.false.
  V_value    ='RE'
- l_bands=.false.
  l_mag=.false.
  l_sp_wf=.false.
 #if defined _YPP_SC
@@ -376,7 +376,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_dos)            call initactivate(1,'dos')
      endif
      if ( trim(rstr_piece(i1)) == 'electrons') then
-       if (l_bands)          call initactivate(1,'bands')
+       if (l_bands)          call initactivate(1,'bnds')
      endif
    enddo
  enddo
@@ -389,6 +389,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_shifted_grid = runlevel_is_on('Shifted_Grid')
  l_high_sym_pts = runlevel_is_on('High_Symm')
  l_dos       =runlevel_is_on('dos')
+ l_bands     =runlevel_is_on('bnds')
 #if defined _YPP_SC
  l_mean_potential=runlevel_is_on('MeanPot')
  if (l_mean_potential) then
@@ -416,7 +417,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 &             runlevel_is_on('MeanPot'), &
 #endif
 &             runlevel_is_on('density')/))
- l_bands     =runlevel_is_on('bands')
  l_free_hole=runlevel_is_on('freehole')
  l_amplitude=runlevel_is_on('amplitude')
  l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
@@ -424,6 +424,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_density  =runlevel_is_on('density').and.runlevel_is_on('electrons')
  l_mag      =runlevel_is_on('magnetization')
  l_wannier  =runlevel_is_on('wannier')
+ !
  if (.not.l_exc_wf) l_free_hole=.false.
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE

@@ -27,7 +27,8 @@ objs = 	zgetf2.o  zhetrd.o  zlarft.o  zlaswp.o  \
 	zhptrd.o  zlanhp.o zhegvx.o zheevx.o zhegst.o zpotf2.o  zpotrf.o\
 	zstein.o  zhegs2.o zunmtr.o zunmql.o zunm2l.o chegv.o zhegv.o \
 	dpotrf.o  dstebz.o disnan.o dlaisnan.o dlaebz.o dpotf2.o\
-	dlagts.o dlagtf.o dlarnv.o dtrtri.o dlaruv.o dlaruv.o dtrti2.o
+	dlagts.o dlagtf.o dlarnv.o dtrtri.o dlaruv.o dlaruv.o dtrti2.o\
+        zgetrs.o
 #else
 objs = 	cgetf2.o  chetrd.o  clarft.o  claswp.o  \
 	cung2l.o  ilaenv.o  slanst.o  slassq.o  \
@@ -57,5 +58,6 @@ objs = 	cgetf2.o  chetrd.o  clarft.o  claswp.o  \
 	chptrd.o  clanhp.o chegvx.o cheevx.o chegst.o cpotf2.o  cpotrf.o\
 	cstein.o  chegs2.o cunmtr.o cunmql.o cunm2l.o chegv.o\
 	spotrf.o  sstebz.o sisnan.o slaisnan.o slaebz.o spotf2.o\
-	slagts.o slagtf.o slarnv.o strtri.o slaruv.o slaruv.o strti2.o
+	slagts.o slagtf.o slarnv.o strtri.o slaruv.o slaruv.o strti2.o\
+        cgetrs.o
 #endif                                                                  

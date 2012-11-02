@@ -199,7 +199,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
        else
          sty = 2
        end if
-       do ny = sty,  nstep_f(1)
+       do ny = sty,  nstep_f(2)
          tmp_ipol_weight(2) = polynomial_ipol_coeff(order_ipol, &
                   intvy, pt_ipol, real(ny-1)/nstep_f(2))
          !
@@ -209,7 +209,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
            else
              stz = 2
            end if
-           do nz = stz,  nstep_f(1)
+           do nz = stz,  nstep_f(3)
              tmp_ipol_weight(3) = polynomial_ipol_coeff(order_ipol, &
                       intvz, pt_ipol, real(nz-1)/nstep_f(3))
              !

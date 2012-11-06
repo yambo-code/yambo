@@ -46,7 +46,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
 #endif
 #if defined _YPP_RT 
- use real_time,      ONLY:RT_step,NE_steps
+ use real_time,      ONLY:RT_step,NE_steps,Gr_kind
  use fields,         ONLY:Efield,i_Probe
 #endif
 #if defined _YPP_ELPH
@@ -192,6 +192,16 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
 #if defined _YPP_RT
  !
+ ! Retarded GFs
+ !
+ Ret_GF_bands=(/1,n_bands/)
+ GF_T_step=1.*FS2AUT
+ GF_E_step=0.1/HA2EV
+ GF_T_window=-1.
+ GF_E_window=100./HA2EV
+ GF_QP_width=0.1/HA2EV
+ Gr_kind="QP"
+ !
  t_jump=0.
  !
  !REMOVE SYMMETRIES
@@ -212,6 +222,76 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  OCC_T_range=0.
  OCC_deltaT=0.
  l_RT_occupations=.FALSE.
+ !
+ !RETARDED GREEN'S functions
+ !
+ l_retarded_GFs=.FALSE.
+ !
+ !ANALIZE RESPONSE
+ !
+ X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
+ X_rt%energy_steps   =200
+ X_rt%energy_range(:)=(/0._SP,20./HA2EV/)
+ X_rt%damp           ="NONE"
+ X_rt%damp_factor    =0.
+ Probe_Keyword ="none"
+ Pump_Keyword  ="none"
+ X_order       =1
+ !
+#endif
+ !
+ ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
+ !
+#if defined _YPP_MAGNETIC
+ !
+ l_angular_momentum=.false.
+ l_position=.false.
+ !
+#endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! DATABASES 
+ !===========
+ !
+#if defined _YPP_SC
+ ! 
+ call E_reset(E_dummy) 
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+ !
+ !ANALIZE RESPONSE
+ !
+ X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
+ X_rt%energy_steps   =200
+ X_rt%energy_range(:)=(/0._SP,20./HA2EV/)
+ X_rt%damp           ="NONE"
+ X_rt%damp_factor    =0.
+ Probe_Keyword ="none"
+ Pump_Keyword  ="none"
+ X_order       =1
+ !
+#endif
+ !
+ ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
+ !
+#if defined _YPP_MAGNETIC
+ !
+ l_angular_momentum=.false.
+ l_position=.false.
+ !
+#endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! DATABASES 
+ !===========
+ !
+#if defined _YPP_SC
+ ! 
+ call E_reset(E_dummy) 
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
  !
  !ANALIZE RESPONSE
  !
@@ -345,6 +425,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        ! GPL_EXCLUDE_END
        !
      endif
+#if defined _YPP_RT
+     if ( trim(rstr_piece(i1)) == 'CCA') l_retarded_GFs=.TRUE.
+#endif
      if ( trim(rstr_piece(i1)) == 'electrons') then
        !
        l_density        =trim(rstr_piece(i1+1))=='d'
@@ -422,6 +505,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_gkkp      =runlevel_is_on('gkkp')
 #endif
 #if defined _YPP_RT
+ l_retarded_GFs     = runlevel_is_on('CCA')
  l_RT_occupations   = runlevel_is_on('occupations')
  l_fix_syms         = runlevel_is_on('fixsyms')
  l_RT_X             = runlevel_is_on('rtX')
@@ -487,6 +571,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_RT
  !             
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta Magnetization RmAllSymm RmTimeRev")
+ !
+ if (l_retarded_GFs) then
+   call QP_ctl_switch('G')
+   call initactivate(1,"RetGFbands RetGFkind T_window T_step E_window E_step QP_width")
+ endif
  !
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")

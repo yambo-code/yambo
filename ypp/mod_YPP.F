@@ -164,6 +164,16 @@ module YPP
  real(SP)    :: B_field,B_theta,B_psi
  real(SP)    :: Magnetization(3)
  !
+ ! (RT) Retarded Green's functions
+ !
+ logical  :: l_retarded_GFs
+ integer  :: Ret_GF_bands(2)      ! Bands Range
+ real(SP) :: GF_E_step
+ real(SP) :: GF_T_step
+ real(SP) :: GF_E_window
+ real(SP) :: GF_T_window
+ real(SP) :: GF_QP_width
+ !
  ! (RT) optics
  !
  logical  :: Use_FFT

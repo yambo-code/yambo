@@ -23,6 +23,7 @@ subroutine ypp_init_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
 &                        Time_unit,Bfield_unit,Efield_unit,V_real_time
+ use real_time,     ONLY:Gr_kind
  use wave_func,     ONLY:wf_ng
  use YPP
  implicit none
@@ -79,6 +80,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'occupations','[R] Analize time-dependent occupations')
  call it('r',defs,'fixsyms',    '[R] Reduce Symmetries')
  call it('r',defs,'rtX',        '[R] Real-Time Response functions Post-Processing')
+ call it('r',defs,'CCA',        '[R] Time convolution of retarded GFs to be used in the CCA')
 #endif
 #if defined _YPP_SC
  call it('r',defs,'MeanPot', '[R] Mean Potential')
@@ -197,6 +199,16 @@ subroutine ypp_init_load(defs)
  call it(defs,'OutputAlat','[a.u.] Lattice constant used for "alat" ouput format',alat_used_for_output,verb_level=V_general)
  !
 #if defined _YPP_RT
+ !
+ ! Retarded GFs
+ !
+ call it(defs,'GFbands', 'Bands',Ret_GF_bands) 
+ call it(defs,'GFkind',  'Green`s function kind',Gr_kind) 
+ call it(defs,'QP_width','QP energy indetermination',GF_QP_width,unit=E_unit) 
+ call it(defs,'T_step',  'Time step in the integration',GF_T_step,unit=Time_unit) 
+ call it(defs,'E_step',  'Energy step in the integration',GF_E_step,unit=E_unit) 
+ call it(defs,'E_window','Energy window',GF_E_window,unit=E_unit) 
+ call it(defs,'T_window','Rime window',GF_T_window,unit=Time_unit) 
  !
  call it(defs,'Xorder','Max order of the response functions',X_order)
  call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword)

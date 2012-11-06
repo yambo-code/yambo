@@ -182,6 +182,9 @@ module real_time
  ! GFs
  !-----
  !
+ integer           :: N_T_steps_Gr
+ character(schlen) :: Gr_kind
+ complex(SP), allocatable :: Gr(:,:,:)
  complex(SP), allocatable :: G_lesser_reference(:,:,:)
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
  complex(SP), allocatable :: Sigma_relax(:,:,:)

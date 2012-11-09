@@ -50,7 +50,7 @@ integer function ioRIM(ID)
    RL_vol_disk=RL_vol
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=10,MENU=0)
-
+   !
    call io_elemental(ID,I0=RIM_ng,DB_I0=RIM_ng_disk,&
 &       VAR=' Coulombian RL components        :',CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,L0=RIM_is_diagonal,&

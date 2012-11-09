@@ -23,13 +23,15 @@ subroutine RT_retarded_GFs_for_the_CCA(E,k)
  !
  use pars,           ONLY:SP,DP,pi
  use units,          ONLY:FS2AUT,HA2EV
- use YPP,            ONLY:Ret_GF_bands,GF_QP_width,GF_T_step,GF_E_step,GF_E_window
+ use YPP,            ONLY:GF_QP_width,GF_T_step,GF_E_step,GF_E_window
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use real_time,      ONLY:N_T_steps_Gr,Gr,Gr_kind
+ use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window
  use QP_CTL_m,       ONLY:QP_apply
  use timing,         ONLY:live_timing
  use com,            ONLY:msg
+ use IO_m,           ONLY:OP_WR,WR_CL_IF_END,io_control,NONE,LOG
+ use global_XC,      ONLY:G_E_xc_string
  implicit none
  !
  type(bz_samp) ::k
@@ -37,34 +39,38 @@ subroutine RT_retarded_GFs_for_the_CCA(E,k)
  !
  ! Work Space
  !
- integer  :: i_b,i_k,i_w,i_t,T_steps,E_steps 
- real(SP) :: T_window,TIME
+ integer  :: i_b,i_k,i_w,E_steps,io_err,ID
  real(SP),    allocatable :: A_w(:),A_t(:,:,:)
  complex(SP), allocatable :: W(:)
  complex(DP), allocatable :: A_w_DP(:),A_t_DP(:)
- real(SP),external  :: RIntegrate
+ integer,     external    :: io_Green_Functions
+ real(SP),    external    :: RIntegrate
  !
  call section("=",'Retarded Green`s functions integral (CCA)')
  !============================================================
  !
  E_steps=GF_E_window/GF_E_step
- T_window=2.*pi*real(E_steps)/GF_E_window*.5 ! 50% of the T period
- T_steps=   T_window/GF_T_step
+ Gr_T_window=2.*pi*real(E_steps)/GF_E_window*.5 ! 50% of the T period
+ Gr_T_steps =Gr_T_window/GF_T_step
  !
- T_window   =GF_T_step*T_steps
+ Gr_T_window   =GF_T_step*Gr_T_steps
  GF_E_window=GF_E_step*E_steps
  ! 
  call msg("s",'Energy window [eV]:',GF_E_window*HA2EV)
- call msg("s",'Time window   [fs]:',T_window/FS2AUT)
+ call msg("s",'Time window   [fs]:',Gr_T_window/FS2AUT)
  !
- allocate(A_w(E_steps),A_t(k%nibz,Ret_GF_bands(2),T_steps),W(E_steps),A_w_DP(E_steps),A_t_DP(T_steps))
+ allocate(A_w(E_steps),Gr(k%nibz,Gr_bands(2),Gr_T_steps),W(E_steps),A_w_DP(E_steps),A_t_DP(Gr_T_steps))
  !
- call QP_apply(Ret_GF_bands,E,k,'G',msg_fmt='l')
+ call QP_apply(Gr_bands,E,k,'G',msg_fmt='l')
+ !
+ call io_control(ACTION=OP_WR,SEC=(/1/),COM=LOG,ID=ID)
+ io_err=io_Green_Functions(ID)
  ! 
- call live_timing('Fourier Transformation',k%nibz*(Ret_GF_bands(2)-Ret_GF_bands(1)+1))
+ call live_timing('Fourier Transformation',k%nibz*(Gr_bands(2)-Gr_bands(1)+1))
  !
  do i_k=1,k%nibz
-   do i_b=Ret_GF_bands(1),Ret_GF_bands(2)
+   !
+   do i_b=Gr_bands(1),Gr_bands(2)
      !
      select case (trim(Gr_kind))
        !
@@ -76,12 +82,12 @@ subroutine RT_retarded_GFs_for_the_CCA(E,k)
          enddo
          !
          A_w_DP=A_w
-         call RT_1D_Fourier_Transform("W2T"," ",W,A_w_DP,E_steps,A_t_DP,T_steps,T_window/T_steps,0.,.FALSE.,0)
-         A_t(i_k,i_b,:)=real(A_t_DP,SP)
+         call RT_1D_Fourier_Transform("W2T"," ",W,A_w_DP,E_steps,A_t_DP,Gr_T_steps,Gr_T_window/Gr_T_steps,0.,.FALSE.,0)
+         Gr(i_k,i_b,:)=A_t_DP
          !
          ! DEBUG
-         !do i_t=1,T_steps
-         !  TIME= T_window/T_steps*i_t
+         !do i_t=1,Gr_T_steps
+         !  TIME= Gr_T_window/Gr_T_steps*i_t
          !  write (100,'(5f20.10)') TIME/FS2AUT,A_t(i_k,i_b,i_t),cos(E%E(i_b,i_k,1)*TIME)*exp(-GF_QP_width*TIME)
          !enddo
          !stop
@@ -91,6 +97,12 @@ subroutine RT_retarded_GFs_for_the_CCA(E,k)
      call live_timing(steps=1)
      !
    enddo
+   !
+   call io_control(ACTION=WR_CL_IF_END,SEC=(/i_k+1/),COM=NONE,ID=ID)
+   io_err=io_Green_Functions(ID)
+   !
  enddo
+ !
+ deallocate(A_w,Gr,W,A_w_DP,A_t_DP)
  !
 end subroutine RT_retarded_GFs_for_the_CCA

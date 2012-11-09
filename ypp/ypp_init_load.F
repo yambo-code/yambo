@@ -23,7 +23,9 @@ subroutine ypp_init_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
 &                        Time_unit,Bfield_unit,Efield_unit,V_real_time
- use real_time,     ONLY:Gr_kind
+#if defined _YPP_RT
+ use real_time,     ONLY:Gr_kind,Gr_bands
+#endif
  use wave_func,     ONLY:wf_ng
  use YPP
  implicit none
@@ -202,7 +204,7 @@ subroutine ypp_init_load(defs)
  !
  ! Retarded GFs
  !
- call it(defs,'GFbands', 'Bands',Ret_GF_bands) 
+ call it(defs,'GFbands', 'Bands',Gr_bands) 
  call it(defs,'GFkind',  'Green`s function kind',Gr_kind) 
  call it(defs,'QP_width','QP energy indetermination',GF_QP_width,unit=E_unit) 
  call it(defs,'T_step',  'Time step in the integration',GF_T_step,unit=Time_unit) 

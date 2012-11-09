@@ -179,12 +179,19 @@ module real_time
  real(SP)    :: RT_ave_dephasing
  real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
  !
+ ! GFs (retarded)
+ !----------------
+ !
+ logical           :: l_G_retarded
+ integer           :: Gr_T_steps
+ real(SP)          :: Gr_T_window
+ integer           :: Gr_bands(2)
+ character(schlen) :: Gr_kind
+ complex(SP), allocatable :: Gr(:,:,:)
+ !
  ! GFs
  !-----
  !
- integer           :: N_T_steps_Gr
- character(schlen) :: Gr_kind
- complex(SP), allocatable :: Gr(:,:,:)
  complex(SP), allocatable :: G_lesser_reference(:,:,:)
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
  complex(SP), allocatable :: Sigma_relax(:,:,:)

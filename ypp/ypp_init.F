@@ -46,7 +46,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
 #endif
 #if defined _YPP_RT 
- use real_time,      ONLY:RT_step,NE_steps,Gr_kind
+ use real_time,      ONLY:RT_step,NE_steps,Gr_kind,Gr_bands
  use fields,         ONLY:Efield,i_Probe
 #endif
 #if defined _YPP_ELPH
@@ -194,7 +194,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! Retarded GFs
  !
- Ret_GF_bands=(/1,n_bands/)
+ Gr_bands=(/1,n_bands/)
  GF_T_step=1.*FS2AUT
  GF_E_step=0.1/HA2EV
  GF_T_window=-1.

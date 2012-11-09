@@ -25,7 +25,8 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,bz_samp,qindx_X
  use SC,              ONLY:SC_bands,it_now 
- use real_time,       ONLY:RT_qp_px,G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,Sigma_relax
+ use real_time,       ONLY:RT_qp_px,G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,&
+&                          Sigma_relax,l_G_retarded
  use QP_m,            ONLY:QP_n_states,QP_table
  use collisions_CACHE,ONLY:CACHE
  use par_proc_m,      ONLY:pp_redux_wait

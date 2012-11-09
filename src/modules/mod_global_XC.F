@@ -236,11 +236,11 @@ module global_XC
        ch=global_XC_string
        select case (perturbation)
          case(EXT_B_PAULI)
-           global_XC_string=trim(ch)//'+ Pauli Magnetism'
+           global_XC_string=trim(ch)//trim(ch_plus)//'Pauli Magnetism'
          case(EXT_B_LANDAU)
-           global_XC_string=trim(ch)//'+ Landau Magnetism'
+           global_XC_string=trim(ch)//trim(ch_plus)//'Landau Magnetism'
          case(EXT_B_MAGNETISM)
-           global_XC_string=trim(ch)//'+ Magnetism'
+           global_XC_string=trim(ch)//trim(ch_plus)//'Magnetism'
        end select
      endif
      !

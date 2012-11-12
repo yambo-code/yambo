@@ -22,11 +22,10 @@
 integer function io_Green_Functions(ID)
  !
  use pars,           ONLY:SP
- use units,          ONLY:FS2AUT
+ use units,          ONLY:FS2AUT,HA2EV
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_sec,io_elemental,&
-&                         io_action,RD_CL_IF_END,RD_CL,WR_CL,WR_CL_IF_END,&
 &                         write_is_on,io_bulk
- use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window
+ use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_steps,Gr_E_window
  use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc
  !
@@ -45,16 +44,18 @@ integer function io_Green_Functions(ID)
    !
    io_Green_Functions=io_header(ID,XC_KIND="G")
    !
-   !use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window
-   !
-   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=4,MENU=0)
+   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=6,MENU=0)
    !
    call io_elemental(ID,I1=Gr_bands,&
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
    call io_elemental(ID,R0=Gr_T_window,&
-&       VAR=' Time range                  [fs]:',UNIT=1./FS2AUT,CHECK=.true.,OP=(/"==","=="/))
+&       VAR=' Time range                  [fs]:',UNIT=1./FS2AUT,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=Gr_T_steps,&
-&       VAR=' Time steps                      :',UNIT=FS2AUT,CHECK=.true.,OP=(/"==","=="/))
+&       VAR=' Time steps                      :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,R0=Gr_E_window,&
+&       VAR=' Energy range                [eV]:',UNIT=HA2EV,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,I0=Gr_E_steps,&
+&       VAR=' Energy steps                    :',CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(ID,VAR=" ",VAR_SZ=0,MENU=0)
    !
@@ -65,25 +66,25 @@ integer function io_Green_Functions(ID)
    !
  endif
  !
- i_k=maxval(io_sec(ID,:))-1
- !
- if (i_k==0) goto 1
+ if (.not.any((/io_sec(ID,:)==2/))) return
  !
  allocate(Gr_disk(Gr_bands(2),Gr_T_steps,2))
  !
- call io_bulk(ID,VAR="G_retarded_k"//trim(intc(i_k)),VAR_SZ=(/Gr_bands(2),Gr_T_steps,2/))
- if(write_is_on(ID)) then
-   Gr_disk(:,:,1) =real(Gr(i_k,:,:))
-   Gr_disk(:,:,2)=aimag(Gr(i_k,:,:))
-   call io_bulk(ID,R3=Gr_disk)
- else
-   call io_bulk(ID,R3=Gr_disk)
-   Gr(i_k,:,:)=CMPLX(Gr_disk(:,:,1),Gr_disk(:,:,2))
- endif
+ do i_k=1,nkibz
+   !
+   call io_bulk(ID,VAR="G_retarded_k"//trim(intc(i_k)),VAR_SZ=(/Gr_bands(2),Gr_T_steps,2/))
+   if(write_is_on(ID)) then
+     Gr_disk(:,:,1) =real(Gr(i_k,:,:))
+     Gr_disk(:,:,2)=aimag(Gr(i_k,:,:))
+     call io_bulk(ID,R3=Gr_disk)
+   else
+     call io_bulk(ID,R3=Gr_disk)
+     Gr(i_k,:,:)=CMPLX(Gr_disk(:,:,1),Gr_disk(:,:,2))
+   endif
+   !
+ enddo
  !
  deallocate(Gr_disk)
- !
- if (io_action(ID)==RD_CL_IF_END.and.i_k==nkibz) io_action(ID)=RD_CL
  !
 1 call io_disconnect(ID=ID)
  !

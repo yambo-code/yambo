@@ -36,7 +36,7 @@ subroutine RT_initialize(E,k,q)
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
 &                         NE_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,            &
-&                         l_RT_skip_JandP_IO,RT_q_px,l_G_retarded,Gr_kind
+&                         l_RT_skip_JandP_IO,RT_q_px,l_G_retarded,Gr_kind,Gr_bands
  use par_indexes_m,  ONLY:par_indexes
  use par_proc_m,     ONLY:pp_indexes_reset
  use D_lattice,      ONLY:DL_vol
@@ -70,6 +70,11 @@ subroutine RT_initialize(E,k,q)
  !
  l_NE_simulate_BSE     =.FALSE.
  l_NE_simulate_TDDFT   =.FALSE.
+ !
+ if (l_G_retarded) then
+   l_G_retarded=l_carrier_dynamics.or.l_ph_corr
+   if (Gr_bands(1)<SC_bands(1).or.Gr_bands(2)<SC_bands(2)) l_G_retarded=.FALSE.
+ endif
  !
  l_RT_diagonalize      =RT_diagonalization_steps>1
  !
@@ -299,9 +304,7 @@ subroutine RT_initialize(E,k,q)
    call msg( 'r','[RT] Simulate TD-DFT            :',l_NE_simulate_TDDFT)
    call msg( 'r','[RT] Carriers El-ph scattering  :',l_ph_corr)
    call msg( 'r','[RT] Carriers El-El scattering  :',l_carrier_dynamics)
-   if ((l_carrier_dynamics.or.l_ph_corr).and.l_G_retarded) then
-     call msg( 'r','[RT] Retareded Green`s function :',Gr_kind)
-   endif
+   if (l_G_retarded) call msg( 'r','[RT] Retareded Green`s function :',Gr_kind)
    call msg( 'r','[SC] Extended collisions I/O    :',l_collisions_IO)
  endif
  !

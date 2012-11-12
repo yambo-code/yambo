@@ -184,8 +184,10 @@ module real_time
  !
  logical           :: l_G_retarded
  integer           :: Gr_T_steps
- real(SP)          :: Gr_T_window
+ integer           :: Gr_E_steps
  integer           :: Gr_bands(2)
+ real(SP)          :: Gr_T_window
+ real(SP)          :: Gr_E_window
  character(schlen) :: Gr_kind
  complex(SP), allocatable :: Gr(:,:,:)
  !
@@ -306,7 +308,7 @@ module real_time
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
      use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
-     use R_lattice,      ONLY:nqbz
+     use R_lattice,      ONLY:nqbz,nkibz
      !
      type(levels), intent(in) :: en
      !
@@ -373,6 +375,13 @@ module real_time
      if(l_sc_contains_lda.and.SC_xc_functional/=0.and.SC_bands(1)>1) then
        allocate(full_rho(fft_size))
        call mem_est("full_rho",(/fft_size/),(/SP/))
+     endif
+     !
+     ! Retarded Green Functions
+     !
+     if (l_G_retarded) then
+       allocate(Gr(nkibz,Gr_bands(2),Gr_T_steps))
+       call mem_est("G_retarded",(/size(Gr)/),(/2*SP/))
      endif
      !
      ! Reference energies
@@ -491,6 +500,13 @@ module real_time
      !
      if(allocated(Q_io_map)) then
        deallocate(Q_io_map,K_io_map)
+     endif
+     !
+     ! Retarded Green Functions
+     !
+     if (allocated(Gr)) then
+       deallocate(Gr)
+       call mem_est("G_retarded")
      endif
      !
      call pp_indexes_reset(RT_k_px) 

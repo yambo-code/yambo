@@ -168,11 +168,9 @@ module YPP
  !
  logical  :: l_retarded_GFs
  integer  :: Ret_GF_bands(2)      ! Bands Range
- real(SP) :: GF_E_step
+ real(SP) :: Gr_E_step
  real(SP) :: GF_T_step
- real(SP) :: GF_E_window
- real(SP) :: GF_T_window
- real(SP) :: GF_QP_width
+ real(SP) :: Gr_QP_width
  !
  ! (RT) optics
  !

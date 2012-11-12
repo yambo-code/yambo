@@ -33,6 +33,7 @@ subroutine RT_start_and_restart(E,k,X)
  !  .> RESTART from a previous run
  ! [4] Initialize the bare Hartree and XC
  ! [5] Initialize the fields
+ ! [6] (Eventually) load the retarded Green Functions 
  !
  use pars,           ONLY:SP,cI,cZERO,rZERO
  use units,          ONLY:HA2EV
@@ -61,11 +62,12 @@ subroutine RT_start_and_restart(E,k,X)
  type(levels)      :: E
  type(bz_samp)     :: k
  type(X_t)         :: X
- integer, external :: io_SC_components
  !
  ! Work Space
  !
- integer :: ik,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,io_OCCUPATIONS,ID_OCCUPATIONS
+ integer :: ik,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,&
+&           io_OCCUPATIONS,ID_OCCUPATIONS,ID_Gr,io_Gr
+ integer, external :: io_SC_components,io_Green_Functions
  logical :: RESTART,SC_DB_present
  !
  ! Initialize the Gf and potentials
@@ -134,6 +136,11 @@ subroutine RT_start_and_restart(E,k,X)
  !
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(7)) ! G_lesser
  io_THETA=io_SC_components('THETA' ,E,ID(7))
+ !
+ ! Retarded Green Functions
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID_Gr)
+ io_Gr=io_Green_Functions(ID_Gr)
  !
  ! To restart from RT only the G_lesser is necessary
  !

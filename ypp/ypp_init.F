@@ -46,7 +46,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
 #endif
 #if defined _YPP_RT 
- use real_time,      ONLY:RT_step,NE_steps,Gr_kind,Gr_bands
+ use real_time,      ONLY:RT_step,NE_steps,Gr_kind,Gr_bands,Gr_E_window
  use fields,         ONLY:Efield,i_Probe
 #endif
 #if defined _YPP_ELPH
@@ -196,10 +196,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  Gr_bands=(/1,n_bands/)
  GF_T_step=1.*FS2AUT
- GF_E_step=0.1/HA2EV
- GF_T_window=-1.
- GF_E_window=100./HA2EV
- GF_QP_width=0.1/HA2EV
+ Gr_E_step=0.1/HA2EV
+ Gr_E_window=100./HA2EV
+ Gr_QP_width=0.1/HA2EV
  Gr_kind="QP"
  !
  t_jump=0.
@@ -574,7 +573,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_retarded_GFs) then
    call QP_ctl_switch('G')
-   call initactivate(1,"RetGFbands RetGFkind T_window T_step E_window E_step QP_width")
+   call initactivate(1,"RetGFbands RetGFkind T_step E_window E_step QP_width")
  endif
  !
  if (l_RT_X) then 

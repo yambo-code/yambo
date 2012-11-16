@@ -19,17 +19,20 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_Green_Functions(ID)
+integer function io_G_retarded(ID,what)
  !
  use pars,           ONLY:SP
  use units,          ONLY:FS2AUT,HA2EV
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_sec,io_elemental,&
 &                         write_is_on,io_bulk
- use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_steps,Gr_E_window
+ use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_steps,Gr_E_window,&
+&                         Gr_mat_dim,Gr_matrix
+ use SC,             ONLY:SC_bands
  use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc
  !
  implicit none
+ character(*)::what
  integer     ::ID
  !
  ! Work Space
@@ -37,17 +40,23 @@ integer function io_Green_Functions(ID)
  integer              :: i_k
  real(SP),allocatable :: Gr_disk(:,:,:)
  !
- io_Green_Functions=io_connect(desc="Retarded_Green_Function",type=2,ID=ID)
- if (io_Green_Functions/=0) goto 1
+ io_G_retarded=io_connect(desc=what,type=2,ID=ID)
+ if (io_G_retarded/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_Green_Functions=io_header(ID,XC_KIND="G")
+   io_G_retarded=io_header(ID,XC_KIND="G")
    !
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=6,MENU=0)
    !
-   call io_elemental(ID,I1=Gr_bands,&
-&       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
+   if (what=="G_retarded") then
+     call io_elemental(ID,I1=Gr_bands,&
+&         VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
+   else
+     call io_elemental(ID,I1=SC_bands,&
+&         VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
+   endif
+   !
    call io_elemental(ID,R0=Gr_T_window,&
 &       VAR=' Time range                  [fs]:',UNIT=1./FS2AUT,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=Gr_T_steps,&
@@ -68,23 +77,35 @@ integer function io_Green_Functions(ID)
  !
  if (.not.any((/io_sec(ID,:)==2/))) return
  !
- allocate(Gr_disk(Gr_bands(2),Gr_T_steps,2))
- !
- do i_k=1,nkibz
+ if (what=="G_retarded") then
    !
-   call io_bulk(ID,VAR="G_retarded_k"//trim(intc(i_k)),VAR_SZ=(/Gr_bands(2),Gr_T_steps,2/))
-   if(write_is_on(ID)) then
-     Gr_disk(:,:,1) =real(Gr(i_k,:,:))
-     Gr_disk(:,:,2)=aimag(Gr(i_k,:,:))
-     call io_bulk(ID,R3=Gr_disk)
-   else
-     call io_bulk(ID,R3=Gr_disk)
-     Gr(i_k,:,:)=CMPLX(Gr_disk(:,:,1),Gr_disk(:,:,2))
-   endif
+   allocate(Gr_disk(Gr_bands(2),Gr_T_steps,2))
    !
- enddo
- !
- deallocate(Gr_disk)
+   do i_k=1,nkibz
+     !
+     call io_bulk(ID,VAR="G_retarded_k"//trim(intc(i_k)),VAR_SZ=(/Gr_bands(2),Gr_T_steps,2/))
+     if(write_is_on(ID)) then
+       Gr_disk(:,:,1) =real(Gr(i_k,:,:))
+       Gr_disk(:,:,2)=aimag(Gr(i_k,:,:))
+       call io_bulk(ID,R3=Gr_disk)
+     else
+       call io_bulk(ID,R3=Gr_disk)
+       Gr(i_k,:,:)=CMPLX(Gr_disk(:,:,1),Gr_disk(:,:,2))
+     endif
+     !
+   enddo
+   !
+   deallocate(Gr_disk)
+   !
+ else if (what=="G_retarded_matrix") then
+   !
+   call io_bulk(ID,VAR="G_retarded_matrix_SIZE",VAR_SZ=(/1/))
+   call io_bulk(ID,I0=Gr_mat_dim)
+   !
+   call io_bulk(ID,VAR="G_retarded_matrix",VAR_SZ=(/Gr_mat_dim,Gr_mat_dim/))
+   call io_bulk(ID,R2=Gr_matrix)
+   !
+ endif
  !
 1 call io_disconnect(ID=ID)
  !

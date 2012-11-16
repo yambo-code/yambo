@@ -67,7 +67,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use collisions_IO,  ONLY:io_COLLISIONS,V_kind
 #endif
 #if defined _RT
- use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe,Dynamics_Kind,l_G_retarded 
+ use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe,Dynamics_Kind
  use fields,         ONLY:Efield,i_Pump,i_Probe,Efield_reset,Efield_duplicate
 #endif
 #if defined _MAGNETIC
@@ -98,7 +98,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: ioE_RIM
  !
 #if defined _SC || defined _RT
- integer, external :: io_SC_components,io_Green_Functions
+ integer, external :: io_SC_components,io_G_retarded
 #endif
 #if defined _ELPH 
  integer           :: ioELPH_err
@@ -365,8 +365,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_G=io_SC_components('G' ,en,io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_Gr=io_Green_Functions(io_ID)
- l_G_retarded=io_Gr==0
+ io_Gr=io_G_retarded(io_ID,"G_retarded")
 #endif
  !
  ! SC 

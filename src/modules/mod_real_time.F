@@ -182,13 +182,16 @@ module real_time
  ! GFs (retarded)
  !----------------
  !
- logical           :: l_G_retarded
+ logical           :: l_G_retarded_DB
+ integer           :: Gr_mat_dim
  integer           :: Gr_T_steps
  integer           :: Gr_E_steps
  integer           :: Gr_bands(2)
  real(SP)          :: Gr_T_window
  real(SP)          :: Gr_E_window
  character(schlen) :: Gr_kind
+ integer,     allocatable :: Gr_indexes(:,:,:,:)
+ real(SP),    allocatable :: Gr_matrix(:,:)
  complex(SP), allocatable :: Gr(:,:,:)
  !
  ! GFs
@@ -379,7 +382,7 @@ module real_time
      !
      ! Retarded Green Functions
      !
-     if (l_G_retarded) then
+     if (l_G_retarded_DB) then
        allocate(Gr(nkibz,Gr_bands(2),Gr_T_steps))
        call mem_est("G_retarded",(/size(Gr)/),(/2*SP/))
      endif
@@ -507,6 +510,11 @@ module real_time
      if (allocated(Gr)) then
        deallocate(Gr)
        call mem_est("G_retarded")
+     endif
+     if (allocated(Gr_indexes)) then
+       deallocate(Gr_indexes)
+       deallocate(Gr_matrix)
+       call mem_est("Gr_indexes G_matrix")
      endif
      !
      call pp_indexes_reset(RT_k_px) 

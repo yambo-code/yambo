@@ -45,7 +45,7 @@ subroutine RT_start_and_restart(E,k,X)
  use real_time,      ONLY:G_lesser,ID,NE_steps,RT_ind_J,    &
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_ELPH_CCA_Kernel,   &
+&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_ELPH_CCA_Kernel,&
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
@@ -67,7 +67,7 @@ subroutine RT_start_and_restart(E,k,X)
  !
  integer :: ik,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,ID_Gr,io_Gr
- integer, external :: io_SC_components,io_Green_Functions
+ integer, external :: io_SC_components,io_G_retarded
  logical :: RESTART,SC_DB_present
  !
  ! Initialize the Gf and potentials
@@ -140,7 +140,12 @@ subroutine RT_start_and_restart(E,k,X)
  ! Retarded Green Functions
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID_Gr)
- io_Gr=io_Green_Functions(ID_Gr)
+ io_Gr=io_G_retarded(ID_Gr,"G_retarded")
+ !
+ ! Retarded Green Functions matrix
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID_Gr)
+ io_Gr=io_G_retarded(ID_Gr,"G_retarded_matrix")
  !
  ! To restart from RT only the G_lesser is necessary
  !
@@ -410,5 +415,17 @@ subroutine RT_start_and_restart(E,k,X)
  !
  if(.not.associated(E%Eo)) allocate(E%Eo(SC_bands(2),QP_nk,n_sp_pol))
  E%Eo(1:SC_bands(2),1:QP_nk,1:n_sp_pol)=E%E(1:SC_bands(2),1:QP_nk,1:n_sp_pol)
+ !
+ ! Retarded Green Functions matrix
+ ! ===============================
+ !
+ if (l_ph_corr.or.l_carrier_dynamics.and.io_Gr/=0) then
+   !
+   call section('+','Retarded Green Functions initialization')
+   !                 ========================================
+   !
+   call RT_CCA_initialize(E)
+   !
+ endif
  !
 end subroutine RT_start_and_restart

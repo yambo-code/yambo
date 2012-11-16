@@ -93,7 +93,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     l_RT_diagonalize,RT_is_dumped,RAD_LifeTime,Phase_LifeTime,&
 &                     NE_Hxc_jumps,NE_tot_time,NE_MEM_steps,NE_MEM_treshold,&
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,&
-&                     Eh_pumped_pair_energy,Dynamics_Kind,Eh_pumped_pair_width
+&                     Eh_pumped_pair_energy,Dynamics_Kind,Eh_pumped_pair_width,Gr_bands
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,theta_function_iTo_ref,i_Pump,i_Probe
 #endif
 #if defined _MAGNETIC
@@ -504,6 +504,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  RT_eh_energy_max=0.
  Eh_pumped_pair_energy=-1./HA2EV
  Eh_pumped_pair_width=0.1/HA2EV
+ Gr_bands=0
  !
 #endif
  !

@@ -43,7 +43,7 @@ subroutine RT_retarded_GFs_for_the_CCA(E,k)
  real(SP),    allocatable :: A_w(:),A_t(:,:,:)
  complex(SP), allocatable :: W(:)
  complex(DP), allocatable :: A_w_DP(:),A_t_DP(:)
- integer,     external    :: io_Green_Functions
+ integer,     external    :: io_G_retarded
  real(SP),    external    :: RIntegrate
  !
  call section("=",'Retarded Green`s functions integral (CCA)')
@@ -82,13 +82,6 @@ subroutine RT_retarded_GFs_for_the_CCA(E,k)
          call RT_1D_Fourier_Transform("W2T"," ",W,A_w_DP,Gr_E_steps,A_t_DP,Gr_T_steps,Gr_T_window/Gr_T_steps,0.,.FALSE.,0)
          Gr(i_k,i_b,:)=A_t_DP
          !
-         ! DEBUG
-         !do i_t=1,Gr_T_steps
-         !  TIME= Gr_T_window/Gr_T_steps*i_t
-         !  write (100,'(5f20.10)') TIME/FS2AUT,A_t(i_k,i_b,i_t),cos(E%E(i_b,i_k,1)*TIME)*exp(-GF_QP_width*TIME)
-         !enddo
-         !stop
-         !
      end select
      !
      call live_timing(steps=1)
@@ -98,7 +91,7 @@ subroutine RT_retarded_GFs_for_the_CCA(E,k)
  enddo
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),COM=LOG,ID=ID)
- io_err=io_Green_Functions(ID)
+ io_err=io_G_retarded(ID,"G_retarded")
  !
  deallocate(A_w,Gr,W,A_w_DP,A_t_DP)
  !

@@ -21,7 +21,7 @@
 !
 module interpolate
  !
- use pars,       ONLY:SP,schlen
+ use pars,       ONLY:SP,DP,schlen
  use com,        ONLY:error
  !
  ! Interpolation according to PRB 38 p2721
@@ -44,7 +44,7 @@ module interpolate
  ! 
  type interp_coeff
    character(schlen)     :: interp_type
-   complex(SP), allocatable :: engre(:,:)
+   complex(DP), allocatable :: engre(:,:)
    integer               :: ndim
  end type interp_coeff
  !
@@ -54,23 +54,27 @@ module interpolate
  !
  interface
    !
-   subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,k,ID)
+   subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,ID)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
+     use electrons,  ONLY:levels
      implicit none
      type(bz_samp), intent(in)           :: k
      real(SP),      intent(in), optional :: R1D(:,:),R2D(:,:,:)
      complex(SP),   intent(in), optional :: C1D(:,:),C2D(:,:,:)
+     type(levels),  intent(in), optional :: E
      integer,       intent(out)          :: ID
    end subroutine  eval_interpolation_coeff
    !
-   subroutine bz_interpolation(R1D,R2D,C1D,C2D,USER_k,ID)
+   subroutine bz_interpolation(R1D,R2D,C1D,C2D,E,USER_k,ID)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
+     use electrons,  ONLY:levels
      implicit none
      type(bz_samp), intent(in)            :: USER_k
      real(SP),      intent(out), optional :: R1D(:,:),R2D(:,:,:)
      complex(SP),   intent(out), optional :: C1D(:,:),C2D(:,:,:)
+     type(levels),  intent(out), optional :: E
      integer,       intent(in)            :: ID
    end subroutine bz_interpolation
    !

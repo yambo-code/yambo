@@ -1,2 +1,2 @@
 objs = bz_interp_coeff.o  bz_interpolation.o  bz_interp_setup.o eval_interpolation_coeff.o \
-       fourier_interpolation.o matrix_inv_cut.o
+       fourier_interpolation.o 

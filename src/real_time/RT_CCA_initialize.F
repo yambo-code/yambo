@@ -27,6 +27,8 @@ subroutine RT_CCA_initialize(E)
 &                         Gr_mat_dim
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:nkibz
+ use par_proc_m,     ONLY:pp_indexes,pp_indexes_reset,myid,pp_redux_wait
+ use par_indexes_m,  ONLY:par_indexes
  use timing,         ONLY:live_timing
  use electrons,      ONLY:levels
  use IO_m,           ONLY:OP_WR_CL,OP_RD_CL,io_control,REP,VERIFY
@@ -37,7 +39,10 @@ subroutine RT_CCA_initialize(E)
  ! Work Space
  !
  integer :: i_n,i_k,i_m,i_p,i_np,i_kp,i_mp,i_pp,i_c,i1,i2,ID,io_err
- real(SP):: Gr_integrand(Gr_T_steps),Gr_T_step,DELTA(2),GAMMA_
+ real(SP):: Gr_integrand(Gr_T_steps),Gr_T_step,DELTA(2),GAMMA_,&
+&           Gr_energies(((SC_bands(2)-SC_bands(1))*nkibz)**2,2),E_(2)
+ type(pp_indexes)   :: px
+ integer,allocatable:: Gr_local_indexes(:,:)
  integer,  external :: io_G_retarded
  real(SP), external :: RIntegrate_fixed_step
  !
@@ -45,20 +50,41 @@ subroutine RT_CCA_initialize(E)
    if (i_c==2) then
      allocate(Gr_indexes(SC_bands(1):SC_bands(2),nkibz,SC_bands(1):SC_bands(2),nkibz))
      call mem_est("Gr_indexes",(/size(Gr_indexes)/),(/IP/))
+     allocate(Gr_local_indexes(Gr_mat_dim,4))
    endif
    Gr_mat_dim=0
    do i_n=SC_bands(1),SC_bands(2)
      do i_k=1,nkibz
        do i_m=SC_bands(1),SC_bands(2)
-         do i_p=1,nkibz
-           if (local_condition(i_k,i_n,i_p,i_m)) then
+         p_loop: do i_p=1,nkibz
+           !
+           E_(1)=E%E(i_n,i_k,1)
+           E_(2)=E%E(i_m,i_p,1)
+           !
+           if (local_condition(i_n,i_k,i_m,i_p)) then
+             do i1=1,Gr_mat_dim
+               if (abs(Gr_energies(i1,1)-E_(1))<1.E-5.and.&
+&                  abs(Gr_energies(i1,2)-E_(2))<1.E-5) then
+                 if (i_c==2) then
+                   Gr_indexes(i_n,i_k,i_m,i_p)=i1
+                   Gr_indexes(i_m,i_p,i_n,i_k)=i1
+                 endif
+                 cycle p_loop 
+               endif
+             enddo
+             !
              Gr_mat_dim=Gr_mat_dim+1
+             !
+             Gr_energies(Gr_mat_dim,1)=E_(1)
+             Gr_energies(Gr_mat_dim,2)=E_(2)
+             !
              if (i_c==2) then
+               Gr_local_indexes(Gr_mat_dim,:)=(/i_n,i_k,i_m,i_p/)
                Gr_indexes(i_n,i_k,i_m,i_p)=Gr_mat_dim
                Gr_indexes(i_m,i_p,i_n,i_k)=Gr_mat_dim
              endif
            endif
-         enddo
+         enddo p_loop
        enddo
      enddo
    enddo
@@ -83,58 +109,56 @@ subroutine RT_CCA_initialize(E)
    return
  endif
  !
- call live_timing('G retarded integrals',(SC_bands(2)-SC_bands(2)+1)*nkibz)
+ call pp_indexes_reset(px)
+ call par_indexes(px,(/Gr_mat_dim/))
+ !
+ call live_timing('G retarded integrals',px%n_of_elements(myid+1))
  !
  if (l_G_retarded_db) Gr_T_step=Gr_T_window/Gr_T_steps
  !
- do i_np=SC_bands(1),SC_bands(2)
-   do i_kp=1,nkibz
-     do i_m=SC_bands(1),SC_bands(2)
-       do i_p=1,nkibz
-         !
-         if (.not.local_condition(i_kp,i_np,i_p,i_m)) cycle
-         !
-         do i_mp=SC_bands(1),SC_bands(2)
-           do i_pp=1,nkibz
-             do i_n=SC_bands(1),SC_bands(2)
-               do i_k=1,nkibz
-                 !
-                 if (.not.local_condition(i_pp,i_mp,i_k,i_n)) cycle
-                 !
-                 i1=Gr_indexes(i_np,i_kp, i_m, i_p)
-                 i2=Gr_indexes(i_mp,i_pp, i_n, i_k)
-                 !
-                 if (i1>i2) cycle
-                 !
-                 if (l_G_retarded_db) then
-                   !
-                   Gr_integrand(:)=real( Gr(i_kp,i_np,:)*Gr(i_p,i_m,:)*&
-&                                  conjg(Gr(i_pp,i_mp,:))*conjg(Gr(i_k,i_n,:)) )
-                   Gr_matrix(i1,i2)=RIntegrate_fixed_step(Gr_integrand,Gr_T_steps,Gr_T_step)
-                   !
-                 else
-                   !
-                   DELTA(1) = E%E(i_np,i_kp,1)-E%E(i_n,i_k,1)
-                   DELTA(2) = E%E(i_m,i_p,1)-E%E(i_mp,i_pp,1)
-                   !
-                   GAMMA_ = abs(E%W(i_np,i_kp,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pp,1))+abs(E%W(i_n,i_k,1))
-                   !
-                   Gr_matrix(i1,i2)=GAMMA_/((DELTA(1)+DELTA(2))**2+GAMMA_**2)
-                   !
-                 endif
-                 !
-               enddo
-             enddo
-           enddo
-         enddo
-       enddo
-     enddo
+ do i1=1,Gr_mat_dim
+   !
+   if (.not.px%element_1D(i1)) cycle
+   !
+   i_np=Gr_local_indexes(i1,1)
+   i_kp=Gr_local_indexes(i1,2)
+   i_m =Gr_local_indexes(i1,3)
+   i_p =Gr_local_indexes(i1,4)
+   !
+   do i2=1,i1
+     !
+     i_mp=Gr_local_indexes(i2,1)
+     i_pp=Gr_local_indexes(i2,2)
+     i_n =Gr_local_indexes(i2,3)
+     i_k =Gr_local_indexes(i2,4)
+     !
+     if (l_G_retarded_db) then
+       !
+       Gr_integrand(:)=real( Gr(i_kp,i_np,:)*Gr(i_p,i_m,:)*&
+&                      conjg(Gr(i_pp,i_mp,:))*conjg(Gr(i_k,i_n,:)) )
+       Gr_matrix(i1,i2)=RIntegrate_fixed_step(Gr_integrand,Gr_T_steps,Gr_T_step)
+       !
+     else
+       !
+       DELTA(1) = E%E(i_np,i_kp,1)-E%E(i_n,i_k,1)
+       DELTA(2) = E%E(i_m,i_p,1)-E%E(i_mp,i_pp,1)
+       !
+       GAMMA_ = abs(E%W(i_np,i_kp,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pp,1))+abs(E%W(i_n,i_k,1))
+       !
+       Gr_matrix(i1,i2)=GAMMA_/((DELTA(1)+DELTA(2))**2+GAMMA_**2)
+       !
+     endif
+     !
      call live_timing(steps=1)
+     !
    enddo
  enddo
  !
  do i1=1,Gr_mat_dim
-   do i2=i1+1,Gr_mat_dim
+   call pp_redux_wait(Gr_matrix(:,i1))
+ enddo
+ do i1=1,Gr_mat_dim
+   do i2=1,i1
      Gr_matrix(i2,i1)=Gr_matrix(i1,i2)
    enddo
  enddo
@@ -143,6 +167,7 @@ subroutine RT_CCA_initialize(E)
    deallocate(Gr)
    call mem_est("G_retarded")
  endif
+ deallocate(Gr_local_indexes)
  !
  call live_timing()
  !
@@ -154,7 +179,7 @@ subroutine RT_CCA_initialize(E)
  !
  contains
    !
-   logical function local_condition(i_k,i_n,i_p,i_m)
+   logical function local_condition(i_n,i_k,i_m,i_p)
      !
      integer i_k,i_n,i_p,i_m
      !

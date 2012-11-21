@@ -21,7 +21,7 @@
 !
 subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues)
   !
-  use pars,           ONLY:SP,pi,cI,cZERO
+  use pars,           ONLY:SP,pi,cI,cZERO,DP
   use interpolate,    ONLY:nshells,lattice_vectors,make_star,metric,int_sop
   use R_lattice,      ONLY:bz_samp
   use D_lattice,      ONLY:nsym
@@ -33,7 +33,7 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues)
   type(bz_samp), intent(in) :: USER_k
   real(SP), intent(out)     :: VALUES(nvalues,USER_k%nibz)
   real(SP), parameter       :: twopi=2._SP*pi
-  complex(SP), intent(in)   :: engre(nshells,nvalues)
+  complex(DP), intent(in)   :: engre(nshells,nvalues)
   !
   ! Work Space
   !

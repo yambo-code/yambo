@@ -32,7 +32,7 @@ module ELPH
  integer   :: elph_nDBs_used
  integer   :: nq_memory
  integer   :: elph_branches(2)
- real(SP)  :: max_ph_freq
+ real(SP)  :: W_debye
  logical   :: elph_use_q_grid
  real(SP),    allocatable :: ph_kpt_bz(:,:)
  real(SP),    allocatable :: ph_qpt(:,:)

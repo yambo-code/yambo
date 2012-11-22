@@ -29,7 +29,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  use frequency,           ONLY:w_samp,W_reset
  use YPP,                 ONLY:elph_steps,ph_broad,n_lambda
  use stderr,              ONLY:intc
- use ELPH,                ONLY:max_ph_freq,elph_nDBs_used,ph_modes,elph_global_free,&
+ use ELPH,                ONLY:W_debye,elph_nDBs_used,ph_modes,elph_global_free,&
 &                              gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,&
 &                              gsqF_life_f ,elph_use_q_grid,ph_freqs_sq,elph_global_alloc
  use IO_m,                ONLY:io_control,OP_RD,RD_CL,DUMP,RD_CL
@@ -118,7 +118,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  !
  call W_reset(g_sq_F_E)
  g_sq_F_E%n=elph_steps
- g_sq_F_E%er=(/0._SP,max_ph_freq*1.1/)
+ g_sq_F_E%er=(/0._SP,W_debye*1.1/)
  g_sq_F_E%dr=ph_broad
  call FREQUENCIES_setup(g_sq_F_E)
  call pp_indexes_reset(px)

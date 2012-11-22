@@ -27,7 +27,7 @@ integer function ioELPH(ID,what)
 &                         read_is_on,write_is_on,RD_CL,RD_CL_IF_END,io_action,&
 &                         io_mode,DUMP,ver_is_gt_or_eq
  use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,elph_gkkp,&
-&                         QP_PH_n_G_bands,max_ph_freq,elph_DW,elph_nDBs,&
+&                         QP_PH_n_G_bands,W_debye,elph_DW,elph_nDBs,&
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,ph_kpt_bz,elph_nDBs_used,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
 &                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz
@@ -106,7 +106,7 @@ integer function ioELPH(ID,what)
    if (ioELPH/=0) goto 1
    !
    call io_bulk(ID,VAR="MAX_PH_FREQ",VAR_SZ=(/1/))
-   call io_bulk(ID,R0=max_ph_freq)
+   call io_bulk(ID,R0=W_debye)
    !
    ! Q point coordinates [iku]...
    !

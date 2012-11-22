@@ -61,7 +61,8 @@ module electrons
    integer         :: kf
    integer         :: sf
    real(SP)        :: Efermi(3)
-   real(SP)        :: Egap(2) ! 1-2 refers to spin polarizations
+   real(SP)        :: E_dir_gap(2) ! 1-2 refers to spin polarizations
+   real(SP)        :: E_ind_gap(2)
    !
    ! QP corrections
    !
@@ -115,7 +116,7 @@ module electrons
        Eo%kf=Ei%kf
        Eo%sf=Ei%sf
        Eo%Efermi=Ei%Efermi
-       Eo%Egap=Ei%Egap
+       Eo%E_dir_gap=Ei%E_dir_gap
      endif
      allocate(Eo%E(Eo%nb,Eo%nk,n_sp_pol),Eo%f(Eo%nb,Eo%nk,n_sp_pol))
      call mem_est("E-E E-f",(/size(Eo%E),size(Eo%f)/),(/SP,SP/))
@@ -166,7 +167,7 @@ module electrons
    subroutine E_reset(E)
      use memory_m, ONLY:mem_est
      type(levels)::E
-     E%Egap=0.
+     E%E_dir_gap=0.
      E%Efermi=0.
      E%nb=0
      E%nk=0

@@ -169,7 +169,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (any((/l_fix_syms,l_RT_X/))) call RT_driver(en,k)
  !         ==================
  !
- if (l_retarded_GFs) call RT_retarded_GFs_for_the_CCA(en,k)
+ if (l_retarded_GFs) call RT_G_retarded(en,k)
  !  ================
  !  
 #endif

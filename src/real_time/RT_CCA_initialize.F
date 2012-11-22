@@ -110,15 +110,13 @@ subroutine RT_CCA_initialize(E)
  endif
  !
  call pp_indexes_reset(px)
- call par_indexes(px,(/Gr_mat_dim/))
+ call par_indexes(px,(/Gr_mat_dim,Gr_mat_dim/))
  !
  call live_timing('G retarded integrals',px%n_of_elements(myid+1))
  !
  if (l_G_retarded_db) Gr_T_step=Gr_T_window/Gr_T_steps
  !
  do i1=1,Gr_mat_dim
-   !
-   if (.not.px%element_1D(i1)) cycle
    !
    i_np=Gr_local_indexes(i1,1)
    i_kp=Gr_local_indexes(i1,2)
@@ -131,6 +129,8 @@ subroutine RT_CCA_initialize(E)
      i_pp=Gr_local_indexes(i2,2)
      i_n =Gr_local_indexes(i2,3)
      i_k =Gr_local_indexes(i2,4)
+     !
+     if (.not.px%element_2D(i1,i2)) cycle
      !
      if (l_G_retarded_db) then
        !
@@ -152,6 +152,7 @@ subroutine RT_CCA_initialize(E)
      call live_timing(steps=1)
      !
    enddo
+   !
  enddo
  !
  do i1=1,Gr_mat_dim

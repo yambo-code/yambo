@@ -7,7 +7,7 @@ RT_objects = RT_driver.o RT_paths.o RT_databases.o RT_fix_symmetries.o RT_X_LRR_
              RT_build_spin_sop.o RT_initialize.o RT_X_qssin.o RT_1D_Fourier_Transform.o  \
              RT_damp_it.o RT_X_effective.o RT_coefficients_Fourier.o RT_coefficients_Inversion.o RT_X_inversion.o \
              RT_split_Polarization.o RT_occupations_analyze.o RT_occupations_check.o RT_occupations_repair.o \
-             RT_retarded_GFs_for_the_CCA.o
+             RT_G_retarded.o
 #endif
 #if defined _YPP_MAGNETIC
 magnetic_objects = electrons_angular_momentum.o electrons_position.o

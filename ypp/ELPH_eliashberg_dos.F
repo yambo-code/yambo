@@ -29,7 +29,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use YPP,                 ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
 &                              ph_broad,l_dos,l_eliashberg
  use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,ph_freqs_sq,&
-&                              max_ph_freq,elph_nDBs,elph_use_q_grid,&
+&                              W_debye,elph_nDBs,elph_use_q_grid,&
 &                              E_k_plus_q,setup_k_plus_q_levels,elph_global_free
  use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use timing,              ONLY:live_timing
@@ -100,7 +100,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !
  ! Energy range
  !
- e_step=max_ph_freq*1.10/(elph_steps-1)
+ e_step=W_debye*1.10/(elph_steps-1)
  do i2=1,elph_steps
    ph_energy(i2)=(i2-1)*e_step
  enddo

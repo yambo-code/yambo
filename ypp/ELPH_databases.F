@@ -25,7 +25,7 @@ integer function ELPH_databases(k,E,q)
  use stderr,              ONLY:intc
  use electrons,           ONLY:levels
  use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,elph_use_q_grid,&
-&                              elph_global_free,max_ph_freq,elph_global_alloc,&
+&                              elph_global_free,W_debye,elph_global_alloc,&
 &                              elph_nDBs,ph_qpt,ph_kpt_bz,elph_nk_bz
  use com,                 ONLY:msg,warning,file_exists,error
  use R_lattice,           ONLY:bz_samp,qindx_B
@@ -69,7 +69,7 @@ integer function ELPH_databases(k,E,q)
  call msg('s','PW(ELPH) databases ...')
  !
  io_err=0
- max_ph_freq=0.
+ W_debye=0.
  elph_use_q_grid=.true.
  elph_nDBs=0
  nDBs_disk=0
@@ -390,7 +390,7 @@ integer function ELPH_databases(k,E,q)
      !
      if (.not.abinit_DB) ph_freq=ph_freq/2._SP
      !
-     max_ph_freq=max(max_ph_freq,ph_freq)
+     W_debye=max(W_debye,ph_freq)
      !
    enddo
    if (idb_<0) then

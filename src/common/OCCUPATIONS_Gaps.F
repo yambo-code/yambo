@@ -88,6 +88,8 @@ subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,N_f,N_m)
    !
  enddo
  !
+ E%E_ind_gap(:n_sp_pol)=E_g_ind_(:n_sp_pol,1)
+ !
  ! [2] Direct Gaps (min/max)
  !
  do i_s=1,n_sp_pol
@@ -101,7 +103,7 @@ subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,N_f,N_m)
    !
  enddo
  !
- E%Egap(:n_sp_pol)=E_g_dir_(:n_sp_pol,1)
+ E%E_dir_gap(:n_sp_pol)=E_g_dir_(:n_sp_pol,1)
  !
  ! From Shadow variables to optional variables
  !

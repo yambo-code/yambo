@@ -29,7 +29,7 @@ subroutine RT_ELPH_initialize(k,q)
  use R_lattice,      ONLY:RL_vol,bz_samp
  use par_proc_m,     ONLY:myid
  use IO_m,           ONLY:io_control,OP_RD,REP,RD_CL_IF_END
- use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,max_ph_freq
+ use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,W_debye
  use memory_m,       ONLY:mem_est
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
@@ -119,7 +119,7 @@ subroutine RT_ELPH_initialize(k,q)
  !
  ! Test of the effect of using a single optical mode
  !
- if (l_use_Debye_E) ph_freqs_sq=max_ph_freq**2.
+ if (l_use_Debye_E) ph_freqs_sq=W_debye**2.
  !
  ! RIM
  !=====

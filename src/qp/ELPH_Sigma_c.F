@@ -45,7 +45,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,RL_vol
  use ELPH,          ONLY:elph_nb,ph_freqs_sq,elph_gkkp,&
-&                        elph_global_free,QP_PH_n_G_bands,max_ph_freq,elph_DW,&
+&                        elph_global_free,QP_PH_n_G_bands,W_debye,elph_DW,&
 &                        elph_nDBs,E_k_plus_q,elph_use_q_grid,&
 &                        setup_k_plus_q_levels,f_k_plus_q,elph_nDBs_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
@@ -417,7 +417,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Debye energy
  !
- call msg('nr','[Ph] Debye energy [ev/ThZ]:',(/max_ph_freq*HA2EV,max_ph_freq*HA2THZ/))
+ call msg('nr','[Ph] Debye energy [ev/ThZ]:',(/W_debye*HA2EV,W_debye*HA2THZ/))
  !
  ! All 2 All
  !

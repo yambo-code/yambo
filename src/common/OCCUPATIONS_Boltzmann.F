@@ -21,6 +21,8 @@
 !
 subroutine OCCUPATIONS_Boltzmann(E,k,ik)
  !
+ ! warning: to be fixed action of trev or spin_sop on rotated_v
+ !
  use pars,          ONLY:SP
  use electrons,     ONLY:levels,n_sp_pol,spin_occ,Boltz_Efield,Boltz_tau,Boltz_f,Boltz_vel
  use R_lattice,     ONLY:bz_samp,nkibz,rl_sop

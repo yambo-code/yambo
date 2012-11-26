@@ -124,6 +124,11 @@ subroutine el_current(en,Xk,ik,J,J_diam,J_Vnl_x,l_directions)
        if (l_directions(1)) J_dump_Vnl_x(:,i_spin,1)=pre_factor*(conjg(wf(:,i_wf))*(J_dump_x_left(:,1)-J_dump_x_right(:,1) ) )
        if (l_directions(2)) J_dump_Vnl_x(:,i_spin,2)=pre_factor*(conjg(wf(:,i_wf))*(J_dump_x_left(:,2)-J_dump_x_right(:,2) ) )
        !
+       ! To be fixed
+       ! The current is a real (or polar) vector
+       ! The spin is a pseudo (or axial) vector
+       ! The spin-current must be transformed with both dl_sop and spin_sop
+       !
        forall(ifft=1:fft_size) J(ifft,i_spin,:)=J(ifft,i_spin,:)  &
 &                        -matmul( DL_sop(:,:,is), J_dump(fft_rot_r(is,ifft),i_spin,:) )
        forall(ifft=1:fft_size) J_diam(ifft,i_spin,:)=J_diam(ifft,i_spin,:)  &

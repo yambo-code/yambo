@@ -190,15 +190,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
  endif
  !
-#if defined _KERR
- if (l_anomalous_Hall.and..not.BS_not_const_eh_f) then
-   if(Ken%nbf==Ken%nbm) call warning(' The system is not a metal. Anomalous Hall effect not computed')
-   if(Ken%nbf/=Ken%nbm) call warning(' Metallic system, but with too low smearing. Anomalous Hall effect not computed')
-   l_anomalous_Hall=.false.
- endif  
-#endif
-
- !
  ! SOLVER
  !
  if (l_bss.and.BS_columns==Xk%nibz) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)

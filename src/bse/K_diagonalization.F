@@ -67,7 +67,6 @@ subroutine K_diagonalization(iq,W)
  complex(SP), allocatable ::BS_R(:) 
 #if defined _KERR
  complex(SP), allocatable ::BS_R_kerr(:) 
- complex(SP)              ::BSS_rhoq0_tmp(size(BSS_rhoq0_kerr))
 #endif
  complex(SP), allocatable ::BS_E(:)
  !
@@ -83,7 +82,6 @@ subroutine K_diagonalization(iq,W)
  complex(SP), allocatable ::BS_R_right(:)
 #if defined _KERR
  complex(SP), allocatable ::BS_R_right_kerr(:)
- complex(SP), allocatable ::BS_R_left_kerr(:)
 #endif
  complex(SP), allocatable ::BS_overlap(:,:)
  !
@@ -132,8 +130,8 @@ subroutine K_diagonalization(iq,W)
    BS_overlap=(0.,0.)
 #if defined _KERR
    if(l_kerr) then
-     allocate(BS_R_right_kerr(BS_H_dim),BS_R_left_kerr(BS_H_dim))
-     call mem_est("BS_R_right_kerr BS_R_left_kerr",(/BS_H_dim,BS_H_dim/))
+     allocate(BS_R_right_kerr(BS_H_dim))
+     call mem_est("BS_R_right_kerr",(/BS_H_dim/))
   endif
 #endif
  else
@@ -251,14 +249,11 @@ subroutine K_diagonalization(iq,W)
      if(l_kerr) then
        call live_timing('BSK R KERR residuals',px%n_of_elements(myid+1))
        !
-       BSS_rhoq0_tmp(1:BS_K_dim) =BSS_rhoq0_kerr(1:BS_K_dim)
-       BSS_rhoq0_tmp(BS_K_dim+1:)=BSS_rhoq0(BS_K_dim+1:)
-       !
        do i1=1,BS_H_dim
          BS_R_right_kerr(i1)=cmplx(0.,0.,SP)
          if (.not.px%element_1D(i1)) cycle
          !
-         BS_R_right_kerr(i1)=Vstar_dot_V(BS_H_dim,BSS_rhoq0_tmp,BS_V_right(:,i1))
+         BS_R_right_kerr(i1)=Vstar_dot_V(BS_H_dim,BSS_rhoq0_kerr,BS_V_right(:,i1))
          !
          call live_timing(steps=1)
        enddo
@@ -298,29 +293,6 @@ subroutine K_diagonalization(iq,W)
      !
      call live_timing
      !
-#if defined _KERR
-     if(l_kerr) then
-       BSS_rhoq0_tmp(:BS_K_dim)  =      BSS_rhoq0(:BS_K_dim)  *BS_eh_f(:BS_K_dim)
-       BSS_rhoq0_tmp(BS_K_dim+1:)=-BSS_rhoq0_kerr(BS_K_dim+1:)*BS_eh_f(:BS_K_dim)
-       !
-       call live_timing('BSK L KERR residuals',px%n_of_elements(myid+1))
-       !
-       do i1=1,BS_H_dim
-         BS_R_kerr(i1)=cmplx(0.,0.,SP)
-         if (.not.px%element_1D(i1)) cycle
-         !
-         BS_R_kerr(i1)=Vstar_dot_V(BS_H_dim,BS_V_left(:,i1),BSS_rhoq0_tmp)
-         !
-         call live_timing(steps=1)
-       enddo
-       call pp_redux_wait(BS_R_kerr)
-       !
-       !
-       call live_timing
-       !
-     endif
-#endif
-     !
      ! [3] BS_overlap(i,j)=conjg(BS_V_left(k,i))*BS_V_right(k,j)
      !
      call live_timing('BSK overlap mat',1)
@@ -345,28 +317,12 @@ subroutine K_diagonalization(iq,W)
      call pp_redux_wait(BS_R_left)
      call live_timing
      !
-#if defined _KERR
-     if(l_kerr) then
-       call live_timing('BSK L kerr x overlap',px%n_of_elements(myid+1))
-       do i1=1,BS_H_dim
-         BS_R_left_kerr(i1)=cmplx(0.,0.,SP)
-         if (.not.px%element_1D(i1)) cycle
-         !
-         BS_R_left_kerr(i1)=V_dot_V(BS_H_dim,BS_overlap(i1,:),BS_R_kerr)
-         !
-         call live_timing(steps=1)
-       enddo
-       call pp_redux_wait(BS_R_left_kerr)
-       call live_timing
-     endif
-#endif
-     !
      ! [5] BS_R(i)=BS_R_left(i)BS_R_right(i)
      !
      do i1=1,BS_H_dim
        BS_R(i1)=BS_R_left(i1)*BS_R_right(i1)
 #if defined _KERR
-       if(l_kerr) BS_R_kerr(i1)=BS_R_left_kerr(i1)*BS_R_right_kerr(i1)
+       if(l_kerr) BS_R_kerr(i1)=BS_R_left(i1)*BS_R_right_kerr(i1)
 #endif
      enddo
      !
@@ -457,11 +413,11 @@ subroutine K_diagonalization(iq,W)
      if (.not.K_is_not_hermitian) X_epsilon(5,:)=X_epsilon(5,:)-conjg(BS_R(i1))*BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
      if (l_anomalous_Hall) then
        if(trim(global_gauge)=='length') then
-         if (K_is_not_hermitian)      B_Hall(2)=B_Hall(2)-BS_R_kerr(i1)
-         if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)-conjg(BS_R(i1))*BS_R_kerr(i1)
+         if (K_is_not_hermitian)      B_Hall(2)=B_Hall(2)+BS_R_kerr(i1)
+         if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)+conjg(BS_R(i1))*BS_R_kerr(i1)
        else if(trim(global_gauge)=='velocity') then
-         if (K_is_not_hermitian)      B_Hall(2)=B_Hall(2)-BS_R_kerr(i1)/BS_E(i1)**2
-         if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)-conjg(BS_R(i1))*BS_R_kerr(i1)/real(BS_E(i1))**2
+         if (K_is_not_hermitian)      B_Hall(2)=B_Hall(2)+BS_R_kerr(i1)/BS_E(i1)**2
+         if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)+conjg(BS_R(i1))*BS_R_kerr(i1)/real(BS_E(i1))**2
        endif
      endif
    endif
@@ -480,20 +436,21 @@ subroutine K_diagonalization(iq,W)
  factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
  if(trim(global_gauge)=='velocity') factor_jj=X_epsilon(3,iw_ref)
  !
- if(trim(global_gauge)=='length')   B_Hall(2)=B_Hall(2)*factor/q_norm(1)**2
- if(trim(global_gauge)=='velocity') B_Hall(2)=B_Hall(2)*factor
- !
  if(trim(global_gauge)=='length')   X_epsilon(2,:)=1.+X_epsilon(2,:)*factor/q_norm(1)**2
  if(trim(global_gauge)=='velocity') X_epsilon(2,:)=1.+(X_epsilon(2,:)-factor_jj)*factor/(real(W%p(:))**2+epsilon(1.))
- ! I add the term describing the Anomalous Hall effect which is
- ! missing in the length gauge (this should be zero for systems with a gap)
- if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(5,:)=X_epsilon(5,:)-B_Hall(2)/W%p(:)
  ! Drude
  X_epsilon(2,:)=X_epsilon(2,:)+X_drude_term(:)*factor/q_norm(1)**2
  !
  if(l_kerr) then
    if(trim(global_gauge)=='length')   X_epsilon(5,:)=X_epsilon(5,:)*factor/q_norm(1)**2
    if(trim(global_gauge)=='velocity') X_epsilon(5,:)=X_epsilon(5,:)*factor/(real(W%p(:))**2+epsilon(1.))
+   !
+   if(trim(global_gauge)=='length')   B_Hall(2)=B_Hall(2)*factor/q_norm(1)**2
+   if(trim(global_gauge)=='velocity') B_Hall(2)=B_Hall(2)*factor
+   !
+   ! I add the term describing the Anomalous Hall effect which is
+   ! missing in the length gauge (this should be zero for systems with a gap)
+   if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(5,:)=X_epsilon(5,:)+B_Hall(2)/W%p(:)
    !
    ! Kerr parameters
    !

@@ -82,15 +82,15 @@ subroutine K_kerr_IP(w)
    endif
  enddo
  !
- if (BS_K_coupling.or.BS_IP_antires) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
- !
  factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
- !
- if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)*factor/q_norm(1)**2
- if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)*factor
  !
  if(trim(global_gauge)=='length')   X_epsilon(4,:)= X_epsilon(4,:)*factor/q_norm(1)**2
  if(trim(global_gauge)=='velocity') X_epsilon(4,:)= X_epsilon(4,:)*factor/(real(w(:))**2+epsilon(1.))
+ !
+ if (BS_K_coupling.or.BS_IP_antires) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
+ !
+ if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)*factor/q_norm(1)**2
+ if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)*factor
  !
  ! I add the term describing the Anomalous Hall effect which is
  ! missing in the length gauge (this should be zero for systems with a gap)

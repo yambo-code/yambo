@@ -33,6 +33,7 @@ subroutine K_diagonalization(iq,W)
 #if defined _KERR
  use KERR,           ONLY:BSS_rhoq0_kerr,iw_ref,B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
+ use units,          ONLY:DEG2RAD
 #endif
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
@@ -47,7 +48,6 @@ subroutine K_diagonalization(iq,W)
  use parser_m,       ONLY:parser
 #if defined _SC || defined _KERR
  use fields,         ONLY:global_gauge
- use units,          ONLY:DEG2RAD
 #endif
 #if defined _DISTRIBUTED
  use matrix_operate, ONLY:USE_PWDIAGO
@@ -379,10 +379,10 @@ subroutine K_diagonalization(iq,W)
  X_epsilon(3,:)=X_epsilon(3,:)/real(ncpu,SP)
 #if defined _KERR
  if(l_kerr) then
-   X_epsilon(4,:)=X_epsilon(4,:)/real(ncpu,SP)
    X_epsilon(5,:)=(0.,0.)
    X_epsilon(6,:)=X_epsilon(6,:)/real(ncpu,SP)
-   X_epsilon(7,:)=(0.,0.)
+   X_epsilon(8,:)=(0.,0.)
+   X_epsilon(9,:)=X_epsilon(9,:)/real(ncpu,SP)
    B_Hall(1)=B_Hall(1)/real(ncpu,SP)
  endif
 #endif
@@ -454,7 +454,7 @@ subroutine K_diagonalization(iq,W)
    !
    ! Kerr parameters
    !
-   X_epsilon(7,:)=-X_epsilon(5,:)/( (X_epsilon(2,:)-1.0_SP)*sqrt(X_epsilon(2,:)) ) /DEG2RAD
+   X_epsilon(8,:)=-X_epsilon(5,:)/( (X_epsilon(2,:)-1.0_SP)*sqrt(X_epsilon(2,:)) ) /DEG2RAD
    !
  endif
 #else

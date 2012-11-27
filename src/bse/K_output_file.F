@@ -244,8 +244,10 @@ subroutine K_output_file(iq,mode)
      !
      do iw=1,BSS_n_freqs 
        output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,aimag(X_epsilon(5,iw)),real(X_epsilon(5,iw)),&
-&                    aimag(X_epsilon(4,iw)),real(X_epsilon(4,iw))/)
+&                    aimag(X_epsilon(6,iw)),real(X_epsilon(6,iw))/)
        n_output_data=5
+       if (mode==1) n_output_data=7
+       if (mode==1) output_data(6:7)=(/aimag(X_epsilon(7,iw)),real(X_epsilon(7,iw))/)
        if (mode==4) n_output_data=3
        if (mode==4) output_data(2:3)=output_data(4:5)
        call msg('o off','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
@@ -254,9 +256,11 @@ subroutine K_output_file(iq,mode)
      ! Kerr parameters
      !
      do iw=1,BSS_n_freqs 
-       output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,real(X_epsilon(7,iw)),aimag(X_epsilon(7,iw)),&
-&                    real(X_epsilon(6,iw)),aimag(X_epsilon(6,iw))/)
+       output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,real(X_epsilon(8,iw)),aimag(X_epsilon(8,iw)),&
+&                    real(X_epsilon(9,iw)),aimag(X_epsilon(9,iw))/)
        n_output_data=5
+       if (mode==1) n_output_data=7
+       if (mode==1) output_data(6:7)=(/aimag(X_epsilon(10,iw)),real(X_epsilon(10,iw))/)
        if (mode==4) n_output_data=3
        if (mode==4) output_data(2:3)=output_data(4:5)
        call msg('o moke','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)

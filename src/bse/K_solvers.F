@@ -57,7 +57,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! Work Space
  !
- integer           ::ik,iv,ic,i1,i_sp,ioBS_err,ID 
+ integer           ::ik,iv,ic,i1,i_sp,ioBS_err,ID, epsilon_dim
 #if defined _KERR
  integer           ::iw
  complex(SP)       ::factor_jj
@@ -91,11 +91,12 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! Eps_0
  !
+ epsilon_dim=4
 #if defined _KERR
- allocate(X_epsilon(7,BSS_n_freqs))
-#else
- allocate(X_epsilon(4,BSS_n_freqs))
+ if(l_kerr) epsilon_dim=10
 #endif
+ allocate(X_epsilon(epsilon_dim,BSS_n_freqs))
+ !
  allocate(X_drude_term(BSS_n_freqs))
  X_epsilon=cmplx(0.,0.,SP)
  X_drude_term=cmplx(0.,0.,SP)

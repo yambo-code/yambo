@@ -70,22 +70,22 @@ subroutine K_kerr_IP(w)
    endif
    !
    if (abs(BS_eh_E(i1))<1.E-5) cycle
-   X_epsilon(4,:)=X_epsilon(4,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)/&
+   X_epsilon(6,:)=X_epsilon(6,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)/&
 &                                (w(:)-BS_eh_E(i1))
    if (l_anomalous_Hall) then
      if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)
      if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)/BS_eh_E(i1)**2
    endif
    if (BS_K_coupling.or.BS_IP_antires) then
-     X_epsilon(4,:)=X_epsilon(4,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0_kerr(i1)*BS_eh_f(i1)/&
+     X_epsilon(6,:)=X_epsilon(6,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0_kerr(i1)*BS_eh_f(i1)/&
 &                                (w(:)+BS_eh_E(i1))
    endif
  enddo
  !
  factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
  !
- if(trim(global_gauge)=='length')   X_epsilon(4,:)= X_epsilon(4,:)*factor/q_norm(1)**2
- if(trim(global_gauge)=='velocity') X_epsilon(4,:)= X_epsilon(4,:)*factor/(real(w(:))**2+epsilon(1.))
+ if(trim(global_gauge)=='length')   X_epsilon(6,:)= X_epsilon(6,:)*factor/q_norm(1)**2
+ if(trim(global_gauge)=='velocity') X_epsilon(6,:)= X_epsilon(6,:)*factor/(real(w(:))**2+epsilon(1.))
  !
  if (BS_K_coupling.or.BS_IP_antires) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
@@ -94,10 +94,10 @@ subroutine K_kerr_IP(w)
  !
  ! I add the term describing the Anomalous Hall effect which is
  ! missing in the length gauge (this should be zero for systems with a gap)
- if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(4,:)=X_epsilon(4,:)+B_Hall(1)/w(:)
+ if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(6,:)=X_epsilon(6,:)+B_Hall(1)/w(:)
  !
  ! Kerr parameters
  !
- X_epsilon(6,:)=-X_epsilon(4,:)/( (X_epsilon(3,:)-1.0_SP)*sqrt(X_epsilon(3,:)) ) /DEG2RAD
+ X_epsilon(9,:)=-X_epsilon(6,:)/( (X_epsilon(3,:)-1.0_SP)*sqrt(X_epsilon(3,:)) ) /DEG2RAD
  !
 end subroutine

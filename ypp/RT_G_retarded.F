@@ -26,7 +26,8 @@ subroutine RT_G_retarded(E,k)
  use YPP,            ONLY:Gr_QP_width,GF_T_step,Gr_E_step
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_window,Gr_E_steps
+ use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_window,Gr_E_steps,&
+&                         Gr_peak_pos,Gr_E_ranges
  use QP_CTL_m,       ONLY:QP_apply
  use ELPH,           ONLY:W_debye
  use timing,         ONLY:live_timing
@@ -40,7 +41,7 @@ subroutine RT_G_retarded(E,k)
  ! Work Space
  !
  integer  :: i_b,i_k,i_w,io_err,ID
- real(SP) :: E_cb_min,E_vb_max,W_diff,Area
+ real(SP) :: E_cb_min,E_vb_max,W_v_diff,W_c_diff,Area,Time
  real(SP),    allocatable :: A_t(:,:,:)
  complex(SP), allocatable :: W(:),Sigma(:)
  complex(DP), allocatable :: A_w_DP(:),A_t_DP(:)
@@ -54,7 +55,7 @@ subroutine RT_G_retarded(E,k)
  Gr_T_window=2.*pi*real(Gr_E_steps)/Gr_E_window*.5 ! 50% of the T period
  Gr_T_steps =Gr_T_window/GF_T_step
  !
- Gr_T_window   =GF_T_step*Gr_T_steps
+ Gr_T_window=GF_T_step*Gr_T_steps
  Gr_E_window=Gr_E_step*Gr_E_steps
  ! 
  call msg("s",'Energy window [eV]:',Gr_E_window*HA2EV)
@@ -62,7 +63,12 @@ subroutine RT_G_retarded(E,k)
  call msg("s",'Time steps        :',Gr_T_steps)
  !
  allocate(Gr(k%nibz,Gr_bands(2),Gr_T_steps))
+ allocate(Gr_peak_pos(k%nibz,Gr_bands(2)))
+ allocate(Gr_E_ranges(k%nibz,Gr_bands(2),2))
  allocate(W(Gr_E_steps),A_w_DP(Gr_E_steps),A_t_DP(Gr_T_steps),Sigma(Gr_E_steps))
+ !
+ Gr_E_ranges  =0._SP
+ Gr_peak_pos=0._SP
  !
  ! QP corrections
  !================
@@ -83,30 +89,41 @@ subroutine RT_G_retarded(E,k)
      A_t_DP=(0._DP,0._DP)
      Sigma =(0._SP,0._SP)
      !
+     Gr_peak_pos(i_k,i_b)=E%E(i_b,i_k,1)
+     select case (trim(Gr_kind))
+       !
+       case ("BOX")
+         !
+         Gr_E_ranges(i_k,i_b,:)=Gr_QP_width
+         !
+     end select
+     !
      do i_w=1,Gr_E_steps
        !
-       W(i_w)=E%E(i_b,i_k,1)+Gr_E_window*(-1./2.+1./real(Gr_E_steps)*i_w)
+       W(i_w)=Gr_E_window*(-1./2.+1./real(Gr_E_steps)*i_w)
+       !
+       W_v_diff=real(W(i_w))+E%E(i_b,i_k,1)-E_vb_max
+       !
+       W_c_diff=real(W(i_w))+E%E(i_b,i_k,1)-E_cb_min
        !
        select case (trim(Gr_kind))
          !
          case ("QP")
            Sigma(i_w)=cI*Gr_QP_width
            !
-         case ("QP-corrected")
+         case ("QP+e-p")
            !
            if (i_b<=E%nbf) then
              !
              ! Filled bands
              !==============
              !
-             W_diff=real(W(i_w))-E_vb_max
-             !
-             if (W_diff>0.) cycle
+             if (W_v_diff>0.) cycle
              !
              ! El-Ph part
              !
-             if (abs(W_diff)<W_debye) then
-               Sigma(i_w)=ci*abs(W_diff)**3*Gr_QP_width/abs(W_debye-E_vb_max)**3
+             if (abs(W_v_diff)<W_debye) then
+               Sigma(i_w)=ci*abs(W_v_diff)**3*Gr_QP_width/abs(W_debye-E_vb_max)**3
              else
                Sigma(i_w)=cI*Gr_QP_width
              endif
@@ -116,22 +133,34 @@ subroutine RT_G_retarded(E,k)
              ! Empty bands
              !=============
              !
-             W_diff=real(W(i_w))-E_cb_min
-             !
-             if (W_diff<0.) cycle
+             if (W_c_diff<0.) cycle
              !
              ! El-Ph part
              !
-             if (abs(W_diff)<W_debye) then
-               Sigma(i_w)=ci*abs(W_diff)**3*Gr_QP_width/abs(W_debye-E_vb_max)**3
+             if (abs(W_v_diff)<W_debye) then
+               Sigma(i_w)=ci*abs(W_v_diff)**3*Gr_QP_width/abs(W_debye-E_vb_max)**3
              else
                Sigma(i_w)=cI*Gr_QP_width
              endif
              !
            endif
+           !
        end select
        !
-       A_w_DP(i_w)=1./pi*aimag(Sigma(i_w))/( ( W(i_w)-E%E(i_b,i_k,1)-real(Sigma(i_w)))**2 + ( aimag(Sigma(i_w)) )**2)
+       if (trim(Gr_kind)=="BOX") then
+         !
+         if (i_b<=E%nbf.and.W_v_diff>0.) cycle
+         if (i_b> E%nbf.and.W_c_diff<0.) cycle
+         if ( abs(W(i_w))>Gr_QP_width ) cycle
+         A_w_DP(i_w)=1./2./Gr_QP_width
+         !
+       else
+         !
+         if (abs(aimag(Sigma(i_w))<1.E-5_SP)) cycle
+         !
+         A_w_DP(i_w)=1./pi*aimag(Sigma(i_w))/( ( W(i_w)-E%E(i_b,i_k,1)-real(Sigma(i_w)))**2 + ( aimag(Sigma(i_w)) )**2)
+         !
+       endif
        !
      enddo
      !
@@ -142,6 +171,21 @@ subroutine RT_G_retarded(E,k)
      call RT_1D_Fourier_Transform("W2T"," ",W,A_w_DP,Gr_E_steps,A_t_DP,Gr_T_steps,Gr_T_window/Gr_T_steps,0.,.FALSE.,0)
      Gr(i_k,i_b,:)=A_t_DP
      !
+     !DEBUG>
+!     do i_w=1,Gr_E_steps
+!       write (100,*) real(W(i_w))*HA2EV,real(A_w_DP(i_w))
+!     enddo
+!     do i_w=1,Gr_T_steps
+!       Time= Gr_T_window/Gr_T_steps*i_w
+!       write (200,*) Time/FS2AUT,real(A_t_DP(i_w)),10./Time*cos(5.*Gr_QP_width*Time)
+!     enddo
+!     call RT_1D_Fourier_Transform("T2W"," ",W,A_w_DP,Gr_E_steps,A_t_DP,Gr_T_steps,Gr_T_window/Gr_T_steps,0.,.FALSE.,1)
+!     do i_w=1,Gr_E_steps
+!       write (300,*) real(W(i_w))*HA2EV,real(A_w_DP(i_w))/pi
+!     enddo
+!     stop
+     !DEBUG<
+     !
      call live_timing(steps=1)
      !
    enddo
@@ -151,6 +195,6 @@ subroutine RT_G_retarded(E,k)
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),COM=LOG,ID=ID)
  io_err=io_G_retarded(ID,"G_retarded")
  !
- deallocate(Gr,W,A_w_DP,A_t_DP,Sigma)
+ deallocate(Gr,W,A_w_DP,A_t_DP,Sigma,Gr_peak_pos,Gr_E_ranges)
  !
 end subroutine RT_G_retarded

@@ -41,7 +41,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !
  integer               :: i_qp1,i_qp2,i_p,i_kmq,i_pmq,i_n,i_m,i_mp,i_np,i_p_star,&
 &                         iqbz,i_p_s,iqibz,i_p_bz
- real(SP)              :: f_k,f_p,f_kmq,f_pmq,pre_factor,lorentzian,&
+ real(SP)              :: f_k,f_p,f_kmq,f_pmq,pre_factor,Gr_integral,&
 &                         f_E_factor,f_H_factor
  !
  ! Dimensioning and Zeroing
@@ -88,13 +88,13 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          !
          pre_factor=abs(4.*pi*CACHE(i_qp1)%COLLISIONS_v3(i_qp2,i_p_s,iqbz))**2
          !
-         lorentzian=Gr_matrix(Gr_indexes(i_np,i_kmq, i_m, i_p),Gr_indexes(i_mp,i_pmq, i_n, i_k))
+         Gr_integral=Gr_matrix(Gr_indexes(i_np,i_kmq, i_m, i_p),Gr_indexes(i_mp,i_pmq, i_n, i_k))
          !
          f_E_factor=(1._SP-f_kmq)*(1._SP-f_p)*f_pmq
          f_H_factor=f_kmq*f_p*(2._SP-f_pmq)
          !
-         E_E_Electron_lifetime(i_n,i_k)= E_E_Electron_lifetime(i_n,i_k)+pre_factor*lorentzian*f_E_factor
-         E_E_Hole_lifetime(i_n,i_k)    = E_E_Hole_lifetime(i_n,i_k)+pre_factor*lorentzian*F_H_factor
+         E_E_Electron_lifetime(i_n,i_k)= E_E_Electron_lifetime(i_n,i_k)+pre_factor*Gr_integral*f_E_factor
+         E_E_Hole_lifetime(i_n,i_k)    = E_E_Hole_lifetime(i_n,i_k)+pre_factor*Gr_integral*F_H_factor
          !
        enddo
        !

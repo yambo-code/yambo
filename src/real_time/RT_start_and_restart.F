@@ -142,11 +142,6 @@ subroutine RT_start_and_restart(E,k,X)
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID_Gr)
  io_Gr=io_G_retarded(ID_Gr,"G_retarded")
  !
- ! Retarded Green Functions matrix
- !
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID_Gr)
- io_Gr=io_G_retarded(ID_Gr,"G_retarded_matrix")
- !
  ! To restart from RT only the G_lesser is necessary
  !
  RESTART                = io_G ==0
@@ -419,7 +414,7 @@ subroutine RT_start_and_restart(E,k,X)
  ! Retarded Green Functions matrix
  ! ===============================
  !
- if (l_ph_corr.or.l_carrier_dynamics.and.io_Gr/=0) then
+ if ((l_ph_corr.or.l_carrier_dynamics)) then
    !
    call section('+','Retarded Green Functions initialization')
    !                 ========================================

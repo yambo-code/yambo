@@ -26,7 +26,7 @@ integer function io_G_retarded(ID,what)
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_sec,io_elemental,&
 &                         write_is_on,io_bulk
  use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_steps,Gr_E_window,&
-&                         Gr_mat_dim,Gr_matrix
+&                         Gr_mat_dim,Gr_matrix,Gr_peak_pos,Gr_E_ranges
  use SC,             ONLY:SC_bands
  use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc
@@ -96,6 +96,12 @@ integer function io_G_retarded(ID,what)
    enddo
    !
    deallocate(Gr_disk)
+   !
+   call io_bulk(ID,VAR="Gr_Peak_Position",VAR_SZ=(/nkibz,Gr_bands(2)/))
+   call io_bulk(ID,R2=Gr_peak_pos)
+   !
+   call io_bulk(ID,VAR="Gr_Energy_Ranges",VAR_SZ=(/nkibz,Gr_bands(2),2/))
+   call io_bulk(ID,R3=Gr_E_ranges)
    !
  else if (what=="G_retarded_matrix") then
    !

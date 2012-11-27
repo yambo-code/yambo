@@ -23,8 +23,8 @@ subroutine RT_CCA_initialize(E)
  !
  use pars,           ONLY:IP,SP
  use SC,             ONLY:SC_bands
- use real_time,      ONLY:Gr,Gr_indexes,Gr_matrix,Gr_T_steps,Gr_T_window,l_G_retarded_db,&
-&                         Gr_mat_dim
+ use real_time,      ONLY:Gr,Gr_indexes,Gr_matrix,Gr_T_steps,Gr_T_window,l_G_retarded_DB,&
+&                         Gr_mat_dim,Gr_peak_pos,Gr_E_ranges
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:nkibz
  use par_proc_m,     ONLY:pp_indexes,pp_indexes_reset,myid,pp_redux_wait
@@ -39,12 +39,13 @@ subroutine RT_CCA_initialize(E)
  ! Work Space
  !
  integer :: i_n,i_k,i_m,i_p,i_np,i_kp,i_mp,i_pp,i_c,i1,i2,ID,io_err
- real(SP):: Gr_integrand(Gr_T_steps),Gr_T_step,DELTA(2),GAMMA_,&
-&           Gr_energies(((SC_bands(2)-SC_bands(1))*nkibz)**2,2),E_(2)
- type(pp_indexes)   :: px
- integer,allocatable:: Gr_local_indexes(:,:)
- integer,  external :: io_G_retarded
- real(SP), external :: RIntegrate_fixed_step
+ real(SP):: Gr_T_step,DELTA(2),GAMMA_,&
+&           Gr_energies(((SC_bands(2)-SC_bands(1))*nkibz)**2,2),E_(2),E_center,&
+&           Gr_integrand(Gr_T_steps)
+ type(pp_indexes)    :: px
+ integer,allocatable :: Gr_local_indexes(:,:)
+ integer,    external:: io_G_retarded
+ real(SP),   external:: Laplace_transform
  !
  do i_c=1,2
    if (i_c==2) then
@@ -102,9 +103,9 @@ subroutine RT_CCA_initialize(E)
  io_err=io_G_retarded(ID,"G_retarded_matrix")
  !
  if (io_err==0) then
-   if (l_G_retarded_db) then
-     deallocate(Gr)
-     call mem_est("G_retarded")
+   if (l_G_retarded_DB) then
+     deallocate(Gr,Gr_peak_pos,Gr_E_ranges)
+     call mem_est("G_retarded G_peak_pos G_E_ranges")
    endif
    return
  endif
@@ -114,7 +115,7 @@ subroutine RT_CCA_initialize(E)
  !
  call live_timing('G retarded integrals',px%n_of_elements(myid+1))
  !
- if (l_G_retarded_db) Gr_T_step=Gr_T_window/Gr_T_steps
+ if (l_G_retarded_DB) Gr_T_step=Gr_T_window/Gr_T_steps
  !
  do i1=1,Gr_mat_dim
    !
@@ -132,11 +133,20 @@ subroutine RT_CCA_initialize(E)
      !
      if (.not.px%element_2D(i1,i2)) cycle
      !
-     if (l_G_retarded_db) then
+     if (l_G_retarded_DB) then
        !
        Gr_integrand(:)=real( Gr(i_kp,i_np,:)*Gr(i_p,i_m,:)*&
-&                      conjg(Gr(i_pp,i_mp,:))*conjg(Gr(i_k,i_n,:)) )
-       Gr_matrix(i1,i2)=RIntegrate_fixed_step(Gr_integrand,Gr_T_steps,Gr_T_step)
+&                            conjg(Gr(i_pp,i_mp,:))*conjg(Gr(i_k,i_n,:)) )
+       !
+       E_center=Gr_peak_pos(i_pp,i_mp)+Gr_peak_pos(i_k,i_n)-Gr_peak_pos(i_kp,i_np)-Gr_peak_pos(i_p,i_m)
+       !
+       if (abs(E_center)<1.E-5) cycle
+       !
+       if (E_center>Gr_E_ranges(i_pp,i_mp,2)+Gr_E_ranges(i_k,i_n,2)+Gr_E_ranges(i_kp,i_np,2)+Gr_E_ranges(i_p,i_m,2) ) cycle
+       !
+       if (E_center<-Gr_E_ranges(i_pp,i_mp,1)-Gr_E_ranges(i_k,i_n,1)-Gr_E_ranges(i_kp,i_np,1)-Gr_E_ranges(i_p,i_m,1) ) cycle
+       !
+       Gr_matrix(i1,i2)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
        !
      else
        !
@@ -148,6 +158,10 @@ subroutine RT_CCA_initialize(E)
        Gr_matrix(i1,i2)=GAMMA_/((DELTA(1)+DELTA(2))**2+GAMMA_**2)
        !
      endif
+     !
+     !DEBUG>
+     !write (100,*)  ((E%E(i_n,i_k,1)-E%E(i_np,i_kp,1))-(E%E(i_m,i_p,1)-E%E(i_mp,i_pp,1)))*27.21,Gr_matrix(i1,i2)
+     !DEBUG<
      !
      call live_timing(steps=1)
      !
@@ -164,9 +178,9 @@ subroutine RT_CCA_initialize(E)
    enddo
  enddo
  !
- if (l_G_retarded_db) then
-   deallocate(Gr)
-   call mem_est("G_retarded")
+ if (l_G_retarded_DB) then
+   deallocate(Gr,Gr_peak_pos,Gr_E_ranges)
+   call mem_est("G_retarded G_peak_pos G_E_ranges")
  endif
  deallocate(Gr_local_indexes)
  !

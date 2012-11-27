@@ -19,27 +19,32 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function RIntegrate_fixed_step(F,N,dW)
+function Laplace_transform(F,N,dT,Eo)
  !
- use pars,    ONLY:SP
+ use pars,    ONLY:SP,cI
  implicit none
- integer,     intent(in)  :: N
- real(SP),    intent(in)  :: dW,F(N)
- real(SP)                 :: RIntegrate_fixed_step
+ integer,  intent(in)  :: N
+ real(SP), intent(in)  :: dT,Eo
+ real(SP), intent(in)  :: F(N)
+ real(SP)              :: Laplace_transform
  !
  ! Work Space
  !
- integer      :: i_w
- real(SP)     :: M,Q,W,Wp
+ integer   :: i_t
  !
- RIntegrate_fixed_step=0._SP
+ Laplace_transform=0._SP
  !
- do i_w=1,N-1
-   W =i_w*dW
-   Wp=(i_w+1)*dW
-   M=(F(i_w)-F(i_w+1))/(W-Wp)
-   Q=F(i_w)-M*W
-   RIntegrate_fixed_step=RIntegrate_fixed_step+1./2.*M*(Wp**2.-W**2.)+Q*(Wp-W)
+ do i_t=1,N-1
+   !
+   Laplace_transform=Laplace_transform-cI*F(i_t)*exp(cI*i_t*dT*Eo)/Eo*(exp(cI*dT*Eo)-1)
+   !
+   ! Alternative form (1)
+   !
+   !Laplace_transform=Laplace_transform+F(i_t)*dT*exp(cI*Eo*T)
+   !
+   ! Alternative form (2)
+   !
+   !Laplace_transform=Laplace_transform+(1./2.*M*(Tp**2.-T**2.)+Q*(Tp-T))*exp(cI*Eo*T)
  enddo
  !
 end function

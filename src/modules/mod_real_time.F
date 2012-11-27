@@ -192,6 +192,8 @@ module real_time
  character(schlen) :: Gr_kind
  integer,     allocatable :: Gr_indexes(:,:,:,:)
  real(SP),    allocatable :: Gr_matrix(:,:)
+ real(SP),    allocatable :: Gr_peak_pos(:,:)
+ real(SP),    allocatable :: Gr_E_ranges(:,:,:)
  complex(SP), allocatable :: Gr(:,:,:)
  !
  ! GFs
@@ -385,6 +387,10 @@ module real_time
      if (l_G_retarded_DB) then
        allocate(Gr(nkibz,Gr_bands(2),Gr_T_steps))
        call mem_est("G_retarded",(/size(Gr)/),(/2*SP/))
+       allocate(Gr_peak_pos(nkibz,Gr_bands(2)))
+       call mem_est("G_peak_pos",(/size(Gr_peak_pos)/))
+       allocate(Gr_E_ranges(nkibz,Gr_bands(2),2))
+       call mem_est("G_E_ranges",(/size(Gr_E_ranges)/))
      endif
      !
      ! Reference energies

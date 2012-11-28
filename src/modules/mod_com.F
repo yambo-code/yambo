@@ -81,7 +81,7 @@ module com
      character(schlen)::ch(2)
      character(lchlen)::folder
      !
-     get_name=""
+     get_name=" "
      folder="SAVE"
      if (.not.CORE_IO.and..not.MORE_IO.and..not.COM_IO) return
      !

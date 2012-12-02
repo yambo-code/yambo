@@ -31,7 +31,7 @@ subroutine G_shells_finder()
  use D_lattice,    ONLY:nsym,inv_index
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
 &                       g_vec,g_rot,E_of_shell,rl_sop,minus_G
- use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
+ use vec_operate,  ONLY:iku_v_norm,v_is_zero
  use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
  use zeros,        ONLY:G_iku_zero
  !
@@ -39,17 +39,14 @@ subroutine G_shells_finder()
  !
  ! Work Space
  !
- integer :: i_1,i_2,ig_1,ig_2,i_s,i_m,n_g_shells_no_holes
- integer :: G_mod_indx(ng_closed),ng_in_shell_TMP(ng_closed),first_G_in_shell(ng_closed)
- real(SP):: G_mod(ng_closed),g_rotated(3),E_of_shell_TMP(ng_closed)
+ integer :: i1,i2,i3,i_G_below,i_G_shell,&
+&           ng_in_shell_TMP(ng_closed),n_g_shells_no_holes
+ real(SP):: v1(3),G_module(2),E_of_shell_TMP(ng_closed)
  !
- ! I/O
+ !I/O
  !
  integer           :: ID,io_err
  integer, external :: ioGROT
- !
- ! I/O (read)
- !============
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_err=ioGROT(ID)
@@ -63,84 +60,78 @@ subroutine G_shells_finder()
    endif
  endif
  !
- ! Re-ordering by increasing module
- !==================================
- !
- do ig_1=1,ng_closed
-   G_mod(ig_1)=iku_v_norm(g_vec(ig_1,:))
- enddo
- call sort(G_mod,indx=G_mod_indx)
- !
- ! Shells build-up by finding equal module G_vectors
- ! ==================================================
- ! 
- call degeneration_finder(G_mod,ng_closed,first_G_in_shell,ng_in_shell_TMP,n_g_shells,minval(G_iku_zero))
- !
  ! Init
  !
  allocate(g_rot(nsym,ng_closed))
  !
  g_rot=0
- g_rot(:,1)=1 ! Gamma point
+ ng_in_shell_TMP=0
  E_of_shell_TMP=0.
+ G_module=0.
  !
- if (ng_closed>1) call live_timing('Shells finder',n_g_shells)
- !============================================================
+ ! Gamma point
  !
- do i_m=1,n_g_shells
-   !
-   do i_1=first_G_in_shell(i_m),first_G_in_shell(i_m)+ng_in_shell_TMP(i_m)-1
-     !
-     ig_1=G_mod_indx(i_1)
-     !
-     if (i_1==1) E_of_shell_TMP(i_m)=iku_v_norm(g_vec(ig_1,:))**2./2.
-     !
-     do i_s=1,nsym
-       !
-       g_rotated=matmul(rl_sop(:,:,i_s),g_vec(ig_1,:))
-       !
-       do i_2=first_G_in_shell(i_m),first_G_in_shell(i_m)+ng_in_shell_TMP(i_m)-1
+ g_rot(:,1)=1
+ n_g_shells=1
+ ng_in_shell_TMP(1)=1
+ i_G_shell=1
+ !
+ if (ng_closed>1) call live_timing('Shells finder',ng_closed-1)
+ !
+ do i1=2,ng_closed
+   i_G_below=0
+   do i2=1,nsym
+     v1=matmul(rl_sop(:,:,i2),g_vec(i1,:))
+     do i3=2,ng_closed
+       if (v_is_zero(v1-g_vec(i3,:),zero_=G_iku_zero)) then
+         g_rot(i2,i1)=i3
          !
-         ig_2=G_mod_indx(i_2)
+         ! Number of rotated G "below" the given G
+         !  
+         if (i3<=i1) i_G_below=i_G_below+1
          !
-         if (v_is_zero(g_rotated-g_vec(ig_2,:),zero_=G_iku_zero)) then
-           !
-           g_rot(i_s,ig_1)=ig_2
-           !
-           exit
-           !
-         endif
-         !
-       enddo
-       !
+         exit
+       endif
      enddo
-     !
    enddo
    !
    call live_timing(steps=1)
    !
+   ! If all the rotated G are "below" the given G
+   ! the shell could be closed
+   !
+   if (i_G_below==nsym) then
+     !
+     ! Gamma point
+     !
+     if (i1==1) cycle
+     !
+     G_module(1)=iku_v_norm(g_vec(i_G_shell,:))
+     G_module(2)=iku_v_norm(g_vec(i1,:))
+     !
+     if (abs( G_module(2)-G_module(1) )>1.E-5) n_g_shells=n_g_shells+1
+     !
+     i_G_shell=i1
+     ng_in_shell_TMP(n_g_shells)=i_G_shell
+     E_of_shell_TMP(n_g_shells)=iku_v_norm(g_vec(i_G_shell,:))**2./2.
+     !
+   endif
+   !
  enddo
+ if (ng_closed>1) call live_timing()
  !
- !
- if (ng_closed>1) call live_timing(steps=1)
- !
- ! Check for SHELLS holes
+ !Check for holes
  !
  n_g_shells_no_holes=n_g_shells
- !
- do i_m=n_g_shells,2,-1
+ do i1=n_g_shells,2,-1
    !
-   if ( all(g_rot(:,:ng_in_shell_TMP(i_m))/=0) ) then
-     n_g_shells_no_holes=i_m
+   if ( all(g_rot(:,:ng_in_shell_TMP(i1))/=0) ) then
+     n_g_shells_no_holes=i1
      exit 
    endif
    !
  enddo
  n_g_shells=n_g_shells_no_holes
- !
- ! Add Gamma shell
- !
- n_g_shells=n_g_shells+1
  !
  ! Shells Allocation & Transfer 
  !
@@ -148,8 +139,7 @@ subroutine G_shells_finder()
  call mem_est("RL_Gshells RL_Eshells",&
 &             (/n_g_shells+nsym*ng_closed,n_g_shells/),(/IP,SP/))
  !
- ng_in_shell(1)=1
- ng_in_shell(2:n_g_shells)=ng_in_shell_TMP(:n_g_shells-1)
+ ng_in_shell=ng_in_shell_TMP(:n_g_shells)
  ng_closed=ng_in_shell(n_g_shells)
  !
  ! Andrea [12/10/2011]: when the symmetries are removed using ypp

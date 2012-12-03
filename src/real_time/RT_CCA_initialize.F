@@ -38,7 +38,7 @@ subroutine RT_CCA_initialize(E)
  !
  ! Work Space
  !
- integer :: i_n,i_k,i_m,i_p,i_np,i_kp,i_mp,i_pp,i_c,i1,i2,ID,io_err
+ integer :: i_n,i_k,i_m,i_p,i_np,i_kp,i_mp,i_pp,i_c,i1,i2,ID,io_err,n_blocks
  real(SP):: Gr_T_step,DELTA(2),GAMMA_,&
 &           Gr_energies(((SC_bands(2)-SC_bands(1))*nkibz)**2,2),E_(2),E_center,&
 &           Gr_integrand(Gr_T_steps)
@@ -110,12 +110,16 @@ subroutine RT_CCA_initialize(E)
    return
  endif
  !
+ n_blocks=(Gr_mat_dim*Gr_mat_dim-Gr_mat_dim)/2+Gr_mat_dim
+ !
  call pp_indexes_reset(px)
- call par_indexes(px,(/Gr_mat_dim,Gr_mat_dim/))
+ call par_indexes(px,(/n_blocks/))
  !
  call live_timing('G retarded integrals',px%n_of_elements(myid+1))
  !
  if (l_G_retarded_DB) Gr_T_step=Gr_T_window/Gr_T_steps
+ !
+ n_blocks=0
  !
  do i1=1,Gr_mat_dim
    !
@@ -131,7 +135,8 @@ subroutine RT_CCA_initialize(E)
      i_n =Gr_local_indexes(i2,3)
      i_k =Gr_local_indexes(i2,4)
      !
-     if (.not.px%element_2D(i1,i2)) cycle
+     n_blocks=n_blocks+1
+     if (.not.px%element_1D(n_blocks)) cycle
      !
      if (l_G_retarded_DB) then
        !
@@ -140,11 +145,11 @@ subroutine RT_CCA_initialize(E)
        !
        E_center=Gr_peak_pos(i_pp,i_mp)+Gr_peak_pos(i_k,i_n)-Gr_peak_pos(i_kp,i_np)-Gr_peak_pos(i_p,i_m)
        !
-       if (abs(E_center)<1.E-5) cycle
+       if (abs(E_center)<1.E-5) goto 1
        !
-       if (E_center>Gr_E_ranges(i_pp,i_mp,2)+Gr_E_ranges(i_k,i_n,2)+Gr_E_ranges(i_kp,i_np,2)+Gr_E_ranges(i_p,i_m,2) ) cycle
+       if (E_center>Gr_E_ranges(i_pp,i_mp,2)+Gr_E_ranges(i_k,i_n,2)+Gr_E_ranges(i_kp,i_np,2)+Gr_E_ranges(i_p,i_m,2) ) goto 1
        !
-       if (E_center<-Gr_E_ranges(i_pp,i_mp,1)-Gr_E_ranges(i_k,i_n,1)-Gr_E_ranges(i_kp,i_np,1)-Gr_E_ranges(i_p,i_m,1) ) cycle
+       if (E_center<-Gr_E_ranges(i_pp,i_mp,1)-Gr_E_ranges(i_k,i_n,1)-Gr_E_ranges(i_kp,i_np,1)-Gr_E_ranges(i_p,i_m,1) ) goto 1
        !
        Gr_matrix(i1,i2)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
        !
@@ -155,6 +160,9 @@ subroutine RT_CCA_initialize(E)
        !
        GAMMA_ = abs(E%W(i_np,i_kp,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pp,1))+abs(E%W(i_n,i_k,1))
        !
+       if (DELTA(1)+DELTA(2)> GAMMA_) goto 1
+       if (DELTA(1)+DELTA(2)<-GAMMA_) goto 1
+       !
        Gr_matrix(i1,i2)=GAMMA_/((DELTA(1)+DELTA(2))**2+GAMMA_**2)
        !
      endif
@@ -163,11 +171,13 @@ subroutine RT_CCA_initialize(E)
      !write (100,*)  ((E%E(i_n,i_k,1)-E%E(i_np,i_kp,1))-(E%E(i_m,i_p,1)-E%E(i_mp,i_pp,1)))*27.21,Gr_matrix(i1,i2)
      !DEBUG<
      !
-     call live_timing(steps=1)
+1    call live_timing(steps=1)
      !
    enddo
    !
  enddo
+ !
+ call live_timing()
  !
  do i1=1,Gr_mat_dim
    call pp_redux_wait(Gr_matrix(:,i1))

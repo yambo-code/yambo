@@ -67,15 +67,6 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
      ! Including "by hand" the limits on the signs of DELTA I managed to get
      ! (finally) a converged el-ph dynamics.
      !
-     ! Updated on 29/3/2012 with more tailored constrains. Valid only in systems
-     ! with a gap.
-     !
-     ! n>=n_full_bands+1 => i_np>=n_full_bands+1 
-     !
-     ! Fermi level ----------------
-     !
-     ! n<=n_full_bands => i_np<=n_full_bands 
-     !
      if (i_n_shift<=n_full_bands.and.i_np_shift>  n_full_bands) cycle
      if (i_n_shift> n_full_bands.and.i_np_shift<= n_full_bands) cycle
      !

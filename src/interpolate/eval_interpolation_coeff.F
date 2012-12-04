@@ -19,14 +19,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,k,ID)
+subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,ID)
   use pars,        ONLY:SP
   use R_lattice,   ONLY:bz_samp
+  use electrons,   ONLY:levels,n_sp_pol
   use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells,get_ID
   implicit none
   type(bz_samp), intent(in)           :: k
   real(SP),      intent(in), optional :: R1D(:,:),R2D(:,:,:)
   complex(SP),   intent(in), optional :: C1D(:,:),C2D(:,:,:)
+  type(levels),  intent(in), optional :: E
   integer,       intent(inout)        :: ID
   !
   ! Work Space
@@ -56,6 +58,17 @@ subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,k,ID)
     RDATA(1:inpdim(1),1:k%nibz)            = real(C1D(1:inpdim(1),1:k%nibz))
     RDATA(inpdim(1)+1:2*inpdim(1),1:k%nibz)=aimag(C1D(1:inpdim(1),1:k%nibz))
     !
+  elseif(present(E)) then
+    !
+    interpls(ID)%interp_type=REAL2D
+    inpdim(1)               =E%nb
+    inpdim(2)               =n_sp_pol
+    interpls(ID)%ndim       =inpdim(1)*inpdim(2)
+    allocate(interpls(ID)%engre(nshells,interpls(ID)%ndim))
+    allocate(RDATA(interpls(ID)%ndim,k%nibz))
+    do i1=1,inpdim(2)
+      RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:k%nibz)            = E%E(1:inpdim(1),1:k%nibz,i1)
+    enddo 
   elseif(present(R2D)) then
     !
     interpls(ID)%interp_type=REAL2D

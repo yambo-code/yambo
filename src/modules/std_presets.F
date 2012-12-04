@@ -99,9 +99,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
 #endif
-#if defined _TEST_2
- use interpolate, ONLY:interpls,interp_coeff,max_interpls
-#endif
+ use interpolate, ONLY:interpls,max_interpls
  !
  implicit none
  !
@@ -296,13 +294,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  IO_write=master_cpu
  n_nodes=1
  !
-#if defined _TEST_2
- !
  ! Interpolation
  !
  interpls(1:max_interpls)%ndim=0
- !
-#endif
  !
  Parallel_Fragments=.FALSE.
  Fragmented_IO=index(INSTR,'dbfrag')>0

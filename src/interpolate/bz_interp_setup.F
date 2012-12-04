@@ -44,6 +44,7 @@ subroutine bz_interp_setup(Xk)
  integer,  allocatable     :: indx(:)
  integer                   :: i1,i2,i3,is,R_max(3),nR_max,n_vec,istart,iend,nstar
  logical                   :: add_vec,vec_in_star
+ real(SP),  parameter      :: zero=2e-05
  !
  allocate(int_sop(3,3,nsym))
  ! 
@@ -65,10 +66,6 @@ subroutine bz_interp_setup(Xk)
    int_sop(:,:,is)=matmul(transpose(a_inv),int_sop(:,:,is))
    int_sop(:,:,is)=nint(matmul(int_sop(:,:,is),b_inv))
    !
-!   write(*,*) ' symm ',is
-!   write(*,*) int_sop(1,:,is)
-!   write(*,*) int_sop(2,:,is)
-!   write(*,*) int_sop(3,:,is)
  enddo
 
  !
@@ -118,7 +115,7 @@ subroutine bz_interp_setup(Xk)
    !
    add_vec=.false.
    !
-   if((all_vec_mod(i2)-lattice_vec_mod(nshells))>zero_dfl) then
+   if((all_vec_mod(i2)-lattice_vec_mod(nshells))>zero) then
      istart=nshells+1
      add_vec=.true.
    endif

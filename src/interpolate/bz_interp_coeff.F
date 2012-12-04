@@ -26,7 +26,7 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues)
   ! Code take from BoltzTrap
   ! http://www.icams.de/content/departments/ams/madsen/boltztrap.html
   !
-  use pars,           ONLY:SP,pi,cI,IP,cZERO,cONE
+  use pars,           ONLY:SP,DP,pi,cI,IP,cZERO,cONE
   use interpolate,    ONLY:nshells,lattice_vectors,make_star,metric,int_sop
   use D_lattice,      ONLY:nsym,dl_sop,a
   use R_lattice,      ONLY:bz_samp,b
@@ -40,34 +40,31 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues)
   integer,       intent(in)  :: nvalues
   type(bz_samp), intent(in)  :: Xk
   real(SP),      intent(in)  :: VALUEs(nvalues,Xk%nibz)
-  complex(SP),   intent(out) :: engre(nshells,nvalues)
+  complex(DP),   intent(out) :: engre(nshells,nvalues)
   !
   ! Work Space
   !
-  real(SP),    allocatable :: rho(:)
-  complex(SP), allocatable :: h_mat(:,:),star_1(:,:),star_2(:,:),delta(:,:),tmp_matrix(:,:)
-  real(SP)  :: R2_min,R2,roughness_func,star_vec(3,nsym),v(3)
-  real(SP), parameter :: twopi=2._SP*pi
+  real(DP),    allocatable :: rho(:)
+  complex(SP), allocatable :: h_mat(:,:),delta(:,:)
+  complex(DP), allocatable :: star_1(:,:),star_2(:,:)
+  real(DP)  :: R2_min,R2,roughness_func
+  real(DP), parameter :: twopi=2._SP*pi
+  real(SP)  :: v(3),star_vec(3,nsym)
   integer   :: ik,ik2,iv,i1,i2,nstar,nkm1,info,ikn,ikibz,nkpt
-#if defined _DOUBLE
-  complex(SP), parameter :: cutoff=0.35e-12
-#else
-  complex(SP), parameter :: cutoff=0.7e-06
-#endif
-!  integer, allocatable :: ipiv(:)
+  integer, allocatable :: ipiv(:)
   !
   nkpt=Xk%nibz             ! number of k-points in the BZ
   nkm1=Xk%nibz-1           ! number of k-points minus 1 in the BZ
   ikn =Xk%nibz             ! last k-point index
   !
-  allocate(delta(nkm1,nvalues),tmp_matrix(nkm1,nvalues))
-  call mem_est("delta tmp_matrix",(/size(delta),size(tmp_matrix)/),(/SP,SP/))
+  allocate(delta(nkm1,nvalues))
+  call mem_est("delta",(/size(delta)/),(/SP/))
   allocate(rho(nshells))
   call mem_est("rho",(/nshells/),(/SP/))
   allocate(h_mat(nkm1,nkm1),star_1(nshells,nkpt),star_2(nshells,nkm1))
   call mem_est("h_mat star_1 star_2",(/size(h_mat),size(star_1),size(star_2)/),(/2*SP,2*SP,2*SP/))
-!  allocate(ipiv(nkm1))
-!  call mem_est("ipiv",(/size(ipiv)/),(/IP/))
+  allocate(ipiv(nkm1))
+  call mem_est("ipiv",(/size(ipiv)/),(/IP/))
   !
   ! Construct delta_epsilon eq. 10
   !
@@ -77,7 +74,7 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues)
     delta(ik,:)=VALUEs(:,ik)-VALUEs(:,ikn)
   enddo
   !
-  rho(1)=0._SP
+  rho(1)=0._DP
   R2_min=dot_product(lattice_vectors(:,2),matmul(metric,lattice_vectors(:,2)))
   !
   do i1=2,nshells
@@ -115,29 +112,21 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues)
     enddo
   enddo
   !
-  call matrix_inv_cut(h_mat,nkm1,cutoff,.true.)
+#if defined _DOUBLE
+  call ZGETRF(nkm1,nkm1,h_mat,nkm1,ipiv,info)
+#else
+  call CGETRF(nkm1,nkm1,h_mat,nkm1,ipiv,info)
+#endif
   !
-  tmp_matrix=cZERO
-  do i1=1,nvalues
-    call M_by_V('n',nkm1,h_mat,delta(:,i1),tmp_matrix(:,i1)) 
-  enddo
-  delta=tmp_matrix
+  if(info/=0) call error("[Interp] Error in factorization ")
   !
-!#if defined _DOUBLE
-!  call ZGETRF(nkm1,nkm1,h_mat,nkm1,ipiv,info)
-!#else
-!  call CGETRF(nkm1,nkm1,h_mat,nkm1,ipiv,info)
-!#endif
+#if defined _DOUBLE
+  call  ZGETRS('N',nkm1,nvalues,h_mat,nkm1,ipiv,delta,nkm1,info)
+#else
+  call  CGETRS('N',nkm1,nvalues,h_mat,nkm1,ipiv,delta,nkm1,info)
+#endif
   !
-!  if(info/=0) call error("[Interp] Error in factorization ")
-  !
-!#if defined _DOUBLE
-!  call  ZGETRS('N',nkm1,nvalues,h_mat,nkm1,ipiv,delta,nkm1,info)
-!#else
-!  call  CGETRS('N',nkm1,nvalues,h_mat,nkm1,ipiv,delta,nkm1,info)
-!#endif
-  !
-!  if(info/=0) call error("[Interp] Error in -getrs")
+  if(info/=0) call error("[Interp] Error in -getrs")
   !
   engre=cZERO
   !
@@ -153,28 +142,28 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues)
   !
   deallocate(h_mat,star_1,star_2)
   call mem_est("h_mat star_1 star_2")
-!  deallocate(ipiv)
-!  call mem_est("ipiv")
-  deallocate(delta,rho,tmp_matrix)
-  call mem_est("delta rho tmp_matrix")
+  deallocate(ipiv)
+  call mem_est("ipiv")
+  deallocate(delta,rho)
+  call mem_est("delta rho")
   !
   call k_compare(Xk,VALUEs,engre,nshells,nvalues)
   !
 end subroutine bz_interp_coeff
 
-pure real(SP) function roughness_func(R2,R2_min)
-  use pars,           ONLY:SP
+pure real(DP) function roughness_func(R2,R2_min)
+  use pars,           ONLY:DP
   implicit none
-  real(SP),  intent(in) :: R2,R2_min
-  real(SP),  parameter  :: C1=0.75_SP,C2=0.75_SP
+  real(DP),  intent(in) :: R2,R2_min
+  real(DP),  parameter  :: C1=0.75_DP,C2=0.75_DP
   !
-  roughness_func=(1._SP-C1*R2/R2_min)**2 + C2*(R2/R2_min)**3
+  roughness_func=(1._DP-C1*R2/R2_min)**2 + C2*(R2/R2_min)**3
   !
 end function roughness_func
 
 subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues)
   use units,          ONLY:HA2EV
-  use pars,           ONLY:SP,schlen
+  use pars,           ONLY:SP,DP,schlen
   use R_lattice,      ONLY:bz_samp
   use interpolate,    ONLY:lattice_vectors
   use com,            ONLY:warning,msg
@@ -183,7 +172,7 @@ subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues)
   type(bz_samp), intent(in) :: Xk
   integer,       intent(in) :: nvalues,nshells
   real(SP),      intent(in) :: VALUEs(nvalues,Xk%nibz)
-  complex(SP),   intent(out) :: engre(nshells,nvalues)
+  complex(DP),   intent(in) :: engre(nshells,nvalues)
   !
   ! Work Space
   !

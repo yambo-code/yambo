@@ -100,7 +100,7 @@ subroutine barriers()
  ! If the system is non magnetic you can safely comment the nex line
  ! Otherwise you have to run ypp_rt to remove the trev symmetry when SO is present
  !
- if(i_time_rev==1.and.n_spinor>1) call switch_off_runlevel('all',on_name=' ')
+ if(i_time_rev==1.and.n_spinor>1) call switch_off_runlevel('all',on_name=trim(always_runlevels))
  !
 #if defined _RT
  call switch_off_runlevel('gw0',on_name=' ')
@@ -190,9 +190,8 @@ subroutine barriers()
  ! GPL_EXCLUDE_START SPIN_INGORE
  !
  if (n_spin>1) then
-   call switch_off_runlevel('all',on_name=&
-&       'chi optics HF_and_locXC bse em1s em1d ppa gw0 bss alda_fxc bs_fxc cohsex magnetic scpot '//&
-&       trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='chi optics HF_and_locXC '//trim(always_runlevels))
+   call switch_off_runlevel(' ',on_name='bs_fxc cohsex magnetic scpot bse em1s em1d ppa gw0 bss alda_fxc')
    if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
    if (gw0_raxis) call switch_off_runlevel('all',on_name=' ')
  endif 

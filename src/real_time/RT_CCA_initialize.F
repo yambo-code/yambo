@@ -147,9 +147,15 @@ subroutine RT_CCA_initialize(E)
        !
        if (abs(E_center)<1.E-5) goto 1
        !
-       if (E_center>Gr_E_ranges(i_pp,i_mp,2)+Gr_E_ranges(i_k,i_n,2)+Gr_E_ranges(i_kp,i_np,2)+Gr_E_ranges(i_p,i_m,2) ) goto 1
+       GAMMA_ = Gr_E_ranges(i_pp,i_mp,2)+Gr_E_ranges(i_k,i_n,2)+Gr_E_ranges(i_kp,i_np,2)+Gr_E_ranges(i_p,i_m,2)
        !
-       if (E_center<-Gr_E_ranges(i_pp,i_mp,1)-Gr_E_ranges(i_k,i_n,1)-Gr_E_ranges(i_kp,i_np,1)-Gr_E_ranges(i_p,i_m,1) ) goto 1
+       if (GAMMA_>1.E-5) then
+         !
+         if (E_center> GAMMA_) goto 1
+         !
+         if (E_center<-GAMMA_) goto 1
+         !
+       endif
        !
        Gr_matrix(i1,i2)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
        !
@@ -160,8 +166,10 @@ subroutine RT_CCA_initialize(E)
        !
        GAMMA_ = abs(E%W(i_np,i_kp,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pp,1))+abs(E%W(i_n,i_k,1))
        !
-       if (DELTA(1)+DELTA(2)> GAMMA_) goto 1
-       if (DELTA(1)+DELTA(2)<-GAMMA_) goto 1
+       if (GAMMA_>1.E-5) then
+         if (DELTA(1)+DELTA(2)> GAMMA_) goto 1
+         if (DELTA(1)+DELTA(2)<-GAMMA_) goto 1
+       endif
        !
        Gr_matrix(i1,i2)=GAMMA_/((DELTA(1)+DELTA(2))**2+GAMMA_**2)
        !

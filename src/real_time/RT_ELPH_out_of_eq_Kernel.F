@@ -47,7 +47,7 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
  complex(SP)           :: G_k(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: G_kmq(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: Xi_eta,Xi_np
- complex(SP), external :: RT_G_retarded
+ complex(SP), external :: RT_G_retarded_time
  !
  S_mat=cZERO
  !
@@ -76,11 +76,11 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
    !
    do i_e=1,B_dim
      !
-     Xi_eta=RT_G_retarded(E,i_e+SC_bands(1)-1,ik_m_q,0.,DELTA_T)
+     Xi_eta=RT_G_retarded_time("Lorentzian",E,i_e+SC_bands(1)-1,ik_m_q,0.,DELTA_T)
      !
      do i_np=1,B_dim
        !
-       Xi_np=RT_G_retarded(E,i_np+SC_bands(1)-1,ik    ,0.,DELTA_T)
+       Xi_np=RT_G_retarded_time("Lorentzian",E,i_np+SC_bands(1)-1,ik    ,0.,DELTA_T)
        !
        DELTA_matrix=-cI*exp(cI*i_s*ph_freq*DELTA_T)*&
 &                   ( ( N_q(i_map(-i_s))-N_q(i_map(i_s)) )*cI*M3(i_e,i_np) +&

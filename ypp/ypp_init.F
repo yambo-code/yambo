@@ -198,7 +198,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  GF_T_step=1.*FS2AUT
  Gr_E_step=0.1/HA2EV
  Gr_E_window=100./HA2EV
- Gr_QP_width=0.1/HA2EV
  Gr_kind="QP"
  !
  t_jump=0.

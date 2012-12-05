@@ -116,7 +116,7 @@ ypp_ph: libs
 	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
 ypp_rt: libs
 	@LIBS2DO="$(YPPRTLIBS)" ; ADF="-D_SC -D_RT -D_ELPH -D_YPP_RT";$(mksrc)
-	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPRTLIBS)"; ADF="-D_YPP_RT";$(mkx)
+	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPRTLIBS)"; ADF="-D_YPP_RT -D_YPP_ELPH";$(mkx)
 ypp_sc: libs
 	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_SC";$(mksrc)
 	@X2DO="ypp_sc" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_SC";$(mkx)

@@ -23,16 +23,17 @@ subroutine RT_G_retarded(E,k)
  !
  use pars,           ONLY:SP,DP,pi,cI
  use units,          ONLY:FS2AUT,HA2EV
- use YPP,            ONLY:Gr_QP_width,GF_T_step,Gr_E_step
+ use YPP,            ONLY:GF_T_step,Gr_E_step
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_window,Gr_E_steps,&
 &                         Gr_peak_pos,Gr_E_ranges
  use QP_CTL_m,       ONLY:QP_apply
+ use QP_m,           ONLY:QP_ctl_Wc,QP_ctl_Wv
  use ELPH,           ONLY:W_debye
  use timing,         ONLY:live_timing
- use com,            ONLY:msg
- use IO_m,           ONLY:OP_WR_CL,io_control,LOG
+ use com,            ONLY:msg,warning
+ use IO_m,           ONLY:OP_WR_CL,OP_RD_CL,io_control,LOG,DUMP,NONE
  implicit none
  !
  type(bz_samp) ::k
@@ -40,16 +41,34 @@ subroutine RT_G_retarded(E,k)
  !
  ! Work Space
  !
- integer  :: i_b,i_k,i_w,io_err,ID
- real(SP) :: E_cb_min,E_vb_max,W_v_diff,W_c_diff,Area,Time
- real(SP),    allocatable :: A_t(:,:,:)
- complex(SP), allocatable :: W(:),Sigma(:)
+ integer  :: i_b,i_k,i_w,io_err,ID,i_t
+ real(SP) :: Area,Time,Gr_QP_width
+ complex(SP), allocatable :: W(:)
  complex(DP), allocatable :: A_w_DP(:),A_t_DP(:)
- integer,     external    :: io_G_retarded
- real(SP),    external    :: RIntegrate
+ integer,     external    :: io_G_retarded,ioELPH
+ real(SP),    external    :: RIntegrate,RT_G_retarded_frequency
+ complex(SP), external    :: RT_G_retarded_time
  !
- call section("=",'Retarded Green`s functions integral (CCA)')
- !============================================================
+ call section("=",'Retarded Green`s functions')
+ !=============================================
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+ io_err=ioELPH(ID,'gkkp')
+ if (io_err/=0) then
+   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+   io_err=ioELPH(ID,'gkkp_expanded')
+ else
+   W_debye=0.
+ endif
+ !
+ if (io_err/=0.and.trim(Gr_kind)=="HC") then
+   call warning("Missing ELPH database. Unknown Debye energy. Switching to plain QP.")
+   Gr_kind="QP"
+ endif
+ !
+ Gr_QP_width=QP_ctl_Wc(3,1,1)/HA2EV
+ !
+ if (trim(Gr_kind)=="QP-cut".or.trim(Gr_kind)=="BOX") Gr_E_window=4*Gr_QP_width
  !
  Gr_E_steps =Gr_E_window/Gr_E_step
  Gr_T_window=2.*pi*real(Gr_E_steps)/Gr_E_window*.5 ! 50% of the T period
@@ -65,21 +84,22 @@ subroutine RT_G_retarded(E,k)
  allocate(Gr(k%nibz,Gr_bands(2),Gr_T_steps))
  allocate(Gr_peak_pos(k%nibz,Gr_bands(2)))
  allocate(Gr_E_ranges(k%nibz,Gr_bands(2),2))
- allocate(W(Gr_E_steps),A_w_DP(Gr_E_steps),A_t_DP(Gr_T_steps),Sigma(Gr_E_steps))
+ allocate(W(Gr_E_steps),A_w_DP(Gr_E_steps),A_t_DP(Gr_T_steps))
  !
- Gr_E_ranges  =0._SP
+ Gr_E_ranges=0._SP
  Gr_peak_pos=0._SP
  !
  ! QP corrections
  !================
  call QP_apply(Gr_bands,E,k,'G',msg_fmt='l')
  !
- E_vb_max=maxval( E%E(:E%nbf,:,:) )
- E_cb_min=minval( E%E(E%nbf+1:,:,:) )
- !
- W_debye=0.06/HA2EV
- ! 
  call live_timing('Fourier Transformation',k%nibz*(Gr_bands(2)-Gr_bands(1)+1))
+ !
+ do i_w=1,Gr_E_steps
+   !
+   W(i_w)=Gr_E_window*(-1./2.+1./real(Gr_E_steps)*i_w)
+   !
+ enddo
  !
  do i_k=1,k%nibz
    !
@@ -87,103 +107,50 @@ subroutine RT_G_retarded(E,k)
      !
      A_w_DP=(0._DP,0._DP)
      A_t_DP=(0._DP,0._DP)
-     Sigma =(0._SP,0._SP)
      !
      Gr_peak_pos(i_k,i_b)=E%E(i_b,i_k,1)
-     select case (trim(Gr_kind))
-       !
-       case ("BOX")
-         !
-         Gr_E_ranges(i_k,i_b,:)=Gr_QP_width
-         !
-     end select
      !
-     do i_w=1,Gr_E_steps
-       !
-       W(i_w)=Gr_E_window*(-1./2.+1./real(Gr_E_steps)*i_w)
-       !
-       W_v_diff=real(W(i_w))+E%E(i_b,i_k,1)-E_vb_max
-       !
-       W_c_diff=real(W(i_w))+E%E(i_b,i_k,1)-E_cb_min
-       !
-       select case (trim(Gr_kind))
-         !
-         case ("QP")
-           Sigma(i_w)=cI*Gr_QP_width
-           !
-         case ("QP+e-p")
-           !
-           if (i_b<=E%nbf) then
-             !
-             ! Filled bands
-             !==============
-             !
-             if (W_v_diff>0.) cycle
-             !
-             ! El-Ph part
-             !
-             if (abs(W_v_diff)<W_debye) then
-               Sigma(i_w)=ci*abs(W_v_diff)**3*Gr_QP_width/abs(W_debye-E_vb_max)**3
-             else
-               Sigma(i_w)=cI*Gr_QP_width
-             endif
-             !
-           else
-             !
-             ! Empty bands
-             !=============
-             !
-             if (W_c_diff<0.) cycle
-             !
-             ! El-Ph part
-             !
-             if (abs(W_v_diff)<W_debye) then
-               Sigma(i_w)=ci*abs(W_v_diff)**3*Gr_QP_width/abs(W_debye-E_vb_max)**3
-             else
-               Sigma(i_w)=cI*Gr_QP_width
-             endif
-             !
-           endif
-           !
-       end select
-       !
-       if (trim(Gr_kind)=="BOX") then
-         !
-         if (i_b<=E%nbf.and.W_v_diff>0.) cycle
-         if (i_b> E%nbf.and.W_c_diff<0.) cycle
-         if ( abs(W(i_w))>Gr_QP_width ) cycle
-         A_w_DP(i_w)=1./2./Gr_QP_width
-         !
-       else
-         !
-         if (abs(aimag(Sigma(i_w))<1.E-5_SP)) cycle
-         !
-         A_w_DP(i_w)=1./pi*aimag(Sigma(i_w))/( ( W(i_w)-E%E(i_b,i_k,1)-real(Sigma(i_w)))**2 + ( aimag(Sigma(i_w)) )**2)
-         !
-       endif
-       !
-     enddo
+     if (trim(Gr_kind)=="BOX".or.trim(Gr_kind)=="QP-cut") Gr_E_ranges(i_k,i_b,:)=Gr_QP_width
      !
-     Area=RIntegrate(real(A_w_DP,SP),real(W),Gr_E_steps)
-     !
-     A_w_DP=A_w_DP/Area
-     !
-     call RT_1D_Fourier_Transform("W2T"," ",W,A_w_DP,Gr_E_steps,A_t_DP,Gr_T_steps,Gr_T_window/Gr_T_steps,0.,.FALSE.,0)
-     Gr(i_k,i_b,:)=A_t_DP
+     if (trim(Gr_kind)=="HC") then
+       !
+       do i_t=1,Gr_T_steps
+         !
+         Time= Gr_T_window/Gr_T_steps*i_t
+         Gr(i_k,i_b,i_t)=RT_G_retarded_time("HC",E,i_b,i_k,Time,0.)
+         A_t_DP(i_t)=Gr(i_k,i_b,i_t)
+         !
+       enddo
+       !
+     else
+       !
+       do i_w=1,Gr_E_steps
+         !
+         A_w_DP(i_w)=RT_G_retarded_frequency(trim(Gr_kind),E,i_b,i_k,real(W(i_w)),Gr_QP_width)
+         !
+       enddo
+       !
+       Area=RIntegrate(real(A_w_DP,SP),real(W),Gr_E_steps)
+       A_w_DP=A_w_DP/Area
+       !
+       call RT_1D_Fourier_Transform("W2T"," ",W,A_w_DP,Gr_E_steps,A_t_DP,Gr_T_steps,Gr_T_window/Gr_T_steps,0.,.FALSE.,0)
+       Gr(i_k,i_b,:)=A_t_DP
+       !
+     endif
      !
      !DEBUG>
-!     do i_w=1,Gr_E_steps
-!       write (100,*) real(W(i_w))*HA2EV,real(A_w_DP(i_w))
-!     enddo
-!     do i_w=1,Gr_T_steps
-!       Time= Gr_T_window/Gr_T_steps*i_w
-!       write (200,*) Time/FS2AUT,real(A_t_DP(i_w)),10./Time*cos(5.*Gr_QP_width*Time)
-!     enddo
-!     call RT_1D_Fourier_Transform("T2W"," ",W,A_w_DP,Gr_E_steps,A_t_DP,Gr_T_steps,Gr_T_window/Gr_T_steps,0.,.FALSE.,1)
-!     do i_w=1,Gr_E_steps
-!       write (300,*) real(W(i_w))*HA2EV,real(A_w_DP(i_w))/pi
-!     enddo
-!     stop
+     !do i_w=1,Gr_E_steps
+     !  write (100,*) real(W(i_w))*HA2EV,real(A_w_DP(i_w))
+     !enddo
+     !do i_t=1,Gr_T_steps
+     !  Time= Gr_T_window/Gr_T_steps*i_t
+     !  write (200,*) Time/FS2AUT,real(A_t_DP(i_t)),10./Time*cos(5.*Gr_QP_width*Time)
+     !enddo
+     !call RT_1D_Fourier_Transform("T2W"," ",W,A_w_DP,Gr_E_steps,A_t_DP,Gr_T_steps,Gr_T_window/Gr_T_steps,0.,.FALSE.,1)
+     !do i_w=1,Gr_E_steps
+     !  write (300,*) real(W(i_w))*HA2EV,real(A_w_DP(i_w))/pi
+     !enddo
+     !stop
      !DEBUG<
      !
      call live_timing(steps=1)
@@ -195,6 +162,6 @@ subroutine RT_G_retarded(E,k)
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),COM=LOG,ID=ID)
  io_err=io_G_retarded(ID,"G_retarded")
  !
- deallocate(Gr,W,A_w_DP,A_t_DP,Sigma,Gr_peak_pos,Gr_E_ranges)
+ deallocate(Gr,W,A_w_DP,A_t_DP,Gr_peak_pos,Gr_E_ranges)
  !
 end subroutine RT_G_retarded

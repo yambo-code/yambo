@@ -206,7 +206,6 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'GFbands', 'Bands',Gr_bands) 
  call it(defs,'GFkind',  'Green`s function kind',Gr_kind) 
- call it(defs,'QP_width','QP energy indetermination',Gr_QP_width,unit=E_unit) 
  call it(defs,'T_step',  'Time step in the integration',GF_T_step,unit=Time_unit) 
  call it(defs,'E_step',  'Energy step in the integration',Gr_E_step,unit=E_unit) 
  call it(defs,'E_window','Energy window',Gr_E_window,unit=E_unit) 

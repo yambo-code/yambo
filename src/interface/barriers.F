@@ -97,7 +97,7 @@ subroutine barriers()
  ! RUNLEVELS
  !===========
  !
- !if(i_time_rev==1.and.n_spin>1) call switch_off_runlevel('all',on_name=' ')
+ !if(i_time_rev==1.and.n_spinor>1) call switch_off_runlevel('all',on_name=' ')
  !
 #if defined _RT
  call switch_off_runlevel('gw0',on_name=' ')
@@ -190,6 +190,8 @@ subroutine barriers()
    call switch_off_runlevel('all',on_name='chi optics HF_and_locXC '//trim(always_runlevels))
    call switch_off_runlevel(' ',on_name='bs_fxc cohsex magnetic scpot bse em1s em1d ppa gw0 bss alda_fxc')
    if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
+   ! If the system uses magnetic symmetries then OEP is not correctly imlpemented
+   if(mag_syms) call switch_off_runlevel('scpot',on_name=' ')
  endif 
  !
  ! GPL_EXCLUDE_END SPIN_INGORE
@@ -197,9 +199,5 @@ subroutine barriers()
  ! MORE
  !======
  if ( (l_ppa.and.trim(QP_solver)=='s').or.l_cohsex ) QP_solver='n'
- !
- ! If the system uses magnetic symmetries then OEP is not correctly imlpemented
- ! You have to run ypp_rt to remove the trev symmetries
- !if(mag_syms) call switch_off_runlevel('all',on_name=' ')
  !
 end subroutine

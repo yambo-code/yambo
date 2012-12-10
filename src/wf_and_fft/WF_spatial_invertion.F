@@ -58,9 +58,10 @@ subroutine WF_spatial_invertion(en,Xk)
  ! nsym/(i_time_rev+1) and all the nsym. If there is not
  ! TR this procedure is not possible.
  !
+ ! When mag_syms, t_rev and space_inv are two different syms
+ ! and this procedure is meaningless.
  if (i_time_rev==0.or.mag_syms) then 
    i_space_inv=0
- ! When mag_syms t_rev and space_inv are two different syms
  else
    !
    allocate(rho_si(fft_size),rho_nsi(fft_size),cv(fft_size))

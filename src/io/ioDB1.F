@@ -28,7 +28,7 @@ integer function ioDB1(E,k,ID)
  use LOGO,             ONLY:code_version,code_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
 &                           n_spinor
- use D_lattice,        ONLY:a, alat, nsym, i_time_rev, mag_syms, input_GS_Tel, dl_sop, &
+ use D_lattice,        ONLY:a, alat, nsym, i_time_rev, input_GS_Tel, dl_sop, &
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
 &                           Z_species, n_atoms, mag_syms
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&

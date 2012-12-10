@@ -43,7 +43,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF_load,WF_free
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
- use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv
+ use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
 #if defined _RT         
  use collisions_IO, ONLY:TEMP_COLLISIONS_v
@@ -317,10 +317,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    !   X(-q,G,G') = X(q,-G',-G')
    !
-   ! While the -1 is introduced th the collisions the reflection of the
+   ! While the -1 is introduced in the collisions the reflection of the
    ! matrix must be done here.
    !
-   if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 .and..not.PPaR_is_TR_rotated) then
+   if (iqs>nsym/(i_time_rev+1) .and. (i_space_inv==0.or.mag_syms) .and..not.PPaR_is_TR_rotated) then
      PPaR_is_TR_rotated=.true.
      forall(i1=1:X%ng,i2=1:X%ng) PPaR_ws(i2,i1)=PPaR(i1,i2)
      PPaR(:,:)=PPaR_ws(:,:)

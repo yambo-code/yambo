@@ -47,7 +47,7 @@ subroutine barriers()
  !
  use drivers
  use pars,       ONLY:schlen
- use D_lattice,  ONLY:i_time_rev,i_space_inv
+ use D_lattice,  ONLY:i_time_rev,i_space_inv,mag_syms
  use BS,         ONLY:BSS_mode
  use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor
  use QP_m,       ONLY:QP_solver
@@ -193,6 +193,8 @@ subroutine barriers()
    call switch_off_runlevel('all',on_name='chi optics HF_and_locXC '//trim(always_runlevels))
    call switch_off_runlevel(' ',on_name='bs_fxc cohsex magnetic scpot bse em1s em1d ppa gw0 bss alda_fxc')
    if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
+   ! If the system uses magnetic symmetries then OEP is not correctly implemented
+   if (mag_syms)   call switch_off_runlevel('scpot',on_name=' ')
    if (gw0_raxis) call switch_off_runlevel('all',on_name=' ')
  endif 
  !

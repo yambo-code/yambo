@@ -21,10 +21,6 @@
 !
 module matrix_operate
  !
-#if defined _DISTRIBUTED
- use mp_global,         ONLY:np_ortho,init_ortho_group
-#endif
- !
  implicit none
  !
  integer, parameter :: USE_LK=1
@@ -34,9 +30,6 @@ module matrix_operate
  integer, parameter :: INV=5
  integer, parameter :: PARTIAL_DIAGO=6
  integer, parameter :: USE_SVD=7
-#if defined _DISTRIBUTED
- integer, parameter :: USE_PWDIAGO=8
-#endif
  !
  integer, parameter :: min_cpu_block_size=100
  !
@@ -244,11 +237,6 @@ module matrix_operate
      lib_in_use=USE_LK
 #endif
      !
-#if defined _DISTRIBUTED
-     if ((idriver/=DIAGO.or.present(E_cmpl).or.ncpu<4).and.lib_in_use==USE_PWDIAGO) lib_in_use=USE_LK
-#endif
-
-     !
      ! =============== SERIAL SECTION ===============
      !
      !
@@ -396,18 +384,6 @@ module matrix_operate
      endif
      !
      ! =============== PARALLEL SECTION ===============
-     !
-#if defined _DISTRIBUTED
-     if (idriver==DIAGO.and.lib_in_use==USE_PWDIAGO) then    
-       !
-       CALL init_ortho_group()
-       call msg('r',"a parallel distributed memory algorithm will be used,")
-       call msg('r',"eigenstates matrixes will be distributed block like on")
-       call msg('r',"ortho sub-group = "//intc(np_ortho(1))//"*"//intc(np_ortho(2))//" procs")
-       call pcdiagh_nodist(M_size, M_size, M, M_size, E_real, M)
-       !
-     endif
-#endif
      !
 #if defined _SCALAPACK
      !

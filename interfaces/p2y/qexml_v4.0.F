@@ -2921,16 +2921,18 @@ CONTAINS
       !
     END SUBROUTINE qexml_read_rho
 
-subroutine read_pseudo_header(u,z,psfile,nmesh,nbeta) 
+subroutine read_pseudo_header(u,z,psfile,nmesh,nbeta,psp_has_so) 
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   INTEGER, INTENT(OUT) :: nmesh,nbeta
-  REAL, INTENT(OUT) :: z
+  REAL, INTENT(OUT)    :: z
+  LOGICAL, OPTIONAL, INTENT(OUT) :: psp_has_so
   !
   CHARACTER(256) :: filename
   character(50) :: dummy
   logical       :: ldummy
   INTEGER :: i,idummy,idummy2, unit, iostat, u,ierr
+  logical :: psp_has_so_=.false.
 
   CALL iotk_free_unit(u)
   filename= TRIM(datadir_in)//trim(psfile)
@@ -2939,19 +2941,22 @@ subroutine read_pseudo_header(u,z,psfile,nmesh,nbeta)
   IF(ierr>0) CALL errore('read_pseudo_header', &
 &                 'Cannot open file: '//TRIM(filename),1)
 
-  CALL read_upf_header_v2( u, z, nmesh, nbeta, psfile, ierr )
+  CALL read_upf_header_v2( u, z, nmesh, nbeta, psfile, psp_has_so_, ierr )
   if(ierr>0) THEN
       REWIND(u)
       CALL read_upf_header_v1( u, z, nmesh, nbeta, psfile, ierr )
    ENDIF
    close(unit=u)
+   !
+   if(present(psp_has_so)) psp_has_so=psp_has_so_
    return
 end subroutine read_pseudo_header
 
-subroutine read_upf_header_v2( u, z, nmesh, nbeta, psfile, ierr )
+subroutine read_upf_header_v2( u, z, nmesh, nbeta, psfile, psp_has_so, ierr )
   implicit none
   INTEGER, INTENT(OUT) :: nmesh,nbeta
   REAL, INTENT(OUT) :: z
+  LOGICAL, INTENT(OUT) :: psp_has_so
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   INTEGER :: i,idummy,idummy2, unit, iostat, u,ios,ierr,ierr_
   LOGICAL :: found, tvanp
@@ -2976,6 +2981,7 @@ subroutine read_upf_header_v2( u, z, nmesh, nbeta, psfile, ierr )
    if(tvanp) call errore( 'check_pseudo : ','Ultrasoft '//trim(psfile)//' not supported',1)
    CALL iotk_scan_attr(attr, 'mesh_size',      nmesh)
    CALL iotk_scan_attr(attr, 'number_of_proj', nbeta)
+   CALL iotk_scan_attr(attr, 'has_so', psp_has_so)
 
   return
 end subroutine read_upf_header_v2
@@ -3063,24 +3069,26 @@ subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,&
     CHARACTER(256) :: filename
     character(50) :: dummy
     logical       :: ldummy
+    logical       :: psp_has_so_
     INTEGER :: idummy,ibeta,idummy2
     INTEGER        :: i, iostat, u
 
     !
     ! Header data (sets value of unit u)
     !
-    call read_pseudo_header(u,z,psfile, nmesh, nbeta)
+    call read_pseudo_header(u,z,psfile, nmesh, nbeta, psp_has_so=psp_has_so_)
     !
-    call read_pseudo_parameters(u,nmesh,nbeta,mesh, &
+    call read_pseudo_parameters(u,nmesh,nbeta,mesh,psp_has_so_, &
 &                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile)
     !
     return 
 end subroutine read_pseudo_data
 
-subroutine read_pseudo_parameters(u,nmesh,nbeta,mesh, &
+subroutine read_pseudo_parameters(u,nmesh,nbeta,mesh,psp_has_so, &
 &                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile)
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
+  LOGICAL, INTENT(IN)          :: psp_has_so
   !
   INTEGER, INTENT(IN) :: nmesh,nbeta
   REAL, INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
@@ -3097,10 +3105,10 @@ subroutine read_pseudo_parameters(u,nmesh,nbeta,mesh, &
   filename= TRIM(datadir_in)//trim(psfile)
   open (unit = u, file = filename, status = 'old', form = &
       'formatted', iostat = ierr)
-  IF(ierr>0) CALL errore('read_pseudo_header', &
+  IF(ierr>0) CALL errore('read_pseudo_parameters', &
 &                 'Cannot open file: '//TRIM(filename),1)
 
-  CALL read_upf_parameters_v2(u,nmesh,nbeta,mesh, &
+  CALL read_upf_parameters_v2(u,nmesh,nbeta,mesh,psp_has_so, &
 &                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
   if(ierr>0) THEN
       REWIND(u)
@@ -3172,14 +3180,14 @@ subroutine read_upf_parameters_v1(u,nmesh,nbeta,mesh, &
   return 
 end subroutine
 
-subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh, &
+subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh,psp_has_so, &
 &                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
   !
   use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
-  use electrons,      ONLY:spin_orbit
   !
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
+  LOGICAL, INTENT(IN)          :: psp_has_so
   !
   INTEGER, INTENT(IN)  :: nmesh,nbeta
   REAL, INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
@@ -3246,7 +3254,7 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh, &
   !
   CALL iotk_scan_end(u, 'PP_NONLOCAL')
   !
-  if(spin_orbit) then
+  if(psp_has_so) then
     !
     CALL iotk_scan_begin(u, 'PP_SPIN_ORB')
     !

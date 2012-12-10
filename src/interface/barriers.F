@@ -190,7 +190,7 @@ subroutine barriers()
    call switch_off_runlevel('all',on_name='chi optics HF_and_locXC '//trim(always_runlevels))
    call switch_off_runlevel(' ',on_name='bs_fxc cohsex magnetic scpot bse em1s em1d ppa gw0 bss alda_fxc')
    if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
-   ! If the system uses magnetic symmetries then OEP is not correctly imlpemented
+   ! If the system uses magnetic symmetries then OEP is not correctly implemented
    if(mag_syms) call switch_off_runlevel('scpot',on_name=' ')
  endif 
  !

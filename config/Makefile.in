@@ -84,7 +84,6 @@ all: $(TARGETS) $(PROJECTS) $(DEBUG)
 libs:
 	@$(mklibxc)
 	@LIBS2DO="slatec";  DIR2GO="lib" ; $(mklib)
-	@LIBS2DO="pwdiago"; DIR2GO="lib" ; $(mklib)
 	@if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
 	DIR2GO="lib" ; $(mklib); fi
 	@if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \

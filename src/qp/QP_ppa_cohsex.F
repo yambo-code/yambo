@@ -317,7 +317,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    !   X(-q,G,G') = X(q,-G',-G')
    !
-   ! While the -1 is introduced th the collisions the reflection of the
+   ! While the -1 is introduced in the collisions the reflection of the
    ! matrix must be done here.
    !
    if (iqs>nsym/(i_time_rev+1) .and. (i_space_inv==0.or.mag_syms) .and..not.PPaR_is_TR_rotated) then

@@ -256,11 +256,18 @@ subroutine K_output_file(iq,mode)
      ! Kerr parameters
      !
      do iw=1,BSS_n_freqs 
-       output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,real(X_epsilon(8,iw)),aimag(X_epsilon(8,iw)),&
-&                    real(X_epsilon(9,iw)),aimag(X_epsilon(9,iw))/)
+       output_data(1)= real(X_epsilon(1,iw))*HA2EV
+       output_data(2)=-real(X_epsilon(5,iw)/( (X_epsilon(2,iw)-1.0_SP)*sqrt(X_epsilon(2,iw)) ) /DEG2RAD)
+       output_data(3)=-aimag(X_epsilon(5,iw)/( (X_epsilon(2,iw)-1.0_SP)*sqrt(X_epsilon(2,iw)) ) /DEG2RAD)
+       output_data(4)=-real(X_epsilon(6,iw)/( (X_epsilon(3,iw)-1.0_SP)*sqrt(X_epsilon(3,iw)) ) /DEG2RAD)
+       output_data(5)=-aimag(X_epsilon(6,iw)/( (X_epsilon(3,iw)-1.0_SP)*sqrt(X_epsilon(3,iw)) ) /DEG2RAD)
+       !
        n_output_data=5
        if (mode==1) n_output_data=7
-       if (mode==1) output_data(6:7)=(/aimag(X_epsilon(10,iw)),real(X_epsilon(10,iw))/)
+       if (mode==1) then
+         output_data(6)=-real(X_epsilon(7,iw)/( (X_epsilon(4,iw)-1.0_SP)*sqrt(X_epsilon(4,iw)) ) /DEG2RAD)
+         output_data(7)=-aimag(X_epsilon(7,iw)/( (X_epsilon(4,iw)-1.0_SP)*sqrt(X_epsilon(4,iw)) ) /DEG2RAD)
+       endif
        if (mode==4) n_output_data=3
        if (mode==4) output_data(2:3)=output_data(4:5)
        call msg('o moke','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)

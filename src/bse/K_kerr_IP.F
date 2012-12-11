@@ -96,8 +96,4 @@ subroutine K_kerr_IP(w)
  ! missing in the length gauge (this should be zero for systems with a gap)
  if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(6,:)=X_epsilon(6,:)+B_Hall(1)/w(:)
  !
- ! Kerr parameters
- !
- X_epsilon(9,:)=-X_epsilon(6,:)/( (X_epsilon(3,:)-1.0_SP)*sqrt(X_epsilon(3,:)) ) /DEG2RAD
- !
 end subroutine

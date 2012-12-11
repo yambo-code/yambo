@@ -375,8 +375,6 @@ subroutine K_diagonalization(iq,W)
  if(l_kerr) then
    X_epsilon(5,:)=(0.,0.)
    X_epsilon(6,:)=X_epsilon(6,:)/real(ncpu,SP)
-   X_epsilon(8,:)=(0.,0.)
-   X_epsilon(9,:)=X_epsilon(9,:)/real(ncpu,SP)
    B_Hall(1)=B_Hall(1)/real(ncpu,SP)
  endif
 #endif
@@ -445,10 +443,6 @@ subroutine K_diagonalization(iq,W)
    ! I add the term describing the Anomalous Hall effect which is
    ! missing in the length gauge (this should be zero for systems with a gap)
    if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(5,:)=X_epsilon(5,:)+B_Hall(2)/W%p(:)
-   !
-   ! Kerr parameters
-   !
-   X_epsilon(8,:)=-X_epsilon(5,:)/( (X_epsilon(2,:)-1.0_SP)*sqrt(X_epsilon(2,:)) ) /DEG2RAD
    !
  endif
 #else

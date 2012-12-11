@@ -93,7 +93,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  epsilon_dim=4
 #if defined _KERR
- if(l_kerr) epsilon_dim=10
+ if(l_kerr) epsilon_dim=7
 #endif
  allocate(X_epsilon(epsilon_dim,BSS_n_freqs))
  !
@@ -245,7 +245,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !  
    X_epsilon(1,:)=W_bss%p(:)
 #if defined _KERR
-   X_epsilon(5,:)=0.
+   if(l_kerr) X_epsilon(5,:)=0.
 #endif
    X_epsilon(2,:)=0.
    !

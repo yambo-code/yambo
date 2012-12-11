@@ -78,7 +78,7 @@ lf90include="$lf90include $linclude"
 fi
 case $target in
   yambo*)
-   llibs="$llibs \$(lscalapack) -lpwdiago \$(llapack) \$(lblacs) \$(lblas)"
+   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
   a2y|elk2y|c2y)

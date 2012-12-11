@@ -44,9 +44,6 @@ subroutine K_diagonalization(iq,W)
 #if defined _SC
  use fields,         ONLY:global_gauge
 #endif
-#if defined _DISTRIBUTED
- use matrix_operate, ONLY:USE_PWDIAGO
-#endif
  implicit none
  type(w_samp)  :: W
  integer       :: iq
@@ -125,7 +122,11 @@ subroutine K_diagonalization(iq,W)
    !
    ! Kernel loading
    !
+#if defined _TEST_1
    call K_BSload(iq)
+#else
+   call K_BSmat_by_V(iq)
+#endif
    !
    if (BS_not_const_eh_f) then
      !
@@ -169,9 +170,6 @@ subroutine K_diagonalization(iq,W)
    !
    lib_driver=USE_LK
    if (ncpu>1) lib_driver=USE_SLK
-#if defined _DISTRIBUTED
-   if(ncpu>=4.and..not.K_is_not_hermitian) lib_driver=USE_PWDIAGO
-#endif 
    call live_timing('BSK diagonalize',1)
    if (K_is_not_hermitian) then
      call mat_dia_inv(DIAGO,lib_driver,BS_mat,E_cmpl=BS_E,&

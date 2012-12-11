@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
+subroutine K_BSmat_by_V_Haydock(iq,iter,Vi,Vo,iter_par)
  !
  !
  ! Here I fill the upper half of the kernel (coupling included):

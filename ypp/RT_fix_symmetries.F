@@ -61,7 +61,7 @@ subroutine RT_fix_symmetries(E,k)
  type(X_t)             :: X_Vnl
  !
  integer               :: ik_save,iv(2),ierr,ib,ibm,i_wf,n_steps,i_spin,&
-&                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
+&                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik,last_zero
  integer               :: spatial_nsym,old_spatial_nsym,old_trev_nsym
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:),ic_rot_table(:)
  real(SP)              :: v1(3),v2(3)
@@ -574,6 +574,22 @@ subroutine RT_fix_symmetries(E,k)
    !
    wf_igk(1:wf_nc_k(i1),i1) = g_rot(is,wf_igk_save(1:wf_nc_k(i1),ik))
    call i_sort( wf_igk(1:wf_nc_k(i1),i1) )
+   !
+   ! Remove zero in front of wf_igk
+   !
+   last_zero=0
+   do i2=1,wf_nc_k(i1)
+     if(wf_igk(i2,i1)==0) then
+       last_zero=last_zero+1
+     else
+       exit      
+     endif
+   enddo
+   !
+   if(last_zero/=0) then
+     wf_nc_k(i1)             =wf_nc_k(i1)-last_zero
+     wf_igk(1:wf_nc_k(i1),i1)=wf_igk(last_zero+1:wf_nc_k(i1)+last_zero,i1)
+   endif
    !
  enddo
  !

@@ -37,7 +37,10 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use xc_functionals,        ONLY: GS_xc_KIND,GS_xc_FUNCTIONAL
  use mod_xc2y,              ONLY: XC_yamboID, XC_yamboID2kind
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
-&                                 alat_mult_factor,artificial_spin_pol
+&                                 alat_mult_factor,artificial_spin_pol,ng_vec_abinit
+ use vec_operate,           ONLY: v_is_zero
+ use zeros,                 ONLY: G_iku_zero
+ !
  implicit none
  character(*)                   :: KSS_file_name
  type(levels),     intent(out)  :: en
@@ -56,6 +59,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  type(wffile_type)              :: wff
  integer                        :: psp_so
  integer                        :: fform,ishm
+ real(SP)                       :: g_inv(3)
+ real(SP), allocatable          :: g_vec_tmp(:,:)
  integer,  allocatable          :: rel_gvec(:,:)
  real(DP), allocatable          :: rstr(:)
  !
@@ -71,7 +76,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  call msg('l','abinit version ',ahdr%codvsn)
  read(11)
  read(11) 
- read(11) ahdr%nsym, n_bands, ng_vec, ishm, pp_n_l_times_proj_max
+ read(11) ahdr%nsym, n_bands, ng_vec_abinit, ishm, pp_n_l_times_proj_max
  !
  l_many_proj= (ishm==-1)
  !
@@ -187,8 +192,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  ! ALLOCATION
  !
- allocate(wf_nc_k(k%nibz),g_vec(ng_vec,3),rstr(en%nb))
- allocate(en%E(en%nb,k%nibz,n_sp_pol),rel_gvec(3,ng_vec))
+ allocate(wf_nc_k(k%nibz),g_vec(ng_vec_abinit,3),rstr(en%nb))
+ allocate(en%E(en%nb,k%nibz,n_sp_pol),rel_gvec(3,ng_vec_abinit))
  !
  call msg('s','Symmetries...')
  !============================
@@ -207,12 +212,36 @@ subroutine a2y_db1(en,k,KSS_file_name)
  call msg('s','RL vectors...')
  !============================
  !
- read(11) (rel_gvec(:,i1),i1=1,ng_vec)
+ read(11) (rel_gvec(:,i1),i1=1,ng_vec_abinit)
  read(11) 
  read(11) 
- do i1=1,ng_vec
+ do i1=1,ng_vec_abinit
    g_vec(i1,:)=matmul(transpose(b),rel_gvec(:,i1))*alat(:)/2./pi
  enddo
+ call msg('l','done')
+ !
+ call msg('s','Closing shells...')
+ !============================
+ !
+ ng_vec=ng_vec_abinit
+ allocate(g_vec_tmp(2*ng_vec,3))
+ g_vec_tmp(1:ng_vec,:)=g_vec
+ deallocate(g_vec)
+ !
+ do i1=1,ng_vec
+   g_inv=-g_vec_tmp(i1,:)
+   do i2=1,ng_vec
+     if( v_is_zero(g_inv-g_vec_tmp(i2,:),zero_=G_iku_zero)) exit 
+   enddo
+   if (i2<=ng_vec) cycle
+   ng_vec=ng_vec+1
+   g_vec_tmp(ng_vec,:)=g_inv
+ enddo
+ !
+ allocate(g_vec(ng_vec,3))
+ g_vec=g_vec_tmp(1:ng_vec,:)
+ deallocate(g_vec_tmp)
+ !
  call msg('l','done')
  !
  call msg('s','Energies...')
@@ -224,8 +253,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! 
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
- allocate(WF_disk_DP(ng_vec,n_spinor))
- allocate(wf_igk_tmp(ng_vec,k%nibz))
+ allocate(WF_disk_DP(ng_vec_abinit,n_spinor))
+ allocate(wf_igk_tmp(ng_vec_abinit,k%nibz))
  wf_igk_tmp=-1
  WF_disk_DP=0._DP
  !
@@ -253,7 +282,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
      enddo
      if(i_spin>1) cycle
      ic=0
-     do ig=1,ng_vec
+     do ig=1,ng_vec_abinit
        if(all(wf_disk_DP(ig,:)==0)) cycle
        ic=ic+1
        wf_igk_tmp(ic,ik)=ig

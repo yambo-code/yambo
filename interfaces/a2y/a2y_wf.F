@@ -51,14 +51,13 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  !
  use pars,                  ONLY:SP,DP
  use electrons,             ONLY:n_bands,n_spin,n_spinor,n_sp_pol
- use R_lattice,             ONLY:ng_vec
  use D_lattice,             ONLY:n_atomic_species
  use pseudo,                ONLY:pp_n_l_times_proj_max,PP_alloc,pp_kbs,pp_kb,pp_kbd,&
 &                                l_many_proj,pp_table
  use R_lattice,             ONLY:nkibz,ng_vec
  use wave_func,             ONLY:wf_ncx,wf_nc_k,wf_nb_io,wf_nb_io_groups,wf_igk
  use defs_datatypes,        ONLY:hdr_type, wffile_type
- use mod_com2y,             ONLY:artificial_spin_pol
+ use mod_com2y,             ONLY:artificial_spin_pol,ng_vec_abinit
  implicit none
  !
  integer        :: ikibz,ib_grp
@@ -73,9 +72,9 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  !
  type(hdr_type)     :: ahdr
  type(wffile_type)  :: wff
- real(DP)           :: pp_kb_kdb_disk(ng_vec),&
+ real(DP)           :: pp_kb_kdb_disk(ng_vec_abinit),&
 &                      pp_kbs_disk(n_atomic_species,pp_n_l_times_proj_max)
- complex(DP)        :: wf_disk_DP(ng_vec,n_spinor)
+ complex(DP)        :: wf_disk_DP(ng_vec_abinit,n_spinor)
  integer            :: fform,i_spin,i_spinor
  !
  ! Number of records for each k-point
@@ -137,9 +136,9 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
      do i1=1,n_atomic_species
        do i2=1,pp_n_l_times_proj_max
          read(11) pp_kb_kdb_disk
-         pp_kb(:,i1,i2,i_spin)=pp_kb_kdb_disk
+         pp_kb(:ng_vec_abinit,i1,i2,i_spin)=pp_kb_kdb_disk
          read(11) pp_kb_kdb_disk
-         pp_kbd(:,i1,i2,i_spin)=pp_kb_kdb_disk
+         pp_kbd(:ng_vec_abinit,i1,i2,i_spin)=pp_kb_kdb_disk
        enddo
      enddo   
    endif

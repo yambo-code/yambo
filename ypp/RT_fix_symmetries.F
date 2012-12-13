@@ -800,7 +800,7 @@ subroutine RT_fix_symmetries(E,k)
    enddo
  enddo
  !
- wf_ncx=maxval(wf_igk_save)
+ wf_ncx=maxval(wf_nc_k_save)
  !
  allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
  !

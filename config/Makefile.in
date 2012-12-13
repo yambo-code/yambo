@@ -91,7 +91,7 @@ libs:
 	@if test "$(do_local)" = yes ; then LIBS2DO="local" ; \
 	DIR2GO="lib" ; $(mklib); fi
 yambo: libs
-	@LIBS2DO="$(MAIN_LIBS)" ; ADF="-D_TEST_1"; $(mksrc)
+	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
 #
 # PROJECTS #

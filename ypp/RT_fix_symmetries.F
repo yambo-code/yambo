@@ -60,7 +60,7 @@ subroutine RT_fix_symmetries(E,k)
  type(levels)          :: en_sc,en_sc_expanded
  !
  integer               :: ik_save,iv(2),ierr,ib,ibm,i_wf,n_steps,i_spin,&
-&                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
+&                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik,last_zero
  integer               :: spatial_nsym,old_spatial_nsym,old_trev_nsym
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:),ic_rot_table(:)
  real(SP)              :: v1(3),v2(3)
@@ -173,12 +173,17 @@ subroutine RT_fix_symmetries(E,k)
  ioKB_err=ioKB_PP(ID) 
  !
  ! PWscf
- X_Vnl%ib=(/1,E%nb/)     ! full bands range
- X_Vnl%ngostnts=wf_ng    ! all G-vectors
- call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_Vnl_err=io_Vnl(X_Vnl,E,ID)
+ if(.not.ioKB_err==0) then
+   X_Vnl%ib=(/1,E%nb/)     ! full bands range
+   X_Vnl%ngostnts=wf_ng    ! all G-vectors
+   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
+   io_Vnl_err=io_Vnl(X_Vnl,E,ID)
+ else
+   io_Vnl_err=1
+ endif
  !
  if(ioKB_err==0.or.io_Vnl_err==0) call section('=',"PseudoPotentials")
+ !
  !
  if(ioKB_err==0) then
    !  
@@ -783,14 +788,30 @@ subroutine RT_fix_symmetries(E,k)
  wf_igk_save =wf_igk
  !
  deallocate(wf_nc_k,wf_igk)
+ !
+ ! Check which of the wfc components can be rotated
+ ! and discard the ones above n_g_closed
+ do ik=1,k_save%nibz
+   do ic=1,wf_nc_k_save(ik)
+     if( wf_igk_save(ic,ik)<=ng_closed ) cycle
+     wf_igk_save(ic:wf_nc_k_save(ik),ik)=-1
+     wf_nc_k_save(ik)=ic-1
+     exit
+   enddo
+ enddo
+ !
+ wf_ncx=maxval(wf_igk_save)
+ !
  allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
  !
  wf_igk=-1
+ !
  do i1=1,k_save%nibz
+   !
    ik=kpoints_map(1,i1)
    !
-   wf_igk(1:wf_ncx,i1) = wf_igk_save(1:wf_ncx,ik)
-   wf_nc_k(i1)         = min(ng_closed,wf_nc_k_save(ik))
+   wf_nc_k(i1) = wf_nc_k_save(ik)
+   wf_igk(1:wf_nc_k(i1),i1) = wf_igk_save(1:wf_nc_k_save(ik),ik)
    !
  enddo
  !
@@ -799,9 +820,8 @@ subroutine RT_fix_symmetries(E,k)
    ik=kpoints_map(1,i1)
    is=kpoints_map(2,i1)
    !
-   wf_nc_k(i1)              = min(ng_closed,wf_nc_k_save(ik))
-   wf_igk(1:wf_nc_k(i1),i1) = g_rot(is,wf_igk_save(1:wf_nc_k(i1),ik))
-   !
+   wf_nc_k(i1) = wf_nc_k_save(ik)
+   wf_igk(1:wf_nc_k(i1),i1) = g_rot(is,wf_igk_save(1:wf_nc_k_save(ik),ik))
    call i_sort( wf_igk(1:wf_nc_k(i1),i1) )
    !
  enddo
@@ -885,12 +905,12 @@ subroutine RT_fix_symmetries(E,k)
  !
  if(ioKB_err==0) then 
    !
+   pp_kb=0._SP
+   pp_kbd=0._SP
+   !
    if(n_steps>0) call live_timing('PseudoPotentials (abinit)',n_steps)
    !
    do i1=k_save%nibz+1,k%nibz
-     !
-     pp_kb=0._SP
-     pp_kbd=0._SP
      !
      ik=kpoints_map(1,i1)
      is=kpoints_map(2,i1)

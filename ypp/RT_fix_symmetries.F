@@ -65,7 +65,7 @@ subroutine RT_fix_symmetries(E,k)
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:),ic_rot_table(:)
  real(SP)              :: v1(3),v2(3)
  real(SP)              :: B_cart(3)
- integer               :: symm_M_factor,symm_B_factor,ig,ig_rot,ic,ic_rot
+ integer               :: symm_M_factor,symm_B_factor,ig,ig_rot,ic,ic_rot,wf_ncx_save
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
 &                         S_contains_TR(nsym),Trev_2_spatial=.false.,Rm_inv_BM_axis,Expand_symm
@@ -753,20 +753,49 @@ subroutine RT_fix_symmetries(E,k)
  Fragmented_IO=io_fragmented(ID)
  io_err=ioWF(ID)
  !
+ ! Check if wf_ncx must be changed
+ wf_ncx_save=wf_ncx
+ !
+ allocate(wf_nc_k_save(k_save%nibz),wf_igk_save(wf_ncx,k_save%nibz))
+ call mem_est("wf_nc_k_save wf_igk_save",(/size(wf_nc_k_save),size(wf_igk_save)/),(/IP,IP/))
+ wf_nc_k_save=wf_nc_k
+ wf_igk_save =wf_igk
+ !
+ deallocate(wf_igk)
+ !
+ ! Check which of the wfc components can be rotated
+ ! and discard the ones above n_g_closed
+ do ik=1,k_save%nibz
+   do ic=1,wf_nc_k_save(ik)
+     if( wf_igk_save(ic,ik)<=ng_closed ) cycle
+     wf_igk_save(ic:wf_nc_k_save(ik),ik)=-1
+     wf_nc_k_save(ik)=ic-1
+     exit
+   enddo
+ enddo
+ !
+ wf_ncx=maxval(wf_nc_k_save)
+ !
+ allocate(wf_igk(wf_ncx,k%nibz))
+ !
  if (trim(core_io_path)/=trim(more_io_path)) then
    !
    call msg('s',':: Copying existing database ...')
    !
    call cp_file(trim(core_io_path)//"/SAVE/s.kb_pp",trim(more_io_path)//"/SAVE",ierr)
    call cp_file(trim(core_io_path)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
-   call cp_file(trim(core_io_path)//"/SAVE/s.wf",trim(more_io_path)//"/SAVE",ierr)
-   call cp_file(trim(core_io_path)//"/SAVE/ns.wf",trim(more_io_path)//"/SAVE",ierr)
+   if(wf_ncx_save==wf_ncx) then
+     call cp_file(trim(core_io_path)//"/SAVE/s.wf",trim(more_io_path)//"/SAVE",ierr)
+     call cp_file(trim(core_io_path)//"/SAVE/ns.wf",trim(more_io_path)//"/SAVE",ierr)
+   endif
    do ik=1,k_save%nibz
      do i1=1,wf_nb_io_groups
-       fragment_name='ns.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
-       call cp_directory(trim(core_io_path)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
-       fragment_name='s.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
-       call cp_directory(trim(core_io_path)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
+       if(wf_ncx_save==wf_ncx) then
+         fragment_name='ns.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
+         call cp_directory(trim(core_io_path)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
+         fragment_name='s.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
+         call cp_directory(trim(core_io_path)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
+       endif
        fragment_name='ns.kb_pp_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
        call cp_directory(trim(core_io_path)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
        fragment_name='s.kb_pp_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
@@ -782,29 +811,25 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Rotating wavefunctions components
  !
- allocate(wf_nc_k_save(k_save%nibz),wf_igk_save(wf_ncx,k_save%nibz))
- call mem_est("wf_nc_k_save wf_igk_save",(/size(wf_nc_k_save),size(wf_igk_save)/),(/IP,IP/))
- wf_nc_k_save=wf_nc_k
- wf_igk_save =wf_igk
- !
- deallocate(wf_nc_k,wf_igk)
- !
- ! Check which of the wfc components can be rotated
- ! and discard the ones above n_g_closed
- do ik=1,k_save%nibz
-   do ic=1,wf_nc_k_save(ik)
-     if( wf_igk_save(ic,ik)<=ng_closed ) cycle
-     wf_igk_save(ic:wf_nc_k_save(ik),ik)=-1
-     wf_nc_k_save(ik)=ic-1
-     exit
-   enddo
- enddo
- !
- wf_ncx=maxval(wf_nc_k_save)
- !
- allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
+ allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+ call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  !
  wf_igk=-1
+ !
+ core_io_path_save=core_io_path
+ core_io_path=more_io_path
+ !
+ if(wf_ncx_save/=wf_ncx) then
+   !
+   call live_timing('WFs comp. reduction',k_save%nibz)
+   ! ============================================
+   !
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
+   io_err=ioWF(ID)
+   !
+   ACTION_=OP_APP_WR_CL
+   if(Fragmented_IO) ACTION_=OP_WR_CL
+ endif
  !
  do i1=1,k_save%nibz
    !
@@ -813,7 +838,35 @@ subroutine RT_fix_symmetries(E,k)
    wf_nc_k(i1) = wf_nc_k_save(ik)
    wf_igk(1:wf_nc_k(i1),i1) = wf_igk_save(1:wf_nc_k_save(ik),ik)
    !
+   if(wf_ncx_save/=wf_ncx) then
+     call io_control(ACTION=ACTION_,COM=NONE,SEC=(/i1+1,1/),ID=ID)
+     ! 
+     wf_disk=0._SP
+     !
+     do ib=1,E%nb
+       do i_spin=1,n_spin
+         !
+         i_wf=wf_state(ib,ik,i_spin)
+         !
+         wf_disk(1,ib,:wf_nc_k(i1),i_spin)=  real(wf(:wf_nc_k_save(ik),i_wf))
+         wf_disk(2,ib,:wf_nc_k(i1),i_spin)= aimag(wf(:wf_nc_k_save(ik),i_wf))
+         !
+       enddo
+     enddo
+     !   
+     io_err=ioWF(ID,wf=wf_disk)
+     call live_timing(steps=1)
+   endif
+   !
  enddo
+ !
+ if(wf_ncx_save/=wf_ncx) call live_timing()
+ !
+ deallocate(wf_igk_save,wf_nc_k_save)
+ call mem_est("wf_nc_k_save wf_igk_save")
+ !
+ call section('=',"Final I/O")
+ !============================
  !
  do i1=k_save%nibz+1,k%nibz 
    !
@@ -826,23 +879,12 @@ subroutine RT_fix_symmetries(E,k)
    !
  enddo
  !
- deallocate(wf_igk_save,wf_nc_k_save)
- call mem_est("wf_nc_k_save wf_igk_save")
- !
  wf_ng=maxval(wf_igk)
- !
- call section('=',"Final I/O")
- !============================
- !
- core_io_path_save=core_io_path
- core_io_path=more_io_path
  !
  n_steps=k%nibz-k_save%nibz
  if(n_steps>0) call live_timing('WFs rotation',n_steps)
  !
  allocate(ic_rot_table(wf_ncx))
- allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
- call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  allocate(wf_tmp(wf_ncx,n_spin))
  !
  ACTION_=OP_APP_WR_CL

@@ -32,11 +32,7 @@ subroutine K_Haydock(iq,W)
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
 &                         BS_DB_is_fragmented, BS_eh_f,ioBSS_Haydock,&
 &                         BS_K_Coupling,Haydock_terminator,&
-#if defined _TEST_1
 &                         K_BSmat_by_V
-#else
-&                         K_BSmat_by_V
-#endif
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
  use electrons,      ONLY:spin_occ

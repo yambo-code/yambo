@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2009 A. Marini, M. Gruning and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini, M. Gruning and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -47,6 +47,8 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
 &                         BS_cpl_mat,BS_IO_index
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_control,OP_RD,RD,NONE,RD_CL,OP_RD_CL
+ use wrapper,        ONLY:M_by_V
+ !
  implicit none
  integer               ::iq
  integer               ::iter
@@ -132,36 +134,20 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
          enddo
          !
          if (use_fragments) then
-#if defined _DOUBLE
-           call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(1._SP,0._SP),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(1)+1),1)
-#else
-           call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(1._SP,0._SP),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(1)+1),1)
-#endif
            !
-           ! GPL_EXCLUDE_START
+           call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(1._SP,0._SP),&
+&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1:),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+1:),1)
            !
            if (BS_K_coupling) then
              !
              ! Calculate the diagonal coupling part
              !
-!             Vi=conjg(Vi)
-#if defined _DOUBLE
-             call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),alpha,&
+             call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),alpha,&
 &                     BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(1)+1:)),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(1)+1),1)
-#else
-             call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),alpha,&
-&                     BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(1)+1:)),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(1)+1),1)
-#endif       
-!             Vi=conjg(Vi)
+&                     Vo(frag_pointer(1)+1:),1)
+             !
            end if
-           !
-           ! GPL_EXCLUDE_END
            !
          end if
          !
@@ -177,60 +163,33 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
 &                 i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik2)) &
 &                 BS_mat(i2,i1)=conjg(BS_mat(i1,i2))
            !
-           ! GPL_EXCLUDE_START
-           !
            if (BS_K_coupling) then
              forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1),&
 &                   i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik2)) &
 &                   BS_cpl_mat(i2,i1)=BS_cpl_mat(i1,i2)
            endif
            !
-           ! GPL_EXCLUDE_END
-           !
          else
            !
-#if defined _DOUBLE
-           call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+1),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(1)+1),1)
-           call zgemv('c',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(2)+1),1)
-#else
-           call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+1),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(1)+1),1)
-           call cgemv('c',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(2)+1),1)
-#endif
-           !
-           ! GPL_EXCLUDE_START
+           call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
+&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+1:),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+1:),1)
+           call M_by_V('c',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
+&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1:),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(2)+1:),1)
            !
            if (BS_K_coupling) then
              !
              ! Calculate the off-diagonal coupling part
              !
-             Vi=conjg(Vi)
-#if defined _DOUBLE
-             call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),alpha,&
-&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+1),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(1)+1),1)
-             call zgemv('t',BS_blk_dim(ik1),BS_blk_dim(ik2),alpha,&
-&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(2)+1),1)
-#else
-             call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),alpha,&
-&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+1),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(1)+1),1)
-             call cgemv('t',BS_blk_dim(ik1),BS_blk_dim(ik2),alpha,&
-&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(2)+1),1)
-#endif       
-             Vi=conjg(Vi)
+             call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik2),alpha,&
+&                     BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(2)+1:)),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+1:),1)
+             call M_by_V('t',BS_blk_dim(ik1),BS_blk_dim(ik2),alpha,&
+&                     BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(1)+1:)),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(2)+1:),1)
+             !
            endif
-           !
-           ! GPL_EXCLUDE_END
            !
          endif
          !
@@ -245,27 +204,14 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
  !
  if (.not.use_fragments) then
    !
-#if defined _DOUBLE
-   call zgemv('n',BS_K_dim,BS_K_dim,(1._SP,0._SP),&
-&             BS_mat,BS_K_dim,Vi,1,(0._SP,0._SP),Vo,1)
-#else
-   call cgemv('n',BS_K_dim,BS_K_dim,(1._SP,0._SP),&
-&             BS_mat,BS_K_dim,Vi,1,(0._SP,0._SP),Vo,1)
-#endif
-   !
-   ! GPL_EXCLUDE_START
+   call M_by_V('n',BS_K_dim,BS_mat,Vi,Vo)
    !
    if (BS_K_coupling) then
-#if defined _DOUBLE
-     call zgemv('n',BS_K_dim,BS_K_dim,alpha, BS_cpl_mat,&
+     !
+     call M_by_V('n',BS_K_dim,BS_K_dim,alpha, BS_cpl_mat,&
 &               BS_K_dim,conjg(Vi),1,(1._SP,0._SP),Vo,1)
-#else
-     call cgemv('n',BS_K_dim,BS_K_dim,alpha,BS_cpl_mat,&
-&               BS_K_dim,conjg(Vi),1,(1._SP,0._SP),Vo,1)
-#endif
+     !
    endif
-   !
-   ! GPL_EXCLUDE_END
    !
  else
    !

@@ -31,6 +31,7 @@ module mod_com2y
  logical :: l_Vnl
  logical :: verboseIO
  !
+ integer :: ng_vec_abinit
  integer, public  :: N_G_vectors
  !
  real(SP):: alat_mult_factor

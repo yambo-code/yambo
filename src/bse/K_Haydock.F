@@ -21,7 +21,7 @@
 !
 subroutine K_Haydock(iq,W)
  !
- use pars,           ONLY:SP,pi,schlen
+ use pars,           ONLY:SP,pi,schlen,cI
  use wrapper,        ONLY:V_by_V_plus_V
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_epsilon
@@ -145,7 +145,7 @@ subroutine K_Haydock(iq,W)
      Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)*BS_eh_f(:BS_K_dim)
      call K_BSmat_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity)
      Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
-     Cf(1) = 2._SP*aimag(dot_product(BSS_rhoq0,Vn))/Haydock_v0_mod
+     Cf(1) = 2._SP*cI*aimag(dot_product(BSS_rhoq0,Vn))/Haydock_v0_mod
      Vnp1(:) = Vnp1(:)/Haydock_v0_mod
      Vn(:)   = Vn(:)/Haydock_v0_mod
    else
@@ -240,7 +240,7 @@ subroutine K_Haydock(iq,W)
      ! with all product evaluated just in the eh pairs subspace 
      !
      Cf(it+1)= ((1._SP-ItParity)*real(dot_product(BSS_rhoq0,Vn))+&
-&               (1._SP+ItParity)*aimag(dot_product(BSS_rhoq0,Vn)))/&
+&               (1._SP+ItParity)*cI*aimag(dot_product(BSS_rhoq0,Vn)))/&
 &               Haydock_v0_mod
      !
    endif

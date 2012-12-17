@@ -53,7 +53,7 @@ subroutine K_Haydock(iq,W)
  complex(SP),allocatable :: Vn(:),Vnm1(:),Vnp1(:)
  complex(SP),allocatable :: Cf(:)
 #if defined _KERR
- complex(SP),allocatable :: Cf_kerr(:) 
+ complex(SP),allocatable :: Cf_kerr(:)
 #endif
  real(SP)           ::reached_treshold, Bf(Max_iterations),Af(Max_iterations)
  real(SP)           ::ItParity
@@ -197,23 +197,22 @@ subroutine K_Haydock(iq,W)
      if(cpl_scheme_fast) then
        call K_BSmat_by_V_Haydock(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity)
        Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
-       Cf(1) = 2._SP*cI*aimag(dot_product(BSS_rhoq0(:BS_K_dim),Vn))/Haydock_v0_mod
+       Cf(1) = 0.
 #if defined _KERR
-       if(l_kerr) Cf_kerr(1)= 2._SP*cI*aimag(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn))/Haydock_v0_mod
+       if(l_kerr) Cf_kerr(1)= 2._SP*cI*aimag(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn))/Haydock_v0_mod**2._SP
 #endif
      else
        Vn(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)*BS_eh_f(:BS_K_dim)
        call K_BSmat_by_V(iq,iter=it_on_disk,Vi=Vn,Vo=Vnp1)
        Haydock_v0_mod=sqrt(fdot_product(Vn,Vnp1))
-       Cf(1) = dot_product(BSS_rhoq0,Vn)/Haydock_v0_mod
+       Cf(1) = dot_product(BSS_rhoq0,Vn)/Haydock_v0_mod**2._SP
 #if defined _KERR
-       if(l_kerr) Cf_kerr(1)= dot_product(BSS_rhoq0_kerr,Vn)/Haydock_v0_mod
+       if(l_kerr) Cf_kerr(1)= dot_product(BSS_rhoq0_kerr,Vn)/Haydock_v0_mod**2._SP
 #endif
      endif
      !
      Vnp1(:) = Vnp1(:)/Haydock_v0_mod
      Vn(:)   = Vn(:)/Haydock_v0_mod
-     !
      !
    else
      Haydock_v0_mod = Bf(1)
@@ -313,17 +312,13 @@ subroutine K_Haydock(iq,W)
        forall(i1=1:BS_K_dim) Vnp1(i1)=Vnp1(i1)/Bf(it+1)
        !
        ! Using symmetry arguments
-       ! Cf=(1-ItParity)Re(<rhoq0|Vn>) + (1+ItParity)Im(<rhoq0|Vn>) 
+       ! Cf=(1-ItParity)Re(<rhoq0|Vn>) + i*(1+ItParity)Im(<rhoq0|Vn>) 
        ! with all product evaluated just in the eh pairs subspace 
        !
-       Cf(it+1)= ((1._SP-ItParity)*real(dot_product(BSS_rhoq0(:BS_K_dim),Vn))+&
-&                 (1._SP+ItParity)*cI*aimag(dot_product(BSS_rhoq0(:BS_K_dim),Vn)))/&
-&                 Haydock_v0_mod
+       Cf(it+1)= ((1._SP-ItParity)*real(dot_product(BSS_rhoq0(:BS_K_dim),Vn)))/Haydock_v0_mod
 #if defined _KERR
-       if(l_kerr) &
-&        Cf_kerr(it+1)= ((1._SP-ItParity)*real(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn))+&
-&                        (1._SP+ItParity)*cI*aimag(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn)))/&
-&                        Haydock_v0_mod
+       if(l_kerr) Cf_kerr(it+1)= &
+&               ((1._SP+ItParity)*cI*aimag(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn)))/Haydock_v0_mod
 #endif
      else
        forall(i1=1:2*BS_K_dim) Vn(i1)=Vn(i1)/Bf(it+1)
@@ -483,8 +478,8 @@ subroutine K_Haydock(iq,W)
          X_o(2,i1)=1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(2,i1+1))
        enddo
        if (use_cpl_scheme) then
-         X_i(:,1) = X_o(:,1)
-         X_i(:,2) = Bf(2)*X_o(:,2)*X_i(:,1)
+         X_i(:,1) = -X_o(:,1)
+         X_i(:,2) = -Bf(2)*X_o(:,2)*X_i(:,1)
          YbyX(:) = X_i(:,1)*Cf(1) + X_i(:,2)*Cf(2)
          do i1 = 2,it-1
            X_i(1,i1+1) = -Bf(i1+1)*X_o(1,i1+1)*X_i(1,i1)

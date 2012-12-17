@@ -241,7 +241,7 @@ subroutine K_diagonalization(iq,W)
      !
 #if defined _KERR
      if(l_kerr) then
-       call live_timing('BSK R KERR residuals',px%n_of_elements(myid+1))
+       call live_timing(' KERR residuals',px%n_of_elements(myid+1))
        !
        do i1=1,BS_H_dim
          BS_R_right_kerr(i1)=cmplx(0.,0.,SP)
@@ -344,7 +344,7 @@ subroutine K_diagonalization(iq,W)
      !
 #if defined _KERR
      if(l_kerr) then
-       call live_timing('BSK KERR residuals',px%n_of_elements(myid+1))
+       call live_timing(' KERR residuals',px%n_of_elements(myid+1))
        BS_R_KERR=(0.,0.)
        !
        do i1=1,BS_K_dim

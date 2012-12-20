@@ -145,7 +145,8 @@ subroutine K_Haydock(iq,W)
      Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)*BS_eh_f(:BS_K_dim)
      call K_BSmat_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity)
      Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
-     Cf(1) = 2._SP*cI*aimag(dot_product(BSS_rhoq0,Vn))/Haydock_v0_mod
+     ! This is zero by symmetry
+     Cf(1) = 2._SP*cI*aimag(dot_product(BSS_rhoq0,Vn))/Haydock_v0_mod**2._SP
      Vnp1(:) = Vnp1(:)/Haydock_v0_mod
      Vn(:)   = Vn(:)/Haydock_v0_mod
    else
@@ -238,6 +239,7 @@ subroutine K_Haydock(iq,W)
      ! Using symmetry arguments
      ! Cf=(1-ItParity)Re(<rhoq0|Vn>) + (1+ItParity)Im(<rhoq0|Vn>) 
      ! with all product evaluated just in the eh pairs subspace 
+     ! N.B. <rhoq0|Vn> is real by symmetry thus aimag(<rhoq0|Vn>)=0
      !
      Cf(it+1)= ((1._SP-ItParity)*real(dot_product(BSS_rhoq0,Vn))+&
 &               (1._SP+ItParity)*cI*aimag(dot_product(BSS_rhoq0,Vn)))/&
@@ -372,8 +374,8 @@ subroutine K_Haydock(iq,W)
          X_o(2,i1)=1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(2,i1+1))
        enddo
        if (BS_K_Coupling) then
-         X_i(:,1) = X_o(:,1)
-         X_i(:,2) = Bf(2)*X_o(:,2)*X_i(:,1)
+         X_i(:,1) = -X_o(:,1)
+         X_i(:,2) = -Bf(2)*X_o(:,2)*X_i(:,1)
          YbyX(:) = X_i(:,1)*Cf(1) + X_i(:,2)*Cf(2)
          do i1 = 2,it-1
            X_i(1,i1+1) = -Bf(i1+1)*X_o(1,i1+1)*X_i(1,i1)

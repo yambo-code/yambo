@@ -169,7 +169,9 @@ integer function ioBS_DISTRIBUTED(iq,X,ID,blk_only)
    call io_bulk(ID,R3=BS_mat_disk)
    !
    if (read_is_on(ID)) then
-     if (.not.load_DB_once_for_all) call mat_r2c(BS_mat_disk,BS_cpl_mat)
+     if (.not.load_DB_once_for_all) call mat_r2c(BS_mat_disk,&
+&     BS_cpl_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik12(1)),&
+&            BS_K_dim+BS_k_and_row_restart(2)+1:BS_K_dim+BS_k_and_row_restart(2)+BS_blk_dim(ik12(2))))
      if (load_DB_once_for_all)      call mat_r2c(BS_mat_disk,&
 &     BS_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik12(1)),&
 &            BS_K_dim+BS_k_and_row_restart(2)+1:BS_K_dim+BS_k_and_row_restart(2)+BS_blk_dim(ik12(2))))

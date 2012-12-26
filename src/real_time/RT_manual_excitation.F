@@ -77,6 +77,8 @@ subroutine RT_manual_excitation(E,k)
          !
          local_E_window=local_E_window+Eh_pumped_pair_width/10.
          !
+         if (all(Pumped_state(SC_bands(1):SC_bands(2)))) local_E_window=Eh_pumped_pair_width*1.1
+         !
        enddo
      enddo
    enddo

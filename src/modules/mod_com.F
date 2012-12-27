@@ -25,15 +25,19 @@ module com
  use stderr,     ONLY:gen_fmt
  implicit none
  !
- ! PATHS & JOB_str
+ ! PATHS
  !
  character(lchlen)  :: core_io_path
  character(lchlen)  :: more_io_path
  character(lchlen)  :: com_path
- character(lchlen)  :: jobstr
  character(lchlen)  :: repfile
  !
  character(3)      :: terminator(4)
+ !
+ ! JOB strings
+ !
+ character(lchlen)  :: jobstr
+ character(lchlen)  :: second_jobstr
  !
  ! Sectioning
  !
@@ -45,6 +49,7 @@ module com
  !
  integer,parameter  :: nofs=200
  integer,parameter  :: max_open_ofs=200
+ integer, parameter :: num_of_alternative_locations=12
  character(lchlen)  :: of(nofs)
  character(lchlen)  :: opened_of(max_open_ofs)
  integer            :: of_unit(max_open_ofs)
@@ -57,32 +62,38 @@ module com
  !
  contains
    !
-   character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,NETCDF)
+   character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,NETCDF,ALT_JOB_STRING)
      !
      ! -2 ----------------  -> desc (NETCDF deduced from presence of "ndb" in desc)
      ! -1 ----------------  -> subfolder/(n)desc
      !  0 Stable s.         -> CORE_IO_PATH/SAVE/subfolder/(n)s.desc
      !  1 Stable db.        -> CORE_IO_PATH/SAVE/subfolder/(n)db.desc
-     !  2 Job dependent db. -> PATH/JOBSTR/subfolder/(n)db.desc
+     !  2 Job dependent db. -> PATH/JOBSTR/subfolder/(n)db.desc 
      !  3 Job dependent o.  -> COM_PATH/o.desc-JOBSTR
      !  4 ----------------  -> MORE_IO_PATH/RESTART/(n)db.desc_FOLDER
      !                                                    |
+     !                                                    JOBSTR, or  SAVE if no JOBSTR 
      ! if (CORE_IO) PATH=core_io_path
      ! if (MORE_IO) PATH=more_io_path
      ! if ( COM_IO) PATH=com_path
-     !                                                    JOBSTR, or  SAVE if no JOBSTR 
+     !
+     ! Update of 27/12/2012. Added second jobstr to be used when the database of type 2 is read.
+     !
      character(*)           ::desc
      integer                ::type
      logical                ::CORE_IO,MORE_IO,NETCDF,COM_IO
      character(*), optional ::subfolder
+     character(*), optional ::ALT_JOB_STRING
      ! 
      ! Work Space
      !
      character(schlen)::ch(2)
-     character(lchlen)::folder
+     character(lchlen)::folder,jobstr_
      !
      get_name=" "
-     folder="SAVE"
+     jobstr_ =jobstr
+     if (present(ALT_JOB_STRING)) jobstr_=ALT_JOB_STRING
+     folder  ="SAVE"
      if (.not.CORE_IO.and..not.MORE_IO.and..not.COM_IO) return
      !
      ch(1)=core_io_path
@@ -108,7 +119,7 @@ module com
          ch(2)="db."//trim(desc)
        case(2,4)
          ch(2)="db."//trim(desc)
-         if (len_trim(jobstr)>0) folder=trim(jobstr)
+         if (len_trim(jobstr_)>0) folder=trim(jobstr_)
          if (type==4) then
            ch(2)="db."//trim(desc)//"_"//trim(folder)
            folder="RESTART"
@@ -127,7 +138,7 @@ module com
        case(3)
          ch(2)="o."//trim(desc)
          folder=""
-         if (len_trim(jobstr)>0) ch(2)="o-"//trim(jobstr)//"."//trim(desc)
+         if (len_trim(jobstr_)>0) ch(2)="o-"//trim(jobstr_)//"."//trim(desc)
          ch(1)=com_path
      end select 
      !
@@ -147,14 +158,16 @@ module com
      character(*)           ::desc
      character(*), optional ::subfolder
      logical                ::NETCDF_DB
-     character(lchlen)      ::all_locations(8)
+     character(lchlen)      ::all_locations(num_of_alternative_locations)
      !
      ! Possible Paths
      !
-     ! 1/2. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with JOBSTR)
-     ! 3/4. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=1 (no   JOBSTR)
-     ! 5/6. MORE_IO=.FALSE. CORE_IO=.TRUE. COM_IO=.FALSE.  type=2 (with JOBSTR)
-     ! 7/8. MORE_IO=.FALSE. CORE_IO=.TRUE. COM_IO=.FALSE.  type=1 (no   JOBSTR)
+     ! 1/2.  MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with JOBSTR)
+     ! 3/4.  MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=1 (no   JOBSTR)
+     ! 5/6.  MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with JOBSTR)
+     ! 7/8.  MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=1 (no   JOBSTR)
+     ! 9/10. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with SECOND_JOBSTR)
+     ! 11/12.MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with SECOND_JOBSTR)
      !
      all_locations(1)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
 &                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
@@ -172,6 +185,26 @@ module com
 &                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
      all_locations(8)=get_name(desc,subfolder,1,CORE_IO=.TRUE.,&
 &                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
+     !
+     ! Added on 27/12/2012 using second_jobstr
+     !
+     all_locations(9:12) = ' '
+     !
+     if (len_trim(second_jobstr)>0) then
+       all_locations(9) =get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
+&                                 MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB,&
+&                                 ALT_JOB_STRING=trim(second_jobstr))
+       all_locations(10)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
+&                                 MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB,&
+&                                 ALT_JOB_STRING=trim(second_jobstr))
+       all_locations(11)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
+&                                 MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB,&
+&                                 ALT_JOB_STRING=trim(second_jobstr))
+       all_locations(12)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
+&                                 MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB,&
+&                                 ALT_JOB_STRING=trim(second_jobstr))
+     endif
+     !
    end function
    !
    subroutine of_open_close(of_name,mode)

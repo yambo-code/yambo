@@ -61,7 +61,7 @@ subroutine RT_G_retarded(E,k)
    W_debye=0.
  endif
  !
- if (io_err/=0.and.trim(Gr_kind)=="HC") then
+ if (io_err/=0.and.trim(Gr_kind)/="HC") then
    call warning("Missing ELPH database. Unknown Debye energy. Switching to plain QP.")
    Gr_kind="QP"
  endif

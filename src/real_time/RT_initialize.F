@@ -75,7 +75,7 @@ subroutine RT_initialize(E,k,q)
  !
  if (l_G_retarded_DB) then
    l_G_retarded_DB=l_carrier_dynamics.or.l_ph_corr
-   if (Gr_bands(1)<SC_bands(1).or.Gr_bands(2)<SC_bands(2)) l_G_retarded_DB=.FALSE.
+   if (Gr_bands(1)>SC_bands(1).or.Gr_bands(2)<SC_bands(2)) l_G_retarded_DB=.FALSE.
  endif
  !
  l_RT_diagonalize      =RT_diagonalization_steps>1

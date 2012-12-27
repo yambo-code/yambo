@@ -115,13 +115,18 @@ module stderr
      endif
    end function 
    !
-   subroutine string_split(string_in,string_out)
-     character(*)     :: string_in
-     character(schlen):: string_out(:)
+   subroutine string_split(string_in,string_out,space)
+     character(*)          :: string_in
+     character(schlen)     :: string_out(:)
+     character(*),optional :: space
      !
      ! Work Space
      !
      integer          :: i_pos(2),is
+     character(1)     :: space_
+     !
+     space_=" "
+     if (present(space)) space_=space(1:1)
      !
      i_pos=(/1,1/)
      is=0
@@ -130,7 +135,7 @@ module stderr
        !
        ! Here I go to the first non null characater " AB  C"
        !                                              |
-       do while (string_in(i_pos(1):i_pos(1)) == ' ')
+       do while (string_in(i_pos(1):i_pos(1)) == space_)
          if (i_pos(1)==len_trim(string_in)) exit
          i_pos(1)=i_pos(1)+1
        enddo
@@ -138,7 +143,7 @@ module stderr
        ! Here I go to the last non-null characater before a space " AB  C"
        !                                                             |   
        i_pos(2)=i_pos(1)
-       do while (string_in(i_pos(2):i_pos(2)) /= ' ')
+       do while (string_in(i_pos(2):i_pos(2)) /= space_)
          if (i_pos(2)==len_trim(string_in)) exit
          i_pos(2)=i_pos(2)+1
        enddo

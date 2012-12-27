@@ -22,7 +22,7 @@
 subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
- use pars,       ONLY:SP
+ use pars,       ONLY:SP,schlen
  use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use fields,     ONLY:global_gauge,grid_path
@@ -53,8 +53,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use par_proc_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,write_to_of,write_to_report,max_open_ofs,&
-&                     more_io_path,core_io_path,jobstr,com_path
- use stderr,     ONLY:win_size,tty_size,write_to_log,logfile,set_real_printed_length
+&                     more_io_path,core_io_path,jobstr,com_path,second_jobstr
+ use stderr,     ONLY:win_size,tty_size,write_to_log,logfile,set_real_printed_length,string_split
  use timing,     ONLY:log_line_to_dump,log_line,nhash,live_timing_is_on,&
 &                     parallel_timing,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
@@ -93,7 +93,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     l_RT_diagonalize,RT_is_dumped,RAD_LifeTime,Phase_LifeTime,&
 &                     NE_Hxc_jumps,NE_tot_time,NE_MEM_steps,NE_MEM_treshold,&
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,&
-&                     Eh_pumped_pair_energy,Dynamics_Kind,Eh_pumped_pair_width,Gr_bands
+&                     Eh_pumped_pair_energy,Dynamics_Kind,Eh_pumped_pair_width,Gr_bands,&
+&                     Gr_T_window,Gr_T_steps,Gr_E_window,Gr_E_steps,Gr_kind
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,theta_function_iTo_ref,i_Pump,i_Probe
 #endif
 #if defined _MAGNETIC
@@ -105,7 +106,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  implicit none
  !
  character(*) :: INSTR,IND,OD,JS,COM_DIR
- integer      :: i1,i2
+ !
+ ! Work Space 
+ !
+ integer           :: i1,i2
+ character(schlen) :: string(2)
  !
  ! Printed reals format lengths 
  !
@@ -134,7 +139,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ! ... and Job string
  !
- jobstr=JS
+ call string_split(JS,string,",")
+ jobstr=string(1)
+ second_jobstr=" "
+ if (len_trim(string(2))>0) second_jobstr=string(2)
  !
  ! PAR PROC Setup
  !
@@ -504,7 +512,15 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  RT_eh_energy_max=0.
  Eh_pumped_pair_energy=-1./HA2EV
  Eh_pumped_pair_width=0.1/HA2EV
+ !
+ ! G_retarded
+ !
  Gr_bands=0
+ Gr_T_window=0.
+ Gr_T_steps=0
+ Gr_E_window=0.
+ Gr_E_steps=0
+ Gr_kind=" "
  !
 #endif
  !

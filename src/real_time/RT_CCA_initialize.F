@@ -41,7 +41,7 @@ subroutine RT_CCA_initialize(E)
  integer :: i_n,i_k,i_m,i_p,i_np,i_kp,i_mp,i_pp,i_c,i1,i2,ID,io_err,n_blocks
  real(SP):: Gr_T_step,DELTA(2),GAMMA_,&
 &           Gr_energies(((SC_bands(2)-SC_bands(1))*nkibz)**2,2),E_(2),E_center,&
-&           Gr_integrand(Gr_T_steps)
+&           Gr_integrand(Gr_T_steps),Gr_integral_min_val(2)
  type(pp_indexes)    :: px
  integer,allocatable :: Gr_local_indexes(:,:)
  integer,    external:: io_G_retarded
@@ -121,6 +121,8 @@ subroutine RT_CCA_initialize(E)
  !
  n_blocks=0
  !
+ Gr_integral_min_val=0.
+ !
  do i1=1,Gr_mat_dim
    !
    i_np=Gr_local_indexes(i1,1)
@@ -175,6 +177,11 @@ subroutine RT_CCA_initialize(E)
        !
      endif
      !
+     if (E_center>Gr_integral_min_val(1)) then
+       Gr_integral_min_val(1)=E_center
+       Gr_integral_min_val(2)=min( Gr_integral_min_val(2), Gr_matrix(i1,i2))
+     endif
+     !
      !DEBUG>
      !write (100,*)  ((E%E(i_n,i_k,1)-E%E(i_np,i_kp,1))-(E%E(i_m,i_p,1)-E%E(i_mp,i_pp,1)))*27.21,Gr_matrix(i1,i2)
      !DEBUG<
@@ -192,6 +199,7 @@ subroutine RT_CCA_initialize(E)
  enddo
  do i1=1,Gr_mat_dim
    do i2=1,i1
+     Gr_matrix(i1,i2)=Gr_matrix(i1,i2)+Gr_integral_min_val(2)
      Gr_matrix(i2,i1)=Gr_matrix(i1,i2)
    enddo
  enddo

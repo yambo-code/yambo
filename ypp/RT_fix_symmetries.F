@@ -38,9 +38,10 @@ subroutine RT_fix_symmetries(E,k)
 &                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP,RD_CL_IF_END,WR_CL_IF_END
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
 &                              wf_ng,wf_state,WF_load,wf_state,wf,WF_free,wf_nb_io_groups
- use real_time,           ONLY:kpoints_map
- use pseudo,              ONLY:pp_kb,pp_kbd,n_atomic_species,pp_n_l_times_proj_max,PP_free,Vnl
+#if defined _YPP_RT
  use SC,                  ONLY:local_V,SC_R,H_nl_sc,SC_bands
+#endif
+ use pseudo,              ONLY:pp_kb,pp_kbd,n_atomic_species,pp_n_l_times_proj_max,PP_free,Vnl
  use stderr,              ONLY:intc,set_real_printed_length
  use parser_m,            ONLY:parser
  use zeros,               ONLY:k_iku_zero
@@ -51,7 +52,10 @@ subroutine RT_fix_symmetries(E,k)
  type(levels)                 :: E,E_expanded,E_reduced
  type(bz_samp)                :: k
  !
- integer, external :: ioDB1,io_SC_components,ioKB_PP,io_Vnl
+ integer, external :: ioDB1,ioKB_PP,io_Vnl
+#if defined _YPP_RT
+ integer, external :: io_SC_components
+#endif
  !
  ! Work Space
  !
@@ -63,6 +67,7 @@ subroutine RT_fix_symmetries(E,k)
 &                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik,last_zero
  integer               :: spatial_nsym,old_spatial_nsym,old_trev_nsym
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:),ic_rot_table(:)
+ integer,allocatable   :: kpoints_map(:,:)
  real(SP)              :: v1(3),v2(3)
  real(SP)              :: B_cart(3)
  integer               :: symm_M_factor,symm_B_factor,ig,ig_rot,ic,ic_rot,wf_ncx_save
@@ -70,7 +75,10 @@ subroutine RT_fix_symmetries(E,k)
  logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
 &                         S_contains_TR(nsym),Trev_2_spatial=.false.,Rm_inv_BM_axis,Expand_symm
  character(lchlen)     :: core_io_path_save,fragment_name
- integer               :: ACTION_,ioKB_err,io_SC_E_err,io_SC_V_err,io_SC_WF_err,io_Vnl_err
+ integer               :: ACTION_,ioKB_err,io_Vnl_err
+#if defined _YPP_RT
+ integer               :: io_SC_E_err,io_SC_V_err,io_SC_WF_err
+#endif
  complex(SP), allocatable :: full_H(:,:,:,:)
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  real(SP),    allocatable :: old_dl_sop(:,:,:)
@@ -153,6 +161,7 @@ subroutine RT_fix_symmetries(E,k)
  call bz_samp_reset(k_save)
  call bz_samp_duplicate(k,k_save)
  !
+#if defined _YPP_RT
  ! Check presence of SC wave-functions
  !
  call E_reset(en_sc)
@@ -165,6 +174,7 @@ subroutine RT_fix_symmetries(E,k)
  io_SC_V_err=io_SC_components('V',en_sc,ID)
  !
  if (io_SC_E_err/=0.or.io_SC_WF_err/=0.or.io_SC_V_err/=0) io_SC_E_err=-1 
+#endif
  !
  ! Read PseudoPotentials
  !
@@ -638,6 +648,7 @@ subroutine RT_fix_symmetries(E,k)
    call mk_dir(trim(more_io_path)//'/SAVE')
  endif
  !
+#if defined _YPP_RT
  if(io_SC_E_err/=-1) then
    call section('=',"SC wavefunctions and energies")
    !===============================
@@ -742,11 +753,14 @@ subroutine RT_fix_symmetries(E,k)
    endif
    !
  endif
+#endif
  !
  call section('=',"Wavefunctions")
  !===============================
  !
+#if defined _YPP_RT
  if(io_SC_E_err/=-1) l_sc_run=.true. ! to not read again SC wavefunctions
+#endif
  !
  call WF_load(wf_ng,1,(/1,E%nb/),(/1,k_save%nibz/),space='C',title='')
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)  

@@ -190,10 +190,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_START
  !
-#if defined _YPP_RT
- !
- t_jump=0.
- !
  !REMOVE SYMMETRIES
  !
  E_field=0._SP
@@ -201,6 +197,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  B_theta=0._SP
  B_psi=0._SP
  Magnetization=0._SP
+ !
+#if defined _YPP_RT
+ !
+ t_jump=0.
  !
  !ANALIZE RESPONSE
  !
@@ -397,6 +397,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_high_sym_pts = runlevel_is_on('High_Symm')
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
+ l_fix_syms  =runlevel_is_on('fixsyms')
 #if defined _YPP_SC
  l_mean_potential=runlevel_is_on('MeanPot')
  if (l_mean_potential) then
@@ -410,7 +411,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_gkkp      =runlevel_is_on('gkkp')
 #endif
 #if defined _YPP_RT
- l_fix_syms         = runlevel_is_on('fixsyms')
  l_RT_X             = runlevel_is_on('rtX')
 #endif
 #if defined _YPP_BOLTZMANN
@@ -478,11 +478,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
 #endif
  !
-#if defined _YPP_RT
- !             
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta Magnetization RmAllSymm RmTimeRev RmInvMBaxis")
  if (l_fix_syms.and.n_spinor==2) call initactivate(1,"ExpandSymm")
  !
+#if defined _YPP_RT
+ !             
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
    call initactivate(1,"TmRngeRt TmJumps DampMode DampFactor SkipJP_IO FrMinDamp RmAsymLim UseFFT")

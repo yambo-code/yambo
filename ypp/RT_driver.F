@@ -39,17 +39,6 @@ subroutine RT_driver(en,k)
  !
  logical       :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
  !
- if (l_fix_syms) then
-   !
-   call section("*",'RT Pre Processing')
-   !
-   ! SYMMERIES removal
-   !-------------------
-   !
-   call RT_fix_symmetries(en,k)
-   return
- endif
- !
  call section("*",'RT Post Processing')
  !
  call RT_paths(en)

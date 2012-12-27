@@ -761,7 +761,7 @@ subroutine RT_fix_symmetries(E,k)
  wf_nc_k_save=wf_nc_k
  wf_igk_save =wf_igk
  !
- deallocate(wf_igk)
+ deallocate(wf_igk,wf_nc_k)
  !
  ! Check which of the wfc components can be rotated
  ! and discard the ones above n_g_closed
@@ -775,8 +775,7 @@ subroutine RT_fix_symmetries(E,k)
  enddo
  !
  wf_ncx=maxval(wf_nc_k_save)
- !
- allocate(wf_igk(wf_ncx,k%nibz))
+ allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
  !
  if (trim(core_io_path)/=trim(more_io_path)) then
    !
@@ -862,13 +861,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  if(wf_ncx_save/=wf_ncx) call live_timing()
  !
- deallocate(wf_igk_save,wf_nc_k_save)
- call mem_est("wf_nc_k_save wf_igk_save")
- !
- call section('=',"Final I/O")
- !============================
- !
- do i1=k_save%nibz+1,k%nibz 
+ do i1=k_save%nibz+1,k%nibz
    !
    ik=kpoints_map(1,i1)
    is=kpoints_map(2,i1)
@@ -880,6 +873,12 @@ subroutine RT_fix_symmetries(E,k)
  enddo
  !
  wf_ng=maxval(wf_igk)
+ !
+ deallocate(wf_igk_save,wf_nc_k_save)
+ call mem_est("wf_nc_k_save wf_igk_save")
+ !
+ call section('=',"Final I/O")
+ !============================
  !
  n_steps=k%nibz-k_save%nibz
  if(n_steps>0) call live_timing('WFs rotation',n_steps)

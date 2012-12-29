@@ -42,7 +42,7 @@ subroutine RT_G_retarded(E,k)
  ! Work Space
  !
  integer  :: i_b,i_k,i_w,io_err,ID,i_t
- real(SP) :: Area,Time,Gr_QP_width
+ real(SP) :: Area,Time,Gr_QP_width,E_vb_max,E_cb_min
  complex(SP), allocatable :: W(:)
  complex(DP), allocatable :: A_w_DP(:),A_t_DP(:)
  integer,     external    :: io_G_retarded,ioELPH
@@ -61,7 +61,7 @@ subroutine RT_G_retarded(E,k)
    W_debye=0.
  endif
  !
- if (io_err/=0.and.trim(Gr_kind)/="HC") then
+ if (io_err/=0.and.trim(Gr_kind)/="HC".and.trim(Gr_kind)/="QP") then
    call warning("Missing ELPH database. Unknown Debye energy. Switching to plain QP.")
    Gr_kind="QP"
  endif
@@ -76,6 +76,9 @@ subroutine RT_G_retarded(E,k)
  !
  Gr_T_window=GF_T_step*Gr_T_steps
  Gr_E_window=Gr_E_step*Gr_E_steps
+ !
+ E_vb_max=maxval( E%E(:E%nbf,:,:) )
+ E_cb_min=minval( E%E(E%nbf+1:,:,:) )
  ! 
  call msg("s",'Energy window [eV]:',Gr_E_window*HA2EV)
  call msg("s",'Time window   [fs]:',Gr_T_window/FS2AUT)
@@ -111,6 +114,11 @@ subroutine RT_G_retarded(E,k)
      Gr_peak_pos(i_k,i_b)=E%E(i_b,i_k,1)
      !
      if (trim(Gr_kind)=="BOX".or.trim(Gr_kind)=="QP-cut") Gr_E_ranges(i_k,i_b,:)=Gr_QP_width
+     if (trim(Gr_kind)=="QP") Gr_E_ranges(i_k,i_b,:)=Gr_QP_width*8.7  ! Distance where the Lorentzian in about 1/100 of the top value
+     if (trim(Gr_kind)=="HC") Gr_E_ranges(i_k,i_b,:)=Gr_QP_width*4.8  ! "
+     !
+     if (i_b<=E%nbf  ) Gr_E_ranges(i_k,i_b,2)=min( Gr_E_ranges(i_k,i_b,2) , abs( Gr_peak_pos(i_k,i_b) - E_vb_max ))
+     if (i_b>=E%nbm+1) Gr_E_ranges(i_k,i_b,1)=min( Gr_E_ranges(i_k,i_b,1) , abs( Gr_peak_pos(i_k,i_b) - E_cb_min ))
      !
      if (trim(Gr_kind)=="HC") then
        !

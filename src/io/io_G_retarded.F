@@ -37,7 +37,7 @@ integer function io_G_retarded(ID,what)
  !
  ! Work Space
  !
- integer              :: i_k
+ integer              :: i_k,i_s,T_steps_each_section,T_section(2)
  real(SP),allocatable :: Gr_disk(:,:,:)
  !
  io_G_retarded=io_connect(desc=what,type=2,ID=ID)
@@ -79,19 +79,27 @@ integer function io_G_retarded(ID,what)
  !
  if (what=="G_retarded") then
    !
-   allocate(Gr_disk(Gr_bands(2),Gr_T_steps,2))
+   T_steps_each_section=Gr_T_steps/10
+   !
+   allocate(Gr_disk(Gr_bands(2),T_steps_each_section,2))
    !
    do i_k=1,nkibz
      !
-     call io_bulk(ID,VAR="G_retarded_k"//trim(intc(i_k)),VAR_SZ=(/Gr_bands(2),Gr_T_steps,2/))
-     if(write_is_on(ID)) then
-       Gr_disk(:,:,1) =real(Gr(i_k,:,:))
-       Gr_disk(:,:,2)=aimag(Gr(i_k,:,:))
-       call io_bulk(ID,R3=Gr_disk)
-     else
-       call io_bulk(ID,R3=Gr_disk)
-       Gr(i_k,:,:)=CMPLX(Gr_disk(:,:,1),Gr_disk(:,:,2))
-     endif
+     do i_s=1,10
+       !
+       T_section=(/(i_s-1)*T_steps_each_section+1,min( i_s*T_steps_each_section,Gr_T_steps )/)
+       !
+       call io_bulk(ID,VAR="G_retarded_k"//trim(intc(i_k))//"_Tsec"//trim(intc(i_s)),VAR_SZ=(/Gr_bands(2),T_steps_each_section,2/))
+       if(write_is_on(ID)) then
+         Gr_disk(:,1:T_section(2)-T_section(1)+1,1) =real(Gr(i_k,:,T_section(1):T_section(2)))
+         Gr_disk(:,1:T_section(2)-T_section(1)+1,2)=aimag(Gr(i_k,:,T_section(1):T_section(2)))
+         call io_bulk(ID,R3=Gr_disk)
+       else
+         call io_bulk(ID,R3=Gr_disk)
+         Gr(i_k,:,T_section(1):T_section(2))=CMPLX(Gr_disk(:,1:T_section(2)-T_section(1)+1,1),Gr_disk(:,1:T_section(2)-T_section(1)+1,2))
+       endif
+       !
+     enddo
      !
    enddo
    !

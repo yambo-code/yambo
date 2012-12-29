@@ -164,7 +164,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! GPL_EXCLUDE_START
  !
- if(l_fix_syms) call RT_fix_symmetries(en,k)
+ if(l_fix_syms) call symmetries_driver(en,k)
  !  ==========
  !
 #if defined _YPP_RT

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_fix_symmetries(E,k)
+subroutine symmetries_driver(E,k)
  !
  use YPP,                 ONLY:E_field,B_theta,B_psi,B_field,Magnetization
  use drivers,             ONLY:l_sc_run

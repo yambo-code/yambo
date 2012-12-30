@@ -40,7 +40,7 @@ subroutine RT_CCA_initialize(E)
  ! Work Space
  !
  integer :: i_n,i_k,i_m,i_p,i_np,i_kp,i_mp,i_pp,i_c,i1,i2,ID,io_err,n_blocks
- real(SP):: Gr_T_step,DELTA(2),GAMMA_,&
+ real(SP):: Gr_T_step,GAMMA_(2),&
 &           Gr_energies(((SC_bands(2)-SC_bands(1))*nkibz)**2,2),E_(2),E_center,&
 &           Gr_integrand(Gr_T_steps),Gr_integral_min_val(2)
  type(pp_indexes)    :: px
@@ -153,11 +153,12 @@ subroutine RT_CCA_initialize(E)
        !
        if (abs(E_center)<1.E-5) goto 1
        !
-       GAMMA_ = Gr_E_ranges(i_pp,i_mp,2)+Gr_E_ranges(i_k,i_n,2)+Gr_E_ranges(i_kp,i_np,2)+Gr_E_ranges(i_p,i_m,2)
+       GAMMA_(1) = Gr_E_ranges(i_pp,i_mp,1)+Gr_E_ranges(i_k,i_n,1)+Gr_E_ranges(i_kp,i_np,2)+Gr_E_ranges(i_p,i_m,2)
+       GAMMA_(2) = Gr_E_ranges(i_pp,i_mp,2)+Gr_E_ranges(i_k,i_n,2)+Gr_E_ranges(i_kp,i_np,1)+Gr_E_ranges(i_p,i_m,1)
        !
        if (.not.l_do_not_cut) then
-         if (E_center> GAMMA_) goto 1
-         if (E_center<-GAMMA_) goto 1
+         if (E_center> GAMMA_(2)) goto 1
+         if (E_center<-GAMMA_(1)) goto 1
        endif
        !
        Gr_matrix(i1,i2)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
@@ -169,11 +170,11 @@ subroutine RT_CCA_initialize(E)
        GAMMA_ = abs(E%W(i_np,i_kp,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pp,1))+abs(E%W(i_n,i_k,1))
        !
        if (.not.l_do_not_cut) then
-         if (E_center> GAMMA_) goto 1
-         if (E_center<-GAMMA_) goto 1
+         if (E_center> GAMMA_(1)) goto 1
+         if (E_center<-GAMMA_(1)) goto 1
        endif
        !
-       Gr_matrix(i1,i2)=GAMMA_/(E_center**2+GAMMA_**2)
+       Gr_matrix(i1,i2)=GAMMA_(1)/(E_center**2+GAMMA_(1)**2)
        !
      endif
      !

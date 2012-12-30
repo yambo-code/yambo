@@ -29,7 +29,6 @@ subroutine RT_CCA_initialize(E)
  use R_lattice,      ONLY:nkibz
  use par_proc_m,     ONLY:pp_indexes,pp_indexes_reset,myid,pp_redux_wait
  use par_indexes_m,  ONLY:par_indexes
- use parser_m,       ONLY:parser
  use timing,         ONLY:live_timing
  use electrons,      ONLY:levels
  use IO_m,           ONLY:OP_WR_CL,OP_RD_CL,io_control,REP,VERIFY
@@ -40,16 +39,13 @@ subroutine RT_CCA_initialize(E)
  ! Work Space
  !
  integer :: i_n,i_k,i_m,i_p,i_np,i_kp,i_mp,i_pp,i_c,i1,i2,ID,io_err,n_blocks
- real(SP):: Gr_T_step,GAMMA_(2),&
+ real(SP):: Gr_T_step,GAMMA_(2),WIDTH(4,2),E_vb_max,E_cb_min,&
 &           Gr_energies(((SC_bands(2)-SC_bands(1))*nkibz)**2,2),E_(2),E_center,&
 &           Gr_integrand(Gr_T_steps),Gr_integral_min_val(2)
  type(pp_indexes)    :: px
- logical             :: l_do_not_cut
  integer,allocatable :: Gr_local_indexes(:,:)
  integer,    external:: io_G_retarded
  real(SP),   external:: Laplace_transform
- !
- call parser('DO_NOT_CUT',l_do_not_cut)
  !
  do i_c=1,2
    if (i_c==2) then
@@ -127,6 +123,9 @@ subroutine RT_CCA_initialize(E)
  !
  Gr_integral_min_val=0.
  !
+ E_vb_max=maxval( E%E(:E%nbf,:,:) )
+ E_cb_min=minval( E%E(E%nbf+1:,:,:) )
+ !
  do i1=1,Gr_mat_dim
    !
    i_np=Gr_local_indexes(i1,1)
@@ -156,32 +155,38 @@ subroutine RT_CCA_initialize(E)
        GAMMA_(1) = Gr_E_ranges(i_pp,i_mp,1)+Gr_E_ranges(i_k,i_n,1)+Gr_E_ranges(i_kp,i_np,2)+Gr_E_ranges(i_p,i_m,2)
        GAMMA_(2) = Gr_E_ranges(i_pp,i_mp,2)+Gr_E_ranges(i_k,i_n,2)+Gr_E_ranges(i_kp,i_np,1)+Gr_E_ranges(i_p,i_m,1)
        !
-       if (.not.l_do_not_cut) then
-         if (E_center> GAMMA_(2)) goto 1
-         if (E_center<-GAMMA_(1)) goto 1
-       endif
+       if (E_center> GAMMA_(2)) goto 1
+       if (E_center<-GAMMA_(1)) goto 1
        !
        Gr_matrix(i1,i2)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
+       !
+       if (Gr_matrix(i1,i2)<0.) Gr_matrix(i1,i2)=0.
        !
      else
        !
        E_center=E%E(i_np,i_kp,1)-E%E(i_n,i_k,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pp,1)
        !
-       GAMMA_ = abs(E%W(i_np,i_kp,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pp,1))+abs(E%W(i_n,i_k,1))
+       WIDTH(1,:)=set_WIDTH(i_np,i_kp,abs(E%W(i_np,i_kp,1)))
+       WIDTH(2,:)=set_WIDTH(i_n,i_k,  abs(E%W(i_n,i_k,1)))
+       WIDTH(3,:)=set_WIDTH(i_m,i_p,  abs(E%W(i_m,i_p,1)))
+       WIDTH(4,:)=set_WIDTH(i_mp,i_pp,abs(E%W(i_mp,i_pp,1)))
        !
-       if (.not.l_do_not_cut) then
-         if (E_center> GAMMA_(1)) goto 1
-         if (E_center<-GAMMA_(1)) goto 1
-       endif
+       GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)+WIDTH(3,1)+WIDTH(4,2)
+       GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)+WIDTH(3,2)+WIDTH(4,1)
+       !
+       if (E_center> GAMMA_(2)) goto 1
+       if (E_center<-GAMMA_(1)) goto 1
+       !
+       GAMMA_(1) = abs(E%W(i_np,i_kp,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pp,1))+abs(E%W(i_n,i_k,1))
        !
        Gr_matrix(i1,i2)=GAMMA_(1)/(E_center**2+GAMMA_(1)**2)
        !
      endif
      !
-     if (E_center>Gr_integral_min_val(1)) then
-       Gr_integral_min_val(1)=E_center
-       Gr_integral_min_val(2)=min( Gr_integral_min_val(2), Gr_matrix(i1,i2))
-     endif
+!     if (E_center>Gr_integral_min_val(1)) then
+!       Gr_integral_min_val(1)=E_center
+!       Gr_integral_min_val(2)=min( Gr_integral_min_val(2), Gr_matrix(i1,i2))
+!     endif
      !
      !DEBUG>
      !write (100,*)  ((E%E(i_n,i_k,1)-E%E(i_np,i_kp,1))-(E%E(i_m,i_p,1)-E%E(i_mp,i_pp,1)))*27.21,Gr_matrix(i1,i2)
@@ -200,7 +205,7 @@ subroutine RT_CCA_initialize(E)
  enddo
  do i1=1,Gr_mat_dim
    do i2=1,i1
-     Gr_matrix(i1,i2)=Gr_matrix(i1,i2)+Gr_integral_min_val(2)
+     Gr_matrix(i1,i2)=Gr_matrix(i1,i2)-Gr_integral_min_val(2)
      Gr_matrix(i2,i1)=Gr_matrix(i1,i2)
    enddo
  enddo
@@ -232,6 +237,19 @@ subroutine RT_CCA_initialize(E)
      else if (i_k==i_p.and.i_n<=i_m) then
        local_condition=.TRUE.
      endif
+     !
+   end function
+   !
+   function set_WIDTH(i_n,i_k,W)
+     !
+     integer  :: i_k,i_n
+     real(SP) :: W
+     real(SP) :: set_WIDTH(2)
+     !
+     set_WIDTH=W
+     !
+     if (i_n<=E%nbf  ) set_WIDTH(2)=min( W ,abs( E%E(i_n,i_k,1) - E_vb_max )) 
+     if (i_n>=E%nbm+1) set_WIDTH(1)=min( W ,abs( E%E(i_n,i_k,1) - E_cb_min )) 
      !
    end function
    !

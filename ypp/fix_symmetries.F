@@ -40,6 +40,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  real(SP),intent(out)   :: old_dl_sop(3,3,nsym)
  integer, intent(out)   :: old_sop_inv(nsym)
  logical, intent(out)   :: S_contains_TR(nsym)
+ !
  integer, intent(inout) :: action_kind
  !
  ! Work space
@@ -143,8 +144,8 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  old_nsym=nsym
  old_spatial_nsym=spatial_nsym
  old_trev_nsym=nsym-spatial_nsym
- old_sop_inv=sop_inv
  old_dl_sop=dl_sop
+ old_sop_inv=sop_inv
  !
  if (use_B_field) then
    B_cart(1)=B_field*sin(B_theta)*cos(B_psi)
@@ -302,7 +303,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
      !
    endif
    !
-   if(nsym<=old_spatial_nsym+old_trev_nsym) then
+   if(nsym<=old_nsym) then
      call msg('s','Symmetries cannot be expanded. Exit program')
      action_kind=0
      return

@@ -21,27 +21,30 @@
 !
 subroutine symmetries_driver(E,k)
  !
- use electrons,           ONLY:levels !,E_reset,n_spin,n_sp_pol,n_spinor
- use com,                 ONLY:warning
+ use pars,                ONLY:SP
+ use electrons,           ONLY:levels
+ use com,                 ONLY:msg,warning
  use R_lattice,           ONLY:bz_samp,ng_closed,ng_vec,bz_samp_reset,bz_samp_duplicate
  use D_lattice,           ONLY:nsym
- use wave_func,           ONLY:wf_nb_io
+ use wave_func,           ONLY:wf_nb_io,wf_ng
+ use stderr,              ONLY:intc
  !
  implicit none
  !
- type(levels)          :: E
- type(bz_samp)         :: k
+ type(levels),intent(in)     :: E
+ type(bz_samp),intent(inout) :: k
  !
  ! Work Space
  !
  type(bz_samp)         :: k_save
  integer               :: old_nsym
- integer               :: old_dl_sop(nsym)
+ real(SP)              :: old_dl_sop(3,3,nsym)
  integer               :: old_sop_inv(nsym)
  logical               :: S_contains_TR(nsym)
- integer               :: kpoints_map(2,k%nibz)
+ integer               :: wf_ng_save
  integer               :: wf_ncx_save
  integer               :: action_kind
+ integer,allocatable   :: kpoints_map(:,:)
  !
  if (wf_nb_io/=E%nb) then
    call warning('Splitted wavefunctions still not supported')
@@ -67,16 +70,27 @@ subroutine symmetries_driver(E,k)
  if(old_nsym<nsym) call G_shells_finder()
  !
  ! Create kpoints_map and rotate spheres of G-vectors centered on kpts
- call fix_kpts_and_gvec(k,k_save,kpoints_map,wf_ncx_save,action_kind)
+ call section('=',"K-points")
+ !===========================
+ !
+ call msg('s',trim(intc(k%nibz))//' k-points are now expanded/reduced to ...')
+ deallocate(k%pt)
+ call k_reduce(k)
+ call msg('l'," "//trim(intc(k%nibz)))
+ !
+ allocate(kpoints_map(2,k%nibz))
+ !
+ call fix_kpts_and_gvec(k,k_save,kpoints_map,wf_ncx_save,wf_ng_save,action_kind)
  !
  ! Rotate WFs, duplicate E and write new DBs
  call fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_TR,action_kind)
  !
  ! Rotate KB and Vnl
- call fix_PPs(k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
+ call fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
  ! CLEAN
  !=======
  call bz_samp_reset(k_save)
+ deallocate(kpoints_map)
  !
 end subroutine

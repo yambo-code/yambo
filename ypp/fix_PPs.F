@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
+subroutine fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP,lchlen
  use com,                 ONLY:msg,warning,core_io_path,more_io_path
@@ -40,11 +40,12 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  implicit none
  !
- type(levels)             :: E
+ type(levels),intent(in)  :: E
  !
  type(bz_samp),intent(in) :: k
  type(bz_samp),intent(in) :: k_save
  integer,intent(in)       :: kpoints_map(2,k%nibz)
+ integer,intent(in)       :: wf_ng_save
  !
  integer,intent(in)       :: old_nsym
  real(SP),intent(in)      :: old_dl_sop(3,3,old_nsym)
@@ -58,9 +59,8 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  type(X_t)             :: X_Vnl
  !
  character(lchlen)     :: core_io_path_save,fragment_name
- integer               :: n_steps
- integer               :: ACTION_,ID
- integer               :: ierr,io_err,ioKB_err,io_Vnl_err
+ integer               :: n_steps,ID
+ integer               :: ierr,ioKB_err,io_Vnl_err
  !
  real(SP),allocatable     :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  complex(SP), allocatable :: Vnl_store(:,:,:,:,:)
@@ -68,8 +68,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  ! Dummies
  !
  integer               :: i1,is,ik,ik_save
- integer               :: ib,ibm,i_wf,i_spin
- integer               :: ic,ic_rot,ig,ig_rot
+ integer               :: ib,ibm,i_spin
  !
  ! External functions
  !
@@ -82,8 +81,9 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  ioKB_err=ioKB_PP(ID) 
  !
  ! PWscf
- X_Vnl%ib=(/1,E%nb/)     ! full bands range
- X_Vnl%ngostnts=wf_ng    ! all G-vectors
+ X_Vnl%ib=(/1,E%nb/)       ! full bands range
+ X_Vnl%ngostnts=wf_ng_save ! all G-vectors
+ nXkibz=k_save%nibz
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_Vnl_err=io_Vnl(X_Vnl,E,ID)
  !
@@ -114,7 +114,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  endif
  !
  if(io_Vnl_err==0) then
-   !
    allocate( Vnl_store(3,E%nb,E%nbm,k_save%nibz,n_sp_pol) )
    Vnl_store=(0._SP,0._SP)
    call mem_est("Vnl_store",(/size(Vnl_store)/),elements_kind=(/SP/))
@@ -256,6 +255,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
      forall(ik=1:k%nibz) Vnl(:,:,:,ik,:) = Vnl_store(:,:,:,kpoints_map(1,ik),:)
      !
+     X_Vnl%ngostnts=wf_ng
      nXkibz=k%nibz
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
      io_Vnl_err=io_Vnl(X_Vnl,E,ID)

@@ -38,7 +38,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
  !
  implicit none
  !
- type(levels)             :: E
+ type(levels),intent(in)  :: E
  !
  type(bz_samp),intent(in) :: k
  type(bz_samp),intent(in) :: k_save
@@ -66,13 +66,12 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
  ! Dummies
  !
  integer               :: i1,is,ik,ik_save
- integer               :: ib,ibm,i_wf,i_spin
+ integer               :: ib,i_wf,i_spin
  integer               :: ic,ic_rot,ig,ig_rot
  !
  ! External functions
  !
  integer, external :: ioDB1
- !
  !
  if (trim(core_io_path)/=trim(more_io_path)) then
    call mk_dir(more_io_path)
@@ -80,15 +79,15 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
  endif
  !
 #if defined _YPP_SC || defined _YPP_RT
-   call fix_SC_DBs(k,k_save,kpoints_map,action_kind)
+ call fix_SC_DBs(k,k_save,kpoints_map,action_kind)
 #endif
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
+ Fragmented_IO=io_fragmented(ID)
+ io_err=ioWF(ID)
  !
  core_io_path_save=core_io_path
  core_io_path=more_io_path
- !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)  
- Fragmented_IO=io_fragmented(ID)
- io_err=ioWF(ID)
  !
  select case(action_kind)
  case(1)
@@ -122,7 +121,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
      call warning(':: Existing database will be overwritten')
    endif
    !
-   !call WF_load(wf_ng,1,(/1,E%nb/),(/1,k_save%nibz/),space='C',title='')
+   call WF_load(wf_ng,1,(/1,E%nb/),(/1,k_save%nibz/),space='C',title='')
    !
    ! Rotating wavefunctions by components
    !
@@ -143,7 +142,9 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
      do ik=1,k_save%nibz
        !
        ik_save=kpoints_map(1,ik)
-       call WF_load(wf_ng,1,(/1,E%nb/),(/ik_save,ik_save/),space='C',title='')
+       !
+       !core_io_path=core_io_path_save
+       !call WF_load(wf_ng,1,(/1,E%nb/),(/ik_save,ik_save/),space='C',title='')
        !
        call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
        ! 
@@ -160,8 +161,10 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
          enddo
        enddo
        !   
+       !call WF_free()
+       !core_io_path=more_io_path
+       !
        io_err=ioWF(ID,wf=wf_disk)
-       call WF_free()
        !
        call live_timing(steps=1)
      enddo
@@ -187,9 +190,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
      ik_save=kpoints_map(1,ik)
      is=kpoints_map(2,ik)
      !
-     call WF_load(wf_ng,1,(/1,E%nb/),(/ik_save,ik_save/),space='C',title='')
-     !
-     call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
+     !core_io_path=core_io_path_save
+     !call WF_load(wf_ng,1,(/1,E%nb/),(/ik_save,ik_save/),space='C',title='')
      !
      ic_rot_table=-1
      do ic=1,wf_nc_k(ik_save)
@@ -201,7 +203,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
        ic_rot_table(ic)=ic_rot
      enddo
      !
-     wf_disk=(0.,0.)
+     wf_disk=0._SP
      !
      do ib=1,E%nb
        !
@@ -223,8 +225,11 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
        !
      enddo
      !
+     !call WF_free()
+     !core_io_path=more_io_path
+     !
+     call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
      io_err=ioWF(ID,wf=wf_disk)
-     call WF_free()
      !
      call live_timing(steps=1)
      !

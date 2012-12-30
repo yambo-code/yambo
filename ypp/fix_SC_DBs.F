@@ -42,19 +42,11 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
  type(levels)          :: en_sc,en_sc_expanded
  !
- integer               :: n_steps
- integer               :: ACTION_,ID
- integer               :: ierr,io_err
- integer                  :: io_SC_E_err,io_SC_V_err,io_SC_WF_err
+ integer               :: ID
+ integer               :: io_SC_E_err,io_SC_V_err,io_SC_WF_err
+ integer               :: ik
  !
  complex(SP), allocatable :: full_H(:,:,:,:)
- !
- ! Dummies
- !
- integer               :: i1
- integer               :: ik,ik_save
- integer               :: ib,ibm,i_wf,i_spin
- integer               :: ic,ic_rot,ig,ig_rot
  !
  ! External functions
  !

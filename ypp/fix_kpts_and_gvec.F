@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine fix_kpts_and_gvec(k,k_save,kpoints_map,wf_ncx_save,action_kind)
+subroutine fix_kpts_and_gvec(k,k_save,kpoints_map,wf_ncx_save,wf_ng_save,action_kind)
  !
  use pars,                ONLY:IP,SP
  use com,                 ONLY:msg
@@ -33,11 +33,12 @@ subroutine fix_kpts_and_gvec(k,k_save,kpoints_map,wf_ncx_save,action_kind)
  !
  implicit none
  !
- type(bz_samp)             :: k
- type(bz_samp),intent(in)  :: k_save
- integer,intent(out)       :: kpoints_map(2,k%nibz)
- integer,intent(out)       :: wf_ncx_save
- integer,intent(in)        :: action_kind
+ type(bz_samp),intent(inout) :: k
+ type(bz_samp),intent(in)    :: k_save
+ integer,intent(out)         :: kpoints_map(2,k%nibz)
+ integer,intent(out)         :: wf_ncx_save
+ integer,intent(out)         :: wf_ng_save
+ integer,intent(in)          :: action_kind
  !
  ! Work space
  !
@@ -47,23 +48,17 @@ subroutine fix_kpts_and_gvec(k,k_save,kpoints_map,wf_ncx_save,action_kind)
  !
  integer               :: i1,ik,ik_save,ic,is
  integer               :: iv(2)
- real(SP)              :: v1(3),v2(3)
+ real(SP)              :: v1(3)
  ! 
- call section('=',"K-points")
- !===========================
- !
- call msg('s',trim(intc(k%nibz))//' k-points are now expanded/reduced to ...')
- deallocate(k%pt)
- call k_reduce(k)
- call msg('l'," "//trim(intc(k%nibz)))
- !
  allocate(wf_nc_k_save(k_save%nibz),wf_igk_save(wf_ncx,k_save%nibz))
  call mem_est("wf_nc_k_save wf_igk_save",(/size(wf_nc_k_save),size(wf_igk_save)/),(/IP,IP/))
  wf_nc_k_save=wf_nc_k
  wf_igk_save =wf_igk
  wf_ncx_save =wf_ncx
+ wf_ng_save  =wf_ng
  !
  deallocate(wf_nc_k,wf_igk)
+ call mem_est("wf_nc_k wf_igk")
  !
  ! Check which of the wfc components can be rotated
  ! and discard the ones above ng_closed
@@ -157,6 +152,6 @@ subroutine fix_kpts_and_gvec(k,k_save,kpoints_map,wf_ncx_save,action_kind)
  ! CLEAN
  !=======
  deallocate(wf_igk_save,wf_nc_k_save)
- call mem_est("wf_nc_k_save wf_igk_save")
+ call mem_est("wf_igk_save wf_nc_k_save")
  !
 end subroutine

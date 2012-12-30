@@ -21,7 +21,7 @@
 !
 subroutine RT_G_retarded(E,k)
  !
- use pars,           ONLY:SP,DP,pi,cI
+ use pars,           ONLY:SP,DP,pi
  use units,          ONLY:FS2AUT,HA2EV
  use YPP,            ONLY:GF_T_step,Gr_E_step
  use R_lattice,      ONLY:bz_samp
@@ -29,7 +29,7 @@ subroutine RT_G_retarded(E,k)
  use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_window,Gr_E_steps,&
 &                         Gr_peak_pos,Gr_E_ranges
  use QP_CTL_m,       ONLY:QP_apply
- use QP_m,           ONLY:QP_ctl_Wc,QP_ctl_Wv
+ use QP_m,           ONLY:QP_ctl_Wc
  use ELPH,           ONLY:W_debye
  use timing,         ONLY:live_timing
  use com,            ONLY:msg,warning
@@ -42,7 +42,7 @@ subroutine RT_G_retarded(E,k)
  ! Work Space
  !
  integer  :: i_b,i_k,i_w,io_err,ID,i_t
- real(SP) :: Area,Time,Gr_QP_width,E_vb_max,E_cb_min
+ real(SP) :: Area,Time,Gr_QP_width
  complex(SP), allocatable :: W(:)
  complex(DP), allocatable :: A_w_DP(:),A_t_DP(:)
  integer,     external    :: io_G_retarded,ioELPH
@@ -77,9 +77,6 @@ subroutine RT_G_retarded(E,k)
  Gr_T_window=GF_T_step*Gr_T_steps
  Gr_E_window=Gr_E_step*Gr_E_steps
  !
- E_vb_max=maxval( E%E(:E%nbf,:,:) )
- E_cb_min=minval( E%E(E%nbf+1:,:,:) )
- ! 
  call msg("s",'Energy window [eV]:',Gr_E_window*HA2EV)
  call msg("s",'Time window   [fs]:',Gr_T_window/FS2AUT)
  call msg("s",'Time steps        :',Gr_T_steps)
@@ -113,12 +110,7 @@ subroutine RT_G_retarded(E,k)
      !
      Gr_peak_pos(i_k,i_b)=E%E(i_b,i_k,1)
      !
-     if (trim(Gr_kind)=="BOX".or.trim(Gr_kind)=="QP-cut") Gr_E_ranges(i_k,i_b,:)=Gr_QP_width
-     if (trim(Gr_kind)=="QP") Gr_E_ranges(i_k,i_b,:)=Gr_QP_width*8.7  ! Distance where the Lorentzian in about 1/100 of the top value
-     if (trim(Gr_kind)=="HC") Gr_E_ranges(i_k,i_b,:)=Gr_QP_width*4.8  ! "
-     !
-     if (i_b<=E%nbf  ) Gr_E_ranges(i_k,i_b,2)=min( Gr_E_ranges(i_k,i_b,2) , abs( Gr_peak_pos(i_k,i_b) - E_vb_max ))
-     if (i_b>=E%nbm+1) Gr_E_ranges(i_k,i_b,1)=min( Gr_E_ranges(i_k,i_b,1) , abs( Gr_peak_pos(i_k,i_b) - E_cb_min ))
+     Gr_E_ranges(i_k,i_b,:)=Gr_QP_width
      !
      if (trim(Gr_kind)=="HC") then
        !

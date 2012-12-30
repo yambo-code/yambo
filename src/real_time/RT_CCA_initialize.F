@@ -41,7 +41,7 @@ subroutine RT_CCA_initialize(E)
  integer :: i_n,i_k,i_m,i_p,i_np,i_kp,i_mp,i_pp,i_c,i1,i2,ID,io_err,n_blocks
  real(SP):: Gr_T_step,GAMMA_(2),WIDTH(4,2),E_vb_max,E_cb_min,&
 &           Gr_energies(((SC_bands(2)-SC_bands(1))*nkibz)**2,2),E_(2),E_center,&
-&           Gr_integrand(Gr_T_steps),Gr_integral_min_val(2)
+&           Gr_integrand(Gr_T_steps)
  type(pp_indexes)    :: px
  integer,allocatable :: Gr_local_indexes(:,:)
  integer,    external:: io_G_retarded
@@ -121,8 +121,6 @@ subroutine RT_CCA_initialize(E)
  !
  n_blocks=0
  !
- Gr_integral_min_val=0.
- !
  E_vb_max=maxval( E%E(:E%nbf,:,:) )
  E_cb_min=minval( E%E(E%nbf+1:,:,:) )
  !
@@ -148,12 +146,15 @@ subroutine RT_CCA_initialize(E)
        Gr_integrand(:)=real( Gr(i_kp,i_np,:)*Gr(i_p,i_m,:)*&
 &                            conjg(Gr(i_pp,i_mp,:))*conjg(Gr(i_k,i_n,:)) )
        !
-       E_center=Gr_peak_pos(i_pp,i_mp)+Gr_peak_pos(i_k,i_n)-Gr_peak_pos(i_kp,i_np)-Gr_peak_pos(i_p,i_m)
+       E_center=Gr_peak_pos(i_kp,i_np)+Gr_peak_pos(i_k,i_n)-Gr_peak_pos(i_np,i_kp)-Gr_peak_pos(i_pp,i_mp)
        !
-       if (abs(E_center)<1.E-5) goto 1
+       WIDTH(1,:)=set_WIDTH(i_np,i_kp,maxval(  Gr_E_ranges(i_kp,i_np,:) ) )
+       WIDTH(2,:)=set_WIDTH(i_n,i_k,  maxval(  Gr_E_ranges(i_k,i_n,:) ) )
+       WIDTH(3,:)=set_WIDTH(i_m,i_p,  maxval(  Gr_E_ranges(i_p,i_m,:) ) )
+       WIDTH(4,:)=set_WIDTH(i_mp,i_pp,maxval(  Gr_E_ranges(i_pp,i_mp,:) ) )
        !
-       GAMMA_(1) = Gr_E_ranges(i_pp,i_mp,1)+Gr_E_ranges(i_k,i_n,1)+Gr_E_ranges(i_kp,i_np,2)+Gr_E_ranges(i_p,i_m,2)
-       GAMMA_(2) = Gr_E_ranges(i_pp,i_mp,2)+Gr_E_ranges(i_k,i_n,2)+Gr_E_ranges(i_kp,i_np,1)+Gr_E_ranges(i_p,i_m,1)
+       GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)+WIDTH(3,1)+WIDTH(4,2)
+       GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)+WIDTH(3,2)+WIDTH(4,1)
        !
        if (E_center> GAMMA_(2)) goto 1
        if (E_center<-GAMMA_(1)) goto 1
@@ -183,11 +184,6 @@ subroutine RT_CCA_initialize(E)
        !
      endif
      !
-!     if (E_center>Gr_integral_min_val(1)) then
-!       Gr_integral_min_val(1)=E_center
-!       Gr_integral_min_val(2)=min( Gr_integral_min_val(2), Gr_matrix(i1,i2))
-!     endif
-     !
      !DEBUG>
      !write (100,*)  ((E%E(i_n,i_k,1)-E%E(i_np,i_kp,1))-(E%E(i_m,i_p,1)-E%E(i_mp,i_pp,1)))*27.21,Gr_matrix(i1,i2)
      !DEBUG<
@@ -205,7 +201,7 @@ subroutine RT_CCA_initialize(E)
  enddo
  do i1=1,Gr_mat_dim
    do i2=1,i1
-     Gr_matrix(i1,i2)=Gr_matrix(i1,i2)-Gr_integral_min_val(2)
+     Gr_matrix(i1,i2)=Gr_matrix(i1,i2)
      Gr_matrix(i2,i1)=Gr_matrix(i1,i2)
    enddo
  enddo

@@ -41,7 +41,7 @@ subroutine RT_CCA_initialize(E)
  integer :: i_n,i_k,i_m,i_p,i_np,i_kp,i_mp,i_pp,i_c,i1,i2,ID,io_err,n_blocks
  real(SP):: Gr_T_step,GAMMA_(2),WIDTH(4,2),E_vb_max,E_cb_min,&
 &           Gr_energies(((SC_bands(2)-SC_bands(1))*nkibz)**2,2),E_(2),E_center,&
-&           Gr_integrand(Gr_T_steps)
+&           Gr_integrand(Gr_T_steps),pre_factor
  type(pp_indexes)    :: px
  integer,allocatable :: Gr_local_indexes(:,:)
  integer,    external:: io_G_retarded
@@ -148,10 +148,12 @@ subroutine RT_CCA_initialize(E)
        !
        E_center=Gr_peak_pos(i_kp,i_np)+Gr_peak_pos(i_k,i_n)-Gr_peak_pos(i_np,i_kp)-Gr_peak_pos(i_pp,i_mp)
        !
-       WIDTH(1,:)=set_WIDTH(i_np,i_kp,maxval(  Gr_E_ranges(i_kp,i_np,:) ) )
-       WIDTH(2,:)=set_WIDTH(i_n,i_k,  maxval(  Gr_E_ranges(i_k,i_n,:) ) )
-       WIDTH(3,:)=set_WIDTH(i_m,i_p,  maxval(  Gr_E_ranges(i_p,i_m,:) ) )
-       WIDTH(4,:)=set_WIDTH(i_mp,i_pp,maxval(  Gr_E_ranges(i_pp,i_mp,:) ) )
+       pre_factor=4.8
+       !
+       WIDTH(1,:)=set_WIDTH(i_np,i_kp,maxval(  Gr_E_ranges(i_kp,i_np,:) )*pre_factor )
+       WIDTH(2,:)=set_WIDTH(i_n,i_k,  maxval(  Gr_E_ranges(i_k,i_n,:) )*pre_factor )
+       WIDTH(3,:)=set_WIDTH(i_m,i_p,  maxval(  Gr_E_ranges(i_p,i_m,:) )*pre_factor )
+       WIDTH(4,:)=set_WIDTH(i_mp,i_pp,maxval(  Gr_E_ranges(i_pp,i_mp,:) )*pre_factor )
        !
        GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)+WIDTH(3,1)+WIDTH(4,2)
        GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)+WIDTH(3,2)+WIDTH(4,1)
@@ -165,12 +167,14 @@ subroutine RT_CCA_initialize(E)
        !
      else
        !
+       pre_factor=8.7
+       !
        E_center=E%E(i_np,i_kp,1)-E%E(i_n,i_k,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pp,1)
        !
-       WIDTH(1,:)=set_WIDTH(i_np,i_kp,abs(E%W(i_np,i_kp,1)))
-       WIDTH(2,:)=set_WIDTH(i_n,i_k,  abs(E%W(i_n,i_k,1)))
-       WIDTH(3,:)=set_WIDTH(i_m,i_p,  abs(E%W(i_m,i_p,1)))
-       WIDTH(4,:)=set_WIDTH(i_mp,i_pp,abs(E%W(i_mp,i_pp,1)))
+       WIDTH(1,:)=set_WIDTH(i_np,i_kp,abs(E%W(i_np,i_kp,1))*pre_factor)
+       WIDTH(2,:)=set_WIDTH(i_n,i_k,  abs(E%W(i_n,i_k,1))*pre_factor)
+       WIDTH(3,:)=set_WIDTH(i_m,i_p,  abs(E%W(i_m,i_p,1))*pre_factor)
+       WIDTH(4,:)=set_WIDTH(i_mp,i_pp,abs(E%W(i_mp,i_pp,1))*pre_factor)
        !
        GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)+WIDTH(3,1)+WIDTH(4,2)
        GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)+WIDTH(3,2)+WIDTH(4,1)

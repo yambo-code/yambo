@@ -26,7 +26,7 @@ subroutine symmetries_driver(E,k)
  use com,                 ONLY:msg,warning
  use R_lattice,           ONLY:bz_samp,ng_closed,ng_vec,bz_samp_reset,bz_samp_duplicate
  use D_lattice,           ONLY:nsym
- use wave_func,           ONLY:wf_nb_io,wf_ng
+ use wave_func,           ONLY:wf_nb_io,wf_ng,WF_load,WF_free
  use stderr,              ONLY:intc
  !
  implicit none
@@ -46,11 +46,6 @@ subroutine symmetries_driver(E,k)
  integer               :: action_kind
  integer,allocatable   :: kpoints_map(:,:)
  !
- if (wf_nb_io/=E%nb) then
-   call warning('Splitted wavefunctions still not supported')
-   return
- endif
- !
  ! This is needed to construct grot for all wf_ngs.
  if (ng_vec>ng_closed) then
    ng_closed=ng_vec
@@ -64,13 +59,11 @@ subroutine symmetries_driver(E,k)
  call bz_samp_reset(k_save)
  call bz_samp_duplicate(k,k_save)
  !
- ! Fix symmetreis
  call fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
  if(old_nsym<nsym) call G_shells_finder()
  !
- ! Create kpoints_map and rotate spheres of G-vectors centered on kpts
- call section('=',"K-points")
+ call section('=',"K-points and G-shells")
  !===========================
  !
  call msg('s',trim(intc(k%nibz))//' k-points are now expanded/reduced to ...')
@@ -80,9 +73,15 @@ subroutine symmetries_driver(E,k)
  !
  allocate(kpoints_map(2,k%nibz))
  !
+ ! In case sysm are expanded I have to load WFs here because after wf_nc_k
+ ! will be ill defined on the smaller set of kpts. Instead if syms are reduced
+ ! wf_nc_k_new = (wf_nc_k_old, something_more) and WF_load_works fine
+ if(action_kind==2) call WF_load(wf_ng,1,(/1,E%nb/),(/1,k_save%nibz/),space='C',title='')
+ !
+ ! Fill kpoints_map and rotate spheres of G-vectors centered on kpts
  call fix_kpts_and_gvec(k,k_save,kpoints_map,wf_ncx_save,wf_ng_save,action_kind)
  !
- ! Rotate WFs, duplicate E and write new DBs
+ ! Energies and Wave-functions
  call fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_TR,action_kind)
  !
  ! Rotate KB and Vnl
@@ -90,6 +89,7 @@ subroutine symmetries_driver(E,k)
  !
  ! CLEAN
  !=======
+ if(action_kind==2) call WF_free()
  call bz_samp_reset(k_save)
  deallocate(kpoints_map)
  !

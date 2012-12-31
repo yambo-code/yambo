@@ -76,6 +76,8 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop
  !
  ! Check the presence of PPs DBs
  !
+ n_steps=k%nibz-k_save%nibz
+ !
  ! Abinit
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  ioKB_err=ioKB_PP(ID) 
@@ -87,7 +89,10 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_Vnl_err=io_Vnl(X_Vnl,E,ID)
  !
- if(ioKB_err==0.or.io_Vnl_err==0) call section('=',"PseudoPotentials")
+ if(ioKB_err/=0.and.io_Vnl_err/=0) return
+ !
+ if(ioKB_err==0)   call section('=',"PseudoPotentials (PWscf)")
+ if(io_Vnl_err==0) call section('=',"PseudoPotentials (PWscf)")
  !
  ! Read PP DBs
  !
@@ -134,22 +139,24 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop
  case(1)
    !
    if (trim(core_io_path_save)/=trim(more_io_path)) then
-     !
-     call msg('s',':: Copying existing database ...')
-     !
-     call cp_file(trim(core_io_path_save)//"/SAVE/s.kb_pp",trim(more_io_path)//"/SAVE",ierr)
-     call cp_file(trim(core_io_path_save)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
-     do ik=1,k_save%nibz
-       do i1=1,wf_nb_io_groups
-         fragment_name='ns.kb_pp_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
-         call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
-         fragment_name='s.kb_pp_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
-         call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
+     if(ioKB_err==0) then
+       !
+       call msg('s',':: Copying existing database ...')
+       !
+       call cp_file(trim(core_io_path_save)//"/SAVE/s.kb_pp",trim(more_io_path)//"/SAVE",ierr)
+       call cp_file(trim(core_io_path_save)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
+       do ik=1,k_save%nibz
+         do i1=1,wf_nb_io_groups
+           fragment_name='ns.kb_pp_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
+           call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
+           fragment_name='s.kb_pp_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
+           call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
+         enddo
        enddo
-     enddo
-     !
-     call msg('l','done')
-     !
+       !
+       call msg('l','done')
+       !
+     endif
    else
      call warning(':: Existing database will be overwritten')
    endif
@@ -161,7 +168,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop
      pp_kb=0._SP
      pp_kbd=0._SP
      !
-     if(n_steps>0) call live_timing('PseudoPotentials (abinit)',n_steps)
+     if(n_steps>0) call live_timing('PPs rotation',n_steps)
      !
      do ik=k_save%nibz+1,k%nibz
        !
@@ -194,7 +201,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop
      Vnl(1:3, 1:E%nb, 1:E%nbm, 1:k_save%nibz, 1:n_sp_pol)=&
   &       Vnl_store(1:3, 1:E%nb, 1:E%nbm, 1:k_save%nibz, 1:n_sp_pol)
      !
-     if(n_steps>0) call live_timing('PseudoPotentials (PWscf)',n_steps)
+     if(n_steps>0) call live_timing('PPs rotation',n_steps)
      !
      do ik=k_save%nibz+1,k%nibz
        !
@@ -224,7 +231,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop
    !
  case(2)
    !
-   if(ioKB_err==0.or.io_Vnl_err==0) call msg('s',':: PseudoPotentials ...')
+   if(ioKB_err==0.or.io_Vnl_err==0) call msg('s',':: Reducing PPs DB...')
    !
    if(ioKB_err==0) then
      !
@@ -245,8 +252,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop
      call mem_est("pp_kb_store pp_kbd_store")
      call PP_free()
      !
-     call msg('l','done (abinit)')
-     !
    endif
    !
    if(io_Vnl_err==0) then
@@ -263,9 +268,9 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop
      deallocate(Vnl_store,Vnl)
      call mem_est("Vnl_store Vnl") 
      !
-     call msg('l','done (pwscf)')
-     !
    endif
+   !
+   call msg('l','done')
    !
  end select
  !

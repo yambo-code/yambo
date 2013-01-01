@@ -2,7 +2,7 @@
 # autoconf macro for detecting NetCDF module file
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-# Copyright (C) 2000-2012 A. Marini and the YAMBO team
+# Copyright (C) 2000-2013 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU

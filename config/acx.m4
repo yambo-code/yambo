@@ -1,7 +1,7 @@
 #
 # Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
 #
-# Copyright (C) 2000-2012 A. Marini and the YAMBO team
+# Copyright (C) 2000-2013 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU

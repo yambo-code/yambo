@@ -23,7 +23,8 @@ subroutine symmetries_driver(E,k)
  !
  use pars,                ONLY:SP
  use electrons,           ONLY:levels
- use com,                 ONLY:msg,warning
+ use IO_m,                ONLY:mk_dir
+ use com,                 ONLY:msg,warning,core_io_path,more_io_path
  use R_lattice,           ONLY:bz_samp,ng_closed,ng_vec,bz_samp_reset,bz_samp_duplicate
  use D_lattice,           ONLY:nsym
  use wave_func,           ONLY:wf_nb_io,wf_ng,WF_load,WF_free
@@ -37,17 +38,27 @@ subroutine symmetries_driver(E,k)
  ! Work Space
  !
  type(bz_samp)         :: k_save
+ integer,allocatable   :: kpoints_map(:,:)
+ ! 
  integer               :: old_nsym
  real(SP)              :: old_dl_sop(3,3,nsym)
  integer               :: old_sop_inv(nsym)
  logical               :: S_contains_TR(nsym)
- integer               :: wf_ng_save
- integer               :: wf_ncx_save
+ !
  integer               :: action_kind
- integer,allocatable   :: kpoints_map(:,:)
+ !
+ if(core_io_path==more_io_path) then
+   call msg('s','I will not owrite the old DBs. Specify the output path with -O option')
+   return
+ endif
+ !
+ !if (trim(core_io_path)/=trim(more_io_path)) then
+ call mk_dir(more_io_path)
+ call mk_dir(trim(more_io_path)//'/SAVE')
+ !endif
  !
  ! This is needed to construct grot for all wf_ngs.
- if (ng_vec>ng_closed) then
+ if (wf_ng>ng_closed) then
    ng_closed=ng_vec
    call G_shells_finder()
  endif
@@ -56,15 +67,20 @@ subroutine symmetries_driver(E,k)
  call k_ibz2bz(k,'i',.true.)
  call k_reduce(k)
  !
- call bz_samp_reset(k_save)
- call bz_samp_duplicate(k,k_save)
- !
  call fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
+ !
+ if(old_nsym==nsym) then
+   call msg('s','Symmetries not changed. Exit program')
+   return
+ endif
  !
  if(old_nsym<nsym) call G_shells_finder()
  !
- call section('=',"K-points and G-shells")
+ call section('=',"K-points")
  !===========================
+ !
+ call bz_samp_reset(k_save)
+ call bz_samp_duplicate(k,k_save)
  !
  call msg('s',trim(intc(k%nibz))//' k-points are now expanded/reduced to ...')
  deallocate(k%pt)
@@ -73,23 +89,16 @@ subroutine symmetries_driver(E,k)
  !
  allocate(kpoints_map(2,k%nibz))
  !
- ! In case sysm are expanded I have to load WFs here because after wf_nc_k
- ! will be ill defined on the smaller set of kpts. Instead if syms are reduced
- ! wf_nc_k_new = (wf_nc_k_old, something_more) and WF_load_works fine
- if(action_kind==2) call WF_load(wf_ng,1,(/1,E%nb/),(/1,k_save%nibz/),space='C',title='')
- !
- ! Fill kpoints_map and rotate spheres of G-vectors centered on kpts
- call fix_kpts_and_gvec(k,k_save,kpoints_map,wf_ncx_save,wf_ng_save,action_kind)
+ call build_kpts_map(k,k_save,kpoints_map,action_kind)
  !
  ! Energies and Wave-functions
- call fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_TR,action_kind)
+ call fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_kind)
  !
- ! Rotate KB and Vnl
- call fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
+ ! Rotate KB or Vnl
+ call fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
  ! CLEAN
  !=======
- if(action_kind==2) call WF_free()
  call bz_samp_reset(k_save)
  deallocate(kpoints_map)
  !

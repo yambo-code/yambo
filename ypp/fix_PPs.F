@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
+subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP,lchlen
  use com,                 ONLY:msg,warning,core_io_path,more_io_path
@@ -45,7 +45,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop
  type(bz_samp),intent(in) :: k
  type(bz_samp),intent(in) :: k_save
  integer,intent(in)       :: kpoints_map(2,k%nibz)
- integer,intent(in)       :: wf_ng_save
  !
  integer,intent(in)       :: old_nsym
  real(SP),intent(in)      :: old_dl_sop(3,3,old_nsym)
@@ -84,14 +83,14 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop
  !
  ! PWscf
  X_Vnl%ib=(/1,E%nb/)       ! full bands range
- X_Vnl%ngostnts=wf_ng_save ! all G-vectors
+ X_Vnl%ngostnts=1          ! to overcome check for io
  nXkibz=k_save%nibz
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_Vnl_err=io_Vnl(X_Vnl,E,ID)
  !
  if(ioKB_err/=0.and.io_Vnl_err/=0) return
  !
- if(ioKB_err==0)   call section('=',"PseudoPotentials (PWscf)")
+ if(ioKB_err==0)   call section('=',"PseudoPotentials (Abinit)")
  if(io_Vnl_err==0) call section('=',"PseudoPotentials (PWscf)")
  !
  ! Read PP DBs
@@ -138,7 +137,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop
  select case(action_kind)
  case(1)
    !
-   if (trim(core_io_path_save)/=trim(more_io_path)) then
+!   if (trim(core_io_path_save)/=trim(more_io_path)) then
      if(ioKB_err==0) then
        !
        call msg('s',':: Copying existing database ...')
@@ -157,9 +156,9 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,wf_ng_save,old_nsym,old_dl_sop,old_sop
        call msg('l','done')
        !
      endif
-   else
-     call warning(':: Existing database will be overwritten')
-   endif
+!   else
+!     call warning(':: Existing database will be overwritten')
+!   endif
    !
    ! Pseudo-potentials
    !

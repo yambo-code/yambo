@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine fix_kpts_and_gvec(k,k_save,kpoints_map,wf_ncx_save,wf_ng_save,action_kind)
+subroutine fix_WFs_Gshells(k,k_save,kpoints_map,wf_ng_save,wf_ncx_save,wf_nc_k_save,wf_igk_save,action_kind)
  !
  use pars,                ONLY:IP,SP
  use com,                 ONLY:msg
@@ -35,23 +35,19 @@ subroutine fix_kpts_and_gvec(k,k_save,kpoints_map,wf_ncx_save,wf_ng_save,action_
  !
  type(bz_samp),intent(inout) :: k
  type(bz_samp),intent(in)    :: k_save
- integer,intent(out)         :: kpoints_map(2,k%nibz)
- integer,intent(out)         :: wf_ncx_save
+ integer,intent(in)          :: kpoints_map(2,k%nibz)
+ !
  integer,intent(out)         :: wf_ng_save
+ integer,intent(out)         :: wf_ncx_save
+ integer,intent(out)         :: wf_nc_k_save(k_save%nibz)
+ integer,intent(out)         :: wf_igk_save(wf_ncx,k_save%nibz)
+ !
  integer,intent(in)          :: action_kind
  !
  ! Work space
  !
- integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
- ! 
- ! Dummies
+ integer               :: ik,ik_save,ic,is
  !
- integer               :: i1,ik,ik_save,ic,is
- integer               :: iv(2)
- real(SP)              :: v1(3)
- ! 
- allocate(wf_nc_k_save(k_save%nibz),wf_igk_save(wf_ncx,k_save%nibz))
- call mem_est("wf_nc_k_save wf_igk_save",(/size(wf_nc_k_save),size(wf_igk_save)/),(/IP,IP/))
  wf_nc_k_save=wf_nc_k
  wf_igk_save =wf_igk
  wf_ncx_save =wf_ncx
@@ -73,47 +69,11 @@ subroutine fix_kpts_and_gvec(k,k_save,kpoints_map,wf_ncx_save,wf_ng_save,action_
  enddo
  !
  wf_ncx=maxval(wf_nc_k_save)
+ !
  allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
- !
- ! Map k-point using the save BZ
- !
- ! kpoints_map(1, ik ) = ik_save
- ! kpoints_map(2, ik ) = is
- !
- ! with ik_save,is relative to the original set of k-points and symmetries
- !
- kpoints_map=0
- do ik=1,k%nibz 
-   do ik_save=1,k%nbz
-     if (v_is_zero(k%pt(ik,:)-k_save%ptbz(ik_save,:),zero_=k_iku_zero)) then
-       if(action_kind==1) kpoints_map(:, ik ) = k_save%sstar(ik_save,:)
-       if(action_kind==2) kpoints_map(1, ik ) = ik_save
-       exit 
-     endif
-   enddo
- enddo
  !
  select case(action_kind)
  case(1)
-   !
-   ! swap ik and i1 to sort
-   ! first all the points in the ibz
-   ! 
-   main_loop: do ik=1,k%nibz 
-     if ( kpoints_map(2, ik )/=1 ) then
-       do i1=ik+1,k%nibz
-         if ( kpoints_map(2, i1 )==1 ) then
-           iv=kpoints_map(:, ik )
-           v1=k%pt(ik,:)
-           kpoints_map(:,ik)=kpoints_map(:,i1)
-           kpoints_map(:,i1)=iv
-           k%pt(ik,:)=k%pt(i1,:)                 
-           k%pt(i1,:)=v1
-           cycle main_loop
-         endif
-       enddo
-     endif
-   enddo main_loop
    !
    wf_igk=-1
    !
@@ -148,10 +108,5 @@ subroutine fix_kpts_and_gvec(k,k_save,kpoints_map,wf_ncx_save,wf_ng_save,action_
  end select
  !
  wf_ng=maxval(wf_igk)
- !
- ! CLEAN
- !=======
- deallocate(wf_igk_save,wf_nc_k_save)
- call mem_est("wf_igk_save wf_nc_k_save")
  !
 end subroutine

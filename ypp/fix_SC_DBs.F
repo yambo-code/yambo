@@ -21,9 +21,10 @@
 !
 subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
- use pars,                ONLY:SP
+ use pars,                ONLY:SP,lchlen
  use drivers,             ONLY:l_sc_run
  use memory_m,            ONLY:mem_est
+ use com,                 ONLY:core_io_path,more_io_path
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_WR,OP_RD,VERIFY,&
 &                              OP_RD_CL,DUMP,RD_CL_IF_END,WR_CL_IF_END
  use SC,                  ONLY:local_V,SC_R,H_nl_sc,SC_bands
@@ -42,6 +43,8 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
  type(levels)          :: en_sc,en_sc_expanded
  !
+ character(lchlen)     :: core_io_path_save
+ !
  integer               :: ID
  integer               :: io_SC_E_err,io_SC_V_err,io_SC_WF_err
  integer               :: ik
@@ -53,132 +56,134 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  integer, external :: io_SC_components
  !
  !
- select case(action_kind)
- case(1)
-   !
-   ! Check presence of SC DBs
-   !
-   call E_reset(en_sc)
-   !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+ if(action_kind==2) return
+ !
+ core_io_path_save=core_io_path
+ !
+ ! Check presence of SC DBs
+ !
+ call E_reset(en_sc)
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+ io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+ io_SC_E_err=io_SC_components('E',en_sc,ID)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+ io_SC_V_err=io_SC_components('V',en_sc,ID)
+ !
+ if (io_SC_E_err/=0.or.io_SC_WF_err/=0.or.io_SC_V_err/=0) io_SC_E_err=-1 
+ !  
+ if(io_SC_E_err==-1) return
+ !
+ call section('=',"SC wavefunctions and energies")
+ !===============================
+ !
+ ! Energies
+ !
+ en_sc%nb=SC_bands(2)
+ en_sc%nk=k_save%nibz
+ allocate(en_sc%E(en_sc%nb,en_sc%nk,n_sp_pol))  
+ !
+ nkibz=k_save%nibz
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID)
+ io_SC_E_err=io_SC_components('E',en_sc,ID)
+ !
+ call map_energies(en_sc,en_sc_expanded,k,kpoints_map)
+ !
+ nkibz=k%nibz
+ !
+ core_io_path=more_io_path
+ call io_control(ACTION=OP_WR_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID)
+ io_SC_E_err=io_SC_components('E',en_sc_expanded,ID)
+ !
+ !  Wave-function
+ !
+ allocate(SC_R(SC_bands(2),SC_bands(2),k%nibz,n_sp_pol))
+ call mem_est("SC_R",(/size(SC_R)/))
+ !
+ nkibz=k_save%nibz
+ !
+ core_io_path=core_io_path_save
+ call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
+ io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+ !
+ do ik=1,k_save%nibz
+   call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
    io_SC_WF_err=io_SC_components('WF',en_sc,ID)
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
-   io_SC_E_err=io_SC_components('E',en_sc,ID)
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+ enddo
+ !
+ nkibz=k%nibz
+ !
+ core_io_path=more_io_path
+ call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID)
+ io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+ !
+ do ik=1,k_save%nibz
+   call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
+   io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+ enddo
+ !
+ do ik=k_save%nibz+1,k%nibz
+   SC_R(:,:,ik,:)=SC_R(:,:,kpoints_map(1,ik),:)
+   call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
+   io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+ enddo
+ !
+ deallocate(SC_R)
+ call mem_est("SC_R")
+ !
+ ! Copy the potential
+ !
+ call XC_switch()
+ if(.not.local_V) then
+   !
+   allocate(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
+   call mem_est("H_nl_sc",(/size(H_nl_sc)/))
+   !
+   allocate(full_H(SC_bands(2),SC_bands(2),k_save%nibz,n_sp_pol))
+   call mem_est("full_H",(/size(full_H)/))
+   !
+   nkibz=k_save%nibz
+   !
+   core_io_path=core_io_path_save
+   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
    io_SC_V_err=io_SC_components('V',en_sc,ID)
    !
-   if (io_SC_E_err/=0.or.io_SC_WF_err/=0.or.io_SC_V_err/=0) io_SC_E_err=-1 
-   !  
-   if(io_SC_E_err==-1) return
-   !
-   call section('=',"SC wavefunctions and energies")
-   !===============================
-   !
-   ! Energies
-   !
-   en_sc%nb=SC_bands(2)
-   en_sc%nk=k_save%nibz
-   allocate(en_sc%E(en_sc%nb,en_sc%nk,n_sp_pol))  
-   !
-   nkibz=k_save%nibz
-   !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID)
-   io_SC_E_err=io_SC_components('E',en_sc,ID)
-   !
-   call map_energies(en_sc,en_sc_expanded,k,kpoints_map)
-   !
-   nkibz=k%nibz
-   !
-   call io_control(ACTION=OP_WR_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID)
-   io_SC_E_err=io_SC_components('E',en_sc_expanded,ID)
-   !
-   !  Wave-function
-   !
-   allocate(SC_R(SC_bands(2),SC_bands(2),k%nibz,n_sp_pol))
-   call mem_est("SC_R",(/size(SC_R)/))
-   !
-   nkibz=k_save%nibz
-   !
-   call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
-   io_SC_WF_err=io_SC_components('WF',en_sc,ID)
-   !
    do ik=1,k_save%nibz
-     call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
-     io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID)
+     io_SC_V_err=io_SC_components('V',en_sc,ID)
+     full_H(:,:,ik,:)=H_nl_sc(:,:,:)
    enddo
    !
    nkibz=k%nibz
    !
+   core_io_path=more_io_path
    call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID)
-   io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+   io_SC_V_err=io_SC_components('V',en_sc,ID)
    !
    do ik=1,k_save%nibz
+     H_nl_sc(:,:,:)=full_H(:,:,ik,:)
      call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
-     io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+     io_SC_V_err=io_SC_components('V',en_sc,ID)
    enddo
    !
    do ik=k_save%nibz+1,k%nibz
-     SC_R(:,:,ik,:)=SC_R(:,:,kpoints_map(1,ik),:)
+     H_nl_sc(:,:,:)=full_H(:,:,kpoints_map(1,ik),:)
      call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
-     io_SC_WF_err=io_SC_components('WF',en_sc,ID)
-   enddo
-   !
-   deallocate(SC_R)
-   call mem_est("SC_R")
-   !
-   ! Copy the potential
-   !
-   call XC_switch()
-   if(.not.local_V) then
-     !
-     allocate(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
-     call mem_est("H_nl_sc",(/size(H_nl_sc)/))
-     !
-     allocate(full_H(SC_bands(2),SC_bands(2),k_save%nibz,n_sp_pol))
-     call mem_est("full_H",(/size(full_H)/))
-     !
-     nkibz=k_save%nibz
-     !
-     call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
      io_SC_V_err=io_SC_components('V',en_sc,ID)
-     !
-     do ik=1,k_save%nibz
-       call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID)
-       io_SC_V_err=io_SC_components('V',en_sc,ID)
-       full_H(:,:,ik,:)=H_nl_sc(:,:,:)
-     enddo
-     !
-     nkibz=k%nibz
-     !
-     call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID)
-     io_SC_V_err=io_SC_components('V',en_sc,ID)
-     !
-     do ik=1,k_save%nibz
-       H_nl_sc(:,:,:)=full_H(:,:,ik,:)
-       call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
-       io_SC_V_err=io_SC_components('V',en_sc,ID)
-     enddo
-     !
-     do ik=k_save%nibz+1,k%nibz
-       H_nl_sc(:,:,:)=full_H(:,:,kpoints_map(1,ik),:)
-       call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
-       io_SC_V_err=io_SC_components('V',en_sc,ID)
-     enddo    
-     !
-     deallocate(H_nl_sc)
-     call mem_est("H_nl_sc")
-     !
-     deallocate(full_H)
-     call mem_est("full_H")
-     !
-   endif
+   enddo    
    !
-   l_sc_run=.true. ! to not read again SC wavefunctions
+   deallocate(H_nl_sc)
+   call mem_est("H_nl_sc")
    !
- case(2)
+   deallocate(full_H)
+   call mem_est("full_H")
    !
-   ! Not yet implemented
-   !
- end select
+ endif
+ !
+ core_io_path=core_io_path_save
+ !
+ l_sc_run=.true. ! to not read again SC wavefunctions
  !
 end subroutine

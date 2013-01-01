@@ -146,7 +146,7 @@ module YPP
  !
  ! GPL_EXCLUDE_START RAS_IGNORE
  !
- ! (RT) Reduce Symmetries
+ ! Reduce Symmetries
  !
  logical     :: l_fix_syms
  real(SP)    :: E_field(2,3)

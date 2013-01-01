@@ -19,18 +19,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_TR,action_kind)
+subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP,lchlen
  use com,                 ONLY:msg,warning,core_io_path,more_io_path
  use drivers,             ONLY:l_sc_run
  use memory_m,            ONLY:mem_est
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
-&                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO,mk_dir, &
+&                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO, &
 &                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP,RD_CL_IF_END,WR_CL_IF_END
- use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
-&                              wf_ng,wf_state,WF_load,wf_state,wf,WF_free,&
-&                              wf_nb_io_groups !,wf_space,WF_alloc !,wf_b,wf_k,wf_s
+ use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
+ &                             wf_state,WF_load,wf_state,wf,WF_free,wf_nb_io_groups
  use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol
  use timing,              ONLY:live_timing
  use stderr,              ONLY:intc
@@ -44,7 +43,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
  type(bz_samp),intent(in) :: k
  type(bz_samp),intent(in) :: k_save
  integer,intent(in)       :: kpoints_map(2,k%nibz)
- integer,intent(in)       :: wf_ncx_save 
  !
  integer,intent(in)       :: old_nsym
  logical,intent(in)       :: S_contains_TR(old_nsym)
@@ -53,14 +51,19 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
  !
  ! Work space
  !
- type(levels)          :: E_expanded,E_reduced
+ type(levels)          :: E_new
  !
  character(lchlen)     :: core_io_path_save,fragment_name
  integer               :: n_steps,nb1,nb2
  integer               :: ACTION_,ID
  integer               :: ierr,io_err
  !
- integer,allocatable      :: ic_rot_table(:) 
+ integer               :: wf_ng_save,wf_ng_new
+ integer               :: wf_ncx_save,wf_ncx_new
+ integer               :: wf_nc_k_save(k_save%nibz),wf_nc_k_new(k%nibz)
+ integer,allocatable   :: wf_igk_save(:,:),wf_igk_new(:,:)
+ !
+ integer,     allocatable :: ic_rot_table(:) 
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  complex(SP), allocatable :: wf_tmp(:,:)
  !
@@ -74,14 +77,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
  !
  integer, external :: ioDB1
  !
- if (trim(core_io_path)/=trim(more_io_path)) then
-   call mk_dir(more_io_path)
-   call mk_dir(trim(more_io_path)//'/SAVE')
- endif
- !
-#if defined _YPP_SC || defined _YPP_RT
- call fix_SC_DBs(k,k_save,kpoints_map,action_kind)
-#endif
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
  Fragmented_IO=io_fragmented(ID)
@@ -90,22 +85,52 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
  core_io_path_save=core_io_path
  core_io_path=more_io_path
  !
+ call section('=',"Energies and WFs shells")
+ !===========================
+ !
+ allocate(wf_igk_save(wf_ncx,k_save%nibz))
+ ! Rotate spheres of G-vectors centered on kpts
+ call fix_WFs_Gshells(k,k_save,kpoints_map,wf_ng_save,wf_ncx_save,wf_nc_k_save,wf_igk_save,action_kind)
+ !
+ allocate(wf_igk_new(wf_ncx,k%nibz))
+ !
+ call map_energies(E,E_new,k,kpoints_map)
+ !
+ call msg('s',':: I/O...')
+ call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+ io_err=ioDB1(E_new,k,ID)
+ call msg('l','done')
+ !
+ call section('=',"Wavefunctions")
+ !===============================
+ !
+ ! After I/O of DB1 I need to restore the old WFs shells
+ ! to make sure that WF_load works properly
+ wf_nc_k_new=wf_nc_k
+ wf_igk_new =wf_igk
+ wf_ncx_new =wf_ncx
+ wf_ng_new  =wf_ng
+ !
+ deallocate(wf_nc_k,wf_igk)
+ allocate(wf_nc_k(k_save%nibz),wf_igk(wf_ncx_save,k_save%nibz))
+ !
+ wf_nc_k=wf_nc_k_save
+ wf_igk =wf_igk_save
+ wf_ncx =wf_ncx_save
+ wf_ng  =wf_ng_save 
+ !
+ if(wf_ncx_save/=wf_ncx_new) call warning('wf_ncx was reduced to avoid components in open shells')
+ !
+ !if(trim(core_io_path_save)==trim(more_io_path)) then
+ !  call warning(':: Existing database will be overwritten')
+ !  if(wf_ncx_save/=wf_ncx_new) call warning(':: Existing database will be overwritten')
+ !endif
+ !
  select case(action_kind)
  case(1)
    !
-   call section('=',"Energies")
-   !===========================
-   !
-   call map_energies(E,E_expanded,k,kpoints_map)
-   call msg('s',':: DB1 ...')
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-   io_err=ioDB1(E_expanded,k,ID)
-   call msg('l','done')
-   !
-   call section('=',"Wavefunctions")
-   !===============================
-   !
-   if (trim(core_io_path_save)/=trim(more_io_path).and.wf_ncx_save==wf_ncx) then
+   !if (trim(core_io_path_save)/=trim(more_io_path).and.wf_ncx_save==wf_ncx_new) then
+   if (wf_ncx_save==wf_ncx_new) then
      !
      call msg('s',':: Copying existing database ...')
      !
@@ -122,16 +147,15 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
      !
      call msg('l','done')
      !
-   else
-     call warning(':: Existing database will be overwritten')
    endif
    !
    ! Rotating wavefunctions by components
    !
-   allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+   allocate(wf_disk(2,wf_nb_io,wf_ncx_new,n_spin))
    call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
    !
-   if(wf_ncx_save/=wf_ncx) then
+   !if(trim(core_io_path_save)/=trim(more_io_path).and.wf_ncx_save/=wf_ncx_new) then
+   if(wf_ncx_save/=wf_ncx_new) then
      !
      call live_timing('WFs comp. reduction',k_save%nibz)
      !
@@ -147,11 +171,13 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
        !
        do ib_grp=1,wf_nb_io_groups
          !
-         core_io_path=core_io_path_save
          wf_disk=0._SP
          !
          nb1=wf_nb_io*(ib_grp-1)+1
          nb2=wf_nb_io*ib_grp
+         !
+         wf_ncx=wf_ncx_save
+         core_io_path=core_io_path_save
          call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
          !
          do ib=nb1,nb2
@@ -159,12 +185,13 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
              !
              i_wf=wf_state(ib,ik_save,i_spin)
              !
-             wf_disk(1,ib,:wf_nc_k(ik),i_spin)=  real(wf(:wf_nc_k(ik_save),i_wf))
-             wf_disk(2,ib,:wf_nc_k(ik),i_spin)= aimag(wf(:wf_nc_k(ik_save),i_wf))
+             wf_disk(1,ib,:wf_nc_k_new(ik),i_spin)=  real(wf(:wf_nc_k_save(ik_save),i_wf))
+             wf_disk(2,ib,:wf_nc_k_new(ik),i_spin)= aimag(wf(:wf_nc_k_save(ik_save),i_wf))
              !
            enddo
          enddo
          !
+         wf_ncx=wf_ncx_new
          core_io_path=more_io_path
          call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
          io_err=ioWF(ID,wf=wf_disk)
@@ -181,8 +208,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
    n_steps=(k%nibz-k_save%nibz)
    if(n_steps>0) call live_timing('WFs rotation',n_steps)
    !
-   allocate(ic_rot_table(wf_ncx))
-   allocate(wf_tmp(wf_ncx,n_spin))
+   allocate(ic_rot_table(wf_ncx_new))
+   allocate(wf_tmp(wf_ncx_new,n_spin))
    !
    ACTION_=OP_APP_WR_CL
    if(Fragmented_IO) ACTION_=OP_WR_CL
@@ -193,10 +220,10 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
      is=kpoints_map(2,ik)
      !
      ic_rot_table=-1
-     do ic=1,wf_nc_k(ik_save)
-       ig_rot=g_rot(is,wf_igk(ic,ik_save))
-       do ic_rot=1,wf_nc_k(ik)
-         ig=wf_igk(ic_rot,ik)
+     do ic=1,wf_nc_k_save(ik_save)
+       ig_rot=g_rot(is,wf_igk_save(ic,ik_save))
+       do ic_rot=1,wf_nc_k_new(ik)
+         ig=wf_igk_new(ic_rot,ik)
          if(ig==ig_rot) exit
        enddo
        ic_rot_table(ic)=ic_rot
@@ -206,9 +233,11 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
        !
        wf_disk=0._SP
        !
-       core_io_path=core_io_path_save
        nb1=wf_nb_io*(ib_grp-1)+1
        nb2=wf_nb_io*ib_grp
+       !
+       wf_ncx=wf_ncx_save
+       core_io_path=core_io_path_save
        call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
        !
        do ib=nb1,nb2
@@ -219,18 +248,19 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
            !
            i_wf=wf_state(ib,ik_save,i_spin)
            !
-           forall(ic=1:wf_nc_k(ik_save)) wf_tmp(ic_rot_table(ic),i_spin)=wf(ic,i_wf)
+           forall(ic=1:wf_nc_k_save(ik_save)) wf_tmp(ic_rot_table(ic),i_spin)=wf(ic,i_wf)
            !
          enddo
          !
-         forall(ic=1:wf_nc_k(ik)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
+         forall(ic=1:wf_nc_k_new(ik)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
          if ( S_contains_TR(is) ) wf_tmp=conjg(wf_tmp)
          !
-         wf_disk(1,ib,1:wf_ncx,:)= real(wf_tmp(:wf_ncx,:))
-         wf_disk(2,ib,1:wf_ncx,:)= aimag(wf_tmp(:wf_ncx,:))
+         wf_disk(1,ib,1:wf_ncx_new,:)= real(wf_tmp(:wf_ncx_new,:))
+         wf_disk(2,ib,1:wf_ncx_new,:)= aimag(wf_tmp(:wf_ncx_new,:))
          !
        enddo
        !
+       wf_ncx=wf_ncx_new
        core_io_path=more_io_path
        call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
        io_err=ioWF(ID,wf=wf_disk)
@@ -248,32 +278,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
    !
  case(2)
    !
-   call section('=',"Energies")
-   !===========================
-   !
-   call E_reset(E_reduced)
-   E_reduced%nb=E%nb
-   E_reduced%nk=k%nibz
-   allocate(E_reduced%E(E%nb,k%nibz,n_sp_pol))
-   !
-   do ik=1,k%nibz
-     E_reduced%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
-   enddo
-   !
-   call msg('s',':: DB1 ...')
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-   io_err=ioDB1(E_reduced,k,ID)
-   call msg('l','done')
-   !
-   call section('=',"Wavefunctions")
-   !===============================
-   !
-   if (trim(core_io_path)==trim(more_io_path)) call warning(':: Existing database will be overwritten')
-   !
-   core_io_path_save=core_io_path
-   core_io_path=more_io_path
-   !
-   call msg('s',':: WFs ...')
+   call msg('s',':: WFs reduction...')
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
    io_err=ioWF(ID)
@@ -294,17 +299,21 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
        !
        nb1=wf_nb_io*(ib_grp-1)+1
        nb2=wf_nb_io*ib_grp
-       !core_io_path=core_io_path_save
-       !call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
+       !
+       wf_ncx=wf_ncx_save
+       core_io_path=core_io_path_save
+       call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
        !
        do ib=nb1,nb2
          do i_spin=1,n_spin
            i_wf=wf_state(ib,ik_save,i_spin)
-           wf_disk(1,ib,1:wf_ncx,i_spin)= real(wf(1:wf_ncx,i_wf))
-           wf_disk(2,ib,1:wf_ncx,i_spin)= aimag(wf(1:wf_ncx,i_wf))
+           wf_disk(1,ib,1:wf_ncx_new,i_spin)= real(wf(1:wf_ncx_new,i_wf))
+           wf_disk(2,ib,1:wf_ncx_new,i_spin)= aimag(wf(1:wf_ncx_new,i_wf))
          enddo
        enddo
        !
+       wf_ncx=wf_ncx_new
+       core_io_path=more_io_path
        call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
        io_err=ioWF(ID,wf=wf_disk)
        !
@@ -323,34 +332,36 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,wf_ncx_save,old_nsym,S_contains_
  !
  core_io_path=core_io_path_save
  !
+#if defined _YPP_SC || defined _YPP_RT
+ call fix_SC_DBs(k,k_save,kpoints_map,action_kind)
+#endif
+ !
  ! (n)db clean
  !=============
  !
- if (trim(core_io_path)==trim(more_io_path)) then
-   call msg('s',':: Cleaning ...')
-   call rm_file((trim(core_io_path))//"/SAVE/ndb.kindx")
-   call rm_file((trim(core_io_path))//"/SAVE/ndb.gops")
-   call rm_file((trim(core_io_path))//"/SAVE/ndb.dipoles")
-   call rm_file((trim(core_io_path))//"/SAVE/db.dipoles")
-   call rm_file((trim(core_io_path))//"/SAVE/ndb.P_and_P2")
-   call rm_file((trim(core_io_path))//"/SAVE/db.P_and_P2")
-   call rm_file((trim(core_io_path))//"/SAVE/db.kindx")
-   call rm_file((trim(core_io_path))//"/SAVE/db.gops")
-   call msg('l','done')
- endif
+ !if (trim(core_io_path)==trim(more_io_path)) then
+ !  call msg('s',':: Cleaning ...')
+ !  call rm_file((trim(core_io_path))//"/SAVE/ndb.kindx")
+ !  call rm_file((trim(core_io_path))//"/SAVE/ndb.gops")
+ !  call rm_file((trim(core_io_path))//"/SAVE/ndb.dipoles")
+ !  call rm_file((trim(core_io_path))//"/SAVE/db.dipoles")
+ !  call rm_file((trim(core_io_path))//"/SAVE/ndb.P_and_P2")
+ !  call rm_file((trim(core_io_path))//"/SAVE/db.P_and_P2")
+ !  call rm_file((trim(core_io_path))//"/SAVE/db.kindx")
+ !  call rm_file((trim(core_io_path))//"/SAVE/db.gops")
+ !  call msg('l','done')
+ !endif
  !
  ! CLEAN
  !=======
- if(action_kind==1) call E_reset(E_expanded)
- if(action_kind==2) call E_reset(E_reduced)
- !
+ call E_reset(E_new)
  call WF_free()
  deallocate(wf_disk)
  call mem_est("wf_disk")
  !
 end subroutine
 !
-subroutine map_energies(E,E_expanded,k,kpoints_map)
+subroutine map_energies(E,E_new,k,kpoints_map)
  !
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp
@@ -358,7 +369,7 @@ subroutine map_energies(E,E_expanded,k,kpoints_map)
  implicit none
  !
  type(levels), intent(in)     :: E
- type(levels), intent(out)    :: E_expanded
+ type(levels), intent(out)    :: E_new
  type(bz_samp), intent(in)    :: k
  integer,       intent(in)    :: kpoints_map(2,k%nibz)
  !
@@ -366,13 +377,13 @@ subroutine map_energies(E,E_expanded,k,kpoints_map)
  !
  integer :: ik
  !
- call E_reset(E_expanded)
- E_expanded%nb=E%nb
- E_expanded%nk=k%nibz
- allocate(E_expanded%E(E%nb,k%nibz,n_sp_pol))
+ call E_reset(E_new)
+ E_new%nb=E%nb
+ E_new%nk=k%nibz
+ allocate(E_new%E(E%nb,k%nibz,n_sp_pol))
  !
  do ik=1,k%nibz
-   E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
+   E_new%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
  enddo
  !
 end subroutine map_energies

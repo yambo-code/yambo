@@ -130,11 +130,6 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  if(Reduce_syms) action_kind=1
  if(Expand_syms) action_kind=2
  ! 
- if(action_kind==0) return
- !
- call section('+',"Symmetries")
- !=============================
- !
  ! Time-reversal related Symmetries
  !
  forall (is=1:nsym) S_contains_TR(is)=is>nsym/(1+i_time_rev)
@@ -152,6 +147,11 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
    B_cart(2)=B_field*sin(B_theta)*sin(B_psi) 
    B_cart(3)=B_field*cos(B_theta)
  endif
+ !
+ if(action_kind==0) return
+ !
+ call section('+',"Symmetries")
+ !=============================
  !
  select case(action_kind)
  !

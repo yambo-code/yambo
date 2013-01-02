@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 D. Sangalli, C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2013 D. Sangalli, C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine fix_WFs_Gshells(k,k_save,kpoints_map,wf_ng_save,wf_ncx_save,wf_nc_k_save,wf_igk_save,action_kind)
+subroutine fix_WFs_Gshells(k,k_save,kpoints_map,action_kind)
  !
  use pars,                ONLY:IP,SP
  use com,                 ONLY:msg
@@ -37,16 +37,16 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,wf_ng_save,wf_ncx_save,wf_nc_k_s
  type(bz_samp),intent(in)    :: k_save
  integer,intent(in)          :: kpoints_map(2,k%nibz)
  !
- integer,intent(out)         :: wf_ng_save
- integer,intent(out)         :: wf_ncx_save
- integer,intent(out)         :: wf_nc_k_save(k_save%nibz)
- integer,intent(out)         :: wf_igk_save(wf_ncx,k_save%nibz)
- !
  integer,intent(in)          :: action_kind
  !
  ! Work space
  !
- integer               :: ik,ik_save,ic,is
+ integer                     :: wf_ng_save
+ integer                     :: wf_ncx_save
+ integer                     :: wf_nc_k_save(k_save%nibz)
+ integer                     :: wf_igk_save(wf_ncx,k_save%nibz)
+ !
+ integer                     :: ik,ik_save,ic,is
  !
  wf_nc_k_save=wf_nc_k
  wf_igk_save =wf_igk

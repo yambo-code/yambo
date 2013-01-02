@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 D. Sangalli, C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2013 D. Sangalli, C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -89,10 +89,19 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !===========================
  !
  allocate(wf_igk_save(wf_ncx,k_save%nibz))
+ wf_nc_k_save=wf_nc_k
+ wf_igk_save =wf_igk
+ wf_ncx_save =wf_ncx
+ wf_ng_save  =wf_ng
+ !
  ! Rotate spheres of G-vectors centered on kpts
- call fix_WFs_Gshells(k,k_save,kpoints_map,wf_ng_save,wf_ncx_save,wf_nc_k_save,wf_igk_save,action_kind)
+ call fix_WFs_Gshells(k,k_save,kpoints_map,action_kind)
  !
  allocate(wf_igk_new(wf_ncx,k%nibz))
+ wf_nc_k_new=wf_nc_k
+ wf_igk_new =wf_igk
+ wf_ncx_new =wf_ncx
+ wf_ng_new  =wf_ng
  !
  if(wf_ncx_save/=wf_ncx_new) call msg('s',':: wf_ncx was reduced to avoid components in open shells')
  !
@@ -114,11 +123,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  ! After I/O of DB1 I need to restore the old WFs shells
  ! to make sure that WF_load works properly
- wf_nc_k_new=wf_nc_k
- wf_igk_new =wf_igk
- wf_ncx_new =wf_ncx
- wf_ng_new  =wf_ng
- !
  deallocate(wf_nc_k,wf_igk)
  allocate(wf_nc_k(k_save%nibz),wf_igk(wf_ncx_save,k_save%nibz))
  !
@@ -127,16 +131,10 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  wf_ncx =wf_ncx_save
  wf_ng  =wf_ng_save 
  !
- !if(trim(core_io_path_save)==trim(more_io_path)) then
- !  call warning(':: Existing database will be overwritten')
- !  if(wf_ncx_save/=wf_ncx_new) call warning(':: Existing database will be overwritten')
- !endif
- !
  select case(action_kind)
  !
  case(1)
    !
-   !if (trim(core_io_path_save)/=trim(more_io_path).and.wf_ncx_save==wf_ncx_new) then
    if (wf_ncx_save==wf_ncx_new) then
      !
      call msg('s',':: Copying existing database ...')
@@ -145,9 +143,9 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      call cp_file(trim(core_io_path_save)//"/SAVE/ns.wf",trim(more_io_path)//"/SAVE",ierr)
      do ik=1,k_save%nibz
        do ib_grp=1,wf_nb_io_groups
-         fragment_name='ns.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(ib_grp))
-         call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
          fragment_name='s.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(ib_grp))
+         call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
+         fragment_name='ns.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(ib_grp))
          call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
        enddo
      enddo
@@ -161,7 +159,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    allocate(wf_disk(2,wf_nb_io,wf_ncx_new,n_spin))
    call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
    !
-   !if(trim(core_io_path_save)/=trim(more_io_path).and.wf_ncx_save/=wf_ncx_new) then
    if(wf_ncx_save/=wf_ncx_new) then
      !
      call live_timing('WFs comp. reduction',k_save%nibz)
@@ -189,12 +186,9 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          !
          do ib=nb1,nb2
            do i_spin=1,n_spin
-             !
              i_wf=wf_state(ib,ik_save,i_spin)
-             !
              wf_disk(1,ib,:wf_nc_k_new(ik),i_spin)=  real(wf(:wf_nc_k_save(ik_save),i_wf))
              wf_disk(2,ib,:wf_nc_k_new(ik),i_spin)= aimag(wf(:wf_nc_k_save(ik_save),i_wf))
-             !
            enddo
          enddo
          !

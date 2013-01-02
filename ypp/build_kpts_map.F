@@ -34,10 +34,10 @@ subroutine build_kpts_map(k,k_save,kpoints_map,action_kind)
  !
  integer,intent(in)          :: action_kind
  ! 
- ! Dummies
+ ! Work space
  !
  integer               :: i1,ik,ik_save,ic,is
- integer               :: iv(2)
+ integer               :: iv(2),nk
  real(SP)              :: v1(3)
  ! 
  !
@@ -48,10 +48,15 @@ subroutine build_kpts_map(k,k_save,kpoints_map,action_kind)
  !
  ! with ik_save,is relative to the original set of k-points and symmetries
  !
+ if(action_kind==1) nk=k_save%nbz
+ if(action_kind==2) nk=k_save%nibz
+ !
  kpoints_map=0
  do ik=1,k%nibz 
-   do ik_save=1,k%nbz
-     if (v_is_zero(k%pt(ik,:)-k_save%ptbz(ik_save,:),zero_=k_iku_zero)) then
+   do ik_save=1,k_save%nbz
+     if(action_kind==1) v1=k_save%ptbz(ik_save,:)
+     if(action_kind==2) v1=k_save%pt(ik_save,:)
+     if (v_is_zero(k%pt(ik,:)-v1,zero_=k_iku_zero)) then
        if(action_kind==1) kpoints_map(:, ik ) = k_save%sstar(ik_save,:)
        if(action_kind==2) kpoints_map(1, ik ) = ik_save
        exit 

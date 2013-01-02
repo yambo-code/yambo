@@ -100,8 +100,8 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
    ioKB_err=ioKB_PP(ID) 
    !  
-   allocate(pp_kb_store(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin,k%nibz))
-   allocate(pp_kbd_store(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin,k%nibz))
+   allocate(pp_kb_store(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin,k_save%nibz))
+   allocate(pp_kbd_store(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin,k_save%nibz))
    call mem_est("pp_kb_store pp_kbd_store",(/size(pp_kb),size(pp_kbd)/),elements_kind=(/SP,SP/))
    !
    do ik=1,k_save%nibz
@@ -230,7 +230,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    !
  case(2)
    !
-   if(ioKB_err==0.or.io_Vnl_err==0) call msg('s',':: Reducing PPs DB...')
+   if(ioKB_err==0.or.io_Vnl_err==0) call msg('s',':: PPs reduction...')
    !
    if(ioKB_err==0) then
      !

@@ -191,7 +191,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  B_field=0._SP
  B_theta=0._SP
  B_psi=0._SP
- Magnetization=0._SP
  !
 #if defined _YPP_RT
  !
@@ -473,7 +472,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
 #endif
  !
- if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta Magnetization RmAllSymm RmTimeRev RmInvMBaxis")
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmInvMBaxis")
  if (l_fix_syms.and.n_spinor==2) call initactivate(1,"ExpandSymm")
  !
 #if defined _YPP_RT

@@ -22,12 +22,12 @@
 subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP
- use com,                 ONLY:msg,warning
+ use com,                 ONLY:msg,warning,error
  use parser_m,            ONLY:parser
  use matrix_operate,      ONLY:m3det
  use stderr,              ONLY:intc,set_real_printed_length
- use YPP,                 ONLY:E_field,B_theta,B_psi,B_field,Magnetization
- use electrons,           ONLY:levels,n_spinor
+ use YPP,                 ONLY:E_field,B_theta,B_psi,B_field
+ use electrons,           ONLY:levels,n_spinor,Total_magn
  use R_lattice,           ONLY:rl_sop
  use vec_operate,         ONLY:v_norm
  use D_lattice,           ONLY:nsym,dl_sop,spin_sop,i_time_rev,a,alat,mag_syms,&
@@ -67,7 +67,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  has_magnetization=.FALSE.
  if (any(E_field/=0.)) use_E_field=.TRUE.
  if (B_field/=0.)      use_B_field=.TRUE.
- if (any(Magnetization/=0.).and.n_spinor==2)  has_magnetization=.TRUE.
+ if (any(Total_magn/=0.).and.n_spinor==2)  has_magnetization=.TRUE.
  !
  call parser('ExpandSymm',Expand_syms)
  !
@@ -86,7 +86,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  mag_syms= ( use_B_field .or. (n_spinor==2.and.has_magnetization)) &
 &           .and. (i_time_rev==1) .and. (.not.Rm_TR)
  !
- if (mag_syms) call msg('s','There are a magnetic field or SOC in a magnetic system with T-rev')
+ if (mag_syms) call msg('s','There is T-rev with (a) [a magnetic field] or (b) [SOC in a magnetic system]')
  !
  if (Expand_syms) then
    call msg('s','Expand symmetries selected. All other option will be discarded')
@@ -97,7 +97,6 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
    Rm_TR=.false.
    Rm_all_syms=.false.
    Rm_inv_BM_axis=.false.
-   Expand_syms=.false.
    use_E_field=.false.
    use_B_field=.false.
    E_field=0.
@@ -113,7 +112,6 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
    Rm_inv_BM_axis=.false.
    E_field=0.
    B_field=0.
-   Magnetization=0.
  endif
  !
  if (use_E_field) call section('*',"== Electric Fields: BZ sampling remapping ==")
@@ -171,6 +169,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
        nsym=nsym/(1+i_time_rev)
      endif
      i_time_rev=0
+     mag_syms=.false.
    endif
    !
    ! Then remove other symmetries according to input
@@ -178,6 +177,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
      nsym=1
      spatial_nsym=1
      i_time_rev=0
+     mag_syms=.false.
    else
      is=2
      !
@@ -211,9 +211,9 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
        !
        if(has_magnetization.and.n_spinor==2.and..not.reject_symmetry) then
          symm_M_factor=0
-         v1(:) = matmul( dl_sop(:,:,is), Magnetization )
-         if(all( abs(v1(:)-Magnetization(:))<epsilon(1.)) ) symm_M_factor=+1
-         if(all( abs(v1(:)+Magnetization(:))<epsilon(1.)) ) symm_M_factor=-1
+         v1(:) = matmul( dl_sop(:,:,is), Total_magn )
+         if(all( abs(v1(:)-Total_magn(:))<epsilon(1.)) ) symm_M_factor=+1
+         if(all( abs(v1(:)+Total_magn(:))<epsilon(1.)) ) symm_M_factor=-1
          reject_symmetry=(symm_M_factor==0)
          if(.not.reject_symmetry.and.Rm_inv_BM_axis) reject_symmetry=(symm_M_factor==-1)
          if(.not.reject_symmetry) then
@@ -237,6 +237,13 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
      enddo
    endif
    !
+   allocate(dl_sop_tmp(3,3,nsym))
+   dl_sop_tmp(1:3,1:3,1:nsym)=dl_sop(1:3,1:3,1:nsym)
+   deallocate(dl_sop)
+   allocate(dl_sop(3,3,nsym))
+   dl_sop=dl_sop_tmp
+   deallocate(dl_sop_tmp)
+   !
  !*********************
  ! Expand Symmetries
  !*********************
@@ -249,9 +256,9 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
      nsym=2*nsym
      if(i_space_inv==1) then
        spatial_nsym=2*spatial_nsym
-       call msg('s',' Spatial inversion is now a symmetry of the system')
+       call msg('s','Spatial inversion is now a symmetry of the system')
      else
-       call msg('s',' T-rev is now a symmetry of the system')
+       call msg('s','T-rev is now a symmetry of the system')
      endif
      !
      deallocate(dl_sop,rl_sop)
@@ -271,15 +278,15 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
      !
      ! I check if a (simple) inversion in the plane
      ! perperndicular to the magnetization exists
-     if(all(Magnetization(1:2)==0)) then
+     if(all(Total_magn(1:2)==0)) then
        symm_to_check(:,:,1)=reshape((/-1.,0.,0.,0., 1.,0.,0.,0., 1./),(/3,3/))
        symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0.,-1.,0.,0.,0., 1./),(/3,3/))
      endif
-     if(all(Magnetization(2:3)==0)) then
+     if(all(Total_magn(2:3)==0)) then
        symm_to_check(:,:,1)=reshape((/ 1.,0.,0.,0.,-1.,0.,0.,0., 1./),(/3,3/))
        symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0., 1.,0.,0.,0.,-1./),(/3,3/))
      endif
-     if(Magnetization(1)==0.and.Magnetization(3)==0) then
+     if(Total_magn(1)==0.and.Total_magn(3)==0) then
        symm_to_check(:,:,1)=reshape((/-1.,0.,0.,0., 1.,0.,0.,0., 1./),(/3,3/))
        symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0., 1.,0.,0.,0.,-1./),(/3,3/))
      endif
@@ -290,14 +297,17 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
        mag_syms=.true.
        i_time_rev=1
        nsym=2*nsym
-       call msg('s',' Magnetic symmetries are now included in the symm group')
+       call msg('s','Magnetic symmetries are now included in the symm group')
        !
+       allocate(dl_sop_tmp(3,3,nsym/2))
+       dl_sop_tmp(1:3,1:3,1:nsym/2)=dl_sop(1:3,1:3,1:nsym/2)
        deallocate(dl_sop,rl_sop)
        allocate(dl_sop(3,3,nsym),rl_sop(3,3,nsym))
-       dl_sop(1:3,1:3,1:nsym/2)=old_dl_sop(1:3,1:3,1:nsym/2)
+       dl_sop(1:3,1:3,1:nsym/2)=dl_sop_tmp(1:3,1:3,1:nsym/2)
        do is=nsym/2+1,nsym
-         dl_sop(1:3,1:3,is)=matmul(old_dl_sop(1:3,1:3,is-nsym/2),-symm_to_check(1:3,1:3,found_syms))
+         dl_sop(1:3,1:3,is)=matmul(dl_sop_tmp(1:3,1:3,is-nsym/2),-symm_to_check(1:3,1:3,found_syms))
        enddo
+       deallocate(dl_sop_tmp)
        !
      endif
      !
@@ -314,15 +324,13 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  if(.not.RM_all_syms)&
 & call msg('s',trim(intc(old_spatial_nsym))//' spatial symmetries reduced/increased to ...'//trim(intc(spatial_nsym)))
  !
+ if(nsym==spatial_nsym) then
+   i_time_rev=0
+   mag_syms=.false.
+ endif
+ !
  if(i_time_rev==1)&
 & call msg('s',trim(intc(old_trev_nsym))//' T-rev symmetries reduced/increased to ...'//trim(intc(nsym-spatial_nsym)))
- !
- allocate(dl_sop_tmp(3,3,nsym))
- dl_sop_tmp(1:3,1:3,1:nsym)=dl_sop(1:3,1:3,1:nsym)
- deallocate(dl_sop)
- allocate(dl_sop(3,3,nsym))
- dl_sop=dl_sop_tmp
- deallocate(dl_sop_tmp)
  !
  call set_real_printed_length(f_length=7,g_length=8)
  !

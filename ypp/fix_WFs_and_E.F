@@ -33,7 +33,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol
  use timing,              ONLY:live_timing
  use stderr,              ONLY:intc
- use R_lattice,           ONLY:bz_samp,g_rot
+ use R_lattice,           ONLY:bz_samp,g_rot,ng_closed
  use D_lattice,           ONLY:spin_sop
  !
  implicit none
@@ -54,7 +54,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  type(levels)          :: E_new
  !
  character(lchlen)     :: core_io_path_save,fragment_name
- integer               :: n_steps,nb1,nb2
+ integer               :: n_steps,nb1,nb2,ng_closed_save
  integer               :: ACTION_,ID
  integer               :: ierr,io_err
  !
@@ -94,13 +94,21 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  allocate(wf_igk_new(wf_ncx,k%nibz))
  !
+ if(wf_ncx_save/=wf_ncx_new) call msg('s',':: wf_ncx was reduced to avoid components in open shells')
+ !
  call map_energies(E,E_new,k,kpoints_map)
+ !
+ ! For some reason ioDB1 changes the value of ng_closed
+ ! This is a work-around to this problem
+ ng_closed_save=ng_closed
  !
  call msg('s',':: I/O...')
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
  io_err=ioDB1(E_new,k,ID)
  call msg('l','done')
  !
+ ng_closed=ng_closed_save
+ ! 
  call section('=',"Wavefunctions")
  !===============================
  !
@@ -119,14 +127,13 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  wf_ncx =wf_ncx_save
  wf_ng  =wf_ng_save 
  !
- if(wf_ncx_save/=wf_ncx_new) call warning('wf_ncx was reduced to avoid components in open shells')
- !
  !if(trim(core_io_path_save)==trim(more_io_path)) then
  !  call warning(':: Existing database will be overwritten')
  !  if(wf_ncx_save/=wf_ncx_new) call warning(':: Existing database will be overwritten')
  !endif
  !
  select case(action_kind)
+ !
  case(1)
    !
    !if (trim(core_io_path_save)/=trim(more_io_path).and.wf_ncx_save==wf_ncx_new) then
@@ -283,7 +290,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
    io_err=ioWF(ID)
    !
-   allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+   allocate(wf_disk(2,wf_nb_io,wf_ncx_new,n_spin))
    call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
    !
    ACTION_=OP_APP_WR_CL

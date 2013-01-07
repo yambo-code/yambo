@@ -106,7 +106,7 @@ if test "x$netcdf" = xyes; then
      if test "x$hdf5" = xyes; then
        dnetcdf="${dnetcdf} -D_HDF5_IO"
        NETCDF_LINKS="$ldflag"
-       for file in `find $with_netcdf_include \( -name '*hdf5*'\) `; do
+       for file in `find $with_netcdf_include \( -name '*hdf5*' \) `; do
          cp $file include/ 
        done
        for file in `find $with_netcdf_lib -name '*hdf5*.a'`; do

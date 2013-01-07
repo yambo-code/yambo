@@ -34,7 +34,6 @@ NETCDF_LINKS=""
 case $with_netcdf_link in
         yes | "") ;;
         -* | */* | *.a | *.so | *.so.* | *.o) NETCDF_LINKS="$with_netcdf_link" ;;
-        *) NETCDF_LINKS="-l$with_netcdf_link" ;;
 esac
 
 
@@ -137,6 +136,10 @@ if test "x$netcdf" = xyes; then
   if test "x$hdf5" = xyes; then
     NCLIBS="${NCLIBS} ${NETCDF_LINKS}"
   fi
+fi
+
+if test "${NETCDF_LINKS}" != ""; then
+ NCLIBS="${NETCDF_LINKS}"
 fi
 
 AC_SUBST(NCLIBS)

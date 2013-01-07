@@ -337,22 +337,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  call fix_SC_DBs(k,k_save,kpoints_map,action_kind)
 #endif
  !
- ! (n)db clean
- !=============
- !
- !if (trim(core_io_path)==trim(more_io_path)) then
- !  call msg('s',':: Cleaning ...')
- !  call rm_file((trim(core_io_path))//"/SAVE/ndb.kindx")
- !  call rm_file((trim(core_io_path))//"/SAVE/ndb.gops")
- !  call rm_file((trim(core_io_path))//"/SAVE/ndb.dipoles")
- !  call rm_file((trim(core_io_path))//"/SAVE/db.dipoles")
- !  call rm_file((trim(core_io_path))//"/SAVE/ndb.P_and_P2")
- !  call rm_file((trim(core_io_path))//"/SAVE/db.P_and_P2")
- !  call rm_file((trim(core_io_path))//"/SAVE/db.kindx")
- !  call rm_file((trim(core_io_path))//"/SAVE/db.gops")
- !  call msg('l','done')
- !endif
- !
  ! CLEAN
  !=======
  call E_reset(E_new)

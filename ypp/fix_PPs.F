@@ -137,26 +137,22 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  select case(action_kind)
  case(1)
    !
-!   if (trim(core_io_path_save)/=trim(more_io_path)) then
-     if(ioKB_err==0) then
-       !
-       call msg('s',':: Copying existing database ...')
-       !
-       call cp_file(trim(core_io_path_save)//"/SAVE/s.kb_pp",trim(more_io_path)//"/SAVE",ierr)
-       call cp_file(trim(core_io_path_save)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
-       do ik=1,k_save%nibz
-         fragment_name='ns.kb_pp_fragment_'//trim(intc(ik))
-         call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE/",ierr)
-         fragment_name='s.kb_pp_fragment_'//trim(intc(ik))//'_'//trim(intc(i1))
-         call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE/",ierr)
-       enddo
-       !
-       call msg('l','done')
-       !
-     endif
-!   else
-!     call warning(':: Existing database will be overwritten')
-!   endif
+   if(ioKB_err==0) then
+     !
+     call msg('s',':: Copying existing database ...')
+     !
+     call cp_file(trim(core_io_path_save)//"/SAVE/s.kb_pp",trim(more_io_path)//"/SAVE",ierr)
+     call cp_file(trim(core_io_path_save)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
+     do ik=1,k_save%nibz
+       fragment_name='ns.kb_pp_fragment_'//trim(intc(ik))
+       call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE/",ierr)
+       fragment_name='s.kb_pp_fragment_'//trim(intc(ik))
+       call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE/",ierr)
+     enddo
+     !
+     call msg('l','done')
+     !
+   endif
    !
    ! Pseudo-potentials
    !

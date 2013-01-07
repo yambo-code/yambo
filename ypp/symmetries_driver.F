@@ -54,12 +54,10 @@ subroutine symmetries_driver(E,k)
    call msg('s','Setting I/O path to "FixSymm"')
  endif
  !
- !if (trim(core_io_path)/=trim(more_io_path)) then
  call mk_dir(more_io_path)
  call mk_dir(trim(more_io_path)//"/SAVE")
  call rm_file((trim(more_io_path))//"/SAVE/ndb.gops")
  call rm_file((trim(more_io_path))//"/SAVE/ndb.kindx")
- !endif
  !
  ! This is needed to construct grot for all wf_ngs.
  if (wf_ng>ng_closed) then
@@ -85,7 +83,7 @@ subroutine symmetries_driver(E,k)
  call fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
  if(old_nsym==nsym) then
-   call msg('s','Symmetries not changed. Program terminaned')
+   call msg('s','Symmetries did not change. Program terminaned.')
    return
  endif
  !

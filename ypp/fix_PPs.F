@@ -145,12 +145,10 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        call cp_file(trim(core_io_path_save)//"/SAVE/s.kb_pp",trim(more_io_path)//"/SAVE",ierr)
        call cp_file(trim(core_io_path_save)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
        do ik=1,k_save%nibz
-         do i1=1,wf_nb_io_groups
-           fragment_name='ns.kb_pp_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
-           call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
-           fragment_name='s.kb_pp_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
-           call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
-         enddo
+         fragment_name='ns.kb_pp_fragment_'//trim(intc(ik))
+         call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE/",ierr)
+         fragment_name='s.kb_pp_fragment_'//trim(intc(ik))//'_'//trim(intc(i1))
+         call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE/",ierr)
        enddo
        !
        call msg('l','done')

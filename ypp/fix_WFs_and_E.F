@@ -79,8 +79,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
- Fragmented_IO=io_fragmented(ID)
  io_err=ioWF(ID)
+ Fragmented_IO=io_fragmented(ID)
  !
  core_io_path_save=core_io_path
  core_io_path=more_io_path

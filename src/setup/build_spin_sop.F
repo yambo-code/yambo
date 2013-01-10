@@ -50,13 +50,18 @@ subroutine build_spin_sop()
  sigma_y=reshape((/ cZERO,-cI   , cI   , cZERO/),(/2,2/))
  sigma_z=reshape((/ cONe , cZERO, cZERO,-cONe /),(/2,2/))
  !
- ! T_rev=(-i sigma_y K0 ) with K0 the complex conjugation
+ ! T_rev=(-i sigma_y K0 ) with K0 the complex conjugation.
  t_rev=-cI*sigma_y
  !
  do is=1,nsym
    !
+   tmp_sop=dl_sop(:,:,is)
+   !
+   ! Trev symm must be excluded to compute the rotation angles
+   if(is>nsym/(1+i_time_rev)) tmp_sop=-tmp_sop
+   !
    ! Spin is invariant under spatial inversion. I need only the rotations.
-   tmp_sop= dl_sop(:,:,is)*m3det(dl_sop(:,:,is))
+   tmp_sop= tmp_sop*m3det(tmp_sop)
    !
    !           "Tait–Bryan angles"
    !    x,y,z --> x'y'z' --> x''y''z'' -->  X,Y,Z  

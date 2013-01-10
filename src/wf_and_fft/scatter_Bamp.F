@@ -103,10 +103,15 @@ subroutine scatterBamp(isc)
    else
      wf_tmp_i(:,2)=wf(fft_rot_r(is,:),i_wf)
      wf_tmp_o(:,2)=wf(fft_rot_r(os,:),o_wf)
+     !
+     do ifft=1,fft_size
+       wf_tmp_i(ifft,1)=spin_sop(1,1,is)*wf_tmp_i(ifft,1)+spin_sop(1,2,is)*wf_tmp_i(ifft,2)
+       wf_tmp_i(ifft,2)=spin_sop(2,1,is)*wf_tmp_i(ifft,1)+spin_sop(2,2,is)*wf_tmp_i(ifft,2)
+       wf_tmp_o(ifft,1)=spin_sop(1,1,is)*wf_tmp_o(ifft,1)+spin_sop(1,2,is)*wf_tmp_o(ifft,2)
+       wf_tmp_o(ifft,2)=spin_sop(2,1,is)*wf_tmp_o(ifft,1)+spin_sop(2,2,is)*wf_tmp_o(ifft,2)
+     enddo
    endif
    !
-   forall(ifft=1:fft_size) wf_tmp_i(ifft,:)=matmul(spin_sop(:,:,is),wf_tmp_i(ifft,:))
-   forall(ifft=1:fft_size) wf_tmp_o(ifft,:)=matmul(spin_sop(:,:,os),wf_tmp_o(ifft,:))
  endif
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE

@@ -34,17 +34,14 @@ function Laplace_transform(F,N,dT,Eo)
  !
  Laplace_transform=0._SP
  !
- do i_t=1,N-1
-   !
-   Laplace_transform=Laplace_transform-cI*F(i_t)*exp(cI*i_t*dT*Eo)/Eo*(exp(cI*dT*Eo)-1)
-   !
-   ! Alternative form (1)
-   !
-   !Laplace_transform=Laplace_transform+F(i_t)*dT*exp(cI*Eo*T)
-   !
-   ! Alternative form (2)
-   !
-   !Laplace_transform=Laplace_transform+(1./2.*M*(Tp**2.-T**2.)+Q*(Tp-T))*exp(cI*Eo*T)
- enddo
+ if (abs(Eo)>0.) then
+   do i_t=1,N-1
+     Laplace_transform=Laplace_transform-cI*F(i_t)*exp(cI*i_t*dT*Eo)/Eo*(exp(cI*dT*Eo)-1)
+   enddo
+ else
+   do i_t=1,N
+     Laplace_transform=Laplace_transform+F(i_t)*dT
+   enddo
+ endif
  !
 end function

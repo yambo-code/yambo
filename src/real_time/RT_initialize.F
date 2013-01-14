@@ -172,8 +172,11 @@ subroutine RT_initialize(E,k,q)
      !
      call SC_check_symmetries(Efield(i1)%versor)
      !
-     if(Efield(i1)%ef_name/='DELTA'.and.(Efield(i1)%frequency(1)==0._SP.and.Efield(i1)%damping==0)) &
-&      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero frequency and damping.")
+     if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%frequency(1)==0._SP) &
+&      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero frequency.")
+     !
+     if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%damping==0) &
+&      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero damping.")
      ! 
      if(Efield(i1)%intensity==0._SP) &
 &      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")

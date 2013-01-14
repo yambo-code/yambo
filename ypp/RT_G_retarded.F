@@ -144,7 +144,7 @@ subroutine RT_G_retarded(E,k)
      !enddo
      !do i_t=1,Gr_T_steps
      !  Time= Gr_T_window/Gr_T_steps*i_t
-     !  write (200,*) Time/FS2AUT,real(A_t_DP(i_t)),10./Time*cos(5.*Gr_QP_width*Time)
+     !  write (200,*) Time/FS2AUT,real(A_t_DP(i_t))
      !enddo
      !call RT_1D_Fourier_Transform("T2W"," ",W,A_w_DP,Gr_E_steps,A_t_DP,Gr_T_steps,Gr_T_window/Gr_T_steps,0.,.FALSE.,1)
      !do i_w=1,Gr_E_steps

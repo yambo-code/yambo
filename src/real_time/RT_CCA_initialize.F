@@ -146,7 +146,7 @@ subroutine RT_CCA_initialize(E)
        Gr_integrand(:)=real( Gr(i_kp,i_np,:)*Gr(i_p,i_m,:)*&
 &                            conjg(Gr(i_pp,i_mp,:))*conjg(Gr(i_k,i_n,:)) )
        !
-       E_center=Gr_peak_pos(i_kp,i_np)+Gr_peak_pos(i_k,i_n)-Gr_peak_pos(i_np,i_kp)-Gr_peak_pos(i_pp,i_mp)
+       E_center=Gr_peak_pos(i_kp,i_np)-Gr_peak_pos(i_k,i_n)+Gr_peak_pos(i_p,i_m)-Gr_peak_pos(i_pp,i_mp)
        !
        pre_factor=4.8
        !
@@ -189,7 +189,7 @@ subroutine RT_CCA_initialize(E)
      endif
      !
      !DEBUG>
-     !write (100,*)  ((E%E(i_n,i_k,1)-E%E(i_np,i_kp,1))-(E%E(i_m,i_p,1)-E%E(i_mp,i_pp,1)))*27.21,Gr_matrix(i1,i2)
+     !write (100,*)  E_center*27.21,Gr_matrix(i1,i2)
      !DEBUG<
      !
 1    call live_timing(steps=1)

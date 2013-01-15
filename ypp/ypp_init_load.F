@@ -24,6 +24,7 @@ subroutine ypp_init_load(defs)
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
 &                        Time_unit,Bfield_unit,Efield_unit,V_real_time
  use wave_func,     ONLY:wf_ng
+ use electrons,     ONLY:n_spinor
  use YPP
  implicit none
  type(initdefs)::defs
@@ -75,8 +76,9 @@ subroutine ypp_init_load(defs)
  !
  ! GPL_EXCLUDE_START 
  !
-#if defined _YPP_RT
  call it('r',defs,'fixsyms', '[R] Reduce Symmetries')
+ !
+#if defined _YPP_RT
  call it('r',defs,'rtX',     '[R] Real-Time Response functions Post-Processing')
 #endif
 #if defined _YPP_SC
@@ -192,20 +194,22 @@ subroutine ypp_init_load(defs)
  call it(defs,'GammaRadius','[a.u.] Maximum distance from gamma',gamma_radius,verb_level=V_general)
  call it(defs,'OutputAlat','[a.u.] Lattice constant used for "alat" ouput format',alat_used_for_output,verb_level=V_general)
  !
-#if defined _YPP_RT
- !
- call it(defs,'Xorder','Max order of the response functions',X_order)
- call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword)
- call it(defs,'PumpKey','Keyword to select groups of PUMP databases',Pump_Keyword)
+ ! REMOVE SYMMETRIES
  !
  call it(defs,'Efield1','First external Electric Field',E_field(1,:))
  call it(defs,'Efield2','Additional external Electric Field',E_field(2,:))
  call it(defs,'BField',    '[MAG] Magnetic field modulus',B_field,unit=Bfield_unit)
  call it(defs,'Bpsi',      '[MAG] Magnetic field psi angle [degree]',B_psi,unit='deg')
  call it(defs,'Btheta',    '[MAG] Magnetic field theta angle [degree]',B_theta,unit='deg')
- call it(defs,'Magnetization','Direction of the magnetization',Magnetization)
- call it('f',defs,'RmAllSymm' , 'Remove all symmetries') 
+ if(n_spinor==2) call it('f',defs,'ExpandSymm' , 'Add inv and magnetic symms if possible')
+ call it('f',defs,'RmAllSymm' , 'Remove all symmetries')
  call it('f',defs,'RmTimeRev' , 'Remove Time Reversal')
+ !
+#if defined _YPP_RT
+ !
+ call it(defs,'Xorder','Max order of the response functions',X_order)
+ call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword)
+ call it(defs,'PumpKey','Keyword to select groups of PUMP databases',Pump_Keyword)
  !
  call it(defs,'EnRngeRt','Energy range',X_rt%energy_range,unit=E_unit)
  call it(defs,'ETStpsRt','Total Energy steps',X_rt%energy_steps)

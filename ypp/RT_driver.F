@@ -21,7 +21,7 @@
 !
 subroutine RT_driver(en,k)
  !
- use YPP,            ONLY:l_fix_syms,Use_FFT,RT_P_t,RT_J_t,N_probe_frequencies,&
+ use YPP,            ONLY:Use_FFT,RT_P_t,RT_J_t,N_probe_frequencies,&
 &                         N_probes,N_pumps,RT_initialize,RT_databases,X_order,&
 &                         l_RT_X_inversion,l_skip_pol_and_curr_IO,l_force_min_damp
  use R_lattice,      ONLY:bz_samp
@@ -38,17 +38,6 @@ subroutine RT_driver(en,k)
  ! Work Space
  !
  logical       :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
- !
- if (l_fix_syms) then
-   !
-   call section("*",'RT Pre Processing')
-   !
-   ! SYMMERIES removal
-   !-------------------
-   !
-   call RT_fix_symmetries(en,k)
-   return
- endif
  !
  call section("*",'RT Post Processing')
  !

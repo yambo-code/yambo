@@ -164,10 +164,13 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! GPL_EXCLUDE_START
  !
+ if(l_fix_syms) call symmetries_driver(en,k)
+ !  ==========
+ !
 #if defined _YPP_RT
  !
- if (any((/l_fix_syms,l_RT_X/))) call RT_driver(en,k)
- !         ==================
+ if (l_RT_X) call RT_driver(en,k)
+ !   ======
  !  
 #endif
  !

@@ -68,8 +68,8 @@
 #endif
   {"freehole","f","Free hole position [excitons plot]",0,0,0,0,0}, 
   {"bzrim",   "r","BZ energy RIM analyzer",0,0,0,0,0}, 
-#if defined _YPP_RT
   {"fixsyms", "n","Remove symmetries not consistent with an external perturbation",0,0,0,0,0}, 
+#if defined _YPP_RT
   {"rtX",     "t","Real-Time Response function post-processing",0,0,0,0,0}, 
 #endif
 #if defined _YPP_ELPH

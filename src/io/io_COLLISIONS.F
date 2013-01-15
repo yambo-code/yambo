@@ -27,10 +27,10 @@ integer function io_COLLISIONS(i_qp,ID,X)
 &                        COLLISIONS_path,COLLISIONS_range
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,io_restart_point,&
-&                        ver_is_gt_or_eq,IO_OUTDATED_DB
+&                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX
  use com,           ONLY:error
- use SC,            ONLY:SC_bands
+ use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing
  use fragments,     ONLY:io_fragment,Fragments_Restart,Fragments_Synchronize
  use X_m,           ONLY:X_t,n_X_descs,X_description
@@ -48,7 +48,7 @@ integer function io_COLLISIONS(i_qp,ID,X)
  character(schlen)     :: db_name
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
  integer               :: V_kind_disk,i_desc,VAR_size
- character(lchlen)     :: V_kind_string
+ character(lchlen)     :: V_kind_string,X_string
  character(schlen)     :: desc,db_string
  !
  db_string=" "
@@ -131,12 +131,20 @@ integer function io_COLLISIONS(i_qp,ID,X)
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        !
        ! In this case I have loaded the em1s DB and I know the parameters.
-       ! I can, therefor, write/read and/or VERIFIY the values
+       ! I can, therefore, write/read and/or VERIFIY the values
        !
        do i_desc=1,iabs(n_X_descs)
          call io_elemental(ID,VAR='X_descriptions_'//trim(intc(i_desc)),CH0="",VAR_SZ=1,MENU=0)
-         call io_elemental(ID,CH0=X_description(i_desc),VAR='',CHECK=n_X_descs>0,OP=(/"=="/))
+         call io_elemental(ID,DB_CH0=X_string,CH0=X_description(i_desc),VAR='',CHECK=n_X_descs>0,OP=(/"=="/))
          call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+         !
+         ! For the real-time databases I need to extract from the X_descriptions few parameters which describe
+         ! the response function properties
+         !
+         if (read_is_on(ID).and.i_desc<=2) then
+           if (i_desc==1) read (X_string(26:40),*) SC_X_size
+           if (i_desc==2) read (X_string(26:40),'(i2,1x,i3)') SC_X_bands
+         endif
        enddo
        !
      endif

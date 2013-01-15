@@ -23,8 +23,8 @@ subroutine RT_CCA_initialize(E)
  !
  use pars,           ONLY:IP,SP
  use SC,             ONLY:SC_bands
- use real_time,      ONLY:Gr,Gr_indexes,Gr_matrix,Gr_T_steps,Gr_T_window,l_G_retarded_DB,&
-&                         Gr_mat_dim,Gr_peak_pos,Gr_E_ranges
+ use real_time,      ONLY:Gr,Gr_indexes,Gr_ee_matrix,Gr_T_steps,Gr_T_window,l_G_retarded_DB,&
+&                         Gr_mat_dim,Gr_peak_pos,Gr_E_ranges,Gr_ep_matrix
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:nkibz
  use par_proc_m,     ONLY:pp_indexes,pp_indexes_reset,myid,pp_redux_wait
@@ -93,9 +93,9 @@ subroutine RT_CCA_initialize(E)
  !
  ! Allocation
  !============
- allocate(Gr_matrix(Gr_mat_dim,Gr_mat_dim))
- call mem_est("Gr_matrix",(/size(Gr_matrix)/))
- Gr_matrix=0._SP
+ allocate(Gr_ee_matrix(Gr_mat_dim,Gr_mat_dim))
+ call mem_est("Gr_ee_matrix",(/size(Gr_ee_matrix)/))
+ Gr_ee_matrix=0._SP
  !
  ! I/O (read)
  !============
@@ -115,7 +115,7 @@ subroutine RT_CCA_initialize(E)
  call pp_indexes_reset(px)
  call par_indexes(px,(/n_blocks/))
  !
- call live_timing('G retarded integrals',px%n_of_elements(myid+1))
+ call live_timing('G retarded integrals (e-e)',px%n_of_elements(myid+1))
  !
  if (l_G_retarded_DB) Gr_T_step=Gr_T_window/Gr_T_steps
  !
@@ -161,9 +161,9 @@ subroutine RT_CCA_initialize(E)
        if (E_center> GAMMA_(2)) goto 1
        if (E_center<-GAMMA_(1)) goto 1
        !
-       Gr_matrix(i1,i2)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
+       Gr_ee_matrix(i1,i2)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
        !
-       if (Gr_matrix(i1,i2)<0.) Gr_matrix(i1,i2)=0.
+       if (Gr_ee_matrix(i1,i2)<0.) Gr_ee_matrix(i1,i2)=0.
        !
      else
        !
@@ -184,7 +184,7 @@ subroutine RT_CCA_initialize(E)
        !
        GAMMA_(1) = abs(E%W(i_np,i_kp,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pp,1))+abs(E%W(i_n,i_k,1))
        !
-       Gr_matrix(i1,i2)=GAMMA_(1)/(E_center**2+GAMMA_(1)**2)
+       Gr_ee_matrix(i1,i2)=GAMMA_(1)/(E_center**2+GAMMA_(1)**2)
        !
      endif
      !
@@ -201,12 +201,12 @@ subroutine RT_CCA_initialize(E)
  call live_timing()
  !
  do i1=1,Gr_mat_dim
-   call pp_redux_wait(Gr_matrix(:,i1))
+   call pp_redux_wait(Gr_ee_matrix(:,i1))
  enddo
  do i1=1,Gr_mat_dim
    do i2=1,i1
-     Gr_matrix(i1,i2)=Gr_matrix(i1,i2)
-     Gr_matrix(i2,i1)=Gr_matrix(i1,i2)
+     Gr_ee_matrix(i1,i2)=Gr_ee_matrix(i1,i2)
+     Gr_ee_matrix(i2,i1)=Gr_ee_matrix(i1,i2)
    enddo
  enddo
  !

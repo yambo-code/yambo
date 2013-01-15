@@ -24,9 +24,10 @@ integer function io_G_retarded(ID,what)
  use pars,           ONLY:SP
  use units,          ONLY:FS2AUT,HA2EV
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_sec,io_elemental,&
-&                         write_is_on,io_bulk
+&                         write_is_on,io_bulk,io_status
  use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_steps,Gr_E_window,&
-&                         Gr_mat_dim,Gr_matrix,Gr_peak_pos,Gr_E_ranges
+&                         Gr_mat_dim,Gr_ee_matrix,Gr_peak_pos,Gr_E_ranges,l_G_DB_has_el_ph,Gr_T_step,&
+&                         Gr_QP_width
  use SC,             ONLY:SC_bands
  use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc
@@ -47,7 +48,12 @@ integer function io_G_retarded(ID,what)
    !
    io_G_retarded=io_header(ID,XC_KIND="G")
    !
-   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=6,MENU=0)
+   call io_elemental(ID,VAR='G_retarded_KIND',CH0="",VAR_SZ=1,MENU=0)
+   call io_elemental(ID,CH0=Gr_kind,&
+&       VAR=' Retarded Green`s function       :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=10,MENU=0)
    !
    if (what=="G_retarded") then
      call io_elemental(ID,I1=Gr_bands,&
@@ -57,21 +63,37 @@ integer function io_G_retarded(ID,what)
 &         VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
    endif
    !
+   call io_elemental(ID,R0=Gr_QP_width,&
+&       VAR=' QP damping                  [eV]:',UNIT=HA2EV,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,R0=Gr_T_window,&
 &       VAR=' Time range                  [fs]:',UNIT=1./FS2AUT,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,R0=Gr_T_step,&
+&       VAR=' Time step                   [fs]:',UNIT=1./FS2AUT,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=Gr_T_steps,&
 &       VAR=' Time steps                      :',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,R0=Gr_E_window,&
-&       VAR=' Energy range                [eV]:',UNIT=HA2EV,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,I0=Gr_E_steps,&
-&       VAR=' Energy steps                    :',CHECK=.true.,OP=(/"=="/))
    !
-   call io_elemental(ID,VAR=" ",VAR_SZ=0,MENU=0)
+   if (trim(Gr_kind)/="HC") then
+     !
+     call io_elemental(ID,R0=Gr_E_window,&
+&         VAR=' Energy range                [eV]:',UNIT=HA2EV,CHECK=.true.,OP=(/"=="/))
+     !
+     call io_elemental(ID,I0=Gr_E_steps,&
+&         VAR=' Energy steps                    :',CHECK=.true.,OP=(/"=="/))
+     !
+   endif
    !
-   call io_elemental(ID,VAR='G_retarded_KIND',CH0="",VAR_SZ=1,MENU=0)
-   call io_elemental(ID,CH0=Gr_kind,&
-&       VAR=' Retarded Green`s function       :',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,VAR="",VAR_SZ=0)
+   if (what=="G_retarded_matrix") then
+     !
+     call io_elemental(ID,L0=l_G_DB_has_el_ph,&
+&         VAR=' Electron-Phonon submatrix       :',CHECK=.true.,OP=(/"=="/))
+     !
+   endif
+   !
+   call io_elemental(ID,VAR=" ",VAR_SZ=0)
+   !
+   io_G_retarded=io_status(ID)
+   !
+   if (io_G_retarded/=0) goto 1
    !
  endif
  !
@@ -117,7 +139,7 @@ integer function io_G_retarded(ID,what)
    call io_bulk(ID,I0=Gr_mat_dim)
    !
    call io_bulk(ID,VAR="G_retarded_matrix",VAR_SZ=(/Gr_mat_dim,Gr_mat_dim/))
-   call io_bulk(ID,R2=Gr_matrix)
+   call io_bulk(ID,R2=Gr_ee_matrix)
    !
  endif
  !

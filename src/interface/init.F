@@ -366,6 +366,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  io_G=io_SC_components('G' ,en,io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_Gr=io_G_retarded(io_ID,"G_retarded")
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_Gr=io_G_retarded(io_ID,"G_retarded_matrix")
 #endif
  !
  ! SC 

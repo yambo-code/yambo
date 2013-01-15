@@ -26,7 +26,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  use R_lattice,       ONLY:qindx_S,bz_samp,qindx_X
  use SC,              ONLY:SC_bands,it_now 
  use real_time,       ONLY:RT_qp_px,G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,Sigma_relax,&
-&                          Gr_matrix,Gr_indexes
+&                          Gr_ee_matrix,Gr_indexes
  use QP_m,            ONLY:QP_n_states,QP_table
  use collisions_CACHE,ONLY:CACHE
  use par_proc_m,      ONLY:pp_redux_wait
@@ -88,7 +88,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          !
          pre_factor=abs(4.*pi*CACHE(i_qp1)%COLLISIONS_v3(i_qp2,i_p_s,iqbz))**2
          !
-         Gr_integral=Gr_matrix(Gr_indexes(i_np,i_kmq, i_m, i_p),Gr_indexes(i_mp,i_pmq, i_n, i_k))
+         Gr_integral=Gr_ee_matrix(Gr_indexes(i_np,i_kmq, i_m, i_p),Gr_indexes(i_mp,i_pmq, i_n, i_k))
          !
          f_E_factor=(1._SP-f_kmq)*(1._SP-f_p)*f_pmq
          f_H_factor=f_kmq*f_p*(2._SP-f_pmq)

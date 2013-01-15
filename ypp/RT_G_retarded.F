@@ -27,13 +27,13 @@ subroutine RT_G_retarded(E,k)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_window,Gr_E_steps,&
-&                         Gr_peak_pos,Gr_E_ranges
+&                         Gr_peak_pos,Gr_E_ranges,Gr_T_step,Gr_QP_width
  use QP_CTL_m,       ONLY:QP_apply
- use QP_m,           ONLY:QP_ctl_Wc
+ use QP_m,           ONLY:QP_ctl_Wc,QP_ctl_Wv
  use ELPH,           ONLY:W_debye
  use timing,         ONLY:live_timing
  use com,            ONLY:msg,warning
- use IO_m,           ONLY:OP_WR_CL,OP_RD_CL,io_control,LOG,DUMP,NONE
+ use IO_m,           ONLY:OP_WR_CL,OP_RD_CL,io_control,LOG,DUMP,NONE,VERIFY
  implicit none
  !
  type(bz_samp) ::k
@@ -42,7 +42,7 @@ subroutine RT_G_retarded(E,k)
  ! Work Space
  !
  integer  :: i_b,i_k,i_w,io_err,ID,i_t
- real(SP) :: Area,Time,Gr_QP_width
+ real(SP) :: Area,Time
  complex(SP), allocatable :: W(:)
  complex(DP), allocatable :: A_w_DP(:),A_t_DP(:)
  integer,     external    :: io_G_retarded,ioELPH
@@ -77,9 +77,17 @@ subroutine RT_G_retarded(E,k)
  Gr_T_window=GF_T_step*Gr_T_steps
  Gr_E_window=Gr_E_step*Gr_E_steps
  !
+ Gr_T_step=GF_T_step
+ !
  call msg("s",'Energy window [eV]:',Gr_E_window*HA2EV)
  call msg("s",'Time window   [fs]:',Gr_T_window/FS2AUT)
+ call msg("s",'Time step     [fs]:',Gr_T_step)
  call msg("s",'Time steps        :',Gr_T_steps)
+ !
+ call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,COM=LOG,ID=ID)
+ io_err=io_G_retarded(ID,"G_retarded")
+ !
+ if (io_err==0) return
  !
  allocate(Gr(k%nibz,Gr_bands(2),Gr_T_steps))
  allocate(Gr_peak_pos(k%nibz,Gr_bands(2)))

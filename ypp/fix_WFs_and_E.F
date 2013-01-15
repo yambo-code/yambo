@@ -33,7 +33,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol
  use timing,              ONLY:live_timing
  use stderr,              ONLY:intc
- use R_lattice,           ONLY:bz_samp,g_rot,ng_closed
+ use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz
  use D_lattice,           ONLY:spin_sop
  !
  implicit none
@@ -180,6 +180,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          nb1=wf_nb_io*(ib_grp-1)+1
          nb2=wf_nb_io*ib_grp
          !
+         nkibz=k_save%nibz
          wf_ncx=wf_ncx_save
          core_io_path=core_io_path_save
          call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
@@ -192,6 +193,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
            enddo
          enddo
          !
+         nkibz=k%nibz
          wf_ncx=wf_ncx_new
          core_io_path=more_io_path
          call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
@@ -237,6 +239,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        nb1=wf_nb_io*(ib_grp-1)+1
        nb2=wf_nb_io*ib_grp
        !
+       nkibz=k_save%nibz
        wf_ncx=wf_ncx_save
        core_io_path=core_io_path_save
        call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
@@ -261,6 +264,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          !
        enddo
        !
+       nkibz=k%nibz
        wf_ncx=wf_ncx_new
        core_io_path=more_io_path
        call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
@@ -301,6 +305,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        nb1=wf_nb_io*(ib_grp-1)+1
        nb2=wf_nb_io*ib_grp
        !
+       nkibz=k_save%nibz
        wf_ncx=wf_ncx_save
        core_io_path=core_io_path_save
        call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
@@ -313,6 +318,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          enddo
        enddo
        !
+       nkibz=k%nibz
        wf_ncx=wf_ncx_new
        core_io_path=more_io_path
        call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)

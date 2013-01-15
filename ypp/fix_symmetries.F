@@ -271,15 +271,15 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
      !
      ! I check if a (simple) inversion in the plane
      ! perperndicular to the magnetization exists
-     if(all(Total_magn(1:2)==0)) then
+     if(all(abs(Total_magn(1:2))<1.E-5)) then
        symm_to_check(:,:,1)=reshape((/-1.,0.,0.,0., 1.,0.,0.,0., 1./),(/3,3/))
        symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0.,-1.,0.,0.,0., 1./),(/3,3/))
      endif
-     if(all(Total_magn(2:3)==0)) then
+     if(all(abs(Total_magn(2:3))<1.E-5)) then
        symm_to_check(:,:,1)=reshape((/ 1.,0.,0.,0.,-1.,0.,0.,0., 1./),(/3,3/))
        symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0., 1.,0.,0.,0.,-1./),(/3,3/))
      endif
-     if(Total_magn(1)==0.and.Total_magn(3)==0) then
+     if(abs(Total_magn(1))<1.E-5.and.abs(Total_magn(3))<1.E-5) then
        symm_to_check(:,:,1)=reshape((/-1.,0.,0.,0., 1.,0.,0.,0., 1./),(/3,3/))
        symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0., 1.,0.,0.,0.,-1./),(/3,3/))
      endif

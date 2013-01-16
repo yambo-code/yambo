@@ -28,9 +28,8 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  use stderr,              ONLY:intc,set_real_printed_length
  use YPP,                 ONLY:E_field,B_theta,B_psi,B_field
  use electrons,           ONLY:levels,n_spinor,Total_magn
- use R_lattice,           ONLY:rl_sop,g_vec,ng_vec
- use vec_operate,         ONLY:v_norm,v_is_zero
- use zeros,               ONLY:G_iku_zero
+ use R_lattice,           ONLY:rl_sop
+ use vec_operate,         ONLY:v_norm
  use D_lattice,           ONLY:nsym,dl_sop,spin_sop,i_time_rev,a,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table,&
 &                              atoms_spatial_invertion
@@ -62,8 +61,6 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  logical                :: reject_symmetry,found_symm
  real(SP)               :: v1(3),v2(3)
  real(SP)               :: symm_to_check(3,3,2)
- real(SP)               :: g_rot(3)
- real(SP), allocatable  :: g_vec_tmp(:,:)
  !
  use_E_field=.FALSE.
  use_B_field=.FALSE.
@@ -384,39 +381,6 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  ! Check group table
  !
  call symmetry_group_table('s')
- !
- ! Close the G-vectors shell
- !
- if(nsym>old_nsym) then
-   !
-   call msg('s','Closing shells...')
-   !============================
-   !
-   do is=old_nsym+1,nsym
-     !
-     allocate(g_vec_tmp(2*ng_vec,3))
-     g_vec_tmp(1:ng_vec,:)=g_vec
-     deallocate(g_vec)
-     !
-     do i1=1,ng_vec
-       g_rot=matmul(dl_sop(:,:,is),g_vec_tmp(i1,:))
-       do i2=1,ng_vec
-         if( v_is_zero(g_rot-g_vec_tmp(i2,:),zero_=G_iku_zero)) exit 
-       enddo
-       if (i2<=ng_vec) cycle
-       ng_vec=ng_vec+1
-       g_vec_tmp(ng_vec,:)=g_rot
-     enddo
-     !
-     allocate(g_vec(ng_vec,3))
-     g_vec=g_vec_tmp(1:ng_vec,:)
-     deallocate(g_vec_tmp)
-     !
-   enddo
-   !
-   call msg('l','done')
-   !
- endif
  !
 end subroutine
 !

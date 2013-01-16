@@ -33,7 +33,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol
  use timing,              ONLY:live_timing
  use stderr,              ONLY:intc
- use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz
+ use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz,ng_vec
  use D_lattice,           ONLY:spin_sop
  !
  implicit none
@@ -58,6 +58,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  integer               :: ACTION_,ID
  integer               :: ierr,io_err
  !
+ integer               :: ng_vec_save,ng_vec_new
  integer               :: wf_ng_save,wf_ng_new
  integer               :: wf_ncx_save,wf_ncx_new
  integer               :: wf_nc_k_save(k_save%nibz),wf_nc_k_new(k%nibz)
@@ -93,17 +94,20 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  wf_igk_save =wf_igk
  wf_ncx_save =wf_ncx
  wf_ng_save  =wf_ng
+ ng_vec_save =ng_vec
  !
  ! Rotate spheres of G-vectors centered on kpts
- call fix_WFs_Gshells(k,k_save,kpoints_map,action_kind)
+ call fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  !
  allocate(wf_igk_new(wf_ncx,k%nibz))
  wf_nc_k_new=wf_nc_k
  wf_igk_new =wf_igk
  wf_ncx_new =wf_ncx
  wf_ng_new  =wf_ng
+ ng_vec_new =ng_vec
  !
  if(wf_ncx_save/=wf_ncx_new) call msg('s',':: wf_ncx was reduced to avoid components in open shells')
+ if(ng_vec_save/=ng_vec_new) call msg('s',':: ng_vec was increased to close the G-shell')
  !
  call map_energies(E,E_new,k,kpoints_map)
  !

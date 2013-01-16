@@ -28,8 +28,9 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  use stderr,              ONLY:intc,set_real_printed_length
  use YPP,                 ONLY:E_field,B_theta,B_psi,B_field
  use electrons,           ONLY:levels,n_spinor,Total_magn
- use R_lattice,           ONLY:rl_sop
- use vec_operate,         ONLY:v_norm
+ use R_lattice,           ONLY:rl_sop,g_vec,ng_vec
+ use vec_operate,         ONLY:v_norm,v_is_zero
+ use zeros,               ONLY:G_iku_zero
  use D_lattice,           ONLY:nsym,dl_sop,spin_sop,i_time_rev,a,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table,&
 &                              atoms_spatial_invertion
@@ -57,17 +58,19 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  ! Dummies
  !
  integer                :: i1,i2
- integer                :: is,found_syms
- logical                :: reject_symmetry
+ integer                :: is,n_syms_to_check
+ logical                :: reject_symmetry,found_symm
  real(SP)               :: v1(3),v2(3)
- real(SP)               :: symm_to_check(3,3,3)
+ real(SP)               :: symm_to_check(3,3,2)
+ real(SP)               :: g_rot(3)
+ real(SP), allocatable  :: g_vec_tmp(:,:)
  !
  use_E_field=.FALSE.
  use_B_field=.FALSE.
  has_magnetization=.FALSE.
  if (any(E_field/=0.)) use_E_field=.TRUE.
  if (B_field/=0.)      use_B_field=.TRUE.
- if (any(Total_magn/=0.).and.n_spinor==2)  has_magnetization=.TRUE.
+ if (any(Total_magn>1.E-3).and.n_spinor==2)  has_magnetization=.TRUE.
  !
  call parser('ExpandSymm',Expand_syms)
  !
@@ -258,6 +261,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
        spatial_nsym=2*spatial_nsym
        call msg('s','Spatial inversion is now a symmetry of the system')
      else
+       i_time_rev=1
        call msg('s','T-rev is now a symmetry of the system')
      endif
      !
@@ -274,26 +278,38 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
    ! For systems with magnetization
    if(.not.mag_syms.and.has_magnetization) then
      ! Fake symm for the moment, for future use
-     symm_to_check(:,:,3)=1.E-3
+     symm_to_check=0.
+     n_syms_to_check=0
+     found_symm=.false.
      !
      ! I check if a (simple) inversion in the plane
      ! perperndicular to the magnetization exists
      if(all(abs(Total_magn(1:2))<1.E-5)) then
        symm_to_check(:,:,1)=reshape((/-1.,0.,0.,0., 1.,0.,0.,0., 1./),(/3,3/))
        symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0.,-1.,0.,0.,0., 1./),(/3,3/))
+       n_syms_to_check=2
      endif
      if(all(abs(Total_magn(2:3))<1.E-5)) then
        symm_to_check(:,:,1)=reshape((/ 1.,0.,0.,0.,-1.,0.,0.,0., 1./),(/3,3/))
        symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0., 1.,0.,0.,0.,-1./),(/3,3/))
+       n_syms_to_check=2
      endif
      if(abs(Total_magn(1))<1.E-5.and.abs(Total_magn(3))<1.E-5) then
        symm_to_check(:,:,1)=reshape((/-1.,0.,0.,0., 1.,0.,0.,0., 1./),(/3,3/))
        symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0., 1.,0.,0.,0.,-1./),(/3,3/))
+       n_syms_to_check=2
      endif
      !
-     call atoms_check_symm(symm_to_check,found_syms)
+     do i1=1,n_syms_to_check
+       do i2=1,nsym
+         if(.not.all(abs(symm_to_check(:,:,i1)-dl_sop(:,:,i2))<1.E-5) ) cycle
+         n_syms_to_check=n_syms_to_check-1
+       enddo
+     enddo
      !
-     if(found_syms>0) then
+     if(n_syms_to_check>0) call atoms_check_symm(symm_to_check,n_syms_to_check,found_symm)
+     !
+     if(found_symm) then
        mag_syms=.true.
        i_time_rev=1
        nsym=2*nsym
@@ -305,7 +321,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
        allocate(dl_sop(3,3,nsym),rl_sop(3,3,nsym))
        dl_sop(1:3,1:3,1:nsym/2)=dl_sop_tmp(1:3,1:3,1:nsym/2)
        do is=nsym/2+1,nsym
-         dl_sop(1:3,1:3,is)=matmul(dl_sop_tmp(1:3,1:3,is-nsym/2),-symm_to_check(1:3,1:3,found_syms))
+         dl_sop(1:3,1:3,is)=matmul(dl_sop_tmp(1:3,1:3,is-nsym/2),-symm_to_check(1:3,1:3,1))
        enddo
        deallocate(dl_sop_tmp)
        !
@@ -369,9 +385,42 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  !
  call symmetry_group_table('s')
  !
+ ! Close the G-vectors shell
+ !
+ if(nsym>old_nsym) then
+   !
+   call msg('s','Closing shells...')
+   !============================
+   !
+   do is=old_nsym+1,nsym
+     !
+     allocate(g_vec_tmp(2*ng_vec,3))
+     g_vec_tmp(1:ng_vec,:)=g_vec
+     deallocate(g_vec)
+     !
+     do i1=1,ng_vec
+       g_rot=matmul(dl_sop(:,:,is),g_vec_tmp(i1,:))
+       do i2=1,ng_vec
+         if( v_is_zero(g_rot-g_vec_tmp(i2,:),zero_=G_iku_zero)) exit 
+       enddo
+       if (i2<=ng_vec) cycle
+       ng_vec=ng_vec+1
+       g_vec_tmp(ng_vec,:)=g_rot
+     enddo
+     !
+     allocate(g_vec(ng_vec,3))
+     g_vec=g_vec_tmp(1:ng_vec,:)
+     deallocate(g_vec_tmp)
+     !
+   enddo
+   !
+   call msg('l','done')
+   !
+ endif
+ !
 end subroutine
 !
-subroutine atoms_check_symm(symm_to_check,found_syms)
+subroutine atoms_check_symm(symm_to_check,n_syms_to_check,found_symm)
  use pars,           ONLY:zero_dfl
  use matrix_operate, ONLY:m3inv
  use pars,           ONLY:SP
@@ -379,27 +428,30 @@ subroutine atoms_check_symm(symm_to_check,found_syms)
  !
  implicit none
  !
- real(SP) :: symm_to_check(3,3,3)
- integer  :: found_syms
+ real(SP) :: symm_to_check(3,3,n_syms_to_check)
+ integer  :: n_syms_to_check
+ logical  :: found_symm
  !
  ! Work Space
  !
- integer  :: ia,iap,is,isymm
+ integer  :: ia,iap,is,isymm,n_syms
  real(SP) :: at_diff(3),a_m1(3,3),tmp_pos(3,2),shift(3)
  !
- found_syms=3
+ found_symm=.false.
+ n_syms=n_syms_to_check
  !
  call m3inv(transpose(a),a_m1)
  !
  shift=2*(a(1,:)+a(2,:)+a(3,:))
  !
- do is=1,n_atomic_species
-   symm_loop: do isymm=3,1,-1
+ symm_loop: do isymm=1,n_syms_to_check
+   symm_to_check(:,:,1)=symm_to_check(:,:,isymm)
+   do is=1,n_atomic_species
      atoms_loop: do ia=1,n_atoms_species(is)
-       do iap=1,n_atoms_species(is) 
+       do iap=1,n_atoms_species(is)
          !
          tmp_pos(:,1)=atom_pos(:,ia,is)
-         tmp_pos(:,2)=matmul(symm_to_check(:,:,isymm),atom_pos(:,iap,is)+shift)
+         tmp_pos(:,2)=matmul(symm_to_check(:,:,1),atom_pos(:,iap,is)+shift)
          !
          at_diff=matmul(a_m1,tmp_pos(:,1)-tmp_pos(:,2))
          !
@@ -410,11 +462,16 @@ subroutine atoms_check_symm(symm_to_check,found_syms)
          if (all(at_diff<=zero_dfl)) cycle atoms_loop
          !
        enddo
-       found_syms=found_syms-1
-       cycle symm_loop
+       !
+       if(iap==n_atoms_species(is)+1) then
+         n_syms=n_syms-1
+         cycle symm_loop
+       endif
+       !
      enddo atoms_loop
-     return
-   enddo symm_loop
- enddo
+   enddo
+ enddo symm_loop
+ !
+ found_symm= (n_syms>0)
  !
 end subroutine atoms_check_symm

@@ -87,7 +87,7 @@ subroutine symmetries_driver(E,k)
    return
  endif
  !
- if(old_nsym<nsym) call G_shells_finder()
+ if(old_nsym<nsym) ng_closed=ng_vec
  !
  call section('=',"K-points")
  !===========================

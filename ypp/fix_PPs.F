@@ -29,12 +29,14 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
 &                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO,mk_dir, &
 &                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP,RD_CL_IF_END,WR_CL_IF_END
  use electrons,           ONLY:n_spin,n_sp_pol
- use pseudo,              ONLY:pp_kb,pp_kbd,n_atomic_species,pp_n_l_times_proj_max,PP_free,Vnl
+ use pseudo,              ONLY:pp_kb,pp_kbd,pp_kbs,n_atomic_species,&
+&                              pp_n_l_times_proj_max,PP_free,PP_alloc,Vnl
  use timing,              ONLY:live_timing
  use X_m,                 ONLY:X_t
  use stderr,              ONLY:intc
  use wave_func,           ONLY:wf_nb_io_groups,wf_ng
  use R_lattice,           ONLY:bz_samp,ng_closed,g_rot,nXkibz,ng_vec
+ use mod_com2y,           ONLY:ng_vec_abinit
  use D_lattice,           ONLY:n_atomic_species
  use electrons,           ONLY:levels
  !
@@ -60,8 +62,11 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  character(lchlen)     :: core_io_path_save,fragment_name
  integer               :: n_steps,ID
  integer               :: ierr,ioKB_err,io_Vnl_err
+ integer               :: ng_vec_save
  !
- real(SP),allocatable     :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
+ real(SP),allocatable     :: pp_kb_store(:,:,:,:,:)
+ real(SP),allocatable     :: pp_kbd_store(:,:,:,:,:)
+ real(SP),allocatable     :: pp_kbs_store(:,:)
  complex(SP), allocatable :: Vnl_store(:,:,:,:,:)
  !
  ! Dummies
@@ -97,11 +102,15 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  if(ioKB_err==0) then
    !
+   ng_vec_save=ng_vec
+   ng_vec=ng_closed
+   !
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
    ioKB_err=ioKB_PP(ID) 
    !  
-   allocate(pp_kb_store(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin,k_save%nibz))
-   allocate(pp_kbd_store(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin,k_save%nibz))
+   allocate(pp_kb_store(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_spin,k_save%nibz))
+   allocate(pp_kbd_store(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_spin,k_save%nibz))
+   allocate(pp_kbs_store(n_atomic_species,pp_n_l_times_proj_max))
    call mem_est("pp_kb_store pp_kbd_store",(/size(pp_kb),size(pp_kbd)/),elements_kind=(/SP,SP/))
    !
    do ik=1,k_save%nibz
@@ -114,6 +123,10 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      pp_kbd_store(:,:,:,:,ik)=pp_kbd(:,:,:,:)
      !
    enddo
+   !
+   pp_kbs_store=pp_kbs
+   !
+   ng_vec=ng_vec_save
    !
  endif
  !
@@ -178,7 +191,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        !
      enddo
      !
-     deallocate(pp_kb_store,pp_kbd_store)
+     deallocate(pp_kb_store,pp_kbd_store,pp_kbs_store)
      call mem_est("pp_kb_store pp_kbd_store")
      !
      call PP_free()
@@ -228,20 +241,26 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    !
    if(ioKB_err==0) then
      !
+     call PP_free()
+     call PP_alloc()
+     pp_kb=0.
+     pp_kbd=0.
+     pp_kbs=pp_kbs_store
+     !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
      ioKB_err=ioKB_PP(ID) 
      !
      do ik=1,k%nibz
        !
-       pp_kb(:,:,:,:) =pp_kb_store(:,:,:,:,kpoints_map(1,ik))
-       pp_kbd(:,:,:,:)=pp_kbd_store(:,:,:,:,kpoints_map(1,ik))     
+       pp_kb(:ng_closed,:,:,:) =pp_kb_store(:ng_closed,:,:,:,kpoints_map(1,ik))
+       pp_kbd(:ng_closed,:,:,:)=pp_kbd_store(:ng_closed,:,:,:,kpoints_map(1,ik))     
        !
        call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)      
        ioKB_err=ioKB_PP(ID)
        !
      enddo
      !
-     deallocate(pp_kb_store,pp_kbd_store)
+     deallocate(pp_kb_store,pp_kbd_store,pp_kbs_store)
      call mem_est("pp_kb_store pp_kbd_store")
      call PP_free()
      !

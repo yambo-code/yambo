@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine fix_WFs_Gshells(k,k_save,kpoints_map,action_kind)
+subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  !
  use pars,                ONLY:IP,SP
  use com,                 ONLY:msg
@@ -29,13 +29,17 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,action_kind)
  use vec_operate,         ONLY:v_norm,v_is_zero,i_sort
  use electrons,           ONLY:levels
  use wave_func,           ONLY:wf_nc_k, wf_igk,wf_ncx,wf_ng
- use R_lattice,           ONLY:bz_samp,nkibz,g_rot,ng_closed,ng_vec
+ use R_lattice,           ONLY:bz_samp,nkibz,g_rot,ng_closed,ng_vec,g_vec
+ use vec_operate,         ONLY:v_norm
+ use zeros,               ONLY:G_iku_zero
+ use D_lattice,           ONLY:nsym,dl_sop
  !
  implicit none
  !
  type(bz_samp),intent(inout) :: k
  type(bz_samp),intent(in)    :: k_save
  integer,intent(in)          :: kpoints_map(2,k%nibz)
+ integer,intent(in)          :: old_nsym
  !
  integer,intent(in)          :: action_kind
  !
@@ -46,7 +50,10 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,action_kind)
  integer                     :: wf_nc_k_save(k_save%nibz)
  integer                     :: wf_igk_save(wf_ncx,k_save%nibz)
  !
- integer                     :: ik,ik_save,ic,is
+ real(SP)                    :: g_rot_tmp(3)
+ real(SP), allocatable       :: g_vec_tmp(:,:)
+ !
+ integer                     :: ik,ik_save,ic,is,ig1,ig2
  !
  wf_nc_k_save=wf_nc_k
  wf_igk_save =wf_igk
@@ -104,6 +111,39 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,action_kind)
      wf_igk(1:wf_ncx,ik) = wf_igk_save(1:wf_ncx,kpoints_map(1,ik))
      wf_nc_k(ik)         = wf_nc_k_save(kpoints_map(1,ik))
    enddo
+   !
+   ! Close the G-vectors shell
+   !
+   if(nsym>old_nsym) then
+     !
+     call msg('s','Closing shells...')
+     !============================
+     !
+     do is=old_nsym+1,nsym
+       !
+       allocate(g_vec_tmp(2*ng_vec,3))
+       g_vec_tmp(1:ng_vec,:)=g_vec
+       deallocate(g_vec)
+       !
+       do ig1=1,ng_vec
+         g_rot_tmp=matmul(dl_sop(:,:,is),g_vec_tmp(ig1,:))
+         do ig2=1,ng_vec
+           if( v_is_zero(g_rot_tmp-g_vec_tmp(ig2,:),zero_=G_iku_zero)) exit 
+         enddo
+         if (ig2<=ng_vec) cycle
+         ng_vec=ng_vec+1
+         g_vec_tmp(ng_vec,:)=g_rot_tmp
+       enddo
+       !
+       allocate(g_vec(ng_vec,3))
+       g_vec=g_vec_tmp(1:ng_vec,:)
+       deallocate(g_vec_tmp)
+       !
+     enddo
+     !
+     call msg('l','done')
+     !
+   endif
    !
  end select
  !

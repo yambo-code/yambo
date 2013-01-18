@@ -119,6 +119,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=============================
  call msg('r','DL (S)ymmetries [cc]')
  !
+ ! spin symmetries
+ call build_spin_sop()
+ !
  allocate(rl_sop(3,3,nsym))
  do is=1,nsym
    forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)

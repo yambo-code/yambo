@@ -46,6 +46,7 @@ module D_lattice
  integer :: idt_index   ! Indentity I  index
  logical :: mag_syms
  real(SP),allocatable :: dl_sop(:,:,:)
+ complex(SP),allocatable :: spin_sop(:,:,:)
  integer, allocatable :: sop_tab(:,:)
  integer, allocatable :: sop_inv(:)
  !

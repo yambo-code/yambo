@@ -157,12 +157,11 @@ module YPP
  !
  logical     :: l_RT_occupations
  !
- ! (RT) Reduce Symmetries
+ ! Reduce Symmetries
  !
  logical     :: l_fix_syms
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
- real(SP)    :: Magnetization(3)
  !
  ! (RT) Retarded Green's functions
  !

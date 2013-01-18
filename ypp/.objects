@@ -2,9 +2,12 @@
 ELPH_objects = ELPH_databases.o ELPH_eliashberg_dos.o \
                ELPH_general_gFsq.o ELPH_excitonic_gkkp.o ELPH_atomic_amplitude.o ELPH_gkkp_expand.o
 #endif
+#if defined _YPP_SC || defined _YPP_RT
+SC_objects = fix_SC_DBs.o
+#endif
 #if defined _YPP_RT
-RT_objects = RT_driver.o RT_paths.o RT_databases.o RT_fix_symmetries.o RT_X_LRR_real_field.o \
-             RT_build_spin_sop.o RT_initialize.o RT_X_qssin.o RT_1D_Fourier_Transform.o  \
+RT_objects = RT_driver.o RT_paths.o RT_databases.o RT_X_LRR_real_field.o \
+             RT_initialize.o RT_X_qssin.o RT_1D_Fourier_Transform.o  \
              RT_damp_it.o RT_X_effective.o RT_coefficients_Fourier.o RT_coefficients_Inversion.o RT_X_inversion.o \
              RT_split_Polarization.o RT_occupations_analyze.o RT_occupations_check.o RT_occupations_repair.o \
              RT_G_retarded.o
@@ -18,5 +21,6 @@ objs = mod_YPP.o  ypp_i.o ypp_init.o ypp_init_load.o \
        excitons_driver.o electrons_driver.o electrons_dos_and_charge.o \
        plot_check_and_launch.o plot_gnuplot.o plot_xcrysden.o plot_cube.o \
        excitons_sort_and_report.o excitons_collinear.o excitons_non_collinear.o $(bands_objects) \
-       WANNIER_driver.o read_bxsf.o double_k_grid.o \
-       $(ELPH_objects) $(RT_objects) k_random.o  $(magnetic_objects) 
+       WANNIER_driver.o read_bxsf.o double_k_grid.o symmetries_driver.o \
+       fix_symmetries.o build_kpts_map.o fix_WFs_Gshells.o fix_WFs_and_E.o fix_PPs.o \
+       $(ELPH_objects) $(RT_objects) $(SC_objects) k_random.o  $(magnetic_objects) 

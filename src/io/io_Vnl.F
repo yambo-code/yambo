@@ -31,6 +31,7 @@ integer function io_Vnl(X,Xen,ID)
 &                        read_is_on,write_is_on,io_header,io_fragmented,io_extension
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  use fragments,     ONLY:io_fragment
+ use com,           ONLY:warning
  !
  implicit none
  type(X_t)   ::X
@@ -75,7 +76,10 @@ integer function io_Vnl(X,Xen,ID)
    call io_elemental(ID,VAR="",VAR_SZ=0)
    !
    io_Vnl=io_status(ID)
-   if (io_Vnl/=0) goto 1
+   if (io_Vnl/=0) then
+     call warning(' The commutator DB cannot be used. Try to lower ElecTemp in the input.')
+     goto 1
+   endif
  endif
  !
  if (.not.Dipole_bands_ordered) db_nbm=db_nb(2)

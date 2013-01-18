@@ -146,10 +146,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! Manage direct access I/O
  ! 
- use_direct_access=.FALSE.
-#if defined _MAGNETIC 
  use_direct_access=(kpts_to_load(1)==kpts_to_load(2))
-#endif
 #if defined _MANYK
  use_direct_access=.TRUE.
 #endif

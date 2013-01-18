@@ -33,10 +33,10 @@ subroutine scatterBamp(isc)
  !                                        /:\
  !  iq_is = ik_is-ok_os-Go
  !
- use pars,           ONLY:DP
+ use pars,           ONLY:DP,SP,cZERO,cONE
  use electrons,      ONLY:n_spinor
  use collision,      ONLY:ggwinfo
- use D_lattice,      ONLY:nsym,i_time_rev,idt_index
+ use D_lattice,      ONLY:nsym,i_time_rev,mag_syms,spin_sop,idt_index
  use R_lattice,      ONLY:g_rot
  use wave_func,      ONLY:wf,wf_state
  use FFT_m,          ONLY:fft_size,fft_rot_r,fft_dim,fftw_plan,fft_g_table
@@ -45,17 +45,17 @@ subroutine scatterBamp(isc)
  !
  ! Work Space
  !
- complex(DP) :: rho_tw_rs(fft_size,n_spinor)
+ complex(DP) :: rho_tw_rs(fft_size)
+ complex(SP) :: wf_tmp_i(fft_size,n_spinor),wf_tmp_o(fft_size,n_spinor)
  !
- integer :: ib,ik,is,i_sp,ifft
- integer :: ob,ok,os,o_sp,offt
- integer :: qs,iGo,i_spr,i_spinor
+ integer :: ib,ik,is,i_sp,i_wf
+ integer :: ob,ok,os,o_sp,o_wf
+ integer :: qs,iGo,ifft
  logical :: litr,lotr
  !
  ! GPL_INCLUDE_START SPIN_IGNORE
  !i_sp =1
  !o_sp =1
- !i_spr=1
  ! GPL_INCLUDE_END SPIN_IGNORE
  !
  ! <ib ik_is i_sp| 
@@ -81,67 +81,68 @@ subroutine scatterBamp(isc)
  !
  ! \tilde{\rho} in Real Space
  !
+ i_wf=wf_state(ib,ik,i_sp)
+ o_wf=wf_state(ob,ok,o_sp)
+ !
+ if(is==idt_index) then
+   wf_tmp_i(:,1)=wf(:,i_wf)
+   wf_tmp_o(:,1)=wf(:,o_wf)
+ else
+   wf_tmp_i(:,1)=wf(fft_rot_r(is,:),i_wf)
+   wf_tmp_o(:,1)=wf(fft_rot_r(os,:),o_wf)
+ endif
+ !
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
- do i_spr=1,n_spinor
-   !
-   ! GPL_EXCLUDE_END SPIN_IGNORE
-   !
-   ifft=wf_state(ib,ik,i_sp+i_spr-1)
-   offt=wf_state(ob,ok,o_sp+i_spr-1)
-   !                                               
+ if (n_spinor==2) then
+   i_wf=wf_state(ib,ik,2)
+   o_wf=wf_state(ob,ok,2)
    if(is==idt_index) then
-     rho_tw_rs(:,i_spr)=conjg(wf(:,ifft))
+     wf_tmp_i(:,2)=wf(:,i_wf)
+     wf_tmp_o(:,2)=wf(:,o_wf)
    else
-     if (litr)      rho_tw_rs(:,i_spr)=wf(fft_rot_r(is,:),ifft)
-     if (.not.litr) rho_tw_rs(:,i_spr)=conjg(wf(fft_rot_r(is,:),ifft))
+     wf_tmp_i(:,2)=wf(fft_rot_r(is,:),i_wf)
+     wf_tmp_o(:,2)=wf(fft_rot_r(os,:),o_wf)
+     !
+     do ifft=1,fft_size
+       wf_tmp_i(ifft,1)=spin_sop(1,1,is)*wf_tmp_i(ifft,1)+spin_sop(1,2,is)*wf_tmp_i(ifft,2)
+       wf_tmp_i(ifft,2)=spin_sop(2,1,is)*wf_tmp_i(ifft,1)+spin_sop(2,2,is)*wf_tmp_i(ifft,2)
+       wf_tmp_o(ifft,1)=spin_sop(1,1,is)*wf_tmp_o(ifft,1)+spin_sop(1,2,is)*wf_tmp_o(ifft,2)
+       wf_tmp_o(ifft,2)=spin_sop(2,1,is)*wf_tmp_o(ifft,1)+spin_sop(2,2,is)*wf_tmp_o(ifft,2)
+     enddo
    endif
    !
-   if(os==idt_index) then
-     rho_tw_rs(:,i_spr)=rho_tw_rs(:,i_spr)*wf(:,offt)
-   else
-     if (lotr)      rho_tw_rs(:,i_spr)=rho_tw_rs(:,i_spr)*conjg(wf(fft_rot_r(os,:),offt))
-     if (.not.lotr) rho_tw_rs(:,i_spr)=rho_tw_rs(:,i_spr)*wf(fft_rot_r(os,:),offt)
-   endif
-   !
-   ! FFT call
-   !
-#if defined _FFTW
-   call fft_3d(rho_tw_rs(:,i_spr),fft_dim,+1,fftw_plan)
-#else
-   call fft_3d(rho_tw_rs(:,i_spr),fft_dim,+1)
-#endif
-   !
-   ! GPL_EXCLUDE_START SPIN_IGNORE
-   !
- enddo
+ endif
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE
  !
- if(qs==idt_index) then
-   isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(1:isc%ngrho,iGo),1)
- else
-   isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo),1)
- endif
+ if(.not.litr) wf_tmp_i=conjg(wf_tmp_i)
+ if(     lotr) wf_tmp_o=conjg(wf_tmp_o)
+ !
+ rho_tw_rs(:)=wf_tmp_i(:,1)*wf_tmp_o(:,1)
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
+ if (n_spinor==2) rho_tw_rs(:)=rho_tw_rs+wf_tmp_i(:,2)*wf_tmp_o(:,2)
+ ! 
+ ! GPL_EXCLUDE_END SPIN_IGNORE
+ !
+#if defined _FFTW
+ call fft_3d(rho_tw_rs,fft_dim,+1,fftw_plan)
+#else
+ call fft_3d(rho_tw_rs,fft_dim,+1)
+#endif
+ !
+ !
  if(qs==idt_index) then
-   do i_spinor=2,n_spinor,1
-     isc%rhotw(1:isc%ngrho)=isc%rhotw(1:isc%ngrho)+rho_tw_rs(fft_g_table(1:isc%ngrho,iGo),i_spinor)
-   enddo
+   isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(1:isc%ngrho,iGo))
  else
-   do i_spinor=2,n_spinor,1
-     isc%rhotw(1:isc%ngrho)=isc%rhotw(1:isc%ngrho)+&
-&                         rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo),i_spinor)
-   enddo
+   isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo))
  endif
  !
- ! GPL_EXCLUDE_END SPIN_IGNORE
- ! 
  ! q=0, G=0 case
  !
- if (all((/isc%qs(2)==1,ib==ob/))) isc%rhotw(1)=(1.,0.)
- if (all((/isc%qs(2)==1,ib/=ob/))) isc%rhotw(1)=(0.,0.)
+ if (all((/isc%qs(2)==1,ib==ob/))) isc%rhotw(1)=cONE
+ if (all((/isc%qs(2)==1,ib/=ob/))) isc%rhotw(1)=cZERO
  !
 end subroutine

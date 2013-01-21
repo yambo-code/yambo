@@ -220,12 +220,13 @@ subroutine a2y_db1(en,k,KSS_file_name)
  enddo
  call msg('l','done')
  !
+ ng_vec=ng_vec_abinit
+ !
  if( i_time_rev==1 .or. i_space_inv==1) then
    !
    call msg('s','Closing shells...')
    !============================
    !
-   ng_vec=ng_vec_abinit
    allocate(g_vec_tmp(2*ng_vec,3))
    g_vec_tmp(1:ng_vec,:)=g_vec
    deallocate(g_vec)

@@ -19,24 +19,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
+subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp)
  !  
  use pars,           ONLY:SP,cI,pi
  use electrons,      ONLY:levels,spin_occ,n_full_bands
  use SC,             ONLY:SC_bands,it_now
- use real_time,      ONLY:G_lesser,MEM_index,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime
+ use real_time,      ONLY:G_lesser,MEM_index,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
+&                         Gr_ep_matrix,Gr_indexes,Gr_ordering_condition
+ use ELPH,           ONLY:ph_freqs_sq
  !
  implicit none
  !
  type(levels),  intent(in)  :: E
- integer,       intent(in)  :: ik,ik_m_q
- real(SP),      intent(in)  :: ph_freq,Bose_f,f_k(SC_bands(2)-SC_bands(1)+1)
+ integer,       intent(in)  :: ik,ik_m_q,i_q,i_l
+ real(SP),      intent(in)  :: Bose_f,f_k(SC_bands(2)-SC_bands(1)+1)
  complex(SP),   intent(in)  :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  !
  ! Work Space ...
  !
  integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift
- real(SP) :: DELTA,GAMMA_,f_k_m_q,P_ph_abs,P_ph_emit
+ real(SP) :: DELTA,GAMMA_,f_k_m_q,P_ph_abs,P_ph_emit,ph_freq
  !
  ! Dimensions
  !============
@@ -45,6 +47,8 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
  !
  ! Kernel kind
  !============= 
+ !
+ ph_freq=abs(sqrt(ph_freqs_sq(i_q,i_l)))
  !
  do i_n=1,B_dim
    !
@@ -72,8 +76,16 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
      !
      if (abs(DELTA)<1.E-10) cycle
      !
-     if (DELTA>1.E-10) P_ph_abs =GAMMA_/(GAMMA_**2+(DELTA-ph_freq)**2)
-     if (DELTA<1.E-10) P_ph_emit=GAMMA_/(GAMMA_**2+(DELTA+ph_freq)**2)
+     if (Gr_ordering_condition(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik)) then
+       if (DELTA>1.E-10) P_ph_abs =Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,1) 
+       if (DELTA<1.E-10) P_ph_emit=Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,2) 
+     else
+       if (DELTA>1.E-10) P_ph_abs =Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,2) 
+       if (DELTA<1.E-10) P_ph_emit=Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,1) 
+     endif
+     !
+     !if (DELTA>1.E-10) P_ph_abs =GAMMA_/(GAMMA_**2+(DELTA-ph_freq)**2)
+     !if (DELTA<1.E-10) P_ph_emit=GAMMA_/(GAMMA_**2+(DELTA+ph_freq)**2)
      !
      E_P_Hole_lifetime(i_n_shift,ik)=E_P_Hole_lifetime(i_n_shift,ik)+&
 &                                    abs(Gkkp(i_np,i_n))**2*P_ph_abs*f_k_m_q

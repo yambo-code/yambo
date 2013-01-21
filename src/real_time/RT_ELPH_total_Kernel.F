@@ -124,7 +124,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
        ! Complete Collision Approximation (CCA)
        !=======================================
        !
-       call RT_ELPH_CCA_Kernel(ik,ik_m_q,f_k,N_q(1),E,ph_freq,Gkkp)
+       call RT_ELPH_CCA_Kernel(ik,ik_m_q,iqbz,il,f_k,N_q(1),E,Gkkp)
        !
      else
        !

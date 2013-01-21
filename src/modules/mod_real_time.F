@@ -533,6 +533,20 @@ module real_time
      !
    end subroutine RT_free
    !
+   logical function Gr_ordering_condition(i_n,i_k,i_m,i_p)
+     !
+     integer i_k,i_n,i_p,i_m
+     !
+     Gr_ordering_condition=.FALSE.
+     !
+     if (i_k<i_p) then
+       Gr_ordering_condition=.TRUE.
+     else if (i_k==i_p.and.i_n<=i_m) then
+       Gr_ordering_condition=.TRUE.
+     endif
+     !
+   end function
+   !
    integer function MEM_index(it)
      !
      integer :: it

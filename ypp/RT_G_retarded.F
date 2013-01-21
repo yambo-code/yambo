@@ -79,9 +79,10 @@ subroutine RT_G_retarded(E,k)
  !
  Gr_T_step=GF_T_step
  !
- call msg("s",'Energy window [eV]:',Gr_E_window*HA2EV)
+ if (.not.trim(Gr_kind)=="HC") call msg("s",'Energy window [eV]:',Gr_E_window*HA2EV)
+ !
  call msg("s",'Time window   [fs]:',Gr_T_window/FS2AUT)
- call msg("s",'Time step     [fs]:',Gr_T_step)
+ call msg("s",'Time step     [fs]:',Gr_T_step/FS2AUT)
  call msg("s",'Time steps        :',Gr_T_steps)
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,COM=LOG,ID=ID)

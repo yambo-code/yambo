@@ -27,9 +27,10 @@ integer function io_G_retarded(ID,what)
 &                         write_is_on,io_bulk,io_status
  use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_steps,Gr_E_window,&
 &                         Gr_mat_dim,Gr_ee_matrix,Gr_peak_pos,Gr_E_ranges,l_G_DB_has_el_ph,Gr_T_step,&
-&                         Gr_QP_width
+&                         Gr_QP_width,Gr_ep_matrix
  use SC,             ONLY:SC_bands
- use R_lattice,      ONLY:nkibz
+ use ELPH,           ONLY:ph_modes
+ use R_lattice,      ONLY:nkibz,nqbz
  use stderr,         ONLY:intc
  !
  implicit none
@@ -140,6 +141,12 @@ integer function io_G_retarded(ID,what)
    !
    call io_bulk(ID,VAR="G_retarded_matrix",VAR_SZ=(/Gr_mat_dim,Gr_mat_dim/))
    call io_bulk(ID,R2=Gr_ee_matrix)
+   !
+   call io_bulk(ID,VAR="G_ep_retarded_matrix_1",VAR_SZ=(/Gr_mat_dim,nqbz,ph_modes/))
+   call io_bulk(ID,R3=Gr_ep_matrix(:,:,:,1))
+   !
+   call io_bulk(ID,VAR="G_ep_retarded_matrix_2",VAR_SZ=(/Gr_mat_dim,nqbz,ph_modes/))
+   call io_bulk(ID,R3=Gr_ep_matrix(:,:,:,2))
    !
  endif
  !

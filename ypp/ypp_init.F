@@ -46,7 +46,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
 #endif
 #if defined _YPP_RT 
- use real_time,      ONLY:RT_step,NE_steps
+ use real_time,      ONLY:RT_step,NE_steps,Gr_kind,Gr_bands,Gr_E_window
  use fields,         ONLY:Efield,i_Probe
 #endif
 #if defined _YPP_ELPH
@@ -148,6 +148,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  l_phonons=.false.
  l_gkkp=.false.
+ l_gkkp_expand=.false.
  l_eliashberg=.false.
  l_atomic_amplitude=.false.
  elph_steps=200
@@ -191,6 +192,14 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
 #if defined _YPP_RT
  !
+ ! Retarded GFs
+ !
+ Gr_bands=(/1,n_bands/)
+ GF_T_step=1.*FS2AUT
+ Gr_E_step=0.1/HA2EV
+ Gr_E_window=100./HA2EV
+ Gr_kind="QP"
+ !
  t_jump=0.
  !
  !REMOVE SYMMETRIES
@@ -199,6 +208,87 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  B_field=0._SP
  B_theta=0._SP
  B_psi=0._SP
+ !
+ !DOS
+ !
+ Fermi_fit_points=(/1.5,0.5/)
+ !
+ !OCCUPATIONS
+ !
+ OCC_T_ref=-FS2AUT
+ OCC_T_range=0.
+ OCC_deltaT=0.
+ l_RT_occupations=.FALSE.
+ !
+ !RETARDED GREEN'S functions
+ !
+ l_retarded_GFs=.FALSE.
+ !
+ !ANALIZE RESPONSE
+ !
+ X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
+ X_rt%energy_steps   =200
+ X_rt%energy_range(:)=(/0._SP,20./HA2EV/)
+ X_rt%damp           ="NONE"
+ X_rt%damp_factor    =0.
+ Probe_Keyword ="none"
+ Pump_Keyword  ="none"
+ X_order       =1
+ !
+#endif
+ !
+ ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
+ !
+#if defined _YPP_MAGNETIC
+ !
+ l_angular_momentum=.false.
+ l_position=.false.
+ !
+#endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! DATABASES 
+ !===========
+ !
+#if defined _YPP_SC
+ ! 
+ call E_reset(E_dummy) 
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+ !
+ !ANALIZE RESPONSE
+ !
+ X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
+ X_rt%energy_steps   =200
+ X_rt%energy_range(:)=(/0._SP,20./HA2EV/)
+ X_rt%damp           ="NONE"
+ X_rt%damp_factor    =0.
+ Probe_Keyword ="none"
+ Pump_Keyword  ="none"
+ X_order       =1
+ !
+#endif
+ !
+ ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
+ !
+#if defined _YPP_MAGNETIC
+ !
+ l_angular_momentum=.false.
+ l_position=.false.
+ !
+#endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! DATABASES 
+ !===========
+ !
+#if defined _YPP_SC
+ ! 
+ call E_reset(E_dummy) 
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
  !
  !ANALIZE RESPONSE
  !
@@ -332,6 +422,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        ! GPL_EXCLUDE_END
        !
      endif
+#if defined _YPP_RT
+     if ( trim(rstr_piece(i1)) == 'CCA') l_retarded_GFs=.TRUE.
+#endif
      if ( trim(rstr_piece(i1)) == 'electrons') then
        !
        l_density        =trim(rstr_piece(i1+1))=='d'
@@ -344,6 +437,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
        !
        ! GPL_EXCLUDE_END SPIN_IGNORE
+       !
+#if defined _YPP_RT
+       l_RT_occupations   =trim(rstr_piece(i1+1))=='o'
+#endif
        !
 #if defined _YPP_ELPH
        l_eliashberg       =trim(rstr_piece(i1+1))=='e'
@@ -376,6 +473,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
      endif
      if ( trim(rstr_piece(i1)) == 'electrons') then
        if (l_bands)          call initactivate(1,'bnds')
+#if defined _YPP_RT	     
+       if (l_RT_occupations) call initactivate(1,'occupations')
+#endif	       
      endif
    enddo
  enddo
@@ -403,6 +503,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_gkkp      =runlevel_is_on('gkkp')
 #endif
 #if defined _YPP_RT
+ l_retarded_GFs     = runlevel_is_on('CCA')
+ l_RT_occupations   = runlevel_is_on('occupations')
+ l_fix_syms         = runlevel_is_on('fixsyms')
  l_RT_X             = runlevel_is_on('rtX')
 #endif
 #if defined _YPP_MAGNETIC
@@ -463,11 +566,15 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
 #endif
  !
- if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmInvMBaxis")
- if (l_fix_syms.and.n_spinor==2) call initactivate(1,"ExpandSymm")
- !
 #if defined _YPP_RT
  !             
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta Magnetization RmAllSymm RmTimeRev")
+ !
+ if (l_retarded_GFs) then
+   call QP_ctl_switch('G')
+   call initactivate(1,"RetGFbands RetGFkind T_step E_window E_step QP_width")
+ endif
+ !
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
    call initactivate(1,"TmRngeRt TmJumps DampMode DampFactor SkipJP_IO FrMinDamp RmAsymLim UseFFT")
@@ -475,20 +582,18 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  ! 
 #endif
  !
+ ! GPL_EXCLUDE_END
+ !
  ! Wannier 90 interface
  !
  if (l_wannier) call initactivate(1,"Seed WriteAMU QPdbPath")
  !
- ! GPL_EXCLUDE_END
- !
  if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat NoWeights GammaRadius")
  !
  if (l_electrons) then
-    if (l_dos.or.l_bands) call QP_ctl_switch('G')
-    if (l_dos) then
-      call initactivate(1,"OCCdT OCCTime")
-      call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad")
-    endif
+    if (l_dos.or.l_bands.or.l_RT_occupations) call QP_ctl_switch('G')
+    if (l_dos.or.l_RT_occupations) call initactivate(1,"TFit OCCdT OCCTime OCCTref")
+    if (l_dos) call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad")
  endif
  !
 #if defined _YPP_MAGNETIC
@@ -515,7 +620,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF")
+ if (l_gkkp.and..not.l_excitons) call initactivate(1,"DBsPATH PHfreqF GkkpExpand")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EEfermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif
@@ -531,7 +636,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  l_QP_init=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH
- if (.not.l_QP_init) l_QP_init=l_electrons.and.l_eliashberg
+ if (.not.l_QP_init) l_QP_init=(l_electrons.and.l_eliashberg)
 #endif
 #if defined _YPP_SC
  if (.not.l_QP_init) l_QP_init=l_electrons.and.l_mean_potential
@@ -539,8 +644,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_MAGNETIC
  if (.not.l_QP_init) l_QP_init=l_angular_momentum.or.l_position
 #endif
+#if defined _YPP_RT
+ if (.not.l_QP_init) l_QP_init=l_RT_occupations
+#endif
  !
- if (l_QP_init) call QP_init(.FALSE.,.FALSE.)
+ if (l_QP_init) call QP_init(.FALSE.,.TRUE.)
  !
 contains
  !

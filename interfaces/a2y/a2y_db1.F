@@ -294,8 +294,13 @@ subroutine a2y_db1(en,k,KSS_file_name)
      enddo
      wf_nc_k(ik)=ic
    enddo
+   ! 
+   ! GPL_EXCLUDE_START SPIN_IGNORE
    !
    if(i_spin>1) cycle
+   !
+   ! GPL_EXCLUDE_END SPIN_IGNORE
+   !
    wf_ncx=maxval(wf_nc_k)
    wf_ng=maxval(wf_igk_tmp)
    !

@@ -256,12 +256,12 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! i_spin=1
  ! GPL_INCLUDE_END SPIN_IGNORE
  ! 
- ! GPL_EXCLUDE_START SPIN_IGNORE
- !
- allocate(WF_disk_DP(ng_vec_abinit,n_spinor))
+ allocate(wf_disk_DP(ng_vec_abinit,n_spinor))
  allocate(wf_igk_tmp(ng_vec_abinit,k%nibz))
  wf_igk_tmp=-1
  WF_disk_DP=0._DP
+ !
+ ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  do i_spin=1,n_sp_pol
    !

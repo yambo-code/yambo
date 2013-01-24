@@ -31,7 +31,7 @@ subroutine electrons_driver(Xk,Xen)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_angular_momentum,&
-&                         l_position,l_current,l_bands,l_RT_occupations
+&                         l_position,l_current,l_bands,BANDS_range
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -70,9 +70,6 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_SC
  if (.not.flag) flag=l_mean_potential
 #endif
-#if defined _YPP_RT 
- if (.not.flag) flag=l_RT_occupations
-#endif
  !
  if (.not.flag) return
  !
@@ -92,6 +89,8 @@ subroutine electrons_driver(Xk,Xen)
  if (.not.flag) flag=l_mean_potential
 #endif
  !
+ if(l_bands) nb_to_load=BANDS_range
+ !
  if (flag) then
    call QP_state_table_setup(Xen)
    nb_to_load   =(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)         !(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
@@ -109,9 +108,6 @@ subroutine electrons_driver(Xk,Xen)
 #endif
 #if defined _YPP_SC
  if (flag) flag=.not.l_mean_potential
-#endif
-#if defined _YPP_RT 
- if (flag) flag=.not.l_RT_occupations
 #endif
  !
  if(flag) then
@@ -346,15 +342,6 @@ subroutine electrons_driver(Xk,Xen)
    !
    !
  endif
- !
-#if defined _YPP_RT
- !
- ! Real-Time occupations
- !=======================
- !
- if (l_RT_occupations) call RT_occupations_analyze(Xk,Xen)
- !
-#endif
  !
 #if defined _YPP_MAGNETIC
  !

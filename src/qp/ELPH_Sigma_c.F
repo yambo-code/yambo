@@ -21,11 +21,9 @@
 !
 subroutine ELPH_Sigma_c(en,k,q,qp)
  !
- ! This routine calculates the full dynamicsl el-ph self-energy
- ! calculated in the Fan + DW approximation.
- ! In the static and adiabatic limit it reduces to the 
- ! Allen-Cardona formulation (see for example 
- ! PRB 23, 1495 (1981) ).
+ ! This routine calculates the QP shifts due to el-ph intercation
+ ! following the Allen-Cardona formulation (see for example 
+ ! PRB 23, 1495 (1981) )
  !
  use pars,          ONLY:SP,DP,schlen,pi
  use units,         ONLY:HA2EV,HA2THZ
@@ -40,12 +38,12 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR_CL
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
-&                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
+&                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,QP_G_dr,&
 &                        On_Mass_Shell_approx
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,RL_vol
  use ELPH,          ONLY:elph_nb,ph_freqs_sq,elph_gkkp,&
-&                        elph_global_free,QP_PH_n_G_bands,W_debye,elph_DW,&
+&                        elph_global_free,QP_PH_n_G_bands,max_ph_freq,elph_DW,&
 &                        elph_nDBs,E_k_plus_q,elph_use_q_grid,&
 &                        setup_k_plus_q_levels,f_k_plus_q,elph_nDBs_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
@@ -68,7 +66,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  integer, external::ioELPH,QP_state_extract
  character(schlen)::ch
  real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,&
-&                   E_k_plus_q_at_gamma(elph_nb,k%nbz),elph_gkkp_sq,gsqF_damping
+&                   E_k_plus_q_at_gamma(elph_nb,k%nbz),elph_gkkp_sq,gsqF_damping,E_random_shift
  complex(SP)      ::delta_E
  logical          ::l_WRgFsq,l_GF_from_CA
  real(SP), allocatable :: q_weight(:)
@@ -172,7 +170,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  if (trim(QP_solver)=='g')  time_order_sign=1
  !
- ! Q ranges
+ ! Q ranges and Spherical RIM
+ !============================
  !
  !             / ypp_ph            elph_use_q_grid=F
  ! elph_nDBs = | 
@@ -186,16 +185,17 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! nq_to_sum = | 
  !              \ nqbz             elph_use_q_grid=T
  !
- !
- nq_to_sum=elph_nDBs_used
- if (elph_use_q_grid) nq_to_sum=q%nbz
- !
- allocate(q_weight(nq_to_sum))
- !
- ! Spherical RIM
- !===============
- !
- call rim_spherical(nq_to_sum,ph_qpt(1:nq_to_sum,1:3),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),2,.TRUE.)
+ if (elph_use_q_grid) then
+   nq_to_sum=q%nbz
+   call k_ibz2bz(q,'i',.TRUE.)
+   allocate(q_weight(nq_to_sum))
+   call rim_spherical(nq_to_sum,q%ptbz,q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),.TRUE.)
+   call k_ibz2bz(q,'d',.TRUE.)
+ else
+   nq_to_sum=elph_nDBs_used
+   allocate(q_weight(nq_to_sum))
+   call rim_spherical(nq_to_sum,ph_qpt,q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),.TRUE.)
+ endif
  !
  ! Parallelization
  !
@@ -251,7 +251,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      io_err=ioELPH(ID,'gkkp')
      if (io_err<0) call error('Missing Q-database')
      !
-     if (.not.elph_use_q_grid) call setup_k_plus_q_levels(en%Efermi(1))
+     if (.not.elph_use_q_grid) then
+       !
+       if (iq_bz==1) E_random_shift=E_k_plus_q(en%nbf,1,1)-en%E(en%nbf,1,1)
+       !
+       call setup_k_plus_q_levels(E_random_shift)
+       !
+     endif
      !
      ! I call live_timing here as in ioELPH the global_alloc() can 
      ! send a screen message about the allocated memory that can interferee
@@ -315,6 +321,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          ! k is in the IBZ and q is the PW_q (=-YAMBO_q)
          !
        endif
+       !
        do il=elph_branches(1),elph_branches(2)
          !
          ph_E=sqrt(abs(ph_freqs_sq(iq_ibz,il)))
@@ -417,7 +424,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Debye energy
  !
- call msg('nr','[Ph] Debye energy [ev/ThZ]:',(/W_debye*HA2EV,W_debye*HA2THZ/))
+ call msg('nr','[Ph] Debye energy [ev/ThZ]:',(/max_ph_freq*HA2EV,max_ph_freq*HA2THZ/))
  !
  ! All 2 All
  !
@@ -534,7 +541,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          do il=elph_branches(1),elph_branches(2)
            !
-           ph_freq=sqrt(ph_freqs_sq(iq_loop,il))
+           if (.not.elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq(iq_loop,il))
+           if (     elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq( q%sstar(iq_loop,1) ,il))
            !
            do iw=1,gsqF_energy_steps
              !

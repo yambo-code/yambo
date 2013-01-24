@@ -103,7 +103,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  ! BANDS
  !
  BANDS_steps=0
- BANDS_range=0
+ BANDS_range=(/1,n_bands/)
  l_bands=.false.
  !
  !

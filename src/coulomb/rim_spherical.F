@@ -27,7 +27,8 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  !                         = 1/vol \sum_{Qi} \int_Si d3q/q^power [q^power F(q)] ~
  !                         ~ 1/vol \sum_{Qi} [Qi^power F(Qi)] \int_Si d3q/q^power
  !
- ! with Si a sphere of radius "radius" and volume vol/Np
+ ! with Si a sphere of radius "radius" and volume vol/Np. F(q) is divergent at gamma
+ ! and it goes like 1/q^2. Therefore [q^2 F(q)] is regular.
  !
  ! Finally I will rewrite 
  !

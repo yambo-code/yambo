@@ -41,8 +41,7 @@ integer function ioQP(what,qp,ID)
  !
  implicit none
  type(QP_t)  ::qp
- character(*)::what 
- !             'QP'/'W'/'G'/filename
+ character(*)::what ! 'QP'/'W'/'G'/filename
  integer     ::ID
  !
  ! Work Space
@@ -51,6 +50,7 @@ integer function ioQP(what,qp,ID)
 &                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,var_size
  character(schlen)    ::ch
  character(2)         ::OP(1)
+ logical              ::Terminator_msg
  integer ,    allocatable ::qp_table_disk(:,:)
  real(SP),    allocatable ::qp_DATA_disk(:,:,:),QP_W_disk(:,:,:),QP_Sc_disk(:,:)
  !
@@ -117,8 +117,8 @@ integer function ioQP(what,qp,ID)
      if (ver_is_gt_or_eq(ID,(/3,0,1/)))     var_size=5 
      if (ver_is_gt_or_eq(ID,revision=1255)) var_size=6 
      if (ver_is_gt_or_eq(ID,revision=1339)) var_size=7 
-     if (ver_is_gt_or_eq(ID,revision=1385)) var_size=9 
    endif
+   if (what/="W".and.ver_is_gt_or_eq(ID,(/3,2,5/))) var_size=9 
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=var_size,MENU=0)
    !
@@ -130,6 +130,7 @@ integer function ioQP(what,qp,ID)
    call io_elemental(ID,I0=qp%n_states,DB_I0=QP_n_states_disk,&
 &       VAR=' QP tot states          :',CHECK=.true.,OP=OP)
    !
+   Terminator_msg=.FALSE.
    if (what/="W") then
      if (ver_is_gt_or_eq(ID,(/3,0,1/))) &
 &      call io_elemental(ID,I0=GWo_iterations,&
@@ -140,13 +141,15 @@ integer function ioQP(what,qp,ID)
 &                        VAR=' Self-energy terminator :',CHECK=.true.,OP=(/"=="/))
      if (ver_is_gt_or_eq(ID,revision=1339)) &
         call io_elemental(ID,R0=GW_en_comp,&
-&                         VAR=' Self-energy terminator pole:',CHECK=.true.,OP=(/"=="/))
-     if (ver_is_gt_or_eq(ID,revision=1385)) then
-       call io_elemental(ID,L0=PPa_terminator,&
-&         VAR=' Self-energy terminator :',CHECK=.true.,OP=(/"=="/))
-       call io_elemental(ID,R0=GW_en_comp,&
-&         VAR=' Self-energy terminator pole:',CHECK=.true.,OP=(/"=="/))
-     endif
+&                        VAR=' Terminator pole        :',CHECK=.true.,OP=(/"=="/))
+     Terminator_msg=ver_is_gt_or_eq(ID,revision=1255)
+   endif
+   !    
+   if (ver_is_gt_or_eq(ID,(/3,2,5/)).and.what/="W".and..not.Terminator_msg) then
+     call io_elemental(ID,L0=PPa_terminator,&
+&       VAR=' Self-energy terminator :',CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,R0=GW_en_comp,&
+&       VAR=' Terminator pole        :',CHECK=.true.,OP=(/"=="/))
    endif
    !    
    call io_elemental(ID,I0=qp%n_descs,DB_I0=n_descs_disk,CHECK=.true.,OP=OP)

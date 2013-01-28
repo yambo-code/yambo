@@ -25,7 +25,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use pars,           ONLY:pi
  use units,          ONLY:HA2EV,FS2AUT
  use wave_func,      ONLY:wf_ng 
- use D_lattice,      ONLY:alat
+ use D_lattice,      ONLY:alat,i_time_rev
  use R_lattice,      ONLY:ng_vec,nkibz
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
@@ -463,8 +463,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
 #endif
  !
- if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmInvMBaxis")
- if (l_fix_syms.and.n_spinor==2) call initactivate(1,"ExpandSymm")
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
+ if (l_fix_syms.and.n_spinor==2.and.i_time_rev==0) call initactivate(1,"ExpandSymm")
  !
 #if defined _YPP_RT
  !             

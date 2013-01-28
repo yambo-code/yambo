@@ -43,7 +43,7 @@ subroutine e2y_db1(en,k,ncid)
  use etsf_data
  use pars,                 only : SP, DP, PI, schlen
  use com,                  only : msg, error
- use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, spin_orbit
+ use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, l_spin_orbit
  use wave_func,            only : wf_ncx
  use R_lattice,            only : bz_samp
  use D_lattice,            only : nsym, n_atomic_species
@@ -366,7 +366,7 @@ contains
     ! yet supported properly
     !
     use D_lattice,            only : input_GS_Tel, n_atomic_species, n_atoms_species
-    use electrons,            only : spin_orbit, default_nel
+    use electrons,            only : l_spin_orbit, default_nel
     use xc_functionals,       only : GS_xc_KIND,GS_xc_FUNCTIONAL
     use mod_xc2y,             only : XC_yamboID, XC_yamboID2kind
     integer                       :: i1
@@ -397,12 +397,12 @@ contains
     allocate(spin_orbit_atom_(n_atomic_species))
     call etsf_io_low_read_var(ncid, "so_typat", spin_orbit_atom_, lstat)
     if(lstat) then
-      spin_orbit = .false.
+      l_spin_orbit = .false.
       if(any(spin_orbit_atom_.eq.2).or.any(spin_orbit_atom_.eq.3)) then
-        spin_orbit = .true.
+        l_spin_orbit = .true.
       endif
     else
-      spin_orbit = .false.
+      l_spin_orbit = .false.
     endif
     deallocate(spin_orbit_atom_)
     !

@@ -86,7 +86,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  if (mag_syms) call msg('s','There is T-rev with (a) [a magnetic field] or (b) [SOC in a magnetic system]')
  !
  if (Expand_syms) then
-   call msg('s','Expand symmetries selected. All other option will be discarded')
+   call msg('s','Expand symmetries selected. All other options will be discarded')
    if(n_spinor/=2) then
      call msg('s','Expand symmetries meaningful only if n_spinor=2. End program')
      return

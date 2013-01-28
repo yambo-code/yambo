@@ -24,7 +24,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use pars,                  ONLY: SP, DP,pi
  use com,                   ONLY: msg,warning,error
  use electrons,             ONLY: levels, default_nel,n_bands,n_spin,n_sp_pol,&
-&                                 n_spinor,spin_orbit 
+&                                 n_spinor,l_spin_orbit,n_spin_den 
  use R_lattice,             ONLY: bz_samp, ng_vec, g_vec,nkibz, b
  use D_lattice,             ONLY: DL_vol, a, alat, input_GS_Tel,i_space_inv,&
 &                                 n_atomic_species,n_atoms_species,i_time_rev,&
@@ -81,12 +81,12 @@ subroutine a2y_db1(en,k,KSS_file_name)
  l_many_proj= (ishm==-1)
  !
  if(     l_many_proj) then
-   read(11)  pp_n_l_max, psp_so
+   read(11)  pp_n_l_max, psp_so, n_spin_den 
    read(11) 
    read(11) 
    read(11) 
    !
-   spin_orbit=(psp_so>1)
+   l_spin_orbit=(psp_so>1)
  else
    pp_n_l_max=abs(pp_n_l_times_proj_max)
  endif

@@ -247,6 +247,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
    !
    call msg('l','done')
    !
+   if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
+   !
  endif
  !
  call msg('s','Energies...')

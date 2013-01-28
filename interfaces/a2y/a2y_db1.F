@@ -24,7 +24,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use pars,                  ONLY: SP, DP,pi
  use com,                   ONLY: msg,warning,error
  use electrons,             ONLY: levels, default_nel,n_bands,n_spin,n_sp_pol,&
-&                                 n_spinor,spin_orbit 
+&                                 n_spinor,l_spin_orbit,n_spin_den 
  use R_lattice,             ONLY: bz_samp, ng_vec, g_vec,nkibz, b
  use D_lattice,             ONLY: DL_vol, a, alat, input_GS_Tel,i_space_inv,&
 &                                 n_atomic_species,n_atoms_species,i_time_rev,&
@@ -81,12 +81,12 @@ subroutine a2y_db1(en,k,KSS_file_name)
  l_many_proj= (ishm==-1)
  !
  if(     l_many_proj) then
-   read(11)  pp_n_l_max, psp_so
+   read(11)  pp_n_l_max, psp_so, n_spin_den 
    read(11) 
    read(11) 
    read(11) 
    !
-   spin_orbit=(psp_so>1)
+   l_spin_orbit=(psp_so>1)
  else
    pp_n_l_max=abs(pp_n_l_times_proj_max)
  endif
@@ -220,12 +220,13 @@ subroutine a2y_db1(en,k,KSS_file_name)
  enddo
  call msg('l','done')
  !
+ ng_vec=ng_vec_abinit
+ !
  if( i_time_rev==1 .or. i_space_inv==1) then
    !
    call msg('s','Closing shells...')
    !============================
    !
-   ng_vec=ng_vec_abinit
    allocate(g_vec_tmp(2*ng_vec,3))
    g_vec_tmp(1:ng_vec,:)=g_vec
    deallocate(g_vec)
@@ -255,12 +256,12 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! i_spin=1
  ! GPL_INCLUDE_END SPIN_IGNORE
  ! 
- ! GPL_EXCLUDE_START SPIN_IGNORE
- !
- allocate(WF_disk_DP(ng_vec_abinit,n_spinor))
+ allocate(wf_disk_DP(ng_vec_abinit,n_spinor))
  allocate(wf_igk_tmp(ng_vec_abinit,k%nibz))
  wf_igk_tmp=-1
  WF_disk_DP=0._DP
+ !
+ ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  do i_spin=1,n_sp_pol
    !
@@ -293,8 +294,13 @@ subroutine a2y_db1(en,k,KSS_file_name)
      enddo
      wf_nc_k(ik)=ic
    enddo
+   ! 
+   ! GPL_EXCLUDE_START SPIN_IGNORE
    !
    if(i_spin>1) cycle
+   !
+   ! GPL_EXCLUDE_END SPIN_IGNORE
+   !
    wf_ncx=maxval(wf_nc_k)
    wf_ng=maxval(wf_igk_tmp)
    !

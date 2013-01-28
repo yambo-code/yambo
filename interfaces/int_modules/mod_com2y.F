@@ -69,7 +69,7 @@ module mod_com2y
    subroutine symmetries_check_and_load(int_sop,nsym_,t_rev)
      !
      use com,       ONLY:msg,error
-     use electrons, ONLY:spin_orbit
+     use electrons, ONLY:l_spin_orbit,n_spin_den
      use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,mag_syms,inv_index,&
 &                        atoms_spatial_invertion,i_space_inv,alat
      use R_lattice, ONLY:b,rl_sop
@@ -91,8 +91,8 @@ module mod_com2y
        double_symmetries=.not.mag_syms
      else
        i_time_rev=1
-       if(spin_orbit) i_time_rev=0
-       double_symmetries=.not.spin_orbit
+       if(l_spin_orbit.and.n_spin_den==4) i_time_rev=0
+       double_symmetries=.not.(l_spin_orbit.and.n_spin_den==4)
      endif
      !
      ! Space Invertion (possible only for v >= 3.0.4)
@@ -224,7 +224,7 @@ module mod_com2y
    subroutine print_interface_dimensions(en,k)
      use com,                   ONLY : msg
      use electrons,             ONLY : levels, default_nel, n_spin, n_sp_pol, &
-&                                      n_spinor, spin_orbit
+&                                      n_spinor, l_spin_orbit
      use R_lattice,             ONLY : bz_samp, ng_vec, g_vec
      use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                      DL_vol, a, alat, input_GS_Tel, &
@@ -244,7 +244,7 @@ module mod_com2y
      call msg('s',' :: Bands                 :',en%nb)
      call msg('s',' :: Spinor components     :',n_spinor)
      call msg('s',' :: Spin polarizations    :',n_sp_pol)
-     call msg('s',' :: Spin orbit coupling   : ',spin_orbit)
+     call msg('s',' :: Spin orbit coupling   : ',l_spin_orbit)
      call msg('s',' :: Symmetries   [spatial]:',nsym/(i_time_rev+1))
      call msg('s',' ::                [T-rev]: ',i_time_rev==1)
      call msg('s',' :: Max WF components     :',wf_ncx)

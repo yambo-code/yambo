@@ -36,7 +36,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  use stderr,              ONLY:intc
  use wave_func,           ONLY:wf_nb_io_groups,wf_ng
  use R_lattice,           ONLY:bz_samp,ng_closed,g_rot,nXkibz,ng_vec
- use mod_com2y,           ONLY:ng_vec_abinit
  use D_lattice,           ONLY:n_atomic_species
  use electrons,           ONLY:levels
  !

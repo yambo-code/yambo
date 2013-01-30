@@ -128,18 +128,19 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
       end do
       l = pseudo%lbeta(ibeta)
       j=0
-      if(n_spinor==2) j = pseudo%jbeta(ibeta)
+      if(pseudo%psp_has_so) j = pseudo%jbeta(ibeta)
       do i_spinor=1,n_spinor
-        if(n_spinor==1) then
+        if(.not.pseudo%psp_has_so) then
           mmin=-l
           mmax= l
-        endif
-        if(n_spinor==2.and.j>l) then
-          mmin=-l-1+(i_spinor-1)
-          mmax= l+(i_spinor-1)
-        elseif(n_spinor==2.and.j<l) then
-          mmin=-l+(i_spinor-1)
-          mmax= l-1+(i_spinor-1)
+        else
+          if(j>l) then
+            mmin=-l-1+(i_spinor-1)
+            mmax= l+(i_spinor-1)
+          elseif(j<l) then
+            mmin=-l+(i_spinor-1)
+            mmax= l-1+(i_spinor-1)
+          endif
         endif
         do m=mmin,mmax
           iproj(i_spinor) = iproj(i_spinor) + 1
@@ -153,11 +154,14 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
             enddo
             cycle
           endif
-          spinor_factor=1.
-          if(j>l.and.i_spinor==1) spinor_factor= sqrt(real((l+m+1))/real(2*l+1))
-          if(j>l.and.i_spinor==2) spinor_factor= sqrt(real((l-m+1))/real(2*l+1))
-          if(j<l.and.i_spinor==1) spinor_factor= sqrt(real((l-m  ))/real(2*l+1))
-          if(j<l.and.i_spinor==2) spinor_factor=-sqrt(real((l+m  ))/real(2*l+1))
+          if(.not.pseudo%psp_has_so) then
+            spinor_factor=1.
+          else
+            if(j>l.and.i_spinor==1) spinor_factor= sqrt(real((l+m+1))/real(2*l+1))
+            if(j>l.and.i_spinor==2) spinor_factor= sqrt(real((l-m+1))/real(2*l+1))
+            if(j<l.and.i_spinor==1) spinor_factor= sqrt(real((l-m  ))/real(2*l+1))
+            if(j<l.and.i_spinor==2) spinor_factor=-sqrt(real((l+m  ))/real(2*l+1))
+          endif
           ! componente normale
           do ipw=1,npw
             tmp = xlylm(ipw,m,l) * &

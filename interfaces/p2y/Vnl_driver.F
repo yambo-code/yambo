@@ -31,7 +31,7 @@ subroutine Vnl_driver(en,k)
  use wave_func,             ONLY:wf_nc_k, wf_ncx, wf_igk, wf_ng
  use X_m,                   ONLY:X_t
  use pseudo,                ONLY:Vnl
- use com,                   ONLY:msg
+ use com,                   ONLY:msg,warning
  use timing,                ONLY:live_timing
  use memory_m,              ONLY:mem_est
  use IO_m,                  ONLY:io_control,OP_WR_CL,REP
@@ -115,6 +115,9 @@ subroutine Vnl_driver(en,k)
  call msg('s','Import atoms data...')
  call fill_atoms(atoms,struct)
  call msg("l","done")
+ !
+ if(n_spinor==2.and.any(.not.atoms%pseudo(:)%psp_has_so))&
+&  call warning(' n_spinor=2 but some pseudo does not contain SO')
  !
  call msg('s','Initialize basis data...')
  call pw_basis_init(basis_con,struct)
@@ -333,7 +336,7 @@ subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
  !
  call read_pseudo_data(psfile,nmesh,nbeta,pseudo%z,pseudo%mesh,&
 &                      pseudo%wmesh,pseudo%vloc,pseudo%lbeta,pseudo%jbeta,&
-&                      pseudo%mesh_beta,pseudo%beta,pseudo%d)
+&                      pseudo%mesh_beta,pseudo%beta,pseudo%d,pseudo%psp_has_so)
  !
  ! Fill the pseudo%interpolation table
  ! ecutwfc(Ha) -> cutoff(Ry)

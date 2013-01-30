@@ -34,7 +34,7 @@ subroutine K_output_file(iq,mode)
  use pars,      ONLY:cI
  use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,hbar_SI
  use drivers,   ONLY:l_kerr,l_anomalous_Hall
- use X_output,  ONLY:moke_file_name,off_file_name
+ use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name
  use KERR,      ONLY:B_Hall
 #endif
  !
@@ -47,7 +47,7 @@ subroutine K_output_file(iq,mode)
  character(2)      :: title_mode
  integer           :: iw,n_output_data
  real(SP)          :: output_data(7)
- complex(SP)       :: eels(3,BSS_n_freqs),alpha(3,BSS_n_freqs)
+ complex(SP)       :: eels(3,BSS_n_freqs),alpha(3,BSS_n_freqs),beta(3,BSS_n_freqs)
  logical           :: eval_eels
  !
  ! File Names 
@@ -76,10 +76,6 @@ subroutine K_output_file(iq,mode)
  if (BS_K_coupling) ordering='c'
  eval_eels= O_eels(X_epsilon(1,:),BSS_n_freqs,.TRUE.,ordering)
  !
-#if defined _KERR
- if(l_kerr) eval_eels=.false.
-#endif
- !
  title_mode='Ot'
  if (mode<0) title_mode='ot'
  !
@@ -92,6 +88,7 @@ subroutine K_output_file(iq,mode)
 #if defined _KERR
  if(l_kerr) then
    call of_open_close(off_file_name,title_mode)
+   if (eval_alpha) call of_open_close(beta_file_name,title_mode)
    call of_open_close(moke_file_name,title_mode)
  endif
 #endif
@@ -161,6 +158,13 @@ subroutine K_output_file(iq,mode)
      if (mode/=1.and.mode/=4) call msg("o off",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (mode==4) call msg("o off",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
      !
+     if (eval_alpha) then 
+       call X_setup_headers('beta')
+       if (mode==1) call msg("o beta",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+       if (mode/=1.and.mode/=4) call msg("o beta",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+       if (mode==4) call msg("o beta",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+     endif
+     !
      call X_setup_headers('moke')
      if (mode==1) call msg("o moke",'#',headers,INDENT=0,USE_TABS=.TRUE.)
      if (mode/=1.and.mode/=4) call msg("o moke",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
@@ -169,7 +173,7 @@ subroutine K_output_file(iq,mode)
    endif
 #endif
    !
-   call msg("o eps eel alpha off moke",'#')
+   call msg("o eps eel alpha off beta moke",'#')
    !
    ! ABSORPTION
    !------------
@@ -240,6 +244,11 @@ subroutine K_output_file(iq,mode)
    !------
    if(l_kerr) then
      !
+     if(eval_alpha) then
+       beta(1,:)=X_epsilon(5,:)/4./pi*eps_2_alpha
+       beta(2,:)=X_epsilon(6,:)/4./pi*eps_2_alpha
+     endif
+     !
      ! eps_xy
      !
      do iw=1,BSS_n_freqs 
@@ -251,6 +260,22 @@ subroutine K_output_file(iq,mode)
        if (mode==4) n_output_data=3
        if (mode==4) output_data(2:3)=output_data(4:5)
        call msg('o off','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+       !
+       if(eval_alpha) then
+         !
+         ! alpha_xy
+         !
+         output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,aimag(beta(1,iw)),real(beta(1,iw)),&
+&                  aimag(beta(2,iw)),real(beta(2,iw))/)
+         n_output_data=5
+         if (mode==1) n_output_data=7
+         if (mode==1) output_data(6:7)=(/aimag(beta(3,iw)),real(beta(3,iw))/)
+         if (mode==4) n_output_data=3
+         if (mode==4) output_data(2:3)=output_data(4:5)
+         call msg("o beta",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
+         !
+       endif
+       !
      enddo
      !
      ! Kerr parameters
@@ -286,6 +311,7 @@ subroutine K_output_file(iq,mode)
 #if defined _KERR
  if(l_kerr) then
    call of_open_close(off_file_name)
+   call of_open_close(beta_file_name)
    call of_open_close(moke_file_name)
  endif
 #endif

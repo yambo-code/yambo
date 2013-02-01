@@ -33,22 +33,23 @@ subroutine check_periodic_directions()
  !
  integer  :: non_p_dir(3),i1,ia,i_check
  real(SP) :: non_p_dot_product(3),periodic_length,non_periodic_length
- logical  :: l_3D,l_2D,l_1D
+ logical  :: l_0D,l_1D,l_2D,l_3D
  !
  non_p_dir=0
  if (index(non_periodic_directions,'x')+index(non_periodic_directions,'X')/=0) non_p_dir(1)=1
  if (index(non_periodic_directions,'y')+index(non_periodic_directions,'Y')/=0) non_p_dir(2)=1
  if (index(non_periodic_directions,'z')+index(non_periodic_directions,'Z')/=0) non_p_dir(3)=1
  !
- l_3D=all(non_p_dir/=0)
- l_2D=sum(non_p_dir)==2
- l_1D=sum(non_p_dir)==1
+ l_0D=all(non_p_dir/=0)
+ l_1D=sum(non_p_dir)==2
+ l_2D=sum(non_p_dir)==1
+ l_3D=all(non_p_dir==0)
  !
- if (.not.l_3D.and..not.l_2D.and..not.l_1D) return
+ if (l_3D) return
  !
- ! 3D case
+ ! 0D case
  !
- if (l_3D) then 
+ if (l_0D) then 
    alpha_dim='volume'
    eps_2_alpha=DL_vol
    eval_alpha=.TRUE.
@@ -62,7 +63,7 @@ subroutine check_periodic_directions()
  ! there must be two cell unit vectors _|_ to the 1D non periodic direction that must be
  ! parallel to the third unit cell vector
  !
- if (l_2D.or.l_1D) then 
+ if (l_1D.or.l_2D) then 
    do ia=1,3
      non_p_dot_product(ia)=0.
      do i1=1,3
@@ -73,17 +74,17 @@ subroutine check_periodic_directions()
    do ia=1,3
      if ( abs(non_p_dot_product(ia)-sum(abs(a(ia,:)))) < 1.E-5 ) then
        i_check=i_check+1
-       if (l_1D) non_periodic_length=v_norm(a(ia,:))
+       if (l_2D) non_periodic_length=v_norm(a(ia,:))
      else if (non_p_dot_product(ia)<1.E-5) then
        i_check=i_check+1
-       if (l_2D) periodic_length=v_norm(a(ia,:))
+       if (l_1D) periodic_length=v_norm(a(ia,:))
      endif
      if (i_check==3) then
-       if (l_2D) then
+       if (l_1D) then
          eps_2_alpha=DL_vol/periodic_length
          alpha_dim='area'
        endif
-       if (l_1D) then
+       if (l_2D) then
          eps_2_alpha=non_periodic_length
          alpha_dim='length'
        endif

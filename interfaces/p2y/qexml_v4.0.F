@@ -2932,7 +2932,7 @@ subroutine read_pseudo_header(u,z,psfile,nmesh,nbeta,psp_has_so)
   character(50) :: dummy
   logical       :: ldummy
   INTEGER :: i,idummy,idummy2, unit, iostat, u,ierr
-  logical :: psp_has_so_=.false.
+  logical :: psp_has_so_
 
   CALL iotk_free_unit(u)
   filename= TRIM(datadir_in)//trim(psfile)
@@ -2944,11 +2944,13 @@ subroutine read_pseudo_header(u,z,psfile,nmesh,nbeta,psp_has_so)
   CALL read_upf_header_v2( u, z, nmesh, nbeta, psfile, psp_has_so_, ierr )
   if(ierr>0) THEN
       REWIND(u)
+      psp_has_so_=.false.
       CALL read_upf_header_v1( u, z, nmesh, nbeta, psfile, ierr )
    ENDIF
    close(unit=u)
    !
    if(present(psp_has_so)) psp_has_so=psp_has_so_
+   !
    return
 end subroutine read_pseudo_header
 
@@ -3057,28 +3059,28 @@ end subroutine read_upf_header_v1
   end function matches
 
 subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,&
-&          wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d) 
+&          wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psp_has_so) 
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   !
   INTEGER, INTENT(INOUT) :: nmesh,nbeta
-  REAL, INTENT(OUT)    :: z
-  REAL, INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
-  INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
+  REAL, INTENT(OUT)      :: z
+  REAL, INTENT(OUT)      :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
+  INTEGER, INTENT(OUT)   :: lbeta(:),mesh_beta(:)
+  LOGICAL, INTENT(INOUT) :: psp_has_so
     !
     CHARACTER(256) :: filename
     character(50) :: dummy
     logical       :: ldummy
-    logical       :: psp_has_so_
     INTEGER :: idummy,ibeta,idummy2
     INTEGER        :: i, iostat, u
 
     !
     ! Header data (sets value of unit u)
     !
-    call read_pseudo_header(u,z,psfile, nmesh, nbeta, psp_has_so=psp_has_so_)
+    call read_pseudo_header(u,z,psfile, nmesh, nbeta, psp_has_so=psp_has_so)
     !
-    call read_pseudo_parameters(u,nmesh,nbeta,mesh,psp_has_so_, &
+    call read_pseudo_parameters(u,nmesh,nbeta,mesh,psp_has_so, &
 &                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile)
     !
     return 

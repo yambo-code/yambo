@@ -34,10 +34,11 @@ module electrons
  !
  ! Spin support
  !
- !     n_spin n_sp_pol n_spinor  
- !       1        1        1              
- !       2        1        2    non collinear
- !       2        2        1        collinear
+ !     n_spin n_sp_pol n_spinor n_spin_den 
+ !       1        1        1       1              
+ !       2        1        2       1          non collinear, v[rho] 
+ !       2        1        2       4          non collinear, v[rho_{\sigma,\tau}] 
+ !       2        2        1       2          collinear,     v[rho_{\sigma}]
  !
  ! Note that in the non collinear case n_spin is an index
  ! for the spinor components. It is not a Physical quantity.
@@ -45,7 +46,9 @@ module electrons
  integer  :: n_spin
  integer  :: n_sp_pol
  integer  :: n_spinor
- logical  :: spin_orbit
+ integer  :: n_spin_den
+ !
+ logical  :: l_spin_orbit
  !
  ! Average magnetization density
  !

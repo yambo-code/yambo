@@ -39,6 +39,7 @@ module pw_data
   integer                    :: nsym_, isym_(3,3,48)
   integer                    :: t_rev_(48)
   logical                    :: invsym_
+  logical                    :: trevsym_
 
 ! Planewaves
   integer                    :: ngm_, npwx_

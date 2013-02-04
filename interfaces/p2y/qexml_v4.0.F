@@ -1792,12 +1792,13 @@ CONTAINS
     !
     !
     !------------------------------------------------------------------------
-    SUBROUTINE qexml_read_symmetry( nsym, invsym, trasl, s, sname, s_units, t_rev, &
+    SUBROUTINE qexml_read_symmetry( nsym, invsym, trevsym, trasl, s, sname, s_units, t_rev, &
                                     irt, nat, ierr )
       !------------------------------------------------------------------------
       !
       INTEGER,          OPTIONAL, INTENT(OUT) :: nsym
       LOGICAL,          OPTIONAL, INTENT(OUT) :: invsym
+      LOGICAL,          OPTIONAL, INTENT(OUT) :: trevsym
       INTEGER,          OPTIONAL, INTENT(OUT) :: s(:,:,:)
       REAL(dbl),        OPTIONAL, INTENT(OUT) :: trasl(:,:)
       CHARACTER(LEN=*), OPTIONAL, INTENT(OUT) :: sname(:)
@@ -1808,7 +1809,7 @@ CONTAINS
       !
       INTEGER              :: nsym_
       CHARACTER(256)       :: sname_(48), s_units_
-      LOGICAL              :: invsym_
+      LOGICAL              :: invsym_, trevsym_
       INTEGER              :: s_(3,3,48)
       REAL(dbl)            :: trasl_(3,48)
       INTEGER              :: t_rev_(48)
@@ -1828,6 +1829,9 @@ CONTAINS
       IF (ierr/=0) RETURN
       !
       CALL iotk_scan_dat( iunit, "INVERSION_SYMMETRY", invsym_, IERR=ierr )
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_dat( iunit, "TIME_REVERSAL_FLAG", trevsym_, IERR=ierr )
       IF (ierr/=0) RETURN
       !
       CALL iotk_scan_dat( iunit, "NUMBER_OF_ATOMS", nat_, IERR=ierr )
@@ -1873,6 +1877,7 @@ CONTAINS
       !
       IF ( PRESENT(nsym) )        nsym          = nsym_
       IF ( PRESENT(invsym) )      invsym        = invsym_
+      IF ( PRESENT(trevsym) )     trevsym       = trevsym_
       IF ( PRESENT(nat) )         nat           = nat_
       IF ( PRESENT(trasl) )       trasl(1:3, 1:nsym_)   = trasl_(1:3, 1:nsym_)
       IF ( PRESENT(s) )           s(1:3, 1:3, 1:nsym_)  = s_(1:3, 1:3, 1:nsym_)

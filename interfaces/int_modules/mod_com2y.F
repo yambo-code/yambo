@@ -66,7 +66,7 @@ module mod_com2y
      !
    end subroutine
    !
-   subroutine symmetries_check_and_load(int_sop,nsym_,t_rev)
+   subroutine symmetries_check_and_load(int_sop,nsym_,trevsym,t_rev)
      !
      use com,       ONLY:msg,error
      use electrons, ONLY:l_spin_orbit,n_spin_den
@@ -76,6 +76,7 @@ module mod_com2y
      !
      integer :: nsym_
      integer :: int_sop(3,3,nsym_) ! Symmetries in RLU
+     logical, optional :: trevsym
      integer, optional :: t_rev(nsym_)
      !
      integer :: is,is_spatial,is_trev,is_yambo,i2,i3
@@ -85,14 +86,16 @@ module mod_com2y
      !
      mag_syms=.false.
      inv_index=-1
-     if(present(t_rev)) then
-       i_time_rev=1
-       if(any(t_rev(:)==1)) mag_syms=.true.
+     if(present(t_rev).and.present(trevsym)) then
+       if(trevsym) i_time_rev=1
+       if(any(t_rev(:)==1)) then
+         mag_syms=.true.
+         i_time_rev=1
+       endif
        double_symmetries=.not.mag_syms
      else
        i_time_rev=1
        if(l_spin_orbit.and.n_spin_den==4) i_time_rev=0
-       double_symmetries=.not.(l_spin_orbit.and.n_spin_den==4)
      endif
      !
      ! Space Invertion (possible only for v >= 3.0.4)

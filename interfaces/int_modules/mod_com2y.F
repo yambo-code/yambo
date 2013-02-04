@@ -70,7 +70,7 @@ module mod_com2y
      !
      use com,       ONLY:msg,error
      use electrons, ONLY:l_spin_orbit,n_spin_den
-     use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,mag_syms,&
+     use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,mag_syms,inv_index,&
 &                        atoms_spatial_invertion,i_space_inv,alat
      use R_lattice, ONLY:b,rl_sop
      !
@@ -85,7 +85,9 @@ module mod_com2y
      real(SP):: sop_mat(3,3)
      !
      mag_syms=.false.
+     inv_index=-1
      if(present(t_rev).and.present(trevsym)) then
+       i_time_rev=0
        if(trevsym) i_time_rev=1
        if(any(t_rev(:)==1)) then
          mag_syms=.true.
@@ -95,7 +97,7 @@ module mod_com2y
      else
        i_time_rev=1
        if(l_spin_orbit.and.n_spin_den==4) i_time_rev=0
-       double_symmetries=.not.(l_spin_orbit.and.n_spin_den==4)
+       double_symmetries=(i_time_rev==1)
      endif
      !
      ! Space Invertion (possible only for v >= 3.0.4)
@@ -211,6 +213,7 @@ module mod_com2y
        sop_mat=matmul(transpose(a),int_sop(:,:,is))
        dl_sop(:,:,is_yambo)=matmul(sop_mat,b)/2._SP/pi
        if (double_symmetries) dl_sop(:,:,is_yambo+nsym_)=-dl_sop(:,:,is_yambo)
+       if (mag_syms.and.(is_yambo>nsym/(1+i_time_rev))) dl_sop(:,:,is_yambo)=-dl_sop(:,:,is_yambo)
      enddo
      !
      allocate(rl_sop(3,3,nsym))

@@ -79,7 +79,7 @@ module mod_com2y
      logical, optional :: trevsym
      integer, optional :: t_rev(nsym_)
      !
-     integer :: is,is_spatial,is_trev,is_yambo,i2,i3
+     integer :: is,is_inv,is_spatial,is_trev,is_yambo,i2,i3
      logical :: l_identity,l_inversion
      logical :: double_symmetries
      real(SP):: sop_mat(3,3)
@@ -87,6 +87,7 @@ module mod_com2y
      mag_syms=.false.
      inv_index=-1
      if(present(t_rev).and.present(trevsym)) then
+       i_time_rev=0
        if(trevsym) i_time_rev=1
        if(any(t_rev(:)==1)) then
          mag_syms=.true.
@@ -96,6 +97,7 @@ module mod_com2y
      else
        i_time_rev=1
        if(l_spin_orbit.and.n_spin_den==4) i_time_rev=0
+       double_symmetries=(i_time_rev==1)
      endif
      !
      ! Space Invertion (possible only for v >= 3.0.4)
@@ -130,7 +132,7 @@ module mod_com2y
 &          int_sop(2,1,is)==0.and.int_sop(2,2,is)==-1.and.int_sop(2,3,is)==0.and.&
 &          int_sop(3,1,is)==0.and.int_sop(3,2,is)==0.and.int_sop(3,3,is)==-1) then
          l_inversion=.true.
-         inv_index=is
+         is_inv=is
        endif 
      enddo
      !
@@ -151,11 +153,7 @@ module mod_com2y
      ! Identity was stripped in outkss: swap all
      ! symmetries with their inversions
      !
-     if (.not.l_identity.and.l_inversion) then
-       int_sop=-int_sop
-       l_identity=.true.
-       l_inversion=.false.
-     endif
+     if (.not.l_identity.and.l_inversion) int_sop=-int_sop
      !
      if (force_noSYMM) i_time_rev=0
      ! 
@@ -215,6 +213,7 @@ module mod_com2y
        sop_mat=matmul(transpose(a),int_sop(:,:,is))
        dl_sop(:,:,is_yambo)=matmul(sop_mat,b)/2._SP/pi
        if (double_symmetries) dl_sop(:,:,is_yambo+nsym_)=-dl_sop(:,:,is_yambo)
+       if (mag_syms.and.(is_yambo>nsym/(1+i_time_rev))) dl_sop(:,:,is_yambo)=-dl_sop(:,:,is_yambo)
      enddo
      !
      allocate(rl_sop(3,3,nsym))

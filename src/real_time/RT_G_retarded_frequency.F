@@ -92,7 +92,7 @@ real(SP) function RT_G_retarded_frequency(Approx,E,ib,ik,W,WIDTH)
  !
  if (Approx=="BOX") return
  !
- if (abs(aimag(Sigma)<1.E-5_SP)) return
+ if (abs(aimag(Sigma))<1.E-5_SP) return
  !
  RT_G_retarded_frequency=1./pi*aimag(Sigma)/( ( W-real(Sigma))**2 + ( aimag(Sigma) )**2)
  !

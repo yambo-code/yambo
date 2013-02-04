@@ -83,7 +83,6 @@ subroutine ypp_init_load(defs)
  !
 #if defined _YPP_RT
  call it('r',defs,'occupations','[R] Analize time-dependent occupations')
- call it('r',defs,'fixsyms',    '[R] Reduce Symmetries')
  call it('r',defs,'rtX',        '[R] Real-Time Response functions Post-Processing')
  call it('r',defs,'CCA',        '[R] Time convolution of retarded GFs to be used in the CCA')
 #endif

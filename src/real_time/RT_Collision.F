@@ -136,14 +136,14 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !
    H_nl_sc=cZERO
    !
-   ! Non-local XC potentials (like CHOSEX)
+   ! Non-local XC potentials (like COHSEX)
    !=======================================
    if(.not.local_V.and..not.XCfrozen) then
      ! 
      ! HF
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
      ! 
-     ! CHOSEX
+     ! COHSEX
      if (l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc) 
      !
    endif
@@ -151,7 +151,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    ! Adiabatic Switching
    !=====================
    ! (for all the parts of self-energy different from V_h + V_xc)
-   ! I have to subtruct XC0_and_HARTREE0 that contains <mk|Vxc(rho0) |nk>
+   ! I have to subtract XC0_and_HARTREE0 that contains <mk|Vxc(rho0) |nk>
    !
    if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.NE_dynamics) then 
      !      

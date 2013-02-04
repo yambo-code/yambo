@@ -119,7 +119,8 @@ integer function io_G_retarded(ID,what)
          call io_bulk(ID,R3=Gr_disk)
        else
          call io_bulk(ID,R3=Gr_disk)
-         Gr(i_k,:,T_section(1):T_section(2))=CMPLX(Gr_disk(:,1:T_section(2)-T_section(1)+1,1),Gr_disk(:,1:T_section(2)-T_section(1)+1,2))
+         Gr(i_k,:,T_section(1):T_section(2))=&
+&                                    CMPLX(Gr_disk(:,1:T_section(2)-T_section(1)+1,1),Gr_disk(:,1:T_section(2)-T_section(1)+1,2))
        endif
        !
      enddo

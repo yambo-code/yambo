@@ -423,6 +423,8 @@ contains
 #if defined _P2Y_EXPORT
 
    call pw_symmetry(pw_unit)
+   trevsym_=.true.
+   t_rev_=0
 
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 

@@ -26,18 +26,19 @@ subroutine eval_minus_G()
  ! G_{minus_G(ig)} = -G_ig
  !
  use pars,         ONLY:IP
- use timing,       ONLY:live_timing
  use memory_m,     ONLY:mem_est
  use D_lattice,    ONLY:inv_index
  use vec_operate,  ONLY:v_is_zero
  use R_lattice,    ONLY:ng_closed,g_vec,g_rot,minus_G
  use zeros,        ONLY:G_iku_zero
+ use com,          ONLY:msg
  !
  implicit none
  !
  ! Work Space
  !
  integer  :: ig,igp,ng1,ng2
+ logical  :: found(ng_closed)
  !
  if (allocated(minus_G)) then
    deallocate(minus_G)
@@ -56,38 +57,27 @@ subroutine eval_minus_G()
    !
    minus_G(1)=1
    !
-   if (ng_closed>1) call live_timing('Inversion map for the R lattice',ng_closed-1)
+   found=.false. 
+   if (ng_closed>1) call msg('s','Inversion map for the R lattice')
    !
    do ig=2,ng_closed
-     ng1=max(2,ig-ng_closed/500)
-     ng2=min(ng_closed,ig+ng_closed/500)
+      if (found(ig)) cycle  
      !
-     do igp=ng1,ng2
+      do igp=ig+1,ng_closed
        !
-       if (v_is_zero(g_vec(ig,:)+g_vec(igp,:),zero_=G_iku_zero)) then
-         minus_G(ig)=igp
-         exit
-       endif
+         if  (found(igp)) cycle 
+         if (v_is_zero(g_vec(ig,:)+g_vec(igp,:),zero_=G_iku_zero)) then
+            minus_G(ig)=igp
+            minus_G(igp)=ig
+            found(igp)=.true.
+            exit
+         endif
        !
      enddo
      !
-     if(minus_G(ig)==0) then
-       do igp=2,ng_closed
-         if(igp>=ng1.and.igp<=ng2) cycle
-         !
-         if (v_is_zero(g_vec(ig,:)+g_vec(igp,:),zero_=G_iku_zero)) then
-           minus_G(ig)=igp
-           exit
-         endif
-         !
-       enddo
-     endif
-     !
-     call live_timing(steps=1)
    enddo
    !
  endif
  !
- call live_timing()
  !
 end subroutine

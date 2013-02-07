@@ -38,40 +38,28 @@ function tddft_alda_r_space(iq,ic,ik,iv,is,mode)
  ! iq==1 => ik(1)=ik(3) is(1)=is(3) ik(2)=ik(4) is(2)=is(4)
  !
  use pars,           ONLY:SP,pi
- use FFT_m,          ONLY:fft_size,fft_rot_r
+ use com,            ONLY:error
+ use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:wf,wf_state
  use xc_functionals, ONLY:F_xc
  use D_lattice,      ONLY:nsym,i_time_rev
  use wrapper,        ONLY:V_dot_V
+ use electrons,      ONLY:n_spinor,n_spin
+ !
  implicit none
+ !
  integer     :: iq,ic(2),iv(2),ik(4),is(4),mode
  complex(SP) :: tddft_alda_r_space
  ! 
  ! Work Space
  !
- integer     :: i1,iv1fft,ic1fft,i2fft,j2fft
- logical     :: l_s_tr(2)
- complex(SP) :: rhotwr1(fft_size),rhotwr2(fft_size)
+ integer     :: i_wf_v(n_spinor),i_wf_c(n_spinor)
+ complex(SP) :: rhotwr1(fft_size)
+ complex(SP) :: rhotwr2(fft_size)
+ complex(SP) :: WF_symm1(fft_size,n_spinor)
+ complex(SP) :: WF_symm2(fft_size,n_spinor)
  !
- ! Init
- !
- tddft_alda_r_space=cmplx(0.,0.,SP)
- !
- ! Symmetries
- !
- if (iq==1) l_s_tr(:)=(is(:2)>nsym/(i_time_rev+1))
- !
- ! FFT indexes
- !
- ic1fft=wf_state(ic(1),ik(1),1)
- iv1fft=wf_state(iv(1),ik(3),1)
- if (mode==1) then
-   i2fft=wf_state(ic(2),ik(2),1)
-   j2fft=wf_state(iv(2),ik(4),1)
- else
-   i2fft=wf_state(iv(2),ik(2),1)
-   j2fft=wf_state(ic(2),ik(4),1)
- endif
+ if(n_spin>1) call error('TDDFT/ALDA not implemented for n_spin>1')
  !
  ! Simplified procedure when at the Gamma point.
  !
@@ -79,13 +67,24 @@ function tddft_alda_r_space(iq,ic,ik,iv,is,mode)
  !                           :Fxc:
  !  (iv(1),ik(1),is(1)) -->--:...:-->-- (iv(2),ik(2),is(2))
  !
- if (iq==1) then
-   if (l_s_tr(1))      rhotwr1(:)=wf(fft_rot_r(is(1),:),ic1fft)*conjg(wf(fft_rot_r(is(1),:),iv1fft))
-   if (.not.l_s_tr(1)) rhotwr1(:)=conjg(wf(fft_rot_r(is(1),:),ic1fft))*wf(fft_rot_r(is(1),:),iv1fft)
-   !
-   if (l_s_tr(2))      rhotwr2(:)=F_xc(:)*conjg(wf(fft_rot_r(is(2),:),i2fft))*wf(fft_rot_r(is(2),:),j2fft)
-   if (.not.l_s_tr(2)) rhotwr2(:)=F_xc(:)*wf(fft_rot_r(is(2),:),i2fft)*conjg(wf(fft_rot_r(is(2),:),j2fft))
- endif
+ tddft_alda_r_space=cmplx(0.,0.,SP)
+ !
+ i_wf_c(1)=wf_state(ic(1),ik(1),1)
+ call WF_apply_symm(is(1),i_wf_c,WF_symm1) 
+ !
+ i_wf_v(1)=wf_state(iv(1),ik(3),1)
+ call WF_apply_symm(is(3),i_wf_v,WF_symm2)
+ !
+ rhotwr1(:)=conjg(WF_symm1(:,1))*WF_symm2(:,1)
+ !
+ i_wf_c(1)=wf_state(ic(2),ik(2),1)
+ call WF_apply_symm(is(1),i_wf_c,WF_symm1) 
+ !
+ i_wf_v(1)=wf_state(iv(2),ik(4),1)
+ call WF_apply_symm(is(4),i_wf_v,WF_symm2)
+ !
+ if (mode==1) rhotwr2(:)=conjg(WF_symm1(:,1))*WF_symm2(:,1)
+ if (mode==2) rhotwr2(:)=conjg(WF_symm2(:,1))*WF_symm1(:,1)
  !
  ! Sum
  !

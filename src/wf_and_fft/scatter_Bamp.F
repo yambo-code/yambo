@@ -59,43 +59,20 @@ subroutine scatterBamp(isc)
  !
  ! <ib ik_is i_sp| 
  !
- ib=isc%is(1)
- ik=isc%is(2)
- is=isc%is(3)
- i_sp=isc%is(4)
+ i_wf(1)=wf_state(isc%is(1),isc%is(2),isc%is(4))
+ if (n_spinor==2)  i_wf(2)=wf_state(isc%is(1),isc%is(2),2)
+ call WF_apply_symm(isc%is(3),i_wf,WF_symm_i)
  !
  ! | ob ok_os o_sp>   
  !
- ob=isc%os(1)
- ok=isc%os(2)
- os=isc%os(3)
- o_sp=isc%os(4)
- !
- ! e^[I(Rs(G-G0)).r]
- !
- iGo=isc%qs(1)
- qs =isc%qs(3)
+ o_wf(1)=wf_state(isc%os(1),isc%os(2),isc%os(4))
+ if (n_spinor==2) o_wf(2)=wf_state(isc%os(1),isc%os(2),2)
+ call WF_apply_symm(isc%os(3),i_wf,WF_symm_o)
  !
  ! \tilde{\rho} in Real Space
  !
- i_wf(1)=wf_state(ib,ik,i_sp)
- o_wf(1)=wf_state(ob,ok,o_sp)
- !
- if (n_spinor==2) then
-   i_wf(2)=wf_state(ib,ik,2)
-   o_wf(2)=wf_state(ob,ok,2)
- endif
- !
- call WF_apply_symm(is,i_wf,WF_symm_i)
- call WF_apply_symm(os,o_wf,WF_symm_o)
- !
  rho_tw_rs(:)=conjg(WF_symm_i(:,1))*WF_symm_o(:,1)
- !
- ! GPL_EXCLUDE_START SPIN_IGNORE
- !
  if (n_spinor==2) rho_tw_rs(:)=rho_tw_rs+WF_symm_i(:,2)*WF_symm_o(:,2)
- ! 
- ! GPL_EXCLUDE_END SPIN_IGNORE
  !
 #if defined _FFTW
  call fft_3d(rho_tw_rs,fft_dim,+1,fftw_plan)
@@ -103,12 +80,13 @@ subroutine scatterBamp(isc)
  call fft_3d(rho_tw_rs,fft_dim,+1)
 #endif
  !
+ ! e^[I(Rs(G-G0)).r]
  !
- if(qs==idt_index) then
-   isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(1:isc%ngrho,iGo))
- else
-   isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo))
- endif
+ iGo=isc%qs(1)
+ qs =isc%qs(3)
+ !
+ if(qs==idt_index) isc%rhotw(1:isc%ngrho)= rho_tw_rs(fft_g_table(1:isc%ngrho,iGo))
+ if(qs/=idt_index) isc%rhotw(1:isc%ngrho)= rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo))
  !
  ! q=0, G=0 case
  !

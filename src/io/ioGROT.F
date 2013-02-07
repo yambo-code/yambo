@@ -38,8 +38,6 @@ integer function ioGROT(io_db)
  ioGROT=io_header(io_db,IMPOSE_SN=.true.)
  if (ioGROT/=0) goto 1
  !
- ! Davide 17/08/2012: This is useless since I've already reduced
- ! ng_closed and eval_minus_G works properly. Should be removed.
  if (.not.ver_is_gt_or_eq(io_db,revision=955).and.inv_index<0) then
    ioGROT=-1 
    goto 1
@@ -71,8 +69,6 @@ integer function ioGROT(io_db)
  call io_bulk(io_db,VAR="GROT",VAR_SZ=(/nsym_db,ng_closed/))
  call io_bulk(io_db,I2=g_rot(:,:ng_closed))
  !
- ! Davide 17/08/2012: This is useless since I've already reduced
- ! ng_closed and eval_minus_G works properly. Should be removed.
  if (ver_is_gt_or_eq(io_db,revision=955).and.inv_index<0) then
    call io_bulk(io_db,VAR="minusG",VAR_SZ=(/ng_closed/))
    call io_bulk(io_db,I1=minus_G(:ng_closed))

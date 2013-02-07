@@ -152,8 +152,8 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
              !
              ! GPL_EXCLUDE_END SPIN_IGNORE
              !
-             if(is1xis2>nsym/(1+i_time_rev)) wf_tmp1=conjg(wf_tmp2)
-             if(iss_tab>nsym/(1+i_time_rev)) wf_tmp2=conjg(wf_tmp1)
+             if(is1xis2>nsym/(1+i_time_rev)) wf_tmp1=conjg(wf_tmp1)
+             if(iss_tab>nsym/(1+i_time_rev)) wf_tmp2=conjg(wf_tmp2)
              !
              wf_cmp=dot_product(wf_tmp1(:,1),wf_tmp2(:,1))
              !

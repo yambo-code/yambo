@@ -53,7 +53,7 @@ subroutine Vnl_driver(en,k)
  ! Work space
  !
  complex :: Vnl_cvk(3)
- integer :: ik, ib1, ib2, iv, ic, npwk,ngmax, vb(2), cb(2), i, ig,io_err,ID
+ integer :: ik, ib1, ib2, iv, ic, npwk,ngmax, vb(2), cb(2), i1, ig,io_err,ID
  integer :: i_spin, i_spinor, j_spinor
  type(X_t)         :: X
  type(pp_indexes)  :: px
@@ -123,13 +123,11 @@ subroutine Vnl_driver(en,k)
  call pw_basis_init(basis_con,struct)
  call msg("l","done")
  !
- call par_indexes(px,(/k%nibz/))
+ call par_indexes(px,(/k%nibz*n_sp_pol,vb(2)/),low_range=(/1,vb(1)/))
  !
  call live_timing('Pseudovelocity :',px%n_of_elements(myid+1))
  !
  do ik=1,k%nibz
-   !
-   if(.not.px%element_1D(ik)) cycle
    !
    ! Fill the basis array for this ik, including the basis%k array
    !
@@ -148,7 +146,11 @@ subroutine Vnl_driver(en,k)
      !
      call read_wfc_k_sp(ik,i_spin,wf_disk_SP,wf_ncx,n_bands)
      !
+     i1=i_spin+(ik-1)*n_sp_pol
+     !
      do iv=vb(1),vb(2)  ! Valence
+       !
+       if(.not.px%element_2D(i1,iv)) cycle
        !
        ! Fill a single valence wavefunction array and basis.
        ! Dimension is fixed by ngmax
@@ -213,15 +215,15 @@ subroutine Vnl_driver(en,k)
        enddo
        if(associated(wfc_val%val)) nullify(wfc_val)
        if(n_spinor==2.and.associated(wfc_val2%val)) nullify(wfc_val2)
+       call live_timing(steps=1)
      enddo
    enddo
    do i_spinor=1,n_spinor
      call pw_pseudovelocity_destroy(pseudovelocity(i_spinor))
    enddo
-   call live_timing(steps=1)
  end do
  !
- call live_timing
+ call live_timing()
  !
  do i_spin=1,n_sp_pol
    call pp_redux_wait(Vnl(:,:,:,:,i_spin))

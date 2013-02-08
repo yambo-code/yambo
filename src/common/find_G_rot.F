@@ -21,7 +21,7 @@
 !
 subroutine find_G_rot(is,call_kind)
  !
- use pars,         ONLY:SP,schlen
+ use pars,         ONLY:SP
  use com,          ONLY:error
  use R_lattice,    ONLY:ng_vec,ng_closed,g_vec,minus_G
  use D_lattice,    ONLY:dl_sop
@@ -29,7 +29,7 @@ subroutine find_G_rot(is,call_kind)
  use vec_operate,  ONLY:v_is_zero
  !
  integer               :: is
- character(schlen)     :: call_kind
+ character(*)          :: call_kind
  !
  ! Work space
  ! 

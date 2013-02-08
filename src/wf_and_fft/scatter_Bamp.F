@@ -67,12 +67,12 @@ subroutine scatterBamp(isc)
  !
  o_wf(1)=wf_state(isc%os(1),isc%os(2),isc%os(4))
  if (n_spinor==2) o_wf(2)=wf_state(isc%os(1),isc%os(2),2)
- call WF_apply_symm(isc%os(3),i_wf,WF_symm_o)
+ call WF_apply_symm(isc%os(3),o_wf,WF_symm_o)
  !
  ! \tilde{\rho} in Real Space
  !
  rho_tw_rs(:)=conjg(WF_symm_i(:,1))*WF_symm_o(:,1)
- if (n_spinor==2) rho_tw_rs(:)=rho_tw_rs+WF_symm_i(:,2)*WF_symm_o(:,2)
+ if (n_spinor==2) rho_tw_rs(:)=rho_tw_rs+conjg(WF_symm_i(:,2))*WF_symm_o(:,2)
  !
 #if defined _FFTW
  call fft_3d(rho_tw_rs,fft_dim,+1,fftw_plan)

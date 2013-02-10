@@ -58,10 +58,17 @@ subroutine G_shells_finder()
  io_err=ioGROT(ID)
  !
  if (io_err==0) then
+   if(inv_index<0) then
+     deallocate(ng_in_shell,E_of_shell,g_rot,minus_G)
+     call mem_est("RL_Gshells RL_Eshells")
+     call io_control(ACTION=OP_RD_CL,SEC=(/2/),MODE=VERIFY,ID=ID)
+     io_err=ioGROT(ID)
+   endif
    return
  else
    if (allocated(g_rot)) then
      deallocate(ng_in_shell,E_of_shell,g_rot)
+     if(inv_index<0) deallocate(minus_G)
      call mem_est("RL_Gshells RL_Eshells")
    endif
  endif
@@ -177,14 +184,13 @@ subroutine G_shells_finder()
  ! will fail as the shells are not closed anymore with respect to the inversion.
  !
  if (inv_index<0) then
-   call IO_and_Messaging_switch("-timing")
+   allocate(minus_G(ng_closed))
    call eval_minus_G()
    do while (  count(minus_G==0)>0 ) 
      n_g_shells=n_g_shells-1 
      ng_closed=ng_in_shell(n_g_shells)
      call eval_minus_G()
    enddo
-   call IO_and_Messaging_switch("+timing")
    ng_in_shell(:n_g_shells)=ng_in_shell_TMP(:n_g_shells)
  endif
  !

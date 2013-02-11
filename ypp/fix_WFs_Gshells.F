@@ -26,12 +26,11 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  use memory_m,            ONLY:mem_est
  use zeros,               ONLY:k_iku_zero
  use stderr,              ONLY:intc
- use vec_operate,         ONLY:v_norm,v_is_zero,i_sort
+ use vec_operate,         ONLY:v_norm,i_sort
  use electrons,           ONLY:levels
  use wave_func,           ONLY:wf_nc_k, wf_igk,wf_ncx,wf_ng
  use R_lattice,           ONLY:bz_samp,nkibz,g_rot,ng_closed,ng_vec,g_vec
  use vec_operate,         ONLY:v_norm
- use zeros,               ONLY:G_iku_zero
  use D_lattice,           ONLY:nsym,dl_sop
  !
  implicit none
@@ -120,25 +119,7 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
      !============================
      !
      do is=old_nsym+1,nsym
-       !
-       allocate(g_vec_tmp(2*ng_vec,3))
-       g_vec_tmp(1:ng_vec,:)=g_vec
-       deallocate(g_vec)
-       !
-       do ig1=1,ng_vec
-         g_rot_tmp=matmul(dl_sop(:,:,is),g_vec_tmp(ig1,:))
-         do ig2=1,ng_vec
-           if( v_is_zero(g_rot_tmp-g_vec_tmp(ig2,:),zero_=G_iku_zero)) exit 
-         enddo
-         if (ig2<=ng_vec) cycle
-         ng_vec=ng_vec+1
-         g_vec_tmp(ng_vec,:)=g_rot_tmp
-       enddo
-       !
-       allocate(g_vec(ng_vec,3))
-       g_vec=g_vec_tmp(1:ng_vec,:)
-       deallocate(g_vec_tmp)
-       !
+       call find_G_rot(is,'extend_grid')
      enddo
      !
      call msg('l','done')

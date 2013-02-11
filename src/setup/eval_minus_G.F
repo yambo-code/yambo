@@ -26,18 +26,16 @@ subroutine eval_minus_G()
  ! G_{minus_G(ig)} = -G_ig
  !
  use pars,         ONLY:IP
- use timing,       ONLY:live_timing
+ use com,          ONLY:msg
  use memory_m,     ONLY:mem_est
  use D_lattice,    ONLY:inv_index
- use vec_operate,  ONLY:v_is_zero
- use R_lattice,    ONLY:ng_closed,g_vec,g_rot,minus_G
- use zeros,        ONLY:G_iku_zero
+ use R_lattice,    ONLY:ng_closed,g_rot,minus_G
  !
  implicit none
  !
  ! Work Space
  !
- integer  :: ig,igp
+ integer  :: ig
  !
  if (allocated(minus_G)) then
    deallocate(minus_G)
@@ -53,25 +51,8 @@ subroutine eval_minus_G()
      minus_G(ig)=g_rot(inv_index,ig)
    enddo
  else
-   !
    minus_G(1)=1
-   !
-   if (ng_closed>1) call live_timing('Inversion map for the R lattice',ng_closed-1)
-   !
-   do ig=2,ng_closed
-     do igp=2,ng_closed
-       !
-       if (v_is_zero(g_vec(ig,:)+g_vec(igp,:),zero_=G_iku_zero)) then
-         minus_G(ig)=igp
-         exit
-       endif
-       !
-     enddo
-     call live_timing(steps=1)
-   enddo
-   !
+   if (ng_closed>1) call find_G_rot(-1,'set_table')
  endif
- !
- call live_timing()
  !
 end subroutine

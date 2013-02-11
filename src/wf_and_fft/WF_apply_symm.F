@@ -32,30 +32,30 @@ subroutine WF_apply_symm(isc,WF_symm)
  !
  integer     :: i_wf(n_spinor)
  !
- i_wf(1)=wf_state(isc(1),isc(2),isc(3))
+ i_wf(1)=wf_state(isc(1),isc(2),isc(4))
  if(n_spinor==2)  i_wf(n_spinor)=wf_state(isc(1),isc(2),n_spinor)
  !
- if(isc(4)==idt_index) then
+ if(isc(3)==idt_index) then
    WF_symm(:,1)=wf(:,i_wf(1))
    if(n_spinor==2) WF_symm(:,2)=wf(:,i_wf(2))
    return
  endif
  !
- WF_symm(:,1)=wf(fft_rot_r(isc(4),:),i_wf(1))
+ WF_symm(:,1)=wf(fft_rot_r(isc(3),:),i_wf(1))
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  if (n_spinor==2) then
-   WF_symm(:,2)=wf(fft_rot_r(isc(4),:),i_wf(2))
+   WF_symm(:,2)=wf(fft_rot_r(isc(3),:),i_wf(2))
    do ifft=1,fft_size
-     WF_symm(ifft,1)=spin_sop(1,1,isc(4))*WF_symm(ifft,1)+spin_sop(1,2,isc(4))*WF_symm(ifft,2)
-     WF_symm(ifft,2)=spin_sop(2,1,isc(4))*WF_symm(ifft,1)+spin_sop(2,2,isc(4))*WF_symm(ifft,2)
+     WF_symm(ifft,1)=spin_sop(1,1,isc(3))*WF_symm(ifft,1)+spin_sop(1,2,isc(3))*WF_symm(ifft,2)
+     WF_symm(ifft,2)=spin_sop(2,1,isc(3))*WF_symm(ifft,1)+spin_sop(2,2,isc(3))*WF_symm(ifft,2)
    enddo
  endif
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE
  !
- if(isc(4)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)
+ if(isc(3)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)
  !
  return
  !

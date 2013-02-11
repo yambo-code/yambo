@@ -136,8 +136,8 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
              !
              if (O_phase(is1xis2,ib1,i_spin2)/=0) cycle
              !
-             call WF_apply_symm((/ib1,ik2,i_spin2,is1xis2/),WF_symm1)
-             call WF_apply_symm((/ib1,ik2,i_spin2,iss_tab/),WF_symm2)
+             call WF_apply_symm((/ib1,ik2,is1xis2,i_spin2/),WF_symm1)
+             call WF_apply_symm((/ib1,ik2,iss_tab,i_spin2/),WF_symm2)
              !
              wf_cmp=dot_product(WF_symm1(:,1),WF_symm2(:,1))
              if(n_spinor>1) wf_cmp=wf_cmp+dot_product(WF_symm1(:,2),WF_symm2(:,2))

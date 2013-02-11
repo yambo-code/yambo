@@ -62,13 +62,13 @@ function tddft_alda_r_space(iq,ic,ik,iv,is,mode)
  !
  tddft_alda_r_space=cmplx(0.,0.,SP)
  !
- call WF_apply_symm((/ic(1),ik(1),1,is(1)/),WF_symm1) 
- call WF_apply_symm((/iv(1),ik(3),1,is(3)/),WF_symm2)
+ call WF_apply_symm((/ic(1),ik(1),is(1),1/),WF_symm1) 
+ call WF_apply_symm((/iv(1),ik(3),is(3),1/),WF_symm2)
  !
  rhotwr1(:)=conjg(WF_symm1(:,1))*WF_symm2(:,1)
  !
- call WF_apply_symm((/ic(2),ik(2),1,is(2)/),WF_symm1) 
- call WF_apply_symm((/iv(2),ik(4),1,is(4)/),WF_symm2)
+ call WF_apply_symm((/ic(2),ik(2),is(2),1/),WF_symm1) 
+ call WF_apply_symm((/iv(2),ik(4),is(4),1/),WF_symm2)
  !
  if (mode==1) rhotwr2(:)=conjg(WF_symm1(:,1))*WF_symm2(:,1)
  if (mode==2) rhotwr2(:)=conjg(WF_symm2(:,1))*WF_symm1(:,1)

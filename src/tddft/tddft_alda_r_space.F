@@ -35,12 +35,9 @@ function tddft_alda_r_space(iq,ic,ik,iv,is,mode)
  !                              :Fxc:
  !  (iv(1),ik(3),is(3)) -->--:...:-->-- (ic(2),ik(4),is(4))
  !
- ! iq==1 => ik(1)=ik(3) is(1)=is(3) ik(2)=ik(4) is(2)=is(4)
- !
  use pars,           ONLY:SP,pi
  use com,            ONLY:error
  use FFT_m,          ONLY:fft_size
- use wave_func,      ONLY:wf,wf_state
  use xc_functionals, ONLY:F_xc
  use D_lattice,      ONLY:nsym,i_time_rev
  use wrapper,        ONLY:V_dot_V
@@ -53,7 +50,6 @@ function tddft_alda_r_space(iq,ic,ik,iv,is,mode)
  ! 
  ! Work Space
  !
- integer     :: i_wf_v(n_spinor),i_wf_c(n_spinor)
  complex(SP) :: rhotwr1(fft_size)
  complex(SP) :: rhotwr2(fft_size)
  complex(SP) :: WF_symm1(fft_size,n_spinor)
@@ -62,32 +58,22 @@ function tddft_alda_r_space(iq,ic,ik,iv,is,mode)
  if(n_spin>1) call error('TDDFT/ALDA not implemented for n_spin>1')
  !
  ! Simplified procedure when at the Gamma point.
- !
- !  (ic(1),ik(1),is(1)) --<--:...:--<-- (ic(2),ik(2),is(2))
- !                           :Fxc:
- !  (iv(1),ik(1),is(1)) -->--:...:-->-- (iv(2),ik(2),is(2))
+ ! iq==1 => ik(1)=ik(3) is(1)=is(3) ik(2)=ik(4) is(2)=is(4)
  !
  tddft_alda_r_space=cmplx(0.,0.,SP)
  !
- i_wf_c(1)=wf_state(ic(1),ik(1),1)
- call WF_apply_symm(is(1),i_wf_c,WF_symm1) 
- !
- i_wf_v(1)=wf_state(iv(1),ik(3),1)
- call WF_apply_symm(is(3),i_wf_v,WF_symm2)
+ call WF_apply_symm((/ic(1),ik(1),1,is(1)/),WF_symm1) 
+ call WF_apply_symm((/iv(1),ik(3),1,is(3)/),WF_symm2)
  !
  rhotwr1(:)=conjg(WF_symm1(:,1))*WF_symm2(:,1)
  !
- i_wf_c(1)=wf_state(ic(2),ik(2),1)
- call WF_apply_symm(is(1),i_wf_c,WF_symm1) 
- !
- i_wf_v(1)=wf_state(iv(2),ik(4),1)
- call WF_apply_symm(is(4),i_wf_v,WF_symm2)
+ call WF_apply_symm((/ic(2),ik(2),1,is(2)/),WF_symm1) 
+ call WF_apply_symm((/iv(2),ik(4),1,is(4)/),WF_symm2)
  !
  if (mode==1) rhotwr2(:)=conjg(WF_symm1(:,1))*WF_symm2(:,1)
  if (mode==2) rhotwr2(:)=conjg(WF_symm2(:,1))*WF_symm1(:,1)
  !
  ! Sum
- !
  tddft_alda_r_space=V_dot_V(fft_size,rhotwr1,rhotwr2)
  !
  ! tddft_alda_r_space'd be 2*cdotc/u*real(fft_size,SP)/DL_vol/Nq 

@@ -38,39 +38,27 @@ subroutine scatterBamp(isc)
  use collision,      ONLY:ggwinfo
  use D_lattice,      ONLY:nsym,i_time_rev,spin_sop,idt_index
  use R_lattice,      ONLY:g_rot
- use wave_func,      ONLY:wf_state
  use FFT_m,          ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
+ !
  implicit none
+ !
  type(ggwinfo)::isc
  !
  ! Work Space
  !
  complex(DP) :: rho_tw_rs(fft_size)
- complex(SP) :: WF_symm_i(fft_size,n_spinor),WF_symm_o(fft_size,n_spinor)
+ complex(SP) :: WF_symm_i(fft_size,n_spinor)
+ complex(SP) :: WF_symm_o(fft_size,n_spinor)
  !
- integer :: ib,ik,is,i_sp,i_wf(n_spinor)
- integer :: ob,ok,os,o_sp,o_wf(n_spinor)
- integer :: qs,iGo,ifft
- !
- ! GPL_INCLUDE_START SPIN_IGNORE
- !i_sp =1
- !o_sp =1
- ! GPL_INCLUDE_END SPIN_IGNORE
+ integer     :: qs,iGo,ifft
  !
  ! <ib ik_is i_sp| 
- !
- i_wf(1)=wf_state(isc%is(1),isc%is(2),isc%is(4))
- if (n_spinor==2)  i_wf(2)=wf_state(isc%is(1),isc%is(2),2)
- call WF_apply_symm(isc%is(3),i_wf,WF_symm_i)
+ call WF_apply_symm(isc%is,WF_symm_i)
  !
  ! | ob ok_os o_sp>   
- !
- o_wf(1)=wf_state(isc%os(1),isc%os(2),isc%os(4))
- if (n_spinor==2) o_wf(2)=wf_state(isc%os(1),isc%os(2),2)
- call WF_apply_symm(isc%os(3),o_wf,WF_symm_o)
+ call WF_apply_symm(isc%os,WF_symm_o)
  !
  ! \tilde{\rho} in Real Space
- !
  rho_tw_rs(:)=conjg(WF_symm_i(:,1))*WF_symm_o(:,1)
  if (n_spinor==2) rho_tw_rs(:)=rho_tw_rs+conjg(WF_symm_i(:,2))*WF_symm_o(:,2)
  !
@@ -90,7 +78,7 @@ subroutine scatterBamp(isc)
  !
  ! q=0, G=0 case
  !
- if (all((/isc%qs(2)==1,ib==ob/))) isc%rhotw(1)=cONe
- if (all((/isc%qs(2)==1,ib/=ob/))) isc%rhotw(1)=cZERO
+ if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) isc%rhotw(1)=cONe
+ if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) isc%rhotw(1)=cZERO
  !
 end subroutine

@@ -41,7 +41,6 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  !
  use pars,          ONLY:SP,IP
  use memory_m,      ONLY:mem_est
- use wave_func,     ONLY:wf_state
  use FFT_m,         ONLY:fft_size
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
  use R_lattice,     ONLY:b,qindx_B,bz_samp,ik_is_table
@@ -64,7 +63,6 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  integer     :: i1,i2,i3,i4,ik1bz,ik2bz
  integer     :: b_ref,ib1,ib2,i_spin2,i_spin1
  integer     :: is1,is2,is1xis2,iss_tab,is_coll
- integer     :: i_wf(n_spinor)
  integer     :: scatt_stat(BS_bands(2)-BS_bands(1)+1,BS_bands(2)-BS_bands(1)+1,nsym,n_sp_pol)
  complex(SP) :: wf_cmp,WF_symm1(fft_size,n_spinor),WF_symm2(fft_size,n_spinor)
  logical     :: eval_collision
@@ -137,19 +135,12 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
            do ib1=BS_bands(1),BS_bands(2)
              !
              if (O_phase(is1xis2,ib1,i_spin2)/=0) cycle
-             i_wf(1)=wf_state(ib1,ik2,i_spin2)
-             if(n_spinor==2) i_wf(2)=wf_state(ib1,ik2,2)
              !
-             call WF_apply_symm(is1xis2,i_wf,WF_symm1)
-             call WF_apply_symm(iss_tab,i_wf,WF_symm2)
+             call WF_apply_symm((/ib1,ik2,i_spin2,is1xis2/),WF_symm1)
+             call WF_apply_symm((/ib1,ik2,i_spin2,iss_tab/),WF_symm2)
              !
              wf_cmp=dot_product(WF_symm1(:,1),WF_symm2(:,1))
-             !
-             ! GPL_EXCLUDE_START SPIN_IGNORE
-             !
              if(n_spinor>1) wf_cmp=wf_cmp+dot_product(WF_symm1(:,2),WF_symm2(:,2))
-             !
-             ! GPL_EXCLUDE_END SPIN_IGNORE
              !
              if (abs(abs(wf_cmp)-1.)<=1.E-3) then
                O_phase(is1xis2,ib1,i_spin2)=nint(real(wf_cmp))

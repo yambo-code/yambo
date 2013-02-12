@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine find_G_rot(is,call_kind)
+subroutine G_rot_grid(is,call_kind)
  !
  use pars,         ONLY:SP
  use com,          ONLY:error
@@ -34,9 +34,9 @@ subroutine find_G_rot(is,call_kind)
  ! Work space
  ! 
  integer               :: ig,igp,ng
- logical               :: inversion
- logical               :: extend_grid
- logical               :: set_table
+ logical               :: inversion=.false.
+ logical               :: extend_grid=.false.
+ logical               :: set_table=.false.
  real(SP)              :: g_rot_tmp(3) 
  real(SP),allocatable  :: g_vec_tmp(:,:)
  logical, allocatable  :: g_rot_found(:)
@@ -51,10 +51,10 @@ subroutine find_G_rot(is,call_kind)
  if(ng==-1) call error('find_g_rot: ng=-1')
  if(ng==1)  return
  !
- if(is==-1) inversion=.true.
+ inversion=(is==-1)
  !
  allocate(g_vec_tmp(2*ng,3),g_rot_found(2*ng))
- g_vec_tmp(1:ng_vec,:)=g_vec
+ g_vec_tmp(1:ng,:)=g_vec(1:ng,:)
  g_rot_found=.false.
  if(extend_grid) deallocate(g_vec)
  !
@@ -79,7 +79,8 @@ subroutine find_G_rot(is,call_kind)
      endif
    enddo
    !
-   if(.not.g_rot_found(ig).and..not.extend_grid) call error('find_g_rot: g_rot not found')
+   if( .not.g_rot_found(ig) .and. .not.extend_grid .and. .not.inversion) &
+&    call error('find_g_rot: g_rot not found')
    !
    if(.not.g_rot_found(ig).and.extend_grid) then
      ng_vec=ng_vec+1

@@ -52,7 +52,7 @@ subroutine eval_minus_G()
    enddo
  else
    minus_G(1)=1
-   if (ng_closed>1) call find_G_rot(-1,'set_table')
+   if (ng_closed>1) call G_rot_grid(-1,'set_table')
  endif
  !
 end subroutine

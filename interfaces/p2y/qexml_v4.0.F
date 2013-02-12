@@ -53,6 +53,9 @@ MODULE qexml_module
   LOGICAL          :: qexml_current_version_init = .FALSE.
   LOGICAL          :: qexml_version_before_1_4_0 = .FALSE.
   !
+  CHARACTER(10)    :: pwscf_current_version = " "
+  LOGICAL          :: pwscf_version_before_4_3_2 = .TRUE.
+  !
   CHARACTER(iotk_attlenx) :: attr
   !
   !
@@ -61,6 +64,8 @@ MODULE qexml_module
 
   PUBLIC :: qexml_current_version, qexml_default_version
   PUBLIC :: qexml_current_version_init
+  !
+  PUBLIC :: pwscf_current_version
   !
   PUBLIC :: qexml_init,  qexml_openfile, qexml_closefile
   !
@@ -181,6 +186,11 @@ CONTAINS
           CALL qexml_read_header( FORMAT_VERSION=qexml_current_version, IERR=ierr )
           IF ( ierr/=0 ) qexml_current_version = TRIM( qexml_default_version )
           !
+          CALL qexml_read_header( CREATOR_VERSION=pwscf_current_version, IERR=ierr )
+          IF ( ierr/=0 ) CALL errore( 'Read pwscf version', &
+                         ' variables pwscf_current_version not present', 1 )
+          !IF ( ierr/=0 ) pwscf_current_version = TRIM( pwscf_default_version )
+          !
           !
       CASE ( "write", "WRITE" )
           !
@@ -198,10 +208,16 @@ CONTAINS
       !    
       qexml_version_before_1_4_0 = .FALSE.
       !    
-      IF ( TRIM( qexml_version_compare( qexml_current_version, "1.4.0" )) == "older" ) &
+      IF ( TRIM( version_compare( qexml_current_version, "1.4.0" )) == "older" ) &
          qexml_version_before_1_4_0 = .TRUE.
       !
       qexml_current_version_init = .TRUE.
+      !
+      pwscf_version_before_4_3_2 = .FALSE.
+      !
+      IF ( TRIM( version_compare( pwscf_current_version, "4.3.2" )) == "older" ) &
+         pwscf_version_before_4_3_2 = .TRUE.
+      !
       !
       !
     END SUBROUTINE qexml_openfile
@@ -308,7 +324,7 @@ CONTAINS
     !
     !
     !------------------------------------------------------------------------
-    SUBROUTINE qexml_version_parse(str, major, minor, patch, ierr)
+    SUBROUTINE version_parse(str, major, minor, patch, ierr)
       !--------------------------------------------------------------------------
       !   
       ! Determine the major, minor and patch numbers from 
@@ -367,10 +383,10 @@ CONTAINS
       READ( num(3), *, IOSTAT=ierr ) patch
       IF (ierr/=0) RETURN
       !
-    END SUBROUTINE qexml_version_parse
+    END SUBROUTINE version_parse
     !
     !--------------------------------------------------------------------------
-    FUNCTION qexml_version_compare(str1, str2)
+    FUNCTION version_compare(str1, str2)
       !--------------------------------------------------------------------------
       !   
       ! Compare two version strings; the result is
@@ -382,19 +398,19 @@ CONTAINS
       !
       IMPLICIT NONE
       CHARACTER(*)  :: str1, str2
-      CHARACTER(10) :: qexml_version_compare
+      CHARACTER(10) :: version_compare
       !
       INTEGER   :: version1(3), version2(3)
       INTEGER   :: basis, icheck1, icheck2
       INTEGER   :: ierr
       !
   
-      qexml_version_compare = " "
+      version_compare = " "
       !
-      CALL qexml_version_parse( str1, version1(1), version1(2), version1(3), ierr)
+      CALL version_parse( str1, version1(1), version1(2), version1(3), ierr)
       IF ( ierr/=0 ) RETURN
       !
-      CALL qexml_version_parse( str2, version2(1), version2(2), version2(3), ierr)
+      CALL version_parse( str2, version2(1), version2(2), version2(3), ierr)
       IF ( ierr/=0 ) RETURN
       !
       ! 
@@ -405,19 +421,19 @@ CONTAINS
       !
       IF ( icheck1 > icheck2 ) THEN
          !
-         qexml_version_compare = 'newer'
+         version_compare = 'newer'
          !
       ELSEIF( icheck1 == icheck2 ) THEN
          !
-         qexml_version_compare = 'equal'
+         version_compare = 'equal'
          !
       ELSE
          !
-         qexml_version_compare = 'older'
+         version_compare = 'older'
          !
       ENDIF
       !
-    END FUNCTION qexml_version_compare  
+    END FUNCTION version_compare  
     !
     !
     !------------------------------------------------------------------------
@@ -1809,7 +1825,7 @@ CONTAINS
       !
       INTEGER              :: nsym_
       CHARACTER(256)       :: sname_(48), s_units_
-      LOGICAL              :: invsym_, trevsym_
+      LOGICAL              :: invsym_, trevsym_=.true.
       INTEGER              :: s_(3,3,48)
       REAL(dbl)            :: trasl_(3,48)
       INTEGER              :: t_rev_(48)
@@ -1831,8 +1847,10 @@ CONTAINS
       CALL iotk_scan_dat( iunit, "INVERSION_SYMMETRY", invsym_, IERR=ierr )
       IF (ierr/=0) RETURN
       !
-      CALL iotk_scan_dat( iunit, "TIME_REVERSAL_FLAG", trevsym_, IERR=ierr )
-      IF (ierr/=0) RETURN
+      IF (.not.pwscf_version_before_4_3_2) then
+        CALL iotk_scan_dat( iunit, "TIME_REVERSAL_FLAG", trevsym_, IERR=ierr )
+        IF (ierr/=0) RETURN
+      ENDIF
       !
       CALL iotk_scan_dat( iunit, "NUMBER_OF_ATOMS", nat_, IERR=ierr )
       IF (ierr/=0) RETURN

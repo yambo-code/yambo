@@ -227,7 +227,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
    call msg('s','Closing shells against inversion...')
    !============================
    !
-   call find_G_rot(-1,'extend_grid')
+   call G_rot_grid(-1,'extend_grid')
    !
    call msg('l','done')
    !

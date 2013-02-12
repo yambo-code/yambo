@@ -749,7 +749,7 @@ CONTAINS
       !
       INTEGER              :: nsym_
       CHARACTER(256)       :: sname_(48), s_units_
-      LOGICAL              :: invsym_, trevsym_
+      LOGICAL              :: invsym_, trevsym_=.true.
       INTEGER              :: s_(3,3,48)
       REAL(dbl)            :: trasl_(3,48)
       INTEGER              :: t_rev_(48)
@@ -769,9 +769,6 @@ CONTAINS
       IF (ierr/=0) RETURN
       !
       CALL iotk_scan_dat( iunpun, "INVERSION_SYMMETRY", invsym_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_dat( iunit, "TIME_REVERSAL_FLAG", trevsym_, IERR=ierr )
       IF (ierr/=0) RETURN
       !
       CALL iotk_scan_dat( iunpun, "NUMBER_OF_ATOMS", nat_, IERR=ierr )

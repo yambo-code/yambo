@@ -43,7 +43,7 @@ integer function eval_G_minus_G(iG,iGo)
  !
  integer :: i1,i2,i3,ng1,ng2
  integer :: iG_shell,iG_,iGo_
- real    :: E_of_shell_G_m_G
+ real(SP):: E_of_shell_G_m_G
  real(SP):: v1(3)
  !
  ! Init
@@ -89,7 +89,7 @@ integer function eval_G_minus_G(iG,iGo)
        goto 1
      endif
      !
-     if(E_of_shell_G_m_G==0) then
+     if(abs(E_of_shell_G_m_G)<1.E-5) then
         G_m_G(i1,i2)=1
         cycle
      endif     

@@ -119,7 +119,7 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
      !============================
      !
      do is=old_nsym+1,nsym
-       call find_G_rot(is,'extend_grid')
+       call G_rot_grid(is,'extend_grid')
      enddo
      !
      call msg('l','done')

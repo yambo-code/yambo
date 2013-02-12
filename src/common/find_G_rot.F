@@ -35,8 +35,8 @@ subroutine find_G_rot(is,call_kind)
  ! 
  integer               :: ig,igp,ng
  logical               :: inversion
- logical               :: extend_grid
- logical               :: set_table
+ logical               :: extend_grid=.false.
+ logical               :: set_table=.false.
  real(SP)              :: g_rot_tmp(3) 
  real(SP),allocatable  :: g_vec_tmp(:,:)
  logical, allocatable  :: g_rot_found(:)
@@ -54,7 +54,7 @@ subroutine find_G_rot(is,call_kind)
  if(is==-1) inversion=.true.
  !
  allocate(g_vec_tmp(2*ng,3),g_rot_found(2*ng))
- g_vec_tmp(1:ng_vec,:)=g_vec
+ g_vec_tmp(1:ng,:)=g_vec(1:ng,:)
  g_rot_found=.false.
  if(extend_grid) deallocate(g_vec)
  !

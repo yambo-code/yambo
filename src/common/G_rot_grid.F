@@ -46,12 +46,13 @@ subroutine G_rot_grid(is,call_kind)
  ! Initialization
  !
  identity=reshape((/ 1._SP, 0._SP, 0._SP, 0._SP, 1._SP, 0._SP, 0._SP, 0._SP, 1._SP/),(/3,3/))
- dl_sop_square=matmul(dl_sop(:,:,is),dl_sop(:,:,is))
+ if(is>0) dl_sop_square=matmul(dl_sop(:,:,is),dl_sop(:,:,is))
+ if(is<0) dl_sop_square=identity
  ! 
  extend_grid = (trim(call_kind)=='extend_grid')
  set_table   = (trim(call_kind)=='set_table')
  inversion   = (is==-1)
- reflection  = (all(abs(identity(:,:)-dl_sop_square(:,:))<1.E-5) .or. inversion)
+ reflection  = all(abs(identity(:,:)-dl_sop_square(:,:))<1.E-5
  !
  ng=-1
  if(extend_grid) ng=ng_vec

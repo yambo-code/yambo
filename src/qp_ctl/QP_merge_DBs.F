@@ -33,6 +33,7 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp)
  ! Work Space
  !
  integer  ::i_db,i1,i2,n_states_merged,nk_merged,nb_merged
+ logical  ::l_QP_db
  integer, allocatable :: dummy_table(:,:)
  !
  n_states_merged=qp2merge(1)%n_states
@@ -66,9 +67,19 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp)
  qp%nb=maxval(dummy_table(:,1))
  qp%nk=maxval(dummy_table(:,3))
  qp%n_states=n_states_merged
+ qp%GreenF_n_steps=qp2merge(1)%GreenF_n_steps
  !
- allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_bare(qp%n_states))
+ l_QP_db=associated(qp2merge(1)%E)
+ !
  allocate(qp%k(qp%nk,3),qp%table(qp%n_states,3+n_sp_pol-1))
+ !
+ if (l_QP_db) then
+   allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_bare(qp%n_states))
+ else
+   allocate(qp%S_total(qp%n_states,qp%GreenF_n_steps))
+   allocate(qp%GreenF(qp%n_states,qp%GreenF_n_steps))
+   allocate(qp%GreenF_W(qp%n_states,qp%GreenF_n_steps))
+ endif
  !
  qp%table=dummy_table(:qp%n_states,:)
  !
@@ -76,9 +87,15 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp)
    do i_db=1,n_dbs
      do i2=1,qp2merge(i_db)%n_states
        if (all(qp2merge(i_db)%table(i2,:)==qp%table(i1,:))) then
-         qp%Z(i1)=qp2merge(i_db)%Z(i2)
-         qp%E(i1)=qp2merge(i_db)%E(i2)
-         qp%E_bare(i1)=qp2merge(i_db)%E_bare(i2)
+         if (l_QP_db) then
+           qp%Z(i1)=qp2merge(i_db)%Z(i2)
+           qp%E(i1)=qp2merge(i_db)%E(i2)
+           qp%E_bare(i1)=qp2merge(i_db)%E_bare(i2)
+         else
+           qp%S_total(i1,:)=qp2merge(i_db)%S_total(i2,:)
+           qp%GreenF(i1,:)=qp2merge(i_db)%GreenF(i2,:)
+           qp%GreenF_W(i1,:)=qp2merge(i_db)%GreenF_W(i2,:)
+         endif
          qp%k(qp%table(i1,3),:)=qp2merge(i_db)%k( qp2merge(i_db)%table(i2,3),:)
        endif
      enddo

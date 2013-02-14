@@ -33,16 +33,25 @@ subroutine G_rot_grid(is,call_kind)
  !
  ! Work space
  ! 
- integer               :: ig,igp,ng
- logical               :: inversion=.false.
- logical               :: extend_grid=.false.
- logical               :: set_table=.false.
+ integer               :: ig,igp,ng,ng1
+ logical               :: inversion
+ logical               :: extend_grid
+ logical               :: set_table
+ logical               :: reflection
  real(SP)              :: g_rot_tmp(3) 
+ real(SP)              :: identity(3,3),dl_sop_square(3,3)
  real(SP),allocatable  :: g_vec_tmp(:,:)
  logical, allocatable  :: g_rot_found(:)
  !
- if(trim(call_kind)=='extend_grid') extend_grid = .true.
- if(trim(call_kind)=='set_table')   set_table   = .true.
+ ! Initialization
+ !
+ identity=reshape((/ 1._SP, 0._SP, 0._SP, 0._SP, 1._SP, 0._SP, 0._SP, 0._SP, 1._SP/),(/3,3/))
+ dl_sop_square=matmul(dl_sop(:,:,is),dl_sop(:,:,is))
+ ! 
+ extend_grid = (trim(call_kind)=='extend_grid')
+ set_table   = (trim(call_kind)=='set_table')
+ inversion   = (is==-1)
+ reflection  = (all(abs(identity(:,:)-dl_sop_square(:,:))<1.E-5) .or. inversion)
  !
  ng=-1
  if(extend_grid) ng=ng_vec
@@ -51,7 +60,7 @@ subroutine G_rot_grid(is,call_kind)
  if(ng==-1) call error('find_g_rot: ng=-1')
  if(ng==1)  return
  !
- inversion=(is==-1)
+ ! Allocation
  !
  allocate(g_vec_tmp(2*ng,3),g_rot_found(2*ng))
  g_vec_tmp(1:ng,:)=g_vec(1:ng,:)
@@ -66,11 +75,13 @@ subroutine G_rot_grid(is,call_kind)
    if(     inversion) g_rot_tmp=-g_vec_tmp(ig,:)
    if(.not.inversion) g_rot_tmp=matmul(dl_sop(:,:,is),g_vec_tmp(ig,:))
    !
-   do igp=ig+1,ng
+   ng1=2
+   if(reflection) ng1=ig+1
+   do igp=ng1,ng
      if(g_rot_found(igp)) cycle
      if( v_is_zero(g_rot_tmp-g_vec_tmp(igp,:),zero_=G_iku_zero)) then
        g_rot_found(ig)=.true.
-       g_rot_found(igp)=.true.
+       if(reflection) g_rot_found(igp)=.true.
        if(set_table) then
          minus_G(ig)=igp
          minus_G(igp)=ig

@@ -187,7 +187,7 @@ subroutine barriers()
  ! GPL_EXCLUDE_START SPIN_INGORE
  !
  if (n_spin>1) then
-   on_runlevels='chi optics HF_and_locXC bs_fxc cohsex magnetic scpot bse em1s em1d ppa gw0 bss alda_fxc'
+   on_runlevels='chi optics HF_and_locXC bs_fxc cohsex magnetic scpot bse tdhf em1s em1d ppa gw0 bss alda_fxc'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
    ! If the system uses magnetic symmetries then OEP is not correctly implemented

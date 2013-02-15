@@ -85,6 +85,13 @@ subroutine init_convert(rfac,ivar,v_descr,force_RL)
    else if (index(trim(v_descr),'kWLm2')/=0) then
      rfac=AU2KWCMm2
    endif
+   return
+ endif
+ !
+ if (ivar==0 .and. rfac==0._SP .and. (index(v_descr,'mHa')/=0 .or. index(v_descr,'Ha')/=0 .or. &
+&    index(v_descr,'mRy')/=0 .or. index(v_descr,'Ry')/=0 .or. index(v_descr,'eV')/=0 ) ) then
+   ivar=1
+   return
  endif
  !
 end subroutine

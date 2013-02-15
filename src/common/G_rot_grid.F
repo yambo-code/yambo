@@ -52,7 +52,7 @@ subroutine G_rot_grid(is,call_kind)
  extend_grid = (trim(call_kind)=='extend_grid')
  set_table   = (trim(call_kind)=='set_table')
  inversion   = (is==-1)
- reflection  = all(abs(identity(:,:)-dl_sop_square(:,:))<1.E-5
+ reflection  = all(abs(identity(:,:)-dl_sop_square(:,:))<1.E-5)
  !
  ng=-1
  if(extend_grid) ng=ng_vec

@@ -36,7 +36,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use timing,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
- use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,&
+ use R_lattice,     ONLY:ng_closed,n_g_shells,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
  use BS,            ONLY:BS_res_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
@@ -127,9 +127,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Basics
  !
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
- call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',&
-&                        ng_closed,unit=G_unit,verb_level=V_RL)
- call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL)
+ call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
+ call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,E_unit,verb_level=V_RL) 
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt)
@@ -147,7 +146,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! S_xc
  !
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
- call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx,G_unit)
+ call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx,E_unit)
  call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
@@ -168,8 +167,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`)',BS_cpl_mode)
  call it('f',defs,'BSIPAres','[BS] anti-resonant term in the IP part')
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
- call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
- call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
+ call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,E_unit)
+ call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,E_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t/none`',BSS_mode,protect=.FALSE.)
  call it(defs,'BLongDir','[BSS] [cc] Electric Field',BSS_q0)
@@ -185,7 +184,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! F_xc
  !
- call it(defs,'FxcGRLc',  '[TDDFT] XC-kernel RL size',FXC_n_g_corr,G_unit)
+ call it(defs,'FxcGRLc',  '[TDDFT] XC-kernel RL size',FXC_n_g_corr,E_unit)
  call it(defs,'LRC_alpha','[TDDFT] LRC alpha factor',FXC_LRC_alpha)
  call it(defs,'LRC_beta', '[TDDFT] LRC beta factor',FXC_LRC_beta,verb_level=V_resp)
  !
@@ -217,7 +216,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'IDEm1Ref','[RIM] Dielectric matrix reference component 1(x)/2(y)/3(z)',&
 &                         RIM_id_epsm1_reference,verb_level=V_RL)
  call it(defs,'RandQpts','[RIM] Number of random q-points in the BZ',RIM_n_rand_pts)
- call it(defs,'RandGvec','[RIM] Coulomb interaction RS components',RIM_ng,G_unit)
+ call it(defs,'RandGvec','[RIM] Coulomb interaction RS components',RIM_ng,E_unit)
  call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_RL)
  !
  ! CUTOFF
@@ -460,7 +459,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,nms( 8),des( 8),X%q0,verb_level=0)
      call it(defs,nms( 9),des( 9),X%ehe,E_unit,verb_level=V_resp)
      call it(defs,nms(10),des(10),X%ppaE,E_unit,verb_level=0)
-     call it(defs,nms(11),des(11),X%ng,G_unit,verb_level=0) 
+     call it(defs,nms(11),des(11),X%ng,E_unit,verb_level=0) 
      call it(defs,nms(12),des(12),X%iq,verb_level=0)
      call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)

@@ -46,6 +46,9 @@ subroutine init_convert(rfac,ivar,v_descr,force_RL)
    else if (index(v_descr,'Ry')/=0) then
      if (force_RL     ) call Gclose(ivar,'tRL')
      if (.not.force_RL) call Gclose(ivar,'tRy')
+   else if (index(v_descr,'eV')/=0) then
+     if (force_RL     ) call Gclose(ivar,'tRL')
+     if (.not.force_RL) call Gclose(ivar,'teV')
    endif
    return
  endif

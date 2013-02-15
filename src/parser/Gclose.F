@@ -22,6 +22,7 @@
 subroutine Gclose(ng,what)
  !
  use pars,        ONLY:SP
+ use units,       ONLY:HA2EV
  use R_lattice,   ONLY:n_g_shells,E_of_shell,ng_in_shell
  implicit none
  integer :: ng
@@ -32,7 +33,7 @@ subroutine Gclose(ng,what)
  character(*) :: what
  if (any((/n_g_shells==0,ng==0/))) return
  ng_r=real(ng)
- select case (what)
+ select case (trim(what))
    case ('tHa')
      ng=int(G2E(G2G(ng)))
    case ('tmHa')
@@ -41,6 +42,8 @@ subroutine Gclose(ng,what)
      ng=int(2.*G2E(G2G(ng)))
    case ('tmRy')
      ng=int(2.*1000.*G2E(G2G(ng)))
+   case ('teV')
+     ng=int(HA2EV*G2E(G2G(ng)))
    case ('fHa')
      ng=G2G(E2G(ng_r))
    case ('fmHa')
@@ -49,6 +52,8 @@ subroutine Gclose(ng,what)
      ng=E2G(real(ng)/2._SP)
    case ('fmRy')
      ng=E2G(real(ng)/2._SP/1000._SP)
+   case ('feV')
+     ng=E2G(real(ng)/HA2EV)
    case ('tRL','fRL')
      ng=G2G(ng)
  end select

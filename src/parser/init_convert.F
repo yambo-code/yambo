@@ -19,79 +19,84 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine init_convert(rfac,ivar,v_descr,force_RL)
+subroutine init_convert_i(ivar,v_descr,force_RL)
+ !
+ use units
+ use com,           ONLY:error
+ !
+ implicit none
+ !
+ integer :: ivar
+ character(*)::v_descr
+ logical     ::force_RL
+ !
+ if(ivar<0) call error('init_convert: negative variable found in the input')
+ !
+ if (index(v_descr,'RL')/=0) then
+   call Gclose(ivar,'tRL')
+ else if (index(v_descr,'mHa')/=0) then
+   if (force_RL     ) call Gclose(ivar,'tRL')
+   if (.not.force_RL) call Gclose(ivar,'tmHa')
+ else if (index(v_descr,'Ha')/=0) then
+   if (force_RL     ) call Gclose(ivar,'tRL')
+   if (.not.force_RL) call Gclose(ivar,'tHa')
+ else if (index(v_descr,'mRy')/=0) then
+   if (force_RL     ) call Gclose(ivar,'tRL')
+   if (.not.force_RL) call Gclose(ivar,'tmRy')
+ else if (index(v_descr,'Ry')/=0) then
+   if (force_RL     ) call Gclose(ivar,'tRL')
+   if (.not.force_RL) call Gclose(ivar,'tRy')
+ else if (index(v_descr,'eV')/=0) then
+   if (force_RL     ) call Gclose(ivar,'tRL')
+   if (.not.force_RL) call Gclose(ivar,'teV')
+ endif
+ !
+end subroutine
+!
+subroutine init_convert_r(rfac,v_descr,force_RL)
  !
  use pars,   ONLY:SP
+ use com,    ONLY:error
  use units
  !
  implicit none
  !
  real(SP):: rfac
- integer :: ivar
  character(*)::v_descr
  logical     ::force_RL
  !
- if (ivar/=0) then
-   if (index(v_descr,'RL')/=0) then
-     call Gclose(ivar,'tRL')
-   else if (index(v_descr,'mHa')/=0) then
-     if (force_RL     ) call Gclose(ivar,'tRL')
-     if (.not.force_RL) call Gclose(ivar,'tmHa')
-   else if (index(v_descr,'Ha')/=0) then
-     if (force_RL     ) call Gclose(ivar,'tRL')
-     if (.not.force_RL) call Gclose(ivar,'tHa')
-   else if (index(v_descr,'mRy')/=0) then
-     if (force_RL     ) call Gclose(ivar,'tRL')
-     if (.not.force_RL) call Gclose(ivar,'tmRy')
-   else if (index(v_descr,'Ry')/=0) then
-     if (force_RL     ) call Gclose(ivar,'tRL')
-     if (.not.force_RL) call Gclose(ivar,'tRy')
-   else if (index(v_descr,'eV')/=0) then
-     if (force_RL     ) call Gclose(ivar,'tRL')
-     if (.not.force_RL) call Gclose(ivar,'teV')
-   endif
-   return
- endif
+ if(rfac<0) call error('init_convert: negative variable found in the input')
  !
- if (rfac>0.) then
-   if (index(trim(v_descr),'meV')/=0) then
-     rfac=HA2EV*1000.
-   else if (index(trim(v_descr),'eV')/=0) then
-     rfac=HA2EV
-   else if (index(trim(v_descr),'mHa')/=0) then
-     rfac=1.*1000.
-   else if (index(trim(v_descr),'Ha')/=0) then
-     rfac=1.
-   else if (index(trim(v_descr),'mRy')/=0) then
-     rfac=2.*1000.
-   else if (index(trim(v_descr),'Ry')/=0) then
-     rfac=2.
-   else if (index(trim(v_descr),'K')/=0) then
-     rfac=11604.*HA2EV
-   else if (index(trim(v_descr),'GHz')/=0) then
-     rfac=HA2GHZ
-   else if (index(trim(v_descr),'THz')/=0) then
-     rfac=HA2THZ
-   else if (index(trim(v_descr),'ps')/=0) then
-     rfac=1./PS2AUT
-   else if (index(trim(v_descr),'fs')/=0) then
-     rfac=1./FS2AUT
-   else if (index(trim(v_descr),'T')/=0) then
-     rfac=AU2Tesla
-   else if (index(trim(v_descr),'V/mm')/=0) then
-     rfac=AU2VMm1
-   else if (index(trim(v_descr),'deg')/=0) then
-     rfac=1./DEG2RAD
-   else if (index(trim(v_descr),'kWLm2')/=0) then
-     rfac=AU2KWCMm2
-   endif
-   return
- endif
- !
- if (ivar==0 .and. rfac==0._SP .and. (index(v_descr,'mHa')/=0 .or. index(v_descr,'Ha')/=0 .or. &
-&    index(v_descr,'mRy')/=0 .or. index(v_descr,'Ry')/=0 .or. index(v_descr,'eV')/=0 ) ) then
-   ivar=1
-   return
+ if (index(trim(v_descr),'meV')/=0) then
+   rfac=HA2EV*1000.
+ else if (index(trim(v_descr),'eV')/=0) then
+   rfac=HA2EV
+ else if (index(trim(v_descr),'mHa')/=0) then
+   rfac=1.*1000.
+ else if (index(trim(v_descr),'Ha')/=0) then
+   rfac=1.
+ else if (index(trim(v_descr),'mRy')/=0) then
+   rfac=2.*1000.
+ else if (index(trim(v_descr),'Ry')/=0) then
+   rfac=2.
+ else if (index(trim(v_descr),'K')/=0) then
+   rfac=11604.*HA2EV
+ else if (index(trim(v_descr),'GHz')/=0) then
+   rfac=HA2GHZ
+ else if (index(trim(v_descr),'THz')/=0) then
+   rfac=HA2THZ
+ else if (index(trim(v_descr),'ps')/=0) then
+   rfac=1./PS2AUT
+ else if (index(trim(v_descr),'fs')/=0) then
+   rfac=1./FS2AUT
+ else if (index(trim(v_descr),'T')/=0) then
+   rfac=AU2Tesla
+ else if (index(trim(v_descr),'V/mm')/=0) then
+   rfac=AU2VMm1
+ else if (index(trim(v_descr),'deg')/=0) then
+   rfac=1./DEG2RAD
+ else if (index(trim(v_descr),'kWLm2')/=0) then
+   rfac=AU2KWCMm2
  endif
  !
 end subroutine

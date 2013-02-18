@@ -31,7 +31,7 @@ subroutine Gclose(ng,what)
  !
  real(SP):: ng_r
  character(*) :: what
- if (any((/n_g_shells==0,ng==0/))) return
+ if (n_g_shells==0) return
  ng_r=real(ng)
  select case (trim(what))
    case ('tHa')

@@ -45,6 +45,8 @@ subroutine G_rot_grid(is,call_kind)
  !
  ! Initialization
  !
+ if(is==1) return
+ !
  identity=reshape((/ 1._SP, 0._SP, 0._SP, 0._SP, 1._SP, 0._SP, 0._SP, 0._SP, 1._SP/),(/3,3/))
  if(is>0) dl_sop_square=matmul(dl_sop(:,:,is),dl_sop(:,:,is))
  if(is<0) dl_sop_square=identity
@@ -59,6 +61,8 @@ subroutine G_rot_grid(is,call_kind)
  if(set_table)   ng=ng_closed
  !
  if(ng==-1) call error('find_g_rot: ng=-1')
+ !
+ if(set_table) minus_G(1)=1
  if(ng==1)  return
  !
  ! Allocation
@@ -69,7 +73,6 @@ subroutine G_rot_grid(is,call_kind)
  if(extend_grid) deallocate(g_vec)
  !
  g_rot_found(1)=.true.
- if(set_table) minus_G(1)=1
  !
  do ig=2,ng
    if(g_rot_found(ig)) cycle

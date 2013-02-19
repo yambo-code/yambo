@@ -97,7 +97,9 @@ subroutine barriers()
  ! RUNLEVELS
  !===========
  !
+ ! GPL_INCLUDE_START
  !if(i_time_rev==1.and.n_spinor>1) call switch_off_runlevel('all',on_name=' ')
+ ! GPL_INCLUDE_END
  !
 #if defined _RT
  call switch_off_runlevel('gw0',on_name=' ')
@@ -177,24 +179,14 @@ subroutine barriers()
  !
  ! SPIN
  !=============
- !
- ! GPL_INCLUDE_START SPIN_IGNORE
- !
- !if (n_spin>1) call switch_off_runlevel('all',on_name=' ')
- !
- ! GPL_INCLUDE_END SPIN_IGNORE
- !
- ! GPL_EXCLUDE_START SPIN_INGORE
- !
  if (n_spin>1) then
-   on_runlevels='chi optics HF_and_locXC bs_fxc cohsex magnetic scpot bse tdhf em1s em1d ppa gw0 bss'
+   on_runlevels='chi optics HF_and_locXC cohsex magnetic scpot bse tdhf em1s em1d ppa gw0 bss'
+   ! GPL_INCLUDE_START SC_IGNORE
+   !on_runlevels='chi optics HF_and_locXC cohsex bse tdhf em1s em1d ppa gw0 bss'
+   ! GPL_INCLUDE_END SC_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
-   ! If the system uses magnetic symmetries then OEP is not correctly implemented
-   if(mag_syms) call switch_off_runlevel('scpot',on_name=' ')
  endif 
- !
- ! GPL_EXCLUDE_END SPIN_INGORE
  !
  ! MORE
  !======

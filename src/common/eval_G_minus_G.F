@@ -39,7 +39,7 @@ integer function eval_G_minus_G(iG,iGo)
  !
  ! Work Space
  !
- integer :: i1,i2,i3,ng1,ng2
+ integer :: i1,i2,ng1,ng2
  integer :: iG_shell,iG_,iGo_
  real(SP):: E_of_shell_G_m_G
  real(SP):: v1(3)
@@ -71,8 +71,8 @@ integer function eval_G_minus_G(iG,iGo)
    if (ng_in_shell(i1)==iG_) iG_shell=i1
  enddo
  !
- G_m_G(1,:iGo_)=minus_G(:iGo_)
  forall(i1=1:iG_) G_m_G(i1,1)=i1
+ if(iGo_>1) G_m_G(1,2:iGo_)=minus_G(2:iGo_)
  !
  do i1=iG_,2,-1
    do i2=iGo_,2,-1

@@ -30,10 +30,8 @@ integer function eval_G_minus_G(iG,iGo)
  !
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
- use vec_operate,  ONLY:v_is_zero
- use zeros,        ONLY:G_iku_zero
- use timing,       ONLY:live_timing
  use vec_operate,  ONLY:iku_v_norm
+ use timing,       ONLY:live_timing
  use R_lattice,    ONLY:G_m_G,g_vec,ng_closed,ng_in_shell,n_g_shells,minus_G,E_of_shell
  !
  implicit none
@@ -41,10 +39,12 @@ integer function eval_G_minus_G(iG,iGo)
  !
  ! Work Space
  !
- integer :: i1,i2,i3,ng1,ng2
+ integer :: i1,i2,ng1,ng2
  integer :: iG_shell,iG_,iGo_
  real(SP):: E_of_shell_G_m_G
  real(SP):: v1(3)
+ !
+ integer, external :: ig_index
  !
  ! Init
  !
@@ -71,8 +71,10 @@ integer function eval_G_minus_G(iG,iGo)
    if (ng_in_shell(i1)==iG_) iG_shell=i1
  enddo
  !
- G_m_G(1,:iGo_)=minus_G(:iGo_)
  forall(i1=1:iG_) G_m_G(i1,1)=i1
+ if(iGo_>1) G_m_G(1,2:iGo_)=minus_G(:iGo_)
+ !
+ if(iG_==1 .or. iGo_==1) return
  !
  do i1=iG_,2,-1
    do i2=iGo_,2,-1
@@ -89,25 +91,7 @@ integer function eval_G_minus_G(iG,iGo)
        goto 1
      endif
      !
-     if(abs(E_of_shell_G_m_G)<1.E-5) then
-        G_m_G(i1,i2)=1
-        cycle
-     endif     
-     !
-     do i3=2,n_g_shells
-       if( abs(E_of_shell(i3)-E_of_shell_G_m_G)/E_of_shell(i3)< 1.E-5) then
-         ng1=ng_in_shell(i3-1)
-         ng2=ng_in_shell(i3)
-         exit
-       endif
-     enddo
-     !
-     do i3=ng1,ng2
-       if (v_is_zero(v1-g_vec(i3,:),zero_=G_iku_zero)) then
-         G_m_G(i1,i2)=i3
-         exit
-       endif
-     enddo
+     G_m_G(i1,i2)=ig_index(v1)
      !
    enddo
  enddo 

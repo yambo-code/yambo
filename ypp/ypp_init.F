@@ -318,12 +318,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_gkkp           =trim(rstr_piece(i1+1))=='g'
 #endif
        !
-       ! GPL_EXCLUDE_START SPIN_IGNORE
-       !
        l_spin  =trim(rstr_piece(i1+1))=='sp'.and.n_spin>1
        l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
        !
-       ! GPL_EXCLUDE_END SPIN_IGNORE
        ! GPL_EXCLUDE_START
        !
 #if defined _YPP_ELPH
@@ -338,12 +335,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_dos            =trim(rstr_piece(i1+1))=='s'
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
        l_bands          =trim(rstr_piece(i1+1))=='b'
-       !
-       ! GPL_EXCLUDE_START SPIN_IGNORE
-       !
        l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
-       !
-       ! GPL_EXCLUDE_END SPIN_IGNORE
        !
 #if defined _YPP_ELPH
        l_eliashberg       =trim(rstr_piece(i1+1))=='e'
@@ -425,12 +417,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_wannier  =runlevel_is_on('wannier')
  !
  if (.not.l_exc_wf) l_free_hole=.false.
- !
- ! GPL_EXCLUDE_START SPIN_IGNORE
- !
- l_spin     =runlevel_is_on('exc_spin')
- !
- ! GPL_EXCLUDE_END SPIN_IGNORE 
  !
  if (l_bz_grids) then
    call initactivate(1,"cooIn cooOut")

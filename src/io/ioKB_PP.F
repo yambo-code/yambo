@@ -133,16 +133,8 @@ integer function ioKB_PP(ID)
    pp_kbd=0._SP
  endif
  ! 
- ! GPL_INCLUDE_START SPIN_IGNORE
- ! i_spin=1
- ! GPL_INCLUDE_END SPIN_IGNORE
- ! 
- ! GPL_EXCLUDE_START SPIN_IGNORE
- !
  do i_spin=1,n_sp_pol
    ! 
-   ! GPL_EXCLUDE_END SPIN_IGNORE
-   !
    if (write_is_on(ID)) pp_disk=pp_kb(:,:,:,i_spin)
    !
    if (ver_is_gt_or_eq(ID,revision=374)) then
@@ -167,11 +159,7 @@ integer function ioKB_PP(ID)
    !
    if (read_is_on(ID)) pp_kbd(:,:,:,i_spin) = pp_disk(:,:,:)
    ! 
-   ! GPL_EXCLUDE_START SPIN_IGNORE
-   !
  enddo
- ! 
- ! GPL_EXCLUDE_END SPIN_IGNORE
  !
  deallocate(pp_disk)
  !

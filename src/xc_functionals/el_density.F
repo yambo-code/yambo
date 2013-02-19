@@ -96,16 +96,9 @@ subroutine el_density(en,Xk,rho,force_si)
      !
      if (.not.px%element_2D(i2,i1)) cycle
      !        
-     i_spin=1
-     !
-     ! GPL_EXCLUDE_START SPIN_IGNORE
-     !
      do i_spin=1,n_spin
        !
        if (size(wf_state,3)<i_spin) cycle
-       !
-       ! GPL_EXCLUDE_END SPIN_IGNORE
-       !
        if (size(wf_state,1)<i1) cycle
        if (size(wf_state,2)<i2) cycle
        !
@@ -125,22 +118,11 @@ subroutine el_density(en,Xk,rho,force_si)
         endif
 #else
         f_occ=en%f(i1,i2,1)
-        !
-        ! GPL_EXCLUDE_START SPIN_IGNORE
-        !
         if (n_sp_pol==2) f_occ=en%f(i1,i2,i_spin)
-        !
-        ! GPL_EXCLUDE_END SPIN_IGNORE
-        !
 #endif
         rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(i2)*abs(wf(:,ifft))**2.
         !
-        ! GPL_EXCLUDE_START SPIN_IGNORE
-        !
       enddo
-      !
-      ! GPL_EXCLUDE_END SPIN_IGNORE
-      !
     enddo
   enddo
   !

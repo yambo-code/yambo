@@ -61,7 +61,7 @@ subroutine G_shells_finder()
    if(inv_index<0) then
      deallocate(ng_in_shell,E_of_shell,g_rot,minus_G)
      call mem_est("RL_Gshells RL_Eshells")
-     call io_control(ACTION=OP_RD_CL,SEC=(/2/),MODE=VERIFY,ID=ID)
+     call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,ID=ID)
      io_err=ioGROT(ID)
    endif
    return

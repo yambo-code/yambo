@@ -22,7 +22,6 @@
 subroutine init_convert_i(ivar,v_descr,force_RL)
  !
  use units
- use com,           ONLY:error
  !
  implicit none
  !
@@ -30,7 +29,7 @@ subroutine init_convert_i(ivar,v_descr,force_RL)
  character(*)::v_descr
  logical     ::force_RL
  !
- if(ivar<0) call error('init_convert: negative variable found in the input')
+ if(ivar<0) return
  !
  if (index(v_descr,'RL')/=0) then
    call Gclose(ivar,'tRL')
@@ -56,7 +55,6 @@ end subroutine
 subroutine init_convert_r(rfac,v_descr,force_RL)
  !
  use pars,   ONLY:SP
- use com,    ONLY:error
  use units
  !
  implicit none
@@ -65,7 +63,7 @@ subroutine init_convert_r(rfac,v_descr,force_RL)
  character(*)::v_descr
  logical     ::force_RL
  !
- if(rfac<0) call error('init_convert: negative variable found in the input')
+ if(rfac<0) return
  !
  if (index(trim(v_descr),'meV')/=0) then
    rfac=HA2EV*1000.

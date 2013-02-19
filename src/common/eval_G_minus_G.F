@@ -72,9 +72,7 @@ integer function eval_G_minus_G(iG,iGo)
  enddo
  !
  forall(i1=1:iG_) G_m_G(i1,1)=i1
- if(iGo_>1) G_m_G(1,2:iGo_)=minus_G(:iGo_)
- !
- if(iG_==1 .or. iGo_==1) return
+ if(iGo_>1) G_m_G(1,2:iGo_)=minus_G(2:iGo_)
  !
  do i1=iG_,2,-1
    do i2=iGo_,2,-1

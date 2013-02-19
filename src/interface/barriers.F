@@ -49,7 +49,7 @@ subroutine barriers()
  use pars,       ONLY:schlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv,mag_syms
  use BS,         ONLY:BSS_mode
- use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor
+ use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor,n_sp_pol
  use QP_m,       ONLY:QP_solver
  use it_m,       ONLY:switch_off_runlevel
  implicit none
@@ -97,10 +97,9 @@ subroutine barriers()
  ! RUNLEVELS
  !===========
  !
- ! If the system is non magnetic you can safely comment the nex line
- ! Otherwise you have to run ypp_rt to remove the trev symmetry when SO is present
- !
- if(i_time_rev==1.and.n_spinor>1) call switch_off_runlevel('all',on_name=trim(always_runlevels))
+ ! GPL_INCLUDE_START
+ !if(i_time_rev==1.and.n_spinor>1) call switch_off_runlevel('all',on_name=' ')
+ ! GPL_INCLUDE_END
  !
 #if defined _RT
  call switch_off_runlevel('gw0',on_name=' ')
@@ -180,25 +179,14 @@ subroutine barriers()
  !
  ! SPIN
  !=============
- !
- ! GPL_INCLUDE_START SPIN_IGNORE
- !
- !if (n_spin>1) call switch_off_runlevel('all',on_name=' ')
- !
- ! GPL_INCLUDE_END SPIN_IGNORE
- !
- ! GPL_EXCLUDE_START SPIN_INGORE
- !
  if (n_spin>1) then
-   on_runlevels='chi optics HF_and_locXC bs_fxc cohsex magnetic scpot bse em1s em1d ppa gw0 bss alda_fxc'
+   on_runlevels='chi optics HF_and_locXC cohsex magnetic scpot bse tdhf em1s em1d ppa gw0 bss'
+   ! GPL_INCLUDE_START SC_IGNORE
+   !on_runlevels='chi optics HF_and_locXC cohsex bse tdhf em1s em1d ppa gw0 bss'
+   ! GPL_INCLUDE_END SC_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
-   ! If the system uses magnetic symmetries then OEP is not correctly implemented
-   if (mag_syms)   call switch_off_runlevel('scpot',on_name=' ')
-   if (gw0_raxis) call switch_off_runlevel('all',on_name=' ')
  endif 
- !
- ! GPL_EXCLUDE_END SPIN_INGORE
  !
  ! MORE
  !======

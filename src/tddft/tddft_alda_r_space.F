@@ -70,8 +70,8 @@ function tddft_alda_r_space(iq,ic,ik,iv,is,mode)
  call WF_apply_symm((/ic(2),ik(2),is(2),1/),WF_symm1) 
  call WF_apply_symm((/iv(2),ik(4),is(4),1/),WF_symm2)
  !
- if (mode==1) rhotwr2(:)=conjg(WF_symm1(:,1))*WF_symm2(:,1)
- if (mode==2) rhotwr2(:)=conjg(WF_symm2(:,1))*WF_symm1(:,1)
+ if (mode==1) rhotwr2(:)=F_xc(:)*WF_symm1(:,1)*conjg(WF_symm2(:,1))
+ if (mode==2) rhotwr2(:)=F_xc(:)*WF_symm2(:,1)*conjg(WF_symm1(:,1))
  !
  ! Sum
  tddft_alda_r_space=V_dot_V(fft_size,rhotwr1,rhotwr2)

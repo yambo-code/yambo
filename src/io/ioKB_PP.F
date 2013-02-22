@@ -66,13 +66,9 @@ integer function ioKB_PP(ID)
    !
    call io_elemental(ID,I0=n_atoms_species_max)
    call io_elemental(ID,I0=n_atomic_species)
-   call io_elemental(ID,I0=pp_n_l_times_proj_max)
-   !
-   if (ver_is_gt_or_eq(ID,revision=898)) then
-     call io_elemental(ID,I0=pp_n_l_max)
-   else
-     pp_n_l_max=pp_n_l_times_proj_max
-   endif
+   if (ver_is_gt_or_eq(ID,revision=898)) &
+&    call io_elemental(ID,I0=pp_n_l_times_proj_max)
+   call io_elemental(ID,I0=pp_n_l_max)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if (read_is_on(ID)) then
@@ -87,10 +83,6 @@ integer function ioKB_PP(ID)
        allocate(pp_n_l_comp(n_atomic_species))
        call mem_est("pp_n_l_comp",(/n_atomic_species/),(/IP/))
      endif
-     if (.not.allocated(pp_table)) then
-       allocate(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
-       call mem_est("pp_table",(/size(pp_table)/),(/IP/))
-     endif
      !
    endif
    !
@@ -98,14 +90,21 @@ integer function ioKB_PP(ID)
    call io_bulk(ID,I1=n_atoms_species)
    call io_bulk(ID,VAR="ATOM_L_COMP",VAR_SZ=(/n_atomic_species/))
    call io_bulk(ID,I1=pp_n_l_comp)
+   !
+   if (.not.ver_is_gt_or_eq(ID,revision=898)) pp_n_l_times_proj_max=maxval(pp_n_l_comp)
+   if (read_is_on(ID).and. .not.allocated(pp_table)) then
+     allocate(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
+     call mem_est("pp_table",(/size(pp_table)/),(/IP/))
+   endif
+   !
    if (ver_is_gt_or_eq(ID,revision=898)) then
      call io_bulk(ID,VAR="PP_TABLE",VAR_SZ=(/3,n_atomic_species,pp_n_l_times_proj_max/))
      call io_bulk(ID,I3=pp_table)
    else
      do i1=1,pp_n_l_times_proj_max
-       pp_table(1,i1,:)=i1
-       pp_table(2,i1,:)=1
-       pp_table(3,i1,:)=1
+       pp_table(1,:,i1)=i1
+       pp_table(2,:,i1)=1
+       pp_table(3,:,i1)=1
      enddo
    endif
    !

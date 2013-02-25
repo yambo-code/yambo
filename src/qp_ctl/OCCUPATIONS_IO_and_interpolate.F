@@ -36,6 +36,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use D_lattice,      ONLY:DL_vol
  use timing,         ONLY:what_is_running
  use stderr,         ONLY:set_real_printed_length
+ use interfaces,     ONLY:OCCUPATIONS_gaps
  !
  implicit none
  !
@@ -148,7 +149,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    call mem_est("RT_occupations")
    !
    ! I need to redefine here several quantities related to the occupations
-   ! using REPORT_Occupations
+   ! using OCCUPATIONS_gaps
    !
    PE_nel=nel-sum(E%f(:n_met_bands,:,:))/real(nXkibz)
    !
@@ -158,7 +159,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    call msg(' r','                      [cm^-3]:',PE_nel/(DL_vol*BO2ANG**3*1.E-24))
    !
    call msg('r','')
-   call REPORT_Occupations(E,2,.TRUE.)
+   call OCCUPATIONS_gaps(E)
    call msg('r','Integarted N. of e-    :',sum(E%f(:,:,:))/real(nXkibz))
    !
    n_met_bands =E%nbm

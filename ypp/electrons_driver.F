@@ -230,24 +230,14 @@ subroutine electrons_driver(Xk,Xen)
        cycle
      else
        !
-       ! GPL_EXCLUDE_START SPIN_IGNORE
-       !
        if (n_spin==2) then
          if (i_spin==1) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_UP_'//trim(intc(plot_dim))
          if (i_spin==2) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_DN_'//trim(intc(plot_dim))
          if (i_spin==1) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' UP'
          if (i_spin==2) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' DN'
        else
-         !
-         ! GPL_EXCLUDE_END SPIN_IGNORE
-         !
          ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim)) 
-         !
-         ! GPL_EXCLUDE_START SPIN_IGNORE
-         !
        endif
-       !
-       ! GPL_EXCLUDE_END SPIN_IGNORE
        !
        if (use_cube) output_fname=trim(ch_ws(1))//'d.cube'
        if (use_xcrysden) output_fname=trim(ch_ws(1))//'d.xsf'
@@ -270,8 +260,8 @@ subroutine electrons_driver(Xk,Xen)
     !
  endif
  !
- ! MAGNETIZATION GPL_EXCLUDE_START
- !=================================
+ ! MAGNETIZATION 
+ !===============
  !
  if (l_mag) then
    !
@@ -365,6 +355,8 @@ subroutine electrons_driver(Xk,Xen)
    endif
  endif
 #endif
+ !
+ ! GPL_EXCLUDE_START
  !
 #if defined _YPP_MAGNETIC
  !

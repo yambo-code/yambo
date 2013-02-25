@@ -205,12 +205,7 @@ module electrons
      integer :: v(:)
      !
      spin=1
-     !
-     ! GPL_EXCLUDE_START SPIN_IGNORE
-     !
      if (n_sp_pol==2) spin=v(4)
-     !
-     ! GPL_EXCLUDE_END SPIN_IGNORE
      !
    end function
    !

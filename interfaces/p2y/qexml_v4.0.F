@@ -2984,7 +2984,7 @@ subroutine read_upf_header_v2( u, z, nmesh, nbeta, psfile, psp_has_so, ierr )
   LOGICAL, INTENT(OUT) :: psp_has_so
   CHARACTER(LEN=*), INTENT(IN) :: psfile
   INTEGER :: i,idummy,idummy2, unit, iostat, u,ios,ierr,ierr_
-  LOGICAL :: found, tvanp
+  LOGICAL :: found, tvanp, norm_conserving
   CHARACTER(len=iotk_attlenx) :: attr
   CHARACTER(len=iotk_namlenx) :: root
   CHARACTER(LEN=20) :: typ=''      ! Pseudo type ( NC or US or PAW)
@@ -3000,7 +3000,8 @@ subroutine read_upf_header_v2( u, z, nmesh, nbeta, psfile, psp_has_so, ierr )
    if(found) CALL iotk_scan_end(u,'PP_INFO')
    CALL iotk_scan_empty(u, 'PP_HEADER', attr=attr)
    CALL iotk_scan_attr(attr, 'pseudo_type',    typ)
-   if(.not. trim(typ) == "NC") call errore( 'check_pseudo : ',trim(psfile)//' file not norm conserving!',1)
+   norm_conserving=(trim(typ) == "NC" .or. trim(typ) == "SL" .or. trim(typ) == "NL")
+   if(.not.norm_conserving) call errore( 'check_pseudo : ',trim(psfile)//' file not norm conserving!',1)
    CALL iotk_scan_attr(attr, 'is_ultrasoft',   tvanp) 
    CALL iotk_scan_attr(attr, 'z_valence',      z)
    if(tvanp) call errore( 'check_pseudo : ','Ultrasoft '//trim(psfile)//' not supported',1)

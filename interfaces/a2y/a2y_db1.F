@@ -99,19 +99,10 @@ subroutine a2y_db1(en,k,KSS_file_name)
  GS_xc_FUNCTIONAL = XC_yamboID('abinit',abinit_func=ahdr%ixc)
  GS_xc_KIND = XC_yamboID2kind(GS_xc_FUNCTIONAL)
  !
- ! GPL_INCLUDE_START SPIN_IGNORE
- !n_spinor=1
- !n_sp_pol=1
- ! GPL_INCLUDE_END SPIN_IGNORE
- !
- ! GPL_EXCLUDE_START SPIN_IGNORE
- !
  n_spinor=ahdr%nspinor
  n_sp_pol=ahdr%nsppol
  !
  if (n_sp_pol==1.and.artificial_spin_pol) n_sp_pol=2
- !
- ! GPL_EXCLUDE_END SPIN_IGNORE
  !
  n_spin=max(n_sp_pol,n_spinor)
  !
@@ -238,16 +229,10 @@ subroutine a2y_db1(en,k,KSS_file_name)
  call msg('s','Energies...')
  !==========================
  !
- ! GPL_INCLUDE_START SPIN_IGNORE
- ! i_spin=1
- ! GPL_INCLUDE_END SPIN_IGNORE
- ! 
  allocate(wf_disk_DP(ng_vec_abinit,n_spinor))
  allocate(wf_igk_tmp(ng_vec_abinit,k%nibz))
  wf_igk_tmp=-1
  WF_disk_DP=0._DP
- !
- ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  do i_spin=1,n_sp_pol
    !
@@ -256,8 +241,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
      cycle
    endif
    ! 
-   ! GPL_EXCLUDE_END SPIN_IGNORE
-   !
    do ik=1,k%nibz
      do i1=1,n_atomic_species
        do i2=1,pp_n_l_times_proj_max
@@ -281,11 +264,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
      wf_nc_k(ik)=ic
    enddo
    ! 
-   ! GPL_EXCLUDE_START SPIN_IGNORE
-   !
    if(i_spin>1) cycle
-   !
-   ! GPL_EXCLUDE_END SPIN_IGNORE
    !
    wf_ncx=maxval(wf_nc_k)
    wf_ng=maxval(wf_igk_tmp)
@@ -294,12 +273,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
    do ik=1,k%nibz
      wf_igk(1:wf_ncx,ik)=wf_igk_tmp(1:wf_ncx,ik)
    enddo
-   ! 
-   ! GPL_EXCLUDE_START SPIN_IGNORE
-   !
  enddo
- ! 
- ! GPL_EXCLUDE_END SPIN_IGNORE
  !
  ! CLEAN
  !

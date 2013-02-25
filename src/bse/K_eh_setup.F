@@ -54,10 +54,6 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
  integer :: ikbz,iv,ic,ik,ikp,i_sp,is
  real(SP):: E_eh,f_eh
  !
- ! GPL_INCLUDE_START SPIN_IGNORE
- !i_sp = 1
- ! GPL_INCLUDE_END SPIN_IGNORE
- !
  do while(.TRUE.) 
    !
    BS_K_dim=0
@@ -81,11 +77,7 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
          is =Xk%sstar(ikbz,2)
          ikp=Xk%sstar(qindx_X(iq,ikbz,1),1)
          !
-         ! GPL_EXCLUDE_START SPIN_IGNORE
-         !
          do i_sp=1,n_sp_pol
-           !
-           ! GPL_EXCLUDE_END SPIN_IGNORE
            !
            E_eh=Ken%E(ic,ik,i_sp)-Ken%E(iv,ikp,i_sp)
            if (abs(E_eh)<1.E-5) then
@@ -138,12 +130,7 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
            Iiv(iv,i_sp)=1
            Iic(ic,i_sp)=1
            !
-           ! GPL_EXCLUDE_START SPIN_IGNORE
-           !
          enddo
-         !
-         ! GPL_EXCLUDE_END SPIN_IGNORE
-         !
        enddo
      enddo
      !
@@ -154,44 +141,25 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
      if (.not.BS_res_K_corr) cycle
      !
      do iv=BS_bands(1),Ken%nbm
-       !
-       ! GPL_EXCLUDE_START SPIN_IGNORE
-       !
        do i_sp=1,n_sp_pol
-         !
-         ! GPL_EXCLUDE_END SPIN_IGNORE
          !
          if (Iiv(iv,i_sp)==1) then
            O_n_v_states(ikbz,i_sp)=O_n_v_states(ikbz,i_sp)+1
            if (allocated(O_v_state)) O_v_state(ikbz,O_n_v_states(ikbz,i_sp),i_sp)=iv
          endif
          !
-         ! GPL_EXCLUDE_START SPIN_IGNORE
-         !
        enddo
-       !
-       ! GPL_EXCLUDE_END SPIN_IGNORE
-       !
      enddo
+     !
      do ic=Ken%nbf+1,BS_bands(2)
-       !
-       ! GPL_EXCLUDE_START SPIN_IGNORE
-       !
        do i_sp=1,n_sp_pol
-         !
-         ! GPL_EXCLUDE_END SPIN_IGNORE
          !
          if (Iic(ic,i_sp)==1) then
             O_n_c_states(ikbz,i_sp)=O_n_c_states(ikbz,i_sp)+1
             if (allocated(O_c_state)) O_c_state(ikbz,O_n_c_states(ikbz,i_sp),i_sp)=ic
          endif
          !
-         ! GPL_EXCLUDE_START SPIN_IGNORE
-         !
        enddo
-       !
-       ! GPL_EXCLUDE_END SPIN_IGNORE
-       !
      enddo
    enddo
    !

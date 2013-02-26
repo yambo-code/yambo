@@ -16,5 +16,5 @@ WF_der_objects = WF_derivative.o
 DISTRIBUTED_objects = WF_states_setup.o
 objs = fft_setup.o fft_3d.o $(FFT_object) $(FFT_more) \
        scatter_Bamp.o scatter_Gamp.o WF_spatial_invertion.o \
-       WF_load.o $(WF_rot_object) $(WF_der_objects) $(DISTRIBUTED_objects)\
-       eval_R_minus_R.o 
+       WF_load.o WF_apply_symm.o $(WF_rot_object) \
+       $(WF_der_objects) $(DISTRIBUTED_objects) eval_R_minus_R.o 

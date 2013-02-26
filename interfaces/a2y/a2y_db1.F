@@ -39,7 +39,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
 &                                 alat_mult_factor,artificial_spin_pol,ng_vec_abinit
  use vec_operate,           ONLY: v_is_zero
- use zeros,                 ONLY: G_iku_zero
  !
  implicit none
  character(*)                   :: KSS_file_name
@@ -49,11 +48,9 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !Work Space
  !
  real(SP)                       :: cp(3)
- integer                        :: i1,ik,i2,i3,inel,i_spin,i_spinor,ic,ig,ng1,ng2
+ integer                        :: i1,ik,i2,i3,inel,i_spin,i_spinor,ic,ig
  complex(DP),allocatable        :: wf_disk_DP(:,:)
  integer, allocatable           :: wf_igk_tmp(:,:)
- real(SP), allocatable          :: g_vec_tmp(:,:)
- integer, allocatable           :: g_vec_table(:)
  logical                        :: gamma_only
  !
  !ABINIT
@@ -62,7 +59,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
  type(wffile_type)              :: wff
  integer                        :: psp_so
  integer                        :: fform,ishm
- real(SP)                       :: g_inv(3)
  integer,  allocatable          :: rel_gvec(:,:)
  real(DP), allocatable          :: rstr(:)
  !
@@ -103,19 +99,10 @@ subroutine a2y_db1(en,k,KSS_file_name)
  GS_xc_FUNCTIONAL = XC_yamboID('abinit',abinit_func=ahdr%ixc)
  GS_xc_KIND = XC_yamboID2kind(GS_xc_FUNCTIONAL)
  !
- ! GPL_INCLUDE_START SPIN_IGNORE
- !n_spinor=1
- !n_sp_pol=1
- ! GPL_INCLUDE_END SPIN_IGNORE
- !
- ! GPL_EXCLUDE_START SPIN_IGNORE
- !
  n_spinor=ahdr%nspinor
  n_sp_pol=ahdr%nsppol
  !
  if (n_sp_pol==1.and.artificial_spin_pol) n_sp_pol=2
- !
- ! GPL_EXCLUDE_END SPIN_IGNORE
  !
  n_spin=max(n_sp_pol,n_spinor)
  !
@@ -140,8 +127,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  k%nibz      = ahdr%nkpt
  nkibz       = k%nibz
  allocate(k%pt(k%nibz,3))
- do i1 = 1,k%nibz
-   k%pt(i1,:)=matmul(transpose(b),ahdr%kptns(:,i1))*alat(:)/2./pi
+ do ik = 1,k%nibz
+   k%pt(ik,:)=matmul(transpose(b),ahdr%kptns(:,ik))*alat(:)/2./pi
  enddo
  !
  ! ABINIT 
@@ -214,11 +201,11 @@ subroutine a2y_db1(en,k,KSS_file_name)
  call msg('s','RL vectors...')
  !============================
  !
- read(11) (rel_gvec(:,i1),i1=1,ng_vec_abinit)
+ read(11) (rel_gvec(:,ig),ig=1,ng_vec_abinit)
  read(11) 
  read(11) 
- do i1=1,ng_vec_abinit
-   g_vec(i1,:)=matmul(transpose(b),rel_gvec(:,i1))*alat(:)/2./pi
+ do ig=1,ng_vec_abinit
+   g_vec(ig,:)=matmul(transpose(b),rel_gvec(:,ig))*alat(:)/2./pi
  enddo
  call msg('l','done')
  !
@@ -231,38 +218,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
    call msg('s','Closing shells against inversion...')
    !============================
    !
-   allocate(g_vec_tmp(2*ng_vec,3),g_vec_table(2*ng_vec))
-   g_vec_tmp(1:ng_vec,:)=g_vec
-   g_vec_table=-1
-   deallocate(g_vec)
-   !
-   do i1=1,ng_vec
-     g_inv=-g_vec_tmp(i1,:)
-     if(g_vec_table(i1)/=-1) cycle
-     ng1=max(1,i1-ng_vec/500)
-     ng2=min(ng_vec,i1+ng_vec/500)
-     do i2=ng1,ng2
-       if( v_is_zero(g_inv-g_vec_tmp(i2,:),zero_=G_iku_zero)) exit 
-     enddo
-     if (i2<=ng2) then
-       g_vec_table(i2)=i1
-       cycle
-     endif
-     do i2=1,ng_vec
-       if(i2>=ng1 .and. i2<=ng2) cycle
-       if( v_is_zero(g_inv-g_vec_tmp(i2,:),zero_=G_iku_zero)) exit 
-     enddo
-     if (i2<=ng_vec) then
-       g_vec_table(i2)=i1
-       cycle
-     endif
-     ng_vec=ng_vec+1
-     g_vec_tmp(ng_vec,:)=g_inv
-   enddo
-   !
-   allocate(g_vec(ng_vec,3))
-   g_vec=g_vec_tmp(1:ng_vec,:)
-   deallocate(g_vec_tmp,g_vec_table)
+   call G_rot_grid(-1,'extend_grid')
    !
    call msg('l','done')
    !
@@ -273,16 +229,10 @@ subroutine a2y_db1(en,k,KSS_file_name)
  call msg('s','Energies...')
  !==========================
  !
- ! GPL_INCLUDE_START SPIN_IGNORE
- ! i_spin=1
- ! GPL_INCLUDE_END SPIN_IGNORE
- ! 
  allocate(wf_disk_DP(ng_vec_abinit,n_spinor))
  allocate(wf_igk_tmp(ng_vec_abinit,k%nibz))
  wf_igk_tmp=-1
  WF_disk_DP=0._DP
- !
- ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  do i_spin=1,n_sp_pol
    !
@@ -291,8 +241,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
      cycle
    endif
    ! 
-   ! GPL_EXCLUDE_END SPIN_IGNORE
-   !
    do ik=1,k%nibz
      do i1=1,n_atomic_species
        do i2=1,pp_n_l_times_proj_max
@@ -316,11 +264,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
      wf_nc_k(ik)=ic
    enddo
    ! 
-   ! GPL_EXCLUDE_START SPIN_IGNORE
-   !
    if(i_spin>1) cycle
-   !
-   ! GPL_EXCLUDE_END SPIN_IGNORE
    !
    wf_ncx=maxval(wf_nc_k)
    wf_ng=maxval(wf_igk_tmp)
@@ -329,12 +273,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
    do ik=1,k%nibz
      wf_igk(1:wf_ncx,ik)=wf_igk_tmp(1:wf_ncx,ik)
    enddo
-   ! 
-   ! GPL_EXCLUDE_START SPIN_IGNORE
-   !
  enddo
- ! 
- ! GPL_EXCLUDE_END SPIN_IGNORE
  !
  ! CLEAN
  !

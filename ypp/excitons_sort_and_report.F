@@ -153,17 +153,13 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    !
    call msg('o weight','#','',INDENT=0,USE_TABS=.true.)
    titles(1:4)=(/'Band_V','Band_C','K  ibz','Symm. '/)
-   ! GPL_EXCLUDE_START SPIN_IGNORE
    if(n_sp_pol==1) then
-     ! GPL_EXCLUDE_END SPIN_IGNORE
      titles(5:6)=(/'Weight','Energy'/)
      call msg('o weight','#',titles(:6),INDENT=0,USE_TABS=.true.)
-     ! GPL_EXCLUDE_START SPIN_IGNORE
    else
      titles(5:7)=(/'Spin  ','Weight','Energy'/)
      call msg('o weight','#',titles(:7),INDENT=0,USE_TABS=.true.)
    endif
-   ! GPL_EXCLUDE_END SPIN_IGNORE
    titles(1:2)=(/'E    [eV]','Amplitude'/)
    call msg('o amp','#',titles(:2),INDENT=0,USE_TABS=.true.)
    call msg('o weight amp','#','',INDENT=0,USE_TABS=.true.)
@@ -178,14 +174,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
      ikbz = BS_eh_table(S_indx(neh),1)
      iv = BS_eh_table(S_indx(neh),2)
      ic = BS_eh_table(S_indx(neh),3)
-     ! GPL_EXCLUDE_START SPIN_IGNORE
-     !
      i_spin= spin(BS_eh_table(S_indx(neh),:))
-     !
-     ! GPL_EXCLUDE_END SPIN_IGNORE
-     ! GPL_INCLUDE_START SPIN_IGNORE
-     !i_spin = 1
-     ! GPL_INCLUDE_END SPIN_IGNORE
      !
      ikibz = Xk%sstar(ikbz,1)
      is = Xk%sstar(ikbz,2)
@@ -196,13 +185,10 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
      !
      if (A_weight(neh)<min_weight*5._SP) cycle
      !
-     ! GPL_EXCLUDE_START SPIN_IGNORE
      if(n_sp_pol==1) then
-       ! GPL_EXCLUDE_END SPIN_IGNORE
        call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
 &                             A_weight(neh),amp_trans(amp_n_trans,1)*HA2EV/),&
 &            INDENT=-2,USE_TABS=.FALSE.)
-       ! GPL_EXCLUDE_START SPIN_IGNORE
      else
        if(i_spin==1) value= 1.
        if(i_spin==2) value=-1.
@@ -210,7 +196,6 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
 &                           value,A_weight(neh),amp_trans(amp_n_trans,1)*HA2EV/),&
 &                 INDENT=-2,USE_TABS=.FALSE.)
      endif
-     ! GPL_EXCLUDE_END SPIN_IGNORE
    enddo
    !
    ! Excitonic Amplitude

@@ -24,42 +24,45 @@ subroutine REPORT_Occupations(E)
  use pars,          ONLY:SP,lchlen
  use units,         ONLY:HA2EV
  use com,           ONLY:msg,warning
- use electrons,     ONLY:levels,n_sp_pol
+ use electrons,     ONLY:levels,n_sp_pol,nel
  use interfaces,    ONLY:OCCUPATIONS_gaps
  !
  implicit none
+ !
  type(levels)::E
  ! 
  ! Work Space
  ! 
- integer           ::i1,i_s
+ integer           ::i_sp_pol
+ integer           ::first_occ_state
+ integer           ::Nbf(n_sp_pol)
+ integer           ::Nbm(n_sp_pol)
  character(lchlen) ::ch_
  character(23)     ::prefix_
- real(SP)          ::E_g_dir(n_sp_pol,2) ! min - max
- real(SP)          ::E_g_ind(n_sp_pol,2) ! min - max
- integer           ::N_f(n_sp_pol)
- integer           ::N_m(n_sp_pol)
+ real(SP)          ::N_met
+ real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
+ real(SP)          ::E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
  !
- call OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,N_f,N_m)
+ call OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
  !
  call msg('r','States summary         : Full        Metallic    Empty')
  !
  ! [1] States occupations
  !
- do i_s=1,n_sp_pol
-   i1=1
+ do i_sp_pol=1,n_sp_pol
+   first_occ_state=1
    !
    prefix_=''
-   if (n_sp_pol>1.and.i_s==1) prefix_='             [spin up]'
-   if (n_sp_pol>1.and.i_s==2) prefix_='                  [dn]'
+   if (n_sp_pol>1.and.i_sp_pol==1) prefix_='             [spin up]'
+   if (n_sp_pol>1.and.i_sp_pol==2) prefix_='                  [dn]'
    !
-   if (N_f(i_s)==0) i1=0
-   if (N_f(i_s)/=N_m(i_s)) then
-     write (ch_,'(3(i4.4,a,i4.4,3x))') i1,'-',N_f(i_s),&
-&          N_f(i_s)+1,'-',N_m(i_s),N_m(i_s)+1,'-',E%nb
+   if (Nbf(i_sp_pol)==0) first_occ_state=0
+   if (Nbf(i_sp_pol)/=Nbm(i_sp_pol)) then
+     write (ch_,'(3(i4.4,a,i4.4,3x))') first_occ_state,'-',Nbf(i_sp_pol),&
+&          Nbf(i_sp_pol)+1,'-',Nbm(i_sp_pol),Nbm(i_sp_pol)+1,'-',E%nb
      call msg('r',prefix_//'  '//trim(ch_))
    else
-     write (ch_,'(2(i4.4,a,i4.4,15x))') i1,'-',N_f(i_s),N_f(i_s)+1,'-',E%nb
+     write (ch_,'(2(i4.4,a,i4.4,15x))') first_occ_state,'-',Nbf(i_sp_pol),Nbf(i_sp_pol)+1,'-',E%nb
      call msg('r',prefix_//'  '//trim(ch_))
    endif
    !
@@ -67,32 +70,55 @@ subroutine REPORT_Occupations(E)
  !
  ! [2] Indirect Gaps (min/max)
  !
- do i_s=1,n_sp_pol
-   !
-   if (N_f(i_s)/=N_m(i_s)) cycle
-   !
+ if(all(Nbf==Nbm)) then
    prefix_=                               'Indirect Gaps      [ev]:'
-   if (n_sp_pol>1.and.i_s==1) prefix_='Indirect Gaps [ev] [up]'
-   if (n_sp_pol>1.and.i_s==2) prefix_='                   [dn]'
-   call msg('r',prefix_//':',E_g_ind(i_s,:)*HA2EV)
-   !
- enddo
+   call msg('r',prefix_//':',E_g_ind(1,:)*HA2EV)
+ endif
+ !
+ if(n_sp_pol==2.and.any(Nbf==Nbm)) then 
+   do i_sp_pol=1,n_sp_pol
+     if (Nbf(i_sp_pol)/=Nbm(i_sp_pol)) cycle
+     if (Nbf(i_sp_pol)==0) cycle
+     if (i_sp_pol==1) prefix_='              [spin up]'
+     if (i_sp_pol==2) prefix_='              [spin dn]'
+     call msg('r',prefix_//':',E_g_ind(i_sp_pol+1,:)*HA2EV)
+   enddo
+ endif
  !
  ! [3] Direct Gaps (min/max)
  !
- do i_s=1,n_sp_pol
-   !
-   if (N_f(i_s)/=N_m(i_s)) cycle
-   !
-   prefix_=                               'Direct Gaps        [ev]:'
-   if (n_sp_pol>1.and.i_s==1) prefix_='Direct Gaps   [ev] [up]:'
-   if (n_sp_pol>1.and.i_s==2) prefix_='                   [dn]:'
-   call msg('r',prefix_//':',E_g_dir(i_s,:)*HA2EV)
-   !
- enddo
+ if(all(Nbf==Nbm)) then
+   prefix_='Direct Gaps        [ev]'
+   call msg('r',prefix_//':',E_g_dir(1,:)*HA2EV)
+ endif
+ !
+ if(n_sp_pol==2.and.any(Nbf==Nbm)) then 
+   do i_sp_pol=1,n_sp_pol
+     if (Nbf(i_sp_pol)/=Nbm(i_sp_pol)) cycle
+     if (Nbf(i_sp_pol)==0) cycle
+     if (i_sp_pol==1) prefix_='              [spin up]'
+     if (i_sp_pol==2) prefix_='              [spin dn]'
+     call msg('r',prefix_//':',E_g_dir(i_sp_pol+1,:)*HA2EV)
+   enddo
+ endif
+ !
  !
  ! [3] Report if the system is treated as a metal
  !
- if (E%nbf/=E%nbm.and..not.any(N_f/=N_m)) call warning('Merged spin levels are metallic')
+ if (.not.all(Nbf==Nbm)) then
+   if(n_sp_pol==1) call warning('Metallic system')
+   if(n_sp_pol==2) then
+     if(all(Nbf/=Nbm)) call warning('Metallic system')
+     if(any(Nbf==Nbm)) call warning('System is an half-metal')
+   endif
+ endif
+ !
+ if (.not.all(Nbf==Nbm)) then
+   N_met=0
+   do i_sp_pol=1,n_sp_pol
+     N_met= N_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk) !/(sum(Nbm(:)-Nbf(:)))) old f_met
+   enddo
+   call msg('r','N of e- / Metallic e-:',(/nel,N_met/))
+ endif
  !
 end subroutine

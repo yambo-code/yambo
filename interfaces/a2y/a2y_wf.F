@@ -115,12 +115,6 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  pp_kb=0._SP
  pp_kbd=0._SP
  !
- ! GPL_INCLUDE_START SPIN_IGNORE
- ! i_spin=1
- ! GPL_INCLUDE_END SPIN_IGNORE
- ! 
- ! GPL_EXCLUDE_START SPIN_IGNORE
- !
  do i_spin=1,n_sp_pol
    !
    if (i_spin==2.and.artificial_spin_pol) then
@@ -130,8 +124,6 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
      cycle
    endif
    ! 
-   ! GPL_EXCLUDE_END SPIN_IGNORE
-   !
    if (ib_grp==1) then
      do i1=1,n_atomic_species
        do i2=1,pp_n_l_times_proj_max
@@ -162,8 +154,6 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
      endif
    enddo
    !
-   ! GPL_EXCLUDE_START SPIN_IGNORE
-   !
    if (n_sp_pol==2.and..not.artificial_spin_pol) then
      ! 
      ! BIG PROBLEM WITH ABINIT: abinit uses a different ordering
@@ -190,8 +180,6 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    !
  enddo
  ! 
- ! GPL_EXCLUDE_END SPIN_IGNORE
- !
  if (ikibz==nkibz.and.ib_grp==wf_nb_io_groups) close(11)
  !
 end subroutine

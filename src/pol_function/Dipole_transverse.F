@@ -133,16 +133,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
      io_err=ioKB_PP(ID)
    endif
    ! 
-   ! GPL_INCLUDE_START SPIN_IGNORE
-   ! i_spin=1
-   ! GPL_INCLUDE_END SPIN_IGNORE
-   ! 
-   ! GPL_EXCLUDE_START SPIN_IGNORE
-   !
    do i_spin=1,n_spin
      ! 
-     ! GPL_EXCLUDE_END SPIN_IGNORE
-     !
      pp_spin=i_spin
      if (n_spinor==2) pp_spin=1
      if (ioKB_err==0) call Dipole_kb_pp_comp(ik,pp_spin,Xk,kbv)
@@ -231,18 +223,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) rho(1:3)=(0._SP,0._SP)
          !
-         ! GPL_EXCLUDE_START SPIN_IGNORE
-         !
          if (n_spinor==2) then
            DIP_iR(:,ic,iv,ik,1)=DIP_iR(:,ic,iv,ik,1)+rho(:3)
          else 
-           !
-           ! GPL_EXCLUDE_END SPIN_IGNORE
-           !
            DIP_iR(:,ic,iv,ik,i_spin)=rho(:3)
-           !
-           ! GPL_EXCLUDE_START SPIN_IGNORE
-           !
          endif
          !
 #if defined _SC
@@ -255,20 +239,12 @@ subroutine Dipole_transverse(Xen,Xk,X)
            P_square(ic,iv,ik,i_spin)= rho(4)
          endif
 #endif
-         !
-         ! GPL_EXCLUDE_END SPIN_IGNORE
-         !
        enddo    ! conduction band loop
        !
        call live_timing(steps=1)
        !
      enddo      ! valence band loop
-     ! 
-     ! GPL_EXCLUDE_START SPIN_IGNORE
-     !
    enddo        ! spin loop
-   ! 
-   ! GPL_EXCLUDE_END SPIN_IGNORE
    !
  enddo          ! k-points
  !

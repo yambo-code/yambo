@@ -65,7 +65,7 @@ subroutine Fragments_Restart(ID,current_fragment,fragments_todo)
    if (.not.file_exists(trim(restart_folder))) call mk_dir(restart_folder)
    !
    open(unit=81,file=trim(restart_file))
-   write (81,'(/2x,a,3(i2.2,a),a,i3.3)') 'Restart file for YAMBO ',code_version(1),&
+   write (81,'(/2x,a,3(i2.2,a),a,i4.4)') 'Restart file for YAMBO ',code_version(1),&
          '.',code_version(2),'.',code_version(3),' -- ','revision ',code_revision
    local_string=date_and_time_string()
    write (81,'(/2x,a)') trim(local_string)

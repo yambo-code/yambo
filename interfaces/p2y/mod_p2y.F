@@ -242,20 +242,12 @@ contains
    !
    ! Set miscellanous YAMBO data: dimensions
    !
-   ! GPL_EXCLUDE_START SPIN_IGNORE
-   !
    n_spin_den = n_spin_pw_
    select case(n_spin_pw_)
    case(1)
-     !
-     ! GPL_EXCLUDE_END SPIN_IGNORE
-     !
      n_sp_pol  = 1
      n_spinor  = 1
      n_spin    = 1
-     !
-     ! GPL_EXCLUDE_START SPIN_IGNORE
-     !
    case(2)
      n_sp_pol  = 2
      n_spinor  = 1
@@ -265,8 +257,6 @@ contains
      n_spinor  = 2
      n_spin    = 2
    end select
-   !
-   ! GPL_EXCLUDE_END SPIN_IGNORE
    !
    input_GS_Tel = 0.d0
    !
@@ -423,10 +413,13 @@ contains
 #if defined _P2Y_EXPORT
 
    call pw_symmetry(pw_unit)
+   trevsym_=.true.
+   t_rev_=0
 
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
-   call qexml_read_symmetry(invsym=invsym_, trasl=trasl_(:,1:nsym_),s=isym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
+   call qexml_read_symmetry(invsym=invsym_, trevsym=trevsym_, trasl=trasl_(:,1:nsym_), &
+&                                         s=isym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
 
 #endif
@@ -441,7 +434,7 @@ contains
    do i1 = 1,nsym_
      isym_(:,:,i1) = transpose(isym_(:,:,i1))
    enddo
-   call symmetries_check_and_load(isym_(:,:,1:nsym_),nsym_,t_rev=t_rev_)
+   call symmetries_check_and_load(isym_(:,:,1:nsym_),nsym_,trevsym=trevsym_, t_rev=t_rev_)
    !
  end subroutine get_symmetries
  !

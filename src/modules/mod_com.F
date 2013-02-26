@@ -479,6 +479,7 @@ module com
      if (present(USE_TABS)) l_fmt=.true.
      if (present(INDENT)) l_indent=INDENT
      msgfmt=composed_fmt('a',size(val),l_fmt,l_indent)
+     if(trim(msgfmt)=="(/00x,a, 01(a,1x))") msgfmt="(/99x,a, 01(a,1x))"
      do i1=1,max_open_ofs
        if (of_unit(i1)<=0) cycle
        write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))

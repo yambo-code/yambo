@@ -30,9 +30,7 @@ subroutine XCo_local(E,Xk)
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:wf,wf_state
  use xc_functionals,ONLY:V_xc,xc_string
- ! GPL_EXCLUDE_START  SPIN_IGNORE
  use xc_functionals,ONLY:magn
- ! GPL_EXCLUDE_END  SPIN_IGNORE
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wrapper,       ONLY:Vstar_dot_V
 #if defined _SC
@@ -60,9 +58,7 @@ subroutine XCo_local(E,Xk)
  !
  if (.not.allocated(V_xc))   allocate(V_xc(fft_size,n_spin))
  !
- ! GPL_EXCLUDE_START  SPIN_IGNORE
  if (n_spin>1.and..not.allocated(magn)) allocate(magn(fft_size,3))
- ! GPL_EXCLUDE_END  SPIN_IGNORE
  !
  ! Precompiler options in case a non-DFT potential is required
  !
@@ -120,8 +116,6 @@ subroutine XCo_local(E,Xk)
    return
    !
  endif
- !
- ! GPL_EXCLUDE_START  SPIN_IGNORE
  !
  if (n_spin==2) then
    !
@@ -202,8 +196,6 @@ subroutine XCo_local(E,Xk)
  if(n_spin>1) deallocate(magn)
 #endif
  ! 
- ! GPL_EXCLUDE_END SPIN_IGNORE
- !
 #if !defined _SC
  deallocate(V_xc)
 #endif

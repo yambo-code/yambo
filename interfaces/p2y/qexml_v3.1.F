@@ -1359,11 +1359,12 @@ CONTAINS
 
 
     !------------------------------------------------------------------------
-    SUBROUTINE qexml_read_symmetry( nsym, invsym, ftau, s, sname, s_units, t_rev, ierr )
+    SUBROUTINE qexml_read_symmetry( nsym, invsym, trevsym, ftau, s, sname, s_units, t_rev, ierr )
       !------------------------------------------------------------------------
       !
       INTEGER,          OPTIONAL, INTENT(OUT) :: nsym
       LOGICAL,          OPTIONAL, INTENT(OUT) :: invsym
+      LOGICAL,          OPTIONAL, INTENT(OUT) :: trevsym
       INTEGER,          OPTIONAL, INTENT(OUT) :: s(:,:,:)
       REAL(dbl),        OPTIONAL, INTENT(OUT) :: ftau(:,:)
       CHARACTER(LEN=*), OPTIONAL, INTENT(OUT) :: sname(:)
@@ -1373,7 +1374,7 @@ CONTAINS
       !
       INTEGER             :: nsym_
       CHARACTER(256)      :: sname_(48), s_units_
-      LOGICAL             :: invsym_
+      LOGICAL             :: invsym_, trevsym_=.true.
       INTEGER             :: s_(3,3,48)
       REAL(dbl)           :: ftau_(3,48)
       INTEGER             :: t_rev_(48)
@@ -1425,6 +1426,7 @@ CONTAINS
       !
       IF ( PRESENT(nsym) )        nsym          = nsym_
       IF ( PRESENT(invsym) )      invsym        = invsym_
+      IF ( PRESENT(trevsym) )     trevsym       = trevsym_
       IF ( PRESENT(ftau) )        ftau(1:3, 1:nsym_)    = ftau_(1:3, 1:nsym_)
       IF ( PRESENT(s) )           s(1:3, 1:3, 1:nsym_)  = s_(1:3, 1:3, 1:nsym_)
       IF ( PRESENT(sname) )  THEN     

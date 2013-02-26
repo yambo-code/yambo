@@ -36,13 +36,9 @@ subroutine el_magnetization(en,Xk)
  use wave_func,      ONLY:wf_state,wf
  use xc_functionals, ONLY:magn
  !
- ! GPL_EXCLUDE_START SPIN_IGNORE
- !
  use electrons,      ONLY:Total_magn
  use D_lattice,      ONLY:DL_vol
  use matrix_operate, ONLY:m3det
- !
- ! GPL_EXCLUDE_END SPIN_IGNORE
  !
  implicit none
  type(levels) ::en
@@ -56,16 +52,9 @@ subroutine el_magnetization(en,Xk)
  magn=0.
  cv=0.
  !
- ! GPL_EXCLUDE_START SPIN_IGNORE
- !
  Total_magn=0.
  !
- ! GPL_EXCLUDE_END SPIN_IGNORE
- !
- !
  if (n_spin==1) return
- !
- ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  do i1=1,en%nbm
    do i2=1,Xk%nibz
@@ -114,7 +103,5 @@ subroutine el_magnetization(en,Xk)
  do i1=1,fft_size
    Total_magn(:)=Total_magn(:)+magn(i1,:)
  enddo
- !
- ! GPL_EXCLUDE_END SPIN_IGNORE
  !
 end subroutine

@@ -140,6 +140,8 @@ module SC
      !
      type(levels) :: E
      !
+     SC_nbands=SC_bands(2)-SC_bands(1)+1
+     !
      ! In the magnetic project Ho has already been allocated
      !
      if (.not.allocated(Ho)) then

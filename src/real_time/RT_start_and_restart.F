@@ -34,10 +34,10 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! [4] Initialize the bare Hartree and XC
  ! [5] Initialize the fields
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cZERO,cONE,cI
  use drivers,        ONLY:l_sc_contains_lda
  use com,            ONLY:msg,warning,error
- use QP_m,           ONLY:QP_nk,COHSEX_use_empties
+ use QP_m,           ONLY:QP_nk,COHSEX_use_empties,QP_nb
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
@@ -73,21 +73,23 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! G_lesser(T=0,T=0)=Go and G_lesser_old(T=0,T=0)=Go
  !
- G_lesser          =(0._SP,0._SP)
- G_lesser_reference=(0._SP,0._SP)
+ G_lesser          =cZERO
+ G_lesser_reference=cZERO
  rho_reference     =0._SP
  if(allocated(full_rho)) full_rho=0._SP
  V_xc_sc           =0._SP
  V_hartree_sc      =0._SP
- H_nl_sc           =(0._SP,0._SP)
+ H_nl_sc           =cZERO
  !
  ! Set to zero current and fields
  !
- RT_P               =(0._SP,0._SP)
- RT_ind_J           =(0._SP,0._SP)
+ RT_P               =cZERO
+ RT_ind_J           =cZERO
  ! 
+ QP_nb=SC_bands(2)
+ !
  forall(i1=SC_bands(1):SC_bands(2),ik=1:Xen%nk)
-   G_lesser(i1,i1,ik,1) =(0._SP,1._SP)*Xen%f(i1,ik,1)
+   G_lesser(i1,i1,ik,1) =cI*Xen%f(i1,ik,1)
    RT_occupations(i1,ik)=Xen%f(i1,ik,1)
  end forall
  !
@@ -174,7 +176,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
    if(l_RT_needs_XC0) then
      !
-     XC0_and_HARTREE0=(0._SP,0._SP)
+     XC0_and_HARTREE0=cZERO
      !
      if (local_V) then 
        call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID(3))  ! Local potential
@@ -247,7 +249,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
    ! The first term is stored here in XC0_and_HARTREE0
    !
-   XC0_and_HARTREE0=(0._SP,0._SP)
+   XC0_and_HARTREE0=cZERO
    !
    ! Rho_reference. Note that altough rh_n has been already calcualted 
    ! in sc_bare_Hamiltonian I need to recalculate it here when SC_lw_band>1

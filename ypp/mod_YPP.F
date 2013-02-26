@@ -143,13 +143,13 @@ module YPP
  integer     :: wannier_bands(2)   ! Bands Range
  integer     :: ord_dgrid_ipol     ! order of interpolation using double grid
  !
- ! GPL_EXCLUDE_START RAS_IGNORE
- !
  ! Reduce Symmetries
  !
  logical     :: l_fix_syms
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
+ !
+ ! GPL_EXCLUDE_START RAS_IGNORE
  !
  ! SC
  !

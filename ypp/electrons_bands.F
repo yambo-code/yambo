@@ -44,7 +44,7 @@ subroutine electrons_bands(Xk,Xen)
  real(SP), allocatable :: distances(:),values(:),bands(:,:,:),tmp_bands(:,:,:)
  integer               :: i1,i2,ic,is,ID_interp
  integer,  allocatable :: int_distances(:)
- character(schlen)     :: bands_f_name,bands_f_down
+ character(schlen)     :: bands_f_name(n_sp_pol)
  character(schlen), allocatable :: headings(:)
  !
  if(BANDS_steps<=0)  call error("Set BANDS_steps > 0")
@@ -126,50 +126,38 @@ subroutine electrons_bands(Xk,Xen)
  !
  call bz_interpolation(USER_k=CIRCUIT_k,R2D=bands,ID=ID_interp)
  !
- bands_f_name="bands"
- if(n_sp_pol>1) then
-   bands_f_name=bands_f_name//"_up"
-   bands_f_down="bands_down"
-   call of_open_close(bands_f_down,'ot')
- endif
- call of_open_close(bands_f_name,'ot')
+ do is=1,n_sp_pol
+   bands_f_name(is)="bands-sp"//intc(is)
+   call of_open_close(bands_f_name(is),'ot')
+ enddo
  !
  headings(1:3)=(/" kx  "," ky  "," kz  "/)
  do i1=BANDS_range(1),BANDS_range(2)
    headings(3+i1-BANDS_range(1)+1)=' b'//intc(i1)
  enddo
  !
- if(n_sp_pol>1) then
-   call msg('o bands_up',"#",headings,INDENT=0,USE_TABS=.true.)
-   call msg('o bands_down',"#",headings,INDENT=0,USE_TABS=.true.)
- else
-   call msg('o bands',"#",headings,INDENT=0,USE_TABS=.true.)
- endif
+ do is=1,n_sp_pol
+   call msg('o '//bands_f_name(is),"#",headings,INDENT=0,USE_TABS=.true.)
+ enddo
+ !
  call msg('o path',"#"," ",INDENT=0)
  !
  coo_out=coo_in
+ !
  do i1=1,CIRCUIT_K%nibz
    !
    call k_transform(CIRCUIT_K%pt(i1,:),"iku")
    values(1:3)=CIRCUIT_K%pt(i1,:)
-   values(3+1:3+BANDS_range(2)-BANDS_range(1)+1)= & 
-&    bands(BANDS_range(1):BANDS_range(2),1,i1)*HA2EV
- if(n_sp_pol>1) then
-   call msg('o bands_up',"",values,INDENT=0,USE_TABS=.true.)
-   values(3+1:3+BANDS_range(2)-BANDS_range(1)+1)= & 
-&    bands(BANDS_range(1):BANDS_range(2),2,i1)*HA2EV
-   call msg('o bands_down',"",values,INDENT=0,USE_TABS=.true.)
- else
-   call msg('o bands',"",values,INDENT=0,USE_TABS=.true.)
- endif
+   do is=1,n_sp_pol
+     values(3+1:3+BANDS_range(2)-BANDS_range(1)+1)=bands(BANDS_range(1):BANDS_range(2),is,i1)*HA2EV
+     call msg('o '//bands_f_name(is),"",values,INDENT=0,USE_TABS=.true.)
+   enddo
    !
  enddo
  ! 
- call of_open_close(bands_f_name)
- if(n_sp_pol>1) then
-   call of_open_close(bands_f_down)
- endif
- !
+ do is=1,n_sp_pol
+   call of_open_close(bands_f_name(is))
+ enddo
  call reset_interpolation(ID_interp)
  !
 end subroutine

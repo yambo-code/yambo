@@ -42,6 +42,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use com,           ONLY:msg,error,warning
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
+ use interfaces,    ONLY:OCCUPATIONS_gaps
  implicit none
  type(levels) ::E
  type(bz_samp)::K
@@ -92,6 +93,8 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! In general those oscillations appear when the gap is small.
  !
  n_b_full_guess= nint( real(nel)/2.0_SP*real(n_spinor)+.1)
+ !
+ if (n_b_full_guess+1 > E%nb ) call error(' Too few states. Include more states in the DFT run.')
  !
  Ef(1)=maxval(E%E(n_b_full_guess,:,:))
  Ef(2)=minval(E%E(n_b_full_guess+1,:,:))
@@ -223,12 +226,13 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    enddo
  endif
  !
+ ! Eval Metallic/Filled bands and gaps
+ !
+ call OCCUPATIONS_gaps(E)
+ !
  ! Mode = 1. Define E%f and exits
  !
- if (mode==1) then
-   call REPORT_Occupations(E,1)
-   return
- endif
+ if (mode==1) return
  !
  ! Complete Report
  !
@@ -236,7 +240,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  call msg('r',  'Electronic Temp. [ev K]:',(/Tel*HA2EV,Tel*HA2KEL/))
  call msg('r',  'Bosonic    Temp. [ev K]:',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
  !
- call REPORT_Occupations(E,mode)
+ call REPORT_Occupations(E)
  !
  contains
    !

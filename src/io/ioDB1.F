@@ -141,6 +141,12 @@ integer function ioDB1(E,k,ID)
    !
    !=------------ DIMENSIONS END -----------------=
    !
+   ! Check for old databases not compatible with libxc
+   !
+   if (.not.ver_is_gt_or_eq(ID,(/3,2,2/))) &
+&     call error(" WF databases too old. Please regenerate them with a newer Yambo release")
+   !
+   !
    ! Wavefunction G-vector components
    !---------------------------------
    !

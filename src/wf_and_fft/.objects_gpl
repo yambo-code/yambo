@@ -13,4 +13,4 @@ WF_rot_object = WF_rotate.o
 DISTRIBUTED_objects = WF_states_setup.o
 objs = fft_setup.o fft_3d.o $(FFT_object)  \
        scatter_Bamp.o scatter_Gamp.o WF_spatial_invertion.o WF_load.o \
-       $(WF_rot_object) $(DISTRIBUTED_objects)
+       WF_apply_symm.o $(WF_rot_object) $(DISTRIBUTED_objects)

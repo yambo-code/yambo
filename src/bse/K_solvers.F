@@ -33,7 +33,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use BS,             ONLY:ioBS_DISTRIBUTED
 #endif
  use com,            ONLY:msg,warning
- use drivers,        ONLY:l_bs_fxc
+ use drivers,        ONLY:l_bs_fxc,l_rpa_IP
 #if defined _KERR
  use units,          ONLY:HA2EV
  use com,            ONLY:error
@@ -65,14 +65,14 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  real(SP)          ::factor
  complex(SP)       ::drude_GreenF(W_bss%n(2))
  real(SP)          ::v(3)
- logical           ::run_Haydock,run_Diago,Pert_inversion,BSE_IP
+ logical           ::run_Haydock,run_Diago,Pert_inversion
  integer, external ::ioBS
  type(X_t)         ::X_oscillators
  character(schlen) ::ch
  !
  call section('*','BSE solver(s)')
  !
- if(.not.trim(BSS_mode)=='none') then
+ if(.not.l_rpa_IP) then
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
 #if defined _DISTRIBUTED
    ioBS_err=ioBS_DISTRIBUTED(iq,X_static,ID)
@@ -219,8 +219,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  Pert_inversion      =index(BSS_mode,'i')/=0
 #endif
  !
- BSE_IP              =trim(BSS_mode)=='none'
- !
  if (run_Haydock.and.associated(Ken%W)) then
    call warning('K with QP widths not supported in the Haydock solver')
    run_Haydock=.false.
@@ -241,7 +239,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  if (Pert_inversion)     call K_inversion(iq,W_bss,Ken,Xk,q)
  !
- if (BSE_IP) then
+ if (l_rpa_IP) then
    !  
    X_epsilon(1,:)=W_bss%p(:)
 #if defined _KERR

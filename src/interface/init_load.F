@@ -78,19 +78,24 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'setup',   '[R INI] Initialization') 
  call it('r',defs,'optics',  '[R OPT] Optics')
  call it('r',defs,'chi',     '[R CHI] Dyson equation for Chi.')
- call it('r',defs,'bse',     '[R BSK] Bethe Salpeter Equation.')
- call it('r',defs,'HF_and_locXC',   '[R XX] Hartree-Fock Self-energy and Vxc')
+ call it('r',defs,'bse',     '[R BSE] Bethe Salpeter Equation.')
+ call it('r',defs,'IP',      '[R   K] Independet Particles')
+ call it('r',defs,'LFs',     '[R   K] Local fields term')
+ call it('r',defs,'tddft',   '[R   K] Use TDDFT kernel')
+ call it('r',defs,'alda_fxc','[R   K]     Adiabatic-LDA Fxc')
+ call it('r',defs,'lrc_fxc', '[R   K]     LRC (1/alpha) Fxc')
+ call it('r',defs,'bs_fxc',  '[R   K]     BSE-derived Fxc')
+ call it('r',defs,'tdhf',    '[R BSK] Unscreened e-h interaction: TD Hartree-Fock kernel')
+ call it('r',defs,'W_eh',    '[R BSK]   screened e-h interaction: W kernel')
+ call it('r',defs,'bss',     '[R BSS] Bethe Salpeter Equation solver')
  call it('r',defs,'em1s',    '[R Xs] Static Inverse Dielectric Matrix')
  call it('r',defs,'em1d',    '[R Xd] Dynamical Inverse Dielectric Matrix')
  call it('r',defs,'ppa',     '[R Xp] Plasmon Pole Approximation')
+ call it('r',defs,'HF_and_locXC',   '[R XX] Hartree-Fock Self-energy and Vxc')
  call it('r',defs,'gw0',     '[R GW] GoWo Quasiparticle energy levels')
- call it('r',defs,'bss',     '[R BSS] Bethe Salpeter Equation solver')
- call it('r',defs,'alda_fxc','[R TDDFT] The ALDA TDDFT kernel')
- call it('r',defs,'lrc_fxc', '[R TDDFT] The LRC TDDFT kernel')
- call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb interaction')
- call it('r',defs,'tdhf',    '[R TDHF] Unscreened e-h interaction: TD Hartree-Fock')
- call it('r',defs,'cohsex',  '[R Xp] COlumb Hole Screened EXchange')
  call it('r',defs,'life',    '[R GW] GoWo Quasiparticle lifetimes')
+ call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb interaction')
+ call it('r',defs,'cohsex',  '[R Xp] COlumb Hole Screened EXchange')
  !
  ! GPL_EXCLUDE_START
  !
@@ -98,13 +103,16 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! NON GPL RUNLEVELS
  !===================
  call it('r',defs,'acfdt',   '[R ETOT] ACFDT Total Energy')
- call it('r',defs,'bs_fxc',  '[R TDDFT] The BSE TDDFT kernel')
+ call it('r',defs,'build_bs_fxc',   '[R BSS] Build Fxc via BSE-K')
 #if defined _ELPH 
  call it('r',defs,'ElPhHam', '[R] Frohlich Hamiltonian') 
 #endif
  !
  ! GPL_EXCLUDE_END
  !
+#if defined _KERR
+ call it('r',defs,'kerr',    '[R OPT] Kerr')
+#endif
 #if defined _SC 
  call it('r',defs,'scpot',   '[R] Self-Consistent potentials') 
 #endif
@@ -160,7 +168,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
  !
- !
  ! BSE
  !
  call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`)',BS_res_mode)
@@ -170,7 +177,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,E_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,E_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
- call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t/none`',BSS_mode,protect=.FALSE.)
+ call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t`',BSS_mode,protect=.FALSE.)
  call it(defs,'BLongDir','[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange','[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange','[BSS] Damping range',BSS_dr,E_unit)
@@ -203,7 +210,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! BSE: Kerr
  !
- call it('f',defs,'EvalKerr', '[BSE] Kerr parameters',verb_level=V_resp)
  call it(defs,'Gauge'       , '[BSE] Gauge (length|velocity). In metals length misses An-Hall',global_gauge)
  call it('f',defs,'AnHall'  , '[BSE] Compute the anomalous Hall effect and if length add it to eps')
  !

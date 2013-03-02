@@ -38,7 +38,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
- use drivers,        ONLY:l_bss,l_bs_fxc,l_alda_fxc,l_td_hf
+ use drivers,        ONLY:l_bss,l_bs_fxc,l_alda_fxc,l_td_hf,l_rpa_IP
  use par_proc_m,     ONLY:pp_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
@@ -74,6 +74,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  call X_reset(X_tddft)
  call W_reset(W_bss)
+ ! TDDFT setup
+ call tddft_do_X_W_typs(-1,X_tddft,Xw)
  !
  ! In these two lines I ensure the at least all the metallic
  ! bands are included in the X summation
@@ -103,6 +105,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  if (.not.l_bs_fxc) call parser('bs_fxc',l_bs_fxc)
  !
  ! GPL_EXCLUDE_END
+ !
  !
  ! W RL size setup looking at the max index of G-G' 
  !
@@ -145,25 +148,23 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Logicals (Drivers)
  !
- if(trim(BSS_mode)=='none') then
+ if(l_rpa_IP) then
+   call parser('BSIPAres',BS_IP_antires)
    BS_res_mode='none'
    BS_cpl_mode='none'
-   BS_K_coupling=.FALSE.
-   call parser('BSIPAres',BS_IP_antires)
- else
-   BS_res_K_corr=index(BS_res_mode,'c')/=0
-   BS_res_K_exchange=index(BS_res_mode,'x')/=0
-   BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
-   BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
-   BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
-   !
-   BS_W_is_diagonal=index(BS_res_mode,'d')/=0
-   !
-   BS_K_is_ALDA=l_alda_fxc
  endif
  !
+ BS_res_K_corr=index(BS_res_mode,'c')/=0
+ BS_res_K_exchange=index(BS_res_mode,'x')/=0
+ BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
+ BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
+ BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
+ !
+ BS_W_is_diagonal=index(BS_res_mode,'d')/=0
+ !
+ BS_K_is_ALDA=l_alda_fxc
+ !
 #if defined _KERR
- call parser('EvalKerr',l_kerr)
  if(l_kerr) call parser('AnHall',l_anomalous_Hall)
 #endif
  !
@@ -186,7 +187,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  iq=BS_q(1)
  ! 
- if(trim(BSS_mode)=='none') then
+ if(l_rpa_IP) then
    call K_IP(iq,Ken,Xk,X_static_pp%Wd)
  else
    call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
@@ -200,7 +201,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! `TDDFT` SOLVER
  !
- if (l_bs_fxc) then
+ if (index(BSS_mode,'t')/=0) then
    !
    call X_duplicate(X_static_pp,X_tddft) ! initialize X_tddft to X_static_pp
    !

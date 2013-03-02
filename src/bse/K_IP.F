@@ -53,14 +53,6 @@ subroutine K_IP(iq,Ken,Xk,Wd)
    call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
  endif
  !
- E_eh_range=(/minval(abs(BS_eh_E))-1.E-5,maxval(abs(BS_eh_E))/)
- S_eh_range=(/BS_eh_win(1)/100.*(E_eh_range(2)-E_eh_range(1)),& 
-&             BS_eh_win(2)/100.*(E_eh_range(2)-E_eh_range(1))/)
- !
- ! Test the spatial Inversion
- !
- call WF_spatial_invertion(Ken,Xk)
- !
  ! DB identifier 
  !
  BS_identifier=pickup_a_random(10000._SP)

@@ -238,7 +238,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_bse=.false.
  l_chi=.false.
  l_bss=.false.
+ l_rpa_IP=.false.
+ l_rpa_LF=.false.
+ l_tddft=.false.
+ l_alda_fxc=.false.
+ l_lrc_fxc=.false.
  l_bs_fxc=.false.
+ l_td_hf=.false.
+ l_W_eh=.false.
  l_acfdt=.false.
  l_el_corr=.false.
  l_ph_corr=.false.

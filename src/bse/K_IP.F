@@ -24,11 +24,10 @@ subroutine K_IP(iq,Ken,Xk,Wd)
  use pars,         ONLY:SP,IP
  use LOGO,         ONLY:pickup_a_random
  use memory_m,     ONLY:mem_est
- use electrons,    ONLY:levels,n_sp_pol
+ use electrons,    ONLY:levels
  use R_lattice,    ONLY:bz_samp
  use com,          ONLY:error
- use BS,           ONLY:BS_eh_win,BS_columns,BS_eh_E,BS_identifier, &
-&                       BS_blk_dim
+ use BS,           ONLY:BS_columns,BS_identifier,BS_blk_dim
  !
  implicit none
  type(levels)  ::Ken 
@@ -36,7 +35,6 @@ subroutine K_IP(iq,Ken,Xk,Wd)
  integer       ::iq
  !
  complex(SP):: Wd
- real(SP)   :: E_eh_range(2),S_eh_range(2)
  !
  ! Setups
  !

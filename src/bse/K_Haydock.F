@@ -22,6 +22,7 @@
 subroutine K_Haydock(iq,W)
  !
  use pars,           ONLY:SP,pi,schlen,cI
+ use com,            ONLY:error
  use wrapper,        ONLY:V_by_V_plus_V
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_epsilon
@@ -259,6 +260,7 @@ subroutine K_Haydock(iq,W)
      ! B(n+1)= <Vn+1|Vn+1>^(1/2)
      !
      Bf(it+1)=sqrt(dot_product(Vnp1,Vnp1))
+     if( isnan(Bf(it+1)) ) call error('Bf=NaN likely because some eigenvalue of BSE is negative.')
      !
      !|Vn-1> = |Vn>
      !
@@ -303,7 +305,8 @@ subroutine K_Haydock(iq,W)
      !          where the dot_product is just on eh pair space 
      !
      if(     cpl_scheme_fast) Bf(it+1)=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
-     if(.not.cpl_scheme_fast) Bf(it+1)=sqrt(fdot_product(Vn,Vnp1)) 
+     if(.not.cpl_scheme_fast) Bf(it+1)=sqrt(fdot_product(Vn,Vnp1))
+     if( isnan(Bf(it+1)) ) call error(' Bf=NaN likely because some eigenvalue of BSE is negative.')
      !
      !|Vn> =|Vn+1> / B(n+1)
      !

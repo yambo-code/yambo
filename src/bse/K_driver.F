@@ -38,7 +38,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
- use drivers,        ONLY:l_bss,l_bs_fxc,l_alda_fxc,l_td_hf,l_rpa_IP
+ use drivers,        ONLY:l_rpa_IP,l_rpa_LF,l_alda_fxc,l_td_hf,l_W_eh,l_bs_fxc,l_bss
  use par_proc_m,     ONLY:pp_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
@@ -116,20 +116,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
  endif
  !
- if (l_bs_fxc.or.index(BSS_mode,'t')/=0) then
-   !  
-   ! GPL_EXCLUDE_START  
-   !  
-   ! Remove the exchange from the BS_mode
-   ! if TDDFT Fxc is obtained from K
-   !
-   if (index(BSS_mode,'t')==0) BS_res_mode=trim( string_remove(BS_res_mode,'x') )
-   BS_cpl_mode=" "
-   call parser('FxcCausal',FXC_is_causal)
-   !
-   ! GPL_EXCLUDE_END
-   !
- else if (l_alda_fxc) then
+#if defined _KERR
+ if(l_kerr) call parser('AnHall',l_anomalous_Hall)
+#endif
+ !
+ if(l_rpa_IP) then
+   call parser('BSIPAres',BS_IP_antires)
+   BS_res_mode='none'
+   BS_cpl_mode='none'
+ endif
+ !
+ if (l_rpa_LF.or.l_alda_fxc) then
    !  
    ! Remove the correlation from the BS_mode
    !
@@ -146,13 +143,27 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    if (index(BS_cpl_mode,'c')/=0) BS_res_mode=trim( string_add(BS_res_mode,'d') ) 
  endif
  !
- ! Logicals (Drivers)
- !
- if(l_rpa_IP) then
-   call parser('BSIPAres',BS_IP_antires)
-   BS_res_mode='none'
-   BS_cpl_mode='none'
+ if (l_W_eh) then
+   BS_res_mode=trim( string_add(BS_res_mode,'c') )
  endif
+ !
+ !  
+ ! GPL_EXCLUDE_START  
+ !  
+ if (l_bs_fxc.or.index(BSS_mode,'t')/=0) then
+   ! Remove the exchange from the BS_mode
+   ! if TDDFT Fxc is obtained from K
+   !
+   if (index(BSS_mode,'t')==0) BS_res_mode=trim( string_remove(BS_res_mode,'x') )
+   BS_cpl_mode=" "
+   call parser('FxcCausal',FXC_is_causal)
+   !
+ endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ !
+ ! Logicals (Drivers)
  !
  BS_res_K_corr=index(BS_res_mode,'c')/=0
  BS_res_K_exchange=index(BS_res_mode,'x')/=0
@@ -163,10 +174,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  !
  BS_K_is_ALDA=l_alda_fxc
- !
-#if defined _KERR
- if(l_kerr) call parser('AnHall',l_anomalous_Hall)
-#endif
  !
  ! Energy points
  !
@@ -188,6 +195,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  iq=BS_q(1)
  ! 
  if(l_rpa_IP) then
+   ! This is a fake subroutine.
+   ! The kernel is not constructed in the IP approximation
    call K_IP(iq,Ken,Xk,X_static_pp%Wd)
  else
    call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)

@@ -452,7 +452,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! GPL_EXCLUDE_START
    !
-   ! BS based TDDFT (BS fxc is only of q=0 0 0)
+   ! BS based TDDFT (BS fxc is only of q=0 0 0). BS_fxc db exist
    if(l_bs_fxc) call initactivate(1,'FxcGRLc FxcSVdig FxcCausal')
    !
    ! GPL_EXCLUDE_END
@@ -493,25 +493,28 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_alda_fxc)   call initactivate(1,'FxcGRLc')
    if (l_lrc_fxc)    call initactivate(1,'LRC_alpha LRC_beta')
    !
-   ! BSE + TDDFT = no BS db, Fxc + LF on-fly
-   !
-   if (l_bs_fxc) then
-     call initactivate(1,'FxcGRLc FxcSVdig FxcCausal FxcMEStps')
-     call initactivate(1,'BLongDir BEnRange BDmRange BEnSteps')
-     call initactivate(-1,'BScplKmod')
-   endif
-   !
    if(l_td_hf.or.l_W_eh) call initactivate(1,'BSENGBlk')
    !
    call initactivate(1,'ShiftedPath')
    call initactivate(1,'DrudeW')
    call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind BSEClmns')
    !
+   ! BSE + TDDFT = no BS db, Fxc + LF on-fly
+   ! Special case: The BSE equation is used to build up the BSE_Fxc kernel.
+   if (l_bs_fxc) then
+     call initactivate(1,'FxcGRLc FxcSVdig FxcCausal FxcMEStps')
+     call initactivate(1,'BLongDir BEnRange BDmRange BEnSteps')
+     call initactivate(-1,'BScplKmod')
+   endif
+   !
  endif
  !
  ! BSE solver
  !
  if (l_bss) then
+   !
+   ! Special case: the BSE_Fxc kernel has been constructed
+   !               Thus I move to g-space to solve the Dyson equation
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGexx ALLGexx')
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk')
    !
@@ -837,6 +840,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_lrc_fxc=runlevel_is_on('lrc_fxc')
        l_bs_fxc=runlevel_is_on('bs_fxc')
        l_W_eh=runlevel_is_on('W_eh')
+       l_td_hf=runlevel_is_on('tdhf')
        l_bss=runlevel_is_on('bss')
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
@@ -1117,7 +1121,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if(l_tddft) then
            l_alda_fxc = .true.                            !  (ALDA by default)
            l_alda_fxc = trim(rstr_piece(i1+1)) == 'da'
-           l_lrc_fxc  = trim(rstr_piece(i1+1)) == 'dl'
+           l_lrc_fxc  = trim(rstr_piece(i1+1)) == 'dl'.and.l_chi
            l_bs_fxc   = trim(rstr_piece(i1+1)) == 'db'
          endif
          !
@@ -1128,12 +1132,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          if(l_rpa_IP)      call initactivate(1,'IP')
          if(l_rpa_LF)      call initactivate(1,'LFs')
+         !
          if(l_tddft) then
                            call initactivate(1,'tddft')
            if(l_alda_fxc)  call initactivate(1,'alda_fxc')
            if(l_lrc_fxc)   call initactivate(1,'lrc_fxc')
            if(l_bs_fxc)    call initactivate(1,'bs_fxc')
          endif
+         !
          if(l_td_hf)       call initactivate(1,'tdhf')
          if(l_W_eh)        call initactivate(1,'W_eh')
          !
@@ -1146,9 +1152,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if (index(BSS_mode,'h')==0.and.index(BSS_mode,'d')==0.and.&
 &            index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0) BSS_mode='h'
          !
-         ! With and ALDA Fxc the t solver is not permitted
+         ! With ALDA Fxc the "t" solver is not permitted
          !
-         if (l_alda_fxc.and.index(BSS_mode,'t')/=0) BSS_mode='h'
+         if ((.not.l_bs_fxc).and.index(BSS_mode,'t')/=0) BSS_mode='h'
          !
        endif
        !

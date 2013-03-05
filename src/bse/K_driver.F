@@ -35,6 +35,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_IP_antires
+#if defined _DISTRIBUTED
+ use BS,             ONLY:ioBS_DISTRIBUTED
+#endif
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
@@ -42,10 +45,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use par_proc_m,     ONLY:pp_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
+ use IO_m,           ONLY:io_control,REP,NONE,OP_RD_CL
 #if defined _SC
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate
  use QP_m,           ONLY:OCC_T_ref
- use IO_m,           ONLY:REP
 #endif
 #if defined _KERR
  use BS,             ONLY:BS_not_const_eh_f
@@ -59,10 +62,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Work Space
  !
+ type(X_t)   :: X_tddft
  integer     :: iq,bands_to_correct(2)
  integer     :: Max_G_m_G
- type(X_t)   :: X_tddft
+ integer     :: ID,ioBS_err
  integer, external :: eval_G_minus_G
+ integer, external ::ioBS
  !
 #if defined _SC
  !
@@ -190,21 +195,31 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n(2)
  !
- ! KERNEL
- !
  iq=BS_q(1)
- ! 
- if(l_rpa_IP) then
-   ! This is a fake subroutine.
-   ! The kernel is not constructed in the IP approximation
-   call K_IP(iq,Ken,Xk,X_static_pp%Wd)
- else
+ !
+ ! 1. The IP Part (Dipoles and eh-energies)...
+ ! ================
+ !
+ call K_IP(iq,Ken,Xk,X_static_pp,W_bss)
+ !
+ ! 2. The KERNEL
+ ! ================
+ call section('+','Main loop')
+ !
+ if(.not.l_rpa_IP) then
    call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
+   !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
+#if defined _DISTRIBUTED
+   ioBS_err=ioBS_DISTRIBUTED(iq,X_static_pp,ID)
+#else
+   ioBS_err=ioBS(iq,X_static_pp,ID)
+#endif
  endif
  !
- ! SOLVER
- !
- if (l_bss.and.BS_columns==Xk%nibz) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
+ ! 3. The SOLVER
+ ! =================
+ if (ioBS_err==0.and.l_bss.and.BS_columns==Xk%nibz) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
  !
  ! GPL_EXCLUDE_START
  !

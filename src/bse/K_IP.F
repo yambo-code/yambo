@@ -19,34 +19,57 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_IP(iq,Ken,Xk,Wd)
+subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  !
- use pars,         ONLY:SP,IP
- use LOGO,         ONLY:pickup_a_random
- use memory_m,     ONLY:mem_est
- use electrons,    ONLY:levels
- use R_lattice,    ONLY:bz_samp
- use com,          ONLY:error
- use BS,           ONLY:BS_columns,BS_identifier,BS_blk_dim
+ use pars,          ONLY:SP,IP,pi
+ use LOGO,          ONLY:pickup_a_random
+ use memory_m,      ONLY:mem_est
+ use frequency,     ONLY:w_samp
+ use com,           ONLY:error,msg
+ use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
+ use electrons,     ONLY:levels,spin_occ,spin
+ use X_m,           ONLY:X_t,X_epsilon,X_drude_term,alpha_dim,eps_2_alpha,           &
+&                        DIP_q_dot_iR,X_duplicate,X_drude_term
+ use BS,            ONLY:BS_columns,BS_identifier,BS_blk_dim,BS_k_and_row_restart,   &
+&                        BSS_rhoq0,BS_eh_f,BS_eh_E,BS_eh_table,BSS_Vnl_included,     &
+&                        BS_bands,BS_eh_W,BS_IP_antires,BS_drude_f_eh,BS_K_coupling, &
+&                        BS_K_dim,BSS_n_freqs,BSS_q0
+#if defined _KERR
+ use units,         ONLY:HA2EV
+ use drivers,       ONLY:l_kerr
+ use fields,        ONLY:global_gauge
+ use KERR,          ONLY:DIP_P_symm,KERR_alloc,iw_ref
+#endif
  !
  implicit none
- type(levels)  ::Ken 
- type(bz_samp) ::Xk
- integer       ::iq
+ type(levels) ::Ken
+ type(bz_samp)::Xk
+ type(X_t)    ::X_static
+ type(w_samp) ::W_bss
+ integer      ::iq
  !
- complex(SP):: Wd
+ ! Work space
+ !
+ type(X_t)         ::X_oscillators
+ integer           ::ik,iv,ic,i1,i_sp,ioBS_err,ID, epsilon_dim
+ real(SP)          ::factor
+ complex(SP)       ::drude_GreenF(W_bss%n(2))
+#if defined _KERR
+ integer           ::iw
+ complex(SP)       ::factor_jj
+#endif
  !
  ! Setups
  !
  if (BS_columns<=0.or.BS_columns>Xk%nibz) BS_columns=Xk%nibz
+ BS_k_and_row_restart=0
  !
  ! Dimensions and Tables
  ! 
  allocate(BS_blk_dim(Xk%nibz))
- !
  call mem_est("BS_blk_dim",(/Xk%nbz/),(/IP/))
  !
- call K_eh_setup(iq,Ken,Xk,Wd)
+ call K_eh_setup(iq,Ken,Xk,X_static%Wd)
  if (any(BS_blk_dim==0)) then
    call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
  endif
@@ -55,6 +78,116 @@ subroutine K_IP(iq,Ken,Xk,Wd)
  !
  BS_identifier=pickup_a_random(10000._SP)
  !
- call section('+','Main loop')
+ !
+ ! Polarizability ?
+ !
+ if (trim(alpha_dim)/='adim') then
+   call msg('r', 'Optical renormalization   [au]:',eps_2_alpha)
+   call msg('rn','Polarizability dimension      :',trim(alpha_dim))
+ endif
+ !
+ ! Eps_0
+ !
+ epsilon_dim=4
+#if defined _KERR
+ if(l_kerr) epsilon_dim=7
+#endif
+ allocate(X_epsilon(epsilon_dim,BSS_n_freqs))
+ !
+ allocate(X_drude_term(BSS_n_freqs))
+ X_epsilon=cmplx(0.,0.,SP)
+ X_drude_term=cmplx(0.,0.,SP)
+ !
+ call X_duplicate(X_static,X_oscillators) 
+ call Drude(1,(/1,BSS_n_freqs/),Ken,Xk,W_bss,X_static,drude_GreenF)
+ !
+ X_oscillators%ib=BS_bands
+ if (BS_K_coupling.or.allocated(BS_eh_W).or.BS_IP_antires) then
+   allocate(BSS_rhoq0(2*BS_K_dim)) 
+   call mem_est("BSS_rhoq0",(/2*BS_K_dim/))
+ else
+   allocate(BSS_rhoq0(BS_K_dim)) 
+   call mem_est("BSS_rhoq0",(/BS_K_dim/))
+ endif
+ if (iq==1) then
+   X_oscillators%q0=BSS_q0
+   call Dipole_driver(Ken,Xk,X_oscillators,BSS_q0)
+   BSS_Vnl_included=X_oscillators%Vnl_included
+   do i1=1,BS_K_dim
+     ik  =BS_eh_table(i1,1)
+     iv  =BS_eh_table(i1,2)
+     ic  =BS_eh_table(i1,3)
+     i_sp=spin(BS_eh_table(i1,:))
+     !
+     ! DIP_iq_dot_r(c,v,k) is iq . <v | r |c> while I need 
+     !
+     !   iq . <c|r|v> = - conjg( iq . <v | r |c> )
+     !
+#if defined _KERR
+     if(trim(global_gauge)=='length')   BSS_rhoq0(i1)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))
+     if(trim(global_gauge)=='velocity') BSS_rhoq0(i1)= conjg(DIP_P_symm(1,ic,iv,ik,i_sp))
+#else
+     BSS_rhoq0(i1)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))
+#endif
+     !
+     ! minus comes from the occupation factor 
+     !
+#if defined _KERR
+     if (BS_K_coupling.or.BS_IP_antires) then
+       if(trim(global_gauge)=='length')   BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
+       if(trim(global_gauge)=='velocity') BSS_rhoq0(BS_K_dim+i1)=DIP_P_symm(1,ic,iv,ik,i_sp)
+     endif
+#else
+     if (BS_K_coupling.or.BS_IP_antires) BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
+#endif
+     !
+     X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*BS_eh_f(i1)/&
+&                                  (W_bss%p(:)-BS_eh_E(i1))
+     !
+     if (BS_K_coupling.or.BS_IP_antires) then
+       !
+       ! Note the plus in "+BSS_rhoq0" coming from the BS_eh_f change of sign
+       !
+       X_epsilon(3,:)=X_epsilon(3,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0(i1)*BS_eh_f(i1)/&
+&                                    (W_bss%p(:)+BS_eh_E(i1))
+     endif
+     !
+   enddo
+   !
+   factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
+   !
+#if defined _KERR
+   if(trim(global_gauge)=='velocity') then
+     if(all(abs(real(W_bss%p(:)))>0.01))&
+&      call error(' No w close to 0 included in your frequency grid')
+     iw_ref=1
+     do iw=1,BSS_n_freqs
+       if(abs(real(W_bss%p(iw)))>0.01) cycle
+       if(abs(W_bss%p(iw))<abs(W_bss%p(iw_ref))) iw_ref=iw
+     enddo
+     call msg('nsr','Reference freq. for w=0 is:',real(W_bss%p(iw_ref))*HA2EV )
+     factor_jj=X_epsilon(3,iw_ref)
+   endif
+   !
+   if(trim(global_gauge)=='length') X_epsilon(3,:)=1.+X_epsilon(3,:)*factor/q_norm(1)**2
+   if(trim(global_gauge)=='velocity') then
+     X_epsilon(3,:)=1.+(X_epsilon(3,:)-factor_jj)*factor/(real(W_bss%p(:))**2+epsilon(1.))
+   endif
+   !
+   ! Causal Drude term
+   !
+   X_drude_term(:)=-BS_drude_f_eh*drude_GreenF(:)
+   do iw=1,iw_ref-1
+     X_drude_term(iw_ref-iw)=cmplx(real(X_drude_term(iw_ref-iw)),-aimag(X_drude_term(iw_ref+iw)))
+   enddo
+   X_epsilon(3,:)=X_epsilon(3,:)+X_drude_term(:)*factor/q_norm(1)**2
+   !
+   if(l_kerr) call K_kerr_IP(W_bss%p)
+#else
+   !
+   X_epsilon(3,:)=1.+X_epsilon(3,:)*factor/(q_norm(1))**2
+#endif
+ !
+ endif
  !
 end subroutine

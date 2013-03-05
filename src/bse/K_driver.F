@@ -30,14 +30,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
  use BS,             ONLY:BS_bands,BS_q,BS_blk_dim,BS_eh_table,BS_eh_E,BS_eh_f,&
-&                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,&
+&                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,BSS_rhoq0,&
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_IP_antires
-#if defined _DISTRIBUTED
- use BS,             ONLY:ioBS_DISTRIBUTED
-#endif
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
@@ -45,13 +42,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use par_proc_m,     ONLY:pp_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
- use IO_m,           ONLY:io_control,REP,NONE,OP_RD_CL
 #if defined _SC
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate
  use QP_m,           ONLY:OCC_T_ref
 #endif
 #if defined _KERR
- use BS,             ONLY:BS_not_const_eh_f
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
  implicit none
@@ -65,9 +60,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  type(X_t)   :: X_tddft
  integer     :: iq,bands_to_correct(2)
  integer     :: Max_G_m_G
- integer     :: ID,ioBS_err
  integer, external :: eval_G_minus_G
- integer, external ::ioBS
  !
 #if defined _SC
  !
@@ -197,29 +190,19 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  iq=BS_q(1)
  !
+ call section('+','Main loop')
+ !
  ! 1. The IP Part (Dipoles and eh-energies)...
  ! ================
- !
  call K_IP(iq,Ken,Xk,X_static_pp,W_bss)
  !
  ! 2. The KERNEL
  ! ================
- call section('+','Main loop')
- !
- if(.not.l_rpa_IP) then
-   call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
-   !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
-#if defined _DISTRIBUTED
-   ioBS_err=ioBS_DISTRIBUTED(iq,X_static_pp,ID)
-#else
-   ioBS_err=ioBS(iq,X_static_pp,ID)
-#endif
- endif
+ if(.not.l_rpa_IP) call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
  !
  ! 3. The SOLVER
  ! =================
- if (ioBS_err==0.and.l_bss.and.BS_columns==Xk%nibz) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
+ if (l_bss.and.BS_columns==Xk%nibz) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
  !
  ! GPL_EXCLUDE_START
  !
@@ -253,9 +236,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! CLEAN
  !
- deallocate(BS_blk_dim,BS_eh_table,BS_eh_E,BS_eh_f)
- if (allocated(BS_eh_W)) deallocate(BS_eh_W)
- if (allocated(BS_eh_Z)) deallocate(BS_eh_Z)
- call mem_est("BS_blk_dim BS_eh_table BS_eh_E BS_eh_f BS_eh_W BS_eh_Z")
+ deallocate(BSS_rhoq0,BS_blk_dim)
+ call mem_est("BS_blk_dim BSS_rhoq0")
+ !
+ if (allocated(BS_eh_table)) deallocate(BS_eh_table)
+ if (allocated(BS_eh_E))     deallocate(BS_eh_E)
+ if (allocated(BS_eh_f))     deallocate(BS_eh_f)
+ if (allocated(BS_eh_W))     deallocate(BS_eh_W)
+ if (allocated(BS_eh_Z))     deallocate(BS_eh_Z)
+ call mem_est("BS_eh_table BS_eh_E BS_eh_f BS_eh_W BS_eh_Z")
  !
 end subroutine

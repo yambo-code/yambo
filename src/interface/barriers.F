@@ -194,10 +194,10 @@ subroutine barriers()
  !
 #if defined _KERR
  if(l_kerr) then
-   on_runlevels='bse bss IP LFs tdhf W_eh em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
-   ! GPL_INCLUDE_START SC_IGNORE
-   !on_runlevels='bse IP'
-   ! GPL_INCLUDE_END SC_IGNORE
+   on_runlevels='optics chi bse bss IP LFs tdhf W_eh em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
+   ! GPL_INCLUDE_START
+   !on_runlevels='optics bse bss IP'
+   ! GPL_INCLUDE_END
    if(bss_inv.or.bss_tddft) on_runlevels=' '
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
  endif

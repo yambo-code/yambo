@@ -25,6 +25,8 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  use LOGO,          ONLY:pickup_a_random
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
+ use timing,        ONLY:live_timing
+ use drivers,       ONLY:l_rpa_IP
  use com,           ONLY:error,msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
  use electrons,     ONLY:levels,spin_occ,spin
@@ -113,6 +115,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
    X_oscillators%q0=BSS_q0
    call Dipole_driver(Ken,Xk,X_oscillators,BSS_q0)
    BSS_Vnl_included=X_oscillators%Vnl_included
+   if(l_rpa_IP) call live_timing('Eps0',BS_K_dim)
    do i1=1,BS_K_dim
      ik  =BS_eh_table(i1,1)
      iv  =BS_eh_table(i1,2)
@@ -152,7 +155,11 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
 &                                    (W_bss%p(:)+BS_eh_E(i1))
      endif
      !
+     if(l_rpa_IP) call live_timing(steps=1)
+     !
    enddo
+   !
+   if(l_rpa_IP) call live_timing()
    !
    factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
    !

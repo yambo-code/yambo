@@ -483,11 +483,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
  endif
  !
- ! BSE 
+ ! BSE
  !
  if (l_optics.and.l_bse) then
    call QP_ctl_switch('K')
    !
+#if defined _KERR
+   if(l_kerr) call initactivate(1,'EvalKerr AnHall')
+#endif
    if(l_rpa_IP) call initactivate(1,'BSIPAres')
    if(.not.l_rpa_IP) call initactivate(1,'BSresKmod BScplKmod BSENGexx ALLGexx')
    if (l_alda_fxc)   call initactivate(1,'FxcGRLc')
@@ -511,7 +514,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! BSE solver
  !
- if (l_bss) then
+ if (l_bss.or.(l_rpa_IP.and.l_bse)) then
    !
    ! Special case: the BSE_Fxc kernel has been constructed
    !               Thus I move to g-space to solve the Dyson equation
@@ -531,9 +534,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
 #if defined _SC || defined _KERR
    call initactivate(1,'Gauge')
-#endif
-#if defined _KERR
-   call initactivate(1,'AnHall')
 #endif
 #if defined _ELPH 
    if (l_ph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
@@ -859,9 +859,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! GPL_EXCLUDE_END
        !
        ! 
-#if defined _KERR
-       l_kerr=runlevel_is_on('kerr')
-#endif
 #if defined _SC
        l_sc_run=runlevel_is_on('scpot')
        l_real_time=runlevel_is_on('negf')
@@ -1105,7 +1102,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if (l_chi) call initactivate(1,'chi')
          if (l_bse) call initactivate(1,'bse')
 #if defined _KERR
-         if (l_bse) call initactivate(1,'kerr')
+         l_kerr=l_bse
 #endif
          !
        endif

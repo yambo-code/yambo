@@ -36,7 +36,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #endif
 #if defined _KERR
  use drivers,        ONLY:l_kerr
- use KERR,           ONLY:KERR_alloc
 #endif
 #if defined _SC
  use fields,         ONLY:global_gauge

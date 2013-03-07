@@ -115,6 +115,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  endif
  !
 #if defined _KERR
+ call parser('EvalKerr',l_kerr)
  if(l_kerr) call parser('AnHall',l_anomalous_Hall)
 #endif
  !

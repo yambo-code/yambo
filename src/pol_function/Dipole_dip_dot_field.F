@@ -115,7 +115,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
        do i_spin=1,n_sp_pol
          !
          ! DIP_iq_dot_r = i q . < v k | r | c  k >
-         ! E is invariant under T-rev but the minus is compensted by the conjg of (iq) which should not be there.
+         ! E is invariant under T-rev but the minus is compensated by the conjg of (iq) which should not be there.
          !
          if(.not.t_rev) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin) )
          if(     t_rev) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), field_dir_rot ) 

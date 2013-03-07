@@ -110,9 +110,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _KERR
- call it('r',defs,'kerr',    '[R OPT] Kerr')
-#endif
 #if defined _SC 
  call it('r',defs,'scpot',   '[R] Self-Consistent potentials') 
 #endif
@@ -211,6 +208,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! BSE: Kerr
  !
  call it(defs,'Gauge'       , '[BSE] Gauge (length|velocity). In metals length misses An-Hall',global_gauge)
+ call it('f',defs,'EvalKerr', '[BSE] Compute the Kerr effect')
  call it('f',defs,'AnHall'  , '[BSE] Compute the anomalous Hall effect and if length add it to eps')
  !
 #endif

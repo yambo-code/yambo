@@ -24,6 +24,8 @@ subroutine K_kerr_IP(w)
  use pars,           ONLY:SP,pi
  use units,          ONLY:DEG2RAD
  use memory_m,       ONLY:mem_est
+ use timing,         ONLY:live_timing
+ use drivers,        ONLY:l_rpa_IP
  use X_m,            ONLY:X_epsilon,DIP_q_dot_iR
  use KERR,           ONLY:BSS_rhoq0_kerr,DIP_q_dot_iR_kerr,DIP_P_symm,B_Hall
  use fields,         ONLY:global_gauge
@@ -55,6 +57,8 @@ subroutine K_kerr_IP(w)
  !
  ! eps0_xy
  !
+ if(l_rpa_IP) call live_timing('Eps0_off',BS_K_dim)
+ !
  do i1=1,BS_K_dim
    ik  =BS_eh_table(i1,1)
    iv  =BS_eh_table(i1,2)
@@ -80,7 +84,12 @@ subroutine K_kerr_IP(w)
      X_epsilon(6,:)=X_epsilon(6,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0_kerr(i1)*BS_eh_f(i1)/&
 &                                (w(:)+BS_eh_E(i1))
    endif
+   !
+   if(l_rpa_IP) call live_timing(steps=1)
+   !
  enddo
+ !
+ if(l_rpa_IP) call live_timing()
  !
  factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
  !

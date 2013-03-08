@@ -113,21 +113,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (l_bs_fxc)      call section('*','Bethe-Salpeter Kernel -> xc-kernel')
  !
- ! GPL_EXCLUDE_END
- !
- !
- ! Dimensions and Tables
- ! 
- if (BS_res_K_corr) then
-   !
-   allocate(O_n_c_states(Xk%nbz,n_sp_pol),O_n_v_states(Xk%nbz,n_sp_pol))
-   call mem_est("O_n_c_states O_n_v_states",&
-&               (/Xk%nbz,n_sp_pol,Xk%nbz,n_sp_pol/),(/IP,IP,IP,IP/)) !to check 
-   !
- endif
- !
- ! GPL_EXCLUDE_START
- !
  ! BS/FXC DB
  !
  if (l_bs_fxc) then

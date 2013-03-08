@@ -29,13 +29,14 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  use drivers,       ONLY:l_rpa_IP
  use com,           ONLY:error,msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
- use electrons,     ONLY:levels,spin_occ,spin
+ use electrons,     ONLY:levels,spin_occ,spin,n_sp_pol
  use X_m,           ONLY:X_t,X_epsilon,X_drude_term,alpha_dim,eps_2_alpha,           &
 &                        DIP_q_dot_iR,X_duplicate,X_drude_term,X_alloc
  use BS,            ONLY:BS_columns,BS_identifier,BS_blk_dim,BS_k_and_row_restart,   &
 &                        BSS_rhoq0,BS_eh_f,BS_eh_E,BS_eh_table,BSS_Vnl_included,     &
 &                        BS_bands,BS_eh_W,BS_IP_antires,BS_drude_f_eh,BS_K_coupling, &
-&                        BS_K_dim,BSS_n_freqs,BSS_q0
+&                        BS_K_dim,BSS_n_freqs,BSS_q0,BS_res_K_corr,O_n_c_states,     &
+&                        O_n_v_states
 #if defined _KERR
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_kerr
@@ -70,6 +71,14 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  ! 
  allocate(BS_blk_dim(Xk%nibz))
  call mem_est("BS_blk_dim",(/Xk%nbz/),(/IP/))
+ !
+ if (BS_res_K_corr) then
+   !
+   allocate(O_n_c_states(Xk%nbz,n_sp_pol),O_n_v_states(Xk%nbz,n_sp_pol))
+   call mem_est("O_n_c_states O_n_v_states",&
+&               (/Xk%nbz,n_sp_pol,Xk%nbz,n_sp_pol/),(/IP,IP,IP,IP/))
+   !
+ endif
  !
  call K_eh_setup(iq,Ken,Xk,X_static%Wd)
  if (any(BS_blk_dim==0)) then

@@ -123,6 +123,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    call parser('BSIPAres',BS_IP_antires)
    BS_res_mode='none'
    BS_cpl_mode='none'
+   l_bss=.true.
  endif
  !
  if (l_rpa_LF.or.l_alda_fxc) then

@@ -302,6 +302,7 @@ subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
  !
  ! Allocate and fill a single pseudo
  !
+ use pars,     ONLY:SP
  use pw_pseudo_module
  use qexml_module
  use pw_data, only : ecutwfc_
@@ -323,7 +324,7 @@ subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
  ! Fill the pseudo%interpolation table
  ! ecutwfc(Ha) -> cutoff(Ry)
  !
- call pw_pseudo_set_table(pseudo,real(ecutwfc_)*2.0)
+ call pw_pseudo_set_table(pseudo,real(ecutwfc_,SP)*2._SP)
  !
  return
  !

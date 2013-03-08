@@ -18,6 +18,7 @@
 !#include "tools_error.h"
 
 module pw_pseudovelocity_module
+use pars, ONLY:SP
 use pw_basis_module
 use pw_wfc_module
 implicit none
@@ -37,7 +38,7 @@ type pw_pseudovelocity
   integer                 :: nproj
   type(pw_wfc),   pointer :: proj(:)
   type(pw_wfc),   pointer :: dproj(:,:)
-  real,           pointer :: d(:)
+  real(SP),           pointer :: d(:)
 end type pw_pseudovelocity
 
 contains
@@ -54,16 +55,16 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
   type(pw_atoms), intent(in) :: atoms
   type(pw_pseudo), pointer :: pseudo
   integer :: nproj,iatom,ibeta,iproj(2),nbeta,ipw,npw,l,m,mmin,mmax,i_spinor
-  real    :: j,spinor_factor
-  complex :: tmp,tmp_vec(3)
+  real(SP)    :: j,spinor_factor
+  complex(SP) :: tmp,tmp_vec(3)
   
-  real :: b(3,3),kg(3),pos(3)
-  real :: q(3,basis%npw),modq(basis%npw)
-  complex :: struct_fact(basis%npw)
-  complex, allocatable :: xlylm(:,:,:)
-  complex, allocatable :: dxlylm(:,:,:,:)
-  real    :: fl(basis%npw)
-  real    :: dfl(3,basis%npw)
+  real(SP) :: b(3,3),kg(3),pos(3)
+  real(SP) :: q(3,basis%npw),modq(basis%npw)
+  complex(SP) :: struct_fact(basis%npw)
+  complex(SP), allocatable :: xlylm(:,:,:)
+  complex(SP), allocatable :: dxlylm(:,:,:,:)
+  real(SP)    :: fl(basis%npw)
+  real(SP)    :: dfl(3,basis%npw)
 
 ! write(*,*) "pseudovel_init: start",lmax
   allocate(xlylm(basis%npw,-lmax:lmax,0:lmax),dxlylm(3,basis%npw,-lmax:lmax,0:lmax))
@@ -73,7 +74,7 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
   b = basis%struct%b
   npw = basis%npw
   do ipw=1,npw
-    kg = basis%k + real(basis%g(:,ipw))   
+    kg = basis%k + real(basis%g(:,ipw),SP)   
 !   q(:,ipw) = num_matmul(b,kg) !! CHECK
     q(:,ipw) = matmul(b,kg)
     modq(ipw) = sqrt(sum(q(:,ipw)**2))
@@ -110,7 +111,7 @@ subroutine pw_pseudovelocity_init(velocity,basis,atoms)
     nbeta = pseudo%nbeta
     pos = atoms%positions(:,iatom)
     do ipw=1,npw
-      struct_fact(ipw) = exp(-num_2pi_i*dot_product(real(basis%g(:,ipw)),pos))
+      struct_fact(ipw) = exp(-num_2pi_i*dot_product(real(basis%g(:,ipw),SP),pos))
     end do
 !   write(*,*) "pseudovel_init: loops beta",1,nbeta
     do ibeta=1,nbeta
@@ -194,10 +195,10 @@ end subroutine pw_pseudovelocity_init
    integer :: iproj
    type (pw_wfc) :: wfc_tmp(3)
    type (pw_wfc) :: wfc_dtmp(3)
-   complex :: projection(velocity%nproj)
-   complex :: dprojection(3,velocity%nproj)
+   complex(SP) :: projection(velocity%nproj)
+   complex(SP) :: dprojection(3,velocity%nproj)
 !
-   real :: d
+   real(SP) :: d
 
    do iproj=1,velocity%nproj
      d = velocity%d(iproj) / wfc_new(1)%basis%struct%a_omega
@@ -244,7 +245,7 @@ end subroutine pw_pseudovelocity_destroy
  function pw_pseudovelocity_braket(velocity,bra,ket)
    type (pw_pseudovelocity), intent(in) :: velocity
    type (pw_wfc), intent(in) :: bra,ket
-   complex :: pw_pseudovelocity_braket(3)
+   complex(SP) :: pw_pseudovelocity_braket(3)
    type (pw_wfc) :: wfc_Vnl_ck(3)
  
 !  write(*,*) "Start pw_pseudovelocity_braket"

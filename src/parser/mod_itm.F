@@ -835,7 +835,7 @@ module it_m
          if (c1st(i2)==ifpos) then
            if (.not.Cverbose_enough(trim(c1vars(i2,1)),1,defs%c1def(i2))) cycle
            unit_factor=1.
-           call init_convert_r(unit_factor,c1vars(i2,3),.FALSE.)
+           call init_convert_r(unit_factor,c1vars(i2,3))
            nflines=nflines+1
            v(1)=real(defs%c1def(i2))*unit_factor
            v(2)=aimag(defs%c1def(i2))*unit_factor
@@ -851,7 +851,7 @@ module it_m
          if (r1st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r1vars(i2,1)),1,defs%r1def(i2))) cycle
            unit_factor=1.
-           call init_convert_r(unit_factor,r1vars(i2,3),.FALSE.)
+           call init_convert_r(unit_factor,r1vars(i2,3))
            nflines=nflines+1
            ch(2)=gen_fmt(r_v=(/defs%r1def(i2)*unit_factor/))
            write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t30,2a)'
@@ -864,7 +864,7 @@ module it_m
          if (r2st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r2vars(i2,1)),2,defs%r2def(i2,:))) cycle
            unit_factor=1.
-           call init_convert_r(unit_factor,r2vars(i2,3),.FALSE.)
+           call init_convert_r(unit_factor,r2vars(i2,3))
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r2vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r2def(i2,:)*unit_factor)
@@ -881,7 +881,7 @@ module it_m
          if (r3st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r3vars(i2,1)),3,defs%r3def(i2,:))) cycle
            unit_factor=1.
-           call init_convert_r(unit_factor,r3vars(i2,3),.FALSE.)
+           call init_convert_r(unit_factor,r3vars(i2,3))
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r3vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r3def(i2,:)*unit_factor)
@@ -899,7 +899,7 @@ module it_m
          if (r4st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r4vars(i2,1)),4,defs%r4def(i2,:))) cycle
            unit_factor=1.
-           call init_convert_r(unit_factor,r4vars(i2,3),.FALSE.)
+           call init_convert_r(unit_factor,r4vars(i2,3))
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r4vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r4def(i2,:)*unit_factor)

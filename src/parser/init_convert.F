@@ -52,7 +52,7 @@ subroutine init_convert_i(ivar,v_descr,force_RL)
  !
 end subroutine
 !
-subroutine init_convert_r(rfac,v_descr,force_RL)
+subroutine init_convert_r(rfac,v_descr)
  !
  use pars,   ONLY:SP
  use units
@@ -61,7 +61,6 @@ subroutine init_convert_r(rfac,v_descr,force_RL)
  !
  real(SP):: rfac
  character(*)::v_descr
- logical     ::force_RL
  !
  if(rfac<0) return
  !

@@ -172,7 +172,6 @@ module real_time
  integer                  :: ID(6)
  integer                  :: it_start ! restart point
  integer                  :: max_rt_steps_disk 
- integer,  allocatable    :: kpoints_map(:,:)
  real(SP), allocatable    :: J_and_P_cache(:,:)
  !
  ! Interface

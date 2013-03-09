@@ -24,6 +24,7 @@ module pw_pseudo_module
 !use num_interpolation_module, only : num_interpolation
  use num_interpolation_module
  use numerical_module
+ use pars, ONLY:SP
 implicit none
 ! Module containing the pw_pseudo type and its methods
 private
@@ -36,18 +37,18 @@ public :: pw_pseudo,           &
 
 type pw_pseudo
   logical          :: psp_has_so
-  real             :: z               ! Ionic charge
+  real(SP)         :: z               ! Ionic charge
   integer          :: nbeta           ! Number of nonlocal projectors
   integer          :: nmesh           ! Number of points in mesh
-  real, pointer    :: mesh(:)         ! Mesh [nmesh]
-  real, pointer    :: wmesh(:)        ! weights for integrals [nmesh]
-  real, pointer    :: vloc(:)         ! Local potential [nmesh]
-  integer, pointer :: lbeta(:)
-  real, pointer    :: jbeta(:)
-  integer, pointer :: mesh_beta(:)
-  real, pointer    :: beta(:,:)       ! Non-local projectors [nmesh,nbeta]
-  real, pointer    :: d(:)            ! D_ii factors (diagonal for NC) [nbeta]
-  real             :: cutoff          ! Maximum useful cutoff (Ry)
+  real(SP), pointer    :: mesh(:)         ! Mesh [nmesh]
+  real(SP), pointer    :: wmesh(:)        ! weights for integrals [nmesh]
+  real(SP), pointer    :: vloc(:)         ! Local potential [nmesh]
+  integer,  pointer :: lbeta(:)
+  real(SP), pointer    :: jbeta(:)
+  integer,     pointer :: mesh_beta(:)
+  real(SP), pointer    :: beta(:,:)       ! Non-local projectors [nmesh,nbeta]
+  real(SP), pointer    :: d(:)            ! D_ii factors (diagonal for NC) [nbeta]
+  real(SP)             :: cutoff          ! Maximum useful cutoff (Ry)
   type(num_interpolation), &
            pointer :: interpolation(:)      ! Interpolation table
 end type pw_pseudo
@@ -106,7 +107,7 @@ subroutine pw_pseudo_destroy0(pseudo)
     call num_interpolation_destroy(pseudo%interpolation(i))
   end do
   deallocate(pseudo%interpolation)
-  pseudo%cutoff = 0.0
+  pseudo%cutoff = 0._SP
 end subroutine pw_pseudo_destroy0
 
 subroutine pw_pseudo_destroy1(pseudo)
@@ -121,11 +122,11 @@ subroutine pw_pseudo_set_table(pseudo,cutoff)
 ! use tools_module
 ! use num_module
   type (pw_pseudo), intent(inout) :: pseudo
-  real,             intent(in)    :: cutoff
+  real(SP),             intent(in)    :: cutoff
   integer :: nr
-  real    :: q_max,q,delta_q
+  real(SP)    :: q_max,q,delta_q
   integer :: ir,iq,ibeta,l
-  real    :: aux(pseudo%nmesh),aux1(pseudo%nmesh)
+  real(SP)    :: aux(pseudo%nmesh),aux1(pseudo%nmesh)
   
 
   pseudo%cutoff = cutoff
@@ -134,7 +135,7 @@ subroutine pw_pseudo_set_table(pseudo,cutoff)
   deallocate(pseudo%interpolation)
   allocate(pseudo%interpolation(pseudo%nbeta))
   do ibeta=1,pseudo%nbeta
-    call num_interpolation_init(pseudo%interpolation(ibeta),0.0,q_max, &
+    call num_interpolation_init(pseudo%interpolation(ibeta),0._SP,q_max, &
                                 delta_q,parity=+1)
     nr = pseudo%mesh_beta(ibeta)
     if(nr>pseudo%nmesh) call errore("pw_pseudo_set_table","nr>mesh",1)

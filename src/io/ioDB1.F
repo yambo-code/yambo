@@ -23,6 +23,7 @@ integer function ioDB1(E,k,ID)
  !
  use pars,             ONLY:SP,IP,schlen
  use units,            ONLY:HA2EV
+ use com,              ONLY:error
  use memory_m,         ONLY:mem_est
  use LOGO,             ONLY:code_version,code_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&

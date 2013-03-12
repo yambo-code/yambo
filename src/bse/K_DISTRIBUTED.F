@@ -37,7 +37,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
 &                       RIM_anisotropy,ik_is_table,bare_qpg,minus_G
- use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu,master_cpu,pp_bcast
+ use parallel_m,   ONLY:PP_redux_wait,myid,ncpu,master_cpu,pp_bcast
  use com,          ONLY:msg,warning,error
  use timing,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
@@ -335,7 +335,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    tot_n_K_elements=0
    live_timing_accumulate=0
    !
-   call pp_redux_wait
+   call PP_redux_wait
    do ik2=1,BS_columns
      !
      ikk2=sum(BS_blk_dim(:ik2-1))
@@ -380,7 +380,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        BS_mat=(0.,0.)
        if (BS_K_coupling) BS_cpl_mat=(0.,0.)
        !
-       call pp_redux_wait
+       call PP_redux_wait
        !
        call cols_distribution(BS_blk_dim(ik2))
        !
@@ -471,7 +471,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (mod(n_K_elements(myid+1),int(live_timing_step_size,8))/=0) call live_timing(steps=1)
    call live_timing()
-   call pp_redux_wait
+   call PP_redux_wait
    !
  endif
  !
@@ -614,7 +614,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        endif
        ioBS_Fxc_err=ioBS_DISTRIBUTED(iq,X,ID_read,blk_only=.true.)
        !
-       call pp_redux_wait
+       call PP_redux_wait
        !
        call cols_distribution(BS_blk_dim(ik2))
        !
@@ -721,7 +721,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (mod(n_K_elements(myid+1),int(live_timing_step_size,8))/=0) call live_timing(steps=1)
    call live_timing()
-   call pp_redux_wait
+   call PP_redux_wait
    !
  endif
  !

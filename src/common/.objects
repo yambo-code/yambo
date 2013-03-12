@@ -2,7 +2,7 @@ ELPH_objects=
 #if defined _ELPH
 ELPH_objects= Convolve.o
 #endif
-objs = eval_G_minus_G.o G_rot_grid.o ig_index.o \
+objs = eval_G_minus_G.o G_rot_grid.o G_index.o \
        FREQUENCIES_damping.o FREQUENCIES_setup.o FREQUENCIES_coarse_grid.o \
        FREQUENCIES_Green_Function.o FREQUENCIES_reset.o \
        Kramers_Kronig.o $(ELPH_objects) RIntegrate.o CIntegrate.o QPartilize.o \

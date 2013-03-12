@@ -19,16 +19,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module par_indexes_m
+module PARALLEL_index_m
  !
  implicit none
  !
  contains
    !
-   subroutine par_indexes(px,uplim,low_range)
-     use par_proc_m, ONLY:pp_redux_wait,pp_indexes,ncpu,myid,p_prod
+   subroutine PARALLEL_index(px,uplim,low_range)
+     use parallel_m, ONLY:PP_redux_wait,PP_indexes,ncpu,myid,p_prod
      use com,        ONLY:error
-     type(pp_indexes)  ::px
+     type(PP_indexes)  ::px
      integer           ::uplim(:)
      integer, optional ::low_range(:)
      ! 
@@ -65,7 +65,7 @@ module par_indexes_m
            i_done(i1)=0
            px%n_of_elements(myid+1)=px%n_of_elements(myid+1)+px%weight_1D(i1)
          enddo
-         call pp_redux_wait(i_done,p_prod)
+         call PP_redux_wait(i_done,p_prod)
          do ic=1,ncpu
            if (ic==myid+1) then
              do i1=lowlim(1),uplim(1)
@@ -76,7 +76,7 @@ module par_indexes_m
                px%n_of_elements(myid+1)=px%n_of_elements(myid+1)+px%weight_1D(i1)
              enddo
            endif
-           call pp_redux_wait(i_done,p_prod)
+           call PP_redux_wait(i_done,p_prod)
          enddo
          if (any(i_done==1)) call error('Incomplete Parallel Index Filling')
          deallocate(i_done)
@@ -99,4 +99,4 @@ module par_indexes_m
      !
    end subroutine
    !
-end module par_indexes_m
+end module PARALLEL_index_m

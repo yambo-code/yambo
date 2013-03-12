@@ -27,8 +27,8 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use BS,            ONLY:BS_blk_dim,BS_eh_table,BS_mat,BS_eh_E,BS_eh_W
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_K_diagonal,FXC,&
 &                        FXC_is_causal,ioBS_Fxc
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:bare_qpg,nXkbz
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_RD,RD_CL,&
@@ -58,7 +58,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! Fxc procedure
  !
- type(pp_indexes) :: p1,p2
+ type(PP_indexes) :: p1,p2
  !
  ! I/O
  !
@@ -71,7 +71,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! [IO] READ PARS & FXC_K_diagonal 
  !
- call pp_redux_wait()
+ call PP_redux_wait()
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  ioFxc_err=ioBS_Fxc(iq,W,ID,X=X_static)
  !
@@ -156,25 +156,25 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  left_R=(0._SP,0._SP)
  right_R=(0._SP,0._SP)
  !
- call pp_indexes_reset(p1)
- call pp_indexes_reset(p2)
+ call PP_indexes_reset(p1)
+ call PP_indexes_reset(p2)
  !
- call par_indexes(p1,(/BS_blk_dim(ik1)/))
+ call PARALLEL_index(p1,(/BS_blk_dim(ik1)/))
  do i1=1,BS_blk_dim(ik1)
    if (.not.p1%element_1D(i1)) cycle
    right_R(i1,:)=matmul(BS_mat(i1,:),O2x_qpg(:,:))
  enddo
- call pp_redux_wait(right_R)
+ call PP_redux_wait(right_R)
  !
- call par_indexes(p2,(/BS_blk_dim(ik2)/))
+ call PARALLEL_index(p2,(/BS_blk_dim(ik2)/))
  do i2=1,BS_blk_dim(ik2)
    if (.not.p2%element_1D(i2)) cycle
    left_R(:,i2)=-matmul(conjg_O1x_qpg(:,:),BS_mat(:,i2))
  enddo
- call pp_redux_wait(left_R)
+ call PP_redux_wait(left_R)
  !
- call pp_indexes_reset(p1)
- call pp_indexes_reset(p2)
+ call PP_indexes_reset(p1)
+ call PP_indexes_reset(p2)
  !
  ! Fxc
  !
@@ -184,8 +184,8 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  COM_MODE=NONE
  if (ik1==1.and.ik2==1) COM_MODE=REP
  !
- call pp_indexes_reset(p1)
- call par_indexes(p1,(/W%n(2)/))
+ call PP_indexes_reset(p1)
+ call PARALLEL_index(p1,(/W%n(2)/))
  !
  do iw_blk=1,W%n(1),W%n(2)
    !
@@ -247,7 +247,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    enddo
    !
    do iw=1,W%n(2)
-     call pp_redux_wait(FXC(:,:,iw))
+     call PP_redux_wait(FXC(:,:,iw))
    enddo
    !
    ! [IO] WRITE FXC & FXC_K_diagonal for this block of frequencies
@@ -258,7 +258,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    !
  enddo
  !
- call pp_indexes_reset(p1)
+ call PP_indexes_reset(p1)
  !
  ! CLEAN
  !

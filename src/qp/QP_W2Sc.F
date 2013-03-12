@@ -30,8 +30,8 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
 &                        QP_solver_state,QP_n_W_freqs,QP_solver,QP_table
  use drivers,       ONLY:Finite_Tel
  use frequency,     ONLY:w_samp
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  use functions,     ONLY:bose_f,bose_decay
  use electrons,     ONLY:levels,spin_occ,spin
  use R_lattice,     ONLY:qindx_S,bz_samp
@@ -45,7 +45,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  ! WorkSpace
  !
  integer         :: i1,i2,ib,is(2),os(3)
- type(pp_indexes):: px
+ type(PP_indexes):: px
  real(SP)        :: tsign
  complex(SP)     :: QP_W_here(QP_n_W_freqs)
  complex(SP), allocatable :: dSc(:)
@@ -53,8 +53,8 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  tsign=-1.
  if (Finite_Tel) tsign=1.
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/QP_n_G_bands(2)/),low_range=(/QP_n_G_bands(1)/))
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/QP_n_G_bands(2)/),low_range=(/QP_n_G_bands(1)/))
  !
  do i1=1,QP_n_states
    !
@@ -98,7 +98,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
      !
    enddo
    !
-   call pp_redux_wait(dSc)
+   call PP_redux_wait(dSc)
    forall(i2=1:Sc_W(i1)%n(1)) QP_Sc(i1,i2)=QP_Sc(i1,i2)+dSc(i2)
    !
    deallocate(dSc)

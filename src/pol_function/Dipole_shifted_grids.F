@@ -30,9 +30,9 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  use stderr,              ONLY: intc
  use timing,              ONLY: live_timing
  use electrons,           ONLY: levels,n_spin,  n_spinor,n_sp_pol
- use par_proc_m,          ONLY: pp_redux_wait,pp_indexes,myid,&
-&                               pp_indexes_reset
- use par_indexes_m,       ONLY: par_indexes
+ use parallel_m,          ONLY: PP_redux_wait,PP_indexes,myid,&
+&                               PP_indexes_reset
+ use interfaces,          ONLY: PARALLEL_index
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: X_t,DIP_iR 
  use fields,              ONLY: grid_path 
@@ -64,7 +64,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  integer                      :: i_spin, err, ifail, ir, num_shifted_grid
  complex(SP)                  :: rho(2)
  real(SP)                     :: Ev_m_Ec
- type(pp_indexes)             :: px
+ type(PP_indexes)             :: px
  !
  !ioDB1 shifted grids
  !
@@ -153,10 +153,10 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
    !
    ! Set up the parallel environment 
    !
-   call pp_indexes_reset(px)
-   call par_indexes(px,(/Xk%nibz,Xen%nbm/),(/1,X%ib(1)/))
+   call PP_indexes_reset(px)
+   call PARALLEL_index(px,(/Xk%nibz,Xen%nbm/),(/1,X%ib(1)/))
    call live_timing('Dipole @ grid '//trim(intc(iq))//':',px%n_of_elements(myid+1))
-   call pp_redux_wait
+   call PP_redux_wait
    !
    do ik = 1, Xk%nibz   ! Loop over k's in IBZ [1:nkibz]
      !
@@ -237,7 +237,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  call WF_free()
  do i_spin=1,n_spin
-   call pp_redux_wait(DIP_iR(:,:,:,:,i_spin))
+   call PP_redux_wait(DIP_iR(:,:,:,:,i_spin))
  enddo
  !
  ! Switch off transverse calculation if successful 

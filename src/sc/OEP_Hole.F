@@ -36,8 +36,8 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  use FFT_m,           ONLY:fft_size,fft_rot_r
  use collision,       ONLY:ggwinfo,collision_reset 
  use memory_m,        ONLY:mem_est
- use par_proc_m,      ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m,   ONLY:par_indexes
+ use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,      ONLY:PARALLEL_index
  use wave_func,       ONLY:wf,wf_state
  use timing,          ONLY:live_timing
  use stderr,          ONLY:intc
@@ -54,7 +54,7 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  ! Work space
  !
  type(ggwinfo)    ::isc
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  integer          ::iv1,iv2,ir,ig,i1,ikbz,ik,iq,ifft,offt,tr_syms,os,is,iGo,qs
  real(DP)         ::Vslt_DP(fft_size)
  complex(DP)      ::f(fft_size)

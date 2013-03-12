@@ -47,8 +47,8 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  use BS,            ONLY:O_n_scatt,O_table,O_phase,BS_O,O_n_c_states,O_c_state,&
 &                        O_n_v_states,O_v_state,O_ng,BS_bands,&
 &                        BS_res_K_corr,BS_cpl_K_corr
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  use collision,     ONLY:ggwinfo,collision_reset
  use electrons,     ONLY:n_sp_pol,n_spinor
  implicit none
@@ -59,7 +59,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  ! Work Space
  !
  type(ggwinfo)   ::isc
- type(pp_indexes)::p_index
+ type(PP_indexes)::p_index
  integer     :: i1,i2,i3,i4,ik1bz,ik2bz
  integer     :: b_ref,ib1,ib2,i_spin2,i_spin1
  integer     :: is1,is2,is1xis2,iss_tab,is_coll
@@ -69,7 +69,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  !
  if (.not.BS_res_K_corr) return 
  !
- call pp_indexes_reset(p_index)
+ call PP_indexes_reset(p_index)
  call collision_reset(isc)
  !
  ! K/S Table
@@ -90,7 +90,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
    allocate(isc%rhotw(O_ng))
    BS_O=(0.,0.)
  endif
- call pp_redux_wait
+ call PP_redux_wait
  !
 1 continue
  !
@@ -193,13 +193,13 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  if (allocated(BS_O))then
    if (.not.eval_collision) then
      eval_collision=.true.
-     call par_indexes(p_index,(/O_n_scatt/))
+     call PARALLEL_index(p_index,(/O_n_scatt/))
      goto 1
    endif
    do i1=1,O_n_scatt
-     call pp_redux_wait(BS_O(:,i1))
+     call PP_redux_wait(BS_O(:,i1))
    enddo
-   call pp_indexes_reset(p_index)
+   call PP_indexes_reset(p_index)
    call collision_reset(isc)
  else
    return

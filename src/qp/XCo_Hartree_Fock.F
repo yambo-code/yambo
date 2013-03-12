@@ -29,8 +29,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use timing,        ONLY:live_timing
  use stderr,        ONLY:intc
  use electrons,     ONLY:levels,spin_occ,spin
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  use collision,     ONLY:ggwinfo,collision_reset
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
@@ -49,7 +49,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !Work Space
  !
  type(ggwinfo)    ::isc,iscp
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  integer                 :: i2,iq,ib,ibp,jb,ik,i_qp
  integer                 :: Sx_lower_band,Sx_upper_band
 #if defined _RT
@@ -78,7 +78,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  call collision_reset(isc)
  call collision_reset(iscp) 
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  Sx_lower_band=1
  Sx_upper_band=E%nbm
@@ -144,11 +144,11 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! par indexes
  !
 #if defined _RT
- call par_indexes(px,(/QP_n_states/))
+ call PARALLEL_index(px,(/QP_n_states/))
 #else
- call par_indexes(px,(/q%nbz,E%nbm/))
+ call PARALLEL_index(px,(/q%nbz,E%nbm/))
 #endif
- call pp_redux_wait
+ call PP_redux_wait
  !
  ch='EXS'
 #if defined _SC
@@ -296,10 +296,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  call collision_reset(isc)
  call collision_reset(iscp) 
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
 #if !defined _RT
- call pp_redux_wait(QP_Vnl_xc)
+ call PP_redux_wait(QP_Vnl_xc)
 #endif
  !
 end subroutine

@@ -29,9 +29,9 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
  use stderr,        ONLY:intc
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use frequency,     ONLY:w_samp,bg_npts,cg_pt,cg_npts
- use par_indexes_m, ONLY:par_indexes
+ use interfaces,    ONLY:PARALLEL_index
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
  use electrons,     ONLY:levels,spin_occ
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,q_norm 
@@ -59,7 +59,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
 &                           isp,iv,ic,g1,g2,g2_max,iw,iwmax,isave(4),n_poles 
  logical                 :: force_bare_X_G,skip_WF_load
  real(SP)                :: minmax_ehe(2),eh_occ
- type(pp_indexes)        :: px
+ type(PP_indexes)        :: px
  type(ggwinfo)           :: isc
  complex(SP)             :: GreenF(Xw%n(2)),drude_GreenF(Xw%n(2))
  complex(SP),allocatable :: rhotw_save(:),XoR(:,:)
@@ -68,7 +68,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  ! Defaults & Setups
  !===================
- call pp_indexes_reset(px) 
+ call PP_indexes_reset(px) 
  allocate(XoR(X%ng,X%ng))
  if (iq==1) allocate(rhotw_save(X%ng))
  Xo  = cmplx(0.,0.,SP)
@@ -167,7 +167,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !===================
  allocate(px%weight_1D(cg_npts))
  px%weight_1D=bg_npts+Xw%n(2)
- call par_indexes(px,(/cg_npts/))
+ call PARALLEL_index(px,(/cg_npts/))
  !
  ! LiveTiming Title
  !==================
@@ -318,7 +318,7 @@ loop_bg: do i2 = 1,bg_npts(i1)
    enddo
  endif
  do i1=1,Xw%n(2)
-   call pp_redux_wait(Xo(:,:,i1))
+   call PP_redux_wait(Xo(:,:,i1))
  enddo
  call live_timing
  !
@@ -350,7 +350,7 @@ loop_bg: do i2 = 1,bg_npts(i1)
  ! CLEAN
  !=======
  !
- call pp_indexes_reset(px) 
+ call PP_indexes_reset(px) 
  if (iq==1) deallocate(rhotw_save)
  deallocate(isc%rhotw,XoR)
  call mem_est("Xo_WS")

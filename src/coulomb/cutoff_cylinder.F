@@ -26,8 +26,8 @@ subroutine cutoff_cylinder(q,is_cut)
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,cyl_length,cyl_cut,g_vec,&
 &                        bz_samp,cyl_vr_save,cyl_vz_save
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error
  
@@ -50,9 +50,9 @@ subroutine cutoff_cylinder(q,is_cut)
  real(SP),  external    ::bessel_F2,bessel_F3,bessel_F4,bessel_F5,bessel_F6
  real(SP),  allocatable ::work(:),work2(:)
  integer,   allocatable ::iwork(:),iwork2(:)
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  infcyl=cyl_length==0.
  !
@@ -87,7 +87,7 @@ subroutine cutoff_cylinder(q,is_cut)
  !
  V_cut=cmplx(0.)
  !
- call par_indexes(px,(/q%nibz,wf_ng/))
+ call PARALLEL_index(px,(/q%nibz,wf_ng/))
  !
  call live_timing('Cylinder',px%n_of_elements(myid+1))
  !
@@ -186,7 +186,7 @@ subroutine cutoff_cylinder(q,is_cut)
  !
  ! MPI 2 all
  !
- call pp_redux_wait(V_cut)
+ call PP_redux_wait(V_cut)
  !
  V_cut(1,1)=0.5*(-cyl_cut2+cyl_cut*sqrt(cyl_cut2+cyl_ph_radius2)+&
 &           cyl_ph_radius2*log((cyl_cut+sqrt(cyl_cut2+cyl_ph_radius2))/&

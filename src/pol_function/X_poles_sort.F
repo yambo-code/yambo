@@ -27,8 +27,8 @@ subroutine X_poles_sort(cg_npts,bg_npts,n_poles,Xen,X,Xw)
  use pars,            ONLY:SP,schlen
  use electrons,       ONLY:levels,n_sp_pol
  use R_lattice,       ONLY:nkibz,qindx_X    
- use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset,myid,pp_redux_wait,ncpu
- use par_indexes_m,   ONLY:par_indexes
+ use parallel_m,      ONLY:PP_indexes,PP_indexes_reset,myid,PP_redux_wait,ncpu
+ use interfaces,      ONLY:PARALLEL_index
  use R_lattice,       ONLY:qindx_S,nqbz
  use X_m,             ONLY:X_poles_tab,X_t
  use WF_distribute,   ONLY:Distributed_Memory
@@ -49,14 +49,14 @@ subroutine X_poles_sort(cg_npts,bg_npts,n_poles,Xen,X,Xw)
  integer :: n_cond,cpu_id
  integer :: tab_tmp(4)
  integer :: poles_cpu_map(n_poles) 
- type(pp_indexes)  :: px
+ type(PP_indexes)  :: px
  !
  ! Electron-Hole poles distribution 
  !
  !
  allocate(px%weight_1D(cg_npts))
  px%weight_1D(1:cg_npts)=bg_npts(1:cg_npts)+Xw%n(2)
- call par_indexes(px,(/cg_npts/))
+ call PARALLEL_index(px,(/cg_npts/))
  !
  n_cond=X%ib(2)-Xen%nbf
  !
@@ -65,7 +65,7 @@ subroutine X_poles_sort(cg_npts,bg_npts,n_poles,Xen,X,Xw)
    if(.not.px%element_1D(i1)) cycle
    poles_cpu_map(i1)=myid
  enddo
- call pp_redux_wait(poles_cpu_map)
+ call PP_redux_wait(poles_cpu_map)
  !
  do i1=1,n_poles 
    ! 
@@ -87,6 +87,6 @@ subroutine X_poles_sort(cg_npts,bg_npts,n_poles,Xen,X,Xw)
    !
  enddo
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
 end subroutine X_poles_sort

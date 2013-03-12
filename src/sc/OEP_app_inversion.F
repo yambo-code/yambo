@@ -46,8 +46,8 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use SC,              ONLY:it_now,l_oep_EWeight
  use drivers,         ONLY:l_collisions_IO,l_oep_kli,l_oep_ceda
  use memory_m,        ONLY:mem_est
- use par_proc_m,      ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m,   ONLY:par_indexes
+ use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,      ONLY:PARALLEL_index
  use wave_func,       ONLY:wf_state,wf
  use timing,          ONLY:live_timing
  use stderr,          ONLY:intc
@@ -71,7 +71,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  complex(DP), allocatable :: Vx_dp(:),W_tmp(:),rhotw_ds(:)
  character(schlen)        :: ch
  type(ggwinfo)            :: isc
- type(pp_indexes)         :: px
+ type(PP_indexes)         :: px
  logical                  :: l_is_TR
  !
  ! allocation
@@ -103,12 +103,12 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  ! NB:   not tested for metallic systems, might not work
  ! -----------------------------------------------
  call collision_reset(isc)
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  isc%ngrho=QP_ng_Sx
  allocate(isc%rhotw(QP_ng_Sx),rhotw_sum(QP_ng_Sx-1),rhotw_sum_TR(QP_ng_Sx-1),rhotw_prd(QP_ng_Sx,QP_ng_Sx))
  allocate(rhotw_ds(fft_size),rhotw_rs(QP_ng_Sx))
- call par_indexes(px,(/nkibz,E%nbf/))
- call pp_redux_wait
+ call PARALLEL_index(px,(/nkibz,E%nbf/))
+ call PP_redux_wait
  if (l_oep_kli) ch="KLI@it"//trim(intc(it_now))
  if (l_oep_ceda) ch="CED@it"//trim(intc(it_now))
  call live_timing(trim(ch),px%n_of_elements(myid+1))
@@ -195,6 +195,6 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
   !
  deallocate(Vkli_RL,Vx_dp)
  call collision_reset(isc)
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
   !
 end subroutine OEP_app_inversion

@@ -42,7 +42,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:gen_fmt
  use com,            ONLY:msg,error,warning
- use par_proc_m,     ONLY:pp_redux_wait
+ use parallel_m,     ONLY:PP_redux_wait
  use timing,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use vec_operate,    ONLY:v_is_zero,c2a
@@ -60,7 +60,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  !Work Space
  !
- integer, external :: ig_index
+ integer, external :: G_index
  !
  integer :: io_db,io_err,ioQINDX
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikbz,iqs
@@ -231,8 +231,8 @@ subroutine bz_samp_indexes(k,Xk,q)
      v1=Xk%ptbz(i1,:)-Xk%ptbz(i2,:)-q%ptbz(i3,:) 
      call c2a(v_in=v1,mode='ka2i')
      !
-     if (iqs==1) qindx_X(iqibz,i1,2)=ig_index(v1)
-     if (bse_scattering) qindx_B(i1,i2,2)=ig_index(v1)
+     if (iqs==1) qindx_X(iqibz,i1,2)=G_index(v1)
+     if (bse_scattering) qindx_B(i1,i2,2)=G_index(v1)
      !     
    enddo
    !
@@ -266,7 +266,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      qindx_S(i1,iqbz,1)=i2
      v1=k%ptbz(ikbz,:)-k%ptbz(i2,:)-q%ptbz(iqbz,:)
      call c2a(v_in=v1,mode='ka2i')
-     qindx_S(i1,iqbz,2)=ig_index(v1)
+     qindx_S(i1,iqbz,2)=G_index(v1)
    enddo 
    !
    if (any(qindx_S(i1,:,:)==0)) call error('Null transition detected [qindx_S]')
@@ -287,7 +287,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  call k_ibz2bz(Xk,'d',.false.)
  deallocate(q_map,q_iptbz)
  if (Xk_grid_is_uniform) deallocate(q%ptbz)
- call pp_redux_wait
+ call PP_redux_wait
  !
  contains 
    !

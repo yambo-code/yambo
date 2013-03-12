@@ -261,8 +261,8 @@ module com
    end subroutine
    !
    subroutine write_the_logo(unit_,comment_)
-     use timing,       ONLY:live_time_msg
-     use par_proc_m,   ONLY:master_cpu
+     use timing,       ONLY:LIVE_message
+     use parallel_m,   ONLY:master_cpu
      use LOGO,         ONLY:pickup_a_logo,logo_line,n_logo_lines
      integer     ::unit_
      character(1)::comment_
@@ -285,7 +285,7 @@ module com
      do i1=1,n_logo_lines
        if (unit_/=6) write (unit_,trim(space_)) logo_line(i1)
        if (unit_==6.and.i1>=n_logo_lines-1) cycle
-       if (unit_==6) call live_time_msg("n",logo_line(i1),"","%s",NO_CPUT=.true.)
+       if (unit_==6) call LIVE_message("n",logo_line(i1),"","%s",NO_CPUT=.true.)
      enddo
      if (unit_/=6.and.trim(comment_)=='')  write (unit_,'(a)') ' '
      if (unit_/=6.and.trim(comment_)=='#')  write (unit_,'(a)') '#'
@@ -323,17 +323,17 @@ module com
    end subroutine
    !
    subroutine warning(mesg)
-     use timing,     ONLY:live_time_msg
+     use timing,     ONLY:LIVE_message
      use stderr,     ONLY:string_pack
      character(*) :: mesg
      call msg('nr',string_pack('[WARNING] ',trim(mesg)))
-     call live_time_msg("n",string_pack('[WARNING] ',trim(mesg)),"","%s")
+     call LIVE_message("n",string_pack('[WARNING] ',trim(mesg)),"","%s")
    end subroutine
    !
    subroutine error(mesg)
-     use timing,     ONLY:live_time_msg,live_timing_is_on
+     use timing,     ONLY:LIVE_message,live_timing_is_on
      use stderr,     ONLY:string_pack
-     use par_proc_m, ONLY:p_finalize
+     use parallel_m, ONLY:MPI_close
      character(*)    :: mesg
      !
      if (file_exists(repfile) ) call report_file_fix
@@ -341,13 +341,13 @@ module com
      live_timing_is_on=.FALSE.
      !
      call msg('nr',string_pack('[ERROR] STOP signal received while in :',trim(secnm)))
-     call live_time_msg("nn",&
+     call LIVE_message("nn",&
 &         string_pack('[ERROR] STOP signal received while in :',trim(secnm)),"","%s")
      call msg('nr',string_pack('[ERROR] ',trim(mesg)))
-     call live_time_msg("n",string_pack('[ERROR] ',trim(mesg)),"","%s")
-     call live_time_msg("n","","","%s")
+     call LIVE_message("n",string_pack('[ERROR] ',trim(mesg)),"","%s")
+     call LIVE_message("n","","","%s")
      !
-     call p_finalize
+     call MPI_close
      !
      stop
    end subroutine
@@ -426,7 +426,7 @@ module com
    !
    subroutine namsg(how,mesg,val,USE_TABS,INDENT)
      use stderr,   ONLY: c_print,write_to_log,tty_size
-     use timing,   ONLY: live_time_msg
+     use timing,   ONLY: LIVE_message
      character(*)     :: mesg
      character(*)     :: how
      character(*)     :: val(:)
@@ -458,12 +458,12 @@ module com
      write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
      if (index(how,'l')/=0.and.tty_size>0) &
 &       call c_print(terminator(3),lch,terminator(4),"%s")
-     if (index(how,'s')/=0) call live_time_msg("n",trim(lch),"","%s")
+     if (index(how,'s')/=0) call LIVE_message("n",trim(lch),"","%s")
    end subroutine
    !
    subroutine nimsg(how,mesg,val,USE_TABS,INDENT)
      use stderr,   ONLY: c_print,write_to_log,tty_size
-     use timing,   ONLY: live_time_msg
+     use timing,   ONLY: LIVE_message
      character(*)     :: mesg
      character(*)     :: how
      integer          :: val(:)
@@ -494,12 +494,12 @@ module com
      write (lch,trim(msgfmt)) mesg,val 
      if (index(how,'l')/=0.and.tty_size>0) &
 &       call c_print(terminator(3),lch,terminator(4),"%s")
-     if (index(how,'s')/=0) call live_time_msg("n",trim(lch),"","%s")
+     if (index(how,'s')/=0) call LIVE_message("n",trim(lch),"","%s")
    end subroutine
    !
    subroutine nrmsg(how,mesg,val,USE_TABS,INDENT,formatted_msg)
      use stderr,   ONLY: c_print,write_to_log,tty_size
-     use timing,   ONLY: live_time_msg
+     use timing,   ONLY: LIVE_message
      character(*)     :: mesg
      character(*)     :: how
      real(SP)         :: val(:)
@@ -534,7 +534,7 @@ module com
      write (lch,trim(msgfmt)) mesg,val 
      if (index(how,'l')/=0.and.tty_size>0) call &
 &       c_print(terminator(3),lch,terminator(4),"%s")
-     if (index(how,'s')/=0) call live_time_msg("n",trim(lch),"","%s")
+     if (index(how,'s')/=0) call LIVE_message("n",trim(lch),"","%s")
    end subroutine
    !
    character(lchlen) function composed_fmt(basic_fmt,n,USE_TABS,INDENT)

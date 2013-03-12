@@ -26,7 +26,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use com,            ONLY:warning,error
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
- use par_proc_m,     ONLY:pp_redux_wait
+ use parallel_m,     ONLY:PP_redux_wait
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
  use fields,         ONLY:grid_path,global_gauge
@@ -183,7 +183,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  call Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
- call pp_redux_wait()
+ call PP_redux_wait()
  !
  ! Clean up
  !

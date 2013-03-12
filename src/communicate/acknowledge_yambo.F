@@ -22,7 +22,7 @@
 subroutine acknowledge_yambo()
  !
  use com,        ONLY:msg
- use timing,     ONLY:live_time_msg
+ use timing,     ONLY:LIVE_message
  !
  call msg('r','.-ACKNOWLEDGMENT')
  call msg('r','|')
@@ -44,6 +44,6 @@ subroutine acknowledge_yambo()
  call msg('r','|')
  call msg('r',' ')
  !
- call live_time_msg("","","n","%s",NO_CPUT=.true.)
+ call LIVE_message("","","n","%s",NO_CPUT=.true.)
  !
 end subroutine

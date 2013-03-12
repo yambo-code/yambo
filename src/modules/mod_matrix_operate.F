@@ -206,7 +206,7 @@ module matrix_operate
      !
      use wrapper,     ONLY:M_by_M
      use pars,        ONLY:SP
-     use par_proc_m,  ONLY:pp_redux_wait,ncpu,myid
+     use parallel_m,  ONLY:PP_redux_wait,ncpu,myid
 #if defined _DISTRIBUTED
      use stderr,      ONLY:intc
      use com,         ONLY:msg
@@ -486,7 +486,7 @@ module matrix_operate
              M(i,j) = lM(i_loc, j_loc)
            end do
          end do  
-         call pp_redux_wait(M)
+         call PP_redux_wait(M)
          deallocate(lM)
        end if
        !

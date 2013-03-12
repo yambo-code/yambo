@@ -39,8 +39,8 @@ module collisions_CACHE
    subroutine free_COLLISIONS_v
      use memory_m,       ONLY:mem_est
      use stderr,         ONLY:intc
-     use par_proc_m,     ONLY:pp_indexes,pp_indexes_reset
-     use par_indexes_m,  ONLY:par_indexes       
+     use parallel_m,     ONLY:PP_indexes,PP_indexes_reset
+     use interfaces,     ONLY:PARALLEL_index       
      use QP_m,           ONLY:QP_n_states
      !
      implicit none
@@ -48,13 +48,13 @@ module collisions_CACHE
      ! Work Space
      !
      integer :: i_qp
-     type(pp_indexes)  :: px
+     type(PP_indexes)  :: px
      !
      if(COLLISIONS_cache_size==0.) return
      !
-     call pp_indexes_reset(px)   
+     call PP_indexes_reset(px)   
      !
-     call par_indexes(px,(/QP_n_states/))
+     call PARALLEL_index(px,(/QP_n_states/))
      !
      do i_qp=1,last_QP_mem
        !
@@ -71,7 +71,7 @@ module collisions_CACHE
      !
      deallocate(CACHE)
      !
-     call pp_indexes_reset(px)
+     call PP_indexes_reset(px)
      !
    end subroutine free_COLLISIONS_v
    !

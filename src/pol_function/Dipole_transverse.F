@@ -27,8 +27,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use drivers,             ONLY:l_real_time
  use timing,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
- use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m,       ONLY:par_indexes
+ use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,          ONLY:PARALLEL_index
  use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,PP_free,pp_table,Vnl,pp_n_l_comp
  use R_lattice,           ONLY:g_vec,bz_samp
@@ -51,7 +51,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  complex(SP), allocatable     :: wf_xyz(:,:), kbv(:,:,:)
  complex(SP)                  :: rho(4)
  real(SP)                     :: Ev_m_Ec
- type(pp_indexes)             :: px
+ type(PP_indexes)             :: px
  !
  !I/O and external functions
  !
@@ -102,8 +102,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! Set up the parallel environment
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/Xk%nibz,X%ib(2)/),(/1,ic_min/))
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/Xk%nibz,X%ib(2)/),(/1,ic_min/))
  !
  if (associated(Xen%Eo)) call msg('rns','[X] Using Kohn-Sham energies for the dipoles ')
  !
@@ -114,7 +114,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  call live_timing('Dipole (T):',px%n_of_elements(myid+1)*n_spin)
  wf_dim=3
 #endif
- call pp_redux_wait
+ call PP_redux_wait
  !
  allocate(wf_xyz(wf_ng,wf_dim))
  !
@@ -271,7 +271,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! CLEAN
  !
  deallocate(wf_xyz)
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  if (ioKB_err==0) then
    deallocate(kbv,pp_n_l_comp)
    if (allocated(pp_table)) deallocate(pp_table)
@@ -282,10 +282,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
  endif 
  !
  do i_spin=1,n_sp_pol
-   call pp_redux_wait(DIP_iR(:,:,:,:,i_spin))
+   call PP_redux_wait(DIP_iR(:,:,:,:,i_spin))
 #if defined _SC
-   call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
-   call pp_redux_wait(P_square(:,:,:,i_spin))
+   call PP_redux_wait(DIP_P(:,:,:,:,i_spin))
+   call PP_redux_wait(P_square(:,:,:,i_spin))
 #endif
  enddo
  !

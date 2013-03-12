@@ -32,8 +32,8 @@
    use electrons,               ONLY : n_bands,n_spin,n_spinor,n_sp_pol
    use timing,                  ONLY : live_timing,live_timing_is_on
    use stderr,                  ONLY : intc
-   use par_proc_m,              ONLY : pp_redux_wait,pp_indexes,myid,pp_indexes_reset
-   use par_indexes_m,           ONLY : par_indexes
+   use parallel_m,              ONLY : PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+   use interfaces,              ONLY : PARALLEL_index
    implicit none
    ! 
    ! Work Space
@@ -46,7 +46,7 @@
    complex(SP)              :: rhoint, int, gz
    complex(SP), parameter   :: ci=cmplx(0.0_SP,1.0_SP)
    character(schlen)        :: sch
-   type(pp_indexes)             :: px
+   type(PP_indexes)             :: px
 
    call section('*',"== Slab state localization ==")
    call parser('WrtLocDB',WrtLocDB)

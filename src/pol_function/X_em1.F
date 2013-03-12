@@ -30,7 +30,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
- use par_proc_m,    ONLY:pp_redux_wait
+ use parallel_m,    ONLY:PP_redux_wait
  use wave_func,     ONLY:WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP
  use com,           ONLY:depth
@@ -125,7 +125,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (X%whoami/=1) call X_s(iq,(/1,Xw%n(1)/),X,Xw)
    !
-   call pp_redux_wait
+   call PP_redux_wait
    if (iq==1) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=Xdb) 
    else
@@ -149,6 +149,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  call X_alloc('X')
  call X_alloc('DIP_q_dot_iR')
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free()
- call pp_redux_wait
+ call PP_redux_wait
  !
 end function

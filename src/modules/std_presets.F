@@ -50,7 +50,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
 &                     filled_tresh, l_spin_orbit,n_spin_den,        &
 &                     eval_magn
- use par_proc_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
+ use parallel_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,write_to_of,write_to_report,max_open_ofs,&
 &                     more_io_path,core_io_path,jobstr,com_path

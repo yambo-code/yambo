@@ -36,8 +36,8 @@ subroutine K_inversion(iq,W,E,k,q)
  use R_lattice,      ONLY:d3k_factor,q_norm,bz_samp
  use com,            ONLY:isec,msg
  use timing,         ONLY:live_timing
- use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,ncpu
- use par_indexes_m,  ONLY:par_indexes
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset,ncpu
+ use interfaces,     ONLY:PARALLEL_index
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE,VERIFY,OP_WR_CL
  implicit none
  type(w_samp) :: W
@@ -49,7 +49,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! ... dummies
  !
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  type(w_samp)     ::W_shifted
  integer          ::i1,i2,ik_bz,iv,ic,iw,of_mode,i_sp,ik_ibz,BS_H_dim
  integer, external::pert_inversion
@@ -248,15 +248,15 @@ subroutine K_inversion(iq,W,E,k,q)
  !========================
  !
  full_diago=.false.
- call pp_indexes_reset(px)
- call par_indexes(px,(/W%n(1)/))
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/W%n(1)/))
  call live_timing('Freq loop [pert]',px%n_of_elements(myid+1))
  call perform_invertion(1,W%n(1))
- call pp_redux_wait(inv_err,imode=2)
+ call PP_redux_wait(inv_err,imode=2)
  !
  ! I/O [after pert invertion]
  !
- call pp_redux_wait(X_epsilon)
+ call PP_redux_wait(X_epsilon)
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
  i_err=ioBSS_invert(iq,W%n(1),inv_err,X_epsilon(2,:),W,ID)
  !
@@ -317,8 +317,8 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    ! Then loop on the groups performing full inversion
    !
-   call pp_indexes_reset(px)
-   call par_indexes(px,(/full_inf_freqs/))
+   call PP_indexes_reset(px)
+   call PARALLEL_index(px,(/full_inf_freqs/))
    call live_timing('Freq loop [full]',px%n_of_elements(myid+1))
    full_diago=.true.
    do i1=1,full_inf_freqs
@@ -334,8 +334,8 @@ subroutine K_inversion(iq,W,E,k,q)
      call live_timing(steps=1)
    enddo
    call live_timing()
-   call pp_redux_wait(inv_err,imode=2)
-   call pp_redux_wait(X_epsilon)
+   call PP_redux_wait(inv_err,imode=2)
+   call PP_redux_wait(X_epsilon)
  endif
  !
  nw_conv=0
@@ -352,7 +352,7 @@ subroutine K_inversion(iq,W,E,k,q)
  ! Try a polinomial interpolation on the null values
  !
  call K_eps_interpolate(W%n(1),real(W%p),inv_err)
- call pp_redux_wait()
+ call PP_redux_wait()
  !
  X_epsilon(2,:)=1.+X_epsilon(2,:)
  X_epsilon(1,:)=W%p(:)
@@ -369,7 +369,7 @@ subroutine K_inversion(iq,W,E,k,q)
  ! CLEAN
  !
  deallocate(inv_err)
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  deallocate(BS_mat,iw_full,Lo)
  call mem_est("BS_mat Lo")
  !

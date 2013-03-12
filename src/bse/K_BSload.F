@@ -31,8 +31,8 @@ subroutine K_BSload(iq)
  ! 
  use pars,           ONLY:SP
  use memory_m,       ONLY:mem_est
- use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
- use par_indexes_m,  ONLY:par_indexes
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
+ use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nXkibz
  use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_k_and_row_restart,BS_eh_E,&
 &                         BS_DB_is_fragmented,BS_K_coupling,&
@@ -46,7 +46,7 @@ subroutine K_BSload(iq)
  !
  integer         ::ik1,ik2,i1,i2,BS_H_dim
  type(X_t)       ::X
- type(pp_indexes)::Kp
+ type(PP_indexes)::Kp
  ! 
  ! I/O
  ! 

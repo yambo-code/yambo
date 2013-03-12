@@ -111,19 +111,12 @@ module BS
    end function
 #endif
    !
-   subroutine K_BSmat_by_V_Haydock(iq,iter,Vi,Vo,iter_par)
+   subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
      use pars,          ONLY:SP
      integer               ::iq
      integer               ::iter
      complex(SP)           ::Vi(:),Vo(:)
      real(SP), optional     ::iter_par
-   end subroutine
-   !
-   subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
-     use pars,          ONLY:SP
-     integer               ::iq
-     integer,     optional ::iter
-     complex(SP), optional ::Vi(:),Vo(:)
    end subroutine
    !
    integer function variables_BS(ID,local_description,X)

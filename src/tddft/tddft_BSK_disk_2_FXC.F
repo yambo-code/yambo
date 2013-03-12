@@ -33,7 +33,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
 #endif
  use com,           ONLY:isec
  use timing,        ONLY:live_timing
- use par_proc_m,    ONLY:pp_redux_wait
+ use parallel_m,    ONLY:PP_redux_wait
  use D_lattice,     ONLY:DL_vol
  use wave_func,     ONLY:WF_load,WF_free
  use X_m,           ONLY:X_t
@@ -159,7 +159,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  ! CLEAN
  !
- call pp_redux_wait
+ call PP_redux_wait
  deallocate(O1x,O2x)
  call mem_est('O1x O2x')
  call mem_est("BS_K_2_FXC")

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ig_index(v1)
+integer function G_index(v1)
  !
  use pars,         ONLY:SP
  use zeros,        ONLY:G_iku_zero
@@ -36,7 +36,7 @@ integer function ig_index(v1)
  E_of_shell_v1=iku_v_norm(v1)**2./2.
  !
  if(abs(E_of_shell_v1)<1.E-5) then
-   ig_index=1
+   G_index=1
    return
  endif
  !
@@ -50,7 +50,7 @@ integer function ig_index(v1)
  !
  do ig=ng1,ng2
    if (v_is_zero(v1-g_vec(ig,:),zero_=G_iku_zero)) then
-     ig_index=ig
+     G_index=ig
      exit
    endif
  enddo

@@ -54,8 +54,8 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
- use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
- use par_indexes_m,  ONLY:par_indexes  
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
+ use interfaces,     ONLY:PARALLEL_index  
  use SC,             ONLY:SC_xc_functional,SC_nbands
  use xc_functionals, ONLY:XC_LDA_C_PZ
  !
@@ -71,7 +71,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  logical          :: XC_needs_density
  integer          :: i1,ik
- type(pp_indexes) :: px
+ type(PP_indexes) :: px
  !
  ! Density (needed bu Hartree and local XCs)
  !=========
@@ -126,8 +126,8 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  Ho_plus_Sigma=cZERO
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/QP_nk/))
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/QP_nk/))
  !
  do ik=1,QP_nk 
    !
@@ -188,9 +188,9 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !  
  enddo  !---- loop on k-points
  !
- if(allocated(SC_R)) call pp_redux_wait(SC_R(:,:,:,1))
- call pp_redux_wait(Ho_plus_Sigma(:,:,:,1))
- call pp_indexes_reset(px) 
+ if(allocated(SC_R)) call PP_redux_wait(SC_R(:,:,:,1))
+ call PP_redux_wait(Ho_plus_Sigma(:,:,:,1))
+ call PP_indexes_reset(px) 
  !
  ! Calculate all relaxation terms
  ! ==============================

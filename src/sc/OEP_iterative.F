@@ -44,12 +44,12 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table,QP_ng_Sx
  use collision,       ONLY:collision_reset 
  use memory_m,        ONLY:mem_est
- use par_proc_m,      ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m,   ONLY:par_indexes
+ use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,      ONLY:PARALLEL_index
  use wave_func,       ONLY:WF_load,wf,wf_state
  use SC,              ONLY:it_now,OEP_steps,OEP_threshold,SC_bands,l_oep_EWeight,E_bare
  use drivers,         ONLY:l_oep_exact,l_oep_slater,l_oep_kli,l_oep_ceda
- use timing,          ONLY:live_time_msg
+ use timing,          ONLY:LIVE_message
  use stderr,          ONLY:intc,real2ch,tty_size
  !
  ! I/O
@@ -63,7 +63,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  !
  ! Work space
  !
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  integer          ::ii,iv1,iv2,ik,ir,ifft,offt,is,rho_sym,max_bands,ik_max
  real(SP)         ::V_io(fft_size),V_nm1(fft_size)
  real(SP)         ::V_resp(fft_size),reached_treshold,EWeight,ev_max
@@ -96,7 +96,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  endif
  EWeight = 1._SP
  !
- call live_time_msg("n","","","%s")
+ call LIVE_message("n","","","%s")
  V_io = Voep
  lerr = .false.
  do ii=1,OEP_steps
@@ -132,8 +132,8 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
      reached_treshold=maxval(abs(V_io(1:)-V_nm1(1:)))
      dumb_ch=trim(timing_str)//' '//trim(intc(ii))//' Accuracy :'//&
 &            trim(real2ch(reached_treshold))//'|'//trim(real2ch(OEP_threshold))
-     if (tty_size >0) call live_time_msg("r",dumb_ch,"","%s")
-     if (tty_size <0) call live_time_msg("n",dumb_ch,"","%s")
+     if (tty_size >0) call LIVE_message("r",dumb_ch,"","%s")
+     if (tty_size <0) call LIVE_message("n",dumb_ch,"","%s")
    if (reached_treshold<(OEP_threshold)) exit
    lerr=(ii==OEP_steps)
  end do

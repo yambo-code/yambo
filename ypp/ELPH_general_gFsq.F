@@ -36,8 +36,8 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  use BS,                  ONLY:BS_mat,BS_K_dim,BS_bands,BS_eh_table
  use QP_m,                ONLY:QP_n_states,QP_table,QP_state,QP_nb,QP_nk,QP_states_simmetrize
  use timing,              ONLY:live_timing
- use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset,myid
- use par_indexes_m,       ONLY:par_indexes
+ use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid
+ use interfaces,          ONLY:PARALLEL_index
  use functions,           ONLY:Fermi_fnc_derivative
  implicit none
  type(levels) ::en,Xen
@@ -63,7 +63,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  logical              ::gFsq_is_excitonic
  real(SP)             ::delta_E,ph_freq
  real(SP),allocatable ::g_sq_F(:,:,:)
- type(pp_indexes)     ::px
+ type(PP_indexes)     ::px
  character(schlen)    ::ch
  !
  !I/O
@@ -121,7 +121,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  g_sq_F_E%er=(/0._SP,max_ph_freq*1.1/)
  g_sq_F_E%dr=ph_broad
  call FREQUENCIES_setup(g_sq_F_E)
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  ! Local QP states
  !
@@ -148,8 +148,8 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  enddo
  !
  QP_n_states_2do=count(QP_table_map(:,1)>0)
- call par_indexes(px,(/QP_n_states_2do,elph_nDBs_used/))
- call pp_redux_wait
+ call PARALLEL_index(px,(/QP_n_states_2do,elph_nDBs_used/))
+ call PP_redux_wait
  !
  call live_timing('gF^2 [el]',px%n_of_elements(myid+1))
  !
@@ -196,9 +196,9 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  !
  call live_timing()
  !
- call pp_redux_wait(g_sq_F(:,:,:))
+ call PP_redux_wait(g_sq_F(:,:,:))
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  ! gF^2 plotting (electrons)
  !
@@ -261,8 +261,8 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
    !
    call msg('s',':: Processing '//trim(intc(n_lambda))//' state(s)')
    !
-   call par_indexes(px,(/BS_K_dim/))
-   call pp_redux_wait
+   call PARALLEL_index(px,(/BS_K_dim/))
+   call PP_redux_wait
    !
    do i_lambda=1,n_lambda
      !
@@ -316,7 +316,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  !
  call W_reset(g_sq_F_E)
  call elph_global_free()
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  deallocate(QP_table,g_sq_F)
  if (.not.gFsq_is_excitonic) deallocate(state_is_2do)
  deallocate(QP_table_map,QP_table_DB)

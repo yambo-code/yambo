@@ -29,8 +29,8 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
  use IO_m,                ONLY:io_control,OP_RD,DUMP,RD_CL_IF_END
  use ELPH,                ONLY:elph_nDBS_used,ph_modes,elph_global_free,&
 &                              elph_use_q_grid,ph_freqs_sq,elph_gkkp
- use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset,myid
- use par_indexes_m,       ONLY:par_indexes
+ use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid
+ use interfaces,          ONLY:PARALLEL_index
  use timing,              ONLY:live_timing
  use functions,           ONLY:Fermi_fnc_derivative
  use com,                 ONLY:msg,of_open_close
@@ -47,7 +47,7 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
  real(SP),    allocatable  ::ph_freqs(:)
  real(SP)                  ::gkkp_fs
  integer, external         ::ioELPH
- type(pp_indexes)          ::px
+ type(PP_indexes)          ::px
  character(schlen)         ::ch
  !
  call section("+","Excitonic gkkp factors")
@@ -68,9 +68,9 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
    BS_blk_dim(ik_ibz)= BS_blk_dim(ik_ibz)+1
  enddo
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/elph_nDBS_used,Xk%nibz/))
- call pp_redux_wait
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/elph_nDBS_used,Xk%nibz/))
+ call PP_redux_wait
  !
  do iq=1,elph_nDBS_used
    !
@@ -140,8 +140,8 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
  !
  call live_timing()
  !
- call pp_redux_wait(diagonal_xhi)
- call pp_indexes_reset(px)
+ call PP_redux_wait(diagonal_xhi)
+ call PP_indexes_reset(px)
  !
  ch='gkkpF_'//trim(intc(lambda_s(1)))
  call of_open_close(trim(ch),'ot')

@@ -41,8 +41,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db,&
 &                        BSS_n_descs,BSS_description
  use electrons,     ONLY:levels,n_sp_pol,spin,n_spinor
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  use com,           ONLY:msg,error,warning,of_open_close
  use X_m,           ONLY:X_t
  use memory_m,      ONLY:mem_est
@@ -83,7 +83,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  integer      :: iq,ia,i1,i2,i_l,i_spin
  real(SP)     :: k_dot_r,r_hole_rlu(3)
  !
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  !
  !... I/0
  !
@@ -358,9 +358,9 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Par Proc
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/nr_tot/))
- call pp_redux_wait
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/nr_tot/))
+ call PP_redux_wait
  !
  ! Loop on exc states
  !===================
@@ -433,7 +433,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !
    call live_timing()
    !
-   call pp_redux_wait(v2plot)
+   call PP_redux_wait(v2plot)
    !
    ! PLOT
    !
@@ -457,7 +457,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !
  enddo
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  ! CLEAN
  !

@@ -22,7 +22,7 @@
 integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use drivers,             ONLY:infile_editing
- use par_proc_m,          ONLY:ncpu,myid,p_finalize
+ use parallel_m,          ONLY:ncpu,myid,MPI_close
  use electrons,           ONLY:levels,E_reset,n_bands,default_nel
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,&
 &                              nXkibz,nqibz,k_pt,q_pt
@@ -213,7 +213,7 @@ contains
       call section('X','Game Over')
       call ypp_init(instr,lnstr,.TRUE.)
       call msg("nl","")
-      call p_finalize()
+      call MPI_close()
     else
       call ypp_init(instr,lnstr,.TRUE.)
     endif

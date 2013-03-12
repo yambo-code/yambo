@@ -39,8 +39,8 @@ subroutine K_BSmat_by_V_Haydock(iq,iter,Vi,Vo,iter_par)
  !
  use pars,           ONLY:SP
  use memory_m,       ONLY:mem_est
- use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
- use par_indexes_m,  ONLY:par_indexes
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
+ use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nXkibz
  use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_k_and_row_restart,BS_eh_E,&
 &                         BS_DB_is_fragmented,BS_K_coupling,&
@@ -63,7 +63,7 @@ subroutine K_BSmat_by_V_Haydock(iq,iter,Vi,Vo,iter_par)
  integer         ::ik1,ik2,i1,i2,frag_pointer(2)
  complex(SP)     ::alpha
  type(X_t)       ::X
- type(pp_indexes)::Kp
+ type(PP_indexes)::Kp
  ! 
  ! I/O
  ! 
@@ -93,8 +93,8 @@ subroutine K_BSmat_by_V_Haydock(iq,iter,Vi,Vo,iter_par)
      call mem_est('BS_mat',(/2*size(BS_mat)/))
      !
    else
-     call pp_indexes_reset(Kp)
-     call par_indexes(Kp,(/BS_IO_index(1,nXkibz)-1/))
+     call PP_indexes_reset(Kp)
+     call PARALLEL_index(Kp,(/BS_IO_index(1,nXkibz)-1/))
      if (iter==1) call mem_est('BS_mat',(/maxval(BS_blk_dim)**2/)) 
    endif
    !
@@ -226,8 +226,8 @@ subroutine K_BSmat_by_V_Haydock(iq,iter,Vi,Vo,iter_par)
    !
  else
    !
-   call pp_redux_wait(Vo)
-   call pp_indexes_reset(Kp)
+   call PP_redux_wait(Vo)
+   call PP_indexes_reset(Kp)
    !
  endif
  !

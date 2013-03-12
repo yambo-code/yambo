@@ -40,7 +40,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT 
  use it_m,           ONLY:V_real_time
 #endif
- use par_proc_m,     ONLY:pp_redux_wait,master_cpu
+ use parallel_m,     ONLY:PP_redux_wait,master_cpu
  use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
@@ -698,7 +698,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    open(unit=12,file=trim(infile))
    call initinfio(defs,12)
    close(12)
-   call pp_redux_wait
+   call PP_redux_wait
  endif
  !
  ! To handle externally defined Q-points I use the init_q_pts
@@ -781,7 +781,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (tty_size<0) call rename_file(logfile)
  call rename_file(repfile)
- call pp_redux_wait
+ call PP_redux_wait
  if (master_cpu) open(unit=11,file=trim(repfile))
  call write_the_logo(11,' ')
  !

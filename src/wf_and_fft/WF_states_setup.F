@@ -34,8 +34,8 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
  use QP_m,            ONLY:QP_nb,QP_nk,QP_table,QP_n_states
  use electrons,       ONLY:n_bands,n_sp_pol
  use R_lattice,       ONLY:nkibz,qindx_X    
- use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset,myid,pp_redux_wait,ncpu
- use par_indexes_m,   ONLY:par_indexes
+ use parallel_m,      ONLY:PP_indexes,PP_indexes_reset,myid,PP_redux_wait,ncpu
+ use interfaces,      ONLY:PARALLEL_index
  use R_lattice,       ONLY:bz_samp,qindx_S,nqbz
  use X_m,             ONLY:X_poles_tab
  use WF_distribute,   ONLY:Distributed_Memory
@@ -55,7 +55,7 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
  integer :: i1,i2,iq,i_qp,ib,ik,is,iv,ic,ikp,ikbz,ikpbz,n_poles,i_spin
  real(SP):: N_loaded(ncpu)
  logical :: par_loops
- type(pp_indexes)  :: px
+ type(PP_indexes)  :: px
  character(schlen) :: parallel_type
  !
  if(.not.Distributed_Memory) return
@@ -63,7 +63,7 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
  if (present(report)) then
    N_loaded=0.
    N_loaded(myid+1)=real(count(states_to_load.eqv..TRUE.))/real(n_sp_pol*nkibz*(b_to_load(2)-b_to_load(1)+1))*100.
-   call pp_redux_wait(N_loaded) 
+   call PP_redux_wait(N_loaded) 
    call msg('rs','[Distribute] Average allocated memory is [o/o]:',sum(N_loaded)/real(ncpu))
    return
  endif
@@ -71,7 +71,7 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
  par_loops=.TRUE.
  if(present(par_loop)) par_loops=par_loop
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  if(.not.allocated(states_to_load)) then
    allocate(states_to_load(n_bands,nkibz,n_sp_pol))
@@ -93,7 +93,7 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
    !
    ! Parallelization only on Quasi-particle
    ! 
-   call par_indexes(px,(/qp_to_load(2)/),(/qp_to_load(1)/))
+   call PARALLEL_index(px,(/qp_to_load(2)/),(/qp_to_load(1)/))
    !
    do i_qp=qp_to_load(1),qp_to_load(2)
      !
@@ -108,7 +108,7 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
    ! 
    ! Parallelization on scattering states
    !
-   call par_indexes(px,(/q_to_load(2),b_to_load(2)/),(/q_to_load(1),b_to_load(1)/))
+   call PARALLEL_index(px,(/q_to_load(2),b_to_load(2)/),(/q_to_load(1),b_to_load(1)/))
    !
    do i_qp=qp_to_load(1),qp_to_load(2)
      !
@@ -129,7 +129,7 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
    ! 
    ! Parallelization on bands only
    !
-   call par_indexes(px,(/b_to_load(2)/),(/b_to_load(1)/))
+   call PARALLEL_index(px,(/b_to_load(2)/),(/b_to_load(1)/))
    !
    do ib=b_to_load(1),b_to_load(2)
      !
@@ -143,7 +143,7 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
    !
    ! Parallelization on bands and k-points
    !
-   call par_indexes(px,(/k_to_load(2),b_to_load(2)/),(/k_to_load(1),b_to_load(1)/))
+   call PARALLEL_index(px,(/k_to_load(2),b_to_load(2)/),(/k_to_load(1),b_to_load(1)/))
    !
    do ik=k_to_load(1),k_to_load(2)
      do ib=b_to_load(1),b_to_load(2)
@@ -160,7 +160,7 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
    !
    allocate(px%weight_1D(cg_npts))
    px%weight_1D(1:cg_npts)=bg_npts(1:cg_npts)+Xw%n(2)
-   call par_indexes(px,(/cg_npts/))
+   call PARALLEL_index(px,(/cg_npts/))
    !
    do i1 = 1,cg_npts
      n_poles = sum(bg_npts(1:i1-1))
@@ -195,6 +195,6 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
    !
  end select 
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
 end subroutine

@@ -36,8 +36,8 @@ subroutine Vnl_driver(en,k)
  use memory_m,              ONLY:mem_est
  use IO_m,                  ONLY:io_control,OP_WR_CL,REP
  use mod_com2y,             ONLY:N_G_vectors
- use par_proc_m,            ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m,         ONLY:par_indexes
+ use parallel_m,            ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,            ONLY:PARALLEL_index
  implicit none
  !
  type(levels),     intent(in)  :: en     ! Energies 
@@ -56,7 +56,7 @@ subroutine Vnl_driver(en,k)
  integer :: ik, ib1, ib2, iv, ic, npwk,ngmax, vb(2), cb(2), i1, ig,io_err,ID
  integer :: i_spin, i_spinor, j_spinor
  type(X_t)         :: X
- type(pp_indexes)  :: px
+ type(PP_indexes)  :: px
  integer, external :: io_Vnl
  !
  ! Holds wfc(k) from disk
@@ -74,7 +74,7 @@ subroutine Vnl_driver(en,k)
  end interface
 
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  ! Find the Fermi level and occupied/metallic bands
  !
@@ -123,7 +123,7 @@ subroutine Vnl_driver(en,k)
  call pw_basis_init(basis_con,struct)
  call msg("l","done")
  !
- call par_indexes(px,(/k%nibz*n_sp_pol,vb(2)/),low_range=(/1,vb(1)/))
+ call PARALLEL_index(px,(/k%nibz*n_sp_pol,vb(2)/),low_range=(/1,vb(1)/))
  !
  call live_timing('Pseudovelocity :',px%n_of_elements(myid+1))
  !
@@ -226,7 +226,7 @@ subroutine Vnl_driver(en,k)
  call live_timing()
  !
  do i_spin=1,n_sp_pol
-   call pp_redux_wait(Vnl(:,:,:,:,i_spin))
+   call PP_redux_wait(Vnl(:,:,:,:,i_spin))
  enddo
  !
  ! Write Vnl (pseudovelocity) to disk

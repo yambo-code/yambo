@@ -37,7 +37,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
 &                       RIM_anisotropy,ik_is_table,bare_qpg,minus_G
- use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu
+ use parallel_m,   ONLY:PP_redux_wait,myid,ncpu
  use com,          ONLY:msg,warning,error
  use timing,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
@@ -388,7 +388,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  i8nc=ncpu
  i8id=myid
  !
- call pp_redux_wait
+ call PP_redux_wait
  do ik2=1,BS_columns
    !
    ikk2=sum(BS_blk_dim(:ik2-1))
@@ -435,7 +435,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      BS_mat=(0.,0.)
      if (BS_K_coupling) BS_cpl_mat=(0.,0.)
      !
-     call pp_redux_wait
+     call PP_redux_wait
      do icv1=1,BS_blk_dim(ik1)
        ik1bz=BS_eh_table(ikk1+icv1,1)
        iv1=BS_eh_table(ikk1+icv1,2)
@@ -574,8 +574,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_K_coupling) BS_cpl_mat(icv1,icv2)=H_cpl_x*real(spin_occ)*Co-H_cpl_c
        enddo
      enddo
-     call pp_redux_wait(BS_mat)
-     if (BS_K_coupling) call pp_redux_wait(BS_cpl_mat)
+     call PP_redux_wait(BS_mat)
+     if (BS_K_coupling) call PP_redux_wait(BS_cpl_mat)
      !
      if (l_bs_fxc) then
        !
@@ -604,7 +604,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (mod(n_K_elements(myid+1),int(live_timing_step_size,8))/=0) call live_timing(steps=1)
  call live_timing()
- call pp_redux_wait
+ call PP_redux_wait
  !
  ! GLOBAL CLEANING 
  !=================

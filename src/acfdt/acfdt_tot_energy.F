@@ -29,8 +29,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use wave_func,      ONLY:WF_load,WF_free
  use memory_m,       ONLY:mem_est
  use timing,         ONLY:live_timing
- use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m,  ONLY:par_indexes
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:bz_samp,bare_qpg,nqibz
  use electrons,      ONLY:levels,nel
  use D_lattice,      ONLY:DL_vol
@@ -68,7 +68,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  integer       ::iw,il
  real(SP)      ::Ex_LDA,Ec_LDA,dEc_LDA,ACFDT_EXX,ACFDT_Ec,sug_E_rng
  type(ggwinfo)    ::isc
- type(pp_indexes) ::plw
+ type(PP_indexes) ::plw
  real(SP), allocatable :: lambda(:)
  real(SP), allocatable :: lambda_weight(:)
  real(SP), allocatable :: freq(:)
@@ -87,7 +87,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  call section('*','ACFDT Total Energy')
  !
  call collision_reset(isc)
- call pp_indexes_reset(plw)
+ call PP_indexes_reset(plw)
  !
  call msg('s','[ACFDT] LDA Total energy')
  !
@@ -189,7 +189,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    ACFDT_Ec=0.
    !
-   call par_indexes(plw,(/ACFDT_n_lambda,ACFDT_n_freqs/))
+   call PARALLEL_index(plw,(/ACFDT_n_lambda,ACFDT_n_freqs/))
    call live_timing('Ec',plw%n_of_elements(myid+1)*q%nibz)
    !
    ! X I/O (section 1)
@@ -226,14 +226,14 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
      enddo
    enddo
    !
-   call pp_redux_wait(ACFDT_Ec)
+   call PP_redux_wait(ACFDT_Ec)
    call live_timing
    !
    ! Partial CLEAN
    !
    call X_alloc('X')
    call collision_reset(isc)
-   call pp_indexes_reset(plw)
+   call PP_indexes_reset(plw)
    deallocate(X_s,tddftk,dX)
    call mem_est("X_WS")
    !

@@ -36,7 +36,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use com,           ONLY:msg,of_open_close
  use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_fxc,&
 &                        use_X_RIM,eval_alpha,eps_2_alpha,O_eels
- use par_proc_m,    ONLY:pp_redux_wait
+ use parallel_m,    ONLY:PP_redux_wait
  use wave_func,     ONLY:WF_free
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
@@ -146,7 +146,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      call msg('o eps eel fxc alpha','# BZ Energy RIM points :',BZ_RIM_tot_nkpts,INDENT=0)
    endif
    !
-   call pp_redux_wait
+   call PP_redux_wait
    !
    call of_open_close(eps_file_name)
    call of_open_close(eel_file_name)
@@ -261,7 +261,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! TDDFT Kernel output
    !
    if (l_bs_fxc) then
-     call pp_redux_wait(X_fxc)
+     call PP_redux_wait(X_fxc)
      call of_open_close(fxc_file_name,'oa')
      do iw=1,wv%n(1)
        call msg('o fxc','',(/real(wv%p(iw))*HA2EV,real(X_fxc(iw)*q_norm(iq)**2.),&
@@ -287,7 +287,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  call X_alloc('DIP_q_dot_iR')
  !
  call WF_free()
- call pp_redux_wait
+ call PP_redux_wait
  call set_real_printed_length()
  !
  if (l_bs_fxc.and.allocated(FXC)) then

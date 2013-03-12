@@ -25,10 +25,10 @@ subroutine X_s(iq,fr,X,wv)
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use timing,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,ncpu,pp_indexes_reset
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,ncpu,PP_indexes_reset
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
- use par_indexes_m, ONLY:par_indexes
+ use interfaces,    ONLY:PARALLEL_index
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_mat,X_fxc
  use matrix_operate,ONLY:mat_dia_inv,INV,USE_LK,USE_SLK,USE_SVD
@@ -43,7 +43,7 @@ subroutine X_s(iq,fr,X,wv)
  !
  ! Work Space
  !
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  integer     :: i1,i2,iw,nw_max_par,INV_MODE
  complex(SP), allocatable :: Xom1(:,:),tddftk(:,:),Xo(:,:)
  !
@@ -53,7 +53,7 @@ subroutine X_s(iq,fr,X,wv)
  !
  ! Setup 
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  allocate(tddftk(X%ng,X%ng),Xo(X%ng,X%ng))
  call mem_est("X_WS",(/2*size(Xo)/))
  !
@@ -67,9 +67,9 @@ subroutine X_s(iq,fr,X,wv)
  ! Max number of frequencies inverted in serial mode (nw_max_par)
  !
  nw_max_par=wv%n(2)-mod(wv%n(2),ncpu)
- call par_indexes(px,(/wv%n(2)/))
+ call PARALLEL_index(px,(/wv%n(2)/))
  if (nw_max_par<wv%n(2)) px%element_1D(nw_max_par+1:)=.true.
- call pp_redux_wait
+ call PP_redux_wait
  px%n_of_elements(myid+1)=0
  do iw=1,wv%n(2)
    if (iw<=nw_max_par.and..not.px%element_1D(iw)) X_mat(:,:,iw)=(0.,0.)
@@ -172,12 +172,12 @@ subroutine X_s(iq,fr,X,wv)
  call live_timing
  !
  do i1=1,nw_max_par
-   call pp_redux_wait(X_mat(:,:,i1))
+   call PP_redux_wait(X_mat(:,:,i1))
  enddo
  !
  ! CLEAN
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  deallocate(tddftk,Xo)
  if (l_bs_fxc) then
    deallocate(Xom1)

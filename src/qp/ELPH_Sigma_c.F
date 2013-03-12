@@ -33,8 +33,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error
  use drivers,       ONLY:Finite_Tel,l_el_corr
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,ncpu
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset,ncpu
+ use interfaces,    ONLY:PARALLEL_index
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR_CL
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
@@ -61,7 +61,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  integer          ::iq_db,iq_bz,iq_loop,iq_db_ref,iq_s,iq_ibz,ik,ok,ik_bz,okbz,ib,ob,is,il,i_qp,i2,&
 &                   time_order_sign,ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum
  type(w_samp)     ::Sc_W(qp%n_states)
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  integer          ::io_err,ID,iv4(4)
  integer, external::ioELPH,QP_state_extract
  character(schlen)::ch
@@ -79,7 +79,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Zeroing
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  do i_qp=1,qp%n_states
    call W_reset(Sc_W(i_qp))
  enddo
@@ -204,7 +204,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  forall (iq_loop=1:elph_nDBs_used) Q_map(iq_loop)=iq_loop
  !
  if ( distributed_Q ) then
-   call par_indexes(px,(/elph_nDBs_used/))
+   call PARALLEL_index(px,(/elph_nDBs_used/))
    live_timing_steps=px%n_of_elements(myid+1)*QP_n_states*QP_PH_n_G_bands
    nq_memory=0
    allocate(px%element_2D(elph_nDBs_used,QP_PH_n_G_bands))
@@ -216,11 +216,11 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    enddo
    call msg('r', '[GW/El-Ph] Q-points distributed among the CPUs')
  else
-   call par_indexes(px,(/nq_to_sum,QP_PH_n_G_bands/))
+   call PARALLEL_index(px,(/nq_to_sum,QP_PH_n_G_bands/))
    live_timing_steps=px%n_of_elements(myid+1)*QP_n_states
  endif
  !
- call pp_redux_wait
+ call PP_redux_wait
  !
  ! g^2F(w) residuals Allocation
  !
@@ -428,15 +428,15 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! All 2 All
  !
- if (.not.distributed_Q) call pp_redux_wait(gsqF_dw(:,:,:))
+ if (.not.distributed_Q) call PP_redux_wait(gsqF_dw(:,:,:))
  do iw=1,gsqF_energy_steps
    if (.not.eval_G_using_KK) then
-     call pp_redux_wait(gsqF_fan(:,:,:,iw))
-     call pp_redux_wait(gsqF_ca_corr(:,:,:,iw))
+     call PP_redux_wait(gsqF_fan(:,:,:,iw))
+     call PP_redux_wait(gsqF_ca_corr(:,:,:,iw))
    endif
    if (.not.distributed_Q) then
-     call pp_redux_wait(gsqF_life_bose(:,:,:,iw))
-     call pp_redux_wait(gsqF_life_f(:,:,:,iw))
+     call PP_redux_wait(gsqF_life_bose(:,:,:,iw))
+     call PP_redux_wait(gsqF_life_f(:,:,:,iw))
    endif
  enddo
  !
@@ -455,7 +455,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! CLEAN
  !
  call elph_global_free()
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  if (allocated(Q_map)) deallocate(Q_map)
  deallocate(q_weight)
  do i_qp=1,qp%n_states
@@ -614,7 +614,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        !
      enddo
      !
-     if (distributed_Q) call pp_redux_wait(QP_Sc)
+     if (distributed_Q) call PP_redux_wait(QP_Sc)
      !
      call live_timing()
      !

@@ -35,7 +35,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
  use electrons,      ONLY:n_spin,n_bands,n_spinor
- use par_proc_m,     ONLY:master_cpu,pp_redux_wait
+ use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use timing,         ONLY:what_is_running
 #if defined _YPP_SC
  use SC,             ONLY:SC_bands
@@ -522,7 +522,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    open(unit=12,file=trim(infile))
    call initinfio(defs,12)
    close(12)
-   call pp_redux_wait
+   call PP_redux_wait
  endif
  !
  if(l_qpdb) call qpdb_init()

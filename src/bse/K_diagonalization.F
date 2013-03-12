@@ -43,8 +43,8 @@ subroutine K_diagonalization(iq,W)
  use R_lattice,      ONLY:d3k_factor,q_norm
  use com,            ONLY:isec
  use timing,         ONLY:live_timing
- use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,ncpu,myid,pp_indexes_reset
- use par_indexes_m,  ONLY:par_indexes
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,ncpu,myid,PP_indexes_reset
+ use interfaces,     ONLY:PARALLEL_index
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
 #if defined _SC || defined _KERR
@@ -56,7 +56,7 @@ subroutine K_diagonalization(iq,W)
  !
  ! Work Space
  !
- type(pp_indexes)     ::px
+ type(PP_indexes)     ::px
  integer              ::i1,iw,lib_driver,BS_H_dim
  logical              ::K_is_not_hermitian
  real(SP)             ::gauge_factor,Co
@@ -138,8 +138,8 @@ subroutine K_diagonalization(iq,W)
    call mem_est("BS_E_real",(/BS_H_dim/),(/SP/))
  endif
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/BS_H_dim/))
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/BS_H_dim/))
  !
  ! Diagonalization DB (IN)
  !
@@ -234,7 +234,7 @@ subroutine K_diagonalization(iq,W)
        !
        call live_timing(steps=1)
      enddo
-     call pp_redux_wait(BS_R_right)
+     call PP_redux_wait(BS_R_right)
      call live_timing
      !
 #if defined _KERR
@@ -249,7 +249,7 @@ subroutine K_diagonalization(iq,W)
          !
          call live_timing(steps=1)
        enddo
-       call pp_redux_wait(BS_R_right_kerr)
+       call PP_redux_wait(BS_R_right_kerr)
        call live_timing
      endif
 #endif
@@ -275,7 +275,7 @@ subroutine K_diagonalization(iq,W)
        !
        call live_timing(steps=1)
      enddo
-     call pp_redux_wait(BS_R)
+     call PP_redux_wait(BS_R)
      !
      ! Remove the occupation factors from the oscillators (in case
      ! other solvers are used)
@@ -306,7 +306,7 @@ subroutine K_diagonalization(iq,W)
        !
        call live_timing(steps=1)
      enddo
-     call pp_redux_wait(BS_R_left)
+     call PP_redux_wait(BS_R_left)
      call live_timing
      !
      ! [5] BS_R(i)=BS_R_left(i)BS_R_right(i)
@@ -338,7 +338,7 @@ subroutine K_diagonalization(iq,W)
      enddo
      call live_timing
      !
-     call pp_redux_wait(BS_R)
+     call PP_redux_wait(BS_R)
      !
 #if defined _KERR
      if(l_kerr) then
@@ -354,7 +354,7 @@ subroutine K_diagonalization(iq,W)
        enddo
        call live_timing
        !
-       call pp_redux_wait(BS_R_kerr)
+       call PP_redux_wait(BS_R_kerr)
      endif
 #endif
      !
@@ -419,9 +419,9 @@ subroutine K_diagonalization(iq,W)
    call live_timing(steps=1)
  enddo
  call live_timing
- call pp_redux_wait(X_epsilon)
+ call PP_redux_wait(X_epsilon)
 #if defined _KERR
- call pp_redux_wait(B_Hall)
+ call PP_redux_wait(B_Hall)
 #endif
  !
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2
@@ -486,6 +486,6 @@ subroutine K_diagonalization(iq,W)
    deallocate(BS_E_real)
    call mem_est("BS_E_real")
  endif
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
 end subroutine

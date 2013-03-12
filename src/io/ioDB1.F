@@ -23,7 +23,6 @@ integer function ioDB1(E,k,ID)
  !
  use pars,             ONLY:SP,IP,schlen
  use units,            ONLY:HA2EV
- use com,              ONLY:error
  use memory_m,         ONLY:mem_est
  use LOGO,             ONLY:code_version,code_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
@@ -144,12 +143,6 @@ integer function ioDB1(E,k,ID)
    call io_elemental(ID, VAR="",VAR_SZ=0,MENU=0) 
    !
    !=------------ DIMENSIONS END -----------------=
-   !
-   ! Check for old databases not compatible with libxc
-   !
-   if (.not.ver_is_gt_or_eq(ID,(/3,2,2/))) &
-&     call error(" WF databases too old. Please regenerate them with a newer Yambo release")
-   !
    !
    ! Wavefunction G-vector components
    !---------------------------------

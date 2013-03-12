@@ -49,9 +49,9 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  character(schlen)::ch,db_piece(n_pieces)
  type(QP_t)       ::qp_from_dbs(max_n_of_dbs)
  character(lchlen)::qp_msg,qp_db_name,dummy_db_name
- integer          :: i1,i_sp,n_qp_db
+ integer          :: i1,i2,i_sp,n_qp_db
  logical          :: l_plan_todo_EWZI(5),& ! = ( E W Z INTERPOLATION/k INTERPOLATION/E )
-&                    QPs_DB,GFs_DB,DB_plan_todo_EWZ(max_n_of_dbs,3)
+&                    QPs_DB,GFs_DB
  logical,external :: QP_check_if_corrected
  !
  ! QP I/O
@@ -78,7 +78,6 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  ! Presets
  !
  l_plan_todo_EWZI=.false.
- DB_plan_todo_EWZ=.false.
  GFs_from_DB=.false.
  qp_msg=' '
  QP_load_DB=1
@@ -111,38 +110,32 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
    n_qp_db=0
    do i1=1,n_pieces
      if (trim(db_piece(i1))=="<") then
-       !
-       dummy_db_name=db_piece(i1+1)
-       !
-       if (len_trim(dummy_db_name)==0) cycle
-       !
-       n_qp_db=n_qp_db+1
-       !
-       DB_plan_todo_EWZ(n_qp_db,1)=any((/trim(db_piece(i1-1))=="E",trim(db_piece(i1))=="e"/))
-       DB_plan_todo_EWZ(n_qp_db,2)=any((/trim(db_piece(i1-1))=="W",trim(db_piece(i1))=="w"/))
-       DB_plan_todo_EWZ(n_qp_db,3)=any((/trim(db_piece(i1-1))=="Z",trim(db_piece(i1))=="z"/))
-       !
-       if (n_qp_db==1) qp_db_name=dummy_db_name
-       if (n_qp_db> 1) qp_db_name=string_pack(trim(qp_db_name),"+",trim(dummy_db_name))
-       !
-       if (n_qp_db>max_n_of_dbs) call warning('Too many QP databases provided.')
-       !
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=DUMP,ID=ID(n_qp_db))
-       !
-       ! GPL_EXCLUDE_START
+       do i2=1,min(n_pieces-i1,max_n_of_dbs)
+         dummy_db_name=db_piece(i1+i2)
+         !
+         if (len_trim(dummy_db_name)==0) cycle
+         !
+         n_qp_db=n_qp_db+1
+         !
+         if (n_qp_db==1) qp_db_name=dummy_db_name
+         if (n_qp_db> 1) qp_db_name=string_pack(trim(qp_db_name),"+",trim(dummy_db_name))
+         !
+         if (n_qp_db>max_n_of_dbs) call warning('Too many QP databases provided.')
+         !
+         call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=DUMP,ID=ID(i2))
+         !
+         ! GPL_EXCLUDE_START
 #if defined _ELPH
-       if (index(trim(dummy_db_name),'.QP')/=0.or.index(trim(dummy_db_name),'.G')/=0) then
-         io_err=ioQP(trim(dummy_db_name) ,qp_from_dbs(n_qp_db),ID(n_qp_db))
-       endif
+         io_err=ioQP(trim( db_piece(i1+i2) ),qp_from_dbs(i2),ID(i2))
 #else
-       ! GPL_EXCLUDE_END
-       if (index(trim(dummy_db_name),'.QP')/=0) io_err=ioQP(trim(dummy_db_name),qp_from_dbs(n_qp_db),ID(n_qp_db))
-       ! GPL_EXCLUDE_START
+         ! GPL_EXCLUDE_END
+         if (index(trim(dummy_db_name),'.QP')/=0) io_err=ioQP(trim( db_piece(i1+i2) ),qp_from_dbs(i2),ID(i2))
+         ! GPL_EXCLUDE_START
 #endif
-       ! GPL_EXCLUDE_END
-       !
-       if (io_err/=0) n_qp_db=n_qp_db-1
-       !
+         ! GPL_EXCLUDE_END
+         !
+         if (io_err/=0) n_qp_db=n_qp_db-1
+       enddo
      endif
    enddo
    !
@@ -155,15 +148,9 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
    !
    if (len_trim(qp_db_name)/=0.and.io_err==0) then
      !
-     call QP_merge_DBs(n_qp_db,qp_from_dbs,qp,DB_plan_todo_EWZ(:n_qp_db,:))
+     call QP_merge_DBs(n_qp_db,qp_from_dbs,qp)
      !
      QPs_DB=index(trim(qp_db_name),'.QP')/=0
-     !
-     if (QPs_DB) then
-       l_plan_todo_EWZI(1)=any( DB_plan_todo_EWZ(:n_qp_db,1) )
-       l_plan_todo_EWZI(2)=any( DB_plan_todo_EWZ(:n_qp_db,2) )
-       l_plan_todo_EWZI(3)=any( DB_plan_todo_EWZ(:n_qp_db,3) )
-     endif
      !
      ! GPL_EXCLUDE_START
      !
@@ -183,6 +170,9 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
    !
    do i1=1,n_pieces
      if (QPs_DB) then
+       if (.not.l_plan_todo_EWZI(1)) l_plan_todo_EWZI(1)=any((/trim(db_piece(i1))=="E",trim(db_piece(i1))=="e"/))
+       if (.not.l_plan_todo_EWZI(2)) l_plan_todo_EWZI(2)=any((/trim(db_piece(i1))=="W",trim(db_piece(i1))=="w"/))
+       if (.not.l_plan_todo_EWZI(3)) l_plan_todo_EWZI(3)=any((/trim(db_piece(i1))=="Z",trim(db_piece(i1))=="z"/))
        if (.not.l_plan_todo_EWZI(4)) l_plan_todo_EWZI(4)=any((/trim(db_piece(i1))=="ui",trim(db_piece(i1))=="uI",&
 &                                                              trim(db_piece(i1))=="UI",trim(db_piece(i1))=="Ui",&
 &                                                              trim(db_piece(i1))=="uki",trim(db_piece(i1))=="ukI",&

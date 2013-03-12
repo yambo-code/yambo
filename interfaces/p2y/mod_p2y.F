@@ -290,7 +290,7 @@ contains
    ! Work Space
    !
    real(DP)                       :: tau_units
-   real(SP)                       :: z
+   real                           :: z
    integer                        :: i1,i2,u
 
    allocate( ityp_(nat_) )

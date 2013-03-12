@@ -146,7 +146,7 @@ subroutine G_shells_finder()
  call pp_redux_wait(g_rot)
  call pp_redux_wait(E_of_shell_TMP)
  !
- ! Redefine ng_in_shell_TMP with actual position of the last element of the
+ ! Redefine ng_in_shell_TMP witg actual position of the last element of the
  ! degenerate group
  !
  do i_m=2,n_g_shells

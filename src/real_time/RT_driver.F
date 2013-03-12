@@ -21,7 +21,7 @@
 !
 subroutine RT_driver(E,X,k,q)
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP
  use drivers,        ONLY:l_collisions_IO,l_ph_corr,l_carrier_dynamics 
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
@@ -225,7 +225,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Simmetrization
    !
-   forall( ib=SC_bands(1):SC_bands(2) )  G_lesser(ib,ib,:,it_mem)=cI*aimag(G_lesser(ib,ib,:,it_mem))
+   forall( ib=SC_bands(1):SC_bands(2) )  G_lesser(ib,ib,:,it_mem)=(0._SP,1._SP)*aimag(G_lesser(ib,ib,:,it_mem))
    !
    ! End dynamics ?
    !===============

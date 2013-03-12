@@ -195,7 +195,7 @@ end function pw_wfc_is_equal
 function pw_wfc_braket(bra,ket)
 ! Subroutine per il prodotto scalare di due funzioni d'onda
 ! use num_module
-  complex(SP) :: pw_wfc_braket
+  complex :: pw_wfc_braket
   type(pw_wfc), intent(in) :: bra,ket
 ! if(.not.bra%basis == ket%basis) call errore("pw_wfC_braket","with different
 ! grids not implemented",1)
@@ -206,7 +206,7 @@ subroutine pw_wfc_scale_r(wfc,scale)
 ! Subroutine per riscalare di un fattore reale una funzione d'onda
 ! use num_module
   type(pw_wfc), intent(inout) :: wfc
-  real(SP),         intent(in)    :: scale
+  real,         intent(in)    :: scale
   integer :: i
 !@ END MANUAL
 ! call lasi_scal(wfc%npw,scale,wfc%val,1)
@@ -221,7 +221,7 @@ subroutine pw_wfc_scale_c(wfc,scale)
 ! Subroutine per riscalare di un fattore complesso una funzione d'onda
 ! use num_module
   type(pw_wfc), intent(inout) :: wfc
-  complex(SP),      intent(in)    :: scale
+  complex,      intent(in)    :: scale
 !@ END MANUAL
 ! call lasi_scal(wfc%npw,scale,wfc%val,1)
   wfc%val = wfc%val*scale
@@ -230,7 +230,7 @@ end subroutine pw_wfc_scale_c
 function pw_wfc_p_braket(bra,ket)
 ! Effettua il valore di aspettazione di p
 ! pw_wfc_p_braket(:) e' p(:), dove p(1) e' p_x etc.
-  complex(SP)                   :: pw_wfc_p_braket(3)
+  complex                   :: pw_wfc_p_braket(3)
   type (pw_wfc), intent(in) :: bra,ket
   type(pw_wfc) :: wfc_tmp(3)
   call pw_wfc_init(wfc_tmp,bra%basis)
@@ -249,7 +249,7 @@ subroutine pw_wfc_p(new_wfc,old_wfc)
   type (pw_wfc), intent(in)    :: old_wfc
 !@ END MANUAL
   integer :: ipw
-  real(SP)    :: kg(3),p(3),b(3,3)
+  real    :: kg(3),p(3),b(3,3)
   b = old_wfc%basis%struct%b
   do ipw = 1,old_wfc%npw
     kg = old_wfc%basis%g(:,ipw)+old_wfc%basis%k

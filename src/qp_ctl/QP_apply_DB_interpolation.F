@@ -217,6 +217,8 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
      do i3=band_range(1),band_range(2)
        if (l_plan_todo_EWZI(2)) then
          !
+         if (any(Wl(i3,:)==0._SP)) cycle
+         !
          do i_spin=1,n_sp_pol
            !
            if (QP_check_if_corrected((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
@@ -231,6 +233,8 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
      enddo
      do i3=band_range(1),band_range(2)
        if (l_plan_todo_EWZI(3)) then
+         !
+         if (any(Zl(i3,:)==(0._SP,0._SP))) cycle
          !
          do i_spin=1,n_sp_pol
            !

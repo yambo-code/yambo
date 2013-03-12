@@ -102,8 +102,8 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  allocate(O2x_qpg(BS_blk_dim(ik2),FXC_n_g_corr))
  allocate(blk_Eo(2,O_x_dim))
  !
- forall(i1=1:FXC_n_g_corr) conjg_O1x_qpg(i1,:BS_blk_dim(ik1))=conjg(O1x(i1,:BS_blk_dim(ik1)))*bare_qpg(iq,i1)
- forall(i2=1:FXC_n_g_corr) O2x_qpg(:BS_blk_dim(ik2),i2)=O2x(i2,:BS_blk_dim(ik2))*bare_qpg(iq,i2)
+ forall(i1=1:FXC_n_g_corr) conjg_O1x_qpg(i1,:)=conjg(O1x(i1,:))*bare_qpg(iq,i1)
+ forall(i2=1:FXC_n_g_corr) O2x_qpg(:,i2)=O2x(i2,:)*bare_qpg(iq,i2)
  !
  ! Kernel diagonal and simmetrization
  !

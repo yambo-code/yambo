@@ -15,7 +15,6 @@
 ! along with this program; if not, write to the Free Software
 ! Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 module numerical_module
-  use pars,  ONLY:SP
 ! use num_interpolation_module
   implicit none
   private
@@ -29,19 +28,19 @@ module numerical_module
 !           num_interpolation
 public :: num_2pi_i, num_4pi
 
-real(SP),    parameter :: num_sqrt2   = 1.41421356237309504880
-real(SP),    parameter :: num_pi      = 3.14159265358979323844
-real(SP),    parameter :: num_2pi     = num_pi * 2.0
-real(SP),    parameter :: num_4pi     = num_pi * 4.0
-real(SP),    parameter :: num_8pi     = num_pi * 8.0
-real(SP),    parameter :: num_sqrtpi  = 1.77245385090551602729
-real(SP),    parameter :: num_sqrt8pi = 2.0 * num_sqrt2 * num_sqrtpi
-complex(SP), parameter :: num_2pi_i   = num_pi * (0.0,2.0)
-complex(SP), parameter :: num_pi_i    = num_pi * (0.0,1.0)
+real,    parameter :: num_sqrt2   = 1.41421356237309504880
+real,    parameter :: num_pi      = 3.14159265358979323844
+real,    parameter :: num_2pi     = num_pi * 2.0
+real,    parameter :: num_4pi     = num_pi * 4.0
+real,    parameter :: num_8pi     = num_pi * 8.0
+real,    parameter :: num_sqrtpi  = 1.77245385090551602729
+real,    parameter :: num_sqrt8pi = 2.0 * num_sqrt2 * num_sqrtpi
+complex, parameter :: num_2pi_i   = num_pi * (0.0,2.0)
+complex, parameter :: num_pi_i    = num_pi * (0.0,1.0)
 
 
 ! Private parameters for ylm
-  real(SP), parameter :: c00 =  .28209479177387814347, &
+  real, parameter :: c00 =  .28209479177387814347, &
                    c11 =  .34549414947133547925, &
                    c10 =  .48860251190291992158, &
                    c22 =  .38627420202318958029, &
@@ -99,10 +98,10 @@ complex(SP), parameter :: num_pi_i    = num_pi * (0.0,1.0)
 !
 function num_simpson(f)
 ! Perform simple simpson integral
-  real(SP), intent(in) :: f(:)
-  real(SP) :: num_simpson
+  real, intent(in) :: f(:)
+  real :: num_simpson
   integer :: n,i
-  real(SP) :: sum
+  real :: sum
   n = size(f)
   sum = 0.0
   do i=2,n-1,2
@@ -113,8 +112,8 @@ end function num_simpson
 
 function num_xlylm_grad(x,l,m)
 ! Returns the gradient of xlylm
-  complex(SP)             :: num_xlylm_grad(3)
-  real(SP), intent(in)    :: x(3)
+  complex             :: num_xlylm_grad(3)
+  real, intent(in)    :: x(3)
   integer, intent(in) :: l,m
   if(abs(m)>l) call errore("num_xlylm_grad","m>l",1)
   select case(l)
@@ -200,8 +199,8 @@ function num_xlylm(x,l,m)
 ! Returns |x|^l * y_lm(x).
 ! With this definitions, the spherical harmonics are well
 ! defined also for null vectors, continuous and derivable everywhere
-  complex(SP)             :: num_xlylm
-  real(SP), intent(in)    :: x(3)
+  complex             :: num_xlylm
+  real, intent(in)    :: x(3)
   integer, intent(in) :: l,m
   if(abs(m)>l) call errore("num_xlylm","m>l",1)
   select case(l)
@@ -254,8 +253,8 @@ end function num_xlylm
 function num_ylm(x,l,m)
 ! spherical harmonics
 ! NOTE ill defined for x=0.0
-  complex(SP)             :: num_ylm
-  real(SP), intent(in)    :: x(3)
+  complex             :: num_ylm
+  real, intent(in)    :: x(3)
   integer, intent(in) :: l,m
   select case(l)
   case(0)
@@ -272,8 +271,8 @@ end function num_ylm
 function num_xmlsphbes(x,l)
   use numrec_kinds
 ! Returns x^(-l) * j_l(x)
-  real(SP) :: num_xmlsphbes
-  real(SP),    intent(in) :: x
+  real :: num_xmlsphbes
+  real,    intent(in) :: x
   integer, intent(in) :: l
 ! Note: the following lines can be generated with GNU bc -m
 ! and the following input <<EOF

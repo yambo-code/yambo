@@ -25,6 +25,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  use pars,          ONLY:SP
  use wrapper,       ONLY:V_by_V_plus_V,V_copy
+ use units,         ONLY:HA2EV
  use collision,     ONLY:ggwinfo,collision_reset
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
@@ -59,14 +60,14 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  integer                 :: i1,i2,ik,is,ikp,ikbz,ikpbz,i_spin,&
 &                           isp,iv,ic,g1,g2,g2_max,iw,iwmax,isave(4),n_poles 
- logical                 :: force_bare_X_G,skip_WF_load
- real(SP)                :: minmax_ehe(2),eh_occ
+ logical                 :: force_bare_X_G,skip_WF_load,Drude_term
+ real(SP)                :: minmax_ehe(2),drude_factor,eh_occ
  type(pp_indexes)        :: px
  type(ggwinfo)           :: isc
  complex(SP)             :: GreenF(Xw%n(2)),drude_GreenF(Xw%n(2))
  complex(SP),allocatable :: rhotw_save(:),XoR(:,:)
  integer,    external    :: X_eh_setup
- complex(SP),external    :: X_simple_GreenF
+ complex(SP),external    :: X_simple_GreenF,X_drude
  !
  ! Defaults & Setups
  !===================
@@ -76,6 +77,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  Xo  = cmplx(0.,0.,SP)
  XoR = cmplx(0.,0.,SP)
  GreenF  = cmplx(0.,0.,SP)
+ drude_GreenF = cmplx(0.,0.,SP)
  !
  ! Logicals  to skip wf_load and/or to use bare or RIM GF (no poles accumulation)
  !==========
@@ -98,7 +100,29 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !=====================
  if (iq==1) call Dipole_driver(Xen, Xk, X, X%q0)
  !
- call Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF)
+ ! Drude Contrib. if all of following conditions hold
+ !===============
+ !  . Non zero Drude Freq.
+ !  . Metallic system 
+ !  . Optical response @ q = Gamma
+ !
+ Drude_term=all((/real(X%Wd)>0.,aimag(X%Wd)>0.,Xen%kf>0,Xen%nbf/=Xen%nbm,iq==1/))
+ !
+ if ( Drude_term ) then
+   !
+   call msg('nrs','[X] Drude contribution @[ev]:',(/real(X%Wd),aimag(X%Wd)/)*HA2EV)
+   !
+   ! drude_factor is the eh_occ factor calculated in the Xo loop
+   ! evaluated at the fermi state
+   !
+   drude_factor=Xen%f(Xen%bf,Xen%kf,Xen%sf)*&
+&               (spin_occ-Xen%f(Xen%bf,Xen%kf,Xen%sf))/&
+&               spin_occ/real(Xk%nbz)/DL_vol
+   do iw=fr(1),fr(2)
+     drude_GreenF(iw-fr(1)+1)=X_drude(real(Xw%p(iw)),X%Wd,q_norm(1))/drude_factor
+   enddo
+   !
+ endif
  !
 #if !defined _DISTRIBUTED
  ! WF load

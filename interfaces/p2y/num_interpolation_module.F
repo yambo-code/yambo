@@ -18,7 +18,6 @@
 !#include "tools_error.h"
 !@ MANUAL
 module num_interpolation_module
-use pars,  ONLY:SP
 implicit none
 ! This module provides the definition of "num_interpolation" and its methods
 private
@@ -38,8 +37,8 @@ public :: num_interpolation
 ! the interpolation
 type num_interpolation
   integer      :: n
-  real(SP)         :: xmin,xmax
-  real(SP),pointer :: y(:),x(:)
+  real         :: xmin,xmax
+  real,pointer :: y(:),x(:)
   integer      :: parity
 end type num_interpolation
 !@ END MANUAL
@@ -53,11 +52,11 @@ subroutine num_interpolation_init(interpolation,xmin,xmax,delta,parity)
 ! (the point are equally spaced and span the interval [xmin,xmax]).
 ! If parity/=0, then xmin should be 0.0 and xmax should be positive.
   type (num_interpolation), intent(out) :: interpolation
-  real(SP),                     intent(in)  :: xmin,xmax,delta
+  real,                     intent(in)  :: xmin,xmax,delta
   integer, optional,        intent(in)  :: parity
 !@ END MANUAL
   integer :: i
-  interpolation%n = ceiling(abs(xmax - xmin)/delta) * sign(1._SP,(xmax - xmin))
+  interpolation%n = ceiling(abs(xmax - xmin)/delta) * sign(1.0,(xmax - xmin))
   allocate(interpolation%x(0:interpolation%n))
   allocate(interpolation%y(0:interpolation%n))
   interpolation%xmin = xmin
@@ -65,13 +64,13 @@ subroutine num_interpolation_init(interpolation,xmin,xmax,delta,parity)
   do i=0,interpolation%n
     interpolation%x(i) = xmin + (xmax - xmin) * real(i) / interpolation%n
   end do
-  interpolation%y=0._SP
+  interpolation%y=0.0
   if(present(parity)) then
     interpolation%parity = parity
   else
     interpolation%parity = 0
   end if
-  if(interpolation%parity /= 0 .and. (xmin /= 0._SP .or. xmax<0._SP)) then
+  if(interpolation%parity /= 0 .and. (xmin /= 0.0 .or. xmax<0.0)) then
 !   WARNING("")
     write(*,*) "WARNING in NUM INTERPOLATION"
     interpolation%parity = 0
@@ -93,9 +92,9 @@ subroutine num_interpolation_little_table(interpolation,x,order,tab_x,tab_y)
 ! interpolation routines.
   use numrec_module
   type (num_interpolation), intent(in)  :: interpolation
-  real(SP),                     intent(in)  :: x
+  real,                     intent(in)  :: x
   integer,                  intent(in)  :: order
-  real(SP),                     intent(out) :: tab_x(0:order-1),tab_y(0:order-1)
+  real,                     intent(out) :: tab_x(0:order-1),tab_y(0:order-1)
   integer :: j,k
   if(interpolation%parity==0) then
     call numrec_locate(interpolation%x,interpolation%n+1,x,j)
@@ -112,7 +111,7 @@ subroutine num_interpolation_little_table(interpolation,x,order,tab_x,tab_y)
       if(interpolation%parity>0) then
         tab_y(:) = interpolation%y(k:k+order-1)
       else
-        tab_y(:) = interpolation%y(k:k+order-1) * sign(1._SP,x)
+        tab_y(:) = interpolation%y(k:k+order-1) * sign(1.0,x)
       end if
     else
       tab_x(-k:order-1) = interpolation%x(0:k+order-1)
@@ -127,13 +126,13 @@ end subroutine num_interpolation_little_table
 function num_interpolation_calc(interpolation,x,order)
   use numrec_module
 ! Returns the interpolated value in the point x, using a order-1 polynomial
-  real(SP)                                 :: num_interpolation_calc
+  real                                 :: num_interpolation_calc
   type (num_interpolation), intent(in) :: interpolation
-  real(SP),                     intent(in) :: x
+  real,                     intent(in) :: x
   integer,                  intent(in) :: order
 !@ END MANUAL
-  real(SP) :: tab_x(order),tab_y(order)
-  real(SP) :: y,dy
+  real    :: tab_x(order),tab_y(order)
+  real :: y,dy
 ! write(*,*) "START: num_interpolation_calc"
   call num_interpolation_little_table(interpolation,x,order,tab_x,tab_y)
 ! write(*,*) "call num_interpolation_little_table done"
@@ -147,14 +146,14 @@ function num_interpolation_calc_der(interpolation,x,order,ider)
   use numrec_module
 ! Returns the interpolated value of the ider-th derivative in the point x
 ! Note: ider=0 => the function not derived (in this case prefer num_interpolation_calc)
-  real(SP)                                 :: num_interpolation_calc_der
+  real                                 :: num_interpolation_calc_der
   type (num_interpolation), intent(in) :: interpolation
-  real(SP),                     intent(in) :: x
+  real,                     intent(in) :: x
   integer,                  intent(in) :: order
   integer,                  intent(in) :: ider
 !@ END MANUAL
-  real(SP)    :: tab_x(order),tab_y(order)
-  real(SP)    :: cof(order),pd(0:ider)
+  real    :: tab_x(order),tab_y(order)
+  real    :: cof(order),pd(0:ider)
   call num_interpolation_little_table(interpolation,x,order,tab_x,tab_y)
   call numrec_polcof(tab_x,tab_y,order,cof)
   call numrec_ddpoly(cof,order,x,pd,ider+1)

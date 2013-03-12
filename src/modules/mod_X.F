@@ -152,10 +152,9 @@ module X_m
          !
        case('DIP_iR')
          if (.not.allocated(DIP_iR)) return
-         deallocate(DIP_iR)
        case('DIP_P')
          if (.not.allocated(DIP_P)) return
-         deallocate(DIP_P)
+         deallocate(DIP_iR)
        case('DIP_q_dot_iR')
          if (.not.allocated(DIP_q_dot_iR)) return
          deallocate(DIP_q_dot_iR)

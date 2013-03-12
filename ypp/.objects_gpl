@@ -1,4 +1,6 @@
+#if defined _SPIN
 SPIN_objects = excitons_collinear.o excitons_non_collinear.o
+#endif
 #if defined _YPP_ELPH
 ELPH_objects = ELPH_databases.o ELPH_eliashberg_dos.o ELPH_general_gFsq.o 
 #endif

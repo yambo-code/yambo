@@ -183,9 +183,6 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
    !
    do i1=1,n_pieces
      if (QPs_DB) then
-       if (.not.l_plan_todo_EWZI(1)) l_plan_todo_EWZI(1)=any((/trim(db_piece(i1))=="E",trim(db_piece(i1))=="e"/))
-       if (.not.l_plan_todo_EWZI(2)) l_plan_todo_EWZI(2)=any((/trim(db_piece(i1))=="W",trim(db_piece(i1))=="w"/))
-       if (.not.l_plan_todo_EWZI(3)) l_plan_todo_EWZI(3)=any((/trim(db_piece(i1))=="Z",trim(db_piece(i1))=="z"/))
        if (.not.l_plan_todo_EWZI(4)) l_plan_todo_EWZI(4)=any((/trim(db_piece(i1))=="ui",trim(db_piece(i1))=="uI",&
 &                                    trim(db_piece(i1))=="UI",trim(db_piece(i1))=="Ui"/))
      else if (GFs_DB) then

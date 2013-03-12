@@ -834,7 +834,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_chi=runlevel_is_on('chi')
        l_bse=runlevel_is_on('bse')
        l_rpa_IP=runlevel_is_on('IP')
-       l_rpa_LF=runlevel_is_on('LFs')
+       l_td_hartree=runlevel_is_on('tdh')
        l_tddft=runlevel_is_on('tddft')
        l_alda_fxc=runlevel_is_on('alda_fxc')
        l_lrc_fxc=runlevel_is_on('lrc_fxc')
@@ -1093,8 +1093,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! BSE/LLR
        !
        if ( trim(rstr_piece(i1)) == 'optics' )  then
-         l_chi= trim(rstr_piece(i1+1)) == 'c'
-         l_bse= trim(rstr_piece(i1+1)) == 'b'
+         l_chi= (trim(rstr_piece(i1+1))=='G' ).or.(trim(rstr_piece(i1+1))=='c')
+         l_bse= (trim(rstr_piece(i1+1))=='eh').or.(trim(rstr_piece(i1+1))=='b')
          !
          if (.not.l_chi.and..not.l_bse) l_chi=.true.
          !
@@ -1110,10 +1110,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! Approximation used for the BSE/LLR kernel
        !
        if ( trim(rstr_piece(i1)) == 'kernel' )  then
-         l_rpa_IP   = trim(rstr_piece(i1+1)) == 'i'   ! IP
-         l_rpa_LF   = trim(rstr_piece(i1+1)) == 'l'   ! LFs
+         l_rpa_IP     = trim(rstr_piece(i1+1)) == 'i'   ! IP
+         l_td_hartree = trim(rstr_piece(i1+1)) == 'h'   ! TDHartree = Local-Fields
          !
-         l_tddft    = index(rstr_piece(i1+1),'d')==1  ! TDDFT
+         l_tddft      = index(rstr_piece(i1+1),'d')==1  ! TDDFT
          !
          if(l_tddft) then
            l_alda_fxc = .true.                            !  (ALDA by default)
@@ -1123,12 +1123,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
          !
          if(l_bse) then
-           l_td_hf  = trim(rstr_piece(i1+1)) == 'h'   ! TDHF
-           l_W_eh   = trim(rstr_piece(i1+1)) == 'w'   ! W-eh interaction
+           l_td_hf    = trim(rstr_piece(i1+1)) == 'hf'  ! TDHF
+           l_W_eh     = trim(rstr_piece(i1+1)) == 'W'   ! W-eh screened interaction interaction
          endif
          !
          if(l_rpa_IP)      call initactivate(1,'IP')
-         if(l_rpa_LF)      call initactivate(1,'LFs')
+         if(l_td_hartree)  call initactivate(1,'tdh')
          !
          if(l_tddft) then
                            call initactivate(1,'tddft')

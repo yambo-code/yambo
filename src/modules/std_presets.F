@@ -239,7 +239,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_chi=.false.
  l_bss=.false.
  l_rpa_IP=.false.
- l_rpa_LF=.false.
+ l_td_hartree=.false.
  l_tddft=.false.
  l_alda_fxc=.false.
  l_lrc_fxc=.false.

@@ -164,9 +164,9 @@ subroutine barriers()
    goto 1
  endif
  if (l_bss.or.l_bse) then
-   on_runlevels='optics bse bss IP LFs tddft bs_fxc tdhf W_eh em1s em1d ppa'
+   on_runlevels='optics bse bss IP tdh tddft bs_fxc tdhf W_eh em1s em1d ppa'
    ! GPL_INCLUDE_START SC_IGNORE
-   !on_runlevels='optics bse bss IP LFs tddft tdhf W_eh em1s em1d ppa'
+   !on_runlevels='optics bse bss IP tdh tddft tdhf W_eh em1s em1d ppa'
    ! GPL_INCLUDE_END SC_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
@@ -180,9 +180,9 @@ subroutine barriers()
  ! SPIN
  !=============
  if (n_spin>1) then
-   on_runlevels='optics chi bse bss IP LFs tdhf W_eh em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
+   on_runlevels='optics chi bse bss IP tdh tdhf W_eh em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
    ! GPL_INCLUDE_START SC_IGNORE
-   !on_runlevels='optics chi bse bss IP LFs tdhf W_eh em1s em1d ppa HF_and_locXC cohsex gw0'
+   !on_runlevels='optics chi bse bss IP tdh tdhf W_eh em1s em1d ppa HF_and_locXC cohsex gw0'
    ! GPL_INCLUDE_END SC_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
@@ -194,7 +194,7 @@ subroutine barriers()
  !
 #if defined _KERR
  if(l_kerr) then
-   on_runlevels='optics chi bse bss IP LFs tdhf W_eh em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
+   on_runlevels='optics chi bse bss IP tdh tdhf W_eh em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
    ! GPL_INCLUDE_START
    !on_runlevels='optics bse bss IP'
    ! GPL_INCLUDE_END

@@ -38,7 +38,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
- use drivers,        ONLY:l_rpa_IP,l_rpa_LF,l_alda_fxc,l_td_hf,l_W_eh,l_bs_fxc,l_bss
+ use drivers,        ONLY:l_rpa_IP,l_td_hartree,l_alda_fxc,l_td_hf,l_W_eh,l_bs_fxc,l_bss
  use par_proc_m,     ONLY:pp_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
@@ -124,9 +124,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    BS_res_mode='none'
    BS_cpl_mode='none'
    l_bss=.true.
+   BSS_mode=''
  endif
  !
- if (l_rpa_LF.or.l_alda_fxc) then
+ if (l_td_hartree.or.l_alda_fxc) then
    !  
    ! Remove the correlation from the BS_mode
    !

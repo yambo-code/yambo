@@ -72,7 +72,7 @@ module drivers
  ! ... the kernel ...
  !
  logical :: l_rpa_IP
- logical :: l_rpa_LF
+ logical :: l_td_hartree
  logical :: l_tddft
  logical :: l_alda_fxc
  logical :: l_bs_fxc

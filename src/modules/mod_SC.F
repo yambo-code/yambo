@@ -99,7 +99,6 @@ module SC
  !
  ! Real-Time occupations
  !
- logical                  :: l_RT_occupations_in_use
  real(SP),    allocatable :: RT_occupations(:,:) 
  !
  ! K-points: In case I want to use the G_lesser to define the occupations
@@ -128,35 +127,9 @@ module SC
  !
  contains
    !
-   subroutine SC_QP_setup(E)
-     use R_lattice,      ONLY:nkibz
-     use electrons,      ONLY:levels
-     use QP_m,           ONLY:QP_nk,QP_state,QP_nb
-     use memory_m,       ONLY:mem_est
-     implicit none
-     !
-     type(levels) :: E
-     !
-     SC_nbands=SC_bands(2)-SC_bands(1)+1
-     !
-     ! Build-up QP table
-     !
-     QP_nb=SC_bands(2)
-     QP_nk=nkibz
-     ! 
-     ! QP_state my be read from DBs at start-up
-     !
-     if (allocated(QP_state)) deallocate(QP_state)
-     !
-     allocate(QP_state(QP_nb,QP_nk))
-     call mem_est("QP_state",(/QP_nb*QP_nk/))
-     QP_state=.TRUE.
-     call QP_state_table_setup(E)
-     !
-   end subroutine
-   !
    subroutine SC_alloc(E)
      use pars,           ONLY:SP
+     use R_lattice,      ONLY:nkibz
      use drivers,        ONLY:l_real_time,l_sc_cohsex,l_sc_srpa
      use electrons,      ONLY:n_spin,n_sp_pol,levels
      use FFT_m,          ONLY:fft_size
@@ -167,7 +140,7 @@ module SC
      !
      type(levels) :: E
      !
-     call SC_QP_setup(E)
+     SC_nbands=SC_bands(2)-SC_bands(1)+1
      !
      ! In the magnetic project Ho has already been allocated
      !

@@ -60,10 +60,12 @@ subroutine V_real_space_to_H(ik,V,H,wf)
  !
  ! ... and symmetrize
  !
- do ib=1,QP_nb
-   H(ib,ib,i_spin)=real(H(ib,ib,i_spin),SP)
-   do ibp=1,ib-1
-     H(ib,ibp,i_spin)=conjg(H(ibp,ib,i_spin))
+ do i_spin=1,n_sp_pol
+   do ib=1,QP_nb
+     H(ib,ib,i_spin)=real(H(ib,ib,i_spin),SP)
+     do ibp=1,ib-1
+       H(ib,ibp,i_spin)=conjg(H(ibp,ib,i_spin))
+     enddo
    enddo
  enddo
  !

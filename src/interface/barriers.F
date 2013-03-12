@@ -98,7 +98,7 @@ subroutine barriers()
  !===========
  !
  ! GPL_INCLUDE_START
- !if(i_time_rev==1.and.n_spinor>1) call switch_off_runlevel('all',on_name=' ')
+ !if(mag_syms) call switch_off_runlevel('all',on_name=' ')
  ! GPL_INCLUDE_END
  !
 #if defined _RT

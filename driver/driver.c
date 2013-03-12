@@ -53,7 +53,7 @@ typedef struct
 #if defined _yambo  || _ELPH || _SC  || _RT || _DISTRIBUTED 
  #define _YAMBO_MAIN
 #endif
-#if defined _MANYK || _MAGNETIC || _KERR || _TEST_1 || _TEST_2
+#if defined _MANYK || _MAGNETIC || _KERR || _TEST_2
  #define _YAMBO_MAIN
 #endif
 #if defined _ypp  || _YPP_ELPH || _YPP_RT || _YPP_SC || _YPP_MAGNETIC || _YPP_BOLTZMANN || _YPP_TEST_2

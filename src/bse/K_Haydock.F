@@ -33,7 +33,7 @@ subroutine K_Haydock(iq,W)
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
 &                         BS_DB_is_fragmented, BS_eh_f,ioBSS_Haydock,&
 &                         BS_K_Coupling,Haydock_terminator,&
-&                         K_BSmat_by_V,K_BSmat_by_V_Haydock,Haydock_fast
+&                         K_BSmat_by_V,K_BSmat_by_V_Haydock
 #if defined _KERR
  use KERR,           ONLY:BSS_rhoq0_kerr,iw_ref,B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
@@ -61,7 +61,6 @@ subroutine K_Haydock(iq,W)
  character(schlen)  ::dumb_ch
  logical, external  ::stop_now
  logical            ::use_cpl_scheme
- logical            ::cpl_scheme_fast
  !
  ! I/O
  !
@@ -77,19 +76,15 @@ subroutine K_Haydock(iq,W)
  if (.not.Haydock_terminator) call parser('BSHayTer',Haydock_terminator)
  !
  ! Which approach
- call parser('BSHayFast',Haydock_fast)
  use_cpl_scheme=BS_K_Coupling
- cpl_scheme_fast=Haydock_fast
 #if defined _KERR
  use_cpl_scheme=BS_K_Coupling.or.l_kerr
- cpl_scheme_fast=(BS_K_Coupling.and.Haydock_fast).or.(.not.BS_K_Coupling.and.l_kerr)
 #endif
  !
  if (use_cpl_scheme) then
    !
    allocate(Cf(Max_iterations+1))
-   if(     cpl_scheme_fast) allocate(Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim))
-   if(.not.cpl_scheme_fast) allocate(Vn(2*BS_K_dim),Vnm1(2*BS_K_dim),Vnp1(2*BS_K_dim))
+   allocate(Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim))
 #if defined _KERR
    if(l_kerr) allocate(Cf_kerr(Max_iterations+1))
 #endif
@@ -108,14 +103,11 @@ subroutine K_Haydock(iq,W)
    !
 #if defined _KERR
    if(l_kerr) then
-     if(     cpl_scheme_fast) io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),  &
-&                                               Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1),Cf_kerr=Cf_kerr(1))
-     if(.not.cpl_scheme_fast) io_err=ioBSS_Haydock(ID,1,2*BS_K_dim,reached_treshold,Af(1),Bf(1),&
-&                                               Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1),Cf_kerr=Cf_kerr(1))
+     io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),  &
+&                         Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1),Cf_kerr=Cf_kerr(1))
    else
 #endif
-     if(     cpl_scheme_fast) io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
-     if(.not.cpl_scheme_fast) io_err=ioBSS_Haydock(ID,1,2*BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
+     io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
 #if defined _KERR
    endif
 #endif
@@ -132,16 +124,12 @@ subroutine K_Haydock(iq,W)
    if (use_cpl_scheme) then 
 #if defined _KERR
      if(l_kerr) then
-       if(     cpl_scheme_fast) io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,&
-&            Af(:it_on_disk),Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1),Cf_kerr=Cf_kerr(:it_on_disk+1))
-       if(.not.cpl_scheme_fast) io_err=ioBSS_Haydock(ID,it_on_disk,2*BS_K_dim,reached_treshold,&
-&            Af(:it_on_disk),Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1),Cf_kerr=Cf_kerr(:it_on_disk+1))
+       io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),Bf(:it_on_disk+1),&
+&                                 Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1),Cf_kerr=Cf_kerr(:it_on_disk+1))
      else
 #endif
-       if(     cpl_scheme_fast) io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,&
-&            Af(:it_on_disk),Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
-       if(.not.cpl_scheme_fast) io_err=ioBSS_Haydock(ID,it_on_disk,2*BS_K_dim,reached_treshold,&
-&            Af(:it_on_disk),Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
+       io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
+&                            Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
 #if defined _KERR
    endif
 #endif
@@ -195,22 +183,12 @@ subroutine K_Haydock(iq,W)
 #endif
      Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)*BS_eh_f(:BS_K_dim)
      !
-     if(cpl_scheme_fast) then
-       call K_BSmat_by_V_Haydock(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity)
-       Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
-       Cf(1) = 0.
+     call K_BSmat_by_V_Haydock(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity)
+     Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
+     Cf(1) = 0.
 #if defined _KERR
-       if(l_kerr) Cf_kerr(1)= 2._SP*cI*aimag(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn))/Haydock_v0_mod**2._SP
+     if(l_kerr) Cf_kerr(1)= 2._SP*cI*aimag(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn))/Haydock_v0_mod**2._SP
 #endif
-     else
-       Vn(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)*BS_eh_f(:BS_K_dim)
-       call K_BSmat_by_V(iq,iter=it_on_disk,Vi=Vn,Vo=Vnp1)
-       Haydock_v0_mod=sqrt(fdot_product(Vn,Vnp1))
-       Cf(1) = dot_product(BSS_rhoq0,Vn)/Haydock_v0_mod**2._SP
-#if defined _KERR
-       if(l_kerr) Cf_kerr(1)= dot_product(BSS_rhoq0_kerr,Vn)/Haydock_v0_mod**2._SP
-#endif
-     endif
      !
      Vnp1(:) = Vnp1(:)/Haydock_v0_mod
      Vn(:)   = Vn(:)/Haydock_v0_mod
@@ -245,8 +223,6 @@ subroutine K_Haydock(iq,W)
      !|Vn+1> = H |Vn>
      !
      call K_BSmat_by_V_Haydock(iq,it-it_on_disk,Vn,Vnp1)
-     !if(     cpl_scheme_fast) call K_BSmat_by_V_Haydock(iq,it-it_on_disk,Vn,Vnp1)
-     !if(.not.cpl_scheme_fast) call K_BSmat_by_V(iq,iter=it-it_on_disk,Vi=Vn,Vo=Vnp1)
      !
      ! A(n) = <Vn|Vn+1>
      !
@@ -282,12 +258,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
      !
-     if(cpl_scheme_fast) then
-       call V_by_V_plus_V(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,Vnp1)
-     else
-       call V_by_V_plus_V(2*BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,Vnp1)
-       call V_by_V_plus_V(2*BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,Vnp1) 
-     endif
+     call V_by_V_plus_V(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,Vnp1)
      !
      ! |Vn-1> = |Vn> 
      ! |Vn>   = |Vn+1> 
@@ -297,40 +268,29 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     if(     cpl_scheme_fast) call K_BSmat_by_V_Haydock(iq,it-it_on_disk,Vn,Vnp1,iter_par=ItParity)
-     if(.not.cpl_scheme_fast) call K_BSmat_by_V(iq,iter=it-it_on_disk,Vi=Vn,Vo=Vnp1)
+     call K_BSmat_by_V_Haydock(iq,it-it_on_disk,Vn,Vnp1,iter_par=ItParity)
      !
      ! B(n+1)= <Vn|F|Vn+1>^(1/2) (that is <Vn|FH|Vn>^(1/2))
      !       = (2*Re(<Vn|Vnp1>))^(1/2) by symmetry, 
      !          where the dot_product is just on eh pair space 
      !
-     if(     cpl_scheme_fast) Bf(it+1)=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
-     if(.not.cpl_scheme_fast) Bf(it+1)=sqrt(fdot_product(Vn,Vnp1))
+     Bf(it+1)=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
      if( isnan(Bf(it+1)) ) call error(' Bf=NaN likely because some eigenvalue of BSE is negative.')
      !
      !|Vn> =|Vn+1> / B(n+1)
      !
-     if(cpl_scheme_fast) then
-       forall(i1=1:BS_K_dim) Vn(i1)=Vn(i1)/Bf(it+1)
-       forall(i1=1:BS_K_dim) Vnp1(i1)=Vnp1(i1)/Bf(it+1)
-       !
-       ! Using symmetry arguments
-       ! Cf=(1-ItParity)Re(<rhoq0|Vn>) + i*(1+ItParity)Im(<rhoq0|Vn>) 
-       ! with all product evaluated just in the eh pairs subspace 
-       !
-       Cf(it+1)= ((1._SP-ItParity)*real(dot_product(BSS_rhoq0(:BS_K_dim),Vn)))/Haydock_v0_mod
+     forall(i1=1:BS_K_dim) Vn(i1)=Vn(i1)/Bf(it+1)
+     forall(i1=1:BS_K_dim) Vnp1(i1)=Vnp1(i1)/Bf(it+1)
+     !
+     ! Using symmetry arguments
+     ! Cf=(1-ItParity)Re(<rhoq0|Vn>) + i*(1+ItParity)Im(<rhoq0|Vn>) 
+     ! with all product evaluated just in the eh pairs subspace 
+     !
+     Cf(it+1)= ((1._SP-ItParity)*real(dot_product(BSS_rhoq0(:BS_K_dim),Vn)))/Haydock_v0_mod
 #if defined _KERR
-       if(l_kerr) Cf_kerr(it+1)= &
-&               ((1._SP+ItParity)*cI*aimag(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn)))/Haydock_v0_mod
+     if(l_kerr) Cf_kerr(it+1)= &
+&             ((1._SP+ItParity)*cI*aimag(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn)))/Haydock_v0_mod
 #endif
-     else
-       forall(i1=1:2*BS_K_dim) Vn(i1)=Vn(i1)/Bf(it+1)
-       forall(i1=1:2*BS_K_dim) Vnp1(i1)=Vnp1(i1)/Bf(it+1)
-       Cf(it+1)= dot_product(BSS_rhoq0,Vn)/Haydock_v0_mod
-#if defined _KERR
-       if(l_kerr) Cf_kerr(it+1)= dot_product(BSS_rhoq0_kerr,Vn)/Haydock_v0_mod
-#endif
-     endif
      !
    endif
    !
@@ -371,15 +331,11 @@ subroutine K_Haydock(iq,W)
      Bf(1) = Haydock_v0_mod
 #if defined _KERR
      if(l_kerr) then
-       if(     cpl_scheme_fast) io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
-&                            Af(:it),Bf(:it+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
-       if(.not.cpl_scheme_fast) io_err=ioBSS_Haydock(ID,it,2*BS_K_dim,reached_treshold,&
+       io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
 &                            Af(:it),Bf(:it+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
      else 
 #endif
-       if(     cpl_scheme_fast) io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
-&                            Af(:it),Bf(:it+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1))
-       if(.not.cpl_scheme_fast) io_err=ioBSS_Haydock(ID,it,2*BS_K_dim,reached_treshold,&
+       io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
 &                            Af(:it),Bf(:it+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1))
 #if defined _KERR
      endif
@@ -400,15 +356,12 @@ subroutine K_Haydock(iq,W)
  !
  ! CLEAN
  !
- if (allocated(BS_mat)) deallocate(BS_mat)
- if (use_cpl_scheme) deallocate(Cf)
-#if defined _KERR
- if (use_cpl_scheme.and.l_kerr) deallocate(Cf_kerr)
-#endif
  deallocate(Vn,Vnm1,Vnp1) 
- !
- ! Either if BS_mat is allocated (no fragments) or is not allocated
- ! I need to clean the memory
+ if (allocated(BS_mat))  deallocate(BS_mat)
+ if (allocated(Cf))      deallocate(Cf)
+#if defined _KERR
+ if (allocated(Cf_kerr)) deallocate(Cf_kerr)
+#endif
  !
  call mem_est("BS_mat")
  !
@@ -511,18 +464,6 @@ subroutine K_Haydock(iq,W)
      enddo
      if (use_cpl_scheme) deallocate(X_i)
    end subroutine
-   !
-   ! This is used only by the standard solver, not by the fast, nor in TDA
-   function fdot_product(v,w)
-     !
-     real(SP)    ::fdot_product
-     complex(SP) ::v(2*BS_K_dim),w(2*BS_K_dim)
-     !
-     fdot_product = real(&
-&                   dot_product(v(1:BS_K_dim),w(1:BS_K_dim))&
-&                  -dot_product(v(BS_K_dim+1:2*BS_K_dim),w(BS_K_dim+1:2*BS_K_dim)))
-     !
-   end function fdot_product
    !
    function terminator(x,c1,c2,which)
      !

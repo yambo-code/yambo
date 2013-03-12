@@ -22,6 +22,7 @@
 subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,N_f,N_m)
  !
  use pars,          ONLY:SP
+ use com,           ONLY:error
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
  !
  implicit none
@@ -70,6 +71,8 @@ subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,N_f,N_m)
  !
  E%nbf=minval(N_f_)
  E%Nbm=maxval(N_m_)
+ !
+ if (E%Nbm+1 > E%nb) call error(' Too few states. Include more states in the DFT run.')
  !
  ! E%Efermi(1) = Fermi Level
  ! E%Efermi(2) = VB max (with resepect to Efermi(1) )

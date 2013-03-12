@@ -240,7 +240,6 @@ module real_time
  integer                  :: RT_IO_steps 
  integer                  :: RT_IO_steps_DB 
  real(SP)                 :: RT_IO_time 
- integer,  allocatable    :: kpoints_map(:,:)
  real(SP), allocatable    :: J_and_P_cache(:,:)
  !
  ! Interface

@@ -31,8 +31,7 @@ subroutine K_Haydock(iq,W)
  use BS,             ONLY:BSS_n_descs,BS_K_dim,BS_mat,Haydock_treshold,&
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
 &                         BS_DB_is_fragmented, BS_eh_f,ioBSS_Haydock,&
-&                         BS_K_Coupling,Haydock_terminator,&
-&                         K_BSmat_by_V
+&                         BS_K_Coupling,Haydock_terminator,K_BSmat_by_V
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
  use electrons,      ONLY:spin_occ

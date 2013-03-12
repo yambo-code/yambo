@@ -60,7 +60,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  !Work Space
  !
- integer, external :: ig_index
+ integer, external :: G_index
  !
  integer :: io_db,io_err,ioQINDX
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikbz,iqs
@@ -231,8 +231,8 @@ subroutine bz_samp_indexes(k,Xk,q)
      v1=Xk%ptbz(i1,:)-Xk%ptbz(i2,:)-q%ptbz(i3,:) 
      call c2a(v_in=v1,mode='ka2i')
      !
-     if (iqs==1) qindx_X(iqibz,i1,2)=ig_index(v1)
-     if (bse_scattering) qindx_B(i1,i2,2)=ig_index(v1)
+     if (iqs==1) qindx_X(iqibz,i1,2)=G_index(v1)
+     if (bse_scattering) qindx_B(i1,i2,2)=G_index(v1)
      !     
    enddo
    !
@@ -266,7 +266,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      qindx_S(i1,iqbz,1)=i2
      v1=k%ptbz(ikbz,:)-k%ptbz(i2,:)-q%ptbz(iqbz,:)
      call c2a(v_in=v1,mode='ka2i')
-     qindx_S(i1,iqbz,2)=ig_index(v1)
+     qindx_S(i1,iqbz,2)=G_index(v1)
    enddo 
    !
    if (any(qindx_S(i1,:,:)==0)) call error('Null transition detected [qindx_S]')

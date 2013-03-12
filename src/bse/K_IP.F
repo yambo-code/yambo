@@ -34,7 +34,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
 &                        DIP_q_dot_iR,X_duplicate,X_drude_term,X_alloc
  use BS,            ONLY:BS_columns,BS_identifier,BS_blk_dim,BS_k_and_row_restart,   &
 &                        BSS_rhoq0,BS_eh_f,BS_eh_E,BS_eh_table,BSS_Vnl_included,     &
-&                        BS_bands,BS_eh_W,BS_IP_antires,BS_drude_f_eh,BS_K_coupling, &
+&                        BS_bands,BS_eh_W,BS_anti_res,BS_drude_f_eh,BS_K_coupling, &
 &                        BS_K_dim,BSS_n_freqs,BSS_q0,BS_res_K_corr,O_n_c_states,     &
 &                        O_n_v_states
 #if defined _KERR
@@ -113,7 +113,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  call Drude(1,(/1,BSS_n_freqs/),Ken,Xk,W_bss,X_static,drude_GreenF)
  !
  X_oscillators%ib=BS_bands
- if (BS_K_coupling.or.allocated(BS_eh_W).or.BS_IP_antires) then
+ if (BS_K_coupling.or.allocated(BS_eh_W)) then
    allocate(BSS_rhoq0(2*BS_K_dim)) 
    call mem_est("BSS_rhoq0",(/2*BS_K_dim/))
  else
@@ -145,18 +145,18 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
      ! minus comes from the occupation factor 
      !
 #if defined _KERR
-     if (BS_K_coupling.or.BS_IP_antires) then
+     if (BS_K_coupling) then
        if(trim(global_gauge)=='length')   BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
        if(trim(global_gauge)=='velocity') BSS_rhoq0(BS_K_dim+i1)=DIP_P_symm(1,ic,iv,ik,i_sp)
      endif
 #else
-     if (BS_K_coupling.or.BS_IP_antires) BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
+     if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
 #endif
      !
      X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*BS_eh_f(i1)/&
 &                                  (W_bss%p(:)-BS_eh_E(i1))
      !
-     if (BS_K_coupling.or.BS_IP_antires) then
+     if (BS_anti_res) then
        !
        ! Note the plus in "+BSS_rhoq0" coming from the BS_eh_f change of sign
        !

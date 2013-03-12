@@ -105,38 +105,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call parser('ALLGexx',l_USE_all_Gexx)
  !
- ! GPL_EXCLUDE_START
- !
- if (l_bs_fxc)      call section('*','Bethe-Salpeter Kernel -> xc-kernel')
- !
- ! GPL_EXCLUDE_END
- !
- ! Setups
- !
- if (BS_columns<=0.or.BS_columns>Xk%nibz) BS_columns=Xk%nibz
- BS_k_and_row_restart=0
  BS_exchange_done=.FALSE.
  l_half_Ox  =(BS_columns==1.and..not.l_bs_fxc) ! if .TRUE., gamma point case, it allocates only O1x_small
  !
- ! Dimensions and Tables
- ! 
- allocate(BS_blk_dim(Xk%nibz))
- !
- call mem_est("BS_blk_dim",(/Xk%nbz/),(/IP/))
- if (BS_res_K_corr) then
-   !
-   allocate(O_n_c_states(Xk%nbz,n_sp_pol),O_n_v_states(Xk%nbz,n_sp_pol))
-   call mem_est("O_n_c_states O_n_v_states",&
-&               (/Xk%nbz,n_sp_pol,Xk%nbz,n_sp_pol/),(/IP,IP,IP,IP/)) !to check 
-   !
- endif
- !
- call K_eh_setup(iq,Ken,Xk)
- if (any(BS_blk_dim==0)) then
-   call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
- endif
- !
  ! GPL_EXCLUDE_START
+ !
+ if (l_bs_fxc)      call section('*','Bethe-Salpeter Kernel -> xc-kernel')
  !
  ! BS/FXC DB
  !

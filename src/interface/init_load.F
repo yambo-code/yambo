@@ -169,7 +169,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`)',BS_res_mode)
  call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`)',BS_cpl_mode)
- call it('f',defs,'BSIPAres','[BS] anti-resonant term in the IP part')
+ call it('f',defs,'BSAres', '[BS] anti-resonant term in the epsilon')
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,E_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,E_unit)

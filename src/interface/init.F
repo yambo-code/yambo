@@ -491,7 +491,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _KERR
    if(l_kerr) call initactivate(1,'EvalKerr AnHall')
 #endif
-   if(l_rpa_IP) call initactivate(1,'BSIPAres')
    if(.not.l_rpa_IP) call initactivate(1,'BSresKmod BScplKmod BSENGexx ALLGexx')
    if (l_alda_fxc)   call initactivate(1,'FxcGRLc')
    if (l_lrc_fxc)    call initactivate(1,'LRC_alpha LRC_beta')
@@ -500,7 +499,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call initactivate(1,'ShiftedPath')
    call initactivate(1,'DrudeW')
-   call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind BSEClmns')
+   call initactivate(1,'BSAres BSEQptR BSEBands BSEEhEny BSehWind BSEClmns')
    !
    ! BSE + TDDFT = no BS db, Fxc + LF on-fly
    ! Special case: The BSE equation is used to build up the BSE_Fxc kernel.

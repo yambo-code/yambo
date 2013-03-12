@@ -30,7 +30,7 @@ subroutine K_kerr_IP(w)
  use KERR,           ONLY:BSS_rhoq0_kerr,DIP_q_dot_iR_kerr,DIP_P_symm,B_Hall
  use fields,         ONLY:global_gauge
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,BS_eh_table,&
-&                         BS_eh_E,BS_eh_W,BS_K_coupling,BS_IP_antires
+&                         BS_eh_E,BS_eh_W,BS_K_coupling,BS_anti_res
  use electrons,      ONLY:spin_occ,spin
  use R_lattice,      ONLY:d3k_factor,q_norm
  use drivers,        ONLY:l_anomalous_Hall
@@ -45,7 +45,7 @@ subroutine K_kerr_IP(w)
  !
  integer           ::ik,iv,ic,i1,i_sp
  !
- if (BS_K_coupling.or.allocated(BS_eh_W).or.BS_IP_antires) then
+ if (BS_K_coupling.or.allocated(BS_eh_W)) then
    allocate(BSS_rhoq0_kerr(2*BS_K_dim)) 
    call mem_est("BSS_rhoq0_kerr",(/2*BS_K_dim/))
  else
@@ -68,7 +68,7 @@ subroutine K_kerr_IP(w)
    if(trim(global_gauge)=='length') BSS_rhoq0_kerr(i1)=-conjg(DIP_q_dot_iR_kerr(ic,iv,ik,i_sp))
    if(trim(global_gauge)=='velocity') BSS_rhoq0_kerr(i1)= conjg(DIP_P_symm(2,ic,iv,ik,i_sp))
    !
-   if (BS_K_coupling.or.BS_IP_antires) then
+   if (BS_K_coupling) then
      if(trim(global_gauge)=='length') BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_q_dot_iR_kerr(ic,iv,ik,i_sp)
      if(trim(global_gauge)=='velocity') BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_P_symm(2,ic,iv,ik,i_sp)
    endif
@@ -78,9 +78,9 @@ subroutine K_kerr_IP(w)
 &                                (w(:)-BS_eh_E(i1))
    if (l_anomalous_Hall) then
      if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)
-     if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)/BS_eh_E(i1)**2
+     if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)/real(BS_eh_E(i1))**2
    endif
-   if (BS_K_coupling.or.BS_IP_antires) then
+   if (BS_anti_res) then
      X_epsilon(6,:)=X_epsilon(6,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0_kerr(i1)*BS_eh_f(i1)/&
 &                                (w(:)+BS_eh_E(i1))
    endif
@@ -96,7 +96,7 @@ subroutine K_kerr_IP(w)
  if(trim(global_gauge)=='length')   X_epsilon(6,:)= X_epsilon(6,:)*factor/q_norm(1)**2
  if(trim(global_gauge)=='velocity') X_epsilon(6,:)= X_epsilon(6,:)*factor/(real(w(:))**2+epsilon(1.))
  !
- if (BS_K_coupling.or.BS_IP_antires) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
+ if (BS_anti_res) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
  if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)*factor/q_norm(1)**2
  if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)*factor

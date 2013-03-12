@@ -29,11 +29,12 @@ subroutine K_diagonalization(iq,W)
  use X_m,            ONLY:X_epsilon,X_drude_term
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,&
 &                         BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
-&                         BS_eh_W,K_BSmat_by_V,BS_eh_E
+&                         BS_eh_W,K_BSmat_by_V,BS_eh_E,BS_anti_res
 #if defined _KERR
  use KERR,           ONLY:BSS_rhoq0_kerr,iw_ref,B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
  use units,          ONLY:DEG2RAD
+ use BS,             ONLY:BSS_n_freqs
 #endif
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
@@ -56,16 +57,17 @@ subroutine K_diagonalization(iq,W)
  ! Work Space
  !
  type(pp_indexes)     ::px
- integer              ::i1,lib_driver,BS_H_dim
+ integer              ::i1,iw,lib_driver,BS_H_dim
  logical              ::K_is_not_hermitian
+ real(SP)             ::gauge_factor,Co
  !
  ! Residuals & Energies
  !
+ complex(SP), allocatable ::BS_E(:)
  complex(SP), allocatable ::BS_R(:) 
 #if defined _KERR
  complex(SP), allocatable ::BS_R_kerr(:) 
 #endif
- complex(SP), allocatable ::BS_E(:)
  !
  ! Resonant K
  !
@@ -73,6 +75,7 @@ subroutine K_diagonalization(iq,W)
  !
  ! Coupling
  !
+ complex(SP), allocatable ::BS_overlap(:,:)
  complex(SP), allocatable ::BS_V_left(:,:)
  complex(SP), allocatable ::BS_V_right(:,:)
  complex(SP), allocatable ::BS_R_left(:)
@@ -80,7 +83,6 @@ subroutine K_diagonalization(iq,W)
 #if defined _KERR
  complex(SP), allocatable ::BS_R_right_kerr(:)
 #endif
- complex(SP), allocatable ::BS_overlap(:,:)
  !
  ! I/O
  !
@@ -88,7 +90,7 @@ subroutine K_diagonalization(iq,W)
  integer, external    ::ioBSS_diago
  !
 #if defined _KERR
- real(SP)             :: factor,factor_jj
+ real(SP)             :: factor_jj
 #endif
  !  
  ! Sectioning
@@ -383,34 +385,37 @@ subroutine K_diagonalization(iq,W)
  do i1=1,BS_H_dim
    if (.not.px%element_1D(i1)) cycle
    !
-   ! Note the use of a causal expression here needed to avoid any
-   ! distinction between the resonant and antiresonant e/h Green's
-   ! functions.
+   gauge_factor=1._SP
+#if defined _SC || defined _KERR
+   if (trim(global_gauge)=='velocity') gauge_factor=BS_E(i1)
+   if (     K_is_not_hermitian) gauge_factor=     gauge_factor **2._SP
+   if (.not.K_is_not_hermitian) gauge_factor=real(gauge_factor)**2._SP
+#endif
+#if defined _KERR
+   if (l_kerr.and.l_anomalous_Hall) then
+     if (     K_is_not_hermitian) B_Hall(2)=B_Hall(2)+BS_R_kerr(i1)/gauge_factor
+     if (.not.K_is_not_hermitian) then
+       B_Hall(2)=B_Hall(2)+conjg(BS_R(i1))*BS_R_kerr(i1)/gauge_factor
+       if(BS_anti_res) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
+     endif
+     gauge_factor=1._SP
+   endif
+#endif
    !
-#if defined _SC
-   if (trim(global_gauge)=='velocity') then
-     if (K_is_not_hermitian)      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))/BS_E(i1)**2.
-     if (.not.K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))/real(BS_E(i1))**2.
-  else
-#endif
-    if (K_is_not_hermitian)      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))
-    if (.not.K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))
-#if defined _SC
-  endif
-#endif
+   ! Note the use of a causal expression here needed to avoid any
+   ! distinction between the resonant and antiresonant e/h Green's functions.
+   if (     K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))/gauge_factor
+   if (.not.K_is_not_hermitian) then
+     X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))/gauge_factor
+     if(BS_anti_res) X_epsilon(2,:)=X_epsilon(2,:)+BS_R(i1)*conjg(BS_R(i1))/(W%p(:)+BS_E(i1))/gauge_factor
+   endif
    !
 #if defined _KERR
    if(l_kerr) then
-     if (K_is_not_hermitian)      X_epsilon(5,:)=X_epsilon(5,:)-BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
-     if (.not.K_is_not_hermitian) X_epsilon(5,:)=X_epsilon(5,:)-conjg(BS_R(i1))*BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
-     if (l_anomalous_Hall) then
-       if(trim(global_gauge)=='length') then
-         if (K_is_not_hermitian)      B_Hall(2)=B_Hall(2)+BS_R_kerr(i1)
-         if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)+conjg(BS_R(i1))*BS_R_kerr(i1)
-       else if(trim(global_gauge)=='velocity') then
-         if (K_is_not_hermitian)      B_Hall(2)=B_Hall(2)+BS_R_kerr(i1)/BS_E(i1)**2
-         if (.not.K_is_not_hermitian) B_Hall(2)=B_Hall(2)+conjg(BS_R(i1))*BS_R_kerr(i1)/real(BS_E(i1))**2
-       endif
+     if (     K_is_not_hermitian) X_epsilon(5,:)=X_epsilon(5,:)-BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
+     if (.not.K_is_not_hermitian) then
+       X_epsilon(5,:)=X_epsilon(5,:)-conjg(BS_R(i1))*BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
+       if(BS_anti_res) X_epsilon(5,:)=X_epsilon(5,:)+BS_R(i1)*conjg(BS_R_kerr(i1))/(W%p(:)+BS_E(i1))
      endif
    endif
 #endif
@@ -423,31 +428,28 @@ subroutine K_diagonalization(iq,W)
  call pp_redux_wait(B_Hall)
 #endif
  !
+ Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2
+ !
 #if defined _KERR
  !
- factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
+ if(trim(global_gauge)=='length')   factor_jj=0._SP
  if(trim(global_gauge)=='velocity') factor_jj=X_epsilon(3,iw_ref)
  !
- if(trim(global_gauge)=='length')   X_epsilon(2,:)=1.+X_epsilon(2,:)*factor/q_norm(1)**2
- if(trim(global_gauge)=='velocity') X_epsilon(2,:)=1.+(X_epsilon(2,:)-factor_jj)*factor/(real(W%p(:))**2+epsilon(1.))
- ! Drude
- X_epsilon(2,:)=X_epsilon(2,:)+X_drude_term(:)*factor/q_norm(1)**2
+ if(l_anomalous_Hall) B_Hall(2)=B_Hall(2)*Co
  !
- if(l_kerr) then
-   if(trim(global_gauge)=='length')   X_epsilon(5,:)=X_epsilon(5,:)*factor/q_norm(1)**2
-   if(trim(global_gauge)=='velocity') X_epsilon(5,:)=X_epsilon(5,:)*factor/(real(W%p(:))**2+epsilon(1.))
-   !
-   if(trim(global_gauge)=='length')   B_Hall(2)=B_Hall(2)*factor/q_norm(1)**2
-   if(trim(global_gauge)=='velocity') B_Hall(2)=B_Hall(2)*factor
-   !
-   ! I add the term describing the Anomalous Hall effect which is
-   ! missing in the length gauge (this should be zero for systems with a gap)
-   if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(5,:)=X_epsilon(5,:)+B_Hall(2)/W%p(:)
-   !
- endif
+ gauge_factor=1._SP
+ do iw=1,BSS_n_freqs
+   if(trim(global_gauge)=='velocity')  gauge_factor=(real(W%p(iw))**2+epsilon(1.))*q_norm(1)**2
+   X_epsilon(2,iw)=1.+(X_epsilon(2,iw)-factor_jj+X_drude_term(iw))*Co*gauge_factor
+   if(l_kerr) X_epsilon(5,iw)=X_epsilon(5,iw)*Co*gauge_factor
+ enddo
+ !
+ ! I add the term describing the Anomalous Hall effect which is
+ ! missing in the length gauge (this should be zero for systems with a gap)
+ if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(5,:)=X_epsilon(5,:)+B_Hall(2)/W%p(:)
+ !
 #else
- X_epsilon(2,:)=1.+X_epsilon(2,:)*&
-&                  real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
+ X_epsilon(2,:)=1.+X_epsilon(2,:)*Co
 #endif
  !
  X_epsilon(1,:)=W%p(:)

@@ -51,7 +51,7 @@ CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_magnetic yambo_rt yambo_distributed \
            ypp_rt ypp_ph ypp_sc ypp_magnetic ypp_test_2
 BROKEN   = yambo_manyk
-DEBUG    = yambo_test_1 yambo_test_2
+DEBUG    = yambo_test_2
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
 INTERFCS = a2y p2y e2y c2y
 #
@@ -91,7 +91,7 @@ libs:
 	@if test "$(do_local)" = yes ; then LIBS2DO="local" ; \
 	DIR2GO="lib" ; $(mklib); fi
 yambo: libs
-	@LIBS2DO="$(MAIN_LIBS)" ; ADF="-D_TEST_1"; $(mksrc)
+	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
 #
 # PROJECTS #
@@ -135,9 +135,6 @@ yambo_manyk: libs
 #
 # DEBUG #
 #
-yambo_test_1: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_TEST_1"; $(mksrc)
-	@X2DO="yambo_test_1"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_TEST_1";$(mkx)
 yambo_test_2: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_TEST_2"; $(mksrc)
 	@X2DO="yambo_test_2"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_TEST_2";$(mkx)
@@ -154,7 +151,7 @@ interfaces: libs
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
 	XLIBS="$(2YLIBS)" ; $(mkx) ; fi
 ypp: libs
-	@LIBS2DO="$(YPPLIBS)" ; ADF="-D_TEST_1"; $(mksrc)
+	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
 #
 clean: clean_fast

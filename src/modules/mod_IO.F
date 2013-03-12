@@ -288,25 +288,6 @@ module IO_m
          !
 #if defined _NETCDF_IO && defined _64BIT_OFFSET
          !
-         ! List of (some) character patterns
-         !
-         ! BS_Q
-         ! BS_FXC_Q
-         ! BS_diago_Q
-         ! Haydock_restart
-         ! BS_invert_Q
-         ! cutoff
-         ! COLLISIONS
-         ! db1
-         ! dipoles
-         ! elph
-         ! RIM
-         ! gops
-         ! HF_and_locXC
-         ! kindx
-         ! scE/scWF/scV
-         ! wf
-         !
          if (any((/index(desc,'BS_Q')/=0,index(desc,'BS_diago')/=0,&
 &                  index(desc,'db1')/=0,index(desc,'dipoles')/=0, & 
 &                  index(desc,'elph')/=0,index(desc,'gops')/=0, & 

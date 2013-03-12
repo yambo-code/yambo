@@ -29,8 +29,8 @@ subroutine RT_CCA_initialize(E)
  use drivers,        ONLY:l_ph_corr
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:nkibz,nqbz
- use par_proc_m,     ONLY:pp_indexes,pp_indexes_reset,myid,pp_redux_wait
- use par_indexes_m,  ONLY:par_indexes
+ use parallel_m,     ONLY:PP_indexes,PP_indexes_reset,myid,PP_redux_wait
+ use interfaces,     ONLY:PARALLEL_index
  use timing,         ONLY:live_timing
  use electrons,      ONLY:levels
  use IO_m,           ONLY:OP_WR_CL,OP_RD_CL,io_control,REP,VERIFY
@@ -44,7 +44,7 @@ subroutine RT_CCA_initialize(E)
  real(SP):: Gr_T_step,GAMMA_(2),WIDTH(4,2),E_vb_max,E_cb_min,&
 &           Gr_energies(((SC_bands(2)-SC_bands(1))*nkibz)**2,2),E_(2),E_center,&
 &           Gr_integrand(Gr_T_steps),pre_factor
- type(pp_indexes)    :: px
+ type(PP_indexes)    :: px
  integer,allocatable :: Gr_local_indexes(:,:)
  integer,    external:: io_G_retarded
  real(SP),   external:: Laplace_transform
@@ -128,8 +128,8 @@ subroutine RT_CCA_initialize(E)
  ! Gr (e-p)
  !==========
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/Gr_mat_dim/))
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/Gr_mat_dim/))
  !
  call live_timing('G retarded integrals (e-p)',px%n_of_elements(myid+1))
  !
@@ -204,7 +204,7 @@ subroutine RT_CCA_initialize(E)
  call live_timing()
  do i1=1,Gr_mat_dim
    do i_q=1,nqbz
-     call pp_redux_wait(Gr_ep_matrix(:,i_q,:,:))
+     call PP_redux_wait(Gr_ep_matrix(:,i_q,:,:))
    enddo
  enddo
  !
@@ -213,8 +213,8 @@ subroutine RT_CCA_initialize(E)
  !
  n_blocks=(Gr_mat_dim*Gr_mat_dim-Gr_mat_dim)/2+Gr_mat_dim
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/n_blocks/))
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/n_blocks/))
  !
  call live_timing('G retarded integrals (e-e)',px%n_of_elements(myid+1))
  !
@@ -297,7 +297,7 @@ subroutine RT_CCA_initialize(E)
  call live_timing()
  !
  do i1=1,Gr_mat_dim
-   call pp_redux_wait(Gr_ee_matrix(:,i1))
+   call PP_redux_wait(Gr_ee_matrix(:,i1))
  enddo
  do i1=1,Gr_mat_dim
    do i2=1,i1

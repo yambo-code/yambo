@@ -30,7 +30,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use pars,                ONLY : SP,lchlen,DP
  use memory_m,            ONLY : mem_est
  use com,                 ONLY : msg,write_to_report,core_io_path,error,write_the_logo
- use par_proc_m,          ONLY : ncpu,myid,p_finalize,pwait
+ use parallel_m,          ONLY : ncpu,myid,MPI_close,pwait
  use electrons,           ONLY : levels,E_reset,n_bands, n_spin
  use R_lattice,           ONLY : bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY : wf_ncx,ioWF, wf_nb_io_groups,wf_nb_io
@@ -115,7 +115,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (force_noWFs) then 
    call msg('ln','done ==')
-   call p_finalize
+   call MPI_close
    return
  else
    call msg('l','done ==')
@@ -198,7 +198,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call msg('s' ,' ')
  call msg('ln',' == P2Y completed ==')
  !
- call p_finalize
+ call MPI_close
  !
  end function p2y_i
 

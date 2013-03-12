@@ -27,7 +27,7 @@ subroutine IO_Setup(en,k)
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,IO_write,Fragmented_IO
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use par_proc_m,     ONLY:n_nodes,ncpu,check_for_a_redundant_IO,pp_redux_wait,myid,&
+ use parallel_m,     ONLY:n_nodes,ncpu,check_for_a_redundant_IO,PP_redux_wait,myid,&
 &                         local_master_cpu,master_cpu
  use WF_distribute,  ONLY:Distributed_Memory
  implicit none
@@ -53,7 +53,7 @@ subroutine IO_Setup(en,k)
  if (ncpu>1.and.more_IO_path/=core_IO_path) then
    !
    call check_for_a_redundant_IO(trim(more_IO_path),cpu_seen_by_me,cpu_seen_by_any)
-   call pp_redux_wait()
+   call PP_redux_wait()
    n_cpu_per_node=cpu_seen_by_any(1)
    !
    if (.not.all(cpu_seen_by_any==n_cpu_per_node)) then

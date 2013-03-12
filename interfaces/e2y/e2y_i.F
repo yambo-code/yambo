@@ -25,7 +25,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use pars,                only : SP,lchlen
  use LOGO,                only : pickup_a_random
  use com,                 only : msg,write_to_report,core_io_path, file_exists,write_the_logo
- use par_proc_m,          only : ncpu,myid,p_finalize
+ use parallel_m,          only : ncpu,myid,MPI_close
  use electrons,           only : levels,E_reset,n_bands,n_spin
  use D_lattice,           only : n_atoms_species_max
  use pseudo,              only : PP_alloc, PP_free
@@ -94,7 +94,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call msg('s','ETSF format file set to ',trim(ETSF_file_name))
  if(.not.file_exists(ETSF_file_name)) then
    call msg('ln','File not found! Specify -F filename.')
-   call p_finalize
+   call MPI_close
    return
  endif
  !
@@ -117,7 +117,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (force_noWFs) then
    call msg('ln','done ==')
-   call p_finalize
+   call MPI_close
    return
  else
    call msg('l','done ==')
@@ -164,7 +164,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Close file
  !
  call etsf_io_low_close(ncid, lstat, error_data = error_data)
- call p_finalize
+ call MPI_close
  !
 end function
 

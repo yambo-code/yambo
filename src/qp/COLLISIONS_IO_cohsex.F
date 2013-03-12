@@ -29,8 +29,8 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  use electrons,     ONLY:levels,spin_occ,spin
  use timing,        ONLY:live_timing
  use com,           ONLY:error
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END
@@ -61,7 +61,7 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0
  complex(SP), allocatable ::EM1s(:,:)
  type(ggwinfo)            ::isc,iscp
- type(pp_indexes)         ::px
+ type(PP_indexes)         ::px
  integer          ::io_err,ID
  integer, external::ioX
  character(schlen)::ch
@@ -71,7 +71,7 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  !
  call collision_reset(isc)
  call collision_reset(iscp)
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  ! Setup...
  !
@@ -122,9 +122,9 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
- call par_indexes(px,(/QP_n_states/))
+ call PARALLEL_index(px,(/QP_n_states/))
  !
- call pp_redux_wait
+ call PP_redux_wait
  !
  call live_timing("COHSEX collisions",px%n_of_elements(myid+1)) 
  !
@@ -280,6 +280,6 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  call WF_free()
  call collision_reset(isc)
  call collision_reset(iscp)
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
 end subroutine

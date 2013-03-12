@@ -24,7 +24,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use pars,                ONLY:SP,lchlen
  use LOGO,                ONLY:pickup_a_random
  use com,                 ONLY:msg,write_to_report,core_io_path,write_the_logo
- use par_proc_m,          ONLY:ncpu,myid,p_finalize
+ use parallel_m,          ONLY:ncpu,myid,MPI_close
  use electrons,           ONLY:levels,E_reset,n_spin
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,ioWF,wf_nb_io_groups,wf_nb_io
@@ -77,7 +77,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if ( c2y_file_name(inf,file_name_) < 0 ) then
    call msg('ln','failed')
-   call p_finalize
+   call MPI_close
    return
  endif
  call msg('l',trim(file_name_))
@@ -93,7 +93,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (force_noWFs) then
    call msg('ln','done ==')
-   call p_finalize
+   call MPI_close
    return
  else
    call msg('l','done ==')
@@ -125,6 +125,6 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call msg('ln','done ==')
  !
- call p_finalize
+ call MPI_close
  !
 end function

@@ -27,7 +27,7 @@ subroutine RT_ELPH_initialize(k,q)
 &                         l_ELPH_CCA_Kernel 
  use drivers,        ONLY:l_ph_corr
  use R_lattice,      ONLY:RL_vol,bz_samp
- use par_proc_m,     ONLY:myid
+ use parallel_m,     ONLY:myid
  use IO_m,           ONLY:io_control,OP_RD,REP,RD_CL_IF_END
  use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,W_debye
  use memory_m,       ONLY:mem_est

@@ -29,8 +29,8 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  use wave_func,     ONLY:wf_ng
  use com,           ONLY:msg,of_open_close
  use timing,        ONLY:live_timing
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  implicit none
  type(bz_samp):: q
  logical      :: cut_is_sphere,cut_is_box,cut_is_cyl,is_cut(3)
@@ -45,7 +45,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
 &           pl_xz_pt(n_dl_pts**2,3),v_xz(n_dl_pts**2,2),&
 &           dummy(3)
  integer :: iqibz,iqbz,ig,ir1,ir2,ip,ig_r,is
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  !
  ! CutOff Test
  !
@@ -55,7 +55,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  v_xy=0.
  v_yz=0.
  v_xz=0.
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  ! DL points along the 3 possible planes
  !
@@ -108,7 +108,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  !
  call k_ibz2bz(q,'i',.true.)
  !
- call par_indexes(px,(/n_dl_pts**2/))
+ call PARALLEL_index(px,(/n_dl_pts**2/))
  call live_timing('CutOff Test',px%n_of_elements(myid+1))
  !
  do ip=1,n_dl_pts**2
@@ -142,9 +142,9 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
    !
  enddo
  !
- call pp_redux_wait(v_xy(:,2))
- call pp_redux_wait(v_yz(:,2))
- call pp_redux_wait(v_xz(:,2))
+ call PP_redux_wait(v_xy(:,2))
+ call PP_redux_wait(v_yz(:,2))
+ call PP_redux_wait(v_xz(:,2))
  !
  call live_timing()
  call k_ibz2bz(q,'d',.false.)

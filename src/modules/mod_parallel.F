@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module par_proc_m
+module parallel_m
  !
  use pars,       ONLY:SP,DP
  implicit none
@@ -39,21 +39,21 @@ module par_proc_m
  !
  logical            :: local_master_cpu(max_n_of_cpus)
  !
- type pp_indexes 
+ type PP_indexes 
    logical, pointer :: element_1D(:)     => null()
    logical, pointer :: element_2D(:,:)   => null()
    integer, pointer :: n_of_elements(:)  => null()
    integer, pointer :: weight_1D(:)      => null()
    integer, pointer :: first_of_1D(:)    => null()
- end type pp_indexes
+ end type PP_indexes
  !
  integer, private :: local_type
  !
- interface pp_redux_wait
+ interface PP_redux_wait
    module procedure i1share,i18share,i2share,i3share,r0share,&
 &                   r1share,r2share,r3share,c0share,c1share,c2share,&
 &                   c3share,c4share,pwait
- end interface pp_redux_wait
+ end interface PP_redux_wait
  !
  interface pp_bcast
    module procedure c1bcast,c2bcast
@@ -109,8 +109,8 @@ module par_proc_m
      !
    end subroutine
    !
-   subroutine pp_indexes_reset(ip)
-     type(pp_indexes)::ip
+   subroutine PP_indexes_reset(ip)
+     type(PP_indexes)::ip
      if(associated(ip%element_1D))    deallocate(ip%element_1D)
      if(associated(ip%element_2D))    deallocate(ip%element_2D)
      if(associated(ip%weight_1D))     deallocate(ip%weight_1D)
@@ -119,7 +119,7 @@ module par_proc_m
      nullify(ip%element_1D,ip%element_2D,ip%n_of_elements,ip%weight_1D,ip%first_of_1D)
    end subroutine
    !
-   subroutine p_finalize
+   subroutine MPI_close
      implicit none
 #if defined _MPI
      integer :: ierr
@@ -487,4 +487,4 @@ module par_proc_m
 #endif
    end subroutine
    !
-end module par_proc_m
+end module parallel_m

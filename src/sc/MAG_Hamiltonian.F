@@ -76,8 +76,8 @@ subroutine MAG_Hamiltonian(initial_check_only)
  use SC,             ONLY:SC_bands,SC_potential
  use wave_func,      ONLY:wf,wf_state,wf_x,wf_y,wf_z,WF_load,WF_free,WF_derivative_free
  use timing,         ONLY:live_timing
- use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m,  ONLY:par_indexes
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,     ONLY:PARALLEL_index
  use vec_operate,    ONLY:v_norm
  implicit none
  !
@@ -85,7 +85,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !
  ! Parallelization indexes
  !
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  !
  ! Dummies
  !
@@ -220,9 +220,9 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !
  ! Parallel indexes
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/nkibz,SC_bands(2)/))
- call pp_redux_wait
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/nkibz,SC_bands(2)/))
+ call PP_redux_wait
  !==================================================
  !
  if (MAG_landau) then
@@ -287,12 +287,12 @@ subroutine MAG_Hamiltonian(initial_check_only)
    if(MAG_landau) call WF_derivative_free()
    call WF_free()
    !
-   call pp_redux_wait(Ho(:,:,ik,:))
+   call PP_redux_wait(Ho(:,:,ik,:))
    !
  enddo
  !
  call live_timing()
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  ! Clean Up
  !

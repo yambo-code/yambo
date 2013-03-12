@@ -34,8 +34,8 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
 &                          COLLISIONS_path,io_COLLISIONS,COLLISIONS_range,collisions_RANGES_setup,n_collisions
  use stderr,          ONLY:intc
  use IO_m,            ONLY:OP_RD_CL,io_control,VERIFY,REP
- use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset,myid
- use par_indexes_m,   ONLY:par_indexes
+ use parallel_m,      ONLY:PP_indexes,PP_indexes_reset,myid
+ use interfaces,      ONLY:PARALLEL_index
  use collisions_CACHE,ONLY:COLLISIONS_cache_size,last_QP_mem,cache_memory,CACHE
 #if defined _RT
  use real_time,       ONLY:RT_qp_px
@@ -59,7 +59,7 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  integer            :: i1,i2,i3,ic,i_qp,ID,n_tot_rho_states,io_err(max_V_kinds),V_kinds(max_V_kinds),n_V_kinds,&
 &                      max_COLLISION_cache,iv,QP_n_states_loaded
  real(SP)           :: mem_before_cache
- type(pp_indexes)   :: px
+ type(PP_indexes)   :: px
  character(schlen)  :: dump_ch 
  complex(SP), allocatable :: COLLISIONS_disk(:,:,:)
  !
@@ -110,12 +110,12 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  if (COLLISIONS_cache_size==0..or..not.l_collisions_IO) return
  !
 #if defined _RT
- call pp_indexes_reset(RT_qp_px)
- call par_indexes(RT_qp_px,(/QP_n_states/))
+ call PP_indexes_reset(RT_qp_px)
+ call PARALLEL_index(RT_qp_px,(/QP_n_states/))
  QP_n_states_loaded=RT_qp_px%n_of_elements(myid+1)
 #else
- call pp_indexes_reset(px)
- call par_indexes(px,(/QP_n_states/))
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/QP_n_states/))
  QP_n_states_loaded=px%n_of_elements(myid+1)
 #endif
  !
@@ -247,7 +247,7 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  if(last_QP_mem==QP_n_states) call collisions_IO_free()
  !
 #if !defined _RT
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
 #endif
  !
  write (dump_ch,'(a,f10.2,a)') '[COLLISIONS] QP in memory :',real(last_QP_mem)/real(QP_n_states)*100.0,'%'

@@ -40,7 +40,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_bss,l_bs_fxc,l_alda_fxc,l_td_hf
- use par_proc_m,     ONLY:pp_redux_wait
+ use parallel_m,     ONLY:PP_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
 #if defined _SC
@@ -202,7 +202,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
      Xen%E =Ken%E
    endif
    !
-   call pp_redux_wait
+   call PP_redux_wait
    X_tddft%iq=iq
    X_tddft%ng=BS_n_g_exch
    call O_driver(Xen,Xk,q,W_bss,X_tddft) 

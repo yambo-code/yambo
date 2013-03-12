@@ -29,8 +29,8 @@ subroutine COLLISIONS_IO_compose(G_input)
  use SC,               ONLY:SC_bands
  use global_XC,        ONLY:SC_HF,SC_COHSEX
  use collisions_IO,    ONLY:COLLISIONS_v,COLLISIONS_table,V_kind,io_COLLISIONS
- use par_proc_m,       ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset,myid
- use par_indexes_m,    ONLY:par_indexes
+ use parallel_m,       ONLY:PP_indexes,PP_redux_wait,PP_indexes_reset,myid
+ use interfaces,       ONLY:PARALLEL_index
  use IO_m,             ONLY:io_control,OP_RD_CL,NONE
  use collisions_CACHE, ONLY:last_QP_mem,CACHE
  !
@@ -42,14 +42,14 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  integer           :: i_qp,ib,ibp,ik,ic
  integer           :: io_err,ID       
- type(pp_indexes)  :: px
+ type(PP_indexes)  :: px
  complex(SP)       :: CHO_factor
  !
  if(.not.l_sc_hf.and..not.l_sc_cohsex.and..not.l_sc_exx) return
  !
- call pp_indexes_reset(px)   
+ call PP_indexes_reset(px)   
  !
- call par_indexes(px,(/QP_n_states/))
+ call PARALLEL_index(px,(/QP_n_states/))
  !
  if (.not.allocated(QP_Vnl_xc))  allocate(QP_Vnl_xc(QP_n_states))
  if(l_sc_hf.or.l_sc_cohsex.or.l_sc_exx.or.last_QP_mem/=0) QP_Vnl_xc=(0._SP,0._SP)
@@ -149,9 +149,9 @@ subroutine COLLISIONS_IO_compose(G_input)
  ! When the Cache is used all the QP correction are put together
  ! in QP_Vnl_xc
  ! 
- if(l_sc_hf.or.l_sc_exx.or.l_sc_cohsex.or.last_QP_mem/=0)   call pp_redux_wait(QP_Vnl_xc)
- if(l_sc_cohsex.or.l_sc_srpa)                               call pp_redux_wait(QP_Sc)
+ if(l_sc_hf.or.l_sc_exx.or.l_sc_cohsex.or.last_QP_mem/=0)   call PP_redux_wait(QP_Vnl_xc)
+ if(l_sc_cohsex.or.l_sc_srpa)                               call PP_redux_wait(QP_Sc)
  !
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
 end subroutine 

@@ -38,7 +38,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
  use com,            ONLY:msg,warning
  use X_m,            ONLY:X_t,current_iq
- use timing,         ONLY:live_time_msg
+ use timing,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use xc_functionals, ONLY:V_xc,E_xc
  use frequency,      ONLY:w_samp
@@ -418,13 +418,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 #endif
      !
      if (tty_size>0.or.it_now==1) then
-       call live_time_msg("n",dumb_ch,"","%s")
+       call LIVE_message("n",dumb_ch,"","%s")
      else
        if (local_V) then
-         if (tty_size>0) call live_time_msg("r",dumb_ch,"","%s")
-         if (tty_size<0) call live_time_msg("n",dumb_ch,"","%s")
+         if (tty_size>0) call LIVE_message("r",dumb_ch,"","%s")
+         if (tty_size<0) call LIVE_message("n",dumb_ch,"","%s")
        else
-         call live_time_msg("n",dumb_ch,"","%s")
+         call LIVE_message("n",dumb_ch,"","%s")
        endif
      endif
      !

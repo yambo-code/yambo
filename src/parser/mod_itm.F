@@ -751,7 +751,7 @@ module it_m
      use drivers,      ONLY: infile_editing
      use stderr,       ONLY: gen_fmt
      use com,          ONLY: report_file_fix,write_the_logo
-     use par_proc_m,   ONLY: master_cpu
+     use parallel_m,   ONLY: master_cpu
      type(initdefs)::defs
      integer       :: ou
      ! 

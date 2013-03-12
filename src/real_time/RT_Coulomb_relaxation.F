@@ -29,7 +29,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
 &                          Gr_ee_matrix,Gr_indexes
  use QP_m,            ONLY:QP_n_states,QP_table
  use collisions_CACHE,ONLY:CACHE
- use par_proc_m,      ONLY:pp_redux_wait
+ use parallel_m,      ONLY:PP_redux_wait
  !
  implicit none
  !
@@ -107,8 +107,8 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  ! All-to-All
  !============
  !
- call pp_redux_wait(E_E_Electron_lifetime(:,i_k))
- call pp_redux_wait(E_E_Hole_lifetime(:,i_k))
+ call PP_redux_wait(E_E_Electron_lifetime(:,i_k))
+ call PP_redux_wait(E_E_Hole_lifetime(:,i_k))
  !
  ! Kernel composition
  !====================

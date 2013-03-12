@@ -40,8 +40,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use SC,             ONLY:SC_bands,RT_occupations,SC_description,n_SC_descriptions
 #endif
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
- use par_indexes_m,  ONLY:par_indexes
- use par_proc_m,     ONLY:pp_indexes,myid,pp_redux_wait
+ use interfaces,     ONLY:PARALLEL_index
+ use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait
  implicit none
  !
  type(bz_samp) ::Xk
@@ -54,7 +54,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps,i_fp,io_ID,io_err,ik_rand,i1
  character(schlen)     :: ch_ws,titles(4)
  logical               :: l_TIME_plot,l_3D_plot,l_RIM
- type(pp_indexes)      :: px
+ type(PP_indexes)      :: px
  !
  integer,     external :: ioE_RIM,RT_occupations_check 
  !
@@ -163,7 +163,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    ! Parallel setup and live_timing
    !================================
    !
-   call par_indexes(px,(/dos_E_steps/))
+   call PARALLEL_index(px,(/dos_E_steps/))
    if (n_T_steps==1) call live_timing('DOS',px%n_of_elements(myid+1))
    if (n_T_steps> 1) call live_timing('DOS',n_T_steps,SERIAL=.true.)
    !
@@ -216,7 +216,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
        !
      enddo
      !
-     call pp_redux_wait(el_dos)
+     call PP_redux_wait(el_dos)
      !
      el_dos_max=max(el_dos_max,maxval(abs(el_dos)))
      !

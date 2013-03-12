@@ -27,10 +27,10 @@ integer function RT_phase_space(E)
  use real_time,      ONLY:RT_eh_energy_max,RT_k_px
  use SC,             ONLY:SC_bands
  use R_lattice,      ONLY:nkibz
- use par_indexes_m,  ONLY:par_indexes
+ use interfaces,     ONLY:PARALLEL_index
  use stderr,         ONLY:intc
  use com,            ONLY:warning
- use par_proc_m,     ONLY:pp_indexes_reset,pp_indexes
+ use parallel_m,     ONLY:PP_indexes_reset,PP_indexes
  !
  implicit none
  !
@@ -41,16 +41,16 @@ integer function RT_phase_space(E)
  integer           :: iv,ic,ib,ik,nk_todo,ik_todo,SC_bands_new(2)
  real(SP)          :: E_eh,f_eh
  logical           :: RT_b(SC_bands(2),nkibz),RT_k_point(nkibz)
- type(pp_indexes)  :: p_loc
+ type(PP_indexes)  :: p_loc
  !
  RT_b       =.FALSE.
  RT_k_point =.FALSE.
  !
  ! Pre-allocation of CPU tables
  !
- call pp_indexes_reset(RT_k_px)
+ call PP_indexes_reset(RT_k_px)
  !
- call par_indexes(RT_k_px,(/nkibz/))
+ call PARALLEL_index(RT_k_px,(/nkibz/))
  ! 
  if (RT_eh_energy_max<zero_dfl) then
    !
@@ -93,9 +93,9 @@ integer function RT_phase_space(E)
  !
  nk_todo=count(RT_k_point)
  !
- call pp_indexes_reset(p_loc)
+ call PP_indexes_reset(p_loc)
  !
- call par_indexes(p_loc,(/nk_todo/))
+ call PARALLEL_index(p_loc,(/nk_todo/))
  !
  ik_todo=0
  !
@@ -119,7 +119,7 @@ integer function RT_phase_space(E)
    !
  enddo
  !
- call pp_indexes_reset(p_loc)
+ call PP_indexes_reset(p_loc)
  !
  ! Redefine SC_bands ?
  !

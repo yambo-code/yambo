@@ -29,7 +29,7 @@ subroutine RT_databases_IO(E,it)
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL
  use electrons,      ONLY:levels
 #if defined _ELPH
- use par_proc_m,     ONLY:pp_redux_wait
+ use parallel_m,     ONLY:PP_redux_wait
  use real_time,      ONLY:THETA_matrix,l_ELPH_CCA_Kernel
 #endif
  !
@@ -86,7 +86,7 @@ subroutine RT_databases_IO(E,it)
        ! q-points that it will not evolve. At the next call of this routine
        ! therefore, values relative to different times will be wrongly merged.
        !
-       call pp_redux_wait(THETA_matrix(:,:,:,ik))
+       call PP_redux_wait(THETA_matrix(:,:,:,ik))
        !
        call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(7))
        io_THETA=io_SC_components('THETA' ,E,ID(7))

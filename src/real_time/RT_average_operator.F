@@ -29,8 +29,8 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:wf
  use wrapper,        ONLY:Vstar_dot_V
- use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
- use par_indexes_m,  ONLY:par_indexes
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
+ use interfaces,     ONLY:PARALLEL_index
  !
  implicit none
  !
@@ -47,7 +47,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
  !
  integer     :: i1,ik,SC_bands2
  complex(SP) :: Hk(SC_bands(2),SC_bands(2),n_sp_pol)
- type(pp_indexes) :: px
+ type(PP_indexes) :: px
  !
  SC_bands2=SC_nbands**2
  VALUE=(0._SP,0._SP)
@@ -69,8 +69,8 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
    !
  endif 
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/QP_nk/))
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/QP_nk/))
  !
  do ik=1,QP_nk
    ! 
@@ -87,8 +87,8 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
    !
  enddo
  !
- call pp_redux_wait(VALUE)
- call pp_indexes_reset(px)
+ call PP_redux_wait(VALUE)
+ call PP_indexes_reset(px)
  !
  contains 
    !

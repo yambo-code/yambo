@@ -42,8 +42,8 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  use QP_m,            ONLY:QP_ng_Sx
  use collision,       ONLY:ggwinfo,collision_reset 
  use memory_m,        ONLY:mem_est
- use par_proc_m,      ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m,   ONLY:par_indexes
+ use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,      ONLY:PARALLEL_index
  use wave_func,       ONLY:WF_load,wf,wf_state
  use timing,          ONLY:live_timing
  use stderr,          ONLY:intc
@@ -59,7 +59,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  ! Work space
  !
  type(ggwinfo)    ::isc
- type(pp_indexes) ::px
+ type(PP_indexes) ::px
  integer          ::iv1,iv2,ir,ig,i1,ikbz,ik,iq,ifft,offt,tr_syms,os,is,iGo,qs
  character(schlen)::ch
  logical          ::lostr, listr     
@@ -68,7 +68,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  ! Resets
  !
  call collision_reset(isc)
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
  allocate(isc%gamp(QP_ng_Sx,1),isc%rhotw(QP_ng_Sx),local_u(fft_size),u(fft_size),&
       &u_rs(fft_size),rhotw_rs(fft_size))
@@ -77,8 +77,8 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  isc%ngrho=QP_ng_Sx
  call scatterGamp(isc,'x')
  U_x=(0._SP,0._SP)
- call par_indexes(px,(/q%nbz,E%nbm/))
- call pp_redux_wait
+ call PARALLEL_index(px,(/q%nbz,E%nbm/))
+ call PP_redux_wait
  ch="Sigma_X|WF>@it"//trim(intc(it_now))
  call live_timing(trim(ch),px%n_of_elements(myid+1)*E%nbm*k%nibz)
  do iq=1,q%nbz
@@ -126,6 +126,6 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  call live_timing()
  deallocate(isc%gamp,isc%rhotw,local_u,u,u_rs,rhotw_rs)
  call collision_reset(isc)
- call pp_indexes_reset(px)
+ call PP_indexes_reset(px)
  !
 end subroutine OEP_ApplySigmaX

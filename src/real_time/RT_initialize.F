@@ -37,8 +37,8 @@ subroutine RT_initialize(E,k,q)
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
 &                         NE_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,            &
 &                         l_RT_skip_JandP_IO,RT_q_px,l_G_retarded_DB,Gr_kind,Gr_bands
- use par_indexes_m,  ONLY:par_indexes
- use par_proc_m,     ONLY:pp_indexes_reset
+ use interfaces,     ONLY:PARALLEL_index
+ use parallel_m,     ONLY:PP_indexes_reset
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp,nkibz
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
@@ -209,9 +209,9 @@ subroutine RT_initialize(E,k,q)
    ! Pre-allocation of CPU tables
    !==============================
    !
-   call pp_indexes_reset(RT_q_px)
+   call PP_indexes_reset(RT_q_px)
    !
-   call par_indexes(RT_q_px,(/q%nbz/))
+   call PARALLEL_index(RT_q_px,(/q%nbz/))
    !
  endif
  !

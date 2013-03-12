@@ -24,7 +24,7 @@ subroutine IO_and_Messaging_switch(what)
  use pars,           ONLY:schlen
  use IO_m,           ONLY:IO_write,IO_read,Fragmented_IO_save,Fragmented_IO
  use com,            ONLY:write_to_report
- use par_proc_m,     ONLY:local_master_cpu,myid,master_cpu
+ use parallel_m,     ONLY:local_master_cpu,myid,master_cpu
  use stderr,         ONLY:string_split,write_to_log
  use fragments,      ONLY:Parallel_Fragments,last_syncronized
  use timing,         ONLY:live_timing_is_on

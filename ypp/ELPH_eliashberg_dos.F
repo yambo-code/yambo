@@ -33,8 +33,8 @@ subroutine ELPH_eliashberg_dos(k,en,q)
 &                              E_k_plus_q,setup_k_plus_q_levels,elph_global_free
  use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use timing,              ONLY:live_timing
- use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid
- use par_indexes_m,       ONLY:par_indexes
+ use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid
+ use interfaces,          ONLY:PARALLEL_index
  use functions,           ONLY:Fermi_fnc_derivative
  use stderr,              ONLY:set_real_printed_length
  implicit none
@@ -48,7 +48,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
 &                    ph_dos(elph_steps),ph_energy(elph_steps),omega,e_step
  complex(SP)       ::d_elias_dos
  character(schlen) ::o_file_name,ch
- type(pp_indexes)  ::px
+ type(PP_indexes)  ::px
  real(SP), allocatable :: gamma(:,:)
  !
  !I/O
@@ -119,7 +119,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    gamma=0.
  endif
  !
- call par_indexes(px,(/nq_todo/))
+ call PARALLEL_index(px,(/nq_todo/))
  if (l_eliashberg.and..not.l_dos) call live_timing('Eliashberg',px%n_of_elements(myid+1))
  if (.not.l_eliashberg.and.l_dos) call live_timing('ph DOS',px%n_of_elements(myid+1))
  if (l_dos.and.l_eliashberg)      call live_timing('Eliashberg & DOS',px%n_of_elements(myid+1))
@@ -180,10 +180,10 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !
  call live_timing()
  if (l_eliashberg) then
-   call pp_redux_wait(gamma)
-   call pp_redux_wait(aF)
+   call PP_redux_wait(gamma)
+   call PP_redux_wait(aF)
  endif
- if (l_dos) call pp_redux_wait(ph_dos)
+ if (l_dos) call PP_redux_wait(ph_dos)
  !
  ! Output file
  !

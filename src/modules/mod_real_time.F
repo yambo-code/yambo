@@ -23,7 +23,7 @@ module real_time
  !
  use SC,         ONLY:G_lesser,SC_R
  use pars,       ONLY:DP,SP,schlen
- use par_proc_m, ONLY:pp_indexes
+ use parallel_m, ONLY:PP_indexes
  !
  implicit none
  !
@@ -110,7 +110,7 @@ module real_time
  ! ... Window on the k-points/bands allowed to follow the dynamics ...
  !
  real(SP)             :: RT_eh_energy_max
- type(pp_indexes),SAVE:: RT_k_px
+ type(PP_indexes),SAVE:: RT_k_px
  !
  ! Macroscopic induced current ... 
  !--------------------------------
@@ -149,7 +149,7 @@ module real_time
  ! ... THETA matrix
  complex(SP), allocatable :: THETA_matrix(:,:,:,:)
  ! ... Q-parallelization  and GKKP
- type(pp_indexes),   SAVE :: RT_q_px
+ type(PP_indexes),   SAVE :: RT_q_px
  complex(SP), allocatable :: elph_gkkp_expanded(:,:,:,:)
  ! ... indexes ...
  integer,     allocatable :: THETA_matrix_index(:,:,:)
@@ -165,7 +165,7 @@ module real_time
  !
  ! Coulomb scattering kernel...
  !----------------------------
- type(pp_indexes),   SAVE :: RT_qp_px
+ type(PP_indexes),   SAVE :: RT_qp_px
  real(SP),    allocatable :: E_E_Hole_lifetime(:,:)
  real(SP),    allocatable :: E_E_Electron_lifetime(:,:)
  !
@@ -416,7 +416,7 @@ module real_time
      use memory_m,       ONLY:mem_est
      use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
-     use par_proc_m,     ONLY:pp_indexes_reset
+     use parallel_m,     ONLY:PP_indexes_reset
      !
      call SC_free()
      !
@@ -526,9 +526,9 @@ module real_time
        call mem_est("Gr_indexes G_matrix")
      endif
      !
-     call pp_indexes_reset(RT_k_px) 
-     call pp_indexes_reset(RT_q_px) 
-     call pp_indexes_reset(RT_qp_px) 
+     call PP_indexes_reset(RT_k_px) 
+     call PP_indexes_reset(RT_q_px) 
+     call PP_indexes_reset(RT_qp_px) 
      !
    end subroutine RT_free
    !

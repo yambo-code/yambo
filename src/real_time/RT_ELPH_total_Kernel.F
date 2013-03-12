@@ -45,7 +45,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,G_lesser,MEM_index
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
- use par_proc_m,     ONLY:pp_redux_wait
+ use parallel_m,     ONLY:PP_redux_wait
  !
  implicit none
  !
@@ -171,10 +171,10 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  ! All-to-All
  !============
  !
- call pp_redux_wait(S_mat_sum(:,:))
- call pp_redux_wait(E_P_Electron_lifetime(:,ik))
- call pp_redux_wait(E_P_Hole_lifetime(:,ik))
- call pp_redux_wait(E_P_Phonon_lifetime(:,ik))
+ call PP_redux_wait(S_mat_sum(:,:))
+ call PP_redux_wait(E_P_Electron_lifetime(:,ik))
+ call PP_redux_wait(E_P_Hole_lifetime(:,ik))
+ call PP_redux_wait(E_P_Phonon_lifetime(:,ik))
  !
  do i_n=SC_bands(1),SC_bands(2)
    do i_np=SC_bands(1),SC_bands(2)

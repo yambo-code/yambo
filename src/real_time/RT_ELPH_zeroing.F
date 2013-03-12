@@ -32,7 +32,7 @@ subroutine RT_ELPH_zeroing()
  use R_lattice,      ONLY:nqbz
  use real_time,      ONLY:THETA_matrix,THETA_matrix_index,RT_q_px
  use ELPH,           ONLY:ph_modes
- use par_proc_m,     ONLY:ncpu
+ use parallel_m,     ONLY:ncpu
  implicit none
  !
  ! Work Space

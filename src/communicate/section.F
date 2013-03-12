@@ -31,7 +31,7 @@ subroutine section(mode,name)
  use stderr,     ONLY:string_pack
  use timing,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&
 &                     date_and_time_string
- use par_proc_m, ONLY:pp_redux_wait,ncpu
+ use parallel_m, ONLY:PP_redux_wait,ncpu
  use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
 &                     write_to_report,write_the_logo
  implicit none
@@ -48,7 +48,7 @@ subroutine section(mode,name)
  !
  character(schlen):: average_time,min_time,max_time
  !
- call pp_redux_wait
+ call PP_redux_wait
  !
  ! Get HostName date & time etc...
  !
@@ -77,7 +77,7 @@ subroutine section(mode,name)
    if (len_trim(name)==0) return
    call ct(SEC=.TRUE.)
    cput_here=cput_sec(:,1)
-   call pp_redux_wait(cput_here)
+   call PP_redux_wait(cput_here)
    min_time=time_string(minval(cput_here))
    max_time=time_string(maxval(cput_here))
    average_time =time_string(sum(cput_here)/real(ncpu))
@@ -116,7 +116,7 @@ subroutine section(mode,name)
  !
  if (mode=='X') then
    cput_here=cput_tot(:,1)
-   call pp_redux_wait(cput_here)
+   call PP_redux_wait(cput_here)
    !
    ch=date_and_time_string(dt_in=date_time_at_start)
    chp= string_pack(trim(ch),' [start]')
@@ -156,6 +156,6 @@ subroutine section(mode,name)
  !
  if (mode=='p') isec=isec_save
  !
- call pp_redux_wait
+ call PP_redux_wait
  !
 end subroutine

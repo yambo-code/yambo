@@ -27,18 +27,18 @@ subroutine K_eval_scattering_amplitudes( )
  !                                <n k1_ibz |exp iG.r|m k2_ibz s1^{-1} x s2 > 
  !
  use BS,            ONLY:O_n_scatt,BS_O,O_ng,Scattering_table
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
+ use interfaces,    ONLY:PARALLEL_index
  use collision,     ONLY:ggwinfo,collision_reset
  implicit none
  !
  ! Work Space
  !
  type(ggwinfo)   ::isc
- type(pp_indexes)::p_index
+ type(PP_indexes)::p_index
  integer         ::is,ib1,ib2,i_spin,i_scatt,ik1,ik2,iq
  !
- call pp_indexes_reset(p_index)
+ call PP_indexes_reset(p_index)
  call collision_reset(isc)
  !
  isc%ngrho=O_ng
@@ -47,9 +47,9 @@ subroutine K_eval_scattering_amplitudes( )
  !
  BS_O=(0.,0.)
  !
- call pp_redux_wait
+ call PP_redux_wait
  !
- call par_indexes(p_index,(/O_n_scatt/))
+ call PARALLEL_index(p_index,(/O_n_scatt/))
  !
  do i_scatt=1,O_n_scatt
    !
@@ -72,10 +72,10 @@ subroutine K_eval_scattering_amplitudes( )
  enddo
  !
  do i_scatt=1,O_n_scatt
-   call pp_redux_wait(BS_O(:,i_scatt))
+   call PP_redux_wait(BS_O(:,i_scatt))
  enddo
  !
- call pp_indexes_reset(p_index)
+ call PP_indexes_reset(p_index)
  call collision_reset(isc)
  !
 end subroutine

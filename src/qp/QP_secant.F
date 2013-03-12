@@ -53,7 +53,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp,W_reset
  use X_m,           ONLY:X_t
- use par_proc_m,    ONLY:pp_redux_wait
+ use parallel_m,    ONLY:PP_redux_wait
  use QP_m,          ONLY:QP_t,QP_Vxc,QP_Vnl_xc,QP_Sc,QP_n_W_freqs,QP_W,QP_n_states,&
 &                        QP_solver_state,QP_dSc_steps,QP_dSc,&
 &                        QP_W_dr,QP_W_er,QP_dSc_delta,QP_W_partially_done
@@ -126,7 +126,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
    call W2Sc_local_call()
  enddo
  call live_timing()
- call pp_redux_wait()
+ call PP_redux_wait()
  !
  ! Root
  !
@@ -162,7 +162,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
    call W2Sc_local_call()
  enddo
  call live_timing()
- call pp_redux_wait()
+ call PP_redux_wait()
  !
  ! Analytic continuation 
  !
@@ -197,7 +197,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  enddo
  deallocate(QP_W)
  call mem_est("QP_W")
- call pp_redux_wait()
+ call PP_redux_wait()
  !
  contains 
    !

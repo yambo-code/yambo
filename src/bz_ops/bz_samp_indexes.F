@@ -42,7 +42,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:gen_fmt
  use com,            ONLY:msg,error,warning
- use par_proc_m,     ONLY:pp_redux_wait
+ use parallel_m,     ONLY:PP_redux_wait
  use timing,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use vec_operate,    ONLY:v_is_zero,c2a
@@ -287,7 +287,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  call k_ibz2bz(Xk,'d',.false.)
  deallocate(q_map,q_iptbz)
  if (Xk_grid_is_uniform) deallocate(q%ptbz)
- call pp_redux_wait
+ call PP_redux_wait
  !
  contains 
    !

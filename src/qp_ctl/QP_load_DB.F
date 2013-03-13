@@ -118,9 +118,9 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
        !
        n_qp_db=n_qp_db+1
        !
-       DB_plan_todo_EWZ(n_qp_db,1)=any((/trim(db_piece(i1-1))=="E",trim(db_piece(i1))=="e"/))
-       DB_plan_todo_EWZ(n_qp_db,2)=any((/trim(db_piece(i1-1))=="W",trim(db_piece(i1))=="w"/))
-       DB_plan_todo_EWZ(n_qp_db,3)=any((/trim(db_piece(i1-1))=="Z",trim(db_piece(i1))=="z"/))
+       DB_plan_todo_EWZ(n_qp_db,1)=any((/trim(db_piece(i1-1))=="E",trim(db_piece(i1-1))=="e"/))
+       DB_plan_todo_EWZ(n_qp_db,2)=any((/trim(db_piece(i1-1))=="W",trim(db_piece(i1-1))=="w"/))
+       DB_plan_todo_EWZ(n_qp_db,3)=any((/trim(db_piece(i1-1))=="Z",trim(db_piece(i1-1))=="z"/))
        !
        if (n_qp_db==1) qp_db_name=dummy_db_name
        if (n_qp_db> 1) qp_db_name=string_pack(trim(qp_db_name),"+",trim(dummy_db_name))

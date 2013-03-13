@@ -93,7 +93,11 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp,plan_EWZ)
      do i2=1,qp2merge(i_db)%n_states
        if (all(qp2merge(i_db)%table(i2,:)==qp%table(i1,:))) then
          if (l_QP_db) then
-           if (plan_EWZ(i_db,1)) qp%E(i1)=qp%E(i1)+real(qp2merge(i_db)%E(i2))
+           if (plan_EWZ(i_db,1)) then
+             if (i_db==1) qp%E_bare(i1)=qp2merge(i_db)%E_bare(i2)
+             if (i_db==1) qp%E(i1)=qp%E(i1)+real(qp2merge(i_db)%E(i2))
+             if (i_db> 1) qp%E(i1)=qp%E(i1)+real(qp2merge(i_db)%E(i2))-qp%E_bare(i1)
+           endif
            if (plan_EWZ(i_db,1)) qp%E_bare(i1)=qp2merge(i_db)%E_bare(i2)
            if (plan_EWZ(i_db,2)) qp%E(i1)=qp%E(i1)+cI*aimag(qp2merge(i_db)%E(i2))
            if (plan_EWZ(i_db,3)) qp%Z(i1)=qp%Z(i1)+qp2merge(i_db)%Z(i2)

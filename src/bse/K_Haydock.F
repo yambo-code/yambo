@@ -33,12 +33,12 @@ subroutine K_Haydock(iq,W)
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
 &                         BS_DB_is_fragmented, BS_eh_f,ioBSS_Haydock,&
 &                         BS_K_Coupling,Haydock_terminator,&
-&                         K_BSmat_by_V,K_BSmat_by_V_Haydock
+&                         K_BSmat_by_V
 #if defined _KERR
  use KERR,           ONLY:BSS_rhoq0_kerr,iw_ref,B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
- use timing,         ONLY:live_time_msg
+ use timing,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use electrons,      ONLY:spin_occ
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
@@ -183,7 +183,7 @@ subroutine K_Haydock(iq,W)
 #endif
      Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)*BS_eh_f(:BS_K_dim)
      !
-     call K_BSmat_by_V_Haydock(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity)
+     call K_BSmat_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity)
      Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
      Cf(1) = 0.
 #if defined _KERR
@@ -222,7 +222,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     call K_BSmat_by_V_Haydock(iq,it-it_on_disk,Vn,Vnp1)
+     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1)
      !
      ! A(n) = <Vn|Vn+1>
      !
@@ -268,7 +268,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     call K_BSmat_by_V_Haydock(iq,it-it_on_disk,Vn,Vnp1,iter_par=ItParity)
+     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1,iter_par=ItParity)
      !
      ! B(n+1)= <Vn|F|Vn+1>^(1/2) (that is <Vn|FH|Vn>^(1/2))
      !       = (2*Re(<Vn|Vnp1>))^(1/2) by symmetry, 
@@ -312,15 +312,15 @@ subroutine K_Haydock(iq,W)
      call K_output_file(iq,1)
      dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy :'//&
 &            trim(real2ch(reached_treshold))//'|'//trim(real2ch(Haydock_treshold))
-     if (tty_size>0.and.it_on_disk==0) call live_time_msg("r",dumb_ch,"","%s")
-     if (tty_size>0.and.it_on_disk> 0) call live_time_msg("n",dumb_ch,"","%s")
-     if (tty_size<0) call live_time_msg("n",dumb_ch,"","%s")
+     if (tty_size>0.and.it_on_disk==0) call LIVE_message("r",dumb_ch,"","%s")
+     if (tty_size>0.and.it_on_disk> 0) call LIVE_message("n",dumb_ch,"","%s")
+     if (tty_size<0) call LIVE_message("n",dumb_ch,"","%s")
    else
      !
      dumb_ch='[Haydock] Iteration '//trim(intc(it))
-     if (tty_size<0) call live_time_msg("n",dumb_ch,"","%s")
-     if (tty_size>0.and.it==1) call live_time_msg("n",dumb_ch,"","%s")
-     if (tty_size>0.and.it==2) call live_time_msg("r",dumb_ch,"","%s")
+     if (tty_size<0) call LIVE_message("n",dumb_ch,"","%s")
+     if (tty_size>0.and.it==1) call LIVE_message("n",dumb_ch,"","%s")
+     if (tty_size>0.and.it==2) call LIVE_message("r",dumb_ch,"","%s")
      !
    endif
    !

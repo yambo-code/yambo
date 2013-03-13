@@ -31,9 +31,10 @@ subroutine K_diagonalization(iq,W)
 &                         BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_eh_W,BS_eh_E,BS_anti_res
 #if defined _KERR
- use KERR,           ONLY:BSS_rhoq0_kerr,iw_ref,B_Hall
+ use KERR,           ONLY:BSS_rhoq0_kerr,B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
  use units,          ONLY:DEG2RAD
+ use X_m,            ONLY:iw_ref
  use BS,             ONLY:BSS_n_freqs
 #endif
  use memory_m,       ONLY:mem_est

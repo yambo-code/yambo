@@ -95,7 +95,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !=====================
  if (iq==1) call Dipole_driver(Xen, Xk, X, X%q0)
  !
- call Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF)
+ call Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
  !
  ! Poles tabulation
  !==================

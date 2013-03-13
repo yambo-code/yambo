@@ -35,7 +35,7 @@ subroutine K_Haydock(iq,W)
 &                         BS_K_Coupling,Haydock_terminator,&
 &                         K_BSmat_by_V
 #if defined _KERR
- use KERR,           ONLY:BSS_rhoq0_kerr,iw_ref,B_Hall
+ use KERR,           ONLY:BSS_rhoq0_kerr,B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
  use timing,         ONLY:LIVE_message

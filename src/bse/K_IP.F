@@ -22,6 +22,7 @@
 subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  !
  use pars,          ONLY:SP,IP,pi
+ use units,         ONLY:HA2EV
  use LOGO,          ONLY:pickup_a_random
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
@@ -31,17 +32,17 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
  use electrons,     ONLY:levels,spin_occ,spin,n_sp_pol
  use X_m,           ONLY:X_t,X_epsilon,X_drude_term,alpha_dim,eps_2_alpha,           &
-&                        DIP_q_dot_iR,X_duplicate,X_drude_term,X_alloc
+&                        DIP_q_dot_iR,X_duplicate,X_drude_term,X_alloc,iw_ref
  use BS,            ONLY:BS_columns,BS_identifier,BS_blk_dim,BS_k_and_row_restart,   &
 &                        BSS_rhoq0,BS_eh_f,BS_eh_E,BS_eh_table,BSS_Vnl_included,     &
 &                        BS_bands,BS_eh_W,BS_anti_res,BS_drude_f_eh,BS_K_coupling, &
 &                        BS_K_dim,BSS_n_freqs,BSS_q0,BS_res_K_corr,O_n_c_states,     &
 &                        O_n_v_states
 #if defined _KERR
- use units,         ONLY:HA2EV
  use drivers,       ONLY:l_kerr
+ use com,           ONLY:warning
  use fields,        ONLY:global_gauge
- use KERR,          ONLY:DIP_P_symm,KERR_alloc,iw_ref
+ use KERR,          ONLY:DIP_P_symm,KERR_alloc
 #endif
  !
  implicit none
@@ -55,10 +56,10 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  !
  type(X_t)         ::X_oscillators
  integer           ::ik,iv,ic,i1,i_sp,ioBS_err,ID, epsilon_dim
- real(SP)          ::factor
+ real(SP)          ::Co
  complex(SP)       ::drude_GreenF(W_bss%n(2))
-#if defined _KERR
  integer           ::iw
+#if defined _KERR
  complex(SP)       ::factor_jj
 #endif
  !
@@ -78,6 +79,25 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
    call mem_est("O_n_c_states O_n_v_states",&
 &               (/Xk%nbz,n_sp_pol,Xk%nbz,n_sp_pol/),(/IP,IP,IP,IP/))
    !
+ endif
+ !
+#if defined _KERR
+ !
+ ! Check if it is possible to use the velocity gauge
+ if(all(abs(real(W_bss%p(:)))>0.01)) then
+   call warning(' No w close to 0 in the frequency grid. Length gauge imposed')
+   global_gauge='length'
+ endif
+#endif
+ !
+ ! Look for the W(iw_ref) closest 0
+ iw_ref=1
+ if(any(abs(real(W_bss%p(:)))<0.01)) then
+   do iw=1,BSS_n_freqs
+     if(abs(real(W_bss%p(iw)))>0.01) cycle
+     if(abs(W_bss%p(iw))<abs(W_bss%p(iw_ref))) iw_ref=iw
+   enddo
+   call msg('nsr','Reference freq. for w=0 is:',real(W_bss%p(iw_ref))*HA2EV )
  endif
  !
  call K_eh_setup(iq,Ken,Xk,X_static%Wd)
@@ -110,7 +130,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  X_drude_term=cmplx(0.,0.,SP)
  !
  call X_duplicate(X_static,X_oscillators) 
- call Drude(1,(/1,BSS_n_freqs/),Ken,Xk,W_bss,X_static,drude_GreenF)
+ call Drude(1,(/1,BSS_n_freqs/),Ken,Xk,W_bss,X_static,drude_GreenF,'c')
  !
  X_oscillators%ib=BS_bands
  if (BS_K_coupling.or.allocated(BS_eh_W)) then
@@ -170,39 +190,23 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
    !
    if(l_rpa_IP) call live_timing()
    !
-   factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
+   Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
    !
 #if defined _KERR
-   if(trim(global_gauge)=='velocity') then
-     if(all(abs(real(W_bss%p(:)))>0.01))&
-&      call error(' No w close to 0 included in your frequency grid')
-     iw_ref=1
-     do iw=1,BSS_n_freqs
-       if(abs(real(W_bss%p(iw)))>0.01) cycle
-       if(abs(W_bss%p(iw))<abs(W_bss%p(iw_ref))) iw_ref=iw
-     enddo
-     call msg('nsr','Reference freq. for w=0 is:',real(W_bss%p(iw_ref))*HA2EV )
-     factor_jj=X_epsilon(3,iw_ref)
-   endif
+   if(trim(global_gauge)=='velocity') factor_jj=X_epsilon(3,iw_ref)
    !
-   if(trim(global_gauge)=='length') X_epsilon(3,:)=1.+X_epsilon(3,:)*factor/q_norm(1)**2
-   if(trim(global_gauge)=='velocity') then
-     X_epsilon(3,:)=1.+(X_epsilon(3,:)-factor_jj)*factor/(real(W_bss%p(:))**2+epsilon(1.))
-   endif
-   !
-   ! Causal Drude term
-   !
-   X_drude_term(:)=-BS_drude_f_eh*drude_GreenF(:)
-   do iw=1,iw_ref-1
-     X_drude_term(iw_ref-iw)=cmplx(real(X_drude_term(iw_ref-iw)),-aimag(X_drude_term(iw_ref+iw)))
-   enddo
-   X_epsilon(3,:)=X_epsilon(3,:)+X_drude_term(:)*factor/q_norm(1)**2
+   if(trim(global_gauge)=='length') X_epsilon(3,:)=1.+X_epsilon(3,:)*Co/q_norm(1)**2
+   if(trim(global_gauge)=='velocity')&
+&     X_epsilon(3,:)=1.+(X_epsilon(3,:)-factor_jj)*Co/(real(W_bss%p(:))**2+epsilon(1.))
    !
    if(l_kerr) call K_kerr_IP(W_bss%p)
 #else
    !
-   X_epsilon(3,:)=1.+X_epsilon(3,:)*factor/(q_norm(1))**2
+   X_epsilon(3,:)=1.+X_epsilon(3,:)*Co/(q_norm(1))**2
 #endif
+ !
+ X_drude_term(:)=-BS_drude_f_eh*drude_GreenF(:)
+ X_epsilon(3,:)=X_epsilon(3,:)+X_drude_term(:)*Co/q_norm(1)**2
  !
  endif
  !

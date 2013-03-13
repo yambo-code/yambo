@@ -490,8 +490,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
                      call initactivate(1,'BSEqmode')
    if(.not.l_rpa_IP) call initactivate(1,'BSENGexx ALLGexx')
-   if (l_alda_fxc)   call initactivate(1,'FxcGRLc')
-   if (l_lrc_fxc)    call initactivate(1,'LRC_alpha LRC_beta')
    !
    if(l_td_hf.or.l_W_eh) call initactivate(1,'BSENGBlk')
    if(l_W_eh)            call initactivate(1,'WehDiag')
@@ -1124,7 +1122,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          if(l_bse) then
            l_td_hf    = trim(rstr_piece(i1+1)) == 'hf'  ! TDHF
-           l_W_eh     = trim(rstr_piece(i1+1)) == 'W'   ! W-eh screened interaction interaction
+           l_W_eh     = trim(rstr_piece(i1+1)) == 'w'   ! W-eh screened interaction interaction
          endif
          !
          if(l_rpa_IP)      call initactivate(1,'IP')

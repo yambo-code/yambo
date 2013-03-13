@@ -39,9 +39,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use R_lattice,     ONLY:ng_closed,n_g_shells,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
- use BS,            ONLY:BS_res_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
+ use BS,            ONLY:BS_Eq_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
-&                        BSS_dr,BSS_er,BSS_q0,BS_cpl_mode,BSS_damp_reference
+&                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -167,9 +167,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! BSE
  !
- call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`)',BS_res_mode)
- call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`)',BS_cpl_mode)
- call it('f',defs,'BSAres', '[BS] anti-resonant term in the epsilon')
+ call it(defs,'BSEqmode','[BSE] resonant/causal/coupling',BS_Eq_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,E_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,E_unit)
@@ -181,6 +179,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSHayTrs','[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',&
 &              Haydock_treshold,verb_level=V_resp)
  call it(defs,'BEnSteps','[BSS] Energy steps',BSS_n_freqs)
+ call it('f',defs,'Wehdiag',  '[BSK] the eh interaction is diagonal',verb_level=V_resp)
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the FWs',verb_level=V_resp)
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
  call it('f',defs,'BSHayTer','[BSS] Terminate Haydock continuos fraction',verb_level=V_resp)

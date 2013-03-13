@@ -25,20 +25,20 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,warning
  use memory_m,       ONLY:mem_est
- use stderr,         ONLY:string_remove,string_add,intc
+ use stderr,         ONLY:string_remove,intc
  use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
  use BS,             ONLY:BS_bands,BS_q,BS_blk_dim,BS_eh_table,BS_eh_E,BS_eh_f,&
 &                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,BSS_rhoq0,&
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
-&                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,&
+&                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_anti_res
+&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_Eq_mode
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
- use drivers,        ONLY:l_rpa_IP,l_td_hartree,l_alda_fxc,l_td_hf,l_W_eh,l_bs_fxc,l_bss
+ use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PP_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
@@ -119,45 +119,19 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  if(l_kerr) call parser('AnHall',l_anomalous_Hall)
 #endif
  !
- call parser('BSAres',BS_anti_res)
- !
  if(l_rpa_IP) then
-   BS_res_mode='none'
-   BS_cpl_mode='none'
    l_bss=.true.
    BSS_mode=''
  endif
  !
- if (l_td_hartree.or.l_alda_fxc) then
-   !  
-   ! Remove the correlation from the BS_mode
-   !
-   BS_res_mode=trim( string_remove(BS_res_mode,'c') )
-   BS_cpl_mode=trim( string_remove(BS_cpl_mode,'c') )
-   !
- endif
- !
- if (l_td_hf) then
-   !
-   ! In TDHF correlation is replaced with the (d)iagonal bare W
-   !
-   BS_res_mode=trim( string_add(BS_res_mode,'d') )
-   if (index(BS_cpl_mode,'c')/=0) BS_res_mode=trim( string_add(BS_res_mode,'d') ) 
- endif
- !
- if (l_W_eh) then
-   BS_res_mode=trim( string_add(BS_res_mode,'c') )
- endif
- !
- !  
  ! GPL_EXCLUDE_START  
- !  
+ !
  if (l_bs_fxc.or.index(BSS_mode,'t')/=0) then
    ! Remove the exchange from the BS_mode
    ! if TDDFT Fxc is obtained from K
    !
    if (index(BSS_mode,'t')==0) BS_res_mode=trim( string_remove(BS_res_mode,'x') )
-   BS_cpl_mode=" "
+   BS_Eq_mode="causal"
    call parser('FxcCausal',FXC_is_causal)
    !
  endif
@@ -172,11 +146,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
  BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
+ BS_anti_res=index(BS_Eq_mode,'c')/=0
  !
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  !
  BS_K_is_ALDA=l_alda_fxc
- if(.not.BS_anti_res) BS_anti_res=BS_K_coupling
  !
  ! Energy points
  !

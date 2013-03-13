@@ -48,13 +48,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,QP_nk,&
 &                         QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,X_duplicate,X_reset
- use stderr,         ONLY:tty_size,logfile
+ use stderr,         ONLY:tty_size,logfile,string_add
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:ioWF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
  use TDDFT,          ONLY:ioBS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BSS_mode,BSS_q0,&
-&                         BS_eh_en,BS_res_mode,BS_cpl_mode
+&                         BS_eh_en,BS_Eq_mode,BS_res_mode,BS_cpl_mode
 #if defined _DISTRIBUTED
  use BS,             ONLY:ioBS_DISTRIBUTED
 #endif
@@ -491,11 +491,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _KERR
    if(l_kerr) call initactivate(1,'EvalKerr AnHall')
 #endif
-   if(.not.l_rpa_IP) call initactivate(1,'BSresKmod BScplKmod BSENGexx ALLGexx')
+                     call initactivate(1,'BSEqmode')
+   if(.not.l_rpa_IP) call initactivate(1,'BSENGexx ALLGexx')
    if (l_alda_fxc)   call initactivate(1,'FxcGRLc')
    if (l_lrc_fxc)    call initactivate(1,'LRC_alpha LRC_beta')
    !
    if(l_td_hf.or.l_W_eh) call initactivate(1,'BSENGBlk')
+   if(l_W_eh)            call initactivate(1,'WehDiag')
    !
    call initactivate(1,'ShiftedPath')
    call initactivate(1,'DrudeW')
@@ -506,7 +508,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_bs_fxc) then
      call initactivate(1,'FxcGRLc FxcSVdig FxcCausal FxcMEStps')
      call initactivate(1,'BLongDir BEnRange BDmRange BEnSteps')
-     call initactivate(-1,'BScplKmod')
    endif
    !
  endif
@@ -975,8 +976,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
      if (l_em1s) Xw(2)%dr=0.001/HA2EV
      !
-     if (len_trim(BS_cpl_mode)==0) BS_cpl_mode="none"
-     if (len_trim(BS_res_mode)==0) BS_res_mode="none"
+     if (len_trim(BS_Eq_mode)==0) BS_Eq_mode="causal"
+     !
+     if (l_bse) then
+       if (l_rpa_IP)                     BS_res_mode='none'
+       if (l_td_hartree)                 BS_res_mode='x'
+       if (l_alda_fxc)                   BS_res_mode='x'
+       if (l_td_hf)                      BS_res_mode='xcd'
+       if (l_W_eh)                       BS_res_mode='xc'
+       if (l_W_eh_diagonal)              BS_res_mode=trim(string_add(BS_res_mode,'d'))
+       if (trim(BS_Eq_mode)=="coupling") BS_cpl_mode=trim(BS_res_mode)
+     endif
      !
      ! When running BSE from input file l_bse is FALSE in varsetup1.
      ! In any case I have to overwrite X(2) with PP X(4) only if em1s=F
@@ -1092,7 +1102,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! BSE/LLR
        !
        if ( trim(rstr_piece(i1)) == 'optics' )  then
-         l_chi= (trim(rstr_piece(i1+1))=='G' ).or.(trim(rstr_piece(i1+1))=='c')
+         l_chi= (trim(rstr_piece(i1+1))=='g' ).or.(trim(rstr_piece(i1+1))=='c')
          l_bse= (trim(rstr_piece(i1+1))=='eh').or.(trim(rstr_piece(i1+1))=='b')
          !
          if (.not.l_chi.and..not.l_bse) l_chi=.true.

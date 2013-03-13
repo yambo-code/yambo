@@ -60,7 +60,7 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
  Drude_term=all((/real(X%Wd)>0.,aimag(X%Wd)>0.,Xen%kf>0,Xen%nbf/=Xen%nbm,iq==1/))
  !
  if(.not.Drude_term .and. iq==1) then
-   if(Xen%nbf==Xen%nbm) then
+   if(Xen%nbf==Xen%nbm.and.all((/real(X%Wd)>0.,aimag(X%Wd)>0./)) ) then
      call warning(' System is not a metal. Drude term not included')
      X%Wd=(0._SP,0._SP)
    endif

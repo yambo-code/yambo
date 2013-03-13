@@ -122,6 +122,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  if(l_rpa_IP) then
    l_bss=.true.
    BSS_mode=''
+   if(trim(BS_Eq_mode)=='coupling') BS_Eq_mode='causal'
  endif
  !
  ! GPL_EXCLUDE_START  
@@ -131,7 +132,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    ! if TDDFT Fxc is obtained from K
    !
    if (index(BSS_mode,'t')==0) BS_res_mode=trim( string_remove(BS_res_mode,'x') )
-   BS_Eq_mode="causal"
+   BS_Eq_mode='causal'
    call parser('FxcCausal',FXC_is_causal)
    !
  endif

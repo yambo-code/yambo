@@ -204,10 +204,10 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
    !
    X_epsilon(3,:)=1.+X_epsilon(3,:)*Co/(q_norm(1))**2
 #endif
- !
- X_drude_term(:)=-BS_drude_f_eh*drude_GreenF(:)
- X_epsilon(3,:)=X_epsilon(3,:)+X_drude_term(:)*Co/q_norm(1)**2
- !
+   !
+   X_drude_term(:)=-BS_drude_f_eh*drude_GreenF(:)
+   X_epsilon(3,:)=X_epsilon(3,:)+X_drude_term(:)*Co/q_norm(1)**2
+   !
  endif
  !
  ! CLEAN

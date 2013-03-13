@@ -446,7 +446,7 @@ subroutine K_diagonalization(iq,W)
  if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(5,:)=X_epsilon(5,:)+B_Hall(2)/W%p(:)
  !
 #else
- X_epsilon(2,:)=1.+X_epsilon(2,:)*Co
+ X_epsilon(2,:)=1.+(X_epsilon(2,:)+X_drude_term(:))*Co
 #endif
  !
  X_epsilon(1,:)=W%p(:)

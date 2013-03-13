@@ -49,7 +49,7 @@
   {"parmem", "M","Memory distribution (parallel runs)",0,0,0,0,1}, 
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
-  {"kernel", "k","Kernel [opt=(i)p/td(h)/td(d?)ft/td(hf)/(W)eh]",0,0,1,0,0},
+  {"kernel", "k","Kernel [opt=(i)p/td(h)/td(d?)ft/td(hf)/(w)eh]",0,0,1,0,0},
   {"DESC",   " ","                          d?=[da,dl,db]=[alda/lrc/bse_fxc]",0,0,0,0,0},
   {"DESC",   " ","       (tdhf/Weh only eh-space; lrc only G-space)",0,0,0,0,0},
   {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0,0},                      

@@ -50,7 +50,7 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
  ! Work Space
  !
  integer :: Iic(BS_bands(2),n_sp_pol),Iiv(BS_bands(2),n_sp_pol)
- integer :: ikbz,iv,ic,ik,ikp,i_sp,is
+ integer :: ikbz,iv,ic,ik,ikp,i_sp
  real(SP):: E_eh,f_eh
  !
  if(BS_bands(1)<1        ) BS_bands(1)=1
@@ -78,7 +78,6 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
        do ic=Ken%nbf+1,BS_bands(2)
          !
          ik =Xk%sstar(ikbz,1)
-         is =Xk%sstar(ikbz,2)
          ikp=Xk%sstar(qindx_X(iq,ikbz,1),1)
          !
          do i_sp=1,n_sp_pol

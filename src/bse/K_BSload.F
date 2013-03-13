@@ -51,7 +51,11 @@ subroutine K_BSload(iq)
  ! I/O
  ! 
  integer           ::ioBS_err,ID,ACTION
+#if defined _DISTRIBUTED
+ integer, external ::ioBS_DISTRIBUTED
+#else
  integer, external ::ioBS
+#endif
  !
  if (allocated(BS_mat)) return
  !
@@ -59,7 +63,11 @@ subroutine K_BSload(iq)
  if (BS_K_coupling) BS_H_dim=2*BS_K_dim
  !
  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
+#if defined _DISTRIBUTED
+ ioBS_err=ioBS_DISTRIBUTED(iq,X,ID)
+#else
  ioBS_err=ioBS(iq,X,ID)
+#endif
  !
  allocate(BS_mat(BS_H_dim,BS_H_dim))
  call mem_est('BS_mat',(/2*size(BS_mat)/))
@@ -74,7 +82,11 @@ subroutine K_BSload(iq)
        ! BS I/O
        ! 
        call io_control(ACTION=ACTION,COM=NONE,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
+#if defined _DISTRIBUTED
+       ioBS_err=ioBS_DISTRIBUTED(iq,X,ID)
+#else
        ioBS_err=ioBS(iq,X,ID)
+#endif
        !
        if (ik1==ik2) then
          !

@@ -57,6 +57,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use xc_functionals,ONLY:F_xc
  use wrapper,       ONLY:V_dot_V,Vstar_dot_V,M_by_V
  use global_XC,     ONLY:WF_kind,WF_xc_functional
+ !
  implicit none
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
@@ -68,7 +69,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: ikk1,ikk2,live_timing_steps,live_timing_step_size,live_timing_accumulate,&
 &              is1xis2,ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p,&
-&              i_sp1,i_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
+&              i_sp1,i_sp2,j_sp1,j_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
 &              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0,bands_to_load(2)
  integer    :: iOcv, iOvc
  complex(SP):: Co,H_res_x,H_res_c,H_cpl_x,H_cpl_c
@@ -111,33 +112,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! GPL_EXCLUDE_START
  !
  if (l_bs_fxc)      call section('*','Bethe-Salpeter Kernel -> xc-kernel')
- !
- ! GPL_EXCLUDE_END
- !
- ! Setups
- !
- if (BS_columns<=0.or.BS_columns>Xk%nibz) BS_columns=Xk%nibz
- BS_k_and_row_restart=0
- !
- ! Dimensions and Tables
- ! 
- allocate(BS_blk_dim(Xk%nibz))
- !
- call mem_est("BS_blk_dim",(/Xk%nbz/),(/IP/))
- if (BS_res_K_corr) then
-   !
-   allocate(O_n_c_states(Xk%nbz,n_sp_pol),O_n_v_states(Xk%nbz,n_sp_pol))
-   call mem_est("O_n_c_states O_n_v_states",&
-&               (/Xk%nbz,n_sp_pol,Xk%nbz,n_sp_pol/),(/IP,IP,IP,IP/)) !to check 
-   !
- endif
- !
- call K_eh_setup(iq,Ken,Xk)
- if (any(BS_blk_dim==0)) then
-   call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
- endif
- !
- ! GPL_EXCLUDE_START
  !
  ! BS/FXC DB
  !

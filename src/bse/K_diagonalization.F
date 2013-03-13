@@ -26,7 +26,7 @@ subroutine K_diagonalization(iq,W)
  !
  use pars,           ONLY:SP,DP,pi
  use wrapper,        ONLY:M_by_M,Vstar_dot_V,V_dot_V
- use X_m,            ONLY:X_epsilon
+ use X_m,            ONLY:X_epsilon,X_drude_term
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,&
 &                         BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_eh_W,BS_eh_E
@@ -328,7 +328,7 @@ subroutine K_diagonalization(iq,W)
  call live_timing
  call PP_redux_wait(X_epsilon)
  !
- X_epsilon(2,:)=1.+X_epsilon(2,:)*&
+ X_epsilon(2,:)=1.+(X_epsilon(2,:)+X_drude_term(:))*&
 &                  real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
  !
  X_epsilon(1,:)=W%p(:)

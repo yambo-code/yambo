@@ -48,8 +48,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
-&                     filled_tresh, l_spin_orbit,n_spin_den,        &
-&                     eval_magn
+&                     filled_tresh, l_spin_orbit,n_spin_den,eval_magn
  use parallel_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,write_to_of,write_to_report,max_open_ofs,&
@@ -64,9 +63,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     Fragmented_IO,Fragmented_IO_save 
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
-&                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
+&                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BS_Eq_mode,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
-&                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF
+&                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF,BS_anti_res
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_causal
@@ -238,7 +237,15 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_bse=.false.
  l_chi=.false.
  l_bss=.false.
+ l_rpa_IP=.false.
+ l_td_hartree=.false.
+ l_tddft=.false.
+ l_alda_fxc=.false.
+ l_lrc_fxc=.false.
  l_bs_fxc=.false.
+ l_td_hf=.false.
+ l_W_eh=.false.
+ l_W_eh_diagonal=.false.
  l_acfdt=.false.
  l_el_corr=.false.
  l_ph_corr=.false.
@@ -378,6 +385,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BS_eh_win=100.
  BS_res_mode='xc'
  BS_cpl_mode='none'
+ BS_Eq_mode='causal'
+ BS_anti_res=.FALSE.
  BS_K_dim=0
  BSS_mode=' '
  BSS_n_freqs=100

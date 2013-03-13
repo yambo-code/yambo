@@ -36,12 +36,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use timing,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
- use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,&
+ use R_lattice,     ONLY:ng_closed,n_g_shells,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
- use BS,            ONLY:BS_res_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
+ use BS,            ONLY:BS_Eq_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
-&                        BSS_dr,BSS_er,BSS_q0,BS_cpl_mode,BSS_damp_reference
+&                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -78,19 +78,24 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'setup',   '[R INI] Initialization') 
  call it('r',defs,'optics',  '[R OPT] Optics')
  call it('r',defs,'chi',     '[R CHI] Dyson equation for Chi.')
- call it('r',defs,'bse',     '[R BSK] Bethe Salpeter Equation.')
- call it('r',defs,'HF_and_locXC',   '[R XX] Hartree-Fock Self-energy and Vxc')
+ call it('r',defs,'bse',     '[R BSE] Bethe Salpeter Equation.')
+ call it('r',defs,'IP',      '[R   K] Independet Particles')
+ call it('r',defs,'tdh',     '[R   K] TD Hartree kernel = Local fields term')
+ call it('r',defs,'tddft',   '[R   K] Use TDDFT kernel')
+ call it('r',defs,'alda_fxc','[R   K]     Adiabatic-LDA Fxc')
+ call it('r',defs,'lrc_fxc', '[R   K]     LRC (1/alpha) Fxc')
+ call it('r',defs,'bs_fxc',  '[R   K]     BSE-derived Fxc')
+ call it('r',defs,'tdhf',    '[R BSK] Unscreened e-h interaction: TD Hartree-Fock kernel')
+ call it('r',defs,'W_eh',    '[R BSK]   screened e-h interaction: W kernel')
+ call it('r',defs,'bss',     '[R BSS] Bethe Salpeter Equation solver')
  call it('r',defs,'em1s',    '[R Xs] Static Inverse Dielectric Matrix')
  call it('r',defs,'em1d',    '[R Xd] Dynamical Inverse Dielectric Matrix')
  call it('r',defs,'ppa',     '[R Xp] Plasmon Pole Approximation')
+ call it('r',defs,'HF_and_locXC',   '[R XX] Hartree-Fock Self-energy and Vxc')
  call it('r',defs,'gw0',     '[R GW] GoWo Quasiparticle energy levels')
- call it('r',defs,'bss',     '[R BSS] Bethe Salpeter Equation solver')
- call it('r',defs,'alda_fxc','[R TDDFT] The ALDA TDDFT kernel')
- call it('r',defs,'lrc_fxc', '[R TDDFT] The LRC TDDFT kernel')
- call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb interaction')
- call it('r',defs,'tdhf',    '[R TDHF] Unscreened e-h interaction: TD Hartree-Fock')
- call it('r',defs,'cohsex',  '[R Xp] COlumb Hole Screened EXchange')
  call it('r',defs,'life',    '[R GW] GoWo Quasiparticle lifetimes')
+ call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb interaction')
+ call it('r',defs,'cohsex',  '[R Xp] COlumb Hole Screened EXchange')
  !
  ! GPL_EXCLUDE_START
  !
@@ -127,12 +132,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Basics
  !
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
- call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',&
-&                        ng_closed,unit=G_unit,verb_level=V_RL)
- call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL)
+ call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
+ call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL) 
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
- call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt) 
+ call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt)
  call it(defs,'Nelectro','Electrons number',nel,verb_level=V_general)
  call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)
  call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_general)
@@ -160,11 +164,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
  !
- !
  ! BSE
  !
- call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`)',BS_res_mode)
- call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`)',BS_cpl_mode)
+ call it(defs,'BSEqmode','[BSE] resonant/causal/coupling',BS_Eq_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
@@ -176,6 +178,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSHayTrs','[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',&
 &              Haydock_treshold,verb_level=V_resp)
  call it(defs,'BEnSteps','[BSS] Energy steps',BSS_n_freqs)
+ call it('f',defs,'Wehdiag',  '[BSK] the eh interaction is diagonal',verb_level=V_resp)
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the FWs',verb_level=V_resp)
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
  call it('f',defs,'BSHayTer','[BSS] Terminate Haydock continuos fraction',verb_level=V_resp)
@@ -195,7 +198,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Optics: large Q momenta
  !
  call it(defs,'Qdirection', '[Xd] Transferred momentum direction (iku)',q_plus_G_direction,verb_level=V_resp)
- call it(defs,'QShiftOrder', '[Xd] Pick-up the (QShiftOrder)th q+G vector',Q_Shift_Order,verb_level=V_resp)
+ call it(defs,'QShiftOrder','[Xd] Pick-up the (QShiftOrder)th q+G vector',Q_Shift_Order,verb_level=V_resp)
  !
  ! RIM
  !
@@ -307,6 +310,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
 &                        E_unit,verb_level=V_resp)
  call it('f',defs,'SkipFullInv',  '[BSS] Skip full invertion in perturbative solver',verb_level=V_resp)
+ call it(defs,'DrudeW',  '[BSE] Drude plasmon',X(2)%Wd,E_unit,verb_level=V_resp)
  !
  ! Xx
  !
@@ -353,7 +357,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 
  ! SC [common with RT]
  !
- call it(defs,'Gauge',     '[Xd,RT] Gauge type (lenght|velocity)',global_gauge,verb_level=V_real_time)
+ call it(defs,'Gauge',     '[Xd,RT] Gauge type (length|velocity)',global_gauge,verb_level=V_real_time)
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)

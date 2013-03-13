@@ -3,7 +3,7 @@ DISTRIBUTED_objects = K.o
 DISTRIBUTED_objects = K_DISTRIBUTED.o
 #endif
 
-objs =	K_driver.o K_eh_setup.o \
+objs =	K_driver.o K_IP.o K_eh_setup.o \
         $(DISTRIBUTED_objects) K_filling.o K_scattering.o K_exchange.o \
         K_solvers.o K_Haydock.o K_diagonalization.o K_inversion.o K_eps_interpolate.o \
         K_output_file.o K_BSmat_by_V.o K_BSload.o 

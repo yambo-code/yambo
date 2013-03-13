@@ -30,6 +30,7 @@ subroutine K_output_file(iq,mode)
  use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,&
 &                    eel_file_name,alpha_file_name,X_write_descriptions,&
 &                    X_write_messages_before_headers,X_write_q_plus_g
+ !
  implicit none
  integer    :: mode,iq
  !
@@ -44,7 +45,6 @@ subroutine K_output_file(iq,mode)
  !
  ! File Names 
  !
- !
  select case (-mode) 
    case(1)
      ! Haydock
@@ -58,6 +58,9 @@ subroutine K_output_file(iq,mode)
      ! Inversion
      call X_setup_file_names(1,'inv',' ','bse')
      if (BS_K_is_ALDA)  call X_setup_file_names(1,'inv','alda','bse')
+   case(4)
+     ! Independent-Particle
+     call X_setup_file_names(1,'IP',' ',' ')
  end select
  !
  ! EELS 
@@ -88,19 +91,24 @@ subroutine K_output_file(iq,mode)
    !
    call X_setup_headers('eps')
    if (mode==1) call msg("o eps",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (mode/=1) call msg("o eps",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (mode/=1.and.mode/=4) call msg("o eps",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (mode==4) call msg("o eps",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    !
    if (eval_eels) then 
      call X_setup_headers('eel')
      if (mode==1) call msg("o eel",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-     if (mode/=1) call msg("o eel",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode/=1.and.mode/=4) call msg("o eel",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==4) call msg("o eel",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    end if   
    !
    if (eval_alpha) then 
      call X_setup_headers('alpha')
      if (mode==1) call msg("o alpha",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-     if (mode/=1) call msg("o alpha",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode/=1.and.mode/=4) call msg("o alpha",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==4) call msg("o alpha",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    endif
+   !
+   !
    call msg("o eps eel alpha",'#')
    !
    ! ABSORPTION
@@ -118,13 +126,15 @@ subroutine K_output_file(iq,mode)
      n_output_data=5
      if (mode==1) n_output_data=7
      if (mode==1) output_data(6:7)=(/aimag(X_epsilon(4,iw)),real(X_epsilon(4,iw))/)
+     if (mode==4) n_output_data=3
+     if (mode==4) output_data(2:3)=output_data(4:5)
      !
      call msg("o eps",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
      !
    enddo
    !
    ! EELS & POLARIZABILITY
-   !---------------------
+   !-----------------------
    !
    if (eval_eels) then
      !
@@ -145,6 +155,8 @@ subroutine K_output_file(iq,mode)
        n_output_data=5
        if (mode==1) n_output_data=7
        if (mode==1) output_data(6:7)=(/aimag(eels(3,iw)),real(eels(3,iw))/)
+       if (mode==4) n_output_data=3
+       if (mode==4) output_data(2:3)=output_data(4:5)
        call msg("o eel",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
        !
        ! ALPHA
@@ -154,9 +166,12 @@ subroutine K_output_file(iq,mode)
        n_output_data=5
        if (mode==1) n_output_data=7
        if (mode==1) output_data(6:7)=(/aimag(alpha(3,iw)),real(alpha(3,iw))/)
+       if (mode==4) n_output_data=3
+       if (mode==4) output_data(2:3)=output_data(4:5)
        call msg("o alpha",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
        !
      enddo
+     !
    endif
    !
  endif

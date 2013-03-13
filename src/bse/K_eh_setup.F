@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_eh_setup(iq,Ken,Xk)
+subroutine K_eh_setup(iq,Ken,Xk,Wd)
  !
  ! Out: 
  !
@@ -33,17 +33,18 @@ subroutine K_eh_setup(iq,Ken,Xk)
  !
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
- use com,          ONLY:error
+ use com,          ONLY:warning
  use BS,           ONLY:BS_K_dim,O_v_state,O_c_state,BS_res_K_corr,&
 &                       O_n_v_states,O_n_c_states,BS_eh_E,BS_eh_f,BS_eh_en,&
-&                       BS_eh_table,BS_bands,BS_blk_dim,BS_K_coupling,&
-&                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z
+&                       BS_eh_table,BS_bands,BS_blk_dim,BS_anti_res,&
+&                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z,BS_drude_f_eh
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
  use R_lattice,    ONLY:qindx_X,bz_samp
  !
  implicit none
  type(levels) ::Ken
  type(bz_samp)::Xk
+ complex(SP)  ::Wd
  integer      ::iq
  !
  ! Work Space
@@ -82,7 +83,10 @@ subroutine K_eh_setup(iq,Ken,Xk)
          do i_sp=1,n_sp_pol
            !
            E_eh=Ken%E(ic,ik,i_sp)-Ken%E(iv,ikp,i_sp)
-           if (abs(E_eh)<1.E-5) cycle
+           if (abs(E_eh)<1.E-5) then
+             if(any((/ic/=Ken%bf,iv/=Ken%bf,ik/=Ken%kf,i_sp/=Ken%sf/)) ) cycle
+             if(real(Wd)==0..and.aimag(Wd)==0.) cycle
+           endif
            !
            ! Same ordering procedure of the Xo case (see X_eh_setup.F)
            !
@@ -98,7 +102,13 @@ subroutine K_eh_setup(iq,Ken,Xk)
            ! A 5% fractional occupation swiches on the particular
            ! treatment of finite temp. BSE 
            !
-           f_eh=f_eh/spin_occ/spin_occ          
+           f_eh=f_eh/spin_occ/spin_occ
+           !
+           if (abs(E_eh)<1.E-5) then
+             BS_drude_f_eh=f_eh
+             cycle
+           endif
+           !
            if ( abs(f_eh-1.)> filled_tresh) BS_not_const_eh_f=.TRUE.
            !
            ! The e/h occ must be 1. in the T=0 case as the spin factor (spin_occ)
@@ -127,8 +137,9 @@ subroutine K_eh_setup(iq,Ken,Xk)
        enddo
      enddo
      !
-     if (.not.BS_K_coupling.and.BS_not_const_eh_f) then
-       call error('Fractional e/h occupations found. BS coupling forced.')
+     if (.not.BS_anti_res.and.BS_not_const_eh_f) then
+       call warning('Fractional e/h occupations found. Anti-resonant term included.')
+       BS_anti_res=.true.
      endif
      !
      if (.not.BS_res_K_corr) cycle

@@ -45,6 +45,9 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
  use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_k_and_row_restart,BS_eh_E,&
 &                         BS_DB_is_fragmented,BS_K_coupling,&
 &                         BS_cpl_mat,BS_IO_index
+#if defined _DISTRIBUTED
+ use BS,             ONLY:ioBS_DISTRIBUTED
+#endif
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_control,OP_RD,RD,NONE,RD_CL,OP_RD_CL
  use wrapper,        ONLY:M_by_V
@@ -79,7 +82,11 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
    !
    if (.not.use_fragments) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
+#if defined _DISTRIBUTED
+     ioBS_err=ioBS_DISTRIBUTED(iq,X,ID)
+#else
      ioBS_err=ioBS(iq,X,ID)
+#endif
      !
      allocate(BS_mat(BS_K_dim,BS_K_dim))
      if (BS_K_coupling) allocate(BS_cpl_mat(BS_K_dim,BS_K_dim))
@@ -112,7 +119,11 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
        ! BS I/O
        ! 
        call io_control(ACTION=ACTION,COM=NONE,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
+#if defined _DISTRIBUTED
+       ioBS_err=ioBS_DISTRIBUTED(iq,X,ID)
+#else
        ioBS_err=ioBS(iq,X,ID)
+#endif
        !
        if (ik1==ik2) then
          !

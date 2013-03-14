@@ -63,7 +63,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     Fragmented_IO,Fragmented_IO_save 
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
-&                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BS_Eq_mode,&
+&                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
 &                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF,BS_anti_res
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
@@ -385,7 +385,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BS_eh_win=100.
  BS_res_mode='xc'
  BS_cpl_mode='none'
- BS_Eq_mode='causal'
+ BSE_mode='causal'
  BS_anti_res=.FALSE.
  BS_K_dim=0
  BSS_mode=' '

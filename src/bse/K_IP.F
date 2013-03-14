@@ -97,7 +97,6 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
      if(abs(real(W_bss%p(iw)))>0.01) cycle
      if(abs(W_bss%p(iw))<abs(W_bss%p(iw_ref))) iw_ref=iw
    enddo
-   call msg('nsr','Reference freq. for w=0 is:',real(W_bss%p(iw_ref))*HA2EV )
  endif
  !
  call K_eh_setup(iq,Ken,Xk,X_static%Wd)
@@ -196,7 +195,10 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
    Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
    !
 #if defined _KERR
-   if(trim(global_gauge)=='velocity') factor_jj=X_epsilon(3,iw_ref)
+   if(trim(global_gauge)=='velocity') then
+     call msg('nsr','Gauge velocity: reference freq. for w=0 is [eV]:',real(W_bss%p(iw_ref))*HA2EV )
+     factor_jj=X_epsilon(3,iw_ref)
+   endif
    !
    if(trim(global_gauge)=='length') X_epsilon(3,:)=1.+X_epsilon(3,:)*Co/q_norm(1)**2
    if(trim(global_gauge)=='velocity')&
@@ -207,10 +209,10 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
    !
    X_epsilon(3,:)=1.+X_epsilon(3,:)*Co/(q_norm(1))**2
 #endif
- !
- X_drude_term(:)=-BS_drude_f_eh*drude_GreenF(:)
- X_epsilon(3,:)=X_epsilon(3,:)+X_drude_term(:)*Co/q_norm(1)**2
- !
+   !
+   X_drude_term(:)=-BS_drude_f_eh*drude_GreenF(:)
+   X_epsilon(3,:)=X_epsilon(3,:)+X_drude_term(:)*Co/q_norm(1)**2
+   !
  endif
  !
  ! CLEAN

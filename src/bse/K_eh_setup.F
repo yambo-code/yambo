@@ -181,7 +181,7 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
    endif
    if (associated(Ken%Z)) then
      allocate(BS_eh_Z(BS_K_dim))
-     call mem_est("BS_eh_Z",(/BS_K_dim/),(/SP/))
+     call mem_est("BS_eh_Z",(/BS_K_dim/))
    endif
    !
    if (.not.BS_res_K_corr) cycle

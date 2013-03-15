@@ -54,7 +54,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
  use TDDFT,          ONLY:ioBS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BSS_mode,BSS_q0,&
-&                         BS_eh_en,BS_Eq_mode,BS_res_mode,BS_cpl_mode
+&                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode
 #if defined _DISTRIBUTED
  use BS,             ONLY:ioBS_DISTRIBUTED
 #endif
@@ -491,7 +491,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _KERR
    if(l_kerr) call initactivate(1,'EvalKerr AnHall')
 #endif
-                     call initactivate(1,'BSEqmode')
+                     call initactivate(1,'BSEmode')
    if(.not.l_rpa_IP) call initactivate(1,'BSENGexx ALLGexx')
    !
    if(l_td_hf.or.l_W_eh) call initactivate(1,'BSENGBlk')
@@ -974,16 +974,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
      if (l_em1s) Xw(2)%dr=0.001/HA2EV
      !
-     if (len_trim(BS_Eq_mode)==0) BS_Eq_mode="causal"
+     if (len_trim(BSE_mode)==0) BSE_mode="causal"
      !
      if (l_bse) then
-       if (l_rpa_IP)                     BS_res_mode='none'
-       if (l_td_hartree)                 BS_res_mode='x'
-       if (l_alda_fxc)                   BS_res_mode='x'
-       if (l_td_hf)                      BS_res_mode='xcd'
-       if (l_W_eh)                       BS_res_mode='xc'
-       if (l_W_eh_diagonal)              BS_res_mode=trim(string_add(BS_res_mode,'d'))
-       if (trim(BS_Eq_mode)=="coupling") BS_cpl_mode=trim(BS_res_mode)
+       if (l_rpa_IP)                   BS_res_mode='none'
+       if (l_td_hartree)               BS_res_mode='x'
+       if (l_alda_fxc)                 BS_res_mode='x'
+       if (l_td_hf)                    BS_res_mode='xcd'
+       if (l_W_eh)                     BS_res_mode='xc'
+       if (l_W_eh_diagonal)            BS_res_mode=trim(string_add(BS_res_mode,'d'))
+       if (trim(BSE_mode)=="coupling") BS_cpl_mode=trim(BS_res_mode)
      endif
      !
      ! When running BSE from input file l_bse is FALSE in varsetup1.

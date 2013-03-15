@@ -34,7 +34,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_Eq_mode
+&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BSE_mode
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
@@ -122,8 +122,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  if(l_rpa_IP) then
    l_bss=.true.
    BSS_mode=''
-   if(trim(BS_Eq_mode)=='coupling') BS_Eq_mode='causal'
+   if(trim(BSE_mode)=='coupling') BSE_mode='causal'
  endif
+ !
+ if( any((/index(BSS_mode,'h')/=0,index(BSS_mode,'i')/=0/)) &
+&    .and. trim(BSE_mode)=='causal') BSE_mode='resonant'
  !
  ! GPL_EXCLUDE_START  
  !
@@ -132,7 +135,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    ! if TDDFT Fxc is obtained from K
    !
    if (index(BSS_mode,'t')==0) BS_res_mode=trim( string_remove(BS_res_mode,'x') )
-   BS_Eq_mode='causal'
+   BSE_mode='causal'
    call parser('FxcCausal',FXC_is_causal)
    !
  endif
@@ -147,7 +150,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
  BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
- BS_anti_res=index(BS_Eq_mode,'c')/=0
+ BS_anti_res=index(BSE_mode,'c')/=0
  !
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  !

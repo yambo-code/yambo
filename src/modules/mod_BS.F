@@ -47,7 +47,7 @@ module BS
  logical :: BS_K_is_ALDA
  logical :: BS_DB_is_fragmented
  logical :: BS_not_const_eh_f
- character(schlen) :: BS_Eq_mode
+ character(schlen) :: BSE_mode
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
  integer    , allocatable :: BS_eh_table(:,:)
@@ -56,7 +56,7 @@ module BS
  complex(SP), allocatable :: BS_cpl_mat(:,:)
  real(SP)   , allocatable :: BS_eh_E(:)
  real(SP)   , allocatable :: BS_eh_f(:)
- real(SP)   , allocatable :: BS_eh_Z(:)
+ complex(SP), allocatable :: BS_eh_Z(:)
  real(SP)   , allocatable :: BS_eh_W(:)
  !
  ! Oscillators ...

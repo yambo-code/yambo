@@ -207,13 +207,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  O_ng=maxval(G_m_G)
  !
- call fft_setup(O_ng,1,.true.)
- c_fft_size=fft_size
- call fft_setup(BS_n_g_exch,maxval(qindx_X(iq,:,2)),.true.)
- x_fft_size=fft_size
- if (x_fft_size>c_fft_size.and..not.l_USE_all_Gexx) then
-   call warning('Exchange FFT size is too big. RL vectors reduced to '//intc(O_ng))
-   BS_n_g_exch=O_ng
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_USE_all_Gexx) then
+   call fft_setup(O_ng,1,.true.)
+   c_fft_size=fft_size
+   call fft_setup(BS_n_g_exch,maxval(qindx_X(iq,:,2)),.true.)
+   x_fft_size=fft_size
+   if (x_fft_size>c_fft_size) then
+     call warning('Exchange FFT size is too big. RL vectors reduced to '//intc(O_ng))
+     BS_n_g_exch=O_ng
+   endif
  endif
  !
  if (l_bs_fxc) then

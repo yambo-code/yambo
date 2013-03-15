@@ -37,7 +37,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
 &                        BSS_rhoq0,BS_eh_f,BS_eh_E,BS_eh_table,BSS_Vnl_included,     &
 &                        BS_bands,BS_eh_W,BS_anti_res,BS_drude_f_eh,BS_K_coupling, &
 &                        BS_K_dim,BSS_n_freqs,BSS_q0,BS_res_K_corr,O_n_c_states,     &
-&                        O_n_v_states
+&                        O_n_v_states,BS_eh_Z
 #if defined _KERR
  use drivers,       ONLY:l_kerr
  use com,           ONLY:warning
@@ -57,7 +57,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  type(X_t)         ::X_oscillators
  integer           ::ik,iv,ic,i1,i_sp,ioBS_err,ID, epsilon_dim
  real(SP)          ::Co
- complex(SP)       ::drude_GreenF(W_bss%n(2))
+ complex(SP)       ::drude_GreenF(W_bss%n(2)),local_Z
  integer           ::iw
 #if defined _KERR
  complex(SP)       ::factor_jj
@@ -97,7 +97,6 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
      if(abs(real(W_bss%p(iw)))>0.01) cycle
      if(abs(W_bss%p(iw))<abs(W_bss%p(iw_ref))) iw_ref=iw
    enddo
-   call msg('nsr','Reference freq. for w=0 is:',real(W_bss%p(iw_ref))*HA2EV )
  endif
  !
  call K_eh_setup(iq,Ken,Xk,X_static%Wd)
@@ -151,6 +150,9 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
      ic  =BS_eh_table(i1,3)
      i_sp=spin(BS_eh_table(i1,:))
      !
+     local_Z=1.
+     if (allocated(BS_eh_Z)) local_Z=BS_eh_Z(i1)
+     !
      ! DIP_iq_dot_r(c,v,k) is iq . <v | r |c> while I need 
      !
      !   iq . <c|r|v> = - conjg( iq . <v | r |c> )
@@ -173,15 +175,15 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
      if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
 #endif
      !
-     X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*BS_eh_f(i1)/&
-&                                  (W_bss%p(:)-BS_eh_E(i1))
+     X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*&
+&                                  BS_eh_f(i1)*local_Z/(W_bss%p(:)-BS_eh_E(i1))
      !
      if (BS_anti_res) then
        !
        ! Note the plus in "+BSS_rhoq0" coming from the BS_eh_f change of sign
        !
-       X_epsilon(3,:)=X_epsilon(3,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0(i1)*BS_eh_f(i1)/&
-&                                    (W_bss%p(:)+BS_eh_E(i1))
+       X_epsilon(3,:)=X_epsilon(3,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0(i1)*&
+&                                    BS_eh_f(i1)*local_Z/(W_bss%p(:)+BS_eh_E(i1))
      endif
      !
      if(l_rpa_IP) call live_timing(steps=1)
@@ -193,7 +195,10 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
    Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
    !
 #if defined _KERR
-   if(trim(global_gauge)=='velocity') factor_jj=X_epsilon(3,iw_ref)
+   if(trim(global_gauge)=='velocity') then
+     call msg('nsr','Gauge velocity: reference freq. for w=0 is [eV]:',real(W_bss%p(iw_ref))*HA2EV )
+     factor_jj=X_epsilon(3,iw_ref)
+   endif
    !
    if(trim(global_gauge)=='length') X_epsilon(3,:)=1.+X_epsilon(3,:)*Co/q_norm(1)**2
    if(trim(global_gauge)=='velocity')&

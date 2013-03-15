@@ -29,7 +29,7 @@ subroutine K_diagonalization(iq,W)
  use X_m,            ONLY:X_epsilon,X_drude_term
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,&
 &                         BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
-&                         BS_eh_W,BS_eh_E
+&                         BS_eh_W,BS_eh_E,BS_anti_res
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,USE_SLK,INV
@@ -314,11 +314,17 @@ subroutine K_diagonalization(iq,W)
 #if defined _SC
    if (trim(global_gauge)=='velocity') then
      if (K_is_not_hermitian)      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))/BS_E(i1)**2.
-     if (.not.K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))/real(BS_E(i1))**2.
+     if (.not.K_is_not_hermitian) then
+       X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))/real(BS_E(i1))**2.
+       if(BS_anti_res) X_epsilon(2,:)=X_epsilon(2,:)+conjg(BS_R(i1))*BS_R(i1)/(W%p(:)+BS_E(i1))/real(BS_E(i1))**2.
+    endif
   else
 #endif
     if (K_is_not_hermitian)      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))
-    if (.not.K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))
+     if (.not.K_is_not_hermitian) then
+       X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))
+       if(BS_anti_res) X_epsilon(2,:)=X_epsilon(2,:)+conjg(BS_R(i1))*BS_R(i1)/(W%p(:)+BS_E(i1))
+    endif
 #if defined _SC
   endif
 #endif

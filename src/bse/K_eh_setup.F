@@ -33,12 +33,12 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
  !
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
- use com,          ONLY:warning
+ use com,          ONLY:warning,error
  use BS,           ONLY:BS_K_dim,O_v_state,O_c_state,BS_res_K_corr,&
 &                       O_n_v_states,O_n_c_states,BS_eh_E,BS_eh_f,BS_eh_en,&
 &                       BS_eh_table,BS_bands,BS_blk_dim,BS_anti_res,&
 &                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z,BS_drude_f_eh,&
-&                       BSE_mode
+&                       BSE_mode,BSS_mode
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
  use R_lattice,    ONLY:qindx_X,bz_samp
  !
@@ -139,7 +139,9 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
      enddo
      !
      if (.not.BS_anti_res.and.BS_not_const_eh_f) then
-       call warning('Fractional e/h occupations found. Causal BSE_mode forced.')
+       if(any((/index(BSS_mode,'h')/=0,index(BSS_mode,'i')/=0,index(BSS_mode,'t')/=0/))) &
+&        call error('Fractional e/h occupations. Use coupling BSEmode or diagonalization solver.')
+       call warning('Fractional e/h occupations. Causal BSEmode forced.')
        BSE_mode='causal'
        BS_anti_res=.true.
      endif

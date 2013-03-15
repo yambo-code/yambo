@@ -423,11 +423,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !FFT
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,&
-&          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs')
+&          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'ecutFFT FFTGvecs')
  !
  !Setup
  !
- if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim')
+ if (l_setup) call initactivate(1,'MaxGvecs MaxNG IkSigLim IkXLim')
 #if defined  _ELPH 
  if (l_setup) call initactivate(1,'MinusQ')
 #endif
@@ -444,7 +444,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !XX
  !
- if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs')  
+ if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs ecutHF')  
  !
  ! TDDFT
  !
@@ -453,13 +453,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! GPL_EXCLUDE_START
    !
    ! BS based TDDFT (BS fxc is only of q=0 0 0). BS_fxc db exist
-   if(l_bs_fxc) call initactivate(1,'FxcGRLc FxcSVdig FxcCausal')
+   if(l_bs_fxc) call initactivate(1,'FxcGRLc ecutFxc FxcSVdig FxcCausal')
    !
    ! GPL_EXCLUDE_END
    !
    !
    ! ALDA/LRC Tddft
-   if (l_alda_fxc) call initactivate(1,'FxcGRLc')
+   if (l_alda_fxc) call initactivate(1,'FxcGRLc ecutFxc')
    if (l_lrc_fxc)  call initactivate(1,'LRC_alpha LRC_beta')
    !
  endif
@@ -492,9 +492,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if(l_kerr) call initactivate(1,'EvalKerr AnHall')
 #endif
                      call initactivate(1,'BSEmode')
-   if(.not.l_rpa_IP) call initactivate(1,'BSENGexx ALLGexx')
+   if(.not.l_rpa_IP) call initactivate(1,'BSENGexx ecutKexch ALLGexx')
    !
-   if(l_td_hf.or.l_W_eh) call initactivate(1,'BSENGBlk')
+   if(l_td_hf.or.l_W_eh) call initactivate(1,'BSENGBlk ecutKcorr')
    if(l_W_eh)            call initactivate(1,'WehDiag')
    !
    call initactivate(1,'ShiftedPath')
@@ -504,7 +504,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! BSE + TDDFT = no BS db, Fxc + LF on-fly
    ! Special case: The BSE equation is used to build up the BSE_Fxc kernel.
    if (l_bs_fxc) then
-     call initactivate(1,'FxcGRLc FxcSVdig FxcCausal FxcMEStps')
+     call initactivate(1,'FxcGRLc ecutFxc FxcSVdig FxcCausal FxcMEStps')
      call initactivate(1,'BLongDir BEnRange BDmRange BEnSteps')
    endif
    !
@@ -516,8 +516,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! Special case: the BSE_Fxc kernel has been constructed
    !               Thus I move to g-space to solve the Dyson equation
-   if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGexx ALLGexx')
-   if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk')
+   if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGexx ecutKexch ALLGexx')
+   if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk ecutKcorr')
    !
    call QP_ctl_switch('K')
    call initactivate(1,'BoseCut ShiftedPath')
@@ -525,7 +525,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if(l_rpa_IP) call initactivate(-1,'BSSmod')
    !
    if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
-   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer BSHayFast')
+   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
    if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipFullInv')
    !
    ! Special project dependent variables
@@ -563,7 +563,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_acfdt) then
    call QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
-   call initactivate(1,'EXXRLvcs AC_n_LAM AC_n_FR AC_E_Rng')
+   call initactivate(1,'EXXRLvcs ecutHF AC_n_LAM AC_n_FR AC_E_Rng')
    call X_activate('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
  endif
  !
@@ -619,7 +619,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
  endif
  !
- if(l_alda_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/)) ) call initactivate(1,'FxcGRLc')
+ if(l_alda_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/)) ) call initactivate(1,'FxcGRLc ecutFxc')
  if( l_lrc_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/)) ) call initactivate(1,'LRC_alpha LRC_beta')
  !
  ! El-Ph: Frohlich Hamiltonian
@@ -755,6 +755,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if(infile_verbosity==V_real_time.and.l_real_time) call DephMatrix_init()
 #endif
  !
+ call inactivate_old_variables
+ !
  if (infile_editing) return
  !
  ! Report/Log Files
@@ -801,6 +803,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    end subroutine
    !
 #endif
+   !
+   subroutine inactivate_old_variables
+     character(lchlen):: old_runlevels
+     old_runlevels="MaxGvecs EXXRLvcs FFTGvecs BSENGexx BSENGBlk FxcGRLc"
+     call initactivate(-1,trim(old_runlevels))
+   end subroutine   
    !
    subroutine X_activate(mode,what)
      character(2)::mode

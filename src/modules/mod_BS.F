@@ -91,7 +91,6 @@ module BS
  real(SP) :: Haydock_v0_mod
  logical  :: BSS_write_eig_2_db
  logical  :: Haydock_terminator
- logical  :: Haydock_fast
  logical  :: BSS_uses_RIM
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF

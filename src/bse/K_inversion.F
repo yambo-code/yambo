@@ -27,7 +27,8 @@ subroutine K_inversion(iq,W,E,k,q)
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BSS_uses_GreenF,&
 &                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BS_eh_f,&
-&                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z
+&                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z,&
+&                         BSE_mode
  use units
  use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
@@ -209,9 +210,14 @@ subroutine K_inversion(iq,W,E,k,q)
      if (allocated(BS_eh_W)) QP_width=BS_eh_W(i1)
      if (allocated(BS_eh_Z)) QP_Z=BS_eh_Z(i1)
      if (associated(E%GreenF)) then
+       if(i1==1) write(*,*) 'associatd'
        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"c")
      else
+       if(i1==1) write(*,*) 'not associatd'
+       if(i1==1) write(*,*) trim(BSE_mode)
        Lo(i1,:)=QP_Z*BS_eh_f(i1)/(W%p(:)-BS_eh_E(i1)-(0.,1.)*QP_width)
+       if (trim(BSE_mode)=='causal') Lo(i1,:)=Lo(i1,:) &
+&                                           -QP_Z*BS_eh_f(i1)/(W%p(:)+BS_eh_E(i1)-(0.,1.)*QP_width)
        if (BS_K_coupling) Lo(i1+BS_K_dim,:)=-QP_Z*BS_eh_f(i1)/(W%p(:)+BS_eh_E(i1)-(0.,1.)*QP_width)
      endif
    else

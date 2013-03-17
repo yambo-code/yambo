@@ -49,7 +49,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  character(schlen)::ch,db_piece(n_pieces)
  type(QP_t)       ::qp_from_dbs(max_n_of_dbs)
  character(lchlen)::qp_msg,qp_db_name,dummy_db_name
- integer          :: i1,i_sp,n_qp_db
+ integer          :: i1,i_sp,n_qp_db,i2
  logical          :: l_plan_todo_EWZI(5),& ! = ( E W Z INTERPOLATION/k INTERPOLATION/E )
 &                    QPs_DB,GFs_DB,DB_plan_todo_EWZ(max_n_of_dbs,3)
  logical,external :: QP_check_if_corrected
@@ -118,9 +118,14 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
        !
        n_qp_db=n_qp_db+1
        !
-       DB_plan_todo_EWZ(n_qp_db,1)=any((/trim(db_piece(i1-1))=="E",trim(db_piece(i1))=="e"/))
-       DB_plan_todo_EWZ(n_qp_db,2)=any((/trim(db_piece(i1-1))=="W",trim(db_piece(i1))=="w"/))
-       DB_plan_todo_EWZ(n_qp_db,3)=any((/trim(db_piece(i1-1))=="Z",trim(db_piece(i1))=="z"/))
+       do i2=i1-3,i1-1
+         if (.not. DB_plan_todo_EWZ(n_qp_db,1)) &
+&           DB_plan_todo_EWZ(n_qp_db,1)=any((/trim(db_piece(i2))=="E",trim(db_piece(i2))=="e"/))
+         if (.not. DB_plan_todo_EWZ(n_qp_db,2)) &
+&           DB_plan_todo_EWZ(n_qp_db,2)=any((/trim(db_piece(i2))=="W",trim(db_piece(i2))=="w"/))
+         if (.not. DB_plan_todo_EWZ(n_qp_db,3)) &
+&           DB_plan_todo_EWZ(n_qp_db,3)=any((/trim(db_piece(i2))=="Z",trim(db_piece(i2))=="z"/))
+       enddo
        !
        if (n_qp_db==1) qp_db_name=dummy_db_name
        if (n_qp_db> 1) qp_db_name=string_pack(trim(qp_db_name),"+",trim(dummy_db_name))
@@ -227,10 +232,6 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
 &      QP_check_if_corrected(band_range,(/1,en%nk/),(/1,n_sp_pol/),en,'Z')) l_plan_todo_EWZI(3)=.false.
    if (GFs_from_DB.and.&
 &      QP_check_if_corrected(band_range,(/1,en%nk/),(/1,n_sp_pol/),en,'G')) GFs_from_DB=.false.
-   !
-   !DEBUG >
-   l_plan_todo_EWZI(3)=.false.
-   !DEBUG <
    !
    if (.not.any(l_plan_todo_EWZI).and..not.GFs_from_DB) then
      QP_load_DB=-1

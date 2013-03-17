@@ -36,8 +36,10 @@ module BS
  integer :: BS_k_and_row_restart(2)
  real(SP):: BS_eh_en(2)
  real(SP):: BS_eh_win(2)
+ real(SP):: BS_drude_f_eh
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
+ logical :: BS_anti_res
  logical :: BS_res_K_exchange
  logical :: BS_res_K_corr
  logical :: BS_cpl_K_exchange
@@ -45,6 +47,7 @@ module BS
  logical :: BS_K_is_ALDA
  logical :: BS_DB_is_fragmented
  logical :: BS_not_const_eh_f
+ character(schlen) :: BSE_mode
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
  integer    , allocatable :: BS_eh_table(:,:)
@@ -53,7 +56,7 @@ module BS
  complex(SP), allocatable :: BS_cpl_mat(:,:)
  real(SP)   , allocatable :: BS_eh_E(:)
  real(SP)   , allocatable :: BS_eh_f(:)
- real(SP)   , allocatable :: BS_eh_Z(:)
+ complex(SP), allocatable :: BS_eh_Z(:)
  real(SP)   , allocatable :: BS_eh_W(:)
  !
  ! Oscillators ...

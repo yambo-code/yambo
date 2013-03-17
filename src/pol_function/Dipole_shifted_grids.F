@@ -118,15 +118,6 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  wf_ng_eff = min(wf_ng_save,wf_ng_shifted)
  !
-#if defined _MANYK
- !
- ! {k} Allocate k-dependent local copies of unshifted WF grid. 
- !
- allocate(wf_state_local( X%ib(2), nkibz_save, n_spin ), stat=err )
- allocate(wf_local( wf_ng_eff, (X%ib(2)-X%ib(1)+1)*1*n_spin ), stat=err ) 
-
-#else
- !
  ! {k} Save local copy of unshifted WF grid. 
  !
  allocate(wf_local( size(wf,1), size(wf,2) ), stat=err )
@@ -143,7 +134,6 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  call WF_load(0,1,(/ X%ib(1), Xen%nbm /),&
 &                 (/1,num_shifted_grid*Xk%nibz/),&
 &                 space='G',title='-Oscillators/G space (shifted grid)') 
-#endif
  !
  ! Main loop over cartesian directions
  !
@@ -161,24 +151,6 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
    do ik = 1, Xk%nibz   ! Loop over k's in IBZ [1:nkibz]
      !
      ikpq = ik_grid + ik - 1 ! Corresponding k in set of shifted grids
-     !
-#if defined _MANYK
-     !
-     ! Load WFs {k} 
-     !
-     call set_parms(grid='  local',command='  reset')
-     call WF_free()
-     call WF_load(wf_ng_eff,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
-     wf_local(:,:)         = wf(:,:)
-     wf_state_local(:,1:ik,:) = wf_state(:,:,:)
-     !
-     ! Load WFs {k} + q_iq
-     !
-     call set_parms(grid=' shifted',command='  reset')
-     call WF_free()
-     call WF_load(wf_ng_eff,1,(/X%ib(1), Xen%nbm /),&
-&                   (/ikpq,ikpq/),space='G',title='-Oscillators/G space')
-#endif
      !
      do iv = X%ib(1),Xen%nbm
        if (.not.px%element_2D(ik,iv)) cycle

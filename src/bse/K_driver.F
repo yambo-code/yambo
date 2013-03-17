@@ -31,15 +31,15 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
  use BS,             ONLY:BS_bands,BS_q,BS_blk_dim,BS_eh_table,BS_eh_E,BS_eh_f,&
-&                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,&
+&                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,BSS_rhoq0,&
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
-&                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,&
+&                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_eh_en
+&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_eh_en,BSE_mode
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
- use drivers,        ONLY:l_bss,l_bs_fxc,l_alda_fxc,l_td_hf
+ use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PP_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
@@ -56,8 +56,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Work Space
  !
- integer     :: ik,iq,bands_to_correct(2)
  type(X_t)   :: X_tddft
+ integer     :: iq,bands_to_correct(2)
+ integer     :: Max_G_m_G,ik
  integer, external :: eval_G_minus_G
  !
 #if defined _SC
@@ -70,6 +71,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  call X_reset(X_tddft)
  call W_reset(W_bss)
+ ! TDDFT setup
+ call tddft_do_X_W_typs(-1,X_tddft,Xw)
  !
  ! In these two lines I ensure the at least all the metallic
  ! states are included in the X summation
@@ -108,41 +111,36 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! W RL size setup looking at the max index of G-G' 
  !
- if (BS_n_g_W/= eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2))) ) then
-   BS_n_g_W= eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
+ Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
+ if (BS_n_g_W/= Max_G_m_G ) then
+   BS_n_g_W= Max_G_m_G
    call warning (' W size reduced due to symmetry constraints')
    call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
  endif
  !
+ if(l_rpa_IP) then
+   l_bss=.true.
+   BSS_mode=''
+   if(trim(BSE_mode)=='coupling') BSE_mode='causal'
+ endif
+ !
+ if( any((/index(BSS_mode,'h')/=0,index(BSS_mode,'i')/=0/)) &
+&    .and. trim(BSE_mode)=='causal') BSE_mode='resonant'
+ !
+ ! GPL_EXCLUDE_START  
+ !
  if (l_bs_fxc.or.index(BSS_mode,'t')/=0) then
-   !  
-   ! GPL_EXCLUDE_START  
-   !  
    ! Remove the exchange from the BS_mode
    ! if TDDFT Fxc is obtained from K
    !
    if (index(BSS_mode,'t')==0) BS_res_mode=trim( string_remove(BS_res_mode,'x') )
-   BS_cpl_mode=" "
+   BSE_mode='causal'
    call parser('FxcCausal',FXC_is_causal)
-   !
-   ! GPL_EXCLUDE_END
-   !
- else if (l_alda_fxc) then
-   !  
-   ! Remove the correlation from the BS_mode
-   !
-   BS_res_mode=trim( string_remove(BS_res_mode,'c') )
-   BS_cpl_mode=trim( string_remove(BS_cpl_mode,'c') )
    !
  endif
  !
- if (l_td_hf) then
-   !
-   ! In TDHF correlation is replaced with the (d)iagonal bare W
-   !
-   BS_res_mode=trim( string_add(BS_res_mode,'d') )
-   if (index(BS_cpl_mode,'c')/=0) BS_res_mode=trim( string_add(BS_res_mode,'d') ) 
- endif
+ ! GPL_EXCLUDE_END
+ !
  !
  ! Logicals (Drivers)
  !
@@ -151,6 +149,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
  BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
+ BS_anti_res=index(BSE_mode,'c')/=0
  !
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  !
@@ -171,21 +170,27 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n(2)
  !
- ! KERNEL
- !
  iq=BS_q(1)
- ! 
- call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
  !
- ! SOLVER
+ call section('+','Main loop')
  !
+ ! 1. The IP Part (Dipoles and eh-energies)...
+ ! ================
+ call K_IP(iq,Ken,Xk,X_static_pp,W_bss)
+ !
+ ! 2. The KERNEL
+ ! ================
+ if(.not.l_rpa_IP) call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
+ !
+ ! 3. The SOLVER
+ ! =================
  if (l_bss.and.BS_columns==Xk%nibz) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
  !
  ! GPL_EXCLUDE_START
  !
  ! `TDDFT` SOLVER
  !
- if (l_bs_fxc) then
+ if (index(BSS_mode,'t')/=0) then
    !
    call X_duplicate(X_static_pp,X_tddft) ! initialize X_tddft to X_static_pp
    !
@@ -213,9 +218,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! CLEAN
  !
- deallocate(BS_blk_dim,BS_eh_table,BS_eh_E,BS_eh_f)
- if (allocated(BS_eh_W)) deallocate(BS_eh_W)
- if (allocated(BS_eh_Z)) deallocate(BS_eh_Z)
- call mem_est("BS_blk_dim BS_eh_table BS_eh_E BS_eh_f BS_eh_W BS_eh_Z")
+ deallocate(BSS_rhoq0,BS_blk_dim)
+ call mem_est("BS_blk_dim BSS_rhoq0")
+ !
+ if (allocated(BS_eh_table)) deallocate(BS_eh_table)
+ if (allocated(BS_eh_E))     deallocate(BS_eh_E)
+ if (allocated(BS_eh_f))     deallocate(BS_eh_f)
+ if (allocated(BS_eh_W))     deallocate(BS_eh_W)
+ if (allocated(BS_eh_Z))     deallocate(BS_eh_Z)
+ call mem_est("BS_eh_table BS_eh_E BS_eh_f BS_eh_W BS_eh_Z")
  !
 end subroutine

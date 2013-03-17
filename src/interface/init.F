@@ -48,13 +48,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,QP_nk,&
 &                         QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,X_duplicate,X_reset
- use stderr,         ONLY:tty_size,logfile
+ use stderr,         ONLY:tty_size,logfile,string_add
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:ioWF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
  use TDDFT,          ONLY:ioBS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BSS_mode,BSS_q0,&
-&                         BS_eh_en,BS_res_mode,BS_cpl_mode
+&                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode
 #if defined _DISTRIBUTED
  use BS,             ONLY:ioBS_DISTRIBUTED
 #endif
@@ -75,6 +75,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
  !
  implicit none
+ !
  type(levels) ::en        
 #if defined _SC
  type(levels) ::en_sc
@@ -94,6 +95,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
  logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
+ character(6)      :: X_size
  !
  integer, external :: ioE_RIM
  !
@@ -123,9 +125,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _RT
  what_is_running='YAMBO_RT'
-#endif
-#if defined _MANYK 
- what_is_running='YAMBO_MANYK'
 #endif
 #if defined _MAGNETIC
  what_is_running='YAMBO_MAGNETIC'
@@ -427,7 +426,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh')
+ call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh EvalMagn')
  !
  !FFT
  !
@@ -455,30 +454,90 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs')  
  !
- ! Optics(not bse) nor GW (no PP)
+ ! TDDFT
  !
- if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
-   call QP_ctl_switch('X')
-   call initactivate(1,'ShiftedPath Qdirection QShiftOrder')
-#if defined _SC
-   call initactivate(1,'Gauge OCCTime')
-#endif
-   call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
-&                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
-&                  'DrudeW','EhEngy','LongDr'/))
+ if (l_optics.and.l_chi) then
+   !
+   ! GPL_EXCLUDE_START
+   !
+   ! BS based TDDFT (BS fxc is only of q=0 0 0). BS_fxc db exist
+   if(l_bs_fxc) call initactivate(1,'FxcGRLc FxcSVdig FxcCausal')
+   !
+   ! GPL_EXCLUDE_END
+   !
+   !
+   ! ALDA/LRC Tddft
+   if (l_alda_fxc) call initactivate(1,'FxcGRLc')
+   if (l_lrc_fxc)  call initactivate(1,'LRC_alpha LRC_beta')
    !
  endif
  !
- ! BSE 
+ ! Optics(not bse) nor GW (no PP)
+ !
+ if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
+   X_size='NGsBlk'
+   if(l_rpa_IP) X_size='      '
+   call X_activate('Xd',(/X_size,'QpntsR','BndsRn',&
+&                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
+&                  'DrudeW','EhEngy','LongDr'/))
+   !
+   !
+   call QP_ctl_switch('X')
+   call initactivate(1,'ShiftedPath Qdirection QShiftOrder')
+   !
+#if defined _SC
+   call initactivate(1,'Gauge OCCTime')
+#endif
+   !
+ endif
+ !
+ ! BSE
  !
  if (l_optics.and.l_bse) then
    call QP_ctl_switch('K')
+   !
+                     call initactivate(1,'BSEmode')
+   if(.not.l_rpa_IP) call initactivate(1,'BSENGexx ALLGexx')
+   !
+   if(l_td_hf.or.l_W_eh) call initactivate(1,'BSENGBlk')
+   if(l_W_eh)            call initactivate(1,'WehDiag')
+   !
    call initactivate(1,'ShiftedPath')
 #if defined _SC
    call initactivate(1,'Gauge')
 #endif
-   call initactivate(1,'BSresKmod BScplKmod BSEQptR BSEBands')
-   call initactivate(1,'BSENGBlk BSENGexx ALLGexx BSEEhEny BSEClmns BSehWind')
+   call initactivate(1,'DrudeW')
+   call initactivate(1,'BSAres BSEQptR BSEBands BSEEhEny BSehWind BSEClmns')
+   !
+   ! BSE + TDDFT = no BS db, Fxc + LF on-fly
+   ! Special case: The BSE equation is used to build up the BSE_Fxc kernel.
+   if (l_bs_fxc) then
+     call initactivate(1,'FxcGRLc FxcSVdig FxcCausal FxcMEStps')
+     call initactivate(1,'BLongDir BEnRange BDmRange BEnSteps')
+   endif
+   !
+ endif
+ !
+ ! BSE solver
+ !
+ if (l_bss.or.(l_rpa_IP.and.l_bse)) then
+   !
+   ! Special case: the BSE_Fxc kernel has been constructed
+   !               Thus I move to g-space to solve the Dyson equation
+   if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGexx ALLGexx')
+   if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk')
+   !
+   call QP_ctl_switch('K')
+   call initactivate(1,'BoseCut ShiftedPath')
+   call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir')
+   if(l_rpa_IP) call initactivate(-1,'BSSmod')
+   !
+   if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
+   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
+   if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipFullInv')
+   !
+   ! Special project dependent variables
+   !
 #if defined _ELPH 
    if (l_ph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
 #endif
@@ -565,6 +624,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
  endif
  !
+ if(l_alda_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/)) ) call initactivate(1,'FxcGRLc')
+ if( l_lrc_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/)) ) call initactivate(1,'LRC_alpha LRC_beta')
+ !
  ! El-Ph: Frohlich Hamiltonian
  !
  ! GPL_EXCLUDE_START
@@ -579,43 +641,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- ! Optics + BS based TDDFT (BS fxc is only of q=0 0 0)
- !
- if (l_bs_fxc.and.l_optics.and.l_chi) call initactivate(1,'FxcGRLc FxcSVdig FxcCausal')
- !
- ! ALDA/LRC Tddft
- !
- if (l_alda_fxc.and.&
-&    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/))) &
-&    call initactivate(1,'FxcGRLc')
- if (l_lrc_fxc.and.any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,&
-&                        l_cohsex,l_gw0/))) call initactivate(1,'LRC_alpha LRC_beta')
- !
- ! BSE + TDDFT = no BS db, Fxc + LF on-fly
- !
- if (l_bs_fxc.and.l_bse) then
-   call initactivate(1,'BLongDir BEnRange BDmRange BEnSteps')
-   call initactivate(1,'FxcGRLc FxcSVdig FxcCausal FxcMEStps')
-   call initactivate(-1,'BScplKmod')
- endif
- !
- ! BSE + ALDA TDDFT = no correlation
- !
- if (l_alda_fxc.and.l_bse) then
-   call initactivate(-1,'BSENGBlk BSEEhEny BSEClmns BSehWind')
- endif
- !
- ! BSE solver
- !
- if (l_bss) then
-  call QP_ctl_switch('K')
-  call initactivate(1,'BoseCut ShiftedPath')
-  call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir')
-  if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
-  if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
-  if (index(BSS_mode,'t')/=0)  call initactivate(1,'FxcGRLc FxcSVdig FxcMEStps FxcCausal')
-  if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode')
- endif
  !
  ! DFT
  !
@@ -808,27 +833,31 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_optics=runlevel_is_on('optics')
        l_chi=runlevel_is_on('chi')
        l_bse=runlevel_is_on('bse')
-       l_rim=runlevel_is_on('rim_cut')
-       l_col_cut=runlevel_is_on('rim_cut')
-       l_HF_and_locXC=runlevel_is_on('HF_and_locXC')
+       l_rpa_IP=runlevel_is_on('IP')
+       l_td_hartree=runlevel_is_on('tdh')
+       l_tddft=runlevel_is_on('tddft')
+       l_alda_fxc=runlevel_is_on('alda_fxc')
+       l_lrc_fxc=runlevel_is_on('lrc_fxc')
+       l_bs_fxc=runlevel_is_on('bs_fxc')
+       l_W_eh=runlevel_is_on('W_eh')
+       l_td_hf=runlevel_is_on('tdhf')
+       l_bss=runlevel_is_on('bss')
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
        l_ppa=runlevel_is_on('ppa')
+       l_HF_and_locXC=runlevel_is_on('HF_and_locXC')
        l_gw0=runlevel_is_on('gw0')
-       l_bss=runlevel_is_on('bss')
-       l_alda_fxc=runlevel_is_on('alda_fxc')
-       l_lrc_fxc=runlevel_is_on('lrc_fxc')
-       l_td_hf=runlevel_is_on('tdhf')
        l_life=runlevel_is_on('life')
+       l_rim=runlevel_is_on('rim_cut')
+       l_col_cut=runlevel_is_on('rim_cut')
+       l_cohsex=runlevel_is_on('cohsex')
        !
        ! GPL_EXCLUDE_START
        ! 
-       l_bs_fxc=runlevel_is_on('bs_fxc')
        l_acfdt=runlevel_is_on('acfdt')
        !
        ! GPL_EXCLUDE_END
        !
-       l_cohsex=runlevel_is_on('cohsex')
        ! 
 #if defined _SC
        l_sc_run=runlevel_is_on('scpot')
@@ -905,8 +934,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_gw0.and.l_el_corr) call initactivate(1,'HF_and_locXC')
      if (l_ppa)    call initactivate(1,'em1d')
      if (l_cohsex) call initactivate(1,'em1s')
-     if (l_bss)    call initactivate(1,'bse')
-     if (l_bss)    call initactivate(1,'l_optics')
+     !if (l_bss)    call initactivate(1,'bse')
+     !if (l_bss)    call initactivate(1,'l_optics')
      if (l_bse) then
        !
        if (l_alda_fxc) BS_res_mode='x'     
@@ -950,8 +979,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
      if (l_em1s) Xw(2)%dr=0.001/HA2EV
      !
-     if (len_trim(BS_cpl_mode)==0) BS_cpl_mode="none"
-     if (len_trim(BS_res_mode)==0) BS_res_mode="none"
+     if (len_trim(BSE_mode)==0) BSE_mode="causal"
+     !
+     if (l_bse) then
+       if (l_rpa_IP)                   BS_res_mode='none'
+       if (l_td_hartree)               BS_res_mode='x'
+       if (l_alda_fxc)                 BS_res_mode='x'
+       if (l_td_hf)                    BS_res_mode='xcd'
+       if (l_W_eh)                     BS_res_mode='xc'
+       if (l_W_eh_diagonal)            BS_res_mode=trim(string_add(BS_res_mode,'d'))
+       if (trim(BSE_mode)=="coupling") BS_cpl_mode=trim(BS_res_mode)
+     endif
      !
      ! When running BSE from input file l_bse is FALSE in varsetup1.
      ! In any case I have to overwrite X(2) with PP X(4) only if em1s=F
@@ -1078,44 +1116,53 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          end select
        endif
        !
-       ! TDDFT
-       !
-       if ( trim(rstr_piece(i1)) == 'tddft' )  then
-         l_alda_fxc=  trim(rstr_piece(i1+1)) == 'a'
-         !
-         ! GPL_EXCLUDE_START
-         !
-         l_bs_fxc= trim(rstr_piece(i1+1)) == 'b'
-         !
-         ! GPL_EXCLUDE_END
-         !
-         l_lrc_fxc= trim(rstr_piece(i1+1)) == 'l'
-         if (.not.l_alda_fxc.and..not.l_bs_fxc.and..not.l_lrc_fxc) l_alda_fxc=.true.
-         if (l_alda_fxc)  call initactivate(1,'alda_fxc optics')
-         if (l_lrc_fxc)   call initactivate(1,'lrc_fxc chi optics')
-         !
-         ! GPL_EXCLUDE_START
-         !
-         if (l_bs_fxc)  call initactivate(1,'bs_fxc optics')
-         !
-         ! GPL_EXCLUDE_END
-         !
-         infile_editing=.true.
-       endif
-       !
        ! BSE/LLR
        !
        if ( trim(rstr_piece(i1)) == 'optics' )  then
-         l_chi= trim(rstr_piece(i1+1)) == 'c'
-         l_bse= trim(rstr_piece(i1+1)) == 'b'
-         !
-         l_td_hf= trim(rstr_piece(i1+1)) == 't'
-         if (l_td_hf) l_bse=.TRUE.
-         if (l_td_hf) call initactivate(1,'tdhf')
+         l_chi= (trim(rstr_piece(i1+1))=='g' ).or.(trim(rstr_piece(i1+1))=='c')
+         l_bse= (trim(rstr_piece(i1+1))=='eh').or.(trim(rstr_piece(i1+1))=='b')
          !
          if (.not.l_chi.and..not.l_bse) l_chi=.true.
+         !
+         call initactivate(1,'optics')
          if (l_chi) call initactivate(1,'chi')
          if (l_bse) call initactivate(1,'bse')
+         !
+       endif
+       !
+       ! Approximation used for the BSE/LLR kernel
+       !
+       if ( trim(rstr_piece(i1)) == 'kernel' )  then
+         l_rpa_IP     = trim(rstr_piece(i1+1)) == 'i'   ! IP
+         l_td_hartree = trim(rstr_piece(i1+1)) == 'h'   ! TDHartree = Local-Fields
+         !
+         l_tddft      = index(rstr_piece(i1+1),'d')==1  ! TDDFT
+         !
+         if(l_tddft) then
+           l_alda_fxc = .true.                            !  (ALDA by default)
+           l_alda_fxc = trim(rstr_piece(i1+1)) == 'da'
+           l_lrc_fxc  = trim(rstr_piece(i1+1)) == 'dl'.and.l_chi
+           l_bs_fxc   = trim(rstr_piece(i1+1)) == 'db'
+         endif
+         !
+         if(l_bse) then
+           l_td_hf    = trim(rstr_piece(i1+1)) == 'hf'  ! TDHF
+           l_W_eh     = trim(rstr_piece(i1+1)) == 'w'   ! W-eh screened interaction interaction
+         endif
+         !
+         if(l_rpa_IP)      call initactivate(1,'IP')
+         if(l_td_hartree)  call initactivate(1,'tdh')
+         !
+         if(l_tddft) then
+                           call initactivate(1,'tddft')
+           if(l_alda_fxc)  call initactivate(1,'alda_fxc')
+           if(l_lrc_fxc)   call initactivate(1,'lrc_fxc')
+           if(l_bs_fxc)    call initactivate(1,'bs_fxc')
+         endif
+         !
+         if(l_td_hf)       call initactivate(1,'tdhf')
+         if(l_W_eh)        call initactivate(1,'W_eh')
+         !
        endif
        !
        ! BSE Solver

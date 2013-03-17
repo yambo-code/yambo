@@ -121,9 +121,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! Main loop over k in IBZ
  !
  do ik=1,Xk%nibz
-#if defined _MANYK
-   call WF_load(0,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
-#endif
    !
    ! [Vnl,r]
    !

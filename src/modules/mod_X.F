@@ -54,6 +54,7 @@ module X_m
  ! Absorption & Polarizability
  !
  complex(SP), allocatable :: X_epsilon(:,:)
+ complex(SP), allocatable :: X_drude_term(:)
  complex(SP), allocatable :: X_fxc(:)
  !
  ! Response function
@@ -63,6 +64,7 @@ module X_m
  integer ,    allocatable :: X_RLcomp_ig(:)
  complex(SP), allocatable :: X_mat(:,:,:)
  integer :: current_iq
+ integer :: iw_ref
  integer :: X_RIM_nkpts
  logical :: half_X_mat_only
  logical :: self_detect_E_range

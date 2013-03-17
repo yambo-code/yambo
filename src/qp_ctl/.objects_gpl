@@ -1,2 +1,3 @@
 objs= mod_QP_CTL.o QP_load_DB.o QP_check_if_corrected.o QP_fit_DB_values.o \
-      QP_apply_DB_interpolation.o QP_apply_global_stretch.o QP_merge_DBs.o
+      QP_apply_DB_interpolation.o QP_apply_global_stretch.o QP_merge_DBs.o \
+      Nearest_level_interpolation.o

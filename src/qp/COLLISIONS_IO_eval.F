@@ -21,19 +21,19 @@
 !
 subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  !
- use drivers,       ONLY:l_HF_and_locXC,l_cohsex
+ use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_carrier_dynamics 
  use com,           ONLY:error
  use pars,          ONLY:schlen,SP,IP
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev
- use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk,COHSEX_use_empties,QP_n_G_bands,QP_t,QP_state
+ use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk,COHSEX_use_empties,QP_n_G_bands,QP_state
  use wave_func,     ONLY:WF_free
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands
  use global_XC,     ONLY:SC_HF,SC_COHSEX
  use collisions_IO, ONLY:V_kind,collisions_IO_alloc,collisions_IO_free,TEMP_COLLISIONS_v,&
-&                        io_COLLISIONS 
+&                        io_COLLISIONS,collisions_RANGES_setup,COLLISIONS_range
  use X_m,           ONLY:X_t
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
@@ -48,9 +48,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  !
  ! WorkSpace
  !
- integer, external ::eval_G_minus_G
  integer           ::ID
- type(QP_t)        ::qp_dummy
  character(schlen) ::ch
  !
  call section('*','Extended collisions')
@@ -66,7 +64,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  !
  ! Check for the Time Reversal Symmetry
  !
- if(i_time_rev==1) call error(" COLLISIONS not compatible with Time Reversal Symmetry! ")
+ if (i_time_rev==1) call error(" COLLISIONS not compatible with Time Reversal Symmetry! ")
  !
  ! No DB => EVAL
  !===============
@@ -76,7 +74,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  allocate(fragment_status(QP_n_states))
  call mem_est("fragment_status",(/QP_n_states/),(/IP/))
  !
- if (l_HF_and_locXC) then
+ if (l_HF_and_locXC.and..not.l_carrier_dynamics) then
    !
    call section('+','Hartree-Fock')
    !================================
@@ -84,6 +82,8 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
    V_kind=SC_HF
    fragment_status=-1
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+   !
+   call collisions_RANGES_setup()
    !
    if (io_COLLISIONS(0,ID)/=0) then
      allocate(TEMP_COLLISIONS_v(QP_nb,QP_nb,QP_nk))
@@ -93,6 +93,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
      call report_disk_usage('HF')
      !
      call XCo_Hartree_Fock(E,k,xk,q)
+     !
    endif
    !
  endif
@@ -102,26 +103,30 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
    if (l_HF_and_locXC)      call section('=','COHSEX')
    if (.not.l_HF_and_locXC) call section('+','COHSEX')
    !                        ==========================
-   !
    V_kind=SC_COHSEX
    fragment_status=-1
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    !
    if (io_COLLISIONS(0,ID)/=0) then
      !
-     X(2)%ng=eval_G_minus_G(X(2)%ng,0)
      QP_n_G_bands(2)=SC_bands(2)
      COHSEX_use_empties=.TRUE.
+     !  
+     ! RL vectors to dimension the COLLISIONS
+     !  
+     call collisions_RANGES_setup()
      !
      if (.not.allocated(TEMP_COLLISIONS_v)) then
-       allocate(TEMP_COLLISIONS_v(SC_bands(1):QP_nb,SC_bands(1):QP_nb,QP_nk))
+       allocate(TEMP_COLLISIONS_v(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
+&                                 COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
+&                                 COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
        call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
        call collisions_IO_alloc()
      endif
      !
      call report_disk_usage('COHSEX')
      !
-     call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1) 
+     call COLLISIONS_IO_cohsex(X(2),Xk,E,k,q,Xw(2)) 
      !
    endif
    !

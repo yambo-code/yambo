@@ -19,9 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_initialize(Xen,q)
+subroutine RT_initialize(E,k,q)
  ! 
- use drivers,        ONLY:l_collisions_IO,l_ph_corr 
+ use drivers,        ONLY:l_collisions_IO,l_ph_corr,l_carrier_dynamics
  use SC,             ONLY:local_V,SC_bands
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
@@ -30,25 +30,30 @@ subroutine RT_initialize(Xen,q)
  use electrons,      ONLY:nel,levels,BZ_RIM_nbands
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
-&                         l_RT_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,     &
+&                         l_RT_diamagnetic,RT_IO_steps,RT_IO_time,l_NE_simulate_BSE,&
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
 &                         l_RT_induced_field,NE_Hxc_jumps,l_NE_simulate_TDDFT,      &
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
-&                         Phase_LifeTime,RT_ave_dephasing,NE_MEM_Treshold,NE_MEM_steps
+&                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
+&                         NE_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,            &
+&                         l_RT_skip_JandP_IO,RT_q_px,l_G_retarded_DB,Gr_kind,Gr_bands
+ use interfaces,     ONLY:PARALLEL_index
+ use parallel_m,     ONLY:PP_indexes_reset
  use D_lattice,      ONLY:DL_vol
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,nkibz
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
  use X_m,            ONLY:use_X_RIM
  use parser_m,       ONLY:parser
  implicit none
  !
- type(levels), intent(in) :: Xen
- type(bz_samp),intent(in) :: q
+ type(levels), intent(in) :: E
+ type(bz_samp),intent(in) :: q,k
  !
  ! Work space
  !
- integer                  :: i1,rest
+ integer                  :: i1,rest,nk_todo
+ integer, external        :: RT_phase_space
  character(5)             :: MSG_ch
  real(SP)                 :: Fluence,T_memory
  !
@@ -59,13 +64,23 @@ subroutine RT_initialize(Xen,q)
  call parser('InducedField' ,l_RT_induced_field)
  call parser('RTfreezeH',    Hfrozen)
  call parser('RTfreezeXC',   XCfrozen)
+ call parser('SkipGFIO',     l_RT_skip_GF_IO)
+ call parser('SkipOCCIO',    l_RT_skip_OCC_IO)
+ call parser('SkipJPIO',     l_RT_skip_JandP_IO)
  !
  l_NE_simulate_BSE     =.FALSE.
  l_NE_simulate_TDDFT   =.FALSE.
  !
+ l_G_retarded_DB=Gr_bands(1)>0
+ !
+ if (l_G_retarded_DB) then
+   l_G_retarded_DB=l_carrier_dynamics.or.l_ph_corr
+   if (Gr_bands(1)>SC_bands(1).or.Gr_bands(2)<SC_bands(2)) l_G_retarded_DB=.FALSE.
+ endif
+ !
  l_RT_diagonalize      =RT_diagonalization_steps>1
  !
- call UPDATE_flags()
+ call UPDATE_flags(.FALSE.)
  !
  ! If I am doing a NE loop in all cases I need to evaluate XC or Hartree correspoding to the
  ! starting basis. During the thermalization, instead, the potentials are updated
@@ -78,18 +93,31 @@ subroutine RT_initialize(Xen,q)
  if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step))
  !
  ! Set a number of steps compatible with the cache.
- ! Negative max_rt_steps_disk means no I/O
- !=================================================
+ ! Negative value forces the step to be set automatically
+ !========================================================
  !
- if(max_rt_steps_disk>0.and.mod(Thermal_steps+NE_steps,max_rt_steps_disk)/=0) then
-   rest=mod(Thermal_steps+NE_steps,max_rt_steps_disk)
+ if (RT_IO_time>0) RT_IO_steps=nint(RT_IO_time/RT_step)
+ !
+ if(RT_IO_steps>0.and.mod(Thermal_steps+NE_steps,RT_IO_steps)/=0) then
+   !
+   rest=mod(Thermal_steps+NE_steps,RT_IO_steps)
    if(NE_steps/=0) then
-     NE_steps = NE_steps+max_rt_steps_disk-rest
+     NE_steps = NE_steps+RT_IO_steps-rest
    elseif (NE_steps==0.and.Thermal_steps/=0) then
-     Thermal_steps = Thermal_steps+max_rt_steps_disk-rest
+     Thermal_steps = Thermal_steps+RT_IO_steps-rest
    endif
- else if (max_rt_steps_disk<0) then
-   max_rt_steps_disk=NE_steps+1
+   !
+   ! Set automatically RT_IO_time and RT_IO_steps 
+   !
+ else if (RT_IO_time<0) then
+   RT_IO_time =max(NE_tot_time/1000.,RT_step)
+   RT_IO_steps=nint(RT_IO_time/RT_step)
+   if (RT_IO_steps_DB>0.and.RT_IO_steps/=RT_IO_steps_DB) then
+     call warning('IO steps read from the existing databases')
+     RT_IO_steps=RT_IO_steps_DB
+     RT_IO_time =RT_IO_steps*RT_step
+   endif
+   !
  endif
  !
  NE_tot_time=RT_step*NE_steps
@@ -102,9 +130,9 @@ subroutine RT_initialize(Xen,q)
  !
  call section('=','Dephasing matrix setup')
  !
- call RT_Dephasing_Matrix(Xen)
+ call RT_Dephasing_Matrix(E) 
  !
- if (.not.associated(Xen%W).and.l_ph_corr) then
+ if (.not.RT_is_dumped.and.l_ph_corr) then
   l_ph_corr=.FALSE.
   call warning('No QP lifetime provided. El-Ph scattering switched off')
  endif
@@ -114,7 +142,7 @@ subroutine RT_initialize(Xen,q)
  !
  T_memory=0._SP
  if (l_ph_corr.and.NE_MEM_Treshold>0.) then
-   T_memory=-1./minval( abs(Xen%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_Treshold)
+   T_memory=-1./minval( abs(E%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_Treshold)
    NE_MEM_steps=T_memory/RT_step
  endif
  !
@@ -144,8 +172,11 @@ subroutine RT_initialize(Xen,q)
      !
      call SC_check_symmetries(Efield(i1)%versor)
      !
-     if(Efield(i1)%ef_name/='DELTA'.and.(Efield(i1)%frequency(1)==0._SP.and.Efield(i1)%damping==0)) &
-&      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero frequency and damping.")
+     if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%frequency(1)==0._SP) &
+&      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero frequency.")
+     !
+     if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%damping==0) &
+&      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero damping.")
      ! 
      if(Efield(i1)%intensity==0._SP) &
 &      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
@@ -166,10 +197,22 @@ subroutine RT_initialize(Xen,q)
  ! E_RIM
  ! ==============
  ! IP phase factores averaged  with E_RIM
+ !
  use_X_RIM=BZ_RIM_nbands/=0.and.SC_bands(1)<BZ_RIM_nbands               
  if (RT_is_dumped.and.use_X_RIM) then
    call warning('E_RIM and damping not compatible. Switching off E_RIM')
    use_X_RIM=.false.
+ endif
+ !
+ if (l_ph_corr.or.l_carrier_dynamics) then
+   !
+   ! Pre-allocation of CPU tables
+   !==============================
+   !
+   call PP_indexes_reset(RT_q_px)
+   !
+   call PARALLEL_index(RT_q_px,(/q%nbz/))
+   !
  endif
  !
 #if defined _ELPH
@@ -177,12 +220,24 @@ subroutine RT_initialize(Xen,q)
  ! Electron-phonon
  ! ===============
  !
- call RT_ELPH_initialize(q)
+ if (l_ph_corr) then
+   !
+   call section('=','El-Ph matrix elements loading and setup')
+   !                 =======================================
+   call RT_ELPH_initialize(k,q)
+   !
+ endif
  !
 #endif
  !
+ call section('=','Phase space check')
+ !
+ nk_todo=RT_phase_space(E,q)
+ !
+ if (nk_todo==0) call error('Too narrow energy window on evolved k-points')
+ !
  ! LOG
- !=====
+ ! ===
  !
  call section('=','Messaging')
  !
@@ -193,11 +248,13 @@ subroutine RT_initialize(Xen,q)
  call msg( 'r', '[RT] Memory depth           [fs]:',T_memory/FS2AUT)
  call msg( 'r', '[RT] Memory steps               :',NE_MEM_steps)
  call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
+ call msg( 'r', '[RT] K-points evolved      [o/o]:',real(nk_todo)/real(nkibz)*100.)
  call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)
  call msg( 'r', '[RT] Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000._SP/))
  call msg( 'r', '[RT] Damping (Radiative)[fs/meV]:',(/RAD_LifeTime/FS2AUT,   HBAR_eVfs/RAD_LifeTime*FS2AUT*1000._SP/))
  if(NE_steps>0) then
    call msg('rn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
+   call msg('r', '[RT] Time between I/O`s     [fs]:',RT_IO_time/FS2AUT)
    call msg('rn','[RT] Electron-gas plasma frequency [eV]:',sqrt(4._SP*pi*nel/DL_vol)*HA2EV)
  endif
  call msg('r', '[RT] Pump/Probe periodicity     [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
@@ -219,13 +276,13 @@ subroutine RT_initialize(Xen,q)
  ! Fluence
  !=========
  if (l_NE_with_fields) then
-   call RT_Fluence(Fluence)
+   call RT_Fluence(Fluence,NE_steps)
    call msg('rn','[RT] Fluence               [kJ/cm^2]:',Fluence)
  endif
  !
  ! Generalized Rabi Function
  !============================
- if (l_NE_with_fields) call RT_Rabi_Function(Xen,Efield(i_Pump))
+ if (l_NE_with_fields) call RT_Rabi_Function(E,Efield(i_Pump))
  !
  ! If the gauge is length I need E(t) whose definition includes a delta(t). 
  ! The numerical definition of delta(t) in mod_fields depends on the 
@@ -236,8 +293,6 @@ subroutine RT_initialize(Xen,q)
  ! 
  if (trim(global_gauge) == 'length' ) theta_function_iTo_ref=0
  !
- if(RT_ave_dephasing/=0._SP) call DephMatrix_setup() 
- !
  ! Checking extended COLLISIONS
  !==============================
  !
@@ -245,25 +300,33 @@ subroutine RT_initialize(Xen,q)
  !
  call COLLISIONS_IO_load(.TRUE.)
  !
- call UPDATE_flags()
+ call UPDATE_flags(.TRUE.)
  !
  if(NE_steps>0) then
    call msg('nr','[RT] Simulate IP                :',l_NE_simulate_IP)
    call msg( 'r','[RT] Simulate RPA               :',l_NE_simulate_RPA)
    call msg( 'r','[RT] Simulate BSE               :',l_NE_simulate_BSE)
    call msg( 'r','[RT] Simulate TD-DFT            :',l_NE_simulate_TDDFT)
+   call msg( 'r','[RT] Carriers El-ph scattering  :',l_ph_corr)
+   call msg( 'r','[RT] Carriers El-El scattering  :',l_carrier_dynamics)
+   if (l_G_retarded_DB) call msg( 'r','[RT] Retareded Green`s function :',Gr_kind)
    call msg( 'r','[SC] Extended collisions I/O    :',l_collisions_IO)
-   call msg( 'r','[SC] Electron-phonon scattering :',l_ph_corr)
  endif
  !
  contains
    !
-   subroutine UPDATE_flags()
+   subroutine UPDATE_flags(COLLISIONS_checked)
      !
-     if (l_collisions_IO) then
-       XCfrozen=.FALSE.
-       if (Hfrozen) call warning('COLLISIONS used but Hartree frozen')
+     logical :: COLLISIONS_checked
+     !
+     if (COLLISIONS_checked) then
+       if (l_collisions_IO.and..not.l_carrier_dynamics) then
+         XCfrozen=.FALSE.
+         if (Hfrozen) call warning('COLLISIONS used but Hartree frozen')
+       endif
      endif
+     !
+     if (l_carrier_dynamics) XCfrozen=.TRUE.
      !
      l_NE_simulate_RPA     =.not.Hfrozen.and.     XCfrozen
      l_NE_simulate_IP      =     Hfrozen.and.     XCfrozen

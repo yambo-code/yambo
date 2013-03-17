@@ -29,7 +29,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  use LOGO,          ONLY:code_version,code_revision
  use com,           ONLY:msg,warning
  use stderr,        ONLY:string_split
- use D_lattice,     ONLY:Tel,a,alat,input_Tel_commands_over_header,Bose_Temp
+ use D_lattice,     ONLY:Tel,a,alat,input_Tel_is_negative,Bose_Temp
  use electrons,     ONLY:n_sp_pol,n_spinor
  use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt,cut_description
  use wave_func,     ONLY:wf_ng
@@ -206,7 +206,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_bulk(ID,VAR="HEAD_KPT",VAR_SZ=(/nkibz_disk,3/))
    call io_bulk(ID,R2=l_pt)
    !
-   if (read_is_on(ID).and.allocated(k_pt)) then
+   if (read_is_on(ID).and.allocated(k_pt).and.KPTS) then
      !
      call define_zeros(vector_=k_pt,zero_=local_zero)
      !
@@ -217,9 +217,11 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
        if (WARN) call warning('Wrong K-points coordinates/order')
        goto 1
      endif
+     !
    endif
    !
    deallocate(l_pt)
+   !
  endif
  !
  ! Cutoff
@@ -261,7 +263,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
    !
-   if (input_Tel_commands_over_header) then
+   if (input_Tel_is_negative) then
      Tel      =save_Tel(1)
      Bose_Temp=save_Tel(2)
    endif

@@ -21,22 +21,18 @@
 !
 subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
- use pars,           ONLY:SP,pi,cI
- use units,          ONLY:SPEED_OF_LIGHT,HA2EV
- use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
- use R_lattice,      ONLY:bz_samp,nkibz
- use D_lattice,      ONLY:DL_vol
- use SC,             ONLY:V_hartree_sc,Ho,SC_bands
+ use pars,           ONLY:SP,cI,zero_dfl
+ use units,          ONLY:HA2EV
+ use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex,l_carrier_dynamics
+ use R_lattice,      ONLY:bz_samp
+ use SC,             ONLY:V_hartree_sc,Ho,SC_bands,it_now
  use X_m,            ONLY:P_square
- use electrons,      ONLY:spin_occ
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,l_NE_with_fields, &
-&                         l_NE_simulate_IP ,l_Dynamics_is_over,RT_output,NE_i_time
- use fields,         ONLY:A_vecpot
+&                         l_NE_simulate_IP 
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc,QP_Sc,QP_nk
  use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
- use vec_operate,    ONLY:sort
  !
  implicit none 
  !
@@ -47,13 +43,13 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  ! WorkSpace
  !
- integer     :: i1,indexes(SC_bands(2)*nkibz)
- real(SP)    :: Energies_and_occupations(SC_bands(2)*nkibz,2)
+ real(SP)    :: dG_sign
  !
  ! Shadows
  !
  integer     :: ib,ik
  complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex,E_mg,delta_G
+ real(SP)    :: Fluence
  !      
  E_kin    =(0._SP,0._SP)
  E_ion    =(0._SP,0._SP)
@@ -63,6 +59,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  Ex       =(0._SP,0._SP)
  E_mg     =(0._SP,0._SP)
  delta_G  =(0._SP,0._SP)
+ Fluence  =0._SP
  !
  ! Non-interaction kinetc energy
  !
@@ -83,19 +80,17 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
    !
    call RT_average_operator(VALUE=E_h,O_REAL=V_hartree_sc,G=G_lesser(:,:,:),en=en,k=k)
    !
-   E_h=E_h/2._SP
+   E_h=E_h/2.
    !
  endif
  !
- if(l_sc_hf.or.l_sc_cohsex.and..not.l_NE_simulate_IP) then
+ if(l_sc_hf.or.(l_sc_cohsex.and..not.l_carrier_dynamics).and..not.l_NE_simulate_IP) then
    !
    call RT_average_operator(VALUE=Ex,O_QP=QP_Vnl_xc,G=G_lesser(:,:,:),en=en,k=k)
    !
-   Ex=Ex/2._SP
-   !
  endif
  !
- if(XCfrozen) then
+ if (XCfrozen) then
    !
    ! Notice that XC0_and_HARTREE0 contains the Hartree part only in case
    ! of indipendent particles
@@ -114,7 +109,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
      !
      call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser(:,:,:),en=en,k=k)
      !
-   elseif(l_sc_cohsex) then
+   else if(l_sc_cohsex.and..not.l_carrier_dynamics) then
      !      
      call RT_average_operator(VALUE=Exc,O_QP=QP_Sc,G=G_lesser(:,:,:),en=en,k=k)
      !
@@ -126,7 +121,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  if(l_NE_with_fields) then
    !                    
-   E_mg=DL_vol/(8._SP*pi*SPEED_OF_LIGHT**2)*abs(sum(A_vecpot%vecpot))
+   call RT_Fluence(Fluence,it_now)
    !
  endif
  !
@@ -138,52 +133,33 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! 
  ! In a semiconductor/isolant delta_G is defined as:
  !
- !  delta_G=\sum_c,k (-i G_lesser(c,c,k) + i G_lesser(v,v,k)) w_k
+ !  delta_G=\sum_{n=(c,v),k} (-i G_lesser(v,v,k) + i G_lesser(c,c,k)) w_k=
+ !          \sum_{n=(c,v),k} (f_vk-f_ck) w_k
  !
  ! where conduction and valence are defined with reference to the unperturbed
  ! system.
  !
- ! This definition can be extended to metals 
- !
- !  delta_G=\sum_n,k (-i) G_lesser(n,n,k) w_k ( 1 - 2 f_nk/spin_occ )
+ ! This definition is easily extended to metals 
  !
  do ik=1,en%nk
    do ib=1,SC_bands(2)
+     !
+     dG_sign=1.
+     if (en%f(ib,ik,1)<zero_dfl) dG_sign=-1.
+     !
      if (ib<SC_bands(1)) then
-       delta_G=delta_G-en%f(ib,ik,1)*k%weights(ik)*(1.-2.*en%f(ib,ik,1)/spin_occ)
+       delta_G=delta_G+dG_sign*en%f(ib,ik,1)*k%weights(ik)
      else
-       delta_G=delta_G+cI*G_lesser(ib,ib,ik)*k%weights(ik)*(1.-2.*en%f(ib,ik,1)/spin_occ)
+       delta_G=delta_G-dG_sign*cI*G_lesser(ib,ib,ik)*k%weights(ik)
      endif
+     !
    enddo
  enddo
  !
- if (l_Dynamics_is_over.and.l_NE_with_fields) then
-   !
-   i1=1
-   do ik=1,en%nk
-     do ib=1,SC_bands(1)-1
-       Energies_and_occupations(i1,1)=en%E(ib,ik,1)
-       Energies_and_occupations(i1,2)=en%f(ib,ik,1)
-       i1=i1+1
-     enddo
-     do ib=SC_bands(1),SC_bands(2)
-       Energies_and_occupations(i1,1)=en%E(ib,ik,1)
-       Energies_and_occupations(i1,2)=real(-cI*G_lesser(ib,ib,ik))
-       i1=i1+1
-     enddo
-   enddo
-   !
-   call sort(Energies_and_occupations(:,1),indx=indexes)
-   !
-   do i1=1,SC_bands(2)*en%nk
-     call RT_output('occ',(/Energies_and_occupations(indexes(i1),2)/),E=Energies_and_occupations(i1,1)*HA2EV)
-   enddo
-   !
- endif
- !
  ! Transfer the shadow variables
  !
- on_the_fly_operators=(/E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf,delta_G/)
+ on_the_fly_operators(1:5)=(/E_kin,E_ion,E_h,Ex,Exc/)*HA2EV
+ on_the_fly_operators(6:8)=(/cmplx(Fluence),Trace_Gf,delta_G/)
  !
 end subroutine RT_Observables
 

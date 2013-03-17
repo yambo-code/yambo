@@ -71,7 +71,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
 #if defined _SC 
  !
- if(l_sc_run.or.l_real_time) Dipole_bands_ordered=.FALSE.
+ if (l_sc_run.or.l_real_time) Dipole_bands_ordered=.FALSE.
  !
 #endif
  !
@@ -128,10 +128,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      call WF_states_setup(b_to_load=(/1,X%ib(2)/),report=.true.)
      !
    endif
-   !
-#if !defined _MANYK
-   call WF_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',force_WFo=.true.)
-#endif
    !
    use_trans_gauge = .true.
    !

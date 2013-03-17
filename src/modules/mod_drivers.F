@@ -40,6 +40,7 @@ module drivers
  logical :: l_sc_run
  logical :: l_sc_magnetic
  logical :: l_collisions_IO
+ logical :: l_carrier_dynamics  
  !
  ! The self-energy correlation "kind"
  !

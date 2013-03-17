@@ -119,7 +119,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
    if (i_n==0) FT_title="P(t)"
    if (i_n/=0) FT_title="P(t)-Sum[P_harm^(n<"//trim(intc(i_n))//"])"
    !
-   call RT_1D_Fourier_Transform(" "//trim(FT_title),freqs,P_W,X_rt%energy_steps,P_DP(iT_o:,1),NE_steps-iT_o+1,&
+   call RT_1D_Fourier_Transform('T2W'," "//trim(FT_title),freqs,P_W,X_rt%energy_steps,P_DP(iT_o:,1),NE_steps-iT_o+1,&
 &                               RT_step,iT_o*RT_step,.FALSE.,1)
    !
    do i_w=1,X_rt%energy_steps

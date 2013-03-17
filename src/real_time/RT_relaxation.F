@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_relaxation(G_input,Xen,k,q,Time)
+subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! This subroutine calculate relaxation term coming from off-diagonal part
  ! of the self-energy in time, from the electron-phonon coupling or simple 
@@ -28,17 +28,17 @@ subroutine RT_relaxation(G_input,Xen,k,q,Time)
  ! Output: Sigma_relax
  !
  use pars,           ONLY:SP,cI,cZERO
- use units,          ONLY:HBAR_eVfs,FS2AUT,HA2EV
  use electrons,      ONLY:levels
- use drivers,        ONLY:l_ph_corr
+ use drivers,        ONLY:l_ph_corr,l_carrier_dynamics 
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
- use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix
+ use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
+&                         RT_k_px
  !
  implicit none
  !
- type(levels),  intent(in)    :: Xen
+ type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
  complex(SP),   intent(in)    :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
@@ -46,6 +46,8 @@ subroutine RT_relaxation(G_input,Xen,k,q,Time)
  ! Work Space
  !
  integer          :: i1,i2,ik
+ !
+ Sigma_relax=cZERO
  !
  ! Damping
  !=========
@@ -59,16 +61,20 @@ subroutine RT_relaxation(G_input,Xen,k,q,Time)
  ! This term send the electron distribution into the initial one
  ! G_lesser_refence(:,:,:) 
  !
- if(.not.RT_is_dumped.and..not.l_ph_corr) return 
+ if(.not.RT_is_dumped.and..not.l_ph_corr.and..not.l_carrier_dynamics) return 
  !
- Sigma_relax=cZERO
- !
- if(RT_is_dumped.and.NE_dynamics) then
+ ! El-El
+ !=======
+ if (l_carrier_dynamics) then
    !
-   forall(i1=SC_bands(1):SC_bands(2),i2=SC_bands(1):SC_bands(2)) 
-     Sigma_relax(i1,i2,:)=Sigma_relax(i1,i2,:)-cI*RT_Deph_Matrix(i1,i2,:)*(G_input(i1,i2,:)-G_lesser_reference(i1,i2,:))
-   end forall
+   do ik=1,QP_nk
      !
+     if (.not.RT_k_px%element_1D(ik)) cycle
+     !
+     call RT_Coulomb_relaxation(ik,E,k,q) 
+     !
+   enddo
+   !
  endif
  !
 #if defined _ELPH
@@ -76,11 +82,29 @@ subroutine RT_relaxation(G_input,Xen,k,q,Time)
  ! El-Ph
  !=======
  if (l_ph_corr) then
+   !
    do ik=1,QP_nk
-     call RT_ELPH_Kernel(ik,Xen,k,q,Time) 
+     !
+     if (.not.RT_k_px%element_1D(ik)) cycle
+     !
+     call RT_ELPH_total_Kernel(ik,E,k,q,Time) 
+     !
    enddo
+   !
  endif
+ !
 #endif
+ !
+ ! Dephasing Matrix
+ !==================
+ !
+ if(RT_is_dumped.and.NE_dynamics) then
+   !
+   forall(i1=SC_bands(1):SC_bands(2),i2=SC_bands(1):SC_bands(2)) 
+     Sigma_relax(i1,i2,:)=Sigma_relax(i1,i2,:)-cI*RT_Deph_Matrix(i1,i2,:)*(G_input(i1,i2,:)-G_lesser_reference(i1,i2,:))
+   end forall
+   !
+ endif
  !
 end subroutine RT_relaxation
 

@@ -59,7 +59,7 @@ module pars
  real(SP),    parameter :: zero_dfl=1.E-5
  real(SP),    parameter :: rZERO=0._SP
  complex(SP), parameter :: cI   =(0._SP,1._SP)
- complex(SP), parameter :: cONe =(1._SP,0._SP)
+ complex(SP), parameter :: cONE =(1._SP,0._SP)
  complex(SP), parameter :: cZERO=(0._SP,0._SP)
  !
 end module 

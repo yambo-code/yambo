@@ -52,8 +52,10 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  integer     ,optional :: spins_to_load(2)
- character(*),optional :: space,title
- logical     ,optional :: impose_free_and_alloc,force_WFo
+ character(*),optional :: space
+ character(*),optional :: title
+ logical     ,optional :: impose_free_and_alloc
+ logical     ,optional :: force_WFo
  !
  ! Work Space
  !
@@ -145,9 +147,6 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! Manage direct access I/O
  ! 
  use_direct_access=(kpts_to_load(1)==kpts_to_load(2))
-#if defined _MANYK
- use_direct_access=.TRUE.
-#endif
  use_live_timing =.not.use_direct_access
  !
  ! In case of k by k I/O prevent multiple free/alloc

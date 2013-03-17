@@ -25,7 +25,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use X_m,            ONLY:X_epsilon
  use stderr,         ONLY:intc,real2ch
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BSS_uses_GreenF,&
-&                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,&
+&                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,BSS_inversion_mode,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BS_eh_f,&
 &                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z
  use units
@@ -64,7 +64,7 @@ subroutine K_inversion(iq,W,E,k,q)
  integer    ::full_inf_freqs,nw,nw_conv,&
 &             min_dist_non_conv_freqs ! Every W%n(1)/min_dist_non_conv_freqs
                                       ! I perform a full inversion
- logical    ::full_diago,skip_full_inv,full_inf_freqs_found
+ logical    ::do_it_full,full_inf_freqs_found,MIXED,FULL,PERTURBATIVE
  !
  ! I/O
  !
@@ -88,7 +88,19 @@ subroutine K_inversion(iq,W,E,k,q)
  ! RIM support ? Full invertion ?
  !
  BSS_uses_RIM=BZ_RIM_nbands>=BS_bands(2)
- call parser('SkipFullInv', skip_full_inv)
+ !
+ MIXED        = index(BSS_inversion_mode,'m')/=0
+ FULL         = .FALSE.
+ PERTURBATIVE = .FALSE.
+ !
+ if (MIXED) then
+   FULL         = .TRUE.
+   PERTURBATIVE = .TRUE.
+ else
+     FULL         = index(BSS_inversion_mode,'f')/=0
+   if (.not.FULL) &
+&    PERTURBATIVE = index(BSS_inversion_mode,'f')/=0
+ endif
  !
  ! I/O
  !
@@ -156,6 +168,7 @@ subroutine K_inversion(iq,W,E,k,q)
  ! Kernel loading
  !
  call K_BSload(iq)
+ !
  forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
  if (BS_K_coupling) then
    forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(i1-BS_K_dim)
@@ -247,25 +260,30 @@ subroutine K_inversion(iq,W,E,k,q)
  ! Perturbative Invertion
  !========================
  !
- full_diago=.false.
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/W%n(1)/))
- call live_timing('Freq loop [pert]',px%n_of_elements(myid+1))
- call perform_invertion(1,W%n(1))
- call PP_redux_wait(inv_err,imode=2)
  !
- ! I/O [after pert invertion]
- !
- call PP_redux_wait(X_epsilon)
- call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
- i_err=ioBSS_invert(iq,W%n(1),inv_err,X_epsilon(2,:),W,ID)
+ if (PERTURBATIVE) then
+   !
+   do_it_full=.FALSE.
+   call live_timing('Freq loop [pert]',px%n_of_elements(myid+1))
+   call perform_invertion(1,W%n(1))
+   call PP_redux_wait(inv_err,imode=2)
+   !
+   ! I/O [after pert invertion]
+   !
+   call PP_redux_wait(X_epsilon)
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+   i_err=ioBSS_invert(iq,W%n(1),inv_err,X_epsilon(2,:),W,ID)
+   !
+ endif
  !
  ! Full Invertion
  !=================
  !
  ! First I define the group of frequencies not converged
  !
- if (.not.skip_full_inv) then
+ if (FULL) then
    !
    full_inf_freqs=0
    do i1=1,W%n(1)
@@ -275,7 +293,9 @@ subroutine K_inversion(iq,W,E,k,q)
      endif
    enddo
    !
- else
+ endif
+ !
+ if (PERTURBATIVE) then
    !
    min_dist_non_conv_freqs=W%n(1)
    full_inf_freqs_found=.FALSE.
@@ -309,7 +329,7 @@ subroutine K_inversion(iq,W,E,k,q)
    enddo
  endif
  !
- if (full_inf_freqs>0.and..not.skip_full_inv) then
+ if (full_inf_freqs>0.and.FULL) then
    !
    call msg('rs','[BSE INV] Non converged frequencies :',full_inf_freqs)
    !
@@ -320,7 +340,7 @@ subroutine K_inversion(iq,W,E,k,q)
    call PP_indexes_reset(px)
    call PARALLEL_index(px,(/full_inf_freqs/))
    call live_timing('Freq loop [full]',px%n_of_elements(myid+1))
-   full_diago=.true.
+   do_it_full=.true.
    do i1=1,full_inf_freqs
      !
      if (stop_now(.FALSE.)) then
@@ -383,23 +403,23 @@ subroutine K_inversion(iq,W,E,k,q)
      !
      do i2=1,iw_2do
        !
-       if(.not.full_diago) then
+       if(.not.do_it_full) then
          !
          if (.not.px%element_1D(i2)) cycle
          !
        endif
        !
-       if (full_diago) perform_inv=inv_err(i2+iw_2start-1)/=0
-       if (.not.full_diago) perform_inv=inv_err(i2+iw_2start-1)==-1
+       if (do_it_full) perform_inv=inv_err(i2+iw_2start-1)/=0
+       if (.not.do_it_full) perform_inv=inv_err(i2+iw_2start-1)==-1
        !
        if (perform_inv) &
 &        inv_err(i2+iw_2start-1)=pert_inversion(BS_H_dim,BSS_rhoq0,-1.*Co,&
-&               X_epsilon(2,i2+iw_2start-1),Lo(:,i2+iw_2start-1),BS_mat,full_diago)
+&               X_epsilon(2,i2+iw_2start-1),Lo(:,i2+iw_2start-1),BS_mat,do_it_full)
        !
-       if (.not.full_diago) call live_timing(steps=1)
+       if (.not.do_it_full) call live_timing(steps=1)
        !
      enddo
-     if (.not.full_diago) call live_timing()
+     if (.not.do_it_full) call live_timing()
      !
    end subroutine
    !

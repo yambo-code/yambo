@@ -24,9 +24,6 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
  use pars,          ONLY:SP,cZERO,schlen
  use units,         ONLY:HA2EV
  use com,           ONLY:msg
- use frequency,     ONLY:bg_npts,cg_pt,cg_npts
- use stderr,        ONLY:intc
- use drivers,       ONLY:l_bss
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ
  use R_lattice,     ONLY:bz_samp,q_norm 

@@ -22,10 +22,11 @@
 subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  use pars,           ONLY:SP,IP
+ use units,          ONLY:HA2EV
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,warning
  use memory_m,       ONLY:mem_est
- use stderr,         ONLY:string_remove,intc
+ use stderr,         ONLY:string_remove,string_add,intc,real2ch
  use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
@@ -34,7 +35,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BSE_mode
+&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_eh_en,BSE_mode
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
@@ -45,6 +46,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 #if defined _SC
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate
  use QP_m,           ONLY:OCC_T_ref
+ use IO_m,           ONLY:REP
 #endif
  implicit none
  type(levels)  ::Xen,Ken
@@ -56,7 +58,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  type(X_t)   :: X_tddft
  integer     :: iq,bands_to_correct(2)
- integer     :: Max_G_m_G
+ integer     :: Max_G_m_G,ik
  integer, external :: eval_G_minus_G
  !
 #if defined _SC
@@ -73,11 +75,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  call tddft_do_X_W_typs(-1,X_tddft,Xw)
  !
  ! In these two lines I ensure the at least all the metallic
- ! bands are included in the X summation
+ ! states are included in the X summation
  !
  if (any((/BS_bands(1)>Ken%nbf+1,BS_bands(2)<Ken%nbm/))) then
    BS_bands=(/Ken%nbf+1,Ken%nbm/)
+   BS_eh_en=(/1.,-1./)
+   do ik=1,Xk%nibz
+     if (Ken%f(Ken%nbm,ik,1)  >1.E-5) BS_eh_en(2)=max(BS_eh_en(2),Ken%E(Ken%nbm,ik,1))
+     if (Ken%f(Ken%nbf+1,ik,1)>1.E-5) BS_eh_en(1)=min(BS_eh_en(1),Ken%E(Ken%nbf,ik,1))
+   enddo
    call warning('BS bands redefined to be :'//trim(intc(BS_bands(1)))//' - '//trim(intc(BS_bands(2))))
+   call warning('E/h energy range :'//trim(real2ch(BS_eh_en(1)*HA2EV))//' - '//trim(real2ch(BS_eh_en(2)*HA2EV))//' eV')
  endif
  !
  ! If using ALDA enough bands must be loaded to
@@ -100,7 +108,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  if (.not.l_bs_fxc) call parser('bs_fxc',l_bs_fxc)
  !
  ! GPL_EXCLUDE_END
- !
  !
  ! W RL size setup looking at the max index of G-G' 
  !

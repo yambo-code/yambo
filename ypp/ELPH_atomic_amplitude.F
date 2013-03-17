@@ -27,7 +27,7 @@ subroutine ELPH_atomic_amplitude(q)
  use R_lattice,           ONLY:bz_samp,RL_vol,RIM_n_rand_pts
  use D_lattice,           ONLY:n_atoms_species,Z_species,n_atoms
  use ELPH,                ONLY:ph_modes,ph_freqs_sq,&
-&                              max_ph_freq,elph_nDBs,elph_use_q_grid,&
+&                              W_Debye,elph_nDBs,elph_use_q_grid,&
 &                              elph_global_free,pol_vector,ph_qpt
  use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use stderr,              ONLY:set_real_printed_length,intc

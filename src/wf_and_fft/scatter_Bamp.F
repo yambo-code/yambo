@@ -33,7 +33,7 @@ subroutine scatterBamp(isc)
  !                                        /:\
  !  iq_is = ik_is-ok_os-Go
  !
- use pars,           ONLY:DP,SP,cZERO,cONe
+ use pars,           ONLY:DP,SP,cZERO,cONE
  use electrons,      ONLY:n_spinor
  use collision,      ONLY:ggwinfo
  use D_lattice,      ONLY:nsym,i_time_rev,spin_sop,idt_index

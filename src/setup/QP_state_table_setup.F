@@ -35,7 +35,7 @@ subroutine QP_state_table_setup(en)
  !
  use pars,          ONLY:SP,IP
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_sc_run,l_real_time,l_collisions_IO
+ use drivers,       ONLY:l_sc_run,l_real_time,l_collisions_IO,l_carrier_dynamics
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,SC_bands_mixed,SC_band_mixing 
  use electrons,     ONLY:levels,n_sp_pol
@@ -43,6 +43,7 @@ subroutine QP_state_table_setup(en)
 #if defined _SC
  use SC,            ONLY:SC_bands,l_SC_diagonal
 #endif
+ !
  implicit none
  type(levels)::en
  !
@@ -113,7 +114,7 @@ subroutine QP_state_table_setup(en)
        do i1=1,e_rng_lines
          do ik=int(QP_r_limits(i1,1)),int(QP_r_limits(i1,2)),1
            do ib=1,en%nb
-             if (en%E(ib,ik,1)<QP_r_limits(i1,4)) QP_e_nb=ib
+             if (en%E(ib,ik,1)<QP_r_limits(i1,4)) QP_e_nb=max(QP_e_nb,ib)
            enddo
          enddo
        enddo
@@ -137,6 +138,7 @@ subroutine QP_state_table_setup(en)
          enddo
        enddo
      endif
+     !
    else
      !
      if (.not.associated(en%E)) return
@@ -164,7 +166,11 @@ subroutine QP_state_table_setup(en)
  if (l_sc_run.or.l_real_time.or.l_collisions_IO) then
    !
    SC_bands_mixed=1
+   !
+#if !defined _ELPH
    if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0.
+#endif
+   !
    if (SC_band_mixing<0..or.SC_band_mixing>100.) SC_band_mixing=0.
    if (SC_band_mixing>0.) SC_bands_mixed=nint(QP_nb*SC_band_mixing/100.)
    if (SC_bands_mixed==0) SC_bands_mixed=1
@@ -214,6 +220,16 @@ subroutine QP_state_table_setup(en)
          QP_table(QP_n_states,2)=i2+i3
          QP_table(QP_n_states,3)=i1
          if (n_sp_pol==2) QP_table(QP_n_states,4)=i_sp
+         !
+#if defined _RT
+         if (l_carrier_dynamics.and.i3>0) then
+           QP_n_states=QP_n_states+1
+           QP_table(QP_n_states,1)=i2+i3
+           QP_table(QP_n_states,2)=i2
+           QP_table(QP_n_states,3)=i1
+           if (n_sp_pol==2) QP_table(QP_n_states,4)=i_sp
+         endif
+#endif
          !
        enddo
      enddo

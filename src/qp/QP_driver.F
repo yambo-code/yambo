@@ -29,7 +29,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp
- use com,           ONLY:msg
+ use com,           ONLY:msg,warning
  use X_m,           ONLY:X_t
  use parser_m,      ONLY:parser
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
@@ -37,7 +37,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_W_partially_done,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
-&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,PPA_terminator
+&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,PPA_terminator,l_QP_Expand
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
  use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
  implicit none
@@ -49,7 +49,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! Work Space
  !
  type(QP_t)        ::qp
- integer           ::i1,io_QP_err,io_G_err,ID_QP,ID_G,i_spin,dump_ng
+ integer           ::i1,io_QP_err,io_G_err,ID_QP,ID_G,i_spin
  integer, external ::ioQP,eval_G_minus_G
  !
  ! Driver Logicals
@@ -57,8 +57,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  call parser('NewtDchk',   QP_dSc_test)
  call parser('OnMassShell',On_Mass_Shell_approx)
+ call parser('QPExpand'   ,l_QP_Expand)
  call parser('UseEbands',  COHSEX_use_empties)
- call parser('GWTerm', PPa_terminator)
+ call parser('GWTerm', PPA_terminator)
  ! GPL_EXCLUDE_START
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
  use_GreenF_Zoom=QP_G_Zoom_treshold>0.
@@ -71,6 +72,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! skipped
  !==============================================================
  if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_el_corr.and..not.l_life) return
+ !
+ if (.not.l_el_corr.and..not.l_ph_corr) then
+   call warning('Both e-p and e-e correlation switched off')
+   return
+ endif
  !
  ! Head message
  !==============

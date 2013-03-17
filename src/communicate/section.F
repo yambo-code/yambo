@@ -62,13 +62,13 @@ subroutine section(mode,name)
  ! To handle menu's like sections I need to reset 
  ! the depth when the previous section is 'p'-like
  !
- if (previous_secmode=='p') then
-   depth=depth-1
-   previous_secmode=' '
- endif
+ if (previous_secmode=='p') depth=depth-1
+ !
  isec_save=isec
  !
  ! Update Section Depth & Timing 
+ !
+ previous_secmode=' '
  !
  select case (mode)
  case ('X','*')
@@ -93,8 +93,8 @@ subroutine section(mode,name)
    previous_secmode='p'
    depth=depth+1
  case ('-')
-   previous_secmode=' '
    depth=depth-1
+   isec(depth+1:)=0
  end select
  !
  ! Write out the Section header (in secnm)

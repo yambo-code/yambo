@@ -22,11 +22,11 @@
 subroutine COLLISIONS_IO_store(i_qp)
  !
  use pars,            ONLY:SP
- use QP_m,            ONLY:QP_nk,QP_nb,QP_n_states
+ use QP_m,            ONLY:QP_n_states
  use collisions_IO,   ONLY:COLLISIONS_cutoff,TEMP_COLLISIONS_v,COLLISIONS_table,&
-&                          COLLISIONS_v,n_collisions,io_COLLISIONS
+&                          COLLISIONS_v,n_collisions,io_COLLISIONS,COLLISIONS_range
  use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL
- use SC,              ONLY:SC_bands
+ use drivers,         ONLY:l_carrier_dynamics
  !
  implicit none                                              
  !
@@ -34,8 +34,9 @@ subroutine COLLISIONS_IO_store(i_qp)
  !
  ! Work Space
  !
- integer   :: ic,jb,jb2,ik
+ integer   :: ic,i1,i2,i3
  integer   :: io_err,ID
+ logical   :: local_condition
  real(SP)  :: COLLISIONS_max
  !
  ! Reduction of tiny elements of tmp_sx.
@@ -44,10 +45,13 @@ subroutine COLLISIONS_IO_store(i_qp)
  !
  ic=0
  !
- do jb=SC_bands(1),QP_nb
-   do jb2=SC_bands(1),QP_nb
-     do ik=1,QP_nk
-       if(abs(TEMP_COLLISIONS_v(jb,jb2,ik))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0)  ic=ic+1
+ do i1=COLLISIONS_range(1,1),COLLISIONS_range(1,2)
+   do i2=COLLISIONS_range(2,1),COLLISIONS_range(2,2)
+     do i3=COLLISIONS_range(3,1),COLLISIONS_range(3,2)
+       local_condition=&
+&         abs(TEMP_COLLISIONS_v(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0&
+&         .or.l_carrier_dynamics
+       if (local_condition) ic=ic+1
      enddo
    enddo
  enddo
@@ -56,13 +60,16 @@ subroutine COLLISIONS_IO_store(i_qp)
  COLLISIONS_table(:,:,:)=0
  ic=0
  !
- do jb=SC_bands(1),QP_nb
-   do jb2=SC_bands(1),QP_nb
-     do ik=1,QP_nk
-       if(abs(TEMP_COLLISIONS_v(jb,jb2,ik))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0)  then
+ do i1=COLLISIONS_range(1,1),COLLISIONS_range(1,2)
+   do i2=COLLISIONS_range(2,1),COLLISIONS_range(2,2)
+     do i3=COLLISIONS_range(3,1),COLLISIONS_range(3,2)
+       local_condition=&
+&         abs(TEMP_COLLISIONS_v(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0&
+&         .or.l_carrier_dynamics
+       if (local_condition) then
          ic=ic+1
-         COLLISIONS_table(jb,jb2,ik)=1
-         COLLISIONS_v(ic)           =TEMP_COLLISIONS_v(jb,jb2,ik)
+         COLLISIONS_table(i1,i2,i3)=1
+         COLLISIONS_v(ic)          =TEMP_COLLISIONS_v(i1,i2,i3) 
        endif
      enddo      
    enddo      

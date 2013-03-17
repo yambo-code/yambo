@@ -21,7 +21,7 @@
 !
 subroutine build_spin_sop()
  !
- use pars,           ONLY:SP,pi,cI,cONe,cZERO
+ use pars,           ONLY:SP,pi,cI,cONE,cZERO
  use matrix_operate, ONLY:m3det
  use D_lattice,      ONLY:dl_sop,spin_sop,nsym,i_time_rev,sop_inv
  use electrons,      ONLY:n_spin,n_sp_pol,n_spinor
@@ -35,10 +35,10 @@ subroutine build_spin_sop()
  !
  if(.not.allocated(spin_sop)) allocate(spin_sop(n_spin,n_spin,nsym))
  !
- sigma_0=reshape((/ cONe , cZERO, cZERO, cONe /),(/2,2/))
+ sigma_0=reshape((/ cONE , cZERO, cZERO, cONE /),(/2,2/))
  !
  if(n_spin==1) then
-   spin_sop(1,1,:)=cONe
+   spin_sop(1,1,:)=cONE
    return
  else if(n_sp_pol==2) then
    forall(is=1:nsym) spin_sop(:,:,is)=sigma_0
@@ -46,9 +46,9 @@ subroutine build_spin_sop()
  endif
  !
  ! Pauli matrices
- sigma_x=reshape((/ cZERO, cONe , cONe , cZERO/),(/2,2/))
+ sigma_x=reshape((/ cZERO, cONE , cONE , cZERO/),(/2,2/))
  sigma_y=reshape((/ cZERO,-cI   , cI   , cZERO/),(/2,2/))
- sigma_z=reshape((/ cONe , cZERO, cZERO,-cONe /),(/2,2/))
+ sigma_z=reshape((/ cONE , cZERO, cZERO,-cONE /),(/2,2/))
  !
  ! T_rev=(-i sigma_y K0 ) with K0 the complex conjugation.
  t_rev=-cI*sigma_y

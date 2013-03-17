@@ -50,29 +50,24 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  type(ggwinfo)    ::isc,iscp
  type(PP_indexes) ::px
- integer                 :: i2,iq,ib,ibp,jb,ik,i_qp
+ integer                 :: iq,ib,ibp,jb,ik,i_qp
  integer                 :: Sx_lower_band,Sx_upper_band
 #if defined _RT
- integer                 :: jb2,ik_minus_q,COM_
+ integer                 :: jb2,ik_minus_q
 #endif
 #if defined _DOUBLE
- complex(DP)             ::zdotc,zdotu
+ complex(DP)             ::zdotu
 #else 
- complex(SP)             ::cdotc,cdotu
+ complex(SP)             ::cdotu
 #endif
  complex(DP)             ::DP_Sx
  complex(SP),allocatable ::local_rhotw(:)
- character(schlen)       ::ch,ch_spin,sx_fmt,vxc_fmt,dump_ch
+ character(schlen)       ::ch
  !
  !QP list
  !
  integer              :: i4(4)
  integer, external    :: QP_state_extract
- !
- !IO
- !
- integer           :: ID,io_err
- integer, external :: io_HF_and_locXC
  !
  ! Resets & basis setup
  !

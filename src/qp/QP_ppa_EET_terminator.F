@@ -19,15 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function eet_terminator(W,e,vs,Ep,ig1,ig2,iq,cutoff)
+function QP_ppa_EET_terminator(W,e,vs,Ep,ig1,ig2,iq,cutoff)
  !
  ! Terminator for the PPA self-energy using the zero order
  ! effective-energy technique(EET) PRB 85, 085126 (2012)
  !
  use pars,          ONLY:SP
  use R_lattice,     ONLY:q_norm,q_pt,G_vec
- use D_lattice,     ONLY:alat
- use collision,     ONLY:ggwinfo
  use electrons,     ONLY:levels,spin_occ
  use vec_operate,   ONLY:iku_v_norm
  use functions,     ONLY:bose_f
@@ -42,15 +40,15 @@ function eet_terminator(W,e,vs,Ep,ig1,ig2,iq,cutoff)
  type(levels),  intent(in) :: E
  integer,       intent(in) :: vs(4)
  !
- complex(SP) :: eet_terminator
+ complex(SP) :: QP_ppa_EET_terminator
  !
  ! Work space
  !
  real(SP) :: eet_energy,q_plus_G,q_plus_Gp
  complex(SP) :: lW
  !
- q_plus_G =iku_v_norm(q_pt(iq,:)+g_vec(ig1,:))
- q_plus_Gp=iku_v_norm(q_pt(iq,:)+g_vec(ig2,:))
+ q_plus_G =iku_v_norm(q_pt(iq,:)+G_vec(ig1,:))
+ q_plus_Gp=iku_v_norm(q_pt(iq,:)+G_vec(ig2,:))
  !
  if(iq==1.and.ig1==1) q_plus_G =q_norm(1)
  if(iq==1.and.ig2==1) q_plus_Gp=q_norm(1)
@@ -67,6 +65,6 @@ function eet_terminator(W,e,vs,Ep,ig1,ig2,iq,cutoff)
  !
  lW=W
  if (Finite_Tel) lW=conjg(W)
- eet_terminator=real(spin_occ)/(lW-eet_energy-Ep) 
+ QP_ppa_EET_terminator=real(spin_occ)/(lW-eet_energy-Ep) 
  !
 end function

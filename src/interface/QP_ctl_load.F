@@ -39,7 +39,7 @@ subroutine QP_ctl_load(defs,i_type)
  ! 
  ! Work Space
  ! 
- integer           ::i_spin,i1,i1_range(2)
+ integer           ::i_spin,i1,i1_range(2),verbosity_here
  character(1)      ::prefix(3)
  character(3)      ::spin_ch(3)
  character(7)      ::description_ch(3)
@@ -52,6 +52,11 @@ subroutine QP_ctl_load(defs,i_type)
  description_ch(1)='Xd'
  description_ch(2)='BSK BSS'
  description_ch(3)='G'
+ !
+ verbosity_here=V_qp
+#if defined _RT
+ verbosity_here=0
+#endif
  !
  if (initmode==0) i1_range=(/1,3/)
  if (initmode/=0.and.n_sp_pol==1) i1_range=1
@@ -72,13 +77,13 @@ subroutine QP_ctl_load(defs,i_type)
 &          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wv',&
 &          '[EXTQP '//trim(description_ch(i_type))//'] W parameters '//&
 &          trim(spin_description_ch(i1))//' (valence) eV|adim|eV^-1',&
-&          QP_ctl_Wv(i_type,:,i_spin),verb_level=V_qp)
+&          QP_ctl_Wv(i_type,:,i_spin),verb_level=verbosity_here)
    !
    call it(defs,&
 &          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wc',&
 &          '[EXTQP '//trim(description_ch(i_type))//'] W parameters '//&
 &          trim(spin_description_ch(i1))//' (conduction) eV|adim|eV^-1',&
-&          QP_ctl_Wc(i_type,:,i_spin),verb_level=V_qp)
+&          QP_ctl_Wc(i_type,:,i_spin),verb_level=verbosity_here)
    !
    call it(defs,&
 &          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Z',&
@@ -101,10 +106,15 @@ subroutine QP_ctl_load(defs,i_type)
 &        '[EXTQP '//trim(description_ch(i_type))//'] Rescale dipole by LDA/QP energy',verb_level=V_qp)
 #endif
 !
-#if defined _SC || _YPP_RT
+#if defined _SC  && !defined _YPP_RT
  call it(defs,prefix(i_type)//'fnFdb',&
 &        '[EXTQP '//trim(description_ch(i_type))//'] Occupations database directory',&
 &        OCC_ctl(i_type),verb_level=V_real_time)
+#endif
+#if  defined _YPP_RT
+ call it(defs,prefix(i_type)//'fnFdb',&
+&        '[EXTQP '//trim(description_ch(i_type))//'] Occupations database directory',&
+&        OCC_ctl(i_type))
 #endif
  !
 end subroutine

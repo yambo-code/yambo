@@ -64,7 +64,6 @@ module BS
  integer  :: O_ng
  integer,    allocatable :: O_phase(:,:,:)
  integer,    allocatable :: O_table(:,:,:,:,:)
- integer,    allocatable :: Scattering_table(:,:)
  !
  ! ... first table of possible c/v states
  !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini, E. Cannuccia and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -27,7 +27,7 @@ subroutine ELPH_atomic_amplitude(q)
  use R_lattice,           ONLY:bz_samp,RL_vol,RIM_n_rand_pts
  use D_lattice,           ONLY:n_atoms_species,Z_species,n_atoms
  use ELPH,                ONLY:ph_modes,ph_freqs_sq,&
-&                              W_debye,elph_nDBs,elph_use_q_grid,&
+&                              W_Debye,elph_nDBs,elph_use_q_grid,&
 &                              elph_global_free,pol_vector,ph_qpt
  use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use stderr,              ONLY:set_real_printed_length,intc
@@ -81,7 +81,7 @@ subroutine ELPH_atomic_amplitude(q)
    q_weight=q%weights(iq)
  else
    if (RIM_n_rand_pts>0) call msg('s','Using RIM with '//trim(intc(RIM_n_rand_pts))//' point')
-   call rim_spherical(nq_to_sum,ph_qpt(1:nq_to_sum,1:3),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),2,.TRUE.)
+   call rim_spherical(nq_to_sum,ph_qpt(1:nq_to_sum,1:3),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),.TRUE.)
  endif
  !
  mean_ui_uj=(0.,0.)

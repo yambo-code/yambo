@@ -19,58 +19,70 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,N_f,N_m)
+subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
  !
  use pars,          ONLY:SP
- use com,           ONLY:error
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
+ use com,           ONLY:error,warning
  !
  implicit none
+ !
  type(levels)       ::E
- real(SP), optional ::E_g_dir(n_sp_pol,2) ! min - max
- real(SP), optional ::E_g_ind(n_sp_pol,2) ! min - max
- integer , optional ::N_f(n_sp_pol)
- integer , optional ::N_m(n_sp_pol)
+ real(SP), optional ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
+ real(SP), optional ::E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
+ integer , optional ::Nbf(n_sp_pol)
+ integer , optional ::Nbm(n_sp_pol)
  ! 
  ! Work Space
  ! 
- integer  ::i1,i_s
- real(SP) ::r_nk
+ integer :: ib,ik,i_sp_pol,j_sp_pol,i_sp_ref,j_sp_ref
+ !
+ real(SP):: E_g_dir_old
+ real(SP):: E_vb_min(n_sp_pol),E_vb_max(n_sp_pol)
+ real(SP):: E_cb_min(n_sp_pol),E_cb_max(n_sp_pol)
+ real(SP):: r_nk
  real(SP), parameter ::tresh=epsilon(1._SP)
  ! 
  ! Shadow variables 
  ! 
- real(SP) ::E_g_dir_(n_sp_pol,2)
- real(SP) ::E_g_ind_(n_sp_pol,2) 
- integer  ::N_f_(n_sp_pol)
- integer  ::N_m_(n_sp_pol)
+ real(SP) ::E_g_dir_(1+(n_sp_pol-1)*2,2)
+ real(SP) ::E_g_ind_(1+(n_sp_pol-1)*2,2) 
+ integer  ::Nbf_(n_sp_pol)
+ integer  ::Nbm_(n_sp_pol)
+ !
+ if(sum(E%f(:,:,:))<1._SP-filled_tresh) call error('The system contains less than 1 electron')
+ !
+ ! Initialization
+ !
+ E_g_dir_=0
+ E_g_ind_=0
+ Nbm_=0
+ Nbf_=0
  !
  ! Evaluate Metallic/Filled bands
  !
- N_m_=0
- N_f_=0
- do i_s=1,n_sp_pol
-   do i1=1,E%nb
+ do i_sp_pol=1,n_sp_pol
+   do ib=1,E%nb
      !
      ! A single state (n k) weights 2 only when there is no spin
      ! components 
      !
-     r_nk=sum(E%f(i1,:,i_s))
+     r_nk=sum(E%f(ib,:,i_sp_pol))
      !
      if (n_spin==1) r_nk=r_nk/2.
      !
      if (r_nk<=tresh) cycle
      if (abs(r_nk-real(E%nk,SP))<=filled_tresh) then
-       N_f_(i_s)=i1
+       Nbf_(i_sp_pol)=ib
        cycle
      endif
-     N_m_(i_s)=i1
+     Nbm_(i_sp_pol)=ib
    enddo
-   if (N_m_(i_s)==0) N_m_(i_s)=N_f_(i_s)
+   if (Nbm_(i_sp_pol)==0) Nbm_(i_sp_pol)=Nbf_(i_sp_pol)
  enddo
  !
- E%nbf=minval(N_f_)
- E%Nbm=maxval(N_m_)
+ E%Nbf=minval(Nbf_)
+ E%Nbm=maxval(Nbm_)
  !
  if (E%Nbm+1 > E%nb) call error(' Too few states. Include more states in the DFT run.')
  !
@@ -78,41 +90,91 @@ subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,N_f,N_m)
  ! E%Efermi(2) = VB max (with resepect to Efermi(1) )
  ! E%Efermi(3) = CB min (with resepect to Efermi(1) )
  !
- E%Efermi(2:)=E%Efermi(1)+(/maxval(E%E(E%nbf,:,:)),minval(E%E(E%nbf+1,:,:))/)
- if (E%nbf/=E%nbm) E%Efermi(2:)=0.
+ E_vb_min=-100._SP
+ E_vb_max=-100._SP
+ E_cb_min=0._SP
+ E_cb_max=0._SP
+ do i_sp_pol=1,n_sp_pol
+   if(Nbf_(i_sp_pol)>0) then
+     E_vb_min(i_sp_pol)=minval(E%E(Nbf_(i_sp_pol),:,i_sp_pol))
+     E_vb_max(i_sp_pol)=maxval(E%E(Nbf_(i_sp_pol),:,i_sp_pol))
+   endif
+   E_cb_min(i_sp_pol)=minval(E%E(Nbf_(i_sp_pol)+1,:,i_sp_pol))
+   E_cb_max(i_sp_pol)=minval(E%E(Nbf_(i_sp_pol)+1,:,i_sp_pol))
+ enddo
+ E%Efermi(2:)=E%Efermi(1)+(/maxval(E_vb_max),minval(E_cb_min)/)
  !
  ! [1] Indirect Gaps (min/max)
  !
- do i_s=1,n_sp_pol
+ if(all(Nbf_==Nbm_)) then
+   E_g_ind_(1,1)=minval(E_cb_min)-maxval(E_vb_max)
+   E_g_ind_(1,2)=minval(E_cb_max)-maxval(E_vb_min)
+   ! This should never happen
+   if(E_g_ind_(1,1)<0.and.n_sp_pol==2) &
+&    call warning('Merged spin levels are metallic')
    !
-   if (N_f_(i_s)/=N_m_(i_s)) cycle
-   E_g_ind_(i_s,1)=minval(E%E(N_f_(i_s)+1,:,i_s))-maxval(E%E(N_f_(i_s),:,i_s))
-   E_g_ind_(i_s,2)=maxval(E%E(N_f_(i_s)+1,:,i_s))-maxval(E%E(N_f_(i_s),:,i_s))
-   !
- enddo
+ endif
  !
- E%E_ind_gap(:n_sp_pol)=E_g_ind_(:n_sp_pol,1)
+ if(n_sp_pol==2.and.any(Nbf_==Nbm_)) then
+   do i_sp_pol=1,n_sp_pol
+     !
+     if (Nbf_(i_sp_pol)/=Nbm_(i_sp_pol)) cycle
+     E_g_ind_(i_sp_pol+1,1)=E_cb_min(i_sp_pol)-E_vb_max(i_sp_pol) 
+     E_g_ind_(i_sp_pol+1,2)=E_cb_max(i_sp_pol)-E_vb_min(i_sp_pol)
+     !
+   enddo
+ endif
+ !
+ if(n_sp_pol==1) E%E_ind_gap(1)=E_g_ind_(1,1)
+ if(n_sp_pol==2) E%E_ind_gap(1:2)=E_g_ind_(2:3,1)
  !
  ! [2] Direct Gaps (min/max)
  !
- do i_s=1,n_sp_pol
-   !
-   if (N_f_(i_s)/=N_m_(i_s)) cycle
-   E_g_dir_(i_s,:)=(/100.,-100./)
-   do i1=1,E%nk
-     E_g_dir_(i_s,1)=min(E_g_dir_(i_s,1),E%E(N_f_(i_s)+1,i1,i_s)-E%E(N_f_(i_s),i1,i_s) )
-     E_g_dir_(i_s,2)=max(E_g_dir_(i_s,2),E%E(N_f_(i_s)+1,i1,i_s)-E%E(N_f_(i_s),i1,i_s) )
+ if(all(Nbf_==Nbm_)) then
+   E_g_dir_(1,:)=(/100.,-100./)
+   do ik=1,E%nk
+     do i_sp_pol=1,n_sp_pol
+       do j_sp_pol=1,n_sp_pol
+         if(Nbf_(j_sp_pol)==0) cycle
+         E_g_dir_old=E_g_dir_(1,1)
+         E_g_dir_(1,1)=min(E_g_dir_(1,1),&
+&                        E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(j_sp_pol),ik,j_sp_pol) )
+         if(E_g_dir_(1,1)<E_g_dir_old) then
+           i_sp_ref=i_sp_pol
+           j_sp_ref=j_sp_pol
+         endif
+       enddo
+     enddo
+     E_g_dir_(1,2)=max(E_g_dir_(1,2),E%E(Nbf_(i_sp_ref)+1,ik,i_sp_ref)-E%E(Nbf_(j_sp_ref),ik,j_sp_ref) )
    enddo
-   !
- enddo
+ endif
  !
- E%E_dir_gap(:n_sp_pol)=E_g_dir_(:n_sp_pol,1)
+ if(n_sp_pol==2.and.any(Nbf_==Nbm_)) then
+   do i_sp_pol=1,n_sp_pol
+     !
+     if (Nbf_(i_sp_pol)/=Nbm_(i_sp_pol)) cycle
+     if (Nbf_(i_sp_pol)==0) cycle
+     !
+     E_g_dir_(i_sp_pol+1,:)=(/100.,-100./)
+     do ik=1,E%nk
+       E_g_dir_(i_sp_pol+1,1)=min(E_g_dir_(i_sp_pol+1,1),&
+&                      E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(i_sp_pol),ik,i_sp_pol) )
+       E_g_dir_(i_sp_pol+1,2)=max(E_g_dir_(i_sp_pol+1,2),&
+&                      E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(i_sp_pol),ik,i_sp_pol) )
+     enddo
+     !
+   enddo
+ endif
+ !
+ if(n_sp_pol==1) E%E_dir_gap(1)=E_g_dir_(1,1)
+ if(n_sp_pol==2) E%E_dir_gap(1:2)=E_g_dir_(2:3,1)
+ !
  !
  ! From Shadow variables to optional variables
  !
  if (present(E_g_dir)) E_g_dir=E_g_dir_
  if (present(E_g_ind)) E_g_ind=E_g_ind_
- if (present(N_f)) N_f=N_f_
- if (present(N_m)) N_m=N_m_
+ if (present(Nbf)) Nbf=Nbf_
+ if (present(Nbm)) Nbm=Nbm_
  !
 end subroutine

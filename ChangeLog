@@ -1,3 +1,27 @@
+2013-03-17 23:01:56 r2006 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.3.0
+
+	*  . include/version.inc config/Makefile.in doc/README.compile_on_BQG parser/Gclose.F wf_and_fft/WF_load.F pol_function/Dipole_transverse.F pol_function/X_drude.F pol_function/X_os.F pol_function/Dipole_shifted_grids.F pol_function/Dipole_driver.F interface/init_load.F interface/init.F interface/barriers.F tddft/tddft_do_X_W_typs.F modules/.objects_gpl modules/mod_BS.F modules/mod_drivers.F modules/std_presets.F modules/mod_X.F + bse/.objects bse/.objects_gpl bse/K_diagonalization.F bse/K_eh_setup.F bse/K.F bse/K_DISTRIBUTED.F bse/K_BSmat_by_V.F bse/K_driver.F bse/K_phases_and_dimensions.F bse/K_solvers.F bse/K_output_file.F bse/K_eval_scattering_amplitudes.F bse/K_scattering.F bse/K_BSload.F qp_ctl/QP_merge_DBs.F qp_ctl/QP_load_DB.F driver/yambo.h sbin/yamboo.pl
+
+	Merged with trunk@2003
+
+	BSE section taken completely from trunk. New structure will be developed only in the devel-open-mp.
+
+	Patch sent by: Andrea
+
+2013-03-13 00:13:58 r1968 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	init_convert splitted in two
+
+2013-03-12 23:30:25 r1966 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Global variable renaming and moving in order to reduce conflicts during the mergering procedure of the devel-open-mp branch
+
+2013-03-12 21:55:59 r1965 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Merged with trunk@1964 fixing ALL problems with previous mergering
+
 2013-03-12 18:12:39 r1961 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Reverting to revision 1957 for severe mergering problems

@@ -74,13 +74,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Compatibility with old variables
  !
- integer       :: ng_closed_old=0
- integer       :: wf_ng_old=0
- integer       :: QP_ng_Sx_old=0
- integer       :: BS_n_g_W_old=0
- integer       :: BS_n_g_exch_old=0
- integer       :: FXC_n_g_corr_old=0
- integer       :: RIM_ng_old=0
+ integer       :: ng_closed_old=1
+ integer       :: wf_ng_old=1
+ integer       :: QP_ng_Sx_old=1
+ integer       :: BS_n_g_W_old=1
+ integer       :: BS_n_g_exch_old=1
+ integer       :: FXC_n_g_corr_old=1
+ integer       :: RIM_ng_old=1
  !
  !===============
  ! GPL RUNLEVELS
@@ -143,10 +143,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed_old,unit=G_unit,verb_level=V_old)
  call it(defs,'MaxNG',   '[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
- if(ng_closed_old>0) ng_closed=ng_closed_old
+ if(ng_closed_old/=1) ng_closed=ng_closed_old
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng_old,G_unit,verb_level=V_old) 
  call it(defs,'ecutFFT','[FFT] Plane-waves',wf_ng,cut_off,verb_level=V_RL) 
- if(wf_ng_old>0) wf_ng=wf_ng_old
+ if(wf_ng_old/=1) wf_ng=wf_ng_old
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt)
@@ -166,7 +166,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
  call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx_old,cut_off,verb_level=V_old)
  call it(defs,'ecutHF',   '[XX] Exchange RL components',QP_ng_Sx,cut_off)
- if(QP_ng_Sx_old>0) QP_ng_Sx=QP_ng_Sx_old
+ if(QP_ng_Sx_old/=1) QP_ng_Sx=QP_ng_Sx_old
  call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
@@ -188,8 +188,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch_old,cut_off,verb_level=V_old)
  call it(defs,'ecutKcorr','[BSK] Screened interaction block size',BS_n_g_W,cut_off)
  call it(defs,'ecutKexch','[BSK] Exchange components',BS_n_g_exch,cut_off)
- if(BS_n_g_W_old >0) BS_n_g_W=BS_n_g_W_old
- if(BS_n_g_exch>0) BS_n_g_exch=BS_n_g_exch_old
+ if(BS_n_g_W_old/=1) BS_n_g_W=BS_n_g_W_old
+ if(BS_n_g_exch /=1) BS_n_g_exch=BS_n_g_exch_old
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t`',BSS_mode,protect=.FALSE.)
  call it(defs,'BLongDir','[BSS] [cc] Electric Field',BSS_q0)
@@ -207,7 +207,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'FxcGRLc',  '[TDDFT] XC-kernel RL size',FXC_n_g_corr_old,cut_off,verb_level=V_old)
  call it(defs,'ecutFxc',  '[TDDFT] XC-kernel RL size',FXC_n_g_corr,cut_off)
- if(FXC_n_g_corr_old>0) FXC_n_g_corr=FXC_n_g_corr_old
+ if(FXC_n_g_corr_old/=1) FXC_n_g_corr=FXC_n_g_corr_old
  call it(defs,'LRC_alpha','[TDDFT] LRC alpha factor',FXC_LRC_alpha)
  call it(defs,'LRC_beta', '[TDDFT] LRC beta factor',FXC_LRC_beta,verb_level=V_resp)
  !
@@ -241,7 +241,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'RandQpts','[RIM] Number of random q-points in the BZ',RIM_n_rand_pts)
  call it(defs,'RandGvec','[RIM] Coulomb interaction RS components',RIM_ng_old,cut_off,verb_level=V_old)
  call it(defs,'ecutRIM', '[RIM] Coulomb interaction RS components',RIM_ng,cut_off)
- if(RIM_ng_old>0) RIM_ng=RIM_ng_old
+ if(RIM_ng_old/=1) RIM_ng=RIM_ng_old
  call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_RL)
  !
  ! CUTOFF
@@ -498,7 +498,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,nms(10),des(10),X%ppaE,E_unit,verb_level=0)
      call it(defs,nms_old(1),des_old(1),ng_old,cut_off,verb_level=V_old) 
      call it(defs,nms(11),des(11),X%ng,cut_off,verb_level=0) 
-     if(ng_old>0) X%ng=ng_old
+     if(ng_old/=1) X%ng=ng_old
      call it(defs,nms(12),des(12),X%iq,verb_level=0)
      call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)

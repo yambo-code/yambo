@@ -33,7 +33,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,PP_free,pp_table, &
 &                              Vnl,pp_n_l_comp,kbv_spin
  use R_lattice,           ONLY:g_vec,bz_samp
- use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P
+ use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P,Dipole_Energy_treshold
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD,OP_RD_CL
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
@@ -99,7 +99,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! Set up band limits
  !
- if (Dipole_bands_ordered) then
+ if (Dipole_bands_ordered.or.Dipole_Energy_treshold<0.) then
    iv_max=Xen%nbm
    ic_min=Xen%nbf+1
  else
@@ -128,9 +128,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! Main loop over k in IBZ
  !
  do ik=1,Xk%nibz
-#if defined _MANYK
-   call WF_load(0,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
-#endif
    !
    ! [Vnl,r]
    !
@@ -162,7 +159,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
          !
-         if (abs(Ev_m_Ec)<=1.E-5_SP.and..not.l_real_time) cycle
+         if (abs(Ev_m_Ec)<=Dipole_Energy_treshold.and..not.l_real_time) cycle
          !
          ivfft=wf_state(iv,ik,i_spin)
          if(ivfft==0) call error(" Error in parallel wf distribution")
@@ -239,7 +236,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          rho(1:3)=rho(1:3)/Ev_m_Ec
          !
-         if (abs(Ev_m_Ec)<=1.E-5_SP) rho(1:3)=(0._SP,0._SP)
+         if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) rho(1:3)=(0._SP,0._SP)
          !
          if (n_spinor==2) then
            DIP_iR(:,ic,iv,ik,1)=DIP_iR(:,ic,iv,ik,1)+rho(:3)
@@ -264,27 +261,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
      enddo      ! valence band loop
    enddo        ! spin loop
    !
-   ! Symmetrization 
-   !================
-   !
-   ! To avoid numerical noise in the real-time evolution we need to impose
-   ! P (iR) to be Hermitian (anti-Hermitian)
-   !
-   if (.not.Dipole_bands_ordered) then
-     do iv=X%ib(1),X%ib(2)
-       do ic=iv+1,X%ib(2)
-         DIP_iR(:,ic,iv,ik,:)=-conjg(DIP_iR(:,iv,ic,ik,:))
-#if defined _RT
-         DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
-         P_square(ic,iv,ik,:)= conjg(P_square(iv,ic,ik,:))
-#endif        
-#if defined _KERR
-         if(trim(global_gauge)=='velocity') DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
-#endif        
-       enddo
-     enddo
-   endif
-   !
  enddo          ! k-points
  !
  call live_timing
@@ -303,15 +279,40 @@ subroutine Dipole_transverse(Xen,Xk,X)
    if (allocated(Vnl)) deallocate(Vnl)
  endif 
  !
- do i_spin=1,n_sp_pol
-   call PP_redux_wait(DIP_iR(:,:,:,:,i_spin))
+ do ik=1,Xk%nibz
+   !
+   do i_spin=1,n_sp_pol
+     call PP_redux_wait(DIP_iR(:,:,:,ik,i_spin))
 #if defined _SC
-   call PP_redux_wait(DIP_P(:,:,:,:,i_spin))
-   call PP_redux_wait(P_square(:,:,:,i_spin))
+     call PP_redux_wait(DIP_P(:,:,:,ik,i_spin))
+     call PP_redux_wait(P_square(:,:,ik,i_spin))
 #endif
 #if defined _KERR
    if(trim(global_gauge)=='velocity') call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
 #endif
+   enddo
+   !
+   ! Symmetrization 
+   !================
+   !
+   ! To avoid numerical noise in the real-time evolution we need to impose
+   ! P (iR) to be Hermitian (anti-Hermitian)
+   !
+   if (.not.Dipole_bands_ordered) then
+     do iv=X%ib(1),X%ib(2)
+       do ic=iv+1,X%ib(2)
+         DIP_iR(:,ic,iv,ik,:)=-conjg(DIP_iR(:,iv,ic,ik,:))
+#if defined _RT
+         DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
+         P_square(ic,iv,ik,:)= conjg(P_square(iv,ic,ik,:))
+#endif        
+#if defined _KERR
+         if(trim(global_gauge)=="velocity")DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
+#endif        
+       enddo
+     enddo
+   endif
+   !
  enddo
  !
 end subroutine Dipole_transverse

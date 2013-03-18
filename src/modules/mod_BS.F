@@ -81,6 +81,7 @@ module BS
  !
  character(lchlen):: BSS_description(100)
  character(schlen):: BSS_mode
+ character(schlen):: BSS_inversion_mode
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
  real(SP) :: BSS_er(2)
@@ -116,7 +117,7 @@ module BS
      integer               ::iq
      integer               ::iter
      complex(SP)           ::Vi(:),Vo(:)
-     real(SP), optional     ::iter_par
+     real(SP),optional     ::iter_par
    end subroutine
    !
    integer function variables_BS(ID,local_description,X)

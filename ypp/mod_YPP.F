@@ -105,6 +105,7 @@ module YPP
  !EL-PH
  !
  logical :: l_gkkp
+ logical :: l_gkkp_expand
  logical :: l_phonons
  logical :: l_eliashberg
  logical :: l_atomic_amplitude
@@ -136,13 +137,26 @@ module YPP
  !
  logical     :: l_qpdb
  !
+ ! GPL_EXCLUDE_START 
+ !
+ ! SC
+ !
+ logical  :: l_mean_potential
+ !
+ ! (RT) DOS
+ !
+ real(SP) :: Fermi_fit_points(2)
  !
  ! Wannier bands
  !
- logical     :: l_bxsf
+ logical           :: l_bxsf
  character(lchlen) :: w90_fname
- integer     :: wannier_bands(2)   ! Bands Range
- integer     :: ord_dgrid_ipol     ! order of interpolation using double grid
+ integer           :: wannier_bands(2)   ! Bands Range
+ integer           :: ord_dgrid_ipol     ! order of interpolation using double grid
+ !
+ ! (RT) Occupations
+ !
+ logical     :: l_RT_occupations
  !
  ! Reduce Symmetries
  !
@@ -150,11 +164,12 @@ module YPP
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
  !
- ! GPL_EXCLUDE_START RAS_IGNORE
+ ! (RT) Retarded Green's functions
  !
- ! SC
- !
- logical  :: l_mean_potential
+ logical  :: l_retarded_GFs
+ integer  :: Ret_GF_bands(2)      ! Bands Range
+ real(SP) :: Gr_E_step
+ real(SP) :: GF_T_step
  !
  ! (RT) optics
  !
@@ -171,6 +186,7 @@ module YPP
  integer  :: X_order
  real(SP) :: t_jump
  real(SP) :: W_RT_induced_step
+ real(SP) :: OCC_T_ref      ! Reference time
  real(SP) :: OCC_T_range(2) ! Time range to plot the dos
  real(SP) :: OCC_deltaT     ! Time step to plot the dos
  character(schlen) :: Probe_Keyword
@@ -179,6 +195,7 @@ module YPP
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
  !
+ complex(SP),    allocatable :: RT_occupations_ref(:,:)
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)
  !
@@ -192,7 +209,7 @@ module YPP
  !
  type(Xw_rt) :: X_rt 
  !
- ! GPL_EXCLUDE_END RAS_IGNORE
+ ! GPL_EXCLUDE_END
  !
  interface
    !

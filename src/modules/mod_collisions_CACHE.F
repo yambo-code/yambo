@@ -27,6 +27,7 @@ module collisions_CACHE
  type COLLISION_cache
    integer(LP), allocatable  :: COLLISIONS_table(:,:,:)
    complex(SP), allocatable  :: COLLISIONS_v(:)
+   complex(SP), allocatable  :: COLLISIONS_v3(:,:,:)
  end type
  !
  real(SP)                           :: COLLISIONS_cache_size

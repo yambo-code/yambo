@@ -1,3 +1,2267 @@
+2013-03-15 21:05:06 r2002 sangalli
+
+	Version 3.3.0
+
+	*  config/configure.ac configure include/version.inc interface/init_load.F parser/Gclose.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fixed small bug in the initialization
+	- Erased duplicate bs_xc runlevel
+
+	Patch sent by: Davide
+
+2013-03-15 16:05:22 r1996 sangalli
+
+	Version 3.3.0
+
+	*  config/configure.ac configure include/version.inc bse/K.F bse/K_diagonalization.F bse/K_driver.F bse/K_eh_setup.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- BSE_mode="causal" works only at the IP-RPA level or with the diagonalization solver
+	- Check on the correlation fft-size done only if BS_res_K_corr or BS_cpl_K_corr=.true.
+
+	Patch sent by: Davide
+
+2013-03-14 15:03:46 r1990 sangalli
+
+	Version 3.3.0
+
+	*  include/version.inc configure interface/init_load.F interface/init.F modules/std_presets.F modules/mod_BS.F bse/K_driver.F bse/K_eh_setup.F bse/K_IP.F config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- BS_Eq_mode renamed BSE_mode
+	- Improved messages
+
+	Patch sent by: Davide
+
+2013-03-14 12:50:14 r1988 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.3.0
+
+	*  configure include/version.inc config/configure.ac qp_ctl/QP_load_DB.F modules/mod_BS.F bse/K_IP.F bse/K_eh_setup.F
+
+	Bugs:
+	- In multiple QP dbs reading in src/qp_ctl/QP_load_DB.F. Note that to read different quantites
+	  from different DBs' one should use spaces like
+	  " E < DB1 E W < DB2 Z < DB3"
+
+	Changes:
+	- Added support to complex (Fano like) renormalization factors
+
+	Patch sent by: Andrea
+
+2013-03-13 21:29:41 r1985 sangalli
+
+	Version 3.3.0
+
+	*  include/version.inc driver/yambo.h configure interface/init.F config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fixed few inconsistencies
+
+	Patch sent by: Davide
+
+2013-03-13 17:53:24 r1983 sangalli
+
+	Version 3.3.0
+
+	*  config/configure.ac configure driver/yambo.h include/version.inc bse/.objects bse/K.F bse/K_BSload.F bse/K_BSmat_by_V.F bse/K_DISTRIBUTED.F bse/K_IP.F bse/K_diagonalization.F bse/K_driver.F bse/K_eh_setup.F bse/K_output_file.F bse/K_solvers.F interface/barriers.F interface/init.F interface/init_load.F modules/mod_BS.F modules/mod_X.F modules/mod_drivers.F modules/std_presets.F pol_function/X_drude.F pol_function/X_os.F tddft/tddft_do_X_W_typs.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Reorganization of optical runlevels in view of the introduction of the _KERR project in the trunk.
+	  See new yambo -H output. Still to be more deeply tested.
+
+	- yambo -o ? -k ? (-y ?)
+	    1)  -o option : choose the space where the dyson equation for optics is solved
+	           c(/g)   --> solve the dyson equation for chi in the  g-space
+	           b(/eh)  --> solve the dyson equation for L   in the eh-space
+	    2)  -k choose the approximation for the kernel of the dyson equation
+	             i=IP-RPA; h =td_hartree; da=tddft/alda; dl=tddft/lrc(only g-space); db=tddft/bs_fxc
+	                       hf=tdhf (only eh-space) ; w= screened (W) eh interaction (only eh-space)
+	    3) -y choose the solver. Only for the eh-space. As before d/h/i/t
+	        (not sure about the "t" solver bat it will not enter the GPL for the moment)
+
+	- New input variable BSEqmode. This replaces the two old variables BSresmode and BScplmode
+	       resonant = only the resonant term is used
+	       causal   = both resonant and anti-resonant term are used (This is the TDA)
+	       coupling = resonant + anti-resonant + coupling term used (This is the full BSE)
+	  For metals causal option must be used, while it is not needed to force coupling any-more
+
+	- Also now the Drude term can be included in the eh-space (only IP and after diagonalization solver)
+
+	Patch sent by: Davide
+
+2013-03-13 14:04:35 r1980 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Other bug fixes in QP db loading
+
+2013-03-13 10:39:51 r1977 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fix
+
+2013-03-13 01:31:59 r1974 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Created compiling version of gpl+open-mp. Still to be tested.
+
+2013-03-13 01:09:40 r1973 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	File missing was preventing the compilation
+
+2013-03-13 00:13:46 r1967 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	init_convert splitted in two
+
+2013-03-12 23:30:25 r1966 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Global variable renaming and moving in order to reduce conflicts during the mergering procedure of the devel-open-mp branch
+
+2013-03-12 19:39:15 r1963 sangalli
+
+	Version 3.3.0
+
+	*  config/Makefile.in config/configure.ac configure driver/driver.c include/version.inc sbin/yamboo.pl bse/.objects + bse/K_BSmat_by_V_TEST_1.F bse/K_Haydock.F bse/K_diagonalization.F bse/K_inversion.F modules/mod_BS.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- TEST_1 proget definetly removed. It has long been tested as it was the defaul also in the trunk
+
+	Patch sent by: Davide
+
+2013-03-12 16:53:36 r1957 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug in external QP I/O fixed
+
+2013-03-12 13:14:05 r1949 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Added possibility to selectively load Energies, Widths and Z factors from different databases
+
+2013-03-11 18:00:46 r1947 sangalli
+
+	Version 3.3.0
+
+	*  configure pol_function/X_os.F pol_function/X_drude.F config/configure.ac include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Drude subroutine directly compute the drude term of X_epsilon and can be used also
+	  within the BSE scheme (i.e. eh representation of the L function)
+
+	Patch sent by: Davide
+
+2013-03-09 14:42:01 r1942 sangalli
+
+	Version 3.3.0
+
+	*  config/configure.ac configure parser/ps_convert.F parser/mod_itm.F parser/init_convert.F pol_function/.objects modules/mod_real_time.F setup/G_shells_finder.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- removed kpoints_map variable in mod_real_time
+	- improved unit conversion. Now (i) also the cut-off energy E=0 is properly converted to 1 RL
+	  and (ii) cut-off energies can be given also in eV units
+	- removed old KERR declaration in pol_function/.objects
+
+	Patch sent by: Davide
+
+2013-03-08 18:02:47 r1940 attacc
+
+	Version 3.3.0
+
+	*  p2y/pw_pseudovelocity_module.F p2y/pw_wfc_module.F p2y/qexml_v4.0.F p2y/mod_p2y.F p2y/Vnl_driver.F p2y/pw_pseudo_module.F p2y/num_interpolation_module.F p2y/mod_numerical.F modules/mod_matrix_operate.F
+
+	Additions:
+	 -Fixed p2y in double precision
+	 -Introduced Trace and Hermitian operators
+
+2013-03-08 16:13:50 r1938 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	BUG fixed in linewidths loading from external DB
+
+2013-03-07 15:28:13 r1931 sangalli
+
+	Version 3.2.5
+
+	*  include/version.inc configure bse/K_eh_setup.F config/configure.ac
+
+	Bugs:
+	- BS_bands(1:2) forced to be in the bands range
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-03-06 15:38:17 r1925 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Wrong sign in Finite temperature line-widths corrected
+
+2013-03-01 11:39:18 r1902 sangalli
+
+	Version 3.2.5
+
+	*  configure tddft/tddft_BSK_2_FXC.F include/version.inc config/configure.ac
+
+	Bugs:
+	- tddft_BSK_2_FXC was reporting error 'Array bound mismatch'
+	  if yambo is compiled with gfortran and bounds check
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-02-27 14:03:49 r1892 attacc
+
+	Version 3.3.0
+
+	*  modules/mod_X.F
+
+	Bugs:
+	 -Dipoles Matrices not correctly deallocated
+
+2013-02-27 09:39:38 r1887 attacc
+
+	Fixed version
+
+2013-02-27 09:34:26 r1885 attacc
+
+	Version 3.2.6
+
+	*  configure include/version.inc config/configure.ac
+
+	Changes:
+	 -Version updated
+
+2013-02-27 09:07:36 r1884 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac configure common/OCCUPATIONS_Gaps.F common/OCCUPATIONS_Fermi.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- At least 1 conduction state must be included in the ground-state,
+	  otherwise yambo returns error
+
+	Patch sent by: Davide
+
+2013-02-27 06:24:51 r1883 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug in SCALAPACK m4 fixed. It was freezing the configure
+
+2013-02-26 17:22:30 r1881 attacc
+
+	Version 3.2.5
+
+	*  real_time/RT_start_and_restart.F real_time/RT_driver.F sc/V_real_space_to_H.F modules/mod_SC.F
+
+	Bugs:
+	 -[RT] Different bugs in real-time dynamics fixed
+
+2013-02-26 16:06:34 r1878 attacc
+
+	Version 3.2.5
+
+	*  interface/barriers.F
+
+	Bugs:
+	 -Fixed wrong barrier (Davide)
+
+2013-02-26 13:43:42 r1874 attacc
+
+	Version 3.2.5
+
+	*  modules/.objects_gpl bse/.objects_gpl common/.objects_gpl wf_and_fft/.objects_gpl ypp/.objects_gpl ypp/mod_YPP.F
+
+	Bugs:
+	 -Fixed GPL compilation
+
+2013-02-26 12:18:50 r1873 attacc
+
+	Version 3.2.5
+
+	*  io/ioDB1.F ypp/electrons_bands.F
+
+	Additions:
+	 -Bands interpolation works also with spin
+
+	Changes:
+	 -Yambo stops if wave-function databases are older than version 3.2.2
+
+2013-02-25 17:08:38 r1868 sangalli
+
+	Version 3.2.5
+
+	*  configure communicate/REPORT_Occupations.F common/.objects common/OCCUPATIONS_Gaps.F common/OCCUPATIONS_Fermi.F common/OCCUPATIONS_Extend.F modules/mod_interfaces.F modules/.objects modules/mod_electrons.F qp_ctl/OCCUPATIONS_IO_and_interpolate.F include/version.inc config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Report occupations reorganized following the structure created by Andrea in his branch
+
+	Patch sent by: Davide
+
+2013-02-25 14:17:58 r1867 sangalli
+
+	Version 3.2.5
+
+	*  configure modules/mod_com.F parser/Gclose.F config/configure.ac include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- In case cutoff-variables in the input file are provided in energy units but
+	  initialization has not yet been performed error message is called. This avoids that
+	  the parser interprets the numbers in the input as beeing in RL units
+
+	Patch sent by: Davide
+
+2013-02-22 16:58:33 r1858 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac configure tddft/tddft_alda_r_space.F include/version.inc
+
+	Bugs:
+	- Fixed bug introduced inserting WF_apply_symm in tddft_alda_r_space.
+	  The code however is still slower than before.
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-02-22 10:54:56 r1855 sangalli
+
+	Version 3.2.5
+
+	*  include/version.inc config/configure.ac configure io/ioKB_PP.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Restored compatibility with old DBs for [r,Vnl] commutator
+
+	Patch sent by: Davide
+
+2013-02-21 15:30:06 r1853 sangalli
+
+	Version 3.2.5
+
+	*  p2y/qexml_v4.0.F
+
+	Bugs:
+	- Restored line erroneously removed in the previous commit
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-02-21 15:24:26 r1852 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac configure p2y/qexml_v4.0.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- In UPF V2.0 norm-conserving psp cab be classified as "NC", "SL" and "NL"
+	  All these are ok for yambo
+
+	Patch sent by: Davide
+
+2013-02-19 17:12:21 r1850 sangalli
+
+	Version 3.2.5
+
+	*  setup/QP_state_table_setup.F xc_functionals/el_magnetization.F xc_functionals/el_density.F wf_and_fft/WF_load.F wf_and_fft/WF_apply_symm.F pol_function/Dipole_transverse.F pol_function/X_eh_setup.F pol_function/Dipole_dip_dot_field.F io/ioKB_PP.F modules/mod_electrons.F bse/K_scattering.F bse/K_eh_setup.F qp/XCo_local.F qp_ctl/mod_QP_CTL.F ypp/electrons_driver.F ypp/excitons_non_collinear.F ypp/ypp_init_load.F ypp/excitons_driver.F ypp/excitons_sort_and_report.F ypp/ypp_init.F include/version.inc config/configure.ac configure p2y/mod_p2y.F a2y/a2y_db1.F a2y/a2y_wf.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- "GPL EXCLUDE/INCLUDE SPIN" flags removed
+	- WF_apply_symm used to properly rotate WFs in excitons_driver and excitons_non_collinear
+
+	Patch sent by: Davide
+
+2013-02-19 15:04:20 r1847 sangalli
+
+	Version 3.2.5
+
+	*  configure common/eval_G_minus_G.F setup/setup.F interface/barriers.F config/configure.ac include/version.inc
+
+	Bugs:
+	- bug introduced in eval_G_m_G merging from my branch
+	Additions:
+	-
+	Changes:
+	- fixed barriers for spin
+
+	Patch sent by: Davide
+
+2013-02-19 12:13:56 r1846 sangalli
+
+	Version 3.2.5
+
+	*  configure wf_and_fft/WF_apply_symm.F wf_and_fft/scatter_Bamp.F wf_and_fft/.objects tddft/tddft_alda_r_space.F bse/K_scattering.F config/configure.ac include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- WF_apply_symm.F inserted in the trunk (from my branch) in order to make
+	  scatter_Bamp and K_scattering work with n_spinor=2 case
+	  Implementation also prepared for tddft_alda_r_space
+
+	Patch sent by: Davide
+
+2013-02-19 12:04:39 r1845 sangalli
+
+	Version 3.2.5
+
+	*  include/version.inc config/configure.ac configure bz_ops/bz_samp_indexes.F common/eval_G_minus_G.F common/G_rot_grid.F common/.objects common/ig_index.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- unified code for bz_samp_indexes.F and eval_G_minus_G.F using ig_index function
+	- common/G_rot_grid.F for the case is is not the inversion
+
+	Patch sent by: Davide
+
+2013-02-18 14:05:35 r1840 attacc
+
+	Version 3.2.5
+
+	*  setup/G_shells_finder.F
+
+	Bugs:
+	 -Fixed bug reading ndb.grot: nsym_db undefined if one reads only the second section
+
+2013-02-13 14:44:29 r1821 sangalli
+
+	Version 3.2.5
+
+	*  configure communicate/REPORT_Occupations.F common/OCCUPATIONS_Fermi.F config/configure.ac include/version.inc
+
+	Bugs:
+	- REPORT_Occupations works also in case n_sp_pol=2 with zero electrons in
+	  one of the two spin channels
+	Additions:
+	-
+	Changes:
+	- REPORT_Occupations correctly reports if the system is a metals, an half-metals or a
+	  magnetic semi-conductors. This replaces the old message "merged spin-levels are metallic".
+	- Instead of the average occupations of the metallic system, the total number of metallic electrons,
+	  which is easier to understand, is reported.
+
+	Patch sent by: Davide
+
+2013-02-13 11:10:13 r1819 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac lib/libxc/configure lib/libxc/config.h.in qp_ctl/QP_merge_DBs.F
+
+	Bugs:
+	- Bug fixed in QP_merge_DBs.F was not properly allocating the Green's functions loaded from a user-defined
+	  Database.
+
+	Patch sent by: Andrea
+
+2013-02-12 12:16:25 r1815 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac ypp/fix_WFs_Gshells.F include/version.inc a2y/a2y_db1.F configure common/find_G_rot.F common/eval_G_minus_G.F + common/.objects setup/eval_minus_G.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- find_G_rot renamed G_rot_grid
+	- G_rot_grid may not found g_rot in case neither inversion symmetry nor time reversal are present
+	  Error message removed
+
+	Patch sent by: Davide
+
+2013-02-12 11:06:55 r1813 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac configure common/find_G_rot.F include/version.inc
+
+	Bugs:
+	- extend_grid and set_table were not initialized in find_G_rot
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-02-12 10:37:31 r1812 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac configure p2y/qexml_v4.0.F p2y/qexml_v3.2.F include/version.inc
+
+	Bugs:
+	- [p2y] TIME_REVERSAL_FLAG is present in pwscf-4.3.2 . It is not present before
+	        qexml fixed
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-02-11 17:39:21 r1811 sangalli
+
+	Version 3.2.5
+
+	*  a2y/a2y_db1.F setup/G_shells_finder.F setup/eval_minus_G.F common/find_G_rot.F common/eval_G_minus_G.F common/.objects modules/std_presets.F ypp/fix_WFs_Gshells.F include/version.inc config/configure.ac configure
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- search for g_rot(ig) now is done within the shells not within the whole g-vectors space.
+	  Expecially for nanostructures where ng_vec> 100.000 while all(ng_in_shell(:))< 100 the code is much
+	  faster (i.e. few secs against ~1h or more). Interested subroutines are:
+	  * a2y_db1.F (closire of G space against inversion)
+	  * eval_minus_G.F
+	  * eval_G_minus_G.F
+	  * fix_WFs_Gshells.F (when symmetries are increased, experimental)
+	- when inv_index<0 minus_G table is evaluated separately. However the call to ioGROT with the line command
+	  "if(inv_index<0)" is done in the init subroutine when inv_index is not yet defined. Thus
+	  after the setup in case inv_index<0 G_shells_finder must read again the ioGROT file, section 2
+
+	Patch sent by: Davide
+
+2013-02-07 14:03:30 r1799 sangalli
+
+	Version 3.2.5
+
+	*  include/version.inc configure bse/K_Haydock.F config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- When the full BSE is solved with Haydock beyond the TDA BSS_rhoq0(2*BS_K_dim)
+	  and Vn(BS_K_dim) have different dimensions.
+	  Thus the line dot_product(BSS_rhoq0,Vn) gave error using gfrotran compiled with tho bounds check flag
+	  and has been replaced by dot_product(BSS_rhoq0(:BS_K_dim),Vn)
+
+	Patch sent by: Davide
+
+2013-02-07 11:12:46 r1797 sangalli
+
+	Version 3.2.5
+
+	*  configure io/Fragments_Restart.F include/version.inc config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Correctly print 4 number code revision in io/Fragments_Restart.F
+
+	Patch sent by: Davide
+
+2013-02-05 10:11:23 r1790 sangalli
+
+	Version 3.2.5
+
+	*  include/version.inc p2y/qexml_v3.1.F p2y/mod_p2y.F p2y/qexml_v3.2.F configure config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [p2y] Restored compatibility with PWscf DBs older than 4.0 for Trev varables
+
+	Patch sent by: Davide
+
+2013-02-04 17:20:12 r1788 sangalli
+
+	Version 3.2.5
+
+	*  configure config/configure.ac include/version.inc int_modules/mod_com2y.F
+
+	Bugs:
+	- [p2y] magnetic symemtries in the pwscf DB do not include the Trev symmetry,
+	        while symmetries in the yambo DB do. Thus I need a minus in the interface
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-02-04 14:57:53 r1783 sangalli
+
+	Version 3.2.5
+
+	*  configure p2y/qexml_v4.0.F p2y/mod_pw_data.F p2y/mod_p2y.F int_modules/mod_com2y.F include/version.inc config/configure.ac
+
+	Bugs:
+	- p2y for systems with SO did not work properly in case nsym=1
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-01-30 16:40:42 r1762 sangalli
+
+	Version 3.2.5
+
+	*  configure setup/check_periodic_directions.F include/version.inc config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- in check_periodic_directions.F 0D systems (i.e. isolated systems) where
+	  associated with the logical l_3D, 1D systems with logical l_2D, and
+	  2D systems with logical l_1D. The names of the logicals have been fixed.
+
+	Patch sent by: Davide
+
+2013-01-29 12:14:03 r1760 sangalli
+
+	Version 3.2.5
+
+	*  configure a2y/a2y_db1.F include/version.inc config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [a2y] Improved closing shell algorithm
+
+	Patch sent by: Davide
+
+2013-01-28 15:19:51 r1757 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac configure p2y/Vnl_driver.F p2y/pw_pseudo_module.F p2y/qexml_v4.0.F p2y/pw_pseudovelocity_module.F a2y/a2y_db1.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [p2y] the commutator is computed also in case of calculations with
+	  SO where not all pseudo-potentials are fully-relativistic
+
+	Patch sent by: Davide
+
+2013-01-28 10:57:38 r1752 sangalli
+
+	Version 3.2.5
+
+	*  ypp/ypp_init.F ypp/fix_symmetries.F include/version.inc config/configure.ac configure int_modules/mod_com2y.F p2y/mod_p2y.F a2y/a2y_db1.F e2y/e2y_db1.F modules/mod_electrons.F modules/std_presets.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- a2y now correctly works with a new patched version of abinit also in the case of non magnetic systems
+
+	Patch sent by: Davide
+
+2013-01-25 15:48:16 r1749 sangalli
+
+	Version 3.2.5
+
+	*  configure wf_and_fft/scatter_Bamp.F config/configure.ac include/version.inc
+
+	Bugs:
+	- scatter_Bamp.F: fixed a bug I had introduced merging a commit from Andrea with
+	                  the changes I've done in scatter_Bamp to properly run with
+	                  spin_sop. (Thanks Claudio)
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-01-24 18:35:51 r1743 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  include/version.inc config/configure.ac lib/libxc/aclocal.m4 lib/libxc/configure lib/libxc/Makefile.in lib/libxc/Makefile.in lib/libxc/testsuite/Makefile.in lib/libxc/build/Makefile.in lib/libxc/config.h.in qp/ELPH_Sigma_c.F coulomb/rim_spherical.F io/ioQP.F configure
+
+	Bugs:
+	- ELPH_Sigma_c.F: wrong call to rim_spherical fixed.
+
+	Changes:
+	- libxc configure-related files.
+	- Changed reference energy to shift the E(k+q) energies passed to Yambo by PWscf in an el-ph calculation.
+
+	Patch sent by: Andrea
+
+2013-01-24 15:47:52 r1741 attacc
+
+	Version 3.2.5
+
+	*  ypp/electrons_driver.F ypp/ypp_init.F
+
+	Changes:
+	 -Small change in bands plot input
+
+2013-01-23 15:15:25 r1738 attacc
+
+	Version 3.2.5
+
+	*  a2y/a2y_db1.F
+
+	Bugs:
+	 -Fixed GPL
+
+2013-01-22 11:15:52 r1736 attacc
+
+	Version 3.2.5
+
+	*  modules/.objects_gpl interpolate/.objects interpolate/.objects_gpl ypp/.objects_gpl a2y/a2y_db1.F
+
+	Bugs:
+	 -Fixed GPL compilation
+
+2013-01-21 12:16:27 r1729 sangalli
+
+	Version 3.2.5
+
+	*  include/version.inc a2y/a2y_db1.F config/configure.ac configure
+
+	Bugs:
+	- [a2y] bug in a2y for spinorial calculations. ng_vec was not defined correctly
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-01-18 12:46:43 r1726 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	BUG in ypp/fix_PPs.F fixed
+
+2013-01-17 14:45:36 r1721 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc a2y/a2y_db1.F config/configure.ac ypp/fix_WFs_and_E.F ypp/fix_PPs.F ypp/symmetries_driver.F ypp/fix_WFs_Gshells.F ypp/fix_symmetries.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [ypp] imlpementation to add symmetries moved from my branch to trunk
+	- [a2y] G-shells closed only when either t-rev or space-inv are present
+
+	Patch sent by: Davide
+
+2013-01-15 17:43:59 r1713 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac ypp/fix_WFs_and_E.F ypp/fix_symmetries.F
+
+	Bugs:
+	- Fixed small bug in the new fix_symmetries version
+
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-01-15 13:49:06 r1710 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac configure include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- removed old subroutine RT_fix_symmetries.F
+
+	Patch sent by: Davide
+
+2013-01-15 13:41:54 r1709 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac io/io_Vnl.F modules/mod_D_lattice.F wf_and_fft/WF_load.F wf_and_fft/scatter_Bamp.F + setup/setup.F setup/.objects ypp/ypp_init.F ypp/build_kpts_map.F ypp/RT_driver.F ypp/fix_SC_DBs.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/fix_WFs_and_E.F ypp/fix_symmetries.F ypp/fix_PPs.F ypp/symmetries_driver.F ypp/RT_fix_symmetries.F ypp/RT_build_spin_sop.F ypp/ypp_i.F ypp/.objects ypp/fix_WFs_Gshells.F driver/ypp.h configure include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2013-01-01 16:28:22 r1691 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Global year update in Copyright headers in: trunk, devel-andrea and devel-openmp
+
+2012-12-30 11:50:00 r1683 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac ypp/electrons_dos_and_charge.F
+
+	Bugs:
+	- missing #if defined _YPP_RT in electrons_dos_and_charge
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-12-18 10:52:24 r1668 sangalli
+
+	Version 3.2.5
+
+	*  bse/K_Haydock.F configure include/version.inc config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Haydock. Fixed few inconsistencies with the equations which
+	  however does not affect the final result for eps_xx.
+
+	Patch sent by: Davide
+
+2012-12-14 11:47:38 r1661 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac io/ioBS_DISTRIBUTED.F bse/K_Haydock.F bse/K_BSmat_by_V.F bse/K_BSmat_by_V_TEST_1.F
+
+	Bugs:
+	- io/ioBS_DISTRIBUTED.F. Same bug that was in ioBS, fixed also in ioBS_distributed
+	Additions:
+	-
+	Changes:
+	- bse/K_Haydock.F bse/K_BSmat_by_V.F bse/K_BSmat_by_V_TEST_1.F
+	  removed many "#if defined _DOUBLE" thanks to wrapper
+
+	Patch sent by: Davide
+
+2012-12-14 10:59:14 r1659 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac io/ioBS.F
+
+	Bugs:
+	- ioBS: fixed wrong read of BS_cpl_mat in case of Haydock fast algoritm.
+	- configure: fixed small typo
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-12-13 11:17:15 r1654 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac ypp/RT_fix_symmetries.F
+
+	Bugs:
+	- [YPP_RT] wrong definition of wf_ncx
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-12-13 10:07:07 r1652 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc int_modules/mod_com2y.F a2y/a2y_db1.F a2y/a2y_wf.F config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [a2y] a2y always closes G_vectors against spatial inversion
+
+	Patch sent by: Davide
+
+2012-12-13 08:36:22 r1651 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac bse/K_Haydock.F ypp/RT_fix_symmetries.F configure include/version.inc
+
+	Bugs:
+	- [YPP_RT] ioKB_PP was broken after io_Vnl implementation in ypp_rt
+	- [YPP_RT] abinit wfs are now written on components and check of wf_nc_k(ik) vs ng_closde
+	           had to be replaced by check of wg_igk(:,ik) vs ng_closed. This because
+	           abinit does not close shells against Trev when SpaceInv is not present
+	- K_Haydock. Fixed cI factor
+
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-12-12 18:07:40 r1649 attacc
+
+	Version 3.2.5
+
+	*  ypp/RT_fix_symmetries.F
+
+	Bugs:
+	 -Bug in RT_fix_symmetries.F removed zeros in wf_igk (I don't know where they come from)
+
+2012-12-10 16:58:46 r1633 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac interface/barriers.F
+
+	Bugs:
+	- barriers was still not working properly for n_spinor==2.
+	  syntax changed again
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-12-10 15:54:42 r1631 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc p2y/qexml_v4.0.F config/configure.ac
+
+	Bugs:
+	- p2y -c now correctly works if pw.x run was done with a fully relativistic pseudo (i.e. with SO included in the psp)
+	  but withou SO included in the Hamiltonian.
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2012-12-10 15:52:25 r1630 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac wf_and_fft/WF_spatial_invertion.F interface/barriers.F setup/setup.F xc_functionals/el_density.F qp/QP_ppa_cohsex.F qp/QP_real_axis.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Magnetic symmetries implementation fixed also in the trunk.
+
+	Patch sent by: Davide
+
+2012-12-06 10:36:18 r1623 attacc
+
+	Version 3.2.5
+
+	*  sbin/make_makefile.sh.in config/Makefile.in config/Makefile.in_gpl lib/libxc/configure lib/pwdiago lib/pwdiago/cdiagh.F lib/pwdiago/localindex.F lib/pwdiago/.objects lib/pwdiago/opt_param.h lib/pwdiago/chegvx.f lib/pwdiago/localdim.F lib/pwdiago/kind.F lib/pwdiago/error_handler.F lib/pwdiago/cdiaghg.F lib/pwdiago/f_defs.h lib/pwdiago/dspev_drv.F lib/pwdiago/chegv.f lib/pwdiago/mp_global.F lib/pwdiago/rdiagh.F lib/pwdiago/descriptors.F lib/pwdiago/rdiaghg.F lib/pwdiago/ptoolkit.F lib/pwdiago/chpev.f lib/pwdiago/gridsetup.F lib/pwdiago/mp_base.F lib/pwdiago/zhpev_drv.F lib/pwdiago/mp.F modules/mod_matrix_operate.F bse/K_diagonalization.F
+
+	Changes:
+	 -Cleaning the code: removed PWDIAGO subroutines
+
+2012-12-05 13:55:56 r1614 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac setup/G_shells_finder.F modules/mod_vec_operate.F
+
+	- Shell findes rewritten and parallelized. The new algorithm is based on the re-ordering of the G-vectors
+	  with increasing module and it is much faster.
+
+	Patch sent by: Andrea
+
+2012-12-04 15:47:42 r1609 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac interface/barriers.F configure include/version.inc
+
+	Bugs:
+	- Call to switch_off_runlevel subroutin in barriers.F splitted in 2
+
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2012-11-02 16:58:24 r1580 attacc
+
+	Version 3.2.5
+
+	*  lib/lapack/cgetrs.f lib/lapack/zgetrs.f lib/lapack/.objects modules/mod_interpolate.F interpolate/matrix_inv_cut.F interpolate/bz_interp_setup.F interpolate/bz_interp_coeff.F interpolate/eval_interpolation_coeff.F interpolate/bz_interpolation.F interpolate/fourier_interpolation.F interpolate/.objects
+
+	Bugs:
+	 -Fixed double precision part in interpolation
+	-
+
+2012-10-30 16:28:58 r1571 attacc
+
+	Version 3.2.5
+
+	*  ypp/double_k_grid.F
+
+	Bugs:
+	 -Small bug in double generation
+
+2012-10-30 13:29:15 r1570 attacc
+
+	Version 3.2.5
+
+	*  ypp/ypp_init_load.F ypp/ypp_init.F
+
+	Bugs:
+	 -Stupid bug in ypp input
+
+2012-10-24 15:39:44 r1560 attacc
+
+	Version 3.2.5
+
+	*  modules/std_presets.F ypp/electrons_bands.F
+
+	Bugs:
+	 -Removed _TEST_2 flag
+
+2012-10-23 16:56:39 r1557 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac ypp/RT_fix_symmetries.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [ypp_rt] Also s.Vnl DB rotated in RT_fix_symmetries. Implementation from devel-davide.
+	  Tests needed
+
+	Patch sent by: Davide
+
+2012-10-23 13:56:33 r1555 attacc
+
+	Version 3.2.5
+
+	*  config/Makefile.in_gpl config/Makefile.in setup/setup.F modules/mod_interpolate.F modules/.objects interpolate/.objects interpolate/matrix_inv_cut.F interpolate/bz_interp_setup.F interpolate/bz_interp_coeff.F interpolate/eval_interpolation_coeff.F interpolate/bz_interpolation.F interpolate/fourier_interpolation.F ypp/electrons_driver.F ypp/.objects ypp/ypp_init.F ypp/electrons_bands.F ypp/ypp_init_load.F driver/ypp.h driver/ypp.h_gpl configure
+
+	Additions:
+	 -Brillouin zone interpolation
+	 -ypp -s b band structure interpolation
+
+2012-10-23 11:02:16 r1551 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc p2y/mod_p2y.F p2y/mod_pw_data.F config/configure.ac
+
+	Bugs:
+	- [p2y] input_GS_Tel units fixed
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-10-22 10:20:29 r1543 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc p2y/qexml_v4.0.F config/configure.ac
+
+	Bugs:
+	- [p2y] ios was not initialized to 0 in read_upf_header_v1
+	Additions:
+	-
+	Changes:
+	- [p2y] TWO_FERMI_ENERGIES implementation simplified
+
+	Patch sent by: Davide
+
+2012-10-19 18:31:15 r1542 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  p2y/qexml_v4.0.F
+
+	Bugs:
+	-  [p2y] Hopefully a proper resolution of the TWO_FERMI_ENERGIES problem, back compatibility and famous "< 1984" bug
+	-
+	Patch sent by: Conor
+
+2012-10-19 15:08:39 r1539 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  p2y/qexml_v4.0.F
+
+	Bugs:
+	- [p2y] Fixed a couple of bugs related to reading UPF files: checking for NC and two fermi levels.
+
+	Patch sent by: Conor
+
+2012-10-17 16:15:35 r1536 sangalli
+
+	Version 3.2.5
+
+	*  p2y/qexml_v4.0.F
+
+	Bugs:
+	- Small typo from the previous commit
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-10-17 16:13:23 r1535 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac configure include/version.inc p2y/qexml_v4.0.F
+
+	Bugs:
+	- [P2Y] In case TWO_FERMY_ENERGY==.true. (i.e. fixed_magnetization)
+	  p2y calls errore
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-10-10 10:39:24 r1523 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac configure include/version.inc p2y/mod_pw_data.F p2y/qexml_v4.0.F p2y/mod_p2y.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [P2Y] input_GW_Tel is read from data-file.xml
+
+	Patch sent by: Davide
+
+2012-10-08 11:31:01 r1510 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac io/io_Vnl.F configure include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Vnl I/O fragmented on kpts as dipoles I/O
+
+	Patch sent by: Davide
+
+2012-10-08 11:17:37 r1509 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc p2y/Vnl_driver.F config/configure.ac io/io_Vnl.F pol_function/Dipole_transverse.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- I/O of Vnl changed to make ns.Vnl db of the trunk compatible with ns.Vnl db of my branch
+	  in view of a future inclusion of the relativistic part (i.e. off-diagonal spin part) of [r.Vnl]
+	  in the trunk
+
+	Patch sent by: Davide
+
+2012-10-08 09:19:13 r1506 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc p2y/pw_pseudovelocity_module.F config/configure.ac
+
+	Bugs:
+	- If Vnl contains l=0 component and SO then the computed number
+	  of spherical armonics was wrong
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-10-01 18:38:11 r1502 sangalli
+
+	Version 3.2.5
+
+	*  . configure include/version.inc p2y/pw_pseudovelocity_module.F p2y/qexml_v4.0.F p2y/mod_p2y.F p2y/Vnl_driver.F p2y/pw_pseudo_module.F config/configure.ac io/io_Vnl.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [p2y] Implementation of [r,Vnl] extendend to all cases:
+	  * Quantum espresso psps of version 2
+	  * n_sp_pol=2 and n_spinor=2 and psps with many projectors
+	  Checks for eps_xy, which is very sensitive to [r,Vnl], on Ni seems ok.
+
+	Patch sent by: Davide
+
+2012-09-28 11:48:30 r1490 attacc
+
+	Updated revision
+
+2012-09-28 11:25:07 r1489 attacc
+
+	Small error
+
+2012-09-28 11:24:07 r1488 attacc
+
+	Version 3.2.5
+
+	*  wf_and_fft/WF_load.F pol_function/.objects pol_function/Dipole_driver.F pol_function/Dipole_transverse.F pol_function/Dipole_rotate.F setup/setup.F setup/QP_state_table_setup.F interface/init_load.F interface/init.F sc/SC_WF_and_dipole_dimensions.F sc/SC_start_and_restart.F sc/SC_driver.F sc/.objects sc/SC_History.F sc/SC_update_dipoles.F io/variables_SC.F io/io_SC_components.F modules/mod_wave_func.F modules/std_presets.F modules/mod_SC.F
+
+	Additions:
+	 -[SC] Self-consistent COHSEX with update of W, with dipoles rotation (SCUpWIter)
+	 -[SC] Added the possibility of non-local mixing(SCnlMix) and diagonal approximation (SCdiag)
+
+2012-09-22 20:32:45 r1474 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac
+
+	Bugs:
+	- fixed small bug in configure while lookin for HDF5 support
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-09-19 16:29:34 r1472 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version/revision updated. Tab spaces fixed
+
+2012-09-19 16:21:25 r1471 attacc
+
+	Version 3.2.5
+
+	*  wf_and_fft/scatter_Bamp.F setup/setup.F modules/mod_vec_operate.F modules/mod_com.F modules/mod_D_lattice.F
+
+	Changes:
+	 -Vecotor function defined as "pure"
+
+	Additions:
+	 -Possibility to flush output into files,  call of_open_close(filename,'f')
+	 -Identity operation not applied in scatter_Bamp.F anymore
+
+2012-09-17 11:05:10 r1461 attacc
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/acx.m4 config/acx_cpp.m4 config/acx_fortran_flags.m4 config/configure.ac
+
+	Additions:
+	 -Possibility to specify unoptimized Fortran flags UFLAGS
+
+2012-09-13 14:33:14 r1445 attacc
+
+	Version 3.2.5
+
+	*  configure config/libxc.m4
+
+	Bugs:
+	 -Fixed libxc configure call on powerpc
+
+2012-09-12 11:49:40 r1436 attacc
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/libxc.m4 config/configure.ac
+
+	Bugs:
+	 -Fixed libxc configure problem with xlf/xlc compilers
+
+2012-09-02 21:46:59 r1420 sangalli
+
+	Version 3.2.5
+
+	*  include/version.inc config/configure.ac qp/QP_secant.F qp/secant.F configure
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Secant solver improved. Also a small bugs has been fixed
+
+	Patch sent by: Davide
+
+2012-08-30 14:58:18 r1418 attacc
+
+	Version 3.2.5
+
+	*  common/FREQUENCIES_reset.F modules/mod_frequency.F
+
+	Bugs:
+	 -Fixed possibly memory leaks
+
+2012-08-14 13:48:01 r1413 sangalli
+
+	Version 3.2.5
+
+	*  qp/XCo_local.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Deallocation of V_xc moved after GPL_EXCLUDE_END SPIN_IGNORE
+
+	Patch sent by: Davide
+
+2012-08-14 12:49:21 r1411 sangalli
+
+	Version 3.2.5
+
+	*  config/configure.ac qp/XCo_local.F configure include/version.inc
+
+	Bugs:
+	- Fixed an old bug in the computation of QP_Vxc for n_spinor=2
+	  Also the subroutine XCo_local.F has been reorganized
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-08-06 16:05:17 r1404 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac xc_functionals/el_magnetization.F qp/XCo_local.F
+
+	Bugs:
+	- Bug fix for SO and <Vxc> in qp/XCo_local.F from xc_functionals/el_magnetization.F
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-08-06 15:23:07 r1403 sangalli
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac xc_functionals/el_magnetization.F
+
+	Bugs:
+	- Fixed: if magn(x)=0 somewhere for systems with SO <V_xc>=NaN
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-07-27 17:15:16 r1398 attacc
+
+	Version 3.2.5
+
+	*  scripts/read_dip.py + scripts/eps_converter.py
+
+	Additions:
+	 -New script to calculate: conductivity, reflectivity, transmissivity,
+	                           refractive index and extinction coefficient
+
+2012-07-26 17:47:53 r1391 attacc
+
+	Version 3.2.5
+
+	*  io/ioQP.F scripts scripts/read_dip.py scripts/read_qp.py
+
+	Bugs:
+	 -Small bug in ioQP
+
+	Additions:
+	 -Python scripts to read NetCDF databases
+
+2012-07-26 11:07:03 r1387 attacc
+
+	typos
+
+2012-07-26 11:02:44 r1386 attacc
+
+	[SC] local_description variable not initializated
+
+2012-07-25 10:34:05 r1384 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fix in ioQP.F
+
+2012-07-23 15:48:24 r1379 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Internal version updated
+
+2012-07-20 18:26:39 r1375 attacc
+
+	Version 3.2.5
+
+	*  modules/mod_fields.F interface/init_load.F
+
+	Additions:
+	 -[RT] Added pulse field
+
+2012-07-19 12:39:35 r1371 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure p2y/p2y_wf.F p2y/mod_p2y.F p2y/p2y_i.F p2y/.objects p2y/qexml_v4.0.F config/configure.ac
+
+	Additions:
+	- p2y now works with QE v5.0
+
+	Patch sent by: Conor
+
+2012-07-17 16:26:00 r1369 attacc
+
+	Version 3.2.5
+
+	*  real_time/RT_initialize.F ypp/double_k_grid.F
+
+	Bugs:
+	 -Double precision small fix
+
+2012-07-10 11:53:14 r1361 attacc
+
+	Version 3.2.5
+
+	*  qp/XCo_Hartree_Fock.F qp/QP_ppa_cohsex.F wf_and_fft/WF_states_setup.F modules/mod_wf_distribute.F
+
+	Bugs:
+	 -Bug in WF distribution in GW
+
+2012-07-10 10:16:09 r1360 sangalli
+
+	Version 3.2.5
+
+	*  a2y/a2y_wf.F a2y/a2y_db1.F e2y/e2y_kb_pp.F io/ioKB_PP.F modules/mod_pseudo.F ypp/RT_fix_symmetries.F
+
+	Bugs:
+	- RT_fix_symmetries: fixed rotation of pp_kb
+	Additions:
+	-
+	Changes:
+	- Now also a2y construct a database with WFs written on components.
+
+	Patch sent by: Davide
+
+2012-07-09 17:40:01 r1358 sangalli
+
+	Version 3.2.5
+
+	*  ypp/RT_fix_symmetries.F
+
+	Bugs:
+	- g_rot must be constructed for all g_vec in order to perform the rotation
+	  in G space
+
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-07-07 15:25:52 r1353 sangalli
+
+	Version 3.2.5
+
+	*  ypp/RT_fix_symmetries.F
+
+	Bugs:
+	- Also pp_kb and pp_kbd must be rotated
+	- cp old database for k=1,k_save%nibz not k%nibz
+
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-07-04 17:34:11 r1345 attacc
+
+	small typos
+
+2012-07-04 14:39:14 r1344 attacc
+
+	Version 3.2.5
+
+	*  interface/init_load.F real_time/RT_Integrator.F modules/mod_real_time.F
+
+	Additions:
+	 -[RT] New integrators EULEREXP and RK2EXP (ispired by the Octopus one)
+
+2012-07-03 18:22:54 r1343 attacc
+
+	typos
+
+2012-07-03 18:20:06 r1342 attacc
+
+	Version 3.2.5
+
+	*  real_time/RT_start_and_restart.F real_time/RT_Collision.F io/ioQP.F modules/mod_memory.F qp/eet_terminator.F
+
+	Bugs:
+	 -[RT] Wrong definition of E_bare in real-time (Myrta)
+	 -[RT] Bug in k-point parallelization
+
+2012-07-03 14:33:11 r1339 attacc
+
+	Version 3.2.5
+
+	*  qp/eet_terminator.F interface/init_load.F interface/init.F real_time/RT_start_and_restart.F real_time/RT_Collision.F io/ioQP.F modules/std_presets.F modules/mod_QP.F
+
+	Additions:
+	 -Added also the Bruneval-Gonze terminator for the self-energy
+
+2012-07-03 01:14:32 r1338 attacc
+
+	restored i_sort call
+
+2012-07-02 16:55:39 r1337 attacc
+
+	Version 3.2.5
+
+	*  ypp/RT_fix_symmetries.F
+
+	Bugs:
+	 -[RT] Bug rotating WFs generated by PWSCF
+
+2012-07-02 13:18:30 r1335 attacc
+
+	Version 3.2.5
+
+	*  real_time/RT_Collision.F
+
+	Bugs:
+	 -[RT] Wrong parallelization on k-points fixed
+
+2012-06-20 14:12:34 r1320 attacc
+
+	Version 3.2.5
+
+	*  io/ver_is_gt_or_eq.F modules/mod_IO.F
+
+	Bugs:
+	 -Serious bug reading databases in parallel
+
+2012-06-20 11:31:41 r1318 sangalli
+
+	Version 3.2.5
+
+	*  qp/QP_Green_Function.F
+
+	Bugs:
+	- QP_zoom now works also for states above the fermi level
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-06-19 12:27:04 r1314 attacc
+
+	Small fixes for the GPL+DISTRIBUTED
+
+2012-06-19 11:22:13 r1312 attacc
+
+	Version 3.2.5
+
+	*  io/ioE_RIM.F modules/mod_vec_operate.F modules/mod_electrons.F bse/K_diagonalization.F pol_function/X_bare_RIM_GreenF.F ypp/k_random.F ypp/ypp_init.F ypp/mod_YPP.F ypp/double_k_grid.F ypp/ypp_init_load.F ypp/read_bxsf.F ypp/ypp_i.F ypp/.objects driver/ypp.h
+
+	Additions:
+	 -Possibility to read BXSF files generated by Wannier90 to improve k-points convergence
+	  (see http://www.yambo-code.org/doc/inputs/ypp_bxsf.php)
+
+2012-06-18 14:03:29 r1309 attacc
+
+	Version 3.2.5
+
+	*  modules/mod_par_proc.F bse/K_DISTRIBUTED.F
+
+	Changes:
+	 -[DISTRIBUTED] BSE equation parallelized on columns
+	 -[DISTRIBUTED] Parallelization using MPI_BCAST, no need anymore to make a copy
+	                of the BSE matrix
+
+2012-06-18 13:02:02 r1308 sangalli
+
+	Version 3.2.5
+
+	*  modules/mod_xc_functionals.F modules/mod_SC.F xc_functionals/.objects xc_functionals/XC_libxc_driver.F xc_functionals/spin_density.F + qp/XCo_local.F tddft/tddft_alda_r_space.F sc/SC_driver.F ypp/electrons_dos_and_charge.F ypp/electrons_driver.F ypp/electrons_angular_momentum.F ypp/RT_fix_symmetries.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- two_spin_density renamed magn
+
+	Patch sent by: Davide
+
+2012-06-15 19:07:09 r1307 attacc
+
+	small typos
+
+2012-06-15 18:58:10 r1306 attacc
+
+	Version 3.2.5
+
+	*  pol_function/X_os.F pol_function/X_poles_sort.F interface/init_load.F real_time/.objects real_time/RT_Integrator.F real_time/RT_Dephasing_Matrix.F real_time/RT_ELPH_Kernel.F real_time/RT_Collision.F modules/mod_real_time.F modules/mod_pars.F
+
+	Changes:
+	 -Distributed part in X_os moved in GPL
+	 -[RT] Removed EXACT and RK2EXACT integrators
+	 -[RT] Added RT_Dephasing_Matrix.F
+	 -[RT] RT_Collision now calculates only Ho+Sigma+U
+
+	Additions:
+	 -Distribution also on spin variables in X_os
+	 -[RT] RT_relaxation calculate relaxation terms present only in I1
+
+2012-06-15 15:49:24 r1304 sangalli
+
+	Version 3.2.5
+
+	*  modules/mod_functions.F bse/K_scattering.F qp/QP_ppa_cohsex.F qp/QP_real_axis.F
+
+	Bugs:
+	- K_scattering.F: i_time_rev check for rotated wfs
+	- QP_real_axis.F: spin_occ factor fot the case n_sp_pol==2
+	Additions:
+	-
+	Changes:
+	- wrapper used in QP_real_axis.F
+
+	Patch sent by: Davide
+
+2012-06-14 14:57:45 r1301 sangalli
+
+	Version 3.2.5
+
+	*  ypp/RT_fix_symmetries.F ypp/RT_build_spin_sop.F interface/barriers.F xc_functionals/spin_density.F
+
+	Bugs:
+	- build_spin_sop.F: bug inserted creating patch for trunk from my implementation
+	Additions:
+	-
+	Changes:
+	- for n_sp_pol=2 the spin is completly independent from the space-time variables.
+	  So it does not change under time_reversal neither.
+	  Removed trev symm operations from spin_density.F and RT_fix_symmetries.F
+	  Barriers updated accrodingly
+
+	Patch sent by: Davide
+
+2012-06-14 10:25:16 r1298 attacc
+
+	Version 3.2.5
+
+	*  pol_function/X_os.F pol_function/X_poles_sort.F pol_function/.objects
+
+	Additions:
+	 -[DISTRIBUTED] Memory distribution on condution bands works in X_os.F
+	-
+
+2012-06-13 11:04:19 r1296 gruning
+
+	Version 3.2.5
+
+	*  xc_functionals/XC_libxc_driver.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes: [XC] Rationalized names of local variables in XC_libxc_driver.F (Sent by Davide)
+	-
+
+2012-06-12 15:57:37 r1294 gruning
+
+	Version 3.2.5
+
+	*  int_modules/mod_xc2y.F
+
+	Bugs: [P2Y] The xc code PW91 was not recognised.
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2012-06-10 18:36:21 r1288 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc p2y/Vnl_driver.F config/configure.ac xc_functionals/spin_density.F wf_and_fft/fft_setup.F pol_function/Dipole_dip_dot_field.F modules/mod_vec_operate.F ypp/RT_fix_symmetries.F ypp/RT_build_spin_sop.F
+
+	 - [SPIN SOP] spin_sop (presently used only in RT_fix_symm) for the non_collinear case fixed and tested
+	 - [RT_fix_symm] WFs are now rotated in g-space without the FFT. Also the g-vector-shells for each wf are rotated. These two changes enable to have a closed shell for the rotated  wf centered on the right
+	   k-point.
+	   Thus the  "PWscf structure" is preserved. No changes for abinit wfs.
+
+	[BUG] in the collinear case (n_sp_pol=2) the spin density is assumed to be always along the z direction and must not be rotated with the spatial symmetries.
+
+	Patch sent by: Davide
+
+2012-06-09 16:39:09 r1285 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Internal version updated
+
+2012-06-07 17:17:10 r1281 attacc
+
+	Version 3.2.5
+
+	*  config/netcdf_f90.m4
+
+	Additions:
+	 -Small change for NetCDF 4.2
+
+2012-06-07 13:00:45 r1279 gruning
+
+	Version 3.2.5
+
+	*  xc_functionals/XC_libxc_driver.F
+
+	Bugs: LDA in LibXC is now corrected for working in spin-noncollinear
+	      GGA is still under scrutiny. TODO: put a barrier for GGA+noncoll-spin
+	-
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by Davide
+
+2012-05-31 09:40:14 r1269 gruning
+
+	Version 3.2.5
+
+	*  int_modules/mod_xc2y.F
+
+	Bugs: Apparently there are several way to specify a XC in pwscf. Added PBE next to PBX and PBC
+	      in the interface module between PWSCF and LIBXC. (Bug found by Maurizia)
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2012-05-22 18:08:44 r1258 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fix again
+
+2012-05-22 18:05:18 r1257 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	[devel-andrea] merged with trunk @ rev 1255. [trunk] bug fix in RT_fix_symmetries.F
+
+2012-05-22 17:03:47 r1255 attacc
+
+	Version 3.2.5
+
+	*  xc_functionals/el_density.F qp/QP_driver.F qp/XCo_Hartree_Fock.F qp/eet_terminator.F qp/.objects qp/.objects_gpl qp/QP_ppa_cohsex.F wf_and_fft/WF_load.F wf_and_fft/.objects wf_and_fft/.objects_gpl pol_function/Dipole_driver.F pol_function/Dipole_transverse.F interface/init_load.F interface/init.F io/ioQP.F io/IO_Setup.F modules/mod_wave_func.F modules/std_presets.F modules/mod_QP.F modules/.objects modules/.objects_gpl driver/yambo.h driver/yambo.h_gpl
+
+	Additions:
+	 -Distributed memory for GoWo, Hartree-Fock and Dipoles
+	 -EET terminator in GoWo
+
+2012-05-22 11:35:22 r1251 attacc
+
+	Version 3.2.5
+
+	*  modules/std_presets.F ypp/electrons_driver.F ypp/RT_fix_symmetries.F
+
+	Bugs:
+	 [SC] mag_syms was uninitialized
+	 [SC] typo in RT_fix_syms
+	 [SC] typo in electrons driver
+
+2012-05-18 16:55:11 r1239 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc int_modules/mod_com2y.F p2y/p2y_i.F config/configure.ac xc_functionals/el_density.F wf_and_fft/fft_setup.F wf_and_fft/scatter_Bamp.F setup/setup.F sc/OEP_driver.F sc/OEP_iterative.F sc/OEP_ApplySigmaX.F sc/OEP_Weighted_Density.F sc/OEP_app_inversion.F sc/OEP_ApplySigmaCSX.F sc/OEP_Hole.F tddft/tddft_alda_r_space.F io/ioDB1.F modules/mod_wave_func.F modules/mod_FFT.F modules/mod_D_lattice.F ypp/excitons_non_collinear.F ypp/excitons_driver.F ypp/RT_fix_symmetries.F
+
+	Changes:
+	- fft_rot_r now is constructed for all symmetries only from the spatial part of each symmetry.
+	  I.e. if del_sop include the t-rev fft_rot_r is constructed from -dl_sop
+
+	- spin_orbit logical removed from ioDB1.F and substituted by logical mag_sym
+	  the logical spin_orbit is still used in a2y
+
+	Patch sent by: Davide
+
+2012-05-18 15:37:25 r1237 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small changed in DB1. WANNIER interface forgotten in ypp/.objects_gpl
+
+2012-05-14 17:41:57 r1224 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc int_modules/mod_com2y.F config/configure.ac interface/barriers.F io/ioDB1.F ypp/RT_fix_symmetries.F
+
+	Bugs:
+	- [YPP_RT] Bug in the application of time-reversal in ypp/RT_fix_symmetries.F
+	- [INTERFACES] Wrong definition of symmetries when time-reversal is used.
+
+	Patch sent by: Davide
+
+2012-05-14 13:49:57 r1223 attacc
+
+	Version 3.2.5
+
+	*  p2y/p2y_db1.F pol_function/Dipole_shifted_grids.F ypp/k_grids.F
+
+	Bugs:
+	 -[SC/RT] Error SC_bands reseted in ioDB1 when use Dipole_shift_grids
+
+	Changes:
+	  - weight printed also for shifted grids
+	  - p2y -w option works also when disk_io='none' in PWSCF
+
+2012-05-14 09:50:41 r1221 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Change in the use of the alat prefactor used in the interfaces and of the clean-up of libxc
+
+2012-05-11 15:13:53 r1219 attacc
+
+	Version 3.2.5
+
+	*  int_modules/mod_xc2y.F
+
+	Bugs:
+	 -Small bug with gfortran compiler
+
+2012-05-11 14:01:10 r1215 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Added 'LDA' string in xc-functionals (Davide)
+
+2012-05-11 09:39:20 r1211 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Minore changes to the GPL-related files
+
+2012-05-11 09:04:27 r1210 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/Makefile.in_gpl config/acx_report.m4 config/configure.ac lib/libxc/configure xc_functionals/XC_potential_driver.F io/ioDB1.F driver/driver.c
+
+	Bugs:
+	- In config/report.in due to wrong definition of BLAS string and of bin path
+	- src/io/ioDB1.F: Increased reference revision number for I/O of spin_orbit
+
+	Changes:
+	- Makefile_gpl.in updated
+
+	Patch sent by: Andrea
+
+2012-05-10 15:17:13 r1209 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Fixed wrong call to nc-config in configuring NETCDF
+
+2012-05-09 11:46:29 r1205 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc int_modules/mod_xc2y.F p2y/p2y_db1.F p2y/mod_p2y.F config/configure.ac xc_functionals/xcxalp.F xc_functionals/xcwign.F xc_functionals/el_current.F xc_functionals/XC_lda_driver.F xc_functionals/xcspol.F xc_functionals/.objects xc_functionals/mod_xc_costants.F xc_functionals/xchelu.F xc_functionals/xcpzca.F modules/mod_xc_functionals.F
+
+	Bugs:
+	- Fixed bug in interfaces/int_modules/mod_xc2y.F due to the spaces introduced in the
+	  string definitions for the libxc interface
+
+	Changes:
+	- Removed old abinit LDA routines, constants and interfaces
+
+	Patch sent by: Andrea
+
+2012-05-08 11:24:09 r1204 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	BOLTZMANN and AUGER projects removed
+
+2012-05-08 09:44:05 r1203 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	-w Wannier 90 option renamed
+
+2012-05-07 16:15:18 r1199 gruning
+
+	Version 3.2.5
+
+	*  xc_functionals/XC_libxc_driver.F
+
+	Bugs: XC_libxc_driver, index out of range in a deallocation statement (found by Davide)
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2012-05-07 13:42:55 r1197 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac lib/libxc/Makefile.in lib/libxc/Makefile.am ras ras/write_eps_tensor.F ras/io_ostnts_cut.F ras/reels_spectrum.F ras/write_reelsdiff.F ras/io_slab_eps.F ras/extract_eps_surf.F ras/rasdriver.F ras/Dipole_driver_cut.F ras/.objects ras/Dipole_transverse_cut.F ras/.objects_gpl ras/Dipole_shifted_grids_cut.F ras/ras_spectrum.F pol_function/Dipole_check_shifted_grids.F pol_function/X_os.F pol_function/Dipole_shifted_grids.F pol_function/Dipole_dip_dot_field.F pol_function/Dipole_driver.F setup/QP_external_corrections.F interface/init_load.F interface/init.F ras_reels_mods ras_reels_mods/mod_eels_gvec.F ras_reels_mods/mod_long.F ras_reels_mods/mod_eels_kinematics.F ras_reels_mods/mod_surface_geometry.F ras_reels_mods/mod_model_loss_function.F ras_reels_mods/io_loc.F ras_reels_mods/mod_bulkeps.F ras_reels_mods/mod_eels_global.F ras_reels_mods/mod_reels.F ras_reels_mods/mod_eels_scattering.F ras_reels_mods/mod_eels_inveps.F ras_reels_mods/mod_eels_qpt.F ras_reels_mods/mod_optcut.F ras_reels_mods/mod_convolute.F ras_reels_mods/mod_analyse_peaks.F ras_reels_mods/reels_presets.F ras_reels_mods/mod_eels_detector.F ras_reels_mods/mod_numerical_integration.F ras_reels_mods/mod_eels_wgrid.F ras_reels_mods/mod_allocate.F ras_reels_mods/.objects ras_reels_mods/mod_loss_module.F ras_reels_mods/mod_ras.F ras_reels_mods/.objects_gpl ras_reels_mods/mod_intchar.F ras_reels_mods/mod_eels_integration.F ras_reels_mods/ras_presets.F reels reels/loss_bulk.F reels/average_epsm1_q.F reels/.objects reels/epsinv.F reels/.objects_gpl reels/reelsdriver.F reels/calc_loss_function.F reels/write_output.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/ypp_i.F driver/yambo.h driver/yambo_driver.F sbin/yamboo.pl
+
+	Bugs:
+	- Fixed broken compatibility of "make clean" with the internal compilation of libxc
+
+	Changes:
+	- Projects YAMBO_RAS/YAMBO_RAS_DISTRIBUTED/YAMBO_RAS_MANYK/YAMBO_REELS/YPP_RAS removed.
+	  They will all remain alive and active in Conor's branch
+
+	Patch sent by: Andrea
+
+2012-05-06 13:18:19 r1195 gruning
+
+	Version 3.2.5
+
+	*  int_modules/mod_xc2y.F  xc_functionals/XC_libxc_driver.F qp/XCo_driver.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes: Small aestetic refinements, + set as not available some XC in abinit
+	         for which is not clear to what they correspond (not to what is in the documentation anyway)
+	-
+
+2012-05-04 11:25:01 r1194 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Updated info (Davide's mail) about hot to merge the branches with the trunk
+
+2012-05-04 11:13:38 r1191 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	KERR project removed (Davide)
+
+2012-05-03 13:12:03 r1190 gruning
+
+	Version 3.2.5
+
+	*  xc_functionals/XC_eval_gga_potential.F
+
+	Bugs: [GGA] Inizialization of a variable of fft was missing.
+	      Now GGA in Yambo as reference. Extensive tests still needed.
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2012-05-03 12:35:27 r1189 gruning
+
+	Version 3.2.5
+
+	*  a2y/a2y_db1.F
+
+	Bugs: [A2Y] abinit libxc codes were not readed!
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2012-05-03 12:16:07 r1188 gruning
+
+	Version 3.2.5
+
+	*   xc_functionals/eval_Gradient.F xc_functionals/XC_libxc_driver.F xc_functionals/XC_eval_gga_potential.F
+
+	Bugs: Corrected other factors (to have the gradient of the density in a.u. before passing it to libxc)
+	      Now results very close to reference: still small differences + small degeneracy breaking => to debug!
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2012-05-02 21:34:16 r1187 gruning
+
+	Version 3.2.5
+
+	*   xc_functionals/eval_Gradient.F xc_functionals/XC_libxc_driver.F xc_functionals/XC_eval_gga_potential.F modules/mod_xc_functionals.F
+
+	Bugs: xc_functionals/eval_Gradient.F, xc_functionals/XC_eval_gga_potential.F modules/mod_xc_functionals.F:
+	      Wrong factors corrected - still differences wrt ABINIT results => further debugging needed
+	-
+	Additions:
+	-
+	Changes: xc_functionals/XC_libxc_driver.F: aestetic changes in the XC_string
+	-
+
+2012-04-29 20:53:59 r1184 gruning
+
+	Version 3.2.5
+
+	*  modules/mod_xc_functionals.F io/ioKB_PP.F ypp/RT_fix_symmetries.F
+
+	Bugs:
+	- has_magnetization was not initializsed in RT_fix_symmetries
+	- All strings must have the same dimension in XC_KIND_DESCR
+	- ioKB_PP must loop on spin only if n_sp_pol=2
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2012-04-29 18:14:44 r1183 gruning
+
+	Version 3.2.5
+
+	*  xc_functionals/XC_eval_gga_potential.F
+
+	Bugs: Forgot to add this file to previous commit...
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2012-04-29 18:04:58 r1182 gruning
+
+	Version 3.2.5
+
+	*  xc_functionals/eval_Gradient.F xc_functionals/XC_libxc_driver.F xc_functionals/el_density_derivative.F xc_functionals/.objects wf_and_fft/.objects
+
+	Bugs:
+	-
+	Additions: GGAs are now working (to be tested!!!)
+	-
+	Changes:
+	-
+
+2012-04-27 15:32:14 r1181 gruning
+
+	Version 3.2.5
+
+	*  int_modules/mod_xc2y.F  xc_functionals/XC_potential_driver.F xc_functionals/XC_libxc_driver.F io/ioDB1.F modules/mod_libxc_int.F modules/mod_xc_functionals.F
+
+	Bugs: [A2Y] In modules/mod_xc_functionals.F KIND of xc was not correctly determined
+	-
+	Additions:
+	-
+	Changes: Minor changes, mostly aestetic.
+	>> INTEGRATION WITH LIBXC HAS BEEN TESTED<<
+	-
+
+2012-04-26 11:02:10 r1180 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	u option removed from BS strings. Replaced by l_td_hf
+
+2012-04-24 22:16:05 r1179 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc int_modules/mod_com2y.F p2y/mod_p2y.F p2y/mod_pw_data.F a2y/a2y_wf.F config/report.in config/Makefile.in config/configure.ac xc_functionals/spin_density.F qp/QP_of.F qp/QP_real_axis.F qp/QP_life_transitions.F qp/QP_W2Sc.F setup/check_periodic_directions.F setup/setup.F interface/init_load.F interface/init.F interface/barriers.F communicate/REPORT_Occupations.F sc/SC_driver.F io/ioDB1.F modules/mod_electrons.F modules/mod_functions.F modules/std_presets.F modules/mod_magnetic.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/electrons_driver.F ypp/RT_fix_symmetries.F ypp/RT_build_spin_sop.F ypp/.objects
+
+	Bugs:
+	- a2y interfaces with HGH psp (Davide)
+	- QP correction fos n_sp_pol=2 for Cohsex and PPA (Davide)
+	- the magnetization was computed without rotating the magnetization vector when symmetries are present (Davide)
+	- p2y interface correctly reads symmetries for spinor calculation with spin-orbit on magnetic systems (Davide)
+
+	Additions: (Myrta)
+
+	Changes: Changed the interfaces a2y, e2y, p2y to cope with the (new) XC treatment (e.g. via libxc)
+		     Changed the xc_functional module in src to cope with the (new) XC treatment (e.g. via libxc)
+	         Deleted the libxc_int module (most of things were not neededi anymore, the rest is in xc_functional)
+	         >>> WORK IN PROGRESS: DO NOT MERGE WITH YOUR BRANCH - PROBABLY THIS VERSION IS BROKEN -
+
+	Changes:
+	- QP corrections for real axis integration (Davide)
+	- RT_fix symmetries rotates spinors and check symmetries against magnetization (Davide)
+
+	Patch sent by: Davide and Myrta
+
+2012-04-24 12:03:39 r1173 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	libxc_int.F removed
+
+2012-04-24 11:21:27 r1172 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/report.in config/libxc.m4 config/Makefile.in config/Makefile.in_gpl config/acx_report.m4 config/configure.ac config/setup.in lib/libxc lib/libxc/m4 lib/libxc/m4/ltsugar.m4 lib/libxc/m4/libtool.m4 lib/libxc/m4/fc_integer.m4 lib/libxc/m4/fcflags.m4 lib/libxc/m4/ltversion.m4 lib/libxc/m4/ax_f90_module_extension.m4 lib/libxc/m4/lt~obsolete.m4 lib/libxc/m4/ltoptions.m4 lib/libxc/m4/acx.m4 lib/libxc/configure lib/libxc/Makefile.in lib/libxc/PACKAGING lib/libxc/AUTHORS lib/libxc/src lib/libxc/gga_xc_1w.c lib/libxc/gga_k_pearson.c lib/libxc/mgga_x_m06l.c lib/libxc/gga_x_2d_pbe.c lib/libxc/Makefile.in lib/libxc/gga_x_lb.c lib/libxc/gga_c_wl.c lib/libxc/hyb_gga_xc_b3lyp.c lib/libxc/lda_k_tf.c lib/libxc/gga_k_tflw.c lib/libxc/work_mgga_x.c lib/libxc/lda_c_2d_prm.c lib/libxc/get_funcs.pl lib/libxc/gga_x_am05.c lib/libxc/mgga_xc_vsxc.c lib/libxc/lda_xc_teter93.c lib/libxc/gga_x_g96.c lib/libxc/gga_x_pbe.c lib/libxc/mgga_x_tpss.c lib/libxc/lda_c_pz.c lib/libxc/util.c lib/libxc/xc_f.c lib/libxc/gga_x_herman.c lib/libxc/util.h lib/libxc/gga_c_am05.c lib/libxc/gga_xc_th.c lib/libxc/gga_k_ol2.c lib/libxc/gga_k_dk.c lib/libxc/mgga_c_tpss.c lib/libxc/hyb_gga_xc_pbeh.c lib/libxc/gga_c_lm.c lib/libxc/gga_x_2d_b86.c lib/libxc/gga_x_2d_b88.c lib/libxc/gga_x_ft97.c lib/libxc/gga_x_optx.c lib/libxc/mgga_x_lta.c lib/libxc/work_gga_c.c lib/libxc/work_lda.c lib/libxc/gga_x_b86.c lib/libxc/xc_config.h lib/libxc/gga_x_htbs.c lib/libxc/hyb_gga_xc_b1wc.c lib/libxc/gga_x_b88.c lib/libxc/mgga_x_br89.c lib/libxc/gga_x_sogga11.c lib/libxc/special_functions.c lib/libxc/gga_xc_b97.c lib/libxc/lda_c_ml1.c lib/libxc/gga_x_pbea.c lib/libxc/lda_x_2d.c lib/libxc/work_mgga_c.c lib/libxc/integrate.c lib/libxc/gga_x_kt.c lib/libxc/gga_c_lyp.c lib/libxc/gga_c_pbe.c lib/libxc/gga_xc_edf1.c lib/libxc/gga_x_mpbe.c lib/libxc/lda_c_gombas.c lib/libxc/gga_c_wi.c lib/libxc/lda.c lib/libxc/lda_c_pw.c lib/libxc/mix_func.c lib/libxc/gga_x_pw86.c lib/libxc/gga_x_airy.c lib/libxc/lda_x_1d.c lib/libxc/hyb_gga_xc_b97.c lib/libxc/lda_c_wigner.c lib/libxc/hyb_gga_xc_o3lyp.c lib/libxc/mgga_x_tau_hcth.c lib/libxc/gga_c_sogga11.c lib/libxc/gga_k_ol1.c lib/libxc/gga_x_lg93.c lib/libxc/functionals.c lib/libxc/lda_c_vwn.c lib/libxc/gga_x_rpbe.c lib/libxc/gga_c_p86.c lib/libxc/gga.c lib/libxc/gga_x_bayesian.c lib/libxc/xc_s.h lib/libxc/lda_c_rpa.c lib/libxc/gga_x_pw91.c lib/libxc/mgga.c lib/libxc/lda_c_2d_amgb.c lib/libxc/lda_c_1d_csc.c lib/libxc/gga_x_wc.c lib/libxc/mgga_x_2d_prhg07.c lib/libxc/xc.h lib/libxc/gga_x_2d_b86_mgc.c lib/libxc/gga_c_pw91.c lib/libxc/string_f.h lib/libxc/gga_x_dk87.c lib/libxc/lda_c_hl.c lib/libxc/work_gga_x.c lib/libxc/lda_x.c lib/libxc/Makefile.am lib/libxc/libxc_master.F90 lib/libxc/gga_x_c09x.c lib/libxc/work_gga_becke.c lib/libxc/gga_x_b86_mgc.c lib/libxc/depcomp lib/libxc/compile lib/libxc/testsuite lib/libxc/testsuite/regression lib/libxc/testsuite/regression/mgga_x_tpss.data.bz2 lib/libxc/testsuite/regression/gga_xc_pbelyp1w.data.bz2 lib/libxc/testsuite/regression/gga_x_apbe.data.bz2 lib/libxc/testsuite/regression/lda_c_wigner.data.bz2 lib/libxc/testsuite/regression/gga_x_lbm.data.bz2 lib/libxc/testsuite/regression/gga_k_fr_b88.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_sb98_1a.data.bz2 lib/libxc/testsuite/regression/gga_k_fr_pw86.data.bz2 lib/libxc/testsuite/regression/gga_c_lyp.data.bz2 lib/libxc/testsuite/regression/gga_xc_pbe1w.data.bz2 lib/libxc/testsuite/regression/lda_c_ob_pw.data.bz2 lib/libxc/testsuite/regression/gga_x_pbe_sol.data.bz2 lib/libxc/testsuite/regression/gga_x_mpbe.data.bz2 lib/libxc/testsuite/regression/gga_x_b86_mgc.data.bz2 lib/libxc/testsuite/regression/gga_xc_b97_3.data.bz2 lib/libxc/testsuite/regression/gga_x_2d_b88.data.bz2 lib/libxc/testsuite/regression/gga_x_ft97_a.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_b3pw91.data.bz2 lib/libxc/testsuite/regression/gga_x_optx.data.bz2 lib/libxc/testsuite/regression/gga_k_ludena.data.bz2 lib/libxc/testsuite/regression/gga_k_baltin.data.bz2 lib/libxc/testsuite/regression/gga_x_ol2.data.bz2 lib/libxc/testsuite/regression/gga_c_wl.data.bz2 lib/libxc/testsuite/regression/gga_k_lc94.data.bz2 lib/libxc/testsuite/regression/gga_x_pw91.data.bz2 lib/libxc/testsuite/regression/gga_k_ge2.data.bz2 lib/libxc/testsuite/regression/gga_xc_th3.data.bz2 lib/libxc/testsuite/regression/lda_c_pw.data.bz2 lib/libxc/testsuite/regression/gga_k_thakkar.data.bz2 lib/libxc/testsuite/regression/gga_xc_sb98_1a.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_o3lyp.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_sb98_1b.data.bz2 lib/libxc/testsuite/regression/gga_c_am05.data.bz2 lib/libxc/testsuite/regression/mgga_c_tpss.data.bz2 lib/libxc/testsuite/regression/gga_k_dk.data.bz2 lib/libxc/testsuite/regression/gga_xc_edf1.data.bz2 lib/libxc/testsuite/regression/gga_c_apbe.data.bz2 lib/libxc/testsuite/regression/gga_xc_hcth_147.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_b97_1.data.bz2 lib/libxc/testsuite/regression/gga_xc_th_fc.data.bz2 lib/libxc/testsuite/regression/lda_c_vwn_rpa.data.bz2 lib/libxc/testsuite/regression/gga_k_apbe.data.bz2 lib/libxc/testsuite/regression/gga_x_ft97_b.data.bz2 lib/libxc/testsuite/regression/mgga_x_tb09.data.bz2 lib/libxc/testsuite/regression/gga_k_absr1.data.bz2 lib/libxc/testsuite/regression/gga_x_bayesian.data.bz2 lib/libxc/testsuite/regression/gga_xc_mohlyp2.data.bz2 lib/libxc/testsuite/regression/lda_k_lp.data.bz2 lib/libxc/testsuite/regression/lda_c_2d_prm.data.bz2 lib/libxc/testsuite/regression/mgga_x_br89.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_b1wc.data.bz2 lib/libxc/testsuite/regression/gga_xc_th4.data.bz2 lib/libxc/testsuite/regression/gga_c_sogga11_x.data.bz2 lib/libxc/testsuite/regression/lda_xc_teter93.data.bz2 lib/libxc/testsuite/regression/lda_x_1d.data.bz2 lib/libxc/testsuite/regression/gga_k_perdew.data.bz2 lib/libxc/testsuite/regression/gga_xc_sb98_1b.data.bz2 lib/libxc/testsuite/regression/gga_c_pw91.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_sb98_2a.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_sb98_1c.data.bz2 lib/libxc/testsuite/regression/gga_x_mpw91.data.bz2 lib/libxc/testsuite/regression/gga_xc_b97_k.data.bz2 lib/libxc/testsuite/regression/gga_x_lg93.data.bz2 lib/libxc/testsuite/regression/gga_x_mb88.data.bz2 lib/libxc/testsuite/regression/gga_k_vw.data.bz2 lib/libxc/testsuite/regression/gga_c_pbe.data.bz2 lib/libxc/testsuite/regression/gga_x_pbek1_vdw.data.bz2 lib/libxc/testsuite/regression/gga_xc_hcth_407.data.bz2 lib/libxc/testsuite/regression/lda_c_gombas.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_b97_2.data.bz2 lib/libxc/testsuite/regression/gga_x_pbe_r.data.bz2 lib/libxc/testsuite/regression/hyb_gga_x_sogga11_x.data.bz2 lib/libxc/testsuite/regression/mgga_x_2d_prhg07_prp10.data.bz2 lib/libxc/testsuite/regression/gga_k_absr2.data.bz2 lib/libxc/testsuite/regression/gga_c_pbe_sol.data.bz2 lib/libxc/testsuite/regression/gga_x_pbe_jsjr.data.bz2 lib/libxc/testsuite/regression/gga_x_rge2.data.bz2 lib/libxc/testsuite/regression/gga_xc_th_fl.data.bz2 lib/libxc/testsuite/regression/gga_x_sogga.data.bz2 lib/libxc/testsuite/regression/gga_k_gp85.data.bz2 lib/libxc/testsuite/regression/gga_xc_b97_d.data.bz2 lib/libxc/testsuite/regression/gga_xc_sb98_2a.data.bz2 lib/libxc/testsuite/regression/gga_xc_th_fcfo.data.bz2 lib/libxc/testsuite/regression/gga_xc_sb98_1c.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_sb98_2b.data.bz2 lib/libxc/testsuite/regression/lda_c_gl.data.bz2 lib/libxc/testsuite/regression/gga_x_dk87_r1.data.bz2 lib/libxc/testsuite/regression/gga_c_lm.data.bz2 lib/libxc/testsuite/regression/lda_c_ob_pz.data.bz2 lib/libxc/testsuite/regression/mgga_x_rpp09.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_b97_3.data.bz2 lib/libxc/testsuite/regression/gga_k_yt65.data.bz2 lib/libxc/testsuite/regression/gga_k_lieb.data.bz2 lib/libxc/testsuite/regression/gga_k_tw1.data.bz2 lib/libxc/testsuite/regression/gga_x_b86.data.bz2 lib/libxc/testsuite/regression/gga_x_kt1.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_mpw3pw.data.bz2 lib/libxc/testsuite/regression/gga_x_optb88_vdw.data.bz2 lib/libxc/testsuite/regression/gga_x_pw86.data.bz2 lib/libxc/testsuite/regression/gga_x_pbe.data.bz2 lib/libxc/testsuite/regression/lda_c_pz.data.bz2 lib/libxc/testsuite/regression/gga_x_pbea.data.bz2 lib/libxc/testsuite/regression/lda_x_2d.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_b3p86.data.bz2 lib/libxc/testsuite/regression/lda_c_1d_csc.data.bz2 lib/libxc/testsuite/regression/mgga_x_2d_prhg07.data.bz2 lib/libxc/testsuite/regression/gga_x_wc.data.bz2 lib/libxc/testsuite/regression/gga_x_herman.data.bz2 lib/libxc/testsuite/regression/gga_c_rge2.data.bz2 lib/libxc/testsuite/regression/mgga_c_vsxc.data.bz2 lib/libxc/testsuite/regression/gga_xc_sb98_2b.data.bz2 lib/libxc/testsuite/regression/mgga_x_tau_hcth.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_sb98_2c.data.bz2 lib/libxc/testsuite/regression/gga_x_dk87_r2.data.bz2 lib/libxc/testsuite/regression/gga_x_rpbe.data.bz2 lib/libxc/testsuite/regression/gga_c_p86.data.bz2 lib/libxc/testsuite/regression/lda_c_xalpha.data.bz2 lib/libxc/testsuite/regression/gga_k_golden.data.bz2 lib/libxc/testsuite/regression/lda_c_vbh.data.bz2 lib/libxc/testsuite/regression/gga_x_lb.data.bz2 lib/libxc/testsuite/regression/gga_x_xpbe.data.bz2 lib/libxc/testsuite/regression/gga_k_tw2.data.bz2 lib/libxc/testsuite/regression/gga_k_vjks.data.bz2 lib/libxc/testsuite/regression/gga_x_sogga11.data.bz2 lib/libxc/testsuite/regression/gga_xc_kt2.data.bz2 lib/libxc/testsuite/regression/gga_xc_hcth_93.data.bz2 lib/libxc/testsuite/regression/lda_c_pw_rpa.data.bz2 lib/libxc/testsuite/regression/gga_x_g96.data.bz2 lib/libxc/testsuite/regression/lda_c_ml1.data.bz2 lib/libxc/testsuite/regression/lda_c_2d_amgb.data.bz2 lib/libxc/testsuite/regression/gga_c_pbe_jrgx.data.bz2 lib/libxc/testsuite/regression/gga_xc_mohlyp.data.bz2 lib/libxc/testsuite/regression/gga_xc_sb98_2c.data.bz2 lib/libxc/testsuite/regression/lda_c_hl.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_b97_k.data.bz2 lib/libxc/testsuite/regression/gga_k_vsk.data.bz2 lib/libxc/testsuite/regression/lda_c_vwn.data.bz2 lib/libxc/testsuite/regression/gga_c_wi.data.bz2 lib/libxc/testsuite/regression/mgga_x_lta.data.bz2 lib/libxc/testsuite/regression/gga_xc_xlyp.data.bz2 lib/libxc/testsuite/regression/lda_c_rpa.data.bz2 lib/libxc/testsuite/regression/gga_k_tw3.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_mpw1pw.data.bz2 lib/libxc/testsuite/regression/gga_x_b88.data.bz2 lib/libxc/testsuite/regression/lda_c_pz_mod.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_b97.data.bz2 lib/libxc/testsuite/regression/lda_c_ml2.data.bz2 lib/libxc/testsuite/regression/gga_c_xpbe.data.bz2 lib/libxc/testsuite/regression/gga_x_optpbe_vdw.data.bz2 lib/libxc/testsuite/regression/gga_k_llp.data.bz2 lib/libxc/testsuite/regression/gga_xc_hcth_120.data.bz2 lib/libxc/testsuite/regression/mgga_x_bj06.data.bz2 lib/libxc/testsuite/regression/gga_k_ol1.data.bz2 lib/libxc/testsuite/regression/gga_x_c09x.data.bz2 lib/libxc/testsuite/regression/gga_x_2d_b86.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_x3lyp.data.bz2 lib/libxc/testsuite/regression/gga_xc_b97_1.data.bz2 lib/libxc/testsuite/regression/gga_k_ernzerhof.data.bz2 lib/libxc/testsuite/regression/gga_x_rpw86.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_b1pw91.data.bz2 lib/libxc/testsuite/regression/gga_x_2d_pbe.data.bz2 lib/libxc/testsuite/regression/gga_k_gr.data.bz2 lib/libxc/testsuite/regression/mgga_x_m06l.data.bz2 lib/libxc/testsuite/regression/gga_xc_th1.data.bz2 lib/libxc/testsuite/regression/gga_x_htbs.data.bz2 lib/libxc/testsuite/regression/gga_k_tw4.data.bz2 lib/libxc/testsuite/regression/mgga_x_gvt4.data.bz2 lib/libxc/testsuite/regression/lda_c_pw_mod.data.bz2 lib/libxc/testsuite/regression/gga_xc_mpwlyp1w.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_mpw1k.data.bz2 lib/libxc/testsuite/regression/gga_xc_b97.data.bz2 lib/libxc/testsuite/regression/gga_x_2d_b86_mgc.data.bz2 lib/libxc/testsuite/regression/gga_c_wi0.data.bz2 lib/libxc/testsuite/regression/gga_c_sogga11.data.bz2 lib/libxc/testsuite/regression/gga_k_ol2.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_mpw3lyp.data.bz2 lib/libxc/testsuite/regression/lda_x.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_pbeh.data.bz2 lib/libxc/testsuite/regression/gga_xc_b97_2.data.bz2 lib/libxc/testsuite/regression/gga_k_pearson.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_b1lyp.data.bz2 lib/libxc/testsuite/regression/hyb_gga_xc_b3lyp.data.bz2 lib/libxc/testsuite/regression/lda_k_tf.data.bz2 lib/libxc/testsuite/regression/gga_xc_th2.data.bz2 lib/libxc/testsuite/regression/gga_x_am05.data.bz2 lib/libxc/testsuite/regression/gga_x_lag.data.bz2 lib/libxc/testsuite/regression/gga_x_airy.data.bz2 lib/libxc/testsuite/regression/gga_xc_th_fco.data.bz2 lib/libxc/testsuite/xc-reference.pl lib/libxc/testsuite/xc-get_data.c lib/libxc/testsuite/Makefile.in lib/libxc/testsuite/xc-run_testsuite lib/libxc/testsuite/Makefile.am lib/libxc/testsuite/xc-regression.c lib/libxc/testsuite/xc-consistency.c lib/libxc/testsuite/df_repo lib/libxc/testsuite/df_repo/lda_c_pw.data lib/libxc/testsuite/df_repo/gga_xc_hcth_93.data lib/libxc/testsuite/df_repo/gga_xc_b97.data lib/libxc/testsuite/df_repo/lda_c_pz.data lib/libxc/testsuite/df_repo/gga_x_pbe.data lib/libxc/testsuite/df_repo/gga_xc_hcth_120.data lib/libxc/testsuite/df_repo/gga_c_pw91.data lib/libxc/testsuite/df_repo/gga_c_lyp.data lib/libxc/testsuite/df_repo/gga_c_pbe.data lib/libxc/testsuite/df_repo/gga_xc_edf1.data lib/libxc/testsuite/df_repo/lda_x.data lib/libxc/testsuite/df_repo/gga_xc_hcth_407.data lib/libxc/testsuite/df_repo/gga_xc_hcth_147.data lib/libxc/testsuite/df_repo/gga_xc_b97_1.data lib/libxc/testsuite/df_repo/gga_xc_b97_2.data lib/libxc/testsuite/df_repo/lda_c_vwn.data lib/libxc/testsuite/df_repo/gga_c_p86.data lib/libxc/testsuite/df_repo/lda_c_vwn_rpa.data lib/libxc/testsuite/df_repo/gga_x_ft97_b.data lib/libxc/testsuite/df_repo/hyb_gga_xc_b3lyp.data lib/libxc/testsuite/df_repo/gga_x_pw91.data lib/libxc/testsuite/df_repo/gga_x_b88.data lib/libxc/config.guess lib/libxc/README lib/libxc/config.sub lib/libxc/ltmain.sh lib/libxc/build lib/libxc/build/libxc.spec.in lib/libxc/build/Makefile.in lib/libxc/build/libxc.pc.in lib/libxc/build/Makefile.am lib/libxc/config.h.in lib/libxc/configure.ac lib/libxc/TODO lib/libxc/INSTALL lib/libxc/COPYING lib/libxc/missing lib/libxc/Makefile.am lib/libxc/NEWS lib/libxc/aclocal.m4 lib/libxc/install-sh xc_functionals/XC_potential_driver.F xc_functionals/XC_libxc_driver.F xc_functionals/.objects modules/.objects modules/.objects_gpl sbin/yamboo.pl
+
+	*** MAJOR UPDATE. UNSTABLE REVISION ***
+
+	Additions:
+	- LIBXC library added among the built-in libraries. It will be used to create a structure of the internal xc functional
+	  and to add the GGA family of functionals.
+
+	Patch sent by: Andrea
+
+2012-04-22 21:40:26 r1170 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/acx_blas.m4 config/acx_mpi.m4 config/configure.ac config/acx_lapack.m4 config/slk.m4 xc_functionals/el_density.F xc_functionals/XC_libxc_driver.F xc_functionals/el_density_derivative.F xc_functionals/.objects common/OCCUPATIONS_Fermi.F interface/init_load.F modules/mod_functions.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/WANNIER_driver.F ypp/ypp_i.F ypp/.objects driver/ypp.h driver/ypp.h_gpl
+
+	Bugs:
+	- [configure] Fixed procedures to identify external BLAS/LAPACK libraries
+	- [configure] Starting the rewriting of the SCALAPACK support
+
+	Additions:
+	- Starting adding GGA/BLYP and hybrid xc functionals support
+	- [YPP] Added interface to the Wannier90 code
+
+	Changes:
+	- [GPL] Removed barrier to electronic temperature
+
+	Patch sent by: Andrea
+
+2012-04-05 15:58:30 r1165 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug-fix in spin report of mod_QP_clt (maurizia)
+
+2012-04-05 13:09:17 r1162 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small typos corrected in precompiler option
+
+2012-04-02 15:06:43 r1155 attacc
+
+	Version 3.2.5
+
+	*  ypp/ypp_init.F
+
+	Changes:
+	 -[RT] In YPP_RT wg_ng not changed in ypp_ini.F
+
+2012-03-27 14:51:22 r1148 attacc
+
+	Version 3.2.5
+
+	*  configure config/Makefile.in lib/blas/zhpr2.f lib/blas/chpmv.f lib/blas/dtrmm.f lib/blas/snrm2.f lib/blas/dgemv.f lib/blas/dasum.f lib/blas/ssyrk.f lib/blas/strmv.f lib/blas/chpr2.f lib/blas/dnrm2.f lib/blas/dsyrk.f lib/blas/dtrmv.f lib/blas/strmm.f lib/blas/zhpmv.f lib/blas/sgemv.f lib/blas/.objects lib/blas/sasum.f lib/pwdiago lib/pwdiago/mp_global.F lib/pwdiago/chegv.f lib/pwdiago/dspev_drv.F lib/pwdiago/rdiagh.F lib/pwdiago/descriptors.F lib/pwdiago/chpev.f lib/pwdiago/ptoolkit.F lib/pwdiago/rdiaghg.F lib/pwdiago/mp_base.F lib/pwdiago/gridsetup.F lib/pwdiago/zhpev_drv.F lib/pwdiago/mp.F lib/pwdiago/cdiagh.F lib/pwdiago/localindex.F lib/pwdiago/.objects lib/pwdiago/opt_param.h lib/pwdiago/chegvx.f lib/pwdiago/localdim.F lib/pwdiago/kind.F lib/pwdiago/cdiaghg.F lib/pwdiago/error_handler.F lib/pwdiago/f_defs.h lib/lapack/zupgtr.f lib/lapack/sisnan.f lib/lapack/dpotrf.f lib/lapack/cunm2l.f lib/lapack/clanhp.f lib/lapack/chpev.f lib/lapack/sstebz.f lib/lapack/zunmql.f lib/lapack/cpotrf.f lib/lapack/chegst.f lib/lapack/spotrf.f lib/lapack/chptrd.f lib/lapack/zunm2l.f lib/lapack/zlanhp.f lib/lapack/chegv.f lib/lapack/dpotf2.f lib/lapack/dtrti2.f lib/lapack/cheevx.f lib/lapack/chegvx.f lib/lapack/zpotrf.f lib/lapack/zhpev.f lib/lapack/dlaruv.f lib/lapack/cpotf2.f lib/lapack/dlagtf.f lib/lapack/zhegst.f lib/lapack/slaisnan.f lib/lapack/zhptrd.f lib/lapack/chegs2.f lib/lapack/spotf2.f lib/lapack/strti2.f lib/lapack/dlaisnan.f lib/lapack/cunmtr.f lib/lapack/zheevx.f lib/lapack/zhegvx.f lib/lapack/slaruv.f lib/lapack/slagtf.f lib/lapack/zhegv.f lib/lapack/zpotf2.f lib/lapack/cstein.f lib/lapack/dlaebz.f lib/lapack/zhegs2.f lib/lapack/dtrtri.f lib/lapack/dlagts.f lib/lapack/dlarnv.f lib/lapack/zunmtr.f lib/lapack/cupgtr.f lib/lapack/zstein.f lib/lapack/disnan.f lib/lapack/slaebz.f lib/lapack/strtri.f lib/lapack/dstebz.f lib/lapack/slagts.f lib/lapack/cunmql.f lib/lapack/slarnv.f lib/lapack/.objects modules/mod_matrix_operate.F bse/K_diagonalization.F sbin/make_makefile.sh.in
+
+	Additions:
+	 -[DISTRIBUTED] parallel diagonalization of BSE (using Cavazzoni's Scalapack)
+
+2012-03-22 17:07:49 r1134 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Revision update
+
+2012-03-22 13:27:24 r1132 attacc
+
+	Version 3.2.5
+
+	*  qp/COLLISIONS_IO_compose.F
+
+	Bugs:
+	 -[RT] Bug in real-time when TDBSE is .true.
+
+2012-02-22 14:51:38 r1104 gruning
+
+	Version 3.2.4
+
+	*  interface/init.F
+
+	Bugs: Behavior in variable inizialization of -g n -p p runs
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2012-01-17 15:59:14 r1034 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug in reporting revisions > 1000 fixed
+
+2012-01-12 12:50:43 r1016 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Mergering of gpl+elph branch with trunk@revision 1016
+
 2012-01-12 10:46:46 r1015 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	New version (subversion increased)

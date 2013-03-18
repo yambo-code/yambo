@@ -28,10 +28,9 @@ subroutine QP_of(qp,en,QPdb_read_err,k)
  use electrons, ONLY:levels,spin,n_sp_pol
  use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Vnl_xc,QP_table,&
 &                    QP_solver,QP_n_states,l_extended_output,Vxc_kind,&
-&                    QP_G_dr,QP_Sc_steps,use_GreenF_to_eval_QP,Vnlxc_kind,&
+&                    QP_Sc_steps,use_GreenF_to_eval_QP,Vnlxc_kind,&
 &                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,QP_states_simmetrize 
  use stderr,    ONLY:set_real_printed_length
- use frequency, ONLY:w_samp,W_reset
  use R_lattice, ONLY:bz_samp
  implicit none
  type(QP_t)   ::qp

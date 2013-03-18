@@ -26,7 +26,7 @@ netcdf      = @dnetcdf@
 scalapack   = @dscalapack@
 precision   = @dp_cpp@
 fft         = @FFT_CPP@
-xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@
+xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@
 debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
@@ -49,9 +49,9 @@ TARGETS  = all yambo interfaces ypp
 UTILS    = changelog
 CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_magnetic yambo_rt yambo_distributed yambo_kerr\
-           ypp_rt ypp_ph ypp_sc ypp_magnetic ypp_boltzmann ypp_test_2
-BROKEN   = yambo_manyk
-DEBUG    = yambo_test_2
+           ypp_rt ypp_ph ypp_sc ypp_magnetic ypp_boltzmann
+BROKEN   = 
+DEBUG    = 
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
 INTERFCS = a2y p2y e2y c2y
 #
@@ -117,8 +117,8 @@ ypp_ph: libs
 	@LIBS2DO="$(YPPLIBS)";ADF="-D_ELPH -D_BOLTZMANN"; $(mksrc)
 	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH -D_YPP_BOLTZMANN";$(mkx)
 ypp_rt: libs
-	@LIBS2DO="$(YPPRTLIBS)" ; ADF="-D_SC -D_RT";$(mksrc)
-	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPRTLIBS)"; ADF="-D_YPP_RT";$(mkx)
+	@LIBS2DO="$(YPPRTLIBS)" ; ADF="-D_SC -D_RT -D_ELPH -D_YPP_RT";$(mksrc)
+	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPRTLIBS)"; ADF="-D_YPP_RT -D_YPP_ELPH";$(mkx)
 ypp_sc: libs
 	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_SC";$(mksrc)
 	@X2DO="ypp_sc" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_SC";$(mkx)
@@ -128,12 +128,6 @@ ypp_magnetic: libs
 ypp_boltzmann: libs
 	@LIBS2DO="$(YPPLIBS)" ; ADF="-D_BOLTZMANN";$(mksrc)
 	@X2DO="ypp_boltzmann" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_BOLTZMANN";$(mkx)
-#
-# BROKEN #
-# 
-yambo_manyk: libs
-	@LIBS2DO="$(MAIN_LIBZ)";ADF="-D_MANYK"; $(mksrc)
-	@X2DO="yambo_manyk"; XPATH="driver";XLIBS="$(MAIN_LIBZ)";ADF="-D_MANYK";$(mkx)
 #
 # Interfaces & ypp #
 #

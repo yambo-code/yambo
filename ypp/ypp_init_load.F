@@ -23,6 +23,9 @@ subroutine ypp_init_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
 &                        Time_unit,Bfield_unit,Efield_unit,V_real_time
+#if defined _YPP_RT
+ use real_time,     ONLY:Gr_kind,Gr_bands,Gr_E_window
+#endif
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:n_spinor
  use YPP
@@ -81,7 +84,9 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'fixsyms', '[R] Reduce Symmetries')
  !
 #if defined _YPP_RT
- call it('r',defs,'rtX',     '[R] Real-Time Response functions Post-Processing')
+ call it('r',defs,'occupations','[R] Analize time-dependent occupations')
+ call it('r',defs,'rtX',        '[R] Real-Time Response functions Post-Processing')
+ call it('r',defs,'CCA',        '[R] Time convolution of retarded GFs to be used in the CCA')
 #endif
 #if defined _YPP_SC
  call it('r',defs,'MeanPot', '[R] Mean Potential')
@@ -100,8 +105,10 @@ subroutine ypp_init_load(defs)
  call it(defs,'DOSESteps', 'Energy steps',dos_E_steps,verb_level=V_general) 
  call it('f',defs,'DOSocc'   , 'Use only occupied states',verb_level=V_general)
 #if defined _YPP_RT
- call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit,verb_level=V_real_time)
- call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit,verb_level=V_real_time)
+ call it(defs,'TFit','NEGF Fermi Function fit values',Fermi_fit_points)
+ call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit)
+ call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit)
+ call it(defs,'OCCTref','NEGF Occupations reference time',OCC_T_ref,unit=Time_unit)
 #endif
  !
  ! BANDS
@@ -180,6 +187,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'PhBroad','Phonon broadening (Eliashberg & DOS)',ph_broad,E_unit)
  call it(defs,'EEfermi','External Fermi Level (Eliashberg)',elph_Ef,E_unit)
  call it(defs,'PhStps', 'Energy steps',elph_steps)
+ call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
  !
 #endif
  !
@@ -199,7 +207,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'GammaRadius','[a.u.] Maximum distance from gamma',gamma_radius,verb_level=V_general)
  call it(defs,'OutputAlat','[a.u.] Lattice constant used for "alat" ouput format',alat_used_for_output,verb_level=V_general)
  !
- ! REMOVE SYMMETRIES
+ ! Remove Simmetries
  !
  call it(defs,'Efield1','First external Electric Field',E_field(1,:))
  call it(defs,'Efield2','Additional external Electric Field',E_field(2,:))
@@ -212,6 +220,14 @@ subroutine ypp_init_load(defs)
  call it('f',defs,'RmInvMBaxis','Remove symmtries which invert the axis parallel to M/B')
  !
 #if defined _YPP_RT
+ !
+ ! Retarded GFs
+ !
+ call it(defs,'GFbands', 'Bands',Gr_bands) 
+ call it(defs,'GFkind',  'Green`s function kind ("QP","QP-cut","BOX","HC"),',Gr_kind) 
+ call it(defs,'T_step',  'Time step in the integration',GF_T_step,unit=Time_unit) 
+ call it(defs,'E_step',  'Energy step in the integration',Gr_E_step,unit=E_unit) 
+ call it(defs,'E_window','Energy window',Gr_E_window,unit=E_unit) 
  !
  call it(defs,'Xorder','Max order of the response functions',X_order)
  call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword)

@@ -67,7 +67,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use collisions_IO,  ONLY:io_COLLISIONS,V_kind
 #endif
 #if defined _RT
- use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe
+ use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe,Dynamics_Kind
  use fields,         ONLY:Efield,i_Pump,i_Probe,Efield_reset,Efield_duplicate
 #endif
 #if defined _MAGNETIC
@@ -90,7 +90,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,io_KB_PP_err,&
-&                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G
+&                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G,io_Gr
  integer, external :: ioX,io_DIPOLES,ioGROT,ioQINDX,ioRIM,&
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
@@ -100,7 +100,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: ioE_RIM
  !
 #if defined _SC || defined _RT
- integer, external :: io_SC_components 
+ integer, external :: io_SC_components,io_G_retarded
 #endif
 #if defined _ELPH 
  integer           :: ioELPH_err
@@ -125,9 +125,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _RT
  what_is_running='YAMBO_RT'
-#endif
-#if defined _MANYK 
- what_is_running='YAMBO_MANYK'
 #endif
 #if defined _MAGNETIC
  what_is_running='YAMBO_MAGNETIC'
@@ -185,6 +182,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    init = 2
    if (tty_size<0) write (logfile,'(2a)') trim(com_path),'/l_dbs'
    live_timing_is_on=.false.
+   write_to_report=.false.
  endif
  !
  ! Dump the input file
@@ -262,7 +260,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_err=ioCOL_CUT(io_ID) 
  !
- ! e_rim
+ ! E_rim
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_err=ioE_RIM(en,io_ID) 
@@ -350,6 +348,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _ELPH 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  ioELPH_err=ioELPH(io_ID,'gkkp')
+ !
+ if (ioELPH_err/=0) then
+   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+   ioELPH_err=ioELPH(io_ID,'gkkp_expanded')
+ endif
+ !
 #endif
  !
  ! RT 
@@ -359,6 +363,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  io_J_and_P=io_SC_components('J_and_P' ,en,io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_G=io_SC_components('G' ,en,io_ID)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_Gr=io_G_retarded(io_ID,"G_retarded")
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_Gr=io_G_retarded(io_ID,"G_retarded_matrix")
 #endif
  !
  ! SC 
@@ -498,6 +506,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if(l_W_eh)            call initactivate(1,'WehDiag')
    !
    call initactivate(1,'ShiftedPath')
+#if defined _SC
+   call initactivate(1,'Gauge')
+#endif
    call initactivate(1,'DrudeW')
    call initactivate(1,'BSAres BSEQptR BSEBands BSEEhEny BSehWind BSEClmns')
    !
@@ -591,7 +602,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
        else
          call initactivate(1,'GWoIter')
-         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell')
+         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
        endif
        !
      endif
@@ -644,6 +655,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'Potential FFTGvecs Gauge SCmixing SCBands SClwBand SCnlMix BandMix EXXCut')
    call initactivate(-1,'QpntsRXs')
    if (l_cohsex) call initactivate(1,'GbndRnge UseEbands SCUpWIter')
+   if (l_collisions_IO) call initactivate(1,'DynKind')
    if (.not.l_collisions_IO) call initactivate(1,'CollPath CollCache')
    if (.not.l_real_time.and..not.l_collisions_IO) then
      call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
@@ -651,32 +663,28 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &        trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
    endif
    call initactivate(1,'SCdiag MeanPotential')
+   if (l_collisions_IO) call initactivate(-1,'GbndRnge UseEbands MeanPotential') 
  endif
 #endif
  !
 #if defined _RT
  !
- ! REAL-TIME specific: (i) Time-Evolution (ii) Collisions
- !
- ! (i) Time Evolution
+ ! REAL-TIME specific
  !
  if (l_real_time) then
    call QP_ctl_switch('G')
    call initactivate(-1,'SCmixing')
-   call initactivate(1,'Integrator RADLifeTime PhLifeTime') 
-   call initactivate(1,'RTstep NEsteps NETime')
-   if (l_ph_corr) call initactivate(1,'MemTresh')
+   call initactivate(1,'Integrator DynKind RADLifeTime PhLifeTime RTmaxEn RTpumpEhEn RTpumpEhWd') 
+   call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
+   if (l_ph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol UseDebyeE ElPhModes')
    call initactivate(1,'HXCjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
-   call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField')
+   call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField SkipGFIO SkipOCCIO')
    if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
    if (              l_RT_pump_and_probe) call Afield_activate('Pump')
    !
-   call initactivate(1,'RTAveDeph')
    call initactivate(1,'ShiftedPath')
    !
  endif
- !
- ! (ii) COLLISIONS: no additional variables required
  !
 #endif
  !
@@ -872,6 +880,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _RT
        l_collisions_IO=runlevel_is_on('collisions_IO')
+       l_carrier_dynamics =trim(Dynamics_Kind)=="C"
 #endif
 #if defined  _ELPH  
        if (.not.CLOSE_Gs) then
@@ -942,6 +951,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !if (l_bss)    call initactivate(1,'bse')
      !if (l_bss)    call initactivate(1,'l_optics')
      if (l_bse) then
+       !
+       if (l_alda_fxc) BS_res_mode='x'     
        !
        if (io_X_err(2)==0) then
          if (ioBS_err/=0) BS_n_g_W=X(2)%ng
@@ -1028,7 +1039,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      use stderr, ONLY:string_split
      use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,&
-&                     V_real_time,V_all
+&                     V_real_time,V_all,rstatus
      implicit none
      integer     :: init_
      character(*):: rstr
@@ -1036,7 +1047,18 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! Work Space
      !
      integer          ::i1,i2,n_pieces
-     character(schlen)::rstr_piece(2*nrnlvls)
+     character(schlen)::rstr_piece(2*nrnlvls),strings_to_not_use_as_runlevels(nrnlvls)
+     !
+     ! Bug fix (17/9/2012). If any string following a -### identifier contains 
+     ! a string related to a runlevel this is erronously switched on. 
+     !
+     strings_to_not_use_as_runlevels=" "
+     strings_to_not_use_as_runlevels(1)="jobstr"
+     strings_to_not_use_as_runlevels(2)="ifile"
+     strings_to_not_use_as_runlevels(3)="idir"
+     strings_to_not_use_as_runlevels(4)="cdir"
+     strings_to_not_use_as_runlevels(5)="odir"
+     strings_to_not_use_as_runlevels(6)="cdir"
      !
      ! Split the string in pieces
      !
@@ -1047,7 +1069,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      enddo
      if (n_pieces==0) return
      !
-     do i1=1,n_pieces
+     INPUT_strings_loop: do i1=1,n_pieces
        !
        if (trim(rstr_piece(i1))=='ifile') cycle
        if (i1>1) then
@@ -1064,10 +1086,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        enddo
        !
        if (i1>1) then
-         if (trim(rstr_piece(i1-1)) == 'jobstr') cycle
+         do i2=1,nrnlvls
+           if (trim(rstr_piece(i1  )) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
+           if (trim(rstr_piece(i1-1)) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
+         enddo
        endif
        !
-       ! Run Level
+       ! Run Levels
        !
        call initactivate(1, trim(rstr_piece(i1)) )
        !
@@ -1164,9 +1189,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if (index(BSS_mode,'h')==0.and.index(BSS_mode,'d')==0.and.&
 &            index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0) BSS_mode='h'
          !
-         ! With ALDA Fxc the "t" solver is not permitted
+         ! With and ALDA Fxc the t solver is not permitted
          !
-         if ((.not.l_bs_fxc).and.index(BSS_mode,'t')/=0) BSS_mode='h'
+         if (l_alda_fxc.and.index(BSS_mode,'t')/=0) BSS_mode='h'
          !
        endif
        !
@@ -1265,7 +1290,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
 #endif
        !
-     enddo 
+     enddo INPUT_strings_loop
      !
      if (infile_editing) init_=1
      !

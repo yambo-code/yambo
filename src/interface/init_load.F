@@ -27,7 +27,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,cut_off,T_unit,Bfield_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_old,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
- use X_m,           ONLY:X_t,q_plus_G_direction,Q_Shift_Order
+ use X_m,           ONLY:X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold
  use fields,        ONLY:global_gauge,grid_path
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,GW_en_comp,&
@@ -41,7 +41,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
  use BS,            ONLY:BSE_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
-&                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference
+&                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -54,8 +54,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
-&                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time,NE_Hxc_jumps,&
-&                        RT_ave_dephasing,NE_MEM_treshold
+&                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,NE_Hxc_jumps,Dynamics_Kind,&
+&                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
+&                        Eh_pumped_pair_width
  use fields,        ONLY:Efield
 #endif
 #if defined _MAGNETIC
@@ -192,6 +193,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  if(BS_n_g_exch /=1) BS_n_g_exch=BS_n_g_exch_old
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t`',BSS_mode,protect=.FALSE.)
+ call it(defs,'BSSInvMode','[BSS] Inversion solver modality `m/f/p` (mixed, full, perturbative)',BSS_inversion_mode)
  call it(defs,'BLongDir','[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange','[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange','[BSS] Damping range',BSS_dr,E_unit)
@@ -263,6 +265,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GWoIter',    '[GW] GWo SC iterations',GWo_iterations,verb_level=V_qp)
  call it(defs,'GreenFTresh','[GW] [o/o] Treshold to define the new zoomed energy range',QP_G_Zoom_treshold,verb_level=V_qp)
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
+ call it('f',defs,'QPExpand','[F GW] The QP corrections are expanded all over the BZ before being dumped in the DB',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
  !
  ! GPL_EXCLUDE_END
@@ -274,17 +277,36 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Real Time dynamics
  !
 #if defined _RT
- call it(defs,'RTstep',    '[RT] Real Time step length',RT_step,unit=Time_unit)
- call it(defs,'NEsteps',   '[RT] Non-equilibrium Time steps',NE_steps)
- call it(defs,'MemTresh',  '[RT] Treshold on the decay of the retarded GF',NE_MEM_Treshold)
- call it(defs,'HXCjumps',  '[RT] Steps jumped between two Hartree+XC updates',NE_Hxc_jumps,Verb_level=V_real_time)
- call it(defs,'NETime',    '[RT] Non-equilibrium  max Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit)
- call it(defs,'ThermSteps','[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
- call it(defs,'Integrator',   '[RT] Integrator (RK2 | EULER | EULEREXP | RK2EXP ) ',Integrator_name)
- call it(defs,'RADLifeTime',  '[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit)
- call it(defs,'PhLifeTime',   '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit)
+ call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit)
+ call it(defs,'NEsteps',    '[RT] Non-equilibrium Time steps',NE_steps)
+ call it(defs,'HXCjumps',   '[RT] Steps jumped between two Hartree+XC updates',NE_Hxc_jumps,Verb_level=V_real_time)
+ call it(defs,'NETime',     '[RT] Non-equilibrium  max Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit)
+ call it(defs,'ThermSteps', '[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
+ call it(defs,'Integrator', '[RT] Integrator (RK2 | EULER | EULEREXP | RK2EXP ) ',Integrator_name)
+ call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit)
+ call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit)
+ call it(defs,'DynKind',    '[RT] Dynamics kind ((C)arriers/(P)olarization)',Dynamics_Kind)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT')
  call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT')
+ !
+ ! ELPH
+ !
+ call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_Treshold)
+ call it(defs,'RTmaxEn',    '[RT] Max e/h energy to define the states that are evolved',RT_eh_energy_max,&
+&                            Verb_level=V_real_time,unit=E_unit)
+ call it(defs,'RTpumpEhEn', '[RT] Energy centers of the levels to be inverted by hand',Eh_pumped_pair_energy,&
+&                            Verb_level=V_real_time,unit=E_unit)
+ call it(defs,'RTpumpEhWd', '[RT] Energy window of the levels to be inverted by hand',Eh_pumped_pair_width,&
+&                            Verb_level=V_real_time,unit=E_unit)
+ call it('f',defs,'UseDebyeE','[RT] Use a single Debye energy for all phonon modes')
+ call it('f',defs,'RT_T_evol','[RT] Use a complete Time evolution instead of the CCA')
+ !
+ ! I/O
+ !
+ call it(defs,'IOtime',        '[RT] Time between to consecutive I/O',RT_IO_time,verb_level=V_real_time,unit=Time_unit)
+ call it('f',defs,'SkipGFIO',  '[RT] Do not write on disk the Green Functions',verb_level=V_real_time)
+ call it('f',defs,'SkipOCCIO', '[RT] Do not write on disk the Occupations',verb_level=V_real_time)
+ call it('f',defs,'SkipJPIO',  '[RT] Do not write on disk the current and polarization',verb_level=V_real_time)
  !
  ! Other parameters of RT (to be switched on using the verbosity)
  !
@@ -294,7 +316,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        ,RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit)
  call it('f',defs,'Diamagnetic', '[RT] Include the diamagnetic term in current and coupling',verb_level=V_real_time)
  call it('f',defs,'InducedField', '[RT] Include induced field in coupling and current',verb_level=V_real_time)
- call it(defs,'DiskSteps',     '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_real_time)
  !
  ! External fields
  !
@@ -359,6 +380,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Optics
  !
  call it(defs,'ShiftedPath',    '[Xd] Shifted grids path',grid_path,verb_level=V_resp)
+ call it(defs,'DipoleEtresh',   '[Xd] Treshold in the definition of R=P/deltaE',Dipole_Energy_treshold,&
+&                                                                               verb_level=V_resp,unit=E_unit)
  !
  ! GPL_EXCLUDE_END
  !
@@ -410,11 +433,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
    !
    subroutine Afield(i_field)
      character(5) :: name
-     integer      :: verbosity_here,i_field
-     verbosity_here=0
+     integer      :: i_field
      if (i_field==1) name='Probe'
-     if (i_field==2)  name='Pump'
-     if (i_field==2) verbosity_here=V_real_time
+     if (i_field==2) name='Pump'
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &    Efield(i_field)%frequency,unit=E_unit)
      call it(defs,trim(name)//'_FrStep',          '[RT '//trim(name)//'] Frequency step',&
@@ -422,8 +443,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &    Efield(i_field)%intensity,unit=I_unit)
      call it(defs,trim(name)//'_Damp',             '[RT '//trim(name)//'] Damping',&
-&    Efield(i_field)%damping,unit=Time_unit,verb_level=V_real_time)
-     call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] (SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN|PULSE)',&
+&    Efield(i_field)%damping,unit=Time_unit)
+     call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
 &    Efield(i_field)%ef_name,verb_level=0)
      call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
 &    Efield(i_field)%versor,verb_level=0)

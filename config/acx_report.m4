@@ -47,6 +47,9 @@ if test "$enable_netcdf_LFS" = "yes" &&  test "$netcdf" = "yes" ; then NETCDF_LF
 PW_str=" "
 if test "$compile_p2y" = "yes" ; then PW_str="X"; fi
 
+OPENMP_str=" "
+if test "$enable_open_mp" = "yes" ; then OPENMP_str="X"; fi
+
 ETSF_str=" "
 if test "$compile_e2y" = "yes" ; then ETSF_str="X"; fi
 
@@ -79,5 +82,6 @@ AC_SUBST(BLAS_str)
 AC_SUBST(LAPACK_str)
 AC_SUBST(LOCAL_str)
 AC_SUBST(SLK_str)
+AC_SUBST(OPENMP_str)
 
 ])

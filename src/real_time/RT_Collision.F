@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
+subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  ! The BKE is coded in terms of Ho + V + Sigma
  ! This subroutine contruct Ho + V plus the diagonal part of Sigma(T=(t1 + t2)/2)
  ! In the TD-COHSEX we have that
  !
  !   H_k=Ho_k+U_k+ V_k^H-V_k^H[G_ref]+\Sigma_k^{SEX}-\Sigma_k^{SEX}[G_ref]
- !                ------ A --------- -------- B -------------------------
+ !                 ----- A --------- -------- B -------------------------
  !
  ! Note that IP\equiv A=0 & B=0
  ! Note that TDLDA\equiv A=0 &  \Sigma=V_xc
@@ -37,19 +37,18 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  ! This subroutine also fills SC_R with the full Hamiltonian if this is allocated
  !
- use pars,           ONLY:SP,cI,cONE,cZERO
- use units,          ONLY:HBAR_eVfs,FS2AUT,HA2EV
- use wrapper,        ONLY:M_by_M,V_by_V_plus_V
+ use pars,           ONLY:SP,cONE,cZERO
+ use wrapper,        ONLY:V_by_V_plus_V
  use electrons,      ONLY:levels
- use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex,l_ph_corr
+ use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
- use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,RAD_LifeTime,full_rho,           &
+ use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,                             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
-&                         G_lesser_reference,Phase_LifeTime,NE_Hxc_jumps,       &
-&                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start, &
-&                         RT_Deph_Matrix,l_RT_needs_XC0,Ho_plus_Sigma
+&                         G_lesser_reference,NE_Hxc_jumps,                                     &
+&                         l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start,              &
+&                         l_RT_needs_XC0,Ho_plus_Sigma
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
@@ -61,7 +60,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  implicit none
  !
- type(levels),  intent(in)    :: Xen
+ type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
  complex(SP),   intent(in)    :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
@@ -82,7 +81,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  if (it_now==it_start.or.mod(it_now-it_start+1,NE_Hxc_jumps)==0) then
    !
-   if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) call el_density(G_input,Xen,k,rho_n,SC_bands(1),.false.)
+   if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) call el_density(G_input,E,k,rho_n,SC_bands(1),.false.)
    !
    ! The Hartree term is written as
    !
@@ -101,7 +100,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
        if (SC_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
        !
        call IO_and_Messaging_switch("-report -log -io_in -io_out")
-       call XC_potential_driver(Xen,k,WF_KIND,WF_xc_functional,1)
+       call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
        call IO_and_Messaging_switch("+report +log +io_in +io_out")
        V_xc_sc=V_xc
        !
@@ -111,7 +110,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
      ! NOTICE THAT: this approximation is valid only for linear self-energies 
      !              in G_lesser as exchange or COHSEX(with W fixed) 
      !
-     if(l_sc_hf.or.l_sc_cohsex) call COLLISIONS_IO_compose(G_input-G_lesser_reference)
+     if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_IO_compose(G_input-G_lesser_reference)
      !
    endif
    !
@@ -133,23 +132,26 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    if (.not.px%element_1D(ik)) cycle
    !
-   ! Here I fill H_nl_sc (which defined I1 and I2) with...
+   ! Here I fill H_nl_sc with...
    !
    H_nl_sc=cZERO
    !
-   ! Non-local XC potentials (like CHOSEX)
+   ! Non-local XC potentials (like COHSEX)
    !=======================================
    if(.not.local_V.and..not.XCfrozen) then
+     ! 
      ! HF
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
-     ! CHOSEX
+     ! 
+     ! COHSEX
      if (l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc) 
+     !
    endif
    !
    ! Adiabatic Switching
    !=====================
    ! (for all the parts of self-energy different from V_h + V_xc)
-   ! I have to subtruct XC0_and_HARTREE0 that contains <mk|Vxc(rho0) |nk>
+   ! I have to subtract XC0_and_HARTREE0 that contains <mk|Vxc(rho0) |nk>
    !
    if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.NE_dynamics) then 
      !      
@@ -169,7 +171,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    ! Local XC potentials 
    !=====================
-   if(.not.l_NE_simulate_IP) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
+   if (.not.l_NE_simulate_IP) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
    !  
    ! Add Ho = T+V_ion
    !==================
@@ -194,7 +196,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  ! Calculate all relaxation terms
  ! ==============================
- call RT_relaxation(G_input,Xen,k,q,Time)  
+ call RT_relaxation(G_input,E,k,q,Time)  
  !
 end subroutine RT_Collision
 

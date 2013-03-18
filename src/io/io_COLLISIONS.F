@@ -24,30 +24,31 @@ integer function io_COLLISIONS(i_qp,ID,X)
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collisions_IO, ONLY:COLLISIONS_table,n_collisions,V_kind,COLLISIONS_v,COLLISIONS_cutoff,&
-&                        COLLISIONS_path
+&                        COLLISIONS_path,COLLISIONS_range
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
-&                        io_bulk,write_is_on,io_disconnect,io_restart_point,io_file,&
-&                        ver_is_gt_or_eq
+&                        io_bulk,write_is_on,io_disconnect,io_restart_point,&
+&                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX
  use com,           ONLY:error
- use SC,            ONLY:SC_bands
- use QP_m,          ONLY:QP_ng_Sx,QP_n_states,QP_nb,QP_nk,SC_band_mixing
+ use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
+ use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing
  use fragments,     ONLY:io_fragment,Fragments_Restart,Fragments_Synchronize
  use X_m,           ONLY:X_t,n_X_descs,X_description
  use stderr,        ONLY:intc
+ use drivers,       ONLY:l_carrier_dynamics
  !
  implicit none
  !
- integer, intent(inout)                ::ID
- integer, intent(in)                   ::i_qp
- type(X_t),optional                    ::X
+ integer, intent(inout)::ID
+ integer, intent(in)   ::i_qp
+ type(X_t),optional    ::X
  !
  ! Work Space
  !
  character(schlen)     :: db_name
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
- integer               :: V_kind_disk,i_desc
- character(lchlen)     :: V_kind_string
+ integer               :: V_kind_disk,i_desc,VAR_size
+ character(lchlen)     :: V_kind_string,X_string
  character(schlen)     :: desc,db_string
  !
  db_string=" "
@@ -68,6 +69,11 @@ integer function io_COLLISIONS(i_qp,ID,X)
  endif
  if(io_COLLISIONS/=0) goto 1
  !
+ if (.not.ver_is_gt_or_eq(ID,revision=891)) then
+   io_COLLISIONS=IO_OUTDATED_DB
+   goto 1
+ endif
+ !
  ! Previous Fragments are syncronized (copied in the MORE_IO)
  !
  call Fragments_Synchronize(ID,db_name,i_fragment=-QP_n_states)
@@ -80,20 +86,16 @@ integer function io_COLLISIONS(i_qp,ID,X)
    !
    io_COLLISIONS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
    !
-   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=4,MENU=0)
+   VAR_size=4
+   if (ver_is_gt_or_eq(ID,revision=1428)) VAR_size=5
+   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=VAR_size,MENU=0)
    !
-   if (ver_is_gt_or_eq(ID,revision=891)) then
-     !
-     call io_elemental(ID,I1=SC_bands,&
-&         VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
-     !
-   else  
-     !
-     call io_elemental(ID,I0=SC_bands(2),&
-&         VAR=' Upper Band                      :',CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,I0=SC_bands(1),&
-&         VAR=' Lower Band                      :',CHECK=.true.,OP=(/"=="/))
-     !
+   call io_elemental(ID,I1=SC_bands,&
+&       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
+   !
+   if (ver_is_gt_or_eq(ID,revision=1428)) then
+     call io_elemental(ID,L0=l_carrier_dynamics,&
+&         VAR=' Carriers dynamics only          :',CHECK=.true.,OP=(/"=="/))
    endif
    !
    call io_elemental(ID,R0=SC_band_mixing,&
@@ -129,12 +131,20 @@ integer function io_COLLISIONS(i_qp,ID,X)
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        !
        ! In this case I have loaded the em1s DB and I know the parameters.
-       ! I can, therefor, write/read and/or VERIFIY the values
+       ! I can, therefore, write/read and/or VERIFIY the values
        !
        do i_desc=1,iabs(n_X_descs)
          call io_elemental(ID,VAR='X_descriptions_'//trim(intc(i_desc)),CH0="",VAR_SZ=1,MENU=0)
-         call io_elemental(ID,CH0=X_description(i_desc),VAR='',CHECK=n_X_descs>0,OP=(/"=="/))
+         call io_elemental(ID,DB_CH0=X_string,CH0=X_description(i_desc),VAR='',CHECK=n_X_descs>0,OP=(/"=="/))
          call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+         !
+         ! For the real-time databases I need to extract from the X_descriptions few parameters which describe
+         ! the response function properties
+         !
+         if (read_is_on(ID).and.i_desc<=2) then
+           if (i_desc==1) read (X_string(26:40),*) SC_X_size
+           if (i_desc==2) read (X_string(26:40),'(i2,1x,i3)') SC_X_bands
+         endif
        enddo
        !
      endif
@@ -143,10 +153,8 @@ integer function io_COLLISIONS(i_qp,ID,X)
      !
    endif
    !
-   call io_elemental(ID,I0=RIM_ng,&
-&       VAR=' RIM RL components               :',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,I0=RIM_n_rand_pts,&
-&       VAR=' RIM random points               :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,I0=RIM_ng,VAR=' RIM RL components               :',WARN=.true.)
+   call io_elemental(ID,I0=RIM_n_rand_pts,VAR=' RIM random points               :',WARN=.true.)
    call io_elemental(ID,VAR="",VAR_SZ=0)
    !
    io_COLLISIONS=io_status(ID)
@@ -162,8 +170,14 @@ integer function io_COLLISIONS(i_qp,ID,X)
    !
    call io_bulk(ID,VAR='N_COLLISIONS_STATES',VAR_SZ=(/1/))
    call io_bulk(ID,I0=n_collisions)
-   call io_bulk(ID,VAR='COLLISIONS_TABLE',VAR_SZ=(/QP_nb-SC_bands(1)+1,QP_nb-SC_bands(1)+1,QP_nk/))
-   call io_bulk(ID,L3=COLLISIONS_table(SC_bands(1):QP_nb,SC_bands(1):QP_nb,1:QP_nk))
+   call io_bulk(ID,VAR='COLLISIONS_TABLE',&
+&                  VAR_SZ=(/COLLISIONS_range(1,2)-COLLISIONS_range(1,1)+1,&
+&                           COLLISIONS_range(2,2)-COLLISIONS_range(2,1)+1,&
+&                           COLLISIONS_range(3,2)-COLLISIONS_range(3,1)+1/))
+   !
+   call io_bulk(ID,L3=COLLISIONS_table(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
+&                                      COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
+&                                      COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
    !
    allocate(COLLISIONS_v_disk(n_collisions,2))      
    !
@@ -177,7 +191,7 @@ integer function io_COLLISIONS(i_qp,ID,X)
      COLLISIONS_v(1:n_collisions)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
    endif
    !
-   deallocate(COLLISIONS_v_disk)      
+   deallocate(COLLISIONS_v_disk)
    !
    ! Fragments are syncronized (copied in the CORE_IO)
    !

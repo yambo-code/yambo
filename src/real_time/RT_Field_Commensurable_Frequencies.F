@@ -29,7 +29,6 @@ subroutine RT_Field_Commensurable_Frequencies()
  ! equal to 2*pi/deltaW. This must be not larger then NE_steps*RT_step 
  !
  use pars,           ONLY:SP
- use units,          ONLY:HA2EV
  use fields,         ONLY:Efield,n_ext_fields,i_Pump,i_Probe,EtoT
  use real_time,      ONLY:NE_steps,RT_step
  !

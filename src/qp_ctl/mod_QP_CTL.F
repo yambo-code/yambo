@@ -96,11 +96,16 @@ module QP_CTL_m
      use com,           ONLY:msg,depth
      use electrons,     ONLY:levels,E_reset,n_sp_pol,&
 &                            BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,BZ_RIM_tot_nkpts
+     use D_lattice,     ONLY:input_Tel_is_negative
      use R_lattice,     ONLY:bz_samp,nXkibz
      use parser_m,      ONLY:parser
      use global_XC,     ONLY:setup_global_XC,MORE_SCISSOR,MORE_SCIS_AND_STRE,MORE_STRETCH,&
 &                            K_kind,K_xc_functional,MORE_NONE,G_kind,G_xc_functional,&
 &                            X_kind,X_xc_functional,QP_DB_kind,SE_NONE
+#if defined _SC
+     use SC,            ONLY:l_RT_occupations_in_use
+#endif
+     use interfaces,    ONLY:OCCUPATIONS_gaps
      integer       ::band_range(2)
      type(levels)  ::en
      type(bz_samp) ::k
@@ -115,7 +120,7 @@ module QP_CTL_m
      type(QP_t)       ::qp
      type(QP_ctl_t)   ::QP_ctl_from_DB(n_sp_pol),QP_ctl_input_or_impose(n_sp_pol)
      integer          ::DB_corrected(en%nb,en%nk,n_sp_pol),ik_bz,ik_ibz,ib,i1,&
-&                       ik_r,SE_MORE,i_spin,QP_load_DB_err
+&                       ik_r,SE_MORE,i_spin,QP_load_DB_err,nbf_m_SAVE(2)
      character(schlen)::ch
      character(1)     ::what
      character(11)    ::spin_ch(2)
@@ -177,11 +182,10 @@ module QP_CTL_m
        if (present(qp_impose)) ch='Internal QP corrections ('//what//')'
      enddo
      !
-     if (depth>0) then
-       call section('=',trim(ch))
-     else 
-       call section('*',trim(ch))
-     endif
+     ! Sectioning
+     !
+     if (depth>0 ) call section('p',trim(ch))
+     if (depth==0) call section('*',trim(ch))
      !
      ! Interpolation neighbours is always input file controlled
      !
@@ -298,7 +302,19 @@ module QP_CTL_m
          !
        endif
        !
+       if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
+       !
+#if defined _SC
+       if (.not.l_RT_occupations_in_use) call OCCUPATIONS_Fermi(en,k,1)
+#endif      
+#if !defined _SC
        call OCCUPATIONS_Fermi(en,k,1)
+#endif      
+       !
+       if (input_Tel_is_negative) then
+         en%nbf=nbf_m_SAVE(1)
+         en%nbm=nbf_m_SAVE(2)
+       endif
        !
      endif
      !
@@ -329,7 +345,7 @@ module QP_CTL_m
      ! Reporting
      !
      call msg('r', '[QP] Fermi level variation [ev]:',en%Efermi(1)*HA2EV)
-     call msg('r',   '[QP] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
+     call msg('r', '[QP] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
      if (en%nbf==en%nbm) then
        if (n_sp_pol==1) then
          call msg('r','[QP] Ind. Gap Correction  [ev]:',&

@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.3.0 r.2002 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.3.0 r.1966 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="3"
-SSUBLEVEL="0"
-SREVISION="2002"
+SSUBLEVEL="1"
+SREVISION="1966"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -163,6 +163,19 @@ fi
 AC_SUBST(PW_VER)
 AC_SUBST(PW_CPP)
 
+# ============================================================================
+#
+# Verbose compilation
+#
+AC_ARG_ENABLE(open-mp, AC_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
+if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
+openmp_cpp=" "
+OPENMPLIBS=" "
+if test x"$enable_open_mp" = "xyes"; then 
+ OPENMPLIBS="-openmp -lpthread"; 
+ openmp_cpp="-D_OPENMP"
+fi
+AC_SUBST(OPENMPLIBS)
 # ============================================================================
 #
 # Verbose compilation
@@ -338,6 +351,7 @@ if test "$mpibuild" = "yes"; then
 # OVERALL CHECK
 #
  if test "$mpibuild" = "no" ; then 
+  openmp_cpp=""
   mpi_cpp=""
   MPILIBS=""
   PF90=""
@@ -345,6 +359,7 @@ if test "$mpibuild" = "yes"; then
   PCC=""
   PCCFLAGS=""
  fi
+ AC_SUBST(openmp_cpp)
  AC_SUBST(mpi_cpp)
  AC_SUBST(MPILIBS)
  AC_SUBST(PF90)

@@ -19,23 +19,29 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_databases_IO(Xen,it)
+subroutine RT_databases_IO(E,it)
  !
  use QP_m,           ONLY:QP_nk
+ use drivers,        ONLY:l_ph_corr
  use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,NE_i_time,it_start,&
-&                         OCCUPATIONS_IO_and_interpolate
+&                         OCCUPATIONS_IO_and_interpolate,RT_IO_steps,&
+&                         l_RT_skip_GF_IO,l_RT_skip_OCC_IO,l_RT_skip_JandP_IO
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL
  use electrons,      ONLY:levels
+#if defined _ELPH
+ use parallel_m,     ONLY:PP_redux_wait
+ use real_time,      ONLY:THETA_matrix,l_ELPH_CCA_Kernel
+#endif
  !
  implicit none
  !
  integer, intent(in)      :: it
  integer, external        :: io_SC_components
- type(levels),intent(in)  :: Xen
+ type(levels),intent(in)  :: E
  !
  ! Work Space
  !
- integer :: ik,io_G,io_J_and_P,COM_
+ integer :: ik,io_G,io_J_and_P,COM_,io_THETA
  !
  ! When the simulation has been restarted the first step (it==it_start)
  ! corresponds to the latest of the previous simulation. Therefore
@@ -43,24 +49,61 @@ subroutine RT_databases_IO(Xen,it)
  !
  if (it==it_start.and.it_start>1) return
  !
- ! Write G_lesser (always)
+ ! Write every RT_IO_steps
  !
- io_G=0
- COM_=NONE
- if (it==it_start) COM_=REP
- call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(5))
- io_G=io_SC_components('G' ,Xen,ID(5))
+ if (.not. (NE_i_time==1.or.mod(NE_i_time,RT_IO_steps)==0) ) return
  !
- do ik = 1, QP_nk 
-   call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
-   io_G=io_SC_components('G',Xen,ID(5))
- enddo
+ if (it==it_start.and.it_start>1) return
+ !
+ ! Write G_lesser
+ !================
+ !
+ if (.not.l_RT_skip_GF_IO) then
+   !
+   io_G=0
+   io_THETA=0
+   COM_=NONE
+   if (it==it_start) COM_=REP
+   call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(5))
+   io_G=io_SC_components('G' ,E,ID(5))
+   !
+#if defined _ELPH
+   if (l_ph_corr.and..not.l_ELPH_CCA_Kernel) then
+     call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(7))
+     io_THETA=io_SC_components('THETA' ,E,ID(7))
+   endif
+#endif
+   !
+   do ik = 1, QP_nk 
+     call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
+     io_G=io_SC_components('G',E,ID(5))
+#if defined _ELPH
+     if (l_ph_corr.and..not.l_ELPH_CCA_Kernel) then
+       !
+       ! The I/O of the THETA matrix is tricky when the run is parallel.
+       ! The point is that every CPU evolves a certain group of q-points.
+       ! If I do here a all-to-all each CPU will have non-zero values for 
+       ! q-points that it will not evolve. At the next call of this routine
+       ! therefore, values relative to different times will be wrongly merged.
+       !
+       call PP_redux_wait(THETA_matrix(:,:,:,ik))
+       !
+       call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(7))
+       io_THETA=io_SC_components('THETA' ,E,ID(7))
+       !
+       call RT_ELPH_zeroing()
+       !
+     endif
+#endif
+   enddo
+   !
+ endif
  !
  ! Occupations
  !
- call OCCUPATIONS_IO_and_interpolate(Xen,'G')
+ if (.not.l_RT_skip_OCC_IO) call OCCUPATIONS_IO_and_interpolate(E,'G')
  !
- if(l_NE_with_fields.and.NE_dynamics) then
+ if(l_NE_with_fields.and.NE_dynamics.and..not.l_RT_skip_JandP_IO) then
    !
    ! Remember that negative time = adiabatic switching
    ! no need to store current
@@ -70,9 +113,9 @@ subroutine RT_databases_IO(Xen,it)
    ! Write current and polarization on disk
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
-   io_J_and_P=io_SC_components('J_and_P' ,Xen,ID(4))
+   io_J_and_P=io_SC_components('J_and_P' ,E,ID(4))
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
-   io_J_and_P=io_SC_components('J_and_P' ,Xen,ID(4))
+   io_J_and_P=io_SC_components('J_and_P' ,E,ID(4))
    !
  endif
  !

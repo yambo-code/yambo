@@ -30,6 +30,10 @@ module collisions_IO
  integer                  :: V_kind 
  character(lchlen)        :: COLLISIONS_path
  !
+ ! Array bounds
+ !
+ integer  :: COLLISIONS_range(3,2)
+ !
  ! Cut off on exchange matrix elements
  ! Sx_cutoff=0 all, (Sx_cutoff>1 or Sx_cutoff<0)=none
  !
@@ -54,11 +58,27 @@ module collisions_IO
  !
  contains
    !
+   subroutine collisions_RANGES_setup()
+     use drivers,        ONLY:l_carrier_dynamics
+     use SC,             ONLY:SC_bands
+     use D_lattice,      ONLY:nsym
+     use R_lattice,      ONLY:nqbz,nkibz
+     use QP_m,           ONLY:QP_n_states
+     integer :: N_G_vectors
+     if (l_carrier_dynamics) then
+       COLLISIONS_range(1,:)=(/1,QP_n_states/)
+       COLLISIONS_range(2,:)=(/1,nsym/)
+       COLLISIONS_range(3,:)=(/1,nqbz/)
+     else 
+       COLLISIONS_range(1,:)=SC_bands
+       COLLISIONS_range(2,:)=SC_bands
+       COLLISIONS_range(3,:)=(/1,nkibz/)
+     endif
+   end subroutine
+   !
    subroutine collisions_IO_alloc(V_size_input)
      use pars,           ONLY:IP
-     use QP_m,           ONLY:QP_nk,QP_nb
      use memory_m,       ONLY:mem_est
-     implicit none
      !
      integer, intent(in), optional :: V_size_input
      !
@@ -69,19 +89,25 @@ module collisions_IO
      if(present(V_size_input)) then
        V_size=V_size_input
      else
-       V_size=QP_nb**2*QP_nk
+       !
+       call collisions_RANGES_setup()
+       !
+       V_size=(COLLISIONS_range(1,2)-COLLISIONS_range(1,1)+1)*&
+&             (COLLISIONS_range(2,2)-COLLISIONS_range(2,1)+1)*&
+&             (COLLISIONS_range(3,2)-COLLISIONS_range(3,1)+1)
      endif
      !
      allocate(COLLISIONS_v(V_size))
      call mem_est("COLLISIONS_v",(/size(COLLISIONS_v)/),(/2*SP/))
-     allocate(COLLISIONS_table(QP_nb,QP_nb,QP_nk))
+     allocate(COLLISIONS_table(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
+&                              COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
+&                              COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
      call mem_est("COLLISIONS_table",(/size(COLLISIONS_table)/),(/LP/))
      !
    end subroutine
    !
    subroutine collisions_IO_free()
      use memory_m,       ONLY:mem_est
-     implicit none
      if(allocated(COLLISIONS_v)) then
        deallocate(COLLISIONS_v)
        call mem_est("COLLISIONS_v")

@@ -31,9 +31,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use IO_m,           ONLY:io_control,REP,NONE,OP_RD_CL
  use X_m,            ONLY:X_t,X_epsilon,X_drude_term
  use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs
-#if defined _DISTRIBUTED
- use BS,             ONLY:ioBS_DISTRIBUTED
-#endif
 #if defined _SC
  use fields,         ONLY:global_gauge
 #endif
@@ -57,11 +54,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  if(.not.l_rpa_IP) then
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
-#if defined _DISTRIBUTED
-   ioBS_err=ioBS_DISTRIBUTED(iq,X_static,ID)
-#else
    ioBS_err=ioBS(iq,X_static,ID)
-#endif
    if(ioBS_err/=0) return
  endif
  !

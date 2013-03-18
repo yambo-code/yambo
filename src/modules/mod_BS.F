@@ -96,21 +96,9 @@ module BS
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_uses_partial_diago
-#if defined _DISTRIBUTED
- logical  :: BS_exchange_done,BS_exchange_db
-#endif
  complex(SP),allocatable :: BSS_rhoq0(:)
  !
  interface 
-   !
-#if defined _DISTRIBUTED
-   integer function ioBS_DISTRIBUTED(iq,X,ID,blk_only)
-     use X_m,           ONLY:X_t
-     type(X_t):: X 
-     logical, optional :: blk_only
-     integer  :: iq,ID  
-   end function
-#endif
    !
    subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
      use pars,          ONLY:SP

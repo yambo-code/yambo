@@ -207,10 +207,6 @@ module matrix_operate
      use wrapper,     ONLY:M_by_M
      use pars,        ONLY:SP
      use parallel_m,  ONLY:PP_redux_wait,ncpu,myid
-#if defined _DISTRIBUTED
-     use stderr,      ONLY:intc
-     use com,         ONLY:msg
-#endif
      integer                :: idriver,lib_in
      complex(SP)            :: M(:,:)
      complex(SP),  optional :: V_left(:,:),V_right(:,:),E_cmpl(:)
@@ -260,7 +256,7 @@ module matrix_operate
      ! Decide which to use among LK or SLK
      !
      if (ncpu==1.or.M_size/ncpu<min_cpu_block_size) lib_in_use=USE_LK 
-#if ! defined _SCALAPACK && ! defined _DISTRIBUTED
+#if ! defined _SCALAPACK 
      lib_in_use=USE_LK
 #endif
      !

@@ -89,12 +89,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer    :: O_x_dim,alloc_err(2),x_fft_size,c_fft_size
  logical    :: load_O_X,l_USE_all_Gexx
  complex(SP),allocatable::Ovv(:),Occ(:),Cc(:)
-#if defined _DISTRIBUTED
- complex(SP),target, allocatable::O2x(:,:)
- complex(SP),pointer            ::O1x(:,:)
-#else
  complex(SP),        allocatable::O1x(:,:),O2x(:,:)
-#endif
  complex(SP),allocatable::Ovc(:),Ocv(:)
  type(ggwinfo)          ::isc
  !
@@ -367,16 +362,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (load_O_X) then
    allocate(O2x(BS_n_g_exch,O_x_dim),stat=alloc_err(2))
    call mem_est('O2x',(/size(O2x)/),errors=(/alloc_err(2)/))
-#if defined _DISTRIBUTED
-   if(.not.l_col_cut.and.Xk%nibz==1) then
-     O1x=>O2x
-   else
-#endif
-     allocate(O1x(BS_n_g_exch,O_x_dim),stat=alloc_err(1))
-     call mem_est('O1x',(/size(O1x)/),errors=(/alloc_err(1)/))
-#if defined _DISTRIBUTED
-   endif
-#endif
+   allocate(O1x(BS_n_g_exch,O_x_dim),stat=alloc_err(1))
+   call mem_est('O1x',(/size(O1x)/),errors=(/alloc_err(1)/))
  endif
  !
  if (.not.BS_K_coupling) call mem_est('BS_mat',(/O_x_dim**2/))
@@ -616,16 +603,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call mem_est("BS_mat")
  !
  if (load_O_X) then
-#if defined _DISTRIBUTED
-   if(l_col_cut.or.Xk%nibz/=1) then 
-#endif
-     deallocate(O1x)
-     call mem_est("O1x")
-#if defined _DISTRIBUTED
-   else
-     nullify(O1x)
-   endif
-#endif
+   deallocate(O1x)
+   call mem_est("O1x")
    deallocate(O2x)
    call mem_est("O2x")
  endif

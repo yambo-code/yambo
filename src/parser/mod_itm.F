@@ -30,7 +30,7 @@ module it_m
  !
  character(2),parameter :: E_unit='eV'
  character(2),parameter :: G_unit='RL'
- character(3),parameter :: cut_off='mHa'
+ character(2),parameter :: Ecut_unit='eV'
  character(2),parameter :: T_unit='eV'
  character(2),parameter :: Time_unit='fs'
  character(2),parameter :: Bfield_unit='T'

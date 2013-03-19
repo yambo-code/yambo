@@ -40,6 +40,7 @@ subroutine REPORT_Occupations(E)
  character(lchlen) ::ch_
  character(23)     ::prefix_
  real(SP)          ::N_met
+ real(SP)          ::f_met
  real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
  real(SP)          ::E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
  !
@@ -115,10 +116,13 @@ subroutine REPORT_Occupations(E)
  !
  if (.not.all(Nbf==Nbm)) then
    N_met=0
+   f_met=0
    do i_sp_pol=1,n_sp_pol
-     N_met= N_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk) !/(sum(Nbm(:)-Nbf(:)))) old f_met
+     f_met=f_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk*(Nbm(i_sp_pol)-Nbf(i_sp_pol)))
+     N_met=N_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk)
    enddo
-   call msg('r','N of e- / Metallic e-:',(/nel,N_met/))
+   call msg('r','N of el / N of met el: ',       (/nel,N_met/))
+   call msg('r','Average metallic occ.:            ',(/f_met/))
  endif
  !
 end subroutine

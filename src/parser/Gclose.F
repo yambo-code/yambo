@@ -33,6 +33,7 @@ subroutine Gclose(ng,what)
  real(SP):: ng_r
  character(*) :: what
  !
+ if (ng==0        .and.      (trim(what)=="fRL".or.trim(what)=="tRL") )   return
  if (n_g_shells==0.and.      (trim(what)=="fRL".or.trim(what)=="tRL") )   return
  if (n_g_shells==0.and. .not.(trim(what)=="fRL".or.trim(what)=="tRL") ) &
 &  call error(' Initialization not yet done. Use RL units in input or run initialization')

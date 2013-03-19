@@ -22,6 +22,8 @@
 subroutine setup(en,Xen,Ken,k,Xk)
  !
  use drivers,        ONLY:l_sc_run
+ use units,          ONLY:HA2EV
+ use it_m,           ONLY:Ecut_unit
  use pars,           ONLY:SP,pi,schlen
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,n_sp_pol
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,mag_syms,&
@@ -60,7 +62,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Work Space
  !
- real(SP)          :: rv(3),m(3,3),Tel_SAVE
+ real(SP)          :: rv(3),m(3,3)
+ real(SP)          :: Tel_SAVE
+ real(SP)          :: conv_factor
  integer           :: i1,i2,i3,is,ia,i_err,nbf_m_SAVE(2)
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch1,dumb_ch2
@@ -189,7 +193,12 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !============================
  !
  call G_shells_finder()
- call msg('rn','Shells, format: [S#] G_RL(mHa)')
+ !
+ dumb_ch1=Ecut_unit
+ if(trim(Ecut_unit)== 'eV') conv_factor=HA2EV
+ if(trim(Ecut_unit)=='mHa') conv_factor=1000._SP
+ if(trim(Ecut_unit)== 'Ha') conv_factor=1._SP
+ call msg('rn','Shells, format: [S#] G_RL('//trim(Ecut_unit)//')')
  !
  ! When there is no Spatial inversion the map is built in G_shells_finder
  if(inv_index>0) call eval_minus_G()
@@ -198,7 +207,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    dumb_ch1=' '
    do i2=i1,max(i1-3,1),-1
      dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']:'//trim(intc(ng_in_shell(i2)))//&
-&             '('//trim(real2ch(E_of_shell(i2)*1000.))//')'
+&             '('//trim(real2ch(E_of_shell(i2)*conv_factor))//')'
      dumb_ch1=dumb_ch2
    enddo
    call msg('r',trim(dumb_ch2))
@@ -208,7 +217,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    dumb_ch1=' '
    do i2=i1,max(i1-3,1),-1
      dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']:'//trim(intc(ng_in_shell(i2)))//&
-&             '('//trim(real2ch(E_of_shell(i2)*1000.))//')'
+&             '('//trim(real2ch(E_of_shell(i2)*conv_factor))//')'
      dumb_ch1=dumb_ch2
    enddo
    call msg('r',trim(dumb_ch2))
@@ -230,7 +239,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
    enddo
    if (i_err/=0) call error('Impossible to determine the K-grid lattice')
  endif
- !
  !
  if (trim(non_periodic_directions)/="none") then
    !

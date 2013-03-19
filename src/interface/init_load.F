@@ -24,8 +24,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use pars,          ONLY:schlen
  use electrons,     ONLY:levels,nel,filled_tresh,eval_magn
  use frequency,     ONLY:w_samp
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,cut_off,T_unit,Bfield_unit,&
-&                        Time_unit,I_unit,Angle_unit,V_old,&
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,Ecut_unit,T_unit,Bfield_unit,&
+&                        Time_unit,I_unit,Angle_unit,V_old,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold
  use fields,        ONLY:global_gauge,grid_path
@@ -73,20 +73,20 @@ subroutine init_load(defs,en,q,k,X,Xw)
  type(X_t)     ::X(4)
  type(w_samp)  ::Xw(4)
  !
- ! Compatibility with old variables
+ ! Compatibility with old input-file variables
  !
- integer       :: ng_closed_old=1
- integer       :: wf_ng_old=1
- integer       :: QP_ng_Sx_old=1
- integer       :: BS_n_g_W_old=1
- integer       :: BS_n_g_exch_old=1
- integer       :: FXC_n_g_corr_old=1
- integer       :: RIM_ng_old=1
+ integer       :: ng_closed_old=0
+ integer       :: wf_ng_old=0
+ integer       :: QP_ng_Sx_old=0
+ integer       :: BS_n_g_W_old=0
+ integer       :: BS_n_g_exch_old=0
+ integer       :: FXC_n_g_corr_old=0
+ integer       :: RIM_ng_old=0
  !
  !===============
  ! GPL RUNLEVELS
  !===============
- call it('r',defs,'setup',   '[R INI] Initialization') 
+ call it('r',defs,'setup',   '[R INI] Initialization')
  call it('r',defs,'optics',  '[R OPT] Optics')
  call it('r',defs,'chi',     '[R CHI] Dyson equation for Chi.')
  call it('r',defs,'bse',     '[R BSE] Bethe Salpeter Equation.')
@@ -144,10 +144,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed_old,unit=G_unit,verb_level=V_old)
  call it(defs,'MaxNG',   '[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
- if(ng_closed_old/=1) ng_closed=ng_closed_old
- call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng_old,G_unit,verb_level=V_old) 
- call it(defs,'ecutFFT','[FFT] Plane-waves',wf_ng,cut_off,verb_level=V_RL) 
- if(wf_ng_old/=1) wf_ng=wf_ng_old
+ call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng_old,Ecut_unit,verb_level=V_old) 
+ call it(defs,'ecutFFT', '[FFT] Plane-waves',wf_ng,Ecut_unit,verb_level=V_RL) 
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt)
@@ -165,9 +163,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! S_xc
  !
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
- call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx_old,cut_off,verb_level=V_old)
- call it(defs,'ecutHF',   '[XX] Exchange RL components',QP_ng_Sx,cut_off)
- if(QP_ng_Sx_old/=1) QP_ng_Sx=QP_ng_Sx_old
+ call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx_old,Ecut_unit,verb_level=V_old)
+ call it(defs,'ecutHF',   '[XX] Exchange RL components',QP_ng_Sx,Ecut_unit)
  call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
@@ -185,12 +182,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'BSEmode', '[BSE] resonant/causal/coupling',BSE_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
- call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W_old,cut_off,verb_level=V_old)
- call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch_old,cut_off,verb_level=V_old)
- call it(defs,'ecutKcorr','[BSK] Screened interaction block size',BS_n_g_W,cut_off)
- call it(defs,'ecutKexch','[BSK] Exchange components',BS_n_g_exch,cut_off)
- if(BS_n_g_W_old/=1) BS_n_g_W=BS_n_g_W_old
- if(BS_n_g_exch /=1) BS_n_g_exch=BS_n_g_exch_old
+ call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W_old,Ecut_unit,verb_level=V_old)
+ call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch_old,Ecut_unit,verb_level=V_old)
+ call it(defs,'ecutKcorr','[BSK] Screened interaction block size',BS_n_g_W,Ecut_unit)
+ call it(defs,'ecutKexch','[BSK] Exchange components',BS_n_g_exch,Ecut_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t`',BSS_mode,protect=.FALSE.)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `m/f/p` (mixed, full, perturbative)',BSS_inversion_mode)
@@ -208,9 +203,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! F_xc
  !
- call it(defs,'FxcGRLc',  '[TDDFT] XC-kernel RL size',FXC_n_g_corr_old,cut_off,verb_level=V_old)
- call it(defs,'ecutFxc',  '[TDDFT] XC-kernel RL size',FXC_n_g_corr,cut_off)
- if(FXC_n_g_corr_old/=1) FXC_n_g_corr=FXC_n_g_corr_old
+ call it(defs,'FxcGRLc',  '[TDDFT] XC-kernel RL size',FXC_n_g_corr_old,Ecut_unit,verb_level=V_old)
+ call it(defs,'ecutFxc',  '[TDDFT] XC-kernel RL size',FXC_n_g_corr,Ecut_unit)
  call it(defs,'LRC_alpha','[TDDFT] LRC alpha factor',FXC_LRC_alpha)
  call it(defs,'LRC_beta', '[TDDFT] LRC beta factor',FXC_LRC_beta,verb_level=V_resp)
  !
@@ -242,9 +236,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'IDEm1Ref','[RIM] Dielectric matrix reference component 1(x)/2(y)/3(z)',&
 &                         RIM_id_epsm1_reference,verb_level=V_RL)
  call it(defs,'RandQpts','[RIM] Number of random q-points in the BZ',RIM_n_rand_pts)
- call it(defs,'RandGvec','[RIM] Coulomb interaction RS components',RIM_ng_old,cut_off,verb_level=V_old)
- call it(defs,'ecutRIM', '[RIM] Coulomb interaction RS components',RIM_ng,cut_off)
- if(RIM_ng_old/=1) RIM_ng=RIM_ng_old
+ call it(defs,'RandGvec','[RIM] Coulomb interaction RS components',RIM_ng_old,Ecut_unit,verb_level=V_old)
+ call it(defs,'ecutRIM', '[RIM] Coulomb interaction RS components',RIM_ng,Ecut_unit)
  call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_RL)
  !
  ! CUTOFF
@@ -427,6 +420,16 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
  call it('f',defs,'SCdiag','[SC] Diagonal approximation for the self-energy(WF unchaged)',verb_level=V_sc)
 #endif
+ !
+ ! Compatibility with old input-file variables
+ !
+ if(ng_closed_old>0    ) ng_closed    = ng_closed_old
+ if(wf_ng_old>0        ) wf_ng        = wf_ng_old
+ if(QP_ng_Sx_old>0     ) QP_ng_Sx     = QP_ng_Sx_old
+ if(BS_n_g_W_old>0     ) BS_n_g_W     = BS_n_g_W_old
+ if(BS_n_g_exch_old >0 ) BS_n_g_exch  = BS_n_g_exch_old
+ if(FXC_n_g_corr_old>0 ) FXC_n_g_corr = FXC_n_g_corr_old
+ if(RIM_ng_old>0       ) RIM_ng       = RIM_ng_old
  ! 
  contains 
    !
@@ -462,11 +465,17 @@ subroutine init_load(defs,en,q,k,X,Xw)
      ! 
      ! Work Space
      ! 
-     integer           ::i1,ng_old
+     integer           ::i1
+     integer           ::ng_old=0
      integer,parameter ::n_des=14,n_des_old=1
      character(8)      ::nms(n_des),nms_old(n_des_old),sfx
      character(40)     ::des(n_des),des_old(n_des_old)
      character(schlen) ::lch1,lch2
+     !
+     if (X%whoami==1) sfx='Xx'
+     if (X%whoami==2) sfx='Xs'
+     if (X%whoami==3) sfx='Xd'
+     if (X%whoami==4) sfx='Xp'
      !
      nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &          'DrudeW','LongDr','EhEngy','PPAPnt',&
@@ -486,26 +495,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
      des(13)='Polarization function bands'
      des(14)='Damping reference energy'
      !
-     nms_old='NGsBlk'
-     des_old(1)='Response function energy cutoff'
-     !
      do i1=1,n_des
        lch1=des(i1);lch2=nms(i1)
-       if (X%whoami==1) sfx='Xx'
-       if (X%whoami==2) sfx='Xs'
-       if (X%whoami==3) sfx='Xd'
-       if (X%whoami==4) sfx='Xp'
        write (des(i1),'(4a)')  '[',trim(sfx),'] ',trim(lch1)
        write (nms(i1),'(2a)')  lch2(1:6),trim(sfx)
-     enddo
-     do i1=1,n_des_old
-       lch1=des_old(i1);lch2=nms_old(i1)
-       if (X%whoami==1) sfx='Xx'
-       if (X%whoami==2) sfx='Xs'
-       if (X%whoami==3) sfx='Xd'
-       if (X%whoami==4) sfx='Xp'
-       write (des_old(i1),'(4a)')  '[',trim(sfx),'] ',trim(lch1)
-       write (nms_old(i1),'(2a)')  lch2(1:6),trim(sfx)
      enddo
      !
      call it(defs,nms( 1),des( 1),X%ordering,verb_level=V_resp)
@@ -518,12 +511,22 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,nms( 8),des( 8),X%q0,verb_level=0)
      call it(defs,nms( 9),des( 9),X%ehe,E_unit,verb_level=V_resp)
      call it(defs,nms(10),des(10),X%ppaE,E_unit,verb_level=0)
-     call it(defs,nms_old(1),des_old(1),ng_old,cut_off,verb_level=V_old) 
-     call it(defs,nms(11),des(11),X%ng,cut_off,verb_level=0) 
-     if(ng_old/=1) X%ng=ng_old
+     call it(defs,nms(11),des(11),X%ng,Ecut_unit,verb_level=0) 
      call it(defs,nms(12),des(12),X%iq,verb_level=0)
      call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)
+     !
+     ! Compatibility with old input-file variables
+     !
+     nms_old=(/'NGsBlk'/)
+     des_old(1)='Response function energy cutoff'
+     do i1=1,n_des_old
+       lch1=des_old(i1);lch2=nms_old(i1)
+       write (des_old(i1),'(4a)')  '[',trim(sfx),'] ',trim(lch1)
+       write (nms_old(i1),'(2a)')  lch2(1:6),trim(sfx)
+     enddo
+     call it(defs,nms_old(1),des_old(1),ng_old,Ecut_unit,verb_level=V_old) 
+     if(ng_old>0) X%ng=ng_old
      !
    end subroutine
    !

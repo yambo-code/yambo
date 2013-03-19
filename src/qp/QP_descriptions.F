@@ -117,8 +117,8 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    if (.not.l_life) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
-&          string_pack('(a,2(',gen_fmt( Xw%n ),',1x))'))) &
-&          ' X Steps                :',Xw%n(1)
+&          string_pack('(a,(',gen_fmt( i_v=(/Xw%n_freqs/) ),',1x))'))) &
+&          ' X Steps                :',Xw%n_freqs
    endif
  endif
  if (ver_is_gt_or_eq(-1,(/3,0,1/))) then

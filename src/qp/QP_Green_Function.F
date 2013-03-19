@@ -55,7 +55,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
  ! The Green's function
  !
  call W_reset(W)
- W%n                =QP_Sc_steps
+ W%n_freqs          =QP_Sc_steps
  W%dr               =QP_G_dr
  old_min_max_step   =(/1000.,0./)
  new_min_max_step   =(/1000.,0./)
@@ -92,7 +92,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
      endif
    endif
    !
-   do iw=1,W%n(1) 
+   do iw=1,W%n_freqs
      !
      qp%GreenF(iqp,iw)=1./(real(qp%GreenF_W(iqp,iw))-Eo-qp%S_total(iqp,iw))
      !
@@ -100,7 +100,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    !
    ! Spectral Function Integral
    !
-   QP_G_amplitude_integral(iqp)=RIntegrate(aimag(qp%GreenF(iqp,:)),real(qp%GreenF_W(iqp,:)),W%n(1))/pi
+   QP_G_amplitude_integral(iqp)=RIntegrate(aimag(qp%GreenF(iqp,:)),real(qp%GreenF_W(iqp,:)),W%n_freqs)/pi
    !
    ! Search for a finer energy range 
    !
@@ -108,12 +108,12 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
      !
      Amp_Peak=maxval(abs(aimag(qp%GreenF(iqp,:))))
      iw_start=0
-     do iw=1,W%n(1)
+     do iw=1,W%n_freqs
        if (iw_start==0.and.abs(aimag(qp%GreenF(iqp,iw)))>Amp_Peak*QP_G_Zoom_treshold/100.) iw_start=iw
        if (iw_start/=0) exit
      enddo
      iw_end=0
-     do iw=W%n(1),1,-1
+     do iw=W%n_freqs,1,-1
        if (iw_end==0.and.abs(aimag(qp%GreenF(iqp,iw)))>Amp_Peak*QP_G_Zoom_treshold/100.) iw_end=iw
        if (iw_end/=0) exit
      enddo
@@ -136,7 +136,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    ! Extraction of the QP properties directly from the Green's function
    !====================================================================
    !
-   call QPartilize(W%n(1),qp%GreenF(iqp,:),real(qp%GreenF_W(iqp,:)),qp%E(iqp),qp%Z(iqp),QP_dSc_delta) 
+   call QPartilize(W%n_freqs,qp%GreenF(iqp,:),real(qp%GreenF_W(iqp,:)),qp%E(iqp),qp%Z(iqp),QP_dSc_delta) 
    !
  enddo
  !

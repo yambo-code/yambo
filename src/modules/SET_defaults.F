@@ -19,11 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
+subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
  use pars,       ONLY:SP,schlen
- use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
+ use units,      ONLY:HA2EV,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use fields,     ONLY:global_gauge,grid_path
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
@@ -50,17 +50,16 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
 &                     filled_tresh, l_spin_orbit,n_spin_den,        &
 &                     eval_magn
- use parallel_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
+ use parallel_m, ONLY:master_cpu,ncpu,CPU_str_reset
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
-&                     of_unit,write_to_of,write_to_report,max_open_ofs,&
+&                     of_unit,max_open_ofs,repfile,&
 &                     more_io_path,core_io_path,jobstr,com_path,second_jobstr
- use stderr,     ONLY:win_size,tty_size,write_to_log,logfile,set_real_printed_length,string_split
- use timing,     ONLY:log_line_to_dump,log_line,nhash,live_timing_is_on,&
-&                     parallel_timing,ct
+ use stderr,     ONLY:win_size,tty_size,write_to_log,logfile,set_real_printed_length,&
+&                     string_split,log_as_a_file
+ use timing,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
- use WF_distribute, ONLY:Distributed_Memory
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
- use IO_m,       ONLY:io_reset,max_io_units,IO_write,serial_number,IO_read,mk_dir,&
+ use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,&
 &                     Fragmented_IO,Fragmented_IO_save 
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
@@ -71,7 +70,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_causal
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
- use fragments,  ONLY:Parallel_Fragments
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,nQ_memory,&
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches
@@ -116,6 +114,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  call set_real_printed_length()
  !
+ ! CPU structures
+ !
+ call CPU_str_reset()
+ !
  ! Stack Size 
  !
  call remove_stack_limit()
@@ -144,15 +146,27 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  second_jobstr=" "
  if (len_trim(string(2))>0) second_jobstr=string(2)
  !
- ! PAR PROC Setup
+ ! Global Logicals
  !
- master_cpu          =myid==0
- local_master_cpu    =myid==0
+ Fragmented_IO_save=index(INSTR,'dbfrag')>0.or.ncpu>1.or.index(INSTR,'fragnb')>0
+ !
+ ! Logical Setup (mainly for interfaces and ypp. As far as yambo is concerned this call is done
+ ! in init.F)
+ !
+ call SET_logicals()
  !
  ! TTY size 
  !
  call win_size(tty_size)
  call ct(INIT=.TRUE.)
+ log_as_a_file=log_as_a_file
+#if defined _BLUEGENE
+ log_as_a_file=.TRUE.
+#endif
+ !
+ !I/O 
+ !
+ serial_number=0
  !
  !com
  !
@@ -164,8 +178,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  opened_of=' '
  of_unit=0
  of_unit(max_open_ofs)=-11
- write_to_of=master_cpu
- write_to_report=master_cpu
  !
  !LOGO
  !
@@ -174,16 +186,15 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !stderr
  !
- write_to_log=master_cpu
+ write_to_log=.TRUE.
+ repfile=" "
  write (logfile,'(2a)') trim(more_io_path),'/l_stderr'
  !
  !Timing
  !
  log_line_to_dump=.false.
  log_line=' '
- nhash=20
- parallel_timing=.false.
- live_timing_is_on=.true.
+ nhash=40
  !
  !functions
  !
@@ -305,21 +316,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  fft_dim=0
  fft_multiplier=(/1,1,1/)
  !
- !IO
- !
- serial_number=0
- IO_read=.true.
- IO_write=master_cpu
- n_nodes=1
- !
  ! Interpolation
  !
  interpls(1:max_interpls)%ndim=0
- !
- Parallel_Fragments=.FALSE.
- Fragmented_IO=index(INSTR,'dbfrag')>0
- Fragmented_IO_save=Fragmented_IO
- Distributed_Memory=index(INSTR,'parmem')>0.and.ncpu>1
  !
  do i1=1,max_io_units
    call io_reset(i1)

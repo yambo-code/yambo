@@ -67,10 +67,10 @@ subroutine X_delta_part(X,Xw,Gamp)
  complex(SP):: Xt(X%ng,X%ng)
  !
  if (i_space_inv==1) then
-   forall(i1=1:X%ng,i2=1:X%ng,i3=1:Xw%n(1)) &
+   forall(i1=1:X%ng,i2=1:X%ng,i3=1:Xw%n_freqs) &
 &        X_mat(i1,i2,i3)=aimag(X_mat(i1,i2,i3))*Gamp(i1,i2)
  else
-   do i3=1,Xw%n(1)
+   do i3=1,Xw%n_freqs
      forall(i1=1:X%ng,i2=1:X%ng) Xt(i1,i2)=X_mat(i1,i2,i3)*Gamp(i1,i2)
      forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,i3)=&
 &                                     0.5*aimag(Xt(i1,i2)+Xt(i2,i1))-&

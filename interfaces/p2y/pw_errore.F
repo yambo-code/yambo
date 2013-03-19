@@ -31,3 +31,6 @@ subroutine errore(subname,msgin,ierr)
   stop ' ' ! not called
   !
 end subroutine errore
+!
+subroutine mpi_abort
+end subroutine mpi_abort

@@ -157,18 +157,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Energy points
  !
- W_bss%n=BSS_n_freqs
+ W_bss%n_freqs=BSS_n_freqs
  W_bss%er=BSS_er
  W_bss%dr=BSS_dr
  W_bss%damp_reference=BSS_damp_reference
  !
- ! Note that %n(2) is not used in standard BSE solvers.
- ! Only when we are using the BS derived FXC FXC_per_memstps
- ! defines %n(2) and the memory allocation of the kernel
- !
  W_bss%per_memstps=FXC_per_memstps
  call FREQUENCIES_setup(W_bss)
- FXC_n_mem_freqs=W_bss%n(2)
+ FXC_n_mem_freqs=W_bss%n_freqs
  !
  iq=BS_q(1)
  !

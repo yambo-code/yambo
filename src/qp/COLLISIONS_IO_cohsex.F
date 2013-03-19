@@ -41,7 +41,6 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  use D_lattice,     ONLY:DL_vol
  use wrapper,       ONLY:M_by_V
  use collisions_IO, ONLY:TEMP_COLLISIONS_v
- use WF_distribute, ONLY:WF_states_setup
  use drivers,       ONLY:l_carrier_dynamics
  use SC,            ONLY:SC_bands
  use fragments,     ONLY:fragment_status
@@ -87,17 +86,6 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  !
  ! WFs...
  !
- ! Quasi-particle list
- ! (all processors have all qp-states)
- call WF_states_setup(qp_to_load=(/1,QP_n_states/),par_loop=.FALSE.)
- !
- ! Scattering states are distributed
- call WF_states_setup(b_to_load=QP_n_G_bands,qp_to_load=(/1,QP_n_states/),q_to_load=(/1,q%nbz/),k=k)
- !
- ! Report
- call WF_states_setup(b_to_load=QP_n_G_bands,report=.TRUE.)
- !
- ! WFs
  call WF_load(isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-SC')
  !
  ! Plasmon-Pole/Static interaction DB I/O

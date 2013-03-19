@@ -30,7 +30,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_life
  use electrons,     ONLY:levels,spin,spin_occ
- use frequency,     ONLY:w_samp,cg_index_bg,cg_npts,W_reset
+ use frequency,     ONLY:w_samp,coarse_grid_index,coarse_grid_N,W_reset
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
@@ -97,8 +97,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! ALLOCATION (W/Sc)
  !
  if (.not.l_life) then
-   QP_n_W_freqs=Xw%n(1)
-   QP_n_W_freqs_redux=Xw%n(1)
+   QP_n_W_freqs=Xw%n_freqs
+   QP_n_W_freqs_redux=Xw%n_freqs
    allocate(QP_W(QP_n_states,QP_n_G_bands(2),QP_n_W_freqs),stat=i_err)
    call mem_est("QP_W",(/size(QP_W)/),errors=(/i_err/))
  endif
@@ -107,8 +107,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  if (trim(QP_solver)=='n') then
    do i1=1,qp%n_states
-     Sc_W(i1)%n=QP_dSc_steps
-     allocate(Sc_W(i1)%p(Sc_W(i1)%n(1)))
+     Sc_W(i1)%n_freqs=QP_dSc_steps
+     allocate(Sc_W(i1)%p(Sc_W(i1)%n_freqs))
      forall (i2=1:QP_dSc_steps) Sc_W(i1)%p(i2)=qp%E_bare(i1)+(i2-1)*QP_dSc_delta
    enddo
  else if (trim(QP_solver)=='g') then
@@ -118,9 +118,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    QP_G_damp=0.
    !
    do i1=1,qp%n_states
-     Sc_W(i1)%n =QP_Sc_steps
+     Sc_W(i1)%n_freqs =QP_Sc_steps
      call FREQUENCIES_Green_Function(i1,Sc_W(i1),en%E,.FALSE.)
-     QP_Sc_steps=Sc_W(i1)%n(1)
+     QP_Sc_steps=Sc_W(i1)%n_freqs
    enddo
  endif
  !
@@ -160,7 +160,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        !
        Xw%er=QP_W_er
        Xw%dr=QP_W_dr
-       Xw%n=QP_n_W_freqs
+       Xw%n_freqs=QP_n_W_freqs
        call FREQUENCIES_setup(Xw)
        ! 
        call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
@@ -192,10 +192,10 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      X_life_W(iqibz)%dr=Xw%dr
      !
      i1=QP_life_transitions(iqibz,en,k,q,X_life_W(iqibz))
-     life_W_table(iqibz,:size(cg_index_bg))=cg_index_bg(:)
+     life_W_table(iqibz,:size(coarse_grid_index))=coarse_grid_index(:)
      !
-     QP_n_W_freqs_redux=max(QP_n_W_freqs_redux,cg_npts)
-     deallocate(cg_index_bg)
+     QP_n_W_freqs_redux=max(QP_n_W_freqs_redux,coarse_grid_N)
+     deallocate(coarse_grid_index)
      call mem_est("CGi")
      !
    enddo
@@ -264,8 +264,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        ! Xw%er/dr/n are not known here and are not read from ioX so
        ! I need to redefine them in terms of Xw%p (read from ioX)
        !
-       Xw%er=(/real(Xw%p(1)),real(Xw%p(Xw%n(1)))/)
-       Xw%dr=(/aimag(Xw%p(1)),aimag(Xw%p(Xw%n(1)))/)
+       Xw%er=(/real(Xw%p(1)),real(Xw%p(Xw%n_freqs))/)
+       Xw%dr=(/aimag(Xw%p(1)),aimag(Xw%p(Xw%n_freqs))/)
        call X_delta_part(X,Xw,isc%gamp)
        !
      endif
@@ -278,7 +278,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    !
    if (iqs>nsym/(i_time_rev+1) .and. (i_space_inv==0.or.mag_syms) .and..not.X_is_TR_rotated) then
      X_is_TR_rotated=.true.
-     do i3=1,Xw%n(1)
+     do i3=1,Xw%n_freqs
        forall(i1=1:X%ng,i2=1:X%ng) X_mat_ws(i2,i1)=X_mat(i1,i2,i3)
        X_mat(:,:,i3)=X_mat_ws(:,:)
      enddo
@@ -354,7 +354,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      !
      QP_W_er=Xw%er
      QP_W_dr=Xw%dr
-     QP_n_W_freqs=Xw%n(1)
+     QP_n_W_freqs=Xw%n_freqs
      !
      ! Only if I am doing secant solver of Dyson I store on disk
      ! the W m.e. 

@@ -52,7 +52,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use timing,          ONLY:live_timing
  use stderr,          ONLY:intc
  use SC,              ONLY:it_now
- use IO_m,            ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,OP_WR_CL
+ use IO_m,            ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,OP_WR_CL,IO_and_Messaging_switch
  use X_m,             ONLY:X_alloc,X_mat,X_t
  use com,             ONLY:error
  !

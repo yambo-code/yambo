@@ -59,7 +59,7 @@ integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
    call io_elemental(ID,VAR=&
 &       " Using energy RIM                :",L0=BSS_uses_RIM,CHECK=.TRUE.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
-&       " Number of frequencies           :",I0=W_disk%n(1))
+&       " Number of frequencies           :",I0=W_disk%n_freqs)
    call io_elemental(ID,UNIT=HA2EV,VAR=&
 &       " Energy range                [ev]:",R1=W_disk%er)
    call io_elemental(ID,UNIT=HA2EV,VAR=&
@@ -69,7 +69,7 @@ integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    call io_bulk(ID,'N_of_FREQs',VAR_SZ=(/1/))
-   call io_bulk(ID,I0=W_disk%n(1))
+   call io_bulk(ID,I0=W_disk%n_freqs)
    !
    call io_bulk(ID,'FREQs_RANGE',VAR_SZ=(/2/))
    call io_bulk(ID,R1=W_disk%er)
@@ -84,27 +84,27 @@ integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   call io_bulk(ID,'INV_ERRs',VAR_SZ=(/W_disk%n(1)/))
+   call io_bulk(ID,'INV_ERRs',VAR_SZ=(/W_disk%n_freqs/))
    call io_bulk(ID,I1=inv_err)
    !
-   allocate(W(2,W_disk%n(1)))
+   allocate(W(2,W_disk%n_freqs))
    !
    if (write_is_on(ID)) then
      W(1,:)=real(W_disk%p)
      W(2,:)=aimag(W_disk%p)
    endif
    !
-   call io_bulk(ID,'FREQs',VAR_SZ=(/2,W_disk%n(1)/))
+   call io_bulk(ID,'FREQs',VAR_SZ=(/2,W_disk%n_freqs/))
    call io_bulk(ID,R2=W)
    !
    if (read_is_on(ID)) then
-     allocate(W_disk%p(W_disk%n(1)))
+     allocate(W_disk%p(W_disk%n_freqs))
      W_disk%p(:)=W(1,:)+(0.,1.)*W(2,:)
    endif
    !
    deallocate(W)
    !
-   call io_bulk(ID,'EPSILON',VAR_SZ=(/2,W_disk%n(1)/))
+   call io_bulk(ID,'EPSILON',VAR_SZ=(/2,W_disk%n_freqs/))
    call io_bulk(ID,R2=eps)
    !
  endif

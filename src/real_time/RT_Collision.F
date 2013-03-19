@@ -57,6 +57,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use interfaces,     ONLY:PARALLEL_index  
  use SC,             ONLY:SC_xc_functional,SC_nbands
  use xc_functionals, ONLY:XC_LDA_C_PZ
+ use IO_m,           ONLY:IO_and_Messaging_switch
  !
  implicit none
  !

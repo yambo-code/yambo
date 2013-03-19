@@ -30,7 +30,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use pars,                ONLY : SP,lchlen,DP
  use memory_m,            ONLY : mem_est
  use com,                 ONLY : msg,write_to_report,core_io_path,error,write_the_logo
- use parallel_m,          ONLY : ncpu,myid,MPI_close,pwait
+ use parallel_m,          ONLY : ncpu,myid,MPI_close,PARALLEL_wait
  use electrons,           ONLY : levels,E_reset,n_bands, n_spin
  use R_lattice,           ONLY : bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY : wf_ncx,ioWF, wf_nb_io_groups,wf_nb_io
@@ -38,6 +38,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use mod_com2y,           ONLY : interface_presets,force_noWFs,l_Vnl,verboseIO
  use mod_wf2y,            ONLY : wf_splitter
  use stderr,              ONLY : intc
+ use interfaces,          ONLY : PARALLEL_live_message
  !
  implicit none
  type(levels)                 :: en
@@ -61,7 +62,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  p2y_i =0
  ncpu  =np
  myid  =pid
- call std_presets(instr,od,od,'','')
+ call SET_defaults(instr,od,od,'','')
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en)
@@ -96,7 +97,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (ncpu>1) lch=trim(lch)//' @ '//trim(intc(ncpu))//' CPUs'
  !
- call msg('s',trim(lch))
+ call PARALLEL_live_message(trim(lch))
  !
  call msg('s','DBs path set to ',trim(core_io_path))
  !
@@ -108,17 +109,16 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call p2y_db1(en,k)
  !
- call msg('s','== Writing DB1 ...')
+ call msg('s','Writing main Database  ...')
  !
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
  io_err=ioDB1(en,k,ID)
  !
+ call msg('s','... Database done')
+ !
  if (force_noWFs) then 
-   call msg('ln','done ==')
    call MPI_close
    return
- else
-   call msg('l','done ==')
  endif
  ! 
  ! Some definitions are done during the I/O in DB1. As only the
@@ -126,7 +126,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (ncpu>1) then
    !
-   call pwait()
+   call PARALLEL_wait()
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
    io_err=ioDB1(en,k,ID)
@@ -135,14 +135,15 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Make db2 database
  !
- call msg('s','== DB2 (wavefunctions) ... ')
+ call msg('s','Writing Wavefunctions ...')
  !
  ! Wavefunction blocks
  !
+#if defined _P2Y_EXPORT
  wf_nb_io_groups=1
  wf_nb_io=n_bands
-#if !defined _P2Y_EXPORT
- call wf_splitter
+#else
+ call WF_splitter
 #endif
  !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
@@ -176,27 +177,24 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  deallocate(wf_disk)
  call mem_est("wf_disk")
  !
- if(verboseIO) then
-   call msg('s','== DB2 (wavefunctions) ... done ==')
- else
-   call msg('l','done ==')
- endif
+ call msg('s','... Wavefunctions done')
  !
  if (l_Vnl) then
 #if defined _P2Y_V40 || defined _P2Y_V50
-   call msg('s','=== Non-local pseudo-potential commutator === ')
+   call msg('s','Writing Non-local pseudo-potential ... ')
    call Vnl_driver(en,k)
+   call msg('s','... Non-local pseudo-potential done')
 #else
    call msg('s','Vnl support only with PWscf v4.0 or later.')
 #endif
  endif
  !
- call pwait()
+ call PARALLEL_wait()
  !
  call pw_close
  !
+ call msg('s',' == P2Y completed ==')
  call msg('s' ,' ')
- call msg('ln',' == P2Y completed ==')
  !
  call MPI_close
  !

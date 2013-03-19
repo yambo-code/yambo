@@ -25,7 +25,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
-&                        Time_unit,I_unit,Angle_unit,&
+&                        Time_unit,I_unit,Angle_unit,V_parallel,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold
  use fields,        ONLY:global_gauge,grid_path
@@ -63,8 +63,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
 #if defined _ELPH 
- use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches
+ use ELPH,          ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches
 #endif
+ use parallel_m,    ONLY:n_threads,n_log_CPUs
  !
  implicit none
  type(initdefs)::defs
@@ -127,7 +128,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  !================
  ! GPL VARIABLES
- !================
+ !================ 
+ !
+ ! CPU's
+ !
+#if defined _MPI || defined _BLUEGENE
+ call CPU_structure_load( )
+#endif
  !
  ! Basics
  !
@@ -145,6 +152,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _ELPH 
  call it('f',defs,'MinusQ', '[KPT] Use -{q} grid',verb_level=V_kpt)
  call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nDBs_used,verb_level=V_kpt) 
+#endif
+ !
+ ! Parallel Setup
+ !
+#if defined _MPI || defined _BLUEGENE
+ call it(defs,'Threads',      '[PARALLEL] Number of threads',n_threads,verb_level=V_parallel)
+ call it(defs,'NLogCPUs',     '[PARALLEL] Live-timing CPU`s (0 for all)',n_log_CPUs,verb_level=V_parallel)
 #endif
  !
  ! S_xc
@@ -230,8 +244,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GWoIter',    '[GW] GWo SC iterations',GWo_iterations,verb_level=V_qp)
  call it(defs,'GreenFTresh','[GW] [o/o] Treshold to define the new zoomed energy range',QP_G_Zoom_treshold,verb_level=V_qp)
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
- call it('f',defs,'QPExpand','[F GW] The QP corrections are expanded all over the BZ before being dumped in the DB',verb_level=V_qp)
+ call it('f',defs,'QPExpand','[F GW] The QP corrections are expanded all over the BZ',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
+ !
+ ! I/O
+ !
+ call it('f',defs,'SkipWRITE', '[PARALLEL] Do not write on disk',verb_level=V_parallel)
  !
  ! GPL_EXCLUDE_END
  !
@@ -419,6 +437,27 @@ subroutine init_load(defs,en,q,k,X,Xw)
    !
 #endif
    !
+#if defined _MPI || defined _BLUEGENE
+   !
+   subroutine CPU_structure_load()
+     use parallel_m, ONLY:n_CPU_str_max,CPU_structure
+     integer           :: i_s
+     character(schlen) :: name
+     do i_s=1,n_CPU_str_max
+       if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
+       name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"
+       call it(defs,trim(name),'[PARALLEL] CPUs for each role',CPU_structure(i_s)%CPU_string)
+       name=trim(CPU_structure(i_s)%Short_Description)//"_ROLEs"
+       call it(defs,trim(name),'[PARALLEL] CPUs roles (k,v,c,q,qp,b)',CPU_structure(i_s)%ROLE_string)
+       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_diago"
+       call it(defs,trim(name),'[PARALLEL] CPUs for matrix diagonalization',CPU_structure(i_s)%nCPU_diagonalization)
+       name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_invert"
+       call it(defs,trim(name),'[PARALLEL] CPUs for matrix inversion',CPU_structure(i_s)%nCPU_inversion)
+     enddo
+   end subroutine
+   !
+#endif
+   !
    subroutine Xload(X,wv)
      !
      type(X_t):: X
@@ -464,7 +503,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,nms( 2),des( 2),wv%er,E_unit,verb_level=0) 
      call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=0)
      call it(defs,nms( 4),des( 4),X%cg_percentual,verb_level=V_resp)
-     call it(defs,nms( 5),des( 5),wv%n(1),verb_level=0)
+     call it(defs,nms( 5),des( 5),wv%n_freqs,verb_level=0)
      call it(defs,nms( 6),des( 6),wv%per_memstps,verb_level=1)
      call it(defs,nms( 7),des( 7),X%Wd,E_unit,verb_level=1) 
      call it(defs,nms( 8),des( 8),X%q0,verb_level=0)

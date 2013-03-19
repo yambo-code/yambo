@@ -30,6 +30,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,ioWF,wf_nb_io_groups,wf_nb_io
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
+ use interfaces,          ONLY:PARALLEL_live_message
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:wf_splitter
  use pseudo,              ONLY:PP_free
@@ -56,7 +57,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  a2y_i =0
  ncpu  =np
  myid  =pid
- call std_presets(instr,od,od,'','')
+ call SET_defaults(instr,od,od,'','')
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en) 
@@ -73,7 +74,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call write_the_logo(6,' ')
  !
- call msg('s','A(binit) 2 Y(ambo)')
+ call PARALLEL_live_message('A(binit) 2 Y(ambo)')
  !
  call msg('s','Checking input file ...')
  !
@@ -88,25 +89,24 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call a2y_db1(en,k,trim(KSS_file_name))
  !
- call msg('s','== DB1 ...')
+ call msg('s','Writing main Database ...')
  !
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
  io_err=ioDB1(en,k,ID)
  !
+ call msg('s','... Database done')
+ !
  if (force_noWFs) then
-   call msg('ln','done ==')
    call MPI_close
    return
- else
-   call msg('l','done ==')
  endif
  !
  ! Splitting + SPIN support still not implemented (see a2y_wf.F for
  ! more details)
  !
- if (n_spin==1) call wf_splitter()
+ if (n_spin==1) call WF_splitter()
  !
- call msg('s','== WFs + nlPP ...')
+ call msg('s','Writing WFs and (eventually) nlPP ...')
  !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  !
@@ -132,7 +132,9 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  deallocate(wf_disk)
  call PP_free()
  !
- call msg('ln','done ==')
+ call msg('s','... WF and PP done')
+ call msg('s',' == A2Y completed ==')
+ call msg('s',' ')
  !
  call MPI_close
  !

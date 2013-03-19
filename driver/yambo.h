@@ -38,15 +38,16 @@
   {"lhelp",  "H","Long Help",0,0,0,0,0},               
   {"jobstr", "J","Job string identifier",0,0,1,0,1},   
   {"infver", "V","Input file verbosity",0,0,1,0,0},    
-  {"DESC",   " ","opt=RL,kpt,sc,qp,io,gen,resp,rt,all",0,0,0,0,0},
+  {"DESC",   " ","opt=RL,kpt,sc,qp,io,gen,resp,rt,all,par",0,0,0,0,0},
   {"ifile",  "F","Input file",0,0,1,0,1},              
   {"idir",   "I","Core I/O directory",0,0,1,0,1},         
   {"odir",   "O","Additional I/O directory",0,0,1,0,1},   
   {"cdir",   "C","Communications I/O directory",0,0,1,0,1},  
-  {"nompi",  "N","Skip MPI initialization",0,0,0,0,0}, 
   {"dbpr",   "D","DataBases properties",0,0,0,0,0},    
   {"dbfrag", "S","DataBases fragmentation",0,0,0,0,1}, 
-  {"parmem", "M","Memory distribution (parallel runs)",0,0,0,0,1}, 
+#if defined _MPI
+  {"nompi",  "N","Skip MPI initialization",0,0,0,0,0}, 
+#endif
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
   {"kernel", "k","Kernel [opt=(i)p/td(h)/td(d?)ft/td(hf)/(w)eh]",0,0,1,0,0},
@@ -61,6 +62,7 @@
   {"gw0",    "g","Dyson Equation solver",0,0,1,0,0}, 
   {"DESC",   " ","[opt=(n)ewton/(s)ecant/(g)reen]",0,0,0,0,0},
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
+  {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0,0},                      
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
 #if defined _RT
   {"collisions_IO",  "e","Evaluate the extended Collisions",0,0,0,0,0}, 

@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.3.0 r.1966 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.3.0 r.1984 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="3"
-SSUBLEVEL="1"
-SREVISION="1966"
+SSUBLEVEL="0"
+SREVISION="1984"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -97,6 +97,7 @@ test -z "$AR_FLAGS" && AR_FLAGS="-ru"
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug],[Objects are not removed but saved in appropriate directories. Default is yes.]))
 if test x"$enable_debug" = "x"; then enable_debug="yes"; fi
 AC_SUBST(enable_debug)
+
 # ============================================================================
 # DP
 AC_ARG_ENABLE(dp, AC_HELP_STRING([--enable-dp], [Double-precision build. Default is no.]))
@@ -164,8 +165,18 @@ AC_SUBST(PW_VER)
 AC_SUBST(PW_CPP)
 
 # ============================================================================
+# BLUEGENE support
+AC_ARG_ENABLE(bluegene, AC_HELP_STRING([--enable-bluegene],[Bluegene specific code instructions.]))
+if test x"$enable_bluegene" = "x"; then enable_bluegene="yes"; fi
+bluegene_cpp=" "
+if test x"$enable_bluegene" = "xyes"; then 
+ bluegene_cpp="-D_BLUEGENE"
+fi
+AC_SUBST(bluegene_cpp)
+
+# ============================================================================
 #
-# Verbose compilation
+# OpenMP
 #
 AC_ARG_ENABLE(open-mp, AC_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
 if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi

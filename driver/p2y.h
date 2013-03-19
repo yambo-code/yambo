@@ -40,6 +40,7 @@
   {"ifile", "F","XML index file name",0,0,1,0,1}, 
   {"odir",  "O","Output directory",0,0,1,0,1}, 
   {"dbfrag","S","DataBases fragmentation",0,0,0,0,1}, 
+  {"fragnb","b","Number of bands for each fragment",1,0,0,0,1},
   {"alat_f","a","Lattice constants rescaling factor",0,1,0,0,1},
   {"notr",  "t","Force use of spatial Inv. instead of Time Rev.",0,0,0,0,1},
   {"nosy",  "n","Force no symmetries",0,0,0,0,1},

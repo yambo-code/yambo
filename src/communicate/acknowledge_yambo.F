@@ -44,6 +44,6 @@ subroutine acknowledge_yambo()
  call msg('r','|')
  call msg('r',' ')
  !
- call LIVE_message("","","n","%s",NO_CPUT=.true.)
+ call LIVE_message("","","n","%s",CPU_TIME=.false.)
  !
 end subroutine

@@ -24,7 +24,7 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
  ! C<W|1./(V^{-1}-M)|W> = \sum_n C<W| ( V M )^n V |W>
  !
  use pars,           ONLY:SP
- use matrix_operate, ONLY:mat_dia_inv,USE_LK,INV
+ use matrix_operate, ONLY:mat_dia_inv,INV
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
  !
  implicit none
@@ -84,7 +84,7 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
        wk(i1,i2)=wk(i1,i2)-M(i1,i2)
      enddo
    enddo
-   call mat_dia_inv(INV,USE_LK,wk)
+   call mat_dia_inv(INV,wk)
    call M_by_V('n',N,wk,W,A_n)
    f=C*Vstar_dot_V(N,W,A_n)
    !

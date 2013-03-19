@@ -27,15 +27,17 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use drivers,             ONLY:l_real_time
  use timing,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
- use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,          ONLY:PARALLEL_index
+ use parallel_m,          ONLY:PP_redux_wait,PAR_IND_CON_BANDS_X,PAR_IND_Xk_ibz,PP_redux_wait,&
+&                              PAR_Xk_ibz_index,PAR_IND_VAL_BANDS_X,&
+&                              PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_CON_BANDS_X_ID,&
+&                              PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_A2A
  use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,PP_free,pp_table,Vnl,pp_n_l_comp
  use R_lattice,           ONLY:g_vec,bz_samp
  use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P,Dipole_Energy_treshold
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD,OP_RD_CL
  use memory_m,            ONLY:mem_est
- use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
+ use wave_func,           ONLY:wf,wf_ng,wf_state
  use wrapper,             ONLY:M_by_V
  use com,                 ONLY:error,msg
  !
@@ -46,12 +48,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! Work Space
  !
- integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min,i_pp,pp_spin
- integer                      :: is,ia,il,im,alloc_err,i_spin,E_i_spin,wf_dim
+ integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min,i_pp,pp_spin,ik_mem
+ integer                      :: is,ia,il,im,alloc_err,i_spin,E_i_spin,wf_dim,n_LT_steps
  complex(SP), allocatable     :: wf_xyz(:,:), kbv(:,:,:)
  complex(SP)                  :: rho(4)
  real(SP)                     :: Ev_m_Ec
- type(PP_indexes)             :: px
  !
  !I/O and external functions
  !
@@ -100,18 +101,17 @@ subroutine Dipole_transverse(Xen,Xk,X)
    ic_min=X%ib(1)
  endif
  !
- ! Set up the parallel environment
- !
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/Xk%nibz,X%ib(2)/),(/1,ic_min/))
- !
  if (associated(Xen%Eo)) call msg('rns','[X] Using Kohn-Sham energies for the dipoles ')
  !
+ n_LT_steps=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*&
+&           PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(PAR_IND_CON_BANDS_X_ID(X%whoami)+1)*&
+&           PAR_IND_VAL_BANDS_X(X%whoami)%n_of_elements(PAR_IND_VAL_BANDS_X_ID(X%whoami)+1)*n_spin
+ !
 #if defined _SC
- call live_timing('P and P^2 (T):',px%n_of_elements(myid+1)*n_spin)
+ !call live_timing('P and P^2 (T):',px%n_of_elements(myid+1)*n_spin)
  wf_dim=4
 #else
- call live_timing('Dipole (T):',px%n_of_elements(myid+1)*n_spin)
+ call live_timing('Dipole (T):',n_LT_steps)
  wf_dim=3
 #endif
  call PP_redux_wait
@@ -130,8 +130,20 @@ subroutine Dipole_transverse(Xen,Xk,X)
      io_err=ioKB_PP(ID)
    endif
    ! 
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle 
+   !
+   ik_mem=PAR_Xk_ibz_index(ik)
+   ! 
+   ! GPL_INCLUDE_START SPIN_IGNORE
+   ! i_spin=1
+   ! GPL_INCLUDE_END SPIN_IGNORE
+   ! 
+   ! GPL_EXCLUDE_START SPIN_IGNORE
+   !
    do i_spin=1,n_spin
      ! 
+     ! GPL_EXCLUDE_END SPIN_IGNORE
+     !
      pp_spin=i_spin
      if (n_spinor==2) pp_spin=1
      if (ioKB_err==0) call Dipole_kb_pp_comp(ik,pp_spin,Xk,kbv)
@@ -141,21 +153,27 @@ subroutine Dipole_transverse(Xen,Xk,X)
      !
      do ic=ic_min,X%ib(2)
        !
-       if(.not.px%element_2D(ik,ic)) cycle
+       if (.not.PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic)) cycle 
        !
        do iv=X%ib(1),iv_max 
+         !
+         if (.not.PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)) cycle 
          !
          rho(:)=(0._SP,0._SP)
          !
          Ev_m_Ec=Xen%E(iv,ik,E_i_spin)-Xen%E(ic,ik,E_i_spin)
          if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,E_i_spin)-Xen%Eo(ic,ik,E_i_spin)
          !
-         if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
-         !
-         if (abs(Ev_m_Ec)<=Dipole_Energy_treshold.and..not.l_real_time) cycle
+         if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/)).or.&
+&            abs(Ev_m_Ec)<=Dipole_Energy_treshold.and..not.l_real_time) then
+           !
+           call live_timing(steps=1)
+           cycle
+           !
+         endif
          !
          ivfft=wf_state(iv,ik,i_spin)
-         if(ivfft==0) call error(" Error in parallel wf distribution")
+         if (ivfft==0) call error(" Error in parallel wf distribution")
          !
          ! wf_xyz = -i grad fdo(iv,ik)
          !
@@ -175,7 +193,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! GPL_EXCLUDE_END 
          !
          icfft=wf_state(ic,ik,i_spin)
-         if(icfft==0) call error("Error distribution wave-function")
+         if (icfft==0) call error("Error distribution wave-function")
          !
          ! WARNING !!!!!!!! The convention is to revert the order of the bands indexes
          !==================
@@ -206,7 +224,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !=====
          ! P_vc=rho(:3)
 #if defined _SC
-         DIP_P(:,ic,iv,ik,i_spin)=DIP_P(:,ic,iv,ik,i_spin)+rho(:3)
+         DIP_P(:,ic,iv,ik_mem,i_spin)=DIP_P(:,ic,iv,ik_mem,i_spin)+rho(:3)
 #endif        
          !======
          ! <iR>
@@ -220,10 +238,18 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) rho(1:3)=(0._SP,0._SP)
          !
+         ! GPL_EXCLUDE_START SPIN_IGNORE
+         !
          if (n_spinor==2) then
-           DIP_iR(:,ic,iv,ik,1)=DIP_iR(:,ic,iv,ik,1)+rho(:3)
+           DIP_iR(:,ic,iv,ik_mem,1)=DIP_iR(:,ic,iv,ik_mem,1)+rho(:3)
          else 
-           DIP_iR(:,ic,iv,ik,i_spin)=rho(:3)
+           !
+           ! GPL_EXCLUDE_END SPIN_IGNORE
+           !
+           DIP_iR(:,ic,iv,ik_mem,i_spin)=rho(:3)
+           !
+           ! GPL_EXCLUDE_START SPIN_IGNORE
+           !
          endif
          !
 #if defined _SC
@@ -231,26 +257,33 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! <P^2>
          !======
          if( n_spinor == 2 ) then
-           P_square(ic,iv,ik,1)= P_square(ic,iv,ik,1)+rho(4)
+           P_square(ic,iv,ik_mem,1)= P_square(ic,iv,ik_mem,1)+rho(4)
          else
-           P_square(ic,iv,ik,i_spin)= rho(4)
+           P_square(ic,iv,ik_mem,i_spin)= rho(4)
          endif
 #endif
+         !
+         call live_timing(steps=1)
+         !
+         ! GPL_EXCLUDE_END SPIN_IGNORE
+         !
        enddo    ! conduction band loop
        !
-       call live_timing(steps=1)
-       !
      enddo      ! valence band loop
+     ! 
+     ! GPL_EXCLUDE_START SPIN_IGNORE
+     !
    enddo        ! spin loop
+   ! 
+   ! GPL_EXCLUDE_END SPIN_IGNORE
    !
  enddo          ! k-points
  !
- call live_timing
+ call live_timing()
  !
  ! CLEAN
  !
  deallocate(wf_xyz)
- call PP_indexes_reset(px)
  if (ioKB_err==0) then
    deallocate(kbv,pp_n_l_comp)
    if (allocated(pp_table)) deallocate(pp_table)
@@ -262,11 +295,15 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  do ik=1,Xk%nibz
    !
+   ik_mem=PAR_Xk_ibz_index(ik)
+   !
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle 
+   ! 
    do i_spin=1,n_sp_pol
-     call PP_redux_wait(DIP_iR(:,:,:,ik,i_spin))
+     call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_spin),COMM=PAR_COM_Xk_ibz_A2A%COMM)
 #if defined _SC
-     call PP_redux_wait(DIP_P(:,:,:,ik,i_spin))
-     call PP_redux_wait(P_square(:,:,ik,i_spin))
+     call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_spin),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+     call PP_redux_wait(P_square(:,:,ik_mem,i_spin),COMM=PAR_COM_Xk_ibz_A2A%COMM)
 #endif
    enddo
    !
@@ -279,10 +316,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
    if (.not.Dipole_bands_ordered) then
      do iv=X%ib(1),X%ib(2)
        do ic=iv+1,X%ib(2)
-         DIP_iR(:,ic,iv,ik,:)=-conjg(DIP_iR(:,iv,ic,ik,:))
+         DIP_iR(:,ic,iv,ik_mem,:)=-conjg(DIP_iR(:,iv,ic,ik_mem,:))
 #if defined _RT
-         DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
-         P_square(ic,iv,ik,:)= conjg(P_square(iv,ic,ik,:))
+         DIP_P(:,ic,iv,ik_mem,:) = conjg(DIP_P(:,iv,ic,ik_mem,:))
+         P_square(ic,iv,ik_mem,:)= conjg(P_square(iv,ic,ik_mem,:))
 #endif        
        enddo
      enddo

@@ -26,6 +26,7 @@ module stderr
  !
  integer          :: tty_size
  logical          :: write_to_log
+ logical          :: log_as_a_file
  character(lchlen):: logfile
  !
  integer :: f_format_length
@@ -115,10 +116,11 @@ module stderr
      endif
    end function 
    !
-   subroutine string_split(string_in,string_out,space)
+   subroutine string_split(string_in,string_out,space,n_non_empty_strings)
      character(*)          :: string_in
      character(schlen)     :: string_out(:)
      character(*),optional :: space
+     integer,     optional :: n_non_empty_strings
      !
      ! Work Space
      !
@@ -156,6 +158,13 @@ module stderr
        if (i_pos(2)==len_trim(string_in)) exit
        !
      enddo
+     !
+     if (present(n_non_empty_strings)) then
+       n_non_empty_strings=0
+       do is=1,size(string_out)
+         if (len_trim(string_out(is))>0) n_non_empty_strings=n_non_empty_strings+1
+       enddo
+     endif
      !
    end subroutine
    !

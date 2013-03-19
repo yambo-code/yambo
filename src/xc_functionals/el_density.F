@@ -46,63 +46,90 @@ subroutine el_density(en,Xk,rho,force_si)
  !
  !
  use pars,          ONLY:SP
- use com,           ONLY:warning,error
+ use com,           ONLY:warning
  use electrons,     ONLY:levels,n_spin,n_sp_pol
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym,i_time_rev,mag_syms
  use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_inv
  use wave_func,     ONLY:wf_state,wf
-#if defined _RT
- use SC,            ONLY:SC_bands
-#endif
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
- use interfaces,    ONLY:PARALLEL_index
+!#if defined _RT
+! use SC,            ONLY:SC_bands
+!#endif
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP_G_b,&
+&                        PAR_COM_QP_A2A,PAR_IND_QP,PAR_COM_QP_A2A
  !
  implicit none
  type(bz_samp)::Xk
-#if defined _RT
- complex(SP), intent(in), optional :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),Xk%nibz)
- integer,     intent(in) :: lowest_band
-#endif
+!#if defined _RT
+! complex(SP), intent(in), optional :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),Xk%nibz)
+! integer,     intent(in) :: lowest_band
+!#endif
  type(levels) ::en       
  real(SP)     ::rho(fft_size)
  logical,     intent(in) :: force_si
  !
  ! Work Space 
  !
- integer :: i1,i2,ik,i_spin,ifft,rho_syms,ifft2
+ integer :: ib,ibp,ik,i_spin,ifft,rho_syms,ifft2,ir
  real(SP):: rho_no_sym(fft_size),f_occ
  logical :: warn_done
- integer :: iv_max,iv_min
- type(PP_indexes) ::px
+ integer :: iv_max,iv_min,ID
+ integer, allocatable ::states_filling(:,:,:)
  !
  rho=0._SP
  rho_no_sym=0._SP
  warn_done=.false.
  !
-#if defined _RT
- iv_max=SC_bands(2)
- iv_min=lowest_band
-#else
+!#if defined _RT
+! iv_max=SC_bands(2)
+! iv_min=lowest_band
+!#else
  iv_max=en%nbm
  iv_min=1
-#endif
+!#endif
  !
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/Xk%nibz,iv_max/),low_range=(/1,iv_min/))
+ ! March 2013 (Andrea)
  !
- do i1=iv_min,iv_max
-   do i2=1,Xk%nibz
+ ! The calculation of the density is tricky. Indeed the bands and k-points
+ ! are distributed in the PAR_COM_QP_A2A groups in a non predictable manner.
+ ! This means the bands and k-points can be duplicated and, for this reason,
+ ! only the first CPU of the block that has that (n,k) must use it.
+ ! This condiction in ensured by the line:
+ ! 
+ ! if (.not.all(states_filling(ib,ik,1:ID-1)==0))
+ !
+ allocate(states_filling(iv_max,Xk%nibz,PAR_COM_QP_A2A%n_CPU))
+ states_filling=0
+ !
+ ID=PAR_COM_QP_A2A%CPU_id+1
+ !
+ do ib=iv_min,iv_max
+   do ik=1,Xk%nibz
+      if (PAR_IND_QP_G_b%element_1D(ib).and.PAR_IND_Xk_ibz%element_1D(ik)) then
+          states_filling(ib,ik,ID)=1
+      endif
+   enddo
+ enddo
+ !
+ call PP_redux_wait(states_filling,COMM=PAR_COM_QP_A2A%COMM)
+ !
+ bands_loop: do ib=iv_min,iv_max
+   !
+   if (.not.PAR_IND_QP_G_b%element_1D(ib)) cycle
+   !
+   do ik=1,Xk%nibz
      !
-     if (.not.px%element_2D(i2,i1)) cycle
-     !        
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+     !
+     if (.not.all(states_filling(ib,ik,1:ID-1)==0)) cycle
+     !
      do i_spin=1,n_spin
        !
        if (size(wf_state,3)<i_spin) cycle
-       if (size(wf_state,1)<i1) cycle
-       if (size(wf_state,2)<i2) cycle
+       if (size(wf_state,1)<ib) cycle
+       if (size(wf_state,2)<ik) cycle
        !
-       ifft=wf_state(i1,i2,i_spin)
+       ifft=wf_state(ib,ik,i_spin)
        !
        if (ifft==0) then
          if (.not.warn_done) call warning('Not enough states to calculate rho')
@@ -110,59 +137,58 @@ subroutine el_density(en,Xk,rho,force_si)
          cycle
        endif
        !
-#if defined _RT
-        if(i1<SC_bands(1)) then
-          f_occ=en%f(i1,i2,1)
-        else
-          f_occ=real(-(0._SP,1._SP)*G_lesser(i1,i1,i2),SP)
-        endif
-#else
-        f_occ=en%f(i1,i2,1)
-        if (n_sp_pol==2) f_occ=en%f(i1,i2,i_spin)
-#endif
-        rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(i2)*abs(wf(:,ifft))**2.
+!#if defined _RT
+!        if(ib<SC_bands(1)) then
+!          f_occ=en%f(ib,ik,1)
+!        else
+!          f_occ=real(-(0._SP,1._SP)*G_lesser(ib,ib,ik),SP)
+!        endif
+!#else
+        f_occ=en%f(ib,ik,1)
+        if (n_sp_pol==2) f_occ=en%f(ib,ik,i_spin)
+!#endif
+        rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(ik)*abs(wf(:,ifft))**2.
         !
       enddo
     enddo
-  enddo
+  enddo bands_loop
   !
-#if defined _RT
+!#if defined _RT
+!  !
+!  ! Off-diagonal contributions
+!  !
+!  do ik=1,Xk%nibz
+!    !      
+!    do ib=iv_min,iv_max
+!      !
+!      do ibp=ib+1,SC_bands(2)
+!        !      
+!        if(ib<SC_bands(1).or.ibp<SC_bands(1)) cycle
+!        !
+!        ifft=wf_state(ib,ik,1)
+!        ifft2=wf_state(ibp,ik,1)
+!        !
+!        if(ifft==0.or.ifft2==0) cycle
+!        !
+!        rho_no_sym(:)=rho_no_sym(:)-Xk%weights(ik)*2._SP*real(wf(:,ifft) &
+!&                 *conjg(wf(:,ifft2))*(0._SP,1._SP)*G_lesser(ib,ibp,ik),SP)
+!        !
+!      enddo
+!    enddo
+!    !
+!  enddo
+!#endif
   !
-  ! Off-diagonal contributions
+  deallocate(states_filling)
   !
-  do ik=1,Xk%nibz
-    !      
-    do i1=iv_min,iv_max
-      !
-      if (.not.px%element_2D(ik,i1)) cycle
-      !
-      do i2=i1+1,SC_bands(2)
-        !      
-        if(i1<SC_bands(1).or.i2<SC_bands(1)) cycle
-        !
-        ifft=wf_state(i1,ik,1)
-        ifft2=wf_state(i2,ik,1)
-        !
-        if(ifft==0.or.ifft2==0) cycle
-        !
-        rho_no_sym(:)=rho_no_sym(:)-Xk%weights(ik)*2._SP*real(wf(:,ifft) &
-&                 *conjg(wf(:,ifft2))*(0._SP,1._SP)*G_lesser(i1,i2,ik),SP)
-        !
-      enddo
-    enddo
-    !
-  enddo
-#endif
-  !
-  call PP_redux_wait(rho_no_sym)
-  call PP_indexes_reset(px)
+  call PP_redux_wait(rho_no_sym,COMM=PAR_COM_QP_A2A%COMM)
   !
   ! Simmetrization
   !
   rho_syms=nsym/(i_time_rev+1)
   if(mag_syms) rho_syms=nsym 
-  do i1=1,rho_syms
-    rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(i1,:)),SP)/real(nsym,SP)
+  do ir=1,rho_syms
+    rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(ir,:)),SP)/real(nsym,SP)
   enddo
   if (mag_syms)      return
   if (.not.force_si) rho(:)=(1+i_time_rev)*rho(:)

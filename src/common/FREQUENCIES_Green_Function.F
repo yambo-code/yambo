@@ -62,13 +62,13 @@ subroutine FREQUENCIES_Green_Function(iqp,W,E,Spectral_Function)
    call FREQUENCIES_setup(W)
    Eo=E(QP_table(iqp,1),QP_table(iqp,3),spin(QP_table(iqp,:)))
    !
-   n_small_freqs=W%n(1)/2
+   n_small_freqs=W%n_freqs/2
    !
    small_step=( QP_G_er(2)-QP_G_er(1))/real(n_small_freqs)
-   large_step=( wide_range(2)-wide_range(1) - ( QP_G_er(2)-QP_G_er(1)) )/real(W%n(1)-n_small_freqs) 
+   large_step=( wide_range(2)-wide_range(1) - ( QP_G_er(2)-QP_G_er(1)) )/real(W%n_freqs-n_small_freqs) 
    running_step=large_step
    !
-   do iw=2,W%n(1)
+   do iw=2,W%n_freqs
      !
      W%p(iw)=real(W%p(iw-1))+running_step+cI*aimag(W%p(iw))
      !

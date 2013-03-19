@@ -138,8 +138,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),en%E,.not.l_GF_from_CA)
      !
    enddo
-   QP_Sc_steps      =Sc_W(1)%n(1)
-   gsqF_energy_steps=Sc_W(1)%n(1)
+   QP_Sc_steps      =Sc_W(1)%n_freqs
+   gsqF_energy_steps=Sc_W(1)%n_freqs
    !
    if (.not.l_el_corr) QP_Sc=cmplx(0.,0.)  
    !
@@ -149,7 +149,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    do i_qp=1,qp%n_states
      Sc_W(i_qp)%n=QP_dSc_steps
-     allocate(Sc_W(i_qp)%p(Sc_W(i_qp)%n(1)))
+     allocate(Sc_W(i_qp)%p(Sc_W(i_qp)%n_freqs))
      forall (i2=1:QP_dSc_steps) Sc_W(i_qp)%p(i2)=&
 &           en%E(QP_table(i_qp,1),QP_table(i_qp,3),1)+(i2-1)*QP_dSc_delta+&
 &           cmplx(0.,QP_G_damp,SP)

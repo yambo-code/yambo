@@ -30,7 +30,7 @@ subroutine FREQUENCIES_reset(Xw)
  ! bg_pt(:), cg_pt(:), cg_index_bg(:),
  ! X_poles_tab(:), rg_index_bg(:), bg_npts(:)
  !
- use frequency,   ONLY:w_samp,bg_npts,cg_npts,cg_pt,rg_index_bg,cg_index_bg
+ use frequency,   ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt,ordered_grid_index,coarse_grid_index
  use memory_m   , ONLY:mem_est
  use X_m,         ONLY:X_poles_tab
  implicit none
@@ -42,8 +42,8 @@ subroutine FREQUENCIES_reset(Xw)
    nullify(Xw%p)
  endif
  call mem_est("W-p")
- if (allocated(rg_index_bg)) deallocate(rg_index_bg)
- deallocate(X_poles_tab,bg_npts,cg_pt,cg_index_bg)
+ if (allocated(ordered_grid_index)) deallocate(ordered_grid_index)
+ deallocate(X_poles_tab,bare_grid_N,coarse_grid_Pt,coarse_grid_index)
  call mem_est("X_poles_tab RGi BGn CGp CGi")      
  !
 end subroutine

@@ -28,12 +28,12 @@ subroutine section(mode,name)
  !
  use pars
  use it_m,       ONLY:ofiles_append
- use stderr,     ONLY:string_pack
+ use stderr,     ONLY:string_pack,intc
  use timing,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&
 &                     date_and_time_string
- use parallel_m, ONLY:PP_redux_wait,ncpu
+ use parallel_m, ONLY:PP_redux_wait,PARALLEL_message,ncpu
  use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
-&                     write_to_report,write_the_logo
+&                     write_to_report,write_the_logo,repfile
  implicit none
  character(1)::mode
  character(*)::name
@@ -54,7 +54,11 @@ subroutine section(mode,name)
  !
  if (depth==-1) then
    ch=date_and_time_string(dt_out=date_time_at_start)
-   if (write_to_report) write (11,'(1x,a)') trim(ch)
+   if (write_to_report) then
+     open(unit=11,file=trim(repfile),position='append')
+     write (11,'(1x,a)') trim(ch)
+     close(11)
+   endif
    call write_the_logo(6,' ')
    previous_secmode=' '
  endif
@@ -120,28 +124,33 @@ subroutine section(mode,name)
    !
    ch=date_and_time_string(dt_in=date_time_at_start)
    chp= string_pack(trim(ch),' [start]')
-   if (write_to_report) write (11,'(1x,a)') chp(:len_trim(chp))
+   if (write_to_report) then
+     open(unit=11,file=trim(repfile),position='append')
+     write (11,'(1x,a)') chp(:len_trim(chp))
+     close(11)
+   endif
    call ofiles_append(line='')
    call ofiles_append(line=chp(:len_trim(chp)))
    !
    ch = date_and_time_string()
    chp= string_pack(trim(ch),' [end]')
-   do i1=1,index(ch,'CPUs')+5
-     chp(i1:i1)=" "
-   enddo
-   if (write_to_report) write (11,'(1x,a)') chp(:len_trim(chp))
+   if (write_to_report) then
+     open(unit=11,file=trim(repfile),position='append')
+     write (11,'(1x,a)') chp(:len_trim(chp))
+     close(11)
+   endif
    call ofiles_append(line=chp(:len_trim(chp)))
    !
    min_time=time_string(minval(cput_here))
    max_time=time_string(maxval(cput_here))
    average_time =time_string(sum(cput_here)/real(ncpu))
+   !
    if (all((/trim(min_time)/='',trim(max_time)/='',trim(average_time)/=''/))) then
      !
      ch = 'CpuTiming Min/Max/Average:'
-     write (ch,'(6a)') 'Cpu Timing [Min/Max/Average]: ',trim(min_time),&
-&     '/',trim(max_time),'/',trim(average_time)
+     write (ch,'(6a)')     'Timing   [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
      call msg('nrn',trim(ch))
-     call ofiles_append(line='')
+     call ofiles_append(line=" ")
      call ofiles_append(line=trim(ch))
      !
    endif

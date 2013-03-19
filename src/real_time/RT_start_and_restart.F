@@ -52,7 +52,7 @@ subroutine RT_start_and_restart(E,k,X)
 &                         rho_convergence,H_rotate,V_hartree_sc,&
 &                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional,&
 &                         RT_nk,RT_k,RT_occupations,SC_nbands
- use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE,IO_and_Messaging_switch
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:wf

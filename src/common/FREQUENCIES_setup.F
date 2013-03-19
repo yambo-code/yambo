@@ -21,7 +21,7 @@
 !
 subroutine FREQUENCIES_setup(W)
  !
- ! %er %dr %n -> %p
+ ! %er %dr %n_freqs -> %p
  !
  use pars,          ONLY:SP
  use frequency,     ONLY:w_samp
@@ -37,11 +37,11 @@ subroutine FREQUENCIES_setup(W)
  !If %p is associated and consitent with %er/%dr return
  !
  if (associated(W%p)) then
-   if (size(W%p)==W%n(1).and.&
+   if (size(W%p)==W%n_freqs.and.&
 &      abs(  real(W%p(1))-W%er(1) )<1.E-5.and.&
 &      abs( aimag(W%p(1))-W%dr(1) )<1.E-5.and.&
-&      abs(  real(W%p(W%n(1)))-W%er(2) )<1.E-5.and.&
-&      abs( aimag(W%p(W%n(1)))-W%dr(2) )<1.E-5) return
+&      abs(  real(W%p(W%n_freqs))-W%er(2) )<1.E-5.and.&
+&      abs( aimag(W%p(W%n_freqs))-W%dr(2) )<1.E-5) return
  endif
  !
  if (associated(W%p)) then
@@ -51,25 +51,20 @@ subroutine FREQUENCIES_setup(W)
  !
  ! First the total/mem steps
  !
- if (W%er(2)==W%er(1)) W%n=1
- W%n(2)=nint(W%per_memstps*real(W%n(1))/100.)
- if (W%n(1)<W%n(2)) W%n(2)=W%n(1)
+ if (W%er(2)==W%er(1)) W%n_freqs=1
+ W%n_freqs=nint(W%per_memstps*real(W%n_freqs)/100.)
  !
- ! Redefine n(1) to the closest multiplier of n(2)
- !
- W%n(1)=W%n(1)-mod(W%n(1),W%n(2))
- !
- allocate(W%p(W%n(1)))
- call mem_est("W-p",(/W%n(1)/))
+ allocate(W%p(W%n_freqs))
+ call mem_est("W-p",(/W%n_freqs/))
  !
  W%p(1)=cmplx(W%er(1),W%dr(1),SP)
- if (W%n(1)==1) then
+ if (W%n_freqs==1) then
    W%er(2)=W%er(1)
    W%dr(2)=W%dr(1)
    return
  endif
- forall(i1=1:W%n(1)-1) W%p(i1+1)=W%er(1)+(W%er(2)-W%er(1))/(W%n(1)-1)*i1
- do i1=1,W%n(1)
+ forall(i1=1:W%n_freqs-1) W%p(i1+1)=W%er(1)+(W%er(2)-W%er(1))/(W%n_freqs-1)*i1
+ do i1=1,W%n_freqs
    W%p(i1)=real(W%p(i1))+FREQUENCIES_damping(W,real(W%p(i1)))*cmplx(0.,1.,SP)
  enddo
  !

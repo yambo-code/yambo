@@ -233,7 +233,11 @@ module com
             if (trim(opened_of(i2))==local_file_name) file_index=i2
          enddo
          if(file_index==-1) return
+#if defined _BLUEGENE
+         flush(abs(of_unit(file_index)))
+#else
          call flush(abs(of_unit(file_index)))
+#endif
        endif
        !
        if ( (index(mode,'o')==0.and.index(mode,'O')==0) .or. .not.write_to_of) return
@@ -294,8 +298,8 @@ module com
    end subroutine
    !
    subroutine write_the_logo(unit_,comment_)
+     !
      use timing,       ONLY:LIVE_message
-     use parallel_m,   ONLY:master_cpu
      use LOGO,         ONLY:pickup_a_logo,logo_line,n_logo_lines
      integer     ::unit_
      character(1)::comment_
@@ -304,7 +308,7 @@ module com
      !
      call pickup_a_logo(unit_)
      !
-     if (.not.master_cpu.or.unit_<0) return
+     if (unit_<0) return
      !
      if (trim(comment_)=='')  space_='(t5,3a)'
      if (trim(comment_)=='#') then
@@ -315,13 +319,17 @@ module com
        enddo
      endif
      !
+     if (unit_==11) open(unit=11,file=trim(repfile),position='append')
+     !
      do i1=1,n_logo_lines
        if (unit_/=6) write (unit_,trim(space_)) logo_line(i1)
        if (unit_==6.and.i1>=n_logo_lines-1) cycle
-       if (unit_==6) call LIVE_message("n",logo_line(i1),"","%s",NO_CPUT=.true.)
+       if (unit_==6) call LIVE_message(logo_line(i1),"n","","%s",CPU_TIME=.false.,CPU_ID=.false.)
      enddo
      if (unit_/=6.and.trim(comment_)=='')  write (unit_,'(a)') ' '
-     if (unit_/=6.and.trim(comment_)=='#')  write (unit_,'(a)') '#'
+     if (unit_/=6.and.trim(comment_)=='#') write (unit_,'(a)') '#'
+     !
+     if (unit_==11) close(11)
      !
    end subroutine
    !
@@ -360,7 +368,7 @@ module com
      use stderr,     ONLY:string_pack
      character(*) :: mesg
      call msg('nr',string_pack('[WARNING] ',trim(mesg)))
-     call LIVE_message("n",string_pack('[WARNING] ',trim(mesg)),"","%s")
+     call LIVE_message(string_pack('[WARNING] ',trim(mesg)),"n","","%s")
    end subroutine
    !
    subroutine error(mesg)
@@ -369,26 +377,17 @@ module com
      use parallel_m, ONLY:MPI_close
      character(*)    :: mesg
      !
-     if (file_exists(repfile) ) call report_file_fix
-     !
      live_timing_is_on=.FALSE.
      !
      call msg('nr',string_pack('[ERROR] STOP signal received while in :',trim(secnm)))
-     call LIVE_message("nn",&
-&         string_pack('[ERROR] STOP signal received while in :',trim(secnm)),"","%s")
+     call LIVE_message(string_pack('[ERROR] STOP signal received while in :',trim(secnm)),"nn","","%s")
      call msg('nr',string_pack('[ERROR] ',trim(mesg)))
-     call LIVE_message("n",string_pack('[ERROR] ',trim(mesg)),"","%s")
-     call LIVE_message("n","","","%s")
+     call LIVE_message(string_pack('[ERROR] ',trim(mesg)),"n","","%s")
+     call LIVE_message("","n","","%s")
      !
      call MPI_close
      !
      stop
-   end subroutine
-   !
-   subroutine report_file_fix
-     if (.not.write_to_report) return
-     close(11)
-     open(unit=11,file=trim(repfile),position='append')
    end subroutine
    !
    subroutine msg_deliver(formatted_msg)
@@ -396,7 +395,9 @@ module com
      integer      :: i_unit
      do i_unit=1,max_open_ofs
        if (of_unit(i_unit)<=0) cycle
+       if (of_unit(i_unit)==11) open(unit=11,file=trim(repfile),position='append')
        write (of_unit(i_unit),'(a)') formatted_msg
+       if (of_unit(i_unit)==11) close(11)
        of_unit(i_unit)=-of_unit(i_unit)
      enddo
     end subroutine
@@ -458,7 +459,7 @@ module com
    end subroutine
    !
    subroutine namsg(how,mesg,val,USE_TABS,INDENT)
-     use stderr,   ONLY: c_print,write_to_log,tty_size
+     use stderr,   ONLY: c_print,write_to_log,log_as_a_file
      use timing,   ONLY: LIVE_message
      character(*)     :: mesg
      character(*)     :: how
@@ -482,20 +483,22 @@ module com
      if(trim(msgfmt)=="(/00x,a, 01(a,1x))") msgfmt="(/99x,a, 01(a,1x))"
      do i1=1,max_open_ofs
        if (of_unit(i1)<=0) cycle
+       if (of_unit(i1)==11) open(unit=11,file=trim(repfile),position='append')
        write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
+       if (of_unit(i1)==11) close(11)
        of_unit(i1)=-of_unit(i1)
      enddo
      if (index(how,'o')>0.or.index(how,'O')>0) return
      if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
      msgfmt=composed_fmt('a',-size(val),.false.,-1)
      write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
-     if (index(how,'l')/=0.and.tty_size>0) &
+     if (index(how,'l')/=0.and..not.log_as_a_file) &
 &       call c_print(terminator(3),lch,terminator(4),"%s")
-     if (index(how,'s')/=0) call LIVE_message("n",trim(lch),"","%s")
+     if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
    end subroutine
    !
    subroutine nimsg(how,mesg,val,USE_TABS,INDENT)
-     use stderr,   ONLY: c_print,write_to_log,tty_size
+     use stderr,   ONLY: c_print,write_to_log,log_as_a_file
      use timing,   ONLY: LIVE_message
      character(*)     :: mesg
      character(*)     :: how
@@ -518,20 +521,22 @@ module com
      msgfmt=composed_fmt(trim(gen_fmt(val)),size(val),l_fmt,l_indent)
      do i1=1,max_open_ofs
        if (of_unit(i1)<=0) cycle
+       if (of_unit(i1)==11) open(unit=11,file=trim(repfile),position='append')
        write (of_unit(i1),trim(msgfmt)) mesg,val
+       if (of_unit(i1)==11) close(11)
        of_unit(i1)=-of_unit(i1)
      enddo
      if (index(how,'o')>0.or.index(how,'O')>0) return
      if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
      msgfmt=composed_fmt(trim(gen_fmt(val)),-size(val),.false.,-1)
      write (lch,trim(msgfmt)) mesg,val 
-     if (index(how,'l')/=0.and.tty_size>0) &
+     if (index(how,'l')/=0.and..not.log_as_a_file) &
 &       call c_print(terminator(3),lch,terminator(4),"%s")
-     if (index(how,'s')/=0) call LIVE_message("n",trim(lch),"","%s")
+     if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
    end subroutine
    !
    subroutine nrmsg(how,mesg,val,USE_TABS,INDENT,formatted_msg)
-     use stderr,   ONLY: c_print,write_to_log,tty_size
+     use stderr,   ONLY: c_print,write_to_log,log_as_a_file
      use timing,   ONLY: LIVE_message
      character(*)     :: mesg
      character(*)     :: how
@@ -554,10 +559,12 @@ module com
      msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),size(val),l_fmt,l_indent)
      do i1=1,max_open_ofs
        if (of_unit(i1)<=0) cycle
+       if (of_unit(i1)==11) open(unit=11,file=trim(repfile),position='append')
        if (present(formatted_msg)) then
          write (formatted_msg,trim(msgfmt)) mesg,val
        else
          write (of_unit(i1),trim(msgfmt)) mesg,val
+         if (of_unit(i1)==11) close(11)
          of_unit(i1)=-of_unit(i1)
        endif
      enddo
@@ -565,9 +572,9 @@ module com
      if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
      msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),-size(val),.false.,-1)
      write (lch,trim(msgfmt)) mesg,val 
-     if (index(how,'l')/=0.and.tty_size>0) call &
+     if (index(how,'l')/=0.and..not.log_as_a_file) call &
 &       c_print(terminator(3),lch,terminator(4),"%s")
-     if (index(how,'s')/=0) call LIVE_message("n",trim(lch),"","%s")
+     if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
    end subroutine
    !
    character(lchlen) function composed_fmt(basic_fmt,n,USE_TABS,INDENT)

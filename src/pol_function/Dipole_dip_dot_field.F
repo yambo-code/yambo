@@ -22,8 +22,8 @@
 subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_optics
- use drivers,        ONLY:l_col_cut
+ use drivers,        ONLY:l_optics,l_col_cut
+ use parallel_m,     ONLY:PAR_Xk_nbz,PAR_Xk_bz_index,PAR_Xk_ibz_index,PAR_IND_Xk_bz
  use electrons,      ONLY:levels,n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
@@ -40,7 +40,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
  ! Work Space
  !
- integer                   :: ik,i1,ic,iv,is,i_spin
+ integer                   :: ik,ik_bz,ic,iv,is,i_spin,ik_mem,ik_bz_mem
  real(SP)                  :: field_dir_rot(3)
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the
@@ -55,14 +55,19 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
  ! Calculate the q-dependent oscillators
  !
- call X_alloc('DIP_q_dot_iR',(/X%ib(2),Xen%nbm,Xk%nbz/))
+ call X_alloc('DIP_q_dot_iR',(/X%ib(2),Xen%nbm,PAR_Xk_nbz/))
  DIP_q_dot_iR = (0.0_SP,0.0_SP)
  !
- do i1 = 1,Xk%nbz
+ do ik_bz = 1,Xk%nbz
    !
-   ik = Xk%sstar(i1,1)
-   is = sop_inv(Xk%sstar(i1,2))
+   ik = Xk%sstar(ik_bz,1)
+   is = sop_inv(Xk%sstar(ik_bz,2))
    field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
+   !
+   ik_bz_mem=PAR_Xk_bz_index(ik_bz)
+   ik_mem=PAR_Xk_ibz_index(ik)
+   !
+   if (.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle 
    !
    do iv = X%ib(1), Xen%nbm
      !
@@ -72,13 +77,16 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
          ! 
          ! DIP_iq_dot_r = i q . < v k | r | c k >
          !
-         if ( is<= nsym/(i_time_rev+1) ) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin)  )
-         if ( is > nsym/(i_time_rev+1) ) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), field_dir_rot ) 
+         if ( is<= nsym/(i_time_rev+1) ) then
+           DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik_mem,i_spin)  )
+         else
+           DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin) = dot_product( DIP_iR(:,ic,iv,ik_mem,i_spin), field_dir_rot ) 
+         endif
          !
        enddo
        ! 
      enddo
-     DIP_q_dot_iR(iv,iv,i1,:) = (1.0_SP,0.0_SP)
+     DIP_q_dot_iR(iv,iv,ik_bz_mem,:) = (1.0_SP,0.0_SP)
    enddo
    !
  enddo

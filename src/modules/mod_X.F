@@ -70,6 +70,12 @@ module X_m
  logical :: self_detect_E_range
  logical :: use_X_RIM
  !
+ ! I/O parameters
+ !
+ integer,parameter:: n_MAX_blocks_of_rows=1000 ! Note that in NETCDF the max number of vars is 8192
+ integer          :: n_blocks_of_rows
+ integer          :: n_rows_each_block
+ !
  ! I/O descriptions
  !
  integer          :: n_X_descs

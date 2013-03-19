@@ -23,7 +23,7 @@ logical function stop_now(DO_IT_NOW)
  !
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use electrons,      ONLY:levels,E_reset
- use com,            ONLY:repfile,file_exists,report_file_fix
+ use com,            ONLY:repfile,file_exists
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_reset
  use it_m,           ONLY:it_reset
@@ -53,8 +53,6 @@ logical function stop_now(DO_IT_NOW)
  call bz_samp_reset(k)
  call W_reset(Xw)
  call X_reset(X,type=1)
- !
- if (file_exists(repfile) ) call report_file_fix
  !
  call section('X','USER STOP signal')
  !

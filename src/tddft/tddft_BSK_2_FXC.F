@@ -42,7 +42,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! WorkSpace 
  !
- integer      :: blk_pos(2),ik,ic,iv,i1,i2,iw,iw_blk,i_sp
+ integer      :: blk_pos(2),ik,ic,iv,i1,i2,iw,i_sp
  complex(SP)  :: Co
  complex(SP), allocatable :: wk1(:,:),wk2(:,:),FXC_temp(:,:)
  !
@@ -185,75 +185,68 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  if (ik1==1.and.ik2==1) COM_MODE=REP
  !
  call PP_indexes_reset(p1)
- call PARALLEL_index(p1,(/W%n(2)/))
+ call PARALLEL_index(p1,(/W%n_freqs/))
  !
- do iw_blk=1,W%n(1),W%n(2)
+ do iw=1,W%n_freqs
    !
    ! [IO] READ FXC % FXC_K_diagonal for this block of frequencies
    !
-   if (iw_blk==1) then
+   if (iw==1) then
      if (ioFxc_err==0) then
-       call io_control(ACTION=RD_CL,COM=NONE,SEC=(/iw_blk+2/),ID=ID)
+       call io_control(ACTION=RD_CL,COM=NONE,SEC=(/iw+2/),ID=ID)
        ioFxc_err=ioBS_Fxc(iq,W,ID,X=X_static)
      endif
    else
-     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/iw_blk+2/),ID=ID)
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/iw+2/),ID=ID)
      ioFxc_err=ioBS_Fxc(iq,W,ID,X=X_static)
    endif
    !
    if (ioFxc_err/=0) FXC=(0._SP,0._SP)
    !
-   do iw=iw_blk,iw_blk+W%n(2)-1
-     !
-     if (.not.p1%element_1D(iw-iw_blk+1)) then
-       FXC(:,:,iw-iw_blk+1)=(0._SP,0._SP)
-       cycle
-     endif
-     !
-     ! Upper diagonal block contribution
-     !
+   !
+   if (.not.p1%element_1D(iw)) then
+     FXC(:,:,iw)=(0._SP,0._SP)
+     cycle
+   endif
+   !
+   ! Upper diagonal block contribution
+   !
+   if (FXC_is_causal) then 
+     forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)*(&
+&          1._SP/(W%p(iw)-blk_Eo(1,i1))+1._SP/(-W%p(iw)-blk_Eo(1,i1)) )
+     forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)*(&
+&          1._SP/(W%p(iw)-blk_Eo(2,i2))+1._SP/(-W%p(iw)-blk_Eo(2,i2)) )
+   else
+     forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)/(W%p(iw)-blk_Eo(1,i1))
+     forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)/(W%p(iw)-blk_Eo(2,i2))
+   endif
+   !
+   FXC(:,:,iw)=FXC(:,:,iw)+Co*(matmul(conjg_O1x_qpg,wk1)+matmul(wk2,O2x_qpg))
+   !
+   ! Lower diagonal block contribution
+   !
+   if (ik1/=ik2) then
      if (FXC_is_causal) then 
        forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)*(&
-&            1._SP/(W%p(iw)-blk_Eo(1,i1))+1._SP/(-W%p(iw)-blk_Eo(1,i1)) )
+&          1._SP/(-conjg(W%p(iw))-blk_Eo(1,i1))+1._SP/(conjg(W%p(iw))-blk_Eo(1,i1)) )
        forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)*(&
-&            1._SP/(W%p(iw)-blk_Eo(2,i2))+1._SP/(-W%p(iw)-blk_Eo(2,i2)) )
+&          1._SP/(-conjg(W%p(iw))-blk_Eo(2,i2))+1._SP/(conjg(W%p(iw))-blk_Eo(2,i2)) )
      else
-       forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)/(W%p(iw)-blk_Eo(1,i1))
-       forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)/(W%p(iw)-blk_Eo(2,i2))
+       forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)/(conjg(W%p(iw))-blk_Eo(1,i1))
+       forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)/(conjg(W%p(iw))-blk_Eo(2,i2))
      endif
      !
-     FXC(:,:,iw-iw_blk+1)=FXC(:,:,iw-iw_blk+1)+&
-&                         Co*(matmul(conjg_O1x_qpg,wk1)+matmul(wk2,O2x_qpg))
+     FXC_temp=Co*(matmul(conjg_O1x_qpg,wk1)+matmul(wk2,O2x_qpg))
      !
-     ! Lower diagonal block contribution
-     !
-     if (ik1/=ik2) then
-       if (FXC_is_causal) then 
-         forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)*(&
-&            1._SP/(-conjg(W%p(iw))-blk_Eo(1,i1))+1._SP/(conjg(W%p(iw))-blk_Eo(1,i1)) )
-         forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)*(&
-&            1._SP/(-conjg(W%p(iw))-blk_Eo(2,i2))+1._SP/(conjg(W%p(iw))-blk_Eo(2,i2)) )
-       else
-         forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)/(conjg(W%p(iw))-blk_Eo(1,i1))
-         forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)/(conjg(W%p(iw))-blk_Eo(2,i2))
-       endif
-       !
-       FXC_temp=Co*(matmul(conjg_O1x_qpg,wk1)+matmul(wk2,O2x_qpg))
-       !
-       forall(i1=1:FXC_n_g_corr,i2=1:FXC_n_g_corr) &
-&            FXC(i1,i2,iw-iw_blk+1)=FXC(i1,i2,iw-iw_blk+1)+conjg(FXC_temp(i2,i1))
-     endif
-     !
-   enddo
+     forall(i1=1:FXC_n_g_corr,i2=1:FXC_n_g_corr) FXC(i1,i2,iw)=FXC(i1,i2,iw)+conjg(FXC_temp(i2,i1))
+   endif
    !
-   do iw=1,W%n(2)
-     call PP_redux_wait(FXC(:,:,iw))
-   enddo
+   call PP_redux_wait(FXC(:,:,iw))
    !
    ! [IO] WRITE FXC & FXC_K_diagonal for this block of frequencies
    !
-   if (iw_blk==1) call io_control(ACTION=OP_WR_CL,COM=COM_MODE,SEC=(/1,2,iw_blk+2/),ID=ID)
-   if (iw_blk> 1) call io_control(ACTION=OP_WR_CL,COM=COM_MODE,SEC=(/iw_blk+2/),ID=ID)
+   if (iw==1) call io_control(ACTION=OP_WR_CL,COM=COM_MODE,SEC=(/1,2,iw+2/),ID=ID)
+   if (iw> 1) call io_control(ACTION=OP_WR_CL,COM=COM_MODE,SEC=(/iw+2/),ID=ID)
    ioFxc_err=ioBS_Fxc(iq,W,ID,X=X_static)
    !
  enddo

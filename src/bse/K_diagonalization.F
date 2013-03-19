@@ -168,13 +168,13 @@ subroutine K_diagonalization(iq,W)
    if (ncpu>1) lib_driver=USE_SLK
    call live_timing('BSK diagonalize',1)
    if (K_is_not_hermitian) then
-     call mat_dia_inv(DIAGO,lib_driver,BS_mat,E_cmpl=BS_E,&
+     call mat_dia_inv(DIAGO,BS_mat,lib_in=lib_driver,E_cmpl=BS_E,&
 &                     V_left=BS_V_left,V_right=BS_V_right)
      !
      if (BSS_write_eig_2_db) BS_mat=BS_V_right
      !
    else
-     call mat_dia_inv(DIAGO,lib_driver,BS_mat,E_real=BS_E_real)
+     call mat_dia_inv(DIAGO,BS_mat,lib_in=lib_driver,E_real=BS_E_real)
      BS_E=BS_E_real
    endif
    call live_timing(steps=1)
@@ -246,7 +246,7 @@ subroutine K_diagonalization(iq,W)
      !
      call M_by_M('c','n',BS_H_dim,BS_V_left,BS_V_right,BS_overlap)
      !
-     call mat_dia_inv(INV,USE_SLK,BS_overlap)
+     call mat_dia_inv(INV,BS_overlap,lib_in=USE_SLK)
      call live_timing(steps=1)
      call live_timing()
      !

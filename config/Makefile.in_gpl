@@ -26,7 +26,7 @@ netcdf      = @dnetcdf@
 scalapack   = @dscalapack@
 precision   = @dp_cpp@
 fft         = @FFT_CPP@
-xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@
+xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@
 debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
@@ -51,14 +51,14 @@ INTERFCS = a2y p2y e2y
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules xc_functionals parser communicate common io wf_and_fft 
+BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate common io wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
                tddft pol_function qp bse
 #
 # Interfaces
 #
-2YLIBS       = external_c modules parser communicate common io bz_ops 
+2YLIBS       = external_c modules parallel parser communicate common io bz_ops 
 #
 # YPP
 #
@@ -192,7 +192,7 @@ define mkx
 endef
 define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
-        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' \) \
+        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' \) \
         -type f -print | grep -v '\.\/Makefile' | xargs rm -f
  echo "[CLEAN] Objects ... done"
  echo "[CLEAN] Broken files ... done"
@@ -208,7 +208,7 @@ define lib_xc_clean
 endef
 define lib_xc_distclean
  cd $(libdir)/libxc; make -s distclean; cd ../..
- rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/ libxc/autom4te.cache/
+ rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/ lib/libxc/autom4te.cache/
  echo "[CLEAN] LibXC ... done" 
 endef
 define lib_mod_clean

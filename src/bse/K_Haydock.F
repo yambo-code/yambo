@@ -358,7 +358,7 @@ subroutine K_Haydock(iq,W)
        end if
      end if
      !
-     do iw=1,W%n(1)
+     do iw=1,W%n_freqs
        X_o=(0._SP,0._SP)
        if (UseTerminator) then 
          if (.not.BS_K_Coupling) X_t = terminator(W%p(iw),Av1,Av2,RES)
@@ -392,7 +392,7 @@ subroutine K_Haydock(iq,W)
        if (Haydock_treshold>0._SP) reached_treshold=max(reached_treshold,&
 &         abs(X_epsilon(2,iw)-X_epsilon(4,iw))/abs(X_epsilon(2,iw)))
        if (Haydock_treshold<0._SP) reached_treshold=reached_treshold+&
-&         abs(X_epsilon(2,iw)-X_epsilon(4,iw))/abs(X_epsilon(2,iw))/real(W%n(1))
+&         abs(X_epsilon(2,iw)-X_epsilon(4,iw))/abs(X_epsilon(2,iw))/real(W%n_freqs)
      enddo
      if (BS_K_Coupling) deallocate(X_i)
    end subroutine

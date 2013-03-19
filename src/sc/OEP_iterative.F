@@ -50,7 +50,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  use SC,              ONLY:it_now,OEP_steps,OEP_threshold,SC_bands,l_oep_EWeight,E_bare
  use drivers,         ONLY:l_oep_exact,l_oep_slater,l_oep_kli,l_oep_ceda
  use timing,          ONLY:LIVE_message
- use stderr,          ONLY:intc,real2ch,tty_size
+ use stderr,          ONLY:intc,real2ch,log_as_a_file
  !
  ! I/O
  !
@@ -96,7 +96,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  endif
  EWeight = 1._SP
  !
- call LIVE_message("n","","","%s")
+ call LIVE_message("","n","","%s")
  V_io = Voep
  lerr = .false.
  do ii=1,OEP_steps
@@ -132,8 +132,8 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
      reached_treshold=maxval(abs(V_io(1:)-V_nm1(1:)))
      dumb_ch=trim(timing_str)//' '//trim(intc(ii))//' Accuracy :'//&
 &            trim(real2ch(reached_treshold))//'|'//trim(real2ch(OEP_threshold))
-     if (tty_size >0) call LIVE_message("r",dumb_ch,"","%s")
-     if (tty_size <0) call LIVE_message("n",dumb_ch,"","%s")
+     if (     log_as_a_file) call LIVE_message("r",dumb_ch,"","%s")
+     if (.not.log_as_a_file) call LIVE_message("n",dumb_ch,"","%s")
    if (reached_treshold<(OEP_threshold)) exit
    lerr=(ii==OEP_steps)
  end do

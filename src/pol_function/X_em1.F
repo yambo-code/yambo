@@ -30,10 +30,13 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,&
+&                        PAR_COM_Q_INDEX,master_cpu
  use wave_func,     ONLY:WF_free
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP
+ use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP,&
+&                        IO_and_Messaging_switch
  use com,           ONLY:depth
+ use interfaces,    ONLY:PARALLEL_global_indexes
  implicit none
  type(levels) ::Xen 
  type(bz_samp)::Xk,q
@@ -67,13 +70,13 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  if (.not.APPEND_NO_VERIFY) then
    if (X%whoami==2) then
      call section(sec_mode,'Static Dielectric Matrix')
-     Xw%n=1
+     Xw%n_freqs=1
    else if (X%whoami==3) then
      call section(sec_mode,'Dynamical Dielectric Matrix')
      if (l_gw0) self_detect_E_range=.true.
    else if (X%whoami==4) then
      call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
-     Xw%n=2
+     Xw%n_freqs=2
      Xw%er=(/epsilon(1._SP),0._SP/)
      Xw%dr=(/0._SP,X%ppaE/)
      X%ordering='c'
@@ -110,25 +113,44 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Allocation
  !    
- call X_alloc('X',(/X%ng,X%ng,Xw%n(2)/))
+ call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
  !
  do iq=iq_to_start,X%iq(2)
+   !
+   if (iq_to_start==1) then
+     if (iq==1) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Zero_Momentum",X=X) 
+     if (iq==2) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
+   else 
+     if (iq==iq_to_start) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
+   endif
+   !
+   if (iq>1) then
+     if (.not.PAR_IND_Q%element_1D(iq)) cycle
+   endif
    !
    ! TDDFT setup
    !
    call tddft_do_X_W_typs(iq,X,Xw)
    if (l_alda_fxc) call tddft_alda_g_space(Xen,Xk)
    !
-   call X_os(X_mat,iq,(/1,Xw%n(1)/),Xen,Xk,Xw,X)  
+   call X_os(X_mat,iq,Xen,Xk,Xw,X)  
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
-   if (X%whoami/=1) call X_s(iq,(/1,Xw%n(1)/),X,Xw)
+   if (X%whoami/=1) call X_s(iq,X,Xw)
    !
-   call PP_redux_wait
+   if (iq==1) call PP_redux_wait
+   if (iq> 1) call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
+   !
    if (iq==1) then
+     !
+     call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
+     !
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=Xdb) 
    else
+     !
+     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
+     !
      call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
    endif
    i_err=ioX(X,Xw,Xdb)
@@ -149,6 +171,5 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  call X_alloc('X')
  call X_alloc('DIP_q_dot_iR')
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free()
- call PP_redux_wait
  !
 end function

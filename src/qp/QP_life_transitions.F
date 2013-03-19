@@ -27,7 +27,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
 &                        QP_cg_percent
  use functions,     ONLY:bose_f,h2ht,e2et
  use com,           ONLY:error
- use frequency,     ONLY:w_samp,bg_npts,cg_npts,cg_pt,rg_index_bg
+ use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt,ordered_grid_index
  use electrons,     ONLY:levels,spin
  use R_lattice,     ONLY:qindx_S,bz_samp
  !
@@ -106,20 +106,20 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  !
  call FREQUENCIES_coarse_grid('Life',X_freqs(iqibz_in,:n_of_transitions(iqibz_in)),&
 &                 n_of_transitions(iqibz_in),QP_cg_percent)
- X_life_W%n=cg_npts
+ X_life_W%n_freqs=coarse_grid_N
  !
- X_life_W%er=(/minval(cg_pt),maxval(cg_pt)/)
+ X_life_W%er=(/minval(coarse_grid_Pt),maxval(coarse_grid_Pt)/)
  !
- allocate(X_life_W%p(cg_npts))
- do i1=1,cg_npts
+ allocate(X_life_W%p(coarse_grid_N))
+ do i1=1,coarse_grid_N
    ! 
-   X_life_W%p(i1)=cg_pt(i1)+FREQUENCIES_damping(X_life_W,cg_pt(i1))*cmplx(0.,1.,SP)
+   X_life_W%p(i1)=coarse_grid_Pt(i1)+FREQUENCIES_damping(X_life_W,coarse_grid_Pt(i1))*cmplx(0.,1.,SP)
    !
  enddo
  !
  ! Clean
  !
- deallocate(bg_npts,cg_pt,rg_index_bg)
+ deallocate(bare_grid_N,coarse_grid_Pt,ordered_grid_index)
  call mem_est("BGn CGp RGi")
  !
 end function

@@ -48,6 +48,7 @@ module it_m
  integer, parameter :: V_general=6
  integer, parameter :: V_resp=7
  integer, parameter :: V_real_time=8
+ integer, parameter :: V_parallel=9
  integer, parameter :: V_all=99
  !
  integer, parameter :: maxrnlvls=50
@@ -750,7 +751,7 @@ module it_m
      use stderr,       ONLY: intc
      use drivers,      ONLY: infile_editing
      use stderr,       ONLY: gen_fmt
-     use com,          ONLY: report_file_fix,write_the_logo
+     use com,          ONLY: write_the_logo,repfile
      use parallel_m,   ONLY: master_cpu
      type(initdefs)::defs
      integer       :: ou
@@ -760,6 +761,8 @@ module it_m
      integer :: i2,i3,ifpos,ch_length
      real(SP):: unit_factor,v(2)
      character(lchlen)::ch(2)  
+     !
+     if (ou==11) open(unit=11,file=trim(repfile),position='append')
      !
      nflines=0
      flines=' '
@@ -930,14 +933,18 @@ module it_m
      if (master_cpu) then
        if (ou==12) call write_the_logo(ou,'#')
        if (ou==11) write (ou,'(2a)') ' .-Input file : ',trim(infile)
-       if (ou/=11.and.ou/=12) write (ou,'(a/2a)') '#','# .-Input file : ',trim(infile)
-       do i1=1,nflines
+     endif
+     if (ou/=11.and.ou/=12) write (ou,'(a/2a)') '#','# .-Input file : ',trim(infile)
+     do i1=1,nflines
+       if (master_cpu) then
          if (ou==12) write (ou,'(a)') trim(flines(i1))
          if (ou==11) write (ou,'(2a)') ' | ',trim(flines(i1))
-         if (ou/=11.and.ou/=12) write (ou,'(2a)') '# | ',trim(flines(i1))
-       enddo
-       if (ou==11) call report_file_fix
-     endif
+       endif
+       if (ou/=11.and.ou/=12) write (ou,'(2a)') '# | ',trim(flines(i1))
+      enddo
+     !
+     if (ou==11) close(11)
+     !
    end subroutine
    !
    logical function Iverbose_enough(var_name,nvar,var_val)

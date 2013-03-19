@@ -28,6 +28,7 @@ module mod_wf2y
    subroutine wf_splitter()
      !
      use pars,           ONLY:SP,DP
+     use mod_com2y,      ONLY:wf_nb_io_user
      use units,          ONLY:Megabyte
      use com,            ONLY:msg
      use wave_func,      ONLY:wf_nb_io,wf_nb_io_groups,wf_ncx
@@ -40,26 +41,32 @@ module mod_wf2y
      !
      wf_nb_io_groups=1
      wf_nb_io=n_bands
-     !
-     array_sz = DP*n_bands*real(wf_ncx)/Megabyte ! wf_disk_DP
-     !
-     ! No memory problems: no blocks
-     ! 
-     if (array_sz<=max_wf_block_size) return
-     !
-     wf_nb_io_groups = ceiling(array_sz/max_wf_block_size)
-     wf_nb_io        = ceiling(real(n_bands)/wf_nb_io_groups)
-     !
-     if(wf_nb_io_groups .gt. n_bands) then
-       wf_nb_io_groups = n_bands 
-       wf_nb_io = 1
-       return
+     if (wf_nb_io_user>0) then
+       !
+       wf_nb_io=wf_nb_io_user
+       wf_nb_io_groups=ceiling(real(n_bands)/real(wf_nb_io))
+       !
+     else
+       !
+       array_sz = DP*n_bands*real(wf_ncx)/Megabyte ! wf_disk_DP
+       !
+       ! No memory problems: no blocks
+       ! 
+       if (array_sz<=max_wf_block_size) return
+       !
+       wf_nb_io_groups = ceiling(array_sz/max_wf_block_size)
+       wf_nb_io        = ceiling(real(n_bands)/wf_nb_io_groups)
+       !
+       if(wf_nb_io_groups .gt. n_bands) then
+         wf_nb_io_groups = n_bands 
+         wf_nb_io = 1
+       endif
+       !
      endif
      !
      array_sz = DP*wf_nb_io*real(wf_ncx)/Megabyte
      !
-     call msg('s',':: WF splitter Blocks/bands/block size(Mb):',&
-&                     (/wf_nb_io_groups,wf_nb_io,int(array_sz)/))
+     call msg('s',':: WF splitter Blocks/bands/block size(Mb):',(/wf_nb_io_groups,wf_nb_io,int(array_sz)/))
      !
    end subroutine
    !

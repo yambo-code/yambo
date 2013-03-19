@@ -28,25 +28,20 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  !
  ! Output
  !--------
- ! integer :: cg_npts
- ! real(SP),allocatable :: cg_pt(:)
- ! integer, allocatable :: cg_index_bg(:)
- ! integer, allocatable :: rg_index_bg(:)
- ! integer, allocatable :: bg_npts(:)
- !
- !  cg_npts      ! Number of Coarse grid points
- !  cg_pt        ! Coarse grid point
- !  rg_index_bg(ibg)  ! Tells the index in the reordered (not coarse) 
- !                    ! grid of the ibg-th element
- !                    ! of the original (not sorted) grid
- !  cg_index_bg(ibg)  ! Tells the index in the coarse 
- !                    ! grid of the ibg-th element
- !                    ! of the original (not sorted) grid
- !  bg_npts(icg) ! Tells how many poles are linked to the POLE of the coarse grid
+ ! coarse_grid_N          ! Coarse grid points
+ ! coarse_grid_Pt         ! Coarse grid point
+ ! coarse_grid_index(ibg) ! Tells the index in the reordered (not coarse) 
+ !                        ! grid of the ibg-th element
+ !                        ! of the original (not sorted) grid
+ ! ordered_grid_index(ibg)! Tells the index in the reordered (not coarse) 
+ !                        ! grid of the ibg-th element
+ !                        ! of the original (not sorted) grid
+ ! bare_grid_N(icg)       ! Tells how many poles are linked to the POLE of the
+ !                        ! non degenerate new grid (icg)
  !
  use pars,        ONLY:SP,IP,schlen
  use com,         ONLY:msg
- use frequency,   ONLY:bg_npts,cg_npts,cg_pt,rg_index_bg,cg_index_bg
+ use frequency,   ONLY:bare_grid_N,coarse_grid_N,coarse_grid_Pt,ordered_grid_index,coarse_grid_index
  use vec_operate, ONLY:sort
  use memory_m   , ONLY:mem_est
  implicit none
@@ -74,13 +69,13 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
    ! the response function is calculated using an external set of
    ! k-points/bands.
    !
-   allocate(rg_index_bg(npts),cg_index_bg(npts),bg_npts(npts),cg_pt(npts))
+   allocate(ordered_grid_index(npts),coarse_grid_index(npts),bare_grid_N(npts),coarse_grid_Pt(npts))
    call mem_est("RGi CGi BGn CGp",(/npts,npts,npts,npts/),(/IP,IP,IP,SP/))
-   cg_npts=npts
-   bg_npts=1
-   cg_pt=bg_pt
-   forall ( i1=1:npts) rg_index_bg(i1)=i1
-   forall ( i1=1:npts) cg_index_bg(i1)=i1
+   coarse_grid_N=npts
+   bare_grid_N=1
+   coarse_grid_Pt=bg_pt
+   forall ( i1=1:npts) ordered_grid_index(i1)=i1
+   forall ( i1=1:npts) coarse_grid_index(i1)=i1
    return
  endif
  !
@@ -97,7 +92,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  if (cg_percentual<0.) tresh=minval(bg_diffs)+&
 &                      abs(cg_percentual)/100.*(maxval(bg_diffs)-minval(bg_diffs))
  icycle=0
- cg_npts=-1
+ coarse_grid_N=-1
  lcycle=.true.
  do while(lcycle)
    icycle=icycle+1
@@ -111,50 +106,50 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
      ipos(bg_sorted_x(i1),2)=i1
    enddo
    if (icycle==1) dncg=i2
-   if (cg_percentual>0.) cg_npts=max(int(cg_percentual*real(dncg)/100.),1)
-   if (i2<=cg_npts.or.cg_percentual==100.) lcycle=.false.
+   if (cg_percentual>0.) coarse_grid_N=max(int(cg_percentual*real(dncg)/100.),1)
+   if (i2<=coarse_grid_N.or.cg_percentual==100.) lcycle=.false.
    if (icycle==1) then
-     itresh=npts-cg_npts
+     itresh=npts-coarse_grid_N
      tresh=bg_diffs(max(itresh,1))
      cycle
    endif
-   itresh=min(itresh+i2-cg_npts,npts-1)
+   itresh=min(itresh+i2-coarse_grid_N,npts-1)
    tresh=bg_diffs(max(itresh,1))
  enddo
- cg_npts=i2
+ coarse_grid_N=i2
  !
- allocate(rg_index_bg(npts),cg_index_bg(npts),bg_npts(cg_npts),cg_pt(cg_npts))
- call mem_est("RGi CGi BGn CGp",(/npts,npts,cg_npts,cg_npts/),(/IP,IP,IP,SP/))
+ allocate(ordered_grid_index(npts),coarse_grid_index(npts),bare_grid_N(coarse_grid_N),coarse_grid_Pt(coarse_grid_N))
+ call mem_est("RGi CGi BGn CGp",(/npts,npts,coarse_grid_N,coarse_grid_N/),(/IP,IP,IP,SP/))
  !
- rg_index_bg=ipos(:,2)
+ ordered_grid_index=ipos(:,2)
  !
  i2=1
- cg_pt=0.
- bg_npts=0
+ coarse_grid_Pt=0.
+ bare_grid_N=0
  do i1=1,npts
    if (ipos(i1,1)/=i2) then
-     cg_pt(i2)=cg_pt(i2)/real(bg_npts(i2))
+     coarse_grid_Pt(i2)=coarse_grid_Pt(i2)/real(bare_grid_N(i2))
      i2=i2+1
    endif
-   cg_pt(i2)=cg_pt(i2)+bg_sorted(i1)
-   bg_npts(i2)=bg_npts(i2)+1
+   coarse_grid_Pt(i2)=coarse_grid_Pt(i2)+bg_sorted(i1)
+   bare_grid_N(i2)=bare_grid_N(i2)+1
  enddo
- cg_pt(cg_npts)=cg_pt(cg_npts)/real(bg_npts(cg_npts))
+ coarse_grid_Pt(coarse_grid_N)=coarse_grid_Pt(coarse_grid_N)/real(bare_grid_N(coarse_grid_N))
  !
  i3=0
  allocate(i_vec(npts))
- do i1=1,cg_npts
-   do i2=1,bg_npts(i1)
+ do i1=1,coarse_grid_N
+   do i2=1,bare_grid_N(i1)
      i3=i3+1
      i_vec(i3)=i1
    enddo
  enddo
- forall(i1=1:npts) cg_index_bg(i1)=i_vec( rg_index_bg(i1) )
+ forall(i1=1:npts) coarse_grid_index(i1)=i_vec( ordered_grid_index(i1) )
  deallocate(i_vec)
  !
  write (ch,'(3a)') '[',title,'-CG] R(p) Tot o/o(of R)  :'
  !
- call msg('rs',trim(ch),(/cg_npts,npts,int(real(cg_npts)/real(dncg)*100.)/))
+ call msg('rs',trim(ch),(/coarse_grid_N,npts,int(real(coarse_grid_N)/real(dncg)*100.)/))
  !
  deallocate(bg_diffs,bg_sorted,bg_sorted_x)
  !

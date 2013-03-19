@@ -87,7 +87,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  ! Kernel 2 FXC
  !
- allocate(FXC_K_diagonal(BS_K_dim),FXC(FXC_n_g_corr,FXC_n_g_corr,W%n(2)))
+ allocate(FXC_K_diagonal(BS_K_dim),FXC(FXC_n_g_corr,FXC_n_g_corr,W%n_freqs))
  O_x_dim=maxval(BS_blk_dim)
  call mem_est("FXC_K_diagonal FXC",(/BS_K_dim,size(FXC)/),(/SP,2*SP/))
  FXC_K_diagonal=0._SP

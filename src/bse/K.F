@@ -192,7 +192,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! Allocation
    !
-   allocate(FXC_K_diagonal(BS_K_dim),FXC(FXC_n_g_corr,FXC_n_g_corr,W_bss%n(2)))
+   allocate(FXC_K_diagonal(BS_K_dim),FXC(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
    call mem_est("FXC_K_diagonal FXC",(/BS_K_dim,size(FXC)/),(/SP,2*SP/))
    FXC_K_diagonal=0._SP
    FXC=(0._SP,0._SP)

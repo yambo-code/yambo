@@ -23,6 +23,7 @@ module IO_m
  !
  use pars,       ONLY:SP,lchlen,schlen
  use LOGO,       ONLY:code_version,code_revision
+ use parallel_m, ONLY:myid
 #if defined _NETCDF_IO
  use netcdf
 #endif
@@ -39,6 +40,7 @@ module IO_m
  !
  logical :: IO_write
  logical :: IO_read
+ logical :: IO_write_not_fragmented_DB
  logical :: Fragmented_IO
  logical :: Fragmented_IO_save
  !
@@ -54,6 +56,10 @@ module IO_m
  ! COM
  !
  integer, parameter:: REP=41,LOG=42,NONE=43
+ !
+ ! I/O
+ !
+ integer, parameter:: MASTER=51,ALL=52
  !
  ! I/O errors
  !
@@ -141,6 +147,11 @@ module IO_m
      integer          :: ID
      integer,optional :: version(3),revision
    end function
+   !
+   subroutine IO_and_Messaging_switch(what,CONDITION)
+     character(*)      :: what
+     logical, optional :: CONDITION
+   end subroutine
    !
  end interface
  !
@@ -429,10 +440,10 @@ module IO_m
      !
    end subroutine
    !
-   subroutine io_control(ACTION,MODE,COM,SEC,ID,NETCDF)
+   subroutine io_control(ACTION,MODE,COM,SEC,ID,NETCDF,IO)
      !
      integer :: ACTION,ID
-     integer,optional :: MODE,COM,SEC(:)
+     integer,optional :: MODE,COM,SEC(:),IO
      logical,optional :: NETCDF
      !
      ! Work Space

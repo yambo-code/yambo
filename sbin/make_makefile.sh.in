@@ -53,9 +53,6 @@ for arg in $@; do
    fcflags="\$(pf90flags)"
    llmpi="\$(lmpi)"
    ;;
-  -D_OPENMP)
-   dopts="$dopts $arg";
-   ;;
   -D_NETCDF_IO|-D_64BIT_OFFSET)
    dopts="$dopts $arg";
    ;;

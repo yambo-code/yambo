@@ -31,6 +31,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:wf_splitter
+ use interfaces,          ONLY:PARALLEL_live_message
  !
  implicit none
  type(levels)                 :: en 
@@ -54,7 +55,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  c2y_i =0
  ncpu  =np
  myid  =pid
- call std_presets(instr,od,od,'','')
+ call SET_defaults(instr,od,od,'','')
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en) 
@@ -71,7 +72,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call write_the_logo(6,' ')
  !
- call msg('s','C(pmd) 2 Y(ambo)')
+ call PARALLEL_live_message('C(pmd) 2 Y(ambo)')
  !
  call msg('s','Checking input file ...')
  !

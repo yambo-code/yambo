@@ -86,15 +86,13 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  !
  call mem_est("FXC_K_diagonal FXC",(/BS_K_dim,size(FXC)/),(/SP,2*SP/))
  !
- ! As wv%p is read from DB %n(2) is not setup in freqs_setup.
- ! Note that wv%n(2) MUST respect the FXC_n_mem_freqs value.
- ! Tnis means that wv%n(2) CANNOT assume generic values.
- ! It can be either wv%n(1) OR FXC_n_mem_freqs.
+ ! As wv%p is read from DB %n_freqs is not setup in freqs_setup.
+ ! Note that wv%n_freqs MUST respect the FXC_n_mem_freqs value.
+ ! Tnis means that wv%n_freqs CANNOT assume generic values.
+ ! It can be either wv%n_freqs OR FXC_n_mem_freqs.
  ! 
- if (l_bss) wv%n(2)=wv%n(1)
-
  if (.not.l_bss.and.wv%per_memstps/=100.) then
-   wv%n(2)=FXC_n_mem_freqs
+   wv%n_freqs=FXC_n_mem_freqs
    wv%per_memstps=FXC_per_memstps
  endif
  !

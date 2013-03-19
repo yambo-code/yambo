@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
-&                   spins_to_load,space,title,impose_free_and_alloc,force_WFo)
+&                  spins_to_load,space,title,impose_free_and_alloc,force_WFo)
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
@@ -37,10 +37,10 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        wf_n_states,wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free
  use wave_func,     ONLY:states_to_load,states_loaded
- use WF_distribute, ONLY:Distributed_Memory
  use timing,        ONLY:live_timing
+ use interfaces,    ONLY:PARALLEL_live_message
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
-&                        io_fragmented, io_netcdf_support, RD_CL,DUMP
+&                        io_fragmented, io_netcdf_support, RD_CL,DUMP,IO_and_Messaging_switch
 #if defined _SC
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
@@ -101,23 +101,19 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if(loaded_bounds_ok.and.allocated(states_to_load).and.allocated(states_loaded)) then
    !
-   if(allocated(states_loaded)) then
-     !
-     ikibz=wf_k(1)
-     do while(ikibz<=wf_k(2).and.loaded_bounds_ok) 
-       is   =wf_s(1)
-       do while(is<=wf_s(2).and.loaded_bounds_ok) 
-          ib   =wf_b(1)
-          do while(ib<=wf_b(2).and.loaded_bounds_ok) 
-            loaded_bounds_ok=states_to_load(ib,ikibz,is).eqv.states_loaded(ib,ikibz,is)
-            ib=ib+1
-          enddo
-          is=is+1
-       enddo
-       ikibz=ikibz+1
+   ikibz=wf_k(1)
+   do while(ikibz<=wf_k(2).and.loaded_bounds_ok) 
+     is   =wf_s(1)
+     do while(is<=wf_s(2).and.loaded_bounds_ok) 
+        ib   =wf_b(1)
+        do while(ib<=wf_b(2).and.loaded_bounds_ok) 
+          loaded_bounds_ok=states_to_load(ib,ikibz,is).eqv.states_loaded(ib,ikibz,is)
+          ib=ib+1
+        enddo
+        is=is+1
      enddo
-     !
-   endif
+     ikibz=ikibz+1
+   enddo
    !
  endif
  !
@@ -148,6 +144,9 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! 
  use_direct_access=(kpts_to_load(1)==kpts_to_load(2))
  use_live_timing =.not.use_direct_access
+#if defined _BLUEGENE
+ use_live_timing =.FALSE.
+#endif
  !
  ! In case of k by k I/O prevent multiple free/alloc
  !
@@ -212,6 +211,11 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (wf_space=='G') allocate(wf_DP(wf_ng))
  if (wf_space=='C') allocate(wf_DP(wf_ncx))
  !
+ ! LOG the states loaded
+ !
+ call PARALLEL_live_message("WF states",LOADED=wf_n_states,TOTAL=(bands_to_load(2)-bands_to_load(1)+1)*&
+&                           (kpts_to_load(2)-kpts_to_load(1)+1)*(s_2_load(2)-s_2_load(1)+1))
+ !
  if (wf_space=='R') call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !
  if (use_live_timing) call live_timing('[WF'//trim(wf_title)//' loader] Wfs (re)loading',wf_n_states,SERIAL=.true.)
@@ -233,6 +237,13 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      if (io_fragmented(ID).or.io_netcdf_support(ID)) then
        if (any((/ikibz<wf_k(1),ikibz>wf_k(2)/))) cycle
        if (wf_nb_io*(ib_grp-1)+1>wf_b(2)) cycle
+       !
+       ! In case the states to load are distributed in a complex way
+       ! by PARALLEL_WF_distribute I skip fragments that are not needed
+       ! 
+       if ( allocated(states_to_load) ) then
+         if (.not.any(states_to_load(wf_nb_io*(ib_grp-1)+1:wf_nb_io*ib_grp,ikibz,:))) cycle
+       endif
      endif
      !
      ACTION_=RD_CL_IF_END
@@ -250,7 +261,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          !
          if (any((/ib<wf_b(1),ib>wf_b(2),is<wf_s(1),is>wf_s(2)/))) cycle 
          !
-         if(allocated(states_to_load).and.Distributed_Memory) then
+         if(allocated(states_to_load)) then
            if(.not.states_to_load(ib,ikibz,is)) cycle
          endif
          !

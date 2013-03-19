@@ -31,7 +31,7 @@ module mod_com2y
  logical :: l_Vnl
  logical :: verboseIO
  !
- integer :: ng_vec_abinit
+ integer :: ng_vec_abinit,wf_nb_io_user
  integer, public  :: N_G_vectors
  !
  real(SP):: alat_mult_factor
@@ -40,7 +40,7 @@ module mod_com2y
    !
    subroutine interface_presets(in_string)
      !
-     use stderr, ONLY:string_split
+     use stderr,     ONLY:string_split
      character(*)   :: in_string
      !
      character(schlen)::str_piece(100)
@@ -59,9 +59,11 @@ module mod_com2y
      !
      alat_mult_factor=1.
      N_G_vectors=0
+     wf_nb_io_user=0
      do i1=1,100
        if ( trim(str_piece(i1))=='alat_f')  read(str_piece(i1+1),*) alat_mult_factor
        if ( trim(str_piece(i1))=='Gnum')    read(str_piece(i1+1),*) N_G_vectors
+       if ( trim(str_piece(i1))=='fragnb')  read(str_piece(i1+1),*) wf_nb_io_user
      enddo
      !
    end subroutine

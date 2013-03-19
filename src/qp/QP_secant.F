@@ -88,7 +88,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  !
  do i1=1,qp%n_states
    call W_reset(Sc_W(i1))
-   Sc_W(i1)%n=1
+   Sc_W(i1)%n_freqs=1
    allocate(Sc_W(i1)%p(1))
  enddo
  !
@@ -170,7 +170,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  do i1=1,qp%n_states
    Eqp_raxis(i1,1)=Eqp_raxis(i1,iabs(QP_solver_state(i1)))
    call W_reset(Sc_W(i1))
-   Sc_W(i1)%n=QP_dSc_steps
+   Sc_W(i1)%n_freqs=QP_dSc_steps
    allocate(Sc_W(i1)%p(QP_dSc_steps))
    forall (i2=1:QP_dSc_steps) Sc_W(i1)%p(i2)=Eqp_raxis(i1,1)+(i2-1)*QP_dSc_delta
  enddo
@@ -224,7 +224,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
        !
        Xw%er=QP_W_er
        Xw%dr=QP_W_dr
-       Xw%n=QP_n_W_freqs
+       Xw%n_freqs=QP_n_W_freqs
        call FREQUENCIES_setup(Xw)
        !
        call QP_W2Sc(iqbz,k,en,Xw,Sc_W)

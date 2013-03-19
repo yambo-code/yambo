@@ -73,6 +73,21 @@ module matrix_operate
      !
    end function hermitian
    !
+   subroutine mat_transpose(M) 
+     use pars,ONLY:SP
+     complex(SP) :: M(:,:)
+     integer     :: D,i1,i2
+     complex, allocatable :: V(:)
+     D=size(M,1)
+     allocate(V(D))
+     do i1=1,D
+       V(i1:D)=M(i1,i1:D)
+       M(i1,i1:D)=M(i1:D,i1)
+       M(i1:D,i1)=V(i1:D)
+     enddo
+     deallocate(V)
+   end subroutine
+   !
    subroutine mat_r2c_ordered(mr,mc,m_order) 
      !
      ! Copy mr in mc using m_order indexes for mc
@@ -180,6 +195,7 @@ module matrix_operate
      inv(3,3)=(-m(1,2)*m(2,1) + m(1,1)*m(2,2) )/det
      !
      !if (abs(det)<=1.E-7) call error('Null determinant. Inversion failed.')
+     !
      if (present(m_inv))      m_inv=inv
      if (.not.present(m_inv)) m=inv
      !
@@ -201,23 +217,26 @@ module matrix_operate
 &              m(1,3)*( m(2,1)*m(3,2) - m(2,2)*m(3,1) )
    end function
    !
-   subroutine mat_dia_inv(idriver,lib_in,M,blt,V_left,V_right,&
-&                         E_real,E_cmpl,SVD_digits,fill)
+   subroutine mat_dia_inv(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_digits,fill)
      !
      use wrapper,     ONLY:M_by_M
      use pars,        ONLY:SP
-     use parallel_m,  ONLY:PP_redux_wait,ncpu,myid
-     integer                :: idriver,lib_in
+     use parallel_m,  ONLY:PP_redux_wait,PAR_COM_INV,PAR_COM_DIAGO,mpi_comm_world
+     integer                :: idriver
      complex(SP)            :: M(:,:)
-     complex(SP),  optional :: V_left(:,:),V_right(:,:),E_cmpl(:)
+     complex(SP),  optional :: V_left(:,:)
+     complex(SP),  optional :: V_right(:,:)
+     complex(SP),  optional :: E_cmpl(:)
      type(blacs_t),optional :: blt
      real(SP),     optional :: E_real(:)
-     integer,      optional :: fill,SVD_digits 
+     integer,      optional :: lib_in
+     integer,      optional :: fill
+     integer,      optional :: SVD_digits 
      !
      !Work Spaces ...
      !
      real(SP):: SV_min
-     integer :: M_size,i1,i2,lib_in_use
+     integer :: M_size,i1,i2,lib_in_use,Ncpu_in_use,myID_in_use
      !
      ! ...serial invertion
      !
@@ -251,14 +270,33 @@ module matrix_operate
      ! M dimensions and initialization
      !
      M_size=size(M,2)
-     lib_in_use=lib_in
+     !
+     ! CPUs (number and ID) 
+     !
+     Ncpu_in_use=1
+     myID_in_use=0
+     !
+#if defined _MPI
+     if (idriver==INV) then
+       Ncpu_in_use=PAR_COM_INV%n_CPU
+       myID_in_use=PAR_COM_INV%CPU_id
+     else if (idriver==DIAGO) then
+       Ncpu_in_use=PAR_COM_DIAGO%n_CPU
+       myID_in_use=PAR_COM_DIAGO%CPU_id
+     endif 
+#endif
      !
      ! Decide which to use among LK or SLK
      !
-     if (ncpu==1.or.M_size/ncpu<min_cpu_block_size) lib_in_use=USE_LK 
-#if ! defined _SCALAPACK 
      lib_in_use=USE_LK
+#if defined _SCALAPACK 
+     lib_in_use=USE_SLK
 #endif
+     if (present(lib_in)) then
+        lib_in_use=lib_in
+     endif
+     !
+     if (Ncpu_in_use==1.or.M_size/Ncpu_in_use<min_cpu_block_size.or.idriver==USE_SVD) lib_in_use=USE_LK 
      !
      ! =============== SERIAL SECTION ===============
      !
@@ -415,16 +453,15 @@ module matrix_operate
        if (present(fill)) call v2v_blt(blt,iblt)
        if (.not.present(fill)) then
          !
-         call blacs_pinfo(myid, ncpu)
+         call blacs_pinfo(myID_in_use, Ncpu_in_use)
          call blacs_get(-1, 0, iblt%ictxt)
          !
          ! Creation of the processor grid
          !
-         iblt%npcol = ncpu / 2 
-         iblt%nprow = ncpu / iblt%npcol
+         iblt%npcol = Ncpu_in_use / 2 
+         iblt%nprow = Ncpu_in_use / iblt%npcol
          call blacs_gridinit(iblt%ictxt,'r',iblt%nprow,iblt%npcol)
-         call blacs_gridinfo(iblt%ictxt,iblt%nprow,iblt%npcol,&
-&                            iblt%myrow, iblt%mycol)
+         call blacs_gridinfo(iblt%ictxt,iblt%nprow,iblt%npcol,iblt%myrow, iblt%mycol)
          !
          ! blocking factor: number of rows of the global array in each local array
          !
@@ -482,7 +519,7 @@ module matrix_operate
              M(i,j) = lM(i_loc, j_loc)
            end do
          end do  
-         call PP_redux_wait(M)
+         call PP_redux_wait(M,COMM=PAR_COM_INV%COMM)
          deallocate(lM)
        end if
        !

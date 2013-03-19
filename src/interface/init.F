@@ -36,11 +36,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
 &                         infile,infile_dump,ofiles_append,runlevel_is_on,&
-&                         switch_off_runlevel
-#if defined _RT 
- use it_m,           ONLY:V_real_time
-#endif
- use parallel_m,     ONLY:PP_redux_wait,master_cpu
+&                         switch_off_runlevel,V_real_time,V_parallel
+ use parallel_m,     ONLY:PP_redux_wait,master_cpu,ncpu,myid
  use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
@@ -48,7 +45,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,QP_nk,&
 &                         QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,X_duplicate,X_reset
- use stderr,         ONLY:tty_size,logfile,string_add
+ use stderr,         ONLY:log_as_a_file,logfile,intc,string_add
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:ioWF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
@@ -127,6 +124,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='YAMBO_MAGNETIC'
 #endif
  !
+ !CPU structure
+ !
+ call PARALLEL_structure()
+ !
+ ! Global Logicals
+ !
+ call SET_logicals()
+ !
  !Presets (input)
  !
  init = 0
@@ -157,7 +162,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (FINALIZE) then
    call call_init_load('Game_Over')
    call initinfio(defs,11)
-   if (master_cpu) call ofiles_append(defs=defs)
+   call ofiles_append(defs=defs)
    return
  endif
  if (CLOSE_Gs) then
@@ -174,10 +179,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! DB props listing mode ?
  !
  call read_command_line(instr,init)
+ !
  if (index(instr,'dbpr')>0) then
    list_dbs=.true.
    init = 2
-   if (tty_size<0) write (logfile,'(2a)') trim(com_path),'/l_dbs'
+   if (log_as_a_file) write (logfile,'(2a)') trim(com_path),'/l_dbs'
    live_timing_is_on=.false.
    write_to_report=.false.
  endif
@@ -209,6 +215,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call mk_dir(com_path)
    call mk_dir(trim(core_io_path)//"/SAVE")
    call mk_dir(trim(more_io_path)//"/SAVE")
+   if (init==0.and.ncpu>1) call mk_dir(trim(com_path)//"/LOG")
  endif
  !
  X(3)%ib=(/1,en%nb/)
@@ -419,12 +426,29 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh EvalMagn')
+ call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh Threads NLogCPUs SkipWRITE EvalMagn')
  !
  !FFT
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,&
 &          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs')
+ !
+ ! CPU structure
+ !
+#if defined _MPI 
+ !
+ if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa) then
+   call CPU_activate("X_q_0")
+   call CPU_activate("X_all_q")
+ endif
+ !
+ if (l_HF_and_locXC) call CPU_activate("HF")
+ !
+ if (l_gw0) call CPU_activate("GW")
+ !
+ if (l_bse) call CPU_activate("BSE")
+ !
+#endif
  !
  !Setup
  !
@@ -752,32 +776,48 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (infile_editing) return
  !
+ ! Update Logicals (especially the write_to_log)
+ !
+ call SET_logicals()
+ !
  ! Report/Log Files
  !
  if (trim(jobstr)=='') write (repfile,'(2a)') trim(com_path),'/r'
  if (trim(jobstr)/='') write (repfile,'(4a)') trim(com_path),'/','r-',trim(jobstr)
- if (tty_size<0) then
+ if (log_as_a_file) then
   if (trim(jobstr)=='') write (logfile,'(2a)') trim(com_path),'/l'
   if (trim(jobstr)/='') write (logfile,'(4a)') trim(com_path),'/','l-',trim(jobstr)
+  if (ncpu>1) then
+    if (trim(jobstr)=='') write (logfile,'(a)')  trim(com_path)//'/LOG/l'
+    if (trim(jobstr)/='') write (logfile,'(2a)') trim(com_path)//'/LOG/l-',trim(jobstr)
+  endif
  endif
  do i1=1,nrnlvls
    rch=repfile
-   if (rstatus(i1)/=0) write (rch,'(3a)') trim(repfile),'_',trim(rnlvls(i1,1))
-   repfile=rch
-   if (tty_size<0) then
+   if (rstatus(i1)/=0) then
+     write (rch,'(3a)') trim(repfile),'_',trim(rnlvls(i1,1))
+     repfile=rch
+   endif
+   if (log_as_a_file) then
      jch=logfile
      if (rstatus(i1)/=0) write (jch,'(3a)') trim(logfile),'_',trim(rnlvls(i1,1))
      logfile=jch
    endif
  enddo
+ if (ncpu>1) then
+   jch=logfile
+   logfile=trim(jch)//"_CPU_"//trim(intc(myid+1))
+ endif
  !
  ! Finalize
  !
- if (tty_size<0) call rename_file(logfile)
+ if (log_as_a_file) call rename_file(logfile)
  call rename_file(repfile)
  call PP_redux_wait
- if (master_cpu) open(unit=11,file=trim(repfile))
- call write_the_logo(11,' ')
+ if (master_cpu) then
+   open(unit=11,file=trim(repfile))
+   call write_the_logo(11,' ')
+ endif
  !
  contains
    !
@@ -796,6 +836,18 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    end subroutine
    !
 #endif
+   !
+   subroutine CPU_activate(what)
+     character(*) :: what ! X_q_0 X_all_q GW HF BSE
+     call initactivate(1,what//"_CPU")
+     call initactivate(1,what//"_ROLEs")
+     if (what=="X_q_0".or.what=="X_all_q".or.what=="BSE") then
+       call initactivate(1,what//"_nCPU_invert")
+     endif
+     if (what=="BSE") then
+       call initactivate(1,what//"_nCPU_diago")
+     endif
+   end subroutine
    !
    subroutine X_activate(mode,what)
      character(2)::mode
@@ -927,8 +979,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_gw0.and.l_el_corr) call initactivate(1,'HF_and_locXC')
      if (l_ppa)    call initactivate(1,'em1d')
      if (l_cohsex) call initactivate(1,'em1s')
-     !if (l_bss)    call initactivate(1,'bse')
-     !if (l_bss)    call initactivate(1,'l_optics')
+     if (l_bss)    call initactivate(1,'bse')
+     if (l_bss)    call initactivate(1,'optics')
      if (l_bse) then
        !
        if (l_alda_fxc) BS_res_mode='x'     
@@ -958,10 +1010,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! After infile reading. Immediately before infile writing
      ! CAREFUL! Any input file value is overwritten here !
      !
-     Xw(2)%n(2)=Xw(2)%n(1)
-     Xw(4)%n(2)=Xw(4)%n(1)
-     Xw(3)%n(2)=Xw(3)%n(1)
-     Xw(1)%n(2)=Xw(1)%n(1)
+     Xw(2)%n_freqs=Xw(2)%n_freqs
+     Xw(4)%n_freqs=Xw(4)%n_freqs
+     Xw(3)%n_freqs=Xw(3)%n_freqs
+     Xw(1)%n_freqs=Xw(1)%n_freqs
      !
      ! q0 renormalization
      !
@@ -1084,6 +1136,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! V_general=6
        ! V_resp=7
        ! V_real_time=8
+       ! V_parallel=9
        ! V_all=99
        !
        if ( trim(rstr_piece(i1)) == 'infver' ) then
@@ -1104,6 +1157,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              infile_verbosity=V_resp
            case ('rt')
              infile_verbosity=V_real_time
+           case ('par')
+             infile_verbosity=V_parallel
            case ('all')
              infile_verbosity=V_all
          end select

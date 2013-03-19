@@ -27,8 +27,10 @@ integer function io_DIPOLES(X,Xen,ID)
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_fragmented,&
-&                        io_bulk,read_is_on,write_is_on,io_header,io_extension
+&                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
+&                        RD_CL_IF_END,RD_CL,io_action
  use fragments,     ONLY:io_fragment
+ use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_nbz
  !
  implicit none
  type(X_t)   ::X
@@ -37,7 +39,7 @@ integer function io_DIPOLES(X,Xen,ID)
  !
  ! Work Space
  !
- integer :: i1,ixyz,sec_size,i_spin,db_nbm,db_nb(2)
+ integer :: i1,ik,ik_mem,ixyz,sec_size,i_spin,db_nbm,db_nb(2)
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  real(SP),allocatable :: DIP_iR_disk(:,:,:)
@@ -55,45 +57,56 @@ integer function io_DIPOLES(X,Xen,ID)
    !
  endif
  !
+ ! When writing in parallel the definitions in variables_DIPOLES
+ ! are done only for the MASTER node.
+ !
+ if (write_is_on(ID)) then
+   db_nb=X%ib
+   db_nbm=Xen%nbm
+ endif
+ !
  if (.not.Dipole_bands_ordered) db_nbm=db_nb(2)
  !
  ! On disk the size is DIP_iR_or_P(3,db_nb(2),db_nbm,nXkibz)
  !
  sec_size=3*db_nb(2)*db_nbm
- if (any((/io_sec(ID,:)==2/))) then
+ !
+ ik=maxval(io_sec(ID,:))-1
+ !
+ if (ik==0) goto 1
+ !
+ ik_mem=PAR_Xk_ibz_index(ik)
+ !
+ allocate(DIP_iR_disk(db_nb(2),db_nbm,2))
+ !
+ if (read_is_on(ID)) call X_alloc('DIP_iR',(/3,X%ib(2),db_nbm,PAR_Xk_nbz/))
+ !
+ ! Fragmentation
+ !
+ io_extension(ID)='dipoles'
+ if (io_fragmented(ID)) call io_fragment(ID,i_fragment=ik)
+ !
+ ! Manage RD_CL_IF_END
+ !
+ if (io_action(ID)==RD_CL_IF_END.and.ik==nXkibz) io_action(ID)=RD_CL
+ !
+ do ixyz=1,3
    !
-   allocate(DIP_iR_disk(db_nb(2),db_nbm,2))
-   !
-   if (read_is_on(ID)) call X_alloc('DIP_iR',(/3,X%ib(2),db_nbm,nXkibz/))
-   !
-   do i1=1,nXkibz
+   do i_spin=1,n_sp_pol
      !
-     ! Fragmentation
+     if (write_is_on(ID)) call mat_c2r(DIP_iR(ixyz,:,:,ik_mem,i_spin),DIP_iR_disk)
      !
-     io_extension(ID)='dipoles'
-     if (io_fragmented(ID)) call io_fragment(ID,i_fragment=i1)
+     write (VAR_name,'(3(a,i4.4))') 'DIP_iR_k_',ik,'_xyz_',ixyz,'_spin_',i_spin
+     call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(DIP_iR_disk))
+     call io_bulk(ID,R3=DIP_iR_disk)
      !
-     do ixyz=1,3
-       !
-       do i_spin=1,n_sp_pol
-         !
-         if (write_is_on(ID)) call mat_c2r(DIP_iR(ixyz,:,:,i1,i_spin),DIP_iR_disk)
-         !
-         write (VAR_name,'(3(a,i4.4))') 'DIP_iR_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
-         call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(DIP_iR_disk))
-         call io_bulk(ID,R3=DIP_iR_disk)
-         !
-         if (read_is_on(ID)) call mat_r2c(DIP_iR_disk,DIP_iR(ixyz,:,:,i1,i_spin))
-         !
-       enddo
-       !
-     enddo
+     if (read_is_on(ID)) call mat_r2c(DIP_iR_disk,DIP_iR(ixyz,:,:,ik_mem,i_spin))
      !
    enddo
    !
-   deallocate(DIP_iR_disk)
-   !
- endif
+ enddo
+ !
+ deallocate(DIP_iR_disk)
  !
 1 call io_disconnect(ID=ID)
  !

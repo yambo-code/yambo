@@ -49,7 +49,7 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
  type(X_t)           ::X_dummy
  !
  w_group=1
- if (maxval(io_sec(ID,:))>2.and.FXC_W%n(1)>1) then
+ if (maxval(io_sec(ID,:))>2.and.FXC_W%n_freqs>1) then
    w_group=maxval(io_sec(ID,:)-2)/FXC_n_mem_freqs+1
  endif
  !
@@ -85,7 +85,7 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
 &       VAR="    |Damping range       [ev]:",R1=FXC_W%dr,CHECK=.true.,OP=(/"==","=="/),&
 &       DESCRIPTION=FXC_description(4))
    call io_elemental(ID,&
-&       VAR="    |Total Energy steps      :",I0=FXC_W%n(1),CHECK=.true.,OP=(/"=="/),&
+&       VAR="    |Total Energy steps      :",I0=FXC_W%n_freqs,CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=FXC_description(5))
    call io_elemental(ID,&
 &       VAR="    |Memory Energy steps     :",I0=FXC_n_mem_freqs,CHECK=.true.,OP=(/"=="/),&
@@ -140,8 +140,8 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   call io_bulk(ID,VAR='FREQUENCIES',VAR_SZ=(/FXC_W%n(1),2/))
-   allocate(W_disk(FXC_W%n(1),2))
+   call io_bulk(ID,VAR='FREQUENCIES',VAR_SZ=(/FXC_W%n_freqs,2/))
+   allocate(W_disk(FXC_W%n_freqs,2))
    !
    if (write_is_on(ID)) then
      W_disk(:,1)=real(FXC_W%p(:))
@@ -155,8 +155,8 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
        deallocate(FXC_W%p)
        call mem_est("W-p")
      endif
-     allocate(FXC_W%p(FXC_W%n(1)))
-     call mem_est("W-p",(/FXC_W%n(1)/))
+     allocate(FXC_W%p(FXC_W%n_freqs))
+     call mem_est("W-p",(/FXC_W%n_freqs/))
      FXC_W%p(:)=cmplx(W_disk(:,1),W_disk(:,2))
    endif
    !

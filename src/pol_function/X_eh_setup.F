@@ -25,7 +25,8 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  use X_m,           ONLY:X_t,X_poles,X_poles_tab
  use R_lattice,     ONLY:qindx_X,bz_samp
  use electrons,     ONLY:levels,n_sp_pol,spin_occ
- use frequency,     ONLY:rg_index_bg
+ use frequency,     ONLY:ordered_grid_index
+ use parallel_m,    ONLY:PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,PAR_IND_VAL_BANDS_X
  implicit none
  type(levels)::Xen 
  type(bz_samp)::Xk
@@ -50,9 +51,17 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  X_eh_setup=0
  do i1=1,Xk%nbz
+   !
+   if (.not.PAR_IND_Xk_bz%element_1D(i1)) cycle 
+   !
    do iv=X%ib(1),Xen%nbm
+     !
+     if (.not.PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)) cycle 
+     !
      do ic=Xen%nbf+1,X%ib(2)
        do i_sp=1,n_sp_pol
+         !
+         if (.not.PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic)) cycle 
          !
          i2=qindx_X(iabs(iq),i1,1)
          ik=Xk%sstar(i1,1) 
@@ -95,8 +104,8 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          X_eh_setup=X_eh_setup+1
          poles(X_eh_setup)=E_eh
          i_pole=X_eh_setup
-         if (allocated(rg_index_bg)) i_pole=rg_index_bg(X_eh_setup)
-         if (iq>0) X_poles_tab(i_pole,:)=(/i1,iv,ic,i_sp/)
+         if (allocated(ordered_grid_index)) i_pole=ordered_grid_index(X_eh_setup)
+         if (iq>0)                   X_poles_tab(i_pole,:)=(/i1,iv,ic,i_sp/)
          !
        enddo
      enddo

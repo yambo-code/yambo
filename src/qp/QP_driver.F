@@ -254,7 +254,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  endif
  !
  ! Updated descriptions (needed in case of Zoomed GFs)
- !=======================
+ !=====================================================
  !
  call QP_descriptions(qp,X,Xw,.TRUE.)
  !

@@ -81,12 +81,12 @@ subroutine X_GreenF_remap(bands,E,W)
    W_A%er(1)=nint(W_A%er(1)/E_step)*E_step
  enddo
  !
- W_A%n=max(new_map_points,W%n(1))
+ W_A%n=max(new_map_points,W%n_freqs)
  W_A%dr=0.
  call FREQUENCIES_setup(W_A)
  W_A%p=real(W_A%p)
  !
- allocate(E_map%GreenF(bands(2),E%nk,n_sp_pol,W_A%n(1)))
+ allocate(E_map%GreenF(bands(2),E%nk,n_sp_pol,W_A%n_freqs))
  E_map%GreenF=(0.,0.)
  !
  call live_timing('GF remapping',(bands(2)-bands(1)+1)*E%nk)
@@ -118,7 +118,7 @@ subroutine X_GreenF_remap(bands,E,W)
        call Kramers_Kronig(Ao,&
 &                          real(E%GreenF_W(i_b,i_k,i_spin,:)),E%GreenF_n_E_steps,&
 &                          E_map%GreenF(i_b,i_k,i_spin,:),&
-&                          W_sign*W_A%p,W_A%n(1),W_sign*zero_plus)
+&                          W_sign*W_A%p,W_A%n_freqs,W_sign*zero_plus)
        !
      enddo
      !
@@ -136,7 +136,7 @@ subroutine X_GreenF_remap(bands,E,W)
  !
  nullify(E%GreenF,E%GreenF_W)
  call mem_est("E-GreenF E-GreenF_W")
- E%GreenF_n_E_steps=W_A%n(1)
+ E%GreenF_n_E_steps=W_A%n_freqs
  allocate(E%GreenF(bands(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
  call mem_est("E-GreenF",(/size(E%GreenF)/))
  allocate(E%GreenF_W(bands(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))

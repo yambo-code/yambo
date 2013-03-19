@@ -62,7 +62,7 @@ subroutine K_inversion(iq,W,E,k,q)
  integer, parameter :: max_freqs_full_inv_ratio=10
  integer,  allocatable ::inv_err(:),iw_full(:)
  integer    ::full_inf_freqs,nw,nw_conv,&
-&             min_dist_non_conv_freqs ! Every W%n(1)/min_dist_non_conv_freqs
+&             min_dist_non_conv_freqs ! Every W%n_freqs/min_dist_non_conv_freqs
                                       ! I perform a full inversion
  logical    ::do_it_full,full_inf_freqs_found,MIXED,FULL,PERTURBATIVE
  !
@@ -117,11 +117,11 @@ subroutine K_inversion(iq,W,E,k,q)
  endif
  !
  if (i_err==0) then
-   allocate(inv_err_disk(W_disk%n(1)),eps_2start(W_disk%n(1)),&
-&           disk_freq_table(W_disk%n(1)+W%n(1)))
+   allocate(inv_err_disk(W_disk%n_freqs),eps_2start(W_disk%n_freqs),&
+&           disk_freq_table(W_disk%n_freqs+W%n_freqs))
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-   i_err=ioBSS_invert(iq,W_disk%n(1),inv_err_disk,eps_2start,W_disk,ID)
+   i_err=ioBSS_invert(iq,W_disk%n_freqs,inv_err_disk,eps_2start,W_disk,ID)
    !
    ! Here I create a new energy array that merges the disk 
    ! and present energies. In addition the corresponding inv_err
@@ -131,17 +131,17 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    deallocate(X_epsilon)
    !
-   BSS_n_freqs=W%n(1)
+   BSS_n_freqs=W%n_freqs
    BSS_er=W%er
    BSS_dr=W%dr
    !
    allocate(X_epsilon(4,BSS_n_freqs))
-   allocate(inv_err(W%n(1)),iw_full(W%n(1)))
+   allocate(inv_err(W%n_freqs),iw_full(W%n_freqs))
    X_epsilon=(0.,0.)
    inv_err=-1
    !
    nw_conv=0
-   do iw=1,W%n(1)
+   do iw=1,W%n_freqs
      !
      ! Load eps only for converged frequencies
      !
@@ -153,17 +153,17 @@ subroutine K_inversion(iq,W,E,k,q)
        endif
      endif
    enddo
-   call msg('rs','[BSE INV] Frequencies read    [o/o]:',real(nw_conv)/real(W%n(1))*100._SP)
+   call msg('rs','[BSE INV] Frequencies read    [o/o]:',real(nw_conv)/real(W%n_freqs)*100._SP)
    deallocate(inv_err_disk,eps_2start,disk_freq_table)
  else
-   allocate(inv_err(W%n(1)),iw_full(W%n(1)))
+   allocate(inv_err(W%n_freqs),iw_full(W%n_freqs))
    inv_err=-1
    X_epsilon=(0.,0.)
  endif
  !
  !  mem est
  !
- call mem_est("Lo",(/BS_H_dim*W%n(1),BS_H_dim**2/))
+ call mem_est("Lo",(/BS_H_dim*W%n_freqs,BS_H_dim**2/))
  !
  ! Kernel loading
  !
@@ -189,7 +189,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2
  !
- allocate(Lo(BS_H_dim,W%n(1)))
+ allocate(Lo(BS_H_dim,W%n_freqs))
  Lo=(0.,0.)
  call W_reset(W_shifted)
  call W_duplicate(W,W_shifted)
@@ -222,15 +222,15 @@ subroutine K_inversion(iq,W,E,k,q)
      if (allocated(BS_eh_W)) QP_width=BS_eh_W(i1)
      if (allocated(BS_eh_Z)) QP_Z=BS_eh_Z(i1)
      if (associated(E%GreenF)) then
-       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"c")
+       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n_freqs/),W,E,k,Lo(i1,:),"c")
      else
        Lo(i1,:)=QP_Z*BS_eh_f(i1)/(W%p(:)-BS_eh_E(i1)-(0.,1.)*QP_width)
        if (BS_K_coupling) Lo(i1+BS_K_dim,:)=-QP_Z*BS_eh_f(i1)/(W%p(:)+BS_eh_E(i1)-(0.,1.)*QP_width)
      endif
    else
-     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"sr")
+     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n_freqs/),W,E,k,Lo(i1,:),"sr")
      if (BS_K_coupling) then
-       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1+BS_K_dim,:),"sa")
+       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n_freqs/),W,E,k,Lo(i1+BS_K_dim,:),"sa")
      endif
    endif
    !
@@ -243,10 +243,10 @@ subroutine K_inversion(iq,W,E,k,q)
    !==============================================
    !
    if (BSS_uses_RIM) then
-     forall(iw=1:W%n(1)) W_shifted%p(iw)=W%p(iw)-BS_mat(i1,i1)
-     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1,:),"sr")
+     forall(iw=1:W%n_freqs) W_shifted%p(iw)=W%p(iw)-BS_mat(i1,i1)
+     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n_freqs/),W_shifted,E,k,Lo(i1,:),"sr")
      if (BS_K_coupling) then
-       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1+BS_K_dim,:),"sa")
+       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n_freqs/),W_shifted,E,k,Lo(i1+BS_K_dim,:),"sa")
      endif
      BS_mat(i1,i1)=(0.,0.)
    endif
@@ -261,20 +261,20 @@ subroutine K_inversion(iq,W,E,k,q)
  !========================
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/W%n(1)/))
+ call PARALLEL_index(px,(/W%n_freqs/))
  !
  if (PERTURBATIVE) then
    !
    do_it_full=.FALSE.
    call live_timing('Freq loop [pert]',px%n_of_elements(myid+1))
-   call perform_invertion(1,W%n(1))
+   call perform_invertion(1,W%n_freqs)
    call PP_redux_wait(inv_err,imode=2)
    !
    ! I/O [after pert invertion]
    !
    call PP_redux_wait(X_epsilon)
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-   i_err=ioBSS_invert(iq,W%n(1),inv_err,X_epsilon(2,:),W,ID)
+   i_err=ioBSS_invert(iq,W%n_freqs,inv_err,X_epsilon(2,:),W,ID)
    !
  endif
  !
@@ -286,7 +286,7 @@ subroutine K_inversion(iq,W,E,k,q)
  if (FULL) then
    !
    full_inf_freqs=0
-   do i1=1,W%n(1)
+   do i1=1,W%n_freqs
      if (inv_err(i1)/=0) then
        full_inf_freqs=full_inf_freqs+1
        iw_full(full_inf_freqs)=i1
@@ -297,7 +297,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  if (PERTURBATIVE) then
    !
-   min_dist_non_conv_freqs=W%n(1)
+   min_dist_non_conv_freqs=W%n_freqs
    full_inf_freqs_found=.FALSE.
    !
    do while (.not.full_inf_freqs_found) 
@@ -306,10 +306,10 @@ subroutine K_inversion(iq,W,E,k,q)
      !
      iw=-1
      nw=0
-     do i1=1,W%n(1)
+     do i1=1,W%n_freqs
        if (inv_err(i1)/= 0.and.iw<0) iw=i1
        if (inv_err(i1)/= 0.and.iw>0) nw=nw+1
-       if ((inv_err(i1)== 0.or.(inv_err(i1)==1.and.i1==W%n(1))).and.iw>0) then
+       if ((inv_err(i1)== 0.or.(inv_err(i1)==1.and.i1==W%n_freqs)).and.iw>0) then
          !
          if (nw>=min_dist_non_conv_freqs) then
            !
@@ -325,7 +325,7 @@ subroutine K_inversion(iq,W,E,k,q)
      enddo
      min_dist_non_conv_freqs=min_dist_non_conv_freqs-1
      if (min_dist_non_conv_freqs==0) full_inf_freqs_found=.TRUE.
-     if (full_inf_freqs>=W%n(1)/max_freqs_full_inv_ratio) full_inf_freqs_found=.TRUE.
+     if (full_inf_freqs>=W%n_freqs/max_freqs_full_inv_ratio) full_inf_freqs_found=.TRUE.
    enddo
  endif
  !
@@ -359,19 +359,19 @@ subroutine K_inversion(iq,W,E,k,q)
  endif
  !
  nw_conv=0
- do iw=1,W%n(1)
+ do iw=1,W%n_freqs
    if (inv_err(iw)==0) nw_conv=nw_conv+1
  enddo
- call msg('rs','[BSE INV] Converged frequencies (after full inv) [o/o]:',real(nw_conv)/real(W%n(1))*100._SP)
+ call msg('rs','[BSE INV] Converged frequencies (after full inv) [o/o]:',real(nw_conv)/real(W%n_freqs)*100._SP)
  !
  ! I/O [after full invertion]
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
- i_err=ioBSS_invert(iq,W%n(1),inv_err,X_epsilon(2,:),W,ID)
+ i_err=ioBSS_invert(iq,W%n_freqs,inv_err,X_epsilon(2,:),W,ID)
  !
  ! Try a polinomial interpolation on the null values
  !
- call K_eps_interpolate(W%n(1),real(W%p),inv_err)
+ call K_eps_interpolate(W%n_freqs,real(W%p),inv_err)
  call PP_redux_wait()
  !
  X_epsilon(2,:)=1.+X_epsilon(2,:)
@@ -382,7 +382,7 @@ subroutine K_inversion(iq,W,E,k,q)
  BSS_description(BSS_n_descs)=' BSS|BZ RIM points              :'//intc(BZ_RIM_tot_nkpts)
  BSS_n_descs=BSS_n_descs+1
  BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//&
-&                             trim(real2ch(real(nw_conv)/real(W%n(1))*100._SP))
+&                             trim(real2ch(real(nw_conv)/real(W%n_freqs)*100._SP))
  !
  call K_output_file(iq,of_mode)
  !

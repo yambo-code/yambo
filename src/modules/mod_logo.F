@@ -256,9 +256,9 @@ module LOGO
        ch=logo_line(i1)
        do while (index(ch,'S')/=0) 
          iA=index(ch,'S')
-#if defined _aix
+#if defined _aix || defined _BLUEGENE
          ch(iA:iA)="\\"
-#else
+#else 
          ch(iA:iA)="\"
 #endif
        enddo

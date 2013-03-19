@@ -33,6 +33,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use QP_m,           ONLY:QP_Vnl_xc,QP_Sc,QP_nk
  use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
+ use IO_m,           ONLY:IO_and_Messaging_switch
  !
  implicit none 
  !

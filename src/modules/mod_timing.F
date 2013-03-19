@@ -25,6 +25,7 @@ module timing
  use pars,     ONLY:DP
  use pars,     ONLY:schlen
  use pars,     ONLY:lchlen
+ use stderr,   ONLY:log_as_a_file
  implicit none
  !
  ! What is running ?
@@ -34,7 +35,7 @@ module timing
  ! Checked
  !
  integer           :: date_time_at_start(6)
- logical           :: live_timing_is_on,parallel_timing
+ logical           :: live_timing_is_on
  !
  ! Live Timing
  !
@@ -72,10 +73,9 @@ module timing
        call date_and_time(cd,ctz,cz,dz)
      endif
      call igethname(host_name,hn_len)
-     write (date_and_time_string,&
-&          '(4a,i3.3,a,2(i2.2,a),i4.4,2x,i2.2,a,i2.2)') trim(what_is_running),'@',&
-&           host_name(:hn_len),' x ',ncpu,' CPUs * ',&
-&           dz(2),'/',dz(3),'/',dz(1),dz(5),':',dz(6)
+     write (date_and_time_string,'(2(i2.2,a),i4.4,a,2(i2.2,a),3a)') &
+&           dz(2),'/',dz(3),'/',dz(1),' at ',dz(5),':',dz(6),' ',&
+&           trim(what_is_running),' @ ',host_name(:hn_len)
      if (present(dt_out)) dt_out=dz(:6)
    end function
    !
@@ -85,11 +85,10 @@ module timing
      logical     ,optional :: SERIAL
      if (.not.live_timing_is_on) return
      if (present(message).and.present(steps)) then
-       if (present(SERIAL)) call live_timing_activate(message,steps,.TRUE.)
+       if (present(SERIAL))      call live_timing_activate(message,steps,.TRUE.)
        if (.not.present(SERIAL)) call live_timing_activate(message,steps,.FALSE.)
      endif
      if (.not.present(message).and.present(steps)) call live_timing_add(steps)
-     if (.not.present(message).and..not.present(steps)) call live_timing_finalize()
    end subroutine
    !
    subroutine ct(INIT,INIT_SEG,SEG,INIT_SEC,SEC,FIN)
@@ -146,7 +145,7 @@ module timing
      if (d/=0)  write (time_string,'(4(i2.2,a))') d,'d-',h,'h-',m,'m-',s,'s'
    end function
    !
-   subroutine LIVE_message(lfmt,message,rfmt,sfmt,NO_CPUT)
+   subroutine LIVE_message(message,lfmt,rfmt,sfmt,CPU_TIME,CPU_ID)
      !
      !C simple message:
      !
@@ -155,28 +154,49 @@ module timing
      ! rfmt    =right formatting (n nn r)
      ! sfmt    =Message formatting
      !
-     use stderr,     ONLY : c_print,logfile,tty_size,write_to_log
-     use parallel_m, ONLY : myid,ncpu,master_cpu
+     use stderr,     ONLY : c_print,logfile,write_to_log
+     use parallel_m, ONLY : myid,ncpu
      implicit none
-     character(*)      :: lfmt,message,rfmt,sfmt
-     logical, optional :: NO_CPUT
+     character(*)          :: message
+     character(*),optional :: lfmt,rfmt,sfmt
+     logical,     optional :: CPU_TIME,CPU_ID
      ! 
      ! Work Space
      !
-     character(lchlen):: lch,fmt,message_composed,time_is_now_string 
-     logical          :: add_cput
+     character(lchlen):: lch,fmt_here,message_composed,time_is_now_string 
+     character(schlen):: lfmt_,rfmt_,sfmt_
+     logical          :: add_cput,add_cpu_id
      !
      if (.not.write_to_log) return
      !
+     if (.not.log_as_a_file) lfmt_="r"
+     if (log_as_a_file) lfmt_="n"
+     !
+     if (present(lfmt)) then
+       lfmt_=trim(lfmt)
+     endif
+     rfmt_=" "
+     if (present(rfmt)) then
+       rfmt_=trim(rfmt)
+     endif
+     sfmt_="%s"
+     if (present(sfmt)) then
+       sfmt_=trim(sfmt)
+     endif
+     !
      ! Update the reference CPUT
      !
+     add_cpu_id=.true.
+     if (present(CPU_ID)) then
+       add_cpu_id=CPU_ID
+     endif
      message_composed=trim(message)
-     if (ncpu/=1.and.parallel_timing.and.(index(lfmt,"n")>0.or.index(lfmt,"r")>0.)) then
-       write (message_composed,'(a,i2.2,2a)') 'P',myid+1,': ',trim(message)
+     if (ncpu/=1.and.add_cpu_id.and.(index(lfmt_,"n")>0.or.index(lfmt_,"r")>0.)) then
+       write (message_composed,'(a,i4.4,2a)') 'P',myid+1,': ',trim(message)
      endif
      add_cput=live_timing_is_on
-     if (present(NO_CPUT)) then
-       add_cput=.not.NO_CPUT
+     if (present(CPU_TIME)) then
+       add_cput=CPU_TIME
      endif
      if (add_cput) then
        !
@@ -192,8 +212,8 @@ module timing
      !
      ! TTY is active ? 
      !
-     if (tty_size>0) then
-       call c_print(lfmt,trim(message_composed),rfmt,sfmt)
+     if (.not.log_as_a_file) then
+       call c_print(lfmt_,trim(message_composed),rfmt_,sfmt_)
        return
      endif
      !
@@ -209,28 +229,26 @@ module timing
      !                "n"  "A"              ""        "??"          "??"       "A"
      !                ""   "B"              ""        "A"           ""         "AB"
      !
-     if (index(trim(lfmt),"n")>0) then
+     if (index(trim(lfmt_),"n")>0) then
        open(unit=13,file=trim(logfile),position='append')
-       if (trim(lfmt)=="nn") write (13,'(a/)') ""
-       if (master_cpu) write (13,'(a)') trim(log_line)
-       if (.not.master_cpu.and.len_trim(log_line)>0) write (13,'(a)') trim(log_line)
+       if (trim(lfmt_)=="nn") write (13,'(a/)') ""
+       write (13,'(a)') trim(log_line)
        log_line=trim(message_composed) 
-       if (trim(rfmt)=="n".or.trim(rfmt)=="nn") log_line=""
-       if (trim(rfmt)=="nn") write (13,'(a/)') ""
+       if (trim(rfmt_)=="n".or.trim(rfmt_)=="nn") log_line=""
+       if (trim(rfmt_)=="nn") write (13,'(a/)') ""
        close(13)
        return
      endif
-     fmt='(2a)'
+     fmt_here='(2a)'
      if (trim(message)=='|'.and.nhash/=hashes_done) then
-       write (fmt,'(a,i2.2,a)') '(a,',nhash-hashes_done,'x,a)'
+       write (fmt_here,'(a,i2.2,a)') '(a,',nhash-hashes_done,'x,a)'
      endif
-     write (lch,trim(fmt)) trim(log_line),trim(message_composed)
+     write (lch,trim(fmt_here)) trim(log_line),trim(message_composed)
      log_line=lch
-     if (index(trim(rfmt),"n")>0) then
+     if (index(trim(rfmt_),"n")>0) then
        open(unit=13,file=trim(logfile),position='append')
-       if (master_cpu) write (13,'(a)') trim(log_line)
-       if (.not.master_cpu.and.len_trim(log_line)>0) write (13,'(a)') trim(log_line)
-       if (trim(rfmt)=="nn") write (13,'(a/)') ""
+       write (13,'(a)') trim(log_line)
+       if (trim(rfmt_)=="nn") write (13,'(a/)') ""
        close(13)
        log_line=""
      endif
@@ -238,7 +256,7 @@ module timing
    end subroutine
    !
    subroutine live_timing_activate(name,steps,SERIAL)
-     use stderr,     ONLY : tty_size,write_to_log
+     use stderr,     ONLY : write_to_log
      implicit none
      character(*)      :: name
      logical           :: SERIAL
@@ -254,23 +272,19 @@ module timing
      steps_done=0
      cput_save=0.
      call ct(INIT_SEG=.true.)
-     if (tty_size>0) call LIVE_message("n",trim(name),"","%s")
+     if (.not.log_as_a_file) call LIVE_message(trim(name),"n","","%s")
      call live_timing_update("--","--")
-     if (.not.SERIAL) then
-       write_to_log=.true.
-       parallel_timing=.true.
-     endif
    end subroutine
    !
    subroutine live_timing_add(steps)
-     use parallel_m, ONLY : myid,master_cpu
+     use parallel_m, ONLY : myid
      implicit none
      integer :: steps
      ! 
      ! Work Space
      !
      character(schlen)  :: xtch,etch
-     real(SP),parameter :: rts=5.,p_delay=10.
+     real(SP),parameter :: rts=5.
      real(SP) :: lts
      logical  :: time_report
      !
@@ -283,22 +297,20 @@ module timing
      !
      etch=time_string(cput_seg(myid+1,1)) 
      if (len_trim(etch)==0) etch='--'
-     time_report=cput_seg(myid+1,1)-cput_save>=rts+p_delay*myid
-     if (.not.time_report) time_report=all((/master_cpu,steps_done==time_steps/))
+     time_report=cput_seg(myid+1,1)-cput_save>=rts
+     if (.not.time_report) time_report=steps_done==time_steps
      if (time_report) cput_save=cput_seg(myid+1,1)
      !
      if (time_report) then
        lts=cput_seg(myid+1,1)*real(time_steps)/real(steps_done)
        xtch=time_string(lts)
        if (len_trim(xtch)==0) xtch='--'
-       if (trim(xtch)/='--'.or.master_cpu) call live_timing_update(trim(xtch),trim(etch))
+       call live_timing_update(trim(xtch),trim(etch))
      endif
      !
    end subroutine
    !
    subroutine live_timing_update(xch,ech)
-     use stderr,     ONLY : tty_size
-     use parallel_m, ONLY : master_cpu
      implicit none
      character(*)::xch,ech
      ! 
@@ -308,37 +320,30 @@ module timing
      character(schlen):: lch,lfmt,lmsg
      !
      if (hashes_now==hashes_done.and.steps_done/=0) return
-     if (steps_done==0.and..not.master_cpu) return
      !
      ! Write the descriptor 
      !
      write (lch,'(2a)') trim(timing_name),' |'
-     if (tty_size>0) call LIVE_message("r",lch,"","%s")
-     if (tty_size<0) call LIVE_message("n",lch,"","%s")
+     if (.not.log_as_a_file) call LIVE_message(lch,"r","","%s")
+     if (log_as_a_file) call LIVE_message(lch,"n","","%s")
      !
      ! Write the progression bar
      !
      if (hashes_now/=hashes_done) hashes_done=hashes_now
+     !
      do i1=1,hashes_done
-       call LIVE_message("","#","","%s",NO_CPUT=.true.)
+       call LIVE_message("#","","","%s",CPU_TIME=.false.)
      enddo
+     !
      i1=nhash-hashes_done+1 
      if (hashes_done==nhash) i1=0
      if (i1>=10) write (lfmt,'(a,i2.2,a)') '%',nhash-hashes_done+1,'s'
      if (i1< 10) write (lfmt,'(a,i1.1,a)') '%',nhash-hashes_done+1,'s'
-     call LIVE_message("","|","",lfmt,NO_CPUT=.true.)
+     call LIVE_message("|","","",lfmt,CPU_TIME=.false.)
      perc=int(real(steps_done)/real(time_steps)*100.)
      write (lmsg,'(1x,a,i3.3,5a)') '[',perc,'%] ',ech,'(E) ',xch,'(X)'
-     call LIVE_message("",lmsg,"","%s",NO_CPUT=.true.)
+     call LIVE_message(lmsg,"","","%s",CPU_TIME=.false.)
      !
-   end subroutine
-   !
-   subroutine live_timing_finalize
-     use stderr,     ONLY : write_to_log
-     use parallel_m, ONLY : master_cpu
-     implicit none
-     parallel_timing=.false.
-     write_to_log=master_cpu
    end subroutine
    !
    ! COPYRIGHT

@@ -57,7 +57,7 @@ module memory_m
      integer :: i1,i2,local_kind
      logical :: loading,stdout_report
      real(SP):: mem_moved
-     real(SP),parameter :: mem_tresh=0.1  ! ( in Gb. CAREFUL! mem_tresh must be >0)
+     real(SP),parameter :: mem_tresh=0.01  ! ( in Gb. CAREFUL! mem_tresh must be >0)
      character(lchlen)  ::ch(2)
      character(schlen)  ::input_name(10),action
      !

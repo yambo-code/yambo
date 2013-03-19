@@ -27,22 +27,25 @@ module frequency
  !
  ! Bare 2 Coarse grid
  !
- ! cg_npts      ! Coarse grid points
- ! cg_pt        ! Coarse grid point
- ! cg_index_bg(ibg)  ! Tells the index in the reordered (not coarse) 
- !                   ! grid of the ibg-th element
- !                   ! of the original (not sorted) grid
- ! bg_npts(icg) ! Tells how many poles are linked to the POLE of the
- !              ! non degenerate new grid (icg)
+ ! coarse_grid_N          ! Coarse grid points
+ ! coarse_grid_Pt         ! Coarse grid point
+ ! coarse_grid_index(ibg) ! Tells the index in the reordered (not coarse) 
+ !                        ! grid of the ibg-th element
+ !                        ! of the original (not sorted) grid
+ ! ordered_grid_index(ibg)! Tells the index in the reordered (not coarse) 
+ !                        ! grid of the ibg-th element
+ !                        ! of the original (not sorted) grid
+ ! bare_grid_N(icg)       ! Tells how many poles are linked to the POLE of the
+ !                        ! non degenerate new grid (icg)
  !
- integer :: cg_npts
- real(SP),allocatable :: cg_pt(:)
- integer, allocatable :: rg_index_bg(:)
- integer, allocatable :: cg_index_bg(:)
- integer, allocatable :: bg_npts(:)
+ integer :: coarse_grid_N
+ real(SP),allocatable :: coarse_grid_Pt(:)
+ integer, allocatable :: ordered_grid_index(:)
+ integer, allocatable :: coarse_grid_index(:)
+ integer, allocatable :: bare_grid_N(:)
  !
  type w_samp
-   integer      :: n(2)
+   integer      :: n_freqs
    real(SP)     :: er(2)
    real(SP)     :: damp_reference
    real(SP)     :: dr(2)
@@ -55,7 +58,7 @@ module frequency
    subroutine W_merge(W1,Wo,table)
      use memory_m, ONLY:mem_est
      type(w_samp):: W1,Wo
-     integer     :: table(W1%n(1)+Wo%n(1))
+     integer     :: table(W1%n_freqs+Wo%n_freqs)
      ! 
      ! Work Space
      !
@@ -67,26 +70,26 @@ module frequency
      call W_duplicate(Wo,Wbase)
      call W_reset(Wo)
      !
-     nw=Wbase%n(1)
+     nw=Wbase%n_freqs
      table=0
-     do i1=1,nw
+     do i1=1,Wbase%n_freqs
        table(i1)=-i1
      enddo
      !
-     W1_loop: do iw1=W1%n(1),1,-1
-       do iw2=1,Wbase%n(1)
+     W1_loop: do iw1=W1%n_freqs,1,-1
+       do iw2=1,Wbase%n_freqs
          !
          r=(/real(Wbase%p(iw2)),real(W1%p(iw1)),0._SP/)
-         if (iw2<Wbase%n(1)) r(3)=real(Wbase%p(iw2+1))
+         if (iw2<Wbase%n_freqs) r(3)=real(Wbase%p(iw2+1))
          !
          if (abs(r(1)-r(2))<1.E-5) then
            table(iw2)=iw1
            cycle W1_loop 
          endif
          !
-         if ((iw2< Wbase%n(1).and.r(1)<r(2).and.r(2)<r(3)).or.&
-&            (iw2==Wbase%n(1).and.r(1)<r(2)) ) then
-           do i1=W1%n(1)+Wbase%n(1)-1,iw2+1,-1
+         if ((iw2< Wbase%n_freqs.and.r(1)<r(2).and.r(2)<r(3)).or.&
+&            (iw2==Wbase%n_freqs.and.r(1)<r(2)) ) then
+           do i1=W1%n_freqs+Wbase%n_freqs-1,iw2+1,-1
              table(i1+1)=table(i1)
            enddo
            table(iw2+1)=iw1
@@ -97,9 +100,9 @@ module frequency
        enddo
      enddo W1_loop
      !
-     Wo%n=nw
+     Wo%n_freqs=nw
      allocate(Wo%p(nw))
-     call mem_est("W-p",(/Wo%n(1)/))
+     call mem_est("W-p",(/Wo%n_freqs/))
      do iw1=1,nw
        if (table(iw1)>0) Wo%p(iw1)=W1%p(table(iw1))
        if (table(iw1)<0) Wo%p(iw1)=Wbase%p(-table(iw1))
@@ -114,14 +117,14 @@ module frequency
    subroutine W_duplicate(Wi,Wo)
      use memory_m, ONLY:mem_est
      type(w_samp):: Wi,Wo
-     Wo%n=Wi%n
+     Wo%n_freqs=Wi%n_freqs
      Wo%per_memstps=Wi%per_memstps
      Wo%er=Wi%er
      Wo%dr=Wi%dr
      Wo%damp_reference=Wi%damp_reference
      if (associated(Wi%p)) then
-       allocate(Wo%p(Wo%n(1)))
-       call mem_est("W-p",(/Wo%n(1)/))
+       allocate(Wo%p(Wo%n_freqs))
+       call mem_est("W-p",(/Wo%n_freqs/))
        Wo%p=Wi%p
      endif
    end subroutine W_duplicate
@@ -129,7 +132,7 @@ module frequency
    subroutine W_reset(W)
      use memory_m, ONLY:mem_est
      type(w_samp)::W
-     W%n=100
+     W%n_freqs=100
      W%per_memstps=100.
      W%er=(/0.,10./)/HA2EV
      W%dr=(/.1,.1/)/HA2EV

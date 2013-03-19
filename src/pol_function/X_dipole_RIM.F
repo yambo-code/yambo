@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_dipole_RIM(iq,transitions,fr,Xw,Xen,Xk,Gf_rhoq0,ordering)
+subroutine X_dipole_RIM(iq,transitions,Xw,Xen,Xk,Gf_rhoq0,ordering)
  !
  use pars,       ONLY:SP
  use electrons,  ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,spin_occ,BZ_RIM_nbands
@@ -27,7 +27,7 @@ subroutine X_dipole_RIM(iq,transitions,fr,Xw,Xen,Xk,Gf_rhoq0,ordering)
  use frequency,  ONLY:w_samp
  !
  implicit none
- integer      :: iq,transitions(4),fr(2)
+ integer      :: iq,transitions(4)
  type(w_samp) :: Xw
  type(levels) :: Xen
  type(bz_samp):: Xk
@@ -38,7 +38,7 @@ subroutine X_dipole_RIM(iq,transitions,fr,Xw,Xen,Xk,Gf_rhoq0,ordering)
  integer      ::i1,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ik,ikp
  real(SP)     ::ffac,f0fac,W_
  complex(SP)  ::Gf_tmp
- complex(SP), optional :: Gf_rhoq0(Xw%n(2))
+ complex(SP), optional :: Gf_rhoq0(Xw%n_freqs)
  real(SP)     ::Ec_m_Ev
  complex(SP)  ::Z_,pole
  !
@@ -67,15 +67,15 @@ subroutine X_dipole_RIM(iq,transitions,fr,Xw,Xen,Xk,Gf_rhoq0,ordering)
    Ec_m_Ev=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ik_rand,i_spin)
    pole   =Ec_m_Ev+(0.,1.)*W_
    !
-   do iw=fr(1),fr(2)
+   do iw=1,Xw%n_freqs
      if (ordering=="t") &
-&      Gf_rhoq0(iw-fr(1)+1)=(Z_*(1./(Xw%p(iw)-pole)-1./(conjg(Xw%p(iw))+pole)))/Ec_m_Ev**2
+&      Gf_rhoq0(iw)=(Z_*(1./(Xw%p(iw)-pole)-1./(conjg(Xw%p(iw))+pole)))/Ec_m_Ev**2
      if (ordering=="c") &
-&      Gf_rhoq0(iw-fr(1)+1)=(Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+pole))       )/Ec_m_Ev**2
+&      Gf_rhoq0(iw)=(Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+pole))       )/Ec_m_Ev**2
      if (ordering=="r") &
-&      Gf_rhoq0(iw-fr(1)+1)=(Z_/(Xw%p(iw)-pole)                               )/Ec_m_Ev**2
+&      Gf_rhoq0(iw)=(Z_/(Xw%p(iw)-pole)                               )/Ec_m_Ev**2
      if (ordering=="a") &
-&      Gf_rhoq0(iw-fr(1)+1)=(           -Z_/(conjg(Xw%p(iw))+pole)            )/Ec_m_Ev**2
+&      Gf_rhoq0(iw)=(           -Z_/(conjg(Xw%p(iw))+pole)            )/Ec_m_Ev**2
    enddo
    !
    return
@@ -101,13 +101,13 @@ subroutine X_dipole_RIM(iq,transitions,fr,Xw,Xen,Xk,Gf_rhoq0,ordering)
    ffac=Z_*Xen%f_RIM(iv,ik_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))/&
 &       real(BZ_RIM_nkpt(ikbz))/f0fac
    !
-   do iw=fr(1),fr(2)
+   do iw=1,Xw%n_freqs
      !
      if (ordering=="t") Gf_tmp=ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
      if (ordering=="c") Gf_tmp=ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
      if (ordering=="r") Gf_tmp=ffac/(Xw%p(iw)-pole)
      if (ordering=="a") Gf_tmp=-ffac/(conjg(Xw%p(iw))+pole)
-     Gf_rhoq0(iw-fr(1)+1)=Gf_rhoq0(iw-fr(1)+1)+Gf_tmp/Ec_m_Ev**2
+     Gf_rhoq0(iw)=Gf_rhoq0(iw)+Gf_tmp/Ec_m_Ev**2
      !
    enddo
    !

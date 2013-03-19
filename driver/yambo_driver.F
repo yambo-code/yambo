@@ -70,7 +70,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  myid  =pid
  infile=inf
  !
- call std_presets(instr,ind,od,js,com_dir)
+ call SET_defaults(instr,ind,od,js,com_dir)
  call it_reset(1)
  !
  ! not resetted in init call
@@ -98,10 +98,10 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  endif
  if (iinf/=0) return
  !
- ! RUN SUMMARY 
- !=============
+ ! PARALLEL and I/O Setup 
+ !=======================
  !
- call IO_Setup(en,k)
+ call PARALLEL_and_IO_Setup(en,k)
  !
  ! SETUPS ...
  !============
@@ -132,11 +132,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  call QP_external_corrections(Xen,en,Xk,k,X)
  !
- ! HARTREE-FOCK AND VXC
- !======================
- !
- if (l_HF_and_locXC.and..not.any((/l_sc_run,l_collisions_IO,l_real_time/))) call XCo_driver(en,k,Xk,q)
- !
  ! OPTICS
  !========
  !
@@ -163,6 +158,11 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  l_dyn_em1= (.not.l_ppa.and..not.l_cohsex) .and. (l_em1d.or.(l_gw0.and.l_el_corr))
  !
  if (l_dyn_em1)    i_err=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
+ !
+ ! HARTREE-FOCK AND VXC
+ !======================
+ !
+ if (l_HF_and_locXC.and..not.any((/l_sc_run,l_collisions_IO,l_real_time/))) call XCo_driver(en,k,Xk,q)
  !
  ! EXTENDED COLLISIONS (HF & COHSEX)
  !===================================

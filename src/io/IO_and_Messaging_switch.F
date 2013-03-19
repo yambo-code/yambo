@@ -19,23 +19,37 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine IO_and_Messaging_switch(what)
+subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  use pars,           ONLY:schlen
  use IO_m,           ONLY:IO_write,IO_read,Fragmented_IO_save,Fragmented_IO
- use com,            ONLY:write_to_report
- use parallel_m,     ONLY:local_master_cpu,myid,master_cpu
- use stderr,         ONLY:string_split,write_to_log
+ use com,            ONLY:write_to_report,write_to_of
+ use parallel_m,     ONLY:IO_write_default,myid,master_cpu
+ use stderr,         ONLY:string_split
  use fragments,      ONLY:Parallel_Fragments,last_syncronized
  use timing,         ONLY:live_timing_is_on
+ use parser_m,       ONLY:parser
  implicit none
  !
- character(*) :: what
+ character(*)      :: what
+ logical, optional :: CONDITION
  !
  ! Work Space
  !
  integer          ::ich
  character(schlen)::ch_piece(10)
+ logical          ::local_TRUE,local_FALSE,local_no_WRITE,local_master
+ !
+ call parser('SkipWRITE',local_no_WRITE)
+ !
+ local_TRUE  =.TRUE.
+ local_FALSE =.FALSE.
+ local_master=master_cpu
+ if (present(CONDITION)) then
+   local_TRUE =CONDITION
+   local_FALSE=CONDITION
+   local_master=CONDITION
+ endif
  !
  if (len_trim(what)>0) then
    call string_split(what,ch_piece)
@@ -43,45 +57,41 @@ subroutine IO_and_Messaging_switch(what)
      !
      ! Complete Reset
      !
-     if (trim(ch_piece(ich))=="RESET") then
-       write_to_log   =master_cpu
-       write_to_report=master_cpu
-       IO_write       =local_master_cpu(myid+1)
-       IO_read        =.true.
-       Fragmented_IO  =Fragmented_IO_save
-       Parallel_Fragments  =.FALSE.
-       last_syncronized    =0
-       live_timing_is_on   =.TRUE.
-       return
-     endif
+     if (trim(ch_piece(ich))=="RESET") call SET_logicals()
      !
      ! Messages
      !
-     if (trim(ch_piece(ich))=="-report") write_to_report=.false.
-     if (trim(ch_piece(ich))=="-log"   ) write_to_log=.false.
-     if (trim(ch_piece(ich))=="-timing") live_timing_is_on=.false.
-     if (trim(ch_piece(ich))=="+report") write_to_report=master_cpu
-     if (trim(ch_piece(ich))=="+log"   ) write_to_log=master_cpu
-     if (trim(ch_piece(ich))=="+timing") live_timing_is_on=.true.
+     if (trim(ch_piece(ich))=="-report") write_to_report=local_FALSE
+     if (trim(ch_piece(ich))=="-timing") live_timing_is_on=local_FALSE
+     if (trim(ch_piece(ich))=="+report") write_to_report=local_master
+     if (trim(ch_piece(ich))=="+timing") live_timing_is_on=local_TRUE
+     !
+     ! Ouput files
+     !
+     if (trim(ch_piece(ich))=="-output") write_to_of=local_FALSE
+     if (trim(ch_piece(ich))=="+output") write_to_of=local_TRUE
      !
      ! I/O
      !
-     if (trim(ch_piece(ich))=="-io_in")  IO_read=.false.
-     if (trim(ch_piece(ich))=="-io_out") IO_write=.false.
-     if (trim(ch_piece(ich))=="+io_in")  IO_read=.true.
-     if (trim(ch_piece(ich))=="+io_out") IO_write=local_master_cpu(myid+1)
+     if (trim(ch_piece(ich))=="-io_in" ) IO_read=local_FALSE
+     if (trim(ch_piece(ich))=="-io_out") IO_write=local_FALSE
+     if (trim(ch_piece(ich))=="+io_in" ) IO_read=local_TRUE
+     if (trim(ch_piece(ich))=="+io_out") then
+       if (local_no_WRITE)      IO_write=.FALSE.
+       if (.not.local_no_WRITE) IO_write=local_TRUE
+     endif
      !
      if (trim(ch_piece(ich))=="+all_write_fragments") then
-       Parallel_Fragments=.TRUE.
-       IO_write          =.TRUE.
-       last_syncronized    =0
+       Parallel_Fragments=local_TRUE
+       IO_write          =local_TRUE
+       last_syncronized  =0
      endif
      if (trim(ch_piece(ich))=="-all_write_fragments") then
-       Parallel_Fragments=.FALSE.
-       IO_write          =local_master_cpu(myid+1)
+       Parallel_Fragments=local_FALSE
+       IO_write          =IO_write_default(myid+1)
      endif
      !
-     if (trim(ch_piece(ich))=="+DB_is_fragmented") Fragmented_IO=.TRUE.
+     if (trim(ch_piece(ich))=="+DB_is_fragmented") Fragmented_IO=local_TRUE
      if (trim(ch_piece(ich))=="-DB_is_fragmented") Fragmented_IO=Fragmented_IO_save
      !
    enddo

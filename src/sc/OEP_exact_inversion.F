@@ -37,7 +37,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan
- use frequency,       ONLY:w_samp,W_reset,bg_npts,cg_pt,cg_index_bg,rg_index_bg
+ use frequency,       ONLY:w_samp,W_reset,bare_grid_N,coarse_grid_Pt,coarse_grid_index,ordered_grid_index
  use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
  use collision,       ONLY:ggwinfo,collision_reset
  use QP_m,            ONLY:QP_ng_Sx,QP_Vnl_xc,QP_n_states,QP_table,QP_Sc
@@ -76,12 +76,12 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  Xw%n = 1
  call FREQUENCIES_setup(Xw)
  Xw%p(1)=real(Xw%p(1))+(0.,1.)*epsilon(1._SP)
- call X_alloc('X',(/X%ng,X%ng,Xw%n(2)/))
+ call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
  X%ordering='c'
  !
  ! 2:
  call IO_and_Messaging_switch("-report") 
- call X_os(X_mat,1,(/1,Xw%n(1)/),E,k,Xw,X)
+ call X_os(X_mat,1,E,k,Xw,X)
  call IO_and_Messaging_switch("+report")
  ! 3:
  allocate(Xo_inverse(X%ng-1,X%ng-1))
@@ -187,8 +187,8 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  ! Reset coarse-grid arrays used in X_os
  !
- if (allocated(rg_index_bg)) deallocate(rg_index_bg)
- deallocate(X_poles_tab,bg_npts,cg_pt,cg_index_bg)
+ if (allocated(ordered_grid_index)) deallocate(ordered_grid_index)
+ deallocate(X_poles_tab,bare_grid_N,coarse_grid_Pt,coarse_grid_index)
  call mem_est("X_poles_tab RGi BGn CGp CGi")
  current_iq=0
  !

@@ -39,11 +39,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use com,            ONLY:msg,warning
  use X_m,            ONLY:X_t,current_iq
  use timing,         ONLY:LIVE_message
- use stderr,         ONLY:tty_size,intc,real2ch
+ use stderr,         ONLY:intc,real2ch
  use xc_functionals, ONLY:V_xc,E_xc
  use frequency,      ONLY:w_samp
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,&
-&                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL
+&                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder
  use timing,         ONLY:live_timing
  use collisions_IO,  ONLY:collisions_IO_alloc,collisions_IO_free
@@ -417,14 +417,14 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if(n_sp_pol>1) dumb_ch=trim(dumb_ch)//'  (Mz='//trim(real2ch(Total_magn(3)))//')'
 #endif
      !
-     if (tty_size>0.or.it_now==1) then
-       call LIVE_message("n",dumb_ch,"","%s")
+     if (.not.log_as_a_file.or.it_now==1) then
+       call LIVE_message(dumb_ch,"n","","%s")
      else
        if (local_V) then
-         if (tty_size>0) call LIVE_message("r",dumb_ch,"","%s")
-         if (tty_size<0) call LIVE_message("n",dumb_ch,"","%s")
+         if (.not.log_as_a_file) call LIVE_message(dumb_ch,"r","","%s")
+         if (log_as_a_file) call LIVE_message(dumb_ch,"n","","%s")
        else
-         call LIVE_message("n",dumb_ch,"","%s")
+         call LIVE_message(dumb_ch,"n","","%s")
        endif
      endif
      !

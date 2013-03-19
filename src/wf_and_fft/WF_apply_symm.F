@@ -24,6 +24,9 @@ subroutine WF_apply_symm(isc,WF_symm)
  use pars,          ONLY:SP
  use wave_func,     ONLY:wf,wf_state
  use FFT_m,         ONLY:fft_rot_r,fft_size
+ use com,           ONLY:error
+ use stderr,        ONLY:intc
+ use parallel_m,    ONLY:myid
  use electrons,     ONLY:n_spinor
  use D_lattice,     ONLY:nsym,spin_sop,i_time_rev,idt_index
  !
@@ -33,6 +36,11 @@ subroutine WF_apply_symm(isc,WF_symm)
  integer     :: i_wf(n_spinor)
  !
  i_wf(1)=wf_state(isc(1),isc(2),isc(4))
+#if defined _BLUEGENE
+ if (i_wf(1)==0) call error('EMPTY WF index @ b:'//trim(intc(isc(1)))//' k:'//&
+&                           trim(intc(isc(2)))//' spin:'//trim(intc(isc(4)))//&
+&                           ' ID:'//trim(intc(myid)))
+#endif
  if(n_spinor==2)  i_wf(n_spinor)=wf_state(isc(1),isc(2),n_spinor)
  !
  if(isc(3)==idt_index) then

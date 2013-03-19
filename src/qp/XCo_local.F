@@ -29,10 +29,10 @@ subroutine XCo_local(E,Xk)
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:wf,wf_state
- use xc_functionals,ONLY:V_xc,xc_string
- use xc_functionals,ONLY:magn
+ use xc_functionals,ONLY:V_xc,xc_string,magn
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wrapper,       ONLY:Vstar_dot_V
+ use parallel_m,    ONLY:PAR_IND_QP,PP_redux_wait,PAR_COM_QP_index
 #if defined _SC
  use com,           ONLY:error
  use IO_m,          ONLY:REP,VERIFY
@@ -99,6 +99,11 @@ subroutine XCo_local(E,Xk)
    ! 
    do i1=1,QP_n_states
      !
+     ! The QP indexes have been created together with the bands and q
+     ! distribution used to calculate the exchange self-energy
+     !
+     if (.not.PAR_IND_QP%element_1D(i1)) cycle
+     !
      ib =QP_table(i1,1)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
@@ -112,6 +117,8 @@ subroutine XCo_local(E,Xk)
      QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,iwf),c_ws(:,1))
      !
    enddo
+   !
+   call PP_redux_wait(QP_Vxc,COMM=PAR_COM_QP_index%COMM)
    !
    return
    !
@@ -157,6 +164,8 @@ subroutine XCo_local(E,Xk)
    !
    do i1=1,QP_n_states
      !
+     if (.not.PAR_IND_QP%element_1D(i1)) cycle
+     !
      ib =QP_table(i1,1)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
@@ -199,5 +208,7 @@ subroutine XCo_local(E,Xk)
 #if !defined _SC
  deallocate(V_xc)
 #endif
+ !
+ call PP_redux_wait(QP_Vxc)
  !
 end subroutine

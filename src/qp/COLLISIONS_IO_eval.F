@@ -37,7 +37,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  use X_m,           ONLY:X_t
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
- use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
+ use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,IO_and_Messaging_switch
  use fragments,     ONLY:fragment_status
  !
  implicit none

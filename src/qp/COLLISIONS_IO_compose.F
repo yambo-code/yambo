@@ -31,7 +31,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  use collisions_IO,    ONLY:COLLISIONS_v,COLLISIONS_table,V_kind,io_COLLISIONS
  use parallel_m,       ONLY:PP_indexes,PP_redux_wait,PP_indexes_reset,myid
  use interfaces,       ONLY:PARALLEL_index
- use IO_m,             ONLY:io_control,OP_RD_CL,NONE
+ use IO_m,             ONLY:io_control,OP_RD_CL,NONE,IO_and_Messaging_switch
  use collisions_CACHE, ONLY:last_QP_mem,CACHE
  !
  implicit none

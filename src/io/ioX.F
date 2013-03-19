@@ -157,7 +157,7 @@ integer function ioX(X,Xw,ID)
      call io_elemental(ID,UNIT=HA2EV,&
 &         VAR=" :: X damping range    [ev]:",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
      call io_elemental(ID,&
-&           VAR=" :: Number of frequencies  :",I0=Xw%n(1),CHECK=.true.,OP=(/"=="/))
+&           VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
    endif
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
@@ -181,8 +181,8 @@ integer function ioX(X,Xw,ID)
    !
    write (ch,'(a,i3.3)') "FREQ_sec_iq",iq
    if (ver_is_gt_or_eq(ID,revision=308)) ch="FREQ_sec_iq"//trim(intc(iq))
-   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/Xw%n(1),2/))
-   allocate(W_disk(Xw%n(1),2))
+   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/Xw%n_freqs,2/))
+   allocate(W_disk(Xw%n_freqs,2))
    !
    if (write_is_on(ID)) then
      W_disk(:,1)=real(Xw%p(:))
@@ -196,8 +196,8 @@ integer function ioX(X,Xw,ID)
        deallocate(Xw%p)
        call mem_est("W-p")
      endif
-     allocate(Xw%p(Xw%n(1)))
-     call mem_est("W-p",(/Xw%n(1)/))
+     allocate(Xw%p(Xw%n_freqs))
+     call mem_est("W-p",(/Xw%n_freqs/))
      Xw%p(:)=cmplx(W_disk(:,1),W_disk(:,2))
    endif
    !
@@ -206,9 +206,9 @@ integer function ioX(X,Xw,ID)
    write (ch,'(a,i3.3)') "X_Q_",iq
    if (ver_is_gt_or_eq(ID,revision=308)) ch="X_Q_"//trim(intc(iq))
    !
-   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/X%ng_db,X%ng_db,2,Xw%n(1)/))
+   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/X%ng_db,X%ng_db,2,Xw%n_freqs/))
    !
-   do i1=1,Xw%n(1)
+   do i1=1,Xw%n_freqs
      !
      if (write_is_on(ID)) call mat_c2r(X_mat(:,:,i1),X_disk)
      !

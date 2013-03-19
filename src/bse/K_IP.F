@@ -57,7 +57,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  type(X_t)         ::X_oscillators
  integer           ::ik,iv,ic,i1,i_sp,ioBS_err,ID, epsilon_dim
  real(SP)          ::Co
- complex(SP)       ::drude_GreenF(W_bss%n(2)),local_Z
+ complex(SP)       ::drude_GreenF(W_bss%n_freqs),local_Z
  integer           ::iw
 #if defined _KERR
  complex(SP)       ::factor_jj

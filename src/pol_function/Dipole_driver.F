@@ -22,23 +22,20 @@
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  use drivers,        ONLY:l_optics,l_real_time,l_sc_run
- use pars,           ONLY:SP,cI
- use com,            ONLY:warning,error
- use drivers,        ONLY:l_col_cut
- use electrons,      ONLY:levels,n_sp_pol
- use parallel_m,     ONLY:PP_redux_wait
- use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
- use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use fields,         ONLY:grid_path,global_gauge
- use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
+ use interfaces,     ONLY:PARALLEL_WF_distribute
+ use pars,           ONLY:SP
+ use com,            ONLY:warning
+ use electrons,      ONLY:levels
+ use R_lattice,      ONLY:bz_samp
+ use fields,         ONLY:grid_path
+ use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
 &                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
- use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+ use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,MASTER,OP_APP_WR_CL,OP_RD,RD_CL_IF_END
  use wave_func,      ONLY:wf_ng,WF_load,WF_free
- use vec_operate,    ONLY:v_norm
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_Xk_nibz,PAR_IND_VAL_BANDS_X
 #if defined _SC      
  use X_m,            ONLY:P_square
 #endif
- use WF_distribute,  ONLY:WF_states_setup
  implicit none
  !
  type(bz_samp), intent(inout) :: Xk
@@ -48,8 +45,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Work Space
  !
- integer                   :: ik,i1,ic,iv,is,i_spin
- real(SP)                  :: field_dir_rot(3),E_m_Ep
+ integer                   :: ic,iv,is,ik
  logical                   :: use_trans_gauge
  !
  !I/O
@@ -81,10 +77,20 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  X%ngostnts=wf_ng
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
+ call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_err(1)=io_DIPOLES(X,Xen,ID)
  !
+ do ik=1,Xk%nibz
+   !
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik).or.io_err(1)<0) cycle 
+   !
+   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+ik/),ID=ID)
+   io_err(1)=io_DIPOLES(X,Xen,ID)
+   !
+ enddo
+ !
  io_err(2)=0
+ !
 #if defined _SC 
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
@@ -100,34 +106,31 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    ! in the new basis. So all transitions are needed
    !
    if (Dipole_bands_ordered) then
-     call X_alloc('DIP_iR',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
+     call X_alloc('DIP_iR',(/3,X%ib(2),Xen%nbm,PAR_Xk_nibz/))
    else
-     call X_alloc('DIP_iR',(/3,X%ib(2),X%ib(2),Xk%nibz/))
+     call X_alloc('DIP_iR',(/3,X%ib(2),X%ib(2),PAR_Xk_nibz/))
    endif
    DIP_iR=(0._SP,0._SP)
    !
 #if defined _SC
-   call X_alloc('DIP_P'   ,(/3,X%ib(2),X%ib(2),Xk%nibz/))
-   call X_alloc('P_square',(/X%ib(2),X%ib(2),Xk%nibz/))
+   call X_alloc('DIP_P'   ,(/3,X%ib(2),X%ib(2),PAR_Xk_nibz/))
+   call X_alloc('P_square',(/X%ib(2),X%ib(2),PAR_Xk_nibz/))
    DIP_P=(0._SP,0._SP)
    P_square=(0._SP,0._SP)
 #endif
    !   
-   if(trim(grid_path)=='none'.and.Dipole_bands_ordered) then
+   ! WF distribution   
+   !
+   if (.not.Dipole_uses_shifted_grids.and.Dipole_bands_ordered) then
      !
-     ! Valence bands are loaded by all processors
-     !
-     call WF_states_setup(k_to_load=(/1,Xk%nibz/),b_to_load=(/1,Xen%nbm/),par_loop=.FALSE.)
-     !
-     ! Parallelization on conductions bands and k-points
-     !
-     call WF_states_setup(k_to_load=(/1,Xk%nibz/),b_to_load=(/Xen%nbf+1,X%ib(2)/))
-     !
-     ! Report
-     !
-     call WF_states_setup(b_to_load=(/1,X%ib(2)/),report=.true.)
+     call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_Xk_ibz,&
+&                                B_index =PAR_IND_CON_BANDS_X(X%whoami),&
+&                                Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
+&                                CLEAN_UP=.TRUE.)
      !
    endif
+   !   
+   ! WF load 
    !
    call WF_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',force_WFo=.true.)
    !
@@ -158,12 +161,21 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    call WF_free()
    !
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+   call io_control(ACTION=OP_WR_CL,IO=MASTER,COM=REP,SEC=(/1/),ID=ID)
    io_err(1)=io_DIPOLES(X,Xen,ID)
    !
+   do ik=1,Xk%nibz
+     !
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle 
+     !
+     call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1+ik/),ID=ID)
+     io_err(1)=io_DIPOLES(X,Xen,ID)
+     !
+   enddo
+   !
 #if defined _SC 
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   io_err(2)=io_P_and_P2(X,Xen,ID)
+   !call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+   !io_err(2)=io_P_and_P2(X,Xen,ID)
 #endif
    !
  end if
@@ -180,8 +192,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  endif
  !
  call Dipole_dip_dot_field(Xen,Xk,X,field_dir)
- !
- call PP_redux_wait()
  !
  ! Clean up
  !

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
+subroutine Drude(iq,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
  !
  use pars,          ONLY:SP,cZERO,schlen
  use units,         ONLY:HA2EV
@@ -38,8 +38,8 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
  type(X_t)            :: X
  type(w_samp)         :: Xw
  !
- integer              :: iq,fr(2)
- complex(SP)          :: drude_GreenF(Xw%n(2))
+ integer              :: iq
+ complex(SP)          :: drude_GreenF(Xw%n_freqs)
  character(1)         :: drude_ordering
  !
  real(SP)             :: drude_factor
@@ -78,8 +78,8 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
 &             (spin_occ-Xen%f(Xen%bf,Xen%kf,Xen%sf))/ &
 &             (spin_occ*real(Xk%nbz)*DL_vol)
  !
- do iw=fr(1),fr(2)
-   drude_GreenF(iw-fr(1)+1)=X_drude(real(Xw%p(iw)),X%Wd,q_norm(1))/drude_factor
+ do iw=1,Xw%n_freqs
+   drude_GreenF(iw)=X_drude(real(Xw%p(iw)),X%Wd,q_norm(1))/drude_factor
  enddo
  !
  if(drude_ordering/='c') return

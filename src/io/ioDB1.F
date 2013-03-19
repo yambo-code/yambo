@@ -21,7 +21,7 @@
 !
 integer function ioDB1(E,k,ID)
  !
- use pars,             ONLY:SP,IP
+ use pars,             ONLY:SP,IP,schlen
  use units,            ONLY:HA2EV
  use com,              ONLY:error
  use memory_m,         ONLY:mem_est
@@ -45,12 +45,20 @@ integer function ioDB1(E,k,ID)
 #if defined _SC
  use SC,               ONLY:SC_bands
 #endif
+#if defined _RT || defined _YPP_RT
+ use IO_m,             ONLY:variable_is_found
+#endif
  !
  implicit none
  !
  type(levels)  :: E
  type(bz_samp) :: k
  integer       :: ID,code_version_local(3),code_revision_local
+ !
+ ! Work Space
+ !
+ logical           :: l_io_sym_eq
+ character(schlen) :: string
  !
  ioDB1 =io_connect(desc="db1",type=0,ID=ID)
  if (ioDB1/=0) goto 1
@@ -172,7 +180,7 @@ integer function ioDB1(E,k,ID)
      call io_elemental(ID,I0=n_atomic_species,CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' No. of atom species             :')
    endif
-   if (ver_is_gt_or_eq(ID,revision=1239)) then
+   if (ver_is_gt_or_eq(ID,revision=1240).and.ver_is_gt_or_eq(ID,(/3,2,5/))) then
      call io_elemental(ID, VAR="mag_syms",VAR_SZ=1,MENU=0)
      call io_elemental(ID, L0=mag_syms,VAR=' Magnetic symmetries             : ')
    endif
@@ -244,7 +252,7 @@ integer function ioDB1(E,k,ID)
  !
  call io_bulk(ID,VAR="LATTICE_PARAMETER",VAR_SZ=(/3/))
  call io_bulk(ID,R1=alat)
-
+ !
  call io_bulk(ID,VAR="LATTICE_VECTORS",VAR_SZ=(/3,3/))
  call io_bulk(ID,R2=a)
  !
@@ -266,6 +274,13 @@ integer function ioDB1(E,k,ID)
  !
  call io_bulk(ID, VAR="SYMMETRY", VAR_SZ=shape(dl_sop) )
  call io_bulk(ID, R3=dl_sop)
+ !
+#if defined _RT || defined _YPP_RT
+ !
+ if (write_is_on(ID)) l_io_sym_eq=.TRUE.
+ if (read_is_on(ID) ) l_io_sym_eq=variable_is_found(ID,"N_SYMMETRIES")==1
+ !
+#endif
  !
  ! G-vectors
  !

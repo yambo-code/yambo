@@ -26,7 +26,7 @@ netcdf      = @dnetcdf@
 scalapack   = @dscalapack@
 precision   = @dp_cpp@
 fft         = @FFT_CPP@
-xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@
+xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@
 debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
@@ -48,7 +48,7 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
 TARGETS  = all yambo interfaces ypp 
 UTILS    = changelog
 CLEANS   = clean clean_all
-PROJECTS = yambo_ph yambo_sc yambo_magnetic yambo_rt yambo_distributed \
+PROJECTS = yambo_ph yambo_sc yambo_magnetic yambo_rt \
            ypp_rt ypp_ph ypp_sc ypp_magnetic
 BROKEN   = 
 DEBUG    = 
@@ -57,7 +57,7 @@ INTERFCS = a2y p2y e2y c2y
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules xc_functionals parser communicate common io wf_and_fft 
+BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate common io wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
                interpolate tddft pol_function qp acfdt bse
@@ -67,7 +67,7 @@ PJ_RTLIBS          = $(MAIN_LIBS) sc real_time
 #
 # Interfaces
 #
-2YLIBS       = external_c modules parser communicate common io bz_ops 
+2YLIBS       = external_c modules parallel parser communicate common io bz_ops 
 #
 # YPP
 #
@@ -98,9 +98,6 @@ yambo: libs
 yambo_magnetic: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_MAGNETIC -D_SC"; $(mksrc)
 	@X2DO="yambo_magnetic"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_MAGNETIC -D_SC";$(mkx)
-yambo_distributed: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_DISTRIBUTED"; $(mksrc)
-	@X2DO="yambo_distributed"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_DISTRIBUTED";$(mkx)
 yambo_sc: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_SC"; $(mksrc)
 	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
@@ -203,7 +200,7 @@ define mkx
 endef
 define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
-        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' \) \
+        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' \) \
         -type f -print | grep -v '\.\/Makefile' | xargs rm -f
  echo "[CLEAN] Objects ... done"
  echo "[CLEAN] Broken files ... done"

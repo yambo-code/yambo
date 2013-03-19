@@ -79,6 +79,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM.or.associated(Xen%GreenF)
  skip_WF_load=.false.
  !
+ if(Distributed_Memory) force_bare_X_G=.true.
+ !
  call mem_est("Xo_WS",(/size(XoR)+2*X%ng/))
  !
  !  Optical strengths

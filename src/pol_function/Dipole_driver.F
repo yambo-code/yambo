@@ -129,6 +129,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
    endif
    !
+   call WF_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',force_WFo=.true.)
+   !
    use_trans_gauge = .true.
    !
    ! GPL_EXCLUDE_START 

@@ -48,7 +48,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,QP_nk,&
 &                         QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,X_duplicate,X_reset
- use stderr,         ONLY:tty_size,logfile,string_add
+ use stderr,         ONLY:tty_size,logfile,string_add,string_remove
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:ioWF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
@@ -503,10 +503,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if(.not.l_rpa_IP) call initactivate(1,'BSENGexx ecutKexch ALLGexx')
    !
    if(l_td_hf.or.l_W_eh) call initactivate(1,'BSENGBlk ecutKcorr')
-   if(l_W_eh)            call initactivate(1,'WehDiag')
+   if(l_W_eh)            call initactivate(1,'WehDiag WehCpl')
    !
    call initactivate(1,'ShiftedPath')
-#if defined _SC
+#if defined _SC || defined _KERR
    call initactivate(1,'Gauge')
 #endif
    call initactivate(1,'DrudeW')
@@ -948,11 +948,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_gw0.and.l_el_corr) call initactivate(1,'HF_and_locXC')
      if (l_ppa)    call initactivate(1,'em1d')
      if (l_cohsex) call initactivate(1,'em1s')
-     !if (l_bss)    call initactivate(1,'bse')
-     !if (l_bss)    call initactivate(1,'l_optics')
      if (l_bse) then
-       !
-       if (l_alda_fxc) BS_res_mode='x'     
        !
        if (io_X_err(2)==0) then
          if (ioBS_err/=0) BS_n_g_W=X(2)%ng
@@ -1001,8 +997,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if (l_alda_fxc)                 BS_res_mode='x'
        if (l_td_hf)                    BS_res_mode='xcd'
        if (l_W_eh)                     BS_res_mode='xc'
-       if (l_W_eh_diagonal)            BS_res_mode=trim(string_add(BS_res_mode,'d'))
        if (trim(BSE_mode)=="coupling") BS_cpl_mode=trim(BS_res_mode)
+       !
+       call parser('WehDiag',l_W_eh_diag)
+       call parser('WehCpl' ,l_W_eh_cpl)
+       if (l_W_eh_diag)                BS_res_mode=trim(string_add(BS_res_mode,'d'))
+       if (.not.l_W_eh_cpl)            BS_cpl_mode=trim(string_remove(BS_res_mode,'c'))
      endif
      !
      ! When running BSE from input file l_bse is FALSE in varsetup1.

@@ -54,9 +54,9 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
  integer :: ikbz,iv,ic,ik,ikp,i_sp
  real(SP):: E_eh,f_eh
  !
- if(BS_bands(1)<1        ) BS_bands(1)=1
  if(BS_bands(1)>Ken%nbf  ) BS_bands(1)=Ken%nbf
  if(BS_bands(2)<Ken%nbm+1) BS_bands(2)=Ken%nbm+1
+ if(BS_bands(1)<1        ) BS_bands(1)=1
  if(BS_bands(2)>Ken%nb   ) BS_bands(2)=Ken%nb
  !
  do while(.TRUE.) 

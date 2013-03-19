@@ -77,7 +77,8 @@ module drivers
  logical :: l_lrc_fxc
  logical :: l_td_hf
  logical :: l_W_eh
- logical :: l_W_eh_diagonal
+ logical :: l_W_eh_diag
+ logical :: l_W_eh_cpl
  !
  ! ... and the solvers
  !

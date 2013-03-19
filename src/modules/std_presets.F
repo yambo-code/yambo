@@ -255,7 +255,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_bs_fxc=.false.
  l_td_hf=.false.
  l_W_eh=.false.
- l_W_eh_diagonal=.false.
+ l_W_eh_diag=.false.
+ l_W_eh_cpl=.false.
  l_acfdt=.false.
  l_el_corr=.false.
  l_ph_corr=.false.

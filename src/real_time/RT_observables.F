@@ -159,7 +159,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! Transfer the shadow variables
  !
  on_the_fly_operators(1:5)=(/E_kin,E_ion,E_h,Ex,Exc/)*HA2EV
- on_the_fly_operators(6:8)=(/cmplx(Fluence),Trace_Gf,delta_G/)
+ on_the_fly_operators(6:8)=(/cmplx(Fluence,0._SP,SP),Trace_Gf,delta_G/)
  !
 end subroutine RT_Observables
 

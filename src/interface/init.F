@@ -496,6 +496,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_optics.and.l_bse) then
    call QP_ctl_switch('K')
    !
+#if defined _KERR
+   if(l_kerr) call initactivate(1,'EvalKerr AnHall')
+#endif
+   !
                      call initactivate(1,'BSEmode')
    if(.not.l_rpa_IP) call initactivate(1,'BSENGexx ALLGexx')
    !
@@ -503,7 +507,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if(l_W_eh)            call initactivate(1,'WehDiag WehCpl')
    !
    call initactivate(1,'ShiftedPath')
-#if defined _SC
+#if defined _SC | defined _KERR
    call initactivate(1,'Gauge')
 #endif
    call initactivate(1,'DrudeW')
@@ -1131,6 +1135,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          call initactivate(1,'optics')
          if (l_chi) call initactivate(1,'chi')
          if (l_bse) call initactivate(1,'bse')
+#if defined _KERR
+         l_kerr=l_bse
+#endif
          !
        endif
        !

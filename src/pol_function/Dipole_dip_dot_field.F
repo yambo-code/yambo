@@ -23,11 +23,17 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_optics
+#if defined _KERR
+ use drivers,        ONLY:l_kerr
+ use KERR,           ONLY:DIP_q_dot_iR_kerr,KERR_alloc,KERR_alloc, &
+&                         Dip_P_symm
+ use fields,         ONLY:global_gauge
+ use X_m,            ONLY:DIP_P
+#endif
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use fields,         ONLY:global_gauge
  use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR
  use vec_operate,    ONLY:v_norm
  !
@@ -42,6 +48,10 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
  integer                   :: ik,i1,ic,iv,is,i_spin
  real(SP)                  :: field_dir_rot(3)
+ logical                   :: t_rev
+#if defined _KERR
+ real(SP)                  :: dipole_dir(3),dipole_dir_rot(3)
+#endif
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the
  ! oscillator strengths have been calculated using the shifted grids.
@@ -49,6 +59,22 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  ! to the norm of the grid shift.
  !
  field_dir=field_dir*q0_def_norm/v_norm(field_dir)
+ !
+#if defined _KERR
+ if(trim(global_gauge)=='velocity') field_dir=field_dir/q0_def_norm
+ if(l_kerr) then ! if field=(0,1,0) dipole=(1,0,0) OK  p_x=\aplha_xy E_y
+   if(field_dir(2).ne.0) then
+     dipole_dir(1)=-1.
+     dipole_dir(2)=-dipole_dir(1)*(field_dir(1)/field_dir(2))
+     dipole_dir(3)= 0.
+   else
+     dipole_dir(3)= 0.
+     dipole_dir(2)= 1.
+     dipole_dir(1)=-dipole_dir(2)*(field_dir(2)/field_dir(1))
+   endif
+   dipole_dir=dipole_dir*v_norm(field_dir)/v_norm(dipole_dir)
+ endif
+#endif
  !
  q_norm(1)=q0_def_norm
  if (.not.l_col_cut) bare_qpg(1,1)=q0_def_norm
@@ -58,27 +84,71 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  call X_alloc('DIP_q_dot_iR',(/X%ib(2),Xen%nbm,Xk%nbz/))
  DIP_q_dot_iR = (0.0_SP,0.0_SP)
  !
+#if defined _KERR
+ if(trim(global_gauge)=='velocity') then
+   i1=1
+   if(l_kerr) i1=2
+   call KERR_alloc('DIP_P_symm',(/i1,X%ib(2),Xen%nbm,Xk%nbz/))
+   DIP_P_symm = 0.0_SP
+ endif
+ !
+ if(l_kerr) then
+   call KERR_alloc('DIP_q_dot_iR',(/X%ib(2),Xen%nbm,Xk%nbz/))
+   DIP_q_dot_iR_kerr = (0.0_SP,0.0_SP)
+ endif
+#endif
+ !
  do i1 = 1,Xk%nbz
    !
    ik = Xk%sstar(i1,1)
    is = sop_inv(Xk%sstar(i1,2))
    field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
+#if defined _KERR
+   if (l_kerr) dipole_dir_rot = matmul( dl_sop(:,:,is), dipole_dir )
+#endif
+   if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
+   if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
    !
    do iv = X%ib(1), Xen%nbm
      !
      do ic = Xen%nbf+1, X%ib(2)
        !
        do i_spin=1,n_sp_pol
-         ! 
-         ! DIP_iq_dot_r = i q . < v k | r | c k >
          !
-         if ( is<= nsym/(i_time_rev+1) ) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin)  )
-         if ( is > nsym/(i_time_rev+1) ) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), field_dir_rot ) 
+         ! DIP_iq_dot_r = i q . < v k | r | c  k >
+         ! E is invariant under T-rev but the minus is compensated by the conjg of (iq) which should not be there.
+         !
+         if(.not.t_rev) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin) )
+         if(     t_rev) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), field_dir_rot ) 
+         !
+#if defined _KERR
+         if(trim(global_gauge)=='velocity') then
+           if(.not.t_rev) DIP_P_symm(1,ic,iv,i1,i_spin) = dot_product(field_dir_rot, DIP_P(:,ic,iv,ik,i_spin))
+           if(     t_rev) DIP_P_symm(1,ic,iv,i1,i_spin) = dot_product( DIP_P(:,ic,iv,ik,i_spin), field_dir_rot )
+         endif
+         !
+         if(l_kerr) then
+           if(.not.t_rev) DIP_q_dot_iR_kerr(ic,iv,i1,i_spin) = dot_product(dipole_dir_rot, DIP_iR(:,ic,iv,ik,i_spin) )
+           if(     t_rev) DIP_q_dot_iR_kerr(ic,iv,i1,i_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), dipole_dir_rot)
+           !
+           if(trim(global_gauge)=='velocity') then
+             if(.not.t_rev) DIP_P_symm(2,ic,iv,i1,i_spin) = dot_product(dipole_dir_rot, DIP_P(:,ic,iv,ik,i_spin))
+             if(     t_rev) DIP_P_symm(2,ic,iv,i1,i_spin) = dot_product(DIP_P(:,ic,iv,ik,i_spin), dipole_dir_rot)
+           endif
+         endif
+#endif
          !
        enddo
-       ! 
+       !
      enddo
      DIP_q_dot_iR(iv,iv,i1,:) = (1.0_SP,0.0_SP)
+#if defined _KERR
+     if(trim(global_gauge)=='velocity') DIP_P_symm(1,iv,iv,i1,:) = (1.0_SP,0.0_SP)
+     if(l_kerr) then
+       DIP_q_dot_iR_kerr(iv,iv,i1,:) = (1.0_SP,0.0_SP)
+       if(trim(global_gauge)=='velocity') DIP_P_symm(2,iv,iv,i1,:) = (1.0_SP,0.0_SP)
+     endif
+#endif
    enddo
    !
  enddo

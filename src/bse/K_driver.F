@@ -48,6 +48,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use QP_m,           ONLY:OCC_T_ref
  use IO_m,           ONLY:REP
 #endif
+#if defined _KERR
+ use drivers,        ONLY:l_kerr,l_anomalous_Hall
+#endif
  implicit none
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
@@ -117,6 +120,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    call warning (' W size reduced due to symmetry constraints')
    call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
  endif
+ !
+#if defined _KERR
+ call parser('EvalKerr',l_kerr)
+ if(l_kerr) call parser('AnHall',l_anomalous_Hall)
+#endif
  !
  if(l_rpa_IP) then
    l_bss=.true.

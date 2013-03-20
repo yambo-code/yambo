@@ -98,7 +98,13 @@ module UNITS
  !
  !   \tau=\hbar/\gamma
  !
- real(SP), parameter :: HBAR_eVfs = 6.58211899_SP*10._SP**(-1._SP) ! eV*fs
+ real(SP), parameter :: HBAR_eVfs = 6.58211899_SP*10._SP**(-1._SP)   ! eV*fs
+ real(SP), parameter :: HBAR_SI   = 1.054571726_SP*10._SP**(-34._SP) !  J*s
+ !
+ ! Elementary charge
+ !=================
+ real(SP), parameter :: e_SI   = 1.602176565*10._SP**(-19._SP) !  C
+ !
  !
  ! Magnetic fields
  !=================

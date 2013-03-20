@@ -67,6 +67,9 @@ module drivers
  logical :: l_em1s
  logical :: l_bse
  !
+ logical :: l_kerr
+ logical :: l_anomalous_Hall
+ !
  ! ... the kernel ...
  !
  logical :: l_rpa_IP

@@ -27,18 +27,21 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
  use parallel_m,     ONLY:PP_redux_wait
- use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use fields,         ONLY:grid_path,global_gauge
+ use fields,         ONLY:grid_path
  use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
 &                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use wave_func,      ONLY:wf_ng,WF_load,WF_free
  use vec_operate,    ONLY:v_norm
-#if defined _SC      
+#if defined _SC  || defined _KERR
  use X_m,            ONLY:P_square
 #endif
  use WF_distribute,  ONLY:WF_states_setup
+#if defined _KERR
+ use fields,         ONLY:global_gauge
+#endif
+ !
  implicit none
  !
  type(bz_samp), intent(inout) :: Xk
@@ -56,7 +59,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  integer :: ID,io_err(2)
  integer, external :: io_DIPOLES
-#if defined _SC 
+#if defined _SC || defined _KERR
  integer, external :: io_P_and_P2
 #endif
  !
@@ -91,6 +94,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  io_err(2)=io_P_and_P2(X,Xen,ID)
  !
 #endif
+#if defined _KERR
+ if(trim(global_gauge)=='velocity') then
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
+   io_err(2)=io_P_and_P2(X,Xen,ID)
+ endif
+#endif
  !
  if (any(io_err/=0)) then
    !
@@ -111,6 +120,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    call X_alloc('P_square',(/X%ib(2),X%ib(2),Xk%nibz/))
    DIP_P=(0._SP,0._SP)
    P_square=(0._SP,0._SP)
+#endif
+   !
+#if defined _KERR
+   if(trim(global_gauge)=='velocity') then
+     call X_alloc('DIP_P'   ,(/3,X%ib(2),X%ib(2),Xk%nibz/))
+     DIP_P=(0._SP,0._SP)
+     call X_alloc('P_square',(/X%ib(2),X%ib(2),Xk%nibz/))
+     P_square=(0._SP,0._SP)
+   endif
 #endif
    !   
    if(trim(grid_path)=='none'.and.Dipole_bands_ordered) then
@@ -165,6 +183,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err(2)=io_P_and_P2(X,Xen,ID)
 #endif
+#if defined _KERR
+   if(trim(global_gauge)=='velocity') then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+     io_err(2)=io_P_and_P2(X,Xen,ID)
+   endif
+#endif
    !
  end if
  !
@@ -186,5 +210,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Clean up
  !
  call X_alloc('DIP_iR') 
+ !
+#if defined _KERR
+ if(trim(global_gauge)=='velocity') call X_alloc('DIP_P') 
+#endif
  !
 end subroutine

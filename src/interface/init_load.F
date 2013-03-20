@@ -132,7 +132,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! CPU's
  !
-#if defined _MPI || defined _BLUEGENE
+#if defined _MPI 
  call CPU_structure_load( )
 #endif
  !
@@ -156,7 +156,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Parallel Setup
  !
-#if defined _MPI || defined _BLUEGENE
+#if defined _MPI 
  call it(defs,'Threads',      '[PARALLEL] Number of threads',n_threads,verb_level=V_parallel)
  call it(defs,'NLogCPUs',     '[PARALLEL] Live-timing CPU`s (0 for all)',n_log_CPUs,verb_level=V_parallel)
 #endif
@@ -437,7 +437,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
    !
 #endif
    !
-#if defined _MPI || defined _BLUEGENE
+#if defined _MPI 
    !
    subroutine CPU_structure_load()
      use parallel_m, ONLY:n_CPU_str_max,CPU_structure

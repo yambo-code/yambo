@@ -88,10 +88,8 @@ module fragments
      ! the prperties of the DB that have been read previously 
      ! (like io_nectdf_support or io_code_version/revision).
      !
-#if defined _BLUEGENE
      use interfaces, ONLY:PARALLEL_live_message
      use parallel_m, ONLY:ncpu
-#endif
      !
      implicit none
      integer           :: ID
@@ -132,12 +130,10 @@ module fragments
        endif
        ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID)
        !
-#if defined _BLUEGENE
        if (ncpu>1) then
          if (write_is_on(ID)) call PARALLEL_live_message("Writing "//trim(fragment_filename))
          if (read_is_on(ID) ) call PARALLEL_live_message("Reading "//trim(fragment_filename))
        endif
-#endif
        !
      else
        write (subfolder,'(2a,i5.5)') trim(io_extension(ID)),'_',i_frag
@@ -150,12 +146,10 @@ module fragments
        !
        ierr_=io_connect('fragment',subfolder=subfolder,type=io_type(ID),ID=ID)
        !
-#if defined _BLUEGENE
        if (ncpu>1) then
          if (write_is_on(ID)) call PARALLEL_live_message("Writing "//trim(fragment_filename))
          if (read_is_on(ID) ) call PARALLEL_live_message("Reading "//trim(fragment_filename))
        endif
-#endif
        !
      endif
      !

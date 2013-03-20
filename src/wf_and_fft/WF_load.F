@@ -37,7 +37,6 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        wf_n_states,wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free
  use wave_func,     ONLY:states_to_load,states_loaded
- use timing,        ONLY:live_timing
  use interfaces,    ONLY:PARALLEL_live_message
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
 &                        io_fragmented, io_netcdf_support, RD_CL,DUMP,IO_and_Messaging_switch
@@ -65,7 +64,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                   s_2_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
- logical          ::loaded_bounds_ok,use_direct_access,use_live_timing,free_and_alloc
+ logical          ::loaded_bounds_ok,use_direct_access,free_and_alloc
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
@@ -143,10 +142,6 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! Manage direct access I/O
  ! 
  use_direct_access=(kpts_to_load(1)==kpts_to_load(2))
- use_live_timing =.not.use_direct_access
-#if defined _BLUEGENE
- use_live_timing =.FALSE.
-#endif
  !
  ! In case of k by k I/O prevent multiple free/alloc
  !
@@ -218,8 +213,6 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (wf_space=='R') call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !
- if (use_live_timing) call live_timing('[WF'//trim(wf_title)//' loader] Wfs (re)loading',wf_n_states,SERIAL=.true.)
- !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  !
@@ -279,8 +272,6 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          if (wf_space=='G'.or.wf_space=='C') then
            wf(:,wf_n_states)=wf_DP(:)
            !
-           if (use_live_timing) call live_timing(steps=1)
-           !
            cycle
          endif
 #if defined _FFTW
@@ -290,14 +281,10 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 #endif
          wf(:,wf_n_states)=wf_DP(:)*fft_norm
          !
-         if (use_live_timing) call live_timing(steps=1)
-         !
        enddo
      enddo
    enddo
  enddo
- !
- if (use_live_timing) call live_timing()
  !
  ! CLEAN
  !

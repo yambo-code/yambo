@@ -159,10 +159,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call win_size(tty_size)
  call ct(INIT=.TRUE.)
- log_as_a_file=log_as_a_file
-#if defined _BLUEGENE
- log_as_a_file=.TRUE.
-#endif
+ log_as_a_file=ncpu>1
  !
  !I/O 
  !

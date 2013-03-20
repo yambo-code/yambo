@@ -233,11 +233,7 @@ module com
             if (trim(opened_of(i2))==local_file_name) file_index=i2
          enddo
          if(file_index==-1) return
-#if defined _BLUEGENE
          flush(abs(of_unit(file_index)))
-#else
-         call flush(abs(of_unit(file_index)))
-#endif
        endif
        !
        if ( (index(mode,'o')==0.and.index(mode,'O')==0) .or. .not.write_to_of) return

@@ -40,8 +40,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
- use parallel_m,     ONLY:PP_redux_wait
- use R_lattice,      ONLY:bz_samp,qindx_B
+ use parallel_m,     ONLY:PP_redux_wait,PAR_Xk_nbz,PAR_Xk_nibz,PAR_Xk_bz_index,PAR_Xk_ibz_index,PAR_IND_Xk_bz,PAR_IND_Xk_ibz
+ use R_lattice,      ONLY:bz_samp,qindx_B,nXkbz,nXkibz
  use parser_m,       ONLY:parser
 #if defined _SC
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate
@@ -61,6 +61,21 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  integer     :: Max_G_m_G,ik
  integer, external :: eval_G_minus_G
  !
+ ! Pre-Setup of Parallel variables
+ !
+ PAR_Xk_nbz =nXkbz
+ PAR_Xk_nibz=nXkibz
+ allocate (PAR_Xk_ibz_index(nXkibz),PAR_Xk_bz_index(nXkbz))
+ allocate (PAR_IND_Xk_bz%element_1D(nXkbz),PAR_IND_Xk_ibz%element_1D(nXkibz))
+ do ik=1,PAR_Xk_nbz
+   PAR_Xk_bz_index(ik)=ik
+   PAR_IND_Xk_bz%element_1D(ik)=.TRUE.
+   if (ik<=nXkibz) then
+     PAR_IND_Xk_ibz%element_1D(ik)=.TRUE.
+     PAR_Xk_ibz_index(ik)=ik
+   endif
+ enddo
+ !
 #if defined _SC
  !
  ! The NE occupations globally redefine the metallic/full bands. So they must
@@ -71,7 +86,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  call X_reset(X_tddft)
  call W_reset(W_bss)
+ !
  ! TDDFT setup
+ !
  call tddft_do_X_W_typs(-1,X_tddft,Xw)
  !
  ! In these two lines I ensure the at least all the metallic

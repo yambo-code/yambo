@@ -28,12 +28,13 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  use KERR,           ONLY:DIP_q_dot_iR_kerr,KERR_alloc,KERR_alloc, &
 &                         Dip_P_symm
  use fields,         ONLY:global_gauge
+ use X_m,            ONLY:DIP_P
 #endif
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
- use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,spin_sop,sop_inv
+ use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR,DIP_P
+ use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR
  use vec_operate,    ONLY:v_norm
  !
  implicit none

@@ -541,9 +541,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! Special project dependent variables
    !
-#if defined _SC || defined _KERR
-   call initactivate(1,'Gauge')
-#endif
 #if defined _ELPH 
    if (l_ph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
 #endif

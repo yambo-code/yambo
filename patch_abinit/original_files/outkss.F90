@@ -21,7 +21,7 @@
 !!  - Writing out eigenvalues and eigenvectors.
 !!
 !! COPYRIGHT
-!! Copyright (C) 2000-2012 ABINIT group (MT, VO, AR, MG)
+!! Copyright (C) 2000-2013 ABINIT group (MT, VO, AR, MG)
 !! This file is distributed under the terms of the
 !! GNU General Public License, see ~abinit/COPYING
 !! or http://www.gnu.org/copyleft/gpl.txt .
@@ -49,6 +49,7 @@
 !!  MPI_enreg=information about MPI parallelization
 !!  mpsang= 1+maximum angular momentum for nonlocal pseudopotentials
 !!  mpw=maximum dimensioned size of npw.
+!!  my_natom=number of atoms treated by current processor
 !!  natom=number of atoms in cell.
 !!  nfft=(effective) number of FFT grid points (for this processor)
 !!  nkpt=number of k points.
@@ -106,9 +107,9 @@
 !!
 !! CHILDREN
 !!      clsopn,cprj_alloc,cprj_copy,cprj_exch,cprj_free,dsksta
-!!      etsf_io_low_close,get_kg,hdr_skip,init_ddiago_ctl,k2gamma_centered
-!!      ks_ddiago,memkss,merge_and_sort_kg,remove_inversion,rwwf,timab
-!!      write_kss_header,write_kss_wfgk,wrtout,xbarrier_mpi,xcomm_init
+!!      etsf_io_low_close,gather_paw_ij,get_kg,hdr_skip,init_ddiago_ctl
+!!      k2gamma_centered,ks_ddiago,memkss,merge_and_sort_kg,remove_inversion
+!!      rwwf,timab,write_kss_header,write_kss_wfgk,wrtout,xbarrier_mpi
 !!      xexch_mpi
 !!
 !! SOURCE
@@ -120,20 +121,20 @@
 #include "abi_common.h"
 
 subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
-& kssform,mband,mcg,mcprj,mgfft,mkmem,MPI_enreg,mpsang,mpw,natom,&
+& kssform,mband,mcg,mcprj,mgfft,mkmem,MPI_enreg,mpsang,mpw,my_natom,natom,&
 & nfft,nkpt,npwarr,nspden,nsppol,nsym,ntypat,occ,Pawtab,Pawfgr,Paw_ij,&
 & prtvol,Psps,rprimd,Wffnow,vtrial,xred,cg,usecprj,Cprj,eigen,ierr)
-
- use m_profiling
 
  use defs_basis
  use defs_datatypes
  use defs_abitypes
  use defs_wvltypes
+ use m_profiling
+
  use m_xmpi
  use m_errors
  use m_wffile
-#if defined HAVE_TRIO_ETSF_IO
+#ifdef HAVE_TRIO_ETSF_IO
  use etsf_io
 #endif
 
@@ -142,6 +143,10 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
  use m_gsphere,          only : merge_and_sort_kg, table_gbig2kg, get_kg
  use m_io_kss,           only : write_kss_wfgk, write_kss_header, k2gamma_centered
  use m_hamiltonian,      only : ddiago_ctl_type, init_ddiago_ctl
+ use m_header,           only : hdr_skip
+ use m_paw_toolbox,      only : gather_paw_ij
+ use m_pawcprj,          only : cprj_type, cprj_alloc, cprj_copy, cprj_exch, cprj_free, paw_overlap
+
  use m_linalg_interfaces
 
 !This section has been created automatically by the script Abilint (TD).
@@ -150,9 +155,8 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
 #define ABI_FUNC 'outkss'
  use interfaces_14_hidewrite
  use interfaces_18_timing
- use interfaces_42_geometry
- use interfaces_44_abitypes_defs
- use interfaces_51_manage_mpi
+ use interfaces_32_util
+ use interfaces_41_geometry
  use interfaces_57_iovars
  use interfaces_59_io_mpi
  use interfaces_67_common
@@ -162,7 +166,7 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
 
 !Arguments ------------------------------------
 !scalars
- integer,intent(in) :: kssform,mband,mcg,mcprj,mgfft,mkmem,mpsang,mpw,natom,usecprj
+ integer,intent(in) :: kssform,mband,mcg,mcprj,mgfft,mkmem,mpsang,mpw,my_natom,natom,usecprj
  integer,intent(in) :: nfft,nkpt,nsppol,nspden,nsym,ntypat,prtvol
  integer,intent(out) :: ierr
  real(dp),intent(in) :: ecut
@@ -182,12 +186,11 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
  real(dp),intent(in) :: cg(2,mcg),eigen(mband*nkpt*nsppol)
  type(Cprj_type),intent(in) :: Cprj(natom,mcprj*usecprj)
  type(Pawtab_type),intent(in) :: Pawtab(Psps%ntypat*Psps%usepaw)
- type(paw_ij_type),intent(in) :: Paw_ij(natom*Psps%usepaw)
+ type(paw_ij_type),intent(inout),target :: Paw_ij(my_natom*Psps%usepaw)
 
 !Local variables-------------------------------
 !scalars
- integer,parameter :: tim_rwwf=0
- integer,parameter :: bufnb=20
+ integer,parameter :: tim_rwwf=0,bufnb=20
  integer :: untkss,onband_diago
  integer :: bdtot_index,i,iatom,ib,ibp,accesswff
  integer :: ibsp,ibsp1,ibsp2,ibg,ig,ii,ikpt
@@ -225,6 +228,7 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
  type(Cprj_type),allocatable :: Cprjnk_k(:,:)
  type(Cprj_type),pointer :: Cprj_diago_k(:,:)
  type(ddiago_ctl_type) :: Diago_ctl
+ type(paw_ij_type),pointer :: Paw_ij_all(:)
 #if defined HAVE_TRIO_ETSF_IO
  logical :: lstat
  type(etsf_io_low_error) :: Error
@@ -236,9 +240,9 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
  call timab(933,1,tsec) ! outkss
  call timab(934,1,tsec) ! outkss(Gsort+hd)
 
- call xcomm_init(MPI_enreg,spaceComm)
- my_rank = xcomm_rank(spaceComm)
- nprocs  = xcomm_size(spaceComm)
+ spaceComm=MPI_enreg%comm_cell
+ my_rank=xcomm_rank(spaceComm)
+ nprocs=xcomm_size(spaceComm)
  master=0
 
  accesswff = Dtset%accesswff
@@ -281,6 +285,7 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
    write(msg,'(a,70("="),4a,i1,a)') ch10,ch10, &
 &   ' Calculating and writing out Kohn-Sham electronic Structure file',ch10, &
 &   ' Using diagonalized wavefunctions and energies (kssform=',kssform,')'
+   !MSG_ERROR("kssform =1 is not available")
  else
    write(msg,'(a,i0,2a)')&
 &   " Unsupported value for kssform: ",kssform,ch10,&
@@ -320,7 +325,7 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
  end if
 !* Check mproj
  mproj=MAXVAL(Psps%indlmn(3,:,:))
- if (mproj>1.and.Psps%usepaw==0) then ! TODO One has to deriver the expression for [Vnl,r], in particular HGH and GTH psps
+ if (mproj>1.and.Psps%usepaw==0) then ! TODO One has to derive the expression for [Vnl,r], in particular HGH and GTH psps
    write(msg,'(8a)')ch10,&
 &   ' outkss : COMMENT - ',ch10,&
 &   ' At least one NC pseudopotential has more that one projector per angular channel',ch10,&
@@ -376,7 +381,7 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
    MSG_WARNING(msg)
    ierr=ierr+1
  end if
- if (MPI_enreg%paral_spin/=0) then
+ if (MPI_enreg%paral_spinor/=0) then
    write(msg,'(3a)')&
 &   ' outkss cannot be used yet with parallelization on nspinors !',ch10,&
 &   ' Program does not stop but _KSS file will not be created...'
@@ -399,7 +404,7 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
 !Estimate required memory in case of diagonalization.
 !TODO to be modified to take into account the case nsppol=2
  if (kssform/=3) then
-   call memkss(mband,mgfft,mkmem,MPI_enreg,mproj,Psps%mpssoang,mpw,natom,Dtset%ngfft,nkpt,dtset%nspinor,nsym,ntypat)
+   call memkss(mband,mgfft,mkmem,mproj,Psps%mpssoang,mpw,natom,Dtset%ngfft,nkpt,dtset%nspinor,nsym,ntypat)
  end if
 !
 !=== Initialize some variables ===
@@ -614,6 +619,16 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
 !  call WffKg(Wffnow,0)
 !  call xdefineOff(0,Wffnow,MPI_enreg,Dtset%nband,npwarr,dtset%nspinor,nsppol,nkpt)
  end if
+!
+!=== In case of PAW distributed atomic sites, need to retrieve the full paw_ij%dij ===
+ if (do_diago.and.Psps%usepaw==1.and.MPI_enreg%nproc_atom>1) then
+   ABI_DATATYPE_ALLOCATE(Paw_ij_all,(dtset%natom))
+   call gather_paw_ij(-1,MPI_enreg%comm_atom,Paw_ij,Paw_ij_all)
+ else
+   paw_ij_all => paw_ij
+ end if
+
+
  call timab(934,2,tsec) ! outkss(Gsort+hd)
 !
 
@@ -657,7 +672,7 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
 &         nband_k=nbandkssk(ikpt),effmass=Dtset%effmass,istwf_k=Dtset%istwfk(ikpt),prtvol=Dtset%prtvol)
 
          call ks_ddiago(Diago_ctl,nbandkssk(ikpt),Dtset%nfft,mgfft,Dtset%ngfft,natom,&
-&         Dtset%typat,nfft,dtset%nspinor,nspden,nsppol,ntypat,Pawtab,Pawfgr,Paw_ij,&
+&         Dtset%typat,nfft,dtset%nspinor,nspden,nsppol,ntypat,Pawtab,Pawfgr,Paw_ij_all,&
 &         Psps,rprimd,vtrial,xred,onband_diago,eig_ene,eig_vec,Cprj_diago_k,comm_self,ierr)
 
          call timab(936,2,tsec)
@@ -672,7 +687,7 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
      if (nprocs==1) then
 
        if (Psps%usepaw==1) then ! Copy projectors for this k-point
-         ABI_ALLOCATE(Cprjnk_k,(natom,nband_k*dtset%nspinor))
+         ABI_DATATYPE_ALLOCATE(Cprjnk_k,(natom,nband_k*dtset%nspinor))
          call cprj_alloc(Cprjnk_k,0,dimlmn)
          if (kssform==3) then
            call cprj_copy(Cprj(:,ibg+1:ibg+dtset%nspinor*nband_k),Cprjnk_k)
@@ -711,7 +726,7 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
 !          In case of PAW and kssform==3, retrieve matrix elements of the PAW projectors for this k-point
 !          TODO add the mkmem==0 case
            if (Psps%usepaw==1) then
-             ABI_ALLOCATE(Cprjnk_k,(natom,nband_k*dtset%nspinor))
+             ABI_DATATYPE_ALLOCATE(Cprjnk_k,(natom,nband_k*dtset%nspinor))
              call cprj_alloc(Cprjnk_k,0,dimlmn)
              if (my_rank==sender) then
                if (kssform==3) then
@@ -829,7 +844,7 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
 !            ovlp(2)=ddot(npwkss,ug1(1,:),1,ug1(2,:),1) - ddot(npwkss,ug1(2,:),1,ug1(1,:),1)
              if (Psps%usepaw==1) ovlp = ovlp &
 &               + paw_overlap(Cprjnk_k(:,ibsp:ibsp),Cprjnk_k(:,ibsp:ibsp),Dtset%typat,Pawtab,&
-&                             spinor_comm=MPI_enreg%comm_spin)
+&                             spinor_comm=MPI_enreg%comm_spinor)
              norm = norm + DABS(ovlp(1))
            end do
            if (norm<einf) einf=norm
@@ -854,7 +869,7 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
 
                if (Psps%usepaw==1) ovlp= ovlp &
 &                 + paw_overlap(Cprjnk_k(:,ibsp1:ibsp1),Cprjnk_k(:,ibsp2:ibsp2),Dtset%typat,Pawtab,&
-&                               spinor_comm=MPI_enreg%comm_spin)
+&                               spinor_comm=MPI_enreg%comm_spinor)
              end do
              norm = DSQRT(ovlp(1)**2+ovlp(2)**2)
              if (norm<cinf) cinf=norm
@@ -905,7 +920,7 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
 
        if (Psps%usepaw==1) then
          call cprj_free(Cprjnk_k)
-         ABI_DEALLOCATE(Cprjnk_k)
+         ABI_DATATYPE_DEALLOCATE(Cprjnk_k)
        end if
      end if
 
@@ -914,7 +929,7 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
      end if
 
 !    if (MPI_enreg%paral_compil_kpt==1) then !cannot be used in seq run!
-     if (MINVAL(ABS(MPI_enreg%proc_distrb(ikpt,:,isppol)-my_rank))==0) then
+     if (.not.(proc_distrb_cycle(MPI_enreg%proc_distrb,ikpt,1,nband_k,isppol,my_rank))) then
        k_index=k_index+npw_k*nband_k*dtset%nspinor
        ibg=ibg+dtset%nspinor*nband_k
      end if
@@ -931,8 +946,8 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
 & '  min sum_G |a(n,k,G)| = ',einf,ch10,&
 & '  max sum_G |a(n,k,G)| = ',esup,ch10,&
 & ' Test on the orthogonalization of the wavefunctions',ch10,&
-& '  min sum_G a(n,k,G)* a(n'',k,G) = ',cinf,ch10,&
-& '  max sum_G a(n,k,G)* a(n'',k,G) = ',csup,ch10
+& '  min sum_G a(n,k,G)a(n'',k,G) = ',cinf,ch10,&
+& '  max sum_G a(n,k,G)a(n'',k,G) = ',csup,ch10
  call wrtout(std_out,msg,'COLL')
  call wrtout(ab_out,msg,'COLL')
 
@@ -941,6 +956,9 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
  ABI_DEALLOCATE(tnons2)
  if (Psps%usepaw==1)  then
    ABI_DEALLOCATE(dimlmn)
+   if (do_diago.and.MPI_enreg%nproc_atom>1) then
+     ABI_DATATYPE_DEALLOCATE(Paw_ij_all)
+   end if
  end if
  if ((.not.do_diago).and.(mkmem==0))  then
    ABI_DEALLOCATE(eig_dum)
@@ -962,7 +980,7 @@ subroutine outkss(Dtfil,Dtset,ecut,gmet,gprimd,Hdr,&
 
  if (associated(Cprj_diago_k)) then
    call cprj_free(Cprj_diago_k)
-   ABI_DEALLOCATE(Cprj_diago_k)
+   ABI_DATATYPE_DEALLOCATE(Cprj_diago_k)
  end if
 
  if (lhack)  then

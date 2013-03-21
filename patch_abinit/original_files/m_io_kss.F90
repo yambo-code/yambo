@@ -7,7 +7,7 @@
 !!  This module contains procedured dealing with the IO of the KSS file.
 !!
 !! COPYRIGHT
-!! Copyright (C) 1999-2012 ABINIT group (MG, GMR, VO, LR, RWG, MM, XG, RShaltaf)
+!! Copyright (C) 1999-2013 ABINIT group (MG, GMR, VO, LR, RWG, MM, XG, RShaltaf)
 !! This file is distributed under the terms of the
 !! GNU General Public License, see ~abinit/COPYING
 !! or http://www.gnu.org/copyleft/gpl.txt .
@@ -25,28 +25,27 @@
 
 #include "abi_common.h"
 
-
-
 MODULE m_io_kss
-
- use m_profiling
 
  use defs_basis
  use defs_datatypes
  use defs_abitypes
  use defs_wvltypes
+ use m_profiling
  use m_wffile
  use m_xmpi
  use m_errors
  use m_timer
-#if defined HAVE_TRIO_ETSF_IO
+ use m_abi_etsf
+#ifdef HAVE_TRIO_ETSF_IO
  use etsf_io
 #endif
 
  use m_io_tools,         only : get_unit
+ use m_dtset,            only : dtset_copy, dtset_free
  use m_blas,             only : xdotc
- use m_header,           only : hdr_get_nelect_byocc, isknown_headform, hdr_copy, hdr_clean
- use m_gsphere,          only : table_gbig2kg, get_kg
+ use m_header,           only : hdr_get_nelect_byocc, isknown_headform, hdr_copy, hdr_clean, hdr_comm, hdr_io_etsf, hdr_io
+ use m_gsphere,          only : table_gbig2kg, get_kg,  merge_and_sort_kg
  use m_wfs,              only : wfs_descriptor, wfd_ihave_ug, wfd_mybands, wfd_update_bkstab, &
 &                               WFD_STORED, WFD_ALLOCATED, wfd_set_mpicomm
  use m_commutator_vkbr,  only : calc_vkb
@@ -60,8 +59,9 @@ MODULE m_io_kss
  public :: write_kss_header    ! Writes the header of the KSS file.
  public :: read_kss_header     ! Read the head of the KSS file.
  public :: write_vkb           ! Writes the KB form factors and derivates on file for a single k-point.
- public :: write_kss_wfgk      ! Write the Gamme-centered wavefunctions and energies on the KSS file for a single k-point.
+ public :: write_kss_wfgk      ! Write the Gamma-centered wavefunctions and energies on the KSS file for a single k-point.
  public :: k2gamma_centered    ! Convert a set of wavefunctions from the k-centered to the gamma-centered basis set.
+ public :: make_gvec_kss       ! Build the list of G-vectors for the KSS file.
 
 CONTAINS  !===========================================================
 !!***
@@ -98,10 +98,10 @@ CONTAINS  !===========================================================
 !!  Starting version 5.6, KSS files in single precision are not supported anymore.
 !!
 !! PARENTS
-!!      rdm,setup_bse,setup_screening,setup_sigma
+!!      setup_screening,setup_sigma
 !!
 !! CHILDREN
-!!      get_kg,sphere,table_gbig2kg
+!!      merge_and_sort_kg,remove_inversion,wrtout
 !!
 !! SOURCE
 
@@ -114,7 +114,6 @@ subroutine testkss(filkss,accesswff,nsym_out,nbnds_kss,ng_kss,mpsang,gvec_p,ener
 #undef ABI_FUNC
 #define ABI_FUNC 'testkss'
  use interfaces_14_hidewrite
- use interfaces_59_io_mpi
 !End of the abilint section
 
  implicit none
@@ -148,6 +147,7 @@ subroutine testkss(filkss,accesswff,nsym_out,nbnds_kss,ng_kss,mpsang,gvec_p,ener
 ! *************************************************************************
 
  DBG_ENTER("COLL")
+ ABI_TIMER_START("")
 
  if (accesswff==IO_MODE_ETSF) then
    write(msg,'(3a)')&
@@ -238,7 +238,7 @@ subroutine testkss(filkss,accesswff,nsym_out,nbnds_kss,ng_kss,mpsang,gvec_p,ener
 !        Electrons_folder%occupations__kpoint_access = ikpt
 !        Electrons_folder%occupations__spin_access   = isppol
          call etsf_io_electrons_get(kss_unt,Electrons_folder,lstat,Error_data)
-         ETSF_CHECK_MYERROR(lstat,Error_data)
+         ETSF_CHECK_ERROR(lstat,Error_data)
 
          energies_p(1:nbnds_kss,ikpt,isppol)=eigen(1:nbnds_kss)
          !write(std_out,*)isppol,ikpt,eigen(:)*Ha_eV
@@ -257,7 +257,7 @@ subroutine testkss(filkss,accesswff,nsym_out,nbnds_kss,ng_kss,mpsang,gvec_p,ener
    if (accesswff==IO_MODE_ETSF) then
 #if defined HAVE_TRIO_ETSF_IO
      call etsf_io_low_close(kss_unt,lstat,Error_data)
-     ETSF_CHECK_MYERROR(lstat,Error_data)
+     ETSF_CHECK_ERROR(lstat,Error_data)
 #endif
    end if
  end if ! (my_rank==master)
@@ -281,6 +281,7 @@ subroutine testkss(filkss,accesswff,nsym_out,nbnds_kss,ng_kss,mpsang,gvec_p,ener
    call xbarrier_mpi(comm)
  end if
 
+ ABI_TIMER_STOP("")
  DBG_EXIT("COLL")
 
 end subroutine testkss
@@ -311,10 +312,10 @@ end subroutine testkss
 !!  This behavior should be changed but most of the automatic tests should be updated TODO
 !!
 !! PARENTS
-!!      bethe_salpeter,screening,sigma
+!!      screening,sigma
 !!
 !! CHILDREN
-!!      get_kg,sphere,table_gbig2kg
+!!      merge_and_sort_kg,remove_inversion,wrtout
 !!
 !! SOURCE
 
@@ -371,9 +372,9 @@ subroutine wfd_read_kss(Wfd,ikss_name,nbndsA,accesswff,nelect)
 
  DBG_ENTER("COLL")
 
- ABI_TIMER_START("wfd_read_kss")
+ ABI_TIMER_START("")
 
-#if !defined HAVE_TRIO_ETSF_IO
+#ifndef HAVE_TRIO_ETSF_IO
  if (accesswff==IO_MODE_ETSF) then
    write(msg,'(3a)')&
 &   ' When accesswff==3, support for the ETSF I/O library ',ch10,&
@@ -537,7 +538,7 @@ subroutine wfd_read_kss(Wfd,ikss_name,nbndsA,accesswff,nelect)
          ierr = skip_kss_record(kss_unt,1,Wfd%usepaw,Wfd%nspinor,Wfd%natom)
          if (ierr/=0) then
            write(msg,'(a,3(i0,1x))')" IO-Error reading KSS file records for (b,k,s)= ",ib,ik_ibz,spin
-           MSG_PERS_ERROR(msg)
+           MSG_ERROR(msg)
          end if
        end if
      end do ! ib
@@ -546,7 +547,7 @@ subroutine wfd_read_kss(Wfd,ikss_name,nbndsA,accesswff,nelect)
      ierr = skip_kss_record(kss_unt,nbandkss-nbndsA,Wfd%usepaw,Wfd%nspinor,Wfd%natom)
      if (ierr/=0) then
        write(msg,'(a,3(i0,1x))')" IO-Error while skipping KSS file records after (b,k,s)= ",ib,ik_ibz,spin
-       MSG_PERS_ERROR(msg)
+       MSG_ERROR(msg)
      end if
 
    end do !ik_ibz
@@ -556,18 +557,18 @@ subroutine wfd_read_kss(Wfd,ikss_name,nbndsA,accesswff,nelect)
 
 #if defined HAVE_TRIO_ETSF_IO
 
+ ! Read full block. TODO: Can be opimized since we usually need a much smaller block.
+ formeig=0; mcg=Wfd%nspinor*kss_npw*nbandkss; mband=nbandkss
+ ABI_ALLOCATE(cg,(2,mcg))
+ ABI_ALLOCATE(eigen,((2*mband)**formeig*mband))
+ ABI_ALLOCATE(occ_vec,(mband))
+
  do spin=1,Wfd%nsppol
    do ik_ibz=1,Wfd%nkibz
      npw_k   = Wfd%npwarr(ik_ibz)
      npw_kso = npw_k*Wfd%nspinor
 
      if (ALL(.not.my_readmask(:,ik_ibz,spin))) CYCLE
-
-     ! Read full block. TODO: Can be opimized since we usually need a much smaller block.
-     formeig=0; mcg=Wfd%nspinor*kss_npw*nbandkss; mband=nbandkss
-     ABI_ALLOCATE(cg,(2,mcg))
-     ABI_ALLOCATE(eigen,((2*mband)**formeig*mband))
-     ABI_ALLOCATE(occ_vec,(mband))
 
      ! Get eigenvalues, occupations and coefficients
      Electrons_folder%eigenvalues%data1D         => eigen
@@ -578,7 +579,7 @@ subroutine wfd_read_kss(Wfd,ikss_name,nbndsA,accesswff,nelect)
      Electrons_folder%occupations__spin_access   =  spin
 
      call etsf_io_electrons_get(kss_unt,Electrons_folder,lstat,Error_data)
-     ETSF_CHECK_MYERROR(lstat,Error_data)
+     ETSF_CHECK_ERROR(lstat,Error_data)
 
      ! === Get the coefficients_of_wavefunctions ===
      Main_folder%coefficients_of_wavefunctions%data2D => cg(:,:)
@@ -586,7 +587,7 @@ subroutine wfd_read_kss(Wfd,ikss_name,nbndsA,accesswff,nelect)
      Main_folder%wfs_coeff__spin_access               =  spin
 
      call etsf_io_main_get(kss_unt,Main_folder,lstat,Error_data)
-     ETSF_CHECK_MYERROR(lstat,Error_data)
+     ETSF_CHECK_ERROR(lstat,Error_data)
      !write(std_out,*)' occ_vec    ik_ibz = ',ik_ibz,occ_vec
      !write(std_out,*)' eigen [eV] ik_ibz = ',ik_ibz,eigen*Ha_eV
      !write(std_out,*)' cg         ik_ibz = ',ik_ibz,cg
@@ -626,12 +627,14 @@ subroutine wfd_read_kss(Wfd,ikss_name,nbndsA,accesswff,nelect)
      nullify(Main_folder%coefficients_of_wavefunctions%data2D)
      nullify(Electrons_folder%occupations%data1D)
      nullify(Electrons_folder%eigenvalues%data1D)
-     ABI_DEALLOCATE(cg)
-     ABI_DEALLOCATE(eigen)
-     ABI_DEALLOCATE(occ_vec)
 
    end do !ik_ibz
  end do !spin
+
+ ABI_DEALLOCATE(cg)
+ ABI_DEALLOCATE(eigen)
+ ABI_DEALLOCATE(occ_vec)
+
 #endif
 
  CASE DEFAULT
@@ -644,7 +647,7 @@ subroutine wfd_read_kss(Wfd,ikss_name,nbndsA,accesswff,nelect)
 #if defined HAVE_TRIO_ETSF_IO
  if (accesswff==IO_MODE_ETSF) then
    call etsf_io_low_close(kss_unt,lstat,Error_data)
-   ETSF_CHECK_MYERROR(lstat,Error_data)
+   ETSF_CHECK_ERROR(lstat,Error_data)
  end if
 #endif
  !
@@ -671,7 +674,7 @@ subroutine wfd_read_kss(Wfd,ikss_name,nbndsA,accesswff,nelect)
 
  ABI_DEALLOCATE(my_readmask)
 
- ABI_TIMER_STOP("wfd_read_kss")
+ ABI_TIMER_STOP("")
 
  DBG_EXIT("COLL")
 
@@ -716,7 +719,7 @@ end subroutine wfd_read_kss
 !!      outkss
 !!
 !! CHILDREN
-!!      get_kg,sphere,table_gbig2kg
+!!      merge_and_sort_kg,remove_inversion,wrtout
 !!
 !! SOURCE
 
@@ -730,9 +733,6 @@ subroutine write_kss_header(filekss,kss_npw,ishm,nbandksseff,mband,nsym2,symrel2
 #undef ABI_FUNC
 #define ABI_FUNC 'write_kss_header'
  use interfaces_14_hidewrite
- use interfaces_53_abiutil
- use interfaces_59_io_mpi
- use interfaces_61_ionetcdf
 !End of the abilint section
 
  implicit none
@@ -830,7 +830,7 @@ subroutine write_kss_header(filekss,kss_npw,ishm,nbandksseff,mband,nsym2,symrel2
  end do
 
 !Change dimension in the local Dtset_cpy as well.
- call dtsetcopy(Dtset_cpy, Dtset)
+ call dtset_copy(Dtset_cpy, Dtset)
  Dtset_cpy%mpw   = kss_npw
  Dtset_cpy%mband = nbandksseff
 
@@ -883,7 +883,7 @@ subroutine write_kss_header(filekss,kss_npw,ishm,nbandksseff,mband,nsym2,symrel2
    call abi_etsf_geo_put(Dtset_cpy, filekss, Psps)
    ! Open again for further additions
    call etsf_io_low_open_modify(kss_unt, TRIM(filekss)//"-etsf.nc", lstat, Error_data = Error_data)
-   ETSF_CHECK_MYERROR(lstat,Error_data)
+   ETSF_CHECK_ERROR(lstat,Error_data)
 
    ! Add additional info from abinit header.
    call hdr_io_etsf(fform,my_Hdr,rdwr,kss_unt)
@@ -903,12 +903,10 @@ subroutine write_kss_header(filekss,kss_npw,ishm,nbandksseff,mband,nsym2,symrel2
          end if
        end do
      end do
+     ! Write it now to be able to deallocate quickly.
      GW_data%kb_formfactor_sign%data2D => vkbsign_int
-     call etsf_io_gwdata_put(kss_unt, GW_data, lstat, Error_data) ! Write it now to be able to deallocate quickly.ABI_ALLOCATE(kss_unt,)
-     call etsf_io_gwdata_put(kss_unt, GW_data, lstat, Error_data) ! Write it now to be able to deallocate quickly.ABI_ALLOCATE(GW_data,)
-     call etsf_io_gwdata_put(kss_unt, GW_data, lstat, Error_data) ! Write it now to be able to deallocate quickly.ABI_ALLOCATE(lstat,)
-     call etsf_io_gwdata_put(kss_unt, GW_data, lstat, Error_data) ! Write it now to be able to deallocate quickly.ABI_ALLOCATE(Error_data,)
-     ETSF_CHECK_MYERROR(lstat,Error_data)
+     call etsf_io_gwdata_put(kss_unt, GW_data, lstat, Error_data) 
+     ETSF_CHECK_ERROR(lstat,Error_data)
      nullify(GW_data%kb_formfactor_sign%data2D)
      ABI_DEALLOCATE(vkbsign_int)
    end if
@@ -919,7 +917,7 @@ subroutine write_kss_header(filekss,kss_npw,ishm,nbandksseff,mband,nsym2,symrel2
    MSG_ERROR(msg)
  END SELECT
 
- call dtsetfree(Dtset_cpy)
+ call dtset_free(Dtset_cpy)
  call hdr_clean(my_Hdr)
 
  DBG_EXIT("COLL")
@@ -958,7 +956,7 @@ end subroutine write_kss_header
 !!      kss2wfk,m_io_kss
 !!
 !! CHILDREN
-!!      get_kg,sphere,table_gbig2kg
+!!      merge_and_sort_kg,remove_inversion,wrtout
 !!
 !! SOURCE
 
@@ -971,7 +969,6 @@ subroutine read_kss_header(kss_unt,filkss,accesswff,prtvol,nsym_out,nbnds_kss,ng
 #undef ABI_FUNC
 #define ABI_FUNC 'read_kss_header'
  use interfaces_14_hidewrite
- use interfaces_59_io_mpi
 !End of the abilint section
 
  implicit none
@@ -1040,7 +1037,7 @@ subroutine read_kss_header(kss_unt,filkss,accesswff,prtvol,nsym_out,nbnds_kss,ng
    call wrtout(std_out,msg,'COLL')
 
    call etsf_io_low_open_read(kss_unt,filkss,lstat,Error_data=Error_data)
-   ETSF_CHECK_MYERROR(lstat,Error_data)
+   ETSF_CHECK_ERROR(lstat,Error_data)
 
    rdwr=1
    call hdr_io_etsf(fform,Hdr,rdwr,kss_unt)
@@ -1150,8 +1147,7 @@ subroutine read_kss_header(kss_unt,filkss,accesswff,prtvol,nsym_out,nbnds_kss,ng
    MSG_ERROR("Unsupported value for accesswff")
  END SELECT
 
- ABI_CHECK(ALL(gvec_p(:,1)==0),'First G must be Gamma')
-
+ ABI_CHECK(ALL(gvec_p(1:3,1)==0),'First G must be 0')
 
  if (prtvol>0) then ! Output important dimensions on the log file.
    write(msg,'(a,f8.2)')' number of electrons                    ',nelect
@@ -1216,7 +1212,7 @@ end subroutine read_kss_header
 !!      m_io_kss
 !!
 !! CHILDREN
-!!      get_kg,sphere,table_gbig2kg
+!!      merge_and_sort_kg,remove_inversion,wrtout
 !!
 !! SOURCE
 
@@ -1300,7 +1296,7 @@ subroutine write_vkb(kss_unt,ikpt,kpoint,kss_npw,gbig,trsl,rprimd,Psps,accesswff
    GW_data%kb_formfactor_derivative%data3D => vkbd_tgt
 
    call etsf_io_gwdata_put(kss_unt, GW_data, lstat, Error_data)
-   ETSF_CHECK_MYERROR(lstat,Error_data)
+   ETSF_CHECK_ERROR(lstat,Error_data)
 
    nullify(GW_data%kb_formfactors%data3D          ) ! Avoid dangling pointers
    nullify(GW_data%kb_formfactor_derivative%data3D)
@@ -1358,7 +1354,7 @@ end subroutine write_vkb
 !!      outkss
 !!
 !! CHILDREN
-!!      get_kg,sphere,table_gbig2kg
+!!      merge_and_sort_kg,remove_inversion,wrtout
 !!
 !! SOURCE
 
@@ -1366,6 +1362,8 @@ subroutine write_kss_wfgk(kss_unt,ikpt,isppol,kpoint,nspinor,kss_npw,npw_k,kg_k,
 &          nbandksseff,natom,Psps,ene_k,occ_k,rprimd,gbig,wfg,Cprjnk_k,accesswff)
 
  use defs_basis
+ use defs_datatypes
+ use m_pawcprj, only : cprj_type
 
 !This section has been created automatically by the script Abilint (TD).
 !Do not modify the following lines by hand.
@@ -1461,6 +1459,8 @@ subroutine write_kss_wfgk(kss_unt,ikpt,isppol,kpoint,nspinor,kss_npw,npw_k,kg_k,
    MSG_ERROR(msg)
  END SELECT
 
+ call destroy_mpi_enreg(MPI_enreg_seq)
+
 end subroutine write_kss_wfgk
 !!***
 
@@ -1502,7 +1502,7 @@ end subroutine write_kss_wfgk
 !!      outkss
 !!
 !! CHILDREN
-!!      get_kg,sphere,table_gbig2kg
+!!      merge_and_sort_kg,remove_inversion,wrtout
 !!
 !! SOURCE
 
@@ -1515,7 +1515,7 @@ subroutine k2gamma_centered(kpoint,npw_k,istwf_k,ecut,kg_k,kss_npw,nspinor,nband
 !Do not modify the following lines by hand.
 #undef ABI_FUNC
 #define ABI_FUNC 'k2gamma_centered'
- use interfaces_53_ffts
+ use interfaces_52_fft_mpi_noabirule
 !End of the abilint section
 
  implicit none
@@ -1616,9 +1616,9 @@ subroutine k2gamma_centered(kpoint,npw_k,istwf_k,ecut,kg_k,kss_npw,nspinor,nband
        tmp_cg = cg(:,my_icg+ii+1:my_icg+ii+npw_k)
        !write(776,*)"band= ",band,tmp_cg !cg(1:,my_icg+1+ii:my_icg+ii+npw_k)
 
-       call sphere(tmp_cg,ndat,npw_k,cfft,n1,n2,n3,n4,n5,n6,kg_k,istwf_k,tobox,MPI_enreg,no_shift,identity,one)
+       call sphere(tmp_cg,ndat,npw_k,cfft,n1,n2,n3,n4,n5,n6,kg_k,istwf_k,tobox,MPI_enreg%me_g0,no_shift,identity,one)
 
-       call sphere(full_cg,ndat,full_npw_k,cfft,n1,n2,n3,n4,n5,n6,full_kg_k,1,tosph,MPI_enreg,no_shift,identity,one)
+       call sphere(full_cg,ndat,full_npw_k,cfft,n1,n2,n3,n4,n5,n6,full_kg_k,1,tosph,MPI_enreg%me_g0,no_shift,identity,one)
        !write(777,*)"band= ",band,full_cg(:,:)
 
        do ig=1,kss_npw ! Retrieve the correct components
@@ -1745,6 +1745,173 @@ end function skip_kss_record
 !!***
 
 !----------------------------------------------------------------------
+
+!!****f* m_io_kss/make_gvec_kss
+!! NAME
+!! make_gvec_kss
+!!
+!! FUNCTION
+!!   Build the list of G-vectors using the KSS convention.
+!!
+!! INPUTS
+!!  nkpt=Number of k-points.
+!!  nsym=Number of symmetries.
+!!  prtvol=Verbosity option.
+!!  symmorphi= 
+!!    0 : Old (Obsolete) implementation => Suppress inversion from symmetries list
+!!    1 : Use input symrel, tnons.
+!!  ecut_eff=Effective cutoff
+!!  symrel(3,3,nsym)= Symmetry operation in real space.
+!!  tnons(3,nsym)=Fractional translations
+!!  kptns(3,nkpt)=K-points in reduced coordinates.
+!!
+!! OUTPUT
+!!  npwkss = Input: Initial guess for the number of G-vectors required. Use 0 to have the 
+!!           full list of G-vectors that form a closed shell.
+!!           Output: Actual number of G-vectors that form a set of closed shells
+!!  gvec_kss(:,:) = Input: null pointer. Output: gvec_kss(3,npwkss), list of G-vectors (closed shells)
+!!  ierr=Status error
+!!
+!! PARENTS
+!!      setup_screening,setup_sigma
+!!
+!! CHILDREN
+!!      merge_and_sort_kg,remove_inversion,wrtout
+!!
+!! SOURCE
+
+subroutine make_gvec_kss(nkpt,kptns,ecut_eff,symmorphi,nsym,symrel,tnons,gprimd,prtvol,npwkss,gvec_kss,ierr)
+
+ use defs_basis
+ use m_profiling
+
+!This section has been created automatically by the script Abilint (TD).
+!Do not modify the following lines by hand.
+#undef ABI_FUNC
+#define ABI_FUNC 'make_gvec_kss'
+ use interfaces_14_hidewrite
+ use interfaces_41_geometry
+!End of the abilint section
+
+ implicit none
+
+!Arguments ------------------------------------
+!scalars
+ integer,intent(in) :: nkpt,nsym,prtvol,symmorphi
+ integer,intent(out) :: ierr
+ integer,intent(inout) :: npwkss
+ real(dp),intent(in) :: ecut_eff
+!arrays
+ integer,intent(in) :: symrel(3,3,nsym)
+ integer,pointer :: gvec_kss(:,:)
+ real(dp),intent(in) :: tnons(3,nsym),kptns(3,nkpt)
+ real(dp),intent(in) :: gprimd(3,3)
+
+!Local variables-------------------------------
+!scalars
+ integer :: ii,ishm,maxpw,nbase
+ integer :: nrst1,nrst2,nsym2,pinv
+ integer,pointer :: gbig(:,:)
+ character(len=500) :: msg
+!arrays
+ integer,pointer :: symrel2(:,:,:),shlim(:)
+ real(dp),pointer :: tnons2(:,:)
+! *********************************************************************
+
+ ierr = 0
+ write(msg,'(2a)')ch10,' Sorting g-vecs for an output of states on an unique "big" PW basis.'
+ call wrtout(std_out,msg,'COLL')
+
+ !ecut_eff = ecut * Dtset%dilatmx**2  ! Use ecut_eff instead of ecut_eff since otherwise
+ !
+ !============================================================
+ !=== Prepare set containing all G-vectors sorted by stars ===
+ !============================================================
+ !
+ !=== Analyze symmetry operations ===
+ if (symmorphi==0) then  ! Old (Obsolete) implementation: Suppress inversion from symmetries list:
+   nullify(symrel2,tnons2)
+   call remove_inversion(nsym,symrel,tnons,nsym2,symrel2,tnons2,pinv)
+   if (ANY(ABS(tnons2(:,1:nsym2))>tol8)) then
+     write(msg,'(3a)')&
+&     ' Non-symmorphic operations still remain in the symmetries list ',ch10,&
+&     ' Program does not stop but _KSS file will not be created...'
+     MSG_WARNING(msg)
+     ierr=ierr+1 ; RETURN
+   end if
+ else if (symmorphi==1) then
+!  If in the input file symmorphi==1 all the symmetry operations are retained:
+!  both identity and inversion (if any) as well as non-symmorphic operations.
+   nsym2=nsym ; pinv=1
+   ABI_MALLOC(symrel2,(3,3,nsym))
+   ABI_MALLOC(tnons2,(3,nsym))
+   symrel2(:,:,:)=symrel(:,:,1:nsym)
+   tnons2(:,:)   =tnons(:,1:nsym)
+ else
+   write(msg,'(a,i4,3a)')&
+&   ' symmorphi = ',symmorphi,' while it must be 0 or 1',ch10,&
+&   ' Program does not stop but KSS file will not be created...'
+   MSG_WARNING(msg)
+   ierr=ierr+1 ; RETURN
+ end if
+ !
+ !===================================================================
+ !==== Merge the set of k-centered G-spheres into a big set gbig ====
+ !===================================================================
+ !* Vectors in gbig are ordered by shells
+ !
+ nullify(gbig,shlim)
+ call merge_and_sort_kg(nkpt,kptns,ecut_eff,nsym2,pinv,symrel2,gprimd,gbig,prtvol,shlim_p=shlim)
+
+ nbase = SIZE(shlim)   ! Number of independent G in the big sphere.
+ maxpw = shlim(nbase)  ! Total number of G"s in the big sphere.
+ !
+ ! * Determine optimal number of bands and G"s to be written.
+ !npwkss=Dtset%npwkss
+ if ((npwkss==0).or.(npwkss>=maxpw)) then
+   npwkss=maxpw
+   write(msg,'(5a)')&
+&   ' Since the number of g''s to be written on file',ch10,&
+&   ' was 0 or too large, it has been set to the max. value.,',ch10,&
+&   ' computed from the union of the sets of G vectors for the different k-points.'
+   call wrtout(std_out,msg,'COLL')
+ end if
+
+ ishm=0
+ do ii=1,nbase
+   if (shlim(ii)<=npwkss) then
+     ishm=ii
+   else
+     EXIT
+   end if
+ end do
+ !ishm=bisect(shlim,npwkss)
+
+ if (shlim(ishm)/=npwkss) then
+   nrst1=shlim(ishm)
+   nrst2=MIN0(shlim(MIN0(ishm+1,nbase)),maxpw)
+   if (IABS(npwkss-nrst2)<IABS(npwkss-nrst1)) nrst1=nrst2
+   npwkss=nrst1
+   if (shlim(ishm)<npwkss) ishm=ishm+1
+   write(msg,'(3a)')&
+&   ' The number of G''s to be written on file is not a whole number of stars ',ch10,&
+&   ' the program set it to the nearest star limit.'
+   call wrtout(std_out,msg,'COLL')
+ end if
+
+ write(msg,'(a,i5)')' Number of G-vectors is: ',npwkss
+ call wrtout(std_out,msg,'COLL')
+
+ ABI_MALLOC(gvec_kss,(3,npwkss))
+ gvec_kss = gbig(:,1:npwkss)
+
+ ABI_FREE(gbig)
+ ABI_FREE(symrel2)
+ ABI_FREE(tnons2)
+ ABI_FREE(shlim)
+
+end subroutine make_gvec_kss
+!!***
 
 END MODULE m_io_kss
 !!***

@@ -10,7 +10,7 @@
 !!  are used or PAW with a nonlocal term in the all-electron Hamiltonian (eg. LDA+U).
 !!
 !! COPYRIGHT
-!! Copyright (C) 2008-2012 ABINIT group (MG, FB)
+!! Copyright (C) 2008-2013 ABINIT group (MG, FB)
 !! This file is distributed under the terms of the
 !! GNU General Public License, see ~abinit/COPYING
 !! or http://www.gnu.org/copyleft/gpl.txt .
@@ -25,12 +25,11 @@
 
 MODULE m_commutator_vkbr
 
- use m_profiling
-
  use defs_basis
  use defs_datatypes
  use m_blas
  use m_errors
+ use m_profiling
 
  use m_gwdefs,        only : czero_gw
  use m_special_funcs, only : ylmc, ylmcd
@@ -205,13 +204,12 @@ CONTAINS  !=====================================================================
 subroutine correct_init_kb_ffactors(KBff_k,kpoint,rprimd,npw_k,kg_k,Psps)
 
  use defs_datatypes
- use defs_abitypes
 
 !This section has been created automatically by the script Abilint (TD).
 !Do not modify the following lines by hand.
 #undef ABI_FUNC
 #define ABI_FUNC 'correct_init_kb_ffactors'
- use interfaces_42_geometry
+ use interfaces_41_geometry
  use interfaces_65_nonlocal
 !End of the abilint section
 
@@ -228,7 +226,7 @@ subroutine correct_init_kb_ffactors(KBff_k,kpoint,rprimd,npw_k,kg_k,Psps)
 
 !Local variables ------------------------------
 !scalars
- integer :: dimffnl,ider,idir,itypat,istat,nkpg
+ integer :: dimffnl,ider,idir,itypat,nkpg
  integer :: il,ilmn,iln,iln0,nlmn,ig
  real(dp) :: fact,ucvol
  !real(dp) :: ,effmass,ecutsm
@@ -250,7 +248,7 @@ subroutine correct_init_kb_ffactors(KBff_k,kpoint,rprimd,npw_k,kg_k,Psps)
  ! * Notice how the ordering is chosen correctly unlike in outkss.
  ! * More than one projector per angular channel is allowed but changes in cchi0q0 are needed
  !  allocate(KBff_ksign(Psps%mpsang,ntypat))  THIS THE OLD IMPLEMENTATION
- ABI_ALLOCATE(KBff_k%sign_dyad,(Psps%lnmax,Psps%ntypat))
+ ABI_MALLOC(KBff_k%sign_dyad,(Psps%lnmax,Psps%ntypat))
  KBff_k%sign_dyad(:,:)=0
 
  do itypat=1,Psps%ntypat
@@ -271,33 +269,31 @@ subroutine correct_init_kb_ffactors(KBff_k,kpoint,rprimd,npw_k,kg_k,Psps)
 
  ! === Allocate KB form factor and derivative wrt k+G ===
  ! * Also here we use correct ordering for dimensions
- ABI_ALLOCATE(KBff_k%ff ,(npw_k,Psps%lnmax,Psps%ntypat))
- istat = ABI_ALLOC_STAT
- ABI_ALLOCATE(KBff_k%ffd,(npw_k,Psps%lnmax,Psps%ntypat))
- istat = ABI_ALLOC_STAT
+ ABI_MALLOC(KBff_k%ff ,(npw_k,Psps%lnmax,Psps%ntypat))
+ ABI_MALLOC(KBff_k%ffd,(npw_k,Psps%lnmax,Psps%ntypat))
  KBff_k%ff(:,:,:)=zero ; KBff_k%ffd(:,:,:)=zero
  
  ider=1 ; dimffnl=2 ! To retrieve the first derivative.
  idir=0 ; nkpg=0
  !
  ! Quantities used only if useylm==1
- ABI_ALLOCATE(ylm,(npw_k,Psps%mpsang**2*Psps%useylm))
- ABI_ALLOCATE(ylm_gr,(npw_k,3+6*(ider/2),Psps%mpsang**2*Psps%useylm))
- ABI_ALLOCATE(ylm_k,(npw_k,Psps%mpsang**2*Psps%useylm))
- ABI_ALLOCATE(kpg_dum,(npw_k,nkpg))
+ ABI_MALLOC(ylm,(npw_k,Psps%mpsang**2*Psps%useylm))
+ ABI_MALLOC(ylm_gr,(npw_k,3+6*(ider/2),Psps%mpsang**2*Psps%useylm))
+ ABI_MALLOC(ylm_k,(npw_k,Psps%mpsang**2*Psps%useylm))
+ ABI_MALLOC(kpg_dum,(npw_k,nkpg))
 
- ABI_ALLOCATE(ffnl,(npw_k,dimffnl,Psps%lmnmax,Psps%ntypat))
+ ABI_MALLOC(ffnl,(npw_k,dimffnl,Psps%lmnmax,Psps%ntypat))
 
  call mkffnl(Psps%dimekb,dimffnl,Psps%ekb,ffnl,Psps%ffspl,gmet,gprimd,ider,idir,Psps%indlmn,&
 &  kg_k,kpg_dum,kpoint,Psps%lmnmax,Psps%lnmax,Psps%mpsang,Psps%mqgrid_ff,nkpg,npw_k,& 
 &  Psps%ntypat,Psps%pspso,Psps%qgrid_ff,rmet,Psps%usepaw,Psps%useylm,ylm_k,ylm_gr)
 
- ABI_DEALLOCATE(kpg_dum)
- ABI_DEALLOCATE(ylm)
- ABI_DEALLOCATE(ylm_gr)
- ABI_DEALLOCATE(ylm_k)
+ ABI_FREE(kpg_dum)
+ ABI_FREE(ylm)
+ ABI_FREE(ylm_gr)
+ ABI_FREE(ylm_k)
 
- ABI_ALLOCATE(modkplusg,(npw_k))
+ ABI_MALLOC(modkplusg,(npw_k))
 
  !effmass=one; ecutsm=zero
  !call mkkin(ecut,ecutsm,effmass,gmet,kg_k,modkplusg,kpoint,npw_k)
@@ -355,8 +351,8 @@ subroutine correct_init_kb_ffactors(KBff_k,kpoint,rprimd,npw_k,kg_k,Psps)
    end do
  end do
 
- ABI_DEALLOCATE(ffnl)
- ABI_DEALLOCATE(modkplusg)
+ ABI_FREE(ffnl)
+ ABI_FREE(modkplusg)
 
  DBG_EXIT("COLL")
 
@@ -449,15 +445,15 @@ subroutine destroy_kb_ffactors(KBff_k)
 
 !integer 
  if (associated(KBff_k%sign_dyad))  then
-   ABI_DEALLOCATE(KBff_k%sign_dyad)
+   ABI_FREE(KBff_k%sign_dyad)
  end if
 
 !real
  if (associated(KBff_k%ff ))  then
-   ABI_DEALLOCATE(KBff_k%ff)
+   ABI_FREE(KBff_k%ff)
  end if
  if (associated(KBff_k%ffd))  then
-   ABI_DEALLOCATE(KBff_k%ffd)
+   ABI_FREE(KBff_k%ffd)
  end if
 
 end subroutine destroy_kb_ffactors
@@ -690,6 +686,7 @@ subroutine ccgradvnl(npwwfn,gvec,kpoint,Cryst,mpsang,vkbsign,vkb,vkbd,gradvnl)
 !Do not modify the following lines by hand.
 #undef ABI_FUNC
 #define ABI_FUNC 'ccgradvnl'
+ use interfaces_14_hidewrite
 !End of the abilint section
 
  implicit none
@@ -719,8 +716,7 @@ subroutine ccgradvnl(npwwfn,gvec,kpoint,Cryst,mpsang,vkbsign,vkb,vkbd,gradvnl)
  real(dp) :: b1(3),b2(3),b3(3)
 !************************************************************************
 
- !write(msg,'(a)')' limit q->0, including term <n,k|[Vnl,iqr]|n"k>'
- !call wrtout(std_out,msg,'COLL')
+ call wrtout(std_out,' limit q->0, including term <n,k|[Vnl,iqr]|n"k>','COLL')
 
  b1=two_pi*Cryst%gprimd(:,1)
  b2=two_pi*Cryst%gprimd(:,2)
@@ -1026,7 +1022,6 @@ subroutine init_kb_potential(KBgrad_k,Cryst,Psps,inclvkb,istwfk,npwwfn,kpoint,gv
 
 !Local variables-------------------------------
 !scalars
- integer :: istat
  character(len=500) :: msg
 !arrays
  real(dp),allocatable :: vkb(:,:,:),vkbd(:,:,:),vkbsign(:,:)
@@ -1048,11 +1043,9 @@ subroutine init_kb_potential(KBgrad_k,Cryst,Psps,inclvkb,istwfk,npwwfn,kpoint,gv
  ! in order to support pseudos with more than projector.
  ! Moreover they should be calculated on-the-fly using calc_vkb
  ! For the moment, we opt for a quick an dirty implementation.
- ABI_ALLOCATE(vkbsign,(Psps%mpsang,Cryst%ntypat))
- ABI_ALLOCATE(vkb ,(npwwfn,Cryst%ntypat,Psps%mpsang))
- istat = ABI_ALLOC_STAT
- ABI_ALLOCATE(vkbd,(npwwfn,Cryst%ntypat,Psps%mpsang))
- istat = ABI_ALLOC_STAT
+ ABI_MALLOC(vkbsign,(Psps%mpsang,Cryst%ntypat))
+ ABI_MALLOC(vkb ,(npwwfn,Cryst%ntypat,Psps%mpsang))
+ ABI_MALLOC(vkbd,(npwwfn,Cryst%ntypat,Psps%mpsang))
 
  call calc_vkb(Psps,kpoint,npwwfn,gvec,Cryst%rprimd,vkbsign,vkb,vkbd)
 
@@ -1063,9 +1056,8 @@ subroutine init_kb_potential(KBgrad_k,Cryst,Psps,inclvkb,istwfk,npwwfn,kpoint,gv
  CASE (1) ! * Legendre polynomials (CPU and mem ~npwwfn^2) ===
 
   ! gradvnl = (grad_K+grad_Kp) Vnl(K,Kp) in reciprocal lattice units.
-  ABI_ALLOCATE(KBgrad_k%gradvnl,(3,npwwfn,npwwfn))
-  istat = ABI_ALLOC_STAT
-  if (istat/=0) then
+  ABI_MALLOC(KBgrad_k%gradvnl,(3,npwwfn,npwwfn))
+  if (ABI_ALLOC_STAT/=0) then
     write(msg,'(a,f12.1)')'out-of-memory gradvnl; Mb= ',3*npwwfn**2*2*gwpc*b2Mb
     MSG_ERROR(msg)
   end if
@@ -1074,16 +1066,14 @@ subroutine init_kb_potential(KBgrad_k,Cryst,Psps,inclvkb,istwfk,npwwfn,kpoint,gv
 
  CASE (2) ! * Complex spherical harmonics (CPU and mem \propto npwwfn).
 
-  ABI_ALLOCATE(KBgrad_k%fnl,(npwwfn,Psps%mpsang**2,Cryst%natom))
-  istat = ABI_ALLOC_STAT
-  if (istat/=0) then
+  ABI_MALLOC(KBgrad_k%fnl,(npwwfn,Psps%mpsang**2,Cryst%natom))
+  if (ABI_ALLOC_STAT/=0) then
     write(msg,'(a,f12.1)')'out-of-memory fnl; Mb= ',npwwfn*Psps%mpsang**2*Cryst%natom*2*gwpc*b2Mb
     MSG_ERROR(msg)
   end if
 
-  ABI_ALLOCATE(KBgrad_k%fnld,(3,npwwfn,Psps%mpsang**2,Cryst%natom))
-  istat = ABI_ALLOC_STAT
-  if (istat/=0)then
+  ABI_MALLOC(KBgrad_k%fnld,(3,npwwfn,Psps%mpsang**2,Cryst%natom))
+  if (ABI_ALLOC_STAT/=0)then
     write(msg,'(a,f12.1)')'out-of-memory fnld; Mb= ',3*npwwfn*Psps%mpsang**2*Cryst%natom*2*gwpc*b2Mb
     MSG_ERROR(msg)
   end if
@@ -1097,9 +1087,9 @@ subroutine init_kb_potential(KBgrad_k,Cryst,Psps,inclvkb,istwfk,npwwfn,kpoint,gv
    MSG_ERROR(msg)
  END SELECT 
 
- ABI_DEALLOCATE(vkbsign)
- ABI_DEALLOCATE(vkb)
- ABI_DEALLOCATE(vkbd)
+ ABI_FREE(vkbsign)
+ ABI_FREE(vkb)
+ ABI_FREE(vkbd)
 
 end subroutine init_kb_potential 
 !!***
@@ -1143,13 +1133,13 @@ subroutine destroy_kb_potential_0D(KBgrad_k)
 
 !complex
  if (associated(KBgrad_k%gradvnl))  then
-   ABI_DEALLOCATE(KBgrad_k%gradvnl)
+   ABI_FREE(KBgrad_k%gradvnl)
  end if
  if (associated(KBgrad_k%fnl    ))  then
-   ABI_DEALLOCATE(KBgrad_k%fnl)
+   ABI_FREE(KBgrad_k%fnl)
  end if
  if (associated(KBgrad_k%fnld   ))  then
-   ABI_DEALLOCATE(KBgrad_k%fnld)
+   ABI_FREE(KBgrad_k%fnld)
  end if
 
 end subroutine destroy_kb_potential_0D
@@ -1299,10 +1289,11 @@ subroutine add_vnlr_commutator(KBgrad_k,npwwfn,nspinor,wfg1,wfg2,rhotwx)
  CASE (2)  ! Complex spherical harmonics (much faster!).
 
   dum=czero_gw; gamma_term=czero
+!$OMP PARALLEL DO PRIVATE(cta1,cta2,cta3,cta4) COLLAPSE(2) REDUCTION(+:dum,gamma_term)
   do iat=1,KBgrad_k%natom
     do ilm=1,KBgrad_k%mpsang**2
-      cta1=czero_gw ; cta2(:)=czero_gw
-      cta4=czero_gw ; cta3(:)=czero_gw
+      cta1=czero_gw; cta2(:)=czero_gw
+      cta4=czero_gw; cta3(:)=czero_gw
       do ig=1,npwwfn ! Here we take advantage of the property Y_(l-m)= (-i)^m Y_lm^*.
         cta1   = cta1    + wfg1(ig) * KBgrad_k%fnl (ig,ilm,iat)
         cta2(:)= cta2(:) + wfg2(ig) * KBgrad_k%fnld(:,ig,ilm,iat)
@@ -1376,7 +1367,7 @@ subroutine calc_vkb(Psps,kpoint,npw_k,kg_k,rprimd,vkbsign,vkb,vkbd)
 !Do not modify the following lines by hand.
 #undef ABI_FUNC
 #define ABI_FUNC 'calc_vkb'
- use interfaces_42_geometry
+ use interfaces_41_geometry
  use interfaces_56_recipspace
  use interfaces_65_nonlocal
 !End of the abilint section
@@ -1434,23 +1425,23 @@ subroutine calc_vkb(Psps,kpoint,npw_k,kg_k,rprimd,vkbsign,vkb,vkbd)
  idir=0; nkpg=0
  !
  ! Quantities used only if useylm==1
- ABI_ALLOCATE(ylm,(npw_k,Psps%mpsang**2*Psps%useylm))
- ABI_ALLOCATE(ylm_gr,(npw_k,3+6*(ider/2),Psps%mpsang**2*Psps%useylm))
- ABI_ALLOCATE(ylm_k,(npw_k,Psps%mpsang**2*Psps%useylm))
- ABI_ALLOCATE(kpg_dum,(npw_k,nkpg))
+ ABI_MALLOC(ylm,(npw_k,Psps%mpsang**2*Psps%useylm))
+ ABI_MALLOC(ylm_gr,(npw_k,3+6*(ider/2),Psps%mpsang**2*Psps%useylm))
+ ABI_MALLOC(ylm_k,(npw_k,Psps%mpsang**2*Psps%useylm))
+ ABI_MALLOC(kpg_dum,(npw_k,nkpg))
 
- ABI_ALLOCATE(ffnl,(npw_k,dimffnl,Psps%lmnmax,Psps%ntypat))
+ ABI_MALLOC(ffnl,(npw_k,dimffnl,Psps%lmnmax,Psps%ntypat))
 
  call mkffnl(Psps%dimekb,dimffnl,Psps%ekb,ffnl,Psps%ffspl,gmet,gprimd,ider,idir,Psps%indlmn,&
 &  kg_k,kpg_dum,kpoint,Psps%lmnmax,Psps%lnmax,Psps%mpsang,Psps%mqgrid_ff,nkpg,npw_k,& 
 &  Psps%ntypat,Psps%pspso,Psps%qgrid_ff,rmet,Psps%usepaw,Psps%useylm,ylm_k,ylm_gr)
 
- ABI_DEALLOCATE(kpg_dum)
- ABI_DEALLOCATE(ylm)
- ABI_DEALLOCATE(ylm_gr)
- ABI_DEALLOCATE(ylm_k)
+ ABI_FREE(kpg_dum)
+ ABI_FREE(ylm)
+ ABI_FREE(ylm_gr)
+ ABI_FREE(ylm_k)
 
- ABI_ALLOCATE(modkplusg,(npw_k))
+ ABI_MALLOC(modkplusg,(npw_k))
 
  effmass=one; ecutsm=zero; ecut=HUGE(one)
  call mkkin(ecut,ecutsm,effmass,gmet,kg_k,modkplusg,kpoint,npw_k)
@@ -1501,8 +1492,8 @@ subroutine calc_vkb(Psps,kpoint,npw_k,kg_k,rprimd,vkbsign,vkb,vkbd)
    end do
  end do
 
- ABI_DEALLOCATE(ffnl)
- ABI_DEALLOCATE(modkplusg)
+ ABI_FREE(ffnl)
+ ABI_FREE(modkplusg)
 
  DBG_EXIT("COLL")
 

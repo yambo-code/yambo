@@ -72,7 +72,7 @@ subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_in
        if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(2))) then
          i_chain(2)  =i_chain(1)-log(real(PARALLEL_CPU_used(i_c)))/log(2.)
          call PARALLEL_build_up_child_chains(i_chain(2),COMM_index_2,i_chain(1))
-         if (present(COMM_A2A_2)) then
+         if (present(COMM_A2A_2).and.i_chain(2)>0) then
            call COMM_copy(INTER_CHAIN(i_chain(2)),COMM_A2A_2)
          endif
        endif
@@ -81,7 +81,7 @@ subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_in
      do i_c=1,PARALLEL_n_structures_active
        !
        if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(3))) then
-         if (i_chain(2)/=0) then
+         if (i_chain(2)>0) then
            i_chain(3)  =i_chain(2)-log(real(PARALLEL_CPU_used(i_c)))/log(2.)
            call PARALLEL_build_up_child_chains(i_chain(3),COMM_index_3,i_chain(2))
          else
@@ -94,9 +94,9 @@ subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_in
      do i_c=1,PARALLEL_n_structures_active
        !
        if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(4))) then
-         if (i_chain(3)/=0) then
+         if (i_chain(3)>0) then
            call COMM_copy(INTER_CHAIN(i_chain(3)),COMM_index_4)
-         else if (i_chain(2)/=0) then
+         else if (i_chain(2)>0) then
            call COMM_copy(INTER_CHAIN(i_chain(2)),COMM_index_4)
          else
            call COMM_copy(INTER_CHAIN(i_chain(1)),COMM_index_4)
@@ -130,7 +130,7 @@ subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_in
        if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(2))) then
          i_chain(2)  =i_chain(1)-log(real(PARALLEL_CPU_used(i_c)))/log(2.)
          call PARALLEL_build_up_child_chains(i_chain(2),COMM_index_2,i_chain(1))
-         if (present(COMM_A2A_2)) then
+         if (present(COMM_A2A_2).and.i_chain(2)>0) then
            call COMM_copy(INTER_CHAIN(i_chain(2)),COMM_A2A_2)
          endif
        endif
@@ -139,7 +139,7 @@ subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_in
      do i_c=1,PARALLEL_n_structures_active
        !
        if (trim(PARALLEL_CPU_role(i_c))==trim(ROLE(3))) then
-         if (i_chain(2)/=0) then
+         if (i_chain(2)>0) then
            call COMM_copy(INTER_CHAIN(i_chain(2)),COMM_index_3)
          else
            call COMM_copy(INTER_CHAIN(i_chain(1)),COMM_index_3)

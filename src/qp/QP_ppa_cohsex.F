@@ -453,6 +453,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! ALL 2 ALL of QP_Sc
  !
+ write (*,*) QP_Sc(1,1)*HA2EV
+ !
  call PP_redux_wait(QP_Sc)
  !
  call WF_free()

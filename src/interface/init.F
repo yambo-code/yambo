@@ -938,8 +938,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_gw0.and.l_el_corr) call initactivate(1,'HF_and_locXC')
      if (l_ppa)    call initactivate(1,'em1d')
      if (l_cohsex) call initactivate(1,'em1s')
-     !if (l_bss)    call initactivate(1,'bse')
-     !if (l_bss)    call initactivate(1,'l_optics')
+     if (l_bss)    call initactivate(1,'bse')
+     if (l_bss)    call initactivate(1,'optics')
      if (l_bse) then
        !
        if (l_alda_fxc) BS_res_mode='x'     

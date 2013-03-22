@@ -149,7 +149,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! GPL_EXCLUDE_END
  !
- !
  ! Logicals (Drivers)
  !
  BS_res_K_corr=index(BS_res_mode,'c')/=0

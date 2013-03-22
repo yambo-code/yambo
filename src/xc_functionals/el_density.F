@@ -73,7 +73,7 @@ subroutine el_density(en,Xk,rho,force_si)
  integer :: ib,ibp,ik,i_spin,ifft,rho_syms,ifft2,ir
  real(SP):: rho_no_sym(fft_size),f_occ
  logical :: warn_done
- integer :: iv_max,iv_min,ID
+ integer :: iv_max,iv_min,ID,n_QP_A2A_cpu
  integer, allocatable ::states_filling(:,:,:)
  !
  rho=0._SP
@@ -98,20 +98,24 @@ subroutine el_density(en,Xk,rho,force_si)
  ! 
  ! if (.not.all(states_filling(ib,ik,1:ID-1)==0))
  !
- allocate(states_filling(iv_max,Xk%nibz,PAR_COM_QP_A2A%n_CPU))
- states_filling=0
+ n_QP_A2A_cpu=PAR_COM_QP_A2A%n_CPU
  !
- ID=PAR_COM_QP_A2A%CPU_id+1
- !
- do ib=iv_min,iv_max
-   do ik=1,Xk%nibz
-      if (PAR_IND_QP_G_b%element_1D(ib).and.PAR_IND_Xk_ibz%element_1D(ik)) then
-          states_filling(ib,ik,ID)=1
-      endif
+ if (n_QP_A2A_cpu>1) then
+   !
+   allocate(states_filling(iv_max,Xk%nibz,n_QP_A2A_cpu))
+   states_filling=0
+   !
+   ID=PAR_COM_QP_A2A%CPU_id+1
+   !
+   do ib=iv_min,iv_max
+     do ik=1,Xk%nibz
+        if (PAR_IND_QP_G_b%element_1D(ib).and.PAR_IND_Xk_ibz%element_1D(ik)) states_filling(ib,ik,ID)=1
+     enddo
    enddo
- enddo
- !
- call PP_redux_wait(states_filling,COMM=PAR_COM_QP_A2A%COMM)
+   !
+   call PP_redux_wait(states_filling,COMM=PAR_COM_QP_A2A%COMM)
+   !
+ endif
  !
  bands_loop: do ib=iv_min,iv_max
    !
@@ -121,7 +125,9 @@ subroutine el_density(en,Xk,rho,force_si)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     if (.not.all(states_filling(ib,ik,1:ID-1)==0)) cycle
+     if (n_QP_A2A_cpu>1) then
+       if (.not.all(states_filling(ib,ik,1:ID-1)==0)) cycle
+     endif
      !
      do i_spin=1,n_spin
        !
@@ -179,9 +185,12 @@ subroutine el_density(en,Xk,rho,force_si)
 !  enddo
 !#endif
   !
-  deallocate(states_filling)
-  !
-  call PP_redux_wait(rho_no_sym,COMM=PAR_COM_QP_A2A%COMM)
+  if (n_QP_A2A_cpu>1) then
+    deallocate(states_filling)
+    call PP_redux_wait(rho_no_sym,COMM=PAR_COM_QP_A2A%COMM)
+  else
+    call PP_redux_wait(rho_no_sym)
+  endif
   !
   ! Simmetrization
   !

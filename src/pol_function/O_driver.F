@@ -69,6 +69,16 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  !
  do iq=X%iq(1),X%iq(2)
    !
+   ! TDDFT setup
+   !
+   call tddft_do_X_W_typs(iq,X,wv)
+   !
+   ! ALDA (only once) 
+   !
+   call PARALLEL_global_indexes(Xen,Xk,q,"DENSITY") 
+   !
+   if (l_alda_fxc) call tddft_alda_g_space(Xen,Xk)
+   !
    ! PARALLEL indexes
    !==================
    !
@@ -88,12 +98,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    i_G_shift=O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
    if (i_G_shift<0) cycle
-   !
-   ! TDDFT setup
-   !
-   call tddft_do_X_W_typs(iq,X,wv)
-   !
-   if (l_alda_fxc) call tddft_alda_g_space(Xen,Xk)
    !
    ! In TDDFT with BS based kernel eps0 is non-sense
    ! as shifted of the K diagonal

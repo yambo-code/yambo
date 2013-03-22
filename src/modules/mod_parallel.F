@@ -240,6 +240,8 @@ module parallel_m
      CPU_structure(4)%Short_Description="HF"
      CPU_structure(5)%Long_Description="BSE"
      CPU_structure(5)%Short_Description="BSE"
+     CPU_structure(6)%Long_Description="DENSITY"
+     CPU_structure(6)%Short_Description="DENSITY"
    end subroutine
    !
    subroutine COMM_reset(COMM)

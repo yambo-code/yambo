@@ -31,6 +31,8 @@ subroutine tddft_alda_g_space(E,k)
  use wave_func,     ONLY:WF_load,WF_free
  use xc_functionals,ONLY:F_xc
  use global_XC,     ONLY:WF_kind,WF_xc_functional
+ use interfaces,    ONLY:PARALLEL_WF_distribute
+ use parallel_m,    ONLY:PAR_IND_QP_G_b,PAR_IND_Xk_ibz
  implicit none
  type(levels) ::E
  type(bz_samp)::k
@@ -50,7 +52,11 @@ subroutine tddft_alda_g_space(E,k)
    call msg('s','[TDDFT] ALDA Fxc size forced by symmetry to be :',FXC_n_g_corr)
  endif
  !
- ! WFs
+ ! WF distributed & load
+ !=======================
+ !
+ call PARALLEL_WF_distribute(E%nbm,k%nibz,K_index=PAR_IND_Xk_ibz,&
+&                            B_index=PAR_IND_QP_G_b,CLEAN_UP=.TRUE.)
  !
  call WF_load(0,1,(/1,E%nbm/),(/1,k%nibz/),title='-Rho')
  !

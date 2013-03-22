@@ -440,6 +440,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa) then
    call CPU_activate("X_q_0")
    call CPU_activate("X_all_q")
+   if (l_alda_fxc) call CPU_activate("DENSITY")
  endif
  !
  if (l_HF_and_locXC) call CPU_activate("HF")

@@ -126,6 +126,36 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! ENVIROMENTS
  !=============
  !
+ ! DENSITY
+ !---------
+ !
+ if (ENVIRONMENT=="DENSITY") then
+   !
+   call PARALLEL_assign_chains_and_COMMs(2,ROLE=(/"k","v"/),&
+&                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
+&                                        COMM_index_2=PAR_COM_QP_G_b_INDEX)
+   !
+   ! K-points
+   !
+   call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=.TRUE.)
+   PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
+   PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
+   !
+   ! Bands
+   !
+   call PARALLEL_index(PAR_IND_QP_G_b,(/E%nbm/),COMM=PAR_COM_QP_G_b_INDEX,CONSECUTIVE=.TRUE.)
+   PAR_IND_QP_G_b_ID=PAR_COM_QP_G_b_INDEX%CPU_id
+   !
+   call PARALLEL_live_message("K(ibz)",LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
+&                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU,CHAIN=PAR_COM_Xk_ibz_INDEX%chain_order)
+   !
+   call PARALLEL_live_message("G bands",&
+&                             LOADED=PAR_IND_QP_G_b%n_of_elements(PAR_IND_QP_G_b_ID+1),&
+&                             TOTAL=E%nbm,NCPU=PAR_COM_QP_G_b_INDEX%n_CPU,&
+&                             CHAIN=PAR_COM_QP_G_b_INDEX%chain_order)
+   !
+ endif
+ !
  ! Response_G_space_Zero_Momentum
  !--------------------------------
  !
@@ -296,7 +326,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum".or.ENVIRONMENT=="Response_G_space_Finite_Momentum".or.&
 &    ENVIRONMENT=="BSE") then
-!,n_bands
    !
    if (ENVIRONMENT=="BSE") then
      n_bands= (/E%nbf+1,BS_bands(2)/)
@@ -306,7 +335,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! Response functions conduction bands
    !
-!,PAR_COM_CON_INDEX(X_type)%n_CPU
    call PARALLEL_index(PAR_IND_CON_BANDS_X(X_type),(/n_bands(2)/),low_range=(/n_bands(1)/),&
 &                      COMM=PAR_COM_CON_INDEX(X_type),CONSECUTIVE=.TRUE.)
    PAR_IND_CON_BANDS_X_ID(X_type)=PAR_COM_CON_INDEX(X_type)%CPU_id

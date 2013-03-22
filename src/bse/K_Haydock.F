@@ -261,15 +261,15 @@ subroutine K_Haydock(iq,W)
      call K_output_file(iq,1)
      dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy :'//&
 &            trim(real2ch(reached_treshold))//'|'//trim(real2ch(Haydock_treshold))
-     if (tty_size>0.and.it_on_disk==0) call LIVE_message("r",dumb_ch,"","%s")
-     if (tty_size>0.and.it_on_disk> 0) call LIVE_message("n",dumb_ch,"","%s")
-     if (tty_size<0) call LIVE_message("n",dumb_ch,"","%s")
+     if (tty_size>0.and.it_on_disk==0) call LIVE_message(dumb_ch,"r","","%s")
+     if (tty_size>0.and.it_on_disk> 0) call LIVE_message(dumb_ch,"n","","%s")
+     if (tty_size<0) call LIVE_message(dumb_ch,"n","","%s")
    else
      !
      dumb_ch='[Haydock] Iteration '//trim(intc(it))
-     if (tty_size<0) call LIVE_message("n",dumb_ch,"","%s")
-     if (tty_size>0.and.it==1) call LIVE_message("n",dumb_ch,"","%s")
-     if (tty_size>0.and.it==2) call LIVE_message("r",dumb_ch,"","%s")
+     if (tty_size<0) call LIVE_message(dumb_ch,"n","","%s")
+     if (tty_size>0.and.it==1) call LIVE_message(dumb_ch,"n","","%s")
+     if (tty_size>0.and.it==2) call LIVE_message(dumb_ch,"n","","%s")
      !
    endif
    !

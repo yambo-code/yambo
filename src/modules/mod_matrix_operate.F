@@ -271,20 +271,8 @@ module matrix_operate
      !
      M_size=size(M,2)
      !
-     ! CPUs (number and ID) 
-     !
      Ncpu_in_use=1
      myID_in_use=0
-     !
-#if defined _MPI
-     if (idriver==INV) then
-       Ncpu_in_use=PAR_COM_INV%n_CPU
-       myID_in_use=PAR_COM_INV%CPU_id
-     else if (idriver==DIAGO) then
-       Ncpu_in_use=PAR_COM_DIAGO%n_CPU
-       myID_in_use=PAR_COM_DIAGO%CPU_id
-     endif 
-#endif
      !
      ! Decide which to use among LK or SLK
      !
@@ -297,6 +285,22 @@ module matrix_operate
      endif
      !
      if (Ncpu_in_use==1.or.M_size/Ncpu_in_use<min_cpu_block_size.or.idriver==USE_SVD) lib_in_use=USE_LK 
+     !
+#if defined _MPI
+     !
+     ! CPUs (number and ID) 
+     !
+     if (lib_in_use==USE_SLK) then
+       if (idriver==INV) then
+         Ncpu_in_use=PAR_COM_INV%n_CPU
+         myID_in_use=PAR_COM_INV%CPU_id
+       else if (idriver==DIAGO) then
+         Ncpu_in_use=PAR_COM_DIAGO%n_CPU
+         myID_in_use=PAR_COM_DIAGO%CPU_id
+       endif 
+     endif
+     !
+#endif
      !
      ! =============== SERIAL SECTION ===============
      !

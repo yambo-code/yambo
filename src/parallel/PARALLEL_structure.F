@@ -27,7 +27,7 @@ subroutine PARALLEL_structure()
  !
  ! Work Space 
  !
- integer     ::i_err,ic_1,ic_2,ID(ncpu),i_cpu,ID_save(ncpu),i_chain,n_groups
+ integer     ::i_err,ic_1,ic_2,ID(ncpu+1),i_cpu,ID_save(ncpu+1),i_chain,n_groups
  !
 #if defined _MPI
  !
@@ -46,7 +46,9 @@ subroutine PARALLEL_structure()
  n_groups=ncpu/2/n_threads
  n_MPI=n_groups*2
  !
- n_chains=1+log(real(ncpu/2))/log(2.)
+ ! 2^n_chains * n_threads = N = n_chains=log_2(N/n_threads)
+ !
+ n_chains=log(real(ncpu/n_threads))/log(2.)
  !
  ! ID = (POOL_id, CHAIN_id(1),...., CHAIN_id(n_chains))
  !

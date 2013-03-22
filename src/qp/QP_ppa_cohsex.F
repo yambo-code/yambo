@@ -212,6 +212,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',timing_steps)
    if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',timing_steps)
+   !
 !#if defined _SC
 ! endif
 !#endif
@@ -336,7 +337,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        if (.not.PAR_IND_QP_G_b%element_1D(ib)) cycle
        !
-       call live_timing(steps=1)
+       if (q%sstar(iqbz,2)==1) call live_timing(steps=1)
        !
        isc%os(1)=ib
        !
@@ -452,8 +453,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call X_alloc('X')
  !
  ! ALL 2 ALL of QP_Sc
- !
- write (*,*) QP_Sc(1,1)*HA2EV
  !
  call PP_redux_wait(QP_Sc)
  !

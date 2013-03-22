@@ -32,7 +32,7 @@ subroutine K_diagonalization(iq,W)
 &                         BS_eh_W,BS_eh_E,BS_anti_res
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
- use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,USE_SLK,INV
+ use matrix_operate, ONLY:mat_dia_inv,DIAGO,INV
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:d3k_factor,q_norm
  use com,            ONLY:isec
@@ -51,7 +51,7 @@ subroutine K_diagonalization(iq,W)
  ! Work Space
  !
  type(PP_indexes)     ::px
- integer              ::i1,lib_driver,BS_H_dim
+ integer              ::i1,BS_H_dim
  logical              ::K_is_not_hermitian
  !
  ! Residuals & Energies
@@ -94,7 +94,6 @@ subroutine K_diagonalization(iq,W)
  !
  BS_H_dim=BS_K_dim
  if (BS_K_coupling) BS_H_dim=2*BS_K_dim
- !
  !
  allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
  call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
@@ -164,17 +163,14 @@ subroutine K_diagonalization(iq,W)
    !
    ! Diagonalization of the excitonic hamiltonian
    !
-   lib_driver=USE_LK
-   if (ncpu>1) lib_driver=USE_SLK
    call live_timing('BSK diagonalize',1)
    if (K_is_not_hermitian) then
-     call mat_dia_inv(DIAGO,BS_mat,lib_in=lib_driver,E_cmpl=BS_E,&
-&                     V_left=BS_V_left,V_right=BS_V_right)
+     call mat_dia_inv(DIAGO,BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
      !
      if (BSS_write_eig_2_db) BS_mat=BS_V_right
      !
    else
-     call mat_dia_inv(DIAGO,BS_mat,lib_in=lib_driver,E_real=BS_E_real)
+     call mat_dia_inv(DIAGO,BS_mat,E_real=BS_E_real)
      BS_E=BS_E_real
    endif
    call live_timing(steps=1)
@@ -246,7 +242,7 @@ subroutine K_diagonalization(iq,W)
      !
      call M_by_M('c','n',BS_H_dim,BS_V_left,BS_V_right,BS_overlap)
      !
-     call mat_dia_inv(INV,BS_overlap,lib_in=USE_SLK)
+     call mat_dia_inv(INV,BS_overlap)
      call live_timing(steps=1)
      call live_timing()
      !

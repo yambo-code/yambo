@@ -440,10 +440,10 @@ module IO_m
      !
    end subroutine
    !
-   subroutine io_control(ACTION,MODE,COM,SEC,ID,NETCDF,IO)
+   subroutine io_control(ACTION,MODE,COM,SEC,ID,NETCDF)
      !
      integer :: ACTION,ID
-     integer,optional :: MODE,COM,SEC(:),IO
+     integer,optional :: MODE,COM,SEC(:)
      logical,optional :: NETCDF
      !
      ! Work Space

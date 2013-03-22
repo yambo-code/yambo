@@ -64,7 +64,7 @@ module X_output
      ! Gauges
      !
      if (iq==1) then
-       message='- Using Shifted Grids -'
+       if (trim(global_gauge)=='length')         message='- Using the Length Gauge -'
        if (trim(global_gauge)=='velocity')       message='- Using the Velocity Gauge -'
        call msg('o eps eel alpha','# ',trim(message),INDENT=0)
        message='- [r,Vnl] is *NOT* included -'

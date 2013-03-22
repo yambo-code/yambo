@@ -40,7 +40,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
- use parallel_m,     ONLY:PP_redux_wait,PAR_Xk_nbz,PAR_Xk_nibz,PAR_Xk_bz_index,PAR_Xk_ibz_index,PAR_IND_Xk_bz,PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PP_redux_wait,PAR_Xk_nbz,PAR_Xk_nibz,PAR_Xk_bz_index,PAR_Xk_ibz_index,&
+&                         PAR_IND_Xk_bz,PAR_IND_Xk_ibz,PP_indexes_reset
+ use interfaces,     ONLY:PARALLEL_global_indexes
  use R_lattice,      ONLY:bz_samp,qindx_B,nXkbz,nXkibz
  use parser_m,       ONLY:parser
 #if defined _SC
@@ -62,6 +64,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  integer, external :: eval_G_minus_G
  !
  ! Pre-Setup of Parallel variables
+ !
+ call PARALLEL_global_indexes(Ken,Xk,q," ",RESET=.TRUE.)
  !
  PAR_Xk_nbz =nXkbz
  PAR_Xk_nibz=nXkibz

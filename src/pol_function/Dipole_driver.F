@@ -30,9 +30,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use fields,         ONLY:grid_path
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
 &                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
- use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,MASTER,OP_APP_WR_CL,OP_RD,RD_CL_IF_END
+ use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,MASTER,OP_APP_WR_CL,OP_RD,RD_CL_IF_END,IO_write
  use wave_func,      ONLY:wf_ng,WF_load,WF_free
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_Xk_nibz,PAR_IND_VAL_BANDS_X
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_Xk_nibz,PAR_IND_VAL_BANDS_X,master_cpu
 #if defined _SC      
  use X_m,            ONLY:P_square
 #endif
@@ -161,8 +161,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    call WF_free()
    !
-   call io_control(ACTION=OP_WR_CL,IO=MASTER,COM=REP,SEC=(/1/),ID=ID)
-   io_err(1)=io_DIPOLES(X,Xen,ID)
+   if (master_cpu) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+     io_err(1)=io_DIPOLES(X,Xen,ID)
+   endif
    !
    do ik=1,Xk%nibz
      !

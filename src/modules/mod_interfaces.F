@@ -25,7 +25,7 @@ module interfaces
  !
  interface
    !
-   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X)
+   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      use X_m,           ONLY:X_t
      use electrons,     ONLY:levels
      use R_lattice,     ONLY:bz_samp
@@ -34,6 +34,7 @@ module interfaces
      type(bz_samp)           ::Xk,q
      character(*)            ::ENVIRONMENT
      type(X_t),      optional::X
+     logical,        optional::RESET
    end subroutine
    !
    subroutine PARALLEL_live_message(WHAT,LOADED,TOTAL,NCPU,CHAIN)

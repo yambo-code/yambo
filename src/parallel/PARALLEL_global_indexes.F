@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X)
+subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,&
@@ -51,12 +51,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X)
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
  use IO_m,          ONLY:IO_and_Messaging_switch
  use QP_m,          ONLY:QP_n_states,QP_nb,QP_table,QP_n_G_bands
+ use wave_func,     ONLY:states_to_load
  implicit none
  !
  type(levels)            ::E
  type(bz_samp)           ::Xk,q
  character(*)            ::ENVIRONMENT
  type(X_t), optional     ::X
+ logical,   optional     ::RESET
  !
  ! Work Space
  !
@@ -81,6 +83,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X)
  call PP_indexes_reset(PAR_IND_VAL_BANDS_X(X_type))
  call PP_indexes_reset(PAR_IND_QP)
  call PP_indexes_reset(PAR_IND_QP_G_b)
+ !
+ if (allocated(PAR_Xk_ibz_index)) deallocate(PAR_Xk_ibz_index)
+ if (allocated(PAR_Xk_bz_index)) deallocate(PAR_Xk_bz_index)
+ if (allocated(states_to_load)) deallocate(states_to_load)
  !
  PAR_IND_Q_ID=0
  PAR_IND_Xk_ibz_ID=0
@@ -108,6 +114,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X)
  call COMM_reset(PAR_COM_QP_G_b_INDEX)
  !
  call IO_and_Messaging_switch("RESET")
+ !
+ if (present(RESET)) then
+   if (RESET) return
+ endif
  !
  call PARALLEL_get_user_structure(ENVIRONMENT)
  !
@@ -145,7 +155,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X)
    ! I/O privileges
    !
    if (PARALLEL_n_structures_active>1) then
-     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1)
+     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1.or.&
+&                                                     PAR_COM_Xk_ibz_INDEX%n_CPU==ncpu)
    else
      call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif

@@ -2236,7 +2236,7 @@ CONTAINS
          CALL iotk_scan_dat( iunit, "HUBBARD_LMAX", Hubbard_lmax_, IERR=ierr )
          IF ( ierr/=0 ) RETURN
          !
-         ALLOCATE( Hubbard_l_(1:Hubbard_lmax_) )
+         ALLOCATE( Hubbard_l_(nsp_) )
          ALLOCATE( Hubbard_U_(nsp_) )
          ALLOCATE( Hubbard_alpha_(nsp_) )
          !

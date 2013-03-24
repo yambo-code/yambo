@@ -38,8 +38,7 @@ subroutine K_kerr_IP(w)
  implicit none
  !
  complex(SP)       :: w(BSS_n_freqs) 
- complex(SP)       :: drude_GreenF(BSS_n_freqs)
- real(SP)          :: factor
+ real(SP)          :: Co
  !
  ! Work Space
  !
@@ -91,15 +90,15 @@ subroutine K_kerr_IP(w)
  !
  if(l_rpa_IP) call live_timing()
  !
- factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
+ Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
  !
- if(trim(global_gauge)=='length')   X_epsilon(6,:)= X_epsilon(6,:)*factor/q_norm(1)**2
- if(trim(global_gauge)=='velocity') X_epsilon(6,:)= X_epsilon(6,:)*factor/(real(w(:))**2+epsilon(1.))
+ if(trim(global_gauge)=='length')   X_epsilon(6,:)= X_epsilon(6,:)*Co/q_norm(1)**2
+ if(trim(global_gauge)=='velocity') X_epsilon(6,:)= X_epsilon(6,:)*Co/(real(w(:))**2+epsilon(1.))
  !
  if (BS_anti_res) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
- if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)*factor/q_norm(1)**2
- if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)*factor
+ if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)*Co/q_norm(1)**2
+ if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)*Co
  !
  ! I add the term describing the Anomalous Hall effect which is
  ! missing in the length gauge (this should be zero for systems with a gap)

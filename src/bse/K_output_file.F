@@ -24,7 +24,7 @@ subroutine K_output_file(iq,mode)
  use pars,      ONLY:pi,SP
  use units,     ONLY:HA2EV
  use BS,        ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
-&                    BSS_n_descs,BS_K_coupling,BS_K_is_ALDA,BSS_n_freqs,BSS_q0
+&                    BSS_n_descs,BSE_mode,BS_K_is_ALDA,BSS_n_freqs,BSS_q0
  use X_m,       ONLY:X_epsilon,eval_alpha,eps_2_alpha,O_eels
  use com,       ONLY:msg,of_open_close
  use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,&
@@ -72,8 +72,7 @@ subroutine K_output_file(iq,mode)
  !
  ! EELS 
  !
- ordering='r'
- if (BS_K_coupling) ordering='c'
+ ordering=BSE_mode
  eval_eels= O_eels(X_epsilon(1,:),BSS_n_freqs,.TRUE.,ordering)
  !
  title_mode='Ot'

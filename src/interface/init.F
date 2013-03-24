@@ -499,6 +499,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _KERR
    if(l_kerr) call initactivate(1,'EvalKerr AnHall')
 #endif
+   !
                      call initactivate(1,'BSEmode')
    if(.not.l_rpa_IP) call initactivate(1,'BSENGexx ecutKexch ALLGexx')
    !
@@ -945,6 +946,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_gw0.and.l_el_corr) call initactivate(1,'HF_and_locXC')
      if (l_ppa)    call initactivate(1,'em1d')
      if (l_cohsex) call initactivate(1,'em1s')
+     if (l_bss)    call initactivate(1,'bse')
+     if (l_bss)    call initactivate(1,'optics')
      if (l_bse) then
        !
        if (io_X_err(2)==0) then
@@ -996,10 +999,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if (l_W_eh)                     BS_res_mode='xc'
        if (trim(BSE_mode)=="coupling") BS_cpl_mode=trim(BS_res_mode)
        !
-       call parser('WehDiag',l_W_eh_diag)
-       call parser('WehCpl' ,l_W_eh_cpl)
-       if (l_W_eh_diag)                BS_res_mode=trim(string_add(BS_res_mode,'d'))
-       if (.not.l_W_eh_cpl)            BS_cpl_mode=trim(string_remove(BS_res_mode,'c'))
+       if(l_W_eh) then
+         call parser('WehDiag',l_W_eh_diag)
+         call parser('WehCpl' ,l_W_eh_cpl)
+         if (l_W_eh_diag)                BS_res_mode=trim(string_add(BS_res_mode,'d'))
+         if (.not.l_W_eh_cpl)            BS_cpl_mode=trim(string_remove(BS_res_mode,'c'))
+       endif
      endif
      !
      ! When running BSE from input file l_bse is FALSE in varsetup1.

@@ -33,7 +33,7 @@ subroutine K_Haydock(iq,W)
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
 &                         BS_DB_is_fragmented, BS_eh_f,ioBSS_Haydock,&
 &                         BS_K_Coupling,Haydock_terminator,&
-&                         K_BSmat_by_V
+&                         K_BSmat_by_V,BSE_mode
 #if defined _KERR
  use KERR,           ONLY:BSS_rhoq0_kerr,B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
@@ -206,7 +206,7 @@ subroutine K_Haydock(iq,W)
    ! it=1:|Vn>=|q->0>/(<q->0|q->0>)^(1/2)
    !
    Haydock_v0_mod=sqrt(dot_product(BSS_rhoq0,BSS_rhoq0))
-   if (it_on_disk==0) forall(i1=1:BS_K_dim) Vn(i1)=BSS_rhoq0(i1)/Haydock_v0_mod
+   if (it_on_disk==0) forall(i1=1:BS_K_dim) Vn(i1)=BSS_rhoq0(i1)*BS_eh_f(i1)/Haydock_v0_mod
    !
  endif
  !
@@ -378,15 +378,16 @@ subroutine K_Haydock(iq,W)
      !
      integer     :: i1,iw,i_eps(2)
      real(SP)    :: Co
-     complex(SP) :: X_o(2,it), YbyX(2)
+     complex(SP) :: X_o(2,it), X_oa(2,it), YbyX(2)
      complex(SP),allocatable :: X_i(:,:)
      !
      ! related to terminator
      !
-     complex(SP) :: X_t 
+     complex(SP) :: X_t, X_ta
      real(SP)    :: Av1, Av2
-     integer, parameter :: RES = 2, COUPL = 1, MIN_ITER = 10
+     integer, parameter :: RES = 3, ARES = 2, COUPL = 1, MIN_ITER = 10
      logical     :: UseTerminator
+     logical     :: causal, coupling
      !
      ! Co includes the spin_occ factor because Haydock is expected to work
      ! only when ALL BS_eh_f == spin_occ
@@ -395,10 +396,13 @@ subroutine K_Haydock(iq,W)
      X_t =(0._SP,0._SP)
      UseTerminator = .false.  
      !
+     causal  = (trim(BSE_mode)=='causal'.and..not.use_cpl_scheme)
+     coupling= use_cpl_scheme
+     !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
-     if (use_cpl_scheme) allocate(X_i(2,it))
+     if (coupling) allocate(X_i(2,it))
      if (Useterminator) then 
-       if (.not.use_cpl_scheme) then
+       if (.not.coupling) then
          Av1 = 0._SP
          Av2 = 0._SP
          do i1 = 1, it
@@ -422,18 +426,24 @@ subroutine K_Haydock(iq,W)
      do iw=1,W%n(1)
        X_o=(0._SP,0._SP)
        if (UseTerminator) then 
-         if (.not.use_cpl_scheme) X_t = terminator(W%p(iw),Av1,Av2,RES)
-         if (use_cpl_scheme.and.(mod(it,2)==0)) X_t = terminator(W%p(iw),Av1,Av2,COUPL)
-         if (use_cpl_scheme.and.(mod(it,2)==1)) X_t = terminator(W%p(iw),Av2,Av1,COUPL)
+         if (.not.coupling) then
+           X_t = terminator(W%p(iw), Av1,Av2, RES)
+           if (causal) X_ta= terminator(W%p(iw),-Av1,Av2,ARES)
+         endif
+         if (coupling.and.(mod(it,2)==0)) X_t = terminator(W%p(iw),Av1,Av2,COUPL)
+         if (coupling.and.(mod(it,2)==1)) X_t = terminator(W%p(iw),Av2,Av1,COUPL)
        endif
-       X_o(:,it)=1._SP/(W%p(iw)-Af(it)-Bf(it+1)**2*X_t)
+       X_o(:,it) = 1._SP/(W%p(iw)-Af(it)-Bf(it+1)**2*X_t)
+       if (causal) X_oa(:,it)= 1._SP/(W%p(iw)+Af(it)-Bf(it+1)**2*X_ta)
        do i1=it-1,1,-1
-         X_o(1,i1)=1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(1,i1+1))
+         X_o(1,i1) = 1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(1,i1+1) )
+         if (causal) X_oa(1,i1)= 1._SP/(W%p(iw)+Af(i1)-Bf(i1+1)**2*X_oa(1,i1+1))
        enddo
        do i1=it-2,1,-1
-         X_o(2,i1)=1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(2,i1+1))
+         X_o(2,i1) = 1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(2,i1+1) )
+         if (causal) X_oa(2,i1)= 1._SP/(W%p(iw)+Af(i1)-Bf(i1+1)**2*X_oa(2,i1+1))
        enddo
-       if (use_cpl_scheme) then
+       if (coupling) then
          X_i(:,1) = -X_o(:,1)
          X_i(:,2) = -Bf(2)*X_o(:,2)*X_i(:,1)
          YbyX(:) = X_i(:,1)*Cf(1) + X_i(:,2)*Cf(2)
@@ -454,9 +464,10 @@ subroutine K_Haydock(iq,W)
          i_eps(2)=3*ii+1
        endif
        X_epsilon(1,iw)=W%p(iw)
-       X_epsilon(i_eps(1),iw)=-X_o(1,1)*Co+1._SP
-       X_epsilon(i_eps(2),iw)=-X_o(2,1)*Co+1._SP
+       X_epsilon(i_eps(:),iw)=-X_o(:,1)*Co+1._SP
+       if (causal) X_epsilon(i_eps(:),iw)=X_epsilon(i_eps(:),iw)+X_oa(:,1)*Co
        if (present(ii).and.ii==2) X_epsilon(i_eps(:),iw)=-(X_epsilon(i_eps(:),iw)-1)
+       !
        if (Haydock_treshold>0._SP) reached_treshold=max(reached_treshold,&
 &         abs(X_epsilon(i_eps(1),iw)-X_epsilon(i_eps(2),iw))/abs(X_epsilon(2,iw)))
        if (Haydock_treshold<0._SP) reached_treshold=reached_treshold+&
@@ -478,6 +489,10 @@ subroutine K_Haydock(iq,W)
        terminator = f + sqrt(f**2 -2._SP*x*g) 
        terminator = terminator/g
      case (2)
+       f = (x+c1)
+       terminator = f + sqrt(f**2 -4._SP*c2**2.)
+       terminator = terminator/2._SP/c2**2
+     case (3)
        f = (x-c1)
        terminator = f + sqrt(f**2 -4._SP*c2**2.)
        terminator = terminator/2._SP/c2**2

@@ -720,11 +720,13 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_xc
+   use com,        ONLY : warning,error
    use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND
    use mod_xc2y, ONLY: XC_yamboID,  XC_yamboID2kind
    implicit none
 #if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
-   call qexml_read_xc(dft=pw_dft, ierr=ierr)
+   call qexml_read_xc(dft=pw_dft, lda_plus_u=pw_lda_plus_u, ierr=ierr)
+   if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
    GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
    GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
 #endif

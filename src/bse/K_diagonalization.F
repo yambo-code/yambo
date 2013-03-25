@@ -28,8 +28,7 @@ subroutine K_diagonalization(iq,W)
  use wrapper,        ONLY:M_by_M,Vstar_dot_V,V_dot_V
  use X_m,            ONLY:X_epsilon,X_drude_term
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,&
-&                         BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
-&                         BS_eh_W,BS_eh_E,BS_anti_res
+&                         BSS_write_eig_2_db,BS_eh_W,BS_eh_E,BS_anti_res
 #if defined _KERR
  use KERR,           ONLY:BSS_rhoq0_kerr,B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
@@ -153,31 +152,6 @@ subroutine K_diagonalization(iq,W)
    !
    call K_BSload(iq)
    !
-   if (BS_not_const_eh_f) then
-     !
-     ! In case the f_i-f_j occupation factors are state-dependent
-     ! here I multiply the kernel by BS_eh_f
-     !
-     do i1=1,BS_H_dim
-       !
-       if (i1<=BS_K_dim) then
-         BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
-         BS_mat(i1,:) =BS_mat(i1,:)*BS_eh_f(i1)
-         BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(i1)
-       else
-         !
-         ! Note that the -1 coming from the change in the sign of BS_eh_f
-         ! is already embodied in BS_mat.
-         !
-         BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(i1-BS_K_dim)
-         BS_mat(i1,:) =BS_mat(i1,:)*BS_eh_f(i1-BS_K_dim)
-         BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1-BS_K_dim)
-         !
-       endif
-       !
-     enddo
-   endif
-   !
    ! eh damping 
    !
    if (allocated(BS_eh_W)) &
@@ -258,31 +232,19 @@ subroutine K_diagonalization(iq,W)
      ! [2] BS_R(i)= <i_K|j><j|q0> 
      !            = conjg( BS_V_left(k,i))*BSS_rhoq0(k)*R_k
      !
-     !     R(j) = f_v - f_c
-     !
-     ! In the right residuals I include the occupation factors
-     ! contribution
-     !
-     BSS_rhoq0(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)  *BS_eh_f(:BS_K_dim)
-     BSS_rhoq0(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)*BS_eh_f(:BS_K_dim)
-     !
      call live_timing('BSK L residuals',px%n_of_elements(myid+1))
      !
      do i1=1,BS_H_dim
        BS_R(i1)=cmplx(0.,0.,SP)
        if (.not.px%element_1D(i1)) cycle
        !
-       BS_R(i1)=Vstar_dot_V(BS_H_dim,BS_V_left(:,i1),BSS_rhoq0)
+       BS_R(i1)=Vstar_dot_V(BS_H_dim,BS_V_left(:,i1), &
+&                     (/BSS_rhoq0(1:BS_K_dim),-BSS_rhoq0(1+BS_K_dim:BS_H_dim)/) )
        !
        call live_timing(steps=1)
      enddo
      call PP_redux_wait(BS_R)
      !
-     ! Remove the occupation factors from the oscillators (in case
-     ! other solvers are used)
-     !
-     BSS_rhoq0(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)/  BS_eh_f(:BS_K_dim)
-     BSS_rhoq0(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)/BS_eh_f(:BS_K_dim)
      !
      call live_timing
      !
@@ -378,7 +340,7 @@ subroutine K_diagonalization(iq,W)
  endif
 #endif
  !
- call live_timing('BSK res epsilon',px%n_of_elements(myid+1))
+ call live_timing('BSK     epsilon',px%n_of_elements(myid+1))
  do i1=1,BS_H_dim
    if (.not.px%element_1D(i1)) cycle
    !

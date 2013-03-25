@@ -64,24 +64,22 @@ subroutine K_kerr_IP(w)
    ic  =BS_eh_table(i1,3)
    i_sp=spin(BS_eh_table(i1,:))
    !
-   if(trim(global_gauge)=='length') BSS_rhoq0_kerr(i1)=-conjg(DIP_q_dot_iR_kerr(ic,iv,ik,i_sp))
-   if(trim(global_gauge)=='velocity') BSS_rhoq0_kerr(i1)= conjg(DIP_P_symm(2,ic,iv,ik,i_sp))
+   if(trim(global_gauge)=='length') BSS_rhoq0_kerr(i1)=-conjg(DIP_q_dot_iR_kerr(ic,iv,ik,i_sp))*sqrt(BS_eh_f(i1))
+   if(trim(global_gauge)=='velocity') BSS_rhoq0_kerr(i1)= conjg(DIP_P_symm(2,ic,iv,ik,i_sp))*sqrt(BS_eh_f(i1))
    !
    if (BS_K_coupling) then
-     if(trim(global_gauge)=='length') BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_q_dot_iR_kerr(ic,iv,ik,i_sp)
-     if(trim(global_gauge)=='velocity') BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_P_symm(2,ic,iv,ik,i_sp)
+     if(trim(global_gauge)=='length') BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_q_dot_iR_kerr(ic,iv,ik,i_sp)*sqrt(BS_eh_f(i1))
+     if(trim(global_gauge)=='velocity') BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_P_symm(2,ic,iv,ik,i_sp)*sqrt(BS_eh_f(i1))
    endif
    !
    if (abs(BS_eh_E(i1))<1.E-5) cycle
-   X_epsilon(6,:)=X_epsilon(6,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)/&
-&                                (w(:)-BS_eh_E(i1))
+   X_epsilon(6,:)=X_epsilon(6,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))/(w(:)-BS_eh_E(i1))
    if (l_anomalous_Hall) then
-     if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)
-     if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)/real(BS_eh_E(i1))**2
+     if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))
+     if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))/real(BS_eh_E(i1))**2
    endif
    if (BS_anti_res) then
-     X_epsilon(6,:)=X_epsilon(6,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0_kerr(i1)*BS_eh_f(i1)/&
-&                                (w(:)+BS_eh_E(i1))
+     X_epsilon(6,:)=X_epsilon(6,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0_kerr(i1)/(w(:)+BS_eh_E(i1))
    endif
    !
    if(l_rpa_IP) call live_timing(steps=1)

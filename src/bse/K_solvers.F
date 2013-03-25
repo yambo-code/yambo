@@ -106,11 +106,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #endif
    if (stop_Haydock) call warning('Fractional occupations still unsupported (Haydock)')
    !
-   if (.not.BS_not_const_eh_f) then
-     call K_output_file(iq,-1)
-     call K_Haydock(iq,W_bss)
-     BSS_n_descs=BSS_n_descs-4 
-   endif
+   call K_output_file(iq,-1)
+   call K_Haydock(iq,W_bss)
+   BSS_n_descs=BSS_n_descs-4 
+   !
  endif
  !
  if (run_Diago)          call K_diagonalization(iq,W_bss)

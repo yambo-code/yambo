@@ -162,6 +162,8 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
 &                                             +ffac/(Xw%p(iw)-pole)
        if (ordering=="a" ) GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
 &                                             -ffac/(conjg(Xw%p(iw))+pole)
+       if (ordering=="ia") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
+&                                             -ffac/(Xw%p(iw)+pole)
        if (ordering=="sr") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
 &                                             +s_ffac/(Xw%p(iw)-pole)/spin_occ**2.
        if (ordering=="sa") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&

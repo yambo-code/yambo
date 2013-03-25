@@ -132,8 +132,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    if(trim(BSE_mode)=='coupling') BSE_mode='causal'
  endif
  !
- if( index(BSS_mode,'i')/=0 .and. trim(BSE_mode)=='causal') BSE_mode='resonant'
- !
  ! GPL_EXCLUDE_START  
  !
  if (l_bs_fxc.or.index(BSS_mode,'t')/=0) then

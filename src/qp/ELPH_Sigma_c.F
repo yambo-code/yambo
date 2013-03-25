@@ -133,7 +133,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    do i_qp=1,qp%n_states
      !
-     Sc_W(i_qp)%n =QP_Sc_steps
+     Sc_W(i_qp)%n_freqs =QP_Sc_steps
      !
      call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),en%E,.not.l_GF_from_CA)
      !
@@ -148,7 +148,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  else if (trim(QP_solver)=='n') then
    !
    do i_qp=1,qp%n_states
-     Sc_W(i_qp)%n=QP_dSc_steps
+     Sc_W(i_qp)%n_freqs=QP_dSc_steps
      allocate(Sc_W(i_qp)%p(Sc_W(i_qp)%n_freqs))
      forall (i2=1:QP_dSc_steps) Sc_W(i_qp)%p(i2)=&
 &           en%E(QP_table(i_qp,1),QP_table(i_qp,3),1)+(i2-1)*QP_dSc_delta+&
@@ -514,7 +514,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      if ( trim(QP_solver)=='g' ) then
        coefficient=(1.,0.)
        call W_reset(Sc_local_W)
-       Sc_local_W%n =QP_Sc_steps
+       Sc_local_W%n_freqs =QP_Sc_steps
      endif
      !
      do i_qp=1,QP_n_states   

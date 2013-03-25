@@ -81,7 +81,7 @@ subroutine X_GreenF_remap(bands,E,W)
    W_A%er(1)=nint(W_A%er(1)/E_step)*E_step
  enddo
  !
- W_A%n=max(new_map_points,W%n_freqs)
+ W_A%n_freqs=max(new_map_points,W%n_freqs)
  W_A%dr=0.
  call FREQUENCIES_setup(W_A)
  W_A%p=real(W_A%p)

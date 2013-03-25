@@ -201,7 +201,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
    close(1)
  else
    call live_timing('Diagonalization',1,SERIAL=.TRUE.)
-   call mat_dia_inv(DIAGO,USE_LK,elph_Mat,E_real=elph_E)
+   call mat_dia_inv(DIAGO,elph_Mat,lib_in=USE_LK,E_real=elph_E)
    call live_timing(steps=1)
    call live_timing()
    open(unit=100,file=trim(db_name),status='new',form='unformatted')

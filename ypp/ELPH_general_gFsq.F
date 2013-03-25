@@ -117,7 +117,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  ! Energy setup
  !
  call W_reset(g_sq_F_E)
- g_sq_F_E%n=elph_steps
+ g_sq_F_E%n_freqs=elph_steps
  g_sq_F_E%er=(/0._SP,W_debye*1.1/)
  g_sq_F_E%dr=ph_broad
  call FREQUENCIES_setup(g_sq_F_E)

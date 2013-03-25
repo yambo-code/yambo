@@ -122,7 +122,7 @@ subroutine ELPH_atomic_amplitude(q)
  !
  do is=1,n_atoms
    !
-   call mat_dia_inv(DIAGO,USE_LK,mean_ui_uj(is,:,:),E_real=U_eigenvalues)
+   call mat_dia_inv(DIAGO,mean_ui_uj(is,:,:),lib_in=USE_LK,E_real=U_eigenvalues)
    !
    call msg('s','Atom '//trim(atom_name(is)))
    call msg('s','Displacement  [a.u.]/A #1: ',sqrt(U_eigenvalues(1))*(/1.,BO2ANG/) )

@@ -507,7 +507,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if(l_W_eh)            call initactivate(1,'WehDiag WehCpl')
    !
    call initactivate(1,'ShiftedPath')
-#if defined _SC | defined _KERR
+#if defined _SC || defined _KERR
    call initactivate(1,'Gauge')
 #endif
    call initactivate(1,'DrudeW')
@@ -993,10 +993,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if (l_W_eh)                     BS_res_mode='xc'
        if (trim(BSE_mode)=="coupling") BS_cpl_mode=trim(BS_res_mode)
        !
-       call parser('WehDiag',l_W_eh_diag)
-       call parser('WehCpl' ,l_W_eh_cpl)
-       if (l_W_eh_diag)                BS_res_mode=trim(string_add(BS_res_mode,'d'))
-       if (.not.l_W_eh_cpl)            BS_cpl_mode=trim(string_remove(BS_res_mode,'c'))
+       if(l_W_eh) then
+         call parser('WehDiag',l_W_eh_diag)
+         call parser('WehCpl' ,l_W_eh_cpl)
+         if (l_W_eh_diag)              BS_res_mode=trim(string_add(BS_res_mode,'d'))
+         if (.not.l_W_eh_cpl)          BS_cpl_mode=trim(string_remove(BS_res_mode,'c'))
+       endif
      endif
      !
      ! When running BSE from input file l_bse is FALSE in varsetup1.

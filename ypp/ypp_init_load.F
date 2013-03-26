@@ -130,8 +130,10 @@ subroutine ypp_init_load(defs)
  !
  ! GPL_EXCLUDE_END
  !
- call it('f',defs,'NoWeights',    ' Do not print K-points weight') 
+ call it('f',defs,'NoWeights',    ' Do not print points weight') 
  call it('f',defs,'ForceUserPts', ' Do not check the correcteness of the user points') 
+ call it('f',defs,'ListPts',      ' List the internal q/k points also in the parser format') 
+ call it('f',defs,'ExpandPts',    ' Expand the internal q/k points in the BZ') 
  !
  ! EXC WF
  !

@@ -139,7 +139,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
      call msg('nr','[SYMs] Time-reversal derived K-space symmetries:',(/nsym/2+1,nsym/))
      if(.not.mag_syms) inv_index=nsym/2+1
      if(mag_syms) then
-       call warning(' Magnetic symmetries and Trev are not implemented! Remove T-rev')
+       ! GPL_INCLUDE_START
+       !call warning(' Magnetic symmetries and Trev are not implemented! Remove T-rev')
+       ! GPL_INCLUDE_END
        do is=1,nsym
          if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
        enddo

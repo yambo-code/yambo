@@ -341,7 +341,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
 &                        E_unit,verb_level=V_resp)
  call it('f',defs,'SkipFullInv',  '[BSS] Skip full invertion in perturbative solver',verb_level=V_resp)
- call it(defs,'DrudeW',  '[BSE] Drude plasmon',X(2)%Wd,E_unit,verb_level=V_resp)
+ call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',X(2)%Wd,E_unit,verb_level=V_resp)
  !
  ! Xx
  !

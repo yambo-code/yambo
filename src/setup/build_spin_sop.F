@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2012 D. Sangalli and the YAMBO team 
+! Copyright (C) 2000-2013 D. Sangalli and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -64,9 +64,6 @@ subroutine build_spin_sop()
    tmp_sop= tmp_sop*m3det(tmp_sop)
    !
    !           "Tait–Bryan angles"
-   !    x,y,z --> x'y'z' --> x''y''z'' -->  X,Y,Z  
-   ! R_x''(delta)  R_y'(beta)   R_z(alpha)   =  R_z(delta) R_y(beta) R_x(alpha)
-   !
    if (tmp_sop(3,1)==-1.) then
      alpha=0._SP
      beta= pi/2._SP
@@ -81,17 +78,15 @@ subroutine build_spin_sop()
      delta=atan2(tmp_sop(3,2)/cos(beta),tmp_sop(3,3)/cos(beta))
    endif
    !
-   ! These are the angles of rotation of the axis which gives x-->S*x
-   ! Thus I need a minus for the rotation of the coordinates
-   alpha=-alpha/2._SP
-   beta= -beta /2._SP
-   delta=-delta/2._SP
+   alpha=alpha/2._SP
+   beta= beta /2._SP
+   delta=delta/2._SP
    !
    ! Sakurai p.166, eq. 3.2.44 + pag 159 eq. 3.2.3
    spin_RX_delta=sigma_0*cos(delta)+cI*sigma_x*sin(delta)
    spin_RY_beta =sigma_0*cos(beta) +cI*sigma_y*sin(beta)
    spin_RZ_alpha=sigma_0*cos(alpha)+cI*sigma_z*sin(alpha)
-   spin_sop(:,:,is)=matmul(spin_RX_delta,matmul(spin_RY_beta,spin_RZ_alpha))
+   spin_sop(:,:,is)=matmul(spin_RZ_alpha,matmul(spin_RY_beta,spin_RX_delta))
    !
    if(is>nsym/(1+i_time_rev)) spin_sop(:,:,is)=matmul(t_rev,spin_sop(:,:,is))
    !

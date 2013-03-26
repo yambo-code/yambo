@@ -510,7 +510,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC || defined _KERR
    call initactivate(1,'Gauge')
 #endif
-   call initactivate(1,'DrudeW')
+   call initactivate(1,'DrudeWBS')
    call initactivate(1,'BSAres BSEQptR BSEBands BSEEhEny BSehWind BSEClmns')
    !
    ! BSE + TDDFT = no BS db, Fxc + LF on-fly
@@ -997,7 +997,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          call parser('WehDiag',l_W_eh_diag)
          call parser('WehCpl' ,l_W_eh_cpl)
          if (l_W_eh_diag)              BS_res_mode=trim(string_add(BS_res_mode,'d'))
-         if (.not.l_W_eh_cpl)          BS_cpl_mode=trim(string_remove(BS_res_mode,'c'))
+         if (.not.l_W_eh_cpl)          BS_cpl_mode=trim(string_remove(BS_cpl_mode,'c'))
        endif
      endif
      !

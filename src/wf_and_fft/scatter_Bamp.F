@@ -60,7 +60,7 @@ subroutine scatterBamp(isc)
  !
  ! \tilde{\rho} in Real Space
  rho_tw_rs(:)=conjg(WF_symm_i(:,1))*WF_symm_o(:,1)
- if (n_spinor==2) rho_tw_rs(:)=rho_tw_rs+conjg(WF_symm_i(:,2))*WF_symm_o(:,2)
+ if (n_spinor==2) rho_tw_rs(:)=rho_tw_rs(:)+conjg(WF_symm_i(:,2))*WF_symm_o(:,2)
  !
 #if defined _FFTW
  call fft_3d(rho_tw_rs,fft_dim,+1,fftw_plan)

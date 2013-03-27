@@ -227,7 +227,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
          enddo
        enddo
        !
-       el_dos(:)=el_dos(:)*DL_vol/HA2EV
+       el_dos=el_dos*DL_vol/HA2EV
        !
        if (n_T_steps==1) call live_timing(steps=1)
        !

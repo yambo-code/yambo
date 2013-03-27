@@ -176,7 +176,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  iq=BS_q(1)
  !
- call section('+','Main loop')
+ call section('*','Bethe-Salpeter Equation')
  !
  ! 1. The IP Part (Dipoles and eh-energies)...
  ! ================

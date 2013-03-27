@@ -44,6 +44,9 @@ subroutine K_kerr_IP(w)
  !
  integer           ::ik,iv,ic,i1,i_sp
  !
+ !
+ call section('+','BSE KERR IP Term')
+ !
  if (BS_K_coupling.or.allocated(BS_eh_W)) then
    allocate(BSS_rhoq0_kerr(2*BS_K_dim)) 
    call mem_est("BSS_rhoq0_kerr",(/2*BS_K_dim/))

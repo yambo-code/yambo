@@ -62,8 +62,8 @@ module BS
  ! Oscillators ...
  !
  integer  :: O_ng
- integer,    allocatable :: O_phase(:,:,:)
  integer,    allocatable :: O_table(:,:,:,:,:)
+ complex(SP),allocatable :: O_phase(:,:,:)
  !
  ! ... first table of possible c/v states
  !

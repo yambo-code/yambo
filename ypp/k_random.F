@@ -28,7 +28,7 @@ subroutine k_random(Xk,Xen)
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop
  use com,                 ONLY:msg,of_open_close,error
- use vec_operate,         ONLY:rlu_v_norm,v_norm,c2a
+ use vec_operate,         ONLY:rlu_v_norm,v_norm,c2a,k2bz
  use YPP,                 ONLY:BZ_RIM_nkpts,BZ_RIM_path,gamma_radius,K_transform
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
@@ -281,6 +281,7 @@ subroutine k_random(Xk,Xen)
      enddo
      dummy=rlu_v_norm(rand_k(k_counter+1,:))
      call c2a(v_in=rand_k(k_counter+1,:),mode="ka2i")
+     call k2bz(v_in=rand_k(k_counter+1,:))
    end subroutine
    !
    subroutine build_spherical_k()

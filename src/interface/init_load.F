@@ -359,7 +359,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
 &                        E_unit,verb_level=V_resp)
  call it('f',defs,'SkipFullInv',  '[BSS] Skip full invertion in perturbative solver',verb_level=V_resp)
- call it(defs,'DrudeW',  '[BSE] Drude plasmon',X(2)%Wd,E_unit,verb_level=V_resp)
+ call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',X(2)%Wd,E_unit,verb_level=V_resp)
  !
  ! Xx
  !
@@ -479,7 +479,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      !
      nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &          'DrudeW','LongDr','EhEngy','PPAPnt',&
-&          'ecutKx','QpntsR','BndsRn','DmERef'/)
+&          'ecutxx','QpntsR','BndsRn','DmERef'/)
      des(1) ='Green`s function t/c/r/a'
      des(2) ='Energy range'
      des(3) ='Damping range'
@@ -506,8 +506,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=0)
      call it(defs,nms( 4),des( 4),X%cg_percentual,verb_level=V_resp)
      call it(defs,nms( 5),des( 5),wv%n(1),verb_level=0)
-     call it(defs,nms( 6),des( 6),wv%per_memstps,verb_level=1)
-     call it(defs,nms( 7),des( 7),X%Wd,E_unit,verb_level=1) 
+     call it(defs,nms( 6),des( 6),wv%per_memstps,verb_level=V_resp)
+     call it(defs,nms( 7),des( 7),X%Wd,E_unit,verb_level=V_resp) 
      call it(defs,nms( 8),des( 8),X%q0,verb_level=0)
      call it(defs,nms( 9),des( 9),X%ehe,E_unit,verb_level=V_resp)
      call it(defs,nms(10),des(10),X%ppaE,E_unit,verb_level=0)

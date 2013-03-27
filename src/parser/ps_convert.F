@@ -71,7 +71,7 @@ subroutine ps_convert(rvar,ivar,v_name)
  var_is_angle    =trim(v_s_unit)==Angle_unit
  var_is_intensity=trim(v_s_unit)==I_unit
  !
- if (ivar>0) then
+ if (ivar>=0) then
    !
    ! INTEGERS
    !

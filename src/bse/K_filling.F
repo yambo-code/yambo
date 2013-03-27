@@ -41,6 +41,8 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
  real(SP)   :: filling
  character(schlen) :: ch
  !
+ call section('=','Filling Estimation...')
+ !
  i8nc=ncpu
  i8id=myid
  !
@@ -59,7 +61,7 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
  !
  ! Blocks loop 
  !
- call live_timing('Filling Estimation',n_blocks)
+ call live_timing('BSK',n_blocks)
  do ik2=1,BS_columns
    do ik1=ik2,1,-1
      !
@@ -89,14 +91,16 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
  !
  ! Report matrix elements assigned to each CPU
  !
- do i_cpu=1,ncpu
-   write (ch,'(a,i2.2,a)') '[P ',i_cpu,'] Kernel filling [o/o]'
-   if (tot_n_K_elements>0) then
-     call msg('rs',trim(ch),real(n_K_elements(i_cpu))/real(tot_n_K_elements)*100._SP)
-   else
-     call msg('rs',trim(ch),0._SP)
-   endif
- enddo
+ if (ncpu>1) then
+   do i_cpu=1,ncpu
+     write (ch,'(a,i2.2,a)') '[P ',i_cpu,'] Kernel filling [o/o]'
+     if (tot_n_K_elements>0) then
+       call msg('rs',trim(ch),real(n_K_elements(i_cpu))/real(tot_n_K_elements)*100._SP)
+     else
+       call msg('rs',trim(ch),0._SP)
+     endif
+   enddo
+ endif
  !
  ! Rescale the total number of K elements that are passed to the
  ! the live_timing routine. This is done in case the integer(4) used 

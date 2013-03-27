@@ -63,6 +63,8 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  complex(SP)       ::factor_jj
 #endif
  !
+ call section('+','BSE IP Term')
+ !
  ! Setups
  !
  if (BS_columns<=0.or.BS_columns>Xk%nibz) BS_columns=Xk%nibz

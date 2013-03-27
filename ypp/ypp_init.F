@@ -434,9 +434,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    if (l_shifted_grid) call initactivate(1,"KShift1 KShift2 KShift3")
    if (l_high_sym_pts) then
      call initactivate(1,"PtsPath NPtsPath")
-     call initactivate(-1,"NoWeights ForceUserPts cooIn")
+     call initactivate(-1,"NoWeights ForceUserPts ListPts ExpandPts cooIn")
    else
-     call initactivate(1,"NoWeights ForceUserPts")
+     call initactivate(1,"NoWeights ForceUserPts ListPts ExpandPts")
    endif
  endif
  !

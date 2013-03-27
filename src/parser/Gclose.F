@@ -64,6 +64,7 @@ subroutine Gclose(ng,what)
      ng=G2G(ng)
  end select
  !
+ !
 contains
   !
   integer function G2G(ng2close)

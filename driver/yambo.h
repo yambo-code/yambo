@@ -52,7 +52,7 @@
   {"kernel", "k","Kernel [opt=(i)p/td(h)/td(d?)ft/td(hf)/(w)eh]",0,0,1,0,0},
   {"DESC",   " ","    d?=[da,dl,db]=[alda/lrc/bse_fxc]",0,0,0,0,0},
   {"DESC",   " ","       (tdhf/Weh only eh-space; lrc only G-space)",0,0,0,0,0},
-  {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0,0},                      
+  {"bss",    "y","BSE solver [opt=h/d/(p/f)i/t]",0,0,1,0,0},                      
   {"rim_cut","c","Coulomb interaction",0,0,0,0,0},  
   {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0,0},      
   {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0,0},     

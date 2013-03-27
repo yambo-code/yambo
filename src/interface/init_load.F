@@ -171,8 +171,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
- call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t`',BSS_mode,protect=.FALSE.)
- call it(defs,'BSSInvMode','[BSS] Inversion solver modality `m/f/p` (mixed, full, perturbative)',BSS_inversion_mode)
+ call it(defs,'BSSmod',  '[BSS] Solvers `h/d/(p/f)i/t`',BSS_mode,protect=.FALSE.)
+ call it(defs,'BSSInvMode','[BSS] Inversion solver modality `f/p` (full, perturbative)',BSS_inversion_mode)
  call it(defs,'BLongDir','[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange','[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange','[BSS] Damping range',BSS_dr,E_unit)
@@ -340,7 +340,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSEClmns','[BSK] Kernel Columns',BS_columns,verb_level=V_resp)
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
 &                        E_unit,verb_level=V_resp)
- call it('f',defs,'SkipFullInv',  '[BSS] Skip full invertion in perturbative solver',verb_level=V_resp)
  call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',X(2)%Wd,E_unit,verb_level=V_resp)
  !
  ! Xx

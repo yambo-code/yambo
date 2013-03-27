@@ -64,7 +64,7 @@ subroutine K_inversion(iq,W,E,k,q)
  integer    ::full_inf_freqs,nw,nw_conv,&
 &             min_dist_non_conv_freqs ! Every W%n(1)/min_dist_non_conv_freqs
                                       ! I perform a full inversion
- logical    ::do_it_full,full_inf_freqs_found,MIXED,FULL,PERTURBATIVE
+ logical    ::do_it_full,full_inf_freqs_found,FULL,PERTURBATIVE
  !
  ! I/O
  !
@@ -89,17 +89,12 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  BSS_uses_RIM=BZ_RIM_nbands>=BS_bands(2)
  !
- MIXED        = index(BSS_inversion_mode,'m')/=0
- FULL         = .FALSE.
- PERTURBATIVE = .FALSE.
+ FULL         = .TRUE.
+ PERTURBATIVE = .TRUE.
  !
- if (MIXED) then
-   FULL         = .TRUE.
-   PERTURBATIVE = .TRUE.
- else
-     FULL         = index(BSS_inversion_mode,'f')/=0
-   if (.not.FULL) &
-&    PERTURBATIVE = index(BSS_inversion_mode,'f')/=0
+ if (trim(BSS_inversion_mode)/="i") then
+   FULL         = index(BSS_inversion_mode,'f')/=0
+   PERTURBATIVE = index(BSS_inversion_mode,'p')/=0
  endif
  !
  ! I/O

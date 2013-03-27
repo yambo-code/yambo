@@ -402,7 +402,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BS_anti_res=.FALSE.
  BS_K_dim=0
  BSS_mode=' '
- BSS_inversion_mode='m'
+ BSS_inversion_mode='pf'
  BSS_n_freqs=100
  BSS_n_descs=0
  BSS_er=(/0.,10./)/HA2EV

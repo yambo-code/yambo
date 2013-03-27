@@ -536,9 +536,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir')
    if(l_rpa_IP) call initactivate(-1,'BSSmod')
    !
+   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode')
    if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
-   if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipFullInv')
    !
    ! Special project dependent variables
    !

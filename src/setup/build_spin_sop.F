@@ -83,9 +83,9 @@ subroutine build_spin_sop()
    delta=delta/2._SP
    !
    ! Sakurai p.166, eq. 3.2.44 + pag 159 eq. 3.2.3
-   spin_RX_delta=sigma_0*cos(delta)+cI*sigma_x*sin(delta)
-   spin_RY_beta =sigma_0*cos(beta) +cI*sigma_y*sin(beta)
-   spin_RZ_alpha=sigma_0*cos(alpha)+cI*sigma_z*sin(alpha)
+   spin_RX_delta=sigma_0*cos(delta)-cI*sigma_x*sin(delta)
+   spin_RY_beta =sigma_0*cos(beta) -cI*sigma_y*sin(beta)
+   spin_RZ_alpha=sigma_0*cos(alpha)-cI*sigma_z*sin(alpha)
    spin_sop(:,:,is)=matmul(spin_RZ_alpha,matmul(spin_RY_beta,spin_RX_delta))
    !
    if(is>nsym/(1+i_time_rev)) spin_sop(:,:,is)=matmul(t_rev,spin_sop(:,:,is))

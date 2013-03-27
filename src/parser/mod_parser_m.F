@@ -98,7 +98,7 @@ module parser_m
      ddef=res
      call iparse_double(cstr(trim(name)),ddef,dres)
      res=dres
-     call ps_convert(res,0,name)
+     call ps_convert(res,-1,name)
    end subroutine
    !
    subroutine rqparser(name,res)
@@ -115,7 +115,7 @@ module parser_m
        dres=res(i1)
        call iparse_block_double(cstr(trim(name)),0,i1-1,dres)
        res(i1)=dres
-       call ps_convert(res(i1),0,name)
+       call ps_convert(res(i1),-1,name)
      enddo
    end subroutine
    !
@@ -134,7 +134,7 @@ module parser_m
          dres=res(i1,i2)
          call iparse_block_double(cstr(trim(name)),i1-1,i2-1,dres)
          res(i1,i2)=dres
-         call ps_convert(res(i1,i2),0,name)
+         call ps_convert(res(i1,i2),-1,name)
        enddo
      enddo
    end subroutine
@@ -158,8 +158,8 @@ module parser_m
      ddef=res
      call iparse_complex(cstr(trim(name)),ddef,dres)
      r_r=real(dres);r_i=aimag(dres)
-     call ps_convert(r_r,0,name)
-     call ps_convert(r_i,0,name)
+     call ps_convert(r_r,-1,name)
+     call ps_convert(r_i,-1,name)
      res=r_r+(0._SP,1._SP)*r_i
    end subroutine
    !

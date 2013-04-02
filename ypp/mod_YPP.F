@@ -136,6 +136,29 @@ module YPP
  !
  logical     :: l_qpdb
  !
+ ! Surface spectroscopy
+ !
+ logical           :: lras, lsurf, lreels, lcelleps
+ character(schlen) :: xdata, ydata, zdata
+ character(len=5)  :: datatype
+ real(SP)          :: sshift
+ real(SP)          :: d_cellin
+ !
+ ! Localization
+ !
+ logical           :: lloc
+ real(SP)          :: lowerlim, upperlim
+ integer           :: normdir, ngloc
+ integer           :: loc_bands(2)
+ integer           :: loc_kpts(2)
+ !
+ ! Transition Analysis
+ !
+ logical           :: ltrans
+ real(SP)          :: Ecv_min, Ecv_max
+ real(SP)          :: qdir(3)
+ integer           :: idir
+ !
  ! GPL_EXCLUDE_START 
  !
  ! SC

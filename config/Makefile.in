@@ -48,8 +48,8 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
 TARGETS  = all yambo interfaces ypp 
 UTILS    = changelog
 CLEANS   = clean clean_all
-PROJECTS = yambo_ph yambo_sc yambo_magnetic yambo_rt yambo_distributed yambo_kerr\
-           ypp_rt ypp_ph ypp_sc ypp_magnetic
+PROJECTS = yambo_ph yambo_sc yambo_magnetic yambo_rt yambo_distributed yambo_kerr yambo_surf\
+           ypp_rt ypp_ph ypp_sc ypp_magnetic ypp_surf
 BROKEN   = 
 DEBUG    = 
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
@@ -61,6 +61,9 @@ BASIC_LIBS   = external_c modules xc_functionals parser communicate common io wf
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
                interpolate tddft pol_function qp acfdt bse
+
+PJ_SURFLIBS   = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_ctl surf \
+               setup interface tddft pol_function qp acfdt bse
 
 PJ_SCLIBS          = $(MAIN_LIBS) sc 
 PJ_RTLIBS          = $(MAIN_LIBS) sc real_time
@@ -74,6 +77,7 @@ PJ_RTLIBS          = $(MAIN_LIBS) sc real_time
 YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface interpolate pol_function bse
 YPPSCLIBS    = $(YPPLIBS) sc
 YPPRTLIBS    = $(YPPLIBS) sc real_time
+YPPSURFLIBS   = $(BASIC_LIBS) surf_modules bz_ops qp_ctl setup interface interpolate surf pol_function bse
 
 nothing: 
 	@$(make_message)
@@ -113,9 +117,15 @@ yambo_rt: libs
 yambo_ph: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_ELPH";$(mkx)
+yambo_surf: libs
+	@LIBS2DO="$(PJ_SURFLIBS)";ADF="-D_SURF"; $(mksrc)
+	@X2DO="yambo_surf"; XPATH="driver";XLIBS="$(PJ_SURFLIBS)";ADF="-D_SURF";$(mkx)
 ypp_ph: libs
 	@LIBS2DO="$(YPPLIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
+ypp_surf: libs
+	@LIBS2DO="$(YPPSURFLIBS)" ; ADF="-D_YPP_SURF";$(mksrc)
+	@X2DO="ypp_surf" ;XPATH="ypp";XLIBS="$(YPPSURFLIBS)"; ADF="-D_YPP_SURF";$(mkx)
 ypp_rt: libs
 	@LIBS2DO="$(YPPRTLIBS)" ; ADF="-D_SC -D_RT -D_ELPH -D_YPP_RT";$(mksrc)
 	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPRTLIBS)"; ADF="-D_YPP_RT -D_YPP_ELPH";$(mkx)

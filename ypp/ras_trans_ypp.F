@@ -30,13 +30,13 @@
  use vec_operate,         ONLY:c2a, sort
 !  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP
    use IO_m
-   use optcut,                  ONLY : Xcut_q0grad, Xcut_rhoq0
+   use optcut,                  ONLY : DIP_iR_cut, DIP_q_dot_iR_cut
    use R_lattice,               ONLY : nkibz, bz_samp, nXkibz
    use X_m,           ONLY:X_t,DIP_iR,X_alloc
  use timing,              ONLY:live_timing_is_on
 
    implicit none
-   real(SP),allocatable :: DIP_iR_disk(:,:,:),Xcut_q0grad_disk(:,:,:)
+   real(SP),allocatable :: DIP_iR_disk(:,:,:),DIP_iR_cut_disk(:,:,:)
    real(SP),allocatable :: window(:,:)
    real(SP) :: k_int(nkibz), kv(3)
 !functions
@@ -68,16 +68,16 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
    !
    live_timing_is_on=.false.
 
-   write(Ewindow,'(a,f4.2,a,f4.2,a)') "[",Ecv_min*HA2EV,":",Ecv_max*HA2EV,"]eV"
+   write(Ewindow,'(a,f7.3,a,f7.3,a)') "[",Ecv_min*HA2EV,":",Ecv_max*HA2EV,"]eV"
    write(sch,'(a)') " Analysing transitions in range "//Ewindow
    call msg('ns', trim(sch))
    write(sch,'(a,3f6.3)') " Polarization direction [cc]: ",qdir
    call msg('ns', trim(sch))
-   write(sch,'(a,i3,a,i3,a)') " From db.ostnts: iv range [",db_nb(1),":",db_nbm,"]"
+   write(sch,'(a,i3,a,i3,a)') " From db.dipoles: iv range [",db_nb(1),":",db_nbm,"]"
    call msg('ns', trim(sch))
-   write(sch,'(a,i3,a,i3,a)') "                 ic range [",db_nbf+1,":",db_nb(2),"]"
+   write(sch,'(a,i3,a,i3,a)') "                  ic range [",db_nbf+1,":",db_nb(2),"]"
    call msg('ns', trim(sch))
-   if(lusecut) call msg('ns',' Mixing transitions from db.ostnts_cut')
+   if(lusecut) call msg('ns',' Mixing transitions from db.dipoles_cut')
    !
    ! Filter transitions inside the requested range
    !
@@ -94,7 +94,7 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
 
            P2 = dot_product(qdir,DIP_iR(:,ic,iv,ik,i_spin))
            P1 = conjg(P2)
-           if(lusecut) P1 = conjg(dot_product(qdir,Xcut_q0grad(:,ic,iv,ik,i_spin)))
+           if(lusecut) P1 = conjg(dot_product(qdir,DIP_iR_cut(:,ic,iv,ik,i_spin)))
            PP = abs(P1*P2)
            k_int(ik) = k_int(ik)+PP
            ntrans = ntrans + 1
@@ -150,18 +150,18 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
      implicit none
 
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2/),MODE=VERIFY,ID=io_cut)
-     io_err=io_connect(desc='ostnts_cut',type=1,ID=io_cut)
+     io_err=io_connect(desc='dipoles_cut',type=2,ID=io_cut)
      if(io_err.ne.0) return
 
-     allocate(Xcut_q0grad_disk(db_nb(2),db_nbm,2))
-     allocate(Xcut_q0grad(3,db_nb(2),db_nbm,nXkibz,n_sp_pol))
+     allocate(DIP_iR_cut_disk(db_nb(2),db_nbm,2))
+     allocate(DIP_iR_cut(3,db_nb(2),db_nbm,nXkibz,n_sp_pol))
      do i1=1,nXkibz
        do ixyz=1,3
          do i_spin=1,n_sp_pol
            write (VAR_name,'(3(a,i4.4))') 'DIP_iR_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
-           call io_bulk(io_cut,VAR=trim(VAR_name),VAR_SZ=shape(Xcut_q0grad_disk))
-           call io_bulk(io_cut,R3=Xcut_q0grad_disk)
-           call mat_r2c(Xcut_q0grad_disk,Xcut_q0grad(ixyz,:,:,i1,i_spin))
+           call io_bulk(io_cut,VAR=trim(VAR_name),VAR_SZ=shape(DIP_iR_cut_disk))
+           call io_bulk(io_cut,R3=DIP_iR_cut_disk)
+           call mat_r2c(DIP_iR_cut_disk,DIP_iR_cut(ixyz,:,:,i1,i_spin))
          enddo
        enddo
      enddo
@@ -174,7 +174,7 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
      implicit none
 
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2/),MODE=VERIFY,ID=io_db)
-     io_err=io_connect(desc='ostnts',type=1,ID=io_db)
+     io_err=io_connect(desc='dipoles',type=2,ID=io_db)
      sec_size=8
      io_err=io_header(io_db,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.)
      call io_elemental(io_db,VAR="PARS",VAR_SZ=sec_size,MENU=1)

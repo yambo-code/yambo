@@ -77,6 +77,11 @@ PJ_SCLIBS       = $(MAIN_LIBS) sc
 #if defined _DISTRIBUTED
 PROJECTS = yambo_distributed
 #endif
+#if defined _SURF
+PROJECTS = yambo_surf ypp_surf
+PJ_SURFLIBS   = $(MAIN_LIBS) surf
+YPPSURFLIBS   = $(BASIC_LIBS) surf_mods bz_ops qp_ctl setup interface surf pol_function bse
+#endif
 EXE      = $(TARGETS) $(PROJECTS)
 #
 nothing: 
@@ -103,6 +108,14 @@ yambo_sc: libs
 ypp_sc: libs
 	@LIBS2DO="$(YPPLIBS)";ADF="-D_SC"; $(mksrc)
 	@X2DO="ypp_sc" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_SC";$(mkx)
+#endif
+#if defined _SURF
+yambo_surf: libs
+        @LIBS2DO="$(PJ_SURFLIBS)";ADF="-D_SURF"; $(mksrc)
+        @X2DO="yambo_surf"; XPATH="driver";XLIBS="$(PJ_SURFLIBS)";ADF="-D_SURF";$(mkx)
+ypp_surf: libs
+        @LIBS2DO="$(YPPSURFLIBS)" ; ADF="-D_YPP_SURF";$(mksrc)
+        @X2DO="ypp_surf" ;XPATH="ypp";XLIBS="$(YPPSURFLIBS)"; ADF="-D_YPP_SURF";$(mkx)
 #endif
 #if defined _DISTRIBUTED
 yambo_distributed: libs

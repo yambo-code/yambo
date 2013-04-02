@@ -79,6 +79,9 @@
 #if defined _MAGNETIC 
   {"magnetic", "m","Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0,0}, 
 #endif
+#if defined _SURF
+  {"sursp",  "s","Surface Spectroscopy [opt=(r)as/r(e)els/(b)oth]",0,0,1,0,0},
+#endif
   {NULL,NULL,NULL,0,0,0,0,0}
  };
  char *tool="yambo";

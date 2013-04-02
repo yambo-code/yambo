@@ -73,6 +73,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _MAGNETIC
  use magnetic,        ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
 #endif
+#if defined _SURF
+ use ras_module,     ONLY:lras, lreels
+#endif
  !
  implicit none
  !
@@ -128,6 +131,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _MAGNETIC
  what_is_running='YAMBO_MAGNETIC'
+#endif
+#if defined _SURF
+ what_is_running='YAMBO_SURF'
 #endif
  !
  !Presets (input)
@@ -697,6 +703,32 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #endif
  !
+ ! Surface spectroscopy
+ !
+#if defined _SURF
+ if (lras.or.lreels) then
+!   call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
+    call X_activate('Xd',(/'BndsRn',&
+&                 'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
+&                 'DrudeW','EhEngy'/))
+    call initactivate(1,'FFTGvecs XfnQP_E'//&
+&     ' BulkFile BulkForm BlkShift BlkBroad Layers'//&  ! Bulk eps data
+&     ' q0x q0y'//&                                     ! Polarizations
+&     ' Cutoff CutZero CutStep ShiftedPath')               ! Cut off fn
+ endif
+ if (lras) then
+    call initactivate(1,&
+&     ' LocLimit LocType')               ! Analyse
+ endif
+ if (lreels) then
+    call initactivate(1,&
+&     ' E0 Theta0 Thetap Phi DetAngle'//&               ! Kinematics
+&     ' LossForm ImpactFt'//&                        ! Model of loss function
+&     ' DetIntMd NumIntPt'//&                           ! Det. integration
+&     ' PenDepth GausConv')                    ! General flags
+ endif
+#endif
+ !
  ! Are we editing the input file ?
  !
  if (infile_editing) then
@@ -872,6 +904,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_collisions_IO=runlevel_is_on('collisions_IO')
        l_carrier_dynamics =trim(Dynamics_Kind)=="C"
 #endif
+#if defined  _SURF
+       lreels=runlevel_is_on('reels')
+       lras=runlevel_is_on('ras')
+#endif
 #if defined  _ELPH  
        if (.not.CLOSE_Gs) then
          !
@@ -931,6 +967,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call W_duplicate(Xxcw,Xw(3))
        call initactivate(2,'XfnQP_E')
      endif
+#if defined _SURF
+     X(3)%iq = 1  ! 2 components
+     X(3)%ordering = 'c'
+     Xw(3)%n = 101 ! 2 components
+#endif 
 #if defined  _ELPH 
      if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
      elph_nDBs_used=elph_nDBs
@@ -1218,6 +1259,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
          !
        endif
+       !
+       ! Surface spectroscopy
+       !
+#if defined _SURF
+       if ( trim(rstr_piece(i1)) == 'sursp' )  then
+         if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
+         if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
+         if ( trim(rstr_piece(i1+1)) == 'b') call initactivate(1,'ras reels')
+       endif
+#endif
        !
        ! Sc / NEGF
        !

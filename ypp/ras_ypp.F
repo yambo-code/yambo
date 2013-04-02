@@ -73,7 +73,7 @@
  call read_spectral_data(xdata,datatype,nw,lfail)
  allocate(eps_x(nw),hw(nw))
  eps_x(1:nw) = f(1:nw)
- hw(1:nw) = freq(1:nw)/HARTREE + sshift ! shift is internally converted
+ hw(1:nw) = freq(1:nw)/HA2EV + sshift ! shift is internally converted
  sscale = 4.0_SP*PI/d_cellin
 
  select case(pol_type)
@@ -112,9 +112,6 @@
    if(.not.lbulkerr) call CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_cellin)
 
  endif
-
-
-! Add Gaussian broadening
 
  contains
   

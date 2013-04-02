@@ -31,6 +31,9 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  use IO_m,          ONLY:REP
  use QP_m,          ONLY:OCC_T_ref
 #endif
+#if defined _SURF
+ use ras_module,    ONLY:lras, lreels
+#endif
  implicit none
  !
  type(levels) ::en,Xen
@@ -52,6 +55,9 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  ! - Dynamical X -
  !
  apply_QP=(l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa).or.&
+#if defined _SURF
+        lras.or.lreels.or.&
+#endif
         (l_gw0.and..not.l_ppa.and.l_el_corr).or.l_life
  if (apply_QP)  call QP_apply(X(3)%ib,Xen,Xk,"X",msg_fmt='s')
 #if defined _SC

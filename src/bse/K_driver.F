@@ -37,7 +37,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_eh_en,BSE_mode
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
-&                         FXC_is_causal
+&                         FXC_is_causal,FXC_n_g_corr
  use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PP_redux_wait
@@ -154,6 +154,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
  BS_anti_res=index(BSE_mode,'c')/=0
  !
+ if (l_bs_fxc) BS_n_g_exch=FXC_n_g_corr
+ !
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  !
  BS_K_is_ALDA=l_alda_fxc
@@ -183,7 +185,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! 2. The KERNEL
  ! ================
- if(.not.l_rpa_IP) call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
+ if (.not.l_rpa_IP) call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
  !
  ! 3. The SOLVER
  ! =================
@@ -221,7 +223,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! CLEAN
  !
- deallocate(BSS_rhoq0,BS_blk_dim)
+ if (allocated(BSS_rhoq0))   deallocate(BSS_rhoq0)
+ if (allocated(BS_blk_dim))  deallocate(BS_blk_dim)
  call mem_est("BS_blk_dim BSS_rhoq0")
  !
  if (allocated(BS_eh_table)) deallocate(BS_eh_table)

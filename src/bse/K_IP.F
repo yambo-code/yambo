@@ -27,7 +27,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use timing,        ONLY:live_timing
- use drivers,       ONLY:l_rpa_IP
+ use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:error,msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
  use electrons,     ONLY:levels,spin_occ,spin,n_sp_pol
@@ -103,6 +103,8 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  if (any(BS_blk_dim==0)) then
    call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
  endif
+ !
+ if (l_bs_fxc) return
  !
  ! Polarizability ?
  !

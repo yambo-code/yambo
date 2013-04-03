@@ -460,8 +460,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs')  
  !
+<<<<<<< .mine
+ ! Kernels
+=======
  ! Optics mode
+>>>>>>> .r2092
  !
+<<<<<<< .mine
+ if (l_em1s.or.l_em1d)             call initactivate(1,'Chimod')
  if (l_optics.and.l_chi)           call initactivate(1,'Chimod')
  if (l_optics.and.l_bse)           call initactivate(1,'BSEmod')
  if (l_optics.and.l_bse)           call initactivate(1,'BSKmod')
@@ -469,6 +475,15 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Chi kernel
  !
+=======
+ if (l_optics.and.l_chi)           call initactivate(1,'Chimod')
+ if (l_optics.and.l_bse)           call initactivate(1,'BSEmod')
+ if (l_optics.and.l_bse)           call initactivate(1,'BSKmod')
+ if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
+ !
+ ! Chi kernel
+ !
+>>>>>>> .r2092
  if (l_optics.and.l_chi) then
    !
    ! GPL_EXCLUDE_START
@@ -549,6 +564,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! Special case: the BSE_Fxc kernel has been constructed
    !               Thus I move to g-space to solve the Dyson equation
+   !
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGexx ALLGexx')
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk')
    !
@@ -1000,7 +1016,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_bsk)    call initactivate(1,'bse')
      if (l_bss)    call initactivate(1,'optics')
      if (l_bss)    call initactivate(1,'bse')
+<<<<<<< .mine
      if (l_bss)    call initactivate(1,'bsk')
+     if (l_bs_fxc.and.l_bsk) call initactivate(1,'em1s') 
+     if (l_bs_fxc) BSS_mode="t"
+=======
+     if (l_bss)    call initactivate(1,'bsk')
+>>>>>>> .r2092
      if (l_bse) then
        !
        if (l_alda_fxc) BS_res_mode='x'     
@@ -1049,7 +1071,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_bse) then
        if (l_rpa_IP)                   BS_res_mode='none'
        if (l_td_hartree)               BS_res_mode='x'
+<<<<<<< .mine
        if (l_tddft)                    BS_res_mode='x'
+       if (l_bs_fxc)                   BS_res_mode='c'
+=======
+       if (l_tddft)                    BS_res_mode='x'
+>>>>>>> .r2092
        if (l_td_hf)                    BS_res_mode='xcd'
        if (l_W_eh)                     BS_res_mode='xc'
        if (trim(BSE_mode)=="coupling") BS_cpl_mode=trim(BS_res_mode)
@@ -1227,6 +1254,22 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            if (l_bse) call initactivate(1,'bse')
          end if
          !
+<<<<<<< .mine
+         BSK_mode='Hartree'
+         Chi_mode='Hartree'
+         !
+         if(l_bse)  then
+           if(trim(rstr_piece(i1+1)) == 'hartree')  BSK_mode='Hartree'
+           if(trim(rstr_piece(i1+1)) == 'hf') BSK_mode='HF'
+           if( trim(rstr_piece(i1+1)) == 'alda')  BSK_mode='ALDA'
+           if(trim(rstr_piece(i1+1)) == 'sex')  BSK_mode='SEX'
+           if( trim(rstr_piece(i1+1)) == 'bsfxc')  BSK_mode='BSfxc'
+         else if(l_chi) then
+           if(trim(rstr_piece(i1+1)) == 'hartree') Chi_mode='Hartree'
+           if( trim(rstr_piece(i1+1)) == 'alda')  Chi_mode='ALDA'
+           if( trim(rstr_piece(i1+1)) == 'lrc')  Chi_mode='LRC'
+           if( trim(rstr_piece(i1+1)) == 'bsfxc')  Chi_mode='BSfxc'
+=======
          BSK_mode='Hartree'
          Chi_mode='Hartree'
          !
@@ -1241,6 +1284,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            if( trim(rstr_piece(i1+1)) == 'alda')  Chi_mode='ALDA'
            if( trim(rstr_piece(i1+1)) == 'lrc')  Chi_mode='LRC'
            if( trim(rstr_piece(i1+1)) == 'bsfxc')  Chi_mode='BSfxv'
+>>>>>>> .r2092
          endif
          !
          if((trim(rstr_piece(i1+1)) == 'alda').or.&

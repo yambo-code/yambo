@@ -48,6 +48,7 @@ module BS
  logical :: BS_DB_is_fragmented
  logical :: BS_not_const_eh_f
  character(schlen) :: BSE_mode
+ character(schlen) :: BSK_mode
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
  integer    , allocatable :: BS_eh_table(:,:)

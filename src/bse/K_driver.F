@@ -126,11 +126,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  if(l_kerr) call parser('AnHall',l_anomalous_Hall)
 #endif
  !
- if(l_rpa_IP) then
-   l_bss=.true.
-   BSS_mode=''
-   if(trim(BSE_mode)=='coupling') BSE_mode='causal'
- endif
+ if(l_rpa_IP.and.trim(BSE_mode)=='coupling') BSE_mode='causal'
  !
  if( any((/index(BSS_mode,'h')/=0,index(BSS_mode,'i')/=0/)) &
 &    .and. trim(BSE_mode)=='causal') BSE_mode='resonant'

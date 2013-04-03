@@ -27,7 +27,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
 &                        Time_unit,I_unit,Angle_unit,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
- use X_m,           ONLY:X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold
+ use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold
  use fields,        ONLY:global_gauge,grid_path
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,GW_en_comp,&
@@ -39,7 +39,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use R_lattice,     ONLY:ng_closed,n_g_shells,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
- use BS,            ONLY:BSE_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
+ use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
@@ -89,15 +89,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'setup',   '[R INI] Initialization') 
  call it('r',defs,'optics',  '[R OPT] Optics')
  call it('r',defs,'chi',     '[R CHI] Dyson equation for Chi.')
+ call it('r',defs,'chik',    '[R CHI] Kernel for Chi')
  call it('r',defs,'bse',     '[R BSE] Bethe Salpeter Equation.')
- call it('r',defs,'IP',      '[R   K] Independet Particles')
- call it('r',defs,'tdh',     '[R   K] TD Hartree kernel = Local fields term')
- call it('r',defs,'tddft',   '[R   K] Use TDDFT kernel')
- call it('r',defs,'alda_fxc','[R   K] Adiabatic-LDA Fxc')
- call it('r',defs,'lrc_fxc', '[R   K] LRC (1/alpha) Fxc')
- call it('r',defs,'tdhf',    '[R BSK] Unscreened e-h interaction: TD Hartree-Fock kernel')
- call it('r',defs,'W_eh',    '[R BSK] Screened e-h interaction: W kernel')
+ call it('r',defs,'bsk',     '[R BSK] Bethe Salpeter Equation kernel')
  call it('r',defs,'bss',     '[R BSS] Bethe Salpeter Equation solver')
+ call it('r',defs,'tddft',   '[R   K] Use TDDFT kernel')
  call it('r',defs,'em1s',    '[R Xs] Static Inverse Dielectric Matrix')
  call it('r',defs,'em1d',    '[R Xd] Dynamical Inverse Dielectric Matrix')
  call it('r',defs,'ppa',     '[R Xp] Plasmon Pole Approximation')
@@ -113,7 +109,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! NON GPL RUNLEVELS
  !===================
  call it('r',defs,'acfdt',   '[R ETOT] ACFDT Total Energy')
- call it('r',defs,'bs_fxc',  '[R TDDFT] The BSE TDDFT kernel')
 #if defined _ELPH 
  call it('r',defs,'ElPhHam', '[R] Frohlich Hamiltonian') 
 #endif
@@ -181,13 +176,14 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! BSE
  !
- call it(defs,'BSEmode', '[BSE] resonant/causal/coupling',BSE_mode)
+ call it(defs,'BSEmod',  '[BSE] resonant/causal/coupling',BSE_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
- call it(defs,'BSSmod',  '[BSS] Solvers `h/d/(p/f)i/t`',BSS_mode,protect=.FALSE.)
- call it(defs,'BSSInvMode','[BSS] Inversion solver modality `f/p` (full, perturbative)',BSS_inversion_mode)
+ call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX/BSfxc',BSK_mode,protect=.FALSE.)
+ call it(defs,'BSSmod',  '[BSS] haydo/diag/inv/tddft`',BSS_mode,protect=.FALSE.)
+ call it(defs,'BSSInvMode','[BSS] Inversion solver modality `full/perturbative`',BSS_inversion_mode)
  call it(defs,'BLongDir','[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange','[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange','[BSS] Damping range',BSS_dr,E_unit)
@@ -208,6 +204,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Xs Xd Xp
  !
+ call it(defs,'Chimod', '[X] IP/Hartree/ALDA/LRC/BSfxc',Chi_mode,protect=.FALSE.)
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
@@ -471,6 +468,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
      character(40)     ::des(n_des)
      character(schlen) ::lch1,lch2
      !
+     if (X%whoami==1) sfx='Xx'
+     if (X%whoami==2) sfx='Xs'
+     if (X%whoami==3) sfx='Xd'
+     if (X%whoami==4) sfx='Xp'
+     !
      nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &          'DrudeW','LongDr','EhEngy','PPAPnt',&
 &          'NGsBlk','QpntsR','BndsRn','DmERef'/)
@@ -491,10 +493,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
      !
      do i1=1,n_des
        lch1=des(i1);lch2=nms(i1)
-       if (X%whoami==1) sfx='Xx'
-       if (X%whoami==2) sfx='Xs'
-       if (X%whoami==3) sfx='Xd'
-       if (X%whoami==4) sfx='Xp'
        write (des(i1),'(4a)')  '[',trim(sfx),'] ',trim(lch1)
        write (nms(i1),'(2a)')  lch2(1:6),trim(sfx)
      enddo

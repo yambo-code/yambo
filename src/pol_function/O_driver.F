@@ -29,7 +29,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc,set_real_printed_length
- use drivers,       ONLY:l_bs_fxc,l_alda_fxc
+ use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,BZ_RIM_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
@@ -52,7 +52,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  ! 
  ! Work Space
  !
- integer          :: iw_group,iw,i2,frequencies_range(2),iq,i_G_shift
+ integer          :: iw_group,iw,i2,frequencies_range(2),iq,i_G_shift,n_output
  real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus
  logical          :: l_skip_non_int_eps,eval_eels
  !
@@ -109,7 +109,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! OutPut files...
    !
-   call X_setup_file_names(iq,'inv',trim(FXC_type),'dyson',ig=i_G_shift)
+   if(.not.l_rpa_IP) call X_setup_file_names(iq,'inv',trim(FXC_type),'dyson',ig=i_G_shift)
+   if(     l_rpa_IP) call X_setup_file_names(iq,'IP','','',ig=i_G_shift)
    !
    ! ... open ...
    !
@@ -169,10 +170,14 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      !
      ! X Dyson equation solver
      !
-     call X_s(iq,frequencies_range,X,wv)
-     !
-     X_epsilon(2,frequencies_range(1):frequencies_range(2))=1./(X_mat(i_G_shift,i_G_shift,:)*&
+     if(l_rpa_IP) then
+       X_epsilon(2,frequencies_range(1):frequencies_range(2))=X_epsilon(1,frequencies_range(1):frequencies_range(2))
+     else
+       call X_s(iq,frequencies_range,X,wv)
+       !
+       X_epsilon(2,frequencies_range(1):frequencies_range(2))=1./(X_mat(i_G_shift,i_G_shift,:)*&
 &                                                           bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1.)
+     endif
      !
      call of_open_close(eps_file_name,'oa')
      call of_open_close(eel_file_name,'oa')
@@ -186,16 +191,15 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !
        ! Titles 
        !
-       call X_setup_headers('eps')
+       n_output=5
+       if(l_rpa_IP.or.l_skip_non_int_eps) n_output=3
        call msg('o eps eel fxc alpha','#')
-       if (.not.l_skip_non_int_eps) call msg('o eps','#',headers(:5),INDENT=0,USE_TABS=.true.)    
-       if (l_skip_non_int_eps)      call msg('o eps','#',headers(:3),INDENT=0,USE_TABS=.true.)    
+       call X_setup_headers('eps')
+       call msg('o eps',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
        call X_setup_headers('eel')
-       if (.not.l_skip_non_int_eps) call msg('o eel','#',headers(:5),INDENT=0,USE_TABS=.true.)    
-       if (l_skip_non_int_eps)      call msg('o eel','#',headers(:3),INDENT=0,USE_TABS=.true.)    
+       call msg('o eel',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
        call X_setup_headers('alpha')
-       if (.not.l_skip_non_int_eps) call msg('o alpha','#',headers(:5),INDENT=0,USE_TABS=.true.)    
-       if (l_skip_non_int_eps)      call msg('o alpha','#',headers(:3),INDENT=0,USE_TABS=.true.)    
+       call msg('o alpha','#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
        call msg('o eps eel alpha','#')
        !
      endif
@@ -206,8 +210,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !
        output_data=(/real(wv%p(i2))*HA2EV,aimag(X_epsilon(2,i2)),real(X_epsilon(2,i2)),&
 &                    aimag(X_epsilon(1,i2)),real(X_epsilon(1,i2))/)
-       if (l_skip_non_int_eps)      call msg('o eps','',output_data(:3),INDENT=-2,USE_TABS=.true.)
-       if (.not.l_skip_non_int_eps) call msg('o eps','',output_data,INDENT=-2,USE_TABS=.true.)
+       call msg('o eps','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
        !
      enddo
      call of_open_close(eps_file_name)
@@ -222,7 +225,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      call of_open_close(alpha_file_name,'oa')
      !
      eval_eels= O_eels(wv%p,wv%n(1),.TRUE.,X%ordering,X_epsilon(1,:),X_epsilon(3,:))
-     eval_eels= O_eels(wv%p,wv%n(1),.FALSE.,X%ordering,X_epsilon(2,:),X_epsilon(4,:))
+     if(     l_rpa_IP) X_epsilon(4,:)=X_epsilon(3,:)
+     if(.not.l_rpa_IP) eval_eels= O_eels(wv%p,wv%n(1),.FALSE.,X%ordering,X_epsilon(2,:),X_epsilon(4,:))
      !
      if (eval_alpha) then
        !
@@ -231,7 +235,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !       =  (1 +eels    ) eps_2_alpha/4/pi  
        !
        X_epsilon(5,:)=(1.+X_epsilon(3,:))/4./pi*eps_2_alpha
-       X_epsilon(6,:)=(1.+X_epsilon(4,:))/4./pi*eps_2_alpha 
+       if(     l_rpa_IP) X_epsilon(6,:)=X_epsilon(5,:)
+       if(.not.l_rpa_IP) X_epsilon(6,:)=(1.+X_epsilon(4,:))/4./pi*eps_2_alpha 
        !
      endif
      !
@@ -241,16 +246,14 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !
        output_data=(/real(wv%p(iw))*HA2EV,aimag(X_epsilon(4,iw)),real(X_epsilon(4,iw)),&
 &                    aimag(X_epsilon(3,iw)),real(X_epsilon(3,iw))/)
-       if (l_skip_non_int_eps)      call msg('o eel','',output_data(:3),INDENT=-2,USE_TABS=.true.)
-       if (.not.l_skip_non_int_eps) call msg('o eel','',output_data,INDENT=-2,USE_TABS=.true.)
+       call msg('o eel','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
        !
        ! Alpha
        !
        output_data=(/real(wv%p(iw))*HA2EV,aimag(X_epsilon(6,iw)),real(X_epsilon(6,iw)),&
 &                    aimag(X_epsilon(5,iw)),real(X_epsilon(5,iw))/)
        !
-       if (l_skip_non_int_eps)      call msg('o alpha','',output_data(:3),INDENT=-2,USE_TABS=.true.)
-       if (.not.l_skip_non_int_eps) call msg('o alpha','',output_data,INDENT=-2,USE_TABS=.true.)
+       call msg('o alpha','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
      enddo
      !
      call of_open_close(eel_file_name)

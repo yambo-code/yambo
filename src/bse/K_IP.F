@@ -217,4 +217,18 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  if (iq==1) call KERR_alloc('DIP_P_symm')
 #endif
  !
+ if (l_rpa_IP) then
+   !  
+   X_epsilon(1,:)=W_bss%p(:)
+   X_epsilon(2,:)=0.
+   !
+   ! Initialize & write the output file
+   !
+   call K_output_file(iq,-4)
+   call K_output_file(iq,4)
+   !
+   deallocate(X_epsilon,X_drude_term)
+   !
+ endif
+ !
 end subroutine

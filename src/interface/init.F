@@ -552,7 +552,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_em1s) then
    call QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
-   call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
+   call X_activate('Xs',(/'QpntsR','BndsRn','ecutxx','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
  endif
  !
@@ -561,9 +561,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
-   if (l_ppa) call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
+   if (l_ppa) call X_activate('Xp',(/'QpntsR','BndsRn','ecutxx','CGrdSp',&
 &                      'EhEngy','LongDr','PPAPnt'/))
-   if (l_cohsex) call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk',&
+   if (l_cohsex) call X_activate('Xs',(/'QpntsR','BndsRn','ecutxx',&
 &                         'EhEngy','LongDr'/))
  endif
  !
@@ -573,7 +573,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
    call initactivate(1,'EXXRLvcs ecutHF AC_n_LAM AC_n_FR AC_E_Rng')
-   call X_activate('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
+   call X_activate('Xx',(/'QpntsR','BndsRn','ecutxx','CGrdSp','EhEngy','LongDr'/))
  endif
  !
  ! GW/Life
@@ -590,7 +590,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call initactivate(1,'GbndRnge') 
        if (.not.l_cohsex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
        if (.not.l_cohsex) call initactivate(1,'dScStep') 
-       if (.not.l_ppa.and..not.l_cohsex) call X_activate('Xd',(/'BndsRn','NGsBlk',&
+       if (.not.l_ppa.and..not.l_cohsex) call X_activate('Xd',(/'BndsRn','ecutxx',&
 &                      'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                      'DrudeW','EhEngy','LongDr'/)) 
        !
@@ -607,7 +607,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_life) then
        call initactivate(1,'LifeTrCG')
-       if (l_el_corr) call X_activate('Xd',(/'BndsRn','NGsBlk',&
+       if (l_el_corr) call X_activate('Xd',(/'BndsRn','ecutxx',&
 &                                     'DmRnge','CGrdSp',&
 &                                     'DrudeW','EhEngy','LongDr'/)) 
      endif

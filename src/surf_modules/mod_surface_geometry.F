@@ -145,7 +145,7 @@ end subroutine init_surface
           if((all(sym1.lt.0.001).and.i_time_rev.eq.0).or. &
 &             i_space_inv.eq.1) then
             lsymslab = .true.
-            call msg('rs','Spatial inversion present.')
+            call msg('r','Spatial inversion present.')
             exit
           endif
         enddo
@@ -160,21 +160,21 @@ end subroutine init_surface
           forall(i=1:3,j=1:3) sym1(i,j) = abs(dl_sop(i,j,is)-plane(i,j))
           if(all(sym1.lt.0.001)) then
             lsymslab = .true.
-            call msg('rs','Slab symmetries: plane symmetry present...')
+            call msg('r','Slab symmetries: plane symmetry present...')
             exit
           endif
         enddo
         if(lsymslab) exit
 
 !       No symmetry for RAS present
-        call msg('rs','Slab symmetries: no half slab symmetry present...')
+        call msg('r','Slab symmetries: no half slab symmetry present...')
         return
 
       enddo
 
 !     Test for cutoff function use: destroys symmetry
       if(loptcut.and.lsymslab) then
-         call msg('nrs','Note: Real space cutoff function removes slab symmetry.')
+         call msg('nr','Note: Real space cutoff function removes slab symmetry.')
          lsymslab = .false.
       endif
 
@@ -201,8 +201,9 @@ end subroutine init_surface
        Bmat = matmul(Amat,Bmat)             ! n = (b^T)^(-1) G
        gvecaff(ig,:) = nint(Bmat(:))
        write(sch,100) ig,gvecaff(ig,:), g_vec(ig,:)*2.0_SP*PI/alat(:)
-       if(ig.lt.10) call msg('r','First G-vectors:'//trim(sch))
-       if(ig.gt.ng_vec-3) call msg('r','Last  G-vectors:'//trim(sch))
+! For debugging
+!      if(ig.lt.10) call msg('r','First G-vectors:'//trim(sch))
+!      if(ig.gt.ng_vec-3) call msg('r','Last  G-vectors:'//trim(sch))
     enddo
 100 format(i8,3i4,2x,3f7.3) 
     od(1:6) = (/ minval(gvecaff(:,1)), maxval(gvecaff(:,1)), &

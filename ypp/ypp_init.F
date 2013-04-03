@@ -61,7 +61,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  logical          ::l_QP_init
  type(initdefs)   ::defs
- integer          ::i1,i2
+ integer          ::i1,i2, ng_save
  character(schlen)::rstr_piece(60) 
  !
 #if defined _YPP_RT || defined _YPP_SC
@@ -81,6 +81,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_ELPH
  what_is_running='YPP_PH'
+#endif
+#if defined _YPP_SURF
+ what_is_running='YPP_SURF'
 #endif
  !
  if (FINALIZE) then
@@ -157,6 +160,35 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  elph_dbs_path='.'
  ph_freqs_file='none'
  gsqF_energy_steps=1
+ !
+#endif
+ !
+#if defined _YPP_SURF
+ !
+ ! RAS & REELS
+ !
+ call ras_presets
+ xdata = 'o.eps_q001-rpa_00'
+ ydata = 'o.eps_q001-rpa_00'
+ zdata = 'o.eps_q001-rpa_00'
+ sshift = 0.0           ! surface shift
+ datatype = 'eps23'
+ d_cellin = 1.0
+ !
+ ! Localization
+ !
+ normdir = 3
+ lowerlim = 0
+ upperlim = 1
+ ngloc = 0
+ loc_bands = (/ 1, n_bands /)
+ loc_kpts  = (/ 1, nkibz /)
+ ! 
+ ! Transition analysis
+ ! 
+ Ecv_min = 0.0
+ Ecv_max = -1.0/HA2EV
+ idir = 1
  !
 #endif
  !
@@ -504,6 +536,29 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EEfermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
+#endif
+ !
+#if defined _YPP_SURF
+ !
+ lsurf =runlevel_is_on('surf')
+ lras  =runlevel_is_on('ras')
+ lreels=runlevel_is_on('reels')
+ lloc  =runlevel_is_on('loc')
+ ltrans=runlevel_is_on('trans')
+ if(lsurf) then
+   if (lras) call initactivate(1,"XData YData "//&
+&       " BulkFile BulkForm BlkShift BlkBroad "//&
+&       " DataType SrfShift d_cell")
+   if (lreels) call initactivate(1,"XData YData ZData"//&
+&       " q0x q0y"//&
+&       " BulkFile BulkForm BlkShift BlkBroad Layers"//&
+&       " DataType SrfShift d_cell "//&
+&       " E0 Theta0 Thetap Phi DetAngle "//&
+&       " LossForm ImpactFt DetIntMd NumIntPt GausConv")
+   if(lloc) call initactivate(1,"NormDir LowerLim UpperLim NGLoc LbndRnge KptRange WrtLocDB")
+   if(ltrans) call initactivate(1,"EcvMin EcvMax qdir")
+ endif
+ !
 #endif
  !
  if (infile_editing) then

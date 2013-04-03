@@ -707,14 +707,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SURF
  if (lras.or.lreels) then
-!   call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
+!   call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',& ! Head only
     call X_activate('Xd',(/'BndsRn',&
 &                 'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &                 'DrudeW','EhEngy'/))
     call initactivate(1,'FFTGvecs XfnQP_E'//&
 &     ' BulkFile BulkForm BlkShift BlkBroad Layers'//&  ! Bulk eps data
 &     ' q0x q0y'//&                                     ! Polarizations
-&     ' Cutoff CutZero CutStep ShiftedPath')               ! Cut off fn
+&     ' Cutoff CutZero CutStep')               ! Cut off fn
  endif
  if (lras) then
     call initactivate(1,&

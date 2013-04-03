@@ -17,8 +17,7 @@ subroutine write_reelsdiff(lossf, hw, nw )
   !
   ! Set up REELS difference output (add extra tag to distinguish three-layer or full)
   !
-  write(of_name,'(a,a,a)') 'reels_diff','-rpa'
-! write(of_name,'(a,a,a)') 'reels_three_layer','-rpa'
+  write(of_name,'(a,a,a)') 'hreels','-rpa'
   call of_open_close(of_name,'ot')
   !
   ! Output file titles

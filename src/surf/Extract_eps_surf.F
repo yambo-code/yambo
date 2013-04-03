@@ -70,8 +70,8 @@ subroutine extract_eps_surf(surf_i, cell_i, npol, eps_b, nw, lbulkerr, lsurferr)
       surf_i(:,ipol) = cell_i(:,ipol)
     enddo
     nlsurf = dc/d_layer
-    call msg('nrs','Surface layer width defined by cutoff parameter.')
-    if(lsymslab) call msg('nrs','Note: slab symmetry ignored!')
+    call msg('nr','Surface layer width defined by cutoff parameter.')
+    if(lsymslab) call msg('nr','Note: slab symmetry ignored!')
     call write_cell_info
     return
   endif
@@ -80,7 +80,7 @@ subroutine extract_eps_surf(surf_i, cell_i, npol, eps_b, nw, lbulkerr, lsurferr)
   !
   if(nlbulk.le.0.001) then
     if(lsymslab) then
-      call msg('rs',&
+      call msg('r',&
 &     'Surface dielectric function defined over -half- slab.')
       d_surf = d_slab * 0.5_SP
       nlsurf = nlslab * 0.5_SP
@@ -89,7 +89,7 @@ subroutine extract_eps_surf(surf_i, cell_i, npol, eps_b, nw, lbulkerr, lsurferr)
       enddo
     else
       ! This does not yield anything physically useful.
-      call msg('nrs',&
+      call msg('nr',&
 &     'Surface dielectric function defined over -full- slab.')
       d_surf = d_slab
       nlsurf = nlslab
@@ -125,7 +125,7 @@ subroutine extract_eps_surf(surf_i, cell_i, npol, eps_b, nw, lbulkerr, lsurferr)
         surf_i(ie,ipol)=(d_cell*cell_i(ie,ipol)- d_bulk*eps_b(ie))/(d_surf*2.0_SP)
       enddo
     enddo
-    call msg('nrs',&
+    call msg('nr',&
 &   'Symmetric slab: dielectric function for one surface extracted.')
   !
   ! Asymmetric slab case: subtract bulk
@@ -138,7 +138,7 @@ subroutine extract_eps_surf(surf_i, cell_i, npol, eps_b, nw, lbulkerr, lsurferr)
         surf_i(ie,ipol)=(d_cell*cell_i(ie,ipol)- d_bulk*eps_b(ie))/(d_surf*1.0_SP)
       enddo
     enddo
-    call msg('nrs','Non symmetric slab without cutoff:'// &
+    call msg('nr','Non symmetric slab without cutoff:'// &
 &      ' bulk dielectric function subtracted. Result is unphysical!.')
   endif
   call write_cell_info
@@ -155,15 +155,15 @@ contains
     if(lsymslab) write(lch1,'(a14,1x,5a9,a10)') &
 &   "Supercell:","Layer","Cell","Vacuum","Slab","Bulk","2 x Surf"
 
-    call msg('nrs',lch1)
+    call msg('nr',lch1)
 
     write(lch1,'(a14,1x,5f9.2,f10.2)') "No. of layers:",&
 &               1.0,nlcell, nlvac, nlslab, nlbulk, nlsurf
-    call msg('rs',lch1)
+    call msg('r',lch1)
 
     write(lch1,'(a14,1x,5f9.4,f10.2)') "Atomic units:",&
 &               d_layer,d_cell, d_vac, d_slab, d_bulk, d_surf
-    call msg('rs',lch1)
+    call msg('r',lch1)
     return
   end subroutine write_cell_info
 end subroutine extract_eps_surf

@@ -27,7 +27,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use fields,     ONLY:global_gauge,grid_path
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,&
+&                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,Chi_mode,&
 &                      eval_alpha,Vnl_commutator_warning,Dipole_uses_shifted_grids,&
 &                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
@@ -63,13 +63,13 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use IO_m,       ONLY:io_reset,max_io_units,IO_write,serial_number,IO_read,mk_dir,&
 &                     Fragmented_IO,Fragmented_IO_save 
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
-&                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
+&                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
 &                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BS_anti_res
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
-&                     FXC_is_causal
+&                     FXC_is_causal,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use fragments,  ONLY:Parallel_Fragments
 #if defined _ELPH 
@@ -244,8 +244,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_ppa=.false.
  l_cohsex=.false.
  l_gw0=.false.
- l_bse=.false.
  l_chi=.false.
+ l_bse=.false.
+ l_bsk=.false.
  l_bss=.false.
  l_rpa_IP=.false.
  l_td_hartree=.false.
@@ -330,6 +331,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !X
  !
+ Chi_mode=' '
  current_iq=0
  X_RIM_nkpts=0
  self_detect_E_range=.false.
@@ -401,10 +403,12 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BS_res_mode='xc'
  BS_cpl_mode='none'
  BSE_mode='causal'
+ BSK_mode=' '
+ TDDFT_mode=' '
  BS_anti_res=.FALSE.
  BS_K_dim=0
  BSS_mode=' '
- BSS_inversion_mode='m'
+ BSS_inversion_mode='pf'
  BSS_n_freqs=100
  BSS_n_descs=0
  BSS_er=(/0.,10./)/HA2EV

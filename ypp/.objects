@@ -15,6 +15,9 @@ RT_objects = RT_driver.o RT_paths.o RT_databases.o RT_X_LRR_real_field.o \
 #if defined _YPP_BOLTZMANN
 boltz_objects = electrons_current.o
 #endif
+#if defined _YPP_SURF
+SURF_objects = ras_ypp.o reels_ypp.o ras_loc_ypp.o ras_trans_ypp.o 
+#endif
 #if defined _YPP_MAGNETIC
 magnetic_objects = electrons_angular_momentum.o electrons_position.o
 #endif
@@ -26,4 +29,6 @@ objs = mod_YPP.o  ypp_i.o ypp_init.o ypp_init_load.o \
        excitons_sort_and_report.o excitons_collinear.o excitons_non_collinear.o $(bands_objects) \
        WANNIER_driver.o read_bxsf.o double_k_grid.o symmetries_driver.o \
        fix_symmetries.o build_kpts_map.o fix_WFs_Gshells.o fix_WFs_and_E.o fix_PPs.o \
-       $(ELPH_objects) $(RT_objects) $(SC_objects) k_random.o  $(magnetic_objects) $(boltz_objects)
+       $(ELPH_objects) $(RT_objects) $(SC_objects) k_random.o  $(magnetic_objects) \
+       $(boltz_objects) $(SURF_objects)
+

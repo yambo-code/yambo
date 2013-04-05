@@ -21,9 +21,10 @@
 !
 module TDDFT
  !
- use pars,     ONLY:SP,lchlen
+ use pars,     ONLY:SP,lchlen,schlen
  implicit none
  !
+ character(schlen):: TDDFT_mode
  character(lchlen):: FXC_description(100)
  character(10)    :: FXC_type
  integer          :: FXC_n_descs

@@ -30,6 +30,9 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  use fields,         ONLY:global_gauge
  use X_m,            ONLY:DIP_P
 #endif
+#if defined _SURF
+ use ras_module,     ONLY:transloc, lras
+#endif
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
@@ -113,6 +116,11 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
      !
      do ic = Xen%nbf+1, X%ib(2)
        !
+#if defined _SURF
+       if(lras) then
+         if(.not.transloc(ic,iv,ik)) cycle  ! Include only selected transitions
+       endif
+#endif
        do i_spin=1,n_sp_pol
          !
          ! DIP_iq_dot_r = i q . < v k | r | c  k >

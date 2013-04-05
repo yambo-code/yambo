@@ -86,8 +86,8 @@
   {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 
   {"gkkp"  , "g","gkkp databases",0,0,0,0,0}, 
 #endif
-#if defined _YPP_RAS
-  {"surf", "a","Surface spectroscopy postprocessor [loc,trans]",0,0,1,0,0}, 
+#if defined _YPP_SURF
+  {"surf", "a","Surface spectroscopy postprocessor [opt=ras,reels,loc,trans]",0,0,1,0,0}, 
 #endif
   {NULL,NULL,NULL,0,0,0,0,0}
  };

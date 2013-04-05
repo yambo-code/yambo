@@ -1,3 +1,7 @@
+ELPH_objects =
+#if defined _ELPH 
+ELPH_objects = RT_ELPH_initialize.o RT_ELPH_Kernel.o 
+#endif
 objs = 
 ELPH_objs =
 #if defined _ELPH

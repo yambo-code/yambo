@@ -116,17 +116,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  if (run_inversion)      call K_inversion(iq,W_bss,Ken,Xk,q)
  !
- if (l_rpa_IP) then
-   !  
-   X_epsilon(1,:)=W_bss%p(:)
-   !
-   ! Initialize & write the output file
-   !
-   call K_output_file(iq,-4)
-   call K_output_file(iq, 4)
-   !
- endif
- !
  ! CLEAN
  !
  deallocate(X_epsilon,X_drude_term)

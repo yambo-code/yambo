@@ -44,6 +44,10 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use SC,            ONLY:it_now
  use fields,        ONLY:global_gauge
 #endif
+#if defined _SURF
+ use optcut,        ONLY: loptcut, DIP_q_dot_iR_cut
+ use ras_module,    ONLY: lras, lreels
+#endif
  use WF_distribute, ONLY: Distributed_Memory,WF_states_setup
  implicit none
  type(levels)         :: Xen
@@ -65,6 +69,9 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  complex(SP),allocatable :: rhotw_save(:),XoR(:,:)
  integer,    external    :: X_eh_setup
  complex(SP),external    :: X_simple_GreenF
+#if defined _SURF
+ complex(SP)             :: iscut
+#endif
  !
  ! Defaults & Setups
  !===================
@@ -80,13 +87,27 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM.or.associated(Xen%GreenF)
  skip_WF_load=.false.
  !
+#if defined _SURF
+ ! Project's dependent presets
+ if(lras.or.lreels) then
+    skip_WF_load   = .true.  ! No LFE, q=0
+!   force_bare_X_G = .false.
+ endif
+#endif
+ !
  if(Distributed_Memory) force_bare_X_G=.true.
  !
  call mem_est("Xo_WS",(/size(XoR)+2*X%ng/))
+
  !
  !  Optical strengths
  !=====================
  if (iq==1) call Dipole_driver(Xen, Xk, X, X%q0)
+ !
+#if defined _SURF
+ if (iq == 1.and.&
+&    (lras.or.lreels).and.loptcut) call Dipole_driver_cut( Xen, Xk, X, X%q0)
+#endif
  !
  call Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
  !
@@ -227,6 +248,9 @@ loop_bg: do i2 = 1,bg_npts(i1)
        !
        eh_occ = Xen%f(iv,ik,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/&
 &               spin_occ/real(Xk%nbz)/DL_vol
+#if defined _SURF
+       if((lras.or.lreels).and.skip_WF_load) isave=(/iv,ic,ik,i_spin/)
+#endif
        if (any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/))) then
          call scatterBamp(isc)
          rhotw_save=isc%rhotw
@@ -238,6 +262,19 @@ loop_bg: do i2 = 1,bg_npts(i1)
        enddo
        if (is>nsym/(i_time_rev+1)) isc%rhotw=conjg(isc%rhotw)
        isc%rhotw(1)=-conjg(DIP_q_dot_iR(ic,iv,ikbz,i_spin))
+       !
+#if defined _SURF
+       !-----------------------------------------------------------------------------
+       if(lras.or.lreels) then
+         if(loptcut) then
+           iscut= -conjg( DIP_q_dot_iR_cut(ic,iv,ikbz,i_spin) )
+         else
+           iscut= -conjg( DIP_q_dot_iR(ic,iv,ikbz,i_spin) )
+         endif
+         XoR(1,1)=XoR(1,1)+GreenF(1)*eh_occ*iscut*conjg(isc%rhotw(1))
+         cycle loop_bg   ! Only supports calculation of head
+       endif
+#endif
        !
        ! Filling the upper triangular part of the residual here ! 
        !             ^^^^^

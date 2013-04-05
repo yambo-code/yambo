@@ -207,7 +207,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  O_ng=maxval(G_m_G)
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_USE_all_Gexx) then
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_USE_all_Gexx.and..not.l_bs_fxc) then
    call fft_setup(O_ng,1,.true.)
    c_fft_size=fft_size
    call fft_setup(BS_n_g_exch,maxval(qindx_X(iq,:,2)),.true.)
@@ -222,8 +222,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_START
    !
-   call WF_load(max(O_ng,BS_n_g_exch),1,BS_bands,(/1,BS_columns/),&
-&               space='R',title='-BSK->Fxc')
+   call WF_load(max(O_ng,BS_n_g_exch),1,BS_bands,(/1,BS_columns/),space='R',title='-BSK->Fxc')
    !
    ! GPL_EXCLUDE_END
    !
@@ -583,7 +582,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        ! GPL_EXCLUDE_START
        !
-       call TDDFT_BSK_2_FXC(iq,ik1,ik2,&
+       call tddft_BSK_2_FXC(iq,ik1,ik2,&
 &                           O1x(:FXC_n_g_corr,:),O2x(:FXC_n_g_corr,:),O_x_dim,W_bss,X)
        !
        ! GPL_EXCLUDE_END

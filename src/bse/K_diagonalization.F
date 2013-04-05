@@ -357,8 +357,8 @@ subroutine K_diagonalization(iq,W)
        B_Hall(2)=B_Hall(2)+conjg(BS_R(i1))*BS_R_kerr(i1)/gauge_factor
        if(BS_anti_res) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
      endif
-     gauge_factor=1._SP
    endif
+   gauge_factor=1._SP
 #endif
    !
    ! Note the use of a causal expression here needed to avoid any

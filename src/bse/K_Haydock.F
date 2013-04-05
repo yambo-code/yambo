@@ -482,7 +482,7 @@ subroutine K_Haydock(iq,W)
        !
        gauge_factor=1._SP
        if(trim(global_gauge)=='velocity')  gauge_factor=(real(W%p(iw))**2+epsilon(1.))/q_norm(1)**2
-       X_epsilon(i_eps(:),iw)=1._SP+(X_o(:2,1)-factor_jj)*Co/gauge_factor*Haydock_v0_mod**2._SP
+       X_epsilon(i_eps(:),iw)=1._SP-(X_o(:2,1)-factor_jj)*Co/gauge_factor*Haydock_v0_mod**2._SP
        if (causal) X_epsilon(i_eps(:),iw)=X_epsilon(i_eps(:),iw)+X_o(3:4,1)*Co/gauge_factor*Haydock_v0_mod**2._SP
        if (i_eps(1)==2) then
          X_epsilon(2,iw)=X_epsilon(2,iw)+X_drude_term(iw)*Co/gauge_factor

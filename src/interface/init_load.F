@@ -169,7 +169,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GEnSteps',   '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',    '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
  call it('f',defs,'GWTerm',   '[GW] Use a terminator for the self-energy',verb_level=V_qp)
- call it(defs,'GwEnComp',   '[GW] If <= 0 use 0-order EET ; > 0 the Bruneval-Gonze terminator', &
+ call it(defs,'GwEnComp',   '[GW] If <= 0 use 0-order EET; > 0 the Bruneval-Gonze terminator', &
 &                        GW_en_comp,E_unit,verb_level=V_qp)
  call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
@@ -253,7 +253,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GWoIter',    '[GW] GWo SC iterations',GWo_iterations,verb_level=V_qp)
  call it(defs,'GreenFTresh','[GW] [o/o] Treshold to define the new zoomed energy range',QP_G_Zoom_treshold,verb_level=V_qp)
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
- call it('f',defs,'QPExpand','[F GW] The QP corrections are expanded all over the BZ before being dumped in the DB',verb_level=V_qp)
+ call it('f',defs,'QPExpand','[F GW] The QP corrections are expanded in the BZ',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
  !
  ! GPL_EXCLUDE_END

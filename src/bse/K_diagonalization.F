@@ -398,9 +398,9 @@ subroutine K_diagonalization(iq,W)
  !
  gauge_factor=1._SP
  do iw=1,BSS_n_freqs
-   if(trim(global_gauge)=='velocity')  gauge_factor=(real(W%p(iw))**2+epsilon(1.))*q_norm(1)**2
-   X_epsilon(2,iw)=1.+(X_epsilon(2,iw)-factor_jj+X_drude_term(iw))*Co*gauge_factor
-   if(l_kerr) X_epsilon(5,iw)=X_epsilon(5,iw)*Co*gauge_factor
+   if(trim(global_gauge)=='velocity')  gauge_factor=(real(W%p(iw))**2+epsilon(1.))/q_norm(1)**2
+   X_epsilon(2,iw)=1.+(X_epsilon(2,iw)-factor_jj+X_drude_term(iw))*Co/gauge_factor
+   if(l_kerr) X_epsilon(5,iw)=X_epsilon(5,iw)*Co/gauge_factor
  enddo
  !
  ! I add the term describing the Anomalous Hall effect which is

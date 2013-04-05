@@ -37,6 +37,8 @@ subroutine K_Haydock(iq,W)
 #if defined _KERR
  use KERR,           ONLY:BSS_rhoq0_kerr,B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
+ use fields,         ONLY:global_gauge
+ use X_m,            ONLY:iw_ref
 #endif
  use timing,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
@@ -382,6 +384,10 @@ subroutine K_Haydock(iq,W)
      !
      integer     :: i1,iw,i_eps(2)
      real(SP)    :: Co
+#if defined _KERR
+     real(SP)    :: factor_jj
+     real(SP)    :: gauge_factor
+#endif
      complex(SP) :: X_o(4,it), YbyX(2)
      complex(SP),allocatable :: X_i(:,:)
      !
@@ -466,19 +472,45 @@ subroutine K_Haydock(iq,W)
          i_eps(2)=3*ii+1
        endif
        X_epsilon(1,iw)=W%p(iw)
+       !
+#if defined _KERR
+       !
+       if(trim(global_gauge)=='length')   factor_jj=0._SP
+       if(trim(global_gauge)=='velocity') factor_jj=X_epsilon(3,iw_ref)
+       !
+       if(l_anomalous_Hall) B_Hall(2)=B_Hall(2)*Co
+       !
+       gauge_factor=1._SP
+       if(trim(global_gauge)=='velocity')  gauge_factor=(real(W%p(iw))**2+epsilon(1.))/q_norm(1)**2
+       X_epsilon(i_eps(:),iw)=1._SP+(X_o(:2,1)-factor_jj)*Co/gauge_factor*Haydock_v0_mod**2._SP
+       if (causal) X_epsilon(i_eps(:),iw)=X_epsilon(i_eps(:),iw)+X_o(3:4,1)*Co/gauge_factor*Haydock_v0_mod**2._SP
+       if (i_eps(1)==2) then
+         X_epsilon(2,iw)=X_epsilon(2,iw)+X_drude_term(iw)*Co/gauge_factor
+         X_epsilon(4,iw)=X_epsilon(4,iw)+X_drude_term(iw)*Co/gauge_factor
+       endif
+       if (i_eps(1)==5) X_epsilon(i_eps(:),iw)=1._SP-X_epsilon(i_eps(:),iw)
+       !
+       ! I add the term describing the Anomalous Hall effect which is
+       ! missing in the length gauge (this should be zero for systems with a gap)
+       if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(5,iw)=X_epsilon(5,iw)+B_Hall(2)/W%p(iw)
+       !
+#else
        X_epsilon(i_eps(:),iw)=1._SP-X_o(:2,1)*Co*Haydock_v0_mod**2._SP
        if (causal) X_epsilon(i_eps(:),iw)=X_epsilon(i_eps(:),iw)+X_o(3:4,1)*Co*Haydock_v0_mod**2._SP
        if (i_eps(1)==2) then
-         X_epsilon(2,:)=X_epsilon(2,:)+X_drude_term(:)*Co
-         X_epsilon(4,:)=X_epsilon(4,:)+X_drude_term(:)*Co
+         X_epsilon(2,iw)=X_epsilon(2,iw)+X_drude_term(iw)*Co
+         X_epsilon(4,iw)=X_epsilon(4,iw)+X_drude_term(iw)*Co
        endif
        if (i_eps(1)==5) X_epsilon(i_eps(:),iw)=1._SP-X_epsilon(i_eps(:),iw)
+#endif
        !
        if (Haydock_treshold>0._SP) reached_treshold=max(reached_treshold,&
 &         abs(X_epsilon(i_eps(1),iw)-X_epsilon(i_eps(2),iw))/abs(X_epsilon(2,iw)))
        if (Haydock_treshold<0._SP) reached_treshold=reached_treshold+&
 &         abs(X_epsilon(i_eps(1),iw)-X_epsilon(i_eps(2),iw))/abs(X_epsilon(2,iw))/real(W%n(1))
+       !
      enddo
+     !
      if (use_cpl_scheme) deallocate(X_i)
    end subroutine
    !

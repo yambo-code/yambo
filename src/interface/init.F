@@ -1190,6 +1190,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          end select
        endif
        !
+       if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' ) Chi_mode='hartree'
+       !
        ! BSE/LLR
        !
        if ( trim(rstr_piece(i1)) == 'optics' )  then

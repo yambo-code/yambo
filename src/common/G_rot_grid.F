@@ -23,8 +23,8 @@ subroutine G_rot_grid(is,call_kind)
  !
  use pars,         ONLY:SP
  use com,          ONLY:error
- use R_lattice,    ONLY:ng_vec,ng_closed,g_vec,minus_G
- use D_lattice,    ONLY:dl_sop
+ use R_lattice,    ONLY:ng_vec,ng_closed,g_vec,minus_G,rl_sop
+ use D_lattice,    ONLY:dl_sop,alat
  use zeros,        ONLY:G_iku_zero
  use vec_operate,  ONLY:v_is_zero
  !
@@ -33,13 +33,15 @@ subroutine G_rot_grid(is,call_kind)
  !
  ! Work space
  ! 
- integer               :: ig,igp,ng,ng1
+ integer               :: ig,igp,ng,ng1,i1,i2
  logical               :: inversion
  logical               :: extend_grid
  logical               :: set_table
  logical               :: reflection
  real(SP)              :: g_rot_tmp(3) 
- real(SP)              :: identity(3,3),dl_sop_square(3,3)
+ real(SP)              :: identity(3,3)
+ real(SP)              :: rl_sop_square(3,3)
+ real(SP)              :: rl_sop_local(3,3)
  real(SP),allocatable  :: g_vec_tmp(:,:)
  logical, allocatable  :: g_rot_found(:)
  !
@@ -48,13 +50,16 @@ subroutine G_rot_grid(is,call_kind)
  if(is==1) return
  !
  identity=reshape((/ 1._SP, 0._SP, 0._SP, 0._SP, 1._SP, 0._SP, 0._SP, 0._SP, 1._SP/),(/3,3/))
- if(is>0) dl_sop_square=matmul(dl_sop(:,:,is),dl_sop(:,:,is))
- if(is<0) dl_sop_square=identity
+ !
+ if(is>0) forall (i2=1:3,i3=1:3) rl_sop_local(i2,i3)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
+ if(is<0) forall (i2=1:3,i3=1:3) rl_sop_local(i2,i3)=-identity(i2,i3)*alat(i2)/alat(i3)
+ !
+ rl_sop_square=matmul(rl_sop_local,rl_sop_local)
  ! 
  extend_grid = (trim(call_kind)=='extend_grid')
  set_table   = (trim(call_kind)=='set_table')
  inversion   = (is==-1)
- reflection  = all(abs(identity(:,:)-dl_sop_square(:,:))<1.E-5)
+ reflection  = all(abs(identity(:,:)-rl_sop_square(:,:))<1.E-5)
  !
  ng=-1
  if(extend_grid) ng=ng_vec
@@ -76,13 +81,12 @@ subroutine G_rot_grid(is,call_kind)
  !
  do ig=2,ng
    if(g_rot_found(ig)) cycle
-   if(     inversion) g_rot_tmp=-g_vec_tmp(ig,:)
-   if(.not.inversion) g_rot_tmp=matmul(dl_sop(:,:,is),g_vec_tmp(ig,:))
+   g_rot_tmp=matmul(rl_sop_local,g_vec_tmp(ig,:))
    !
    ng1=2
-   if(reflection) ng1=ig+1
+   if(reflection) ng1=ig
    do igp=ng1,ng
-     if(g_rot_found(igp)) cycle
+     if(reflection.and.g_rot_found(igp)) cycle
      if( v_is_zero(g_rot_tmp-g_vec_tmp(igp,:),zero_=G_iku_zero)) then
        g_rot_found(ig)=.true.
        if(reflection) g_rot_found(igp)=.true.
@@ -102,7 +106,7 @@ subroutine G_rot_grid(is,call_kind)
      ng=ng_vec
      g_vec_tmp(ng_vec,:)=g_rot_tmp
      g_rot_found(ig)=.true.
-     g_rot_found(ng_vec)=.true.
+     if(reflection) g_rot_found(ng_vec)=.true.
    endif
  enddo
  !

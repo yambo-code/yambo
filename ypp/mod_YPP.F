@@ -160,8 +160,6 @@ module YPP
  real(SP)          :: qdir(3)
  integer           :: idir
  !
- ! GPL_EXCLUDE_START 
- !
  ! SC
  !
  logical  :: l_mean_potential
@@ -231,8 +229,6 @@ module YPP
  end type Xw_rt
  !
  type(Xw_rt) :: X_rt 
- !
- ! GPL_EXCLUDE_END
  !
  interface
    !

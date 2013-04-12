@@ -188,6 +188,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
  !
+ ! Xs Xd Xp
+ !
+ call it(defs,'Chimod', '[X] IP/Hartree/ALDA/LRC/BSfxc',Chi_mode,protect=.FALSE.)
+ call Xload(X(2),Xw(2))
+ call Xload(X(3),Xw(3))
+ call Xload(X(4),Xw(4))
+ !
  ! BSE
  !
  call it(defs,'BSEmod',  '[BSE] resonant/causal/coupling',BSE_mode)
@@ -197,7 +204,20 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'ecutKcorr','[BSK] Screened interaction block size',BS_n_g_W,Ecut_unit)
  call it(defs,'ecutKexch','[BSK] Exchange components',BS_n_g_exch,Ecut_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
+ !
+ ! GPL_INCLUDE_START
+ !
+ !call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX',BSK_mode,protect=.FALSE.)
+ !
+ ! GPL_INCLUDE_END
+ !
+ !
+ ! GPL_EXCLUDE_START
+ !
  call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX/BSfxc',BSK_mode,protect=.FALSE.)
+ !
+ ! GPL_EXCLUDE_END
+ !
  call it(defs,'BSSmod',  '[BSS] (h)aydock/(d)iagonalization/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
  call it(defs,'BLongDir','[BSS] [cc] Electric Field',BSS_q0)
@@ -206,6 +226,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSHayTrs','[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',&
 &              Haydock_treshold,verb_level=V_resp)
  call it(defs,'BEnSteps','[BSS] Energy steps',BSS_n_freqs)
+ call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',X(2)%Wd,E_unit,verb_level=V_resp)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the FWs',verb_level=V_resp)
@@ -218,13 +239,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'ecutFxc',  '[TDDFT] XC-kernel RL size',FXC_n_g_corr,Ecut_unit)
  call it(defs,'LRC_alpha','[TDDFT] LRC alpha factor',FXC_LRC_alpha)
  call it(defs,'LRC_beta', '[TDDFT] LRC beta factor',FXC_LRC_beta,verb_level=V_resp)
- !
- ! Xs Xd Xp
- !
- call it(defs,'Chimod', '[X] IP/Hartree/ALDA/LRC/BSfxc',Chi_mode,protect=.FALSE.)
- call Xload(X(2),Xw(2))
- call Xload(X(3),Xw(3))
- call Xload(X(4),Xw(4))
  !
  ! Optics: large Q momenta
  !
@@ -384,7 +398,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSEClmns','[BSK] Kernel Columns',BS_columns,verb_level=V_resp)
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
 &                        E_unit,verb_level=V_resp)
- call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',X(2)%Wd,E_unit,verb_level=V_resp)
  !
  ! Xx
  !

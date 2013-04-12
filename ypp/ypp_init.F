@@ -491,7 +491,21 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #endif
  !
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmInvMBaxis")
+ !
+ ! GPL_EXCLUDE_END
+ !
  if (l_fix_syms.and.n_spinor==2.and.i_time_rev==0) call initactivate(1,"ExpandSymm")
+ !
+ ! GPL_INCLUDE_START
+ !
+ !if (l_fix_syms) call initactivate(1,"RmAllSymm RmTimeRev")
+ !
+ ! GPL_INCLUDE_END
+ !
+ !
+ ! GPL_EXCLUDE_START
+ !
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
  !
 #if defined _YPP_RT
  !             

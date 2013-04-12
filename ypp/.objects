@@ -31,4 +31,3 @@ objs = mod_YPP.o  ypp_i.o ypp_init.o ypp_init_load.o \
        fix_symmetries.o build_kpts_map.o fix_WFs_Gshells.o fix_WFs_and_E.o fix_PPs.o \
        $(ELPH_objects) $(RT_objects) $(SC_objects) k_random.o  $(magnetic_objects) \
        $(boltz_objects) $(SURF_objects)
-

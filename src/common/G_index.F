@@ -33,6 +33,8 @@ integer function G_index(v1)
  integer   :: ig,i_shell,ng1,ng2
  real(SP)  :: E_of_shell_v1
  !
+ G_index=0
+ !
  E_of_shell_v1=iku_v_norm(v1)**2./2.
  !
  if(abs(E_of_shell_v1)<1.E-5) then

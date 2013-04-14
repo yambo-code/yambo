@@ -60,9 +60,11 @@ subroutine Dipole_kb_pp_comp(ik,i_spin,Xk,kbv)
        do i_pp=1,pp_n_l_times_proj_max
          il = pp_table(1,is,i_pp)
          pp_spin = pp_table(3,is,i_pp)
-         if(pp_spin>1) cycle
+         if(pp_spin==0) cycle
+         if(pp_spin> 1) cycle
          do im = 1,2*(il-1)+1
            i1=i1+1
+           !if(il/=1) cycle
            c2(1)=sqrt(4.*pi/(2.*(il-1.)+1.))*Ylm(il,im)
            c2(2:4)=sqrt(4.*pi/(2.*(il-1.)+1.))*&
 &                    (dYlm(1,il,im)*Ygrad(1,:)+dYlm(2,il,im)*Ygrad(2,:))

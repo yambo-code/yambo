@@ -54,7 +54,7 @@ subroutine Dipole_kb_sum(ivfft,icfft,rho,kbv)
  enddo
  !
  do i1=1,3
-   drho(i1)=Vstar_dot_V(wf_ng,wf(:,ivfft),Kc(1,i1))+V_dot_V(wf_ng,wf(:,icfft),Kv(1,i1))
+   drho(i1)=Vstar_dot_V(wf_ng,wf(:,ivfft),Kc(:,i1))+V_dot_V(wf_ng,wf(:,icfft),Kv(:,i1))
  enddo
  !
  rho=rho+drho

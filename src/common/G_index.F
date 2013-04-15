@@ -32,6 +32,8 @@ integer function G_index(v1)
  !
  integer   :: ig,i_shell,ng1,ng2
  real(SP)  :: E_of_shell_v1
+ real(SP)  :: delta_E_prev
+ real(SP)  :: delta_E_now
  !
  G_index=0
  !
@@ -42,12 +44,15 @@ integer function G_index(v1)
    return
  endif
  !
+ delta_E_prev=abs(E_of_shell_v1)
  do i_shell=2,n_g_shells
-   if( abs(E_of_shell(i_shell)-E_of_shell_v1)/E_of_shell(i_shell)< 1.E-5) then
-     ng1=ng_in_shell(i_shell-1)+1
-     ng2=ng_in_shell(i_shell)
+   delta_E_now =abs(E_of_shell(i_shell)-E_of_shell_v1)
+   if( delta_E_now>delta_E_prev ) then
+     ng1=ng_in_shell(i_shell-2)+1
+     ng2=ng_in_shell(i_shell-1)
      exit
    endif
+   delta_E_prev=delta_E_now
  enddo
  !
  do ig=ng1,ng2

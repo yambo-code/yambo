@@ -521,7 +521,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,nms( 9),des( 9),X%ehe,E_unit,verb_level=V_resp)
      call it(defs,nms(10),des(10),X%ppaE,E_unit,verb_level=0)
      call it(defs,nms(11),des(11),X%ng,G_unit,verb_level=0) 
-     call it(defs,nms(12),des(12),X%iq,verb_level=0)
+     if (X%whoami==3) then
+       call it(defs,nms(12),des(12),X%iq,verb_level=0)
+     else
+       call it(defs,nms(12),des(12),X%iq,verb_level=V_resp)
+     endif
      call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)
      !

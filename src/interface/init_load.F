@@ -517,7 +517,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      !
      nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &          'DrudeW','LongDr','EhEngy','PPAPnt',&
-&          'ecutxx','QpntsR','BndsRn','DmERef'/)
+&          'ecutG_','QpntsR','BndsRn','DmERef'/)
      des(1) ='Green`s function t/c/r/a'
      des(2) ='Energy range'
      des(3) ='Damping range'

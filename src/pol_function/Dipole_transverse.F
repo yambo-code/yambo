@@ -83,7 +83,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
        do i_pp = 1, pp_n_l_times_proj_max
          il = pp_table(1,is,i_pp)
          pp_spin = pp_table(3,is,i_pp)
-         if (pp_spin==0) cycle
+         if(pp_spin==0) cycle
          do im = 1,2*(il-1)+1
            pp_kbv_dim=pp_kbv_dim+1
          enddo
@@ -184,12 +184,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
          icfft=wf_state(ic,ik,i_spin)
          if(icfft==0) call error("Error distribution wave-function")
          !
-         ! WARNING !!!!!!!! The convention is to revert the order of the bands indexes
-         !==================
-         ! in the definition of DIP_P and DIP_iR
-         !
-         ! DIP_P(iv,ic)  = P_cv
-         ! DIP_iR(iv,ic) = (iR)_cv 
+         ! WARNING: 
+         ! ========
+         ! The convention is to revert the order of the bands
+         ! indexes in the definition of DIP_P and DIP_iR :
+         ! DIP_P(iv,ic)  = P_cv ; DIP_iR(iv,ic) = (iR)_cv 
          !
          ! Note that P is Hermitian and iR anti-hermitian.
          !

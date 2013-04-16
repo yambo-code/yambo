@@ -487,7 +487,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Optics(not bse) nor GW (no PP)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
-   X_size='ecutxx'
+   X_size='ecutG_'
    if(l_rpa_IP) X_size='      '
    call X_activate('Xd',(/X_size,'QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
@@ -567,7 +567,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_em1s) then
    call QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
-   call X_activate('Xs',(/'QpntsR','BndsRn','ecutxx','CGrdSp','EhEngy',&
+   call X_activate('Xs',(/'QpntsR','BndsRn','ecutG_','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
  endif
  !
@@ -576,9 +576,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
-   if (l_ppa) call X_activate('Xp',(/'QpntsR','BndsRn','ecutxx','CGrdSp',&
+   if (l_ppa) call X_activate('Xp',(/'QpntsR','BndsRn','ecutG_','CGrdSp',&
 &                      'EhEngy','LongDr','PPAPnt'/))
-   if (l_cohsex) call X_activate('Xs',(/'QpntsR','BndsRn','ecutxx',&
+   if (l_cohsex) call X_activate('Xs',(/'QpntsR','BndsRn','ecutG_',&
 &                         'EhEngy','LongDr'/))
  endif
  !
@@ -588,7 +588,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
    call initactivate(1,'EXXRLvcs ecutHF AC_n_LAM AC_n_FR AC_E_Rng')
-   call X_activate('Xx',(/'QpntsR','BndsRn','ecutxx','CGrdSp','EhEngy','LongDr'/))
+   call X_activate('Xx',(/'QpntsR','BndsRn','ecutG_','CGrdSp','EhEngy','LongDr'/))
  endif
  !
  ! GW/Life
@@ -605,7 +605,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call initactivate(1,'GbndRnge') 
        if (.not.l_cohsex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
        if (.not.l_cohsex) call initactivate(1,'dScStep') 
-       if (.not.l_ppa.and..not.l_cohsex) call X_activate('Xd',(/'BndsRn','ecutxx',&
+       if (.not.l_ppa.and..not.l_cohsex) call X_activate('Xd',(/'BndsRn','ecutG_',&
 &                      'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                      'DrudeW','EhEngy','LongDr'/)) 
        !
@@ -622,7 +622,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_life) then
        call initactivate(1,'LifeTrCG')
-       if (l_el_corr) call X_activate('Xd',(/'BndsRn','ecutxx',&
+       if (l_el_corr) call X_activate('Xd',(/'BndsRn','ecutG_',&
 &                                     'DmRnge','CGrdSp',&
 &                                     'DrudeW','EhEngy','LongDr'/)) 
      endif

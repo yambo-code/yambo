@@ -61,8 +61,7 @@ subroutine Dipole_kb_pp_comp(ik,i_spin,Xk,kbv)
          il =      pp_table(1,is,i_pp)
          !i_proj  = pp_table(2,is,i_pp)
          pp_spin = pp_table(3,is,i_pp)
-         if (pp_spin==0) cycle
-         !
+         if(pp_spin==0) cycle
          do im = 1,2*(il-1)+1
            i1=i1+1
            kbv_spin(i1)=pp_spin

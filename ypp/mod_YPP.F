@@ -54,6 +54,7 @@ module YPP
  !
  integer               ::BANDS_steps
  integer               ::BANDS_range(2)
+ integer               ::interp_grid(3)  ! Interpolation Grid
  !
  ! REAL SPACE PLOT
  !

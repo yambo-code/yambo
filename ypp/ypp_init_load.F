@@ -119,6 +119,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'BANDS_steps', 'Number of divisions',BANDS_steps) 
  call it(defs,'BANDS_range', 'Bands Range',BANDS_range) 
  call it(defs,'BKpts','Bands circuit',Kgw_1)
+ call it(defs,'INTERPGrid', 'Interpolation Grid',interp_grid)
  !
  ! Wannier interface
  !

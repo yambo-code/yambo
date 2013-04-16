@@ -108,6 +108,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  BANDS_steps=0
  BANDS_range=(/1,n_bands/)
  l_bands=.false.
+ interp_grid = (/-1, -1, -1/)
  !
  !
  ! PLOT
@@ -200,7 +201,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! BZ grids
  !
- coo_in="iku"
+ coo_in="rlu"
  coo_out="rlu"
  Kgw_1=0.
  q_shift= 0.0_SP
@@ -463,7 +464,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    endif
  endif
  !
- if (l_bands) call initactivate(1,"cooIn BKpts BANDS_steps BANDS_range")
+ if (l_bands) call initactivate(1,"cooIn BKpts BANDS_steps BANDS_range INTERPGrid")
  !	   
  l_bzrim     =runlevel_is_on('bzrim')
  !

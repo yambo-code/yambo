@@ -111,7 +111,7 @@
    call GetBulkEps(hw, nw, eps_b, errmsg)
    call msg('nrs',trim(errmsg))
 
-   if(.not.lbulkerr) call CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_cellin)
+   if(.not.lbulkerr) call CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_cellin,"-ypp")
 
  endif
 

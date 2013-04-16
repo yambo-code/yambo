@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf)
+subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf, label)
   use pars,                   ONLY : schlen, SP
   use units,                  ONLY : HA2EV
   use com,                    ONLY : msg, of_open_close
@@ -27,6 +27,7 @@ subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf)
   integer,             intent(in) :: nw
   real(SP),            intent(in) :: hw(nw), d_surf
   complex(SP),         intent(in) :: eps_x(nw),eps_y(nw),eps_b(nw)
+  character(4),        intent(in) :: label
 ! Local
   real(SP)                        :: Aw(nw), Bw(nw) 
   real(SP)                        :: Rdelta(nw), Idelta(nw)
@@ -45,13 +46,11 @@ subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf)
      Rdelta(i) =   real( eps_x(i) ) -  real( eps_y(i) )   
      Idelta(i) =  AIMAG( eps_x(i) ) - AIMAG( eps_y(i) )  
      RAS(i)    = cost * hw(i) * d_surf * ( Aw(i) * Idelta(i) - Bw(i) * Rdelta(i) )
-     
      SDR(i)    = cost * hw(i) * d_surf * &
 &           AIMAG( (1.0_SP - 0.5*(eps_x(i)+eps_y(i)))/(1.0_SP - eps_b(i)) )
-     write(72,*) hw(i)*HA2EV, Idelta(i),Rdelta(i),aimag(eps_b(i)),SDR(i)
   enddo
 
-  write (of_name,'(a,a)') 'ras','-rpa'
+  write (of_name,'(a,a)') 'ras'//label
   call of_open_close(of_name,'ot')
 
 ! Output file titles

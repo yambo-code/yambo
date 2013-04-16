@@ -49,7 +49,6 @@
  use timing,              ONLY:live_timing
  use YPP
  use bulkeps,             ONLY : lbulkerr, GetBulkEps
- use ras_module,          ONLY : CalcRAS
  use eels_kinematics
  use surface_geometry
  use eels_detector

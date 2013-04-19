@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine qpdb_setup(en,k)
+subroutine QP_DBs_setup(en,k)
  !
  use pars,          ONLY:SP,IP,DP
  use units,         ONLY:HA2EV

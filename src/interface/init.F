@@ -1001,7 +1001,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_bss)    call initactivate(1,'optics')
      if (l_bss)    call initactivate(1,'bse')
      if (l_bss)    call initactivate(1,'bsk')
-     if (l_bs_fxc.and.l_bsk) call initactivate(1,'em1s') 
      if (l_bs_fxc) BSS_mode="t"
      if (l_bse) then
        !

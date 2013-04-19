@@ -157,7 +157,9 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (l_bxsf)  call read_bxsf(Xk,Xen)
  !
- if (l_qpdb)  call qpdb_setup(en,k)
+ if (l_QP_DBs_create_and_modify)  call QP_DBs_setup(en,k)
+ !
+ if (l_QP_DBs_merge)  call QP_DBs_merge(en,k)
  !
  if (l_wannier) call WANNIER_driver(k,en)
  !   =========

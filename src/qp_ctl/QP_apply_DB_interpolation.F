@@ -31,7 +31,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  use electrons,     ONLY:n_sp_pol,spin
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,k_the_nearest
  use vec_operate,   ONLY:sort
  use QP_m,          ONLY:QP_t,QP_ctl_applied
  !
@@ -48,7 +48,6 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
 &            nk_exact,i_err,ik_ref,ib_ref
  real(SP) :: idist(qp%nk),odist(qp%nk),k_dist(n_neigh)
  !
- integer, external :: k_the_nearest
  logical, external :: QP_check_if_corrected
  !
  ! IBZ -> BZ (iku)
@@ -92,7 +91,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
      ! First I check if there is an exact correposndance
      ! between k%pt and qp%k. This exists when i_err==0
      !
-     k_near(1)=k_the_nearest(k%pt(i1,:),qp%k,qp%nk,.TRUE.,i_err)
+     k_near(1)=k_the_nearest(k%pt(i1,:),qp%k,qp%nk,ROTATE_k_ref=.TRUE.,i_err=i_err)
      if (i_err==0.and.n_neigh==1) then
        call qp_transfer(k_near(1),i1,1)
        nk_exact=nk_exact+1

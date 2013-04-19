@@ -24,6 +24,7 @@ module YPP
  use pars,    ONLY:SP,DP
  use pars,    ONLY:lchlen
  use pars,    ONLY:schlen
+ use QP_m,    ONLY:QP_t
  implicit none
  !
  ! BZ grids 
@@ -133,9 +134,14 @@ module YPP
  real(SP) :: Gamma_radius
  character(lchlen) :: BZ_RIM_path
  !
- ! Quasi-Particles
+ ! QP databases
  !
- logical     :: l_qpdb
+ logical     :: l_QP_DBs_create_and_modify
+ logical     :: l_QP_DBs_merge
+ integer     :: n_QP_dbs 
+ character(lchlen),  allocatable :: QP_db_name(:)
+ character(schlen),  allocatable :: QP_db_what(:)
+ type(QP_t),         allocatable :: QP_db(:)
  !
  ! Surface spectroscopy
  !

@@ -333,7 +333,16 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_q_grid) call initactivate(1,"Q_grid")
        if (l_shifted_grid) call initactivate(1,"Shifted_Grid")
        if (l_high_sym_pts) call initactivate(1,"High_Symm")
-    endif
+     endif
+     !
+     if ( trim(rstr_piece(i1)) == 'QPDBs') then
+       call initactivate(1,'QPDBs')
+       l_QP_DBs_create_and_modify=trim(rstr_piece(i1+1))=='g'
+       l_QP_DBs_merge            =trim(rstr_piece(i1+1))=='m'
+       if (l_QP_DBs_create_and_modify) call initactivate(1,'QPDB_edit')
+       if (l_QP_DBs_merge)             call initactivate(1,'QPDB_merge')
+     endif
+     !
 #if defined _YPP_ELPH
      if ( trim(rstr_piece(i1)) == 'phonons') then
        l_dos              =trim(rstr_piece(i1+1))=='d'
@@ -341,7 +350,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_atomic_amplitude =trim(rstr_piece(i1+1))=='a'
        if (l_atomic_amplitude) infile_editing=.false.
        if (l_eliashberg)   call initactivate(1,'eliashberg')
-    endif
+     endif
 #endif
      if ( trim(rstr_piece(i1)) == 'excitons') then
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
@@ -418,8 +427,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_SC
  l_mean_potential=runlevel_is_on('MeanPot')
  if (l_mean_potential) then
-    call initactivate(1,'plot')
-    call initactivate(1,'electrons')
+   call initactivate(1,'plot')
+   call initactivate(1,'electrons')
  endif
 #endif
 #if defined _YPP_ELPH
@@ -472,7 +481,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_bxsf) call initactivate(1,"W90_fname WannBnds DgridOrd")
  !
- l_qpdb = runlevel_is_on('qpdb')
+ l_QP_DBs_create_and_modify = runlevel_is_on('QPDB_edit')
+ l_QP_DBs_merge = runlevel_is_on('QPDB_merge')
  !
  ! GPL_EXCLUDE_START
  !
@@ -581,7 +591,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    call PP_redux_wait
  endif
  !
- if(l_qpdb) call qpdb_init()
+ if (l_QP_DBs_create_and_modify.or.l_QP_DBs_merge) call QP_DBs_initialize()
  !
  l_QP_init=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH

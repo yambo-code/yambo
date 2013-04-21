@@ -77,6 +77,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! TDDFT setup
  call tddft_do_X_W_typs(-1,X_tddft,Xw)
  !
+ if(BS_bands(1)<1        ) BS_bands(1)=1
+ if(BS_bands(2)>Ken%nb   ) BS_bands(2)=Ken%nb
+ !
  ! In these two lines I ensure the at least all the metallic
  ! states are included in the X summation
  !

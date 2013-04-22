@@ -33,7 +33,7 @@ subroutine WF_apply_symm(isc,WF_symm)
  integer     :: i_wf(n_spinor)
  !
  i_wf(1)=wf_state(isc(1),isc(2),isc(4))
- if(n_spinor==2)  i_wf(n_spinor)=wf_state(isc(1),isc(2),n_spinor)
+ if(n_spinor==2)  i_wf(2)=wf_state(isc(1),isc(2),2)
  !
  if(isc(3)==idt_index) then
    WF_symm(:,1)=wf(:,i_wf(1))

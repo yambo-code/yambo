@@ -24,13 +24,13 @@ module parser_m
  use pars
  !
  interface parser
-   module procedure lqparser,aqparser,i1qparser,iqparser,imqparser,&
+   module procedure lqparser,chparser,chqparser,chmparser,i1qparser,iqparser,imqparser,&
 &                   r1qparser,rqparser,rmqparser,c1qparser
  end interface
  !
  contains
    !
-   subroutine aqparser(name,res)
+   subroutine chparser(name,res)
      use parser_lib
      use stderr, ONLY : cstr
      implicit none
@@ -42,6 +42,37 @@ module parser_m
      res=' '
      call iparse_string(cstr(name),cstr(def),res)
      if (trim(res)=='"') res=' '
+   end subroutine
+   !
+   subroutine chqparser(name,res)
+     use parser_lib
+     use stderr, ONLY : cstr
+     implicit none
+     character(*), intent(in)  :: name
+     character(*), intent(out) :: res(:)
+     integer :: i1,dim(1) !ws
+     dim=shape(res)
+     if (iparse_isdef(cstr(trim(name)))==0) return
+     do i1=1,dim(1)
+       call iparse_block_string(cstr(trim(name)),0,i1-1,res(i1))
+       if (trim(res(i1))=='"') res=' '
+     enddo
+   end subroutine
+   !
+   subroutine chmparser(name,res)
+     use parser_lib
+     use stderr, ONLY : cstr
+     implicit none
+     character(*), intent(in)  :: name
+     character(*), intent(out) :: res(:,:)
+     integer :: i1,i2,dim(2) !ws
+     dim=shape(res)
+     if (iparse_isdef(cstr(trim(name)))==0) return
+     do i1=1,dim(1)
+       do i2=1,dim(2)
+         call iparse_block_string(cstr(trim(name)),i1-1,i2-1,res(i1,i2))
+       enddo
+     enddo
    end subroutine
    !
    subroutine i1qparser(name,res)

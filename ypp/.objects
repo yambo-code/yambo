@@ -23,7 +23,7 @@ magnetic_objects = electrons_angular_momentum.o electrons_position.o
 #endif
 bands_objects = electrons_bands.o
 objs = mod_YPP.o  ypp_i.o ypp_init.o ypp_init_load.o \
-       k_grids.o k_special.o qpdb_init.o qpdb_setup.o \
+       k_grids.o k_special.o QP_DBs_initialize.o QP_DBs_setup.o QP_DBs_merge.o \
        excitons_driver.o electrons_driver.o electrons_dos_and_charge.o \
        plot_check_and_launch.o plot_gnuplot.o plot_xcrysden.o plot_cube.o \
        excitons_sort_and_report.o excitons_collinear.o excitons_non_collinear.o $(bands_objects) \

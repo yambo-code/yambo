@@ -34,7 +34,7 @@ module ras_module
 
 contains
 
-subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf)
+subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf,label)
   use pars,                   ONLY : schlen, SP
   use units,                  ONLY : HA2EV
   use com,                    ONLY : msg, of_open_close
@@ -42,6 +42,7 @@ subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf)
   integer,             intent(in) :: nw
   real(SP),            intent(in) :: hw(nw), d_surf
   complex(SP),         intent(in) :: eps_x(nw),eps_y(nw),eps_b(nw)
+  character(4), intent(in)       :: label
 ! Local
   real(SP)                        :: Aw(nw), Bw(nw) 
   real(SP)                        :: Rdelta(nw), Idelta(nw)
@@ -66,7 +67,7 @@ subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf)
      write(72,*) hw(i)*HA2EV, Idelta(i),Rdelta(i),aimag(eps_b(i))
   enddo
 
-  write (of_name,'(a,a)') 'ras','-rpa'
+  write (of_name,'(a,a)') 'ras'//label
   call of_open_close(of_name,'ot')
 
 ! Output file titles

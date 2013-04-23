@@ -60,7 +60,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! Work Space
  !
  type(X_t)   :: X_tddft
- integer     :: iq,bands_to_correct(2)
+ integer     :: iq,bands_to_correct(2),Bands_limits(2)
  integer     :: Max_G_m_G,ik
  integer, external :: eval_G_minus_G
  !
@@ -77,15 +77,22 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! TDDFT setup
  call tddft_do_X_W_typs(-1,X_tddft,Xw)
  !
- ! In these two lines I ensure the at least all the metallic
- ! states are included in the X summation
+ if(BS_bands(1)<1        ) BS_bands(1)=1
+ if(BS_bands(2)>Ken%nb   ) BS_bands(2)=Ken%nb
  !
- if (any((/BS_bands(1)>Ken%nbf+1,BS_bands(2)<Ken%nbm/))) then
-   BS_bands=(/Ken%nbf+1,Ken%nbm/)
+ ! In these two lines I ensure the at least all the metallic
+ ! states are included (metallic case) or that at least
+ ! 1 valence state and 1 conduction state are included (non metallic case)
+ !
+ if(Ken%nbf+1>=Ken%nbm) Bands_limits=(/Ken%nbf,Ken%nbf+1/)
+ if(Ken%nbf+1< Ken%nbm) Bands_limits=(/Ken%nbf+1,Ken%nbm/)
+ if (any((/BS_bands(1)>Bands_limits(1),BS_bands(2)<Bands_limits(2)/))) then
+   if(BS_bands(1)>Bands_limits(1)) BS_bands(1)=Bands_limits(1)
+   if(BS_bands(2)<Bands_limits(2)) BS_bands(1)=Bands_limits(2)
    BS_eh_en=(/1.,-1./)
    do ik=1,Xk%nibz
-     if (Ken%f(Ken%nbm,ik,1)  >1.E-5) BS_eh_en(2)=max(BS_eh_en(2),Ken%E(Ken%nbm,ik,1))
-     if (Ken%f(Ken%nbf+1,ik,1)>1.E-5) BS_eh_en(1)=min(BS_eh_en(1),Ken%E(Ken%nbf,ik,1))
+     if (Ken%f(BS_bands(1),ik,1)>1.E-5) BS_eh_en(1)=min(BS_eh_en(1),Ken%E(BS_bands(1),ik,1))
+     if (Ken%f(BS_bands(2),ik,1)>1.E-5) BS_eh_en(2)=max(BS_eh_en(2),Ken%E(BS_bands(2),ik,1))
    enddo
    call warning('BS bands redefined to be :'//trim(intc(BS_bands(1)))//' - '//trim(intc(BS_bands(2))))
    call warning('E/h energy range :'//trim(real2ch(BS_eh_en(1)*HA2EV))//' - '//trim(real2ch(BS_eh_en(2)*HA2EV))//' eV')

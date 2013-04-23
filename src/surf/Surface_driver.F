@@ -206,7 +206,7 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
     !
     call section('=','RAS')
     call CalcRAS(real(wv % p), surf_i(1:nw,1), surf_i(1:nw,2), &
-&                              eps_b(1:nw), nw, d_surf)
+&                              eps_b(1:nw), nw, d_surf,"-rpa")
     !
   endif
   !

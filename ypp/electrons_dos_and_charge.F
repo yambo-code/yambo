@@ -42,6 +42,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
  use interfaces,     ONLY:PARALLEL_index
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait
+ use parser_m,       ONLY:parser
  implicit none
  !
  type(bz_samp) ::Xk
@@ -53,10 +54,13 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  real(SP)              :: el_dos(dos_E_steps,n_sp_pol),dos_E,delta_E,f_occ,io_Time,dos_norm,el_dos_max
  integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps,i_fp,io_ID,io_err,ik_rand,i1
  character(schlen)     :: ch_ws,titles(4)
- logical               :: l_TIME_plot,l_3D_plot,l_RIM
+ logical               :: l_TIME_plot,l_3D_plot,l_RIM,l_prt_occ_only
  type(PP_indexes)      :: px
  !
  integer,     external :: ioE_RIM,RT_occupations_check 
+ !
+ !
+ call parser('PrtOccOnly',l_prt_occ_only)
  !
  ! E_rim
  !=======
@@ -118,7 +122,10 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    ! Output files headers
    !
    if (l_TIME_plot.and.l_3D_plot) then
+     !
+#if defined _YPP_RT
      call RT_output("open el_dos")
+#endif
    else if (.not.l_3D_plot) then
      output_fname='el_dos'
      call of_open_close(trim(output_fname),'ot')
@@ -190,7 +197,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
              do ik=1,nkbz
                do i1=1,BZ_RIM_nkpt(ik)
                  ik_rand=BZ_RIM_table(ik,i1)
-                 f_occ=Xen%f_RIM(ib,ik_rand,i_spin)
+                 f_occ=spin_occ
+                 if(l_prt_occ_only) f_occ=Xen%f_RIM(ib,ik_rand,i_spin)
 #if defined _YPP_RT
                  if (l_TIME_plot) f_occ=(RT_occupations(ib,Xk%sstar(ik,1))-RT_occupations_ref(ib,Xk%sstar(ik,1)))
 #endif
@@ -200,7 +208,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
              enddo
            else
              do ik=1,nkibz
-               f_occ=Xen%f(ib,ik,i_spin)
+               f_occ=spin_occ
+               if(l_prt_occ_only) f_occ=Xen%f(ib,ik,i_spin)
 #if defined _YPP_RT
                if (l_TIME_plot) f_occ=(RT_occupations(ib,ik)-RT_occupations_ref(ib,ik))
 #endif
@@ -244,7 +253,9 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    if (n_T_steps>1) call msg('s','DOS max value  :',el_dos_max)
    !
    if (l_TIME_plot.and.l_3D_plot) then
+#if defined _YPP_RT
      call RT_output("close el_dos")
+#endif
    else if (.not.l_3D_plot) then
      call of_open_close(trim(output_fname))
    endif

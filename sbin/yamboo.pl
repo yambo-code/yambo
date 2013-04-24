@@ -21,8 +21,8 @@ use File::Find;
 $manual_preprocess_files = " ";
 $exclude_files = "yamboo.pl ";
 @core_projects = ('yambo','ypp','p2y','a2y','f2y','e2y');
-@user_projects = ('MAGNETIC','SC','RT','ELPH',
-                  'YPP_ELPH','YPP_RT','YPP_SC','YPP_MAGNETIC','DEBUG');
+@user_projects = ('MAGNETIC','SC','RT','ELPH', 'KERR',
+                  'YPP_ELPH','YPP_RT','YPP_SC','YPP_MAGNETIC','DEBUG','SURF');
 $user_projects_string = join(" ",@user_projects); # Append a space
 $files_to_skip = $manual_preprocess_files.$exclude_files;
 #

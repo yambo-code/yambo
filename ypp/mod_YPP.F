@@ -24,6 +24,7 @@ module YPP
  use pars,    ONLY:SP,DP
  use pars,    ONLY:lchlen
  use pars,    ONLY:schlen
+ use QP_m,    ONLY:QP_t
  implicit none
  !
  ! BZ grids 
@@ -54,6 +55,7 @@ module YPP
  !
  integer               ::BANDS_steps
  integer               ::BANDS_range(2)
+ integer               ::interp_grid(3)  ! Interpolation Grid
  !
  ! REAL SPACE PLOT
  !
@@ -132,11 +134,37 @@ module YPP
  real(SP) :: Gamma_radius
  character(lchlen) :: BZ_RIM_path
  !
- ! Quasi-Particles
+ ! QP databases
  !
- logical     :: l_qpdb
+ logical     :: l_QP_DBs_create_and_modify
+ logical     :: l_QP_DBs_merge
+ integer     :: n_QP_dbs 
+ character(lchlen),  allocatable :: QP_db_name(:)
+ character(schlen),  allocatable :: QP_db_what(:)
+ type(QP_t),         allocatable :: QP_db(:)
  !
- ! GPL_EXCLUDE_START 
+ ! Surface spectroscopy
+ !
+ logical           :: lras, lsurf, lreels, lcelleps
+ character(schlen) :: xdata, ydata, zdata
+ character(len=5)  :: datatype
+ real(SP)          :: sshift
+ real(SP)          :: d_cellin
+ !
+ ! Localization
+ !
+ logical           :: lloc
+ real(SP)          :: lowerlim, upperlim
+ integer           :: normdir, ngloc
+ integer           :: loc_bands(2)
+ integer           :: loc_kpts(2)
+ !
+ ! Transition Analysis
+ !
+ logical           :: ltrans
+ real(SP)          :: Ecv_min, Ecv_max
+ real(SP)          :: qdir(3)
+ integer           :: idir
  !
  ! SC
  !
@@ -207,8 +235,6 @@ module YPP
  end type Xw_rt
  !
  type(Xw_rt) :: X_rt 
- !
- ! GPL_EXCLUDE_END
  !
  interface
    !

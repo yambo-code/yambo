@@ -42,16 +42,15 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use timing,         ONLY:live_timing_is_on,what_is_running
- use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,QP_nk,&
-&                         QP_state,QP_reset,QP_ctl_E,QP_table
- use X_m,            ONLY:X_t,X_duplicate,X_reset
- use stderr,         ONLY:log_as_a_file,logfile,intc,string_add
+ use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,QP_nk,QP_state,QP_reset,QP_ctl_E,QP_table
+ use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
+ use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:ioWF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
  use TDDFT,          ONLY:ioBS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BSS_mode,BSS_q0,&
-&                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode
+&                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
 #if defined  _ELPH 
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
@@ -66,6 +65,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _MAGNETIC
  use magnetic,        ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
+#endif
+#if defined _SURF
+ use ras_module,     ONLY:lras, lreels
 #endif
  !
  implicit none
@@ -122,6 +124,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _MAGNETIC
  what_is_running='YAMBO_MAGNETIC'
+#endif
+#if defined _SURF
+ what_is_running='YAMBO_SURF'
 #endif
  !
  !CPU structure
@@ -472,7 +477,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs')  
  !
- ! TDDFT
+ ! Kernels
+ !
+ if (l_em1s.or.l_em1d)             call initactivate(1,'Chimod')
+ if (l_optics.and.l_chi)           call initactivate(1,'Chimod')
+ if (l_optics.and.l_bse)           call initactivate(1,'BSEmod')
+ if (l_optics.and.l_bse)           call initactivate(1,'BSKmod')
+ if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
  !
  if (l_optics.and.l_chi) then
    !
@@ -509,23 +520,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
  endif
  !
- ! BSE
+ ! BSK
  !
- if (l_optics.and.l_bse) then
-   call QP_ctl_switch('K')
-   !
-                     call initactivate(1,'BSEmode')
-   if(.not.l_rpa_IP) call initactivate(1,'BSENGexx ALLGexx')
+ if (l_optics.and.l_bse.and.l_bsk) then
+   !                     
+   call initactivate(1,'BSENGexx ALLGexx')
    !
    if(l_td_hf.or.l_W_eh) call initactivate(1,'BSENGBlk')
-   if(l_W_eh)            call initactivate(1,'WehDiag')
-   !
-   call initactivate(1,'ShiftedPath')
-#if defined _SC
-   call initactivate(1,'Gauge')
-#endif
-   call initactivate(1,'DrudeW')
-   call initactivate(1,'BSAres BSEQptR BSEBands BSEEhEny BSehWind BSEClmns')
+   if(l_W_eh)            call initactivate(1,'WehDiag WehCpl')
    !
    ! BSE + TDDFT = no BS db, Fxc + LF on-fly
    ! Special case: The BSE equation is used to build up the BSE_Fxc kernel.
@@ -536,23 +538,40 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
  endif
  !
+ ! BSE
+ !
+ if (l_optics.and.l_bse) then
+   !
+   call QP_ctl_switch('K')
+   !
+   call initactivate(1,'ShiftedPath')
+#if defined _SC || defined _KERR
+   call initactivate(1,'Gauge')
+#endif
+#if defined _KERR
+   if(l_kerr) call initactivate(1,'EvalKerr AnHall')
+#endif
+   !
+   call initactivate(1,'DrudeWBS')
+   call initactivate(1,'BoseCut ShiftedPath')
+   call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
+   call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
+   !
+ endif                    
+ !
  ! BSE solver
  !
- if (l_bss.or.(l_rpa_IP.and.l_bse)) then
+ if (l_optics.and.l_bse.and.l_bss) then
    !
    ! Special case: the BSE_Fxc kernel has been constructed
    !               Thus I move to g-space to solve the Dyson equation
+   !
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGexx ALLGexx')
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk')
    !
-   call QP_ctl_switch('K')
-   call initactivate(1,'BoseCut ShiftedPath')
-   call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir')
-   if(l_rpa_IP) call initactivate(-1,'BSSmod')
-   !
+   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode')
    if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
-   if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipFullInv')
    !
    ! Special project dependent variables
    !
@@ -709,6 +728,32 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (MAG_landau) call initactivate(1,'B_radius')
  endif
  !
+#endif
+ !
+ ! Surface spectroscopy
+ !
+#if defined _SURF
+ if (lras.or.lreels) then
+!   call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',& ! Head only
+    call X_activate('Xd',(/'BndsRn',&
+&                 'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
+&                 'DrudeW','EhEngy'/))
+    call initactivate(1,'FFTGvecs XfnQP_E'//&
+&     ' BulkFile BulkForm BlkShift BlkBroad Layers'//&  ! Bulk eps data
+&     ' q0x q0y'//&                                     ! Polarizations
+&     ' Cutoff CutZero CutStep')               ! Cut off fn
+ endif
+ if (lras) then
+    call initactivate(1,&
+&     ' LocLimit LocType')               ! Analyse
+ endif
+ if (lreels) then
+    call initactivate(1,&
+&     ' E0 Theta0 Thetap Phi DetAngle'//&               ! Kinematics
+&     ' LossForm ImpactFt'//&                        ! Model of loss function
+&     ' DetIntMd NumIntPt'//&                           ! Det. integration
+&     ' PenDepth GausConv')                    ! General flags
+ endif
 #endif
  !
  ! Are we editing the input file ?
@@ -879,15 +924,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_optics=runlevel_is_on('optics')
        l_chi=runlevel_is_on('chi')
        l_bse=runlevel_is_on('bse')
-       l_rpa_IP=runlevel_is_on('IP')
-       l_td_hartree=runlevel_is_on('tdh')
-       l_tddft=runlevel_is_on('tddft')
-       l_alda_fxc=runlevel_is_on('alda_fxc')
-       l_lrc_fxc=runlevel_is_on('lrc_fxc')
-       l_bs_fxc=runlevel_is_on('bs_fxc')
-       l_W_eh=runlevel_is_on('W_eh')
-       l_td_hf=runlevel_is_on('tdhf')
+       l_bsk=runlevel_is_on('bsk')
        l_bss=runlevel_is_on('bss')
+       l_tddft=runlevel_is_on('tddft')
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
        l_ppa=runlevel_is_on('ppa')
@@ -913,6 +952,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT
        l_collisions_IO=runlevel_is_on('collisions_IO')
        l_carrier_dynamics =trim(Dynamics_Kind)=="C"
+#endif
+#if defined  _SURF
+       lreels=runlevel_is_on('reels')
+       lras=runlevel_is_on('ras')
 #endif
 #if defined  _ELPH  
        if (.not.CLOSE_Gs) then
@@ -940,6 +983,18 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if (i1==1) call barriers( )
        !
      enddo
+     !
+     ! Setup logicals which are not runlevels
+     !
+     l_rpa_IP     = trim(Chi_mode)=='IP'.or.trim(BSK_mode)=='IP'
+     l_td_hartree = trim(Chi_mode)=='Hartree'.or.trim(BSK_mode)=='Hartree'
+     if (l_tddft) then
+       l_alda_fxc = trim(Chi_mode)=='ALDA'.or.trim(BSK_mode)=='ALDA'
+       l_lrc_fxc  = trim(Chi_mode)=='LRC' 
+       l_bs_fxc   = trim(Chi_mode)=='BSfxc' .or.trim(BSK_mode)=='BSfxc'
+     endif
+     l_td_hf      = trim(BSK_mode)=="HF"
+     l_W_eh       = trim(BSK_mode)=="SEX"
      !
    end subroutine logicalson
    !
@@ -973,6 +1028,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call W_duplicate(Xxcw,Xw(3))
        call initactivate(2,'XfnQP_E')
      endif
+#if defined _SURF
+     X(3)%iq = 1  ! 2 components
+     X(3)%ordering = 'c'
+     Xw(3)%n = 101 ! 2 components
+#endif 
 #if defined  _ELPH 
      if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
      elph_nDBs_used=elph_nDBs
@@ -980,8 +1040,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_gw0.and.l_el_corr) call initactivate(1,'HF_and_locXC')
      if (l_ppa)    call initactivate(1,'em1d')
      if (l_cohsex) call initactivate(1,'em1s')
-     if (l_bss)    call initactivate(1,'bse')
+     if (l_W_eh)   call initactivate(1,'em1s')
+     if (l_bsk)    call initactivate(1,'optics')
+     if (l_bsk)    call initactivate(1,'bse')
      if (l_bss)    call initactivate(1,'optics')
+     if (l_bss)    call initactivate(1,'bse')
+     if (l_bss)    call initactivate(1,'bsk')
+     if (l_bs_fxc) BSS_mode="t"
      if (l_bse) then
        !
        if (l_alda_fxc) BS_res_mode='x'     
@@ -1030,11 +1095,18 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_bse) then
        if (l_rpa_IP)                   BS_res_mode='none'
        if (l_td_hartree)               BS_res_mode='x'
-       if (l_alda_fxc)                 BS_res_mode='x'
+       if (l_tddft)                    BS_res_mode='x'
+       if (l_bs_fxc)                   BS_res_mode='c'
        if (l_td_hf)                    BS_res_mode='xcd'
        if (l_W_eh)                     BS_res_mode='xc'
-       if (l_W_eh_diagonal)            BS_res_mode=trim(string_add(BS_res_mode,'d'))
        if (trim(BSE_mode)=="coupling") BS_cpl_mode=trim(BS_res_mode)
+       !
+       if(l_W_eh) then
+         call parser('WehDiag',l_W_eh_diag)
+         call parser('WehCpl' ,l_W_eh_cpl)
+         if (l_W_eh_diag)              BS_res_mode=trim(string_add(BS_res_mode,'d'))
+         if (.not.l_W_eh_cpl)          BS_cpl_mode=trim(string_remove(BS_cpl_mode,'c'))
+       endif
      endif
      !
      ! When running BSE from input file l_bse is FALSE in varsetup1.
@@ -1165,6 +1237,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          end select
        endif
        !
+       if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' ) Chi_mode='hartree'
+       !
        ! BSE/LLR
        !
        if ( trim(rstr_piece(i1)) == 'optics' )  then
@@ -1176,42 +1250,63 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          call initactivate(1,'optics')
          if (l_chi) call initactivate(1,'chi')
          if (l_bse) call initactivate(1,'bse')
+#if defined _KERR
+         l_kerr=l_bse
+#endif
+         if (l_chi) Chi_mode='IP'
+         if (l_bse) BSK_mode='IP'
          !
        endif
        !
        ! Approximation used for the BSE/LLR kernel
        !
        if ( trim(rstr_piece(i1)) == 'kernel' )  then
-         l_rpa_IP     = trim(rstr_piece(i1+1)) == 'i'   ! IP
-         l_td_hartree = trim(rstr_piece(i1+1)) == 'h'   ! TDHartree = Local-Fields
          !
-         l_tddft      = index(rstr_piece(i1+1),'d')==1  ! TDDFT
+         ! if the optics option is not present define defaults
+         ! since kernel does not correspond to a runlevel, set 
+         ! infile_editing=.true.           
          !
-         if(l_tddft) then
-           l_alda_fxc = .true.                            !  (ALDA by default)
-           l_alda_fxc = trim(rstr_piece(i1+1)) == 'da'
-           l_lrc_fxc  = trim(rstr_piece(i1+1)) == 'dl'.and.l_chi
-           l_bs_fxc   = trim(rstr_piece(i1+1)) == 'db'
+         if (.not.l_bse.and..not.l_chi) then
+           l_chi =((trim(rstr_piece(i1+1)) == 'hartree').or.&
+                  &( trim(rstr_piece(i1+1)) == 'lrc'))
+           l_bse =((trim(rstr_piece(i1+1)) == 'alda').or.&
+                  &(trim(rstr_piece(i1+1)) == 'sex').or.&
+                  &(trim(rstr_piece(i1+1)) == 'hf').or.&
+                  &( trim(rstr_piece(i1+1)) == 'bsfxc'))
+           infile_editing=.true.           
+           call initactivate(1,'optics')
+           if (l_chi) call initactivate(1,'chi')
+           if (l_bse) call initactivate(1,'bse')
+         end if
+         !
+         BSK_mode='Hartree'
+         Chi_mode='Hartree'
+         !
+         if(l_bse)  then
+           if(trim(rstr_piece(i1+1)) == 'hartree')  BSK_mode='Hartree'
+           if(trim(rstr_piece(i1+1)) == 'hf')       BSK_mode='HF'
+           if( trim(rstr_piece(i1+1)) == 'alda')    BSK_mode='ALDA'
+           if(trim(rstr_piece(i1+1)) == 'sex')      BSK_mode='SEX'
+           if( trim(rstr_piece(i1+1)) == 'bsfxc')   BSK_mode='BSfxc'
+         else if(l_chi) then
+           if(trim(rstr_piece(i1+1)) == 'hartree')  Chi_mode='Hartree'
+           if( trim(rstr_piece(i1+1)) == 'alda')    Chi_mode='ALDA'
+           if( trim(rstr_piece(i1+1)) == 'lrc')     Chi_mode='LRC'
+           if( trim(rstr_piece(i1+1)) == 'bsfxc')   Chi_mode='BSfxc'
          endif
          !
-         if(l_bse) then
-           l_td_hf    = trim(rstr_piece(i1+1)) == 'hf'  ! TDHF
-           l_W_eh     = trim(rstr_piece(i1+1)) == 'w'   ! W-eh screened interaction interaction
-         endif
+         if((trim(rstr_piece(i1+1)) == 'alda').or.&
+           &(trim(rstr_piece(i1+1)) == 'lrc').or.&
+           &(trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
          !
-         if(l_rpa_IP)      call initactivate(1,'IP')
-         if(l_td_hartree)  call initactivate(1,'tdh')
+         if(l_bse)   call initactivate(1,'bsk')
          !
-         if(l_tddft) then
-                           call initactivate(1,'tddft')
-           if(l_alda_fxc)  call initactivate(1,'alda_fxc')
-           if(l_lrc_fxc)   call initactivate(1,'lrc_fxc')
-           if(l_bs_fxc)    call initactivate(1,'bs_fxc')
-         endif
-         !
-         if(l_td_hf)       call initactivate(1,'tdhf')
-         if(l_W_eh)        call initactivate(1,'W_eh')
-         !
+       endif
+       !
+       ! TDDFT Kind
+       !
+       if ( trim(rstr_piece(i1)) == 'tddft' )  then
+
        endif
        !
        ! BSE Solver
@@ -1224,6 +1319,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          ! With and ALDA Fxc the t solver is not permitted
          !
          if (l_alda_fxc.and.index(BSS_mode,'t')/=0) BSS_mode='h'
+         if (BSK_mode=='IP') call switch_off_runlevel('bss',on_name=' ')
          !
        endif
        !
@@ -1254,6 +1350,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
          !
        endif
+       !
+       ! Surface spectroscopy
+       !
+#if defined _SURF
+       if ( trim(rstr_piece(i1)) == 'sursp' )  then
+         if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
+         if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
+         if ( trim(rstr_piece(i1+1)) == 'b') call initactivate(1,'ras reels')
+       endif
+#endif
        !
        ! Sc / NEGF
        !

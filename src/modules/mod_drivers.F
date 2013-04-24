@@ -66,8 +66,13 @@ module drivers
  logical :: l_em1d
  logical :: l_em1s
  logical :: l_bse
+ logical :: l_bsk
+ logical :: l_bss
  !
- ! ... the kernel ...
+ logical :: l_kerr
+ logical :: l_anomalous_Hall
+ !
+ ! ... and the kernel
  !
  logical :: l_rpa_IP
  logical :: l_td_hartree
@@ -77,11 +82,8 @@ module drivers
  logical :: l_lrc_fxc
  logical :: l_td_hf
  logical :: l_W_eh
- logical :: l_W_eh_diagonal
- !
- ! ... and the solvers
- !
- logical :: l_bss
+ logical :: l_W_eh_diag
+ logical :: l_W_eh_cpl
  !
  ! The XC types (Vxc)
  !

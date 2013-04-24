@@ -24,11 +24,11 @@ subroutine k_random(Xk,Xen)
  use pars,                ONLY:SP,DP,lchlen,schlen
  use units,               ONLY:HA2EV
  use stderr,              ONLY:set_real_printed_length,intc
- use R_lattice,           ONLY:bz_samp,nkibz
+ use R_lattice,           ONLY:bz_samp,nkibz,k_the_nearest
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop
  use com,                 ONLY:msg,of_open_close,error
- use vec_operate,         ONLY:rlu_v_norm,v_norm,c2a
+ use vec_operate,         ONLY:rlu_v_norm,v_norm,c2a,k2bz
  use YPP,                 ONLY:BZ_RIM_nkpts,BZ_RIM_path,gamma_radius,K_transform
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
@@ -46,7 +46,6 @@ subroutine k_random(Xk,Xen)
  real(SP)     ::dummy,rand_k(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
 &               gap(2)
  integer      ::i1,ikbz
- integer, external :: k_the_nearest
  character(lchlen) :: k_rand_fname
  character(schlen) :: dump
  logical           :: No_Weight
@@ -228,7 +227,7 @@ subroutine k_random(Xk,Xen)
    BZ_RIM_nkpt=0
    do i1=1,RIM_k%nbz
      !
-     ikbz=k_the_nearest(RIM_k%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz,.FALSE.,i_err)
+     ikbz=k_the_nearest(RIM_k%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
      BZ_RIM_nkpt(ikbz)=BZ_RIM_nkpt(ikbz)+1
      !
      if (allocated(BZ_RIM_table)) BZ_RIM_table(ikbz,BZ_RIM_nkpt(ikbz))=RIM_k%sstar(i1,1)
@@ -281,6 +280,7 @@ subroutine k_random(Xk,Xen)
      enddo
      dummy=rlu_v_norm(rand_k(k_counter+1,:))
      call c2a(v_in=rand_k(k_counter+1,:),mode="ka2i")
+     call k2bz(v_in=rand_k(k_counter+1,:))
    end subroutine
    !
    subroutine build_spherical_k()

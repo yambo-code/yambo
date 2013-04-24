@@ -91,15 +91,10 @@ subroutine barriers()
  !
  ! GPL_INCLUDE_START
  !call switch_off_runlevel('acfdt',on_name=' ')
- !call switch_off_runlevel('bs_fxc',on_name=' ')
  ! GPL_INCLUDE_END
  !
  ! RUNLEVELS
  !===========
- !
- ! GPL_INCLUDE_START
- !if(mag_syms) call switch_off_runlevel('all',on_name=' ')
- ! GPL_INCLUDE_END
  !
 #if defined _RT
  call switch_off_runlevel('gw0',on_name=' ')
@@ -140,9 +135,9 @@ subroutine barriers()
  !
  if (gw0_raxis) then
    on_runlevels='gw0 em1d el_el el_ph HF_and_locXC'
-   ! GPL_INCLUDE_START ELPH_IGNORE
+   ! GPL_INCLUDE_START 
    !on_runlevels='gw0 em1d el_el HF_and_locXC'
-   ! GPL_INCLUDE_END ELPH_IGNORE
+   ! GPL_INCLUDE_END 
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
@@ -156,17 +151,17 @@ subroutine barriers()
    goto 1
  endif
  if (alda_g_space) then
-   call switch_off_runlevel('all',on_name='optics chi tddft alda_fxc '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='optics chi tddft '//trim(always_runlevels))
    goto 1
  endif
  if (alda_r_space) then
-   call switch_off_runlevel('all',on_name='optics bse tddft alda_fxc bss '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='optics bse bsk bss tddft '//trim(always_runlevels))
    goto 1
  endif
  if (l_bss.or.l_bse) then
-   on_runlevels='optics bse bss IP tdh tddft bs_fxc tdhf W_eh em1s em1d ppa'
+   on_runlevels='optics bse bsk bss tddft em1s em1d ppa'
    ! GPL_INCLUDE_START SC_IGNORE
-   !on_runlevels='optics bse bss IP tdh tddft tdhf W_eh em1s em1d ppa'
+   !on_runlevels='optics bse bsk bss em1s em1d ppa'
    ! GPL_INCLUDE_END SC_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
@@ -180,9 +175,9 @@ subroutine barriers()
  ! SPIN
  !=============
  if (n_spin>1) then
-   on_runlevels='optics chi bse bss IP tdh tdhf W_eh em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
+   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
    ! GPL_INCLUDE_START SC_IGNORE
-   !on_runlevels='optics chi bse bss IP tdh tdhf W_eh em1s em1d ppa HF_and_locXC cohsex gw0'
+   !on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0'
    ! GPL_INCLUDE_END SC_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
@@ -191,5 +186,16 @@ subroutine barriers()
  ! MORE
  !======
  if ( (l_ppa.and.trim(QP_solver)=='s').or.l_cohsex ) QP_solver='n'
+ !
+#if defined _KERR
+ if(l_kerr) then
+   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
+   ! GPL_INCLUDE_START
+   !on_runlevels='optics bse'
+   ! GPL_INCLUDE_END
+   if(bss_inv.or.bss_tddft) on_runlevels=' '
+   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
+ endif
+#endif
  !
 end subroutine

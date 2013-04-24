@@ -46,7 +46,7 @@ subroutine k_grids(en,k,Xk,q)
  real(SP):: kout(Xk%nibz,3),k_plus_q(Xk%nibz,3)
  integer,  allocatable :: int_ctl(:)
  character(schlen)     :: ch
- logical               :: No_Weight,Force_User_points
+ logical               :: No_Weight,Force_User_points,List_internal_points,Expand_internal_points
  !
  call bz_samp_reset(USER_K)
  call bz_samp_reset(Q_user)
@@ -67,6 +67,48 @@ subroutine k_grids(en,k,Xk,q)
  call msg("s",'Q-points  (BZ):',q%nbz)
  call parser('NoWeights',No_Weight)
  call parser('ForceUserPts',Force_User_points)
+ call parser('ListPts',List_internal_points)
+ call parser('ExpandPts',Expand_internal_points)
+ !
+ if (List_internal_points) then
+   !
+   write(ch,'(a,a,a)') "== Built-in grids [",trim(coo_out),"] =="
+   !==================================================================
+   call section('+',trim(ch))
+   !
+   if (l_k_grid) then
+     if (Expand_internal_points) then
+       call k_expand(Xk)
+       call msg("s",'Q-points (BZ) formatted')
+       call print_the_grid(Xk%ptbz,Xk%nbz,'iku',.TRUE.)
+       call msg("s",'Q-points (BZ) un-formatted')
+       call print_the_grid(Xk%ptbz,Xk%nbz,'iku',.FALSE.)
+     else
+       call msg("s",'Q-points (IBZ) formatted')
+       call print_the_grid(Xk%pt,Xk%nibz,'iku',.TRUE.)
+       call msg("s",'Q-points (IBZ) un-formatted')
+       call print_the_grid(Xk%pt,Xk%nibz,'iku',.FALSE.)
+     endif
+   endif
+   !
+   if (l_q_grid) then
+     if (Expand_internal_points) then
+       call k_expand(q)
+       call msg("s",'Q-points (BZ) formatted')
+       call print_the_grid(q%ptbz,q%nbz,'iku',.TRUE.)
+       call msg("s",'Q-points (BZ) un-formatted')
+       call print_the_grid(q%ptbz,q%nbz,'iku',.FALSE.)
+     else
+       call msg("s",'Q-points (IBZ) formatted')
+       call print_the_grid(q%pt,q%nibz,'iku',.TRUE.)
+       call msg("s",'Q-points (IBZ) un-formatted')
+       call print_the_grid(q%pt,q%nibz,'iku',.FALSE.)
+     endif
+   endif
+   !
+   goto 1
+   !
+ endif
  !
  if (.not.l_high_sym_pts) then
    !
@@ -164,7 +206,7 @@ subroutine k_grids(en,k,Xk,q)
          if (trim(coo_in)=="cc")  call c2a(v_in=q%ptbz(i1,:),v_out=v,mode="ki2c")
          if (trim(coo_in)=="rlu") call c2a(v_in=q%ptbz(i1,:),v_out=v,mode="ki2a")
          if (v_is_zero(v(:)-Q_user%pt(Q_user%nibz,:),zero_=k_iku_zero).and..not.Force_User_points) then
-           call warning(' Point already in the grid')
+           call warning(' Point already in the grid. Listing internal Q-points.')
            exit q_main_loop
          endif
        enddo
@@ -318,16 +360,20 @@ subroutine k_grids(en,k,Xk,q)
        call K_transform(v,'iku')
        !
        if (formatted_) then
-!        write(ch,'(3(f12.7,1x,a,1x))') v(1),'|',v(2),'|',v(3),'|'
          if(No_Weight) then
-           write(ch,'(3(f12.6,1x))') v
+           write(ch,'(3(f12.7,1x,a,1x))') v(1),'|',v(2),'|',v(3)
          else
-           write(ch,'(3(f12.6,1x),f6.3)') v,1._SP
+           write(ch,'(4(f12.7,1x,a,1x))') v(1),'|',v(2),'|',v(3),'|',1._SP
          endif
-         call msg("s",'      ',trim(ch))
        else
-         call msg("s",'      ',v)
+         if(No_Weight) then
+           write(ch,'(3(f12.7,1x))') v(:)
+         else
+           write(ch,'(4(f12.7,1x))') v(:),1._SP
+         endif
        endif
+       !
+       call msg("s",'      ',trim(ch))
        !
      enddo
      live_timing_is_on=.true.

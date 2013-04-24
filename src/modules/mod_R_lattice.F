@@ -112,6 +112,19 @@ module R_lattice
  real(SP)                :: cyl_vz_save
  real(SP)                :: cyl_zz_save
  !
+ interface
+   !
+   integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,i_err)
+     use pars, ONLY: SP
+     integer :: n_k
+     real(SP):: k_ref(3)
+     real(SP):: k(n_k,3)
+     logical, optional :: ROTATE_k_ref
+     integer, optional :: i_err
+   end function 
+   !
+ end interface
+ !
  contains
    !
    subroutine qindx_alloc()

@@ -47,8 +47,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  integer          :: i1,i2,ik
  !
- Sigma_relax=cZERO
- !
  ! Damping
  !=========
  !
@@ -62,6 +60,8 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! G_lesser_refence(:,:,:) 
  !
  if(.not.RT_is_dumped.and..not.l_ph_corr.and..not.l_carrier_dynamics) return 
+ !
+ Sigma_relax=cZERO
  !
  ! El-El
  !=======

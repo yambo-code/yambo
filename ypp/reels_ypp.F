@@ -49,7 +49,6 @@
  use timing,              ONLY:live_timing
  use YPP
  use bulkeps,             ONLY : lbulkerr, GetBulkEps
- use ras_module,          ONLY : CalcRAS
  use eels_kinematics
  use surface_geometry
  use eels_detector
@@ -80,7 +79,7 @@ real(SP)                       :: qpard(2), q0v(3,3)
  call read_spectral_data(xdata,datatype,nw,lfail)
  allocate(eps_i(nw,3),hw(nw),eps_b(nw),surf_i(nw,3),lossf(nw,3), eps_g(nw,3))
  eps_i(1:nw,1) = f(1:nw)
- hw(1:nw) = freq(1:nw)/HARTREE + sshift ! shift is internally converted
+ hw(1:nw) = freq(1:nw)/HA2EV + sshift ! shift is internally converted
  call read_spectral_data(ydata,datatype,nwy,lfail)
  if(nwy.ne.nw) call error('X/Y datafiles have inconsistent data')
  eps_i(1:nw,2) = f(1:nw)

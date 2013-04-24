@@ -30,9 +30,12 @@ subroutine WF_apply_symm(isc,WF_symm)
  use electrons,     ONLY:n_spinor
  use D_lattice,     ONLY:nsym,spin_sop,i_time_rev,idt_index
  !
+ implicit none
+ !
  integer     :: isc(4)
  complex(SP) :: WF_symm(fft_size,n_spinor)
  !
+ integer     :: ifft
  integer     :: i_wf(n_spinor)
  !
  i_wf(1)=wf_state(isc(1),isc(2),isc(4))

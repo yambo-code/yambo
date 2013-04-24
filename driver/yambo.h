@@ -50,10 +50,10 @@
 #endif
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
-  {"kernel", "k","Kernel [opt=(i)p/td(h)/td(d?)ft/td(hf)/(w)eh]",0,0,1,0,0},
-  {"DESC",   " ","                          d?=[da,dl,db]=[alda/lrc/bse_fxc]",0,0,0,0,0},
-  {"DESC",   " ","       (tdhf/Weh only eh-space; lrc only G-space)",0,0,0,0,0},
-  {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0,0},                      
+  {"kernel", "k","Kernel [opt=hartree/alda/lrc/hf/sex/bsfxc]",0,0,1,0,0},
+  {"DESC",   " ","       (hf/sex only eh-space; lrc only G-space)",0,0,0,0,0},
+  {"bss",    "y","BSE solver [opt=h/d/(p/f)i/t]",0,0,1,0,0},                      
+  {"DESC",   " ","       (h)aydock/(d)iagonalization/(i)nversion",0,0,0,0,0},
   {"rim_cut","c","Coulomb interaction",0,0,0,0,0},  
   {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0,0},      
   {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0,0},     
@@ -62,7 +62,6 @@
   {"gw0",    "g","Dyson Equation solver",0,0,1,0,0}, 
   {"DESC",   " ","[opt=(n)ewton/(s)ecant/(g)reen]",0,0,0,0,0},
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
-  {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0,0},                      
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
 #if defined _RT
   {"collisions_IO",  "e","Evaluate the extended Collisions",0,0,0,0,0}, 
@@ -76,10 +75,13 @@
   {"DESC",   " ","opt=(hf),(c)ohsex,(exx),(exxc),(srpa),(h)artree,(d)ef",0,0,0,0,0},
 #endif
 #if defined _RT 
-  {"negf",   "k","Real-time dynamic [opt=(n)one,(p)robe,(pp)ump & probe]",0,0,1,0,0}, 
+  {"negf",   "q","Real-time dynamic [opt=(n)one,(p)robe,(pp)ump & probe]",0,0,1,0,0}, 
 #endif
 #if defined _MAGNETIC 
   {"magnetic", "m","Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0,0}, 
+#endif
+#if defined _SURF
+  {"sursp",  "s","Surface Spectroscopy [opt=(r)as/r(e)els/(b)oth]",0,0,1,0,0},
 #endif
   {NULL,NULL,NULL,0,0,0,0,0}
  };

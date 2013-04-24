@@ -27,7 +27,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
- use X_m,           ONLY:X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold
+ use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold
  use fields,        ONLY:global_gauge,grid_path
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,GW_en_comp,&
@@ -39,7 +39,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use R_lattice,     ONLY:ng_closed,n_g_shells,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
- use BS,            ONLY:BSE_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
+ use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
@@ -62,8 +62,18 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
+#if defined _SURF
+ use bulkeps,              ONLY:init_bulk
+ use eels_kinematics,      ONLY:init_kinematics
+ use eels_detector,        ONLY:init_detector
+ use optcut,               ONLY:init_cutoff
+ use surface_geometry,     ONLY:init_surface
+ use model_loss_function,  ONLY:init_loss_function
+ use convolute,            ONLY:init_convolute
+ use ras_module,           ONLY:locfac, loctype
+#endif
 #if defined _ELPH 
- use ELPH,          ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches
+ use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches
 #endif
  use parallel_m,    ONLY:n_threads,n_log_CPUs
  !
@@ -80,15 +90,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'setup',   '[R INI] Initialization') 
  call it('r',defs,'optics',  '[R OPT] Optics')
  call it('r',defs,'chi',     '[R CHI] Dyson equation for Chi.')
+ call it('r',defs,'chik',    '[R CHI] Kernel for Chi')
  call it('r',defs,'bse',     '[R BSE] Bethe Salpeter Equation.')
- call it('r',defs,'IP',      '[R   K] Independet Particles')
- call it('r',defs,'tdh',     '[R   K] TD Hartree kernel = Local fields term')
- call it('r',defs,'tddft',   '[R   K] Use TDDFT kernel')
- call it('r',defs,'alda_fxc','[R   K]     Adiabatic-LDA Fxc')
- call it('r',defs,'lrc_fxc', '[R   K]     LRC (1/alpha) Fxc')
- call it('r',defs,'tdhf',    '[R BSK] Unscreened e-h interaction: TD Hartree-Fock kernel')
- call it('r',defs,'W_eh',    '[R BSK]   screened e-h interaction: W kernel')
+ call it('r',defs,'bsk',     '[R BSK] Bethe Salpeter Equation kernel')
  call it('r',defs,'bss',     '[R BSS] Bethe Salpeter Equation solver')
+ call it('r',defs,'tddft',   '[R   K] Use TDDFT kernel')
  call it('r',defs,'em1s',    '[R Xs] Static Inverse Dielectric Matrix')
  call it('r',defs,'em1d',    '[R Xd] Dynamical Inverse Dielectric Matrix')
  call it('r',defs,'ppa',     '[R Xp] Plasmon Pole Approximation')
@@ -104,7 +110,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! NON GPL RUNLEVELS
  !===================
  call it('r',defs,'acfdt',   '[R ETOT] ACFDT Total Energy')
- call it('r',defs,'bs_fxc',  '[R TDDFT] The BSE TDDFT kernel')
 #if defined _ELPH 
  call it('r',defs,'ElPhHam', '[R] Frohlich Hamiltonian') 
 #endif
@@ -121,20 +126,27 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _MAGNETIC
  call it('r',defs,'magnetic','[R] Magnetic fields')
 #endif
+#if defined _SURF
+ call it('r',defs,'sursp',  '[R] Surface Spectroscopy ')
+ call it('r',defs,'reels',  '[R] Reflection EELS (3-layer model) ')
+ call it('r',defs,'ras',    '[R] Reflectance anisotropy spectroscopy (RAS)')
+#endif
 #if defined _ELPH 
  call it('r',defs,'el_ph',   '[R] Electron-Phonon Correlation')   
  call it('r',defs,'el_el',   '[R] Electron-Electron Correlation') 
 #endif
  !
- !================
- ! GPL VARIABLES
- !================ 
- !
+ !=======
  ! CPU's
+ !=======
  !
 #if defined _MPI 
  call CPU_structure_load( )
 #endif
+ !
+ !================
+ ! GPL VARIABLES
+ !================ 
  !
  ! Basics
  !
@@ -173,27 +185,50 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GEnSteps',   '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',    '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
  call it('f',defs,'GWTerm',   '[GW] Use a terminator for the self-energy',verb_level=V_qp)
- call it(defs,'GwEnComp',   '[GW] If <= 0 use 0-order EET ; > 0 the Bruneval-Gonze terminator', &
+ call it(defs,'GwEnComp',   '[GW] If <= 0 use 0-order EET; > 0 the Bruneval-Gonze terminator', &
 &                        GW_en_comp,E_unit,verb_level=V_qp)
  call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
  !
+ ! Xs Xd Xp
+ !
+ call it(defs,'Chimod', '[X] IP/Hartree/ALDA/LRC/BSfxc',Chi_mode,protect=.FALSE.)
+ call Xload(X(2),Xw(2))
+ call Xload(X(3),Xw(3))
+ call Xload(X(4),Xw(4))
+ !
  ! BSE
  !
- call it(defs,'BSEmode', '[BSE] resonant/causal/coupling',BSE_mode)
+ call it(defs,'BSEmod',  '[BSE] resonant/causal/coupling',BSE_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
- call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t`',BSS_mode,protect=.FALSE.)
- call it(defs,'BSSInvMode','[BSS] Inversion solver modality `m/f/p` (mixed, full, perturbative)',BSS_inversion_mode)
+ !
+ ! GPL_INCLUDE_START
+ !
+ !call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX',BSK_mode,protect=.FALSE.)
+ !
+ ! GPL_INCLUDE_END
+ !
+ !
+ ! GPL_EXCLUDE_START
+ !
+ call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX/BSfxc',BSK_mode,protect=.FALSE.)
+ !
+ ! GPL_EXCLUDE_END
+ !
+ call it(defs,'BSSmod',  '[BSS] (h)aydock/(d)iagonalization/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
+ call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
  call it(defs,'BLongDir','[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange','[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange','[BSS] Damping range',BSS_dr,E_unit)
  call it(defs,'BSHayTrs','[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',&
 &              Haydock_treshold,verb_level=V_resp)
  call it(defs,'BEnSteps','[BSS] Energy steps',BSS_n_freqs)
- call it('f',defs,'Wehdiag',  '[BSK] the eh interaction is diagonal',verb_level=V_resp)
+ call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',X(2)%Wd,E_unit,verb_level=V_resp)
+ call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
+ call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the FWs',verb_level=V_resp)
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
  call it('f',defs,'BSHayTer','[BSS] Terminate Haydock continuos fraction',verb_level=V_resp)
@@ -204,16 +239,20 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'LRC_alpha','[TDDFT] LRC alpha factor',FXC_LRC_alpha)
  call it(defs,'LRC_beta', '[TDDFT] LRC beta factor',FXC_LRC_beta,verb_level=V_resp)
  !
- ! Xs Xd Xp
- !
- call Xload(X(2),Xw(2))
- call Xload(X(3),Xw(3))
- call Xload(X(4),Xw(4))
- !
  ! Optics: large Q momenta
  !
  call it(defs,'Qdirection', '[Xd] Transferred momentum direction (iku)',q_plus_G_direction,verb_level=V_resp)
  call it(defs,'QShiftOrder','[Xd] Pick-up the (QShiftOrder)th q+G vector',Q_Shift_Order,verb_level=V_resp)
+ !
+#if defined _KERR
+ !
+ ! BSE: Kerr
+ !
+ call it(defs,'Gauge'       , '[BSE] Gauge (length|velocity). In metals length misses An-Hall',global_gauge)
+ call it('f',defs,'EvalKerr', '[BSE] Compute the Kerr effect')
+ call it('f',defs,'AnHall'  , '[BSE] Compute the anomalous Hall effect and if length add it to eps')
+ !
+#endif
  !
  ! RIM
  !
@@ -316,6 +355,20 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization',verb_level=V_sc)
  call it(defs,'B_radius',      '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
 #endif
+ ! 
+ ! Surface spectroscopy
+ !
+#if defined _SURF
+ call init_bulk(defs)
+ call init_surface(defs)
+ call init_cutoff(defs)
+ call init_kinematics(defs)
+ call init_loss_function(defs)
+ call init_detector(defs)
+ call init_convolute(defs)
+ call it(defs,'LocType', '[RAS] Transition filter (ss/sb/bs/bb|no)',loctype,verb_level=V_resp)
+ call it(defs,'LocLimit','[RAS] Factor defining state localization',locfac,verb_level=V_resp)
+#endif
  !
  ! GPL_EXCLUDE_END SC_IGNORE
  !
@@ -347,8 +400,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSEClmns','[BSK] Kernel Columns',BS_columns,verb_level=V_resp)
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
 &                        E_unit,verb_level=V_resp)
- call it('f',defs,'SkipFullInv',  '[BSS] Skip full invertion in perturbative solver',verb_level=V_resp)
- call it(defs,'DrudeW',  '[BSE] Drude plasmon',X(2)%Wd,E_unit,verb_level=V_resp)
  !
  ! Xx
  !
@@ -504,13 +555,17 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=0)
      call it(defs,nms( 4),des( 4),X%cg_percentual,verb_level=V_resp)
      call it(defs,nms( 5),des( 5),wv%n_freqs,verb_level=0)
-     call it(defs,nms( 6),des( 6),wv%per_memstps,verb_level=1)
-     call it(defs,nms( 7),des( 7),X%Wd,E_unit,verb_level=1) 
+     call it(defs,nms( 6),des( 6),wv%per_memstps,verb_level=V_resp)
+     call it(defs,nms( 7),des( 7),X%Wd,E_unit,verb_level=V_resp) 
      call it(defs,nms( 8),des( 8),X%q0,verb_level=0)
      call it(defs,nms( 9),des( 9),X%ehe,E_unit,verb_level=V_resp)
      call it(defs,nms(10),des(10),X%ppaE,E_unit,verb_level=0)
      call it(defs,nms(11),des(11),X%ng,G_unit,verb_level=0) 
-     call it(defs,nms(12),des(12),X%iq,verb_level=0)
+     if (X%whoami==3) then
+       call it(defs,nms(12),des(12),X%iq,verb_level=0)
+     else
+       call it(defs,nms(12),des(12),X%iq,verb_level=V_resp)
+     endif
      call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)
      !

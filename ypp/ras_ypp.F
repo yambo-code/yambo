@@ -25,6 +25,8 @@
  ! \frac{\delta R}{R} = \frac{4\omega\d_surf}{c} \times
  !                      \Im \frac{ \epsilon^s_x - \epsilon^s_y}{\epsilon_b - 1}
  !
+ ! Nota bene: the following was based on definitions in previous versions of yambo,
+ !            and may not be correct!
  ! The polarizability is:
  ! \epsilon = \frac{4 \pi}{\Omega} \alpha + 1
  ! and for a surface, \Omega = d_z (the cell height)
@@ -64,16 +66,16 @@
  real(SP),    allocatable   :: hw(:)
 
  call section('*',"== RAS postprocessor ==")
- call msg('nrs','Note: symmetries are not used.')
+ call msg('nrs','NB: Calculate d factor with care!')
  if( index(datatype,"eps").eq.1 ) pol_type = 0
  if( index(datatype,"a_r").eq.1 ) pol_type = 1
  if( index(datatype,"a_t").eq.1 ) pol_type = 2
- call msg('nrs','Cell thickness d_cell (au): ',d_cellin)
+ call msg('nrs','d parameter (au): ',d_cellin)
 
  call read_spectral_data(xdata,datatype,nw,lfail)
  allocate(eps_x(nw),hw(nw))
  eps_x(1:nw) = f(1:nw)
- hw(1:nw) = freq(1:nw)/HARTREE + sshift ! shift is internally converted
+ hw(1:nw) = freq(1:nw)/HA2EV + sshift ! shift is internally converted
  sscale = 4.0_SP*PI/d_cellin
 
  select case(pol_type)
@@ -109,12 +111,9 @@
    call GetBulkEps(hw, nw, eps_b, errmsg)
    call msg('nrs',trim(errmsg))
 
-   if(.not.lbulkerr) call CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_cellin)
+   if(.not.lbulkerr) call CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_cellin,"-ypp")
 
  endif
-
-
-! Add Gaussian broadening
 
  contains
   

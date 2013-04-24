@@ -300,7 +300,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    ! Gamma factors symmetrization
    !
    call degeneration_finder(abs(ph_freqs_sq(iq,:)),ph_modes,first_el,n_of_el,&
-&                           n_deg_grp,1.E-10)
+&                           n_deg_grp,1.E-10_SP)
    do i1=1,n_deg_grp
      !
      sym_gamma=0._SP

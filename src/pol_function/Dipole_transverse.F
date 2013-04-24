@@ -40,6 +40,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use wave_func,           ONLY:wf,wf_ng,wf_state
  use wrapper,             ONLY:M_by_V
  use com,                 ONLY:error,msg
+#if defined _KERR
+ use fields,              ONLY:global_gauge
+#endif
  !
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -80,7 +83,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
        do i_pp = 1, pp_n_l_times_proj_max
          il = pp_table(1,is,i_pp)
          pp_spin = pp_table(3,is,i_pp)
-         if(pp_spin>1) cycle
+         if(pp_spin==0) cycle
+         if(pp_spin>1 ) cycle
          do im = 1,2*(il-1)+1
            pp_kbv_dim=pp_kbv_dim+1
          enddo
@@ -195,12 +199,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
          icfft=wf_state(ic,ik,i_spin)
          if (icfft==0) call error("Error distribution wave-function")
          !
-         ! WARNING !!!!!!!! The convention is to revert the order of the bands indexes
-         !==================
-         ! in the definition of DIP_P and DIP_iR
-         !
-         ! DIP_P(iv,ic)  = P_cv
-         ! DIP_iR(iv,ic) = (iR)_cv 
+         ! WARNING: 
+         ! ========
+         ! The convention is to revert the order of the bands
+         ! indexes in the definition of DIP_P and DIP_iR :
+         ! DIP_P(iv,ic)  = P_cv ; DIP_iR(iv,ic) = (iR)_cv 
          !
          ! Note that P is Hermitian and iR anti-hermitian.
          !
@@ -226,6 +229,16 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #if defined _SC
          DIP_P(:,ic,iv,ik_mem,i_spin)=DIP_P(:,ic,iv,ik_mem,i_spin)+rho(:3)
 #endif        
+#if defined _KERR
+         if(trim(global_gauge)=='velocity') then
+           if (n_spinor==2) then
+             DIP_P(:,ic,iv,ik,1)=DIP_P(:,ic,iv,ik,1)+rho(:3)
+           else
+             DIP_P(:,ic,iv,ik,i_spin)=rho(:3)
+           endif
+         endif
+#endif        
+         !
          !======
          ! <iR>
          !======
@@ -305,6 +318,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
      call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_spin),COMM=PAR_COM_Xk_ibz_A2A%COMM)
      call PP_redux_wait(P_square(:,:,ik_mem,i_spin),COMM=PAR_COM_Xk_ibz_A2A%COMM)
 #endif
+#if defined _KERR
+   if(trim(global_gauge)=='velocity') call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
+#endif
    enddo
    !
    ! Symmetrization 
@@ -320,6 +336,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #if defined _RT
          DIP_P(:,ic,iv,ik_mem,:) = conjg(DIP_P(:,iv,ic,ik_mem,:))
          P_square(ic,iv,ik_mem,:)= conjg(P_square(iv,ic,ik_mem,:))
+#endif        
+#if defined _KERR
+         if(trim(global_gauge)=="velocity")DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
 #endif        
        enddo
      enddo

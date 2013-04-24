@@ -110,7 +110,7 @@ subroutine RT_initialize(E,k,q)
    ! Set automatically RT_IO_time and RT_IO_steps 
    !
  else if (RT_IO_time<0) then
-   RT_IO_time =max(NE_tot_time/1000.,RT_step)
+   RT_IO_time =max(NE_tot_time/1000._SP,RT_step)
    RT_IO_steps=nint(RT_IO_time/RT_step)
    if (RT_IO_steps_DB>0.and.RT_IO_steps/=RT_IO_steps_DB) then
      call warning('IO steps read from the existing databases')
@@ -248,7 +248,7 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', '[RT] Memory depth           [fs]:',T_memory/FS2AUT)
  call msg( 'r', '[RT] Memory steps               :',NE_MEM_steps)
  call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
- call msg( 'r', '[RT] K-points evolved      [o/o]:',real(nk_todo)/real(nkibz)*100.)
+ call msg( 'r', '[RT] K-points evolved      [o/o]:',real(nk_todo,SP)/real(nkibz)*100._SP)
  call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)
  call msg( 'r', '[RT] Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000._SP/))
  call msg( 'r', '[RT] Damping (Radiative)[fs/meV]:',(/RAD_LifeTime/FS2AUT,   HBAR_eVfs/RAD_LifeTime*FS2AUT*1000._SP/))

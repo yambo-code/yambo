@@ -136,6 +136,8 @@ if test "x$netcdf" = xyes; then
   fi
   if test "x$hdf5" = xyes; then
     NCLIBS="${NCLIBS} ${NETCDF_LINKS}"
+  elif test  x"$NETCDF_LINKS" != x"" ; then
+    NCLIBS="${NETCDF_LINKS}"
   fi
 fi
 

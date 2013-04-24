@@ -61,7 +61,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  logical          ::l_QP_init
  type(initdefs)   ::defs
- integer          ::i1,i2
+ integer          ::i1,i2, ng_save
  character(schlen)::rstr_piece(60) 
  !
 #if defined _YPP_RT || defined _YPP_SC
@@ -81,6 +81,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_ELPH
  what_is_running='YPP_PH'
+#endif
+#if defined _YPP_SURF
+ what_is_running='YPP_SURF'
 #endif
  !
  if (FINALIZE) then
@@ -105,6 +108,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  BANDS_steps=0
  BANDS_range=(/1,n_bands/)
  l_bands=.false.
+ interp_grid = (/-1, -1, -1/)
  !
  !
  ! PLOT
@@ -160,6 +164,35 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
 #endif
  !
+#if defined _YPP_SURF
+ !
+ ! RAS & REELS
+ !
+ call ras_presets
+ xdata = 'o.eps_q001-rpa_00'
+ ydata = 'o.eps_q001-rpa_00'
+ zdata = 'o.eps_q001-rpa_00'
+ sshift = 0.0           ! surface shift
+ datatype = 'eps23'
+ d_cellin = 1.0
+ !
+ ! Localization
+ !
+ normdir = 3
+ lowerlim = 0
+ upperlim = 1
+ ngloc = 0
+ loc_bands = (/ 1, n_bands /)
+ loc_kpts  = (/ 1, nkibz /)
+ ! 
+ ! Transition analysis
+ ! 
+ Ecv_min = 0.0
+ Ecv_max = -1.0/HA2EV
+ idir = 1
+ !
+#endif
+ !
  ! Wannier interface
  !
  l_wannier=.FALSE.
@@ -168,7 +201,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! BZ grids
  !
- coo_in="iku"
+ coo_in="rlu"
  coo_out="rlu"
  Kgw_1=0.
  q_shift= 0.0_SP
@@ -300,7 +333,16 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_q_grid) call initactivate(1,"Q_grid")
        if (l_shifted_grid) call initactivate(1,"Shifted_Grid")
        if (l_high_sym_pts) call initactivate(1,"High_Symm")
-    endif
+     endif
+     !
+     if ( trim(rstr_piece(i1)) == 'QPDBs') then
+       call initactivate(1,'QPDBs')
+       l_QP_DBs_create_and_modify=trim(rstr_piece(i1+1))=='g'
+       l_QP_DBs_merge            =trim(rstr_piece(i1+1))=='m'
+       if (l_QP_DBs_create_and_modify) call initactivate(1,'QPDB_edit')
+       if (l_QP_DBs_merge)             call initactivate(1,'QPDB_merge')
+     endif
+     !
 #if defined _YPP_ELPH
      if ( trim(rstr_piece(i1)) == 'phonons') then
        l_dos              =trim(rstr_piece(i1+1))=='d'
@@ -308,7 +350,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_atomic_amplitude =trim(rstr_piece(i1+1))=='a'
        if (l_atomic_amplitude) infile_editing=.false.
        if (l_eliashberg)   call initactivate(1,'eliashberg')
-    endif
+     endif
 #endif
      if ( trim(rstr_piece(i1)) == 'excitons') then
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
@@ -385,8 +427,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_SC
  l_mean_potential=runlevel_is_on('MeanPot')
  if (l_mean_potential) then
-    call initactivate(1,'plot')
-    call initactivate(1,'electrons')
+   call initactivate(1,'plot')
+   call initactivate(1,'electrons')
  endif
 #endif
 #if defined _YPP_ELPH
@@ -425,13 +467,13 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    if (l_shifted_grid) call initactivate(1,"KShift1 KShift2 KShift3")
    if (l_high_sym_pts) then
      call initactivate(1,"PtsPath NPtsPath")
-     call initactivate(-1,"NoWeights ForceUserPts cooIn")
+     call initactivate(-1,"NoWeights ForceUserPts ListPts ExpandPts cooIn")
    else
-     call initactivate(1,"NoWeights ForceUserPts")
+     call initactivate(1,"NoWeights ForceUserPts ListPts ExpandPts")
    endif
  endif
  !
- if (l_bands) call initactivate(1,"cooIn BKpts BANDS_steps BANDS_range")
+ if (l_bands) call initactivate(1,"cooIn BKpts BANDS_steps BANDS_range INTERPGrid")
  !	   
  l_bzrim     =runlevel_is_on('bzrim')
  !
@@ -439,7 +481,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_bxsf) call initactivate(1,"W90_fname WannBnds DgridOrd")
  !
- l_qpdb = runlevel_is_on('qpdb')
+ l_QP_DBs_create_and_modify = runlevel_is_on('QPDB_edit')
+ l_QP_DBs_merge = runlevel_is_on('QPDB_merge')
  !
  ! GPL_EXCLUDE_START
  !
@@ -449,8 +492,20 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
 #endif
  !
- if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
+ ! GPL_EXCLUDE_END
+ !
  if (l_fix_syms.and.n_spinor==2.and.i_time_rev==0) call initactivate(1,"ExpandSymm")
+ !
+ ! GPL_INCLUDE_START
+ !
+ !if (l_fix_syms) call initactivate(1,"RmAllSymm RmTimeRev")
+ !
+ ! GPL_INCLUDE_END
+ !
+ !
+ ! GPL_EXCLUDE_START
+ !
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
  !
 #if defined _YPP_RT
  !             
@@ -473,7 +528,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
     if (l_dos.or.l_bands) call QP_ctl_switch('G')
     if (l_dos) then
       call initactivate(1,"OCCdT OCCTime")
-      call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad")
+      call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad PrtOccOnly")
     endif
  endif
  !
@@ -506,6 +561,29 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif
  !
+#if defined _YPP_SURF
+ !
+ lsurf =runlevel_is_on('surf')
+ lras  =runlevel_is_on('ras')
+ lreels=runlevel_is_on('reels')
+ lloc  =runlevel_is_on('loc')
+ ltrans=runlevel_is_on('trans')
+ if(lsurf) then
+   if (lras) call initactivate(1,"XData YData "//&
+&       " BulkFile BulkForm BlkShift BlkBroad "//&
+&       " DataType SrfShift d_cell")
+   if (lreels) call initactivate(1,"XData YData ZData"//&
+&       " q0x q0y"//&
+&       " BulkFile BulkForm BlkShift BlkBroad Layers"//&
+&       " DataType SrfShift d_cell "//&
+&       " E0 Theta0 Thetap Phi DetAngle "//&
+&       " LossForm ImpactFt DetIntMd NumIntPt GausConv")
+   if(lloc) call initactivate(1,"NormDir LowerLim UpperLim NGLoc LbndRnge KptRange WrtLocDB")
+   if(ltrans) call initactivate(1,"EcvMin EcvMax qdir")
+ endif
+ !
+#endif
+ !
  if (infile_editing) then
    open(unit=12,file=trim(infile))
    call initinfio(defs,12)
@@ -513,7 +591,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    call PP_redux_wait
  endif
  !
- if(l_qpdb) call qpdb_init()
+ if (l_QP_DBs_create_and_modify.or.l_QP_DBs_merge) call QP_DBs_initialize()
  !
  l_QP_init=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH

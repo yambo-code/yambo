@@ -165,23 +165,23 @@ module fields
            !
          enddo
        case('DELTA')
-         if (order==0 ) local_a=1.
-         if (order> 0 ) local_a=0.
-         if (order==-1) local_a=1.
+         if (order==0 ) local_a=1._SP
+         if (order> 0 ) local_a=0._SP
+         if (order==-1) local_a=1._SP
        case('GAUSS')
          if (order==0 ) local_a= sigma*sqrt(pi/2._SP)* ( erf( (real(T_or_W,SP)-T_0)/(sigma*sqrt(2._SP)) )+1._SP )
          if (order==1 ) local_a= exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
          if (order==2 ) local_a=-exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )*(T_or_W-T_0)/sigma**2
          if (order==-1) order=-2
        case('QSSIN')
-         if (order==0 ) local_a= 0.
+         if (order==0 ) local_a= 0._SP
          if (order==1 ) local_a= sin(freq*(T_or_W-T_0))*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
          if (order==2 ) local_a= (freq*cos(freq*(T_or_W-T_0)) &
 &            -(T_or_W-T_0)* sin(freq*(T_or_W-T_0))/sigma**2)*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
          if (order==-1) order=-2
        case('PULSE')
          if(abs((real(T_or_W)-T_0))< sigma) then
-           if (order==0 ) local_a= 0.
+           if (order==0 ) local_a= 0._SP
            if (order==1 ) local_a=(T_or_W-T_0 + sigma)**2 *(T_or_W-T_0 - sigma)**2/sigma**4*cos(freq*(T_or_W-T_0))
            if (order==2 ) local_a=(2*(T_or_W-T_0 + sigma)*    (T_or_W-T_0 - sigma)**2/sigma**4  + &
 &                                  2*(T_or_W-T_0 + sigma)**2 *(T_or_W-T_0 - sigma)   /sigma**4) * &
@@ -206,20 +206,20 @@ module fields
      integer :: iT,order
      real(SP):: T,step
      !
-     theta_function=0.
-     iT=nint(T/step)
+     theta_function=0._SP
+     iT=floor(T/step)
      !
      if (iT==theta_function_iTo_ref) then
-       if (order==2) theta_function= 1./step**2.
+       if (order==2) theta_function= 1._SP/step**2.
      endif
      !
      if (iT==theta_function_iTo_ref+1) then
-       if (order==1) theta_function= 1./step
-       if (order==2) theta_function=-1./step**2.
+       if (order==1) theta_function= 1._SP/step
+       if (order==2) theta_function=-1._SP/step**2.
      endif
      !
      if (iT>=theta_function_iTo_ref+2) then
-       if (order==0) theta_function= 1.
+       if (order==0) theta_function= 1._SP
      endif
      !
    end function
@@ -240,15 +240,15 @@ module fields
    !
    subroutine Efield_reset(E)
      type(ext_field) :: E
-     E%t_initial    =0.
+     E%t_initial    =0._SP
      E%int_t_initial=0
-     E%frequency    =0.
+     E%frequency    =0._SP
      E%n_frequencies=1
-     E%W_step       =0.
-     E%intensity    =0.
-     E%damping      =0.
+     E%W_step       =0._SP
+     E%intensity    =0._SP
+     E%damping      =0._SP
      E%ef_name      ='none'
-     E%versor       =(/1.0,0.0,0.0/)
+     E%versor       =(/1._SP,0._SP,0._SP/)
    end subroutine
    !
    complex(SP) function Rabi_Factor(Field,P,R)
@@ -263,9 +263,9 @@ module fields
      type(ext_field), intent(in) :: Field
      complex(SP)                 :: P(3),R(3)
      if ( trim(global_gauge)=='length' ) then
-       Rabi_Factor=2.*sum(R(:)*Field%versor(:))*Field%amplitude
+       Rabi_Factor=2._SP*sum(R(:)*Field%versor(:))*Field%amplitude
      else 
-       Rabi_Factor=2.*sum(P(:)*Field%versor(:))*Field%amplitude
+       Rabi_Factor=2._SP*sum(P(:)*Field%versor(:))*Field%amplitude
        if( any( trim(Field%ef_name)==(/'ANTIRES','SIN    '/)) ) Rabi_Factor=-cI*Rabi_Factor/Field%frequency(1)
        if( any( trim(Field%ef_name)==(/'RES'/)) )               Rabi_Factor= cI*Rabi_Factor/Field%frequency(1)
      endif
@@ -277,8 +277,8 @@ module fields
      type(ext_field):: Field
      integer        :: order
      ! work space
-     complex :: E_w
-     real(SP):: T_0, sigma, W_0, T
+     complex(SP) :: E_w
+     real(SP)    :: T_0, sigma, W_0, T
      !
      select case(Field%ef_name)
        case('ANTIRES')
@@ -292,8 +292,8 @@ module fields
          T_0=10._SP*sigma
          W_0=Field%frequency(1)
          T = 2._SP*pi/W_0
-         E_w= sqrt(pi/2.)*Field%amplitude*sigma*exp(-cI*W_0*T_0)*&
-              &(erf((T-T_0)/sqrt(2.)/sigma)+erf(T_0/sqrt(2.)/sigma))
+         E_w= sqrt(pi/2._SP)*Field%amplitude*sigma*exp(-cI*W_0*T_0)*&
+              &(erf((T-T_0)/sqrt(2._SP)/sigma)+erf(T_0/sqrt(2._SP)/sigma))
          Divide_by_Field = (2._SP*cI/E_w)**order
          if (order==0) Divide_by_Field =  (4._SP,0._SP)/(E_w*conjg(E_w))
        end select
@@ -353,11 +353,11 @@ module fields
        !
        I=Intensity*AU2KWCMm2/WMm22kWCMm2/WMm22ERGCMm2SECm1
        !
-       SPEED=SPEED_OF_LIGHT_SI*100. ! cm/sec
+       SPEED=SPEED_OF_LIGHT_SI*100._SP ! cm/sec
        !
        ! I = SPEED_OF_LIGHT/4/pi |E|^2 
        !
-       Efield_strength= sqrt(I*4.*pi/SPEED)*SVCMm12VMm1*VMm12AU
+       Efield_strength= sqrt(I*4._SP*pi/SPEED)*SVCMm12VMm1*VMm12AU
        !
      endif
      !
@@ -369,7 +369,7 @@ module fields
        !
        ! I = SPEED_OF_LIGHT/4/pi |E|^2 
        !
-       Efield_strength= sqrt(I*4.*pi/SPEED)
+       Efield_strength= sqrt(I*4._SP*pi/SPEED)
        !
      endif
      !

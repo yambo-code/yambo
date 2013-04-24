@@ -21,7 +21,7 @@
 !
 module it_m
  !
- use pars
+ use pars,       ONLY:schlen,lchlen,SP
  implicit none
  !
  character(lchlen)  :: infile
@@ -71,7 +71,7 @@ module it_m
  integer ::      rstatus(maxrnlvls) 
  character(schlen) :: flags(maxflags,2)
  integer ::      fstatus(maxflags)
- character(schlen) :: flines(nvars+maxflags+maxrnlvls)
+ character(lchlen) :: flines(nvars+maxflags+maxrnlvls)
  character(schlen) :: i1vars(maxi1vars,3)
  integer ::           i1st(maxi1vars)
  character(schlen) :: i2vars(maxi2vars,3)
@@ -619,6 +619,7 @@ module it_m
      !Verbosity variables defaults update
      !
      if (initmode<=1.and.present(verb_level)) call initverbosity(name,v_id,'ch',defs,verb_level)
+     !
    end subroutine
    !
    !@@@@@@@@@@@@@@@@@@

@@ -157,15 +157,17 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (l_bxsf)  call read_bxsf(Xk,Xen)
  !
- if (l_qpdb)  call qpdb_setup(en,k)
+ if (l_QP_DBs_create_and_modify)  call QP_DBs_setup(en,k)
+ !
+ if (l_QP_DBs_merge)  call QP_DBs_merge(en,k)
  !
  if (l_wannier) call WANNIER_driver(k,en)
  !   =========
  !
- ! GPL_EXCLUDE_START
- !
- if(l_fix_syms) call symmetries_driver(en,k)
+ if (l_fix_syms) call symmetries_driver(en,k)
  !  ==========
+ !
+ ! GPL_EXCLUDE_START
  !
 #if defined _YPP_RT
  !
@@ -203,6 +205,17 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (l_electrons.and.l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q)
  !
 #endif
+
+#if defined _YPP_SURF
+ !
+ if (lras) call ras_ypp
+ if (lreels) call reels_ypp
+!if (lcelleps) call ras_generate_epsdb(en,k)
+ if (lloc) call ras_loc_ypp
+ if (ltrans) call ras_trans_ypp(en,k)
+ !
+#endif
+
  !
  ! END
  !

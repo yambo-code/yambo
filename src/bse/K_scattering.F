@@ -39,7 +39,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  !
  ! where |k2 ib s1^{-1} x s2 > = PHASE * |k2 ib is_in_the_star_of_k2>
  !
- use pars,          ONLY:SP,IP
+ use pars,          ONLY:SP,IP,cONE,cZERO
  use memory_m,      ONLY:mem_est
  use FFT_m,         ONLY:fft_size
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
@@ -81,7 +81,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
    allocate(O_phase(nsym,BS_bands(2),n_sp_pol))
    call mem_est("O_phase",(/size(O_phase)/),(/IP/))
  endif
- O_phase=0
+ O_phase=cZERO
  isc%ngrho=O_ng
  !
  eval_collision=.false.
@@ -114,14 +114,14 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
        !
        ! Phase search : |k ib is > =? PH |k ib iss_tab>
        !
-       if (is1xis2==iss_tab) O_phase(is1xis2,:,:)=1
+       if (is1xis2==iss_tab) O_phase(is1xis2,:,:)=cONE
        if (is1xis2/=iss_tab.and..not.eval_collision) then
          !
          do i_spin2=1,n_sp_pol
            !
            do ib1=BS_bands(1),BS_bands(2)
              !
-             if (O_phase(is1xis2,ib1,i_spin2)/=0) cycle
+             if (O_phase(is1xis2,ib1,i_spin2)/=cZERO) cycle
              !
              call WF_apply_symm((/ib1,ik2,is1xis2,i_spin2/),WF_symm1)
              call WF_apply_symm((/ib1,ik2,iss_tab,i_spin2/),WF_symm2)
@@ -130,9 +130,9 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
              if(n_spinor>1) wf_cmp=wf_cmp+dot_product(WF_symm1(:,2),WF_symm2(:,2))
              !
              if (abs(abs(wf_cmp)-1.)<=1.E-3) then
-               O_phase(is1xis2,ib1,i_spin2)=nint(real(wf_cmp))
+               O_phase(is1xis2,ib1,i_spin2)=conjg(wf_cmp)
              else
-               O_phase(is1xis2,ib1,i_spin2)=-99
+               O_phase(is1xis2,ib1,i_spin2)=-99._SP
              endif
            enddo
          enddo
@@ -163,7 +163,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
            !
            is_coll=iss_tab
            !
-           if (O_phase(is1xis2,ib2,i_spin1)==-99) is_coll=is1xis2
+           if (O_phase(is1xis2,ib2,i_spin1)==-99._SP) is_coll=is1xis2
            if(scatt_stat(ib1-b_ref,ib2-b_ref,is_coll,i_spin1)==0) then
              !
              O_n_scatt=O_n_scatt+1
@@ -205,14 +205,13 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
    return
  endif
  !
- ! When O_phase is -99 the phase does not exist so that it must be set
- ! to 0
+ ! When O_phase is -99 the phase does not exist so that it must be set to 1
  !
  do i1=1,nsym
    do i2=1,BS_bands(2)
      do i_spin1=1,n_sp_pol
        !
-       if (O_phase(i1,i2,i_spin1)==-99.or.O_phase(i1,i2,i_spin1)==0) O_phase(i1,i2,i_spin1)=1
+       if (O_phase(i1,i2,i_spin1)==-99._SP.or.O_phase(i1,i2,i_spin1)==cZERO) O_phase(i1,i2,i_spin1)=cONE
        ! 
      enddo
    enddo

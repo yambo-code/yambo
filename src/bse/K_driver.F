@@ -37,7 +37,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_eh_en,BSE_mode
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
-&                         FXC_is_causal
+&                         FXC_is_causal,FXC_n_g_corr
  use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PP_redux_wait,PAR_Xk_nbz,PAR_Xk_nibz,PAR_Xk_bz_index,PAR_Xk_ibz_index,&
@@ -50,6 +50,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use QP_m,           ONLY:OCC_T_ref
  use IO_m,           ONLY:REP
 #endif
+#if defined _KERR
+ use drivers,        ONLY:l_kerr,l_anomalous_Hall
+#endif
  implicit none
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
@@ -59,7 +62,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! Work Space
  !
  type(X_t)   :: X_tddft
- integer     :: iq,bands_to_correct(2)
+ integer     :: iq,bands_to_correct(2),Bands_limits(2)
  integer     :: Max_G_m_G,ik
  integer, external :: eval_G_minus_G
  !
@@ -95,15 +98,22 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  call tddft_do_X_W_typs(-1,X_tddft,Xw)
  !
- ! In these two lines I ensure the at least all the metallic
- ! states are included in the X summation
+ if(BS_bands(1)<1        ) BS_bands(1)=1
+ if(BS_bands(2)>Ken%nb   ) BS_bands(2)=Ken%nb
  !
- if (any((/BS_bands(1)>Ken%nbf+1,BS_bands(2)<Ken%nbm/))) then
-   BS_bands=(/Ken%nbf+1,Ken%nbm/)
+ ! In these two lines I ensure the at least all the metallic
+ ! states are included (metallic case) or that at least
+ ! 1 valence state and 1 conduction state are included (non metallic case)
+ !
+ if(Ken%nbf+1>=Ken%nbm) Bands_limits=(/Ken%nbf,Ken%nbf+1/)
+ if(Ken%nbf+1< Ken%nbm) Bands_limits=(/Ken%nbf+1,Ken%nbm/)
+ if (any((/BS_bands(1)>Bands_limits(1),BS_bands(2)<Bands_limits(2)/))) then
+   if(BS_bands(1)>Bands_limits(1)) BS_bands(1)=Bands_limits(1)
+   if(BS_bands(2)<Bands_limits(2)) BS_bands(1)=Bands_limits(2)
    BS_eh_en=(/1.,-1./)
    do ik=1,Xk%nibz
-     if (Ken%f(Ken%nbm,ik,1)  >1.E-5) BS_eh_en(2)=max(BS_eh_en(2),Ken%E(Ken%nbm,ik,1))
-     if (Ken%f(Ken%nbf+1,ik,1)>1.E-5) BS_eh_en(1)=min(BS_eh_en(1),Ken%E(Ken%nbf,ik,1))
+     if (Ken%f(BS_bands(1),ik,1)>1.E-5) BS_eh_en(1)=min(BS_eh_en(1),Ken%E(BS_bands(1),ik,1))
+     if (Ken%f(BS_bands(2),ik,1)>1.E-5) BS_eh_en(2)=max(BS_eh_en(2),Ken%E(BS_bands(2),ik,1))
    enddo
    call warning('BS bands redefined to be :'//trim(intc(BS_bands(1)))//' - '//trim(intc(BS_bands(2))))
    call warning('E/h energy range :'//trim(real2ch(BS_eh_en(1)*HA2EV))//' - '//trim(real2ch(BS_eh_en(2)*HA2EV))//' eV')
@@ -139,11 +149,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
  endif
  !
- if(l_rpa_IP) then
-   l_bss=.true.
-   BSS_mode=''
-   if(trim(BSE_mode)=='coupling') BSE_mode='causal'
- endif
+#if defined _KERR
+ call parser('EvalKerr',l_kerr)
+ if(l_kerr) call parser('AnHall',l_anomalous_Hall)
+#endif
+ !
+ if(l_rpa_IP.and.trim(BSE_mode)=='coupling') BSE_mode='causal'
  !
  if( any((/index(BSS_mode,'h')/=0,index(BSS_mode,'i')/=0/)) &
 &    .and. trim(BSE_mode)=='causal') BSE_mode='resonant'
@@ -162,7 +173,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! GPL_EXCLUDE_END
  !
- !
  ! Logicals (Drivers)
  !
  BS_res_K_corr=index(BS_res_mode,'c')/=0
@@ -171,6 +181,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
  BS_anti_res=index(BSE_mode,'c')/=0
+ !
+ if (l_bs_fxc) BS_n_g_exch=FXC_n_g_corr
  !
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  !
@@ -197,7 +209,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! 2. The KERNEL
  ! ================
- if(.not.l_rpa_IP) call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
+ if (.not.l_rpa_IP) call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
  !
  ! 3. The SOLVER
  ! =================
@@ -235,7 +247,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! CLEAN
  !
- deallocate(BSS_rhoq0,BS_blk_dim)
+ if (allocated(BSS_rhoq0))   deallocate(BSS_rhoq0)
+ if (allocated(BS_blk_dim))  deallocate(BS_blk_dim)
  call mem_est("BS_blk_dim BSS_rhoq0")
  !
  if (allocated(BS_eh_table)) deallocate(BS_eh_table)

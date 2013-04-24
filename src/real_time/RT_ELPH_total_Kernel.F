@@ -105,7 +105,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
      !
      ! N+/-
      !
-     N_q    = (bose_f(ph_freq)+(/0.,spin_occ/))/spin_occ
+     N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
      !
      ! Note the m.e. in Gkkp are stored with indexes order exchanged
      !

@@ -52,18 +52,18 @@ subroutine el_density(en,Xk,rho,force_si)
  use D_lattice,     ONLY:nsym,i_time_rev,mag_syms
  use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_inv
  use wave_func,     ONLY:wf_state,wf
-!#if defined _RT
-! use SC,            ONLY:SC_bands
-!#endif
+#if defined _RT
+ use SC,            ONLY:SC_bands
+#endif
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP_G_b,&
 &                        PAR_COM_QP_A2A,PAR_IND_QP,PAR_COM_QP_A2A
  !
  implicit none
  type(bz_samp)::Xk
-!#if defined _RT
-! complex(SP), intent(in), optional :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),Xk%nibz)
-! integer,     intent(in) :: lowest_band
-!#endif
+#if defined _RT
+ complex(SP), intent(in), optional :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),Xk%nibz)
+ integer,     intent(in) :: lowest_band
+#endif
  type(levels) ::en       
  real(SP)     ::rho(fft_size)
  logical,     intent(in) :: force_si
@@ -80,13 +80,13 @@ subroutine el_density(en,Xk,rho,force_si)
  rho_no_sym=0._SP
  warn_done=.false.
  !
-!#if defined _RT
-! iv_max=SC_bands(2)
-! iv_min=lowest_band
-!#else
+#if defined _RT
+ iv_max=SC_bands(2)
+ iv_min=lowest_band
+#else
  iv_max=en%nbm
  iv_min=1
-!#endif
+#endif
  !
  ! March 2013 (Andrea)
  !
@@ -143,47 +143,47 @@ subroutine el_density(en,Xk,rho,force_si)
          cycle
        endif
        !
-!#if defined _RT
-!        if(ib<SC_bands(1)) then
-!          f_occ=en%f(ib,ik,1)
-!        else
-!          f_occ=real(-(0._SP,1._SP)*G_lesser(ib,ib,ik),SP)
-!        endif
-!#else
+#if defined _RT
+        if(ib<SC_bands(1)) then
+          f_occ=en%f(ib,ik,1)
+        else
+          f_occ=real(-(0._SP,1._SP)*G_lesser(ib,ib,ik),SP)
+        endif
+#else
         f_occ=en%f(ib,ik,1)
         if (n_sp_pol==2) f_occ=en%f(ib,ik,i_spin)
-!#endif
+#endif
         rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(ik)*abs(wf(:,ifft))**2.
         !
       enddo
     enddo
   enddo bands_loop
   !
-!#if defined _RT
-!  !
-!  ! Off-diagonal contributions
-!  !
-!  do ik=1,Xk%nibz
-!    !      
-!    do ib=iv_min,iv_max
-!      !
-!      do ibp=ib+1,SC_bands(2)
-!        !      
-!        if(ib<SC_bands(1).or.ibp<SC_bands(1)) cycle
-!        !
-!        ifft=wf_state(ib,ik,1)
-!        ifft2=wf_state(ibp,ik,1)
-!        !
-!        if(ifft==0.or.ifft2==0) cycle
-!        !
-!        rho_no_sym(:)=rho_no_sym(:)-Xk%weights(ik)*2._SP*real(wf(:,ifft) &
-!&                 *conjg(wf(:,ifft2))*(0._SP,1._SP)*G_lesser(ib,ibp,ik),SP)
-!        !
-!      enddo
-!    enddo
-!    !
-!  enddo
-!#endif
+#if defined _RT
+  !
+  ! Off-diagonal contributions
+  !
+  do ik=1,Xk%nibz
+    !      
+    do ib=iv_min,iv_max
+      !
+      do ibp=ib+1,SC_bands(2)
+        !      
+        if(ib<SC_bands(1).or.ibp<SC_bands(1)) cycle
+        !
+        ifft=wf_state(ib,ik,1)
+        ifft2=wf_state(ibp,ik,1)
+        !
+        if(ifft==0.or.ifft2==0) cycle
+        !
+        rho_no_sym(:)=rho_no_sym(:)-Xk%weights(ik)*2._SP*real(wf(:,ifft) &
+&                 *conjg(wf(:,ifft2))*(0._SP,1._SP)*G_lesser(ib,ibp,ik),SP)
+        !
+      enddo
+    enddo
+    !
+  enddo
+#endif
   !
   if (n_QP_A2A_cpu>1) then
     deallocate(states_filling)

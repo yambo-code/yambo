@@ -23,11 +23,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
  use pars,       ONLY:SP,schlen
- use units,      ONLY:HA2EV,FS2AUT
+ use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use fields,     ONLY:global_gauge,grid_path
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,&
+&                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,Chi_mode,&
 &                      eval_alpha,Vnl_commutator_warning,Dipole_uses_shifted_grids,&
 &                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
@@ -51,9 +51,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     filled_tresh, l_spin_orbit,n_spin_den,        &
 &                     eval_magn
  use parallel_m, ONLY:master_cpu,ncpu,CPU_str_reset
- use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
-&                     of_unit,max_open_ofs,repfile,&
-&                     more_io_path,core_io_path,jobstr,com_path,second_jobstr
+ use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
+&                     more_io_path,core_io_path,jobstr,com_path,second_jobstr,repfile
  use stderr,     ONLY:win_size,tty_size,write_to_log,logfile,set_real_printed_length,&
 &                     string_split,log_as_a_file
  use timing,     ONLY:log_line_to_dump,log_line,nhash,ct
@@ -62,13 +61,13 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,&
 &                     Fragmented_IO,Fragmented_IO_save 
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
-&                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
+&                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
 &                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BS_anti_res
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
-&                     FXC_is_causal
+&                     FXC_is_causal,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,nQ_memory,&
@@ -252,8 +251,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_ppa=.false.
  l_cohsex=.false.
  l_gw0=.false.
- l_bse=.false.
  l_chi=.false.
+ l_bse=.false.
+ l_bsk=.false.
  l_bss=.false.
  l_rpa_IP=.false.
  l_td_hartree=.false.
@@ -263,7 +263,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_bs_fxc=.false.
  l_td_hf=.false.
  l_W_eh=.false.
- l_W_eh_diagonal=.false.
+ l_W_eh_diag=.false.
+ l_W_eh_cpl=.false.
  l_acfdt=.false.
  l_el_corr=.false.
  l_ph_corr=.false.
@@ -323,6 +324,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  !X
  !
+ Chi_mode=' '
  current_iq=0
  X_RIM_nkpts=0
  self_detect_E_range=.false.
@@ -394,10 +396,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BS_res_mode='xc'
  BS_cpl_mode='none'
  BSE_mode='causal'
+ BSK_mode=' '
+ TDDFT_mode=' '
  BS_anti_res=.FALSE.
  BS_K_dim=0
  BSS_mode=' '
- BSS_inversion_mode='m'
+ BSS_inversion_mode='pf'
  BSS_n_freqs=100
  BSS_n_descs=0
  BSS_er=(/0.,10./)/HA2EV

@@ -217,7 +217,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
              do ik=1,nkibz
                f_occ=spin_occ
                if(l_prt_occ_only) f_occ=Xen%f(ib,ik,i_spin)
-z#if defined _YPP_RT
+#if defined _YPP_RT
                if (l_TIME_plot) f_occ=(RT_occupations(ib,ik)-RT_occupations_ref(ib,ik))
 #endif
                el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&

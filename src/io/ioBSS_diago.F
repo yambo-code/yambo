@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
+integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID,bsR_kerr)
  !
  use pars,          ONLY:SP,schlen,IP
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_write_eig_2_db,&
@@ -29,13 +29,15 @@ integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
 &                        io_header,write_is_on,read_is_on,ver_is_gt_or_eq
  use electrons,     ONLY:n_sp_pol
  implicit none
- integer     :: iq,ID,BS_H_dim
- real(SP)    :: bsE(2,BS_H_dim),bsR(2,BS_H_dim)
+ integer              :: iq,ID,BS_H_dim
+ complex(SP)          :: bsE(BS_H_dim),bsR(BS_H_dim)
+ complex(SP),optional :: bsR_kerr(BS_H_dim)
  !
  ! Work Space
  !
  integer          :: i1
  real(SP)         :: BS_mat_disk(2,BS_H_dim)
+ real(SP)         :: bsE_disk(2,BS_H_dim),bsR_disk(2,BS_H_dim)
  character(schlen):: db_name
  !
  write (db_name,'(a,i2.2)') 'BS_diago_Q',iq
@@ -73,10 +75,26 @@ integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
  endif
  !
  if (any((/io_sec(ID,:)==2/))) then
+   !
+   if (write_is_on(ID)) bsE_disk(1,:)=real(bsE)
+   if (write_is_on(ID)) bsE_disk(2,:)=aimag(bsE)
    call io_bulk(ID,'BS_Energies',VAR_SZ=(/2,BS_H_dim/))
-   call io_bulk(ID,R2=bsE)
+   call io_bulk(ID,R2=bsE_disk)
+   if (read_is_on(ID)) bsE=cmplx(bsE_disk(1,:),bsE_disk(2,:))
+   !
+   if (write_is_on(ID)) bsR_disk(1,:)=real(bsR)
+   if (write_is_on(ID)) bsR_disk(2,:)=aimag(bsR)
    call io_bulk(ID,'BS_Residuals',VAR_SZ=(/2,BS_H_dim/))
-   call io_bulk(ID,R2=bsR)
+   call io_bulk(ID,R2=bsR_disk)
+   if (read_is_on(ID)) bsR=cmplx(bsR_disk(1,:),bsR_disk(2,:))
+   !
+   if(present(bsR_kerr)) then
+     if (write_is_on(ID)) bsR_disk(1,:)=real(bsR_kerr)
+     if (write_is_on(ID)) bsR_disk(2,:)=aimag(bsR_kerr)
+     call io_bulk(ID,'BS_KERR_Residuals',VAR_SZ=(/2,BS_H_dim/))
+     call io_bulk(ID,R2=bsR_disk)
+     if (read_is_on(ID)) bsR_kerr=cmplx(bsR_disk(1,:),bsR_disk(2,:))
+   endif
  endif
  !
  if (any((/io_sec(ID,:)==3/))) then

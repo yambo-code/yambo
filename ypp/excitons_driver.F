@@ -36,7 +36,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use YPP,           ONLY:l_eliashberg,l_gkkp
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
- use BS,            ONLY:BS_K_dim,BS_bands,BS_q,&
+ use BS,            ONLY:BS_K_dim,BS_bands,BS_q,ioBSS_diago,&
 &                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
 &                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db,&
 &                        BSS_n_descs,BSS_description
@@ -88,7 +88,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !... I/0
  !
  integer           ::io_err,ID,io_ID
- integer, external ::ioBSS_diago,ioBS
+ integer, external ::ioBS
  type(X_t)         ::Xbsk
  !
  !... Energies and Residulas

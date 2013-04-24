@@ -31,8 +31,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use FFT_m,          ONLY:fft_size
  use YPP,            ONLY:l_density,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,plot_title,l_dos,dos_broadening,dos_bands,&
-&                         dos_E_range,dos_E_steps,OCC_T_ref,OCC_T_range,OCC_deltaT,RT_occupations_ref, &
-                          l_only_occ
+&                         dos_E_range,dos_E_steps,OCC_T_ref,OCC_T_range,OCC_deltaT,RT_occupations_ref
 #if defined _YPP_RT
  use YPP,            ONLY:OCC_T_range,OCC_deltaT
 #endif
@@ -47,6 +46,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
  use interfaces,     ONLY:PARALLEL_index
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait
+ use parser_m,       ONLY:parser
  implicit none
  !
  type(bz_samp) ::Xk
@@ -58,10 +58,13 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  real(SP)              :: el_dos(dos_E_steps,n_sp_pol),dos_E,delta_E,f_occ,io_Time,dos_norm,el_dos_max
  integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps,i_fp,io_ID,io_err,ik_rand,i1
  character(schlen)     :: ch_ws,titles(4),out_units(2)
- logical               :: l_TIME_plot,l_3D_plot,l_RIM
+ logical               :: l_TIME_plot,l_3D_plot,l_RIM,l_prt_occ_only
  type(PP_indexes)      :: px
  !
  integer,     external :: ioE_RIM,RT_occupations_check 
+ !
+ !
+ call parser('PrtOccOnly',l_prt_occ_only)
  !
  ! E_rim
  !=======
@@ -86,8 +89,6 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  if (l_dos) then
    !
    call section('*','Electronic DOS')
-   !
-   call parser('DOSocc',l_only_occ)
    !
    l_TIME_plot=.FALSE.
    l_3D_plot  =.FALSE.
@@ -203,8 +204,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
              do ik=1,nkbz
                do i1=1,BZ_RIM_nkpt(ik)
                  ik_rand=BZ_RIM_table(ik,i1)
-                 if(     l_only_occ) f_occ=Xen%f_RIM(ib,ik_rand,i_spin)
-                 if(.not.l_only_occ) f_occ=spin_occ
+                 f_occ=spin_occ
+                 if(l_prt_occ_only) f_occ=Xen%f_RIM(ib,ik_rand,i_spin)
 #if defined _YPP_RT
                  if (l_TIME_plot) f_occ=(RT_occupations(ib,Xk%sstar(ik,1))-RT_occupations_ref(ib,Xk%sstar(ik,1)))
 #endif
@@ -214,9 +215,9 @@ subroutine electrons_dos_and_charge(Xk,Xen)
              enddo
            else
              do ik=1,nkibz
-               if(     l_only_occ) f_occ=Xen%f(ib,ik,i_spin)
-               if(.not.l_only_occ) f_occ=spin_occ
-#if defined _YPP_RT
+               f_occ=spin_occ
+               if(l_prt_occ_only) f_occ=Xen%f(ib,ik,i_spin)
+z#if defined _YPP_RT
                if (l_TIME_plot) f_occ=(RT_occupations(ib,ik)-RT_occupations_ref(ib,ik))
 #endif
                el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&

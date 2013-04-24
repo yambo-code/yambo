@@ -129,6 +129,13 @@ module BS
      type(X_t), optional::X
    end function
    !
+   integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID,bsR_kerr)
+     use pars,          ONLY:SP
+     integer             :: iq,ID,BS_H_dim
+     complex(SP)         :: bsE(BS_H_dim),bsR(BS_H_dim)
+     complex(SP),optional:: bsR_kerr(BS_H_dim)
+   end function
+   !
    integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)
      use pars,          ONLY:SP
      integer             :: ID,it,BS_H_dim

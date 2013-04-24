@@ -28,7 +28,8 @@ subroutine K_diagonalization(iq,W)
  use wrapper,        ONLY:M_by_M,Vstar_dot_V,V_dot_V
  use X_m,            ONLY:X_epsilon,X_drude_term
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,&
-&                         BSS_write_eig_2_db,BS_eh_W,BS_eh_E,BS_anti_res
+&                         BSS_write_eig_2_db,BS_eh_W,BS_eh_E,BS_anti_res,&
+&                         ioBSS_diago
 #if defined _KERR
  use KERR,           ONLY:BSS_rhoq0_kerr,B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
@@ -87,7 +88,6 @@ subroutine K_diagonalization(iq,W)
  ! I/O
  !
  integer              ::io_err,ID
- integer, external    ::ioBSS_diago
  !
 #if defined _KERR
  real(SP)             :: factor_jj
@@ -143,8 +143,18 @@ subroutine K_diagonalization(iq,W)
  !
  ! Diagonalization DB (IN)
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+#if defined _KERR
+ if(l_kerr) then
+   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
+   io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID,BS_R_kerr)
+ else
+#endif
+   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
+   io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+#if defined _KERR
+ endif
+#endif
+
  !
  if(io_err<0) then
    !
@@ -336,6 +346,7 @@ subroutine K_diagonalization(iq,W)
  if(l_kerr) then
    X_epsilon(5,:)=(0.,0.)
    X_epsilon(6,:)=X_epsilon(6,:)/real(ncpu,SP)
+   B_Hall(2)=(0.,0.)
    B_Hall(1)=B_Hall(1)/real(ncpu,SP)
  endif
 #endif
@@ -346,16 +357,17 @@ subroutine K_diagonalization(iq,W)
    !
    gauge_factor=1._SP
 #if defined _SC || defined _KERR
-   if (trim(global_gauge)=='velocity') gauge_factor=BS_E(i1)
-   if (     K_is_not_hermitian) gauge_factor=     gauge_factor **2._SP
-   if (.not.K_is_not_hermitian) gauge_factor=real(gauge_factor)**2._SP
+   if (trim(global_gauge)=='velocity') then
+     gauge_factor=BS_E(i1)
+     if (     K_is_not_hermitian) gauge_factor=     gauge_factor **2._SP
+     if (.not.K_is_not_hermitian) gauge_factor=real(gauge_factor)**2._SP
+   endif
 #endif
 #if defined _KERR
    if (l_kerr.and.l_anomalous_Hall) then
      if (     K_is_not_hermitian) B_Hall(2)=B_Hall(2)+BS_R_kerr(i1)/gauge_factor
      if (.not.K_is_not_hermitian) then
        B_Hall(2)=B_Hall(2)+conjg(BS_R(i1))*BS_R_kerr(i1)/gauge_factor
-       if(BS_anti_res) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
      endif
    endif
    gauge_factor=1._SP
@@ -394,7 +406,10 @@ subroutine K_diagonalization(iq,W)
  if(trim(global_gauge)=='length')   factor_jj=0._SP
  if(trim(global_gauge)=='velocity') factor_jj=X_epsilon(3,iw_ref)
  !
- if(l_anomalous_Hall) B_Hall(2)=B_Hall(2)*Co
+ if(l_anomalous_Hall) then
+   B_Hall(2)=B_Hall(2)*Co
+   if(BS_anti_res) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
+ endif
  !
  gauge_factor=1._SP
  do iw=1,BSS_n_freqs
@@ -420,8 +435,17 @@ subroutine K_diagonalization(iq,W)
  ! Diagonalization DB (OUT)
  !
  if (io_err/=0) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-   io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+#if defined _KERR
+   if(l_kerr) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
+     io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID,BS_R_kerr)
+   else
+#endif
+     call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
+     io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+#if defined _KERR
+   endif
+#endif
  endif
  !
  ! CLEAN

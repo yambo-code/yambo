@@ -46,7 +46,6 @@ module YPP
  ! DOS
  !
  logical      ::l_dos ! electrons and phonons
- logical      ::l_only_occ     ! use only occ states
  real(SP)     ::dos_broadening ! electrons
  real(SP)     ::dos_E_range(2) ! Energy Range
  integer      ::dos_bands(2)   ! Bands Range

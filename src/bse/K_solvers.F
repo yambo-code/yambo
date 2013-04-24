@@ -104,11 +104,13 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #if defined _KERR
    if(l_kerr) stop_Haydock = BS_not_const_eh_f
 #endif
-   if (stop_Haydock) call warning('Fractional occupations still unsupported (Haydock)')
+   if (stop_Haydock) call warning('Fractional occupations and coupling/kerr still unsupported (Haydock)')
    !
-   call K_output_file(iq,-1)
-   call K_Haydock(iq,W_bss)
-   BSS_n_descs=BSS_n_descs-4 
+   if(.not.stop_Haydock) then
+     call K_output_file(iq,-1)
+     call K_Haydock(iq,W_bss)
+     BSS_n_descs=BSS_n_descs-4 
+   endif
    !
  endif
  !

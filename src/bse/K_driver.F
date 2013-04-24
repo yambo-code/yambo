@@ -51,6 +51,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
+#if defined _SC || defined _KERR
+ use fields,         ONLY:global_gauge
+#endif
  implicit none
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
@@ -97,6 +100,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    call warning('BS bands redefined to be :'//trim(intc(BS_bands(1)))//' - '//trim(intc(BS_bands(2))))
    call warning('E/h energy range :'//trim(real2ch(BS_eh_en(1)*HA2EV))//' - '//trim(real2ch(BS_eh_en(2)*HA2EV))//' eV')
  endif
+ !
+#if defined _SC || defined _KERR
+ if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
+   call warning("Now a valid gauge. Switching to lenght gauge")
+   global_gauge="length"
+ endif
+#endif
  !
  ! If using ALDA enough bands must be loaded to
  ! be able to calculate the density

@@ -117,7 +117,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'DOS_bands', 'DOS bands',dos_bands) 
  call it(defs,'DOSERange', 'Energy range',dos_E_range,unit=E_unit,verb_level=V_general) 
  call it(defs,'DOSESteps', 'Energy steps',dos_E_steps,verb_level=V_general) 
- call it('f',defs,'DOSocc'   , 'Use only occupied states',verb_level=V_general)
+ call it('f',defs,'PrtOccOnly', 'Occupied states only') 
 #if defined _YPP_RT
  call it(defs,'TFit','NEGF Fermi Function fit values',Fermi_fit_points)
  call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit)

@@ -98,7 +98,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  ! DOS
  !
  l_dos=.false.
- l_only_occ=.false.
  dos_broadening=0.1/HA2EV
  dos_bands=(/1,n_bands/)
  dos_E_range=(/1.,-1./)/HA2EV
@@ -539,7 +538,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
     if (l_dos.or.l_bands) call QP_ctl_switch('G')
     if (l_dos) then
       call initactivate(1,"OCCdT OCCTime")
-      call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad DOSocc")
+      call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad PrtOccOnly")
     endif
  endif
  !

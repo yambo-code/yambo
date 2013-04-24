@@ -51,6 +51,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
+#if defined _SC || defined _KERR
+ use fields,         ONLY:global_gauge
+#endif
  implicit none
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
@@ -98,6 +101,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    call warning('E/h energy range :'//trim(real2ch(BS_eh_en(1)*HA2EV))//' - '//trim(real2ch(BS_eh_en(2)*HA2EV))//' eV')
  endif
  !
+#if defined _SC || defined _KERR
+ if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
+   call warning("Not a valid gauge in input. Switching to lenght gauge")
+   global_gauge="length"
+ endif
+#endif
+ !
  ! If using ALDA enough bands must be loaded to
  ! be able to calculate the density
  !
@@ -135,8 +145,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  if(l_rpa_IP.and.trim(BSE_mode)=='coupling') BSE_mode='causal'
  !
- if( any((/index(BSS_mode,'h')/=0,index(BSS_mode,'i')/=0/)) &
-&    .and. trim(BSE_mode)=='causal') BSE_mode='resonant'
+ if(index(BSS_mode,'i')/=0 .and. trim(BSE_mode)=='causal') BSE_mode='resonant'
  !
  ! GPL_EXCLUDE_START  
  !

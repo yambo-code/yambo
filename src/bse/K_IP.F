@@ -55,7 +55,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  ! Work space
  !
  type(X_t)         ::X_oscillators
- integer           ::ik,iv,ic,i1,i_sp,ioBS_err,ID, epsilon_dim
+ integer           ::ik,iv,ic,i1,i_sp,epsilon_dim
  real(SP)          ::Co
  complex(SP)       ::drude_GreenF(W_bss%n(2)),local_Z
  integer           ::iw
@@ -157,8 +157,9 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
 #if defined _KERR
      if(trim(global_gauge)=='length')   BSS_rhoq0(i1)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))
      if(trim(global_gauge)=='velocity') BSS_rhoq0(i1)= conjg(DIP_P_symm(1,ic,iv,ik,i_sp))
+     BSS_rhoq0(i1)=BSS_rhoq0(i1)*sqrt(BS_eh_f(i1))
 #else
-     BSS_rhoq0(i1)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))
+     BSS_rhoq0(i1)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))*sqrt(BS_eh_f(i1))
 #endif
      !
      ! minus comes from the occupation factor 
@@ -167,20 +168,19 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
      if (BS_K_coupling) then
        if(trim(global_gauge)=='length')   BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
        if(trim(global_gauge)=='velocity') BSS_rhoq0(BS_K_dim+i1)=DIP_P_symm(1,ic,iv,ik,i_sp)
+       BSS_rhoq0(BS_K_dim+i1)=BSS_rhoq0(BS_K_dim+i1)*sqrt(BS_eh_f(i1))
      endif
 #else
-     if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
+     if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)*sqrt(BS_eh_f(i1))
 #endif
      !
-     X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*&
-&                                  BS_eh_f(i1)*local_Z/(W_bss%p(:)-BS_eh_E(i1))
+     X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*local_Z/(W_bss%p(:)-BS_eh_E(i1))
      !
      if (BS_anti_res) then
        !
        ! Note the plus in "+BSS_rhoq0" coming from the BS_eh_f change of sign
        !
-       X_epsilon(3,:)=X_epsilon(3,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0(i1)*&
-&                                    BS_eh_f(i1)*local_Z/(W_bss%p(:)+BS_eh_E(i1))
+       X_epsilon(3,:)=X_epsilon(3,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0(i1)*local_Z/(W_bss%p(:)+BS_eh_E(i1))
      endif
      !
      if(l_rpa_IP) call live_timing(steps=1)
@@ -222,7 +222,6 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  if (l_rpa_IP) then
    !  
    X_epsilon(1,:)=W_bss%p(:)
-   X_epsilon(2,:)=0.
    !
    ! Initialize & write the output file
    !

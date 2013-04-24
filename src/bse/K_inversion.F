@@ -175,6 +175,11 @@ subroutine K_inversion(iq,W,E,k,q)
    !
  endif
  !
+ ! I need to remove the occupations from the oscillators strenght
+ ! These are now embodied in the Green's function
+ BSS_rhoq0(1:BS_K_dim)=BSS_rhoq0(1:BS_K_dim)/sqrt(BS_eh_f(1:BS_K_dim))
+ BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)=BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)/sqrt(BS_eh_f(1:BS_K_dim))
+ !
  ! Initialize the output file 
  !
  of_mode=3

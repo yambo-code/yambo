@@ -35,6 +35,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  use interfaces,          ONLY: PARALLEL_index
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: X_t,DIP_iR 
+ use wrapper,             ONLY: Vstar_dot_V
  use fields,              ONLY: grid_path 
  use memory_m,            ONLY: mem_est
  use wave_func,           ONLY: wf,wf_ng,wf_igk,wf_state,WF_load,WF_free , wf_ncx
@@ -80,11 +81,6 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  integer                      :: io_err
  integer, external            :: ioDB1_selective_scan
-#if defined _DOUBLE
- complex(SP)                  :: zdotc
-#else 
- complex(SP)                  :: cdotc
-#endif
  !
  use_trans_gauge=.true.
  !
@@ -178,13 +174,8 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
            !
            ! DIP_iR_or_P = < v,k+q | c,k >/q
            !
-#if defined _DOUBLE
-           rho(i_spin) = zdotc( wf_ng_eff, wf(1:wf_ng_eff,ivfft), &
-&                               1, wf_local(1:wf_ng_eff,icfft),1 ) /q0_shift_norm
-#else
-           rho(i_spin) = cdotc( wf_ng_eff, wf(1:wf_ng_eff,ivfft), &
-&                               1, wf_local(1:wf_ng_eff,icfft),1 ) /q0_shift_norm
-#endif
+           rho(i_spin) = Vstar_dot_V(wf_ng_eff,wf(1:wf_ng_eff,ivfft), &
+&                                        wf_local(1:wf_ng_eff,icfft)) /q0_shift_norm
            !
          enddo    ! spin loop
          !
@@ -208,7 +199,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  ! CLEAN
  !
  call WF_free()
- do i_spin=1,n_spin
+ do i_spin=1,n_sp_pol
    call PP_redux_wait(DIP_iR(:,:,:,:,i_spin))
  enddo
  !

@@ -52,7 +52,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  ! 
  ! Work Space
  !
- integer          :: iw_group,iw,i2,frequencies_range(2),iq,i_G_shift,n_output
+ integer          :: iw,iq,i_G_shift,n_output,n_freqs
  real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus
  logical          :: l_skip_non_int_eps,eval_eels
  !
@@ -78,6 +78,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    call tddft_do_X_W_typs(iq,X,wv)
    !
+   n_freqs=wv%n(1)
+   !
    if (l_alda_fxc) call tddft_alda_g_space(Xen,Xk)
    !
    ! In TDDFT with BS based kernel eps0 is non-sense
@@ -87,15 +89,15 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Arrays to be written in the o. files
    !
-   allocate(X_epsilon(8,wv%n(1)))
+   allocate(X_epsilon(8,n_freqs))
    if (l_bs_fxc) then
-     allocate(X_fxc(wv%n(1)))
+     allocate(X_fxc(n_freqs))
      X_fxc=(0._SP,0._SP)
    endif
    !
    ! X_mat allocation
    !
-   call X_alloc('X',(/X%ng,X%ng,wv%n(2)/))
+   call X_alloc('X',(/X%ng,X%ng,n_freqs/))
    !
    ! Frequencies (AFTER TDDFT SETUP!)
    !
@@ -103,7 +105,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Check if EELS can be evaluated
    !
-   eval_eels= O_eels(wv%p,wv%n(1),.TRUE.,X%ordering)
+   eval_eels= O_eels(wv%p,n_freqs,.TRUE.,X%ordering)
    !
    if (eval_alpha) eval_alpha=eval_eels
    !
@@ -158,75 +160,66 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! 1:e0 2:e 3:eel0 4:eel 5:alpha0 6:alpha 
    !
    X_epsilon=(0.,0.)
-   do iw_group=1,wv%n(1),wv%n(2)
+   !
+   call X_os(X_mat,iq,Xen,Xk,wv,X)     
+   !
+   ! Without LF eps/alpha
+   !
+   X_epsilon(1,:)=1.0_SP-X_mat(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
+   !
+   ! X Dyson equation solver
+   !
+   if(l_rpa_IP) then
+     X_epsilon(2,:)=X_epsilon(1,:)
+   else
+     call X_s(iq,X,wv)
      !
-     frequencies_range=(/iw_group,iw_group+wv%n(2)-1/)
+     X_epsilon(2,:)=1./(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1.)
+   endif
+   !
+   call of_open_close(eps_file_name,'oa')
+   call of_open_close(eel_file_name,'oa')
+   call of_open_close(alpha_file_name,'oa')
+   !
+   ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
+   !
+   call X_write_messages_before_headers(iq,associated(Xen%GreenF),X%Vnl_included,X%ordering)
+   !
+   ! Titles 
+   !
+   n_output=5
+   if(l_rpa_IP.or.l_skip_non_int_eps) n_output=3
+   call msg('o eps eel fxc alpha','#')
+   call X_setup_headers('eps')
+   call msg('o eps',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
+   call X_setup_headers('eel')
+   call msg('o eel',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
+   call X_setup_headers('alpha')
+   call msg('o alpha','#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
+   call msg('o eps eel alpha','#')
+   !
+   do iw=1,n_freqs
      !
-     call X_os(X_mat,iq,frequencies_range,Xen,Xk,wv,X)     
+     ! Eps
      !
-     ! Without LF eps/alpha
-     !
-     X_epsilon(1,frequencies_range(1):frequencies_range(2))=1.0_SP-X_mat(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
-     !
-     ! X Dyson equation solver
-     !
-     if(l_rpa_IP) then
-       X_epsilon(2,frequencies_range(1):frequencies_range(2))=X_epsilon(1,frequencies_range(1):frequencies_range(2))
-     else
-       call X_s(iq,frequencies_range,X,wv)
-       !
-       X_epsilon(2,frequencies_range(1):frequencies_range(2))=1./(X_mat(i_G_shift,i_G_shift,:)*&
-&                                                           bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1.)
-     endif
-     !
-     call of_open_close(eps_file_name,'oa')
-     call of_open_close(eel_file_name,'oa')
-     call of_open_close(alpha_file_name,'oa')
-     !
-     if (iw_group==1) then
-       !
-       ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
-       !
-       call X_write_messages_before_headers(iq,associated(Xen%GreenF),X%Vnl_included,X%ordering)
-       !
-       ! Titles 
-       !
-       n_output=5
-       if(l_rpa_IP.or.l_skip_non_int_eps) n_output=3
-       call msg('o eps eel fxc alpha','#')
-       call X_setup_headers('eps')
-       call msg('o eps',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
-       call X_setup_headers('eel')
-       call msg('o eel',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
-       call X_setup_headers('alpha')
-       call msg('o alpha','#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
-       call msg('o eps eel alpha','#')
-       !
-     endif
-     !
-     do i2=frequencies_range(1),frequencies_range(2)
-       !
-       ! Eps
-       !
-       output_data=(/real(wv%p(i2))*HA2EV,aimag(X_epsilon(2,i2)),real(X_epsilon(2,i2)),&
-&                    aimag(X_epsilon(1,i2)),real(X_epsilon(1,i2))/)
-       call msg('o eps','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
-       !
-     enddo
-     call of_open_close(eps_file_name)
-     call of_open_close(eel_file_name)
-     call of_open_close(alpha_file_name)
+     output_data=(/real(wv%p(iw))*HA2EV,aimag(X_epsilon(2,iw)),real(X_epsilon(2,iw)),&
+&                  aimag(X_epsilon(1,iw)),real(X_epsilon(1,iw))/)
+     call msg('o eps','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
      !
    enddo
+   !
+   call of_open_close(eps_file_name)
+   call of_open_close(eel_file_name)
+   call of_open_close(alpha_file_name)
    !
    if (eval_eels) then 
      !
      call of_open_close(eel_file_name,'oa')
      call of_open_close(alpha_file_name,'oa')
      !
-     eval_eels= O_eels(wv%p,wv%n(1),.TRUE.,X%ordering,X_epsilon(1,:),X_epsilon(3,:))
+     eval_eels= O_eels(wv%p,n_freqs,.TRUE.,X%ordering,X_epsilon(1,:),X_epsilon(3,:))
      if(     l_rpa_IP) X_epsilon(4,:)=X_epsilon(3,:)
-     if(.not.l_rpa_IP) eval_eels= O_eels(wv%p,wv%n(1),.FALSE.,X%ordering,X_epsilon(2,:),X_epsilon(4,:))
+     if(.not.l_rpa_IP) eval_eels= O_eels(wv%p,n_freqs,.FALSE.,X%ordering,X_epsilon(2,:),X_epsilon(4,:))
      !
      if (eval_alpha) then
        !
@@ -240,7 +233,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !
      endif
      !
-     do iw=1,wv%n(1)
+     do iw=1,n_freqs
        !
        ! EEL
        !
@@ -266,7 +259,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    if (l_bs_fxc) then
      call PP_redux_wait(X_fxc)
      call of_open_close(fxc_file_name,'oa')
-     do iw=1,wv%n(1)
+     do iw=1,n_freqs
        call msg('o fxc','',(/real(wv%p(iw))*HA2EV,real(X_fxc(iw)*q_norm(iq)**2.),&
 &                           aimag(X_fxc(iw)*q_norm(iq)**2.)/),INDENT=-2,USE_TABS=.true.)
      enddo

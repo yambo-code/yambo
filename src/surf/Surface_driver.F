@@ -159,7 +159,7 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
        
       fr = (/ iw, iw+wv%n(2)-1 /) ! the small block of frequencies
        
-      call X_os(X_mat,iq,fr,Xen,Xk,wv,X)
+      call X_os(X_mat,iq,Xen,Xk,wv,X)
        
       if(loptcut) X_mat(1,1,:) = X_mat(1,1,:)*az/dc ! Scale if cutoff present
 

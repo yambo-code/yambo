@@ -119,11 +119,11 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    call tddft_do_X_W_typs(iq,X,Xw)
    if (l_alda_fxc) call tddft_alda_g_space(Xen,Xk)
    !
-   call X_os(X_mat,iq,(/1,Xw%n(1)/),Xen,Xk,Xw,X)  
+   call X_os(X_mat,iq,Xen,Xk,Xw,X)  
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
-   if (X%whoami/=1) call X_s(iq,(/1,Xw%n(1)/),X,Xw)
+   if (X%whoami/=1) call X_s(iq,X,Xw)
    !
    call PP_redux_wait
    if (iq==1) then

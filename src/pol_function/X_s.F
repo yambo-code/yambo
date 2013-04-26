@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_s(iq,fr,X,wv)
+subroutine X_s(iq,X,wv)
  !
  use pars,          ONLY:SP,pi
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
@@ -32,14 +32,13 @@ subroutine X_s(iq,fr,X,wv)
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_mat,X_fxc
  use matrix_operate,ONLY:mat_dia_inv,INV,USE_LK,USE_SLK,USE_SVD
- use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_n_mem_freqs,&
-&                        FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,ioBS_Fxc
+ use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_n_mem_freqs,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,ioBS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE
  !
  implicit none
  type(X_t)    :: X
  type(w_samp) :: wv
- integer      :: iq,fr(2)
+ integer      :: iq
  !
  ! Work Space
  !
@@ -66,19 +65,19 @@ subroutine X_s(iq,fr,X,wv)
  !
  ! Max number of frequencies inverted in serial mode (nw_max_par)
  !
- nw_max_par=wv%n(2)-mod(wv%n(2),ncpu)
- call PARALLEL_index(px,(/wv%n(2)/))
- if (nw_max_par<wv%n(2)) px%element_1D(nw_max_par+1:)=.true.
+ nw_max_par=wv%n(1)-mod(wv%n(1),ncpu)
+ call PARALLEL_index(px,(/wv%n(1)/))
+ if (nw_max_par<wv%n(1)) px%element_1D(nw_max_par+1:)=.true.
  call PP_redux_wait
  px%n_of_elements(myid+1)=0
- do iw=1,wv%n(2)
+ do iw=1,wv%n(1)
    if (iw<=nw_max_par.and..not.px%element_1D(iw)) X_mat(:,:,iw)=(0.,0.)
    if (px%element_1D(iw)) px%n_of_elements(myid+1)=px%n_of_elements(myid+1)+1
  enddo
  !
- call live_timing(&
-&   'X @q['//trim(intc(iq))//'] '//trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_elements(myid+1))
- do iw=1,wv%n(2)
+ call live_timing('X@q['//trim(intc(iq))//'] ',px%n_of_elements(myid+1))
+ !
+ do iw=1,wv%n(1)
    !
    INV_MODE=USE_LK
    Xo=X_mat(:,:,iw)
@@ -99,12 +98,12 @@ subroutine X_s(iq,fr,X,wv)
      !
      ! BS Fxc
      !
-     if ( mod(fr(1)+iw-1,FXC_n_mem_freqs)==1.or.wv%n(1)==1) then
-       FXC_w_ref=fr(1)+iw-2
+     if ( mod(iw,FXC_n_mem_freqs)==1.or.wv%n(1)==1) then
+       FXC_w_ref=iw-1
        if (FXC_w_ref==0) then
          call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
        else
-         call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/fr(1)+iw/),ID=ID)
+         call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+iw/),ID=ID)
        endif
        ioFxc_err=ioBS_Fxc(iq,wv,ID)
      endif
@@ -121,18 +120,18 @@ subroutine X_s(iq,fr,X,wv)
        call mat_dia_inv(INV,INV_MODE,Xom1)
      endif
      !
-     tddftk(:FXC_n_g_corr,:FXC_n_g_corr)=matmul(FXC(:,:,fr(1)+iw-1-FXC_w_ref),Xom1)
-     FXC(:,:,fr(1)+iw-1-FXC_w_ref)=matmul(Xom1,tddftk(:FXC_n_g_corr,:FXC_n_g_corr))
-     tddftk(:,:FXC_n_g_corr)=-matmul(Xo(:,:FXC_n_g_corr),FXC(:,:,fr(1)+iw-1-FXC_w_ref))
+     tddftk(:FXC_n_g_corr,:FXC_n_g_corr)=matmul(FXC(:,:,iw-FXC_w_ref),Xom1)
+     FXC(:,:,iw-FXC_w_ref)=matmul(Xom1,tddftk(:FXC_n_g_corr,:FXC_n_g_corr))
+     tddftk(:,:FXC_n_g_corr)=-matmul(Xo(:,:FXC_n_g_corr),FXC(:,:,iw-FXC_w_ref))
      !
      ! Fxc to be written to the o file
      !
-     X_fxc(fr(1)+iw-1-FXC_w_ref)=FXC(1,1,fr(1)+iw-1-FXC_w_ref)
+     X_fxc(iw-FXC_w_ref)=FXC(1,1,iw-FXC_w_ref)
      !
      ! When all CPU's are doing this frequency point X_fxc must be rescaled
      ! because of the call pp_redux_wait(X_fxc) in O_driver.
      !
-     if (iw>nw_max_par) X_fxc(fr(1)+iw-1-FXC_w_ref)=X_fxc(fr(1)+iw-1-FXC_w_ref)/real(ncpu)
+     if (iw>nw_max_par) X_fxc(iw-FXC_w_ref)=X_fxc(iw-FXC_w_ref)/real(ncpu)
      !
      ! GPL_EXCLUDE_END
      !

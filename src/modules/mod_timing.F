@@ -172,7 +172,7 @@ module timing
      !
      message_composed=trim(message)
      if (ncpu/=1.and.parallel_timing.and.(index(lfmt,"n")>0.or.index(lfmt,"r")>0.)) then
-       write (message_composed,'(a,i2.2,2a)') 'P',myid+1,': ',trim(message)
+       write (message_composed,'(a,i3.3,2a)') 'P',myid+1,': ',trim(message)
      endif
      add_cput=live_timing_is_on
      if (present(NO_CPUT)) then

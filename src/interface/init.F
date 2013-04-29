@@ -1073,14 +1073,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    subroutine varsetup2 
      !
-     ! After infile reading. Immediately before infile writing
-     ! CAREFUL! Any input file value is overwritten here !
-     !
-     Xw(2)%n_freqs=Xw(2)%n_freqs
-     Xw(4)%n_freqs=Xw(4)%n_freqs
-     Xw(3)%n_freqs=Xw(3)%n_freqs
-     Xw(1)%n_freqs=Xw(1)%n_freqs
-     !
      ! q0 renormalization
      !
      BSS_q0(:)=BSS_q0(:)*q0_def_norm/v_norm(BSS_q0)

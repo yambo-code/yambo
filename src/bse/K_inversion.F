@@ -235,11 +235,11 @@ subroutine K_inversion(iq,W,E,k,q)
      if (allocated(BS_eh_W)) QP_width=BS_eh_W(i1)
      if (allocated(BS_eh_Z)) QP_Z=BS_eh_Z(i1)
      if (associated(E%GreenF)) then
-       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:,1),"r")
+       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"r")
        if (trim(BSE_mode)=='causal') &
-&        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:,2),"ia")
+&        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"ia")
        if (trim(BSE_mode)=='coupling') &
-&        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1+BS_K_dim,:,1),"ia")
+&        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"ia")
      else
        Lo(i1,:,1)=QP_Z*BS_eh_f(i1)/(W%p(:)-BS_eh_E(i1)-(0.,1.)*QP_width)
        if (trim(BSE_mode)=='causal') &
@@ -248,11 +248,11 @@ subroutine K_inversion(iq,W,E,k,q)
 &        Lo(i1+BS_K_dim,:,1)=-QP_Z*BS_eh_f(i1)/(W%p(:)+BS_eh_E(i1)-(0.,1.)*QP_width)
      endif
    else
-     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:,1),"sr")
+     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"sr")
      if (trim(BSE_mode)=='causal') &
-&      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:,2),"sa")
+&      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"sa")
      if (trim(BSE_mode)=='coupling') &
-&      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1+BS_K_dim,:,1),"sa")
+&      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"sa")
    endif
    !
    X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*Lo(i1,:,1)*Co
@@ -266,11 +266,11 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    if (BSS_uses_RIM) then
      forall(iw=1:W%n(1)) W_shifted%p(iw)=W%p(iw)-BS_mat(i1,i1)
-     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1,:,1),"sr")
+     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,1),"sr")
      if (trim(BSE_mode)=='causal') &
-&      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1,:,2),"sa")
+&      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,2),"sa")
      if (trim(BSE_mode)=='coupling') &
-&      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1+BS_K_dim,:,1),"sa")
+&      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1+BS_K_dim,:,1),"sa")
      BS_mat(i1,i1)=(0.,0.)
    endif
    !

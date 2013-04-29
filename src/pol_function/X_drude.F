@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
+subroutine X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
  !
  use pars,          ONLY:SP,cZERO,schlen
  use units,         ONLY:HA2EV
@@ -38,7 +38,7 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
  type(X_t)            :: X
  type(w_samp)         :: Xw
  !
- integer              :: iq,fr(2)
+ integer              :: iq
  complex(SP)          :: drude_GreenF(Xw%n(2))
  character(1)         :: drude_ordering
  !
@@ -78,8 +78,8 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
 &             (spin_occ-Xen%f(Xen%bf,Xen%kf,Xen%sf))/ &
 &             (spin_occ*real(Xk%nbz)*DL_vol)
  !
- do iw=fr(1),fr(2)
-   drude_GreenF(iw-fr(1)+1)=X_drude(real(Xw%p(iw)),X%Wd,q_norm(1))/drude_factor
+ do iw=1,Xw%n(1)
+   drude_GreenF(iw)=Jellium_drude(real(Xw%p(iw)),X%Wd,q_norm(1))/drude_factor
  enddo
  !
  if(drude_ordering/='c') return
@@ -92,7 +92,7 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
  !
  contains
    !
-   function X_drude(W,Wd,q0_norm)
+   function Jellium_drude(W,Wd,q0_norm)
    !
    !Jellium Xo propagator with a given plasma frequency
    !The propagator is T-ordered. 
@@ -106,7 +106,7 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
    !
    ! Work Space
    !
-   complex(SP) :: xi,X_drude
+   complex(SP) :: xi,Jellium_drude
    real(SP)    :: Kf,rxi,fac
    !
    Kf =((3.*pi*real(Wd)**2.)/4.)**(1./3.)
@@ -115,14 +115,14 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
    rxi=real(xi)
    !
    if (abs(W)<=10*fac) then
-     X_drude=-1./(2.*pi**2.*q0_norm)*(2.*fac+xi*log((xi-fac)/xi)-&
-&            conjg(xi)*log((conjg(xi)+fac)/conjg(xi)))
+     Jellium_drude=-1./(2.*pi**2.*q0_norm)*(2.*fac+xi*log((xi-fac)/xi)-&
+&                  conjg(xi)*log((conjg(xi)+fac)/conjg(xi)))
    else
-     X_drude=-Kf*fac/(2.*pi**2.)*(-1./(2.*xi)+1./(2.*conjg(xi))-&
-&            fac/(3.*rxi**2.)-fac/(3.*rxi**2.))
+     Jellium_drude=-Kf*fac/(2.*pi**2.)*(-1./(2.*xi)+1./(2.*conjg(xi))-&
+&                  fac/(3.*rxi**2.)-fac/(3.*rxi**2.))
    endif
    !
-  end function X_drude
+  end function Jellium_drude
   !
   !
 end subroutine

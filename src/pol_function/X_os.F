@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
+subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Non interacting Xo
  !
@@ -54,8 +54,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  type(bz_samp)        :: Xk
  type(X_t)            :: X
  type(w_samp)         :: Xw
- integer              :: iq,fr(2)
- complex(SP)          :: Xo(X%ng,X%ng,Xw%n(2))
+ integer              :: iq
+ complex(SP)          :: Xo(X%ng,X%ng,Xw%n(1))
  !
  ! Work Space
  !
@@ -65,7 +65,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  real(SP)                :: minmax_ehe(2),eh_occ
  type(PP_indexes)        :: px
  type(ggwinfo)           :: isc
- complex(SP)             :: GreenF(Xw%n(2)),drude_GreenF(Xw%n(2))
+ complex(SP)             :: GreenF(Xw%n(1)),drude_GreenF(Xw%n(1))
  complex(SP),allocatable :: rhotw_save(:),XoR(:,:)
  integer,    external    :: X_eh_setup
  complex(SP),external    :: X_simple_GreenF
@@ -109,7 +109,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
 &    (lras.or.lreels).and.loptcut) call Dipole_driver_cut( Xen, Xk, X, X%q0)
 #endif
  !
- call Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
+ call X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
  !
  ! Poles tabulation
  !==================
@@ -174,13 +174,13 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  g2_max=X%ng
  iwmax=1
  if (half_X_mat_only) g2_max=-1
- if (Xw%n(2)==1.and.half_X_mat_only) iwmax=2
+ if (Xw%n(1)==1.and.half_X_mat_only) iwmax=2
  if (current_iq==0.and.half_X_mat_only ) call msg('s','[X] Upper matrix triangle filled')
  !
  ! Parallel pointers
  !===================
  allocate(px%weight_1D(cg_npts))
- px%weight_1D=bg_npts+Xw%n(2)
+ px%weight_1D=bg_npts+Xw%n(1)
  call PARALLEL_index(px,(/cg_npts/))
  !
  ! LiveTiming Title
@@ -189,12 +189,10 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  if (l_sc_run.and..not.l_collisions_IO) then
    call live_timing('Xo @it'//trim(intc(it_now)),px%n_of_elements(myid+1))
  else
-   call live_timing('Xo@q['//trim(intc(iq))//'] '//&
-&                    trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_elements(myid+1))
+   call live_timing('Xo@q'//trim(intc(iq)),px%n_of_elements(myid+1))
  endif
 #else
- call live_timing('Xo@q['//trim(intc(iq))//'] '//&
-&                  trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_elements(myid+1))
+ call live_timing('Xo@q'//trim(intc(iq)),px%n_of_elements(myid+1))
 #endif
  !
  n_poles=0
@@ -223,8 +221,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
      if (cg_pt(i1)==0.) then
        GreenF=drude_GreenF/real(bg_npts(i1))
      else
-       if (.not.force_bare_X_G) GreenF(1) = X_simple_GreenF(Xw%p(fr(1)),cg_pt(i1),X%ordering)
-       if (force_bare_X_G) call X_bare_RIM_GreenF(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,GreenF,X%ordering)
+       if (.not.force_bare_X_G) GreenF(1) = X_simple_GreenF(Xw%p(1),cg_pt(i1),X%ordering)
+       if (force_bare_X_G) call X_bare_RIM_GreenF(iq,X_poles_tab(i1,:),Xw,Xen,Xk,GreenF,X%ordering)
      endif
 loop_bg: do i2 = 1,bg_npts(i1)
        n_poles = n_poles+1
@@ -284,17 +282,16 @@ loop_bg: do i2 = 1,bg_npts(i1)
        !
      enddo loop_bg
      !
-     do i2=iwmax,Xw%n(2)
-       iw=i2+fr(1)-1
-       if (.not.force_bare_X_G.and.cg_pt(i1)/=0.) GreenF(i2)=X_simple_GreenF(Xw%p(iw),cg_pt(i1),X%ordering)
+     do iw=iwmax,Xw%n(1)
+       if (.not.force_bare_X_G.and.cg_pt(i1)/=0.) GreenF(iw)=X_simple_GreenF(Xw%p(iw),cg_pt(i1),X%ordering)
        do g2=1,X%ng
-         call V_by_V_plus_V(g2,GreenF(i2)/GreenF(1),XoR(:g2,g2),Xo(:g2,g2,i2))
-         if (g2<g2_max) call V_by_V_plus_V(X%ng-g2,GreenF(i2)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),Xo(g2+1:,g2,i2))
+         call V_by_V_plus_V(g2,GreenF(iw)/GreenF(1),XoR(:g2,g2),Xo(:g2,g2,iw))
+         if (g2<g2_max) call V_by_V_plus_V(X%ng-g2,GreenF(iw)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),Xo(g2+1:,g2,iw))
          !
        enddo
      enddo
      !
-     call live_timing(steps=Xw%n(2)+bg_npts(i1))
+     call live_timing(steps=Xw%n(1)+bg_npts(i1))
      !
    enddo 
    !
@@ -306,8 +303,8 @@ loop_bg: do i2 = 1,bg_npts(i1)
      n_poles=sum(bg_npts(1:i1-1))
      if (.not.px%element_1D(i1)) cycle
      if (iwmax==1) XoR=(0.,0.)
-     if (.not.force_bare_X_G) GreenF(1)=X_simple_GreenF(Xw%p(fr(1)),cg_pt(i1),X%ordering)
-     if (force_bare_X_G) call X_bare_RIM_GreenF(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,GreenF,X%ordering)
+     if (.not.force_bare_X_G) GreenF(1)=X_simple_GreenF(Xw%p(1),cg_pt(i1),X%ordering)
+     if (force_bare_X_G) call X_bare_RIM_GreenF(iq,X_poles_tab(i1,:),Xw,Xen,Xk,GreenF,X%ordering)
      do i2=1,bg_npts(i1)
        n_poles=n_poles+1
        ikbz   = X_poles_tab(n_poles,1)
@@ -329,15 +326,14 @@ loop_bg: do i2 = 1,bg_npts(i1)
          call V_by_V_plus_V(g2,GreenF(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),XoR(:g2,g2))
        enddo
      enddo
-     do i2=iwmax,Xw%n(2)
-       iw=i2+fr(1)-1
-       if (.not.force_bare_X_G) GreenF(i2)=X_simple_GreenF(Xw%p(iw),cg_pt(i1),X%ordering)
+     do iw=iwmax,Xw%n(1)
+       if (.not.force_bare_X_G) GreenF(iw)=X_simple_GreenF(Xw%p(iw),cg_pt(i1),X%ordering)
        do g2=1,X%ng
-         call V_by_V_plus_V(g2,GreenF(i2)/GreenF(1),XoR(:g2,g2),Xo(:g2,g2,i2))
-         if (g2<g2_max) call V_by_V_plus_V(X%ng-g2,GreenF(i2)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),Xo(g2+1:,g2,i2))
+         call V_by_V_plus_V(g2,GreenF(iw)/GreenF(1),XoR(:g2,g2),Xo(:g2,g2,iw))
+         if (g2<g2_max) call V_by_V_plus_V(X%ng-g2,GreenF(iw)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),Xo(g2+1:,g2,iw))
        enddo
      enddo
-     call live_timing(steps=Xw%n(2)+bg_npts(i1))
+     call live_timing(steps=Xw%n(1)+bg_npts(i1))
    enddo 
    !
  end select 
@@ -347,7 +343,7 @@ loop_bg: do i2 = 1,bg_npts(i1)
      call V_copy(g2,XoR(:,g2),Xo(:,g2,1))
    enddo
  endif
- do i1=1,Xw%n(2)
+ do i1=1,Xw%n(1)
    call PP_redux_wait(Xo(:,:,i1))
  enddo
  call live_timing
@@ -370,7 +366,7 @@ loop_bg: do i2 = 1,bg_npts(i1)
  !=========================================================
  !
  if (trim(global_gauge)=='velocity') then
-   do iw=fr(1),fr(2)
+   do iw=1,Xw%n(1)
      Xo(1,1,iw)=Xo(1,1,iw)/real(Xw%p(iw))**2
    enddo
  endif

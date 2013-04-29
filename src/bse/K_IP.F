@@ -128,7 +128,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  X_drude_term=cmplx(0.,0.,SP)
  !
  call X_duplicate(X_static,X_oscillators) 
- call Drude(1,(/1,BSS_n_freqs/),Ken,Xk,W_bss,X_static,drude_GreenF,'c')
+ call X_Drude(1,Ken,Xk,W_bss,X_static,drude_GreenF,'c')
  !
  X_oscillators%ib=BS_bands
  if (BS_K_coupling.or.allocated(BS_eh_W)) then

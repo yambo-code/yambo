@@ -13,10 +13,10 @@
 # Add dryrun
 # Multiple projects
 # Make a list of project tags to remove, might be easier to strip?
+# Indicate if a file has been modified after preprocessing
+# Search for insupported !if ndefined tags
 #
 # Status
-# Works for: _DISTRO _PH
-#
 
 use Getopt::Long;
 use File::Find;
@@ -29,29 +29,52 @@ $nodryrun = 1;
             "v"             => \$verbose,
             "p=s"           => \$input_projects_string);
 
+# Check, if STDOUT is a terminal. If not, not ANSI sequences are
+# # emitted.
+ if(-t STDOUT) {
+     $color_start{blue}="\033[34m";
+     $color_end{blue}="\033[0m";
+     $color_start{red}="\033[31m";
+     $color_end{red}="\033[0m";
+     $color_start{green}="\033[32m";
+     $color_end{green}="\033[0m";
+}
 #
-# Define special flags and stuff.
-# Script scans all text files; might be safer to scan only named extension files? (.F)
+
 #
+# ============= USER DEFINED FLAGS =====================
+#
+# List any source files here that do not get processed correctly by the script
 $manual_preprocess_files = " ";
-$exclude_files = "yamboo.pl ";
+#
+$exclude_files = "yamboo.pl yamboo_new.pl";
+$exclude_dirs = "lib sbin config bin doc";
 @core_projects = ('yambo','ypp','p2y','a2y','f2y','e2y');
 @user_projects = ('MAGNETIC','DISTRIBUTED','SC','RT','ELPH', 'KERR',
                   'YPP_ELPH','YPP_RT','YPP_SC','YPP_MAGNETIC','DEBUG','SURF');
+#
+# ============= END OF USER DEFINED FLAGS  ==============
+#
 $user_projects_string = join(" ",@user_projects); # Append a space
 $files_to_skip = $manual_preprocess_files.$exclude_files;
 #
-# Exclude matches to #defines like _SC_KERNEL by adding a space or newline character
 # CARE: Do not use @user_projects after this point.
 #
 @tmp1 = map { "_".$_." " } @user_projects;
 @tmp2 = map { "_".$_."\n" } @user_projects;
 @available_projects = (@tmp1,@tmp2);
 #
+# Excluded directories
+#
+@exclude_dirs_list = split(/ /,$exclude_dirs);
+chomp(@exclude_dirs_list);
+#
 # User interface
 #
 if($help or not $input_projects_string){ 
-   print "\nSyntax: yamboo.pl -p=\"GPL\"  (GPL tag will overwrite everything else!)\n   OR   yamboo.pl -p=\"PROJECT1 PROJECT2 ... \" \n  where allowed PROJECTs are: $user_projects_string\n" and exit;
+   &usage;
+   print "Allowed PROJECTs are: $user_projects_string\n" and exit;
+#  print "\nSyntax: yamboo.pl -p=\"GPL\"  (GPL tag will overwrite everything else!)\n   OR   yamboo.pl -p=\"PROJECT1 PROJECT2 ... \" \n  where allowed PROJECTs are: $user_projects_string\n" and exit;
 }
 #
 # Extract list of selected projects
@@ -70,31 +93,27 @@ foreach $project (@user_projects) {
       }
    }
 }
-# Overwrite if GPL only
-$gpl_only = 0;
-if(index($input_projects_string,"GPL") ge 0){
-  $gpl_only = 1;
-  @selected_projects_list = ();
-  $number_selected_projects = 0;
-}
 $selected_projects_string = join(" ",@selected_projects_list); # Append a space
-
-
-if($number_selected_projects or $gpl_only){
+#
+# Report projects identified correctly or GPL only
+#
+if($number_selected_projects){
   open(LOG, ">yamboo.log") or die "Error opening log\n";
-  &io("Processing source for GPL");
+  &io("Processing source for GPL + $selected_projects_string ");
+}
+elsif(index($input_projects_string,"GPL") ge 0){
+  open(LOG, ">yamboo.log") or die "Error opening log\n";
+  &io("Processing source for GPL only ");
 }
 else{
   print "Incorrect project selection: $input_projects_string. \nSelect from: $user_projects_string\n" and exit;
 }
 
-if($number_selected_projects){
-  &io(" plus $number_selected_projects projects: $selected_projects_string");
-}
 #
 # Protected files:
 #
-&io("\nProtected files: $files_to_skip \n");
+&io("\nProtected files      : $files_to_skip \n");
+&io("\nProtected directories: $exclude_dirs \n");
 #
 # Dry run
 #
@@ -115,6 +134,7 @@ if($verbose) {
 #$PROJECT_IGNORE_TAG = "$selected_project"."_IGNORE";
 @PROJECT_IGNORE_TAGS = @selected_projects_list;
 foreach (@PROJECT_IGNORE_TAGS) { $_ = $_."_IGNORE" } ;
+if($verbose) { print "Ignore tags:".join(" ",@PROJECT_IGNORE_TAGS) };
 #print @PROJECT_IGNORE_TAGS;
 #
 # Hard wired tags
@@ -134,6 +154,9 @@ find sub {
    return unless -d $_ ;
    $directory_name = $File::Find::name; 
    if ($directory_name =~ m/$SVN_DIR/){ return; }  
+   foreach my $dir (@exclude_dirs_list) {
+      if ($directory_name =~ m/$dir/){ return; }  
+   }
    push (@directories_list, $directory_name."/");
 }, ".";
 
@@ -161,7 +184,7 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
    #==================================================================#
 
    if (grep(/$GPL_OBJECTS_FILE/, @local_filenames) ){
-      &io("... Found $GPL_OBJECTS_FILE file:\n");
+      &io("... Found $GPL_OBJECTS_FILE file");
 
       $file_name = $directory_name.$GPL_OBJECTS_FILE;
       open(GPL_OBJ_FILENAME, $file_name) 
@@ -171,13 +194,18 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
       #
       # Preprocess the .objects_gpl file.
       #
-      @preprocessed_objects = @gpl_objects_contents;
-      $found_project = &check_for_project_preprocess_flags(@gpl_objects_contents);
-      if($verbose) { print "... found $found_project matches to projects\n" };
-#     if($found_project ge 0) {  # Dont preprocess if matches specific project   ?? so why the next line?
-      if($found_project ge 0) {  # Dont preprocess if matches specific project   ?? so why the next line?
-         @preprocessed_objects = &preprocessor(@gpl_objects_contents);  # this is not working for .objects_gpl, does not strip other projects
-      }
+# Output: $match_project
+#         0 if no #defines are present at all
+#         0 if no #define PROJECT are present at all
+#        -1 if matches to any selected project
+#        +n if matches to n projects
+#     @preprocessed_objects = @gpl_objects_contents;
+#      $found_project = &check_for_project_preprocess_flags(@gpl_objects_contents);
+#     if($verbose) { print "... found $found_project matches to projects\n" };
+#      if($found_project ge 0) {  # Preprocess if 
+#         &io("... Preprocessing file $GPL_OBJECTS_FILE\n");
+         @preprocessed_objects = &preprocessor(@gpl_objects_contents); 
+#     }
       #
       # Dump into the .objects_gpl file again
       #
@@ -195,7 +223,7 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
       if($#gpl_only_source_files+1 == 0) {
          push(@directories_for_deletion,$directory_name);
          push (@delete_list, $directory_name);
-         &io("... Directory marked for deletion\n"); 
+         &io("\n... Directory marked for deletion"); 
          next DIRECTORY_LOOP;
       }
       #
@@ -209,7 +237,7 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
          unless ($file_name =~ m/\.F$/) { next };  # at end of string = $
          $found = grep(/$file_name/, @gpl_only_source_files) ;
          unless ($found) { 
-            &io("... Deleting non-GPL file: $file_name\n");
+            &io("\n... Deleting non-GPL file: $file_name");
             if($nodryrun) { unlink ($directory_name.$file_name) }; 
             push (@delete_list, $directory_name.$file_name);
          }
@@ -217,7 +245,7 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
       #
       # Move the .objects_gpl to .objects
       #
-      &io("... Reverting GPL only $GPL_OBJECTS_FILE file\n");
+      &io("\n... Overwriting $OBJECTS_FILE with $GPL_OBJECTS_FILE");
       if($nodryrun) { rename($directory_name.$GPL_OBJECTS_FILE,$directory_name.$OBJECTS_FILE)};
       push (@delete_list, $directory_name.$GPL_OBJECTS_FILE);
    }
@@ -232,7 +260,7 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
    #==================================================================#
    FILE_GPL: foreach $file_name (@local_filenames) { 
       if($file_name =~ m/$GPL_FILE_SUFFIX$/) {
-         &io("... Found $GPL_FILE_SUFFIX file: $file_name\n"); 
+         &io("\n... Found $GPL_FILE_SUFFIX file: $file_name"); 
          $new_file_name = $file_name;
          $new_file_name =~ s/$GPL_FILE_SUFFIX//;  # strip the suffix
          #
@@ -251,7 +279,7 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
 #          push (@delete_list, $directory_name.$file_name);
 #        }
 #        else{
-           &io("... Reverting GPL only $file_name file\n");
+           &io("\n... Reverting GPL only $file_name file");
            if($nodryrun) { rename($directory_name.$file_name,$directory_name.$new_file_name) };
            push (@delete_list, $directory_name.$file_name);
            next;
@@ -266,7 +294,7 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
    GPL_PREPROCESS: foreach $file_name (@local_filenames) { 
 
       if($exclude_files =~ m/$file_name/) {
-            &io("... Skipping GPL preprocess of $file_name\n"); next GPL_PREPROCESS;
+            &io("\n... Skipping GPL preprocess of $file_name\n"); next GPL_PREPROCESS;
       }
       if($verbose) {print "... Processing individual file $file_name \n"};
       #
@@ -281,7 +309,7 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
       #
       $gpl_test = grep(/$START_INCLUDE_TAG|$START_EXCLUDE_TAG/,@source_contents);
       if(not $gpl_test) { next }
-      &io("... Processing GPL tagged file $file_name \n");
+      &io("\n... Preprocessing GPL tagged file $file_name ");
 #     elsif($found_exc) {&io("... EXCLUDE tags\n")}
       #
       # Strip non GPL lines
@@ -290,12 +318,13 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
          or die "Error opening $directory_name.$file_name -stripped\n";
       $exclude_status = 0; 
       $include_status = 0; 
-      while($line = shift(@source_contents)) {
+      LINE: while($line = shift(@source_contents)) {
+         if($verbose) { print LOG substr($line,0,10)." incl=".$include_status." excl=".$exclude_status."\n" };
          #
-         # Check that the GPL flags have not been overridden by PROJECT_IGNORE tags
+         # Check that the GPL flags have not been overridden by PROJECT_IGNORE tags 
          #
          foreach my $PROJECT_IGNORE_TAG (@PROJECT_IGNORE_TAGS){
-            if($line =~ m/$PROJECT_IGNORE_TAG/) { next }; # skip this line only
+            if($line =~ m/$PROJECT_IGNORE_TAG/) { next LINE }; # skip this line only
          }
 #        if($line =~ m/$PROJECT_IGNORE_TAG/ and 
 #             ($line =~ m/[$START_EXCLUDE_TAG|$END_EXCLUDE_TAG]/)) { next }; # skip this line only
@@ -305,8 +334,8 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
          # Test to see if we are inside a GPL loop
          #
          if($line =~ m/$START_EXCLUDE_TAG/) { $exclude_status = 1; };
-         if($line =~ m/$START_INCLUDE_TAG/) { $include_status = 1;  next };
-         if($line =~ m/$END_INCLUDE_TAG/) { $include_status = 0; next};
+         if($line =~ m/$START_INCLUDE_TAG/) { $include_status = 1;  next LINE };
+         if($line =~ m/$END_INCLUDE_TAG/) { $include_status = 0; next LINE };
 
 # WRONG _ need to check that ! is first character in line
          if($include_status) { $line =~ s/\!// } # Strip first ! only
@@ -333,7 +362,7 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
       # Skip the special or exclude files (already GPL processed?)
       #
       if("$exclude_files.$manual_preprocess_files.$OBJECTS_FILE" =~ m/$file_name/) {
-            &io("... Skipping preprocess of $file_name\n"); next FILE_PREPROCESS;
+            &io("\n... Skipping preprocess of $file_name"); next FILE_PREPROCESS;
       }
       #
       # Read contents of source file
@@ -359,7 +388,14 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
       if($nodryrun) {rename($directory_name.$file_name."-stripped",$directory_name.$file_name)};
    }
 } # directory loop
-&io("\n yambo GPL created successfully.\n");
+#
+# Clean up
+#
+&io("\n\n ============= REPORT =================\n");
+if($number_selected_projects){ 
+   &io("yambo GPL +  $selected_projects_string source created successfully.\n");
+}
+else { &io("yambo GPL only created successfully.\n") }
 #
 # Delete project only directories (check if SVN still works)
 #
@@ -447,6 +483,30 @@ sub io{
     print $io_string;
     print LOG $io_string;
 }
+sub ior{
+    my($io_string) = shift(@_);
+    printf "%10s","$color_start{red} $io_string $color_end{red}";
+    print LOG $io_string;
+}
+sub iog{
+    my($io_string) = shift(@_);
+    printf "%10s","$color_start{green} $io_string $color_end{green}";
+    print LOG $io_string;
+}
+sub ioc{
+    my($io_string) = shift(@_);
+    printf "%-60s",$io_string;
+    print LOG $io_string;
+}
+#---------------------------------------------------------------------#
+sub io2{
+    my($io_string) = shift(@_);
+    my($result) = shift(@_);
+#   printf "%-60s%-10s\n" substr($io_string,0,60),"$color_start{red} $result $color_end{red}";
+#   printf "%60s %10s\n",substr($io_string,0,60),"$color_start{red} $result $color_end{red}";
+    printf "%60s %10s\n",$io_string,"$color_start{red} $result $color_end{red}";
+    print LOG $io_string;
+}
 #---------------------------------------------------------------------#
 # Checks the text passed via the list @_ for the presence
 # of #define PROJECT statements.
@@ -456,7 +516,7 @@ sub io{
 # Output: $match_project
 #         0 if no #defines are present at all
 #         0 if no #define PROJECT are present at all
-#        -1 if matches to any selected project
+#        -n if matches to n selected project
 #        +n if matches to n projects
 #
 #---------------------------------------------------------------------#
@@ -487,6 +547,8 @@ sub preprocessor{
     my $preprocess_loop = 0;
     my $project_else = 0;
     my @preprocessed_lines = ();
+#   &io("\n... Preprocessing file $file_name: ");
+    &ioc("\n... Preprocessing file $file_name: ");
     
     LINE: while($myline = shift(@unprocessed_text)) {
 #      print "XXX $preprocess_loop $inclusive_loop $exclusive_loop $line";
@@ -525,11 +587,24 @@ sub preprocessor{
           }
           #
           # Turn on the exclusive stripping
+          # this probably needs to be skipped for a selected project match
           #
           if($myline =~ m/#(\w| )*!defined|# *ifndef/ and $myline =~ m/$project/ ) { 
-              $exclusive_loop = 1; # 
-              $report_file_change = 1;
-              next LINE;
+             #
+             # If the line ALSO has a core project, leave it alone!
+             #
+             foreach $core_project (@core_projects) {
+                if($myline =~ m/$core_project/ ) { last DEFPROJ };
+             }
+             #
+             # If the line ALSO matches any selected project, leave it alone!
+             #
+             foreach my $selected_project (@selected_projects_list) {
+                if($myline =~ m/$selected_project/ ) { last DEFPROJ };
+             }
+             $exclusive_loop = 1; # 
+             $report_file_change = 1;
+             next LINE;
           }
        }
 
@@ -539,6 +614,27 @@ sub preprocessor{
        push(@preprocessed_lines,$myline);
 
     } # end loop LINE
-    if($report_file_change) {print "... Preprocessing file $file_name \n"}
+#   if($report_file_change) {&io(" $color_start{red} CHANGED  $color_end{red} ")};
+    if($report_file_change) {&ior("CHANGED")};
+    if(not $report_file_change) {&iog("unchanged")};
+#   if($report_file_change) {print "... Preprocessed file $file_name \n"}
     return @preprocessed_lines;
 }
+
+sub usage {
+
+ print <<EndOfUsage
+
+   Syntax: yamboo.pl [OPTIONS]
+
+           [OPTIONS] are:
+                   -v                 Verbose output
+                   -d                 Perform dry run
+                   -p [PROJECTS]      List of projects to include in source
+
+            [PROJECTS] has form: "GPL" or
+                                 "PROJECT1 PROJECT2 .."
+EndOfUsage
+  ;
+}
+

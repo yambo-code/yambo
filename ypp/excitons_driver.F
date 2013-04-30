@@ -26,7 +26,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use stderr,        ONLY:intc
  use FFT_m,         ONLY:fft_dim,fft_size
  use D_lattice,     ONLY:a,i_time_rev,nsym,alat
- use wave_func,     ONLY:WF_load,wf,WF_free,wf_ng
+ use wave_func,     ONLY:WF_load,wf,WF_symm,WF_free,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
@@ -101,9 +101,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  integer           ::iv,ic,iv_fft,ic_fft,ikbz,ikibz,is,neh
  real(SP)          ::r_eh(3)
  complex(SP)       ::wf_
- !
- complex(SP), allocatable  ::WF_symm1(:,:)
- complex(SP), allocatable  ::WF_symm2(:,:)
+ complex(SP)       ::WF1_ir(n_spinor),WF2_ir(n_spinor)
  !
  complex(SP),  allocatable ::wf_vc(:)
  !
@@ -353,7 +351,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Allocation
  !
- allocate(WF_symm1(fft_size,n_spinor),WF_symm2(fft_size,n_spinor))
  allocate(wf_vc(BS_H_dim),v2plot(nr_tot))
  call mem_est('wf_vc v2plot ',(/2*BS_H_dim,nr_tot/),(/SP,SP/))
  !
@@ -410,11 +407,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
        !
        k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2.*pi
        !
-       call WF_apply_symm((/iv,ikibz,is,i_spin/),WF_symm1)
-       call WF_apply_symm((/ic,ikibz,is,i_spin/),WF_symm2)
+       WF1_ir=WF_symm(rindex(ir),(/iv,ikibz,is,i_spin/))
+       WF2_ir=WF_symm(rindex(ir),(/ic,ikibz,is,i_spin/))
        !
-       wf_vc(neh) = conjg(WF_symm1(rindex(ir),1))*WF_symm2(rindex(ir),1)
-       if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF_symm1(rindex(ir),2))*WF_symm2(rindex(ir),2)
+       wf_vc(neh) = conjg(WF1_ir(1))*WF2_ir(1)
+       if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF1_ir(2))*WF2_ir(2)
        !
        wf_vc(neh) = wf_vc(neh)*exp(cI*k_dot_r)
        ! 
@@ -463,7 +460,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! CLEAN
  !
  deallocate(r_cell_cc,rindex)
- deallocate(WF_symm1,WF_symm2)
  deallocate(v2plot,BS_R,BS_E,lambda_s)
  call mem_est('v2plot BS_R_E')
  deallocate(BS_eh_table,BS_mat,wf_vc)

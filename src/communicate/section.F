@@ -21,10 +21,11 @@
 !
 subroutine section(mode,name)
  !
- ! mode = * 	: keep level
+ ! mode = * 	: new basic level
  !      = +     : increase level
  !      = -     : decrease level
  !      = p     : increase level only in this section
+ !      = #     : increase level #
  !
  use pars
  use it_m,       ONLY:ofiles_append
@@ -96,6 +97,10 @@ subroutine section(mode,name)
  case ('p')
    previous_secmode='p'
    depth=depth+1
+ case ('2')
+   depth=1
+ case ('3')
+   depth=2
  case ('-')
    depth=depth-1
    isec(depth+1:)=0

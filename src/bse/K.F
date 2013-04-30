@@ -154,7 +154,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! 
  if (BS_res_K_corr.and..not.l_td_hf) then
    !
-   call section('p','Screened interaction header I/O')
+   call section('+','Screened interaction header I/O')
    !
    ! X%ng are the G's in the X DB while BS_n_g_W the G's I want to read.
    ! Now to read only BS_n_g_W components I need to redefine X%ng
@@ -343,7 +343,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  BS_identifier=pickup_a_random(10000._SP)
  !
- call section('+','Main loop')
+ call section('2','Main loop')
  !
  !allocations
  !***********

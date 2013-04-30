@@ -123,7 +123,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! be able to calculate the density
  !
  bands_to_correct=BS_bands
- if (l_alda_fxc) bands_to_correct=(/1,BS_bands(2)/)
+ if (l_alda_fxc) then
+   bands_to_correct=(/1,BS_bands(2)/)
+   call PARALLEL_global_indexes(Ken,Xk,q,"DENSITY",RESET=.FALSE.,SERIAL=.TRUE.)
+ endif
  !
  ! ... and the QP corrections
  !
@@ -201,11 +204,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  iq=BS_q(1)
  !
- call section('+','Main loop')
- !
  ! 1. The IP Part (Dipoles and eh-energies)...
  ! ================
- call K_IP(iq,Ken,Xk,X_static_pp,W_bss)
+ call K_IP(iq,q,Ken,Xk,X_static_pp,W_bss)
  !
  ! 2. The KERNEL
  ! ================

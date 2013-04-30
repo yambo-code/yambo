@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
+subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  !
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,&
@@ -40,7 +40,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_INV_ID,PAR_IND_DIAGO_ID,&
-&                        PAR_IND_QP_ID,PAR_IND_QP_G_b_ID
+&                        PAR_IND_QP_ID,PAR_IND_QP_G_b_ID,myid
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
 &                        PARALLEL_live_message
  use X_m,           ONLY:X_t
@@ -59,13 +59,20 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  character(*)            ::ENVIRONMENT
  type(X_t), optional     ::X
  logical,   optional     ::RESET
+ logical,   optional     ::SERIAL
  !
  ! Work Space
  !
  integer       :: i_k,i_p,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2)
+ logical       :: reset_all
  character(10) :: WHAT
  !
  ! Resets...
+ !
+ reset_all=.TRUE.
+ if (present(RESET)) then
+   reset_all=RESET
+ endif
  !
  X_type=1
  if (present(X)) then
@@ -74,46 +81,50 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  if (ENVIRONMENT=="BSE") X_type=5
  !
- call PP_indexes_reset(PAR_IND_INV)
- call PP_indexes_reset(PAR_IND_DIAGO)
- call PP_indexes_reset(PAR_IND_Q)
- call PP_indexes_reset(PAR_IND_Xk_ibz)
- call PP_indexes_reset(PAR_IND_Xk_bz)
- call PP_indexes_reset(PAR_IND_CON_BANDS_X(X_type))
- call PP_indexes_reset(PAR_IND_VAL_BANDS_X(X_type))
- call PP_indexes_reset(PAR_IND_QP)
- call PP_indexes_reset(PAR_IND_QP_G_b)
- !
- if (allocated(PAR_Xk_ibz_index)) deallocate(PAR_Xk_ibz_index)
- if (allocated(PAR_Xk_bz_index)) deallocate(PAR_Xk_bz_index)
- if (allocated(states_to_load)) deallocate(states_to_load)
- !
- PAR_IND_Q_ID=0
- PAR_IND_Xk_ibz_ID=0
- PAR_IND_Xk_bz_ID=0
- PAR_IND_CON_BANDS_X_ID(X_type)=0
- PAR_IND_VAL_BANDS_X_ID(X_type)=0
- PAR_IND_INV_ID=0
- PAR_IND_DIAGO_ID=0
- PAR_IND_QP_ID=0
- PAR_IND_QP_G_b_ID=0
- !
- call COMM_reset(PAR_COM_VAL_INDEX(X_type))
- call COMM_reset(PAR_COM_CON_INDEX(X_type))
- call COMM_reset(PAR_COM_Xk_ibz_INDEX)
- call COMM_reset(PAR_COM_Q_INDEX)
- call COMM_reset(PAR_COM_Xk_bz_INDEX)
- call COMM_reset(PAR_COM_Xk_ibz_A2A)
- call COMM_reset(PAR_COM_Q_A2A)
- call COMM_reset(PAR_COM_INV_INDEX)
- call COMM_reset(PAR_COM_INV)
- call COMM_reset(PAR_COM_DIAGO_INDEX)
- call COMM_reset(PAR_COM_DIAGO)
- call COMM_reset(PAR_COM_QP_INDEX)
- call COMM_reset(PAR_COM_QP_A2A)
- call COMM_reset(PAR_COM_QP_G_b_INDEX)
- !
- call IO_and_Messaging_switch("RESET")
+ if (reset_all) then
+   !
+   call PP_indexes_reset(PAR_IND_INV)
+   call PP_indexes_reset(PAR_IND_DIAGO)
+   call PP_indexes_reset(PAR_IND_Q)
+   call PP_indexes_reset(PAR_IND_Xk_ibz)
+   call PP_indexes_reset(PAR_IND_Xk_bz)
+   call PP_indexes_reset(PAR_IND_CON_BANDS_X(X_type))
+   call PP_indexes_reset(PAR_IND_VAL_BANDS_X(X_type))
+   call PP_indexes_reset(PAR_IND_QP)
+   call PP_indexes_reset(PAR_IND_QP_G_b)
+   !
+   if (allocated(PAR_Xk_ibz_index)) deallocate(PAR_Xk_ibz_index)
+   if (allocated(PAR_Xk_bz_index)) deallocate(PAR_Xk_bz_index)
+   if (allocated(states_to_load)) deallocate(states_to_load)
+   !
+   PAR_IND_Q_ID=0
+   PAR_IND_Xk_ibz_ID=0
+   PAR_IND_Xk_bz_ID=0
+   PAR_IND_CON_BANDS_X_ID(X_type)=0
+   PAR_IND_VAL_BANDS_X_ID(X_type)=0
+   PAR_IND_INV_ID=0
+   PAR_IND_DIAGO_ID=0
+   PAR_IND_QP_ID=0
+   PAR_IND_QP_G_b_ID=0
+   !
+   call COMM_reset(PAR_COM_VAL_INDEX(X_type))
+   call COMM_reset(PAR_COM_CON_INDEX(X_type))
+   call COMM_reset(PAR_COM_Xk_ibz_INDEX)
+   call COMM_reset(PAR_COM_Q_INDEX)
+   call COMM_reset(PAR_COM_Xk_bz_INDEX)
+   call COMM_reset(PAR_COM_Xk_ibz_A2A)
+   call COMM_reset(PAR_COM_Q_A2A)
+   call COMM_reset(PAR_COM_INV_INDEX)
+   call COMM_reset(PAR_COM_INV)
+   call COMM_reset(PAR_COM_DIAGO_INDEX)
+   call COMM_reset(PAR_COM_DIAGO)
+   call COMM_reset(PAR_COM_QP_INDEX)
+   call COMM_reset(PAR_COM_QP_A2A)
+   call COMM_reset(PAR_COM_QP_G_b_INDEX)
+   !
+   call IO_and_Messaging_switch("RESET")
+   !
+ endif
  !
  if (present(RESET)) then
    if (RESET) return
@@ -121,7 +132,63 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  call PARALLEL_get_user_structure(ENVIRONMENT)
  !
- if (PARALLEL_n_structures_active==0.and.ncpu>1) call error('Please provide a CPU structure by using the -P command line option')
+ if (PARALLEL_n_structures_active==0.and.ncpu>1) call error('Please provide a CPU structure in the input file')
+ !
+ ! SERIAL
+ !========
+ if (present(SERIAL)) then
+   !
+   if (SERIAL) then
+     !
+     if (ENVIRONMENT=="DENSITY") then
+       !
+       PAR_IND_QP_G_b_ID=myid
+       allocate(PAR_IND_QP_G_b%n_of_elements(ncpu),PAR_IND_QP_G_b%element_1D(E%nbm))
+       PAR_IND_QP_G_b%element_1D=.TRUE.
+       PAR_IND_QP_G_b%n_of_elements(myid+1)=E%nbm
+       !
+     endif
+     !
+     if (ENVIRONMENT=="BSE".or.ENVIRONMENT=="DENSITY") then
+       !
+       PAR_COM_Xk_ibz_INDEX%CPU_id=myid
+       allocate(PAR_IND_Xk_ibz%n_of_elements(ncpu),PAR_IND_Xk_ibz%element_1D(Xk%nibz))
+       PAR_IND_Xk_ibz%element_1D=.TRUE.
+       PAR_IND_Xk_ibz%n_of_elements(myid+1)=Xk%nibz
+       !
+     endif
+     !
+     if (ENVIRONMENT=="BSE") then
+       !
+       PAR_COM_Xk_bz_INDEX%CPU_id=myid
+       allocate(PAR_IND_Xk_bz%n_of_elements(ncpu),PAR_IND_Xk_bz%element_1D(Xk%nbz))
+       PAR_IND_Xk_bz%element_1D=.TRUE.
+       PAR_IND_Xk_bz%n_of_elements(myid+1)=Xk%nbz
+       !
+       PAR_COM_Xk_ibz_INDEX%CPU_id=myid
+       allocate(PAR_IND_Xk_ibz%n_of_elements(ncpu),PAR_IND_Xk_ibz%element_1D(Xk%nibz))
+       PAR_IND_Xk_ibz%element_1D=.TRUE.
+       PAR_IND_Xk_ibz%n_of_elements(myid+1)=Xk%nibz
+       !
+       PAR_IND_CON_BANDS_X_ID(X_type)=myid
+       allocate(PAR_IND_CON_BANDS_X(X_type)%n_of_elements(ncpu),PAR_IND_CON_BANDS_X(X_type)%element_1D(BS_bands(2)))
+       PAR_IND_CON_BANDS_X(X_type)%element_1D=.FALSE.
+       PAR_IND_CON_BANDS_X(X_type)%element_1D(E%nbf+1:BS_bands(2))=.TRUE.
+       PAR_IND_CON_BANDS_X(X_type)%n_of_elements(myid+1)=BS_bands(2)-E%nbf
+       !
+       PAR_IND_VAL_BANDS_X_ID(X_type)=myid
+       allocate(PAR_IND_VAL_BANDS_X(X_type)%n_of_elements(ncpu),PAR_IND_VAL_BANDS_X(X_type)%element_1D(E%nbm))
+       PAR_IND_VAL_BANDS_X(X_type)%element_1D=.FALSE.
+       PAR_IND_VAL_BANDS_X(X_type)%element_1D(BS_bands(1):E%nbm)=.TRUE.
+       PAR_IND_VAL_BANDS_X(X_type)%n_of_elements(myid+1)=E%nbm-BS_bands(1)+1
+       !
+     endif
+     !
+     return
+     !
+   endif
+   !
+ endif
  !
  ! ENVIROMENTS
  !=============

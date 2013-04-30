@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
+subroutine K_IP(iq,q,Ken,Xk,X_static,W_bss)
  !
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:HA2EV
@@ -31,6 +31,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  use com,           ONLY:error,msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
  use electrons,     ONLY:levels,spin_occ,spin,n_sp_pol
+ use interfaces,    ONLY:PARALLEL_global_indexes
  use X_m,           ONLY:X_t,X_epsilon,X_drude_term,alpha_dim,eps_2_alpha,           &
 &                        DIP_q_dot_iR,X_duplicate,X_drude_term,X_alloc,iw_ref
  use BS,            ONLY:BS_columns,BS_blk_dim,BS_k_and_row_restart,   &
@@ -47,7 +48,7 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
  !
  implicit none
  type(levels) ::Ken
- type(bz_samp)::Xk
+ type(bz_samp)::Xk,q
  type(X_t)    ::X_static
  type(w_samp) ::W_bss
  integer      ::iq
@@ -62,6 +63,8 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
 #if defined _KERR
  complex(SP)       ::factor_jj
 #endif
+ !
+ call section('*','E/h space setups & IP absorption') 
  !
  ! Setups
  !
@@ -137,8 +140,19 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
    allocate(BSS_rhoq0(BS_K_dim)) 
    call mem_est("BSS_rhoq0",(/BS_K_dim/))
  endif
+ !
  if (iq==1) then
+   !
+   ! Parallel setup in the case when the em1s runlevel is switched off. 
+   ! In this case all CPUs must load EVERYTHING as no alternative
+   ! distribution is still done
+   !
+   X_oscillators%whoami=5
+   !
+   call PARALLEL_global_indexes(Ken,Xk,q,"BSE",RESET=.FALSE.,SERIAL=.TRUE.,X=X_oscillators)
+   !
    X_oscillators%q0=BSS_q0
+write (*,*) 'before Dipole_driver...'
    call Dipole_driver(Ken,Xk,X_oscillators,BSS_q0)
    BSS_Vnl_included=X_oscillators%Vnl_included
    if(l_rpa_IP) call live_timing('Eps0',BS_K_dim)
@@ -161,6 +175,8 @@ subroutine K_IP(iq,Ken,Xk,X_static,W_bss)
 #else
      BSS_rhoq0(i1)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))
 #endif
+write (*,*) BSS_rhoq0(i1)
+ stop
      !
      ! minus comes from the occupation factor 
      !

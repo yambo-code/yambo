@@ -26,7 +26,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,warning
  use memory_m,       ONLY:mem_est
- use stderr,         ONLY:string_remove,string_add,intc,real2ch
+ use stderr,         ONLY:string_remove,intc,real2ch
  use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
@@ -35,15 +35,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_eh_en,BSE_mode
+&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_eh_en,BSE_mode,BSS_q0
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal,FXC_n_g_corr
  use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
- use parallel_m,     ONLY:PP_redux_wait,PAR_Xk_nbz,PAR_Xk_nibz,PAR_Xk_bz_index,PAR_Xk_ibz_index,&
-&                         PAR_IND_Xk_bz,PAR_IND_Xk_ibz,PP_indexes_reset
+ use parallel_m,     ONLY:PP_redux_wait
  use interfaces,     ONLY:PARALLEL_global_indexes
- use R_lattice,      ONLY:bz_samp,qindx_B,nXkbz,nXkibz
+ use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
 #if defined _SC
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate
@@ -61,27 +60,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Work Space
  !
- type(X_t)   :: X_tddft
+ type(X_t)   :: X_tddft,X_oscillators
  integer     :: iq,bands_to_correct(2),Bands_limits(2)
  integer     :: Max_G_m_G,ik
  integer, external :: eval_G_minus_G
- !
- ! Pre-Setup of Parallel variables
- !
- call PARALLEL_global_indexes(Ken,Xk,q," ",RESET=.TRUE.)
- !
- PAR_Xk_nbz =nXkbz
- PAR_Xk_nibz=nXkibz
- allocate (PAR_Xk_ibz_index(nXkibz),PAR_Xk_bz_index(nXkbz))
- allocate (PAR_IND_Xk_bz%element_1D(nXkbz),PAR_IND_Xk_ibz%element_1D(nXkibz))
- do ik=1,PAR_Xk_nbz
-   PAR_Xk_bz_index(ik)=ik
-   PAR_IND_Xk_bz%element_1D(ik)=.TRUE.
-   if (ik<=nXkibz) then
-     PAR_IND_Xk_ibz%element_1D(ik)=.TRUE.
-     PAR_Xk_ibz_index(ik)=ik
-   endif
- enddo
  !
 #if defined _SC
  !
@@ -123,10 +105,18 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! be able to calculate the density
  !
  bands_to_correct=BS_bands
- if (l_alda_fxc) then
-   bands_to_correct=(/1,BS_bands(2)/)
-   call PARALLEL_global_indexes(Ken,Xk,q,"DENSITY",RESET=.FALSE.,SERIAL=.TRUE.)
- endif
+ if (l_alda_fxc) bands_to_correct=(/1,BS_bands(2)/)
+ !
+ ! Pre-Setup of Parallel variables
+ !
+ call X_duplicate(X_static_pp,X_oscillators) 
+ X_oscillators%whoami=5
+ X_oscillators%ib=BS_bands
+ X_oscillators%q0=BSS_q0
+ !
+ call PARALLEL_global_indexes(Ken,Xk,q," ",RESET=.TRUE.,X=X_oscillators)
+ call PARALLEL_global_indexes(Ken,Xk,q,"DENSITY",RESET=.FALSE.,SERIAL=.TRUE.,X=X_oscillators)
+ call PARALLEL_global_indexes(Ken,Xk,q,"BSE",    RESET=.FALSE.,SERIAL=.TRUE.,X=X_oscillators)
  !
  ! ... and the QP corrections
  !
@@ -206,7 +196,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! 1. The IP Part (Dipoles and eh-energies)...
  ! ================
- call K_IP(iq,q,Ken,Xk,X_static_pp,W_bss)
+ call K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! 2. The KERNEL
  ! ================

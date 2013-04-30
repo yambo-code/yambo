@@ -133,8 +133,8 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_Xk_bz
  !
  ! ... linear response
- type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_X(4)
- type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_X(4)
+ type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_X(5)
+ type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_X(5)
  !
  ! ... QP
  type(PP_indexes),SAVE :: PAR_IND_QP

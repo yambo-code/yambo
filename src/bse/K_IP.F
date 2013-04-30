@@ -19,11 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_IP(iq,q,Ken,Xk,X_static,W_bss)
+subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:HA2EV
- use LOGO,          ONLY:pickup_a_random
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use timing,        ONLY:live_timing
@@ -31,12 +30,11 @@ subroutine K_IP(iq,q,Ken,Xk,X_static,W_bss)
  use com,           ONLY:error,msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
  use electrons,     ONLY:levels,spin_occ,spin,n_sp_pol
- use interfaces,    ONLY:PARALLEL_global_indexes
  use X_m,           ONLY:X_t,X_epsilon,X_drude_term,alpha_dim,eps_2_alpha,           &
-&                        DIP_q_dot_iR,X_duplicate,X_drude_term,X_alloc,iw_ref
+&                        DIP_q_dot_iR,X_drude_term,X_alloc,iw_ref
  use BS,            ONLY:BS_columns,BS_blk_dim,BS_k_and_row_restart,   &
 &                        BSS_rhoq0,BS_eh_f,BS_eh_E,BS_eh_table,BSS_Vnl_included,     &
-&                        BS_bands,BS_eh_W,BS_anti_res,BS_drude_f_eh,BS_K_coupling, &
+&                        BS_eh_W,BS_anti_res,BS_drude_f_eh,BS_K_coupling, &
 &                        BS_K_dim,BSS_n_freqs,BSS_q0,BS_res_K_corr,O_n_c_states,     &
 &                        O_n_v_states,BS_eh_Z
 #if defined _KERR
@@ -48,15 +46,14 @@ subroutine K_IP(iq,q,Ken,Xk,X_static,W_bss)
  !
  implicit none
  type(levels) ::Ken
- type(bz_samp)::Xk,q
- type(X_t)    ::X_static
+ type(bz_samp)::Xk
+ type(X_t)    ::X_oscillators
  type(w_samp) ::W_bss
  integer      ::iq
  !
  ! Work space
  !
- type(X_t)         ::X_oscillators
- integer           ::ik,iv,ic,i1,i_sp,ioBS_err,ID, epsilon_dim
+ integer           ::ik,iv,ic,i1,i_sp,epsilon_dim
  real(SP)          ::Co
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),local_Z
  integer           ::iw
@@ -102,7 +99,7 @@ subroutine K_IP(iq,q,Ken,Xk,X_static,W_bss)
    enddo
  endif
  !
- call K_eh_setup(iq,Ken,Xk,X_static%Wd)
+ call K_eh_setup(iq,Ken,Xk,X_oscillators%Wd)
  !
  if (any(BS_blk_dim==0)) then
    call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
@@ -129,10 +126,8 @@ subroutine K_IP(iq,q,Ken,Xk,X_static,W_bss)
  X_epsilon=cmplx(0.,0.,SP)
  X_drude_term=cmplx(0.,0.,SP)
  !
- call X_duplicate(X_static,X_oscillators) 
- call Drude(1,Ken,Xk,W_bss,X_static,drude_GreenF,'c')
+ call Drude(1,Ken,Xk,W_bss,X_oscillators,drude_GreenF,'c')
  !
- X_oscillators%ib=BS_bands
  if (BS_K_coupling.or.allocated(BS_eh_W)) then
    allocate(BSS_rhoq0(2*BS_K_dim)) 
    call mem_est("BSS_rhoq0",(/2*BS_K_dim/))
@@ -143,16 +138,6 @@ subroutine K_IP(iq,q,Ken,Xk,X_static,W_bss)
  !
  if (iq==1) then
    !
-   ! Parallel setup in the case when the em1s runlevel is switched off. 
-   ! In this case all CPUs must load EVERYTHING as no alternative
-   ! distribution is still done
-   !
-   X_oscillators%whoami=5
-   !
-   call PARALLEL_global_indexes(Ken,Xk,q,"BSE",RESET=.FALSE.,SERIAL=.TRUE.,X=X_oscillators)
-   !
-   X_oscillators%q0=BSS_q0
-write (*,*) 'before Dipole_driver...'
    call Dipole_driver(Ken,Xk,X_oscillators,BSS_q0)
    BSS_Vnl_included=X_oscillators%Vnl_included
    if(l_rpa_IP) call live_timing('Eps0',BS_K_dim)
@@ -175,8 +160,6 @@ write (*,*) 'before Dipole_driver...'
 #else
      BSS_rhoq0(i1)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))
 #endif
-write (*,*) BSS_rhoq0(i1)
- stop
      !
      ! minus comes from the occupation factor 
      !

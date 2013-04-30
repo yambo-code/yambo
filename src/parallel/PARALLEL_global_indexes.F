@@ -149,26 +149,17 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
        !
      endif
      !
-     if (ENVIRONMENT=="BSE".or.ENVIRONMENT=="DENSITY") then
+     if (ENVIRONMENT=="BSE") then
        !
        PAR_COM_Xk_ibz_INDEX%CPU_id=myid
        allocate(PAR_IND_Xk_ibz%n_of_elements(ncpu),PAR_IND_Xk_ibz%element_1D(Xk%nibz))
        PAR_IND_Xk_ibz%element_1D=.TRUE.
        PAR_IND_Xk_ibz%n_of_elements(myid+1)=Xk%nibz
-       !
-     endif
-     !
-     if (ENVIRONMENT=="BSE") then
        !
        PAR_COM_Xk_bz_INDEX%CPU_id=myid
        allocate(PAR_IND_Xk_bz%n_of_elements(ncpu),PAR_IND_Xk_bz%element_1D(Xk%nbz))
        PAR_IND_Xk_bz%element_1D=.TRUE.
        PAR_IND_Xk_bz%n_of_elements(myid+1)=Xk%nbz
-       !
-       PAR_COM_Xk_ibz_INDEX%CPU_id=myid
-       allocate(PAR_IND_Xk_ibz%n_of_elements(ncpu),PAR_IND_Xk_ibz%element_1D(Xk%nibz))
-       PAR_IND_Xk_ibz%element_1D=.TRUE.
-       PAR_IND_Xk_ibz%n_of_elements(myid+1)=Xk%nibz
        !
        PAR_IND_CON_BANDS_X_ID(X_type)=myid
        allocate(PAR_IND_CON_BANDS_X(X_type)%n_of_elements(ncpu),PAR_IND_CON_BANDS_X(X_type)%element_1D(BS_bands(2)))
@@ -182,11 +173,21 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
        PAR_IND_VAL_BANDS_X(X_type)%element_1D(BS_bands(1):E%nbm)=.TRUE.
        PAR_IND_VAL_BANDS_X(X_type)%n_of_elements(myid+1)=E%nbm-BS_bands(1)+1
        !
+       PAR_Xk_nbz =Xk%nbz
+       PAR_Xk_nibz=Xk%nibz
+       allocate (PAR_Xk_ibz_index(Xk%nibz),PAR_Xk_bz_index(Xk%nbz))
+       do i_k=1,Xk%nbz
+         PAR_Xk_bz_index(i_k)=i_k
+         if (i_k<=Xk%nibz) then
+           PAR_Xk_ibz_index(i_k)=i_k
+         endif
+       enddo
+       !
      endif
      !
-     return
-     !
    endif
+   !
+   return
    !
  endif
  !

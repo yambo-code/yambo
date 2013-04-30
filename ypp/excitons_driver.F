@@ -102,8 +102,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  real(SP)          ::r_eh(3)
  complex(SP)       ::wf_
  !
- complex(SP)       ::WF_symm1(fft_size,n_spinor)
- complex(SP)       ::WF_symm2(fft_size,n_spinor)
+ complex(SP), allocatable  ::WF_symm1(:,:)
+ complex(SP), allocatable  ::WF_symm2(:,:)
  !
  complex(SP),  allocatable ::wf_vc(:)
  !
@@ -353,6 +353,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Allocation
  !
+ allocate(WF_symm1(fft_size,n_spinor),WF_symm2(fft_size,n_spinor))
  allocate(wf_vc(BS_H_dim),v2plot(nr_tot))
  call mem_est('wf_vc v2plot ',(/2*BS_H_dim,nr_tot/),(/SP,SP/))
  !
@@ -462,6 +463,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! CLEAN
  !
  deallocate(r_cell_cc,rindex)
+ deallocate(WF_symm1,WF_symm2)
  deallocate(v2plot,BS_R,BS_E,lambda_s)
  call mem_est('v2plot BS_R_E')
  deallocate(BS_eh_table,BS_mat,wf_vc)

@@ -25,6 +25,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,&
 &                        PARALLEL_cpu_mat_inversion,CPU_structure,PP_redux_wait,master_cpu,&
 &                        PARALLEL_cpu_mat_diagonalization
+ use parallel_m,    ONLY:& ! LOGICALS
+&                        l_par_bse,l_par_density,l_par_X_G_q0,l_par_X_G_q,l_par_HF,l_par_GW
  use parallel_m,    ONLY:& ! COMMUNICATORS
 &                        COMM_reset,&  
 &                        PAR_COM_VAL_INDEX,PAR_COM_CON_INDEX,PAR_COM_Q_A2A,&
@@ -73,6 +75,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  if (present(RESET)) then
    reset_all=RESET
  endif
+ !
+ ! Logicals
+ !
+ l_par_bse    =ENVIRONMENT=="BSE"
+ l_par_density=ENVIRONMENT=="DENSITY"
+ l_par_X_G_q0 =ENVIRONMENT=="Response_G_space_Zero_Momentum"
+ l_par_X_G_q  =ENVIRONMENT=="Response_G_space_Finite_Momentum"
+ l_par_HF     =ENVIRONMENT=="HF"
+ l_par_GW     =ENVIRONMENT=="GW"
  !
  X_type=1
  if (present(X)) then

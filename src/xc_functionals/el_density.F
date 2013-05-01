@@ -56,7 +56,7 @@ subroutine el_density(en,Xk,rho,force_si)
  use SC,            ONLY:SC_bands
 #endif
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP_G_b,&
-&                        PAR_COM_QP_A2A,PAR_IND_QP,PAR_COM_QP_A2A
+&                        PAR_COM_QP_A2A,PAR_IND_QP,PAR_COM_QP_A2A,l_par_HF,l_par_GW
  !
  implicit none
  type(bz_samp)::Xk
@@ -189,7 +189,7 @@ subroutine el_density(en,Xk,rho,force_si)
     deallocate(states_filling)
     call PP_redux_wait(rho_no_sym,COMM=PAR_COM_QP_A2A%COMM)
   else
-    call PP_redux_wait(rho_no_sym)
+    if (l_par_GW.or.l_par_HF) call PP_redux_wait(rho_no_sym)
   endif
   !
   ! Simmetrization

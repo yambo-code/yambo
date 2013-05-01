@@ -36,6 +36,10 @@ module parallel_m
  integer            :: n_nodes  = 1
  integer            :: n_MPI    = 1
  !
+ ! Logicals
+ !
+ logical            :: l_par_bse,l_par_density,l_par_X_G_q0,l_par_X_G_q,l_par_HF,l_par_GW
+ !
  ! Input file...
  !
  ! ... Threads

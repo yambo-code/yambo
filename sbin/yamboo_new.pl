@@ -48,10 +48,11 @@ $nodryrun = 1;
 $manual_preprocess_files = " ";
 #
 $exclude_files = "yamboo.pl yamboo_new.pl";
-$exclude_dirs = "lib sbin config bin doc";
+$exclude_dirs = "lib sbin bin doc";
 @core_projects = ('yambo','ypp','p2y','a2y','f2y','e2y');
-@user_projects = ('MAGNETIC','DISTRIBUTED','SC','RT','ELPH', 'KERR',
-                  'YPP_ELPH','YPP_RT','YPP_SC','YPP_MAGNETIC','DEBUG','SURF');
+# First row are the new GPL released projects
+@user_projects = ('ELPH', 'YPP_ELPH', 'KERR', 'SURF', 'YPP_SURF',
+                  'DEBUG', 'MAGNETIC','DISTRIBUTED','SC','RT','YPP_RT','YPP_SC','YPP_MAGNETIC');
 #
 # ============= END OF USER DEFINED FLAGS  ==============
 #
@@ -184,7 +185,7 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
    #==================================================================#
 
    if (grep(/$GPL_OBJECTS_FILE/, @local_filenames) ){
-      &io("... Found $GPL_OBJECTS_FILE file");
+      &io("... Found GPL object file $GPL_OBJECTS_FILE ");
 
       $file_name = $directory_name.$GPL_OBJECTS_FILE;
       open(GPL_OBJ_FILENAME, $file_name) 
@@ -260,7 +261,7 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
    #==================================================================#
    FILE_GPL: foreach $file_name (@local_filenames) { 
       if($file_name =~ m/$GPL_FILE_SUFFIX$/) {
-         &io("\n... Found $GPL_FILE_SUFFIX file: $file_name"); 
+         &io("\n... Found generic GPL suffix $GPL_FILE_SUFFIX file: $file_name"); 
          $new_file_name = $file_name;
          $new_file_name =~ s/$GPL_FILE_SUFFIX//;  # strip the suffix
          #
@@ -280,6 +281,7 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
 #        }
 #        else{
            &io("\n... Reverting GPL only $file_name file");
+           &io("\n... Overwriting $file_name with $new_file_name");
            if($nodryrun) { rename($directory_name.$file_name,$directory_name.$new_file_name) };
            push (@delete_list, $directory_name.$file_name);
            next;

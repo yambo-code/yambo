@@ -98,7 +98,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  if(Distributed_Memory) force_bare_X_G=.true.
  !
  call mem_est("Xo_WS",(/size(XoR)+2*X%ng/))
-
  !
  !  Optical strengths
  !=====================

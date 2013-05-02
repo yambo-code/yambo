@@ -77,7 +77,7 @@ integer function ioELPH(ID,what)
      call io_elemental(ID,&
 &       VAR="                  [used]:",I0=elph_nDBs_used,CHECK=.true.,OP=(/"=="/))
    endif
-   if (ver_is_gt_or_eq(ID,revision=1074)) then
+   if (ver_is_gt_or_eq(ID,revision=1074).and.what=='gkkp_expanded') then
      call io_elemental(ID,&
 &       VAR=" K points (BZ)          :",I0=elph_nk_bz,CHECK=.true.,OP=(/"=="/))
    endif
@@ -123,7 +123,7 @@ integer function ioELPH(ID,what)
    call io_bulk(ID,VAR="PH_Q",VAR_SZ=(/elph_nDBs,3/) )
    call io_bulk(ID,R2=ph_qpt(:,:))
    !
-   if (ver_is_gt_or_eq(ID,revision=1074)) then
+   if (ver_is_gt_or_eq(ID,revision=1074).and.what=='gkkp_expanded') then
      !
      call io_bulk(ID,VAR="PH_K",VAR_SZ=(/nkbz,3/) )
      call io_bulk(ID,R2=ph_kpt_bz(:,:))

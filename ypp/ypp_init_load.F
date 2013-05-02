@@ -22,11 +22,12 @@
 subroutine ypp_init_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
-&                        Time_unit,Bfield_unit,Efield_unit,V_real_time
+&                        Time_unit,Bfield_unit,Efield_unit,V_real_time,T_unit
 #if defined _YPP_RT
  use real_time,     ONLY:Gr_kind,Gr_bands,Gr_E_window
 #endif
  use wave_func,     ONLY:wf_ng
+ use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
  use YPP
 #if defined _YPP_SURF
@@ -102,6 +103,11 @@ subroutine ypp_init_load(defs)
 #endif
  !
  ! GPL_EXCLUDE_END
+ !
+ ! Temperatures
+ !
+ call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)
+ call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
  !
  ! DOS
  !

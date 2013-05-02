@@ -22,11 +22,12 @@
 subroutine ypp_init_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
-&                        Time_unit,Bfield_unit,Efield_unit,V_real_time
+&                        Time_unit,Bfield_unit,Efield_unit,V_real_time,T_unit
 #if defined _YPP_RT
  use real_time,     ONLY:Gr_kind,Gr_bands,Gr_E_window
 #endif
  use wave_func,     ONLY:wf_ng
+ use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
  use YPP
 #if defined _YPP_BOLTZMANN
@@ -111,6 +112,11 @@ subroutine ypp_init_load(defs)
  !
  ! GPL_EXCLUDE_END
  !
+ ! Temperatures
+ !
+ call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)
+ call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
+ !
  ! DOS
  !
  call it(defs,'DOS_broad', 'Broadening of the DOS',dos_broadening,E_unit) 
@@ -166,7 +172,7 @@ subroutine ypp_init_load(defs)
 &                           deg_energy,E_unit)
  call it(defs,'MinWeight', 'Print transitions with weight => MinWeight',min_weight,verb_level=V_general)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
- call it(defs,'Cells', 'Number of cell repetitions (even or 1)',ncell)
+ call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
  !

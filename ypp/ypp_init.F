@@ -314,6 +314,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='all' )  infile_verbosity=V_all
    endif
    !
+   call initactivate(1,'ElecTemp BoseTemp')
+   !
    do i2=1,nrnlvls
      if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)) ) then
        infile_editing=.true.

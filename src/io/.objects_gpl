@@ -10,6 +10,10 @@ DISTRIBUTED_objects = ioBS.o
 #if defined _DISTRIBUTED
 DISTRIBUTED_objects = ioBS_DISTRIBUTED.o
 #endif
+#if defined _KERR
+KERR_objects = io_P_and_P2.o
+#endif
+#
 objs = ver_is_gt_or_eq.o IO_and_Messaging_switch.o \
        io_Vnl.o \
        ioRIM.o        ioGROT.o     $(ELPH_objects) \
@@ -19,4 +23,4 @@ objs = ver_is_gt_or_eq.o IO_and_Messaging_switch.o \
        ioBSS_diago.o  ioBSS_Haydock.o  ioBSS_invert.o \
        io_elemental.o io_bulk.o      io_header.o ioE_RIM.o \
        ioCOL_CUT.o    ioDB1_selective_scan.o variables_BS.o variables_X.o variables_DIPOLES.o $(SC_objects)  \
-       IO_Setup.o Fragments_Restart.o Fragments_Synchronize.o
+       $(KERR_objects) IO_Setup.o Fragments_Restart.o Fragments_Synchronize.o

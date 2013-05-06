@@ -199,7 +199,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  !... and find the nearest occupied state to the Fermi level
  !
- if (.not.associated(E%f)) allocate(E%f(E%nb,E%nk,n_spin))
+ if (.not.associated(E%f)) allocate(E%f(E%nb,E%nk,n_sp_pol))
  Efdist=1.E5
  do i1=1,n_total_states
    ib=index( index_E_sorted(i1) , 1)

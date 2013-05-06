@@ -41,42 +41,36 @@ end type pw_atoms
 
 contains
 
-!@ MANUAL
 subroutine pw_atoms_init(atoms,struct,cutoff_vloc)
   type (pw_atoms),          intent(out) ::atoms
   type (pw_struct), target, intent(in)  :: struct
   real, intent(in) :: cutoff_vloc
-!@ END MANUAL
   atoms%struct => struct
   atoms%natoms = 0
   atoms%ntypes = 0
   atoms%cutoff_vloc = cutoff_vloc
   allocate(atoms%pseudo(0))
-  allocate(atoms%names(0))
-  allocate(atoms%positions(0,0))
+! allocate(atoms%names(0))
+! allocate(atoms%positions(0,0))
 ! call pw_allocate(atoms%positions)
-  allocate(atoms%type_map(0))
+! allocate(atoms%type_map(0))
 ! call pw_allocate(atoms%type_map)
 end subroutine pw_atoms_init
 
-!@ MANUAL
 subroutine pw_atoms_destroy(atoms)
   type (pw_atoms), intent(inout) :: atoms
-!@ END MANUAL
   call pw_pseudo_destroy(atoms%pseudo)
   deallocate(atoms%pseudo)
-  deallocate(atoms%names)
+! deallocate(atoms%names)
 ! call pw_deallocate(atoms%positions)
-  deallocate(atoms%positions)
+! deallocate(atoms%positions)
 ! call pw_deallocate(atoms%type_map)
-  deallocate(atoms%type_map)
+! deallocate(atoms%type_map)
 end subroutine pw_atoms_destroy
 
-!@ MANUAL
 subroutine pw_atoms_set_dim(atoms,natoms,ntypes)
   type (pw_atoms), intent(inout) :: atoms
   integer,         intent(in)    :: natoms,ntypes
-!@ END MANUAL
   type (pw_struct), pointer :: struct
   struct => atoms%struct
   call pw_atoms_destroy(atoms)
@@ -84,15 +78,15 @@ subroutine pw_atoms_set_dim(atoms,natoms,ntypes)
   atoms%natoms = natoms
   atoms%ntypes = ntypes
   allocate(atoms%pseudo(ntypes))
-  allocate(atoms%names(ntypes))
-  atoms%names = " "
-  allocate(atoms%positions(3,natoms))
+! allocate(atoms%names(ntypes))
+! atoms%names = " "
+! allocate(atoms%positions(3,natoms))
 ! call pw_allocate(atoms%positions)
-  allocate(atoms%type_map(natoms))
+! allocate(atoms%type_map(natoms))
 ! call pw_allocate(atoms%type_map)
   call pw_pseudo_init(atoms%pseudo)
-  atoms%positions = 0.0
-  atoms%type_map = 0
+! atoms%positions = 0.0
+! atoms%type_map = 0
 end subroutine pw_atoms_set_dim
 
 end module pw_atoms_module

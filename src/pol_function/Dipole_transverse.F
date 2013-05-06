@@ -34,7 +34,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
 &                              pp_kbv_dim,spin_m_table,pp_factor
  use R_lattice,           ONLY:g_vec,bz_samp
  use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P,Dipole_Energy_treshold
- use IO_m,                ONLY:io_control,REP,OP_RD,RD_CL,RD
+ use IO_m,                ONLY:io_control,REP,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
  use wrapper,             ONLY:M_by_V
@@ -111,16 +111,14 @@ subroutine Dipole_transverse(Xen,Xk,X)
    ! [Vnl,r]
    !
    if (ioKB_pwscf_err==0) then
-     if (ik==1              ) call io_control(ACTION=OP_RD,SEC=(/ik+1/),ID=ID)
-     if (ik>1.and.ik<Xk%nibz) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
-     if (ik==Xk%nibz        ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
+     if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
+     if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
      ioKB_pwscf_err=ioKB_pwscf(ID)
    endif
    !
    if (ioKB_abinit_err==0) then
-     if (ik==1              ) call io_control(ACTION=OP_RD,SEC=(/ik+1/),ID=ID)
-     if (ik>1.and.ik<Xk%nibz) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
-     if (ik==Xk%nibz        ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
+     if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
+     if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
      ioKB_abinit_err=ioKB_abinit(ID)
    endif
    ! 

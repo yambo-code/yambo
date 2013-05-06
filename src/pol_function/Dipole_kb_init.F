@@ -24,7 +24,7 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
  use pars,                ONLY:SP,pi
  use X_m,                 ONLY:X_t
  use electrons,           ONLY:levels
- use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD_CL
+ use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD_CL,OP_RD
  use D_lattice,           ONLY:n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table, &
 &                              spin_m_table,pp_factor,pp_n_l_max
@@ -45,18 +45,25 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
  integer, external            :: ioKB_abinit,ioKB_pwscf,io_Vnl
  !
  X%Vnl_included=.false.
+ io_Vnl_err     =-1
+ ioKB_abinit_err=-1
+ ioKB_pwscf_err =-1
  !
  ! Check for the Vnl DB
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_Vnl_err=io_Vnl(X,Xen,ID)
  !
  ! Check for the KB pwscf DB 
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
- ioKB_pwscf_err=ioKB_pwscf(ID)
+ if(.not.ioKB_abinit_err==0) then
+   call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+   ioKB_pwscf_err=ioKB_pwscf(ID)
+ endif
  !
  ! Check for the KB abinit DB 
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
- ioKB_abinit_err=ioKB_abinit(ID)
+ if(.not.ioKB_pwscf_err==0) then
+   call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+   ioKB_abinit_err=ioKB_abinit(ID)
+ endif
  !
  X%Vnl_included= any((/ioKB_abinit_err==0,ioKB_pwscf_err==0,io_Vnl_err==0/))
  !

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioKB_PP(ID)
+integer function ioKB_abinit(ID)
  !
  use pars,             ONLY:schlen,IP,SP
  use stderr,           ONLY:intc
@@ -27,7 +27,8 @@ integer function ioKB_PP(ID)
 &                           atom_pos
  use R_lattice,        ONLY:ng_vec
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
-&                           pp_n_l_comp,pp_kbs,pp_kb,PP_alloc,pp_kbd
+&                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
+&                           PP_alloc_abinit
  use memory_m,         ONLY:mem_est
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
 &                           io_elemental,io_bulk,io_header,io_fragmented,&
@@ -44,15 +45,15 @@ integer function ioKB_PP(ID)
  integer :: ik,i1,i_spin,var_size
  ik=maxval(io_sec(ID,:))-1
  !
- ioKB_PP=io_connect(desc="kb_pp",type=0,ID=ID)
- if (ioKB_PP/=0) goto 1
+ ioKB_abinit=io_connect(desc="kb_pp",type=0,ID=ID)
+ if (ioKB_abinit/=0) goto 1
  !
  ! Dimensions
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioKB_PP=io_header(ID,IMPOSE_SN=.true.)
-   if (ioKB_PP/=0) goto 1
+   ioKB_abinit=io_header(ID,IMPOSE_SN=.true.)
+   if (ioKB_abinit/=0) goto 1
    !
    var_size=3
    if (ver_is_gt_or_eq(ID,revision=898)) var_size=4
@@ -111,14 +112,14 @@ integer function ioKB_PP(ID)
    call io_bulk(ID,VAR="ATOM_POS",VAR_SZ=shape(atom_pos))
    call io_bulk(ID,R3=atom_pos)
    !
-   if (ioKB_PP/=0) goto 1
+   if (ioKB_abinit/=0) goto 1
    !
  endif
  !
  if (ik==0) goto 1
  !
  if (ik==1) then
-   if (read_is_on(ID)) call PP_alloc()
+   if (read_is_on(ID)) call PP_alloc_abinit()
    call io_bulk(ID,VAR="PP_KBS",VAR_SZ=shape(pp_kbs))
    call io_bulk(ID,R2=pp_kbs)
  endif
@@ -164,4 +165,4 @@ integer function ioKB_PP(ID)
  !
 1 call io_disconnect(ID=ID)
  !
-end function ioKB_PP
+end function ioKB_abinit

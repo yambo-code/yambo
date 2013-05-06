@@ -46,7 +46,6 @@
   {"nowf",  "w","Force no wavefunctions",0,0,0,0,1},
   {"Gnum",  "g","Number of RL vectors to be used",1,0,0,0,1},
   {"verb",  "v","Verbose wfc I/O reporting",0,0,0,0,1}, 
-  {"dovnl", "c","Compute nonlocal pseudo commutator",0,0,0,0,1}, 
   {NULL,NULL,NULL,0,0,0,0,0}
  };
  char *tool="p2y";

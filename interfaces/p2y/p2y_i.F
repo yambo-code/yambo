@@ -35,7 +35,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use R_lattice,           ONLY : bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY : wf_ncx,ioWF, wf_nb_io_groups,wf_nb_io
  use IO_m,                ONLY : io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number,OP_RD_CL,DUMP
- use mod_com2y,           ONLY : interface_presets,force_noWFs,l_Vnl,verboseIO
+ use mod_com2y,           ONLY : interface_presets,force_noWFs,verboseIO
  use mod_wf2y,            ONLY : wf_splitter
  use stderr,              ONLY : intc
  !
@@ -108,7 +108,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call p2y_db1(en,k)
  !
- call msg('s','== Writing DB1 ...')
+ call msg('s','== DB1 (Gvecs and more) ... ')
  !
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
  io_err=ioDB1(en,k,ID)
@@ -134,8 +134,8 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  endif
  !
  ! Make db2 database
- !
- call msg('s','== DB2 (wavefunctions) ... ')
+ !             
+ call msg('s','== DB2 (wavefunctions)  ... ')
  !
  ! Wavefunction blocks
  !
@@ -177,19 +177,22 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call mem_est("wf_disk")
  !
  if(verboseIO) then
-   call msg('s','== DB2 (wavefunctions) ... done ==')
+   call msg('s','== DB2 (wavefunctions)  ... done ==')
  else
    call msg('l','done ==')
  endif
  !
- if (l_Vnl) then
 #if defined _P2Y_V40 || defined _P2Y_V50
-   call msg('s','=== Non-local pseudo-potential commutator === ')
-   call Vnl_driver(en,k)
-#else
-   call msg('s','Vnl support only with PWscf v4.0 or later.')
-#endif
+ call msg('s','== DB3 (PsedoPotential) ... ')
+ call PP_PWscf_driver(k)
+ if(verboseIO) then
+   call msg('s','== DB3 (PseudoPotential) ... done ==')
+ else
+   call msg('l','done ==')
  endif
+#else
+ call msg('s','Vnl support only with PWscf v4.0 or later.')
+#endif
  !
  call pwait()
  !

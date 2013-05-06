@@ -52,8 +52,8 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  use pars,                  ONLY:SP,DP
  use electrons,             ONLY:n_bands,n_spin,n_spinor,n_sp_pol
  use D_lattice,             ONLY:n_atomic_species
- use pseudo,                ONLY:pp_n_l_times_proj_max,PP_alloc,pp_kbs,pp_kb,pp_kbd,&
-&                                l_many_proj,pp_table
+ use pseudo,                ONLY:pp_n_l_times_proj_max,PP_alloc_abinit,pp_kbs,  &
+&                                pp_kb,pp_kbd,l_many_proj,pp_table
  use R_lattice,             ONLY:nkibz,ng_vec
  use wave_func,             ONLY:wf_ncx,wf_nc_k,wf_nb_io,wf_nb_io_groups,wf_igk
  use defs_datatypes,        ONLY:hdr_type, wffile_type
@@ -105,7 +105,7 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
      read(11)
    enddo
    !
-   call PP_alloc()
+   call PP_alloc_abinit()
    read(11) ((pp_kbs_disk(i1,i2),i2=1,pp_n_l_times_proj_max),i1=1,n_atomic_species)
    pp_kbs=pp_kbs_disk
    !

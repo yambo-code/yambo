@@ -92,10 +92,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Work Space
  !
- integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,io_KB_PP_err,&
+ integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,io_KB_abinit_err,io_KB_pwscf_err,&
 &                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G,io_Gr
  integer, external :: ioX,io_DIPOLES,ioGROT,ioQINDX,ioRIM,&
-&                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
+&                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_abinit,ioKB_pwscf,&
 &                     ioCOL_CUT
  logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
  character(6)      :: X_size
@@ -306,12 +306,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  OSTNTS_Vnl_included=io_err==0.and.X(3)%Vnl_included
  !
+ ! PP_PWscf
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+ io_KB_pwscf_err=ioKB_pwscf(io_ID)
+ !
  ! kb_pp
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_KB_PP_err=ioKB_PP(io_ID)
+ io_KB_abinit_err=ioKB_abinit(io_ID)
  !
- if (io_err/=0) OSTNTS_Vnl_included=io_KB_PP_err==0
+ if (io_err/=0) OSTNTS_Vnl_included=(io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
  !
  ! I transfer to all X types the X(3) used in the previous io's 
  !

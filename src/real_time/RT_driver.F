@@ -37,7 +37,7 @@ subroutine RT_driver(E,X,k,q)
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
 &                         l_Dynamics_is_over,MEM_index
- use matrix_operate,  ONLY:mat_dia_inv,DIAGO,USE_LK
+ use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
  use com,             ONLY:error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
@@ -295,7 +295,7 @@ subroutine RT_driver(E,X,k,q)
    if(it==Thermal_steps.or. (mod(it,RT_diagonalization_steps)==0.and.RT_diagonalization_steps>0) ) then
      !
      do ik=1,E%nk
-       call mat_dia_inv(DIAGO,USE_LK,SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),E_real=E%E(:SC_bands(2),ik,1))
+       call mat_dia_inv(DIAGO,SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),E_real=E%E(:SC_bands(2),ik,1))
      enddo
      !
      ! Updating

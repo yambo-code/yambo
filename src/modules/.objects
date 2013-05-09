@@ -18,6 +18,6 @@ objs = mod_pars.o mod_units.o  mod_stderr.o  mod_parallel.o \
        mod_functions.o  mod_zeros.o mod_pseudo.o \
        mod_BS.o mod_QP.o mod_TDDFT.o mod_ACFDT.o $(KERR_objects) \
        mod_IO.o $(ELPH_objects) mod_xc_functionals.o mod_global_XC.o \
-       $(SC_objects) $(RT_objects) $(MAGNETIC_objects) \
        mod_X_output.o mod_interfaces.o  \
+       $(SC_objects) $(RT_objects) $(MAGNETIC_objects) \
        mod_fragments.o SET_logicals.o SET_defaults.o

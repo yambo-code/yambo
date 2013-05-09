@@ -35,11 +35,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use wave_func,      ONLY:wf,wf_n_states,WF_free,WF_load
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
- use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
+ use matrix_operate, ONLY:mat_dia_inv,DIAGO
  use com,            ONLY:msg,warning
  use X_m,            ONLY:X_t,current_iq
  use timing,         ONLY:LIVE_message
- use stderr,         ONLY:intc,real2ch
+ use stderr,         ONLY:intc,real2ch,log_as_a_file
  use xc_functionals, ONLY:V_xc,E_xc
  use frequency,      ONLY:w_samp
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,&
@@ -304,7 +304,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      do i_spin=1,n_sp_pol
        !
-       call mat_dia_inv(DIAGO,USE_LK,H_nl_sc(:,:,i_spin),E_real=E%E(:SC_bands(2),ik,i_spin))
+       call mat_dia_inv(DIAGO,H_nl_sc(:,:,i_spin),E_real=E%E(:SC_bands(2),ik,i_spin))
        !
        ! Rotation (WFo->wf) matrix
        !

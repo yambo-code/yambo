@@ -29,7 +29,7 @@ subroutine QP_load_SC_xc()
  use R_lattice,       ONLY:nkibz
  use SC,              ONLY:SC_bands,H_nl_sc,load_SC_components,SC_R,H_rotate,compatible_SC_DB,&
 &                          found_SC_DB
- use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
+ use matrix_operate,  ONLY:mat_dia_inv,INV
  !
  implicit none
  !
@@ -48,7 +48,7 @@ subroutine QP_load_SC_xc()
      if (.not.compatible_SC_DB.or..not.found_SC_DB) return
      !
      do i_spin=1,n_sp_pol
-       call mat_dia_inv(INV,USE_LK,SC_R(:,:,i_k,i_spin))
+       call mat_dia_inv(INV,SC_R(:,:,i_k,i_spin))
        call H_rotate(SC_R(:,:,i_k,i_spin),H_nl_sc(:,:,i_spin),SC_bands(2),-1)
      enddo
      !

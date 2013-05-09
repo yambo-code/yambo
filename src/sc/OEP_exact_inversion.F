@@ -38,7 +38,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan
  use frequency,       ONLY:w_samp,W_reset,bare_grid_N,coarse_grid_Pt,coarse_grid_index,ordered_grid_index
- use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
+ use matrix_operate,  ONLY:mat_dia_inv,INV
  use collision,       ONLY:ggwinfo,collision_reset
  use QP_m,            ONLY:QP_ng_Sx,QP_Vnl_xc,QP_n_states,QP_table,QP_Sc
  use memory_m,        ONLY:mem_est
@@ -73,7 +73,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  ! -----------------------------------------------
  ! 1:
  call W_reset(Xw)
- Xw%n = 1
+ Xw%n_freqs = 1
  call FREQUENCIES_setup(Xw)
  Xw%p(1)=real(Xw%p(1))+(0.,1.)*epsilon(1._SP)
  call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
@@ -88,7 +88,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  Xo_inverse(:X%ng-1,:X%ng-1) =  X_mat(2:X%ng,2:X%ng,1) 
  call X_alloc('X')
  ! 4:
- call mat_dia_inv(INV,USE_LK,Xo_inverse)
+ call mat_dia_inv(INV,Xo_inverse)
  !
  !
  ! Calculate rho_xc(G) =>  1 - initialize vars/dim

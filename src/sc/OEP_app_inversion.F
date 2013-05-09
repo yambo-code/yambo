@@ -39,7 +39,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
  use frequency,       ONLY:w_samp,W_reset,bare_grid_N,coarse_grid_Pt,coarse_grid_index,ordered_grid_index
- use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
+ use matrix_operate,  ONLY:mat_dia_inv,INV
  use collision,       ONLY:ggwinfo,collision_reset
  use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table,QP_ng_Sx
  use memory_m,        ONLY:mem_est
@@ -171,7 +171,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  ! Calculate Vkli (RL) 
  !
  allocate(Vkli_RL(QP_ng_Sx-1))
- call mat_dia_inv(INV,USE_LK,Ko)
+ call mat_dia_inv(INV,Ko)
  ! 
  Vkli_RL=matmul(Ko,rho_xc)
  !

@@ -53,7 +53,7 @@ module it_m
  !
  integer, parameter :: maxrnlvls=50
  integer, parameter :: maxflags =50
- integer, parameter :: maxi1vars=50
+ integer, parameter :: maxi1vars=100
  integer, parameter :: maxi2vars=50
  integer, parameter :: maxi3vars=50
  integer, parameter :: maxr1vars=60

@@ -1260,12 +1260,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
        endif
        !
-       ! TDDFT Kind
-       !
-       if ( trim(rstr_piece(i1)) == 'tddft' )  then
-
-       endif
-       !
        ! BSE Solver
        !
        if ( trim(rstr_piece(i1)) == 'bss' )  then

@@ -26,7 +26,7 @@
 subroutine Dipole_kb_pwscf_comp(ik,i_spin,Xk,kbv)
  !
  use pars,          ONLY:SP,pi
- use R_lattice,     ONLY:b,g_vec,bz_samp
+ use R_lattice,     ONLY:b,g_vec,bz_samp,ng_vec,ng_closed
  use vec_operate,   ONLY:iku_v_norm,v_norm,c2a
  use wave_func,     ONLY:wf,wf_ng,wf_igk,wf_nc_k
  use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
@@ -56,6 +56,7 @@ subroutine Dipole_kb_pwscf_comp(ik,i_spin,Xk,kbv)
  !
  do ic=1,wf_nc_k(ik)
    ig=wf_igk(ic,ik)
+   if(ig>wf_ng) cycle
    call c2a(b,(Xk%pt(ik,:)+g_vec(ig,:)),KpG_cc,'ki2c')
    call c2a(b,g_vec(ig,:),G_cc,'ki2c')
    KpG_norm=v_norm(KpG_cc)

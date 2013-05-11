@@ -59,7 +59,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! ... frequencies
  !
- integer, parameter :: max_freqs_full_inv_ratio=10
+ integer, parameter :: max_freqs_full_inv_ratio=1
  integer,  allocatable ::inv_err(:),iw_full(:)
  integer    ::full_inf_freqs,nw,nw_conv,&
 &             min_dist_non_conv_freqs ! Every W%n(1)/min_dist_non_conv_freqs
@@ -177,8 +177,11 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! I need to remove the occupations from the oscillators strenght
  ! These are now embodied in the Green's function
+ !
  BSS_rhoq0(1:BS_K_dim)=BSS_rhoq0(1:BS_K_dim)/sqrt(BS_eh_f(1:BS_K_dim))
- BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)=BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)/sqrt(BS_eh_f(1:BS_K_dim))
+ if (BS_K_coupling.or.allocated(BS_eh_W)) then
+   BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)=BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)/sqrt(BS_eh_f(1:BS_K_dim))
+ endif
  !
  ! Initialize the output file 
  !
@@ -235,7 +238,7 @@ subroutine K_inversion(iq,W,E,k,q)
    endif
    !
    X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*Lo(i1,:)*Co
-   if (BS_K_coupling) then
+   if (BS_K_coupling.or.allocated(BS_eh_W)) then
      X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1+BS_K_dim)*conjg(BSS_rhoq0(i1+BS_K_dim))*Lo(i1+BS_K_dim,:)*Co
    endif
    !

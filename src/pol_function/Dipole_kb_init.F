@@ -22,8 +22,10 @@
 subroutine Dipole_kb_init(Xen,X,io_err,ID)
  !
  use pars,                ONLY:SP,pi
+ use stderr,              ONLY:intc
  use X_m,                 ONLY:X_t
  use electrons,           ONLY:levels
+ use com,                 ONLY:msg,warning
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD_CL,OP_RD
  use D_lattice,           ONLY:n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table, &
@@ -45,9 +47,12 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
  integer, external            :: ioKB_abinit,ioKB_pwscf,io_Vnl
  !
  X%Vnl_included=.false.
+ !
  io_Vnl_err     =-1
  ioKB_abinit_err=-1
  ioKB_pwscf_err =-1
+ !
+ pp_kbv_dim=0
  !
  ! Check for the Vnl DB
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
@@ -83,8 +88,6 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
    spin_m_table=0
    allocate(pp_factor(2*(pp_n_l_max-1)+1,pp_n_l_max,maxval(pp_table(2,:,:)+1),n_atomic_species,2))
    pp_factor=1._SP
-   !
-   pp_kbv_dim=0
    !
    do is = 1,n_atomic_species
      psp_has_so=.not.all(pp_table(2,is,:)==0)
@@ -134,7 +137,6 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
    !allocate(pp_factor(2*(pp_n_l_max-1)1,pp_n_l_max,1,n_atomic_species,2))
    !pp_factor=1._SP
    !
-   pp_kbv_dim=0
    do is = 1,n_atomic_species
      do ia = 1,n_atoms_species(is)
        do i_pp = 1, pp_n_l_times_proj_max
@@ -157,6 +159,9 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
  io_err(1)=ioKB_abinit_err
  io_err(2)=ioKB_pwscf_err
  io_err(3)=io_Vnl_err
+ !
+ if ( pp_kbv_dim>0 ) call msg('s','[x,Vnl] computed using '//trim(intc(pp_kbv_dim))//' projectors')
+ if ( pp_kbv_dim>20) call warning(' [x,Vnl] slows the Dipoles computation. To neglect it rename the ns.kb_pp files')
  !
  return
  !

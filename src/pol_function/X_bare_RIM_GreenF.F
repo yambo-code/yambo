@@ -94,7 +94,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
 &                        GreenF,            Xw%p,                          Xw%n(1), cmplx(0.,0.,SP))
    endif
    !
-   if (trim(ordering)='c'.or.trim(ordering)=='ca') then
+   if (trim(ordering)=='c'.or.trim(ordering)=='ca') then
      call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
 &                        GreenF,            -Xw%p,                      Xw%n(1), cmplx(0.,0.,SP))
    endif

@@ -94,12 +94,12 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
 &                        GreenF,            Xw%p,                          Xw%n(1), cmplx(0.,0.,SP))
    endif
    !
-   if (trim(ordering)=='c') then
+   if (trim(ordering)='c'.or.trim(ordering)=='ca') then
      call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
 &                        GreenF,            -Xw%p,                      Xw%n(1), cmplx(0.,0.,SP))
    endif
    !
-   if (trim(ordering)=='a'.or.trim(ordering)=='t') then
+   if (trim(ordering)=='t'.or.trim(ordering)=='a') then
      call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
 &                        GreenF,            -conjg(Xw%p),               Xw%n(1), cmplx(0.,0.,SP))
    endif
@@ -125,10 +125,11 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
    pole=Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin)-(0.,1.)*W_
    !
    do iw=1,Xw%n(1)
-     if (ordering=="t" ) GreenF(iw)=Z_*(1./(Xw%p(iw)-pole)-1./(conjg(Xw%p(iw))+pole))
-     if (ordering=="c" ) GreenF(iw)=Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+conjg(pole)))
-     if (ordering=="r" ) GreenF(iw)=Z_/    (Xw%p(iw)-pole)
-     if (ordering=="a" ) GreenF(iw)=                      -Z_/(conjg(Xw%p(iw))+pole)
+     if (ordering=="t" )  GreenF(iw)=Z_*(1./(Xw%p(iw)-pole)-1./(conjg(Xw%p(iw))+pole))
+     if (ordering=="c" )  GreenF(iw)=Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+conjg(pole)))
+     if (ordering=="r" )  GreenF(iw)=Z_/    (Xw%p(iw)-pole)
+     if (ordering=="a" )  GreenF(iw)=                      -Z_/(conjg(Xw%p(iw))+pole)
+     if (ordering=="ca" ) GreenF(iw)=                      -Z_/(Xw%p(iw)+pole)
    enddo
    !
    return
@@ -162,6 +163,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
        if (ordering=="c" ) GreenF(iw)=GreenF(iw)+ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
        if (ordering=="r" ) GreenF(iw)=GreenF(iw)+ffac/(Xw%p(iw)-pole)
        if (ordering=="a" ) GreenF(iw)=GreenF(iw)-ffac/(conjg(Xw%p(iw))+pole)
+       if (ordering=="ca") GreenF(iw)=GreenF(iw)-ffac/(Xw%p(iw)+pole)
        if (ordering=="sr") GreenF(iw)=GreenF(iw)+s_ffac/(Xw%p(iw)-pole)/spin_occ**2.
        if (ordering=="sa") GreenF(iw)=GreenF(iw)-s_ffac/(Xw%p(iw)+pole)/spin_occ**2.
      enddo
@@ -182,12 +184,13 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
 &         BZ_RIM_ipol_weight(i1)*BZ_RIM_ipol_weight(i2)/real(BZ_RIM_nkpt(ikbz))/real(BZ_RIM_nkpt(ikpbz))/f0fac
        !
        do iw=1,Xw%n(1)
-         if (ordering=="t") GreenF(iw)=GreenF(iw)+&
-&                           ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
-         if (ordering=="c") GreenF(iw)=GreenF(iw)+&
-&                           ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
-         if (ordering=="r") GreenF(iw)=GreenF(iw)+ffac/(Xw%p(iw)-pole)
-         if (ordering=="a") GreenF(iw)=GreenF(iw)-ffac/(conjg(Xw%p(iw))+pole)
+         if (ordering=="t" ) GreenF(iw)=GreenF(iw)+&
+&                             ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
+         if (ordering=="c" ) GreenF(iw)=GreenF(iw)+&
+&                             ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
+         if (ordering=="r" ) GreenF(iw)=GreenF(iw)+ffac/(Xw%p(iw)-pole)
+         if (ordering=="a" ) GreenF(iw)=GreenF(iw)-ffac/(conjg(Xw%p(iw))+pole)
+         if (ordering=="ca") GreenF(iw)=GreenF(iw)-ffac/(Xw%p(iw)+pole)
        enddo
        !
      enddo

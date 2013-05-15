@@ -224,7 +224,7 @@ subroutine K_inversion(iq,W,E,k,q)
      if (allocated(BS_eh_Z)) QP_Z=BS_eh_Z(i1)
      if (associated(E%GreenF)) then
        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:),"r")
-       if (BS_K_coupling) call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:),"a")
+       if (BS_K_coupling) call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:),"ca")
      else
        Lo(i1,:)=QP_Z*BS_eh_f(i1)/(W%p(:)-BS_eh_E(i1)-(0.,1.)*QP_width)
        if (BS_K_coupling) Lo(i1+BS_K_dim,:)=-QP_Z*BS_eh_f(i1)/(W%p(:)+BS_eh_E(i1)-(0.,1.)*QP_width)

@@ -113,7 +113,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  !
 #if defined _SC
- !call live_timing('P and P^2 (T):',px%n_of_elements(myid+1)*n_spin)
+ call live_timing('P and P^2 (T):',n_LT_steps)
  wf_dim=4
 #else
  call live_timing('Dipole (T):',n_LT_steps)

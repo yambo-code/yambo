@@ -39,6 +39,7 @@ subroutine SC_WF_and_dipole_dimensions(X)
  !
  X(1)%ib(2)=SC_bands(2)
  if (l_real_time) then
+   X(1)%whoami=6
    X(1)%ng=wf_ng
  else
    X(1)%ng=QP_ng_Sx

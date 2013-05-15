@@ -124,6 +124,13 @@ module parallel_m
    integer, pointer :: first_of_1D(:)    => null()
  end type PP_indexes
  !
+ ! Number of Response functions
+ !==============================
+ !
+ !1:Xo 2:em1s 3:em1d 4:pp 5:bse 6:rt
+ !
+ integer, parameter :: n_parallel_X_types=6
+ !
  ! Specific PP indexes ...
  !========================
  !
@@ -137,8 +144,8 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_Xk_bz
  !
  ! ... linear response
- type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_X(5)
- type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_X(5)
+ type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_X(n_parallel_X_types)
+ type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_X(n_parallel_X_types)
  !
  ! ... QP
  type(PP_indexes),SAVE :: PAR_IND_QP
@@ -161,8 +168,8 @@ module parallel_m
  integer            :: PAR_IND_Xk_bz_ID
  !
  ! ... linear response & BSK
- integer            :: PAR_IND_VAL_BANDS_X_ID(5)
- integer            :: PAR_IND_CON_BANDS_X_ID(5)
+ integer            :: PAR_IND_VAL_BANDS_X_ID(n_parallel_X_types)
+ integer            :: PAR_IND_CON_BANDS_X_ID(n_parallel_X_types)
  !
  ! Specific MPI COMMUNICATORS...
  !==============================
@@ -195,8 +202,8 @@ module parallel_m
  integer,allocatable:: PAR_Xk_bz_index(:)
  !
  ! ... linear response & BSK
- type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(5)
- type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(5)
+ type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
+ type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
  !
  ! WorkSpace
  !
@@ -246,6 +253,8 @@ module parallel_m
      CPU_structure(5)%Short_Description="BSE"
      CPU_structure(6)%Long_Description="DENSITY"
      CPU_structure(6)%Short_Description="DENSITY"
+     CPU_structure(7)%Long_Description="RT"
+     CPU_structure(7)%Short_Description="RT"
    end subroutine
    !
    subroutine COMM_reset(COMM)

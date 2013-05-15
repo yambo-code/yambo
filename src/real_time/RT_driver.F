@@ -44,6 +44,7 @@ subroutine RT_driver(E,X,k,q)
  use collisions_IO,   ONLY:collisions_IO_alloc,collisions_IO_free,collisions_RANGES_setup
  use collisions_CACHE,ONLY:free_COLLISIONS_v
  use QP_CTL_m,        ONLY:QP_apply
+ use interfaces,      ONLY:PARALLEL_global_indexes
  !
  implicit none
  !
@@ -54,7 +55,7 @@ subroutine RT_driver(E,X,k,q)
  !
  type(levels)  :: E
  type(bz_samp) :: k,q
- type(X_t):: X(4)
+ type(X_t)     :: X(2)
  logical, external  ::stop_now
  ! 
  ! Work Space
@@ -78,9 +79,15 @@ subroutine RT_driver(E,X,k,q)
  call set_real_printed_length(f_length=10,g_length=10)  
  !
  ! Switch 
- !=======
+ !========
  !
  call XC_switch()
+ !
+ ! Parallel Setups
+ !=================
+ !
+ call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
+ call PARALLEL_global_indexes(E,k,q,"RT",RESET=.FALSE.,SERIAL=.TRUE.,X=X(1))
  !
  ! Dipoles & WF dimensions
  !=========================

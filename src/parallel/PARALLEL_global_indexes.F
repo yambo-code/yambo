@@ -47,6 +47,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                        PARALLEL_live_message
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_bands
+ use SC,            ONLY:SC_bands
  use electrons,     ONLY:levels
  use stderr,        ONLY:intc
  use com,           ONLY:error
@@ -65,7 +66,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  !
  ! Work Space
  !
- integer       :: i_k,i_p,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2)
+ integer       :: i_k,i_p,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),c_bands(2),v_bands(2)
  logical       :: reset_all
  character(10) :: WHAT
  !
@@ -91,6 +92,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  endif
  !
  if (ENVIRONMENT=="BSE") X_type=5
+ if (ENVIRONMENT=="RT" ) X_type=6
  !
  if (reset_all) then
    !
@@ -161,6 +163,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
      endif
      !
      if (ENVIRONMENT=="BSE") then
+       v_bands=(/BS_bands(1),E%nbm/)
+       c_bands=(/E%nbf+1,BS_bands(2)/)
+     else if (ENVIRONMENT=="RT") then
+       v_bands=(/SC_bands(1),E%nbm/)
+       c_bands=(/E%nbf+1,SC_bands(2)/)
+     endif
+     !
+     if (ENVIRONMENT=="BSE".or.ENVIRONMENT=="RT") then
        !
        PAR_COM_Xk_ibz_INDEX%CPU_id=myid
        allocate(PAR_IND_Xk_ibz%n_of_elements(ncpu),PAR_IND_Xk_ibz%element_1D(Xk%nibz))
@@ -175,14 +185,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
        PAR_IND_CON_BANDS_X_ID(X_type)=myid
        allocate(PAR_IND_CON_BANDS_X(X_type)%n_of_elements(ncpu),PAR_IND_CON_BANDS_X(X_type)%element_1D(BS_bands(2)))
        PAR_IND_CON_BANDS_X(X_type)%element_1D=.FALSE.
-       PAR_IND_CON_BANDS_X(X_type)%element_1D(E%nbf+1:BS_bands(2))=.TRUE.
-       PAR_IND_CON_BANDS_X(X_type)%n_of_elements(myid+1)=BS_bands(2)-E%nbf
+       PAR_IND_CON_BANDS_X(X_type)%element_1D(c_bands(1):c_bands(2))=.TRUE.
+       PAR_IND_CON_BANDS_X(X_type)%n_of_elements(myid+1)=c_bands(2)-c_bands(1)+1
        !
        PAR_IND_VAL_BANDS_X_ID(X_type)=myid
        allocate(PAR_IND_VAL_BANDS_X(X_type)%n_of_elements(ncpu),PAR_IND_VAL_BANDS_X(X_type)%element_1D(E%nbm))
        PAR_IND_VAL_BANDS_X(X_type)%element_1D=.FALSE.
-       PAR_IND_VAL_BANDS_X(X_type)%element_1D(BS_bands(1):E%nbm)=.TRUE.
-       PAR_IND_VAL_BANDS_X(X_type)%n_of_elements(myid+1)=E%nbm-BS_bands(1)+1
+       PAR_IND_VAL_BANDS_X(X_type)%element_1D(v_bands(1):v_bands(2))=.TRUE.
+       PAR_IND_VAL_BANDS_X(X_type)%n_of_elements(myid+1)=v_bands(2)-v_bands(1)+1
        !
        PAR_Xk_nbz =Xk%nbz
        PAR_Xk_nibz=Xk%nibz

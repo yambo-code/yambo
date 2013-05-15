@@ -407,6 +407,8 @@ subroutine RT_X_effective(en)
 &                                                  E=Probe_Frequency(i_f)*HA2EV)
            !
          enddo
+         call msg('o '//trim(X_file_name),'')
+         call msg('o '//trim(X_file_name),'')
        enddo 
        !
        call RT_output("close "//trim(X_file_name))

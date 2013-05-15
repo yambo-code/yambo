@@ -21,12 +21,12 @@
 !
 subroutine electrons_bands(Xk,Xen)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,lchlen,DP
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,BANDS_range,k_transform,interp_grid
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
- use com,            ONLY:msg,of_open_close,error
+ use com,            ONLY:msg,of_open_close,error,warning
  use vec_operate,    ONLY:c2a,v_norm
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
@@ -46,6 +46,7 @@ subroutine electrons_bands(Xk,Xen)
  integer,  allocatable :: int_distances(:)
  character(schlen)     :: bands_f_name(n_sp_pol)
  character(schlen), allocatable :: headings(:)
+ character(3*lchlen)   :: bnd_line
  !
  !Input file parsing
  !
@@ -87,6 +88,9 @@ subroutine electrons_bands(Xk,Xen)
  deallocate(tmp_bands)
  !
  allocate(values(3+BANDS_range(2)-BANDS_range(1)+1),headings(3+BANDS_range(2)-BANDS_range(1)+1))
+ !
+ if(SP/=DP) &
+&  call warning("To have a smaller error in the interpolation compile yambo in double precision: --enable-dp")
  !
  ! Interpolation along lines
  ! 
@@ -153,7 +157,8 @@ subroutine electrons_bands(Xk,Xen)
      values(1:3)=CIRCUIT_K%pt(i1,:)
      do is=1,n_sp_pol
        values(3+1:3+BANDS_range(2)-BANDS_range(1)+1)=bands(BANDS_range(1):BANDS_range(2),is,i1)*HA2EV
-       call msg('o '//bands_f_name(is),"",values,INDENT=0,USE_TABS=.true.)
+       write(bnd_line,'(300f16.10)') values(1:3+BANDS_range(2)-BANDS_range(1)+1)
+       call msg('o '//bands_f_name(is),trim(bnd_line))
      enddo
      !
    enddo
@@ -203,7 +208,8 @@ subroutine electrons_bands(Xk,Xen)
      !
      do is=1,n_sp_pol
        values(3+1:3+BANDS_range(2)-BANDS_range(1)+1)=bands(BANDS_range(1):BANDS_range(2),is,ik)*HA2EV
-       call msg('o '//bands_f_name(is),"",values,INDENT=0,USE_TABS=.true.)
+       write(bnd_line,'(300f16.10)') values(1:3+BANDS_range(2)-BANDS_range(1)+1)
+       call msg('o '//bands_f_name(is),trim(bnd_line))
      enddo
      !
    enddo

@@ -60,7 +60,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! ... frequencies
  !
- integer, parameter :: max_freqs_full_inv_ratio=10
+ integer, parameter :: max_freqs_full_inv_ratio=1
  integer,  allocatable ::inv_err(:),iw_full(:)
  integer    ::full_inf_freqs,nw,nw_conv,&
 &             min_dist_non_conv_freqs ! Every W%n(1)/min_dist_non_conv_freqs
@@ -186,8 +186,11 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! I need to remove the occupations from the oscillators strenght
  ! These are now embodied in the Green's function
+ !
  BSS_rhoq0(1:BS_K_dim)=BSS_rhoq0(1:BS_K_dim)/sqrt(BS_eh_f(1:BS_K_dim))
- BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)=BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)/sqrt(BS_eh_f(1:BS_K_dim))
+ if (trim(BSE_mode)=='coupling'.or.allocated(BS_eh_W)) then
+   BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)=BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)/sqrt(BS_eh_f(1:BS_K_dim))
+ endif
  !
  ! Initialize the output file 
  !
@@ -215,10 +218,6 @@ subroutine K_inversion(iq,W,E,k,q)
  !
 #endif
  !
- write(*,*) '   '
- write(*,*) 'BSS_uses_RIM= ',BSS_uses_RIM
- write(*,*) 'associated(E%GreenF)=  ',associated(E%GreenF)
- !
  call live_timing('Green`s function',BS_K_dim)
  !
  do i1=1,BS_K_dim
@@ -237,9 +236,9 @@ subroutine K_inversion(iq,W,E,k,q)
      if (associated(E%GreenF)) then
        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"r")
        if (trim(BSE_mode)=='causal') &
-&        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"ia")
+&        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"ca")
        if (trim(BSE_mode)=='coupling') &
-&        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"ia")
+&        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"ca")
      else
        Lo(i1,:,1)=QP_Z*BS_eh_f(i1)/(W%p(:)-BS_eh_E(i1)-(0.,1.)*QP_width)
        if (trim(BSE_mode)=='causal') &
@@ -258,7 +257,7 @@ subroutine K_inversion(iq,W,E,k,q)
    X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*Lo(i1,:,1)*Co
    if (trim(BSE_mode)=='causal') X_epsilon(3,:)=X_epsilon(3,:)- &
 &                                conjg(BSS_rhoq0(i1))*BSS_rhoq0(i1)*Lo(i1,:,2)*Co
-   if (trim(BSE_mode)=='coupling') X_epsilon(3,:)=X_epsilon(3,:)- &
+   if (trim(BSE_mode)=='coupling'.or.allocated(BS_eh_W)) X_epsilon(3,:)=X_epsilon(3,:)- &
 &                     conjg(BSS_rhoq0(i1+BS_K_dim))*BSS_rhoq0(i1+BS_K_dim)*Lo(i1+BS_K_dim,:,1)*Co
    !
    ! Include the Kernel diagonal as a rigid shift

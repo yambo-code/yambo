@@ -132,7 +132,7 @@ module fields
      !
      select case( trim(E_field%ef_name) )
        case('SIN')
-	     do i_f=1,E_field%n_frequencies	
+         do i_f=1,E_field%n_frequencies     
            !
            freq=field_frequency(E_field,i_f)
            !
@@ -140,8 +140,8 @@ module fields
            if (order==1 ) local_a=local_a+ sin(freq*T_or_W)
            if (order==2 ) local_a=local_a+freq*cos(freq*T_or_W)
            if (order==-1) local_a=local_a+1._SP/2._SP/(T_or_W-freq)-1._SP/2._SP/(T_or_W+freq)-1._SP/freq
-	       !
-	     enddo 
+           !
+         enddo 
        case('ANTIRES')
          do i_f=1,E_field%n_frequencies
            !

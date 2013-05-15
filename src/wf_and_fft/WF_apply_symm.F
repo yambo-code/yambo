@@ -19,22 +19,42 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_apply_symm(isc,WF_bz)
+subroutine WF_apply_symm(isc,WF_symm)
  !
  use pars,          ONLY:SP
- use FFT_m,         ONLY:fft_size
+ use wave_func,     ONLY:wf,wf_state
+ use FFT_m,         ONLY:fft_rot_r,fft_size
  use electrons,     ONLY:n_spinor
- use wave_func,     ONLY:WF_symm
+ use D_lattice,     ONLY:nsym,spin_sop,i_time_rev,idt_index
  !
  implicit none
  !
  integer     :: isc(4)
- complex(SP) :: WF_bz(fft_size,n_spinor)
+ complex(SP) :: WF_symm(fft_size,n_spinor)
  !
  integer     :: ifft
+ integer     :: i_wf(n_spinor)
  !
- do ifft=1,fft_size
-   WF_bz(ifft,:)=WF_symm(ifft,isc)
- enddo
+ i_wf(1)=wf_state(isc(1),isc(2),isc(4))
+ if(n_spinor==2)  i_wf(2)=wf_state(isc(1),isc(2),2)
+ !
+ if(isc(3)==idt_index) then
+   WF_symm(:,1)=wf(:,i_wf(1))
+   if(n_spinor==2) WF_symm(:,2)=wf(:,i_wf(2))
+   return
+ endif
+ !
+ if(n_spinor==1) WF_symm(:,1)=wf(fft_rot_r(isc(3),:),i_wf(1))
+ !
+ if (n_spinor==2) then
+   WF_symm(:,1)=spin_sop(1,1,isc(3))*wf(fft_rot_r(isc(3),:),i_wf(1))+ &
+&                    spin_sop(1,2,isc(3))*wf(fft_rot_r(isc(3),:),i_wf(2))
+   WF_symm(:,2)=spin_sop(2,1,isc(3))*wf(fft_rot_r(isc(3),:),i_wf(1))+ &
+&                    spin_sop(2,2,isc(3))*wf(fft_rot_r(isc(3),:),i_wf(2))
+ endif
+ !
+ if(isc(3)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)
+ !
+ return
  !
 end subroutine

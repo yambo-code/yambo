@@ -21,16 +21,14 @@
 !
 subroutine K_inversion(iq,W,E,k,q) 
  !
- use pars,           ONLY:SP,pi,DP
+ use pars,           ONLY:SP,pi
  use X_m,            ONLY:X_epsilon
  use stderr,         ONLY:intc,real2ch
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BSS_uses_GreenF,&
 &                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,BSS_inversion_mode,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BS_eh_f,&
 &                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z
- use units
  use memory_m,       ONLY:mem_est
- use parser_m,       ONLY:parser
  use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_merge,W_duplicate
  use R_lattice,      ONLY:d3k_factor,q_norm,bz_samp
@@ -225,7 +223,8 @@ subroutine K_inversion(iq,W,E,k,q)
      if (allocated(BS_eh_W)) QP_width=BS_eh_W(i1)
      if (allocated(BS_eh_Z)) QP_Z=BS_eh_Z(i1)
      if (associated(E%GreenF)) then
-       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:),"c")
+       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:),"r")
+       if (BS_K_coupling) call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:),"a")
      else
        Lo(i1,:)=QP_Z*BS_eh_f(i1)/(W%p(:)-BS_eh_E(i1)-(0.,1.)*QP_width)
        if (BS_K_coupling) Lo(i1+BS_K_dim,:)=-QP_Z*BS_eh_f(i1)/(W%p(:)+BS_eh_E(i1)-(0.,1.)*QP_width)

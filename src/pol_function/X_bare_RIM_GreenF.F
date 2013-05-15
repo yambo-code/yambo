@@ -89,13 +89,17 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
    !
    ! Resonant Part
    !
-   if (ordering/="a") &
-&    call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
+   if (trim(ordering)=='r'.or.trim(ordering)=='t'.or.trim(ordering)=='c') then
+     call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
 &                        GreenF,            Xw%p,                          Xw%n(1), cmplx(0.,0.,SP))
-   if (ordering=="c") then
+   endif
+   !
+   if (trim(ordering)=='c') then
      call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
 &                        GreenF,            -Xw%p,                      Xw%n(1), cmplx(0.,0.,SP))
-   else if (ordering=="a".or.ordering=="t") then
+   endif
+   !
+   if (trim(ordering)=='a'.or.trim(ordering)=='t') then
      call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
 &                        GreenF,            -conjg(Xw%p),               Xw%n(1), cmplx(0.,0.,SP))
    endif

@@ -29,8 +29,8 @@ subroutine WF_apply_symm(isc,WF_symm)
  !
  implicit none
  !
- integer     :: isc(4)
- complex(SP) :: WF_symm(fft_size,n_spinor)
+ integer,     intent(in)  :: isc(4)
+ complex(SP), intent(out) :: WF_symm(fft_size,n_spinor)
  !
  integer     :: ifft
  integer     :: i_wf(n_spinor)

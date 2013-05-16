@@ -103,7 +103,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: ioE_RIM
  !
 #if defined _SC || defined _RT
- integer, external :: io_SC_components,io_G_retarded
+ integer, external :: io_SC_components,io_G_retarded,io_RT_components
 #endif
 #if defined _ELPH 
  integer           :: ioELPH_err
@@ -371,9 +371,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_J_and_P=io_SC_components('J_and_P' ,en,io_ID)
+ io_J_and_P=io_RT_components('J_and_P' ,en,io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_G=io_SC_components('G' ,en,io_ID)
+ io_G=io_RT_components('G' ,en,io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_Gr=io_G_retarded(io_ID,"G_retarded")
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)

@@ -49,6 +49,25 @@ subroutine RT_databases_IO(E,it)
  !
  if (it==it_start.and.it_start>1) return
  !
+ ! Polarization and current are automaticaly written every RT_IO_stesp
+ ! the cache save value at steps different from mod(NE_i_time,RT_IO_steps)/=0)
+ !
+ if(l_NE_with_fields.and.NE_dynamics.and..not.l_RT_skip_JandP_IO) then
+   !
+   ! Remember that negative time = adiabatic switching
+   ! no need to store current
+   !
+   io_J_and_P=0 
+   !
+   ! Write current and polarization on disk
+   !
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
+   io_J_and_P=io_SC_components('J_and_P' ,E,ID(4))
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
+   io_J_and_P=io_SC_components('J_and_P' ,E,ID(4))
+   !
+ endif
+ !
  ! Write every RT_IO_steps
  !
  if (.not. (NE_i_time==1.or.mod(NE_i_time,RT_IO_steps)==0) ) return
@@ -102,21 +121,5 @@ subroutine RT_databases_IO(E,it)
  ! Occupations
  !
  if (.not.l_RT_skip_OCC_IO) call OCCUPATIONS_IO_and_interpolate(E,'G')
- !
- if(l_NE_with_fields.and.NE_dynamics.and..not.l_RT_skip_JandP_IO) then
-   !
-   ! Remember that negative time = adiabatic switching
-   ! no need to store current
-   !
-   io_J_and_P=0 
-   !
-   ! Write current and polarization on disk
-   !
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
-   io_J_and_P=io_SC_components('J_and_P' ,E,ID(4))
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
-   io_J_and_P=io_SC_components('J_and_P' ,E,ID(4))
-   !
- endif
- !
+
 end subroutine RT_databases_IO

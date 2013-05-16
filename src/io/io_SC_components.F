@@ -110,7 +110,15 @@ integer function io_SC_components(what,E_sc,ID)
      if (l_J_and_P)     io_SC_components=io_connect(desc="RT_J_and_P",type=2,ID=ID)
      if (l_occupations) io_SC_components=io_connect(desc="RT_occupations",type=2,ID=ID)
    else
+     !  
      do_IO=NE_i_time==1.or.mod(NE_i_time,RT_IO_steps)==0
+     !
+     if(l_J_and_P) then
+       do_IO=.false.
+       if(mod(NE_i_time,  RT_IO_steps)  ==0.and.write_is_on(ID))  do_IO=.true.
+       if(mod(NE_i_time-1,RT_IO_steps)  ==0.and.read_is_on(ID))   do_IO=.true.
+     endif
+     !
      if(do_IO) then
        if (l_J_and_P)     io_SC_components=io_connect(desc="RT_J_and_P_"//trim(intc(file_number)),type=2,ID=ID)
        if (l_occupations) then
@@ -122,7 +130,7 @@ integer function io_SC_components(what,E_sc,ID)
      else
        io_SC_components=0
        call io_reset(ID)
-       return
+       if(.not.l_J_and_P) return
      endif
    endif
  endif

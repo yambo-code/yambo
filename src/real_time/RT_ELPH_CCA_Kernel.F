@@ -71,21 +71,32 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp)
      ! Including "by hand" the limits on the signs of DELTA I managed to get
      ! (finally) a converged el-ph dynamics.
      !
+     ! Updated on 29/3/2012 with more tailored constrains. Valid only in systems
+     ! with a gap.
+     !
+     ! n>=n_full_bands+1 => i_np>=n_full_bands+1 
+     !
+     ! Fermi level ----------------
+     !
+     ! n<=n_full_bands => i_np<=n_full_bands 
+     !
      if (i_n_shift<=n_full_bands.and.i_np_shift>  n_full_bands) cycle
      if (i_n_shift> n_full_bands.and.i_np_shift<= n_full_bands) cycle
      !
      if (abs(DELTA)<1.E-10) cycle
      !
-     if (Gr_ordering_condition(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik)) then
-       if (DELTA>1.E-10) P_ph_abs =Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,1) 
-       if (DELTA<1.E-10) P_ph_emit=Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,2) 
-     else
-       if (DELTA>1.E-10) P_ph_abs =Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,2) 
-       if (DELTA<1.E-10) P_ph_emit=Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,1) 
-     endif
+     !if (Gr_ordering_condition(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik)) then
+     !  if (DELTA>1.E-10) P_ph_abs =Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,1) 
+     !  if (DELTA<1.E-10) P_ph_emit=Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,2) 
+     !else
+     !  if (DELTA>1.E-10) P_ph_abs =Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,2) 
+     !  if (DELTA<1.E-10) P_ph_emit=Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,1) 
+     !endif
      !
-     !if (DELTA>1.E-10) P_ph_abs =GAMMA_/(GAMMA_**2+(DELTA-ph_freq)**2)
-     !if (DELTA<1.E-10) P_ph_emit=GAMMA_/(GAMMA_**2+(DELTA+ph_freq)**2)
+     !DEBUG>
+     if (DELTA>1.E-10) P_ph_abs =GAMMA_/(GAMMA_**2+(DELTA-ph_freq)**2)
+     if (DELTA<1.E-10) P_ph_emit=GAMMA_/(GAMMA_**2+(DELTA+ph_freq)**2)
+     !DEBUG<
      !
      E_P_Hole_lifetime(i_n_shift,ik)=E_P_Hole_lifetime(i_n_shift,ik)+&
 &                                    abs(Gkkp(i_np,i_n))**2*P_ph_abs*f_k_m_q

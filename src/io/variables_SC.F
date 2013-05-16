@@ -35,7 +35,7 @@ integer function variables_SC(ID,local_description,what)
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,                             &
 &                         RT_IO_steps,l_RT_induced_field,l_NE_simulate_BSE,NE_MEM_steps,&
-&                         l_ELPH_CCA_Kernel,RT_IO_steps_DB
+&                         l_RT_CCA_Kernel,RT_IO_steps_DB
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
@@ -198,7 +198,7 @@ integer function variables_SC(ID,local_description,what)
 &     VAR=" [ELPH] Electron-phonon          :", CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,L0=l_ELPH_CCA_Kernel,&
+   call io_elemental(ID,L0=l_RT_CCA_Kernel,&
 &     VAR=" [ELPH] Completed Collision(CCA) :", CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1

@@ -139,7 +139,7 @@ module real_time
  ! ELPH kernel...
  !----------------
  !
- logical     :: l_ELPH_CCA_Kernel
+ logical     :: l_RT_CCA_Kernel
  real(SP)    :: Eh_pumped_pair_energy(2)
  real(SP)    :: Eh_pumped_pair_width
  !
@@ -351,7 +351,7 @@ module real_time
        E_E_Electron_lifetime=0._SP
      endif
      !
-     if (l_ELPH_CCA_Kernel.and.l_ph_corr) then
+     if (l_RT_CCA_Kernel.and.l_ph_corr) then
        allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),QP_nk))
        allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),QP_nk))
        allocate(E_P_Phonon_lifetime(SC_bands(1):SC_bands(2),QP_nk))

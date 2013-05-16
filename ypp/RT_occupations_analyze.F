@@ -32,7 +32,7 @@ subroutine RT_occupations_analyze(k,E)
  use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT
  use com,            ONLY:msg,of_open_close
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,E_P_Electron_lifetime,&
-&                         E_P_Phonon_lifetime,l_ELPH_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime
+&                         E_P_Phonon_lifetime,l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime
  use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions,SC_bands
  implicit none
  !
@@ -99,24 +99,24 @@ subroutine RT_occupations_analyze(k,E)
        !
        ! Titles
        !========
-       if (l_carrier_dynamics.and.l_ELPH_CCA_Kernel) then
+       if (l_carrier_dynamics.and.l_RT_CCA_Kernel) then
          titles(:)=(/'         ','         ','|--------','--El-Ph--','--------|','|-El-El--','--------|'/)
          call msg('o '//trim(output_fname),'#',titles(:),INDENT=0,USE_TABS=.TRUE.)
          titles(1)='T[fs]'
          titles(2)='Occ.'
          titles(3:7)=(/'Hole[meV]','El. [meV]','Ph. [meV]','Hole[meV]','El. [meV]'/)
          call msg('o '//trim(output_fname),'#',titles(:7),INDENT=0,USE_TABS=.TRUE.)
-       else if (l_carrier_dynamics.and..not.l_ELPH_CCA_Kernel) then
+       else if (l_carrier_dynamics.and..not.l_RT_CCA_Kernel) then
          titles(1)='T[fs]'
          titles(2)='Occ.'
          titles(3:4)=(/'Hole[meV]','El. [meV]'/)
          call msg('o '//trim(output_fname),'#',titles(:4),INDENT=0,USE_TABS=.TRUE.)
-       else if (.not.l_carrier_dynamics.and.l_ELPH_CCA_Kernel) then
+       else if (.not.l_carrier_dynamics.and.l_RT_CCA_Kernel) then
          titles(1)='T[fs]'
          titles(2)='Occ.'
          titles(3:5)=(/'Hole[meV]','El. [meV]','Ph. [meV]'/)
          call msg('o '//trim(output_fname),'#',titles(:5),INDENT=0,USE_TABS=.TRUE.)
-       else if (.not.l_carrier_dynamics.and..not.l_ELPH_CCA_Kernel) then
+       else if (.not.l_carrier_dynamics.and..not.l_RT_CCA_Kernel) then
          titles(1)='T[fs]'
          titles(2)='Occ.'
          call msg('o '//trim(output_fname),'#',titles(:2),INDENT=0,USE_TABS=.TRUE.)
@@ -133,7 +133,7 @@ subroutine RT_occupations_analyze(k,E)
      data_to_plot(:2)=(/io_TIME/FS2AUT,RT_occupations(ib,ik)/spin_occ/)
      RT_occupations_sum(i_T)=RT_occupations_sum(i_T)+RT_occupations(ib,ik)*k%weights(ik)
      !
-     if (l_ELPH_CCA_Kernel) then
+     if (l_RT_CCA_Kernel) then
        data_to_plot(3:5)=(/E_P_Hole_lifetime(ib,ik)*HA2EV,E_P_Electron_lifetime(ib,ik)*HA2EV,&
 &                                              E_P_Phonon_lifetime(ib,ik)*HA2EV/)*1000.
        if (l_carrier_dynamics) then

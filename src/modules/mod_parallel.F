@@ -38,7 +38,7 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_bse,l_par_density,l_par_X_G_q0,l_par_X_G_q,l_par_HF,l_par_GW
+ logical            :: l_par_bse,l_par_density,l_par_X_G_q0,l_par_X_G_q,l_par_HF,l_par_GW,l_par_RT
  !
  ! Input file...
  !
@@ -127,9 +127,9 @@ module parallel_m
  ! Number of Response functions
  !==============================
  !
- !1:Xo 2:em1s 3:em1d 4:pp 5:bse 6:rt
+ !1:Xo 2:em1s 3:em1d 4:pp 5:bse
  !
- integer, parameter :: n_parallel_X_types=6
+ integer, parameter :: n_parallel_X_types=5
  !
  ! Specific PP indexes ...
  !========================
@@ -253,7 +253,7 @@ module parallel_m
      CPU_structure(5)%Short_Description="BSE"
      CPU_structure(6)%Long_Description="DENSITY"
      CPU_structure(6)%Short_Description="DENSITY"
-     CPU_structure(7)%Long_Description="RT"
+     CPU_structure(7)%Long_Description="Real_Time"
      CPU_structure(7)%Short_Description="RT"
    end subroutine
    !

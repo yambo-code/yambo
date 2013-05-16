@@ -36,7 +36,8 @@ subroutine RT_initialize(E,k,q)
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
 &                         NE_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,            &
-&                         l_RT_skip_JandP_IO,RT_q_px,l_G_retarded_DB,Gr_kind,Gr_bands
+&                         l_RT_skip_JandP_IO,RT_q_px,l_G_retarded_DB,Gr_kind,       &
+&                         Gr_bands,l_RT_CCA_Kernel
  use interfaces,     ONLY:PARALLEL_index
  use parallel_m,     ONLY:PP_indexes_reset
  use D_lattice,      ONLY:DL_vol
@@ -56,7 +57,7 @@ subroutine RT_initialize(E,k,q)
  integer, external        :: RT_phase_space
  character(5)             :: MSG_ch
  real(SP)                 :: Fluence,T_memory
- !
+ logical                  :: l_Full_RT_T_evolution!
  ! Logicals
  !==========
  !
@@ -67,7 +68,9 @@ subroutine RT_initialize(E,k,q)
  call parser('SkipGFIO',     l_RT_skip_GF_IO)
  call parser('SkipOCCIO',    l_RT_skip_OCC_IO)
  call parser('SkipJPIO',     l_RT_skip_JandP_IO)
+ call parser('RT_T_evol',    l_Full_RT_T_evolution)
  !
+ l_RT_CCA_Kernel=.not.l_Full_RT_T_evolution
  l_NE_simulate_BSE     =.FALSE.
  l_NE_simulate_TDDFT   =.FALSE.
  !

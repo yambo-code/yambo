@@ -87,7 +87,10 @@ subroutine RT_driver(E,X,k,q)
  !=================
  !
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
- call PARALLEL_global_indexes(E,k,q,"RT",RESET=.FALSE.,SERIAL=.TRUE.,X=X(1))
+ call PARALLEL_global_indexes(E,k,q,"Response_G_space_Zero_Momentum",X=X(1))
+ call PARALLEL_global_indexes(E,k,q,"Real_Time",X=X(1))
+! call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,SERIAL=.TRUE.,X=X(1))
+! call PARALLEL_global_indexes(E,k,q,"DENSITY",RESET=.FALSE.,SERIAL=.TRUE.,X=X(1))
  !
  ! Dipoles & WF dimensions
  !=========================

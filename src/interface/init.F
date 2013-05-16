@@ -454,6 +454,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_bse) call CPU_activate("BSE")
  !
+ if (l_real_time) then
+   call CPU_activate("RT")
+   call CPU_activate("X_q_0")
+ endif
+ !
 #endif
  !
  !Setup
@@ -884,10 +889,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
    !
    subroutine CPU_activate(what)
-     character(*) :: what ! X_q_0 X_all_q GW HF BSE
+     character(*) :: what ! X_q_0 X_all_q GW HF BSE RT
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
-     if (what=="X_q_0".or.what=="X_all_q".or.what=="BSE") then
+     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_all_q".or.what=="BSE") then
        call initactivate(1,what//"_nCPU_invert")
      endif
      if (what=="BSE") then

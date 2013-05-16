@@ -275,8 +275,10 @@ subroutine RT_CCA_initialize(E)
        GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)+WIDTH(3,1)+WIDTH(4,2)
        GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)+WIDTH(3,2)+WIDTH(4,1)
        !
-       if (E_center> GAMMA_(2)*pre_factor) goto 2
-       if (E_center<-GAMMA_(1)*pre_factor) goto 2
+       !DEBUG>
+       !if (E_center> GAMMA_(2)*pre_factor) goto 2
+       !if (E_center<-GAMMA_(1)*pre_factor) goto 2
+       !DEBUG<
        !
        GAMMA_(1) = abs(E%W(i_np,i_kp,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pp,1))+abs(E%W(i_n,i_k,1))
        !
@@ -330,8 +332,10 @@ subroutine RT_CCA_initialize(E)
      !
      set_WIDTH=W
      !
-     if (i_n<=E%nbf  ) set_WIDTH(2)=min( W ,abs( E%E(i_n,i_k,1) - E_vb_max )) 
-     if (i_n>=E%nbm+1) set_WIDTH(1)=min( W ,abs( E%E(i_n,i_k,1) - E_cb_min )) 
+     !DEBUG>
+     !if (i_n<=E%nbf  ) set_WIDTH(2)=min( W ,abs( E%E(i_n,i_k,1) - E_vb_max )) 
+     !if (i_n>=E%nbm+1) set_WIDTH(1)=min( W ,abs( E%E(i_n,i_k,1) - E_cb_min )) 
+     !DEBUG<
      !
    end function
    !

@@ -30,7 +30,7 @@ subroutine RT_databases_IO(E,it)
  use electrons,      ONLY:levels
 #if defined _ELPH
  use parallel_m,     ONLY:PP_redux_wait
- use real_time,      ONLY:THETA_matrix,l_ELPH_CCA_Kernel
+ use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel
 #endif
  !
  implicit none
@@ -68,7 +68,7 @@ subroutine RT_databases_IO(E,it)
    io_G=io_SC_components('G' ,E,ID(5))
    !
 #if defined _ELPH
-   if (l_ph_corr.and..not.l_ELPH_CCA_Kernel) then
+   if (l_ph_corr.and..not.l_RT_CCA_Kernel) then
      call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(7))
      io_THETA=io_SC_components('THETA' ,E,ID(7))
    endif
@@ -78,7 +78,7 @@ subroutine RT_databases_IO(E,it)
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_SC_components('G',E,ID(5))
 #if defined _ELPH
-     if (l_ph_corr.and..not.l_ELPH_CCA_Kernel) then
+     if (l_ph_corr.and..not.l_RT_CCA_Kernel) then
        !
        ! The I/O of the THETA matrix is tricky when the run is parallel.
        ! The point is that every CPU evolves a certain group of q-points.

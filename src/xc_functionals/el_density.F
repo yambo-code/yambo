@@ -73,7 +73,7 @@ subroutine el_density(en,Xk,rho,force_si)
  integer :: ib,ibp,ik,i_spin,ifft,rho_syms,ifft2,ir
  real(SP):: rho_no_sym(fft_size),f_occ
  logical :: warn_done
- integer :: iv_max,iv_min,ID,n_QP_A2A_cpu
+ integer :: iv_max,iv_min,ID
  integer, allocatable ::states_filling(:,:,:)
  !
  rho=0._SP
@@ -98,11 +98,9 @@ subroutine el_density(en,Xk,rho,force_si)
  ! 
  ! if (.not.all(states_filling(ib,ik,1:ID-1)==0))
  !
- n_QP_A2A_cpu=PAR_COM_QP_A2A%n_CPU
- !
- if (n_QP_A2A_cpu>1) then
+ if (PAR_COM_QP_A2A%n_CPU>1) then
    !
-   allocate(states_filling(iv_max,Xk%nibz,n_QP_A2A_cpu))
+   allocate(states_filling(iv_max,Xk%nibz,PAR_COM_QP_A2A%n_CPU))
    states_filling=0
    !
    ID=PAR_COM_QP_A2A%CPU_id+1
@@ -125,7 +123,7 @@ subroutine el_density(en,Xk,rho,force_si)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     if (n_QP_A2A_cpu>1) then
+     if (PAR_COM_QP_A2A%n_CPU>1) then
        if (.not.all(states_filling(ib,ik,1:ID-1)==0)) cycle
      endif
      !
@@ -185,7 +183,7 @@ subroutine el_density(en,Xk,rho,force_si)
   enddo
 #endif
   !
-  if (n_QP_A2A_cpu>1) then
+  if (PAR_COM_QP_A2A%n_CPU>1) then
     deallocate(states_filling)
     call PP_redux_wait(rho_no_sym,COMM=PAR_COM_QP_A2A%COMM)
   else

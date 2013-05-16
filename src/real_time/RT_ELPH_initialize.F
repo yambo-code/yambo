@@ -24,7 +24,7 @@ subroutine RT_ELPH_initialize(k,q)
  use pars,           ONLY:SP,pi
  use real_time,      ONLY:q_weight,RT_q_px,elph_gkkp_expanded,THETA_matrix,&
 &                         GKKP_matrix_index,THETA_matrix_index,Q_io_map,K_io_map,&
-&                         l_ELPH_CCA_Kernel 
+&                         l_RT_CCA_Kernel 
  use drivers,        ONLY:l_ph_corr
  use R_lattice,      ONLY:RL_vol,bz_samp
  use parallel_m,     ONLY:myid
@@ -44,16 +44,14 @@ subroutine RT_ELPH_initialize(k,q)
  integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s,i_n,i_np
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes)
  integer, external   ::ioELPH
- logical             ::l_Full_RT_T_evolution,l_use_Debye_E
+ logical             ::l_use_Debye_E
  !
  ! Logicals
  !==========
  !
  if (.not.l_ph_corr) return
  !
- call parser('RT_T_evol',l_Full_RT_T_evolution)
- call parser('UseDebyE',l_use_Debye_E)
- l_ELPH_CCA_Kernel=.not.l_Full_RT_T_evolution
+ call parser('UseDebyE',     l_use_Debye_E)
  !
  ! Q/K grid remapping
  !====================
@@ -66,7 +64,7 @@ subroutine RT_ELPH_initialize(k,q)
  allocate(elph_gkkp_expanded(k%nbz*RT_q_px%n_of_elements(myid+1),ph_modes,elph_nb,elph_nb),stat=alloc_err)
  call mem_est("GKKP_expanded",(/size(elph_gkkp_expanded)/),(/2*SP/),errors=(/alloc_err/))
  !
- if (.not.l_ELPH_CCA_Kernel) then
+ if (.not.l_RT_CCA_Kernel) then
    allocate(THETA_matrix(2*q%nbz*ph_modes,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1,QP_nk))
    call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
    THETA_matrix=(0._SP,0._SP)
@@ -108,6 +106,7 @@ subroutine RT_ELPH_initialize(k,q)
          ! and of the code I decided, here, to exchange the indexes:
          !
          elph_gkkp_expanded((i_counter-1)*k%nbz+ik,:,i_n,i_np)=elph_gkkp(K_io_map(ik),:,i_np,i_n)
+         !
        enddo
      enddo
      !
@@ -135,7 +134,7 @@ subroutine RT_ELPH_initialize(k,q)
  ! THETA matrix indexes
  !======================
  !
- if (l_ELPH_CCA_Kernel) return
+ if (l_RT_CCA_Kernel) return
  !
  i_counter=0
  !

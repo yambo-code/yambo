@@ -102,7 +102,9 @@ subroutine XCo_local(E,Xk)
      ! The QP indexes have been created together with the bands and q
      ! distribution used to calculate the exchange self-energy
      !
-     if (.not.PAR_IND_QP%element_1D(i1)) cycle
+     if (PAR_COM_QP_index%n_CPU>1) then
+       if (.not.PAR_IND_QP%element_1D(i1)) cycle
+     endif
      !
      ib =QP_table(i1,1)
      ibp=QP_table(i1,2)
@@ -118,7 +120,9 @@ subroutine XCo_local(E,Xk)
      !
    enddo
    !
-   call PP_redux_wait(QP_Vxc,COMM=PAR_COM_QP_index%COMM)
+   if (PAR_COM_QP_index%n_CPU>1) then
+     call PP_redux_wait(QP_Vxc,COMM=PAR_COM_QP_index%COMM)
+   endif
    !
    return
    !

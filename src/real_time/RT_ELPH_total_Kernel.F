@@ -41,7 +41,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,it_now 
- use real_time,      ONLY:Sigma_relax,q_weight,elph_gkkp_expanded,GKKP_matrix_index,RT_q_px,l_ELPH_CCA_Kernel,&
+ use real_time,      ONLY:Sigma_relax,q_weight,elph_gkkp_expanded,GKKP_matrix_index,RT_q_px,l_RT_CCA_Kernel,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,G_lesser,MEM_index
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
@@ -79,7 +79,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  S_mat_eq=cZero
  S_mat_out_of_eq=cZero
  S_mat_sum=cZero
- if (l_ELPH_CCA_Kernel) then
+ if (l_RT_CCA_Kernel) then
    E_P_Hole_lifetime(:,ik)    =rZero
    E_P_Electron_lifetime(:,ik)=rZero
    E_P_Phonon_lifetime(:,ik)  =rZero
@@ -119,7 +119,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
        enddo 
      enddo
      !
-     if (l_ELPH_CCA_Kernel) then
+     if (l_RT_CCA_Kernel) then
        !
        ! Complete Collision Approximation (CCA)
        !=======================================
@@ -160,7 +160,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  ! CCA kernel composition
  !========================
  !
- if (l_ELPH_CCA_Kernel) then
+ if (l_RT_CCA_Kernel) then
    do i_n=1,B_dim
      i_n_m=i_n+SC_bands(1)-1
      S_mat_sum(i_n,i_n)=E_P_Hole_lifetime(i_n_m,ik)*(f_k(i_n)-1.)+E_P_Electron_lifetime(i_n_m,ik)*f_k(i_n)+&

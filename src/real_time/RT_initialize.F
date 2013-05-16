@@ -112,6 +112,10 @@ subroutine RT_initialize(E,k,q)
  else if (RT_IO_time<0) then
    RT_IO_time =max(NE_tot_time/1000._SP,RT_step)
    RT_IO_steps=nint(RT_IO_time/RT_step)
+   !
+   rest=mod(Thermal_steps+NE_steps,RT_IO_steps)
+   if(rest/=0) NE_steps = NE_steps+RT_IO_steps-rest
+   !
    if (RT_IO_steps_DB>0.and.RT_IO_steps/=RT_IO_steps_DB) then
      call warning('IO steps read from the existing databases')
      RT_IO_steps=RT_IO_steps_DB

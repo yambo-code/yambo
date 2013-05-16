@@ -27,10 +27,10 @@ function X_simple_GreenF(W,pole,ordering)
  complex(SP)  ::W,X_simple_GreenF
  character(*) ::ordering
  !
- if (ordering=="t")  X_simple_GreenF=1./(W-pole)-1./(conjg(W)+pole)
- if (ordering=="c")  X_simple_GreenF=1./(W-pole)-1./(W+pole)       
- if (ordering=="r")  X_simple_GreenF=1./(W-pole)                   
- if (ordering=="a")  X_simple_GreenF=           -1./(conjg(W)+pole)   ! T-ordered anti-resonant
- if (ordering=="ca") X_simple_GreenF=           -1./(W+pole)          !    causal anti-resonant
+ if (trim(ordering)=="t")  X_simple_GreenF=1./(W-pole)-1./(conjg(W)+pole)
+ if (trim(ordering)=="c")  X_simple_GreenF=1./(W-pole)-1./(W+pole)       
+ if (trim(ordering)=="r")  X_simple_GreenF=1./(W-pole)                   
+ if (trim(ordering)=="a")  X_simple_GreenF=           -1./(conjg(W)+pole)
+ if (trim(ordering)=="ca") X_simple_GreenF=           -1./(W+pole)
  !
 end function

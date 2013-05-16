@@ -21,7 +21,7 @@
 !
 subroutine K_inversion(iq,W,E,k,q) 
  !
- use pars,           ONLY:SP,pi,DP
+ use pars,           ONLY:SP,pi
  use X_m,            ONLY:X_epsilon,X_drude_term
  use stderr,         ONLY:intc,real2ch
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BSS_uses_GreenF,&
@@ -29,9 +29,7 @@ subroutine K_inversion(iq,W,E,k,q)
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BS_eh_f,&
 &                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z,&
 &                         BSE_mode
- use units
  use memory_m,       ONLY:mem_est
- use parser_m,       ONLY:parser
  use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_merge,W_duplicate
  use R_lattice,      ONLY:d3k_factor,q_norm,bz_samp

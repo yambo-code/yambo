@@ -31,6 +31,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
  use fields,         ONLY:global_gauge
  use X_m,            ONLY:DIP_iR,DIP_P
  use SC,             ONLY:SC_bands
+ use parallel_m,     ONLY:PAR_Xk_ibz_index
  !
  implicit none
  integer,     intent(in)       :: ik
@@ -54,7 +55,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    ! and the intraband optical matrix elements have been set to zero
    !
    do i1=SC_bands(1),SC_bands(2)
-     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(sum(A_vec_pot(1:3)*DIP_P(1:3,i1,i1,ik,1)),SP)
+     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(sum(A_vec_pot(1:3)*DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),1)),SP)
    enddo
    !
    do i1=SC_bands(1),SC_bands(2)
@@ -62,7 +63,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
        !
        ! Note that (P)_cv = DIP_P (:,iv,ic,:,:)
        !     
-       A_dot_P=-sum(A_vec_pot(1:3)*DIP_P(1:3,i2,i1,ik,1))
+       A_dot_P=-sum(A_vec_pot(1:3)*DIP_P(1:3,i2,i1,PAR_Xk_ibz_index(ik),1))
        H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)+A_dot_P
        H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)+conjg(A_dot_P)
        !
@@ -85,7 +86,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    ! Intraband terms
    !
    do i1=SC_bands(1),SC_bands(2)
-     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)+real(cI*sum(E_vec_pot(1:3)*DIP_iR(1:3,i1,i1,ik,1)),SP)
+     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)+real(cI*sum(E_vec_pot(1:3)*DIP_iR(1:3,i1,i1,PAR_Xk_ibz_index(ik),1)),SP)
    enddo
    !
    do i1=SC_bands(1),SC_bands(2)
@@ -93,7 +94,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
        !
        ! Note that (iR)_cv = DIP_iR (:,iv,ic,:,:)
        !
-       E_dot_r=cI*sum(E_vec_pot(1:3)*DIP_iR(1:3,i2,i1,ik,1))
+       E_dot_r=cI*sum(E_vec_pot(1:3)*DIP_iR(1:3,i2,i1,PAR_Xk_ibz_index(ik),1))
        H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)+E_dot_r
        H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)+conjg(E_dot_r)
        !

@@ -153,7 +153,6 @@ module real_time
  complex(SP), allocatable :: elph_gkkp_expanded(:,:,:,:)
  ! ... indexes ...
  integer,     allocatable :: THETA_matrix_index(:,:,:)
- integer,     allocatable :: GKKP_matrix_index(:)
  integer,     allocatable :: Q_io_map(:)
  integer,     allocatable :: K_io_map(:)
  !
@@ -254,7 +253,7 @@ module real_time
      real(SP), optional, intent(in) :: E
    end subroutine
    !
-   subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
+   subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
      use pars,       ONLY:SP
      use SC,         ONLY:SC_bands
      use R_lattice,  ONLY:bz_samp 
@@ -264,8 +263,9 @@ module real_time
      type(bz_samp), intent(in) :: k
      complex(SP),   intent(in) :: G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
      type(levels),  intent(in) :: en
+     integer,       intent(in) :: nK_mem
      complex(SP),  intent(out) :: VALUE
-     complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
+     complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
      complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
      real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
      logical,         optional, intent(in) :: TRANS
@@ -469,7 +469,7 @@ module real_time
      if (allocated(THETA_matrix)) then
        deallocate(THETA_matrix)
        call mem_est("THETA_matrix")
-       deallocate(THETA_matrix_index,GKKP_matrix_index)
+       deallocate(THETA_matrix_index)
      endif
      !
      if (allocated(elph_gkkp_expanded)) then

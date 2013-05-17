@@ -25,7 +25,7 @@ subroutine SET_logicals()
  use com,        ONLY:write_to_of,write_to_report
  use fragments,  ONLY:Parallel_Fragments
  use IO_m,       ONLY:IO_write,IO_read,Fragmented_IO,Fragmented_IO_save,IO_write_not_fragmented_DB
- use stderr,     ONLY:write_to_log
+ use stderr,     ONLY:write_to_log,write_fragments_IO_log
  use timing,     ONLY:live_timing_is_on
  integer :: i_chain ! Work Space
  master_cpu                =myid==0
@@ -36,6 +36,7 @@ subroutine SET_logicals()
    if (i_chain==0) write_to_log=.TRUE.
    if (i_chain> 0) write_to_log=INTER_CHAIN(i_chain)%CPU_id==0
  endif
+ write_fragments_IO_log    =write_to_log
  IO_write_default(myid+1)  =master_cpu
  IO_write                  =IO_write_default(myid+1)
  write_to_of               =master_cpu

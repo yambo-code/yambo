@@ -34,6 +34,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use IO_m,           ONLY:IO_and_Messaging_switch
+ use parallel_m,     ONLY:PAR_Xk_nibz
  !
  implicit none 
  !
@@ -66,12 +67,13 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  ! E_Kin = - i Tr { P^2 G^<}/2  
  !
- call RT_average_operator(VALUE=E_kin,O_MATRIX=P_square,G=G_lesser(:,:,:),en=en,k=k,TRANS=.TRUE.)
+ call RT_average_operator(VALUE=E_kin,O_MATRIX=P_square,G=G_lesser(:,:,:),en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ !
  E_kin=E_kin/2.
  !  
  ! E_ion = - i Tr {Ho G^<} - Ekin
  !
- call RT_average_operator(VALUE=E_ion,O_MATRIX=Ho,G=G_lesser(:,:,:),en=en,k=k)
+ call RT_average_operator(VALUE=E_ion,O_MATRIX=Ho,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
  !
  E_ion = E_ion - E_kin
  !
@@ -79,7 +81,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
    !
    ! Hartree potential Energy
    !
-   call RT_average_operator(VALUE=E_h,O_REAL=V_hartree_sc,G=G_lesser(:,:,:),en=en,k=k)
+   call RT_average_operator(VALUE=E_h,O_REAL=V_hartree_sc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
    !
    E_h=E_h/2.
    !
@@ -87,7 +89,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  if(l_sc_hf.or.(l_sc_cohsex.and..not.l_carrier_dynamics).and..not.l_NE_simulate_IP) then
    !
-   call RT_average_operator(VALUE=Ex,O_QP=QP_Vnl_xc,G=G_lesser(:,:,:),en=en,k=k)
+   call RT_average_operator(VALUE=Ex,O_QP=QP_Vnl_xc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
    !
  endif
  !
@@ -96,7 +98,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
    ! Notice that XC0_and_HARTREE0 contains the Hartree part only in case
    ! of indipendent particles
    !
-   call RT_average_operator(VALUE=Exc,O_MATRIX=XC0_and_HARTREE0,G=G_lesser(:,:,:),en=en,k=k)
+   call RT_average_operator(VALUE=Exc,O_MATRIX=XC0_and_HARTREE0,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
    !
  else
    !
@@ -108,11 +110,11 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
      call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0)
      call IO_and_Messaging_switch("+report +log +io_in +io_out")
      !
-     call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser(:,:,:),en=en,k=k)
+     call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
      !
    else if(l_sc_cohsex.and..not.l_carrier_dynamics) then
      !      
-     call RT_average_operator(VALUE=Exc,O_QP=QP_Sc,G=G_lesser(:,:,:),en=en,k=k)
+     call RT_average_operator(VALUE=Exc,O_QP=QP_Sc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
      !
    endif
    !
@@ -128,7 +130,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  ! Total number of electrons
  !
- call RT_average_operator(VALUE=Trace_Gf,G=G_lesser(:,:,:),en=en,k=k)
+ call RT_average_operator(VALUE=Trace_Gf,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
  !
  ! Andrea [21/12/2011]
  ! 

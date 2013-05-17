@@ -29,6 +29,7 @@ integer function io_P_and_P2(X,Xen,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_fragmented,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension
  use fragments,     ONLY:io_fragment
+ use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_nibz
  !
  implicit none
  type(X_t)   ::X
@@ -37,7 +38,7 @@ integer function io_P_and_P2(X,Xen,ID)
  !
  ! Work Space
  !
- integer :: i1,ixyz,i_spin,db_nbm,db_nb(2)
+ integer :: ik,ixyz,i_spin,db_nbm,db_nb(2),ik_mem
  character(schlen)    :: VAR_name
  real(SP),allocatable :: disk_data(:,:,:)
  integer, external    :: variables_DIPOLES
@@ -61,25 +62,27 @@ integer function io_P_and_P2(X,Xen,ID)
    !
    allocate(disk_data(db_nb(2),db_nbm,2))
    !
-   if (read_is_on(ID)) call X_alloc('P_square',(/X%ib(2),X%ib(2),nXkibz/))
-   if (read_is_on(ID)) call X_alloc('DIP_P',(/3,X%ib(2),db_nbm,nXkibz/))
+   if (read_is_on(ID)) call X_alloc('P_square',(/X%ib(2),X%ib(2),PAR_Xk_nibz/))
+   if (read_is_on(ID)) call X_alloc('DIP_P',(/3,X%ib(2),db_nbm,PAR_Xk_nibz/))
    !
-   do i1=1,nXkibz
+   do ik=1,nXkibz
+     !
+     ik_mem=PAR_Xk_ibz_index(ik)
      !
      ! Fragmentation
      !
      io_extension(ID)='P_and_P2'
-     if (io_fragmented(ID)) call io_fragment(ID,i_fragment=i1)
+     if (io_fragmented(ID)) call io_fragment(ID,i_fragment=ik)
      !
      do i_spin=1,n_sp_pol
        !
-       if (write_is_on(ID)) call mat_c2r(P_square(:,:,i1,i_spin),disk_data)
+       if (write_is_on(ID)) call mat_c2r(P_square(:,:,ik_mem,i_spin),disk_data)
        !
-       write (VAR_name,'(2(a,i4.4))') 'P_square_k_',i1,'_spin_',i_spin
+       write (VAR_name,'(2(a,i4.4))') 'P_square_k_',ik,'_spin_',i_spin
        call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(disk_data))
        call io_bulk(ID,R3=disk_data)
        !
-       if (read_is_on(ID)) call mat_r2c(disk_data,P_square(:,:,i1,i_spin))
+       if (read_is_on(ID)) call mat_r2c(disk_data,P_square(:,:,ik_mem,i_spin))
        !
      enddo
      !
@@ -87,13 +90,13 @@ integer function io_P_and_P2(X,Xen,ID)
        !
        do i_spin=1,n_sp_pol
          !
-         if (write_is_on(ID)) call mat_c2r(DIP_P(ixyz,:,:,i1,i_spin),disk_data)
+         if (write_is_on(ID)) call mat_c2r(DIP_P(ixyz,:,:,ik_mem,i_spin),disk_data)
          !
-         write (VAR_name,'(3(a,i4.4))') 'DIP_P_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
+         write (VAR_name,'(3(a,i4.4))') 'DIP_P_k_',ik,'_xyz_',ixyz,'_spin_',i_spin
          call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(disk_data))
          call io_bulk(ID,R3=disk_data)
          !
-         if (read_is_on(ID)) call mat_r2c(disk_data,DIP_P(ixyz,:,:,i1,i_spin))
+         if (read_is_on(ID)) call mat_r2c(disk_data,DIP_P(ixyz,:,:,ik_mem,i_spin))
          !
        enddo
        !

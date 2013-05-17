@@ -176,8 +176,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    enddo
    !
 #if defined _SC 
-   !call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   !io_err(2)=io_P_and_P2(X,Xen,ID)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+   io_err(2)=io_P_and_P2(X,Xen,ID)
 #endif
    !
  end if

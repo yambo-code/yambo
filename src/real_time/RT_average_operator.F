@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
+subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  !
  use pars,           ONLY:SP,cI
  use SC,             ONLY:SC_bands,SC_nbands
@@ -29,15 +29,15 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:wf
  use wrapper,        ONLY:Vstar_dot_V
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
  !
  implicit none
  !
  type(bz_samp), intent(in) :: k
  complex(SP),   intent(in) :: G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
+ integer,       intent(in) :: nK_mem
  complex(SP),  intent(out) :: VALUE
- complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
+ complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
  real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
  logical,         optional, intent(in) :: TRANS
@@ -47,7 +47,6 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
  !
  integer     :: i1,ik,SC_bands2
  complex(SP) :: Hk(SC_bands(2),SC_bands(2),n_sp_pol)
- type(PP_indexes) :: px
  !
  SC_bands2=SC_nbands**2
  VALUE=(0._SP,0._SP)
@@ -69,12 +68,9 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
    !
  endif 
  !
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/QP_nk/))
- !
  do ik=1,QP_nk
    ! 
-   if (.not.px%element_1D(ik)) cycle   
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle   
    !
    call make_Hk_matrix(ik)
    !
@@ -87,29 +83,30 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
    !
  enddo
  !
- call PP_redux_wait(VALUE)
- call PP_indexes_reset(px)
+ if (QP_nk/=nK_mem) call PP_redux_wait(VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  contains 
    !
    subroutine make_Hk_matrix(ik)
      implicit none
      integer, intent(in) :: ik
-     integer :: i1
+     integer :: i1,ik_mem
+     !
+     ik_mem=PAR_Xk_ibz_index(ik)
      !
      Hk=(0._SP,0._SP)
      !
      if(present(O_MATRIX)) then
        if(present(TRANS)) then 
           forall(i1=1:n_sp_pol) Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),i1)= &
-&                                 transpose(O_MATRIX(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,i1))
+&                                 transpose(O_MATRIX(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_mem,i1))
        else
           forall(i1=1:n_sp_pol) Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),i1)= &
-&                                 O_MATRIX(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,i1)
+&                                 O_MATRIX(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_mem,i1)
        endif
        !
        do i1=1,SC_bands(1)-1
-         Hk(i1,i1,1:n_sp_pol)=O_MATRIX(i1,i1,ik,1:n_sp_pol)       
+         Hk(i1,i1,1:n_sp_pol)=O_MATRIX(i1,i1,ik_mem,1:n_sp_pol)       
        enddo
        !
      endif

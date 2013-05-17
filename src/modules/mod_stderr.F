@@ -26,6 +26,7 @@ module stderr
  !
  integer          :: tty_size
  logical          :: write_to_log
+ logical          :: write_fragments_IO_log
  logical          :: log_as_a_file
  character(lchlen):: logfile
  !

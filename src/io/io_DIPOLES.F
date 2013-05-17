@@ -30,7 +30,7 @@ integer function io_DIPOLES(X,Xen,ID)
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
 &                        RD_CL_IF_END,RD_CL,io_action
  use fragments,     ONLY:io_fragment
- use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_nbz
+ use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_nibz
  !
  implicit none
  type(X_t)   ::X
@@ -79,7 +79,7 @@ integer function io_DIPOLES(X,Xen,ID)
  !
  allocate(DIP_iR_disk(db_nb(2),db_nbm,2))
  !
- if (read_is_on(ID)) call X_alloc('DIP_iR',(/3,X%ib(2),db_nbm,PAR_Xk_nbz/))
+ if (read_is_on(ID)) call X_alloc('DIP_iR',(/3,X%ib(2),db_nbm,PAR_Xk_nibz/))
  !
  ! Fragmentation
  !

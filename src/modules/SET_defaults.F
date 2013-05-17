@@ -53,7 +53,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use parallel_m, ONLY:master_cpu,ncpu,CPU_str_reset
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,jobstr,com_path,second_jobstr,repfile
- use stderr,     ONLY:win_size,tty_size,write_to_log,logfile,set_real_printed_length,&
+ use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,&
 &                     string_split,log_as_a_file
  use timing,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
@@ -182,7 +182,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  !stderr
  !
- write_to_log=.TRUE.
  repfile=" "
  write (logfile,'(2a)') trim(more_io_path),'/l_stderr'
  !

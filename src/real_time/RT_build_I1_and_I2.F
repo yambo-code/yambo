@@ -37,6 +37,6 @@ subroutine RT_build_I1_and_I2(G_input_k,ik,I1_k,I2_k)
   call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),G_input_k,I1_k)
   call M_by_M('n','n',SC_nbands,G_input_k,Ho_plus_Sigma(:,:,ik,1),I2_k)     
   !
-  if(allocated(Sigma_relax))  I1_k = I1_k + Sigma_relax(:,:,ik)
+  if (allocated(Sigma_relax))  I1_k = I1_k + Sigma_relax(:,:,ik)
   !
 end subroutine RT_build_I1_and_I2

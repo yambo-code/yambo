@@ -25,7 +25,7 @@ module fragments
  use IO_m,   ONLY:close_is_on,io_connect,ver_is_gt_or_eq,io_resetable,io_file,&
 &                 io_sec,io_extension,io_action,io_fragmented,read_is_on,write_is_on,&
 &                 OP_RD_CL,OP_WR_CL,io_type,io_disconnect,io_netcdf_support,io_folder
- use stderr, ONLY:intc
+ use stderr, ONLY:intc,write_fragments_IO_log
  !
  implicit none
  !
@@ -130,7 +130,7 @@ module fragments
        endif
        ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID)
        !
-       if (ncpu>1) then
+       if (ncpu>1.and.write_fragments_IO_log) then
          if (write_is_on(ID)) call PARALLEL_live_message("Writing "//trim(fragment_filename))
          if (read_is_on(ID) ) call PARALLEL_live_message("Reading "//trim(fragment_filename))
        endif

@@ -44,6 +44,7 @@ subroutine RT_Rabi_Function(E,Field)
  use SC,             ONLY:SC_bands
  use com,            ONLY:msg
  use stderr,         ONLY:set_real_printed_length
+ use parallel_m,     ONLY:PAR_Xk_ibz_index
  !
  implicit none
  type(levels),    intent(in) :: E
@@ -69,7 +70,7 @@ subroutine RT_Rabi_Function(E,Field)
        if (abs(E%E(iv,ik,1)-E%E(ic,ik,1))<=1.E-5_SP) cycle
        !
        Wo = E%E(ic,ik,1)-E%E(iv,ik,1)
-       Rabi=Rabi_Factor(Field, DIP_P(:,ic,iv,ik,1),-cI*DIP_iR(:,ic,iv,ik,1))
+       Rabi=Rabi_Factor(Field, DIP_P(:,ic,iv,PAR_Xk_ibz_index(ik),1),-cI*DIP_iR(:,ic,iv,PAR_Xk_ibz_index(ik),1))
        Critical = sqrt(Field%frequency(1)*Wo)
        Cutoff = sqrt(Wo**2 + 4.*abs(Rabi)**2)
        !

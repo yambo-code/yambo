@@ -22,18 +22,20 @@
 subroutine RT_ELPH_initialize(k,q)
  ! 
  use pars,           ONLY:SP,pi
- use real_time,      ONLY:q_weight,RT_q_px,elph_gkkp_expanded,THETA_matrix,&
-&                         GKKP_matrix_index,THETA_matrix_index,Q_io_map,K_io_map,&
-&                         l_RT_CCA_Kernel 
+ use real_time,      ONLY:q_weight,elph_gkkp_expanded,THETA_matrix,&
+&                         THETA_matrix_index,Q_io_map,K_io_map,&
+&                         l_RT_CCA_Kernel
  use drivers,        ONLY:l_ph_corr
+ use com,            ONLY:warning
  use R_lattice,      ONLY:RL_vol,bz_samp
  use parallel_m,     ONLY:myid
- use IO_m,           ONLY:io_control,OP_RD,REP,RD_CL_IF_END
+ use IO_m,           ONLY:io_control,REP,OP_RD_CL
  use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,W_debye
  use memory_m,       ONLY:mem_est
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
  use parser_m,       ONLY:parser
+ use parallel_m,     ONLY:PAR_Q_index,PAR_IND_Q,PAR_nQ
  !
  implicit none
  !
@@ -41,7 +43,7 @@ subroutine RT_ELPH_initialize(k,q)
  !
  ! Work Space
  !
- integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s,i_n,i_np
+ integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s,i_n,i_np,ik_bz
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes)
  integer, external   ::ioELPH
  logical             ::l_use_Debye_E
@@ -50,6 +52,15 @@ subroutine RT_ELPH_initialize(k,q)
  !==========
  !
  if (.not.l_ph_corr) return
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
+ io_err=ioELPH(ID,'gkkp_expanded')
+ !
+ if (io_err/=0) then
+   l_ph_corr=.FALSE.
+   call warning('ELPH database not found. E-P scattering switched off')
+   return
+ endif
  !
  call parser('UseDebyE',     l_use_Debye_E)
  !
@@ -61,7 +72,7 @@ subroutine RT_ELPH_initialize(k,q)
  ! Allocation
  !============
  !
- allocate(elph_gkkp_expanded(k%nbz*RT_q_px%n_of_elements(myid+1),ph_modes,elph_nb,elph_nb),stat=alloc_err)
+ allocate(elph_gkkp_expanded(k%nibz*PAR_nQ,ph_modes,elph_nb,elph_nb),stat=alloc_err)
  call mem_est("GKKP_expanded",(/size(elph_gkkp_expanded)/),(/2*SP/),errors=(/alloc_err/))
  !
  if (.not.l_RT_CCA_Kernel) then
@@ -71,32 +82,25 @@ subroutine RT_ELPH_initialize(k,q)
    allocate(THETA_matrix_index(q%nbz,ph_modes,2))
  endif
  !
- allocate(GKKP_matrix_index(q%nbz))
- !
  ! I/O
  !=====
- !
- call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
- io_err=ioELPH(ID,'gkkp_expanded')
  !
  i_counter=0
  !
  do iq=1,q%nbz
    !
+   if (.not.PAR_IND_Q%element_1D(iq)) cycle
+   !
    iq_io=Q_io_map(iq)
    !
-   call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_io+1/),ID=ID)
+   call io_control(ACTION=OP_RD_CL,SEC=(/iq_io+1/),ID=ID)
    io_err=ioELPH(ID,'gkkp_expanded')
    !
    ph_Esq_local(iq,:)=ph_freqs_sq(iq_io,:)
    !
-   if (.not.RT_q_px%element_1D(iq)) cycle
-   !
-   i_counter=i_counter+1
-   !
-   GKKP_matrix_index(iq)=i_counter
-   !
-   do ik=1,k%nbz
+   do ik=1,k%nibz
+     !
+     ik_bz=sum(k%nstar(:ik-1))+1
      !
      do i_n=1,elph_nb
        do i_np=1,elph_nb
@@ -105,7 +109,7 @@ subroutine RT_ELPH_initialize(k,q)
          ! where the band indexes have been exchanged. Instead of doing a global change of the notes
          ! and of the code I decided, here, to exchange the indexes:
          !
-         elph_gkkp_expanded((i_counter-1)*k%nbz+ik,:,i_n,i_np)=elph_gkkp(K_io_map(ik),:,i_np,i_n)
+         elph_gkkp_expanded((PAR_Q_index(iq)-1)*k%nibz+ik,:,i_n,i_np)=elph_gkkp(K_io_map(ik_bz),:,i_np,i_n)
          !
        enddo
      enddo

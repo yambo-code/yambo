@@ -111,7 +111,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
 &           PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(PAR_IND_CON_BANDS_X_ID(X%whoami)+1)*&
 &           PAR_IND_VAL_BANDS_X(X%whoami)%n_of_elements(PAR_IND_VAL_BANDS_X_ID(X%whoami)+1)*n_spin
  !
- !
 #if defined _SC
  call live_timing('P and P^2 (T):',n_LT_steps)
  wf_dim=4

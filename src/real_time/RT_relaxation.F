@@ -33,8 +33,8 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
- use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
-&                         RT_k_px
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait,master_cpu
+ use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix
  !
  implicit none
  !
@@ -69,7 +69,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    !
    do ik=1,QP_nk
      !
-     if (.not.RT_k_px%element_1D(ik)) cycle
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
      call RT_Coulomb_relaxation(ik,E,k,q) 
      !
@@ -85,7 +85,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    !
    do ik=1,QP_nk
      !
-     if (.not.RT_k_px%element_1D(ik)) cycle
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
      call RT_ELPH_total_Kernel(ik,E,k,q,Time) 
      !
@@ -94,6 +94,28 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  endif
  !
 #endif
+ !
+ ! PARALLEL Mergering
+ !====================
+ !
+ ! I make copies of the k-resolved matrix. In the future a completely independet
+ ! k loop could be implemented
+ !
+ if (l_ph_corr.or.l_carrier_dynamics) then
+   do ik=1,QP_nk
+     call PP_redux_wait(Sigma_relax(:,:,ik),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   enddo
+ endif
+ !
+ !DEBUG>
+ !write (*,*)
+ !if (master_cpu) then
+ !do i1=SC_bands(1),SC_bands(2)
+ !  write  (*,'(i3,10f10.5)') i1,real(Sigma_relax(i1,i1,:10))*1000.
+ !enddo
+ !endif
+ !stop
+ !DEBUG<
  !
  ! Dephasing Matrix
  !==================

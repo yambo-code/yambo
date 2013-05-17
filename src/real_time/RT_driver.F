@@ -30,7 +30,8 @@ subroutine RT_driver(E,X,k,q)
  use X_m,            ONLY:X_t,X_alloc
  use wave_func,      ONLY:WF_load,WF_free
  use R_lattice,      ONLY:bz_samp,qindx_free
- use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho
+ use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho,&
+&                         SC_QP_setup
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_steps,&
@@ -44,7 +45,9 @@ subroutine RT_driver(E,X,k,q)
  use collisions_IO,   ONLY:collisions_IO_alloc,collisions_IO_free,collisions_RANGES_setup
  use collisions_CACHE,ONLY:free_COLLISIONS_v
  use QP_CTL_m,        ONLY:QP_apply
- use interfaces,      ONLY:PARALLEL_global_indexes
+ use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
+ use parallel_m,      ONLY:PAR_IND_QP_G_b,PAR_IND_Xk_ibz
+ use IO_m,            ONLY:IO_and_Messaging_switch
  !
  implicit none
  !
@@ -83,19 +86,26 @@ subroutine RT_driver(E,X,k,q)
  !
  call XC_switch()
  !
- ! Parallel Setups
- !=================
- !
- call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
- call PARALLEL_global_indexes(E,k,q,"Response_G_space_Zero_Momentum",X=X(1))
- call PARALLEL_global_indexes(E,k,q,"Real_Time",X=X(1))
-! call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,SERIAL=.TRUE.,X=X(1))
-! call PARALLEL_global_indexes(E,k,q,"DENSITY",RESET=.FALSE.,SERIAL=.TRUE.,X=X(1))
- !
  ! Dipoles & WF dimensions
  !=========================
  !
  call SC_WF_and_dipole_dimensions(X)
+ !
+ ! QP dimensions
+ !================
+ ! This is also called in SC_alloc (from RT_alloc) but I need it also here
+ ! for PARALLEL_global_indexes
+ !
+ call SC_QP_setup(E)
+ !
+ ! Parallel Setups
+ !=================
+ !
+ call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
+ call PARALLEL_global_indexes(E,k,q,"Response_G_space_Zero_Momentum",RESET=.FALSE.,X=X(1))
+ call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
+! call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,SERIAL=.TRUE.,X=X(1))
+! call PARALLEL_global_indexes(E,k,q,"DENSITY",RESET=.FALSE.,SERIAL=.TRUE.,X=X(1))
  !
  ! Dipoles
  !========
@@ -106,8 +116,17 @@ subroutine RT_driver(E,X,k,q)
  !
  call Dipole_driver(E,k,X(1),X(1)%q0)
  !
+ ! IO 
+ !====
+ !
+ ! In dipole_driver the IO is k-dictated. Here I want only the master to write
+ !
+ call IO_and_Messaging_switch("RESET")
+ !
  ! WFs loading
  !=============
+ !
+ call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_QP_G_b,CLEAN_UP=.TRUE.)
  !
  call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
  !
@@ -253,7 +272,9 @@ subroutine RT_driver(E,X,k,q)
    it_now=it ! used in RESTART
    !
    call set_real_printed_length()
+   call IO_and_Messaging_switch("-fragments_IO_log")
    call RT_databases_IO(E,it)
+   call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
    !
    ! Current and Polarization
@@ -266,6 +287,9 @@ subroutine RT_driver(E,X,k,q)
      !=======================
      call RT_mean_carrier_lifetimes(G_lesser(:,:,:,it_mem),E,k)
      call RT_output('life',TIME=NE_time/FS2AUT)
+     !DEBUG>
+     if (it==4) stop
+     !DEBUG<
      !
    endif
    !

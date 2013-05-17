@@ -196,6 +196,8 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
  !
  ! ... and BZ-derived variables
+ integer            :: PAR_nQ
+ integer,allocatable:: PAR_Q_index(:)
  integer            :: PAR_Xk_nibz
  integer,allocatable:: PAR_Xk_ibz_index(:)
  integer            :: PAR_Xk_nbz

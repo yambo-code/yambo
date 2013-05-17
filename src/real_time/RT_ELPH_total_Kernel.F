@@ -41,11 +41,11 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,it_now 
- use real_time,      ONLY:Sigma_relax,q_weight,elph_gkkp_expanded,GKKP_matrix_index,RT_q_px,l_RT_CCA_Kernel,&
+ use real_time,      ONLY:Sigma_relax,q_weight,elph_gkkp_expanded,l_RT_CCA_Kernel,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,G_lesser,MEM_index
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
- use parallel_m,     ONLY:PP_redux_wait
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index,PAR_COM_Xk_ibz_A2A
  !
  implicit none
  !
@@ -56,7 +56,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !
  ! Work Space ...
  !
- integer               :: i_s,i_map(-1:1),il,i_gkkp,ik_bz
+ integer               :: i_s,i_map(-1:1),il,i_gkkp
  real(SP)              :: ph_freq,N_q(2),f_k(SC_bands(2)-SC_bands(1)+1)
  !
  complex(SP)           :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
@@ -70,7 +70,6 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  integer               :: iqbz,ik_m_q,ik_m_qs
  !
  B_dim=SC_bands(2)-SC_bands(1)+1
- ik_bz=sum(k%nstar(:ik-1))+1
  !
  i_map(-1)=1
  i_map( 0)=1
@@ -90,12 +89,12 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !
  do iqbz=1,q%nbz
    !
-   if (.not.RT_q_px%element_1D(iqbz)) cycle
+   if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
    !
    ik_m_q =k%sstar(qindx_S(ik,iqbz,1),1)
    ik_m_qs=k%sstar(qindx_S(ik,iqbz,1),2)
    !
-   i_gkkp=GKKP_matrix_index(iqbz)
+   i_gkkp=PAR_Q_index(iqbz)
    !
    do il=elph_branches(1),elph_branches(2)
      !
@@ -112,10 +111,10 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
      Gkkp=(0._SP,0._SP)
      do i_n=SC_bands(1),SC_bands(2)
        i_n_m=i_n-SC_bands(1)+1
-       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded((i_gkkp-1)*k%nbz+ik_bz,il,i_n,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
+       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded((i_gkkp-1)*k%nibz+ik,il,i_n,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
        do i_np=SC_bands(1),SC_bands(2)
          i_np_m=i_np-SC_bands(1)+1
-         Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded((i_gkkp-1)*k%nbz+ik_bz,il,i_np,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
+         Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded((i_gkkp-1)*k%nibz+ik,il,i_np,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
        enddo 
      enddo
      !
@@ -157,29 +156,39 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
    !
  enddo ! iqbz
  !
- ! CCA kernel composition
- !========================
+ ! Kernel composition
+ !====================
  !
  if (l_RT_CCA_Kernel) then
-   do i_n=1,B_dim
-     i_n_m=i_n+SC_bands(1)-1
-     S_mat_sum(i_n,i_n)=E_P_Hole_lifetime(i_n_m,ik)*(f_k(i_n)-1.)+E_P_Electron_lifetime(i_n_m,ik)*f_k(i_n)+&
-&                       E_P_Phonon_lifetime(i_n_m,ik)
+   !
+   call PP_redux_wait(E_P_Electron_lifetime(:,ik),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+   call PP_redux_wait(E_P_Hole_lifetime(:,ik),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+   call PP_redux_wait(E_P_Phonon_lifetime(:,ik),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+   !
+   ! CCA 
+   !=====
+   do i_n=SC_bands(1),SC_bands(2)
+     !
+     i_n_m=i_n-SC_bands(1)+1
+     !
+     Sigma_relax(i_n,i_n,ik)=Sigma_relax(i_n,i_n,ik)+&
+&                            E_P_Hole_lifetime(i_n,ik)*(f_k(i_n_m)-1.)+E_P_Electron_lifetime(i_n,ik)*f_k(i_n_m)+&
+&                            E_P_Phonon_lifetime(i_n,ik)
    enddo
+   !
+ else
+   !
+   ! Otherwise 
+   !===========
+   !
+   call PP_redux_wait(S_mat_sum(:,:),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+   !
+   do i_n=SC_bands(1),SC_bands(2)
+     do i_np=SC_bands(1),SC_bands(2)
+       Sigma_relax(i_n,i_np,ik)=Sigma_relax(i_n,i_np,ik)+S_mat_sum(i_n-SC_bands(1)+1,i_np-SC_bands(1)+1)
+     enddo 
+   enddo
+   !
  endif
- !
- ! All-to-All
- !============
- !
- call PP_redux_wait(S_mat_sum(:,:))
- call PP_redux_wait(E_P_Electron_lifetime(:,ik))
- call PP_redux_wait(E_P_Hole_lifetime(:,ik))
- call PP_redux_wait(E_P_Phonon_lifetime(:,ik))
- !
- do i_n=SC_bands(1),SC_bands(2)
-   do i_np=SC_bands(1),SC_bands(2)
-     Sigma_relax(i_n,i_np,ik)=Sigma_relax(i_n,i_np,ik)+S_mat_sum(i_n-SC_bands(1)+1,i_np-SC_bands(1)+1)
-   enddo 
- enddo
  !
 end subroutine RT_ELPH_total_kernel

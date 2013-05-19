@@ -39,7 +39,6 @@ subroutine PP_PWscf_driver(k)
  use memory_m,              ONLY:mem_est
  use IO_m,                  ONLY:io_control,OP_WR_CL,OP_APP_WR_CL,REP
  use mod_com2y,             ONLY:N_G_vectors
- use parallel_m,            ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,            ONLY:PARALLEL_index
  implicit none
  !
@@ -53,7 +52,6 @@ subroutine PP_PWscf_driver(k)
  !
  integer :: ik, ngmax,io_err,ID
  integer :: ibeta,itype
- type(PP_indexes)  :: px
  integer, external :: ioKB_pwscf
  !
  interface
@@ -101,11 +99,7 @@ subroutine PP_PWscf_driver(k)
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
  io_err=ioKB_pwscf(ID)
  !
- call PARALLEL_index(px,(/k%nibz/))
- !
  do ik=1,k%nibz
-   !
-   if(.not.px%element_1D(ik)) cycle
    !
    call fill_basis(basis_con,struct,ik,ngmax)
    call PP_PWscf_comp(basis_con,atoms)

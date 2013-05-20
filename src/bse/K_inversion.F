@@ -28,9 +28,9 @@ subroutine K_inversion(iq,W,E,k,q)
 &                         BSE_mode,BS_eh_table,BS_eh_E,BS_bands,BSS_inversion_mode,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BS_eh_f,&
 &                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z,&
-&                         BSE_mode
+&                         BSE_mode,BS_mat_diagonal
  use memory_m,       ONLY:mem_est
- use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,spin
+ use electrons,      ONLY:spin_occ,levels,BZ_RIM_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_merge,W_duplicate
  use R_lattice,      ONLY:d3k_factor,q_norm,bz_samp
  use com,            ONLY:isec,msg
@@ -51,7 +51,6 @@ subroutine K_inversion(iq,W,E,k,q)
  type(PP_indexes) ::px
  type(w_samp)     ::W_shifted
  integer          ::i1,i2,ik_bz,iv,ic,iw,of_mode,i_sp,ik_ibz,BS_H_dim
- integer, external::pert_inversion
  logical, external::stop_now
  complex(SP)      ::Co,QP_Z,QP_width
  complex(SP), allocatable  ::Lo(:,:,:)
@@ -73,7 +72,11 @@ subroutine K_inversion(iq,W,E,k,q)
  integer, allocatable     ::inv_err_disk(:),disk_freq_table(:)
  complex(SP), allocatable ::eps_disk(:,:)
  !
+ logical :: distribute_memory, new_algorithm
+ !
  ! Sectioning
+ !
+ distribute_memory=.true.
  !
  if (isec(2)/=0) then
    call section('=','Inversion solver')
@@ -86,9 +89,7 @@ subroutine K_inversion(iq,W,E,k,q)
  BS_H_dim=BS_K_dim
  if (trim(BSE_mode)=="coupling") BS_H_dim=2*BS_K_dim
  !
- ! RIM support ? Full invertion ?
- !
- BSS_uses_RIM=BZ_RIM_nbands>=BS_bands(2)
+ ! Full invertion ?
  !
  FULL         = .TRUE.
  PERTURBATIVE = .TRUE.
@@ -163,22 +164,23 @@ subroutine K_inversion(iq,W,E,k,q)
  allocate(eps_disk(W%n(1),IO_dim))
  eps_disk=(0._SP,0._SP)
  !
- !  mem est
- !
- call mem_est("Lo",(/BS_H_dim*W%n(1),BS_H_dim**2,IO_dim/))
- !
- ! Kernel loading
- !
- call K_BSload(iq)
- !
- forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
- if (trim(BSE_mode)=='coupling') then
-   forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(i1-BS_K_dim)
+ new_algorithm=distribute_memory.and.trim(BSE_mode)=='resonant'
+ if(.not.new_algorithm) then
    !
-   ! I need to remove the -1 in the coupling part due to the change of sign of the occupations. This -1 
-   ! is now embodied in the Green's function
+   ! Kernel loading
    !
-   forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:)=-BS_mat(i1,:)
+   call K_BSload(iq)
+   !
+   forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
+   if (trim(BSE_mode)=='coupling') then
+     forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(i1-BS_K_dim)
+     !
+     ! I need to remove the -1 in the coupling part due to the change of sign of the occupations. This -1 
+     ! is now embodied in the Green's function
+     !
+     forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:)=-BS_mat(i1,:)
+     !
+   endif
    !
  endif
  !
@@ -200,7 +202,9 @@ subroutine K_inversion(iq,W,E,k,q)
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2
  !
  allocate(Lo(BS_H_dim,W%n(1),IO_dim))
+ call mem_est("Lo",(/BS_H_dim*W%n(1)*IO_dim*2/))
  Lo=(0.,0.)
+ !
  call W_reset(W_shifted)
  call W_duplicate(W,W_shifted)
  !
@@ -262,13 +266,13 @@ subroutine K_inversion(iq,W,E,k,q)
    !==============================================
    !
    if (BSS_uses_RIM) then
-     forall(iw=1:W%n(1)) W_shifted%p(iw)=W%p(iw)-BS_mat(i1,i1)
+     forall(iw=1:W%n(1)) W_shifted%p(iw)=W%p(iw)-BS_mat_diagonal(i1)
      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,1),"sr")
      if (trim(BSE_mode)=='causal') &
 &      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,2),"sa")
      if (trim(BSE_mode)=='coupling') &
 &      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1+BS_K_dim,:,1),"sa")
-     BS_mat(i1,i1)=(0.,0.)
+     if(.not.new_algorithm) BS_mat(i1,i1)=(0.,0.)
    endif
    !
    call live_timing(steps=1)
@@ -287,7 +291,7 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    do_it_full=.FALSE.
    call live_timing('Freq loop [pert]',px%n_of_elements(myid+1))
-   call perform_invertion(1,W%n(1))
+   call perform_invertion(1,W%n(1),new_algorithm)
    call PP_redux_wait(inv_err,imode=2)
    !
    ! I/O [after pert invertion]
@@ -374,7 +378,7 @@ subroutine K_inversion(iq,W,E,k,q)
      !
      if (.not.px%element_1D(i1)) cycle
      iw=iw_full(i1)
-     call perform_invertion(iw,1)
+     call perform_invertion(iw,1,new_algorithm)
      call live_timing(steps=1)
    enddo
    call live_timing()
@@ -423,11 +427,15 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  contains
    !
-   subroutine perform_invertion(iw_2start,iw_2do)
+   subroutine perform_invertion(iw_2start,iw_2do,new_algorithm)
      integer     :: iw_2start,iw_2do
      !
      integer :: i2,i3,tmp_err
      logical :: perform_inv
+     logical :: new_algorithm
+     !
+     integer, external::pert_inversion
+     integer, external::pert_inversion_new
      !
      tmp_err=0
      !
@@ -444,7 +452,7 @@ subroutine K_inversion(iq,W,E,k,q)
        if (do_it_full) perform_inv=inv_err(i3)/=0
        if (.not.do_it_full) perform_inv=inv_err(i3)==-1
        !       
-       if (perform_inv) then
+       if (perform_inv.and..not.new_algorithm) then
          inv_err(i3)=pert_inversion(BS_H_dim,BSS_rhoq0,-1.*Co,&
 &                         X_epsilon(2,i3),Lo(:,i3,1),BS_mat,do_it_full)
          !
@@ -452,6 +460,12 @@ subroutine K_inversion(iq,W,E,k,q)
 &          tmp_err=pert_inversion(BS_H_dim,conjg(BSS_rhoq0),-1.*Co,&
 &                       X_epsilon(4,i3),Lo(:,i3,2),conjg(BS_mat),do_it_full)
        endif
+       !
+       if (perform_inv.and.new_algorithm) then
+         inv_err(i3)=pert_inversion_new(BS_H_dim,BSS_rhoq0,-1.*Co,&
+&                         X_epsilon(2,i3),Lo(:,i3,1),do_it_full)
+       endif       
+       !
        if(inv_err(i3)==0.and.tmp_err==0) inv_err(i3)=0
        if(inv_err(i3)==1.or. tmp_err==1) inv_err(i3)=1
        !

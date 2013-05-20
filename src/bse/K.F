@@ -43,12 +43,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use X_m,          ONLY:X_alloc,X_t,X_mat
  use BS,           ONLY:BS_bands,BS_eh_E,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,O_n_c_states,&
-&                       BS_n_g_W,BS_blk_dim,O_table,BS_mat,&
+&                       BS_n_g_W,BS_blk_dim,O_table,BS_mat,BS_mat_diagonal,&
 &                       O_phase,O_c_state,O_v_state,O_ng,BS_eh_table,BS_columns,&
 &                       BS_n_g_exch,BS_identifier,BS_K_coupling,O_n_v_states,&
 &                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
 &                       BS_IO_index,BS_K_is_ALDA,BS_cpl_mat,&
-&                       BS_cpl_K_exchange,BSS_q0,&
+&                       BS_cpl_K_exchange,BSS_q0,BSS_uses_RIM,&
 &                       O_n_scatt,BS_O,BS_cpl_K_corr
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
@@ -70,7 +70,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer    :: ikk1,ikk2,live_timing_steps,live_timing_step_size,live_timing_accumulate,&
 &              is1xis2,ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p,&
 &              i_sp1,i_sp2,j_sp1,j_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
-&              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0,bands_to_load(2)
+&              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0,bands_to_load(2),&
+&              iBSE1,iBSE2
  integer    :: iOcv, iOvc
  complex(SP):: Co,H_res_x,H_res_c,H_cpl_x,H_cpl_c
  !
@@ -100,7 +101,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! I/O
  !
- integer           ::ioX_err,ioBS_Fxc_err,XID,ID
+ integer           ::ioX_err,ioBS_Fxc_err,ioBS_err,XID,ID
  integer, external ::ioX,ioBS
  !
  Co=4._SP*pi/DL_vol/real(q%nbz,SP)
@@ -125,7 +126,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! GPL_EXCLUDE_END
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   ioBS_Fxc_err=ioBS(iq,X,ID)
+   ioBS_err=ioBS(iq,X,ID)
    !
    ! GPL_EXCLUDE_START
    !
@@ -381,6 +382,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (.not.BS_K_coupling) call mem_est('BS_mat',(/O_x_dim**2/))
  if (BS_K_coupling) call mem_est('BS_mat',(/2*O_x_dim**2/)) 
  !
+ if (BSS_uses_RIM) then
+   allocate(BS_mat_diagonal(BS_K_dim))
+   call mem_est('BS_mat_diagonal',(/size(BS_mat_diagonal)/))
+ endif
+ !
  if (.not.l_bs_fxc) call live_timing('BSK',live_timing_steps)
  if (l_bs_fxc) call live_timing('BSK->Fxc',live_timing_steps)
  !
@@ -438,10 +444,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      call PP_redux_wait
      do icv1=1,BS_blk_dim(ik1)
-       ik1bz=BS_eh_table(ikk1+icv1,1)
-       iv1=BS_eh_table(ikk1+icv1,2)
-       ic1=BS_eh_table(ikk1+icv1,3)
-       i_sp1=spin(BS_eh_table(ikk1+icv1,:))
+       iBSE1=ikk1+icv1
+       ik1bz=BS_eh_table(iBSE1,1)
+       iv1=BS_eh_table(iBSE1,2)
+       ic1=BS_eh_table(iBSE1,3)
+       i_sp1=spin(BS_eh_table(iBSE1,:))
        is1=Xk%sstar(ik1bz,2)
        !
        is1p=Xk%sstar( qindx_X(iq,ik1bz,1) ,2)
@@ -449,10 +456,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        do icv2=1,BS_blk_dim(ik2)
          !
          if (ik1==ik2.and.icv2<icv1) cycle
+         iBSE2=ikk2+icv2
          !
          ! ::: E/h energy window :::
          !
-         if (.not.K_scatter(abs(BS_eh_E(ikk1+icv1)),abs(BS_eh_E(ikk2+icv2)),&
+         if (.not.K_scatter(abs(BS_eh_E(iBSE1)),abs(BS_eh_E(iBSE2)),&
 &                           E_eh_range,S_eh_range)) cycle
          !
          ! ::: Parallel Switch :::
@@ -568,14 +576,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          ! Impose the resonant part of the kernel to be hermitian
          !
-         if (ik1==ik2.and.icv1==icv2) H_res_c=real(H_res_c)
+         if (iBSE1==iBSE2) H_res_c=real(H_res_c)
          !
          BS_mat(icv1,icv2)=H_res_x*real(spin_occ)*Co-H_res_c
+         !
+         if (BSS_uses_RIM.and.iBSE1==iBSE2) BS_mat_diagonal(iBSE1)=BS_mat(icv1,icv2)
          !
          if (BS_K_coupling) BS_cpl_mat(icv1,icv2)=H_cpl_x*real(spin_occ)*Co-H_cpl_c
        enddo
      enddo
      call PP_redux_wait(BS_mat)
+     if (BSS_uses_RIM)  call PP_redux_wait(BS_mat_diagonal)
      if (BS_K_coupling) call PP_redux_wait(BS_cpl_mat)
      !
      if (l_bs_fxc) then

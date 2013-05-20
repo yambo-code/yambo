@@ -27,15 +27,16 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use com,            ONLY:msg,warning
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:string_remove,string_add,intc,real2ch
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_nbands
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
  use BS,             ONLY:BS_bands,BS_q,BS_blk_dim,BS_eh_table,BS_eh_E,BS_eh_f,&
 &                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,BSS_rhoq0,&
-&                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
+&                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,BS_mat_diagonal,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_eh_en,BSE_mode
+&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_eh_en,BSE_mode, &
+&                         BSS_uses_RIM
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal,FXC_n_g_corr
  use QP_CTL_m,       ONLY:QP_apply
@@ -181,6 +182,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  W_bss%dr=BSS_dr
  W_bss%damp_reference=BSS_damp_reference
  !
+ ! RIM support
+ !
+ BSS_uses_RIM = (BZ_RIM_nbands>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
+ !
  ! Note that %n(2) is not used in standard BSE solvers.
  ! Only when we are using the BS derived FXC FXC_per_memstps
  ! defines %n(2) and the memory allocation of the kernel
@@ -237,9 +242,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! CLEAN
  !
- if (allocated(BSS_rhoq0))   deallocate(BSS_rhoq0)
- if (allocated(BS_blk_dim))  deallocate(BS_blk_dim)
- call mem_est("BS_blk_dim BSS_rhoq0")
+ if (allocated(BSS_rhoq0))       deallocate(BSS_rhoq0)
+ if (allocated(BS_blk_dim))      deallocate(BS_blk_dim)
+ if (allocated(BS_mat_diagonal)) deallocate(BS_mat_diagonal)
+ call mem_est("BS_blk_dim BSS_rhoq0 BS_mat_diagonal")
  !
  if (allocated(BS_eh_table)) deallocate(BS_eh_table)
  if (allocated(BS_eh_E))     deallocate(BS_eh_E)

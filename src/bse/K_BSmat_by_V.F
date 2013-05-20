@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
+subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,inversion)
  !
  !
  ! Here I fill the upper half of the kernel (coupling included):
@@ -44,7 +44,7 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
  use R_lattice,      ONLY:nXkibz
  use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_k_and_row_restart,BS_eh_E,&
 &                         BS_DB_is_fragmented,BS_K_coupling,&
-&                         BS_cpl_mat,BS_IO_index
+&                         BS_cpl_mat,BS_IO_index,BSS_uses_RIM
 #if defined _DISTRIBUTED
  use BS,             ONLY:ioBS_DISTRIBUTED
 #endif
@@ -57,6 +57,7 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
  integer               ::iter
  complex(SP)           ::Vi(:),Vo(:)
  real(SP),optional     ::iter_par
+ logical ,optional     ::inversion
  !
  ! Work Space
  !
@@ -127,8 +128,12 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
        !
        if (ik1==ik2) then
          !
-         forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1)) &
+         if(.not.inversion) then
+           forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1)) &
 &              BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(frag_pointer(1)+i1)
+         else if (inversion .and. BSS_uses_RIM) then
+           BS_mat(i1,i1)=(0.,0.)
+         endif
          !
          ! On diagonal block simmetrization
          !

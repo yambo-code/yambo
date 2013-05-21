@@ -132,7 +132,8 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,inversion)
            forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1)) &
 &              BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(frag_pointer(1)+i1)
          else if (inversion .and. BSS_uses_RIM) then
-           BS_mat(i1,i1)=(0.,0.)
+           forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1)) &
+&              BS_mat(i1,i1)=(0.,0.)
          endif
          !
          ! On diagonal block simmetrization

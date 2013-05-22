@@ -89,7 +89,7 @@ subroutine K_inversion(iq,W,E,k,q)
  BS_H_dim=BS_K_dim
  if (trim(BSE_mode)=="coupling") BS_H_dim=2*BS_K_dim
  !
- ! Full invertion ?
+ ! Full inversion ?
  !
  FULL         = .TRUE.
  PERTURBATIVE = .TRUE.
@@ -270,10 +270,10 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    do_it_full=.FALSE.
    call live_timing('Freq loop [pert]',px%n_of_elements(myid+1))
-   call perform_invertion(1,W%n(1))
+   call perform_inversion(1,W%n(1))
    call PP_redux_wait(inv_err,imode=2)
    !
-   ! I/O [after pert invertion]
+   ! I/O [after pert inversion]
    !
    call PP_redux_wait(X_epsilon)
    !
@@ -383,7 +383,7 @@ subroutine K_inversion(iq,W,E,k,q)
      !
      if (.not.px%element_1D(i1)) cycle
      iw=iw_full(i1)
-     call perform_invertion(iw,1)
+     call perform_inversion(iw,1)
      call live_timing(steps=1)
    enddo
    call live_timing()
@@ -395,9 +395,9 @@ subroutine K_inversion(iq,W,E,k,q)
  do iw=1,W%n(1)
    if (inv_err(iw)==0) nw_conv=nw_conv+1
  enddo
- call msg('rs','[BSE INV] Converged frequencies (after full inv) [o/o]:',real(nw_conv)/real(W%n(1))*100._SP)
+ call msg('rs','[BSE INV] Converged frequencies [o/o]:',real(nw_conv)/real(W%n(1))*100._SP)
  !
- ! I/O [after full invertion]
+ ! I/O [after full inversion]
  !
  eps_disk(:,1)=X_epsilon(2,:)
  if(IO_dim==2) eps_disk(:,2)=X_epsilon(4,:)
@@ -436,7 +436,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  contains
    !
-   subroutine perform_invertion(iw_2start,iw_2do)
+   subroutine perform_inversion(iw_2start,iw_2do)
      integer     :: iw_2start,iw_2do
      !
      integer :: i2,i3,tmp_err
@@ -457,8 +457,8 @@ subroutine K_inversion(iq,W,E,k,q)
        !
        i3=i2+iw_2start-1
        !
-       if (do_it_full) perform_inv=inv_err(i3)/=0
-       if (.not.do_it_full) perform_inv=inv_err(i3)==-1
+       if (     do_it_full) perform_inv= inv_err(i3)/= 0
+       if (.not.do_it_full) perform_inv= inv_err(i3)==-1
        !       
        if (perform_inv) then
          !

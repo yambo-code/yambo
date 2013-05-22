@@ -45,10 +45,10 @@ integer function full_inversion(N,W,C,f,V,M)
  wk=(0.,0.)
  !
  do i1=1,N 
-	 wk(i1,i1)=1./V(i1)
-	 do i2=1,N 
-	   wk(i1,i2)=wk(i1,i2)-M(i1,i2)
-	 enddo
+   wk(i1,i1)=1./V(i1)
+   do i2=1,N 
+     wk(i1,i2)=wk(i1,i2)-M(i1,i2)
+   enddo
  enddo
  call mat_dia_inv(INV,USE_LK,wk)
  call M_by_V('n',N,wk,W,A_n)

@@ -105,6 +105,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer, external ::ioX,ioBS
  !
  Co=4._SP*pi/DL_vol/real(q%nbz,SP)
+ ioBS_err    =-1
+ ioBS_Fxc_err=-1
  !
  if (.not.l_bs_fxc) call section('=','BSE Kernel')
  !
@@ -134,7 +136,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! GPL_EXCLUDE_END
  !
- if (ioBS_Fxc_err==0) then
+ if (ioBS_Fxc_err==0.or.ioBS_err==0) then
    if (BS_res_K_corr) then
      deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
      call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")

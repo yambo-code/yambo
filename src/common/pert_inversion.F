@@ -21,7 +21,7 @@
 !
 integer function pert_inversion(N,W,C,f,V)
  !
- ! C<W|1./(V^{-1}-M)|W> = \sum_n C<W| ( V M )^n V |W>
+ ! C<W|1./(V^{-1}-M)|W> = \sum_n C<W| (1-VM)^{-1} V |W> = \sum_n C<W| ( VM )^n V |W>
  !
  use pars,           ONLY:SP
  use matrix_operate, ONLY:mat_dia_inv,USE_LK,INV
@@ -37,7 +37,7 @@ integer function pert_inversion(N,W,C,f,V)
  !
  ! Work Space
  !
- integer, parameter       :: max_it=30
+ integer, parameter       :: max_it=200
  real(SP),parameter       :: perc_treshold=0.01
  integer     ::it,i1,i2
  complex(SP) ::A_nm1(N),A_n(N),delta_f,fo
@@ -49,7 +49,7 @@ integer function pert_inversion(N,W,C,f,V)
  !
  if (abs(f)==0.) f=fo
  !
- it=0
+ it=1
  !
  delta_f=0.
  !
@@ -62,7 +62,7 @@ integer function pert_inversion(N,W,C,f,V)
    f=f+delta_f
    !
    if (abs(real(delta_f))<perc_treshold*abs(real(fo)).and.&
-&        abs(aimag(delta_f))<perc_treshold*abs(aimag(fo))) return
+&      abs(aimag(delta_f))<perc_treshold*abs(aimag(fo))) return
    !
    A_nm1(:)=A_n(:)
    !

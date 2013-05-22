@@ -47,12 +47,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       O_phase,O_c_state,O_v_state,O_ng,BS_eh_table,BS_columns,&
 &                       BS_n_g_exch,BS_identifier,BS_K_coupling,O_n_v_states,&
 &                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
-&                       BS_IO_index,BS_K_is_ALDA,BS_cpl_mat,&
+&                       BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0,&
 &                       O_n_scatt,BS_O,BS_cpl_K_corr
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
+ use matrix_operate,ONLY:matrix_linear_index
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
  use xc_functionals,ONLY:F_xc
  use wrapper,       ONLY:V_dot_V,Vstar_dot_V,M_by_V
@@ -576,9 +577,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      else
        if (ik2==1.and.ik1==1) then
-         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,BS_IO_index(1,1)/),ID=ID)
+         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,matrix_linear_index(1,1)/),ID=ID)
        else
-         call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
+         call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/matrix_linear_index(ik1,ik2)/),ID=ID)
        endif
        ioBS_Fxc_err=ioBS(iq,X,ID)
      endif

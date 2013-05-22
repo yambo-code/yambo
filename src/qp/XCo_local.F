@@ -24,6 +24,7 @@ subroutine XCo_local(E,Xk)
  ! Local V_xc
  !
  use pars,          ONLY:SP,pi
+ use drivers,       ONLY:l_real_time
  use electrons,     ONLY:levels,n_spin,n_spinor,spin
  use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table
  use R_lattice,     ONLY:bz_samp
@@ -32,7 +33,12 @@ subroutine XCo_local(E,Xk)
  use xc_functionals,ONLY:V_xc,xc_string,magn
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wrapper,       ONLY:Vstar_dot_V
- use parallel_m,    ONLY:PAR_IND_QP,PP_redux_wait,PAR_COM_QP_index
+ use parallel_m,    ONLY:PAR_IND_QP,PP_redux_wait,PAR_COM_QP_index,PAR_IND_WF_k
+#if defined _RT
+ use parallel_m,    ONLY:PAR_IND_B_mat
+ use matrix_operate,ONLY:matrix_linear_index
+ use SC,            ONLY:SC_bands
+#endif
 #if defined _SC
  use com,           ONLY:error
  use IO_m,          ONLY:REP,VERIFY
@@ -99,16 +105,27 @@ subroutine XCo_local(E,Xk)
    ! 
    do i1=1,QP_n_states
      !
-     ! The QP indexes have been created together with the bands and q
-     ! distribution used to calculate the exchange self-energy
-     !
-     if (PAR_COM_QP_index%n_CPU>1) then
-       if (.not.PAR_IND_QP%element_1D(i1)) cycle
-     endif
-     !
      ib =QP_table(i1,1)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
+     !
+     if (l_real_time) then
+       !
+#if defined _RT
+       if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+       if (.not.PAR_IND_B_mat%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
+#endif
+       !
+     else
+       !
+       ! The QP indexes have been created together with the bands and q
+       ! distribution used to calculate the exchange self-energy
+       !
+       if (PAR_COM_QP_index%n_CPU>1) then
+         if (.not.PAR_IND_QP%element_1D(i1)) cycle
+       endif
+       !
+     endif
      !
      ! <iwf|V_xc|iwfp>
      !
@@ -120,8 +137,14 @@ subroutine XCo_local(E,Xk)
      !
    enddo
    !
-   if (PAR_COM_QP_index%n_CPU>1) then
-     call PP_redux_wait(QP_Vxc,COMM=PAR_COM_QP_index%COMM)
+   if (l_real_time) then
+#if defined _RT
+     call PP_redux_wait(QP_Vxc)
+#endif
+   else
+     if (PAR_COM_QP_index%n_CPU>1) then
+       call PP_redux_wait(QP_Vxc,COMM=PAR_COM_QP_index%COMM)
+     endif
    endif
    !
    return

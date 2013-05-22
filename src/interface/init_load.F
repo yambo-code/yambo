@@ -493,13 +493,23 @@ subroutine init_load(defs,en,q,k,X,Xw)
    subroutine CPU_structure_load()
      use parallel_m, ONLY:n_CPU_str_max,CPU_structure
      integer           :: i_s
-     character(schlen) :: name
-     do i_s=1,n_CPU_str_max
+     character(schlen) :: name,possible_fields
+     do i_s=1,n_CPU_str_max ! X_q_0 X_all_q GW HF BSE DENSITY RT WF
+       !
+       if (i_s==1) possible_fields='(k,c,v)'
+       if (i_s==2) possible_fields='(q,k,c,v)'
+       if (i_s==3) possible_fields='(qp,q,b)'
+       if (i_s==4) possible_fields='(qp,q,b)'
+       if (i_s==5) possible_fields=' '
+       if (i_s==6) possible_fields='(k,v)'
+       if (i_s==7) possible_fields='(k,b,q,qp)'
+       if (i_s==8) possible_fields='(k,b)'
+       !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"
        call it(defs,trim(name),'[PARALLEL] CPUs for each role',CPU_structure(i_s)%CPU_string)
        name=trim(CPU_structure(i_s)%Short_Description)//"_ROLEs"
-       call it(defs,trim(name),'[PARALLEL] CPUs roles (k,v,c,q,qp,b)',CPU_structure(i_s)%ROLE_string)
+       call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),CPU_structure(i_s)%ROLE_string)
        name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_diago"
        call it(defs,trim(name),'[PARALLEL] CPUs for matrix diagonalization',CPU_structure(i_s)%nCPU_diagonalization)
        name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_invert"

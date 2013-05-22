@@ -21,8 +21,7 @@
 !
 subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
- use pars,           ONLY:SP
- use com,            ONLY:error
+ use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:levels,n_sp_pol,spin
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
  use SC,             ONLY:Ho,E_bare,V_xc_sc,V_hartree_sc,rho_n,SC_bands
@@ -36,6 +35,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
 #if defined _MAGNETIC
  use drivers,        ONLY:l_sc_magnetic
 #endif
+ use parallel_m,     ONLY:PP_redux_wait
  implicit none
  !
  type(levels)             :: E
@@ -52,11 +52,16 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  ! Note that G_lesser here is the non-interacting one (occupations on the diagonal) only
  !
- call el_density(G_lesser,E,Xk,rho_n,1,.false.)
+ call el_density_matrix(G_lesser,E,Xk,rho_n,1,.false.)
+ !
 #else
+ !
  call el_density(E,Xk,rho_n,.false.)
  V_xc_sc=V_xc 
+ !
 #endif
+ !
+ QP_Vxc=cZERO
  call XCo_local(E,k)
  !
  ! The Ho = -nabla**2. + V_ext is deduced from the input energies en0:
@@ -77,7 +82,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  ! If we are using yambo_magnetic now Ho already
  ! contains H_magnetic
  !
- if(.not.l_sc_magnetic) Ho=(0._SP,0._SP)
+ if (.not.l_sc_magnetic) Ho=(0._SP,0._SP)
  !
 #else
  !
@@ -86,10 +91,12 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
 #endif
  !
  call V_Hartree(rho_n,V_hartree_sc)
+ !
  V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
  !
  do ik=1,QP_nk
    call V_real_space_to_H(ik,-V_hartree_sc,Ho(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf)
+   call PP_redux_wait(Ho(:,:,ik,:))
  enddo
  !
  forall (ib=1:QP_nb,ik=1:QP_nk,i_spin=1:n_sp_pol) Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) + E_bare(ib,ik,i_spin)  

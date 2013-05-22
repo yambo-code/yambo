@@ -54,7 +54,6 @@ subroutine RT_initialize(E,k,q)
  ! Work space
  !
  integer                  :: i1,rest,nk_todo
- integer, external        :: RT_phase_space
  character(5)             :: MSG_ch
  real(SP)                 :: Fluence,T_memory
  logical                  :: l_Full_RT_T_evolution!
@@ -233,12 +232,6 @@ subroutine RT_initialize(E,k,q)
  endif
  !
 #endif
- !
- !call section('=','Phase space check')
- !!
- !nk_todo=RT_phase_space(E,q)
- !!
- !if (nk_todo==0) call error('Too narrow energy window on evolved k-points')
  !
  ! LOG
  ! ===

@@ -46,7 +46,7 @@ subroutine RT_driver(E,X,k,q)
  use collisions_CACHE,ONLY:free_COLLISIONS_v
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
- use parallel_m,      ONLY:PAR_IND_QP_G_b,PAR_IND_Xk_ibz
+ use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k
  use IO_m,            ONLY:IO_and_Messaging_switch
  !
  implicit none
@@ -103,9 +103,8 @@ subroutine RT_driver(E,X,k,q)
  !
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
  call PARALLEL_global_indexes(E,k,q,"Response_G_space_Zero_Momentum",RESET=.FALSE.,X=X(1))
+ call PARALLEL_global_indexes(E,k,q,"Wave_Functions",RESET=.FALSE.)
  call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
-! call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,SERIAL=.TRUE.,X=X(1))
-! call PARALLEL_global_indexes(E,k,q,"DENSITY",RESET=.FALSE.,SERIAL=.TRUE.,X=X(1))
  !
  ! Dipoles
  !========
@@ -126,7 +125,7 @@ subroutine RT_driver(E,X,k,q)
  ! WFs loading
  !=============
  !
- call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_QP_G_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
  !
  call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
  !

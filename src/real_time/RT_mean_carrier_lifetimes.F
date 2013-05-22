@@ -44,7 +44,7 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,k,E)
  !
  RT_mean_lifetimes=0._SP
  !
- do ik=1,QP_nk
+ do ik=1,1
    do ib=1,SC_bands(2)
      if (ib< SC_bands(1)) then
        f_occ=spin_occ
@@ -69,5 +69,6 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,k,E)
  enddo
  !
  if (n_states>0) RT_mean_lifetimes=RT_mean_lifetimes/float(n_states)
+ write (*,*) RT_mean_lifetimes*1000.
  !
 end subroutine RT_mean_carrier_lifetimes

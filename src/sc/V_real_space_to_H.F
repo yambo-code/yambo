@@ -22,11 +22,14 @@
 subroutine V_real_space_to_H(ik,V,H,wf)
  !
  use electrons,      ONLY:n_sp_pol,spin
- use pars,           ONLY:SP,DP
+ use pars,           ONLY:SP
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
  use wave_func,      ONLY:wf_state,wf_n_states
  use wrapper,        ONLY:Vstar_dot_V
+ use parallel_m,     ONLY:PAR_IND_B_mat,PAR_IND_WF_k
+ use matrix_operate, ONLY:matrix_linear_index
+ use SC,             ONLY:SC_bands
  implicit none
  !
  integer     :: ik,i_spin
@@ -42,11 +45,16 @@ subroutine V_real_space_to_H(ik,V,H,wf)
  !
  do i1=1,QP_n_states
    !
+   if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
    if (QP_table(i1,3)/=ik) cycle
    !
    ib =QP_table(i1,1)
    ibp=QP_table(i1,2)
    i_spin=spin(qp_table(i1,:))
+   !
+#if defined _RT
+   if (.not.PAR_IND_B_mat%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
+#endif
    !
    ! <ifft|V|ifftp>
    !
@@ -67,6 +75,7 @@ subroutine V_real_space_to_H(ik,V,H,wf)
        H(ib,ibp,i_spin)=conjg(H(ibp,ib,i_spin))
      enddo
    enddo
+   !
  enddo
  !
 end subroutine 

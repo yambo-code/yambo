@@ -82,7 +82,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  if (it_now==it_start.or.mod(it_now-it_start+1,NE_Hxc_jumps)==0) then
    !
-   if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) call el_density(G_input,E,k,rho_n,SC_bands(1),.false.)
+   if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) call el_density_matrix(G_input,E,k,rho_n,SC_bands(1),.false.)
    !
    ! The Hartree term is written as
    !

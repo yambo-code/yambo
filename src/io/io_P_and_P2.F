@@ -29,7 +29,7 @@ integer function io_P_and_P2(X,Xen,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_fragmented,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension
  use fragments,     ONLY:io_fragment
- use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_nibz
+ use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_IND_Xk_ibz
  !
  implicit none
  type(X_t)   ::X
@@ -56,6 +56,14 @@ integer function io_P_and_P2(X,Xen,ID)
    !
  endif
  !
+ ! When writing in parallel the definitions in variables_DIPOLES
+ ! are done only for the MASTER node.
+ !
+ if (write_is_on(ID)) then
+   db_nb =X%ib
+   db_nbm=Xen%nbm
+ endif
+ !
  if (.not.Dipole_bands_ordered) db_nbm=db_nb(2)
  !
  if (any((/io_sec(ID,:)==2/))) then
@@ -66,6 +74,8 @@ integer function io_P_and_P2(X,Xen,ID)
    if (read_is_on(ID)) call X_alloc('DIP_P',(/3,X%ib(2),db_nbm,PAR_Xk_nibz/))
    !
    do ik=1,nXkibz
+     !
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
      ik_mem=PAR_Xk_ibz_index(ik)
      !

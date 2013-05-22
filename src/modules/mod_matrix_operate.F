@@ -42,9 +42,26 @@ module matrix_operate
    ! variables needed to distribute the global array across the grid
    !
    integer :: descM(9), descV(9), ldrow, ldcol, blocking_factor 
+   !
  end type blacs_t 
  !
  contains
+   !
+   integer function matrix_linear_index(i1,i2)
+     !
+     ! Note that:
+     !
+     !  matrix_linear_index(1,1)=2
+     !  matrix_linear_index(2,2)=3
+     !  matrix_linear_index(1,2)=4
+     !  matrix_linear_index(3,3)=5
+     !  matrix_linear_index(2,3)=6
+     !  matrix_linear_index(1,3)=7
+     !
+     integer :: i1,i2
+     matrix_linear_index=(i2**2+i2)/2-i1+2
+     !
+   end function
    !
    complex(SP) function trace(M)
      use pars, ONLY:SP,cZERO

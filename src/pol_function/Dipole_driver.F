@@ -30,7 +30,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use fields,         ONLY:grid_path
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
 &                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
- use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,MASTER,OP_APP_WR_CL,OP_RD,RD_CL_IF_END,IO_write
+ use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,MASTER,OP_APP_WR_CL,OP_RD,RD_CL_IF_END
  use wave_func,      ONLY:wf_ng,WF_load,WF_free
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_Xk_nibz,PAR_IND_VAL_BANDS_X,master_cpu
 #if defined _SC      
@@ -140,7 +140,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! Attempt calculation using shifted grids if requested
    !
-   if(Dipole_uses_shifted_grids) then
+   if (Dipole_uses_shifted_grids) then
      !
      ! Use shifted grids, supporting fallback to transverse gauge
      !
@@ -164,19 +164,23 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    if (master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
      io_err(1)=io_DIPOLES(X,Xen,ID)
+#if defined _SC 
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+     io_err(2)=io_P_and_P2(X,Xen,ID)
+#endif
    endif
    !
    do ik=1,Xk%nibz
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle 
-     !
+     ! 
      call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1+ik/),ID=ID)
      io_err(1)=io_DIPOLES(X,Xen,ID)
      !
    enddo
    !
 #if defined _SC 
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
    io_err(2)=io_P_and_P2(X,Xen,ID)
 #endif
    !

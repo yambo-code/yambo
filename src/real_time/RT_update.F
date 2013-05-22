@@ -118,8 +118,8 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
   !
   ! Update the full density and the one between SC_lw_band:SC_bands(2)
   !
-  if(allocated(rho_reference)) call el_density(G_input,Xen,Xk,rho_reference,SC_bands(1),.false.)  
-  if(allocated(full_rho))      call el_density(G_input,Xen,Xk,full_rho     ,1         ,.false.)  
+  if(allocated(rho_reference)) call el_density_matrix(G_input,Xen,Xk,rho_reference,SC_bands(1),.false.)  
+  if(allocated(full_rho))      call el_density_matrix(G_input,Xen,Xk,full_rho     ,1         ,.false.)  
   !
  endif 
  !

@@ -57,6 +57,7 @@ subroutine RT_start_and_restart(E,k,X)
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
+ use parallel_m,     ONLY:PP_redux_wait
  implicit none
  !
  type(levels)      :: E
@@ -184,7 +185,7 @@ subroutine RT_start_and_restart(E,k,X)
      call H_rotate(SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),G_lesser(:,:,ik,1),SC_nbands,-1)
    enddo
    !
-   if (Hfrozen) call el_density(G_lesser(:,:,:,1),E,k,rho_n,1,.false.)
+   if (Hfrozen) call el_density_matrix(G_lesser(:,:,:,1),E,k,rho_n,1,.false.)
    if (Hfrozen) call V_Hartree(rho_n,V_hartree_sc)
    !
    V_xc_sc=(0._SP)
@@ -271,11 +272,11 @@ subroutine RT_start_and_restart(E,k,X)
    ! in sc_bare_Hamiltonian I need to recalculate it here when SC_lw_band>1
    ! as it it is also used in XC_potential_driver
    ! 
-   call el_density(G_lesser(:,:,:,1),E,k,rho_n,SC_bands(1),.false.)
+   call el_density_matrix(G_lesser(:,:,:,1),E,k,rho_n,SC_bands(1),.false.)
    rho_reference=rho_n
    !
    if (allocated(full_rho)) then
-     call el_density(G_lesser(:,:,:,1),E,k,rho_n,1,.false.)
+     call el_density_matrix(G_lesser(:,:,:,1),E,k,rho_n,1,.false.)
      full_rho=rho_n
    endif
    !
@@ -309,6 +310,8 @@ subroutine RT_start_and_restart(E,k,X)
      endif
      !
      call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf) 
+     !
+     call PP_redux_wait(XC0_and_HARTREE0(:,:,ik,:))
      !
    enddo
    !
@@ -376,7 +379,7 @@ subroutine RT_start_and_restart(E,k,X)
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
    if(it_start>Thermal_steps.and..not.l_NE_simulate_IP) & 
-&     call el_density(G_lesser_reference,E,k,rho_reference,SC_bands(1),.false.)
+&     call el_density_matrix(G_lesser_reference,E,k,rho_reference,SC_bands(1),.false.)
    !
  endif
  !

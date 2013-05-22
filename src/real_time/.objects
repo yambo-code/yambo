@@ -9,7 +9,7 @@ ELPH_objs =  RT_ELPH_zeroing.o RT_ELPH_gkkp_remap.o RT_ELPH_initialize.o \
              RT_ELPH_eq_Kernel.o RT_ELPH_CCA_Kernel.o RT_ELPH_out_of_eq_Kernel.o RT_ELPH_total_Kernel.o 
 #endif
 #if defined _RT
-objs = RT_initialize.o RT_phase_space.o RT_start_and_restart.o RT_update.o RT_CCA_initialize.o \
+objs = RT_initialize.o RT_start_and_restart.o RT_update.o RT_CCA_initialize.o \
        RT_manual_excitation.o RT_driver.o RT_apply_field.o RT_Collision.o RT_Integrator.o \
        RT_build_I1_and_I2.o RT_build_U1_and_U2.o RT_EULEREXP_step.o RT_EULER_step.o \
        RT_observables.o RT_output.o RT_propagate_fields.o \

@@ -44,7 +44,8 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
  use R_lattice,      ONLY:nXkibz
  use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_k_and_row_restart,BS_eh_E,&
 &                         BS_DB_is_fragmented,BS_K_coupling,&
-&                         BS_cpl_mat,BS_IO_index
+&                         BS_cpl_mat
+ use matrix_operate, ONLY:matrix_linear_index
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_control,OP_RD,RD,NONE,RD_CL,OP_RD_CL
  use wrapper,        ONLY:M_by_V
@@ -87,7 +88,7 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
      !
    else
      call PP_indexes_reset(Kp)
-     call PARALLEL_index(Kp,(/BS_IO_index(1,nXkibz)-1/))
+     call PARALLEL_index(Kp,(/matrix_linear_index(1,nXkibz)-1/))
      if (iter==1) call mem_est('BS_mat',(/maxval(BS_blk_dim)**2/)) 
    endif
    !
@@ -101,7 +102,7 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
        if (use_fragments) then
          frag_pointer=BS_k_and_row_restart(:2)
          BS_k_and_row_restart=0
-         if (.not.Kp%element_1D(BS_IO_index(ik1,ik2)-1)) cycle
+         if (.not.Kp%element_1D(matrix_linear_index(ik1,ik2)-1)) cycle
          allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
          if (BS_K_coupling) allocate(BS_cpl_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
          ACTION=OP_RD_CL
@@ -111,7 +112,7 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
        !
        ! BS I/O
        ! 
-       call io_control(ACTION=ACTION,COM=NONE,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
+       call io_control(ACTION=ACTION,COM=NONE,SEC=(/matrix_linear_index(ik1,ik2)/),ID=ID)
        ioBS_err=ioBS(iq,X,ID)
        !
        if (ik1==ik2) then

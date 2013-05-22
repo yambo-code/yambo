@@ -38,9 +38,10 @@ module interfaces
      logical,        optional::SERIAL
    end subroutine
    !
-   subroutine PARALLEL_live_message(WHAT,LOADED,TOTAL,NCPU,CHAIN)
-     character(*)      :: WHAT
-     integer,optional  :: LOADED,TOTAL,NCPU,CHAIN
+   subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU,CHAIN)
+     character(*)          :: WHAT
+     character(*),optional :: ENVIRONMENT
+     integer,     optional :: LOADED,TOTAL,NCPU,CHAIN
    end subroutine
    !
    subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,CLEAN_UP)

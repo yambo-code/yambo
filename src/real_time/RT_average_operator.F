@@ -70,7 +70,9 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  !
  do ik=1,QP_nk
    ! 
-   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle   
+   if (QP_nk/=nK_mem) then
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle   
+   endif
    !
    call make_Hk_matrix(ik)
    !
@@ -92,7 +94,8 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
      integer, intent(in) :: ik
      integer :: i1,ik_mem
      !
-     ik_mem=PAR_Xk_ibz_index(ik)
+     ik_mem=ik
+     if (QP_nk/=nK_mem) ik_mem=PAR_Xk_ibz_index(ik)
      !
      Hk=(0._SP,0._SP)
      !
@@ -112,7 +115,10 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
      endif
      !
      if(present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk)
-     if(present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk,wf)
+     if(present(O_REAL))   then
+       call V_real_space_to_H(ik,O_REAL,Hk,wf)
+       call PP_redux_wait(Hk)
+     endif
      !
    end subroutine make_Hk_matrix
    !

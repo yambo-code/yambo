@@ -149,7 +149,12 @@ module parallel_m
  !
  ! ... QP
  type(PP_indexes),SAVE :: PAR_IND_QP
+ type(PP_indexes),SAVE :: PAR_IND_B_mat
  type(PP_indexes),SAVE :: PAR_IND_QP_G_b
+ !
+ ! ... WF
+ type(PP_indexes),SAVE :: PAR_IND_WF_b
+ type(PP_indexes),SAVE :: PAR_IND_WF_k
  !
  ! Specific MPI ID's ...
  !======================
@@ -161,6 +166,10 @@ module parallel_m
  ! ... QP
  integer            :: PAR_IND_QP_ID
  integer            :: PAR_IND_QP_G_b_ID
+ !
+ ! ... WF
+ integer            :: PAR_IND_WF_b_ID
+ integer            :: PAR_IND_WF_k_ID
  !
  ! ... BZ
  integer            :: PAR_IND_Q_ID
@@ -188,6 +197,11 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_QP_A2A
  type(MPI_comm),SAVE :: PAR_COM_QP_G_b_INDEX
  !
+ ! ... WF
+ type(MPI_comm),SAVE :: PAR_COM_WF_k_A2A
+ type(MPI_comm),SAVE :: PAR_COM_WF_k_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_WF_b_INDEX
+ !
  ! ... BZ
  type(MPI_comm),SAVE :: PAR_COM_Q_INDEX
  type(MPI_comm),SAVE :: PAR_COM_Q_A2A
@@ -195,7 +209,7 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_Xk_ibz_A2A
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
  !
- ! ... and BZ-derived variables
+ ! ... and derived variables
  integer            :: PAR_nQ
  integer,allocatable:: PAR_Q_index(:)
  integer            :: PAR_Xk_nibz
@@ -257,6 +271,8 @@ module parallel_m
      CPU_structure(6)%Short_Description="DENSITY"
      CPU_structure(7)%Long_Description="Real_Time"
      CPU_structure(7)%Short_Description="RT"
+     CPU_structure(8)%Long_Description="Wave_Functions"
+     CPU_structure(8)%Short_Description="WF"
    end subroutine
    !
    subroutine COMM_reset(COMM)

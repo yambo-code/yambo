@@ -129,19 +129,15 @@ module BS
  !
  contains
    !
-   integer function BS_IO_index(ik1,ik2)
-     integer :: ik1,ik2
-     BS_IO_index=(ik2**2+ik2)/2-ik1+2
-   end function
-   !
    function BS_blocks(I)
-     use R_lattice, ONLY:nXkibz
+     use R_lattice,      ONLY:nXkibz
+     use matrix_operate, ONLY:matrix_linear_index
      integer :: BS_blocks(2)
      integer :: I,ik1,ik2
      BS_blocks=0
      do ik1=1,nXkibz
        do ik2=1,nXkibz
-         if (BS_IO_index(ik1,ik2)==I) then
+         if (matrix_linear_index(ik1,ik2)==I) then
            BS_blocks=(/ik1,ik2/)
            return
          endif

@@ -30,7 +30,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use stderr,        ONLY:intc
  use electrons,     ONLY:levels,spin_occ,spin
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
-&                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_QP_G_b,&
+&                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
 &                        PAR_IND_Q_ID
  use collision,     ONLY:ggwinfo,collision_reset
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
@@ -105,7 +105,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  call PARALLEL_global_indexes(E,k,q,"HF")
  !
- call PARALLEL_WF_distribute(max(E%nbm,QP_nb),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_QP_G_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(max(E%nbm,QP_nb),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
  !
  call PARALLEL_WF_distribute(max(E%nbm,QP_nb),k%nibz,QP_index=PAR_IND_QP)
  !
@@ -126,7 +126,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  if (l_collisions_IO) ch='HF collisions'
 #endif
  !
- n_lt_bands=count( PAR_IND_QP_G_b%element_1D(:Sx_upper_band) )
+ n_lt_bands=count( PAR_IND_G_b%element_1D(:Sx_upper_band) )
  !
  call live_timing(trim(ch),PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
 &                          PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands)
@@ -200,7 +200,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
      !
      do jb=Sx_lower_band,Sx_upper_band
        !
-       if (.not.PAR_IND_QP_G_b%element_1D(jb)) cycle
+       if (.not.PAR_IND_G_b%element_1D(jb)) cycle
        !      
        isc%os(1)=jb
        iscp%os=isc%os

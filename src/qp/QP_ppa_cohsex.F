@@ -32,9 +32,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error
  use drivers,       ONLY:Finite_Tel,l_ppa,l_cohsex,l_sc_run,l_sc_srpa
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP_G_b,PAR_IND_QP,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_IND_Q_ID,PAR_IND_QP_ID,&
-&                        PAR_COM_Q_A2A,PAR_COM_QP_G_b_INDEX
+&                        PAR_COM_Q_A2A,PAR_COM_G_b_INDEX
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,OP_WR_CL
@@ -161,7 +161,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call PARALLEL_global_indexes(E,k,q,"GW")
  !
- call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_QP_G_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
  !
  call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,QP_index=PAR_IND_QP)
  !
@@ -208,7 +208,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
 &               PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
-&               count( PAR_IND_QP_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
+&               count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
    !
    if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',timing_steps)
    if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',timing_steps)
@@ -335,7 +335,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
-       if (.not.PAR_IND_QP_G_b%element_1D(ib)) cycle
+       if (.not.PAR_IND_G_b%element_1D(ib)) cycle
        !
        if (q%sstar(iqbz,2)==1) call live_timing(steps=1)
        !

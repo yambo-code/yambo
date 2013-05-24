@@ -48,7 +48,7 @@ subroutine el_density(en,Xk,rho,force_si)
  use D_lattice,     ONLY:nsym,i_time_rev,mag_syms
  use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_inv
  use wave_func,     ONLY:wf_state,wf
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP_G_b,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,&
 &                        PAR_COM_QP_A2A,PAR_IND_QP,l_par_HF,l_par_GW
  !
  implicit none
@@ -88,7 +88,7 @@ subroutine el_density(en,Xk,rho,force_si)
    !
    do ib=1,en%nbm
      do ik=1,Xk%nibz
-        if (PAR_IND_QP_G_b%element_1D(ib).and.PAR_IND_Xk_ibz%element_1D(ik)) states_filling(ib,ik,ID)=1
+        if (PAR_IND_G_b%element_1D(ib).and.PAR_IND_Xk_ibz%element_1D(ik)) states_filling(ib,ik,ID)=1
      enddo
    enddo
    !
@@ -98,7 +98,7 @@ subroutine el_density(en,Xk,rho,force_si)
  !
  bands_loop: do ib=1,en%nbm
    !
-   if (.not.PAR_IND_QP_G_b%element_1D(ib)) cycle
+   if (.not.PAR_IND_G_b%element_1D(ib)) cycle
    !
    do ik=1,Xk%nibz
      !

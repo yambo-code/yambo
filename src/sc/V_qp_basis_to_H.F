@@ -24,6 +24,11 @@ subroutine V_qp_basis_to_H(ik,V,H)
  use electrons,      ONLY:n_sp_pol,spin
  use pars,           ONLY:SP
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
+#if defined _RT
+ use SC,             ONLY:SC_bands
+ use matrix_operate, ONLY:matrix_linear_index
+ use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_COM_WF_k_A2A,PP_redux_wait,PAR_IND_WF_k
+#endif
  implicit none
  !
  integer     :: ik
@@ -34,6 +39,10 @@ subroutine V_qp_basis_to_H(ik,V,H)
  !
  integer    :: i1,ib,ibp,i_spin
  !
+ if (.not.PAR_IND_WF_k%element_1D(ik)) return
+ !
+ H(:,:,:) = H(:,:,:)/real(PAR_COM_WF_k_A2A%n_CPU)
+ !
  ! Fill ...
  !
  do i1=1,QP_n_states
@@ -42,6 +51,10 @@ subroutine V_qp_basis_to_H(ik,V,H)
    ib =QP_table(i1,1)
    ibp=QP_table(i1,2)
    i_spin = spin(QP_table(i1,:))
+   !
+#if defined _RT
+   if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
+#endif
    !
    ! In the RT simulation the bands QP_table matrix is not ordered
    ! when the carriers Couloumb scattering is calculated.
@@ -57,5 +70,7 @@ subroutine V_qp_basis_to_H(ik,V,H)
    if (ib/=ibp) H(ibp,ib,i_spin) = conjg(H(ib,ibp,i_spin))
    !
  end do
+ !
+ call PP_redux_wait(H,COMM=PAR_COM_WF_k_A2A%COMM)
  !
 end subroutine 

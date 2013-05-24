@@ -150,6 +150,7 @@ module parallel_m
  ! ... QP
  type(PP_indexes),SAVE :: PAR_IND_QP
  type(PP_indexes),SAVE :: PAR_IND_B_mat
+ type(PP_indexes),SAVE :: PAR_IND_B_mat_ordered
  type(PP_indexes),SAVE :: PAR_IND_QP_G_b
  !
  ! ... WF
@@ -179,6 +180,9 @@ module parallel_m
  ! ... linear response & BSK
  integer            :: PAR_IND_VAL_BANDS_X_ID(n_parallel_X_types)
  integer            :: PAR_IND_CON_BANDS_X_ID(n_parallel_X_types)
+ !
+ ! ... RT
+ integer            :: PAR_IND_B_mat_ID
  !
  ! Specific MPI COMMUNICATORS...
  !==============================
@@ -210,6 +214,8 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
  !
  ! ... and derived variables
+ integer            :: PAR_n_B_mat_elements
+ integer,allocatable:: PAR_B_mat_index(:,:)
  integer            :: PAR_nQ
  integer,allocatable:: PAR_Q_index(:)
  integer            :: PAR_Xk_nibz

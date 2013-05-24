@@ -35,7 +35,7 @@ subroutine XCo_local(E,Xk)
  use wrapper,       ONLY:Vstar_dot_V
  use parallel_m,    ONLY:PAR_IND_QP,PP_redux_wait,PAR_COM_QP_index,PAR_IND_WF_k
 #if defined _RT
- use parallel_m,    ONLY:PAR_IND_B_mat
+ use parallel_m,    ONLY:PAR_IND_B_mat_ordered
  use matrix_operate,ONLY:matrix_linear_index
  use SC,            ONLY:SC_bands
 #endif
@@ -113,7 +113,7 @@ subroutine XCo_local(E,Xk)
        !
 #if defined _RT
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-       if (.not.PAR_IND_B_mat%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
+       if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
 #endif
        !
      else

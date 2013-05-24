@@ -25,8 +25,9 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp)
  use electrons,      ONLY:levels,spin_occ,n_full_bands
  use SC,             ONLY:SC_bands,it_now
  use real_time,      ONLY:G_lesser,MEM_index,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
-&                         Gr_ep_matrix,Gr_indexes,Gr_ordering_condition
- use ELPH,           ONLY:ph_freqs_sq
+&                         Gr_ep_matrix,Gr_indexes,Gr_ordering_condition,B_mat_index
+ use ELPH,           ONLY:ph_freqs_sq,ph_modes
+ use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
  !
  implicit none
  !
@@ -37,13 +38,16 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp)
  !
  ! Work Space ...
  !
- integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift
+ integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem
  real(SP) :: DELTA,GAMMA_,f_k_m_q,P_ph_abs,P_ph_emit,ph_freq
  !
  ! Dimensions
  !============
  !
  B_dim=SC_bands(2)-SC_bands(1)+1
+ !
+ ik_mem=PAR_Xk_ibz_index(ik)
+ iq_mem=PAR_Q_index(i_q)
  !
  ! Kernel kind
  !============= 
@@ -57,14 +61,6 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp)
    do i_np=1,B_dim
      ! 
      i_np_shift=i_np+SC_bands(1)-1
-     !
-     f_k_m_q=-cI*G_lesser(i_np+SC_bands(1)-1,i_np+SC_bands(1)-1,ik_m_q,MEM_index(it_now))/spin_occ
-     !
-     DELTA  = E%E(i_np+SC_bands(1)-1,ik_m_q,1)-E%E(i_n+SC_bands(1)-1,ik,1)
-     GAMMA_ = abs(E%W(i_np+SC_bands(1)-1,ik_m_q,1))+abs(E%W(i_n+SC_bands(1)-1,ik,1))
-     !
-     P_ph_abs =0.
-     P_ph_emit=0.
      !
      ! 16/3/2012
      !
@@ -83,15 +79,21 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp)
      if (i_n_shift<=n_full_bands.and.i_np_shift>  n_full_bands) cycle
      if (i_n_shift> n_full_bands.and.i_np_shift<= n_full_bands) cycle
      !
+     if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n_shift,i_np_shift) ) ) cycle
+     i_b_mat_mem=PAR_B_mat_index(i_n_shift,i_np_shift)
+     !
+     f_k_m_q=-cI*G_lesser(i_np+SC_bands(1)-1,i_np+SC_bands(1)-1,ik_m_q,MEM_index(it_now))/spin_occ
+     !
+     DELTA  = E%E(i_np+SC_bands(1)-1,ik_m_q,1)-E%E(i_n+SC_bands(1)-1,ik,1)
+     GAMMA_ = abs(E%W(i_np+SC_bands(1)-1,ik_m_q,1))+abs(E%W(i_n+SC_bands(1)-1,ik,1))
+     !
+     P_ph_abs =0.
+     P_ph_emit=0.
+     !
      if (abs(DELTA)<1.E-10) cycle
      !
-     !if (Gr_ordering_condition(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik)) then
-     !  if (DELTA>1.E-10) P_ph_abs =Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,1) 
-     !  if (DELTA<1.E-10) P_ph_emit=Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,2) 
-     !else
-     !  if (DELTA>1.E-10) P_ph_abs =Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,2) 
-     !  if (DELTA<1.E-10) P_ph_emit=Gr_ep_matrix(Gr_indexes(i_np+SC_bands(1)-1,ik_m_q,i_n+SC_bands(1)-1,ik),i_q,i_l,1) 
-     !endif
+     !if (DELTA>1.E-10) P_ph_abs =Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,i_l+ph_modes)
+     !if (DELTA<1.E-10) P_ph_emit=Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,i_l)
      !
      !DEBUG>
      if (DELTA>1.E-10) P_ph_abs =GAMMA_/(GAMMA_**2+(DELTA-ph_freq)**2)

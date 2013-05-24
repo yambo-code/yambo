@@ -35,7 +35,7 @@ subroutine RT_ELPH_initialize(k,q)
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
  use parser_m,       ONLY:parser
- use parallel_m,     ONLY:PAR_Q_index,PAR_IND_Q,PAR_nQ
+ use parallel_m,     ONLY:PAR_Q_index,PAR_IND_Q,PAR_nQ,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz
  !
  implicit none
  !
@@ -43,7 +43,7 @@ subroutine RT_ELPH_initialize(k,q)
  !
  ! Work Space
  !
- integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s,i_n,i_np,ik_bz
+ integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s,i_n,i_np,ik_bz,ik_mem
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes)
  integer, external   ::ioELPH
  logical             ::l_use_Debye_E
@@ -72,7 +72,7 @@ subroutine RT_ELPH_initialize(k,q)
  ! Allocation
  !============
  !
- allocate(elph_gkkp_expanded(k%nibz*PAR_nQ,ph_modes,elph_nb,elph_nb),stat=alloc_err)
+ allocate(elph_gkkp_expanded(PAR_Xk_nibz*PAR_nQ,ph_modes,elph_nb,elph_nb),stat=alloc_err)
  call mem_est("GKKP_expanded",(/size(elph_gkkp_expanded)/),(/2*SP/),errors=(/alloc_err/))
  !
  if (.not.l_RT_CCA_Kernel) then
@@ -102,6 +102,10 @@ subroutine RT_ELPH_initialize(k,q)
      !
      ik_bz=sum(k%nstar(:ik-1))+1
      !
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+     !
+     ik_mem=PAR_Xk_ibz_index(ik)
+     !
      do i_n=1,elph_nb
        do i_np=1,elph_nb
          !
@@ -109,7 +113,7 @@ subroutine RT_ELPH_initialize(k,q)
          ! where the band indexes have been exchanged. Instead of doing a global change of the notes
          ! and of the code I decided, here, to exchange the indexes:
          !
-         elph_gkkp_expanded((PAR_Q_index(iq)-1)*k%nibz+ik,:,i_n,i_np)=elph_gkkp(K_io_map(ik_bz),:,i_np,i_n)
+         elph_gkkp_expanded((PAR_Q_index(iq)-1)*PAR_Xk_nibz+ik_mem,:,i_n,i_np)=elph_gkkp(K_io_map(ik_bz),:,i_np,i_n)
          !
        enddo
      enddo

@@ -115,10 +115,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
      endif
      !
      if(present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk)
-     if(present(O_REAL))   then
-       call V_real_space_to_H(ik,O_REAL,Hk,wf)
-       call PP_redux_wait(Hk)
-     endif
+     if(present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk,wf)
      !
    end subroutine make_Hk_matrix
    !

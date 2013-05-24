@@ -57,7 +57,7 @@ subroutine RT_start_and_restart(E,k,X)
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
- use parallel_m,     ONLY:PP_redux_wait
+ use parallel_m,     ONLY:PAR_IND_WF_k,PAR_COM_WF_k_INDEX,PP_redux_wait
  implicit none
  !
  type(levels)      :: E
@@ -203,6 +203,9 @@ subroutine RT_start_and_restart(E,k,X)
      endif
      !
      do ik=1,QP_nk
+       !
+       if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+       !
        if (local_V.and..not.l_NE_simulate_Irredux) then
          call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf)
        elseif(.not.l_NE_simulate_Irredux) then
@@ -221,6 +224,8 @@ subroutine RT_start_and_restart(E,k,X)
      enddo
      !
    endif
+   !
+   call PP_redux_wait(XC0_and_HARTREE0,COMM=PAR_COM_WF_k_INDEX%COMM)
    !
    ! Now I update <i|r|j> dipoles using G_lesser_reference as
    ! Green function to construct the Hamiltonian
@@ -303,6 +308,11 @@ subroutine RT_start_and_restart(E,k,X)
    !
    do ik=1,QP_nk
      !
+     if (.not.PAR_IND_WF_k%element_1D(ik)) then
+       XC0_and_HARTREE0(:,:,ik,:)=cZERO
+       cycle
+     endif
+     !
      if(.not.l_NE_simulate_Irredux.and..not.l_NE_simulate_TDDFT) then
        !
        call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf) 
@@ -311,9 +321,9 @@ subroutine RT_start_and_restart(E,k,X)
      !
      call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf) 
      !
-     call PP_redux_wait(XC0_and_HARTREE0(:,:,ik,:))
-     !
    enddo
+   !
+   call PP_redux_wait(XC0_and_HARTREE0,COMM=PAR_COM_WF_k_INDEX%COMM)
    !
    V_xc_sc=(0._SP)
    !
@@ -417,12 +427,14 @@ subroutine RT_start_and_restart(E,k,X)
  ! Retarded Green Functions matrix
  ! ===============================
  !
- if ((l_ph_corr.or.l_carrier_dynamics)) then
+ if (l_ph_corr.or.l_carrier_dynamics) then
    !
    call section('+','Retarded Green Functions initialization')
    !                 ========================================
    !
-   call RT_CCA_initialize(E)
+   if (l_ph_corr) call RT_G_retarded_EP_initialize(E,k)
+   !
+   !call RT_CCA_initialize(E)
    !
  endif
  !

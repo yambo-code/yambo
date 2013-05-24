@@ -27,8 +27,10 @@ subroutine V_real_space_to_H(ik,V,H,wf)
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
  use wave_func,      ONLY:wf_state,wf_n_states
  use wrapper,        ONLY:Vstar_dot_V
- use parallel_m,     ONLY:PAR_IND_B_mat,PAR_IND_WF_k
+#if defined _RT
+ use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,PAR_COM_WF_k_A2A,PP_redux_wait
  use matrix_operate, ONLY:matrix_linear_index
+#endif
  use SC,             ONLY:SC_bands
  implicit none
  !
@@ -41,11 +43,14 @@ subroutine V_real_space_to_H(ik,V,H,wf)
  integer    :: i1,ib,ibp,ifft,ifftp
  complex(SP):: c_ws(fft_size)
  !
+ if (.not.PAR_IND_WF_k%element_1D(ik)) return
+ !
+ H(:,:,:) = H(:,:,:)/real(PAR_COM_WF_k_A2A%n_CPU)
+ !
  ! Fill ...
  !
  do i1=1,QP_n_states
    !
-   if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
    if (QP_table(i1,3)/=ik) cycle
    !
    ib =QP_table(i1,1)
@@ -53,7 +58,7 @@ subroutine V_real_space_to_H(ik,V,H,wf)
    i_spin=spin(qp_table(i1,:))
    !
 #if defined _RT
-   if (.not.PAR_IND_B_mat%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
+   if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
 #endif
    !
    ! <ifft|V|ifftp>
@@ -62,7 +67,7 @@ subroutine V_real_space_to_H(ik,V,H,wf)
    ifftp=wf_state(ibp,ik,i_spin)
    c_ws(:)=V(:,i_spin)*wf(:,ifftp)
    !
-   H(ib,ibp,i_spin) = H(ib,ibp,i_spin) + Vstar_dot_V(fft_size,wf(:,ifft),c_ws(:))
+   H(ib,ibp,i_spin) = H(ib,ibp,i_spin)+Vstar_dot_V(fft_size,wf(:,ifft),c_ws(:))
    !
  end do
  !
@@ -75,7 +80,8 @@ subroutine V_real_space_to_H(ik,V,H,wf)
        H(ib,ibp,i_spin)=conjg(H(ibp,ib,i_spin))
      enddo
    enddo
-   !
  enddo
+ !
+ call PP_redux_wait(H,COMM=PAR_COM_WF_k_A2A%COMM)
  !
 end subroutine 

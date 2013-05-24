@@ -45,7 +45,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,G_lesser,MEM_index
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index,PAR_COM_Xk_ibz_A2A
+ use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_COM_Xk_ibz_A2A,PAR_Xk_nibz,PAR_Xk_ibz_index
  !
  implicit none
  !
@@ -67,9 +67,11 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  ! ... band index ...
  integer               :: i_n,i_np,i_m,B_dim,i_np_m,i_n_m
  ! ... BZ index ...
- integer               :: iqbz,ik_m_q,ik_m_qs
+ integer               :: iqbz,ik_m_q,ik_mem
  !
  B_dim=SC_bands(2)-SC_bands(1)+1
+ !
+ ik_mem=PAR_Xk_ibz_index(ik)
  !
  i_map(-1)=1
  i_map( 0)=1
@@ -79,9 +81,6 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  S_mat_out_of_eq=cZero
  S_mat_sum=cZero
  if (l_RT_CCA_Kernel) then
-   E_P_Hole_lifetime(:,ik)    =rZero
-   E_P_Electron_lifetime(:,ik)=rZero
-   E_P_Phonon_lifetime(:,ik)  =rZero
    do i_n=1,B_dim
      f_k(i_n)=-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,ik,MEM_index(it_now))/spin_occ
    enddo
@@ -92,7 +91,6 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
    if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
    !
    ik_m_q =k%sstar(qindx_S(ik,iqbz,1),1)
-   ik_m_qs=k%sstar(qindx_S(ik,iqbz,1),2)
    !
    i_gkkp=PAR_Q_index(iqbz)
    !
@@ -111,10 +109,10 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
      Gkkp=(0._SP,0._SP)
      do i_n=SC_bands(1),SC_bands(2)
        i_n_m=i_n-SC_bands(1)+1
-       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded((i_gkkp-1)*k%nibz+ik,il,i_n,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
+       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_n,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
        do i_np=SC_bands(1),SC_bands(2)
          i_np_m=i_np-SC_bands(1)+1
-         Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded((i_gkkp-1)*k%nibz+ik,il,i_np,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
+         Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_np,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
        enddo 
      enddo
      !
@@ -161,10 +159,6 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !
  if (l_RT_CCA_Kernel) then
    !
-   call PP_redux_wait(E_P_Electron_lifetime(:,ik),COMM=PAR_COM_Xk_ibz_A2A%COMM)
-   call PP_redux_wait(E_P_Hole_lifetime(:,ik),COMM=PAR_COM_Xk_ibz_A2A%COMM)
-   call PP_redux_wait(E_P_Phonon_lifetime(:,ik),COMM=PAR_COM_Xk_ibz_A2A%COMM)
-   !
    ! CCA 
    !=====
    do i_n=SC_bands(1),SC_bands(2)
@@ -180,8 +174,6 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
    !
    ! Otherwise 
    !===========
-   !
-   call PP_redux_wait(S_mat_sum(:,:),COMM=PAR_COM_Xk_ibz_A2A%COMM)
    !
    do i_n=SC_bands(1),SC_bands(2)
      do i_np=SC_bands(1),SC_bands(2)

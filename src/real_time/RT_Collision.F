@@ -51,12 +51,10 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
 &                         l_RT_needs_XC0,Ho_plus_Sigma
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:wf
- use xc_functionals, ONLY:V_xc
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_WF_k_INDEX,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index  
  use SC,             ONLY:SC_xc_functional,SC_nbands
- use xc_functionals, ONLY:XC_LDA_C_PZ
  use IO_m,           ONLY:IO_and_Messaging_switch
  !
  implicit none
@@ -71,7 +69,6 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  logical          :: XC_needs_density
  integer          :: i1,ik
- type(PP_indexes) :: px
  !
  ! Density (needed bu Hartree and local XCs)
  !=========
@@ -117,25 +114,15 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !
  endif
  !
- if(allocated(SC_R)) then
-    SC_R =cZERO
-    do i1=1,SC_bands(1)-1
-      SC_R(i1,i1,:,:)=cONE
-    enddo
- endif
- !
  Ho_plus_Sigma=cZERO
- !
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/QP_nk/))
  !
  do ik=1,QP_nk 
    !
-   if (.not.px%element_1D(ik)) cycle
-   !
-   ! Here I fill H_nl_sc with...
+   if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
    !
    H_nl_sc=cZERO
+   !
+   ! Here I fill H_nl_sc with...
    !
    ! Non-local XC potentials (like COHSEX)
    !=======================================
@@ -160,7 +147,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
 &                    H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
      !
      H_nl_sc=H_nl_sc*(1._SP+tanh((Time+(RT_step*real(Thermal_steps))/2._SP)/ &
-&            (RT_step*real(Thermal_steps))/SwitchOnTime))/2._SP
+&                    (RT_step*real(Thermal_steps))/SwitchOnTime))/2._SP
      !
    endif
    !
@@ -179,21 +166,43 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    call V_by_V_plus_V(SC_nbands,cONE,Ho(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),&
 &                     H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
    !
-   ! And the gauge field
-   !=====================
-   if(l_NE_with_fields.and.NE_dynamics) call RT_apply_field(ik,H_nl_sc,A_input)
-   !
-   if(allocated(SC_R))  SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)= &
-&                            H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
-   !
    Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)= &
 &        H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
+   !
+ enddo  !---- loop on k-points
+ !
+ call PP_redux_wait(Ho_plus_Sigma(:,:,:,1),COMM=PAR_COM_WF_k_INDEX%COMM)
+ !
+ ! The field must be applied in a separate loop driven by the 
+ ! X_q_0 PARALLEL roles
+ !
+ do ik=1,QP_nk 
+   !
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) then
+     Ho_plus_Sigma(:,:,ik,:)=cZERO
+     cycle
+   endif
+   !
+   H_nl_sc=cZERO
+   !
+   ! And the gauge field
+   !=====================
+   if (l_NE_with_fields.and.NE_dynamics) call RT_apply_field(ik,H_nl_sc,A_input)
+   !
+   Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)= &
+&                Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)+&
+&                H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
    !  
  enddo  !---- loop on k-points
  !
- if(allocated(SC_R)) call PP_redux_wait(SC_R(:,:,:,1))
- call PP_redux_wait(Ho_plus_Sigma(:,:,:,1))
- call PP_indexes_reset(px) 
+ call PP_redux_wait(Ho_plus_Sigma(:,:,:,1),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ !
+ if(allocated(SC_R)) then
+   SC_R = Ho_plus_Sigma
+   do i1=1,SC_bands(1)-1
+     SC_R(i1,i1,:,:)=cONE
+   enddo
+ endif
  !
  ! Calculate all relaxation terms
  ! ==============================

@@ -67,6 +67,7 @@ subroutine RT_CCA_initialize(E)
            E_(2)=E%E(i_m,i_p,1)
            !
            if (Gr_ordering_condition(i_n,i_k,i_m,i_p)) then
+             !
              do i1=1,Gr_mat_dim
                if (abs(Gr_energies(i1,1)-E_(1))<1.E-5.and.&
 &                  abs(Gr_energies(i1,2)-E_(2))<1.E-5) then

@@ -22,20 +22,21 @@
 subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! This subroutine calculate relaxation term coming from off-diagonal part
- ! of the self-energy in time, from the electron-phonon coupling or simple 
- ! radiative and dephasing term in the kinetic equation 
+ ! of the self-energy in time, from the electron-phonon and/or electron-electron 
+ ! coupling or simple radiative and dephasing term in the kinetic equation 
  !
  ! Output: Sigma_relax
  !
  use pars,           ONLY:SP,cI,cZERO
  use electrons,      ONLY:levels
- use drivers,        ONLY:l_ph_corr,l_carrier_dynamics 
+ use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait,master_cpu
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
-&                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_Phonon_lifetime
+&                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_Phonon_lifetime,&
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel
  !
  implicit none
  !
@@ -48,18 +49,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  integer          :: i1,i2,ik
  !
- ! Damping
- !=========
- !
- ! Fictitious lifetime equivalent to the broadening
- ! in linear optics
- !   
- ! This term kill the induced polarization, namely off-diagonal term in the
- ! Green function
- !
- ! This term send the electron distribution into the initial one
- ! G_lesser_refence(:,:,:) 
- !
  if(.not.RT_is_dumped.and..not.l_ph_corr.and..not.l_carrier_dynamics) return 
  !
  Sigma_relax=cZERO
@@ -67,6 +56,9 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! El-El
  !=======
  if (l_carrier_dynamics) then
+   !
+   E_E_Hole_lifetime=0._SP
+   E_E_Electron_lifetime=0._SP
    !
    do ik=1,QP_nk
      !
@@ -83,6 +75,12 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! El-Ph
  !=======
  if (l_ph_corr) then
+   !
+   if (l_RT_CCA_Kernel) then
+     E_P_Hole_lifetime=0._SP
+     E_P_Electron_lifetime=0._SP
+     E_P_Phonon_lifetime=0._SP
+   endif
    !
    do ik=1,QP_nk
      !
@@ -105,20 +103,30 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  if (l_ph_corr.or.l_carrier_dynamics) then
    do ik=1,QP_nk
      call PP_redux_wait(Sigma_relax(:,:,ik))
-     call PP_redux_wait(E_P_Electron_lifetime(:,ik))
-     call PP_redux_wait(E_P_Hole_lifetime(:,ik))
-     call PP_redux_wait(E_P_Phonon_lifetime(:,ik))
-!,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     if (l_RT_CCA_Kernel) then
+       call PP_redux_wait(E_P_Electron_lifetime(:,ik))
+       call PP_redux_wait(E_P_Hole_lifetime(:,ik))
+       call PP_redux_wait(E_P_Phonon_lifetime(:,ik))
+     endif
    enddo
  endif
  !
  !DEBUG>
- !write (*,*)
+ ! write (100,*)
+ ! write (100,*) E_P_Electron_lifetime(:,:)
+ ! write (100,*) E_P_Hole_lifetime(:,:)
+ ! write (100,*) E_P_Phonon_lifetime(:,:)
  !if (master_cpu) then
  !do i1=SC_bands(1),SC_bands(2)
- !  write  (*,'(i3,10f10.5)') i1,real(Sigma_relax(i1,i1,:10))*1000.
+ !  write  (*,'(f10.5)') E_P_Electron_lifetime(i1,:)*1000.
+ !  write  (*,'(f10.5)') E_P_Hole_lifetime(i1,:)*1000.
+ !  write  (*,'(f10.5)') E_P_Phonon_lifetime(i1,:)*1000.
+ !  write  (*,'(f10.5)') Sigma_relax(i1,:,:)*1000.
  !enddo
  !endif
+ !do while (.TRUE.)
+ !enddo
+ !stop
  !DEBUG<
  !
  ! Dephasing Matrix

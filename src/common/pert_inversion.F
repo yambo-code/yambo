@@ -55,7 +55,7 @@ integer function pert_inversion(N,W,C,f,V)
  !
  do while (it<=max_it) 
    !
-   call K_BSmat_by_V(1,1,A_nm1,A_n,inversion=.true.)
+   call K_BSmat_by_V(1,1,A_nm1,A_n,call_kind='inversion')
    A_n(:)=V(:)*A_n(:)
    delta_f=C*Vstar_dot_V(N,W,A_n)
    !

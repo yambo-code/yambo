@@ -474,9 +474,9 @@ subroutine K_inversion(iq,W,E,k,q)
 &                         X_epsilon(2,i3),Lo(:,i3,1))
            if (trim(BSE_mode)=='causal') then
              ! Here instead of using conjg(BS_mat) I use conjg of
-             ! everything else, the output included
+             ! everything else, the output included (see after the enddo)
              tmp_err=pert_inversion(BS_H_dim,BSS_rhoq0,-1.*conjg(Co),&
-&                         conjg(X_epsilon(4,i3)),conjg(Lo(:,i3,2)))
+&                         X_epsilon(4,i3),conjg(Lo(:,i3,2)))
            endif      
          endif
          !
@@ -488,7 +488,11 @@ subroutine K_inversion(iq,W,E,k,q)
        if (.not.do_it_full) call live_timing(steps=1)
        !
      enddo
-     if (.not.do_it_full) call live_timing()
+     !
+     if (.not.do_it_full) then
+       if (trim(BSE_mode)=='causal')  X_epsilon(4,i3)=conjg(X_epsilon(4,i3))
+       call live_timing()
+     endif
      !
    end subroutine
    !

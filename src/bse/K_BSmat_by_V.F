@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,inversion)
+subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
  !
  !
  ! Here I fill the upper half of the kernel (coupling included):
@@ -30,14 +30,16 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,inversion)
  !
  ! and I also do
  !
- !  Vo = K x Vi
+ !  Haydock:   Vo(1:BS_K_dim) = K_r x Vi(1:BS_K_dim) + K_c x Vi(1:BS_K_dim)
+ !  Inversion: Vo(1:BS_H_dim) = K_r x Vi(1:BS_K_dim) + K_c x Vi(BS_K_dim+1,BS_H_dim)
  !
  ! Parallel shared matrix multiplication implemented
  !
  ! Because of symmetries I never need the second half 
  ! (it can be reconstructed by the "iteration parity") 
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,schlen
+ use com,            ONLY:error
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
@@ -53,15 +55,17 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,inversion)
  use wrapper,        ONLY:M_by_V
  !
  implicit none
- integer               ::iq
- integer               ::iter
- complex(SP)           ::Vi(:),Vo(:)
- real(SP),optional     ::iter_par
- logical ,optional     ::inversion
+ !
+ integer                     ::iq
+ integer                     ::iter
+ complex(SP)                 ::Vi(:),Vo(:)
+ real(SP),optional           ::iter_par
+ character(schlen) ,optional ::call_kind
  !
  ! Work Space
  !
- integer         ::ik1,ik2,i1,i2,frag_pointer(2)
+ logical         ::l_inv,l_Hay
+ integer         ::ik1,ik2,i1,i2,frag_pointer(2),dim_shift
  complex(SP)     ::alpha
  type(X_t)       ::X
  type(PP_indexes)::Kp
@@ -71,6 +75,14 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,inversion)
  integer           ::ioBS_err,ID,ACTION
  integer, external ::ioBS
  logical           ::use_fragments,db_load
+ !
+ l_Hay=trim(call_kind)=='Haydock'
+ l_inv=trim(call_kind)=='Inversion'
+ !
+ if( (.not.l_inv) .and. (.not.l_Hay) ) call error('K_BSmat_byV: not a valid call.')
+ !
+ if(l_Hay) dim_shift=1
+ if(l_inv) dim_shift=BS_K_dim+1
  !
  Vo=(0._SP,0._SP)
  alpha=(1._SP,0._SP) 
@@ -128,10 +140,10 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,inversion)
        !
        if (ik1==ik2) then
          !
-         if(.not.inversion) then
+         if(l_Hay) then
            forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1)) &
 &              BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(frag_pointer(1)+i1)
-         else if (inversion .and. BSS_uses_RIM) then
+         else if (l_inv .and. BSS_uses_RIM) then
            forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1)) &
 &              BS_mat(i1,i1)=(0.,0.)
          endif
@@ -161,8 +173,8 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,inversion)
              ! Calculate the diagonal coupling part
              !
              call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),alpha,&
-&                     BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(1)+1:)),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(1)+1:),1)
+&                     BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(1)+dim_shift:)),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+dim_shift:),1)
              !
            end if
            !
@@ -181,8 +193,8 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,inversion)
 &                 BS_mat(i2,i1)=conjg(BS_mat(i1,i2))
            !
            if (BS_K_coupling) then
-             forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1),&
-&                   i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik2)) &
+             forall(i1=BS_k_and_row_restart(1)+dim_shift:BS_k_and_row_restart(1)+BS_blk_dim(ik1),&
+&                   i2=BS_k_and_row_restart(2)+dim_shift:BS_k_and_row_restart(2)+BS_blk_dim(ik2)) &
 &                   BS_cpl_mat(i2,i1)=BS_cpl_mat(i1,i2)
            endif
            !
@@ -200,11 +212,11 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,inversion)
              ! Calculate the off-diagonal coupling part
              !
              call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik2),alpha,&
-&                     BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(2)+1:)),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(1)+1:),1)
+&                     BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(2)+dim_shift:)),&
+&                     1,(1._SP,0._SP),Vo(frag_pointer(1)+dim_shift:),1)
              call M_by_V('t',BS_blk_dim(ik1),BS_blk_dim(ik2),alpha,&
-&                     BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(1)+1:)),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(2)+1:),1)
+&                     BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(1)+dim_shift:)),&
+&                     1,(1._SP,0._SP),Vo(frag_pointer(2)+1:),1)
              !
            endif
            !
@@ -226,7 +238,7 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,inversion)
    if (BS_K_coupling) then
      !
      call M_by_V('n',BS_K_dim,BS_K_dim,alpha, BS_cpl_mat,&
-&               BS_K_dim,conjg(Vi),1,(1._SP,0._SP),Vo,1)
+&               BS_K_dim,conjg(Vi(dim_shift:)),1,(1._SP,0._SP),Vo(dim_shift:),1)
      !
    endif
    !

@@ -200,6 +200,8 @@ subroutine K_inversion(iq,W,E,k,q)
  !
 #endif
  !
+ if (BSS_uses_RIM) call K_BSload_diag(iq)
+ !
  call live_timing('Green`s function',BS_K_dim)
  !
  do i1=1,BS_K_dim
@@ -433,6 +435,10 @@ subroutine K_inversion(iq,W,E,k,q)
    deallocate(BS_mat)
    call mem_est("BS_mat")
  endif
+ if( allocated(BS_mat_diagonal) ) then
+   deallocate(BS_mat_diagonal)
+   call mem_est("BS_mat_diagonal")
+ endif
  !
  contains
    !
@@ -470,12 +476,12 @@ subroutine K_inversion(iq,W,E,k,q)
 &            tmp_err=full_inversion(BS_H_dim,conjg(BSS_rhoq0),-1.*Co,&
 &                         X_epsilon(4,i3),Lo(:,i3,2),conjg(BS_mat))
          else
-           inv_err(i3)=pert_inversion(BS_H_dim,BSS_rhoq0,-1.*Co,&
+           inv_err(i3)=pert_inversion(i3,BS_H_dim,BSS_rhoq0,-1.*Co,&
 &                         X_epsilon(2,i3),Lo(:,i3,1))
            if (trim(BSE_mode)=='causal') then
              ! Here instead of using conjg(BS_mat) I use conjg of
              ! everything else, the output included (see after the enddo)
-             tmp_err=pert_inversion(BS_H_dim,BSS_rhoq0,-1.*conjg(Co),&
+             tmp_err=pert_inversion(i3,BS_H_dim,BSS_rhoq0,-1.*conjg(Co),&
 &                         X_epsilon(4,i3),conjg(Lo(:,i3,2)))
            endif      
          endif

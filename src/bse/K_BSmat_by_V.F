@@ -38,7 +38,7 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
  ! Because of symmetries I never need the second half 
  ! (it can be reconstructed by the "iteration parity") 
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP
  use com,            ONLY:error
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
@@ -56,11 +56,11 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
  !
  implicit none
  !
- integer                     ::iq
- integer                     ::iter
- complex(SP)                 ::Vi(:),Vo(:)
- real(SP),optional           ::iter_par
- character(schlen) ,optional ::call_kind
+ integer                ::iq
+ integer                ::iter
+ complex(SP)            ::Vi(:),Vo(:)
+ real(SP),optional      ::iter_par
+ character(3) ,optional ::call_kind
  !
  ! Work Space
  !
@@ -76,13 +76,13 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
  integer, external ::ioBS
  logical           ::use_fragments,db_load
  !
- l_Hay=trim(call_kind)=='Haydock'
- l_inv=trim(call_kind)=='Inversion'
+ l_Hay= (trim(call_kind)=='Hay')
+ l_inv= (trim(call_kind)=='Inv')
  !
  if( (.not.l_inv) .and. (.not.l_Hay) ) call error('K_BSmat_byV: not a valid call.')
  !
- if(l_Hay) dim_shift=1
- if(l_inv) dim_shift=BS_K_dim+1
+ dim_shift=1
+ if(l_inv .and. BS_K_coupling ) dim_shift=BS_K_dim+1
  !
  Vo=(0._SP,0._SP)
  alpha=(1._SP,0._SP) 
@@ -145,7 +145,7 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
 &              BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(frag_pointer(1)+i1)
          else if (l_inv .and. BSS_uses_RIM) then
            forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1)) &
-&              BS_mat(i1,i1)=(0.,0.)
+&              BS_mat(i1,i1)=(0.,0.)  ! This part was read in K_BSload_diag
          endif
          !
          ! On diagonal block simmetrization

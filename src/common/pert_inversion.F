@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function pert_inversion(N,W,C,f,V)
+integer function pert_inversion(iw,N,W,C,f,V)
  !
  ! C<W|1./(V^{-1}-M)|W> = \sum_n C<W| (1-VM)^{-1} V |W> = \sum_n C<W| ( VM )^n V |W>
  !
@@ -31,7 +31,7 @@ integer function pert_inversion(N,W,C,f,V)
  !
  implicit none
  !
- integer      ::N
+ integer      ::iw,N
  complex(SP)  ::W(N),C,f
  complex(SP)  ::V(N)
  !
@@ -55,7 +55,7 @@ integer function pert_inversion(N,W,C,f,V)
  !
  do while (it<=max_it) 
    !
-   call K_BSmat_by_V(1,1,A_nm1,A_n,call_kind='inversion')
+   call K_BSmat_by_V(1,it*iw,A_nm1,A_n,call_kind='Inv')
    A_n(:)=V(:)*A_n(:)
    delta_f=C*Vstar_dot_V(N,W,A_n)
    !

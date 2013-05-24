@@ -606,13 +606,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        else
          call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
        endif
-       ioBS_Fxc_err=ioBS(iq,X,ID)
+       ioBS_err=ioBS(iq,X,ID)
      endif
      !
      deallocate(BS_mat)
      if (BS_K_coupling) deallocate(BS_cpl_mat)
    enddo
  enddo
+ !
+ if(allocated(BS_mat_diagonal)) deallocate(BS_mat_diagonal)
  !
  ! Live Timing finalize
  !

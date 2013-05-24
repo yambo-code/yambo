@@ -115,12 +115,12 @@ module BS
 #endif
    !
    subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
-     use pars,                ONLY:SP,schlen
-     integer                     ::iq
-     integer                     ::iter
-     complex(SP)                 ::Vi(:),Vo(:)
-     real(SP),optional           ::iter_par
-     character(schlen), optional ::call_kind
+     use pars,           ONLY:SP
+     integer                ::iq
+     integer                ::iter
+     complex(SP)            ::Vi(:),Vo(:)
+     real(SP),optional      ::iter_par
+     character(3), optional ::call_kind
    end subroutine
    !
    integer function variables_BS(ID,local_description,X)

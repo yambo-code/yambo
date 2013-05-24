@@ -236,7 +236,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
    !--------
    if (present(TIME)) data_to_dump(1)=TIME
    if (present(E))    data_to_dump(1)=E
-
+   !
    select case (trim(short_file_name(i_f)))
      case('current','YPP-current')
        data_to_dump(2:4) =real(RT_ind_J)

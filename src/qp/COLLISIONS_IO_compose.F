@@ -27,12 +27,10 @@ subroutine COLLISIONS_IO_compose(G_input)
  use pars,             ONLY:SP
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
  use SC,               ONLY:SC_bands
- use global_XC,        ONLY:SC_HF,SC_COHSEX
- use collisions_IO,    ONLY:COLLISIONS_v,COLLISIONS_table,V_kind,io_COLLISIONS
- use parallel_m,       ONLY:PP_indexes,PP_redux_wait,PP_indexes_reset,myid
+ use collisions_IO,    ONLY:COLLISIONS_v,COLLISIONS_table
+ use parallel_m,       ONLY:PP_indexes,PP_redux_wait,PP_indexes_reset
  use interfaces,       ONLY:PARALLEL_index
- use IO_m,             ONLY:io_control,OP_RD_CL,NONE,IO_and_Messaging_switch
- use collisions_CACHE, ONLY:last_QP_mem,CACHE
+ use collision,        ONLY:COLLISIONS
  !
  implicit none
  !       
@@ -41,9 +39,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  ! Work Space
  !
  integer           :: i_qp,ib,ibp,ik,ic
- integer           :: io_err,ID       
  type(PP_indexes)  :: px
- complex(SP)       :: CHO_factor
  !
  if(.not.l_sc_hf.and..not.l_sc_cohsex.and..not.l_sc_exx) return
  !
@@ -52,14 +48,10 @@ subroutine COLLISIONS_IO_compose(G_input)
  call PARALLEL_index(px,(/QP_n_states/))
  !
  if (.not.allocated(QP_Vnl_xc))  allocate(QP_Vnl_xc(QP_n_states))
- if(l_sc_hf.or.l_sc_cohsex.or.l_sc_exx.or.last_QP_mem/=0) QP_Vnl_xc=(0._SP,0._SP)
+ QP_Vnl_xc=(0._SP,0._SP)
  if(l_sc_cohsex.or.l_sc_srpa) QP_Sc=(0._SP,0._SP)
  !
- ! First loop on collisions in the Cache
- ! notice that in memory all collisions are sum together
- ! so all the contribution to quasi-particle is stored in QP_Vnl_xc
- !
- do i_qp=1,last_QP_mem
+ do i_qp=1,QP_n_states
    !
    if(.not.px%element_1D(i_qp)) cycle  
    ic=1
@@ -67,8 +59,8 @@ subroutine COLLISIONS_IO_compose(G_input)
    do ib=SC_bands(1),QP_nb
      do ibp=SC_bands(1),QP_nb
        do ik=1,QP_nk
-         if(CACHE(i_qp)%COLLISIONS_table(ib,ibp,ik)/=0) then
-           QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-(0._SP,1._SP)*CACHE(i_qp)%COLLISIONS_v(ic)*G_input(ib,ibp,ik)
+         if(COLLISIONS(i_qp)%table(ib,ibp,ik)/=0) then
+           QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-(0._SP,1._SP)*COLLISIONS(i_qp)%v(ic)*G_input(ib,ibp,ik)
            ic=ic+1
          endif
        enddo
@@ -77,80 +69,10 @@ subroutine COLLISIONS_IO_compose(G_input)
    !
  enddo
  !
- ! .. then read the remaning collisions from disk
- ! On disk each contributions is stored in a different database
- !
- call IO_and_Messaging_switch("+DB_is_fragmented")
- !
- do i_qp=last_QP_mem+1,QP_n_states
-   !
-   if(.not.px%element_1D(i_qp)) cycle  
-   !
-   if(l_sc_hf.or.l_sc_cohsex.or.l_sc_exx) then
-     !
-     V_kind=SC_HF
-     !
-     if (i_qp == px%first_of_1D(myid+1) ) then
-       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-     else 
-       call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
-     endif
-     io_err=io_COLLISIONS(i_qp,ID)
-     !
-     ic=1
-     !
-     do ib=SC_bands(1),QP_nb
-       do ibp=SC_bands(1),QP_nb
-         do ik=1,QP_nk
-           if(COLLISIONS_table(ib,ibp,ik)/=0) then
-             QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-(0._SP,1._SP)*COLLISIONS_v(ic)*G_input(ib,ibp,ik)
-             ic=ic+1
-           endif
-          enddo
-       enddo
-     enddo
-     !
-   endif
-   !
-   if(l_sc_cohsex.or.l_sc_srpa) then
-     !
-     V_kind=SC_COHSEX
-     !
-     if (i_qp == px%first_of_1D(myid+1) ) then
-       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-     else 
-       call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
-     endif
-     io_err=io_COLLISIONS(i_qp,ID)
-     !
-     ic=1
-     !
-     do ib=SC_bands(1),QP_nb
-       do ibp=SC_bands(1),QP_nb
-         do ik=1,QP_nk
-           if(COLLISIONS_table(ib,ibp,ik)/=0) then
-             !
-             CHO_factor=(0._SP,1._SP)*G_input(ib,ibp,ik)
-             if (ib==ibp) CHO_factor=(0._SP,1._SP)*G_input(ib,ibp,ik) +1.
-             !
-             QP_Sc(i_qp,1)=QP_Sc(i_qp,1)-COLLISIONS_v(ic)*CHO_factor
-             ic=ic+1
-           endif
-          enddo
-        enddo
-     enddo
-     !
-   endif
-   !
- enddo
- !
- call IO_and_Messaging_switch("-DB_is_fragmented")
- !
- ! When the Cache is used all the QP correction are put together
- ! in QP_Vnl_xc
+ ! All the QP correction are put together in QP_Vnl_xc
  ! 
- if(l_sc_hf.or.l_sc_exx.or.l_sc_cohsex.or.last_QP_mem/=0)   call PP_redux_wait(QP_Vnl_xc)
- if(l_sc_cohsex.or.l_sc_srpa)                               call PP_redux_wait(QP_Sc)
+ call PP_redux_wait(QP_Vnl_xc)
+ if (l_sc_cohsex.or.l_sc_srpa) call PP_redux_wait(QP_Sc)
  !
  call PP_indexes_reset(px)
  !

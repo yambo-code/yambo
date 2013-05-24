@@ -102,24 +102,24 @@ subroutine RT_CCA_initialize(E)
  call mem_est("Gr_ee_matrix",(/size(Gr_ee_matrix)/))
  Gr_ee_matrix=0._SP
  !
- if (l_G_DB_has_el_ph) then
-   allocate(Gr_ep_matrix(Gr_mat_dim,nqbz,ph_modes,2))
-   call mem_est("Gr_ep_matrix",(/size(Gr_ep_matrix)/))
-   Gr_ep_matrix=0._SP
- endif
+! if (l_G_DB_has_el_ph) then
+!   allocate(Gr_ep_matrix(Gr_mat_dim,nqbz,ph_modes,2))
+!   call mem_est("Gr_ep_matrix",(/size(Gr_ep_matrix)/))
+!   Gr_ep_matrix=0._SP
+! endif
  !
  ! I/O (read)
  !============
- call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,COM=REP,ID=ID)
- io_err=io_G_retarded(ID,"G_retarded_matrix")
+! call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,COM=REP,ID=ID)
+! io_err=io_G_retarded(ID,"G_retarded_matrix")
  !
- if (io_err==0) then
-   if (l_G_retarded_DB) then
-     deallocate(Gr,Gr_peak_pos,Gr_E_ranges)
-     call mem_est("G_retarded G_peak_pos G_E_ranges")
-   endif
-   return
- endif
+! if (io_err==0) then
+!   if (l_G_retarded_DB) then
+!     deallocate(Gr,Gr_peak_pos,Gr_E_ranges)
+!     call mem_est("G_retarded G_peak_pos G_E_ranges")
+!   endif
+!   return
+! endif
  !
  if (l_G_retarded_DB) Gr_T_step=Gr_T_window/Gr_T_steps
  !
@@ -132,82 +132,82 @@ subroutine RT_CCA_initialize(E)
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/Gr_mat_dim/))
  !
- call live_timing('G retarded integrals (e-p)',px%n_of_elements(myid+1))
+! call live_timing('G retarded integrals (e-p)',px%n_of_elements(myid+1))
  !
- do i1=1,Gr_mat_dim
-   !
-   i_n=Gr_local_indexes(i1,1)
-   i_k=Gr_local_indexes(i1,2)
-   i_m=Gr_local_indexes(i1,3)
-   i_p=Gr_local_indexes(i1,4)
-   !
-   if (.not.px%element_1D(i1)) cycle
-   !
-   do i_q=1,nqbz
-     !
-     do i_l=1,ph_modes
-       !
-       do i_s=-1,1,2
-         !
-         if (i_s==-1) i_s_i=1
-         if (i_s== 1) i_s_i=2
-         !
-         if (l_G_retarded_DB) then
-           !
-           pre_factor=4.8
-           !
-           WIDTH(1,:)=set_WIDTH(i_n,i_k,maxval(  Gr_E_ranges(i_k,i_n,:) ))
-           WIDTH(2,:)=set_WIDTH(i_m,i_p,maxval(  Gr_E_ranges(i_p,i_m,:) ))
-           !
-           GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)
-           GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)
-           !
-           E_center=Gr_peak_pos(i_k,i_n)-Gr_peak_pos(i_p,i_m)+i_s*abs(sqrt(ph_freqs_sq(i_q,i_l)))
-           !
-           if (E_center> GAMMA_(2)*pre_factor) goto 1
-           if (E_center<-GAMMA_(1)*pre_factor) goto 1
-           !
-           Gr_integrand(:)=real( conjg(Gr(i_k,i_n,:))*Gr(i_p,i_m,:) )
-           !
-           Gr_ep_matrix(i1,i_q,i_l,i_s_i)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
-           !
-           if (Gr_ep_matrix(i1,i_q,i_l,i_s_i)<0.) Gr_ep_matrix(i1,i_q,i_l,i_s_i)=0.
-           !
-         else
-           !
-           pre_factor=8.7
-           !
-           E_center=E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+i_s*abs(sqrt(ph_freqs_sq(i_q,i_l)))
-           !
-           WIDTH(1,:)=set_WIDTH(i_n,i_k,abs(E%W(i_n,i_k,1)))
-           WIDTH(2,:)=set_WIDTH(i_m,i_p,abs(E%W(i_m,i_p,1)))
-           !
-           GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)
-           GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)
-           !
-           if (E_center> GAMMA_(2)*pre_factor) goto 1
-           if (E_center<-GAMMA_(1)*pre_factor) goto 1
-           !
-           Gr_ep_matrix(i1,i_q,i_l,i_s_i)=GAMMA_(1)/(E_center**2+GAMMA_(1)**2)
-           !
-         endif
-         !
-       enddo
-       !
-     enddo
-     !
-   enddo
-   !
-1  call live_timing(steps=1)
-   !
- enddo
+! do i1=1,Gr_mat_dim
+!   !
+!   i_n=Gr_local_indexes(i1,1)
+!   i_k=Gr_local_indexes(i1,2)
+!   i_m=Gr_local_indexes(i1,3)
+!   i_p=Gr_local_indexes(i1,4)
+!   !
+!   if (.not.px%element_1D(i1)) cycle
+!   !
+!   do i_q=1,nqbz
+!     !
+!     do i_l=1,ph_modes
+!       !
+!       do i_s=-1,1,2
+!         !
+!         if (i_s==-1) i_s_i=1
+!         if (i_s== 1) i_s_i=2
+!         !
+!         if (l_G_retarded_DB) then
+!           !
+!           pre_factor=4.8
+!           !
+!           WIDTH(1,:)=set_WIDTH(i_n,i_k,maxval(  Gr_E_ranges(i_k,i_n,:) ))
+!           WIDTH(2,:)=set_WIDTH(i_m,i_p,maxval(  Gr_E_ranges(i_p,i_m,:) ))
+!           !
+!           GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)
+!           GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)
+!           !
+!           E_center=Gr_peak_pos(i_k,i_n)-Gr_peak_pos(i_p,i_m)+i_s*abs(sqrt(ph_freqs_sq(i_q,i_l)))
+!           !
+!           if (E_center> GAMMA_(2)*pre_factor) goto 1
+!           if (E_center<-GAMMA_(1)*pre_factor) goto 1
+!           !
+!           Gr_integrand(:)=real( conjg(Gr(i_k,i_n,:))*Gr(i_p,i_m,:) )
+!           !
+!           Gr_ep_matrix(i1,i_q,i_l,i_s_i)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
+!           !
+!           if (Gr_ep_matrix(i1,i_q,i_l,i_s_i)<0.) Gr_ep_matrix(i1,i_q,i_l,i_s_i)=0.
+!           !
+!         else
+!           !
+!           pre_factor=8.7
+!           !
+!           E_center=E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+i_s*abs(sqrt(ph_freqs_sq(i_q,i_l)))
+!           !
+!           WIDTH(1,:)=set_WIDTH(i_n,i_k,abs(E%W(i_n,i_k,1)))
+!           WIDTH(2,:)=set_WIDTH(i_m,i_p,abs(E%W(i_m,i_p,1)))
+!           !
+!           GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)
+!           GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)
+!           !
+!           if (E_center> GAMMA_(2)*pre_factor) goto 1
+!           if (E_center<-GAMMA_(1)*pre_factor) goto 1
+!           !
+!           Gr_ep_matrix(i1,i_q,i_l,i_s_i)=GAMMA_(1)/(E_center**2+GAMMA_(1)**2)
+!           !
+!         endif
+!         !
+!       enddo
+!       !
+!     enddo
+!     !
+!   enddo
+!   !
+!1  call live_timing(steps=1)
+!   !
+! enddo
  !
- call live_timing()
- do i1=1,Gr_mat_dim
-   do i_q=1,nqbz
-     call PP_redux_wait(Gr_ep_matrix(:,i_q,:,:))
-   enddo
- enddo
+! call live_timing()
+! do i1=1,Gr_mat_dim
+!   do i_q=1,nqbz
+!     call PP_redux_wait(Gr_ep_matrix(:,i_q,:,:))
+!   enddo
+! enddo
  !
  ! Gr (e-e)
  !==========
@@ -320,8 +320,8 @@ subroutine RT_CCA_initialize(E)
  ! I/O (write)
  !=============
  !
- call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),COM=REP,ID=ID)
- io_err=io_G_retarded(ID,"G_retarded_matrix")
+! call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),COM=REP,ID=ID)
+! io_err=io_G_retarded(ID,"G_retarded_matrix")
  !
  contains
    !

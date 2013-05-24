@@ -28,7 +28,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  use real_time,       ONLY:RT_qp_px,G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,Sigma_relax,&
 &                          Gr_ee_matrix,Gr_indexes
  use QP_m,            ONLY:QP_n_states,QP_table
- use collisions_CACHE,ONLY:CACHE
+ use collision,       ONLY:COLLISIONS
  use parallel_m,      ONLY:PP_redux_wait
  !
  implicit none
@@ -42,7 +42,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  integer               :: i_qp1,i_qp2,i_p,i_kmq,i_pmq,i_n,i_m,i_mp,i_np,i_p_star,&
 &                         iqbz,i_p_s,iqibz,i_p_bz
  real(SP)              :: f_k,f_p,f_kmq,f_pmq,pre_factor,Gr_integral,&
-&                         f_E_factor,f_H_factor
+&                         f_E_factor,f_H_factor,DELTA_,GAMMA_
  !
  ! Dimensioning and Zeroing
  !==========================
@@ -86,7 +86,12 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          !
          f_pmq=-cI*G_lesser(i_mp,i_mp,i_pmq,MEM_index(it_now))
          !
-         pre_factor=abs(4.*pi*CACHE(i_qp1)%COLLISIONS_v3(i_qp2,i_p_s,iqbz))**2
+         pre_factor=abs(4.*pi*COLLISIONS(i_qp1)%v3(i_qp2,i_p_s,iqbz))**2
+         !
+         !DELTA_ = E%E(i_np,i_kmq,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)-E%E(i_n,i_k,1)
+         !GAMMA_ = abs(E%W(i_np,i_kmq,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))+abs(E%W(i_n,i_k,1))
+         !
+         !Gr_integral=GAMMA_/(DELTA_**2+GAMMA_**2)
          !
          Gr_integral=Gr_ee_matrix(Gr_indexes(i_np,i_kmq, i_m, i_p),Gr_indexes(i_mp,i_pmq, i_n, i_k))
          !
@@ -95,6 +100,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          !
          E_E_Electron_lifetime(i_n,i_k)= E_E_Electron_lifetime(i_n,i_k)+pre_factor*Gr_integral*f_E_factor
          E_E_Hole_lifetime(i_n,i_k)    = E_E_Hole_lifetime(i_n,i_k)+pre_factor*Gr_integral*F_H_factor
+
          !
        enddo
        !
@@ -103,6 +109,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
    enddo
    !
  enddo
+ !stop
  !
  ! All-to-All
  !============

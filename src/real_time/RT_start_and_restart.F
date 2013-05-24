@@ -432,9 +432,9 @@ subroutine RT_start_and_restart(E,k,X)
    call section('+','Retarded Green Functions initialization')
    !                 ========================================
    !
-   if (l_ph_corr) call RT_G_retarded_EP_initialize(E,k)
+   !if (l_ph_corr) call RT_G_retarded_EP_initialize(E,k)
    !
-   !call RT_CCA_initialize(E)
+   call RT_CCA_initialize(E)
    !
  endif
  !

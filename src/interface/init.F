@@ -693,7 +693,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(-1,'QpntsRXs')
    if (l_cohsex) call initactivate(1,'GbndRnge UseEbands SCUpWIter')
    if (l_collisions_IO) call initactivate(1,'DynKind')
-   if (.not.l_collisions_IO) call initactivate(1,'CollPath CollCache')
+   if (.not.l_collisions_IO) call initactivate(1,'CollPath')
    if (.not.l_real_time.and..not.l_collisions_IO) then
      call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
      if (trim(SC_potential)=='EXX'.or.trim(SC_potential)=='EXXC'.or.&

@@ -81,7 +81,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,RT_nk,&
 &                     l_Mean_Potential,l_RT_occupations_in_use,SC_up_W_iters,l_SC_diagonal,l_SC_nl_mix
  use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff,COLLISIONS_path
- use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
 #if defined _RT || defined _YPP_RT
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,    &
@@ -474,7 +473,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  n_collisions=0
  COLLISIONS_path=" "
- COLLISIONS_cache_size=-1.0
  COLLISIONS_cutoff=0.0005
  !
 #endif

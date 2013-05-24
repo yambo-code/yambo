@@ -43,7 +43,7 @@ subroutine RT_driver(E,X,k,q)
  use com,             ONLY:error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
  use collisions_IO,   ONLY:collisions_IO_alloc,collisions_IO_free,collisions_RANGES_setup
- use collisions_CACHE,ONLY:free_COLLISIONS_v
+ use collision,       ONLY:free_COLLISIONS_v
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k

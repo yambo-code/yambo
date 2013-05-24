@@ -21,7 +21,7 @@
 !
 module collision
  !
- use pars, ONLY :SP
+ use pars, ONLY :SP,LP
  !
  implicit none
  !
@@ -41,7 +41,49 @@ module collision
    complex(SP), pointer :: rhotw(:)  => null()
  end type ggwinfo
  !
+ type COLLISIONS_element
+   integer(LP), allocatable  :: table(:,:,:)
+   complex(SP), allocatable  :: v(:)
+   complex(SP), allocatable  :: v3(:,:,:)
+ end type
+ !
+ type(COLLISIONS_element), allocatable :: COLLISIONS(:)
+ !
  contains
+   !
+   subroutine free_COLLISIONS_v
+     use memory_m,       ONLY:mem_est
+     use stderr,         ONLY:intc
+     use parallel_m,     ONLY:PP_indexes,PP_indexes_reset
+     use interfaces,     ONLY:PARALLEL_index       
+     use QP_m,           ONLY:QP_n_states
+     !
+     implicit none
+     !
+     ! Work Space
+     !
+     integer :: i_qp
+     type(PP_indexes)  :: px
+     !
+     call PP_indexes_reset(px)   
+     !
+     call PARALLEL_index(px,(/QP_n_states/))
+     !
+     do i_qp=1,QP_n_states
+       !
+       if(.not.px%element_1D(i_qp)) cycle  
+       !
+       deallocate(COLLISIONS(i_qp)%table,COLLISIONS(i_qp)%v)
+       call mem_est("QP_COLLISIONS_table"//trim(intc((i_qp))))
+       call mem_est("QP_COLLISIONS_v"//trim(intc(i_qp)))
+       !
+     enddo
+     !
+     deallocate(COLLISIONS)
+     !
+     call PP_indexes_reset(px)
+     !
+   end subroutine free_COLLISIONS_v
    !
    subroutine collision_reset(ggw)
      type(ggwinfo)::ggw

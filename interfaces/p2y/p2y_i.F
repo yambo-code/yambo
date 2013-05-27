@@ -52,7 +52,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  character(icd),   intent(in) :: com_dir   
  !
  character(lchlen)     :: lch
- integer               :: ID,io_err,ik, ib_grp,ierr,npwk
+ integer               :: ID,io_err,ik, ib_grp
  integer, external     :: ioDB1
  real(SP), allocatable :: wf_disk(:,:,:,:)
  !

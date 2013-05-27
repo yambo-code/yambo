@@ -38,7 +38,6 @@ subroutine PP_PWscf_driver(k)
  use timing,                ONLY:live_timing
  use memory_m,              ONLY:mem_est
  use IO_m,                  ONLY:io_control,OP_WR_CL,OP_APP_WR_CL,REP
- use mod_com2y,             ONLY:N_G_vectors
  use interfaces,            ONLY:PARALLEL_index
  implicit none
  !
@@ -67,7 +66,6 @@ subroutine PP_PWscf_driver(k)
  call k_expand(k)
  !
  ngmax  = wf_ng
- if (N_G_vectors>0) ngmax=N_G_vectors
  !
  ! Main allocations:
  !

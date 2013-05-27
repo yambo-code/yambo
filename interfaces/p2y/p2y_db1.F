@@ -23,7 +23,7 @@ subroutine p2y_db1(en,k)
  !
  use P2Y
  use com,                   ONLY : msg,warning
- use mod_com2y,             ONLY : print_interface_dimensions,N_G_vectors
+ use mod_com2y,             ONLY : print_interface_dimensions
  use xc_functionals,        ONLY : xc_string,GS_xc_KIND,GS_xc_FUNCTIONAL
  use R_lattice,             ONLY : ng_vec,g_vec
  use wave_func,             ONLY : wf_ng, wf_nc_k, wf_ncx, wf_igk
@@ -107,13 +107,10 @@ subroutine p2y_db1(en,k)
    !
    call get_IGK(k)
    !
-   if (N_G_vectors>0) ng_vec=max(N_G_vectors,wf_ng)
-   !
    call msg('l','done')
    !
  else
    !
-   N_G_vectors=1
    wf_ng      =1
    ng_vec     =1
    allocate(g_vec(1,3))

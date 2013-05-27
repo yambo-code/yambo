@@ -64,7 +64,6 @@ module collisions_IO
      use D_lattice,      ONLY:nsym
      use R_lattice,      ONLY:nqbz,nkibz
      use QP_m,           ONLY:QP_n_states
-     integer :: N_G_vectors
      if (l_carrier_dynamics) then
        COLLISIONS_range(1,:)=(/1,QP_n_states/)
        COLLISIONS_range(2,:)=(/1,nsym/)

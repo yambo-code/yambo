@@ -33,7 +33,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait,master_cpu
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_Phonon_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel
@@ -103,6 +103,10 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  if (l_ph_corr.or.l_carrier_dynamics) then
    do ik=1,QP_nk
      call PP_redux_wait(Sigma_relax(:,:,ik))
+     if (l_carrier_dynamics) then
+       call PP_redux_wait(E_E_Electron_lifetime(:,ik))
+       call PP_redux_wait(E_E_Hole_lifetime(:,ik))
+     endif
      if (l_RT_CCA_Kernel) then
        call PP_redux_wait(E_P_Electron_lifetime(:,ik))
        call PP_redux_wait(E_P_Hole_lifetime(:,ik))

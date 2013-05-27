@@ -224,9 +224,9 @@ module parallel_m
  !
  ! ... and derived variables
  integer            :: PAR_nQPp
- integer,allocatable:: PAR_QPp_index(:,:)
+ integer,allocatable:: PAR_QPp_index(:)
  integer            :: PAR_nQP
- integer,allocatable:: PAR_QP_index(:,:)
+ integer,allocatable:: PAR_QP_index(:)
  integer            :: PAR_n_B_mat_elements
  integer,allocatable:: PAR_B_mat_index(:,:)
  integer            :: PAR_nQ

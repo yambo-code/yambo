@@ -36,10 +36,8 @@ subroutine RT_initialize(E,k,q)
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
 &                         NE_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,            &
-&                         l_RT_skip_JandP_IO,RT_q_px,l_G_retarded_DB,Gr_kind,       &
+&                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,       &
 &                         Gr_bands,l_RT_CCA_Kernel
- use interfaces,     ONLY:PARALLEL_index
- use parallel_m,     ONLY:PP_indexes_reset
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp,nkibz
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
@@ -205,17 +203,6 @@ subroutine RT_initialize(E,k,q)
  if (RT_is_dumped.and.use_X_RIM) then
    call warning('E_RIM and damping not compatible. Switching off E_RIM')
    use_X_RIM=.false.
- endif
- !
- if (l_ph_corr.or.l_carrier_dynamics) then
-   !
-   ! Pre-allocation of CPU tables
-   !==============================
-   !
-   call PP_indexes_reset(RT_q_px)
-   !
-   call PARALLEL_index(RT_q_px,(/q%nbz/))
-   !
  endif
  !
 #if defined _ELPH

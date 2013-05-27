@@ -30,7 +30,7 @@ subroutine RT_ELPH_zeroing()
  use drivers,        ONLY:l_ph_corr
  use pars,           ONLY:cZERO
  use R_lattice,      ONLY:nqbz
- use real_time,      ONLY:THETA_matrix,THETA_matrix_index,RT_q_px
+ use real_time,      ONLY:THETA_matrix,THETA_matrix_index
  use ELPH,           ONLY:ph_modes
  use parallel_m,     ONLY:ncpu
  implicit none
@@ -42,7 +42,6 @@ subroutine RT_ELPH_zeroing()
  if (.not.l_ph_corr.or.ncpu==1) return
  !
  do iq=1,nqbz
-   if (RT_q_px%element_1D(iq)) cycle
    do il=1,ph_modes
      do i_s=1,2
        THETA_matrix(THETA_matrix_index(iq,il,i_s),:,:,:) = cZERO

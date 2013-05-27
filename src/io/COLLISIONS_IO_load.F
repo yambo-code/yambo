@@ -22,23 +22,21 @@
 subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  !
  ! Load all collisions contribution from any kind of self-energy 
- ! exchange, COHSEX etc.. and store them together in QP_rho(i_qp)
+ ! exchange, COHSEX etc.. and store them together 
  !
  use pars,            ONLY:IP,SP,LP
  use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_collisions_IO,l_sc_srpa,l_carrier_dynamics 
- use com,             ONLY:msg
+ use timing,          ONLY:live_timing
  use global_XC,       ONLY:SC_HF,SC_COHSEX
  use QP_m,            ONLY:QP_n_states
+ use D_lattice,       ONLY:nsym
  use memory_m,        ONLY:mem_est
  use collisions_IO,   ONLY:COLLISIONS_v,COLLISIONS_table,V_kind,collisions_IO_free,&
 &                          COLLISIONS_path,io_COLLISIONS,COLLISIONS_range,collisions_RANGES_setup
  use IO_m,            ONLY:OP_RD_CL,io_control,VERIFY,REP
- use parallel_m,      ONLY:PP_indexes,PP_indexes_reset,myid
- use interfaces,      ONLY:PARALLEL_index
+ use parallel_m,      ONLY:PAR_nQPp,PAR_nQP,PAR_QP_index,PAR_QPp_index,PAR_IND_QP,PAR_IND_QPp,&
+&                          PAR_nQ,PAR_Q_index,PAR_IND_Q
  use collision,       ONLY:COLLISIONS
-#if defined _RT
- use real_time,       ONLY:RT_qp_px
-#endif
  !
  implicit none
  !
@@ -51,8 +49,7 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  ! Work Space
  !
  integer            :: i1,i2,i3,ic,i_qp,ID,n_tot_rho_states,io_err(max_V_kinds),V_kinds(max_V_kinds),n_V_kinds,&
-&                      iv,QP_n_states_loaded
- type(PP_indexes)   :: px
+&                      iv,i_qp_mem,i_q_mem,i_qpp_mem
  complex(SP), allocatable :: COLLISIONS_disk(:,:,:)
  !
  n_V_kinds   =0
@@ -94,20 +91,8 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
    return
    !
  endif
- !           
- call msg('sr','[COLLISIONS] Loading ...')
  !
  if (.not.l_collisions_IO) return
- !
-#if defined _RT
- call PP_indexes_reset(RT_qp_px)
- call PARALLEL_index(RT_qp_px,(/QP_n_states/))
- QP_n_states_loaded=RT_qp_px%n_of_elements(myid+1)
-#else
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/QP_n_states/))
- QP_n_states_loaded=px%n_of_elements(myid+1)
-#endif
  !
  ! Array ranges setup
  !
@@ -118,29 +103,26 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
 &                         COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
  call mem_est("COLLISIONS_disk",(/size(COLLISIONS_disk)/),(/2*SP/))
  !
- i_qp=0
+ call live_timing('Collisions DB I/O:',PAR_nQP)
  !
- allocate(COLLISIONS(QP_n_states))
+ allocate(COLLISIONS(PAR_nQP))
  !
- do while(i_qp<QP_n_states)  
+ do i_qp=1,QP_n_states
    !
-   i_qp=i_qp+1
+   if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
    !
-#if defined _RT
-   if(.not.RT_qp_px%element_1D(i_qp)) cycle  
-#else
-   if(.not.px%element_1D(i_qp)) cycle  
-#endif
+   i_qp_mem=PAR_QP_index(i_qp)
    !
    if (.not.l_carrier_dynamics) then
      !
-     allocate(COLLISIONS(i_qp)%table(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
+     allocate(COLLISIONS(i_qp_mem)%table(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
 &                                    COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
 &                                    COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
      !
-     COLLISIONS(i_qp)%table(:,:,:)=0
+     COLLISIONS(i_qp_mem)%table(:,:,:)=0
      !
    endif
+   !
    COLLISIONS_disk=(0.,0.)
    !
    do iv=1,n_V_kinds
@@ -166,7 +148,7 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
            else
              if(COLLISIONS_table(i1,i2,i3)==1) then
                ic=ic+1
-               COLLISIONS(i_qp)%table(i1,i2,i3)=1
+               COLLISIONS(i_qp_mem)%table(i1,i2,i3)=1
                COLLISIONS_disk(i1,i2,i3)=COLLISIONS_disk(i1,i2,i3)+COLLISIONS_v(ic)
              endif
            endif
@@ -177,14 +159,11 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
      !
    enddo
    !
-   n_tot_rho_states=sum(int(COLLISIONS(i_qp)%table(:,:,:),IP))
-   !
    if (l_carrier_dynamics) then
-     allocate(COLLISIONS(i_qp)%v3(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
-&                                 COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
-&                                 COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
+     allocate(COLLISIONS(i_qp_mem)%v3(PAR_nQPp,nsym,PAR_nQ))
    else
-     allocate(COLLISIONS(i_qp)%v(n_tot_rho_states))
+     n_tot_rho_states=sum(int(COLLISIONS(i_qp_mem)%table(:,:,:),IP))
+     allocate(COLLISIONS(i_qp_mem)%v(n_tot_rho_states))
    endif
    !
    ic=0
@@ -193,24 +172,32 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
      do i2=COLLISIONS_range(2,1),COLLISIONS_range(2,2)
        do i3=COLLISIONS_range(3,1),COLLISIONS_range(3,2)
          if (l_carrier_dynamics) then
-           COLLISIONS(i_qp)%v3(i1,i2,i3)=COLLISIONS_disk(i1,i2,i3)
+           if (.not.PAR_IND_QPp%element_1D(i1)) cycle
+           if (.not.PAR_IND_Q%element_1D(i3)) cycle
+           i_qpp_mem=PAR_QPp_index(i1)
+           i_q_mem  =PAR_Q_index(i3)
+           COLLISIONS(i_qp_mem)%v3(i_qpp_mem,i2,i_q_mem)=COLLISIONS_disk(i1,i2,i3)
          else
-           if(COLLISIONS(i_qp)%table(i1,i2,i3)==1) then
+           if (COLLISIONS(i_qp_mem)%table(i1,i2,i3)==1) then
              ic=ic+1
-             COLLISIONS(i_qp)%v(ic)=COLLISIONS_disk(i1,i2,i3)
+             COLLISIONS(i_qp_mem)%v(ic)=COLLISIONS_disk(i1,i2,i3)
            endif
          endif
        enddo
      enddo
    enddo
    !
+   call live_timing(steps=1)
+   !
  end do
  !
+ call live_timing()
+ !
  if (l_carrier_dynamics) then
-   call mem_est("QP_COLLISIONS",(/size(COLLISIONS(1)%v3)*QP_n_states_loaded/),(/2*SP/))
+   call mem_est("QP_COLLISIONS",(/size(COLLISIONS(1)%v3)*PAR_nQP/),(/2*SP/))
  else
-   call mem_est("QP_COLLISIONS_table",(/size(COLLISIONS(1)%table)*QP_n_states_loaded/),(/LP/))
-   call mem_est("QP_COLLISIONS",(/size(COLLISIONS(1)%v)*QP_n_states_loaded/),(/2*SP/))
+   call mem_est("QP_COLLISIONS_table",(/size(COLLISIONS(1)%table)*PAR_nQP/),(/LP/))
+   call mem_est("QP_COLLISIONS",(/size(COLLISIONS(1)%v)*PAR_nQP/),(/2*SP/))
  endif
  !
  deallocate(COLLISIONS_disk)
@@ -219,9 +206,5 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  ! If all QP are in memory I don't need anymore collisions_IO
  !
  call collisions_IO_free()
- !
-#if !defined _RT
- call PP_indexes_reset(px)
-#endif
  !
 end subroutine COLLISIONS_IO_load

@@ -28,7 +28,6 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,k,E)
  use SC,             ONLY:SC_bands
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin_occ
- use units
  implicit none
  !
  complex(SP),intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
@@ -71,6 +70,8 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,k,E)
  !
  if (n_states>0) RT_mean_lifetimes=RT_mean_lifetimes/float(n_states)
  !
- write (*,*) RT_mean_lifetimes(1:6)*HA2EV*1000.
+ !DEBUG>
+ !write (*,*) RT_mean_lifetimes(1:6)*HA2EV*1000.
+ !DEBUG<
  !
 end subroutine RT_mean_carrier_lifetimes

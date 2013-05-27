@@ -27,9 +27,6 @@ subroutine COLLISIONS_IO_compose(G_input)
  use pars,             ONLY:SP
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
  use SC,               ONLY:SC_bands
- use collisions_IO,    ONLY:COLLISIONS_v,COLLISIONS_table
- use parallel_m,       ONLY:PP_indexes,PP_redux_wait,PP_indexes_reset
- use interfaces,       ONLY:PARALLEL_index
  use collision,        ONLY:COLLISIONS
  !
  implicit none
@@ -39,13 +36,8 @@ subroutine COLLISIONS_IO_compose(G_input)
  ! Work Space
  !
  integer           :: i_qp,ib,ibp,ik,ic
- type(PP_indexes)  :: px
  !
  if(.not.l_sc_hf.and..not.l_sc_cohsex.and..not.l_sc_exx) return
- !
- call PP_indexes_reset(px)   
- !
- call PARALLEL_index(px,(/QP_n_states/))
  !
  if (.not.allocated(QP_Vnl_xc))  allocate(QP_Vnl_xc(QP_n_states))
  QP_Vnl_xc=(0._SP,0._SP)
@@ -53,7 +45,6 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  do i_qp=1,QP_n_states
    !
-   if(.not.px%element_1D(i_qp)) cycle  
    ic=1
    !
    do ib=SC_bands(1),QP_nb
@@ -71,9 +62,9 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  ! All the QP correction are put together in QP_Vnl_xc
  ! 
- call PP_redux_wait(QP_Vnl_xc)
- if (l_sc_cohsex.or.l_sc_srpa) call PP_redux_wait(QP_Sc)
- !
- call PP_indexes_reset(px)
+ !DEBUG>
+ !call PP_redux_wait(QP_Vnl_xc)
+ !if (l_sc_cohsex.or.l_sc_srpa) call PP_redux_wait(QP_Sc)
+ !DEBUG<
  !
 end subroutine 

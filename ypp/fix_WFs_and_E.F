@@ -347,6 +347,15 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  call fix_SC_DBs(k,k_save,kpoints_map,action_kind)
 #endif
  !
+ ! Finally I save again the new WFs_shells to be used by fix_PPs
+ deallocate(wf_nc_k,wf_igk)
+ allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
+ !
+ wf_nc_k=wf_nc_k_new
+ wf_igk =wf_igk_new
+ wf_ncx =wf_ncx_new
+ wf_ng  =wf_ng_new 
+ !
  ! CLEAN
  !=======
  call E_reset(E_new)

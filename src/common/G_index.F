@@ -44,8 +44,8 @@ integer function G_index(v1)
  endif
  !
  do i_shell=2,n_g_shells
-   if(E_of_shell(i_shell-1)-1E-5<E_of_shell_v1.and.E_of_shell_v1<E_of_shell(i_shell)+1E-5) then
-     ng1=ng_in_shell(i_shell-1)+1
+   if(E_of_shell(i_shell-1)-1E-4<E_of_shell_v1.and.E_of_shell_v1<E_of_shell(i_shell)-1E-4) then
+     ng1=ng_in_shell(maxval((/i_shell-2,1/)))+1
      ng2=ng_in_shell(i_shell)
      exit
    endif

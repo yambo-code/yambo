@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_start_and_restart(E,k,X)
+subroutine RT_start_and_restart(E,k,q,X)
  !
  ! This subroutine initialize some variables and restart from SC
  ! or from a previous RT calculation:
@@ -61,7 +61,7 @@ subroutine RT_start_and_restart(E,k,X)
  implicit none
  !
  type(levels)      :: E
- type(bz_samp)     :: k
+ type(bz_samp)     :: k,q
  type(X_t)         :: X
  !
  ! Work Space
@@ -432,9 +432,10 @@ subroutine RT_start_and_restart(E,k,X)
    call section('+','Retarded Green Functions initialization')
    !                 ========================================
    !
-   !if (l_ph_corr) call RT_G_retarded_EP_initialize(E,k)
+   if (l_ph_corr)          call RT_G_retarded_EP_initialize(E,k)
+   if (l_carrier_dynamics) call RT_G_retarded_EE_initialize(E,k,q)
    !
-   call RT_CCA_initialize(E)
+   !call RT_CCA_initialize(E)
    !
  endif
  !

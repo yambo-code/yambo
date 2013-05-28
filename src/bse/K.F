@@ -36,7 +36,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
-&                       RIM_anisotropy,ik_is_table,bare_qpg,minus_G
+&                       RIM_anisotropy,bare_qpg,minus_G
  use parallel_m,   ONLY:PP_redux_wait,myid,ncpu
  use com,          ONLY:msg,warning,error
  use timing,       ONLY:live_timing
@@ -612,8 +612,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
    deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
    call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
-   deallocate(O_phase,ik_is_table)
-   call mem_est("O_phase ik_is_table")
+   deallocate(O_phase)
+   call mem_est("O_phase")
    deallocate(Ovv,Occ,Cc)
    call mem_est("O_RES_WS")
    deallocate(BS_O)

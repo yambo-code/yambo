@@ -51,11 +51,13 @@ module R_lattice
    integer,  pointer :: nstar(:)   => null()
    integer,  pointer :: star(:,:)  => null()
    integer,  pointer :: sstar(:,:) => null() 
+   integer,  pointer :: s_table(:,:) => null() 
    real(SP), pointer :: pt(:,:)    => null()
    real(SP), pointer :: ptbz(:,:)  => null()
    real(SP), pointer :: weights(:) => null()
    character(6)      :: description
    character(1)      :: units
+   character(1)      :: s_table_mode = " "
  end type bz_samp
  !
  ! Q/K sampling shadow tables
@@ -71,7 +73,6 @@ module R_lattice
  integer, allocatable :: qindx_X(:,:,:)
  integer, allocatable :: qindx_B(:,:,:)
  integer, allocatable :: qindx_S(:,:,:)
- integer, allocatable :: ik_is_table(:,:)
  !
  ! SYMs
  !
@@ -167,13 +168,14 @@ module R_lattice
      k%units=' '
      k%description=' '
      !
+     if(associated(k%s_table))  deallocate(k%s_table)
      if(associated(k%nstar))    deallocate(k%nstar)
      if(associated(k%star))     deallocate(k%star)
      if(associated(k%sstar))    deallocate(k%sstar)
      if(associated(k%pt))       deallocate(k%pt)
      if(associated(k%ptbz))     deallocate(k%ptbz)
      if(associated(k%weights))  deallocate(k%weights)
-     nullify(k%nstar,k%star,k%sstar,k%pt,k%ptbz,k%weights)
+     nullify(k%nstar,k%star,k%sstar,k%pt,k%ptbz,k%weights,k%s_table)
      !
    end subroutine bz_samp_reset
    !

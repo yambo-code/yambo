@@ -74,6 +74,8 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  !
  ! Setup...
  !
+ call k_sym2sym(k,'k')
+ call k_sym2sym(q,'k')
  call k_expand(k)
  !
  ! Dimensions...

@@ -179,7 +179,6 @@ module real_time
  !
  logical           :: l_G_retarded_DB
  logical           :: l_G_DB_has_el_ph
- integer           :: Gr_mat_dim
  integer           :: Gr_T_steps
  integer           :: Gr_E_steps
  integer           :: Gr_bands(2)
@@ -188,8 +187,7 @@ module real_time
  real(SP)          :: Gr_T_window
  real(SP)          :: Gr_E_window
  character(schlen) :: Gr_kind
- integer,     allocatable :: Gr_indexes(:,:,:,:)
- real(SP),    allocatable :: Gr_ee_matrix(:,:)
+ real(SP),    allocatable :: Gr_ee_matrix(:,:,:,:)
  real(SP),    allocatable :: Gr_ep_matrix(:,:,:,:)
  real(SP),    allocatable :: Gr_peak_pos(:,:)
  real(SP),    allocatable :: Gr_E_ranges(:,:,:)
@@ -513,10 +511,13 @@ module real_time
        deallocate(Gr)
        call mem_est("G_retarded")
      endif
-     if (allocated(Gr_indexes)) then
-       deallocate(Gr_indexes)
+     if (allocated(Gr_ee_matrix)) then
        deallocate(Gr_ee_matrix)
-       call mem_est("Gr_indexes G_matrix")
+       call mem_est("G_ee_matrix")
+     endif
+     if (allocated(Gr_ep_matrix)) then
+       deallocate(Gr_ep_matrix)
+       call mem_est("G_ep_matrix")
      endif
      !
    end subroutine RT_free

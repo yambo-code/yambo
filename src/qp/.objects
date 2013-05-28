@@ -3,7 +3,7 @@ ELPH_objects =
 ELPH_objects = ELPH_Sigma_c.o ELPH_Hamiltonian.o 
 #endif
 #if defined _SC
-SC_objects = QP_load_SC_xc.o \
+SC_objects = QP_load_SC_xc.o RT_EE_scattering_kinematics.o \
              COLLISIONS_IO_eval.o   COLLISIONS_IO_store.o \
              COLLISIONS_IO_compose.o COLLISIONS_IO_cohsex.o
 #endif

@@ -41,7 +41,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,QP_G_dr,&
 &                        On_Mass_Shell_approx
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
- use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,RL_vol
+ use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol
  use ELPH,          ONLY:elph_nb,ph_freqs_sq,elph_gkkp,&
 &                        elph_global_free,QP_PH_n_G_bands,W_debye,elph_DW,&
 &                        elph_nDBs,E_k_plus_q,elph_use_q_grid,&
@@ -302,7 +302,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !                <(R^-1 k)+q n'|dV_{SCF}/du^{q nu}|(R^-1 k) n>= 
          !                gkkp(ik_bz,nu,n',n)
          !
-         ik_bz_gkkp=ik_is_table(ik,sop_inv(iq_s))
+         ik_bz_gkkp=k%s_table(ik,sop_inv(iq_s))
          ! 
          ! gkkp_{I_need}= <k+IRq n'|dV_{SCF}/du^{IRq nu}|k n>=
          !                [<(R^-1 S p)+q n|dV_{SCF}/du^{q nu}|(R^-1 S p) n'>]^*= 
@@ -315,7 +315,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
            ob_gkkp   =ib
            !                                 R^-1                 S
            !                                 -------------------- --
-           ik_bz_gkkp=ik_is_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
+           ik_bz_gkkp=k%s_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
          endif
          !
          ! k is in the IBZ and q is the PW_q (=-YAMBO_q)

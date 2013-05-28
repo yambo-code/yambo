@@ -27,7 +27,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
 &                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,mk_dir
  use com,           ONLY:error,msg,of_open_close,file_exists
- use R_lattice,     ONLY:nqibz,nqbz,bz_samp,qindx_S,ik_is_table
+ use R_lattice,     ONLY:nqibz,nqbz,bz_samp,qindx_S
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms
  use electrons,     ONLY:levels
  use timing,        ONLY:live_timing
@@ -169,11 +169,11 @@ subroutine ELPH_Hamiltonian(en,k,q)
      !
      ib_gkkp =ib
      ibp_gkkp=ibp
-     ik_bz_gkkp=ik_is_table(elph_Ham_ik,sop_inv(iq_s))
+     ik_bz_gkkp=k%s_table(elph_Ham_ik,sop_inv(iq_s))
      if (iq_s>nsym/(i_time_rev+1)) then
        ib_gkkp   =ib
        ibp_gkkp  =ibp
-       ik_bz_gkkp=ik_is_table(ok_ibz,sop_tab(sop_inv(iq_s-nsym/2),ok_s))
+       ik_bz_gkkp=k%s_table(ok_ibz,sop_tab(sop_inv(iq_s-nsym/2),ok_s))
      endif
      !
      elph_Mat(iH,iHp)=q_weight*conjg(elph_gkkp(ik_bz_gkkp,il,ibp_gkkp,ib_gkkp))/sqrt(2.*ph_E)

@@ -29,9 +29,9 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  !                                <n k1_ibz |exp iG.r|m k2_ibz s1^{-1} x s2 > 
  !
  ! now, in general, s1^{-1} x s2 is not a symmetry in the star of k2_ibz, so we
- ! define and use the table ik_is_table:
+ ! define and use the table Xk%s_table:
  !
- ! is_in_the_star_of_k2=ik_is_table(k2,s1^{-1} x s2 )
+ ! is_in_the_star_of_k2=Xk%s_table(k2,s1^{-1} x s2 )
  !
  ! to get
  !
@@ -43,7 +43,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  use memory_m,      ONLY:mem_est
  use FFT_m,         ONLY:fft_size
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
- use R_lattice,     ONLY:b,qindx_B,bz_samp,ik_is_table
+ use R_lattice,     ONLY:b,qindx_B,bz_samp
  use BS,            ONLY:O_n_scatt,O_table,O_phase,BS_O,O_n_c_states,O_c_state,&
 &                        O_n_v_states,O_v_state,O_ng,BS_bands,&
 &                        BS_res_K_corr,BS_cpl_K_corr
@@ -110,7 +110,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
        ik2bz=sum(Xk%nstar(:ik2-1))+i2
        is2  =Xk%star(ik2,i2)
        is1xis2=sop_tab(sop_inv(is1),is2)
-       iss_tab=ik_is_table(ik2,is1xis2)
+       iss_tab=Xk%s_table(ik2,is1xis2)
        !
        ! Phase search : |k ib is > =? PH |k ib iss_tab>
        !

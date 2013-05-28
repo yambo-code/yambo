@@ -26,7 +26,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  use R_lattice,       ONLY:qindx_S,bz_samp,qindx_X
  use SC,              ONLY:SC_bands,it_now 
  use real_time,       ONLY:G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,Sigma_relax,&
-&                          Gr_ee_matrix,Gr_indexes
+&                          Gr_ee_matrix
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:COLLISIONS
  use parallel_m,      ONLY:PAR_QP_index,PAR_QPp_index,PAR_IND_QP,PAR_IND_QPp,PAR_Q_index,PAR_IND_Q
@@ -95,12 +95,12 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          !
          pre_factor=abs(4.*pi*COLLISIONS(i_qp1_mem)%v3(i_qp2_mem,i_p_s,i_q_mem))**2
          !
-         !DELTA_ = E%E(i_np,i_kmq,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)-E%E(i_n,i_k,1)
-         !GAMMA_ = abs(E%W(i_np,i_kmq,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))+abs(E%W(i_n,i_k,1))
+         DELTA_ = E%E(i_np,i_kmq,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)-E%E(i_n,i_k,1)
+         GAMMA_ = abs(E%W(i_np,i_kmq,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))+abs(E%W(i_n,i_k,1))
          !
-         !Gr_integral=GAMMA_/(DELTA_**2+GAMMA_**2)
+         Gr_integral=GAMMA_/(DELTA_**2+GAMMA_**2)
          !
-         Gr_integral=Gr_ee_matrix(Gr_indexes(i_np,i_kmq, i_m, i_p),Gr_indexes(i_mp,i_pmq, i_n, i_k))
+         !Gr_integral=Gr_ee_matrix(Gr_indexes(i_np,i_kmq, i_m, i_p),Gr_indexes(i_mp,i_pmq, i_n, i_k))
          !
          f_E_factor=(1._SP-f_kmq)*(1._SP-f_p)*f_pmq
          f_H_factor=f_kmq*f_p*(2._SP-f_pmq)

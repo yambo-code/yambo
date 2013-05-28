@@ -25,7 +25,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp)
  use electrons,      ONLY:levels,spin_occ,n_full_bands
  use SC,             ONLY:SC_bands,it_now
  use real_time,      ONLY:G_lesser,MEM_index,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
-&                         Gr_ep_matrix,Gr_indexes,Gr_ordering_condition,B_mat_index
+&                         Gr_ep_matrix,B_mat_index
  use ELPH,           ONLY:ph_freqs_sq,ph_modes
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
  !

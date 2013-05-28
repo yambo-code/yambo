@@ -571,7 +571,7 @@ integer function ELPH_databases(k,E,q)
    use pars,           ONLY:SP
    use vec_operate,    ONLY:c2a
    use D_lattice,      ONLY:nsym,sop_tab
-   use R_lattice,      ONLY:rl_sop,nkbz,ik_is_table
+   use R_lattice,      ONLY:rl_sop,nkbz
    implicit none
    integer :: ikbz_is_table(nkbz,nsym)
    integer :: i1,is,ir,ikibz,i2
@@ -580,22 +580,22 @@ integer function ELPH_databases(k,E,q)
    !
    ! First I find the action of all the syms on the IBZ kpts
    !
-   ! R_is k_ibz = k_{ik_is_table(k_ibz,is)}
+   ! R_is k_ibz = k_{s_table(k_ibz,is)}
    !
-   ! where ik_is_table(k_ibz,is) is a BZ index
+   ! where s_table(k_ibz,is) is a BZ index
    !
    call k_sym2sym(k,'k')
    call k_ibz2bz(k,'i',.false.) ! in k_sym2sym there is the k_ibz2bz(k,'d',...) call
    !
-   ! To extend ik_is_table to the BZ I simply have that
+   ! To extend s_table to the BZ I simply have that
    !
-   ! R_is k_bz = R_is S k_ibz = ik_is_table(k_ibz,sop_tab(R_is,S))
+   ! R_is k_bz = R_is S k_ibz = s_table(k_ibz,sop_tab(R_is,S))
    !
    do i1=1,k%nbz
      ikibz=k%sstar(i1,1)
      ir   =k%sstar(i1,2)
      do is=1,nsym
-       ikbz_is_table(i1,is)=ik_is_table(ikibz,sop_tab(is,ir))
+       ikbz_is_table(i1,is)=k%s_table(ikibz,sop_tab(is,ir))
      enddo
    enddo
    !

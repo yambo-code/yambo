@@ -95,6 +95,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  endif
 #endif
  !
+ if(iq==1.and.X%ng==1) skip_WF_load=.true.
+ !
  if(Distributed_Memory) force_bare_X_G=.true.
  !
  call mem_est("Xo_WS",(/size(XoR)+2*X%ng/))
@@ -249,7 +251,7 @@ loop_bg: do i2 = 1,bg_npts(i1)
        if((lras.or.lreels).and.skip_WF_load) isave=(/iv,ic,ik,i_spin/)
 #endif
        if (any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/))) then
-         call scatterBamp(isc)
+         if(X%ng>1) call scatterBamp(isc)
          rhotw_save=isc%rhotw
          isave=(/iv,ic,ik,i_spin/)
        endif

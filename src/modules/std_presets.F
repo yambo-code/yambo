@@ -62,7 +62,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,IO_write,serial_number,IO_read,mk_dir,&
 &                     Fragmented_IO,Fragmented_IO_save 
- use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
+ use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,BSS_inv_iter_max,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
@@ -409,6 +409,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BS_K_dim=0
  BSS_mode=' '
  BSS_inversion_mode='pf'
+ BSS_inv_iter_max=31
  BSS_n_freqs=100
  BSS_n_descs=0
  BSS_er=(/0.,10./)/HA2EV

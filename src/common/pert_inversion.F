@@ -26,7 +26,7 @@ integer function pert_inversion(iw,N,W,C,f,V)
  use pars,           ONLY:SP
  use matrix_operate, ONLY:mat_dia_inv,USE_LK,INV
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
- use BS,             ONLY:K_BSmat_by_V
+ use BS,             ONLY:K_BSmat_by_V,BSS_inv_iter_max
  use com,            ONLY:error
  !
  implicit none
@@ -37,7 +37,6 @@ integer function pert_inversion(iw,N,W,C,f,V)
  !
  ! Work Space
  !
- integer, parameter       :: max_it=200
  real(SP),parameter       :: perc_treshold=0.01
  integer     ::it,i1,i2
  complex(SP) ::A_nm1(N),A_n(N),delta_f,fo
@@ -53,7 +52,7 @@ integer function pert_inversion(iw,N,W,C,f,V)
  !
  delta_f=0.
  !
- do while (it<=max_it) 
+ do while (it<=BSS_inv_iter_max) 
    !
    call K_BSmat_by_V(1,it*iw,A_nm1,A_n,call_kind='Inv')
    A_n(:)=V(:)*A_n(:)

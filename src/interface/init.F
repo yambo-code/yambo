@@ -556,7 +556,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGexx ecutKexch ALLGexx')
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk ecutKcorr')
    !
-   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode')
+   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSSInvItMax')
    if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
    !

@@ -27,8 +27,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BSS_uses_GreenF,&
 &                         BSE_mode,BS_eh_table,BS_eh_E,BS_bands,BSS_inversion_mode,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BS_eh_f,&
-&                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z,&
-&                         BSE_mode,BS_mat_diagonal
+&                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z,BS_mat_diagonal
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ,levels,BZ_RIM_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_merge,W_duplicate
@@ -105,7 +104,6 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
  i_err=ioBSS_invert(iq,1,1,(/0/),(/(0._SP,0._SP)/),W_disk,ID)
- !
  !
  ! When the damping range is not uniform then changing
  ! the energy borders
@@ -348,7 +346,6 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    call K_BSload(iq)
    !  
-   !
    ! I need to remove the -1 in the coupling part due to the change of sign
    ! of the occupations. This -1 is now embodied in the Green's function
    !

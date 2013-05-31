@@ -63,6 +63,8 @@ integer function pert_inversion(iw,N,W,C,f,V)
    if (abs(real(delta_f))<perc_treshold*abs(real(fo)).and.&
 &      abs(aimag(delta_f))<perc_treshold*abs(aimag(fo))) return
    !
+   if( abs(real(delta_f))>25._SP .or. abs(aimag(delta_f))>25._SP ) exit
+   !
    A_nm1(:)=A_n(:)
    !
    it=it+1

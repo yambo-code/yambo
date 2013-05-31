@@ -26,7 +26,7 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  use real_time,      ONLY:Gr_ee_matrix,l_G_retarded_DB
  use memory_m,       ONLY:mem_est
  use D_lattice,      ONLY:nsym
- use R_lattice,      ONLY:bz_samp,nqbz,qindx_X,qindx_S
+ use R_lattice,      ONLY:bz_samp,nqbz,qindx_S
  use parallel_m,     ONLY:PAR_nQP,PAR_nQPp,PAR_nQ,PAR_IND_Q,PAR_IND_QP,PAR_IND_QPp,PAR_Q_index,&
 &                         PAR_QP_index,PAR_QPp_index
  use timing,         ONLY:live_timing
@@ -38,8 +38,8 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  !
  ! Work Space
  !
- integer :: i_qp1,i_qp2,i_qp1_mem,i_qp2_mem,i_n,i_k,i_m,i_p,i_np,i_kmq,i_mp,i_pmq,&
-&           i_q,i_q_s,i_p_bz,iqbz,iq_mem,i_p_s,i_p_star,i_pmq_s
+ integer :: i_qp1,i_qp2,i_qp1_mem,i_qp2_mem,i_n,i_k,i_m,i_p,i_np,i_kmq,i_mp,&
+&           i_q,i_q_s,iqbz,iq_mem,i_p_s,i_p_star,i_pmq_bz,i_pmq
  real(SP):: GAMMA_(2),WIDTH(4,2),pre_factor,E_center
  !
  ! Allocation
@@ -87,9 +87,9 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
          !
          i_p_s =k%star(i_p,i_p_star)
          !
-write (*,*) i_p_s,'<'
-         call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,i_q,i_q_s,i_pmq,i_pmq_s)
-write (*,*) i_pmq,i_pmq_s
+         call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,i_q,i_q_s,i_pmq_bz)
+         !
+         i_pmq =k%sstar(i_pmq_bz,1)
          !
          if (l_G_retarded_DB) then
 !           !
@@ -136,7 +136,7 @@ write (*,*) i_pmq,i_pmq_s
            !
            GAMMA_(1) = abs(E%W(i_np,i_kmq,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))+abs(E%W(i_n,i_k,1))
            !
-           Gr_ee_matrix(i_qp1_mem,i_qp2_mem,i_p_s,iq_mem)=GAMMA_(1)/(E_center**2+GAMMA_(1)**2)
+           Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=GAMMA_(1)/(E_center**2+GAMMA_(1)**2)
            !
          endif
          !

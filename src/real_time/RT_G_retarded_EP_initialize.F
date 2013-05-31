@@ -29,7 +29,7 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  use real_time,      ONLY:B_mat_index,Gr_ep_matrix,l_G_retarded_DB
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_Xk_nibz,PAR_nQ,PAR_n_B_mat_elements,PAR_IND_Xk_ibz,&
-&                         PAR_Xk_ibz_index,PAR_IND_Q,PAR_B_mat_index,PAR_Q_index,master_cpu
+&                         PAR_Xk_ibz_index,PAR_IND_Q,PAR_B_mat_index,PAR_Q_index
  use ELPH,           ONLY:ph_modes,ph_freqs_sq
  !
  implicit none
@@ -72,9 +72,6 @@ subroutine RT_G_retarded_EP_initialize(E,k)
          do il=1,ph_modes
            !
            do is=-1,1,2
-             !
-             !if (i_s==-1) i_s_i=1
-             !if (i_s== 1) i_s_i=2
              !
              if (l_G_retarded_DB) then
                !

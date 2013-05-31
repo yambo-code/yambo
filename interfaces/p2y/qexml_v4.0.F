@@ -3279,7 +3279,7 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh,psp_has_so, &
   !
   CALL iotk_scan_dat(u, 'PP_DIJ', d_tmp , attr=attr)
   cd_tmp=cmplx(d_tmp,0._SP)
-  call mat_dia_inv(DIAGO,USE_LK,cd_tmp,E_real=d)
+  call mat_dia_inv(DIAGO,cd_tmp,lib_in=USE_LK,E_real=d)
   d_tmp=real(cd_tmp)
   !
   lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))

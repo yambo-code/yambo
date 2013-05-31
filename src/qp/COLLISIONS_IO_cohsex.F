@@ -37,7 +37,7 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_n_states,QP_table
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF_load,WF_free
- use R_lattice,     ONLY:qindx_S,bz_samp,qindx_X
+ use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:DL_vol
  use wrapper,       ONLY:M_by_V
  use collisions_IO, ONLY:TEMP_COLLISIONS_v
@@ -56,8 +56,8 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  integer                  ::i_qp1,i_qp2,i1,i2,iqbz,iqibz,alloc_err,iqs,&
 &                           i_n,i_k,i_k_s,i_k_sp,&
 &                           i_np,i_kmq,i_kmq_s,i_kmq_sp,i_kmq_G0,&
-&                           i_m,i_p,i_p_s,i_p_sp,i_p_star,i_p_bz,&
-&                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0
+&                           i_m,i_p,i_p_s,i_p_sp,i_p_star,&
+&                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz
  complex(SP), allocatable ::EM1s(:,:)
  type(ggwinfo)            ::isc,iscp
  type(PP_indexes)         ::px
@@ -202,12 +202,12 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
            !==========================
            !
            i_p_s =k%star(i_p,i_p_star)
-           i_p_bz=i_p_star
-           if (i_p>1) i_p_bz=sum(k%nstar(:i_p-1))+i_p_star
            !
-           i_pmq   = k%sstar(qindx_X(iqibz,i_p_bz,1),1)
-           i_pmq_s = k%sstar(qindx_X(iqibz,i_p_bz,1),2)
-           i_pmq_G0= qindx_X(iqibz,i_p_bz,2)
+           call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,iqibz,iqs,i_pmq_bz)
+           !
+           i_pmq   = k%sstar(i_pmq_bz,1)
+           i_pmq_s = k%sstar(i_pmq_bz,2)
+           i_pmq_G0= k%sstar(i_pmq_bz,3)
            !
            iscp%is =(/i_m,i_p,i_p_s,i_p_sp/)
            iscp%os =(/i_mp,i_pmq,i_pmq_s,i_pmq_sp/)

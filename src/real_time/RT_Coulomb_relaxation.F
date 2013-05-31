@@ -23,7 +23,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !  
  use pars,            ONLY:SP,cI,rZero,pi
  use electrons,       ONLY:levels,spin_occ
- use R_lattice,       ONLY:qindx_S,bz_samp,qindx_X
+ use R_lattice,       ONLY:qindx_S,bz_samp
  use SC,              ONLY:SC_bands,it_now 
  use real_time,       ONLY:G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,Sigma_relax,&
 &                          Gr_ee_matrix
@@ -40,9 +40,9 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  ! Work Space ...
  !
  integer               :: i_qp1,i_qp2,i_p,i_kmq,i_pmq,i_n,i_m,i_mp,i_np,i_p_star,&
-&                         iqbz,i_p_s,iqibz,i_p_bz,i_qp1_mem,i_qp2_mem,i_q_mem
+&                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_qp2_mem,i_q_mem,i_pmq_bz
  real(SP)              :: f_k,f_p,f_kmq,f_pmq,pre_factor,Gr_integral,&
-&                         f_E_factor,f_H_factor,DELTA_,GAMMA_
+&                         f_E_factor,f_H_factor
  !
  ! Dimensioning and Zeroing
  !==========================
@@ -68,7 +68,8 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
      if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
      i_q_mem=PAR_Q_index(iqbz)
      !
-     iqibz = q%sstar(iqbz,1)
+     i_q   = q%sstar(iqbz,1)
+     i_q_s = q%sstar(iqbz,2)
      i_kmq = k%sstar(qindx_S(i_k,iqbz,1),1)
      !
      f_kmq=-cI*G_lesser(i_np,i_np,i_kmq,MEM_index(it_now))/spin_occ
@@ -87,20 +88,16 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
        do i_p_star=1,k%nstar(i_p)
          !
          i_p_s =k%star(i_p,i_p_star)
-         i_p_bz=i_p_star
-         if (i_p>1) i_p_bz=sum(k%nstar(:i_p-1))+i_p_star
-         i_pmq   = k%sstar(qindx_X(iqibz,i_p_bz,1),1)
+         !
+         call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,i_q,i_q_s,i_pmq_bz)
+         !
+         i_pmq = k%sstar(i_pmq_bz,1)
          !
          f_pmq=-cI*G_lesser(i_mp,i_mp,i_pmq,MEM_index(it_now))
          !
          pre_factor=abs(4.*pi*COLLISIONS(i_qp1_mem)%v3(i_qp2_mem,i_p_s,i_q_mem))**2
          !
-         DELTA_ = E%E(i_np,i_kmq,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)-E%E(i_n,i_k,1)
-         GAMMA_ = abs(E%W(i_np,i_kmq,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))+abs(E%W(i_n,i_k,1))
-         !
-         Gr_integral=GAMMA_/(DELTA_**2+GAMMA_**2)
-         !
-         !Gr_integral=Gr_ee_matrix(Gr_indexes(i_np,i_kmq, i_m, i_p),Gr_indexes(i_mp,i_pmq, i_n, i_k))
+         Gr_integral=Gr_ee_matrix(i_qp1_mem,i_qp2_mem,i_q_mem,i_p_s)
          !
          f_E_factor=(1._SP-f_kmq)*(1._SP-f_p)*f_pmq
          f_H_factor=f_kmq*f_p*(2._SP-f_pmq)

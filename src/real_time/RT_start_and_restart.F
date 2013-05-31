@@ -435,8 +435,6 @@ subroutine RT_start_and_restart(E,k,q,X)
    if (l_ph_corr)          call RT_G_retarded_EP_initialize(E,k)
    if (l_carrier_dynamics) call RT_G_retarded_EE_initialize(E,k,q)
    !
-   !call RT_CCA_initialize(E)
-   !
  endif
  !
 end subroutine RT_start_and_restart

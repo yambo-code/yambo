@@ -34,7 +34,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
  use units,         ONLY:HA2EV
  use QP_m,          ONLY:QP_t,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_table,&
 &                        QP_n_states,use_GreenF_to_eval_QP,QP_Sc_steps,QP_G_dr,&
-&                        QP_dSc_delta,QP_G_Zoom_treshold,&
+&                        QP_dSc_delta,QP_G_Zoom_treshold,QP_G_info,&
 &                        QP_G_amplitude_integral,QP_G_zoom_er,use_GreenF_Zoom
  use electrons,     ONLY:spin,levels
  use frequency,     ONLY:w_samp,W_reset
@@ -47,8 +47,8 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
  ! Work Space
  !
  type(w_samp)     ::W
- integer          ::iqp,ib,ik,i_spin,iw,iw_start,iw_end
- real(SP)         ::Eo,Amp_Peak,old_min_max_step(2),new_min_max_step(2),W_step
+ integer          ::iqp,ib,ik,i_spin,iw,iw_start,iw_end,i_n
+ real(SP)         ::Eo,Amp_Peak,old_min_max_step(2),new_min_max_step(2),W_step,Aw,Awp1
  !
  real(SP), external :: RIntegrate
  !
@@ -137,6 +137,30 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    !====================================================================
    !
    call QPartilize(W%n(1),qp%GreenF(iqp,:),real(qp%GreenF_W(iqp,:)),qp%E(iqp),qp%Z(iqp),QP_dSc_delta) 
+   !
+   ! Width Info
+   !====================================================================
+   !
+   if (allocated(QP_G_info)) then
+     Amp_Peak=maxval(abs(aimag(qp%GreenF(iqp,:))))
+     QP_G_info(iqp,:,:)=1000.
+     do iw=1,W%n(1)-1
+       Aw  =abs(aimag(qp%GreenF(iqp,iw)))
+       Awp1=abs(aimag(qp%GreenF(iqp,iw+1)))
+       do i_n=1,3
+         if ( (Aw-Amp_Peak*.25*i_n)*(Awp1-Amp_Peak*.25*i_n)<0. ) then
+           if (abs(QP_G_info(iqp,i_n,1)-1000.)<1.E-5) then
+             QP_G_info(iqp,i_n,1)=qp%GreenF_W(iqp,iw)
+             cycle
+           endif
+           if (abs(QP_G_info(iqp,i_n,2)-1000.)<1.E-5) then
+             QP_G_info(iqp,i_n,2)=qp%GreenF_W(iqp,iw)
+             cycle
+           endif
+         endif
+       enddo
+     enddo
+   endif
    !
  enddo
  !

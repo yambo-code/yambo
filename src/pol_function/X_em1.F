@@ -36,6 +36,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP,&
 &                        IO_and_Messaging_switch
  use com,           ONLY:depth
+ use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes
  implicit none
  type(levels) ::Xen 
@@ -117,6 +118,20 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  do iq=iq_to_start,X%iq(2)
    !
+   ! TDDFT setup
+   !
+   call tddft_do_X_W_typs(iq,X,Xw)
+   !
+   ! ALDA (only once) 
+   !
+   if (l_alda_fxc.and..not.allocated(FXC)) then
+     !
+     call PARALLEL_global_indexes(Xen,Xk,q,"DENSITY") 
+     !
+     call tddft_alda_g_space(Xen,Xk)
+     !
+   endif
+   !
    if (iq_to_start==1) then
      if (iq==1) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Zero_Momentum",X=X) 
      if (iq==2) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
@@ -127,11 +142,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (iq>1) then
      if (.not.PAR_IND_Q%element_1D(iq)) cycle
    endif
-   !
-   ! TDDFT setup
-   !
-   call tddft_do_X_W_typs(iq,X,Xw)
-   if (l_alda_fxc) call tddft_alda_g_space(Xen,Xk)
    !
    call X_os(X_mat,iq,Xen,Xk,Xw,X)  
    !

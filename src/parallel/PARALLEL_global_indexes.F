@@ -120,6 +120,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    call PP_indexes_reset(PAR_IND_B_mat_ordered)
    call PP_indexes_reset(PAR_IND_G_b)
    call PP_indexes_reset(PAR_IND_WF_b)
+   call PP_indexes_reset(PAR_IND_WF_k)
    !
    if (allocated(PAR_B_mat_index))  deallocate(PAR_B_mat_index)
    if (allocated(PAR_QP_index))     deallocate(PAR_QP_index)
@@ -596,7 +597,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    ! G bands
    !
    if (ENVIRONMENT=="HF") n_bands=(/1,max(E%nbm,QP_nb)/)
-   if (ENVIRONMENT=="GW") n_bands=(/QP_n_G_bands(1),max(QP_n_G_bands(2),QP_nb)/)
+   if (ENVIRONMENT=="GW") n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
    !
    call PARALLEL_index(PAR_IND_G_b,(/n_bands(2)/),low_range=(/n_bands(1)/),&
 &                      COMM=PAR_COM_G_b_INDEX,CONSECUTIVE=.TRUE.)

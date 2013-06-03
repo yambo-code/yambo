@@ -75,9 +75,13 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! ALDA (only once) 
    !
-   call PARALLEL_global_indexes(Xen,Xk,q,"DENSITY") 
-   !
-   if (l_alda_fxc) call tddft_alda_g_space(Xen,Xk)
+   if (l_alda_fxc.and..not.allocated(FXC)) then
+     !
+     call PARALLEL_global_indexes(Xen,Xk,q,"DENSITY") 
+     !
+     call tddft_alda_g_space(Xen,Xk)
+     !
+   endif
    !
    ! PARALLEL indexes
    !==================

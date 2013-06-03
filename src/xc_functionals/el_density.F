@@ -49,7 +49,7 @@ subroutine el_density(en,Xk,rho,force_si)
  use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_inv
  use wave_func,     ONLY:wf_state,wf
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,&
-&                        PAR_COM_QP_A2A,PAR_IND_QP,l_par_HF,l_par_GW
+&                        PAR_COM_QP_A2A,PAR_IND_QP,l_par_HF,l_par_GW,l_par_DENSITY
  !
  implicit none
  type(bz_samp)::Xk
@@ -134,7 +134,7 @@ subroutine el_density(en,Xk,rho,force_si)
    deallocate(states_filling)
    call PP_redux_wait(rho_no_sym,COMM=PAR_COM_QP_A2A%COMM)
  else
-   if (l_par_GW.or.l_par_HF) call PP_redux_wait(rho_no_sym)
+   if (l_par_GW.or.l_par_HF.or.l_par_DENSITY) call PP_redux_wait(rho_no_sym)
  endif
  !
  ! Simmetrization

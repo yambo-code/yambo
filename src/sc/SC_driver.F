@@ -326,7 +326,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
    end do
    !
-   if(l_NSC_shot) call OCCUPATIONS_Fermi(E,k,1) 
+   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,1) 
    !
    if (l_SC_cycle) then
      !
@@ -356,7 +356,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! Update dipoles and recalcolate the dielectric constant
      ! ======================================================
      !
-     if(SC_up_W_iters>0.and.mod(it,SC_up_W_iters)==0) then
+     if (SC_up_W_iters>0.and.mod(it,SC_up_W_iters)==0) then
        !
        ! Update dipoles
        !

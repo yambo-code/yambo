@@ -84,7 +84,9 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    spin_rho_SP(:,i1)=rho_n(:)
  enddo
 #else
+ !
  call el_density(en,Xk,rho,.false.)
+ !
  if(n_spin==1) spin_rho_SP(:,1)=rho(:)
  if(n_spin> 1) then
    call el_magnetization(en,Xk)

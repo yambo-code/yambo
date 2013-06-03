@@ -55,8 +55,7 @@ subroutine tddft_alda_g_space(E,k)
  ! WF distributed & load
  !=======================
  !
- call PARALLEL_WF_distribute(E%nbm,k%nibz,K_index=PAR_IND_Xk_ibz,&
-&                            B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(E%nbm,k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
  !
  call WF_load(0,1,(/1,E%nbm/),(/1,k%nibz/),title='-Rho')
  !

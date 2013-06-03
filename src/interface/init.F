@@ -85,10 +85,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Work Space
  !
- integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,io_KB_PP_err,&
+ integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,io_KB_abinit_err,io_KB_pwscf_err,&
 &                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G,io_Gr
  integer, external :: ioX,io_DIPOLES,ioGROT,ioQINDX,ioRIM,&
-&                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
+&                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_abinit,ioKB_pwscf,&
 &                     ioCOL_CUT
  logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
  character(6)      :: X_size
@@ -96,7 +96,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: ioE_RIM
  !
 #if defined _SC || defined _RT
- integer, external :: io_SC_components,io_G_retarded
+ integer, external :: io_SC_components,io_G_retarded,io_RT_components
 #endif
 #if defined _ELPH 
  integer           :: ioELPH_err
@@ -309,12 +309,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  OSTNTS_Vnl_included=io_err==0.and.X(3)%Vnl_included
  !
+ ! PP_PWscf
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+ io_KB_pwscf_err=ioKB_pwscf(io_ID)
+ !
  ! kb_pp
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_KB_PP_err=ioKB_PP(io_ID)
+ io_KB_abinit_err=ioKB_abinit(io_ID)
  !
- if (io_err/=0) OSTNTS_Vnl_included=io_KB_PP_err==0
+ if (io_err/=0) OSTNTS_Vnl_included=(io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
  !
  ! I transfer to all X types the X(3) used in the previous io's 
  !
@@ -365,9 +370,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_J_and_P=io_SC_components('J_and_P' ,en,io_ID)
+ io_J_and_P=io_RT_components('J_and_P' ,en,io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_G=io_SC_components('G' ,en,io_ID)
+ io_G=io_RT_components('G' ,en,io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_Gr=io_G_retarded(io_ID,"G_retarded")
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
@@ -715,7 +720,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
    if (l_ph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol UseDebyeE ElPhModes')
    call initactivate(1,'HXCjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
-   call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField SkipGFIO SkipOCCIO')
+   call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField SkipGFIO SkipOCCIO IOtime')
    if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
    if (              l_RT_pump_and_probe) call Afield_activate('Pump')
    !
@@ -1299,12 +1304,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          if(l_bse)   call initactivate(1,'bsk')
          !
-       endif
-       !
-       ! TDDFT Kind
-       !
-       if ( trim(rstr_piece(i1)) == 'tddft' )  then
-
        endif
        !
        ! BSE Solver

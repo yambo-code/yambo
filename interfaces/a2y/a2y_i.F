@@ -49,7 +49,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  character(lchlen) :: KSS_file_name
  integer           :: ID,io_err,ik,ib_grp
- integer,     external :: a2y_KSS_file_name,ioDB1,ioKB_PP
+ integer,     external :: a2y_KSS_file_name,ioDB1,ioKB_abinit
  real(SP), allocatable :: wf_disk(:,:,:,:)
  !
  ! Presets
@@ -119,7 +119,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
      if (n_atoms_species_max>0.and.ib_grp==1) then
        if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
        if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
-       io_err=ioKB_PP(ID)
+       io_err=ioKB_abinit(ID)
      endif
      !
      if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)

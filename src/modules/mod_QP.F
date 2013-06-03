@@ -62,6 +62,7 @@ module QP_m
  real(SP)          :: QP_cg_percent
  real(SP)          :: GW_en_comp
  real(SP)   ,allocatable:: QP_G_amplitude_integral(:)
+ real(SP)   ,allocatable:: QP_G_info(:,:,:)
  real(SP)   ,allocatable:: QP_G_zoom_er(:,:)
  complex(SP),allocatable:: QP_dSc(:,:)
  complex(SP),allocatable:: QP_W(:,:,:)

@@ -30,7 +30,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use drivers,        ONLY:l_bs_fxc,l_rpa_IP
  use IO_m,           ONLY:io_control,REP,NONE,OP_RD_CL
  use X_m,            ONLY:X_t,X_epsilon,X_drude_term
- use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs
+ use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs,BSE_mode
 #if defined _SC
  use fields,         ONLY:global_gauge
 #endif
@@ -44,10 +44,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! Work Space
  !
- real(SP)          ::v(3)
  logical           ::run_Haydock,run_Diago,run_inversion
- character(schlen) ::ch
- integer           :: ID,ioBS_err
+ logical           ::stop_Haydock
+ integer           ::ID,ioBS_err
  integer, external ::ioBS
  !
  call section('*','BSE solver(s)')
@@ -91,13 +90,15 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  if (run_Haydock) then
    !
-   if (BS_not_const_eh_f) call warning('Fractional occupations still unsupported (Haydock)')
+   stop_Haydock = (BS_not_const_eh_f.and.BSE_mode=='coupling')
+   if (stop_Haydock) call warning('Fractional occupations and coupling still unsupported (Haydock)')
    !
-   if (.not.BS_not_const_eh_f) then
+   if(.not.stop_Haydock) then
      call K_output_file(iq,-1)
      call K_Haydock(iq,W_bss)
      BSS_n_descs=BSS_n_descs-4 
    endif
+   !
  endif
  !
  if (run_Diago)          call K_diagonalization(iq,W_bss)

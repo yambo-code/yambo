@@ -36,7 +36,7 @@ subroutine RT_databases_IO(E,it)
  implicit none
  !
  integer, intent(in)      :: it
- integer, external        :: io_SC_components
+ integer, external        :: io_RT_components
  type(levels),intent(in)  :: E
  !
  ! Work Space
@@ -48,6 +48,25 @@ subroutine RT_databases_IO(E,it)
  ! databases must not be written
  !
  if (it==it_start.and.it_start>1) return
+ !
+ ! Polarization and current are automaticaly written every RT_IO_stesp
+ ! the cache save value at steps different from mod(NE_i_time,RT_IO_steps)/=0)
+ !
+ if(l_NE_with_fields.and.NE_dynamics.and..not.l_RT_skip_JandP_IO) then
+   !
+   ! Remember that negative time = adiabatic switching
+   ! no need to store current
+   !
+   io_J_and_P=0 
+   !
+   ! Write current and polarization on disk
+   !
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
+   io_J_and_P=io_RT_components('J_and_P' ,E,ID(4))
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
+   io_J_and_P=io_RT_components('J_and_P' ,E,ID(4))
+   !
+ endif
  !
  ! Write every RT_IO_steps
  !
@@ -65,18 +84,18 @@ subroutine RT_databases_IO(E,it)
    COM_=NONE
    if (it==it_start) COM_=REP
    call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(5))
-   io_G=io_SC_components('G' ,E,ID(5))
+   io_G=io_RT_components('G' ,E,ID(5))
    !
 #if defined _ELPH
    if (l_ph_corr.and..not.l_RT_CCA_Kernel) then
      call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(7))
-     io_THETA=io_SC_components('THETA' ,E,ID(7))
+     io_THETA=io_RT_components('THETA' ,E,ID(7))
    endif
 #endif
    !
    do ik = 1, QP_nk 
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
-     io_G=io_SC_components('G',E,ID(5))
+     io_G=io_RT_components('G',E,ID(5))
 #if defined _ELPH
      if (l_ph_corr.and..not.l_RT_CCA_Kernel) then
        !
@@ -89,7 +108,7 @@ subroutine RT_databases_IO(E,it)
        call PP_redux_wait(THETA_matrix(:,:,:,ik))
        !
        call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(7))
-       io_THETA=io_SC_components('THETA' ,E,ID(7))
+       io_THETA=io_RT_components('THETA' ,E,ID(7))
        !
        call RT_ELPH_zeroing()
        !
@@ -102,21 +121,5 @@ subroutine RT_databases_IO(E,it)
  ! Occupations
  !
  if (.not.l_RT_skip_OCC_IO) call OCCUPATIONS_IO_and_interpolate(E,'G')
- !
- if(l_NE_with_fields.and.NE_dynamics.and..not.l_RT_skip_JandP_IO) then
-   !
-   ! Remember that negative time = adiabatic switching
-   ! no need to store current
-   !
-   io_J_and_P=0 
-   !
-   ! Write current and polarization on disk
-   !
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
-   io_J_and_P=io_SC_components('J_and_P' ,E,ID(4))
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
-   io_J_and_P=io_SC_components('J_and_P' ,E,ID(4))
-   !
- endif
- !
+
 end subroutine RT_databases_IO

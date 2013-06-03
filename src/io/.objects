@@ -1,9 +1,9 @@
 SC_objects = 
 #if defined _SC
-SC_objects = io_COLLISIONS.o COLLISIONS_IO_load.o load_SC_components.o io_SC_components.o variables_SC.o io_P_and_P2.o
+SC_objects = io_COLLISIONS.o COLLISIONS_IO_load.o load_SC_components.o io_SC_components.o variables_SC.o io_P_and_P2.o 
 #endif
 #if defined _RT
-RT_objects = io_G_retarded.o
+RT_objects = io_G_retarded.o io_RT_components.o
 #endif
 ELPH_objects = 
 #if defined _ELPH 
@@ -21,7 +21,7 @@ objs = ver_is_gt_or_eq.o IO_and_Messaging_switch.o \
        io_Vnl.o \
        ioRIM.o        ioGROT.o     $(ELPH_objects) \
        io_DIPOLES.o   ioQINDX.o    ioQP.o      ioX.o \
-       ioDB1.o        ioWF.o       ioKB_PP.o   io_HF_and_locXC.o \
+       ioDB1.o        ioWF.o       ioKB_abinit.o   ioKB_pwscf.o   io_HF_and_locXC.o \
        ioBS.o   ioBS_Fxc.o  \
        ioBSS_diago.o  ioBSS_Haydock.o ioBSS_invert.o \
        io_elemental.o io_bulk.o      io_header.o ioE_RIM.o \

@@ -79,14 +79,14 @@ subroutine k_grids(en,k,Xk,q)
    if (l_k_grid) then
      if (Expand_internal_points) then
        call k_expand(Xk)
-       call msg("s",'Q-points (BZ) formatted')
+       call msg("s",'K-points (BZ) formatted')
        call print_the_grid(Xk%ptbz,Xk%nbz,'iku',.TRUE.)
-       call msg("s",'Q-points (BZ) un-formatted')
+       call msg("s",'K-points (BZ) un-formatted')
        call print_the_grid(Xk%ptbz,Xk%nbz,'iku',.FALSE.)
      else
-       call msg("s",'Q-points (IBZ) formatted')
+       call msg("s",'K-points (IBZ) formatted')
        call print_the_grid(Xk%pt,Xk%nibz,'iku',.TRUE.)
-       call msg("s",'Q-points (IBZ) un-formatted')
+       call msg("s",'K-points (IBZ) un-formatted')
        call print_the_grid(Xk%pt,Xk%nibz,'iku',.FALSE.)
      endif
    endif

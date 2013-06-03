@@ -119,6 +119,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
        n_qp_db=n_qp_db+1
        !
        do i2=i1-3,i1-1
+         if(i2<=0) cycle
          if (.not. DB_plan_todo_EWZ(n_qp_db,1)) &
 &           DB_plan_todo_EWZ(n_qp_db,1)=any((/trim(db_piece(i2))=="E",trim(db_piece(i2))=="e"/))
          if (.not. DB_plan_todo_EWZ(n_qp_db,2)) &

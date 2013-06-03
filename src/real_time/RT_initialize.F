@@ -113,6 +113,10 @@ subroutine RT_initialize(E,k,q)
  else if (RT_IO_time<0) then
    RT_IO_time =max(NE_tot_time/1000._SP,RT_step)
    RT_IO_steps=nint(RT_IO_time/RT_step)
+   !
+   rest=mod(Thermal_steps+NE_steps,RT_IO_steps)
+   if(rest/=0) NE_steps = NE_steps+RT_IO_steps-rest
+   !
    if (RT_IO_steps_DB>0.and.RT_IO_steps/=RT_IO_steps_DB) then
      call warning('IO steps read from the existing databases')
      RT_IO_steps=RT_IO_steps_DB
@@ -243,6 +247,8 @@ subroutine RT_initialize(E,k,q)
  endif
  call msg('r', '[RT] Pump/Probe periodicity     [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
  call msg('r', '[RT]            energy step     [eV]:',maxval(Efield(:)%W_step)*HA2EV)
+ call msg('r', '[RT] IO cache steps                 :',RT_IO_steps)
+ call msg('r', '[RT] IO cache time              [fs]:',RT_IO_time/FS2AUT)
  !
  do i1=1,n_ext_fields
    !

@@ -59,7 +59,10 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  character(lchlen) :: jobstr_save
  type(levels)      :: RT_db1_E
  type(bz_samp)     :: RT_db1_k
- integer, external :: ioDB1_selective_scan,ioDB1,io_SC_components
+ integer, external :: ioDB1_selective_scan,ioDB1
+#if defined _RT
+ integer, external :: io_RT_components
+#endif
  !
  ! Interpolation
  !
@@ -74,14 +77,18 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    !
    ! (a) Write
    !
+#if defined _RT
+   !
    do ib=SC_bands(1),SC_bands(2)
      RT_occupations(ib,:)=-real((0._SP,1._SP)*G_lesser(ib,ib,:,MEM_index(NE_i_time)))
    enddo
    ! 
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
-   io_err_occ=io_SC_components('occupations',E,ID(6))
+   io_err_occ=io_RT_components('occupations',E,ID(6))
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(6))
-   io_err_occ=io_SC_components('occupations',E,ID(6))
+   io_err_occ=io_RT_components('occupations',E,ID(6))
+   ! 
+#endif
    ! 
  else
    !
@@ -107,8 +114,10 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    ! OCCUPATIONS I/O (I)
    !====================
    !  
+#if defined _RT
    call io_control(ACTION=OP_RD,COM=COM_,SEC=(/1/),MODE=DUMP,ID=ID(6))
-   io_err_occ=io_SC_components('occupations',E,ID(6))
+   io_err_occ=io_RT_components('occupations',E,ID(6))
+#endif
    !
    if (io_err_occ<0) then
 #if !defined _YPP_RT 
@@ -176,10 +185,12 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
    endif
    !
+#if defined _RT
    call io_control(ACTION=RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID(6))
-   io_err_occ=io_SC_components('occupations',E,ID(6))
+   io_err_occ=io_RT_components('occupations',E,ID(6))
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID(6))
-   io_err_occ=io_SC_components('occupations',E,ID(6))
+   io_err_occ=io_RT_components('occupations',E,ID(6))
+#endif
    !
    jobstr=jobstr_save
    !

@@ -78,10 +78,19 @@ subroutine setup(en,Xen,Ken,k,Xk)
  endif
  !
  call msg('r','... with scaling factors [a.u.]:',alat)
- call msg('nr','Direct Lattice(DL) unit cell [iru]')
- call msg('r','A1 =',a(1,:)/alat(:))
- call msg('r','A2 =',a(2,:)/alat(:))
- call msg('rn','A3 =',a(3,:)/alat(:))
+ call msg('nr','Direct Lattice(DL) unit cell [iru  /  cc(a.u.)]')
+ dumb_ch1='A1 ='//trim(real2ch(a(1,1)/alat(1)))//' '//trim(real2ch(a(1,2)/alat(2)))//' '//&
+&                 trim(real2ch(a(1,3)/alat(3)))//'     '//&
+&                 trim(real2ch(a(1,1)))//' '//trim(real2ch(a(1,2)))//' '//trim(real2ch(a(1,3)))
+ call msg('r',dumb_ch1)
+ dumb_ch1='A2 ='//trim(real2ch(a(2,1)/alat(1)))//' '//trim(real2ch(a(2,2)/alat(2)))//' '//&
+&                 trim(real2ch(a(2,3)/alat(3)))//'     '//&
+&                 trim(real2ch(a(2,1)))//' '//trim(real2ch(a(2,2)))//' '//trim(real2ch(a(3,3)))
+ call msg('r',dumb_ch1)
+ dumb_ch1='A3 ='//trim(real2ch(a(3,1)/alat(1)))//' '//trim(real2ch(a(3,2)/alat(2)))//' '//&
+&                 trim(real2ch(a(3,3)/alat(3)))//'     '//&
+&                 trim(real2ch(a(3,1)))//' '//trim(real2ch(a(3,2)))//' '//trim(real2ch(a(3,3)))
+ call msg('rn',dumb_ch1)
  !
  ! DL vol
  !
@@ -97,13 +106,19 @@ subroutine setup(en,Xen,Ken,k,Xk)
  b(2,:)=cross_product(a(3,:),a(1,:))*2.*pi/DL_vol
  b(3,:)=cross_product(a(1,:),a(2,:))*2.*pi/DL_vol
  !
- call msg('nr','Reciprocal Lattice(RL) unit cell [iku]')
+ call msg('nr','Reciprocal Lattice(RL) unit cell [iku  /  cc]')
  call c2a(b,b(1,:),rv,'kc2i')
- call msg('r','B1 =',rv)
+ dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
+&                 trim(real2ch(b(1,1)))//' '//trim(real2ch(b(1,2)))//' '//trim(real2ch(b(1,3)))
+ call msg('r',dumb_ch1)
  call c2a(b,b(2,:),rv,'kc2i')
- call msg('r','B2 =',rv)
+ dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
+&                 trim(real2ch(b(2,1)))//' '//trim(real2ch(b(2,2)))//' '//trim(real2ch(b(2,3)))
+ call msg('r',dumb_ch1)
  call c2a(b,b(3,:),rv,'kc2i')
- call msg('rn','B3 =',rv)
+ dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
+&                 trim(real2ch(b(3,1)))//' '//trim(real2ch(b(3,2)))//' '//trim(real2ch(b(3,3)))
+ call msg('rn',dumb_ch1)
  !
  ! ZERO's SETUP
  !

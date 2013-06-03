@@ -29,7 +29,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
  use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Vnl_xc,QP_table,&
 &                    QP_solver,QP_n_states,l_extended_output,Vxc_kind,&
 &                    QP_Sc_steps,use_GreenF_to_eval_QP,Vnlxc_kind,&
-&                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,QP_states_simmetrize 
+&                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,QP_states_simmetrize ,QP_G_info
  use stderr,    ONLY:set_real_printed_length
  implicit none
  type(QP_t)   ::qp
@@ -44,7 +44,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
  !
  !o.qp titles
  !
- integer, parameter:: tpar=14
+ integer, parameter:: tpar=23
  integer       :: ntitles,titles_order(tpar)
  real(SP)      :: values(tpar)
  character(schlen) :: titles(tpar)
@@ -63,18 +63,26 @@ subroutine QP_of(qp,en,QPdb_read_err)
  titles(12) = 'Width[meV]' ! 12
  titles(13) = 'Width[fs]' ! 13
  titles(14) = 'Spin_Pol' ! 14
+ titles(15) = 'Z(Re)' ! 15
+ titles(16) = 'Z(Im)' ! 16
+ titles(17) = 'E_25%(low)' ! 17
+ titles(18) = 'E_25%(high)' ! 18
+ titles(19) = 'E_50%(low)' ! 19
+ titles(20) = 'E_50%(high)' ! 20
+ titles(21) = 'E_75%(low)' ! 21
+ titles(22) = 'E_75%(high)' ! 22
+ titles(23) = 'Integral' ! 23
  !
  ntitles=5
  titles_order(:ntitles)=(/9,10,4,8,2/)
- if (.not.report_Sc.or. ( trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP ))   then
+ if (.not.report_Sc)   then
    ntitles=6
    titles_order(4:6)=(/5,8,6/)
  endif
  if (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP) then
-   ntitles=5
-   titles_order(:ntitles)=(/9,10,4,5,6/)
- endif
- if (l_ph_corr) then
+   ntitles=14
+   titles_order(:14)=(/9,10,5,8,12,15,16,17,18,19,20,21,22,23/)
+ else if (l_ph_corr) then
    ntitles=ntitles+1
    titles_order(ntitles)=12
  endif
@@ -141,14 +149,28 @@ subroutine QP_of(qp,en,QPdb_read_err)
          values(11)=real(QP_Vnl_xc(i1))*HA2EV
        endif
      endif
-     values(4:6)=(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV),real(qp%Z(i1))/)
-     values(9:10)=(/real(qp_k),real(qp_b)/)
+     !
+     values(4:6)  =(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV),real(qp%Z(i1))/)
+     values(9:10) =(/real(qp_k),real(qp_b)/)
      values(12:13)=(/aimag(qp%E(i1)*HA2EV/1.E-3),HBAR_eVfs/aimag(qp%E(i1))/HA2EV/)
+     values(15:16)=(/real(qp%Z(i1)),aimag(qp%Z(i1))/)
+     !
+     if (allocated(QP_G_amplitude_integral)) then
+       values(23)=QP_G_amplitude_integral(i1)
+     endif
+     if (allocated(QP_G_info)) then
+       values(17:18)=QP_G_info(i1,1,:)*HA2EV
+       values(19:20)=QP_G_info(i1,2,:)*HA2EV
+       values(21:22)=QP_G_info(i1,3,:)*HA2EV
+     endif
+     !
      if (qp_isp==1) values(14)= 1.
      if (qp_isp==2) values(14)=-1.
      if (aimag(qp%E(i1))==0.) values(12:13)=0.
      call msg('o qp','',values(titles_order(:ntitles)),INDENT=-2,USE_TABS=.TRUE.)
+     !
    enddo
+   !
    call of_open_close(file_name)
    !
  else if (trim(QP_solver)=='g') then

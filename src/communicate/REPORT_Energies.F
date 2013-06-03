@@ -28,35 +28,48 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,header)
  use stderr,         ONLY:intc,real2ch
  use wave_func,      ONLY:wf_nc_k
  use com,            ONLY:msg
+ use vec_operate,    ONLY:c2a
+ !
  implicit none
  !
  type(bz_samp) :: k,Xk
  integer       :: n_bands_,k_range(2)
  real(SP)      :: E(n_bands_,k%nibz,n_sp_pol)
+ real(SP)      :: k_cc(3)
  logical       :: header
  character(*)  :: what
  !
  ! Work Space
  !
  integer           :: ik,is_pol,ib,i1
- character(schlen) :: dumb_ch
+ character(schlen) :: dumb_ch1,dumb_ch2
  real(SP)          :: E_(n_bands_,n_sp_pol)
  !
  if (header.and..not.(k_range(1)==k_range(2).and.k_range(1)>1) )  &
 &   call msg('rn','Energy unit is electronVolt [eV]')
  !
  do ik=k_range(1),k_range(2)
+   !
+   call c2a(v_in=k%pt(ik,:),v_out=k_cc,mode='ki2c')
    ! 
-   dumb_ch='K ['//trim(intc(ik))//'] :'//trim(real2ch(k%pt(ik,1)))//' '//&
+   dumb_ch1='K ['//trim(intc(ik))//'] :'//trim(real2ch(k_cc(1)))//' '//&
+&          trim(real2ch(k_cc(2)))//' '//trim(real2ch(k_cc(3)))//&
+&          ' (cc ) * Comp.s '//trim(intc(wf_nc_k(ik)))
+   dumb_ch2='       '//trim(real2ch(k%pt(ik,1)))//' '//&
 &          trim(real2ch(k%pt(ik,2)))//' '//trim(real2ch(k%pt(ik,3)))//&
-&          ' (iku) * Comp.s '//trim(intc(wf_nc_k(ik)))
+&          ' (iku) '
+   if(ik>  9) dumb_ch2=' '//trim(dumb_ch2)
+   if(ik> 99) dumb_ch2=' '//trim(dumb_ch2)
+   if(ik>999) dumb_ch2=' '//trim(dumb_ch2)
    !
    if (header) then
      if (ik> 1    ) call msg('r','')
      if (ik<=nXkibz) then
-       call msg('r','*X* '//trim(dumb_ch)//' * weight '//trim(real2ch(Xk%weights(ik))))
+       call msg('r','*X* '//trim(dumb_ch1)//' * weight '//trim(real2ch(Xk%weights(ik))))
+       call msg('r','    '//trim(dumb_ch2))
      else
-       call msg('r',trim(dumb_ch)) 
+       call msg('r',trim(dumb_ch1))
+       call msg('r',trim(dumb_ch2))
      endif
    endif
    !

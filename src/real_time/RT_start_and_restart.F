@@ -68,7 +68,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  integer :: ik,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,ID_Gr,io_Gr
- integer, external :: io_SC_components,io_G_retarded
+ integer, external :: io_SC_components,io_G_retarded,io_RT_components
  logical :: RESTART,SC_DB_present
  !
  ! Initialize the Gf and potentials
@@ -128,15 +128,15 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
- io_J_and_P=io_SC_components('J_and_P' ,E,ID(4))
+ io_J_and_P=io_RT_components('J_and_P' ,E,ID(4))
  if (io_J_and_P==0) COM_=NONE
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
- io_G=io_SC_components('G' ,E,ID(5))
+ io_G=io_RT_components('G' ,E,ID(5))
  !
  ! ELPH Theta matrix
  !
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(7)) ! G_lesser
- io_THETA=io_SC_components('THETA' ,E,ID(7))
+ io_THETA=io_RT_components('THETA' ,E,ID(7))
  !
  ! Retarded Green Functions
  !
@@ -341,14 +341,14 @@ subroutine RT_start_and_restart(E,k,q,X)
    ! and I read it_now from the databases. 
    !
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5))
-   io_G=io_SC_components('G',E,ID(5))
+   io_G=io_RT_components('G',E,ID(5))
    !
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
-   io_OCCUPATIONS=io_SC_components('occupations',E,ID_OCCUPATIONS)
+   io_OCCUPATIONS=io_RT_components('occupations',E,ID_OCCUPATIONS)
    !
    if (l_ph_corr.and..not.l_RT_CCA_Kernel) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(7))
-     io_THETA=io_SC_components('THETA',E,ID(7))
+     io_THETA=io_RT_components('THETA',E,ID(7))
    endif
    !
    ! Note that the databases must be loaded at the correct time:
@@ -356,15 +356,15 @@ subroutine RT_start_and_restart(E,k,q,X)
    NE_i_time=it_now
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
-   io_OCCUPATIONS=io_SC_components('occupations',E,ID_OCCUPATIONS)
+   io_OCCUPATIONS=io_RT_components('occupations',E,ID_OCCUPATIONS)
    !
    do ik=1,QP_nk
      call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
-     io_G=io_SC_components('G',E,ID(5))
+     io_G=io_RT_components('G',E,ID(5))
      !
      if (l_ph_corr.and..not.l_RT_CCA_Kernel) then
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(7))
-       io_THETA=io_SC_components('THETA',E,ID(7))
+       io_THETA=io_RT_components('THETA',E,ID(7))
      endif
      !
    enddo

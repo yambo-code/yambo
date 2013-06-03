@@ -134,8 +134,6 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
      enddo
      !
      if (.not.BS_anti_res.and.BS_not_const_eh_f) then
-       if(any((/index(BSS_mode,'h')/=0,index(BSS_mode,'i')/=0,index(BSS_mode,'t')/=0/))) &
-&        call error('Fractional e/h occupations. Use coupling BSEmode or diagonalization solver.')
        call warning('Fractional e/h occupations. Causal BSEmode forced.')
        BSE_mode='causal'
        BS_anti_res=.true.

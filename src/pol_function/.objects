@@ -6,7 +6,8 @@ ELPH_objects = X_GreenF_remap.o
 #endif
 objs = O_driver.o O_eels.o \
        Dipole_driver.o Dipole_dip_dot_field.o \
-       Dipole_kb_pp_comp.o Dipole_kb_sum.o Dipole_kb_Ylm.o \
+       Dipole_kb_abinit_comp.o Dipole_kb_sum.o Dipole_kb_Ylm.o \
+       Dipole_kb_pwscf_comp.o Dipole_kb_init.o \
        Dipole_transverse.o Dipole_shifted_grids.o Dipole_check_shifted_grids.o  \
        X_drude.o  X_pre_setup.o X_simple_GreenF.o X_eh_setup.o X_em1.o X_os.o X_s.o \
        $(ELPH_objects) $(SC_objects) \

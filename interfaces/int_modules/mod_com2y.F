@@ -28,11 +28,9 @@ module mod_com2y
  logical :: force_noWFs
  logical :: force_noSYMM
  logical :: artificial_spin_pol
- logical :: l_Vnl
  logical :: verboseIO
  !
  integer :: ng_vec_abinit,wf_nb_io_user
- integer, public  :: N_G_vectors
  !
  real(SP):: alat_mult_factor
  !
@@ -55,14 +53,11 @@ module mod_com2y
      force_noWFs          =index(in_string,'nowf')>0
      artificial_spin_pol  =index(in_string,'dupl')>0
      verboseIO            =index(in_string,'verb')>0
-     l_Vnl                =index(in_string,'dovnl')>0
      !
      alat_mult_factor=1.
-     N_G_vectors=0
      wf_nb_io_user=0
      do i1=1,100
        if ( trim(str_piece(i1))=='alat_f')  read(str_piece(i1+1),*) alat_mult_factor
-       if ( trim(str_piece(i1))=='Gnum')    read(str_piece(i1+1),*) N_G_vectors
        if ( trim(str_piece(i1))=='fragnb')  read(str_piece(i1+1),*) wf_nb_io_user
      enddo
      !

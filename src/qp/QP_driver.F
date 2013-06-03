@@ -37,7 +37,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_W_partially_done,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
-&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,PPA_terminator,l_QP_Expand
+&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,PPA_terminator,l_QP_Expand,QP_G_info
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
  use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
  implicit none
@@ -367,6 +367,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        qp%GreenF_n_steps=QP_Sc_steps
        allocate(QP_G_amplitude_integral(QP_n_states))
        call mem_est("QP_G_amplitude_integral",(/size(QP_G_amplitude_integral)/))
+       allocate(QP_G_info(QP_n_states,3,2))
+       call mem_est("QP_G_info",(/size(QP_G_info)/))
      else if (.not.l_life) then
        allocate(QP_dSc(qp%n_states,QP_dSc_steps-1))
        call mem_est("QP_dSc",(/size(QP_dSc)/))
@@ -391,6 +393,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        deallocate(qp%S_total)
        nullify(qp%S_total)
      endif
+     if (allocated(QP_G_info)) deallocate(QP_G_info)
      if (allocated(QP_G_amplitude_integral)) deallocate(QP_G_amplitude_integral)
      if (allocated(QP_G_zoom_er))  deallocate(QP_G_zoom_er)
      call mem_est("QP_G_amplitude_integral")

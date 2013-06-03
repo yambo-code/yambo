@@ -83,7 +83,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !=====================
  if (iq==1) then
    call Dipole_driver(Xen, Xk, X, X%q0)
-   call Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
+   call X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
  endif
  !
  ! WF distributed & load

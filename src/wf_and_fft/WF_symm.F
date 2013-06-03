@@ -19,50 +19,41 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_apply_symm(isc,WF_symm)
+function WF_symm(ifft,isc)
  !
  use pars,          ONLY:SP
  use wave_func,     ONLY:wf,wf_state
- use FFT_m,         ONLY:fft_rot_r,fft_size
- use com,           ONLY:error
- use stderr,        ONLY:intc
- use parallel_m,    ONLY:myid
+ use FFT_m,         ONLY:fft_rot_r
  use electrons,     ONLY:n_spinor
  use D_lattice,     ONLY:nsym,spin_sop,i_time_rev,idt_index
  !
  implicit none
  !
- integer,     intent(in)  :: isc(4)
- complex(SP), intent(out) :: WF_symm(fft_size,n_spinor)
+ complex(SP), dimension(n_spinor) :: WF_symm
+ !
+ integer     :: isc(4)
  !
  integer     :: ifft
  integer     :: i_wf(n_spinor)
  !
  i_wf(1)=wf_state(isc(1),isc(2),isc(4))
-#if defined _BLUEGENE
- if (i_wf(1)==0) call error('EMPTY WF index @ b:'//trim(intc(isc(1)))//' k:'//&
-&                           trim(intc(isc(2)))//' spin:'//trim(intc(isc(4)))//&
-&                           ' ID:'//trim(intc(myid)))
-#endif
- if(n_spinor==2)  i_wf(n_spinor)=wf_state(isc(1),isc(2),n_spinor)
+ if(n_spinor==2)  i_wf(2)=wf_state(isc(1),isc(2),2)
  !
  if(isc(3)==idt_index) then
-   WF_symm(:,1)=wf(:,i_wf(1))
-   if(n_spinor==2) WF_symm(:,2)=wf(:,i_wf(2))
+   WF_symm(1)=wf(ifft,i_wf(1))
+   if(n_spinor==2) WF_symm(2)=wf(ifft,i_wf(2))
    return
  endif
  !
- if(n_spinor==1) WF_symm(:,1)=wf(fft_rot_r(isc(3),:),i_wf(1))
+ if(n_spinor==1) WF_symm(1)=wf(fft_rot_r(isc(3),ifft),i_wf(1))
  !
  if (n_spinor==2) then
-   WF_symm(:,1)=spin_sop(1,1,isc(3))*wf(fft_rot_r(isc(3),:),i_wf(1))+ &
-&                    spin_sop(1,2,isc(3))*wf(fft_rot_r(isc(3),:),i_wf(2))
-   WF_symm(:,2)=spin_sop(2,1,isc(3))*wf(fft_rot_r(isc(3),:),i_wf(1))+ &
-&                    spin_sop(2,2,isc(3))*wf(fft_rot_r(isc(3),:),i_wf(2))
+   WF_symm(1)=spin_sop(1,1,isc(3))*wf(fft_rot_r(isc(3),ifft),i_wf(1))+ &
+&                    spin_sop(1,2,isc(3))*wf(fft_rot_r(isc(3),ifft),i_wf(2))
+   WF_symm(2)=spin_sop(2,1,isc(3))*wf(fft_rot_r(isc(3),ifft),i_wf(1))+ &
+&                    spin_sop(2,2,isc(3))*wf(fft_rot_r(isc(3),ifft),i_wf(2))
  endif
  !
  if(isc(3)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)
  !
- return
- !
-end subroutine
+end function

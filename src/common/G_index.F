@@ -25,34 +25,39 @@ integer function G_index(v1)
  use zeros,        ONLY:G_iku_zero
  use vec_operate,  ONLY:v_is_zero,iku_v_norm
  use R_lattice,    ONLY:g_vec,ng_in_shell,n_g_shells,E_of_shell
+ use com,          ONLY:error
  !
  implicit none
  !
- real(SP)  :: v1(3)
+ real(SP), intent(in)  :: v1(3)
  !
  integer   :: ig,i_shell,ng1,ng2
  real(SP)  :: E_of_shell_v1
- real(SP)  :: delta_E_prev
- real(SP)  :: delta_E_now
  !
  G_index=0
  !
- E_of_shell_v1=iku_v_norm(v1)**2./2.
+ E_of_shell_v1=iku_v_norm(v1)**2./2._SP
  !
  if(abs(E_of_shell_v1)<1.E-5) then
    G_index=1
    return
  endif
  !
- delta_E_prev=abs(E_of_shell_v1)
+ ng1=1
+ ng2=ng_in_shell(n_g_shells)
+ !
  do i_shell=2,n_g_shells
-   delta_E_now =abs(E_of_shell(i_shell)-E_of_shell_v1)
-   if( delta_E_now>delta_E_prev ) then
-     ng1=ng_in_shell(i_shell-2)+1
-     ng2=ng_in_shell(i_shell-1)
+   if(abs(E_of_shell(i_shell)-E_of_shell_v1)<1.E-4) then
+     ng1=ng_in_shell(i_shell-1)
      exit
    endif
-   delta_E_prev=delta_E_now
+ enddo
+ !
+ do i_shell=n_g_shells-1,2,-1
+   if(abs(E_of_shell(i_shell)-E_of_shell_v1)<1.E-4) then
+     ng2=ng_in_shell(minval((/i_shell+2,n_g_shells/)))
+     exit
+   endif
  enddo
  !
  do ig=ng1,ng2
@@ -62,6 +67,7 @@ integer function G_index(v1)
    endif
  enddo
  !
+ if(G_index==0) call error(" Error search for G=G1-G2 !!")
  return
  !
 end function

@@ -373,7 +373,7 @@ module parallel_m
      dimensions=shape(array)
      dimension=product(dimensions)
      allocate(larray(dimension))
-     larray=0.
+     larray=0
      call mpi_allreduce(array(1),larray,dimension,mpi_integer,omode,LOCAL_COMM,i_err)
      array=reshape(larray,dimensions)
      deallocate(larray)
@@ -406,7 +406,7 @@ module parallel_m
      dimensions=shape(array)
      dimension=product(dimensions)
      allocate(larray(dimension))
-     larray=0.
+     larray=0
      call mpi_allreduce(array(1),larray,dimension,mpi_integer8,omode,LOCAL_COMM,i_err)
      array=reshape(larray,dimensions)
      deallocate(larray)
@@ -458,7 +458,7 @@ module parallel_m
      dimensions=shape(array)
      dimension=product(dimensions)
      allocate(larray(dimension))
-     larray=0.
+     larray=0
      call mpi_allreduce(array(1,1,1),larray,dimension,mpi_integer,mpi_sum,LOCAL_COMM,i_err)
      array=reshape(larray,dimensions)
      deallocate(larray)

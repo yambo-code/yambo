@@ -26,8 +26,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,warning
  use memory_m,       ONLY:mem_est
- use stderr,         ONLY:string_remove,intc,real2ch
- use electrons,      ONLY:levels,n_sp_pol
+ use stderr,         ONLY:string_remove,string_add,intc,real2ch
+ use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_nbands
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
  use BS,             ONLY:BS_bands,BS_q,BS_blk_dim,BS_eh_table,BS_eh_E,BS_eh_f,&
@@ -35,7 +35,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_eh_en,BSE_mode,BSS_q0
+&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_eh_en,BSE_mode,&
+&                         BSS_uses_RIM,BSS_q0
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal,FXC_n_g_corr
  use QP_CTL_m,       ONLY:QP_apply
@@ -51,6 +52,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 #endif
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
+#endif
+#if defined _SC || defined _KERR
+ use fields,         ONLY:global_gauge
 #endif
  implicit none
  type(levels)  ::Xen,Ken
@@ -101,6 +105,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    call warning('E/h energy range :'//trim(real2ch(BS_eh_en(1)*HA2EV))//' - '//trim(real2ch(BS_eh_en(2)*HA2EV))//' eV')
  endif
  !
+#if defined _SC || defined _KERR
+ if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
+   call warning("Not a valid gauge in input. Switching to lenght gauge")
+   global_gauge="length"
+ endif
+#endif
+ !
  ! If using ALDA enough bands must be loaded to
  ! be able to calculate the density
  !
@@ -149,9 +160,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  if(l_rpa_IP.and.trim(BSE_mode)=='coupling') BSE_mode='causal'
  !
- if( any((/index(BSS_mode,'h')/=0,index(BSS_mode,'i')/=0/)) &
-&    .and. trim(BSE_mode)=='causal') BSE_mode='resonant'
- !
  ! GPL_EXCLUDE_START  
  !
  if (l_bs_fxc.or.index(BSS_mode,'t')/=0) then
@@ -188,11 +196,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  W_bss%dr=BSS_dr
  W_bss%damp_reference=BSS_damp_reference
  !
+ ! RIM support
+ !
+ BSS_uses_RIM = (BZ_RIM_nbands>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
+ !
  W_bss%per_memstps=FXC_per_memstps
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n_freqs
  !
  iq=BS_q(1)
+ !
+ call section('+','Main loop')
  !
  ! 1. The IP Part (Dipoles and eh-energies)...
  ! ================

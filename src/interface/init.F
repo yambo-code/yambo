@@ -457,6 +457,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_gw0) call CPU_activate("GW")
  !
+ if (l_collisions_IO) call CPU_activate("RT")
+ !
  if (l_bse) call CPU_activate("BSE")
  !
  if (l_real_time) then
@@ -464,6 +466,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call CPU_activate("WF")
    call CPU_activate("X_q_0")
  endif
+ !
  !
 #endif
  !
@@ -720,7 +723,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
    if (l_ph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol UseDebyeE ElPhModes')
    call initactivate(1,'HXCjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
-   call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField SkipGFIO SkipOCCIO IOtime')
+   call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField SkipGFIO SkipOCCIO IOtime COLLISIONS-on-the-fly')
    if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
    if (              l_RT_pump_and_probe) call Afield_activate('Pump')
    !

@@ -328,6 +328,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'SkipGFIO',  '[RT] Do not write on disk the Green Functions',verb_level=V_real_time)
  call it('f',defs,'SkipOCCIO', '[RT] Do not write on disk the Occupations',verb_level=V_real_time)
  call it('f',defs,'SkipJPIO',  '[RT] Do not write on disk the current and polarization',verb_level=V_real_time)
+ call it('f',defs,'COLLISIONS-on-the-fly', '[RT] Calculate COLLISIONS on-the-fly',verb_level=V_real_time)
  !
  ! Other parameters of RT (to be switched on using the verbosity)
  !

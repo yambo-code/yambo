@@ -33,7 +33,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
 &                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
 &                        PAR_IND_Q_ID,PAR_n_B_mat_elements,PAR_COM_QP_A2A,&
-&                        PAR_IND_B_mat
+&                        PAR_IND_B_mat,PAR_Q_index,PAR_IND_QPp,PAR_QPp_index
  use interfaces,    ONLY:PARALLEL_index
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
@@ -61,7 +61,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
 &                           i_n,i_k,i_k_s,i_k_sp,&
 &                           i_np,i_kmq,i_kmq_s,i_kmq_sp,i_kmq_G0,&
 &                           i_m,i_p,i_p_s,i_p_sp,i_p_star,&
-&                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz
+&                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp2_mem
  complex(SP), allocatable ::EM1s(:,:)
  type(ggwinfo)            ::isc,iscp
  integer          ::io_err,ID
@@ -131,7 +131,12 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
    !
    Q_loop: do iqbz=1,q%nbz 
      !
-     if (.not.PAR_IND_Q%element_1D(q%sstar(iqbz,1))) cycle
+     if (l_carrier_dynamics) then
+       if (.not.PAR_IND_Q%element_1D(q%sstar(iqbz,1))) cycle
+     else
+       if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
+       i_q_mem=PAR_Q_index(iqbz)
+     endif
      !
      i_kmq_G0 =qindx_S(QP_table(i_qp1,3),iqbz,2)
      iqibz    =q%sstar(iqbz,1)
@@ -198,6 +203,9 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
        !
        do i_qp2=1,QP_n_states
          !
+         if (.not.PAR_IND_QPp%element_1D(i_qp2)) cycle
+         i_qp2_mem=PAR_QPp_index(i_qp2)
+         !
          i_m     = QP_table(i_qp2,1)
          i_mp    = QP_table(i_qp2,2)
          i_p     = QP_table(i_qp2,3)
@@ -213,7 +221,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
            !
            i_pmq   = k%sstar(i_pmq_bz,1)
            i_pmq_s = k%sstar(i_pmq_bz,2)
-           i_pmq_G0= k%sstar(i_pmq_bz,3)
+           i_pmq_G0= 1
            !
            iscp%is =(/i_m,i_p,i_p_s,i_p_sp/)
            iscp%os =(/i_mp,i_pmq,i_pmq_s,i_pmq_sp/)
@@ -224,6 +232,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
            call M_by_V('N', X%ng, EM1s, conjg(iscp%rhotw), local_rhotw)
            !
            TEMP_COLLISIONS_v(i_qp2,i_p_s,iqbz)=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+           !TEMP_COLLISIONS_v(i_qp2_mem,i_p_s,i_q_mem)=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
            !
          enddo
          !

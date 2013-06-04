@@ -113,7 +113,11 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    ! PARALLEL Setup
    !================
    call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
-   call PARALLEL_global_indexes(E,k,q,"GW")
+   if (l_carrier_dynamics) then
+     call PARALLEL_global_indexes(E,k,q,"Real_Time")
+   else
+     call PARALLEL_global_indexes(E,k,q,"GW")
+   endif
    !
    V_kind=SC_COHSEX
    fragment_status=-1
@@ -131,8 +135,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        !
        if (.not.allocated(TEMP_COLLISIONS_v)) then
          allocate(TEMP_COLLISIONS_v(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
-&                                 COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
-&                                 COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
+&                                   COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
+&                                   COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
          call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
          call collisions_IO_alloc()
        endif

@@ -28,8 +28,8 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  use memory_m,       ONLY:mem_est
 #if defined _RT
  use real_time,      ONLY:G_lesser
- use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_COM_WF_k_INDEX
 #endif
+ use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_COM_WF_k_INDEX
  use wave_func,      ONLY:wf
  use R_lattice,      ONLY:bz_samp
  use xc_functionals, ONLY:V_xc
@@ -97,10 +97,12 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  do ik=1,QP_nk
    !
+#if defined _RT
    if (.not.PAR_IND_WF_k%element_1D(ik)) then
      Ho(:,:,ik,:)  =cZERO
      cycle
    endif
+#endif
    !
    call V_real_space_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),wf)
    !
@@ -120,6 +122,8 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  deallocate(QP_Vxc)
  call mem_est("QP_Vxc")
  !
+#if defined _RT
  call PP_redux_wait(Ho,COMM=PAR_COM_WF_k_INDEX%COMM)
+#endif
  !
 end subroutine SC_bare_Hamiltonian

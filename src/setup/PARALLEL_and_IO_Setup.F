@@ -69,7 +69,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r','Input file     is ',trim(infile))
  call msg('r','Report file    is ',trim(repfile))
  if (len_trim(jobstr)>0 ) call msg('r','Job string     is ',trim(jobstr))
- if (log_as_a_file         ) call msg('r','Log file       is ',trim(logfile))
+ if (log_as_a_file      ) call msg('r','Log files      in ',trim(trim(com_path)//"/LOG"))
  call msg('r','')
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=REP,ID=ID)

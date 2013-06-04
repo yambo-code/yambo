@@ -23,7 +23,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_cohsex,l_collisions_IO,l_sc_contains_lda
+ use drivers,        ONLY:l_sc_cohsex,l_collisions_IO,l_sc_contains_lda,l_sc_hf
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
@@ -36,6 +36,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use matrix_operate, ONLY:mat_dia_inv,DIAGO
+ use interfaces,     ONLY:PARALLEL_global_indexes
  use com,            ONLY:msg,warning
  use X_m,            ONLY:X_t,current_iq
  use timing,         ONLY:LIVE_message
@@ -93,6 +94,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  call SC_start_and_restart(X,E,Xk)
  !
  if (.not.any((/l_SC_RESTART,l_SC_cycle,l_NSC_shot/))) return
+ !
+ ! Parallel Setup
+ !================
+ call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+ if (l_sc_cohsex) call PARALLEL_global_indexes(E,k,q,"HF") 
+ if (l_sc_hf)     call PARALLEL_global_indexes(E,k,q,"GW")
  !
  ! Allocation(s)...
  !==================

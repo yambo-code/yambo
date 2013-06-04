@@ -27,18 +27,19 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev
- use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk,COHSEX_use_empties,QP_n_G_bands,QP_state
+ use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk,QP_n_G_bands,QP_state
  use wave_func,     ONLY:WF_free
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands
  use global_XC,     ONLY:SC_HF,SC_COHSEX
  use collisions_IO, ONLY:V_kind,collisions_IO_alloc,collisions_IO_free,TEMP_COLLISIONS_v,&
-&                        io_COLLISIONS,collisions_RANGES_setup,COLLISIONS_range
+&                        io_COLLISIONS,collisions_RANGES_setup,COLLISIONS_range,l_STORE_COLLISIONS
  use X_m,           ONLY:X_t
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
- use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,IO_and_Messaging_switch
+ use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
  use fragments,     ONLY:fragment_status
+ use interfaces,    ONLY:PARALLEL_global_indexes
  !
  implicit none
  type(levels)  :: E
@@ -69,28 +70,33 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  ! No DB => EVAL
  !===============
  !
- call IO_and_Messaging_switch("+all_write_fragments")
- !
- allocate(fragment_status(QP_n_states))
- call mem_est("fragment_status",(/QP_n_states/),(/IP/))
+ if (l_STORE_COLLISIONS) then
+   allocate(fragment_status(QP_n_states))
+   call mem_est("fragment_status",(/QP_n_states/),(/IP/))
+ endif
  !
  if (l_HF_and_locXC.and..not.l_carrier_dynamics) then
    !
    call section('+','Hartree-Fock')
    !================================
    !
+   ! PARALLEL Setup
+   !================
+   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+   call PARALLEL_global_indexes(E,k,q,"HF")
+   !
    V_kind=SC_HF
    fragment_status=-1
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+   if (l_STORE_COLLISIONS) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    !
-   call collisions_RANGES_setup()
-   !
-   if (io_COLLISIONS(0,ID)/=0) then
-     allocate(TEMP_COLLISIONS_v(QP_nb,QP_nb,QP_nk))
-     call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
-     call collisions_IO_alloc()
+   if (io_COLLISIONS(0,ID)/=0.or..not.l_STORE_COLLISIONS) then
      !
-     call report_disk_usage('HF')
+     if (l_STORE_COLLISIONS) then
+       allocate(TEMP_COLLISIONS_v(QP_nb,QP_nb,QP_nk))
+       call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
+       call collisions_IO_alloc()
+       call report_disk_usage('HF')
+     endif
      !
      call XCo_Hartree_Fock(E,k,xk,q)
      !
@@ -101,30 +107,39 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  if (l_cohsex) then
    !
    if (l_HF_and_locXC)      call section('=','COHSEX')
-   if (.not.l_HF_and_locXC) call section('+','COHSEX')
    !                        ==========================
+   if (.not.l_HF_and_locXC) call section('+','COHSEX')
+   !
+   ! PARALLEL Setup
+   !================
+   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+   call PARALLEL_global_indexes(E,k,q,"GW")
+   !
    V_kind=SC_COHSEX
    fragment_status=-1
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+   if (l_STORE_COLLISIONS) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    !
    if (io_COLLISIONS(0,ID)/=0) then
      !
      QP_n_G_bands(2)=SC_bands(2)
-     COHSEX_use_empties=.TRUE.
      !  
      ! RL vectors to dimension the COLLISIONS
      !  
-     call collisions_RANGES_setup()
-     !
-     if (.not.allocated(TEMP_COLLISIONS_v)) then
-       allocate(TEMP_COLLISIONS_v(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
+     if (l_STORE_COLLISIONS) then  
+       !  
+       call collisions_RANGES_setup()
+       !
+       if (.not.allocated(TEMP_COLLISIONS_v)) then
+         allocate(TEMP_COLLISIONS_v(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
 &                                 COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
 &                                 COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
-       call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
-       call collisions_IO_alloc()
+         call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
+         call collisions_IO_alloc()
+       endif
+       !
+       call report_disk_usage('COHSEX')
+       !
      endif
-     !
-     call report_disk_usage('COHSEX')
      !
      call COLLISIONS_IO_cohsex(X(2),Xk,E,k,q,Xw(2)) 
      !
@@ -132,19 +147,18 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
    !
  endif
  !
- call IO_and_Messaging_switch("-all_write_fragments")
- !
  ! CLEAN
  !=======
  !
  deallocate(fragment_status)
  call mem_est("fragment_status")
- if (.not.allocated(TEMP_COLLISIONS_v)) return
  !
- call WF_free()
- call collisions_IO_free()
- deallocate(TEMP_COLLISIONS_v)
- call mem_est("TEMP_COLLISIONS_v")
+ if (.not.l_STORE_COLLISIONS.or.allocated(TEMP_COLLISIONS_v)) then
+   call WF_free()
+   call collisions_IO_free()
+   if (allocated(TEMP_COLLISIONS_v)) deallocate(TEMP_COLLISIONS_v)
+   call mem_est("TEMP_COLLISIONS_v")
+ endif
  !
  contains
    !

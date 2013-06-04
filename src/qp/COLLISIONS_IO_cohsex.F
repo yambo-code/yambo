@@ -29,11 +29,15 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  use electrons,     ONLY:levels,spin_occ,spin
  use timing,        ONLY:live_timing
  use com,           ONLY:error
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use real_time,     ONLY:B_mat_index
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
+&                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
+&                        PAR_IND_Q_ID,PAR_n_B_mat_elements,PAR_COM_QP_A2A,&
+&                        PAR_IND_B_mat
  use interfaces,    ONLY:PARALLEL_index
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,IO_and_Messaging_switch
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_n_states,QP_table
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF_load,WF_free
@@ -60,7 +64,6 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz
  complex(SP), allocatable ::EM1s(:,:)
  type(ggwinfo)            ::isc,iscp
- type(PP_indexes)         ::px
  integer          ::io_err,ID
  integer, external::ioX
  character(schlen)::ch
@@ -68,9 +71,9 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  !
  ! Reset...
  !
+ !
  call collision_reset(isc)
  call collision_reset(iscp)
- call PP_indexes_reset(px)
  !
  ! Setup...
  !
@@ -112,15 +115,12 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
- call PARALLEL_index(px,(/QP_n_states/))
- !
- call PP_redux_wait
- !
- call live_timing("COHSEX collisions",px%n_of_elements(myid+1)) 
+ call live_timing("COHSEX collisions",PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
+&                 PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*PAR_n_B_mat_elements)
  !
  QP_loop: do i_qp1=1,QP_n_states
    !
-   if (.not.px%element_1D(i_qp1)) cycle
+   if (.not.PAR_IND_QP%element_1D(i_qp1)) cycle
    !
    if (fragment_status(i_qp1)/=-1) then
      call live_timing(steps=1)
@@ -131,6 +131,8 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
    !
    Q_loop: do iqbz=1,q%nbz 
      !
+     if (.not.PAR_IND_Q%element_1D(q%sstar(iqbz,1))) cycle
+     !
      i_kmq_G0 =qindx_S(QP_table(i_qp1,3),iqbz,2)
      iqibz    =q%sstar(iqbz,1)
      iqs      =q%sstar(iqbz,2)
@@ -140,12 +142,16 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
        !
        call scatterGamp(isc,'c')
        !
+       call IO_and_Messaging_switch("-fragments_IO_log")
+       !
        ! I/O
        !
        if (iqbz ==1) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID)
        if (q%nbz==1) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)
        if (iqbz>  1) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
        io_err=ioX(X,Xw,ID)
+       !
+       call IO_and_Messaging_switch("+fragments_IO_log")
        !
        ! Poles and Residuals
        !
@@ -229,9 +235,16 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
          !
          isc%os(1)=i_np
          !
-         call scatterBamp(isc)
+         isc_loop: do i_mp=QP_n_G_bands(1),QP_n_G_bands(2)
+           if ( PAR_IND_B_mat%element_1D( B_mat_index(i_np,i_mp) ) ) then
+             call scatterBamp(isc)
+             exit isc_loop
+           endif
+         enddo isc_loop
          !
          do i_mp=QP_n_G_bands(1),QP_n_G_bands(2)
+           !
+           if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_np,i_mp) ) ) cycle
            !
            iscp%os(1)=i_mp
            !
@@ -247,12 +260,16 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
            !
            TEMP_COLLISIONS_v(i_np,i_mp,isc%os(2))=TEMP_COLLISIONS_v(i_np,i_mp,isc%os(2))-4._SP/spin_occ*pi*pre_factor
            !
+           if (q%sstar(iqbz,2)==1) call live_timing(steps=1)
+           !
          enddo ! loop on the band i_np
          !
        enddo ! loop on the band i_m
        !
      endif
    enddo Q_loop 
+   !
+   call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)
    !
    call COLLISIONS_IO_store(i_qp1)
    !
@@ -270,6 +287,5 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  call WF_free()
  call collision_reset(isc)
  call collision_reset(iscp)
- call PP_indexes_reset(px)
  !
 end subroutine

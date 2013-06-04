@@ -21,7 +21,7 @@
 !
 subroutine COLLISIONS_IO_compose(G_input)
  !
- ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} rho_rho_(n,n',q,qp_state) x G_lesser(n,n',k-q)
+ ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} COLLISIONS(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
  use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_sc_srpa
  use pars,             ONLY:SP

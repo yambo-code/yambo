@@ -116,8 +116,8 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
    if (.not.l_carrier_dynamics) then
      !
      allocate(COLLISIONS(i_qp_mem)%table(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
-&                                    COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
-&                                    COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
+&                                        COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
+&                                        COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
      !
      COLLISIONS(i_qp_mem)%table(:,:,:)=0
      !

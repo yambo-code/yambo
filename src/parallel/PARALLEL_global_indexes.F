@@ -50,13 +50,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
 &                        PARALLEL_live_message
  use X_m,           ONLY:X_t
- use drivers,       ONLY:l_real_time
+ use drivers,       ONLY:l_real_time,l_collisions_IO
  use matrix_operate,ONLY:matrix_linear_index
  use BS,            ONLY:BS_bands
 #if defined _SC
  use SC,            ONLY:SC_bands
-#endif
-#if defined _RT
  use real_time,     ONLY:B_mat_index
 #endif
  use electrons,     ONLY:levels
@@ -492,24 +490,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    !
    ! Bands (G_k, G_k_m_q => QP indexes)
    !
-   call PARALLEL_index(PAR_IND_B_mat,(/ (SC_bands(2)-SC_bands(1)+1)**2 /),&
-&                      COMM=PAR_COM_G_b_INDEX,CONSECUTIVE=.TRUE.)
-   PAR_IND_B_mat_ID=PAR_COM_G_b_INDEX%CPU_id
-   !
-   allocate(PAR_B_mat_index(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)))
-   PAR_n_B_mat_elements=PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1)
-   PAR_B_mat_index=0
-   !
-   PAR_n_B_mat_elements=0
-   !
-   do ib1=SC_bands(1),SC_bands(2)
-     do ib2=SC_bands(1),SC_bands(2)
-       if (PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2) ) ) then
-         PAR_n_B_mat_elements=PAR_n_B_mat_elements+1
-         PAR_B_mat_index(ib1,ib2)=PAR_n_B_mat_elements
-       endif
-     enddo
-   enddo
+   call G_b_to_B_mat( )
    !
    allocate(PAR_QP_index(QP_n_states),PAR_IND_QP%n_of_elements(ncpu),PAR_IND_QP%element_1D(QP_n_states)) 
    PAR_IND_QP%element_1D=.FALSE.
@@ -577,6 +558,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    !
    call PARALLEL_index(PAR_IND_QP,(/QP_n_states/),COMM=PAR_COM_QP_INDEX)
    PAR_IND_QP_ID=PAR_COM_QP_INDEX%CPU_id
+   PAR_nQP=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)
+   allocate(PAR_QP_index(QP_n_states))
+   PAR_QP_index=0
+   call Build_up_index(PAR_IND_QP,QP_n_states,PAR_QP_index,PAR_nQP)
    call PARALLEL_live_message("QP",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1),TOTAL=QP_n_states,&
 &                             NCPU=PAR_COM_QP_INDEX%n_CPU,CHAIN=PAR_COM_QP_INDEX%chain_order)
@@ -598,10 +583,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    !
    if (ENVIRONMENT=="HF") n_bands=(/1,max(E%nbm,QP_nb)/)
    if (ENVIRONMENT=="GW") n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
+   if (l_collisions_IO)   n_bands=SC_bands
    !
    call PARALLEL_index(PAR_IND_G_b,(/n_bands(2)/),low_range=(/n_bands(1)/),&
 &                      COMM=PAR_COM_G_b_INDEX,CONSECUTIVE=.TRUE.)
    PAR_IND_G_b_ID=PAR_COM_G_b_INDEX%CPU_id
+   !
+   if (l_collisions_IO) call G_b_to_B_mat( )
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz)
    call PARALLEL_live_message("G bands",ENVIRONMENT=ENVIRONMENT,&
@@ -612,12 +600,16 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    ! I/O privileges
    !
    if (PARALLEL_n_structures_active>1) then
-     call IO_and_Messaging_switch("+io_out +output",CONDITION=master_cpu)
+     if (.not.l_collisions_IO) call IO_and_Messaging_switch("+io_out +output",CONDITION=master_cpu)
+     if (     l_collisions_IO) call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_QP_INDEX%my_CHAIN==1)
    else
      call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif
    !
  endif
+ !
+ ! BANDS in RESPONSE FUNCTION
+ !----------------------------
  !
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum".or.ENVIRONMENT=="Response_G_space_Finite_Momentum".or.&
 &    ENVIRONMENT=="BSE") then
@@ -662,6 +654,28 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  endif
  !
  contains
+   !
+   subroutine G_b_to_B_mat( )
+     !
+     call PARALLEL_index(PAR_IND_B_mat,(/ (SC_bands(2)-SC_bands(1)+1)**2 /),COMM=PAR_COM_G_b_INDEX,CONSECUTIVE=.TRUE.)
+     PAR_IND_B_mat_ID=PAR_COM_G_b_INDEX%CPU_id
+     !
+     allocate(PAR_B_mat_index(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)))
+     PAR_n_B_mat_elements=PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1)
+     PAR_B_mat_index=0
+     !
+     PAR_n_B_mat_elements=0
+     !
+     do ib1=SC_bands(1),SC_bands(2)
+       do ib2=SC_bands(1),SC_bands(2)
+         if (PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2) ) ) then
+           PAR_n_B_mat_elements=PAR_n_B_mat_elements+1
+           PAR_B_mat_index(ib1,ib2)=PAR_n_B_mat_elements
+         endif
+       enddo
+     enddo
+     !
+   end subroutine
    !
    subroutine Build_up_index(PAR_ind,n_PAR_ind,V_ind,n_V_ind)
      !

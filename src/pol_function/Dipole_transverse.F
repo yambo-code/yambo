@@ -107,10 +107,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! Main loop over k in IBZ
  !
  do ik=1,Xk%nibz
-   ! 
-   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle 
-   !
-   ik_mem=PAR_Xk_ibz_index(ik)
    !
    ! [Vnl,r]
    !
@@ -125,6 +121,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
      if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
      ioKB_abinit_err=ioKB_abinit(ID)
    endif
+   ! 
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle 
+   !
+   ik_mem=PAR_Xk_ibz_index(ik)
    ! 
    do i_spin=1,n_spin
      ! 

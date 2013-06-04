@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
+subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_carrier_dynamics 
  use com,           ONLY:error
@@ -141,7 +141,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
        !
      endif
      !
-     call COLLISIONS_IO_cohsex(X(2),Xk,E,k,q,Xw(2)) 
+     call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2)) 
      !
    endif
    !

@@ -233,7 +233,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! Checking extended COLLISIONS
  !==============================
  !
- call COLLISIONS_IO_load(.TRUE.)
+ call COLLISIONS_load(.TRUE.)
  !
  if (l_collisions_IO) call msg('s' ,'[SC] Extented collisions I/O Used')
  call msg('r' ,'[SC] Extented collisions I/O          :',l_collisions_IO)

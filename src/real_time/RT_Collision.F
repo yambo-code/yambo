@@ -108,7 +108,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
      ! NOTICE THAT: this approximation is valid only for linear self-energies 
      !              in G_lesser as exchange or COHSEX(with W fixed) 
      !
-     if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_IO_compose(G_input-G_lesser_reference)
+     if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_compose(G_input-G_lesser_reference)
      !
    endif
    !

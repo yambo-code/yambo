@@ -158,7 +158,7 @@ subroutine RT_driver(E,X,k,q)
    !
    if (.not.l_collisions_IO) call error('COLLISIONs database missing')
    !
-   call COLLISIONS_IO_load(.FALSE.)
+   call COLLISIONS_load(.FALSE.)
    !
  endif
  !

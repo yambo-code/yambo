@@ -288,7 +288,7 @@ subroutine RT_initialize(E,k,q)
  !
  call msg('r',' ')
  !
- call COLLISIONS_IO_load(.TRUE.)
+ call COLLISIONS_load(.TRUE.)
  !
  call UPDATE_flags(.TRUE.)
  !

@@ -110,7 +110,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! COLLISIONS
  !============
  !
- if (l_collisions_IO) call COLLISIONS_IO_load(.FALSE.)
+ if (l_collisions_IO) call COLLISIONS_load(.FALSE.)
  !
  ! Initialize SC_R matrix
  !========================

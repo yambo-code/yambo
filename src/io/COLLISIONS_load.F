@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
+subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  ! Load all collisions contribution from any kind of self-energy 
  ! exchange, COHSEX etc.. and store them together 
@@ -207,4 +207,4 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  !
  call collisions_IO_free()
  !
-end subroutine COLLISIONS_IO_load
+end subroutine COLLISIONS_load

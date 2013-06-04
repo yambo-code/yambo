@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
+subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  !
  ! COHSEX collisions 
  !
@@ -271,7 +271,7 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
    !
    call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)
    !
-   call COLLISIONS_IO_store(i_qp1)
+   call COLLISIONS_store(i_qp1)
    !
    call live_timing(steps=1)
    !

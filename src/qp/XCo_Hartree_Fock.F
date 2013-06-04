@@ -273,7 +273,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    !
    call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)
    !
-   if (l_collisions_IO) call COLLISIONS_IO_store(i_qp)
+   if (l_collisions_IO) call COLLISIONS_store(i_qp)
    !
 #endif
    !

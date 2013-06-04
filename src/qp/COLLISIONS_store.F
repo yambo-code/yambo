@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_IO_store(i_qp)
+subroutine COLLISIONS_store(i_qp)
  !
  use pars,            ONLY:SP
  use QP_m,            ONLY:QP_n_states
@@ -83,4 +83,4 @@ subroutine COLLISIONS_IO_store(i_qp)
  !
  if (i_qp==QP_n_states) call IO_and_Messaging_switch("-DB_is_fragmented")
  !
-end subroutine COLLISIONS_IO_store
+end subroutine COLLISIONS_store

@@ -73,7 +73,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      do ik=1,QP_nk
        call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik,1),SC_bands(2),-1)
      enddo
-     call COLLISIONS_IO_compose(G_lesser(:,:,:,1))
+     call COLLISIONS_compose(G_lesser(:,:,:,1))
      !    ==========
    else
      !

@@ -30,14 +30,12 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  use timing,        ONLY:live_timing
  use com,           ONLY:error
  use real_time,     ONLY:B_mat_index
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
-&                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
-&                        PAR_IND_Q_ID,PAR_n_B_mat_elements,PAR_COM_QP_A2A,&
-&                        PAR_IND_B_mat,PAR_Q_index,PAR_IND_QPp,PAR_QPp_index
- use interfaces,    ONLY:PARALLEL_index
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,&
+&                        PAR_IND_Q,PAR_n_B_mat_elements,PAR_COM_QP_A2A,PAR_COM_G_b_A2A,&
+&                        PAR_IND_B_mat,PAR_Q_index,PAR_IND_QPp,PAR_QPp_index,PAR_nQ,PAR_nQP,PAR_nQPp
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,IO_and_Messaging_switch
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_n_states,QP_table
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF_load,WF_free
@@ -97,7 +95,6 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioX(X,Xw,ID)
- if (io_err/=0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
  ! Test the spatial Inversion
  !   
@@ -115,28 +112,25 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
- call live_timing("COHSEX collisions",PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
-&                 PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*PAR_n_B_mat_elements)
+ if (l_carrier_dynamics) then
+   call live_timing("COHSEX collisions",PAR_nQP*PAR_nQ*PAR_nQPp)
+ else
+   call live_timing("COHSEX collisions",PAR_nQP*PAR_nQ*PAR_n_B_mat_elements)
+ endif
+ if (io_err/=0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
  QP_loop: do i_qp1=1,QP_n_states
    !
    if (.not.PAR_IND_QP%element_1D(i_qp1)) cycle
    !
    if (fragment_status(i_qp1)/=-1) then
-     call live_timing(steps=1)
+     call live_timing(steps=PAR_nQ*PAR_n_B_mat_elements)
      cycle
    endif
    !
    TEMP_COLLISIONS_v=cZERO
    !
    Q_loop: do iqbz=1,q%nbz 
-     !
-     if (l_carrier_dynamics) then
-       if (.not.PAR_IND_Q%element_1D(q%sstar(iqbz,1))) cycle
-     else
-       if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
-       i_q_mem=PAR_Q_index(iqbz)
-     endif
      !
      i_kmq_G0 =qindx_S(QP_table(i_qp1,3),iqbz,2)
      iqibz    =q%sstar(iqbz,1)
@@ -151,9 +145,9 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
        !
        ! I/O
        !
-       if (iqbz ==1) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID)
-       if (q%nbz==1) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)
-       if (iqbz>  1) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
+       if (q%nbz==1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,3/),ID=ID)
+       if (iqbz ==1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,2*iqibz+1/),ID=ID)
+       if (iqbz>  1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
        io_err=ioX(X,Xw,ID)
        !
        call IO_and_Messaging_switch("+fragments_IO_log")
@@ -169,6 +163,13 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
          forall(i1=1:X%ng,i2=1:X%ng) EM1s(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
        endif
        !
+     endif
+     !
+     if (l_carrier_dynamics) then
+       if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
+       i_q_mem=PAR_Q_index(iqbz)
+     else
+       if (.not.PAR_IND_Q%element_1D(q%sstar(iqbz,1))) cycle
      endif
      !
      ! Scattering geometry (I)
@@ -217,11 +218,10 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
            !
            i_p_s =k%star(i_p,i_p_star)
            !
-           call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,iqibz,iqs,i_pmq_bz)
+           call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,iqibz,iqs,i_pmq_bz,i_pmq_G0)
            !
            i_pmq   = k%sstar(i_pmq_bz,1)
            i_pmq_s = k%sstar(i_pmq_bz,2)
-           i_pmq_G0= 1
            !
            iscp%is =(/i_m,i_p,i_p_s,i_p_sp/)
            iscp%os =(/i_mp,i_pmq,i_pmq_s,i_pmq_sp/)
@@ -232,9 +232,12 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
            call M_by_V('N', X%ng, EM1s, conjg(iscp%rhotw), local_rhotw)
            !
            TEMP_COLLISIONS_v(i_qp2,i_p_s,iqbz)=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+           !
            !TEMP_COLLISIONS_v(i_qp2_mem,i_p_s,i_q_mem)=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
            !
          enddo
+         !
+         call live_timing(steps=1)
          !
        enddo
        !
@@ -278,11 +281,13 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
      endif
    enddo Q_loop 
    !
-   call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)
+   if (l_carrier_dynamics) then
+     call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_G_b_A2A%COMM)
+   else
+     call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)
+   endif
    !
    call COLLISIONS_store(i_qp1)
-   !
-   call live_timing(steps=1)
    !
  enddo QP_loop
  !

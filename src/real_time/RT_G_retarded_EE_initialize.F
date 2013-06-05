@@ -39,7 +39,7 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  ! Work Space
  !
  integer :: i_qp1,i_qp2,i_qp1_mem,i_qp2_mem,i_n,i_k,i_m,i_p,i_np,i_kmq,i_mp,&
-&           i_q,i_q_s,iqbz,iq_mem,i_p_s,i_p_star,i_pmq_bz,i_pmq
+&           i_q,i_q_s,iqbz,iq_mem,i_p_s,i_p_star,i_pmq_bz,i_pmq,i_pmq_G0
  real(SP):: GAMMA_(2),WIDTH(4,2),pre_factor,E_center
  !
  ! Allocation
@@ -87,7 +87,7 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
          !
          i_p_s =k%star(i_p,i_p_star)
          !
-         call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,i_q,i_q_s,i_pmq_bz)
+         call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,i_q,i_q_s,i_pmq_bz,i_pmq_G0)
          !
          i_pmq =k%sstar(i_pmq_bz,1)
          !

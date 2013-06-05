@@ -35,7 +35,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                        PAR_COM_Xk_bz_INDEX,PAR_COM_INV_INDEX,PAR_COM_INV,&
 &                        PAR_COM_DIAGO_INDEX,PAR_COM_DIAGO,&
 &                        PAR_COM_QP_INDEX,PAR_COM_QPp_INDEX,&
-&                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,&
+&                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_A2A,&
 &                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX
  use parallel_m,    ONLY:& ! INDEXES
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,&
@@ -156,6 +156,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    call COMM_reset(PAR_COM_QP_INDEX)
    call COMM_reset(PAR_COM_QP_A2A)
    call COMM_reset(PAR_COM_G_b_INDEX)
+   call COMM_reset(PAR_COM_G_b_A2A)
    call COMM_reset(PAR_COM_WF_k_A2A)
    call COMM_reset(PAR_COM_WF_b_INDEX)
    call COMM_reset(PAR_COM_WF_k_INDEX)
@@ -474,9 +475,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"k","b","q","qp"/),&
 &                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,COMM_index_2=PAR_COM_G_b_INDEX,&
 &                                        COMM_index_3=PAR_COM_Q_INDEX,&
-&                                        COMM_index_4=PAR_COM_QPp_INDEX,COMM_A2A_1=PAR_COM_Xk_ibz_A2A)
+&                                        COMM_index_4=PAR_COM_QPp_INDEX,&
+&                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
+&                                        COMM_A2A_2=PAR_COM_G_b_A2A,&
+&                                        COMM_A2A_3=PAR_COM_Q_A2A)
    !
-   if (n_CPU_save/=PAR_COM_Xk_ibz_INDEX%n_CPU) then
+   if (n_CPU_save/=PAR_COM_Xk_ibz_INDEX%n_CPU.and..not.l_collisions_IO) then
      call error(' Wrong structure of Real_Time fields. Please set #CPU for K-points to be '//trim(intc(n_CPU_save)))
    endif
    !
@@ -539,6 +543,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    call PARALLEL_live_message("QPs (level 2)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_nQPp,TOTAL=QP_n_states,&
 &                             NCPU=PAR_COM_QPp_INDEX%n_CPU,CHAIN=PAR_COM_QPp_INDEX%chain_order)
    !
+   if (l_collisions_IO) then
+     call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_G_b_A2A%CPU_id==1)
+   else
+     call IO_and_Messaging_switch("+io_out +output",CONDITION=master_cpu)
+   endif
+   !
 #endif
    !
  endif
@@ -570,6 +580,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    !
    call PARALLEL_index(PAR_IND_Q,(/nqibz/),COMM=PAR_COM_Q_INDEX)
    PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
+   PAR_nQ=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)
    call PARALLEL_live_message("Q(ibz)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1),TOTAL=nqibz,&
 &                             NCPU=PAR_COM_Q_INDEX%n_CPU,CHAIN=PAR_COM_Q_INDEX%chain_order)

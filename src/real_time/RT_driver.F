@@ -287,7 +287,7 @@ subroutine RT_driver(E,X,k,q)
      call RT_mean_carrier_lifetimes(G_lesser(:,:,:,it_mem),E,k)
      call RT_output('life',TIME=NE_time/FS2AUT)
      !DEBUG>
-     if (it==4) stop
+     !if (it==4) stop
      !DEBUG<
      !
    endif

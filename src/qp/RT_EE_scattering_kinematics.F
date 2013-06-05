@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_EE_scattering_kinematics(k,q,i_p,i_Rp,i_q,i_Rq,i_t_bz)
+subroutine RT_EE_scattering_kinematics(k,q,i_p,i_Rp,i_q,i_Rq,i_t_bz,i_t_G0)
  !
  !      __/__ i_p,i_Rp (in)
  !    ./  \
@@ -52,16 +52,22 @@ subroutine RT_EE_scattering_kinematics(k,q,i_p,i_Rp,i_q,i_Rq,i_t_bz)
  !    
  use D_lattice,       ONLY:sop_tab,sop_inv
  use R_lattice,       ONLY:bz_samp,qindx_S
+ !DEBUG>
+ use R_lattice,       ONLY:qindx_X
+ !DEBUG<
  !
  implicit none
  !
  type(bz_samp), intent(in) :: k,q
  integer,       intent(in) :: i_p,i_Rp,i_q,i_Rq
- integer,      intent(out) :: i_t_bz
+ integer,      intent(out) :: i_t_bz,i_t_G0
  !
  ! Work Space ...
  !
  integer               :: i_Rpm1,i_Rpm1_times_Rq,iqbz,iubz,i_u,i_Ru
+ !DEBUG>
+ integer :: i_p_bz
+ !DEBUG<
  !
  ! Rp^-1    ->  i_Rpm1=sop_inv(i_Rp)
  !
@@ -84,5 +90,13 @@ subroutine RT_EE_scattering_kinematics(k,q,i_p,i_Rp,i_q,i_Rq,i_t_bz)
  i_Ru=k%sstar(iubz,2)
  !    
  i_t_bz=k%s_table(i_u,sop_tab(i_Rp,i_Ru))
+ !
+ i_t_G0=1
+ !
+ !DEBUG>
+ i_p_bz=k%s_table(i_p,i_Rp)
+ i_t_bz=qindx_X(i_q,i_p_bz,1)
+ i_t_G0=qindx_X(i_q,i_p_bz,2)
+ !DEBUG<
  !
 end subroutine RT_EE_scattering_kinematics

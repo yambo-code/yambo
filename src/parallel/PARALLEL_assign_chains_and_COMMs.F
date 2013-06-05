@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_index_2,COMM_index_3,&
-&                                           COMM_index_4,COMM_A2A_1,COMM_A2A_2)
+&                                           COMM_index_4,COMM_A2A_1,COMM_A2A_2,COMM_A2A_3)
  !
  use parallel_m,    ONLY:MPI_comm,INTRA_CHAIN,INTER_CHAIN,PARALLEL_n_structures_active,&
 &                        PARALLEL_CPU_used,ncpu,COMM_copy,PARALLEL_CPU_role,&
@@ -36,6 +36,7 @@ subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_in
  type(MPI_comm),optional :: COMM_index_4
  type(MPI_comm),optional :: COMM_A2A_1
  type(MPI_comm),optional :: COMM_A2A_2
+ type(MPI_comm),optional :: COMM_A2A_3
  !
  ! Work Space
  !
@@ -87,6 +88,9 @@ subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_in
          else
            i_chain(3)  =i_chain(1)-log(real(PARALLEL_CPU_used(i_c)))/log(2.)
            call PARALLEL_build_up_child_chains(i_chain(3),COMM_index_3,i_chain(1))
+         endif
+         if (present(COMM_A2A_3).and.i_chain(3)>0) then
+           call COMM_copy(INTER_CHAIN(i_chain(3)),COMM_A2A_3)
          endif
        endif
        !

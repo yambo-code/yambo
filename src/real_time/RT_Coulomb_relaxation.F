@@ -40,7 +40,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  ! Work Space ...
  !
  integer               :: i_qp1,i_qp2,i_p,i_kmq,i_pmq,i_n,i_m,i_mp,i_np,i_p_star,&
-&                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_qp2_mem,i_q_mem,i_pmq_bz
+&                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_qp2_mem,i_q_mem,i_pmq_bz,i_pmq_G0
  real(SP)              :: f_k,f_p,f_kmq,f_pmq,pre_factor,Gr_integral,&
 &                         f_E_factor,f_H_factor
  !
@@ -89,11 +89,11 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          !
          i_p_s =k%star(i_p,i_p_star)
          !
-         call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,i_q,i_q_s,i_pmq_bz)
+         call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,i_q,i_q_s,i_pmq_bz,i_pmq_G0)
          !
-         i_pmq = k%sstar(i_pmq_bz,1)
+         i_pmq =k%sstar(i_pmq_bz,1)
          !
-         f_pmq=-cI*G_lesser(i_mp,i_mp,i_pmq,MEM_index(it_now))
+         f_pmq =-cI*G_lesser(i_mp,i_mp,i_pmq,MEM_index(it_now))
          !
          pre_factor=abs(4.*pi*COLLISIONS(i_qp1_mem)%v3(i_qp2_mem,i_p_s,i_q_mem))**2
          !

@@ -209,6 +209,7 @@ module parallel_m
  !
  ! ... G bands
  type(MPI_comm),SAVE :: PAR_COM_G_b_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_G_b_A2A
  !
  ! ... WF
  type(MPI_comm),SAVE :: PAR_COM_WF_k_A2A

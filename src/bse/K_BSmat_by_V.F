@@ -186,12 +186,12 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
                call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),cONE,&
 &                       BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1:),1,cONE,&
 &                       Vo(frag_pointer(1)+1:),1)
-               ! -(K_c)* x Vi
-               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),cONE,-conjg(BS_cpl_mat), &
+               ! (K_c)* x Vi -1 is now embodied in the Green`s functions
+               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),cONE,conjg(BS_cpl_mat), &
 &                       BS_blk_dim(ik1),Vi(frag_pointer(1)+1:),1,cONE,&
 &                       Vo(frag_pointer(1)+BS_K_dim+1:),1)
-               ! -(K_r)* x Vi
-               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),cONE,-conjg(BS_mat),     &
+               ! (K_r)* x Vi -1 is now embodied in the Green`s functions
+               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),cONE,conjg(BS_mat),     &
 &                   BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1:),1,cONE,&
 &                       Vo(frag_pointer(1)+BS_K_dim+1:),1)
                !
@@ -250,17 +250,17 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
 &                       BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1:),&
 &                       1,cONE,Vo(frag_pointer(2)+1:),1)
                !
-               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,-conjg(BS_cpl_mat), &
+               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,conjg(BS_cpl_mat), &
 &                     BS_blk_dim(ik1),Vi(frag_pointer(2)+1:),&
 &                     1,cONE,Vo(frag_pointer(1)+BS_K_dim+1:),1)
-               call M_by_V('t',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,-conjg(BS_cpl_mat), &
+               call M_by_V('t',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,conjg(BS_cpl_mat), &
 &                     BS_blk_dim(ik1),Vi(frag_pointer(1)+1:),&
 &                     1,cONE,Vo(frag_pointer(2)+BS_K_dim+1:),1)
                !
-               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,-conjg(BS_mat), &
+               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,conjg(BS_mat), &
 &                     BS_blk_dim(ik1),Vi(frag_pointer(2)+BS_K_dim+1:),&
 &                     1,cONE,Vo(frag_pointer(1)+BS_K_dim+1:),1)
-               call M_by_V('t',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,-conjg(BS_mat), &
+               call M_by_V('t',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,conjg(BS_mat), &
 &                     BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1:),&
 &                     1,cONE,Vo(frag_pointer(2)+BS_K_dim+1:),1)
                !
@@ -294,9 +294,9 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
        !
        call M_by_V('n',BS_K_dim,BS_K_dim,cONE, BS_cpl_mat,&
 &                 BS_K_dim,Vi(BS_K_dim+1:),1,cONE,Vo,1)
-       call M_by_V('n',BS_K_dim,BS_K_dim,cONE,-conjg(BS_cpl_mat),&
+       call M_by_V('n',BS_K_dim,BS_K_dim,cONE,conjg(BS_cpl_mat),&
 &               BS_K_dim,Vi,1,cONE,Vo(BS_K_dim+1:),1)
-       call M_by_V('n',BS_K_dim,BS_K_dim,cONE, -conjg(BS_mat),&
+       call M_by_V('n',BS_K_dim,BS_K_dim,cONE,conjg(BS_mat),&
 &               BS_K_dim,Vi(BS_K_dim+1:),1,cONE,Vo(BS_K_dim+1:),1)
      
      endif

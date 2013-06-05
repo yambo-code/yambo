@@ -493,7 +493,7 @@ subroutine K_inversion(iq,W,E,k,q)
      enddo
      !
      if (.not.do_it_full) then
-       if (trim(BSE_mode)=='causal')  X_epsilon(4,i3)=conjg(X_epsilon(4,i3))
+       if (trim(BSE_mode)=='causal')  X_epsilon(4,:)=conjg(X_epsilon(4,:))
        call live_timing()
      endif
      !

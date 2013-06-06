@@ -53,10 +53,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  use drivers,       ONLY:l_real_time,l_collisions_IO
  use matrix_operate,ONLY:matrix_linear_index
  use BS,            ONLY:BS_bands
-#if defined _SC
  use SC,            ONLY:SC_bands
  use real_time,     ONLY:B_mat_index
-#endif
  use electrons,     ONLY:levels
  use stderr,        ONLY:intc
  use com,           ONLY:error

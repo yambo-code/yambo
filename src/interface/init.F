@@ -455,7 +455,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_HF_and_locXC) call CPU_activate("HF")
  !
- if (l_gw0) call CPU_activate("GW")
+ if (l_gw0) then
+   if (l_ph_corr) CPU_activate("ELPH")
+   if (l_el_corr) CPU_activate("GW")
+ endif
  !
  if (l_collisions_IO) call CPU_activate("RT")
  !

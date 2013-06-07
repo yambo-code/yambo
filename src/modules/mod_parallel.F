@@ -38,7 +38,8 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_bse,l_par_density,l_par_X_G_q0,l_par_X_G_q,l_par_HF,l_par_GW,l_par_RT
+ logical            :: l_par_bse,l_par_density,l_par_X_G_q0
+ logical            :: l_par_X_G_q,l_par_HF,l_par_GW,l_par_RT,l_par_ELPH
  !
  ! Input file...
  !
@@ -86,7 +87,7 @@ module parallel_m
    integer              :: nCPU_inversion       =0
  end type CPU_stru
  !
- integer,parameter   :: n_CPU_str_max=10
+ integer,parameter   :: n_CPU_str_max=20
  type(CPU_stru),SAVE :: CPU_structure(n_CPU_str_max)
  !
  !... Running values ...
@@ -293,6 +294,8 @@ module parallel_m
      CPU_structure(7)%Short_Description="RT"
      CPU_structure(8)%Long_Description="Wave_Functions"
      CPU_structure(8)%Short_Description="WF"
+     CPU_structure(9)%Long_Description="Electron_Phonon"
+     CPU_structure(9)%Short_Description="ELPH"
    end subroutine
    !
    subroutine COMM_reset(COMM)

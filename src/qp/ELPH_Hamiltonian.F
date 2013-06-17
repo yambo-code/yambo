@@ -270,7 +270,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  call live_timing()
  !
  ! Eigenvectors written to DB for post-analysis
- !============================
+ !=============================================
  !
  ! |I_k>= A_nk * |nk> + SUM_n_q_il ( B_n_q_il * |n,k-q>|q,il> )
  !
@@ -297,14 +297,13 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !                                
  ! Mean values of displacement <iH|u_alfa_i_s|iH>
  ! ==============================================
- !iH is the eigenvector of elph_Mat
+ ! iH is the eigenvector of elph_Mat
  !
  mean_u=0.0
  !
  call live_timing('MD evaluation',H_size,SERIAL=.TRUE.)
  !
  call msg('r','Displacements:')
- call msg('r','Index ',(/'C1(x)','C2(x)','H1(x)','H2(x)','C1(y)','C2(y)','H1(y)','H2(y)','C1(z)','C2(z)','H1(z)','H2(z)'/))
  !
  do iH=1,H_size
    call live_timing(steps=1)
@@ -327,14 +326,14 @@ subroutine ELPH_Hamiltonian(en,k,q)
          enddo
        enddo
      enddo
+     write (tmp_string,'(a,i4.4,2a,i2.2,a,3(1x,f5.3))') 'State(',iH,')-','Atom(',ia,')',real(mean_u(ia,:,iH))
+     call msg('r',trim(tmp_string))
    enddo
-   write (tmp_string,'(i5,12(1x,f5.3))') iH,real(mean_u(:,:,iH))
-   call msg('r',trim(tmp_string))
  enddo
  call live_timing()
  !                                
  !Mean values of displacement <iH|(u_alfa_i_s)^2|iH>
- !===========
+ !===================================================
  ! iH is the eigenvector of elph_Mat
  ! |iH> = Sum_n A_nk*|n,k> + Sum_n_q_lambda B_nkq*|n,k-q> |q,lambda>
  ! A_nk_sq = conjg(A_nk)*A_nk
@@ -344,8 +343,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call live_timing('MD square evaluation',H_size,SERIAL=.TRUE.)
  !
- call msg('r','sqrt(MD square):')
- call msg('r','Index ',(/'C1(x)','C2(x)','H1(x)','H2(x)','C1(y)','C2(y)','H1(y)','H2(y)','C1(z)','C2(z)','H1(z)','H2(z)'/))
+ call msg('nr','sqrt(MD square):')
  !
  do iH=1,H_size
    call live_timing(steps=1)
@@ -383,10 +381,10 @@ subroutine ELPH_Hamiltonian(en,k,q)
        enddo
        mean_u_sq(ia,ic,iH)=mean_u_sq(ia,ic,iH)*( A_nk_sq + 3*B_nkq_sq )
      enddo
+     write (tmp_string,'(a,i4.4,2a,i2.2,a,3(1x,f5.3))') 'State(',iH,')-','Atom(',ia,')',real(mean_u_sq(ia,:,iH))
+     call msg('r',trim(tmp_string))
    enddo 
    !
-   write (tmp_string,'(i5,12(1x,f5.3))') iH,sqrt(real(mean_u_sq(:,:,iH)))
-   call msg('r',trim(tmp_string))
  enddo
  call live_timing()
  !

@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.4.0 r.2409 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.4.0 r.2412 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="4"
 SSUBLEVEL="0"
-SREVISION="2409"
+SREVISION="2412"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -97,6 +97,13 @@ test -z "$AR_FLAGS" && AR_FLAGS="-ru"
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug],[Objects are not removed but saved in appropriate directories. Default is yes.]))
 if test x"$enable_debug" = "x"; then enable_debug="yes"; fi
 AC_SUBST(enable_debug)
+# ============================================================================= 
+# KEEP SOURCE FILES 
+AC_ARG_ENABLE(keepsource, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is no.]))
+dp_cpp=""
+if test x"$enable_keep_src" = "x";    then enable_keep_src="no" ; fi
+if test x"$enable_keep_src" = "xyes"; then enalbe_keep_src="yes"; fi
+AC_SUBST(enable_keep_src)
 # ============================================================================
 # DP
 AC_ARG_ENABLE(dp, AC_HELP_STRING([--enable-dp], [Double-precision build. Default is no.]))

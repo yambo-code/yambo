@@ -161,7 +161,7 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
  io_err(3)=io_Vnl_err
  !
  if ( pp_kbv_dim>0 ) call msg('s','[x,Vnl] computed using '//trim(intc(pp_kbv_dim))//' projectors')
- if ( pp_kbv_dim>20) call warning(' [x,Vnl] slows the Dipoles computation. To neglect it rename the ns.kb_pp files')
+ if ( pp_kbv_dim>50) call warning(' [x,Vnl] slows the Dipoles computation. To neglect it rename the ns.kb_pp file')
  !
  return
  !

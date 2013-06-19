@@ -140,7 +140,7 @@ subroutine K_Haydock(iq,W)
      Cf= (0.,0.)
      Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)
      !
-     call K_BSmat_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity)
+     call K_BSmat_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
      Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
      Cf(1) = 0.
      !
@@ -176,7 +176,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1)
+     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1,call_kind='Hay')
      !
      ! A(n) = <Vn|Vn+1>
      !
@@ -222,7 +222,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1,iter_par=ItParity)
+     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
      !
      ! B(n+1)= <Vn|F|Vn+1>^(1/2) (that is <Vn|FH|Vn>^(1/2))
      !       = (2*Re(<Vn|Vnp1>))^(1/2) by symmetry, 

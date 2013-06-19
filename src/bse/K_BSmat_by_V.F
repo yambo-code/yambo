@@ -19,32 +19,34 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
+subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
  !
  !
- ! Here I fill the upper half of the kernel (coupling included):
+ ! Here I read the kernel (coupling included):
  !
- !      | (K_r)     (K_c)    |  <- this part is done here
+ !      | (K_r)     (K_c)    |  
  !  K = |                    |
  !      | (-K_c^*)  (-K_r^*) |
  !
- ! and I also do
+ ! and I do
  !
- !  Vo = K x Vi
+ !  Haydock:   Vo(1:BS_K_dim) = K_r x Vi(1:BS_K_dim) + K_c x Vi(BS_K_dim+1:BS_H_dim)
+ !  Inversion: Vo(1:BS_H_dim) = K   x Vi(1:BS_H_dim)
  !
  ! Parallel shared matrix multiplication implemented
  !
  ! Because of symmetries I never need the second half 
  ! (it can be reconstructed by the "iteration parity") 
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cONE,cZERO
+ use com,            ONLY:error
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nXkibz
  use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_k_and_row_restart,BS_eh_E,&
 &                         BS_DB_is_fragmented,BS_K_coupling,&
-&                         BS_cpl_mat,BS_IO_index
+&                         BS_cpl_mat,BS_IO_index,BSS_uses_RIM
 #if defined _DISTRIBUTED
  use BS,             ONLY:ioBS_DISTRIBUTED
 #endif
@@ -53,13 +55,16 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
  use wrapper,        ONLY:M_by_V
  !
  implicit none
- integer               ::iq
- integer               ::iter
- complex(SP)           ::Vi(:),Vo(:)
- real(SP),optional     ::iter_par
+ !
+ integer                ::iq
+ integer                ::iter
+ complex(SP)            ::Vi(:),Vo(:)
+ real(SP),optional      ::iter_par
+ character(3) ,optional ::call_kind
  !
  ! Work Space
  !
+ logical         ::l_inv,l_Hay
  integer         ::ik1,ik2,i1,i2,frag_pointer(2)
  complex(SP)     ::alpha
  type(X_t)       ::X
@@ -71,9 +76,16 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
  integer, external ::ioBS
  logical           ::use_fragments,db_load
  !
- Vo=(0._SP,0._SP)
- alpha=(1._SP,0._SP) 
- if (present(iter_par)) alpha = iter_par*(1._SP,0._SP)
+ l_Hay= (trim(call_kind)=='Hay')
+ l_inv= (trim(call_kind)=='Inv')
+ !
+ if( (.not.l_inv) .and. (.not.l_Hay) ) call error('K_BSmat_byV: not a valid call.')
+ !
+ Vo=cZERO
+ if (l_Hay) then
+   alpha=cONE
+   if (present(iter_par)) alpha = iter_par*cONE
+ endif
  !
  use_fragments=BS_DB_is_fragmented
  db_load= use_fragments.or..not.allocated(BS_mat)
@@ -93,8 +105,10 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
      call mem_est('BS_mat',(/2*size(BS_mat)/))
      !
    else
-     call PP_indexes_reset(Kp)
-     call PARALLEL_index(Kp,(/BS_IO_index(1,nXkibz)-1/))
+     if (l_Hay) then
+       call PP_indexes_reset(Kp)
+       call PARALLEL_index(Kp,(/BS_IO_index(1,nXkibz)-1/))
+     endif
      if (iter==1) call mem_est('BS_mat',(/maxval(BS_blk_dim)**2/)) 
    endif
    !
@@ -108,7 +122,9 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
        if (use_fragments) then
          frag_pointer=BS_k_and_row_restart(:2)
          BS_k_and_row_restart=0
-         if (.not.Kp%element_1D(BS_IO_index(ik1,ik2)-1)) cycle
+         if (l_Hay) then
+           if(.not.Kp%element_1D(BS_IO_index(ik1,ik2)-1)) cycle
+         endif
          allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
          if (BS_K_coupling) allocate(BS_cpl_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
          ACTION=OP_RD_CL
@@ -127,8 +143,13 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
        !
        if (ik1==ik2) then
          !
-         forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1)) &
+         if(l_Hay) then
+           forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1)) &
 &              BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(frag_pointer(1)+i1)
+         else if (l_inv .and. BSS_uses_RIM) then
+           forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1)) &
+&              BS_mat(i1,i1)=cZERO  ! This part was read in K_BSload_diag
+         endif
          !
          ! On diagonal block simmetrization
          !
@@ -145,18 +166,36 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
          enddo
          !
          if (use_fragments) then
-           !
-           call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(1._SP,0._SP),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1:),1,(1._SP,0._SP),&
+           ! K_r * Vi
+           call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),cONE,&
+&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1:),1,cONE,&
 &                     Vo(frag_pointer(1)+1:),1)
            !
            if (BS_K_coupling) then
              !
              ! Calculate the diagonal coupling part
              !
-             call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),alpha,&
-&                     BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(1)+1:)),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(1)+1:),1)
+             if (l_Hay) then
+               !   K_c   x Vi
+               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),alpha,&
+&                       BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(1)+1:)),1,cONE,&
+&                       Vo(frag_pointer(1)+1:),1)
+               !
+             else if (l_inv) then
+               !   K_c   x Vi
+               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),cONE,&
+&                       BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1:),1,cONE,&
+&                       Vo(frag_pointer(1)+1:),1)
+               ! (K_c)* x Vi -1 is now embodied in the Green`s functions
+               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),cONE,conjg(BS_cpl_mat), &
+&                       BS_blk_dim(ik1),Vi(frag_pointer(1)+1:),1,cONE,&
+&                       Vo(frag_pointer(1)+BS_K_dim+1:),1)
+               ! (K_r)* x Vi -1 is now embodied in the Green`s functions
+               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik1),cONE,conjg(BS_mat),     &
+&                   BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1:),1,cONE,&
+&                       Vo(frag_pointer(1)+BS_K_dim+1:),1)
+               !
+             endif
              !
            end if
            !
@@ -182,23 +221,50 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
            !
          else
            !
-           call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+1:),1,(1._SP,0._SP),&
+           call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,&
+&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+1:),1,cONE,&
 &                     Vo(frag_pointer(1)+1:),1)
-           call M_by_V('c',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1:),1,(1._SP,0._SP),&
+           call M_by_V('c',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,&
+&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1:),1,cONE,&
 &                     Vo(frag_pointer(2)+1:),1)
            !
            if (BS_K_coupling) then
              !
              ! Calculate the off-diagonal coupling part
              !
-             call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik2),alpha,&
-&                     BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(2)+1:)),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(1)+1:),1)
-             call M_by_V('t',BS_blk_dim(ik1),BS_blk_dim(ik2),alpha,&
-&                     BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(1)+1:)),1,(1._SP,0._SP),&
-&                     Vo(frag_pointer(2)+1:),1)
+             if(l_Hay) then
+               !
+               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik2),alpha,&
+&                       BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(2)+1:)),&
+&                       1,cONE,Vo(frag_pointer(1)+1:),1)
+               call M_by_V('t',BS_blk_dim(ik1),BS_blk_dim(ik2),alpha,&
+&                       BS_cpl_mat,BS_blk_dim(ik1),conjg(Vi(frag_pointer(1)+1:)),&
+&                       1,cONE,Vo(frag_pointer(2)+1:),1)
+               !
+             else if (l_inv) then
+               !
+               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,&
+&                       BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+BS_K_dim+1:),&
+&                       1,cONE,Vo(frag_pointer(1)+1:),1)
+               call M_by_V('t',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,&
+&                       BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1:),&
+&                       1,cONE,Vo(frag_pointer(2)+1:),1)
+               !
+               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,conjg(BS_cpl_mat), &
+&                     BS_blk_dim(ik1),Vi(frag_pointer(2)+1:),&
+&                     1,cONE,Vo(frag_pointer(1)+BS_K_dim+1:),1)
+               call M_by_V('t',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,conjg(BS_cpl_mat), &
+&                     BS_blk_dim(ik1),Vi(frag_pointer(1)+1:),&
+&                     1,cONE,Vo(frag_pointer(2)+BS_K_dim+1:),1)
+               !
+               call M_by_V('n',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,conjg(BS_mat), &
+&                     BS_blk_dim(ik1),Vi(frag_pointer(2)+BS_K_dim+1:),&
+&                     1,cONE,Vo(frag_pointer(1)+BS_K_dim+1:),1)
+               call M_by_V('t',BS_blk_dim(ik1),BS_blk_dim(ik2),cONE,conjg(BS_mat), &
+&                     BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1:),&
+&                     1,cONE,Vo(frag_pointer(2)+BS_K_dim+1:),1)
+               !
+             endif
              !
            endif
            !
@@ -219,12 +285,25 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
    !
    if (BS_K_coupling) then
      !
-     call M_by_V('n',BS_K_dim,BS_K_dim,alpha, BS_cpl_mat,&
-&               BS_K_dim,conjg(Vi),1,(1._SP,0._SP),Vo,1)
+     if (l_Hay) then
+       !
+       call M_by_V('n',BS_K_dim,BS_K_dim,alpha, BS_cpl_mat,&
+&                 BS_K_dim,conjg(Vi),1,cONE,Vo,1)
+       !
+     else if(l_inv) then
+       !
+       call M_by_V('n',BS_K_dim,BS_K_dim,cONE, BS_cpl_mat,&
+&                 BS_K_dim,Vi(BS_K_dim+1:),1,cONE,Vo,1)
+       call M_by_V('n',BS_K_dim,BS_K_dim,cONE,conjg(BS_cpl_mat),&
+&               BS_K_dim,Vi,1,cONE,Vo(BS_K_dim+1:),1)
+       call M_by_V('n',BS_K_dim,BS_K_dim,cONE,conjg(BS_mat),&
+&               BS_K_dim,Vi(BS_K_dim+1:),1,cONE,Vo(BS_K_dim+1:),1)
+     
+     endif
      !
    endif
    !
- else
+ else if(l_Hay) then
    !
    call PP_redux_wait(Vo)
    call PP_indexes_reset(Kp)

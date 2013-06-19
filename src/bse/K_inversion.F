@@ -27,9 +27,9 @@ subroutine K_inversion(iq,W,E,k,q)
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BSS_uses_GreenF,&
 &                         BSE_mode,BS_eh_table,BS_eh_E,BS_bands,BSS_inversion_mode,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BS_eh_f,&
-&                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z
+&                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z,BS_mat_diagonal
  use memory_m,       ONLY:mem_est
- use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,spin
+ use electrons,      ONLY:spin_occ,levels,BZ_RIM_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_merge,W_duplicate
  use R_lattice,      ONLY:d3k_factor,q_norm,bz_samp
  use com,            ONLY:isec,msg
@@ -50,7 +50,6 @@ subroutine K_inversion(iq,W,E,k,q)
  type(PP_indexes) ::px
  type(w_samp)     ::W_shifted
  integer          ::i1,i2,ik_bz,iv,ic,iw,of_mode,i_sp,ik_ibz,BS_H_dim
- integer, external::pert_inversion
  logical, external::stop_now
  complex(SP)      ::Co,QP_Z,QP_width
  complex(SP), allocatable  ::Lo(:,:,:)
@@ -85,9 +84,7 @@ subroutine K_inversion(iq,W,E,k,q)
  BS_H_dim=BS_K_dim
  if (trim(BSE_mode)=="coupling") BS_H_dim=2*BS_K_dim
  !
- ! RIM support ? Full invertion ?
- !
- BSS_uses_RIM=BZ_RIM_nbands>=BS_bands(2)
+ ! Full inversion ?
  !
  FULL         = .TRUE.
  PERTURBATIVE = .TRUE.
@@ -161,26 +158,11 @@ subroutine K_inversion(iq,W,E,k,q)
  allocate(eps_disk(W%n(1),IO_dim))
  eps_disk=(0._SP,0._SP)
  !
- ! Kernel loading
- !
- call K_BSload(iq)
- !
- forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
- if (trim(BSE_mode)=="coupling") then
-   forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(i1-BS_K_dim)
-   !
-   ! I need to remove the -1 in the coupling part due to the change of sign of the occupations. This -1 
-   ! is now embodied in the Green's function
-   !
-   forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:)=-BS_mat(i1,:)
-   !
- endif
- !
  ! I need to remove the occupations from the oscillators strenght
  ! These are now embodied in the Green's function
  !
  BSS_rhoq0(1:BS_K_dim)=BSS_rhoq0(1:BS_K_dim)/sqrt(BS_eh_f(1:BS_K_dim))
- if (trim(BSE_mode)=="coupling".or.allocated(BS_eh_W)) then
+ if (trim(BSE_mode)=='coupling'.or.allocated(BS_eh_W)) then
    BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)=BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)/sqrt(BS_eh_f(1:BS_K_dim))
  endif
  !
@@ -211,6 +193,8 @@ subroutine K_inversion(iq,W,E,k,q)
  endif
  !
 #endif
+ !
+ if (BSS_uses_RIM) call K_BSload_diag(iq)
  !
  call live_timing('Green`s function',BS_K_dim)
  !
@@ -258,13 +242,12 @@ subroutine K_inversion(iq,W,E,k,q)
    !==============================================
    !
    if (BSS_uses_RIM) then
-     forall(iw=1:W%n(1)) W_shifted%p(iw)=W%p(iw)-BS_mat(i1,i1)
+     forall(iw=1:W%n(1)) W_shifted%p(iw)=W%p(iw)-BS_mat_diagonal(i1)
      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,1),"sr")
      if (trim(BSE_mode)=='causal') &
 &      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,2),"sa")
      if (trim(BSE_mode)=='coupling') &
 &      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1+BS_K_dim,:,1),"sa")
-     BS_mat(i1,i1)=(0.,0.)
    endif
    !
    call live_timing(steps=1)
@@ -283,10 +266,10 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    do_it_full=.FALSE.
    call live_timing('Freq loop [pert]',px%n_of_elements(myid+1))
-   call perform_invertion(1,W%n(1))
+   call perform_inversion(1,W%n(1))
    call PP_redux_wait(inv_err,imode=2)
    !
-   ! I/O [after pert invertion]
+   ! I/O [after pert inversion]
    !
    call PP_redux_wait(X_epsilon)
    !
@@ -355,6 +338,31 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    X_epsilon(2:4,:)=X_epsilon(2:4,:)/real(ncpu,SP)
    !
+   ! Kernel loading
+   !
+   call K_BSload(iq)
+   !  
+   ! I need to remove the -1 in the coupling part due to the change of sign
+   ! of the occupations. This -1 is now embodied in the Green's function
+   !
+   if (BSS_uses_RIM) then
+     !
+     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=(0.,0.)
+     if (trim(BSE_mode)=='coupling') then
+       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=(0.,0.)
+       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:) =-BS_mat(i1,:)
+     endif
+     !
+   else
+     !
+     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
+     if (trim(BSE_mode)=='coupling') then
+       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(i1-BS_K_dim)
+       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:) =-BS_mat(i1,:)
+     endif
+     !
+   endif
+   !
    ! Then loop on the groups performing full inversion
    !
    call PP_indexes_reset(px)
@@ -370,7 +378,7 @@ subroutine K_inversion(iq,W,E,k,q)
      !
      if (.not.px%element_1D(i1)) cycle
      iw=iw_full(i1)
-     call perform_invertion(iw,1)
+     call perform_inversion(iw,1)
      call live_timing(steps=1)
    enddo
    call live_timing()
@@ -384,7 +392,7 @@ subroutine K_inversion(iq,W,E,k,q)
  enddo
  call msg('rs','[BSE INV] Converged frequencies [o/o]:',real(nw_conv)/real(W%n(1))*100._SP)
  !
- ! I/O [after full invertion]
+ ! I/O [after full inversion]
  !
  eps_disk(:,1)=X_epsilon(2,:)
  if(IO_dim==2) eps_disk(:,2)=X_epsilon(4,:)
@@ -414,16 +422,29 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  deallocate(inv_err,eps_disk)
  call PP_indexes_reset(px)
- deallocate(BS_mat,iw_full,Lo)
- call mem_est("BS_mat Lo")
+ deallocate(iw_full,Lo)
+ call mem_est("Lo")
+ if( allocated(BS_mat) ) then
+   deallocate(BS_mat)
+   call mem_est("BS_mat")
+ endif
+ if( allocated(BS_mat_diagonal) ) then
+   deallocate(BS_mat_diagonal)
+   call mem_est("BS_mat_diagonal")
+ endif
  !
  contains
    !
-   subroutine perform_invertion(iw_2start,iw_2do)
+   subroutine perform_inversion(iw_2start,iw_2do)
      integer     :: iw_2start,iw_2do
      !
      integer :: i2,i3,tmp_err
      logical :: perform_inv
+     !
+     integer, external::pert_inversion
+     integer, external::full_inversion
+     !
+     tmp_err=0
      !
      do i2=1,iw_2do
        !
@@ -435,18 +456,30 @@ subroutine K_inversion(iq,W,E,k,q)
        !
        i3=i2+iw_2start-1
        !
-       if (     do_it_full) perform_inv=inv_err(i3)/= 0
-       if (.not.do_it_full) perform_inv=inv_err(i3)==-1
-       !
+       if (     do_it_full) perform_inv= inv_err(i3)/= 0
+       if (.not.do_it_full) perform_inv= inv_err(i3)==-1
+       !       
        if (perform_inv) then
-         inv_err(i3)=pert_inversion(BS_H_dim,BSS_rhoq0,-1.*Co,&
-&               X_epsilon(2,i3),Lo(:,i3,1),BS_mat,do_it_full)
          !
-         if (trim(BSE_mode)=='causal') &
-&          tmp_err=pert_inversion(BS_H_dim,conjg(BSS_rhoq0),-1.*Co,&
-&               X_epsilon(4,i3),Lo(:,i3,2),conjg(BS_mat),do_it_full)
+         if (do_it_full) then
+           inv_err(i3)=full_inversion(BS_H_dim,BSS_rhoq0,-1.*Co,&
+&                           X_epsilon(2,i3),Lo(:,i3,1),BS_mat)
+           !
+           if (trim(BSE_mode)=='causal') &
+&            tmp_err=full_inversion(BS_H_dim,conjg(BSS_rhoq0),-1.*Co,&
+&                         X_epsilon(4,i3),Lo(:,i3,2),conjg(BS_mat))
+         else
+           inv_err(i3)=pert_inversion(i3,BS_H_dim,BSS_rhoq0,-1.*Co,&
+&                         X_epsilon(2,i3),Lo(:,i3,1))
+           if (trim(BSE_mode)=='causal') then
+             ! Here instead of using conjg(BS_mat) I use conjg of
+             ! everything else, the output included (see after the enddo)
+             tmp_err=pert_inversion(i3,BS_H_dim,BSS_rhoq0,-1.*conjg(Co),&
+&                         X_epsilon(4,i3),conjg(Lo(:,i3,2)))
+           endif      
+         endif
          !
-       endif
+       endif       
        !
        if(inv_err(i3)==0.and.tmp_err==0) inv_err(i3)=0
        if(inv_err(i3)==1.or. tmp_err==1) inv_err(i3)=1
@@ -454,7 +487,11 @@ subroutine K_inversion(iq,W,E,k,q)
        if (.not.do_it_full) call live_timing(steps=1)
        !
      enddo
-     if (.not.do_it_full) call live_timing()
+     !
+     if (.not.do_it_full) then
+       if (trim(BSE_mode)=='causal')  X_epsilon(4,:)=conjg(X_epsilon(4,:))
+       call live_timing()
+     endif
      !
    end subroutine
    !

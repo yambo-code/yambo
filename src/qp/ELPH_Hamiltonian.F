@@ -34,6 +34,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use matrix_operate,ONLY:mat_dia_inv,DIAGO,USE_LK
  use stderr,        ONLY:intc,set_real_printed_length
  use QP_m,          ONLY:QP_G_damp
+ use parser_m,      ONLY:parser
  !
  implicit none
  !
@@ -45,6 +46,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  integer              :: H_size,ib,iq_bz,iq_ibz,iq_s,ID,io_err,iH,il,ok_bz,ok_ibz,ok_s,No_PH_basis_size,&
 &                        iHp,ibp,iq_ibz_db,ik_bz_gkkp,ib_gkkp,ibp_gkkp,iw
  real(SP)             :: ph_E,residual,q_weight
+ logical              :: l_eval_Displacements
  integer, external    :: ioELPH
  integer,     allocatable :: elph_Ham_Table(:,:)
  real   (SP), allocatable :: elph_E(:)
@@ -84,6 +86,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call k_sym2sym(k,'k')
  call k_expand(k)
+ !
+ call parser('Eval_Displacements',l_eval_displacements)
  !
  Ph_branches=elph_branches(2)-elph_branches(1)+1
  No_PH_basis_size=elph_Ham_bands(2)-elph_Ham_bands(1)+1
@@ -231,6 +235,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
    !
    db_name=trim(jobstr)//'/TOP_RESIDUAL_b'//trim(intc(ib))//'_k'//trim(intc(elph_Ham_ik))
    open(unit=100,file=trim(db_name),form='unformatted')
+   write (100) elph_Ham_bands
    write (file_name,'(2(a,i3.3))') 'G_Ham_band_',ib,'_k_',elph_Ham_ik
    call of_open_close(file_name,'ot')
    call msg('o Ham','# El-Ph Hamiltonian derived Green`s function')
@@ -282,16 +287,27 @@ subroutine ELPH_Hamiltonian(en,k,q)
    do iHp=1,H_size
      ibp    =elph_Ham_Table(iHp,1)
      iq_bz  =elph_Ham_Table(iHp,2)
-     il     =elph_Ham_Table(iHp,3)
-     iq_ibz =q%sstar(iq_bz,1)
-     iq_s   =q%sstar(iq_bz,2)
-     ok_bz  =qindx_S(elph_Ham_ik,iq_bz,1)
-     ok_ibz =k%sstar(ok_bz,1)
-     ok_s   =k%sstar(ok_bz,2)
+     if (iq_bz>0) then
+       il     =elph_Ham_Table(iHp,3)
+       iq_ibz =q%sstar(iq_bz,1)
+       iq_s   =q%sstar(iq_bz,2)
+       ok_bz  =qindx_S(elph_Ham_ik,iq_bz,1)
+       ok_ibz =k%sstar(ok_bz,1)
+       ok_s   =k%sstar(ok_bz,2)
+     else
+       il     =0
+       iq_ibz =0
+       iq_s   =0
+       ok_bz  =0
+       ok_ibz =0
+       ok_s   =0
+     endif
      write(100) ibp,ok_ibz,ok_s,il,iq_ibz,iq_s,elph_Mat(iHp,iH) 
    enddo
    close(100)
  enddo
+ !
+ if (.not.l_eval_Displacements) goto 1
  !
  call section('+','Mean Displacements (MD)')
  !                                
@@ -392,9 +408,16 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  ! CLEAN
  !
+1 continue
+ !
  call elph_global_free( )
- deallocate(elph_Ham_Table,elph_Mat,elph_E)
- deallocate(mean_u,top_residual,num_of_ph,top_ph_residual)
- deallocate(mean_u_sq)
+ if (allocated(elph_Ham_Table)) deallocate(elph_Ham_Table)
+ if (allocated(elph_Mat))       deallocate(elph_Mat)
+ if (allocated(elph_E))         deallocate(elph_E)
+ if (allocated(mean_u))         deallocate(mean_u)
+ if (allocated(top_residual))   deallocate(top_residual)
+ if (allocated(num_of_ph))      deallocate(num_of_ph)
+ if (allocated(top_ph_residual))deallocate(top_ph_residual)
+ if (allocated(mean_u_sq))      deallocate(mean_u_sq)
  !
 end subroutine

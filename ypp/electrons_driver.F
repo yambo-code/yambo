@@ -44,6 +44,7 @@ subroutine electrons_driver(Xk,Xen)
  use com,            ONLY:error
 #endif
 #if defined _YPP_ELPH
+ use YPP,            ONLY:elph_residual_treshold
  use ELPH,           ONLY:elph_Ham_bands
  use pars,           ONLY:lchlen
  use com,            ONLY:jobstr,file_exists
@@ -58,7 +59,7 @@ subroutine electrons_driver(Xk,Xen)
  real(SP), allocatable :: el_den(:)
  integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref,iq_ibz,iq_s
  logical               :: flag,l_polaronic_wf
- character(schlen)     :: ch_ws(2)
+ character(lchlen)     :: ch_ws(2)
 #if defined _YPP_SC
  integer               :: ID,io_V
  integer, external     :: io_SC_components
@@ -68,9 +69,11 @@ subroutine electrons_driver(Xk,Xen)
  !
  !Polaronic Wf
  !
- integer                 :: n_top_residuals,top_residual(1000),i_st,H_size,i_c
+ integer, parameter      :: n_max_res=100
+ integer                 :: n_top_residuals,top_residual(n_max_res),i_st,H_size,i_c
  character(lchlen)       :: db_name
  integer                 :: ok_ibz,il,ok_s
+ real(SP)                :: polaronic_residual(n_max_res),max_residual
  complex(SP)             :: B_n_ok
  complex(SP), allocatable:: v2plot_c(:),wf_rot(:)
  !
@@ -189,18 +192,24 @@ subroutine electrons_driver(Xk,Xen)
      !
      if (.not.file_exists(trim(db_name))) cycle
      !  
-     n_top_residuals=1
-     open(unit=100,name=trim(db_name),form='unformatted')
-     do while(.true.)
-       read(100,end=2) top_residual(n_top_residuals)
-       n_top_residuals=n_top_residuals+1
-     enddo
-2    n_top_residuals=n_top_residuals-1
-     call msg('s',':: Processing '//trim(intc(n_top_residuals))//' residuals@k'//trim(intc(ik))//&
+     do i_st=1,2
+       n_top_residuals=1
+       open(unit=100,name=trim(db_name),form='unformatted')
+       do while(.true.)
+         read(100,end=2) top_residual(n_top_residuals),polaronic_residual(n_top_residuals)
+         if  (polaronic_residual(n_top_residuals)>elph_residual_treshold/100.*max_residual) n_top_residuals=n_top_residuals+1
+       enddo
+2      n_top_residuals=n_top_residuals-1
+       close(100)
+       if (i_st==1) max_residual=maxval(polaronic_residual(:n_top_residuals))
+     enddo 
+     ! 
+     call msg('s',':: Found '//trim(intc(n_top_residuals))//' residuals@k'//trim(intc(ik))//&
 &                 '_b'//trim(intc(ib))//':', top_residual(:n_top_residuals))
-     close(100)
      !
      do i_st=1,n_top_residuals
+       !
+       if  (polaronic_residual(i_st)<elph_residual_treshold/100.*maxval(polaronic_residual(:n_top_residuals))) cycle
        !
        v2plot_c=cmplx(0.,SP)
        !

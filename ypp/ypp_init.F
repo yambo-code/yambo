@@ -542,6 +542,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_plot) then
    call initactivate(1,"Format Direction FFTGvecs") 
    if (l_sp_wf) call initactivate(1,"Degen_Step")  
+#if defined _YPP_ELPH
+   if (l_sp_wf) call initactivate(1,"ResTresh")  
+#endif
    if (l_mag)   call initactivate(1,"MagDir") 
  endif
  !

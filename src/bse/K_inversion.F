@@ -50,7 +50,7 @@ subroutine K_inversion(iq,W,E,k,q)
  type(PP_indexes) ::px
  type(w_samp)     ::W_shifted
  integer          ::i1,i2,ik_bz,iv,ic,iw,of_mode,i_sp,ik_ibz,BS_H_dim
- integer, external::pert_inversion                                  qwdqwd
+ integer, external::pert_inversion
  logical, external::stop_now
  complex(SP)      ::Co,QP_Z,QP_width
  complex(SP), allocatable  ::Lo(:,:,:)

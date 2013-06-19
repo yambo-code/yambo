@@ -178,7 +178,7 @@ subroutine electrons_driver(Xk,Xen)
    !
    i_qp=1
    !
-   l_norm_to_one=.false.
+   l_norm_to_one=.true.
    !
    do while (i_qp<=QP_n_states) 
      !
@@ -236,7 +236,7 @@ subroutine electrons_driver(Xk,Xen)
        enddo
        close(100)
        !
-       v2plot  =real(v2plot_c)
+       v2plot  =abs(real(v2plot_c))
        !
        ch_ws(1)='sp_wf_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim))//&
 &               '_STATE'//trim(intc(top_residual(i_st)))//'_'//trim(intc(plot_dim))

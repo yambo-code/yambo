@@ -24,7 +24,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi
- use drivers,       ONLY:l_sc_run,l_sc_exx,l_collisions_IO
+ use drivers,       ONLY:l_sc_run,l_sc_exx,l_eval_collisions
  use com,           ONLY:msg
  use timing,        ONLY:live_timing
  use stderr,        ONLY:intc
@@ -79,7 +79,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  ! COLLISIONS 
  !
- if(l_collisions_IO) then
+ if(l_eval_collisions) then
    Sx_lower_band=SC_bands(1)
    Sx_upper_band=SC_bands(2)
  endif
@@ -88,7 +88,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
  !
- if (.not.l_collisions_IO) then
+ if (.not.l_eval_collisions) then
    !
    ! QP_table -> report
    !
@@ -105,7 +105,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! WF distributed & load
  !=======================
  !
- if (.not.l_collisions_IO) call PARALLEL_global_indexes(E,k,q,"HF")
+ if (.not.l_eval_collisions) call PARALLEL_global_indexes(E,k,q,"HF")
  !
  call PARALLEL_WF_distribute(max(E%nbm,QP_nb),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_distribute(max(E%nbm,QP_nb),k%nibz,QP_index=PAR_IND_QP)
@@ -123,7 +123,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ch='EXS'
 #if defined _SC
  if (l_sc_run)        ch='HF@it'//trim(intc(it_now))
- if (l_collisions_IO) ch='HF collisions'
+ if (l_eval_collisions) ch='HF collisions'
 #endif
  !
 #if defined _RT
@@ -273,7 +273,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    !
    call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)
    !
-   if (l_collisions_IO) call COLLISIONS_store(i_qp)
+   if (l_eval_collisions) call COLLISIONS_store(i_qp)
    !
 #endif
    !

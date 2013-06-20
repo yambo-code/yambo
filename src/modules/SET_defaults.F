@@ -272,7 +272,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_sc_exx=.false.
  l_sc_contains_lda=.false.
  l_sc_magnetic=.false.
- l_collisions_IO=.false.
+ l_eval_collisions=.false.
  l_elph_Hamiltonian=.false.
  l_carrier_dynamics=.false.
  !

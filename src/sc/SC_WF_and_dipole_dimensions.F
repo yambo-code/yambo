@@ -21,7 +21,7 @@
 !
 subroutine SC_WF_and_dipole_dimensions(X)
  !
- use drivers,      ONLY:l_real_time,l_sc_hf,l_sc_exx,l_sc_cohsex,l_sc_srpa,l_collisions_IO
+ use drivers,      ONLY:l_real_time,l_sc_hf,l_sc_exx,l_sc_cohsex,l_sc_srpa,l_eval_collisions
  use com,          ONLY:warning,msg
  use X_m,          ONLY:X_t
  use wave_func,    ONLY:wf_ng
@@ -79,7 +79,7 @@ subroutine SC_WF_and_dipole_dimensions(X)
  if(SC_up_W_iters/=0) then
    call msg('nr','[SC] Updating W each                   :',SC_up_W_iters)
    !
-   if(l_collisions_IO) then
+   if(l_eval_collisions) then
      SC_up_W_iters=0
      call warning(' Collisions not compatible with W updating, turned off ')
    endif

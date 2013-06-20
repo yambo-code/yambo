@@ -23,7 +23,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_cohsex,l_collisions_IO,l_sc_contains_lda,l_sc_hf
+ use drivers,        ONLY:l_sc_cohsex,l_eval_collisions,l_sc_contains_lda,l_sc_hf
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
@@ -110,12 +110,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! COLLISIONS
  !============
  !
- if (l_collisions_IO) call COLLISIONS_load(.FALSE.)
+ if (l_eval_collisions) call COLLISIONS_load(.FALSE.)
  !
  ! Initialize SC_R matrix
  !========================
  !
- if(.not.l_SC_RESTART.and.l_collisions_IO) then
+ if(.not.l_SC_RESTART.and.l_eval_collisions) then
    !      
    SC_R=(0.,0.)
    forall(i1=1:SC_bands(2))
@@ -271,7 +271,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        if (l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
        !
-       if (.not.l_collisions_IO.and.it_now>1) then
+       if (.not.l_eval_collisions.and.it_now>1) then
          !
          ! Rotate H_nl_sc in the WFo basis.
          !
@@ -537,7 +537,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call mem_est("V_mean",(/fft_size*SC_bands(2)/))
      endif
      !
-     if(l_collisions_IO) then
+     if(l_eval_collisions) then
        !
        allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk,1))
        call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
@@ -578,7 +578,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call mem_est("V_mean")
      endif
      !
-     if(l_collisions_IO) then
+     if(l_eval_collisions) then
        !
        deallocate(G_lesser)
        call mem_est("G_lesser")

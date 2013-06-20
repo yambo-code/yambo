@@ -456,11 +456,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_HF_and_locXC) call CPU_activate("HF")
  !
  if (l_gw0) then
-   if (l_ph_corr) CPU_activate("ELPH")
-   if (l_el_corr) CPU_activate("GW")
+   if (l_ph_corr) call CPU_activate("ELPH")
+   if (l_el_corr) call CPU_activate("GW")
  endif
  !
- if (l_collisions_IO) call CPU_activate("RT")
+ if (l_eval_collisions) call CPU_activate("RT")
  !
  if (l_bse) call CPU_activate("BSE")
  !
@@ -698,20 +698,31 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! DFT
  !
-#if defined _SC 
+#if defined _SC
  if (l_sc_run) then
-   call initactivate(1,'Potential FFTGvecs Gauge SCmixing SCBands SClwBand SCnlMix BandMix EXXCut')
-   call initactivate(-1,'QpntsRXs')
-   if (l_cohsex) call initactivate(1,'GbndRnge UseEbands SCUpWIter')
-   if (l_collisions_IO) call initactivate(1,'DynKind')
-   if (.not.l_collisions_IO) call initactivate(1,'CollPath')
-   if (.not.l_real_time.and..not.l_collisions_IO) then
+   !
+   call initactivate( 1,'Potential FFTGvecs Gauge SCBands EXXCut CollPath')
+   !
+   if (l_eval_collisions) then
+     !
+     call initactivate(1,'DynKind')
+     !
+   else
+     !
+     call initactivate( 1,'SCmixing SClwBand SCnlMix BandMix')
+     call initactivate(-1,'QpntsRXs')
+     if (l_cohsex) call initactivate(1,'GbndRnge UseEbands SCUpWIter')
      call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
      if (trim(SC_potential)=='EXX'.or.trim(SC_potential)=='EXXC'.or.&
 &        trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
+     call initactivate(1,'SCdiag Mean_Potential')
    endif
-   call initactivate(1,'SCdiag MeanPotential')
-   if (l_collisions_IO) call initactivate(-1,'GbndRnge UseEbands MeanPotential') 
+   !
+   if (l_eval_collisions) then
+     call initactivate(-1,'GbndRnge UseEbands BandMix') 
+   else
+     call initactivate(1,'SCdiag Mean_Potential')
+   endif
  endif
 #endif
  !
@@ -792,7 +803,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !If qp limits are requested they are added at the end of the input file
  !
- if ( any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_collisions_IO ) then
+ if ( any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_eval_collisions ) then
    !
    ! The QP_state can be read from ioxxvxc in DUMP mode or from the input file.
    ! The DB value is used when a new input file is created or when the previous input file
@@ -961,13 +972,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! GPL_EXCLUDE_END
        !
        ! 
-#if defined _SC
+#if defined _SC 
        l_sc_run=runlevel_is_on('scpot')
        l_real_time=runlevel_is_on('negf')
        l_sc_magnetic=runlevel_is_on('magnetic')
 #endif
 #if defined _RT
-       l_collisions_IO=runlevel_is_on('collisions_IO')
+       l_eval_collisions=runlevel_is_on('collisions')
        l_carrier_dynamics =trim(Dynamics_Kind)=="C"
 #endif
 #if defined  _SURF
@@ -1366,7 +1377,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        ! Sc / NEGF
        !
-#if defined _SC
+#if defined _SC 
        if ( trim(rstr_piece(i1)) == 'scpot' )  then
          if ( trim(rstr_piece(i1+1)) == 'exx' ) then
            SC_potential='EXX'

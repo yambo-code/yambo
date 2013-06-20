@@ -22,7 +22,7 @@
 subroutine RT_driver(E,X,k,q)
  !
  use pars,           ONLY:SP,cI
- use drivers,        ONLY:l_collisions_IO,l_ph_corr,l_carrier_dynamics 
+ use drivers,        ONLY:l_eval_collisions,l_ph_corr,l_carrier_dynamics 
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use timing,         ONLY:live_timing 
@@ -42,7 +42,7 @@ subroutine RT_driver(E,X,k,q)
  use memory_m,        ONLY:mem_est
  use com,             ONLY:error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
- use collisions_IO,   ONLY:collisions_IO_alloc,collisions_IO_free,collisions_RANGES_setup
+ use collisions_IO,   ONLY:collisions_IO_alloc,collisions_IO_free,collisions_RANGES_setup,l_STORE_COLLISIONS
  use collision,       ONLY:free_COLLISIONS_v
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
@@ -142,9 +142,13 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_alloc(E)
  !
- call collisions_RANGES_setup()
- !
- call collisions_IO_alloc()
+ if (l_STORE_COLLISIONS) then
+   !
+   call collisions_RANGES_setup()
+   !
+   call collisions_IO_alloc()
+   !
+ endif
  !
  ! Restart from a previous RT run or from a SC calculation
  ! 
@@ -156,9 +160,16 @@ subroutine RT_driver(E,X,k,q)
  !
  if((.not.local_V.and..not.l_NE_simulate_IP).or.l_carrier_dynamics) then
    !
-   if (.not.l_collisions_IO) call error('COLLISIONs database missing')
-   !
-   call COLLISIONS_load(.FALSE.)
+   if (l_STORE_COLLISIONS) then
+     !
+     if (.not.l_eval_collisions) call error('COLLISIONs database missing')
+     !
+     call COLLISIONS_load(.FALSE.)
+     !
+   else
+     !
+     call COLLISIONS_load(.FALSE.)
+   endif
    !
  endif
  !

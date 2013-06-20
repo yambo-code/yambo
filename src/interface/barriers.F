@@ -21,30 +21,6 @@
 !
 subroutine barriers()
  !
- ! ENVIROMENTS:
- !  Finite T     Finite_Tel
- !  SPIN         n_spin>1
- !  Non Herm K   BS_K_coupling  
- !  Metal        metallic_system
- !  Dyson Solver newton,secant, green
- !  TR or SI     TR_or_SI
- !  Uniform grid Xk_grid_is_uniform
- !  
- ! RUNLEVELS:
- !  RIM         l_rim          COL_CUT     l_col_cut 
- !  ACFDT       l_acfdt        GW PPA      gw0_ppa 
- !  GW RA       gw0_raxis      GW COHSEX   gw0_cohsex 
- !  LIFE        l_life         EL-PH       gw0_el_ph 
- !  SIGMAX      l_xx_vxc       ALDA(G)     alda_g_space 
- !  ALDA(R)     alda_r_space   BS Fxc      l_bs_fxc 
- !  EPSm1 STAT. l_em1s         BSE TDDFT   bss_tddft
- !  OPT G-SPACE l_chi          OPT BSE     l_bse 
- !  BSE DIAGO   bss_diago      BSE INV     bss_inv 
- !  BSE HAYD    bss_haydock    SC          l_sc_run
- !  TDHF
- !  MAGNETIC    l_magnetic
- !  COLL_IO     l_COLLISIONS_IO
- !
  use drivers
  use pars,       ONLY:schlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv,mag_syms
@@ -103,12 +79,12 @@ subroutine barriers()
  ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_real_time) then
-   call switch_off_runlevel('all',on_name='scpot negf el_ph '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='scpot HF_and_locXC cohsex em1s negf collisions '//trim(always_runlevels))
    goto 1
  endif
  !
  if (l_sc_run) then
-   call switch_off_runlevel('all',on_name='scpot HF_and_locXC cohsex em1s negf magnetic collisions_IO '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='scpot HF_and_locXC cohsex em1s negf magnetic collisions '//trim(always_runlevels))
    goto 1
  endif
  !

@@ -119,7 +119,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'scpot',   '[R] Self-Consistent potentials') 
 #endif
 #if defined _RT
- call it('r',defs,'collisions_IO',   '[R] Eval the extended Collisions')
+ call it('r',defs,'collisions',      '[R] Eval the extended Collisions')
  call it('r',defs,'negf',            '[R] Real-Time dynamics') 
 #endif
 #if defined _MAGNETIC
@@ -443,7 +443,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
  call it('f',defs,'TF_precondition','[SC] Thomas Fermi precondition in density',verb_level=V_sc)
  call it(defs,'SCUpWIter', "[SC] Update W(q,G,G') every SCUpWIter iteractions",SC_up_W_iters) 
- call it('f',defs,'MeanPotential','[SC] Real-space Mean Potential',verb_level=V_sc)
+ call it('f',defs,'Mean_Potential','[SC] Real-space Mean Potential',verb_level=V_sc)
  call it('f',defs,'SCnlMix','[SC] Use SC non-local mixing',verb_level=V_sc)
  ! 
  ! SC [common with RT]

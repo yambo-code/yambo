@@ -21,7 +21,7 @@
 !
 subroutine RT_initialize(E,k,q)
  ! 
- use drivers,        ONLY:l_collisions_IO,l_ph_corr,l_carrier_dynamics
+ use drivers,        ONLY:l_eval_collisions,l_ph_corr,l_carrier_dynamics
  use SC,             ONLY:local_V,SC_bands
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
@@ -39,6 +39,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,       &
 &                         Gr_bands,l_RT_CCA_Kernel
  use D_lattice,      ONLY:DL_vol
+ use collisions_IO,  ONLY:l_STORE_COLLISIONS
  use R_lattice,      ONLY:bz_samp,nkibz
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
@@ -54,23 +55,25 @@ subroutine RT_initialize(E,k,q)
  integer                  :: i1,rest,nk_todo
  character(5)             :: MSG_ch
  real(SP)                 :: Fluence,T_memory
- logical                  :: l_Full_RT_T_evolution!
+ logical                  :: l_Full_RT_T_evolution,l_COLLISIONS_on_the_fly
  !
  ! Logicals
  !==========
  !
- call parser('Diamagnetic',  l_RT_diamagnetic)
- call parser('InducedField' ,l_RT_induced_field)
- call parser('RTfreezeH',    Hfrozen)
- call parser('RTfreezeXC',   XCfrozen)
- call parser('SkipGFIO',     l_RT_skip_GF_IO)
- call parser('SkipOCCIO',    l_RT_skip_OCC_IO)
- call parser('SkipJPIO',     l_RT_skip_JandP_IO)
- call parser('RT_T_evol',    l_Full_RT_T_evolution)
+ call parser('Diamagnetic',          l_RT_diamagnetic)
+ call parser('InducedField' ,        l_RT_induced_field)
+ call parser('RTfreezeH',            Hfrozen)
+ call parser('RTfreezeXC',           XCfrozen)
+ call parser('SkipGFIO',             l_RT_skip_GF_IO)
+ call parser('SkipOCCIO',            l_RT_skip_OCC_IO)
+ call parser('SkipJPIO',             l_RT_skip_JandP_IO)
+ call parser('RT_T_evol',            l_Full_RT_T_evolution)
+ call parser('COLLISIONS-on-the-fly',l_COLLISIONS_on_the_fly)
  !
  l_RT_CCA_Kernel=.not.l_Full_RT_T_evolution
  l_NE_simulate_BSE     =.FALSE.
  l_NE_simulate_TDDFT   =.FALSE.
+ l_STORE_COLLISIONS    =.not.l_COLLISIONS_on_the_fly
  !
  l_G_retarded_DB=Gr_bands(1)>0
  !
@@ -300,7 +303,8 @@ subroutine RT_initialize(E,k,q)
    call msg( 'r','[RT] Carriers El-ph scattering  :',l_ph_corr)
    call msg( 'r','[RT] Carriers El-El scattering  :',l_carrier_dynamics)
    if (l_G_retarded_DB) call msg( 'r','[RT] Retareded Green`s function :',Gr_kind)
-   call msg( 'r','[SC] Extended collisions I/O    :',l_collisions_IO)
+   call msg( 'r','[SC] Extended collisions        :',l_eval_collisions)
+   call msg( 'r','[SC]                       [I/O]:',l_STORE_COLLISIONS)
  endif
  !
  contains
@@ -310,7 +314,7 @@ subroutine RT_initialize(E,k,q)
      logical :: COLLISIONS_checked
      !
      if (COLLISIONS_checked) then
-       if (l_collisions_IO.and..not.l_carrier_dynamics) then
+       if (l_eval_collisions.and..not.l_carrier_dynamics) then
          XCfrozen=.FALSE.
          if (Hfrozen) call warning('COLLISIONS used but Hartree frozen')
        endif

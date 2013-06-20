@@ -90,7 +90,9 @@ module collisions_IO
      integer :: V_size
      !
      if(present(V_size_input)) then
+       !
        V_size=V_size_input
+       !
      else
        !
        call collisions_RANGES_setup()

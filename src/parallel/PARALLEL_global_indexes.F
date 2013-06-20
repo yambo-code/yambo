@@ -50,9 +50,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use X_m,           ONLY:X_t
- use drivers,       ONLY:l_real_time,l_collisions_IO
+ use drivers,       ONLY:l_real_time,l_eval_collisions,l_ph_corr
  use matrix_operate,ONLY:matrix_linear_index
  use BS,            ONLY:BS_bands
+#if defined _ELPH
+ use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
+#endif
 #if defined _SC
  use SC,            ONLY:SC_bands
  use real_time,     ONLY:B_mat_index
@@ -481,7 +484,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                                        COMM_A2A_2=PAR_COM_G_b_A2A,&
 &                                        COMM_A2A_3=PAR_COM_Q_A2A)
    !
-   if (n_CPU_save/=PAR_COM_Xk_ibz_INDEX%n_CPU.and..not.l_collisions_IO) then
+   if (n_CPU_save/=PAR_COM_Xk_ibz_INDEX%n_CPU.and..not.l_eval_collisions) then
      call error(' Wrong structure of Real_Time fields. Please set #CPU for K-points to be '//trim(intc(n_CPU_save)))
    endif
    !
@@ -545,8 +548,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    call PARALLEL_live_message("QPs (level 2)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_nQPp,TOTAL=QP_n_states,&
 &                             NCPU=PAR_COM_QPp_INDEX%n_CPU,CHAIN=PAR_COM_QPp_INDEX%chain_order)
    !
-   if (l_collisions_IO) then
-     call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_G_b_A2A%CPU_id==1)
+   if (l_eval_collisions) then
+     call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_G_b_A2A%CPU_id==0)
    else
      call IO_and_Messaging_switch("+io_out +output",CONDITION=master_cpu)
    endif
@@ -580,15 +583,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    !
    ! Q-points
    !
-   i_q_range(2)=nqibz
+   iq_range(2)=nqibz
 #if defined _ELPH
    if (ENVIRONMENT=="ELPH".and.l_ph_corr) then
-     if (     elph_use_q_grid) i_q_range(2)=nqbz
-     if (.not.elph_use_q_grid) i_q_range(2)=elph_nDBs_used
+     if (     elph_use_q_grid) iq_range(2)=nqbz
+     if (.not.elph_use_q_grid) iq_range(2)=elph_nDBs_used
    endif
 #endif  
    !
-   call PARALLEL_index(PAR_IND_Q,(/i_q_range(2)/),COMM=PAR_COM_Q_INDEX)
+   call PARALLEL_index(PAR_IND_Q,(/iq_range(2)/),COMM=PAR_COM_Q_INDEX)
    PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
    PAR_nQ=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)
 #if defined _ELPH
@@ -609,10 +612,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    if (ENVIRONMENT=="HF") n_bands=(/1,max(E%nbm,QP_nb)/)
    if (ENVIRONMENT=="GW") n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
 #if defined _RT
-   if (l_collisions_IO)   n_bands=SC_bands
+   if (l_eval_collisions)   n_bands=SC_bands
 #endif
 #if defined _ELPH
-   if (l_collisions_IO)   n_bands=(/1,QP_PH_n_G_bands/)
+   if (l_eval_collisions)   n_bands=(/1,QP_PH_n_G_bands/)
 #endif
    !
    call PARALLEL_index(PAR_IND_G_b,(/n_bands(2)/),low_range=(/n_bands(1)/),&
@@ -620,7 +623,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    PAR_IND_G_b_ID=PAR_COM_G_b_INDEX%CPU_id
    !
 #if defined _RT
-   if (l_collisions_IO) call G_b_to_B_mat( )
+   if (l_eval_collisions) call G_b_to_B_mat( )
 #endif
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz)
@@ -632,8 +635,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    ! I/O privileges
    !
    if (PARALLEL_n_structures_active>1) then
-     if (.not.l_collisions_IO) call IO_and_Messaging_switch("+io_out +output",CONDITION=master_cpu)
-     if (     l_collisions_IO) call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_QP_INDEX%my_CHAIN==1)
+     if (.not.l_eval_collisions) call IO_and_Messaging_switch("+io_out +output",CONDITION=master_cpu)
+     if (     l_eval_collisions) call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_QP_INDEX%my_CHAIN==1)
    else
      call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif

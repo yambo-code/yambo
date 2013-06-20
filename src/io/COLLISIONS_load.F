@@ -25,7 +25,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! exchange, COHSEX etc.. and store them together 
  !
  use pars,            ONLY:IP,SP,LP
- use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_collisions_IO,l_sc_srpa,l_carrier_dynamics 
+ use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_eval_collisions,l_sc_srpa,l_carrier_dynamics 
  use timing,          ONLY:live_timing
  use global_XC,       ONLY:SC_HF,SC_COHSEX
  use QP_m,            ONLY:QP_n_states
@@ -84,15 +84,15 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
    enddo
    !
-   l_collisions_IO=all(io_err==0)
+   l_eval_collisions=all(io_err==0)
    !
-   if (.not.l_collisions_IO) COLLISIONS_path=" "
+   if (.not.l_eval_collisions) COLLISIONS_path=" "
    !
    return
    !
  endif
  !
- if (.not.l_collisions_IO) return
+ if (.not.l_eval_collisions) return
  !
  ! Array ranges setup
  !

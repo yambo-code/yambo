@@ -28,7 +28,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !    Y   /____Y88b   /   YY   Y888b  888   |  Y888   /  
  !   /   /      Y88b /          Y888b 888__/    `88_-~   
  !
- use drivers,       ONLY:l_ppa,l_HF_and_locXC,l_sc_run,l_collisions_IO,l_real_time,&
+ use drivers,       ONLY:l_ppa,l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
 &                        l_gw0,l_el_corr,l_life,l_acfdt,l_elph_Hamiltonian
  use X_m,           ONLY:X_t
@@ -176,13 +176,13 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! HARTREE-FOCK AND VXC
  !======================
  !
- if (l_HF_and_locXC.and..not.any((/l_sc_run,l_collisions_IO,l_real_time/))) call XCo_driver(en,k,Xk,q)
+ if (l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))) call XCo_driver(en,k,Xk,q)
  !
  ! EXTENDED COLLISIONS (HF & COHSEX)
  !===================================
  !
 #if defined _RT 
- if (l_collisions_IO) call COLLISIONS_eval(en,X,k,xk,q,Xw(:2))
+ if (l_eval_collisions) call COLLISIONS_eval(en,X,k,xk,q,Xw(:2))
 #endif
  !
  ! SELF-ENERGIES

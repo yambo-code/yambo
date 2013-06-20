@@ -30,7 +30,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_exx,l_sc_srpa,l_sc_cohsex,l_sc_contains_lda,&
-&                         l_collisions_IO,l_oep_exact
+&                         l_eval_collisions,l_oep_exact
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_t,QP_nk,QP_reset
  use electrons,      ONLY:levels,n_spin
@@ -62,7 +62,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    ! Hartee-Fock & COHSEX
    !======================
    !
-   if(l_collisions_IO) then
+   if(l_eval_collisions) then
      !     
      G_lesser=(0.,0.)
      forall(ib=1:SC_bands(2),ik=1:E%nk) G_lesser(ib,ib,ik,1)=(0._SP,1._SP)*E%f(ib,ik,1)

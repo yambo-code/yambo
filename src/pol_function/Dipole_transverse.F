@@ -103,6 +103,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  call PP_redux_wait
  !
  allocate(wf_xyz(wf_ng,wf_dim))
+ call mem_est("wf_xyz",(/size(wf_xyz)/),(/2*SP/))
  !
  ! Main loop over k in IBZ
  !
@@ -253,6 +254,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! CLEAN
  !
  deallocate(wf_xyz)
+ call mem_est("wf_xyz")
  call PP_indexes_reset(px)
  if (ioKB_pwscf_err==0.or.ioKB_abinit_err==0) then
    deallocate(kbv)
@@ -261,9 +263,12 @@ subroutine Dipole_transverse(Xen,Xk,X)
    if (allocated(pp_factor))    deallocate(pp_factor)
    if (allocated(spin_m_table)) deallocate(spin_m_table)
    call PP_free()
-   call mem_est("KBV") 
+   call mem_est("KBV pp_n_l_comp pp_table pp_factor spin_m_table") 
  else if (io_Vnl_err==0) then
-   if (allocated(Vnl)) deallocate(Vnl)
+   if (allocated(Vnl)) then
+     deallocate(Vnl)
+     call mem_est("Vnl")
+   endif
  endif 
  !
  do ik=1,Xk%nibz

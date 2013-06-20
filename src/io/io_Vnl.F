@@ -32,6 +32,7 @@ integer function io_Vnl(X,Xen,ID)
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  use fragments,     ONLY:io_fragment
  use com,           ONLY:warning
+ use memory_m,      ONLY:mem_est
  !
  implicit none
  type(X_t)   ::X
@@ -90,12 +91,14 @@ integer function io_Vnl(X,Xen,ID)
  if (any((/io_sec(ID,:)==2/))) then
    !
    allocate(Vnl_disk(db_nb(2),db_nbm,2))  ! Allocate to exactly the size on disk
+   call mem_est("Vnl_disk",(/size(Vnl_disk)/))
    !
    if(read_is_on(ID)) then
       !
       ! Fill an array Vnl to size required by yambo, ignore extra elements
       !
       allocate(Vnl(3,X%ib(2),db_nbm,nXkibz,n_sp_pol))
+      call mem_est("Vnl",(/size(Vnl)/))
    endif
    !
    do i1=1,nXkibz
@@ -124,6 +127,7 @@ integer function io_Vnl(X,Xen,ID)
    enddo
    !
    deallocate(Vnl_disk)
+   call mem_est("Vnl_disk")
    !
  endif
  !

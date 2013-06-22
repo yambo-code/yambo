@@ -31,18 +31,18 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  use com,           ONLY:error
  use real_time,     ONLY:B_mat_index
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,&
-&                        PAR_IND_Q,PAR_n_B_mat_elements,PAR_COM_QP_A2A,PAR_COM_G_b_A2A,&
+&                        PAR_IND_Q,PAR_n_B_mat_elements,PAR_COM_QP_A2A,PAR_COM_G_b_A2A,PAR_QP_index,&
 &                        PAR_IND_B_mat,PAR_Q_index,PAR_IND_QPp,PAR_QPp_index,PAR_nQ,PAR_nQP,PAR_nQPp
- use collision,     ONLY:ggwinfo,collision_reset
+ use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_n_states,QP_table
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF_load,WF_free
  use R_lattice,     ONLY:qindx_S,bz_samp
- use D_lattice,     ONLY:DL_vol
+ use D_lattice,     ONLY:DL_vol,nsym
  use wrapper,       ONLY:M_by_V
- use collisions_IO, ONLY:TEMP_COLLISIONS_v
+ use collisions_IO, ONLY:TEMP_COLLISIONS_v,l_STORE_COLLISIONS
  use drivers,       ONLY:l_carrier_dynamics
  use SC,            ONLY:SC_bands
  use fragments,     ONLY:fragment_status
@@ -59,7 +59,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
 &                           i_n,i_k,i_k_s,i_k_sp,&
 &                           i_np,i_kmq,i_kmq_s,i_kmq_sp,i_kmq_G0,&
 &                           i_m,i_p,i_p_s,i_p_sp,i_p_star,&
-&                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp2_mem
+&                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp2_mem,i_qp1_mem
  complex(SP), allocatable ::EM1s(:,:)
  type(ggwinfo)            ::isc,iscp
  integer          ::io_err,ID
@@ -123,9 +123,15 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
    !
    if (.not.PAR_IND_QP%element_1D(i_qp1)) cycle
    !
-   if (fragment_status(i_qp1)/=-1) then
-     call live_timing(steps=PAR_nQ*PAR_n_B_mat_elements)
-     cycle
+   i_qp1_mem=PAR_QP_index(i_qp1)
+   !
+   if (l_STORE_COLLISIONS) then
+     if (fragment_status(i_qp1)/=-1) then
+       call live_timing(steps=PAR_nQ*PAR_n_B_mat_elements)
+       cycle
+     endif
+   else
+     allocate(COLLISIONS(i_qp1_mem)%v3(PAR_nQPp,nsym,PAR_nQ))
    endif
    !
    TEMP_COLLISIONS_v=cZERO
@@ -231,9 +237,15 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
            !
            call M_by_V('N', X%ng, EM1s, conjg(iscp%rhotw), local_rhotw)
            !
-           TEMP_COLLISIONS_v(i_qp2,i_p_s,iqbz)=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
-           !
-           !TEMP_COLLISIONS_v(i_qp2_mem,i_p_s,i_q_mem)=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+           if (l_STORE_COLLISIONS) then
+             !
+             TEMP_COLLISIONS_v(i_qp2,i_p_s,iqbz)=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+             !
+           else
+             !
+             COLLISIONS(i_qp1_mem)%v3(i_qp2_mem,i2,i_q_mem)=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+             !
+           endif
            !
          enddo
          !
@@ -282,12 +294,12 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
    enddo Q_loop 
    !
    if (l_carrier_dynamics) then
-     call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_G_b_A2A%COMM)
+     if (l_STORE_COLLISIONS) call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_G_b_A2A%COMM)
    else
      call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)
    endif
    !
-   call COLLISIONS_store(i_qp1)
+   if (l_STORE_COLLISIONS) call COLLISIONS_store(i_qp1)
    !
  enddo QP_loop
  !
@@ -295,8 +307,8 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  !
  ! CLEAN
  !
- deallocate(isc%gamp,isc%rhotw,iscp%rhotw,EM1s)
- call mem_est("ISC-GAMP GW-E EM1s")
+ deallocate(EM1s)
+ call mem_est("EM1s")
  call X_alloc('X')
  call WF_free()
  call collision_reset(isc)

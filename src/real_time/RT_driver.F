@@ -166,9 +166,6 @@ subroutine RT_driver(E,X,k,q)
      !
      call COLLISIONS_load(.FALSE.)
      !
-   else
-     !
-     call COLLISIONS_load(.FALSE.)
    endif
    !
  endif

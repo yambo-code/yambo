@@ -26,7 +26,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use pars,          ONLY:schlen,SP,IP
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:i_time_rev
+ use D_lattice,     ONLY:i_time_rev,nsym
  use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk,QP_n_G_bands,QP_state
  use wave_func,     ONLY:WF_free
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
@@ -34,12 +34,15 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use global_XC,     ONLY:SC_HF,SC_COHSEX
  use collisions_IO, ONLY:V_kind,collisions_IO_alloc,collisions_IO_free,TEMP_COLLISIONS_v,&
 &                        io_COLLISIONS,collisions_RANGES_setup,COLLISIONS_range,l_STORE_COLLISIONS
+ use collision,     ONLY:COLLISIONS
  use X_m,           ONLY:X_t
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
  use fragments,     ONLY:fragment_status
  use interfaces,    ONLY:PARALLEL_global_indexes
+ use parallel_m,    ONLY:PAR_nQPp,PAR_nQ,PAR_nQP
+ use parser_m,      ONLY:parser
  !
  implicit none
  type(levels)  :: E
@@ -51,9 +54,13 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  integer           ::ID
  character(schlen) ::ch
+ logical           ::l_COLLISIONS_on_the_fly
  !
  call section('*','Extended collisions')
  !=======================================
+ !
+ call parser('COLLISIONS_on_the_fly',l_COLLISIONS_on_the_fly)
+ l_STORE_COLLISIONS    =.not.l_COLLISIONS_on_the_fly
  !
  ! QP states setup
  !
@@ -119,17 +126,17 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      call PARALLEL_global_indexes(E,k,q,"GW")
    endif
    !
-   V_kind=SC_COHSEX
-   fragment_status=-1
-   if (l_STORE_COLLISIONS) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-   !
-   if (io_COLLISIONS(0,ID)/=0) then
+   if (l_STORE_COLLISIONS) then
      !
-     QP_n_G_bands(2)=SC_bands(2)
-     !  
-     ! RL vectors to dimension the COLLISIONS
-     !  
-     if (l_STORE_COLLISIONS) then  
+     V_kind=SC_COHSEX
+     fragment_status=-1
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+     !
+     if (io_COLLISIONS(0,ID)/=0) then
+       !
+       QP_n_G_bands(2)=SC_bands(2)
+       !  
+       ! RL vectors to dimension the COLLISIONS
        !  
        call collisions_RANGES_setup()
        !
@@ -143,7 +150,13 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        !
        call report_disk_usage('COHSEX')
        !
+       call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2)) 
+       !
      endif
+     !
+   else
+     !
+     allocate(COLLISIONS(PAR_nQP))
      !
      call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2)) 
      !
@@ -153,11 +166,11 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! CLEAN
  !=======
- !
- deallocate(fragment_status)
- call mem_est("fragment_status")
+ stop
  !
  if (.not.l_STORE_COLLISIONS.or.allocated(TEMP_COLLISIONS_v)) then
+   deallocate(fragment_status)
+   call mem_est("fragment_status")
    call WF_free()
    call collisions_IO_free()
    if (allocated(TEMP_COLLISIONS_v)) deallocate(TEMP_COLLISIONS_v)

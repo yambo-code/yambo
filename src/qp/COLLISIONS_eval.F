@@ -166,9 +166,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! CLEAN
  !=======
- stop
  !
- if (.not.l_STORE_COLLISIONS.or.allocated(TEMP_COLLISIONS_v)) then
+ if (l_STORE_COLLISIONS.or.allocated(TEMP_COLLISIONS_v)) then
    deallocate(fragment_status)
    call mem_est("fragment_status")
    call WF_free()

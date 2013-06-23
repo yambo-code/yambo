@@ -243,7 +243,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
              !
            else
              !
-             COLLISIONS(i_qp1_mem)%v3(i_qp2_mem,i2,i_q_mem)=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+             COLLISIONS(i_qp1_mem)%v3(i_qp2_mem,i_p_s,i_q_mem)=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
              !
            endif
            !
@@ -310,7 +310,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  deallocate(EM1s)
  call mem_est("EM1s")
  call X_alloc('X')
- call WF_free()
+ if (l_STORE_COLLISIONS) call WF_free()
  call collision_reset(isc)
  call collision_reset(iscp)
  !

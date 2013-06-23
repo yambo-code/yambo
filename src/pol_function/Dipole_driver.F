@@ -174,8 +174,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle 
      ! 
-     call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1+ik/),ID=ID)
-     io_err(1)=io_DIPOLES(X,Xen,ID)
+     !call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1+ik/),ID=ID)
+     !io_err(1)=io_DIPOLES(X,Xen,ID)
      !
    enddo
    !

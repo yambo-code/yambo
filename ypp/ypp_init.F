@@ -440,6 +440,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT
  l_RT_X             = runlevel_is_on('rtX')
+ l_retarded_GFs     = runlevel_is_on('CCA')
 #endif
 #if defined _YPP_MAGNETIC
  l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
@@ -514,6 +515,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
    call initactivate(1,"TmRngeRt TmJumps DampMode DampFactor SkipJP_IO FrMinDamp RmAsymLim UseFFT")
+ endif
+ !
+ if (l_retarded_GFs) then
+   call initactivate(1,"GFkind GFbands T_step E_step E_window")
+   call QP_ctl_switch('G')
  endif
  ! 
 #endif

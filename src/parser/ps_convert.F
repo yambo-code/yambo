@@ -157,13 +157,23 @@ subroutine ps_convert(rvar,ivar,v_name)
      rvar=rvar*PS2AUT
      call set_itp_unit('ps',1)
      return
-   else 
+     !
+   else if (index(v_line,'fs')/=0) then
      !
      ! 1 AUT= 1 FS * FSAUT
      !
      rvar=rvar*FS2AUT
      call set_itp_unit('fs',1)
      return
+     !
+   else if (index(v_line,'as')/=0) then
+     !
+     ! 1 AUT= 1 AS * ASAUT
+     !
+     rvar=rvar*AS2AUT
+     call set_itp_unit('as',1)
+     return
+     !
    endif
    !
    ! If nothing has been done and the real has a unit I assume it is in eV!

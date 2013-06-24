@@ -23,7 +23,7 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  !
  use pars,           ONLY:SP,rZERO
  use QP_m,           ONLY:QP_n_states,QP_table
- use real_time,      ONLY:Gr_ee_matrix,l_G_retarded_DB
+ use real_time,      ONLY:Gr_ee_matrix,l_G_retarded_DB,Gr_T_steps,Gr,Gr_peak_pos,Gr_T_step
  use memory_m,       ONLY:mem_est
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:bz_samp,nqbz,qindx_S
@@ -41,12 +41,16 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  integer :: i_qp1,i_qp2,i_qp1_mem,i_qp2_mem,i_n,i_k,i_m,i_p,i_np,i_kmq,i_mp,&
 &           i_q,i_q_s,iqbz,iq_mem,i_p_s,i_p_star,i_pmq_bz,i_pmq,i_pmq_G0
  real(SP):: GAMMA_(2),WIDTH(4,2),pre_factor,E_center
+ real(SP), allocatable :: Gr_integrand(:)
+ real(SP),    external :: Laplace_transform
  !
  ! Allocation
  !
  allocate(Gr_ee_matrix(PAR_nQP,PAR_nQPp,PAR_nQ,nsym))
  Gr_ee_matrix=rZERO
  call mem_est("Gr_ee_matrix",(/size(Gr_ee_matrix)/))
+ !
+ if (l_G_retarded_DB) allocate(Gr_integrand(Gr_T_steps))
  !
  call live_timing('Electron-Electron:',PAR_nQP*PAR_nQPp*PAR_nQ)
  !
@@ -92,39 +96,40 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
          i_pmq =k%sstar(i_pmq_bz,1)
          !
          if (l_G_retarded_DB) then
-!           !
-!           Gr_integrand(:)=real( Gr(i_kp,i_np,:)*Gr(i_p,i_m,:)*&
-!&                                conjg(Gr(i_pp,i_mp,:))*conjg(Gr(i_k,i_n,:)) )
-!           !
-!           E_center=Gr_peak_pos(i_kp,i_np)-Gr_peak_pos(i_k,i_n)+Gr_peak_pos(i_p,i_m)-Gr_peak_pos(i_pp,i_mp)
-!           !
-!           pre_factor=4.8
-!           !
-!           WIDTH(1,:)=set_WIDTH(i_np,i_kp,maxval(  Gr_E_ranges(i_kp,i_np,:) ))
-!           WIDTH(2,:)=set_WIDTH(i_n,i_k,  maxval(  Gr_E_ranges(i_k,i_n,:) ))
-!           WIDTH(3,:)=set_WIDTH(i_m,i_p,  maxval(  Gr_E_ranges(i_p,i_m,:) ))
-!           WIDTH(4,:)=set_WIDTH(i_mp,i_pp,maxval(  Gr_E_ranges(i_pp,i_mp,:) ))
-!           !
-!           GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)+WIDTH(3,1)+WIDTH(4,2)
-!           GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)+WIDTH(3,2)+WIDTH(4,1)
-!           !
-!           if (E_center> GAMMA_(2)*pre_factor) goto 2
-!           if (E_center<-GAMMA_(1)*pre_factor) goto 2
-!           !
-!           Gr_ee_matrix(i1,i2)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
-!           !
-!           if (Gr_ee_matrix(i1,i2)<0.) Gr_ee_matrix(i1,i2)=0.
-!           !
+           !
+           Gr_integrand(:)=real( Gr(i_kmq,i_np,:)*Gr(i_p,i_m,:)*conjg(Gr(i_pmq,i_mp,:))*conjg(Gr(i_k,i_n,:)) )
+           !
+           E_center=Gr_peak_pos(i_kmq,i_np)-Gr_peak_pos(i_k,i_n)+Gr_peak_pos(i_p,i_m)-Gr_peak_pos(i_pmq,i_mp)
+           !
+           !DEBUG>
+           !pre_factor=4.8
+           !WIDTH(1,:)=set_WIDTH(i_np,i_kp,maxval(  Gr_E_ranges(i_kp,i_np,:) ))
+           !WIDTH(2,:)=set_WIDTH(i_n,i_k,  maxval(  Gr_E_ranges(i_k,i_n,:) ))
+           !WIDTH(3,:)=set_WIDTH(i_m,i_p,  maxval(  Gr_E_ranges(i_p,i_m,:) ))
+           !WIDTH(4,:)=set_WIDTH(i_mp,i_pp,maxval(  Gr_E_ranges(i_pp,i_mp,:) ))
+           !GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)+WIDTH(3,1)+WIDTH(4,2)
+           !GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)+WIDTH(3,2)+WIDTH(4,1)
+           !
+           !if (E_center> GAMMA_(2)*pre_factor) goto 2
+           !if (E_center<-GAMMA_(1)*pre_factor) goto 2
+           !DEBUG<
+           !
+           Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
+           !
+           if (Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)<0.) Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=0._SP
+           !
          else
            !
-           pre_factor=8.7
+           !pre_factor=8.7
            !
            E_center=E%E(i_np,i_kmq,1)-E%E(i_n,i_k,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)
            !
-           WIDTH(1,:)=set_WIDTH(i_np,i_kmq,abs(E%W(i_np,i_kmq,1)))
-           WIDTH(2,:)=set_WIDTH(i_n,i_k,   abs(E%W(i_n,i_k,1)))
-           WIDTH(3,:)=set_WIDTH(i_m,i_p,   abs(E%W(i_m,i_p,1)))
-           WIDTH(4,:)=set_WIDTH(i_mp,i_pmq,abs(E%W(i_mp,i_pmq,1)))
+           !DEBUG>
+           !WIDTH(1,:)=set_WIDTH(i_np,i_kmq,abs(E%W(i_np,i_kmq,1)))
+           !WIDTH(2,:)=set_WIDTH(i_n,i_k,   abs(E%W(i_n,i_k,1)))
+           !WIDTH(3,:)=set_WIDTH(i_m,i_p,   abs(E%W(i_m,i_p,1)))
+           !WIDTH(4,:)=set_WIDTH(i_mp,i_pmq,abs(E%W(i_mp,i_pmq,1)))
+           !DEBUG<
            !
            GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)+WIDTH(3,1)+WIDTH(4,2)
            GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)+WIDTH(3,2)+WIDTH(4,1)
@@ -140,11 +145,11 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
            !
          endif
          !
+         !DEBUG>
+         !write (100,*)  E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
+         !DEBUG<
+         !
        enddo
-       !
-       !DEBUG>
-       !write (100,*)  E_center*27.21,Gr_matrix(i1,i2)
-       !DEBUG<
        !
        call live_timing(steps=1)
        !
@@ -155,6 +160,8 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  enddo
  !
  call live_timing()
+ !
+ if (l_G_retarded_DB) deallocate(Gr_integrand)
  !
  contains
    !

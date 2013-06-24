@@ -84,6 +84,7 @@ module UNITS
  real(SP), parameter :: HA2FSm1   =HA2THZ/1000._SP            ! HA = HA2FSm1 femto-SEC^(-1)
  !                                                              Note that 1 THz = 10^-3 / fs
  real(SP), parameter :: FS2AUT    =10.**2/CORE_CNST           ! femto-SEC = FS2AUT unit of Time in A.U. (2.4189 10^(-17) sec)
+ real(SP), parameter :: AS2AUT    =0.1/CORE_CNST           ! pico-SEC  = PS2AUT unit of Time in A.U.
  real(SP), parameter :: PS2AUT    =10.**5/CORE_CNST           ! pico-SEC  = PS2AUT unit of Time in A.U.
  !
  ! LifeTimes

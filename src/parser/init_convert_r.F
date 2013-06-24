@@ -53,6 +53,8 @@ subroutine init_convert_r(rfac,v_descr)
    rfac=1./PS2AUT
  else if (index(trim(v_descr),'fs')/=0) then
    rfac=1./FS2AUT
+ else if (index(trim(v_descr),'as')/=0) then
+   rfac=1./AS2AUT
  else if (index(trim(v_descr),'T')/=0) then
    rfac=AU2Tesla
  else if (index(trim(v_descr),'V/mm')/=0) then

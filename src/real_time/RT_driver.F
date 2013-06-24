@@ -375,8 +375,6 @@ subroutine RT_driver(E,X,k,q)
  !
  if(.not.local_V.and..not.l_NE_simulate_IP) call free_COLLISIONS_v()
  !
- call X_alloc("P_square")
- !
  call set_real_printed_length()
  !
 end subroutine RT_driver

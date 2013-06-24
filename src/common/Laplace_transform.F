@@ -34,7 +34,7 @@ function Laplace_transform(F,N,dT,Eo)
  !
  Laplace_transform=0._SP
  !
- if (abs(Eo)>0.) then
+ if (abs(Eo)>1.E-5) then
    do i_t=1,N-1
      Laplace_transform=Laplace_transform-cI*F(i_t)*exp(cI*i_t*dT*Eo)/Eo*(exp(cI*dT*Eo)-1)
    enddo

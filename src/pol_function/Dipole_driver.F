@@ -21,10 +21,10 @@
 !
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
- use drivers,        ONLY:l_optics,l_real_time,l_sc_run
+ use drivers,        ONLY:l_optics,l_real_time,l_sc_run,l_eval_collisions
  use interfaces,     ONLY:PARALLEL_WF_distribute
  use pars,           ONLY:SP
- use com,            ONLY:warning
+ use com,            ONLY:warning,secnm
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:grid_path
@@ -46,7 +46,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Work Space
  !
  integer                   :: ic,iv,is,ik
- logical                   :: use_trans_gauge
+ logical                   :: use_trans_gauge,l_evaluating_em1s
  !
  !I/O
  !
@@ -67,7 +67,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
 #if defined _SC 
  !
- if (l_sc_run.or.l_real_time) Dipole_bands_ordered=.FALSE.
+ l_evaluating_em1s=index(secnm,"Dielectric")/=0
+ !
+ if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) Dipole_bands_ordered=.FALSE.
  !
 #endif
  !
@@ -174,20 +176,20 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle 
      ! 
-     !call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1+ik/),ID=ID)
-     !io_err(1)=io_DIPOLES(X,Xen,ID)
+     call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1+ik/),ID=ID)
+     io_err(1)=io_DIPOLES(X,Xen,ID)
      !
    enddo
    !
 #if defined _SC 
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
+   call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
    io_err(2)=io_P_and_P2(X,Xen,ID)
 #endif
    !
  end if
  !
 #if defined _RT  
- if (l_real_time) return
+ if (l_real_time.and..not.l_evaluating_em1s) return
 #endif
  !
  ! Warn about missing [Vnl,r] commutator
@@ -202,5 +204,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Clean up
  !
  call X_alloc('DIP_iR') 
+#if defined _RT  
+ call X_alloc('DIP_P') 
+ call X_alloc('P_square') 
+#endif
  !
 end subroutine

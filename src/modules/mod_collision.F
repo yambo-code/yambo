@@ -55,18 +55,33 @@ module collision
      use memory_m,       ONLY:mem_est
      use stderr,         ONLY:intc
      use QP_m,           ONLY:QP_n_states
+     use parallel_m,     ONLY:PAR_IND_QP,PAR_QP_index
      !
      implicit none
      !
      ! Work Space
      !
-     integer :: i_qp
+     integer :: i_qp,i_qp_mem
      !
      do i_qp=1,QP_n_states
        !
-       deallocate(COLLISIONS(i_qp)%table,COLLISIONS(i_qp)%v)
-       call mem_est("QP_COLLISIONS_table"//trim(intc((i_qp))))
-       call mem_est("QP_COLLISIONS_v"//trim(intc(i_qp)))
+       if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+       i_qp_mem=PAR_QP_index(i_qp)
+       !
+       if (allocated(COLLISIONS(i_qp_mem)%table)) then
+         deallocate(COLLISIONS(i_qp_mem)%table)
+         call mem_est("QP_COLLISIONS_table"//trim(intc((i_qp))))
+       endif
+       !
+       if (allocated(COLLISIONS(i_qp_mem)%v)) then
+         deallocate(COLLISIONS(i_qp_mem)%v)
+         call mem_est("QP_COLLISIONS_v"//trim(intc((i_qp))))
+       endif
+       !
+       if (allocated(COLLISIONS(i_qp_mem)%v3)) then
+         deallocate(COLLISIONS(i_qp_mem)%v3)
+         call mem_est("QP_COLLISIONS_v3"//trim(intc((i_qp))))
+       endif
        !
      enddo
      !

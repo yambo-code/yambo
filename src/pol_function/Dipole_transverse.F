@@ -93,12 +93,16 @@ subroutine Dipole_transverse(Xen,Xk,X)
 &           PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(PAR_IND_CON_BANDS_X_ID(X%whoami)+1)*&
 &           PAR_IND_VAL_BANDS_X(X%whoami)%n_of_elements(PAR_IND_VAL_BANDS_X_ID(X%whoami)+1)*n_spin
  !
+ wf_dim=3
 #if defined _SC
- call live_timing('P and P^2 (T):',n_LT_steps)
- wf_dim=4
+ if (allocated(DIP_P)) then
+   call live_timing('P and P^2 (T):',n_LT_steps)
+   wf_dim=4
+ else
+   call live_timing('Dipole (T):',n_LT_steps)
+ endif
 #else
  call live_timing('Dipole (T):',n_LT_steps)
- wf_dim=3
 #endif
  call PP_redux_wait
  !
@@ -170,10 +174,12 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! GPL_EXCLUDE_START 
          !
 #if defined _SC
-         wf_xyz(:wf_ng,4) = wf(1:wf_ng,ivfft) *  & 
-&                          ( (Xk%pt(ik,1) + g_vec(:wf_ng,1))**2 * (2.0_SP*pi/alat(1))**2  &
-&                          + (Xk%pt(ik,2) + g_vec(:wf_ng,2))**2 * (2.0_SP*pi/alat(2))**2  &
-&                          + (Xk%pt(ik,3) + g_vec(:wf_ng,3))**2 * (2.0_SP*pi/alat(3))**2 )
+         if (allocated(DIP_P)) then
+           wf_xyz(:wf_ng,4) = wf(1:wf_ng,ivfft) *  & 
+&                            ( (Xk%pt(ik,1) + g_vec(:wf_ng,1))**2 * (2.0_SP*pi/alat(1))**2  &
+&                            + (Xk%pt(ik,2) + g_vec(:wf_ng,2))**2 * (2.0_SP*pi/alat(2))**2  &
+&                            + (Xk%pt(ik,3) + g_vec(:wf_ng,3))**2 * (2.0_SP*pi/alat(3))**2 )
+         endif
 #endif
          !
          ! GPL_EXCLUDE_END 
@@ -209,7 +215,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !=====
          ! P_vc=rho(:3)
 #if defined _SC
-         DIP_P(:,ic,iv,ik_mem,i_spin)=DIP_P(:,ic,iv,ik_mem,i_spin)+rho(:3)
+         if (allocated(DIP_P)) then
+           DIP_P(:,ic,iv,ik_mem,i_spin)=DIP_P(:,ic,iv,ik_mem,i_spin)+rho(:3)
+         endif
 #endif        
 #if defined _KERR
          if(trim(global_gauge)=='velocity') then
@@ -245,10 +253,12 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !======
          ! <P^2>
          !======
-         if( n_spinor == 2 ) then
-           P_square(ic,iv,ik_mem,1)= P_square(ic,iv,ik_mem,1)+rho(4)
-         else
-           P_square(ic,iv,ik_mem,i_spin)= rho(4)
+         if (allocated(DIP_P)) then
+           if( n_spinor == 2 ) then
+             P_square(ic,iv,ik_mem,1)= P_square(ic,iv,ik_mem,1)+rho(4)
+           else
+             P_square(ic,iv,ik_mem,i_spin)= rho(4)
+           endif
          endif
 #endif
          !
@@ -288,8 +298,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
    do i_spin=1,n_sp_pol
      call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_spin),COMM=PAR_COM_Xk_ibz_A2A%COMM)
 #if defined _SC
-     call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_spin),COMM=PAR_COM_Xk_ibz_A2A%COMM)
-     call PP_redux_wait(P_square(:,:,ik_mem,i_spin),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+    if (allocated(DIP_P)) then
+      call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_spin),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+      call PP_redux_wait(P_square(:,:,ik_mem,i_spin),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+    endif
 #endif
 #if defined _KERR
    if(trim(global_gauge)=='velocity') call pp_redux_wait(DIP_P(:,:,:,:,i_spin))

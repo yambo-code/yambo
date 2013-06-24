@@ -117,7 +117,7 @@ subroutine electrons_driver(Xk,Xen)
    db_name=trim(jobstr)//'/TOP_RESIDUAL_b'//trim(intc(QP_table(1,1)))//'_k'//trim(intc(QP_table(1,3)))
    if (file_exists(trim(db_name))) then
      l_polaronic_wf=.TRUE.
-     open(unit=100,name=trim(db_name),form='unformatted')
+     open(unit=100,file=trim(db_name),form='unformatted')
      read(100) elph_Ham_bands
      close(100)
      nb_to_load    =elph_Ham_bands
@@ -194,7 +194,7 @@ subroutine electrons_driver(Xk,Xen)
      !  
      do i_st=1,2
        n_top_residuals=1
-       open(unit=100,name=trim(db_name),form='unformatted')
+       open(unit=100,file=trim(db_name),form='unformatted')
        do while(.true.)
          read(100,end=2) top_residual(n_top_residuals),polaronic_residual(n_top_residuals)
          if  (polaronic_residual(n_top_residuals)>elph_residual_treshold/100.*max_residual) n_top_residuals=n_top_residuals+1
@@ -214,7 +214,7 @@ subroutine electrons_driver(Xk,Xen)
        v2plot_c=cmplx(0.,SP)
        !
        db_name=trim(jobstr)//'/EIGENV_I'//trim(intc(top_residual(i_st)))//'_k'//trim(intc(ik))
-       open(unit=100,name=trim(db_name),form='unformatted')
+       open(unit=100,file=trim(db_name),form='unformatted')
        read(100) H_size
        do i_c=1,H_size
          read(100) ibp,ok_ibz,ok_s,il,iq_ibz,iq_s,B_n_ok

@@ -166,8 +166,6 @@ integer function ELPH_databases(k,E,q)
  if (file_exists(trim(ph_freqs_file))) then
    call msg('s',"Phonon frequencies (re)read from: "//trim(ph_freqs_file))
    use_ext_ph_freqs=.true.
-   open(unit=99,file=trim(ph_freqs_file))
-   read(99,*)
  endif
  !
  call live_timing('ELPH databases (WRITE)',nDBs_disk,SERIAL=.true.)
@@ -226,8 +224,6 @@ integer function ELPH_databases(k,E,q)
    !
  enddo
  call live_timing()
- !
- if (use_ext_ph_freqs) close(99)
  !
  call msg("s",':: Modes           :',ph_modes)
  call msg("s",':: Bands range     :',elph_nb)
@@ -398,12 +394,18 @@ integer function ELPH_databases(k,E,q)
      goto 1
    endif
    if (use_ext_ph_freqs) then
+     open(unit=99,file=trim(ph_freqs_file))
+     read(99,*)
+     do i1=1,(idb-1)*(1+ph_modes/6)
+       read(99,*) ph_q 
+     enddo
      read(99,*) ph_q 
      if (.not.v_is_zero(ph_q(:)-real(Q_DP(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_freqs_file))
      do i1=1,ph_modes,6
        read(99,*) ph_freqs_sq(iq,i1:min(i1+5,ph_modes))
      enddo
      ph_freqs_sq(iq,:)=(abs(ph_freqs_sq(iq,:))/HA2CMm1)**2.
+     close(99)
    else
      do il=1,ph_modes
        ph_freqs_sq(iq,il)=max( real(ph_freqs_sq_disk(il)),0._SP)

@@ -29,7 +29,7 @@ subroutine RT_G_retarded(E,k)
  use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_window,Gr_E_steps,&
 &                         Gr_peak_pos,Gr_E_ranges,Gr_T_step,Gr_QP_width
  use QP_CTL_m,       ONLY:QP_apply
- use QP_m,           ONLY:QP_ctl_Wc,QP_ctl_Wv
+ use QP_m,           ONLY:QP_ctl_Wc
  use ELPH,           ONLY:W_debye
  use timing,         ONLY:live_timing
  use com,            ONLY:msg,warning
@@ -137,9 +137,6 @@ subroutine RT_G_retarded(E,k)
          !
          Time= Gr_T_window/Gr_T_steps*i_t
          Gr(i_k,i_b,i_t)=RT_G_retarded_time(trim(Gr_kind),E,i_b,i_k,Time,0.)
-         !DEBUG>
-         !A_t_DP(i_t)=Gr(i_k,i_b,i_t)
-         !DEBUG<
        enddo
        !
      else
@@ -157,21 +154,6 @@ subroutine RT_G_retarded(E,k)
        Gr(i_k,i_b,:)=A_t_DP
        !
      endif
-     !
-     !DEBUG>
-     !do i_w=1,Gr_E_steps
-     !  write (100,*) real(W(i_w))*HA2EV,real(A_w_DP(i_w))
-     !enddo
-     !do i_t=1,Gr_T_steps
-     !  Time= Gr_T_window/Gr_T_steps*i_t
-     !  write (200,*) Time/FS2AUT,real(A_t_DP(i_t))
-     !enddo
-     !call RT_1D_Fourier_Transform("T2W"," ",W,A_w_DP,Gr_E_steps,A_t_DP,Gr_T_steps,Gr_T_window/Gr_T_steps,0.,.FALSE.,1)
-     !do i_w=1,Gr_E_steps
-     !  write (300,*) real(W(i_w))*HA2EV,real(A_w_DP(i_w))/pi
-     !enddo
-     !stop
-     !DEBUG<
      !
      call live_timing(steps=1)
      !

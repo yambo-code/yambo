@@ -62,7 +62,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 #endif
  use electrons,     ONLY:levels
  use stderr,        ONLY:intc
- use com,           ONLY:error
+ use com,           ONLY:error,secnm
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
  use IO_m,          ONLY:IO_and_Messaging_switch
  use QP_m,          ONLY:QP_n_states,QP_nb,QP_table,QP_n_G_bands
@@ -79,7 +79,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  ! Work Space
  !
  integer       :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),c_bands(2),v_bands(2),ib1,ib2,n_CPU_save
- logical       :: reset_all
+ logical       :: reset_all,l_evaluating_em1s
  character(10) :: WHAT
  !
  ! Resets...
@@ -652,8 +652,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    if (ENVIRONMENT=="BSE") then
      n_bands= (/E%nbf+1,BS_bands(2)/)
    else
+     l_evaluating_em1s=index(secnm,"Dielectric")/=0
      n_bands= (/E%nbf+1,X%ib(2)/)
-     if (l_real_time) n_bands=X%ib
+     if (l_real_time.and..not.l_evaluating_em1s) n_bands=X%ib
    endif
    !
    ! Response functions conduction bands
@@ -674,7 +675,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
      n_bands= (/BS_bands(1),E%nbm/)
    else
      n_bands= (/X%ib(1),E%nbm/)
-     if (l_real_time) n_bands=X%ib
+     if (l_real_time.and..not.l_evaluating_em1s) n_bands=X%ib
    endif
    !
    call PARALLEL_index(PAR_IND_VAL_BANDS_X(X_type),(/n_bands(2)/),low_range=(/n_bands(1)/),&

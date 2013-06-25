@@ -22,6 +22,7 @@
 subroutine RT_G_retarded_EE_initialize(E,k,q)
  !
  use pars,           ONLY:SP,rZERO
+ use units,          ONLY:HA2EV
  use QP_m,           ONLY:QP_n_states,QP_table
  use real_time,      ONLY:Gr_ee_matrix,l_G_retarded_DB,Gr_T_steps,Gr,Gr_peak_pos,Gr_T_step
  use memory_m,       ONLY:mem_est
@@ -116,8 +117,6 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
            !
            Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
            !
-           if (Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)<0.) Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=0._SP
-           !
          else
            !
            !pre_factor=8.7
@@ -146,7 +145,11 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
          endif
          !
          !DEBUG>
-         write (100,*)  E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
+ !if (i_qp1_mem==1.and.i_qp2_mem==1.and.iq_mem==1.and.i_p_s==1) write (*,*)  E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
+ !if (i_qp1_mem==1.and.i_qp2_mem==2.and.iq_mem==2.and.i_p_s==1) write (*,*)  E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
+ !if (i_qp1_mem==2.and.i_qp2_mem==18.and.iq_mem==1.and.i_p_s==1) write (*,*)  E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
+ !if (i_qp1_mem==2.and.i_qp2_mem==22.and.iq_mem==5.and.i_p_s==1) write (*,*)  E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
+ !if (i_qp1_mem==2.and.i_qp2_mem==22.and.iq_mem==5.and.i_p_s==1) stop
          !DEBUG<
          !
        enddo
@@ -158,8 +161,6 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
    enddo
    !
  enddo
- !
- stop
  !
  call live_timing()
  !

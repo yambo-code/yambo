@@ -60,11 +60,4 @@ subroutine COLLISIONS_compose(G_input)
    !
  enddo
  !
- ! All the QP correction are put together in QP_Vnl_xc
- ! 
- !DEBUG>
- !call PP_redux_wait(QP_Vnl_xc)
- !if (l_sc_cohsex.or.l_sc_srpa) call PP_redux_wait(QP_Sc)
- !DEBUG<
- !
 end subroutine 

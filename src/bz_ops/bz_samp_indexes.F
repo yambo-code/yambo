@@ -76,6 +76,9 @@ subroutine bz_samp_indexes(k,Xk,q)
  call parser('MinusQ',impose_minus_q)
  !
  if (.not.bse_scattering) bse_scattering=l_bse
+#if defined _ELPH
+ bse_scattering=.TRUE.
+#endif
  !
  q%description='q'
  !

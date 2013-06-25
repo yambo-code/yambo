@@ -71,11 +71,15 @@ complex(SP) function RT_G_retarded_time(Approx,E,ib,ik,Time,delta_T)
  !
  if (delta_T>0.) then
    !
+   !DEBUG>
    !RT_G_retarded_time=exp(-cI*eps*delta_T)*exp(-Gamma_factor*delta_T)/P_delta
+   !DEBUG<
    !
  else
    !
+   !DEBUG>
    !RT_G_retarded_time=-cI*exp(-cI*eps*Time)*exp_up/exp_dn
+   !DEBUG<
    !
    RT_G_retarded_time=exp_up/exp_dn
    !

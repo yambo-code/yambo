@@ -115,25 +115,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    enddo
  endif
  !
- !DEBUG>
- !if (master_cpu) then
- ! write (*,*) E_E_Electron_lifetime(:,1)*1000.
- ! write (*,*) E_E_Hole_lifetime(:,1)*1000.
-  !write (*,*) E_P_Phonon_lifetime(:,:)
- !endif
- !if (master_cpu) then
- !do i1=SC_bands(1),SC_bands(2)
- !  write  (*,'(f10.5)') E_P_Electron_lifetime(i1,:)*1000.
- !  write  (*,'(f10.5)') E_P_Hole_lifetime(i1,:)*1000.
- !  write  (*,'(f10.5)') E_P_Phonon_lifetime(i1,:)*1000.
- !  write  (*,'(f10.5)') Sigma_relax(i1,:,:)*1000.
- !enddo
- !endif
- !do while (.TRUE.)
- !enddo
- !stop
- !DEBUG<
- !
  ! Dephasing Matrix
  !==================
  !

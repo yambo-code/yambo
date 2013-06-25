@@ -79,7 +79,7 @@ subroutine barriers()
  ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_real_time) then
-   call switch_off_runlevel('all',on_name='scpot HF_and_locXC cohsex em1s negf collisions '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='scpot HF_and_locXC cohsex el_ph em1s negf collisions '//trim(always_runlevels))
    goto 1
  endif
  !

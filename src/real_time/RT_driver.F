@@ -265,9 +265,6 @@ subroutine RT_driver(E,X,k,q)
    !
    ! End dynamics ?
    !===============
-   !DEBUG>
-   !if (it==4) l_Dynamics_is_over=.TRUE.
-   !DEBUG<
    if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.
    if (stop_now(.FALSE.)) then
       NE_steps=(int((it-Thermal_steps)/RT_IO_steps)+1)*RT_IO_steps
@@ -294,9 +291,6 @@ subroutine RT_driver(E,X,k,q)
      !=======================
      call RT_mean_carrier_lifetimes(G_lesser(:,:,:,it_mem),E,k)
      call RT_output('life',TIME=NE_time/FS2AUT)
-     !DEBUG>
-     !if (it==4) stop
-     !DEBUG<
      !
    endif
    !

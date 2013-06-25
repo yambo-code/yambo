@@ -21,7 +21,7 @@
 !
 subroutine electrons_driver(Xk,Xen)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,lchlen
  Use stderr,         ONLY:intc
  use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state
  use FFT_m,          ONLY:fft_size,fft_dim
@@ -46,7 +46,6 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_ELPH
  use YPP,            ONLY:elph_residual_treshold
  use ELPH,           ONLY:elph_Ham_bands
- use pars,           ONLY:lchlen
  use com,            ONLY:jobstr,file_exists
 #endif
  implicit none

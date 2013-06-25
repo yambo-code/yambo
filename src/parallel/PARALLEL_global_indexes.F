@@ -615,7 +615,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    if (l_eval_collisions)   n_bands=SC_bands
 #endif
 #if defined _ELPH
-   if (l_eval_collisions)   n_bands=(/1,QP_PH_n_G_bands/)
+   if (.not.l_eval_collisions)   n_bands=(/1,QP_PH_n_G_bands/)
 #endif
    !
    call PARALLEL_index(PAR_IND_G_b,(/n_bands(2)/),low_range=(/n_bands(1)/),&

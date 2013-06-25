@@ -122,7 +122,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  ch='EXS'
 #if defined _SC
- if (l_sc_run)        ch='HF@it'//trim(intc(it_now))
+ if (l_sc_run)          ch='HF@it'//trim(intc(it_now))
  if (l_eval_collisions) ch='HF collisions'
 #endif
  !

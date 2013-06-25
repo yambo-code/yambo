@@ -63,7 +63,7 @@ complex(SP) function RT_G_retarded_time(Approx,E,ib,ik,Time,delta_T)
  !
  ! Pure Lorentzian dynamics
  !
- if (Approx=="Lorentzian") then
+ if (Approx=="Lorentzian".or.Approx=="QP") then
    exp_up  = exp(-Gamma_factor*Time)
    exp_dn  = 1._SP
    P_delta = 1._SP
@@ -78,6 +78,7 @@ complex(SP) function RT_G_retarded_time(Approx,E,ib,ik,Time,delta_T)
    !RT_G_retarded_time=-cI*exp(-cI*eps*Time)*exp_up/exp_dn
    !
    RT_G_retarded_time=exp_up/exp_dn
+   !
  endif
  !
 end function RT_G_retarded_time

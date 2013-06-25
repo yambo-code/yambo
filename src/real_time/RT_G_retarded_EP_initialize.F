@@ -26,7 +26,7 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  use electrons,      ONLY:levels
  use SC,             ONLY:SC_bands
  use timing,         ONLY:live_timing
- use real_time,      ONLY:B_mat_index,Gr_ep_matrix,l_G_retarded_DB
+ use real_time,      ONLY:B_mat_index,Gr_ep_matrix,l_G_retarded_DB,Gr,Gr_peak_pos,Gr_T_steps,Gr_T_step
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_Xk_nibz,PAR_nQ,PAR_n_B_mat_elements,PAR_IND_Xk_ibz,&
 &                         PAR_Xk_ibz_index,PAR_IND_Q,PAR_B_mat_index,PAR_Q_index
@@ -40,7 +40,9 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  ! Work Space
  !
  real(SP):: GAMMA_(2),WIDTH(4,2),E_center,pre_factor
- integer :: ik,iqbz,i_n,i_np,ik_mem,i_b_mat_mem,iq_mem,ik_m_q,il,is
+ integer :: ik,iqbz,i_n,i_np,ik_mem,i_b_mat_mem,iq_mem,ik_m_q,il,is,i_s
+ real(SP), allocatable :: Gr_integrand(:)
+ real(SP),    external :: Laplace_transform
  !
  ! Allocation
  !
@@ -49,6 +51,8 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  allocate(Gr_ep_matrix(PAR_Xk_nibz,PAR_n_B_mat_elements,PAR_nQ,2*ph_modes))
  Gr_ep_matrix=rZERO
  call mem_est("Gr_ep_matrix",(/size(Gr_ep_matrix)/))
+ !
+ if (l_G_retarded_DB) allocate(Gr_integrand(Gr_T_steps))
  !
  do ik=1,nkibz
    !
@@ -83,16 +87,14 @@ subroutine RT_G_retarded_EP_initialize(E,k)
                !GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)
                !GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)
                !
-               !E_center=Gr_peak_pos(i_k,i_n)-Gr_peak_pos(i_p,i_m)+i_s*abs(sqrt(ph_freqs_sq(i_q,i_l)))
+               E_center=Gr_peak_pos(ik,i_n)-Gr_peak_pos(ik_m_q,i_np)+i_s*abs(sqrt(ph_freqs_sq(iqbz,il)))
                !
                !if (E_center> GAMMA_(2)*pre_factor) goto 1
                !if (E_center<-GAMMA_(1)*pre_factor) goto 1
                !
-               !Gr_integrand(:)=real( conjg(Gr(i_k,i_n,:))*Gr(i_p,i_m,:) )
+               Gr_integrand(:)=real( conjg(Gr(ik,i_n,:))*Gr(ik_m_q,i_np,:) )
                !
-               !Gr_ep_matrix(i1,i_q,i_l,i_s_i)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
-               !
-               !if (Gr_ep_matrix(i1,i_q,i_l,i_s_i)<0.) Gr_ep_matrix(i1,i_q,i_l,i_s_i)=0.
+               Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
                !
              else
                !

@@ -103,7 +103,7 @@ module YPP
  real(SP)     ::WF_multiplier   
  character(schlen) ::state_ctl 
  !
- !EL-PH
+ ! EL-PH
  !
  logical :: l_gkkp
  logical :: l_gkkp_expand

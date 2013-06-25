@@ -65,7 +65,7 @@ integer function io_G_retarded(ID,what)
    call io_elemental(ID,I0=Gr_T_steps,&
 &       VAR=' Time steps                      :',CHECK=.true.,OP=(/"=="/))
    !
-   if (trim(Gr_kind)/="HC") then
+   if (trim(Gr_kind)/="HC".and.trim(Gr_kind)/="QP") then
      !
      call io_elemental(ID,R0=Gr_E_window,&
 &         VAR=' Energy range                [eV]:',UNIT=HA2EV,CHECK=.true.,OP=(/"=="/))

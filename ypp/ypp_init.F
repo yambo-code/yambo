@@ -518,8 +518,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
  !
  if (l_retarded_GFs) then
-   call initactivate(1,"GFkind GFbands T_step E_step E_window")
+   call initactivate(1,"GFkind GFbands T_step T_window E_step E_window")
    call QP_ctl_switch('G')
+   call initactivate(-1,"GfnFdb OCCTime")
  endif
  ! 
 #endif

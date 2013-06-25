@@ -44,7 +44,6 @@
   {"notr",  "t","Force use of spatial Inv. instead of Time Rev.",0,0,0,0,1},
   {"nosy",  "n","Force no symmetries",0,0,0,0,1},
   {"nowf",  "w","Force no wavefunctions",0,0,0,0,1},
-  {"Gnum",  "g","Number of RL vectors to be used",1,0,0,0,1},
   {"verb",  "v","Verbose wfc I/O reporting",0,0,0,0,1}, 
   {NULL,NULL,NULL,0,0,0,0,0}
  };

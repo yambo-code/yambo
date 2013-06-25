@@ -31,10 +31,8 @@ subroutine K_BSload_diag(iq)
  ! 
  use pars,           ONLY:SP
  use memory_m,       ONLY:mem_est
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nXkibz
- use BS,             ONLY:BS_mat,BS_mat_diagonal,BS_K_dim,BS_blk_dim,BS_k_and_row_restart,BS_eh_E,&
+ use BS,             ONLY:BS_mat,BS_mat_diagonal,BS_K_dim,BS_blk_dim,BS_k_and_row_restart,&
 &                         BS_DB_is_fragmented,BS_K_coupling,BS_IO_index
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_control,OP_RD,RD,NONE,RD_CL,OP_RD_CL
@@ -46,7 +44,6 @@ subroutine K_BSload_diag(iq)
  integer         ::i1,ik,frag_pointer
  logical         ::BS_K_coupling_save
  type(X_t)       ::X
- type(PP_indexes)::Kp
  ! 
  ! I/O
  ! 
@@ -103,7 +100,7 @@ subroutine K_BSload_diag(iq)
 #endif
    !
    forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik)) &
-&        BS_mat_diagonal(i1+frag_pointer)=BS_mat(i1,i1) !+BS_eh_E(i1+frag_pointer)
+&        BS_mat_diagonal(i1+frag_pointer)=BS_mat(i1,i1)
    !
    if (BS_DB_is_fragmented) deallocate(BS_mat)
    !       

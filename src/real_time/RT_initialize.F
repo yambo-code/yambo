@@ -263,6 +263,8 @@ subroutine RT_initialize(E,k,q)
  endif
  call msg('r', '[RT] Pump/Probe periodicity     [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
  call msg('r', '[RT]            energy step     [eV]:',maxval(Efield(:)%W_step)*HA2EV)
+ call msg('r', '[RT] IO cache steps                 :',RT_IO_steps)
+ call msg('r', '[RT] IO cache time              [fs]:',RT_IO_time/FS2AUT)
  !
  do i1=1,n_ext_fields
    !

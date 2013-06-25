@@ -43,10 +43,19 @@ integer function G_index(v1)
    return
  endif
  !
+ ng1=1
+ ng2=ng_in_shell(n_g_shells)
+ !
  do i_shell=2,n_g_shells
-   if(E_of_shell(i_shell-1)-1E-5<E_of_shell_v1.and.E_of_shell_v1<E_of_shell(i_shell)+1E-5) then
-     ng1=ng_in_shell(i_shell-1)+1
-     ng2=ng_in_shell(i_shell)
+   if(abs(E_of_shell(i_shell)-E_of_shell_v1)<1.E-4) then
+     ng1=ng_in_shell(i_shell-1)
+     exit
+   endif
+ enddo
+ !
+ do i_shell=n_g_shells-1,2,-1
+   if(abs(E_of_shell(i_shell)-E_of_shell_v1)<1.E-4) then
+     ng2=ng_in_shell(minval((/i_shell+2,n_g_shells/)))
      exit
    endif
  enddo

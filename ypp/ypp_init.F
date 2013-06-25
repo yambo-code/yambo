@@ -67,7 +67,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_RT || defined _YPP_SC
  type(levels)     ::E_dummy
  integer          ::io_SC_err,ID
- integer, external::io_SC_components
+ integer, external::io_SC_components,io_RT_components
 #endif
  !
  ! What is running ?
@@ -277,7 +277,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  call E_reset(E_dummy) 
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
- io_SC_err=io_SC_components('G' ,E_dummy,ID)
+ io_SC_err=io_RT_components('G' ,E_dummy,ID)
  ! 
  if (io_SC_err==0) then
    !
@@ -555,6 +555,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_plot) then
    call initactivate(1,"Format Direction FFTGvecs") 
    if (l_sp_wf) call initactivate(1,"Degen_Step")  
+#if defined _YPP_ELPH
+   if (l_sp_wf) call initactivate(1,"ResTresh")  
+#endif
    if (l_mag)   call initactivate(1,"MagDir") 
  endif
  !

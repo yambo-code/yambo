@@ -31,7 +31,6 @@ module mod_com2y
  logical :: verboseIO
  !
  integer :: ng_vec_abinit
- integer, public  :: N_G_vectors
  !
  real(SP):: alat_mult_factor
  !
@@ -56,10 +55,8 @@ module mod_com2y
      verboseIO            =index(in_string,'verb')>0
      !
      alat_mult_factor=1.
-     N_G_vectors=0
      do i1=1,100
        if ( trim(str_piece(i1))=='alat_f')  read(str_piece(i1+1),*) alat_mult_factor
-       if ( trim(str_piece(i1))=='Gnum')    read(str_piece(i1+1),*) N_G_vectors
      enddo
      !
    end subroutine

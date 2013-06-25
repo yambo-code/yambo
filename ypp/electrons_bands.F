@@ -179,7 +179,7 @@ subroutine electrons_bands(Xk,Xen)
    !
    INTERP_k%description="Interp"
    !
-   call grid_generator(INTERP_k,interp_grid)
+   call grid_generator(INTERP_k,'i',interp_grid)
    allocate(bands(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz))
    call bz_interpolation(USER_k=INTERP_k,R2D=bands,ID=ID_interp)
    !

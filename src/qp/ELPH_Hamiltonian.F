@@ -26,7 +26,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use ELPH,          ONLY:elph_global_alloc,elph_global_free,elph_Ham_bands,elph_Ham_ik,&
 &                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,mk_dir
- use com,           ONLY:error,msg,of_open_close,file_exists
+ use com,           ONLY:error,msg,of_open_close,file_exists,jobstr
  use R_lattice,     ONLY:nqibz,nqbz,bz_samp,qindx_S,ik_is_table
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms
  use electrons,     ONLY:levels
@@ -34,6 +34,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use matrix_operate,ONLY:mat_dia_inv,DIAGO,USE_LK
  use stderr,        ONLY:intc,set_real_printed_length
  use QP_m,          ONLY:QP_G_damp
+ use parser_m,      ONLY:parser
  !
  implicit none
  !
@@ -45,6 +46,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  integer              :: H_size,ib,iq_bz,iq_ibz,iq_s,ID,io_err,iH,il,ok_bz,ok_ibz,ok_s,No_PH_basis_size,&
 &                        iHp,ibp,iq_ibz_db,ik_bz_gkkp,ib_gkkp,ibp_gkkp,iw
  real(SP)             :: ph_E,residual,q_weight
+ logical              :: l_eval_Displacements
  integer, external    :: ioELPH
  integer,     allocatable :: elph_Ham_Table(:,:)
  real   (SP), allocatable :: elph_E(:)
@@ -84,6 +86,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call k_sym2sym(k,'k')
  call k_expand(k)
+ !
+ call parser('Eval_Displacements',l_eval_displacements)
  !
  Ph_branches=elph_branches(2)-elph_branches(1)+1
  No_PH_basis_size=elph_Ham_bands(2)-elph_Ham_bands(1)+1
@@ -190,9 +194,9 @@ subroutine ELPH_Hamiltonian(en,k,q)
  ! Diagonalization 
  !=================
  !
- call mk_dir('ELPH_Ham')
+ if (trim(jobstr)=="") call error("Please provide a non empty string for the job_name")
  !
- db_name='ELPH_Ham/DIAGO_DB_k_'//trim(intc(elph_Ham_ik))
+ db_name=trim(jobstr)//'/DIAGO_DB_k_'//trim(intc(elph_Ham_ik))
  if (file_exists(db_name)) then
    call msg('s','Eigenvectors/Eigenvalues I/O')
    open(unit=1,file=trim(db_name),status='old',form='unformatted')
@@ -229,8 +233,9 @@ subroutine ELPH_Hamiltonian(en,k,q)
      enddo
    enddo
    !
-   db_name='ELPH_Ham/TOP_RESIDUAL_b'//trim(intc(ib))//'_k'//trim(intc(elph_Ham_ik))
+   db_name=trim(jobstr)//'/TOP_RESIDUAL_b'//trim(intc(ib))//'_k'//trim(intc(elph_Ham_ik))
    open(unit=100,file=trim(db_name),form='unformatted')
+   write (100) elph_Ham_bands
    write (file_name,'(2(a,i3.3))') 'G_Ham_band_',ib,'_k_',elph_Ham_ik
    call of_open_close(file_name,'ot')
    call msg('o Ham','# El-Ph Hamiltonian derived Green`s function')
@@ -243,8 +248,11 @@ subroutine ELPH_Hamiltonian(en,k,q)
    !
    do iH=1,H_size
      residual= abs(elph_Mat(ib-elph_Ham_bands(1)+1,iH))**2.
-     if (residual>1.E-2) then
-       if (residual>max_residual) max_residual=residual
+     if (residual>max_residual) max_residual=residual
+   enddo
+   do iH=1,H_size
+     residual= abs(elph_Mat(ib-elph_Ham_bands(1)+1,iH))**2.
+     if (residual>0.01*max_residual) then
        call msg('o Ham','#',(/real(iH,SP),elph_E(iH)*HA2EV,residual/),INDENT=0,USE_TABS=.true.)
        write (100) iH,residual
        top_residual(iH)=.TRUE.
@@ -270,41 +278,51 @@ subroutine ELPH_Hamiltonian(en,k,q)
  call live_timing()
  !
  ! Eigenvectors written to DB for post-analysis
- !============================
+ !=============================================
  !
  ! |I_k>= A_nk * |nk> + SUM_n_q_il ( B_n_q_il * |n,k-q>|q,il> )
  !
  do iH=1,H_size
    if (.not.top_residual(iH)) cycle
-   db_name='ELPH_Ham/EIGENV_I'//trim(intc(iH))//'_k'//trim(intc(elph_Ham_ik))
+   db_name=trim(jobstr)//'/EIGENV_I'//trim(intc(iH))//'_k'//trim(intc(elph_Ham_ik))
    open(unit=100,file=trim(db_name),form='unformatted')
    write(100) H_size
    do iHp=1,H_size
      ibp    =elph_Ham_Table(iHp,1)
      iq_bz  =elph_Ham_Table(iHp,2)
-     il     =elph_Ham_Table(iHp,3)
-     iq_ibz =q%sstar(iq_bz,1)
-     iq_s   =q%sstar(iq_bz,2)
-     ok_bz  =qindx_S(elph_Ham_ik,iq_bz,1)
-     ok_ibz =k%sstar(ok_bz,1)
-     ok_s   =k%sstar(ok_bz,2)
+     if (iq_bz>0) then
+       il     =elph_Ham_Table(iHp,3)
+       iq_ibz =q%sstar(iq_bz,1)
+       iq_s   =q%sstar(iq_bz,2)
+       ok_bz  =qindx_S(elph_Ham_ik,iq_bz,1)
+       ok_ibz =k%sstar(ok_bz,1)
+       ok_s   =k%sstar(ok_bz,2)
+     else
+       il     =0
+       iq_ibz =0
+       iq_s   =0
+       ok_bz  =0
+       ok_ibz =0
+       ok_s   =0
+     endif
      write(100) ibp,ok_ibz,ok_s,il,iq_ibz,iq_s,elph_Mat(iHp,iH) 
    enddo
    close(100)
  enddo
  !
+ if (.not.l_eval_Displacements) goto 1
+ !
  call section('+','Mean Displacements (MD)')
  !                                
  ! Mean values of displacement <iH|u_alfa_i_s|iH>
  ! ==============================================
- !iH is the eigenvector of elph_Mat
+ ! iH is the eigenvector of elph_Mat
  !
  mean_u=0.0
  !
  call live_timing('MD evaluation',H_size,SERIAL=.TRUE.)
  !
  call msg('r','Displacements:')
- call msg('r','Index ',(/'C1(x)','C2(x)','H1(x)','H2(x)','C1(y)','C2(y)','H1(y)','H2(y)','C1(z)','C2(z)','H1(z)','H2(z)'/))
  !
  do iH=1,H_size
    call live_timing(steps=1)
@@ -327,14 +345,14 @@ subroutine ELPH_Hamiltonian(en,k,q)
          enddo
        enddo
      enddo
+     write (tmp_string,'(a,i4.4,2a,i2.2,a,3(1x,f5.3))') 'State(',iH,')-','Atom(',ia,')',real(mean_u(ia,:,iH))
+     call msg('r',trim(tmp_string))
    enddo
-   write (tmp_string,'(i5,12(1x,f5.3))') iH,real(mean_u(:,:,iH))
-   call msg('r',trim(tmp_string))
  enddo
  call live_timing()
  !                                
  !Mean values of displacement <iH|(u_alfa_i_s)^2|iH>
- !===========
+ !===================================================
  ! iH is the eigenvector of elph_Mat
  ! |iH> = Sum_n A_nk*|n,k> + Sum_n_q_lambda B_nkq*|n,k-q> |q,lambda>
  ! A_nk_sq = conjg(A_nk)*A_nk
@@ -344,8 +362,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call live_timing('MD square evaluation',H_size,SERIAL=.TRUE.)
  !
- call msg('r','sqrt(MD square):')
- call msg('r','Index ',(/'C1(x)','C2(x)','H1(x)','H2(x)','C1(y)','C2(y)','H1(y)','H2(y)','C1(z)','C2(z)','H1(z)','H2(z)'/))
+ call msg('nr','sqrt(MD square):')
  !
  do iH=1,H_size
    call live_timing(steps=1)
@@ -383,10 +400,10 @@ subroutine ELPH_Hamiltonian(en,k,q)
        enddo
        mean_u_sq(ia,ic,iH)=mean_u_sq(ia,ic,iH)*( A_nk_sq + 3*B_nkq_sq )
      enddo
+     write (tmp_string,'(a,i4.4,2a,i2.2,a,3(1x,f5.3))') 'State(',iH,')-','Atom(',ia,')',real(mean_u_sq(ia,:,iH))
+     call msg('r',trim(tmp_string))
    enddo 
    !
-   write (tmp_string,'(i5,12(1x,f5.3))') iH,sqrt(real(mean_u_sq(:,:,iH)))
-   call msg('r',trim(tmp_string))
  enddo
  call live_timing()
  !
@@ -394,9 +411,16 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  ! CLEAN
  !
+1 continue
+ !
  call elph_global_free( )
- deallocate(elph_Ham_Table,elph_Mat,elph_E)
- deallocate(mean_u,top_residual,num_of_ph,top_ph_residual)
- deallocate(mean_u_sq)
+ if (allocated(elph_Ham_Table)) deallocate(elph_Ham_Table)
+ if (allocated(elph_Mat))       deallocate(elph_Mat)
+ if (allocated(elph_E))         deallocate(elph_E)
+ if (allocated(mean_u))         deallocate(mean_u)
+ if (allocated(top_residual))   deallocate(top_residual)
+ if (allocated(num_of_ph))      deallocate(num_of_ph)
+ if (allocated(top_ph_residual))deallocate(top_ph_residual)
+ if (allocated(mean_u_sq))      deallocate(mean_u_sq)
  !
 end subroutine

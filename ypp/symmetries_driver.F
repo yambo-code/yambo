@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine symmetries_driver(E,k)
+subroutine symmetries_driver(E,Xk)
  !
  use pars,                ONLY:SP
  use xc_functionals,      ONLY:magn
@@ -35,11 +35,11 @@ subroutine symmetries_driver(E,k)
  implicit none
  !
  type(levels),intent(in)     :: E
- type(bz_samp),intent(inout) :: k
+ type(bz_samp),intent(inout) :: Xk
  !
  ! Work Space
  !
- type(bz_samp)         :: k_save
+ type(bz_samp)         :: Xk_save
  integer,allocatable   :: kpoints_map(:,:)
  ! 
  integer               :: old_nsym
@@ -77,8 +77,8 @@ subroutine symmetries_driver(E,k)
  !endif
  !
  ! Expansion of default k-points
- call k_ibz2bz(k,'i',.true.)
- call k_reduce(k)
+ call k_ibz2bz(Xk,'i',.true.)
+ call k_reduce(Xk)
  !
  call fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
@@ -92,27 +92,27 @@ subroutine symmetries_driver(E,k)
  call section('=',"K-points")
  !===========================
  !
- call bz_samp_reset(k_save)
- call bz_samp_duplicate(k,k_save)
+ call bz_samp_reset(Xk_save)
+ call bz_samp_duplicate(Xk,Xk_save)
  !
- call msg('s',trim(intc(k%nibz))//' k-points are now expanded/reduced to ...')
- deallocate(k%pt)
- call k_reduce(k)
- call msg('l'," "//trim(intc(k%nibz)))
+ call msg('s',trim(intc(Xk%nibz))//' k-points are now expanded/reduced to ...')
+ deallocate(Xk%pt)
+ call k_reduce(Xk)
+ call msg('l'," "//trim(intc(Xk%nibz)))
  !
- allocate(kpoints_map(2,k%nibz))
+ allocate(kpoints_map(2,Xk%nibz))
  !
- call build_kpts_map(k,k_save,kpoints_map,action_kind)
+ call build_kpts_map(Xk,Xk_save,kpoints_map,action_kind)
  !
  ! Energies and Wave-functions
- call fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_kind)
+ call fix_WFs_and_E(E,Xk,Xk_save,kpoints_map,old_nsym,S_contains_TR,action_kind)
  !
  ! Rotate KB or Vnl
- call fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
+ call fix_PPs(E,Xk,Xk_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
  ! CLEAN
  !=======
- call bz_samp_reset(k_save)
+ call bz_samp_reset(Xk_save)
  deallocate(kpoints_map)
  !
 end subroutine

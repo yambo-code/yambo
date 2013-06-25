@@ -23,6 +23,7 @@ module IO_m
  !
  use pars,       ONLY:SP,lchlen,schlen
  use LOGO,       ONLY:code_version,code_revision
+ use com,        ONLY:error
 #if defined _NETCDF_IO
  use netcdf
 #endif
@@ -444,6 +445,7 @@ module IO_m
      if ( any((/ACTION==OP_RD_CL,ACTION==OP_WR_CL,&
 &               ACTION==OP_APP_WR_CL,ACTION==OP_RD,&
 &               ACTION==OP_APP,ACTION==OP_WR/)) ) then
+       ID=-1
        do i1=1,max_io_units
          if (io_unit(i1)==0) then
            ID=i1
@@ -452,6 +454,7 @@ module IO_m
            exit
          endif
        enddo
+       if(ID==-1) call error(" Recompile Yambo with a larger: max_io_units")
      endif
      !
      io_action(ID)=ACTION

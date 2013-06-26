@@ -74,6 +74,7 @@ subroutine PP_PWscf_driver(k)
  !
  call pw_basis_init(basis_con,struct)
  !
+ if( all(atoms%pseudo(:)%nbeta==0) ) return
  pp_n_l_times_proj_max=maxval((/atoms%pseudo(:)%nbeta/))
  !
  allocate(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
@@ -84,6 +85,7 @@ subroutine PP_PWscf_driver(k)
  pp_n_l_max=0
  do itype=1,n_atomic_species
    pp_n_l_comp(itype)=maxval((/atoms%pseudo(itype)%lbeta(:)/))
+   if(atoms%pseudo(itype)%nbeta==0) pp_n_l_comp(itype)=0   
    do ibeta=1,atoms%pseudo(itype)%nbeta
      pp_n_l_max=(max(pp_n_l_max,atoms%pseudo(itype)%lbeta(ibeta)+1))
      pp_table(1,itype,ibeta) = atoms%pseudo(itype)%lbeta(ibeta)+1               ! l+1

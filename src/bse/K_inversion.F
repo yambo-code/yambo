@@ -244,8 +244,10 @@ subroutine K_inversion(iq,W,E,k,q)
    if (BSS_uses_RIM) then
      forall(iw=1:W%n(1)) W_shifted%p(iw)=W%p(iw)-BS_mat_diagonal(i1)
      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,1),"sr")
-     if (trim(BSE_mode)=='causal') &
-&      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,2),"sa")
+     if (trim(BSE_mode)=='causal') then
+       forall(iw=1:W%n(1)) W_shifted%p(iw)=W%p(iw)+conjg(BS_mat_diagonal(i1))
+       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,2),"sa")
+     endif
      if (trim(BSE_mode)=='coupling') &
 &      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1+BS_K_dim,:,1),"sa")
    endif

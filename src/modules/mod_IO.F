@@ -386,6 +386,14 @@ module IO_m
            io_file(ID)=alternative_file(11)
          else if (file_exists(trim(alternative_file(12)))) then
            io_file(ID)=alternative_file(12)
+         else if (file_exists(trim(alternative_file(13)))) then
+           io_file(ID)=alternative_file(13)
+         else if (file_exists(trim(alternative_file(14)))) then
+           io_file(ID)=alternative_file(14)
+         else if (file_exists(trim(alternative_file(15)))) then
+           io_file(ID)=alternative_file(15)
+         else if (file_exists(trim(alternative_file(16)))) then
+           io_file(ID)=alternative_file(16)
          else
            io_connect=IO_NO_DATABASE
            if (present(no_full_RESET)) then

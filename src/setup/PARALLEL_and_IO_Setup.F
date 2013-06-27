@@ -22,7 +22,8 @@
 subroutine PARALLEL_and_IO_Setup(en,k)
  !
  use stderr,         ONLY:logfile,log_as_a_file
- use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,warning,second_jobstr
+ use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,warning,&
+&                         second_jobstr,third_jobstr
  use it_m,           ONLY:infile
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,Fragmented_IO
  use R_lattice,      ONLY:bz_samp
@@ -70,6 +71,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r','Report file    is ',trim(repfile))
  if (len_trim(jobstr)>0        ) call msg('r','Job string(main): ',trim(jobstr))
  if (len_trim(second_jobstr)>0 ) call msg('r','     (Secondary): ',trim(second_jobstr))
+ if (len_trim(third_jobstr)>0  ) call msg('r','         (Third): ',trim(third_jobstr))
  if (log_as_a_file      ) call msg('r','Log files      in ',trim(trim(com_path)//"/LOG"))
  call msg('r','')
  !

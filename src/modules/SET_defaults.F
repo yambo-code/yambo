@@ -52,7 +52,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     eval_magn
  use parallel_m, ONLY:master_cpu,ncpu,CPU_str_reset
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
-&                     more_io_path,core_io_path,jobstr,com_path,second_jobstr,repfile
+&                     more_io_path,core_io_path,jobstr,com_path,second_jobstr,repfile,third_jobstr
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,&
 &                     string_split,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
@@ -143,6 +143,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  jobstr=string(1)
  second_jobstr=" "
  if (len_trim(string(2))>0) second_jobstr=string(2)
+ third_jobstr=" "
+ if (len_trim(string(3))>0) third_jobstr=string(3)
  !
  ! Global Logicals
  !

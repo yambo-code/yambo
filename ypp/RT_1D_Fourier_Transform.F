@@ -37,7 +37,7 @@ subroutine RT_1D_Fourier_Transform(mode,title,freqs,fw,nw,ft,nt,dt,T0,USE_FFT,I_
  ! ft(t) = \int fw(w) exp^(-i w t) 
  !
  use pars,           ONLY:SP,DP,cI
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  implicit none
  !
  integer,     intent(in)   :: nw,nt,I_sign

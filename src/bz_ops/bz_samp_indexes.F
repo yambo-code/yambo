@@ -43,7 +43,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  use stderr,         ONLY:gen_fmt
  use com,            ONLY:msg,error,warning
  use parallel_m,     ONLY:PP_redux_wait
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use vec_operate,    ONLY:v_is_zero,c2a
  use R_lattice,      ONLY:b,d3q_factor,RL_vol,g_vec,ng_vec,&

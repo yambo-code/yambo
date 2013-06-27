@@ -30,7 +30,7 @@
    use R_lattice,               ONLY : g_vec, nkibz
    use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, NONE
    use electrons,               ONLY : n_bands,n_spin,n_spinor,n_sp_pol
-   use timing,                  ONLY : live_timing,live_timing_is_on
+   use LIVE_t,                  ONLY : live_LIVE_t,live_timing_is_on
    use stderr,                  ONLY : intc
    use parallel_m,              ONLY : PP_redux_wait,PP_indexes,myid,PP_indexes_reset
    use interfaces,              ONLY : PARALLEL_index

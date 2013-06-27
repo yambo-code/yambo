@@ -31,7 +31,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use R_lattice,      ONLY:g_vec,nkibz
  use stderr,         ONLY:intc
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:k_pt
  use D_lattice,      ONLY:alat

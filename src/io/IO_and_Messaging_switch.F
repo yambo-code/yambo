@@ -27,7 +27,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  use parallel_m,     ONLY:IO_write_default,myid,master_cpu
  use stderr,         ONLY:string_split
  use fragments,      ONLY:Parallel_Fragments,last_syncronized
- use timing,         ONLY:live_timing_is_on
+ use LIVE_t,         ONLY:live_timing_is_on
  use parser_m,       ONLY:parser
  use stderr,         ONLY:write_fragments_IO_log
  implicit none

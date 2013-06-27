@@ -34,7 +34,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:bz_samp,nXkibz,bz_samp_reset
  use D_lattice,      ONLY:DL_vol,input_Tel_is_negative
- use timing,         ONLY:what_is_running
+ use LIVE_t,         ONLY:what_is_running
  use stderr,         ONLY:intc
  use vec_operate,    ONLY:sort
  use interfaces,     ONLY:OCCUPATIONS_gaps

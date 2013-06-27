@@ -36,7 +36,7 @@ subroutine cutoff_box(q,is_cut)
 &                        CUTOFF_plus_RIM
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use zeros,         ONLY:k_iku_zero,G_iku_zero
  !
  implicit none

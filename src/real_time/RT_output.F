@@ -28,7 +28,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  use fields,         ONLY:A_vecpot
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes
- use timing,         ONLY:what_is_running
+ use LIVE_t,         ONLY:what_is_running
  implicit none
  !
  character(*),       intent(in) :: what

@@ -31,7 +31,7 @@ subroutine RT_G_retarded(E,k)
  use QP_CTL_m,       ONLY:QP_apply
  use QP_m,           ONLY:QP_ctl_Wc
  use ELPH,           ONLY:W_debye
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use com,            ONLY:msg,warning
  use IO_m,           ONLY:OP_WR_CL,OP_RD_CL,io_control,LOG,DUMP,NONE,VERIFY
  implicit none

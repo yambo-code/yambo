@@ -30,7 +30,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use parser_m,      ONLY:parser
  use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,spin_occ
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error
  use drivers,       ONLY:Finite_Tel,l_el_corr
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset,ncpu

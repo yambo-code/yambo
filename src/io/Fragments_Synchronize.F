@@ -26,7 +26,7 @@ subroutine Fragments_Synchronize(ID,db_name,i_fragment,j_fragment)
  use IO_m,           ONLY:synchronize_db,write_is_on,io_mode,VERIFY 
  use stderr,         ONLY:intc
  use fragments,      ONLY:last_syncronized,fragment_status
- use timing,         ONLY:hashes_now
+ use LIVE_t,         ONLY:hashes_now
  implicit none
  !
  integer          ::ID,i_fragment

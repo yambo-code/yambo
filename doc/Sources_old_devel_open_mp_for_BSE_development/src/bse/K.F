@@ -40,7 +40,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use parallel_m,   ONLY:PP_redux_wait,myid,PP_indexes_reset,PP_indexes,n_threads,&
 &                       POOL_id,POOL_COMM
  use com,          ONLY:msg,warning,error
- use timing,       ONLY:live_timing
+ use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
  use BS,           ONLY:BS_bands,BS_eh_E,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,O_n_c_states,&

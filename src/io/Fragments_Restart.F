@@ -27,7 +27,7 @@ subroutine Fragments_Restart(ID,current_fragment,fragments_todo)
 &                    DUMP,io_com,NONE,io_mode,VERIFY,rm_file,mk_dir,io_raw_extension
  use stderr,    ONLY:intc
  use com,       ONLY:get_name,file_exists,more_io_path
- use timing,    ONLY:date_and_time_string
+ use LIVE_t,    ONLY:date_and_time_string
  use com,       ONLY:msg
  use fragments, ONLY:Parallel_Fragments,fragment_status
  implicit none

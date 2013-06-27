@@ -34,7 +34,7 @@ subroutine K_Haydock(iq,W)
 &                         BS_DB_is_fragmented,ioBSS_Haydock,&
 &                         BS_K_Coupling,Haydock_terminator,&
 &                         K_BSmat_by_V,BSE_mode
- use timing,         ONLY:LIVE_message
+ use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use electrons,      ONLY:spin_occ
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP

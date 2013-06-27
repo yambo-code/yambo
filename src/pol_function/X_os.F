@@ -26,7 +26,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use pars,          ONLY:SP
  use wrapper,       ONLY:V_by_V_plus_V
  use collision,     ONLY:ggwinfo,collision_reset
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_Q_A2A,&

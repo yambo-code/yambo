@@ -46,7 +46,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use com,           ONLY:msg,error,warning,of_open_close
  use X_m,           ONLY:X_t
  use memory_m,      ONLY:mem_est
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use vec_operate,   ONLY:c2a
  use wrapper,       ONLY:V_dot_V
  !

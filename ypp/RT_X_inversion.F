@@ -28,7 +28,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
  use real_time,      ONLY:NE_steps,RT_step,RT_P
  use units,          ONLY:FS2AUT
  use com,            ONLY:msg
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  implicit none
  !
  real(SP)      :: RT_P_probe(NE_steps,N_probes,3),Harmonic_Frequency(0:X_order,N_probe_frequencies)

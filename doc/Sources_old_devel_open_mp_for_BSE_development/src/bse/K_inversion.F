@@ -35,7 +35,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use frequency,      ONLY:w_samp,W_reset,W_merge,W_duplicate
  use R_lattice,      ONLY:d3k_factor,q_norm,bz_samp
  use com,            ONLY:isec,msg
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset,ncpu
  use interfaces,     ONLY:PARALLEL_index
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE,VERIFY,OP_WR_CL

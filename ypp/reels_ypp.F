@@ -46,7 +46,7 @@
  use com,                 ONLY:msg, error
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,&
 &                              OP_RD_CL,VERIFY
- use timing,              ONLY:live_timing
+ use LIVE_t,              ONLY:live_timing
  use YPP
  use bulkeps,             ONLY : lbulkerr, GetBulkEps
  use eels_kinematics

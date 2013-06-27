@@ -75,7 +75,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
  use electrons,      ONLY:n_sp_pol
  use SC,             ONLY:SC_bands,SC_potential
  use wave_func,      ONLY:wf,wf_state,wf_x,wf_y,wf_z,WF_load,WF_free,WF_derivative_free
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use vec_operate,    ONLY:v_norm

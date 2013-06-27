@@ -26,7 +26,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  use pars,            ONLY:IP,SP,LP
  use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_eval_collisions,l_sc_srpa,l_carrier_dynamics 
- use timing,          ONLY:live_timing
+ use LIVE_t,          ONLY:live_timing
  use global_XC,       ONLY:SC_HF,SC_COHSEX
  use QP_m,            ONLY:QP_n_states
  use D_lattice,       ONLY:nsym

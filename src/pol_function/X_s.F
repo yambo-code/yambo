@@ -23,7 +23,7 @@ subroutine X_s(iq,X,wv)
  !
  use pars,          ONLY:SP,pi,cZero
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_Q_A2A,PAR_COM_INV_INDEX,PAR_COM_INV,&
 &                        PP_indexes,PP_indexes_reset,PAR_IND_INV_ID

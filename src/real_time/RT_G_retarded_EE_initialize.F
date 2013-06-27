@@ -30,7 +30,7 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  use R_lattice,      ONLY:bz_samp,nqbz,qindx_S
  use parallel_m,     ONLY:PAR_nQP,PAR_nQPp,PAR_nQ,PAR_IND_Q,PAR_IND_QP,PAR_IND_QPp,PAR_Q_index,&
 &                         PAR_QP_index,PAR_QPp_index
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use electrons,      ONLY:levels
  implicit none
  !

@@ -26,7 +26,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use pars,          ONLY:SP,schlen,DP,pi
  use drivers,       ONLY:l_sc_run,l_sc_exx,l_eval_collisions
  use com,           ONLY:msg
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
  use electrons,     ONLY:levels,spin_occ,spin
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&

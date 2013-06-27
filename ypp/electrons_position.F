@@ -27,7 +27,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  use D_lattice,      ONLY:a
  use wave_func,      ONLY:wf,wf_state,WF_load,WF_free
  use electrons,      ONLY:n_sp_pol
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use com,            ONLY:msg,of_open_close,error
  use YPP,            ONLY:output_fname
  use stderr,         ONLY:intc

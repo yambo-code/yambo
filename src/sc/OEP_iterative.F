@@ -49,7 +49,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  use wave_func,       ONLY:WF_load,wf,wf_state
  use SC,              ONLY:it_now,OEP_steps,OEP_threshold,SC_bands,l_oep_EWeight,E_bare
  use drivers,         ONLY:l_oep_exact,l_oep_slater,l_oep_kli,l_oep_ceda
- use timing,          ONLY:LIVE_message
+ use LIVE_t,          ONLY:LIVE_message
  use stderr,          ONLY:intc,real2ch,log_as_a_file
  !
  ! I/O

@@ -25,7 +25,7 @@ subroutine RT_driver(E,X,k,q)
  use drivers,        ONLY:l_eval_collisions,l_ph_corr,l_carrier_dynamics 
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
- use timing,         ONLY:live_timing 
+ use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,X_alloc
  use wave_func,      ONLY:WF_load,WF_free

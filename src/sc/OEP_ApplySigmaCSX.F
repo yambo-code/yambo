@@ -49,7 +49,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
  use wave_func,       ONLY:WF_load,wf,wf_state
- use timing,          ONLY:live_timing
+ use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
  use SC,              ONLY:it_now
  use IO_m,            ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,OP_WR_CL,IO_and_Messaging_switch

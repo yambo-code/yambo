@@ -25,7 +25,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  use pars,                ONLY:SP,pi
  use drivers,             ONLY:l_real_time
- use timing,              ONLY:live_timing
+ use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_CON_BANDS_X,PAR_IND_Xk_ibz,&
 &                              PAR_Xk_ibz_index,PAR_IND_VAL_BANDS_X,&

@@ -32,7 +32,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
 &                              W_debye,elph_nDBs,elph_use_q_grid,&
 &                              E_k_plus_q,setup_k_plus_q_levels,elph_global_free
  use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
- use timing,              ONLY:live_timing
+ use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid
  use interfaces,          ONLY:PARALLEL_index
  use functions,           ONLY:Fermi_fnc_derivative

@@ -27,7 +27,7 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
  use functions,    ONLY:K_scatter
  use BS,           ONLY:BS_eh_E,BS_columns,BS_blk_dim,BS_k_and_row_restart
  use parallel_m,   ONLY:myid,ncpu,PP_redux_wait
- use timing,       ONLY:live_timing,nhash
+ use LIVE_t,       ONLY:live_timing,nhash
  implicit none
  !
  integer(8) :: n_K_elements(ncpu),tot_n_K_elements

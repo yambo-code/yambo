@@ -22,7 +22,7 @@
 subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU,CHAIN)
  !
  use pars,   ONLY:lchlen
- use timing, ONLY:LIVE_message
+ use LIVE_t, ONLY:LIVE_message
  use stderr, ONLY:intc
  !
  implicit none

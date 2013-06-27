@@ -28,7 +28,7 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  use D_lattice,   ONLY:a
  use YPP,         ONLY:nr,v2plot,r_hole,v2plot2D,l_norm_to_one,WF_multiplier,plot_dim,&
 &                      plot_title,output_string,l_wavefunction,l_current,use_xcrysden
- use timing,      ONLY:live_timing
+ use LIVE_t,      ONLY:live_timing
  !
  implicit none
  logical    :: use_1d(3),use_2d(3),eval_only

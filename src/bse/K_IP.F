@@ -25,7 +25,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:error,msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm

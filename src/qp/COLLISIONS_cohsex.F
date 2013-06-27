@@ -27,7 +27,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use com,           ONLY:error
  use real_time,     ONLY:B_mat_index
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,&

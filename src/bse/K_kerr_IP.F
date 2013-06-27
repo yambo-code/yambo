@@ -24,7 +24,7 @@ subroutine K_kerr_IP(w)
  use pars,           ONLY:SP,pi
  use units,          ONLY:DEG2RAD
  use memory_m,       ONLY:mem_est
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use drivers,        ONLY:l_rpa_IP
  use X_m,            ONLY:X_epsilon,DIP_q_dot_iR
  use KERR,           ONLY:BSS_rhoq0_kerr,DIP_q_dot_iR_kerr,DIP_P_symm,B_Hall

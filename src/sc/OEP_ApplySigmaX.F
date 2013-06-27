@@ -45,7 +45,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
  use wave_func,       ONLY:WF_load,wf,wf_state
- use timing,          ONLY:live_timing
+ use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
  use SC,              ONLY:it_now
  !

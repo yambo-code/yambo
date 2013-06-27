@@ -23,7 +23,7 @@
 !====================================
    use pars
    use com,                     ONLY : msg, error
-   use timing,                  ONLY : live_timing
+   use LIVE_t,                  ONLY : live_timing
    use electrons,               ONLY : levels, n_spin, n_spinor, n_sp_pol
    use parallel_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
 &                                      pp_indexes_reset

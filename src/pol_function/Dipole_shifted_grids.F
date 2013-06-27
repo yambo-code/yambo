@@ -28,7 +28,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  use pars,                ONLY: SP,lchlen
  use com,                 ONLY: warning, core_io_path, error
  use stderr,              ONLY: intc
- use timing,              ONLY: live_timing
+ use LIVE_t,              ONLY: live_timing
  use electrons,           ONLY: levels,n_spin,  n_spinor,n_sp_pol
  use parallel_m,          ONLY: PP_redux_wait,PP_indexes,myid,&
 &                               PP_indexes_reset

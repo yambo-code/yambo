@@ -26,7 +26,7 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
   use eels_kinematics
   use eels_detector
   use model_loss_function
-  use timing,              ONLY:live_timing
+  use LIVE_t,              ONLY:live_timing
   implicit none
   integer,      intent(in) :: nw
   real(SP),     intent(in) :: hw(nw)

@@ -28,7 +28,7 @@ subroutine MAG_H_pseudo(Xk)
  use FFT_m,         ONLY:fft_size
  use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table
  use R_lattice,     ONLY:bz_samp
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use SC,            ONLY:SC_bands,Ho
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos
  use memory_m,      ONLY:mem_est

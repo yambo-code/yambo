@@ -33,7 +33,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        QP_n_G_bands,QP_ng_Sx,GW_en_comp,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
 &                        SC_E_threshold,QP_dSc_delta,QP_G_Zoom_treshold,OCC_T_ref
- use timing,        ONLY:nhash
+ use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
  use R_lattice,     ONLY:ng_closed,n_g_shells,QP_states_k,nXkibz,&

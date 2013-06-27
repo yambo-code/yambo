@@ -30,7 +30,7 @@ subroutine read_bxsf(Xk,Xen)
  use electrons,           ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,&
                                BZ_RIM_max_filling,BZ_RIM_nbands, &
                                n_bands,BZ_RIM_tot_nkpts,BZ_RIM_ipol_weight,n_spin
- use timing,              ONLY:live_timing
+ use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:file_exists,msg,error
  use vec_operate,         ONLY:c2a,rlu_k2bz,k2bz,v_is_zero
  use IO_m,                ONLY:io_control,NONE,OP_WR_CL,OP_RD_CL,io_disconnect 

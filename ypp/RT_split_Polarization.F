@@ -26,7 +26,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  use units,          ONLY:FS2AUT,HA2EV
  use real_time,      ONLY:RT_step,RT_P,RT_output,RAD_LifeTime,Phase_LifeTime
  use stderr,         ONLY:intc
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  !
  ! Fourier
  !

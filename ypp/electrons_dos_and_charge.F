@@ -34,7 +34,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use com,            ONLY:msg,of_open_close
  use functions,      ONLY:Fermi_fnc_derivative
  use QP_CTL_m,       ONLY:QP_apply
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
 #if defined _YPP_RT
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_output
  use SC,             ONLY:SC_bands,RT_occupations,SC_description,n_SC_descriptions

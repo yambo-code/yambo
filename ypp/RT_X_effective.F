@@ -33,7 +33,7 @@ subroutine RT_X_effective(en)
 &                         i_Pump,EtoT,Divide_by_Field
  use real_time,      ONLY:NE_steps,RT_output,RT_step,RT_P
  use vec_operate,    ONLY:sort
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use stderr,         ONLY:intc,real2ch
  implicit none
  !

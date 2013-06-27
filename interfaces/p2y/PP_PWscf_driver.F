@@ -35,7 +35,7 @@ subroutine PP_PWscf_driver(k)
  use pseudo,                ONLY:PP_alloc_PWscf,PP_free,pp_n_l_comp,     &
 &                                pp_n_l_times_proj_max,pp_n_l_max,pp_table
  use com,                   ONLY:msg,warning
- use timing,                ONLY:live_timing
+ use LIVE_t,                ONLY:live_timing
  use memory_m,              ONLY:mem_est
  use IO_m,                  ONLY:io_control,OP_WR_CL,OP_APP_WR_CL,REP
  use interfaces,            ONLY:PARALLEL_index

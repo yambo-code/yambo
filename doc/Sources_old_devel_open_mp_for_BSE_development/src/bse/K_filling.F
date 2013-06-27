@@ -29,7 +29,7 @@ subroutine K_filling(E_eh_range,S_eh_range,Par_kernel)
  use parallel_m
 !,   ONLY:myid,ncpu,pp_redux_wait,pp_indexes,POOLS_initialize,n_pools,ncpu
  use interfaces,   ONLY:PARALLEL_index
- use timing,       ONLY:live_timing
+ use LIVE_t,       ONLY:live_timing
  use stderr,       ONLY:intc
  implicit none
  !

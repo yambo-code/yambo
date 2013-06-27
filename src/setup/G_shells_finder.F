@@ -26,7 +26,7 @@ subroutine G_shells_finder()
  ! R_is G_ig = G_{g_rot(is,ig)}
  !
  use pars,         ONLY:SP,IP
- use timing,       ONLY:live_timing
+ use LIVE_t,       ONLY:live_timing
  use memory_m,     ONLY:mem_est
  use D_lattice,    ONLY:nsym,inv_index
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&

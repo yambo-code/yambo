@@ -29,7 +29,7 @@ subroutine RT_databases(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  use com,            ONLY:warning
  use memory_m,       ONLY:mem_est
  use SC,             ONLY:SC_bands
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
  use real_time,      ONLY:NE_steps,NE_i_time,J_and_P_cache,RT_ind_J,RT_IO_steps,&
 &                         J_and_P_cache_size,RT_P,NE_time,RT_step,&

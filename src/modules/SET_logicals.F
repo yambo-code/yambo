@@ -26,7 +26,7 @@ subroutine SET_logicals()
  use fragments,  ONLY:Parallel_Fragments
  use IO_m,       ONLY:IO_write,IO_read,Fragmented_IO,Fragmented_IO_save,IO_write_not_fragmented_DB
  use stderr,     ONLY:write_to_log,write_fragments_IO_log
- use timing,     ONLY:live_timing_is_on
+ use LIVE_t,     ONLY:live_timing_is_on
  integer :: i_chain ! Work Space
  master_cpu                =myid==0
  if (n_log_CPUs==0) then

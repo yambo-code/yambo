@@ -25,7 +25,7 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  use R_lattice,      ONLY:nkibz,nqbz,bz_samp,qindx_S
  use electrons,      ONLY:levels
  use SC,             ONLY:SC_bands
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use real_time,      ONLY:B_mat_index,Gr_ep_matrix,l_G_retarded_DB,Gr,Gr_peak_pos,Gr_T_steps,Gr_T_step
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_Xk_nibz,PAR_nQ,PAR_n_B_mat_elements,PAR_IND_Xk_ibz,&

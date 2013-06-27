@@ -31,7 +31,7 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
 &                              elph_use_q_grid,ph_freqs_sq,elph_gkkp
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid
  use interfaces,          ONLY:PARALLEL_index
- use timing,              ONLY:live_timing
+ use LIVE_t,              ONLY:live_timing
  use functions,           ONLY:Fermi_fnc_derivative
  use com,                 ONLY:msg,of_open_close
  use stderr,              ONLY:intc

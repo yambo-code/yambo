@@ -41,7 +41,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
- use timing,         ONLY:live_timing_is_on,what_is_running
+ use LIVE_t,         ONLY:live_timing_is_on,what_is_running
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,QP_nk,&
 &                         QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,X_duplicate,X_reset

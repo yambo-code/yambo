@@ -31,7 +31,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  use electrons,           ONLY:n_spin,n_sp_pol
  use pseudo,              ONLY:pp_kb,pp_kbd,pp_kbs,n_atomic_species,PP_alloc_pwscf,&
 &                              pp_n_l_times_proj_max,PP_free,PP_alloc_abinit,Vnl
- use timing,              ONLY:live_timing
+ use LIVE_t,              ONLY:live_timing
  use X_m,                 ONLY:X_t
  use stderr,              ONLY:intc
  use wave_func,           ONLY:wf_nb_io_groups,wf_ng,wf_igk,wf_nc_k,wf_ncx

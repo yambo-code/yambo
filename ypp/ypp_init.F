@@ -36,7 +36,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use stderr,         ONLY:string_split
  use electrons,      ONLY:n_spin,n_bands,n_spinor
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
- use timing,         ONLY:what_is_running
+ use LIVE_t,         ONLY:what_is_running
 #if defined _YPP_SC
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nb

@@ -30,7 +30,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use D_lattice,           only : n_atoms_species_max
  use pseudo,              only : PP_alloc, PP_free
  use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
- use timing,              only : live_timing_is_on
+ use LIVE_t,              only : live_timing_is_on
  use wave_func,           only : wf_ncx,ioWF,wf_nb_io_groups,wf_nb_io
  use IO_m,                only : io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use mod_com2y,           only : interface_presets, force_noWFs

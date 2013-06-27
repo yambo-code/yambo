@@ -33,7 +33,7 @@
    use optcut,                  ONLY : DIP_iR_cut, DIP_q_dot_iR_cut
    use R_lattice,               ONLY : nkibz, bz_samp, nXkibz
    use X_m,           ONLY:X_t,DIP_iR,X_alloc
- use timing,              ONLY:live_timing_is_on
+ use LIVE_t,              ONLY:live_timing_is_on
 
    implicit none
    real(SP),allocatable :: DIP_iR_disk(:,:,:),DIP_iR_cut_disk(:,:,:)

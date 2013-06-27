@@ -31,7 +31,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use drivers,       ONLY:l_life
  use electrons,     ONLY:levels,spin,spin_occ
  use frequency,     ONLY:w_samp,coarse_grid_index,coarse_grid_N,W_reset
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index

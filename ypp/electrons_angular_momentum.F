@@ -38,7 +38,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
 &                         WF_free,WF_derivative_free
  use SC,             ONLY:load_SC_components
  use electrons,      ONLY:n_sp_pol
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use units,          ONLY:SPEED_OF_LIGHT
  use com,            ONLY:msg,of_open_close
  !

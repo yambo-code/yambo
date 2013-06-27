@@ -31,7 +31,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
  &                             wf_state,WF_load,wf_state,wf,WF_free,wf_nb_io_groups
  use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol
- use timing,              ONLY:live_timing
+ use LIVE_t,              ONLY:live_timing
  use stderr,              ONLY:intc
  use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz,ng_vec
  use D_lattice,           ONLY:spin_sop

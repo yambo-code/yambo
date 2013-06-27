@@ -35,7 +35,7 @@ subroutine K_diagonalization(iq,W)
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:d3k_factor,q_norm
  use com,            ONLY:isec
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,ncpu,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL

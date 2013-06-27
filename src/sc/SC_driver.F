@@ -39,14 +39,14 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use interfaces,     ONLY:PARALLEL_global_indexes
  use com,            ONLY:msg,warning
  use X_m,            ONLY:X_t,current_iq
- use timing,         ONLY:LIVE_message
+ use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:intc,real2ch,log_as_a_file
  use xc_functionals, ONLY:V_xc,E_xc
  use frequency,      ONLY:w_samp
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder
- use timing,         ONLY:live_timing
+ use LIVE_t,         ONLY:live_timing
  use collisions_IO,  ONLY:collisions_IO_alloc,collisions_IO_free
 #if defined _MAGNETIC
  use electrons,       ONLY:Total_magn

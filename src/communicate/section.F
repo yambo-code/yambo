@@ -30,7 +30,7 @@ subroutine section(mode,name)
  use pars
  use it_m,       ONLY:ofiles_append
  use stderr,     ONLY:string_pack,intc
- use timing,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&
+ use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&
 &                     date_and_time_string
  use parallel_m, ONLY:PP_redux_wait,PARALLEL_message,ncpu
  use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&

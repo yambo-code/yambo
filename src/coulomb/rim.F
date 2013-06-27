@@ -26,7 +26,7 @@ subroutine rim()
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use vec_operate,   ONLY:v_norm
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&

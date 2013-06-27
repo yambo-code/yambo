@@ -28,7 +28,7 @@ subroutine cutoff_cylinder(q,is_cut)
 &                        bz_samp,cyl_vr_save,cyl_vz_save
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error
  
  implicit none

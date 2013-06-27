@@ -29,7 +29,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
 &                        BS_bands,BS_blk_dim,BS_K_dim,BS_k_and_row_restart
  use matrix_operate,ONLY:matrix_linear_index
  use com,           ONLY:isec
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_redux_wait
  use D_lattice,     ONLY:DL_vol
  use wave_func,     ONLY:WF_load,WF_free

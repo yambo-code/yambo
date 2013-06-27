@@ -23,7 +23,7 @@ subroutine X_GreenF_remap(bands,E,W)
  !
  use pars,          ONLY:SP,pi
  use units,         ONLY:HA2EV
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels,n_sp_pol
  use frequency,     ONLY:w_samp,W_reset
  use memory_m,      ONLY:mem_est

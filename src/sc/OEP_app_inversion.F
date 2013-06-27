@@ -49,7 +49,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
  use wave_func,       ONLY:wf_state,wf
- use timing,          ONLY:live_timing
+ use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
  !
  ! I/O

@@ -172,7 +172,7 @@ contains
    use D_lattice,             ONLY : input_GS_Tel, n_atomic_species
    use wave_func,             ONLY : wf_ncx 
    use com,                   ONLY : msg, error
-   use timing,                ONLY : live_timing_is_on
+   use LIVE_t,                ONLY : live_timing_is_on
    use units,                 ONLY : HA2eV
    type(levels),     intent(out)  :: en     ! Energies
    type(bz_samp),    intent(out)  :: k      ! K/Q points

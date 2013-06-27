@@ -48,7 +48,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  use pars,          ONLY:SP,IP
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp,W_reset

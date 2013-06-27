@@ -295,7 +295,7 @@ module com
    !
    subroutine write_the_logo(unit_,comment_)
      !
-     use timing,       ONLY:LIVE_message
+     use LIVE_t,       ONLY:LIVE_message
      use LOGO,         ONLY:pickup_a_logo,logo_line,n_logo_lines
      integer     ::unit_
      character(1)::comment_
@@ -360,7 +360,7 @@ module com
    end subroutine
    !
    subroutine warning(mesg)
-     use timing,     ONLY:LIVE_message
+     use LIVE_t,     ONLY:LIVE_message
      use stderr,     ONLY:string_pack
      character(*) :: mesg
      call msg('nr',string_pack('[WARNING] ',trim(mesg)))
@@ -368,7 +368,7 @@ module com
    end subroutine
    !
    subroutine error(mesg)
-     use timing,     ONLY:LIVE_message,live_timing_is_on
+     use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
      use stderr,     ONLY:string_pack
      use parallel_m, ONLY:MPI_close
      character(*)    :: mesg
@@ -456,7 +456,7 @@ module com
    !
    subroutine namsg(how,mesg,val,USE_TABS,INDENT)
      use stderr,   ONLY: c_print,write_to_log,log_as_a_file
-     use timing,   ONLY: LIVE_message
+     use LIVE_t,   ONLY: LIVE_message
      character(*)     :: mesg
      character(*)     :: how
      character(*)     :: val(:)
@@ -495,7 +495,7 @@ module com
    !
    subroutine nimsg(how,mesg,val,USE_TABS,INDENT)
      use stderr,   ONLY: c_print,write_to_log,log_as_a_file
-     use timing,   ONLY: LIVE_message
+     use LIVE_t,   ONLY: LIVE_message
      character(*)     :: mesg
      character(*)     :: how
      integer          :: val(:)
@@ -533,7 +533,7 @@ module com
    !
    subroutine nrmsg(how,mesg,val,USE_TABS,INDENT,formatted_msg)
      use stderr,   ONLY: c_print,write_to_log,log_as_a_file
-     use timing,   ONLY: LIVE_message
+     use LIVE_t,   ONLY: LIVE_message
      character(*)     :: mesg
      character(*)     :: how
      real(SP)         :: val(:)

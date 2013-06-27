@@ -39,7 +39,7 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
  use wave_func,       ONLY:wf,wf_state
- use timing,          ONLY:live_timing
+ use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
  use SC,              ONLY:l_oep_EWeight
  !

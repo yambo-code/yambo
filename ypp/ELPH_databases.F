@@ -33,7 +33,7 @@ integer function ELPH_databases(k,E,q)
  use parser_m,            ONLY:parser
  use YPP,                 ONLY:ph_freqs_file,l_gkkp_expand
  use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
- use timing,              ONLY:live_timing
+ use LIVE_t,              ONLY:live_timing
  implicit none
  type(bz_samp) ::k,q
  type(levels)  ::E

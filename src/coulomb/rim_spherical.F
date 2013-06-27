@@ -47,7 +47,7 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  use pars,          ONLY:SP,pi,DP
  use drivers,       ONLY:l_real_time
  use com,           ONLY:msg
- use timing,        ONLY:live_timing
+ use LIVE_t,        ONLY:live_timing
  use vec_operate,   ONLY:v_norm
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:RIM_n_rand_pts

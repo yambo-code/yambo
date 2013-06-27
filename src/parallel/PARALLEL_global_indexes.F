@@ -548,10 +548,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    call PARALLEL_live_message("QPs (level 2)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_nQPp,TOTAL=QP_n_states,&
 &                             NCPU=PAR_COM_QPp_INDEX%n_CPU,CHAIN=PAR_COM_QPp_INDEX%chain_order)
    !
+   ! When the collisons are note evaluated the I/O is dictated by Response_G_space_Zero_Momentum
+   ! and then resetted in RT_driver
+   !
    if (l_eval_collisions) then
      call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_G_b_A2A%CPU_id==0)
-   else
-     call IO_and_Messaging_switch("+io_out +output",CONDITION=master_cpu)
    endif
    !
 #endif

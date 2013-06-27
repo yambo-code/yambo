@@ -98,8 +98,8 @@ subroutine RT_driver(E,X,k,q)
  !
  call SC_QP_setup(E)
  !
- ! Parallel Setups
- !=================
+ ! Parallel Setups (I)
+ !=====================
  !
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
  call PARALLEL_global_indexes(E,k,q,"Response_G_space_Zero_Momentum",RESET=.FALSE.,X=X(1))

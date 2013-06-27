@@ -199,38 +199,39 @@ integer function io_RT_components(what,ID)
    if (io_sec(ID,1)==1) then
      call io_bulk(ID,VAR="RT_Kpts",VAR_SZ=(/RT_nk,3/))
      call io_bulk(ID,R2=RT_k)
-   endif
-   !
-   call io_bulk(ID,VAR="RT_occupations_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-   call io_bulk(ID,R2=RT_occupations)
-   !
+   else
+     !
+     call io_bulk(ID,VAR="RT_occupations_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+     call io_bulk(ID,R2=RT_occupations)
+     !
 #if defined _ELPH  && defined _RT
-   !
-   if (ver_is_gt_or_eq(ID,revision=1124).and.allocated(E_P_Hole_lifetime)) then
      !
-     call io_bulk(ID,VAR="RT_E_P_Hole_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-     call io_bulk(ID,R2=E_P_Hole_lifetime)
+     if (ver_is_gt_or_eq(ID,revision=1124).and.allocated(E_P_Hole_lifetime)) then
+       !
+       call io_bulk(ID,VAR="RT_E_P_Hole_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+       call io_bulk(ID,R2=E_P_Hole_lifetime)
+       !
+       call io_bulk(ID,VAR="RT_E_P_Electron_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+       call io_bulk(ID,R2=E_P_Electron_lifetime)
+       !
+       call io_bulk(ID,VAR="RT_E_P_Phonon_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+       call io_bulk(ID,R2=E_P_Phonon_lifetime)
+       !
+     endif
      !
-     call io_bulk(ID,VAR="RT_E_P_Electron_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-     call io_bulk(ID,R2=E_P_Electron_lifetime)
-     !
-     call io_bulk(ID,VAR="RT_E_P_Phonon_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-     call io_bulk(ID,R2=E_P_Phonon_lifetime)
-     !
-   endif
-   !
 #endif
-   !
-   if (ver_is_gt_or_eq(ID,revision=1449).and.allocated(E_E_Hole_lifetime)) then
      !
-     call io_bulk(ID,VAR="RT_E_E_Hole_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-     call io_bulk(ID,R2=E_E_Hole_lifetime)
-     !
-     call io_bulk(ID,VAR="RT_E_E_Electron_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-     call io_bulk(ID,R2=E_E_Electron_lifetime)
+     if (ver_is_gt_or_eq(ID,revision=1449).and.allocated(E_E_Hole_lifetime)) then
+       !
+       call io_bulk(ID,VAR="RT_E_E_Hole_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+       call io_bulk(ID,R2=E_E_Hole_lifetime)
+       !
+       call io_bulk(ID,VAR="RT_E_E_Electron_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+       call io_bulk(ID,R2=E_E_Electron_lifetime)
+       !
+     endif
      !
    endif
-   !
    !
  endif
  !

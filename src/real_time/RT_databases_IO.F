@@ -121,5 +121,5 @@ subroutine RT_databases_IO(E,it)
  ! Occupations
  !
  if (.not.l_RT_skip_OCC_IO) call OCCUPATIONS_IO_and_interpolate(E,'G')
-
+ !
 end subroutine RT_databases_IO

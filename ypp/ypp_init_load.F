@@ -157,11 +157,14 @@ subroutine ypp_init_load(defs)
  call it('f',defs,'ListPts',      ' List the internal q/k points also in the parser format') 
  call it('f',defs,'ExpandPts',    ' Expand the internal q/k points in the BZ') 
  !
- ! EXC WF
+ ! WFs
  !
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit)
  call it(defs,'Degen_Step', 'Maximum energy separation of two degenerate states',&
 &                           deg_energy,E_unit)
+#if defined _YPP_ELPH
+ call it(defs,'ResTresh', '[o/o] Treshold on processed polaronic residuals',elph_residual_treshold)
+#endif
  call it(defs,'MinWeight', 'Print transitions with weight => MinWeight',min_weight,verb_level=V_general)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
  call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)

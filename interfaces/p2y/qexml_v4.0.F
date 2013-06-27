@@ -3215,7 +3215,7 @@ end subroutine
 subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh,psp_has_so, &
 &                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
   !
-  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
+  use matrix_operate, ONLY:mat_dia_inv,DIAGO
   use pars,           ONLY:SP
   !
   IMPLICIT NONE
@@ -3278,9 +3278,12 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh,psp_has_so, &
   ENDDO
   !
   CALL iotk_scan_dat(u, 'PP_DIJ', d_tmp , attr=attr)
-  cd_tmp=cmplx(d_tmp,0._SP)
-  call mat_dia_inv(DIAGO,cd_tmp,lib_in=USE_LK,E_real=d)
-  d_tmp=real(cd_tmp)
+  !
+  if(size(d_tmp)>1) then
+    cd_tmp=cmplx(d_tmp,0._SP)
+    call mat_dia_inv(DIAGO,cd_tmp,E_real=d)
+    d_tmp=real(cd_tmp)
+  endif
   !
   lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))
   forall (i1=1:nmesh) beta(i1,:)=matmul(transpose(d_tmp),beta_tmp(i1,:))

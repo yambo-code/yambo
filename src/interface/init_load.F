@@ -139,7 +139,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! CPU's
  !=======
  !
-#if defined _MPI 
+#if defined _MPI || defined _BLUEGENE
  call CPU_structure_load( )
 #endif
  !
@@ -355,6 +355,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization',verb_level=V_sc)
  call it(defs,'B_radius',      '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
 #endif
+ !
+ ! GPL_EXCLUDE_END SC_IGNORE
  ! 
  ! Surface spectroscopy
  !
@@ -369,8 +371,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'LocType', '[RAS] Transition filter (ss/sb/bs/bb|no)',loctype,verb_level=V_resp)
  call it(defs,'LocLimit','[RAS] Factor defining state localization',locfac,verb_level=V_resp)
 #endif
- !
- ! GPL_EXCLUDE_END SC_IGNORE
  !
  ! QP ctl 
  !
@@ -487,7 +487,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
    !
 #endif
    !
-#if defined _MPI 
+#if defined _MPI || defined _BLUEGENE
    !
    subroutine CPU_structure_load()
      use parallel_m, ONLY:n_CPU_str_max,CPU_structure

@@ -53,6 +53,7 @@ module BS
  character(schlen) :: BS_cpl_mode
  integer    , allocatable :: BS_eh_table(:,:)
  integer    , allocatable :: BS_blk_dim(:)
+ complex(SP), allocatable :: BS_mat_diagonal(:)
  complex(SP), allocatable :: BS_mat(:,:)
  complex(SP), allocatable :: BS_cpl_mat(:,:)
  real(SP)   , allocatable :: BS_eh_E(:)
@@ -101,12 +102,13 @@ module BS
  !
  interface 
    !
-   subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
+   subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
      use pars,          ONLY:SP
      integer               ::iq
      integer               ::iter
      complex(SP)           ::Vi(:),Vo(:)
      real(SP),optional     ::iter_par
+     character(3),optional ::call_kind
    end subroutine
    !
    integer function variables_BS(ID,local_description,X)

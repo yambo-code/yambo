@@ -115,6 +115,7 @@ module YPP
  real(SP):: ph_broad
  real(SP):: elph_Ef
  real(SP):: elph_E_max
+ real(SP):: elph_residual_treshold = 0.
  character(schlen) :: elph_dbs_path
  character(schlen) :: ph_freqs_file
  !

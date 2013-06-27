@@ -25,6 +25,7 @@ cpp="@CPP@"
 cppflags="@C_AS_CPP_FLAGS@"
 ECHO_N="@ECHO_N@"
 PREFIX="@MKMF_PREFIX@"
+KEEPSRC="@enable_keep_src@"
 #
 if [ $# = 0 ] ; then
  echo $0 "dir target objectfile mode(l/x) Dflag1 Dflag2 Dflag3 ..."
@@ -185,12 +186,26 @@ FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
 #
 # Rules
 #
+EOF
+if [ "$KEEPSRC" == "yes" ]; then
+cat << EOF >> $cdir/Makefile
+.F.o:
+	@rm -f \$*\$(f90suffix)
+	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	@echo $ECHO_N \$*".F "
+EOF
+else
+cat << EOF >> $cdir/Makefile
 .F.o:
 	@rm -f \$*\$(f90suffix)
 	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	@rm -f \$*\$(f90suffix)
 	@echo $ECHO_N \$*".F "
+EOF
+fi
+cat << EOF >> $cdir/Makefile
 .f.o:
 	${PREFIX}(eval \$(f77) -c \$(f77flags) \$*.f) > /dev/null
 	@echo $ECHO_N \$*".f "

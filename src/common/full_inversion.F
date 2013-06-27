@@ -19,60 +19,41 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function pert_inversion(iw,N,W,C,f,V)
+integer function full_inversion(N,W,C,f,V,M)
  !
- ! C<W|1./(V^{-1}-M)|W> = \sum_n C<W| (1-VM)^{-1} V |W> = \sum_n C<W| ( VM )^n V |W>
+ ! C<W|1./(V^{-1}-M)|W>
  !
  use pars,           ONLY:SP
- use matrix_operate, ONLY:mat_dia_inv,USE_LK,INV
+ use matrix_operate, ONLY:mat_dia_inv,INV
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
- use BS,             ONLY:K_BSmat_by_V
- use com,            ONLY:error
  !
  implicit none
  !
- integer      ::iw,N
+ integer      ::N
  complex(SP)  ::W(N),C,f
- complex(SP)  ::V(N)
+ complex(SP)  ::V(N),M(N,N)
  !
  ! Work Space
  !
- real(SP),parameter       :: perc_treshold=0.01
- integer     ::BSS_inv_iter_max=51
- integer     ::it,i1,i2
- complex(SP) ::A_nm1(N),A_n(N),delta_f,fo
+ complex(SP), allocatable ::wk(:,:)
+ integer     ::i1,i2
+ complex(SP) ::A_n(N)
  !
- pert_inversion=0
+ full_inversion=0
  !
- A_nm1(:)=V(:)*W(:)
- fo=C*Vstar_dot_V(N,W,A_nm1)
+ allocate(wk(N,N))
+ wk=(0.,0.)
  !
- if (abs(f)==0.) f=fo
- !
- it=1
- !
- delta_f=0.
- !
- do while (it<=BSS_inv_iter_max) 
-   !
-   call K_BSmat_by_V(1,it*iw,A_nm1,A_n,call_kind='Inv')
-   A_n(:)=V(:)*A_n(:)
-   delta_f=C*Vstar_dot_V(N,W,A_n)
-   !
-   f=f+delta_f
-   !
-   if (abs(real(delta_f))<perc_treshold*abs(real(fo)).and.&
-&      abs(aimag(delta_f))<perc_treshold*abs(aimag(fo))) return
-   !
-   if( abs(real(delta_f))>40._SP .or. abs(aimag(delta_f))>40._SP ) exit
-   !
-   A_nm1(:)=A_n(:)
-   !
-   it=it+1
-   !
+ do i1=1,N 
+   wk(i1,i1)=1./V(i1)
+   do i2=1,N 
+     wk(i1,i2)=wk(i1,i2)-M(i1,i2)
+   enddo
  enddo
+ call mat_dia_inv(INV,wk)
+ call M_by_V('n',N,wk,W,A_n)
+ f=C*Vstar_dot_V(N,W,A_n)
  !
- pert_inversion=1
- f=(0.,0.)
+ deallocate(wk)
  !
 end function

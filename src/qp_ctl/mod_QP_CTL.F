@@ -48,6 +48,7 @@ module QP_CTL_m
    real(SP)   :: fit_scissor
    real(SP)   :: E(4)
    real(SP)   :: W(6)
+   real(SP)   :: W_E_ref(2)
    real(SP)   :: E_err(2)
    real(SP)   :: W_err(2)
    complex(SP):: Z
@@ -65,6 +66,7 @@ module QP_CTL_m
      QP_ctl%Z=(1.,0.)
      QP_ctl%E_err=0.
      QP_ctl%W_err=0.
+     QP_ctl%W_E_ref=0.
      QP_ctl%db_scissor=0.
      QP_ctl%fit_scissor=0.
    end subroutine
@@ -92,7 +94,7 @@ module QP_CTL_m
      !
      use memory_m,      ONLY:mem_est
      use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
-&                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db
+&                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
      use com,           ONLY:msg,depth
      use electrons,     ONLY:levels,E_reset,n_sp_pol,&
 &                            BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,BZ_RIM_tot_nkpts
@@ -239,6 +241,7 @@ module QP_CTL_m
        do i_spin=1,n_sp_pol
          QP_ctl_input_or_impose(i_spin)%W(1:3)=(/QP_ctl_Wc(Eid,1,i_spin)/HA2EV,&
 &                                                QP_ctl_Wc(Eid,2,i_spin),QP_ctl_Wc(Eid,3,i_spin)*HA2EV/)
+         QP_ctl_input_or_impose(i_spin)%W_E_ref(:)=(/QP_ctl_Wc_E_ref(Eid,i_spin),QP_ctl_Wv_E_ref(Eid,i_spin)/)
          QP_ctl_input_or_impose(i_spin)%W(4:6)=(/QP_ctl_Wv(Eid,1,i_spin)/HA2EV,&
 &                                                QP_ctl_Wv(Eid,2,i_spin),QP_ctl_Wv(Eid,3,i_spin)*HA2EV/)
          QP_ctl_input_or_impose(i_spin)%Z=QP_ctl_Z(Eid,i_spin)

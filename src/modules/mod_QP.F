@@ -129,6 +129,8 @@ module QP_m
  ! is not used in non-collinear or scalar cases.
  !
  real(SP)                :: QP_ctl_E(3,3,2)
+ real(SP)                :: QP_ctl_Wc_E_ref(3,2)
+ real(SP)                :: QP_ctl_Wv_E_ref(3,2)
  real(SP)                :: QP_ctl_Wc(3,3,2)
  real(SP)                :: QP_ctl_Wv(3,3,2)
  complex(SP)             :: QP_ctl_Z(3,2)

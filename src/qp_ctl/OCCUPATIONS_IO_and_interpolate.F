@@ -84,9 +84,9 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    enddo
    ! 
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
-   io_err_occ=io_RT_components('occupations',E,ID(6))
+   io_err_occ=io_RT_components('occupations',ID(6))
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(6))
-   io_err_occ=io_RT_components('occupations',E,ID(6))
+   io_err_occ=io_RT_components('occupations',ID(6))
    ! 
 #endif
    ! 
@@ -116,7 +116,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    !  
 #if defined _RT
    call io_control(ACTION=OP_RD,COM=COM_,SEC=(/1/),MODE=DUMP,ID=ID(6))
-   io_err_occ=io_RT_components('occupations',E,ID(6))
+   io_err_occ=io_RT_components('occupations',ID(6))
 #endif
    !
    if (io_err_occ<0) then
@@ -187,9 +187,9 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    !
 #if defined _RT
    call io_control(ACTION=RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID(6))
-   io_err_occ=io_RT_components('occupations',E,ID(6))
+   io_err_occ=io_RT_components('occupations',ID(6))
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID(6))
-   io_err_occ=io_RT_components('occupations',E,ID(6))
+   io_err_occ=io_RT_components('occupations',ID(6))
 #endif
    !
    jobstr=jobstr_save

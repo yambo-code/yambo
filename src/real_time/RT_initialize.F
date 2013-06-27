@@ -138,10 +138,7 @@ subroutine RT_initialize(E,k,q)
  !
  call RT_Dephasing_Matrix(E) 
  !
- if (.not.RT_is_dumped.and.l_ph_corr) then
-  l_ph_corr=.FALSE.
-  call warning('No QP lifetime provided. El-Ph scattering switched off')
- endif
+ if (.not.RT_is_dumped) call warning('No Dephasing provided. Is the simulation meaningfull ?')
  !
  ! Memory Depth
  !============== 

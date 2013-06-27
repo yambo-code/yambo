@@ -62,9 +62,9 @@ subroutine RT_databases_IO(E,it)
    ! Write current and polarization on disk
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
-   io_J_and_P=io_RT_components('J_and_P' ,E,ID(4))
+   io_J_and_P=io_RT_components('J_and_P',ID(4))
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
-   io_J_and_P=io_RT_components('J_and_P' ,E,ID(4))
+   io_J_and_P=io_RT_components('J_and_P',ID(4))
    !
  endif
  !
@@ -84,18 +84,18 @@ subroutine RT_databases_IO(E,it)
    COM_=NONE
    if (it==it_start) COM_=REP
    call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(5))
-   io_G=io_RT_components('G' ,E,ID(5))
+   io_G=io_RT_components('G',ID(5))
    !
 #if defined _ELPH
    if (l_ph_corr.and..not.l_RT_CCA_Kernel) then
      call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(7))
-     io_THETA=io_RT_components('THETA' ,E,ID(7))
+     io_THETA=io_RT_components('THETA',ID(7))
    endif
 #endif
    !
    do ik = 1, QP_nk 
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
-     io_G=io_RT_components('G',E,ID(5))
+     io_G=io_RT_components('G',ID(5))
 #if defined _ELPH
      if (l_ph_corr.and..not.l_RT_CCA_Kernel) then
        !
@@ -108,7 +108,7 @@ subroutine RT_databases_IO(E,it)
        call PP_redux_wait(THETA_matrix(:,:,:,ik))
        !
        call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(7))
-       io_THETA=io_RT_components('THETA' ,E,ID(7))
+       io_THETA=io_RT_components('THETA',ID(7))
        !
        call RT_ELPH_zeroing()
        !

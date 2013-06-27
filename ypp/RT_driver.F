@@ -41,7 +41,7 @@ subroutine RT_driver(en,k)
  !
  call section("*",'RT Post Processing')
  !
- call RT_paths(en)
+ call RT_paths( )
  !
  ! LOGICALS
  !----------
@@ -64,7 +64,7 @@ subroutine RT_driver(en,k)
    !
    ! Database
    !
-   call RT_databases(en)
+   call RT_databases( )
    !
    !  Initialization 
    !

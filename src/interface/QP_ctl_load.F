@@ -29,9 +29,9 @@ subroutine QP_ctl_load(defs,i_type)
  ! spin unless the DB1 is read. 
  !
  use electrons,     ONLY:n_sp_pol
- use it_m,          ONLY:it,initmode,initdefs,V_qp,V_real_time
+ use it_m,          ONLY:it,initmode,initdefs,V_qp,V_real_time,E_unit
  use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_Wv,&
-&                        QP_ctl_Wc,QP_ctl_Z,OCC_ctl
+&                        QP_ctl_Wc,QP_ctl_Z,OCC_ctl,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
  !
  implicit none
  integer, intent(in) :: i_type
@@ -74,10 +74,22 @@ subroutine QP_ctl_load(defs,i_type)
 &          QP_ctl_E(i_type,:,i_spin),verb_level=V_qp)
    !
    call it(defs,&
+&          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wv_E',&
+&          '[EXTQP '//trim(description_ch(i_type))//'] W Energy reference '//&
+&          trim(spin_description_ch(i1))//' (valence)',&
+&          QP_ctl_Wv_E_ref(i_type,i_spin),E_unit,verb_level=verbosity_here)
+   !
+   call it(defs,&
 &          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wv',&
 &          '[EXTQP '//trim(description_ch(i_type))//'] W parameters '//&
 &          trim(spin_description_ch(i1))//' (valence) eV|adim|eV^-1',&
 &          QP_ctl_Wv(i_type,:,i_spin),verb_level=verbosity_here)
+   !
+   call it(defs,&
+&          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wc_E',&
+&          '[EXTQP '//trim(description_ch(i_type))//'] W Energy reference '//&
+&          trim(spin_description_ch(i1))//' (conduction)',&
+&          QP_ctl_Wc_E_ref(i_type,i_spin),E_unit,verb_level=verbosity_here)
    !
    call it(defs,&
 &          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wc',&

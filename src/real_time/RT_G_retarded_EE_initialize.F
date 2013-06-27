@@ -150,6 +150,7 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  !if (i_qp1_mem==2.and.i_qp2_mem==18.and.iq_mem==1.and.i_p_s==1) write (*,*)  E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
  !if (i_qp1_mem==2.and.i_qp2_mem==22.and.iq_mem==5.and.i_p_s==1) write (*,*)  E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
  !if (i_qp1_mem==2.and.i_qp2_mem==22.and.iq_mem==5.and.i_p_s==1) stop
+         !write (100,*) E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
          !DEBUG<
          !
        enddo

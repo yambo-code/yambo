@@ -612,7 +612,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    if (ENVIRONMENT=="HF") n_bands=(/1,max(E%nbm,QP_nb)/)
    if (ENVIRONMENT=="GW") n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
 #if defined _RT
-   if (l_eval_collisions)   n_bands=SC_bands
+   if (l_eval_collisions)        n_bands=SC_bands
 #endif
 #if defined _ELPH
    if (.not.l_eval_collisions)   n_bands=(/1,QP_PH_n_G_bands/)

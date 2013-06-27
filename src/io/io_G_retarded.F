@@ -24,10 +24,11 @@ integer function io_G_retarded(ID,what)
  use pars,           ONLY:SP
  use units,          ONLY:FS2AUT,HA2EV
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_sec,io_elemental,&
-&                         write_is_on,io_bulk,io_status
+&                         write_is_on,io_bulk,io_status,ver_is_gt_or_eq
  use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_steps,Gr_E_window,&
 &                         Gr_peak_pos,Gr_E_ranges,Gr_T_step,Gr_QP_width
  use R_lattice,      ONLY:nkibz
+ use QP_m,           ONLY:QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use stderr,         ONLY:intc
  !
  implicit none
@@ -51,13 +52,31 @@ integer function io_G_retarded(ID,what)
 &       VAR=' Retarded Green`s function       :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=10,MENU=0)
+   if (ver_is_gt_or_eq(ID,revision=2440)) then
+     call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=18,MENU=0)
+   else
+     call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=10,MENU=0)
+   endif
    !
    call io_elemental(ID,I1=Gr_bands,&
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
    !
    call io_elemental(ID,R0=Gr_QP_width,&
 &       VAR=' QP damping                  [eV]:',UNIT=HA2EV,CHECK=.true.,OP=(/"=="/))
+   !
+   if (ver_is_gt_or_eq(ID,revision=2440)) then
+     !
+     call io_elemental(ID,R0=QP_ctl_Wc_E_ref(3,1),&
+&         VAR=' Damping (c) Energy ref      [eV]:',UNIT=HA2EV,CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,R1=QP_ctl_Wc(3,:,1),&
+&         VAR=' Damping (c)      [eV,adim,eV^-1]:',CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,R0=QP_ctl_Wv_E_ref(3,1),&
+&         VAR=' Damping (v) Energy ref      [eV]:',UNIT=HA2EV,CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,R1=QP_ctl_Wv(3,:,1),&
+&         VAR=' Damping (v)      [eV,adim,eV^-1]:',CHECK=.true.,OP=(/"=="/))
+     !
+   endif
+   !
    call io_elemental(ID,R0=Gr_T_window,&
 &       VAR=' Time range                  [fs]:',UNIT=1./FS2AUT,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,R0=Gr_T_step,&

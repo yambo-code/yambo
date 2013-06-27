@@ -19,18 +19,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_RT_components(what,E_sc,ID)
+integer function io_RT_components(what,ID)
  !
  ! what can be E WF V J_and_P G
  !
  use pars,           ONLY:SP,lchlen
  use R_lattice,      ONLY:nkibz,nqbz
  use stderr,         ONLY:intc
- use SC,             ONLY:SC_bands,rho_convergence,E_convergence,SC_nbands,&
-&                         SC_R,V_xc_sc,local_V,H_nl_sc,RT_k,RT_nk,RT_occupations,&
+ use SC,             ONLY:SC_bands,SC_nbands,&
+&                         RT_k,RT_nk,RT_occupations,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
-&                         io_sec,io_bulk,read_is_on,write_is_on,io_file,IO_NO_DATABASE,&
+&                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,&
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found
  use fields,         ONLY:i_Probe,i_Pump
  use real_time,      ONLY:RT_IO_steps,NE_i_time,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
@@ -45,15 +45,11 @@ integer function io_RT_components(what,E_sc,ID)
  use fields,         ONLY:A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
- use memory_m,       ONLY:mem_est
- use FFT_m,          ONLY:fft_size
  use matrix_operate, ONLY:mat_c2r,mat_r2c
- use electrons,      ONLY:levels,n_sp_pol,n_spin
  use fragments,      ONLY:io_fragment
  implicit none
  !
- integer, intent(in)      :: ID
- type(levels)             :: E_sc
+ integer,      intent(in) :: ID
  character(*), intent(in) :: what
  !
  ! Work Space
@@ -61,9 +57,9 @@ integer function io_RT_components(what,E_sc,ID)
  integer, external     :: variables_SC
  character(lchlen)     :: local_description(100)
  !
- real(SP), allocatable :: TMP_matrix(:,:,:),E_disk(:,:,:)
- integer               :: ik,bands_to_load,ib,i_spin,i1
- logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_MP,l_T_EL,l_THETA
+ real(SP), allocatable :: TMP_matrix(:,:,:)
+ integer               :: ik,ib,i_spin,i1
+ logical               :: l_V,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_MP,l_T_EL,l_THETA
  integer               :: file_number,i_time
  logical               :: do_IO
  integer               :: i_time_range(2)
@@ -182,7 +178,7 @@ integer function io_RT_components(what,E_sc,ID)
    call manage_RD_WR_CL_IF_END(ID,ik,nkibz)
  endif
  !
- if(any((/l_G,l_occupations,l_THETA/))) then
+ if(any((/l_G,l_THETA/))) then
    !
    if (ik==0) goto 1
    !

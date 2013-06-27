@@ -273,10 +273,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
 #if defined _YPP_RT
  ! 
- call E_reset(E_dummy) 
- !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
- io_SC_err=io_RT_components('G' ,E_dummy,ID)
+ io_SC_err=io_RT_components('G' ,ID)
  ! 
  if (io_SC_err==0) then
    !
@@ -440,7 +438,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT
  l_RT_X             = runlevel_is_on('rtX')
- l_retarded_GFs     = runlevel_is_on('CCA')
+ l_retarded_GFs     = runlevel_is_on('Gret')
 #endif
 #if defined _YPP_MAGNETIC
  l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')

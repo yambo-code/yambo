@@ -53,7 +53,7 @@ subroutine RT_EE_scattering_kinematics(k,q,i_p,i_Rp,i_q,i_Rq,i_t_bz,i_t_G0)
  use D_lattice,       ONLY:sop_tab,sop_inv
  use R_lattice,       ONLY:bz_samp,qindx_S
  !DEBUG>
- use R_lattice,       ONLY:qindx_X
+ !use R_lattice,       ONLY:qindx_X
  !DEBUG<
  !
  implicit none
@@ -94,9 +94,9 @@ subroutine RT_EE_scattering_kinematics(k,q,i_p,i_Rp,i_q,i_Rq,i_t_bz,i_t_G0)
  i_t_G0=1
  !
  !DEBUG>
- i_p_bz=k%s_table(i_p,i_Rp)
- i_t_bz=qindx_X(i_q,i_p_bz,1)
- i_t_G0=qindx_X(i_q,i_p_bz,2)
+ !i_p_bz=k%s_table(i_p,i_Rp)
+ !i_t_bz=qindx_X(i_q,i_p_bz,1)
+ !i_t_G0=qindx_X(i_q,i_p_bz,2)
  !DEBUG<
  !
 end subroutine RT_EE_scattering_kinematics

@@ -106,7 +106,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! Work Space 
  !
  integer           :: i1,i2
- character(schlen) :: string(2)
+ character(schlen) :: string(3)
  !
  ! Printed reals format lengths 
  !

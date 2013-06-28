@@ -31,7 +31,7 @@ subroutine electrons_driver(Xk,Xen)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_angular_momentum,&
-&                         l_position,l_bands,BANDS_range
+&                         l_position,l_bands,BANDS_range,l_RT_occupations
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -85,6 +85,9 @@ subroutine electrons_driver(Xk,Xen)
 #endif
 #if defined _YPP_SC
  if (.not.flag) flag=l_mean_potential
+#endif
+#if defined _YPP_RT 
+ if (.not.flag) flag=l_RT_occupations
 #endif
  !
  if (.not.flag) return
@@ -448,6 +451,15 @@ subroutine electrons_driver(Xk,Xen)
  endif
  !
  ! GPL_EXCLUDE_START
+ !
+#if defined _YPP_RT
+ !
+ ! Real-Time occupations
+ !=======================
+ !
+ if (l_RT_occupations) call RT_occupations_analyze(Xk,Xen)
+ !
+#endif
  !
 #if defined _YPP_MAGNETIC
  !

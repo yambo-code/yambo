@@ -476,7 +476,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    !
    n_CPU_save=PAR_COM_Xk_ibz_INDEX%n_CPU
    !
-   call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"k","b","q","qp"/),&
+   call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"k ","b ","q ","qp"/),&
 &                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,COMM_index_2=PAR_COM_G_b_INDEX,&
 &                                        COMM_index_3=PAR_COM_Q_INDEX,&
 &                                        COMM_index_4=PAR_COM_QPp_INDEX,&

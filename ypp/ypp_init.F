@@ -103,6 +103,13 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  dos_E_range=(/1.,-1./)/HA2EV
  dos_E_steps=500
  !
+ !OCCUPATIONS
+ !
+ OCC_T_ref=-FS2AUT
+ OCC_T_range=0.
+ OCC_deltaT=0.
+ l_RT_occupations=.FALSE.
+ !
  ! BANDS
  !
  BANDS_steps=0
@@ -377,7 +384,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_dos            =trim(rstr_piece(i1+1))=='s'
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
        l_bands          =trim(rstr_piece(i1+1))=='b'
-       l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
+       l_mag            =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
+       !
+#if defined _YPP_RT
+       l_RT_occupations =trim(rstr_piece(i1+1))=='o'
+#endif
        !
 #if defined _YPP_ELPH
        l_eliashberg       =trim(rstr_piece(i1+1))=='e'
@@ -410,6 +421,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
      endif
      if ( trim(rstr_piece(i1)) == 'electrons') then
        if (l_bands)          call initactivate(1,'bnds')
+       if (l_RT_occupations) call initactivate(1,'occupations')
      endif
    enddo
  enddo
@@ -437,6 +449,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_gkkp      =runlevel_is_on('gkkp')
 #endif
 #if defined _YPP_RT
+ l_RT_occupations   = runlevel_is_on('occupations')
  l_RT_X             = runlevel_is_on('rtX')
  l_retarded_GFs     = runlevel_is_on('Gret')
 #endif
@@ -532,11 +545,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat NoWeights GammaRadius")
  !
  if (l_electrons) then
-    if (l_dos.or.l_bands) call QP_ctl_switch('G')
-    if (l_dos) then
-      call initactivate(1,"OCCdT OCCTime")
-      call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad PrtOccOnly")
-    endif
+   if (l_dos.or.l_bands.or.l_RT_occupations) call QP_ctl_switch('G')
+   if (l_dos.or.l_RT_occupations) call initactivate(1,"TFit OCCdT OCCTime OCCTref")
+   if (l_dos) call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad")
  endif
  !
 #if defined _YPP_MAGNETIC

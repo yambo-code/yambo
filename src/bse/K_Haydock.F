@@ -193,7 +193,9 @@ subroutine K_Haydock(iq,W)
      ! B(n+1)= <Vn+1|Vn+1>^(1/2)
      !
      Bf(it+1)=sqrt(dot_product(Vnp1,Vnp1))
+#if !defined _BLUEGENE
      if( isnan(Bf(it+1)) ) call error('Bf=NaN likely because some eigenvalue of BSE is negative.')
+#endif
      !
      !|Vn-1> = |Vn>
      !
@@ -232,7 +234,9 @@ subroutine K_Haydock(iq,W)
      !          where the dot_product is just on eh pair space 
      !
      Bf(it+1)=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
+#if !defined _BLUEGENE
      if( isnan(Bf(it+1)) ) call error(' Bf=NaN likely because some eigenvalue of BSE is negative.')
+#endif
      !
      !|Vn> =|Vn+1> / B(n+1)
      !

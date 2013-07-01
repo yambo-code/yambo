@@ -152,6 +152,7 @@ ypp: libs
 # ydb
 #
 ydb: libs
+	@LIBS2DO="$(YDBLIBS)" ; $(mksrc)
 	@X2DO="ydb" ;XPATH="ydb";XLIBS="$(YDBLIBS)";$(mkx)
 #
 clean: clean_fast

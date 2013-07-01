@@ -94,7 +94,7 @@ case $target in
    llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
   ydb*)
-   llibs="$llibs \$(lnetcdf)"
+   llibs="$llibs \$(lnetcdf) \$(llocal)"
     ;;
 esac
 

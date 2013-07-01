@@ -30,17 +30,16 @@
 #else
  int ydb_i_
 #endif
-(int *, int *,int *,int *,int *,int *,int *,int *,
-  char *rnstr2, char *inf, char *id, char *od, char *com_dir, char *js,
-  int lni,int iif,int iid,int iod,int icd,int ijs);
+(int *, char *rnstr2 );
 /*
  Command line structure
 */
  static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
   {"help",  "h","Short Help",0,0,0,0,0}, 
   {"lhelp", "H","Long Help",0,0,0,0,0}, 
+  {"db",    "d","Set DB path",0,0,1,0,0},   
   {"add",   "a","Add",0,0,1,0,0},   
-  {"kind",  "v","Kind [opt=(d)irectory,(i)input,(o)utput]",0,0,1,0,0},    
+  {"kind",  "k","Kind [opt=(d)irectory,(i)input,(o)utput]",0,0,1,0,0},    
   {"list",  "l","Input file",0,0,0,0,0},              
   {"new",   "n","New job ID and input file (using a given reference)",0,0,1,0,0},         
   {"ref",   "r","Reference",0,0,1,0,0},        

@@ -316,6 +316,13 @@ int main(int argc, char *argv[])
  F90_FUNC(e2y_i,E2Y_I)(
          &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
 #endif
+#if defined _ydb 
+ /* 
+   Running the Fortran p2y driver 
+ ===========================================================================
+ */
+ F90_FUNC(ydb_i,YDB_I)(&lni,rnstr2);
+#endif
  /* 
    INPUT FILE
  ===========================================================================

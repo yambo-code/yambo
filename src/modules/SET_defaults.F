@@ -159,7 +159,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call win_size(tty_size)
  call ct(INIT=.TRUE.)
- log_as_a_file=ncpu>1
+ log_as_a_file=ncpu>1.or.tty_size<0
  !
  !I/O 
  !

@@ -35,7 +35,8 @@ module pars
 #else
  integer, parameter  :: SP = selected_real_kind(6,30)
 #endif
- integer, parameter  :: IP = selected_int_kind(9)
+ integer, parameter  :: IP  = selected_int_kind(9)
+ integer, parameter  :: IP4 = selected_int_kind(4)
  !
  ! NetCDF types
  !

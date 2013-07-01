@@ -21,15 +21,15 @@
 !
 subroutine PARALLEL_and_IO_Setup(en,k)
  !
- use stderr,         ONLY:logfile,log_as_a_file
- use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,warning,&
+ use stderr,         ONLY:log_as_a_file
+ use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,&
 &                         second_jobstr,third_jobstr
  use it_m,           ONLY:infile
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,Fragmented_IO
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use parallel_m,     ONLY:n_nodes,ncpu,PP_redux_wait,myid,IO_write_default,n_MPI,n_threads,n_chains,&
-&                         PARALLEL_CPU_used,PARALLEL_n_structures_active,PARALLEL_message,n_CPU_str_max
+ use parallel_m,     ONLY:n_nodes,ncpu,n_MPI,n_threads,n_chains,&
+&                         PARALLEL_message,n_CPU_str_max
  implicit none
  !
  type(levels)  :: en
@@ -37,8 +37,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! 
  ! Work Space
  !
- integer           :: ID,io_err,n_cpu_per_node,i_s
- integer(8)        :: cpu_seen_by_me(ncpu),cpu_seen_by_any(ncpu)
+ integer           :: ID,io_err,i_s
  integer, external :: ioDB1
  !
  call section('*','CPU structure, Files & I/O Directories') 

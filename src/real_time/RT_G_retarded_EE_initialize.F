@@ -21,13 +21,14 @@
 !
 subroutine RT_G_retarded_EE_initialize(E,k,q)
  !
- use pars,           ONLY:SP,rZERO
+ use pars,           ONLY:SP,rZERO,IP4,IP
  use units,          ONLY:HA2EV
  use QP_m,           ONLY:QP_n_states,QP_table
  use real_time,      ONLY:Gr_ee_matrix,l_G_retarded_DB,Gr_T_steps,Gr,Gr_peak_pos,Gr_T_step
  use memory_m,       ONLY:mem_est
+ use SC,             ONLY:SC_bands
  use D_lattice,      ONLY:nsym
- use R_lattice,      ONLY:bz_samp,nqbz,qindx_S
+ use R_lattice,      ONLY:bz_samp,nqbz,qindx_S,nkibz
  use parallel_m,     ONLY:PAR_nQP,PAR_nQPp,PAR_nQ,PAR_IND_Q,PAR_IND_QP,PAR_IND_QPp,PAR_Q_index,&
 &                         PAR_QP_index,PAR_QPp_index
  use LIVE_t,         ONLY:live_timing
@@ -40,16 +41,25 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  ! Work Space
  !
  integer :: i_qp1,i_qp2,i_qp1_mem,i_qp2_mem,i_n,i_k,i_m,i_p,i_np,i_kmq,i_mp,&
-&           i_q,i_q_s,iqbz,iq_mem,i_p_s,i_p_star,i_pmq_bz,i_pmq,i_pmq_G0
- real(SP):: GAMMA_(2),WIDTH(4,2),pre_factor,E_center
+&           i_q,i_q_s,iqbz,iq_mem,i_p_s,i_p_star,i_pmq_bz,i_pmq,i_pmq_G0,&
+&           i_trans(4),kin_scatt(4)
+ real(SP):: GAMMA_(2),WIDTH(4,2),pre_factor,E_center,E_1,E_2
+ real(SP):: TRANSITIONS_E((SC_bands(2)-SC_bands(1)+1)*nkibz)
  real(SP), allocatable :: Gr_integrand(:)
  real(SP),    external :: Laplace_transform
+ logical :: eval_it
+ integer(IP4)          :: TRANSITIONS_table((SC_bands(2)-SC_bands(1)+1)*nkibz,&
+&                                           (SC_bands(2)-SC_bands(1)+1)*nkibz,&
+&                                           (SC_bands(2)-SC_bands(1)+1)*nkibz,&
+&                                           (SC_bands(2)-SC_bands(1)+1)*nkibz,4)
  !
  ! Allocation
  !
  allocate(Gr_ee_matrix(PAR_nQP,PAR_nQPp,PAR_nQ,nsym))
  Gr_ee_matrix=rZERO
  call mem_est("Gr_ee_matrix",(/size(Gr_ee_matrix)/))
+ call mem_est("TRANSITIONS table",(/size(TRANSITIONS_table)/),(/IP4/))
+ call mem_est("TRANSITIONS E",(/size(TRANSITIONS_E)/),(/SP/))
  !
  if (l_G_retarded_DB) allocate(Gr_integrand(Gr_T_steps))
  !
@@ -57,6 +67,17 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  !
  call k_sym2sym(q,'k')
  call k_sym2sym(k,'k')
+ !
+ TRANSITIONS_E=0.
+ TRANSITIONS_table=0
+ !
+ i_trans(1)=0
+ do i_n=SC_bands(1),SC_bands(2)
+   do i_k=1,nkibz
+     i_trans(1)=i_trans(1)+1
+     TRANSITIONS_E(i_trans(1))=Gr_peak_pos(i_k,i_n)
+   enddo
+ enddo
  !
  ! Gr (e-e)
  !==========
@@ -98,24 +119,44 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
          !
          if (l_G_retarded_DB) then
            !
-           Gr_integrand(:)=real( Gr(i_kmq,i_np,:)*Gr(i_p,i_m,:)*conjg(Gr(i_pmq,i_mp,:))*conjg(Gr(i_k,i_n,:)) )
-           !
            E_center=Gr_peak_pos(i_kmq,i_np)-Gr_peak_pos(i_k,i_n)+Gr_peak_pos(i_p,i_m)-Gr_peak_pos(i_pmq,i_mp)
            !
-           !DEBUG>
-           !pre_factor=4.8
-           !WIDTH(1,:)=set_WIDTH(i_np,i_kp,maxval(  Gr_E_ranges(i_kp,i_np,:) ))
-           !WIDTH(2,:)=set_WIDTH(i_n,i_k,  maxval(  Gr_E_ranges(i_k,i_n,:) ))
-           !WIDTH(3,:)=set_WIDTH(i_m,i_p,  maxval(  Gr_E_ranges(i_p,i_m,:) ))
-           !WIDTH(4,:)=set_WIDTH(i_mp,i_pp,maxval(  Gr_E_ranges(i_pp,i_mp,:) ))
-           !GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)+WIDTH(3,1)+WIDTH(4,2)
-           !GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)+WIDTH(3,2)+WIDTH(4,1)
+           i_trans(1)=transition_finder(Gr_peak_pos(i_kmq,i_np))
+           i_trans(2)=transition_finder(Gr_peak_pos(i_p,i_m))
+           i_trans(3)=transition_finder(Gr_peak_pos(i_pmq,i_mp))
+           i_trans(4)=transition_finder(Gr_peak_pos(i_k,i_n))
            !
-           !if (E_center> GAMMA_(2)*pre_factor) goto 2
-           !if (E_center<-GAMMA_(1)*pre_factor) goto 2
-           !DEBUG<
+           kin_scatt=(/i_qp1_mem,i_qp2_mem,iq_mem,i_p_s/)
+           eval_it=.TRUE.
            !
-           Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
+           if (TRANSITIONS_table(i_trans(1),i_trans(2),i_trans(3),i_trans(4),1)/=0) then
+             eval_it=.FALSE.
+             kin_scatt=TRANSITIONS_table(i_trans(1),i_trans(2),i_trans(3),i_trans(4),:)
+           else if (TRANSITIONS_table(i_trans(2),i_trans(1),i_trans(3),i_trans(4),1)/=0) then
+             eval_it=.FALSE.
+             kin_scatt=TRANSITIONS_table(i_trans(2),i_trans(1),i_trans(3),i_trans(4),:)
+           else if (TRANSITIONS_table(i_trans(1),i_trans(2),i_trans(4),i_trans(3),1)/=0) then
+             eval_it=.FALSE.
+             kin_scatt=TRANSITIONS_table(i_trans(1),i_trans(2),i_trans(4),i_trans(3),:)
+           else if (TRANSITIONS_table(i_trans(2),i_trans(1),i_trans(4),i_trans(3),1)/=0) then
+             eval_it=.FALSE.
+             kin_scatt=TRANSITIONS_table(i_trans(2),i_trans(1),i_trans(4),i_trans(3),:)
+           endif
+           !
+           if (eval_it) then
+             !
+             Gr_integrand(:)=real( Gr(i_kmq,i_np,:)*Gr(i_p,i_m,:)*conjg(Gr(i_pmq,i_mp,:))*conjg(Gr(i_k,i_n,:)) )
+             !
+             Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
+             !
+             TRANSITIONS_table(i_trans(1),i_trans(2),i_trans(3),i_trans(4),:)=(/i_qp1_mem,i_qp2_mem,iq_mem,i_p_s/) 
+             !
+           else
+             !
+             Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=Gr_ee_matrix(kin_scatt(1),kin_scatt(2),&
+&                                                                        kin_scatt(3),kin_scatt(4))
+             !
+           endif
            !
          else
            !
@@ -145,11 +186,6 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
          endif
          !
          !DEBUG>
- !if (i_qp1_mem==1.and.i_qp2_mem==1.and.iq_mem==1.and.i_p_s==1) write (*,*)  E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
- !if (i_qp1_mem==1.and.i_qp2_mem==2.and.iq_mem==2.and.i_p_s==1) write (*,*)  E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
- !if (i_qp1_mem==2.and.i_qp2_mem==18.and.iq_mem==1.and.i_p_s==1) write (*,*)  E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
- !if (i_qp1_mem==2.and.i_qp2_mem==22.and.iq_mem==5.and.i_p_s==1) write (*,*)  E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
- !if (i_qp1_mem==2.and.i_qp2_mem==22.and.iq_mem==5.and.i_p_s==1) stop
          !write (100,*) E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
          !DEBUG<
          !
@@ -168,6 +204,18 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  if (l_G_retarded_DB) deallocate(Gr_integrand)
  !
  contains
+   !
+   integer function transition_finder(E)
+     integer  :: ic
+     real(SP) :: E
+     transition_finder=-1
+     do ic=1,(SC_bands(2)-SC_bands(1)+1)*nkibz
+       if (abs(E-TRANSITIONS_E(ic))<1.E-5) then
+         transition_finder=ic
+         return
+       endif
+     enddo
+   end function
    !
    function set_WIDTH(i_n,i_k,W)
      !

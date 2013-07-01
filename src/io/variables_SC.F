@@ -35,7 +35,7 @@ integer function variables_SC(ID,local_description,what)
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,                             &
 &                         RT_IO_steps,l_RT_induced_field,l_NE_simulate_BSE,NE_MEM_steps,&
-&                         l_RT_CCA_Kernel,RT_IO_steps_DB
+&                         l_RT_CCA_Kernel,RT_IO_steps_DB,N_Gr_descs,Gr_description,l_G_retarded_DB
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
@@ -56,6 +56,7 @@ integer function variables_SC(ID,local_description,what)
  integer               :: SC_kind_disk,SC_perturbation_disk,&
 &                         io_status_save,i1,i_desc,local_size,VAR_SIZE
  logical               :: CHECK_,l_J,l_G,l_occupations,l_NE_with_fields_disk,l_MP
+ character(lchlen)     :: ch
  !
  l_J =.FALSE.
  l_G =.FALSE.
@@ -377,6 +378,21 @@ integer function variables_SC(ID,local_description,what)
 &    VAR=' [RT] Induced field              :',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    !
+   ! G retarded variables
+   !======================
+   if (ver_is_gt_or_eq(ID,revision=2450)) then
+     call io_elemental(ID,VAR="G_ret_DB",VAR_SZ=2,MENU=0) 
+     call io_elemental(ID,L0=l_G_retarded_DB,CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,I0=N_Gr_descs,CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     do i1=1,N_Gr_descs
+       write (ch,'(a,i5.5)') 'G_ret_DESC_strings_',i1
+       call io_elemental(ID,VAR=trim(ch),CH0="",VAR_SZ=1,MENU=0)
+       call io_elemental(ID,CH0=Gr_description(i1),VAR='',CHECK=.true.,OP=(/"=="/))
+       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     enddo
+   endif
+   !
    if (l_NE_with_fields_disk) then
      !
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -384,7 +400,7 @@ integer function variables_SC(ID,local_description,what)
      call io_elemental(ID,VAR="GAUGE_TYPE",CH0="",VAR_SZ=1,MENU=0)
      i_desc=i_desc+1
      call io_elemental(ID,CH0=global_gauge, &
-&       VAR=' [RT] Gauge Type                 :',CHECK=.true.,OP=(/"=="/),&
+&       VAR=' [FIELDs] Gauge Type             :',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !

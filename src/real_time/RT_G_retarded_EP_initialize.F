@@ -21,7 +21,7 @@
 !
 subroutine RT_G_retarded_EP_initialize(E,k)
  !
- use pars,           ONLY:rZERO,SP
+ use pars,           ONLY:rZERO,SP,IP4
  use R_lattice,      ONLY:nkibz,nqbz,bz_samp,qindx_S
  use electrons,      ONLY:levels
  use SC,             ONLY:SC_bands
@@ -40,9 +40,13 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  ! Work Space
  !
  real(SP):: GAMMA_(2),WIDTH(4,2),E_center,pre_factor
- integer :: ik,iqbz,i_n,i_np,ik_mem,i_b_mat_mem,iq_mem,ik_m_q,il,is,i_s
+ integer :: ik,iqbz,i_n,i_np,ik_mem,i_b_mat_mem,iq_mem,ik_m_q,il,is,i_s,i_trans(2),kin_scatt(3)
  real(SP), allocatable :: Gr_integrand(:)
  real(SP),    external :: Laplace_transform
+ real(SP):: TRANSITIONS_E((SC_bands(2)-SC_bands(1)+1)*nkibz)
+ logical :: eval_it
+ integer(IP4)          :: TRANSITIONS_table((SC_bands(2)-SC_bands(1)+1)*nkibz,&
+&                                           (SC_bands(2)-SC_bands(1)+1)*nkibz,3)
  !
  ! Allocation
  !
@@ -53,6 +57,17 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  call mem_est("Gr_ep_matrix",(/size(Gr_ep_matrix)/))
  !
  if (l_G_retarded_DB) allocate(Gr_integrand(Gr_T_steps))
+ !
+ TRANSITIONS_E=0.
+ TRANSITIONS_table=0
+ !
+ i_trans(1)=0
+ do i_n=SC_bands(1),SC_bands(2)
+   do ik=1,nkibz
+     i_trans(1)=i_trans(1)+1
+     TRANSITIONS_E(i_trans(1))=Gr_peak_pos(ik,i_n)
+   enddo
+ enddo
  !
  do ik=1,nkibz
    !
@@ -79,22 +94,33 @@ subroutine RT_G_retarded_EP_initialize(E,k)
              !
              if (l_G_retarded_DB) then
                !
-               !pre_factor=4.8
-               !
-               !WIDTH(1,:)=set_WIDTH(i_n,i_k,maxval(  Gr_E_ranges(i_k,i_n,:) ))
-               !WIDTH(2,:)=set_WIDTH(i_m,i_p,maxval(  Gr_E_ranges(i_p,i_m,:) ))
-               !
-               !GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)
-               !GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)
-               !
                E_center=Gr_peak_pos(ik,i_n)-Gr_peak_pos(ik_m_q,i_np)+i_s*abs(sqrt(ph_freqs_sq(iqbz,il)))
+               !           
+               i_trans(1)=transition_finder(Gr_peak_pos(ik,i_n))
+               i_trans(2)=transition_finder(Gr_peak_pos(ik_m_q,i_np))
                !
-               !if (E_center> GAMMA_(2)*pre_factor) goto 1
-               !if (E_center<-GAMMA_(1)*pre_factor) goto 1
+               if (il==1.and.is==-1) then
+                 kin_scatt=(/ik_mem,i_b_mat_mem,iq_mem/)
+                 eval_it=.TRUE.
+                 !
+                 if (TRANSITIONS_table(i_trans(1),i_trans(2),1)/=0) then
+                   eval_it=.FALSE.
+                   kin_scatt=TRANSITIONS_table(i_trans(1),i_trans(2),:)
+                 else if (TRANSITIONS_table(i_trans(2),i_trans(1),1)/=0) then
+                   eval_it=.FALSE.
+                   kin_scatt=TRANSITIONS_table(i_trans(2),i_trans(1),:)
+                 endif
+               endif
                !
-               Gr_integrand(:)=real( conjg(Gr(ik,i_n,:))*Gr(ik_m_q,i_np,:) )
-               !
-               Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
+               if (eval_it) then
+                 Gr_integrand(:)=real( conjg(Gr(ik,i_n,:))*Gr(ik_m_q,i_np,:) )
+                 Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=&
+&                             Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
+                 TRANSITIONS_table(i_trans(1),i_trans(2),:)=(/ik_mem,i_b_mat_mem,iq_mem/)
+               else
+                 Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=&
+&                             Gr_ep_matrix(kin_scatt(1),kin_scatt(2),kin_scatt(3),il+max(is,0)*ph_modes)
+               endif
                !
              else
                !
@@ -132,6 +158,18 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  call live_timing()
  !
  contains
+   !
+   integer function transition_finder(E)
+     integer  :: ic
+     real(SP) :: E
+     transition_finder=-1
+     do ic=1,(SC_bands(2)-SC_bands(1)+1)*nkibz
+       if (abs(E-TRANSITIONS_E(ic))<1.E-5) then
+         transition_finder=ic
+         return
+       endif
+     enddo
+   end function
    !
    function set_WIDTH(i_n,i_k,W)
      !

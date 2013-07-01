@@ -93,6 +93,9 @@ case $target in
   ypp*)
    llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
+  ydb*)
+   llibs="$llibs \$(lnetcdf)"
+    ;;
 esac
 
 cat config/setup >>$cdir/Makefile

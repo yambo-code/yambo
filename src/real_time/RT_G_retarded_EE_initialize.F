@@ -58,7 +58,7 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  allocate(Gr_ee_matrix(PAR_nQP,PAR_nQPp,PAR_nQ,nsym))
  Gr_ee_matrix=rZERO
  call mem_est("Gr_ee_matrix",(/size(Gr_ee_matrix)/))
- call mem_est("TRANSITIONS table",(/size(TRANSITIONS_table)/),(/IP4/))
+ call mem_est("TRANSITIONS table",(/size(TRANSITIONS_table)/),(/IP/))
  call mem_est("TRANSITIONS E",(/size(TRANSITIONS_E)/),(/SP/))
  !
  if (l_G_retarded_DB) allocate(Gr_integrand(Gr_T_steps))

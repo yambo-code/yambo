@@ -45,7 +45,7 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
   	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
 	   src/external_c/.objects Makefile driver/version.h \
        sbin/objects_debug.sh driver/editor.h 
-TARGETS  = all yambo interfaces ypp 
+TARGETS  = all yambo interfaces ypp ydb
 UTILS    = changelog
 CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_magnetic yambo_rt yambo_kerr yambo_surf\
@@ -77,7 +77,8 @@ PJ_RTLIBS          = $(MAIN_LIBS) sc real_time
 YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface interpolate pol_function bse
 YPPSCLIBS    = $(YPPLIBS) sc
 YPPRTLIBS    = $(YPPLIBS) sc real_time
-YPPSURFLIBS   = $(BASIC_LIBS) surf_modules bz_ops qp_ctl setup interface interpolate surf pol_function bse
+YPPSURFLIBS  = $(BASIC_LIBS) surf_modules bz_ops qp_ctl setup interface interpolate surf pol_function bse
+YDBLIBS      = $(BASIC_LIBS) 
 
 nothing: 
 	@$(make_message)
@@ -147,6 +148,11 @@ interfaces: libs
 ypp: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
+#
+# ydb
+#
+ydb: libs
+	@X2DO="ydb" ;XPATH="ydb";XLIBS="$(YDBLIBS)";$(mkx)
 #
 clean: clean_fast
 clean_fast: 

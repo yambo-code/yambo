@@ -55,7 +55,7 @@ integer function io_RT_components(what,ID)
  ! Work Space
  !
  integer, external     :: variables_SC
- character(lchlen)     :: local_description(100)
+ character(lchlen)     :: local_description(100),ch
  !
  real(SP), allocatable :: TMP_matrix(:,:,:)
  integer               :: ik,ib,i_spin,i1

@@ -46,7 +46,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_RT_CCA_Kernel,&
-&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time
+&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,Gr_bands
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
 &                         rho_convergence,H_rotate,V_hartree_sc,&
@@ -142,6 +142,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID_Gr)
  io_Gr=io_G_retarded(ID_Gr,"G_retarded")
+ if (io_Gr<0) Gr_bands=0
  !
  ! To restart from RT only the G_lesser is necessary
  !

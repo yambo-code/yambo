@@ -26,7 +26,7 @@ integer function io_G_retarded(ID,what)
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_sec,io_elemental,&
 &                         write_is_on,io_bulk,io_status,ver_is_gt_or_eq
  use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_steps,Gr_E_window,&
-&                         Gr_peak_pos,Gr_E_ranges,Gr_T_step,Gr_QP_width
+&                         Gr_peak_pos,Gr_E_ranges,Gr_T_step,Gr_QP_width,Gr_description,N_Gr_descs
  use R_lattice,      ONLY:nkibz
  use QP_m,           ONLY:QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use stderr,         ONLY:intc
@@ -37,19 +37,23 @@ integer function io_G_retarded(ID,what)
  !
  ! Work Space
  !
- integer              :: i_k,i_s,T_steps_each_section,T_section(2)
+ integer              :: i_k,i_s,T_steps_each_section,T_section(2),i_desc
  real(SP),allocatable :: Gr_disk(:,:,:)
  !
  io_G_retarded=io_connect(desc=what,type=2,ID=ID)
  if (io_G_retarded/=0) goto 1
+ !
+ Gr_description=' '
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
    io_G_retarded=io_header(ID,XC_KIND="G")
    !
    call io_elemental(ID,VAR='G_retarded_KIND',CH0="",VAR_SZ=1,MENU=0)
+   i_desc=1
    call io_elemental(ID,CH0=Gr_kind,&
-&       VAR=' Retarded Green`s function       :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' [Gr] Retarded Green`s function  :',CHECK=.true.,&
+&       OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if (ver_is_gt_or_eq(ID,revision=2440)) then
@@ -61,38 +65,60 @@ integer function io_G_retarded(ID,what)
    call io_elemental(ID,I1=Gr_bands,&
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
    !
+   i_desc=i_desc+1
    call io_elemental(ID,R0=Gr_QP_width,&
-&       VAR=' QP damping                  [eV]:',UNIT=HA2EV,CHECK=.true.,OP=(/"=="/))
+&       VAR=' [Gr] QP damping             [eV]:',UNIT=HA2EV,CHECK=.true.,&
+&       OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
    !
    if (ver_is_gt_or_eq(ID,revision=2440)) then
      !
+     i_desc=i_desc+1
      call io_elemental(ID,R0=QP_ctl_Wc_E_ref(3,1),&
-&         VAR=' Damping (c) Energy ref      [eV]:',UNIT=HA2EV,CHECK=.true.,OP=(/"=="/))
+&         VAR=' [Gr] Damping (c) Energy ref [eV]:',UNIT=HA2EV,CHECK=.true.,&
+&         OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
+     i_desc=i_desc+1
      call io_elemental(ID,R1=QP_ctl_Wc(3,:,1),&
-&         VAR=' Damping (c)      [eV,adim,eV^-1]:',CHECK=.true.,OP=(/"=="/))
+&         VAR=' [Gr] Damping (c) [eV,adim,eV^-1]:',CHECK=.true.,&
+&         OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
+     i_desc=i_desc+1
      call io_elemental(ID,R0=QP_ctl_Wv_E_ref(3,1),&
-&         VAR=' Damping (v) Energy ref      [eV]:',UNIT=HA2EV,CHECK=.true.,OP=(/"=="/))
+&         VAR=' [Gr] Damping (v) Energy ref [eV]:',UNIT=HA2EV,CHECK=.true.,&
+&         OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
+     i_desc=i_desc+1
      call io_elemental(ID,R1=QP_ctl_Wv(3,:,1),&
-&         VAR=' Damping (v)      [eV,adim,eV^-1]:',CHECK=.true.,OP=(/"=="/))
+&         VAR=' [Gr] Damping (v) [eV,adim,eV^-1]:',CHECK=.true.,&
+&         OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
      !
    endif
    !
+   i_desc=i_desc+1
    call io_elemental(ID,R0=Gr_T_window,&
-&       VAR=' Time range                  [fs]:',UNIT=1./FS2AUT,CHECK=.true.,OP=(/"=="/))
+&       VAR=' [Gr] Time range             [fs]:',UNIT=1./FS2AUT,CHECK=.true.,&
+&       OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
+   i_desc=i_desc+1
    call io_elemental(ID,R0=Gr_T_step,&
-&       VAR=' Time step                   [fs]:',UNIT=1./FS2AUT,CHECK=.true.,OP=(/"=="/))
+&       VAR=' [Gr] Time step              [fs]:',UNIT=1./FS2AUT,CHECK=.true.,&
+&       OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
+   i_desc=i_desc+1
    call io_elemental(ID,I0=Gr_T_steps,&
-&       VAR=' Time steps                      :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' [Gr] Time steps                 :',CHECK=.true.,&
+&       OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
    !
    if (trim(Gr_kind)/="HC".and.trim(Gr_kind)/="QP") then
      !
+     i_desc=i_desc+1
      call io_elemental(ID,R0=Gr_E_window,&
-&         VAR=' Energy range                [eV]:',UNIT=HA2EV,CHECK=.true.,OP=(/"=="/))
+&         VAR=' [Gr] Energy range           [eV]:',UNIT=HA2EV,CHECK=.true.,&
+&         OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
      !
+     i_desc=i_desc+1
      call io_elemental(ID,I0=Gr_E_steps,&
-&         VAR=' Energy steps                    :',CHECK=.true.,OP=(/"=="/))
+&         VAR=' [Gr] Energy steps               :',CHECK=.true.,&
+&         OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
      !
    endif
+   !
+   N_Gr_descs=i_desc
    !
    call io_elemental(ID,VAR=" ",VAR_SZ=0)
    !

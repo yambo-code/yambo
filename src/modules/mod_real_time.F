@@ -22,7 +22,7 @@
 module real_time
  !
  use SC,         ONLY:G_lesser,SC_R
- use pars,       ONLY:DP,SP,schlen
+ use pars,       ONLY:DP,SP,schlen,lchlen
  !
  implicit none
  !
@@ -182,11 +182,13 @@ module real_time
  integer           :: Gr_T_steps
  integer           :: Gr_E_steps
  integer           :: Gr_bands(2)
+ integer           :: N_Gr_descs = 0
  real(SP)          :: Gr_QP_width
  real(SP)          :: Gr_T_step
  real(SP)          :: Gr_T_window
  real(SP)          :: Gr_E_window
  character(schlen) :: Gr_kind
+ character(lchlen) :: Gr_description(100)
  real(SP),    allocatable :: Gr_ee_matrix(:,:,:,:)
  real(SP),    allocatable :: Gr_ep_matrix(:,:,:,:)
  real(SP),    allocatable :: Gr_peak_pos(:,:)

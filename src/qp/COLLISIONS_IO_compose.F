@@ -131,7 +131,7 @@ subroutine COLLISIONS_IO_compose(G_input)
            if(COLLISIONS_table(ib,ibp,ik)/=0) then
              !
              CHO_factor=(0._SP,1._SP)*G_input(ib,ibp,ik)
-             if (ib==ibp) CHO_factor=(0._SP,1._SP)*G_input(ib,ibp,ik) +1.
+             if (ib==ibp) CHO_factor=(0._SP,1._SP)*G_input(ib,ibp,ik) +1._SP
              !
              QP_Sc(i_qp,1)=QP_Sc(i_qp,1)-COLLISIONS_v(ic)*CHO_factor
              ic=ic+1

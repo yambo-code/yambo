@@ -308,7 +308,8 @@ module real_time
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,schlen
-     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda,l_ph_corr,l_carrier_dynamics
+     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda,l_ph_corr,l_carrier_dynamics,&
+&                             l_sc_cohsex         
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n, &
 &                             SC_xc_functional,SC_xc_functional,RT_occupations
@@ -322,7 +323,7 @@ module real_time
      !
      call SC_alloc(en)
      !
-     if (l_HF_and_locXC) then
+     if (l_HF_and_locXC.or.l_sc_hf.or.l_sc_cohsex) then
        !
        allocate(QP_Vnl_xc(QP_n_states))
        call mem_est("QP_Vnl_xc",(/QP_n_states/))

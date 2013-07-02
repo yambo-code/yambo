@@ -56,18 +56,20 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  Gr_ep_matrix=rZERO
  call mem_est("Gr_ep_matrix",(/size(Gr_ep_matrix)/))
  !
- if (l_G_retarded_DB) allocate(Gr_integrand(Gr_T_steps))
- !
- TRANSITIONS_E=0.
- TRANSITIONS_table=0
- !
- i_trans(1)=0
- do i_n=SC_bands(1),SC_bands(2)
-   do ik=1,nkibz
-     i_trans(1)=i_trans(1)+1
-     TRANSITIONS_E(i_trans(1))=Gr_peak_pos(ik,i_n)
+ if (l_G_retarded_DB) then
+   allocate(Gr_integrand(Gr_T_steps))
+   !
+   TRANSITIONS_E=0.
+   TRANSITIONS_table=0
+   !
+   i_trans(1)=0
+   do i_n=SC_bands(1),SC_bands(2)
+     do ik=1,nkibz
+       i_trans(1)=i_trans(1)+1
+       TRANSITIONS_E(i_trans(1))=Gr_peak_pos(ik,i_n)
+     enddo
    enddo
- enddo
+ endif
  !
  do ik=1,nkibz
    !

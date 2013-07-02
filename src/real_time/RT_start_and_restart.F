@@ -142,7 +142,10 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID_Gr)
  io_Gr=io_G_retarded(ID_Gr,"G_retarded")
- if (io_Gr<0) Gr_bands=0
+ if (io_Gr<0) then
+   Gr_bands=0
+   if (.not.associated(E%W)) call error('No W damping nor external G_ret provided')
+ endif
  !
  ! To restart from RT only the G_lesser is necessary
  !

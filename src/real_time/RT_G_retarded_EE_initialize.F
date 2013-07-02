@@ -53,15 +53,17 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  call k_sym2sym(q,'k')
  call k_sym2sym(k,'k')
  !
- n_trans=0
- TRANSITIONS_E=rZERO
- call mem_est("TRANSITIONS_E",(/size(TRANSITIONS_E)/),(/SP/))
- do i_n=SC_bands(1),SC_bands(2)
-   do i_k=1,nkibz
-     n_trans=n_trans+1
-     TRANSITIONS_E(n_trans)=Gr_peak_pos(i_k,i_n)
+ if (l_G_retarded_DB) then
+   n_trans=0
+   TRANSITIONS_E=rZERO
+   call mem_est("TRANSITIONS_E",(/size(TRANSITIONS_E)/),(/SP/))
+   do i_n=SC_bands(1),SC_bands(2)
+     do i_k=1,nkibz
+       n_trans=n_trans+1
+       TRANSITIONS_E(n_trans)=Gr_peak_pos(i_k,i_n)
+     enddo
    enddo
- enddo
+ endif
  !
  ! Gr (e-e)
  !==========
@@ -167,14 +169,10 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
              Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=&
 &                         Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
              !
- !write (200,*) i_kmq,i_np,i_p,i_m
- !write (200,*) i_pmq,i_mp,i_k,i_n
- !write (200,*) i_trans_ord,Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s),' EVALUED'
            else
              !
              Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=Gr_ee_matrix(kin_scatt(1),kin_scatt(2),&
 &                                                                        kin_scatt(3),kin_scatt(4))
- !write (200,*) i_trans,Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s),' LOADED'
              !
            endif
            !

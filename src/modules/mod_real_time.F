@@ -1,4 +1,4 @@
-!
+! 
 ! Copyright (C) 2000-2013 A. Marini, M. Gruening and the YAMBO team 
 !              http://www.yambo-code.org
 ! 

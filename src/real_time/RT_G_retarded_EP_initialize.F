@@ -50,7 +50,7 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  !
  ! Allocation
  !
- call live_timing('Electron-Phonon:',PAR_Xk_nibz*PAR_n_B_mat_elements*PAR_nQ)
+ call live_timing('[Gret] Electron-Phonon:',PAR_Xk_nibz*PAR_n_B_mat_elements*PAR_nQ)
  !
  allocate(Gr_ep_matrix(PAR_Xk_nibz,PAR_n_B_mat_elements,PAR_nQ,2*ph_modes))
  Gr_ep_matrix=rZERO

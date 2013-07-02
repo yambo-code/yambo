@@ -430,9 +430,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  if (l_ph_corr.or.l_carrier_dynamics) then
    !
-   call section('+','Retarded Green Functions initialization')
-   !                 ========================================
-   !
    if (l_ph_corr)          call RT_G_retarded_EP_initialize(E,k)
    if (l_carrier_dynamics) call RT_G_retarded_EE_initialize(E,k,q)
    !

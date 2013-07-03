@@ -297,9 +297,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
        enddo
      enddo
      !
-     call PARALLEL_live_message("B matrix",ENVIRONMENT=ENVIRONMENT,&
+     call PARALLEL_live_message("Bands",ENVIRONMENT=ENVIRONMENT,&
 &                               LOADED=PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1),&
-&                               TOTAL=SC_bands(1)-1+matrix_linear_index(1,SC_bands(2)-SC_bands(1)+1)-1,&
+&                               TOTAL=SC_bands(2),&
 &                               NCPU=PAR_COM_WF_b_INDEX%n_CPU,&
 &                               CHAIN=PAR_COM_WF_b_INDEX%chain_order)
      !

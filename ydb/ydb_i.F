@@ -21,9 +21,12 @@
 !
 integer function ydb_i(lnstr,instr)
  !
- use pars,                ONLY:schlen
+ use pars,                ONLY:schlen,lchlen
  use IO_m,                ONLY:mk_dir 
- use stderr,              ONLY:string_split
+ use com,                 ONLY:file_exists
+ use stderr,              ONLY:string_split,write_to_log,log_as_a_file
+ use LIVE_t,              ONLY:LIVE_message
+ use parallel_m,          ONLY:ncpu
  !
  implicit none
  integer,          intent(in) :: lnstr
@@ -33,7 +36,17 @@ integer function ydb_i(lnstr,instr)
  !
  integer,parameter::n_max_pieces=100
  character(schlen)::rstr_piece(n_max_pieces)
+ character(lchlen)::PATH,file_name
  integer          ::n_pieces,i1
+ !
+ ! Presets
+ !
+ ydb_i =0
+ ncpu  =1
+ write_to_log =.TRUE.
+ log_as_a_file=.FALSE.
+ !
+ ! INPUT string splitter
  !
  call string_split(instr(:lnstr),rstr_piece)
  n_pieces=0
@@ -42,8 +55,31 @@ integer function ydb_i(lnstr,instr)
  enddo
  if (n_pieces==0) return
  !
- write (*,*) check_for_word("db"),rstr_piece(check_for_word("db")+1)
+ ! PATH
+ !
+ if (file_exists('~/.ydb/PATH')) then
+   open(unit=1,file='~/.ydb/PATH',form='formatted')
+   read (1,'(a)') PATH
+   close(1)
+ else 
+   call LIVE_message('[ERROR] DB not found ',"n","n","%s")
+   stop
+ endif
+ !
+ ! ADD
+ !
+ if (check_for_word("add")>0) then
+   call LIVE_message('Adding ... '//trim(file_name),"n"," ","%s")
+   if (check_for_word("in")>0) then
+     read(rstr_piece(check_for_word("in")+1),'(a)') file_name
+     call LIVE_message('... INPUT file '//trim(file_name),"n"," ","%s")
+     call YDB_scan_file(trim(file_name))
+   endif
+ endif
+ !
+!,rstr_piece(check_for_word("db")+1)
 ! call mk_dir("ydb")
+ call LIVE_message(' ',"n","n","%s")
  !
  contains
    !

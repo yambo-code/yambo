@@ -47,6 +47,8 @@ subroutine RT_manual_excitation(E,k)
  !
  if (Eh_pumped_pair_energy(2)<=0.) return
  !
+ delta_Nel=0._SP
+ !
  do ik=1,E%nk
    !
    i1=0

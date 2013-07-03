@@ -37,12 +37,12 @@
  static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
   {"help",  "h","Short Help",0,0,0,0,0}, 
   {"lhelp", "H","Long Help",0,0,0,0,0}, 
-  {"db",    "d","Set DB path",0,0,1,0,0},   
-  {"add",   "a","Add",0,0,1,0,0},   
-  {"kind",  "k","Kind [opt=(d)irectory,(i)input,(o)utput]",0,0,1,0,0},    
-  {"list",  "l","Input file",0,0,0,0,0},              
-  {"new",   "n","New job ID and input file (using a given reference)",0,0,1,0,0},         
-  {"ref",   "r","Reference",0,0,1,0,0},        
+  {"del",   "d","Remove",1,0,0,0,0},   
+  {"add",   "a","Add",0,0,0,0,0},   
+  {"in",    "i","Input",0,0,1,0,0},    
+  {"out",   "o","Output",0,0,1,0,0},    
+  {"list",  "l","View",1,0,0,0,0},              
+  {"ref",   "r","Reference",1,0,0,0,0},        
   {"change","c","Change a give VAR I/O directory",0,0,2,0,0},
   {NULL,NULL,NULL,0,0,0,0,0}
  };

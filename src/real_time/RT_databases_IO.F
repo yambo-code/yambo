@@ -49,6 +49,8 @@ subroutine RT_databases_IO(E,it)
  !
  if (it==it_start.and.it_start>1) return
  !
+ call start_clock('RT_dbIO')
+ !
  ! Polarization and current are automaticaly written every RT_IO_stesp
  ! the cache save value at steps different from mod(NE_i_time,RT_IO_steps)/=0)
  !
@@ -121,5 +123,7 @@ subroutine RT_databases_IO(E,it)
  ! Occupations
  !
  if (.not.l_RT_skip_OCC_IO) call OCCUPATIONS_IO_and_interpolate(E,'G')
-
+ !
+ call stop_clock('RT_dbIO')
+ !
 end subroutine RT_databases_IO

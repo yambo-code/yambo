@@ -50,6 +50,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  if(.not.l_NE_with_fields.or..not.NE_dynamics) return
  !
+ call start_clock('RT_curr')
+ !
  do id=1,3
    !
    call RT_average_operator(VALUE=RT_ind_J(id),O_MATRIX=-DIP_P(id,1:SC_bands(2),1:SC_bands(2),1:QP_nk,1:n_sp_pol),&
@@ -69,5 +71,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  RT_ind_J=RT_ind_J/DL_vol
  RT_P    =RT_P/DL_vol
+ !
+ call stop_clock('RT_curr')
  !
 end subroutine RT_current_AND_polarization

@@ -58,6 +58,8 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
  complex(SP) :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP) :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
+ call start_clock('RT_Int')
+ !
  SC_bands2_dot_nibz=SC_nbands**2*k%nibz
  !
  if(trim(Integrator)==EULER) then
@@ -136,5 +138,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
    call error(" Unknown Integrator!")
    !
  endif   
+ !
+ call stop_clock('RT_Int')
  !
 end subroutine RT_Integrator

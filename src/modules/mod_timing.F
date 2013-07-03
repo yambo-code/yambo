@@ -54,6 +54,45 @@ module timing
  logical           :: log_line_to_dump
  character(lchlen) :: log_line
  !
+ !
+ ! Copyright (C) 2001-2007 Quantum ESPRESSO group
+ ! This file is distributed under the terms of the
+ ! GNU General Public License. See the file `License'
+ ! in the root directory of the present distribution,
+ ! or http://www.gnu.org/copyleft/gpl.txt .
+ !
+ !     Related time-printing utilities in src/timing:
+ !     init_clocks( go )    initialization - must be called first
+ !                          go = .TRUE. : up to "maxclock" clocks can be started
+ !                          go = .FALSE.: only clock #1 can be started
+ !     start_clock( label )   starts clock "label" (max 12 characters)
+ !                            if "label" has never been started, initializes it
+ !                            issues warning if "label" already started
+ !     stop_clock( label )    stops  clock "label"
+ !                            issues warning if "label" is either not running
+ !                            or has never been started
+ !     print_clock( label )   print cpu and wall time measured by clock "label"
+ !                            clock "label" may be running or stopped 
+ !                            and remains in the same state
+ !                            issues warning if "label" has never been started
+ !     get_clock( label )     return wall time measured by clock "label"
+ !                            returns -1 if "label" has never been started
+ !
+ !
+ ! PWscf timing parameters
+ !
+ integer,  parameter :: maxclock   = 100
+ real(DP), parameter :: notrunning = -1.0_DP
+ !
+ real(DP)          :: cputime(maxclock), t0cpu(maxclock)
+ real(DP)          :: walltime(maxclock), t0wall(maxclock)
+ character(len=12) :: clock_label(maxclock)
+ integer           :: called(maxclock)
+ !
+ integer :: nclock = 0
+ logical :: no
+ integer :: trace_depth = 0
+ !
  contains
    !
    character(lchlen) function date_and_time_string(dt_in,dt_out)

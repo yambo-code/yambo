@@ -73,8 +73,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  myid  =pid
  infile=inf
  !
+
  call std_presets(instr,ind,od,js,com_dir)
-#ifdef _SURF
+#if defined _SURF
  call ras_presets()
 #endif
  call it_reset(1)

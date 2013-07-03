@@ -67,14 +67,14 @@ subroutine symmetries_driver(E,Xk)
  !
  ! Check if the system is magnetic
  ! Magnetization must be considered to derive syms if n_spinor==2
- !if(n_spinor==2) then
- !  call WF_load(0,1,(/1,E%nbm/),(/1,k%nibz/),title='-Magn')
- !  allocate(magn(fft_size,3))
- !  call el_magnetization(E,k)
- !  call msg('s','Total magnetization (x,y,z) [Bohr_magneton] :',real(Total_magn(:),SP))
- !  deallocate(magn)
- !  call WF_free()
- !endif
+ if(n_spinor==2) then
+   call WF_load(0,1,(/1,E%nbm/),(/1,Xk%nibz/),title='-Magn')
+   allocate(magn(fft_size,3))
+   call el_magnetization(E,Xk)
+   call msg('s','Total magnetization (x,y,z) [Bohr_magneton] :',real(Total_magn(:),SP))
+   deallocate(magn)
+   call WF_free()
+ endif
  !
  ! Expansion of default k-points
  call k_ibz2bz(Xk,'i',.true.)

@@ -161,7 +161,9 @@ subroutine barriers()
  if (l_bss.or.l_bse) then
    on_runlevels='optics bse bsk bss tddft em1s em1d ppa'
    ! GPL_INCLUDE_START SC_IGNORE
-   !on_runlevels='optics bse bsk bss em1s em1d ppa'
+   ! !This barrier prevent tddft to work as l_alda_fxc is not defined and alda_r_space does not work...
+   ! !Barrier commented (Davide: 25/06/2013)
+   ! !on_runlevels='optics bse bsk bss tddft em1s em1d ppa'
    ! GPL_INCLUDE_END SC_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1

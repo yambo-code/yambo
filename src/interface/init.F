@@ -119,6 +119,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! What is running ?
  !
+ !
  what_is_running='YAMBO'
 #if defined _ELPH 
  what_is_running='YAMBO_PH'
@@ -178,10 +179,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! First vars loading
  ! 
+ write(*,*) 'pluto4'
  call call_init_load('create_shadow_vars')
  !
  ! DB props listing mode ?
  !
+ write(*,*) 'pluto5'
  call read_command_line(instr,init)
  if (index(instr,'dbpr')>0) then
    list_dbs=.true.
@@ -1106,6 +1109,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    subroutine read_command_line(rstr,init_) 
      !
+     use com,    ONLY:error
      use stderr, ONLY:string_split
      use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,&
 &                     V_real_time,V_all,rstatus
@@ -1204,6 +1208,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! BSE/LLR
        !
        if ( trim(rstr_piece(i1)) == 'optics' )  then
+         !
+         if(l_bse.or.l_chi) call error(' -k option given befor -o in the command line')
+         !
          l_chi= (trim(rstr_piece(i1+1))=='g' ).or.(trim(rstr_piece(i1+1))=='c')
          l_bse= (trim(rstr_piece(i1+1))=='eh').or.(trim(rstr_piece(i1+1))=='b')
          !
@@ -1215,8 +1222,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _KERR
          l_kerr=l_bse
 #endif
-         if (l_chi) Chi_mode='IP'
-         if (l_bse) BSK_mode='IP'
+         if (l_chi.and.trim(Chi_mode)==' ') Chi_mode='IP'
+         if (l_bse.and.trim(BSK_mode)==' ') BSK_mode='IP'
          !
        endif
        !
@@ -1276,6 +1283,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          if (l_alda_fxc.and.index(BSS_mode,'t')/=0) BSS_mode='h'
          if (BSK_mode=='IP') call switch_off_runlevel('bss',on_name=' ')
+         if (BSK_mode==' ') then
+           BSK_mode="SEX"
+           Chi_mode="Hartree"
+         endif
          !
        endif
        !

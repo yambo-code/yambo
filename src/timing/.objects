@@ -1,0 +1,1 @@
+objs =   init_clocks.o start_clock.o stop_clock.o print_clock.o get_clock.o

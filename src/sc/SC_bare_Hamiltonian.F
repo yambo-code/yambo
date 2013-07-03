@@ -37,10 +37,13 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  use drivers,        ONLY:l_sc_magnetic
  use magnetic,       ONLY:MAG_B
 #endif
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
+ use interfaces,     ONLY:PARALLEL_index
  implicit none
  !
  type(levels)             :: E
  type(bz_samp)            :: Xk,k
+ type(PP_indexes)         :: px
  !
  ! Work space
  !
@@ -89,18 +92,30 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  call V_Hartree(rho_n,V_hartree_sc)
  V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
  !
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/QP_nk/))
+ ! 
  do ik=1,QP_nk
+   !
+   if (.not.px%element_1D(ik)) cycle
+   !
    call V_real_space_to_H(ik,-V_hartree_sc,Ho(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf)
- enddo
- !
- forall (ib=1:QP_nb,ik=1:QP_nk,i_spin=1:n_sp_pol) Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) + E_bare(ib,ik,i_spin)  
- !
- ! ... then remove Vxc[rho_0] also
- !=================================
- !
- do ik=1,QP_nk
+   !
+   !
+   forall (ib=1:QP_nb,i_spin=1:n_sp_pol) &
+&           Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) + E_bare(ib,ik,i_spin)  
+   !
+   ! ... then remove Vxc[rho_0] also
+   !=================================
+   !
    call V_qp_basis_to_H(ik,-QP_Vxc,Ho(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol))
+   !
  enddo
+ !
+ do i_spin=1,n_sp_pol
+   call PP_redux_wait(Ho(:,:,:,i_spin))
+ enddo
+ call PP_indexes_reset(px)
  !
  deallocate(QP_Vxc)
  call mem_est("QP_Vxc")

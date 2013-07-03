@@ -21,7 +21,7 @@
 !
 subroutine electrons_driver(Xk,Xen)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,lchlen
  Use stderr,         ONLY:intc
  use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state
  use FFT_m,          ONLY:fft_size,fft_dim
@@ -46,7 +46,6 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_ELPH
  use YPP,            ONLY:elph_residual_treshold
  use ELPH,           ONLY:elph_Ham_bands
- use pars,           ONLY:lchlen
  use com,            ONLY:jobstr,file_exists
 #endif
  implicit none
@@ -120,7 +119,7 @@ subroutine electrons_driver(Xk,Xen)
    db_name=trim(jobstr)//'/TOP_RESIDUAL_b'//trim(intc(QP_table(1,1)))//'_k'//trim(intc(QP_table(1,3)))
    if (file_exists(trim(db_name))) then
      l_polaronic_wf=.TRUE.
-     open(unit=100,name=trim(db_name),form='unformatted')
+     open(unit=100,file=trim(db_name),form='unformatted')
      read(100) elph_Ham_bands
      close(100)
      nb_to_load    =elph_Ham_bands
@@ -184,7 +183,7 @@ subroutine electrons_driver(Xk,Xen)
    !
    i_qp=1
    !
-   l_norm_to_one=.false.
+   l_norm_to_one=.true.
    !
    do while (i_qp<=QP_n_states) 
      !
@@ -200,7 +199,7 @@ subroutine electrons_driver(Xk,Xen)
      !  
      do i_st=1,2
        n_top_residuals=1
-       open(unit=100,name=trim(db_name),form='unformatted')
+       open(unit=100,file=trim(db_name),form='unformatted')
        do while(.true.)
          read(100,end=2) top_residual(n_top_residuals),polaronic_residual(n_top_residuals)
          if  (polaronic_residual(n_top_residuals)>elph_residual_treshold/100.*max_residual) n_top_residuals=n_top_residuals+1
@@ -220,7 +219,7 @@ subroutine electrons_driver(Xk,Xen)
        v2plot_c=cmplx(0.,SP)
        !
        db_name=trim(jobstr)//'/EIGENV_I'//trim(intc(top_residual(i_st)))//'_k'//trim(intc(ik))
-       open(unit=100,name=trim(db_name),form='unformatted')
+       open(unit=100,file=trim(db_name),form='unformatted')
        read(100) H_size
        do i_c=1,H_size
          read(100) ibp,ok_ibz,ok_s,il,iq_ibz,iq_s,B_n_ok
@@ -242,7 +241,7 @@ subroutine electrons_driver(Xk,Xen)
        enddo
        close(100)
        !
-       v2plot  =real(v2plot_c)
+       v2plot  =abs(real(v2plot_c))
        !
        ch_ws(1)='sp_wf_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim))//&
 &               '_STATE'//trim(intc(top_residual(i_st)))//'_'//trim(intc(plot_dim))

@@ -21,11 +21,11 @@
 !
 subroutine RT_driver(E,X,k,q)
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP,DP,cI
  use drivers,        ONLY:l_collisions_IO,l_ph_corr,l_carrier_dynamics 
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
- use timing,         ONLY:live_timing 
+ use timing,         ONLY:live_timing,clock_label,nclock,no	
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,X_alloc
  use wave_func,      ONLY:WF_load,WF_free
@@ -56,11 +56,15 @@ subroutine RT_driver(E,X,k,q)
  type(bz_samp) :: k,q
  type(X_t):: X(4)
  logical, external  ::stop_now
+ real(DP), external  ::get_clock
  ! 
  ! Work Space
  !
- integer                  :: it,ik,ib,it_mem,it_mem_p1
+ integer                  :: it,ik,ib,it_mem,it_mem_p1,i_clock
  complex(SP)              :: on_the_fly_operators(8)
+ !
+ call init_clocks( .true. )
+ call start_clock('RT_drive')
  !
  if (l_ph_corr.and.l_carrier_dynamics) then
    call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph AND e-e scattering')
@@ -294,9 +298,11 @@ subroutine RT_driver(E,X,k,q)
    ! ===============
    if(it==Thermal_steps.or. (mod(it,RT_diagonalization_steps)==0.and.RT_diagonalization_steps>0) ) then
      !
+     call start_clock('mat_dia')   
      do ik=1,E%nk
        call mat_dia_inv(DIAGO,USE_LK,SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),E_real=E%E(:SC_bands(2),ik,1))
      enddo
+     call stop_clock('mat_dia')
      !
      ! Updating
      !===========
@@ -337,5 +343,11 @@ subroutine RT_driver(E,X,k,q)
  call X_alloc("P_square")
  !
  call set_real_printed_length()
+ !
+ call stop_clock('RT_drive')
+ do i_clock=1,nclock
+   !write(*,*) clock_label(i_clock),': ',get_clock(clock_label(i_clock)) ,' s'
+   call print_clock(clock_label(i_clock))
+ enddo
  !
 end subroutine RT_driver

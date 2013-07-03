@@ -355,6 +355,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization',verb_level=V_sc)
  call it(defs,'B_radius',      '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
 #endif
+ !
+ ! GPL_EXCLUDE_END SC_IGNORE
  ! 
  ! Surface spectroscopy
  !
@@ -369,8 +371,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'LocType', '[RAS] Transition filter (ss/sb/bs/bb|no)',loctype,verb_level=V_resp)
  call it(defs,'LocLimit','[RAS] Factor defining state localization',locfac,verb_level=V_resp)
 #endif
- !
- ! GPL_EXCLUDE_END SC_IGNORE
  !
  ! QP ctl 
  !

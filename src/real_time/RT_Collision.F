@@ -74,6 +74,8 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  ! Density (needed bu Hartree and local XCs)
  !=========
+ call start_clock('RT_Coll')
+ !
  !
  ! NE_dynamics=.FALSE. corresponds to Thermalization where the density must be updated
  !
@@ -197,6 +199,8 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  ! Calculate all relaxation terms
  ! ==============================
  call RT_relaxation(G_input,E,k,q,Time)  
+ !
+ call stop_clock('RT_Coll')
  !
 end subroutine RT_Collision
 

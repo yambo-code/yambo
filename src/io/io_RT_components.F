@@ -63,7 +63,7 @@ integer function io_RT_components(what,E_sc,ID)
  !
  real(SP), allocatable :: TMP_matrix(:,:,:),E_disk(:,:,:)
  integer               :: ik,bands_to_load,ib,i_spin,i1
- logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_MP,l_T_EL,l_THETA
+ logical               :: l_WF,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_T_EL,l_THETA
  integer               :: file_number,i_time
  logical               :: do_IO
  integer               :: i_time_range(2)
@@ -138,14 +138,14 @@ integer function io_RT_components(what,E_sc,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   l_IMPOSE_SN=.not.l_V
+   l_IMPOSE_SN=.TRUE.
    if (l_occupations) l_IMPOSE_SN=.FALSE.
    l_T_EL=.false.
 #if defined _ELPH
    l_T_EL=.true.
 #endif
    !
-   if (any((/l_J_and_P,l_G,l_MP,l_THETA/))) then
+   if (any((/l_J_and_P,l_G,l_THETA/))) then
      if (write_is_on(ID).or.variable_is_found(ID,"TEMPERATURES")/=0) then
        io_RT_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL)
      else

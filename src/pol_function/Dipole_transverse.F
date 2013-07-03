@@ -94,16 +94,20 @@ subroutine Dipole_transverse(Xen,Xk,X)
 &           PAR_IND_VAL_BANDS_X(X%whoami)%n_of_elements(PAR_IND_VAL_BANDS_X_ID(X%whoami)+1)*n_spin
  !
  wf_dim=3
+ !
+ if (n_LT_steps>0) then
 #if defined _SC
- if (allocated(DIP_P)) then
-   call live_timing('P and P^2 (T):',n_LT_steps)
-   wf_dim=4
- else
-   call live_timing('Dipole (T):',n_LT_steps)
- endif
+   if (allocated(DIP_P)) then
+     call live_timing('P and P^2 (T):',n_LT_steps)
+     wf_dim=4
+   else
+     call live_timing('Dipole (T):',n_LT_steps)
+   endif
 #else
- call live_timing('Dipole (T):',n_LT_steps)
+   call live_timing('Dipole (T):',n_LT_steps)
 #endif
+ endif
+ !
  call PP_redux_wait
  !
  allocate(wf_xyz(wf_ng,wf_dim))
@@ -111,6 +115,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! Main loop over k in IBZ
  !
  do ik=1,Xk%nibz
+   !
+   if (n_LT_steps==0) cycle
    !
    ! [Vnl,r]
    !
@@ -278,7 +284,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  deallocate(wf_xyz)
  if (ioKB_pwscf_err==0.or.ioKB_abinit_err==0) then
-   deallocate(kbv)
+   if (allocated(kbv))          deallocate(kbv)
    if (allocated(pp_n_l_comp))  deallocate(pp_n_l_comp)
    if (allocated(pp_table))     deallocate(pp_table)
    if (allocated(pp_factor))    deallocate(pp_factor)

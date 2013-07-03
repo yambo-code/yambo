@@ -273,6 +273,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                        COMM=PAR_COM_WF_b_INDEX,CONSECUTIVE=.TRUE.)
      PAR_IND_WF_b_ID=PAR_COM_WF_b_INDEX%CPU_id
      !
+     call PARALLEL_live_message("Bands Matrix",ENVIRONMENT=ENVIRONMENT,&
+&                               LOADED=PAR_IND_B_mat_ordered%n_of_elements(PAR_IND_WF_b_ID+1),&
+&                               TOTAL=matrix_linear_index(1,SC_bands(2)-SC_bands(1)+1)-1,&
+&                               NCPU=PAR_COM_WF_b_INDEX%n_CPU,&
+&                               CHAIN=PAR_COM_WF_b_INDEX%chain_order)
+     !
      allocate(PAR_IND_WF_b%n_of_elements(PAR_COM_WF_b_INDEX%n_CPU),PAR_IND_WF_b%element_1D(SC_bands(2)))
      PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=SC_bands(1)-1
      PAR_IND_WF_b%element_1D(:)=.FALSE.
@@ -297,7 +303,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
        enddo
      enddo
      !
-     call PARALLEL_live_message("Bands",ENVIRONMENT=ENVIRONMENT,&
+     call PARALLEL_live_message("Bands (derived)",ENVIRONMENT=ENVIRONMENT,&
 &                               LOADED=PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1),&
 &                               TOTAL=SC_bands(2),&
 &                               NCPU=PAR_COM_WF_b_INDEX%n_CPU,&

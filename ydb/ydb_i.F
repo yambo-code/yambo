@@ -24,8 +24,10 @@ integer function ydb_i(lnstr,instr)
  use pars,                ONLY:schlen,lchlen
  use IO_m,                ONLY:mk_dir 
  use com,                 ONLY:file_exists
- use stderr,              ONLY:string_split,write_to_log,log_as_a_file
+ use LOGO,                ONLY:pickup_a_random
+ use stderr,              ONLY:string_split,write_to_log,log_as_a_file,intc,cstr
  use LIVE_t,              ONLY:LIVE_message
+ use parser_lib,          ONLY:iparse_init,iparse_end
  use parallel_m,          ONLY:ncpu
  !
  implicit none
@@ -35,9 +37,13 @@ integer function ydb_i(lnstr,instr)
  ! Work Space
  !
  integer,parameter::n_max_pieces=100
- character(schlen)::rstr_piece(n_max_pieces)
- character(lchlen)::PATH,file_name
- integer          ::n_pieces,i1
+ character(schlen)::rstr_piece(n_max_pieces),known_runlevels(200)
+ character(lchlen)::PATH,file_name,host_name
+ integer          ::hn_len,n_pieces,i1,i_random,i_err
+ integer          ::dz(8),year,day,month,hour,minutes
+ character(5)     ::cz
+ character(8)     ::cd
+ character(10)    ::ctz
  !
  ! Presets
  !
@@ -45,6 +51,7 @@ integer function ydb_i(lnstr,instr)
  ncpu  =1
  write_to_log =.TRUE.
  log_as_a_file=.FALSE.
+ known_runlevels=' '
  !
  ! INPUT string splitter
  !
@@ -54,6 +61,19 @@ integer function ydb_i(lnstr,instr)
    if (len_trim(rstr_piece(i1))>0) n_pieces=n_pieces+1
  enddo
  if (n_pieces==0) return
+ !
+ ! Date and Time
+ !
+ call date_and_time(cd,ctz,cz,dz)
+ call igethname(host_name,hn_len)
+ year=dz(1)
+ month=dz(2)
+ day=dz(3)
+ hour=dz(5)
+ minutes=dz(6)
+ call LIVE_message('YDB running @'//host_name(:hn_len)//' '//trim(intc(day))//&
+&                  '-'//trim(intc(month))//'-'//trim(intc(year))//' '//&
+&                  trim(intc(hour))//':'//trim(intc(minutes)),"n","n","%s")
  !
  ! PATH
  !
@@ -65,20 +85,26 @@ integer function ydb_i(lnstr,instr)
    call LIVE_message('[ERROR] DB not found ',"n","n","%s")
    stop
  endif
+ call LIVE_message('DB is in '//trim(PATH))
  !
  ! ADD
  !
  if (check_for_word("add")>0) then
    call LIVE_message('Adding ... '//trim(file_name),"n"," ","%s")
+   call mk_dir(trim(PATH)//'/'//trim(intc(year)))
+   call mk_dir(trim(PATH)//'/'//trim(intc(year))//'/'//trim(intc(month)))
+   call mk_dir(trim(PATH)//'/'//trim(intc(year))//'/'//trim(intc(month))//'/'//trim(intc(day)))
    if (check_for_word("in")>0) then
      read(rstr_piece(check_for_word("in")+1),'(a)') file_name
      call LIVE_message('... INPUT file '//trim(file_name),"n"," ","%s")
-     call YDB_scan_file(trim(file_name))
+     i_random=pickup_a_random(10000.)
+     i_err=iparse_init(cstr(trim(file_name)),cstr('-'))
+     write (*,*) i_random
+     !call YDB_scan_file(trim(file_name))
+     call iparse_end()
    endif
  endif
  !
-!,rstr_piece(check_for_word("db")+1)
-! call mk_dir("ydb")
  call LIVE_message(' ',"n","n","%s")
  !
  contains

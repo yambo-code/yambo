@@ -206,6 +206,7 @@ subroutine RT_driver(E,X,k,q)
  ! Initialize output files
  !==========================
  !
+ call RT_output(what="initialize")
  call RT_output(what="open dyn cur pol")
  if(l_NE_with_fields) call RT_output(what="open pot occ")
  if (l_ph_corr.or.l_carrier_dynamics) call RT_output('open life')
@@ -354,8 +355,6 @@ subroutine RT_driver(E,X,k,q)
  enddo
  !
  if(NE_steps/=0) call live_timing
- !
- call RT_output(what="close cur pol pot dyn occ life")
  !
  if (l_RT_diagonalize) call SC_History(-1,E)
  !

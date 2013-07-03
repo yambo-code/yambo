@@ -42,8 +42,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
  integer                  :: i_f,i_fp,n_headings(n_output_files),next_file,i_order
- logical                  :: file_is_todo(n_output_files),initialize,finalize
- logical,           save  :: SC_descriptions_dumped(n_output_files)
+ logical                  :: file_is_todo(n_output_files),open_files,initialize
+ logical,           save  :: SC_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
  character(schlen)        :: headings(n_output_files,10),append_ch
  real(SP)                 :: data_to_dump(20)
  !
@@ -51,8 +51,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
  !
  call set_real_printed_length(f_length=15,g_length=15)
  !
- initialize=index(what,'open')>0
- finalize  =index(what,'close')>0
+ open_files=index(what,'open')>0
+ initialize=index(what,'initialize')>0
  !
  ! File Names & HEADERS
  !----------------------
@@ -61,6 +61,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  !
  headings=" "
  if (initialize) file_name=" "
+ if (initialize) file_already_opened=.FALSE.
  short_file_name=" "
  headings(1:4,1)="Time[fs]"
  next_file=1
@@ -68,19 +69,22 @@ subroutine RT_output(what,VALUEs,TIME,E)
  append_ch=' '
  if (index(what_is_running,'YPP')>0) append_ch='YPP-'
  !
- if (initialize) file_name(next_file)=trim(append_ch)//'current'
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'current'
  short_file_name(next_file)=trim(append_ch)//'current'
  n_headings(next_file)=4
  headings(next_file,2:4)=(/"j_x","j_y","j_z"/)
  next_file=next_file+1
  !
- if (initialize) file_name(next_file)=trim(append_ch)//'polarization'
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'polarization'
  short_file_name(next_file)=trim(append_ch)//'polarization'
  n_headings(next_file)=4
  headings(next_file,2:4)=(/"Pol_x","Pol_y","Pol_z"/)
  next_file=next_file+1
  !
- if (initialize) file_name(next_file)=trim(append_ch)//'vector_potential'
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'vector_potential'
  short_file_name(next_file)=trim(append_ch)//'vector_potential'
  n_headings(next_file)=10
  headings(next_file,2:4 )=(/"A_x","A_y","A_z"/)
@@ -88,7 +92,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
  headings(next_file,8:10)=(/"A''_x","A''_y","A''_z"/)
  next_file=next_file+1
  !
- if (initialize) file_name(next_file)=trim(append_ch)//'dynamics'
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'dynamics'
  short_file_name(next_file)=trim(append_ch)//'dynamics'
  n_headings(next_file)=9
  headings(next_file,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
@@ -99,26 +104,30 @@ subroutine RT_output(what,VALUEs,TIME,E)
  next_file=next_file+1
  !
  do i_order=0,max_X_order,1
-   if (initialize) file_name(next_file)=trim(append_ch)//'dP_order_'//trim(intc(i_order))
+   if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'dP_order_'//trim(intc(i_order))
    short_file_name(next_file)=trim(append_ch)//'dP_order_'//trim(intc(i_order))
    n_headings(next_file)=4
    headings(next_file,2:4)=(/"dPol_x","dPol_y","dPol_z"/)
    next_file=next_file+1
  enddo
  !
- if (initialize) file_name(next_file)=trim(append_ch)//'P_minus_P_pump'
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'P_minus_P_pump'
  short_file_name(next_file)=trim(append_ch)//'P_minus_P_pump'
  n_headings(next_file)=4
  headings(next_file,2:4)=(/"dPol_x","dPol_y","dPol_z"/)
  next_file=next_file+1
  !
- if (initialize) file_name(next_file)=trim(append_ch)//'P_minus_P_pump'
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'P_minus_P_pump'
  short_file_name(next_file)=trim(append_ch)//'P_minus_P_pump'
  n_headings(next_file)=4
  headings(next_file,2:4)=(/"dPol_x","dPol_y","dPol_z"/)
  next_file=next_file+1
  !
- if (initialize) file_name(next_file)=trim(append_ch)//'mean_lifetimes'
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'mean_lifetimes'
  short_file_name(next_file)=trim(append_ch)//'mean_lifetimes'
  n_headings(next_file)=6
  headings(next_file,2:6)=(/"e-p Hole [meV]","e-p Elec [meV]","e-p Ph   [meV]","e-e Hole [meV]","e-e Elec [meV]"/)
@@ -126,21 +135,24 @@ subroutine RT_output(what,VALUEs,TIME,E)
  !
  ! ... energy resolved ...
  !
- if (initialize) file_name(next_file)=trim(append_ch)//'eps'
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'eps'
  short_file_name(next_file)=trim(append_ch)//'eps'
  n_headings(next_file)=3
  headings(next_file,2:3)=(/'eps/Im','eps/Re'/)
  headings(next_file,1)="E [eV]"
  next_file=next_file+1
  !
- if (initialize) file_name(next_file)=trim(append_ch)//'eels'
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'eels'
  short_file_name(next_file)=trim(append_ch)//'eels'
  n_headings(next_file)=3
  headings(next_file,2:3)=(/'eel/Im','eel/Re'/)
  headings(next_file,1)="E [eV]"
  next_file=next_file+1
  !
- if (initialize) file_name(next_file)=trim(append_ch)//'Polarization_W'
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'Polarization_W'
  short_file_name(next_file)=trim(append_ch)//'Polarization_W'
  n_headings(next_file)=3
  headings(next_file,1)="E [eV]"
@@ -149,7 +161,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
  !
  do i_order=0,max_X_order,1
    !
-   if (initialize) file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))
+   if (open_files.and..not.file_already_opened(next_file)) &
+&     file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))
    short_file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))
    n_headings(next_file)=3
    headings(next_file,1)="E [eV]"
@@ -160,7 +173,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
    endif
    next_file=next_file+1
    !
-   if (initialize) file_name(next_file)=trim(append_ch)//'dP_W_order_'//trim(intc(i_order))
+   if (open_files.and..not.file_already_opened(next_file)) &
+&     file_name(next_file)=trim(append_ch)//'dP_W_order_'//trim(intc(i_order))
    short_file_name(next_file)=trim(append_ch)//'dP_W_order_'//trim(intc(i_order))
    n_headings(next_file)=3
    headings(next_file,1)="E [eV]"
@@ -171,14 +185,16 @@ subroutine RT_output(what,VALUEs,TIME,E)
  !
  ! ... and time/energy resolved ...
  !
- if (initialize) file_name(next_file)=trim(append_ch)//'X_effective'
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'X_effective'
  short_file_name(next_file)=trim(append_ch)//'X_effective'
  n_headings(next_file)=4
  headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
  headings(next_file,3:4)=(/'X/Im','X/Re'/)
  next_file=next_file+1
  !
- if (initialize) file_name(next_file)=trim(append_ch)//'el_dos'
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'el_dos'
  short_file_name(next_file)=trim(append_ch)//'el_dos'
  n_headings(next_file)=3
  headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
@@ -192,21 +208,23 @@ subroutine RT_output(what,VALUEs,TIME,E)
  do i_f=1,n_output_files
    do i_fp=1,n_output_files
      if (len_trim(orders(i_fp))==0) cycle
-     if (.not.file_is_todo(i_f)) file_is_todo(i_f) = index(file_name(i_f),trim(orders(i_fp)))>0
+     if (.not.file_is_todo(i_f)) &
+&   file_is_todo(i_f) = index(file_name(i_f),trim(orders(i_fp)))>0
    enddo
  enddo
  !
- ! OPEN & CLOSE
- !--------------
+ ! OPEN 
+ !-------
  !
- if (initialize.or.finalize) then
+ if (open_files) then
    !
    SC_descriptions_dumped=.FALSE.
    !
    do i_f=1,n_output_files
      if (.not.file_is_todo(i_f)) cycle
-     if (initialize) call of_open_close(file_name(i_f),'ot')
-     if (finalize)   call of_open_close(trim(short_file_name(i_f)))
+     call of_open_close(file_name(i_f),'ot')
+     call of_open_close(trim(short_file_name(i_f)))
+     file_already_opened(i_f)=.TRUE.
    enddo
    !
    call set_real_printed_length( )
@@ -218,6 +236,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
  do i_f=1,n_output_files
    !
    if (.not.file_is_todo(i_f)) cycle
+   !
+   call of_open_close(file_name(i_f),'oa')
    !
    ! Headers and Descriptions
    !---------------------------
@@ -266,6 +286,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
    end select
    !
    call msg('o '//trim(short_file_name(i_f)),'',data_to_dump(1:n_headings(i_f)),USE_TABS=.TRUE.)
+   !
+   call of_open_close(file_name(i_f))
    !
  enddo
  !

@@ -164,7 +164,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
        !
        if (iqibz==1) then
          forall(i1=1:X%ng,i2=1:X%ng) EM1s(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
-         EM1s(1,1)=X_mat(1,1,1)*sqrt(isc%gamp(1,1)/DL_vol/q%nbz)
+         if (l_carrier_dynamics) EM1s(1,1)=X_mat(1,1,1)*sqrt(isc%gamp(1,1)/DL_vol/q%nbz)
        else
          forall(i1=1:X%ng,i2=1:X%ng) EM1s(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
        endif

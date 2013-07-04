@@ -43,7 +43,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,iif)
  character(schlen)::rstr_piece(n_max_pieces),known_runlevels(200)
  character(lchlen)::PATH,file_name,host_name,file_PATH,runl_PATH,desc_PATH,vers_PATH,db_PATH
  integer          ::hn_len,n_pieces,i1,i_random,i_err,ID
- integer          ::dz(8),year,day,month,hour,minutes
+ integer          ::dz(8),year,day,month,hour,minutes,i_ref
  logical          ::l_found
  character(5)     ::cz
  character(8)     ::cd
@@ -158,7 +158,15 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,iif)
    call LIVE_message('[ERROR] DB not found ',"n","n","%s")
    stop
  endif
- call LIVE_message('DB is in '//trim(PATH))
+ call LIVE_message('DB is in '//trim(PATH),"n","n","%s")
+ !
+ ! REF
+ !
+ i_ref=0
+ if (check_for_word("ref")>0) then
+   read(rstr_piece(check_for_word("ref")+1),'(i)') i_ref
+   call LIVE_message('Reference ID is '//trim(intc(i_ref)),"n","n","%s")
+ endif
  !
  ! ADD
  !
@@ -175,10 +183,10 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,iif)
        return
      endif
    endif
+   call LIVE_message('Adding ... '//trim(file_name),"n"," ","%s")
    !
    i_random=pickup_a_random(1000000.)
    !
-   call LIVE_message('Adding ... '//trim(file_name),"n"," ","%s")
    call mk_dir(trim(PATH)//'/'//trim(intc(year)))
    call mk_dir(trim(PATH)//'/'//trim(intc(year))//'/'//trim(intc(month)))
    call mk_dir(trim(PATH)//'/'//trim(intc(year))//'/'//trim(intc(month))//'/'//trim(intc(day)))
@@ -191,7 +199,6 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,iif)
      open(unit=1,file=trim(desc_PATH),form='formatted')
      open(unit=2,file=trim(vers_PATH),form='formatted')
      open(unit=3,file=trim(runl_PATH),form='formatted')
-     call LIVE_message('... INPUT file '//trim(file_name),"n"," ","%s")
      i_err=iparse_init(cstr(trim(file_name)),cstr('-'))
      do i1=1,200
        if (len_trim(known_runlevels(1))==0) cycle
@@ -202,11 +209,28 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,iif)
      write (1,'(/a/)') ' Description relative INPUT file '//trim(file_name)
      call iparse_end()
      call cp_file(trim(file_name),trim(file_PATH),i_err)
-     !i_err=io_YDB(trim(db_PATH),ID) 
      close(1)
      close(2)
      close(3)
    endif
+   !
+!   if (check_for_word("out")>0) then
+!     call mk_dir(trim(PATH))
+!     call build_up_paths(i_random)
+!     open(unit=1,file=trim(desc_PATH),form='formatted')
+!     i_err=iparse_init(cstr(trim(file_name)),cstr('-'))
+!     do i1=1,200
+!       if (len_trim(known_runlevels(1))==0) cycle
+!       call parser(trim(known_runlevels(i1)),l_found)
+!       if (l_found) write (3,'(a)') ' '//trim(known_runlevels(i1))
+!     enddo
+!     iif=0
+!     write (1,'(/a/)') ' Description relative INPUT file '//trim(file_name)
+!     call iparse_end()
+!     call cp_file(trim(file_name),trim(file_PATH),i_err)
+!     !i_err=io_YDB(trim(db_PATH),ID) 
+!     close(1)
+!   endif
    !
  endif
  !

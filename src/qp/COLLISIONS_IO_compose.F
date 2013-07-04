@@ -23,7 +23,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} rho_rho_(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
- use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_sc_srpa
+ use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_sc_srpa,l_carrier_dynamics
  use pars,             ONLY:SP
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
  use SC,               ONLY:SC_bands
@@ -131,7 +131,7 @@ subroutine COLLISIONS_IO_compose(G_input)
            if(COLLISIONS_table(ib,ibp,ik)/=0) then
              !
              CHO_factor=(0._SP,1._SP)*G_input(ib,ibp,ik)
-             if (ib==ibp) CHO_factor=(0._SP,1._SP)*G_input(ib,ibp,ik) +1._SP
+             if (ib==ibp.and.l_carrier_dynamics) CHO_factor=(0._SP,1._SP)*G_input(ib,ibp,ik) +1._SP
              !
              QP_Sc(i_qp,1)=QP_Sc(i_qp,1)-COLLISIONS_v(ic)*CHO_factor
              ic=ic+1

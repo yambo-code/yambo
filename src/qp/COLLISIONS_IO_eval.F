@@ -92,7 +92,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
      !
      call report_disk_usage('HF')
      !
-     call XCo_Hartree_Fock(E,k,xk,q)
+     call COLLISIONS_IO_HF(E,k,xk,q)
      !
    endif
    !

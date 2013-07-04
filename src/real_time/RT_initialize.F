@@ -36,7 +36,8 @@ subroutine RT_initialize(E,k,q)
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
 &                         NE_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,            &
-&                         l_RT_skip_JandP_IO,RT_q_px,l_G_retarded_DB,Gr_kind,Gr_bands
+&                         l_RT_skip_JandP_IO,RT_q_px,l_G_retarded_DB,Gr_kind,Gr_bands,&
+&                         Integrator_name,RK2EXP,EULEREXP
  use interfaces,     ONLY:PARALLEL_index
  use parallel_m,     ONLY:PP_indexes_reset
  use D_lattice,      ONLY:DL_vol
@@ -82,11 +83,7 @@ subroutine RT_initialize(E,k,q)
  !
  call UPDATE_flags(.FALSE.)
  !
- ! If I am doing a NE loop in all cases I need to evaluate XC or Hartree correspoding to the
- ! starting basis. During the thermalization, instead, the potentials are updated
- ! and only T+V_ion must be stored in Ho.
- !
- l_RT_needs_XC0=Thermal_steps==0
+ l_RT_needs_XC0=.FALSE. 
  !
  ! Use NE_tot_time if provided
  !
@@ -233,6 +230,11 @@ subroutine RT_initialize(E,k,q)
  endif
  !
 #endif
+ !
+ if(RT_is_dumped.or.l_ph_corr.or.l_carrier_dynamics) then
+   if(trim(Integrator_name)==RK2EXP.or.trim(Integrator_name)==EULEREXP) &
+&     call error("RK2EXP and EULEREXP work only for undumped dynamics [to be extended] !!  ")
+ endif
  !
  call section('=','Phase space check')
  !

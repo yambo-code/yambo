@@ -39,7 +39,7 @@ subroutine RT_start_and_restart(E,k,X)
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_contains_lda,l_ph_corr,l_carrier_dynamics
  use com,            ONLY:msg,warning,error
- use QP_m,           ONLY:QP_nk,COHSEX_use_empties
+ use QP_m,           ONLY:QP_nk,COHSEX_use_empties,QP_nb
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:G_lesser,ID,NE_steps,RT_ind_J,    &
@@ -57,6 +57,7 @@ subroutine RT_start_and_restart(E,k,X)
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
+ use memory_m,       ONLY:mem_est
  implicit none
  !
  type(levels)      :: E
@@ -66,7 +67,7 @@ subroutine RT_start_and_restart(E,k,X)
  ! Work Space
  !
  integer :: ik,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,&
-&           io_OCCUPATIONS,ID_OCCUPATIONS,ID_Gr,io_Gr
+&           io_OCCUPATIONS,ID_OCCUPATIONS,ID_Gr,io_Gr,i_spin
  integer, external :: io_SC_components,io_G_retarded,io_RT_components
  logical :: RESTART,SC_DB_present
  !
@@ -106,7 +107,8 @@ subroutine RT_start_and_restart(E,k,X)
    E_bare=E%E(:SC_bands(2),:,:)
  endif
  !
- call SC_bare_Hamiltonian(E,k,k)
+ Ho=cZERO
+ forall (ib=1:QP_nb,ik=1:QP_nk,i_spin=1:n_sp_pol)  Ho(ib,ib,ik,i_spin) = E_bare(ib,ik,i_spin)
  !
  ! Save a copy of the k-grid
  !===========================
@@ -150,6 +152,10 @@ subroutine RT_start_and_restart(E,k,X)
  SC_DB_present =  all((/io_E==0,io_WF==0,io_V==0/))
  !
  if(SC_DB_present) then
+   !
+   l_RT_needs_XC0=.TRUE.
+   allocate(XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
+   call mem_est("XC0_and_HARTREE0",(/size(XC0_and_HARTREE0)/),(/2*SP/))
    !
    ! BEGIN RESTART FROM SC
    !=======================
@@ -242,6 +248,11 @@ subroutine RT_start_and_restart(E,k,X)
    !
  endif
  !
+ if(.not.l_NE_simulate_IP) then
+   call el_density(G_lesser(:,:,:,1),E,k,rho_n,SC_bands(1),.false.)
+   if(allocated(rho_reference)) rho_reference=rho_n
+ endif
+ !
  if(.not.SC_DB_present.and.l_RT_needs_XC0) then
    !
    ! Build Hartree and XCo 
@@ -271,8 +282,6 @@ subroutine RT_start_and_restart(E,k,X)
    ! in sc_bare_Hamiltonian I need to recalculate it here when SC_lw_band>1
    ! as it it is also used in XC_potential_driver
    ! 
-   call el_density(G_lesser(:,:,:,1),E,k,rho_n,SC_bands(1),.false.)
-   rho_reference=rho_n
    !
    if (allocated(full_rho)) then
      call el_density(G_lesser(:,:,:,1),E,k,rho_n,1,.false.)

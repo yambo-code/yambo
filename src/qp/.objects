@@ -5,7 +5,7 @@ ELPH_objects = ELPH_Sigma_c.o ELPH_Hamiltonian.o
 #if defined _SC
 SC_objects = QP_load_SC_xc.o \
              COLLISIONS_IO_eval.o   COLLISIONS_IO_store.o \
-             COLLISIONS_IO_compose.o COLLISIONS_IO_cohsex.o
+             COLLISIONS_IO_compose.o COLLISIONS_IO_cohsex.o COLLISIONS_IO_HF.o
 #endif
 objs = QP_driver.o QP_newton.o QP_ppa_cohsex.o QP_ppa_EET_terminator.o \
        QP_secant.o QP_real_axis.o QP_W2Sc.o QP_life_transitions.o secant.o bracket.o \

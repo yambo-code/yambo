@@ -114,8 +114,12 @@ int main(int argc, char *argv[])
  int mpi_init=0;
  int iv[4];
  double rv[4];
- char *cv[4];
+ char *cv[4]; 
  char *fmt=NULL,*inf=NULL,*od=NULL,*id=NULL,*js=NULL,*db=NULL,*com_dir=NULL;
+#if defined _ydb
+ char *desc=NULL,*str_no_null=NULL,*vers=NULL,*runlevels=NULL;
+ int  lstrings=200;
+#endif
  extern int optind;
  extern int guess_winsize();
  char rnstr1[500]={'\0'},rnstr2[500]={'\0'},edit_line[100]={'\0'};
@@ -127,8 +131,13 @@ int main(int argc, char *argv[])
  strcpy(inf,tool);
  strcat(inf,".in");
  iif=strlen(inf);
- id  = (char *) malloc(2);
- od  = (char *) malloc(2);
+#if defined _ydb
+ desc     = (char *) malloc(lstrings);
+ vers     = (char *) malloc(lstrings);
+ runlevels= (char *) malloc(lstrings);
+#endif
+ id       = (char *) malloc(2);
+ od       = (char *) malloc(2);
  com_dir  = (char *) malloc(2);
  js  = (char *) malloc(2);
  strcpy(od,".");
@@ -318,10 +327,28 @@ int main(int argc, char *argv[])
 #endif
 #if defined _ydb 
  /* 
-   Running the Fortran p2y driver 
+   Running the Fortran ydb driver 
  ===========================================================================
  */
- F90_FUNC(ydb_i,YDB_I)(&lni,rnstr2);
+ F90_FUNC(ydb_i,YDB_I)(&lni,rnstr2,&lstrings,desc,vers,runlevels,&iif);
+ if (iif > 0) { 
+  str_no_null = strtok (desc," ");
+  strcpy(edit_line,editor);
+  strncat(edit_line,desc,strlen(desc));
+  if(strstr(editor,"none ")==0) { system(edit_line); };
+  if (iif > 1) { 
+   str_no_null = strtok (runlevels," ");
+   strcpy(edit_line,editor);
+   strncat(edit_line,runlevels,strlen(runlevels));
+   if(strstr(editor,"none ")==0) { system(edit_line); };
+  }
+  if (iif == 3) { 
+   str_no_null = strtok (vers," ");
+   strcpy(edit_line,editor);
+   strncat(edit_line,vers,strlen(vers));
+   if(strstr(editor,"none ")==0) { system(edit_line); };
+  }
+ };
 #endif
  /* 
    INPUT FILE

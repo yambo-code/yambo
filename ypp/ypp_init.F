@@ -85,6 +85,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_SURF
  what_is_running='YPP_SURF'
 #endif
+#if defined _YPP_RT
+ what_is_running='YPP_RT'
+#endif
  !
  if (FINALIZE) then
    call call_init_load('GameOver')
@@ -625,7 +628,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (.not.l_QP_init) l_QP_init=l_angular_momentum.or.l_position
 #endif
  !
+#if defined _YPP_RT
+ if (.not.l_QP_init) l_QP_init=l_RT_occupations
+ if (l_QP_init) call QP_init(.FALSE.,.TRUE.)
+#else
  if (l_QP_init) call QP_init(.FALSE.,.FALSE.)
+#endif
  !
 contains
  !

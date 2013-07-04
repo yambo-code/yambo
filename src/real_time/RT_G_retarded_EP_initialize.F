@@ -117,7 +117,7 @@ subroutine RT_G_retarded_EP_initialize(E,k)
                if (eval_it) then
                  Gr_integrand(:)=real( conjg(Gr(ik,i_n,:))*Gr(ik_m_q,i_np,:) )
                  Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=&
-&                             Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
+&                             abs(Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center))
                  TRANSITIONS_table(i_trans(1),i_trans(2),:)=(/ik_mem,i_b_mat_mem,iq_mem/)
                else
                  Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=&

@@ -31,12 +31,12 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands
+ use SC,             ONLY:SC_bands,it_now
  use QP_m,           ONLY:QP_nk
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_Phonon_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,MEM_index,G_lesser
  !
  implicit none
  !
@@ -47,11 +47,20 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! Work Space
  !
- integer          :: i1,i2,ik
+ integer          :: ib1,ib2,ik
  !
  if(.not.RT_is_dumped.and..not.l_ph_corr.and..not.l_carrier_dynamics) return 
  !
  Sigma_relax=cZERO
+ !
+ ! Andrea 4/7/2013. Fix of potential anomalous values
+ ! of the G_lesser diagonal
+ !
+ do ik=1,QP_nk
+   do ib1=SC_bands(1),SC_bands(2)
+     G_lesser(ib1,ib1,ik,MEM_index(it_now))=cI*abs(-cI*G_lesser(ib1,ib1,ik,MEM_index(it_now)))
+   enddo
+ enddo
  !
  ! El-El
  !=======
@@ -120,8 +129,9 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  if(RT_is_dumped.and.NE_dynamics) then
    !
-   forall(i1=SC_bands(1):SC_bands(2),i2=SC_bands(1):SC_bands(2)) 
-     Sigma_relax(i1,i2,:)=Sigma_relax(i1,i2,:)-cI*RT_Deph_Matrix(i1,i2,:)*(G_input(i1,i2,:)-G_lesser_reference(i1,i2,:))
+   forall(ib1=SC_bands(1):SC_bands(2),ib2=SC_bands(1):SC_bands(2)) 
+     Sigma_relax(ib1,ib2,:)=Sigma_relax(ib1,ib2,:)-cI*RT_Deph_Matrix(ib1,ib2,:)*&
+&                           (G_input(ib1,ib2,:)-G_lesser_reference(ib1,ib2,:))
    end forall
    !
  endif

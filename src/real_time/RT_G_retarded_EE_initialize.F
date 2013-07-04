@@ -167,7 +167,7 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
              Gr_integrand(:)=real( Gr(i_kmq,i_np,:)*Gr(i_p,i_m,:)*&
 &                                  conjg(Gr(i_pmq,i_mp,:))*conjg(Gr(i_k,i_n,:)) )
              Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=&
-&                         Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center)
+&                         abs(Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center))
              !
            else
              !

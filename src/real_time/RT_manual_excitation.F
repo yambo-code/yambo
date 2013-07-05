@@ -67,8 +67,8 @@ subroutine RT_manual_excitation(E,k)
            if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(1))<local_E_window) i1=ib
          else
            if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(2))<local_E_window) then
-             G_lesser(i1,i1,ik,1) = cZERO
              G_lesser(ib,ib,ik,1) = spin_occ*cI
+             G_lesser(i1,i1,ik,1) = cI*spin_occ-G_lesser(ib,ib,ik,1)
              Pumped_state(i1)=.TRUE.
              Pumped_state(ib)=.TRUE.
              call msg('sr','[RT] Eh pair pumped `by hand` @ k'//trim(intc(ik))//&

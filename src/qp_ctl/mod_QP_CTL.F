@@ -107,7 +107,7 @@ module QP_CTL_m
 #if defined _SC
      use SC,            ONLY:l_RT_occupations_in_use
 #endif
-     use interfaces,    ONLY:OCCUPATIONS_gaps
+     use interfaces,    ONLY:OCCUPATIONS_Gaps
      integer       ::band_range(2)
      type(levels)  ::en
      type(bz_samp) ::k

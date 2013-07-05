@@ -43,7 +43,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use com,           ONLY:msg,error,warning
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
- use interfaces,    ONLY:OCCUPATIONS_gaps
+ use interfaces,    ONLY:OCCUPATIONS_Gaps
  implicit none
  !
  type(levels) ::E
@@ -237,7 +237,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  ! Eval Metallic/Filled bands and gaps
  !
- call OCCUPATIONS_gaps(E)
+ call OCCUPATIONS_Gaps(E)
  !
  ! Mode = 1. Define E%f and exits
  !

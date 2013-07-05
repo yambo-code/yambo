@@ -37,7 +37,7 @@ subroutine RT_driver(E,X,k,q)
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_steps,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
-&                         l_Dynamics_is_over,MEM_index
+&                         l_Dynamics_is_over,MEM_index,G_MEM_steps
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
  use com,             ONLY:error
@@ -242,8 +242,8 @@ subroutine RT_driver(E,X,k,q)
    NE_i_time  =it-Thermal_steps
    NE_time    =(NE_i_time-1)*RT_step
    NE_dynamics=NE_i_time>=1
-   it_mem     =MEM_index(NE_i_time)
-   it_mem_p1  =MEM_index(NE_i_time+1)
+   it_mem     =MEM_index(NE_i_time,G_MEM_steps)
+   it_mem_p1  =MEM_index(NE_i_time+1,G_MEM_steps)
    !
    ! Start-Up & Timing
    !===================

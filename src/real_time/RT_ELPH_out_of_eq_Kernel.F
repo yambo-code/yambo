@@ -24,7 +24,8 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
  use pars,           ONLY:SP,cI,pi,cZERO
  use electrons,      ONLY:levels,spin_occ
  use SC,             ONLY:SC_bands,it_now
- use real_time,      ONLY:RT_step,THETA_matrix,Integrator_name,G_lesser,MEM_index,THETA_matrix_index
+ use real_time,      ONLY:RT_step,THETA_matrix,Integrator_name,G_lesser,MEM_index,&
+&                         THETA_matrix_index,G_MEM_steps
  use wrapper,        ONLY:M_by_M
  !
  implicit none
@@ -61,8 +62,10 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
  !
  B_dim=SC_bands(2)-SC_bands(1)+1
  !
- G_k(:,:)  =G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,MEM_index(it_now))/spin_occ
- G_kmq(:,:)=G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_m_q,MEM_index(it_now))/spin_occ
+ G_k(:,:)  =G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,&
+&                    MEM_index(it_now,G_MEM_steps))/spin_occ
+ G_kmq(:,:)=G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),&
+&                    ik_m_q,MEM_index(it_now,G_MEM_steps))/spin_occ
  !
  call M_by_M('n','n',B_dim,G_kmq,Gkkp,M1)
  !

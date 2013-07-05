@@ -41,7 +41,7 @@ integer function io_RT_components(what,ID)
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,J_and_P_cache_size, &
 &                         G_lesser,NE_dynamics,RT_ind_J,J_and_P_cache,&
-&                         G_lesser_reference,MEM_index,NE_MEM_steps,THETA_matrix,q_weight
+&                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight
  use fields,         ONLY:A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
@@ -119,7 +119,7 @@ integer function io_RT_components(what,ID)
    endif
  endif
  if (l_G) then
-   if (.not.ver_is_gt_or_eq(ID,revision=944).or.NE_MEM_steps==2.or.io_sec(ID,1)==1) then
+   if (.not.ver_is_gt_or_eq(ID,revision=944).or.G_MEM_steps==2.or.io_sec(ID,1)==1) then
      io_RT_components=io_connect(desc="RT_GreenF",type=2,ID=ID)
    else
      io_RT_components=io_connect(desc="RT_GreenF_"//trim(intc(file_number)),type=2,ID=ID)
@@ -271,21 +271,21 @@ integer function io_RT_components(what,ID)
    i_spin=1
    !
    if (ver_is_gt_or_eq(ID,revision=944)) then
-     i_time_range=(/NE_i_time-NE_MEM_steps+1,NE_i_time/)
+     i_time_range=(/NE_i_time-G_MEM_steps+1,NE_i_time/)
      if (i_time_range(1)<=0) i_time_range(1)=1
      do i_time=i_time_range(1),i_time_range(2)
        call io_bulk(ID,VAR="G_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_ITIME"//trim(intc(i_time)),&
 &           VAR_SZ=(/SC_nbands,SC_nbands,2/))
-       if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik,MEM_index(i_time)),TMP_matrix)
+       if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik,MEM_index(i_time,G_MEM_steps)),TMP_matrix)
        call io_bulk(ID,R3=TMP_matrix)
-       if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser(:,:,ik,MEM_index(i_time)))
+       if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser(:,:,ik,MEM_index(i_time,G_MEM_steps)))
      enddo
    else
      call io_bulk(ID,VAR="G_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
 &         VAR_SZ=(/SC_nbands,SC_nbands,2/))
-     if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik,MEM_index(NE_i_time)),TMP_matrix)
+     if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik,MEM_index(NE_i_time,G_MEM_steps)),TMP_matrix)
      call io_bulk(ID,R3=TMP_matrix)
-     if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser(:,:,ik,MEM_index(NE_i_time)))
+     if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser(:,:,ik,MEM_index(NE_i_time,G_MEM_steps)))
    endif
    !
    call io_bulk(ID,VAR="G_lesser_ref_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&

@@ -36,7 +36,7 @@ module wrapper
  end interface
  !
  interface M_by_V 
-   module procedure mv_cgemv,mv_c
+   module procedure mv_cgemv,mv_sgemv,mv_c,mv_r
  end interface
  !
  interface V_by_V_plus_V
@@ -83,6 +83,19 @@ module wrapper
    ! interface M_by_V 
    !===================
    !
+   subroutine mv_sgemv(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+     real(SP), intent(in) :: ALPHA,BETA
+     integer,  intent(in) :: INCX,INCY,LDA,M,N
+     character,intent(in) :: TRANS
+     real(SP), intent(in) :: A(LDA,*),X(*)
+     real(SP), intent(out):: Y(*)
+#if defined _DOUBLE
+     call DGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+#else
+     call SGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+#endif
+   end subroutine mv_sgemv
+   !
    subroutine mv_cgemv(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
      complex(SP), intent(in) :: ALPHA,BETA
      integer,     intent(in) :: INCX,INCY,LDA,M,N
@@ -107,6 +120,18 @@ module wrapper
      call CGEMV(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
 #endif
    end subroutine mv_c
+   !
+   subroutine mv_r(TRANS,msize,A,X,Y)
+     integer,  intent(in) :: msize
+     real(SP), intent(in) :: A(msize,*),X(*)
+     real(SP), intent(out):: Y(*)
+     character,intent(in) :: TRANS
+#if defined _DOUBLE
+     call DGEMV(TRANS,msize,msize,1._SP,A,msize,X,1,0._SP,Y,1)
+#else
+     call SGEMV(TRANS,msize,msize,1._SP,A,msize,X,1,0._SP,Y,1)
+#endif
+   end subroutine mv_r
    !
    !=========================
    ! interface V_by_V_plus_V 

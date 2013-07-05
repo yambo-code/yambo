@@ -63,7 +63,6 @@ subroutine RT_output(what,VALUEs,TIME,E)
  if (initialize) file_name=" "
  if (initialize) file_already_opened=.FALSE.
  short_file_name=" "
- headings(1:4,1)="Time[fs]"
  next_file=1
  !
  append_ch=' '
@@ -132,6 +131,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
  n_headings(next_file)=6
  headings(next_file,2:6)=(/"e-p Hole [meV]","e-p Elec [meV]","e-p Ph   [meV]","e-e Hole [meV]","e-e Elec [meV]"/)
  next_file=next_file+1
+ !
+ headings(1:next_file-1,1)="Time[fs]"
  !
  ! ... energy resolved ...
  !

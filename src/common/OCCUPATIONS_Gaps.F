@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
+subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
  !
  use pars,          ONLY:SP
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh

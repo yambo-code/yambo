@@ -32,12 +32,12 @@ subroutine RT_initialize(E,k,q)
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
 &                         l_RT_diamagnetic,RT_IO_steps,RT_IO_time,l_NE_simulate_BSE,&
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
-&                         l_RT_induced_field,NE_Hxc_jumps,l_NE_simulate_TDDFT,      &
+&                         l_RT_induced_field,RT_dynamics_jumps,l_NE_simulate_TDDFT,      &
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
-&                         NE_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,            &
+&                         G_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,            &
 &                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,               &
-&                         Gr_bands,l_RT_CCA_Kernel
+&                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps
  use collisions_IO,  ONLY:l_STORE_COLLISIONS
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -128,8 +128,6 @@ subroutine RT_initialize(E,k,q)
  !
  NE_tot_time=RT_step*NE_steps
  !
- if (NE_Hxc_jumps<=0) NE_Hxc_jumps=1
- !
  ! Dephasing Matrix. Including user-defined matrix-likfe dephasing factors, constant
  !==================
  ! radiative/phase, polaronic based
@@ -146,7 +144,16 @@ subroutine RT_initialize(E,k,q)
  T_memory=0._SP
  if (l_ph_corr.and.NE_MEM_Treshold>0.) then
    T_memory=-1./minval( abs(E%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_Treshold)
-   NE_MEM_steps=T_memory/RT_step
+   G_MEM_steps=T_memory/RT_step
+ endif
+ !
+ ! Memory Depth
+ !============== 
+ !
+ if (RT_dynamics_jumps<0) RT_dynamics_jumps=0
+ Life_MEM_steps=1
+ if (RT_dynamics_jumps>0) then
+   Life_MEM_steps=3
  endif
  !
  ! External fields checks
@@ -232,7 +239,7 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', '[RT] NE Steps                   :',NE_steps)
  call msg( 'r', '[RT] NE time                [fs]:',NE_steps*RT_step/FS2AUT)
  call msg( 'r', '[RT] Memory depth           [fs]:',T_memory/FS2AUT)
- call msg( 'r', '[RT] Memory steps               :',NE_MEM_steps)
+ call msg( 'r', '[RT] Memory steps               :',G_MEM_steps)
  call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
  call msg( 'r', '[RT] K-points evolved      [o/o]:',real(nk_todo,SP)/real(nkibz)*100._SP)
  call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)

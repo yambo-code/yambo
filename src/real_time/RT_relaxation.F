@@ -36,7 +36,9 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_Phonon_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,MEM_index,G_lesser
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,MEM_index,&
+&                         G_lesser,G_MEM_steps,RT_dynamics_jumps,it_start,&
+&                         Life_MEM_steps,SAVED_lifetime
  !
  implicit none
  !
@@ -47,7 +49,8 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! Work Space
  !
- integer          :: ib1,ib2,ik
+ integer          :: ib1,ib2,ik,it_relative
+ logical          :: l_evaluate,l_interpolate
  !
  if(.not.RT_is_dumped.and..not.l_ph_corr.and..not.l_carrier_dynamics) return 
  !
@@ -58,13 +61,21 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  do ik=1,QP_nk
    do ib1=SC_bands(1),SC_bands(2)
-     G_lesser(ib1,ib1,ik,MEM_index(it_now))=cI*abs(-cI*G_lesser(ib1,ib1,ik,MEM_index(it_now)))
+     G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps))=&
+&            cI*abs(-cI*G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps)))
    enddo
  enddo
  !
+ ! Eval or Interpolate ?
+ !======================
+ it_relative   = mod(it_now-it_start,Life_MEM_steps+RT_dynamics_jumps)+1
+ l_evaluate    = it_relative <= Life_MEM_steps.or.it_now<10*RT_dynamics_jumps
+ l_interpolate = it_relative >  Life_MEM_steps.and..not.l_evaluate
+ write (*,*) it_now,l_evaluate,l_interpolate
+ !
  ! El-El
  !=======
- if (l_carrier_dynamics) then
+ if (l_carrier_dynamics.and.l_evaluate) then
    !
    E_E_Hole_lifetime=0._SP
    E_E_Electron_lifetime=0._SP
@@ -83,7 +94,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! El-Ph
  !=======
- if (l_ph_corr) then
+ if (l_ph_corr.and.l_evaluate) then
    !
    if (l_RT_CCA_Kernel) then
      E_P_Hole_lifetime=0._SP
@@ -110,18 +121,43 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! k loop could be implemented
  !
  if (l_ph_corr.or.l_carrier_dynamics) then
-   do ik=1,QP_nk
-     call PP_redux_wait(Sigma_relax(:,:,ik))
-     if (l_carrier_dynamics) then
-       call PP_redux_wait(E_E_Electron_lifetime(:,ik))
-       call PP_redux_wait(E_E_Hole_lifetime(:,ik))
-     endif
-     if (l_RT_CCA_Kernel) then
-       call PP_redux_wait(E_P_Electron_lifetime(:,ik))
-       call PP_redux_wait(E_P_Hole_lifetime(:,ik))
-       call PP_redux_wait(E_P_Phonon_lifetime(:,ik))
-     endif
-   enddo
+   if (l_evaluate) then
+     do ik=1,QP_nk
+       call PP_redux_wait(Sigma_relax(:,:,ik))
+       if (l_carrier_dynamics) then
+         call PP_redux_wait(E_E_Electron_lifetime(:,ik))
+         call PP_redux_wait(E_E_Hole_lifetime(:,ik))
+         if (RT_dynamics_jumps>0) then
+           SAVED_lifetime(:,ik,1, it_relative)=E_E_Hole_lifetime(:,ik)
+           SAVED_lifetime(:,ik,2, it_relative)=E_E_Electron_lifetime(:,ik)
+         endif
+       endif
+       if (l_RT_CCA_Kernel) then
+         call PP_redux_wait(E_P_Electron_lifetime(:,ik))
+         call PP_redux_wait(E_P_Hole_lifetime(:,ik))
+         call PP_redux_wait(E_P_Phonon_lifetime(:,ik))
+         if (RT_dynamics_jumps>0) then
+           SAVED_lifetime(:,ik,3, it_relative)=E_P_Hole_lifetime(:,ik)
+           SAVED_lifetime(:,ik,4, it_relative)=E_P_Electron_lifetime(:,ik)
+           SAVED_lifetime(:,ik,5, it_relative)=E_P_Phonon_lifetime(:,ik)
+         endif
+       endif
+     enddo
+   else if (l_interpolate) then
+     do ik=1,QP_nk
+       do ib1=SC_bands(1),SC_bands(2)
+         if (l_carrier_dynamics) then
+           call RT_Lifetimes_Interpolation(E_E_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,1,:))
+           call RT_Lifetimes_Interpolation(E_E_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,2,:))
+         endif
+         if (l_RT_CCA_Kernel) then
+           call RT_Lifetimes_Interpolation(E_P_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,3,:))
+           call RT_Lifetimes_Interpolation(E_P_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,4,:))
+           call RT_Lifetimes_Interpolation(E_P_Phonon_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,5,:))
+         endif
+       enddo
+     enddo
+   endif
  endif
  !
  ! Dephasing Matrix

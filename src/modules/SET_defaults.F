@@ -87,7 +87,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,  &
 &                     SwitchOnTime,RT_IO_steps,RT_IO_steps_DB,l_RT_induced_field,RT_IO_time,&
 &                     l_RT_diagonalize,RT_is_dumped,RAD_LifeTime,Phase_LifeTime,&
-&                     NE_Hxc_jumps,NE_tot_time,NE_MEM_steps,NE_MEM_treshold,&
+&                     RT_dynamics_jumps,NE_tot_time,G_MEM_steps,NE_MEM_treshold,&
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,&
 &                     Eh_pumped_pair_energy,Dynamics_Kind,Eh_pumped_pair_width,Gr_bands,&
 &                     Gr_T_window,Gr_T_steps,Gr_E_window,Gr_E_steps,Gr_kind
@@ -502,7 +502,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  RT_step=0.002*FS2AUT
  NE_steps=1
- NE_Hxc_jumps=1
+ RT_dynamics_jumps=0
  Thermal_steps=0
  SwitchOnTime = 1./8.
  Integrator_name='RK2'
@@ -518,7 +518,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_RT_induced_field=.FALSE.
  NE_tot_time= 5*RAD_LifeTime
  NE_MEM_treshold=0.
- NE_MEM_steps=2     ! By default only G_lesser@t and @t+1
+ G_MEM_steps=2   ! By default only G_lesser@t and @t+1
  RT_nk=0
  RT_eh_energy_max=0.
  Eh_pumped_pair_energy=-1./HA2EV

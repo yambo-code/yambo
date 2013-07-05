@@ -53,7 +53,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
-&                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,NE_Hxc_jumps,Dynamics_Kind,&
+&                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_jumps,Dynamics_Kind,&
 &                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
 &                        Eh_pumped_pair_width
  use fields,        ONLY:Efield
@@ -300,8 +300,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit)
  call it(defs,'NEsteps',    '[RT] Non-equilibrium Time steps',NE_steps)
- call it(defs,'HXCjumps',   '[RT] Steps jumped between two Hartree+XC updates',NE_Hxc_jumps,Verb_level=V_real_time)
- call it(defs,'NETime',     '[RT] Non-equilibrium  max Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit)
+ call it(defs,'RTjumps',    '[RT] Steps jumped between two RT updates',RT_dynamics_jumps,Verb_level=V_real_time)
+ call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit)
  call it(defs,'ThermSteps', '[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
  call it(defs,'Integrator', '[RT] Integrator (RK2 | EULER | EULEREXP | RK2EXP ) ',Integrator_name)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit)
@@ -334,10 +334,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'SwitchOnTime', '[RT Therm] Adiabatic switch on time ',SwitchOnTime,verb_level=V_real_time,unit=Time_unit)
  call it(defs,'RTDiagoSteps', '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)
- call it(defs,'RTAveDeph','[RT] Dephasing for all elements not included in RTDePhMatrix' &
-&                        ,RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit)
+ call it(defs,'RTAveDeph',    '[RT] Dephasing for all elements not included in RTDePhMatrix', &
+&                             RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit)
  call it('f',defs,'Diamagnetic', '[RT] Include the diamagnetic term in current and coupling',verb_level=V_real_time)
- call it('f',defs,'InducedField', '[RT] Include induced field in coupling and current',verb_level=V_real_time)
+ call it('f',defs,'InducedField','[RT] Include induced field in coupling and current',verb_level=V_real_time)
  !
  ! External fields
  !

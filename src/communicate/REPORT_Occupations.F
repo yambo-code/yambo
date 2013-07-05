@@ -25,7 +25,7 @@ subroutine REPORT_Occupations(E)
  use units,         ONLY:HA2EV
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_sp_pol,nel
- use interfaces,    ONLY:OCCUPATIONS_gaps
+ use interfaces,    ONLY:OCCUPATIONS_Gaps
  !
  implicit none
  !
@@ -44,7 +44,7 @@ subroutine REPORT_Occupations(E)
  real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
  real(SP)          ::E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
  !
- call OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
+ call OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
  !
  call msg('r','States summary         : Full        Metallic    Empty')
  !

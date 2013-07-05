@@ -98,13 +98,14 @@ module real_time
  real(SP) :: NE_time ! <- incremented
  real(SP) :: NE_tot_time ! Total (fixed)
  integer  :: NE_i_time ! = (NE_time-1)/RT_step
- integer  :: NE_Hxc_jumps
+ integer  :: RT_dynamics_jumps 
  integer  :: NE_steps
  !
  ! ... Memory ...
  !
  real(SP) :: NE_MEM_treshold
- integer  :: NE_MEM_steps
+ integer  :: G_MEM_steps
+ integer  :: Life_MEM_steps
  !
  ! ... Window on the k-points/bands allowed to follow the dynamics ...
  !
@@ -154,15 +155,19 @@ module real_time
  integer,     allocatable :: K_io_map(:)
  !
  ! Hole/Electron Time-dependent life-times
- !
+ !-----------------------------------------
  real(SP),    allocatable :: E_P_Hole_lifetime(:,:)
  real(SP),    allocatable :: E_P_Electron_lifetime(:,:)
  real(SP),    allocatable :: E_P_Phonon_lifetime(:,:)
  !
- ! Coulomb scattering kernel...
- !----------------------------
+ ! Coulomb RD life-times
+ !-----------------------
  real(SP),    allocatable :: E_E_Hole_lifetime(:,:)
  real(SP),    allocatable :: E_E_Electron_lifetime(:,:)
+ !
+ ! Saved RD life-times
+ !-----------------------
+ real(SP),    allocatable :: SAVED_lifetime(:,:,:,:)
  !
  ! ... ouput max/min lifetimes
  !-----------------------------
@@ -231,7 +236,9 @@ module real_time
  integer,  parameter      :: J_and_P_cache_size=18
  !
  integer                  :: ID(7)
- integer                  :: it_start ! restart point
+ integer                  :: it_start            ! restart point
+ integer                  :: last_it_evaluated=0 ! When RT_dynamics_jumps are non zero this is 
+                                                 ! the last evaluated point
  integer                  :: RT_IO_steps 
  integer                  :: RT_IO_steps_DB 
  real(SP)                 :: RT_IO_time 
@@ -333,7 +340,7 @@ module real_time
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))
      !
-     allocate(G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,NE_MEM_steps))
+     allocate(G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,G_MEM_steps))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
      allocate(RT_occupations(SC_bands(1):SC_bands(2),QP_nk))
@@ -343,6 +350,8 @@ module real_time
        allocate(E_E_Hole_lifetime(SC_bands(1):SC_bands(2),QP_nk))
        allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),QP_nk))
        call mem_est("RT_E_E_lifetimes",(/2*size(E_E_Hole_lifetime)/),(/SP/))
+       E_E_Hole_lifetime=0._SP
+       E_E_Electron_lifetime=0._SP
      endif
      !
      if (l_RT_CCA_Kernel.and.l_ph_corr) then
@@ -350,8 +359,24 @@ module real_time
        allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),QP_nk))
        allocate(E_P_Phonon_lifetime(SC_bands(1):SC_bands(2),QP_nk))
        call mem_est("RT_E_P_lifetimes",(/3*size(E_P_Hole_lifetime)/),(/SP/))
+       E_P_Hole_lifetime=0._SP
+       E_P_Electron_lifetime=0._SP
+       E_P_Phonon_lifetime=0._SP
      endif
-    !
+     !
+     if (RT_dynamics_jumps>0) then
+       if (l_carrier_dynamics.and.l_RT_CCA_Kernel.and.l_ph_corr) then
+         allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),QP_nk,5,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p p
+         call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
+       else if (l_carrier_dynamics) then
+         allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),QP_nk,2,Life_MEM_steps)) ! e-e h, e-e e
+         call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
+       else if (l_RT_CCA_Kernel.and.l_ph_corr) then
+         allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),QP_nk,3,Life_MEM_steps)) ! e-p h, e-p e, e-p p
+         call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
+       endif
+     endif
+     !
      allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
      !
@@ -546,13 +571,11 @@ module real_time
      !
    end function
    !
-   integer function MEM_index(it)
-     !
-     integer :: it
-     MEM_index=mod(it,NE_MEM_steps)
-     if (MEM_index==0) MEM_index=NE_MEM_steps
+   integer function MEM_index(it,Nt)
+     integer :: it,Nt
+     MEM_index=mod(it,Nt)
+     if (MEM_index==0) MEM_index=Nt
      if (it        <0) MEM_index=1
-     !
    end function
    !
 end module

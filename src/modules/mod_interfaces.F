@@ -59,7 +59,7 @@ module interfaces
      !
    end subroutine 
    !
-   subroutine OCCUPATIONS_gaps(E,E_g_dir,E_g_ind,N_f,N_m)
+   subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m)
      use pars,          ONLY: SP
      use electrons,     ONLY:levels,n_sp_pol
      type(levels)       :: E

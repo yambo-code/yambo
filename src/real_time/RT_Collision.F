@@ -46,7 +46,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,                             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
-&                         G_lesser_reference,NE_Hxc_jumps,                                     &
+&                         G_lesser_reference,                                    &
 &                         l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start,              &
 &                         l_RT_needs_XC0,Ho_plus_Sigma
  use fields,         ONLY:gauge_field
@@ -77,7 +77,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  XC_needs_density=.not.XCfrozen.and.l_sc_contains_lda.and.SC_xc_functional/=0
  !
- if (it_now==it_start.or.mod(it_now-it_start+1,NE_Hxc_jumps)==0) then
+ if (it_now==it_start) then
    !
    if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) call el_density_matrix(G_input,E,k,rho_n,SC_bands(1),.false.)
    !

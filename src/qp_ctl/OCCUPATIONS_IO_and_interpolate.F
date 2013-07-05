@@ -24,7 +24,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use units,          ONLY:BO2ANG,FS2AUT,HA2EV
  use pars,           ONLY:SP,lchlen
  use parser_m,       ONLY:parser
- use real_time,      ONLY:ID,G_lesser,NE_i_time,RT_IO_steps,RT_step,MEM_index
+ use real_time,      ONLY:ID,G_lesser,NE_i_time,RT_IO_steps,RT_step,MEM_index,G_MEM_steps
  use SC,             ONLY:SC_bands,RT_occupations,RT_nk,RT_k,l_RT_occupations_in_use
  use IO_m,           ONLY:io_control,NONE,OP_WR_CL,OP_RD,RD_CL,OP_RD_CL,DUMP,variable_is_found
  use electrons,      ONLY:levels,BZ_RIM_nbands,n_sp_pol,n_met_bands,&
@@ -37,7 +37,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use LIVE_t,         ONLY:what_is_running
  use stderr,         ONLY:intc
  use vec_operate,    ONLY:sort
- use interfaces,     ONLY:OCCUPATIONS_gaps
+ use interfaces,     ONLY:OCCUPATIONS_Gaps
  !
  implicit none
  !
@@ -80,7 +80,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
 #if defined _RT
    !
    do ib=SC_bands(1),SC_bands(2)
-     RT_occupations(ib,:)=-real((0._SP,1._SP)*G_lesser(ib,ib,:,MEM_index(NE_i_time)))
+     RT_occupations(ib,:)=-real((0._SP,1._SP)*G_lesser(ib,ib,:,MEM_index(NE_i_time,G_MEM_steps)))
    enddo
    ! 
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
@@ -238,7 +238,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    ! I need to redefine here the met/filled number of bands related to the occupations
    ! using OCCUPATIONS_gaps
    !
-   if (.not.input_Tel_is_negative) call OCCUPATIONS_gaps(E)
+   if (.not.input_Tel_is_negative) call OCCUPATIONS_Gaps(E)
    !
    call msg('r','Integarted N. of e-   [input]:',sum(RT_occupations(:,:))/real(RT_nk)+(SC_bands(1)-1)*2._SP)
    call msg('r','               [interpolated]:',sum(E%f(:,:,:))/real(nXkibz))

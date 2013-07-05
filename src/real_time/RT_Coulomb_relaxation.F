@@ -22,11 +22,12 @@
 subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !  
  use pars,            ONLY:SP,cI,rZero,pi
+ use units
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,bz_samp
  use SC,              ONLY:SC_bands,it_now 
  use real_time,       ONLY:G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,Sigma_relax,&
-&                          Gr_ee_matrix
+&                          Gr_ee_matrix,G_MEM_steps
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:COLLISIONS
  use parallel_m,      ONLY:PAR_QP_index,PAR_QPp_index,PAR_IND_QP,PAR_IND_QPp,PAR_Q_index,PAR_IND_Q
@@ -72,7 +73,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
      i_q_s = q%sstar(iqbz,2)
      i_kmq = k%sstar(qindx_S(i_k,iqbz,1),1)
      !
-     f_kmq=-cI*G_lesser(i_np,i_np,i_kmq,MEM_index(it_now))/spin_occ
+     f_kmq=-cI*G_lesser(i_np,i_np,i_kmq,MEM_index(it_now,G_MEM_steps))/spin_occ
      !
      do i_qp2=1,QP_n_states
        !
@@ -83,7 +84,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
        i_mp = QP_table(i_qp2,2)
        i_p  = QP_table(i_qp2,3)
        !
-       f_p=-cI*G_lesser(i_m,i_m,i_p,MEM_index(it_now))/spin_occ
+       f_p=-cI*G_lesser(i_m,i_m,i_p,MEM_index(it_now,G_MEM_steps))/spin_occ
        !
        do i_p_star=1,k%nstar(i_p)
          !
@@ -93,7 +94,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          !
          i_pmq =k%sstar(i_pmq_bz,1)
          !
-         f_pmq =-cI*G_lesser(i_mp,i_mp,i_pmq,MEM_index(it_now))
+         f_pmq =-cI*G_lesser(i_mp,i_mp,i_pmq,MEM_index(it_now,G_MEM_steps))
          !
          pre_factor=abs(4.*pi*COLLISIONS(i_qp1_mem)%v3(i_qp2_mem,i_p_s,i_q_mem))**2
          !
@@ -117,7 +118,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !====================
  !
  do i_n=SC_bands(1),SC_bands(2)
-   f_k=-cI*G_lesser(i_n,i_n,i_k,MEM_index(it_now))/spin_occ
+   f_k=-cI*G_lesser(i_n,i_n,i_k,MEM_index(it_now,G_MEM_steps))/spin_occ
    Sigma_relax(i_n,i_n,i_k)=Sigma_relax(i_n,i_n,i_k)+E_E_Hole_lifetime(i_n,i_k)*(f_k-1._SP)+&
 &                                                    E_E_Electron_lifetime(i_n,i_k)*f_k
  enddo

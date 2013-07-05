@@ -33,8 +33,8 @@ integer function variables_SC(ID,local_description,what)
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,              &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
-&                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,                             &
-&                         RT_IO_steps,l_RT_induced_field,l_NE_simulate_BSE,NE_MEM_steps,&
+&                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_IO_time,                  &
+&                         RT_IO_steps,l_RT_induced_field,l_NE_simulate_BSE,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,RT_IO_steps_DB,N_Gr_descs,Gr_description,l_G_retarded_DB
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
@@ -208,7 +208,7 @@ integer function variables_SC(ID,local_description,what)
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID, &
-&     VAR=" [ELPH] Memory steps             :",I0=NE_MEM_steps,CHECK=.true.,OP=(/"=="/),&
+&     VAR=" [ELPH] Memory steps             :",I0=G_MEM_steps,CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
@@ -290,8 +290,9 @@ integer function variables_SC(ID,local_description,what)
  if(any((/l_J,l_G,l_occupations/))) then
    !
    VAR_SIZE=8
-   if (ver_is_gt_or_eq(ID,revision=890)) VAR_SIZE=7
-   if (ver_is_gt_or_eq(ID,revision=944)) VAR_SIZE=8
+   if (ver_is_gt_or_eq(ID,revision=890) ) VAR_SIZE=7
+   if (ver_is_gt_or_eq(ID,revision=944) ) VAR_SIZE=8
+   if (ver_is_gt_or_eq(ID,revision=2478)) VAR_SIZE=9
    call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=VAR_SIZE,MENU=0) 
    !
    i_desc=i_desc+1
@@ -347,9 +348,15 @@ integer function variables_SC(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,DB_I0=RT_IO_steps_DB,I0=RT_IO_steps,&
-&    VAR=' [RT] Cache size                 :',CHECK=.true.,OP=(/"=="/),&
+&    VAR=' [RT] IO steps                   :',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
+   if (ver_is_gt_or_eq(ID,revision=2478)) then
+     call io_elemental(ID,R0=RT_IO_time,&
+&      VAR=' [RT] Time between two IOs       :',CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
+     i_desc=i_desc+1
+   endif
    if (ver_is_gt_or_eq(ID,revision=1270)) then
      call io_elemental(ID,R0=RAD_LifeTime,&
 &      VAR=' [RT] Radiative life time    [fs]:', CHECK=.true.,OP=(/"=="/),&

@@ -42,7 +42,8 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,it_now 
  use real_time,      ONLY:Sigma_relax,q_weight,elph_gkkp_expanded,l_RT_CCA_Kernel,&
-&                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,G_lesser,MEM_index
+&                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,G_lesser,&
+&                         MEM_index,G_MEM_steps
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_COM_Xk_ibz_A2A,PAR_Xk_nibz,PAR_Xk_ibz_index
@@ -82,7 +83,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  S_mat_sum=cZero
  if (l_RT_CCA_Kernel) then
    do i_n=1,B_dim
-     f_k(i_n)=-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,ik,MEM_index(it_now))/spin_occ
+     f_k(i_n)=-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,ik,MEM_index(it_now,G_MEM_steps))/spin_occ
    enddo
  endif
  !

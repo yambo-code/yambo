@@ -39,7 +39,7 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  !
  ! Work Space
  !
- real(SP):: GAMMA_(2),WIDTH(4,2),E_center,pre_factor
+ real(SP):: GAMMA_,E_center
  integer :: ik,iqbz,i_n,i_np,ik_mem,i_b_mat_mem,iq_mem,ik_m_q,il,is,i_s,i_trans(2),kin_scatt(3)
  real(SP), allocatable :: Gr_integrand(:)
  real(SP),    external :: Laplace_transform
@@ -98,6 +98,8 @@ subroutine RT_G_retarded_EP_initialize(E,k)
                !
                E_center=Gr_peak_pos(ik,i_n)-Gr_peak_pos(ik_m_q,i_np)+i_s*abs(sqrt(ph_freqs_sq(iqbz,il)))
                !           
+               if (abs(E_center)>2.*E%E_ind_gap(1)) cycle
+               !
                i_trans(1)=transition_finder(Gr_peak_pos(ik,i_n))
                i_trans(2)=transition_finder(Gr_peak_pos(ik_m_q,i_np))
                !
@@ -126,20 +128,13 @@ subroutine RT_G_retarded_EP_initialize(E,k)
                !
              else
                !
-               pre_factor=8.7
-               !
                E_center=E%E(i_n,ik,1)-E%E(i_np,ik_m_q,1)+is*abs(sqrt(ph_freqs_sq(iqbz,il)))
                !
-               WIDTH(1,:)=set_WIDTH(i_n ,ik    ,abs(E%W(i_n ,ik    ,1)))
-               WIDTH(2,:)=set_WIDTH(i_np,ik_m_q,abs(E%W(i_np,ik_m_q,1)))
+               if (abs(E_center)>2.*E%E_ind_gap(1)) cycle
                !
-               GAMMA_(1) = WIDTH(1,1)+WIDTH(2,2)
-               GAMMA_(2) = WIDTH(1,2)+WIDTH(2,1)
+               GAMMA_ = abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik_m_q,1))
                !
-               !if (E_center> GAMMA_(2)*pre_factor) cycle
-               !if (E_center<-GAMMA_(1)*pre_factor) cycle
-               !
-               Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=GAMMA_(1)/(E_center**2+GAMMA_(1)**2)
+               Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=GAMMA_/(E_center**2+GAMMA_**2)
                !
              endif
              !
@@ -171,21 +166,6 @@ subroutine RT_G_retarded_EP_initialize(E,k)
          return
        endif
      enddo
-   end function
-   !
-   function set_WIDTH(i_n,i_k,W)
-     !
-     integer  :: i_k,i_n
-     real(SP) :: W
-     real(SP) :: set_WIDTH(2)
-     !
-     set_WIDTH=W
-     !
-     !DEBUG>
-     !if (i_n<=E%nbf  ) set_WIDTH(2)=min( W ,abs( E%E(i_n,i_k,1) - E_vb_max )) 
-     !if (i_n>=E%nbm+1) set_WIDTH(1)=min( W ,abs( E%E(i_n,i_k,1) - E_cb_min )) 
-     !DEBUG<
-     !
    end function
    !
 end subroutine RT_G_retarded_EP_initialize

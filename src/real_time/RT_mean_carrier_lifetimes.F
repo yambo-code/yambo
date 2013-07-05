@@ -36,11 +36,13 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,k,E)
  !
  ! Work space
  !
- integer            :: ib,ik,n_states
+ integer            :: ib,ik,n_h_states,n_e_states,n_p_states
  real(SP)           :: f_occ
  real(SP),parameter :: f_tresh=1.E-5
  !
- n_states=0
+ n_h_states=0
+ n_e_states=0
+ n_p_states=0
  !
  RT_mean_lifetimes=0._SP
  !
@@ -50,17 +52,28 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,k,E)
      !
      f_occ=-cI*G_lesser(ib,ib,ik)
      !
-     if (abs(f_occ)>f_tresh.and.abs(f_occ-spin_occ)>f_tresh) then
-       n_states=n_states+1
+     if (allocated(E_P_Hole_lifetime)) then
+       n_p_states=n_p_states+1
+       RT_mean_lifetimes(3)=RT_mean_lifetimes(3)+E_P_Phonon_lifetime(ib,ik)
+     endif
+     !
+     if (abs(f_occ)>f_tresh) then
+       n_e_states=n_e_states+1
        if (allocated(E_P_Hole_lifetime)) then
-         RT_mean_lifetimes(1)=RT_mean_lifetimes(1)+E_P_Hole_lifetime(ib,ik)
          RT_mean_lifetimes(2)=RT_mean_lifetimes(2)+E_P_Electron_lifetime(ib,ik)
-         RT_mean_lifetimes(3)=RT_mean_lifetimes(3)+E_P_Phonon_lifetime(ib,ik)
        endif
        if (allocated(E_E_Hole_lifetime)) then
-
-         RT_mean_lifetimes(4)=RT_mean_lifetimes(4)+E_E_Hole_lifetime(ib,ik)
          RT_mean_lifetimes(5)=RT_mean_lifetimes(5)+E_E_Electron_lifetime(ib,ik)
+       endif
+     endif
+     !
+     if (abs(f_occ-spin_occ)>f_tresh) then
+       n_h_states=n_h_states+1
+       if (allocated(E_P_Hole_lifetime)) then
+         RT_mean_lifetimes(1)=RT_mean_lifetimes(1)+E_P_Hole_lifetime(ib,ik)
+       endif
+       if (allocated(E_E_Hole_lifetime)) then
+         RT_mean_lifetimes(4)=RT_mean_lifetimes(4)+E_E_Hole_lifetime(ib,ik)
        endif
      endif
      !
@@ -68,10 +81,10 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,k,E)
    !
  enddo
  !
- if (n_states>0) RT_mean_lifetimes=RT_mean_lifetimes/float(n_states)
- !
- !DEBUG>
- !write (*,*) RT_mean_lifetimes(1:6)*HA2EV*1000.
- !DEBUG<
+ if (n_p_states>0) RT_mean_lifetimes(3)=RT_mean_lifetimes(3)/float(n_p_states)
+ if (n_e_states>0) RT_mean_lifetimes(2)=RT_mean_lifetimes(2)/float(n_e_states)
+ if (n_e_states>0) RT_mean_lifetimes(5)=RT_mean_lifetimes(5)/float(n_e_states)
+ if (n_h_states>0) RT_mean_lifetimes(1)=RT_mean_lifetimes(1)/float(n_h_states)
+ if (n_h_states>0) RT_mean_lifetimes(4)=RT_mean_lifetimes(4)/float(n_h_states)
  !
 end subroutine RT_mean_carrier_lifetimes

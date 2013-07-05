@@ -70,7 +70,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! Eval or Interpolate ?
  !======================
  it_relative   = mod(it_now-it_start,Life_MEM_steps+RT_dynamics_jumps)+1
- if (it_now-it_start<2* (Life_MEM_steps+RT_dynamics_jumps) ) then
+ if (it_now-it_start<2*(Life_MEM_steps+RT_dynamics_jumps) ) then
    l_evaluate    = .TRUE.
    l_interpolate = .FALSE.
    l_save        = .FALSE.

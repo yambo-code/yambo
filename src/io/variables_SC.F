@@ -35,7 +35,8 @@ integer function variables_SC(ID,local_description,what)
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_IO_time,                  &
 &                         RT_IO_steps,l_RT_induced_field,l_NE_simulate_BSE,G_MEM_steps,&
-&                         l_RT_CCA_Kernel,RT_IO_steps_DB,N_Gr_descs,Gr_description,l_G_retarded_DB
+&                         l_RT_CCA_Kernel,RT_IO_steps_DB,N_Gr_descs,Gr_description,l_G_retarded_DB,&
+&                         RT_dynamics_jumps,Life_MEM_steps
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
@@ -289,10 +290,8 @@ integer function variables_SC(ID,local_description,what)
  !
  if(any((/l_J,l_G,l_occupations/))) then
    !
-   VAR_SIZE=8
-   if (ver_is_gt_or_eq(ID,revision=890) ) VAR_SIZE=7
-   if (ver_is_gt_or_eq(ID,revision=944) ) VAR_SIZE=8
-   if (ver_is_gt_or_eq(ID,revision=2478)) VAR_SIZE=9
+   VAR_SIZE=7
+   if (ver_is_gt_or_eq(ID,revision=2486)) VAR_SIZE=8
    call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=VAR_SIZE,MENU=0) 
    !
    i_desc=i_desc+1
@@ -304,17 +303,16 @@ integer function variables_SC(ID,local_description,what)
 &    VAR=" [RT] XC frozen                  :", CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    !
-   if (.not.ver_is_gt_or_eq(ID,revision=890)) then
-     i_desc=i_desc+1
-     call io_elemental(ID,L0=l_NE_simulate_BSE,&
-&      VAR=" [RT] Time-Dependent COHSEX/GW   :", CHECK=.true.,OP=(/"=="/),&
-&      DESCRIPTION=local_description(i_desc))
-   endif
-   !
    i_desc=i_desc+1
    call io_elemental(ID,&
 &    VAR=" [RT] Time step              [fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
+   if (ver_is_gt_or_eq(ID,revision=2484)) then
+     i_desc=i_desc+1
+     call io_elemental(ID,&
+&      VAR=" [RT] Time steps interpolated    :",I0=RT_dynamics_jumps,CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc))
+   endif
    i_desc=i_desc+1
    call io_elemental(ID,&
 &    VAR=" [RT] Time steps                 :",I0=NE_steps,WARN=.true.,OP=(/"=="/),&
@@ -350,24 +348,25 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,DB_I0=RT_IO_steps_DB,I0=RT_IO_steps,&
 &    VAR=' [RT] IO steps                   :',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
    if (ver_is_gt_or_eq(ID,revision=2478)) then
+     i_desc=i_desc+1
      call io_elemental(ID,R0=RT_IO_time,&
 &      VAR=' [RT] Time between two IOs       :',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
-     i_desc=i_desc+1
    endif
    if (ver_is_gt_or_eq(ID,revision=1270)) then
+     i_desc=i_desc+1
      call io_elemental(ID,R0=RAD_LifeTime,&
 &      VAR=' [RT] Radiative life time    [fs]:', CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
    else
+     i_desc=i_desc+1
      call io_elemental(ID,R0=RAD_LifeTime,&
 &      VAR=' [RT] QP life time           [fs]:', CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
    endif
-   i_desc=i_desc+1
    if (ver_is_gt_or_eq(ID,revision=605)) then
+     i_desc=i_desc+1
      call io_elemental(ID,R0=Phase_LifeTime,&
 &      VAR=' [RT] Dephasing life time    [fs]:', CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
@@ -384,6 +383,7 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,L0=l_RT_induced_field,&
 &    VAR=' [RT] Induced field              :',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    ! G retarded variables
    !======================

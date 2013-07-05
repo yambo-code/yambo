@@ -23,9 +23,7 @@ subroutine RT_Lifetimes_Interpolation(Life,Life_SAVED)
  !
  use pars,           ONLY:SP
  use SC,             ONLY:it_now
- use real_time,      ONLY:RT_step,Life_MEM_steps,Thermal_steps,RT_dynamics_jumps
- use matrix_operate, ONLY:m3inv
- use wrapper,        ONLY:M_by_V
+ use real_time,      ONLY:RT_step,Life_MEM_steps,RT_dynamics_jumps
  !
  implicit none
  !
@@ -33,25 +31,16 @@ subroutine RT_Lifetimes_Interpolation(Life,Life_SAVED)
  !
  ! Work Space
  !
- integer   :: it,it_absolute
- real(SP)  :: Mat(Life_MEM_steps,Life_MEM_steps),X(Life_MEM_steps),M(Life_MEM_steps)
+ integer   :: it_first
+ real(SP)  :: T_first,T_now,M(Life_MEM_steps-1)
  !
- do it=1,Life_MEM_steps
-   it_absolute=int(real(it_now-1)/real(Life_MEM_steps+RT_dynamics_jumps))*(Life_MEM_steps+RT_dynamics_jumps)+it
-   X(it)=(it_absolute-1)*RT_step
-   Mat(it,:)=(/1.,(X(it)-,X(it)**2./)
- enddo
+ it_first=int(real(it_now-1)/real(Life_MEM_steps+RT_dynamics_jumps))*(Life_MEM_steps+RT_dynamics_jumps)+1
+ T_first=(it_first-1)*RT_step
+ T_now=(it_now-1)*RT_step
  !
- if (Life_MEM_steps==3) call m3inv(Mat)
+ M(1)=(4._SP*Life_SAVED(2)-3._SP*Life_SAVED(1)-Life_SAVED(3))/2._SP/RT_step
+ M(2)=(Life_SAVED(3)-2._SP*Life_SAVED(2)+Life_SAVED(1))/2._SP/RT_step**2
  !
- call M_by_V('n',Life_MEM_steps,Mat,Life_SAVED,M)
- !
- Life=0.
- do it=1,Life_MEM_steps
-  Life=Life+M(it)*X(it)**(it-1)
- enddo
- !
- write (*,*) Life_SAVED,Life
- stop
+ Life=Life_SAVED(1)+M(1)*(T_now-T_first)+M(2)*(T_now-T_first)**2
  !
 end subroutine RT_Lifetimes_Interpolation

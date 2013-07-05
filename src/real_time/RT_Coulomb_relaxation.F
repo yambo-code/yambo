@@ -22,11 +22,10 @@
 subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !  
  use pars,            ONLY:SP,cI,rZero,pi
- use units
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,bz_samp
- use SC,              ONLY:SC_bands,it_now 
- use real_time,       ONLY:G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,Sigma_relax,&
+ use SC,              ONLY:it_now 
+ use real_time,       ONLY:G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,&
 &                          Gr_ee_matrix,G_MEM_steps
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:COLLISIONS
@@ -112,15 +111,6 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
      !
    enddo
    !
- enddo
- !
- ! Kernel composition
- !====================
- !
- do i_n=SC_bands(1),SC_bands(2)
-   f_k=-cI*G_lesser(i_n,i_n,i_k,MEM_index(it_now,G_MEM_steps))/spin_occ
-   Sigma_relax(i_n,i_n,i_k)=Sigma_relax(i_n,i_n,i_k)+E_E_Hole_lifetime(i_n,i_k)*(f_k-1._SP)+&
-&                                                    E_E_Electron_lifetime(i_n,i_k)*f_k
  enddo
  !
 end subroutine RT_Coulomb_relaxation

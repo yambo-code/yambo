@@ -28,7 +28,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! Output: Sigma_relax
  !
  use pars,           ONLY:SP,cI,cZERO
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,it_now
@@ -38,7 +38,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_Phonon_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,MEM_index,&
 &                         G_lesser,G_MEM_steps,RT_dynamics_jumps,it_start,&
-&                         Life_MEM_steps,SAVED_lifetime
+&                         Life_MEM_steps,SAVED_lifetime,RT_step
  !
  implicit none
  !
@@ -50,7 +50,8 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! Work Space
  !
  integer          :: ib1,ib2,ik,it_relative
- logical          :: l_evaluate,l_interpolate
+ logical          :: l_evaluate,l_interpolate,l_save
+ real(SP)         :: f_k(SC_bands(2))
  !
  if(.not.RT_is_dumped.and..not.l_ph_corr.and..not.l_carrier_dynamics) return 
  !
@@ -69,9 +70,15 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! Eval or Interpolate ?
  !======================
  it_relative   = mod(it_now-it_start,Life_MEM_steps+RT_dynamics_jumps)+1
- l_evaluate    = it_relative <= Life_MEM_steps.or.it_now<10*RT_dynamics_jumps
- l_interpolate = it_relative >  Life_MEM_steps.and..not.l_evaluate
- write (*,*) it_now,l_evaluate,l_interpolate
+ if (it_now-it_start<2* (Life_MEM_steps+RT_dynamics_jumps) ) then
+   l_evaluate    = .TRUE.
+   l_interpolate = .FALSE.
+   l_save        = .FALSE.
+ else
+   l_evaluate    = it_relative <= Life_MEM_steps
+   l_interpolate = it_relative >  Life_MEM_steps
+   l_save        = l_evaluate
+ endif
  !
  ! El-El
  !=======
@@ -123,11 +130,10 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  if (l_ph_corr.or.l_carrier_dynamics) then
    if (l_evaluate) then
      do ik=1,QP_nk
-       call PP_redux_wait(Sigma_relax(:,:,ik))
        if (l_carrier_dynamics) then
          call PP_redux_wait(E_E_Electron_lifetime(:,ik))
          call PP_redux_wait(E_E_Hole_lifetime(:,ik))
-         if (RT_dynamics_jumps>0) then
+         if (l_save) then
            SAVED_lifetime(:,ik,1, it_relative)=E_E_Hole_lifetime(:,ik)
            SAVED_lifetime(:,ik,2, it_relative)=E_E_Electron_lifetime(:,ik)
          endif
@@ -136,7 +142,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
          call PP_redux_wait(E_P_Electron_lifetime(:,ik))
          call PP_redux_wait(E_P_Hole_lifetime(:,ik))
          call PP_redux_wait(E_P_Phonon_lifetime(:,ik))
-         if (RT_dynamics_jumps>0) then
+         if (l_save) then
            SAVED_lifetime(:,ik,3, it_relative)=E_P_Hole_lifetime(:,ik)
            SAVED_lifetime(:,ik,4, it_relative)=E_P_Electron_lifetime(:,ik)
            SAVED_lifetime(:,ik,5, it_relative)=E_P_Phonon_lifetime(:,ik)
@@ -163,13 +169,27 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! Dephasing Matrix
  !==================
  !
+ do ik=1,QP_nk
+   do ib1=SC_bands(1),SC_bands(2)
+     f_k(ib1)=-cI*G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps))/spin_occ
+     if (l_carrier_dynamics) then
+       Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+E_E_Hole_lifetime(ib1,ik)*(f_k(ib1)-1._SP)+&
+&                                                    E_E_Electron_lifetime(ib1,ik)*f_k(ib1)
+     endif
+     if (l_RT_CCA_Kernel) then
+       Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+&
+&                             E_P_Hole_lifetime(ib1,ik)*(f_k(ib1)-1._SP)+E_P_Electron_lifetime(ib1,ik)*f_k(ib1)+&
+&                             E_P_Phonon_lifetime(ib1,ik)
+     endif
+   enddo
+ enddo
+ !
+ !
  if(RT_is_dumped.and.NE_dynamics) then
-   !
    forall(ib1=SC_bands(1):SC_bands(2),ib2=SC_bands(1):SC_bands(2)) 
      Sigma_relax(ib1,ib2,:)=Sigma_relax(ib1,ib2,:)-cI*RT_Deph_Matrix(ib1,ib2,:)*&
 &                           (G_input(ib1,ib2,:)-G_lesser_reference(ib1,ib2,:))
    end forall
-   !
  endif
  !
 end subroutine RT_relaxation

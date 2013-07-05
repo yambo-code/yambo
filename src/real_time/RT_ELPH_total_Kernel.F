@@ -37,16 +37,15 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !  
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !  
- use pars,           ONLY:SP,cI,cZero,rZero
+ use pars,           ONLY:SP,cI,cZero
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,it_now 
  use real_time,      ONLY:Sigma_relax,q_weight,elph_gkkp_expanded,l_RT_CCA_Kernel,&
-&                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,G_lesser,&
-&                         MEM_index,G_MEM_steps
+&                         MEM_index,G_MEM_steps,G_lesser
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
- use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_COM_Xk_ibz_A2A,PAR_Xk_nibz,PAR_Xk_ibz_index
+ use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_nibz,PAR_Xk_ibz_index
  !
  implicit none
  !
@@ -158,23 +157,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  ! Kernel composition
  !====================
  !
- if (l_RT_CCA_Kernel) then
-   !
-   ! CCA 
-   !=====
-   do i_n=SC_bands(1),SC_bands(2)
-     !
-     i_n_m=i_n-SC_bands(1)+1
-     !
-     Sigma_relax(i_n,i_n,ik)=Sigma_relax(i_n,i_n,ik)+&
-&                            E_P_Hole_lifetime(i_n,ik)*(f_k(i_n_m)-1.)+E_P_Electron_lifetime(i_n,ik)*f_k(i_n_m)+&
-&                            E_P_Phonon_lifetime(i_n,ik)
-   enddo
-   !
- else
-   !
-   ! Otherwise 
-   !===========
+ if (.not.l_RT_CCA_Kernel) then
    !
    do i_n=SC_bands(1),SC_bands(2)
      do i_np=SC_bands(1),SC_bands(2)

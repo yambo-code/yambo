@@ -193,6 +193,7 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'DBsPATH',  'Path to the PW el-ph databases',elph_dbs_path)
  call it(defs,'PHfreqF',  'PWscf format file containing the phonon frequencies',ph_freqs_file)
+ call it(defs,'PHmodeF',  'PWscf format file containing the phonon modes',ph_modes_file)
  call it(defs,'EfGbroad', 'Fermi surface broadening (Gamma)',elph_gamma_broad,E_unit)
  call it(defs,'PhBroad','Phonon broadening (Eliashberg & DOS)',ph_broad,E_unit)
  call it(defs,'EEfermi','External Fermi Level (Eliashberg)',elph_Ef,E_unit)

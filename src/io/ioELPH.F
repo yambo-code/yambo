@@ -30,8 +30,9 @@ integer function ioELPH(ID,what)
 &                         QP_PH_n_G_bands,W_debye,elph_DW,elph_nDBs,&
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,ph_kpt_bz,elph_nDBs_used,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
-&                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz
+&                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz,E_k_p_q
  use stderr,         ONLY:intc
+ use electrons,      ONLY:E_reset
  use R_lattice,      ONLY:nkbz,nqibz
  use D_lattice,      ONLY:n_atoms_species
  use memory_m,       ONLY:mem_est
@@ -224,6 +225,14 @@ integer function ioELPH(ID,what)
  !
  call io_bulk(ID,VAR="E_K_PLUS_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb,nkbz,1/) )
  call io_bulk(ID,R3=E_k_plus_q)
+ !
+ if (read_is_on(ID)) then
+   call E_reset(E_k_p_q)
+   E_k_p_q%nb=elph_nb
+   E_k_p_q%nk=nkbz
+   allocate(E_k_p_q%E(elph_nb,nkbz,1))
+   E_k_p_q%E=E_k_plus_q
+ endif
  ! 
  ! ELPH_gkkp 
  !

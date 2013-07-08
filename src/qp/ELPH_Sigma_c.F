@@ -44,7 +44,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,RL_vol
  use ELPH,          ONLY:elph_nb,ph_freqs_sq,elph_gkkp,&
 &                        elph_global_free,QP_PH_n_G_bands,W_debye,elph_DW,&
-&                        elph_nDBs,E_k_plus_q,elph_use_q_grid,&
+&                        elph_nDBs,E_k_p_q,elph_use_q_grid,&
 &                        setup_k_plus_q_levels,f_k_plus_q,elph_nDBs_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
 &                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK,nq_memory,ph_qpt,&
@@ -253,7 +253,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      !
      if (.not.elph_use_q_grid) then
        !
-       if (iq_bz==1) E_random_shift=E_k_plus_q(en%nbf,1,1)-en%E(en%nbf,1,1)
+       if (iq_bz==1) E_random_shift=E_k_p_q%E(en%nbf,1,1)-en%E(en%nbf,1,1)
        !
        call setup_k_plus_q_levels(E_random_shift)
        !
@@ -265,7 +265,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      !
      if (iq_db_ref==0) then
        call live_timing('El-Ph Sc [coeff]',live_timing_steps)
-       if (.not.elph_use_q_grid) E_k_plus_q_at_gamma(:,:)=E_k_plus_q(:,:,1)
+       if (.not.elph_use_q_grid) E_k_plus_q_at_gamma(:,:)=E_k_p_q%E(:,:,1)
      endif
      !
      iq_db_ref=iq_db
@@ -353,7 +353,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
              f_occ=en%f(ob,ok,1)/spin_occ
              one_minus_2f_occ=(1.-2.*f_occ)
            else
-             delta_E         =Sc_W(i_qp)%p(iw)-E_k_plus_q(ob,ik_bz,1)
+             delta_E         =Sc_W(i_qp)%p(iw)-E_k_p_q%E(ob,ik_bz,1)
              delta_E_at_gamma=en%E(ib,ik,1)   -E_k_plus_q_at_gamma(ob,ik_bz)
              f_occ=f_k_plus_q(ob,ik_bz,1)/spin_occ
              one_minus_2f_occ=(1.-2.*f_occ)

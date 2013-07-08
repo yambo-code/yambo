@@ -216,7 +216,7 @@ module it_m
    !
    logical function runlevel_is_on(runlevel_name)
      character(*) :: runlevel_name
-     integer :: i2
+     integer      :: i2
      runlevel_is_on=.false.
      do i2=1,nrnlvls
        if (trim(rnlvls(i2,1))==runlevel_name) runlevel_is_on=rstatus(i2)/=0

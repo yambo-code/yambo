@@ -79,6 +79,11 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    l_interpolate = it_relative >  Life_MEM_steps
    l_save        = l_evaluate
  endif
+ if (RT_dynamics_jumps==0) then
+   l_evaluate    = .TRUE.
+   l_interpolate = .FALSE.
+   l_save        = .FALSE.
+ endif
  !
  ! El-El
  !=======
@@ -103,7 +108,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !=======
  if (l_ph_corr.and.l_evaluate) then
    !
-   if (l_RT_CCA_Kernel) then
+   if (l_RT_CCA_Kernel.and.l_ph_corr) then
      E_P_Hole_lifetime=0._SP
      E_P_Electron_lifetime=0._SP
      E_P_Phonon_lifetime=0._SP
@@ -138,7 +143,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
            SAVED_lifetime(:,ik,2, it_relative)=E_E_Electron_lifetime(:,ik)
          endif
        endif
-       if (l_RT_CCA_Kernel) then
+       if (l_RT_CCA_Kernel.and.l_ph_corr) then
          call PP_redux_wait(E_P_Electron_lifetime(:,ik))
          call PP_redux_wait(E_P_Hole_lifetime(:,ik))
          call PP_redux_wait(E_P_Phonon_lifetime(:,ik))
@@ -156,7 +161,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
            call RT_Lifetimes_Interpolation(E_E_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,1,:))
            call RT_Lifetimes_Interpolation(E_E_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,2,:))
          endif
-         if (l_RT_CCA_Kernel) then
+         if (l_RT_CCA_Kernel.and.l_ph_corr) then
            call RT_Lifetimes_Interpolation(E_P_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,3,:))
            call RT_Lifetimes_Interpolation(E_P_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,4,:))
            call RT_Lifetimes_Interpolation(E_P_Phonon_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,5,:))
@@ -176,7 +181,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
        Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+E_E_Hole_lifetime(ib1,ik)*(f_k(ib1)-1._SP)+&
 &                                                    E_E_Electron_lifetime(ib1,ik)*f_k(ib1)
      endif
-     if (l_RT_CCA_Kernel) then
+     if (l_RT_CCA_Kernel.and.l_ph_corr) then
        Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+&
 &                             E_P_Hole_lifetime(ib1,ik)*(f_k(ib1)-1._SP)+E_P_Electron_lifetime(ib1,ik)*f_k(ib1)+&
 &                             E_P_Phonon_lifetime(ib1,ik)

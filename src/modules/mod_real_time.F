@@ -365,14 +365,8 @@ module real_time
      endif
      !
      if (RT_dynamics_jumps>0) then
-       if (l_carrier_dynamics.and.l_RT_CCA_Kernel.and.l_ph_corr) then
+       if (l_carrier_dynamics.or.l_RT_CCA_Kernel.or.l_ph_corr) then
          allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),QP_nk,5,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p p
-         call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
-       else if (l_carrier_dynamics) then
-         allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),QP_nk,2,Life_MEM_steps)) ! e-e h, e-e e
-         call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
-       else if (l_RT_CCA_Kernel.and.l_ph_corr) then
-         allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),QP_nk,3,Life_MEM_steps)) ! e-p h, e-p e, e-p p
          call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
        endif
      endif

@@ -39,14 +39,16 @@ subroutine RT_start_and_restart(E,k,q,X)
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_contains_lda,l_ph_corr,l_carrier_dynamics
  use com,            ONLY:msg,warning,error
- use QP_m,           ONLY:QP_nk,COHSEX_use_empties
+ use QP_m,           ONLY:QP_nk,COHSEX_use_empties,&
+&                         QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:G_lesser,ID,NE_steps,RT_ind_J,    &
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_RT_CCA_Kernel,&
-&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,Gr_bands
+&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,Gr_bands,&
+&                         l_G_retarded_DB,N_Gr_descs,Gr_description
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
 &                         rho_convergence,H_rotate,V_hartree_sc,&
@@ -58,6 +60,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use parallel_m,     ONLY:PAR_IND_WF_k,PAR_COM_WF_k_INDEX,PP_redux_wait
+ use stderr,         ONLY:real2ch
  implicit none
  !
  type(levels)      :: E
@@ -435,6 +438,19 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    if (l_ph_corr)          call RT_G_retarded_EP_initialize(E,k)
    if (l_carrier_dynamics) call RT_G_retarded_EE_initialize(E,k,q)
+   !
+   if (.not.l_G_retarded_DB) then
+     Gr_description(1)=' [Gr] Retarded Green`s function  : QP'
+     Gr_description(2)=' [Gr] Damping (c) Energy ref [eV]: '//trim(real2ch(QP_ctl_Wc_E_ref(3,1)*HA2EV))
+     Gr_description(3)=' [Gr] Damping (c) [eV,adim,eV^-1]: '//&
+&                      trim(real2ch(QP_ctl_Wc(3,1,1)))//' '//&
+&                      trim(real2ch(QP_ctl_Wc(3,2,1)))//' '//trim(real2ch(QP_ctl_Wc(3,3,1)))
+     Gr_description(4)=' [Gr] Damping (v) Energy ref [eV]: '//trim(real2ch(QP_ctl_Wv_E_ref(3,1)))
+     Gr_description(5)=' [Gr] Damping (v) [eV,adim,eV^-1]: '//&
+&                      trim(real2ch(QP_ctl_Wv(3,1,1)))//' '//&
+&                      trim(real2ch(QP_ctl_Wv(3,2,1)))//' '//trim(real2ch(QP_ctl_Wv(3,3,1)))
+     N_Gr_descs=5
+   endif
    !
  endif
  !

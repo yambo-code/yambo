@@ -705,9 +705,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    if (l_eval_collisions) then
      !
-     call initactivate(1,'DynKind')
+     call initactivate( 1,'DynKind')
+     call initactivate(-1,'CollPath')
      !
-   else
+   else if (.not.l_real_time) then
      !
      call initactivate( 1,'SCmixing SClwBand SCnlMix BandMix')
      call initactivate(-1,'QpntsRXs')
@@ -720,7 +721,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    if (l_eval_collisions) then
      call initactivate(-1,'GbndRnge UseEbands BandMix') 
-   else
+   else if (.not.l_real_time) then
      call initactivate(1,'SCdiag Mean_Potential')
    endif
  endif
@@ -970,7 +971,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_acfdt=runlevel_is_on('acfdt')
        !
        ! GPL_EXCLUDE_END
-       !
        ! 
 #if defined _SC 
        l_sc_run=runlevel_is_on('scpot')
@@ -1064,6 +1064,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH 
      if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
      elph_nDBs_used=elph_nDBs
+#endif
+#if defined _RT 
+     if (l_real_time) then
+       call switch_off_runlevel('cohsex',on_name=' ')
+       call switch_off_runlevel('HF_and_locXC',on_name=' ')
+       call switch_off_runlevel('em1s',on_name=' ')
+       l_cohsex      =.FALSE.
+       l_em1s        =.FALSE.
+       l_HF_and_locXC=.FALSE.
+     endif
 #endif
      if (l_gw0.and.l_el_corr) call initactivate(1,'HF_and_locXC')
      if (l_ppa)    call initactivate(1,'em1d')

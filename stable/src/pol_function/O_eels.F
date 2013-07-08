@@ -1,0 +1,78 @@
+!
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!              http://www.yambo-code.org
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
+ ! 
+ use pars,          ONLY:SP,pi
+ use units,         ONLY:HA2EV
+ use com,           ONLY:warning
+ implicit none
+ !
+ integer              :: nw
+ complex(SP)          :: wv(nw)
+ logical              :: be_verbose
+ character(1)         :: ordering
+ complex(SP) ,optional:: eps(nw),eel(nw)
+ !
+ ! Work Space
+ !
+ integer            :: iw
+ complex(SP)        :: eps_extended(nw),eps_kk(nw),wv_kk(nw)
+ !
+ O_eels=.TRUE.
+ !
+ if (.not.present(eps)) then
+   if (ordering=='r'.or.ordering=='a') then
+     if (real(wv(1))<-real(wv(1))) then
+       O_eels=.FALSE.
+       if (be_verbose) call warning(' [O_eels] Impossible to evaluate the EELS')
+       return
+     endif
+   endif
+   return
+ endif
+ !
+ if (ordering=='t'.or.ordering=='c') then
+   eel(:)=-1./eps(:)
+   return
+ endif
+ !
+ if ( (maxval(aimag(eps))/aimag(eps(1))<100..or.&
+&      maxval(aimag(eps))/aimag(eps(nw))<100.) .and. be_verbose) &
+&   call warning(' [O_eels] Possible inaccuracy in the EPS prolungation')
+ !
+ ! extend eps to the negative frequencies
+ !
+ eps_kk         =-1./pi*aimag(eps)
+ eps_kk(1)      =(0.,0.)
+ eps_kk(nw)     =(0.,0.)
+ eps_extended   =(0.,0.)
+ call Kramers_Kronig(eps_kk,real(wv),nw,eps_extended,real(wv)+(0.,0.0001)/HA2EV,nw,(0.,0.))
+ !
+ forall(iw=1:nw) eps_kk(iw)=1./pi*aimag(eps(nw-iw+1))
+ forall(iw=1:nw) wv_kk(iw)=-wv(nw-iw+1)
+ eps_kk(1)      =(0.,0.)
+ eps_kk(nw)     =(0.,0.)
+ call Kramers_Kronig(eps_kk,real(wv_kk),nw,eps_extended,real(wv)+(0.,0.0001)/HA2EV,nw,(0.,0.))
+ !
+ eel=-1./(eps_extended+1.)
+ !
+end function

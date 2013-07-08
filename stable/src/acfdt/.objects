@@ -1,0 +1,1 @@
+objs = acfdt_tot_energy.o gauss_leg_grid.o

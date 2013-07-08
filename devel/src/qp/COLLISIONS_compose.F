@@ -1,0 +1,63 @@
+!
+! Copyright (C) 2000-2013 C. Attaccalite and the YAMBO team
+!              http://www.yambo-code.org
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
+! for more details.
+!
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine COLLISIONS_compose(G_input)
+ !
+ ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} COLLISIONS(n,n',q,qp_state) x G_lesser(n,n',k-q)
+ ! 
+ use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_sc_srpa
+ use pars,             ONLY:SP
+ use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
+ use SC,               ONLY:SC_bands
+ use collision,        ONLY:COLLISIONS
+ !
+ implicit none
+ !       
+ complex(SP), intent(in)   :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
+ !
+ ! Work Space
+ !
+ integer           :: i_qp,ib,ibp,ik,ic
+ !
+ if(.not.l_sc_hf.and..not.l_sc_cohsex.and..not.l_sc_exx) return
+ !
+ if (.not.allocated(QP_Vnl_xc))  allocate(QP_Vnl_xc(QP_n_states))
+ QP_Vnl_xc=(0._SP,0._SP)
+ if(l_sc_cohsex.or.l_sc_srpa) QP_Sc=(0._SP,0._SP)
+ !
+ do i_qp=1,QP_n_states
+   !
+   ic=1
+   !
+   do ib=SC_bands(1),QP_nb
+     do ibp=SC_bands(1),QP_nb
+       do ik=1,QP_nk
+         if(COLLISIONS(i_qp)%table(ib,ibp,ik)/=0) then
+           QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-(0._SP,1._SP)*COLLISIONS(i_qp)%v(ic)*G_input(ib,ibp,ik)
+           ic=ic+1
+         endif
+       enddo
+     enddo
+   enddo
+   !
+ enddo
+ !
+end subroutine 

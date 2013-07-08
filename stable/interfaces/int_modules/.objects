@@ -1,0 +1,1 @@
+objs = mod_com2y.o mod_wf2y.o mod_xc2y.o

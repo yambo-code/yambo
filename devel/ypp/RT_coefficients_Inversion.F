@@ -1,0 +1,95 @@
+!
+! Copyright (C) 2000-2013 M. Gruning, A. Marini and the YAMBO team 
+!              http://www.yambo-code.org
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period,use_LRR)
+ !
+ use pars,            ONLY:SP,cI,pi
+ use YPP,             ONLY:i_t_start,X_order
+ use units,           ONLY:FS2AUT,HA2EV,HBAR_eVfs
+ use real_time,       ONLY:RT_step,NE_steps
+ use matrix_operate,  ONLY:mat_dia_inv,INV
+ implicit none
+ !
+ integer,     intent(in)   :: NW,NX
+ real(SP),    intent(in)   :: P(NE_steps),W(NW),T_period
+ complex(SP), intent(out)  :: X(NX)
+ logical,     intent(in)   :: use_LRR
+ !
+ ! Work space
+ !
+ integer                 :: i_t,i_n,i_deltaT,nP_components,M_size
+ real(SP)   ,allocatable :: P_i(:),T_i(:)
+ complex(SP),allocatable :: M(:,:),X_here(:)
+ !
+ if (use_LRR) then
+   M_size        =2*NW+1
+   nP_components =NW+1
+ else
+   M_size        =2*X_order+1
+   nP_components =X_order+1 
+ endif
+ !
+ i_deltaT=int(T_period/RT_step)/M_size
+ !
+ allocate(M(M_size,M_size),P_i(M_size),T_i(M_size),X_here(nP_components))
+ !
+ M=(0._SP,0._SP)
+ !
+ do i_t=1,M_size
+   T_i(i_t)= ((i_t_start-1)+i_deltaT*(i_t-1))*RT_step
+   P_i(i_t)=P(i_t_start+i_deltaT*(i_t-1))
+ enddo
+ !
+ if (use_LRR) then
+   do i_t=1,M_size
+     M(i_t,1) = 1.
+     do i_n=2,nP_components
+       M(i_t,i_n   ) = exp( cI*W(i_n-1)*T_i(i_t))
+       M(i_t,i_n+NW) = exp(-cI*W(i_n-1)*T_i(i_t))
+     end do
+   end do
+ else
+   do i_t=1,M_size
+     M(i_t,1) = 1.
+     do i_n=2, nP_components
+       M(i_t,i_n        ) = exp( cI*W(i_n)*T_i(i_t))
+       M(i_t,i_n+X_order) = exp(-cI*W(i_n)*T_i(i_t))
+     end do
+   end do
+ endif
+ !
+ call mat_dia_inv(INV,M)
+ !
+ X = (0._SP,0._SP)
+ X_here = (0._SP,0._SP)
+ do i_n =1, nP_components
+   do i_t = 1,M_size
+     X_here(i_n)=X_here(i_n)+M(i_n,i_t)*P_i(i_t)
+   end do
+ end do
+ !
+ if (use_LRR     ) X(:)=X_here(2:)
+ if (.not.use_LRR) X(:)=X_here(:)
+ !
+ deallocate(M,P_i,T_i,X_here)
+ ! 
+end subroutine RT_coefficients_Inversion
+

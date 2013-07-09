@@ -1,0 +1,21 @@
+#if defined _DOUBLE
+objs = 	davint.o  xermsg.o  fdump.o   j4save.o  xercnt.o  xerhlt.o \
+	    xerprn.o  xersve.o  i1mach.o  xgetua.o \
+        dpolft.o  dpcoef.o  dp1vlu.o \
+        dbesj0.o  dbesj1.o  dbesk0.o  dbesk1.o  dcsevl.o  initds.o  \
+        d1mach.o  dbesi0.o  dbsk0e.o  dbesi1.o  dbsk1e.o  dbsi0e.o \
+        dbsi1e.o  dqage.o   dqag.o    dqk15.o   dqk21.o   dqk31.o   \
+        dqk41.o   dqk51.o   dqk61.o   dqpsrt.o  dqawo.o   dqawoe.o \
+        dqc25f.o  dqelg.o   dqcheb.o  dqwgtf.o  dqk15w.o  dqwgtf.o \
+        dgtsl.o   d9b0mp.o  d9b1mp.o
+#else
+objs = 	avint.o  xermsg.o fdump.o  j4save.o xercnt.o xerhlt.o \
+	    xerprn.o xersve.o i1mach.o xgetua.o \
+        polfit.o  pcoef.o  pvalue.o \
+        besj0.o  besj1.o  besk0.o  besk1.o  csevl.o  inits.o  \
+        r1mach.o besi0.o  besk0e.o besi1.o  besk1e.o besi0e.o \
+        besi1e.o qage.o   qag.o    qk15.o   qk21.o   qk31.o   \
+        qk41.o   qk51.o   qk61.o   qpsrt.o  qawo.o  qawoe.o \
+        qc25f.o  qelg.o   qcheb.o  qwgtf.o  qk15w.o  qwgtf.o \
+        sgtsl.o       
+#endif

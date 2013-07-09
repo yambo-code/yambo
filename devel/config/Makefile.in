@@ -1,0 +1,265 @@
+#
+# Copyright (C) 2000-2013 A. Marini and the YAMBO team
+#              http://www.yambo-code.org
+#
+# This file is distributed under the terms of the GNU
+# General Public License. You can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation;
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#
+cpu         = @build_cpu@
+os          = @build_os@
+mpi         = @mpi_cpp@
+netcdf      = @dnetcdf@
+scalapack   = @dscalapack@
+precision   = @dp_cpp@
+fft         = @FFT_CPP@
+xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@
+debug       = @enable_debug@
+do_blas     = @compile_blas@
+do_lapack   = @compile_lapack@
+do_local    = @compile_local@
+do_p2y      = @compile_p2y@
+do_e2y      = @compile_e2y@
+shell       = @SHELL@
+make        = @MAKE@
+package_bugreport = @PACKAGE_BUGREPORT@
+prefix      = @prefix@
+exec_prefix = @exec_prefix@
+bindir      = @bindir@
+libdir      = @srcdir_path@/lib
+includedir  = @srcdir_path@/include
+CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
+  	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
+	   src/external_c/.objects Makefile driver/version.h \
+       sbin/objects_debug.sh driver/editor.h 
+TARGETS  = all yambo interfaces ypp ydb
+UTILS    = changelog
+CLEANS   = clean clean_all
+PROJECTS = yambo_ph yambo_sc yambo_magnetic yambo_rt yambo_kerr yambo_surf\
+           ypp_rt ypp_ph ypp_sc ypp_magnetic ypp_surf
+BROKEN   = 
+DEBUG    = 
+EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
+INTERFCS = a2y p2y e2y c2y
+#
+# Libraries (ordered for compiling & linking)
+#
+BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate common io wf_and_fft 
+
+MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
+               interpolate tddft pol_function qp acfdt bse
+
+PJ_SURFLIBS   = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_ctl surf \
+               setup interface tddft pol_function qp acfdt bse
+
+PJ_SCLIBS          = $(MAIN_LIBS) sc 
+PJ_RTLIBS          = $(MAIN_LIBS) sc real_time
+#
+# Interfaces
+#
+2YLIBS       = external_c modules parallel parser communicate common io bz_ops 
+#
+# YPP
+#
+YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface interpolate pol_function bse
+YPPSCLIBS    = $(YPPLIBS) sc
+YPPRTLIBS    = $(YPPLIBS) sc real_time
+YPPSURFLIBS  = $(BASIC_LIBS) surf_modules bz_ops qp_ctl setup interface interpolate surf pol_function bse
+YDBLIBS      = $(BASIC_LIBS) 
+
+nothing: 
+	@$(make_message)
+changelog:
+	svn log | perl sbin/svn2cl.pl > ChangeLog
+all: $(TARGETS) $(PROJECTS) $(DEBUG)
+libs:
+	@$(mklibxc)
+	@LIBS2DO="slatec";  DIR2GO="lib" ; $(mklib)
+	@if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
+	DIR2GO="lib" ; $(mklib); fi
+	@if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
+	DIR2GO="lib" ; $(mklib); fi
+	@if test "$(do_local)" = yes ; then LIBS2DO="local" ; \
+	DIR2GO="lib" ; $(mklib); fi
+yambo: libs
+	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
+	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
+#
+# PROJECTS #
+# 
+yambo_magnetic: libs
+	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_MAGNETIC -D_SC"; $(mksrc)
+	@X2DO="yambo_magnetic"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_MAGNETIC -D_SC";$(mkx)
+yambo_kerr: libs
+	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_KERR"; $(mksrc)
+	@X2DO="yambo_kerr"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_KERR";$(mkx)
+yambo_sc: libs
+	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_SC"; $(mksrc)
+	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
+yambo_rt: libs
+	@LIBS2DO="$(PJ_RTLIBS)";ADF="-D_RT -D_SC -D_ELPH"; $(mksrc)
+	@X2DO="yambo_rt"; XPATH="driver";XLIBS="$(PJ_RTLIBS)";ADF="-D_RT -D_SC -D_ELPH";$(mkx)
+yambo_ph: libs
+	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_ELPH"; $(mksrc)
+	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_ELPH";$(mkx)
+yambo_surf: libs
+	@LIBS2DO="$(PJ_SURFLIBS)";ADF="-D_SURF"; $(mksrc)
+	@X2DO="yambo_surf"; XPATH="driver";XLIBS="$(PJ_SURFLIBS)";ADF="-D_SURF";$(mkx)
+ypp_ph: libs
+	@LIBS2DO="$(YPPLIBS)";ADF="-D_ELPH"; $(mksrc)
+	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
+ypp_surf: libs
+	@LIBS2DO="$(YPPSURFLIBS)" ; ADF="-D_YPP_SURF";$(mksrc)
+	@X2DO="ypp_surf" ;XPATH="ypp";XLIBS="$(YPPSURFLIBS)"; ADF="-D_YPP_SURF";$(mkx)
+ypp_rt: libs
+	@LIBS2DO="$(YPPRTLIBS)" ; ADF="-D_SC -D_RT -D_ELPH -D_YPP_RT";$(mksrc)
+	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPRTLIBS)"; ADF="-D_YPP_RT -D_YPP_ELPH";$(mkx)
+ypp_sc: libs
+	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_SC";$(mksrc)
+	@X2DO="ypp_sc" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_SC";$(mkx)
+ypp_magnetic: libs
+	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_SC -D_MAGNETIC";$(mksrc)
+	@X2DO="ypp_magnetic" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_MAGNETIC";$(mkx)
+#
+# Interfaces & ypp #
+#
+interfaces: libs
+	@LIBS2DO="$(2YLIBS)" ; $(mksrc)
+	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
+	@X2DO="a2y" ;XPATH="interfaces/a2y";XLIBS="$(2YLIBS)";$(mkx)
+	@X2DO="c2y" ;XPATH="interfaces/c2y";XLIBS="$(2YLIBS)";$(mkx)
+	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
+	XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
+	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
+	XLIBS="$(2YLIBS)" ; $(mkx) ; fi
+ypp: libs
+	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
+	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
+#
+# ydb
+#
+ydb: libs
+	@LIBS2DO="$(YDBLIBS)" ; $(mksrc)
+	@X2DO="ydb" ;XPATH="ydb";XLIBS="$(YDBLIBS)";$(mkx)
+#
+clean: clean_fast
+clean_fast: 
+	@$(lib_xc_clean)
+	@$(objects_clean)
+	@$(lib_mod_clean)
+	@$(xclean)
+clean_all: 
+	@$(lib_xc_distclean)
+	@$(objects_clean)
+	@$(lib_mod_netcdf_clean)
+	@$(conf_clean)
+	@$(xclean)
+
+# Functions
+define make_message
+ echo;echo "YAMBO" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ targets;echo;\
+ for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
+ for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
+ for target in $(BROKEN); do echo " [broken] $$target" ; done;echo;\
+ for target in $(UTILS); do echo  " [util] $$target" ; done;echo
+ for target in $(DEBUG); do echo  " [debug] $$target" ; done;echo
+ for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo
+endef
+define mksrc
+ for ldir in $$LIBS2DO; do \
+  if test ! -f "$(libdir)/lib$$ldir.a" || test "$(debug)" = yes  ; \
+  then rm -f "$(libdir)/lib$$ldir.a" ; \
+  echo " " ; \
+  echo ">>>[Making $$ldir]<<<" ; \
+  ./sbin/make_makefile.sh src/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
+  cd src/$$ldir ; $(make) VPATH=src/$$ldir || exit "$$?" ; cd ../../; fi \
+ done
+endef
+define mklibxc
+  if test ! -f "$(libdir)/libxc.a" ; then \
+  echo " " ; \
+  echo ">>>[Making libxc]<<<" ; \
+  cd $(libdir)/libxc ; $(make) -s VPATH=$(libdir)/libxc  || exit "$$?" ; \
+  echo ">>>[Installing libxc]<<<" ; \
+  make -s install ; \
+  cd ../../; \
+  fi 
+endef
+define mklib
+ for ldir in $$LIBS2DO; do \
+  if test ! -f "$(libdir)/lib$$ldir.a" ; \
+  echo " " ; \
+  echo ">>>[Making $$ldir]<<<" ; \
+  then ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $(xcpp) $$ADF ; \
+  cd $$DIR2GO/$$ldir ; $(make) VPATH=$$DIR2GO/$$ldir || exit "$$?" ; cd ../../; fi \
+ done
+endef
+define mkx
+ LLIBS="";for exe in $$XLIBS; do LLIBS="$$LLIBS -l$$exe" ; done ; \
+ for exe in $$X2DO; do \
+  echo " " ; \
+  echo ">>>[Linking $$exe]<<<" ; \
+  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; \
+  then ./sbin/make_makefile.sh $$XPATH $$exe .objects x $$LLIBS $(xcpp) $$ADF ; \
+  cd $$XPATH ; $(make) VPATH=$$XPATH || exit "$$?" ; fi ; \
+  echo " " ; \
+ done
+endef
+define objects_clean
+ find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
+        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' \) \
+        -type f -print | grep -v '\.\/Makefile' | xargs rm -f
+ echo "[CLEAN] Objects ... done"
+ echo "[CLEAN] Broken files ... done"
+ echo "[CLEAN] Makefiles ... done"
+ if test "$(debug)" = yes ; then \
+ find . -name '.debug*' | xargs rm -fr ; \
+ echo "[CLEAN] Debug locks and directories ... done" ; \
+ fi
+endef
+define lib_xc_clean
+ cd $(libdir)/libxc; make -s clean; cd ../..
+ echo "[CLEAN] LibXC ... done" 
+endef
+define lib_xc_distclean
+ cd $(libdir)/libxc; make -s distclean; cd ../..
+ rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/ lib/libxc/autom4te.cache/
+ echo "[CLEAN] LibXC ... done" 
+endef
+define lib_mod_clean
+ find . \( -name '*.a' -o -name '*.mod' \) -type f -print | \
+       grep -v netcdf | grep -v xc_ | grep -v iotk | grep -v typesize | grep -v libxc | xargs rm -f 
+ echo "[CLEAN] Libraries ... done" 
+ echo "[CLEAN] Modules ... done" 
+endef
+define lib_mod_netcdf_clean
+ find . \( -name '*.a' -o -name '*.mod' \
+           -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
+ echo "[CLEAN] Libraries ... done" 
+ echo "[CLEAN] Modules ... done" 
+ echo "[CLEAN] NetCDF files ... done" 
+endef
+define xclean
+ for exe in $(EXE); do rm -f $(bindir)/$$exe; done
+ for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
+ echo "[CLEAN] Targets ... done" 
+endef
+define conf_clean
+ rm -f $(CFGFILES)
+ rm -f config.status config.log
+ rm -fr autom4te.cache
+ echo "[CLEAN] Autoconf files ... done" 
+endef

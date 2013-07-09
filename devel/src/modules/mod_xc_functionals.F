@@ -1,0 +1,124 @@
+!
+! Copyright (C) 2003 M. Marques, A. Castro, A. Rubio, G. Bertsch
+!
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team
+!              http://www.yambo-code.org
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
+! for more details.
+!
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+module xc_functionals
+ !
+ use pars,      ONLY:SP,lchlen
+ use xc_f90_lib_m
+ use xc_f90_types_m
+ use libxc_funcs_m
+ implicit none
+ !
+ integer     , public :: GS_xc_KIND
+ integer     , public :: GS_xc_FUNCTIONAL
+ real(SP), public, allocatable:: magn(:,:)
+ real(SP), public, allocatable:: V_xc(:,:)
+ real(SP), public, allocatable:: E_xc(:)
+ real(SP), public, allocatable:: F_xc(:) 
+ !
+ type xc_fnctl_t
+   integer         :: family
+   integer         :: kind              
+   integer         :: id               
+   integer         :: spin_channels     
+   integer         :: flags
+   character(lchlen) :: name
+   type(xc_f90_pointer_t) :: conf
+   type(xc_f90_pointer_t) :: info
+ end type xc_fnctl_t
+ !
+ integer, public, parameter :: &
+    XC_FACTOR        = 1000,&
+    XC_NOT_AVAILABLE = 999999, & 
+    NOXC             = 0, &    
+    XC_LDA_C_KP      = 99
+ !
+ character(*), parameter, dimension(3) :: XC_KIND_DESCR = (/'(X) ','(C) ','(XC)'/)
+ !
+ contains
+   !
+   integer function XC_libxcID(yamboID,which)
+     !
+     integer, intent(in) :: yamboID,which
+     ! ws:
+     integer func(2)
+     !
+     if (yamboID==XC_NOT_AVAILABLE) then
+       func(which) = XC_NOT_AVAILABLE
+       return
+     end if
+     !
+     if (which.gt.2.or.which.lt.1) return
+     func(1) = yamboID/XC_factor 
+     func(2) = yamboID-func(1)*XC_factor
+     XC_libxcID = func(which)
+     !
+   end function XC_libxcID
+   !
+   subroutine xc_setup_fnctl(f,fun,nsp)
+     !
+     use xc_f90_types_m
+     use xc_f90_lib_m, ONLY:xc_f90_func_init,xc_f90_info_family,&
+          xc_f90_info_kind,xc_f90_info_flags
+     implicit none
+     integer, intent(in) :: fun, nsp
+     type(xc_fnctl_t), intent(out) :: f(2)
+     integer :: ixc
+     type(xc_f90_pointer_t) :: p,info 
+     !
+     do ixc=1,2
+       f(ixc)%id=XC_libxcID(fun,ixc)
+       if (f(ixc)%id==NOXC) cycle
+       call xc_f90_func_init(p,info,f(ixc)%id,nsp)
+       call xc_f90_info_name(info,f(ixc)%name)
+       f(ixc)%family=xc_f90_info_family(info)
+       f(ixc)%kind=xc_f90_info_kind(info)
+       f(ixc)%id=fun
+       f(ixc)%spin_channels=nsp
+       f(ixc)%flags=xc_f90_info_flags(info)
+       f(ixc)%conf=p
+       f(ixc)%info=info
+     enddo
+     !
+   end subroutine xc_setup_fnctl
+   !
+   character(lchlen) function xc_string(functional)
+     !     
+     integer        :: functional
+     character(4)   :: ch_kind
+     type(xc_fnctl_t) :: f(2)
+     integer        :: ixc
+     !
+     xc_string = ''
+     call xc_setup_fnctl(f,functional,XC_UNPOLARIZED)
+     !
+     do ixc = 1,2  
+       if (f(ixc)%id==NOXC) cycle
+       if (ixc==2) xc_string= trim(xc_string)//'+'
+       ch_kind = XC_KIND_DESCR(f(ixc)%kind+1)
+       xc_string= trim(xc_string)//trim(f(ixc)%name)//trim(ch_kind)
+     end do
+     !
+   end function xc_string
+   !
+ end module xc_functionals

@@ -1,0 +1,19 @@
+FFT_more =
+#if defined _RT
+FFT_more = fft_1d.o fft_singleton.o
+#endif
+FFT_object = sgfft.o 
+#if defined _FFTW
+FFT_object =
+#endif
+WF_rot_object =
+#if defined _SC
+WF_rot_object = WF_rotate.o
+#endif
+#if defined _MAGNETIC
+WF_der_objects = WF_derivative.o
+#endif
+objs = fft_setup.o fft_3d.o $(FFT_object) $(FFT_more) \
+       scatter_Bamp.o scatter_Gamp.o WF_spatial_invertion.o \
+       WF_load.o WF_symm.o WF_apply_symm.o $(WF_rot_object) \
+       $(WF_der_objects) eval_R_minus_R.o 

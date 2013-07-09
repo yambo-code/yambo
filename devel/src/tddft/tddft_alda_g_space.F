@@ -1,0 +1,92 @@
+!
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!              http://www.yambo-code.org
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine tddft_alda_g_space(E,k)
+ !
+ use pars,          ONLY:DP,SP
+ use memory_m,      ONLY:mem_est
+ use TDDFT,         ONLY:FXC_n_g_corr,FXC
+ use com,           ONLY:msg
+ use FFT_m,         ONLY:fft_size,fftw_plan,fft_dim,fft_g_table
+ use electrons,     ONLY:levels
+ use R_lattice,     ONLY:bz_samp,G_m_G
+ use wave_func,     ONLY:WF_load,WF_free
+ use xc_functionals,ONLY:F_xc
+ use global_XC,     ONLY:WF_kind,WF_xc_functional
+ use interfaces,    ONLY:PARALLEL_WF_distribute
+ use parallel_m,    ONLY:PAR_IND_G_b,PAR_IND_Xk_ibz
+ implicit none
+ type(levels) ::E
+ type(bz_samp)::k
+ ! 
+ ! Work Space
+ !
+ integer                  :: i1,i2
+ complex(DP), allocatable :: F_xc_DP(:)
+ integer, external        :: eval_G_minus_G
+ !
+ if (allocated(FXC)) return
+ !
+ ! Fxc RL size setup looking at the max index of G-G'
+ !
+ if (FXC_n_g_corr/= eval_G_minus_G(FXC_n_g_corr,0) ) then
+   FXC_n_g_corr   = eval_G_minus_G(FXC_n_g_corr,0)
+   call msg('s','[TDDFT] ALDA Fxc size forced by symmetry to be :',FXC_n_g_corr)
+ endif
+ !
+ ! WF distributed & load
+ !=======================
+ !
+ call PARALLEL_WF_distribute(E%nbm,k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+ !
+ call WF_load(0,1,(/1,E%nbm/),(/1,k%nibz/),title='-Rho')
+ !
+ ! ALDA functional
+ !
+ allocate(F_xc(fft_size),F_xc_DP(fft_size))
+ call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,2)
+ F_xc_DP=F_xc
+ !
+ ! need to reset the plan to do a BACKWARD FFT (R->G)
+ !
+ fftw_plan=0
+#if defined _FFTW
+ call fft_3d(F_xc_DP,fft_dim,-1,fftw_plan)
+#else
+ call fft_3d(F_xc_DP,fft_dim,-1)
+#endif
+ !
+ ! Fxc
+ !
+ allocate(FXC(FXC_n_g_corr,FXC_n_g_corr,1))
+ call mem_est("FXC",(/size(FXC)/))
+ do i1=1,FXC_n_g_corr
+   do i2=1,FXC_n_g_corr
+     FXC(i1,i2,1)=F_xc_DP( fft_g_table( G_m_G(i1,i2) ,1) )/real(fft_size,SP)
+   enddo
+ enddo
+ !
+ ! Clean
+ !
+ deallocate(F_xc,F_xc_DP)
+ call WF_free()
+ !
+end subroutine

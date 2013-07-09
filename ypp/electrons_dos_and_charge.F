@@ -124,6 +124,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    if (l_TIME_plot.and.l_3D_plot) then
      !
 #if defined _YPP_RT
+     call RT_output(what="initialize")
      call RT_output("open el_dos")
 #endif
    else if (.not.l_3D_plot) then
@@ -252,11 +253,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
    if (n_T_steps>1) call msg('s','DOS max value  :',el_dos_max)
    !
-   if (l_TIME_plot.and.l_3D_plot) then
-#if defined _YPP_RT
-     call RT_output("close el_dos")
-#endif
-   else if (.not.l_3D_plot) then
+   if (.not.l_3D_plot) then
      call of_open_close(trim(output_fname))
    endif
    !

@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
  char *cv[4]; 
  char *fmt=NULL,*inf=NULL,*od=NULL,*id=NULL,*js=NULL,*db=NULL,*com_dir=NULL;
 #if defined _ydb
- char *desc=NULL,*str_no_null=NULL,*vers=NULL,*runlevels=NULL;
+ char *desc=NULL,*str_no_null=NULL,*vers=NULL,*runlevels=NULL,*fname=NULL;
  int  lstrings=200;
 #endif
  extern int optind;
@@ -135,6 +135,7 @@ int main(int argc, char *argv[])
  desc     = (char *) malloc(lstrings);
  vers     = (char *) malloc(lstrings);
  runlevels= (char *) malloc(lstrings);
+ fname    = (char *) malloc(lstrings);
 #endif
  id       = (char *) malloc(2);
  od       = (char *) malloc(2);
@@ -330,7 +331,7 @@ int main(int argc, char *argv[])
    Running the Fortran ydb driver 
  ===========================================================================
  */
- F90_FUNC(ydb_i,YDB_I)(&lni,rnstr2,&lstrings,desc,vers,runlevels,&iif);
+ F90_FUNC(ydb_i,YDB_I)(&lni,rnstr2,&lstrings,desc,vers,runlevels,fname,&iif);
  if (iif > 0) { 
   str_no_null = strtok (desc," ");
   strcpy(edit_line,editor);
@@ -346,6 +347,12 @@ int main(int argc, char *argv[])
    str_no_null = strtok (vers," ");
    strcpy(edit_line,editor);
    strncat(edit_line,vers,strlen(vers));
+   if(strstr(editor,"none ")==0) { system(edit_line); };
+  }
+  if (iif == 4) { 
+   str_no_null = strtok (fname," ");
+   strcpy(edit_line,editor);
+   strncat(edit_line,fname,strlen(fname));
    if(strstr(editor,"none ")==0) { system(edit_line); };
   }
  };

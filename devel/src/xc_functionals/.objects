@@ -1,7 +1,0 @@
-DENSITY = 
-#if defined _RT
-DENSITY = el_density_matrix.o
-#endif
-objs =  xc_rpa_kp.o \
-        el_magnetization.o el_density.o $(DENSITY) eval_Gradient.o XC_potential_driver.o\
-        XC_libxc_driver.o XC_eval_gga_potential.o 

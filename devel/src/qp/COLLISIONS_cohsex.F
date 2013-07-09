@@ -69,6 +69,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  !
  ! Reset...
  !
+ alloc_err=0
  !
  call collision_reset(isc)
  call collision_reset(iscp)

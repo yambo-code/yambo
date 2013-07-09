@@ -30,7 +30,8 @@ integer function variables_SC(ID,local_description,what)
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,l_sc_diagonal,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,SC_up_W_iters,&
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,local_V,RT_nk
- use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
+ use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR,&
+&                         variable_is_found
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,              &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_IO_time,                  &
@@ -290,8 +291,8 @@ integer function variables_SC(ID,local_description,what)
  !
  if(any((/l_J,l_G,l_occupations/))) then
    !
-   VAR_SIZE=7
-   if (ver_is_gt_or_eq(ID,revision=2486)) VAR_SIZE=8
+   VAR_SIZE=6
+   if (ver_is_gt_or_eq(ID,revision=2494)) VAR_SIZE=7
    call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=VAR_SIZE,MENU=0) 
    !
    i_desc=i_desc+1
@@ -307,19 +308,25 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,&
 &    VAR=" [RT] Time step              [fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
-   if (ver_is_gt_or_eq(ID,revision=2484)) then
-     i_desc=i_desc+1
-     call io_elemental(ID,&
-&      VAR=" [RT] Time steps interpolated    :",I0=RT_dynamics_jumps,CHECK=.true.,OP=(/"=="/),&
-&      DESCRIPTION=local_description(i_desc))
+   !
+   if(variable_is_found(ID,"TEMPERATURES")/=0) then
+     !
+     if (ver_is_gt_or_eq(ID,revision=2494)) then
+       i_desc=i_desc+1
+       call io_elemental(ID,&
+&        VAR=" [RT] Time steps interpolated    :",I0=RT_dynamics_jumps,CHECK=.true.,OP=(/"=="/),&
+&        DESCRIPTION=local_description(i_desc))
+     endif
+     !
    endif
+   !
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] Time steps                 :",I0=NE_steps,WARN=.true.,OP=(/"=="/),&
+&    VAR=" [RT] Time steps    (planned)    :",I0=NE_steps,WARN=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] NE time (reached)      [fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&
+&    VAR=" [RT] NE time       (reached)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID, &

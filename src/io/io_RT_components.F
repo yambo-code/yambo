@@ -149,6 +149,12 @@ integer function io_RT_components(what,ID)
      endif
    endif
    !
+   if (l_occupations) then
+     if (write_is_on(ID).or.(read_is_on(ID).and.variable_is_found(ID,"TEMPERATURES")/=0) ) then
+       io_RT_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL)
+     endif
+   endif
+   !
    if (io_RT_components/=0) goto 1
    !
    io_RT_components=variables_SC(ID,local_description,what)

@@ -60,7 +60,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  character(2)     ::wf_space_here
  character(schlen)::wf_title
- integer          ::i1,ikibz,ib,i2,ic,is,ig,igfft,wf_size,ib_grp,&
+ integer          ::i1,ikibz,ib,ib1,ib2,i2,ic,is,ig,igfft,wf_size,ib_grp,&
 &                   s_2_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
@@ -214,7 +214,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (wf_space=='R') call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !
- allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+ allocate(wf_disk(2,min(wf_nb_io,wf_b(2)-wf_b(1)+1),wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  !
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
@@ -236,7 +236,10 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
        ! by PARALLEL_WF_distribute I skip fragments that are not needed
        ! 
        if ( allocated(states_to_load) ) then
-         if (.not.any(states_to_load(wf_nb_io*(ib_grp-1)+1:wf_nb_io*ib_grp,ikibz,:))) cycle
+         ib1=wf_nb_io*(ib_grp-1)+1
+         ib2=wf_nb_io*ib_grp
+         if(ib2>wf_b(2)) ib2=wf_b(2)
+         if (.not.any(states_to_load(ib1:ib2,ikibz,:))) cycle
        endif
      endif
      !

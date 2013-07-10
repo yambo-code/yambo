@@ -59,6 +59,8 @@ subroutine V_real_space_to_H(ik,V,H,wf)
    ibp=QP_table(i1,2)
    i_spin=spin(qp_table(i1,:))
    !
+   if (ib>ibp) cycle
+   !
 #if defined _RT
    if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
 #endif

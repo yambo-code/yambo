@@ -37,7 +37,7 @@ integer function io_G_retarded(ID,what)
  !
  ! Work Space
  !
- integer              :: i_k,i_s,T_steps_each_section,T_section(2),i_desc
+ integer              :: i_k,i_s,T_steps_each_section,T_section(2),i_desc,i1
  real(SP),allocatable :: Gr_disk(:,:,:)
  !
  io_G_retarded=io_connect(desc=what,type=2,ID=ID)
@@ -79,7 +79,7 @@ integer function io_G_retarded(ID,what)
      i_desc=i_desc+1
      call io_elemental(ID,R1=QP_ctl_Wc(3,:,1),&
 &         VAR=' [Gr] Damping (c) [eV,adim,eV^-1]:',CHECK=.true.,&
-&         OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
+&         OP=(/"==","==","=="/),DESCRIPTION=Gr_description(i_desc))
      i_desc=i_desc+1
      call io_elemental(ID,R0=QP_ctl_Wv_E_ref(3,1),&
 &         VAR=' [Gr] Damping (v) Energy ref [eV]:',UNIT=HA2EV,CHECK=.true.,&
@@ -87,7 +87,7 @@ integer function io_G_retarded(ID,what)
      i_desc=i_desc+1
      call io_elemental(ID,R1=QP_ctl_Wv(3,:,1),&
 &         VAR=' [Gr] Damping (v) [eV,adim,eV^-1]:',CHECK=.true.,&
-&         OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
+&         OP=(/"==","==","=="/),DESCRIPTION=Gr_description(i_desc))
      !
    endif
    !

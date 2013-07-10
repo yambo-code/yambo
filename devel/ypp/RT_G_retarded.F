@@ -124,8 +124,10 @@ subroutine RT_G_retarded(E,k)
    !
    do i_b=Gr_bands(1),Gr_bands(2)
      !
-     A_w_DP=(0._DP,0._DP)
-     A_t_DP=(0._DP,0._DP)
+     if (l_QP_cut.or.l_BOX) then
+       A_w_DP=(0._DP,0._DP)
+       A_t_DP=(0._DP,0._DP)
+     endif
      !
      Gr_peak_pos(i_k,i_b)=E%E(i_b,i_k,1)
      !

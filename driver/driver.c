@@ -356,6 +356,7 @@ int main(int argc, char *argv[])
    if(strstr(editor,"none ")==0) { system(edit_line); };
   }
  };
+ if (iif == -1) {usage(1);exit(0);};
 #endif
  /* 
    INPUT FILE

@@ -58,11 +58,12 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  integer :: DB_month(n_max_DB_elements)
  integer :: DB_day(n_max_DB_elements)
  character(schlen) :: DB_file(n_max_DB_elements),TMP_ch
+ character(lchlen) :: DB_desc(n_max_DB_elements),description
  !
  ! Presets
  !
  ydb_i =0
- iif   =0
+ iif   =-1
  ncpu  =1
  write_to_log =.TRUE.
  log_as_a_file=.FALSE.
@@ -168,7 +169,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
    close(1)
    open(unit=99,file=trim(db_PATH),form='formatted')
    do i1=1,n_max_DB_elements 
-     read (99,*,end=2) DB_id(i1),DB_i_ref(i1),DB_year(i1),DB_month(i1),DB_day(i1),DB_file(i1)
+     read (99,*,end=2) DB_id(i1),DB_i_ref(i1),DB_year(i1),DB_month(i1),DB_day(i1),DB_file(i1),DB_desc(i1)
    enddo
 2  continue
  else 
@@ -180,15 +181,18 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  ! LIST
  !
  if (check_for_word("list")>0) then
+   iif=0
    call LIVE_message('DB contents..',"n","n","%s")
    call LIVE_message(' ',"n","","%s")
    do i1=1,n_max_DB_elements
      if (DB_id(i1)>0) then
        if (DB_i_ref(i1)==0) then
-         write (*,'(4(a,i6,2x),2a)') ' ID= ',DB_id(i1),' Y= ',DB_year(i1),' M= ',DB_month(i1),' D= ',DB_day(i1),' File= ',DB_file(i1)
+         write (*,'(4(a,i6,2x),4a)') ' ID= ',DB_id(i1),' Y= ',DB_year(i1),' M= ',DB_month(i1),&
+&                                    ' D= ',DB_day(i1),' File= ',trim(DB_file(i1)),' Desc= ',trim(DB_desc(i1))
        else
-         write (*,'(5(a,i6,2x),2a)') ' ID= ',DB_id(i1),' REF= ',DB_i_ref(i1),' Y= ',DB_year(i1),&
-&                                    ' M= ',DB_month(i1),' D= ',DB_day(i1),' File= ',DB_file(i1)
+         write (*,'(5(a,i6,2x),4a)') ' ID= ',DB_id(i1),' REF= ',DB_i_ref(i1),' Y= ',DB_year(i1),&
+&                                    ' M= ',DB_month(i1),' D= ',DB_day(i1),' File= ',trim(DB_file(i1)),&
+&                                    ' Desc= ',trim(DB_desc(i1))
        endif
      endif
    enddo
@@ -200,6 +204,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  DB_id_=0
  DB_i_ref_=0
  if (check_for_word("ref")>0) then
+   iif=0
    read(rstr_piece(check_for_word("ref")+1),'(i)') i_ref
    call LIVE_message('Reference ID is '//trim(intc(i_ref)),"n","n","%s")
    do i1=1,n_max_DB_elements
@@ -210,6 +215,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  ! VIEW
  !
  if (check_for_word("view")>0) then
+   iif=0
    if (DB_i_ref(DB_id_)>0) then
      call build_up_paths(DB_year(DB_id_),DB_month(DB_id_),DB_day(DB_id_),DB_i_ref(DB_id_),&
 &                        DB_id(DB_id_),trim(DB_file(DB_id_))) 
@@ -223,9 +229,18 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
    return
  endif
  !
+ ! DESCRIPTION
+ !
+ description="none"
+ if (check_for_word("msg")>0) then
+   iif=0
+   read(rstr_piece(check_for_word("msg")+1),'(a)') description
+ endif
+ !
  ! ADD
  !
  if (check_for_word("add")>0) then
+   iif=0
    !
    if (check_for_word("in")>0.or.check_for_word("out")>0) then
      if (check_for_word("in")>0) read(rstr_piece(check_for_word("in")+1),'(a)') file_name
@@ -278,13 +293,13 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
      close(1)
      close(2)
      close(3)
-     if (i_ref==0) write (99,'(5(i6,2x),a)') i_random,i_ref,year,month,day,trim(file_name)
+     if (i_ref==0) write (99,'(5(i6,2x),a,1x,a)') i_random,i_ref,year,month,day,trim(file_name),trim(description)
    endif
    !
    if (check_for_word("out")>0.and.i_ref>0) then
      call build_up_paths(year,month,day,i_random,o_random,trim(file_name))
      call cp_file(trim(file_name),trim(file_PATH),i_err)
-     write (99,'(5(i6,2x),a)') o_random,i_random,year,month,day,trim(file_name)
+     write (99,'(5(i6,2x),a,1x,a)') o_random,i_random,year,month,day,trim(file_name),trim(description)
      iif=1
    endif
    !

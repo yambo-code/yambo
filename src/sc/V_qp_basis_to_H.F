@@ -52,6 +52,8 @@ subroutine V_qp_basis_to_H(ik,V,H)
    ibp=QP_table(i1,2)
    i_spin = spin(QP_table(i1,:))
    !
+   if(ib>ibp) cycle
+   !
 #if defined _RT
    if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
 #endif
@@ -61,7 +63,9 @@ subroutine V_qp_basis_to_H(ik,V,H)
    ! As a consequence the H matrix is not correctly imposed to be Hermitian
    ! and the dynamics does not work.
    !
-   if (ib>ibp) cycle
+#if defined _RT
+   if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
+#endif
    !
    H(ib,ibp,i_spin) = H(ib,ibp,i_spin) + V(i1)
    !

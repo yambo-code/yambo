@@ -9,6 +9,7 @@ How to update the branch incorporating previous commits of the trunk
 ====================================================================
 
 svn merge svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/trunk/stable -r xxx:HEAD 
+svn merge svn+ssh://marini@qeforge.qe-forge.org/svnroot/yambo-devel/trunk/devel  -r xxx:HEAD 
 
 How to update the branch incorporating previous commits of another branch
 ==========================================================================

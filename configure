@@ -596,6 +596,8 @@ ac_includes_default="\
 #endif"
 
 ac_subst_vars='LTLIBOBJS
+BGQ_str
+OPENMPI_str
 OPENMP_str
 SLK_str
 LOCAL_str
@@ -663,6 +665,7 @@ FCFLAGS
 FC
 MKMF_PREFIX
 OPENMPLIBS
+openmpi_cpp
 bluegene_cpp
 PW_CPP
 PW_VER
@@ -750,6 +753,7 @@ enable_dp
 with_iotk
 with_p2y
 enable_bluegene
+enable_openmpi
 enable_open_mp
 enable_msgs_comps
 enable_options_check
@@ -1406,6 +1410,7 @@ Optional Features:
   --enable-keep-src       Keep preprocessed.f90 file. Default is no.
   --enable-dp             Double-precision build. Default is no.
   --enable-bluegene       Bluegene specific code instructions.
+  --enable-openmpi        OpenMPI specific code instructions.
   --enable-open-mp        Enable OpenMP support
   --enable-msgs-comps     Verbose compilation log
   --enable-options-check  Enable the command line options check in driver.c.
@@ -5468,7 +5473,6 @@ if test "$compile_p2y" = "yes"; then
 fi
 
 
-
 # ============================================================================
 # BLUEGENE support
 # Check whether --enable-bluegene was given.
@@ -5482,6 +5486,18 @@ if test x"$enable_bluegene" = "xyes"; then
  bluegene_cpp="-D_BLUEGENE"
 fi
 
+# ============================================================================
+# OpenMPI support
+# Check whether --enable-openmpi was given.
+if test "${enable_openmpi+set}" = set; then :
+  enableval=$enable_openmpi;
+fi
+
+if test x"$enable_openmpi" = "x"; then enable_openmpi="yes"; fi
+openmpi_cpp=" "
+if test x"$enable_openmpi" = "xyes"; then
+ bluegene_cpp="-D_OPENMPI"
+fi
 
 # ============================================================================
 #
@@ -9935,7 +9951,18 @@ if test "$compile_local" = "yes" ; then LOCAL_str="X"; fi
 SLK_str=" "
 if test "$enable_scalapack" = "yes" ; then SLK_str="X"; fi
 
+OPENMP_str=" "
+if test "$enable_openmp" = "yes" ; then OPENMP_str="X"; fi
+
+BGQ_str=" "
+if test "$enable_bluegene" = "yes" ; then BGQ_str="X"; fi
+
+OPENMPI_str=" "
+if test "$enable_openmpi" = "yes" ; then OPENMPI_str="X"; fi
+
 if test "$exec_prefix" = "NONE" ; then exec_prefix="$srcdir_path"; fi
+
+
 
 
 

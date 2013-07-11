@@ -169,7 +169,6 @@ if test "$compile_p2y" = "yes"; then
 fi
 AC_SUBST(PW_VER)
 AC_SUBST(PW_CPP)
-
 # ============================================================================
 # BLUEGENE support
 AC_ARG_ENABLE(bluegene, AC_HELP_STRING([--enable-bluegene],[Bluegene specific code instructions.]))
@@ -179,7 +178,15 @@ if test x"$enable_bluegene" = "xyes"; then
  bluegene_cpp="-D_BLUEGENE"
 fi
 AC_SUBST(bluegene_cpp)
-
+# ============================================================================
+# OpenMPI support
+AC_ARG_ENABLE(openmpi, AC_HELP_STRING([--enable-openmpi],[OpenMPI specific code instructions.]))
+if test x"$enable_openmpi" = "x"; then enable_openmpi="yes"; fi
+openmpi_cpp=" "
+if test x"$enable_openmpi" = "xyes"; then 
+ openmpi_cpp="-D_OPENMPI"
+fi
+AC_SUBST(openmpi_cpp)
 # ============================================================================
 #
 # OpenMP

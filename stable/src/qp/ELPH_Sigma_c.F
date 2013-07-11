@@ -25,7 +25,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! following the Allen-Cardona formulation (see for example 
  ! PRB 23, 1495 (1981) )
  !
- use pars,          ONLY:SP,DP,schlen,pi
+ use pars,          ONLY:SP,DP,schlen,pi,cZERO
  use units,         ONLY:HA2EV,HA2THZ
  use parser_m,      ONLY:parser
  use frequency,     ONLY:w_samp,W_reset
@@ -37,9 +37,11 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use interfaces,    ONLY:PARALLEL_index
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR_CL
+ use QP_ctl_m,      ONLY:QP_ctl_t,reset_QP_ctl
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
-&                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,QP_G_dr,&
-&                        On_Mass_Shell_approx
+&                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
+&                        On_Mass_Shell_approx,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
+&                        QP_ctl_interp_neigh,QP_ctl_db
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,RL_vol
  use ELPH,          ONLY:elph_nb,ph_freqs_sq,elph_gkkp,&
@@ -48,7 +50,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        setup_k_plus_q_levels,f_k_plus_q,elph_nDBs_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
 &                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK,nq_memory,ph_qpt,&
-&                        elph_branches
+&                        elph_branches,E_k_plus_q
  use functions,     ONLY:Fermi_fnc_derivative
  !
  implicit none
@@ -70,6 +72,15 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  complex(SP)      ::delta_E
  logical          ::l_WRgFsq,l_GF_from_CA
  real(SP), allocatable :: q_weight(:)
+ ! 
+ ! QP corrections on k+q states
+ !
+ type(QP_ctl_t)        :: QP_ctl,QP_ctl_dummy
+ integer , allocatable :: DB_corrected(:,:,:)
+ ! 
+ ! TAD-pole diagram
+ !
+ complex(SP),allocatable :: T_lambda(:)
  !
  ! Parallelization
  !
@@ -83,6 +94,20 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  do i_qp=1,qp%n_states
    call W_reset(Sc_W(i_qp))
  enddo
+ !
+ call reset_QP_ctl(QP_ctl)
+ call reset_QP_ctl(QP_ctl_dummy)
+ !
+ ! QPctl for k+q energies
+ !
+ QP_ctl%short_descr='[QP@G_k+q]'
+ QP_ctl%db=QP_ctl_db(3)
+ QP_ctl%interp_neigh=QP_ctl_interp_neigh(3)
+ QP_ctl%E=(/QP_ctl_E(3,1,1)/HA2EV,QP_ctl_E(3,2,1),0._SP,QP_ctl_E(3,3,1)/)
+ QP_ctl%W(1:3)=(/QP_ctl_Wc(3,1,1)/HA2EV,QP_ctl_Wc(3,2,1),QP_ctl_Wc(3,3,1)*HA2EV/)
+ QP_ctl%W(4:6)=(/QP_ctl_Wv(3,1,1)/HA2EV,QP_ctl_Wv(3,2,1),QP_ctl_Wv(3,3,1)*HA2EV/)
+ QP_ctl%Z=QP_ctl_Z(3,1)
+ QP_ctl%db=QP_ctl_db(3)
  !
  if (l_el_corr) then
    call section('+','Correlation: Phonon Self-energy')
@@ -226,6 +251,11 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  call elph_global_alloc('gFsq')
  !
+ ! TadPole
+ !
+ allocate(T_lambda(elph_branches(2)))
+ T_lambda=cZERO
+ !
  iq_db_ref=0
  !
  do iq_loop=1,nq_to_sum
@@ -251,11 +281,16 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      io_err=ioELPH(ID,'gkkp')
      if (io_err<0) call error('Missing Q-database')
      !
-     if (.not.elph_use_q_grid) then
+     if (.not.elph_use_q_grid.and.iq_bz==1) then
        !
-       if (iq_bz==1) E_random_shift=E_k_p_q%E(en%nbf,1,1)-en%E(en%nbf,1,1)
+       E_random_shift=E_k_p_q%E(en%nbf,1,1)-en%E(en%nbf,1,1)
        !
        call setup_k_plus_q_levels(E_random_shift)
+       !
+       allocate(DB_corrected(elph_nb,k%nbz,1))
+       DB_corrected=0
+       call QP_apply_global_stretch((/1,elph_nb/),E_k_p_q,QP_ctl_dummy,QP_ctl,DB_corrected,.TRUE.)
+       deallocate(DB_corrected)
        !
      endif
      !

@@ -267,7 +267,7 @@ module QP_CTL_m
      !
      ! Finally I apply the generalized stretch
      !
-     call QP_apply_global_stretch(band_range,en,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected)
+     call QP_apply_global_stretch(band_range,en,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected,.FALSE.)
      !
      ! Fermi Level Updates
      !=====================

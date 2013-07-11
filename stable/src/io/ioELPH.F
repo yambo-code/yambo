@@ -78,7 +78,7 @@ integer function ioELPH(ID,what)
      call io_elemental(ID,&
 &       VAR="                  [used]:",I0=elph_nDBs_used,CHECK=.true.,OP=(/"=="/))
    endif
-   if (ver_is_gt_or_eq(ID,revision=1074).and.what=='gkkp_expanded') then
+   if (ver_is_gt_or_eq(ID,revision=1074)) then
      call io_elemental(ID,&
 &       VAR=" K points (BZ)          :",I0=elph_nk_bz,CHECK=.true.,OP=(/"=="/))
    endif
@@ -230,8 +230,8 @@ integer function ioELPH(ID,what)
    call E_reset(E_k_p_q)
    E_k_p_q%nb=elph_nb
    E_k_p_q%nk=nkbz
-   allocate(E_k_p_q%E(elph_nb,nkbz,1))
-   E_k_p_q%E=E_k_plus_q
+   allocate(E_k_p_q%E(elph_nb,nkbz,n_sp_pol))
+   E_k_p_q%E(:,:,1)=E_k_plus_q(:,:,1)
  endif
  ! 
  ! ELPH_gkkp 

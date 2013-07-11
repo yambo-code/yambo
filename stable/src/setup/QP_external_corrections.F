@@ -90,14 +90,4 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  if (apply_QP)  call OCCUPATIONS_IO_and_interpolate(en,'G',k,Time=OCC_T_ref,imposed_COM=REP)
 #endif
  !
-#if defined _ELPH
- !
- ! - Green's Function (k+q levels loaded for the _ELPH)
- !
- if (l_gw0.and.l_ph_corr) then
-   call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt='s')
- endif
- !
-#endif
- !
 end subroutine

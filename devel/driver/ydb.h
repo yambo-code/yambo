@@ -30,7 +30,7 @@
 #else
  int ydb_i_
 #endif
-(int *, char *rnstr2, int *, char *desc, char *vers, char *runlevels, int * );
+(int *, char *rnstr2, int *, char *desc, char *vers, char *runlevels, char *file_name, int * );
 /*
  Command line structure
 */
@@ -42,9 +42,11 @@
   {"in",    "i","Input",0,0,1,0,0},    
   {"out",   "o","Output",0,0,1,0,0},    
   {"list",  "l","List",0,0,0,0,0},              
-  {"list",  "v","View",1,0,0,0,0},              
+  {"view",  "v","View",0,0,0,0,0},              
   {"ref",   "r","Reference",1,0,0,0,0},        
-  {"change","c","Change a give VAR I/O directory",0,0,2,0,0},
+  {"msg",   "m","Short description",0,0,1,0,0},
+  {"copy",  "c","Copy the whole ID folder (in/out) locally",1,0,0,0,0},
+  {"change","v","Change a give VAR I/O directory",0,0,2,0,0},
   {NULL,NULL,NULL,0,0,0,0,0}
  };
  char *tool="ydb";

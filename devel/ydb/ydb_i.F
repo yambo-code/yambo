@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,iif)
+integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  !
  use pars,                ONLY:schlen,lchlen
  use IO_m,                ONLY:mk_dir,cp_file,io_control,OP_APP_WR_CL,IO_write,IO_read
@@ -35,25 +35,35 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,iif)
  integer,            intent(inout) :: lnstr
  character(lnstr),   intent(inout) :: instr
  integer,            intent(inout) :: iif,lstrings
- character(lstrings),intent(inout) :: desc,vers,runlevels
+ character(lstrings),intent(inout) :: desc,vers,runlevels,fname
  !
  ! Work Space
  !
  integer,parameter::n_max_pieces=100
  character(schlen)::rstr_piece(n_max_pieces),known_runlevels(200)
  character(lchlen)::PATH,file_name,host_name,file_PATH,runl_PATH,desc_PATH,vers_PATH,db_PATH
- integer          ::hn_len,n_pieces,i1,i_random,i_err,ID
- integer          ::dz(8),year,day,month,hour,minutes,i_ref
+ integer          ::hn_len,n_pieces,i1,i_random,i_err,ID,o_random
+ integer          ::dz(8),year,day,month,hour,minutes,i_ref,DB_i_ref_,DB_id_
  logical          ::l_found
  character(5)     ::cz
  character(8)     ::cd
  character(10)    ::ctz
- integer,external :: io_YDB
+ !
+ ! DB
+ !
+ integer,parameter::n_max_DB_elements=10000
+ integer :: DB_id(n_max_DB_elements)
+ integer :: DB_i_ref(n_max_DB_elements)
+ integer :: DB_year(n_max_DB_elements)
+ integer :: DB_month(n_max_DB_elements)
+ integer :: DB_day(n_max_DB_elements)
+ character(schlen) :: DB_file(n_max_DB_elements),TMP_ch
+ character(lchlen) :: DB_desc(n_max_DB_elements),description
  !
  ! Presets
  !
  ydb_i =0
- iif   =0
+ iif   =-1
  ncpu  =1
  write_to_log =.TRUE.
  log_as_a_file=.FALSE.
@@ -127,6 +137,9 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,iif)
  !
  ! INPUT string splitter
  !
+ DB_id=0
+ DB_i_ref=0
+ !
  call string_split(instr(:lnstr),rstr_piece)
  n_pieces=0
  do i1=1,n_max_pieces
@@ -152,50 +165,118 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,iif)
  if (file_exists('~/.ydb/PATH')) then
    open(unit=1,file='~/.ydb/PATH',form='formatted')
    read (1,'(a)') PATH
-   db_PATH=trim(PATH)//'/ndb.YDB'
+   db_PATH=trim(PATH)//'/YDB_log'
    close(1)
+   open(unit=99,file=trim(db_PATH),form='formatted')
+   do i1=1,n_max_DB_elements 
+     read (99,*,end=2) DB_id(i1),DB_i_ref(i1),DB_year(i1),DB_month(i1),DB_day(i1),DB_file(i1),DB_desc(i1)
+   enddo
+2  continue
  else 
    call LIVE_message('[ERROR] DB not found ',"n","n","%s")
    stop
  endif
  call LIVE_message('DB is in '//trim(PATH),"n","n","%s")
  !
+ ! LIST
+ !
+ if (check_for_word("list")>0) then
+   iif=0
+   call LIVE_message('DB contents..',"n","n","%s")
+   call LIVE_message(' ',"n","","%s")
+   do i1=1,n_max_DB_elements
+     if (DB_id(i1)>0) then
+       if (DB_i_ref(i1)==0) then
+         write (*,'(4(a,i6,2x),4a)') ' ID= ',DB_id(i1),' Y= ',DB_year(i1),' M= ',DB_month(i1),&
+&                                    ' D= ',DB_day(i1),' File= ',trim(DB_file(i1)),' Desc= ',trim(DB_desc(i1))
+       else
+         write (*,'(5(a,i6,2x),4a)') ' ID= ',DB_id(i1),' REF= ',DB_i_ref(i1),' Y= ',DB_year(i1),&
+&                                    ' M= ',DB_month(i1),' D= ',DB_day(i1),' File= ',trim(DB_file(i1)),&
+&                                    ' Desc= ',trim(DB_desc(i1))
+       endif
+     endif
+   enddo
+ endif
+ !
  ! REF
  !
  i_ref=0
+ DB_id_=0
+ DB_i_ref_=0
  if (check_for_word("ref")>0) then
+   iif=0
    read(rstr_piece(check_for_word("ref")+1),'(i)') i_ref
    call LIVE_message('Reference ID is '//trim(intc(i_ref)),"n","n","%s")
+   do i1=1,n_max_DB_elements
+     if (DB_id(i1)==i_ref) DB_id_=i1
+   enddo
+ endif
+ !
+ ! VIEW
+ !
+ if (check_for_word("view")>0) then
+   iif=0
+   if (DB_i_ref(DB_id_)>0) then
+     call build_up_paths(DB_year(DB_id_),DB_month(DB_id_),DB_day(DB_id_),DB_i_ref(DB_id_),&
+&                        DB_id(DB_id_),trim(DB_file(DB_id_))) 
+     iif=1
+   else
+     call build_up_paths(DB_year(DB_id_),DB_month(DB_id_),DB_day(DB_id_),DB_id(DB_id_),&
+&                        0,trim(DB_file(DB_id_))) 
+     iif=4
+   endif
+   fname=trim(file_PATH)
+   return
+ endif
+ !
+ ! DESCRIPTION
+ !
+ description="none"
+ if (check_for_word("msg")>0) then
+   iif=0
+   read(rstr_piece(check_for_word("msg")+1),'(a)') description
  endif
  !
  ! ADD
  !
  if (check_for_word("add")>0) then
-   !
-   ! DB
-   !
-   call io_control(ACTION=OP_APP_WR_CL,ID=ID)
+   iif=0
    !
    if (check_for_word("in")>0.or.check_for_word("out")>0) then
-     read(rstr_piece(check_for_word("in")+1),'(a)') file_name
+     if (check_for_word("in")>0) read(rstr_piece(check_for_word("in")+1),'(a)') file_name
+     if (check_for_word("out")>0) read(rstr_piece(check_for_word("out")+1),'(a)') file_name
      if (.not.file_exists(trim(file_name))) then
        call LIVE_message('File '//trim(file_name)//' not found',"n","n","%s")
+       close(unit=99)
        return
      endif
    endif
-   call LIVE_message('Adding ... '//trim(file_name),"n"," ","%s")
    !
-   i_random=pickup_a_random(1000000.)
+   if (check_for_word("in")>0)  i_random=pickup_a_random(1000000.)
+   if (check_for_word("out")>0) o_random=pickup_a_random(1000000.)
    !
-   call mk_dir(trim(PATH)//'/'//trim(intc(year)))
-   call mk_dir(trim(PATH)//'/'//trim(intc(year))//'/'//trim(intc(month)))
-   call mk_dir(trim(PATH)//'/'//trim(intc(year))//'/'//trim(intc(month))//'/'//trim(intc(day)))
-   PATH=trim(PATH)//'/'//trim(intc(year))//'/'//trim(intc(month))//&
-&              '/'//trim(intc(day))//'/'//trim(intc(i_random))
+   if (DB_id_/=0) then
+     i_random=DB_id(DB_id_)
+     month=DB_month(DB_id_)
+     day=DB_day(DB_id_)
+     if (DB_i_ref(DB_id_)/=0) then
+       i_random=DB_i_ref(DB_i_ref_)
+       o_random=DB_id(DB_i_ref_)
+       month=DB_month(DB_i_ref_)
+       day=DB_day(DB_i_ref_)
+     endif
+   endif
+   !
+   if (check_for_word("in")>0) then
+     call LIVE_message('Adding ... '//trim(file_name)//' with ID '//trim(intc(i_random)),"n"," ","%s")
+   else
+     call LIVE_message('Adding ... '//trim(file_name)//' with ID '//trim(intc(o_random))//&
+&                      ' and REF '//trim(intc(i_random)),"n"," ","%s")
+   endif
    !
    if (check_for_word("in")>0) then
      call mk_dir(trim(PATH))
-     call build_up_paths(i_random)
+     call build_up_paths(year,month,day,i_random,0,trim(file_name))
      open(unit=1,file=trim(desc_PATH),form='formatted')
      open(unit=2,file=trim(vers_PATH),form='formatted')
      open(unit=3,file=trim(runl_PATH),form='formatted')
@@ -205,34 +286,26 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,iif)
        call parser(trim(known_runlevels(i1)),l_found)
        if (l_found) write (3,'(a)') ' '//trim(known_runlevels(i1))
      enddo
-     iif=0
+     iif=1
      write (1,'(/a/)') ' Description relative INPUT file '//trim(file_name)
      call iparse_end()
      call cp_file(trim(file_name),trim(file_PATH),i_err)
      close(1)
      close(2)
      close(3)
+     if (i_ref==0) write (99,'(5(i6,2x),a,1x,a)') i_random,i_ref,year,month,day,trim(file_name),trim(description)
    endif
    !
-!   if (check_for_word("out")>0) then
-!     call mk_dir(trim(PATH))
-!     call build_up_paths(i_random)
-!     open(unit=1,file=trim(desc_PATH),form='formatted')
-!     i_err=iparse_init(cstr(trim(file_name)),cstr('-'))
-!     do i1=1,200
-!       if (len_trim(known_runlevels(1))==0) cycle
-!       call parser(trim(known_runlevels(i1)),l_found)
-!       if (l_found) write (3,'(a)') ' '//trim(known_runlevels(i1))
-!     enddo
-!     iif=0
-!     write (1,'(/a/)') ' Description relative INPUT file '//trim(file_name)
-!     call iparse_end()
-!     call cp_file(trim(file_name),trim(file_PATH),i_err)
-!     !i_err=io_YDB(trim(db_PATH),ID) 
-!     close(1)
-!   endif
+   if (check_for_word("out")>0.and.i_ref>0) then
+     call build_up_paths(year,month,day,i_random,o_random,trim(file_name))
+     call cp_file(trim(file_name),trim(file_PATH),i_err)
+     write (99,'(5(i6,2x),a,1x,a)') o_random,i_random,year,month,day,trim(file_name),trim(description)
+     iif=1
+   endif
    !
  endif
+ !
+ close(unit=99)
  !
  call LIVE_message(' ',"n","n","%s")
  !
@@ -247,12 +320,23 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,iif)
      enddo
    end function
    !
-   subroutine build_up_paths(id)
-     integer :: id
+   subroutine build_up_paths(year,month,day,i_random,o_random,file_)
+     integer :: year,month,day,i_random,o_random
+     character(*) :: file_
+     call mk_dir(trim(PATH)//'/'//trim(intc(year)))
+     call mk_dir(trim(PATH)//'/'//trim(intc(year))//'/'//trim(intc(month)))
+     call mk_dir(trim(PATH)//'/'//trim(intc(year))//'/'//trim(intc(month))//'/'//trim(intc(day)))
+     PATH=trim(PATH)//'/'//trim(intc(year))//'/'//trim(intc(month))//&
+&                '/'//trim(intc(day))//'/'//trim(intc(i_random))
+     call mk_dir(trim(PATH))
+     if (o_random/=0) then
+       PATH=trim(PATH)//'/'//trim(intc(o_random))
+       call mk_dir(trim(PATH))
+     endif
      desc_PATH=trim(PATH)//'/description'
      runl_PATH=trim(PATH)//'/runlevels'
      vers_PATH=trim(PATH)//'/version'
-     file_PATH=trim(PATH)//'/'//trim(file_name)
+     file_PATH=trim(PATH)//'/'//trim(file_)
      desc=desc_PATH
      vers=vers_PATH
      runlevels=runl_PATH

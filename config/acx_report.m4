@@ -65,6 +65,15 @@ if test "$compile_local" = "yes" ; then LOCAL_str="X"; fi
 SLK_str=" "
 if test "$enable_scalapack" = "yes" ; then SLK_str="X"; fi
 
+OPENMP_str=" "
+if test "$enable_openmp" = "yes" ; then OPENMP_str="X"; fi
+
+BGQ_str=" "
+if test "$enable_bluegene" = "yes" ; then BGQ_str="X"; fi
+
+OPENMPI_str=" "
+if test "$enable_openmpi" = "yes" ; then OPENMPI_str="X"; fi
+
 if test "$exec_prefix" = "NONE" ; then exec_prefix="$srcdir_path"; fi
 
 AC_SUBST(srcdir_path)
@@ -83,5 +92,7 @@ AC_SUBST(LAPACK_str)
 AC_SUBST(LOCAL_str)
 AC_SUBST(SLK_str)
 AC_SUBST(OPENMP_str)
+AC_SUBST(OPENMPI_str)
+AC_SUBST(BGQ_str)
 
 ])

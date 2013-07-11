@@ -35,6 +35,11 @@ module parallel_m
  integer            :: ncpu
  integer            :: n_nodes  = 1
  integer            :: n_MPI    = 1
+#if defined _OPENMPI
+ integer, parameter :: comm_default_value  = -1
+#else
+ integer, parameter :: comm_default_value  = 0
+#endif
  !
  ! Logicals
  !
@@ -51,7 +56,7 @@ module parallel_m
  integer, parameter :: MAX_N_OF_CHAINS=100
  integer            :: n_chains = 1
  !
- integer            :: POOL_COMM  =0  ! Communicator among the CPU of the same pool
+ integer            :: POOL_COMM  = comm_default_value ! Communicator among the CPU of the same pool
  integer            :: POOL_id    =0  ! RELATIVE ID of the CPU in the POOL
  integer            :: My_POOL    =0  ! ABSOLUTE ID of the POOL among ALL POOLS 
  !
@@ -301,7 +306,7 @@ module parallel_m
    subroutine COMM_reset(COMM)
      type(MPI_comm):: COMM
      COMM%n_CPU      =1
-     COMM%COMM       =0
+     COMM%COMM       = comm_default_value
      COMM%my_CHAIN   =1
      COMM%chain_order=n_chains
      COMM%CPU_ID     =0
@@ -347,7 +352,7 @@ module parallel_m
      if (present(COMM)) then
        local_COMM=COMM
      endif
-     if (local_COMM==0) local_COMM=mpi_comm_world
+     if (local_COMM<0) local_COMM=mpi_comm_world
      call mpi_barrier(local_COMM,i_err)
 #endif
    end subroutine
@@ -366,7 +371,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
-     if (LOCAL_COMM==0) return
+     if (LOCAL_COMM==comm_default_value) return
      call mpi_barrier(LOCAL_COMM,i_err)
      if (present(imode)) then
        if (imode==1) omode=mpi_sum
@@ -399,7 +404,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
-     if (LOCAL_COMM==0) return
+     if (LOCAL_COMM==comm_default_value) return
      call mpi_barrier(LOCAL_COMM,i_err)
      if (present(imode)) then
        if (imode==1) omode=mpi_sum
@@ -431,7 +436,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
-     if (LOCAL_COMM==0) return
+     if (LOCAL_COMM==comm_default_value) return
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
      dimension=product(dimensions)
@@ -457,7 +462,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
-     if (LOCAL_COMM==0) return
+     if (LOCAL_COMM==comm_default_value) return
      call mpi_barrier(LOCAL_COMM,i_err)
      dimensions=shape(array)
      dimension=product(dimensions)
@@ -483,7 +488,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
-     if (LOCAL_COMM==0) return
+     if (LOCAL_COMM==comm_default_value) return
      !
      local_type=MPI_REAL
      if (SP==DP) local_type=MPI_DOUBLE_PRECISION
@@ -515,7 +520,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
-     if (LOCAL_COMM==0) return
+     if (LOCAL_COMM==comm_default_value) return
      !
      local_type=MPI_REAL
      if (SP==DP) local_type=MPI_DOUBLE_PRECISION
@@ -545,7 +550,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
-     if (LOCAL_COMM==0) return
+     if (LOCAL_COMM==comm_default_value) return
      !
      local_type=MPI_REAL
      if (SP==DP) local_type=MPI_DOUBLE_PRECISION
@@ -575,7 +580,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
-     if (LOCAL_COMM==0) return
+     if (LOCAL_COMM==comm_default_value) return
      !
      local_type=MPI_REAL
      if (SP==DP) local_type=MPI_DOUBLE_PRECISION
@@ -605,7 +610,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
-     if (LOCAL_COMM==0) return
+     if (LOCAL_COMM==comm_default_value) return
      !
      local_type=MPI_COMPLEX
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
@@ -637,7 +642,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
-     if (LOCAL_COMM==0) return
+     if (LOCAL_COMM==comm_default_value) return
      !
      local_type=MPI_COMPLEX
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
@@ -665,7 +670,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
-     if (LOCAL_COMM==0) return
+     if (LOCAL_COMM==comm_default_value) return
      !
      local_type=MPI_COMPLEX
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
@@ -695,7 +700,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
-     if (LOCAL_COMM==0) return
+     if (LOCAL_COMM==comm_default_value) return
      !
      local_type=MPI_COMPLEX
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
@@ -725,7 +730,7 @@ module parallel_m
      else
        LOCAL_COMM=mpi_comm_world
      endif
-     if (LOCAL_COMM==0) return
+     if (LOCAL_COMM==comm_default_value) return
      !
      local_type=MPI_COMPLEX
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX

@@ -67,8 +67,8 @@ subroutine V_real_space_to_H(ik,V,H,wf)
    !
    ! <ifft|V|ifftp>
    !
-   ifft =wf_state(ib,ik,i_spin)
-   ifftp=wf_state(ibp,ik,i_spin)
+   ifft   =wf_state(ib,ik,i_spin)
+   ifftp  =wf_state(ibp,ik,i_spin)
    c_ws(:)=V(:,i_spin)*wf(:,ifftp)
    !
    H(ib,ibp,i_spin) = H(ib,ibp,i_spin)+Vstar_dot_V(fft_size,wf(:,ifft),c_ws(:))

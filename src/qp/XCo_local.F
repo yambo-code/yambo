@@ -111,6 +111,11 @@ subroutine XCo_local(E,Xk)
      !
      if (l_real_time) then
        !
+       if(ib>ibp) then
+         QP_Vxc(i1) = conjg(QP_Vxc(i1-1))
+         cycle
+       endif
+       !
 #if defined _RT
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
@@ -136,6 +141,7 @@ subroutine XCo_local(E,Xk)
      QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,iwf),c_ws(:,1))
      !
    enddo
+   !
    !
    if (l_real_time) then
 #if defined _RT

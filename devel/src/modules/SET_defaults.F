@@ -90,7 +90,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RT_dynamics_jumps,NE_tot_time,G_MEM_steps,NE_MEM_treshold,&
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,&
 &                     Eh_pumped_pair_energy,Dynamics_Kind,Eh_pumped_pair_width,Gr_bands,&
-&                     Gr_T_window,Gr_T_steps,Gr_E_window,Gr_E_steps,Gr_kind
+&                     Gr_T_window,Gr_T_steps,Gr_E_window,Gr_E_steps,Gr_kind,&
+&                     l_RT_CCA_Kernel
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,theta_function_iTo_ref,i_Pump,i_Probe
 #endif
 #if defined _MAGNETIC
@@ -276,7 +277,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_sc_magnetic=.false.
  l_eval_collisions=.false.
  l_elph_Hamiltonian=.false.
- l_carrier_dynamics=.false.
  !
  !electrons
  !
@@ -499,6 +499,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_RT_diamagnetic=.FALSE.
  l_RT_probe=.FALSE.
  l_RT_pump_and_probe=.FALSE.
+ l_RT_CCA_Kernel=.FALSE.
  !
  RT_step=0.002*FS2AUT
  NE_steps=1

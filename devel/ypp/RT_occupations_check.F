@@ -51,7 +51,7 @@ integer function RT_occupations_check(E,k)
    !
  endif
  !
- if (l_ph_corr.and.l_RT_CCA_Kernel.and..not.allocated(E_P_Hole_lifetime)) then
+ if ((l_ph_corr.and.l_RT_CCA_Kernel).and..not.allocated(E_P_Hole_lifetime)) then
    allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),k%nibz))
    allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),k%nibz))
    allocate(E_P_Phonon_lifetime(SC_bands(1):SC_bands(2),k%nibz))

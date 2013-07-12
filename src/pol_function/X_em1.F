@@ -116,6 +116,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !    
  call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
  !
+ call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
+ !
  do iq=iq_to_start,X%iq(2)
    !
    ! TDDFT setup
@@ -134,7 +136,10 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (iq_to_start==1) then
      if (iq==1) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Zero_Momentum",X=X) 
-     if (iq==2) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
+     if (iq==2) then 
+       call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
+       call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
+     endif
    else 
      if (iq==iq_to_start) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
    endif

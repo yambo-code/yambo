@@ -21,7 +21,8 @@
 !
 subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE)
  !
- use parallel_m, ONLY:PP_redux_wait,PP_indexes,ncpu,myid,p_prod,mpi_comm_world,MPI_comm
+ use parallel_m, ONLY:PP_redux_wait,PP_indexes,ncpu,myid,p_prod,mpi_comm_world,&
+&                     MPI_comm,comm_default_value
  use com,        ONLY:error
  implicit none
  type(PP_indexes)       ::px
@@ -50,7 +51,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE)
  !
  if (ncpu_loop==1) then
    myid_loop =0
-   local_comm=0
+   local_comm=comm_default_value
    SERIAL    =.TRUE.
  endif
  !

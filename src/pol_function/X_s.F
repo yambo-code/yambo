@@ -177,7 +177,7 @@ subroutine X_s(iq,X,wv)
    !
  enddo
  !
- if (PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1)>0) call live_timing
+ if (PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1)>0) call live_timing()
  !
  do iw=1,wv%n_freqs
    call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_INV_index%COMM)

@@ -34,7 +34,7 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
  type(MPI_comm)         ::COMM
  type(bz_samp)          ::k,q
  !
- integer :: iq,ikp,ik,ikpbz,iqp,iqbz
+ integer :: iq,ikp,ikbz,ik,ikpbz,iqp,iqbz
  !
  IND_k_out_ID=IND_in_ID
  !
@@ -45,15 +45,22 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
  !
  if (ZONE=="k_bz_q_ibz") then
    !
-   do ik=1,nkbz
+   do ikbz=1,nkbz
      !
-     if (.not.IND_in%element_1D(ik)) cycle
+     if (.not.IND_in%element_1D(ikbz)) cycle
+     !
+     ik  =k%sstar(ikbz,1)
+     !
+     if (.not.IND_k_out%element_1D(ik)) then
+       IND_k_out%element_1D(ik)=.TRUE.
+       IND_k_out%n_of_elements(IND_k_out_ID+1)=IND_k_out%n_of_elements(IND_k_out_ID+1)+1
+     endif
      !
      do iq=q_range(1),q_range(2)
        !
        if (.not.IND_q%element_1D(iq)) cycle
        !
-       ikpbz=qindx_X(iq,ik,1)
+       ikpbz=qindx_X(iq,ikbz,1)
        ikp  =k%sstar(ikpbz,1)
        !
        if (.not.IND_k_out%element_1D(ikp)) then
@@ -67,15 +74,22 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
    !
  else if (ZONE=="k_bz_q_bz") then
    !
-   do ik=1,nkbz
+   do ikbz=1,nkbz
      !
-     if (.not.IND_in%element_1D(ik)) cycle
+     if (.not.IND_in%element_1D(ikbz)) cycle
+     !
+     ik  =k%sstar(ikbz,1)
+     !
+     if (.not.IND_k_out%element_1D(ik)) then
+       IND_k_out%element_1D(ik)=.TRUE.
+       IND_k_out%n_of_elements(IND_k_out_ID+1)=IND_k_out%n_of_elements(IND_k_out_ID+1)+1
+     endif 
      !
      do iq=1,nqbz
        !
        if (.not.IND_q%element_1D(iq)) cycle
        !
-       ikpbz=qindx_B(ik,iq,1)
+       ikpbz=qindx_B(ikbz,iq,1)
        ikp  =k%sstar(ikpbz,1)
        !
        if (.not.IND_k_out%element_1D(ikp)) then
@@ -94,6 +108,11 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
      if (.not.IND_in%element_1D(iqp)) cycle
      !
      ik=QP_table(iqp,3)
+     !
+     if (.not.IND_k_out%element_1D(ik)) then
+       IND_k_out%element_1D(ik)=.TRUE.
+       IND_k_out%n_of_elements(IND_k_out_ID+1)=IND_k_out%n_of_elements(IND_k_out_ID+1)+1
+     endif 
      !
      do iqbz=1,nqbz
        !

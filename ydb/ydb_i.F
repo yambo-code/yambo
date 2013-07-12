@@ -44,7 +44,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  character(lchlen)::PATH,file_name,host_name,file_PATH,runl_PATH,desc_PATH,vers_PATH,db_PATH
  integer          ::hn_len,n_pieces,i1,i_random,i_err,ID,o_random
  integer          ::dz(8),year,day,month,hour,minutes,i_ref,DB_i_ref_,DB_id_
- logical          ::l_found
+ logical          ::l_found,l_overwrite
  character(5)     ::cz
  character(8)     ::cd
  character(10)    ::ctz
@@ -276,11 +276,14 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
    if (check_for_word("in")>0)  i_random=pickup_a_random(1000000.)
    if (check_for_word("out")>0) o_random=pickup_a_random(1000000.)
    !
+   l_overwrite=.FALSE.
+   !
    if (DB_id_/=0) then
      i_random=DB_id(DB_id_)
      month=DB_month(DB_id_)
      day=DB_day(DB_id_)
      if (DB_i_ref(DB_id_)/=0) then
+       l_overwrite=.TRUE.
        i_random=DB_i_ref(DB_id_)
        o_random=DB_id(DB_id_)
        month=DB_month(DB_id_)
@@ -320,7 +323,9 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
    if (check_for_word("out")>0.and.i_ref>0) then
      call build_up_paths(year,month,day,i_random,o_random,trim(file_name))
      call cp_file(trim(file_name),trim(file_PATH),i_err)
-     if (i_ref==0) write (99,'(5(i6,2x),a,1x,a)') o_random,i_random,year,month,day,trim(file_name),trim(description)
+     if (.not.l_overwrite) then
+       write (99,'(5(i6,2x),a,1x,a)') o_random,i_random,year,month,day,trim(file_name),trim(description)
+     endif
      iif=1
    endif
    !

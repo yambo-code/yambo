@@ -33,13 +33,12 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
  ! Work Space
  !
  integer          ::i_s,i_selected,i_c
- logical          ::q_found,k_found,qp_k_found,qp_b_found
+ logical          ::q_found,k_found,qp_found
  character(schlen)::c_strings(10),r_strings(10),CPU_string_,ROLE_string_
  !
  i_selected=-1
  !
- qp_k_found=.FALSE.
- qp_b_found=.FALSE.
+ qp_found  =.FALSE.
  q_found   =.FALSE.
  k_found   =.FALSE.
  !
@@ -80,10 +79,9 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
    PARALLEL_CPU_used(PARALLEL_n_structures_active)=CPU_structure(i_selected)%CPU(i_c)
    PARALLEL_CPU_role(PARALLEL_n_structures_active)=CPU_structure(i_selected)%ROLE(i_c)
    !
-   if (trim(PARALLEL_CPU_role(PARALLEL_n_structures_active))=="k"   ) k_found=.TRUE.
-   if (trim(PARALLEL_CPU_role(PARALLEL_n_structures_active))=="q"   ) q_found=.TRUE.
-   if (trim(PARALLEL_CPU_role(PARALLEL_n_structures_active))=="qp_k") qp_k_found=.TRUE.
-   if (trim(PARALLEL_CPU_role(PARALLEL_n_structures_active))=="qp_b") qp_b_found=.TRUE.
+   if (trim(PARALLEL_CPU_role(PARALLEL_n_structures_active))=="k" ) k_found=.TRUE.
+   if (trim(PARALLEL_CPU_role(PARALLEL_n_structures_active))=="q" ) q_found=.TRUE.
+   if (trim(PARALLEL_CPU_role(PARALLEL_n_structures_active))=="qp") qp_found=.TRUE.
    !
    PARALLEL_CPU_used(PARALLEL_n_structures_active)=2**(log(real(PARALLEL_CPU_used(PARALLEL_n_structures_active)))/log(2.))
    !
@@ -114,16 +112,10 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
    PARALLEL_CPU_role(PARALLEL_n_structures_active)="k"
  endif
  !
- if (.not.qp_k_found.or.ncpu==1) then
+ if (.not.qp_found.or.ncpu==1) then
    PARALLEL_n_structures_active=PARALLEL_n_structures_active+1
    PARALLEL_CPU_used(PARALLEL_n_structures_active)=1
-   PARALLEL_CPU_role(PARALLEL_n_structures_active)="qp_k"
- endif
- !
- if (.not.qp_b_found.or.ncpu==1) then
-   PARALLEL_n_structures_active=PARALLEL_n_structures_active+1
-   PARALLEL_CPU_used(PARALLEL_n_structures_active)=1
-   PARALLEL_CPU_role(PARALLEL_n_structures_active)="qp_b"
+   PARALLEL_CPU_role(PARALLEL_n_structures_active)="qp"
  endif
  !
  if (ncpu==1) PARALLEL_n_structures_active=0

@@ -226,9 +226,9 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
 &                        0,trim(DB_file(DB_id_))) 
    endif
    if (DB_i_ref(DB_id_)>0) then
-     call cp_file(trim(file_PATH),trim(DB_file(DB_id_))//"_ID"//trim(intc(i_ref)),i_err)
-   else
      call cp_file(trim(file_PATH),trim(DB_file(DB_id_)),i_err)
+   else
+     call cp_file(trim(file_PATH),trim(DB_file(DB_id_))//"_ID"//trim(intc(i_ref)),i_err)
    endif
    return
  endif

@@ -21,7 +21,7 @@
 !
 subroutine RT_occupations_analyze(k,E)
  !
- use drivers,        ONLY:l_carrier_dynamics
+ use drivers,        ONLY:l_carrier_dynamics,l_ph_corr
  use units,          ONLY:FS2AUT,SP,HA2EV,BO2ANG
  use pars,           ONLY:schlen
  use stderr,         ONLY:intc,set_real_printed_length
@@ -45,6 +45,7 @@ subroutine RT_occupations_analyze(k,E)
  real(SP)              :: io_Time,data_to_plot(7)
  real(SP), allocatable :: RT_occupations_sum(:)
  character(schlen)     :: titles(7)
+ logical               :: l_ELPH_lifetimes
  integer,     external :: RT_occupations_check
  !
  call section('*','Real-Time occupations')
@@ -61,6 +62,8 @@ subroutine RT_occupations_analyze(k,E)
  !
  allocate(RT_occupations_sum(n_T_steps)) 
  RT_occupations_sum=0._SP
+ !
+ l_ELPH_lifetimes=l_ph_corr.and.l_RT_CCA_Kernel
  !
  call set_real_printed_length(f_length=10,g_length=10)
  !
@@ -99,24 +102,24 @@ subroutine RT_occupations_analyze(k,E)
        !
        ! Titles
        !========
-       if (l_carrier_dynamics.and.l_RT_CCA_Kernel) then
+       if (l_carrier_dynamics.and.l_ELPH_lifetimes) then
          titles(:)=(/'         ','         ','|--------','--El-Ph--','--------|','|-El-El--','--------|'/)
          call msg('o '//trim(output_fname),'#',titles(:),INDENT=0,USE_TABS=.TRUE.)
          titles(1)='T[fs]'
          titles(2)='Occ.'
          titles(3:7)=(/'Hole[meV]','El. [meV]','Ph. [meV]','Hole[meV]','El. [meV]'/)
          call msg('o '//trim(output_fname),'#',titles(:7),INDENT=0,USE_TABS=.TRUE.)
-       else if (l_carrier_dynamics.and..not.l_RT_CCA_Kernel) then
+       else if (l_carrier_dynamics.and..not.l_ELPH_lifetimes) then
          titles(1)='T[fs]'
          titles(2)='Occ.'
          titles(3:4)=(/'Hole[meV]','El. [meV]'/)
          call msg('o '//trim(output_fname),'#',titles(:4),INDENT=0,USE_TABS=.TRUE.)
-       else if (.not.l_carrier_dynamics.and.l_RT_CCA_Kernel) then
+       else if (.not.l_carrier_dynamics.and.l_ELPH_lifetimes) then
          titles(1)='T[fs]'
          titles(2)='Occ.'
          titles(3:5)=(/'Hole[meV]','El. [meV]','Ph. [meV]'/)
          call msg('o '//trim(output_fname),'#',titles(:5),INDENT=0,USE_TABS=.TRUE.)
-       else if (.not.l_carrier_dynamics.and..not.l_RT_CCA_Kernel) then
+       else if (.not.l_carrier_dynamics.and..not.l_ELPH_lifetimes) then
          titles(1)='T[fs]'
          titles(2)='Occ.'
          call msg('o '//trim(output_fname),'#',titles(:2),INDENT=0,USE_TABS=.TRUE.)
@@ -133,7 +136,7 @@ subroutine RT_occupations_analyze(k,E)
      data_to_plot(:2)=(/io_TIME/FS2AUT,RT_occupations(ib,ik)/spin_occ/)
      RT_occupations_sum(i_T)=RT_occupations_sum(i_T)+RT_occupations(ib,ik)*k%weights(ik)
      !
-     if (l_RT_CCA_Kernel) then
+     if (l_ELPH_lifetimes) then
        data_to_plot(3:5)=(/E_P_Hole_lifetime(ib,ik)*HA2EV,E_P_Electron_lifetime(ib,ik)*HA2EV,&
 &                                              E_P_Phonon_lifetime(ib,ik)*HA2EV/)*1000.
        if (l_carrier_dynamics) then

@@ -44,7 +44,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  character(lchlen)::PATH,file_name,host_name,file_PATH,runl_PATH,desc_PATH,vers_PATH,db_PATH
  integer          ::hn_len,n_pieces,i1,i_random,i_err,ID,o_random
  integer          ::dz(8),year,day,month,hour,minutes,i_ref,DB_i_ref_,DB_id_
- logical          ::l_found
+ logical          ::l_found,l_overwrite
  character(5)     ::cz
  character(8)     ::cd
  character(10)    ::ctz
@@ -178,26 +178,6 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  endif
  call LIVE_message('DB is in '//trim(PATH),"n","n","%s")
  !
- ! LIST
- !
- if (check_for_word("list")>0) then
-   iif=0
-   call LIVE_message('DB contents..',"n","n","%s")
-   call LIVE_message(' ',"n","","%s")
-   do i1=1,n_max_DB_elements
-     if (DB_id(i1)>0) then
-       if (DB_i_ref(i1)==0) then
-         write (*,'(4(a,i6,2x),4a)') ' ID= ',DB_id(i1),' Y= ',DB_year(i1),' M= ',DB_month(i1),&
-&                                    ' D= ',DB_day(i1),' File= ',trim(DB_file(i1)),' Desc= ',trim(DB_desc(i1))
-       else
-         write (*,'(5(a,i6,2x),4a)') ' ID= ',DB_id(i1),' REF= ',DB_i_ref(i1),' Y= ',DB_year(i1),&
-&                                    ' M= ',DB_month(i1),' D= ',DB_day(i1),' File= ',trim(DB_file(i1)),&
-&                                    ' Desc= ',trim(DB_desc(i1))
-       endif
-     endif
-   enddo
- endif
- !
  ! REF
  !
  i_ref=0
@@ -210,6 +190,47 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
    do i1=1,n_max_DB_elements
      if (DB_id(i1)==i_ref) DB_id_=i1
    enddo
+ endif
+ !
+ ! LIST
+ !
+ if (check_for_word("list")>0) then
+   iif=0
+   call LIVE_message('DB contents..',"n","n","%s")
+   call LIVE_message(' ',"n","","%s")
+   do i1=1,n_max_DB_elements
+     if (DB_id(i1)>0) then
+       if (DB_i_ref(i1)==0) then
+         if (i_ref>0.and.DB_id(i1)/=i_ref) cycle
+         write (*,'(4(a,i6,2x),4a)') ' ID= ',DB_id(i1),' Y= ',DB_year(i1),' M= ',DB_month(i1),&
+&                                    ' D= ',DB_day(i1),' File= ',trim(DB_file(i1)),' Desc= ',trim(DB_desc(i1))
+       else
+         if (i_ref>0.and.DB_i_ref(i1)/=i_ref) cycle
+         write (*,'(5(a,i6,2x),4a)') ' ID= ',DB_id(i1),' REF= ',DB_i_ref(i1),' Y= ',DB_year(i1),&
+&                                    ' M= ',DB_month(i1),' D= ',DB_day(i1),' File= ',trim(DB_file(i1)),&
+&                                    ' Desc= ',trim(DB_desc(i1))
+       endif
+     endif
+   enddo
+ endif
+ !
+ ! COPY
+ !
+ if (check_for_word("copy")>0) then
+   iif=0
+   if (DB_i_ref(DB_id_)>0) then
+     call build_up_paths(DB_year(DB_id_),DB_month(DB_id_),DB_day(DB_id_),DB_i_ref(DB_id_),&
+&                        DB_id(DB_id_),trim(DB_file(DB_id_))) 
+   else
+     call build_up_paths(DB_year(DB_id_),DB_month(DB_id_),DB_day(DB_id_),DB_id(DB_id_),&
+&                        0,trim(DB_file(DB_id_))) 
+   endif
+   if (DB_i_ref(DB_id_)>0) then
+     call cp_file(trim(file_PATH),trim(DB_file(DB_id_)),i_err)
+   else
+     call cp_file(trim(file_PATH),trim(DB_file(DB_id_))//"_ID"//trim(intc(i_ref)),i_err)
+   endif
+   return
  endif
  !
  ! VIEW
@@ -255,15 +276,18 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
    if (check_for_word("in")>0)  i_random=pickup_a_random(1000000.)
    if (check_for_word("out")>0) o_random=pickup_a_random(1000000.)
    !
+   l_overwrite=.FALSE.
+   !
    if (DB_id_/=0) then
      i_random=DB_id(DB_id_)
      month=DB_month(DB_id_)
      day=DB_day(DB_id_)
      if (DB_i_ref(DB_id_)/=0) then
-       i_random=DB_i_ref(DB_i_ref_)
-       o_random=DB_id(DB_i_ref_)
-       month=DB_month(DB_i_ref_)
-       day=DB_day(DB_i_ref_)
+       l_overwrite=.TRUE.
+       i_random=DB_i_ref(DB_id_)
+       o_random=DB_id(DB_id_)
+       month=DB_month(DB_id_)
+       day=DB_day(DB_id_)
      endif
    endif
    !
@@ -299,7 +323,9 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
    if (check_for_word("out")>0.and.i_ref>0) then
      call build_up_paths(year,month,day,i_random,o_random,trim(file_name))
      call cp_file(trim(file_name),trim(file_PATH),i_err)
-     write (99,'(5(i6,2x),a,1x,a)') o_random,i_random,year,month,day,trim(file_name),trim(description)
+     if (.not.l_overwrite) then
+       write (99,'(5(i6,2x),a,1x,a)') o_random,i_random,year,month,day,trim(file_name),trim(description)
+     endif
      iif=1
    endif
    !

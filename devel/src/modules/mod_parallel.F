@@ -352,7 +352,7 @@ module parallel_m
      if (present(COMM)) then
        local_COMM=COMM
      endif
-     if (local_COMM<0) local_COMM=mpi_comm_world
+     if (local_COMM==comm_default_value) local_COMM=mpi_comm_world
      call mpi_barrier(local_COMM,i_err)
 #endif
    end subroutine

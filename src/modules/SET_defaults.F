@@ -451,7 +451,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  nQ_memory=0
  elph_Ham_bands=0
  elph_Ham_ik=1
- l_RT_CCA_Kernel=.FALSE.
 #endif
  !
 #if defined _SC
@@ -494,6 +493,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  l_carrier_dynamics=.FALSE.
  Dynamics_Kind="P"
+ l_RT_CCA_Kernel=.FALSE.
  !
  ! RT current 
  !

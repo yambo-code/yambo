@@ -45,7 +45,7 @@
   {"view",  "v","View",0,0,0,0,0},              
   {"ref",   "r","Reference",1,0,0,0,0},        
   {"msg",   "m","Short description",0,0,1,0,0},
-  {"copy",  "c","Copy the whole ID folder (in/out) locally",1,0,0,0,0},
+  {"copy",  "c","Copy the whole ID folder (in/out) locally",0,0,0,0,0},
   {"change","v","Change a give VAR I/O directory",0,0,2,0,0},
   {NULL,NULL,NULL,0,0,0,0,0}
  };

@@ -105,7 +105,7 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          poles(X_eh_setup)=E_eh
          i_pole=X_eh_setup
          if (allocated(ordered_grid_index)) i_pole=ordered_grid_index(X_eh_setup)
-         if (iq>0)                   X_poles_tab(i_pole,:)=(/i1,iv,ic,i_sp/)
+         if (iq>0) X_poles_tab(i_pole,:)=(/i1,iv,ic,i_sp/)
          !
        enddo
      enddo

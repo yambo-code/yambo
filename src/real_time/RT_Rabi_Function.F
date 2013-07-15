@@ -44,7 +44,7 @@ subroutine RT_Rabi_Function(E,Field)
  use SC,             ONLY:SC_bands
  use com,            ONLY:msg
  use stderr,         ONLY:set_real_printed_length
- use parallel_m,     ONLY:PAR_Xk_ibz_index
+ use parallel_m,     ONLY:PAR_Xk_ibz_index,PAR_IND_Xk_ibz,PP_redux_wait
  !
  implicit none
  type(levels),    intent(in) :: E
@@ -64,6 +64,9 @@ subroutine RT_Rabi_Function(E,Field)
  Critical_min = 1000._SP
  !
  do ik=1,nkibz
+   ! 
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle 
+   !
    do iv=1,E%nbm
      do ic=E%nbf+1,SC_bands(2)
        !
@@ -83,6 +86,10 @@ subroutine RT_Rabi_Function(E,Field)
      enddo
    enddo
  enddo
+ !
+ call PP_redux_wait(Rabi_max)
+ call PP_redux_wait(Critical_min)
+ call PP_redux_wait(Cutoff_max)
  !
  call msg( 'r', '[RT] Max Rabi frequency            [eV]:',Rabi_max*HA2EV)
  if (Critical_min.lt.1000._SP.and.Field%frequency(1)/=0._SP) then  

@@ -441,7 +441,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                                PAR_IND_Q,PAR_COM_Xk_bz_INDEX,iq_range,Xk,q)
    PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz)
-   call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz)
    !
    PARALLEL_cpu_mat_inversion=CPU_structure(2)%nCPU_inversion
    if (ENVIRONMENT=="BSE") PARALLEL_cpu_mat_inversion=CPU_structure(5)%nCPU_inversion

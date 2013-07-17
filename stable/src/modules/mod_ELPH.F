@@ -52,6 +52,7 @@ module ELPH
  !
  integer   :: elph_Ham_bands(2)
  integer   :: elph_Ham_ik
+ real(SP)  :: RES_tresh
  ! 
  ! gFsq matrices
  !

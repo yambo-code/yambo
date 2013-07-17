@@ -24,9 +24,9 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use pars,          ONLY:SP,lchlen
  use units,         ONLY:HA2EV
  use ELPH,          ONLY:elph_global_alloc,elph_global_free,elph_Ham_bands,elph_Ham_ik,&
-&                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector
+&                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector,RES_tresh
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,mk_dir
- use com,           ONLY:error,msg,of_open_close,file_exists,jobstr
+ use com,           ONLY:error,msg,of_open_close,file_exists,jobstr,core_io_path
  use R_lattice,     ONLY:nqibz,nqbz,bz_samp,qindx_S,ik_is_table
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms
  use electrons,     ONLY:levels
@@ -196,6 +196,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  if (trim(jobstr)=="") call error("Please provide a non empty string for the job_name")
  !
+ call mk_dir(trim(core_io_path)//"/"//trim(jobstr))
+ !
  db_name=trim(jobstr)//'/DIAGO_DB_k_'//trim(intc(elph_Ham_ik))
  if (file_exists(db_name)) then
    call msg('s','Eigenvectors/Eigenvalues I/O')
@@ -252,7 +254,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
    enddo
    do iH=1,H_size
      residual= abs(elph_Mat(ib-elph_Ham_bands(1)+1,iH))**2.
-     if (residual>0.01*max_residual) then
+     if (residual>RES_tresh*max_residual) then
        call msg('o Ham','#',(/real(iH,SP),elph_E(iH)*HA2EV,residual/),INDENT=0,USE_TABS=.true.)
        write (100) iH,residual
        top_residual(iH)=.TRUE.
@@ -261,6 +263,35 @@ subroutine ELPH_Hamiltonian(en,k,q)
    !
    call msg('o Ham','#')
    call msg('o Ham','# Maximum residual is ', max_residual,INDENT=0)
+   call msg('o Ham','#')
+   !
+   do iH=1,H_size
+     if (.not.top_residual(iH)) cycle
+     max_residual=0.
+     do iHp=1,H_size
+       residual= abs(elph_Mat(iHp,iH))**2.
+       if (residual>max_residual) max_residual=residual
+     enddo
+     call msg('o Ham','# State '//trim(intc(iH))//' structure')
+     call msg('o Ham','#')
+     call msg('o Ham','#',(/' Band   ','Q-point ','K-point ',' Branch ','Residual'/),INDENT=0,USE_TABS=.true.)
+     do iHp=1,H_size
+       residual= abs(elph_Mat(iHp,iH))**2.
+       if (residual>RES_tresh*max_residual) then
+         ibp    =elph_Ham_Table(iHp,1)
+         iq_bz  =elph_Ham_Table(iHp,2)
+         il     =elph_Ham_Table(iHp,3)
+         iq_ibz =q%sstar(iq_bz,1)
+         iq_s   =q%sstar(iq_bz,2)
+         ok_bz  =qindx_S(elph_Ham_ik,iq_bz,1)
+         ok_ibz =k%sstar(ok_bz,1)
+         ok_s   =k%sstar(ok_bz,2)
+         if (iq_bz==0) call msg('o Ham','#',(/real(ibp,SP),0.,0.,0.,residual/),INDENT=0,USE_TABS=.true.)
+         if (iq_bz> 0) call msg('o Ham','#',(/real(ibp,SP),real(iq_ibz,SP),real(ok_ibz,SP),real(il,SP),residual/),INDENT=0,USE_TABS=.true.)
+       endif
+     enddo
+     call msg('o Ham','#')
+   enddo
    !
    call msg('o Ham','#')
    call msg('o Ham','#',(/'Energy [eV]','R(G)[eV^-1]','I(G)[eV^-1]'/),INDENT=0,USE_TABS=.TRUE.)

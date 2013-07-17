@@ -74,7 +74,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use fragments,  ONLY:Parallel_Fragments
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,nQ_memory,&
-&                     elph_Ham_bands,elph_Ham_ik,elph_branches
+&                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh
 #endif
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
@@ -456,6 +456,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  nQ_memory=0
  elph_Ham_bands=0
  elph_Ham_ik=1
+ RES_tresh=0.01
 #endif
  !
 #if defined _SC

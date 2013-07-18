@@ -77,7 +77,6 @@ integer function ioELPH(ID,what)
      call io_elemental(ID,&
 &       VAR="                  [used]:",I0=elph_nDBs_used,CHECK=.true.,OP=(/"=="/))
    endif
-   !if (ver_is_gt_or_eq(ID,revision=1074).and.what=='gkkp_expanded') then
    !
    if (ver_is_gt_or_eq(ID,revision=1074)) then
      call io_elemental(ID,&

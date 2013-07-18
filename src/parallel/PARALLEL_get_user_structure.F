@@ -112,11 +112,16 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
    PARALLEL_CPU_role(PARALLEL_n_structures_active)="k"
  endif
  !
- if (.not.qp_found.or.ncpu==1) then
-   PARALLEL_n_structures_active=PARALLEL_n_structures_active+1
-   PARALLEL_CPU_used(PARALLEL_n_structures_active)=1
-   PARALLEL_CPU_role(PARALLEL_n_structures_active)="qp"
- endif
+ ! To be checked. These lines assign in PARALLEL_assign_chains_and_COMMs 
+ ! n_CPU > 1 even if 'qp' is not provided. To check carefully.
+ !
+ !DEBUG>
+ !if (.not.qp_found.or.ncpu==1) then
+ !  PARALLEL_n_structures_active=PARALLEL_n_structures_active+1
+ !  PARALLEL_CPU_used(PARALLEL_n_structures_active)=1
+ !  PARALLEL_CPU_role(PARALLEL_n_structures_active)="qp"
+ !endif
+ !DEBUG<
  !
  if (ncpu==1) PARALLEL_n_structures_active=0
  !

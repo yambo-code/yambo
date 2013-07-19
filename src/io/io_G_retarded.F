@@ -28,7 +28,7 @@ integer function io_G_retarded(ID,what)
  use real_time,      ONLY:Gr,Gr_kind,Gr_bands,Gr_T_steps,Gr_T_window,Gr_E_steps,Gr_E_window,&
 &                         Gr_peak_pos,Gr_E_ranges,Gr_T_step,Gr_QP_width,Gr_description,N_Gr_descs
  use R_lattice,      ONLY:nkibz
- use QP_m,           ONLY:QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
+ use QP_m,           ONLY:QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_E
  use stderr,         ONLY:intc
  !
  implicit none
@@ -56,7 +56,9 @@ integer function io_G_retarded(ID,what)
 &       OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   if (ver_is_gt_or_eq(ID,revision=2440)) then
+   if (ver_is_gt_or_eq(ID,revision=2580)) then
+     call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=21,MENU=0)
+   else if (ver_is_gt_or_eq(ID,revision=2440)) then
      call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=18,MENU=0)
    else
      call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=10,MENU=0)
@@ -69,6 +71,14 @@ integer function io_G_retarded(ID,what)
    call io_elemental(ID,R0=Gr_QP_width,&
 &       VAR=' [Gr] QP damping             [eV]:',UNIT=HA2EV,CHECK=.true.,&
 &       OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
+   !
+   if (ver_is_gt_or_eq(ID,revision=2580)) then
+     !
+     i_desc=i_desc+1
+     call io_elemental(ID,R1=QP_ctl_E(3,:,1),&
+&         VAR=' [Gr] QP stretching[eV,adim,adim]:',CHECK=.true.,&
+&         OP=(/"==","==","=="/),DESCRIPTION=Gr_description(i_desc))
+   endif
    !
    if (ver_is_gt_or_eq(ID,revision=2440)) then
      !

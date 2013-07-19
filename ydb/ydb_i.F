@@ -308,7 +308,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
      month=DB_month(DB_id_)
      day=DB_day(DB_id_)
      if (DB_i_ref(DB_id_)/=0) then
-       l_overwrite=.TRUE.
+       l_overwrite=trim(file_name)==trim(DB_file(DB_id_))
        i_random=DB_i_ref(DB_id_)
        o_random=DB_id(DB_id_)
        month=DB_month(DB_id_)

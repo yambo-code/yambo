@@ -281,11 +281,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      io_err=ioELPH(ID,'gkkp')
      if (io_err<0) call error('Missing Q-database')
      !
-     if (.not.elph_use_q_grid.and.iq_bz==1) then
+     if (.not.elph_use_q_grid) then
        !
-       E_random_shift=E_k_p_q%E(en%nbf,1,1)-en%E(en%nbf,1,1)
+       if (iq_bz==1) E_random_shift=E_k_p_q%E(en%nbf,1,1)-en%E(en%nbf,1,1)
        !
        call setup_k_plus_q_levels(E_random_shift)
+       !
+       E_k_p_q%E(:,:,1)=E_k_plus_q(:,:,1)
        !
        allocate(DB_corrected(elph_nb,k%nbz,1))
        DB_corrected=0
@@ -409,7 +411,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
            !
            gsqF_life_f(i_qp,Q_map(iq_ibz),il,iw)= gsqF_life_f(i_qp,Q_map(iq_ibz),il,iw)+pi*elph_gkkp_sq*q_weight(iq_loop)*&
 &            ( ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
-&                time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )*f_occ-&
+&             time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )*f_occ-&
 &              Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) )
            !
            if (eval_G_using_KK) cycle

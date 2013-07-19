@@ -37,9 +37,6 @@ subroutine RT_Fluence(Fluence,STEPS)
  complex(SP)  :: Field_time,E(STEPS)
  real(SP),external :: RIntegrate
  !
- !real(SP)     :: W(STEPS)
- !complex(SP)  :: E_w(STEPS)
- !
  ! E(t)=-d A(t)/dt / SPEED_OF_LIGHT
  !
  ! From RT_Ext_fields we see that
@@ -67,21 +64,6 @@ subroutine RT_Fluence(Fluence,STEPS)
    I(it)=SPEED_OF_LIGHT/8./pi*abs(E(it))**2.
    !
  enddo
- !
-! if (STEPS==NE_steps) then
-!   !
-!   do iw = 1, 1000.
-!     E_w(iw)=(0._SP,0._SP)
-!     W(iw)=(5+1./1000.*iw)/HA2EV
-!     do it = 1, STEPS
-!       E_w(iw) = E_w(iw)+E(it)*exp(cI*W(iw)*it*RT_step)
-!     enddo
-!     write (100,'(3f20.10)') W(iw)*HA2EV,E_w(iw)
-!   enddo
-!   !
-!   stop
-!   !
-! endif
  !
  ! From au to kW/cm^2
  !

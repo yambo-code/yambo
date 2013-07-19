@@ -171,6 +171,11 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    endif
  endif
  !
+ ! Number conservation
+ !=====================
+ !
+ call RT_impose_N_conservation(E,k)
+ !
  ! Dephasing Matrix
  !==================
  !
@@ -188,7 +193,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      endif
    enddo
  enddo
- !
  !
  if(RT_is_dumped.and.NE_dynamics) then
    forall(ib1=SC_bands(1):SC_bands(2),ib2=SC_bands(1):SC_bands(2)) 

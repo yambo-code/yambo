@@ -48,7 +48,7 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
 &            first_el(SC_bands(2)*k%nibz),n_of_el(SC_bands(2)*k%nibz),n_deg_grp,&
 &            QP_table(SC_bands(2)*k%nibz,2),inx,i3
  real(SP) :: delta_Nel,Eo_sorted(SC_bands(2)*k%nibz),sym_value,gamma_f(2),E_f(2),&
-&            Eo_over_T,Eo,T_el,f_dist(2),delta_G,tresh
+&            Eo_over_T,Eo,T_el,f_dist(2),delta_G,tresh,E_here
  character(lchlen) ::output_fname 
  !
  n_states=SC_bands(2)*k%nibz
@@ -131,19 +131,23 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
      inx = Eo_sorted_index(first_el(i1))
      ib  = QP_table(inx,1)
      ik  = QP_table(inx,2)
+     !
+     E_here=E%E(ib,ik,1)   
+     if (ib>E%nbf) E_here=E%E(ib,ik,1)-E%E_ind_gap(1)
+     !
      if (i2==2) then
        if (ib>=SC_bands(1).and.print_fermi_distro) then
-         call msg('o '//trim(output_fname),'',(/E%E(ib,ik,1)*HA2EV,RT_occupations(ib,ik)/),INDENT=-2,USE_TABS=.true.)
+         call msg('o '//trim(output_fname),'',(/E_here*HA2EV,RT_occupations(ib,ik)/),INDENT=-2,USE_TABS=.true.)
        endif
      else
        if ( abs(RT_occupations(ib,ik)-Fermi_fit_points(1))<f_dist(1)) then
          f_dist(1)= abs(RT_occupations(ib,ik)-Fermi_fit_points(1))
-         E_f(1)=E%E(ib,ik,1)
+         E_f(1)=E_here
          gamma_f(1)=log(2./RT_occupations(ib,ik)-1.)
        endif
        if ( abs(RT_occupations(ib,ik)-Fermi_fit_points(2))<f_dist(1)) then
          f_dist(2)= abs(RT_occupations(ib,ik)-Fermi_fit_points(2))
-         E_f(2)=E%E(ib,ik,1)
+         E_f(2)=E_here
          gamma_f(2)=log(2./RT_occupations(ib,ik)-1.)
        endif
      endif

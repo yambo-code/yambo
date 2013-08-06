@@ -243,6 +243,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
      call build_up_paths(DB_year(DB_id_),DB_month(DB_id_),DB_day(DB_id_),DB_id(DB_id_),&
 &                        0,trim(DB_file(DB_id_))) 
      call cp_file(trim(file_PATH),"ID"//trim(intc(i_ref))//"/",i_err)
+     call LIVE_message('Coping '//trim(file_PATH)//" from ID"//trim(intc(i_ref)),"n","n","%s")
    endif
    return
  endif

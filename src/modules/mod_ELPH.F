@@ -34,6 +34,9 @@ module ELPH
  integer   :: elph_branches(2)
  real(SP)  :: W_debye
  logical   :: elph_use_q_grid
+ real(SP),    allocatable :: QP_OMS_Fan(:)
+ real(SP),    allocatable :: QP_DW(:)
+ real(SP),    allocatable :: QP_TadPole(:)
  real(SP),    allocatable :: ph_kpt_bz(:,:)
  real(SP),    allocatable :: ph_qpt(:,:)
  real(SP),    allocatable :: ph_freqs_sq(:,:)
@@ -47,6 +50,7 @@ module ELPH
  !
  integer   :: elph_Ham_bands(2)
  integer   :: elph_Ham_ik
+ real(SP)  :: RES_tresh
  ! 
  ! gFsq matrices
  !

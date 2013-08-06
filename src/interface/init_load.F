@@ -72,7 +72,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use ras_module,           ONLY:locfac, loctype
 #endif
 #if defined _ELPH 
- use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches
+ use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,RES_tresh
 #endif
  use parallel_m,    ONLY:n_threads,n_log_CPUs
  !
@@ -429,6 +429,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'ElPhHBRnge','[ELPH] Hamiltonian bands range',elph_Ham_bands)
  call it(defs,'ElPhHKpt',  '[ELPH] Hamiltonian k-point',elph_Ham_ik)
+ call it(defs,'REStresh',  '[ELPH] Residual treshold to report in output files',RES_tresh)
  !
  ! GPL_EXCLUDE_END
  !

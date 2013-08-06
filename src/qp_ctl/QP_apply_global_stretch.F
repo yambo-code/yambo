@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
-&                                  DB_corrected)
+&                                  DB_corrected,apply_anyway)
  !
  ! Here I apply the strecth for both QP_ctl_from_DB (respecting the 
  ! qp_done array) and QP_ctl_add (everywhere)
@@ -36,6 +36,7 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
  type(levels)    ::E
  type(QP_ctl_t)  ::QP_ctl_from_DB(n_sp_pol),QP_ctl_add(n_sp_pol)
  integer         ::band_range(2),DB_corrected(E%nb,E%nk,n_sp_pol)
+ logical         ::apply_anyway
  !
  ! Work Space
  !
@@ -55,11 +56,15 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
    do_Z=.false.
    !
    if (any(QP_ctl_from_DB(i_sp)%E/=(/0.,1.,0.,1./)).or.any(QP_ctl_add(i_sp)%E/=(/0.,1.,0.,1./))) then
-     if (QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'E')) return
+     if (.not.apply_anyway) then
+       if (QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'E')) return
+     endif
      do_E=.true.
    endif
    if (any((/QP_ctl_from_DB(i_sp)%W(:)/=0/)).or.any((/QP_ctl_add(i_sp)%W(:)/=0/))) then
-     if (QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'W')) return
+     if (.not.apply_anyway) then
+       if (QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'W')) return
+     endif
      do_W=.true.
      if (.not.associated(E%W)) then
        allocate(E%W(E%nb,E%nk,n_sp_pol))
@@ -68,7 +73,9 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
      endif
    endif
    if (QP_ctl_from_DB(i_sp)%Z/=(1.,0.).or.QP_ctl_add(i_sp)%Z/=(1.,0.)) then
-     if (QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'Z')) return
+     if (.not.apply_anyway) then
+       if (QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'Z')) return
+     endif
      do_Z=.true.
      if (.not.associated(E%Z)) then
        allocate(E%Z(E%nb,E%nk,n_sp_pol))
@@ -78,7 +85,7 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
    endif
    if (.not.any((/do_E,do_W,do_Z/))) return
    !
-   if (.not.QP_ctl_applied) QP_ctl_applied=.true.
+   if (.not.QP_ctl_applied.and..not.apply_anyway) QP_ctl_applied=.true.
    !
    ! Backup (only once)
    !
@@ -145,7 +152,9 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
        !
        do ik=1,E%nk
          !
-         if (QP_check_if_corrected((/ib,ib/),(/ik,ik/),(/i_spin,i_spin/),E,what)) cycle
+         if (.not.apply_anyway) then
+           if (QP_check_if_corrected((/ib,ib/),(/ik,ik/),(/i_spin,i_spin/),E,what)) cycle
+         endif
          !
          if (E%Eo(ib,ik,i_spin)> 1.E-5) iref=0
          if (E%Eo(ib,ik,i_spin)<=1.E-5) iref=n_of_coeff
@@ -164,7 +173,7 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
              if (M_factors_base(1)/=1.) E%Z(ib,ik,i_spin)=(M_factors_free(1)+M_factors_base(1))/2.+&
 &                                               (0.,1.)*(M_factors_free(2)+M_factors_base(2))/2.
            endif
-           E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+4
+           if (.not.apply_anyway) E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+4
            cycle
            !
          endif
@@ -181,7 +190,7 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
            if (what=='W'.and.E%Eo(ib,ik,i_spin)>rref.and.E%Eo(ib,ik,i_spin)<=1.E-5) cycle
            delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i3
          enddo
-         if (DB_corrected(ib,ik,i_spin)/=1) then
+         if (DB_corrected(ib,ik,i_spin)/=1.or.apply_anyway) then
            delta=delta+M_factors_base(iref+1)
            do i3=1,n_of_coeff-1
              M_factor_local=M_factors_base(iref+1+i3)
@@ -199,8 +208,10 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
            if (E%Eo(ib,ik,i_spin)> 1.E-5) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)-abs(delta)
          endif
          !
-         if (what=='E') E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+1
-         if (what=='W') E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+2
+         if (.not.apply_anyway) then
+           if (what=='E') E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+1
+           if (what=='W') E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+2
+         endif
          !
        enddo
      enddo

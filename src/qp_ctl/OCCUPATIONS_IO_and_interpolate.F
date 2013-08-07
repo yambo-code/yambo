@@ -90,7 +90,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    ! 
 #endif
    ! 
- else if (Time>1.E-10) then
+ else
    !
    ! (b) Load
    !

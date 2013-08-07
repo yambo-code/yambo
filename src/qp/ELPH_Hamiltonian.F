@@ -27,10 +27,10 @@ subroutine ELPH_Hamiltonian(en,k,q)
 &                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector,RES_tresh
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,mk_dir
  use com,           ONLY:error,msg,of_open_close,file_exists,jobstr,core_io_path
- use R_lattice,     ONLY:nqibz,nqbz,bz_samp,qindx_S
+ use R_lattice,     ONLY:nqibz,nqbz,bz_samp,qindx_S,ik_is_table
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms
  use electrons,     ONLY:levels
- use LIVE_t,        ONLY:live_timing
+ use timing,        ONLY:live_timing
  use matrix_operate,ONLY:mat_dia_inv,DIAGO,USE_LK
  use stderr,        ONLY:intc,set_real_printed_length
  use QP_m,          ONLY:QP_G_damp
@@ -173,11 +173,11 @@ subroutine ELPH_Hamiltonian(en,k,q)
      !
      ib_gkkp =ib
      ibp_gkkp=ibp
-     ik_bz_gkkp=k%s_table(elph_Ham_ik,sop_inv(iq_s))
+     ik_bz_gkkp=ik_is_table(elph_Ham_ik,sop_inv(iq_s))
      if (iq_s>nsym/(i_time_rev+1)) then
        ib_gkkp   =ib
        ibp_gkkp  =ibp
-       ik_bz_gkkp=k%s_table(ok_ibz,sop_tab(sop_inv(iq_s-nsym/2),ok_s))
+       ik_bz_gkkp=ik_is_table(ok_ibz,sop_tab(sop_inv(iq_s-nsym/2),ok_s))
      endif
      !
      elph_Mat(iH,iHp)=q_weight*conjg(elph_gkkp(ik_bz_gkkp,il,ibp_gkkp,ib_gkkp))/sqrt(2.*ph_E)
@@ -207,7 +207,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
    close(1)
  else
    call live_timing('Diagonalization',1,SERIAL=.TRUE.)
-   call mat_dia_inv(DIAGO,elph_Mat,lib_in=USE_LK,E_real=elph_E)
+   call mat_dia_inv(DIAGO,USE_LK,elph_Mat,E_real=elph_E)
    call live_timing(steps=1)
    call live_timing()
    open(unit=100,file=trim(db_name),status='new',form='unformatted')

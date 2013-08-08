@@ -230,6 +230,14 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
            i_pmq   = k%sstar(i_pmq_bz,1)
            i_pmq_s = k%sstar(i_pmq_bz,2)
            !
+           ! (i_m,i_p,i_p_s)--<--.--<--(i_mp,i_pmq,i_pmq_s)
+           !                     |
+           !                    /|\ (iqibz,iqs)
+           !                     |
+           !     (i_n,i_k,1)-->--.-->--(i_np,i_kmq,i_kmq_s)
+           !
+           ! W_{nn'k}{mm'p}^{q} = [W_{n'nk'}{m'mp'}^{-q}]^{*}
+           !
            iscp%is =(/i_m,i_p,i_p_s,i_p_sp/)
            iscp%os =(/i_mp,i_pmq,i_pmq_s,i_pmq_sp/)
            iscp%qs =(/i_pmq_G0,iqibz,1/)

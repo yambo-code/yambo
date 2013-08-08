@@ -664,6 +664,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    endif 
    !
 #if defined  _ELPH 
+   !
+   call QP_ctl_switch('G')
+   !
    if (l_ph_corr) then
      call initactivate(1,'DysSolver')
      call initactivate(1,'GphBRnge ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQpts')
@@ -672,7 +675,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (trim(QP_solver)=="g".and.l_ph_corr) then
      call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
      call initactivate(-1,'WRgFsq NewtDchk GDamping ExtendOut OnMassShell')
-     call QP_ctl_switch('G')
    endif
 #endif
    !
@@ -688,7 +690,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _ELPH 
  !
  if (l_elph_Hamiltonian) then
-   call initactivate(1,'ElPhHBRnge ElPhModes ElPhHKpt GDamping')
+   call initactivate(1,'ElPhHBRnge ElPhModes ElPhHKpt GDamping REStresh')
  endif
  !
 #endif

@@ -314,7 +314,7 @@ integer function variables_SC(ID,local_description,what)
      if (ver_is_gt_or_eq(ID,revision=2494)) then
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [RT] Time steps interpolated    :",I0=RT_dynamics_jumps,CHECK=.true.,OP=(/"=="/),&
+&        VAR=" [RT] Time steps interpolated    :",I0=RT_dynamics_jumps,WARN=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc))
      endif
      !

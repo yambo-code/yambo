@@ -243,6 +243,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
      call build_up_paths(DB_year(DB_id_),DB_month(DB_id_),DB_day(DB_id_),DB_id(DB_id_),&
 &                        0,trim(DB_file(DB_id_))) 
      call cp_file(trim(file_PATH),"ID"//trim(intc(i_ref))//"/",i_err)
+     call LIVE_message('Coping '//trim(file_PATH)//" from ID"//trim(intc(i_ref)),"n","n","%s")
    endif
    return
  endif
@@ -283,7 +284,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
    if (check_for_word("in")>0.or.check_for_word("out")>0) then
      if (check_for_word("in")>0) read(rstr_piece(check_for_word("in")+1),'(a)') file_name
      if (check_for_word("out")>0) read(rstr_piece(check_for_word("out")+1),'(a)') file_name
-     if (.not.file_exists(trim(file_name))) then
+     if (.not.file_exists(trim(file_name)).and.trim(file_name)/="none") then
        call LIVE_message('File '//trim(file_name)//' not found',"n","n","%s")
        close(unit=99)
        return

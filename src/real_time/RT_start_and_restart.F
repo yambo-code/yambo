@@ -129,6 +129,15 @@ subroutine RT_start_and_restart(E,k,q,X)
  call io_control(ACTION=OP_RD_CL,COM=REP ,SEC=(/1/),MODE=VERIFY,ID=ID(3)) ! Local potential
  io_V=io_SC_components('V' ,E,ID(3))
  !
+ ! Retarded Green Functions
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID_Gr)
+ io_Gr=io_G_retarded(ID_Gr,"G_retarded")
+ if (io_Gr<0) then
+   Gr_bands=0
+   if (.not.associated(E%W)) call error('No W damping nor external G_ret provided')
+ endif
+ !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
  io_J_and_P=io_RT_components('J_and_P',ID(4))
@@ -140,15 +149,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(7)) ! G_lesser
  io_THETA=io_RT_components('THETA',ID(7))
- !
- ! Retarded Green Functions
- !
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID_Gr)
- io_Gr=io_G_retarded(ID_Gr,"G_retarded")
- if (io_Gr<0) then
-   Gr_bands=0
-   if (.not.associated(E%W)) call error('No W damping nor external G_ret provided')
- endif
  !
  ! To restart from RT only the G_lesser is necessary
  !

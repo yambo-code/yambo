@@ -72,7 +72,7 @@ integer function io_G_retarded(ID,what)
 &       VAR=' [Gr] QP damping             [eV]:',UNIT=HA2EV,CHECK=.true.,&
 &       OP=(/"=="/),DESCRIPTION=Gr_description(i_desc))
    !
-   if (ver_is_gt_or_eq(ID,revision=2580)) then
+   if (ver_is_gt_or_eq(ID,revision=2581)) then
      !
      i_desc=i_desc+1
      call io_elemental(ID,R1=QP_ctl_E(3,:,1),&

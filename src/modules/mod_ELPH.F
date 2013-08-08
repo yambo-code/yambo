@@ -22,6 +22,7 @@
 module ELPH
  !
  use pars,       ONLY:SP
+ use electrons,  ONLY:levels
  use D_lattice,  ONLY:n_atoms_species
  !
  implicit none
@@ -34,6 +35,9 @@ module ELPH
  integer   :: elph_branches(2)
  real(SP)  :: W_debye
  logical   :: elph_use_q_grid
+ real(SP),    allocatable :: QP_OMS_Fan(:)
+ real(SP),    allocatable :: QP_DW(:)
+ real(SP),    allocatable :: QP_TadPole(:)
  real(SP),    allocatable :: ph_kpt_bz(:,:)
  real(SP),    allocatable :: ph_qpt(:,:)
  real(SP),    allocatable :: ph_freqs_sq(:,:)
@@ -42,11 +46,13 @@ module ELPH
  real(SP),    allocatable :: f_k_plus_q(:,:,:)
  complex(SP), allocatable :: elph_gkkp(:,:,:,:)
  complex(SP), allocatable :: pol_vector(:,:,:)
+ type(levels)             :: E_k_p_q
  !
  ! El_h Hamiltonian
  !
  integer   :: elph_Ham_bands(2)
  integer   :: elph_Ham_ik
+ real(SP)  :: RES_tresh
  ! 
  ! gFsq matrices
  !

@@ -125,8 +125,9 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
 #if defined _YPP_RT
      call RT_output(what="initialize")
-     call RT_output("open el_dos")
+     call RT_output(what="open el_dos")
 #endif
+     output_fname='YPP-el_dos'
    else if (.not.l_3D_plot) then
      output_fname='el_dos'
      call of_open_close(trim(output_fname),'ot')
@@ -230,7 +231,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
      el_dos_max=max(el_dos_max,maxval(abs(el_dos)))
      !
-     if (l_TIME_plot.and.l_3D_plot) call msg('o dos','')
+     if (l_TIME_plot.and.l_3D_plot) call RT_output("el_dos")
      !
      ! Output file
      !

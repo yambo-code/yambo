@@ -121,6 +121,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit)
  call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit)
  call it(defs,'OCCTref','NEGF Occupations reference time',OCC_T_ref,unit=Time_unit)
+ call it(defs,'OCCnRep','NEGF N of times for complete report',RT_n_report) 
 #endif
  !
  ! BANDS

@@ -22,7 +22,7 @@
 subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  ! The BKE is coded in terms of Ho + V + Sigma
- ! This subroutine contruct Ho + V plus the diagonal part of Sigma(T=(t1 + t2)/2)
+ ! This subroutine construct Ho + V plus the time-diagonal part of Sigma(T=(t1 + t2)/2)
  ! In the TD-COHSEX we have that
  !
  !   H_k=Ho_k+U_k+ V_k^H-V_k^H[G_ref]+\Sigma_k^{SEX}-\Sigma_k^{SEX}[G_ref]
@@ -70,7 +70,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  logical          :: XC_needs_density
  integer          :: i1,ik
  !
- ! Density (needed bu Hartree and local XCs)
+ ! Density (needed by Hartree and local XCs)
  !=========
  !
  ! NE_dynamics=.FALSE. corresponds to Thermalization where the density must be updated
@@ -198,7 +198,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  call PP_redux_wait(Ho_plus_Sigma(:,:,:,1),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  if(allocated(SC_R)) then
-   SC_R = Ho_plus_Sigma
+   SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),:,:) = Ho_plus_Sigma
    do i1=1,SC_bands(1)-1
      SC_R(i1,i1,:,:)=cONE
    enddo

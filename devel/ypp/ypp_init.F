@@ -549,8 +549,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_electrons) then
    if (l_dos.or.l_bands.or.l_RT_occupations) call QP_ctl_switch('G')
-   if (l_dos.or.l_RT_occupations) call initactivate(1,"TFit OCCdT OCCTime OCCTref")
-   if (l_dos) call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad")
+   if (l_dos.or.l_RT_occupations) call initactivate(1,"TFit OCCdT OCCTime OCCTref OCCnRep")
+   if (l_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad")
+#if !defined _YPP_RT
+   if (l_dos) call initactivate(1,"DOS_bands")
+#endif
  endif
  !
 #if defined _YPP_MAGNETIC
@@ -629,7 +632,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #endif
  !
 #if defined _YPP_RT
- if (.not.l_QP_init) l_QP_init=l_RT_occupations
+ if (.not.l_QP_init) l_QP_init=l_RT_occupations.or.l_dos
  if (l_QP_init) call QP_init(.FALSE.,.TRUE.)
 #else
  if (l_QP_init) call QP_init(.FALSE.,.FALSE.)

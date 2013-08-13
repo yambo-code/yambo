@@ -27,12 +27,12 @@ subroutine RT_occupations_analyze(k,E)
  use stderr,         ONLY:intc,set_real_printed_length
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:levels,spin,spin_occ
+ use electrons,      ONLY:levels,spin,spin_occ,Nel
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state,QP_nb
- use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT
+ use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT,RT_n_report
  use com,            ONLY:msg,of_open_close
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,E_P_Electron_lifetime,&
-&                         E_P_Phonon_lifetime,l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
+&                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime
  use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions,SC_bands
  implicit none
  !
@@ -42,10 +42,14 @@ subroutine RT_occupations_analyze(k,E)
  ! Work Space
  !
  integer               :: ik,ib,i_spin,i_s,i_T,n_T_steps,i_fp
- real(SP)              :: io_Time,data_to_plot(7)
- real(SP), allocatable :: RT_occupations_sum(:)
- character(schlen)     :: titles(7)
- logical               :: l_ELPH_lifetimes
+ integer               :: i1,n1,n_skip_time
+ real(SP)              :: io_Time,data_to_plot(10)
+ real(SP), allocatable :: RT_occupations_sum(:,:)
+ real(SP)              :: RT_occ_distribution((SC_bands(2)-SC_bands(1)+1)*k%nibz,RT_n_report)
+ real(SP)              :: RT_occ_distr_time(RT_n_report)
+ character(schlen)     :: titles(10)
+ logical               :: l_ELPH_lifetimes,l_fit
+ logical, allocatable  :: l_RT_report_occ_distribution(:)
  integer,     external :: RT_occupations_check
  !
  call section('*','Real-Time occupations')
@@ -60,20 +64,47 @@ subroutine RT_occupations_analyze(k,E)
  call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
  call msg('s','Time steps     :',n_T_steps)
  !
- allocate(RT_occupations_sum(n_T_steps)) 
+ allocate(RT_occupations_sum(3,n_T_steps)) 
  RT_occupations_sum=0._SP
+ !
+ allocate(l_RT_report_occ_distribution(n_T_steps))
+ l_RT_report_occ_distribution=.FALSE.
+ RT_occ_distribution=0._SP
+ l_fit=.FALSE.
+ if(RT_n_report>0) then
+   i1=0
+   if(RT_n_report==1) then
+     i_T=n_T_steps
+     io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+     l_RT_report_occ_distribution(i_T)=.TRUE.
+     RT_occ_distr_time(1)=io_Time
+   else
+     n_skip_time=n_T_steps/(RT_n_report-1)
+     do i_T=n_T_steps,1,-n_skip_time
+       i1=i1+1
+       if(i1>=RT_n_report) cycle
+       io_Time=0.
+       if (i_T >1) io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+       l_RT_report_occ_distribution(i_T)=.TRUE.
+       RT_occ_distr_time(RT_n_report-i1+1)=io_Time
+     enddo
+   endif
+   i1=0
+ endif
  !
  l_ELPH_lifetimes=l_ph_corr.and.l_RT_CCA_Kernel
  !
  call set_real_printed_length(f_length=10,g_length=10)
  !
+ ! F(it) for each (ik,ib)
  do i_T=1,n_T_steps
    !
    io_Time=0.
    if (i_T >1) io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
+   if (l_RT_report_occ_distribution(i_T)) i1=i1+1
+   !
    call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=io_Time)
-   call RT_occupations_repair(E,k,.FALSE.)
    !
    do i_s=1,QP_n_states
      !
@@ -85,6 +116,7 @@ subroutine RT_occupations_analyze(k,E)
      ik    =QP_table(i_s,3)
      i_spin=spin(QP_table(i_s,:))
      !
+     if (ib<SC_bands(1)) cycle
      if (ib>SC_bands(2)) cycle
      if (ik>k%nibz) cycle
      !
@@ -103,11 +135,14 @@ subroutine RT_occupations_analyze(k,E)
        ! Titles
        !========
        if (l_carrier_dynamics.and.l_ELPH_lifetimes) then
-         titles(:)=(/'         ','         ','|--------','--El-Ph--','--------|','|-El-El--','--------|'/)
+         titles(1:2)=(/'         ','         '/)
+         titles(3:5)=(/'|--------','--El-Ph--','--------|'/)
+         titles(6:7)=(/'|-----El-','El------|'/)
          call msg('o '//trim(output_fname),'#',titles(:),INDENT=0,USE_TABS=.TRUE.)
          titles(1)='T[fs]'
          titles(2)='Occ.'
-         titles(3:7)=(/'Hole[meV]','El. [meV]','Ph. [meV]','Hole[meV]','El. [meV]'/)
+         titles(3:5)=(/'Hole[meV]','El. [meV]','Ph. [meV]'/)
+         titles(6:7)=(/'Hole[meV]','El. [meV]'/)
          call msg('o '//trim(output_fname),'#',titles(:7),INDENT=0,USE_TABS=.TRUE.)
        else if (l_carrier_dynamics.and..not.l_ELPH_lifetimes) then
          titles(1)='T[fs]'
@@ -129,50 +164,68 @@ subroutine RT_occupations_analyze(k,E)
      endif
      !
      if (ib<SC_bands(1)) then
-       RT_occupations_sum(i_T)=RT_occupations_sum(i_T)+spin_occ*k%weights(ik)
+       RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+spin_occ*k%weights(ik)
        cycle
      endif
      !
-     data_to_plot(:2)=(/io_TIME/FS2AUT,RT_occupations(ib,ik)/spin_occ/)
-     RT_occupations_sum(i_T)=RT_occupations_sum(i_T)+RT_occupations(ib,ik)*k%weights(ik)
+     if (ib<=E%nbf) data_to_plot(:2)=(/io_TIME/FS2AUT,(RT_occupations(ib,ik)-spin_occ)*k%weights(ik)/)
+     if (ib> E%nbf) data_to_plot(:2)=(/io_TIME/FS2AUT, RT_occupations(ib,ik)          *k%weights(ik)/)
+     if (ib<=E%nbf) RT_occupations_sum(1,i_T)=RT_occupations_sum(1,i_T)+data_to_plot(2)
+     if (ib> E%nbf) RT_occupations_sum(2,i_T)=RT_occupations_sum(2,i_T)+data_to_plot(2)
+     RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+RT_occupations(ib,ik)*k%weights(ik)
      !
+     n1=1
      if (l_ELPH_lifetimes) then
-       data_to_plot(3:5)=(/E_P_Hole_lifetime(ib,ik)*HA2EV,E_P_Electron_lifetime(ib,ik)*HA2EV,&
-&                                              E_P_Phonon_lifetime(ib,ik)*HA2EV/)*1000.
-       if (l_carrier_dynamics) then
-         data_to_plot(6:7)=(/E_E_Hole_lifetime(ib,ik)*HA2EV,E_E_Electron_lifetime(ib,ik)*HA2EV/)*1000.
-         call msg('o '//trim(output_fname),'',data_to_plot(:),INDENT=-2,USE_TABS=.true.)
-       else
-         call msg('o '//trim(output_fname),'',data_to_plot(:5),INDENT=-2,USE_TABS=.true.) 
-       endif
-     else
-       call msg('o '//trim(output_fname),'',data_to_plot(:2),INDENT=-2,USE_TABS=.true.)
+       n1=4
+       data_to_plot(3:4)=(/E_P_Hole_lifetime(ib,ik),E_P_Electron_lifetime(ib,ik)/)
+       data_to_plot(5)  =E_P_Phonon_lifetime(ib,ik)
+       data_to_plot=data_to_plot*HA2EV*1000._SP
      endif
+     if (l_carrier_dynamics) then
+       n1=3
+       if(l_ELPH_lifetimes) n1=6
+       data_to_plot(n1:n1+1)=(/E_E_Hole_lifetime(ib,ik),E_E_Electron_lifetime(ib,ik)/)*HA2EV*1000.
+     endif
+     call msg('o '//trim(output_fname),'',data_to_plot(:n1+1),INDENT=-2,USE_TABS=.true.)
      !
      if (i_T==n_T_steps) call of_open_close(trim(output_fname))
+     !
+     if(.not.l_RT_report_occ_distribution(i_T)) cycle
+     !
+     ! Prepare f(eps_{ik,ib}) for i_T=it_report
+     RT_occ_distribution(i_s,i1)=RT_occupations(ib,ik)
      !
    enddo
    !
  enddo
  !
+ !
+ ! Sum_{ib,ik} f_{ik,ib}(it)
  output_fname='YPP-RT_occupations_ALL'
  call of_open_close(trim(output_fname),'ot')
  do i_fp=1,n_SC_descriptions
    call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
  enddo
  titles(1)='T[fs]'
- titles(2)='Tot. Occ. [cm^-3]'
+ titles(2)='Elec. in cond.'
+ titles(3)='Holes in val. '
+ titles(4)='Tot. Occ. [cm^-3]'
  call msg('o '//trim(output_fname),'#')
- call msg('o '//trim(output_fname),'#',titles(:2),INDENT=0,USE_TABS=.TRUE.)
+ call msg('o '//trim(output_fname),'#',titles(:4),INDENT=0,USE_TABS=.TRUE.)
  call msg('o '//trim(output_fname),'#')
  !
  do i_T=1,n_T_steps
    io_Time=0.
    if (i_T>1) io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-   data_to_plot(:2)=(/io_TIME/FS2AUT,RT_occupations_sum(i_T)/(DL_vol*BO2ANG**3*1.E-24)/)
-   call msg('o '//trim(output_fname),'',data_to_plot(:2),INDENT=-2,USE_TABS=.true.)
+   data_to_plot(:4)=(/io_TIME/FS2AUT,RT_occupations_sum(:,i_T)/(DL_vol*BO2ANG**3*1.E-24)/)
+   call msg('o '//trim(output_fname),'',data_to_plot(:4),INDENT=-2,USE_TABS=.true.)
  enddo
  call of_open_close(trim(output_fname))
+ !
+ ! f(eps_{ik,ib})
+ !
+ if(any(l_RT_report_occ_distribution(:)))&
+&  call RT_occupations_FIT(k,E,RT_occ_distribution(:QP_n_states,:),RT_occ_distr_time)
  !
  call set_real_printed_length()
  !

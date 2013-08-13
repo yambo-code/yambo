@@ -282,7 +282,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! Rho_reference. Note that altough rh_n has been already calculated 
    ! in sc_bare_Hamiltonian I need to recalculate it here when SC_lw_band>1
-   ! as it it is also used in XC_potential_driver
+   ! as it is also used in XC_potential_driver
    ! 
    call el_density_matrix(G_lesser(:,:,:,1),E,k,rho_n,SC_bands(1),.false.)
    rho_reference=rho_n

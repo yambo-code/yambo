@@ -37,7 +37,7 @@ subroutine RT_driver(E,X,k,q)
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_steps,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
-&                         l_Dynamics_is_over,MEM_index,G_MEM_steps
+&                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
  use com,             ONLY:error
@@ -64,6 +64,7 @@ subroutine RT_driver(E,X,k,q)
  ! Work Space
  !
  integer                  :: it,ik,ib,it_mem,it_mem_p1
+ real(SP)                 :: E_previous,E_now
  complex(SP)              :: on_the_fly_operators(8)
  !
  if (l_ph_corr.and.l_carrier_dynamics) then
@@ -300,12 +301,24 @@ subroutine RT_driver(E,X,k,q)
    !
    call RT_Observables(E,k,G_lesser(:,:,:,it_mem),on_the_fly_operators)
    !
+   ! Update Bose Temp and Phonons distribution
+   !===========================================
+   if (l_Debye_TBose_update) then
+     if (it==it_start) E_previous=real(on_the_fly_operators(1)+on_the_fly_operators(2))
+     if (abs(nint(NE_time/FS2AUT)-(NE_time/FS2AUT))< RT_step/FS2AUT .and. &
+&            nint(NE_time/FS2AUT)-(NE_time/FS2AUT) > 0. ) then
+       E_now=real(on_the_fly_operators(1)+on_the_fly_operators(2))
+       call TEMPERATURE_Debye(E_previous-E_now)
+       E_previous=E_now
+     endif
+   endif
+   !
    call RT_output('dyn',real(on_the_fly_operators),TIME=NE_time/FS2AUT)
    call RT_output('cur pol',TIME=NE_time/FS2AUT)
    if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
    !
-   ! Calculate Collisions and fill SC_R
-   !====================================
+   ! Calculate Collisions and fill SC_R, Ho_plus_Sigma, H_nl_sc
+   !============================================================
    !
    call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
    !

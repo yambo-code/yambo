@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_repair(E,k,print_fermi_distro)
+subroutine RT_occupations_repair(E,k)
  !
  ! Andrea April 2nd 2012
  ! 
@@ -31,32 +31,39 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
  use pars,           ONLY:SP,lchlen
  use electrons,      ONLY:Nel,n_full_bands
  use SC,             ONLY:SC_bands,RT_occupations,n_SC_descriptions,SC_description
+ use QP_m,           ONLY:QP_table,QP_n_states
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use vec_operate,    ONLY:sort,degeneration_finder
- use com,            ONLY:msg,of_open_close
+ use com,            ONLY:warning,of_open_close
+ use stderr,         ONLY:real2ch
  !
  implicit none
  !
  type(bz_samp) :: k
  type(levels)  :: E
- logical       :: print_fermi_distro
  !
  ! Work Space
  !
- integer  :: ik,ib,i_c,Eo_sorted_index(SC_bands(2)*k%nibz),n_states,i1,i2,&
-&            first_el(SC_bands(2)*k%nibz),n_of_el(SC_bands(2)*k%nibz),n_deg_grp,&
-&            QP_table(SC_bands(2)*k%nibz,2),inx,i3
- real(SP) :: delta_Nel,Eo_sorted(SC_bands(2)*k%nibz),sym_value,gamma_f(2),E_f(2),&
-&            Eo_over_T,Eo,T_el,f_dist(2),delta_G,tresh,E_here
- character(lchlen) ::output_fname 
+ integer  :: Eo_sorted_index((SC_bands(2)-SC_bands(1)+1)*k%nibz)
+ integer  :: first_el((SC_bands(2)-SC_bands(1)+1)*k%nibz)
+ integer  :: n_of_el((SC_bands(2)-SC_bands(1)+1)*k%nibz)
+ integer  :: n_deg_grp,i1,i2,i3,ib,ik,inx,i_c
  !
- n_states=SC_bands(2)*k%nibz
+ real(SP) :: Eo_sorted((SC_bands(2)-SC_bands(1)+1)*k%nibz)
+ real(SP) :: delta_Nel,sym_value,delta_G
  !
+ call QP_state_table_setup(E)
  call eval_delta_Nel()
  !
  call sort(Eo_sorted,indx=Eo_sorted_index)
- call degeneration_finder(Eo_sorted,n_states,first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
+ call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
+ !
+ ! COMMENTED
+ ! Davide: This must be overcome.
+ ! The external field broke the symmetries and degenerate
+ ! states [i.e. E(ik)=E(S_old(ik)] can have different occupations
+ !
  !
  do i1=1,n_deg_grp
    do i3=1,2
@@ -64,7 +71,8 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
      do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
        inx = Eo_sorted_index(i2)
        ib  = QP_table(inx,1)
-       ik  = QP_table(inx,2)
+       ik  = QP_table(inx,3)
+       if (ib>SC_bands(2)) cycle
        if (ib<SC_bands(1)) then
          if (i3==1) sym_value=sym_value+E%f(ib,ik,1)/real( n_of_el(i1) )
          if (i3==2) E%f(ib,ik,1)=sym_value
@@ -79,102 +87,41 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
  ! Correction of the number of electrons
  !=======================================
  !
- if (print_fermi_distro) call msg('s','Number viol.   :',delta_Nel)
+ !if (delta_Nel>1.E-5) call warning('Number viol.   :'//trim(real2ch(delta_Nel)) )
  !
- i3=1
- tresh=1.E-3
+ ! COMMENTED
+ ! Davide: This gives a constan drift in the number of electrons / holes
+ !         of the lowest unoccupied / highest occupied state which is
+ !         problematic for "low pumping"
  !
- do while (abs(delta_Nel)>tresh) 
-   !
-   if (i3>100) then
-     tresh=tresh*5
-     i3=1
-   endif
-   !
-   do ik=1,k%nibz
-     do ib=SC_bands(1),n_full_bands
-       !
-       if (RT_occupations(ib,ik)<1.E-5.or.abs(RT_occupations(ib,ik)-2.)<1.E-5) cycle
-       !
-       if (delta_Nel<0.) RT_occupations(ib,ik)=RT_occupations(ib,ik)*1.005
-       if (delta_Nel>0.) RT_occupations(ib,ik)=RT_occupations(ib,ik)*0.995
-       !
-     enddo
-   enddo
-   !
-   call eval_delta_Nel()
-   !
-   i3=i3+1
-   !
- enddo
+ !i3=1
+ !tresh=1.E-3
+ !
+ !do while (abs(delta_Nel)>tresh) 
+ !  !
+ !  if (i3>100) then
+ !    tresh=tresh*5
+ !    i3=1
+ !  endif
+ !  !
+ !  do ik=1,k%nibz
+ !    do ib=SC_bands(1),n_full_bands
+ !      !
+ !      if (RT_occupations(ib,ik)<1.E-5.or.abs(RT_occupations(ib,ik)-2.)<1.E-5) cycle
+ !      !
+ !      if (delta_Nel<0.) RT_occupations(ib,ik)=RT_occupations(ib,ik)*1.005
+ !      if (delta_Nel>0.) RT_occupations(ib,ik)=RT_occupations(ib,ik)*0.995
+ !      !
+ !    enddo
+ !  enddo
+ !  !
+ !  call eval_delta_Nel()
+ !  !
+ !  i3=i3+1
+ !  !
+ !enddo
  !
  call eval_delta_G()
- !
- if (.not.print_fermi_distro) return
- !
- ! Occupation distribution
- !=========================
- !
- output_fname="YPP-RT_occupation_distribution"
- call of_open_close(trim(output_fname),'ot')
- do i_c=1,n_SC_descriptions
-   call msg('o distribution','#',trim(SC_description(i_c)),INDENT=0)
- enddo
- call msg('o distribution','#')
- call msg('o distribution','#',(/'E[eV]',' Occ.'/),INDENT=0,USE_TABS=.TRUE.)
- call msg('o distribution','#')
- !
- f_dist=1000.
- !
- do i2=1,2
-   do i1=1,n_deg_grp
-     inx = Eo_sorted_index(first_el(i1))
-     ib  = QP_table(inx,1)
-     ik  = QP_table(inx,2)
-     !
-     E_here=E%E(ib,ik,1)   
-     if (ib>E%nbf) E_here=E%E(ib,ik,1)-E%E_ind_gap(1)
-     !
-     if (i2==2) then
-       if (ib>=SC_bands(1).and.print_fermi_distro) then
-         call msg('o '//trim(output_fname),'',(/E_here*HA2EV,RT_occupations(ib,ik)/),INDENT=-2,USE_TABS=.true.)
-       endif
-     else
-       if ( abs(RT_occupations(ib,ik)-Fermi_fit_points(1))<f_dist(1)) then
-         f_dist(1)= abs(RT_occupations(ib,ik)-Fermi_fit_points(1))
-         E_f(1)=E_here
-         gamma_f(1)=log(2./RT_occupations(ib,ik)-1.)
-       endif
-       if ( abs(RT_occupations(ib,ik)-Fermi_fit_points(2))<f_dist(1)) then
-         f_dist(2)= abs(RT_occupations(ib,ik)-Fermi_fit_points(2))
-         E_f(2)=E_here
-         gamma_f(2)=log(2./RT_occupations(ib,ik)-1.)
-       endif
-     endif
-   enddo
-   !
-   if (i2==1) then
-     !
-     ! Temperature evaluation
-     !========================
-     !
-     if (abs(E_f(1))<1.E-10) then
-       Eo_over_T= -gamma_f(1)
-       T_el     = E_f(2)/(gamma_f(2)+Eo_over_T)
-     else
-       Eo_over_T= (gamma_f(2)*E_f(1)-gamma_f(1)*E_f(2))/(E_f(2)-E_f(1))
-       T_el     = E_f(1)/(gamma_f(1)+Eo_over_T)
-     endif
-     Eo       = Eo_over_T*T_el
-     !
-   endif
-   !
- enddo
- !
- call of_open_close(trim(output_fname))
- !
- call msg('s','El. temp.[eV/K]:',T_el*(/HA2EV,HA2KEL/))
- call msg('s','Fermi level[eV]:',Eo*HA2EV)
  !
  contains
    !
@@ -185,12 +132,11 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
      delta_Nel=0.0_SP
      do ik=1,E%nk
        do ib=1,SC_bands(2)
-         i_c=i_c+1
-         Eo_sorted(i_c) =E%E(ib,ik,1)
-         QP_table(i_c,:)=(/ib,ik/)
          if (ib<SC_bands(1)) then
            delta_Nel=delta_Nel+E%f(ib,ik,1)*k%weights(ik)
          else
+           i_c=i_c+1
+           Eo_sorted(i_c) =E%E(ib,ik,1)
            delta_Nel=delta_Nel+RT_occupations(ib,ik)*k%weights(ik)
          endif
        enddo

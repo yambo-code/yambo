@@ -185,6 +185,7 @@ module YPP
  ! (RT) Occupations
  !
  logical     :: l_RT_occupations
+ integer     :: RT_n_report=1
  !
  ! Reduce Symmetries
  !

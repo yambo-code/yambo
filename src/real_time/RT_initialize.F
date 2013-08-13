@@ -32,10 +32,10 @@ subroutine RT_initialize(E,k,q)
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
 &                         l_RT_diamagnetic,RT_IO_steps,RT_IO_time,l_NE_simulate_BSE,&
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
-&                         l_RT_induced_field,RT_dynamics_jumps,l_NE_simulate_TDDFT,      &
+&                         l_RT_induced_field,RT_dynamics_jumps,l_NE_simulate_TDDFT, &
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
-&                         G_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,            &
+&                         G_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,             &
 &                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,               &
 &                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps
  use collisions_IO,  ONLY:l_STORE_COLLISIONS

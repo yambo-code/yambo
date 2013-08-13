@@ -79,12 +79,13 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #if defined _SC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,RT_nk,&
-&                     l_Mean_Potential,l_RT_occupations_in_use,SC_up_W_iters,l_SC_diagonal,l_SC_nl_mix
+&                     l_Mean_Potential,l_RT_occupations_in_use,SC_up_W_iters,l_SC_diagonal,&
+&                     l_SC_nl_mix
  use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff,COLLISIONS_path
 #endif
 #if defined _RT || defined _YPP_RT
- use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,    &
-&                     RT_diagonalization_steps, l_NE_simulate_RPA,  &
+ use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,&
+&                     RT_diagonalization_steps, l_NE_simulate_RPA,l_Debye_TBose_update,&
 &                     SwitchOnTime,RT_IO_steps,RT_IO_steps_DB,l_RT_induced_field,RT_IO_time,&
 &                     l_RT_diagonalize,RT_is_dumped,RAD_LifeTime,Phase_LifeTime,&
 &                     RT_dynamics_jumps,NE_tot_time,G_MEM_steps,NE_MEM_treshold,&
@@ -494,6 +495,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_carrier_dynamics=.FALSE.
  Dynamics_Kind="P"
  l_RT_CCA_Kernel=.FALSE.
+ l_Debye_TBose_update=.FALSE.
  !
  ! RT current 
  !

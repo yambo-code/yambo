@@ -30,10 +30,12 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use FFT_m,          ONLY:fft_size
  use YPP,            ONLY:l_density,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,plot_title,l_dos,dos_broadening,dos_bands,&
-&                         dos_E_range,dos_E_steps,OCC_T_ref,OCC_T_range,OCC_deltaT,RT_occupations_ref
+&                         dos_E_range,dos_E_steps,OCC_T_ref,OCC_T_range,OCC_deltaT,&
+&                         RT_occupations_ref,RT_n_report
  use com,            ONLY:msg,of_open_close
  use functions,      ONLY:Fermi_fnc_derivative
  use QP_CTL_m,       ONLY:QP_apply
+ use QP_m,           ONLY:QP_table,QP_n_states
  use LIVE_t,         ONLY:live_timing
 #if defined _YPP_RT
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_output
@@ -49,8 +51,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  type(levels)  ::Xen
  !
  ! Work Space
- !
- real(SP), allocatable :: el_den(:)
+ ! 
+ real(SP), allocatable :: el_den(:),RT_occ_distr(:,:)
  real(SP)              :: el_dos(dos_E_steps,n_sp_pol),dos_E,delta_E,f_occ,io_Time,dos_norm,el_dos_max
  integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps,i_fp,io_ID,io_err,ik_rand,i1
  character(schlen)     :: ch_ws,titles(4)
@@ -117,6 +119,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
    el_dos_max=0.
    !
+   call QP_state_table_setup(Xen)
    call QP_apply(dos_bands,Xen,Xk,'G',msg_fmt='s')
    !
    ! Output files headers
@@ -164,7 +167,18 @@ subroutine electrons_dos_and_charge(Xk,Xen)
 #if defined _YPP_RT
    if (n_T_steps==1) then
      call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=OCC_T_range(1))
-     call RT_occupations_repair(Xen,Xk,.TRUE.)
+     !
+     RT_n_report=1
+     allocate(RT_occ_distr(QP_n_states,RT_n_report))
+     do i1=1,QP_n_states
+       ib    =QP_table(i1,1)
+       ik    =QP_table(i1,3)
+       i_spin=spin(QP_table(i1,:))
+       !
+       RT_occ_distr(i1,1)=RT_occupations(ib,ik)
+     enddo
+     call RT_occupations_FIT(Xk,Xen,RT_occ_distr,OCC_T_range(1))
+     deallocate(RT_occ_distr)
    endif
 #endif
    !
@@ -180,7 +194,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
 #if defined _YPP_RT
      call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
-     call RT_occupations_repair(Xen,Xk,.FALSE.)
+     call RT_occupations_repair(Xen,Xk)
 #endif
      !
      el_dos(:,:)=0.
@@ -270,6 +284,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
    allocate(el_den(fft_size))
    !
+   !call PARALLEL_global_indexes(Xen,Xk,q,"DENSITY") 
    call el_density(Xen,Xk,el_den,.FALSE.) 
    v2plot=el_den
    !

@@ -24,7 +24,7 @@ subroutine RT_ELPH_initialize(k,q)
  use pars,           ONLY:SP,pi
  use real_time,      ONLY:q_weight,elph_gkkp_expanded,THETA_matrix,&
 &                         THETA_matrix_index,Q_io_map,K_io_map,&
-&                         l_RT_CCA_Kernel
+&                         l_RT_CCA_Kernel,l_Debye_TBose_update
  use drivers,        ONLY:l_ph_corr
  use com,            ONLY:warning
  use R_lattice,      ONLY:RL_vol,bz_samp
@@ -62,7 +62,8 @@ subroutine RT_ELPH_initialize(k,q)
    return
  endif
  !
- call parser('UseDebyE',     l_use_Debye_E)
+ call parser('UseDebyeE'   , l_use_Debye_E)
+ call parser('UpdateDebyeT', l_Debye_TBose_update)
  !
  ! Q/K grid remapping
  !====================

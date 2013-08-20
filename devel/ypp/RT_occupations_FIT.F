@@ -44,7 +44,7 @@ subroutine RT_occupations_FIT(k,E,RT_occ_distribution,time)
  real(SP)              :: RT_occ_distribution(QP_n_states,RT_n_report)
  real(SP)              :: time(RT_n_report)
  !
- integer, parameter    :: max_iter=1000,fit_dim=1000,nmax_file_report=16
+ integer, parameter    :: max_iter=10000,fit_dim=1000,nmax_file_report=16
  real(SP)              :: RT_occ_fitted(fit_dim,RT_n_report,2),Ei(fit_dim,2)
  !
  ! Work Space
@@ -152,7 +152,7 @@ subroutine RT_occupations_FIT(k,E,RT_occ_distribution,time)
          exit
        endif
        !
-       T_guess=T_fit(i1,ifit)
+       T_guess(ifit)=T_fit(i1,ifit)
        Ef_guess(ifit)=Ef_fit(i1,ifit)
        !
      enddo   
@@ -162,8 +162,8 @@ subroutine RT_occupations_FIT(k,E,RT_occ_distribution,time)
        T_fit(i1,ifit) =-1000._SP
        T_guess(ifit)=max(Tel,1.E-2)
        Ef_fit(i1,ifit)=-1000._SP
-       Ef_guess(ifit)= 1._SP*(minval(E%E(E%nbf+1,:,:))-maxval(E%E(E%nbf,:,:)))
-       Ef_guess(ifit)=-1._SP*(minval(E%E(E%nbf+1,:,:))-maxval(E%E(E%nbf,:,:)))
+       if(ifit==1) Ef_guess(ifit)= 1._SP*(minval(E%E(E%nbf+1,:,:))-maxval(E%E(E%nbf,:,:)))
+       if(ifit==2) Ef_guess(ifit)=-1._SP*(minval(E%E(E%nbf+1,:,:))-maxval(E%E(E%nbf,:,:)))
      endif     
      !
      if(i2<=max_iter) then

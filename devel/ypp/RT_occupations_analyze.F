@@ -106,6 +106,8 @@ subroutine RT_occupations_analyze(k,E)
    !
    call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=io_Time)
    !
+   call RT_occupations_repair(E,k)
+   !
    do i_s=1,QP_n_states
      !
      ! n   =QP_table(i_s,1)
@@ -179,7 +181,7 @@ subroutine RT_occupations_analyze(k,E)
        n1=4
        data_to_plot(3:4)=(/E_P_Hole_lifetime(ib,ik),E_P_Electron_lifetime(ib,ik)/)
        data_to_plot(5)  =E_P_Phonon_lifetime(ib,ik)
-       data_to_plot=data_to_plot*HA2EV*1000._SP
+       data_to_plot(3:)=data_to_plot(3:)*HA2EV*1000._SP
      endif
      if (l_carrier_dynamics) then
        n1=3

@@ -94,9 +94,11 @@ subroutine ypp_init_load(defs)
  ! GPL_EXCLUDE_START 
  !
 #if defined _YPP_RT
- call it('r',defs,'occupations','[R] Analize time-dependent occupations')
- call it('r',defs,'rtX',        '[R] Real-Time Response functions Post-Processing')
- call it('r',defs,'Gret',       '[R] Retarded GFs')
+ call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
+ call it('r',defs,'RT-X',         '[R] Response functions Post-Processing')
+ call it('r',defs,'RTdos',        '[R] Analize time-dependent DOS')
+ call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
+ call it('r',defs,'Gret',         '[R] Retarded GFs')
 #endif
 #if defined _YPP_SC
  call it('r',defs,'MeanPot', '[R] Mean Potential')
@@ -116,12 +118,17 @@ subroutine ypp_init_load(defs)
  call it(defs,'DOSERange', 'Energy range',dos_E_range,unit=E_unit,verb_level=V_general) 
  call it(defs,'DOSESteps', 'Energy steps',dos_E_steps,verb_level=V_general) 
  call it('f',defs,'PrtOccOnly', 'Occupied states only') 
+ !
 #if defined _YPP_RT
- call it(defs,'TFit','NEGF Fermi Function fit values',Fermi_fit_points)
+ !
+ ! OCCUPATIONS
+ !
  call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit)
  call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit)
  call it(defs,'OCCTref','NEGF Occupations reference time',OCC_T_ref,unit=Time_unit)
- call it(defs,'OCCnRep','NEGF N of times for complete report',RT_n_report) 
+ call it('f',defs,'OCCPlot','NEGF Plot f(t) for all k and n')
+ call it('f',defs,'OCCFit','NEGF Make a FIT of the occ. with Fermi Function')
+ call it(defs,'OCCnFit','NEGF N of times for FIT',RT_n_FIT) 
 #endif
  !
  ! BANDS

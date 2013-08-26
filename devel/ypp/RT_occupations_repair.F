@@ -27,7 +27,6 @@ subroutine RT_occupations_repair(E,k)
  ! of the number of electrons. This, in turns, affects all related observables
  !
  use units,          ONLY:HA2EV,HA2KEL
- use YPP,            ONLY:Fermi_fit_points
  use pars,           ONLY:SP,lchlen
  use electrons,      ONLY:Nel,n_full_bands
  use SC,             ONLY:SC_bands,RT_occupations,n_SC_descriptions,SC_description

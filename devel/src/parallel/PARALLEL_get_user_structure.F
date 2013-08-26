@@ -67,7 +67,7 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
  !
  do i_c=1,CPU_structure(i_selected)%N_chains
    !
-   read(c_strings(i_c),'(i3)') CPU_structure(i_selected)%CPU(i_c)
+   read(c_strings(i_c),'(i1)') CPU_structure(i_selected)%CPU(i_c)
    read(r_strings(i_c),'(a )') CPU_structure(i_selected)%ROLE(i_c)
    !
    if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="v") cycle

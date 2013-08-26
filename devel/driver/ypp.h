@@ -66,7 +66,7 @@
 #endif
 #if defined _YPP_RT
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave,(m)ag]",0,0,1,0,0}, 
-  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(o)ccupations]",0,0,1,0,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands]",0,0,1,0,0}, 
 #endif
 #if ! defined _YPP_SC && ! defined _YPP_ELPH && ! defined _YPP_MAGNETIC && ! defined _YPP_RT
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave]",0,0,1,0,0}, 
@@ -76,7 +76,7 @@
   {"bzrim",   "r","BZ energy RIM analyzer",0,0,0,0,0}, 
   {"fixsyms", "n","Remove symmetries not consistent with an external perturbation",0,0,0,0,0}, 
 #if defined _YPP_RT
-  {"rtX",     "t","Real-Time Response function post-processing",0,0,0,0,0}, 
+  {"RealTime","t","Real Time [(X)response,(d)os,(o)ccupations]",0,0,1,0,0}, 
   {"Gret",    "c","Retarded GFs",0,0,0,0,0}, 
 #endif
 #if defined _YPP_ELPH

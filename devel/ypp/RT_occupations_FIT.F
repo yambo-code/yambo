@@ -19,12 +19,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_FIT(k,E,RT_occ_distribution,time)
+subroutine RT_occupations_FIT(k,E,RT_occ_DATA,time)
  ! 
  ! FIT the occupations with a Gauss–Newton algorithm
  !
  use units,          ONLY:HA2EV,HA2KEL,FS2AUT
- use YPP,            ONLY:Fermi_fit_points,RT_n_report
+ use YPP,            ONLY:RT_n_FIT
  use pars,           ONLY:SP,lchlen
  use SC,             ONLY:SC_bands,n_SC_descriptions,SC_description
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
@@ -41,22 +41,22 @@ subroutine RT_occupations_FIT(k,E,RT_occ_distribution,time)
  type(bz_samp) :: k
  type(levels)  :: E
  !
- real(SP)              :: RT_occ_distribution(QP_n_states,RT_n_report)
- real(SP)              :: time(RT_n_report)
+ real(SP)              :: RT_occ_DATA(QP_n_states,RT_n_FIT)
+ real(SP)              :: time(RT_n_FIT)
  !
  integer, parameter    :: max_iter=10000,fit_dim=1000,nmax_file_report=16
- real(SP)              :: RT_occ_fitted(fit_dim,RT_n_report,2),Ei(fit_dim,2)
+ real(SP)              :: RT_occ_fitted(fit_dim,RT_n_FIT,2),Ei(fit_dim,2),Fit_E_range(2)
  !
  ! Work Space
  !
  logical               :: l_two_temperatures
  !
  real(SP)              :: x(QP_n_states),Jacob(QP_n_states,2)
- real(SP)              :: Avg_error(RT_n_report,2)
+ real(SP)              :: Avg_error(RT_n_FIT,2)
  real(SP)              :: Jacob_sq(2,2),Jacob_sq_m1(2,2),Fit_new(2)
- real(SP)              :: T_guess(2),T_fit(RT_n_report,2)
- real(SP)              :: Ef_guess(2),Ef_fit(RT_n_report,2)
- real(SP)              :: delta_E,E_shifted,E_start
+ real(SP)              :: T_guess(2),T_fit(RT_n_FIT,2)
+ real(SP)              :: Ef_guess(2),Ef_fit(RT_n_FIT,2)
+ real(SP)              :: delta_E,E_shifted,E_start,E_shift
  ! 
  integer  :: ifit,i_s,ik,ib,i1,i2,n1,n2,i_fp,i_spin
  integer  :: nfit,last_occupied,nfound(2)
@@ -87,32 +87,36 @@ subroutine RT_occupations_FIT(k,E,RT_occ_distribution,time)
  nfit=1
  if(l_two_temperatures) nfit=2
  !
+ E_shift=1._SP/HA2EV
+ Fit_E_range(1)=E_sorted(1)          -E_shift
+ Fit_E_range(2)=E_sorted(QP_n_states)+E_shift
+ !
  do ifit=1,nfit
-   if(.not.l_two_temperatures)        delta_E=(Fermi_fit_points(2)-Fermi_fit_points(1))
-   if(ifit==1.and.l_two_temperatures) delta_E=(1._SP-Fermi_fit_points(1))
-   if(ifit==2.and.l_two_temperatures) delta_E=(Fermi_fit_points(2)+1._SP)
-   if(ifit==1) E_start=Fermi_fit_points(1)/HA2EV
-   if(ifit==2) E_start=-1._SP/HA2EV
-   delta_E=delta_E/real(fit_dim,SP)/HA2EV
+   if(.not.l_two_temperatures)        delta_E=(Fit_E_range(2)-Fit_E_range(1))
+   if(ifit==1.and.l_two_temperatures) delta_E=(E_shift-Fit_E_range(1))
+   if(ifit==2.and.l_two_temperatures) delta_E=(Fit_E_range(2)+E_shift)
+   if(ifit==1) E_start=Fit_E_range(1)
+   if(ifit==2) E_start=-E_shift
+   delta_E=delta_E/real(fit_dim,SP)
    do i1=1,fit_dim
      Ei(i1,ifit)=E_start+delta_E*real(i1-1,SP)
    enddo
  enddo
  !
  T_guess=max(Tel,1.E-2)
- Ef_guess=(E_sorted(last_occupied+1)-E_sorted(last_occupied))
- if(l_two_temperatures) Ef_guess(2)=-Ef_guess(1)
+ Ef_guess=E_sorted(last_occupied+1)
+ if(l_two_temperatures) Ef_guess(2)=E_sorted(last_occupied)
  !
  T_fit=0._SP
  Ef_fit=0._SP
  RT_occ_fitted=0._SP
- nfound=0._SP
+ nfound=0
  !
- do i1=1,RT_n_report
+ do i1=1,RT_n_FIT
    !
    ! Sort also RT_occupations
-   x(:)=RT_occ_distribution(E_sorted_index(:),i1)
-   RT_occ_distribution(:,i1)=x(:)
+   x(:)=RT_occ_DATA(E_sorted_index(:),i1)
+   RT_occ_DATA(:,i1)=x(:)
    !
    do ifit=1,nfit
      !
@@ -124,7 +128,7 @@ subroutine RT_occupations_FIT(k,E,RT_occ_distribution,time)
          if(i_s<=last_occupied.and.ifit==2.and.l_two_temperatures) cycle
          if(i_s> last_occupied.and.ifit==1.and.l_two_temperatures) cycle
          E_shifted=E_sorted(i_s)-Ef_guess(ifit)
-         x(i_s)=RT_occ_distribution(i_s,i1)-Fermi_fnc(E_shifted,T_guess(ifit))*spin_occ
+         x(i_s)=RT_occ_DATA(i_s,i1)-Fermi_fnc(E_shifted,T_guess(ifit))*spin_occ
          Jacob(i_s,1)=-Fermi_fnc_T_derivative(E_shifted,T_guess(ifit))*spin_occ
          Jacob(i_s,2)=-Fermi_fnc_derivative(E_shifted,T_guess(ifit))*spin_occ
          Avg_error(i1,ifit)=Avg_error(i1,ifit)+x(i_s)**2._SP
@@ -142,7 +146,8 @@ subroutine RT_occupations_FIT(k,E,RT_occ_distribution,time)
        !
        Fit_new=matmul(Jacob_sq_m1,matmul(transpose(Jacob),x))
        !
-       if(Fit_new(1)==Fit_new(1)+1) goto 1000
+       if(any(isnan(Fit_new(:)))) goto 1000
+       if(any(Fit_new(:)==Fit_new(:)+1._SP)) goto 1000
        !
        T_fit(i1,ifit)=T_guess(ifit)-Fit_new(1)
        Ef_fit(i1,ifit)=Ef_guess(ifit)-Fit_new(2)
@@ -159,11 +164,11 @@ subroutine RT_occupations_FIT(k,E,RT_occ_distribution,time)
      !
      if(i2==max_iter+1) then
 1000   continue
-       T_fit(i1,ifit) =-1000._SP
+       T_fit(i1,ifit) =0._SP
        T_guess(ifit)=max(Tel,1.E-2)
-       Ef_fit(i1,ifit)=-1000._SP
-       if(ifit==1) Ef_guess(ifit)= 1._SP*(minval(E%E(E%nbf+1,:,:))-maxval(E%E(E%nbf,:,:)))
-       if(ifit==2) Ef_guess(ifit)=-1._SP*(minval(E%E(E%nbf+1,:,:))-maxval(E%E(E%nbf,:,:)))
+       Ef_fit(i1,ifit)=0._SP
+       if(ifit==1) Ef_guess(ifit)= E_sorted(last_occupied+1)
+       if(ifit==2) Ef_guess(ifit)= E_sorted(last_occupied)
      endif     
      !
      if(i2<=max_iter) then
@@ -177,20 +182,20 @@ subroutine RT_occupations_FIT(k,E,RT_occ_distribution,time)
  enddo
  !
  if(l_two_temperatures) then
-   call msg('s',":: Elec. fitting Temperatures found " &
-&            //trim(intc(nfound(1)))//"/"//trim(intc(RT_n_report)))
    call msg('s',":: Holes fitting Temperatures found " &
-&            //trim(intc(nfound(2)))//"/"//trim(intc(RT_n_report)))
+&            //trim(intc(nfound(1)))//"/"//trim(intc(RT_n_FIT)))
+   call msg('s',":: Elec. fitting Temperatures found " &
+&            //trim(intc(nfound(2)))//"/"//trim(intc(RT_n_FIT)))
  else
-   call msg('s',":: Fitting Temperatures found "//trim(intc(nfound(1)))//"/"//trim(intc(RT_n_report)))
+   call msg('s',":: Fitting Temperatures found "//trim(intc(nfound(1)))//"/"//trim(intc(RT_n_FIT)))
  endif
  !
- do i2=1,RT_n_report,nmax_file_report
+ do i2=1,RT_n_FIT,nmax_file_report
    n1=i2
-   n2=min(RT_n_report,i2+15)
+   n2=min(RT_n_FIT,i2+15)
    !
    output_fname='YPP-RT_occupation_distribution_DATA'
-   if(RT_n_report>nmax_file_report) &
+   if(RT_n_FIT>nmax_file_report) &
 &    output_fname=trim(output_fname)//'_grp'//trim(intc(i2/nmax_file_report+1))
    !
    call of_open_close(trim(output_fname),'ot')
@@ -212,7 +217,7 @@ subroutine RT_occupations_FIT(k,E,RT_occ_distribution,time)
      if (ik>k%nibz) cycle
      !
      call msg('o '//trim(output_fname),'',(/E_sorted(i_s)*HA2EV,&
-  &            RT_occ_distribution(i_s,n1:n2)/),INDENT=-2,USE_TABS=.true.)
+  &            RT_occ_DATA(i_s,n1:n2)/),INDENT=-2,USE_TABS=.true.)
      !
    enddo
    !
@@ -223,7 +228,7 @@ subroutine RT_occupations_FIT(k,E,RT_occ_distribution,time)
      output_fname='YPP-RT_occupation_distribution_FIT'
      if(l_two_temperatures.and.ifit==1) output_fname=trim(output_fname)//'h'
      if(l_two_temperatures.and.ifit==2) output_fname=trim(output_fname)//'e'
-     if(RT_n_report>nmax_file_report) &
+     if(RT_n_FIT>nmax_file_report) &
 &      output_fname=trim(output_fname)//'_grp'//trim(intc(i2/nmax_file_report+1))
      !
      call of_open_close(trim(output_fname),'ot')

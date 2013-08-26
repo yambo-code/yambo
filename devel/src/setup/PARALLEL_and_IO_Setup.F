@@ -47,7 +47,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  !
  if (ncpu>1) then
    !
-   do i_s=0,n_CPU_str_max
+   do i_s=1,n_CPU_str_max
      if (len_trim(PARALLEL_message(i_s))==0) cycle
      call msg( 's','CPU structure:',trim(PARALLEL_message(i_s)))
      call msg( 'r','* CPU structure :',trim(PARALLEL_message(i_s)))

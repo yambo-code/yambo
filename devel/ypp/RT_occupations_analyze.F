@@ -24,13 +24,14 @@ subroutine RT_occupations_analyze(k,E)
  use drivers,        ONLY:l_carrier_dynamics,l_ph_corr
  use units,          ONLY:FS2AUT,SP,HA2EV,BO2ANG
  use pars,           ONLY:schlen
+ use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,set_real_printed_length
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:levels,spin,spin_occ,Nel
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state,QP_nb
- use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT,RT_n_report
- use com,            ONLY:msg,of_open_close
+ use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT,RT_n_FIT
+ use com,            ONLY:msg,of_open_close,warning,error
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
 &                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime
  use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions,SC_bands
@@ -45,14 +46,24 @@ subroutine RT_occupations_analyze(k,E)
  integer               :: i1,n1,n_skip_time
  real(SP)              :: io_Time,data_to_plot(10)
  real(SP), allocatable :: RT_occupations_sum(:,:)
- real(SP)              :: RT_occ_distribution((SC_bands(2)-SC_bands(1)+1)*k%nibz,RT_n_report)
- real(SP)              :: RT_occ_distr_time(RT_n_report)
+ real(SP)              :: RT_occ_DATA((SC_bands(2)-SC_bands(1)+1)*k%nibz,RT_n_FIT)
+ real(SP)              :: RT_occ_Fit_time(RT_n_FIT)
  character(schlen)     :: titles(10)
- logical               :: l_ELPH_lifetimes,l_fit
- logical, allocatable  :: l_RT_report_occ_distribution(:)
+ logical               :: l_ELPH_lifetimes,l_RT_Occ_FIT,l_RT_occ_Plot
+ logical, allocatable  :: l_RT_Occ_FIT_vec(:)
  integer,     external :: RT_occupations_check
  !
  call section('*','Real-Time occupations')
+ !
+ call parser('OccPlot',l_RT_occ_Plot)
+ call parser('OccFit' ,l_RT_occ_FIT )
+ !
+ if(.not.l_RT_occ_Plot .and. .not.l_RT_occ_FIT) then
+   call warning(' Occupations: choose Plot or Fit or both')
+   return
+ endif
+ !
+ if(l_RT_occ_FIT.and.RT_n_FIT<1) call error(' Occupations: RT_n_FIT<1')
  !
  call QP_state_table_setup(E)
  !
@@ -67,26 +78,25 @@ subroutine RT_occupations_analyze(k,E)
  allocate(RT_occupations_sum(3,n_T_steps)) 
  RT_occupations_sum=0._SP
  !
- allocate(l_RT_report_occ_distribution(n_T_steps))
- l_RT_report_occ_distribution=.FALSE.
- RT_occ_distribution=0._SP
- l_fit=.FALSE.
- if(RT_n_report>0) then
+ allocate(l_RT_Occ_FIT_vec(n_T_steps))
+ l_RT_Occ_FIT_vec=.FALSE.
+ RT_occ_DATA=0._SP
+ if(l_RT_Occ_FIT) then
    i1=0
-   if(RT_n_report==1) then
+   if(RT_n_FIT==1) then
      i_T=n_T_steps
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-     l_RT_report_occ_distribution(i_T)=.TRUE.
-     RT_occ_distr_time(1)=io_Time
+     l_RT_Occ_FIT_vec(i_T)=.TRUE.
+     RT_occ_Fit_time(1)=io_Time
    else
-     n_skip_time=n_T_steps/(RT_n_report-1)
+     n_skip_time=n_T_steps/(RT_n_FIT-1)
      do i_T=n_T_steps,1,-n_skip_time
        i1=i1+1
-       if(i1>=RT_n_report) cycle
+       if(i1>RT_n_FIT) cycle
        io_Time=0.
        if (i_T >1) io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-       l_RT_report_occ_distribution(i_T)=.TRUE.
-       RT_occ_distr_time(RT_n_report-i1+1)=io_Time
+       l_RT_Occ_FIT_vec(i_T)=.TRUE.
+       RT_occ_Fit_time(RT_n_FIT-i1+1)=io_Time
      enddo
    endif
    i1=0
@@ -99,10 +109,12 @@ subroutine RT_occupations_analyze(k,E)
  ! F(it) for each (ik,ib)
  do i_T=1,n_T_steps
    !
+   if(.not.(l_RT_occ_plot.or.l_RT_Occ_FIT_vec(i_T))) cycle
+   !
    io_Time=0.
    if (i_T >1) io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
-   if (l_RT_report_occ_distribution(i_T)) i1=i1+1
+   if (l_RT_Occ_FIT_vec(i_T)) i1=i1+1
    !
    call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=io_Time)
    !
@@ -121,6 +133,11 @@ subroutine RT_occupations_analyze(k,E)
      if (ib<SC_bands(1)) cycle
      if (ib>SC_bands(2)) cycle
      if (ik>k%nibz) cycle
+     !
+     ! Prepare f(eps_{ik,ib}) for i_T=it_report
+     if (l_RT_Occ_FIT_vec(i_T)) RT_occ_DATA(i_s,i1)=RT_occupations(ib,ik)     
+     !
+     if (.not.l_RT_occ_Plot) cycle
      !
      output_fname='YPP-RT_occupations_k'//trim(intc(ik))//'_b'//trim(intc(ib))
      !
@@ -192,42 +209,38 @@ subroutine RT_occupations_analyze(k,E)
      !
      if (i_T==n_T_steps) call of_open_close(trim(output_fname))
      !
-     if(.not.l_RT_report_occ_distribution(i_T)) cycle
-     !
-     ! Prepare f(eps_{ik,ib}) for i_T=it_report
-     RT_occ_distribution(i_s,i1)=RT_occupations(ib,ik)
-     !
    enddo
    !
  enddo
  !
  !
- ! Sum_{ib,ik} f_{ik,ib}(it)
- output_fname='YPP-RT_occupations_ALL'
- call of_open_close(trim(output_fname),'ot')
- do i_fp=1,n_SC_descriptions
-   call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
- enddo
- titles(1)='T[fs]'
- titles(2)='Elec. in cond.'
- titles(3)='Holes in val. '
- titles(4)='Tot. Occ. [cm^-3]'
- call msg('o '//trim(output_fname),'#')
- call msg('o '//trim(output_fname),'#',titles(:4),INDENT=0,USE_TABS=.TRUE.)
- call msg('o '//trim(output_fname),'#')
- !
- do i_T=1,n_T_steps
-   io_Time=0.
-   if (i_T>1) io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-   data_to_plot(:4)=(/io_TIME/FS2AUT,RT_occupations_sum(:,i_T)/(DL_vol*BO2ANG**3*1.E-24)/)
-   call msg('o '//trim(output_fname),'',data_to_plot(:4),INDENT=-2,USE_TABS=.true.)
- enddo
- call of_open_close(trim(output_fname))
+ if(l_RT_occ_plot) then
+   ! Sum_{ib,ik} f_{ik,ib}(it)
+   output_fname='YPP-RT_occupations_ALL'
+   call of_open_close(trim(output_fname),'ot')
+   do i_fp=1,n_SC_descriptions
+     call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
+   enddo
+   titles(1)='T[fs]'
+   titles(2)='Elec.'
+   titles(3)='Holes'
+   titles(4)='Tot. Occ. [OMEGA^-1]'
+   call msg('o '//trim(output_fname),'#')
+   call msg('o '//trim(output_fname),'#',titles(:4),INDENT=0,USE_TABS=.TRUE.)
+   call msg('o '//trim(output_fname),'#')
+   !
+   do i_T=1,n_T_steps
+     io_Time=0.
+     if (i_T>1) io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+     data_to_plot(:4)=(/io_TIME/FS2AUT,RT_occupations_sum(:,i_T)/)  !/(DL_vol*BO2ANG**3*1.E-24)/)
+     call msg('o '//trim(output_fname),'',data_to_plot(:4),INDENT=-2,USE_TABS=.true.)
+   enddo
+   call of_open_close(trim(output_fname))
+ endif
  !
  ! f(eps_{ik,ib})
  !
- if(any(l_RT_report_occ_distribution(:)))&
-&  call RT_occupations_FIT(k,E,RT_occ_distribution(:QP_n_states,:),RT_occ_distr_time)
+ if(l_RT_occ_Fit) call RT_occupations_FIT(k,E,RT_occ_DATA(:QP_n_states,:),RT_occ_Fit_time)
  !
  call set_real_printed_length()
  !

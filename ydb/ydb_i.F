@@ -52,7 +52,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  !
  ! DB
  !
- integer,parameter::n_max_DB_elements=10000
+ integer,parameter::n_max_DB_elements=1000
  integer :: DB_id(n_max_DB_elements)
  integer :: DB_i_ref(n_max_DB_elements)
  integer :: DB_year(n_max_DB_elements)
@@ -232,6 +232,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
      do i1=1,n_max_DB_elements
        if (DB_i_ref(i1)==DB_i_ref(DB_id_)) then
          call mk_dir("ID"//trim(intc(DB_i_ref(DB_id_)))//"/ID"//trim(intc(DB_id(i1))))
+         call get_ymdf(year,month,day,file_name,DB_id(i1))
          call build_up_paths(year,month,day,DB_i_ref(i1),DB_id(i1),trim(DB_file(i1))) 
          call cp_file(trim(file_PATH),"ID"//trim(intc(DB_i_ref(DB_id_)))//"/ID"//trim(intc(DB_id(i1)))//"/",i_err)
          call LIVE_message('Coping '//trim(DB_file(i1))//" from ID"//trim(intc(DB_id(i1))),"n","","%s")
@@ -377,14 +378,14 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
    end function
    !
    subroutine get_ymdf(year_,month_,day_,file_,ID)
-     integer          ::year_,month_,day_,ID
+     integer          ::year_,month_,day_,ID,j1
      character(lchlen)::file_
-     do i1=1,n_max_DB_elements 
-       if(DB_id(i1)==ID) then
-         year_=DB_year(i1)
-         month_=DB_month(i1)
-         day_=DB_day(i1)
-         file_=DB_file(i1)
+     do j1=1,n_max_DB_elements 
+       if(DB_id(j1)==ID) then
+         year_=DB_year(j1)
+         month_=DB_month(j1)
+         day_=DB_day(j1)
+         file_=DB_file(j1)
        endif
      enddo
    end subroutine

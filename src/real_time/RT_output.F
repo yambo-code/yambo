@@ -217,8 +217,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  do i_f=1,n_output_files
    do i_fp=1,n_output_files
      if (len_trim(orders(i_fp))==0) cycle
-     if (.not.file_is_todo(i_f)) &
-&   file_is_todo(i_f) = index(file_name(i_f),trim(orders(i_fp)))>0
+     if (.not.file_is_todo(i_f)) file_is_todo(i_f) = index(file_name(i_f),trim(orders(i_fp)))>0
    enddo
  enddo
  !
@@ -259,6 +258,14 @@ subroutine RT_output(what,VALUEs,TIME,E)
      call msg('o '//trim(short_file_name(i_f)),'#',headings(i_f,1:n_headings(i_f)),INDENT=0,USE_TABS=.TRUE.)
      call msg('o '//trim(short_file_name(i_f)),'#')
      SC_descriptions_dumped(i_f)=.TRUE.
+   endif
+   !
+   ! Values
+   !--------
+   if (.not.present(TIME).and..not.present(E)) then
+     call msg('o '//trim(short_file_name(i_f)),'')
+     call of_open_close(file_name(i_f))
+     cycle
    endif
    !
    ! Values

@@ -30,7 +30,7 @@ subroutine electrons_driver(Xk,Xen)
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
-&                         plot_title,l_dos,l_angular_momentum,&
+&                         plot_title,l_dos,l_RT_dos,l_angular_momentum,&
 &                         l_position,l_bands,BANDS_range,l_RT_occupations
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
@@ -87,7 +87,7 @@ subroutine electrons_driver(Xk,Xen)
  if (.not.flag) flag=l_mean_potential
 #endif
 #if defined _YPP_RT 
- if (.not.flag) flag=l_RT_occupations
+ if (.not.flag) flag=any((/l_RT_dos,l_RT_occupations/))
 #endif
  !
  if (.not.flag) return
@@ -136,6 +136,9 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_SC
  if (flag) flag=.not.l_mean_potential
 #endif
+#if defined _YPP_RT
+ if(flag) flag=.not.l_RT_dos
+#endif
  !
  if(flag) then
    call WF_load(wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
@@ -166,7 +169,7 @@ subroutine electrons_driver(Xk,Xen)
  ! DOS & DENSITY
  !===============
  !
- if (l_dos.or.l_density)  call electrons_dos_and_charge(Xk,Xen)
+ if (l_dos.or.l_density.or.l_RT_dos)  call electrons_dos_and_charge(Xk,Xen)
  !
  ! BANDS interpolation
  !======================

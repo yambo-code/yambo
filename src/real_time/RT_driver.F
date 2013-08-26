@@ -63,6 +63,7 @@ subroutine RT_driver(E,X,k,q)
  ! 
  ! Work Space
  !
+ logical                  :: do_output
  integer                  :: it,ik,ib,it_mem,it_mem_p1
  real(SP)                 :: E_previous,E_now
  complex(SP)              :: on_the_fly_operators(8)
@@ -246,6 +247,8 @@ subroutine RT_driver(E,X,k,q)
    it_mem     =MEM_index(NE_i_time,G_MEM_steps)
    it_mem_p1  =MEM_index(NE_i_time+1,G_MEM_steps)
    !
+   do_output= (NE_i_time==1).or.mod(NE_i_time,RT_IO_steps)==0
+   !
    ! Start-Up & Timing
    !===================
    !
@@ -287,7 +290,7 @@ subroutine RT_driver(E,X,k,q)
    !==========================
    call RT_current_AND_polarization(k,E,G_lesser(:,:,:,it_mem),A_vecpot)
    !
-   if (l_ph_corr.or.l_carrier_dynamics) then
+   if ( (l_ph_corr.or.l_carrier_dynamics) .and. do_output) then
      !
      ! Mean Carrier Lifetimes
      !=======================
@@ -313,9 +316,11 @@ subroutine RT_driver(E,X,k,q)
      endif
    endif
    !
-   call RT_output('dyn',real(on_the_fly_operators),TIME=NE_time/FS2AUT)
-   call RT_output('cur pol',TIME=NE_time/FS2AUT)
-   if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
+   if(do_output) then
+     call RT_output('dyn',real(on_the_fly_operators),TIME=NE_time/FS2AUT)
+     call RT_output('cur pol',TIME=NE_time/FS2AUT)
+     if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
+   endif
    !
    ! Calculate Collisions and fill SC_R, Ho_plus_Sigma, H_nl_sc
    !============================================================

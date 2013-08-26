@@ -139,6 +139,8 @@ module real_time
  !----------------
  !
  logical     :: l_RT_CCA_Kernel
+ logical     :: l_Debye_TBose_update
+ real(SP)    :: Eh_pumped_Nel
  real(SP)    :: Eh_pumped_pair_energy(2)
  real(SP)    :: Eh_pumped_pair_width
  !

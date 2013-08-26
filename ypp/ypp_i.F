@@ -47,6 +47,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! 
  ! I/O 
  !
+ logical           :: l_flag
  integer           :: ID,i_err
  integer, external :: ioDB1,ioQINDX,iogrot
 #if defined _YPP_ELPH
@@ -184,12 +185,15 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (l_excitons) call excitons_driver(k,Xk,en,Xen,q)
  !   ===========
  !
-#if defined _YPP_ELPH
- if (l_electrons.and..not.l_eliashberg) call electrons_driver(Xk,Xen)
-#else
- if (l_electrons)                       call electrons_driver(Xk,Xen)
+ l_flag=l_electrons
+#if defined _YPP_ELPH && !defined _YPP_RT
+ if (l_flag) l_flag=.not.l_eliashberg
 #endif
- !   ===========
+#if defined _YPP_RT
+ if(.not.l_flag) l_flag=l_RT_dos.or.l_RT_occupations
+#endif
+ !
+ if (l_flag) call electrons_driver(Xk,Xen)
  !
 #if defined _YPP_ELPH
  !

@@ -26,8 +26,10 @@ subroutine RT_output(what,VALUEs,TIME,E)
  use com,            ONLY:msg,of_open_close
  use SC,             ONLY:SC_description,n_SC_descriptions
  use fields,         ONLY:A_vecpot
+ use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
- use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes
+ use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,l_Debye_TBose_update, &
+&                         l_NE_simulate_IP
  use LIVE_t,         ONLY:what_is_running
  implicit none
  !
@@ -41,7 +43,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  integer, parameter       :: n_output_files=50,max_X_order=9
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
- integer                  :: i_f,i_fp,n_headings(n_output_files),next_file,i_order
+ integer                  :: n1,n2,i_f,i_fp,n_headings(n_output_files),next_file,i_order
  logical                  :: file_is_todo(n_output_files),open_files,initialize
  logical,           save  :: SC_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
  character(schlen)        :: headings(n_output_files,10),append_ch
@@ -95,11 +97,16 @@ subroutine RT_output(what,VALUEs,TIME,E)
 &   file_name(next_file)=trim(append_ch)//'dynamics'
  short_file_name(next_file)=trim(append_ch)//'dynamics'
  n_headings(next_file)=9
+ if(l_NE_simulate_IP)     n_headings(next_file)=n_headings(next_file)-3
+ if(l_Debye_TBose_update) n_headings(next_file)=n_headings(next_file)+1
  headings(next_file,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
  headings(next_file,4:6)=(/"Hartree [eV]","Exchange[eV]","Correlat[eV]"/)
- headings(next_file,7)="Fluence[kJ/cm^2]"
- headings(next_file,8)="N" 
- headings(next_file,9)="dG" 
+ n1=7
+ if(l_NE_simulate_IP) n1=4
+ headings(next_file,n1)="Fluence[kJ/cm^2]"
+ headings(next_file,n1+1)="N" 
+ headings(next_file,n1+2)="dG" 
+ if(l_Debye_TBose_update) headings(next_file,n1+3)="Tbose" 
  next_file=next_file+1
  !
  do i_order=0,max_X_order,1
@@ -129,7 +136,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
 &   file_name(next_file)=trim(append_ch)//'mean_lifetimes'
  short_file_name(next_file)=trim(append_ch)//'mean_lifetimes'
  n_headings(next_file)=6
- headings(next_file,2:6)=(/"e-p Hole [meV]","e-p Elec [meV]","e-p Ph   [meV]","e-e Hole [meV]","e-e Elec [meV]"/)
+ headings(next_file,2:4)=(/"e-p Hole [meV]","e-p Elec [meV]","e-p Ph   [meV]"/)
+ headings(next_file,5:6)=(/"e-e Hole [meV]","e-e Elec [meV]"/)
  next_file=next_file+1
  !
  headings(1:next_file-1,1)="Time[fs]"
@@ -277,7 +285,14 @@ subroutine RT_output(what,VALUEs,TIME,E)
        data_to_dump(2:4) =real(A_vecpot%vecpot(:))
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
-     case('dynamics','YPP-eps','YPP-eels','YPP-SHG_qssin',&
+     case('dynamics')
+       data_to_dump(2:6) = VALUES(1:5)
+       n1=7
+       n2=6
+       if(l_NE_simulate_IP) n1=4
+       data_to_dump(n1:n1+2) = VALUES(n2:n2+2)
+       if(l_Debye_TBose_update) data_to_dump(n1+3) = Bose_Temp
+     case('YPP-eps','YPP-eels','YPP-SHG_qssin',&
 &         'YPP-X_probe_order_0','YPP-X_probe_order_1','YPP-X_probe_order_2','YPP-X_probe_order_3',&
 &         'YPP-X_probe_order_4','YPP-X_probe_order_5','YPP-X_probe_order_6','YPP-X_probe_order_7',&
 &         'YPP-X_probe_order_8','YPP-X_probe_order_9',&
@@ -288,7 +303,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
      case('YPP-X_effective','YPP-el_dos')
        data_to_dump(1:2)=(/Time,E/)
-       data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
+       data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-2)
      case('mean_lifetimes')
        data_to_dump(2:n_headings(i_f)) = RT_mean_lifetimes(1:n_headings(i_f)-1)*HA2EV*1000.
    end select

@@ -55,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_jumps,Dynamics_Kind,&
 &                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
-&                        Eh_pumped_pair_width
+&                        Eh_pumped_pair_width,Eh_pumped_Nel
  use fields,        ONLY:Efield
 #endif
 #if defined _MAGNETIC
@@ -319,8 +319,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                            Verb_level=V_real_time,unit=E_unit)
  call it(defs,'RTpumpEhWd', '[RT] Energy window of the levels to be inverted by hand',Eh_pumped_pair_width,&
 &                            Verb_level=V_real_time,unit=E_unit)
- call it('f',defs,'UseDebyeE','[RT] Use a single Debye energy for all phonon modes')
- call it('f',defs,'RT_T_evol','[RT] Use a complete Time evolution instead of the CCA')
+ call it(defs,'RTpumpNel',  '[RT] Number of electrons pumbed by hand per unit cell',Eh_pumped_Nel,&
+&                            Verb_level=V_real_time)
+ call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes')
+ call it('f',defs,'UpdateDebyeT','[RT] Update Bose Temp assuming phonons are always at equilibrium')
+ call it('f',defs,'RT_T_evol',   '[RT] Use a complete Time evolution instead of the CCA')
  !
  ! I/O
  !

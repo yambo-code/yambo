@@ -26,7 +26,8 @@ subroutine RT_manual_excitation(E,k)
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands
- use real_time,      ONLY:G_lesser,Eh_pumped_pair_energy,Eh_pumped_pair_width
+ use real_time,      ONLY:G_lesser,Eh_pumped_pair_energy,Eh_pumped_pair_width,  &
+&                         Eh_pumped_Nel
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg
@@ -38,57 +39,82 @@ subroutine RT_manual_excitation(E,k)
  !
  ! Work Space
  !
- integer :: i1,i2,ib,ik
- real(SP):: local_E_window,delta_Nel
- logical :: Pumped_state(E%nb)
+ integer :: i1,i2,i3,ib,ik
+ real(SP):: local_E_window,coeff,delta_Nel
+ integer :: Pump_level(E%nb,E%nk)
+ logical :: Pumped_state(E%nb,E%nk)
  !
  ! Possibility to pump by hand one or more electrons up
  !======================================================
  !
- if (Eh_pumped_pair_energy(2)<=0.) return
+ if (Eh_pumped_pair_energy(2)<=0._SP .or. Eh_pumped_Nel<=0._SP  ) return
  !
  delta_Nel=0._SP
+ coeff=0._SP
+ Pumped_state=.FALSE.
+ Pump_level=0
+ i3=1
+ local_E_window=Eh_pumped_pair_width/10.
  !
- do ik=1,E%nk
+ do while(local_E_window<Eh_pumped_pair_width)
    !
-   i1=0
-   Pumped_state=.FALSE.
-   !
-   local_E_window=Eh_pumped_pair_width/10.
-   !
-   do while(local_E_window<Eh_pumped_pair_width)
+   do ik=1,E%nk
+     !
+     i1=0
      !
      do i2=1,SC_bands(2)
        do ib=SC_bands(1),SC_bands(2)
          !
-         if (Pumped_state(ib)) cycle
+         if (Pumped_state(ib,ik)) cycle
          !
          if (i1==0) then
            if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(1))<local_E_window) i1=ib
          else
            if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(2))<local_E_window) then
-             G_lesser(ib,ib,ik,1) = spin_occ*cI
-             G_lesser(i1,i1,ik,1) = cI*spin_occ-G_lesser(ib,ib,ik,1)
-             Pumped_state(i1)=.TRUE.
-             Pumped_state(ib)=.TRUE.
+             if(i1==ib) cycle
+             !G_lesser(ib,ib,ik,1) = spin_occ*cI
+             !G_lesser(i1,i1,ik,1) = cI*spin_occ-G_lesser(ib,ib,ik,1)
+             Pumped_state(i1,ik)=.TRUE.
+             Pumped_state(ib,ik)=.TRUE.
+             Pump_level(ib,ik)= i3
+             Pump_level(i1,ik)=-i3
              call msg('sr','[RT] Eh pair pumped `by hand` @ k'//trim(intc(ik))//&
-&                          ' bands '//trim(intc(i1))//' - '//trim(intc(ib)))
+&                 ' bands '//trim(intc(i1))//' - '//trim(intc(ib))//' (level '//trim(intc(i3))//')')
              i1=0
            endif
          endif
          !
-         local_E_window=local_E_window+Eh_pumped_pair_width/10.
-         !
-         if (all(Pumped_state(SC_bands(1):SC_bands(2)))) local_E_window=Eh_pumped_pair_width*1.1
-         !
        enddo
      enddo
+     !
+     do ib=SC_bands(1),SC_bands(2)
+       !if(Pumped_state(ib,ik)) delta_Nel=delta_Nel-cI*G_lesser(ib,ib,ik,1)*k%weights(ik)*2._SP
+       if(Pumped_state(ib,ik).and.Pump_level(ib,ik)==i3) coeff=coeff+spin_occ*k%weights(ik)/ &
+&                                                            sqrt(abs(real(Pump_level(ib,ik),SP)))
+     enddo
+     !
    enddo
    !
+   i3=i3+1
+   local_E_window=local_E_window+Eh_pumped_pair_width/10._SP
+   if (all(Pumped_state(SC_bands(1):SC_bands(2),:))) local_E_window=Eh_pumped_pair_width*1.1_SP
+   !
+ enddo
+ !
+ coeff=coeff/Eh_pumped_Nel
+ !
+ do ik=1,E%nk
    do ib=SC_bands(1),SC_bands(2)
-     if (Pumped_state(ib)) delta_Nel=delta_Nel-cI*G_lesser(ib,ib,ik,1)*k%weights(ik)*2._SP
-   enddo
-   !
+     !
+     if(.not.Pumped_state(ib,ik)) cycle
+     if(Pump_level(ib,ik)>0) G_lesser(ib,ib,ik,1)=cI*spin_occ*       &
+&                              min(1._SP,1._SP/sqrt(abs(real(Pump_level(ib,ik),SP)))/coeff)
+     if(Pump_level(ib,ik)<0) G_lesser(ib,ib,ik,1)=cI*spin_occ*(1._SP-&
+&                              min(1._SP,1._SP/sqrt(abs(real(Pump_level(ib,ik),SP)))/coeff))
+     !
+     if(Pump_level(ib,ik)>0) delta_Nel=delta_Nel-cI*G_lesser(ib,ib,ik,1)*k%weights(ik)*2._SP
+     !
+   enddo   
  enddo
  !
  call msg('sr','[RT] Carrier number and density [none,cm-3]:',delta_Nel*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24)/))

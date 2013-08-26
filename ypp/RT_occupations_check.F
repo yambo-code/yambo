@@ -41,7 +41,7 @@ integer function RT_occupations_check(E,k)
  !
  if (.not.allocated(RT_occupations)) call error('OCCUPATIONS database not found')
  !
- call RT_occupations_repair(E,k,.FALSE.)
+ call RT_occupations_repair(E,k)
  !
  if (.not.allocated(RT_occupations_ref)) then 
    !
@@ -66,7 +66,7 @@ integer function RT_occupations_check(E,k)
    !
    call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_ref,imposed_COM=NONE)
    !
-   call RT_occupations_repair(E,k,.FALSE.)
+   call RT_occupations_repair(E,k)
    !
    RT_occupations_ref=RT_occupations
    !
@@ -84,7 +84,7 @@ integer function RT_occupations_check(E,k)
  !
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(2))
  !
- call RT_occupations_repair(E,k,.FALSE.)
+ call RT_occupations_repair(E,k)
  !
  if (OCC_deltaT<RT_IO_steps*RT_step) then
    ! 

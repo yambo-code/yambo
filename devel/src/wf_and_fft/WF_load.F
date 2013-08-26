@@ -214,7 +214,17 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (wf_space=='R') call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !
+ ! Bug-fix (noticed by AF) fixed by AM 26/8/2013
+ !
+ ! The wf_disk is written on disk in blocks dimensioned by wf_nb_io. 
+ ! A smaller I/O is possible ONLY with NETCDF while in plain Fortran 
+ ! it produces and erroneous loading of WFs
+ !
+#if defined _NETCDF_IO
  allocate(wf_disk(2,min(wf_nb_io,wf_b(2)-wf_b(1)+1),wf_ncx,n_spin))
+#else
+ allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+#endif
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  !
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)

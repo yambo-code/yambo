@@ -270,7 +270,9 @@ module parallel_m
      integer :: i_s
      !
      PARALLEL_message=" "
-     if (i_s>0.and.len_trim(CPU_structure(i_s)%CPU_string)==0) return
+     if (i_s>0) then
+       if (len_trim(CPU_structure(i_s)%CPU_string)==0) return
+     endif
      !
      if (i_s==0) then
        PARALLEL_message=trim(intc(ncpu))//"(total)"//"-"//trim(intc(n_threads))//"(threads)"

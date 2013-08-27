@@ -245,6 +245,7 @@ module real_time
  integer                  :: RT_IO_steps_DB 
  real(SP)                 :: RT_IO_time 
  real(SP), allocatable    :: J_and_P_cache(:,:)
+ real(SP), allocatable    :: Fluence(:)
  !
  ! Interface
  !

@@ -19,22 +19,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Fluence(Fluence,STEPS)
+subroutine RT_Fluence()
  !
  use pars,           ONLY:SP,pi
+ use com,            ONLY:msg
  use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,FS2AUT
- use real_time,      ONLY:RT_step
+ use real_time,      ONLY:RT_step,NE_steps,Fluence
  use fields,         ONLY:Efield,small_a,theta_function,ef_i_time,i_Pump
  !
  implicit none
- integer , intent(in)  :: STEPS
- real(SP), intent(out) :: Fluence
  ! 
  ! Work Space
  !
  integer      :: it
- real(SP)     :: I(STEPS),T(STEPS)
- complex(SP)  :: Field_time,E(STEPS)
+ real(SP)     :: I(NE_steps),T(NE_steps)
+ complex(SP)  :: Field_time,E(NE_steps)
  real(SP),external :: RIntegrate
  !
  ! E(t)=-d A(t)/dt / SPEED_OF_LIGHT
@@ -49,7 +48,9 @@ subroutine RT_Fluence(Fluence,STEPS)
  !
  I=0._SP
  !
- do it=ef_i_time(i_Pump)+1,STEPS
+ call msg('s','== Computing fluence...')
+ !
+ do it=ef_i_time(i_Pump)+1,NE_steps
    !
    T(it)=it*RT_step
    !
@@ -63,18 +64,32 @@ subroutine RT_Fluence(Fluence,STEPS)
    !
    I(it)=SPEED_OF_LIGHT/8./pi*abs(E(it))**2.
    !
+   !
+   ! From au to kW/cm^2
+   !
+   I(it)=I(it)*AU2KWCMm2
+   ! 
+   ! To get the fluence in kJ/cm^2 I should translate T in secs. However to get 
+   ! the integration more stable I multiply I by 10^-15
+   !
+   T(it)=T(it)/FS2AUT ! au -> fs
+   I(it)=I(it)*1.E-15_SP
+   !
+   Fluence(it)=RIntegrate(I(:it),T(:it),it)
+   !
+   if(it<1001) cycle
+   if(abs((Fluence(it)-Fluence(it-1000))/Fluence(it))<1.E-5) exit
+   !
  enddo
  !
- ! From au to kW/cm^2
+ if ( it< (NE_steps+1) ) it=it-1000
+ if ( it==(NE_steps+1) ) it=it-1
  !
- I=I*AU2KWCMm2
- ! 
- ! To get the fluence in kJ/cm^2 I should translate T in secs. However to get 
- ! the integration more stable I multiply I by 10^-15
+ call msg('l','done ==')
  !
- T=T/FS2AUT ! au -> fs
- I=I*1.E-15_SP
+ call msg('r','[RT] Max Fluence           [kJ/cm^2]:',Fluence(it))
+ call msg('r','     reached at time            [fs]:',T(it))
  !
- Fluence=RIntegrate(I,T,STEPS)
+ if(it<NE_steps) Fluence(it+1:)=Fluence(it)
  !
 end subroutine RT_Fluence

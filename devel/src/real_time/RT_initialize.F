@@ -37,7 +37,7 @@ subroutine RT_initialize(E,k,q)
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,             &
 &                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,               &
-&                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps
+&                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps,Fluence
  use collisions_IO,  ONLY:l_STORE_COLLISIONS
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -54,8 +54,8 @@ subroutine RT_initialize(E,k,q)
  !
  integer                  :: i1,rest,nk_todo
  character(5)             :: MSG_ch
- real(SP)                 :: Fluence,T_memory
- logical                  :: l_Full_RT_T_evolution
+ real(SP)                 :: T_memory
+ logical                  :: l_Full_RT_T_evolution,l_compute_fluence
  !
  ! Logicals
  !==========
@@ -160,6 +160,7 @@ subroutine RT_initialize(E,k,q)
  !========================
  !
  l_NE_with_fields=.false.
+ l_compute_fluence=.false.
  ef_i_time=0
  !
  do i1=1,n_ext_fields
@@ -173,6 +174,9 @@ subroutine RT_initialize(E,k,q)
      ef_i_time(i1)=Efield(i1)%t_initial/RT_step
      !      
      l_NE_with_fields=.true.
+     !
+     if(i1==i_Pump) l_compute_Fluence= (Efield(i1)%ef_name=='DELTA') .or. (Efield(i1)%ef_name=='QSSIN') &
+&                                 .or. (Efield(i1)%ef_name=='GAUSS')
      !
      Efield(i1)%versor         =normalize_v(Efield(i1)%versor)
      !
@@ -190,6 +194,8 @@ subroutine RT_initialize(E,k,q)
      ! 
      if(Efield(i1)%intensity==0._SP) &
 &      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
+     !
+     if(i1==i_Pump) l_compute_fluence=l_compute_fluence.and..not.(Efield(i1)%intensity==0._SP)
      !
    endif
    !
@@ -271,8 +277,9 @@ subroutine RT_initialize(E,k,q)
  ! Fluence
  !=========
  if (l_NE_with_fields) then
-   call RT_Fluence(Fluence,NE_steps)
-   call msg('rn','[RT] Fluence               [kJ/cm^2]:',Fluence)
+   allocate(Fluence(NE_steps))
+   Fluence=0._SP
+   if (l_compute_fluence) call RT_Fluence()
  endif
  !
  ! Generalized Rabi Function

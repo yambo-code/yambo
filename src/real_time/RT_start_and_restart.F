@@ -376,7 +376,7 @@ subroutine RT_start_and_restart(E,k,q,X)
      !
    enddo
    !
-   call RT_ELPH_zeroing()
+   if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
    !
    if(it_now<NE_steps+Thermal_steps) then
      call msg('snr','[RT] Number of steps done    [o/o]:',real(it_now)/real(NE_steps)*100._SP)

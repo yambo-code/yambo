@@ -57,13 +57,8 @@ integer function io_DIPOLES(X,Xen,ID)
    !
  endif
  !
- ! When writing in parallel the definitions in variables_DIPOLES
- ! are done only for the MASTER node.
- !
- if (write_is_on(ID)) then
-   db_nb=X%ib
-   db_nbm=Xen%nbm
- endif
+ db_nb=X%ib
+ db_nbm=Xen%nbm
  !
  if (.not.Dipole_bands_ordered) db_nbm=db_nb(2)
  !

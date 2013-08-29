@@ -500,8 +500,11 @@ module com
      msgfmt=composed_fmt('a',size(val),l_fmt,l_indent)
      if(trim(msgfmt)=="(/00x,a, 01(a,1x))") msgfmt="(/99x,a, 01(a,1x))"
      do i1=1,max_open_ofs
-       if (of_unit(i1)<=0.or.len_trim(repfile)==0) cycle
-       if (of_unit(i1)==11) open(unit=11,file=trim(repfile),position='append')
+       if (of_unit(i1)<=0) cycle
+       if (of_unit(i1)==11) then
+         if (len_trim(repfile)==0) cycle
+         open(unit=11,file=trim(repfile),position='append')
+       endif
        write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
        if (of_unit(i1)==11) close(11)
        of_unit(i1)=-of_unit(i1)
@@ -651,6 +654,7 @@ module com
        do i2=2,10
          if (len_trim(ch_piece(i2))==0) cycle
          do i1=1,max_open_ofs-1
+           if (len_trim(opened_of(i1))==0) cycle
            if (index( opened_of(i1),trim(ch_piece(i2)) )/=0) then
              of_unit(i1) =-of_unit(i1)
            endif

@@ -135,6 +135,7 @@ subroutine RT_occupations_analyze(k,E)
      if (ik>k%nibz) cycle
      !
      ! Prepare f(eps_{ik,ib}) for i_T=it_report
+     !
      if (l_RT_Occ_FIT_vec(i_T)) RT_occ_DATA(i_s,i1)=RT_occupations(ib,ik)     
      !
      if (.not.l_RT_occ_Plot) cycle
@@ -215,7 +216,9 @@ subroutine RT_occupations_analyze(k,E)
  !
  !
  if(l_RT_occ_plot) then
+   !
    ! Sum_{ib,ik} f_{ik,ib}(it)
+   !
    output_fname='YPP-RT_occupations_ALL'
    call of_open_close(trim(output_fname),'ot')
    do i_fp=1,n_SC_descriptions

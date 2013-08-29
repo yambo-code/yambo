@@ -26,16 +26,14 @@ subroutine RT_occupations_repair(E,k)
  ! The el-ph interaction and other spurious numerical effects can induce small variations
  ! of the number of electrons. This, in turns, affects all related observables
  !
- use units,          ONLY:HA2EV,HA2KEL
- use pars,           ONLY:SP,lchlen
- use electrons,      ONLY:Nel,n_full_bands
- use SC,             ONLY:SC_bands,RT_occupations,n_SC_descriptions,SC_description
+ use units,          ONLY:HA2EV
+ use pars,           ONLY:SP
+ use electrons,      ONLY:Nel
+ use SC,             ONLY:SC_bands,RT_occupations
  use QP_m,           ONLY:QP_table,QP_n_states
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use vec_operate,    ONLY:sort,degeneration_finder
- use com,            ONLY:warning,of_open_close
- use stderr,         ONLY:real2ch
  !
  implicit none
  !
@@ -47,13 +45,12 @@ subroutine RT_occupations_repair(E,k)
  integer  :: Eo_sorted_index((SC_bands(2)-SC_bands(1)+1)*k%nibz)
  integer  :: first_el((SC_bands(2)-SC_bands(1)+1)*k%nibz)
  integer  :: n_of_el((SC_bands(2)-SC_bands(1)+1)*k%nibz)
- integer  :: n_deg_grp,i1,i2,i3,ib,ik,inx,i_c
+ integer  :: n_deg_grp,i1,i2,i3,ib,ik,inx
  !
  real(SP) :: Eo_sorted((SC_bands(2)-SC_bands(1)+1)*k%nibz)
- real(SP) :: delta_Nel,sym_value,delta_G
+ real(SP) :: sym_value
  !
  call QP_state_table_setup(E)
- call eval_delta_Nel()
  !
  call sort(Eo_sorted,indx=Eo_sorted_index)
  call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
@@ -86,86 +83,12 @@ subroutine RT_occupations_repair(E,k)
  ! Correction of the number of electrons
  !=======================================
  !
- !if (delta_Nel>1.E-5) call warning('Number viol.   :'//trim(real2ch(delta_Nel)) )
- !
  ! COMMENTED
  ! Davide: This gives a constan drift in the number of electrons / holes
  !         of the lowest unoccupied / highest occupied state which is
  !         problematic for "low pumping"
  !
- !i3=1
- !tresh=1.E-3
+ ! Andrea: Lines removed. The on-the-fly fix provided by RT_impose_N_conservation.F
+ !         makes this procedure redundant
  !
- !do while (abs(delta_Nel)>tresh) 
- !  !
- !  if (i3>100) then
- !    tresh=tresh*5
- !    i3=1
- !  endif
- !  !
- !  do ik=1,k%nibz
- !    do ib=SC_bands(1),n_full_bands
- !      !
- !      if (RT_occupations(ib,ik)<1.E-5.or.abs(RT_occupations(ib,ik)-2.)<1.E-5) cycle
- !      !
- !      if (delta_Nel<0.) RT_occupations(ib,ik)=RT_occupations(ib,ik)*1.005
- !      if (delta_Nel>0.) RT_occupations(ib,ik)=RT_occupations(ib,ik)*0.995
- !      !
- !    enddo
- !  enddo
- !  !
- !  call eval_delta_Nel()
- !  !
- !  i3=i3+1
- !  !
- !enddo
- !
- call eval_delta_G()
- !
- contains
-   !
-   subroutine eval_delta_Nel()
-     !
-     i_c=0
-     !
-     delta_Nel=0.0_SP
-     do ik=1,E%nk
-       do ib=1,SC_bands(2)
-         if (ib<SC_bands(1)) then
-           delta_Nel=delta_Nel+E%f(ib,ik,1)*k%weights(ik)
-         else
-           i_c=i_c+1
-           Eo_sorted(i_c) =E%E(ib,ik,1)
-           delta_Nel=delta_Nel+RT_occupations(ib,ik)*k%weights(ik)
-         endif
-       enddo
-     enddo
-     delta_Nel=delta_Nel-Nel
-     !
-   end subroutine
-   !
-   subroutine eval_delta_G()
-     !
-     use pars, ONLY:zero_dfl
-     real(SP)     ::dG_sign
-     !
-     delta_G=0._SP
-     !
-     do ik=1,E%nk
-       do ib=1,SC_bands(2)
-         !
-         dG_sign=1.
-         if (E%f(ib,ik,1)<zero_dfl) dG_sign=-1.
-         !
-         if (ib<SC_bands(1)) then
-           delta_G=delta_G+dG_sign*E%f(ib,ik,1)*k%weights(ik)
-         else
-           delta_G=delta_G+dG_sign*RT_occupations(ib,ik)*k%weights(ik)
-         endif
-         !
-       enddo
-     enddo
-     !
-   end subroutine
-   !
 end subroutine RT_occupations_repair

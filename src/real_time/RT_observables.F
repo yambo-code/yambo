@@ -28,7 +28,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands,it_now
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,&
-&                         l_NE_simulate_IP,Fluence
+&                         l_NE_simulate_IP 
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc,QP_Sc,QP_nk
  use xc_functionals, ONLY:E_xc
@@ -51,6 +51,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  integer     :: ib,ik
  complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex,E_mg,delta_G
+ real(SP)    :: Fluence
  !      
  E_kin    =(0._SP,0._SP)
  E_ion    =(0._SP,0._SP)
@@ -60,6 +61,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  Ex       =(0._SP,0._SP)
  E_mg     =(0._SP,0._SP)
  delta_G  =(0._SP,0._SP)
+ Fluence  =0._SP
  !
  ! Non-interaction kinetc energy
  !
@@ -118,6 +120,14 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
    !
  endif
  !
+ ! Energy of the Electro-Magnetic Field
+ !
+ if(l_NE_with_fields) then
+   !                    
+   call RT_Fluence(Fluence,it_now)
+   !
+ endif
+ !
  ! Total number of electrons
  !
  call RT_average_operator(VALUE=Trace_Gf,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
@@ -152,7 +162,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! Transfer the shadow variables
  !
  on_the_fly_operators(1:5)=(/E_kin,E_ion,E_h,Ex,Exc/)*HA2EV
- on_the_fly_operators(6:8)=(/cmplx(Fluence(it_now),0._SP,SP),Trace_Gf,delta_G/)
+ on_the_fly_operators(6:8)=(/cmplx(Fluence,0._SP,SP),Trace_Gf,delta_G/)
  !
 end subroutine RT_Observables
 

@@ -35,7 +35,7 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,WHAT,COMM_index,COMM_op
  !
  ! Work Space
  !
- integer :: i_lin_algebra_chain,i_father_chain,i_s,N_cpu_lin_algebra
+ integer :: i_lin_algebra_chain,i_father_chain,N_cpu_lin_algebra
  !
  if (WHAT=="INV")   N_cpu_lin_algebra=PARALLEL_cpu_mat_inversion
  if (WHAT=="DIAGO") N_cpu_lin_algebra=PARALLEL_cpu_mat_diagonalization

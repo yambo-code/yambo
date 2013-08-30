@@ -325,7 +325,7 @@ module vec_operate
      !
      ! Work Space
      !
-     integer :: igrp,iref,i1
+     integer :: iref,i1
      real(SP):: E_diff(2)
      logical :: l_flag,l_singles
      !

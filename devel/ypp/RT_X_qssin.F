@@ -23,7 +23,7 @@ subroutine RT_X_qssin
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,i_t_start,i_t_end,&
 &                         W_RT_induced_step,RED_steps
- use pars,           ONLY:SP,DP,pi,SCHLEN
+ use pars,           ONLY:SP,DP,pi,schlen
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1
  use memory_m,       ONLY:mem_est
  use real_time,      ONLY:NE_steps,RT_step,RT_output

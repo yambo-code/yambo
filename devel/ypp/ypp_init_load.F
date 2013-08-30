@@ -22,7 +22,7 @@
 subroutine ypp_init_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
-&                        Time_unit,Bfield_unit,Efield_unit,V_real_time,T_unit
+&                        Time_unit,Bfield_unit,V_real_time,T_unit
 #if defined _YPP_RT
  use real_time,     ONLY:Gr_kind,Gr_bands,Gr_E_window,Gr_T_window
 #endif
@@ -245,7 +245,6 @@ subroutine ypp_init_load(defs)
  !BZ E RIM
  !
  call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
- call it(defs,'BZ_RIM_path','Path to the SAVE folder with the RIM DB1',BZ_RIM_path)
  !
  ! Wannier bands
  !

@@ -33,7 +33,7 @@ subroutine G_rot_grid(is,call_kind)
  !
  ! Work space
  ! 
- integer               :: ig,igp,ng,ng1,i1,i2
+ integer               :: ig,igp,ng,ng1,i2
  logical               :: inversion
  logical               :: extend_grid
  logical               :: set_table

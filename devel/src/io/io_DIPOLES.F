@@ -39,7 +39,7 @@ integer function io_DIPOLES(X,Xen,ID)
  !
  ! Work Space
  !
- integer :: i1,ik,ik_mem,ixyz,sec_size,i_spin,db_nbm,db_nb(2)
+ integer :: ik,ik_mem,ixyz,sec_size,i_spin,db_nbm,db_nb(2)
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  real(SP),allocatable :: DIP_iR_disk(:,:,:)

@@ -42,7 +42,7 @@ subroutine RT_X_effective(en)
  character(lchlen) :: jobstr_save
  character(schlen) :: X_file_name
  integer           :: i_f,i_fp,f_indx(max_n_of_paths),i_order,min_X_order,i_c,i_t,i_conv,&
-&                     i_p,n_periods
+&                     i_p,N_periods
  real(SP)          :: Pump_Frequency(1),Unit_of_Measure
  complex(SP)       :: running_X(0:X_order,3),runn_err(0:X_order,3)
  logical           :: Probe_consistency_error,CONVERGENCE_is_reached,Iterative_analysis,dump_dP,&

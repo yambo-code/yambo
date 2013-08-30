@@ -39,7 +39,7 @@ integer function eval_G_minus_G(iG,iGo)
  !
  ! Work Space
  !
- integer :: i1,i2,ng1,ng2
+ integer :: i1,i2
  integer :: iG_shell,iG_,iGo_
  real(SP):: E_of_shell_G_m_G
  real(SP):: v1(3)

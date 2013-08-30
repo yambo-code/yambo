@@ -22,14 +22,13 @@
 subroutine RT_occupations_analyze(k,E)
  !
  use drivers,        ONLY:l_carrier_dynamics,l_ph_corr
- use units,          ONLY:FS2AUT,SP,HA2EV,BO2ANG
+ use units,          ONLY:FS2AUT,SP,HA2EV
  use pars,           ONLY:schlen
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,set_real_printed_length
  use R_lattice,      ONLY:bz_samp
- use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:levels,spin,spin_occ,Nel
- use QP_m,           ONLY:QP_table,QP_n_states,QP_state,QP_nb
+ use electrons,      ONLY:levels,spin,spin_occ
+ use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT,RT_n_FIT
  use com,            ONLY:msg,of_open_close,warning,error
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
@@ -135,6 +134,7 @@ subroutine RT_occupations_analyze(k,E)
      if (ik>k%nibz) cycle
      !
      ! Prepare f(eps_{ik,ib}) for i_T=it_report
+     !
      if (l_RT_Occ_FIT_vec(i_T)) RT_occ_DATA(i_s,i1)=RT_occupations(ib,ik)     
      !
      if (.not.l_RT_occ_Plot) cycle
@@ -215,7 +215,9 @@ subroutine RT_occupations_analyze(k,E)
  !
  !
  if(l_RT_occ_plot) then
+   !
    ! Sum_{ib,ik} f_{ik,ib}(it)
+   !
    output_fname='YPP-RT_occupations_ALL'
    call of_open_close(trim(output_fname),'ot')
    do i_fp=1,n_SC_descriptions

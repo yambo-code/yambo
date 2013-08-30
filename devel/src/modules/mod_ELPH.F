@@ -46,7 +46,7 @@ module ELPH
  real(SP),    allocatable :: f_k_plus_q(:,:,:)
  complex(SP), allocatable :: elph_gkkp(:,:,:,:)
  complex(SP), allocatable :: pol_vector(:,:,:)
- type(levels)             :: E_k_p_q
+ type(levels), SAVE       :: E_k_p_q
  !
  ! El_h Hamiltonian
  !

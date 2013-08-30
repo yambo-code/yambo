@@ -36,8 +36,7 @@ subroutine QP_DBs_initialize()
  ! Work Space
  !
  type(QP_t) :: qp
- integer :: i_qp,i_f,i_c,nflines_save,state(4),io_QP,ID,TEST(2,2)
- logical :: var_is_present
+ integer :: i_qp,i_f,i_c,nflines_save,state(4),io_QP,ID
  character(schlen) :: comment,DB_file_name(20,2)
  integer, external :: ioQP
  !

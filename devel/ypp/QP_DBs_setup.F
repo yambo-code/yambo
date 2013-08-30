@@ -21,11 +21,10 @@
 !
 subroutine QP_DBs_setup(en,k)
  !
- use pars,          ONLY:SP,IP,DP
+ use pars,          ONLY:SP
  use units,         ONLY:HA2EV
- use com,           ONLY:error,msg,warning
- use memory_m,      ONLY:mem_est
- use electrons,     ONLY:levels,n_sp_pol,spin_occ
+ use com,           ONLY:error
+ use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use QP_m,          ONLY:QP_t,QP_reset,QP_state,QP_nb,QP_nk,QP_n_states

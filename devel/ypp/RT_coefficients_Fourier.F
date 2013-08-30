@@ -25,7 +25,6 @@ subroutine RT_coefficients_Fourier(nt,P,nw,W,X,X_err,deltaW)
  !
  use pars,           ONLY:SP,cI,pi
  use YPP,            ONLY:i_t_start,X_rt
- use units,          ONLY:FS2AUT,HA2EV
  use fields,         ONLY:EtoT
  use real_time,      ONLY:RT_step
  implicit none
@@ -39,7 +38,7 @@ subroutine RT_coefficients_Fourier(nt,P,nw,W,X,X_err,deltaW)
  real(SP)    :: T_range,T(nt)
  complex(SP) :: P_times_exp(nt),X_square
  integer     :: iT_range,i_f,i_t,N_periods
- integer     :: i_p,p_length
+ integer     :: i_p,P_length
  complex(SP) ,allocatable :: xvalue(:)
  !
  complex(SP),    external    :: CIntegrate

@@ -39,7 +39,7 @@ integer function pert_inversion(iw,N,W,C,f,V)
  !
  real(SP),parameter       :: perc_treshold=0.01
  integer     ::BSS_inv_iter_max=51
- integer     ::it,i1,i2
+ integer     ::it,i1
  complex(SP) ::A_nm1(N),A_n(N),delta_f,fo
  !
  pert_inversion=0

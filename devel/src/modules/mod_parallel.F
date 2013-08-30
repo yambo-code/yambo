@@ -425,9 +425,9 @@ module parallel_m
 #endif
    end subroutine
    !
-   subroutine i2share(array,mode,COMM)
+   subroutine i2share(array,COMM)
      integer :: array(:,:)
-     integer, optional :: mode,COMM
+     integer, optional :: COMM
 #if defined _MPI
      integer::dimensions(2),dimension,LOCAL_COMM  ! Work Space
      integer,allocatable::larray(:)  ! Work Space
@@ -451,9 +451,9 @@ module parallel_m
 #endif
    end subroutine
    !
-   subroutine i3share(array,mode,COMM)
+   subroutine i3share(array,COMM)
      integer:: array(:,:,:)
-     integer, optional :: mode,COMM
+     integer, optional :: COMM
 #if defined _MPI
      integer::dimensions(3),dimension,LOCAL_COMM  ! Work Space
      integer,allocatable::larray(:) ! Work Space
@@ -509,9 +509,9 @@ module parallel_m
 #endif
    end subroutine
    !
-   subroutine r1share(array,mode,COMM)
+   subroutine r1share(array,COMM)
      real(SP) :: array(:)
-     integer, optional :: mode,COMM
+     integer, optional :: COMM
 #if defined _MPI
      integer::dimensions(1),dimension,LOCAL_COMM ! Work Space
      real(SP),allocatable::larray(:)  ! Work Space
@@ -539,9 +539,9 @@ module parallel_m
 #endif
    end subroutine
    !
-   subroutine r2share(array,mode,COMM)
+   subroutine r2share(array,COMM)
      real(SP) :: array(:,:)
-     integer, optional :: mode,COMM
+     integer, optional :: COMM
 #if defined _MPI
      integer::dimensions(2),dimension,LOCAL_COMM  ! Work Space
      real(SP),allocatable::larray(:)  ! Work Space
@@ -569,9 +569,9 @@ module parallel_m
 #endif
    end subroutine
    !
-   subroutine r3share(array,mode,COMM)
+   subroutine r3share(array,COMM)
      real(SP):: array(:,:,:)
-     integer, optional :: mode,COMM
+     integer, optional :: COMM
 #if defined _MPI
      integer::dimensions(3),dimension,LOCAL_COMM  ! Work Space
      real(SP),allocatable::larray(:)  ! Work Space
@@ -631,9 +631,9 @@ module parallel_m
 #endif
    end subroutine
    !
-   subroutine c1share(array,mode,COMM)
+   subroutine c1share(array,COMM)
      complex(SP):: array(:)
-     integer, optional :: mode,COMM
+     integer, optional :: COMM
 #if defined _MPI
      integer  :: LOCAL_COMM
      complex(SP),allocatable::larray(:)  ! Work Space
@@ -659,9 +659,9 @@ module parallel_m
 #endif
    end subroutine
    !
-   subroutine c2share(array,mode,COMM)
+   subroutine c2share(array,COMM)
      complex(SP):: array(:,:)
-     integer, optional :: mode,COMM
+     integer, optional :: COMM
 #if defined _MPI
      integer::dimensions(2),dimension,LOCAL_COMM  ! Work Space
      complex(SP),allocatable::larray(:)  ! Work Space
@@ -689,9 +689,9 @@ module parallel_m
 #endif
    end subroutine
    !
-   subroutine c3share(array,mode,COMM)
+   subroutine c3share(array,COMM)
      complex(SP):: array(:,:,:)
-     integer, optional :: mode,COMM
+     integer, optional :: COMM
 #if defined _MPI
      integer::dimensions(3),dimension,LOCAL_COMM  ! Work Space
      complex(SP),allocatable::larray(:)  ! Work Space
@@ -719,9 +719,9 @@ module parallel_m
 #endif
    end subroutine
    !
-   subroutine c4share(array,mode,COMM)
+   subroutine c4share(array,COMM)
      complex(SP):: array(:,:,:,:)
-     integer, optional :: mode,COMM
+     integer, optional :: COMM
 #if defined _MPI
      integer::dimensions(4),dimension,LOCAL_COMM  ! Work Space
      complex(SP),allocatable::larray(:)  ! Work Space

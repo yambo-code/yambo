@@ -74,7 +74,7 @@ subroutine k_random(Xk,Xen)
  !
  ! DB1 reloading
  !
- i_err=ioDB1_selective_scan(RIM_E,RIM_k, trim(BZ_RIM_path) ,'all')
+ i_err=ioDB1_selective_scan(RIM_E,RIM_k,trim(BZ_RIM_path),'all')
  !
  if (i_err/=0) call error('RIM database not found')
  !

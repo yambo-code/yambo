@@ -26,10 +26,10 @@ subroutine symmetries_driver(E,Xk)
  use electrons,           ONLY:levels,Total_magn,n_spinor
  use FFT_m,               ONLY:fft_size
  use IO_m,                ONLY:mk_dir,rm_file
- use com,                 ONLY:msg,warning,core_io_path,more_io_path
+ use com,                 ONLY:msg,core_io_path,more_io_path
  use R_lattice,           ONLY:bz_samp,ng_closed,ng_vec,bz_samp_reset,bz_samp_duplicate
  use D_lattice,           ONLY:nsym
- use wave_func,           ONLY:wf_nb_io,wf_ng,WF_load,WF_free
+ use wave_func,           ONLY:wf_ng,WF_load,WF_free
  use stderr,              ONLY:intc
  !
  implicit none

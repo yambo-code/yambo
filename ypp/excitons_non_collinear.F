@@ -27,7 +27,6 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_sq,S_z)
  use com,           ONLY:msg,error,warning
  use FFT_m,         ONLY:fft_size
  use R_lattice,     ONLY:bz_samp
- use wave_func,     ONLY:wf_state,wf
  use electrons,     ONLY:n_spinor
  use YPP,           ONLY:lambda,BS_H_dim
  use LIVE_t,        ONLY:live_timing

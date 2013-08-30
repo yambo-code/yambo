@@ -28,7 +28,6 @@ subroutine RT_occupations_repair(E,k)
  !
  use units,          ONLY:HA2EV
  use pars,           ONLY:SP
- use electrons,      ONLY:Nel
  use SC,             ONLY:SC_bands,RT_occupations
  use QP_m,           ONLY:QP_table,QP_n_states
  use R_lattice,      ONLY:bz_samp

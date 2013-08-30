@@ -22,9 +22,7 @@
 subroutine RT_databases(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  use YPP,            ONLY:RT_J_t,RT_P_t
- use units,          ONLY:SPEED_OF_LIGHT
- use pars,           ONLY:DP,SP,pi,schlen
- use electrons,      ONLY:levels
+ use pars,           ONLY:DP,SP,schlen
  use R_lattice,      ONLY:nkibz
  use com,            ONLY:warning
  use memory_m,       ONLY:mem_est

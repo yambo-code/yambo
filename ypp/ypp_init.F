@@ -61,7 +61,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  logical          ::l_QP_init
  type(initdefs)   ::defs
- integer          ::i1,i2, ng_save
+ integer          ::i1,i2
  character(schlen)::rstr_piece(60) 
  !
 #if defined _YPP_RT || defined _YPP_SC

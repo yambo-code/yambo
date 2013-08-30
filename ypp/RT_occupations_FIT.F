@@ -27,11 +27,11 @@ subroutine RT_occupations_FIT(k,E,RT_occ_DATA,time)
  use YPP,            ONLY:RT_n_FIT
  use pars,           ONLY:SP,lchlen
  use SC,             ONLY:SC_bands,n_SC_descriptions,SC_description
- use QP_m,           ONLY:QP_table,QP_n_states,QP_state
+ use QP_m,           ONLY:QP_table,QP_n_states
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:Tel
  use electrons,      ONLY:levels,spin,spin_occ,n_spin
- use vec_operate,    ONLY:sort,degeneration_finder
+ use vec_operate,    ONLY:sort
  use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative,Fermi_fnc_T_derivative
  use com,            ONLY:msg,of_open_close,error
  use stderr,         ONLY:intc

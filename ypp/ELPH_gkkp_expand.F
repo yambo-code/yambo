@@ -22,7 +22,7 @@
 subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
  !
  use pars,                ONLY:SP
- use R_lattice,           ONLY:bz_samp,qindx_B,qindx_S
+ use R_lattice,           ONLY:bz_samp,qindx_B
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
  use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp
  implicit none

@@ -22,12 +22,11 @@
 subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP,lchlen
- use com,                 ONLY:msg,warning,core_io_path,more_io_path
- use drivers,             ONLY:l_sc_run
+ use com,                 ONLY:msg,core_io_path,more_io_path
  use memory_m,            ONLY:mem_est
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
-&                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO, &
-&                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP,RD_CL_IF_END,WR_CL_IF_END
+ use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
+&                              OP_APP,cp_file,cp_directory,Fragmented_IO, &
+&                              io_fragmented,OP_RD_CL,RD_CL,RD
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
  &                             wf_state,WF_load,wf_state,wf,WF_free,wf_nb_io_groups
  use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol

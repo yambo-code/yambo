@@ -21,17 +21,14 @@
 !
 subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  !
- use pars,                ONLY:IP,SP
+ use pars,                ONLY:SP
  use com,                 ONLY:msg
  use memory_m,            ONLY:mem_est
- use zeros,               ONLY:k_iku_zero
- use stderr,              ONLY:intc
  use vec_operate,         ONLY:v_norm,i_sort
- use electrons,           ONLY:levels
  use wave_func,           ONLY:wf_nc_k, wf_igk,wf_ncx,wf_ng
- use R_lattice,           ONLY:bz_samp,nkibz,g_rot,ng_closed,ng_vec,g_vec
+ use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,g_vec
  use vec_operate,         ONLY:v_norm
- use D_lattice,           ONLY:nsym,dl_sop
+ use D_lattice,           ONLY:nsym
  !
  implicit none
  !
@@ -49,10 +46,7 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  integer                     :: wf_nc_k_save(k_save%nibz)
  integer                     :: wf_igk_save(wf_ncx,k_save%nibz)
  !
- real(SP)                    :: g_rot_tmp(3)
- real(SP), allocatable       :: g_vec_tmp(:,:)
- !
- integer                     :: ik,ik_save,ic,is,ig1,ig2
+ integer                     :: ik,ik_save,ic,is
  !
  wf_nc_k_save=wf_nc_k
  wf_igk_save =wf_igk

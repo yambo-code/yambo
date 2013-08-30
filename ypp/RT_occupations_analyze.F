@@ -22,14 +22,13 @@
 subroutine RT_occupations_analyze(k,E)
  !
  use drivers,        ONLY:l_carrier_dynamics,l_ph_corr
- use units,          ONLY:FS2AUT,SP,HA2EV,BO2ANG
+ use units,          ONLY:FS2AUT,SP,HA2EV
  use pars,           ONLY:schlen
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,set_real_printed_length
  use R_lattice,      ONLY:bz_samp
- use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:levels,spin,spin_occ,Nel
- use QP_m,           ONLY:QP_table,QP_n_states,QP_state,QP_nb
+ use electrons,      ONLY:levels,spin,spin_occ
+ use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT,RT_n_FIT
  use com,            ONLY:msg,of_open_close,warning,error
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&

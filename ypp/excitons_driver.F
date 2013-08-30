@@ -25,13 +25,13 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use units,         ONLY:BO2ANG
  use stderr,        ONLY:intc
  use FFT_m,         ONLY:fft_dim,fft_size
- use D_lattice,     ONLY:a,i_time_rev,nsym,alat
+ use D_lattice,     ONLY:a,alat
  use wave_func,     ONLY:WF_load,wf,WF_symm,WF_free,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
 &                        excitons_sort_and_report,l_amplitude,l_free_hole,&
-&                        output_fname,use_xcrysden,use_gnuplot,use_cube,plot_dim,l_norm_to_one
+&                        output_fname,use_xcrysden,use_gnuplot,use_cube,plot_dim
 #if defined _YPP_ELPH
  use YPP,           ONLY:l_eliashberg,l_gkkp
 #endif
@@ -98,7 +98,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  !... Variables needed to plot the exc-wf
  !
- integer           ::iv,ic,iv_fft,ic_fft,ikbz,ikibz,is,neh
+ integer           ::iv,ic,ikbz,ikibz,is,neh
  real(SP)          ::r_eh(3)
  complex(SP)       ::wf_
  complex(SP)       ::WF1_ir(n_spinor),WF2_ir(n_spinor)
@@ -303,7 +303,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  call section('+','Real-Space grid setup')
  !
  if (l_free_hole) ncell=1
- !if (l_free_hole) l_norm_to_one=.false.
  !
  call expand_grid()
  !

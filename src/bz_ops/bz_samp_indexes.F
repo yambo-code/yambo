@@ -190,6 +190,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    call msg('nrsn','[RL indx] X grid is not uniform.  Gamma point only.')
    call q_shadows(.true.)
    gamma_point_only=.true.
+   bse_scattering=.false.
    !
  endif
  !

@@ -91,8 +91,8 @@ module LIVE_t
      logical     ,optional :: SERIAL
      if (.not.live_timing_is_on) return
      if (present(message).and.present(steps)) then
-       if (present(SERIAL))      call live_timing_activate(message,steps,.TRUE.)
-       if (.not.present(SERIAL)) call live_timing_activate(message,steps,.FALSE.)
+       if (present(SERIAL))      call live_timing_activate(message,steps)
+       if (.not.present(SERIAL)) call live_timing_activate(message,steps)
      endif
      if (.not.present(message).and.present(steps)) call live_timing_add(steps)
    end subroutine
@@ -261,11 +261,10 @@ module LIVE_t
      !
    end subroutine
    !
-   subroutine live_timing_activate(name,steps,SERIAL)
+   subroutine live_timing_activate(name,steps)
      use stderr,     ONLY : write_to_log
      implicit none
      character(*)      :: name
-     logical           :: SERIAL
      ! 
      ! Work Space
      !

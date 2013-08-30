@@ -21,7 +21,7 @@
 !
 subroutine electrons_driver(Xk,Xen)
  !
- use pars,           ONLY:SP,schlen,lchlen
+ use pars,           ONLY:SP,lchlen
  Use stderr,         ONLY:intc
  use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state
  use FFT_m,          ONLY:fft_size,fft_dim

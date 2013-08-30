@@ -28,7 +28,6 @@ subroutine RT_ELPH_initialize(k,q)
  use drivers,        ONLY:l_ph_corr
  use com,            ONLY:warning
  use R_lattice,      ONLY:RL_vol,bz_samp
- use parallel_m,     ONLY:myid
  use IO_m,           ONLY:io_control,REP,OP_RD_CL
  use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,W_debye
  use memory_m,       ONLY:mem_est

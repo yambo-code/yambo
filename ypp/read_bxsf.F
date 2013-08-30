@@ -21,19 +21,18 @@
 !
 subroutine read_bxsf(Xk,Xen)
  !
- use pars,                ONLY:SP,DP,lchlen,schlen
+ use pars,                ONLY:SP,lchlen,schlen
  use units,               ONLY:pi,HA2EV,BO2ANG
  use R_lattice,           ONLY:bz_samp,b,k_grid,k_the_nearest
- use D_lattice,           ONLY:alat
  use parser_m,            ONLY:parser
- use YPP,                 ONLY:BZ_RIM_path, wannier_bands, ord_dgrid_ipol
+ use YPP,                 ONLY:wannier_bands, ord_dgrid_ipol
  use electrons,           ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,&
                                BZ_RIM_max_filling,BZ_RIM_nbands, &
                                n_bands,BZ_RIM_tot_nkpts,BZ_RIM_ipol_weight,n_spin
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:file_exists,msg,error
  use vec_operate,         ONLY:c2a,rlu_k2bz,k2bz,v_is_zero
- use IO_m,                ONLY:io_control,NONE,OP_WR_CL,OP_RD_CL,io_disconnect 
+ use IO_m,                ONLY:io_control,NONE,OP_WR_CL
  !
  implicit none
  type(bz_samp) :: Xk
@@ -43,12 +42,11 @@ subroutine read_bxsf(Xk,Xen)
  ! 
  character(lchlen) :: filename
  type(bz_samp) :: RIM_k
- logical       :: l_prt_k_grids
  !
- integer :: readunit, ii, jj, readband, iband, ikpt, kx, ky, kz,ID,i_err, ikbz, bxsf_bands
+ integer :: readunit, ii, readband, iband, ikpt, kx, ky, kz,ID,i_err, ikbz, bxsf_bands
  integer :: nearest_to_g
  integer :: nbands,vband ! total number of bands, highest valence
- integer :: ndim, idim  ! total number of dimensions, iterator on dimensions
+ integer :: ndim ! total number of dimensions, iterator on dimensions
  integer, external :: ioE_RIM
  integer, external :: double_k_grid
  integer :: err_dgrid

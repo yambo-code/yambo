@@ -29,7 +29,7 @@ subroutine WANNIER_driver(k,E)
  use com,            ONLY:error,msg
  use vec_operate,    ONLY:rlu_v_is_zero
  use zeros,          ONLY:k_rlu_zero
- use QP_m,           ONLY:QP_table,QP_t,QP_reset,QP_n_states
+ use QP_m,           ONLY:QP_t,QP_reset
  use IO_m,           ONLY:io_control,OP_RD_CL,LOG,DUMP
  implicit none
  !

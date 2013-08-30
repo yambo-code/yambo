@@ -32,9 +32,9 @@ real(SP) function RT_G_retarded_frequency(Approx,E,ib,ik,W,WIDTH)
  !
  ! Work Space
  !
- real(SP)    :: E_vb_max,E_cb_min,WIDTH,W_v_diff,W_c_diff
+ real(SP)    :: E_vb_max,E_cb_min,WIDTH
  character(*):: Approx
- complex(SP) :: Sigma,SF
+ complex(SP) :: Sigma
  !
  E_vb_max=maxval( E%E(:E%nbf,:,:) )-E%E(ib,ik,1)
  E_cb_min=minval( E%E(E%nbf+1:,:,:) )-E%E(ib,ik,1)

@@ -30,7 +30,6 @@ subroutine RT_initialize(dump_and_write)
  use stderr,         ONLY:real2ch
  use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P
  use fields,         ONLY:Efield,i_Probe
- use parser_m,       ONLY:parser
  implicit none
  !
  logical, optional  :: dump_and_write

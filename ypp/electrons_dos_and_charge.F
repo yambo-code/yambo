@@ -31,11 +31,10 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use YPP,            ONLY:l_density,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,plot_title,l_dos,l_RT_dos,dos_broadening,dos_bands,&
 &                         dos_E_range,dos_E_steps,OCC_T_ref,OCC_T_range,OCC_deltaT,&
-&                         RT_occupations_ref,RT_n_FIT
+&                         RT_occupations_ref
  use com,            ONLY:msg,of_open_close
  use functions,      ONLY:Fermi_fnc_derivative
  use QP_CTL_m,       ONLY:QP_apply
- use QP_m,           ONLY:QP_table,QP_n_states
  use LIVE_t,         ONLY:live_timing
 #if defined _YPP_RT
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_output

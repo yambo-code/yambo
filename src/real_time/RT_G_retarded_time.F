@@ -31,7 +31,7 @@ complex(SP) function RT_G_retarded_time(Approx,E,ib,ik,Time,delta_T)
  !
  ! Note that there is no spin prefactor here
  !
- use pars,       ONLY:SP,cI
+ use pars,       ONLY:SP
  use electrons,  ONLY:levels
  implicit none
  !

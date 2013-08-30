@@ -50,7 +50,7 @@ subroutine QP_state_table_setup(en)
  ! Work Space
  !
  integer :: e_rng_lines,k_rng_lines,icheck,ik,ib,i1,i2,i3,&
-&           QP_k_nk,QP_e_nk,QP_k_nb,QP_e_nb,i_sp,bands_mixed
+&           QP_k_nk,QP_e_nk,QP_k_nb,QP_e_nb,i_sp,bands_mixed,v(2)
  real(SP):: rcheck
  integer,    allocatable:: QP_i_limits(:,:)
  real(SP)   ,allocatable:: QP_r_limits(:,:)
@@ -92,6 +92,11 @@ subroutine QP_state_table_setup(en)
    enddo
    QP_r_limits(:,3:4)=QP_r_limits(:,3:4)/HA2EV
    e_rng_lines=e_rng_lines-2
+   do i1=1,e_rng_lines,1
+     v=QP_r_limits(i1,:2)
+     call i_check(v,en%nk)
+     QP_r_limits(i1,:2)=v
+   enddo
    !
    ! Non null %QPerange/%QPkrange fields
    !

@@ -22,19 +22,17 @@
 subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP,lchlen
- use com,                 ONLY:msg,warning,core_io_path,more_io_path
- use drivers,             ONLY:l_sc_run
+ use com,                 ONLY:msg,core_io_path,more_io_path
  use memory_m,            ONLY:mem_est
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
-&                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO,mk_dir, &
-&                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP,RD_CL_IF_END,WR_CL_IF_END
+&                              OP_APP,cp_file,OP_RD_CL,RD_CL,RD,DUMP
  use electrons,           ONLY:n_spin,n_sp_pol
  use pseudo,              ONLY:pp_kb,pp_kbd,pp_kbs,n_atomic_species,PP_alloc_pwscf,&
 &                              pp_n_l_times_proj_max,PP_free,PP_alloc_abinit,Vnl
  use LIVE_t,              ONLY:live_timing
  use X_m,                 ONLY:X_t
  use stderr,              ONLY:intc
- use wave_func,           ONLY:wf_nb_io_groups,wf_ng,wf_igk,wf_nc_k,wf_ncx
+ use wave_func,           ONLY:wf_ng,wf_igk,wf_nc_k,wf_ncx
  use R_lattice,           ONLY:bz_samp,ng_closed,g_rot,nXkibz,ng_vec
  use D_lattice,           ONLY:n_atomic_species
  use electrons,           ONLY:levels
@@ -70,7 +68,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  ! Dummies
  !
- integer               :: i1,is,ik,ik_save
+ integer               :: is,ik,ik_save
  integer               :: ic,ic_rot,ig,ig_rot
  integer               :: ib,ibm,i_spin
  !

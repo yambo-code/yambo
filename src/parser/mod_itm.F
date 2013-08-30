@@ -759,7 +759,7 @@ module it_m
      ! 
      ! Work Space
      !
-     integer :: i2,i3,ifpos,ch_length
+     integer :: i2,ifpos,ch_length
      real(SP):: unit_factor,v(2)
      character(lchlen)::ch(2)  
      !
@@ -1003,7 +1003,6 @@ module it_m
    end function
    !
    logical function Chverbose_enough(var_name,var_val)
-     integer :: nvar
      character(*)::var_name
      character(*)::var_val
      Chverbose_enough=.false.

@@ -38,7 +38,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_Phonon_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,MEM_index,&
 &                         G_lesser,G_MEM_steps,RT_dynamics_jumps,it_start,&
-&                         Life_MEM_steps,SAVED_lifetime,RT_step
+&                         Life_MEM_steps,SAVED_lifetime
  !
  implicit none
  !

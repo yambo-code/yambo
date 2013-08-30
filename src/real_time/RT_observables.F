@@ -27,7 +27,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands,it_now
  use X_m,            ONLY:P_square
- use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,l_NE_with_fields, &
+ use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,&
 &                         l_NE_simulate_IP,Fluence
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc,QP_Sc,QP_nk

@@ -21,7 +21,7 @@
 !
 subroutine RT_manual_excitation(E,k)
  !
- use pars,           ONLY:SP,cI,cZERO
+ use pars,           ONLY:SP,cI
  use units,          ONLY:BO2ANG
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp

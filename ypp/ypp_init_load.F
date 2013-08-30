@@ -245,7 +245,6 @@ subroutine ypp_init_load(defs)
  !BZ E RIM
  !
  call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
- call it(defs,'BZ_RIM_path','Path to the SAVE folder with the RIM DB1',BZ_RIM_path)
  !
  ! Wannier bands
  !

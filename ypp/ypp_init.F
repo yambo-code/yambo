@@ -69,6 +69,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  integer          ::io_SC_err,ID
  integer, external::io_SC_components,io_RT_components
 #endif
+ integer, external::parse_character_arrays
  !
  ! What is running ?
  !
@@ -223,7 +224,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  !BZ RIM
  !
- BZ_RIM_path="."
  gamma_radius=0.
  !
  ! BXSF interpolation
@@ -564,7 +564,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat NoWeights GammaRadius")
+ if (l_bzrim) call initactivate(1,"BZ_RIM_Nk cooOut OutputAlat NoWeights GammaRadius")
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call QP_ctl_switch('G')
@@ -659,6 +659,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #else
  if (l_QP_init) call QP_init(.FALSE.,.FALSE.)
 #endif
+ !
+ if (l_bzrim) then
+   n_RIM_DBs=parse_character_arrays(RIM_DB1_paths,MAX_RIM_DBs,"RIM_DB1_paths",.TRUE.)
+   if (infile_editing) i1=parse_character_arrays(RIM_DB1_paths,n_RIM_DBs,"RIM_DB1_paths",.FALSE.)
+ endif
  !
 contains
  !

@@ -24,16 +24,16 @@ subroutine k_random(Xk,Xen)
  use pars,                ONLY:SP,DP,lchlen,schlen
  use units,               ONLY:HA2EV
  use stderr,              ONLY:set_real_printed_length,intc
- use R_lattice,           ONLY:bz_samp,nkibz,k_the_nearest
+ use R_lattice,           ONLY:bz_samp,nkibz,k_the_nearest,bz_samp_reset
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop
  use com,                 ONLY:msg,of_open_close,error
  use vec_operate,         ONLY:rlu_v_norm,v_norm,c2a,k2bz
- use YPP,                 ONLY:BZ_RIM_nkpts,BZ_RIM_path,gamma_radius,K_transform
+ use YPP,                 ONLY:BZ_RIM_nkpts,RIM_DB1_paths,gamma_radius,K_transform,MAX_RIM_DBs,n_RIM_DBs
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
 &                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling,&
-&                              BZ_RIM_ipol_weight,n_sp_pol
+&                              BZ_RIM_ipol_weight,n_sp_pol,E_reset
  use LIVE_t,              ONLY:live_timing
  use IO_m,                ONLY:io_control,NONE,OP_WR_CL
  !
@@ -59,9 +59,9 @@ subroutine k_random(Xk,Xen)
  !
  ! BZ DB1 I/O
  !
- type(levels)      :: RIM_E
- type(bz_samp)     :: RIM_k
- integer           :: ID,i_err,nsym_save,nsym_RIM_DB
+ type(levels)      :: RIM_E(MAX_RIM_DBs)
+ type(bz_samp)     :: RIM_k(MAX_RIM_DBs)
+ integer           :: ID,i_err(MAX_RIM_DBs),nsym_save,nsym_RIM_DB,i_db,i_db_ref,ik_ref
  integer, external :: ioDB1_selective_scan,ioE_RIM
  real(SP)          :: dl_sop_save(3,3,48)
  !
@@ -74,34 +74,45 @@ subroutine k_random(Xk,Xen)
  !
  ! DB1 reloading
  !
- i_err=ioDB1_selective_scan(RIM_E,RIM_k,trim(BZ_RIM_path),'all')
- !
- if (i_err/=0) call error('RIM database not found')
+ i_err=0
+ if (n_RIM_DBs>0) then
+   do i_db=1,n_RIM_DBs
+     i_err(i_db)=ioDB1_selective_scan(RIM_E(i_db),RIM_k(i_db),trim(RIM_DB1_paths(i_db,1)),'all')
+     if (i_err(i_db)/=0) call msg("s",'RIM database in '//trim(RIM_DB1_paths(i_db,1))//' NOT FOUND')
+     if (i_err(i_db)==0) call msg("s",'RIM database in'//trim(RIM_DB1_paths(i_db,1))//' FOUND')
+     !
+     ! DB1 checks
+     !
+     if (i_err(i_db)==0.and.any(a/=a_save))  then
+       call msg("s",':: RIM DB1 DL structure does not fit')
+       i_err(i_db)=-1
+     endif
+     if (i_err(i_db)==0.and.any(alat/=alat_save))  then
+       call msg("s",':: RIM DB1 alat does not fit.')
+       i_err(i_db)=-1
+     endif
+     !
+   enddo
+   !
+   if (any((/i_err(:n_RIM_DBs)/=0/))) call error("One or more RIM databases have not been found")
+   !
+ endif
  !
  ! Symmetry restoring
  !
- deallocate(dl_sop)
- nsym_RIM_DB=nsym
- nsym       =nsym_save
- allocate(dl_sop(3,3,nsym))
- dl_sop=dl_sop_SAVE(:,:,:nsym)
- !
- ! DB1 checks
- !
- if (i_err==0.and.any(a/=a_save))  then
-   call msg("s",':: RIM DB1 DL structure does not fit')
-   i_err=-1
- endif
- if (i_err==0.and.any(alat/=alat_save))  then
-   call msg("s",':: RIM DB1 alat does not fit.')
-   i_err=-1
+ if (allocated(dl_sop)) then
+   deallocate(dl_sop)
+   nsym_RIM_DB=nsym
+   nsym       =nsym_save
+   allocate(dl_sop(3,3,nsym))
+   dl_sop=dl_sop_SAVE(:,:,:nsym)
  endif
  !
  call parser('NoWeights',No_Weight)
  !
  impose_gamma_radius=gamma_radius>0.
  !
- if (i_err/=0.or.trim(BZ_RIM_path)==".") then
+ if (n_RIM_DBs==0) then
    !
    call date_and_time(ch(1),ch(2),ch(3),iseed)
    iseed=iabs(iseed)
@@ -160,35 +171,63 @@ subroutine k_random(Xk,Xen)
    return
  endif 
  !
- call section('*','BZ RIM DB')
+ call section('*','BZ RIM DB(s)')
  !
  call msg('s',':: Electrons             :',default_nel)
  call msg('s',':: Temperature       [ev]:',input_GS_Tel)
  call msg('s',':: Lattice factors [a.u.]:',alat)
- call msg('s',':: K points        [read]:',nkibz)
+ do i_db=1,n_RIM_DBs
+   if (i_db==1) call msg('s',':: K points        [DB #'//trim(intc(i_db))//']:',RIM_E(i_db)%nk)
+   if (i_db> 1) call msg('s','::                 [DB #'//trim(intc(i_db))//']:',RIM_E(i_db)%nk)
+ enddo
+ !
+ ! Mergering of ALL RIM_E(:) => RIM_E(1)
+ !
+ i_db_ref=1
+ !
+ if (n_RIM_DBs>1) then
+   i_db_ref=n_RIM_DBs+1
+   call bz_samp_reset(RIM_k(i_db_ref))
+   call E_reset(RIM_E(i_db_ref))
+   RIM_E(i_db_ref)%nk=sum(RIM_E(:n_RIM_DBs)%nk)
+   RIM_E(i_db_ref)%nb=RIM_E(1)%nb
+   RIM_k(i_db_ref)%nibz=sum(RIM_E(:n_RIM_DBs)%nk)
+   allocate(RIM_E(i_db_ref)%E(RIM_E(i_db_ref)%nb,RIM_E(i_db_ref)%nk,n_sp_pol))
+   allocate(RIM_k(i_db_ref)%pt(RIM_E(i_db_ref)%nk,3))
+   do i_db=1,n_RIM_DBs
+     if (i_db==1) ik_ref=0
+     if (i_db> 1) ik_ref=sum(RIM_E(1:i_db-1)%nk)
+     do i1=1,RIM_E(i_db)%nk
+       RIM_E(i_db_ref)%E(:,i1+ik_ref,:)= RIM_E(i_db)%E(:,i1,:)
+       RIM_k(i_db_ref)%pt(i1+ik_ref,:)= RIM_k(i_db)%pt(i1,:)
+     enddo
+   enddo
+ endif
+ !
+ ! Use of less (only BZ_RIM_nkpts, read from input) k-points
  !
  if (BZ_RIM_nkpts<nkibz.and.BZ_RIM_nkpts>0) then
    nkibz   =BZ_RIM_nkpts
-   RIM_E%nk=nkibz
-   allocate(rand_E(RIM_E%nb,nkibz,n_sp_pol))
-   rand_E(:,:,:)=RIM_E%E(:,:nkibz,:)
-   rand_k(:nkibz,:)=RIM_k%pt(:nkibz,:)
-   deallocate(RIM_E%E,RIM_k%pt)
-   allocate(RIM_E%E(RIM_E%nb,nkibz,n_sp_pol),RIM_k%pt(nkibz,3))
-   RIM_E%E(:,:,:)=rand_E(:,:,:)
-   RIM_k%pt(:,:)=rand_k(:,:)
+   RIM_E(i_db_ref)%nk=nkibz
+   allocate(rand_E(RIM_E(i_db_ref)%nb,nkibz,n_sp_pol))
+   rand_E(:,:,:)=RIM_E(i_db_ref)%E(:,:nkibz,:)
+   rand_k(:nkibz,:)=RIM_k(i_db_ref)%pt(:nkibz,:)
+   deallocate(RIM_E(i_db_ref)%E,RIM_k(i_db_ref)%pt)
+   allocate(RIM_E(i_db_ref)%E(RIM_E(i_db_ref)%nb,nkibz,n_sp_pol),RIM_k(i_db_ref)%pt(nkibz,3))
+   RIM_E(i_db_ref)%E(:,:,:)=rand_E(:,:,:)
+   RIM_k(i_db_ref)%pt(:,:)=rand_k(:,:)
    deallocate(rand_E)
  endif
  !
- gap(1)=minval(RIM_E%E(Xen%nbf+1,:,1))-maxval(RIM_E%E(Xen%nbf,:,1)) 
+ gap(1)=minval(RIM_E(i_db_ref)%E(Xen%nbf+1,:,1))-maxval(RIM_E(i_db_ref)%E(Xen%nbf,:,1)) 
  gap(2)=10000.
  do i1=1,nkibz
-   if (RIM_E%E(Xen%nbf+1,i1,1)-RIM_E%E(Xen%nbf,i1,1)<gap(2)) then
-     gap(2)=RIM_E%E(Xen%nbf+1,i1,1)-RIM_E%E(Xen%nbf,i1,1)
+   if (RIM_E(i_db_ref)%E(Xen%nbf+1,i1,1)-RIM_E(i_db_ref)%E(Xen%nbf,i1,1)<gap(2)) then
+     gap(2)=RIM_E(i_db_ref)%E(Xen%nbf+1,i1,1)-RIM_E(i_db_ref)%E(Xen%nbf,i1,1)
    endif
  enddo
  !
- call msg('s','::                 [used]:',BZ_RIM_nkpts)
+ call msg('s','::              [imposed]:',BZ_RIM_nkpts)
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmetries            :',nsym_RIM_DB)
  if (Xen%nbf==Xen%nbm) then
@@ -204,20 +243,20 @@ subroutine k_random(Xk,Xen)
  !
  ! RIM_k (IBZ->BZ)
  !
- call k_ibz2bz(RIM_k,'i',.true.)
+ call k_ibz2bz(RIM_k(i_db_ref),'i',.true.)
  !
- call msg('l','found '//trim(intc(RIM_k%nbz))//' points in the BZ')
+ call msg('l','found '//trim(intc(RIM_k(i_db_ref)%nbz))//' points in the BZ')
  !
  add_X_grid=.true.
  !
- BZ_RIM_nbands=RIM_E%nb
- BZ_RIM_tot_nkpts=RIM_k%nibz
+ BZ_RIM_nbands=RIM_E(i_db_ref)%nb
+ BZ_RIM_tot_nkpts=RIM_k(i_db_ref)%nibz
  if (add_X_grid) BZ_RIM_tot_nkpts=BZ_RIM_tot_nkpts+Xk%nbz
  !
  allocate(BZ_RIM_nkpt(Xk%nbz))
  BZ_RIM_nkpt=0
  !
- call live_timing('BZ RIM Tables',RIM_k%nbz*2,SERIAL=.true.)
+ call live_timing('BZ RIM Tables',RIM_k(i_db_ref)%nbz*2,SERIAL=.true.)
  do while(.not.allocated(BZ_RIM_table)) 
    if (maxval(BZ_RIM_nkpt)>0) then
      if (add_X_grid)      allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)+1))
@@ -225,12 +264,12 @@ subroutine k_random(Xk,Xen)
      BZ_RIM_table=0
    endif
    BZ_RIM_nkpt=0
-   do i1=1,RIM_k%nbz
+   do i1=1,RIM_k(i_db_ref)%nbz
      !
-     ikbz=k_the_nearest(RIM_k%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
+     ikbz=k_the_nearest(RIM_k(i_db_ref)%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
      BZ_RIM_nkpt(ikbz)=BZ_RIM_nkpt(ikbz)+1
      !
-     if (allocated(BZ_RIM_table)) BZ_RIM_table(ikbz,BZ_RIM_nkpt(ikbz))=RIM_k%sstar(i1,1)
+     if (allocated(BZ_RIM_table)) BZ_RIM_table(ikbz,BZ_RIM_nkpt(ikbz))=RIM_k(i_db_ref)%sstar(i1,1)
      !      
      call live_timing(steps=1)
      !
@@ -250,13 +289,13 @@ subroutine k_random(Xk,Xen)
  !  At the end I add to the Xen%E_RIM array the Xen%E energies
  !
  allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
- Xen%E_RIM(:,:RIM_k%nibz,:)=RIM_E%E(:,:,:)
+ Xen%E_RIM(:,:RIM_k(i_db_ref)%nibz,:)=RIM_E(i_db_ref)%E(:,:,:)
  !
  if (add_X_grid) then
    forall(i1=1:Xk%nbz) BZ_RIM_nkpt(i1)=BZ_RIM_nkpt(i1)+1
-   forall(i1=1:Xk%nbz) BZ_RIM_table(i1,BZ_RIM_nkpt(i1))=RIM_k%nibz+i1
+   forall(i1=1:Xk%nbz) BZ_RIM_table(i1,BZ_RIM_nkpt(i1))=RIM_k(i_db_ref)%nibz+i1
    do i1=1,Xk%nbz
-     Xen%E_RIM(:,RIM_k%nibz+i1,:)=Xen%E(:BZ_RIM_nbands,Xk%sstar(i1,1),:)+Xen%Efermi(1)
+     Xen%E_RIM(:,RIM_k(i_db_ref)%nibz+i1,:)=Xen%E(:BZ_RIM_nbands,Xk%sstar(i1,1),:)+Xen%Efermi(1)
    enddo
  endif
  !
@@ -269,7 +308,7 @@ subroutine k_random(Xk,Xen)
  !
  deallocate(BZ_RIM_nkpt,BZ_RIM_table,Xen%E_RIM,BZ_RIM_ipol_weight)
  call k_ibz2bz(Xk,'d',.false.) 
- call k_ibz2bz(RIM_k,'d',.false.) 
+ call k_ibz2bz(RIM_k(i_db_ref),'d',.false.) 
  !
  contains
    !

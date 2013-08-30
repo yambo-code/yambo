@@ -130,10 +130,12 @@ module YPP
  !
  ! BZ RIM
  !
+ integer, parameter :: MAX_RIM_DBs=10
+ integer  :: n_RIM_DBs
  integer  :: BZ_RIM_nkpts
  logical  :: l_bzrim
  real(SP) :: Gamma_radius
- character(lchlen) :: BZ_RIM_path
+ character(lchlen) :: RIM_DB1_paths(MAX_RIM_DBs,1)
  !
  ! QP databases
  !

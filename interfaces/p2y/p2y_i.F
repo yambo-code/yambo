@@ -117,6 +117,8 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call msg('s','... Database done')
  !
  if (force_noWFs) then 
+   call msg('s',' == P2Y completed ==')
+   call msg('s',' ')
    call MPI_close
    return
  endif

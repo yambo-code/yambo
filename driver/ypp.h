@@ -76,7 +76,7 @@
   {"bzrim",   "r","BZ energy RIM analyzer",0,0,0,0,0}, 
   {"fixsyms", "n","Remove symmetries not consistent with an external perturbation",0,0,0,0,0}, 
 #if defined _YPP_RT
-  {"RealTime","t","Real Time [(X)response,(d)os,(o)ccupations]",0,0,1,0,0}, 
+  {"RealTime","t","Real Time [(X)response,(d)os,(op)OccPlot,(of)OccFit]",0,0,1,0,0}, 
   {"Gret",    "c","Retarded GFs",0,0,0,0,0}, 
 #endif
 #if defined _YPP_ELPH

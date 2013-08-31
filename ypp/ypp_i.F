@@ -190,7 +190,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (l_flag) l_flag=.not.l_eliashberg
 #endif
 #if defined _YPP_RT
- if(.not.l_flag) l_flag=l_RT_dos.or.l_RT_occupations
+ if(.not.l_flag) l_flag=l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit
 #endif
  !
  if (l_flag) call electrons_driver(Xk,Xen)

@@ -125,6 +125,12 @@ subroutine RT_occupations_FIT(k,E,RT_occ_DATA,time)
        x=0._SP
        Jacob=0._SP
        do i_s=1,QP_n_states
+         ib= QP_table(i_s,1)
+         ik= QP_table(i_s,3)
+         if (ib<SC_bands(1)) cycle
+         if (ib>SC_bands(2)) cycle
+         if (ik>k%nibz) cycle
+         !
          if(i_s<=last_occupied.and.ifit==2.and.l_two_temperatures) cycle
          if(i_s> last_occupied.and.ifit==1.and.l_two_temperatures) cycle
          E_shifted=E_sorted(i_s)-Ef_guess(ifit)

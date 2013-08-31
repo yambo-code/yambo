@@ -33,7 +33,9 @@ integer function RT_occupations_check(E,k)
  use IO_m,           ONLY:LOG,NONE
  use com,            ONLY:warning,error
  use YPP,            ONLY:RT_occupations_ref,OCC_T_ref,OCC_deltaT,OCC_T_range
+ !
  implicit none
+ !
  type(bz_samp)      :: k
  type(levels)       :: E
  !

@@ -30,8 +30,8 @@ subroutine electrons_driver(Xk,Xen)
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
-&                         plot_title,l_dos,l_RT_dos,l_angular_momentum,&
-&                         l_position,l_bands,BANDS_range,l_RT_occupations
+&                         plot_title,l_dos,l_RT_dos,&
+&                         l_bands,BANDS_range,l_RT_occ_Plot,l_RT_occ_Fit
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -47,6 +47,9 @@ subroutine electrons_driver(Xk,Xen)
  use YPP,            ONLY:elph_residual_treshold
  use ELPH,           ONLY:elph_Ham_bands
  use com,            ONLY:jobstr,file_exists
+#endif
+#if defined _YPP_MAGNETIC
+ use YPP,            ONLY:l_angular_momentum,l_position
 #endif
  implicit none
  !
@@ -87,7 +90,7 @@ subroutine electrons_driver(Xk,Xen)
  if (.not.flag) flag=l_mean_potential
 #endif
 #if defined _YPP_RT 
- if (.not.flag) flag=any((/l_RT_dos,l_RT_occupations/))
+ if (.not.flag) flag=any((/l_RT_dos,l_RT_occ_Plot,l_RT_occ_Fit/))
 #endif
  !
  if (.not.flag) return
@@ -460,7 +463,7 @@ subroutine electrons_driver(Xk,Xen)
  ! Real-Time occupations
  !=======================
  !
- if (l_RT_occupations) call RT_occupations_analyze(Xk,Xen)
+ if (l_RT_occ_Plot.or.l_RT_occ_Fit) call RT_occupations_analyze(Xk,Xen)
  !
 #endif
  !

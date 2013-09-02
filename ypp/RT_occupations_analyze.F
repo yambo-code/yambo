@@ -28,8 +28,8 @@ subroutine RT_occupations_analyze(k,E)
  use stderr,         ONLY:intc,set_real_printed_length
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,spin_occ
- use QP_m,           ONLY:QP_table,QP_n_states,QP_state
- use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT,RT_n_FIT
+ use QP_m,           ONLY:QP_table,QP_n_states
+ use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT,RT_n_FIT,l_RT_Occ_FIT,l_RT_occ_Plot
  use com,            ONLY:msg,of_open_close,warning,error
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
 &                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime
@@ -45,17 +45,14 @@ subroutine RT_occupations_analyze(k,E)
  integer               :: i1,n1,n_skip_time
  real(SP)              :: io_Time,data_to_plot(10)
  real(SP), allocatable :: RT_occupations_sum(:,:)
- real(SP)              :: RT_occ_DATA((SC_bands(2)-SC_bands(1)+1)*k%nibz,RT_n_FIT)
+ real(SP), allocatable :: RT_occ_DATA(:,:)
  real(SP)              :: RT_occ_Fit_time(RT_n_FIT)
  character(schlen)     :: titles(10)
- logical               :: l_ELPH_lifetimes,l_RT_Occ_FIT,l_RT_occ_Plot
+ logical               :: l_ELPH_lifetimes
  logical, allocatable  :: l_RT_Occ_FIT_vec(:)
  integer,     external :: RT_occupations_check
  !
  call section('*','Real-Time occupations')
- !
- call parser('OccPlot',l_RT_occ_Plot)
- call parser('OccFit' ,l_RT_occ_FIT )
  !
  if(.not.l_RT_occ_Plot .and. .not.l_RT_occ_FIT) then
    call warning(' Occupations: choose Plot or Fit or both')
@@ -78,6 +75,7 @@ subroutine RT_occupations_analyze(k,E)
  RT_occupations_sum=0._SP
  !
  allocate(l_RT_Occ_FIT_vec(n_T_steps))
+ allocate(RT_occ_data(QP_n_states,RT_n_FIT))
  l_RT_Occ_FIT_vec=.FALSE.
  RT_occ_DATA=0._SP
  if(l_RT_Occ_FIT) then
@@ -242,7 +240,7 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! f(eps_{ik,ib})
  !
- if(l_RT_occ_Fit) call RT_occupations_FIT(k,E,RT_occ_DATA(:QP_n_states,:),RT_occ_Fit_time)
+ if(l_RT_occ_Fit) call RT_occupations_FIT(k,E,RT_occ_DATA,RT_occ_Fit_time)
  !
  call set_real_printed_length()
  !

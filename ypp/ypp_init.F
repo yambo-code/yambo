@@ -24,9 +24,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use YPP
  use pars,           ONLY:pi
  use units,          ONLY:HA2EV,FS2AUT
- use wave_func,      ONLY:wf_ng 
  use D_lattice,      ONLY:alat,i_time_rev
- use R_lattice,      ONLY:ng_vec,nkibz
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
 &                         nrnlvls,rnlvls,runlevel_is_on,&
@@ -52,6 +50,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_ELPH
  use ELPH,           ONLY:gsqF_energy_steps
 #endif
+#if defined _YPP_SURF
+ use R_lattice,      ONLY:nkibz
+#endif
  implicit none
  integer          ::lnstr
  character(lnstr) ::instr
@@ -64,10 +65,14 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  integer          ::i1,i2
  character(schlen)::rstr_piece(60) 
  !
-#if defined _YPP_RT || defined _YPP_SC
+#if defined _YPP_SC
  type(levels)     ::E_dummy
+ integer, external::io_SC_components
  integer          ::io_SC_err,ID
- integer, external::io_SC_components,io_RT_components
+#endif
+#if defined _YPP_RT
+ integer, external::io_RT_components
+ integer          ::io_RT_err,ID
 #endif
  integer, external::parse_character_arrays
  !
@@ -113,7 +118,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  OCC_T_range=0.
  OCC_deltaT=0.
  l_RealTime=.FALSE.
- l_RT_occupations=.FALSE.
+ l_RT_occ_Plot=.FALSE.
+ l_RT_occ_Fit=.FALSE.
  l_RT_dos=.FALSE.
  !
  ! BANDS
@@ -129,11 +135,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  p_dir      ='1'
  mag_dir    ='X'
  p_format   ='g'
-#if !defined _YPP_RT
- wf_ng=ng_vec
- ! Notice that ng_vec can be larger than maxval(wf_igk) 
- ! and this can cause some problem in ypp. TO BE CHECKED
-#endif
  l_exc_wf   =.false.
  l_density  =.false.
  V_value    ='RE'
@@ -286,9 +287,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_RT
  ! 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
- io_SC_err=io_RT_components('G' ,ID)
+ io_RT_err=io_RT_components('G' ,ID)
  ! 
- if (io_SC_err==0) then
+ if (io_RT_err==0) then
    !
    X_rt%energy_range=(/0._SP,pi/RT_step/)
    X_rt%time_range=(/Efield(i_Probe)%t_initial,NE_steps*RT_step/)
@@ -407,7 +408,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        !
        l_RT_X           =trim(rstr_piece(i1+1))=='X'
        l_RT_dos         =trim(rstr_piece(i1+1))=='d'
-       l_RT_occupations =trim(rstr_piece(i1+1))=='o'
+       l_RT_occ_Plot    =trim(rstr_piece(i1+1))=='op'
+       l_RT_occ_Fit     =trim(rstr_piece(i1+1))=='of'
        !
      endif
 #endif
@@ -438,7 +440,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
      if ( trim(rstr_piece(i1)) == 'RealTime') then
        if (l_RT_X)           call initactivate(1,'RT-X')
        if (l_RT_dos)         call initactivate(1,'RTdos')
-       if (l_RT_occupations) call initactivate(1,'RToccupations')
+       if (l_RT_occ_Plot)    call initactivate(1,'RToccPlot')
+       if (l_RT_occ_Fit)     call initactivate(1,'RToccFit')
      endif
 #endif
 
@@ -471,7 +474,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_RealTime         = runlevel_is_on('RealTime')
  l_RT_X             = runlevel_is_on('RT-X')
  l_RT_dos           = runlevel_is_on('RTdos')
- l_RT_occupations   = runlevel_is_on('RToccupations')
+ l_RT_occ_Plot      = runlevel_is_on('RToccPlot')
+ l_RT_occ_Fit       = runlevel_is_on('RToccFit')
  !
  l_retarded_GFs     = runlevel_is_on('Gret')
 #endif
@@ -572,9 +576,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
 #if defined _YPP_RT
  if (l_RealTime) then
-   if (l_RT_dos.or.l_RT_occupations) call QP_ctl_switch('G')
-   if (l_RT_dos.or.l_RT_occupations) call initactivate(1,"OCCdT OCCTime OCCTref")
-   if (l_RT_occupations) call initactivate(1,"OCCPlot OCCFit OCCnFit")
+   if (l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit) call QP_ctl_switch('G')
+   if (l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit) call initactivate(1,"OCCdT OCCTime OCCTref")
+   if (l_RT_occ_Fit) call initactivate(1,"OCCnFit")
  endif
 #endif
  !
@@ -654,7 +658,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #endif
  !
 #if defined _YPP_RT
- if (.not.l_QP_init) l_QP_init=l_RT_occupations.or.l_RT_dos
+ if (.not.l_QP_init) l_QP_init=l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_dos
  if (l_QP_init) call QP_init(.FALSE.,.TRUE.)
 #else
  if (l_QP_init) call QP_init(.FALSE.,.FALSE.)

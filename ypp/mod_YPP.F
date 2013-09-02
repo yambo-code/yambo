@@ -190,7 +190,8 @@ module YPP
  !
  ! (RT) Occupations
  !
- logical     :: l_RT_occupations
+ logical     :: l_RT_occ_Plot
+ logical     :: l_RT_occ_Fit
  integer     :: RT_n_FIT=0
  !
  ! Reduce Symmetries

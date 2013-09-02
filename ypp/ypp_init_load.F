@@ -97,7 +97,8 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
  call it('r',defs,'RT-X',         '[R] Response functions Post-Processing')
  call it('r',defs,'RTdos',        '[R] Analize time-dependent DOS')
- call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
+ call it('r',defs,'RToccPlot',    '[R] Plot time-dependent occupations')
+ call it('r',defs,'RToccFit',     '[R] Fit occupations distribution at given time')
  call it('r',defs,'Gret',         '[R] Retarded GFs')
 #endif
 #if defined _YPP_SC
@@ -128,7 +129,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'OCCTref','NEGF Occupations reference time',OCC_T_ref,unit=Time_unit)
  call it('f',defs,'OCCPlot','NEGF Plot f(t) for all k and n')
  call it('f',defs,'OCCFit','NEGF Make a FIT of the occ. with Fermi Function')
- call it(defs,'OCCnFit','NEGF N of times for FIT',RT_n_FIT) 
+ call it(defs,'OCCnFit','NEGF N of times for occupations distribution FIT',RT_n_FIT) 
 #endif
  !
  ! BANDS

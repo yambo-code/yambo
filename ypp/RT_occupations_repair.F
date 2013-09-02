@@ -31,7 +31,7 @@ subroutine RT_occupations_repair(E,k)
  use SC,             ONLY:SC_bands,RT_occupations
  use QP_m,           ONLY:QP_table,QP_n_states
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,spin
  use vec_operate,    ONLY:sort,degeneration_finder
  !
  implicit none
@@ -41,15 +41,26 @@ subroutine RT_occupations_repair(E,k)
  !
  ! Work Space
  !
- integer  :: Eo_sorted_index((SC_bands(2)-SC_bands(1)+1)*k%nibz)
- integer  :: first_el((SC_bands(2)-SC_bands(1)+1)*k%nibz)
- integer  :: n_of_el((SC_bands(2)-SC_bands(1)+1)*k%nibz)
- integer  :: n_deg_grp,i1,i2,i3,ib,ik,inx
+ integer               :: n_deg_grp,i1,i2,i3,ib,ik,i_spin,inx
+ integer, allocatable  :: first_el(:)
+ integer, allocatable  :: n_of_el(:)
+ integer, allocatable  :: Eo_sorted_index(:)
  !
- real(SP) :: Eo_sorted((SC_bands(2)-SC_bands(1)+1)*k%nibz)
- real(SP) :: sym_value
+ real(SP)              :: sym_value
+ real(SP), allocatable :: Eo_sorted(:)
  !
- call QP_state_table_setup(E)
+ if(.not.allocated(QP_table)) call QP_state_table_setup(E)
+ !
+ allocate(Eo_sorted(QP_n_states))
+ allocate(Eo_sorted_index(QP_n_states))
+ allocate(first_el(QP_n_states),n_of_el(QP_n_states))
+ !
+ do i1=1,QP_n_states
+   ib    =QP_table(i1,1)
+   ik    =QP_table(i1,3)
+   i_spin=spin(QP_table(i1,:))
+   Eo_sorted(i1)=E%E(ib,ik,i_spin)
+ enddo
  !
  call sort(Eo_sorted,indx=Eo_sorted_index)
  call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
@@ -58,7 +69,6 @@ subroutine RT_occupations_repair(E,k)
  ! Davide: This must be overcome.
  ! The external field broke the symmetries and degenerate
  ! states [i.e. E(ik)=E(S_old(ik)] can have different occupations
- !
  !
  do i1=1,n_deg_grp
    do i3=1,2
@@ -79,15 +89,7 @@ subroutine RT_occupations_repair(E,k)
    enddo
  enddo
  !
- ! Correction of the number of electrons
- !=======================================
- !
- ! COMMENTED
- ! Davide: This gives a constan drift in the number of electrons / holes
- !         of the lowest unoccupied / highest occupied state which is
- !         problematic for "low pumping"
- !
- ! Andrea: Lines removed. The on-the-fly fix provided by RT_impose_N_conservation.F
- !         makes this procedure redundant
+ deallocate(Eo_sorted,Eo_sorted_index)
+ deallocate(first_el,n_of_el)
  !
 end subroutine RT_occupations_repair

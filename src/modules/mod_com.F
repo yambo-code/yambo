@@ -36,9 +36,10 @@ module com
  !
  ! JOB strings
  !
+ integer, parameter :: n_max_jobstr=10
+ integer            :: n_alt_jobstr
  character(lchlen)  :: jobstr
- character(lchlen)  :: second_jobstr
- character(lchlen)  :: third_jobstr
+ character(lchlen)  :: alt_jobstr(n_max_jobstr)
  !
  ! Sectioning
  !
@@ -50,7 +51,7 @@ module com
  !
  integer,parameter  :: nofs=200
  integer,parameter  :: max_open_ofs=200
- integer, parameter :: num_of_alternative_locations=16
+ integer, parameter :: num_of_alternative_locations=8+8*n_max_jobstr
  character(lchlen)  :: of(nofs)
  character(lchlen)  :: opened_of(max_open_ofs)
  integer            :: of_unit(max_open_ofs)
@@ -161,16 +162,22 @@ module com
      logical                ::NETCDF_DB
      character(lchlen)      ::all_locations(num_of_alternative_locations)
      !
+     ! WS
+     integer :: i_jobstr
+     !
      ! Possible Paths
      !
      ! 1/2.  MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with JOBSTR)
      ! 3/4.  MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=1 (no   JOBSTR)
      ! 5/6.  MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with JOBSTR)
      ! 7/8.  MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=1 (no   JOBSTR)
-     ! 9/10. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with SECOND_JOBSTR)
-     ! 11/12.MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with SECOND_JOBSTR)
-     ! 13/14.MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with THIRD_JOBSTR)
-     ! 15/16.MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with THIRD_JOBSTR)
+     ! 9/10. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with ALT_JOBSTR(1))
+     ! 11/12.MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with ALT_JOBSTR(1))
+     ! .
+     ! .
+     ! .
+     ! 5+4*I/6+4*I.MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with ALT_JOBSTR(I))
+     ! 7+4*I/8+4*I.MORE_IO=.FALSE. CORE_IO=.TRUE.  COM_IO=.FALSE. type=2 (with ALT_JOBSTR(I))
      !
      all_locations(1)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
 &                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
@@ -189,43 +196,27 @@ module com
      all_locations(8)=get_name(desc,subfolder,1,CORE_IO=.TRUE.,&
 &                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
      !
-     ! Added on 27/12/2012 using second_jobstr
+     ! Added on 27/12/2012 using second_jobstr (Andrea)
+     ! Added on 27/6/2013 using third_jobstr (Andrea)
+     ! 30/8/2013 Merged and added general number of jobstrs (Andrea)
      !
-     all_locations(9:12) = ' '
-     !
-     if (len_trim(second_jobstr)>0) then
-       all_locations(9) =get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
+     do i_jobstr=1,n_max_jobstr
+       all_locations(5+4*i_jobstr:8+4*i_jobstr) = ' '
+     enddo
+     do i_jobstr=1,n_alt_jobstr
+       all_locations(5+4*i_jobstr) =get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
 &                                 MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(second_jobstr))
-       all_locations(10)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
+&                                 ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
+       all_locations(6+4*i_jobstr)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
 &                                 MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(second_jobstr))
-       all_locations(11)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
+&                                 ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
+       all_locations(7+4*i_jobstr)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
 &                                 MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(second_jobstr))
-       all_locations(12)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
+&                                 ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
+       all_locations(8+4*i_jobstr)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
 &                                 MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(second_jobstr))
-     endif
-     !
-     ! Added on 27/6/2013 using third_jobstr
-     !
-     all_locations(13:16) = ' '
-     !
-     if (len_trim(third_jobstr)>0) then
-       all_locations(13) =get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
-&                                 MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(third_jobstr))
-       all_locations(14)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
-&                                 MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(third_jobstr))
-       all_locations(15)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
-&                                 MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(third_jobstr))
-       all_locations(16)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
-&                                 MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB,&
-&                                 ALT_JOB_STRING=trim(third_jobstr))
-     endif
+&                                 ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
+     enddo
      !
    end function
    !

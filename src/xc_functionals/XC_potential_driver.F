@@ -30,7 +30,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  use com,           ONLY:msg,warning
  use libxc_funcs_m, ONLY: XC_LDA_X, XC_LDA_C_PW
  use xc_functionals,ONLY:XC_EXCHANGE_CORRELATION,xc_string,&
-&                        XC_NOT_AVAILABLE,XC_FACTOR
+&                        XC_NOT_AVAILABLE,XC_FACTOR,current_xc_string,LIBXC_message_done
  implicit none
  type(levels), intent(in)  ::en
  type(bz_samp), intent(in) ::Xk
@@ -40,7 +40,10 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  ! COM
  !
  if (KIND>0.and.FUNCTIONAL>0) then
-   call msg('rsn','[xc] Functional ',xc_string(FUNCTIONAL))
+   if (current_xc_string/=xc_string(FUNCTIONAL)) then
+     call msg('rsn','[xc] Functional ',xc_string(FUNCTIONAL))
+     current_xc_string=xc_string(FUNCTIONAL)
+   endif
  else if (FUNCTIONAL==XC_NOT_AVAILABLE) then
    KIND=XC_EXCHANGE_CORRELATION
    FUNCTIONAL=XC_LDA_X*XC_FACTOR+XC_LDA_C_PW
@@ -50,7 +53,10 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  ! Maybe also (spin)density should be calculated in the wrapper, since it does 
  ! not use anything of libxc.   
  !
- call msg('rsn','[xc] LIBXC used to calculate xc functional ')
+ if (.not.LIBXC_message_done) then
+   call msg('rsn','[xc] LIBXC used to calculate xc functional ')
+   LIBXC_message_done=.TRUE.
+ endif
  !
  call XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !

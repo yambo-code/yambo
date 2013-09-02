@@ -52,7 +52,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     eval_magn
  use parallel_m, ONLY:master_cpu,ncpu,CPU_str_reset
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
-&                     more_io_path,core_io_path,jobstr,com_path,second_jobstr,repfile,third_jobstr
+&                     more_io_path,core_io_path,jobstr,com_path,alt_jobstr,repfile,n_alt_jobstr,&
+&                     n_max_jobstr
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,&
 &                     string_split,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
@@ -108,7 +109,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! Work Space 
  !
  integer           :: i1,i2
- character(schlen) :: string(3)
+ character(schlen) :: string(10)
  !
  ! Printed reals format lengths 
  !
@@ -143,10 +144,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call string_split(JS,string,",")
  jobstr=string(1)
- second_jobstr=" "
- if (len_trim(string(2))>0) second_jobstr=string(2)
- third_jobstr=" "
- if (len_trim(string(3))>0) third_jobstr=string(3)
+ alt_jobstr=" "
+ do i1=2,n_max_jobstr
+   if (len_trim(string(i1))==0) cycle
+   alt_jobstr(i1-1)=string(i1)
+   n_alt_jobstr=i1-1
+ enddo
  !
  ! Global Logicals
  !

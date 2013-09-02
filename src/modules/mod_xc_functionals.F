@@ -36,6 +36,11 @@ module xc_functionals
  real(SP), public, allocatable:: E_xc(:)
  real(SP), public, allocatable:: F_xc(:) 
  !
+ ! Messagging
+ !
+ character(lchlen) :: current_xc_string = ' '
+ logical :: LIBXC_message_done = .FALSE.
+ !
  type xc_fnctl_t
    integer         :: family
    integer         :: kind              

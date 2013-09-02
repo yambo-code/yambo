@@ -205,7 +205,7 @@ module IO_m
      !
      use stderr,        ONLY:string_pack
      use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
-&                            num_of_alternative_locations
+&                            num_of_alternative_locations,n_alt_jobstr
      character(*)           :: desc
      integer                :: type,ID
      character(*), optional :: subfolder
@@ -213,9 +213,10 @@ module IO_m
      !
      ! Work Space
      !
-     integer          ::CREATE_MODE
+     integer          ::CREATE_MODE,i_jobstr
      character(lchlen)::alternative_file(num_of_alternative_locations),folder
      character(schlen)::subfolder_
+     logical          ::file_found
      !
      io_connect=0
      if ( (read_is_on(ID).and..not.IO_read).or.&
@@ -358,43 +359,65 @@ module IO_m
      if (open_is_on(ID).and.read_is_on(ID)) then
        !
        if (.not.file_exists(trim(io_file(ID)))) then
+         !
+         file_found=.FALSE.
+         !
          if (file_exists(trim(alternative_file(1)))) then
            io_file(ID)=alternative_file(1)
            io_netcdf_support(ID)=.not.io_netcdf_support(ID)
+           file_found=.TRUE.
          else if (file_exists(trim(alternative_file(2)))) then
            io_file(ID)=alternative_file(2)
+           file_found=.TRUE.
          else if (file_exists(trim(alternative_file(3)))) then
            io_file(ID)=alternative_file(3)
            io_netcdf_support(ID)=.not.io_netcdf_support(ID)
+           file_found=.TRUE.
          else if (file_exists(trim(alternative_file(4)))) then
            io_file(ID)=alternative_file(4)
+           file_found=.TRUE.
          else if (file_exists(trim(alternative_file(5)))) then
            io_file(ID)=alternative_file(5)
            io_netcdf_support(ID)=.not.io_netcdf_support(ID)
+           file_found=.TRUE.
          else if (file_exists(trim(alternative_file(6)))) then
            io_file(ID)=alternative_file(6)
+           file_found=.TRUE.
          else if (file_exists(trim(alternative_file(7)))) then
            io_file(ID)=alternative_file(7)
            io_netcdf_support(ID)=.not.io_netcdf_support(ID)
+           file_found=.TRUE.
          else if (file_exists(trim(alternative_file(8)))) then
            io_file(ID)=alternative_file(8)
-         else if (file_exists(trim(alternative_file(9)))) then
-           io_file(ID)=alternative_file(9)
-         else if (file_exists(trim(alternative_file(10)))) then
-           io_file(ID)=alternative_file(10)
-         else if (file_exists(trim(alternative_file(11)))) then
-           io_file(ID)=alternative_file(11)
-         else if (file_exists(trim(alternative_file(12)))) then
-           io_file(ID)=alternative_file(12)
-         else if (file_exists(trim(alternative_file(13)))) then
-           io_file(ID)=alternative_file(13)
-         else if (file_exists(trim(alternative_file(14)))) then
-           io_file(ID)=alternative_file(14)
-         else if (file_exists(trim(alternative_file(15)))) then
-           io_file(ID)=alternative_file(15)
-         else if (file_exists(trim(alternative_file(16)))) then
-           io_file(ID)=alternative_file(16)
-         else
+           file_found=.TRUE.
+         endif
+         !
+         if (.not.file_found) then
+           do i_jobstr=1,n_alt_jobstr
+             if (file_exists(trim(alternative_file(5+4*i_jobstr)))) then
+               io_file(ID)=alternative_file(5+4*i_jobstr)
+               file_found=.TRUE.
+               exit
+             endif
+             if (file_exists(trim(alternative_file(6+4*i_jobstr)))) then
+               io_file(ID)=alternative_file(6+4*i_jobstr)
+               file_found=.TRUE.
+               exit
+             endif
+             if (file_exists(trim(alternative_file(7+4*i_jobstr)))) then
+               io_file(ID)=alternative_file(7+4*i_jobstr)
+               file_found=.TRUE.
+               exit
+             endif
+             if (file_exists(trim(alternative_file(8+4*i_jobstr)))) then
+               io_file(ID)=alternative_file(8+4*i_jobstr)
+               file_found=.TRUE.
+               exit
+             endif
+           enddo
+         endif
+         !
+         if (.not.file_found) then
            io_connect=IO_NO_DATABASE
            if (present(no_full_RESET)) then
              io_file(ID)=''

@@ -263,7 +263,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_err=ioRIM(io_ID) 
- write (*,*) io_err
  !
  ! cutoff
  !

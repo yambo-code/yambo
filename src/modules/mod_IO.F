@@ -398,18 +398,15 @@ module IO_m
                io_file(ID)=alternative_file(5+4*i_jobstr)
                file_found=.TRUE.
                exit
-             endif
-             if (file_exists(trim(alternative_file(6+4*i_jobstr)))) then
+             else if (file_exists(trim(alternative_file(6+4*i_jobstr)))) then
                io_file(ID)=alternative_file(6+4*i_jobstr)
                file_found=.TRUE.
                exit
-             endif
-             if (file_exists(trim(alternative_file(7+4*i_jobstr)))) then
+             else if (file_exists(trim(alternative_file(7+4*i_jobstr)))) then
                io_file(ID)=alternative_file(7+4*i_jobstr)
                file_found=.TRUE.
                exit
-             endif
-             if (file_exists(trim(alternative_file(8+4*i_jobstr)))) then
+             else if (file_exists(trim(alternative_file(8+4*i_jobstr)))) then
                io_file(ID)=alternative_file(8+4*i_jobstr)
                file_found=.TRUE.
                exit

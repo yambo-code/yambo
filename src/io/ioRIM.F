@@ -39,7 +39,6 @@ integer function ioRIM(ID)
  character(schlen)   ::VAR_name
  !
  ioRIM=io_connect(desc="RIM",type=2,ID=ID)
- write (*,*) ioRIM
  !
  if (ioRIM/=0) goto 1
  !

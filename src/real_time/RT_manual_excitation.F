@@ -72,8 +72,6 @@ subroutine RT_manual_excitation(E,k)
          else
            if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(2))<local_E_window) then
              if(i1==ib) cycle
-             !G_lesser(ib,ib,ik,1) = spin_occ*cI
-             !G_lesser(i1,i1,ik,1) = cI*spin_occ-G_lesser(ib,ib,ik,1)
              Pumped_state(i1,ik)=.TRUE.
              Pumped_state(ib,ik)=.TRUE.
              Pump_level(ib,ik)= i3
@@ -88,7 +86,6 @@ subroutine RT_manual_excitation(E,k)
      enddo
      !
      do ib=SC_bands(1),SC_bands(2)
-       !if(Pumped_state(ib,ik)) delta_Nel=delta_Nel-cI*G_lesser(ib,ib,ik,1)*k%weights(ik)*2._SP
        if(Pumped_state(ib,ik).and.Pump_level(ib,ik)==i3) coeff=coeff+spin_occ*k%weights(ik)/ &
 &                                                            sqrt(abs(real(Pump_level(ib,ik),SP)))
      enddo

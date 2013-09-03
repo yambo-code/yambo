@@ -171,6 +171,9 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    endif
  endif
  !
+ write (*,*) E_P_Hole_lifetime(5,2)*HA2EV*1000.
+ if (it_now==5) stop
+ !
  ! Number conservation
  !=====================
  !

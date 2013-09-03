@@ -37,7 +37,7 @@ subroutine RT_initialize(E,k,q)
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,             &
 &                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,               &
-&                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps,Fluence
+&                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps,Fluence,l_RT_uses_E_RIM
  use collisions_IO,  ONLY:l_STORE_COLLISIONS
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -301,15 +301,14 @@ subroutine RT_initialize(E,k,q)
    call msg( 'r','[RT] Carriers El-ph scattering  :',l_ph_corr)
    call msg( 'r','[RT] Carriers El-El scattering  :',l_carrier_dynamics)
    if (l_G_retarded_DB) call msg( 'r','[RT] Retareded Green`s function :',Gr_kind)
-   call msg( 'r','[SC] Extended collisions        :',l_eval_collisions)
-   if (l_eval_collisions) call msg( 'r','[SC]                       [I/O]:',l_STORE_COLLISIONS)
+   call msg( 'r','[RT] Extended collisions        :',l_eval_collisions)
+   if (l_eval_collisions) call msg( 'r','[RT]                       [I/O]:',l_STORE_COLLISIONS)
  endif
  !
  ! RIM support
  !=============
- !
- write (*,*) BZ_RIM_tot_nkpts,BZ_RIM_nbands
-
+ l_RT_uses_E_RIM=BZ_RIM_tot_nkpts>0.and.BZ_RIM_nbands>=SC_bands(2)
+ call msg( 'r','[RT] Energy RIM support         :',l_RT_uses_E_RIM)
  !
  contains
    !

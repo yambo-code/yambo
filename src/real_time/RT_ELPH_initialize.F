@@ -62,7 +62,7 @@ subroutine RT_ELPH_initialize(k,q)
  endif
  !
  call parser('UseDebyeE'   , l_use_Debye_E)
- call parser('UpdateDebyeT', l_Debye_TBose_update)
+ call parser('UpdtDebyeT', l_Debye_TBose_update)
  !
  ! Q/K grid remapping
  !====================

@@ -21,21 +21,20 @@
 !
 subroutine TEMPERATURE_Debye(delta_E)
  !
- use pars,       ONLY:SP
+ use pars,       ONLY:SP,pi
  use units,      ONLY:HA2EV
  use D_lattice,  ONLY:n_atoms,Bose_Temp
  use com,        ONLY:error
+ use ELPH,       ONLY:W_debye
  !
  implicit none
  !
- real(SP), intent(in) :: delta_E
- !real(SP), intent(in) :: T_in
- !real(SP), intent(out):: T_out
+ real(SP), intent(in) :: delta_E              ! Delta_E is in Hartree
  ! 
  ! Paramenters
- integer,  parameter :: n_max=10000           ! Max steps
- real(SP), parameter :: T_step=1._SP          ! 1 K each T_step
- real(SP), parameter :: R_const=8.617E-5_SP   ! [eV/(K*atom)]
+ integer,  parameter :: n_max=20000           ! Max steps
+ real(SP), parameter :: T_step=0.05_SP        ! 0.05 K each T_step --> 1000 K range for C_v
+ real(SP), parameter :: R_const=8.617E-5_SP   ! [eV/(K*atom)], this is actually the Boltzmann constant
  !
  ! Functions
  real(SP) :: Cv_Debye(n_max)
@@ -48,7 +47,7 @@ subroutine TEMPERATURE_Debye(delta_E)
  real(SP) :: T_D, Ti
  real(SP) :: xi(n_max), x_max, x_step, x_Ti
  real(SP) :: m
- integer  :: i1,i2,i_max
+ integer  :: i1,i2,i_max,i_shift
  !
  ! pol_fit
  integer, parameter :: fit_dim=5
@@ -58,24 +57,32 @@ subroutine TEMPERATURE_Debye(delta_E)
  ! Initialization
  Cv_Debye=0._SP
  f_int=0._SP
- T_D=640._SP                   ! Silicon (K)
+ T_D=W_debye*HA2EV/R_const
+ !
+ !write(*,*) T_D,W_debye*HA2EV/R_const
  !
  ! Temperature in Kelvin here
  T_in=Bose_temp*HA2EV/R_const
  !
- x_max=T_D/T_in
+ if(T_in>=1._SP)  x_max=T_D/T_in
+ if(T_in< 1._SP)  x_max=T_D/1._SP
  x_step=x_max/real(n_max-2,SP)
- !write(*,*) '# T_in= ',T_in
- !write(*,*) '# T_D = ',T_D
- !write(*,*) '  '
  !
  ! f_int needed for the Debye function
+ !write(*,*) '  '
  !write(*,*) '#F(x) Debye'
  do i1=2,n_max
    xi(i1)=x_step*real(i1-1,SP)
-   f_int(i1)=f_int(i1-1)+xi(i1)**4._SP*exp(xi(i1))/(exp(xi(i1))-1)**2._SP*x_step
-   !write(*,*) xi(i1),f_int(i1),xi(i1)**3._SP/3._SP
  enddo
+ do i1=2,n_max
+   f_int(i1)=f_int(i1-1)+xi(i1)**4._SP*exp(xi(i1))/(exp(xi(i1))-1)**2._SP*x_step
+   if(f_int(i1)==f_int(i1-1)) exit
+ enddo
+ if(i1<n_max) f_int(i1+1:)=f_int(i1)
+ !
+ !do i1=1,n_max
+ !  write(*,*) xi(i1),f_int(i1) !,xi(i1)**3._SP/3._SP,4._SP*pi**4._SP/15._SP
+ !enddo
  !
  ! The Debye Cv function
  !write(*,*) '  '
@@ -83,29 +90,26 @@ subroutine TEMPERATURE_Debye(delta_E)
  i_max=n_max
  do i1=1,n_max-2
    Ti=T_in+real(i1-1,SP)*T_step
+   if(Ti==0._SP) cycle
    x_Ti=T_D/Ti
-   if(x_Ti<0.1) then
-     f_x_Ti=x_Ti**3._SP/3._SP
-   else
-     do i2=i_max,1,-1
-       if(xi(i2)<x_Ti) exit 
-     enddo 
-     i_max=i2
-     if(x_Ti<1.) then
-       X=xi(i2-(fit_dim-3):i2+2)
-       Y=f_int(i2-(fit_dim-3):i2+2)
-       coeff=0._SP
-       call pol_fit(fit_dim,X,Y,order,coeff,eps,0.d0)
-       f_x_Ti=coeff(1)+coeff(2)*x_Ti+coeff(3)*x_Ti**2._SP+coeff(4)*x_Ti**3._SP
-       !write(*,*) coeff
-     else
-       m=(f_int(i2+1)-f_int(i2))/x_step
-       f_x_Ti=f_int(i2)+m*(x_Ti-xi(i2))
-     endif     
-   endif
+   do i2=i_max,1,-1
+     if(xi(i2)<x_Ti) exit 
+   enddo 
+   i_max=i2
+   if(i2>(fit_dim-5)) i_shift=(fit_dim-5)
+   if(i2>(fit_dim-4)) i_shift=(fit_dim-4)
+   if(i2>(fit_dim-3)) i_shift=(fit_dim-3)
+   if(i2>(n_max-2))   i_shift=(fit_dim-2)
+   if(i2>(n_max-1))   i_shift=(fit_dim-1)
+   X=xi(i2-i_shift:i2-i_shift+4)
+   Y=f_int(i2-i_shift:i2-i_shift+4)
+   coeff=0._SP
+   call pol_fit(fit_dim,X,Y,order,coeff,eps,0.d0)
+   f_x_Ti=coeff(1)+coeff(2)*x_Ti+coeff(3)*x_Ti**2._SP+coeff(4)*x_Ti**3._SP
    Cv_Debye(i1)=9._SP*R_const*(Ti/T_D)**3._SP*f_x_Ti/HA2EV
-   if(Cv_Debye(i1)>3._SP*R_const/HA2EV) Cv_Debye(i1)=3._SP*R_const/HA2EV
-   !write(*,*) Ti,Cv_Debye(i1),3._SP*R_const/HA2EV
+   !write(*,*) Ti,Cv_Debye(i1) !, &
+   !&             9._SP*R_const*(Ti/T_D)**3._SP*(4._SP*pi**4._SP/15._SP)/HA2EV,&
+   !&             3._SP*R_const/HA2EV
  enddo
  !
  ! The integral to obtain T_out

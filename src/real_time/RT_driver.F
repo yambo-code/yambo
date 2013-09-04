@@ -304,6 +304,8 @@ subroutine RT_driver(E,X,k,q)
    !
    call RT_Observables(E,k,G_lesser(:,:,:,it_mem),on_the_fly_operators)
    !
+#if defined _ELPH
+   !
    ! Update Bose Temp and Phonons distribution
    !===========================================
    if (l_Debye_TBose_update) then
@@ -315,6 +317,8 @@ subroutine RT_driver(E,X,k,q)
        E_previous=E_now
      endif
    endif
+   !
+#endif
    !
    if(do_output) then
      call RT_output('dyn',real(on_the_fly_operators),TIME=NE_time/FS2AUT)

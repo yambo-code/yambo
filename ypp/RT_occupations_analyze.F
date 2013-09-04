@@ -78,13 +78,14 @@ subroutine RT_occupations_analyze(k,E)
  allocate(RT_occ_data(QP_n_states,RT_n_FIT))
  l_RT_Occ_FIT_vec=.FALSE.
  RT_occ_DATA=0._SP
+ RT_occ_Fit_time=0._SP
  if(l_RT_Occ_FIT) then
    i1=0
    if(RT_n_FIT==1) then
      i_T=n_T_steps
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
      l_RT_Occ_FIT_vec(i_T)=.TRUE.
-     RT_occ_Fit_time(1)=io_Time
+     if(io_Time>0._SP) RT_occ_Fit_time(1)=io_Time
    else
      n_skip_time=n_T_steps/(RT_n_FIT-1)
      do i_T=n_T_steps,1,-n_skip_time
@@ -93,7 +94,7 @@ subroutine RT_occupations_analyze(k,E)
        io_Time=0.
        if (i_T >1) io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
        l_RT_Occ_FIT_vec(i_T)=.TRUE.
-       RT_occ_Fit_time(RT_n_FIT-i1+1)=io_Time
+       if(io_Time>0._SP) RT_occ_Fit_time(RT_n_FIT-i1+1)=io_Time
      enddo
    endif
    i1=0

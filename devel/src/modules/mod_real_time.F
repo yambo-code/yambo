@@ -135,6 +135,10 @@ module real_time
  logical     :: l_RT_skip_OCC_IO
  logical     :: l_RT_skip_JandP_IO
  !
+ ! Relaxation and Dissipation 
+ !----------------------------
+ logical     :: l_RT_uses_E_RIM
+ !
  ! ELPH kernel...
  !----------------
  !

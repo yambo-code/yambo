@@ -27,7 +27,7 @@ subroutine RT_initialize(E,k,q)
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
- use electrons,      ONLY:nel,levels,BZ_RIM_nbands
+ use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
 &                         l_RT_diamagnetic,RT_IO_steps,RT_IO_time,l_NE_simulate_BSE,&
@@ -37,13 +37,12 @@ subroutine RT_initialize(E,k,q)
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,             &
 &                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,               &
-&                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps,Fluence
+&                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps,Fluence,l_RT_uses_E_RIM
  use collisions_IO,  ONLY:l_STORE_COLLISIONS
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp,nkibz
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
- use X_m,            ONLY:use_X_RIM
  use parser_m,       ONLY:parser
  implicit none
  !
@@ -210,16 +209,6 @@ subroutine RT_initialize(E,k,q)
    if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields or thermalization provided')
  endif
  !
- ! E_RIM
- ! ==============
- ! IP phase factores averaged  with E_RIM
- !
- use_X_RIM=BZ_RIM_nbands/=0.and.SC_bands(1)<BZ_RIM_nbands               
- if (RT_is_dumped.and.use_X_RIM) then
-   call warning('E_RIM and damping not compatible. Switching off E_RIM')
-   use_X_RIM=.false.
- endif
- !
 #if defined _ELPH
  !
  ! Electron-phonon
@@ -312,9 +301,14 @@ subroutine RT_initialize(E,k,q)
    call msg( 'r','[RT] Carriers El-ph scattering  :',l_ph_corr)
    call msg( 'r','[RT] Carriers El-El scattering  :',l_carrier_dynamics)
    if (l_G_retarded_DB) call msg( 'r','[RT] Retareded Green`s function :',Gr_kind)
-   call msg( 'r','[SC] Extended collisions        :',l_eval_collisions)
-   call msg( 'r','[SC]                       [I/O]:',l_STORE_COLLISIONS)
+   call msg( 'r','[RT] Extended collisions        :',l_eval_collisions)
+   if (l_eval_collisions) call msg( 'r','[RT]                       [I/O]:',l_STORE_COLLISIONS)
  endif
+ !
+ ! RIM support
+ !=============
+ l_RT_uses_E_RIM=BZ_RIM_tot_nkpts>0.and.BZ_RIM_nbands>=SC_bands(2)
+ call msg( 'r','[RT] Energy RIM support         :',l_RT_uses_E_RIM)
  !
  contains
    !

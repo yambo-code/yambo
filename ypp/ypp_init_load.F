@@ -246,6 +246,7 @@ subroutine ypp_init_load(defs)
  !BZ E RIM
  !
  call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
+ call it('f',defs,'SkipCheck' , 'Skip internal consistency check on k-point grids')
  !
  ! Wannier bands
  !

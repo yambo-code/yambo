@@ -21,12 +21,14 @@
 !
 subroutine RT_G_retarded_EP_initialize(E,k)
  !
+ use units
  use pars,           ONLY:rZERO,SP,IP4
  use R_lattice,      ONLY:nkibz,nqbz,bz_samp,qindx_S
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,BZ_RIM_tot_nkpts,BZ_RIM_nkpt,BZ_RIM_table
  use SC,             ONLY:SC_bands
  use LIVE_t,         ONLY:live_timing
- use real_time,      ONLY:B_mat_index,Gr_ep_matrix,l_G_retarded_DB,Gr,Gr_peak_pos,Gr_T_steps,Gr_T_step
+ use real_time,      ONLY:B_mat_index,Gr_ep_matrix,l_G_retarded_DB,Gr,Gr_peak_pos,&
+&                         Gr_T_steps,Gr_T_step,l_RT_uses_E_RIM
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_Xk_nibz,PAR_nQ,PAR_n_B_mat_elements,PAR_IND_Xk_ibz,&
 &                         PAR_Xk_ibz_index,PAR_IND_Q,PAR_B_mat_index,PAR_Q_index
@@ -40,7 +42,8 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  ! Work Space
  !
  real(SP):: GAMMA_,E_center
- integer :: ik,iqbz,i_n,i_np,ik_mem,i_b_mat_mem,iq_mem,ik_m_q,il,is,i_s,i_trans(2),kin_scatt(3)
+ integer :: ik,iqbz,i_n,i_np,ik_mem,i_b_mat_mem,iq_mem,ik_m_q,il,is,i_s,i_trans(2),kin_scatt(3),&
+&           ik_rim_1,ik_rim_2,i1,i2
  real(SP), allocatable :: Gr_integrand(:)
  real(SP),    external :: Laplace_transform
  real(SP):: TRANSITIONS_E((SC_bands(2)-SC_bands(1)+1)*nkibz)
@@ -128,14 +131,30 @@ subroutine RT_G_retarded_EP_initialize(E,k)
                !
              else
                !
-               E_center=E%E(i_n,ik,1)-E%E(i_np,ik_m_q,1)+is*abs(sqrt(ph_freqs_sq(iqbz,il)))
-               !
-               if (abs(E_center)>2.*E%E_ind_gap(1)) cycle
-               !
-               GAMMA_ = abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik_m_q,1))
-               !
-               Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=GAMMA_/(E_center**2+GAMMA_**2)
-               !
+               if (l_RT_uses_E_RIM) then
+                 Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=0._SP
+                 GAMMA_ = abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik_m_q,1))
+                 do i1=1,BZ_RIM_nkpt(ik)
+                   ik_rim_1=BZ_RIM_table(sum(k%nstar(:ik-1))+1,i1)
+                   do i2=1,BZ_RIM_nkpt(ik_m_q)
+                     ik_rim_2=BZ_RIM_table(sum(k%nstar(:ik_m_q-1))+1,i2)
+                     E_center=E%E_RIM(i_n,ik_rim_1,1)-E%E_RIM(i_np,ik_rim_2,1)+is*abs(sqrt(ph_freqs_sq(iqbz,il)))
+                     if (abs(E_center)>2.*E%E_ind_gap(1)) cycle
+                     Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=&
+&                       Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)+&
+&                       GAMMA_/(E_center**2+GAMMA_**2)/real(BZ_RIM_nkpt(ik))/real(BZ_RIM_nkpt(ik_m_q))
+                   enddo
+                 enddo
+               else
+                 E_center=E%E(i_n,ik,1)-E%E(i_np,ik_m_q,1)+is*abs(sqrt(ph_freqs_sq(iqbz,il)))
+                 !
+                 if (abs(E_center)>2.*E%E_ind_gap(1)) cycle
+                 !
+                 GAMMA_ = abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik_m_q,1))
+                 !
+                 Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=GAMMA_/(E_center**2+GAMMA_**2)
+                 !
+               endif
              endif
              !
            enddo

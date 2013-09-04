@@ -222,7 +222,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  ! If %E_RIM is associated I simply extend the %E occupations to %E_RIM
  !
- if (BZ_RIM_nbands>0) then
+ if (BZ_RIM_nbands>0.and.associated(E%E_RIM)) then
    ! 
    E%E_RIM(:,:,:)=E%E_RIM(:,:,:)-E%Efermi(1)
    do ik=1,BZ_RIM_tot_nkpts

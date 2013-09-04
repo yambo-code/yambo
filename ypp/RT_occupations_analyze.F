@@ -31,7 +31,8 @@ subroutine RT_occupations_analyze(k,E)
  use QP_m,           ONLY:QP_table,QP_n_states
  use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT,RT_n_FIT,l_RT_Occ_FIT,l_RT_occ_Plot
  use com,            ONLY:msg,of_open_close,warning,error
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,&
+&                         E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime
  use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions,SC_bands
  implicit none
@@ -154,14 +155,15 @@ subroutine RT_occupations_analyze(k,E)
        !========
        if (l_carrier_dynamics.and.l_ELPH_lifetimes) then
          titles(1:2)=(/'         ','         '/)
-         titles(3:5)=(/'|--------','--El-Ph--','--------|'/)
-         titles(6:7)=(/'|-----El-','El------|'/)
-         call msg('o '//trim(output_fname),'#',titles(:),INDENT=0,USE_TABS=.TRUE.)
+         titles(3:6)=(/'|--------','--El-Ph--','---------','--------|'/)
+         titles(7:8)=(/'|-----El-','El------|'/)
+         call msg('o '//trim(output_fname),'#',titles(:8),INDENT=0,USE_TABS=.TRUE.)
          titles(1)='T[fs]'
          titles(2)='Occ.'
-         titles(3:5)=(/'Hole[meV]','El. [meV]','Ph. [meV]'/)
-         titles(6:7)=(/'Hole[meV]','El. [meV]'/)
-         call msg('o '//trim(output_fname),'#',titles(:7),INDENT=0,USE_TABS=.TRUE.)
+         titles(3:4)=(/'Hole[meV]','El. [meV]'/)
+         titles(5:6)=(/'Habs[meV]','Eabs[meV]'/)
+         titles(7:8)=(/'Hole[meV]','El. [meV]'/)
+         call msg('o '//trim(output_fname),'#',titles(:8),INDENT=0,USE_TABS=.TRUE.)
        else if (l_carrier_dynamics.and..not.l_ELPH_lifetimes) then
          titles(1)='T[fs]'
          titles(2)='Occ.'
@@ -170,8 +172,9 @@ subroutine RT_occupations_analyze(k,E)
        else if (.not.l_carrier_dynamics.and.l_ELPH_lifetimes) then
          titles(1)='T[fs]'
          titles(2)='Occ.'
-         titles(3:5)=(/'Hole[meV]','El. [meV]','Ph. [meV]'/)
-         call msg('o '//trim(output_fname),'#',titles(:5),INDENT=0,USE_TABS=.TRUE.)
+         titles(3:4)=(/'Hole[meV]','El. [meV]'/)
+         titles(5:6)=(/'Habs[meV]','Eabs[meV]'/)
+         call msg('o '//trim(output_fname),'#',titles(:6),INDENT=0,USE_TABS=.TRUE.)
        else if (.not.l_carrier_dynamics.and..not.l_ELPH_lifetimes) then
          titles(1)='T[fs]'
          titles(2)='Occ.'
@@ -194,14 +197,15 @@ subroutine RT_occupations_analyze(k,E)
      !
      n1=1
      if (l_ELPH_lifetimes) then
-       n1=4
+       n1=5
        data_to_plot(3:4)=(/E_P_Hole_lifetime(ib,ik),E_P_Electron_lifetime(ib,ik)/)
-       data_to_plot(5)  =E_P_Phonon_lifetime(ib,ik)
+       data_to_plot(5)  =E_P_Ho_abs_lifetime(ib,ik)
+       data_to_plot(6)  =E_P_El_abs_lifetime(ib,ik)
        data_to_plot(3:)=data_to_plot(3:)*HA2EV*1000._SP
      endif
      if (l_carrier_dynamics) then
        n1=3
-       if(l_ELPH_lifetimes) n1=6
+       if (l_ELPH_lifetimes) n1=7
        data_to_plot(n1:n1+1)=(/E_E_Hole_lifetime(ib,ik),E_E_Electron_lifetime(ib,ik)/)*HA2EV*1000.
      endif
      call msg('o '//trim(output_fname),'',data_to_plot(:n1+1),INDENT=-2,USE_TABS=.true.)

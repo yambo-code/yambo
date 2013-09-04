@@ -19,12 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp)
+subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
  !  
  use pars,           ONLY:SP,cI,pi
  use electrons,      ONLY:levels,spin_occ,n_full_bands
  use SC,             ONLY:SC_bands,it_now
- use real_time,      ONLY:G_lesser,MEM_index,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
+ use real_time,      ONLY:G_lesser,MEM_index,E_P_Hole_lifetime,E_P_Electron_lifetime,&
+&                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         Gr_ep_matrix,B_mat_index,G_MEM_steps
  use ELPH,           ONLY:ph_freqs_sq,ph_modes
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
@@ -33,8 +34,9 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp)
  !
  type(levels),  intent(in)  :: E
  integer,       intent(in)  :: ik,ik_m_q,i_q,i_l
- real(SP),      intent(in)  :: Bose_f,f_k(SC_bands(2)-SC_bands(1)+1)
+ real(SP),      intent(in)  :: Bose_f(2),f_k(SC_bands(2)-SC_bands(1)+1)
  complex(SP),   intent(in)  :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+ logical :: l_skip_ABS
  !
  ! Work Space ...
  !
@@ -95,11 +97,17 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp)
      if (DELTA<1.E-10) P_ph_emit=Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,i_l)
      !
      E_P_Hole_lifetime(i_n_shift,ik)=E_P_Hole_lifetime(i_n_shift,ik)+&
-&                                    abs(Gkkp(i_np,i_n))**2*P_ph_abs*f_k_m_q
+&                                    abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_abs*Bose_f(2)
+     if (.not.l_skip_ABS) &
+&     E_P_Ho_abs_lifetime(i_n_shift,ik)=E_P_Ho_abs_lifetime(i_n_shift,ik)+&
+&                                      abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_emit*Bose_f(1)
+     !
      E_P_Electron_lifetime(i_n_shift,ik)=E_P_Electron_lifetime(i_n_shift,ik)+&
-&                                        abs(Gkkp(i_np,i_n))**2*P_ph_emit*(1.-f_k_m_q)
-     E_P_Phonon_lifetime(i_n_shift,ik)=E_P_Phonon_lifetime(i_n_shift,ik)+&
-&                 abs(Gkkp(i_np,i_n))**2*Bose_f*(f_k(i_n)-f_k_m_q)*(P_ph_abs+P_ph_emit)
+&                                        abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_emit*Bose_f(2)
+     !
+     if (.not.l_skip_ABS) &
+&     E_P_El_abs_lifetime(i_n_shift,ik)=E_P_El_abs_lifetime(i_n_shift,ik)+&
+&                                      abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_abs*Bose_f(1)
      !
    enddo
    !

@@ -21,14 +21,15 @@
 !
 integer function RT_occupations_check(E,k)
  !
+ use pars,           ONLY:SP
  use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use QP_m,           ONLY:OCC_ctl
  use com,            ONLY:msg
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,RT_IO_steps,l_RT_CCA_Kernel,&
-&                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime
+&                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Ho_abs_lifetime
  use SC,             ONLY:SC_bands,RT_occupations
  use IO_m,           ONLY:LOG,NONE
  use com,            ONLY:warning,error
@@ -56,7 +57,10 @@ integer function RT_occupations_check(E,k)
  if ((l_ph_corr.and.l_RT_CCA_Kernel).and..not.allocated(E_P_Hole_lifetime)) then
    allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),k%nibz))
    allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),k%nibz))
-   allocate(E_P_Phonon_lifetime(SC_bands(1):SC_bands(2),k%nibz))
+   allocate(E_P_El_abs_lifetime(SC_bands(1):SC_bands(2),k%nibz))
+   allocate(E_P_Ho_abs_lifetime(SC_bands(1):SC_bands(2),k%nibz))
+   E_P_El_abs_lifetime=0._SP ! This is read only after rev. 2694
+   E_P_Ho_abs_lifetime=0._SP 
  endif
  !
  if (l_carrier_dynamics.and..not.allocated(E_E_Hole_lifetime)) then

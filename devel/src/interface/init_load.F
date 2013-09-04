@@ -322,7 +322,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'RTpumpNel',  '[RT] Number of electrons pumbed by hand per unit cell',Eh_pumped_Nel,&
 &                            Verb_level=V_real_time)
  call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes')
- call it('f',defs,'UpdateDebyeT','[RT] Update Bose Temp assuming phonons are always at equilibrium')
+ call it('f',defs,'UpdtDebyeT','[RT] Update Bose Temp assuming phonons are always at equilibrium')
  call it('f',defs,'RT_T_evol',   '[RT] Use a complete Time evolution instead of the CCA')
  !
  ! I/O

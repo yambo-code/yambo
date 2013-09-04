@@ -34,7 +34,7 @@ subroutine RT_occupations_FIT(k,E,RT_occ_DATA,time)
  use vec_operate,    ONLY:sort
  use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative,Fermi_fnc_T_derivative
  use com,            ONLY:msg,of_open_close,error
- use stderr,         ONLY:intc
+ use stderr,         ONLY:intc,real2ch
  !
  implicit none
  !
@@ -64,6 +64,7 @@ subroutine RT_occupations_FIT(k,E,RT_occ_DATA,time)
  real(SP) :: E_sorted(QP_n_states)
  !
  character(lchlen) ::output_fname
+ character(10)     ::titles(RT_n_FIT+1),data_ch(RT_n_FIT+1,4,2)
  !
  if(n_spin>1) call error('Occupations FIT not implemented for n_spin>1')
  !
@@ -196,6 +197,27 @@ subroutine RT_occupations_FIT(k,E,RT_occ_DATA,time)
    call msg('s',":: Fitting Temperatures found "//trim(intc(nfound(1)))//"/"//trim(intc(RT_n_FIT)))
  endif
  !
+ titles(1)='   [eV]   '
+ data_ch(1,1,:)=' t    [fs]'
+ if(l_two_temperatures) then
+   data_ch(1,2,1)=' T(h) [K]'
+   data_ch(1,2,2)=' T(e) [K]'
+ else
+   data_ch(1,2,:)=' T    [K]'
+ endif
+ data_ch(1,3,:)=' Ef   [eV]'
+ data_ch(1,4,:)=' error'
+ !
+ do i1=1,RT_n_FIT
+   titles(i1+1)=' f@'//trim(real2ch( time(i1)/FS2AUT ))
+   data_ch(i1+1,1,:)= trim(real2ch( time(i1)/FS2AUT ))
+   do ifit=1,nfit
+     data_ch(i1+1,2,ifit)=   trim(real2ch( T_fit(i1,ifit)*HA2KEL ))
+     data_ch(i1+1,3,ifit)=   trim(real2ch( Ef_fit(i1,ifit)*HA2EV ))
+     data_ch(i1+1,4,ifit)=   trim(real2ch( Avg_error(i1,ifit) ))
+   enddo
+ enddo
+ !
  do i2=1,RT_n_FIT,nmax_file_report
    n1=i2
    n2=min(RT_n_FIT,i2+15)
@@ -210,6 +232,10 @@ subroutine RT_occupations_FIT(k,E,RT_occ_DATA,time)
      call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
    enddo
    !
+   call msg('o '//trim(output_fname),'#')
+   call msg('o '//trim(output_fname),'# Occupations distribution at different times (f@ time)')
+   call msg('o '//trim(output_fname),'#')
+   call msg('o '//trim(output_fname),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
    call msg('o '//trim(output_fname),'#')
    !
    do i_s=1,QP_n_states
@@ -243,11 +269,17 @@ subroutine RT_occupations_FIT(k,E,RT_occ_DATA,time)
        call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
      enddo
      !
-     call msg('o '//trim(output_fname),'# Result of the FIT: time (fs), T_fit [K], Ef_fit [eV], Avg_error')
-     call msg('o '//trim(output_fname),'#',(/0._SP, time(n1:n2)/FS2AUT /),INDENT=-2,USE_TABS=.true.)
-     call msg('o '//trim(output_fname),'#',(/0._SP, T_fit(n1:n2,ifit)*HA2KEL/),INDENT=-2,USE_TABS=.true.)
-     call msg('o '//trim(output_fname),'#',(/0._SP, Ef_fit(n1:n2,ifit)*HA2EV/),INDENT=-2,USE_TABS=.true.)
-     call msg('o '//trim(output_fname),'#',(/0._SP, Avg_error(n1:n2,ifit)/)   ,INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname),'#')
+     call msg('o '//trim(output_fname),'# Results of the FIT')
+     do i1=1,4
+       call msg('o '//trim(output_fname),'#',(/data_ch(1,i1,ifit),data_ch(n1+1:n2+1,i1,ifit)/),&
+&                                                                          INDENT=-2,USE_TABS=.true.)
+     enddo
+     !     
+     call msg('o '//trim(output_fname),'#')
+     call msg('o '//trim(output_fname),'# Fit functions at different time (f@ time)')
+     call msg('o '//trim(output_fname),'#')
+     call msg('o '//trim(output_fname),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
      call msg('o '//trim(output_fname),'#')
      !
      do i1=1,fit_dim

@@ -65,13 +65,12 @@ module it_m
  integer, parameter :: nvars=(maxi1vars+2*maxi2vars+2*maxi3vars+&
 &                             maxr1vars+2*maxr2vars+2*maxr3vars+4*maxr4vars+&
 &                             maxc1vars+maxchvars)
- integer :: nrnlvls,nflags,nflines,ni1v,ni2v,ni3v,nr1v,nr2v,nr3v,&
+ integer :: nrnlvls,nflags,ni1v,ni2v,ni3v,nr1v,nr2v,nr3v,&
 &           nr4v,nc1v,nchv,ns,infile_verbosity,initmode
  character(schlen) :: rnlvls(maxrnlvls,2)
  integer ::      rstatus(maxrnlvls) 
  character(schlen) :: flags(maxflags,2)
  integer ::      fstatus(maxflags)
- character(lchlen) :: flines(nvars+maxflags+maxrnlvls)
  character(schlen) :: i1vars(maxi1vars,3)
  integer ::           i1st(maxi1vars)
  character(schlen) :: i2vars(maxi2vars,3)
@@ -91,6 +90,13 @@ module it_m
  character(schlen) :: chvars(maxchvars,2)
  integer ::           chst(maxchvars)
  integer :: nifpos
+ !
+ ! Input file
+ !============
+ integer :: nflines
+ integer :: nQP_flines=0
+ character(lchlen) :: flines(nvars+maxflags+maxrnlvls)
+ character(lchlen) :: QP_flines(10)
  !
  ! To handle the variables verbosity I need to create a copy
  ! of the standard variable defs and an array with the verbosity 
@@ -936,12 +942,14 @@ module it_m
        if (ou==11) write (ou,'(2a)') ' .-Input file : ',trim(infile)
      endif
      if (ou/=11.and.ou/=12) write (ou,'(a/2a)') '#','# .-Input file : ',trim(infile)
-     do i1=1,nflines
+     do i1=1,nflines+nQP_flines
+       if (i1<=nflines) ch(1)=flines(i1)
+       if (i1> nflines) ch(1)=QP_flines(i1-nflines)
        if (master_cpu) then
-         if (ou==12) write (ou,'(a)') trim(flines(i1))
-         if (ou==11) write (ou,'(2a)') ' | ',trim(flines(i1))
+         if (ou==12) write (ou,'(a)') trim(ch(1))
+         if (ou==11) write (ou,'(2a)') ' | ',trim(ch(1))
        endif
-       if (ou/=11.and.ou/=12) write (ou,'(2a)') '# | ',trim(flines(i1))
+       if (ou/=11.and.ou/=12) write (ou,'(2a)') '# | ',trim(ch(1))
       enddo
      !
      if (ou==11) close(11)

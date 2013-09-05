@@ -41,7 +41,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
  ! Work Space ...
  !
  integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem
- real(SP) :: DELTA,f_k_m_q,P_ph_abs,P_ph_emit,ph_freq
+ real(SP) :: f_k_m_q,P_ph_abs,P_ph_emit,ph_freq
  !
  ! Dimensions
  !============
@@ -67,7 +67,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
      ! 16/3/2012
      !
      ! Including "by hand" the limits on the signs of DELTA I managed to get
-     ! (finally) a converged el-ph dynamics.
+     ! (finally) a converged el-ph dynamics (On 5/9/2013 moved in G_ret initialize).
      !
      ! Updated on 29/3/2012 with more tailored constrains. Valid only in systems
      ! with a gap.
@@ -86,15 +86,8 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
      !
      f_k_m_q=-cI*G_lesser(i_np+SC_bands(1)-1,i_np+SC_bands(1)-1,ik_m_q,MEM_index(it_now,G_MEM_steps))/spin_occ
      !
-     DELTA  = E%E(i_np+SC_bands(1)-1,ik_m_q,1)-E%E(i_n+SC_bands(1)-1,ik,1)
-     !
-     P_ph_abs =0.
-     P_ph_emit=0.
-     !
-     if (abs(DELTA)<1.E-10) cycle
-     !
-     if (DELTA>1.E-10) P_ph_abs =Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,i_l+ph_modes)
-     if (DELTA<1.E-10) P_ph_emit=Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,i_l)
+     P_ph_abs =Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,i_l+ph_modes)
+     P_ph_emit=Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,i_l)
      !
      E_P_Hole_lifetime(i_n_shift,ik)=E_P_Hole_lifetime(i_n_shift,ik)+&
 &                                    abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_abs*Bose_f(2)

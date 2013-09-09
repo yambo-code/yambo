@@ -32,7 +32,7 @@ subroutine k_random(Xk,Xen)
  use YPP,                 ONLY:BZ_RIM_nkpts,BZ_RIM_path,gamma_radius,K_transform
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
-&                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling,&
+&                              BZ_RIM_tot_nkpts,BZ_RIM_max_filling,&
 &                              BZ_RIM_ipol_weight,n_sp_pol
  use timing,              ONLY:live_timing
  use IO_m,                ONLY:io_control,NONE,OP_WR_CL
@@ -249,7 +249,7 @@ subroutine k_random(Xk,Xen)
  !
  !  At the end I add to the Xen%E_RIM array the Xen%E energies
  !
- allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
+ allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
  Xen%E_RIM(:,:RIM_k%nibz,:)=RIM_E%E(:,:,:)
  !
  if (add_X_grid) then

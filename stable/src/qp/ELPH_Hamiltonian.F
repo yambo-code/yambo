@@ -287,7 +287,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
          ok_ibz =k%sstar(ok_bz,1)
          ok_s   =k%sstar(ok_bz,2)
          if (iq_bz==0) call msg('o Ham','#',(/real(ibp,SP),rZERO,rZERO,rZERO,residual/),INDENT=0,USE_TABS=.true.)
-         if (iq_bz> 0) call msg('o Ham','#',(/real(ibp,SP),real(iq_ibz,SP),real(ok_ibz,SP),real(il,SP),residual/),INDENT=0,USE_TABS=.true.)
+         if (iq_bz> 0) call msg('o Ham','#',(/real(ibp,SP),real(iq_ibz,SP),real(ok_ibz,SP), &
+&                                             real(il,SP),residual/),INDENT=0,USE_TABS=.true.)
        endif
      enddo
      call msg('o Ham','#')

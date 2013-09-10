@@ -23,10 +23,11 @@ subroutine k_random(Xk,Xen)
  !
  use pars,                ONLY:SP,DP,lchlen,schlen
  use units,               ONLY:HA2EV
+ use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
  use stderr,              ONLY:set_real_printed_length,intc
  use R_lattice,           ONLY:bz_samp,nkibz,k_the_nearest
  use parser_m,            ONLY:parser
- use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop
+ use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg,of_open_close,error
  use vec_operate,         ONLY:rlu_v_norm,v_norm,c2a,k2bz
  use YPP,                 ONLY:BZ_RIM_nkpts,BZ_RIM_path,gamma_radius,K_transform
@@ -61,7 +62,9 @@ subroutine k_random(Xk,Xen)
  !
  type(levels)      :: RIM_E
  type(bz_samp)     :: RIM_k
- integer           :: ID,i_err,nsym_save,nsym_RIM_DB
+ integer           :: ID
+ integer           :: i_err,nsym_save,nsym_RIM_DB
+ integer           :: i_time_rev_save,i_time_rev_DB
  integer, external :: ioDB1_selective_scan,ioE_RIM
  real(SP)          :: dl_sop_save(3,3,48)
  !
@@ -71,6 +74,7 @@ subroutine k_random(Xk,Xen)
  alat_save=alat
  nsym_save=nsym
  dl_sop_save(:,:,:nsym)=dl_sop
+ i_time_rev_save=i_time_rev
  !
  ! DB1 reloading
  !
@@ -78,11 +82,20 @@ subroutine k_random(Xk,Xen)
  !
  if (i_err/=0) call error('RIM database not found')
  !
+ ! Now that I have the finer grid of Kpts I redefine the zeros for the kpts
+ !
+ if(.not.trim(BZ_RIM_path)==".") then
+   call define_zeros(vector_=RIM_k%pt, zero_=k_iku_zero)
+   call define_zeros(vector_=RIM_k%pt, zero_=k_rlu_zero,RLU=.TRUE.)
+ endif
+ !
  ! Symmetry restoring
  !
  deallocate(dl_sop)
  nsym_RIM_DB=nsym
  nsym       =nsym_save
+ i_time_rev_DB=i_time_rev
+ i_time_rev   =i_time_rev_save
  allocate(dl_sop(3,3,nsym))
  dl_sop=dl_sop_SAVE(:,:,:nsym)
  !
@@ -191,6 +204,10 @@ subroutine k_random(Xk,Xen)
  call msg('s','::                 [used]:',BZ_RIM_nkpts)
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmetries            :',nsym_RIM_DB)
+ if(i_time_rev_DB==1)&
+&   call msg('s',':: Time reversal included ')
+ if(i_time_rev_DB==0)&
+&   call msg('s',':: Time reversal not included')
  if (Xen%nbf==Xen%nbm) then
    call msg('s',':: Gap indirect      [ev]:',gap(1)*HA2EV)
    call msg('s','::     direct        [ev]:',gap(2)*HA2EV)
@@ -212,7 +229,7 @@ subroutine k_random(Xk,Xen)
  !
  BZ_RIM_nbands=RIM_E%nb
  BZ_RIM_tot_nkpts=RIM_k%nibz
- if (add_X_grid) BZ_RIM_tot_nkpts=BZ_RIM_tot_nkpts+Xk%nbz
+ if (add_X_grid) BZ_RIM_tot_nkpts=BZ_RIM_tot_nkpts+Xk%nibz
  !
  allocate(BZ_RIM_nkpt(Xk%nbz))
  BZ_RIM_nkpt=0
@@ -254,9 +271,9 @@ subroutine k_random(Xk,Xen)
  !
  if (add_X_grid) then
    forall(i1=1:Xk%nbz) BZ_RIM_nkpt(i1)=BZ_RIM_nkpt(i1)+1
-   forall(i1=1:Xk%nbz) BZ_RIM_table(i1,BZ_RIM_nkpt(i1))=RIM_k%nibz+i1
-   do i1=1,Xk%nbz
-     Xen%E_RIM(:,RIM_k%nibz+i1,:)=Xen%E(:BZ_RIM_nbands,Xk%sstar(i1,1),:)+Xen%Efermi(1)
+   forall(i1=1:Xk%nbz) BZ_RIM_table(i1,BZ_RIM_nkpt(i1))=RIM_k%nibz+Xk%sstar(i1,1)
+   do i1=1,Xk%nibz
+     Xen%E_RIM(:,RIM_k%nibz+i1,:)=Xen%E(:BZ_RIM_nbands,i1,:)+Xen%Efermi(1)
    enddo
  endif
  !

@@ -32,8 +32,8 @@ subroutine k_random(Xk,Xen)
  use YPP,                 ONLY:BZ_RIM_nkpts,RIM_DB1_paths,gamma_radius,K_transform,MAX_RIM_DBs,n_RIM_DBs
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
-&                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling,&
-&                              BZ_RIM_ipol_weight,n_sp_pol,E_reset
+&                              BZ_RIM_tot_nkpts,n_sp_pol,BZ_RIM_max_filling,&
+&                              BZ_RIM_ipol_weight,E_reset
  use LIVE_t,              ONLY:live_timing
  use IO_m,                ONLY:io_control,NONE,OP_WR_CL
  !
@@ -312,15 +312,17 @@ subroutine k_random(Xk,Xen)
  !
  !  At the end I add to the Xen%E_RIM array the Xen%E energies
  !
- allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
+ allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
  Xen%E_RIM(:,:RIM_k(i_db_ref)%nibz,:)=RIM_E(i_db_ref)%E(:,:,:)
  !
  if (l_add_X_grid) then
+   i2=0
    do i1=1,Xk%nbz
      if (i1==ik_ref(1)) cycle
      BZ_RIM_nkpt(i1)=BZ_RIM_nkpt(i1)+1
      BZ_RIM_table(i1,BZ_RIM_nkpt(i1))=RIM_k(i_db_ref)%nibz+i1
-     Xen%E_RIM(:,RIM_k(i_db_ref)%nibz+i1,:)=Xen%E(:BZ_RIM_nbands,Xk%sstar(i1,1),:)
+     i2=i2+1 
+     Xen%E_RIM(:,RIM_k(i_db_ref)%nibz+i2,:)=Xen%E(:BZ_RIM_nbands,Xk%sstar(i1,1),:)
    enddo
  endif
  !

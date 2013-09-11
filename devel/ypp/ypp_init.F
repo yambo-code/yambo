@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ypp_init(instr,lnstr,FINALIZE)
+subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  use YPP
  use pars,           ONLY:pi
@@ -32,9 +32,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
- use electrons,      ONLY:n_spin,n_bands,n_spinor
+ use electrons,      ONLY:n_spin,n_bands,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:what_is_running
+ use QP_m,           ONLY:QP_state
 #if defined _YPP_SC
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nb
@@ -54,6 +55,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use R_lattice,      ONLY:nkibz
 #endif
  implicit none
+ type(levels)     ::E
  integer          ::lnstr
  character(lnstr) ::instr
  logical          ::FINALIZE
@@ -636,6 +638,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
  !
 #endif
+ !
+ call QP_state_table_setup(E)
  !
  if (infile_editing) then
    open(unit=12,file=trim(infile))

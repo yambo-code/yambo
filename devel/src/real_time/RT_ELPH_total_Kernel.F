@@ -46,6 +46,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_nibz,PAR_Xk_ibz_index
+ use parser_m,       ONLY:parser
  !
  implicit none
  !
@@ -64,6 +65,8 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  complex(SP)           :: S_mat_eq(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: S_mat_sum(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  !
+ logical :: l_skip_ABS
+ !
  ! ... band index ...
  integer               :: i_n,i_np,i_m,B_dim,i_np_m,i_n_m
  ! ... BZ index ...
@@ -72,6 +75,8 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  B_dim=SC_bands(2)-SC_bands(1)+1
  !
  ik_mem=PAR_Xk_ibz_index(ik)
+ !
+ call parser('NOABS',l_skip_ABS)
  !
  i_map(-1)=1
  i_map( 0)=1
@@ -121,7 +126,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
        ! Complete Collision Approximation (CCA)
        !=======================================
        !
-       call RT_ELPH_CCA_Kernel(ik,ik_m_q,iqbz,il,f_k,N_q(1),E,Gkkp)
+       call RT_ELPH_CCA_Kernel(ik,ik_m_q,iqbz,il,f_k,N_q,E,Gkkp,l_skip_ABS)
        !
      else
        !

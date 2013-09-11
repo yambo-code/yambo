@@ -22,8 +22,9 @@
 subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
  ! 
  use pars,           ONLY:SP,cI
- use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes
+ use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes,&
+&                         E_P_Ho_abs_lifetime
  use QP_m,           ONLY:QP_nk
  use SC,             ONLY:SC_bands
  use R_lattice,      ONLY:bz_samp
@@ -37,13 +38,12 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
  ! Work space
  !
  integer            :: ib,ik
- real(SP)           :: n_h_states,n_e_states,n_p_states
+ real(SP)           :: n_h_states,n_e_states
  real(SP)           :: f_occ
  real(SP),parameter :: f_tresh=1.E-5
  !
  n_h_states=0._SP
  n_e_states=0._SP
- n_p_states=0._SP
  !
  RT_mean_lifetimes=0._SP
  !
@@ -53,18 +53,14 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
      !
      f_occ=-cI*G_lesser(ib,ib,ik)
      !
-     if (allocated(E_P_Hole_lifetime)) then
-       n_p_states=n_p_states+k%weights(ik)
-       RT_mean_lifetimes(3)=RT_mean_lifetimes(3)+E_P_Phonon_lifetime(ib,ik)*k%weights(ik)
-     endif
-     !
      if (abs(f_occ)>f_tresh) then
        n_e_states=n_e_states+k%weights(ik)
        if (allocated(E_P_Hole_lifetime)) then
          RT_mean_lifetimes(2)=RT_mean_lifetimes(2)+E_P_Electron_lifetime(ib,ik)*k%weights(ik)
+         RT_mean_lifetimes(4)=RT_mean_lifetimes(4)+E_P_El_abs_lifetime(ib,ik)*k%weights(ik)
        endif
        if (allocated(E_E_Hole_lifetime)) then
-         RT_mean_lifetimes(5)=RT_mean_lifetimes(5)+E_E_Electron_lifetime(ib,ik)*k%weights(ik)
+         RT_mean_lifetimes(6)=RT_mean_lifetimes(6)+E_E_Electron_lifetime(ib,ik)*k%weights(ik)
        endif
      endif
      !
@@ -72,9 +68,10 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
        n_h_states=n_h_states+k%weights(ik)
        if (allocated(E_P_Hole_lifetime)) then
          RT_mean_lifetimes(1)=RT_mean_lifetimes(1)+E_P_Hole_lifetime(ib,ik)*k%weights(ik)
+         RT_mean_lifetimes(3)=RT_mean_lifetimes(3)+E_P_Ho_abs_lifetime(ib,ik)*k%weights(ik)
        endif
        if (allocated(E_E_Hole_lifetime)) then
-         RT_mean_lifetimes(4)=RT_mean_lifetimes(4)+E_E_Hole_lifetime(ib,ik)*k%weights(ik)
+         RT_mean_lifetimes(5)=RT_mean_lifetimes(5)+E_E_Hole_lifetime(ib,ik)*k%weights(ik)
        endif
      endif
      !
@@ -82,10 +79,15 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
    !
  enddo
  !
- if (n_p_states>0._SP) RT_mean_lifetimes(3)=RT_mean_lifetimes(3)/n_p_states
- if (n_e_states>0._SP) RT_mean_lifetimes(2)=RT_mean_lifetimes(2)/n_e_states
- if (n_e_states>0._SP) RT_mean_lifetimes(5)=RT_mean_lifetimes(5)/n_e_states
- if (n_h_states>0._SP) RT_mean_lifetimes(1)=RT_mean_lifetimes(1)/n_h_states
- if (n_h_states>0._SP) RT_mean_lifetimes(4)=RT_mean_lifetimes(4)/n_h_states
+ if (n_e_states>0._SP) then
+   RT_mean_lifetimes(2)=RT_mean_lifetimes(2)/n_e_states
+   RT_mean_lifetimes(4)=RT_mean_lifetimes(4)/n_e_states
+   RT_mean_lifetimes(6)=RT_mean_lifetimes(6)/n_e_states
+ endif
+ if (n_h_states>0._SP) then
+   RT_mean_lifetimes(1)=RT_mean_lifetimes(1)/n_h_states
+   RT_mean_lifetimes(3)=RT_mean_lifetimes(3)/n_h_states
+   RT_mean_lifetimes(5)=RT_mean_lifetimes(5)/n_h_states
+ endif
  !
 end subroutine RT_mean_carrier_lifetimes

@@ -258,8 +258,8 @@ subroutine RT_occupations_FIT(k,E,RT_occ_DATA,time)
    do ifit=1,nfit
      !
      output_fname='YPP-RT_occupation_distribution_FIT'
-     if(l_two_temperatures.and.ifit==1) output_fname=trim(output_fname)//'h'
-     if(l_two_temperatures.and.ifit==2) output_fname=trim(output_fname)//'e'
+     if(l_two_temperatures.and.ifit==1) output_fname=trim(output_fname)//'_hole'
+     if(l_two_temperatures.and.ifit==2) output_fname=trim(output_fname)//'_electrons'
      if(RT_n_FIT>nmax_file_report) &
 &      output_fname=trim(output_fname)//'_grp'//trim(intc(i2/nmax_file_report+1))
      !

@@ -25,8 +25,7 @@ subroutine QP_init(use_for_QP,Energy_range)
  !
  use QP_m,      ONLY: QP_nk,QP_nb,QP_state
  use drivers,   ONLY: infile_editing
- use it_m,      ONLY: nflines,flines,infile
- use parser_m,  ONLY: parser
+ use it_m,      ONLY: nflines,flines,infile,QP_flines,nQP_flines
  implicit none
  !
  logical :: use_for_QP,Energy_range
@@ -34,16 +33,8 @@ subroutine QP_init(use_for_QP,Energy_range)
  ! Work Space
  !
  integer :: i1,state(4),nflines_save
- logical :: l_lines_in_input(2)
  character(7) :: comment
  integer, external :: QP_state_extract
- !
- call parser('QPkrange',l_lines_in_input(1))
- call parser('QPerange',l_lines_in_input(2))
- !
- !If there are already the QP lines or there's not the input file todo return
- !
- if (any(l_lines_in_input).and..not.infile_editing) return 
  !
  comment= ''
  if (use_for_QP) comment="[GW] QP"
@@ -73,12 +64,16 @@ subroutine QP_init(use_for_QP,Energy_range)
    nflines=nflines+3
  endif
  !
- ! Write to input file
+ ! Write (eventually) to input file
  !
- open(unit=12,file=trim(infile),position='append')
+ QP_flines=" "
+ !
+ if (infile_editing) open(unit=12,file=trim(infile),position='append')
  do i1=nflines_save+1,nflines
-   write (12,'(a)') trim(flines(i1))
+   nQP_flines=nQP_flines+1
+   QP_flines(nQP_flines)=flines(i1)
+   if (infile_editing) write (12,'(a)') trim(flines(i1))
  enddo 
- close(12)
+ if (infile_editing) close(12)
  !
 end subroutine

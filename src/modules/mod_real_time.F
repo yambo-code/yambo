@@ -164,7 +164,8 @@ module real_time
  !-----------------------------------------
  real(SP),    allocatable :: E_P_Hole_lifetime(:,:)
  real(SP),    allocatable :: E_P_Electron_lifetime(:,:)
- real(SP),    allocatable :: E_P_Phonon_lifetime(:,:)
+ real(SP),    allocatable :: E_P_El_abs_lifetime(:,:)
+ real(SP),    allocatable :: E_P_Ho_abs_lifetime(:,:)
  !
  ! Coulomb RD life-times
  !-----------------------
@@ -177,7 +178,7 @@ module real_time
  !
  ! ... ouput max/min lifetimes
  !-----------------------------
- real(SP)                 :: RT_mean_lifetimes(5)
+ real(SP)                 :: RT_mean_lifetimes(6)
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
@@ -364,16 +365,18 @@ module real_time
      if (l_RT_CCA_Kernel.and.l_ph_corr) then
        allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),QP_nk))
        allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),QP_nk))
-       allocate(E_P_Phonon_lifetime(SC_bands(1):SC_bands(2),QP_nk))
-       call mem_est("RT_E_P_lifetimes",(/3*size(E_P_Hole_lifetime)/),(/SP/))
+       allocate(E_P_El_abs_lifetime(SC_bands(1):SC_bands(2),QP_nk))
+       allocate(E_P_Ho_abs_lifetime(SC_bands(1):SC_bands(2),QP_nk))
+       call mem_est("RT_E_P_lifetimes",(/4*size(E_P_Hole_lifetime)/),(/SP/))
        E_P_Hole_lifetime=0._SP
        E_P_Electron_lifetime=0._SP
-       E_P_Phonon_lifetime=0._SP
+       E_P_El_abs_lifetime=0._SP
+       E_P_Ho_abs_lifetime=0._SP
      endif
      !
      if (RT_dynamics_jumps>0) then
        if (l_carrier_dynamics.or.l_RT_CCA_Kernel.or.l_ph_corr) then
-         allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),QP_nk,5,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p p
+         allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),QP_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
          call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
        endif
      endif
@@ -473,7 +476,7 @@ module real_time
      endif
      !
      if(allocated(E_P_Hole_lifetime)) then
-       deallocate(E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Phonon_lifetime)
+       deallocate(E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime)
        call mem_est("RT_E_P_lifetimes")
      endif
      !

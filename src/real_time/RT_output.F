@@ -135,9 +135,10 @@ subroutine RT_output(what,VALUEs,TIME,E)
  if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'mean_lifetimes'
  short_file_name(next_file)=trim(append_ch)//'mean_lifetimes'
- n_headings(next_file)=6
- headings(next_file,2:4)=(/"e-p Hole [meV]","e-p Elec [meV]","e-p Ph   [meV]"/)
- headings(next_file,5:6)=(/"e-e Hole [meV]","e-e Elec [meV]"/)
+ n_headings(next_file)=7
+ headings(next_file,2:3)=(/"e-p Hole  [meV]","e-p Elec  [meV]"/)
+ headings(next_file,4:5)=(/"e-p H abs [meV]","e-p E abs [meV]"/)
+ headings(next_file,6:7)=(/"e-e Hole  [meV]","e-e Elec  [meV]"/)
  next_file=next_file+1
  !
  headings(1:next_file-1,1)="Time[fs]"

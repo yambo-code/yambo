@@ -26,6 +26,7 @@ integer function variables_SC(ID,local_description,what)
  use units,          ONLY:AU2Tesla,DEG2RAD,FS2AUT,AU2KWCMm2,HA2EV
  use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
+ use electrons,      ONLY:BZ_RIM_tot_nkpts
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,l_sc_diagonal,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,SC_up_W_iters,&
@@ -37,7 +38,7 @@ integer function variables_SC(ID,local_description,what)
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_IO_time,                  &
 &                         RT_IO_steps,l_RT_induced_field,l_NE_simulate_BSE,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,RT_IO_steps_DB,N_Gr_descs,Gr_description,l_G_retarded_DB,&
-&                         RT_dynamics_jumps,Life_MEM_steps
+&                         RT_dynamics_jumps,Life_MEM_steps,l_RT_uses_E_RIM
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
@@ -395,7 +396,6 @@ integer function variables_SC(ID,local_description,what)
    ! G retarded variables
    !======================
    if (ver_is_gt_or_eq(ID,revision=2450)) then
-     call io_elemental(ID,VAR="G_ret_DB",VAR_SZ=2,MENU=0) 
      call io_elemental(ID,L0=l_G_retarded_DB,CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,I0=N_Gr_descs,CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -405,6 +405,20 @@ integer function variables_SC(ID,local_description,what)
        call io_elemental(ID,CH0=Gr_description(i1),VAR='',CHECK=.true.,OP=(/"=="/))
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      enddo
+   endif
+   !
+   ! RIM
+   !======================
+   if (ver_is_gt_or_eq(ID,revision=2697)) then
+     call io_elemental(ID,VAR="RIM_support",VAR_SZ=2,MENU=0) 
+     i_desc=i_desc+1
+     call io_elemental(ID,L0=l_RT_uses_E_RIM,&
+&      VAR=' [RIM] Random Energies support   :',  CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
+     i_desc=i_desc+1
+     call io_elemental(ID,I0=BZ_RIM_tot_nkpts,&
+&      VAR=' [RIM] Random k-point            :',  CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
    endif
    !
    if (l_NE_with_fields_disk) then

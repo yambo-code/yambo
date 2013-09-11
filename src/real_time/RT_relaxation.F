@@ -35,10 +35,10 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use QP_m,           ONLY:QP_nk
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
-&                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_Phonon_lifetime,&
+&                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,MEM_index,&
 &                         G_lesser,G_MEM_steps,RT_dynamics_jumps,it_start,&
-&                         Life_MEM_steps,SAVED_lifetime
+&                         Life_MEM_steps,SAVED_lifetime,E_P_Ho_abs_lifetime
  !
  implicit none
  !
@@ -111,7 +111,8 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    if (l_RT_CCA_Kernel.and.l_ph_corr) then
      E_P_Hole_lifetime=0._SP
      E_P_Electron_lifetime=0._SP
-     E_P_Phonon_lifetime=0._SP
+     E_P_El_abs_lifetime=0._SP
+     E_P_Ho_abs_lifetime=0._SP
    endif
    !
    do ik=1,QP_nk
@@ -146,11 +147,13 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
        if (l_RT_CCA_Kernel.and.l_ph_corr) then
          call PP_redux_wait(E_P_Electron_lifetime(:,ik))
          call PP_redux_wait(E_P_Hole_lifetime(:,ik))
-         call PP_redux_wait(E_P_Phonon_lifetime(:,ik))
+         call PP_redux_wait(E_P_El_abs_lifetime(:,ik))
+         call PP_redux_wait(E_P_Ho_abs_lifetime(:,ik))
          if (l_save) then
            SAVED_lifetime(:,ik,3, it_relative)=E_P_Hole_lifetime(:,ik)
            SAVED_lifetime(:,ik,4, it_relative)=E_P_Electron_lifetime(:,ik)
-           SAVED_lifetime(:,ik,5, it_relative)=E_P_Phonon_lifetime(:,ik)
+           SAVED_lifetime(:,ik,5, it_relative)=E_P_Ho_abs_lifetime(:,ik)
+           SAVED_lifetime(:,ik,6, it_relative)=E_P_El_abs_lifetime(:,ik)
          endif
        endif
      enddo
@@ -164,7 +167,8 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
          if (l_RT_CCA_Kernel.and.l_ph_corr) then
            call RT_Lifetimes_Interpolation(E_P_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,3,:))
            call RT_Lifetimes_Interpolation(E_P_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,4,:))
-           call RT_Lifetimes_Interpolation(E_P_Phonon_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,5,:))
+           call RT_Lifetimes_Interpolation(E_P_Ho_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,5,:))
+           call RT_Lifetimes_Interpolation(E_P_El_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,6,:))
          endif
        enddo
      enddo
@@ -184,12 +188,12 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      f_k(ib1)=-cI*G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps))/spin_occ
      if (l_carrier_dynamics) then
        Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+E_E_Hole_lifetime(ib1,ik)*(f_k(ib1)-1._SP)+&
-&                                                    E_E_Electron_lifetime(ib1,ik)*f_k(ib1)
+&                                                      E_E_Electron_lifetime(ib1,ik)*f_k(ib1)
      endif
      if (l_RT_CCA_Kernel.and.l_ph_corr) then
        Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+&
-&                             E_P_Hole_lifetime(ib1,ik)*(f_k(ib1)-1._SP)+E_P_Electron_lifetime(ib1,ik)*f_k(ib1)+&
-&                             E_P_Phonon_lifetime(ib1,ik)
+&                             (E_P_Hole_lifetime(ib1,ik)+E_P_Ho_abs_lifetime(ib1,ik))*(f_k(ib1)-1._SP)+&
+&                             (E_P_Electron_lifetime(ib1,ik)+E_P_El_abs_lifetime(ib1,ik))*f_k(ib1)
      endif
    enddo
  enddo

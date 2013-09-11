@@ -101,7 +101,7 @@ subroutine RT_G_retarded_EP_initialize(E,k)
                !
                E_center=Gr_peak_pos(ik,i_n)-Gr_peak_pos(ik_m_q,i_np)+i_s*abs(sqrt(ph_freqs_sq(iqbz,il)))
                !           
-               if (abs(E_center)>2.*E%E_ind_gap(1)) cycle
+               if (.not.Energy_Condition(Gr_peak_pos(ik,i_n)-Gr_peak_pos(ik_m_q,i_np),E_center)) cycle
                !
                i_trans(1)=transition_finder(Gr_peak_pos(ik,i_n))
                i_trans(2)=transition_finder(Gr_peak_pos(ik_m_q,i_np))
@@ -109,7 +109,6 @@ subroutine RT_G_retarded_EP_initialize(E,k)
                if (il==1.and.is==-1) then
                  kin_scatt=(/ik_mem,i_b_mat_mem,iq_mem/)
                  eval_it=.TRUE.
-                 !
                  if (TRANSITIONS_table(i_trans(1),i_trans(2),1)/=0) then
                    eval_it=.FALSE.
                    kin_scatt=TRANSITIONS_table(i_trans(1),i_trans(2),:)
@@ -139,16 +138,17 @@ subroutine RT_G_retarded_EP_initialize(E,k)
                    do i2=1,BZ_RIM_nkpt(ik_m_q)
                      ik_rim_2=BZ_RIM_table(sum(k%nstar(:ik_m_q-1))+1,i2)
                      E_center=E%E_RIM(i_n,ik_rim_1,1)-E%E_RIM(i_np,ik_rim_2,1)+is*abs(sqrt(ph_freqs_sq(iqbz,il)))
-                     if (abs(E_center)>2.*E%E_ind_gap(1)) cycle
+                     if (.not.Energy_Condition(E%E_RIM(i_n,ik_rim_1,1)-E%E_RIM(i_np,ik_rim_2,1),E_center)) cycle
                      Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=&
 &                       Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)+&
 &                       GAMMA_/(E_center**2+GAMMA_**2)/real(BZ_RIM_nkpt(ik))/real(BZ_RIM_nkpt(ik_m_q))
                    enddo
                  enddo
                else
+                 !
                  E_center=E%E(i_n,ik,1)-E%E(i_np,ik_m_q,1)+is*abs(sqrt(ph_freqs_sq(iqbz,il)))
                  !
-                 if (abs(E_center)>2.*E%E_ind_gap(1)) cycle
+                 if (.not.Energy_Condition(E%E(i_n,ik,1)-E%E(i_np,ik_m_q,1),E_center)) cycle
                  !
                  GAMMA_ = abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik_m_q,1))
                  !
@@ -174,6 +174,15 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  call live_timing()
  !
  contains
+   !
+   logical function Energy_Condition(Ennp,EnnppmW)
+     real(SP) :: Ennp,EnnppmW
+     Energy_Condition=.TRUE.
+     if (abs(Ennp)<1.E-10) Energy_Condition=.FALSE.
+     if (abs(EnnppmW)>2.*E%E_ind_gap(1)) Energy_Condition=.FALSE.
+     if (is== 1.and.Ennp>1.E-10) Energy_Condition=.FALSE.
+     if (is==-1.and.Ennp<1.E-10) Energy_Condition=.FALSE.
+   end function
    !
    integer function transition_finder(E)
      integer  :: ic

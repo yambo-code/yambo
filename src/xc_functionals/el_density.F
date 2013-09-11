@@ -49,7 +49,8 @@ subroutine el_density(en,Xk,rho,force_si)
  use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_inv
  use wave_func,     ONLY:wf_state,wf
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,&
-&                        PAR_COM_QP_A2A,PAR_IND_QP,l_par_HF,l_par_GW,l_par_DENSITY
+&                        PAR_COM_QP_A2A,l_par_HF,l_par_GW,&
+&                        l_par_DENSITY,ncpu,myid
  !
  implicit none
  type(bz_samp)::Xk
@@ -79,22 +80,29 @@ subroutine el_density(en,Xk,rho,force_si)
  ! 
  ! if (.not.all(states_filling(ib,ik,1:ID-1)==0))
  !
+ ! Sept 2013 (Andrea)
+ !
+ ! Andrea F reported that <DFT> is wrong when only QP states are distributed.
+ ! In this case the COMM PAR_COM_QP_A2A is not defined and the check on 
+ ! states_filling was not done. This check has been imposed to be done all times.
+ !
  if (PAR_COM_QP_A2A%n_CPU>1) then
-   !
    allocate(states_filling(en%nbm,Xk%nibz,PAR_COM_QP_A2A%n_CPU))
-   states_filling=0
-   !
    ID=PAR_COM_QP_A2A%CPU_id+1
-   !
-   do ib=1,en%nbm
-     do ik=1,Xk%nibz
-        if (PAR_IND_G_b%element_1D(ib).and.PAR_IND_Xk_ibz%element_1D(ik)) states_filling(ib,ik,ID)=1
-     enddo
-   enddo
-   !
-   call PP_redux_wait(states_filling,COMM=PAR_COM_QP_A2A%COMM)
-   !
+ else
+   allocate(states_filling(en%nbm,Xk%nibz,ncpu))
+   ID=myid+1
  endif
+ !
+ states_filling=0
+ !
+ do ib=1,en%nbm
+   do ik=1,Xk%nibz
+     if (PAR_IND_G_b%element_1D(ib).and.PAR_IND_Xk_ibz%element_1D(ik)) states_filling(ib,ik,ID)=1
+   enddo
+ enddo
+ !
+ call PP_redux_wait(states_filling)
  !
  bands_loop: do ib=1,en%nbm
    !
@@ -104,9 +112,7 @@ subroutine el_density(en,Xk,rho,force_si)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     if (PAR_COM_QP_A2A%n_CPU>1) then
-       if (.not.all(states_filling(ib,ik,1:ID-1)==0)) cycle
-     endif
+     if (.not.lowest_empty_ID(states_filling(ib,ik,:))==ID) cycle
      !
      do i_spin=1,n_spin
        !
@@ -131,11 +137,11 @@ subroutine el_density(en,Xk,rho,force_si)
  enddo bands_loop
  !
  if (PAR_COM_QP_A2A%n_CPU>1) then
-   deallocate(states_filling)
    call PP_redux_wait(rho_no_sym,COMM=PAR_COM_QP_A2A%COMM)
  else
    if (l_par_GW.or.l_par_HF.or.l_par_DENSITY) call PP_redux_wait(rho_no_sym)
  endif
+ deallocate(states_filling)
  !
  ! Simmetrization
  !
@@ -150,5 +156,21 @@ subroutine el_density(en,Xk,rho,force_si)
  if (mag_syms)      return
  if (.not.force_si) rho(:)=(1+i_time_rev)*rho(:)
  if (     force_si) rho(:)=   i_time_rev *real(rho(fft_rot_r_inv(:)),SP)+rho(:)
- !
+ ! 
+ contains
+   !
+   integer function lowest_empty_ID(vector)
+     !
+     integer vector(:),i1
+     !
+     lowest_empty_ID=0
+     do i1=1,size(vector)
+       if (vector(i1)>0) then
+         lowest_empty_ID=i1
+         exit
+       endif
+     enddo
+     !
+   end function
+   !
 end subroutine

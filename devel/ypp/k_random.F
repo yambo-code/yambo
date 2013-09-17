@@ -23,10 +23,11 @@ subroutine k_random(Xk,Xen)
  !
  use pars,                ONLY:SP,DP,lchlen,schlen
  use units,               ONLY:HA2EV
+ use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
  use stderr,              ONLY:set_real_printed_length,intc
  use R_lattice,           ONLY:bz_samp,nkibz,k_the_nearest,bz_samp_reset
  use parser_m,            ONLY:parser
- use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop
+ use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg,of_open_close,error,warning
  use vec_operate,         ONLY:rlu_v_norm,v_norm,c2a,k2bz,v_is_zero
  use YPP,                 ONLY:BZ_RIM_nkpts,RIM_DB1_paths,gamma_radius,K_transform,MAX_RIM_DBs,n_RIM_DBs
@@ -61,7 +62,10 @@ subroutine k_random(Xk,Xen)
  !
  type(levels)      :: RIM_E(MAX_RIM_DBs)
  type(bz_samp)     :: RIM_k(MAX_RIM_DBs)
- integer           :: ID,i_err(MAX_RIM_DBs),nsym_save,nsym_RIM_DB,i_db,i_db_ref,ik_ref(2)
+ integer           :: ID
+ integer           :: i_err(MAX_RIM_DBs),nsym_save,nsym_RIM_DB
+ integer           :: i_time_rev_save,i_time_rev_DB
+ integer           :: i_db,i_db_ref,ik_ref(2)
  integer, external :: ioDB1_selective_scan,ioE_RIM
  real(SP)          :: dl_sop_save(3,3,48)
  !
@@ -71,6 +75,7 @@ subroutine k_random(Xk,Xen)
  alat_save=alat
  nsym_save=nsym
  dl_sop_save(:,:,:nsym)=dl_sop
+ i_time_rev_save=i_time_rev
  !
  ! DB1 reloading
  !
@@ -98,12 +103,21 @@ subroutine k_random(Xk,Xen)
    !
  endif
  !
+ ! Now that I have the finer grid of Kpts I redefine the zeros for the kpts
+ !
+ if(.not.trim(BZ_RIM_path)==".") then
+   call define_zeros(vector_=RIM_k%pt, zero_=k_iku_zero)
+   call define_zeros(vector_=RIM_k%pt, zero_=k_rlu_zero,RLU=.TRUE.)
+ endif
+ !
  ! Symmetry restoring
  !
  if (allocated(dl_sop)) then
    deallocate(dl_sop)
    nsym_RIM_DB=nsym
    nsym       =nsym_save
+   i_time_rev_DB=i_time_rev
+   i_time_rev   =i_time_rev_save
    allocate(dl_sop(3,3,nsym))
    dl_sop=dl_sop_SAVE(:,:,:nsym)
  endif
@@ -231,6 +245,10 @@ subroutine k_random(Xk,Xen)
  call msg('s','::              [imposed]:',BZ_RIM_nkpts)
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmetries            :',nsym_RIM_DB)
+ if(i_time_rev_DB==1)&
+&   call msg('s',':: Time reversal included ')
+ if(i_time_rev_DB==0)&
+&   call msg('s',':: Time reversal not included')
  if (Xen%nbf==Xen%nbm) then
    call msg('s',':: Gap indirect      [ev]:',gap(1)*HA2EV)
    call msg('s','::     direct        [ev]:',gap(2)*HA2EV)
@@ -275,7 +293,7 @@ subroutine k_random(Xk,Xen)
  !
  BZ_RIM_nbands=RIM_E(i_db_ref)%nb
  BZ_RIM_tot_nkpts=RIM_k(i_db_ref)%nibz
- if (l_add_X_grid) BZ_RIM_tot_nkpts=BZ_RIM_tot_nkpts+Xk%nbz-1
+ if (l_add_X_grid) BZ_RIM_tot_nkpts=BZ_RIM_tot_nkpts+Xk%nibz-1
  !
  allocate(BZ_RIM_nkpt(Xk%nbz))
  BZ_RIM_nkpt=0
@@ -320,9 +338,9 @@ subroutine k_random(Xk,Xen)
    do i1=1,Xk%nbz
      if (i1==ik_ref(1)) cycle
      BZ_RIM_nkpt(i1)=BZ_RIM_nkpt(i1)+1
-     BZ_RIM_table(i1,BZ_RIM_nkpt(i1))=RIM_k(i_db_ref)%nibz+i1
+     BZ_RIM_table(i1,BZ_RIM_nkpt(i1))=RIM_k(i_db_ref)%nibz+Xk%sstar(i1,1)
      i2=i2+1 
-     Xen%E_RIM(:,RIM_k(i_db_ref)%nibz+i2,:)=Xen%E(:BZ_RIM_nbands,Xk%sstar(i1,1),:)
+     Xen%E_RIM(:,RIM_k(i_db_ref)%nibz+i2,:)=Xen%E(:BZ_RIM_nbands,i1,:) !+Xen%Efermi(1)
    enddo
  endif
  !

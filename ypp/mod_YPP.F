@@ -118,6 +118,7 @@ module YPP
  real(SP):: elph_residual_treshold = 0.
  character(schlen) :: elph_dbs_path
  character(schlen) :: ph_freqs_file
+ character(schlen) :: ph_modes_file
  !
  ! Wannier interface
  !

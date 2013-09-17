@@ -94,7 +94,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  call V_Hartree(rho_n,V_hartree_sc)
  !
  V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
- !
+ ! 
  do ik=1,QP_nk
    !
 #if defined _RT
@@ -106,11 +106,8 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
    !
    call V_real_space_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),wf)
    !
-   do ib=1,QP_nb
-     do i_spin=1,n_sp_pol
-       Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) + E_bare(ib,ik,i_spin)
-     enddo
-   enddo
+   forall (ib=1:QP_nb,i_spin=1:n_sp_pol) &
+&           Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) + E_bare(ib,ik,i_spin)  
    !
    ! ... then remove Vxc[rho_0] also
    !=================================

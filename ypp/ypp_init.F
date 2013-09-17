@@ -176,6 +176,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  elph_Ef=0.
  elph_dbs_path='.'
  ph_freqs_file='none'
+ ph_modes_file='none'
  gsqF_energy_steps=1
  !
 #endif
@@ -611,7 +612,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF GkkpExpand")
+ if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF PHmodeF GkkpExpand")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EEfermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif

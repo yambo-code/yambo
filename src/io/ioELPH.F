@@ -230,8 +230,8 @@ integer function ioELPH(ID,what)
    call E_reset(E_k_p_q)
    E_k_p_q%nb=elph_nb
    E_k_p_q%nk=nkbz
-   allocate(E_k_p_q%E(elph_nb,nkbz,n_sp_pol))
-   E_k_p_q%E(:,:,1)=E_k_plus_q(:,:,1)
+   allocate(E_k_p_q%E(elph_nb,nkbz,1))
+   E_k_p_q%E=E_k_plus_q
  endif
  ! 
  ! ELPH_gkkp 

@@ -28,15 +28,16 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  use frequency,     ONLY:ordered_grid_index
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,PAR_IND_VAL_BANDS_X
  implicit none
- type(levels)::Xen 
- type(bz_samp)::Xk
- type(X_t):: X
- integer :: iq
- real(SP):: minmax_ehe(2)
+ type(levels)  ::Xen 
+ type(bz_samp) ::Xk
+ type(X_t)     ::X
+ integer       ::iq
+ real(SP)      ::minmax_ehe(2)
  !
  ! Work Space
  !
  integer :: i1,i2,ik,ikp,iv,ic,Nb,Nt,i_sp,i_pole
+ logical :: MPI_logicals_on
  real(SP):: E_eh,f_eh
  real(SP), allocatable :: poles(:)
  !
@@ -45,6 +46,8 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  allocate(poles(Xk%nbz*Nb*Nt*n_sp_pol))
  !
+ MPI_logicals_on=associated(PAR_IND_Xk_bz%element_1D)
+ !
  ! Note that in metals not all the elements are defined
  !
  poles=0._SP 
@@ -52,16 +55,22 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  X_eh_setup=0
  do i1=1,Xk%nbz
    !
-   if (.not.PAR_IND_Xk_bz%element_1D(i1)) cycle 
+   if (MPI_logicals_on) then
+     if (.not.PAR_IND_Xk_bz%element_1D(i1)) cycle 
+   endif
    !
    do iv=X%ib(1),Xen%nbm
      !
-     if (.not.PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)) cycle 
+     if (MPI_logicals_on) then
+       if (.not.PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)) cycle 
+     endif
      !
      do ic=Xen%nbf+1,X%ib(2)
        do i_sp=1,n_sp_pol
          !
-         if (.not.PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic)) cycle 
+         if (MPI_logicals_on) then
+           if (.not.PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic)) cycle 
+         endif
          !
          i2=qindx_X(iabs(iq),i1,1)
          ik=Xk%sstar(i1,1) 

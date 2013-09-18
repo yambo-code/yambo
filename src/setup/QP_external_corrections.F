@@ -31,6 +31,9 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  use IO_m,          ONLY:REP
  use QP_m,          ONLY:OCC_T_ref
 #endif
+#if defined _ELPH
+ use ELPH,          ONLY:E_k_p_q,elph_nb
+#endif
 #if defined _SURF
  use ras_module,    ONLY:lras, lreels
 #endif
@@ -83,12 +86,22 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  if (apply_QP)  call OCCUPATIONS_IO_and_interpolate(Xen,'X',Xk,Time=OCC_T_ref,imposed_COM=REP)
 #endif
  !
- ! - Green's Function (not the one used in the BSE -
+ ! - Green's Function (not the one used in the BSE) -
  !
  if (l_gw0)     call QP_apply((/1,n_bands/),en,k,"G",msg_fmt='s')
 #if defined _SC
  if (apply_QP)  apply_QP=.not.l_sc_run.and..not.l_real_time
  if (apply_QP)  call OCCUPATIONS_IO_and_interpolate(en,'G',k,Time=OCC_T_ref,imposed_COM=REP)
+#endif
+ !
+#if defined _ELPH
+ !
+ ! - Green's Function (k+q levels loaded for the _ELPH)
+ !
+ if (l_gw0.and.l_ph_corr) then
+   call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt='s')
+ endif
+ !
 #endif
  !
 end subroutine

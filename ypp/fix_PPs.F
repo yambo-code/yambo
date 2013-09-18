@@ -375,7 +375,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      pp_kbs=pp_kbs_store
      !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
-     ioKB_abinit_err=ioKB_abinit(ID) 
+     ioKB_pwscf_err=ioKB_pwscf(ID) 
      !
      do ik=1,k%nibz
        !

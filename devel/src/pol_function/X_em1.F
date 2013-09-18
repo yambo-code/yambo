@@ -84,13 +84,15 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    endif
  endif
  !
+ call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
+ !
  call X_pre_setup(Xen,X)
  !
  ! In the next lines Yambo will VERIFY the em1d database
  ! to check if this iq has been alrady done. 
  ! When self_detect_E_range=.TRUE. however the Xw%er setup is
  ! done only in X_os and the VERIFY fails. This is why the procedure
- ! must be repeated here (Andrea fixed Bug by C. Attaccalite on October 2008)
+ ! must be repeated here:
  !
  if (self_detect_E_range) then
    call X_eh_setup(-X%iq(1),X,Xen,Xk,minmax_ehe)
@@ -115,8 +117,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! Allocation
  !    
  call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
- !
- call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
  !
  do iq=iq_to_start,X%iq(2)
    !

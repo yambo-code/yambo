@@ -95,7 +95,7 @@ subroutine ypp_init_load(defs)
  !
 #if defined _YPP_RT
  call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
- call it('r',defs,'RT-X',         '[R] Response functions Post-Processing')
+ call it('r',defs,'RT_X',        '[R] Response functions Post-Processing')
  call it('r',defs,'RTdos',        '[R] Analize time-dependent DOS')
  call it('r',defs,'RToccPlot',    '[R] Plot time-dependent occupations')
  call it('r',defs,'RToccFit',     '[R] Fit occupations distribution at given time')

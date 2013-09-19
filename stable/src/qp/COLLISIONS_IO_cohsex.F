@@ -114,7 +114,7 @@ subroutine COLLISIONS_IO_cohsex(X,Xk,E,k,q,Xw)
  !------------
  !
  call X_alloc('X',(/X%ng,X%ng,1/))
- allocate(EM1s(X%ng,X%ng))
+ allocate(EM1s(X%ng,X%ng),stat=alloc_err)
  call mem_est("EM1s",(/size(EM1s)/),errors=(/alloc_err/))
  !
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(isc%ngrho),iscp%rhotw(isc%ngrho),stat=alloc_err)

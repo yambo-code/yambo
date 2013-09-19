@@ -45,7 +45,7 @@ subroutine k_random(Xk,Xen)
  ! Work Space
  !
  real(SP)     ::dummy,rand_k(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
-&               gap(2)
+&               gap(2),tmp_zero(3)
  integer      ::i1,ikbz,i2
  character(lchlen) :: k_rand_fname
  character(schlen) :: dump
@@ -105,10 +105,14 @@ subroutine k_random(Xk,Xen)
  !
  ! Now that I have the finer grid of Kpts I redefine the zeros for the kpts
  !
- if(.not.trim(BZ_RIM_path)==".") then
-   call define_zeros(vector_=RIM_k%pt, zero_=k_iku_zero)
-   call define_zeros(vector_=RIM_k%pt, zero_=k_rlu_zero,RLU=.TRUE.)
- endif
+ do i_db=1,n_RIM_DBs
+   if(.not. trim(RIM_DB1_paths(i1,1))=="." ) then
+     call define_zeros(vector_=RIM_k(i1)%pt, zero_=tmp_zero)
+     k_iku_zero=min(k_iku_zero,tmp_zero)
+     call define_zeros(vector_=RIM_k(i1)%pt, zero_=tmp_zero,RLU=.TRUE.)
+     k_rlu_zero=min(k_rlu_zero,tmp_zero)
+   endif
+ enddo
  !
  ! Symmetry restoring
  !

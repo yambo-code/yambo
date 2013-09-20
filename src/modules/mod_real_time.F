@@ -101,6 +101,10 @@ module real_time
  integer  :: RT_dynamics_jumps 
  integer  :: NE_steps
  !
+ ! ... K-points ...
+ !
+ integer  :: RT_nk
+ !
  ! ... Memory ...
  !
  real(SP) :: NE_MEM_treshold
@@ -349,25 +353,25 @@ module real_time
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))
      !
-     allocate(G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,G_MEM_steps))
+     allocate(G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,G_MEM_steps))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
-     allocate(RT_occupations(SC_bands(1):SC_bands(2),QP_nk))
+     allocate(RT_occupations(SC_bands(1):SC_bands(2),RT_nk))
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
      !
      if (l_carrier_dynamics) then
-       allocate(E_E_Hole_lifetime(SC_bands(1):SC_bands(2),QP_nk))
-       allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),QP_nk))
+       allocate(E_E_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+       allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
        call mem_est("RT_E_E_lifetimes",(/2*size(E_E_Hole_lifetime)/),(/SP/))
        E_E_Hole_lifetime=0._SP
        E_E_Electron_lifetime=0._SP
      endif
      !
      if (l_RT_CCA_Kernel.and.l_ph_corr) then
-       allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),QP_nk))
-       allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),QP_nk))
-       allocate(E_P_El_abs_lifetime(SC_bands(1):SC_bands(2),QP_nk))
-       allocate(E_P_Ho_abs_lifetime(SC_bands(1):SC_bands(2),QP_nk))
+       allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+       allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+       allocate(E_P_El_abs_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+       allocate(E_P_Ho_abs_lifetime(SC_bands(1):SC_bands(2),RT_nk))
        call mem_est("RT_E_P_lifetimes",(/4*size(E_P_Hole_lifetime)/),(/SP/))
        E_P_Hole_lifetime=0._SP
        E_P_Electron_lifetime=0._SP
@@ -377,7 +381,7 @@ module real_time
      !
      if (RT_dynamics_jumps>0) then
        if (l_carrier_dynamics.or.l_RT_CCA_Kernel.or.l_ph_corr) then
-         allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),QP_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
+         allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
          call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
        endif
      endif
@@ -386,7 +390,7 @@ module real_time
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
      !
      if(RT_is_dumped.or.l_ph_corr) then
-       allocate(Sigma_relax(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
+       allocate(Sigma_relax(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
        call mem_est("Sigma_relax",(/size(Sigma_relax)/),(/2*SP/))
      endif
      !
@@ -398,7 +402,7 @@ module real_time
      allocate(SC_R(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("SC_R",(/size(SC_R)/),(/2*SP/))
      !
-     allocate(G_lesser_reference(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
+     allocate(G_lesser_reference(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
      call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
      !
      allocate(rho_reference(fft_size))

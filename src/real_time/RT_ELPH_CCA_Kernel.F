@@ -26,7 +26,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
  use SC,             ONLY:SC_bands,it_now
  use real_time,      ONLY:G_lesser,MEM_index,E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         Gr_ep_matrix,B_mat_index,G_MEM_steps
+&                         B_mat_index,G_MEM_steps
  use ELPH,           ONLY:ph_freqs_sq,ph_modes
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
  !
@@ -42,6 +42,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
  !
  integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem
  real(SP) :: f_k_m_q,P_ph_abs,P_ph_emit,ph_freq
+ real(SP), external :: RT_G_retarded_convolution
  !
  ! Dimensions
  !============
@@ -84,10 +85,12 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
      if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n_shift,i_np_shift) ) ) cycle
      i_b_mat_mem=PAR_B_mat_index(i_n_shift,i_np_shift)
      !
-     f_k_m_q=-cI*G_lesser(i_np+SC_bands(1)-1,i_np+SC_bands(1)-1,ik_m_q,MEM_index(it_now,G_MEM_steps))/spin_occ
+     f_k_m_q=-cI*G_lesser(i_np_shift,i_np_shift,ik_m_q,MEM_index(it_now,G_MEM_steps))/spin_occ
      !
-     P_ph_abs =Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,i_l+ph_modes)
-     P_ph_emit=Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,i_l)
+     P_ph_abs  =RT_G_retarded_convolution("QP",E%E(i_n_shift,ik,1)-E%E(i_np_shift,ik_m_q,1),ph_freq,&
+&                                         abs(E%W(i_n_shift,ik,1))+abs(E%W(i_np_shift,ik_m_q,1)),E%E_ind_gap(1),+1)
+     P_ph_emit =RT_G_retarded_convolution("QP",E%E(i_n_shift,ik,1)-E%E(i_np_shift,ik_m_q,1),ph_freq,&
+&                                         abs(E%W(i_n_shift,ik,1))+abs(E%W(i_np_shift,ik_m_q,1)),E%E_ind_gap(1),-1)
      !
      E_P_Hole_lifetime(i_n_shift,ik)=E_P_Hole_lifetime(i_n_shift,ik)+&
 &                                    abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_abs*Bose_f(2)

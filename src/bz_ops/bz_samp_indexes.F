@@ -382,10 +382,10 @@ subroutine bz_samp_indexes(k,Xk,q)
          nullify(q%pt)
        endif
        call mem_est("k_pt q_pt q_norm q_sstar q-pt")
-       allocate(q%pt(1,3),q_pt(1,3),k_pt(1,3),q_norm(1),q_sstar(1,2)) 
+       allocate(q%pt(1,3),q_pt(1,3),k_pt(k%nibz,3),q_norm(1),q_sstar(1,2)) 
        q%pt=0.
        q_pt=0.
-       k_pt=0.
+       k_pt=k%pt
        q_norm=q0_def_norm
        nqbz=1
        nqibz=1

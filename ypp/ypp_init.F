@@ -475,13 +475,11 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_gkkp      =runlevel_is_on('gkkp')
 #endif
 #if defined _YPP_RT
- write(*,*) 'Befor check in input',l_RealTime,l_RT_X,l_RT_dos
  l_RealTime         = runlevel_is_on('RealTime')
  l_RT_X             = runlevel_is_on('RT_X')
  l_RT_dos           = runlevel_is_on('RTdos')
  l_RT_occ_Plot      = runlevel_is_on('RToccPlot')
  l_RT_occ_Fit       = runlevel_is_on('RToccFit')
- write(*,*) 'After check in input',l_RealTime,l_RT_X,l_RT_dos
  !
  l_retarded_GFs     = runlevel_is_on('Gret')
 #endif

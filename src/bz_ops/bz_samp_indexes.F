@@ -54,6 +54,9 @@ subroutine bz_samp_indexes(k,Xk,q)
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use zeros,          ONLY:G_iku_zero
  use parser_m,       ONLY:parser
+#if defined _ELPH
+ use ELPH,           ONLY:elph_use_q_grid
+#endif
  !
  implicit none
  type(bz_samp)::k,Xk,q
@@ -77,7 +80,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  if (.not.bse_scattering) bse_scattering=l_bse
 #if defined _ELPH
- bse_scattering=.TRUE.
+ bse_scattering=elph_use_q_grid
 #endif
  !
  q%description='q'

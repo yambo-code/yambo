@@ -27,7 +27,7 @@ integer function io_RT_components(what,ID)
  use R_lattice,      ONLY:nkibz,nqbz
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,SC_nbands,&
-&                         RT_k,RT_nk,RT_occupations,&
+&                         RT_nk,RT_occupations,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,&
@@ -202,10 +202,7 @@ integer function io_RT_components(what,ID)
    !
    if (io_RT_components/=0) goto 1  
    !
-   if (io_sec(ID,1)==1) then
-     call io_bulk(ID,VAR="RT_Kpts",VAR_SZ=(/RT_nk,3/))
-     call io_bulk(ID,R2=RT_k)
-   else
+   if (io_sec(ID,1)>1) then
      !
      call io_bulk(ID,VAR="RT_occupations_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=RT_occupations)

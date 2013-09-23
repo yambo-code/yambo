@@ -101,10 +101,6 @@ module real_time
  integer  :: RT_dynamics_jumps 
  integer  :: NE_steps
  !
- ! ... K-points ...
- !
- integer  :: RT_nk
- !
  ! ... Memory ...
  !
  real(SP) :: NE_MEM_treshold
@@ -327,7 +323,7 @@ module real_time
 &                             l_sc_cohsex         
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n, &
-&                             SC_xc_functional,SC_xc_functional,RT_occupations
+&                             SC_xc_functional,SC_xc_functional,RT_occupations,RT_nk
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -440,7 +436,7 @@ module real_time
    subroutine RT_free
      !
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
-     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n,RT_k,RT_occupations
+     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n,RT_occupations
      use memory_m,       ONLY:mem_est
      use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
@@ -519,8 +515,6 @@ module real_time
      !
      deallocate(E_bare)
      call mem_est("E_bare")
-     !
-     deallocate(RT_k)
      !
      if(l_RT_diagonalize) then
        deallocate(Occ_natural_orb)

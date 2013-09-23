@@ -103,10 +103,9 @@ module SC
  real(SP),    allocatable :: RT_occupations(:,:) 
  !
  ! K-points: In case I want to use the G_lesser to define the occupations
- ! of a post-run I need to store in the database a copy of the K grid uses
+ ! of a post-run I need to keep here the number of k-points 
  !
  integer                 :: RT_nk
- real(SP), allocatable   :: RT_k(:,:)
  !
  interface
    !

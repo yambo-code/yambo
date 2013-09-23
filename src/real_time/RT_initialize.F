@@ -22,7 +22,7 @@
 subroutine RT_initialize(E,k,q)
  ! 
  use drivers,        ONLY:l_eval_collisions,l_ph_corr,l_carrier_dynamics
- use SC,             ONLY:local_V,SC_bands
+ use SC,             ONLY:local_V,SC_bands,RT_nk
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
@@ -36,7 +36,7 @@ subroutine RT_initialize(E,k,q)
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,             &
-&                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,RT_nk,         &
+&                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,         &
 &                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps,Fluence,l_RT_uses_E_RIM
  use collisions_IO,  ONLY:l_STORE_COLLISIONS
  use D_lattice,      ONLY:DL_vol

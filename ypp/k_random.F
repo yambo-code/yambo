@@ -44,12 +44,12 @@ subroutine k_random(Xk,Xen)
  !
  ! Work Space
  !
- real(SP)     ::dummy,rand_k(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
+ real(SP)     ::rand_k(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
 &               gap(2),tmp_zero(3)
- integer      ::i1,ikbz,i2
+ integer      ::i1,ik_ibz,i2
  character(lchlen) :: k_rand_fname
  character(schlen) :: dump
- logical           :: No_Weight,l_skip_check,l_add_X_grid
+ logical           :: No_Weight,l_skip_check
  real(SP), allocatable :: rand_E(:,:,:)
  !
  ! Random Generator
@@ -65,7 +65,7 @@ subroutine k_random(Xk,Xen)
  integer           :: ID
  integer           :: i_err(MAX_RIM_DBs),nsym_save,nsym_RIM_DB
  integer           :: i_time_rev_save,i_time_rev_DB
- integer           :: i_db,i_db_ref,ik_ref(2)
+ integer           :: i_db,i_db_merge,i_db_final,ik_ref(2)
  integer, external :: ioDB1_selective_scan,ioE_RIM
  real(SP)          :: dl_sop_save(3,3,48)
  !
@@ -106,10 +106,10 @@ subroutine k_random(Xk,Xen)
  ! Now that I have the finer grid of Kpts I redefine the zeros for the kpts
  !
  do i_db=1,n_RIM_DBs
-   if(.not. trim(RIM_DB1_paths(i1,1))=="." ) then
-     call define_zeros(vector_=RIM_k(i1)%pt, zero_=tmp_zero)
+   if(.not. trim(RIM_DB1_paths(i_db,1))=="." ) then
+     call define_zeros(vector_=RIM_k(i_db)%pt, zero_=tmp_zero)
      k_iku_zero=min(k_iku_zero,tmp_zero)
-     call define_zeros(vector_=RIM_k(i1)%pt, zero_=tmp_zero,RLU=.TRUE.)
+     call define_zeros(vector_=RIM_k(i_db)%pt, zero_=tmp_zero,RLU=.TRUE.)
      k_rlu_zero=min(k_rlu_zero,tmp_zero)
    endif
  enddo
@@ -202,23 +202,25 @@ subroutine k_random(Xk,Xen)
  !
  ! Mergering of ALL RIM_E(:) => RIM_E(n_RIM_DBs+1)
  !
- i_db_ref=1
+ i_db_merge=1
+ i_db_final=2
  !
  if (n_RIM_DBs>1) then
-   i_db_ref=n_RIM_DBs+1
-   call bz_samp_reset(RIM_k(i_db_ref))
-   call E_reset(RIM_E(i_db_ref))
-   RIM_E(i_db_ref)%nk=sum(RIM_E(:n_RIM_DBs)%nk)
-   RIM_E(i_db_ref)%nb=RIM_E(1)%nb
-   RIM_k(i_db_ref)%nibz=sum(RIM_E(:n_RIM_DBs)%nk)
-   allocate(RIM_E(i_db_ref)%E(RIM_E(i_db_ref)%nb,RIM_E(i_db_ref)%nk,n_sp_pol))
-   allocate(RIM_k(i_db_ref)%pt(RIM_E(i_db_ref)%nk,3))
+   i_db_merge=n_RIM_DBs+1
+   i_db_final=n_RIM_DBs+2
+   call bz_samp_reset(RIM_k(i_db_merge))
+   call E_reset(RIM_E(i_db_merge))
+   RIM_E(i_db_merge)%nk=sum(RIM_E(:n_RIM_DBs)%nk)
+   RIM_E(i_db_merge)%nb=RIM_E(1)%nb
+   RIM_k(i_db_merge)%nibz=sum(RIM_E(:n_RIM_DBs)%nk)
+   allocate(RIM_E(i_db_merge)%E(RIM_E(i_db_merge)%nb,RIM_E(i_db_merge)%nk,n_sp_pol))
+   allocate(RIM_k(i_db_merge)%pt(RIM_E(i_db_merge)%nk,3))
    do i_db=1,n_RIM_DBs
      if (i_db==1) ik_ref(1)=0
      if (i_db> 1) ik_ref(1)=sum(RIM_E(1:i_db-1)%nk)
      do i1=1,RIM_E(i_db)%nk
-       RIM_E(i_db_ref)%E(:,i1+ik_ref(1),:)= RIM_E(i_db)%E(:,i1,:)
-       RIM_k(i_db_ref)%pt(i1+ik_ref(1),:)= RIM_k(i_db)%pt(i1,:)
+       RIM_E(i_db_merge)%E(:,i1+ik_ref(1),:)= RIM_E(i_db)%E(:,i1,:)
+       RIM_k(i_db_merge)%pt(i1+ik_ref(1),:)= RIM_k(i_db)%pt(i1,:)
      enddo
    enddo
  endif
@@ -227,22 +229,23 @@ subroutine k_random(Xk,Xen)
  !
  if (BZ_RIM_nkpts<nkibz.and.BZ_RIM_nkpts>0) then
    nkibz   =BZ_RIM_nkpts
-   RIM_E(i_db_ref)%nk=nkibz
-   allocate(rand_E(RIM_E(i_db_ref)%nb,nkibz,n_sp_pol))
-   rand_E(:,:,:)=RIM_E(i_db_ref)%E(:,:nkibz,:)
-   rand_k(:nkibz,:)=RIM_k(i_db_ref)%pt(:nkibz,:)
-   deallocate(RIM_E(i_db_ref)%E,RIM_k(i_db_ref)%pt)
-   allocate(RIM_E(i_db_ref)%E(RIM_E(i_db_ref)%nb,nkibz,n_sp_pol),RIM_k(i_db_ref)%pt(nkibz,3))
-   RIM_E(i_db_ref)%E(:,:,:)=rand_E(:,:,:)
-   RIM_k(i_db_ref)%pt(:,:)=rand_k(:,:)
+   RIM_E(i_db_merge)%nk=nkibz
+   RIM_k(i_db_merge)%nibz=nkibz
+   allocate(rand_E(RIM_E(i_db_merge)%nb,nkibz,n_sp_pol))
+   rand_E(:,:,:)=RIM_E(i_db_merge)%E(:,:nkibz,:)
+   rand_k(:nkibz,:)=RIM_k(i_db_merge)%pt(:nkibz,:)
+   deallocate(RIM_E(i_db_merge)%E,RIM_k(i_db_merge)%pt)
+   allocate(RIM_E(i_db_merge)%E(RIM_E(i_db_merge)%nb,nkibz,n_sp_pol),RIM_k(i_db_merge)%pt(nkibz,3))
+   RIM_E(i_db_merge)%E(:,:,:)=rand_E(:,:,:)
+   RIM_k(i_db_merge)%pt(:,:)=rand_k(:,:)
    deallocate(rand_E)
  endif
  !
- gap(1)=minval(RIM_E(i_db_ref)%E(Xen%nbf+1,:,1))-maxval(RIM_E(i_db_ref)%E(Xen%nbf,:,1)) 
+ gap(1)=minval(RIM_E(i_db_merge)%E(Xen%nbf+1,:,1))-maxval(RIM_E(i_db_merge)%E(Xen%nbf,:,1)) 
  gap(2)=10000.
  do i1=1,nkibz
-   if (RIM_E(i_db_ref)%E(Xen%nbf+1,i1,1)-RIM_E(i_db_ref)%E(Xen%nbf,i1,1)<gap(2)) then
-     gap(2)=RIM_E(i_db_ref)%E(Xen%nbf+1,i1,1)-RIM_E(i_db_ref)%E(Xen%nbf,i1,1)
+   if (RIM_E(i_db_merge)%E(Xen%nbf+1,i1,1)-RIM_E(i_db_merge)%E(Xen%nbf,i1,1)<gap(2)) then
+     gap(2)=RIM_E(i_db_merge)%E(Xen%nbf+1,i1,1)-RIM_E(i_db_merge)%E(Xen%nbf,i1,1)
    endif
  enddo
  !
@@ -264,8 +267,8 @@ subroutine k_random(Xk,Xen)
  call section('+','Internal consistency check ...')
  ik_ref=0
  i1_loop: do i1=1,Xen%nk
-   do i2=1,RIM_E(i_db_ref)%nk
-     if (v_is_zero(RIM_k(i_db_ref)%pt(i2,:)-Xk%pt(i1,:))) then
+   do i2=1,RIM_E(i_db_merge)%nk
+     if (v_is_zero(RIM_k(i_db_merge)%pt(i2,:)-Xk%pt(i1,:))) then
        ik_ref=(/i1,i2/)
        exit  i1_loop
      endif
@@ -274,48 +277,35 @@ subroutine k_random(Xk,Xen)
  !
  if (ik_ref(1)> 0) then
    call msg('l','passed') 
-   RIM_E(i_db_ref)%E(:,:,:)=RIM_E(i_db_ref)%E(:,:,:)+Xen%E(Xen%nbm,ik_ref(1),1)-RIM_E(i_db_ref)%E(Xen%nbm,ik_ref(1),1)
+   RIM_E(i_db_merge)%E(:,:,:)=RIM_E(i_db_merge)%E(:,:,:)+Xen%E(Xen%nbm,ik_ref(1),1)-RIM_E(i_db_merge)%E(Xen%nbm,ik_ref(1),1)
  else 
    call msg('l','failed') 
    if (     l_skip_check) call warning("Internal check failed. A X grid k-point was not found among the RIM list")
    if (.not.l_skip_check) call error("Internal check failed. A X grid k-point was not found among the RIM list")
  endif
  !
- l_add_X_grid=.TRUE.
+ BZ_RIM_nbands=RIM_E(i_db_merge)%nb
+ BZ_RIM_tot_nkpts=RIM_k(i_db_merge)%nibz+Xk%nibz
  !
- call section('+','BZ RIM K-points expansion ...')
+ allocate(BZ_RIM_nkpt(Xk%nibz))
+ BZ_RIM_nkpt=1
  !
- ! Xk (IBZ->BZ)
- !
- call k_ibz2bz(Xk,'i',.true.)
- !
- ! RIM_k (IBZ->BZ)
- !
- call k_ibz2bz(RIM_k(i_db_ref),'i',.true.)
- !
- call msg('l','found '//trim(intc(RIM_k(i_db_ref)%nbz))//' points in the BZ')
- !
- BZ_RIM_nbands=RIM_E(i_db_ref)%nb
- BZ_RIM_tot_nkpts=RIM_k(i_db_ref)%nibz
- if (l_add_X_grid) BZ_RIM_tot_nkpts=BZ_RIM_tot_nkpts+Xk%nibz-1
- !
- allocate(BZ_RIM_nkpt(Xk%nbz))
- BZ_RIM_nkpt=0
- !
- call live_timing('BZ RIM Tables',RIM_k(i_db_ref)%nbz*2,SERIAL=.true.)
- do while(.not.allocated(BZ_RIM_table)) 
-   if (maxval(BZ_RIM_nkpt)>0) then
-     if (l_add_X_grid)      allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)+1))
-     if (.not.l_add_X_grid) allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)))
-     BZ_RIM_table=0
+ call live_timing('BZ RIM Tables',RIM_k(i_db_merge)%nibz*2,SERIAL=.true.)
+ !                ===============
+ do i2=1,2
+   if (i2==2) then
+     allocate(BZ_RIM_table(Xk%nibz,maxval(BZ_RIM_nkpt)))
+     do i1=1,Xk%nibz
+       BZ_RIM_table(i1,1)=i1
+     enddo
    endif
-   BZ_RIM_nkpt=0
-   do i1=1,RIM_k(i_db_ref)%nbz
+   BZ_RIM_nkpt=1
+   do i1=1,RIM_k(i_db_merge)%nibz
      !
-     ikbz=k_the_nearest(RIM_k(i_db_ref)%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
-     BZ_RIM_nkpt(ikbz)=BZ_RIM_nkpt(ikbz)+1
+     ik_ibz=k_the_nearest(RIM_k(i_db_merge)%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.)
+     BZ_RIM_nkpt(ik_ibz)=BZ_RIM_nkpt(ik_ibz)+1
      !
-     if (allocated(BZ_RIM_table)) BZ_RIM_table(ikbz,BZ_RIM_nkpt(ikbz))=RIM_k(i_db_ref)%sstar(i1,1)
+     if (allocated(BZ_RIM_table)) BZ_RIM_table(ik_ibz,BZ_RIM_nkpt(ik_ibz))=ik_ibz
      !      
      call live_timing(steps=1)
      !
@@ -324,8 +314,8 @@ subroutine k_random(Xk,Xen)
  call live_timing()
  !
  BZ_RIM_max_filling=maxval(BZ_RIM_nkpt)
- if (l_add_X_grid) BZ_RIM_max_filling=BZ_RIM_max_filling+1
  call msg('s',':: Blocks filling range  :',(/minval(BZ_RIM_nkpt),BZ_RIM_max_filling/))
+ stop
  !
  ! RIM double grid interpolation weights, not used here, but must be defined.
  !
@@ -335,18 +325,16 @@ subroutine k_random(Xk,Xen)
  !  At the end I add to the Xen%E_RIM array the Xen%E energies
  !
  allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
- Xen%E_RIM(:,:RIM_k(i_db_ref)%nibz,:)=RIM_E(i_db_ref)%E(:,:,:)
+ Xen%E_RIM(:,:RIM_k(i_db_merge)%nibz,:)=RIM_E(i_db_merge)%E(:,:,:)
  !
- if (l_add_X_grid) then
-   i2=0
-   do i1=1,Xk%nbz
-     if (i1==ik_ref(1)) cycle
-     BZ_RIM_nkpt(i1)=BZ_RIM_nkpt(i1)+1
-     BZ_RIM_table(i1,BZ_RIM_nkpt(i1))=RIM_k(i_db_ref)%nibz+Xk%sstar(i1,1)
-     i2=i2+1 
-     Xen%E_RIM(:,RIM_k(i_db_ref)%nibz+i2,:)=Xen%E(:BZ_RIM_nbands,i1,:) !+Xen%Efermi(1)
-   enddo
- endif
+ i2=0
+ do i1=1,Xk%nbz
+   if (i1==ik_ref(1)) cycle
+   BZ_RIM_nkpt(i1)=BZ_RIM_nkpt(i1)+1
+   BZ_RIM_table(i1,BZ_RIM_nkpt(i1))=RIM_k(i_db_merge)%nibz+Xk%sstar(i1,1)
+   i2=i2+1 
+   Xen%E_RIM(:,RIM_k(i_db_merge)%nibz+i2,:)=Xen%E(:BZ_RIM_nbands,i1,:) 
+ enddo
  !
  ! Final I/O
  !
@@ -357,16 +345,15 @@ subroutine k_random(Xk,Xen)
  !
  deallocate(BZ_RIM_nkpt,BZ_RIM_table,Xen%E_RIM,BZ_RIM_ipol_weight)
  call k_ibz2bz(Xk,'d',.false.) 
- call k_ibz2bz(RIM_k(i_db_ref),'d',.false.) 
+ call k_ibz2bz(RIM_k(i_db_merge),'d',.false.) 
  !
  contains
    !
    subroutine build_3D_k()
      real(DP), external :: dlaran
      do i1=1,3
-       rand_k(k_counter+1,i1)=(2.*dlaran(iseed(4:))-1.)
+       rand_k(k_counter+1,i1)=(dlaran(iseed(4:))-1./2.)
      enddo
-     dummy=rlu_v_norm(rand_k(k_counter+1,:))
      call c2a(v_in=rand_k(k_counter+1,:),mode="ka2i")
      call k2bz(v_in=rand_k(k_counter+1,:))
    end subroutine
@@ -381,7 +368,6 @@ subroutine k_random(Xk,Xen)
        enddo
        k_module=v_norm(rand_k(k_counter+1,:))
        call c2a(v_in=rand_k(k_counter+1,:),mode="kc2a")
-       dummy=rlu_v_norm(rand_k(k_counter+1,:))
        call c2a(v_in=rand_k(k_counter+1,:),mode="ka2i")
      enddo
    end subroutine

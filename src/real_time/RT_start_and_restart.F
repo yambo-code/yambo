@@ -47,10 +47,10 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_RT_CCA_Kernel,&
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,Gr_bands,&
-&                         l_G_retarded_DB,N_Gr_descs,Gr_description
+&                         l_G_retarded_DB,N_Gr_descs,Gr_description,l_RT_uses_E_RIM
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,&
-&                         rho_convergence,H_rotate,V_hartree_sc,&
+&                         rho_convergence,H_rotate,V_hartree_sc,RT_nk,&
 &                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional,RT_occupations,SC_nbands
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE,IO_and_Messaging_switch
  use X_m,            ONLY:X_t
@@ -90,15 +90,17 @@ subroutine RT_start_and_restart(E,k,q,X)
  RT_P               =cZERO
  RT_ind_J           =cZERO
  ! 
- forall(ib=SC_bands(1):SC_bands(2),ik=1:RT_nk)
-   if (l_RT_uses_E_RIM) then
-     G_lesser(ib,ib,ik,1) =cI*E%f_RIM(ib,ik,1)
-     RT_occupations(ib,ik)=E%f_RIM(ib,ik,1)
-   else
-     G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
-     RT_occupations(ib,ik)=E%f(ib,ik,1)
-   endif
- end forall
+ do ib=SC_bands(1),SC_bands(2)
+   do ik=1,RT_nk
+     if (l_RT_uses_E_RIM) then
+       G_lesser(ib,ib,ik,1) =cI*E%f_RIM(ib,ik,1)
+       RT_occupations(ib,ik)=E%f_RIM(ib,ik,1)
+     else
+       G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
+       RT_occupations(ib,ik)=E%f(ib,ik,1)
+     endif
+   enddo
+ enddo
  !
  ! Possibility to pump by hand one or more electrons up
  !======================================================

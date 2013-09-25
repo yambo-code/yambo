@@ -27,7 +27,7 @@ subroutine RT_initialize(E,k,q)
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
- use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts
+ use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
 &                         l_RT_diamagnetic,RT_IO_steps,RT_IO_time,l_NE_simulate_BSE,&
@@ -307,13 +307,15 @@ subroutine RT_initialize(E,k,q)
  !
  ! RIM support
  !=============
- l_RT_uses_E_RIM=BZ_RIM_tot_nkpts>0.and.BZ_RIM_nbands>=SC_bands(2)
+ l_RT_uses_E_RIM=BZ_RIM_tot_nkpts>0.and.BZ_RIM_nbands>=SC_bands(2).and..not.RIM_is_symmetry_expanded
  call msg( 'r','[RT] Energy RIM support         :',l_RT_uses_E_RIM)
  !
  ! Number of K-points
  !====================
  RT_nk=k%nibz
- if (l_RT_uses_E_RIM) RT_nk=BZ_RIM_tot_nkpts
+ if (l_RT_uses_E_RIM) then
+   RT_nk=BZ_RIM_tot_nkpts
+ endif
  !
  contains
    !

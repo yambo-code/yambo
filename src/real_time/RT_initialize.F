@@ -27,7 +27,8 @@ subroutine RT_initialize(E,k,q)
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
- use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded
+ use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded,&
+&                         BZ_RIM_nkpt
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
 &                         l_RT_diamagnetic,RT_IO_steps,RT_IO_time,l_NE_simulate_BSE,&
@@ -36,7 +37,7 @@ subroutine RT_initialize(E,k,q)
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,             &
-&                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,         &
+&                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,RIM_k_ibz,     &
 &                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps,Fluence,l_RT_uses_E_RIM
  use collisions_IO,  ONLY:l_STORE_COLLISIONS
  use D_lattice,      ONLY:DL_vol
@@ -51,7 +52,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,rest,nk_todo
+ integer                  :: i1,rest,nk_todo,ik
  character(5)             :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_compute_fluence
@@ -127,7 +128,7 @@ subroutine RT_initialize(E,k,q)
  !
  NE_tot_time=RT_step*NE_steps
  !
- ! Dephasing Matrix. Including user-defined matrix-likfe dephasing factors, constant
+ ! Dephasing Matrix. Including user-defined matrix-like dephasing factors, constant
  !==================
  ! radiative/phase, polaronic based
  !
@@ -314,7 +315,11 @@ subroutine RT_initialize(E,k,q)
  !====================
  RT_nk=k%nibz
  if (l_RT_uses_E_RIM) then
-   RT_nk=BZ_RIM_tot_nkpts
+   allocate(RIM_k_ibz(k%nibz))
+   do ik=1,k%nbz
+     if (k%sstar(ik,2)==1) RIM_k_ibz(k%sstar(ik,1))=ik
+   enddo
+   RT_nk=sum(BZ_RIM_nkpt(RIM_k_ibz(:)))
  endif
  !
  contains

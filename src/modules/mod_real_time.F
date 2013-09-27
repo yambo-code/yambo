@@ -137,7 +137,8 @@ module real_time
  !
  ! Relaxation and Dissipation 
  !----------------------------
- logical     :: l_RT_uses_E_RIM
+ logical                  :: l_RT_uses_E_RIM
+ integer,     allocatable :: RIM_k_ibz(:)
  !
  ! ELPH kernel...
  !----------------

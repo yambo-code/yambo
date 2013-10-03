@@ -66,7 +66,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
-&                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BS_anti_res
+&                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BS_anti_res,&
+&                     BS_bands
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_causal,TDDFT_mode
@@ -81,7 +82,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
 #if defined _SC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
-&                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,RT_nk,&
+&                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,RT_nk,SC_bands,&
 &                     l_Mean_Potential,l_RT_occupations_in_use,SC_up_W_iters,l_SC_diagonal,l_SC_nl_mix
  use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff,COLLISIONS_path
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
@@ -393,6 +394,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ! BS/BSS
  !
+ BS_bands=0
  BS_n_g_W=1
  BS_eh_en=(/-1.,-1./)/HA2EV
  BS_identifier=0
@@ -462,6 +464,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _SC
  ! SC
  !
+ SC_bands=0
  SC_fft_size=0
  SC_iterations=100
  SC_cycle_mixing=0.5

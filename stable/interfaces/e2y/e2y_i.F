@@ -28,7 +28,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use parallel_m,          only : ncpu,myid,MPI_close
  use electrons,           only : levels,E_reset,n_bands,n_spin
  use D_lattice,           only : n_atoms_species_max
- use pseudo,              only : PP_alloc, PP_free
+ use pseudo,              only : PP_alloc_abinit, PP_free
  use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
  use timing,              only : live_timing_is_on
  use wave_func,           only : wf_ncx,ioWF,wf_nb_io_groups,wf_nb_io
@@ -50,7 +50,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  type(bz_samp)                :: k
  character(lchlen)            :: ETSF_file_name
  integer                      :: ID,io_err,ik,icycle, ib_grp
- integer,     external        :: ioDB1, ioKB_PP
+ integer,     external        :: ioDB1, ioKB_abinit
  real(SP), allocatable        :: wf_disk(:,:,:,:)
  logical                      :: letsf_file, lwrite_PP, force_kbpp
  ! 
@@ -130,7 +130,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...') 
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
- call PP_alloc()
+ call PP_alloc_abinit()
 
  do ik=1,nkibz
    !
@@ -146,7 +146,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
      if (n_atoms_species_max>0.and.ib_grp==1) then
        if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
        if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
-       io_err=ioKB_PP(ID) 
+       io_err=ioKB_abinit(ID) 
      endif
      if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
      if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)

@@ -192,9 +192,9 @@ integer function ioDB1(E,k,ID)
      wf_nb_io=E%nb
      QP_nb=E%nb
      QP_n_G_bands=(/1,E%nb/)
-     BS_bands=(/1,E%nb/)
+     if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
 #if defined _SC
-     SC_bands=(/1,E%nb/)
+     if(any(SC_bands(:)==0)) SC_bands=(/1,E%nb/)
 #endif
      !
      Tel=input_GS_Tel

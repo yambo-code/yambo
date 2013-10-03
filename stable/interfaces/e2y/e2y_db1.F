@@ -177,7 +177,7 @@ contains
     !
     ! Lattice vectors
     !
-    a(:,:) = primitive_vectors_(:,:)
+    a(:,:) = transpose(primitive_vectors_(:,:))
     alat(1) = alat_mult_factor*maxval( abs( a(1,:) ))
     alat(2) = alat_mult_factor*maxval( abs( a(2,:) ))
     alat(3) = alat_mult_factor*maxval( abs( a(3,:) ))
@@ -337,7 +337,8 @@ contains
   subroutine import_gwdata_group
     use D_lattice,             only : n_atomic_species
     use pseudo,                only : pp_n_l_times_proj_max,&
-&                                  pp_n_l_comp, pp_kbs,pp_kb,pp_kbd
+&                                  pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
+&                                  pp_table,l_many_proj,pp_n_l_max
     implicit none
     type(etsf_gwdata)            :: gwdata_group
 
@@ -351,8 +352,20 @@ contains
 
 !   call etsf_io_gwdata_get(ncid, gwdata_group, lstat, error_data)
 
-    allocate(pp_n_l_comp(n_atomic_species))
-    pp_n_l_comp = pp_n_l_times_proj_max
+    l_many_proj=.false.
+    pp_n_l_max=abs(pp_n_l_times_proj_max)
+    allocate(pp_n_l_comp(n_atomic_species),&
+&            pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
+    pp_n_l_comp(:)=pp_n_l_max
+    !
+    ! if "l_many_proj" the table is readen in a2y_wf
+    if(.not.l_many_proj) then
+      do i1=1,pp_n_l_times_proj_max
+        pp_table(1,:,i1)=i1  !  l+1
+        pp_table(2,:,i1)=1   !  n_proj
+        pp_table(3,:,i1)=1   !  i_spin
+      enddo
+    endif
     !
     call deallocate_gwdata_group
     return

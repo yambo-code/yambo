@@ -200,7 +200,7 @@ module real_time
  real(SP)          :: Gr_T_step
  real(SP)          :: Gr_T_window
  real(SP)          :: Gr_E_window
- character(schlen) :: Gr_kind
+ character(schlen) :: Gr_kind="QP"
  character(lchlen) :: Gr_description(100)
  real(SP),    allocatable :: Gr_ee_matrix(:,:,:,:)
  real(SP),    allocatable :: Gr_ep_matrix(:,:,:,:)
@@ -336,10 +336,8 @@ module real_time
      call SC_alloc(en)
      !
      if (l_HF_and_locXC.or.l_sc_hf.or.l_sc_cohsex) then
-       !
        allocate(QP_Vnl_xc(QP_n_states))
        call mem_est("QP_Vnl_xc",(/QP_n_states/))
-       !
      endif
      !
      if(l_NE_with_fields) then

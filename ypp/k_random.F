@@ -317,12 +317,17 @@ subroutine k_random(Xk,Xen)
  !                ===============
  do i2=1,2
    if (i2==2) then
+     !
      allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)))
+     !
      do i1=1,Xk%nbz
        BZ_RIM_table(i1,1)=Xk%sstar(i1,1)
      enddo
+     !
    endif
+   !
    BZ_RIM_nkpt=1
+   !
    do i1=1,RIM_nk
      !
      if (i1==ik_ref(2)) then

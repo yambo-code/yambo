@@ -40,8 +40,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,RIM_k_ibz,     &
 &                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps,Fluence,l_RT_uses_E_RIM
  use collisions_IO,  ONLY:l_STORE_COLLISIONS
- use D_lattice,      ONLY:DL_vol
- use R_lattice,      ONLY:bz_samp,nkibz
+ use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
  use parser_m,       ONLY:parser
@@ -52,7 +51,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,rest,nk_todo,ik
+ integer                  :: i1,rest,ik
  character(5)             :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_compute_fluence
@@ -225,45 +224,6 @@ subroutine RT_initialize(E,k,q)
  !
 #endif
  !
- ! LOG
- ! ===
- !
- call section('=','Messaging')
- !
- if(l_NE_with_fields) call msg('rn','[RT] Gauge                      :',trim(global_gauge))
- !
- call msg( 'r', '[RT] NE Steps                   :',NE_steps)
- call msg( 'r', '[RT] NE time                [fs]:',NE_steps*RT_step/FS2AUT)
- call msg( 'r', '[RT] Memory depth           [fs]:',T_memory/FS2AUT)
- call msg( 'r', '[RT] Memory steps               :',G_MEM_steps)
- call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
- call msg( 'r', '[RT] K-points evolved      [o/o]:',real(nk_todo,SP)/real(nkibz)*100._SP)
- call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)
- call msg( 'r', '[RT] Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000._SP/))
- call msg( 'r', '[RT] Damping (Radiative)[fs/meV]:',(/RAD_LifeTime/FS2AUT,   HBAR_eVfs/RAD_LifeTime*FS2AUT*1000._SP/))
- if(NE_steps>0) then
-   call msg('rn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
-   call msg('r', '[RT] Time between I/O`s     [fs]:',RT_IO_time/FS2AUT)
-   call msg('rn','[RT] Electron-gas plasma frequency [eV]:',sqrt(4._SP*pi*nel/DL_vol)*HA2EV)
- endif
- call msg('r', '[RT] Pump/Probe periodicity     [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
- call msg('r', '[RT]            energy step     [eV]:',maxval(Efield(:)%W_step)*HA2EV)
- call msg('r', '[RT] IO cache steps                 :',RT_IO_steps)
- call msg('r', '[RT] IO cache time              [fs]:',RT_IO_time/FS2AUT)
- !
- do i1=1,n_ext_fields
-   !
-   if (i_Pump==i_Probe.and.i1/=i_Probe.and..not.any(trim(Efield(i1)%ef_name)==(/'SIN    ','ANTIRES','RES    '/)) ) cycle
-   !
-   MSG_ch="Pump"
-   if (i1==i_Probe) MSG_ch="Probe"
-   call msg('r', '[RT] '//MSG_ch//' energy window/period [eV/fs]:' &
-&     ,(/Efield(i1)%frequency*HA2EV,2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/))
-   call msg('r', '[RT] '//MSG_ch//' elemental oscillation[fs]:',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))/FS2AUT)
-   call msg('r', '[RT] '//MSG_ch//' energy steps             :',Efield(i1)%n_frequencies)
-   call msg('r', '[RT] '//MSG_ch//' electric field      [V/m]:',Efield(i1)%amplitude*AU2VMm1)
- enddo
- !
  ! Fluence
  !=========
  if (l_NE_with_fields) then
@@ -272,9 +232,8 @@ subroutine RT_initialize(E,k,q)
    if (l_compute_fluence) call RT_Fluence()
  endif
  !
- ! Generalized Rabi Function
- !============================
- if (l_NE_with_fields) call RT_Rabi_Function(E,Efield(i_Pump))
+ ! Gauge
+ !=======
  !
  ! If the gauge is length I need E(t) whose definition includes a delta(t). 
  ! The numerical definition of delta(t) in mod_fields depends on the 
@@ -294,32 +253,76 @@ subroutine RT_initialize(E,k,q)
  !
  call UPDATE_flags(.TRUE.)
  !
- if(NE_steps>0) then
-   call msg('nr','[RT] Simulate IP                :',l_NE_simulate_IP)
-   call msg( 'r','[RT] Simulate RPA               :',l_NE_simulate_RPA)
-   call msg( 'r','[RT] Simulate BSE               :',l_NE_simulate_BSE)
-   call msg( 'r','[RT] Simulate TD-DFT            :',l_NE_simulate_TDDFT)
-   call msg( 'r','[RT] Carriers El-ph scattering  :',l_ph_corr)
-   call msg( 'r','[RT] Carriers El-El scattering  :',l_carrier_dynamics)
-   if (l_G_retarded_DB) call msg( 'r','[RT] Retareded Green`s function :',Gr_kind)
-   call msg( 'r','[RT] Extended collisions        :',l_eval_collisions)
-   if (l_eval_collisions) call msg( 'r','[RT]                       [I/O]:',l_STORE_COLLISIONS)
- endif
- !
  ! RIM support
  !=============
  l_RT_uses_E_RIM=BZ_RIM_tot_nkpts>0.and.BZ_RIM_nbands>=SC_bands(2).and..not.RIM_is_symmetry_expanded
- call msg( 'r','[RT] Energy RIM support         :',l_RT_uses_E_RIM)
  !
  ! Number of K-points
  !====================
  RT_nk=k%nibz
+ allocate(RIM_k_ibz(k%nibz))
  if (l_RT_uses_E_RIM) then
-   allocate(RIM_k_ibz(k%nibz))
    do ik=1,k%nbz
      if (k%sstar(ik,2)==1) RIM_k_ibz(k%sstar(ik,1))=ik
    enddo
    RT_nk=sum(BZ_RIM_nkpt(RIM_k_ibz(:)))
+ else
+   do ik=1,k%nbz
+     RIM_k_ibz(ik)=ik
+   enddo
+ endif
+ !
+ ! LOG
+ ! ===
+ !
+ call section('=','Messaging')
+ !
+ call msg( 'r','---General---')
+ call msg( 'r', 'Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
+ call msg( 'r', 'NE Steps                   :',NE_steps)
+ call msg( 'r', 'NE time                [fs]:',NE_steps*RT_step/FS2AUT)
+ call msg( 'r', 'Memory depth           [fs]:',T_memory/FS2AUT)
+ call msg( 'r', 'Memory steps               :',G_MEM_steps)
+ call msg( 'r', 'Thermalization steps       :',Thermal_steps)
+ call msg( 'r', 'Step length            [fs]:',RT_step/FS2AUT)
+ if (l_NE_simulate_RPA)   call msg( 'r','Simulate RPA               :',l_NE_simulate_RPA)
+ if (l_NE_simulate_BSE)   call msg( 'r','Simulate BSE               :',l_NE_simulate_BSE)
+ if (l_NE_simulate_TDDFT) call msg( 'r','Simulate TD-DFT            :',l_NE_simulate_TDDFT)
+ if (l_ph_corr)           call msg( 'r','El-Ph Carrier scattering   :',l_ph_corr)
+ if (l_carrier_dynamics)  call msg( 'r','El-El Carrier scattering   :',l_carrier_dynamics)
+ !
+ call msg( 'nr','---I/O---')
+ call                          msg('r', 'Time between I/O`s     [fs]:',RT_IO_time/FS2AUT)
+ if (l_eval_collisions)   call msg( 'r','Extended collisions  [eval]:',l_eval_collisions)
+ if (l_STORE_collisions)  call msg( 'r','Extended collisions   [I/O]:',l_STORE_COLLISIONS)
+ !
+ call msg( 'nr','---Damping and retarded GF---')
+ call msg( 'r','Retarded Green`s function   :',Gr_kind)
+ call msg( 'r', 'Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000._SP/))
+ call msg( 'r', 'Damping (Radiative)[fs/meV]:',(/RAD_LifeTime/FS2AUT,   HBAR_eVfs/RAD_LifeTime*FS2AUT*1000._SP/))
+ !
+ call msg( 'nr','---RIM---')
+ call msg( 'r', 'Energy RIM support           :',l_RT_uses_E_RIM)
+ if (l_RT_uses_E_RIM) then
+   call msg( 'r', 'K-points            (TOTAL):',BZ_RIM_tot_nkpts)
+   call msg( 'r', '                     (USED):',RT_nk)
+ endif
+ !
+ if (l_NE_with_fields) then
+   call msg( 'nr','---Fields---')
+   call msg('r','Gauge                       :',trim(global_gauge))
+   call msg('r','Pump/Probe periodicity  [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
+   call msg('r','Pump/Probe energy step  [eV]:',maxval(Efield(:)%W_step)*HA2EV)
+   do i1=1,n_ext_fields
+     if (i_Pump==i_Probe.and.i1/=i_Probe.and..not.any(trim(Efield(i1)%ef_name)==(/'SIN    ','ANTIRES','RES    '/)) ) cycle
+     MSG_ch="Pump"
+     if (i1==i_Probe) MSG_ch="Probe"
+     call msg('r', MSG_ch//' energy window/period [eV/fs]:',(/Efield(i1)%frequency*HA2EV,&
+&                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/))
+     call msg('r', MSG_ch//' elemental oscillation[fs]:',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))/FS2AUT)
+     call msg('r', MSG_ch//' energy steps             :',Efield(i1)%n_frequencies)
+     call msg('r', MSG_ch//' electric field      [V/m]:',Efield(i1)%amplitude*AU2VMm1)
+   enddo
  endif
  !
  contains

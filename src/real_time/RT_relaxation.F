@@ -30,9 +30,8 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use pars,           ONLY:SP,cI,cZERO
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
- use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,it_now
- use QP_m,           ONLY:QP_nk
+ use R_lattice,      ONLY:bz_samp,nkibz
+ use SC,             ONLY:SC_bands,it_now,RT_nk
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
@@ -45,7 +44,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
- complex(SP),   intent(in)    :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
+ complex(SP),   intent(in)    :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
  ! Work Space
  !
@@ -60,7 +59,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! Andrea 4/7/2013. Fix of potential anomalous values
  ! of the G_lesser diagonal
  !
- do ik=1,QP_nk
+ do ik=1,RT_nk
    do ib1=SC_bands(1),SC_bands(2)
      G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps))=&
 &            cI*abs(-cI*G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps)))
@@ -92,7 +91,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    E_E_Hole_lifetime=0._SP
    E_E_Electron_lifetime=0._SP
    !
-   do ik=1,QP_nk
+   do ik=1,nkibz
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
@@ -115,7 +114,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      E_P_Ho_abs_lifetime=0._SP
    endif
    !
-   do ik=1,QP_nk
+   do ik=1,nkibz
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
@@ -135,7 +134,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  if (l_ph_corr.or.l_carrier_dynamics) then
    if (l_evaluate) then
-     do ik=1,QP_nk
+     do ik=1,RT_nk
        if (l_carrier_dynamics) then
          call PP_redux_wait(E_E_Electron_lifetime(:,ik))
          call PP_redux_wait(E_E_Hole_lifetime(:,ik))
@@ -158,7 +157,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
        endif
      enddo
    else if (l_interpolate) then
-     do ik=1,QP_nk
+     do ik=1,RT_nk
        do ib1=SC_bands(1),SC_bands(2)
          if (l_carrier_dynamics) then
            call RT_Lifetimes_Interpolation(E_E_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,1,:))
@@ -183,7 +182,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! Dephasing Matrix
  !==================
  !
- do ik=1,QP_nk
+ do ik=1,RT_nk
    do ib1=SC_bands(1),SC_bands(2)
      f_k(ib1)=-cI*G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps))/spin_occ
      if (l_carrier_dynamics) then

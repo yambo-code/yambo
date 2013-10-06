@@ -36,7 +36,7 @@ subroutine RT_driver(E,X,k,q)
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_steps,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
-&                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
+&                         it_start,RT_output,NE_time,NE_dynamics,RT_update,RIM_k_ibz,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
@@ -56,17 +56,17 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Notice that E is never changed!
  !
- type(levels)  :: E
- type(bz_samp) :: k,q
- type(X_t)     :: X(2)
- logical, external  ::stop_now
+ type(levels)      :: E
+ type(bz_samp)     :: k,q
+ type(X_t)         :: X(2)
+ logical, external :: stop_now
  ! 
  ! Work Space
  !
- logical                  :: do_output
- integer                  :: it,ik,ib,it_mem,it_mem_p1
- real(SP)                 :: E_previous,E_now
- complex(SP)              :: on_the_fly_operators(8)
+ logical           :: do_output
+ integer           :: it,ik,ib,it_mem,it_mem_p1
+ real(SP)          :: E_previous,E_now
+ complex(SP)       :: on_the_fly_operators(8)
  !
  if (l_ph_corr.and.l_carrier_dynamics) then
    call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph AND e-e scattering')
@@ -79,7 +79,7 @@ subroutine RT_driver(E,X,k,q)
  endif
  !
  call section('+','Initialization')
- !########################################################################################
+ !#################################
  !
  call set_real_printed_length(f_length=10,g_length=10)  
  !
@@ -272,8 +272,8 @@ subroutine RT_driver(E,X,k,q)
    !===============
    if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.
    if (stop_now(.FALSE.)) then
-      NE_steps=(int((it-Thermal_steps)/RT_IO_steps)+1)*RT_IO_steps
-      l_Dynamics_is_over=.TRUE.
+     NE_steps=(int((it-Thermal_steps)/RT_IO_steps)+1)*RT_IO_steps
+     l_Dynamics_is_over=.TRUE.
    endif
    !
    ! Write DBs
@@ -288,13 +288,13 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Current and Polarization
    !==========================
-   call RT_current_AND_polarization(k,E,G_lesser(:,:,:,it_mem),A_vecpot)
+   call RT_current_AND_polarization(k,E,G_lesser(:,:,RIM_k_ibz(:),it_mem),A_vecpot)
    !
    if ( (l_ph_corr.or.l_carrier_dynamics) .and. do_output) then
      !
      ! Mean Carrier Lifetimes
      !=======================
-     call RT_mean_carrier_lifetimes(G_lesser(:,:,:,it_mem),E,k)
+     call RT_mean_carrier_lifetimes(G_lesser(:,:,RIM_k_ibz(:),it_mem),E,k)
      call RT_output('life',TIME=NE_time/FS2AUT)
      !
    endif
@@ -302,7 +302,7 @@ subroutine RT_driver(E,X,k,q)
    ! Now print Energetics, current and (eventually) potential 
    !=========================================================
    !
-   call RT_Observables(E,k,G_lesser(:,:,:,it_mem),on_the_fly_operators)
+   call RT_Observables(E,k,G_lesser(:,:,RIM_k_ibz(:),it_mem),on_the_fly_operators)
    !
 #if defined _ELPH
    !
@@ -330,6 +330,7 @@ subroutine RT_driver(E,X,k,q)
    !============================================================
    !
    call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
+   stop
    !
    ! Integration
    !=============

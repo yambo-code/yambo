@@ -22,6 +22,7 @@
 integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  use etsf_io
  use etsf_io_low_level
+ use etsf_data
  use pars,                only : SP,lchlen
  use LOGO,                only : pickup_a_random
  use com,                 only : msg,write_to_report,core_io_path, file_exists,write_the_logo
@@ -48,7 +49,8 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  type(levels)                 :: en
  type(bz_samp)                :: k
- character(lchlen)            :: ETSF_file_name
+ !
+ character(lchlen)            :: KSS_filename,WFK_filename
  integer                      :: ID,io_err,ik,icycle, ib_grp
  integer,     external        :: ioDB1, ioKB_abinit
  real(SP), allocatable        :: wf_disk(:,:,:,:)
@@ -56,9 +58,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! 
  ! Work Space
  !
- ! The local variables to handle ETSF data.
- type(etsf_dims)             :: dims  ! The dimensions of our system
- logical                     :: lstat ! to get informed on error
+ logical                     :: lstat      ! to get informed on error
  type(etsf_io_low_error)     :: error_data ! to store informations about errors
  integer                     :: ncid
  !
@@ -89,10 +89,27 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Check input filenames 
  !
  call msg('s','Checking input file ...')
+ !
+ if(index(trim(inf),'KSS')/=0) ETSF_kind='KSS'
+ if(index(trim(inf),'WFK')/=0) ETSF_kind='WFK'
+ !
+ if(trim(ETSF_kind)=='KSS') then
+   KSS_filename=trim(inf)
+   call msg('s','ETSF KSS file ',trim(KSS_filename))
+ endif
+ !
+ if(trim(ETSF_kind)=='WFK') then
+   WFK_filename=trim(inf)
+   call msg('s','ETSF WFK file ',trim(WFK_filename))
+ endif
+ !
+ if(trim(ETSF_kind)/='KSS'.and.trim(ETSF_kind)/='WFK') then
+   call msg('ln','File kind not supported! Use either KSS or WFK filename.')
+   call MPI_close
+   return
+ endif
 
- ETSF_file_name = trim(inf)
- call msg('s','ETSF format file set to ',trim(ETSF_file_name))
- if(.not.file_exists(ETSF_file_name)) then
+ if(.not.file_exists(trim(inf))) then
    call msg('ln','File not found! Specify -F filename.')
    call MPI_close
    return
@@ -100,7 +117,9 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Open ETSF file for reading
  !
- call etsf_io_low_open_read(ncid, trim(ETSF_file_name), lstat, error_data = error_data)
+ if(trim(ETSF_kind)=='KSS') call etsf_io_low_open_read(ncid, trim(KSS_filename), lstat, error_data = error_data)
+ if(trim(ETSF_kind)=='WFK') call etsf_io_low_open_read(ncid, trim(WFK_filename), lstat, error_data = error_data)
+ !
  if (.not. lstat) call etsf_long_error(error_data)
  call msg('s','DBs path set to :',trim(core_io_path))
  !
@@ -109,18 +128,16 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call e2y_db1(en,k,ncid)
  !
- ! Write the data to YAMBO DB1
- !
- call msg('s',' == Writing DB1 ...')
- call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
- io_err=ioDB1(en,k,ID)
- !
  if (force_noWFs) then
+   !
+   ! Write the data to YAMBO DB1
+   !
+   call msg('s',' == Writing DB1 ...')
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+   io_err=ioDB1(en,k,ID)
    call msg('ln','done ==')
    call MPI_close
    return
- else
-   call msg('l','done ==')
  endif
  !
  call wf_splitter()
@@ -128,10 +145,16 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! WF & PP
  !==========================================
  !
- call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...') 
+ if(trim(ETSF_kind)=='KSS') then
+   call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...') 
+   call PP_alloc_abinit()
+ endif
+ !
+ if(trim(ETSF_kind)=='WFK') &
+&  call msg('s',' == Writing DB2 (wavefunctions) ...') 
+ !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
- call PP_alloc_abinit()
-
+ !
  do ik=1,nkibz
    !
    do ib_grp=1,wf_nb_io_groups
@@ -139,27 +162,38 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
      ! Read from the etsf-nc file
      !
      call e2y_wf(wf_disk,ik,ib_grp,ncid)
-     call e2y_kb_pp(ik,ncid) 
      ! 
-     ! Write to the YAMBO database
+     ! Write to the YAMBO WF database
      ! 
-     if (n_atoms_species_max>0.and.ib_grp==1) then
-       if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-       if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
-       io_err=ioKB_abinit(ID) 
-     endif
      if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
      if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
      io_err=ioWF(ID,wf=wf_disk)
      !
+     if(trim(ETSF_kind)=='KSS') then
+       call e2y_kb_pp(ik,ncid) 
+       if (n_atoms_species_max>0.and.ib_grp==1) then
+         if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+         if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
+         io_err=ioKB_abinit(ID) 
+       endif
+     endif
+     !
    enddo
    !
  enddo
+ !
  deallocate(wf_disk)
-
- call PP_free()
-
+ if(trim(ETSF_kind)=='KSS') call PP_free()
+ !
+ call msg('l','done ==')
+ !
+ ! Write the data to YAMBO DB1
+ !
+ call msg('s',' == Writing DB1 ...')
+ call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+ io_err=ioDB1(en,k,ID)
  call msg('ln','done ==')
+ call MPI_close
  !
  ! Close file
  !

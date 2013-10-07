@@ -28,7 +28,7 @@ subroutine RT_initialize(E,k,q)
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
  use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded,&
-&                         BZ_RIM_nkpt
+&                         BZ_RIM_nkpt,BZ_RIM_max_filling
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
 &                         l_RT_diamagnetic,RT_IO_steps,RT_IO_time,l_NE_simulate_BSE,&
@@ -37,8 +37,9 @@ subroutine RT_initialize(E,k,q)
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,             &
-&                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,RIM_k_ibz,     &
-&                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps,Fluence,l_RT_uses_E_RIM
+&                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,RIM_ibz_coo,    &
+&                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps,Fluence,          &
+&                         l_RT_uses_E_RIM,RIM_bz_coo,RT_ibz_coo
  use collisions_IO,  ONLY:l_STORE_COLLISIONS
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
@@ -51,7 +52,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,rest,ik
+ integer                  :: i1,rest,ik,ik_bz
  character(5)             :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_compute_fluence
@@ -260,15 +261,25 @@ subroutine RT_initialize(E,k,q)
  ! Number of K-points
  !====================
  RT_nk=k%nibz
- allocate(RIM_k_ibz(k%nibz))
+ allocate(RIM_ibz_coo(k%nibz,2))
+ allocate(RIM_bz_coo(k%nbz,2))
+ allocate(RT_ibz_coo(k%nibz,2))
  if (l_RT_uses_E_RIM) then
-   do ik=1,k%nbz
-     if (k%sstar(ik,2)==1) RIM_k_ibz(k%sstar(ik,1))=ik
+   RT_nk=0
+   RT_ibz_coo=0
+   do ik=1,k%nibz
+     ik_bz=1+sum(k%nstar(:ik-1))
+     RIM_ibz_coo(ik,:)=(/sum(BZ_RIM_nkpt(:ik_bz-1))+1,sum(BZ_RIM_nkpt(:ik_bz))/)
+     RT_ibz_coo(ik,:)=(/RT_nk+1,RT_nk+BZ_RIM_nkpt(ik_bz)/)
+     RT_nk=RT_nk+BZ_RIM_nkpt(ik_bz)
    enddo
-   RT_nk=sum(BZ_RIM_nkpt(RIM_k_ibz(:)))
- else
    do ik=1,k%nbz
-     RIM_k_ibz(ik)=ik
+     RIM_bz_coo(ik,:)=(/sum(BZ_RIM_nkpt(:ik-1))+1,sum(BZ_RIM_nkpt(:ik))/)
+   enddo
+ else
+   do ik=1,k%nibz
+     RIM_ibz_coo(ik,:)=ik
+     RT_ibz_coo(ik,:)=ik
    enddo
  endif
  !

@@ -22,11 +22,11 @@
 subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !  
  use pars,            ONLY:SP,cI,rZero,pi
- use electrons,       ONLY:levels,spin_occ
+ use electrons,       ONLY:levels,spin_occ,BZ_RIM_nkpt 
  use R_lattice,       ONLY:qindx_S,bz_samp
  use SC,              ONLY:it_now 
  use real_time,       ONLY:G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,&
-&                          Gr_ee_matrix,G_MEM_steps
+&                          Gr_ee_matrix,G_MEM_steps,RT_ibz_coo,l_RT_uses_E_RIM
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:COLLISIONS
  use parallel_m,      ONLY:PAR_QP_index,PAR_QPp_index,PAR_IND_QP,PAR_IND_QPp,PAR_Q_index,PAR_IND_Q
@@ -47,8 +47,8 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  ! Dimensioning and Zeroing
  !==========================
  !
- E_E_Hole_lifetime(:,i_k)    =rZero
- E_E_Electron_lifetime(:,i_k)=rZero
+ E_E_Hole_lifetime(:,RT_ibz_coo(i_k,1))    =rZero
+ E_E_Electron_lifetime(:,RT_ibz_coo(i_k,1))=rZero
  !
  ! Select only the m.e. of QP_table relative to kpt i_k
  !======================================================
@@ -72,7 +72,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
      i_q_s = q%sstar(iqbz,2)
      i_kmq = k%sstar(qindx_S(i_k,iqbz,1),1)
      !
-     f_kmq=-cI*G_lesser(i_np,i_np,i_kmq,MEM_index(it_now,G_MEM_steps))/spin_occ
+     f_kmq=-cI*G_lesser(i_np,i_np,RT_ibz_coo(i_kmq,1),MEM_index(it_now,G_MEM_steps))/spin_occ
      !
      do i_qp2=1,QP_n_states
        !
@@ -83,7 +83,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
        i_mp = QP_table(i_qp2,2)
        i_p  = QP_table(i_qp2,3)
        !
-       f_p=-cI*G_lesser(i_m,i_m,i_p,MEM_index(it_now,G_MEM_steps))/spin_occ
+       f_p=-cI*G_lesser(i_m,i_m,RT_ibz_coo(i_p,1),MEM_index(it_now,G_MEM_steps))/spin_occ
        !
        do i_p_star=1,k%nstar(i_p)
          !
@@ -93,7 +93,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          !
          i_pmq =k%sstar(i_pmq_bz,1)
          !
-         f_pmq =-cI*G_lesser(i_mp,i_mp,i_pmq,MEM_index(it_now,G_MEM_steps))
+         f_pmq =-cI*G_lesser(i_mp,i_mp,RT_ibz_coo(i_pmq,1),MEM_index(it_now,G_MEM_steps))
          !
          pre_factor=abs(4.*pi*COLLISIONS(i_qp1_mem)%v3(i_qp2_mem,i_p_s,i_q_mem))**2
          !
@@ -102,8 +102,10 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          f_E_factor=(1._SP-f_kmq)*(1._SP-f_p)*f_pmq
          f_H_factor=f_kmq*f_p*(2._SP-f_pmq)
          !
-         E_E_Electron_lifetime(i_n,i_k)= E_E_Electron_lifetime(i_n,i_k)+pre_factor*Gr_integral*f_E_factor
-         E_E_Hole_lifetime(i_n,i_k)    = E_E_Hole_lifetime(i_n,i_k)+pre_factor*Gr_integral*F_H_factor
+         E_E_Electron_lifetime(i_n,RT_ibz_coo(i_k,1))= E_E_Electron_lifetime(i_n,RT_ibz_coo(i_k,1))+&
+&                                                   pre_factor*Gr_integral*f_E_factor
+         E_E_Hole_lifetime(i_n,RT_ibz_coo(i_k,1))    = E_E_Hole_lifetime(i_n,RT_ibz_coo(i_k,1))+&
+&                                                   pre_factor*Gr_integral*F_H_factor
          !
        enddo
        !
@@ -112,5 +114,12 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
    enddo
    !
  enddo
+ !
+ if (.not.l_RT_uses_E_RIM) return
+ !
+ do i_p=RT_ibz_coo(i_k,1)+1,RT_ibz_coo(i_k,2)
+   E_E_Electron_lifetime(i_n,i_p)= E_E_Electron_lifetime(i_n,RT_ibz_coo(i_k,1))
+   E_E_Hole_lifetime(i_n,i_p)= E_E_Hole_lifetime(i_n,RT_ibz_coo(i_k,1))
+ enddo  
  !
 end subroutine RT_Coulomb_relaxation

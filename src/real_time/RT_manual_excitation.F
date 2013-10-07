@@ -27,7 +27,7 @@ subroutine RT_manual_excitation(E,k)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands
  use real_time,      ONLY:G_lesser,Eh_pumped_pair_energy,Eh_pumped_pair_width,  &
-&                         Eh_pumped_Nel,RIM_k_ibz
+&                         Eh_pumped_Nel,RT_ibz_coo
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg
@@ -104,11 +104,11 @@ subroutine RT_manual_excitation(E,k)
    do ib=SC_bands(1),SC_bands(2)
      !
      if(.not.Pumped_state(ib,ik)) cycle
-     if(Pump_level(ib,ik)>0) G_lesser(ib,ib,RIM_k_ibz(ik),1)=cI*spin_occ*       &
+     if(Pump_level(ib,ik)>0) G_lesser(ib,ib,RT_ibz_coo(ik,1),1)=cI*spin_occ*       &
 &                              min(1._SP,1._SP/sqrt(abs(real(Pump_level(ib,ik),SP)))/coeff)
-     if(Pump_level(ib,ik)<0) G_lesser(ib,ib,RIM_k_ibz(ik),1)=cI*spin_occ*(1._SP-&
+     if(Pump_level(ib,ik)<0) G_lesser(ib,ib,RT_ibz_coo(ik,1),1)=cI*spin_occ*(1._SP-&
 &                              min(1._SP,1._SP/sqrt(abs(real(Pump_level(ib,ik),SP)))/coeff))
-     if(Pump_level(ib,ik)>0) delta_Nel=delta_Nel-cI*G_lesser(ib,ib,RIM_k_ibz(ik),1)*k%weights(ik)*2._SP
+     if(Pump_level(ib,ik)>0) delta_Nel=delta_Nel-cI*G_lesser(ib,ib,RT_ibz_coo(ik,1),1)*k%weights(ik)*2._SP
    enddo   
  enddo
  !

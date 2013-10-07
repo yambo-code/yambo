@@ -22,11 +22,11 @@
 subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
  !  
  use pars,           ONLY:SP,cI,pi
- use electrons,      ONLY:levels,spin_occ,n_full_bands
+ use electrons,      ONLY:levels,spin_occ,n_full_bands,BZ_RIM_max_filling
  use SC,             ONLY:SC_bands,it_now
  use real_time,      ONLY:G_lesser,MEM_index,E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         B_mat_index,G_MEM_steps
+&                         B_mat_index,G_MEM_steps,l_RT_uses_E_RIM,RIM_ibz_coo,RT_ibz_coo
  use ELPH,           ONLY:ph_freqs_sq,ph_modes
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
  !
@@ -34,14 +34,14 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
  !
  type(levels),  intent(in)  :: E
  integer,       intent(in)  :: ik,ik_m_q,i_q,i_l
- real(SP),      intent(in)  :: Bose_f(2),f_k(SC_bands(2)-SC_bands(1)+1)
+ real(SP),      intent(in)  :: Bose_f(2),f_k(BZ_RIM_max_filling,SC_bands(2)-SC_bands(1)+1)
  complex(SP),   intent(in)  :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  logical :: l_skip_ABS
  !
  ! Work Space ...
  !
- integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem
- real(SP) :: f_k_m_q,P_ph_abs,P_ph_emit,ph_freq
+ integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem,ik_rim,ip_rim
+ real(SP) :: f_k_m_q,P_ph_abs,P_ph_emit,ph_freq,DELTA_E,DELTA_W
  real(SP), external :: RT_G_retarded_convolution
  !
  ! Dimensions
@@ -85,25 +85,35 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
      if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n_shift,i_np_shift) ) ) cycle
      i_b_mat_mem=PAR_B_mat_index(i_n_shift,i_np_shift)
      !
-     f_k_m_q=-cI*G_lesser(i_np_shift,i_np_shift,ik_m_q,MEM_index(it_now,G_MEM_steps))/spin_occ
+     DELTA_E=E%E(i_n_shift,ik,1)-E%E(i_np_shift,ik_m_q,1)
+     DELTA_W=abs(E%W(i_n_shift,ik,1))+abs(E%W(i_np_shift,ik_m_q,1))
      !
-     P_ph_abs  =RT_G_retarded_convolution("QP",E%E(i_n_shift,ik,1)-E%E(i_np_shift,ik_m_q,1),ph_freq,&
-&                                         abs(E%W(i_n_shift,ik,1))+abs(E%W(i_np_shift,ik_m_q,1)),E%E_ind_gap(1),+1)
-     P_ph_emit =RT_G_retarded_convolution("QP",E%E(i_n_shift,ik,1)-E%E(i_np_shift,ik_m_q,1),ph_freq,&
-&                                         abs(E%W(i_n_shift,ik,1))+abs(E%W(i_np_shift,ik_m_q,1)),E%E_ind_gap(1),-1)
-     !
-     E_P_Hole_lifetime(i_n_shift,ik)=E_P_Hole_lifetime(i_n_shift,ik)+&
-&                                    abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_abs*Bose_f(2)
-     if (.not.l_skip_ABS) &
-&     E_P_Ho_abs_lifetime(i_n_shift,ik)=E_P_Ho_abs_lifetime(i_n_shift,ik)+&
-&                                      abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_emit*Bose_f(1)
-     !
-     E_P_Electron_lifetime(i_n_shift,ik)=E_P_Electron_lifetime(i_n_shift,ik)+&
-&                                        abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_emit*Bose_f(2)
-     !
-     if (.not.l_skip_ABS) &
-&     E_P_El_abs_lifetime(i_n_shift,ik)=E_P_El_abs_lifetime(i_n_shift,ik)+&
-&                                      abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_abs*Bose_f(1)
+     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       do ip_rim=RIM_ibz_coo(ik_m_q,1),RIM_ibz_coo(ik_m_q,2)
+         !
+         if (l_RT_uses_E_RIM) then
+           DELTA_E=E%E_RIM(i_n_shift,ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1),1)-E%E_RIM(i_np_shift,ip_rim,1)
+         endif
+         !
+         f_k_m_q=-cI*G_lesser(i_np_shift,i_np_shift,ip_rim,MEM_index(it_now,G_MEM_steps))/spin_occ
+         !
+         P_ph_abs  =RT_G_retarded_convolution("QP",DELTA_E,ph_freq,DELTA_W,E%E_ind_gap(1),+1)
+         P_ph_emit =RT_G_retarded_convolution("QP",DELTA_E,ph_freq,DELTA_W,E%E_ind_gap(1),-1)
+         !
+         E_P_Hole_lifetime(i_n_shift,ik_rim)=E_P_Hole_lifetime(i_n_shift,ik_rim)+&
+&                                            abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_abs*Bose_f(2)
+         !
+         E_P_Electron_lifetime(i_n_shift,ik_rim)=E_P_Electron_lifetime(i_n_shift,ik_rim)+&
+&                                                abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_emit*Bose_f(2)
+         !
+         if (.not.l_skip_ABS) then
+           E_P_Ho_abs_lifetime(i_n_shift,ik_rim)=E_P_Ho_abs_lifetime(i_n_shift,ik_rim)+&
+&                                                abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_emit*Bose_f(1)
+           E_P_El_abs_lifetime(i_n_shift,ik_rim)=E_P_El_abs_lifetime(i_n_shift,ik_rim)+&
+&                                                abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_abs*Bose_f(1)
+         endif
+       enddo
+     enddo
      !
    enddo
    !

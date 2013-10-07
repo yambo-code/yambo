@@ -92,7 +92,7 @@ module electrons
  ! 
  ! Fine energy grid Tables
  !   
- integer  :: BZ_RIM_max_filling
+ integer  :: BZ_RIM_max_filling = 1
  integer  :: BZ_RIM_tot_nkpts
  integer  :: BZ_RIM_nbands
  logical  :: RIM_is_symmetry_expanded=.FALSE.

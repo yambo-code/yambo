@@ -138,7 +138,9 @@ module real_time
  ! Relaxation and Dissipation 
  !----------------------------
  logical                  :: l_RT_uses_E_RIM
- integer,     allocatable :: RIM_k_ibz(:)
+ integer,     allocatable :: RT_ibz_coo(:,:)
+ integer,     allocatable :: RIM_ibz_coo(:,:)
+ integer,     allocatable :: RIM_bz_coo(:,:)
  !
  ! ELPH kernel...
  !----------------
@@ -448,6 +450,8 @@ module real_time
        call mem_est("QP_Vnl_xc")
        !
      endif
+     !
+     deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo)
      !
      deallocate(E_xc)
      call mem_est('Exc')

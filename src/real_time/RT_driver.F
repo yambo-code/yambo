@@ -36,7 +36,7 @@ subroutine RT_driver(E,X,k,q)
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_steps,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
-&                         it_start,RT_output,NE_time,NE_dynamics,RT_update,RIM_k_ibz,&
+&                         it_start,RT_output,NE_time,NE_dynamics,RT_update,RT_ibz_coo,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
@@ -288,13 +288,13 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Current and Polarization
    !==========================
-   call RT_current_AND_polarization(k,E,G_lesser(:,:,RIM_k_ibz(:),it_mem),A_vecpot)
+   call RT_current_AND_polarization(k,E,G_lesser(:,:,RT_ibz_coo(:,1),it_mem),A_vecpot)
    !
    if ( (l_ph_corr.or.l_carrier_dynamics) .and. do_output) then
      !
      ! Mean Carrier Lifetimes
      !=======================
-     call RT_mean_carrier_lifetimes(G_lesser(:,:,RIM_k_ibz(:),it_mem),E,k)
+     call RT_mean_carrier_lifetimes(G_lesser(:,:,RT_ibz_coo(:,1),it_mem),E,k)
      call RT_output('life',TIME=NE_time/FS2AUT)
      !
    endif
@@ -302,7 +302,7 @@ subroutine RT_driver(E,X,k,q)
    ! Now print Energetics, current and (eventually) potential 
    !=========================================================
    !
-   call RT_Observables(E,k,G_lesser(:,:,RIM_k_ibz(:),it_mem),on_the_fly_operators)
+   call RT_Observables(E,k,G_lesser(:,:,RT_ibz_coo(:,1),it_mem),on_the_fly_operators)
    !
 #if defined _ELPH
    !
@@ -330,7 +330,6 @@ subroutine RT_driver(E,X,k,q)
    !============================================================
    !
    call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
-   stop
    !
    ! Integration
    !=============

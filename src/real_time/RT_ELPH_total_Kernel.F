@@ -38,11 +38,11 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !  
  use pars,           ONLY:SP,cI,cZero
- use electrons,      ONLY:levels,spin_occ
+ use electrons,      ONLY:levels,spin_occ,BZ_RIM_max_filling
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,it_now 
  use real_time,      ONLY:Sigma_relax,q_weight,elph_gkkp_expanded,l_RT_CCA_Kernel,&
-&                         MEM_index,G_MEM_steps,G_lesser
+&                         MEM_index,G_MEM_steps,G_lesser,RT_ibz_coo
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_nibz,PAR_Xk_ibz_index
@@ -58,7 +58,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  ! Work Space ...
  !
  integer               :: i_s,i_map(-1:1),il,i_gkkp
- real(SP)              :: ph_freq,N_q(2),f_k(SC_bands(2)-SC_bands(1)+1)
+ real(SP)              :: ph_freq,N_q(2),f_k(SC_bands(2)-SC_bands(1)+1,BZ_RIM_max_filling)
  !
  complex(SP)           :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: S_mat_out_of_eq(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
@@ -70,7 +70,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  ! ... band index ...
  integer               :: i_n,i_np,i_m,B_dim,i_np_m,i_n_m
  ! ... BZ index ...
- integer               :: iqbz,ik_m_q,ik_mem
+ integer               :: iqbz,ik_m_q,ik_mem,ik_rim
  !
  B_dim=SC_bands(2)-SC_bands(1)+1
  !
@@ -87,7 +87,10 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  S_mat_sum=cZero
  if (l_RT_CCA_Kernel) then
    do i_n=1,B_dim
-     f_k(i_n)=-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,ik,MEM_index(it_now,G_MEM_steps))/spin_occ
+     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       f_k(i_n,ik_rim-RT_ibz_coo(ik,1)+1)=-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,&
+&                                                      ik,MEM_index(it_now,G_MEM_steps))/spin_occ
+     enddo
    enddo
  endif
  !

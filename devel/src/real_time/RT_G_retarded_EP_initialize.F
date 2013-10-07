@@ -42,7 +42,7 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  ! Work Space
  !
  real(SP):: GAMMA_,E_center
- integer :: ik,iqbz,i_n,i_np,ik_mem,i_b_mat_mem,iq_mem,ik_m_q,il,is,i_s,i_trans(2),kin_scatt(3),&
+ integer :: ik,iqbz,i_n,i_np,ik_mem,i_b_mat_mem,iq_mem,ik_m_q,il,is,i_trans(2),kin_scatt(3),&
 &           ik_rim_1,ik_rim_2,i1,i2
  real(SP), allocatable :: Gr_integrand(:)
  real(SP),    external :: Laplace_transform
@@ -99,7 +99,7 @@ subroutine RT_G_retarded_EP_initialize(E,k)
              !
              if (l_G_retarded_DB) then
                !
-               E_center=Gr_peak_pos(ik,i_n)-Gr_peak_pos(ik_m_q,i_np)+i_s*abs(sqrt(ph_freqs_sq(iqbz,il)))
+               E_center=Gr_peak_pos(ik,i_n)-Gr_peak_pos(ik_m_q,i_np)+is*abs(sqrt(ph_freqs_sq(iqbz,il)))
                !           
                if (.not.Energy_Condition(Gr_peak_pos(ik,i_n)-Gr_peak_pos(ik_m_q,i_np),E_center)) cycle
                !

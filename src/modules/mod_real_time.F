@@ -138,7 +138,6 @@ module real_time
  ! Relaxation and Dissipation 
  !----------------------------
  logical                  :: l_RT_uses_E_RIM
- integer,     allocatable :: RT_ibz_coo(:,:)
  integer,     allocatable :: RIM_ibz_coo(:,:)
  integer,     allocatable :: RIM_bz_coo(:,:)
  !
@@ -437,7 +436,8 @@ module real_time
    subroutine RT_free
      !
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
-     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n,RT_occupations
+     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n,RT_occupations,RT_all2ibz,&
+&                             RT_ibz_coo,RT_Nk_ibz
      use memory_m,       ONLY:mem_est
      use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
@@ -451,7 +451,7 @@ module real_time
        !
      endif
      !
-     deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo)
+     deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz)
      !
      deallocate(E_xc)
      call mem_est('Exc')

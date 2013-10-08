@@ -25,12 +25,12 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex,l_carrier_dynamics
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:V_hartree_sc,Ho,SC_bands,it_now
+ use SC,             ONLY:V_hartree_sc,Ho,SC_bands,it_now,RT_nk,RT_Nk_ibz,RT_ibz_coo
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,l_NE_with_fields, &
 &                         l_NE_simulate_IP,Fluence
  use electrons,      ONLY:levels
- use QP_m,           ONLY:QP_Vnl_xc,QP_Sc,QP_nk
+ use QP_m,           ONLY:QP_Vnl_xc,QP_Sc
  use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use IO_m,           ONLY:IO_and_Messaging_switch
@@ -40,7 +40,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
- complex(SP),   intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
+ complex(SP),   intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  complex(SP),   intent(out):: on_the_fly_operators(8)
  !
  ! WorkSpace
@@ -49,7 +49,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  ! Shadows
  !
- integer     :: ib,ik
+ integer     :: ib,ik,ik_rim
  complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex,E_mg,delta_G
  !      
  E_kin    =(0._SP,0._SP)
@@ -71,7 +71,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !  
  ! E_ion = - i Tr {Ho G^<} - Ekin
  !
- call RT_average_operator(VALUE=E_ion,O_MATRIX=Ho,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
+ call RT_average_operator(VALUE=E_ion,O_MATRIX=Ho,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
  !
  E_ion = E_ion - E_kin
  !
@@ -79,7 +79,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
    !
    ! Hartree potential Energy
    !
-   call RT_average_operator(VALUE=E_h,O_REAL=V_hartree_sc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
+   call RT_average_operator(VALUE=E_h,O_REAL=V_hartree_sc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
    !
    E_h=E_h/2.
    !
@@ -87,7 +87,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  if(l_sc_hf.or.(l_sc_cohsex.and..not.l_carrier_dynamics).and..not.l_NE_simulate_IP) then
    !
-   call RT_average_operator(VALUE=Ex,O_QP=QP_Vnl_xc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
+   call RT_average_operator(VALUE=Ex,O_QP=QP_Vnl_xc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
    !
  endif
  !
@@ -96,7 +96,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
    ! Notice that XC0_and_HARTREE0 contains the Hartree part only in case
    ! of indipendent particles
    !
-   call RT_average_operator(VALUE=Exc,O_MATRIX=XC0_and_HARTREE0,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
+   call RT_average_operator(VALUE=Exc,O_MATRIX=XC0_and_HARTREE0,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
    !
  else
    !
@@ -108,11 +108,11 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
      call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0)
      call IO_and_Messaging_switch("+report +log +io_in +io_out")
      !
-     call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
+     call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
      !
    else if(l_sc_cohsex.and..not.l_carrier_dynamics) then
      !      
-     call RT_average_operator(VALUE=Exc,O_QP=QP_Sc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
+     call RT_average_operator(VALUE=Exc,O_QP=QP_Sc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
      !
    endif
    !
@@ -120,7 +120,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  ! Total number of electrons
  !
- call RT_average_operator(VALUE=Trace_Gf,G=G_lesser(:,:,:),en=en,k=k,nK_mem=QP_nk)
+ call RT_average_operator(VALUE=Trace_Gf,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
  !
  ! Andrea [21/12/2011]
  ! 
@@ -143,7 +143,9 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
      if (ib<SC_bands(1)) then
        delta_G=delta_G+dG_sign*en%f(ib,ik,1)*k%weights(ik)
      else
-       delta_G=delta_G-dG_sign*cI*G_lesser(ib,ib,ik)*k%weights(ik)
+       do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)  
+         delta_G=delta_G-dG_sign*cI*G_lesser(ib,ib,ik_rim)*k%weights(ik)/real(RT_Nk_ibz(ik))
+       enddo
      endif
      !
    enddo

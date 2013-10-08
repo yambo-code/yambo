@@ -24,9 +24,9 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  use pars,            ONLY:SP,cI,rZero,pi
  use electrons,       ONLY:levels,spin_occ,BZ_RIM_nkpt 
  use R_lattice,       ONLY:qindx_S,bz_samp
- use SC,              ONLY:it_now 
+ use SC,              ONLY:it_now,RT_ibz_coo
  use real_time,       ONLY:G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,&
-&                          Gr_ee_matrix,G_MEM_steps,RT_ibz_coo,l_RT_uses_E_RIM
+&                          Gr_ee_matrix,G_MEM_steps,l_RT_uses_E_RIM
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:COLLISIONS
  use parallel_m,      ONLY:PAR_QP_index,PAR_QPp_index,PAR_IND_QP,PAR_IND_QPp,PAR_Q_index,PAR_IND_Q

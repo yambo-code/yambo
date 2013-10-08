@@ -31,13 +31,13 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
  use R_lattice,      ONLY:bz_samp,nkibz
- use SC,             ONLY:SC_bands,it_now,RT_nk
+ use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,MEM_index,&
 &                         G_lesser,G_MEM_steps,RT_dynamics_jumps,it_start,&
-&                         Life_MEM_steps,SAVED_lifetime,E_P_Ho_abs_lifetime
+&                         Life_MEM_steps,SAVED_lifetime,E_P_Ho_abs_lifetime,RT_all2ibz
  !
  implicit none
  !
@@ -198,10 +198,14 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  enddo
  !
  if(RT_is_dumped.and.NE_dynamics) then
-   forall(ib1=SC_bands(1):SC_bands(2),ib2=SC_bands(1):SC_bands(2)) 
-     Sigma_relax(ib1,ib2,:)=Sigma_relax(ib1,ib2,:)-cI*RT_Deph_Matrix(ib1,ib2,:)*&
-&                           (G_input(ib1,ib2,:)-G_lesser_reference(ib1,ib2,:))
-   end forall
+   do ik=1,RT_nk
+     do ib1=SC_bands(1),SC_bands(2)
+       do ib2=SC_bands(1),SC_bands(2)
+         Sigma_relax(ib1,ib2,ik)=Sigma_relax(ib1,ib2,ik)-cI*RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))*&
+&                                (G_input(ib1,ib2,ik)-G_lesser_reference(ib1,ib2,ik))
+       enddo
+     enddo
+   enddo
  endif
  !
 end subroutine RT_relaxation

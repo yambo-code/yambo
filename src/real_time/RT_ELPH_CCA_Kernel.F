@@ -19,36 +19,36 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
+subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
  !  
  use pars,           ONLY:SP,cI,pi
- use electrons,      ONLY:levels,spin_occ,n_full_bands,BZ_RIM_max_filling
- use SC,             ONLY:SC_bands,it_now
+ use electrons,      ONLY:levels,spin_occ,n_full_bands
+ use SC,             ONLY:SC_bands,it_now,RT_ibz_coo,RT_Nk_ibz
  use real_time,      ONLY:G_lesser,MEM_index,E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         B_mat_index,G_MEM_steps,l_RT_uses_E_RIM,RIM_ibz_coo,RT_ibz_coo
- use ELPH,           ONLY:ph_freqs_sq,ph_modes
+&                         B_mat_index,G_MEM_steps,l_RT_uses_E_RIM,RIM_ibz_coo
+ use ELPH,           ONLY:ph_freqs_sq
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
  !
  implicit none
  !
  type(levels),  intent(in)  :: E
  integer,       intent(in)  :: ik,ik_m_q,i_q,i_l
- real(SP),      intent(in)  :: Bose_f(2),f_k(BZ_RIM_max_filling,SC_bands(2)-SC_bands(1)+1)
+ real(SP),      intent(in)  :: Bose_f(2)
  complex(SP),   intent(in)  :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  logical :: l_skip_ABS
  !
  ! Work Space ...
  !
  integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem,ik_rim,ip_rim
- real(SP) :: f_k_m_q,P_ph_abs,P_ph_emit,ph_freq,DELTA_E,DELTA_W
+ real(SP) :: f_k_m_q,P_ph_abs,P_ph_emit,ph_freq,DELTA_E,DELTA_W,pre_factor
  real(SP), external :: RT_G_retarded_convolution
  !
  ! Dimensions
  !============
  !
  B_dim=SC_bands(2)-SC_bands(1)+1
- !
+ pre_factor=1._SP
  ik_mem=PAR_Xk_ibz_index(ik)
  iq_mem=PAR_Q_index(i_q)
  !
@@ -93,6 +93,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
          !
          if (l_RT_uses_E_RIM) then
            DELTA_E=E%E_RIM(i_n_shift,ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1),1)-E%E_RIM(i_np_shift,ip_rim,1)
+           pre_factor=1._SP/real(RT_Nk_ibz(ik_m_q))
          endif
          !
          f_k_m_q=-cI*G_lesser(i_np_shift,i_np_shift,ip_rim,MEM_index(it_now,G_MEM_steps))/spin_occ
@@ -101,16 +102,16 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
          P_ph_emit =RT_G_retarded_convolution("QP",DELTA_E,ph_freq,DELTA_W,E%E_ind_gap(1),-1)
          !
          E_P_Hole_lifetime(i_n_shift,ik_rim)=E_P_Hole_lifetime(i_n_shift,ik_rim)+&
-&                                            abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_abs*Bose_f(2)
+&                                            abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_abs*Bose_f(2)*pre_factor
          !
          E_P_Electron_lifetime(i_n_shift,ik_rim)=E_P_Electron_lifetime(i_n_shift,ik_rim)+&
-&                                                abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_emit*Bose_f(2)
+&                                                abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_emit*Bose_f(2)*pre_factor
          !
          if (.not.l_skip_ABS) then
            E_P_Ho_abs_lifetime(i_n_shift,ik_rim)=E_P_Ho_abs_lifetime(i_n_shift,ik_rim)+&
-&                                                abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_emit*Bose_f(1)
+&                                                abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_emit*Bose_f(1)*pre_factor
            E_P_El_abs_lifetime(i_n_shift,ik_rim)=E_P_El_abs_lifetime(i_n_shift,ik_rim)+&
-&                                                abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_abs*Bose_f(1)
+&                                                abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_abs*Bose_f(1)*pre_factor
          endif
        enddo
      enddo

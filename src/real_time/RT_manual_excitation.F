@@ -25,9 +25,9 @@ subroutine RT_manual_excitation(E,k)
  use units,          ONLY:BO2ANG
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands
+ use SC,             ONLY:SC_bands,RT_ibz_coo
  use real_time,      ONLY:G_lesser,Eh_pumped_pair_energy,Eh_pumped_pair_width,  &
-&                         Eh_pumped_Nel,RT_ibz_coo
+&                         Eh_pumped_Nel
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg

@@ -42,11 +42,12 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R,&
+&                         RT_ibz_coo
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,                             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
-&                         G_lesser_reference,                                    &
+&                         G_lesser_reference,                                                  &
 &                         l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start,              &
 &                         l_RT_needs_XC0,Ho_plus_Sigma
  use fields,         ONLY:gauge_field
@@ -108,7 +109,9 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
      ! NOTICE THAT: this approximation is valid only for linear self-energies 
      !              in G_lesser as exchange or COHSEX(with W fixed) 
      !
-     if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_compose(G_input-G_lesser_reference)
+     if (l_sc_hf.or.l_sc_cohsex) then
+       call COLLISIONS_compose(G_input(:,:,RT_ibz_coo(:,1))-G_lesser_reference(:,:,RT_ibz_coo(:,1)))
+     endif
      !
    endif
    !

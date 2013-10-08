@@ -54,7 +54,7 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
      f_occ=-cI*G_lesser(ib,ib,ik)
      !
      if (abs(f_occ)>f_tresh) then
-       n_e_states=n_e_states+k%weights(ik)
+       n_e_states=n_e_states+k%weights(RT_all2ibz(ik))
        if (allocated(E_P_Hole_lifetime)) then
          RT_mean_lifetimes(2)=RT_mean_lifetimes(2)+E_P_Electron_lifetime(ib,ik)*pre_factor
          RT_mean_lifetimes(4)=RT_mean_lifetimes(4)+E_P_El_abs_lifetime(ib,ik)*pre_factor

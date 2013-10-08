@@ -40,7 +40,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
  !
  ! Work Space ...
  !
- integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem,ik_rim,ip_rim
+ integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem,ik_rim,ip_rim,i1,i2
  real(SP) :: f_k_m_q,P_ph_abs,P_ph_emit,ph_freq,DELTA_E,DELTA_W,pre_factor
  real(SP), external :: RT_G_retarded_convolution
  !
@@ -89,14 +89,16 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
      DELTA_W=abs(E%W(i_n_shift,ik,1))+abs(E%W(i_np_shift,ik_m_q,1))
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       do ip_rim=RIM_ibz_coo(ik_m_q,1),RIM_ibz_coo(ik_m_q,2)
-         !
-         if (l_RT_uses_E_RIM) then
-           DELTA_E=E%E_RIM(i_n_shift,ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1),1)-E%E_RIM(i_np_shift,ip_rim,1)
-           pre_factor=1._SP/real(RT_Nk_ibz(ik_m_q))
-         endif
+       do ip_rim=RT_ibz_coo(ik_m_q,1),RT_ibz_coo(ik_m_q,2)
          !
          f_k_m_q=-cI*G_lesser(i_np_shift,i_np_shift,ip_rim,MEM_index(it_now,G_MEM_steps))/spin_occ
+         !
+         if (l_RT_uses_E_RIM) then
+           i1=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+           i2=ip_rim-RT_ibz_coo(ik_m_q,1)+RIM_ibz_coo(ik_m_q,1)
+           DELTA_E=E%E_RIM(i_n_shift,i1,1)-E%E_RIM(i_np_shift,i2,1)
+           pre_factor=1._SP/real(RT_Nk_ibz(ik_m_q))
+         endif
          !
          P_ph_abs  =RT_G_retarded_convolution("QP",DELTA_E,ph_freq,DELTA_W,E%E_ind_gap(1),+1)
          P_ph_emit =RT_G_retarded_convolution("QP",DELTA_E,ph_freq,DELTA_W,E%E_ind_gap(1),-1)

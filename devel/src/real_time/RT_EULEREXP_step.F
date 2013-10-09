@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_EULEREXP_step(G_new_k,G_old_k,U1_k,U2_k,ik,deltaT)
+subroutine RT_EULEREXP_step(G_new_k,G_old_k,U1_k,U2_k,ik_rim,deltaT)
  !
  use pars,           ONLY:SP,cI,cZERO
  use wrapper,        ONLY:M_by_M
@@ -33,7 +33,7 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,U1_k,U2_k,ik,deltaT)
  complex(SP), intent(in)  :: U1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: U2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(out) :: G_new_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- integer,     intent(in)  :: ik
+ integer,     intent(in)  :: ik_rim
  !
  complex(SP) :: M_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)) 
  !
@@ -44,6 +44,6 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,U1_k,U2_k,ik,deltaT)
  call M_by_M('n','n',SC_nbands,U1_k,G_old_k,M_tmp)
  call M_by_M('n','n',SC_nbands,M_tmp,U2_k,G_new_k)
  !
- if(allocated(Sigma_relax))  G_new_k = G_new_k - cI*deltaT*Sigma_relax(:,:,ik)
+ if(allocated(Sigma_relax))  G_new_k = G_new_k - cI*deltaT*Sigma_relax(:,:,ik_rim)
  !
 end subroutine RT_EULEREXP_step

@@ -21,11 +21,12 @@
 !                  
 subroutine RT_databases_IO(E,it)
  !
- use QP_m,           ONLY:QP_nk
  use drivers,        ONLY:l_ph_corr
  use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,NE_i_time,it_start,&
 &                         OCCUPATIONS_IO_and_interpolate,RT_IO_steps,&
-&                         l_RT_skip_GF_IO,l_RT_skip_OCC_IO,l_RT_skip_JandP_IO
+&                         l_RT_skip_GF_IO,l_RT_skip_OCC_IO,&
+&                         l_RT_skip_JandP_IO
+ use SC,             ONLY:RT_nk
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL
  use electrons,      ONLY:levels
 #if defined _ELPH
@@ -93,7 +94,7 @@ subroutine RT_databases_IO(E,it)
    endif
 #endif
    !
-   do ik = 1, QP_nk 
+   do ik = 1, RT_nk 
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
 #if defined _ELPH

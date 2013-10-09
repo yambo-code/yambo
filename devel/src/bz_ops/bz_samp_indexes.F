@@ -54,6 +54,9 @@ subroutine bz_samp_indexes(k,Xk,q)
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use zeros,          ONLY:G_iku_zero
  use parser_m,       ONLY:parser
+#if defined _ELPH
+ use ELPH,           ONLY:elph_use_q_grid
+#endif
  !
  implicit none
  type(bz_samp)::k,Xk,q
@@ -77,7 +80,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  if (.not.bse_scattering) bse_scattering=l_bse
 #if defined _ELPH
- bse_scattering=.TRUE.
+ bse_scattering=elph_use_q_grid
 #endif
  !
  q%description='q'
@@ -382,10 +385,10 @@ subroutine bz_samp_indexes(k,Xk,q)
          nullify(q%pt)
        endif
        call mem_est("k_pt q_pt q_norm q_sstar q-pt")
-       allocate(q%pt(1,3),q_pt(1,3),k_pt(1,3),q_norm(1),q_sstar(1,2)) 
+       allocate(q%pt(1,3),q_pt(1,3),k_pt(k%nibz,3),q_norm(1),q_sstar(1,2)) 
        q%pt=0.
        q_pt=0.
-       k_pt=0.
+       k_pt=k%pt
        q_norm=q0_def_norm
        nqbz=1
        nqibz=1

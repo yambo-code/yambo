@@ -39,21 +39,19 @@ subroutine RT_start_and_restart(E,k,q,X)
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_contains_lda,l_ph_corr,l_carrier_dynamics
  use com,            ONLY:msg,warning,error
- use QP_m,           ONLY:QP_nk,COHSEX_use_empties,&
-&                         QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
+ use QP_m,           ONLY:QP_nk,COHSEX_use_empties,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:G_lesser,ID,NE_steps,RT_ind_J,    &
+ use real_time,      ONLY:ID,NE_steps,RT_ind_J,&
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_RT_CCA_Kernel,&
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,Gr_bands,&
-&                         l_G_retarded_DB,N_Gr_descs,Gr_description
+&                         l_G_retarded_DB,N_Gr_descs,Gr_description,l_RT_uses_E_RIM
  use fields,         ONLY:A_vecpot,A_vecpot_previous
- use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
-&                         rho_convergence,H_rotate,V_hartree_sc,&
-&                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional,&
-&                         RT_nk,RT_k,RT_occupations,SC_nbands
+ use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,&
+&                         rho_convergence,H_rotate,V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
+&                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional,RT_occupations,SC_nbands
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE,IO_and_Messaging_switch
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
@@ -92,10 +90,17 @@ subroutine RT_start_and_restart(E,k,q,X)
  RT_P               =cZERO
  RT_ind_J           =cZERO
  ! 
- forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk)
-   G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
-   RT_occupations(ib,ik)=E%f(ib,ik,1)
- end forall
+ do ib=SC_bands(1),SC_bands(2)
+   do ik=1,RT_nk
+     if (l_RT_uses_E_RIM) then
+       G_lesser(ib,ib,ik,1) =cI*E%f_RIM(ib,ik,1)
+       RT_occupations(ib,ik)=E%f_RIM(ib,ik,1)
+     else
+       G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
+       RT_occupations(ib,ik)=E%f(ib,ik,1)
+     endif
+   enddo
+ enddo
  !
  ! Possibility to pump by hand one or more electrons up
  !======================================================
@@ -111,13 +116,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  endif
  !
  call SC_bare_Hamiltonian(E,k,k)
- !
- ! Save a copy of the k-grid
- !===========================
- ! 
- RT_nk=k%nibz
- allocate(RT_k(RT_nk,3))
- RT_k=k%pt
  !
  ! Perform a first I/O to check which DBs are present. 
  !=====================================================
@@ -155,7 +153,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  RESTART                = io_G ==0
  if (l_ph_corr.and..not.l_RT_CCA_Kernel) RESTART = io_G==0.and.io_THETA==0
  !
- SC_DB_present =  all((/io_E==0,io_WF==0,io_V==0/))
+ SC_DB_present =  all((/io_E==0,io_WF==0,io_V==0,.not.l_RT_uses_E_RIM/))
  !
  if(SC_DB_present) then
    !
@@ -255,7 +253,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
  endif
  !
- if(.not.SC_DB_present.and.l_RT_needs_XC0) then
+ if (.not.SC_DB_present.and.l_RT_needs_XC0) then
    !
    ! Build Hartree and XCo 
    !=======================
@@ -284,11 +282,11 @@ subroutine RT_start_and_restart(E,k,q,X)
    ! in sc_bare_Hamiltonian I need to recalculate it here when SC_lw_band>1
    ! as it is also used in XC_potential_driver
    ! 
-   call el_density_matrix(G_lesser(:,:,:,1),E,k,rho_n,SC_bands(1),.false.)
+   call el_density_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,k,rho_n,SC_bands(1),.false.)
    rho_reference=rho_n
    !
    if (allocated(full_rho)) then
-     call el_density_matrix(G_lesser(:,:,:,1),E,k,rho_n,1,.false.)
+     call el_density_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,k,rho_n,1,.false.)
      full_rho=rho_n
    endif
    !
@@ -395,8 +393,9 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
-   if(it_start>Thermal_steps.and..not.l_NE_simulate_IP) & 
-&     call el_density_matrix(G_lesser_reference,E,k,rho_reference,SC_bands(1),.false.)
+   if (it_start>Thermal_steps.and..not.l_NE_simulate_IP) then 
+     call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_reference,SC_bands(1),.false.)
+   endif
    !
  endif
  !
@@ -428,7 +427,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Store the starting Eigenvalues in Eo
  !======================================
  !
- if(.not.associated(E%Eo)) allocate(E%Eo(SC_bands(2),QP_nk,n_sp_pol))
+ if (.not.associated(E%Eo)) allocate(E%Eo(SC_bands(2),QP_nk,n_sp_pol))
  E%Eo(1:SC_bands(2),1:QP_nk,1:n_sp_pol)=E%E(1:SC_bands(2),1:QP_nk,1:n_sp_pol)
  !
  ! Retarded Green Functions matrix
@@ -436,7 +435,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  if (l_ph_corr.or.l_carrier_dynamics) then
    !
-   if (l_ph_corr)          call RT_G_retarded_EP_initialize(E,k)
+   !if (l_ph_corr)          call RT_G_retarded_EP_initialize(E,k)
    if (l_carrier_dynamics) call RT_G_retarded_EE_initialize(E,k,q)
    !
    if (.not.l_G_retarded_DB) then

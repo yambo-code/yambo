@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_FIT(k,E,RT_occ_DATA,time)
+subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
  ! 
  ! FIT the occupations with a Gauss–Newton algorithm
  !
  use units,          ONLY:HA2EV,HA2KEL,FS2AUT
  use YPP,            ONLY:RT_n_FIT
  use pars,           ONLY:SP,lchlen
- use SC,             ONLY:SC_bands,n_SC_descriptions,SC_description
+ use SC,             ONLY:SC_bands,n_SC_descriptions,SC_description,RT_nk
  use QP_m,           ONLY:QP_table,QP_n_states
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:Tel
@@ -38,7 +38,6 @@ subroutine RT_occupations_FIT(k,E,RT_occ_DATA,time)
  !
  implicit none
  !
- type(bz_samp) :: k
  type(levels)  :: E
  !
  real(SP)              :: RT_occ_DATA(QP_n_states,RT_n_FIT)
@@ -130,7 +129,7 @@ subroutine RT_occupations_FIT(k,E,RT_occ_DATA,time)
          ik= QP_table(i_s,3)
          if (ib<SC_bands(1)) cycle
          if (ib>SC_bands(2)) cycle
-         if (ik>k%nibz) cycle
+         if (ik>RT_nk) cycle
          !
          if(i_s<=last_occupied.and.ifit==2.and.l_two_temperatures) cycle
          if(i_s> last_occupied.and.ifit==1.and.l_two_temperatures) cycle
@@ -246,7 +245,7 @@ subroutine RT_occupations_FIT(k,E,RT_occ_DATA,time)
      !
      if (ib<SC_bands(1)) cycle
      if (ib>SC_bands(2)) cycle
-     if (ik>k%nibz) cycle
+     if (ik>RT_nk) cycle
      !
      call msg('o '//trim(output_fname),'',(/E_sorted(i_s)*HA2EV,&
   &            RT_occ_DATA(i_s,n1:n2)/),INDENT=-2,USE_TABS=.true.)

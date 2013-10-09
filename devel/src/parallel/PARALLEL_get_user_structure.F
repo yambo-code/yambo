@@ -44,6 +44,11 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
  !
  do i_s=1,n_CPU_str_max
    !
+   if (ncpu==1) then
+     CPU_structure(i_s)%CPU_string=" "
+     CPU_structure(i_s)%ROLE_string=" "
+   endif
+   !
    if (trim(CPU_structure(i_s)%Long_Description)==ENVIRONMENT) then
      i_selected=i_s
      CPU_string_=CPU_structure(i_selected)%CPU_string

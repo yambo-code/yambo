@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_repair(E,k)
+subroutine RT_occupations_repair(E)
  !
  ! Andrea April 2nd 2012
  ! 
@@ -36,7 +36,6 @@ subroutine RT_occupations_repair(E,k)
  !
  implicit none
  !
- type(bz_samp) :: k
  type(levels)  :: E
  !
  ! Work Space

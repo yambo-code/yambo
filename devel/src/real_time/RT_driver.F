@@ -31,7 +31,7 @@ subroutine RT_driver(E,X,k,q)
  use wave_func,      ONLY:WF_load,WF_free
  use R_lattice,      ONLY:bz_samp,qindx_free
  use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho,&
-&                         SC_QP_setup
+&                         SC_QP_setup,RT_ibz_coo 
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_steps,&
@@ -56,17 +56,17 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Notice that E is never changed!
  !
- type(levels)  :: E
- type(bz_samp) :: k,q
- type(X_t)     :: X(2)
- logical, external  ::stop_now
+ type(levels)      :: E
+ type(bz_samp)     :: k,q
+ type(X_t)         :: X(2)
+ logical, external :: stop_now
  ! 
  ! Work Space
  !
- logical                  :: do_output
- integer                  :: it,ik,ib,it_mem,it_mem_p1
- real(SP)                 :: E_previous,E_now
- complex(SP)              :: on_the_fly_operators(8)
+ logical           :: do_output
+ integer           :: it,ik,ib,it_mem,it_mem_p1
+ real(SP)          :: E_previous,E_now
+ complex(SP)       :: on_the_fly_operators(8)
  !
  if (l_ph_corr.and.l_carrier_dynamics) then
    call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph AND e-e scattering')
@@ -79,7 +79,7 @@ subroutine RT_driver(E,X,k,q)
  endif
  !
  call section('+','Initialization')
- !########################################################################################
+ !#################################
  !
  call set_real_printed_length(f_length=10,g_length=10)  
  !
@@ -266,14 +266,14 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Simmetrization
    !
-   forall( ib=SC_bands(1):SC_bands(2) )  G_lesser(ib,ib,:,it_mem)=cI*aimag(G_lesser(ib,ib,:,it_mem))
+   forall( ib=SC_bands(1):SC_bands(2) ) G_lesser(ib,ib,:,it_mem)=cI*aimag(G_lesser(ib,ib,:,it_mem))
    !
    ! End dynamics ?
    !===============
    if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.
    if (stop_now(.FALSE.)) then
-      NE_steps=(int((it-Thermal_steps)/RT_IO_steps)+1)*RT_IO_steps
-      l_Dynamics_is_over=.TRUE.
+     NE_steps=(int((it-Thermal_steps)/RT_IO_steps)+1)*RT_IO_steps
+     l_Dynamics_is_over=.TRUE.
    endif
    !
    ! Write DBs
@@ -338,19 +338,19 @@ subroutine RT_driver(E,X,k,q)
    call RT_Integrator(G_lesser(:,:,:,it_mem_p1),G_lesser(:,:,:,it_mem),A_vecpot,A_vecpot_previous,&
 &                     RT_step,E,k,q,Integrator_name,NE_time)
    !
-   if(it==Thermal_steps) then
+   if (it==Thermal_steps) then
      !
      ! I freeze the last self-energy + hartree in XC0_and_HARTREE and I work
      ! only with the differences rho-rho_reference and G_lesser-G_lesser_reference
      ! 
-     call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
+     call RT_Collision(G_lesser(:,:,RT_ibz_coo(:,1),it_mem),A_vecpot_previous,E,k,q,NE_time)
      XC0_and_HARTREE0=SC_R-Ho
      !
    endif
    !
    ! Diagonalization
    ! ===============
-   if(it==Thermal_steps.or. (mod(it,RT_diagonalization_steps)==0.and.RT_diagonalization_steps>0) ) then
+   if (it==Thermal_steps.or. (mod(it,RT_diagonalization_steps)==0.and.RT_diagonalization_steps>0) ) then
      !
      do ik=1,E%nk
        call mat_dia_inv(DIAGO,SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),E_real=E%E(:SC_bands(2),ik,1))

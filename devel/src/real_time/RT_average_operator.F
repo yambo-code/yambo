@@ -22,9 +22,9 @@
 subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  !
  use pars,           ONLY:SP,cI
- use SC,             ONLY:SC_bands,SC_nbands
+ use SC,             ONLY:SC_bands,SC_nbands,RT_all2ibz,RT_Nk_ibz,RT_nk,RT_ibz_coo
  use R_lattice,      ONLY:bz_samp 
- use QP_m,           ONLY:QP_nk,QP_n_states
+ use QP_m,           ONLY:QP_n_states
  use electrons,      ONLY:n_sp_pol,levels
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:wf
@@ -34,7 +34,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  implicit none
  !
  type(bz_samp), intent(in) :: k
- complex(SP),   intent(in) :: G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
+ complex(SP),   intent(in) :: G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  integer,       intent(in) :: nK_mem
  complex(SP),  intent(out) :: VALUE
  complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
@@ -45,7 +45,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  !
  ! Work Space
  !
- integer     :: i1,ik,SC_bands2
+ integer     :: i1,ik,SC_bands2,ik_ibz
  complex(SP) :: Hk(SC_bands(2),SC_bands(2),n_sp_pol)
  !
  SC_bands2=SC_nbands**2
@@ -61,31 +61,37 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
      VALUE=VALUE+sum(en%f(i1,:,1)*k%weights(:))
    enddo
    do i1=SC_bands(1),SC_bands(2)
-     VALUE=VALUE-cI*sum(G(i1,i1,:)*k%weights(:))
+     do ik=1,RT_nk
+       VALUE=VALUE-cI*G(i1,i1,ik)*k%weights(RT_all2ibz(ik))/real(RT_Nk_ibz(RT_all2ibz(ik)))
+     enddo
    enddo
    !
    return
    !
  endif 
  !
- do ik=1,QP_nk
+ do ik_ibz=1,k%nibz
    ! 
-   if (QP_nk/=nK_mem) then
-     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle   
+   if (k%nibz/=nK_mem) then
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik_ibz)) cycle   
    endif
    !
-   call make_Hk_matrix(ik)
+   call make_Hk_matrix(ik_ibz)
    !
    do i1=1,SC_bands(1)-1
-     VALUE=VALUE+conjg(Hk(i1,i1,1))*en%f(i1,ik,1)*k%weights(ik)
+     VALUE=VALUE+conjg(Hk(i1,i1,1))*en%f(i1,ik_ibz,1)*k%weights(ik_ibz)
    enddo
-   !
-   VALUE=VALUE-cI*Vstar_dot_V(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
-&                                        G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))*k%weights(ik)
-   !
+   ! 
+   do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
+     !
+     VALUE=VALUE-cI*Vstar_dot_V(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
+&                                          G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))*&  
+&                                          k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+     !
+   enddo
  enddo
  !
- if (QP_nk/=nK_mem) call PP_redux_wait(VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ if (k%nibz/=nK_mem) call PP_redux_wait(VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  contains 
    !
@@ -95,7 +101,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
      integer :: i1,ik_mem
      !
      ik_mem=ik
-     if (QP_nk/=nK_mem) ik_mem=PAR_Xk_ibz_index(ik)
+     if (k%nibz/=nK_mem) ik_mem=PAR_Xk_ibz_index(ik)
      !
      Hk=(0._SP,0._SP)
      !

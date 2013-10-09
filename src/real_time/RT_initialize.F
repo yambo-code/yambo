@@ -37,7 +37,7 @@ subroutine RT_initialize(E,k,q)
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,             &
-&                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,RIM_ibz_coo,    &
+&                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,RIM_ibz_coo,   &
 &                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps,Fluence,          &
 &                         l_RT_uses_E_RIM,RIM_bz_coo
  use collisions_IO,  ONLY:l_STORE_COLLISIONS
@@ -269,14 +269,14 @@ subroutine RT_initialize(E,k,q)
  allocate(RT_Nk_ibz(k%nibz))
  RT_Nk_ibz=1
  if (l_RT_uses_E_RIM) then
-   RT_ibz_coo=0
+   RT_nk=0
    do ik=1,k%nibz
      ik_bz=1+sum(k%nstar(:ik-1))
      RIM_ibz_coo(ik,:)=(/sum(BZ_RIM_nkpt(:ik_bz-1))+1,sum(BZ_RIM_nkpt(:ik_bz))/)
      RT_ibz_coo(ik,:)=(/RT_nk+1,RT_nk+BZ_RIM_nkpt(ik_bz)/)
+     RT_nk=RT_nk+BZ_RIM_nkpt(ik_bz)
      RT_Nk_ibz(ik)=BZ_RIM_nkpt(ik_bz)
    enddo
-   RT_nk=sum(RT_Nk_ibz)
    do ik=1,k%nbz
      RIM_bz_coo(ik,:)=(/sum(BZ_RIM_nkpt(:ik-1))+1,sum(BZ_RIM_nkpt(:ik))/)
    enddo

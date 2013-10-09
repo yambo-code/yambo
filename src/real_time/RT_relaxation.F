@@ -27,6 +27,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! Output: Sigma_relax
  !
+ use units
  use pars,           ONLY:SP,cI,cZERO
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
@@ -37,7 +38,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,MEM_index,&
 &                         G_lesser,G_MEM_steps,RT_dynamics_jumps,it_start,&
-&                         Life_MEM_steps,SAVED_lifetime,E_P_Ho_abs_lifetime,RT_all2ibz
+&                         Life_MEM_steps,SAVED_lifetime,E_P_Ho_abs_lifetime,RT_all2ibz,l_RT_uses_E_RIM
  !
  implicit none
  !
@@ -178,6 +179,14 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !=====================
  !
  call RT_impose_N_conservation(E,k)
+ !
+ !DEBUG>
+ !if (l_RT_uses_E_RIM) then
+ !  write (100,'(5f20.10)') Time/FS2AUT,sum(E_P_Electron_lifetime(5:7,1))*HA2EV
+ !else
+ !  write (200,'(5f20.10)') Time/FS2AUT,sum(E_P_Electron_lifetime(5:7,1))*HA2EV
+ !endif
+ !DEBUG<
  !
  ! Dephasing Matrix
  !==================

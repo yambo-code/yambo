@@ -25,7 +25,7 @@ subroutine RT_manual_excitation(E,k)
  use units,          ONLY:BO2ANG
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,RT_ibz_coo
+ use SC,             ONLY:SC_bands,RT_ibz_coo,RT_Nk_ibz
  use real_time,      ONLY:G_lesser,Eh_pumped_pair_energy,Eh_pumped_pair_width,  &
 &                         Eh_pumped_Nel
  use stderr,         ONLY:intc
@@ -39,8 +39,8 @@ subroutine RT_manual_excitation(E,k)
  !
  ! Work Space
  !
- integer :: i1,i2,i3,ib,ik
- real(SP):: local_E_window,coeff,delta_Nel
+ integer :: i1,i2,i3,ib,ik,ik_rim
+ real(SP):: local_E_window,coeff,delta_Nel,occupation
  integer :: Pump_level(E%nb,E%nk)
  logical :: Pumped_state(E%nb,E%nk)
  !
@@ -103,12 +103,19 @@ subroutine RT_manual_excitation(E,k)
  do ik=1,E%nk
    do ib=SC_bands(1),SC_bands(2)
      !
-     if(.not.Pumped_state(ib,ik)) cycle
-     if(Pump_level(ib,ik)>0) G_lesser(ib,ib,RT_ibz_coo(ik,1),1)=cI*spin_occ*       &
-&                              min(1._SP,1._SP/sqrt(abs(real(Pump_level(ib,ik),SP)))/coeff)
-     if(Pump_level(ib,ik)<0) G_lesser(ib,ib,RT_ibz_coo(ik,1),1)=cI*spin_occ*(1._SP-&
-&                              min(1._SP,1._SP/sqrt(abs(real(Pump_level(ib,ik),SP)))/coeff))
-     if(Pump_level(ib,ik)>0) delta_Nel=delta_Nel-cI*G_lesser(ib,ib,RT_ibz_coo(ik,1),1)*k%weights(ik)*2._SP
+     if (.not.Pumped_state(ib,ik)) cycle
+     !
+     occupation=min(1._SP,1._SP/sqrt(abs(real(Pump_level(ib,ik),SP)))/coeff)
+     !
+     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       if (Pump_level(ib,ik)>0) then
+         G_lesser(ib,ib,ik_rim,1)=cI*spin_occ*occupation
+         delta_Nel=delta_Nel-cI*G_lesser(ib,ib,ik_rim,1)*k%weights(ik)*2._SP/real(RT_Nk_ibz(ik))
+       else if (Pump_level(ib,ik)<0) then
+         G_lesser(ib,ib,ik_rim,1)=cI*spin_occ*(1._SP-occupation)
+       endif
+     enddo
+     !
    enddo   
  enddo
  !

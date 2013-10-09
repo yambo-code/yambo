@@ -139,7 +139,7 @@ module real_time
  !----------------------------
  logical                  :: l_RT_uses_E_RIM
  integer,     allocatable :: RIM_ibz_coo(:,:)
- integer,     allocatable :: RIM_bz_coo(:,:)
+ integer,     allocatable :: RIM_bz_coo(:,:)  
  !
  ! ELPH kernel...
  !----------------

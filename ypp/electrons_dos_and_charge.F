@@ -93,20 +93,20 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
 #if defined _YPP_RT
    !
-   if(l_RT_dos) then
+   if (l_RT_dos) then
      !
-		 n_T_steps=RT_occupations_check(Xen,Xk)
-		 l_3D_plot=.not.n_T_steps==1
-		 !
-		 if (.not.n_T_steps>0.and..not.l_3D_plot) return
-		 !
-		 dos_bands=SC_bands
-		 !
-		 call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
-		 call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
-		 call msg('s','Time ref   [fs]:',OCC_T_ref/FS2AUT)
-		 call msg('s','Time steps     :',n_T_steps)
-		 call msg('s','Energy steps   :',dos_E_steps)
+	 n_T_steps=RT_occupations_check(Xen,Xk)
+	 l_3D_plot=.not.n_T_steps==1
+	 !
+	 if (.not.n_T_steps>0.and..not.l_3D_plot) return
+	 !
+	 dos_bands=SC_bands
+	 !
+	 call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
+	 call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
+	 call msg('s','Time ref   [fs]:',OCC_T_ref/FS2AUT)
+	 call msg('s','Time steps     :',n_T_steps)
+	 call msg('s','Energy steps   :',dos_E_steps)
      !
    endif
    !
@@ -178,7 +178,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
      if(l_RT_dos) then
        call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
-       call RT_occupations_repair(Xen,Xk)
+       call RT_occupations_repair(Xen)
      endif
 #endif
      !

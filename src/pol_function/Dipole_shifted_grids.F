@@ -217,8 +217,10 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
      ! not rewritten.
      !
      core_io_path = core_io_path_save
-     io_err=ioDB1_selective_scan(E_shift,Xk_shift,trim(core_io_path))
+     io_err=ioDB1_selective_scan(E_shift,Xk_shift,trim(core_io_path),'all')
      wf_ng=wf_ng_shifted
+     !
+     call set_parms(grid='  local', command='  reset')
      !
    end subroutine
    !

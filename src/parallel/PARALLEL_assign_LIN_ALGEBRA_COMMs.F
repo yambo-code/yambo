@@ -24,7 +24,7 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,WHAT,COMM_index,COMM_op
  use parallel_m,    ONLY:MPI_comm,PARALLEL_n_structures_active,PARALLEL_CPU_role,&
 &                        PARALLEL_cpu_mat_inversion,PARALLEL_cpu_mat_diagonalization,&
 &                        INTER_CHAIN,INTRA_CHAIN,CHILD_CHAIN,ncpu,myid,mpi_comm_world,&
-&                        COMM_copy,n_chains,PAR_COM_Q_A2A,PAR_COM_Q_INDEX
+&                        COMM_copy,n_chains,PAR_COM_Q_A2A,PAR_COM_Q_INDEX,comm_default_value
  !
  implicit none
  !
@@ -47,7 +47,7 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,WHAT,COMM_index,COMM_op
  !
  if (i_lin_algebra_chain==n_chains) then ! This means LK (serial). N_cpu_lin_algebra=1
    !
-   COMM_operation%COMM  =0
+   COMM_operation%COMM  =comm_default_value
    COMM_operation%CPU_id=0
    COMM_operation%n_CPU =1
    !
@@ -61,7 +61,7 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,WHAT,COMM_index,COMM_op
    COMM_operation%CPU_id=myid
    COMM_operation%n_CPU =ncpu
    !
-   COMM_index%COMM  =0
+   COMM_index%COMM  =comm_default_value
    COMM_index%CPU_id=0
    COMM_index%n_CPU =1
    !

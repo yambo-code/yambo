@@ -161,6 +161,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call PARALLEL_global_indexes(E,k,q,"GW")
  !
+ ! Redefine iq_to_start to be CPU-dependent
+ !
+ do iqbz=1,q%nbz 
+   if (PAR_IND_Q%element_1D(q%sstar(iqbz,1))) then
+     iq_to_start=iqbz
+     exit
+   endif
+ enddo
+ !
  call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
  !
  call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,QP_index=PAR_IND_QP)

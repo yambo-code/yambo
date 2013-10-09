@@ -1081,7 +1081,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
     !
      if (l_ppa)    call initactivate(1,'em1d')
      if (l_gw0.and..not.l_ppa.and..not.l_cohsex.and..not.&
-&        l_HF_and_locXC)    call initactivate(1,'em1d')
+&        l_HF_and_locXC.and..not.l_ph_corr)  &
+&                  call initactivate(1,'em1d')
      if (l_cohsex) call initactivate(1,'em1s')
      if (l_W_eh)   call initactivate(1,'em1s')
      if (l_bsk)    call initactivate(1,'optics')

@@ -97,16 +97,22 @@ module SC
  !
  complex(SP), allocatable :: G_lesser(:,:,:,:) ! Band, Band, K, Time
  !
+ ! Table pointing to the position of the uniform grid points in the
+ ! G_lesser structure
+ !
+ integer,     allocatable :: RT_ibz_coo(:,:)
+ integer,     allocatable :: RT_all2ibz(:)  
+ integer,     allocatable :: RT_Nk_ibz(:)  
+ !
  ! Real-Time occupations
  !
  logical                  :: l_RT_occupations_in_use
  real(SP),    allocatable :: RT_occupations(:,:) 
  !
  ! K-points: In case I want to use the G_lesser to define the occupations
- ! of a post-run I need to store in the database a copy of the K grid uses
+ ! of a post-run I need to keep here the number of k-points 
  !
  integer                 :: RT_nk
- real(SP), allocatable   :: RT_k(:,:)
  !
  interface
    !

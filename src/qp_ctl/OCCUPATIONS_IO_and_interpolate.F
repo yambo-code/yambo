@@ -25,7 +25,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use pars,           ONLY:SP,lchlen
  use parser_m,       ONLY:parser
  use real_time,      ONLY:ID,G_lesser,NE_i_time,RT_IO_steps,RT_step,MEM_index,G_MEM_steps
- use SC,             ONLY:SC_bands,RT_occupations,RT_nk,RT_k,l_RT_occupations_in_use
+ use SC,             ONLY:SC_bands,RT_occupations,RT_nk,l_RT_occupations_in_use
  use IO_m,           ONLY:io_control,NONE,OP_WR_CL,OP_RD,RD_CL,OP_RD_CL,DUMP,variable_is_found
  use electrons,      ONLY:levels,BZ_RIM_nbands,n_sp_pol,n_met_bands,&
 &                         n_full_bands,nel,E_reset,BZ_RIM_tot_nkpts
@@ -180,8 +180,8 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    !
    Time=(NE_i_time-1)*RT_step
    !
-   if (.not.allocated(RT_k)) then
-     allocate(RT_occupations(SC_bands(1):SC_bands(2),RT_nk),RT_k(RT_nk,3))
+   if (.not.allocated(RT_occupations)) then
+     allocate(RT_occupations(SC_bands(1):SC_bands(2),RT_nk))
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
    endif
    !

@@ -23,7 +23,8 @@ integer function ioE_RIM(E,ID)
  !
  use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_max_filling,&
-&                         BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol,BZ_RIM_ipol_weight
+&                         BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol,BZ_RIM_ipol_weight,&
+&                         RIM_is_symmetry_expanded
  use R_lattice,      ONLY:nXkbz
  use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
@@ -37,10 +38,17 @@ integer function ioE_RIM(E,ID)
  if (ioE_RIM/=0) goto 1
  !
  ioE_RIM=io_header(ID)
- call io_elemental(ID,VAR="PARS",VAR_SZ=3,MENU=1)
+ if (ver_is_gt_or_eq(ID,revision=2740)) then
+   call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=1)
+ else
+   call io_elemental(ID,VAR="PARS",VAR_SZ=3,MENU=1)
+ endif
  call io_elemental(ID,I0=BZ_RIM_nbands,    VAR=' Bands                           :')
  call io_elemental(ID,I0=BZ_RIM_tot_nkpts, VAR=' BZ RIM k-points                 :')
  call io_elemental(ID,I0=BZ_RIM_max_filling,VAR=' BZ Blocks max filling           :')
+ if (ver_is_gt_or_eq(ID,revision=2740)) then
+   call io_elemental(ID,L0=RIM_is_symmetry_expanded,VAR=' Points expanded in the BZ       :')
+ endif
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  if (read_is_on(ID)) then

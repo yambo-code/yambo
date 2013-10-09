@@ -77,6 +77,7 @@ integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,i_err)
    k_rotated(:,is)=matmul(rl_sop(:,:,is),k_ref)
  enddo
  ! 
+ k_distance=10000.
  do i1=1,n_k
    !
    do is=1,nsym

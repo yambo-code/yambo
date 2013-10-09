@@ -27,25 +27,25 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! Output: Sigma_relax
  !
+ use units
  use pars,           ONLY:SP,cI,cZERO
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
- use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,it_now
- use QP_m,           ONLY:QP_nk
+ use R_lattice,      ONLY:bz_samp,nkibz
+ use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,MEM_index,&
 &                         G_lesser,G_MEM_steps,RT_dynamics_jumps,it_start,&
-&                         Life_MEM_steps,SAVED_lifetime,E_P_Ho_abs_lifetime
+&                         Life_MEM_steps,SAVED_lifetime,E_P_Ho_abs_lifetime,RT_all2ibz,l_RT_uses_E_RIM
  !
  implicit none
  !
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
- complex(SP),   intent(in)    :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
+ complex(SP),   intent(in)    :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
  ! Work Space
  !
@@ -60,7 +60,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! Andrea 4/7/2013. Fix of potential anomalous values
  ! of the G_lesser diagonal
  !
- do ik=1,QP_nk
+ do ik=1,RT_nk
    do ib1=SC_bands(1),SC_bands(2)
      G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps))=&
 &            cI*abs(-cI*G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps)))
@@ -92,7 +92,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    E_E_Hole_lifetime=0._SP
    E_E_Electron_lifetime=0._SP
    !
-   do ik=1,QP_nk
+   do ik=1,nkibz
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
@@ -115,7 +115,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      E_P_Ho_abs_lifetime=0._SP
    endif
    !
-   do ik=1,QP_nk
+   do ik=1,nkibz
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
@@ -135,7 +135,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  if (l_ph_corr.or.l_carrier_dynamics) then
    if (l_evaluate) then
-     do ik=1,QP_nk
+     do ik=1,RT_nk
        if (l_carrier_dynamics) then
          call PP_redux_wait(E_E_Electron_lifetime(:,ik))
          call PP_redux_wait(E_E_Hole_lifetime(:,ik))
@@ -158,7 +158,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
        endif
      enddo
    else if (l_interpolate) then
-     do ik=1,QP_nk
+     do ik=1,RT_nk
        do ib1=SC_bands(1),SC_bands(2)
          if (l_carrier_dynamics) then
            call RT_Lifetimes_Interpolation(E_E_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,1,:))
@@ -180,10 +180,18 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  call RT_impose_N_conservation(E,k)
  !
+ !DEBUG>
+ !if (l_RT_uses_E_RIM) then
+ !  write (100,'(5f20.10)') Time/FS2AUT,sum(E_P_Electron_lifetime(5:7,1))*HA2EV
+ !else
+ !  write (200,'(5f20.10)') Time/FS2AUT,sum(E_P_Electron_lifetime(5:7,1))*HA2EV
+ !endif
+ !DEBUG<
+ !
  ! Dephasing Matrix
  !==================
  !
- do ik=1,QP_nk
+ do ik=1,RT_nk
    do ib1=SC_bands(1),SC_bands(2)
      f_k(ib1)=-cI*G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps))/spin_occ
      if (l_carrier_dynamics) then
@@ -199,10 +207,14 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  enddo
  !
  if(RT_is_dumped.and.NE_dynamics) then
-   forall(ib1=SC_bands(1):SC_bands(2),ib2=SC_bands(1):SC_bands(2)) 
-     Sigma_relax(ib1,ib2,:)=Sigma_relax(ib1,ib2,:)-cI*RT_Deph_Matrix(ib1,ib2,:)*&
-&                           (G_input(ib1,ib2,:)-G_lesser_reference(ib1,ib2,:))
-   end forall
+   do ik=1,RT_nk
+     do ib1=SC_bands(1),SC_bands(2)
+       do ib2=SC_bands(1),SC_bands(2)
+         Sigma_relax(ib1,ib2,ik)=Sigma_relax(ib1,ib2,ik)-cI*RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))*&
+&                                (G_input(ib1,ib2,ik)-G_lesser_reference(ib1,ib2,ik))
+       enddo
+     enddo
+   enddo
  endif
  !
 end subroutine RT_relaxation

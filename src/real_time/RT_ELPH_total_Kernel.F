@@ -37,12 +37,11 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !  
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !  
- use pars,           ONLY:SP,cI,cZero
+ use pars,           ONLY:SP,cZero
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
- use SC,             ONLY:SC_bands,it_now 
- use real_time,      ONLY:Sigma_relax,q_weight,elph_gkkp_expanded,l_RT_CCA_Kernel,&
-&                         MEM_index,G_MEM_steps,G_lesser
+ use SC,             ONLY:SC_bands
+ use real_time,      ONLY:Sigma_relax,q_weight,elph_gkkp_expanded,l_RT_CCA_Kernel
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_nibz,PAR_Xk_ibz_index
@@ -58,7 +57,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  ! Work Space ...
  !
  integer               :: i_s,i_map(-1:1),il,i_gkkp
- real(SP)              :: ph_freq,N_q(2),f_k(SC_bands(2)-SC_bands(1)+1)
+ real(SP)              :: ph_freq,N_q(2)
  !
  complex(SP)           :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: S_mat_out_of_eq(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
@@ -85,11 +84,6 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  S_mat_eq=cZero
  S_mat_out_of_eq=cZero
  S_mat_sum=cZero
- if (l_RT_CCA_Kernel) then
-   do i_n=1,B_dim
-     f_k(i_n)=-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,ik,MEM_index(it_now,G_MEM_steps))/spin_occ
-   enddo
- endif
  !
  do iqbz=1,q%nbz
    !
@@ -126,7 +120,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
        ! Complete Collision Approximation (CCA)
        !=======================================
        !
-       call RT_ELPH_CCA_Kernel(ik,ik_m_q,iqbz,il,f_k,N_q,E,Gkkp,l_skip_ABS)
+       call RT_ELPH_CCA_Kernel(ik,ik_m_q,iqbz,il,N_q,E,Gkkp,l_skip_ABS)
        !
      else
        !

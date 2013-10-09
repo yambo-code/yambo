@@ -27,7 +27,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
  !
  !    y(t+dt) = y(t) + dt * f(t,y(t))
  !
- ! elseif(Integrator=="RK2")  Runge-Kutta 2nd order
+ ! else if(Integrator=="RK2")  Runge-Kutta 2nd order
  !
  !    y(t+dt) = y(t) + dt * f(t+dt/2,y(t+dt/2))
  !
@@ -36,7 +36,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
  !
  use pars,           ONLY:SP,schlen
  use com,            ONLY:error
- use SC,             ONLY:SC_bands,SC_nbands
+ use SC,             ONLY:SC_bands,SC_nbands,RT_ibz_coo,RT_all2ibz,RT_nk
  use R_lattice,      ONLY:bz_samp  
  use real_time,      ONLY:EULER,RK2,EULEREXP,RK2EXP,l_NE_with_fields
  use fields,         ONLY:gauge_field
@@ -54,7 +54,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
  ! 
  ! Work Space
  !
- integer     :: ik,SC_bands2_dot_nibz
+ integer     :: ik,SC_bands2_dot_nibz,ik_rim
  complex(SP) :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP) :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
@@ -64,72 +64,78 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
    !
    ! G(T+dt) = G(T) - i dt *(I1(T) - I2(T))
    !
-   do ik=1,k%nibz
-     call RT_build_I1_and_I2(G_old(:,:,ik),ik,I1_k,I2_k)
+   do ik=1,RT_nk
+     call RT_build_I1_and_I2(G_old(:,:,ik),RT_all2ibz(ik),ik,I1_k,I2_k)
      call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step)
    enddo
    !
-   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
+   if (l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
    !
- elseif(trim(Integrator)==EULEREXP) then
+ else if(trim(Integrator)==EULEREXP) then
    !
    ! G(T+dt) = U(dt) G(T) U(-dt) - i dt * Simga_relax(T)
    ! U(t) = exp ( Ho_plus_Sigma * t)
    !
    do ik=1,k%nibz
      call RT_build_U1_and_U2(ik,I1_k,I2_k,T_step)
-     call RT_EULEREXP_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,T_step)
+     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       call RT_EULEREXP_step(G_new(:,:,ik_rim),G_old(:,:,ik_rim),I1_k,I2_k,ik_rim,T_step)
+     enddo
    enddo
    !
-   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
+   if (l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
    !
- elseif(trim(Integrator)==RK2) then
+ else if(trim(Integrator)==RK2) then
    !
    ! Evaluate G(t+dt/2)
    !
-   do ik=1,k%nibz
-     call RT_build_I1_and_I2(G_old(:,:,ik),ik,I1_k,I2_k)
+   do ik=1,RT_nk
+     call RT_build_I1_and_I2(G_old(:,:,ik),RT_all2ibz(ik),ik,I1_k,I2_k)
      call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step/2._SP)
    enddo
    !
    ! Recalculate I1(t+dt/2) and I2(t+dt/2) using  G(t+dt/2) 
    !
-   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step/2._SP)
+   if (l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step/2._SP)
    !
    call RT_Collision(G_new,A_new,E,k,q,Time+T_step/2._SP)
    !
    ! final step G(t+dt)=G(t) + dt * (I1(t+dt/2) - I2(t+dt/2))
    !
-    do ik=1,k%nibz
-     call RT_build_I1_and_I2(G_new(:,:,ik),ik,I1_k,I2_k)
+    do ik=1,RT_nk
+     call RT_build_I1_and_I2(G_new(:,:,ik),RT_all2ibz(ik),ik,I1_k,I2_k)
      call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step)
    enddo
    !
-   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
+   if (l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
    !
- elseif(trim(Integrator)==RK2EXP) then
+ else if(trim(Integrator)==RK2EXP) then
    !
    ! Evaluate G(t+dt/2)
    !
    do ik=1,k%nibz
      call RT_build_U1_and_U2(ik,I1_k,I2_k,T_step/2._SP)
-     call RT_EULEREXP_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,T_step/2._SP)
+     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       call RT_EULEREXP_step(G_new(:,:,ik_rim),G_old(:,:,ik_rim),I1_k,I2_k,ik_rim,T_step/2._SP)
+     enddo
    enddo
    !
    ! Recalculate I1(t+dt/2) and Ho_plus_Sigma(t+dt/2) using  G(t+dt/2) 
    !
-   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step/2._SP)
+   if (l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step/2._SP)
    !
    call RT_Collision(G_new,A_new,E,k,q,Time+T_step/2._SP)
    !
    ! final step G(t+dt)= U1(t + dt) G(t) U2(t+dt) + dt * Sigma_relax(t+dt/2)
    !
-    do ik=1,k%nibz
+   do ik=1,k%nibz
      call RT_build_U1_and_U2(ik,I1_k,I2_k,T_step)
-     call RT_EULEREXP_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,T_step)
+     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       call RT_EULEREXP_step(G_new(:,:,ik_rim),G_old(:,:,ik_rim),I1_k,I2_k,ik_rim,T_step)
+     enddo
    enddo
    !
-   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
+   if (l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
    !
  else
    !

@@ -26,13 +26,12 @@ integer function RT_occupations_check(E,k)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use QP_m,           ONLY:OCC_ctl
- use com,            ONLY:msg
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,RT_IO_steps,l_RT_CCA_Kernel,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Ho_abs_lifetime
  use SC,             ONLY:SC_bands,RT_occupations
  use IO_m,           ONLY:LOG,NONE
- use com,            ONLY:warning,error
+ use com,            ONLY:warning
  use YPP,            ONLY:RT_occupations_ref,OCC_T_ref,OCC_deltaT,OCC_T_range
  !
  implicit none
@@ -42,9 +41,7 @@ integer function RT_occupations_check(E,k)
  !
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(1),imposed_COM=LOG)
  !
- if (.not.allocated(RT_occupations)) call error('OCCUPATIONS database not found')
- !
- call RT_occupations_repair(E,k)
+ call RT_occupations_repair(E)
  !
  if (.not.allocated(RT_occupations_ref)) then 
    !
@@ -72,7 +69,7 @@ integer function RT_occupations_check(E,k)
    !
    call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_ref,imposed_COM=NONE)
    !
-   call RT_occupations_repair(E,k)
+   call RT_occupations_repair(E)
    !
    RT_occupations_ref=RT_occupations
    !
@@ -90,7 +87,7 @@ integer function RT_occupations_check(E,k)
  !
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(2))
  !
- call RT_occupations_repair(E,k)
+ call RT_occupations_repair(E)
  !
  if (OCC_deltaT<RT_IO_steps*RT_step) then
    ! 

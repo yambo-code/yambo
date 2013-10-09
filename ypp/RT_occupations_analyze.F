@@ -24,17 +24,17 @@ subroutine RT_occupations_analyze(k,E)
  use drivers,        ONLY:l_carrier_dynamics,l_ph_corr
  use units,          ONLY:FS2AUT,SP,HA2EV
  use pars,           ONLY:schlen
- use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,set_real_printed_length
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels,spin,spin_occ
- use QP_m,           ONLY:QP_table,QP_n_states
+ use electrons,      ONLY:nel,levels,BZ_RIM_nbands,spin,spin_occ,n_sp_pol
+ use QP_m,           ONLY:QP_state,QP_table,QP_n_states
  use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT,RT_n_FIT,l_RT_Occ_FIT,l_RT_occ_Plot
  use com,            ONLY:msg,of_open_close,warning,error
+ use IO_m,           ONLY:NONE
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,&
 &                         E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime
- use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions,SC_bands
+&                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime,RIM_ibz_coo
+ use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions,SC_bands,RT_nk,RT_ibz_coo
  implicit none
  !
  type(bz_samp) ::k
@@ -42,16 +42,14 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! Work Space
  !
- integer               :: ik,ib,i_spin,i_s,i_T,n_T_steps,i_fp
- integer               :: i1,n1,n_skip_time
- real(SP)              :: io_Time,data_to_plot(10)
- real(SP), allocatable :: RT_occupations_sum(:,:)
- real(SP), allocatable :: RT_occ_DATA(:,:)
- real(SP)              :: RT_occ_Fit_time(RT_n_FIT)
+ integer               :: ik,ib,i_spin,i_s,i_T,n_T_steps,i_fp,i1,n1,n_skip_time,ik_rim,ip
+ real(SP)              :: io_Time,data_to_plot(10),RT_occ_Fit_time(RT_n_FIT)
+ real(SP), allocatable :: RT_occupations_sum(:,:),RT_occ_DATA(:,:)
  character(schlen)     :: titles(10)
  logical               :: l_ELPH_lifetimes
+ integer, allocatable  :: k_weights(:)
  logical, allocatable  :: l_RT_Occ_FIT_vec(:)
- integer,     external :: RT_occupations_check
+ integer,     external :: RT_occupations_check,RT_k_grid
  !
  call section('*','Real-Time occupations')
  !
@@ -61,6 +59,44 @@ subroutine RT_occupations_analyze(k,E)
  endif
  !
  if(l_RT_occ_FIT.and.RT_n_FIT<1) call error(' Occupations: RT_n_FIT<1')
+ !
+ io_TIME=0.
+ call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=io_TIME,imposed_COM=NONE)
+ if (.not.allocated(RT_occupations)) call error('OCCUPATIONS database not found')
+ !
+ ! RIM support of carrier dynamics
+ !=================================
+ !
+ if (RT_nk/=k%nibz) then
+   !
+   if (RT_k_grid(k)/=RT_nk) call error('Impossible to rebuild the RT k-grid')
+   !
+   ! Dump RIM energies in E and fill corresponding occupations
+   !
+   deallocate(E%f,E%E)
+   E%nb  =BZ_RIM_nbands
+   allocate(E%f(E%nb,RT_nk,n_sp_pol),E%E(E%nb,RT_nk,n_sp_pol),k_weights(RT_nk))
+   do ik=1,k%nibz
+     do ik_rim=1,RIM_ibz_coo(ik,2)-RIM_ibz_coo(ik,1)+1
+       ip=RT_ibz_coo(ik,1)+ik_rim-1
+       k_weights(ip)=k%weights(ik)/real(RIM_ibz_coo(ik,2)-RIM_ibz_coo(ik,1)+1)
+       E%E(:,ip,:)=E%E_RIM(:,RIM_ibz_coo(ik,1)+ik_rim-1,:)
+       E%f(:E%nbf,ip,:)=spin_occ
+     enddo
+   enddo
+   deallocate(k%weights)
+   allocate(k%weights(RT_nk))
+   k%weights=k_weights
+   deallocate(k_weights)
+   !
+   E%nk  =RT_nk
+   k%nibz=RT_nk
+   !
+   ! Re-build the QP table
+   !
+   deallocate(QP_state) 
+   !
+ endif
  !
  call QP_state_table_setup(E)
  !
@@ -117,7 +153,7 @@ subroutine RT_occupations_analyze(k,E)
    !
    call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=io_Time)
    !
-   call RT_occupations_repair(E,k)
+   call RT_occupations_repair(E)
    !
    do i_s=1,QP_n_states
      !
@@ -245,7 +281,7 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! f(eps_{ik,ib})
  !
- if(l_RT_occ_Fit) call RT_occupations_FIT(k,E,RT_occ_DATA,RT_occ_Fit_time)
+ if(l_RT_occ_Fit) call RT_occupations_FIT(E,RT_occ_DATA,RT_occ_Fit_time)
  !
  call set_real_printed_length()
  !

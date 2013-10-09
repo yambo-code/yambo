@@ -48,8 +48,11 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! I/O 
  !
  logical           :: l_flag
- integer           :: ID,i_err
+ integer           :: ID,i_err,i_err_RIM
  integer, external :: ioDB1,ioQINDX,iogrot
+#if defined _YPP_RT
+ integer, external :: ioE_RIM
+#endif
 #if defined _YPP_ELPH
  integer, external :: ELPH_databases
 #endif
@@ -126,6 +129,15 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call section('*','K-point grid')
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
  i_err=ioQINDX(k,q,ID)
+ !
+#if defined _YPP_RT
+ !
+ ! E_rim
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
+ i_err_RIM=ioE_RIM(en,ID) 
+ !
+#endif
  ! 
  ! Allocate and fill the k_pt/q_pt array for the DBs header
  !

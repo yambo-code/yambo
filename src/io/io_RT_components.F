@@ -27,7 +27,7 @@ integer function io_RT_components(what,ID)
  use R_lattice,      ONLY:nkibz,nqbz
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,SC_nbands,&
-&                         RT_k,RT_nk,RT_occupations,&
+&                         RT_nk,RT_occupations,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,&
@@ -43,7 +43,6 @@ integer function io_RT_components(what,ID)
 &                         G_lesser,NE_dynamics,RT_ind_J,J_and_P_cache,&
 &                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight
  use fields,         ONLY:A_vecpot
- use QP_m,           ONLY:QP_nk
 #endif                                
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use fragments,      ONLY:io_fragment
@@ -180,6 +179,8 @@ integer function io_RT_components(what,ID)
  ! 
  if(l_J_and_P.or.l_occupations) then
    call manage_RD_WR_CL_IF_END(ID,ik,NE_steps)
+ else if (l_G) then
+   call manage_RD_WR_CL_IF_END(ID,ik,RT_nk)
  else
    call manage_RD_WR_CL_IF_END(ID,ik,nkibz)
  endif
@@ -202,10 +203,7 @@ integer function io_RT_components(what,ID)
    !
    if (io_RT_components/=0) goto 1  
    !
-   if (io_sec(ID,1)==1) then
-     call io_bulk(ID,VAR="RT_Kpts",VAR_SZ=(/RT_nk,3/))
-     call io_bulk(ID,R2=RT_k)
-   else
+   if (io_sec(ID,1)>1) then
      !
      call io_bulk(ID,VAR="RT_occupations_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=RT_occupations)
@@ -305,7 +303,7 @@ integer function io_RT_components(what,ID)
    call io_bulk(ID,R3=TMP_matrix)
    if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser_reference(:,:,ik))
    !
-   if(l_NE_with_fields.and.ik==QP_nk) then
+   if(l_NE_with_fields.and.ik==RT_nk) then
      call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/3,3,2/))
      if (write_is_on(ID)) then
        A_vecpot_disk(:,1,1)= real(A_vecpot%vecpot(:),SP)

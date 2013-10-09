@@ -26,6 +26,7 @@ module mod_xc2y
  use xc_f90_lib_m,   ONLY:xc_f90_func_init, xc_f90_func_end, &
 &                         xc_f90_info_kind, XC_UNPOLARIZED
  use xc_functionals, ONLY:XC_FACTOR, XC_NOT_AVAILABLE, NOXC, XC_libxcID 
+ !
  implicit none
  !
  integer, parameter :: N_Abinit_XC = 28,N_PW_X = 10, N_PW_C = 13, N_PW_GX = 14, N_PW_GC = 11 

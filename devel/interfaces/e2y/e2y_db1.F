@@ -42,13 +42,15 @@ subroutine e2y_db1(en,k,ncid)
  use etsf_io_low_level
  use etsf_data
  use pars,                 only : SP, DP, PI, schlen
- use com,                  only : msg, error
+ use com,                  only : msg, error, warning
  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, l_spin_orbit
  use wave_func,            only : wf_ncx
- use R_lattice,            only : bz_samp
+ use R_lattice,            only : bz_samp, nkibz
  use D_lattice,            only : nsym, n_atomic_species
- use mod_com2y,            only : print_interface_dimensions
+ use mod_com2y,            only : print_interface_dimensions,ng_vec_abinit
+ !
  implicit none
+ !
  type(levels),   intent(inout) :: en
  type(bz_samp),  intent(inout) :: k
  integer,        intent(in)    :: ncid
@@ -70,14 +72,17 @@ subroutine e2y_db1(en,k,ncid)
  !
  en%nb    = dims%max_number_of_states
  k%nibz   = dims%number_of_kpoints 
- wf_ncx   = dims%max_number_of_coefficients
  n_spinor = dims%number_of_spinor_components 
  n_sp_pol = dims%number_of_spins
  n_atomic_species = dims%number_of_atom_species
+ if(trim(ETSF_kind)=='KSS') ng_vec_abinit = dims%max_number_of_coefficients
+ if(trim(ETSF_kind)=='WFK') wf_ncx        = dims%max_number_of_coefficients
  !
  ! Derived YAMBO dimensions
  !
- n_spin = max(n_spinor, n_sp_pol)
+ n_spin  = max(n_spinor, n_sp_pol)
+ nkibz   = k%nibz
+ n_bands = en%nb
  call msg("l","done")
  !>>>DEBUG
  ! call msg('s',':: K-points              :',k%nibz)
@@ -91,7 +96,7 @@ subroutine e2y_db1(en,k,ncid)
  !
  call msg('s','Cell data...')
  call import_geometry_group
- call msg("l","done")
+ call msg("l","...done")
  !
  ! Electrons
  !
@@ -107,13 +112,13 @@ subroutine e2y_db1(en,k,ncid)
  !
  ! PP 
  !
- call import_gwdata_group
+ if(trim(ETSF_kind)=='KSS') call import_gwdata_group
+ if(trim(ETSF_kind)=='WFK') call warning('Commutator not supported. You need a KSS file to include it.')
  !
  ! G-vectors grids and indices
  !
- call msg('s','RL vectors...')
  call import_basisdata_group
- call msg('l','done')
+ call msg('s','RL vectors...done')
  !
  ! All other data
  !
@@ -177,7 +182,7 @@ contains
     !
     ! Lattice vectors
     !
-    a(:,:) = primitive_vectors_(:,:)
+    a(:,:) = transpose(primitive_vectors_(:,:))
     alat(1) = alat_mult_factor*maxval( abs( a(1,:) ))
     alat(2) = alat_mult_factor*maxval( abs( a(2,:) ))
     alat(3) = alat_mult_factor*maxval( abs( a(3,:) ))
@@ -263,41 +268,138 @@ contains
     return
   end subroutine import_electrons_group
   !
-  ! Wavefunction grids: assumes k-dependent = no 
+  ! Wavefunction grids: l_KSS == (k-dependent = no)
   !===========================================================
   subroutine import_basisdata_group
+    !
+    use vec_operate,          only : sort, iku_v_norm
     use R_lattice,            only : g_vec, b, ng_vec
-    use D_lattice,            only : alat
+    use D_lattice,            only : alat, i_space_inv, i_time_rev
     use wave_func,            only : wf_nc_k, wf_igk,wf_ncx,wf_ng
+    !
     implicit none
-    type(etsf_basisdata)           :: basisdata_group
-    integer                       :: g_lim(6), gtotmax, ig_wf, ig, ix, ik, gmin, gmax
-    integer, allocatable          :: g_vec_temp(:,:)
-    logical                       :: gfound
+    !
+    type(etsf_basisdata)          :: basisdata_group
+    integer                       :: g_lim(6), gtotmax, ig_wf, ng_vec_old, ig, ic, ik
+    real(SP)                      :: g_vec_new(3)
+    real(SP),    allocatable      :: g_vec_tmp(:,:),G_mod(:)
+    integer(SP), allocatable      :: wf_igk_tmp(:,:),G_mod_indx(:)
+    logical                       :: gamma_only,l_new
     character(len=15)             :: format1
-
+    !
     call allocate_basisdata_group
-
-    basisdata_group%reduced_coordinates_of_plane_waves%data2d => reduced_coordinates_of_plane_waves_ 
-    basisdata_group%number_of_coefficients                    => number_of_coefficients_
-
+    !
+    if(trim(ETSF_kind)=='KSS') &
+&     basisdata_group%reduced_coordinates_of_plane_waves%data2d => reduced_coordinates_of_plane_waves_KSS_
+    if(trim(ETSF_kind)=='WFK') &
+&     basisdata_group%reduced_coordinates_of_plane_waves%data3d => reduced_coordinates_of_plane_waves_WFK_
+    basisdata_group%number_of_coefficients  => number_of_coefficients_
+    !
     call etsf_io_basisdata_get(ncid, basisdata_group, lstat, error_data)
     !
-    ! NB: the following are true because the igk array is trivial for k-dep=no
+    if(trim(ETSF_kind)=='KSS') then
+      !
+      allocate( g_vec(ng_vec_abinit,3) )
+      do i1=1,ng_vec_abinit
+        g_vec(i1,:)=matmul(transpose(b),reduced_coordinates_of_plane_waves_KSS_(:,i1))*alat(:)/2.0_SP/pi
+      enddo
+      !
+      ng_vec=ng_vec_abinit
+      !
+      gamma_only=(nkibz==1 .and. all(k%pt(1,:)==0.) )
+      !
+      if( i_time_rev==1 .or. i_space_inv==1 .and. .not.gamma_only) then
+        call msg('s','Closing shells against inversion...')
+        call G_rot_grid(-1,'extend_grid')
+        call msg('l','done')
+        if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
+      endif
+      !
+      call e2y_wf_components(ncid)
+      !
+    endif
     !
-    ng_vec  = wf_ncx
-    wf_ng   = wf_ncx
-    allocate( wf_nc_k(k%nibz), g_vec(ng_vec,3), wf_igk(wf_ncx,k%nibz) )
-
-    wf_nc_k = ng_vec
-    do i1=1,ng_vec
-      g_vec(i1,:)=matmul(transpose(b),reduced_coordinates_of_plane_waves_(:,i1))*alat(:)/2.0_SP/pi
-    enddo
-    forall(i1=1:ng_vec) wf_igk(i1,:)=i1
-
+    if(trim(ETSF_kind)=='WFK') then
+      !
+      allocate( wf_nc_k(k%nibz), wf_igk(wf_ncx,k%nibz) )
+      wf_nc_k = basisdata_group%number_of_coefficients
+      wf_igk=-1
+      !
+      ! First guess: G vectors= gvectors at gamma
+      ng_vec = wf_nc_k(1) 
+      allocate(g_vec_tmp(2*wf_ncx,3))
+      !
+      do ic=1,wf_nc_k(1)
+        wf_igk(ic,1)=ic
+        ig=wf_igk(ic,1)
+        g_vec_tmp(ig,:)=matmul(transpose(b),reduced_coordinates_of_plane_waves_WFK_(:,ic,1))*alat(:)/2.0_SP/pi
+      enddo
+      !
+      do ik=2,k%nibz
+        ng_vec_old=ng_vec
+        do ic=1,wf_nc_k(ik)
+          g_vec_new=matmul(transpose(b),reduced_coordinates_of_plane_waves_WFK_(:,ic,ik))*alat(:)/2.0_SP/pi
+          l_new=.true.
+          do ig=1,ng_vec_old
+            if(all(abs(g_vec_tmp(ig,:)-g_vec_new(:))<1.E-5)) then
+              l_new=.false.
+              wf_igk(ic,ik)=ig
+              exit
+            endif
+          enddo
+          if(.not.l_new) cycle
+          ng_vec=ng_vec+1
+          g_vec_tmp(ng_vec,:)=g_vec_new
+          wf_igk(ic,ik)=ng_vec
+        enddo
+      enddo
+      !
+      wf_ng=ng_vec
+      !
+      allocate(g_vec(ng_vec,3))
+      g_vec(:ng_vec,:3)=g_vec_tmp(:ng_vec,:3)
+      deallocate(g_vec_tmp)
+      !
+      if(nsym>1) then
+        call msg('s','Closing shells against symmetries...')
+        do is=2,nsym
+          call G_rot_grid(is,'extend_grid')
+        enddo
+        call msg('l','done')
+        if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
+      endif
+      !
+      ! Re-ordering by increasing module
+      !==================================
+      ! indx_m1 (j) went to position indx_m1(j)
+      ! indx    (i) before was in position indx(i) 
+      allocate(G_mod(ng_vec),G_mod_indx(ng_vec))
+      do ig=1,ng_vec
+        G_mod(ig)=iku_v_norm(g_vec(ig,:))
+      enddo
+      call sort(G_mod,indx_m1=G_mod_indx)
+      deallocate(G_mod)
+      !
+      allocate(g_vec_tmp(ng_vec,3))
+      g_vec_tmp=g_vec
+      g_vec(G_mod_indx(:ng_vec),:3)=g_vec_tmp(:ng_vec,:3)
+      deallocate(g_vec_tmp)
+      !
+      ! Sort wf_igk accordingly
+      allocate( wf_igk_tmp(wf_ncx,k%nibz) )
+      wf_igk_tmp=wf_igk
+      do ik=1,k%nibz
+        wf_igk(:wf_nc_k(ik),ik)=G_mod_indx(wf_igk_tmp(:wf_nc_k(ik),ik))
+      enddo
+      deallocate( wf_igk_tmp,G_mod_indx )
+      wf_ng=maxval(wf_igk)
+      !
+    endif
+    !
     call deallocate_basisdata_group
+    !
     return
-
+    !
   end subroutine import_basisdata_group
   !
   ! K-points (convert to new units)
@@ -337,7 +439,8 @@ contains
   subroutine import_gwdata_group
     use D_lattice,             only : n_atomic_species
     use pseudo,                only : pp_n_l_times_proj_max,&
-&                                  pp_n_l_comp, pp_kbs,pp_kb,pp_kbd
+&                                  pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
+&                                  pp_table,l_many_proj,pp_n_l_max
     implicit none
     type(etsf_gwdata)            :: gwdata_group
 
@@ -351,8 +454,20 @@ contains
 
 !   call etsf_io_gwdata_get(ncid, gwdata_group, lstat, error_data)
 
-    allocate(pp_n_l_comp(n_atomic_species))
-    pp_n_l_comp = pp_n_l_times_proj_max
+    l_many_proj=.false.
+    pp_n_l_max=abs(pp_n_l_times_proj_max)
+    allocate(pp_n_l_comp(n_atomic_species),&
+&            pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
+    pp_n_l_comp(:)=pp_n_l_max
+    !
+    ! if "l_many_proj" the table is readen in a2y_wf
+    if(.not.l_many_proj) then
+      do i1=1,pp_n_l_times_proj_max
+        pp_table(1,:,i1)=i1  !  l+1
+        pp_table(2,:,i1)=1   !  n_proj
+        pp_table(3,:,i1)=1   !  i_spin
+      enddo
+    endif
     !
     call deallocate_gwdata_group
     return

@@ -315,7 +315,7 @@ integer function variables_SC(ID,local_description,what)
      if (ver_is_gt_or_eq(ID,revision=2494)) then
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [RT] Time steps interpolated    :",I0=RT_dynamics_jumps,WARN=.true.,OP=(/"=="/),&
+&        VAR=" [RT] Time jumps                 :",I0=RT_dynamics_jumps,WARN=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc))
      endif
      !
@@ -396,6 +396,7 @@ integer function variables_SC(ID,local_description,what)
    ! G retarded variables
    !======================
    if (ver_is_gt_or_eq(ID,revision=2450)) then
+     call io_elemental(ID,VAR="G_retarded_BASE",VAR_SZ=2,MENU=0) 
      call io_elemental(ID,L0=l_G_retarded_DB,CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,I0=N_Gr_descs,CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -419,11 +420,10 @@ integer function variables_SC(ID,local_description,what)
      call io_elemental(ID,I0=BZ_RIM_tot_nkpts,&
 &      VAR=' [RIM] Random k-point            :',  CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
    !
    if (l_NE_with_fields_disk) then
-     !
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
      call io_elemental(ID,VAR="GAUGE_TYPE",CH0="",VAR_SZ=1,MENU=0)
      i_desc=i_desc+1

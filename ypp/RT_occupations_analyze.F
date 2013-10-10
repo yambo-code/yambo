@@ -101,6 +101,8 @@ subroutine RT_occupations_analyze(k,E)
  call QP_state_table_setup(E)
  !
  n_T_steps=RT_occupations_check(E,k)
+ write (*,*) 'here',n_T_steps
+ stop
  !
  if (n_T_steps<0) return
  !

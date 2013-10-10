@@ -24,24 +24,29 @@ subroutine e2y_wf(wf_disk,ikibz, ib_grp, ncid)
   ! Reads and returns wf_disk for both spins!
   use etsf_io
   use etsf_io_low_level
-  use etsf_data,             only : dims
+  use etsf_data,             only : dims,ETSF_kind
   use pars,                  only : SP
+  use vec_operate,           only : i_sort
   use com,                   only : msg, error
   use electrons,             only : n_bands, n_spin, n_sp_pol, n_spinor
   use R_lattice,             only : nkibz
-  use wave_func,             only : wf_ncx,wf_nc_k,wf_nb_io,wf_nb_io_groups
+  use wave_func,             only : wf_ncx,wf_nc_k, wf_igk,wf_nb_io,wf_nb_io_groups
+  !
   implicit none
+  !
   integer,           intent(in)  :: ikibz, ncid, ib_grp
   real(SP),          intent(out) :: wf_disk(2,n_bands,wf_ncx,n_spin)
+  !
   double precision, allocatable  :: wavefunction_section_(:,:,:)
   logical                        :: lstat
   type(etsf_io_low_error)        :: error_data 
   ! 
   ! Work Space
   !
-  integer        :: ib, ierr, npwk, ik, ig, ispin, ireal, nb_to_read
+  integer        :: ib, ierr, npwk, ik, ic, ispin, ireal, nb_to_read
   integer        :: start(6), count(6), ncvarid
-!
+  integer        :: wf_igk_indx(wf_nc_k(ikibz))
+  !
   type(etsf_main)   :: main_group
 !
 !---------------------------------------------------------------------*
@@ -79,7 +84,9 @@ subroutine e2y_wf(wf_disk,ikibz, ib_grp, ncid)
   !
   start(:) = 1     ; count(:) = 0
   start(5) = ikibz ; count(5) = 1   ! Split on k always
-
+  !
+  if(ETSF_kind=='WFK') call i_sort(wf_igk(:wf_nc_k(ikibz),ikibz),indx=wf_igk_indx)
+  !
   do ispin = 1, n_spin
     !
     ! Select the part of the array to split on
@@ -91,14 +98,25 @@ subroutine e2y_wf(wf_disk,ikibz, ib_grp, ncid)
       start(6) = ispin
       count(6) = 1
     endif
+    !
     call etsf_io_low_read_var(ncid, "coefficients_of_wavefunctions", &
                             & wavefunction_section_, lstat,          &
                             & error_data = error_data, start = start, count = count)
-    forall( ireal=1:2, ib=1:n_bands, ig=1:wf_nc_k(ikibz) ) &
-&        wf_disk(ireal,ib,ig,ispin) = wavefunction_section_(ireal,ig,ib)
-
+    !
+    if(ETSF_kind=='KSS') then
+      forall( ireal=1:2, ib=1:n_bands, ic=1:wf_nc_k(ikibz) ) &
+&          wf_disk(ireal,ib,ic,ispin) = wavefunction_section_(ireal,wf_igk(ic,ikibz),ib)
+    endif
+    !
+    if(ETSF_kind=='WFK') then
+      forall( ireal=1:2, ib=1:n_bands, ic=1:wf_nc_k(ikibz) ) &
+&          wf_disk(ireal,ib,ic,ispin) = wavefunction_section_(ireal,wf_igk_indx(ic),ib)
+    endif
+    !
   enddo
+  !
   deallocate(wavefunction_section_)
- 
+  ! 
   return
+  !
 end subroutine e2y_wf

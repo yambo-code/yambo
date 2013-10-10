@@ -87,7 +87,7 @@ case $target in
    linclude="$linclude -I\$(iotk_dir)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs -letsf_io \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
+   llibs="-lint_modules $llibs -letsf_io \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
    linclude="$linclude -I\$(etsf_dir)"
     ;;
   ypp*)

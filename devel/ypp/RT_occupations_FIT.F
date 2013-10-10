@@ -48,7 +48,7 @@ subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
  !
  ! Work Space
  !
- logical               :: l_two_temperatures
+ logical               :: l_two_temperatures,lfound(2)
  !
  real(SP)              :: x(QP_n_states),Jacob(QP_n_states,2)
  real(SP)              :: Avg_error(RT_n_FIT,2)
@@ -58,7 +58,7 @@ subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
  real(SP)              :: delta_E,E_shifted,E_start,E_shift
  ! 
  integer  :: ifit,i_s,ik,ib,i1,i2,n1,n2,i_fp,i_spin
- integer  :: nfit,last_occupied,nfound(2)
+ integer  :: ntry,nfit,last_occupied,nfound(2)
  integer  :: E_sorted_index(QP_n_states)
  real(SP) :: E_sorted(QP_n_states)
  !
@@ -87,7 +87,7 @@ subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
  nfit=1
  if(l_two_temperatures) nfit=2
  !
- E_shift=1._SP/HA2EV
+ E_shift=0.0_SP !1._SP/HA2EV
  Fit_E_range(1)=E_sorted(1)          -E_shift
  Fit_E_range(2)=E_sorted(QP_n_states)+E_shift
  !
@@ -103,7 +103,7 @@ subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
    enddo
  enddo
  !
- T_guess=max(Tel,1.E-2)
+ T_guess=1.E-3
  Ef_guess=E_sorted(last_occupied+1)
  if(l_two_temperatures) Ef_guess(2)=E_sorted(last_occupied)
  !
@@ -111,14 +111,23 @@ subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
  Ef_fit=0._SP
  RT_occ_fitted=0._SP
  nfound=0
+ ntry=0
  !
  do i1=1,RT_n_FIT
    !
    ! Sort also RT_occupations
    x(:)=RT_occ_DATA(E_sorted_index(:),i1)
    RT_occ_DATA(:,i1)=x(:)
+   lfound=.false.
    !
    do ifit=1,nfit
+     !
+2000 ntry=ntry+1
+     if(ntry>1) then
+       T_guess(ifit)=1.E-3*10**real(ntry-1,SP)
+       if(ifit==1) Ef_guess(ifit)=E_sorted(last_occupied+1)
+       if(ifit==2) Ef_guess(ifit)=E_sorted(last_occupied)
+     endif
      !
      do i2=1,max_iter
        Avg_error(i1,ifit)=0._SP
@@ -152,14 +161,16 @@ subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
        !
        Fit_new=matmul(Jacob_sq_m1,matmul(transpose(Jacob),x))
        !
-       if(any(isnan(Fit_new(:)))) goto 1000
-       if(any(Fit_new(:)==Fit_new(:)+1._SP)) goto 1000
+       if(any(isnan(Fit_new(:)))) exit
+       if(any(Fit_new(:)==Fit_new(:)+1._SP)) exit
        !
        T_fit(i1,ifit)=T_guess(ifit)-Fit_new(1)
        Ef_fit(i1,ifit)=Ef_guess(ifit)-Fit_new(2)
        !
        if(abs(T_guess(ifit)-T_fit(i1,ifit))<1.E-6 .and. abs(Ef_guess(ifit)-Ef_fit(i1,ifit))<1.E-3 ) then
          nfound(ifit)=nfound(ifit)+1
+         lfound(ifit)=.true.
+         ntry=0
          exit
        endif
        !
@@ -168,16 +179,18 @@ subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
        !
      enddo   
      !
-     if(i2==max_iter+1) then
-1000   continue
+     if(.not.lfound(ifit).and.ntry< 5) goto 2000
+     !
+     if(.not.lfound(ifit).and.ntry>=5) then
+       ntry=0
        T_fit(i1,ifit) =0._SP
-       T_guess(ifit)=max(Tel,1.E-2)
+       T_guess(ifit)=1.E-3
        Ef_fit(i1,ifit)=0._SP
        if(ifit==1) Ef_guess(ifit)= E_sorted(last_occupied+1)
        if(ifit==2) Ef_guess(ifit)= E_sorted(last_occupied)
      endif     
      !
-     if(i2<=max_iter) then
+     if(lfound(ifit)) then
        do i2=1,fit_dim
          RT_occ_fitted(i2,i1,ifit)=Fermi_fnc(Ei(i2,ifit)-Ef_fit(i1,ifit),T_fit(i1,ifit))*spin_occ
        enddo

@@ -43,7 +43,7 @@ subroutine RT_occupations_analyze(k,E)
  ! Work Space
  !
  integer               :: ik,ib,i_spin,i_s,i_T,n_T_steps,i_fp,i1,n1,n_skip_time,ik_rim,ip
- real(SP)              :: io_Time,data_to_plot(10),RT_occ_Fit_time(RT_n_FIT)
+ real(SP)              :: io_Time,data_to_plot(10),RT_occ_Fit_time(RT_n_FIT),Plot_deltaT
  real(SP), allocatable :: RT_occupations_sum(:,:),RT_occ_DATA(:,:)
  character(schlen)     :: titles(10)
  logical               :: l_ELPH_lifetimes
@@ -126,14 +126,15 @@ subroutine RT_occupations_analyze(k,E)
      l_RT_Occ_FIT_vec(i_T)=.TRUE.
      if(io_Time>0._SP) RT_occ_Fit_time(1)=io_Time
    else
-     n_skip_time=n_T_steps/(RT_n_FIT-1)
-     do i_T=n_T_steps,1,-n_skip_time
-       i1=i1+1
-       if(i1>RT_n_FIT) cycle
-       io_Time=0.
-       if (i_T >1) io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+     Plot_deltaT=(OCC_T_range(2)-OCC_T_range(1))/(RT_n_FIT-1)
+     n_skip_time=int(Plot_deltaT/OCC_deltaT)
+     do i1=i1,RT_n_FIT
+       i_T=1+(i1-1)*n_skip_time
+       if(i1==RT_n_FIT) i_T=n_T_steps
+       io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+       if(io_Time<0._SP) io_Time=0._SP
        l_RT_Occ_FIT_vec(i_T)=.TRUE.
-       if(io_Time>0._SP) RT_occ_Fit_time(RT_n_FIT-i1+1)=io_Time
+       if(io_Time>0._SP) RT_occ_Fit_time(i1)=io_Time
      enddo
    endif
    i1=0

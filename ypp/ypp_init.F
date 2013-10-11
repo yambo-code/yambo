@@ -482,7 +482,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_RT_occ_Plot      = runlevel_is_on('RToccPlot')
  l_RT_occ_Fit       = runlevel_is_on('RToccFit')
  !
- l_retarded_GFs     = runlevel_is_on('Gret')
 #endif
 #if defined _YPP_MAGNETIC
  l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
@@ -559,12 +558,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
    call initactivate(1,"TmRngeRt TmJumps DampMode DampFactor SkipJP_IO FrMinDamp RmAsymLim UseFFT")
  endif
  !
- if (l_retarded_GFs) then
-   call initactivate(1,"GFkind GFbands T_step T_window E_step E_window")
-   call QP_ctl_switch('G')
-   call initactivate(-1,"GfnFdb OCCTime")
- endif
- ! 
 #endif
  !
  ! Wannier 90 interface

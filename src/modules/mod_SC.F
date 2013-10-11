@@ -113,6 +113,7 @@ module SC
  ! of a post-run I need to keep here the number of k-points 
  !
  integer                 :: RT_nk
+ integer                 :: RT_nstates
  !
  interface
    !

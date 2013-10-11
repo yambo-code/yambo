@@ -541,7 +541,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Gr_T_steps=0
  Gr_E_window=0.
  Gr_E_steps=0
- Gr_kind=" "
+ Gr_kind="QP"
  !
 #endif
  !

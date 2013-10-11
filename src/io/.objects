@@ -3,7 +3,7 @@ SC_objects =
 SC_objects = io_COLLISIONS.o COLLISIONS_load.o load_SC_components.o io_SC_components.o variables_SC.o io_P_and_P2.o 
 #endif
 #if defined _RT
-RT_objects = io_G_retarded.o io_RT_components.o
+RT_objects = io_RT_components.o
 #endif
 ELPH_objects = 
 #if defined _ELPH 

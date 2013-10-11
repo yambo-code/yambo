@@ -33,8 +33,10 @@ subroutine RT_occupations_analyze(k,E)
  use IO_m,           ONLY:NONE
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,&
 &                         E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime,RIM_ibz_coo
- use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions,SC_bands,RT_nk,RT_ibz_coo
+&                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime
+ use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions,SC_bands,&
+&                         RT_nk,RT_nstates,RT_ibz_coo
+ !
  implicit none
  !
  type(bz_samp) ::k
@@ -42,7 +44,7 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! Work Space
  !
- integer               :: ik,ib,i_spin,i_s,i_T,n_T_steps,i_fp,i1,n1,n_skip_time,ik_rim,ip
+ integer               :: ik,ib,i_spin,i_s,i_RT,i_T,n_T_steps,i_fp,i1,n1,n_skip_time,ik_rim
  real(SP)              :: io_Time,data_to_plot(10),RT_occ_Fit_time(RT_n_FIT),Plot_deltaT
  real(SP), allocatable :: RT_occupations_sum(:,:),RT_occ_DATA(:,:)
  character(schlen)     :: titles(10)
@@ -77,17 +79,18 @@ subroutine RT_occupations_analyze(k,E)
    E%nb  =BZ_RIM_nbands
    allocate(E%f(E%nb,RT_nk,n_sp_pol),E%E(E%nb,RT_nk,n_sp_pol),k_weights(RT_nk))
    do ik=1,k%nibz
-     do ik_rim=1,RIM_ibz_coo(ik,2)-RIM_ibz_coo(ik,1)+1
-       ip=RT_ibz_coo(ik,1)+ik_rim-1
-       k_weights(ip)=k%weights(ik)/real(RIM_ibz_coo(ik,2)-RIM_ibz_coo(ik,1)+1)
-       E%E(:,ip,:)=E%E_RIM(:,RIM_ibz_coo(ik,1)+ik_rim-1,:)
-       E%f(:E%nbf,ip,:)=spin_occ
+     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       k_weights(ik_rim)=k%weights(ik)/real(RT_ibz_coo(ik,2)-RT_ibz_coo(ik,1)+1)
+       E%E(:,ik_rim,:)=E%E_RIM(:,ik_rim,:)
+       E%f(:E%nbf,ik_rim,:)=spin_occ
      enddo
    enddo
    deallocate(k%weights)
    allocate(k%weights(RT_nk))
    k%weights=k_weights
    deallocate(k_weights)
+   !
+   RT_nstates=RT_nk*(SC_bands(2)-SC_bands(1)+1)
    !
    E%nk  =RT_nk
    k%nibz=RT_nk
@@ -114,7 +117,7 @@ subroutine RT_occupations_analyze(k,E)
  RT_occupations_sum=0._SP
  !
  allocate(l_RT_Occ_FIT_vec(n_T_steps))
- allocate(RT_occ_data(QP_n_states,RT_n_FIT))
+ allocate(RT_occ_data(RT_nstates,RT_n_FIT))
  l_RT_Occ_FIT_vec=.FALSE.
  RT_occ_DATA=0._SP
  RT_occ_Fit_time=0._SP
@@ -128,7 +131,7 @@ subroutine RT_occupations_analyze(k,E)
    else
      Plot_deltaT=(OCC_T_range(2)-OCC_T_range(1))/(RT_n_FIT-1)
      n_skip_time=int(Plot_deltaT/OCC_deltaT)
-     do i1=i1,RT_n_FIT
+     do i1=1,RT_n_FIT
        i_T=1+(i1-1)*n_skip_time
        if(i1==RT_n_FIT) i_T=n_T_steps
        io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
@@ -158,6 +161,7 @@ subroutine RT_occupations_analyze(k,E)
    !
    call RT_occupations_repair(E)
    !
+   i_RT=0
    do i_s=1,QP_n_states
      !
      ! n   =QP_table(i_s,1)
@@ -168,88 +172,94 @@ subroutine RT_occupations_analyze(k,E)
      ik    =QP_table(i_s,3)
      i_spin=spin(QP_table(i_s,:))
      !
-     if (ib<SC_bands(1)) cycle
-     if (ib>SC_bands(2)) cycle
-     if (ik>k%nibz) cycle
-     !
-     ! Prepare f(eps_{ik,ib}) for i_T=it_report
-     !
-     if (l_RT_Occ_FIT_vec(i_T)) RT_occ_DATA(i_s,i1)=RT_occupations(ib,ik)     
-     !
-     if (.not.l_RT_occ_Plot) cycle
-     !
-     output_fname='YPP-RT_occupations_k'//trim(intc(ik))//'_b'//trim(intc(ib))
-     !
-     if (i_T==1) then
+     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
-       call of_open_close(trim(output_fname),'ot')
+       if (ib<SC_bands(1)) cycle
+       if (ib>SC_bands(2)) cycle
+       if (ik_rim>RT_nk) cycle
        !
-       do i_fp=1,n_SC_descriptions
-         call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
-       enddo
+       i_RT=i_RT+1
        !
-       call msg('o '//trim(output_fname),'#')
+       ! Prepare f(eps_{ik,ib}) for i_T=it_report
        !
-       ! Titles
-       !========
-       if (l_carrier_dynamics.and.l_ELPH_lifetimes) then
-         titles(1:2)=(/'         ','         '/)
-         titles(3:6)=(/'|--------','--El-Ph--','---------','--------|'/)
-         titles(7:8)=(/'|-----El-','El------|'/)
-         call msg('o '//trim(output_fname),'#',titles(:8),INDENT=0,USE_TABS=.TRUE.)
-         titles(1)='T[fs]'
-         titles(2)='Occ.'
-         titles(3:4)=(/'Hole[meV]','El. [meV]'/)
-         titles(5:6)=(/'Habs[meV]','Eabs[meV]'/)
-         titles(7:8)=(/'Hole[meV]','El. [meV]'/)
-         call msg('o '//trim(output_fname),'#',titles(:8),INDENT=0,USE_TABS=.TRUE.)
-       else if (l_carrier_dynamics.and..not.l_ELPH_lifetimes) then
-         titles(1)='T[fs]'
-         titles(2)='Occ.'
-         titles(3:4)=(/'Hole[meV]','El. [meV]'/)
-         call msg('o '//trim(output_fname),'#',titles(:4),INDENT=0,USE_TABS=.TRUE.)
-       else if (.not.l_carrier_dynamics.and.l_ELPH_lifetimes) then
-         titles(1)='T[fs]'
-         titles(2)='Occ.'
-         titles(3:4)=(/'Hole[meV]','El. [meV]'/)
-         titles(5:6)=(/'Habs[meV]','Eabs[meV]'/)
-         call msg('o '//trim(output_fname),'#',titles(:6),INDENT=0,USE_TABS=.TRUE.)
-       else if (.not.l_carrier_dynamics.and..not.l_ELPH_lifetimes) then
-         titles(1)='T[fs]'
-         titles(2)='Occ.'
-         call msg('o '//trim(output_fname),'#',titles(:2),INDENT=0,USE_TABS=.TRUE.)
+       if (l_RT_Occ_FIT_vec(i_T)) RT_occ_DATA(i_RT,i1)=RT_occupations(ib,ik_rim)     
+       !
+       if (.not.l_RT_occ_Plot) cycle
+       !
+       output_fname='YPP-RT_occupations_k'//trim(intc(ik_rim))//'_b'//trim(intc(ib))
+       !
+       if (i_T==1) then
+         !
+         call of_open_close(trim(output_fname),'ot')
+         !
+         do i_fp=1,n_SC_descriptions
+           call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
+         enddo
+         !
+         call msg('o '//trim(output_fname),'#')
+         !
+         ! Titles
+         !========
+         if (l_carrier_dynamics.and.l_ELPH_lifetimes) then
+           titles(1:2)=(/'         ','         '/)
+           titles(3:6)=(/'|--------','--El-Ph--','---------','--------|'/)
+           titles(7:8)=(/'|-----El-','El------|'/)
+           call msg('o '//trim(output_fname),'#',titles(:8),INDENT=0,USE_TABS=.TRUE.)
+           titles(1)='T[fs]'
+           titles(2)='Occ.'
+           titles(3:4)=(/'Hole[meV]','El. [meV]'/)
+           titles(5:6)=(/'Habs[meV]','Eabs[meV]'/)
+           titles(7:8)=(/'Hole[meV]','El. [meV]'/)
+           call msg('o '//trim(output_fname),'#',titles(:8),INDENT=0,USE_TABS=.TRUE.)
+         else if (l_carrier_dynamics.and..not.l_ELPH_lifetimes) then
+           titles(1)='T[fs]'
+           titles(2)='Occ.'
+           titles(3:4)=(/'Hole[meV]','El. [meV]'/)
+           call msg('o '//trim(output_fname),'#',titles(:4),INDENT=0,USE_TABS=.TRUE.)
+         else if (.not.l_carrier_dynamics.and.l_ELPH_lifetimes) then
+           titles(1)='T[fs]'
+           titles(2)='Occ.'
+           titles(3:4)=(/'Hole[meV]','El. [meV]'/)
+           titles(5:6)=(/'Habs[meV]','Eabs[meV]'/)
+           call msg('o '//trim(output_fname),'#',titles(:6),INDENT=0,USE_TABS=.TRUE.)
+         else if (.not.l_carrier_dynamics.and..not.l_ELPH_lifetimes) then
+           titles(1)='T[fs]'
+           titles(2)='Occ.'
+           call msg('o '//trim(output_fname),'#',titles(:2),INDENT=0,USE_TABS=.TRUE.)
+         endif
+         call msg('o '//trim(output_fname),'#')
+         !
        endif
-       call msg('o '//trim(output_fname),'#')
        !
-     endif
-     !
-     if (ib<SC_bands(1)) then
-       RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+spin_occ*k%weights(ik)
-       cycle
-     endif
-     !
-     if (ib<=E%nbf) data_to_plot(:2)=(/io_TIME/FS2AUT,(RT_occupations(ib,ik)-spin_occ)*k%weights(ik)/)
-     if (ib> E%nbf) data_to_plot(:2)=(/io_TIME/FS2AUT, RT_occupations(ib,ik)          *k%weights(ik)/)
-     if (ib<=E%nbf) RT_occupations_sum(1,i_T)=RT_occupations_sum(1,i_T)+data_to_plot(2)
-     if (ib> E%nbf) RT_occupations_sum(2,i_T)=RT_occupations_sum(2,i_T)+data_to_plot(2)
-     RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+RT_occupations(ib,ik)*k%weights(ik)
-     !
-     n1=1
-     if (l_ELPH_lifetimes) then
-       n1=5
-       data_to_plot(3:4)=(/E_P_Hole_lifetime(ib,ik),E_P_Electron_lifetime(ib,ik)/)
-       data_to_plot(5)  =E_P_Ho_abs_lifetime(ib,ik)
-       data_to_plot(6)  =E_P_El_abs_lifetime(ib,ik)
-       data_to_plot(3:)=data_to_plot(3:)*HA2EV*1000._SP
-     endif
-     if (l_carrier_dynamics) then
-       n1=3
-       if (l_ELPH_lifetimes) n1=7
-       data_to_plot(n1:n1+1)=(/E_E_Hole_lifetime(ib,ik),E_E_Electron_lifetime(ib,ik)/)*HA2EV*1000.
-     endif
-     call msg('o '//trim(output_fname),'',data_to_plot(:n1+1),INDENT=-2,USE_TABS=.true.)
-     !
-     if (i_T==n_T_steps) call of_open_close(trim(output_fname))
+       if (ib<SC_bands(1)) then
+         RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+spin_occ*k%weights(ik_rim)
+         cycle
+       endif
+       !
+       if (ib<=E%nbf) data_to_plot(:2)=(/io_TIME/FS2AUT,(RT_occupations(ib,ik_rim)-spin_occ)*k%weights(ik_rim)/)
+       if (ib> E%nbf) data_to_plot(:2)=(/io_TIME/FS2AUT, RT_occupations(ib,ik_rim)          *k%weights(ik_rim)/)
+       if (ib<=E%nbf) RT_occupations_sum(1,i_T)=RT_occupations_sum(1,i_T)+data_to_plot(2)
+       if (ib> E%nbf) RT_occupations_sum(2,i_T)=RT_occupations_sum(2,i_T)+data_to_plot(2)
+       RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+RT_occupations(ib,ik_rim)*k%weights(ik_rim)
+       !
+       n1=1
+       if (l_ELPH_lifetimes) then
+         n1=5
+         data_to_plot(3:4)=(/E_P_Hole_lifetime(ib,ik_rim),E_P_Electron_lifetime(ib,ik_rim)/)
+         data_to_plot(5)  =E_P_Ho_abs_lifetime(ib,ik_rim)
+         data_to_plot(6)  =E_P_El_abs_lifetime(ib,ik_rim)
+         data_to_plot(3:)=data_to_plot(3:)*HA2EV*1000._SP
+       endif
+       if (l_carrier_dynamics) then
+         n1=3
+         if (l_ELPH_lifetimes) n1=7
+         data_to_plot(n1:n1+1)=(/E_E_Hole_lifetime(ib,ik_rim),E_E_Electron_lifetime(ib,ik_rim)/)*HA2EV*1000.
+       endif
+       call msg('o '//trim(output_fname),'',data_to_plot(:n1+1),INDENT=-2,USE_TABS=.true.)
+       !
+       if (i_T==n_T_steps) call of_open_close(trim(output_fname))
+       !
+     enddo
      !
    enddo
    !

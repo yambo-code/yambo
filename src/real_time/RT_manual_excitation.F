@@ -68,9 +68,9 @@ subroutine RT_manual_excitation(E,k)
          if (Pumped_state(ib,ik)) cycle
          !
          if (i1==0) then
-           if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(1))<local_E_window) i1=ib
+           if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(1)-E%Efermi(2))<local_E_window) i1=ib
          else
-           if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(2))<local_E_window) then
+           if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(2)-E%Efermi(2))<local_E_window) then
              if(i1==ib) cycle
              Pumped_state(i1,ik)=.TRUE.
              Pumped_state(ib,ik)=.TRUE.

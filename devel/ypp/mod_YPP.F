@@ -203,7 +203,6 @@ module YPP
  !
  ! (RT) Retarded Green's functions
  !
- logical  :: l_retarded_GFs
  integer  :: Ret_GF_bands(2)      ! Bands Range
  real(SP) :: Gr_E_step
  real(SP) :: GF_T_step

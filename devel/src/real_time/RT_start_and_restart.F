@@ -68,8 +68,8 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Work Space
  !
  integer :: ik,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,&
-&           io_OCCUPATIONS,ID_OCCUPATIONS,ID_Gr,io_Gr
- integer, external :: io_SC_components,io_G_retarded,io_RT_components
+&           io_OCCUPATIONS,ID_OCCUPATIONS
+ integer, external :: io_SC_components,io_RT_components
  logical :: RESTART,SC_DB_present
  !
  ! Initialize the Gf and potentials
@@ -127,14 +127,8 @@ subroutine RT_start_and_restart(E,k,q,X)
  call io_control(ACTION=OP_RD_CL,COM=REP ,SEC=(/1/),MODE=VERIFY,ID=ID(3)) ! Local potential
  io_V=io_SC_components('V' ,E,ID(3))
  !
- ! Retarded Green Functions
- !
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID_Gr)
- io_Gr=io_G_retarded(ID_Gr,"G_retarded")
- if (io_Gr<0) then
-   Gr_bands=0
-   if (.not.associated(E%W)) call error('No W damping nor external G_ret provided')
- endif
+ Gr_bands=0
+ if (.not.associated(E%W)) call error('No W damping nor external G_ret provided')
  !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response

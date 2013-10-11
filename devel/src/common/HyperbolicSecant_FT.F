@@ -23,7 +23,7 @@ real function HyperbolicSecant_FT(E_center,Gamma_HS,alpha)
  !
  ! This subrutines compute the fourier transform of 1/2 sech^alpha(Gamma/alpha*t)
  ! evaluated at E_center, which correspond to the imaginary part of the Fourier 
- ! transform of 1/5*theta(t)*e^{-i*E_center}*sech^alpha(Gamma/alpha*t)
+ ! transform of 1/2*theta(t)*e^{-i*E_center}*sech^alpha(Gamma/alpha*t)
  !
  use pars,        ONLY:SP,pi
  use com,         ONLY:error

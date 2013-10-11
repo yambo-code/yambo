@@ -99,7 +99,6 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'RTdos',        '[R] Analize time-dependent DOS')
  call it('r',defs,'RToccPlot',    '[R] Plot time-dependent occupations')
  call it('r',defs,'RToccFit',     '[R] Fit occupations distribution at given time')
- call it('r',defs,'Gret',         '[R] Retarded GFs')
 #endif
 #if defined _YPP_SC
  call it('r',defs,'MeanPot', '[R] Mean Potential')

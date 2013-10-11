@@ -100,8 +100,8 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
            pre_factor=1._SP/real(RT_Nk_ibz(ik_m_q))
          endif
          !
-         P_ph_abs  =RT_G_retarded_convolution("QP",DELTA_E,ph_freq,DELTA_W,E%E_ind_gap(1),+1)
-         P_ph_emit =RT_G_retarded_convolution("QP",DELTA_E,ph_freq,DELTA_W,E%E_ind_gap(1),-1)
+         P_ph_abs  =RT_G_retarded_convolution(DELTA_E,ph_freq,DELTA_W,E%E_ind_gap(1),+1)
+         P_ph_emit =RT_G_retarded_convolution(DELTA_E,ph_freq,DELTA_W,E%E_ind_gap(1),-1)
          !
          E_P_Hole_lifetime(i_n_shift,ik_rim)=E_P_Hole_lifetime(i_n_shift,ik_rim)+&
 &                                            abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_abs*Bose_f(2)*pre_factor

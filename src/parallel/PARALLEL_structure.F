@@ -23,6 +23,7 @@ subroutine PARALLEL_structure()
  !
  use parallel_m,  ONLY:ncpu,POOL_id,myid,My_POOL,n_MPI,INTER_CHAIN,&
 &                      POOL_COMM,n_chains,INTRA_CHAIN
+ use openmp,      ONLY:OPENMP_initialize
  implicit none
  !
  ! Work Space 

@@ -69,6 +69,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SURF
  use ras_module,     ONLY:lras, lreels
 #endif
+ use openmp,         ONLY:OPENMP_initialize
  !
  implicit none
  !

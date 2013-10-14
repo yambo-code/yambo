@@ -248,6 +248,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
        iscp%rhotw=isc%rhotw
        if (isc%is(1)/=iscp%is(1)) call scatterBamp(iscp)
        !
+#endif
 #if defined _OPENMP
        !
 !$omp parallel do default(shared), private(ig)

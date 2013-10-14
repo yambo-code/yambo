@@ -29,7 +29,6 @@ module OPENMP
  !     any other value given from input will overwrite the environment
  !
  integer     :: n_threads = 1
- integer     :: n_user_threads = 0
  integer     :: n_threads_here = 0
  logical     :: master_thread = .FALSE.
  !
@@ -50,8 +49,8 @@ module OPENMP
      ! if threads are set from input pass the info to the omp env
      !
 #if defined _OPENMP
-     if ( n_user_threads > 0 ) then 
-       n_threads=n_user_threads
+     if ( n_threads > 0 ) then 
+       n_threads=n_threads
        call omp_set_num_threads( n_threads )
      else
        n_threads=omp_get_max_threads()
@@ -73,4 +72,4 @@ module OPENMP
 #endif
    end subroutine
    !
-end module parallel_m
+end module openmp

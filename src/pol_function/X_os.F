@@ -269,7 +269,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      !
    enddo loop_bare_grid
    !
-   !
    do iw=1,Xw%n_freqs
      !
      if (.not.force_bare_X_G.and..not.Drude_pole) then

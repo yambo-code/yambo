@@ -31,13 +31,16 @@ subroutine WF_rotate(ik,WFo,wf_size)
  ! Extended only to collinear case
  !
  use wrapper,        ONLY:V_by_V_plus_V
+#if defined _OPENMP
+ use wrapper,        ONLY:V_by_V_plus_V_omp
+#endif
  use electrons,      ONLY:n_sp_pol
  use pars,           ONLY:SP
  use wave_func,      ONLY:wf_state,wf_n_states,wf
  use SC,             ONLY:SC_R,SC_bands
  implicit none
  !
- integer     :: ik,wf_size
+ integer     :: ik,wf_size,ig
  complex(SP) :: WFo(wf_size,wf_n_states)
  !
  ! Work Space
@@ -55,14 +58,24 @@ subroutine WF_rotate(ik,WFo,wf_size)
        !
        if (ifft==0.or.ifftp==0) cycle
        !
+#if defined _OPENMP
+       call V_by_V_plus_V_omp(wf_size,SC_R(ibp,ib,ik,i_spin),WFo(:,ifftp),WS_wf(:,ib))
+#else
        call V_by_V_plus_V(wf_size,SC_R(ibp,ib,ik,i_spin),WFo(:,ifftp),WS_wf(:,ib))
+#endif
        !
      end do
    end do
    !
+!$omp parallel default(shared), private(ig,ib)
    do ib=1,SC_bands(2)
-     wf(:,wf_state(ib,ik,i_spin))=WS_wf(:,ib)
+!$omp do
+     do ig=1,wf_size
+        wf(ig,wf_state(ib,ik,i_spin))=WS_wf(ig,ib)
+     enddo
+!$omp end do
    enddo
+!$omp end parallel
    !
  enddo
  !

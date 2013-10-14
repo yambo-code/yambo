@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
+subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
  !
  ! Using the wfc at the k,k-q points to construct <r>
  !
@@ -36,6 +36,9 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: X_t,DIP_iR 
  use wrapper,             ONLY: Vstar_dot_V
+#if defined _OPENMP
+ use wrapper,             ONLY: Vstar_dot_V_omp
+#endif
  use fields,              ONLY: grid_path 
  use memory_m,            ONLY: mem_est
  use wave_func,           ONLY: wf,wf_ng,wf_igk,wf_state,WF_load,WF_free , wf_ncx
@@ -47,7 +50,6 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  type(levels),  intent(in)    :: Xen
  type(X_t),     intent(inout) :: X
  logical,       intent(inout) :: use_trans_gauge
- real(SP),      intent(inout) :: field_dir(3)
  !
  ! Saves
  !
@@ -62,8 +64,8 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  ! Work Space
  !
  integer                      :: ik,icfft,ivfft,ic,iv, ik_grid, iq, ikpq
- integer                      :: i_spin, err, ifail, ir, num_shifted_grid
- complex(SP)                  :: rho(2)
+ integer                      :: i_spin, err, ifail, ir, num_shifted_grid, ig
+ complex(SP)                  :: rho(2), ctmp
  real(SP)                     :: Ev_m_Ec
  type(PP_indexes)             :: px
  !
@@ -174,8 +176,13 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
            !
            ! DIP_iR_or_P = < v,k+q | c,k >/q
            !
+#ifdef _OPENMP
+           rho(i_spin) = Vstar_dot_V_omp(wf_ng_eff,wf(1:wf_ng_eff,ivfft), &
+&                                        wf_local(1:wf_ng_eff,icfft)) /q0_shift_norm
+#else
            rho(i_spin) = Vstar_dot_V(wf_ng_eff,wf(1:wf_ng_eff,ivfft), &
 &                                        wf_local(1:wf_ng_eff,icfft)) /q0_shift_norm
+#endif
            !
          enddo    ! spin loop
          !

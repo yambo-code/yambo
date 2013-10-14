@@ -61,8 +61,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  character(2)     ::wf_space_here
  character(schlen)::wf_title
  integer          ::i1,ikibz,ib,ib1,ib2,i2,ic,is,ig,igfft,wf_size,ib_grp,&
-&                   s_2_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_,&
-&                   wf_no_io_local
+&                   s_2_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
  logical          ::loaded_bounds_ok,use_direct_access,free_and_alloc
@@ -221,12 +220,11 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! A smaller I/O is possible ONLY with NETCDF while in plain Fortran 
  ! it produces and erroneous loading of WFs
  !
-! wf_nb_io_local=wf_nb_io
-!#if defined _NETCDF_IO
-! if(wf_nb_io_groups==1) wf_nb_io_local=min(wf_nb_io,wf_b(2)-wf_b(1)+1)
-!#endif
-! allocate(wf_disk(2,wf_nb_io_local,wf_ncx,n_spin))
+#if defined _NETCDF_IO
+ allocate(wf_disk(2,min(wf_nb_io,wf_b(2)-wf_b(1)+1),wf_ncx,n_spin))
+#else
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+#endif
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  !
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
@@ -267,9 +265,6 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
        do ib=wf_nb_io*(ib_grp-1)+1,wf_nb_io*ib_grp
          !
          i2=ib-wf_nb_io*(ib_grp-1)
-!#if defined _NETCDF_IO
-!         if(wf_nb_io_groups==1) i2=ib-wf_b(1)+1
-!#endif
          !
          if (any((/ib<wf_b(1),ib>wf_b(2),is<wf_s(1),is>wf_s(2)/))) cycle 
          !

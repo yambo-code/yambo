@@ -46,11 +46,6 @@ module parallel_m
  logical            :: l_par_bse,l_par_density,l_par_X_G_q0
  logical            :: l_par_X_G_q,l_par_HF,l_par_GW,l_par_RT,l_par_ELPH
  !
- ! Input file...
- !
- ! ... Threads
- integer            :: n_threads = 1
- !
  ! Communicators
  !
  integer, parameter :: MAX_N_OF_CHAINS=100
@@ -267,6 +262,7 @@ module parallel_m
    character(lchlen) function PARALLEL_message(i_s)
      use pars,   ONLY:lchlen
      use stderr, ONLY:intc
+     use openmp, ONLY:n_threads
      integer :: i_s
      !
      PARALLEL_message=" "

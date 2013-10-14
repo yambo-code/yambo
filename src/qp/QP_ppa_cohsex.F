@@ -31,10 +31,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error
- use drivers,       ONLY:Finite_Tel,l_ppa,l_cohsex,l_sc_run,l_sc_srpa
+ use drivers,       ONLY:l_ppa,l_cohsex,l_sc_run,l_sc_srpa
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_IND_Q_ID,PAR_IND_QP_ID,&
-&                        PAR_COM_Q_A2A,PAR_COM_G_b_INDEX
+&                        PAR_COM_Q_A2A
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,OP_WR_CL
@@ -73,7 +73,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  logical, external::stop_now
  character(schlen)::ch,Sc_name
  logical          ::X_is_TR_rotated
- complex(SP)      ::local_rhotw(X%ng),pre_factor
+ complex(SP)      ::local_rhotw(X%ng),pre_factor,sp_dummy
  real(SP)         ::eet_cutoff(n_sp_pol),E_kmq,f_kmq
  !
  ! Reset
@@ -247,6 +247,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Poles and Residuals
      !
+!$omp parallel do default(shared), private(i1,i2)
      do i1=1,X%ng
        do i2=1,X%ng
          if (l_ppa) then
@@ -260,6 +261,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          endif
        enddo
      enddo
+!$omp end parallel do
      !
      X_is_TR_rotated=.false.
      !
@@ -275,6 +277,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    ! matrix must be done here.
    !
    if (iqs>nsym/(i_time_rev+1) .and. (i_space_inv==0.or.mag_syms) .and..not.X_is_TR_rotated) then
+     !
+     ! Note (AF) that $omp directives are inside mat_transpose
+     !
      call mat_transpose(X_mat(:,:,1))
      if (l_ppa) call mat_transpose(X_mat(:,:,2))
      X_is_TR_rotated=.true.
@@ -325,11 +330,18 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 !         if(master_cpu) forall(ig1=1:X%ng,ig2=1:X%ng) eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
        else
          !
+         sp_dummy = 0.0_SP
+         !
+!$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
          do ig1=1,X%ng
            do ig2=1,X%ng
-             dc(1)=dc(1)+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,1)
+             sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,1)
            enddo
          enddo
+!$omp end parallel do
+         !
+         dc(1) = sp_dummy
+         !
          !
          if (PAR_COM_Q_A2A%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
          !
@@ -372,19 +384,27 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
          !
          do i4=1,QP_dSc_steps
+           !
+           sp_dummy = 0.0_SP
+           !
+!$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
            do ig1=1,X%ng
              do ig2=1,X%ng
                !
                !PPA_E=X%ppaE/real(X_mat(ig1,ig2,2))
                !PPA_R=-X_mat(ig1,ig2,1)/2.*PPA_E*isc%gamp(ig1,ig2)
                !
-               dc(i4)=dc(i4)-4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*&
+               sp_dummy=sp_dummy-4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*&
 &                     X_mat(ig1,ig2,1)/2.*X%ppaE/real(X_mat(ig1,ig2,2))*isc%gamp(ig1,ig2)*&
 &                     ( (spin_occ-f_kmq)/(conjg(W_(i4))-E_kmq-X%ppaE/real(X_mat(ig1,ig2,2)))+&
 &                     f_kmq/(conjg(W_(i4))-E_kmq+X%ppaE/real(X_mat(ig1,ig2,2))))
 
              enddo
            enddo
+!$omp end parallel do
+           !
+           dc(i4) = sp_dummy
+           !
          enddo
          !
          QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
@@ -393,7 +413,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          call M_by_V('N', X%ng, X_mat(:,:,1), conjg(iscp%rhotw), local_rhotw)
          !
+#if defined _OPENMP
+         pre_factor=0.0_SP
+!$omp parallel do default(shared), private(i1), reduction(+:pre_factor)
+         do i1=1,X%ng
+           pre_factor=pre_factor+isc%rhotw(i1)*local_rhotw(i1)
+         enddo
+!$omp end parallel do
+#else
          pre_factor=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+#endif
          !
          ! SEX
          !

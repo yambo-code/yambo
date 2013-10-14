@@ -31,12 +31,12 @@ subroutine Dipole_transverse(Xen,Xk,X)
 &                              PAR_Xk_ibz_index,PAR_IND_VAL_BANDS_X,&
 &                              PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_CON_BANDS_X_ID,&
 &                              PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_A2A
- use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
+ use D_lattice,           ONLY:alat
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,PP_free,  &
 &                              pp_kbv_dim,spin_m_table,pp_factor
  use R_lattice,           ONLY:g_vec,bz_samp
  use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P,Dipole_Energy_treshold
- use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD,OP_RD_CL
+ use IO_m,                ONLY:io_control,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state
  use wrapper,             ONLY:M_by_V
@@ -52,18 +52,15 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! Work Space
  !
- integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min,i_pp
- integer                      :: i_spinor,i_spin,E_i_spin,pp_spin
- integer                      :: alloc_err,wf_dim,n_LT_steps,ik_mem
- complex(SP), allocatable     :: wf_xyz(:,:)
- complex(SP), allocatable     :: kbv(:,:,:)
+ integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min,i_spin,E_i_spin,pp_spin,&
+&                                alloc_err,wf_dim,n_LT_steps,ik_mem,ig
+ complex(SP), allocatable     :: wf_xyz(:,:),kbv(:,:,:)
  complex(SP)                  :: rho(4)
  real(SP)                     :: Ev_m_Ec
  !
  !I/O and external functions
  !
- integer                      :: ID,io_err(3)
- integer                      :: ioKB_abinit_err,ioKB_pwscf_err,io_Vnl_err
+ integer                      :: ID,io_err(3),ioKB_abinit_err,ioKB_pwscf_err,io_Vnl_err
  integer, external            :: ioKB_abinit,ioKB_pwscf,io_Vnl
  !
  call Dipole_kb_init(Xen,X,io_err,ID)
@@ -173,9 +170,21 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          ! wf_xyz = -i grad fdo(iv,ik)
          !
+#if defined _OPENMP
+!$omp parallel default(shared), private(i1,ig)
+         do i1=1,3
+!$omp do
+           do ig=1,wf_ng
+             wf_xyz(ig,i1)=wf(ig,ivfft)*(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
+           enddo
+!$omp end do
+         enddo
+!$omp end parallel
+#else
          do i1=1,3
            wf_xyz(:,i1)=wf(:,ivfft)*(Xk%pt(ik,i1)+g_vec(:wf_ng,i1))*2.0_SP*pi/alat(i1)
          enddo
+#endif
          ! 
          ! GPL_EXCLUDE_START 
          !
@@ -208,6 +217,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          ! rho(4) =  \sum_G u^*_{iv ik}(G) ( k + G )^2 u_{ic ik}(G)
          !
+! AF: any omp support ?
          call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
          !
          if (ioKB_abinit_err==0.or.ioKB_pwscf_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)

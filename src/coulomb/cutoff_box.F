@@ -38,6 +38,7 @@ subroutine cutoff_box(q,is_cut)
  use interfaces,    ONLY:PARALLEL_index
  use LIVE_t,        ONLY:live_timing
  use zeros,         ONLY:k_iku_zero,G_iku_zero
+ use openmp,        ONLY:OPENMP_update,n_threads_here,master_thread
  !
  implicit none
  logical      ::is_cut(3)
@@ -47,28 +48,43 @@ subroutine cutoff_box(q,is_cut)
  !
  integer      ::iq,ig,iqbz,ig_p,is,ig_r,iqibz,i1,nq_looped
  real(SP)     ::v1(3),v2(3),V_bare(q%nibz,ng_closed),vol_factor
- complex(SP)  ::V_cut(q%nibz,wf_ng)
+ complex(SP)  ::V_cut(q%nibz,wf_ng),V_cut_tmp
  type(PP_indexes) ::px
  !
  call PP_indexes_reset(px)
  !
  ! Bare interaction
  !
- do iq=1,q%nibz
-   do ig=1,ng_closed
+ ! AF: iku_v_norm is thread safe
+ !
+!$omp parallel do default(shared), private(ig,iq)
+ do ig=1,ng_closed
+   do iq=1,q%nibz
      if (iq==1.and.ig==1) cycle
      V_bare(iq,ig)=1./iku_v_norm(q%pt(iq,:)+g_vec(ig,:))**2.
    enddo
  enddo
+!$omp end parallel do
  V_bare(1,1)=7.7956*(RL_vol/real(q%nbz))**(-2./3.)
  !
  ! RIM contribution
  !
  if (allocated(RIM_qpg).and.RIM_anisotropy==0.) then
    CUTOFF_plus_RIM=.true.
-   forall(iq=1:q%nibz,ig=1:RIM_ng) &
-          V_bare(iq,ig)=RIM_qpg(iq,ig,ig)*DL_vol*real(q%nbz)/2.
+   !
+!$omp parallel do default(shared), private(ig,iq)
+   do ig=1,RIM_ng
+     do iq=1,q%nibz
+       V_bare(iq,ig)=RIM_qpg(iq,ig,ig)*DL_vol*real(q%nbz)/2.
+     enddo
+   enddo
+!$omp end parallel do
+   !
  endif
+ ! 
+ ! Local Threads involved
+ !
+ call OPENMP_update()
  !
  ! BOX
  !
@@ -78,10 +94,13 @@ subroutine cutoff_box(q,is_cut)
  !
  call PARALLEL_index(px,(/q%nibz,wf_ng/))
  !
- call live_timing('Box',px%n_of_elements(myid+1))
+ call live_timing('Box',px%n_of_elements(myid+1)/n_threads_here)
  !
- do iq=1,q%nibz
-   do ig=1,wf_ng
+!$omp parallel do default(shared), &
+!$omp &    private(ig,iq, v1,nq_looped, iqbz,iqibz,is,i1,V_cut_tmp, &
+!$omp &            ig_p,ig_r,v2)
+ do ig=1,wf_ng
+   do iq=1,q%nibz
      !
      if (.not.px%element_2D(iq,ig)) cycle
      !
@@ -100,6 +119,8 @@ subroutine cutoff_box(q,is_cut)
        !
        nq_looped=nq_looped+1
        !
+       V_cut_tmp = 0.0_SP
+       !
        g_loop: do ig_p=1,ng_closed
          !
          do i1=1,3
@@ -110,18 +131,21 @@ subroutine cutoff_box(q,is_cut)
          ig_r=g_rot( sop_inv(is), ig_p )
          v2= ( q%ptbz(iqbz,:)+g_vec(ig_p,:) )*2.*pi/alat(:)
          !
-         V_cut(iq,ig)=V_cut(iq,ig)+V_bare(iqibz,ig_r)*F_box(v1,v2)
+         V_cut_tmp=V_cut_tmp+V_bare(iqibz,ig_r)*F_box(v1,v2)
          !
        enddo g_loop
+       !
+       V_cut(iq,ig)=V_cut(iq,ig)+V_cut_tmp
        !
      enddo q_loop
      !
      V_cut(iq,ig)=V_cut(iq,ig)/nq_looped
      !
-     call live_timing(steps=1)
+     if ( master_thread ) call live_timing(steps=1)
      !
    enddo
  enddo
+!$omp end parallel do
  !
  call live_timing()
  !
@@ -147,7 +171,17 @@ subroutine cutoff_box(q,is_cut)
    vol_factor=v_norm(a(3,:))
  endif
  !
+#if defined _OPENMP
+!$omp parallel do default(shared), private(ig,iq)
+ do ig=1,wf_ng
+   do iq=1,q%nibz
+     bare_qpg(iq,ig)=sqrt(vol_factor/V_cut(iq,ig))
+   enddo
+ enddo
+!$omp end parallel do
+#else
  forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(vol_factor/V_cut(iq,ig))
+#endif
  !
  call k_ibz2bz(q,'d',.true.)
  !

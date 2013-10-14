@@ -28,8 +28,8 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,Fragmented_IO
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use parallel_m,     ONLY:n_nodes,ncpu,n_MPI,n_threads,n_chains,&
-&                         PARALLEL_message,n_CPU_str_max
+ use parallel_m,     ONLY:n_nodes,ncpu,n_MPI,n_chains,PARALLEL_message,n_CPU_str_max
+ use openmp,         ONLY:n_threads,OPENMP_initialize,n_user_threads
  implicit none
  !
  type(levels)  :: en
@@ -41,6 +41,8 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  integer, external :: ioDB1
  !
  call section('*','CPU structure, Files & I/O Directories') 
+ !
+ call OPENMP_initialize(.FALSE.)
  !
  ! CPU structure
  !===============
@@ -55,13 +57,18 @@ subroutine PARALLEL_and_IO_Setup(en,k)
    !
    call msg( 'r','* MPI CHAINS    :',n_chains)
    call msg( 'r','* MPI CPU       :',n_MPI)
-   call msg( 'r','* THREADS       :',n_threads)
+   !
  else
    !
    call msg ('r','* CPU           :',ncpu)
    !
  endif
- call msg('r','* I/O NODES     :',n_nodes)
+ !
+ call msg('r', '* THREADS  (tot):',n_threads)
+ if (n_user_threads>0) then
+   call msg('r', '*         (user):',n_user_threads)
+ endif
+ call msg('r', '* I/O NODES     :',n_nodes)
  call msg('rn','* Fragmented I/O:',Fragmented_IO)
  call msg('r','CORE databases in ',trim(core_io_path))
  call msg('r','Additional I/O in ',trim(more_io_path))

@@ -171,7 +171,17 @@ subroutine X_s(iq,X,wv)
    !
    X_mat(:,:,iw)=matmul(tddftk,Xo)
    !
+#if defined _OPENMP
+!$omp parallel do default(shared), private(i1,i2)
+   do i2=1,X%ng
+     do i1=1,X%ng
+        X_mat(i1,i2,iw)=X_mat(i1,i2,iw)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
+     enddo
+   enddo
+!$omp end parallel do
+#else
    forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,iw)=X_mat(i1,i2,iw)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
+#endif
    !
    call live_timing(steps=1)
    !

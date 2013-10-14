@@ -129,7 +129,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='YAMBO_SURF'
 #endif
  !
- !CPU structure
+ ! CPU structure
  !
  call PARALLEL_structure()
  !
@@ -137,7 +137,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call SET_logicals()
  !
- !Presets (input)
+ ! Presets (input)
  !
  init = 0
  !
@@ -850,6 +850,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT
  if(infile_verbosity==V_real_time.and.l_real_time) call DephMatrix_init()
 #endif
+ !
+ ! After input reading the number of threads could be eventually overwritten
+ ! by the user-specified value
+ !
+ call OPENMP_initialize(.FALSE.)
  !
  if (infile_editing) return
  !

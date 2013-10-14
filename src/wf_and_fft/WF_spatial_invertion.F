@@ -69,9 +69,26 @@ subroutine WF_spatial_invertion(en,Xk)
    call el_density(en,Xk,rho_nsi,.false.)
    !
    cv=(0.,0.)
+   mv(1:2)=0.0_SP
+   !
+#if defined _OPENMP
+   !
    forall(i1=1:fft_size) cv(i1)=conjg(wf(i1,1))*wf(i1,1)
    mv(1)=sum(rho_nsi(:)*cv(:))
    mv(2)=sum(rho_si(:)*cv(:))
+   !
+#else
+   !
+!$omp parallel do default(shared), private(i1), reduction(+:mv)
+   do i1=1,fft_size
+       cv(i1)=conjg(wf(i1,1))*wf(i1,1)
+       mv(1)=mv(1) +rho_nsi(i1)*cv(i1)
+       mv(2)=mv(2) +rho_si(i1)*cv(i1)
+   enddo
+!$omp end parallel do
+   !
+#endif
+   !
    if (abs(mv(1)-mv(2))<abs(mv(1))/1.E5) then
      i_space_inv=1
    else

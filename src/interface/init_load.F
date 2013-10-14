@@ -74,7 +74,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _ELPH 
  use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,RES_tresh
 #endif
- use parallel_m,    ONLY:n_threads,n_log_CPUs
+ use parallel_m,           ONLY:n_log_CPUs
+ use openmp,               ONLY:n_user_threads
  !
  implicit none
  type(initdefs)::defs
@@ -167,8 +168,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Parallel Setup
  !
+#if defined _OPENMP
+ call it(defs,'Threads',      '[OPENMP] Number of threads (leave 0 to use default value)',n_user_threads,verb_level=V_parallel)
+#endif
 #if defined _MPI 
- call it(defs,'Threads',      '[PARALLEL] Number of threads',n_threads,verb_level=V_parallel)
  call it(defs,'NLogCPUs',     '[PARALLEL] Live-timing CPU`s (0 for all)',n_log_CPUs,verb_level=V_parallel)
 #endif
  !
@@ -547,7 +550,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      des(7) ='Drude plasmon'
      des(8) ='[cc] Electric Field'
      des(9) ='Electron-hole energy range'
-     des(10) ='PPA imaginary energy'
+     des(10)='PPA imaginary energy'
      des(11)='Response block size'
      des(12)='Transferred momenta'
      des(13)='Polarization function bands'

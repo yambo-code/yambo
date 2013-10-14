@@ -146,7 +146,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
      ! Use shifted grids, supporting fallback to transverse gauge
      !
-     call Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
+     call Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
      !
      if (use_trans_gauge) call warning('Reverting to transverse gauge')
      if (use_trans_gauge) Dipole_uses_shifted_grids=.FALSE.

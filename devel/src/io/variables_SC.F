@@ -37,7 +37,7 @@ integer function variables_SC(ID,local_description,what)
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_IO_time,                  &
 &                         RT_IO_steps,l_RT_induced_field,l_NE_simulate_BSE,G_MEM_steps,&
-&                         l_RT_CCA_Kernel,RT_IO_steps_DB,N_Gr_descs,Gr_description,l_G_retarded_DB,&
+&                         l_RT_CCA_Kernel,RT_IO_steps_DB,&
 &                         RT_dynamics_jumps,Life_MEM_steps,l_RT_uses_E_RIM
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
@@ -57,9 +57,10 @@ integer function variables_SC(ID,local_description,what)
  ! Work Space
  !
  integer               :: SC_kind_disk,SC_perturbation_disk,&
-&                         io_status_save,i1,i_desc,local_size,VAR_SIZE
+&                         io_status_save,i1,i_desc,local_size,VAR_SIZE,N_Gr_descs
  logical               :: CHECK_,l_J,l_G,l_occupations,l_NE_with_fields_disk,l_MP
- character(lchlen)     :: ch
+ logical               :: l_G_retarded_DB
+ character(lchlen)     :: ch,Gr_description(100)
  !
  l_J =.FALSE.
  l_G =.FALSE.
@@ -395,7 +396,7 @@ integer function variables_SC(ID,local_description,what)
    !
    ! G retarded variables
    !======================
-   if (ver_is_gt_or_eq(ID,revision=2450)) then
+   if (ver_is_gt_or_eq(ID,revision=2450).and..not.ver_is_gt_or_eq(ID,revision=2780)) then
      call io_elemental(ID,VAR="G_retarded_BASE",VAR_SZ=2,MENU=0) 
      call io_elemental(ID,L0=l_G_retarded_DB,CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,I0=N_Gr_descs,CHECK=.true.,OP=(/"=="/))

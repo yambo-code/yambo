@@ -23,7 +23,7 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  !
  use pars,           ONLY:SP,rZERO,IP
  use QP_m,           ONLY:QP_n_states,QP_table
- use real_time,      ONLY:Gr_ee_matrix,Gr_T_steps,Gr,Gr_peak_pos,Gr_T_step,Gr_kind
+ use real_time,      ONLY:Gr_ee_matrix,Gr_kind
  use memory_m,       ONLY:mem_est
  use SC,             ONLY:SC_bands
  use D_lattice,      ONLY:nsym

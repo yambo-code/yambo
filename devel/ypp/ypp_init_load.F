@@ -23,9 +23,6 @@ subroutine ypp_init_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit
-#if defined _YPP_RT
- use real_time,     ONLY:Gr_kind,Gr_bands,Gr_E_window,Gr_T_window
-#endif
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
@@ -126,9 +123,8 @@ subroutine ypp_init_load(defs)
  call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit)
  call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit)
  call it(defs,'OCCTref','NEGF Occupations reference time',OCC_T_ref,unit=Time_unit)
- call it('f',defs,'OCCPlot','NEGF Plot f(t) for all k and n')
- call it('f',defs,'OCCFit','NEGF Make a FIT of the occ. with Fermi Function')
  call it(defs,'OCCnFit','NEGF N of times for occupations distribution FIT',RT_n_FIT) 
+ call it('f',defs,'OCCgroup','NEGF If RIM is used group occupations')
 #endif
  !
  ! BANDS
@@ -277,15 +273,6 @@ subroutine ypp_init_load(defs)
  call it(defs,'Btheta',    '[MAG] Magnetic field theta angle [degree]',B_theta,unit='deg')
  !
 #if defined _YPP_RT
- !
- ! Retarded GFs
- !
- call it(defs,'GFbands', 'Bands',Gr_bands) 
- call it(defs,'GFkind',  'Green`s function kind ("QP","QP-cut","BOX","HC"),',Gr_kind) 
- call it(defs,'T_step',  'Time step in the integration',GF_T_step,unit=Time_unit) 
- call it(defs,'T_window','Time window',Gr_T_window,unit=Time_unit) 
- call it(defs,'E_step',  'Energy step in the integration',Gr_E_step,unit=E_unit) 
- call it(defs,'E_window','Energy window',Gr_E_window,unit=E_unit) 
  !
  ! Post-Processing
  !

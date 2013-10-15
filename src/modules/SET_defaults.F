@@ -101,6 +101,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
 #endif
  use interpolate, ONLY:interpls,max_interpls
+#if defined _TIMING
+ use timing_m,    ONLY:timing_allocate,nclockx
+#endif
  !
  implicit none
  !
@@ -122,6 +125,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! Stack Size 
  !
  call remove_stack_limit()
+ !
+ ! Clocks
+ !
+#if defined _TIMING
+ call timing_allocate(nclockx)
+#endif
  !
  ! ZEROs 
  !

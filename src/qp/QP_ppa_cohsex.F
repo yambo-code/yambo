@@ -48,6 +48,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
  use matrix_operate,ONLY:mat_transpose
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
 !#if defined _SC
 ! use SC,            ONLY:it_now
 !#endif
@@ -175,6 +178,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,QP_index=PAR_IND_QP)
  !
  call WF_load(isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-SC')
+ !
+#if defined _TIMING
+ call timing('GW(ppa)',OPR='start')
+#endif
  !
  ! Plasmon-Pole/Static interaction DB I/O
  !
@@ -489,6 +496,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  endif
  call mem_est("ISC-GAMP GW-E")
  call X_alloc('X')
+#if defined _TIMING
+ call timing('GW(ppa)',OPR='stop')
+#endif
  !
  ! ALL 2 ALL of QP_Sc
  !

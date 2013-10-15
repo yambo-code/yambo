@@ -31,6 +31,9 @@ integer function io_DIPOLES(X,Xen,ID)
 &                        RD_CL_IF_END,RD_CL,io_action
  use fragments,     ONLY:io_fragment
  use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_nibz
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  !
  implicit none
  type(X_t)   ::X
@@ -43,6 +46,10 @@ integer function io_DIPOLES(X,Xen,ID)
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  real(SP),allocatable :: DIP_iR_disk(:,:,:)
+ !
+#if defined _TIMING
+ call timing('io_DIPOLES',OPR='start')
+#endif
  !
  io_DIPOLES=io_connect(desc='dipoles',type=2,ID=ID)
  if (io_DIPOLES/=0) goto 1
@@ -104,5 +111,9 @@ integer function io_DIPOLES(X,Xen,ID)
  deallocate(DIP_iR_disk)
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_DIPOLES',OPR='stop')
+#endif
  !
 end function

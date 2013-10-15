@@ -28,8 +28,8 @@ module OPENMP
  !     from the environment var OMP_NUM_THREADS
  !     any other value given from input will overwrite the environment
  !
- integer     :: n_threads = 1
- integer     :: n_threads_here = 0
+ integer     :: n_threads = 0
+ integer     :: n_threads_now = 0
  logical     :: master_thread = .FALSE.
  !
 #if defined _OPENMP
@@ -50,11 +50,12 @@ module OPENMP
      !
 #if defined _OPENMP
      if ( n_threads > 0 ) then 
-       n_threads=n_threads
        call omp_set_num_threads( n_threads )
      else
        n_threads=omp_get_max_threads()
      endif
+     !
+     n_threads_now=n_threads
      !
      if (.not.DEEP_initialize) return
      !
@@ -64,10 +65,10 @@ module OPENMP
    end subroutine
    !
    subroutine OPENMP_update()
-     n_threads_here=1
+     n_threads_now=1
      master_thread=.true.
 #if defined _OPENMP
-     n_threads_here = omp_get_num_threads()
+     n_threads_now = omp_get_num_threads()
      master_thread  = ( omp_get_thread_num() == 0)
 #endif
    end subroutine

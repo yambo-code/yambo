@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.4.0 r.2785 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.4.0 r.2787 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="4"
 SSUBLEVEL="0"
-SREVISION="2785"
+SREVISION="2787"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -200,6 +200,17 @@ if test x"$enable_open_mp" = "xyes"; then
  openmp_cpp="-D_OPENMP"
 fi
 AC_SUBST(OPENMPLIBS)
+# ============================================================================
+#
+# Time Profiling (mod_timing)
+#
+AC_ARG_ENABLE(time-profile, AC_HELP_STRING([--enable-time-profile],
+              [Extended timing profile of specific sections]))
+if test x"$enable_time_profile" = "x"; then enable_time_profile="no"; fi
+time_profile_cpp=" "
+if test x"$enable_open_mp" = "xyes"; then 
+ time_profile_cpp="-D_TIMING"
+fi
 # ============================================================================
 #
 # Verbose compilation
@@ -383,6 +394,7 @@ if test "$mpibuild" = "yes"; then
   PCC=""
   PCCFLAGS=""
  fi
+ AC_SUBST(time_profile_cpp)
  AC_SUBST(openmp_cpp)
  AC_SUBST(mpi_cpp)
  AC_SUBST(MPILIBS)

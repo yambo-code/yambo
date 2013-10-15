@@ -36,6 +36,9 @@ subroutine X_s(iq,X,wv)
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_n_mem_freqs,&
 &                        FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,ioBS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  !
  implicit none
  type(X_t)    :: X
@@ -53,6 +56,10 @@ subroutine X_s(iq,X,wv)
  integer           ::ioFxc_err,ID,FXC_w_ref
  !
  ! Setup 
+ !
+#if defined _TIMING
+ call timing('X (procedure)',OPR='start')
+#endif
  !
  call PP_indexes_reset(PAR_IND_freqs)
  !
@@ -189,9 +196,18 @@ subroutine X_s(iq,X,wv)
  !
  if (PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1)>0) call live_timing()
  !
+#if defined _TIMING
+ call timing('X (procedure)',OPR='stop')
+ call timing('X (REDUX)',OPR='start')
+#endif
+ !
  do iw=1,wv%n_freqs
    call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_INV_index%COMM)
  enddo
+ !
+#if defined _TIMING
+ call timing('X (REDUX)',OPR='stop')
+#endif
  !
  ! CLEAN
  !

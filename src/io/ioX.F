@@ -36,6 +36,9 @@ integer function ioX(X,Xw,ID)
 &                        NONE,IO_INCOMPATIBLE_VAR
  use stderr,        ONLY:intc
  use fragments,     ONLY:io_fragment,Fragments_Restart
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  implicit none
  type(X_t)   :: X
  type(w_samp):: Xw
@@ -51,6 +54,10 @@ integer function ioX(X,Xw,ID)
  !
  ! I assume that he RL ordering used to build X is not different
  ! from the one in DB1
+ !
+#if defined _TIMING
+ call timing('io_X',OPR='start')
+#endif
  !
  different_db_RL_order=.false.
  !
@@ -234,6 +241,10 @@ integer function ioX(X,Xw,ID)
  ioX=io_restart_point(ID)
  !
 1 call io_disconnect(ID)
+ !
+#if defined _TIMING
+ call timing('io_X',OPR='stop')
+#endif
  !
  contains
    !

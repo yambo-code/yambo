@@ -43,7 +43,10 @@
 !
 subroutine fft_3d(c,n,fft_sign)
  !
- use pars,ONLY:DP
+ use pars,          ONLY:DP
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  implicit none
  integer     :: n(3),fft_sign
  complex(DP) :: c(n(1),n(2),n(3))
@@ -53,6 +56,10 @@ subroutine fft_3d(c,n,fft_sign)
  integer     :: i1,ln(3),ipos
  real(DP), allocatable :: zi(:,:,:,:,:)
  integer     :: i, j, k
+ !
+#if defined _TIMING
+ call timing('FFT',OPR='start')
+#endif
  !
  ! ln(:):memory dimension of Z. ndi must always be greater or
  !       equal than ni. On a vector machine, it is recomended
@@ -99,6 +106,10 @@ subroutine fft_3d(c,n,fft_sign)
  zi(2,:n(1),:n(2),:n(3),ipos)=aimag(c(:,:,:))
  call fft(n(1),n(2),n(3),ln(1),ln(2),ln(3),zi,fft_sign,ipos)
  c(:,:,:)=cmplx(zi(1,:n(1),:n(2),:n(3),ipos),zi(2,:n(1),:n(2),:n(3),ipos),DP)
+#endif
+ !
+#if defined _TIMING
+ call timing('FFT',OPR='stop')
 #endif
  !
  deallocate(zi)

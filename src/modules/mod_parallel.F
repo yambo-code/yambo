@@ -393,7 +393,7 @@ module parallel_m
      integer, optional :: imode,COMM
 #if defined _MPI
      integer :: omode,LOCAL_COMM
-     integer::dimensions(1),dimension !Work Space
+     integer::dimensions(1),dimension  !Work Space
      integer(8),allocatable::larray(:) !Work Space
      if (ncpu==1) return
      !

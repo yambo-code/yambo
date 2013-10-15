@@ -38,7 +38,7 @@ subroutine cutoff_box(q,is_cut)
  use interfaces,    ONLY:PARALLEL_index
  use LIVE_t,        ONLY:live_timing
  use zeros,         ONLY:k_iku_zero,G_iku_zero
- use openmp,        ONLY:OPENMP_update,n_threads_here,master_thread
+ use openmp,        ONLY:OPENMP_update,n_threads_now,master_thread
  !
  implicit none
  logical      ::is_cut(3)
@@ -94,7 +94,7 @@ subroutine cutoff_box(q,is_cut)
  !
  call PARALLEL_index(px,(/q%nibz,wf_ng/))
  !
- call live_timing('Box',px%n_of_elements(myid+1)/n_threads_here)
+ call live_timing('Box',px%n_of_elements(myid+1)/n_threads_now)
  !
 !$omp parallel do default(shared), &
 !$omp &    private(ig,iq, v1,nq_looped, iqbz,iqibz,is,i1,V_cut_tmp, &

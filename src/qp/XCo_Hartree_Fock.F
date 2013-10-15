@@ -37,6 +37,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:WF_load
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
 #if defined _SC
  use SC,            ONLY:it_now,SC_bands
  use collisions_IO, ONLY:TEMP_COLLISIONS_v
@@ -70,6 +73,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  integer              :: i4(4)
  integer, external    :: QP_state_extract
  integer              :: ig
+ !
+#if defined _TIMING
+ call timing('HF',OPR='start')
+#endif
  !
  ! Resets & basis setup
  !
@@ -302,8 +309,17 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call collision_reset(isc)
  call collision_reset(iscp) 
  !
+#if defined _TIMING
+ call timing('HF',OPR='stop')
+ call timing('MPI_ALLREDUCE',OPR='start')
+#endif
+ !
 #if !defined _RT
  call PP_redux_wait(QP_Vnl_xc)
+#endif
+ !
+#if defined _TIMING
+ call timing('MPI_ALLREDUCE',OPR='stop')
 #endif
  !
 end subroutine

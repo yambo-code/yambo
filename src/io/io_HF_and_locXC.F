@@ -29,6 +29,9 @@ integer function io_HF_and_locXC(ID)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  integer :: ID
  !
@@ -38,6 +41,10 @@ integer function io_HF_and_locXC(ID)
 &                     QP_n_states_disk,bands(2),i1,i2,i_found,var_sz
  real(SP)          :: Sx(2),Vxc(2)
  character(schlen) :: QP_xc_FUNCTIONAL
+ !
+#if defined _TIMING
+ call timing('io_HF',OPR='start')
+#endif
  !
  io_HF_and_locXC=io_connect(desc="HF_and_locXC",type=2,ID=ID,no_full_RESET=.TRUE.)
  if (io_HF_and_locXC/=0) then
@@ -135,5 +142,9 @@ integer function io_HF_and_locXC(ID)
  endif
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_HF',OPR='stop')
+#endif
  !
 end function

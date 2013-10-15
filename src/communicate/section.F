@@ -27,7 +27,7 @@ subroutine section(mode,name)
  !      = p     : increase level only in this section
  !      = #     : increase level #
  !
- use pars
+ use pars,       ONLY:lchlen,schlen,SP
  use it_m,       ONLY:ofiles_append
  use stderr,     ONLY:string_pack,intc
  use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&
@@ -35,6 +35,9 @@ subroutine section(mode,name)
  use parallel_m, ONLY:PP_redux_wait,PARALLEL_message,ncpu
  use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
 &                     write_to_report,write_the_logo,repfile
+#if defined _TIMING
+ use timing_m,   ONLY:timing_upto_now
+#endif
  implicit none
  character(1)::mode
  character(*)::name
@@ -154,9 +157,20 @@ subroutine section(mode,name)
      !
      ch = 'CpuTiming Min/Max/Average:'
      write (ch,'(6a)')     'Timing   [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
-     call msg('nrn',trim(ch))
+     !
+#if defined _TIMING
+    call msg('nr',trim(ch))
+    call timing_upto_now()
+#else
+    call msg('nrn',trim(ch))
+#endif
+     !
      call ofiles_append(line=" ")
      call ofiles_append(line=trim(ch))
+     !
+   else
+     !
+     call msg('nr'," ")
      !
    endif
    !

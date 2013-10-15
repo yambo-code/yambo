@@ -21,14 +21,22 @@
 !
 subroutine SET_logicals()
  !
+ use pars,       ONLY:schlen
  use parallel_m, ONLY:IO_write_default,master_cpu,myid,master_cpu,myid,INTER_CHAIN,n_log_CPUs,ncpu
  use com,        ONLY:write_to_of,write_to_report
  use fragments,  ONLY:Parallel_Fragments
- use IO_m,       ONLY:IO_write,IO_read,Fragmented_IO,Fragmented_IO_save,IO_write_not_fragmented_DB
- use stderr,     ONLY:write_to_log,write_fragments_IO_log
+ use IO_m,       ONLY:IO_write,IO_read,Fragmented_IO,Fragmented_IO_save,IO_write_not_fragmented_DB,&
+&                     DBs_IO_control_string,io_DIP,io_X,io_HF
+ use stderr,     ONLY:write_to_log,write_fragments_IO_log,string_split
  use LIVE_t,     ONLY:live_timing_is_on
- integer :: i_chain ! Work Space
+ !
+ ! Work Space
+ !
+ integer          ::i_chain,i_ch
+ character(schlen)::ch_piece(10)
+ !
  master_cpu                =myid==0
+ !
  if (n_log_CPUs==0) then
    write_to_log            =.TRUE.
  else
@@ -36,6 +44,7 @@ subroutine SET_logicals()
    if (i_chain==0) write_to_log=.TRUE.
    if (i_chain> 0) write_to_log=INTER_CHAIN(i_chain)%CPU_id==0
  endif
+ !
  write_fragments_IO_log    =write_to_log
  IO_write_default(myid+1)  =master_cpu
  IO_write                  =IO_write_default(myid+1)
@@ -46,5 +55,13 @@ subroutine SET_logicals()
  live_timing_is_on         =write_to_log
  Parallel_Fragments        =.TRUE.
  IO_write_not_fragmented_DB=master_cpu
+ !
+ call string_split(DBs_IO_control_string,ch_piece)
+ !
+ do i_ch=1,10
+   if (trim(ch_piece(i_ch))=="DIP") io_DIP=.FALSE.
+   if (trim(ch_piece(i_ch))=="X")   io_X=.FALSE.
+   if (trim(ch_piece(i_ch))=="HF")  io_HF=.FALSE.
+ enddo
  !
 end subroutine

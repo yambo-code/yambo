@@ -374,7 +374,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
    PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
    !
-   call distribute_BZk_using_IBZk( )
+   call define_IBZ_index_and_distribute_BZk_using_IBZk(.FALSE.)
    !
    PARALLEL_cpu_mat_inversion=CPU_structure(1)%nCPU_inversion
    !
@@ -402,12 +402,16 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  ! Response_G_space_Finite_Momentum
  !----------------------------------
  !
- if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="BSE") then
+ if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="BSE".or.&
+&    ENVIRONMENT=="Response_G_space") then
    !
    if (ENVIRONMENT=="Response_G_space_Finite_Momentum") then
      WHAT="ibz"
      iq_range=(/max(X%iq(1),2),X%iq(2)/)
-   else
+   else if ( ENVIRONMENT=="Response_G_space") then
+     WHAT="ibz"
+     iq_range=(/1,nqibz/)
+   else 
      WHAT="bz"
      iq_range=(/1,nqbz/)
    endif
@@ -420,30 +424,40 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    ! K-points (BZ)
    !
    call PARALLEL_index(PAR_IND_Xk_bz,(/Xk%nbz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=.TRUE.)
+   PAR_IND_Xk_bz_ID=PAR_COM_Xk_bz_INDEX%CPU_id
+   PAR_Xk_nbz=PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1)
    !
    call PARALLEL_live_message("K(bz)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Xk_bz%n_of_elements(PAR_COM_Xk_bz_INDEX%CPU_id+1),TOTAL=Xk%nbz,&
 &                             NCPU=PAR_COM_Xk_bz_INDEX%n_CPU,CHAIN=PAR_COM_Xk_bz_INDEX%chain_order)
+   allocate(PAR_Xk_bz_index(Xk%nbz))
+   call Build_up_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_INDEX,PAR_Xk_nbz)
    !
    ! Q-points (IBZ in LLR, in BZ BSK)
    !
    call PARALLEL_index(PAR_IND_Q,(/iq_range(2)/),low_range=(/iq_range(1)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.)
    PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
+   PAR_nQ=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)
    !
    call PARALLEL_live_message("Q("//trim(WHAT)//")",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1),&
 &                             TOTAL=iq_range(2)-iq_range(1)+1,&
 &                             NCPU=PAR_COM_Q_INDEX%n_CPU,CHAIN=PAR_COM_Q_INDEX%chain_order)
    !
+   allocate(PAR_Q_index(iq_range(2))) 
+   call Build_up_index(PAR_IND_Q,iq_range(2),PAR_Q_index,PAR_nQ)
+   !
    ! K-points (IBZ) after shifting of Q
    !
    call PARALLEL_add_Q_to_K_list("k_bz_q_"//trim(WHAT),PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
 &                                PAR_IND_Q,PAR_COM_Xk_bz_INDEX,iq_range,Xk,q)
    PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
+   call define_IBZ_index_and_distribute_BZk_using_IBZk(.TRUE.)
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz)
    !
    PARALLEL_cpu_mat_inversion=CPU_structure(2)%nCPU_inversion
    if (ENVIRONMENT=="BSE") PARALLEL_cpu_mat_inversion=CPU_structure(5)%nCPU_inversion
+   if (ENVIRONMENT=="Response_G_space") PARALLEL_cpu_mat_inversion=CPU_structure(10)%nCPU_inversion
    !
    ! Inversion
    !
@@ -609,6 +623,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                             LOADED=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1),TOTAL=nqibz,&
 &                             NCPU=PAR_COM_Q_INDEX%n_CPU,CHAIN=PAR_COM_Q_INDEX%chain_order)
    !
+   allocate(PAR_Q_index(iq_range(2))) 
+   call Build_up_index(PAR_IND_Q,iq_range(2),PAR_Q_index,PAR_nQ)
+   !
    ! K-points
    !
    call PARALLEL_add_Q_to_K_list('k_qp_q_bz',PAR_IND_QP,PAR_IND_QP_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
@@ -655,7 +672,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  !----------------------------
  !
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum".or.ENVIRONMENT=="Response_G_space_Finite_Momentum".or.&
-&    ENVIRONMENT=="BSE") then
+&    ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="BSE") then
    !
    if (ENVIRONMENT=="BSE") then
      n_bands= (/E%nbf+1,BS_bands(2)/)
@@ -745,8 +762,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
      !
    end subroutine
    !
-   subroutine distribute_BZk_using_IBZk( )
+   subroutine define_IBZ_index_and_distribute_BZk_using_IBZk(ONLY_IBZ_index)
      !
+     logical :: ONLY_IBZ_index
+     !
+     ! Work Space
      integer :: i_p
      !
      allocate(PAR_Xk_ibz_index(Xk%nibz))
@@ -764,6 +784,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
        endif
        !
      enddo
+     !
+     if (ONLY_IBZ_index) return
      !
      ! K-points in the BZ 
      !

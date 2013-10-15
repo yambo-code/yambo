@@ -76,6 +76,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
  use parallel_m,           ONLY:n_log_CPUs
  use openmp,               ONLY:n_threads
+ use IO_m,                 ONLY:DBs_IO_control_string
  !
  implicit none
  type(initdefs)::defs
@@ -290,7 +291,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! I/O
  !
- call it('f',defs,'SkipWRITE', '[PARALLEL] Do not write on disk',verb_level=V_parallel)
+ call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O allowed. DB=(DIP,X,HF,WF)',DBs_IO_control_string,verb_level=V_io)
  !
  ! GPL_EXCLUDE_END
  !

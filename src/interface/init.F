@@ -437,7 +437,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh Threads NLogCPUs SkipWRITE EvalMagn')
+ call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh Threads NLogCPUs DBsIOoff EvalMagn')
  !
  !FFT
  !
@@ -449,8 +449,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _MPI || defined _BLUEGENE
  !
  if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa) then
-   call CPU_activate("X_q_0")
-   call CPU_activate("X_all_q")
+   if (l_optics) then
+     call CPU_activate("X_q_0")
+     call CPU_activate("X_finite_q")
+   else
+     call CPU_activate("X_all_q")
+   endif
    if (l_alda_fxc) call CPU_activate("DENSITY")
  endif
  !
@@ -921,10 +925,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
    !
    subroutine CPU_activate(what)
-     character(*) :: what ! X_q_0 X_all_q GW HF BSE DENSITY RT
+     character(*) :: what ! X_q_0 X_finite_q GW HF BSE DENSITY RT WF EP X_all_q
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
-     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_all_q".or.what=="BSE") then
+     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BSE") then
        call initactivate(1,what//"_nCPU_invert")
      endif
      if (what=="BSE") then

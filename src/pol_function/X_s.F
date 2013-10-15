@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_s(iq,X,wv)
+subroutine X_s(iq,X,wv,W_range)
  !
  use pars,          ONLY:SP,pi,cZero
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
@@ -43,12 +43,12 @@ subroutine X_s(iq,X,wv)
  implicit none
  type(X_t)    :: X
  type(w_samp) :: wv
- integer      :: iq
+ integer      :: iq,W_range(2)
  !
  ! Work Space
  !
  type(PP_indexes) ::PAR_IND_freqs
- integer     :: i1,i2,iw,INV_MODE
+ integer          ::i1,i2,iw,INV_MODE
  complex(SP), allocatable :: Xom1(:,:),tddftk(:,:),Xo(:,:)
  !
  ! Fxc I/O (for the BS based kernel)
@@ -86,7 +86,7 @@ subroutine X_s(iq,X,wv)
    call live_timing('X@q['//trim(intc(iq))//'] ',PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1))
  endif
  !
- do iw=1,wv%n_freqs
+ do iw=W_range(1),W_range(2)
    !
    if (.not.PAR_IND_freqs%element_1D(iw)) then
      X_mat(:,:,iw)=cZero
@@ -201,7 +201,7 @@ subroutine X_s(iq,X,wv)
  call timing('X (REDUX)',OPR='start')
 #endif
  !
- do iw=1,wv%n_freqs
+ do iw=W_range(1),W_range(2)
    call PP_redux_wait(X_mat(:,:,iw),COMM=PAR_COM_INV_index%COMM)
  enddo
  !

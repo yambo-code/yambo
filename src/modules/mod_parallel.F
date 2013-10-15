@@ -284,7 +284,7 @@ module parallel_m
      CPU_structure(1)%Long_Description="Response_G_space_Zero_Momentum"
      CPU_structure(1)%Short_Description="X_q_0"
      CPU_structure(2)%Long_Description="Response_G_space_Finite_Momentum"
-     CPU_structure(2)%Short_Description="X_all_q"
+     CPU_structure(2)%Short_Description="X_finite_q"
      CPU_structure(3)%Long_Description="GW"
      CPU_structure(3)%Short_Description="GW"
      CPU_structure(4)%Long_Description="HF"
@@ -299,6 +299,8 @@ module parallel_m
      CPU_structure(8)%Short_Description="WF"
      CPU_structure(9)%Long_Description="Electron_Phonon"
      CPU_structure(9)%Short_Description="ELPH"
+     CPU_structure(10)%Long_Description="Response_G_space"
+     CPU_structure(10)%Short_Description="X_all_q"
    end subroutine
    !
    subroutine COMM_reset(COMM)

@@ -31,10 +31,10 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,&
-&                        PAR_COM_Q_INDEX,master_cpu
+&                        PAR_COM_Q_INDEX,master_cpu,PAR_NQ,PAR_Q_index
  use wave_func,     ONLY:WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP,&
-&                        IO_and_Messaging_switch
+&                        IO_and_Messaging_switch,io_X
  use com,           ONLY:depth
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes
@@ -47,8 +47,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer :: iq,Xdb,i_err,iq_to_start
- real(SP):: minmax_ehe(2)
+ integer           :: iq,Xdb,i_err,iq_to_start,iq_mem,X_range(2)
+ real(SP)          :: minmax_ehe(2)
  integer, external :: ioX
  character(1)      :: sec_mode
  !
@@ -114,10 +114,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (X_em1> 0) iq_to_start=X_em1
  endif
  !
- ! Allocation
- !    
- call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
- !
  do iq=iq_to_start,X%iq(2)
    !
    ! TDDFT setup
@@ -134,25 +130,25 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      !
    endif
    !
-   if (iq_to_start==1) then
-     if (iq==1) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Zero_Momentum",X=X) 
-     if (iq==2) then 
-       call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
-       call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
-     endif
-   else 
-     if (iq==iq_to_start) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
+   if (iq==iq_to_start) then
+     call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
+     if (io_X)      call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+     if (.not.io_X) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs*PAR_nq/))
    endif
    !
-   if (iq>1) then
-     if (.not.PAR_IND_Q%element_1D(iq)) cycle
+   if (.not.PAR_IND_Q%element_1D(iq)) cycle
+   !
+   X_range=(/1,Xw%n_freqs/)
+   if (.not.io_X.and.iq>1) then
+     iq_mem=PAR_Q_index(iq)
+     X_range=(/min(1,Xw%n_freqs*(iq_mem-1)),iq_mem*Xw%n_freqs/)
    endif
    !
-   call X_os(X_mat,iq,Xen,Xk,Xw,X)  
+   call X_os(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
-   if (X%whoami/=1) call X_s(iq,X,Xw)
+   if (X%whoami/=1) call X_s(iq,X,Xw,X_range)
    !
    if (iq==1) call PP_redux_wait
    if (iq> 1) call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
@@ -183,7 +179,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! CLEAN (2)
  !
- call X_alloc('X')
+ if (io_X) call X_alloc('X')
  call X_alloc('DIP_q_dot_iR')
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free()
  !

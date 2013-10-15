@@ -45,6 +45,14 @@ module IO_m
  logical :: Fragmented_IO
  logical :: Fragmented_IO_save
  !
+ ! Global DB I/O control string
+ !
+ character(lchlen) :: DBs_IO_control_string = "none"
+ logical           :: io_DIP=.TRUE.
+ logical           :: io_X  =.TRUE.
+ logical           :: io_WF =.TRUE.
+ logical           :: io_HF =.TRUE.
+ !
  ! Actions
  !
  integer, parameter:: RD_CL=1,OP_RD_CL=2,OP_WR_CL=3,OP_APP_WR_CL=4,OP_RD=5,OP_APP=6,&
@@ -65,7 +73,7 @@ module IO_m
  ! I/O errors
  !
  integer, parameter:: IO_NO_DATABASE=-1,IO_INCOMPATIBLE_VAR=-2,IO_GENERIC_ERROR=-3,&
-&                     IO_NO_BINDING_ERROR=-4,IO_NO_ERROR=0,IO_OUTDATED_DB=-5
+&                     IO_NO_BINDING_ERROR=-4,IO_NO_ERROR=0,IO_OUTDATED_DB=-5,IO_NOT_ALLOWED=-6
  !
  ! Units
  !

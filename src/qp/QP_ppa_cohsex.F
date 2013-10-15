@@ -34,10 +34,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_run,l_sc_srpa
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_IND_Q_ID,PAR_IND_QP_ID,&
-&                        PAR_COM_Q_A2A
+&                        PAR_COM_Q_A2A,PAR_Q_index
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,OP_WR_CL
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
+&                        OP_WR_CL,io_X,IO_NOT_ALLOWED
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,QP_W_partially_done,PPa_terminator
@@ -68,7 +69,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Work Space
  !
  integer                  ::i_qp,i1,i2,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
-&                           i_qp_to_start,iq_to_start,is
+&                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2)
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(ggwinfo)            ::isc,iscp
  integer          ::iv4(4),io_err,ID, timing_steps,qp_ID
@@ -187,7 +188,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioX(X,Xw,ID)
- if (io_err/=0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
+ if (io_err/=0.and.io_X) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
  ! Test the spatial Inversion
  !   
@@ -197,10 +198,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !------------
  !
  if (l_cohsex.or.l_sc_srpa) then
-   call X_alloc('X',(/X%ng,X%ng,1/))
+   if (io_X) call X_alloc('X',(/X%ng,X%ng,1/))
    allocate(dc(2))
  else
-   call X_alloc('X',(/X%ng,X%ng,2/))
+   if (io_X) call X_alloc('X',(/X%ng,X%ng,2/))
    allocate(W_(QP_dSc_steps),dc(QP_dSc_steps),stat=alloc_err)
    call mem_est("GW-E",(/QP_dSc_steps*2/),errors=(/alloc_err/))
    if(PPa_terminator) then
@@ -242,15 +243,27 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    iqs  =isc%qs(3)
    !
    if (iqibz/=isc%iqref) then
+     !
+     if (io_X) then
+       X_range=(/1,Xw%n_freqs/)
+     else
+       iq_mem=PAR_Q_index(iqibz)
+       X_range=(/min(1,Xw%n_freqs*(iq_mem-1)),iq_mem*Xw%n_freqs/)
+     endif
+     !
      call scatterGamp(isc,'c')
      !
      ! I/O
      !
-     if (iqbz==iq_to_start) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID)
-     if (q%nbz==1         ) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)
-     if (iqbz> iq_to_start) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
-     !
-     io_err=ioX(X,Xw,ID)
+     if (io_X) then
+       !
+       if (iqbz==iq_to_start) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID)
+       if (q%nbz==1         ) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)
+       if (iqbz> iq_to_start) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
+       !
+       io_err=ioX(X,Xw,ID)
+       !
+     endif
      !
      ! Poles and Residuals
      !
@@ -258,13 +271,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      do i1=1,X%ng
        do i2=1,X%ng
          if (l_ppa) then
-           if (real(X_mat(i1,i2,1)/X_mat(i1,i2,2))<=1._SP) then
-             X_mat(i1,i2,2)=X%ppaE
+           if (real(X_mat(i1,i2,X_range(1))/X_mat(i1,i2,X_range(2)))<=1._SP) then
+             X_mat(i1,i2,X_range(2))=X%ppaE
            else
-             X_mat(i1,i2,2)=real( sqrt(X_mat(i1,i2,1)/X_mat(i1,i2,2)-1) )
+             X_mat(i1,i2,X_range(2))=real( sqrt(X_mat(i1,i2,X_range(1))/X_mat(i1,i2,X_range(2))-1) )
            endif
          else
-           X_mat(i1,i2,1)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
+           X_mat(i1,i2,X_range(1))=X_mat(i1,i2,X_range(1))*isc%gamp(i1,i2)
          endif
        enddo
      enddo
@@ -287,8 +300,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Note (AF) that $omp directives are inside mat_transpose
      !
-     call mat_transpose(X_mat(:,:,1))
-     if (l_ppa) call mat_transpose(X_mat(:,:,2))
+     call mat_transpose(X_mat(:,:,X_range(1)))
+     if (l_ppa) call mat_transpose(X_mat(:,:,X_range(2)))
      X_is_TR_rotated=.true.
    endif
    !
@@ -342,7 +355,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 !$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
          do ig1=1,X%ng
            do ig2=1,X%ng
-             sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,1)
+             sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,X_range(1))
            enddo
          enddo
 !$omp end parallel do
@@ -402,9 +415,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                !PPA_R=-X_mat(ig1,ig2,1)/2.*PPA_E*isc%gamp(ig1,ig2)
                !
                sp_dummy=sp_dummy-4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*&
-&                     X_mat(ig1,ig2,1)/2.*X%ppaE/real(X_mat(ig1,ig2,2))*isc%gamp(ig1,ig2)*&
-&                     ( (spin_occ-f_kmq)/(conjg(W_(i4))-E_kmq-X%ppaE/real(X_mat(ig1,ig2,2)))+&
-&                     f_kmq/(conjg(W_(i4))-E_kmq+X%ppaE/real(X_mat(ig1,ig2,2))))
+&                     X_mat(ig1,ig2,X_range(1))/2.*X%ppaE/real(X_mat(ig1,ig2,X_range(2)))*isc%gamp(ig1,ig2)*&
+&                     ( (spin_occ-f_kmq)/(conjg(W_(i4))-E_kmq-X%ppaE/real(X_mat(ig1,ig2,X_range(2))))+&
+&                     f_kmq/(conjg(W_(i4))-E_kmq+X%ppaE/real(X_mat(ig1,ig2,X_range(2)))))
 
              enddo
            enddo
@@ -418,7 +431,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
        else
          !
-         call M_by_V('N', X%ng, X_mat(:,:,1), conjg(iscp%rhotw), local_rhotw)
+         call M_by_V('N', X%ng, X_mat(:,:,X_range(1)), conjg(iscp%rhotw), local_rhotw)
          !
 #if defined _OPENMP
          pre_factor=0.0_SP

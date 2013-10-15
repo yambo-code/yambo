@@ -342,7 +342,8 @@ MODULE timing_m
              WRITE (local_ch, '(a15," : ",3x,f5.2,"s CPU ")') &
                    TRIM(obj%name), nsec
            ENDIF
-           call LIVE_message(message=local_ch(:100),lfmt="n") 
+           if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+           call msg('r',local_ch(:100))
          ELSE
            IF (nhour > 0) THEN
              WRITE(local_ch,'(a15," : ",3x,i2,"h",i2,"m CPU (", &
@@ -357,7 +358,8 @@ MODULE timing_m
                    &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nsec, &
                         call_number , total_time / REAL( call_number, SP )
            ENDIF
-           call LIVE_message(message=local_ch(:100),lfmt="n") 
+           if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+           call msg('r',local_ch(:100))
          ENDIF
        CASE ( "sec" )
          !
@@ -370,7 +372,8 @@ MODULE timing_m
                         TRIM(obj%name) , total_time , call_number ,   &
                         total_time / REAL( call_number, SP )
          ENDIF
-         call LIVE_message(message=local_ch(:100),lfmt="n") 
+         if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+         call msg('r',local_ch(:100))
        CASE DEFAULT
          CALL error('clock_write:  Invalid FORM '//TRIM(form_) )
      END SELECT
@@ -410,10 +413,12 @@ MODULE timing_m
      !
      IF ( .NOT. list%alloc ) CALL error('timing_overview:  list not allocated')
      !
-     call LIVE_message(message='Routines: '//TRIM(list%name),lfmt="n")
+     if (ncpu>1) call LIVE_message(message='Routines: '//TRIM(list%name),lfmt="n",CPU_TIME=.FALSE.)
+     call msg('r','Routines: '//TRIM(list%name)//' (Only MASTER cpu here)')
      !
      IF ( list%nclock == 0 ) THEN
-       call LIVE_message(message='No clock to display',lfmt="n")
+       if (ncpu>1) call LIVE_message(message='No clock to display',lfmt="n",CPU_TIME=.FALSE.)
+       call msg('r','No clock to display')
        RETURN
      ENDIF
      !

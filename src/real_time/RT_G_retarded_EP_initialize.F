@@ -26,8 +26,8 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  use electrons,      ONLY:levels,BZ_RIM_tot_nkpts,BZ_RIM_nkpt,BZ_RIM_table
  use SC,             ONLY:SC_bands
  use LIVE_t,         ONLY:live_timing
- use real_time,      ONLY:B_mat_index,Gr_ep_matrix,Gr,Gr_peak_pos,&
-&                         Gr_T_steps,Gr_T_step,l_RT_uses_E_RIM,Gr_kind
+ use real_time,      ONLY:B_mat_index,Gr_ep_matrix,&
+&                         l_RT_uses_E_RIM,Gr_kind
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_Xk_nibz,PAR_nQ,PAR_n_B_mat_elements,PAR_IND_Xk_ibz,&
 &                         PAR_Xk_ibz_index,PAR_IND_Q,PAR_B_mat_index,PAR_Q_index

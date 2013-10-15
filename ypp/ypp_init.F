@@ -576,7 +576,8 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  if (l_RealTime) then
    if (l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit) call QP_ctl_switch('G')
    if (l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit) call initactivate(1,"OCCdT OCCTime OCCTref")
-   if (l_RT_occ_Fit) call initactivate(1,"OCCnFit")
+   if (l_RT_occ_Fit)  call initactivate(1,"OCCnFit")
+   if (l_RT_occ_Plot) call initactivate(1,"OCCgroup")
  endif
 #endif
  !

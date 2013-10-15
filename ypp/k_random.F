@@ -39,6 +39,7 @@ subroutine k_random(Xk,Xen)
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  !
  implicit none
+ !
  type(bz_samp) :: Xk
  type(levels)  :: Xen
  !
@@ -51,6 +52,7 @@ subroutine k_random(Xk,Xen)
  character(schlen) :: dump
  logical           :: No_Weight,l_skip_check,USE_BZ_RIM
  real(SP), allocatable :: rand_E(:,:,:)
+ integer,  allocatable :: BZ_RIM_table_tmp(:,:)
  !
  ! Random Generator
  !
@@ -319,6 +321,7 @@ subroutine k_random(Xk,Xen)
    if (i2==2) then
      !
      allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)))
+     BZ_RIM_table=0
      !
      do i1=1,Xk%nbz
        BZ_RIM_table(i1,1)=Xk%sstar(i1,1)
@@ -372,7 +375,7 @@ subroutine k_random(Xk,Xen)
      do ik_RIM=1,BZ_RIM_nkpt(ik_bz)
        i1=i1+1
        if (ik_RIM==1) then
-         Xen%E_RIM(:,i1,:)=Xen%E(:,BZ_RIM_table(ik_bz,1),:)
+         Xen%E_RIM(:,i1,:)=Xen%E(:BZ_RIM_nbands,BZ_RIM_table(ik_bz,1),:)
        else
          Xen%E_RIM(:,i1,:)=RIM_E(i_db_merge)%E(:,BZ_RIM_table(ik_bz,ik_RIM)-1,:)
        endif

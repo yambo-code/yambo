@@ -503,14 +503,16 @@ subroutine init_load(defs,en,q,k,X,Xw)
      character(schlen) :: name,possible_fields
      do i_s=1,n_CPU_str_max 
        !
-       if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
-       if (i_s==2) possible_fields='(q,k,c,v)' ! X_all_q
-       if (i_s==3) possible_fields='(qp,q,b)'  ! GW
-       if (i_s==4) possible_fields='(qp,q,b)'  ! HF
-       if (i_s==5) possible_fields=' '         ! BSE
-       if (i_s==6) possible_fields='(k,b)'     ! DENSITY
-       if (i_s==7) possible_fields='(k,b,q,qp)'! RT
-       if (i_s==8) possible_fields='(k,b)'     ! WF
+       if (i_s==1)  possible_fields='(k,c,v)'   ! X_q_0
+       if (i_s==2)  possible_fields='(q,k,c,v)' ! X_finite_q
+       if (i_s==3)  possible_fields='(qp,q,b)'  ! GW
+       if (i_s==4)  possible_fields='(qp,q,b)'  ! HF
+       if (i_s==5)  possible_fields=' '         ! BSE
+       if (i_s==6)  possible_fields='(k,b)'     ! DENSITY
+       if (i_s==7)  possible_fields='(k,b,q,qp)'! RT
+       if (i_s==8)  possible_fields='(k,b)'     ! WF
+       if (i_s==9)  possible_fields='(qp,q,b)'  ! e-p
+       if (i_s==10) possible_fields='(q,k,c,v)' ! X_finite_q
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"

@@ -31,7 +31,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,&
-&                        PAR_COM_Q_INDEX,master_cpu,PAR_NQ,PAR_Q_index
+&                        PAR_COM_Q_INDEX,master_cpu,PAR_NQ,PAR_Q_index,myid
  use wave_func,     ONLY:WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP,&
 &                        IO_and_Messaging_switch,io_X
@@ -138,11 +138,9 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
+   iq_mem=PAR_Q_index(iq)
    X_range=(/1,Xw%n_freqs/)
-   if (.not.io_X.and.iq>1) then
-     iq_mem=PAR_Q_index(iq)
-     X_range=(/min(1,Xw%n_freqs*(iq_mem-1)),iq_mem*Xw%n_freqs/)
-   endif
+   if (.not.io_X) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
    !
    call X_os(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
    !
@@ -150,32 +148,29 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (X%whoami/=1) call X_s(iq,X,Xw,X_range)
    !
-   if (iq==1) call PP_redux_wait
-   if (iq> 1) call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
+   call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
-   if (iq==1) then
-     !
-     call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
-     !
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=Xdb) 
-   else
-     !
-     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
-     !
+   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
+   !
+   if (iq==iq_to_start) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=Xdb) 
+   !
+   ! Only the cpus that write the q=1 component knows the value of ng_db this must 
+   ! be initialized for all the cpus
+   !
+   if (iq> iq_to_start) then
+     X%ng_db=X%ng
      call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
    endif
+   !
    i_err=ioX(X,Xw,Xdb)
-   !
-   ! As only the master node enters ioX 2 write the ng_db components must 
-   ! be initialized for all the nodes
-   !
-   X%ng_db=X%ng
    !
    ! CLEAN (1)
    !
    call FREQUENCIES_reset(Xw)
    !
  enddo
+ !
+ call PP_redux_wait()
  !
  ! CLEAN (2)
  !

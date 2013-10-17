@@ -47,7 +47,7 @@ MODULE timing_m
  END TYPE clock
  !     
  TYPE clock_list
-   TYPE(clock), POINTER        :: clock(:)
+   TYPE(clock), POINTER        :: clock(:) => null()
    CHARACTER(str_len)          :: name              ! list name
    INTEGER                     :: nclock            ! actual number of clocks
    INTEGER                     :: nclock_max        ! max number of clocks

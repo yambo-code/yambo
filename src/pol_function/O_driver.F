@@ -194,7 +194,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    if(l_rpa_IP) then
      X_epsilon(2,:)=X_epsilon(1,:)
    else
-     call X_s(iq,X,wv)
+     call X_s(iq,X,wv,(/1,wv%n_freqs/))
      !
      X_epsilon(2,:)=1./(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1.)
    endif

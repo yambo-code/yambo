@@ -38,7 +38,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
-&                        OP_WR_CL,io_X,IO_NOT_ALLOWED
+&                        OP_WR_CL,io_X
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,QP_W_partially_done,PPa_terminator
@@ -244,12 +244,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    if (iqibz/=isc%iqref) then
      !
-     if (io_X) then
-       X_range=(/1,Xw%n_freqs/)
-     else
-       iq_mem=PAR_Q_index(iqibz)
-       X_range=(/min(1,Xw%n_freqs*(iq_mem-1)),iq_mem*Xw%n_freqs/)
-     endif
+     iq_mem=PAR_Q_index(iqibz)
+     X_range=(/1,Xw%n_freqs/)
+     if (.not.io_X) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
      call scatterGamp(isc,'c')
      !
@@ -509,13 +506,20 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  endif
  call mem_est("ISC-GAMP GW-E")
  call X_alloc('X')
+ !
 #if defined _TIMING
  call timing('GW(ppa)',OPR='stop')
 #endif
  !
  ! ALL 2 ALL of QP_Sc
  !
+#if defined _TIMING
+ call timing('GW(REDUX)',OPR='start')
+#endif
  call PP_redux_wait(QP_Sc)
+#if defined _TIMING
+ call timing('GW(REDUX)',OPR='stop')
+#endif
  !
  call WF_free()
  !

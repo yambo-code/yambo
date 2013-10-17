@@ -32,7 +32,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,MASTER,OP_APP_WR_CL,OP_RD,RD_CL_IF_END
  use wave_func,      ONLY:wf_ng,WF_load,WF_free
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_Xk_nibz,PAR_IND_VAL_BANDS_X,master_cpu
+ use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_X,PAR_DIPk_nibz,PAR_IND_VAL_BANDS_X,master_cpu
 #if defined _SC      
  use X_m,            ONLY:P_square
 #endif
@@ -84,7 +84,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  do ik=1,Xk%nibz
    !
-   if (.not.PAR_IND_Xk_ibz%element_1D(ik).or.io_err(1)<0) cycle 
+   if (.not.PAR_IND_DIPk_ibz%element_1D(ik).or.io_err(1)<0) cycle 
    !
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+ik/),ID=ID)
    io_err(1)=io_DIPOLES(X,Xen,ID)
@@ -108,15 +108,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    ! in the new basis. So all transitions are needed
    !
    if (Dipole_bands_ordered) then
-     call X_alloc('DIP_iR',(/3,X%ib(2),Xen%nbm,PAR_Xk_nibz/))
+     call X_alloc('DIP_iR',(/3,X%ib(2),Xen%nbm,PAR_DIPk_nibz/))
    else
-     call X_alloc('DIP_iR',(/3,X%ib(2),X%ib(2),PAR_Xk_nibz/))
+     call X_alloc('DIP_iR',(/3,X%ib(2),X%ib(2),PAR_DIPk_nibz/))
    endif
    DIP_iR=(0._SP,0._SP)
    !
 #if defined _SC
-   call X_alloc('DIP_P'   ,(/3,X%ib(2),X%ib(2),PAR_Xk_nibz/))
-   call X_alloc('P_square',(/X%ib(2),X%ib(2),PAR_Xk_nibz/))
+   call X_alloc('DIP_P'   ,(/3,X%ib(2),X%ib(2),PAR_DIPk_nibz/))
+   call X_alloc('P_square',(/X%ib(2),X%ib(2),PAR_DIPk_nibz/))
    DIP_P=(0._SP,0._SP)
    P_square=(0._SP,0._SP)
 #endif
@@ -125,7 +125,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    if (.not.Dipole_uses_shifted_grids.and.Dipole_bands_ordered) then
      !
-     call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_Xk_ibz,&
+     call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_DIPk_ibz,&
 &                                B_index =PAR_IND_CON_BANDS_X(X%whoami),&
 &                                Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
 &                                CLEAN_UP=.TRUE.)
@@ -174,7 +174,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    do ik=1,Xk%nibz
      !
-     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle 
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
      ! 
      call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1+ik/),ID=ID)
      io_err(1)=io_DIPOLES(X,Xen,ID)

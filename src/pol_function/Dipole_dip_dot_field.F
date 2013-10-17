@@ -21,13 +21,13 @@
 !
 subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
- use pars,           ONLY:SP
- use drivers,        ONLY:l_optics,l_col_cut
- use parallel_m,     ONLY:PAR_Xk_nbz,PAR_Xk_bz_index,PAR_Xk_ibz_index,PAR_IND_Xk_bz
+ use pars,           ONLY:SP,cZERO
+ use drivers,        ONLY:l_col_cut,l_optics
+ use parallel_m,     ONLY:PAR_Xk_nbz,PAR_Xk_bz_index,PAR_DIPk_ibz_index,PAR_IND_Xk_bz,&
+&                         PAR_IND_DIPk_ibz,PAR_COM_q_for_Xo,PP_redux_wait
  use electrons,      ONLY:levels,n_sp_pol
- use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
+ use D_lattice,      ONLY:nsym,i_time_rev,dl_sop
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use fields,         ONLY:global_gauge
  use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR
  use vec_operate,    ONLY:v_norm
  !
@@ -40,8 +40,9 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
  ! Work Space
  !
- integer                   :: ik,ik_bz,ic,iv,is,i_spin,ik_mem,ik_bz_mem
+ integer                   :: ik,ik_bz,ic,iv,is,i_spin,ik_mem,ik_bz_mem,i_star
  real(SP)                  :: field_dir_rot(3)
+ complex(SP)               :: rotated_dipole(1)
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the
  ! oscillator strengths have been calculated using the shifted grids.
@@ -58,35 +59,55 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  call X_alloc('DIP_q_dot_iR',(/X%ib(2),Xen%nbm,PAR_Xk_nbz/))
  DIP_q_dot_iR = (0.0_SP,0.0_SP)
  !
- do ik_bz = 1,Xk%nbz
+ do ik=1,Xk%nibz
    !
-   ik = Xk%sstar(ik_bz,1)
-   is = sop_inv(Xk%sstar(ik_bz,2))
-   field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
-   !
-   ik_bz_mem=PAR_Xk_bz_index(ik_bz)
-   ik_mem=PAR_Xk_ibz_index(ik)
-   !
-   if (.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle 
-   !
-   do iv = X%ib(1), Xen%nbm
+   do i_star=1,Xk%nstar(ik)
      !
-     do ic = Xen%nbf+1, X%ib(2)
+     is = Xk%star(ik,i_star)
+     ik_bz=i_star
+     if (ik>1) ik_bz=sum(Xk%nstar(1:ik-1))+i_star
+     !
+     field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
+     !
+     if (PAR_IND_Xk_bz%element_1D(ik_bz)) ik_bz_mem=PAR_Xk_bz_index(ik_bz)
+     if (PAR_IND_DIPk_ibz%element_1D(ik)) ik_mem=PAR_DIPk_ibz_index(ik)
+     !
+     do iv = X%ib(1), Xen%nbm
        !
-       do i_spin=1,n_sp_pol
-         ! 
-         ! DIP_iq_dot_r = i q . < v k | r | c k >
+       do ic = Xen%nbf+1, X%ib(2)
          !
-         if ( is<= nsym/(i_time_rev+1) ) then
-           DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik_mem,i_spin)  )
-         else
-           DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin) = dot_product( DIP_iR(:,ic,iv,ik_mem,i_spin), field_dir_rot ) 
-         endif
+         do i_spin=1,n_sp_pol
+           !
+           rotated_dipole(1)=cZERO
+           ! 
+           ! DIP_iq_dot_r = i q . < v k | r | c k >
+           !
+           if (PAR_IND_DIPk_ibz%element_1D(ik)) then 
+             if ( is<= nsym/(i_time_rev+1) ) then
+               rotated_dipole(1) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik_mem,i_spin)  )
+             else
+               rotated_dipole(1) = dot_product( DIP_iR(:,ic,iv,ik_mem,i_spin), field_dir_rot ) 
+             endif
+           endif
+           !
+           ! Here I use PAR_COM_q_for_Xo as it connects two CPUS belonging to different
+           ! k_bz points but with the same k_ibz. Those two CPUS belong to the q communicator
+           !
+           if (.not.l_optics) call PP_redux_wait(rotated_dipole,COMM=PAR_COM_q_for_Xo)
+           !
+           if (PAR_IND_Xk_bz%element_1D(ik_bz)) then 
+             DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin) = rotated_dipole(1)
+           endif
+           !
+         enddo
          !
        enddo
        ! 
+       if (PAR_IND_Xk_bz%element_1D(ik_bz)) then 
+         DIP_q_dot_iR(iv,iv,ik_bz_mem,:) = (1.0_SP,0.0_SP)
+       endif
+       ! 
      enddo
-     DIP_q_dot_iR(iv,iv,ik_bz_mem,:) = (1.0_SP,0.0_SP)
    enddo
    !
  enddo

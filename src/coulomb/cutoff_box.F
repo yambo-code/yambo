@@ -81,10 +81,6 @@ subroutine cutoff_box(q,is_cut)
 !$omp end parallel do
    !
  endif
- ! 
- ! Local Threads involved
- !
- call OPENMP_update()
  !
  ! BOX
  !
@@ -94,11 +90,17 @@ subroutine cutoff_box(q,is_cut)
  !
  call PARALLEL_index(px,(/q%nibz,wf_ng/))
  !
- call live_timing('Box',px%n_of_elements(myid+1)/n_threads_now)
- !
-!$omp parallel do default(shared), &
+!$omp parallel default(shared), &
 !$omp &    private(ig,iq, v1,nq_looped, iqbz,iqibz,is,i1,V_cut_tmp, &
 !$omp &            ig_p,ig_r,v2)
+ ! 
+ ! Local Threads involved
+ !
+ call OPENMP_update()
+ !
+ if (master_thread) call live_timing('Box',px%n_of_elements(myid+1)/n_threads_now)
+ !
+!$omp do
  do ig=1,wf_ng
    do iq=1,q%nibz
      !
@@ -145,7 +147,8 @@ subroutine cutoff_box(q,is_cut)
      !
    enddo
  enddo
-!$omp end parallel do
+!$omp end do
+!$omp end parallel
  !
  call live_timing()
  !

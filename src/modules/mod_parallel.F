@@ -43,8 +43,8 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_bse,l_par_density,l_par_X_G_q0
- logical            :: l_par_X_G_q,l_par_HF,l_par_GW,l_par_RT,l_par_ELPH
+ logical            :: l_par_bse,l_par_density,l_par_X_G_q0,l_par_X_G_all_q,&
+&                      l_par_X_G_finite_q,l_par_HF,l_par_GW,l_par_RT,l_par_ELPH
  !
  ! Communicators
  !
@@ -147,6 +147,7 @@ module parallel_m
  ! ... linear response
  type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_X(n_parallel_X_types)
  type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_X(n_parallel_X_types)
+ type(PP_indexes),SAVE :: PAR_IND_DIPk_ibz
  !
  ! ... QP
  type(PP_indexes),SAVE :: PAR_IND_QP
@@ -223,6 +224,7 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_Xk_ibz_INDEX
  type(MPI_comm),SAVE :: PAR_COM_Xk_ibz_A2A
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_Xk_bz_A2A
  !
  ! ... and derived variables
  integer            :: PAR_nQPp
@@ -235,12 +237,16 @@ module parallel_m
  integer,allocatable:: PAR_Q_index(:)
  integer            :: PAR_Xk_nibz
  integer,allocatable:: PAR_Xk_ibz_index(:)
+ integer            :: PAR_DIPk_nibz
+ integer,allocatable:: PAR_DIPk_ibz_index(:)
  integer            :: PAR_Xk_nbz
  integer,allocatable:: PAR_Xk_bz_index(:)
  !
  ! ... linear response & BSK
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
+ integer             :: PAR_COM_q_for_Xo=comm_default_value
+ integer             :: PAR_COM_k_for_P=comm_default_value
  !
  ! WorkSpace
  !
@@ -248,7 +254,7 @@ module parallel_m
  integer, private   :: local_type
  !
  interface PP_redux_wait
-   module procedure i1share,i18share,i2share,i3share,r0share,&
+   module procedure l1share,i1share,i18share,i2share,i3share,r0share,&
 &                   r1share,r2share,r3share,c0share,c1share,c2share,&
 &                   c3share,c4share,PARALLEL_wait
  end interface PP_redux_wait
@@ -321,6 +327,31 @@ module parallel_m
      COMM_out%CPU_ID     =COMM_in%CPU_ID
    end subroutine
    !
+   subroutine PAR_INDEX_copy(IND_in,IND_out)
+     type(PP_indexes):: IND_in,IND_out
+     integer :: dim_
+     if (associated(IND_in%n_of_elements)) then
+       dim_=size(IND_in%n_of_elements)
+       allocate(IND_out%n_of_elements(dim_))
+       IND_out%n_of_elements=IND_in%n_of_elements
+     endif
+     if (associated(IND_in%element_1D)) then
+       dim_=size(IND_in%element_1D)
+       allocate(IND_out%element_1D(dim_))
+       IND_out%element_1D=IND_in%element_1D
+     endif
+     if (associated(IND_in%weight_1D)) then
+       dim_=size(IND_in%weight_1D)
+       allocate(IND_out%weight_1D(dim_))
+       IND_out%weight_1D=IND_in%weight_1D
+     endif
+     if (associated(IND_in%first_of_1D)) then
+       dim_=size(IND_in%first_of_1D)
+       allocate(IND_out%first_of_1D(dim_))
+       IND_out%first_of_1D=IND_in%first_of_1D
+     endif
+   end subroutine
+   !
    subroutine MPI_close
      implicit none
 #if defined _MPI
@@ -354,6 +385,39 @@ module parallel_m
      endif
      if (local_COMM==comm_default_value) local_COMM=mpi_comm_world
      call mpi_barrier(local_COMM,i_err)
+#endif
+   end subroutine
+   !
+   subroutine l1share(array,imode,COMM)
+     logical   :: array(:)
+     integer, optional :: imode,COMM
+#if defined _MPI
+     integer ::omode,LOCAL_COMM
+     integer ::dimensions(1),dimension ! Work Space
+     logical,allocatable::larray(:)    ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     call mpi_barrier(LOCAL_COMM,i_err)
+     if (present(imode)) then
+       if (imode==1) omode=mpi_sum
+       if (imode==2) omode=mpi_prod
+     else
+       omode=mpi_sum
+     endif
+     dimensions=shape(array)
+     dimension=product(dimensions)
+     allocate(larray(dimension))
+     larray=0
+     call mpi_allreduce(array(1),larray,dimension,mpi_logical,omode,LOCAL_COMM,i_err)
+     array=reshape(larray,dimensions)
+     deallocate(larray)
+     call mpi_barrier(LOCAL_COMM,i_err)
 #endif
    end subroutine
    !

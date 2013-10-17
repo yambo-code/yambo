@@ -74,10 +74,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  integer, external    :: QP_state_extract
  integer              :: ig
  !
-#if defined _TIMING
- call timing('HF',OPR='start')
-#endif
- !
  ! Resets & basis setup
  !
  call collision_reset(isc)
@@ -121,6 +117,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call PARALLEL_WF_distribute(max(E%nbm,QP_nb),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_distribute(max(E%nbm,QP_nb),k%nibz,QP_index=PAR_IND_QP)
  call WF_load(QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
+ !
+#if defined _TIMING
+ call timing('HF',OPR='start')
+#endif
  !
  ! allocation again
  !

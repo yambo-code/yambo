@@ -22,13 +22,14 @@
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  !
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
-&                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,&
-&                        PARALLEL_cpu_mat_inversion,CPU_structure,master_cpu,&
+&                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,mpi_comm_world,&
+&                        PARALLEL_cpu_mat_inversion,CPU_structure,master_cpu,comm_default_value,&
 &                        PARALLEL_cpu_mat_diagonalization,PAR_Q_index,PAR_nQ,PAR_n_B_mat_elements,&
-&                        PAR_B_mat_index,PAR_nQP,PAR_nQPp,PAR_QP_index,PAR_QPp_index
+&                        PAR_B_mat_index,PAR_nQP,PAR_nQPp,PAR_QP_index,PAR_QPp_index,PAR_INDEX_copy,&
+&                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz
  use parallel_m,    ONLY:& ! LOGICALS
-&                        l_par_bse,l_par_density,l_par_X_G_q0,l_par_X_G_q,l_par_HF,l_par_GW,l_par_RT,&
-&                        l_par_ELPH
+&                        l_par_bse,l_par_density,l_par_X_G_q0,l_par_HF,l_par_GW,l_par_RT,&
+&                        l_par_ELPH,l_par_X_G_all_q,l_par_X_G_finite_q
  use parallel_m,    ONLY:& ! COMMUNICATORS
 &                        COMM_reset,&  
 &                        PAR_COM_VAL_INDEX,PAR_COM_CON_INDEX,PAR_COM_Q_A2A,&
@@ -37,12 +38,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                        PAR_COM_DIAGO_INDEX,PAR_COM_DIAGO,&
 &                        PAR_COM_QP_INDEX,PAR_COM_QPp_INDEX,&
 &                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_A2A,&
-&                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX
+&                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
+&                        PAR_COM_q_for_Xo,PAR_COM_k_for_P,PAR_COM_Xk_bz_A2A
  use parallel_m,    ONLY:& ! INDEXES
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,&
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q,PAR_IND_INV,PAR_IND_DIAGO,&
                          PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
-&                        PAR_IND_B_mat,PAR_IND_QPp
+&                        PAR_IND_B_mat,PAR_IND_QPp,PAR_IND_DIPk_ibz
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_INV_ID,PAR_IND_DIAGO_ID,&
@@ -91,14 +93,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  !
  ! Logicals
  !
- l_par_bse    =ENVIRONMENT=="BSE"
- l_par_density=ENVIRONMENT=="DENSITY"
- l_par_X_G_q0 =ENVIRONMENT=="Response_G_space_Zero_Momentum"
- l_par_X_G_q  =ENVIRONMENT=="Response_G_space_Finite_Momentum"
- l_par_HF     =ENVIRONMENT=="HF"
- l_par_GW     =ENVIRONMENT=="GW"
- l_par_RT     =ENVIRONMENT=="Real_Time"
- l_par_ELPH   =ENVIRONMENT=="ELPH"
+ l_par_bse          =ENVIRONMENT=="BSE"
+ l_par_density      =ENVIRONMENT=="DENSITY"
+ l_par_X_G_q0       =ENVIRONMENT=="Response_G_space_Zero_Momentum"
+ l_par_X_G_finite_q =ENVIRONMENT=="Response_G_space_Finite_Momentum"
+ l_par_X_G_all_q    =ENVIRONMENT=="Response_G_space"
+ l_par_HF           =ENVIRONMENT=="HF"
+ l_par_GW           =ENVIRONMENT=="GW"
+ l_par_RT           =ENVIRONMENT=="Real_Time"
+ l_par_ELPH         =ENVIRONMENT=="ELPH"
  !
  X_type=1
  if (present(X)) then
@@ -151,6 +154,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    call COMM_reset(PAR_COM_Q_INDEX)
    call COMM_reset(PAR_COM_Xk_bz_INDEX)
    call COMM_reset(PAR_COM_Xk_ibz_A2A)
+   call COMM_reset(PAR_COM_Xk_bz_A2A)
    call COMM_reset(PAR_COM_Q_A2A)
    call COMM_reset(PAR_COM_INV_INDEX)
    call COMM_reset(PAR_COM_INV)
@@ -164,6 +168,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    call COMM_reset(PAR_COM_WF_k_A2A)
    call COMM_reset(PAR_COM_WF_b_INDEX)
    call COMM_reset(PAR_COM_WF_k_INDEX)
+   PAR_COM_q_for_Xo=comm_default_value
+   PAR_COM_k_for_P=comm_default_value
    !
    call IO_and_Messaging_switch("RESET")
    !
@@ -368,18 +374,21 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,COMM_index_2=PAR_COM_CON_INDEX(X_type),&
 &                                        COMM_index_3=PAR_COM_VAL_INDEX(X_type),COMM_A2A_1=PAR_COM_Xk_ibz_A2A)
    !
-   ! K-points
+   ! K-points (IBZ)
    !
    call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=.TRUE.)
    PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
-   PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
    !
-   call define_IBZ_index_and_distribute_BZk_using_IBZk(.FALSE.)
+   ! ... indexes
    !
-   PARALLEL_cpu_mat_inversion=CPU_structure(1)%nCPU_inversion
+   allocate(PAR_Xk_bz_index(Xk%nbz))
+   call distribute_BZk_using_IBZk(PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX)
+   allocate(PAR_Xk_ibz_index(Xk%nibz))
+   call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    !
    ! Inversion
    !
+   PARALLEL_cpu_mat_inversion=CPU_structure(1)%nCPU_inversion
    call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'INV',PAR_COM_INV_INDEX,PAR_COM_INV)
    PAR_IND_INV_ID=PAR_COM_INV_INDEX%CPU_id
    !
@@ -396,6 +405,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU,CHAIN=PAR_COM_Xk_ibz_INDEX%chain_order)
+   !
+   PAR_COM_q_for_Xo=mpi_comm_world
+   PAR_COM_k_for_P =PAR_COM_Xk_ibz_A2A%COMM
+   !
+   call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
+   allocate(PAR_DIPk_ibz_index(Xk%nibz))
+   call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    !
  endif
  !
@@ -419,7 +435,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"q","k","c","v"/),&
 &                                        COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_Xk_bz_INDEX,&
 &                                        COMM_index_3=PAR_COM_CON_INDEX(X_type),&
-&                                        COMM_index_4=PAR_COM_VAL_INDEX(X_type),COMM_A2A_1=PAR_COM_Q_A2A)
+&                                        COMM_index_4=PAR_COM_VAL_INDEX(X_type),COMM_A2A_1=PAR_COM_Q_A2A,&
+&                                        COMM_A2A_2=PAR_COM_Xk_bz_A2A)
    !
    ! K-points (BZ)
    !
@@ -431,7 +448,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                             LOADED=PAR_IND_Xk_bz%n_of_elements(PAR_COM_Xk_bz_INDEX%CPU_id+1),TOTAL=Xk%nbz,&
 &                             NCPU=PAR_COM_Xk_bz_INDEX%n_CPU,CHAIN=PAR_COM_Xk_bz_INDEX%chain_order)
    allocate(PAR_Xk_bz_index(Xk%nbz))
-   call Build_up_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_INDEX,PAR_Xk_nbz)
+   call Build_up_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_index,PAR_Xk_nbz)
    !
    ! Q-points (IBZ in LLR, in BZ BSK)
    !
@@ -452,7 +469,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    call PARALLEL_add_Q_to_K_list("k_bz_q_"//trim(WHAT),PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
 &                                PAR_IND_Q,PAR_COM_Xk_bz_INDEX,iq_range,Xk,q)
    PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
-   call define_IBZ_index_and_distribute_BZk_using_IBZk(.TRUE.)
+   !
+   ! ... indexes
+   !
+   allocate(PAR_Xk_ibz_index(Xk%nibz))
+   call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
+   !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz)
    !
    PARALLEL_cpu_mat_inversion=CPU_structure(2)%nCPU_inversion
@@ -483,6 +505,22 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
      call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_Q_INDEX%my_CHAIN==1)
    else
      call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+   endif
+   !
+   ! To define proper indexes to calculate the dipoles I need to build up
+   ! the PAR_IND_DIPk_ibz by avoiding the overlaps of PAR_IND_Xk_ibz.
+   ! The COMM is anyway the one for the all2all of each q.
+   !
+   if ( ENVIRONMENT=="Response_G_space") then
+     !
+     PAR_COM_q_for_Xo=PAR_COM_Q_A2A%COMM
+     PAR_COM_k_for_P=PAR_COM_Xk_bz_A2A%COMM
+     !
+     call PARALLEL_minimal_index_from_overlaping(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz,PAR_COM_Q_A2A)
+     !
+     allocate(PAR_DIPk_ibz_index(Xk%nibz))
+     call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+     !
    endif
    !
  endif
@@ -762,41 +800,26 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
      !
    end subroutine
    !
-   subroutine define_IBZ_index_and_distribute_BZk_using_IBZk(ONLY_IBZ_index)
+   subroutine distribute_BZk_using_IBZk(IND_ibz,IND_bz,BZ_ID,BZ_index,COMM)
      !
-     logical :: ONLY_IBZ_index
+     type(MPI_comm)   :: COMM
+     type(PP_indexes) :: IND_ibz,IND_bz
+     integer          :: BZ_ID,BZ_index(Xk%nbz)
      !
      ! Work Space
      integer :: i_p
      !
-     allocate(PAR_Xk_ibz_index(Xk%nibz))
-     PAR_Xk_ibz_index=0
-     !
-     PAR_IND_Xk_bz_ID=PAR_IND_Xk_ibz_ID
-     !
-     i_p=0
-     !
-     do i_k=1,Xk%nibz
-       !
-       if (PAR_IND_Xk_ibz%element_1D(i_k)) then
-         i_p=i_p+1
-         PAR_Xk_ibz_index(i_k)=i_p
-       endif
-       !
-     enddo
-     !
-     if (ONLY_IBZ_index) return
-     !
      ! K-points in the BZ 
      !
-     allocate(PAR_IND_Xk_bz%element_1D(Xk%nbz))
-     PAR_IND_Xk_bz%element_1D=.FALSE.
+     allocate(IND_bz%element_1D(Xk%nbz))
+     IND_bz%element_1D=.FALSE.
      !
-     allocate(PAR_IND_Xk_bz%n_of_elements(PAR_COM_Xk_ibz_INDEX%n_CPU))
-     PAR_IND_Xk_bz%element_1D=.FALSE.
+     allocate(IND_bz%n_of_elements(COMM%n_CPU))
+     IND_bz%element_1D=.FALSE.
      ! 
-     allocate(PAR_Xk_bz_index(Xk%nbz))
-     PAR_Xk_bz_index=0
+     BZ_index=0
+     !
+     BZ_ID=PAR_IND_Xk_ibz_ID
      !
      i_p=0
      !
@@ -804,19 +827,19 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
        !
        i_k=Xk%sstar(i_k_bz,1)
        !
-       if (PAR_IND_Xk_ibz%element_1D(i_k)) then
+       if (IND_ibz%element_1D(i_k)) then
          i_p=i_p+1
-         PAR_IND_Xk_bz%element_1D(i_k_bz)=.TRUE.
-         PAR_Xk_bz_index(i_k_bz)=i_p
+         IND_bz%element_1D(i_k_bz)=.TRUE.
+         BZ_index(i_k_bz)=i_p
        else
-         PAR_IND_Xk_bz%element_1D(i_k_bz)=.FALSE.
+         IND_bz%element_1D(i_k_bz)=.FALSE.
        endif
        !
      enddo
      !
      PAR_Xk_nbz=i_p
      !
-     PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_ibz_ID+1)=PAR_Xk_nbz
+     IND_bz%n_of_elements(BZ_ID+1)=PAR_Xk_nbz
      !
    end subroutine
    !

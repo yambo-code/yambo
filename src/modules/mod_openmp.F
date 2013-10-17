@@ -30,7 +30,7 @@ module OPENMP
  !
  integer     :: n_threads = 0
  integer     :: n_threads_now = 0
- logical     :: master_thread = .FALSE.
+ logical     :: master_thread = .TRUE.
  !
 #if defined _OPENMP
  !
@@ -55,21 +55,25 @@ module OPENMP
        n_threads=omp_get_max_threads()
      endif
      !
-     n_threads_now=n_threads
+     n_threads_now=1
      !
      if (.not.DEEP_initialize) return
      !
      call omp_set_dynamic(.false.)
      call omp_set_nested(.false.)
+#else
+     !
+     n_threads=1
+     n_threads_now=1
+     !
 #endif
    end subroutine
    !
    subroutine OPENMP_update()
-     n_threads_now=1
-     master_thread=.true.
+     n_threads_now=n_threads
 #if defined _OPENMP
-     n_threads_now = omp_get_num_threads()
-     master_thread  = ( omp_get_thread_num() == 0)
+     n_threads_now =   omp_get_num_threads()
+     master_thread = ( omp_get_thread_num() == 0)
 #endif
    end subroutine
    !

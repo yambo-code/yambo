@@ -127,6 +127,7 @@ subroutine section(mode,name)
  ! Finalize
  !
  if (mode=='X') then
+   !
    cput_here=cput_tot(:,1)
    call PP_redux_wait(cput_here)
    !
@@ -155,7 +156,6 @@ subroutine section(mode,name)
    !
    if (all((/trim(min_time)/='',trim(max_time)/='',trim(average_time)/=''/))) then
      !
-     ch = 'CpuTiming Min/Max/Average:'
      write (ch,'(6a)')     'Timing   [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
      !
 #if defined _TIMING

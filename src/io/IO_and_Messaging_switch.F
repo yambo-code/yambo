@@ -25,7 +25,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  use IO_m,           ONLY:IO_write,IO_read,Fragmented_IO_save,Fragmented_IO
  use com,            ONLY:write_to_report,write_to_of
  use parallel_m,     ONLY:IO_write_default,myid,master_cpu
- use stderr,         ONLY:string_split
+ use stderr,         ONLY:string_split,write_to_log
  use fragments,      ONLY:Parallel_Fragments,last_syncronized
  use LIVE_t,         ONLY:live_timing_is_on
  use stderr,         ONLY:write_fragments_IO_log
@@ -63,6 +63,11 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
      if (trim(ch_piece(ich))=="-timing") live_timing_is_on=local_FALSE
      if (trim(ch_piece(ich))=="+report") write_to_report=local_master
      if (trim(ch_piece(ich))=="+timing") live_timing_is_on=local_TRUE
+     !
+     ! Log 
+     !
+     if (trim(ch_piece(ich))=="-log") write_to_log=local_FALSE
+     if (trim(ch_piece(ich))=="+log") write_to_log=local_TRUE
      !
      ! Ouput files
      !

@@ -29,7 +29,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:n_nodes,ncpu,n_MPI,n_chains,PARALLEL_message,n_CPU_str_max
- use openmp,         ONLY:n_threads,OPENMP_initialize
+ use openmp,         ONLY:n_threads,OPENMP_initialize,OPENMP_update
  implicit none
  !
  type(levels)  :: en
@@ -43,6 +43,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call section('*','CPU structure, Files & I/O Directories') 
  !
  call OPENMP_initialize(.FALSE.)
+ call OPENMP_update( )
  !
  ! CPU structure
  !===============
@@ -65,6 +66,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  endif
  !
  call msg('r', '* THREADS       :',n_threads)
+ call msg('r', '* TOTAL TASKS   :',n_threads*ncpu)
  call msg('r', '* I/O NODES     :',n_nodes)
  call msg('rn','* Fragmented I/O:',Fragmented_IO)
  call msg('r','CORE databases in ',trim(core_io_path))

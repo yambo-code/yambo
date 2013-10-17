@@ -27,10 +27,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use drivers,             ONLY:l_real_time
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
- use parallel_m,          ONLY:PP_redux_wait,PAR_IND_CON_BANDS_X,PAR_IND_Xk_ibz,&
-&                              PAR_Xk_ibz_index,PAR_IND_VAL_BANDS_X,&
+ use parallel_m,          ONLY:PP_redux_wait,PAR_IND_CON_BANDS_X,PAR_IND_DIPk_ibz,&
+&                              PAR_DIPk_ibz_index,PAR_IND_VAL_BANDS_X,&
 &                              PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_CON_BANDS_X_ID,&
-&                              PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_A2A
+&                              PAR_IND_Xk_ibz_ID,PAR_COM_q_for_Xo,PAR_COM_k_for_P,myid
  use D_lattice,           ONLY:alat
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,PP_free,  &
 &                              pp_kbv_dim,spin_m_table,pp_factor
@@ -86,7 +86,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  if (associated(Xen%Eo)) call msg('rns','[X] Using Kohn-Sham energies for the dipoles ')
  !
- n_LT_steps=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*&
+ n_LT_steps=PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*&
 &           PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(PAR_IND_CON_BANDS_X_ID(X%whoami)+1)*&
 &           PAR_IND_VAL_BANDS_X(X%whoami)%n_of_elements(PAR_IND_VAL_BANDS_X_ID(X%whoami)+1)*n_spin
  !
@@ -105,7 +105,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #endif
  endif
  !
- call PP_redux_wait
+ call PP_redux_wait(COMM=PAR_COM_q_for_Xo)
  !
  allocate(wf_xyz(wf_ng,wf_dim))
  !
@@ -114,6 +114,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
  do ik=1,Xk%nibz
    !
    if (n_LT_steps==0) cycle
+   ! 
+#if defined _NETCDF_IO
+   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
+#endif
    !
    ! [Vnl,r]
    !
@@ -129,9 +133,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
      ioKB_abinit_err=ioKB_abinit(ID)
    endif
    ! 
-   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle 
+   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
    !
-   ik_mem=PAR_Xk_ibz_index(ik)
+   ik_mem=PAR_DIPk_ibz_index(ik)
    ! 
    do i_spin=1,n_spin
      ! 
@@ -217,7 +221,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          ! rho(4) =  \sum_G u^*_{iv ik}(G) ( k + G )^2 u_{ic ik}(G)
          !
-! AF: any omp support ?
          call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
          !
          if (ioKB_abinit_err==0.or.ioKB_pwscf_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
@@ -307,16 +310,16 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  do ik=1,Xk%nibz
    !
-   ik_mem=PAR_Xk_ibz_index(ik)
+   ik_mem=PAR_DIPk_ibz_index(ik)
    !
-   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle 
+   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
    ! 
    do i_spin=1,n_sp_pol
-     call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_spin),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+     call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P)
 #if defined _SC
     if (allocated(DIP_P)) then
-      call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_spin),COMM=PAR_COM_Xk_ibz_A2A%COMM)
-      call PP_redux_wait(P_square(:,:,ik_mem,i_spin),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+      call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P)
+      call PP_redux_wait(P_square(:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P)
     endif
 #endif
 #if defined _KERR

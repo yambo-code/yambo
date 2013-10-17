@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_s(iq,X,wv,W_range)
+subroutine X_s(iq,X,Xw,W_range)
  !
  use pars,          ONLY:SP,pi,cZero
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_Q_A2A,PAR_COM_INV_INDEX,PAR_COM_INV,&
-&                        PP_indexes,PP_indexes_reset,PAR_IND_INV_ID
+&                        PP_indexes,PP_indexes_reset,PAR_IND_INV_ID,PAR_COM_q_for_Xo
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
@@ -42,13 +42,13 @@ subroutine X_s(iq,X,wv,W_range)
  !
  implicit none
  type(X_t)    :: X
- type(w_samp) :: wv
+ type(w_samp) :: Xw
  integer      :: iq,W_range(2)
  !
  ! Work Space
  !
  type(PP_indexes) ::PAR_IND_freqs
- integer          ::i1,i2,iw,INV_MODE
+ integer          ::i1,i2,iw,iw_mat,INV_MODE
  complex(SP), allocatable :: Xom1(:,:),tddftk(:,:),Xo(:,:)
  !
  ! Fxc I/O (for the BS based kernel)
@@ -75,25 +75,27 @@ subroutine X_s(iq,X,wv,W_range)
  !
  ! Frequencies distribution
  !
- call PARALLEL_index(PAR_IND_freqs,(/wv%n_freqs/),COMM=PAR_COM_INV_INDEX)
+ call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_INV_INDEX)
  !
- if (iq==1) call PP_redux_wait()
+ if (iq==1) call PP_redux_wait(COMM=PAR_COM_q_for_Xo)
  if (iq> 1) call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
  !
- call PARALLEL_live_message("Frequencies",LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1),TOTAL=wv%n_freqs)
+ call PARALLEL_live_message("Frequencies",LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1),TOTAL=Xw%n_freqs)
  !
  if (PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1)>0) then
    call live_timing('X@q['//trim(intc(iq))//'] ',PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1))
  endif
  !
- do iw=W_range(1),W_range(2)
+ do iw=1,Xw%n_freqs
+   !
+   iw_mat=iw+W_range(1)-1
    !
    if (.not.PAR_IND_freqs%element_1D(iw)) then
-     X_mat(:,:,iw)=cZero
+     X_mat(:,:,iw_mat)=cZero
      cycle
    endif
    !
-   Xo=X_mat(:,:,iw)
+   Xo=X_mat(:,:,iw_mat)
    !
    tddftk=(0.,0.) 
    !
@@ -112,14 +114,14 @@ subroutine X_s(iq,X,wv,W_range)
 !     !
 !     ! BS Fxc
 !     !
-!     if ( mod(iw,FXC_n_mem_freqs)==1.or.wv%n_freqs==1) then
+!     if ( mod(iw,FXC_n_mem_freqs)==1.or.Xw%n_freqs==1) then
 !       FXC_w_ref=iw-1
 !       if (FXC_w_ref==0) then
 !         call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
 !       else
 !         call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+iw/),ID=ID)
 !       endif
-!       ioFxc_err=ioBS_Fxc(iq,wv,ID)
+!       ioFxc_err=ioBS_Fxc(iq,Xw,ID)
 !     endif
 !     ! 
 !     !if (.not.PAR_IND_freqs%element_1D(iw)) cycle
@@ -153,7 +155,7 @@ subroutine X_s(iq,X,wv,W_range)
      !
      ! LRC Fxc
      !
-     tddftk(1,1)=-Xo(1,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(wv%p(iw))**2)/q_norm(iq)**2
+     tddftk(1,1)=-Xo(1,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(Xw%p(iw))**2)/q_norm(iq)**2
      !
    else if (l_alda_fxc) then
      !
@@ -176,18 +178,18 @@ subroutine X_s(iq,X,wv,W_range)
    !
    ! X(g,gp)=Sum_gpp[tddftk]^-1_(g,gpp)*Xo(gpp,gp)
    !
-   X_mat(:,:,iw)=matmul(tddftk,Xo)
+   X_mat(:,:,iw_mat)=matmul(tddftk,Xo)
    !
 #if defined _OPENMP
 !$omp parallel do default(shared), private(i1,i2)
    do i2=1,X%ng
      do i1=1,X%ng
-        X_mat(i1,i2,iw)=X_mat(i1,i2,iw)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
+        X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
      enddo
    enddo
 !$omp end parallel do
 #else
-   forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,iw)=X_mat(i1,i2,iw)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
+   forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
 #endif
    !
    call live_timing(steps=1)

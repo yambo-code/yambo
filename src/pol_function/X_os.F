@@ -30,12 +30,12 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use stderr,        ONLY:intc
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_Q_A2A,&
+ use parallel_m,    ONLY:PP_redux_wait,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,&
 &                        PAR_Xk_bz_index,PAR_IND_VAL_BANDS_X,PAR_COM_q_for_Xo
  use openmp,        ONLY:OPENMP_update,n_threads_now,master_thread
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
- use interfaces,    ONLY:PARALLEL_WF_distribute
+ use interfaces,    ONLY:PARALLEL_WF_distribute,PARALLEL_WF_index
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
  use electrons,     ONLY:levels,spin_occ
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp
@@ -95,7 +95,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 &                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
 &                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
 &                            CLEAN_UP=.TRUE.)
- call PARALLEL_WF_index( )
+ call PARALLEL_WF_index(COMM=PAR_COM_q_for_Xo)
  !
  call WF_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
@@ -315,8 +315,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #endif
  !
  do iw=1,Xw%n_freqs
-   if (iq==1) call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_q_for_Xo)
-   if (iq> 1) call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_Q_A2A%COMM)
+   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_q_for_Xo%COMM)
  enddo
  !
 #if defined _TIMING

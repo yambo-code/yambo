@@ -25,6 +25,11 @@ module interfaces
  !
  interface
    !
+   subroutine PARALLEL_WF_index(COMM)
+     use parallel_m,      ONLY:MPI_comm
+     type(MPI_comm), optional :: COMM
+   end subroutine
+   !
    subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
      use X_m,           ONLY:X_t
      use electrons,     ONLY:levels

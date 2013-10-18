@@ -19,32 +19,41 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_WF_index( )
+subroutine PARALLEL_WF_index(COMM)
  !
  ! Here I used states_to_load to define the WF_linear index.
  ! I avoid overlaps so that those two indexes can be used at any time
  ! to loop on the total k and b in the MPI_comm_world
  !
  use parallel_m,      ONLY:PP_indexes,ncpu,PAR_IND_WF_linear,&
-&                          PP_indexes_reset,PAR_COM_WORLD,myid
+&                          PP_indexes_reset,myid,PAR_COM_WORLD,MPI_comm
  use wave_func,       ONLY:states_to_load
  !
  implicit none
  !
+ type(MPI_comm), optional :: COMM
+ !
  ! Work Space
  !
- integer          :: ik,ib,NB,NK
+ integer          :: ik,ib,NB,NK,NC,ID
  type(PP_indexes) :: WF_linear,WF_linear_no_overlaps
  !
  call PP_indexes_reset(PAR_IND_WF_linear)
  call PP_indexes_reset(WF_linear)
  call PP_indexes_reset(WF_linear_no_overlaps)
  !
+ NC=ncpu
+ ID=myid
+ if (present(COMM)) then
+   NC=COMM%n_CPU
+   ID=COMM%CPU_id
+ endif
+ !
  NB=size(states_to_load,1)
  NK=size(states_to_load,2)
  !
- allocate(WF_linear%element_1D(NB*NK),WF_linear%n_of_elements(ncpu))
- allocate(PAR_IND_WF_linear%element_2D(NB,NK),PAR_IND_WF_linear%n_of_elements(ncpu))
+ allocate(WF_linear%element_1D(NB*NK),WF_linear%n_of_elements(NC))
+ allocate(PAR_IND_WF_linear%element_2D(NB,NK),PAR_IND_WF_linear%n_of_elements(NC))
  !
  WF_linear%element_1D=.FALSE.
  PAR_IND_WF_linear%element_2D=.FALSE.
@@ -57,7 +66,11 @@ subroutine PARALLEL_WF_index( )
    enddo
  enddo
  !
- call PARALLEL_minimal_index_from_overlaping(WF_linear,WF_linear_no_overlaps,PAR_COM_WORLD)
+ if (present(COMM)) then
+   call PARALLEL_minimal_index_from_overlaping(WF_linear,WF_linear_no_overlaps,COMM)
+ else
+   call PARALLEL_minimal_index_from_overlaping(WF_linear,WF_linear_no_overlaps,PAR_COM_WORLD)
+ endif
  !
  do ik=1,NK
    do ib=1,NB
@@ -67,7 +80,9 @@ subroutine PARALLEL_WF_index( )
    enddo
  enddo
  !
- PAR_IND_WF_linear%n_of_elements(myid+1)=count(PAR_IND_WF_linear%element_2D)
+ PAR_IND_WF_linear%n_of_elements(ID+1)=count(PAR_IND_WF_linear%element_2D)
+
+!PAR_IND_WF_linear%n_of_elements(ID+1)
  !
  call PP_indexes_reset(WF_linear)
  call PP_indexes_reset(WF_linear_no_overlaps)

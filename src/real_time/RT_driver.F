@@ -45,7 +45,7 @@ subroutine RT_driver(E,X,k,q)
  use collisions_IO,   ONLY:collisions_IO_alloc,collisions_IO_free,collisions_RANGES_setup,l_STORE_COLLISIONS
  use collision,       ONLY:free_COLLISIONS_v
  use QP_CTL_m,        ONLY:QP_apply
- use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
+ use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k
  use IO_m,            ONLY:IO_and_Messaging_switch
  !

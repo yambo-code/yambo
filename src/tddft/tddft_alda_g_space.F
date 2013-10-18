@@ -31,7 +31,7 @@ subroutine tddft_alda_g_space(E,k)
  use wave_func,     ONLY:WF_load,WF_free
  use xc_functionals,ONLY:F_xc
  use global_XC,     ONLY:WF_kind,WF_xc_functional
- use interfaces,    ONLY:PARALLEL_WF_distribute
+ use interfaces,    ONLY:PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,    ONLY:PAR_IND_G_b,PAR_IND_Xk_ibz
  implicit none
  type(levels) ::E

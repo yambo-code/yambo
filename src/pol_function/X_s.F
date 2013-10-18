@@ -25,7 +25,7 @@ subroutine X_s(iq,X,Xw,W_range)
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_Q_A2A,PAR_COM_INV_INDEX,PAR_COM_INV,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_COM_INV_INDEX,PAR_COM_INV,&
 &                        PP_indexes,PP_indexes_reset,PAR_IND_INV_ID,PAR_COM_q_for_Xo
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
@@ -77,8 +77,7 @@ subroutine X_s(iq,X,Xw,W_range)
  !
  call PARALLEL_index(PAR_IND_freqs,(/Xw%n_freqs/),COMM=PAR_COM_INV_INDEX)
  !
- if (iq==1) call PP_redux_wait(COMM=PAR_COM_q_for_Xo)
- if (iq> 1) call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
+ call PP_redux_wait(COMM=PAR_COM_q_for_Xo%COMM)
  !
  call PARALLEL_live_message("Frequencies",LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_INV_ID+1),TOTAL=Xw%n_freqs)
  !

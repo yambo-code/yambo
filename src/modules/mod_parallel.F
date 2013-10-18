@@ -249,8 +249,8 @@ module parallel_m
  ! ... linear response & BSK
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
- integer             :: PAR_COM_q_for_Xo=comm_default_value
- integer             :: PAR_COM_k_for_P=comm_default_value
+ type(MPI_comm),SAVE :: PAR_COM_q_for_Xo
+ type(MPI_comm),SAVE :: PAR_COM_k_for_P
  !
  ! WorkSpace
  !

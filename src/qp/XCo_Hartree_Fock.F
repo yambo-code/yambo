@@ -46,7 +46,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use fragments,     ONLY:fragment_status
  use real_time,     ONLY:B_mat_index
 #endif
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use wrapper,       ONLY:V_dot_V
 #if defined _OPENMP
  use wrapper,       ONLY:V_dot_V_omp

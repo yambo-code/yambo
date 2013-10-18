@@ -22,9 +22,10 @@
 subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
  use pars,           ONLY:SP,cZERO
- use drivers,        ONLY:l_col_cut,l_optics
+ use drivers,        ONLY:l_col_cut
  use parallel_m,     ONLY:PAR_Xk_nbz,PAR_Xk_bz_index,PAR_DIPk_ibz_index,PAR_IND_Xk_bz,&
-&                         PAR_IND_DIPk_ibz,PAR_COM_q_for_Xo,PP_redux_wait
+&                         PAR_IND_DIPk_ibz,PP_redux_wait,PAR_COM_Xk_bz_INDEX,&
+&                         l_par_X_G_all_q
  use electrons,      ONLY:levels,n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
@@ -90,10 +91,10 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
              endif
            endif
            !
-           ! Here I use PAR_COM_q_for_Xo as it connects two CPUS belonging to different
+           ! Here I use PAR_COM_Xk_bz_INDEX as it connects two CPUS belonging to different
            ! k_bz points but with the same k_ibz. Those two CPUS belong to the q communicator
            !
-           if (.not.l_optics) call PP_redux_wait(rotated_dipole,COMM=PAR_COM_q_for_Xo)
+           if (l_par_X_G_all_q) call PP_redux_wait(rotated_dipole,COMM=PAR_COM_Xk_bz_INDEX%COMM)
            !
            if (PAR_IND_Xk_bz%element_1D(ik_bz)) then 
              DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin) = rotated_dipole(1)

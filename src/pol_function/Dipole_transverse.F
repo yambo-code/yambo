@@ -105,7 +105,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #endif
  endif
  !
- call PP_redux_wait(COMM=PAR_COM_q_for_Xo)
+ call PP_redux_wait(COMM=PAR_COM_q_for_Xo%COMM)
  !
  allocate(wf_xyz(wf_ng,wf_dim))
  !
@@ -310,16 +310,16 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  do ik=1,Xk%nibz
    !
-   ik_mem=PAR_DIPk_ibz_index(ik)
-   !
    if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
+   !
+   ik_mem=PAR_DIPk_ibz_index(ik)
    ! 
    do i_spin=1,n_sp_pol
-     call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P)
+     call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
 #if defined _SC
     if (allocated(DIP_P)) then
-      call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P)
-      call PP_redux_wait(P_square(:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P)
+      call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
+      call PP_redux_wait(P_square(:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
     endif
 #endif
 #if defined _KERR

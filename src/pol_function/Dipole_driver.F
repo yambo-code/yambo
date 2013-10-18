@@ -22,7 +22,7 @@
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  use drivers,        ONLY:l_optics,l_real_time,l_sc_run,l_eval_collisions
- use interfaces,     ONLY:PARALLEL_WF_distribute
+ use interfaces,     ONLY:PARALLEL_WF_distribute,PARALLEL_WF_index
  use pars,           ONLY:SP
  use com,            ONLY:warning,secnm
  use electrons,      ONLY:levels
@@ -32,7 +32,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,MASTER,OP_APP_WR_CL,OP_RD,RD_CL_IF_END
  use wave_func,      ONLY:wf_ng,WF_load,WF_free
- use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_X,PAR_DIPk_nibz,PAR_IND_VAL_BANDS_X,master_cpu
+ use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_X,PAR_DIPk_nibz,PAR_IND_VAL_BANDS_X,&
+&                         master_cpu,PAR_COM_q_for_Xo
 #if defined _SC      
  use X_m,            ONLY:P_square
 #endif
@@ -129,7 +130,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                                B_index =PAR_IND_CON_BANDS_X(X%whoami),&
 &                                Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
 &                                CLEAN_UP=.TRUE.)
-     call PARALLEL_WF_index( )
+     call PARALLEL_WF_index(COMM=PAR_COM_q_for_Xo)
      !
    endif
    !   

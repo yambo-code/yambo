@@ -36,9 +36,9 @@ subroutine XCo_local(E,Xk)
 #if defined _OPENMP
  use wrapper,       ONLY:Vstar_dot_V_omp
 #endif
- use parallel_m,    ONLY:PAR_IND_QP,PP_redux_wait,PAR_COM_QP_index,PAR_IND_WF_k
+ use parallel_m,    ONLY:PAR_IND_QP,PP_redux_wait,PAR_IND_WF_linear 
 #if defined _RT
- use parallel_m,    ONLY:PAR_IND_B_mat_ordered
+ use parallel_m,    ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k 
  use matrix_operate,ONLY:matrix_linear_index
  use SC,            ONLY:SC_bands
 #endif
@@ -126,12 +126,7 @@ subroutine XCo_local(E,Xk)
        !
      else
        !
-       ! The QP indexes have been created together with the bands and q
-       ! distribution used to calculate the exchange self-energy
-       !
-       if (PAR_COM_QP_index%n_CPU>1) then
-         if (.not.PAR_IND_QP%element_1D(i1)) cycle
-       endif
+       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
        !
      endif
      !
@@ -154,16 +149,7 @@ subroutine XCo_local(E,Xk)
      !
    enddo
    !
-   !
-   if (l_real_time) then
-#if defined _RT
-     call PP_redux_wait(QP_Vxc)
-#endif
-   else
-     if (PAR_COM_QP_index%n_CPU>1) then
-       call PP_redux_wait(QP_Vxc,COMM=PAR_COM_QP_index%COMM)
-     endif
-   endif
+   call PP_redux_wait(QP_Vxc)
    !
    return
    !

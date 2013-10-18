@@ -175,10 +175,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  enddo
  !
  call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
- !
  call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,QP_index=PAR_IND_QP)
+ call PARALLEL_WF_index( )
  !
- call WF_load(isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-SC')
+ call WF_load(isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),&
+#if defined _SC
+&             title='-SC')
+#else
+&             title='-GW')
+#endif
  !
 #if defined _TIMING
  call timing('GW(ppa)',OPR='start')

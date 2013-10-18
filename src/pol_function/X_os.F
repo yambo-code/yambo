@@ -95,6 +95,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 &                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
 &                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
 &                            CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_index( )
  !
  call WF_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !

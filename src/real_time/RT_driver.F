@@ -128,6 +128,7 @@ subroutine RT_driver(E,X,k,q)
  !=============
  !
  call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_index( )
  !
  call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
  !

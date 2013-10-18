@@ -1,0 +1,75 @@
+!
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!              http://www.yambo-code.org
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine PARALLEL_WF_index( )
+ !
+ ! Here I used states_to_load to define the WF_linear index.
+ ! I avoid overlaps so that those two indexes can be used at any time
+ ! to loop on the total k and b in the MPI_comm_world
+ !
+ use parallel_m,      ONLY:PP_indexes,ncpu,PAR_IND_WF_linear,&
+&                          PP_indexes_reset,PAR_COM_WORLD,myid
+ use wave_func,       ONLY:states_to_load
+ !
+ implicit none
+ !
+ ! Work Space
+ !
+ integer          :: ik,ib,NB,NK
+ type(PP_indexes) :: WF_linear,WF_linear_no_overlaps
+ !
+ call PP_indexes_reset(PAR_IND_WF_linear)
+ call PP_indexes_reset(WF_linear)
+ call PP_indexes_reset(WF_linear_no_overlaps)
+ !
+ NB=size(states_to_load,1)
+ NK=size(states_to_load,2)
+ !
+ allocate(WF_linear%element_1D(NB*NK),WF_linear%n_of_elements(ncpu))
+ allocate(PAR_IND_WF_linear%element_2D(NB,NK),PAR_IND_WF_linear%n_of_elements(ncpu))
+ !
+ WF_linear%element_1D=.FALSE.
+ PAR_IND_WF_linear%element_2D=.FALSE.
+ !
+ do ik=1,NK
+   do ib=1,NB
+     if (states_to_load(ib,ik,1)) then
+       WF_linear%element_1D(NK*(ib-1)+ik)=.TRUE.
+     endif
+   enddo
+ enddo
+ !
+ call PARALLEL_minimal_index_from_overlaping(WF_linear,WF_linear_no_overlaps,PAR_COM_WORLD)
+ !
+ do ik=1,NK
+   do ib=1,NB
+     if (WF_linear_no_overlaps%element_1D(NK*(ib-1)+ik)) then
+       PAR_IND_WF_linear%element_2D(ib,ik)=.TRUE.
+     endif
+   enddo
+ enddo
+ !
+ PAR_IND_WF_linear%n_of_elements(myid+1)=count(PAR_IND_WF_linear%element_2D)
+ !
+ call PP_indexes_reset(WF_linear)
+ call PP_indexes_reset(WF_linear_no_overlaps)
+ !
+end subroutine PARALLEL_WF_index

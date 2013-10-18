@@ -129,6 +129,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                                B_index =PAR_IND_CON_BANDS_X(X%whoami),&
 &                                Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
 &                                CLEAN_UP=.TRUE.)
+     call PARALLEL_WF_index( )
      !
    endif
    !   

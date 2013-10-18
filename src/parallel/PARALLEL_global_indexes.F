@@ -31,7 +31,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                        l_par_bse,l_par_density,l_par_X_G_q0,l_par_HF,l_par_GW,l_par_RT,&
 &                        l_par_ELPH,l_par_X_G_all_q,l_par_X_G_finite_q
  use parallel_m,    ONLY:& ! COMMUNICATORS
-&                        COMM_reset,&  
+&                        COMM_reset,PAR_COM_WORLD,&  
 &                        PAR_COM_VAL_INDEX,PAR_COM_CON_INDEX,PAR_COM_Q_A2A,&
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_ibz_A2A,PAR_COM_Q_INDEX,&
 &                        PAR_COM_Xk_bz_INDEX,PAR_COM_INV_INDEX,PAR_COM_INV,&
@@ -43,8 +43,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  use parallel_m,    ONLY:& ! INDEXES
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,&
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q,PAR_IND_INV,PAR_IND_DIAGO,&
-                         PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
-&                        PAR_IND_B_mat,PAR_IND_QPp,PAR_IND_DIPk_ibz
+&                        PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
+&                        PAR_IND_B_mat,PAR_IND_QPp,PAR_IND_DIPk_ibz,PAR_IND_WF_linear
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_INV_ID,PAR_IND_DIAGO_ID,&
@@ -126,6 +126,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    call PP_indexes_reset(PAR_IND_G_b)
    call PP_indexes_reset(PAR_IND_WF_b)
    call PP_indexes_reset(PAR_IND_WF_k)
+   call PP_indexes_reset(PAR_IND_WF_linear)
    !
    if (allocated(PAR_B_mat_index))  deallocate(PAR_B_mat_index)
    if (allocated(PAR_QP_index))     deallocate(PAR_QP_index)
@@ -168,6 +169,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    call COMM_reset(PAR_COM_WF_k_A2A)
    call COMM_reset(PAR_COM_WF_b_INDEX)
    call COMM_reset(PAR_COM_WF_k_INDEX)
+   call COMM_reset(PAR_COM_WORLD)
    PAR_COM_q_for_Xo=comm_default_value
    PAR_COM_k_for_P=comm_default_value
    !
@@ -180,6 +182,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  endif
  !
  call PARALLEL_get_user_structure(ENVIRONMENT)
+ !
+ PAR_COM_WORLD%COMM  =mpi_comm_world
+ PAR_COM_WORLD%CPU_id=myid
+ PAR_COM_WORLD%n_CPU =ncpu
  !
  if (PARALLEL_n_structures_active==0.and.ncpu>1) call error('Please provide a CPU structure in the input file')
  !
@@ -622,11 +628,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  !
  if (ENVIRONMENT=="HF".or.ENVIRONMENT=="GW".or.ENVIRONMENT=="ELPH") then
    !
-   call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"qp","q ","b "/),&
-&                                        COMM_index_1=PAR_COM_QP_INDEX,COMM_index_2=PAR_COM_Q_INDEX,&
+   call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"q ","qp","b "/),&
+&                                        COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_QP_INDEX,&
 &                                        COMM_index_3=PAR_COM_G_b_INDEX,&
-&                                        COMM_A2A_1=PAR_COM_QP_A2A,&
-&                                        COMM_A2A_2=PAR_COM_Q_A2A)
+&                                        COMM_A2A_1=PAR_COM_Q_A2A,&
+&                                        COMM_A2A_2=PAR_COM_QP_A2A)
    !
    ! QP states
    !

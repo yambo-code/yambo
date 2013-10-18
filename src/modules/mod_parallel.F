@@ -161,6 +161,7 @@ module parallel_m
  ! ... WF
  type(PP_indexes),SAVE :: PAR_IND_WF_b
  type(PP_indexes),SAVE :: PAR_IND_WF_k
+ type(PP_indexes),SAVE :: PAR_IND_WF_linear
  !
  ! Specific MPI ID's ...
  !======================
@@ -194,6 +195,9 @@ module parallel_m
  !
  ! Specific MPI COMMUNICATORS...
  !==============================
+ !
+ ! ... linear algebra
+ type(MPI_comm),SAVE :: PAR_COM_WORLD
  !
  ! ... linear algebra
  type(MPI_comm),SAVE :: PAR_COM_INV_INDEX

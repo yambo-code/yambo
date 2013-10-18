@@ -656,7 +656,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    endif
 #endif  
    !
-   call PARALLEL_index(PAR_IND_Q,(/iq_range(2)/),COMM=PAR_COM_Q_INDEX)
+   call PARALLEL_index(PAR_IND_Q,(/iq_range(2)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.)
    PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
    PAR_nQ=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)
 #if defined _ELPH

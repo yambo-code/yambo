@@ -47,7 +47,7 @@ subroutine el_density(en,Xk,rho,force_si)
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym,i_time_rev,mag_syms
  use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_inv
- use wave_func,     ONLY:wf_state,wf
+ use wave_func,     ONLY:WF
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear
  !
  implicit none
@@ -74,11 +74,11 @@ subroutine el_density(en,Xk,rho,force_si)
      !
      do i_spin=1,n_spin
        !
-       if (size(wf_state,3)<i_spin) cycle
-       if (size(wf_state,1)<ib) cycle
-       if (size(wf_state,2)<ik) cycle
+       if (size(WF%index,3)<i_spin) cycle
+       if (size(WF%index,1)<ib) cycle
+       if (size(WF%index,2)<ik) cycle
        !
-       ifft=wf_state(ib,ik,i_spin)
+       ifft=WF%index(ib,ik,i_spin)
        !
        if (ifft==0) then
          if (.not.warn_done) call warning('Not enough states to calculate rho')
@@ -88,7 +88,7 @@ subroutine el_density(en,Xk,rho,force_si)
        !
        f_occ=en%f(ib,ik,1)
        if (n_sp_pol==2) f_occ=en%f(ib,ik,i_spin)
-       rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(ik)*abs(wf(:,ifft))**2.
+       rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(ik)*abs(WF%c(:,ifft))**2.
        !
      enddo
    enddo

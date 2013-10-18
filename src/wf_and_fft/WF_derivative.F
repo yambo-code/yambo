@@ -25,7 +25,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !  is the periodic part of the derivative
  !
  use pars,           ONLY:SP,DP,pi
- use wave_func,      ONLY:wf,wf_state,wf_ng,wf_n_states,wf_x,wf_y,wf_z,&
+ use wave_func,      ONLY:wf,WF%index,wf_ng,wf_n_states,wf_x,wf_y,wf_z,&
 &                         WF_load,WF_free,WF_derivative_alloc
  use electrons,      ONLY:n_sp_pol
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
@@ -89,7 +89,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  do ik=derivative_kpt(1),derivative_kpt(2)
    do ib=bands_to_load(1),bands_to_load(2)
      do i_spin=1,n_sp_pol   
-       ifft=wf_state(ib,ik,i_spin)
+       ifft=WF%index(ib,ik,i_spin)
        !
        ! Evaluate the wf_derivative in G space
        ! wf_derivative(:,i)=-i grad_i wf(:)=p_i wf(:)    i=x,y

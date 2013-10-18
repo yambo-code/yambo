@@ -74,7 +74,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
 &                         Bx,By,Bz,MAG_theta,MAG_psi,ir_table,phase_trick
  use electrons,      ONLY:n_sp_pol
  use SC,             ONLY:SC_bands,SC_potential
- use wave_func,      ONLY:wf,wf_state,wf_x,wf_y,wf_z,WF_load,WF_free,WF_derivative_free
+ use wave_func,      ONLY:wf,WF%index,wf_x,wf_y,wf_z,WF_load,WF_free,WF_derivative_free
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
@@ -250,8 +250,8 @@ subroutine MAG_Hamiltonian(initial_check_only)
      !
      do ibp=1,SC_bands(2)
        do i_spin=1,n_sp_pol   
-         ifft=wf_state(ib,ik,i_spin)
-         jfft=wf_state(ibp,ik,i_spin)
+         ifft=WF%index(ib,ik,i_spin)
+         jfft=WF%index(ibp,ik,i_spin)
          !
          ! Matrix Elements
          !=================

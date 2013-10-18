@@ -33,7 +33,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,MASTER,OP_APP_WR_CL,OP_RD,RD_CL_IF_END
  use wave_func,      ONLY:wf_ng,WF_load,WF_free
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_X,PAR_DIPk_nibz,PAR_IND_VAL_BANDS_X,&
-&                         master_cpu,PAR_COM_q_for_Xo
+&                         master_cpu,PAR_COM_q_for_Xo,PAR_IND_Xk_ibz
 #if defined _SC      
  use X_m,            ONLY:P_square
 #endif
@@ -126,7 +126,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    if (.not.Dipole_uses_shifted_grids.and.Dipole_bands_ordered) then
      !
-     call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_DIPk_ibz,&
+     call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_Xk_ibz,&
 &                                B_index =PAR_IND_CON_BANDS_X(X%whoami),&
 &                                Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
 &                                CLEAN_UP=.TRUE.)

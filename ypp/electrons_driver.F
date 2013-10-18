@@ -23,7 +23,7 @@ subroutine electrons_driver(Xk,Xen)
  !
  use pars,           ONLY:SP,lchlen
  Use stderr,         ONLY:intc
- use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state
+ use wave_func,      ONLY:WF_load,WF,WF_free,wf_ng
  use FFT_m,          ONLY:fft_size,fft_dim
  use R_lattice,      ONLY:bz_samp,nkibz
  use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
@@ -229,9 +229,9 @@ subroutine electrons_driver(Xk,Xen)
          !
          if (il==0) then
            !
-           i_wf=wf_state(ib,ik,1)
+           i_wf=WF%index(ib,ik,1)
            !
-           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+wf(ir,i_wf)
+           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+WF%c(ir,i_wf)
            !
          else
            !
@@ -321,7 +321,7 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_SC
      if (.not.l_mean_potential) then
 #endif
-       i_wf=wf_state(ib,ik,i_spin)
+       i_wf=WF%index(ib,ik,i_spin)
 #if defined _YPP_SC
      endif
 #endif
@@ -336,7 +336,7 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_SC
      if (.not.l_mean_potential) then 
 #endif
-       forall(ir=1:fft_size) v2plot(ir)=real( wf(ir,i_wf)*conjg( wf(ir,i_wf) ) )
+       forall(ir=1:fft_size) v2plot(ir)=real( WF%c(ir,i_wf)*conjg( WF%c(ir,i_wf) ) )
 #if defined _YPP_SC
      endif
 #endif

@@ -25,7 +25,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  use stderr,         ONLY:intc
  use FFT_m,          ONLY:fft_dim,fft_size
  use D_lattice,      ONLY:a
- use wave_func,      ONLY:wf,wf_state,WF_load,WF_free
+ use wave_func,      ONLY:wf,WF%index,WF_load,WF_free
  use electrons,      ONLY:n_sp_pol
  use LIVE_t,         ONLY:live_timing
  use com,            ONLY:msg,of_open_close,error
@@ -115,7 +115,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
    !
    do i_spin=1,n_sp_pol
      do ib=nband_pos(1),nband_pos(2)
-       ifft=wf_state(ib,ik,i_spin)
+       ifft=WF%index(ib,ik,i_spin)
        if(i_spin==2) cycle
        !
        ! *******************************

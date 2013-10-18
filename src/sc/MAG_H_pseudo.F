@@ -24,7 +24,7 @@ subroutine MAG_H_pseudo(Xk)
  use pars,          ONLY:SP
  use electrons,     ONLY:n_spin,n_spinor
  use wrapper,       ONLY:V_dot_V
- use wave_func,     ONLY:wf,wf_ng,WF_load,WF_free,wf_state,wf_n_states
+ use wave_func,     ONLY:wf,wf_ng,WF_load,WF_free,WF%index,wf_n_states
  use FFT_m,         ONLY:fft_size
  use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table
  use R_lattice,     ONLY:bz_samp
@@ -111,14 +111,14 @@ subroutine MAG_H_pseudo(Xk)
        !     
        do ib=1,SC_bands(2)
          !
-         iwf=wf_state(ib,ik,i_spin)
+         iwf=WF%index(ib,ik,i_spin)
          !
          kbv_ks_space(ib,1)=V_dot_V(fft_size,wf(:,iwf),new_pp(:,i1))
          kbv_ks_space(ib,2)=V_dot_V(fft_size,wf(:,iwf),old_pp(:,i1))
          !
          do ibp=1,ib
            !
-           iwfp=wf_state(ibp,ik,i_spin)
+           iwfp=WF%index(ibp,ik,i_spin)
            !
            H_pseudo(ibp,ib)=conjg(kbv_ks_space(ibp,1))*kbv_ks_space(ib,1)-conjg(kbv_ks_space(ibp,2))*kbv_ks_space(ib,2)
            if(ib/=ibp) H_pseudo(ib,ibp)=conjg(H_pseudo(ibp,ib))

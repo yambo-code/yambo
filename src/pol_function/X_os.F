@@ -293,7 +293,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      !
    enddo
    !
-   call live_timing(steps=1)
+   if (master_thread) call live_timing(steps=1)
    !
  enddo 
 !$omp end do
@@ -305,7 +305,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  deallocate(isc%rhotw)
  deallocate(Xo_residual)
  !
- call live_timing()
+ if (master_thread) call live_timing()
  !
 !$omp end parallel
  !

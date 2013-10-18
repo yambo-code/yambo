@@ -29,7 +29,7 @@ subroutine XCo_local(E,Xk)
  use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
- use wave_func,     ONLY:wf,wf_state
+ use wave_func,     ONLY:WF
  use xc_functionals,ONLY:V_xc,xc_string,magn
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wrapper,       ONLY:Vstar_dot_V
@@ -132,19 +132,19 @@ subroutine XCo_local(E,Xk)
      !
      ! <iwf|V_xc|iwfp>
      !
-     iwf =wf_state(ib,ik,1)
-     iwfp=wf_state(ibp,ik,1)
+     iwf =WF%index(ib,ik,1)
+     iwfp=WF%index(ibp,ik,1)
      ! 
 !$omp parallel do default(shared), private(ifft)
      do ifft=1,fft_size
-         c_ws(ifft,1)=V_xc(ifft,1)*wf(ifft,iwfp)
+         c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,iwfp)
      enddo
 !$omp end parallel do
      !
 #if defined _OPENMP
-     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,wf(:,iwf),c_ws(:,1))
+     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,iwf),c_ws(:,1))
 #else
-     QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,iwf),c_ws(:,1))
+     QP_Vxc(i1)=Vstar_dot_V(fft_size,WF%c(:,iwf),c_ws(:,1))
 #endif
      !
    enddo
@@ -204,33 +204,33 @@ subroutine XCo_local(E,Xk)
      if (n_spinor==1) then
        !
        i_sp=spin(QP_table(i1,:))
-       iwf =wf_state(ib,ik,i_sp)
-       iwfp=wf_state(ibp,ik,i_sp)
+       iwf =WF%index(ib,ik,i_sp)
+       iwfp=WF%index(ibp,ik,i_sp)
        !
-       c_ws(:,1)=V_xc_mat(:,i_sp,i_sp)*wf(:,iwfp)
+       c_ws(:,1)=V_xc_mat(:,i_sp,i_sp)*WF%c(:,iwfp)
        !
 #if defined _OPENMP
-       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,wf(:,iwf),c_ws(:,1))
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,iwf),c_ws(:,1))
 #else
-       QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,iwf),c_ws(:,1))
+       QP_Vxc(i1)=Vstar_dot_V(fft_size,WF%c(:,iwf),c_ws(:,1))
 #endif
        !
      else
        !
-       iwf_sp1=wf_state(ib,ik,1)
-       iwf_sp2=wf_state(ib,ik,2)
-       iwfp_sp1=wf_state(ibp,ik,1)
-       iwfp_sp2=wf_state(ibp,ik,2)
+       iwf_sp1=WF%index(ib,ik,1)
+       iwf_sp2=WF%index(ib,ik,2)
+       iwfp_sp1=WF%index(ibp,ik,1)
+       iwfp_sp2=WF%index(ibp,ik,2)
        !
-       c_ws(:,1)=V_xc_mat(:,1,1)*wf(:,iwfp_sp1)+V_xc_mat(:,1,2)*wf(:,iwfp_sp2)
-       c_ws(:,2)=V_xc_mat(:,2,1)*wf(:,iwfp_sp1)+V_xc_mat(:,2,2)*wf(:,iwfp_sp2)
+       c_ws(:,1)=V_xc_mat(:,1,1)*WF%c(:,iwfp_sp1)+V_xc_mat(:,1,2)*WF%c(:,iwfp_sp2)
+       c_ws(:,2)=V_xc_mat(:,2,1)*WF%c(:,iwfp_sp1)+V_xc_mat(:,2,2)*WF%c(:,iwfp_sp2)
        !
 #if defined _OPENMP
-       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,wf(:,iwf_sp1),c_ws(:,1))+&
-&                 Vstar_dot_V_omp(fft_size,wf(:,iwf_sp2),c_ws(:,2))
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,iwf_sp1),c_ws(:,1))+&
+&                 Vstar_dot_V_omp(fft_size,WF%c(:,iwf_sp2),c_ws(:,2))
 #else
-       QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,iwf_sp1),c_ws(:,1))+&
-&                 Vstar_dot_V(fft_size,wf(:,iwf_sp2),c_ws(:,2))
+       QP_Vxc(i1)=Vstar_dot_V(fft_size,WF%c(:,iwf_sp1),c_ws(:,1))+&
+&                 Vstar_dot_V(fft_size,WF%c(:,iwf_sp2),c_ws(:,2))
 #endif
        !
      endif

@@ -32,7 +32,7 @@
    use R_lattice,               ONLY : g_vec, bz_samp
    use X_m,                     ONLY : X_t, Dipole_bands_ordered
    use memory_m,                ONLY : mem_est
-   use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load
+   use wave_func,               ONLY : wf, wf_ng, WF%index, WF_load
    use optcut,                  ONLY : DIP_iR_cut, ng_limits, setup_optcut, pscut, PScut_slow
    use surface_geometry,        ONLY : setup_gvecaff
    implicit none
@@ -109,8 +109,8 @@
            if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
            if (abs(Ev_m_Ec)<=1.E-5) cycle
 
-           ivfft=wf_state(iv,ik,i_spin)
-           icfft=wf_state(ic,ik,i_spin)
+           ivfft=WF%index(iv,ik,i_spin)
+           icfft=WF%index(ic,ik,i_spin)
 #if defined _DISTRIBUTED
          if(ivfft==0) call error(" Error in parallel wf distribution iv")
          if(icfft==0) call error(" Error in parallel wf distribution ic")

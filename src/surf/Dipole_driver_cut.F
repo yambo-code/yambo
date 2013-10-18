@@ -33,7 +33,7 @@
  use fields,                  ONLY : grid_path
  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP
  use memory_m,                ONLY : mem_est
- use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load, WF_free
+ use wave_func,               ONLY : wf, wf_ng, WF%index, WF_load, WF_free
  use optcut,                  ONLY : DIP_iR_cut, DIP_q_dot_iR_cut, ng_limits, setup_optcut, pscut
  use drivers,                 ONLY : l_col_cut
 #if defined _SURF

@@ -25,7 +25,7 @@
    use pars,                    ONLY : SP, pi, schlen
    use parser_m,                ONLY : parser
    use surface_geometry,        ONLY : setup_gvecaff, gvecaff
-   use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load, WF_free, wf_norm_test
+   use wave_func,               ONLY : wf, wf_ng, WF%index, WF_load, WF_free, wf_norm_test
    use D_lattice,               ONLY : alat, DL_vol
    use R_lattice,               ONLY : g_vec, nkibz
    use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, NONE
@@ -75,7 +75,7 @@
  
      call live_timing('Localization k('//trim(intc(ik))//')',loc_bands(2)-loc_bands(1)+1,SERIAL=.true.)
      do ib=loc_bands(1),loc_bands(2)
-       ibfft=wf_state(ib,ik,1)
+       ibfft=WF%index(ib,ik,1)
        rhoint = 0.0_SP
        do ig1=1,ngloc
          do ig2=1,ngloc

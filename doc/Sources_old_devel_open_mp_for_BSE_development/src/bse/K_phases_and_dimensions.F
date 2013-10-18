@@ -40,7 +40,7 @@ subroutine K_phases_and_dimensions(ik1,ik2,Xk,q)
  !
  use pars,          ONLY:SP,IP
  use memory_m,      ONLY:mem_est
- use wave_func,     ONLY:wf_state,wf
+ use wave_func,     ONLY:WF%index,wf
  use FFT_m,         ONLY:fft_rot_r,fft_size
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab,i_time_rev
  use R_lattice,     ONLY:b,qindx_B,bz_samp,ik_is_table
@@ -114,7 +114,7 @@ subroutine K_phases_and_dimensions(ik1,ik2,Xk,q)
            do ib1=BS_bands(1),BS_bands(2)
              !
              if (O_phase(is1xis2,ib1,i_spin2)/=0) cycle
-             ifft=wf_state(ib1,ik2,i_spin2)
+             ifft=WF%index(ib1,ik2,i_spin2)
              !
              wf_tmp1=wf(fft_rot_r(is1xis2,:),ifft)
              wf_tmp2=wf(fft_rot_r(iss_tab,:),ifft)

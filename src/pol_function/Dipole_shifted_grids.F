@@ -41,7 +41,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
 #endif
  use fields,              ONLY: grid_path 
  use memory_m,            ONLY: mem_est
- use wave_func,           ONLY: wf,wf_ng,wf_igk,wf_state,WF_load,WF_free , wf_ncx
+ use wave_func,           ONLY: wf_ng,wf_igk,WF,WF_load,WF_free,wf_ncx
 #if defined _SC           
  use SC,                  ONLY: SC_bands
 #endif
@@ -77,7 +77,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
  !ioWF local copies           
  !
  complex(SP), allocatable     :: wf_local(:,:)
- integer    , allocatable     :: wf_state_local(:,:,:)
+ integer    , allocatable     :: WF_index_local(:,:,:)
  !
  !I/O and external functions
  !
@@ -118,12 +118,12 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
  !
  ! {k} Save local copy of unshifted WF grid. 
  !
- allocate(wf_local( size(wf,1), size(wf,2) ), stat=err )
- call mem_est('WFshifted0',(/ size(wf,1), size(wf,2) /), errors=(/err/))
- allocate(wf_state_local( size(wf_state,1), size(wf_state,2), size(wf_state,3) ), stat=err )
- call mem_est('WFstate0',(/ size(wf,1), size(wf,2) /), errors=(/err/))
- wf_local(:,:)         = wf(:,:)
- wf_state_local(:,:,:) = wf_state(:,:,:)
+ allocate(wf_local( size(WF%c,1), size(WF%c,2) ), stat=err )
+ call mem_est('WFshifted0',(/ size(WF%c,1), size(WF%c,2) /), errors=(/err/))
+ allocate(WF_index_local( size(WF%index,1), size(WF%index,2), size(WF%index,3) ), stat=err )
+ call mem_est('WFstate0',(/ size(WF%c,1), size(WF%c,2) /), errors=(/err/))
+ wf_local(:,:)         = WF%c(:,:)
+ WF_index_local(:,:,:) = WF%index(:,:,:)
  !
  ! Load WFs {k} + q_iq
  !
@@ -157,7 +157,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
            !
            rho(i_spin)=(0.,0.)
            !
-           ivfft   = wf_state(iv,ikpq,i_spin) 
+           ivfft   = WF%index(iv,ikpq,i_spin) 
            !
            ! No need to shift Efermi
            !
@@ -172,15 +172,15 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
            if (any( (/ -Ev_m_Ec < X%ehe(1) .and. X%ehe(1) > 0.0_SP, &
 &                      -Ev_m_Ec > X%ehe(2) .and. X%ehe(2) > 0.0_SP /))) cycle
            if (abs(Ev_m_Ec)<=1.E-5_SP) cycle
-           icfft = wf_state_local(ic,ik,i_spin) 
+           icfft = WF_index_local(ic,ik,i_spin) 
            !
            ! DIP_iR_or_P = < v,k+q | c,k >/q
            !
 #ifdef _OPENMP
-           rho(i_spin) = Vstar_dot_V_omp(wf_ng_eff,wf(1:wf_ng_eff,ivfft), &
+           rho(i_spin) = Vstar_dot_V_omp(wf_ng_eff,WF%c(1:wf_ng_eff,ivfft), &
 &                                        wf_local(1:wf_ng_eff,icfft)) /q0_shift_norm
 #else
-           rho(i_spin) = Vstar_dot_V(wf_ng_eff,wf(1:wf_ng_eff,ivfft), &
+           rho(i_spin) = Vstar_dot_V(wf_ng_eff,WF%c(1:wf_ng_eff,ivfft), &
 &                                        wf_local(1:wf_ng_eff,icfft)) /q0_shift_norm
 #endif
            !

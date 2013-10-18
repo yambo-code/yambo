@@ -84,8 +84,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    endif
  endif
  !
- call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
- !
  call X_pre_setup(Xen,X)
  !
  ! In the next lines Yambo will VERIFY the em1d database
@@ -114,6 +112,21 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (X_em1> 0) iq_to_start=X_em1
  endif
  !
+ ! WaveFunction Part. Buffering. Loading.
+ !========================================
+ !
+ call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
+ call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
+ if (io_X)      call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+ if (.not.io_X) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs*PAR_nq/))
+ !
+! call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_Xk_ibz,&
+!&                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
+!&                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
+!&                            CLEAN_UP=.TRUE.)
+! call PARALLEL_WF_index(COMM=PAR_COM_q_for_Xo)
+! call WF_load(0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
+ !
  do iq=iq_to_start,X%iq(2)
    !
    ! TDDFT setup
@@ -128,12 +141,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      !
      call tddft_alda_g_space(Xen,Xk)
      !
-   endif
-   !
-   if (iq==iq_to_start) then
-     call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
-     if (io_X)      call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
-     if (.not.io_X) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs*PAR_nq/))
    endif
    !
    if (.not.PAR_IND_Q%element_1D(iq)) cycle

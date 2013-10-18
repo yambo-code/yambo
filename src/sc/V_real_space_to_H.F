@@ -19,13 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine V_real_space_to_H(ik,V,H,wf)
+subroutine V_real_space_to_H(ik,V,H,wf_in)
  !
  use electrons,      ONLY:n_sp_pol,spin
  use pars,           ONLY:SP
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
- use wave_func,      ONLY:wf_state,wf_n_states
+ use wave_func,      ONLY:WF
  use wrapper,        ONLY:Vstar_dot_V
 #if defined _SC
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,PAR_COM_WF_k_A2A,PP_redux_wait
@@ -36,7 +36,7 @@ subroutine V_real_space_to_H(ik,V,H,wf)
  !
  integer     :: ik,i_spin
  real(SP)    :: V(fft_size,n_sp_pol)
- complex(SP) :: H(QP_nb,QP_nb,n_sp_pol),wf(fft_size,wf_n_states)
+ complex(SP) :: H(QP_nb,QP_nb,n_sp_pol),wf_in(fft_size,WF%N)
  !
  ! Work Space
  !
@@ -67,11 +67,11 @@ subroutine V_real_space_to_H(ik,V,H,wf)
    !
    ! <ifft|V|ifftp>
    !
-   ifft   =wf_state(ib,ik,i_spin)
-   ifftp  =wf_state(ibp,ik,i_spin)
-   c_ws(:)=V(:,i_spin)*wf(:,ifftp)
+   ifft   =WF%index(ib,ik,i_spin)
+   ifftp  =WF%index(ibp,ik,i_spin)
+   c_ws(:)=V(:,i_spin)*wf_in(:,ifftp)
    !
-   H(ib,ibp,i_spin) = H(ib,ibp,i_spin)+Vstar_dot_V(fft_size,wf(:,ifft),c_ws(:))
+   H(ib,ibp,i_spin) = H(ib,ibp,i_spin)+Vstar_dot_V(fft_size,wf_in(:,ifft),c_ws(:))
    !
  end do
  !

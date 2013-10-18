@@ -27,7 +27,7 @@ subroutine MAG_A_phase()
  use com,            ONLY:msg,error
  use stderr,         ONLY:intc
  use magnetic,       ONLY:Bz,x,MAG_radius,phase_radius,n_loops
- use wave_func,      ONLY:wf,WF_load,WF_free,wf_state
+ use wave_func,      ONLY:wf,WF_load,WF_free,WF%index
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:default_nel,n_sp_pol
  !
@@ -59,7 +59,7 @@ subroutine MAG_A_phase()
  !
  call WF_load(0,1,(/ib_ref,ib_ref/),(/ik_ref,ik_ref/),title='-MAG_GAUGE',impose_free_and_alloc=.TRUE.)
  !
- iwf=wf_state(ib_ref,ik_ref,is_ref)
+ iwf=WF%index(ib_ref,ik_ref,is_ref)
  wf_r2(:)=r2_cyl(:)*wf(:,iwf)
 #if defined _DOUBLE
  r2_ref=real(zdotc(fft_size, wf(:,iwf),1,wf_r2,1))

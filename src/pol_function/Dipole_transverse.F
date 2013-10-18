@@ -38,7 +38,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P,Dipole_Energy_treshold
  use IO_m,                ONLY:io_control,RD_CL,RD
  use memory_m,            ONLY:mem_est
- use wave_func,           ONLY:wf,wf_ng,wf_state
+ use wave_func,           ONLY:wf_ng,WF
  use wrapper,             ONLY:M_by_V
  use com,                 ONLY:error,msg
 #if defined _KERR
@@ -169,7 +169,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
            !
          endif
          !
-         ivfft=wf_state(iv,ik,i_spin)
+         ivfft=WF%index(iv,ik,i_spin)
          if (ivfft==0) call error(" Error in parallel wf distribution")
          !
          ! wf_xyz = -i grad fdo(iv,ik)
@@ -179,14 +179,14 @@ subroutine Dipole_transverse(Xen,Xk,X)
          do i1=1,3
 !$omp do
            do ig=1,wf_ng
-             wf_xyz(ig,i1)=wf(ig,ivfft)*(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
+             wf_xyz(ig,i1)=WF%c(ig,ivfft)*(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
            enddo
 !$omp end do
          enddo
 !$omp end parallel
 #else
          do i1=1,3
-           wf_xyz(:,i1)=wf(:,ivfft)*(Xk%pt(ik,i1)+g_vec(:wf_ng,i1))*2.0_SP*pi/alat(i1)
+           wf_xyz(:,i1)=WF%c(:,ivfft)*(Xk%pt(ik,i1)+g_vec(:wf_ng,i1))*2.0_SP*pi/alat(i1)
          enddo
 #endif
          ! 
@@ -194,7 +194,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
 #if defined _SC
          if (allocated(DIP_P)) then
-           wf_xyz(:wf_ng,4) = wf(1:wf_ng,ivfft) *  & 
+           wf_xyz(:wf_ng,4) = WF%c(1:wf_ng,ivfft) *  & 
 &                            ( (Xk%pt(ik,1) + g_vec(:wf_ng,1))**2 * (2.0_SP*pi/alat(1))**2  &
 &                            + (Xk%pt(ik,2) + g_vec(:wf_ng,2))**2 * (2.0_SP*pi/alat(2))**2  &
 &                            + (Xk%pt(ik,3) + g_vec(:wf_ng,3))**2 * (2.0_SP*pi/alat(3))**2 )
@@ -203,7 +203,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          ! GPL_EXCLUDE_END 
          !
-         icfft=wf_state(ic,ik,i_spin)
+         icfft=WF%index(ic,ik,i_spin)
          if (icfft==0) call error("Error distribution wave-function")
          !
          ! WARNING: 
@@ -221,7 +221,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          ! rho(4) =  \sum_G u^*_{iv ik}(G) ( k + G )^2 u_{ic ik}(G)
          !
-         call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
+         call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,WF%c(:,icfft),1,(0._SP,0._SP),rho,1)
          !
          if (ioKB_abinit_err==0.or.ioKB_pwscf_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
          if (io_Vnl_err==0) then

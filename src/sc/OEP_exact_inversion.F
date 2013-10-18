@@ -44,7 +44,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  use memory_m,        ONLY:mem_est
  use SC,              ONLY:SC_R,H_rotate,it_now
  use drivers,         ONLY:l_eval_collisions,l_sc_srpa
- use wave_func,       ONLY:wf_state,wf
+ use wave_func,       ONLY:WF
  !
  ! I/O
  !
@@ -112,11 +112,11 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  do ik = 1, nkibz 
    do iv = 1 ,E%nbf
      do ic = E%nbf+1, X%ib(2)
-       ifft=wf_state(iv,ik,1)
-       offt=wf_state(ic,ik,1)
-       SigmaXC = dot_product(wf(:,offt),W_x(ik,iv,:)) !<ic|Sigma_xc|iv>
+       ifft=WF%index(iv,ik,1)
+       offt=WF%index(ic,ik,1)
+       SigmaXC = dot_product(WF%c(:,offt),W_x(ik,iv,:)) !<ic|Sigma_xc|iv>
        !
-       rho_tw_rs(:) = conjg(wf(:,ifft))*wf(:,offt)
+       rho_tw_rs(:) = conjg(WF%c(:,ifft))*WF%c(:,offt)
 #if defined _FFTW
    call fft_3d(rho_tw_rs(:),fft_dim,+1,fftw_plan)
 #else

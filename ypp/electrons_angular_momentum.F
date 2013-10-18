@@ -34,7 +34,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
 &                         MAG_gauge,load_cc,free_cc,x
  use FFT_m,          ONLY:fft_size
  use D_lattice,      ONLY:a
- use wave_func,      ONLY:wf,wf_x,wf_y,wf_z,wf_state,WF_load, &
+ use wave_func,      ONLY:wf,wf_x,wf_y,wf_z,WF%index,WF_load, &
 &                         WF_free,WF_derivative_free
  use SC,             ONLY:load_SC_components
  use electrons,      ONLY:n_sp_pol
@@ -157,7 +157,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
    !
    do i_spin=1,n_sp_pol
      do ib=nband_angular(1),nband_angular(2)
-       ifft=wf_state(ib,ik,i_spin)
+       ifft=WF%index(ib,ik,i_spin)
        if(i_spin==2.and..not.MAG_pauli) cycle
        !
        ! Li =(r x p)_i for i=x,y,z

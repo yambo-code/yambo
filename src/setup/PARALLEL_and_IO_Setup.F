@@ -43,7 +43,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call section('*','CPU structure, Files & I/O Directories') 
  !
  call OPENMP_initialize(.FALSE.)
- call OPENMP_update( )
+ call OPENMP_update()
  !
  ! CPU structure
  !===============

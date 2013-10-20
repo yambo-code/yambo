@@ -33,7 +33,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use parallel_m,    ONLY:PP_redux_wait,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,&
 &                        PAR_Xk_bz_index,PAR_IND_VAL_BANDS_X,PAR_COM_q_for_Xo
- use openmp,        ONLY:OPENMP_update,n_threads_now,master_thread
+ use openmp,        ONLY:OPENMP_update,n_threads_now,OPENMP_master_thread
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:PARALLEL_WF_distribute,PARALLEL_WF_index
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
@@ -166,12 +166,12 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! 
 #if defined _SC 
  if (l_sc_run.and..not.l_eval_collisions) then
-   if (master_thread) call live_timing('Xo @it'//trim(intc(it_now)),coarse_grid_N/n_threads_now)
+   if (OPENMP_master_thread()) call live_timing('Xo @it'//trim(intc(it_now)),coarse_grid_N/n_threads_now)
  else
-   if (master_thread) call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_now)
+   if (OPENMP_master_thread()) call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_now)
  endif
 #else
- if (master_thread) call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_now)
+ if (OPENMP_master_thread()) call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_now)
 #endif
  !
  ! Here I prepare the scattering module
@@ -293,7 +293,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      !
    enddo
    !
-   if (master_thread) call live_timing(steps=1)
+   if (OPENMP_master_thread()) call live_timing(steps=1)
    !
  enddo 
 !$omp end do
@@ -305,7 +305,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  deallocate(isc%rhotw)
  deallocate(Xo_residual)
  !
- if (master_thread) call live_timing()
+ if (OPENMP_master_thread()) call live_timing()
  !
 !$omp end parallel
  !

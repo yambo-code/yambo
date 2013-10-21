@@ -48,7 +48,7 @@ subroutine el_density(en,Xk,rho,force_si)
  use D_lattice,     ONLY:nsym,i_time_rev,mag_syms
  use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_inv
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
  !
  implicit none
  type(bz_samp)::Xk
@@ -94,7 +94,7 @@ subroutine el_density(en,Xk,rho,force_si)
    enddo
  enddo bands_loop
  !
- call PP_redux_wait(rho_no_sym)
+ call PP_redux_wait(rho_no_sym,COMM=PAR_COM_density%COMM)
  !
  ! Simmetrization
  !

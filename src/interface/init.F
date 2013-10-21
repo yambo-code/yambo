@@ -441,7 +441,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !FFT
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,&
-&          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs')
+&          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs WFbuffIO')
  !
  ! CPU structure
  !
@@ -454,7 +454,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    else
      call CPU_activate("X_all_q")
    endif
-   if (l_alda_fxc) call CPU_activate("DENSITY")
  endif
  !
  if (l_HF_and_locXC) call CPU_activate("HF")
@@ -922,7 +921,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
    !
    subroutine CPU_activate(what)
-     character(*) :: what ! X_q_0 X_finite_q GW HF BSE DENSITY RT WF EP X_all_q
+     character(*) :: what ! X_q_0 X_finite_q GW HF BSE RT WF EP X_all_q
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
      if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BSE") then
@@ -1068,7 +1067,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SURF
      X(3)%iq = 1  ! 2 components
      X(3)%ordering = 'c'
-     Xw(3)%n = 101 ! 2 components
+     Xw(3)%n_freqs = 101 
 #endif 
 #if defined  _ELPH 
      if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.

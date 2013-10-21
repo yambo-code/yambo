@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
-!====================================
+subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
+ !
  use pars
  use com,                     ONLY : msg, warning
  use LIVE_t,                  ONLY : live_timing
@@ -33,9 +33,10 @@
  use fields,                  ONLY : grid_path
  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP
  use memory_m,                ONLY : mem_est
- use wave_func,               ONLY : wf, wf_ng, WF%index, WF_load, WF_free
+ use wave_func,               ONLY : WF, wf_ng
  use optcut,                  ONLY : DIP_iR_cut, DIP_q_dot_iR_cut, ng_limits, setup_optcut, pscut
  use drivers,                 ONLY : l_col_cut
+ use interfaces,              ONLY : WF_load
 #if defined _SURF
  use ras_module,              ONLY : transloc, lras
 #endif
@@ -94,7 +95,7 @@
    !
    ! WF loading (needed in both cases)
    !
-   call WF_load(0, 1, X%ib, (/1,Xk%nibz/), space='G', title='-Oscillators/G space')
+   call WF_load(WF,0, 1, X%ib, (/1,Xk%nibz/), space='G', title='-Oscillators/G space')
    !
    ! Set up data needed for cut off routines
    !
@@ -114,7 +115,7 @@
    !
    ! Free any loaded WFs
    !
-   call WF_free()
+   call WF_free(WF)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=io_db)
    io_err=io_DIPOLES_cut(X,Xen,io_db)
@@ -170,5 +171,5 @@
  deallocate(DIP_iR_cut)
  call mem_est('DIP_iR_cut')
  return
-
+ !
 end subroutine Dipole_driver_cut

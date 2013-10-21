@@ -28,7 +28,8 @@ subroutine RT_driver(E,X,k,q)
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,X_alloc
- use wave_func,      ONLY:WF_load,WF_free
+ use wave_func,      ONLY:WF
+ use interfaces,     ONLY:WF_load
  use R_lattice,      ONLY:bz_samp,qindx_free
  use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho,&
 &                         SC_QP_setup,RT_ibz_coo 
@@ -130,7 +131,7 @@ subroutine RT_driver(E,X,k,q)
  call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_index( )
  !
- call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
+ call WF_load(WF,WF_G_max,WF_Go_indx,(/1,SC_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
  !
  ! QP-corrections 
  !================
@@ -186,7 +187,7 @@ subroutine RT_driver(E,X,k,q)
    !
    call collisions_IO_free() 
    !
-   call WF_free()
+   call WF_free(WF)
    !
    call X_alloc("P_square")
    !
@@ -198,7 +199,7 @@ subroutine RT_driver(E,X,k,q)
  !
  if(l_NE_simulate_IP) then  
    !
-   call WF_free()
+   call WF_free(WF)
    !
    call mem_est("rho_reference rho")
    !
@@ -387,7 +388,7 @@ subroutine RT_driver(E,X,k,q)
  !
  call collisions_IO_free() 
  !
- call WF_free()
+ call WF_free(WF)
  !
  if(.not.local_V.and..not.l_NE_simulate_IP) call free_COLLISIONS_v()
  !

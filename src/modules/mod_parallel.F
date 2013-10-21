@@ -252,6 +252,9 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_q_for_Xo
  type(MPI_comm),SAVE :: PAR_COM_k_for_P
  !
+ ! ... density
+ type(MPI_comm),SAVE :: PAR_COM_density
+ !
  ! WorkSpace
  !
  integer            :: i_err
@@ -301,16 +304,14 @@ module parallel_m
      CPU_structure(4)%Short_Description="HF"
      CPU_structure(5)%Long_Description="BSE"
      CPU_structure(5)%Short_Description="BSE"
-     CPU_structure(6)%Long_Description="DENSITY"
-     CPU_structure(6)%Short_Description="DENSITY"
-     CPU_structure(7)%Long_Description="Real_Time"
-     CPU_structure(7)%Short_Description="RT"
-     CPU_structure(8)%Long_Description="Wave_Functions"
-     CPU_structure(8)%Short_Description="WF"
-     CPU_structure(9)%Long_Description="Electron_Phonon"
-     CPU_structure(9)%Short_Description="ELPH"
-     CPU_structure(10)%Long_Description="Response_G_space"
-     CPU_structure(10)%Short_Description="X_all_q"
+     CPU_structure(6)%Long_Description="Real_Time"
+     CPU_structure(6)%Short_Description="RT"
+     CPU_structure(7)%Long_Description="Wave_Functions"
+     CPU_structure(7)%Short_Description="WF"
+     CPU_structure(8)%Long_Description="Electron_Phonon"
+     CPU_structure(8)%Short_Description="ELPH"
+     CPU_structure(9)%Long_Description="Response_G_space"
+     CPU_structure(9)%Short_Description="X_all_q"
    end subroutine
    !
    subroutine COMM_reset(COMM)

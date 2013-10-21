@@ -27,7 +27,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
 &                         PAR_IND_DIPk_ibz,PP_redux_wait,PAR_COM_Xk_bz_INDEX,&
 &                         l_par_X_G_all_q
  use electrons,      ONLY:levels,n_sp_pol
- use D_lattice,      ONLY:nsym,i_time_rev,dl_sop
+ use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
  use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR
  use vec_operate,    ONLY:v_norm
@@ -64,7 +64,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
    !
    do i_star=1,Xk%nstar(ik)
      !
-     is = Xk%star(ik,i_star)
+     is = sop_inv(Xk%star(ik,i_star))
      ik_bz=i_star
      if (ik>1) ik_bz=sum(Xk%nstar(1:ik-1))+i_star
      !

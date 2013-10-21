@@ -43,11 +43,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,QP_W_partially_done,PPa_terminator
  use X_m,           ONLY:X_alloc,X_mat,X_t
- use wave_func,     ONLY:WF_load,WF_free
+ use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
  use matrix_operate,ONLY:mat_transpose
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -178,7 +178,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,QP_index=PAR_IND_QP)
  call PARALLEL_WF_index( )
  !
- call WF_load(isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),&
+ call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),&
 #if defined _SC
 &             title='-SC')
 #else
@@ -526,7 +526,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call timing('GW(REDUX)',OPR='stop')
 #endif
  !
- call WF_free()
+ call WF_free(WF)
  !
  call collision_reset(isc)
  call collision_reset(iscp)

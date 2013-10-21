@@ -115,10 +115,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
    !
    if (n_LT_steps==0) cycle
    ! 
-#if defined _NETCDF_IO
-   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
-#endif
-   !
    ! [Vnl,r]
    !
    if (ioKB_pwscf_err==0) then

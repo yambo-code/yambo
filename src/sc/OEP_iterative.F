@@ -45,8 +45,8 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  use collision,       ONLY:collision_reset 
  use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,      ONLY:PARALLEL_index
- use wave_func,       ONLY:WF_load,WF
+ use interfaces,      ONLY:PARALLEL_index,WF_load
+ use wave_func,       ONLY:WF
  use SC,              ONLY:it_now,OEP_steps,OEP_threshold,SC_bands,l_oep_EWeight,E_bare
  use drivers,         ONLY:l_oep_exact,l_oep_slater,l_oep_kli,l_oep_ceda
  use LIVE_t,          ONLY:LIVE_message

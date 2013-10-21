@@ -22,7 +22,7 @@
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  use drivers,        ONLY:l_optics,l_real_time,l_sc_run,l_eval_collisions
- use interfaces,     ONLY:PARALLEL_WF_distribute,PARALLEL_WF_index
+ use interfaces,     ONLY:PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
  use pars,           ONLY:SP
  use com,            ONLY:warning,secnm
  use electrons,      ONLY:levels
@@ -31,7 +31,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
 &                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,MASTER,OP_APP_WR_CL,OP_RD,RD_CL_IF_END
- use wave_func,      ONLY:wf_ng,WF_load,WF_free
+ use wave_func,      ONLY:wf_ng,WF
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_X,PAR_DIPk_nibz,PAR_IND_VAL_BANDS_X,&
 &                         master_cpu,PAR_COM_q_for_Xo,PAR_IND_Xk_ibz
 #if defined _SC      
@@ -136,7 +136,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !   
    ! WF load 
    !
-   call WF_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',force_WFo=.true.)
+   call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',force_WFo=.true.)
    !
    use_trans_gauge = .true.
    !
@@ -163,7 +163,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! Free any loaded WFs
    !
-   call WF_free()
+   call WF_free(WF)
    !
    if (master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)

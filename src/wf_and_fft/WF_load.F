@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
+subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                  spins_to_load,space,title,impose_free_and_alloc,force_WFo)
  !
  ! Load and (eventually) FFTs the wavefunctions
@@ -32,10 +32,10 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  use R_lattice,     ONLY:nkibz
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,&
 &                        fftw_plan,fft_g_table,fft_size
- use wave_func,     ONLY:wf_nc_k,wf_igk,WF_alloc,&
-&                        wf_ng,wf_norm_test,wf_ncx,ioWF,WF_free,&
+ use wave_func,     ONLY:wf_nc_k,wf_igk,&
+&                        wf_ng,wf_norm_test,wf_ncx,ioWF,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
-&                        QUIET_free,WF
+&                        QUIET_free,WAVEs
  use wave_func,     ONLY:states_to_load
  use interfaces,    ONLY:PARALLEL_live_message
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
@@ -50,6 +50,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  implicit none
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
+ type(WAVEs)           :: WF
  integer     ,optional :: spins_to_load(2)
  character(*),optional :: space
  character(*),optional :: title
@@ -161,7 +162,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! First WF_free then fft_setup.
  !
- if (free_and_alloc) call WF_free()
+ if (free_and_alloc) call WF_free(WF)
  !
  WF%b=bands_to_load
  !
@@ -200,7 +201,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (WF%space=='R') call fft_setup(iG_max,iGo_max,.false.)
  if (WF%space=="R") fft_dim_loaded=fft_dim
  !
- if (free_and_alloc) call WF_alloc()
+ if (free_and_alloc) call WF_alloc(WF)
  !
  if (WF%space=='R') allocate(wf_DP(fft_size))
  if (WF%space=='G') allocate(wf_DP(wf_ng))
@@ -220,11 +221,14 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! A smaller I/O is possible ONLY with NETCDF while in plain Fortran 
  ! it produces and erroneous loading of WFs
  !
-#if defined _NETCDF_IO
- allocate(wf_disk(2,min(wf_nb_io,WF%b(2)-WF%b(1)+1),wf_ncx,n_spin))
-#else
+ ! Update of 21/10/2013. This reduced I/O leads to problems and the Al111 test is not 
+ ! passed when using few bands. I switch it off.
+ !
+!#if defined _NETCDF_IO
+! allocate(wf_disk(2,min(wf_nb_io,WF%b(2)-WF%b(1)+1),wf_ncx,n_spin))
+!#else
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
-#endif
+!#endif
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  !
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)

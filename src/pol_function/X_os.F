@@ -23,23 +23,20 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Non interacting Xo
  !
- use drivers,       ONLY:l_optics
  use pars,          ONLY:SP
  use wrapper,       ONLY:V_by_V_plus_V
  use collision,     ONLY:ggwinfo,collision_reset
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use stderr,        ONLY:intc
- use parallel_m,    ONLY:PP_redux_wait,&
-&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,&
-&                        PAR_Xk_bz_index,PAR_IND_VAL_BANDS_X,PAR_COM_q_for_Xo
+ use wave_func,     ONLY:WF
+ use parallel_m,    ONLY:PP_redux_wait,PAR_Xk_bz_index,PAR_COM_q_for_Xo
  use openmp,        ONLY:OPENMP_update,n_threads_now,OPENMP_master_thread
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
- use interfaces,    ONLY:PARALLEL_WF_distribute,PARALLEL_WF_index
+ use interfaces,    ONLY:WF_load
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
  use electrons,     ONLY:levels,spin_occ
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp
- use wave_func,     ONLY:WF_load
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t,X_poles,DIP_q_dot_iR,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM
@@ -88,16 +85,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    call X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
  endif
  !
- ! WF distributed & load
- !=======================
+ ! WF load
+ !=========
  !
- call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_Xk_ibz,&
-&                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
-&                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
-&                            CLEAN_UP=.TRUE.)
- call PARALLEL_WF_index(COMM=PAR_COM_q_for_Xo)
- !
- call WF_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+ call WF_load(WF,X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
 #if defined _TIMING
  call timing('Xo (procedure)',OPR='start')

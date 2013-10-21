@@ -23,7 +23,7 @@ subroutine electrons_driver(Xk,Xen)
  !
  use pars,           ONLY:SP,lchlen
  Use stderr,         ONLY:intc
- use wave_func,      ONLY:WF_load,WF,WF_free,wf_ng
+ use wave_func,      ONLY:WF,wf_ng
  use FFT_m,          ONLY:fft_size,fft_dim
  use R_lattice,      ONLY:bz_samp,nkibz
  use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
@@ -51,6 +51,7 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_MAGNETIC
  use YPP,            ONLY:l_angular_momentum,l_position
 #endif
+ use interfaces,     ONLY:WF_load
  implicit none
  !
  type(bz_samp) ::Xk
@@ -144,7 +145,7 @@ subroutine electrons_driver(Xk,Xen)
 #endif
  !
  if(flag) then
-   call WF_load(wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
+   call WF_load(WF,wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
    nr=fft_dim
    allocate(v2plot(fft_size))
 #if defined _YPP_ELPH
@@ -482,7 +483,7 @@ subroutine electrons_driver(Xk,Xen)
  ! GPL_EXCLUDE_END
  !
 1 continue
- call WF_free()
+ call WF_free(WF)
  if (allocated(v2plot))   deallocate(v2plot)
  if (allocated(QP_table)) deallocate(QP_table,QP_state)
  if (allocated(magn))     deallocate(magn)

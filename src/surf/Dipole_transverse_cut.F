@@ -32,7 +32,7 @@
    use R_lattice,               ONLY : g_vec, bz_samp
    use X_m,                     ONLY : X_t, Dipole_bands_ordered
    use memory_m,                ONLY : mem_est
-   use wave_func,               ONLY : wf, wf_ng, WF%index, WF_load
+   use wave_func,               ONLY : WF, wf_ng
    use optcut,                  ONLY : DIP_iR_cut, ng_limits, setup_optcut, pscut, PScut_slow
    use surface_geometry,        ONLY : setup_gvecaff
    implicit none
@@ -116,7 +116,7 @@
          if(icfft==0) call error(" Error in parallel wf distribution ic")
 #endif
 
-           call PScut(PS, wf(:,ivfft), wf(:,icfft), kg = kg )
+           call PScut(PS, WF%c(:,ivfft), WF%c(:,icfft), kg = kg )
 !          call PScut_slow(PS, wf(:,ivfft), wf(:,icfft), kg )
 
 !          DIP_iR_cut(:,ic,iv,ik,i_spin) = PS(:)/Ev_m_Ec

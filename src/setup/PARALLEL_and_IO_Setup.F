@@ -30,6 +30,8 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:n_nodes,ncpu,n_MPI,n_chains,PARALLEL_message,n_CPU_str_max
  use openmp,         ONLY:n_threads,OPENMP_initialize,OPENMP_update
+ use parser_m,       ONLY:parser
+ use wave_func,      ONLY:WF_buffered_IO
  implicit none
  !
  type(levels)  :: en
@@ -44,6 +46,10 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  !
  call OPENMP_initialize(.FALSE.)
  call OPENMP_update()
+ !
+ ! Buffered I/O ?
+ !
+ call parser('WFbuffIO'   ,WF_buffered_IO)
  !
  ! CPU structure
  !===============

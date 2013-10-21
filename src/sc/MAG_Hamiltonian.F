@@ -74,10 +74,10 @@ subroutine MAG_Hamiltonian(initial_check_only)
 &                         Bx,By,Bz,MAG_theta,MAG_psi,ir_table,phase_trick
  use electrons,      ONLY:n_sp_pol
  use SC,             ONLY:SC_bands,SC_potential
- use wave_func,      ONLY:wf,WF%index,wf_x,wf_y,wf_z,WF_load,WF_free,WF_derivative_free
+ use wave_func,      ONLY:WF,wf_x,wf_y,wf_z,WF_derivative_free
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index
+ use interfaces,     ONLY:PARALLEL_index,WF_load
  use vec_operate,    ONLY:v_norm
  implicit none
  !
@@ -239,7 +239,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
    ! 
    if( any(px%element_2D(ik,:)) ) then
      if (MAG_landau) call WF_derivative((/1,SC_bands(2)/),(/ik,ik/),do_derivatives)
-     call WF_load(0,1,(/1,SC_bands(2)/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
+     call WF_load(WF,0,1,(/1,SC_bands(2)/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
      if(timing_init) call live_timing('MAG-Hamiltonian',px%n_of_elements(myid+1))
      timing_init=.false.
    endif
@@ -267,14 +267,14 @@ subroutine MAG_Hamiltonian(initial_check_only)
            if(H_magn_x_on) H_tmp(:)= H_paramagn_x(:)*wf_x(:,jfft)
            if(H_magn_y_on) H_tmp(:)= H_tmp(:)+H_paramagn_y(:)*wf_y(:,jfft)
            if(H_magn_z_on) H_tmp(:)= H_tmp(:)+H_paramagn_z(:)*wf_z(:,jfft)
-           H_tmp(:)=H_tmp(:)+H_diamagn(:)*wf(:,jfft)
+           H_tmp(:)=H_tmp(:)+H_diamagn(:)*WF%c(:,jfft)
          endif
-         if (MAG_pauli)  H_tmp(:)= H_tmp(:)+H_pauli(:,i_spin)*wf(:,jfft)
+         if (MAG_pauli)  H_tmp(:)= H_tmp(:)+H_pauli(:,i_spin)*WF%c(:,jfft)
          !
 #if defined _DOUBLE
-         Ho(ib,ibp,ik,i_spin) = zdotc(fft_size,wf(:,ifft),1,H_tmp(:),1)
+         Ho(ib,ibp,ik,i_spin) = zdotc(fft_size,WF%c(:,ifft),1,H_tmp(:),1)
 #else
-         Ho(ib,ibp,ik,i_spin) = cdotc(fft_size,wf(:,ifft),1,H_tmp(:),1)
+         Ho(ib,ibp,ik,i_spin) = cdotc(fft_size,WF%c(:,ifft),1,H_tmp(:),1)
 #endif
          !
        enddo
@@ -285,7 +285,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
    enddo
    !
    if(MAG_landau) call WF_derivative_free()
-   call WF_free()
+   call WF_free(WF)
    !
    call PP_redux_wait(Ho(:,:,ik,:))
    !

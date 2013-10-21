@@ -38,6 +38,7 @@ module wave_func
  ! Buffered WFs
  !
  type (WAVEs) :: WF_buffer
+ logical      :: WF_buffered_IO
  !
  ! Actual WFs
  !
@@ -99,89 +100,9 @@ module wave_func
      complex(SP),dimension(n_spinor) :: WF_symm
    end function
    !
-   subroutine WF_load(iG_max,iGo_max,bands_to_load,kpts_to_load,&
-&                     spins_to_load,space,title,impose_free_and_alloc,force_WFo)
-     integer :: iG_max,iGo_max,bands_to_load(2),kpts_to_load(2)
-     integer,     optional :: spins_to_load(2)
-     character(*),optional :: space
-     character(*),optional :: title
-     logical     ,optional :: impose_free_and_alloc
-     logical     ,optional :: force_WFo
-   end subroutine
-   !
  end interface 
  !
  contains
-   !
-   subroutine WF_alloc()
-     use memory_m, ONLY : mem_est
-     use FFT_m,    ONLY : fft_size,fftw_plan,fft_dim
-     !
-     ! Work Space
-     !
-     integer :: err
-     integer :: ik,ib,is
-     !
-     ! Distributed allocation
-     !
-     if(allocated(states_to_load)) then
-       !
-       WF%N=0
-       do ib=WF%b(1),WF%b(2)
-         do ik=WF%k(1),WF%k(2)
-           do is=WF%spin(1),WF%spin(2)
-             if(states_to_load(ib,ik,is)) WF%N=WF%N+1
-           enddo
-         enddo
-       enddo
-       !
-     else
-       !
-       WF%N=(WF%b(2)-WF%b(1)+1)*(WF%k(2)-WF%k(1)+1)*(WF%spin(2)-WF%spin(1)+1)
-       !
-     endif
-     !
-     if (WF%space=="R") allocate(WF%c(fft_size,WF%N),stat=err)
-     if (WF%space=="G") allocate(WF%c(wf_ng,WF%N),stat=err)
-     if (WF%space=="C") allocate(WF%c(wf_ncx,WF%N),stat=err)
-     !
-     if (err==0) allocate(WF%index(WF%b(2),WF%k(2),WF%spin(2)),stat=err)
-     !
-     call mem_est('WF',(/size(WF%c)/),errors=(/err/))
-     !
-     WF%c=(0.,0.)
-     WF%index=0
-#if defined _FFTW
-     fftw_plan=0
-#endif
-   end subroutine
-   !
-   subroutine WF_free()
-     use memory_m, ONLY : mem_est
-     use FFT_m,    ONLY : fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
-  &                       fft_rot_r,fft_rot_r_inv,fftw_plan,fft_multiplier
-     if (.not.associated(WF%c)) return
-     !
-     call mem_est('WF',quiet=QUIET_free)
-     !
-     deallocate(WF%c,WF%state)
-     if (WF%space=="R") then
-       fft_size=0
-       fft_dim=0
-       fft_dim_loaded=0
-       fft_multiplier=1
-       deallocate(fft_g_table,fft_rot_r,fft_rot_r_inv)
-       call mem_est('FFT_g_tab FFT_rot')
-#if defined _FFTW
-       call dfftw_destroy_plan(fftw_plan)
-       fftw_plan=0
-#endif
-     endif
-     WF%k=0
-     WF%b=0
-     WF%spin=0
-     WF%space=' '
-   end subroutine
    !
    subroutine WF_derivative_alloc(cart_direction)
      use memory_m, ONLY : mem_est

@@ -38,7 +38,8 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_n_states,QP_table
  use X_m,           ONLY:X_alloc,X_mat,X_t
- use wave_func,     ONLY:WF_load,WF_free
+ use interfaces,    ONLY:WF_load
+ use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:DL_vol,nsym
  use wrapper,       ONLY:M_by_V
@@ -90,7 +91,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  !
  ! WFs...
  !
- call WF_load(isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-SC')
+ call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-SC')
  !
  ! Plasmon-Pole/Static interaction DB I/O
  !
@@ -319,7 +320,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  deallocate(EM1s)
  call mem_est("EM1s")
  call X_alloc('X')
- if (l_STORE_COLLISIONS) call WF_free()
+ if (l_STORE_COLLISIONS) call WF_free(WF)
  call collision_reset(isc)
  call collision_reset(iscp)
  !

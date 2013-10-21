@@ -26,18 +26,18 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use pars,          ONLY:SP
  use drivers,       ONLY:l_alda_fxc,l_gw0
  use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range
- use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,&
-&                        PAR_COM_Q_INDEX,master_cpu,PAR_NQ,PAR_Q_index,myid
- use wave_func,     ONLY:WF_free
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index,&
+&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X
+ use wave_func,     ONLY:WF_buffered_IO,WF
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP,&
 &                        IO_and_Messaging_switch,io_X
  use com,           ONLY:depth
  use TDDFT,         ONLY:FXC
- use interfaces,    ONLY:PARALLEL_global_indexes
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
+&                        PARALLEL_WF_index,WF_load
  implicit none
  type(levels) ::Xen 
  type(bz_samp)::Xk,q
@@ -120,12 +120,19 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  if (io_X)      call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
  if (.not.io_X) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs*PAR_nq/))
  !
-! call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_Xk_ibz,&
-!&                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
-!&                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
-!&                            CLEAN_UP=.TRUE.)
-! call PARALLEL_WF_index(COMM=PAR_COM_q_for_Xo)
-! call WF_load(0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
+ ! WF distribution 
+ !=================
+ !
+ call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_Xk_ibz,&
+&                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
+&                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
+&                            CLEAN_UP=.TRUE.)
+ !
+ if (WF_buffered_IO) then
+   !
+   call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
+   !
+ endif
  !
  do iq=iq_to_start,X%iq(2)
    !
@@ -137,7 +144,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (l_alda_fxc.and..not.allocated(FXC)) then
      !
-     call PARALLEL_global_indexes(Xen,Xk,q,"DENSITY") 
+     call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
      !
      call tddft_alda_g_space(Xen,Xk)
      !
@@ -183,6 +190,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  if (io_X) call X_alloc('X')
  call X_alloc('DIP_q_dot_iR')
- if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free()
+ if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
 end function

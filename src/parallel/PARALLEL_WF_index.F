@@ -26,7 +26,8 @@ subroutine PARALLEL_WF_index(COMM)
  ! to loop on the total k and b in the MPI_comm_world
  !
  use parallel_m,      ONLY:PP_indexes,ncpu,PAR_IND_WF_linear,&
-&                          PP_indexes_reset,myid,PAR_COM_WORLD,MPI_comm
+&                          PP_indexes_reset,myid,PAR_COM_WORLD,MPI_comm,&
+&                          COMM_copy,PAR_COM_density
  use wave_func,       ONLY:states_to_load
  !
  implicit none
@@ -47,6 +48,9 @@ subroutine PARALLEL_WF_index(COMM)
  if (present(COMM)) then
    NC=COMM%n_CPU
    ID=COMM%CPU_id
+   call COMM_copy(COMM,PAR_COM_density)
+ else
+   call COMM_copy(PAR_COM_WORLD,PAR_COM_density)
  endif
  !
  NB=size(states_to_load,1)
@@ -81,8 +85,6 @@ subroutine PARALLEL_WF_index(COMM)
  enddo
  !
  PAR_IND_WF_linear%n_of_elements(ID+1)=count(PAR_IND_WF_linear%element_2D)
-
-!PAR_IND_WF_linear%n_of_elements(ID+1)
  !
  call PP_indexes_reset(WF_linear)
  call PP_indexes_reset(WF_linear_no_overlaps)

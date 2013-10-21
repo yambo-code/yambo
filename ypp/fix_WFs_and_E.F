@@ -28,12 +28,13 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
 &                              OP_APP,cp_file,cp_directory,Fragmented_IO, &
 &                              io_fragmented,OP_RD_CL,RD_CL,RD
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
- &                             WF,WF_load,wf,WF_free,wf_nb_io_groups
+ &                             WF,wf_nb_io_groups
  use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol
  use LIVE_t,              ONLY:live_timing
  use stderr,              ONLY:intc
  use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz,ng_vec
  use D_lattice,           ONLY:spin_sop
+ use interfaces,          ONLY:WF_load
  !
  implicit none
  !
@@ -86,7 +87,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  core_io_path=more_io_path
  !
  call section('=',"Energies and WFs shells")
- !===========================
+ !===========================================
  !
  allocate(wf_igk_save(wf_ncx,k_save%nibz))
  wf_nc_k_save=wf_nc_k
@@ -186,7 +187,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          nkibz=k_save%nibz
          wf_ncx=wf_ncx_save
          core_io_path=core_io_path_save
-         call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
+         call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
          !
          do ib=nb1,nb2
            do i_spin=1,n_spin
@@ -245,7 +246,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        nkibz=k_save%nibz
        wf_ncx=wf_ncx_save
        core_io_path=core_io_path_save
-       call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
+       call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
        !
        do ib=nb1,nb2
          !
@@ -311,7 +312,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        nkibz=k_save%nibz
        wf_ncx=wf_ncx_save
        core_io_path=core_io_path_save
-       call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
+       call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
        !
        do ib=nb1,nb2
          do i_spin=1,n_spin
@@ -358,7 +359,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  ! CLEAN
  !=======
  call E_reset(E_new)
- call WF_free()
+ call WF_free(WF)
  deallocate(wf_disk)
  call mem_est("wf_disk")
  !

@@ -36,7 +36,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use collision,     ONLY:ggwinfo,collision_reset
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
- use wave_func,     ONLY:WF_load
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -46,7 +45,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use fragments,     ONLY:fragment_status
  use real_time,     ONLY:B_mat_index
 #endif
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use wave_func,     ONLY:WF
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
  use wrapper,       ONLY:V_dot_V
 #if defined _OPENMP
  use wrapper,       ONLY:V_dot_V_omp
@@ -118,7 +118,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call PARALLEL_WF_distribute(max(E%nbm,QP_nb),k%nibz,QP_index=PAR_IND_QP)
  call PARALLEL_WF_index()
  !
- call WF_load(QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
+ call WF_load(WF,QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
  !
 #if defined _TIMING
  call timing('HF',OPR='start')

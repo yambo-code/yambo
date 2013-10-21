@@ -57,7 +57,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,&
 &                     string_split,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
- use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer
+ use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,&
 &                     Fragmented_IO,Fragmented_IO_save 
@@ -319,6 +319,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  WF_buffer%b=0
  WF_buffer%k=0
  WF_buffer%space=' '
+ WF_buffered_IO=.FALSE.
  wf_ng=0
  wf_norm_test=.true.
  wf_nb_io=0

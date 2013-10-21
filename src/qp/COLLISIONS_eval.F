@@ -28,7 +28,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev,nsym
  use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk,QP_n_G_bands,QP_state
- use wave_func,     ONLY:WF_free
+ use wave_func,     ONLY:WF
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands
  use global_XC,     ONLY:SC_HF,SC_COHSEX

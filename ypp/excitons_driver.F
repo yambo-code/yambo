@@ -26,7 +26,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use stderr,        ONLY:intc
  use FFT_m,         ONLY:fft_dim,fft_size
  use D_lattice,     ONLY:a,alat
- use wave_func,     ONLY:WF_load,wf,WF_symm,WF_free,wf_ng
+ use wave_func,     ONLY:WF,WF_symm,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
@@ -42,7 +42,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &                        BSS_n_descs,BSS_description
  use electrons,     ONLY:levels,n_sp_pol,spin,n_spinor
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,    ONLY:PARALLEL_index
+ use interfaces,    ONLY:PARALLEL_index,WF_load
  use com,           ONLY:msg,error,warning,of_open_close
  use X_m,           ONLY:X_t
  use memory_m,      ONLY:mem_est
@@ -214,7 +214,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! 
  ! Loading  Wf 
  !
- if (l_exc_wf) call WF_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
+ if (l_exc_wf) call WF_load(WF,wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
  !
  ! Exciton's spin (not collinear case)
  !=====================================
@@ -463,7 +463,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  call mem_est('v2plot BS_R_E')
  deallocate(BS_eh_table,BS_mat,wf_vc)
  call mem_est('BS_eh_table BS_mat wf_vc')
- call WF_free()
+ call WF_free(WF)
  !
  contains
    !

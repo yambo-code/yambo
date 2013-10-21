@@ -32,7 +32,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
  use electrons,           ONLY: levels,n_spin,  n_spinor,n_sp_pol
  use parallel_m,          ONLY: PP_redux_wait,PP_indexes,myid,&
 &                               PP_indexes_reset,PAR_COM_k_for_P
- use interfaces,          ONLY: PARALLEL_index
+ use interfaces,          ONLY: PARALLEL_index,WF_load
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: X_t,DIP_iR 
  use wrapper,             ONLY: Vstar_dot_V
@@ -41,7 +41,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
 #endif
  use fields,              ONLY: grid_path 
  use memory_m,            ONLY: mem_est
- use wave_func,           ONLY: wf_ng,wf_igk,WF,WF_load,WF_free,wf_ncx
+ use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx
 #if defined _SC           
  use SC,                  ONLY: SC_bands
 #endif
@@ -128,8 +128,8 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
  ! Load WFs {k} + q_iq
  !
  core_io_path = grid_path
- call WF_free()
- call WF_load(0,1,(/ X%ib(1), Xen%nbm /),&
+ call WF_free(WF)
+ call WF_load(WF,0,1,(/ X%ib(1), Xen%nbm /),&
 &                 (/1,num_shifted_grid*Xk%nibz/),&
 &                 space='G',title='-Oscillators/G space (shifted grid)') 
  !
@@ -205,7 +205,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
  !
  ! CLEAN
  !
- call WF_free()
+ call WF_free(WF)
  do i_spin=1,n_sp_pol
    call PP_redux_wait(DIP_iR(:,:,:,:,i_spin),COMM=PAR_COM_k_for_P%COMM)
  enddo

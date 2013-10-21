@@ -43,7 +43,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
  integer                   :: ik,ik_bz,ic,iv,is,i_spin,ik_mem,ik_bz_mem,i_star
  real(SP)                  :: field_dir_rot(3)
- complex(SP)               :: rotated_dipole(1)
+ complex(SP)               :: dipole(3)
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the
  ! oscillator strengths have been calculated using the shifted grids.
@@ -62,53 +62,55 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
  do ik=1,Xk%nibz
    !
-   do i_star=1,Xk%nstar(ik)
+   do iv = X%ib(1), Xen%nbm
      !
-     is = sop_inv(Xk%star(ik,i_star))
-     ik_bz=i_star
-     if (ik>1) ik_bz=sum(Xk%nstar(1:ik-1))+i_star
-     !
-     field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
-     !
-     if (PAR_IND_Xk_bz%element_1D(ik_bz)) ik_bz_mem=PAR_Xk_bz_index(ik_bz)
-     if (PAR_IND_DIPk_ibz%element_1D(ik)) ik_mem=PAR_DIPk_ibz_index(ik)
-     !
-     do iv = X%ib(1), Xen%nbm
+     do ic = Xen%nbf+1, X%ib(2)
        !
-       do ic = Xen%nbf+1, X%ib(2)
+       do i_spin=1,n_sp_pol
          !
-         do i_spin=1,n_sp_pol
+         dipole = cZERO
+         !
+         if (PAR_IND_DIPk_ibz%element_1D(ik)) then
+           !      
+           ik_mem = PAR_DIPk_ibz_index(ik)
+           dipole = DIP_iR(:,ic,iv,ik_mem,i_spin)
            !
-           rotated_dipole(1)=cZERO
-           ! 
-           ! DIP_iq_dot_r = i q . < v k | r | c k >
+         endif
+         !
+         ! Here I use PAR_COM_Xk_bz_INDEX as it connects two CPUS belonging to different
+         ! k_bz points but with the same k_ibz. Those two CPUS belong to the q communicator
+         !
+         if (l_par_X_G_all_q) call PP_redux_wait(dipole,COMM=PAR_COM_Xk_bz_INDEX%COMM)
+         !
+         do i_star=1,Xk%nstar(ik)
            !
-           if (PAR_IND_DIPk_ibz%element_1D(ik)) then 
+           is              = sop_inv(Xk%star(ik,i_star))
+           ik_bz           = i_star
+           if (ik>1) ik_bz = sum(Xk%nstar(1:ik-1))+i_star
+           !
+           field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
+           !
+           if (PAR_IND_Xk_bz%element_1D(ik_bz)) then
+             !
+             ik_bz_mem=PAR_Xk_bz_index(ik_bz)
+             !
              if ( is<= nsym/(i_time_rev+1) ) then
-               rotated_dipole(1) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik_mem,i_spin)  )
+               DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin) = dot_product( field_dir_rot, dipole(:) )
              else
-               rotated_dipole(1) = dot_product( DIP_iR(:,ic,iv,ik_mem,i_spin), field_dir_rot ) 
+               DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin) = dot_product( dipole(:), field_dir_rot ) 
              endif
-           endif
-           !
-           ! Here I use PAR_COM_Xk_bz_INDEX as it connects two CPUS belonging to different
-           ! k_bz points but with the same k_ibz. Those two CPUS belong to the q communicator
-           !
-           if (l_par_X_G_all_q) call PP_redux_wait(rotated_dipole,COMM=PAR_COM_Xk_bz_INDEX%COMM)
-           !
-           if (PAR_IND_Xk_bz%element_1D(ik_bz)) then 
-             DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin) = rotated_dipole(1)
+             !
+             DIP_q_dot_iR(iv,iv,ik_bz_mem,:) = (1.0_SP,0.0_SP)
+             DIP_q_dot_iR(ic,ic,ik_bz_mem,:) = (1.0_SP,0.0_SP)
+             ! 
            endif
            !
          enddo
          !
        enddo
-       ! 
-       if (PAR_IND_Xk_bz%element_1D(ik_bz)) then 
-         DIP_q_dot_iR(iv,iv,ik_bz_mem,:) = (1.0_SP,0.0_SP)
-       endif
-       ! 
+       !
      enddo
+     !
    enddo
    !
  enddo

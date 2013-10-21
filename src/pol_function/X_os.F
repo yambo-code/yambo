@@ -30,10 +30,11 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_Xk_bz_index,PAR_COM_q_for_Xo
+ use parallel_m,    ONLY:PP_redux_wait,PAR_Xk_bz_index,PAR_COM_q_for_Xo,PAR_IND_Xk_ibz,&
+&                        PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X
  use openmp,        ONLY:OPENMP_update,n_threads_now,OPENMP_master_thread
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
- use interfaces,    ONLY:WF_load
+ use interfaces,    ONLY:WF_load,PARALLEL_WF_distribute
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
  use electrons,     ONLY:levels,spin_occ
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp
@@ -87,6 +88,11 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! WF load
  !=========
+ !
+ call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_Xk_ibz,&
+&                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
+&                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
+&                            CLEAN_UP=.TRUE.)
  !
  call WF_load(WF,X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !

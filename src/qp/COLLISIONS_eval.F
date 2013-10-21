@@ -170,7 +170,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (l_STORE_COLLISIONS.or.allocated(TEMP_COLLISIONS_v)) then
    deallocate(fragment_status)
    call mem_est("fragment_status")
-   call WF_free()
+   call WF_free(WF)
    call collisions_IO_free()
    if (allocated(TEMP_COLLISIONS_v)) deallocate(TEMP_COLLISIONS_v)
    call mem_est("TEMP_COLLISIONS_v")

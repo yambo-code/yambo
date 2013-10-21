@@ -313,13 +313,13 @@ subroutine Dipole_transverse(Xen,Xk,X)
    do i_spin=1,n_sp_pol
      call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
 #if defined _SC
-    if (allocated(DIP_P)) then
-      call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
-      call PP_redux_wait(P_square(:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
-    endif
+     if (allocated(DIP_P)) then
+       call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
+       call PP_redux_wait(P_square(:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
+     endif
 #endif
 #if defined _KERR
-   if(trim(global_gauge)=='velocity') call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
+     if(trim(global_gauge)=='velocity') call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
 #endif
    enddo
    !

@@ -446,7 +446,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    !
    PARALLEL_cpu_mat_inversion=CPU_structure(2)%nCPU_inversion
    if (ENVIRONMENT=="BSE") PARALLEL_cpu_mat_inversion=CPU_structure(5)%nCPU_inversion
-   if (ENVIRONMENT=="Response_G_space") PARALLEL_cpu_mat_inversion=CPU_structure(10)%nCPU_inversion
+   if (ENVIRONMENT=="Response_G_space") PARALLEL_cpu_mat_inversion=CPU_structure(9)%nCPU_inversion
    !
    ! Inversion
    !

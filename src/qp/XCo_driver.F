@@ -134,7 +134,7 @@ subroutine XCo_driver(E,k,Xk,q)
  endif
  !
  if (.not.l_sc_run)  then
-   call WF_free()
+   call WF_free(WF)
    call XCo_report_and_IO()
  endif
  !

@@ -112,8 +112,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (X_em1> 0) iq_to_start=X_em1
  endif
  !
- ! WaveFunction Part. Buffering. Loading.
- !========================================
+ ! Parallel distribution
+ !=======================
  !
  call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
  call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 

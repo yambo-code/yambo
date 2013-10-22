@@ -49,8 +49,8 @@ module com
  ! 
  ! Output Files/Report File
  !
- integer,parameter  :: nofs=200
- integer,parameter  :: max_open_ofs=200
+ integer,parameter  :: nofs=400
+ integer,parameter  :: max_open_ofs=400
  integer, parameter :: num_of_alternative_locations=8+8*n_max_jobstr
  character(lchlen)  :: of(nofs)
  character(lchlen)  :: opened_of(max_open_ofs)

@@ -36,8 +36,8 @@ subroutine RT_initialize(E,k,q)
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,             &
-&                         l_RT_skip_JandP_IO,l_G_retarded_DB,Gr_kind,RIM_ibz_coo,   &
-&                         Gr_bands,l_RT_CCA_Kernel,Life_MEM_steps,Fluence,          &
+&                         l_RT_skip_JandP_IO,Gr_kind,RIM_ibz_coo,   &
+&                         l_RT_CCA_Kernel,Life_MEM_steps,Fluence,          &
 &                         l_RT_uses_E_RIM,RIM_bz_coo
  use collisions_IO,  ONLY:l_STORE_COLLISIONS
  use R_lattice,      ONLY:bz_samp
@@ -72,13 +72,6 @@ subroutine RT_initialize(E,k,q)
  l_RT_CCA_Kernel=.not.l_Full_RT_T_evolution
  l_NE_simulate_BSE     =.FALSE.
  l_NE_simulate_TDDFT   =.FALSE.
- !
- l_G_retarded_DB=Gr_bands(1)>0
- !
- if (l_G_retarded_DB) then
-   l_G_retarded_DB=l_carrier_dynamics.or.l_ph_corr
-   if (Gr_bands(1)>SC_bands(1).or.Gr_bands(2)<SC_bands(2)) l_G_retarded_DB=.FALSE.
- endif
  !
  l_RT_diagonalize      =RT_diagonalization_steps>1
  !

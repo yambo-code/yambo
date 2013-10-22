@@ -23,7 +23,7 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  !
  use pars,           ONLY:SP,rZERO,IP
  use QP_m,           ONLY:QP_n_states,QP_table
- use real_time,      ONLY:Gr_ee_matrix,l_G_retarded_DB,Gr_T_steps,Gr,Gr_peak_pos,Gr_T_step
+ use real_time,      ONLY:Gr_ee_matrix,Gr_kind
  use memory_m,       ONLY:mem_est
  use SC,             ONLY:SC_bands
  use D_lattice,      ONLY:nsym
@@ -44,26 +44,11 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
 &           i_q,i_q_s,iqbz,iq_mem,i_p_s,i_p_star,i_pmq_bz,i_pmq,i_pmq_G0,&
 &           i_trans(4),kin_scatt(4),i_t,N_2bodies,N_4bodies,I_ij,I_kl,I_ij_kl,i_trans_ord(4),n_trans
  real(SP):: GAMMA_,E_center
- real(SP):: TRANSITIONS_E((SC_bands(2)-SC_bands(1)+1)*nkibz)
- real(SP), allocatable :: Gr_integrand(:)
- real(SP),    external :: Laplace_transform
- logical                   :: eval_the_laplace
- integer(IP), allocatable  :: TRANSITIONS_table(:,:)
+ !
+ real(SP),    external :: HyperbolicSecant_FT
  !
  call k_sym2sym(q,'k')
  call k_sym2sym(k,'k')
- !
- if (l_G_retarded_DB) then
-   n_trans=0
-   TRANSITIONS_E=rZERO
-   call mem_est("TRANSITIONS_E",(/size(TRANSITIONS_E)/),(/SP/))
-   do i_n=SC_bands(1),SC_bands(2)
-     do i_k=1,nkibz
-       n_trans=n_trans+1
-       TRANSITIONS_E(n_trans)=Gr_peak_pos(i_k,i_n)
-     enddo
-   enddo
- endif
  !
  ! Gr (e-e)
  !==========
@@ -86,14 +71,6 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  !
  ! Allocation
  !
- if (l_G_retarded_DB) then
-   allocate(TRANSITIONS_table(N_4bodies,4))
-   TRANSITIONS_table=0
-   call mem_est("TRANSITIONS_table",(/size(TRANSITIONS_table)/),(/IP/))
-   TRANSITIONS_table=0
-   allocate(Gr_integrand(Gr_T_steps))
-   call mem_est("Gr_ee_matrix",(/size(Gr_ee_matrix)/))
- endif
  allocate(Gr_ee_matrix(PAR_nQP,PAR_nQPp,PAR_nQ,nsym))
  Gr_ee_matrix=rZERO
  call live_timing('[Gret] Electron-Electron:',PAR_nQP*PAR_nQPp*PAR_nQ)
@@ -106,7 +83,6 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
    i_n  = QP_table(i_qp1,1)
    i_np = QP_table(i_qp1,2)
    i_k  = QP_table(i_qp1,3)
-   if (l_G_retarded_DB) i_trans(4)=transition_finder(Gr_peak_pos(i_k,i_n))
    !
    do i_qp2=1,QP_n_states
      !
@@ -116,7 +92,6 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
      i_m   = QP_table(i_qp2,1)
      i_mp  = QP_table(i_qp2,2)
      i_p   = QP_table(i_qp2,3)
-     if (l_G_retarded_DB) i_trans(2)=transition_finder(Gr_peak_pos(i_p,i_m))
      !
      do iqbz=1,nqbz
        !
@@ -126,12 +101,6 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
        i_q   =q%sstar(iqbz,1)
        i_q_s =q%sstar(iqbz,2)
        i_kmq =k%sstar(qindx_S(i_k,iqbz,1),1)
-       if (l_G_retarded_DB) then
-         i_trans(1)=transition_finder(Gr_peak_pos(i_kmq,i_np))
-         i_trans_ord(1)=min(i_trans(1),i_trans(2))
-         i_trans_ord(2)=max(i_trans(1),i_trans(2))
-         I_ij=matrix_linear_index(i_trans_ord(1),i_trans_ord(2))-1
-       endif
        !
        do i_p_star=1,k%nstar(i_p)
          !
@@ -140,55 +109,17 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
          call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,i_q,i_q_s,i_pmq_bz,i_pmq_G0)
          !
          i_pmq =k%sstar(i_pmq_bz,1)
-         if (l_G_retarded_DB) then
-           i_trans(3)=transition_finder(Gr_peak_pos(i_pmq,i_mp))
-           i_trans_ord(3)=min(i_trans(3),i_trans(4))
-           i_trans_ord(4)=max(i_trans(3),i_trans(4))
-           I_kl=matrix_linear_index(i_trans_ord(3),i_trans_ord(4))-1
-           I_ij_kl=matrix_linear_index(min(I_ij,I_kl),max(I_ij,I_kl))-1
-         endif
          !
-         if (l_G_retarded_DB) then
-           !
-           E_center=Gr_peak_pos(i_kmq,i_np)-Gr_peak_pos(i_k,i_n)+Gr_peak_pos(i_p,i_m)-Gr_peak_pos(i_pmq,i_mp)
-           !
-           if (abs(E_center)>2.*E%E_ind_gap(1)) cycle
-           !
-           kin_scatt=(/i_qp1_mem,i_qp2_mem,iq_mem,i_p_s/)
-           eval_the_laplace=.TRUE.
-           !
-           if (TRANSITIONS_table(I_ij_kl,1)/=0) then
-             eval_the_laplace=.FALSE.
-             kin_scatt=TRANSITIONS_table(I_ij_kl,:)
-           endif
-           !
-           if (eval_the_laplace) then
-             !
-             TRANSITIONS_table(I_ij_kl,:)=(/i_qp1_mem,i_qp2_mem,iq_mem,i_p_s/)
-             !
-             Gr_integrand(:)=real( Gr(i_kmq,i_np,:)*Gr(i_p,i_m,:)*&
-&                                  conjg(Gr(i_pmq,i_mp,:))*conjg(Gr(i_k,i_n,:)) )
-             Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=&
-&                         abs(Laplace_transform(Gr_integrand,Gr_T_steps,Gr_T_step,E_center))
-             !
-           else
-             !
-             Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=Gr_ee_matrix(kin_scatt(1),kin_scatt(2),&
-&                                                                        kin_scatt(3),kin_scatt(4))
-             !
-           endif
-           !
-         else
-           !
-           E_center=E%E(i_np,i_kmq,1)-E%E(i_n,i_k,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)
-           !
-           if (abs(E_center)>2.*E%E_ind_gap(1)) cycle
-           !
-           GAMMA_ = abs(E%W(i_np,i_kmq,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))+abs(E%W(i_n,i_k,1))
-           !
-           Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=GAMMA_/(E_center**2+GAMMA_**2)
-           !
-         endif
+         E_center=E%E(i_np,i_kmq,1)-E%E(i_n,i_k,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)
+         !
+         if (abs(E_center)>2.*E%E_ind_gap(1)) cycle
+         !
+         GAMMA_ = abs(E%W(i_np,i_kmq,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))+abs(E%W(i_n,i_k,1))
+         !
+         if(trim(Gr_kind)=='QP') Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=GAMMA_/(E_center**2+GAMMA_**2)
+         !
+         if(trim(Gr_kind)=='HS') &
+&           Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=HyperbolicSecant_FT(E_center,GAMMA_,2)
          !
          !DEBUG>
          !write (100,*) E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
@@ -206,21 +137,4 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  !
  call live_timing()
  !
- if (l_G_retarded_DB) deallocate(Gr_integrand,TRANSITIONS_table)
- call mem_est("TRANSITIONS_table")
- !
- contains
-   !
-   integer function transition_finder(E)
-     integer  :: ic
-     real(SP) :: E
-     transition_finder=-1
-     do ic=1,(SC_bands(2)-SC_bands(1)+1)*nkibz
-       if (abs(E-TRANSITIONS_E(ic))<1.E-10) then
-         transition_finder=ic
-         return
-       endif
-     enddo
-   end function
-   !
 end subroutine RT_G_retarded_EE_initialize

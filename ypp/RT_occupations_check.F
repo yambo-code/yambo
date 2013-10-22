@@ -29,7 +29,7 @@ integer function RT_occupations_check(E,k)
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,RT_IO_steps,l_RT_CCA_Kernel,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Ho_abs_lifetime
- use SC,             ONLY:SC_bands,RT_occupations
+ use SC,             ONLY:SC_bands,RT_occupations,RT_nk
  use IO_m,           ONLY:LOG,NONE
  use com,            ONLY:warning
  use YPP,            ONLY:RT_occupations_ref,OCC_T_ref,OCC_deltaT,OCC_T_range
@@ -45,24 +45,24 @@ integer function RT_occupations_check(E,k)
  !
  if (.not.allocated(RT_occupations_ref)) then 
    !
-   allocate(RT_occupations_ref(SC_bands(1):SC_bands(2),k%nibz))
+   allocate(RT_occupations_ref(SC_bands(1):SC_bands(2),RT_nk))
    !
    RT_occupations_ref=0.
    !
  endif
  !
  if ((l_ph_corr.and.l_RT_CCA_Kernel).and..not.allocated(E_P_Hole_lifetime)) then
-   allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),k%nibz))
-   allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),k%nibz))
-   allocate(E_P_El_abs_lifetime(SC_bands(1):SC_bands(2),k%nibz))
-   allocate(E_P_Ho_abs_lifetime(SC_bands(1):SC_bands(2),k%nibz))
+   allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+   allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+   allocate(E_P_El_abs_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+   allocate(E_P_Ho_abs_lifetime(SC_bands(1):SC_bands(2),RT_nk))
    E_P_El_abs_lifetime=0._SP ! This is read only after rev. 2694
    E_P_Ho_abs_lifetime=0._SP 
  endif
  !
  if (l_carrier_dynamics.and..not.allocated(E_E_Hole_lifetime)) then
-   allocate(E_E_Hole_lifetime(SC_bands(1):SC_bands(2),k%nibz))
-   allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),k%nibz))
+   allocate(E_E_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+   allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
  endif
  !
  if (OCC_T_ref>=0.) then

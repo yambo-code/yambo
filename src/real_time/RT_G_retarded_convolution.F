@@ -19,18 +19,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-real(SP) function RT_G_retarded_convolution(Approx,EmEp,Wph,W,Egap,is)
+real(SP) function RT_G_retarded_convolution(EmEp,Wph,W,Egap,is)
  !
  use pars,       ONLY:SP
+ use units,      ONLY:HA2EV
+ use real_time,  ONLY:Gr_kind
+ !
  implicit none
  !
- character(*) :: Approx
  real(SP)     :: EmEp,Wph,W,Egap
  integer      :: is
  !
  ! Work Space
  !
- real(SP) :: E_center
+ real(SP)           :: E_center
+ real(SP), external :: HyperbolicSecant_FT
  !
  RT_G_retarded_convolution=0.
  !
@@ -38,7 +41,13 @@ real(SP) function RT_G_retarded_convolution(Approx,EmEp,Wph,W,Egap,is)
  !
  if (.not.Energy_Condition(EmEp,E_center)) return
  !
- RT_G_retarded_convolution=W/(E_center**2+W**2)
+ if (trim(Gr_kind)=='QP') RT_G_retarded_convolution=W/(E_center**2+W**2)
+ !
+ if (trim(Gr_kind)=='HS') RT_G_retarded_convolution=HyperbolicSecant_FT(E_center,W,1)
+ !
+ !DEBUG <
+ !write(*,*) E_center*HA2EV,RT_G_retarded_convolution/HA2EV,W*HA2EV
+ !DEBUG >
  !
  contains
    !

@@ -191,23 +191,10 @@ module real_time
  ! GFs (retarded)
  !----------------
  !
- logical           :: l_G_retarded_DB
- logical           :: l_G_DB_has_el_ph
- integer           :: Gr_T_steps
- integer           :: Gr_E_steps
- integer           :: Gr_bands(2)
- integer           :: N_Gr_descs = 0
  real(SP)          :: Gr_QP_width
- real(SP)          :: Gr_T_step
- real(SP)          :: Gr_T_window
- real(SP)          :: Gr_E_window
- character(schlen) :: Gr_kind="QP"
- character(lchlen) :: Gr_description(100)
+ character(schlen) :: Gr_kind
  real(SP),    allocatable :: Gr_ee_matrix(:,:,:,:)
  real(SP),    allocatable :: Gr_ep_matrix(:,:,:,:)
- real(SP),    allocatable :: Gr_peak_pos(:,:)
- real(SP),    allocatable :: Gr_E_ranges(:,:,:)
- complex(SP), allocatable :: Gr(:,:,:)
  !
  ! GFs
  !-----
@@ -409,17 +396,6 @@ module real_time
        call mem_est("full_rho",(/fft_size/),(/SP/))
      endif
      !
-     ! Retarded Green Functions
-     !
-     if (l_G_retarded_DB) then
-       allocate(Gr(nkibz,Gr_bands(2),Gr_T_steps))
-       call mem_est("G_retarded",(/size(Gr)/),(/2*SP/))
-       allocate(Gr_peak_pos(nkibz,Gr_bands(2)))
-       call mem_est("G_peak_pos",(/size(Gr_peak_pos)/))
-       allocate(Gr_E_ranges(nkibz,Gr_bands(2),2))
-       call mem_est("G_E_ranges",(/size(Gr_E_ranges)/))
-     endif
-     !
      ! Reference energies
      !
      allocate(E_bare(1:SC_bands(2),QP_nk,n_sp_pol))
@@ -540,10 +516,6 @@ module real_time
      !
      ! Retarded Green Functions
      !
-     if (allocated(Gr)) then
-       deallocate(Gr)
-       call mem_est("G_retarded")
-     endif
      if (allocated(Gr_ee_matrix)) then
        deallocate(Gr_ee_matrix)
        call mem_est("G_ee_matrix")

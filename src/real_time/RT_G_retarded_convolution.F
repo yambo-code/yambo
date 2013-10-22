@@ -23,7 +23,7 @@ real(SP) function RT_G_retarded_convolution(EmEp,Wph,W,Egap,is)
  !
  use pars,       ONLY:SP
  use units,      ONLY:HA2EV
- use real_time,  ONLY:Gr_kind
+ use real_time,  ONLY:Gr_kind,two_alpha
  !
  implicit none
  !
@@ -43,7 +43,7 @@ real(SP) function RT_G_retarded_convolution(EmEp,Wph,W,Egap,is)
  !
  if (trim(Gr_kind)=='QP') RT_G_retarded_convolution=W/(E_center**2+W**2)
  !
- if (trim(Gr_kind)=='HS') RT_G_retarded_convolution=HyperbolicSecant_FT(E_center,W,1)
+ if (trim(Gr_kind)=='HS') RT_G_retarded_convolution=HyperbolicSecant_FT(E_center,W,two_alpha)
  !
  !DEBUG <
  !write(*,*) E_center*HA2EV,RT_G_retarded_convolution/HA2EV,W*HA2EV

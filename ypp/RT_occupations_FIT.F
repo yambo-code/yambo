@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
+subroutine RT_occupations_FIT(RT_E,RT_occ_DATA,time)
  ! 
  ! FIT the occupations with a Gauss–Newton algorithm
  !
@@ -38,8 +38,7 @@ subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
  !
  implicit none
  !
- type(levels)  :: E
- !
+ real(SP)              :: RT_E(RT_nstates)
  real(SP)              :: RT_occ_DATA(RT_nstates,RT_n_FIT)
  real(SP)              :: time(RT_n_FIT)
  !
@@ -69,25 +68,7 @@ subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
  !
  l_two_temperatures=.true.
  !
- i_RT=0
- do i_s=1,QP_n_states
-   ib    =QP_table(i_s,1)
-   ik    =QP_table(i_s,3)
-   i_spin=spin(QP_table(i_s,:))
-   !
-   do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     !
-     if (ib<SC_bands(1)) cycle
-     if (ib>SC_bands(2)) cycle
-     if (ik_rim>RT_nk) cycle
-     i_RT=i_RT+1
-     !
-     E_sorted(i_RT)=E%E(ib,ik_rim,i_spin)
-     !
-   enddo
-   !
- enddo
- !
+ E_sorted=RT_E
  call sort(E_sorted,indx=E_sorted_index)
  !
  do i_RT=1,RT_nstates
@@ -98,7 +79,7 @@ subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
  nfit=1
  if(l_two_temperatures) nfit=2
  !
- E_shift=0.0_SP !1._SP/HA2EV
+ E_shift=0.0_SP
  Fit_E_range(1)=E_sorted(1)          -E_shift
  Fit_E_range(2)=E_sorted(RT_nstates) +E_shift
  !
@@ -130,7 +111,6 @@ subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
    x(:)=RT_occ_DATA(E_sorted_index(:),i1)
    RT_occ_DATA(:,i1)=x(:)
    lfound=.false.
-   lfound=.false.
    !
    do ifit=1,nfit
      !
@@ -150,10 +130,11 @@ subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
          ib= QP_table(i_s,1)
          ik= QP_table(i_s,3)
          !
+         if (ib<SC_bands(1)) cycle
+         if (ib>SC_bands(2)) cycle
+         !
          do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
            !
-           if (ib<SC_bands(1)) cycle
-           if (ib>SC_bands(2)) cycle
            if (ik_rim>RT_nk) cycle
            !
            i_RT=i_RT+1
@@ -311,8 +292,8 @@ subroutine RT_occupations_FIT(E,RT_occ_DATA,time)
      call msg('o '//trim(output_fname),'#')
      call msg('o '//trim(output_fname),'# Results of the FIT')
      do i1=1,4
-       call msg('o '//trim(output_fname),'#',(/data_ch(1,i1,ifit),data_ch(n1+1:n2+1,i1,ifit)/),&
-&                                                                          INDENT=-2,USE_TABS=.true.)
+       call msg('o '//trim(output_fname),'#',(/data_ch(1,i1,ifit), &
+&                                            data_ch(n1+1:n2+1,i1,ifit)/), INDENT=-2,USE_TABS=.true.)
      enddo
      !     
      call msg('o '//trim(output_fname),'#')

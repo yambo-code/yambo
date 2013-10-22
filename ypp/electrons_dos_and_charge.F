@@ -95,18 +95,18 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
    if (l_RT_dos) then
      !
-	 n_T_steps=RT_occupations_check(Xen,Xk)
-	 l_3D_plot=.not.n_T_steps==1
-	 !
-	 if (.not.n_T_steps>0.and..not.l_3D_plot) return
-	 !
-	 dos_bands=SC_bands
-	 !
-	 call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
-	 call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
-	 call msg('s','Time ref   [fs]:',OCC_T_ref/FS2AUT)
-	 call msg('s','Time steps     :',n_T_steps)
-	 call msg('s','Energy steps   :',dos_E_steps)
+     n_T_steps=RT_occupations_check(Xen,Xk)
+     l_3D_plot=.not.n_T_steps==1
+     !
+     if (.not.n_T_steps>0.and..not.l_3D_plot) return
+     !
+     dos_bands=SC_bands
+     !
+     call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
+     call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
+     call msg('s','Time ref   [fs]:',OCC_T_ref/FS2AUT)
+     call msg('s','Time steps     :',n_T_steps)
+     call msg('s','Energy steps   :',dos_E_steps)
      !
    endif
    !

@@ -23,7 +23,7 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  !
  use pars,           ONLY:SP,rZERO,IP
  use QP_m,           ONLY:QP_n_states,QP_table
- use real_time,      ONLY:Gr_ee_matrix,Gr_kind
+ use real_time,      ONLY:Gr_ee_matrix,Gr_kind,two_alpha
  use memory_m,       ONLY:mem_est
  use SC,             ONLY:SC_bands
  use D_lattice,      ONLY:nsym
@@ -112,6 +112,8 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
          !
          E_center=E%E(i_np,i_kmq,1)-E%E(i_n,i_k,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)
          !
+         if(E_center==0._SP) cycle
+         !
          if (abs(E_center)>2.*E%E_ind_gap(1)) cycle
          !
          GAMMA_ = abs(E%W(i_np,i_kmq,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))+abs(E%W(i_n,i_k,1))
@@ -119,10 +121,10 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
          if(trim(Gr_kind)=='QP') Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=GAMMA_/(E_center**2+GAMMA_**2)
          !
          if(trim(Gr_kind)=='HS') &
-&           Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=HyperbolicSecant_FT(E_center,GAMMA_,2)
+&           Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=HyperbolicSecant_FT(E_center,GAMMA_,2*two_alpha)
          !
          !DEBUG>
-         !write (100,*) E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)
+         !write (100,*) E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)/27.21
          !DEBUG<
          !
        enddo

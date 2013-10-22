@@ -732,7 +732,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_real_time) then
    call QP_ctl_switch('G')
    call initactivate(-1,'SCmixing')
-   call initactivate(1,'Integrator DynKind GrKind RADLifeTime PhLifeTime RTmaxEn RTpumpEhEn RTpumpEhWd RTpumpNel') 
+   call initactivate(1,'Integrator DynKind GrKind TwoAlpha RADLifeTime PhLifeTime RTmaxEn RTpumpEhEn RTpumpEhWd RTpumpNel') 
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
    if (l_ph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol UseDebyeE UpdtDebyeT ElPhModes')
    call initactivate(1,'RTjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')

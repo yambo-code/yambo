@@ -20,7 +20,20 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function RT_k_grid(k)
+ !
+ !       K(BZ)                                                    K(IBZ)
+ !               E_RIM(RIM_bz_coo(ikbz,:)=RIM_ibz_coo(ik,:))
+ !        ____                                                     ____
+ !ikbz1  | 1  | RIM_bz_coo(ikbz1,:) = RIM_ibz_coo(ik1,:)      ik1 | 1  | RT_ibz_coo(ik1,:)     
+ !       |____|                     <----------------------       |____|   
+ !        ____                                                     ____
+ !ikbz2  | 2  | RIM_bz_coo(ikbz2,:)                           ik2 | 2  | RT_ibz_coo(ik2,:)     
+ !       |____|                                             /     |____|   
+ !        ____                                             /
+ !ikbz3  | 3  | RIM_bz_coo(ikbz3,:) = RIM_ibz_coo(ik2,:)  /            
+ !       |____|                      <-------------------/        
  ! 
+ !
  use SC,             ONLY:RT_ibz_coo,RT_all2ibz,RT_Nk_ibz
  use electrons,      ONLY:BZ_RIM_nkpt
  use real_time,      ONLY:RIM_bz_coo,RIM_ibz_coo

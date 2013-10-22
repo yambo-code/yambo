@@ -100,6 +100,8 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
            pre_factor=1._SP/real(RT_Nk_ibz(ik_m_q))
          endif
          !
+         if(DELTA_E==0._SP) cycle
+         !
          P_ph_abs  =RT_G_retarded_convolution(DELTA_E,ph_freq,DELTA_W,E%E_ind_gap(1),+1)
          P_ph_emit =RT_G_retarded_convolution(DELTA_E,ph_freq,DELTA_W,E%E_ind_gap(1),-1)
          !

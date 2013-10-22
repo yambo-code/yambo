@@ -55,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_jumps,Dynamics_Kind,&
 &                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
-&                        Eh_pumped_pair_width,Eh_pumped_Nel,Gr_kind
+&                        Eh_pumped_pair_width,Eh_pumped_Nel,Gr_kind,two_alpha
  use fields,        ONLY:Efield
 #endif
 #if defined _MAGNETIC
@@ -307,7 +307,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit)
  call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit)
  call it(defs,'DynKind',    '[RT] Dynamics kind ((C)arriers/(P)olarization)',Dynamics_Kind)
- call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic secant (HS)',Gr_kind)
+ call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic secant (HS)',Gr_kind,Verb_level=V_real_time)
+ call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT')
  call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT')
  !

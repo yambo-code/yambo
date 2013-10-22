@@ -48,6 +48,8 @@ subroutine RT_occupations_repair(E)
  real(SP)              :: sym_value
  real(SP), allocatable :: Eo_sorted(:)
  !
+ return ! skip occupations repair for the moment
+ !
  if(.not.allocated(QP_table)) call QP_state_table_setup(E)
  !
  allocate(Eo_sorted(QP_n_states))

@@ -25,7 +25,7 @@ subroutine RT_impose_N_conservation(E,k)
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_carrier_dynamics
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,it_now,RT_nk
+ use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz,RT_Nk_ibz
  use real_time,      ONLY:E_E_Hole_lifetime,E_E_Electron_lifetime,MEM_index,&
 &                         G_MEM_steps,G_lesser
  !
@@ -36,8 +36,8 @@ subroutine RT_impose_N_conservation(E,k)
  !
  ! Work Space
  !
- integer          :: ib,ik,it,i_todo
- real(SP)         :: f_occ,CONDITION(2),prefactor(2)
+ integer          :: ib,ik,it,i_todo,ikp
+ real(SP)         :: f_occ,CONDITION(2),prefactor(2),k_weight
  integer, external:: secant
  !
  if (.not.l_carrier_dynamics) return
@@ -50,10 +50,12 @@ subroutine RT_impose_N_conservation(E,k)
    if (it==1) i_todo=1
    if (it==2) i_todo=2
    do ik=1,RT_nk
+     ikp=RT_all2ibz(ik)
+     k_weight=k%weights(ikp)/real(RT_Nk_ibz(ikp),SP)
      do ib=SC_bands(1),SC_bands(2)
        f_occ=-cI*G_lesser(ib,ib,ik,MEM_index(it_now,G_MEM_steps))
        CONDITION(i_todo)=CONDITION(i_todo)+(E_E_Hole_lifetime(ib,ik)*(spin_occ-f_occ)-&
-&                        prefactor(i_todo)*E_E_Electron_lifetime(ib,ik)*f_occ)*K%weights(ik)
+&                        prefactor(i_todo)*E_E_Electron_lifetime(ib,ik)*f_occ)*k_weight
      enddo
    enddo
    it=it+1
@@ -61,7 +63,7 @@ subroutine RT_impose_N_conservation(E,k)
    i_todo=secant(prefactor(1),CONDITION(1),prefactor(2),CONDITION(2),1.E-7,1)
    if (i_todo<0) exit
    CONDITION(i_todo)=0._SP
- enddo 
+ enddo
  !
  do ik=1,RT_nk
    do ib=SC_bands(1),SC_bands(2)

@@ -191,6 +191,7 @@ module real_time
  ! GFs (retarded)
  !----------------
  !
+ integer           :: two_alpha
  real(SP)          :: Gr_QP_width
  character(schlen) :: Gr_kind
  real(SP),    allocatable :: Gr_ee_matrix(:,:,:,:)

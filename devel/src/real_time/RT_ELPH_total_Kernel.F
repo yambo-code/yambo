@@ -95,9 +95,12 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
    !
    do il=elph_branches(1),elph_branches(2)
      !
+     if(ph_freqs_sq(iqbz,il)<0.) cycle
+     !
      ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
      !
-     if (abs(ph_freq)<epsilon(1._SP)) cycle
+     if (iqbz==1 .and. il<=3) cycle  ! For the RIM one should consider an approximation of the q=0 scattering
+     if (ph_freq<1.E-6)       cycle
      !
      ! N+/-
      !

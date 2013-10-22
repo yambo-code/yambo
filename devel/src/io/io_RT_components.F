@@ -226,6 +226,9 @@ integer function io_RT_components(what,ID)
          call io_bulk(ID,R2=E_P_El_abs_lifetime)
        endif
        !
+       call io_bulk(ID,VAR="RT_E_P_Electron_abs_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+       call io_bulk(ID,R2=E_P_Electron_abs_lifetime)
+       !
      endif
      !
 #endif

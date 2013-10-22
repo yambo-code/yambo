@@ -100,8 +100,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
                DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin) = dot_product( dipole(:), field_dir_rot ) 
              endif
              !
-             DIP_q_dot_iR(iv,iv,ik_bz_mem,:) = (1.0_SP,0.0_SP)
-             DIP_q_dot_iR(ic,ic,ik_bz_mem,:) = (1.0_SP,0.0_SP)
+             if (iv==ic) DIP_q_dot_iR(ic,iv,ik_bz_mem,:) = (1.0_SP,0.0_SP)
              ! 
            endif
            !

@@ -30,8 +30,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_Xk_bz_index,PAR_COM_q_for_Xo,PAR_IND_Xk_ibz,&
-&                        PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X
+ use parallel_m,    ONLY:PP_redux_wait,PAR_Xk_bz_index,PAR_COM_q_for_Xo
  use openmp,        ONLY:OPENMP_update,n_threads_now,OPENMP_master_thread
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load,PARALLEL_WF_distribute
@@ -88,12 +87,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! WF load
  !=========
- !
- call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_Xk_ibz,&
-&                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
-&                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
-&                            CLEAN_UP=.TRUE.)
- !
  call WF_load(WF,X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
 #if defined _TIMING
@@ -244,7 +237,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
          rhotw_save=isc%rhotw
          isave=(/iv,ic,ik,i_spin/)
        endif
-       !
        do ig1=1,X%ng
          ig2=g_rot(sop_inv(is),ig1)
          isc%rhotw(ig1)=rhotw_save(ig2)
@@ -254,7 +246,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
            isc%rhotw(ig1)=conjg(isc%rhotw(ig1))
          enddo
        endif
-       !
        isc%rhotw(1)=-conjg(DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin))
      else
        isc%is=(/ic,ik,is,i_spin/)

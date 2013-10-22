@@ -26,6 +26,7 @@ integer function variables_SC(ID,local_description,what)
  use units,          ONLY:AU2Tesla,DEG2RAD,FS2AUT,AU2KWCMm2,HA2EV
  use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
+ use com,            ONLY:error
  use electrons,      ONLY:BZ_RIM_tot_nkpts
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,l_sc_diagonal,&
@@ -398,14 +399,14 @@ integer function variables_SC(ID,local_description,what)
    !======================
    if (ver_is_gt_or_eq(ID,revision=2450).and..not.ver_is_gt_or_eq(ID,revision=2780)) then
      call io_elemental(ID,VAR="G_retarded_BASE",VAR_SZ=2,MENU=0) 
-     call io_elemental(ID,VAR="G_retarded_BASE",VAR_SZ=2,MENU=0) 
-     call io_elemental(ID,L0=l_G_retarded_DB,CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,I0=N_Gr_descs,CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,L0=l_G_retarded_DB)
+     if(l_G_retarded_DB) call error('Gret DB is not implemented anymore.')
+     call io_elemental(ID,I0=N_Gr_descs)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      do i1=1,N_Gr_descs
        write (ch,'(a,i5.5)') 'G_ret_DESC_strings_',i1
        call io_elemental(ID,VAR=trim(ch),CH0="",VAR_SZ=1,MENU=0)
-       call io_elemental(ID,CH0=Gr_description(i1),VAR='',CHECK=.true.,OP=(/"=="/))
+       call io_elemental(ID,CH0=Gr_description(i1),VAR='')
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      enddo
    endif

@@ -27,7 +27,7 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  use SC,             ONLY:SC_bands
  use LIVE_t,         ONLY:live_timing
  use real_time,      ONLY:B_mat_index,Gr_ep_matrix,&
-&                         l_RT_uses_E_RIM,Gr_kind
+&                         l_RT_uses_E_RIM,Gr_kind,two_alpha
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_Xk_nibz,PAR_nQ,PAR_n_B_mat_elements,PAR_IND_Xk_ibz,&
 &                         PAR_Xk_ibz_index,PAR_IND_Q,PAR_B_mat_index,PAR_Q_index
@@ -90,10 +90,10 @@ subroutine RT_G_retarded_EP_initialize(E,k)
              if(trim(Gr_kind)=='QP') Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=GAMMA_/(E_center**2+GAMMA_**2)
              !
              if(trim(Gr_kind)=='HS')&
-               Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=HyperbolicSecant_FT(E_center,GAMMA_,1)
+               Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)=HyperbolicSecant_FT(E_center,GAMMA_,two_alpha)
              !
              !DEBUG>
-             !write (100,*) E_center*27.21, Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)
+             !write (100,*) E_center*27.21, Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,il+max(is,0)*ph_modes)/27.21
              !DEBUG<
              !
            enddo

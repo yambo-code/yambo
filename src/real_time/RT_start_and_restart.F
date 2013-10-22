@@ -356,7 +356,8 @@ subroutine RT_start_and_restart(E,k,q,X)
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
    io_OCCUPATIONS=io_RT_components('occupations',ID_OCCUPATIONS)
    !
-   do ik=1,QP_nk
+   do ik=1,RT_nk
+     !
      call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
      io_G=io_RT_components('G',ID(5))
      !

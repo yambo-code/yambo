@@ -21,7 +21,7 @@
 !
 real function HyperbolicSecant_FT(E_center,Gamma_HS,alpha)
  !
- ! This subrutines compute the fourier transform of 1/2 sech^alpha(Gamma/alpha*t)
+ ! This subrutine computes the Fourier transform of 1/2 sech^alpha(Gamma/alpha*t)
  ! evaluated at E_center, which correspond to the imaginary part of the Fourier 
  ! transform of 1/2*theta(t)*e^{-i*E_center}*sech^alpha(Gamma/alpha*t)
  !
@@ -38,6 +38,7 @@ real function HyperbolicSecant_FT(E_center,Gamma_HS,alpha)
  real(SP)               :: F1,F2,prefactor
  !
  if(alpha<=0) call error('Hyperbolic secant FFT exist only for alpha>0')
+ if(alpha>10) call error('Hyperbolic secant FFT for alpha>10 not implemented')
  !
  x=real(alpha,SP)*pi*E_center/(2._SP*Gamma_HS)
  sech_x=  2._SP/(exp(x)+exp(-x))
@@ -74,5 +75,9 @@ real function HyperbolicSecant_FT(E_center,Gamma_HS,alpha)
  !
  ! More can be created using the recursion relation
  ! F_{alpha+2}=F_{alpha}*prefactor*(alpha/alpha+1)
+ !
+ !DEBUG <
+ ! write(*,*) E_center,HyperbolicSecant_FT,Gamma_HS
+ !DEBUG >
  !
 end function

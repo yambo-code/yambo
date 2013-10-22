@@ -124,6 +124,8 @@ subroutine RT_ELPH_initialize(k,q)
  !
  ph_freqs_sq=ph_Esq_local
  !
+ if(any(ph_freqs_sq<0.)) call warning('Imaginary phonon frequencies found. Please check.')
+ !
  ! Test of the effect of using a single optical mode
  !
  if (l_use_Debye_E) ph_freqs_sq=W_debye**2.

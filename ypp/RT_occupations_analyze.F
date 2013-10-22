@@ -34,9 +34,10 @@ subroutine RT_occupations_analyze(k,E)
  use IO_m,           ONLY:NONE
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,&
 &                         E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime
+&                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime,&
+&                         RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM
  use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions,SC_bands,&
-&                         RT_nk,RT_nstates,RT_ibz_coo
+&                         RT_nk,RT_nstates,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz
  !
  implicit none
  !
@@ -45,9 +46,10 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! Work Space
  !
- integer               :: ik,ib,i_spin,i_s,i_RT,i_T,n_T_steps,i_fp,i1,n1,n_skip_time,ik_rim
+ integer               :: ik,ib,i_spin,i_s,i_RT,i_T,n_T_steps,i_fp,i1,n1,n_skip_time
+ integer               :: ik_rim,ik_E_rim,ik_RT_rim
  real(SP)              :: io_Time,data_to_plot(8),RT_occ_Fit_time(RT_n_FIT),Plot_deltaT
- real(SP), allocatable :: RT_occupations_sum(:,:),RT_occ_DATA(:,:),k_weights(:)
+ real(SP), allocatable :: RT_occupations_sum(:,:),RT_occ_DATA(:,:),RT_E(:)
  character(schlen)     :: titles(8),specs(8,2)
  logical               :: l_ELPH_lifetimes,l_group_occ
  logical, allocatable  :: l_RT_Occ_FIT_vec(:)
@@ -63,46 +65,61 @@ subroutine RT_occupations_analyze(k,E)
  !
  call parser('OCCgroup',l_group_occ)
  !
- ! RIM support of carrier dynamics
+ ! RIM support of carrier dynamics: maps RIM energies in a new array with same ordering of occupations
  !=================================
  !
  if (RT_nk/=k%nibz) then
    !
+   l_RT_uses_E_RIM=.true.
+   !
    if (RT_k_grid(k)/=RT_nk) call error('Impossible to rebuild the RT k-grid')
    !
-   ! Dump RIM energies in E and fill corresponding occupations
+ else
    !
-   deallocate(E%f,E%E)
-   E%nb  =BZ_RIM_nbands
-   allocate(E%f(E%nb,RT_nk,n_sp_pol),E%E(E%nb,RT_nk,n_sp_pol),k_weights(RT_nk))
+   l_RT_uses_E_rim=.false.
+   !
+   allocate(RIM_ibz_coo(k%nibz,2))
+   allocate(RIM_bz_coo(k%nbz,2))
+   allocate(RT_ibz_coo(k%nibz,2))
+   allocate(RT_Nk_ibz(k%nibz))
+   !
+   RT_Nk_ibz=1
+   allocate(RT_all2ibz(k%nibz))
    do ik=1,k%nibz
-     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       k_weights(ik_rim)=k%weights(ik)/real(RT_ibz_coo(ik,2)-RT_ibz_coo(ik,1)+1,SP)
-       E%E(:,ik_rim,:)=E%E_RIM(:,ik_rim,:)
-       E%f(:E%nbf,ik_rim,:)=spin_occ
-     enddo
+     RIM_ibz_coo(ik,:)=ik
+     RT_ibz_coo(ik,:)=ik
+     RT_all2ibz(ik)=ik
    enddo
-   deallocate(k%weights)
-   allocate(k%weights(RT_nk))
-   k%weights=k_weights
-   deallocate(k_weights)
-   !
-   RT_nstates=RT_nk*(SC_bands(2)-SC_bands(1)+1)
-   !
-   E%nk  =RT_nk
-   k%nibz=RT_nk
-   !
-   ! Re-build the QP table
-   !
-   deallocate(QP_state) 
    !
  endif
  !
- call QP_state_table_setup(E)
+ RT_nstates=RT_nk*(SC_bands(2)-SC_bands(1)+1)
+ allocate(RT_E(RT_nstates))
+ !
+ ! Dump RIM energies in E
+ !
+ i_RT=0
+ do i_s=1,QP_n_states
+   !
+   ib    =QP_table(i_s,1)
+   ik    =QP_table(i_s,3)
+   i_spin=spin(QP_table(i_s,:))
+   !
+   if (ib<SC_bands(1)) cycle
+   if (ib>SC_bands(2)) cycle
+   !
+   do ik_rim=1,RIM_ibz_coo(ik,2)-RIM_ibz_coo(ik,1)+1
+     ik_RT_rim=RT_ibz_coo(ik,1)+ik_rim-1
+     ik_E_rim =RIM_ibz_coo(ik,1)+ik_rim-1
+     if (ik_RT_rim>RT_nk) cycle
+     i_RT=i_RT+1
+     if(     l_RT_uses_E_RIM) RT_E(i_RT)=E%E_RIM(ib,ik_E_rim,1)
+     if(.not.l_RT_uses_E_RIM) RT_E(i_RT)=E%E(ib,ik_E_rim,1)
+   enddo
+   !
+ enddo
  !
  n_T_steps=RT_occupations_check(E,k)
- write (*,*) 'here',n_T_steps
- stop
  !
  if (n_T_steps<0) return
  !
@@ -218,21 +235,24 @@ subroutine RT_occupations_analyze(k,E)
          if (i_T==1) call open_file() 
        endif
        !
+       RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+&
+&        RT_occupations(ib,ik_rim)*k%weights(ik)/real(RT_NK_ibz(ik),SP)
+       !
        if (ib==SC_bands(1).and.SC_bands(1)>1) &
-&         RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+spin_occ*k%weights(ik_rim)*real(SC_bands(1)-1)
+&         RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+ &
+&           spin_occ*k%weights(ik)*real(SC_bands(1)-1)/real(RT_NK_ibz(ik),SP)
        !
        data_to_plot(1)=io_TIME/FS2AUT
        if(.not.l_group_occ .or. ik_rim==RT_ibz_coo(ik,1).and.l_group_occ) data_to_plot(2:)=0._SP
        !
-       if (ib<=E%nbf) data_to_plot(2)=data_to_plot(2)+(RT_occupations(ib,ik_rim)-spin_occ)*k%weights(ik_rim)
-       if (ib> E%nbf) data_to_plot(2)=data_to_plot(2)+ RT_occupations(ib,ik_rim)          *k%weights(ik_rim)
+       if (ib<=E%nbf) data_to_plot(2)=data_to_plot(2)+(RT_occupations(ib,ik_rim)-spin_occ)*k%weights(ik)
+       if (ib> E%nbf) data_to_plot(2)=data_to_plot(2)+ RT_occupations(ib,ik_rim)          *k%weights(ik)
        !
        if(.not.l_group_occ .or. ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) then
+         data_to_plot(2)=data_to_plot(2)/real(RT_NK_ibz(ik),SP)
          if (ib<=E%nbf) RT_occupations_sum(1,i_T)=RT_occupations_sum(1,i_T)+data_to_plot(2)
          if (ib> E%nbf) RT_occupations_sum(2,i_T)=RT_occupations_sum(2,i_T)+data_to_plot(2)
        endif
-       !
-       RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+RT_occupations(ib,ik_rim)*k%weights(ik_rim)
        !
        n1=1
        if (l_ELPH_lifetimes) then
@@ -251,7 +271,7 @@ subroutine RT_occupations_analyze(k,E)
        endif
        !
        if(ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) &
-&        data_to_plot(3:)=data_to_plot(3:)/real(RT_ibz_coo(ik,2)-RT_ibz_coo(ik,1)+1,SP)
+&        data_to_plot(3:)=data_to_plot(3:)/real(RT_NK_ibz(ik),SP)
        !
        if(.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) ) then
          call msg('o '//trim(output_fname),'',data_to_plot(:n1+1),INDENT=-2,USE_TABS=.true.)
@@ -261,7 +281,6 @@ subroutine RT_occupations_analyze(k,E)
      enddo
    enddo
  enddo
- !
  !
  if(l_RT_occ_plot) then
    !
@@ -291,7 +310,11 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! f(eps_{ik,ib})
  !
- if(l_RT_occ_Fit) call RT_occupations_FIT(E,RT_occ_DATA,RT_occ_Fit_time)
+ if(l_RT_occ_Fit) call RT_occupations_FIT(RT_E,RT_occ_DATA,RT_occ_Fit_time)
+ !
+ deallocate(RT_E,RT_occ_DATA,RT_occupations_sum,l_RT_Occ_FIT_vec)
+ !
+ if(.not.l_RT_uses_E_rim) deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_Nk_ibz)
  !
  call set_real_printed_length()
  !

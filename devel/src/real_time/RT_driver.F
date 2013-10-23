@@ -31,7 +31,7 @@ subroutine RT_driver(E,X,k,q)
  use wave_func,      ONLY:WF_load,WF_free
  use R_lattice,      ONLY:bz_samp,qindx_free
  use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho,&
-&                         SC_QP_setup,RT_ibz_coo 
+&                         SC_QP_setup
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_steps,&
@@ -343,7 +343,7 @@ subroutine RT_driver(E,X,k,q)
      ! I freeze the last self-energy + hartree in XC0_and_HARTREE and I work
      ! only with the differences rho-rho_reference and G_lesser-G_lesser_reference
      ! 
-     call RT_Collision(G_lesser(:,:,RT_ibz_coo(:,1),it_mem),A_vecpot_previous,E,k,q,NE_time)
+     call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
      XC0_and_HARTREE0=SC_R-Ho
      !
    endif

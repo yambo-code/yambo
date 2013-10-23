@@ -124,7 +124,7 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
 &           Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=HyperbolicSecant_FT(E_center,GAMMA_,2*two_alpha)
          !
          !DEBUG>
-         !write (100,*) E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)/27.21
+         ! write (100,*) E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)/27.21,GAMMA_*27.21
          !DEBUG<
          !
        enddo

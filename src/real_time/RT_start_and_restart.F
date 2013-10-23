@@ -206,7 +206,7 @@ subroutine RT_start_and_restart(E,k,q,X)
        !
        if (local_V.and..not.l_NE_simulate_Irredux) then
          call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf)
-       elseif(.not.l_NE_simulate_Irredux) then
+       else if (.not.l_NE_simulate_Irredux) then
          call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(3))
          io_V=io_SC_components('V',E,ID(3))
          XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1:n_sp_pol)=  &

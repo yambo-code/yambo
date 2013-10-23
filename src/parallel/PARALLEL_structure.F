@@ -21,8 +21,7 @@
 !
 subroutine PARALLEL_structure()
  !
- use parallel_m,  ONLY:ncpu,POOL_id,myid,My_POOL,n_MPI,INTER_CHAIN,&
-&                      POOL_COMM,n_chains,INTRA_CHAIN
+ use parallel_m,  ONLY:ncpu,myid,n_MPI,INTER_CHAIN,n_chains,INTRA_CHAIN
  use openmp,      ONLY:OPENMP_initialize
  implicit none
  !
@@ -69,7 +68,6 @@ subroutine PARALLEL_structure()
    !
    if (myid+1==i_cpu) then
      !
-     My_POOL=ID(1)
      do i_chain=1,n_chains
        INTRA_CHAIN(i_chain)%chain_order=i_chain
        INTRA_CHAIN(i_chain)%my_CHAIN=ID(2+i_chain)
@@ -105,9 +103,6 @@ subroutine PARALLEL_structure()
    call MPI_COMM_RANK(INTER_CHAIN(i_chain)%COMM,INTER_CHAIN(i_chain)%CPU_id,i_err)
    !
  enddo
- !
- call MPI_COMM_SPLIT(mpi_comm_world,my_POOL,myid,POOL_COMM,i_err)
- call MPI_COMM_RANK(POOL_COMM,POOL_id,i_err)
  !
 #endif
  !

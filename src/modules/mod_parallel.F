@@ -43,17 +43,13 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_bse,l_par_density,l_par_X_G_q0,l_par_X_G_all_q,&
+ logical            :: l_par_bse,l_par_X_G_q0,l_par_X_G_all_q,&
 &                      l_par_X_G_finite_q,l_par_HF,l_par_GW,l_par_RT,l_par_ELPH
  !
  ! Communicators
  !
  integer, parameter :: MAX_N_OF_CHAINS=100
  integer            :: n_chains = 1
- !
- integer            :: POOL_COMM  = comm_default_value ! Communicator among the CPU of the same pool
- integer            :: POOL_id    =0  ! RELATIVE ID of the CPU in the POOL
- integer            :: My_POOL    =0  ! ABSOLUTE ID of the POOL among ALL POOLS 
  !
  ! MPI intra-groups Communicators
  !
@@ -298,20 +294,18 @@ module parallel_m
      CPU_structure(1)%Short_Description="X_q_0"
      CPU_structure(2)%Long_Description="Response_G_space_Finite_Momentum"
      CPU_structure(2)%Short_Description="X_finite_q"
-     CPU_structure(3)%Long_Description="GW"
-     CPU_structure(3)%Short_Description="GW"
-     CPU_structure(4)%Long_Description="HF"
-     CPU_structure(4)%Short_Description="HF"
-     CPU_structure(5)%Long_Description="BSE"
-     CPU_structure(5)%Short_Description="BSE"
-     CPU_structure(6)%Long_Description="Real_Time"
-     CPU_structure(6)%Short_Description="RT"
-     CPU_structure(7)%Long_Description="Wave_Functions"
-     CPU_structure(7)%Short_Description="WF"
+     CPU_structure(3)%Long_Description="Response_G_space"
+     CPU_structure(3)%Short_Description="X_all_q"
+     CPU_structure(4)%Long_Description="BSE"
+     CPU_structure(4)%Short_Description="BSE"
+     CPU_structure(5)%Long_Description="GW"
+     CPU_structure(5)%Short_Description="GW"
+     CPU_structure(6)%Long_Description="HF"
+     CPU_structure(6)%Short_Description="HF"
+     CPU_structure(7)%Long_Description="Real_Time"
+     CPU_structure(7)%Short_Description="RT"
      CPU_structure(8)%Long_Description="Electron_Phonon"
      CPU_structure(8)%Short_Description="ELPH"
-     CPU_structure(9)%Long_Description="Response_G_space"
-     CPU_structure(9)%Short_Description="X_all_q"
    end subroutine
    !
    subroutine COMM_reset(COMM)

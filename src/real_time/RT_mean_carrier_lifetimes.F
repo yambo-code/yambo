@@ -49,12 +49,12 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
    !
    pre_factor=k%weights(RT_all2ibz(ik))/real(RT_Nk_ibz(RT_all2ibz(ik)))
    !
-   do ib=SC_bands(1),Sc_bands(2)
+   do ib=SC_bands(1),SC_bands(2)
      !
      f_occ=-cI*G_lesser(ib,ib,ik)
      !
      if (abs(f_occ)>f_tresh) then
-       n_e_states=n_e_states+k%weights(RT_all2ibz(ik))
+       n_e_states=n_e_states+pre_factor
        if (allocated(E_P_Hole_lifetime)) then
          RT_mean_lifetimes(2)=RT_mean_lifetimes(2)+E_P_Electron_lifetime(ib,ik)*pre_factor
          RT_mean_lifetimes(4)=RT_mean_lifetimes(4)+E_P_El_abs_lifetime(ib,ik)*pre_factor
@@ -65,7 +65,7 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
      endif
      !
      if (abs(f_occ-spin_occ)>f_tresh) then
-       n_h_states=n_h_states+k%weights(RT_all2ibz(ik))
+       n_h_states=n_h_states+pre_factor
        if (allocated(E_P_Hole_lifetime)) then
          RT_mean_lifetimes(1)=RT_mean_lifetimes(1)+E_P_Hole_lifetime(ib,ik)*pre_factor
          RT_mean_lifetimes(3)=RT_mean_lifetimes(3)+E_P_Ho_abs_lifetime(ib,ik)*pre_factor

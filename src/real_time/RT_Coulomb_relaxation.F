@@ -39,9 +39,9 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !
  ! Work Space ...
  !
- integer               :: i_qp1,i_qp2,i_p,i_kmq,i_pmq,i_n,i_m,i_mp,i_np,i_p_star,&
+ integer               :: i_qp1,i_qp2,i_p,i_kmq,i_pmq,i_n,i_m,i_mp,i_np,i_p_star,i_k_RIM,&
 &                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_qp2_mem,i_q_mem,i_pmq_bz,i_pmq_G0
- real(SP)              :: f_k,f_p,f_kmq,f_pmq,pre_factor,Gr_integral,&
+ real(SP)              :: f_p,f_kmq,f_pmq,pre_factor,Gr_integral,&
 &                         f_E_factor,f_H_factor
  !
  ! Dimensioning and Zeroing
@@ -117,9 +117,9 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  !
  if (.not.l_RT_uses_E_RIM) return
  !
- do i_p=RT_ibz_coo(i_k,1)+1,RT_ibz_coo(i_k,2)
-   E_E_Electron_lifetime(i_n,i_p)= E_E_Electron_lifetime(i_n,RT_ibz_coo(i_k,1))
-   E_E_Hole_lifetime(i_n,i_p)= E_E_Hole_lifetime(i_n,RT_ibz_coo(i_k,1))
+ do i_k_RIM=RT_ibz_coo(i_k,1)+1,RT_ibz_coo(i_k,2)
+   E_E_Electron_lifetime(:,i_k_RIM)= E_E_Electron_lifetime(:,RT_ibz_coo(i_k,1))
+   E_E_Hole_lifetime(:,i_k_RIM)= E_E_Hole_lifetime(:,RT_ibz_coo(i_k,1))
  enddo  
  !
 end subroutine RT_Coulomb_relaxation

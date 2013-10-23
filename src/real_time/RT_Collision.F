@@ -43,7 +43,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R,&
-&                         RT_ibz_coo
+&                         RT_ibz_coo,RT_nk
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,                             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
@@ -63,7 +63,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
- complex(SP),   intent(in)    :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
+ complex(SP),   intent(in)    :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  type(gauge_field), intent(in):: A_input
  !
  ! Work Space
@@ -80,7 +80,8 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  if (it_now==it_start) then
    !
-   if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) call el_density_matrix(G_input,E,k,rho_n,SC_bands(1),.false.)
+   if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) &
+&    call el_density_matrix(G_input(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1),.false.)
    !
    ! The Hartree term is written as
    !

@@ -26,8 +26,8 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
  use SC,             ONLY:Ho,E_bare,V_xc_sc,V_hartree_sc,rho_n,G_lesser,RT_ibz_coo
  use memory_m,       ONLY:mem_est
- use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_COM_WF_k_INDEX
- use wave_func,      ONLY:wf
+ use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
+ use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp
  use xc_functionals, ONLY:V_xc
 #if defined _MAGNETIC
@@ -94,17 +94,22 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  ! 
  do ik=1,QP_nk
    !
-#if defined _RT
-   if (.not.PAR_IND_WF_k%element_1D(ik)) then
-     Ho(:,:,ik,:)  =cZERO
-     cycle
-   endif
-#endif
+   ! Add bare energies ... 
+   !=======================
    !
-   call V_real_space_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),wf)
+   do ib=1,QP_nb
+     if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+     do i_spin=1,n_sp_pol
+       Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) + E_bare(ib,ik,i_spin)  
+     enddo
+   enddo
    !
-   forall (ib=1:QP_nb,i_spin=1:n_sp_pol) Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) +&
-&                                                              E_bare(ib,ik,i_spin)  
+   if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+   !
+   ! ... then remove Vh[rho_0] 
+   !=============================
+   !
+   call V_real_space_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),WF)
    !
    ! ... then remove Vxc[rho_0] also
    !=================================
@@ -116,8 +121,6 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  deallocate(QP_Vxc)
  call mem_est("QP_Vxc")
  !
-#if defined _RT
- call PP_redux_wait(Ho,COMM=PAR_COM_WF_k_INDEX%COMM)
-#endif
+ call PP_redux_wait(Ho)
  !
 end subroutine SC_bare_Hamiltonian

@@ -193,7 +193,7 @@ module real_time
  !
  integer           :: two_alpha
  real(SP)          :: Gr_QP_width
- character(schlen) :: Gr_kind
+ character(schlen) :: Gr_kind = "QP"
  real(SP),    allocatable :: Gr_ee_matrix(:,:,:,:)
  real(SP),    allocatable :: Gr_ep_matrix(:,:,:,:)
  !

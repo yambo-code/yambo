@@ -73,6 +73,19 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  integer ::io_err,ID
  !
+ ! Is WF to load ? If nor and the space is "R" I need to know the fft_size, at least. 
+ !
+ if(allocated(states_to_load)) then
+   WF%to_load=count(states_to_load==.TRUE.)>0
+   if (.not.WF%to_load) then
+     if (WF%space=='R') then
+       call fft_setup(iG_max,iGo_max,.TRUE.)
+       fft_size=product(fft_dim)
+       return
+     endif
+   endif
+ endif
+ !
  ! Close iG/iGo_max to the nearest shell
  !
  iG_max=iG_in

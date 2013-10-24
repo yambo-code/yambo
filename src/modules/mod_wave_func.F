@@ -33,6 +33,7 @@ module wave_func
    complex(SP), pointer :: c(:,:)        => null()
    integer    , pointer :: index(:,:,:)  => null()
    logical    , pointer :: state(:,:,:)  => null()
+   logical              :: to_load = .TRUE.
  end type WAVEs
  !
  ! Buffered WFs

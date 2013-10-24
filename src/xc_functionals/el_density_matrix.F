@@ -31,7 +31,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  use FFT_m,         ONLY:fft_size,fft_rot_r
  use wave_func,     ONLY:WF
  use SC,            ONLY:SC_bands
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_WF_k_A2A,PAR_IND_B_mat_ordered
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
  use matrix_operate,ONLY:matrix_linear_index
  !
  implicit none
@@ -53,13 +53,14 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  !
  do ik=1,Xk%nibz
    !
-   if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-   !
    do ib1=lowest_band,SC_bands(1)-1
+     if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
      ifft1=WF%index(ib1,ik,1)
      f_occ=en%f(ib1,ik,1)
-     rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(ik)*abs(WF%c(:,ifft1))**2./real(PAR_COM_WF_k_A2A%n_CPU)
+     rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(ik)*abs(WF%c(:,ifft1))**2.
    enddo
+   !
+   if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
    !      
    do ib1=SC_bands(1),SC_bands(2)
      !

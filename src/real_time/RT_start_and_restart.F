@@ -39,7 +39,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_contains_lda,l_ph_corr,l_carrier_dynamics
  use com,            ONLY:msg,warning,error
- use QP_m,           ONLY:QP_nk,COHSEX_use_empties,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
+ use QP_m,           ONLY:QP_nk,COHSEX_use_empties
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:ID,NE_steps,RT_ind_J,&
@@ -47,7 +47,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_RT_CCA_Kernel,&
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,&
-&                         Gr_kind,l_RT_uses_E_RIM
+&                         l_RT_uses_E_RIM
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,&
 &                         rho_convergence,H_rotate,V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
@@ -55,10 +55,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE,IO_and_Messaging_switch
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
- use wave_func,      ONLY:wf
+ use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use parallel_m,     ONLY:PAR_IND_WF_k,PAR_COM_WF_k_INDEX,PP_redux_wait
- use stderr,         ONLY:real2ch
  implicit none
  !
  type(levels)      :: E
@@ -205,7 +204,7 @@ subroutine RT_start_and_restart(E,k,q,X)
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        !
        if (local_V.and..not.l_NE_simulate_Irredux) then
-         call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf)
+         call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF)
        else if (.not.l_NE_simulate_Irredux) then
          call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(3))
          io_V=io_SC_components('V',E,ID(3))
@@ -218,7 +217,7 @@ subroutine RT_start_and_restart(E,k,q,X)
        !
        if(l_NE_simulate_IP.or.l_NE_simulate_Irredux.or.l_NE_simulate_BSE) &
 &         call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2), &
-&                                ik,1:n_sp_pol),wf) 
+&                                ik,1:n_sp_pol),WF) 
      enddo
      !
    endif
@@ -306,22 +305,17 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    do ik=1,QP_nk
      !
-     if (.not.PAR_IND_WF_k%element_1D(ik)) then
-       XC0_and_HARTREE0(:,:,ik,:)=cZERO
-       cycle
-     endif
-     !
      if(.not.l_NE_simulate_Irredux.and..not.l_NE_simulate_TDDFT) then
        !
-       call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf) 
+       call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF) 
        !
      endif
      !
-     call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf) 
+     call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF) 
      !
    enddo
    !
-   call PP_redux_wait(XC0_and_HARTREE0,COMM=PAR_COM_WF_k_INDEX%COMM)
+   call PP_redux_wait(XC0_and_HARTREE0)
    !
    V_xc_sc=(0._SP)
    !

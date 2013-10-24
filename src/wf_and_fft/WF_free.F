@@ -49,5 +49,6 @@ subroutine WF_free(WF)
  WF%b=0
  WF%spin=0
  WF%space=' '
+ WF%to_load=.TRUE.
  !
 end subroutine

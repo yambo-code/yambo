@@ -106,11 +106,10 @@ subroutine RT_driver(E,X,k,q)
  !
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
  call PARALLEL_global_indexes(E,k,q,"Response_G_space_Zero_Momentum",RESET=.FALSE.,X=X(1))
- call PARALLEL_global_indexes(E,k,q,"Wave_Functions",RESET=.FALSE.)
  call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
  !
  ! Dipoles
- !========
+ !=========
  !
  ! before loading the WF in R-space I check and/or calculate
  ! the optical collisions that are done in G-space and would

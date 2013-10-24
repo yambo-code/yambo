@@ -23,7 +23,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  !
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,mpi_comm_world,&
-&                        PARALLEL_cpu_mat_inversion,CPU_structure,master_cpu,comm_default_value,&
+&                        PARALLEL_cpu_mat_inversion,CPU_structure,master_cpu,&
 &                        PARALLEL_cpu_mat_diagonalization,PAR_Q_index,PAR_nQ,PAR_n_B_mat_elements,&
 &                        PAR_B_mat_index,PAR_nQP,PAR_nQPp,PAR_QP_index,PAR_QPp_index,PAR_INDEX_copy,&
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy
@@ -446,6 +446,17 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
        endif
      enddo
    enddo
+   !
+   ! oooooooo    oooooooo
+   ! oooo  oooo  oooo  oooo  <- k
+   ! Xo Xo Xo Xo Xo Xo Xo Xo <- b
+   !
+   ! Not all CPU's (o) load the WFs. Only X
+   !
+   if (PAR_COM_G_b_A2A%CPU_id>0) then
+     PAR_IND_WF_b%element_1D=.FALSE.
+     PAR_IND_WF_k%element_1D=.FALSE.
+   endif
    !
    call PARALLEL_live_message("Bands loaded (derived)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1),&

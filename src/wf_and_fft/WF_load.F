@@ -73,19 +73,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  integer ::io_err,ID
  !
- ! Is WF to load ? If nor and the space is "R" I need to know the fft_size, at least. 
- !
- if(allocated(states_to_load)) then
-   WF%to_load=count(states_to_load==.TRUE.)>0
-   if (.not.WF%to_load) then
-     if (WF%space=='R') then
-       call fft_setup(iG_max,iGo_max,.TRUE.)
-       fft_size=product(fft_dim)
-       return
-     endif
-   endif
- endif
- !
  ! Close iG/iGo_max to the nearest shell
  !
  iG_max=iG_in
@@ -179,6 +166,20 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  WF%b=bands_to_load
  !
+ ! Is WF to load ? If not and the space is "R" I need to know the fft_size, at least. 
+ !
+ if(allocated(states_to_load)) then
+   WF%to_load=count(states_to_load==.TRUE.)>0
+   if (.not.WF%to_load) then
+     if(associated(WF%state)) nullify(WF%state)
+     allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
+     WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))= &
+&             states_to_load(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))
+     deallocate(states_to_load)
+     return
+   endif
+ endif
+ !
 #if defined _SC
  !
  ! First check and fix the number of bands 
@@ -226,6 +227,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  call PARALLEL_live_message("WF states",LOADED=WF%N,TOTAL=(bands_to_load(2)-bands_to_load(1)+1)*&
 &                           (kpts_to_load(2)-kpts_to_load(1)+1)*(s_2_load(2)-s_2_load(1)+1))
  !
+ call msg('rns','[WF] I/O')
  if (WF%space=='R') call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !
  ! Bug-fix (noticed by AF) fixed by AM 26/8/2013

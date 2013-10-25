@@ -31,7 +31,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use pars,           ONLY:schlen,lchlen
  use parser_m,       ONLY:parser
  use units,          ONLY:HA2EV
- use electrons,      ONLY:levels,E_reset,n_sp_pol
+ use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
@@ -60,7 +60,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use collisions_IO,  ONLY:io_COLLISIONS,V_kind
 #endif
 #if defined _RT
- use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe,Dynamics_Kind,Gr_kind
+ use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe,Dynamics_Kind
  use fields,         ONLY:Efield,i_Pump,i_Probe,Efield_reset,Efield_duplicate
 #endif
 #if defined _MAGNETIC
@@ -463,10 +463,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_bse) call CPU_activate("BSE")
  !
- if (l_real_time) then
-   call CPU_activate("RT")
-   call CPU_activate("X_q_0")
- endif
+ if (l_real_time) call CPU_activate("RT")
  !
  !
 #endif

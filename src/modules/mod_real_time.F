@@ -546,7 +546,8 @@ module real_time
      use SC, ONLY:SC_bands
      integer :: ib1,ib2
      !
-     B_mat_index=(ib1-SC_bands(1))*(SC_bands(2)-SC_bands(1)+1)+ib2-SC_bands(1)+1
+     B_mat_index=(ib1-1)*SC_bands(2)+ib2
+     !B_mat_index=(ib1-SC_bands(1))*(SC_bands(2)-SC_bands(1)+1)+ib2-SC_bands(1)+1
      !
    end function
    !

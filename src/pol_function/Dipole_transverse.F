@@ -30,7 +30,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_CON_BANDS_X,PAR_IND_DIPk_ibz,&
 &                              PAR_DIPk_ibz_index,PAR_IND_VAL_BANDS_X,&
 &                              PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_CON_BANDS_X_ID,&
-&                              PAR_IND_Xk_ibz_ID,PAR_COM_q_for_Xo,PAR_COM_k_for_P,myid
+&                              PAR_IND_Xk_ibz_ID,PAR_COM_q_for_Xo,PAR_COM_k_for_P,myid,PAR_B_mat_index,&
+&                              PAR_IND_B_mat,PAR_IND_B_mat_ID,PAR_IND_WF_k
  use D_lattice,           ONLY:alat
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,PP_free,  &
 &                              pp_kbv_dim,spin_m_table,pp_factor
@@ -43,6 +44,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use com,                 ONLY:error,msg
 #if defined _KERR
  use fields,              ONLY:global_gauge
+#endif
+#if defined _RT
+ use real_time,           ONLY:B_mat_index
 #endif
  !
  implicit none
@@ -86,9 +90,14 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  if (associated(Xen%Eo)) call msg('rns','[X] Using Kohn-Sham energies for the dipoles ')
  !
- n_LT_steps=PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*&
-&           PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(PAR_IND_CON_BANDS_X_ID(X%whoami)+1)*&
-&           PAR_IND_VAL_BANDS_X(X%whoami)%n_of_elements(PAR_IND_VAL_BANDS_X_ID(X%whoami)+1)*n_spin
+ if (Dipole_bands_ordered) then
+   n_LT_steps=PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*&
+&             PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(PAR_IND_CON_BANDS_X_ID(X%whoami)+1)*&
+&             PAR_IND_VAL_BANDS_X(X%whoami)%n_of_elements(PAR_IND_VAL_BANDS_X_ID(X%whoami)+1)*n_spin
+ else
+   n_LT_steps=PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*&
+&             PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1)
+ endif
  !
  wf_dim=3
  !
@@ -129,7 +138,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
      ioKB_abinit_err=ioKB_abinit(ID)
    endif
    ! 
-   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
+   if (Dipole_bands_ordered) then
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
+   else
+     if (.not.PAR_IND_WF_k%element_1D(ik)) cycle 
+   endif
    !
    ik_mem=PAR_DIPk_ibz_index(ik)
    ! 
@@ -146,11 +159,17 @@ subroutine Dipole_transverse(Xen,Xk,X)
      !
      do ic=ic_min,X%ib(2)
        !
-       if (.not.PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic)) cycle 
+       if (Dipole_bands_ordered) then
+         if (.not.PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic)) cycle 
+       endif
        !
        do iv=X%ib(1),iv_max 
          !
-         if (.not.PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)) cycle 
+         if (Dipole_bands_ordered) then
+           if (.not.PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)) cycle 
+         else
+           if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ic,iv))) cycle
+         endif
          !
          rho(:)=(0._SP,0._SP)
          !
@@ -259,9 +278,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          if (n_spinor==2) then
            DIP_iR(:,ic,iv,ik_mem,1)=DIP_iR(:,ic,iv,ik_mem,1)+rho(:3)
          else 
-           !
            DIP_iR(:,ic,iv,ik_mem,i_spin)=rho(:3)
-           !
          endif
          !
 #if defined _SC
@@ -292,6 +309,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! CLEAN
  !
  deallocate(wf_xyz)
+ !
  if (ioKB_pwscf_err==0.or.ioKB_abinit_err==0) then
    if (allocated(kbv))          deallocate(kbv)
    if (allocated(pp_n_l_comp))  deallocate(pp_n_l_comp)

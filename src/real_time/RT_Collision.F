@@ -52,7 +52,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
 &                         l_RT_needs_XC0,Ho_plus_Sigma
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_WF_k_INDEX,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz,PAR_COM_WF_k_INDEX
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_WF_k_INDEX,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz,PAR_COM_WF_k_INDEX,myid
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use SC,             ONLY:SC_xc_functional,SC_nbands
@@ -182,10 +182,11 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  ! The field must be applied in a separate loop driven by the 
  ! X_q_0 PARALLEL roles
  !
+ !
  do ik=1,QP_nk 
    !
-   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) then
-     Ho_plus_Sigma(:,:,ik,:)=cZERO
+   if (.not.PAR_IND_WF_k%element_1D(ik)) then
+     Ho_plus_Sigma=(0._SP,0._SP)
      cycle
    endif
    !
@@ -201,7 +202,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !  
  enddo  !---- loop on k-points
  !
- call PP_redux_wait(Ho_plus_Sigma(:,:,:,1),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ call PP_redux_wait(Ho_plus_Sigma(:,:,:,1))
  !
  if(allocated(SC_R)) then
    SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),:,:) = Ho_plus_Sigma

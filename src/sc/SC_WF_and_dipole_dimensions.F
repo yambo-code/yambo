@@ -39,10 +39,11 @@ subroutine SC_WF_and_dipole_dimensions(X)
  !
  ! In real-time I need X(1)%ib(1)=1 in order to calculate E_kin
  !
- X(1)%ib(2)=SC_bands(2) 
  if (l_real_time) then
+   X(1)%ib=SC_bands
    X(1)%ng=wf_ng
  else
+   X(1)%ib(2)=SC_bands(2) 
    X(1)%ng=QP_ng_Sx
  endif
  !

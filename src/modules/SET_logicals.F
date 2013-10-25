@@ -26,7 +26,7 @@ subroutine SET_logicals()
  use com,        ONLY:write_to_of,write_to_report
  use fragments,  ONLY:Parallel_Fragments
  use IO_m,       ONLY:IO_write,IO_read,Fragmented_IO,Fragmented_IO_save,IO_write_not_fragmented_DB,&
-&                     DBs_IO_control_string,io_DIP,io_X,io_HF
+&                     DBs_IO_control_string,io_DIP,io_X,io_HF,io_COLLs
  use stderr,     ONLY:write_to_log,write_fragments_IO_log,string_split
  use LIVE_t,     ONLY:live_timing_is_on
  !
@@ -59,9 +59,10 @@ subroutine SET_logicals()
  call string_split(DBs_IO_control_string,ch_piece)
  !
  do i_ch=1,10
-   if (trim(ch_piece(i_ch))=="DIP") io_DIP=.FALSE.
-   if (trim(ch_piece(i_ch))=="X")   io_X=.FALSE.
-   if (trim(ch_piece(i_ch))=="HF")  io_HF=.FALSE.
+   if (trim(ch_piece(i_ch))=="DIP")   io_DIP=.FALSE.
+   if (trim(ch_piece(i_ch))=="X")     io_X=.FALSE.
+   if (trim(ch_piece(i_ch))=="HF")    io_HF=.FALSE.
+   if (trim(ch_piece(i_ch))=="COLLs") io_COLLs=.FALSE.
  enddo
  !
 end subroutine

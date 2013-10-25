@@ -78,9 +78,9 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
    !
    call make_Hk_matrix(ik_ibz)
    !
-   do i1=1,SC_bands(1)-1
-     VALUE=VALUE+conjg(Hk(i1,i1,1))*en%f(i1,ik_ibz,1)*k%weights(ik_ibz)
-   enddo
+   !do i1=1,SC_bands(1)-1
+   !  VALUE=VALUE+conjg(Hk(i1,i1,1))*en%f(i1,ik_ibz,1)*k%weights(ik_ibz)
+   !enddo
    ! 
    do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
      !
@@ -113,9 +113,9 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
 &                                 O_MATRIX(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_mem,i1)
        endif
        !
-       do i1=1,SC_bands(1)-1
-         Hk(i1,i1,1:n_sp_pol)=O_MATRIX(i1,i1,ik_mem,1:n_sp_pol)       
-       enddo
+       !do i1=1,SC_bands(1)-1
+       !  Hk(i1,i1,1:n_sp_pol)=O_MATRIX(i1,i1,ik_mem,1:n_sp_pol)       
+       !enddo
        !
      endif
      !

@@ -40,8 +40,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use memory_m,      ONLY:mem_est
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
  use fragments,     ONLY:fragment_status
- use interfaces,    ONLY:PARALLEL_global_indexes
- use parallel_m,    ONLY:PAR_nQPp,PAR_nQ,PAR_nQP
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use parallel_m,    ONLY:PAR_nQPp,PAR_nQ,PAR_nQP,PAR_IND_WF_k,PAR_IND_WF_b
  use parser_m,      ONLY:parser
  !
  implicit none
@@ -122,9 +122,13 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
    if (l_carrier_dynamics) then
      call PARALLEL_global_indexes(E,k,q,"Real_Time")
+     call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
    else
      call PARALLEL_global_indexes(E,k,q,"GW")
+     !call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+     !call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,QP_index=PAR_IND_QP)
    endif
+   call PARALLEL_WF_index( )
    !
    if (l_STORE_COLLISIONS) then
      !

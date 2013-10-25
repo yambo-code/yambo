@@ -396,7 +396,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,&
-&           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID),TOTAL=Xk%nibz,&
+&           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz,&
 &           NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU,CHAIN=PAR_COM_Xk_ibz_INDEX%chain_order)
    !.........................................................................
    ! Wave Functions (derived from PAR_COM_Xk_ibz_INDEX and PAR_COM_G_b_INDEX)
@@ -440,6 +440,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    enddo
    !.........................................................................
    ! Oscillators for external field interaction
+   !
+   ! Note that PAR_IND_Xk_ibz = PAR_IND_DIPk_ibz while
+   ! PAR_WF_k is like PAR_IND_Xk_ibz with WF loaded only for 1 cpu per k-block
+   !
    !.........................................................................
    call G_b_to_B_mat( )
    call COMM_copy(PAR_COM_WORLD,PAR_COM_q_for_Xo)
@@ -457,7 +461,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
        endif
      enddo
    enddo
-   !
    !.........................................................................
    ! WFs
    !.........................................................................
@@ -532,6 +535,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    !
    call PARALLEL_index(PAR_IND_Q,(/q%nbz/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.)
    PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
+   PAR_nQ=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)
    !
    allocate(PAR_Q_index(q%nbz)) 
    call Build_up_index(PAR_IND_Q,q%nbz,PAR_Q_index,PAR_nQ)
@@ -704,17 +708,17 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    !
    subroutine G_b_to_B_mat( )
      !
-     call PARALLEL_index(PAR_IND_B_mat,(/ SC_bands(2)**2 /),COMM=PAR_COM_G_b_INDEX,CONSECUTIVE=.TRUE.)
+     call PARALLEL_index(PAR_IND_B_mat,(/ (SC_bands(2)-SC_bands(1)+1)**2 /),COMM=PAR_COM_G_b_INDEX,CONSECUTIVE=.TRUE.)
      PAR_IND_B_mat_ID=PAR_COM_G_b_INDEX%CPU_id
      !
-     allocate(PAR_B_mat_index(SC_bands(2),SC_bands(2)))
+     allocate(PAR_B_mat_index(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)))
      PAR_n_B_mat_elements=PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1)
      PAR_B_mat_index=0
      !
      PAR_n_B_mat_elements=0
      !
-     do ib1=1,SC_bands(2)
-       do ib2=1,SC_bands(2)
+     do ib1=SC_bands(1),SC_bands(2)
+       do ib2=SC_bands(1),SC_bands(2)
          if (PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2) ) ) then
            PAR_n_B_mat_elements=PAR_n_B_mat_elements+1
            PAR_B_mat_index(ib1,ib2)=PAR_n_B_mat_elements

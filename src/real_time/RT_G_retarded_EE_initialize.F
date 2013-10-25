@@ -112,7 +112,7 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
          !
          E_center=E%E(i_np,i_kmq,1)-E%E(i_n,i_k,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)
          !
-         if(E_center==0._SP) cycle
+         if( abs(E_center)<EPSILON(1._SP) ) cycle
          !
          if (abs(E_center)>2.*E%E_ind_gap(1)) cycle
          !
@@ -122,10 +122,6 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
          !
          if(trim(Gr_kind)=='HS') &
 &           Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=HyperbolicSecant_FT(E_center,GAMMA_,2*two_alpha)
-         !
-         !DEBUG>
-         ! write (100,*) E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)/27.21,GAMMA_*27.21
-         !DEBUG<
          !
        enddo
        !

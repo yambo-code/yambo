@@ -128,13 +128,6 @@ module real_time
  real(SP)    :: RAD_LifeTime
  logical     :: RT_is_dumped
  !
- ! I/O
- !----------------
- !
- logical     :: l_RT_skip_GF_IO
- logical     :: l_RT_skip_OCC_IO
- logical     :: l_RT_skip_JandP_IO
- !
  ! Relaxation and Dissipation 
  !----------------------------
  logical                  :: l_RT_uses_E_RIM

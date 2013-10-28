@@ -35,7 +35,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
 &                        PAR_IND_B_mat,PAR_Q_index,PAR_IND_QPp,PAR_QPp_index,PAR_nQ,PAR_nQP,PAR_nQPp
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch,io_COLLs
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_n_states,QP_table
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load
@@ -43,7 +43,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:DL_vol,nsym
  use wrapper,       ONLY:M_by_V
- use collisions_IO, ONLY:TEMP_COLLISIONS_v,l_STORE_COLLISIONS
+ use collisions_IO, ONLY:TEMP_COLLISIONS_v
  use drivers,       ONLY:l_carrier_dynamics
  use SC,            ONLY:SC_bands
  use fragments,     ONLY:fragment_status
@@ -127,7 +127,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
    !
    i_qp1_mem=PAR_QP_index(i_qp1)
    !
-   if (l_STORE_COLLISIONS) then
+   if (io_COLLs) then
      if (fragment_status(i_qp1)/=-1) then
        call live_timing(steps=PAR_nQ*PAR_n_B_mat_elements)
        cycle
@@ -247,7 +247,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
            !
            call M_by_V('N', X%ng, EM1s, conjg(iscp%rhotw), local_rhotw)
            !
-           if (l_STORE_COLLISIONS) then
+           if (io_COLLs) then
              !
              TEMP_COLLISIONS_v(i_qp2,i_p_s,iqbz)=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
              !
@@ -304,12 +304,12 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
    enddo Q_loop 
    !
    if (l_carrier_dynamics) then
-     if (l_STORE_COLLISIONS) call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_G_b_A2A%COMM)
+     if (io_COLLs) call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_G_b_A2A%COMM)
    else
      call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)
    endif
    !
-   if (l_STORE_COLLISIONS) call COLLISIONS_store(i_qp1)
+   if (io_COLLs) call COLLISIONS_store(i_qp1)
    !
  enddo QP_loop
  !
@@ -320,7 +320,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  deallocate(EM1s)
  call mem_est("EM1s")
  call X_alloc('X')
- if (l_STORE_COLLISIONS) call WF_free(WF)
+ if (io_COLLs) call WF_free(WF)
  call collision_reset(isc)
  call collision_reset(iscp)
  !

@@ -127,13 +127,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    call PP_indexes_reset(PAR_IND_WF_k)
    call PP_indexes_reset(PAR_IND_WF_linear)
    !
-   if (allocated(PAR_B_mat_index))  deallocate(PAR_B_mat_index)
-   if (allocated(PAR_QP_index))     deallocate(PAR_QP_index)
-   if (allocated(PAR_QPp_index))    deallocate(PAR_QPp_index)
-   if (allocated(PAR_Q_index))      deallocate(PAR_Q_index)
-   if (allocated(PAR_Xk_ibz_index)) deallocate(PAR_Xk_ibz_index)
-   if (allocated(PAR_Xk_bz_index))  deallocate(PAR_Xk_bz_index)
-   if (allocated(states_to_load))   deallocate(states_to_load)
+   if (allocated(PAR_B_mat_index))    deallocate(PAR_B_mat_index)
+   if (allocated(PAR_QP_index))       deallocate(PAR_QP_index)
+   if (allocated(PAR_QPp_index))      deallocate(PAR_QPp_index)
+   if (allocated(PAR_Q_index))        deallocate(PAR_Q_index)
+   if (allocated(PAR_Xk_ibz_index))   deallocate(PAR_Xk_ibz_index)
+   if (allocated(PAR_Xk_bz_index))    deallocate(PAR_Xk_bz_index)
+   if (allocated(states_to_load))     deallocate(states_to_load)
+   if (allocated(PAR_DIPk_ibz_index)) deallocate(PAR_DIPk_ibz_index)
    !
    PAR_IND_Q_ID=0
    PAR_IND_Xk_ibz_ID=0
@@ -491,8 +492,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    !    |
    !    | __/__ k-q,n'
    !    ./  \
-   !    |\__\__ k,n
-   !    |   /
+   !     \__\__ k,n
+   !        /
    !      
    ! "RT"="k.b.q.qp" 
    !  

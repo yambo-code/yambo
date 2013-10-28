@@ -23,11 +23,9 @@ subroutine RT_databases_IO(E,it)
  !
  use drivers,        ONLY:l_ph_corr
  use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,NE_i_time,it_start,&
-&                         OCCUPATIONS_IO_and_interpolate,RT_IO_steps,&
-&                         l_RT_skip_GF_IO,l_RT_skip_OCC_IO,&
-&                         l_RT_skip_JandP_IO
+&                         OCCUPATIONS_IO_and_interpolate,RT_IO_steps
  use SC,             ONLY:RT_nk
- use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL
+ use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL,io_GF,io_OCCs,io_J
  use electrons,      ONLY:levels
 #if defined _ELPH
  use parallel_m,     ONLY:PP_redux_wait
@@ -53,7 +51,7 @@ subroutine RT_databases_IO(E,it)
  ! Polarization and current are automaticaly written every RT_IO_stesp
  ! the cache save value at steps different from mod(NE_i_time,RT_IO_steps)/=0)
  !
- if(l_NE_with_fields.and.NE_dynamics.and..not.l_RT_skip_JandP_IO) then
+ if(l_NE_with_fields.and.NE_dynamics.and.io_J) then
    !
    ! Remember that negative time = adiabatic switching
    ! no need to store current
@@ -78,7 +76,7 @@ subroutine RT_databases_IO(E,it)
  ! Write G_lesser
  !================
  !
- if (.not.l_RT_skip_GF_IO) then
+ if (io_GF) then
    !
    io_G=0
    io_THETA=0
@@ -121,6 +119,6 @@ subroutine RT_databases_IO(E,it)
  !
  ! Occupations
  !
- if (.not.l_RT_skip_OCC_IO) call OCCUPATIONS_IO_and_interpolate(E,'G')
+ if (io_OCCs) call OCCUPATIONS_IO_and_interpolate(E,'G')
  !
 end subroutine RT_databases_IO

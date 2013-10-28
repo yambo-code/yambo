@@ -24,15 +24,10 @@ module collisions_IO
  use pars,            ONLY:SP,LP,schlen,lchlen
  implicit none
  !
- ! Global Logical. If .FALSE. collisions are calculated on-the-fly
- !
- logical                 :: l_STORE_COLLISIONS=.TRUE.
- !
  complex(SP), allocatable :: COLLISIONS_v(:)
  integer(LP), allocatable :: COLLISIONS_table(:,:,:) 
  integer                  :: n_collisions
  integer                  :: V_kind 
- character(lchlen)        :: COLLISIONS_path
  !
  ! Array bounds
  !

@@ -45,7 +45,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #if defined _KERR
  use fields,              ONLY:global_gauge
 #endif
-#if defined _RT
+#if defined _SC
  use real_time,           ONLY:B_mat_index
 #endif
  !

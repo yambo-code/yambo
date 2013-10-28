@@ -696,12 +696,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC
  if (l_sc_run) then
    !
-   call initactivate( 1,'Potential FFTGvecs Gauge SCBands EXXCut CollPath')
+   call initactivate( 1,'Potential FFTGvecs Gauge SCBands EXXCut')
    !
    if (l_eval_collisions) then
      !
      call initactivate( 1,'DynKind')
-     call initactivate(-1,'CollPath')
      !
    else if (.not.l_real_time) then
      !

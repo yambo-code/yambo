@@ -20,27 +20,30 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine WF_alloc(WF)
- use wave_func,ONLY:WAVEs,states_to_load,wf_ng,wf_ncx
- use memory_m, ONLY:mem_est
- use FFT_m,    ONLY:fft_size,fftw_plan,fft_dim
+ !
+ use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx
+ use memory_m,      ONLY:mem_est
+ use FFT_m,         ONLY:fft_size,fftw_plan,fft_dim
+ use interfaces,    ONLY:PARALLEL_live_message
  implicit none
  !
  type(WAVEs)           :: WF
  !
  ! Work Space
  !
- integer :: err
- integer :: ik,ib,is
+ integer :: err,ik,ib,is,N_total
  !
  ! Distributed allocation
  !
  if(allocated(states_to_load)) then
    !
    WF%N=0
+   N_total=0
    do ib=WF%b(1),WF%b(2)
      do ik=WF%k(1),WF%k(2)
        do is=WF%spin(1),WF%spin(2)
-         if(states_to_load(ib,ik,is)) WF%N=WF%N+1
+         N_total=N_total+1
+         if (states_to_load(ib,ik,is)) WF%N=WF%N+1
        enddo
      enddo
    enddo
@@ -58,6 +61,8 @@ subroutine WF_alloc(WF)
  if (err==0) allocate(WF%index(WF%b(2),WF%k(2),WF%spin(2)),stat=err)
  !
  call mem_est('WF',(/size(WF%c)/),errors=(/err/))
+ !
+ call PARALLEL_live_message("Wave-Function states",LOADED=WF%N,TOTAL=N_total)
  !
  WF%c=(0.,0.)
  WF%index=0

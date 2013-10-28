@@ -43,12 +43,12 @@ subroutine RT_driver(E,X,k,q)
  use memory_m,        ONLY:mem_est
  use com,             ONLY:error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
- use collisions_IO,   ONLY:collisions_IO_alloc,collisions_IO_free,collisions_RANGES_setup,l_STORE_COLLISIONS
+ use collisions_IO,   ONLY:collisions_IO_alloc,collisions_IO_free,collisions_RANGES_setup
  use collision,       ONLY:free_COLLISIONS_v
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k
- use IO_m,            ONLY:IO_and_Messaging_switch
+ use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  !
  implicit none
  !
@@ -143,7 +143,7 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_alloc(E)
  !
- if (l_STORE_COLLISIONS) then
+ if (io_COLLs) then
    !
    call collisions_RANGES_setup()
    !
@@ -161,7 +161,7 @@ subroutine RT_driver(E,X,k,q)
  !
  if((.not.local_V.and..not.l_NE_simulate_IP).or.l_carrier_dynamics) then
    !
-   if (l_STORE_COLLISIONS) then
+   if (io_COLLs) then
      !
      if (.not.l_eval_collisions) call error('COLLISIONs database missing')
      !

@@ -227,7 +227,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  call PARALLEL_live_message("WF states",LOADED=WF%N,TOTAL=(bands_to_load(2)-bands_to_load(1)+1)*&
 &                           (kpts_to_load(2)-kpts_to_load(1)+1)*(s_2_load(2)-s_2_load(1)+1))
  !
- call msg('rns','[WF] I/O')
+ call msg('rns','[WF] Performing Wave-Functions I/O')
  if (WF%space=='R') call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !
  ! Bug-fix (noticed by AF) fixed by AM 26/8/2013

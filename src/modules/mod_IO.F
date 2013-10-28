@@ -53,6 +53,9 @@ module IO_m
  logical           :: io_WF    =.TRUE.
  logical           :: io_HF    =.TRUE.
  logical           :: io_COLLs =.TRUE.
+ logical           :: io_J     =.TRUE.
+ logical           :: io_OCCs  =.TRUE.
+ logical           :: io_GF    =.TRUE.
  !
  ! Actions
  !

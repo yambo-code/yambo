@@ -26,7 +26,7 @@ subroutine SET_logicals()
  use com,        ONLY:write_to_of,write_to_report
  use fragments,  ONLY:Parallel_Fragments
  use IO_m,       ONLY:IO_write,IO_read,Fragmented_IO,Fragmented_IO_save,IO_write_not_fragmented_DB,&
-&                     DBs_IO_control_string,io_DIP,io_X,io_HF,io_COLLs
+&                     DBs_IO_control_string,io_DIP,io_X,io_HF,io_COLLs,io_GF,io_J,io_OCCs
  use stderr,     ONLY:write_to_log,write_fragments_IO_log,string_split
  use LIVE_t,     ONLY:live_timing_is_on
  !
@@ -59,10 +59,14 @@ subroutine SET_logicals()
  call string_split(DBs_IO_control_string,ch_piece)
  !
  do i_ch=1,10
-   if (trim(ch_piece(i_ch))=="DIP")   io_DIP=.FALSE.
-   if (trim(ch_piece(i_ch))=="X")     io_X=.FALSE.
-   if (trim(ch_piece(i_ch))=="HF")    io_HF=.FALSE.
-   if (trim(ch_piece(i_ch))=="COLLs") io_COLLs=.FALSE.
+   if (any((/"DIP","dip"/)==trim(ch_piece(i_ch)))) io_DIP=.FALSE.
+   if (any((/"X","x"/)==trim(ch_piece(i_ch)))) io_X=.FALSE.
+   if (any((/"HF","hf"/)==trim(ch_piece(i_ch)))) io_HF=.FALSE.
+   if (any((/"WF","wf"/)==trim(ch_piece(i_ch)))) io_WF=.FALSE.
+   if (any((/"COLLS","COLLs","colls"/)==trim(ch_piece(i_ch)))) io_COLLs=.FALSE.
+   if (any((/"GF","gf"/)==trim(ch_piece(i_ch)))) io_GF=.FALSE.
+   if (any((/"J","j"/)==trim(ch_piece(i_ch)))) io_J=.FALSE.
+   if (any((/"OCCs","occs","OCCS"/)==trim(ch_piece(i_ch)))) io_OCCs=.FALSE.
  enddo
  !
 end subroutine

@@ -49,7 +49,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _SC
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,SC_up_W_iters,&
 &                        SC_rho_threshold,SC_cycle_mixing,OEP_approx
- use collisions_IO, ONLY:COLLISIONS_cutoff,COLLISIONS_path
+ use collisions_IO, ONLY:COLLISIONS_cutoff
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
@@ -287,12 +287,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GWoIter',    '[GW] GWo SC iterations',GWo_iterations,verb_level=V_qp)
  call it(defs,'GreenFTresh','[GW] [o/o] Treshold to define the new zoomed energy range',QP_G_Zoom_treshold,verb_level=V_qp)
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
- call it('f',defs,'QPExpand','[F GW] The QP corrections are expanded all over the BZ',verb_level=V_qp)
+ call it('f',defs,'QPExpand',   '[F GW] The QP corrections are expanded all over the BZ',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
  !
  ! I/O
  !
- call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O allowed. DB=(DIP,X,HF,WF)',DBs_IO_control_string,verb_level=V_io)
+ call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,WF,COLLs,J,GF,OCC)',&
+&                         DBs_IO_control_string,verb_level=V_io)
  !
  ! GPL_EXCLUDE_END
  !
@@ -465,7 +466,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
- call it(defs,'CollPath',  '[SC,RT] Path to the collisions databases',COLLISIONS_path)
  call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
  call it('f',defs,'SCdiag','[SC] Diagonal approximation for the self-energy(WF unchaged)',verb_level=V_sc)

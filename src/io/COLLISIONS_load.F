@@ -32,7 +32,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use D_lattice,       ONLY:nsym
  use memory_m,        ONLY:mem_est
  use collisions_IO,   ONLY:COLLISIONS_v,COLLISIONS_table,V_kind,collisions_IO_free,&
-&                          COLLISIONS_path,io_COLLISIONS,COLLISIONS_range,collisions_RANGES_setup
+&                          io_COLLISIONS,COLLISIONS_range,collisions_RANGES_setup
  use IO_m,            ONLY:OP_RD_CL,io_control,VERIFY,REP
  use parallel_m,      ONLY:PAR_nQPp,PAR_nQP,PAR_QP_index,PAR_QPp_index,PAR_IND_QP,PAR_IND_QPp,&
 &                          PAR_nQ,PAR_Q_index,PAR_IND_Q
@@ -85,8 +85,6 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    enddo
    !
    l_eval_collisions=all(io_err==0)
-   !
-   if (.not.l_eval_collisions) COLLISIONS_path=" "
    !
    return
    !

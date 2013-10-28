@@ -21,7 +21,7 @@
 !
 subroutine RT_occupations_analyze(k,E)
  !
- use drivers,        ONLY:l_carrier_dynamics,l_ph_corr
+ use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use units,          ONLY:FS2AUT,SP,HA2EV
  use pars,           ONLY:schlen
  use parser_m,       ONLY:parser
@@ -72,7 +72,7 @@ subroutine RT_occupations_analyze(k,E)
    !
    l_RT_uses_E_RIM=.true.
    !
-   if (RT_k_grid(k)/=RT_nk) call error('Impossible to rebuild the RT k-grid')
+   if (RT_k_grid(k)/=RT_nk) call error('Wrong RT k-grid, likely your ndb.E_RIM is changed')
    !
  else
    !
@@ -157,7 +157,7 @@ subroutine RT_occupations_analyze(k,E)
    i1=0
  endif
  !
- l_ELPH_lifetimes=l_ph_corr.and.l_RT_CCA_Kernel
+ l_ELPH_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
  !
  call set_real_printed_length(f_length=10,g_length=10)
  !
@@ -166,13 +166,13 @@ subroutine RT_occupations_analyze(k,E)
  titles(1)='T[fs]'
  titles(2)='Occ.'
  !
- if (l_carrier_dynamics.and.l_ELPH_lifetimes) then
+ if (l_elel_scatt.and.l_ELPH_lifetimes) then
    titles(3:4)=(/'Hole[meV]','El. [meV]'/)
    titles(5:6)=(/'Habs[meV]','Eabs[meV]'/)
    titles(7:8)=(/'Hole[meV]','El. [meV]'/)
- else if (l_carrier_dynamics.and..not.l_ELPH_lifetimes) then
+ else if (l_elel_scatt.and..not.l_ELPH_lifetimes) then
    titles(3:4 )=(/'Hole[meV]','El. [meV]'/)
- else if (.not.l_carrier_dynamics.and.l_ELPH_lifetimes) then
+ else if (.not.l_elel_scatt.and.l_ELPH_lifetimes) then
    titles(3:4)=(/'Hole[meV]','El. [meV]'/)
    titles(5:6)=(/'Habs[meV]','Eabs[meV]'/)
  endif
@@ -263,7 +263,7 @@ subroutine RT_occupations_analyze(k,E)
 &           (/E_P_Ho_abs_lifetime(ib,ik_rim),E_P_El_abs_lifetime(ib,ik_rim)/)*HA2EV*1000._SP
        endif
        !
-       if (l_carrier_dynamics) then
+       if (l_elel_scatt) then
          n1=3
          if (l_ELPH_lifetimes) n1=7
          data_to_plot(n1:n1+1)=data_to_plot(n1:n1+1)+ &
@@ -331,16 +331,16 @@ subroutine RT_occupations_analyze(k,E)
      !
      ! Titles
      !========
-     if (l_carrier_dynamics.and.l_ELPH_lifetimes) then
+     if (l_elel_scatt.and.l_ELPH_lifetimes) then
        call msg('o '//trim(output_fname),'#',specs(: ,1),INDENT=0,USE_TABS=.TRUE.)
        call msg('o '//trim(output_fname),'#',specs(: ,1),INDENT=0,USE_TABS=.TRUE.)
        call msg('o '//trim(output_fname),'#',titles(: 8),INDENT=0,USE_TABS=.TRUE.)
-     else if (l_carrier_dynamics.and..not.l_ELPH_lifetimes) then
+     else if (l_elel_scatt.and..not.l_ELPH_lifetimes) then
        call msg('o '//trim(output_fname),'#',titles(: 4),INDENT=0,USE_TABS=.TRUE.)
-     else if (.not.l_carrier_dynamics.and.l_ELPH_lifetimes) then
+     else if (.not.l_elel_scatt.and.l_ELPH_lifetimes) then
        call msg('o '//trim(output_fname),'#',specs(:6,2),INDENT=0,USE_TABS=.TRUE.)
        call msg('o '//trim(output_fname),'#',titles(: 6),INDENT=0,USE_TABS=.TRUE.)
-     else if (.not.l_carrier_dynamics.and..not.l_ELPH_lifetimes) then
+     else if (.not.l_elel_scatt.and..not.l_ELPH_lifetimes) then
        call msg('o '//trim(output_fname),'#',titles(: 2),INDENT=0,USE_TABS=.TRUE.)
      endif
      call msg('o '//trim(output_fname),'#')

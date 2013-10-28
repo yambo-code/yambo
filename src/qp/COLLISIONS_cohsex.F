@@ -43,7 +43,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  use D_lattice,     ONLY:DL_vol,nsym
  use wrapper,       ONLY:M_by_V
  use collisions_IO, ONLY:TEMP_COLLISIONS_v,l_STORE_COLLISIONS
- use drivers,       ONLY:l_carrier_dynamics
+ use drivers,       ONLY:l_elel_scatt
  use SC,            ONLY:SC_bands
  use fragments,     ONLY:fragment_status
  !
@@ -113,7 +113,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
- if (l_carrier_dynamics) then
+ if (l_elel_scatt) then
    call live_timing("COHSEX collisions",PAR_nQP*PAR_nQ*PAR_nQPp)
  else
    call live_timing("COHSEX collisions",PAR_nQP*PAR_nQ*PAR_n_B_mat_elements)
@@ -165,14 +165,14 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
        !
        if (iqibz==1) then
          forall(i1=1:X%ng,i2=1:X%ng) EM1s(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
-         if (l_carrier_dynamics) EM1s(1,1)=X_mat(1,1,1)*sqrt(isc%gamp(1,1)/DL_vol/q%nbz)
+         if (l_elel_scatt) EM1s(1,1)=X_mat(1,1,1)*sqrt(isc%gamp(1,1)/DL_vol/q%nbz)
        else
          forall(i1=1:X%ng,i2=1:X%ng) EM1s(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
        endif
        !
      endif
      !
-     if (l_carrier_dynamics) then
+     if (l_elel_scatt) then
        if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
        i_q_mem=PAR_Q_index(iqbz)
      else
@@ -202,7 +202,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
      iscp%os =(/0  ,i_kmq,i_kmq_s,i_kmq_sp/)
      iscp%qs =isc%qs
      !
-     if (l_carrier_dynamics) then
+     if (l_elel_scatt) then
        !
        i_np     = QP_table(i_qp1,2)
        isc%os(1)= i_np
@@ -302,7 +302,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
      endif
    enddo Q_loop 
    !
-   if (l_carrier_dynamics) then
+   if (l_elel_scatt) then
      if (l_STORE_COLLISIONS) call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_G_b_A2A%COMM)
    else
      call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)

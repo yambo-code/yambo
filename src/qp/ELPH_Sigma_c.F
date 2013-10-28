@@ -32,7 +32,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use electrons,     ONLY:levels,spin_occ
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error
- use drivers,       ONLY:Finite_Tel,l_el_corr
+ use drivers,       ONLY:Finite_Tel,l_elel_corr
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset,ncpu
  use interfaces,    ONLY:PARALLEL_index
  use functions,     ONLY:bose_f
@@ -109,7 +109,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  QP_ctl%Z=QP_ctl_Z(3,1)
  QP_ctl%db=QP_ctl_db(3)
  !
- if (l_el_corr) then
+ if (l_elel_corr) then
    call section('+','Correlation: Phonon Self-energy')
  else
    call section('=','Correlation: Phonon Self-energy')
@@ -166,7 +166,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    QP_Sc_steps      =Sc_W(1)%n_freqs
    gsqF_energy_steps=Sc_W(1)%n_freqs
    !
-   if (.not.l_el_corr) QP_Sc=cmplx(0.,0.)  
+   if (.not.l_elel_corr) QP_Sc=cmplx(0.,0.)  
    !
    call msg('nr', '[GW/El-Ph] gsqF E range  [ev]:',Sc_W(1)%er*HA2EV)
    !

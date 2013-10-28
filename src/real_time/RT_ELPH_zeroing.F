@@ -27,7 +27,7 @@ subroutine RT_ELPH_zeroing()
  ! each CPU will have non-zero values for q-points that it will not evolve. During the run,
  ! therefore, values relative to different times will be wrongly merged.
  !
- use drivers,        ONLY:l_ph_corr
+ use drivers,        ONLY:l_elph_scatt
  use pars,           ONLY:cZERO
  use R_lattice,      ONLY:nqbz
  use real_time,      ONLY:THETA_matrix,THETA_matrix_index,l_RT_CCA_Kernel
@@ -40,7 +40,7 @@ subroutine RT_ELPH_zeroing()
  integer :: iq,il,i_s
  !
  if (l_RT_CCA_Kernel) return
- if (.not.l_ph_corr.or.ncpu==1) return
+ if (.not.l_elph_scatt.or.ncpu==1) return
  !
  do iq=1,nqbz
    do il=1,ph_modes

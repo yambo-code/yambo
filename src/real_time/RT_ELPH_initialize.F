@@ -25,7 +25,7 @@ subroutine RT_ELPH_initialize(k,q)
  use real_time,      ONLY:q_weight,elph_gkkp_expanded,THETA_matrix,&
 &                         THETA_matrix_index,Q_io_map,K_io_map,&
 &                         l_RT_CCA_Kernel,l_Debye_TBose_update
- use drivers,        ONLY:l_ph_corr
+ use drivers,        ONLY:l_elph_scatt
  use com,            ONLY:warning
  use R_lattice,      ONLY:RL_vol,bz_samp
  use IO_m,           ONLY:io_control,REP,OP_RD_CL
@@ -50,13 +50,13 @@ subroutine RT_ELPH_initialize(k,q)
  ! Logicals
  !==========
  !
- if (.not.l_ph_corr) return
+ if (.not.l_elph_scatt) return
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
  io_err=ioELPH(ID,'gkkp_expanded')
  !
  if (io_err/=0) then
-   l_ph_corr=.FALSE.
+   l_elph_scatt=.FALSE.
    call warning('ELPH database not found. E-P scattering switched off')
    return
  endif

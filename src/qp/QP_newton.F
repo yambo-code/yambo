@@ -23,7 +23,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_ppa,l_el_corr,l_ph_corr,l_cohsex
+ use drivers,       ONLY:l_ppa,l_elel_corr,l_elph_corr,l_cohsex
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,&
@@ -66,7 +66,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    !
    ! GPL_EXCLUDE_END
    !
-   if (l_el_corr) then
+   if (l_elel_corr) then
      if (l_ppa.or.l_cohsex) then
        call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
      else
@@ -80,7 +80,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    !
 # if defined _ELPH 
    !
-   if (l_ph_corr)    call ELPH_Sigma_c(en,k,q,qp)
+   if (l_elph_corr)    call ELPH_Sigma_c(en,k,q,qp)
    !
 #endif
    !
@@ -99,7 +99,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
          Z(i2)=1._SP/(1._SP-QP_dSc(i1,i2))
          !
          Eqp(i2)=qp%E_bare(i1)+Z(i2)*QP_Sc(i1,1)
-         if (l_el_corr) Eqp(i2)=Eqp(i2)+Z(i2)*(QP_Vnl_xc(i1)-QP_Vxc(i1))
+         if (l_elel_corr) Eqp(i2)=Eqp(i2)+Z(i2)*(QP_Vnl_xc(i1)-QP_Vxc(i1))
          !
        enddo
        !

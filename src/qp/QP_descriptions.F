@@ -30,7 +30,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &                        COHSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver,&
 &                        use_GreenF_to_eval_QP,GF_is_causal,QP_G_Zoom_treshold
  use stderr,        ONLY:string_pack,gen_fmt
- use drivers,       ONLY:l_life,l_ppa,l_ph_corr,l_el_corr,l_cohsex
+ use drivers,       ONLY:l_life,l_ppa,l_elph_corr,l_elel_corr,l_cohsex
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_RIM_tot_nkpts
@@ -162,10 +162,10 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  !
  if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
    !
-   if (l_ph_corr) then
+   if (l_elph_corr) then
      !
      qp%n_descs=qp%n_descs+1
-     if (.not.l_el_corr) qp%n_descs=n_descs_save+1
+     if (.not.l_elel_corr) qp%n_descs=n_descs_save+1
      !
      if (trim(QP_solver)/='g') then
        write (qp%description(qp%n_descs),trim(&

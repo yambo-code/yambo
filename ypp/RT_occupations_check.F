@@ -22,7 +22,7 @@
 integer function RT_occupations_check(E,k)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use QP_m,           ONLY:OCC_ctl
@@ -51,7 +51,7 @@ integer function RT_occupations_check(E,k)
    !
  endif
  !
- if ((l_ph_corr.and.l_RT_CCA_Kernel).and..not.allocated(E_P_Hole_lifetime)) then
+ if ((l_elph_scatt.and.l_RT_CCA_Kernel).and..not.allocated(E_P_Hole_lifetime)) then
    allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
    allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
    allocate(E_P_El_abs_lifetime(SC_bands(1):SC_bands(2),RT_nk))
@@ -60,7 +60,7 @@ integer function RT_occupations_check(E,k)
    E_P_Ho_abs_lifetime=0._SP 
  endif
  !
- if (l_carrier_dynamics.and..not.allocated(E_E_Hole_lifetime)) then
+ if (l_elel_scatt.and..not.allocated(E_E_Hole_lifetime)) then
    allocate(E_E_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
    allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
  endif

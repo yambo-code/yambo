@@ -53,7 +53,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
-&                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_jumps,Dynamics_Kind,&
+&                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_jumps,&
 &                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,Gr_kind,two_alpha
  use fields,        ONLY:Efield
@@ -89,7 +89,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'setup',   '[R INI] Initialization') 
  call it('r',defs,'optics',  '[R OPT] Optics')
  call it('r',defs,'chi',     '[R CHI] Dyson equation for Chi.')
- call it('r',defs,'chik',    '[R CHI] Kernel for Chi')
  call it('r',defs,'bse',     '[R BSE] Bethe Salpeter Equation.')
  call it('r',defs,'bsk',     '[R BSK] Bethe Salpeter Equation kernel')
  call it('r',defs,'bss',     '[R BSS] Bethe Salpeter Equation solver')
@@ -121,6 +120,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  call it('r',defs,'collisions',      '[R] Eval the extended Collisions')
  call it('r',defs,'negf',            '[R] Real-Time dynamics') 
+ call it('r',defs,'el_el_scatt',     '[R] Electron-Electron Scattering')   
+ call it('r',defs,'el_ph_scatt',     '[R] Electron-Phonon   Scattering')   
 #endif
 #if defined _MAGNETIC
  call it('r',defs,'magnetic','[R] Magnetic fields')
@@ -131,8 +132,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'ras',    '[R] Reflectance anisotropy spectroscopy (RAS)')
 #endif
 #if defined _ELPH 
- call it('r',defs,'el_ph',   '[R] Electron-Phonon Correlation')   
- call it('r',defs,'el_el',   '[R] Electron-Electron Correlation') 
+ call it('r',defs,'el_ph_corr',   '[R] Electron-Phonon Correlation')   
+ call it('r',defs,'el_el_corr',   '[R] Electron-Electron Correlation') 
 #endif
  !
  !=======
@@ -306,7 +307,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'Integrator', '[RT] Integrator (RK2 | EULER | EULEREXP | RK2EXP ) ',Integrator_name)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit)
  call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit)
- call it(defs,'DynKind',    '[RT] Dynamics kind ((C)arriers/(P)olarization)',Dynamics_Kind)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic secant (HS)',Gr_kind,Verb_level=V_real_time)
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT')

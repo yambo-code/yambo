@@ -52,7 +52,6 @@ subroutine k_random(Xk,Xen)
  character(schlen) :: dump
  logical           :: No_Weight,l_skip_check,USE_BZ_RIM
  real(SP), allocatable :: rand_E(:,:,:)
- integer,  allocatable :: BZ_RIM_table_tmp(:,:)
  !
  ! Random Generator
  !

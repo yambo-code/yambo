@@ -21,7 +21,7 @@
 !
 subroutine RT_initialize(E,k,q)
  ! 
- use drivers,        ONLY:l_eval_collisions,l_ph_corr,l_carrier_dynamics
+ use drivers,        ONLY:l_eval_collisions,l_elph_scatt,l_elel_scatt
  use SC,             ONLY:local_V,SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
@@ -131,7 +131,7 @@ subroutine RT_initialize(E,k,q)
  !============== 
  !
  T_memory=0._SP
- if (l_ph_corr.and.NE_MEM_Treshold>0.) then
+ if (l_elph_scatt.and.NE_MEM_Treshold>0.) then
    T_memory=-1./minval( abs(E%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_Treshold)
    G_MEM_steps=T_memory/RT_step
  endif
@@ -204,7 +204,7 @@ subroutine RT_initialize(E,k,q)
  ! Electron-phonon
  ! ===============
  !
- if (l_ph_corr) then
+ if (l_elph_scatt) then
    !
    call section('=','El-Ph matrix elements loading and setup')
    !                 =======================================
@@ -286,8 +286,8 @@ subroutine RT_initialize(E,k,q)
  if (l_NE_simulate_RPA)   call msg( 'r','Simulate RPA               :',l_NE_simulate_RPA)
  if (l_NE_simulate_BSE)   call msg( 'r','Simulate BSE               :',l_NE_simulate_BSE)
  if (l_NE_simulate_TDDFT) call msg( 'r','Simulate TD-DFT            :',l_NE_simulate_TDDFT)
- if (l_ph_corr)           call msg( 'r','El-Ph Carrier scattering   :',l_ph_corr)
- if (l_carrier_dynamics)  call msg( 'r','El-El Carrier scattering   :',l_carrier_dynamics)
+ if (l_elph_scatt)        call msg( 'r','El-Ph Carrier scattering   :',l_elph_scatt)
+ if (l_elel_scatt)        call msg( 'r','El-El Carrier scattering   :',l_elel_scatt)
  !
  call msg( 'nr','---I/O---')
  call                          msg('r', 'Time between I/O`s     [fs]:',RT_IO_time/FS2AUT)
@@ -329,13 +329,13 @@ subroutine RT_initialize(E,k,q)
      logical :: COLLISIONS_checked
      !
      if (COLLISIONS_checked) then
-       if (l_eval_collisions.and..not.l_carrier_dynamics) then
+       if (l_eval_collisions.and..not.l_elel_scatt) then
          XCfrozen=.FALSE.
          if (Hfrozen) call warning('COLLISIONS used but Hartree frozen')
        endif
      endif
      !
-     if (l_carrier_dynamics) XCfrozen=.TRUE.
+     if (l_elel_scatt) XCfrozen=.TRUE.
      !
      l_NE_simulate_RPA     =.not.Hfrozen.and.     XCfrozen
      l_NE_simulate_IP      =     Hfrozen.and.     XCfrozen

@@ -21,7 +21,7 @@
 !
 subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
- use drivers,       ONLY:l_ph_corr,l_el_corr,l_life,l_cohsex
+ use drivers,       ONLY:l_elph_corr,l_elel_corr,l_life,l_cohsex
  use units,         ONLY:HA2EV,HBAR_eVfs
  use pars,          ONLY:SP,schlen,lchlen
  use com,           ONLY:msg
@@ -69,7 +69,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !============================================================
  !
  report_Sc=.not.QPdb_read_err==0.and..not.On_Mass_Shell_approx.and..not.use_GreenF_to_eval_QP
- report_Vnlxc=l_el_corr.and..not.l_life
+ report_Vnlxc=l_elel_corr.and..not.l_life
  report_dSc=.not.On_Mass_Shell_approx.and..not.trim(QP_solver)=='g'.and..not.use_GreenF_to_eval_QP.and..not.l_cohsex
  do_IO=.TRUE.
  if (l_life.or.QPdb_read_err==0) then
@@ -103,7 +103,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  else 
    call msg(' r','- E  : QP energy  - Z   : Renormalization factor')
    if (report_Sc) call msg(' r','- So : Sc(Eo)     - S   : Sc(E)')
-   if (l_ph_corr) call msg('r', '- Gm : Width [meV]- Gf  : Width [fs]')
+   if (l_elph_corr) call msg('r', '- Gm : Width [meV]- Gf  : Width [fs]')
    if (report_dSc) call msg('rn','- dSp: Sc derivative precision')
    if (report_Vnlxc) then
      call msg('r','- lXC: Starting Local XC ('//trim(Vxc_kind)//')')
@@ -163,7 +163,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
    ! GPL_EXCLUDE_START
    !
-   if (l_ph_corr) then
+   if (l_elph_corr) then
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' Gm='
      shadow(n_shadows)=aimag(qp%E(iqp))*HA2EV/1.E-3

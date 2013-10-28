@@ -241,13 +241,17 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  call OCCUPATIONS_Gaps(E)
  !
+ E%E_VBM=maxval(E%E(E%nbf  ,:,:))
+ E%E_CBm=minval(E%E(E%nbm+1,:,:))
+ !
  ! Mode = 1. Define E%f and exits
  !
  if (mode==1) return
  !
  ! Complete Report
  !
- call msg('r',  'Fermi Level        [ev]:',E%Efermi(1)*HA2EV)
+ call msg('r',  'Fermi Level        [ev]: ',E%Efermi(1)*HA2EV)
+ call msg('r',  'VBM / CBm          [ev]: ',(/E%E_VBM,E%E_CBm/)*HA2EV)
  call msg('r',  'Electronic Temp. [ev K]: ',(/Tel*HA2EV,Tel*HA2KEL/))
  call msg('r',  'Bosonic    Temp. [ev K]: ',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
  call msg('r',  'El. density      [cm-3]: ',(/nel/(DL_vol*BO2ANG**3*1.E-24)/))

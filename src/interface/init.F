@@ -31,7 +31,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use pars,           ONLY:schlen,lchlen
  use parser_m,       ONLY:parser
  use units,          ONLY:HA2EV
- use electrons,      ONLY:levels,E_reset
+ use electrons,      ONLY:levels,E_reset,n_sp_pol
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
@@ -60,7 +60,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use collisions_IO,  ONLY:io_COLLISIONS,V_kind
 #endif
 #if defined _RT
- use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe,Dynamics_Kind
+ use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe,Gr_kind
  use fields,         ONLY:Efield,i_Pump,i_Probe,Efield_reset,Efield_duplicate
 #endif
 #if defined _MAGNETIC
@@ -69,7 +69,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SURF
  use ras_module,     ONLY:lras, lreels
 #endif
- use openmp,         ONLY:OPENMP_initialize
  !
  implicit none
  !
@@ -92,6 +91,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_abinit,ioKB_pwscf,&
 &                     ioCOL_CUT
  logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
+ character(6)      :: X_size
  !
  integer, external :: ioE_RIM
  !
@@ -129,7 +129,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='YAMBO_SURF'
 #endif
  !
- ! CPU structure
+ !CPU structure
  !
  call PARALLEL_structure()
  !
@@ -137,7 +137,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call SET_logicals()
  !
- ! Presets (input)
+ !Presets (input)
  !
  init = 0
  !
@@ -432,38 +432,39 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh Threads NLogCPUs DBsIOoff EvalMagn')
+ call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh Threads NLogCPUs SkipWRITE EvalMagn')
  !
  !FFT
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,&
-&          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs WFbuffIO')
+&          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs')
  !
  ! CPU structure
  !
 #if defined _MPI || defined _BLUEGENE
  !
  if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa) then
-   if (l_optics) then
-     call CPU_activate("X_q_0")
-     call CPU_activate("X_finite_q")
-   else
-     call CPU_activate("X_all_q")
-   endif
+   call CPU_activate("X_q_0")
+   call CPU_activate("X_all_q")
+   if (l_alda_fxc) call CPU_activate("DENSITY")
  endif
  !
  if (l_HF_and_locXC) call CPU_activate("HF")
  !
  if (l_gw0) then
-   if (l_ph_corr) call CPU_activate("ELPH")
-   if (l_el_corr) call CPU_activate("GW")
+   if (l_elph_corr) call CPU_activate("ELPH")
+   if (l_elel_corr) call CPU_activate("GW")
  endif
  !
  if (l_eval_collisions) call CPU_activate("RT")
  !
  if (l_bse) call CPU_activate("BSE")
  !
- if (l_real_time) call CPU_activate("RT")
+ if (l_real_time) then
+   call CPU_activate("RT")
+   call CPU_activate("WF")
+   call CPU_activate("X_q_0")
+ endif
  !
  !
 #endif
@@ -516,7 +517,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Optics(not bse) nor GW (no PP)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
-   call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
+   X_size='NGsBlk'
+   if(l_rpa_IP) X_size='      '
+   call X_activate('Xd',(/X_size,'QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
    !
@@ -586,7 +589,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! Special project dependent variables
    !
 #if defined _ELPH 
-   if (l_ph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
+   if (l_elph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
 #endif
  endif
  !
@@ -623,7 +626,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_gw0.or.l_life) then
    !
-   if (l_el_corr) then
+   if (l_elel_corr) then
      !
      call QP_ctl_switch('X')
      call QP_ctl_switch('G')
@@ -650,7 +653,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_life) then
        call initactivate(1,'LifeTrCG')
-       if (l_el_corr) call X_activate('Xd',(/'BndsRn','NGsBlk',&
+       if (l_elel_corr) call X_activate('Xd',(/'BndsRn','NGsBlk',&
 &                                     'DmRnge','CGrdSp',&
 &                                     'DrudeW','EhEngy','LongDr'/)) 
      endif
@@ -660,12 +663,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call QP_ctl_switch('G')
    !
-   if (l_ph_corr) then
+   if (l_elph_corr) then
      call initactivate(1,'DysSolver')
      call initactivate(1,'GphBRnge ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQpts')
      call initactivate(1,'WRgFsq NewtDchk OnMassShell')
    endif
-   if (trim(QP_solver)=="g".and.l_ph_corr) then
+   if (trim(QP_solver)=="g".and.l_elph_corr) then
      call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
      call initactivate(-1,'WRgFsq NewtDchk GDamping ExtendOut OnMassShell')
    endif
@@ -698,26 +701,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call initactivate( 1,'Potential FFTGvecs Gauge SCBands EXXCut')
    !
-   if (l_eval_collisions) then
-     !
-     call initactivate( 1,'DynKind')
-     !
-   else if (.not.l_real_time) then
-     !
-     call initactivate( 1,'SCmixing SClwBand SCnlMix BandMix')
-     call initactivate(-1,'QpntsRXs')
-     if (l_cohsex) call initactivate(1,'GbndRnge UseEbands SCUpWIter')
-     call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
-     if (trim(SC_potential)=='EXX'.or.trim(SC_potential)=='EXXC'.or.&
-&        trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
-     call initactivate(1,'SCdiag Mean_Potential')
-   endif
+   call initactivate( 1,'SCmixing SClwBand SCnlMix BandMix')
+   call initactivate(-1,'QpntsRXs')
+   if (l_cohsex) call initactivate(1,'GbndRnge UseEbands SCUpWIter')
+   call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
+   if (trim(SC_potential)=='EXX'.or.trim(SC_potential)=='EXXC'.or.&
+&      trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
+   call initactivate(1,'SCdiag Mean_Potential')
    !
-   if (l_eval_collisions) then
-     call initactivate(-1,'GbndRnge UseEbands BandMix') 
-   else if (.not.l_real_time) then
-     call initactivate(1,'SCdiag Mean_Potential')
-   endif
  endif
 #endif
  !
@@ -725,12 +716,21 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! REAL-TIME specific
  !
+ if (l_eval_collisions.and..not.l_real_time) then
+   !
+   call initactivate(-1,'GbndRnge UseEbands BandMix SCUpWIter') 
+   call initactivate(-1,'SCIter SCEtresh SCRhoTresh TF_precondition')
+   !
+   call initactivate( 1,'Potential FFTGvecs Gauge SCBands EXXCut')
+   !
+ endif
+ !
  if (l_real_time) then
    call QP_ctl_switch('G')
    call initactivate(-1,'SCmixing')
-   call initactivate(1,'Integrator DynKind GrKind TwoAlpha RADLifeTime PhLifeTime RTmaxEn RTpumpEhEn RTpumpEhWd RTpumpNel') 
+   call initactivate(1,'Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTmaxEn RTpumpEhEn RTpumpEhWd RTpumpNel') 
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
-   if (l_ph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol UseDebyeE UpdtDebyeT ElPhModes')
+   if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol UseDebyeE UpdtDebyeT ElPhModes')
    call initactivate(1,'RTjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
    call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField SkipGFIO SkipOCCIO IOtime COLLISIONS_on_the_fly')
    if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
@@ -843,11 +843,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if(infile_verbosity==V_real_time.and.l_real_time) call DephMatrix_init()
 #endif
  !
- ! After input reading the number of threads could be eventually overwritten
- ! by the user-specified value
- !
- call OPENMP_initialize(.FALSE.)
- !
  if (infile_editing) return
  !
  ! Update Logicals (especially the write_to_log)
@@ -912,10 +907,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
    !
    subroutine CPU_activate(what)
-     character(*) :: what 
+     character(*) :: what ! X_q_0 X_all_q GW HF BSE DENSITY RT
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
-     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BSE") then
+     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_all_q".or.what=="BSE") then
        call initactivate(1,what//"_nCPU_invert")
      endif
      if (what=="BSE") then
@@ -978,7 +973,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _RT
        l_eval_collisions=runlevel_is_on('collisions')
-       l_carrier_dynamics =trim(Dynamics_Kind)=="C"
+       l_elel_scatt =runlevel_is_on('el_el_scatt')
+       l_elph_scatt=runlevel_is_on('el_ph_scatt')
 #endif
 #if defined  _SURF
        lreels=runlevel_is_on('reels')
@@ -989,19 +985,19 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! Only in this case ioELPH_err is defined
          !
-         l_ph_corr=runlevel_is_on('el_ph').and.(ioELPH_err==0.or.l_real_time)
+         l_elph_corr=runlevel_is_on('el_ph_corr').and.(ioELPH_err==0.or.l_real_time)
          ! GPL_EXCLUDE_START
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.ioELPH_err==0
          ! GPL_EXCLUDE_END
        else
-         l_ph_corr=runlevel_is_on('el_ph')
+         l_elph_corr=runlevel_is_on('el_ph_corr')
          ! GPL_EXCLUDE_START
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
          ! GPL_EXCLUDE_END
        endif
-       l_el_corr=runlevel_is_on('el_el')
+       l_elel_corr=runlevel_is_on('el_el_corr')
 #else
-       l_el_corr=l_gw0.or.l_life
+       l_elel_corr=l_gw0.or.l_life
 #endif
        !
        ! Check if this runlevel is allowed in the 
@@ -1058,13 +1054,20 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SURF
      X(3)%iq = 1  ! 2 components
      X(3)%ordering = 'c'
-     Xw(3)%n_freqs = 101 
+     Xw(3)%n = 101 ! 2 components
 #endif 
 #if defined  _ELPH 
-     if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
+     if (.not.l_elel_corr.and..not.l_elph_corr) l_elel_corr=.true.
      elph_nDBs_used=elph_nDBs
 #endif
-#if defined _RT 
+#if defined _RT
+     ! Default collisions are COHSEX, but it is possible to define something different
+     if (l_eval_collisions.and..not.l_real_time.and..not.l_sc_run) then
+       call initactivate(1,'scpot')
+       SC_potential='COHSEX'
+       call initactivate(1,'em1s cohsex HF_and_locXC')
+     endif
+     !
      if (l_real_time) then
        call switch_off_runlevel('cohsex',on_name=' ')
        call switch_off_runlevel('HF_and_locXC',on_name=' ')
@@ -1073,12 +1076,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_em1s        =.FALSE.
        l_HF_and_locXC=.FALSE.
      endif
+     !
 #endif
-     if (l_gw0.and.l_el_corr) call initactivate(1,'HF_and_locXC')
-    !
+     if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
+     !
      if (l_ppa)    call initactivate(1,'em1d')
      if (l_gw0.and..not.l_ppa.and..not.l_cohsex.and..not.&
-&        l_HF_and_locXC.and..not.l_ph_corr)  &
+&        l_HF_and_locXC.and..not.l_elph_corr)  &
 &                  call initactivate(1,'em1d')
      if (l_cohsex) call initactivate(1,'em1s')
      if (l_W_eh)   call initactivate(1,'em1s')
@@ -1150,7 +1154,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call W_duplicate(Xw(4),Xw(2))
      endif
 #if !defined _ELPH 
-     if (l_gw0) l_el_corr=.true.
+     if (l_gw0) l_elel_corr=.true.
 #endif
      !
 #if defined _RT 
@@ -1365,7 +1369,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if (trim(QP_solver)/='n'.and.trim(QP_solver)/='s'.and.&
 &            trim(QP_solver)/='g') QP_solver='n'
 #if !defined  _ELPH 
-         l_el_corr=.true.
+         l_elel_corr=.true.
 #endif
          !
        endif
@@ -1442,15 +1446,15 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
 #if defined  _ELPH 
        if ( trim(rstr_piece(i1)) == 'corrtp' ) then
-         if ( trim(rstr_piece(i1+1)) == 'e') l_el_corr=.true.
-         if ( trim(rstr_piece(i1+1)) == 'p') l_ph_corr=.true.
+         if ( trim(rstr_piece(i1+1)) == 'e') l_elel_corr=.true.
+         if ( trim(rstr_piece(i1+1)) == 'p') l_elph_corr=.true.
          if ( trim(rstr_piece(i1+1)) == 'b') then
-           l_el_corr=.true.
-           l_ph_corr=.true.
+           l_elel_corr=.true.
+           l_elph_corr=.true.
          endif
-         if (.not.l_ph_corr.and..not.l_el_corr) l_el_corr=.true.
-         if (l_ph_corr) call initactivate(1,'el_ph')
-         if (l_el_corr) call initactivate(1,'el_el')
+         if (.not.l_elph_corr.and..not.l_elel_corr) l_elel_corr=.true.
+         if (l_elph_corr) call initactivate(1,'el_ph_corr')
+         if (l_elel_corr) call initactivate(1,'el_el_corr')
        endif
 #endif
        !
@@ -1460,6 +1464,29 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if ( trim(rstr_piece(i1)) == 'negf' ) then
          if ( trim(rstr_piece(i1+1)) == 'p' ) l_RT_probe=.true.
          if ( trim(rstr_piece(i1+1)) == 'pp') l_RT_pump_and_probe=.true.
+       endif
+       !
+       if ( trim(rstr_piece(i1)) == 'scattp' ) then
+         if ( trim(rstr_piece(i1+1)) == 'e') l_elel_scatt=.true.
+         if ( trim(rstr_piece(i1+1)) == 'p') l_elph_scatt=.true.
+         if ( trim(rstr_piece(i1+1)) == 'b') then
+           l_elel_scatt=.true.
+           l_elph_scatt=.true.
+         endif
+         if (.not.l_elph_scatt.and..not.l_elel_scatt) l_elel_scatt=.true.
+         if (l_elph_scatt) call initactivate(1,'el_ph_scatt')
+         if (l_elel_scatt) call initactivate(1,'el_el_scatt')
+       endif
+       !
+       if ( trim(rstr_piece(i1)) == 'collisions' ) then
+         if ( trim(rstr_piece(i1+1)) == 'c') l_elel_corr=.true.
+         if ( trim(rstr_piece(i1+1)) == 's') l_elel_scatt=.true.
+         if ( trim(rstr_piece(i1+1)) == 'b') then
+           l_elel_corr=.true.
+           l_elel_scatt=.true.
+         endif
+         if (l_elel_corr)  call initactivate(1,'el_el_corr')
+         if (l_elel_scatt) call initactivate(1,'el_el_scatt')
        endif
 #endif
        !

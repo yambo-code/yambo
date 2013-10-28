@@ -61,7 +61,7 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
 #if defined _SURF
         lras.or.lreels.or.&
 #endif
-        (l_gw0.and..not.l_ppa.and.l_el_corr).or.l_life
+        (l_gw0.and..not.l_ppa.and.l_elel_corr).or.l_life
  if (apply_QP)  call QP_apply(X(3)%ib,Xen,Xk,"X",msg_fmt='s')
 #if defined _SC
  if (apply_QP)  apply_QP=.not.l_sc_run.and..not.l_real_time
@@ -79,7 +79,7 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  !
  ! - Plasmon Pole X -
  !
- apply_QP=(l_em1d.and.l_ppa).or.(l_gw0.and.l_ppa.and.l_el_corr)
+ apply_QP=(l_em1d.and.l_ppa).or.(l_gw0.and.l_ppa.and.l_elel_corr)
  if (apply_QP)  call QP_apply(X(4)%ib,Xen,Xk,"X",msg_fmt='s')
 #if defined _SC
  if (apply_QP)  apply_QP=.not.l_sc_run.and..not.l_real_time
@@ -98,7 +98,7 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  !
  ! - Green's Function (k+q levels loaded for the _ELPH)
  !
- if (l_gw0.and.l_ph_corr) then
+ if (l_gw0.and.l_elph_corr) then
    call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt='s')
  endif
  !

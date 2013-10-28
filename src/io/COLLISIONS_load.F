@@ -25,7 +25,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! exchange, COHSEX etc.. and store them together 
  !
  use pars,            ONLY:IP,SP,LP
- use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_eval_collisions,l_sc_srpa,l_carrier_dynamics 
+ use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_eval_collisions,l_sc_srpa,l_elel_scatt 
  use LIVE_t,          ONLY:live_timing
  use global_XC,       ONLY:SC_HF,SC_COHSEX
  use QP_m,            ONLY:QP_n_states
@@ -77,7 +77,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      ! In the carrier dynamics only the HF part is not needed
      !
-     if (l_carrier_dynamics.and.V_kind/=SC_COHSEX) cycle
+     if (l_elel_scatt.and.V_kind/=SC_COHSEX) cycle
      !
      call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
      io_err(iv)=io_COLLISIONS(0,ID)
@@ -111,7 +111,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    !
    i_qp_mem=PAR_QP_index(i_qp)
    !
-   if (.not.l_carrier_dynamics) then
+   if (.not.l_elel_scatt) then
      !
      allocate(COLLISIONS(i_qp_mem)%table(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
 &                                        COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
@@ -129,7 +129,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      ! In the carrier dynamics only the HF part is not needed
      !
-     if (l_carrier_dynamics.and.V_kind/=SC_COHSEX) cycle
+     if (l_elel_scatt.and.V_kind/=SC_COHSEX) cycle
      !
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
      io_err(iv)=io_COLLISIONS(i_qp,ID)
@@ -140,7 +140,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        do i2=COLLISIONS_range(2,1),COLLISIONS_range(2,2)
          do i3=COLLISIONS_range(3,1),COLLISIONS_range(3,2)
            !
-           if (l_carrier_dynamics) then
+           if (l_elel_scatt) then
              ic=ic+1
              COLLISIONS_disk(i1,i2,i3)=COLLISIONS_disk(i1,i2,i3)+COLLISIONS_v(ic)
            else
@@ -157,7 +157,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
    enddo
    !
-   if (l_carrier_dynamics) then
+   if (l_elel_scatt) then
      allocate(COLLISIONS(i_qp_mem)%v3(PAR_nQPp,nsym,PAR_nQ))
    else
      n_tot_rho_states=sum(int(COLLISIONS(i_qp_mem)%table(:,:,:),IP))
@@ -169,7 +169,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    do i1=COLLISIONS_range(1,1),COLLISIONS_range(1,2)
      do i2=COLLISIONS_range(2,1),COLLISIONS_range(2,2)
        do i3=COLLISIONS_range(3,1),COLLISIONS_range(3,2)
-         if (l_carrier_dynamics) then
+         if (l_elel_scatt) then
            if (.not.PAR_IND_QPp%element_1D(i1)) cycle
            if (.not.PAR_IND_Q%element_1D(i3)) cycle
            i_qpp_mem=PAR_QPp_index(i1)
@@ -191,7 +191,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  call live_timing()
  !
- if (l_carrier_dynamics) then
+ if (l_elel_scatt) then
    call mem_est("QP_COLLISIONS",(/size(COLLISIONS(1)%v3)*PAR_nQP/),(/2*SP/))
  else
    call mem_est("QP_COLLISIONS_table",(/size(COLLISIONS(1)%table)*PAR_nQP/),(/LP/))

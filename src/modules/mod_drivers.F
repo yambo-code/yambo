@@ -40,12 +40,16 @@ module drivers
  logical :: l_sc_run
  logical :: l_sc_magnetic
  logical :: l_eval_collisions
- logical :: l_carrier_dynamics  
  !
  ! The self-energy correlation "kind"
  !
- logical :: l_el_corr
- logical :: l_ph_corr
+ logical :: l_elel_corr
+ logical :: l_elph_corr
+ !
+ ! The non-eq. self-energy scattering "kind"
+ !
+ logical :: l_elel_scatt
+ logical :: l_elph_scatt
  !
  ! Electron-Phonon specific flags 
  !

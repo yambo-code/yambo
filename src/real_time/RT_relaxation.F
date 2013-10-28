@@ -30,7 +30,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use units
  use pars,           ONLY:SP,cI,cZERO
  use electrons,      ONLY:levels,spin_occ
- use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
  use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait
@@ -53,7 +53,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  logical          :: l_evaluate,l_interpolate,l_save
  real(SP)         :: f_k(SC_bands(2))
  !
- if(.not.RT_is_dumped.and..not.l_ph_corr.and..not.l_carrier_dynamics) return 
+ if(.not.RT_is_dumped.and..not.l_elph_scatt.and..not.l_elel_scatt) return 
  !
  Sigma_relax=cZERO
  !
@@ -87,7 +87,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! El-El
  !=======
- if (l_carrier_dynamics.and.l_evaluate) then
+ if (l_elel_scatt.and.l_evaluate) then
    !
    E_E_Hole_lifetime=0._SP
    E_E_Electron_lifetime=0._SP
@@ -106,9 +106,9 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! El-Ph
  !=======
- if (l_ph_corr.and.l_evaluate) then
+ if (l_elph_scatt.and.l_evaluate) then
    !
-   if (l_RT_CCA_Kernel.and.l_ph_corr) then
+   if (l_RT_CCA_Kernel.and.l_elph_scatt) then
      E_P_Hole_lifetime=0._SP
      E_P_Electron_lifetime=0._SP
      E_P_El_abs_lifetime=0._SP
@@ -133,10 +133,10 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! I make copies of the k-resolved matrix. In the future a completely independet
  ! k loop could be implemented
  !
- if (l_ph_corr.or.l_carrier_dynamics) then
+ if (l_elph_scatt.or.l_elel_scatt) then
    if (l_evaluate) then
      do ik=1,RT_nk
-       if (l_carrier_dynamics) then
+       if (l_elel_scatt) then
          call PP_redux_wait(E_E_Electron_lifetime(:,ik))
          call PP_redux_wait(E_E_Hole_lifetime(:,ik))
          if (l_save) then
@@ -144,7 +144,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
            SAVED_lifetime(:,ik,2, it_relative)=E_E_Electron_lifetime(:,ik)
          endif
        endif
-       if (l_RT_CCA_Kernel.and.l_ph_corr) then
+       if (l_RT_CCA_Kernel.and.l_elph_scatt) then
          call PP_redux_wait(E_P_Electron_lifetime(:,ik))
          call PP_redux_wait(E_P_Hole_lifetime(:,ik))
          call PP_redux_wait(E_P_El_abs_lifetime(:,ik))
@@ -160,11 +160,11 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    else if (l_interpolate) then
      do ik=1,RT_nk
        do ib1=SC_bands(1),SC_bands(2)
-         if (l_carrier_dynamics) then
+         if (l_elel_scatt) then
            call RT_Lifetimes_Interpolation(E_E_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,1,:))
            call RT_Lifetimes_Interpolation(E_E_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,2,:))
          endif
-         if (l_RT_CCA_Kernel.and.l_ph_corr) then
+         if (l_RT_CCA_Kernel.and.l_elph_scatt) then
            call RT_Lifetimes_Interpolation(E_P_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,3,:))
            call RT_Lifetimes_Interpolation(E_P_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,4,:))
            call RT_Lifetimes_Interpolation(E_P_Ho_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,5,:))
@@ -186,11 +186,11 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  do ik=1,RT_nk
    do ib1=SC_bands(1),SC_bands(2)
      f_k(ib1)=-cI*G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps))/spin_occ
-     if (l_carrier_dynamics) then
+     if (l_elel_scatt) then
        Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+E_E_Hole_lifetime(ib1,ik)*(f_k(ib1)-1._SP)+&
 &                                                      E_E_Electron_lifetime(ib1,ik)*f_k(ib1)
      endif
-     if (l_RT_CCA_Kernel.and.l_ph_corr) then
+     if (l_RT_CCA_Kernel.and.l_elph_scatt) then
        Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+&
 &                             (E_P_Hole_lifetime(ib1,ik)+E_P_Ho_abs_lifetime(ib1,ik))*(f_k(ib1)-1._SP)+&
 &                             (E_P_Electron_lifetime(ib1,ik)+E_P_El_abs_lifetime(ib1,ik))*f_k(ib1)

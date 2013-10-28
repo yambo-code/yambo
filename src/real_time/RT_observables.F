@@ -23,7 +23,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  use pars,           ONLY:SP,cI,zero_dfl
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex,l_carrier_dynamics
+ use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex,l_elel_scatt
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands,it_now,RT_nk,RT_Nk_ibz,RT_ibz_coo
  use X_m,            ONLY:P_square
@@ -85,7 +85,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
    !
  endif
  !
- if(l_sc_hf.or.(l_sc_cohsex.and..not.l_carrier_dynamics).and..not.l_NE_simulate_IP) then
+ if(l_sc_hf.or.(l_sc_cohsex.and..not.l_elel_scatt).and..not.l_NE_simulate_IP) then
    !
    call RT_average_operator(VALUE=Ex,O_QP=QP_Vnl_xc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
    !
@@ -110,7 +110,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
      !
      call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
      !
-   else if(l_sc_cohsex.and..not.l_carrier_dynamics) then
+   else if(l_sc_cohsex.and..not.l_elel_scatt) then
      !      
      call RT_average_operator(VALUE=Exc,O_QP=QP_Sc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
      !

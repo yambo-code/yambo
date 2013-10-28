@@ -241,7 +241,8 @@ module QP_CTL_m
        do i_spin=1,n_sp_pol
          QP_ctl_input_or_impose(i_spin)%W(1:3)=(/QP_ctl_Wc(Eid,1,i_spin)/HA2EV,&
 &                                                QP_ctl_Wc(Eid,2,i_spin),QP_ctl_Wc(Eid,3,i_spin)*HA2EV/)
-         QP_ctl_input_or_impose(i_spin)%W_E_ref(:)=(/QP_ctl_Wc_E_ref(Eid,i_spin),QP_ctl_Wv_E_ref(Eid,i_spin)/)
+         QP_ctl_input_or_impose(i_spin)%W_E_ref(:)=(/QP_ctl_Wc_E_ref(Eid,i_spin)+en%E_CBm,&
+&                                                             QP_ctl_Wv_E_ref(Eid,i_spin)+en%E_VBM/)
          QP_ctl_input_or_impose(i_spin)%W(4:6)=(/QP_ctl_Wv(Eid,1,i_spin)/HA2EV,&
 &                                                QP_ctl_Wv(Eid,2,i_spin),QP_ctl_Wv(Eid,3,i_spin)*HA2EV/)
          QP_ctl_input_or_impose(i_spin)%Z=QP_ctl_Z(Eid,i_spin)

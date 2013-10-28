@@ -54,7 +54,7 @@
   {"DESC",   " ","       (hf/sex only eh-space; lrc only G-space)",0,0,0,0,0},
   {"bss",    "y","BSE solver [opt=h/d/(p/f)i/t]",0,0,1,0,0},                      
   {"DESC",   " ","       (h)aydock/(d)iagonalization/(i)nversion",0,0,0,0,0},
-  {"rim_cut","c","Coulomb interaction",0,0,0,0,0},  
+  {"rim_cut","r","Coulomb interaction",0,0,0,0,0},  
   {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0,0},      
   {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0,0},     
   {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0,0},        
@@ -64,18 +64,17 @@
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
 #if defined _RT
-  {"collisions_IO",  "e","Evaluate the extended Collisions",0,0,0,0,0}, 
+  {"negf",   "q","Real-time dynamic [opt=(n)one,(p)robe,(pp)ump & probe]",0,0,1,0,0}, 
+  {"collisions", "e","Evaluate Collisions [opt=(s)cattering/(c)orrelation/(b)oth]",0,0,1,0,0}, 
+  {"scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/(b)oth]",0,0,1,0,0},
 #endif
 #if defined _ELPH 
-  {"corrtp", "s","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0,0},    
+  {"corrtp", "c","Correlation [opt=(e)lectrons/(p)honons/(b)oth]",0,0,1,0,0},
   {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0,0},    
 #endif
 #if defined _SC | defined _MAGNETIC | defined _RT
   {"scpot",  "v","Self-Consistent Potential",0,0,1,0,0}, 
   {"DESC",   " ","opt=(hf),(c)ohsex,(exx),(exxc),(srpa),(h)artree,(d)ef",0,0,0,0,0},
-#endif
-#if defined _RT 
-  {"negf",   "q","Real-time dynamic [opt=(n)one,(p)robe,(pp)ump & probe]",0,0,1,0,0}, 
 #endif
 #if defined _MAGNETIC 
   {"magnetic", "m","Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0,0}, 

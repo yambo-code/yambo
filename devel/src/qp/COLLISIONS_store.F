@@ -26,7 +26,7 @@ subroutine COLLISIONS_store(i_qp)
  use collisions_IO,   ONLY:COLLISIONS_cutoff,TEMP_COLLISIONS_v,COLLISIONS_table,&
 &                          COLLISIONS_v,n_collisions,io_COLLISIONS,COLLISIONS_range
  use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL,IO_and_Messaging_switch
- use drivers,         ONLY:l_carrier_dynamics
+ use drivers,         ONLY:l_elel_scatt
  !
  implicit none                                              
  !
@@ -50,7 +50,7 @@ subroutine COLLISIONS_store(i_qp)
      do i3=COLLISIONS_range(3,1),COLLISIONS_range(3,2)
        local_condition=&
 &         abs(TEMP_COLLISIONS_v(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0&
-&         .or.l_carrier_dynamics
+&         .or.l_elel_scatt
        if (local_condition) ic=ic+1
      enddo
    enddo
@@ -65,7 +65,7 @@ subroutine COLLISIONS_store(i_qp)
      do i3=COLLISIONS_range(3,1),COLLISIONS_range(3,2)
        local_condition=&
 &         abs(TEMP_COLLISIONS_v(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0&
-&         .or.l_carrier_dynamics
+&         .or.l_elel_scatt
        if (local_condition) then
          ic=ic+1
          COLLISIONS_table(i1,i2,i3)=1

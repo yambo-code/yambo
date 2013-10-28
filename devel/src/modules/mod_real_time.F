@@ -35,8 +35,6 @@ module real_time
  logical           :: l_RT_pump_and_probe  
  logical           :: l_Dynamics_is_over  
  !
- character(schlen) :: Dynamics_Kind ! (C)arriers/(P)olarization
- !
  ! Inital XC (SC or default) are requested
  !
  logical           :: l_RT_needs_XC0
@@ -194,6 +192,7 @@ module real_time
  integer           :: two_alpha
  real(SP)          :: Gr_QP_width
  character(schlen) :: Gr_kind
+ character(lchlen) :: Gr_description(5) 
  real(SP),    allocatable :: Gr_ee_matrix(:,:,:,:)
  real(SP),    allocatable :: Gr_ep_matrix(:,:,:,:)
  !
@@ -309,7 +308,7 @@ module real_time
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,schlen
-     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda,l_ph_corr,l_carrier_dynamics,&
+     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda,l_elph_scatt,l_elel_scatt,&
 &                             l_sc_cohsex         
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n, &
@@ -343,7 +342,7 @@ module real_time
      allocate(RT_occupations(SC_bands(1):SC_bands(2),RT_nk))
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
      !
-     if (l_carrier_dynamics) then
+     if (l_elel_scatt) then
        allocate(E_E_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
        allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
        call mem_est("RT_E_E_lifetimes",(/2*size(E_E_Hole_lifetime)/),(/SP/))
@@ -351,7 +350,7 @@ module real_time
        E_E_Electron_lifetime=0._SP
      endif
      !
-     if (l_RT_CCA_Kernel.and.l_ph_corr) then
+     if (l_RT_CCA_Kernel.and.l_elph_scatt) then
        allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
        allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
        allocate(E_P_El_abs_lifetime(SC_bands(1):SC_bands(2),RT_nk))
@@ -364,7 +363,7 @@ module real_time
      endif
      !
      if (RT_dynamics_jumps>0) then
-       if (l_carrier_dynamics.or.l_RT_CCA_Kernel.or.l_ph_corr) then
+       if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt) then
          allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
          call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
        endif
@@ -373,7 +372,7 @@ module real_time
      allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
      !
-     if(RT_is_dumped.or.l_ph_corr) then
+     if(RT_is_dumped.or.l_elph_scatt) then
        allocate(Sigma_relax(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
        call mem_est("Sigma_relax",(/size(Sigma_relax)/),(/2*SP/))
      endif

@@ -21,7 +21,7 @@
 !
 subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
- use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_carrier_dynamics 
+ use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_elel_scatt 
  use com,           ONLY:error
  use pars,          ONLY:schlen,SP,IP
  use electrons,     ONLY:levels
@@ -82,7 +82,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call mem_est("fragment_status",(/QP_n_states/),(/IP/))
  endif
  !
- if (l_HF_and_locXC.and..not.l_carrier_dynamics) then
+ if (l_HF_and_locXC.and..not.l_elel_scatt) then
    !
    call section('+','Hartree-Fock')
    !================================
@@ -120,7 +120,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    ! PARALLEL Setup
    !================
    call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
-   if (l_carrier_dynamics) then
+   if (l_elel_scatt) then
      call PARALLEL_global_indexes(E,k,q,"Real_Time")
    else
      call PARALLEL_global_indexes(E,k,q,"GW")

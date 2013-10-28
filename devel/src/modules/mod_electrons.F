@@ -66,6 +66,8 @@ module electrons
    real(SP)        :: Efermi(3)
    real(SP)        :: E_dir_gap(2) ! 1-2 refers to spin polarizations
    real(SP)        :: E_ind_gap(2)
+   real(SP)        :: E_VBM        ! Valence    Band Maximum
+   real(SP)        :: E_CBm        ! Conduction Band minimum
    !
    ! QP corrections
    !
@@ -120,6 +122,8 @@ module electrons
        Eo%kf=Ei%kf
        Eo%sf=Ei%sf
        Eo%Efermi=Ei%Efermi
+       Eo%E_VBM=Ei%E_VBM
+       Eo%E_CBm=Ei%E_CBm
        Eo%E_dir_gap=Ei%E_dir_gap
      endif
      allocate(Eo%E(Eo%nb,Eo%nk,n_sp_pol),Eo%f(Eo%nb,Eo%nk,n_sp_pol))
@@ -173,6 +177,8 @@ module electrons
      type(levels)::E
      E%E_dir_gap=0.
      E%Efermi=0.
+     E%E_VBM=0.
+     E%E_CBm=0.
      E%nb=0
      E%nk=0
      E%nbf=0 

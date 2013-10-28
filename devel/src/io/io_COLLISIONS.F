@@ -35,7 +35,7 @@ integer function io_COLLISIONS(i_qp,ID,X)
  use fragments,     ONLY:io_fragment,Fragments_Restart,Fragments_Synchronize
  use X_m,           ONLY:X_t,n_X_descs,X_description
  use stderr,        ONLY:intc
- use drivers,       ONLY:l_carrier_dynamics
+ use drivers,       ONLY:l_elel_scatt
  !
  implicit none
  !
@@ -94,8 +94,8 @@ integer function io_COLLISIONS(i_qp,ID,X)
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
    !
    if (ver_is_gt_or_eq(ID,revision=1428)) then
-     call io_elemental(ID,L0=l_carrier_dynamics,&
-&         VAR=' Carriers dynamics only          :',CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,L0=l_elel_scatt,&
+&         VAR=' Electron-Electron scattering    :',CHECK=.true.,OP=(/"=="/))
    endif
    !
    call io_elemental(ID,R0=SC_band_mixing,&

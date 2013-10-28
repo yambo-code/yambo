@@ -24,7 +24,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
- use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr,l_cohsex,Finite_Tel
+ use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
@@ -74,9 +74,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! S_x/Vxc are always need if not l_life or el. correlations is
  ! skipped
  !==============================================================
- if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_el_corr.and..not.l_life) return
+ if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_elel_corr.and..not.l_life) return
  !
- if (.not.l_el_corr.and..not.l_ph_corr) then
+ if (.not.l_elel_corr.and..not.l_elph_corr) then
    call warning('Both e-p and e-e correlation switched off')
    return
  endif
@@ -105,7 +105,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]:',QP_G_er*HA2EV)
    call msg('rn','[Green] Sc damping range                             [ev]:',QP_G_dr*HA2EV)
    !
-   GF_is_causal=Finite_Tel.or.l_ph_corr 
+   GF_is_causal=Finite_Tel.or.l_elph_corr 
    !
  else if (.not.l_life) then
    return
@@ -142,7 +142,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    ! GPL_EXCLUDE_START
    !
-   if (l_ph_corr) QP_DB_kind=SE_POLARON 
+   if (l_elph_corr) QP_DB_kind=SE_POLARON 
    !
    if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA
    !
@@ -296,11 +296,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  if (trim(QP_solver)=='g') then
    !
-   if (l_el_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   if (l_elel_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
    !
 # if defined _ELPH 
    !
-   if (l_ph_corr)                                    call ELPH_Sigma_c(en,k,q,qp)
+   if (l_elph_corr)                                    call ELPH_Sigma_c(en,k,q,qp)
    !
 #endif
    !
@@ -361,7 +361,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      call mem_est("QP_Sc",(/size(QP_Sc)/))
      !
 #if defined _ELPH
-     if (l_ph_corr) then
+     if (l_elph_corr) then
        if (On_Mass_Shell_approx) then
          allocate(QP_OMS_Fan(QP_n_states))
          call mem_est("QP_OMS_Fan",(/size(QP_OMS_Fan)/))

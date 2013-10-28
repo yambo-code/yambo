@@ -50,7 +50,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use X_m,           ONLY:X_t
- use drivers,       ONLY:l_real_time,l_eval_collisions,l_ph_corr
+ use drivers,       ONLY:l_real_time,l_eval_collisions,l_elph_corr,l_elph_scatt
  use matrix_operate,ONLY:matrix_linear_index
  use BS,            ONLY:BS_bands
 #if defined _ELPH
@@ -592,7 +592,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    !
    iq_range(2)=nqibz
 #if defined _ELPH
-   if (ENVIRONMENT=="ELPH".and.l_ph_corr) then
+   if (ENVIRONMENT=="ELPH".and.(l_elph_corr.or.l_elph_scatt)) then
      if (     elph_use_q_grid) iq_range(2)=nqbz
      if (.not.elph_use_q_grid) iq_range(2)=elph_nDBs_used
    endif

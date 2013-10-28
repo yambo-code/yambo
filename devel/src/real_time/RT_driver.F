@@ -22,7 +22,7 @@
 subroutine RT_driver(E,X,k,q)
  !
  use pars,           ONLY:SP,cI
- use drivers,        ONLY:l_eval_collisions,l_ph_corr,l_carrier_dynamics 
+ use drivers,        ONLY:l_eval_collisions,l_elph_scatt,l_elel_scatt 
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use LIVE_t,         ONLY:live_timing 
@@ -68,11 +68,11 @@ subroutine RT_driver(E,X,k,q)
  real(SP)          :: E_previous,E_now
  complex(SP)       :: on_the_fly_operators(8)
  !
- if (l_ph_corr.and.l_carrier_dynamics) then
+ if (l_elph_scatt.and.l_elel_scatt) then
    call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph AND e-e scattering')
- else if (l_ph_corr) then
+ else if (l_elph_scatt) then
    call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph scattering')
- else if (l_carrier_dynamics) then
+ else if (l_elel_scatt) then
    call section('*',trim(SC_potential)//' Real-Time Dynamics including e-e scattering')
  else
    call section('*',trim(SC_potential)//' Real-Time Dynamics')
@@ -160,7 +160,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Collisions
  !
- if((.not.local_V.and..not.l_NE_simulate_IP).or.l_carrier_dynamics) then
+ if((.not.local_V.and..not.l_NE_simulate_IP).or.l_elel_scatt) then
    !
    if (l_STORE_COLLISIONS) then
      !
@@ -175,7 +175,7 @@ subroutine RT_driver(E,X,k,q)
  ! qindx_X and qindx_S not needed in real-time 
  ! they are used only in dipoles and collisions calculations
  !
- if (.not.l_ph_corr.and..not.l_carrier_dynamics) call qindx_free()
+ if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free()
  !
  ! Calculation already done
  !
@@ -211,7 +211,7 @@ subroutine RT_driver(E,X,k,q)
  call RT_output(what="initialize")
  call RT_output(what="open dyn cur pol")
  if(l_NE_with_fields) call RT_output(what="open pot occ")
- if (l_ph_corr.or.l_carrier_dynamics) call RT_output('open life')
+ if (l_elph_scatt.or.l_elel_scatt) call RT_output('open life')
  !
  ! Loop on time
  !==============
@@ -290,7 +290,7 @@ subroutine RT_driver(E,X,k,q)
    !==========================
    call RT_current_AND_polarization(k,E,G_lesser(:,:,:,it_mem),A_vecpot)
    !
-   if ( (l_ph_corr.or.l_carrier_dynamics) .and. do_output) then
+   if ( (l_elph_scatt.or.l_elel_scatt) .and. do_output) then
      !
      ! Mean Carrier Lifetimes
      !=======================

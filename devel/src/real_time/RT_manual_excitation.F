@@ -47,7 +47,11 @@ subroutine RT_manual_excitation(E,k)
  ! Possibility to pump by hand one or more electrons up
  !======================================================
  !
- if (Eh_pumped_pair_energy(2)<=0._SP .or. Eh_pumped_Nel<=0._SP  ) return
+ if (Eh_pumped_Nel<=0._SP  ) return
+ !
+ ! Shift energy with respect to VBM/CBm
+ Eh_pumped_pair_energy(1)=Eh_pumped_pair_energy(1)+E%E_VBM
+ Eh_pumped_pair_energy(2)=Eh_pumped_pair_energy(2)+E%E_CBm
  !
  delta_Nel=0._SP
  coeff=0._SP
@@ -68,9 +72,9 @@ subroutine RT_manual_excitation(E,k)
          if (Pumped_state(ib,ik)) cycle
          !
          if (i1==0) then
-           if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(1)-E%Efermi(2))<local_E_window) i1=ib
+           if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(1))<local_E_window) i1=ib
          else
-           if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(2)-E%Efermi(2))<local_E_window) then
+           if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(2))<local_E_window) then
              if(i1==ib) cycle
              Pumped_state(i1,ik)=.TRUE.
              Pumped_state(ib,ik)=.TRUE.

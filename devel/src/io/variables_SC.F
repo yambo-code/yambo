@@ -22,7 +22,7 @@
 integer function variables_SC(ID,local_description,what)
  !
  use pars,           ONLY:lchlen
- use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use units,          ONLY:AU2Tesla,DEG2RAD,FS2AUT,AU2KWCMm2,HA2EV
  use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
@@ -38,7 +38,7 @@ integer function variables_SC(ID,local_description,what)
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_IO_time,                  &
 &                         RT_IO_steps,l_RT_induced_field,l_NE_simulate_BSE,G_MEM_steps,&
-&                         l_RT_CCA_Kernel,RT_IO_steps_DB,&
+&                         l_RT_CCA_Kernel,RT_IO_steps_DB,Gr_description,&
 &                         RT_dynamics_jumps,Life_MEM_steps,l_RT_uses_E_RIM
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
@@ -58,10 +58,11 @@ integer function variables_SC(ID,local_description,what)
  ! Work Space
  !
  integer               :: SC_kind_disk,SC_perturbation_disk,&
-&                         io_status_save,i1,i_desc,local_size,VAR_SIZE,N_Gr_descs
+&                         io_status_save,i1,i_desc,local_size,VAR_SIZE
  logical               :: CHECK_,l_J,l_G,l_occupations,l_NE_with_fields_disk,l_MP
- logical               :: l_G_retarded_DB
- character(lchlen)     :: ch,Gr_description(100)
+ character(lchlen)     :: ch
+ integer               :: N_Gr_descs=5
+ logical               :: l_G_retarded_DB=.false.
  !
  l_J =.FALSE.
  l_G =.FALSE.
@@ -200,7 +201,7 @@ integer function variables_SC(ID,local_description,what)
  if (ver_is_gt_or_eq(ID,revision=1121)) then
    call io_elemental(ID,VAR="ELPH_vars",VAR_SZ=4,MENU=0) 
    i_desc=i_desc+1
-   call io_elemental(ID,L0=l_ph_corr,&
+   call io_elemental(ID,L0=l_elph_scatt,&
 &     VAR=" [ELPH] Electron-phonon          :", CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
@@ -223,7 +224,7 @@ integer function variables_SC(ID,local_description,what)
  if (ver_is_gt_or_eq(ID,revision=1455)) then
    call io_elemental(ID,VAR="CARRIER_scattering_vars",VAR_SZ=1,MENU=0) 
    i_desc=i_desc+1
-   call io_elemental(ID,L0=l_carrier_dynamics,&
+   call io_elemental(ID,L0=l_elel_scatt,&
 &     VAR=" [CARRIERS] Coulomb scattering   :", CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -397,7 +398,8 @@ integer function variables_SC(ID,local_description,what)
    !
    ! G retarded variables
    !======================
-   if (ver_is_gt_or_eq(ID,revision=2450).and..not.ver_is_gt_or_eq(ID,revision=2780)) then
+   if (ver_is_gt_or_eq(ID,revision=2450).and.&
+&     (.not.ver_is_gt_or_eq(ID,revision=2780).or.ver_is_gt_or_eq(ID,revision=2822)) ) then
      call io_elemental(ID,VAR="G_retarded_BASE",VAR_SZ=2,MENU=0) 
      call io_elemental(ID,L0=l_G_retarded_DB)
      if(l_G_retarded_DB) call error('Gret DB is not implemented anymore.')

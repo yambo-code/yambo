@@ -37,7 +37,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  use pars,           ONLY:SP,cI,cZERO,rZERO
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_contains_lda,l_ph_corr,l_carrier_dynamics
+ use drivers,        ONLY:l_sc_contains_lda,l_elph_scatt,l_elel_scatt
  use com,            ONLY:msg,warning,error
  use QP_m,           ONLY:QP_nk,COHSEX_use_empties,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol
@@ -47,7 +47,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_RT_CCA_Kernel,&
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,&
-&                         Gr_kind,l_RT_uses_E_RIM
+&                         Gr_kind,Gr_description,l_RT_uses_E_RIM
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,&
 &                         rho_convergence,H_rotate,V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
@@ -144,7 +144,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! To restart from RT only the G_lesser is necessary
  !
  RESTART                = io_G ==0
- if (l_ph_corr.and..not.l_RT_CCA_Kernel) RESTART = io_G==0.and.io_THETA==0
+ if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = io_G==0.and.io_THETA==0
  !
  SC_DB_present =  all((/io_E==0,io_WF==0,io_V==0,.not.l_RT_uses_E_RIM/))
  !
@@ -344,7 +344,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
    io_OCCUPATIONS=io_RT_components('occupations',ID_OCCUPATIONS)
    !
-   if (l_ph_corr.and..not.l_RT_CCA_Kernel) then
+   if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(7))
      io_THETA=io_RT_components('THETA',ID(7))
    endif
@@ -361,7 +361,7 @@ subroutine RT_start_and_restart(E,k,q,X)
      call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
      io_G=io_RT_components('G',ID(5))
      !
-     if (l_ph_corr.and..not.l_RT_CCA_Kernel) then
+     if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(7))
        io_THETA=io_RT_components('THETA',ID(7))
      endif
@@ -427,12 +427,22 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Retarded Green Functions matrix
  ! ===============================
  !
- if (l_ph_corr.or.l_carrier_dynamics) then
+ if (l_elph_scatt.or.l_elel_scatt) then
    !
    ! With    the RIM this cannot be not used, on the fly Gret for el-ph
    ! Without the RIM this implementation could be faster
-   !if (l_ph_corr)          call RT_G_retarded_EP_initialize(E,k)
-   if (l_carrier_dynamics) call RT_G_retarded_EE_initialize(E,k,q)
+   !if (l_elph_scatt)          call RT_G_retarded_EP_initialize(E,k)
+   if (l_elel_scatt) call RT_G_retarded_EE_initialize(E,k,q)
+   !
+   Gr_description(1)=' [Gr] Retarded Green`s function  : '//trim(Gr_kind)
+   Gr_description(2)=' [Gr] Damping (c) Energy ref [eV]: '//trim(real2ch(QP_ctl_Wc_E_ref(3,1)*HA2EV))
+   Gr_description(3)=' [Gr] Damping (c) [eV,adim,eV^-1]: '//&
+&                    trim(real2ch(QP_ctl_Wc(3,1,1)))//' '//&
+&                    trim(real2ch(QP_ctl_Wc(3,2,1)))//' '//trim(real2ch(QP_ctl_Wc(3,3,1)))
+   Gr_description(4)=' [Gr] Damping (v) Energy ref [eV]: '//trim(real2ch(QP_ctl_Wv_E_ref(3,1)*HA2EV))
+   Gr_description(5)=' [Gr] Damping (v) [eV,adim,eV^-1]: '//&
+&                    trim(real2ch(QP_ctl_Wv(3,1,1)))//' '//&
+&                    trim(real2ch(QP_ctl_Wv(3,2,1)))//' '//trim(real2ch(QP_ctl_Wv(3,3,1)))
    !
  endif
  !

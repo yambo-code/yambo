@@ -49,14 +49,12 @@ integer function io_COLLISIONS(i_qp,ID,X)
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
  integer               :: V_kind_disk,i_desc,VAR_size
  character(lchlen)     :: V_kind_string,X_string
- character(schlen)     :: desc,db_string
- !
- db_string=" "
+ character(schlen)     :: desc
  !
  if(V_kind==SC_HF) then
-   db_name     = trim(db_string)//"COLLISIONS_Vbare"
+   db_name     = "COLLISIONS_Vbare"
  elseif(V_kind==SC_COHSEX) then
-   db_name     = trim(db_string)//"COLLISIONS_Wstatic"
+   db_name     = "COLLISIONS_Wstatic"
  else
    call error("COLLISIONS I/O : Unknown database type ")
  endif

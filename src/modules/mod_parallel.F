@@ -257,9 +257,9 @@ module parallel_m
  integer, private   :: local_type
  !
  interface PP_redux_wait
-   module procedure l1share,i1share,i18share,i2share,i3share,r0share,&
+   module procedure l1share,i0share,i1share,i18share,i2share,i3share,r0share,&
 &                   r1share,r2share,r3share,c0share,c1share,c2share,&
-&                   c3share,c4share,PARALLEL_wait
+&                   c3share,c4share,ch0share,PARALLEL_wait
  end interface PP_redux_wait
  !
  interface pp_bcast
@@ -420,6 +420,34 @@ module parallel_m
 #endif
    end subroutine
    !
+   subroutine i0share(val,imode,COMM)
+     integer:: val
+     integer, optional :: imode,COMM
+#if defined _MPI
+     integer ::omode,LOCAL_COMM
+     integer ::lval    ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     call mpi_barrier(LOCAL_COMM,i_err)
+     if (present(imode)) then
+       if (imode==1) omode=mpi_sum
+       if (imode==2) omode=mpi_prod
+     else
+       omode=mpi_sum
+     endif
+     lval=0
+     call mpi_allreduce(val,lval,1,mpi_integer,omode,LOCAL_COMM,i_err)
+     val=lval
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
    subroutine i1share(array,imode,COMM)
      integer(4):: array(:)
      integer, optional :: imode,COMM
@@ -534,6 +562,30 @@ module parallel_m
      call mpi_allreduce(array(1,1,1),larray,dimension,mpi_integer,mpi_sum,LOCAL_COMM,i_err)
      array=reshape(larray,dimensions)
      deallocate(larray)
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
+   subroutine ch0share(chval,COMM)
+     use pars,      ONLY:lchlen
+     character(lchlen) :: chval
+     integer, optional :: COMM
+#if defined _MPI
+     integer          :: LOCAL_COMM   ! Work Space
+     character(lchlen):: local_chval  ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     call mpi_barrier(LOCAL_COMM,i_err)
+     local_chval=' '
+     call mpi_allreduce(chval,local_chval,lchlen,MPI_CHARACTER,mpi_sum,LOCAL_COMM,i_err)
+     chval=local_chval
      call mpi_barrier(LOCAL_COMM,i_err)
 #endif
    end subroutine

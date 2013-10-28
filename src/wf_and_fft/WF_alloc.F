@@ -23,7 +23,7 @@ subroutine WF_alloc(WF)
  !
  use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx
  use memory_m,      ONLY:mem_est
- use FFT_m,         ONLY:fft_size,fftw_plan,fft_dim
+ use FFT_m,         ONLY:fft_size,fftw_plan
  use interfaces,    ONLY:PARALLEL_live_message
  implicit none
  !

@@ -12,7 +12,7 @@ MODULE timing_m
  !
  USE pars,          ONLY:SP,DP
  USE com,           ONLY:error
- USE parallel_m,    ONLY:ncpu,PP_redux_wait
+ USE parallel_m,    ONLY:ncpu,PP_redux_wait,mpi_comm_world
  !
  IMPLICIT NONE
  PRIVATE
@@ -321,7 +321,7 @@ MODULE timing_m
        CALL PP_redux_wait( total_time )
        total_time = total_time / REAL( ncpu, SP )
        !
-       CALL PP_redux_wait( call_number )
+       CALL PP_redux_wait( call_number, COMM=mpi_comm_world )
        call_number = NINT ( call_number / REAL( ncpu, SP ) )
        !
      ENDIF

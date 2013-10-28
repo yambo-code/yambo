@@ -30,7 +30,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index,&
-&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X
+&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
  use wave_func,     ONLY:WF_buffered_IO,WF
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP,&
 &                        IO_and_Messaging_switch,io_X
@@ -171,7 +171,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    ! Only the cpus that write the q=1 component knows the value of ng_db this must 
    ! be initialized for all the cpus
    !
-   if (iq> iq_to_start) then
+   if (iq>iq_to_start) then
      X%ng_db=X%ng
      call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
    endif
@@ -184,7 +184,10 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
  enddo
  !
- call PP_redux_wait()
+ ! X%ngostnts is defined only for the group of CPU's that
+ ! eval q=1 and must be spread to all CPUs to allow futrher I/O
+ !
+ call PP_redux_wait(X%ngostnts,COMM=PAR_COM_Q_INDEX%COMM)
  !
  ! CLEAN (2)
  !

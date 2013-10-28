@@ -291,7 +291,6 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'nr','---I/O---')
  call                          msg('r', 'Time between I/O`s     [fs]:',RT_IO_time/FS2AUT)
- if (l_eval_collisions)   call msg( 'r','Extended collisions  [eval]:',l_eval_collisions)
  if (l_eval_collisions)   call msg( 'r','Extended collisions   [I/O]:',io_COLLs)
  !
  call msg( 'nr','---Damping and retarded GF---')

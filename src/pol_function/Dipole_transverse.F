@@ -30,7 +30,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_CON_BANDS_X,PAR_IND_DIPk_ibz,&
 &                              PAR_DIPk_ibz_index,PAR_IND_VAL_BANDS_X,&
 &                              PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_CON_BANDS_X_ID,&
-&                              PAR_IND_Xk_ibz_ID,PAR_COM_q_for_Xo,PAR_COM_k_for_P,myid,PAR_B_mat_index,&
+&                              PAR_IND_Xk_ibz_ID,PAR_COM_q_for_Xo,PAR_COM_k_for_P,&
 &                              PAR_IND_B_mat,PAR_IND_B_mat_ID,PAR_IND_WF_k
  use D_lattice,           ONLY:alat
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,PP_free,  &

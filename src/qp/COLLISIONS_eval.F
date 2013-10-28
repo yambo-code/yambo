@@ -26,7 +26,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use pars,          ONLY:schlen,SP,IP
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:i_time_rev,nsym
+ use D_lattice,     ONLY:i_time_rev
  use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk,QP_n_G_bands,QP_state
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
@@ -41,8 +41,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
  use fragments,     ONLY:fragment_status
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,    ONLY:PAR_nQPp,PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_QPp
- use parser_m,      ONLY:parser
+ use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_QPp
+ use X_m,           ONLY:X_t
  !
  implicit none
  type(levels)  :: E
@@ -54,7 +54,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  integer           ::ID
  character(schlen) ::ch
- logical           ::l_COLLISIONS_on_the_fly
  !
  call section('*','Extended collisions')
  !=======================================
@@ -123,8 +122,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QPp)
    else
      call PARALLEL_global_indexes(E,k,q,"GW")
-     !call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
-     !call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,QP_index=PAR_IND_QP)
    endif
    call PARALLEL_WF_index( )
    !

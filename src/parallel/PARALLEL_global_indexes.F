@@ -52,7 +52,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use X_m,           ONLY:X_t
- use drivers,       ONLY:l_real_time,l_eval_collisions,l_ph_corr
+ use drivers,       ONLY:l_eval_collisions,l_ph_corr
  use matrix_operate,ONLY:matrix_linear_index
  use BS,            ONLY:BS_bands
 #if defined _ELPH
@@ -64,7 +64,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 #endif
  use electrons,     ONLY:levels
  use stderr,        ONLY:intc
- use com,           ONLY:error,secnm
+ use com,           ONLY:error
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
  use IO_m,          ONLY:IO_and_Messaging_switch
  use QP_m,          ONLY:QP_n_states,QP_nb,QP_table,QP_n_G_bands
@@ -81,7 +81,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  ! Work Space
  !
  integer       :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2
- logical       :: reset_all,l_evaluating_em1s
+ logical       :: reset_all
  character(10) :: WHAT
  !
  ! Resets...

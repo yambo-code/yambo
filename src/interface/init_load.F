@@ -36,7 +36,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
- use R_lattice,     ONLY:ng_closed,n_g_shells,QP_states_k,nXkibz,&
+ use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
@@ -54,7 +54,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_jumps,Dynamics_Kind,&
-&                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
+&                        RT_ave_dephasing,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,Gr_kind,two_alpha
  use fields,        ONLY:Efield
 #endif

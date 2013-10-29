@@ -29,7 +29,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:n_nodes,ncpu,n_MPI,n_chains,PARALLEL_message,n_CPU_str_max
- use openmp,         ONLY:n_threads,OPENMP_initialize,OPENMP_update
+ use openmp,         ONLY:n_threads,OPENMP_initialize,OPENMP_update,master_thread
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
  implicit none
@@ -45,7 +45,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call section('*','CPU structure, Files & I/O Directories') 
  !
  call OPENMP_initialize(.FALSE.)
- call OPENMP_update()
+ call OPENMP_update(master_thread)
  !
  ! Buffered I/O ?
  !

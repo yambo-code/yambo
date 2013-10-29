@@ -26,6 +26,7 @@ module LIVE_t
  use pars,     ONLY:schlen
  use pars,     ONLY:lchlen
  use stderr,   ONLY:log_as_a_file
+ use openmp,   ONLY:master_thread
  implicit none
  !
  ! What is running ?
@@ -89,6 +90,7 @@ module LIVE_t
      character(*),optional :: message
      integer     ,optional :: steps
      logical     ,optional :: SERIAL
+     if (.not.master_thread) return
      if (.not.live_timing_is_on) return
      if (present(message).and.present(steps)) then
        if (present(SERIAL))      call live_timing_activate(message,steps)
@@ -201,7 +203,7 @@ module LIVE_t
      if (ncpu/=1.and.add_cpu_id.and.(index(lfmt_,"n")>0.or.index(lfmt_,"r")>0.)) then
        write (message_composed,'(a,i4.4,2a)') 'P',myid+1,': ',trim(message)
      endif
-     add_cput=live_timing_is_on
+     add_cput=live_timing_is_on.and.master_thread
      if (present(CPU_TIME)) then
        add_cput=CPU_TIME
      endif

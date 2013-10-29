@@ -22,6 +22,7 @@
 subroutine SET_logicals()
  !
  use pars,       ONLY:schlen
+ use drivers,    ONLY:l_eval_collisions
  use parallel_m, ONLY:IO_write_default,master_cpu,myid,master_cpu,myid,INTER_CHAIN,n_log_CPUs,ncpu
  use com,        ONLY:write_to_of,write_to_report
  use fragments,  ONLY:Parallel_Fragments
@@ -68,5 +69,7 @@ subroutine SET_logicals()
    if (any((/"J","j"/)==trim(ch_piece(i_ch)))) io_J=.FALSE.
    if (any((/"OCCs","occs","OCCS"/)==trim(ch_piece(i_ch)))) io_OCCs=.FALSE.
  enddo
+ !
+ if (l_eval_collisions) io_X=.TRUE.
  !
 end subroutine

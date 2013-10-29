@@ -1470,10 +1470,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if ( trim(rstr_piece(i1)) == 'scattp' ) then
          if ( trim(rstr_piece(i1+1)) == 'e') l_elel_scatt=.true.
          if ( trim(rstr_piece(i1+1)) == 'p') l_elph_scatt=.true.
-         if ( trim(rstr_piece(i1+1)) == 'b') then
-           l_elel_scatt=.true.
-           l_elph_scatt=.true.
-         endif
          if (.not.l_elph_scatt.and..not.l_elel_scatt) l_elel_scatt=.true.
          if (l_elph_scatt) call initactivate(1,'el_ph_scatt')
          if (l_elel_scatt) call initactivate(1,'el_el_scatt')

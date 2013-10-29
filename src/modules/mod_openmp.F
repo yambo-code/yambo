@@ -30,8 +30,11 @@ module OPENMP
  !
  integer     :: n_threads = 0
  integer     :: n_threads_now = 0
+ logical     :: master_thread=.TRUE.
  !
 #if defined _OPENMP
+ !
+!$OMP threadprivate(master_thread)
  !
  integer, external :: omp_get_num_threads
  integer, external :: omp_get_thread_num
@@ -68,20 +71,17 @@ module OPENMP
 #endif
    end subroutine
    !
-   subroutine OPENMP_update()
+   subroutine OPENMP_update(master_)
      !
-     !n_threads_now=n_threads
+     logical :: master_
+     integer :: threads_
+     master_=.TRUE.
+     n_threads_now=1
 #if defined _OPENMP
-     if ( OPENMP_master_thread() )  n_threads_now =   omp_get_num_threads()
+     n_threads_now =   omp_get_num_threads()
+     master_ = ( omp_get_thread_num() == 0)
 #endif
+     !
    end subroutine
-   !
-   logical function OPENMP_master_thread()
-        OPENMP_master_thread = .TRUE.
-#if defined _OPENMP
-        OPENMP_master_thread = ( omp_get_thread_num() == 0)
-#endif
-   end function
-   !
    !
 end module openmp

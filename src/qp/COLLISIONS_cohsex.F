@@ -57,7 +57,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  ! Work Space
  !
  integer                  ::i_qp1,i_qp2,i1,i2,iqbz,iqibz,alloc_err,iqs,&
-&                           i_n,i_k,i_k_s,i_k_sp,&
+&                           i_n,i_k,i_k_s,i_k_sp,X_range(2),&
 &                           i_np,i_kmq,i_kmq_s,i_kmq_sp,i_kmq_G0,&
 &                           i_m,i_p,i_p_s,i_p_sp,i_p_star,&
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp2_mem,i_qp1_mem
@@ -91,7 +91,11 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  !
  ! WFs...
  !
- call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-SC')
+ if (l_elel_scatt) then
+   call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,QP_nb/),(/1,k%nibz/),title='-SC')
+ else
+   call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-SC')
+ endif
  !
  ! Plasmon-Pole/Static interaction DB I/O
  !

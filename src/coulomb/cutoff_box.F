@@ -38,7 +38,7 @@ subroutine cutoff_box(q,is_cut)
  use interfaces,    ONLY:PARALLEL_index
  use LIVE_t,        ONLY:live_timing
  use zeros,         ONLY:k_iku_zero,G_iku_zero
- use openmp,        ONLY:OPENMP_update,n_threads_now,OPENMP_master_thread
+ use openmp,        ONLY:OPENMP_update,n_threads_now,master_thread
  !
  implicit none
  logical      ::is_cut(3)
@@ -96,9 +96,9 @@ subroutine cutoff_box(q,is_cut)
  ! 
  ! Local Threads involved
  !
- call OPENMP_update()
+ call OPENMP_update(master_thread)
  !
- if (OPENMP_master_thread()) call live_timing('Box',px%n_of_elements(myid+1)/n_threads_now)
+ call live_timing('Box',px%n_of_elements(myid+1)/n_threads_now)
  !
 !$omp do
  do ig=1,wf_ng
@@ -143,12 +143,14 @@ subroutine cutoff_box(q,is_cut)
      !
      V_cut(iq,ig)=V_cut(iq,ig)/nq_looped
      !
-     if (OPENMP_master_thread()) call live_timing(steps=1)
+     call live_timing(steps=1)
      !
    enddo
  enddo
 !$omp end do
 !$omp end parallel
+ !
+ call OPENMP_update(master_thread)
  !
  call live_timing()
  !

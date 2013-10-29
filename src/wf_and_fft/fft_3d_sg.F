@@ -45,7 +45,6 @@ subroutine fft_3d(c,n,fft_sign)
  !
  use pars,          ONLY:DP
 #if defined _TIMING
- use openmp,        ONLY:OPENMP_master_thread
  use timing_m,      ONLY:timing
 #endif
  implicit none
@@ -59,7 +58,7 @@ subroutine fft_3d(c,n,fft_sign)
  integer     :: i, j, k
  !
 #if defined _TIMING
- if (OPENMP_master_thread()) call timing('FFT',OPR='start')
+ call timing('FFT',OPR='start')
 #endif
  !
  ! ln(:):memory dimension of Z. ndi must always be greater or
@@ -110,7 +109,7 @@ subroutine fft_3d(c,n,fft_sign)
 #endif
  !
 #if defined _TIMING
- if (OPENMP_master_thread()) call timing('FFT',OPR='stop')
+ call timing('FFT',OPR='stop')
 #endif
  !
  deallocate(zi)

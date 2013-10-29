@@ -13,6 +13,7 @@ MODULE timing_m
  USE pars,          ONLY:SP,DP
  USE com,           ONLY:error
  USE parallel_m,    ONLY:ncpu,PP_redux_wait,mpi_comm_world
+ USE openmp,        ONLY:master_thread
  !
  IMPLICIT NONE
  PRIVATE
@@ -85,6 +86,8 @@ MODULE timing_m
      CHARACTER(5)                          :: opr_
      LOGICAL                               :: found
      INTEGER                               :: index
+     !
+     if (.not.master_thread) return
      !
      IF ( LEN( TRIM(name)) == 0 )  CALL error('timing: Invalid name')
      opr_ = " "

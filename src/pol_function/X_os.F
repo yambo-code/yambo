@@ -31,7 +31,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
  use parallel_m,    ONLY:PP_redux_wait,PAR_Xk_bz_index,PAR_COM_q_for_Xo
- use openmp,        ONLY:OPENMP_update,n_threads_now,OPENMP_master_thread
+ use openmp,        ONLY:OPENMP_update,n_threads_now,master_thread
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load,PARALLEL_WF_distribute
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
@@ -146,22 +146,22 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 !$omp parallel default(shared), &
 !$omp &        private( i_cg, Drude_pole,GreenF,n_poles, i_bg, Xo_residual, &
 !$omp &                 ikbz,iv,ic,i_spin,ik,is,ikpbz,ikp,isp, eh_occ, ik_bz_mem, &
-!$omp &                 rhotw_save, isave, ig1,ig2, iw), &
+!$omp &                 rhotw_save, isave, ig1,ig2, iw ), &
 !$omp &        firstprivate( isc )
  !
- call OPENMP_update() 
+ call OPENMP_update(master_thread) 
  !
  ! Timing
  !========
  ! 
 #if defined _SC 
  if (l_sc_run.and..not.l_eval_collisions) then
-   if (OPENMP_master_thread()) call live_timing('Xo @it'//trim(intc(it_now)),coarse_grid_N/n_threads_now)
+   call live_timing('Xo @it'//trim(intc(it_now)),coarse_grid_N/n_threads_now)
  else
-   if (OPENMP_master_thread()) call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_now)
+   call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_now)
  endif
 #else
- if (OPENMP_master_thread()) call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_now)
+ call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_now)
 #endif
  !
  ! Here I prepare the scattering module
@@ -281,7 +281,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      !
    enddo
    !
-   if (OPENMP_master_thread()) call live_timing(steps=1)
+   call live_timing(steps=1)
    !
  enddo 
 !$omp end do
@@ -293,9 +293,11 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  deallocate(isc%rhotw)
  deallocate(Xo_residual)
  !
- if (OPENMP_master_thread()) call live_timing()
+ call live_timing()
  !
 !$omp end parallel
+ !
+ call OPENMP_update(master_thread) 
  !
 #if defined _TIMING
  call timing('Xo (procedure)',OPR='stop')

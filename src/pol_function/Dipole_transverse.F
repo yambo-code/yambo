@@ -168,7 +168,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
          if (Dipole_bands_ordered) then
            if (.not.PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)) cycle 
          else
+#if defined _SC
            if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ic,iv))) cycle
+#endif
          endif
          !
          rho(:)=(0._SP,0._SP)

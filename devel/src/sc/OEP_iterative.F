@@ -45,8 +45,8 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  use collision,       ONLY:collision_reset 
  use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,      ONLY:PARALLEL_index
- use wave_func,       ONLY:WF_load,wf,wf_state
+ use interfaces,      ONLY:PARALLEL_index,WF_load
+ use wave_func,       ONLY:WF
  use SC,              ONLY:it_now,OEP_steps,OEP_threshold,SC_bands,l_oep_EWeight,E_bare
  use drivers,         ONLY:l_oep_exact,l_oep_slater,l_oep_kli,l_oep_ceda
  use LIVE_t,          ONLY:LIVE_message
@@ -104,22 +104,22 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
      V_resp = 0._SP
      do ik = 1, nkibz 
        do iv1 = 1, E%nbf 
-         ifft = wf_state(iv1,ik,1)
+         ifft = WF%index(iv1,ik,1)
          do iv2 = 1, max_bands
            if  (l_oep_kli.and.(iv1.ne.iv2)) cycle
            if  ((iv1.eq.iv2).and.(ik.eq.ik_max).and.&
                 &((iv2.eq.E%nbf).or.(abs(E%E(iv2,ik_max,1)-E%E(E%nbf,ik_max,1)).lt.1.e-4))) cycle 
-           offt = wf_state(iv2,ik,1)
+           offt = WF%index(iv2,ik,1)
            DeltaEps = 0._SP
            do ir = 1, fft_size
-             DeltaEps = DeltaEps + conjg(wf(ir,offt))*wf(ir,ifft)*V_nm1(ir)-&
-&             U(ik,iv2,ir)*conjg(wf(ir,ifft))
+             DeltaEps = DeltaEps + conjg(WF%c(ir,offt))*WF%c(ir,ifft)*V_nm1(ir)-&
+&             U(ik,iv2,ir)*conjg(WF%c(ir,ifft))
            end do
            if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+ E%Efermi(1) 
            if ((l_oep_EWeight).and.(iv2.gt.E%nbf)) &
            &EWeight = EWeight*((E%E(iv2,ik,1)-E%E(iv1,ik,1))/(E%E(iv2,ik,1)+ E%Efermi(1)))    
            V_resp(:) = V_resp(:) + E%f(iv1,ik,1)*k%weights(ik)*real((DeltaEps)*&
-                &conjg(wf(:,ifft))*wf(:,offt))/EWeight
+                &conjg(WF%c(:,ifft))*WF%c(:,offt))/EWeight
          end do
        end do
      end do

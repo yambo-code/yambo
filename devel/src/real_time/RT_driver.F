@@ -28,7 +28,8 @@ subroutine RT_driver(E,X,k,q)
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,X_alloc
- use wave_func,      ONLY:WF_load,WF_free
+ use wave_func,      ONLY:WF
+ use interfaces,     ONLY:WF_load
  use R_lattice,      ONLY:bz_samp,qindx_free
  use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho,&
 &                         SC_QP_setup
@@ -42,12 +43,12 @@ subroutine RT_driver(E,X,k,q)
  use memory_m,        ONLY:mem_est
  use com,             ONLY:error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
- use collisions_IO,   ONLY:collisions_IO_alloc,collisions_IO_free,collisions_RANGES_setup,l_STORE_COLLISIONS
+ use collisions_IO,   ONLY:collisions_IO_alloc,collisions_IO_free,collisions_RANGES_setup
  use collision,       ONLY:free_COLLISIONS_v
  use QP_CTL_m,        ONLY:QP_apply
- use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
+ use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k
- use IO_m,            ONLY:IO_and_Messaging_switch
+ use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  !
  implicit none
  !
@@ -100,16 +101,16 @@ subroutine RT_driver(E,X,k,q)
  !
  call SC_QP_setup(E)
  !
- ! Parallel Setups (I)
- !=====================
+ ! Parallel Setups
+ !=================
  !
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
- call PARALLEL_global_indexes(E,k,q,"Response_G_space_Zero_Momentum",RESET=.FALSE.,X=X(1))
- call PARALLEL_global_indexes(E,k,q,"Wave_Functions",RESET=.FALSE.)
  call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
+ call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_index( )
  !
  ! Dipoles
- !========
+ !=========
  !
  ! before loading the WF in R-space I check and/or calculate
  ! the optical collisions that are done in G-space and would
@@ -127,9 +128,7 @@ subroutine RT_driver(E,X,k,q)
  ! WFs loading
  !=============
  !
- call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
- !
- call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
+ call WF_load(WF,WF_G_max,WF_Go_indx,(/1,SC_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
  !
  ! QP-corrections 
  !================
@@ -144,7 +143,7 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_alloc(E)
  !
- if (l_STORE_COLLISIONS) then
+ if (io_COLLs) then
    !
    call collisions_RANGES_setup()
    !
@@ -162,7 +161,7 @@ subroutine RT_driver(E,X,k,q)
  !
  if((.not.local_V.and..not.l_NE_simulate_IP).or.l_elel_scatt) then
    !
-   if (l_STORE_COLLISIONS) then
+   if (io_COLLs) then
      !
      if (.not.l_eval_collisions) call error('COLLISIONs database missing')
      !
@@ -185,7 +184,7 @@ subroutine RT_driver(E,X,k,q)
    !
    call collisions_IO_free() 
    !
-   call WF_free()
+   call WF_free(WF)
    !
    call X_alloc("P_square")
    !
@@ -197,7 +196,7 @@ subroutine RT_driver(E,X,k,q)
  !
  if(l_NE_simulate_IP) then  
    !
-   call WF_free()
+   call WF_free(WF)
    !
    call mem_est("rho_reference rho")
    !
@@ -386,7 +385,7 @@ subroutine RT_driver(E,X,k,q)
  !
  call collisions_IO_free() 
  !
- call WF_free()
+ call WF_free(WF)
  !
  if(.not.local_V.and..not.l_NE_simulate_IP) call free_COLLISIONS_v()
  !

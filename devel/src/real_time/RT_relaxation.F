@@ -180,14 +180,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  call RT_impose_N_conservation(E,k)
  !
- !DEBUG>
- !if (l_RT_uses_E_RIM) then
- !  write (100,'(5f20.10)') Time/FS2AUT,sum(E_P_Electron_lifetime(5:7,1))*HA2EV
- !else
- !  write (200,'(5f20.10)') Time/FS2AUT,sum(E_P_Electron_lifetime(5:7,1))*HA2EV
- !endif
- !DEBUG<
- !
  ! Dephasing Matrix
  !==================
  !

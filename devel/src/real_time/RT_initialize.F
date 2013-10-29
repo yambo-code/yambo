@@ -34,12 +34,11 @@ subroutine RT_initialize(E,k,q)
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
 &                         l_RT_induced_field,RT_dynamics_jumps,l_NE_simulate_TDDFT, &
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
-&                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
-&                         G_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,             &
-&                         l_RT_skip_JandP_IO,Gr_kind,RIM_ibz_coo,   &
+&                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,            &
+&                         G_MEM_steps,Gr_kind,RIM_ibz_coo,   &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,Fluence,          &
 &                         l_RT_uses_E_RIM,RIM_bz_coo
- use collisions_IO,  ONLY:l_STORE_COLLISIONS
+ use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
@@ -64,9 +63,6 @@ subroutine RT_initialize(E,k,q)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RTfreezeH',            Hfrozen)
  call parser('RTfreezeXC',           XCfrozen)
- call parser('SkipGFIO',             l_RT_skip_GF_IO)
- call parser('SkipOCCIO',            l_RT_skip_OCC_IO)
- call parser('SkipJPIO',             l_RT_skip_JandP_IO)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
  !
  l_RT_CCA_Kernel=.not.l_Full_RT_T_evolution
@@ -135,8 +131,8 @@ subroutine RT_initialize(E,k,q)
  !============== 
  !
  T_memory=0._SP
- if (l_elph_scatt.and.NE_MEM_Treshold>0.) then
-   T_memory=-1./minval( abs(E%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_Treshold)
+ if (l_elph_scatt.and.NE_MEM_treshold>0.) then
+   T_memory=-1./minval( abs(E%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_treshold)
    G_MEM_steps=T_memory/RT_step
  endif
  !
@@ -295,8 +291,7 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'nr','---I/O---')
  call                          msg('r', 'Time between I/O`s     [fs]:',RT_IO_time/FS2AUT)
- if (l_eval_collisions)   call msg( 'r','Extended collisions  [eval]:',l_eval_collisions)
- if (l_STORE_collisions)  call msg( 'r','Extended collisions   [I/O]:',l_STORE_COLLISIONS)
+ if (l_eval_collisions)   call msg( 'r','Extended collisions   [I/O]:',io_COLLs)
  !
  call msg( 'nr','---Damping and retarded GF---')
  call msg( 'r','Retarded Green`s function   :',Gr_kind)

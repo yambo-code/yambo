@@ -199,6 +199,7 @@ module X_m
      X%ng=1
      X%ng_db=0 
      X%iq=(/1,-1/)
+     X%ngostnts=0
      X%whoami=0
      X%Vnl_included=.false.
      if (present(type)) X%whoami=type

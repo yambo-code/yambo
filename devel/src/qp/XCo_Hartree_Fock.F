@@ -36,15 +36,21 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use collision,     ONLY:ggwinfo,collision_reset
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
- use wave_func,     ONLY:WF_load
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
 #if defined _SC
  use SC,            ONLY:it_now,SC_bands
  use collisions_IO, ONLY:TEMP_COLLISIONS_v
  use fragments,     ONLY:fragment_status
  use real_time,     ONLY:B_mat_index
 #endif
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
+ use wave_func,     ONLY:WF
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
  use wrapper,       ONLY:V_dot_V
+#if defined _OPENMP
+ use wrapper,       ONLY:V_dot_V_omp
+#endif
  !
  implicit none
  type(levels) ::E       
@@ -66,6 +72,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  integer              :: i4(4)
  integer, external    :: QP_state_extract
+ integer              :: ig
  !
  ! Resets & basis setup
  !
@@ -109,7 +116,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  call PARALLEL_WF_distribute(max(E%nbm,QP_nb),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_distribute(max(E%nbm,QP_nb),k%nibz,QP_index=PAR_IND_QP)
- call WF_load(QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
+ call PARALLEL_WF_index()
+ !
+ call WF_load(WF,QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
+ !
+#if defined _TIMING
+ call timing('HF',OPR='start')
+#endif
  !
  ! allocation again
  !
@@ -244,11 +257,23 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
        iscp%rhotw=isc%rhotw
        if (isc%is(1)/=iscp%is(1)) call scatterBamp(iscp)
        !
+#endif
+#if defined _OPENMP
+       !
+!$omp parallel do default(shared), private(ig)
+       do ig = 1, isc%ngrho
+         local_rhotw(ig) = -4./spin_occ*pi*isc%rhotw(ig)*conjg(iscp%rhotw(ig))*E%f(jb,isc%os(2),isc%os(4))
+       enddo
+!$omp end parallel do
+       !
+       DP_Sx=V_dot_V_omp(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
+#else
+       !
        local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(jb,isc%os(2),isc%os(4))
        !
-#endif
-       !
        DP_Sx=V_dot_V(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
+       !
+#endif
        !
 #if defined _RT
          !
@@ -286,8 +311,17 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call collision_reset(isc)
  call collision_reset(iscp) 
  !
+#if defined _TIMING
+ call timing('HF',OPR='stop')
+ call timing('MPI_ALLREDUCE',OPR='start')
+#endif
+ !
 #if !defined _RT
  call PP_redux_wait(QP_Vnl_xc)
+#endif
+ !
+#if defined _TIMING
+ call timing('MPI_ALLREDUCE',OPR='stop')
 #endif
  !
 end subroutine

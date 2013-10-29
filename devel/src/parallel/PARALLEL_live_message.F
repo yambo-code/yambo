@@ -19,35 +19,38 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU,CHAIN)
+subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NC,CHAIN)
  !
- use pars,   ONLY:lchlen
- use LIVE_t, ONLY:LIVE_message
- use stderr, ONLY:intc
+ use pars,       ONLY:lchlen
+ use parallel_m, ONLY:ncpu
+ use LIVE_t,     ONLY:LIVE_message
+ use stderr,     ONLY:intc
  !
  implicit none
  !
  character(*)          :: WHAT
  character(*),optional :: ENVIRONMENT
- integer,optional      :: LOADED,TOTAL,NCPU,CHAIN
+ integer,optional      :: LOADED,TOTAL,NC,CHAIN
  character(lchlen)     :: local_message,local_env
  !
  local_message=WHAT
+ !
+ if (ncpu==1) return
  !
  local_env="distribution"
  if (present(ENVIRONMENT)) then
    local_env=ENVIRONMENT
  endif
  ! 
- if (present(LOADED).and.present(NCPU).and.present(CHAIN)) then
+ if (present(LOADED).and.present(NC).and.present(CHAIN)) then
    local_message="[PARALLEL "//trim(local_env)//" for "//WHAT//&
-&                            " on "//trim(intc(NCPU))//" CPU (chain #"//trim(intc(CHAIN))//&
+&                            " on "//trim(intc(NC))//" CPU (chain #"//trim(intc(CHAIN))//&
 &                            ")] Loaded-Total-Percentual: "//trim(intc(LOADED))//"-"//&
 &                            trim(intc(TOTAL))//"-"//&
 &                            trim(intc(int(real(LOADED)/real(TOTAL)*100)))//"%"
- else if (present(LOADED).and.present(NCPU)) then
+ else if (present(LOADED).and.present(NC)) then
    local_message="[PARALLEL "//trim(local_env)//" for "//WHAT//&
-&                            " on "//trim(intc(NCPU))//" CPU] Loaded-Total-Percentual: "//&
+&                            " on "//trim(intc(NC))//" CPU] Loaded-Total-Percentual: "//&
 &                            trim(intc(LOADED))//"-"//&
 &                            trim(intc(TOTAL))//"-"//&
 &                            trim(intc(int(real(LOADED)/real(TOTAL)*100)))//"%"

@@ -27,9 +27,10 @@ subroutine MAG_A_phase()
  use com,            ONLY:msg,error
  use stderr,         ONLY:intc
  use magnetic,       ONLY:Bz,x,MAG_radius,phase_radius,n_loops
- use wave_func,      ONLY:wf,WF_load,WF_free,wf_state
+ use wave_func,      ONLY:WF
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:default_nel,n_sp_pol
+ use interfaces,     ONLY:WF_load
  !
  implicit none
  !
@@ -57,19 +58,19 @@ subroutine MAG_A_phase()
  ib_ref=1
  is_ref=1
  !
- call WF_load(0,1,(/ib_ref,ib_ref/),(/ik_ref,ik_ref/),title='-MAG_GAUGE',impose_free_and_alloc=.TRUE.)
+ call WF_load(WF,0,1,(/ib_ref,ib_ref/),(/ik_ref,ik_ref/),title='-MAG_GAUGE',impose_free_and_alloc=.TRUE.)
  !
- iwf=wf_state(ib_ref,ik_ref,is_ref)
- wf_r2(:)=r2_cyl(:)*wf(:,iwf)
+ iwf=WF%index(ib_ref,ik_ref,is_ref)
+ wf_r2(:)=r2_cyl(:)*WF%c(:,iwf)
 #if defined _DOUBLE
- r2_ref=real(zdotc(fft_size, wf(:,iwf),1,wf_r2,1))
+ r2_ref=real(zdotc(fft_size, WF%c(:,iwf),1,wf_r2,1))
 #else
- r2_ref=real(cdotc(fft_size, wf(:,iwf),1,wf_r2,1))
+ r2_ref=real(cdotc(fft_size, WF%c(:,iwf),1,wf_r2,1))
 #endif
  !
  n_loops=int(r2_ref*Bz/(2*SPEED_OF_LIGHT)+0.5)
  !
- call WF_free()
+ call WF_free(WF)
  !
  if(n_loops==0) call msg('rs','[MAG] Phase trick: check done, not needed')
  if(n_loops> 0) call msg('rs','[MAG] Applying phase trick. Nloops='//trim(intc(n_loops))//' ')

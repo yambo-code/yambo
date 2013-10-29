@@ -81,14 +81,6 @@
 !  GNU General Public License, see http://www.gnu.org/copyleft/gpl.txt .
 
         implicit real*8 (a-h,o-z)
-!$      interface
-!$        integer ( kind=4 ) function omp_get_num_threads ( )
-!$        end function omp_get_num_threads
-!$      end interface
-!$      interface
-!$        integer ( kind=4 ) function omp_get_thread_num ( )
-!$        end function omp_get_thread_num
-!$      end interface
 
 
         REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:) :: zw  
@@ -106,12 +98,12 @@
         ncache=@fft_cfactor@*1024
 
 ! check whether input values are reasonable
-	if (inzee.le.0 .or. inzee.ge.3) stop 'wrong inzee'
-	if (isign.ne.1 .and. isign.ne.-1) stop 'wrong isign'
-	if (n1.gt.nd1) stop 'n1>nd1'
-	if (n2.gt.nd2) stop 'n2>nd2'
-	if (n3.gt.nd3) stop 'n3>nd3'
-	
+       if (inzee.le.0 .or. inzee.ge.3) stop 'wrong inzee'
+       if (isign.ne.1 .and. isign.ne.-1) stop 'wrong isign'
+       if (n1.gt.nd1) stop 'n1>nd1'
+       if (n2.gt.nd2) stop 'n2>nd2'
+       if (n3.gt.nd3) stop 'n3>nd3'
+
 
 ! vector computer with memory banks:
       if (ncache.eq.0) then
@@ -157,20 +149,9 @@
         
 ! RISC machine with cache:
       else
-! INtel IFC does not understand default(private)
-!!$omp parallel  default(private) &
-!$omp parallel & 
-!$omp private(zw,trig,before,after,now,i,j,iam,npr,jj,ma,mb,mm,ic,n,m,jompa,jompb,lot,lotomp,inzeep,inzet,nn,nfft) &
-!$omp shared(n1,n2,n3,nd1,nd2,nd3,z,isign,inzee,ncache) 
-        npr=1
-!$       npr=omp_get_num_threads()
-        iam=0
-!$       iam=omp_get_thread_num()
-!        write(6,*) 'npr,iam',npr,iam
-! Critical section only necessary on Intel
-!$omp critical
+
         allocate(zw(2,ncache/4,2),trig(2,1024),after(20),now(20),before(20))
-!$omp end critical
+
 
         inzet=inzee
 ! TRANSFORM ALONG Z AXIS
@@ -224,8 +205,6 @@
 
         inzet=3-inzet
 
-!$omp barrier
-
 ! TRANSFORM ALONG Y AXIS
         mm=nd3*nd1
         m=nd2
@@ -275,8 +254,6 @@
 2000        continue
       endif
         inzet=3-inzet
-
-!$omp barrier
 
 ! TRANSFORM ALONG X AXIS
         mm=nd2*nd3
@@ -329,7 +306,7 @@
         
         deallocate(zw,trig,after,now,before)
         if (iam.eq.0) inzee=inzet
-!$omp end parallel  
+
 
 
       endif
@@ -503,11 +480,12 @@
                 if (isign.eq.1) then
                         nin1=ia-after
                         nout1=ia-atn
-                        do 2010,ib=1,before
+                        do 2011,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nout1=nout1+atn
                         nout2=nout1+after
+!$omp parallel do default(shared), private(j,r1,s1,r2,s2)
                         do 2010,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -518,14 +496,17 @@
                         zout(1,j,nout2)= r2 + r1
                         zout(2,j,nout2)= s1 - s2
 2010                        continue
+!$omp end parallel do
+2011                        continue
                 else
                         nin1=ia-after
                         nout1=ia-atn
-                        do 2020,ib=1,before
+                        do 2021,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nout1=nout1+atn
                         nout2=nout1+after
+!$omp parallel do default(shared), private(j,r1,s1,r2,s2)
                         do 2020,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -536,16 +517,19 @@
                         zout(1,j,nout2)= r1 - r2
                         zout(2,j,nout2)= s2 + s1
 2020                        continue
+!$omp end parallel do
+2021                        continue
                 endif
         else if (4*ias.eq.after) then
                 if (isign.eq.1) then
                         nin1=ia-after
                         nout1=ia-atn
-                        do 2030,ib=1,before
+                        do 2031,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nout1=nout1+atn
                         nout2=nout1+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2)
                         do 2030,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -558,14 +542,17 @@
                         zout(1,j,nout2)= r1 - r2
                         zout(2,j,nout2)= s1 - s2
 2030                        continue
+!$omp end parallel do
+2031                        continue
                 else
                         nin1=ia-after
                         nout1=ia-atn
-                        do 2040,ib=1,before
+                        do 2041,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nout1=nout1+atn
                         nout2=nout1+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2)
                         do 2040,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -578,16 +565,19 @@
                         zout(1,j,nout2)= r1 - r2
                         zout(2,j,nout2)= s1 - s2
 2040                        continue
+!$omp end parallel do
+2041                        continue
                 endif
         else if (4*ias.eq.3*after) then
                 if (isign.eq.1) then
                         nin1=ia-after
                         nout1=ia-atn
-                        do 2050,ib=1,before
+                        do 2051,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nout1=nout1+atn
                         nout2=nout1+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2)
                         do 2050,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -600,14 +590,17 @@
                         zout(1,j,nout2)= r2 + r1
                         zout(2,j,nout2)= s1 - s2
 2050                        continue
+!$omp end parallel do
+2051                        continue
                 else
                         nin1=ia-after
                         nout1=ia-atn
-                        do 2060,ib=1,before
+                        do 2061,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nout1=nout1+atn
                         nout2=nout1+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2)
                         do 2060,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -620,6 +613,8 @@
                         zout(1,j,nout2)= r1 - r2
                         zout(2,j,nout2)= s2 + s1
 2060                        continue
+!$omp end parallel do
+2061                        continue
                 endif
         else
                 itrig=ias*before+1
@@ -627,11 +622,12 @@
                 ci2=trig(2,itrig)
                 nin1=ia-after
                 nout1=ia-atn
-                do 2090,ib=1,before
+                do 2091,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nout1=nout1+atn
                 nout2=nout1+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2)
                 do 2090,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -644,6 +640,8 @@
                 zout(1,j,nout2)= r1 - r2
                 zout(2,j,nout2)= s1 - s2
 2090                continue
+!$omp end parallel do
+2091                continue
         endif
 2000        continue
         else if (now.eq.4) then
@@ -651,7 +649,7 @@
                 ia=1
                 nin1=ia-after
                 nout1=ia-atn
-                do 4001,ib=1,before
+                do 4002,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nin3=nin2+atb
@@ -660,6 +658,7 @@
                 nout2=nout1+after
                 nout3=nout2+after
                 nout4=nout3+after
+!$omp parallel do default(shared), private(j,r,s, r1,s1,r2,s2,r3,s3,r4,s4)
                 do 4001,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -686,12 +685,14 @@
                 zout(2,j,nout2) = r + s 
                 zout(2,j,nout4) = r - s
 4001                continue
+!$omp end parallel do
+4002                continue
                 do 4000,ia=2,after
                 ias=ia-1
                 if (2*ias.eq.after) then
                         nin1=ia-after
                         nout1=ia-atn
-                        do 4010,ib=1,before
+                        do 4011,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -700,6 +701,7 @@
                         nout2=nout1+after
                         nout3=nout2+after
                         nout4=nout3+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2,r3,s3,r4,s4)
                         do 4010,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -730,6 +732,8 @@
                         zout(2,j,nout2) = r + s 
                         zout(2,j,nout4) = r - s
 4010                        continue
+!$omp end parallel do
+4011                        continue
                 else
                         itt=ias*before
                         itrig=itt+1
@@ -743,7 +747,7 @@
                         ci4=trig(2,itrig)
                         nin1=ia-after
                         nout1=ia-atn
-                        do 4020,ib=1,before
+                        do 4021,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -752,6 +756,7 @@
                         nout2=nout1+after
                         nout3=nout2+after
                         nout4=nout3+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2,r3,s3,r4,s4)
                         do 4020,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -784,13 +789,15 @@
                         zout(2,j,nout2) = r + s 
                         zout(2,j,nout4) = r - s
 4020                        continue
+!$omp end parallel do
+4021                        continue
                 endif
 4000                continue
         else
                 ia=1
                 nin1=ia-after
                 nout1=ia-atn
-                do 4101,ib=1,before
+                do 4102,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nin3=nin2+atb
@@ -799,6 +806,7 @@
                 nout2=nout1+after
                 nout3=nout2+after
                 nout4=nout3+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2,r3,s3,r4,s4)
                 do 4101,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -825,12 +833,14 @@
                 zout(2,j,nout2) = r - s
                 zout(2,j,nout4) = r + s
 4101                continue
+!$omp end parallel do
+4102                continue
                 do 4100,ia=2,after
                 ias=ia-1
                 if (2*ias.eq.after) then
                         nin1=ia-after
                         nout1=ia-atn
-                        do 4110,ib=1,before
+                        do 4111,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -839,6 +849,7 @@
                         nout2=nout1+after
                         nout3=nout2+after
                         nout4=nout3+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2,r3,s3,r4,s4)
                         do 4110,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -869,6 +880,8 @@
                         zout(2,j,nout2) = r - s
                         zout(2,j,nout4) = r + s
 4110                        continue
+!$omp end parallel do
+4111                        continue
                 else
                         itt=ias*before
                         itrig=itt+1
@@ -882,7 +895,7 @@
                         ci4=trig(2,itrig)
                         nin1=ia-after
                         nout1=ia-atn
-                        do 4120,ib=1,before
+                        do 4121,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -891,6 +904,7 @@
                         nout2=nout1+after
                         nout3=nout2+after
                         nout4=nout3+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2,r3,s3,r4,s4)
                         do 4120,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -923,6 +937,8 @@
                         zout(2,j,nout2) = r - s
                         zout(2,j,nout4) = r + s
 4120                        continue
+!$omp end parallel do
+4121                        continue
                 endif
 4100                continue
         endif
@@ -931,7 +947,7 @@
                 ia=1
                         nin1=ia-after
                         nout1=ia-atn
-                        do 8120,ib=1,before
+                        do 8125,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -948,6 +964,8 @@
                         nout6=nout5+after
                         nout7=nout6+after
                         nout8=nout7+after
+!$omp parallel do default(shared), private( j,r,s, &
+!$omp &                r1,s1,r2,s2,r3,s3,r4,s4,r5,s5,r6,s6,r7,s7,r8,s8, ap,am,bp,bm,cp,cm,dp,dm )
                         do 8120,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -1018,6 +1036,8 @@
                         zout(1,j,nout8) = am - cp
                         zout(2,j,nout8) = bp - dp
 8120                        continue
+!$omp end parallel do
+8125                        continue
                 do 8000,ia=2,after
                 ias=ia-1
                         itt=ias*before
@@ -1044,7 +1064,7 @@
                         ci8=trig(2,itrig)
                         nin1=ia-after
                         nout1=ia-atn
-                        do 8020,ib=1,before
+                        do 8025,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -1061,6 +1081,8 @@
                         nout6=nout5+after
                         nout7=nout6+after
                         nout8=nout7+after
+!$omp parallel do default(shared), private(j,r,s, &
+!$omp &                r1,s1,r2,s2,r3,s3,r4,s4,r5,s5,r6,s6,r7,s7,r8,s8, ap,am,bp,bm,cp,cm,dp,dm )
                         do 8020,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -1146,13 +1168,15 @@
                         zout(2,j,nout8) = bp - dp
 
 8020                        continue
+!$omp end parallel do
+8025                        continue
 8000                continue
 
         else
                 ia=1
                         nin1=ia-after
                         nout1=ia-atn
-                        do 8121,ib=1,before
+                        do 8122,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -1169,6 +1193,8 @@
                         nout6=nout5+after
                         nout7=nout6+after
                         nout8=nout7+after
+!$omp parallel do default(shared), private(j,r,s, &
+!$omp &                r1,s1,r2,s2,r3,s3,r4,s4,r5,s5,r6,s6,r7,s7,r8,s8, ap,am,bp,bm,cp,cm,dp,dm )
                         do 8121,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -1239,6 +1265,8 @@
                         zout(1,j,nout8) = am - cp
                         zout(2,j,nout8) = bp - dp
 8121                        continue
+!$omp end parallel do
+8122                        continue
 
                 do 8001,ia=2,after
                 ias=ia-1
@@ -1266,7 +1294,7 @@
                         ci8=trig(2,itrig)
                         nin1=ia-after
                         nout1=ia-atn
-                        do 8021,ib=1,before
+                        do 8022,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -1283,6 +1311,8 @@
                         nout6=nout5+after
                         nout7=nout6+after
                         nout8=nout7+after
+!$omp parallel do default(shared), private(j,r,s, &
+!$omp &                r1,s1,r2,s2,r3,s3,r4,s4,r5,s5,r6,s6,r7,s7,r8,s8, ap,am,bp,bm,cp,cm,dp,dm )
                         do 8021,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -1367,6 +1397,8 @@
                         zout(1,j,nout8) = am - cp
                         zout(2,j,nout8) = bp - dp
 8021                        continue
+!$omp end parallel do
+8022                        continue
 8001                continue
 
         endif
@@ -1376,13 +1408,15 @@
         ia=1
         nin1=ia-after
         nout1=ia-atn
-        do 3001,ib=1,before
+        do 3002,ib=1,before
         nin1=nin1+after
         nin2=nin1+atb
         nin3=nin2+atb
         nout1=nout1+atn
         nout2=nout1+after
         nout3=nout2+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3 )
         do 3001,j=1,nfft
         r1=zin(1,j,nin1)
         s1=zin(2,j,nin1)
@@ -1403,19 +1437,23 @@
         zout(1,j,nout3) = r1 + s2 
         zout(2,j,nout3) = s1 - r2
 3001        continue
+!$omp end parallel do
+3002        continue
         do 3000,ia=2,after
         ias=ia-1
         if (4*ias.eq.3*after) then
         if (isign.eq.1) then
                 nin1=ia-after
                 nout1=ia-atn
-                do 3010,ib=1,before
+                do 3011,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nin3=nin2+atb
                 nout1=nout1+atn
                 nout2=nout1+after
                 nout3=nout2+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3 )
                 do 3010,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -1436,16 +1474,20 @@
                 zout(1,j,nout3) = r1 + s2 
                 zout(2,j,nout3) = s1 + r2
 3010                continue
+!$omp end parallel do
+3011                continue
         else
                 nin1=ia-after
                 nout1=ia-atn
-                do 3020,ib=1,before
+                do 3021,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nin3=nin2+atb
                 nout1=nout1+atn
                 nout2=nout1+after
                 nout3=nout2+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3 )
                 do 3020,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -1466,18 +1508,22 @@
                 zout(1,j,nout3) = r1 - s2 
                 zout(2,j,nout3) = s1 - r2
 3020                continue
+!$omp end parallel do
+3021                continue
         endif
         else if (8*ias.eq.3*after) then
         if (isign.eq.1) then
                 nin1=ia-after
                 nout1=ia-atn
-                do 3030,ib=1,before
+                do 3031,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nin3=nin2+atb
                 nout1=nout1+atn
                 nout2=nout1+after
                 nout3=nout2+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3 )
                 do 3030,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -1500,16 +1546,20 @@
                 zout(1,j,nout3) = r1 + s2 
                 zout(2,j,nout3) = s1 - r2
 3030                continue
+!$omp end parallel do
+3031                continue
         else
                 nin1=ia-after
                 nout1=ia-atn
-                do 3040,ib=1,before
+                do 3041,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nin3=nin2+atb
                 nout1=nout1+atn
                 nout2=nout1+after
                 nout3=nout2+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3 )
                 do 3040,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -1532,6 +1582,8 @@
                 zout(1,j,nout3) = r1 + s2 
                 zout(2,j,nout3) = s1 - r2
 3040                continue
+!$omp end parallel do
+3041                continue
         endif
         else
         itt=ias*before
@@ -1543,13 +1595,15 @@
         ci3=trig(2,itrig)
         nin1=ia-after
         nout1=ia-atn
-        do 3090,ib=1,before
+        do 3091,ib=1,before
         nin1=nin1+after
         nin2=nin1+atb
         nin3=nin2+atb
         nout1=nout1+atn
         nout2=nout1+after
         nout3=nout2+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3 )
         do 3090,j=1,nfft
         r1=zin(1,j,nin1)
         s1=zin(2,j,nin1)
@@ -1574,6 +1628,8 @@
         zout(1,j,nout3) = r1 + s2 
         zout(2,j,nout3) = s1 - r2
 3090        continue
+!$omp end parallel do
+3091        continue
         endif
 3000        continue
         else if (now.eq.5) then
@@ -1588,7 +1644,7 @@
         ia=1
         nin1=ia-after
         nout1=ia-atn
-        do 5001,ib=1,before
+        do 5002,ib=1,before
         nin1=nin1+after
         nin2=nin1+atb
         nin3=nin2+atb
@@ -1599,6 +1655,8 @@
         nout3=nout2+after
         nout4=nout3+after
         nout5=nout4+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3,r4,s4,r5,s5, r25,s25,r34,s34 )
         do 5001,j=1,nfft
         r1=zin(1,j,nin1)
         s1=zin(2,j,nin1)
@@ -1637,13 +1695,15 @@
         zout(2,j,nout3) = r + s
         zout(2,j,nout4) = r - s
 5001        continue
+!$omp end parallel do
+5002        continue
         do 5000,ia=2,after
         ias=ia-1
         if (8*ias.eq.5*after) then
                 if (isign.eq.1) then
                         nin1=ia-after
                         nout1=ia-atn
-                        do 5010,ib=1,before
+                        do 5011,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -1654,6 +1714,8 @@
                         nout3=nout2+after
                         nout4=nout3+after
                         nout5=nout4+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3,r4,s4,r5,s5, r25,s25,r34,s34 )
                         do 5010,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -1696,10 +1758,12 @@
                         zout(2,j,nout3) = r + s
                         zout(2,j,nout4) = r - s
 5010                        continue
+!$omp end parallel do
+5011                        continue
                 else
                         nin1=ia-after
                         nout1=ia-atn
-                        do 5020,ib=1,before
+                        do 5021,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -1710,6 +1774,8 @@
                         nout3=nout2+after
                         nout4=nout3+after
                         nout5=nout4+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3,r4,s4,r5,s5, r25,s25,r34,s34 )
                         do 5020,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -1752,6 +1818,8 @@
                         zout(2,j,nout3) = r + s
                         zout(2,j,nout4) = r - s
 5020                        continue
+!$omp end parallel do
+5021                        continue
                 endif
         else
                 ias=ia-1
@@ -1770,7 +1838,7 @@
                 ci5=trig(2,itrig)
                 nin1=ia-after
                 nout1=ia-atn
-                do 5100,ib=1,before
+                do 5101,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nin3=nin2+atb
@@ -1781,6 +1849,8 @@
                 nout3=nout2+after
                 nout4=nout3+after
                 nout5=nout4+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3,r4,s4,r5,s5, r25,s25,r34,s34 )
                 do 5100,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -1827,6 +1897,8 @@
                 zout(2,j,nout3) = r + s
                 zout(2,j,nout4) = r - s
 5100                continue
+!$omp end parallel do
+5101                continue
         endif
 5000        continue
        else if (now.eq.6) then
@@ -1836,7 +1908,7 @@
         ia=1
         nin1=ia-after
         nout1=ia-atn
-        do 6120,ib=1,before
+        do 6121,ib=1,before
         nin1=nin1+after
         nin2=nin1+atb
         nin3=nin2+atb
@@ -1849,6 +1921,8 @@
         nout4=nout3+after
         nout5=nout4+after
         nout6=nout5+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3, ur1,ui1,ur2,ui2,ur3,ui3, vr1,vi1,vr2,vi2,vr3,vi3 )
         do 6120,j=1,nfft
         r2=zin(1,j,nin3)
         s2=zin(2,j,nin3)
@@ -1901,6 +1975,8 @@
         zout(1,j,nout6)=ur3-vr3
         zout(2,j,nout6)=ui3-vi3
 6120        continue
+!$omp end parallel do
+6121        continue
 
         else 
         stop 'error fftstp'
@@ -1929,11 +2005,12 @@
         ia=1
         nin1=ia-after
         nout1=ia-atn
-        do 2001,ib=1,before
+        do 2002,ib=1,before
         nin1=nin1+after
         nin2=nin1+atb
         nout1=nout1+atn
         nout2=nout1+after
+!$omp parallel do default(shared), private(j,r1,s1,r2,s2)
         do 2001,j=1,nfft
         r1=zin(1,j,nin1)
         s1=zin(2,j,nin1)
@@ -1944,17 +2021,20 @@
         zout(1,nout2,j)= r1 - r2
         zout(2,nout2,j)= s1 - s2
 2001        continue
+!$omp end parallel do
+2002        continue
         do 2000,ia=2,after
         ias=ia-1
         if (2*ias.eq.after) then
                 if (isign.eq.1) then
                         nin1=ia-after
                         nout1=ia-atn
-                        do 2010,ib=1,before
+                        do 2011,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nout1=nout1+atn
                         nout2=nout1+after
+!$omp parallel do default(shared), private(j,r1,s1,r2,s2)
                         do 2010,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -1965,14 +2045,17 @@
                         zout(1,nout2,j)= r2 + r1
                         zout(2,nout2,j)= s1 - s2
 2010                        continue
+!$omp end parallel do
+2011                        continue
                 else
                         nin1=ia-after
                         nout1=ia-atn
-                        do 2020,ib=1,before
+                        do 2021,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nout1=nout1+atn
                         nout2=nout1+after
+!$omp parallel do default(shared), private(j,r1,s1,r2,s2)
                         do 2020,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -1983,16 +2066,19 @@
                         zout(1,nout2,j)= r1 - r2
                         zout(2,nout2,j)= s2 + s1
 2020                        continue
+!$omp end parallel do
+2021                        continue
                 endif
         else if (4*ias.eq.after) then
                 if (isign.eq.1) then
                         nin1=ia-after
                         nout1=ia-atn
-                        do 2030,ib=1,before
+                        do 2031,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nout1=nout1+atn
                         nout2=nout1+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2)
                         do 2030,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -2005,14 +2091,17 @@
                         zout(1,nout2,j)= r1 - r2
                         zout(2,nout2,j)= s1 - s2
 2030                        continue
+!$omp end parallel do
+2031                        continue
                 else
                         nin1=ia-after
                         nout1=ia-atn
-                        do 2040,ib=1,before
+                        do 2041,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nout1=nout1+atn
                         nout2=nout1+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2)
                         do 2040,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -2025,16 +2114,19 @@
                         zout(1,nout2,j)= r1 - r2
                         zout(2,nout2,j)= s1 - s2
 2040                        continue
+!$omp end parallel do
+2041                        continue
                 endif
         else if (4*ias.eq.3*after) then
                 if (isign.eq.1) then
                         nin1=ia-after
                         nout1=ia-atn
-                        do 2050,ib=1,before
+                        do 2051,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nout1=nout1+atn
                         nout2=nout1+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2)
                         do 2050,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -2047,14 +2139,17 @@
                         zout(1,nout2,j)= r2 + r1
                         zout(2,nout2,j)= s1 - s2
 2050                        continue
+!$omp end parallel do
+2051                        continue
                 else
                         nin1=ia-after
                         nout1=ia-atn
-                        do 2060,ib=1,before
+                        do 2061,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nout1=nout1+atn
                         nout2=nout1+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2)
                         do 2060,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -2067,6 +2162,8 @@
                         zout(1,nout2,j)= r1 - r2
                         zout(2,nout2,j)= s2 + s1
 2060                        continue
+!$omp end parallel do
+2061                        continue
                 endif
         else
                 itrig=ias*before+1
@@ -2074,11 +2171,12 @@
                 ci2=trig(2,itrig)
                 nin1=ia-after
                 nout1=ia-atn
-                do 2090,ib=1,before
+                do 2091,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nout1=nout1+atn
                 nout2=nout1+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2)
                 do 2090,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -2091,6 +2189,8 @@
                 zout(1,nout2,j)= r1 - r2
                 zout(2,nout2,j)= s1 - s2
 2090                continue
+!$omp end parallel do
+2091                        continue
         endif
 2000        continue
         else if (now.eq.4) then
@@ -2098,7 +2198,7 @@
                 ia=1
                 nin1=ia-after
                 nout1=ia-atn
-                do 4001,ib=1,before
+                do 4002,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nin3=nin2+atb
@@ -2107,6 +2207,7 @@
                 nout2=nout1+after
                 nout3=nout2+after
                 nout4=nout3+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2,r3,s3,r4,s4)
                 do 4001,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -2133,12 +2234,14 @@
                 zout(2,nout2,j) = r + s 
                 zout(2,nout4,j) = r - s
 4001                continue
+!$omp end parallel do
+4002                continue
                 do 4000,ia=2,after
                 ias=ia-1
                 if (2*ias.eq.after) then
                         nin1=ia-after
                         nout1=ia-atn
-                        do 4010,ib=1,before
+                        do 4011,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -2147,6 +2250,7 @@
                         nout2=nout1+after
                         nout3=nout2+after
                         nout4=nout3+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2,r3,s3,r4,s4)
                         do 4010,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -2177,6 +2281,8 @@
                         zout(2,nout2,j) = r + s 
                         zout(2,nout4,j) = r - s
 4010                        continue
+!$omp end parallel do
+4011                        continue
                 else
                         itt=ias*before
                         itrig=itt+1
@@ -2190,7 +2296,7 @@
                         ci4=trig(2,itrig)
                         nin1=ia-after
                         nout1=ia-atn
-                        do 4020,ib=1,before
+                        do 4021,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -2199,6 +2305,7 @@
                         nout2=nout1+after
                         nout3=nout2+after
                         nout4=nout3+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2,r3,s3,r4,s4)
                         do 4020,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -2231,13 +2338,15 @@
                         zout(2,nout2,j) = r + s 
                         zout(2,nout4,j) = r - s
 4020                        continue
+!$omp end parallel do
+4021                        continue
                 endif
 4000                continue
         else
                 ia=1
                 nin1=ia-after
                 nout1=ia-atn
-                do 4101,ib=1,before
+                do 4102,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nin3=nin2+atb
@@ -2246,6 +2355,7 @@
                 nout2=nout1+after
                 nout3=nout2+after
                 nout4=nout3+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2,r3,s3,r4,s4)
                 do 4101,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -2272,12 +2382,14 @@
                 zout(2,nout2,j) = r - s
                 zout(2,nout4,j) = r + s
 4101                continue
+!$omp end parallel do
+4102                continue
                 do 4100,ia=2,after
                 ias=ia-1
                 if (2*ias.eq.after) then
                         nin1=ia-after
                         nout1=ia-atn
-                        do 4110,ib=1,before
+                        do 4111,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -2286,6 +2398,7 @@
                         nout2=nout1+after
                         nout3=nout2+after
                         nout4=nout3+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2,r3,s3,r4,s4)
                         do 4110,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -2316,6 +2429,8 @@
                         zout(2,nout2,j) = r - s
                         zout(2,nout4,j) = r + s
 4110                        continue
+!$omp end parallel do
+4111                        continue
                 else
                         itt=ias*before
                         itrig=itt+1
@@ -2329,7 +2444,7 @@
                         ci4=trig(2,itrig)
                         nin1=ia-after
                         nout1=ia-atn
-                        do 4120,ib=1,before
+                        do 4121,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -2338,6 +2453,7 @@
                         nout2=nout1+after
                         nout3=nout2+after
                         nout4=nout3+after
+!$omp parallel do default(shared), private(j,r,s,r1,s1,r2,s2,r3,s3,r4,s4)
                         do 4120,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -2370,6 +2486,8 @@
                         zout(2,nout2,j) = r - s
                         zout(2,nout4,j) = r + s
 4120                        continue
+!$omp end parallel do
+4121                        continue
                 endif
 4100                continue
         endif
@@ -2378,7 +2496,7 @@
                 ia=1
                         nin1=ia-after
                         nout1=ia-atn
-                        do 8120,ib=1,before
+                        do 8125,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -2395,6 +2513,8 @@
                         nout6=nout5+after
                         nout7=nout6+after
                         nout8=nout7+after
+!$omp parallel do default(shared), private( j,r,s, &
+!$omp &                r1,s1,r2,s2,r3,s3,r4,s4,r5,s5,r6,s6,r7,s7,r8,s8, ap,am,bp,bm,cp,cm,dp,dm )
                         do 8120,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -2465,6 +2585,8 @@
                         zout(1,nout8,j) = am - cp
                         zout(2,nout8,j) = bp - dp
 8120                        continue
+!$omp end parallel do
+8125                        continue
                 do 8000,ia=2,after
                 ias=ia-1
                         itt=ias*before
@@ -2491,7 +2613,7 @@
                         ci8=trig(2,itrig)
                         nin1=ia-after
                         nout1=ia-atn
-                        do 8020,ib=1,before
+                        do 8025,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -2508,6 +2630,8 @@
                         nout6=nout5+after
                         nout7=nout6+after
                         nout8=nout7+after
+!$omp parallel do default(shared), private(j,r,s, &
+!$omp &                r1,s1,r2,s2,r3,s3,r4,s4,r5,s5,r6,s6,r7,s7,r8,s8, ap,am,bp,bm,cp,cm,dp,dm )
                         do 8020,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -2593,13 +2717,16 @@
                         zout(2,nout8,j) = bp - dp
 
 8020                        continue
+!$omp end parallel do
+8025                        continue
+
 8000                continue
 
         else
                 ia=1
                         nin1=ia-after
                         nout1=ia-atn
-                        do 8121,ib=1,before
+                        do 8122,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -2616,6 +2743,8 @@
                         nout6=nout5+after
                         nout7=nout6+after
                         nout8=nout7+after
+!$omp parallel do default(shared), private(j,r,s, &
+!$omp &                r1,s1,r2,s2,r3,s3,r4,s4,r5,s5,r6,s6,r7,s7,r8,s8, ap,am,bp,bm,cp,cm,dp,dm )
                         do 8121,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -2686,6 +2815,8 @@
                         zout(1,nout8,j) = am - cp
                         zout(2,nout8,j) = bp - dp
 8121                        continue
+!$omp end parallel do
+8122                        continue
 
                 do 8001,ia=2,after
                 ias=ia-1
@@ -2713,7 +2844,7 @@
                         ci8=trig(2,itrig)
                         nin1=ia-after
                         nout1=ia-atn
-                        do 8021,ib=1,before
+                        do 8022,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -2730,6 +2861,8 @@
                         nout6=nout5+after
                         nout7=nout6+after
                         nout8=nout7+after
+!$omp parallel do default(shared), private(j,r,s, &
+!$omp &                r1,s1,r2,s2,r3,s3,r4,s4,r5,s5,r6,s6,r7,s7,r8,s8, ap,am,bp,bm,cp,cm,dp,dm )
                         do 8021,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -2814,6 +2947,8 @@
                         zout(1,nout8,j) = am - cp
                         zout(2,nout8,j) = bp - dp
 8021                        continue
+!$omp end parallel do
+8022                        continue
 8001                continue
 
         endif
@@ -2823,13 +2958,15 @@
         ia=1
         nin1=ia-after
         nout1=ia-atn
-        do 3001,ib=1,before
+        do 3002,ib=1,before
         nin1=nin1+after
         nin2=nin1+atb
         nin3=nin2+atb
         nout1=nout1+atn
         nout2=nout1+after
         nout3=nout2+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3 )
         do 3001,j=1,nfft
         r1=zin(1,j,nin1)
         s1=zin(2,j,nin1)
@@ -2850,19 +2987,24 @@
         zout(1,nout3,j) = r1 + s2 
         zout(2,nout3,j) = s1 - r2
 3001        continue
+!$omp end parallel do
+3002        continue
+
         do 3000,ia=2,after
         ias=ia-1
         if (4*ias.eq.3*after) then
         if (isign.eq.1) then
                 nin1=ia-after
                 nout1=ia-atn
-                do 3010,ib=1,before
+                do 3011,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nin3=nin2+atb
                 nout1=nout1+atn
                 nout2=nout1+after
                 nout3=nout2+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3 )
                 do 3010,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -2883,16 +3025,20 @@
                 zout(1,nout3,j) = r1 + s2 
                 zout(2,nout3,j) = s1 + r2
 3010                continue
+!$omp end parallel do
+3011                continue
         else
                 nin1=ia-after
                 nout1=ia-atn
-                do 3020,ib=1,before
+                do 3021,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nin3=nin2+atb
                 nout1=nout1+atn
                 nout2=nout1+after
                 nout3=nout2+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3 )
                 do 3020,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -2913,18 +3059,22 @@
                 zout(1,nout3,j) = r1 - s2 
                 zout(2,nout3,j) = s1 - r2
 3020                continue
+!$omp end parallel do
+3021                continue
         endif
         else if (8*ias.eq.3*after) then
         if (isign.eq.1) then
                 nin1=ia-after
                 nout1=ia-atn
-                do 3030,ib=1,before
+                do 3031,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nin3=nin2+atb
                 nout1=nout1+atn
                 nout2=nout1+after
                 nout3=nout2+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3 )
                 do 3030,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -2947,16 +3097,20 @@
                 zout(1,nout3,j) = r1 + s2 
                 zout(2,nout3,j) = s1 - r2
 3030                continue
+!$omp end parallel do
+3031                continue
         else
                 nin1=ia-after
                 nout1=ia-atn
-                do 3040,ib=1,before
+                do 3041,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nin3=nin2+atb
                 nout1=nout1+atn
                 nout2=nout1+after
                 nout3=nout2+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3 )
                 do 3040,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -2979,6 +3133,8 @@
                 zout(1,nout3,j) = r1 + s2 
                 zout(2,nout3,j) = s1 - r2
 3040                continue
+!$omp end parallel do
+3041                continue
         endif
         else
         itt=ias*before
@@ -2990,13 +3146,15 @@
         ci3=trig(2,itrig)
         nin1=ia-after
         nout1=ia-atn
-        do 3090,ib=1,before
+        do 3091,ib=1,before
         nin1=nin1+after
         nin2=nin1+atb
         nin3=nin2+atb
         nout1=nout1+atn
         nout2=nout1+after
         nout3=nout2+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3 )
         do 3090,j=1,nfft
         r1=zin(1,j,nin1)
         s1=zin(2,j,nin1)
@@ -3021,6 +3179,8 @@
         zout(1,nout3,j) = r1 + s2 
         zout(2,nout3,j) = s1 - r2
 3090        continue
+!$omp end parallel do
+3091        continue
         endif
 3000        continue
         else if (now.eq.5) then
@@ -3035,7 +3195,7 @@
         ia=1
         nin1=ia-after
         nout1=ia-atn
-        do 5001,ib=1,before
+        do 5002,ib=1,before
         nin1=nin1+after
         nin2=nin1+atb
         nin3=nin2+atb
@@ -3046,6 +3206,8 @@
         nout3=nout2+after
         nout4=nout3+after
         nout5=nout4+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3,r4,s4,r5,s5, r25,s25,r34,s34 )
         do 5001,j=1,nfft
         r1=zin(1,j,nin1)
         s1=zin(2,j,nin1)
@@ -3084,13 +3246,15 @@
         zout(2,nout3,j) = r + s
         zout(2,nout4,j) = r - s
 5001        continue
+!$omp end parallel do
+5002        continue
         do 5000,ia=2,after
         ias=ia-1
         if (8*ias.eq.5*after) then
                 if (isign.eq.1) then
                         nin1=ia-after
                         nout1=ia-atn
-                        do 5010,ib=1,before
+                        do 5011,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -3101,6 +3265,8 @@
                         nout3=nout2+after
                         nout4=nout3+after
                         nout5=nout4+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3,r4,s4,r5,s5, r25,s25,r34,s34 )
                         do 5010,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -3143,10 +3309,12 @@
                         zout(2,nout3,j) = r + s
                         zout(2,nout4,j) = r - s
 5010                        continue
+!$omp end parallel do
+5011                        continue
                 else
                         nin1=ia-after
                         nout1=ia-atn
-                        do 5020,ib=1,before
+                        do 5021,ib=1,before
                         nin1=nin1+after
                         nin2=nin1+atb
                         nin3=nin2+atb
@@ -3157,6 +3325,8 @@
                         nout3=nout2+after
                         nout4=nout3+after
                         nout5=nout4+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3,r4,s4,r5,s5, r25,s25,r34,s34 )
                         do 5020,j=1,nfft
                         r1=zin(1,j,nin1)
                         s1=zin(2,j,nin1)
@@ -3199,6 +3369,8 @@
                         zout(2,nout3,j) = r + s
                         zout(2,nout4,j) = r - s
 5020                        continue
+!$omp end parallel do
+5021                        continue
                 endif
         else
                 ias=ia-1
@@ -3217,7 +3389,7 @@
                 ci5=trig(2,itrig)
                 nin1=ia-after
                 nout1=ia-atn
-                do 5100,ib=1,before
+                do 5101,ib=1,before
                 nin1=nin1+after
                 nin2=nin1+atb
                 nin3=nin2+atb
@@ -3228,6 +3400,8 @@
                 nout3=nout2+after
                 nout4=nout3+after
                 nout5=nout4+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3,r4,s4,r5,s5, r25,s25,r34,s34 )
                 do 5100,j=1,nfft
                 r1=zin(1,j,nin1)
                 s1=zin(2,j,nin1)
@@ -3274,6 +3448,8 @@
                 zout(2,nout3,j) = r + s
                 zout(2,nout4,j) = r - s
 5100                continue
+!$omp end parallel do
+5101                continue
         endif
 5000        continue
        else if (now.eq.6) then
@@ -3283,7 +3459,7 @@
         ia=1
         nin1=ia-after
         nout1=ia-atn
-        do 6120,ib=1,before
+        do 6121,ib=1,before
         nin1=nin1+after
         nin2=nin1+atb
         nin3=nin2+atb
@@ -3296,6 +3472,8 @@
         nout4=nout3+after
         nout5=nout4+after
         nout6=nout5+after
+!$omp parallel do default(shared), &
+!$omp &        private(j,r,s, r1,s1,r2,s2,r3,s3, ur1,ui1,ur2,ui2,ur3,ui3, vr1,vi1,vr2,vi2,vr3,vi3 )
         do 6120,j=1,nfft
         r2=zin(1,j,nin3)
         s2=zin(2,j,nin3)
@@ -3348,6 +3526,8 @@
         zout(1,nout6,j)=ur3-vr3
         zout(2,nout6,j)=ui3-vi3
 6120        continue
+!$omp end parallel do
+6121        continue
 
        else
         stop 'error fftrot'

@@ -186,7 +186,6 @@ openmpi_cpp=" "
 if test x"$enable_openmpi" = "xyes"; then 
  openmpi_cpp="-D_OPENMPI"
 fi
-AC_SUBST(openmpi_cpp)
 # ============================================================================
 #
 # OpenMP
@@ -200,6 +199,18 @@ if test x"$enable_open_mp" = "xyes"; then
  openmp_cpp="-D_OPENMP"
 fi
 AC_SUBST(OPENMPLIBS)
+# ============================================================================
+#
+# Time Profiling (mod_timing)
+#
+AC_ARG_ENABLE(time-profile, AC_HELP_STRING([--enable-time-profile],
+              [Extended timing profile of specific sections]))
+if test x"$enable_time_profile" = "x"; then enable_time_profile="no"; fi
+time_profile_cpp=" "
+if test x"$enable_time_profile" = "xyes"; then 
+ time_profile_cpp="-D_TIMING"
+fi
+AC_SUBST(time_profile_cpp)
 # ============================================================================
 #
 # Verbose compilation
@@ -383,6 +394,7 @@ if test "$mpibuild" = "yes"; then
   PCC=""
   PCCFLAGS=""
  fi
+ AC_SUBST(openmpi_cpp)
  AC_SUBST(openmp_cpp)
  AC_SUBST(mpi_cpp)
  AC_SUBST(MPILIBS)

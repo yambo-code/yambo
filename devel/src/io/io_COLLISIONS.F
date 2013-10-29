@@ -24,7 +24,7 @@ integer function io_COLLISIONS(i_qp,ID,X)
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collisions_IO, ONLY:COLLISIONS_table,n_collisions,V_kind,COLLISIONS_v,COLLISIONS_cutoff,&
-&                        COLLISIONS_path,COLLISIONS_range
+&                        COLLISIONS_range
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,io_restart_point,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on
@@ -49,24 +49,17 @@ integer function io_COLLISIONS(i_qp,ID,X)
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
  integer               :: V_kind_disk,i_desc,VAR_size
  character(lchlen)     :: V_kind_string,X_string
- character(schlen)     :: desc,db_string
- !
- db_string=" "
- if (len_trim(COLLISIONS_path)>1) db_string="db."
+ character(schlen)     :: desc
  !
  if(V_kind==SC_HF) then
-   db_name     = trim(db_string)//"COLLISIONS_Vbare"
+   db_name     = "COLLISIONS_Vbare"
  elseif(V_kind==SC_COHSEX) then
-   db_name     = trim(db_string)//"COLLISIONS_Wstatic"
+   db_name     = "COLLISIONS_Wstatic"
  else
    call error("COLLISIONS I/O : Unknown database type ")
  endif
  !
- if (len_trim(COLLISIONS_path)>1) then
-   io_COLLISIONS=io_connect(desc=db_name,subfolder=trim(COLLISIONS_path),type=-1,ID=ID)
- else
-   io_COLLISIONS=io_connect(desc=db_name,type=2,ID=ID)
- endif
+ io_COLLISIONS=io_connect(desc=db_name,type=2,ID=ID)
  if(io_COLLISIONS/=0) goto 1
  !
  if (.not.ver_is_gt_or_eq(ID,revision=891)) then

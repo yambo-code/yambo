@@ -23,7 +23,7 @@ subroutine electrons_driver(Xk,Xen)
  !
  use pars,           ONLY:SP,lchlen
  Use stderr,         ONLY:intc
- use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state
+ use wave_func,      ONLY:WF,wf_ng
  use FFT_m,          ONLY:fft_size,fft_dim
  use R_lattice,      ONLY:bz_samp,nkibz
  use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
@@ -51,6 +51,7 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_MAGNETIC
  use YPP,            ONLY:l_angular_momentum,l_position
 #endif
+ use interfaces,     ONLY:WF_load
  implicit none
  !
  type(bz_samp) ::Xk
@@ -144,7 +145,7 @@ subroutine electrons_driver(Xk,Xen)
 #endif
  !
  if(flag) then
-   call WF_load(wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
+   call WF_load(WF,wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
    nr=fft_dim
    allocate(v2plot(fft_size))
 #if defined _YPP_ELPH
@@ -229,9 +230,9 @@ subroutine electrons_driver(Xk,Xen)
          !
          if (il==0) then
            !
-           i_wf=wf_state(ib,ik,1)
+           i_wf=WF%index(ib,ik,1)
            !
-           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+wf(ir,i_wf)
+           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+WF%c(ir,i_wf)
            !
          else
            !
@@ -321,7 +322,7 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_SC
      if (.not.l_mean_potential) then
 #endif
-       i_wf=wf_state(ib,ik,i_spin)
+       i_wf=WF%index(ib,ik,i_spin)
 #if defined _YPP_SC
      endif
 #endif
@@ -336,7 +337,7 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_SC
      if (.not.l_mean_potential) then 
 #endif
-       forall(ir=1:fft_size) v2plot(ir)=real( wf(ir,i_wf)*conjg( wf(ir,i_wf) ) )
+       forall(ir=1:fft_size) v2plot(ir)=real( WF%c(ir,i_wf)*conjg( WF%c(ir,i_wf) ) )
 #if defined _YPP_SC
      endif
 #endif
@@ -482,7 +483,7 @@ subroutine electrons_driver(Xk,Xen)
  ! GPL_EXCLUDE_END
  !
 1 continue
- call WF_free()
+ call WF_free(WF)
  if (allocated(v2plot))   deallocate(v2plot)
  if (allocated(QP_table)) deallocate(QP_table,QP_state)
  if (allocated(magn))     deallocate(magn)

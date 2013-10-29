@@ -40,8 +40,6 @@ subroutine RT_impose_N_conservation(E,k)
  real(SP)         :: f_occ,CONDITION(2),prefactor(2),k_weight
  integer, external:: secant
  !
- return
- !
  if (.not.l_elel_scatt) return
  !
  CONDITION=0._SP

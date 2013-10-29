@@ -40,7 +40,8 @@ subroutine SC_start_and_restart(X,E,Xk)
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE
  use FFT_m,          ONLY:fft_size
- use wave_func,      ONLY:WF_load,WF_free
+ use interfaces,     ONLY:WF_load
+ use wave_func,      ONLY:WF
  !
  implicit none
  type(bz_samp)::Xk
@@ -216,14 +217,14 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! WF Loading
  !============
  !
- call WF_load(WF_G_max,WF_Go_indx,(/1,max(SC_bands(2),E%nbm)/),(/1,nkibz/),title='-SC')
+ call WF_load(WF,WF_G_max,WF_Go_indx,(/1,max(SC_bands(2),E%nbm)/),(/1,nkibz/),title='-SC')
  !
  ! Check FFT size to be consistent with local V in NSC shot
  !       --------
  !
  if (l_NSC_shot.and.SC_fft_size/=fft_size) then
    call warning(' FFT size of local SC potential does not fit. Skipping NSC run.')
-   call WF_free()
+   call WF_free(WF)
    l_NSC_shot=.FALSE.
    return
  endif

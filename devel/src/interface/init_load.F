@@ -36,7 +36,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
- use R_lattice,     ONLY:ng_closed,n_g_shells,QP_states_k,nXkibz,&
+ use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
@@ -49,13 +49,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _SC
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,SC_up_W_iters,&
 &                        SC_rho_threshold,SC_cycle_mixing,OEP_approx
- use collisions_IO, ONLY:COLLISIONS_cutoff,COLLISIONS_path
+ use collisions_IO, ONLY:COLLISIONS_cutoff
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_jumps,&
-&                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
-&                        Eh_pumped_pair_width,Eh_pumped_Nel,Gr_kind,two_alpha
+&                        RT_ave_dephasing,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
+&                        Eh_pumped_pair_width,Eh_pumped_Nel,Gr_kind,two_alpha,NE_MEM_treshold
  use fields,        ONLY:Efield
 #endif
 #if defined _MAGNETIC
@@ -74,7 +74,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _ELPH 
  use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,RES_tresh
 #endif
- use parallel_m,    ONLY:n_threads,n_log_CPUs
+ use parallel_m,           ONLY:n_log_CPUs
+ use openmp,               ONLY:n_threads
+ use IO_m,                 ONLY:DBs_IO_control_string
  !
  implicit none
  type(initdefs)::defs
@@ -165,11 +167,14 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'MinusQ', '[KPT] Use -{q} grid',verb_level=V_kpt)
  call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nDBs_used,verb_level=V_kpt) 
 #endif
+ call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 
  !
  ! Parallel Setup
  !
+#if defined _OPENMP
+ call it(defs,'Threads',      '[OPENMP] Number of threads (leave 0 to use default value)',n_threads,verb_level=V_parallel)
+#endif
 #if defined _MPI 
- call it(defs,'Threads',      '[PARALLEL] Number of threads',n_threads,verb_level=V_parallel)
  call it(defs,'NLogCPUs',     '[PARALLEL] Live-timing CPU`s (0 for all)',n_log_CPUs,verb_level=V_parallel)
 #endif
  !
@@ -283,12 +288,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GWoIter',    '[GW] GWo SC iterations',GWo_iterations,verb_level=V_qp)
  call it(defs,'GreenFTresh','[GW] [o/o] Treshold to define the new zoomed energy range',QP_G_Zoom_treshold,verb_level=V_qp)
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
- call it('f',defs,'QPExpand','[F GW] The QP corrections are expanded all over the BZ',verb_level=V_qp)
+ call it('f',defs,'QPExpand',   '[F GW] The QP corrections are expanded all over the BZ',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
  !
  ! I/O
  !
- call it('f',defs,'SkipWRITE', '[PARALLEL] Do not write on disk',verb_level=V_parallel)
+ call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,WF,COLLs,J,GF,OCC)',&
+&                         DBs_IO_control_string,verb_level=V_io)
  !
  ! GPL_EXCLUDE_END
  !
@@ -314,7 +320,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! ELPH
  !
- call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_Treshold)
+ call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_treshold)
  call it(defs,'RTmaxEn',    '[RT] Max e/h energy to define the states that are evolved',RT_eh_energy_max,&
 &                            Verb_level=V_real_time,unit=E_unit)
  call it(defs,'RTpumpEhEn', '[RT] Energy centers of the levels to be inverted by hand',Eh_pumped_pair_energy,&
@@ -460,7 +466,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
- call it(defs,'CollPath',  '[SC,RT] Path to the collisions databases',COLLISIONS_path)
  call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
  call it('f',defs,'SCdiag','[SC] Diagonal approximation for the self-energy(WF unchaged)',verb_level=V_sc)
@@ -502,13 +507,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
      do i_s=1,n_CPU_str_max 
        !
        if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
-       if (i_s==2) possible_fields='(q,k,c,v)' ! X_all_q
-       if (i_s==3) possible_fields='(qp,q,b)'  ! GW
-       if (i_s==4) possible_fields='(qp,q,b)'  ! HF
-       if (i_s==5) possible_fields=' '         ! BSE
-       if (i_s==6) possible_fields='(k,b)'     ! DENSITY
+       if (i_s==2) possible_fields='(q,k,c,v)' ! X_finite_q
+       if (i_s==3) possible_fields='(q,k,c,v)' ! X_all_q
+       if (i_s==4) possible_fields='(q,k,c,v)' ! BSE
+       if (i_s==5) possible_fields='(q,qp,b)'  ! GW
+       if (i_s==6) possible_fields='(q,qp,b)'  ! HF
        if (i_s==7) possible_fields='(k,b,q,qp)'! RT
-       if (i_s==8) possible_fields='(k,b)'     ! WF
+       if (i_s==8) possible_fields='(q,qp,b)'  ! e-p
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"
@@ -549,7 +554,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      des(7) ='Drude plasmon'
      des(8) ='[cc] Electric Field'
      des(9) ='Electron-hole energy range'
-     des(10) ='PPA imaginary energy'
+     des(10)='PPA imaginary energy'
      des(11)='Response block size'
      des(12)='Transferred momenta'
      des(13)='Polarization function bands'

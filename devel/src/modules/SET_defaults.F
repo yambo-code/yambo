@@ -57,7 +57,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,&
 &                     string_split,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
- use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
+ use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,&
 &                     Fragmented_IO,Fragmented_IO_save 
@@ -82,7 +82,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,RT_nk,&
 &                     l_Mean_Potential,l_RT_occupations_in_use,SC_up_W_iters,l_SC_diagonal,&
 &                     l_SC_nl_mix
- use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff,COLLISIONS_path
+ use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff
 #endif
 #if defined _RT || defined _YPP_RT
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,&
@@ -101,6 +101,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
 #endif
  use interpolate, ONLY:interpls,max_interpls
+#if defined _TIMING
+ use timing_m,    ONLY:timing_allocate,nclockx
+#endif
  !
  implicit none
  !
@@ -122,6 +125,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! Stack Size 
  !
  call remove_stack_limit()
+ !
+ ! Clocks
+ !
+#if defined _TIMING
+ call timing_allocate(nclockx)
+#endif
  !
  ! ZEROs 
  !
@@ -305,10 +314,14 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  !wave_func
  !
- wf_b=0
- wf_k=0
+ WF%b=0
+ WF%k=0
+ WF%space=' '
+ WF_buffer%b=0
+ WF_buffer%k=0
+ WF_buffer%space=' '
+ WF_buffered_IO=.FALSE.
  wf_ng=0
- wf_space=' '
  wf_norm_test=.true.
  wf_nb_io=0
  wf_nb_io_groups=1
@@ -482,7 +495,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! COLLISIONS I/O
  !
  n_collisions=0
- COLLISIONS_path=" "
  COLLISIONS_cutoff=0.0005
  !
 #endif

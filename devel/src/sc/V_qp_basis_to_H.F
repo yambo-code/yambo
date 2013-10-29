@@ -26,7 +26,7 @@ subroutine V_qp_basis_to_H(ik,V,H)
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
  use SC,             ONLY:SC_bands
  use matrix_operate, ONLY:matrix_linear_index
- use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_COM_WF_k_A2A,PP_redux_wait,PAR_IND_WF_k
+ use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k
  implicit none
  !
  integer     :: ik
@@ -37,13 +37,9 @@ subroutine V_qp_basis_to_H(ik,V,H)
  !
  integer    :: i1,ib,ibp,i_spin
  !
-#if defined _RT
- if (.not.PAR_IND_WF_k%element_1D(ik)) return
- !
- H(:,:,:) = H(:,:,:)/real(PAR_COM_WF_k_A2A%n_CPU)
-#endif
- !
  ! Fill ...
+ !
+ if (.not.PAR_IND_WF_k%element_1D(ik)) return
  !
  do i1=1,QP_n_states
    !
@@ -54,7 +50,7 @@ subroutine V_qp_basis_to_H(ik,V,H)
    !
    if(ib>ibp) cycle
    !
-#if defined _RT
+#if defined _SC
    if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
 #endif
    !
@@ -70,9 +66,5 @@ subroutine V_qp_basis_to_H(ik,V,H)
    if (ib/=ibp) H(ibp,ib,i_spin) = conjg(H(ib,ibp,i_spin))
    !
  end do
- !
-#if defined _RT
- call PP_redux_wait(H,COMM=PAR_COM_WF_k_A2A%COMM)
-#endif
  !
 end subroutine 

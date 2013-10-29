@@ -29,15 +29,14 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use stderr,        ONLY:intc
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_Q_A2A,&
-&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,&
-&                        PAR_Xk_bz_index,PAR_IND_VAL_BANDS_X
+ use wave_func,     ONLY:WF
+ use parallel_m,    ONLY:PP_redux_wait,PAR_Xk_bz_index,PAR_COM_q_for_Xo
+ use openmp,        ONLY:OPENMP_update,n_threads_now,master_thread
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
- use interfaces,    ONLY:PARALLEL_WF_distribute
+ use interfaces,    ONLY:WF_load,PARALLEL_WF_distribute
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
  use electrons,     ONLY:levels,spin_occ
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp
- use wave_func,     ONLY:WF_load
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t,X_poles,DIP_q_dot_iR,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM
@@ -45,6 +44,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
  use fields,        ONLY:global_gauge
+#endif
+#if defined _TIMING
+ use timing_m,      ONLY:timing
 #endif
  implicit none
  type(levels)         :: Xen
@@ -68,9 +70,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Defaults & Setups
  !===================
- if (iq==1) allocate(rhotw_save(X%ng))
- allocate(Xo_residual(X%ng,X%ng))
- call mem_est("Xo_WS",(/size(Xo_residual)/))
  Xo  = cmplx(0.,0.,SP)
  GreenF  = cmplx(0.,0.,SP)
  drude_GreenF = cmplx(0.,0.,SP)
@@ -86,15 +85,13 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    call X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
  endif
  !
- ! WF distributed & load
- !=======================
+ ! WF load
+ !=========
+ call WF_load(WF,X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
- call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_Xk_ibz,&
-&                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
-&                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
-&                            CLEAN_UP=.TRUE.)
- !
- call WF_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+#if defined _TIMING
+ call timing('Xo (procedure)',OPR='start')
+#endif
  !
  ! Poles tabulation
  !==================
@@ -143,17 +140,28 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  endif
  if (half_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
  !
+ ! OpenMP setup
+ !==============
+ !
+!$omp parallel default(shared), &
+!$omp &        private( i_cg, Drude_pole,GreenF,n_poles, i_bg, Xo_residual, &
+!$omp &                 ikbz,iv,ic,i_spin,ik,is,ikpbz,ikp,isp, eh_occ, ik_bz_mem, &
+!$omp &                 rhotw_save, isave, ig1,ig2, iw ), &
+!$omp &        firstprivate( isc )
+ !
+ call OPENMP_update(master_thread) 
+ !
  ! Timing
  !========
  ! 
 #if defined _SC 
  if (l_sc_run.and..not.l_eval_collisions) then
-   call live_timing('Xo @it'//trim(intc(it_now)),coarse_grid_N)
+   call live_timing('Xo @it'//trim(intc(it_now)),coarse_grid_N/n_threads_now)
  else
-   call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N)
+   call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_now)
  endif
 #else
- call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N)
+ call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_now)
 #endif
  !
  ! Here I prepare the scattering module
@@ -161,14 +169,21 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! Note the collision_reset destrois the bw_plan
  !
  call collision_reset(isc)
- isc%ngrho=X%ng
- allocate(isc%rhotw(X%ng))
  !
  ! MAIN LOOP
  !===========
  !
+ ! Main allocation
+ !-----------------
+ isc%ngrho=X%ng
+ if (iq==1) allocate(rhotw_save(X%ng))
+ allocate(isc%rhotw(X%ng))
+ allocate(Xo_residual(X%ng,X%ng))
+ call mem_est("Xo_WS",(/X%ng**2 *n_threads_now/))
+ !
  isave=0
  !
+!$omp do
  do i_cg = 1,coarse_grid_N
    !
    Drude_pole=iq==1.and.abs(coarse_grid_Pt(i_cg))<1.E-5
@@ -181,7 +196,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    n_poles = sum(bare_grid_N(1:i_cg-1))
    !
-   Xo_residual=(0.,0.)
+   Xo_residual(:,:) = 0.0_SP
    !
    loop_bare_grid: do i_bg = 1,bare_grid_N(i_cg)
      !
@@ -226,7 +241,11 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
          ig2=g_rot(sop_inv(is),ig1)
          isc%rhotw(ig1)=rhotw_save(ig2)
        enddo
-       if (is>nsym/(i_time_rev+1)) isc%rhotw=conjg(isc%rhotw)
+       if (is>nsym/(i_time_rev+1)) then
+         do ig1=1,X%ng
+           isc%rhotw(ig1)=conjg(isc%rhotw(ig1))
+         enddo
+       endif
        isc%rhotw(1)=-conjg(DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin))
      else
        isc%is=(/ic,ik,is,i_spin/)
@@ -237,7 +256,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      !
      ! Filling the upper triangular part of the residual here ! 
      !-------------^^^^^---------------------------------------
-     !
      do ig2=1,X%ng
        call V_by_V_plus_V(ig2,eh_occ*isc%rhotw(ig2),conjg(isc%rhotw(:ig2)),Xo_residual(:ig2,ig2))
      enddo
@@ -250,38 +268,77 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
        GreenF(iw) = X_simple_GreenF(Xw%p(iw),coarse_grid_Pt(i_cg),X%ordering)
      endif
      !
+!$omp critical
      do ig2=1,X%ng
-       !
        call V_by_V_plus_V(ig2,GreenF(iw),Xo_residual(:ig2,ig2),Xo(:ig2,ig2,iw))
-       !
-       if (half_X_mat_only) cycle
-       !
-       call V_by_V_plus_V(X%ng-ig2,GreenF(iw),conjg(Xo_residual(ig2,ig2+1:)),Xo(ig2+1:,ig2,iw))
-       !
      enddo
+     if (.not.half_X_mat_only ) then 
+       do ig2=1,X%ng
+         call V_by_V_plus_V(X%ng-ig2,GreenF(iw),conjg(Xo_residual(ig2,ig2+1:)),Xo(ig2+1:,ig2,iw))
+       enddo
+     endif
+!$omp end critical
      !
    enddo
    !
    call live_timing(steps=1)
    !
  enddo 
+!$omp end do
+ !
+ ! Cleaning the omp region
+ !-------------------------
+ !
+ if (iq==1) deallocate(rhotw_save)
+ deallocate(isc%rhotw)
+ deallocate(Xo_residual)
+ !
+ call live_timing()
+ !
+!$omp end parallel
+ !
+ call OPENMP_update(master_thread) 
+ !
+#if defined _TIMING
+ call timing('Xo (procedure)',OPR='stop')
+ call timing('Xo (REDUX)',OPR='start')
+#endif
  !
  do iw=1,Xw%n_freqs
-   if (iq==1) call PP_redux_wait(Xo(:,:,iw))
-   if (iq> 1) call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_Q_A2A%COMM)
+   call PP_redux_wait(Xo(:,:,iw),COMM=PAR_COM_q_for_Xo%COMM)
  enddo
- call live_timing
+ !
+#if defined _TIMING
+ call timing('Xo (REDUX)',OPR='stop')
+#endif
  !
  ! Symmetrize Xo when only half has been avaluated
  !=================================================
  !
  if (half_X_mat_only) then
-   do ig2=1,X%ng
-     do ig1=ig2+1,X%ng
-        if (i_space_inv==0) Xo(ig1,ig2,:)=conjg(Xo(ig2,ig1,:))
-        if (i_space_inv==1) Xo(ig1,ig2,:)=Xo(ig2,ig1,:)
+   !
+!$omp parallel default(shared), private(ig2,ig1)
+   if (i_space_inv==0) then
+!$omp do
+     do ig2=1,X%ng
+       do ig1=ig2+1,X%ng
+         Xo(ig1,ig2,:)=conjg(Xo(ig2,ig1,:))
+       enddo
      enddo
-   enddo
+!$omp end do
+   endif
+   !
+   if (i_space_inv==1) then
+!$omp do
+     do ig2=1,X%ng
+       do ig1=ig2+1,X%ng
+         Xo(ig1,ig2,:)=Xo(ig2,ig1,:)
+       enddo
+     enddo
+!$omp end do
+   endif
+!$omp end parallel
+   !
  endif
  !
 #if defined _SC
@@ -300,8 +357,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! CLEAN
  !=======
  !
- if (iq==1) deallocate(rhotw_save)
- deallocate(isc%rhotw,Xo_residual)
  call collision_reset(isc)
  call mem_est("Xo_WS")
  !

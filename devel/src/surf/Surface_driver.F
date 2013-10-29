@@ -35,7 +35,7 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
   use optcut,                  only : loptcut, DIP_q_dot_iR_cut, setup_cutmat ! just for dealloc
   use vec_operate,             only : v_norm
   use parallel_m,              only : pp_redux_wait
-  use wave_func,               only : WF_free
+  use wave_func,               only : wf
   use ras_module
   use surface_geometry
   use bulkeps,                 only : lbulkerr, GetBulkEps
@@ -106,7 +106,7 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
   !
   call FREQUENCIES_setup(wv) 
   call X_pre_setup(Xen,X)
-  nw = wv%n(1) ! Have to use freqs_setup in case wv%n(1) is lowered (%)
+  nw = wv%n_freqs ! Have to use freqs_setup in case wv%n(1) is lowered (%)
 
   allocate( eps_i(nw, npol) )  
   allocate( eps_b(nw) )
@@ -151,13 +151,11 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
 &            'Absorption @ q || ',qname,' : ', X%q0/v_norm(X%q0)
     call msg('ns',trim(lch)) ! <-- to std out + newline
        
-    call X_alloc('X',(/X%ng,X%ng,wv%n(2)/))
+    call X_alloc('X',(/X%ng,X%ng,wv%n_freqs/))
 
     X_epsilon = (0.,0.)
 
-    do iw = 1, wv % n(1), wv % n(2) ! loop over blocks
-       
-      fr = (/ iw, iw+wv%n(2)-1 /) ! the small block of frequencies
+    do iw = 1, wv % n_freqs ! loop over blocks
        
       call X_os(X_mat,iq,Xen,Xk,wv,X)
        
@@ -227,7 +225,7 @@ subroutine surfdriver(Xen,Xk,q,wv,X) ! remove q
   deallocate(lossf)
   deallocate(Xk%pt)
   call mem_est("k_pt")
-  call WF_free()
+  call WF_free(WF)
   call ras_clean
 
   call pp_redux_wait
@@ -240,11 +238,11 @@ subroutine ras_clean
  use bulkeps,        only : clean_bulkeps
  use surface_geometry, only : gvecaff
  use optcut, only : end_optcut,loptcut
-  use frequency,     only:rg_index_bg,bg_npts,cg_pt,cg_index_bg
-  use X_m,                     only : X_poles_tab
-  use R_lattice,        only: g_vec, bare_qpg, g_rot, qindx_free
-  use D_lattice,        only: dl_sop
-  use wave_func,        only: wf_nc_k, wf_igk
+! use frequency,     only:rg_index_bg,bg_npts,cg_pt,cg_index_bg
+ use X_m,                     only : X_poles_tab
+ use R_lattice,        only: g_vec, bare_qpg, g_rot, qindx_free
+ use D_lattice,        only: dl_sop
+ use wave_func,        only: wf_nc_k, wf_igk
 
   call qindx_free
   call clean_bulkeps
@@ -259,11 +257,11 @@ subroutine ras_clean
     call mem_est(" X_poles_tab ")
   endif
 
-  if(allocated(rg_index_bg)) call mem_est("RGi BGn CGp CGi")
-  if(allocated(rg_index_bg)) deallocate(rg_index_bg)
-  if(allocated(bg_npts)) deallocate(bg_npts)
-  if(allocated(cg_pt)) deallocate(cg_pt)
-  if(allocated(cg_index_bg)) deallocate(cg_index_bg)
+!  if(allocated(rg_index_bg)) call mem_est("RGi BGn CGp CGi")
+!  if(allocated(rg_index_bg)) deallocate(rg_index_bg)
+!  if(allocated(bg_npts)) deallocate(bg_npts)
+!  if(allocated(cg_pt)) deallocate(cg_pt)
+!  if(allocated(cg_index_bg)) deallocate(cg_index_bg)
 
   deallocate(bare_qpg)
   call mem_est("bare_qpg")

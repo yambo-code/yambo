@@ -36,7 +36,7 @@ subroutine scatterBamp(isc)
  use pars,           ONLY:DP,SP,cZERO,cONE
  use electrons,      ONLY:n_spinor
  use collision,      ONLY:ggwinfo
- use D_lattice,      ONLY:nsym,i_time_rev,spin_sop,idt_index
+ use D_lattice,      ONLY:idt_index
  use R_lattice,      ONLY:g_rot
  use FFT_m,          ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
  !
@@ -50,7 +50,8 @@ subroutine scatterBamp(isc)
  complex(SP) :: WF_symm_i(fft_size,n_spinor)
  complex(SP) :: WF_symm_o(fft_size,n_spinor)
  !
- integer     :: qs,iGo,ifft
+ integer     :: qs,iGo
+ integer     :: ig, ir
  !
  ! <ib ik_is i_sp| 
  call WF_apply_symm(isc%is,WF_symm_i)
@@ -59,8 +60,27 @@ subroutine scatterBamp(isc)
  call WF_apply_symm(isc%os,WF_symm_o)
  !
  ! \tilde{\rho} in Real Space
+ !
+#if defined _OPENMP
+!$omp parallel default(shared), private(ir)
+!$omp do
+ do ir = 1, fft_size
+   rho_tw_rs(ir) = conjg(WF_symm_i(ir,1))*WF_symm_o(ir,1)
+ enddo
+!$omp end do
+ !
+ if (n_spinor==2) then
+!$omp do
+   do ir = 1, fft_size
+     rho_tw_rs(ir) = rho_tw_rs(ir)+conjg(WF_symm_i(ir,2))*WF_symm_o(ir,2)
+   enddo
+!$omp end do
+ endif
+!$omp end parallel
+#else
  rho_tw_rs(:)=conjg(WF_symm_i(:,1))*WF_symm_o(:,1)
  if (n_spinor==2) rho_tw_rs(:)=rho_tw_rs(:)+conjg(WF_symm_i(:,2))*WF_symm_o(:,2)
+#endif
  !
 #if defined _FFTW
  call fft_3d(rho_tw_rs,fft_dim,+1,fftw_plan)
@@ -73,12 +93,28 @@ subroutine scatterBamp(isc)
  iGo=isc%qs(1)
  qs =isc%qs(3)
  !
- if(qs==idt_index) isc%rhotw(1:isc%ngrho)= rho_tw_rs(fft_g_table(1:isc%ngrho,iGo))
- if(qs/=idt_index) isc%rhotw(1:isc%ngrho)= rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo))
+#if defined _OPENMP
+ if (qs==idt_index) then 
+!$omp parallel do default(shared), private(ig)
+   do ig = 1, isc%ngrho
+     isc%rhotw(ig)= rho_tw_rs(fft_g_table(ig,iGo))
+   enddo
+!$omp end parallel do
+ else
+!$omp parallel do default(shared), private(ig)
+   do ig = 1, isc%ngrho
+     isc%rhotw(ig)= rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo))
+   enddo
+!$omp end parallel do
+ endif
+#else
+ if (qs==idt_index) isc%rhotw(1:isc%ngrho)= rho_tw_rs(fft_g_table(1:isc%ngrho,iGo))
+ if (qs/=idt_index) isc%rhotw(1:isc%ngrho)= rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo))
+#endif
  !
  ! q=0, G=0 case
  !
- if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) isc%rhotw(1)=cONe
+ if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) isc%rhotw(1)=cONE
  if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) isc%rhotw(1)=cZERO
  !
 end subroutine

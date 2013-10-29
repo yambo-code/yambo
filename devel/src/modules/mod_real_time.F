@@ -126,13 +126,6 @@ module real_time
  real(SP)    :: RAD_LifeTime
  logical     :: RT_is_dumped
  !
- ! I/O
- !----------------
- !
- logical     :: l_RT_skip_GF_IO
- logical     :: l_RT_skip_OCC_IO
- logical     :: l_RT_skip_JandP_IO
- !
  ! Relaxation and Dissipation 
  !----------------------------
  logical                  :: l_RT_uses_E_RIM
@@ -191,7 +184,7 @@ module real_time
  !
  integer           :: two_alpha
  real(SP)          :: Gr_QP_width
- character(schlen) :: Gr_kind
+ character(schlen) :: Gr_kind = "QP"
  character(lchlen) :: Gr_description(5) 
  real(SP),    allocatable :: Gr_ee_matrix(:,:,:,:)
  real(SP),    allocatable :: Gr_ep_matrix(:,:,:,:)

@@ -32,10 +32,10 @@ subroutine XCo_driver(E,k,Xk,q)
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind 
  use memory_m,      ONLY:mem_est
- use wave_func,     ONLY:WF_free
+ use wave_func,     ONLY:WF
 #if defined _SC
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional,&
-      &                        SC_SRPA
+&                        SC_SRPA
 #endif
  !
  implicit none
@@ -134,7 +134,7 @@ subroutine XCo_driver(E,k,Xk,q)
  endif
  !
  if (.not.l_sc_run)  then
-   call WF_free()
+   call WF_free(WF)
    call XCo_report_and_IO()
  endif
  !

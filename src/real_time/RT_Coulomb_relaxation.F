@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Coulomb_relaxation(i_k,E,k,q)
+subroutine RT_Coulomb_relaxation(i_k,E,k,q,G_lesser)
  !  
  use pars,            ONLY:SP,cI,rZero,pi
- use electrons,       ONLY:levels,spin_occ,BZ_RIM_nkpt 
+ use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,bz_samp
- use SC,              ONLY:it_now,RT_ibz_coo
- use real_time,       ONLY:G_lesser,MEM_index,E_E_Electron_lifetime,E_E_Hole_lifetime,&
-&                          Gr_ee_matrix,G_MEM_steps,l_RT_uses_E_RIM
+ use SC,              ONLY:RT_ibz_coo,SC_bands,RT_nk
+ use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,&
+&                          Gr_ee_matrix,l_RT_uses_E_RIM
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:COLLISIONS
  use parallel_m,      ONLY:PAR_QP_index,PAR_QPp_index,PAR_IND_QP,PAR_IND_QPp,PAR_Q_index,PAR_IND_Q
@@ -36,6 +36,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k,q
  integer,       intent(in) :: i_k
+ complex(SP),   intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
  ! Work Space ...
  !
@@ -72,7 +73,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
      i_q_s = q%sstar(iqbz,2)
      i_kmq = k%sstar(qindx_S(i_k,iqbz,1),1)
      !
-     f_kmq=-cI*G_lesser(i_np,i_np,RT_ibz_coo(i_kmq,1),MEM_index(it_now,G_MEM_steps))/spin_occ
+     f_kmq=-cI*G_lesser(i_np,i_np,RT_ibz_coo(i_kmq,1))/spin_occ
      !
      do i_qp2=1,QP_n_states
        !
@@ -83,7 +84,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
        i_mp = QP_table(i_qp2,2)
        i_p  = QP_table(i_qp2,3)
        !
-       f_p=-cI*G_lesser(i_m,i_m,RT_ibz_coo(i_p,1),MEM_index(it_now,G_MEM_steps))/spin_occ
+       f_p=-cI*G_lesser(i_m,i_m,RT_ibz_coo(i_p,1))/spin_occ
        !
        do i_p_star=1,k%nstar(i_p)
          !
@@ -93,7 +94,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q)
          !
          i_pmq =k%sstar(i_pmq_bz,1)
          !
-         f_pmq =-cI*G_lesser(i_mp,i_mp,RT_ibz_coo(i_pmq,1),MEM_index(it_now,G_MEM_steps))
+         f_pmq =-cI*G_lesser(i_mp,i_mp,RT_ibz_coo(i_pmq,1))
          !
          pre_factor=abs(4.*pi*COLLISIONS(i_qp1_mem)%v3(i_qp2_mem,i_p_s,i_q_mem))**2
          !

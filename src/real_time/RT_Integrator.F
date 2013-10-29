@@ -47,8 +47,8 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
  type(bz_samp),        intent(in) :: k,q
  type(levels),         intent(in) :: E
  real(SP),             intent(in) :: T_step,Time
- complex(SP),          intent(in) :: G_old(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),k%nibz)
- complex(SP),       intent(inout) :: G_new(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),k%nibz)
+ complex(SP),          intent(in) :: G_old(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),       intent(inout) :: G_new(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  type(gauge_field),    intent(in) :: A_old
  type(gauge_field), intent(inout) :: A_new
  ! 

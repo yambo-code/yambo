@@ -119,13 +119,22 @@ module LIVE_t
        cput_tot=0.d0
        cput_tot(myid+1,2)=cput_now
      endif
+#if defined _BLUEGENE
+     cput_tot(myid+1,1)=(cput_now-cput_tot(myid+1,2))
+#else
      cput_tot(myid+1,1)=(cput_now-cput_tot(myid+1,2))/real(n_threads,SP)
+#endif
      !
      if (present(INIT_SEC)) cput_sec(myid+1,:)=(/0.d0,cput_now/)
      if (present(INIT_SEG)) cput_seg(myid+1,:)=(/0.d0,cput_now/)
      !
+#if defined _BLUEGENE
+     if (present(SEC)) cput_sec(myid+1,1)=(cput_now-cput_sec(myid+1,2))
+     if (present(SEG)) cput_seg(myid+1,1)=(cput_now-cput_seg(myid+1,2))
+#else
      if (present(SEC)) cput_sec(myid+1,1)=(cput_now-cput_sec(myid+1,2))/real(n_threads,SP)
      if (present(SEG)) cput_seg(myid+1,1)=(cput_now-cput_seg(myid+1,2))/real(n_threads,SP)
+#endif
      !
      if (present(FIN)) deallocate(cput_seg,cput_sec,cput_tot)
      !

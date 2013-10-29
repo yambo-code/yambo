@@ -694,13 +694,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! DFT
  !
 #if defined _SC
- if (l_sc_run) then
+ if (l_sc_run.and..not.l_real_time) then
    !
    call initactivate( 1,'Potential FFTGvecs Gauge SCBands EXXCut')
    !
    call initactivate( 1,'SCmixing SClwBand SCnlMix BandMix')
    call initactivate(-1,'QpntsRXs')
-   if (l_cohsex) call initactivate(1,'GbndRnge UseEbands SCUpWIter')
+  if (l_cohsex) call initactivate(1,'GbndRnge UseEbands SCUpWIter')
    call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
    if (trim(SC_potential)=='EXX'.or.trim(SC_potential)=='EXXC'.or.&
 &      trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
@@ -713,7 +713,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! REAL-TIME specific
  !
- if (l_eval_collisions.and..not.l_real_time) then
+ if (l_eval_collisions) then
    !
    call initactivate(-1,'GbndRnge UseEbands BandMix SCUpWIter') 
    call initactivate(-1,'SCIter SCEtresh SCRhoTresh TF_precondition')
@@ -1063,14 +1063,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      elph_nDBs_used=elph_nDBs
 #endif
 #if defined _RT
+     !
      ! Default collisions are COHSEX, but it is possible to define something different
-     if (l_eval_collisions.and..not.l_real_time.and..not.l_sc_run) then
+     if (l_eval_collisions) then
        call initactivate(1,'scpot')
        SC_potential='COHSEX'
        call initactivate(1,'em1s cohsex HF_and_locXC')
-     endif
-     !
-     if (l_real_time) then
+     else if (l_real_time) then
        call switch_off_runlevel('cohsex',on_name=' ')
        call switch_off_runlevel('HF_and_locXC',on_name=' ')
        call switch_off_runlevel('em1s',on_name=' ')

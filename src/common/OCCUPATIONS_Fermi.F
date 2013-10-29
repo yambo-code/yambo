@@ -148,8 +148,8 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    do i1=i_Ef(1),i_Ef(2),1
      call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
      if ( abs(n_of_el_from_zero(1)) < nel_diff_zero) then
-       if(E%nb >i1) E%Efermi(1)=(E_sorted(i1)+E_sorted(i1+1))/2.
-       if(E%nb==i1) E%Efermi(1)= E_sorted(i1)
+       if( (E%nk*E%nb*n_sp_pol)> i1 ) E%Efermi(1)=(E_sorted(i1)+E_sorted(i1+1))/2.
+       if( (E%nk*E%nb*n_sp_pol)==i1 ) E%Efermi(1)= E_sorted(i1)
        Fermi_is_converged=.true.
        exit
      endif

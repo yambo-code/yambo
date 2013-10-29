@@ -534,7 +534,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_RT_diagonalize=.FALSE.
  RT_IO_steps=-1
  RT_IO_steps_DB=-1
- RT_IO_time=-1.
+ RT_IO_time=0.5*FS2AUT
  l_RT_induced_field=.FALSE.
  NE_tot_time= 5*RAD_LifeTime
  NE_MEM_treshold=0.

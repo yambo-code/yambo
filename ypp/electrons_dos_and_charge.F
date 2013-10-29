@@ -272,7 +272,6 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
    allocate(el_den(fft_size))
    !
-   !call PARALLEL_global_indexes(Xen,Xk,q,"DENSITY") 
    call el_density(Xen,Xk,el_den,.FALSE.) 
    v2plot=el_den
    !

@@ -30,7 +30,7 @@ subroutine WF_spatial_invertion(en,Xk)
  use pars,          ONLY:SP
  use electrons,     ONLY:levels
  use FFT_m,         ONLY:fft_size
- use wave_func,     ONLY:wf,wf_space
+ use wave_func,     ONLY:WF
  use com,           ONLY:msg
  use D_lattice,     ONLY:i_time_rev,i_space_inv,mag_syms
  use R_lattice,     ONLY:bz_samp
@@ -52,7 +52,7 @@ subroutine WF_spatial_invertion(en,Xk)
  !
  ! WF procedure
  !
- if (.not.allocated(wf).or.wf_space/='R') return
+ if (.not.associated(WF%c).or.WF%space/='R') return
  !
  ! When using wf's the space inv is tested using the first
  ! nsym/(i_time_rev+1) and all the nsym. If there is not
@@ -69,9 +69,26 @@ subroutine WF_spatial_invertion(en,Xk)
    call el_density(en,Xk,rho_nsi,.false.)
    !
    cv=(0.,0.)
-   forall(i1=1:fft_size) cv(i1)=conjg(wf(i1,1))*wf(i1,1)
+   mv(1:2)=0.0_SP
+   !
+#if defined _OPENMP
+   !
+   forall(i1=1:fft_size) cv(i1)=conjg(WF%c(i1,1))*WF%c(i1,1)
    mv(1)=sum(rho_nsi(:)*cv(:))
    mv(2)=sum(rho_si(:)*cv(:))
+   !
+#else
+   !
+!$omp parallel do default(shared), private(i1), reduction(+:mv)
+   do i1=1,fft_size
+       cv(i1)=conjg(WF%c(i1,1))*WF%c(i1,1)
+       mv(1)=mv(1) +rho_nsi(i1)*cv(i1)
+       mv(2)=mv(2) +rho_si(i1)*cv(i1)
+   enddo
+!$omp end parallel do
+   !
+#endif
+   !
    if (abs(mv(1)-mv(2))<abs(mv(1))/1.E5) then
      i_space_inv=1
    else

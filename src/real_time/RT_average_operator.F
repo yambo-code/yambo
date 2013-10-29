@@ -27,7 +27,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  use QP_m,           ONLY:QP_n_states
  use electrons,      ONLY:n_sp_pol,levels
  use FFT_m,          ONLY:fft_size
- use wave_func,      ONLY:wf
+ use wave_func,      ONLY:WF
  use wrapper,        ONLY:Vstar_dot_V
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
  !
@@ -78,16 +78,15 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
    !
    call make_Hk_matrix(ik_ibz)
    !
-   do i1=1,SC_bands(1)-1
-     VALUE=VALUE+conjg(Hk(i1,i1,1))*en%f(i1,ik_ibz,1)*k%weights(ik_ibz)
-   enddo
+   !do i1=1,SC_bands(1)-1
+   !  VALUE=VALUE+conjg(Hk(i1,i1,1))*en%f(i1,ik_ibz,1)*k%weights(ik_ibz)
+   !enddo
    ! 
    do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
      !
      VALUE=VALUE-cI*Vstar_dot_V(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
 &                                          G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))*&  
 &                                          k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
-     !
    enddo
  enddo
  !
@@ -114,14 +113,14 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
 &                                 O_MATRIX(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_mem,i1)
        endif
        !
-       do i1=1,SC_bands(1)-1
-         Hk(i1,i1,1:n_sp_pol)=O_MATRIX(i1,i1,ik_mem,1:n_sp_pol)       
-       enddo
+       !do i1=1,SC_bands(1)-1
+       !  Hk(i1,i1,1:n_sp_pol)=O_MATRIX(i1,i1,ik_mem,1:n_sp_pol)       
+       !enddo
        !
      endif
      !
      if(present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk)
-     if(present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk,wf)
+     if(present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk,WF)
      !
    end subroutine make_Hk_matrix
    !

@@ -26,18 +26,18 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use pars,          ONLY:SP
  use drivers,       ONLY:l_alda_fxc,l_gw0
  use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range
- use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,&
-&                        PAR_COM_Q_INDEX,master_cpu
- use wave_func,     ONLY:WF_free
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index,&
+&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
+ use wave_func,     ONLY:WF_buffered_IO,WF
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP,&
-&                        IO_and_Messaging_switch
+&                        IO_and_Messaging_switch,io_X
  use com,           ONLY:depth
  use TDDFT,         ONLY:FXC
- use interfaces,    ONLY:PARALLEL_global_indexes
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
+&                        PARALLEL_WF_index,WF_load
  implicit none
  type(levels) ::Xen 
  type(bz_samp)::Xk,q
@@ -47,8 +47,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer :: iq,Xdb,i_err,iq_to_start
- real(SP):: minmax_ehe(2)
+ integer           :: iq,Xdb,i_err,iq_to_start,iq_mem,X_range(2)
+ real(SP)          :: minmax_ehe(2)
  integer, external :: ioX
  character(1)      :: sec_mode
  !
@@ -84,8 +84,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    endif
  endif
  !
- call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
- !
  call X_pre_setup(Xen,X)
  !
  ! In the next lines Yambo will VERIFY the em1d database
@@ -114,9 +112,27 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (X_em1> 0) iq_to_start=X_em1
  endif
  !
- ! Allocation
- !    
- call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+ ! Parallel distribution
+ !=======================
+ !
+ call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
+ call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
+ if (io_X)      call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+ if (.not.io_X) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs*PAR_nq/))
+ !
+ ! WF distribution 
+ !=================
+ !
+ call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_Xk_ibz,&
+&                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
+&                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
+&                            CLEAN_UP=.TRUE.)
+ !
+ if (WF_buffered_IO) then
+   !
+   call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
+   !
+ endif
  !
  do iq=iq_to_start,X%iq(2)
    !
@@ -128,52 +144,39 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (l_alda_fxc.and..not.allocated(FXC)) then
      !
-     call PARALLEL_global_indexes(Xen,Xk,q,"DENSITY") 
+     call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
      !
      call tddft_alda_g_space(Xen,Xk)
      !
    endif
    !
-   if (iq_to_start==1) then
-     if (iq==1) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Zero_Momentum",X=X) 
-     if (iq==2) then 
-       call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
-       call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
-     endif
-   else 
-     if (iq==iq_to_start) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
-   endif
+   if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
-   if (iq>1) then
-     if (.not.PAR_IND_Q%element_1D(iq)) cycle
-   endif
+   iq_mem=PAR_Q_index(iq)
+   X_range=(/1,Xw%n_freqs/)
+   if (.not.io_X) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
    !
-   call X_os(X_mat,iq,Xen,Xk,Xw,X)  
+   call X_os(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
-   if (X%whoami/=1) call X_s(iq,X,Xw)
+   if (X%whoami/=1) call X_s(iq,X,Xw,X_range)
    !
-   if (iq==1) call PP_redux_wait
-   if (iq> 1) call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
+   call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
-   if (iq==1) then
-     !
-     call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
-     !
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=Xdb) 
-   else
-     !
-     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
-     !
+   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
+   !
+   if (iq==iq_to_start) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=Xdb) 
+   !
+   ! Only the cpus that write the q=1 component knows the value of ng_db this must 
+   ! be initialized for all the cpus
+   !
+   if (iq>iq_to_start) then
+     X%ng_db=X%ng
      call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
    endif
+   !
    i_err=ioX(X,Xw,Xdb)
-   !
-   ! As only the master node enters ioX 2 write the ng_db components must 
-   ! be initialized for all the nodes
-   !
-   X%ng_db=X%ng
    !
    ! CLEAN (1)
    !
@@ -181,10 +184,15 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
  enddo
  !
+ ! X%ngostnts is defined only for the group of CPU's that
+ ! eval q=1 and must be spread to all CPUs to allow futrher I/O
+ !
+ call PP_redux_wait(X%ngostnts,COMM=PAR_COM_Q_INDEX%COMM)
+ !
  ! CLEAN (2)
  !
- call X_alloc('X')
+ if (io_X) call X_alloc('X')
  call X_alloc('DIP_q_dot_iR')
- if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free()
+ if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
 end function

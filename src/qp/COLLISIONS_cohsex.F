@@ -35,14 +35,15 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
 &                        PAR_IND_B_mat,PAR_Q_index,PAR_IND_QPp,PAR_QPp_index,PAR_nQ,PAR_nQP,PAR_nQPp
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch,io_COLLs
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_n_states,QP_table
  use X_m,           ONLY:X_alloc,X_mat,X_t
- use wave_func,     ONLY:WF_load,WF_free
+ use interfaces,    ONLY:WF_load
+ use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:DL_vol,nsym
  use wrapper,       ONLY:M_by_V
- use collisions_IO, ONLY:TEMP_COLLISIONS_v,l_STORE_COLLISIONS
+ use collisions_IO, ONLY:TEMP_COLLISIONS_v
  use drivers,       ONLY:l_elel_scatt
  use SC,            ONLY:SC_bands
  use fragments,     ONLY:fragment_status
@@ -56,7 +57,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  ! Work Space
  !
  integer                  ::i_qp1,i_qp2,i1,i2,iqbz,iqibz,alloc_err,iqs,&
-&                           i_n,i_k,i_k_s,i_k_sp,&
+&                           i_n,i_k,i_k_s,i_k_sp,X_range(2),&
 &                           i_np,i_kmq,i_kmq_s,i_kmq_sp,i_kmq_G0,&
 &                           i_m,i_p,i_p_s,i_p_sp,i_p_star,&
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp2_mem,i_qp1_mem
@@ -90,7 +91,11 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  !
  ! WFs...
  !
- call WF_load(isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-SC')
+ if (l_elel_scatt) then
+   call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,QP_nb/),(/1,k%nibz/),title='-SC')
+ else
+   call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-SC')
+ endif
  !
  ! Plasmon-Pole/Static interaction DB I/O
  !
@@ -126,7 +131,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
    !
    i_qp1_mem=PAR_QP_index(i_qp1)
    !
-   if (l_STORE_COLLISIONS) then
+   if (io_COLLs) then
      if (fragment_status(i_qp1)/=-1) then
        call live_timing(steps=PAR_nQ*PAR_n_B_mat_elements)
        cycle
@@ -246,7 +251,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
            !
            call M_by_V('N', X%ng, EM1s, conjg(iscp%rhotw), local_rhotw)
            !
-           if (l_STORE_COLLISIONS) then
+           if (io_COLLs) then
              !
              TEMP_COLLISIONS_v(i_qp2,i_p_s,iqbz)=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
              !
@@ -303,12 +308,12 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
    enddo Q_loop 
    !
    if (l_elel_scatt) then
-     if (l_STORE_COLLISIONS) call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_G_b_A2A%COMM)
+     if (io_COLLs) call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_G_b_A2A%COMM)
    else
      call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)
    endif
    !
-   if (l_STORE_COLLISIONS) call COLLISIONS_store(i_qp1)
+   if (io_COLLs) call COLLISIONS_store(i_qp1)
    !
  enddo QP_loop
  !
@@ -319,7 +324,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  deallocate(EM1s)
  call mem_est("EM1s")
  call X_alloc('X')
- if (l_STORE_COLLISIONS) call WF_free()
+ if (io_COLLs) call WF_free(WF)
  call collision_reset(isc)
  call collision_reset(iscp)
  !

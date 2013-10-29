@@ -24,10 +24,29 @@ module wave_func
  use pars,           ONLY:SP
  implicit none
  !
- integer                :: wf_b(2)
- integer                :: wf_k(2)
- integer                :: wf_s(2)
- integer                :: wf_n_states
+ type WAVEs 
+   integer              :: b(2) ! band range 
+   integer              :: k(2) ! k range
+   integer              :: spin(2)
+   integer              :: N ! states 
+   character(1)         :: space
+   complex(SP), pointer :: c(:,:)        => null()
+   integer    , pointer :: index(:,:,:)  => null()
+   logical    , pointer :: state(:,:,:)  => null()
+   logical              :: to_load = .TRUE.
+ end type WAVEs
+ !
+ ! Buffered WFs
+ !
+ type (WAVEs) :: WF_buffer
+ logical      :: WF_buffered_IO
+ !
+ ! Actual WFs
+ !
+ type (WAVEs) :: WF
+ !
+ ! Real components ?
+ !
  logical                :: real_wavefunctions
  !
  ! Bands block size
@@ -42,8 +61,6 @@ module wave_func
  ! Max Num. of G-VECTORS (>= wf_ncx)
  !
  integer                :: wf_ng
- character(1)           :: wf_space
- complex(SP),allocatable:: wf(:,:)
  !
  ! Wave function derivatives
  !
@@ -51,11 +68,8 @@ module wave_func
  complex(SP), allocatable :: wf_y(:,:)
  complex(SP), allocatable :: wf_z(:,:)
  !
- integer    ,allocatable:: wf_state(:,:,:)
- !
  ! Parallel wave-function distribution
  !
- logical    ,allocatable:: states_loaded(:,:,:) 
  logical    ,allocatable:: states_to_load(:,:,:) 
  !
  ! Num. of COMPONENTS at each k
@@ -87,86 +101,9 @@ module wave_func
      complex(SP),dimension(n_spinor) :: WF_symm
    end function
    !
-   subroutine WF_load(iG_max,iGo_max,bands_to_load,kpts_to_load,&
-&                     spins_to_load,space,title,impose_free_and_alloc,force_WFo)
-     integer :: iG_max,iGo_max,bands_to_load(2),kpts_to_load(2)
-     integer,     optional :: spins_to_load(2)
-     character(*),optional :: space
-     character(*),optional :: title
-     logical     ,optional :: impose_free_and_alloc
-     logical     ,optional :: force_WFo
-   end subroutine
-   !
  end interface 
  !
  contains
-   !
-   subroutine WF_alloc()
-     use memory_m, ONLY : mem_est
-     use FFT_m,    ONLY : fft_size,fftw_plan,fft_dim
-     integer :: err
-     integer :: ik,ib,is
-     !
-     ! Distributed allocation
-     !
-     if(allocated(states_to_load)) then
-       !
-       wf_n_states=0
-       do ib=wf_b(1),wf_b(2)
-         do ik=wf_k(1),wf_k(2)
-           do is=wf_s(1),wf_s(2)
-             if(states_to_load(ib,ik,is)) wf_n_states=wf_n_states+1
-           enddo
-         enddo
-       enddo
-       !
-     else
-       !
-       wf_n_states=(wf_b(2)-wf_b(1)+1)*(wf_k(2)-wf_k(1)+1)*(wf_s(2)-wf_s(1)+1)
-       !
-     endif
-     !
-     if (wf_space=="R") allocate(wf(fft_size,wf_n_states),stat=err)
-     if (wf_space=="G") allocate(wf(wf_ng,wf_n_states),stat=err)
-     if (wf_space=="C") allocate(wf(wf_ncx,wf_n_states),stat=err)
-     !
-     if (err==0) allocate(wf_state(wf_b(2),wf_k(2),wf_s(2)),stat=err)
-     !
-     call mem_est('WF',(/size(wf)/),errors=(/err/))
-     !
-     wf=(0.,0.)
-     wf_state=0
-#if defined _FFTW
-     fftw_plan=0
-#endif
-   end subroutine
-   !
-   subroutine WF_free()
-     use memory_m, ONLY : mem_est
-     use FFT_m,    ONLY : fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
-  &                       fft_rot_r,fft_rot_r_inv,fftw_plan,fft_multiplier
-     if (.not.allocated(wf)) return
-     !
-     call mem_est('WF',quiet=QUIET_free)
-     !
-     deallocate(wf,wf_state)
-     if (wf_space=="R") then
-       fft_size=0
-       fft_dim=0
-       fft_dim_loaded=0
-       fft_multiplier=1
-       deallocate(fft_g_table,fft_rot_r,fft_rot_r_inv)
-       call mem_est('FFT_g_tab FFT_rot')
-#if defined _FFTW
-       call dfftw_destroy_plan(fftw_plan)
-       fftw_plan=0
-#endif
-     endif
-     wf_k=0
-     wf_b=0
-     wf_s=0
-     wf_space=' '
-   end subroutine
    !
    subroutine WF_derivative_alloc(cart_direction)
      use memory_m, ONLY : mem_est
@@ -174,18 +111,18 @@ module wave_func
      logical  :: cart_direction(3)
      !
      if(cart_direction(1)) then
-       allocate(wf_x(fft_size,wf_n_states))
-       call mem_est("WF_x",(/fft_size*wf_n_states/),quiet=QUIET_alloc)
+       allocate(wf_x(fft_size,WF%N))
+       call mem_est("WF_x",(/fft_size*WF%N/),quiet=QUIET_alloc)
        wf_x=(0.,0.)
      endif
      if(cart_direction(2)) then
-       allocate(wf_y(fft_size,wf_n_states))
-       call mem_est("WF_y",(/fft_size*wf_n_states/),quiet=QUIET_alloc)
+       allocate(wf_y(fft_size,WF%N))
+       call mem_est("WF_y",(/fft_size*WF%N/),quiet=QUIET_alloc)
        wf_y=(0.,0.)
      endif
      if(cart_direction(3)) then
-       allocate(wf_z(fft_size,wf_n_states))
-       call mem_est("WF_z",(/fft_size*wf_n_states/),quiet=QUIET_alloc)
+       allocate(wf_z(fft_size,WF%N))
+       call mem_est("WF_z",(/fft_size*WF%N/),quiet=QUIET_alloc)
        wf_z=(0.,0.)
      endif
    end subroutine

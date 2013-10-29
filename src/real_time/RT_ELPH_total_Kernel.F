@@ -95,7 +95,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
    !
    do il=elph_branches(1),elph_branches(2)
      !
-     if(ph_freqs_sq(iqbz,il)<0.) cycle
+     if (ph_freqs_sq(iqbz,il)<epsilon(1._SP)) cycle
      !
      ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
      !

@@ -44,7 +44,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
- use wave_func,       ONLY:WF_load,wf,wf_state
+ use wave_func,       ONLY:WF
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
  use SC,              ONLY:it_now
@@ -109,11 +109,11 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
 #else
          call fft_3d(u_rs,fft_dim,1)
 #endif      
-         ifft=wf_state(iv1,ik,1)
-         offt=wf_state(iv2,isc%os(2),1)
+         ifft=WF%index(iv1,ik,1)
+         offt=WF%index(iv2,isc%os(2),1)
          rhotw_rs(:)=E%f(iv2,isc%os(2),1)/spin_occ
-         if (lostr)      rhotw_rs(1:fft_size)=rhotw_rs(:)*conjg(wf(fft_rot_r(os,1:fft_size),offt))
-         if (.not.lostr) rhotw_rs(1:fft_size)=rhotw_rs(:)*wf(fft_rot_r(os,1:fft_size),offt)
+         if (lostr)      rhotw_rs(1:fft_size)=rhotw_rs(:)*conjg(WF%c(fft_rot_r(os,1:fft_size),offt))
+         if (.not.lostr) rhotw_rs(1:fft_size)=rhotw_rs(:)*WF%c(fft_rot_r(os,1:fft_size),offt)
          local_u(:) =  u_rs(fft_rot_r(qs,:))*rhotw_rs(:)
          U_x(ik,iv1,:) = U_x(ik,iv1,:)-local_u(:)
          call live_timing(steps=1)

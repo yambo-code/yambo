@@ -25,8 +25,8 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !  is the periodic part of the derivative
  !
  use pars,           ONLY:SP,DP,pi
- use wave_func,      ONLY:wf,wf_state,wf_ng,wf_n_states,wf_x,wf_y,wf_z,&
-&                         WF_load,WF_free,WF_derivative_alloc
+ use interfaces,     ONLY:WF_load
+ use wave_func,      ONLY:WF,wf_ng,wf_x,wf_y,wf_z,WF_derivative_alloc
  use electrons,      ONLY:n_sp_pol
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use R_lattice,      ONLY:g_vec,nkibz
@@ -59,7 +59,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !
  ! Wavefunctions in G space 
  !==========================
- call WF_load(0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
+ call WF_load(WF,0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
  !
  ! Need to call fft_setup to know the size of the FFT mesh
  ! 
@@ -81,7 +81,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !
  use_live_timing=.false.
  if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) use_live_timing=.true.
- if (use_live_timing) call live_timing('[WF-DERIV] Evaluation loop',wf_n_states)
+ if (use_live_timing) call live_timing('[WF-DERIV] Evaluation loop',WF%N)
 #if defined _FFTW
  fftw_plan = 0
 #endif
@@ -89,7 +89,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  do ik=derivative_kpt(1),derivative_kpt(2)
    do ib=bands_to_load(1),bands_to_load(2)
      do i_spin=1,n_sp_pol   
-       ifft=wf_state(ib,ik,i_spin)
+       ifft=WF%index(ib,ik,i_spin)
        !
        ! Evaluate the wf_derivative in G space
        ! wf_derivative(:,i)=-i grad_i wf(:)=p_i wf(:)    i=x,y
@@ -99,7 +99,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
        do i1=1,3
          if (.not.do_derivative(i1)) cycle
          wf_der=(0.,0.)
-         wf_der(:)=wf(:,ifft)*(k_pt(ik,i1)+g_vec(: wf_ng ,i1))*2.0_SP*pi/alat(i1)
+         wf_der(:)=WF%c(:,ifft)*(k_pt(ik,i1)+g_vec(: wf_ng ,i1))*2.0_SP*pi/alat(i1)
          !
          ! Here we FFT wf_derivative to real space
          wf_DP=(0._DP,0._DP)
@@ -121,7 +121,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  enddo
  !
  if(use_live_timing) call live_timing()
- call WF_free()
+ call WF_free(WF)
  !
  deallocate(wf_DP)
  call mem_est("wf_DP")

@@ -45,6 +45,8 @@ case $with_fftw_lib in
   ;;
 esac
 
+if test x"$enable_open_mp" = "xyes"; then with_fftw=" " ; fi
+
 if test -d "$with_fftw" ; then
   for FFTW_LIBS in "$EXTERNAL_FFTW" ; do      
     AS_IF([test "$FFTW_LIBS"], [LIBS="${FFTW_PATH} ${FFTW_LIBS}"])

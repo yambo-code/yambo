@@ -32,11 +32,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
 &                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,G_lesser,l_SC_RESTART,&
 &                         l_NSC_shot,l_TF_precond,V_mean,SC_up_W_iters,l_SC_nl_mix
- use wave_func,      ONLY:wf,wf_n_states,WF_free,WF_load
+ use wave_func,      ONLY:WF
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use matrix_operate, ONLY:mat_dia_inv,DIAGO
- use interfaces,     ONLY:PARALLEL_global_indexes
+ use interfaces,     ONLY:PARALLEL_global_indexes,WF_load
  use com,            ONLY:msg,warning
  use X_m,            ONLY:X_t,current_iq
  use LIVE_t,         ONLY:LIVE_message
@@ -147,7 +147,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  ! Reference wavefunctions
  !
- WFo   =wf
+ WFo   =WF%c
  !
  ! Start-Up setup.  Eventually restart setup.
  !
@@ -379,10 +379,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        ! Reload and rotate wave-functions if W is updated
        ! =======================================
        !
-       call WF_load(WF_G_max,WF_Go_indx,(/1,max(SC_bands(2),E%nbm)/),(/1,nkibz/),title='-SC',force_WFo=.true.)
+       call WF_load(WF,WF_G_max,WF_Go_indx,(/1,max(SC_bands(2),E%nbm)/),(/1,nkibz/),title='-SC',force_WFo=.true.)
        !
        do ik=1,QP_nk
-          call WF_rotate(ik,WFo,fft_size)
+         call WF_rotate(ik,WFo,fft_size)
        enddo
        !  
      endif
@@ -506,7 +506,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  deallocate(E_bare)
  call mem_est("E_bare")
  if (l_SC_cycle.or.l_NSC_shot) then
-   call WF_free()
+   call WF_free(WF)
    call SC_free()
    call SC_local_free()
  endif
@@ -529,8 +529,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call mem_est("delta_rho",(/fft_size/),(/SP/))
      endif
      !
-     allocate(WFo(fft_size,wf_n_states))
-     call mem_est("WFo",(/fft_size*wf_n_states/))
+     allocate(WFo(fft_size,WF%N))
+     call mem_est("WFo",(/fft_size*WF%N/))
      !
      if (l_Mean_Potential) then
        allocate(V_mean(fft_size,SC_bands(2)))

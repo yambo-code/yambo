@@ -596,6 +596,7 @@ ac_includes_default="\
 #endif"
 
 ac_subst_vars='LTLIBOBJS
+TIME_profile_str
 BGQ_str
 OPENMPI_str
 OPENMP_str
@@ -634,6 +635,7 @@ PF90
 MPILIBS
 mpi_cpp
 openmp_cpp
+openmpi_cpp
 MPICC
 PFC
 LOCAL_LIBS
@@ -664,8 +666,8 @@ ac_ct_FC
 FCFLAGS
 FC
 MKMF_PREFIX
+time_profile_cpp
 OPENMPLIBS
-openmpi_cpp
 bluegene_cpp
 PW_CPP
 PW_VER
@@ -755,6 +757,7 @@ with_p2y
 enable_bluegene
 enable_openmpi
 enable_open_mp
+enable_time_profile
 enable_msgs_comps
 enable_options_check
 with_f90ext
@@ -1412,6 +1415,7 @@ Optional Features:
   --enable-bluegene       Bluegene specific code instructions.
   --enable-openmpi        OpenMPI specific code instructions.
   --enable-open-mp        Enable OpenMP support
+  --enable-time-profile   Extended timing profile of specific sections
   --enable-msgs-comps     Verbose compilation log
   --enable-options-check  Enable the command line options check in driver.c.
                           Default is yes.
@@ -5498,7 +5502,6 @@ openmpi_cpp=" "
 if test x"$enable_openmpi" = "xyes"; then
  openmpi_cpp="-D_OPENMPI"
 fi
-
 # ============================================================================
 #
 # OpenMP
@@ -5514,6 +5517,21 @@ OPENMPLIBS=" "
 if test x"$enable_open_mp" = "xyes"; then
  OPENMPLIBS="-openmp -lpthread";
  openmp_cpp="-D_OPENMP"
+fi
+
+# ============================================================================
+#
+# Time Profiling (mod_timing)
+#
+# Check whether --enable-time-profile was given.
+if test "${enable_time_profile+set}" = set; then :
+  enableval=$enable_time_profile;
+fi
+
+if test x"$enable_time_profile" = "x"; then enable_time_profile="no"; fi
+time_profile_cpp=" "
+if test x"$enable_time_profile" = "xyes"; then
+ time_profile_cpp="-D_TIMING"
 fi
 
 # ============================================================================
@@ -9449,6 +9467,7 @@ fi
 
 
 
+
 fi
 # ============================================================================
 # FFT
@@ -9491,6 +9510,8 @@ case $with_fftw_lib in
     EXTERNAL_FFTW="$with_fftw_lib";
   ;;
 esac
+
+if test x"$enable_open_mp" = "xyes"; then with_fftw=" " ; fi
 
 if test -d "$with_fftw" ; then
   for FFTW_LIBS in "$EXTERNAL_FFTW" ; do
@@ -9930,6 +9951,9 @@ if test "$libxc" = "yes" ; then LIBXC_str="X"; fi
 NETCDF_LF_str=" "
 if test "$enable_netcdf_LFS" = "yes" &&  test "$netcdf" = "yes" ; then NETCDF_LF_str="X"; fi
 
+TIME_profile_str=" "
+if test "$enable_time_profile" = "yes" ; then TIME_profile_str="X"; fi
+
 PW_str=" "
 if test "$compile_p2y" = "yes" ; then PW_str="X"; fi
 
@@ -9951,9 +9975,6 @@ if test "$compile_local" = "yes" ; then LOCAL_str="X"; fi
 SLK_str=" "
 if test "$enable_scalapack" = "yes" ; then SLK_str="X"; fi
 
-OPENMP_str=" "
-if test "$enable_openmp" = "yes" ; then OPENMP_str="X"; fi
-
 BGQ_str=" "
 if test "$enable_bluegene" = "yes" ; then BGQ_str="X"; fi
 
@@ -9961,6 +9982,7 @@ OPENMPI_str=" "
 if test "$enable_openmpi" = "yes" ; then OPENMPI_str="X"; fi
 
 if test "$exec_prefix" = "NONE" ; then exec_prefix="$srcdir_path"; fi
+
 
 
 

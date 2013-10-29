@@ -25,10 +25,9 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  use IO_m,           ONLY:IO_write,IO_read,Fragmented_IO_save,Fragmented_IO
  use com,            ONLY:write_to_report,write_to_of
  use parallel_m,     ONLY:IO_write_default,myid,master_cpu
- use stderr,         ONLY:string_split
+ use stderr,         ONLY:string_split,write_to_log
  use fragments,      ONLY:Parallel_Fragments,last_syncronized
  use LIVE_t,         ONLY:live_timing_is_on
- use parser_m,       ONLY:parser
  use stderr,         ONLY:write_fragments_IO_log
  implicit none
  !
@@ -39,9 +38,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  integer          ::ich
  character(schlen)::ch_piece(10)
- logical          ::local_TRUE,local_FALSE,local_no_WRITE,local_master
- !
- call parser('SkipWRITE',local_no_WRITE)
+ logical          ::local_TRUE,local_FALSE,local_master
  !
  local_TRUE  =.TRUE.
  local_FALSE =.FALSE.
@@ -67,6 +64,11 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
      if (trim(ch_piece(ich))=="+report") write_to_report=local_master
      if (trim(ch_piece(ich))=="+timing") live_timing_is_on=local_TRUE
      !
+     ! Log 
+     !
+     if (trim(ch_piece(ich))=="-log") write_to_log=local_FALSE
+     if (trim(ch_piece(ich))=="+log") write_to_log=local_TRUE
+     !
      ! Ouput files
      !
      if (trim(ch_piece(ich))=="-output") write_to_of=local_FALSE
@@ -77,10 +79,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
      if (trim(ch_piece(ich))=="-io_in" ) IO_read=local_FALSE
      if (trim(ch_piece(ich))=="-io_out") IO_write=local_FALSE
      if (trim(ch_piece(ich))=="+io_in" ) IO_read=local_TRUE
-     if (trim(ch_piece(ich))=="+io_out") then
-       if (local_no_WRITE)      IO_write=.FALSE.
-       if (.not.local_no_WRITE) IO_write=local_TRUE
-     endif
+     if (trim(ch_piece(ich))=="+io_out") IO_write=local_TRUE
      !
      if (trim(ch_piece(ich))=="+all_write_fragments") then
        Parallel_Fragments=local_TRUE

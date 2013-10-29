@@ -32,7 +32,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,spin
  use FFT_m,        ONLY:fft_size
  use stderr,       ONLY:intc
- use wave_func,    ONLY:WF_load,WF_free
+ use interfaces,   ONLY:WF_load
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
@@ -58,6 +58,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use xc_functionals,ONLY:F_xc
  use wrapper,       ONLY:V_dot_V,Vstar_dot_V,M_by_V
  use global_XC,     ONLY:WF_kind,WF_xc_functional
+ use wave_func,     ONLY:WF
  !
  implicit none
  type(levels)  ::Ken 
@@ -221,7 +222,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_START
    !
-   call WF_load(max(O_ng,BS_n_g_exch),1,BS_bands,(/1,BS_columns/),space='R',title='-BSK->Fxc')
+   call WF_load(WF,max(O_ng,BS_n_g_exch),1,BS_bands,(/1,BS_columns/),space='R',title='-BSK->Fxc')
    !
    ! GPL_EXCLUDE_END
    !
@@ -230,7 +231,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    bands_to_load=BS_bands
    if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
    !
-   call WF_load(max(O_ng,BS_n_g_exch),1,bands_to_load,(/1,BS_columns/),&
+   call WF_load(WF,max(O_ng,BS_n_g_exch),1,bands_to_load,(/1,BS_columns/),&
 &               space='R',title='-BSK')
    !
  endif
@@ -656,6 +657,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Final CLEAN
  !
- call WF_free()
+ call WF_free(WF)
  !
 end subroutine

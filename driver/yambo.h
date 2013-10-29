@@ -64,8 +64,8 @@
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
 #if defined _RT
-  {"negf",   "q","Real-time dynamic [opt=(n)one,(p)robe,(pp)ump & probe]",0,0,1,0,0}, 
-  {"collisions", "e","Evaluate Collisions [opt=(s)cattering/(c)orrelation/(b)oth]",0,0,1,0,0}, 
+  {"negf",   "q","Real-time dynamic [opt=(p)robe,(pp)ump & probe]",0,0,1,0,0}, 
+  {"collisions", "e","Evaluate Collisions [opt=(s)cattering/(c)orrelation]",0,0,1,0,0}, 
   {"scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/(b)oth]",0,0,1,0,0},
 #endif
 #if defined _ELPH 

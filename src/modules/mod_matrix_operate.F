@@ -96,13 +96,17 @@ module matrix_operate
      integer     :: D,i1,i2
      complex, allocatable :: V(:)
      D=size(M,1)
+!$omp parallel default(shared), private(V,i1)
      allocate(V(D))
+!$omp do 
      do i1=1,D
        V(i1:D)=M(i1,i1:D)
        M(i1,i1:D)=M(i1:D,i1)
        M(i1:D,i1)=V(i1:D)
      enddo
+!$omp end do
      deallocate(V)
+!$omp end parallel
    end subroutine
    !
    subroutine mat_r2c_ordered(mr,mc,m_order) 

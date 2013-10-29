@@ -26,11 +26,11 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use ACFDT,          ONLY:ACFDT_n_freqs,ACFDT_n_lambda,ACFDT_E_range
  use FFT_m,          ONLY:fft_size
  use frequency,      ONLY:w_samp,W_reset
- use wave_func,      ONLY:WF_load,WF_free
+ use wave_func,      ONLY:WF
  use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index
+ use interfaces,     ONLY:PARALLEL_index,WF_load
  use R_lattice,      ONLY:bz_samp,bare_qpg,nqibz
  use electrons,      ONLY:levels,nel
  use D_lattice,      ONLY:DL_vol
@@ -91,7 +91,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  call msg('s','[ACFDT] LDA Total energy')
  !
- call WF_load(0,1,(/1,Xen%nbm/),(/1,Xk%nibz/),title='-Density')
+ call WF_load(WF,0,1,(/1,Xen%nbm/),(/1,Xk%nibz/),title='-Density')
  !
  allocate(E_xc(fft_size),rho(fft_size))
  call el_density(Xen,Xk,rho,.false.)
@@ -118,7 +118,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
 #endif
  !
  deallocate(E_xc,rho)
- call WF_free()
+ call WF_free(WF)
  !
  ! Correlatin Setup
  !

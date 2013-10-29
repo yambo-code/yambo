@@ -34,8 +34,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,    ONLY:PARALLEL_index
+ use interfaces,    ONLY:PARALLEL_index,WF_load
  use collision,     ONLY:ggwinfo,collision_reset
+ use wave_func,     ONLY:WF
  use IO_m,          ONLY:io_control,REP,VERIFY,NONE,RD,RD_CL,OP_RD,&
 &                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END,OP_RD_CL
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
@@ -47,7 +48,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev,mag_syms
- use wave_func,     ONLY:WF_load,WF_free
  use stderr,        ONLY:intc
  use wrapper,       ONLY:Vstar_dot_V,V_dot_V
  !
@@ -208,7 +208,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  ! WFs
  !
- call WF_load(X%ng,maxval(qindx_S(:,:,2)),&
+ call WF_load(WF,X%ng,maxval(qindx_S(:,:,2)),&
 &            (/QP_n_G_bands(1),max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-Sc')
  !
  ! Test the spatial Inversion
@@ -410,7 +410,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  endif
  !
  call X_alloc('X')
- call WF_free()
+ call WF_free(WF)
  call collision_reset(isc)
  call collision_reset(iscp)
  call PP_indexes_reset(px)

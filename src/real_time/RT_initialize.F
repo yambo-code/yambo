@@ -34,7 +34,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
 &                         l_RT_induced_field,RT_dynamics_jumps,l_NE_simulate_TDDFT, &
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
-&                         Phase_LifeTime,NE_MEM_Treshold,RT_IO_steps_DB,            &
+&                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,Gr_kind,RIM_ibz_coo,   &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,Fluence,          &
 &                         l_RT_uses_E_RIM,RIM_bz_coo
@@ -131,8 +131,8 @@ subroutine RT_initialize(E,k,q)
  !============== 
  !
  T_memory=0._SP
- if (l_elph_scatt.and.NE_MEM_Treshold>0.) then
-   T_memory=-1./minval( abs(E%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_Treshold)
+ if (l_elph_scatt.and.NE_MEM_treshold>0.) then
+   T_memory=-1./minval( abs(E%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_treshold)
    G_MEM_steps=T_memory/RT_step
  endif
  !

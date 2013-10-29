@@ -55,7 +55,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE,IO_and_Messaging_switch
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
- use wave_func,      ONLY:wf
+ use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use parallel_m,     ONLY:PAR_IND_WF_k,PAR_COM_WF_k_INDEX,PP_redux_wait
  use stderr,         ONLY:real2ch
@@ -205,8 +205,8 @@ subroutine RT_start_and_restart(E,k,q,X)
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        !
        if (local_V.and..not.l_NE_simulate_Irredux) then
-         call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf)
-       elseif(.not.l_NE_simulate_Irredux) then
+         call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF)
+       else if (.not.l_NE_simulate_Irredux) then
          call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(3))
          io_V=io_SC_components('V',E,ID(3))
          XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1:n_sp_pol)=  &
@@ -218,7 +218,7 @@ subroutine RT_start_and_restart(E,k,q,X)
        !
        if(l_NE_simulate_IP.or.l_NE_simulate_Irredux.or.l_NE_simulate_BSE) &
 &         call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2), &
-&                                ik,1:n_sp_pol),wf) 
+&                                ik,1:n_sp_pol),WF) 
      enddo
      !
    endif
@@ -306,22 +306,17 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    do ik=1,QP_nk
      !
-     if (.not.PAR_IND_WF_k%element_1D(ik)) then
-       XC0_and_HARTREE0(:,:,ik,:)=cZERO
-       cycle
-     endif
-     !
      if(.not.l_NE_simulate_Irredux.and..not.l_NE_simulate_TDDFT) then
        !
-       call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf) 
+       call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF) 
        !
      endif
      !
-     call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf) 
+     call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF) 
      !
    enddo
    !
-   call PP_redux_wait(XC0_and_HARTREE0,COMM=PAR_COM_WF_k_INDEX%COMM)
+   call PP_redux_wait(XC0_and_HARTREE0)
    !
    V_xc_sc=(0._SP)
    !

@@ -55,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_jumps,&
 &                        RT_ave_dephasing,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
-&                        Eh_pumped_pair_width,Eh_pumped_Nel,Gr_kind,two_alpha
+&                        Eh_pumped_pair_width,Eh_pumped_Nel,Gr_kind,two_alpha,NE_MEM_treshold
  use fields,        ONLY:Efield
 #endif
 #if defined _MAGNETIC
@@ -320,7 +320,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! ELPH
  !
- call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_Treshold)
+ call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_treshold)
  call it(defs,'RTmaxEn',    '[RT] Max e/h energy to define the states that are evolved',RT_eh_energy_max,&
 &                            Verb_level=V_real_time,unit=E_unit)
  call it(defs,'RTpumpEhEn', '[RT] Energy centers of the levels to be inverted by hand',Eh_pumped_pair_energy,&

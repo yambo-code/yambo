@@ -19,19 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-<<<<<<< .working
-AC_INIT(Yambo, 3.4.0 r.2838 , yambo@yambo-code.org)
-=======
-AC_INIT(Yambo, 3.4.0 r.2830 , yambo@yambo-code.org)
->>>>>>> .merge-right.r2837
+AC_INIT(Yambo, 3.4.0 r.2837 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="4"
 SSUBLEVEL="0"
-<<<<<<< .working
-SREVISION="2838"
-=======
-SREVISION="2830"
->>>>>>> .merge-right.r2837
+SREVISION="2837"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)

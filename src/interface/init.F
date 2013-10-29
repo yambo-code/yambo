@@ -31,7 +31,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use pars,           ONLY:schlen,lchlen
  use parser_m,       ONLY:parser
  use units,          ONLY:HA2EV
- use electrons,      ONLY:levels,E_reset,n_sp_pol
+ use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
@@ -60,7 +60,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use collisions_IO,  ONLY:io_COLLISIONS,V_kind
 #endif
 #if defined _RT
- use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe,Gr_kind
+ use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe
  use fields,         ONLY:Efield,i_Pump,i_Probe,Efield_reset,Efield_duplicate
 #endif
 #if defined _MAGNETIC
@@ -69,6 +69,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SURF
  use ras_module,     ONLY:lras, lreels
 #endif
+ use openmp,         ONLY:OPENMP_initialize
  !
  implicit none
  !
@@ -91,7 +92,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_abinit,ioKB_pwscf,&
 &                     ioCOL_CUT
  logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
- character(6)      :: X_size
  !
  integer, external :: ioE_RIM
  !
@@ -129,7 +129,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='YAMBO_SURF'
 #endif
  !
- !CPU structure
+ ! CPU structure
  !
  call PARALLEL_structure()
  !
@@ -137,7 +137,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call SET_logicals()
  !
- !Presets (input)
+ ! Presets (input)
  !
  init = 0
  !
@@ -432,21 +432,24 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh Threads NLogCPUs SkipWRITE EvalMagn')
+ call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh Threads NLogCPUs DBsIOoff EvalMagn')
  !
  !FFT
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,&
-&          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs')
+&          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs WFbuffIO')
  !
  ! CPU structure
  !
 #if defined _MPI || defined _BLUEGENE
  !
  if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa) then
-   call CPU_activate("X_q_0")
-   call CPU_activate("X_all_q")
-   if (l_alda_fxc) call CPU_activate("DENSITY")
+   if (l_optics) then
+     call CPU_activate("X_q_0")
+     call CPU_activate("X_finite_q")
+   else
+     call CPU_activate("X_all_q")
+   endif
  endif
  !
  if (l_HF_and_locXC) call CPU_activate("HF")
@@ -460,11 +463,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_bse) call CPU_activate("BSE")
  !
- if (l_real_time) then
-   call CPU_activate("RT")
-   call CPU_activate("WF")
-   call CPU_activate("X_q_0")
- endif
+ if (l_real_time) call CPU_activate("RT")
  !
  !
 #endif
@@ -517,9 +516,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Optics(not bse) nor GW (no PP)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
-   X_size='NGsBlk'
-   if(l_rpa_IP) X_size='      '
-   call X_activate('Xd',(/X_size,'QpntsR','BndsRn',&
+   call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
    !
@@ -843,6 +840,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if(infile_verbosity==V_real_time.and.l_real_time) call DephMatrix_init()
 #endif
  !
+ ! After input reading the number of threads could be eventually overwritten
+ ! by the user-specified value
+ !
+ call OPENMP_initialize(.FALSE.)
+ !
  if (infile_editing) return
  !
  ! Update Logicals (especially the write_to_log)
@@ -907,10 +909,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
    !
    subroutine CPU_activate(what)
-     character(*) :: what ! X_q_0 X_all_q GW HF BSE DENSITY RT
+     character(*) :: what 
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
-     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_all_q".or.what=="BSE") then
+     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BSE") then
        call initactivate(1,what//"_nCPU_invert")
      endif
      if (what=="BSE") then
@@ -1054,7 +1056,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SURF
      X(3)%iq = 1  ! 2 components
      X(3)%ordering = 'c'
-     Xw(3)%n = 101 ! 2 components
+     Xw(3)%n_freqs = 101 
 #endif 
 #if defined  _ELPH 
      if (.not.l_elel_corr.and..not.l_elph_corr) l_elel_corr=.true.

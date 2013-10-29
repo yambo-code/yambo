@@ -451,7 +451,6 @@ integer function variables_SC(ID,local_description,what)
        call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=local_size,MENU=0)
        !
        i_desc=i_desc+1
-       !call io_elemental(ID,R1=Efield(i1)%versor,CHECK=.true., &
        call io_elemental(ID,R1=Efield(i1)%versor,WARN=.true., &
 &       VAR=" [FIELDs] Versor                 :",OP=(/"==","==","=="/),&
 &       DESCRIPTION=local_description(i_desc))

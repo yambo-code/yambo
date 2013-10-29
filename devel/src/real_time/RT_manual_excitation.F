@@ -40,7 +40,7 @@ subroutine RT_manual_excitation(E,k)
  ! Work Space
  !
  integer :: i1,i2,i3,ib,ik,ik_rim
- real(SP):: local_E_window,coeff,delta_Nel,occupation
+ real(SP):: local_E_window,coeff,delta_Nel,occupation,local_energy(2)
  integer :: Pump_level(E%nb,E%nk)
  logical :: Pumped_state(E%nb,E%nk)
  !
@@ -50,8 +50,9 @@ subroutine RT_manual_excitation(E,k)
  if (Eh_pumped_Nel<=0._SP  ) return
  !
  ! Shift energy with respect to VBM/CBm
- Eh_pumped_pair_energy(1)=Eh_pumped_pair_energy(1)+E%E_VBM
- Eh_pumped_pair_energy(2)=Eh_pumped_pair_energy(2)+E%E_CBm
+ !
+ local_energy(1)=Eh_pumped_pair_energy(1)+E%E_VBM
+ local_energy(2)=Eh_pumped_pair_energy(2)+E%E_CBm
  !
  delta_Nel=0._SP
  coeff=0._SP
@@ -72,9 +73,9 @@ subroutine RT_manual_excitation(E,k)
          if (Pumped_state(ib,ik)) cycle
          !
          if (i1==0) then
-           if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(1))<local_E_window) i1=ib
+           if(abs(E%E(ib,ik,1)-local_energy(1))<local_E_window) i1=ib
          else
-           if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(2))<local_E_window) then
+           if(abs(E%E(ib,ik,1)-local_energy(2))<local_E_window) then
              if(i1==ib) cycle
              Pumped_state(i1,ik)=.TRUE.
              Pumped_state(ib,ik)=.TRUE.

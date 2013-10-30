@@ -169,7 +169,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! Is WF to load ? If not and the space is "R" I need to know the fft_size, at least. 
  !
  if(allocated(states_to_load)) then
-   WF%to_load=count(states_to_load==.TRUE.)>0
+   WF%to_load=count(states_to_load .eqv. .true.)>0
    if (.not.WF%to_load) then
      if(associated(WF%state)) nullify(WF%state)
      allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))

@@ -27,9 +27,10 @@ subroutine SET_logicals()
  use com,        ONLY:write_to_of,write_to_report
  use fragments,  ONLY:Parallel_Fragments
  use IO_m,       ONLY:IO_write,IO_read,Fragmented_IO,Fragmented_IO_save,IO_write_not_fragmented_DB,&
-&                     DBs_IO_control_string,io_DIP,io_X,io_HF,io_COLLs,io_GF,io_J,io_OCCs
+&                     DBs_IO_control_string,io_DIP,io_X,io_HF,io_COLLs,io_WF,io_GF,io_J,io_OCCs
  use stderr,     ONLY:write_to_log,write_fragments_IO_log,string_split
  use LIVE_t,     ONLY:live_timing_is_on
+ implicit none
  !
  ! Work Space
  !

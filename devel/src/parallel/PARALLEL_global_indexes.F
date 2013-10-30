@@ -454,8 +454,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    allocate(PAR_Xk_ibz_index(Xk%nibz))
    call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
-   do ib1=1,SC_bands(2)
-     do ib2=1,SC_bands(2)
+   do ib1=SC_bands(1),SC_bands(2)
+     do ib2=SC_bands(1),SC_bands(2)
        if (PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2) ) ) then
           PAR_IND_WF_b%element_1D(ib1)=.TRUE.
           PAR_IND_WF_b%element_1D(ib2)=.TRUE.

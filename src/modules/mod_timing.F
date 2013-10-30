@@ -328,7 +328,7 @@ MODULE timing_m
        CALL PP_redux_wait( total_time )
        total_time = total_time / REAL( ncpu, SP )
        !
-       CALL PP_redux_wait( call_number, COMM=mpi_comm_world )
+       CALL PP_redux_wait( (/call_number/) )
        call_number = NINT ( call_number / REAL( ncpu, SP ) )
        !
      ENDIF

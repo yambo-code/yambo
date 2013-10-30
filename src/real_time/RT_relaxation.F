@@ -27,7 +27,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! Output: Sigma_relax
  !
- use units
  use pars,           ONLY:SP,cI,cZERO
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
@@ -36,16 +35,16 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,MEM_index,&
-&                         G_lesser,G_MEM_steps,RT_dynamics_jumps,it_start,&
-&                         Life_MEM_steps,SAVED_lifetime,E_P_Ho_abs_lifetime,l_RT_uses_E_RIM
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,&
+&                         RT_dynamics_jumps,it_start,&
+&                         Life_MEM_steps,SAVED_lifetime,E_P_Ho_abs_lifetime
  !
  implicit none
  !
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
- complex(SP),   intent(in)    :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),   intent(inout) :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
  ! Work Space
  !
@@ -62,8 +61,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  do ik=1,RT_nk
    do ib1=SC_bands(1),SC_bands(2)
-     G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps))=&
-&            cI*abs(-cI*G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps)))
+     G_input(ib1,ib1,ik)=cI*abs(-cI*G_input(ib1,ib1,ik))
    enddo
  enddo
  !
@@ -96,7 +94,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     call RT_Coulomb_relaxation(ik,E,k,q) 
+     call RT_Coulomb_relaxation(ik,E,k,q,G_input)
      !
    enddo
    !
@@ -119,7 +117,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     call RT_ELPH_total_Kernel(ik,E,k,q,Time) 
+     call RT_ELPH_total_Kernel(ik,E,k,q,Time,G_input) 
      !
    enddo
    !
@@ -185,7 +183,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  do ik=1,RT_nk
    do ib1=SC_bands(1),SC_bands(2)
-     f_k(ib1)=-cI*G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps))/spin_occ
+     f_k(ib1)=-cI*G_input(ib1,ib1,ik)/spin_occ
      if (l_elel_scatt) then
        Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+E_E_Hole_lifetime(ib1,ik)*(f_k(ib1)-1._SP)+&
 &                                                      E_E_Electron_lifetime(ib1,ik)*f_k(ib1)

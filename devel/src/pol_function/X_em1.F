@@ -187,7 +187,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! X%ngostnts is defined only for the group of CPU's that
  ! eval q=1 and must be spread to all CPUs to allow futrher I/O
  !
- call PP_redux_wait(X%ngostnts,COMM=PAR_COM_Q_INDEX%COMM)
+ call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_Q_INDEX%COMM)
  !
  ! CLEAN (2)
  !

@@ -19,24 +19,25 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
+subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesser)
  !  
  use pars,           ONLY:SP,cI,pi
  use electrons,      ONLY:levels,spin_occ,n_full_bands
- use SC,             ONLY:SC_bands,it_now,RT_ibz_coo,RT_Nk_ibz
- use real_time,      ONLY:G_lesser,MEM_index,E_P_Hole_lifetime,E_P_Electron_lifetime,&
+ use SC,             ONLY:SC_bands,RT_ibz_coo,RT_Nk_ibz,RT_nk
+ use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         B_mat_index,G_MEM_steps,l_RT_uses_E_RIM,RIM_ibz_coo
+&                         B_mat_index,l_RT_uses_E_RIM,RIM_ibz_coo
  use ELPH,           ONLY:ph_freqs_sq
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
  !
  implicit none
  !
- type(levels),  intent(in)  :: E
- integer,       intent(in)  :: ik,ik_m_q,i_q,i_l
- real(SP),      intent(in)  :: Bose_f(2)
- complex(SP),   intent(in)  :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- logical :: l_skip_ABS
+ type(levels),  intent(in) :: E
+ integer,       intent(in) :: ik,ik_m_q,i_q,i_l
+ real(SP),      intent(in) :: Bose_f(2)
+ complex(SP),   intent(in) :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+ complex(SP),   intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ logical,       intent(in) :: l_skip_ABS
  !
  ! Work Space ...
  !
@@ -91,7 +92,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        do ip_rim=RT_ibz_coo(ik_m_q,1),RT_ibz_coo(ik_m_q,2)
          !
-         f_k_m_q=-cI*G_lesser(i_np_shift,i_np_shift,ip_rim,MEM_index(it_now,G_MEM_steps))/spin_occ
+         f_k_m_q=-cI*G_lesser(i_np_shift,i_np_shift,ip_rim)/spin_occ
          !
          if (l_RT_uses_E_RIM) then
            i1=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)

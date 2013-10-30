@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
+subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
  !  
  ! In this routine I do not perform a time step. I calculate
  ! the el-ph Kernel at time TIME using an approximate iterative scheme (light but approximated).
@@ -40,7 +40,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  use pars,           ONLY:SP,cZero
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
- use SC,             ONLY:SC_bands
+ use SC,             ONLY:SC_bands,RT_nk
  use real_time,      ONLY:Sigma_relax,q_weight,elph_gkkp_expanded,l_RT_CCA_Kernel
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
@@ -53,6 +53,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  type(bz_samp), intent(in) :: k,q
  integer,       intent(in) :: ik
  real(SP),      intent(in) :: TIME
+ complex(SP),   intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
  ! Work Space ...
  !
@@ -123,7 +124,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
        ! Complete Collision Approximation (CCA)
        !=======================================
        !
-       call RT_ELPH_CCA_Kernel(ik,ik_m_q,iqbz,il,N_q,E,Gkkp,l_skip_ABS)
+       call RT_ELPH_CCA_Kernel(ik,ik_m_q,iqbz,il,N_q,E,Gkkp,l_skip_ABS,G_lesser)
        !
      else
        !

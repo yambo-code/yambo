@@ -42,7 +42,7 @@ module interfaces
      type(MPI_comm), optional :: COMM
    end subroutine
    !
-   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
+   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      use X_m,           ONLY:X_t
      use electrons,     ONLY:levels
      use R_lattice,     ONLY:bz_samp
@@ -52,7 +52,6 @@ module interfaces
      character(*)            ::ENVIRONMENT
      type(X_t),      optional::X
      logical,        optional::RESET
-     logical,        optional::SERIAL
    end subroutine
    !
    subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU,CHAIN)

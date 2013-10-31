@@ -30,7 +30,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  !--------
  ! coarse_grid_N          ! Coarse grid points
  ! coarse_grid_Pt         ! Coarse grid point
- ! coarse_grid_index(ibg) ! Tells the index in the reordered (not coarse) 
+ ! coarse_grid_index(ibg) ! Tells the index in the coarse
  !                        ! grid of the ibg-th element
  !                        ! of the original (not sorted) grid
  ! ordered_grid_index(ibg)! Tells the index in the reordered (not coarse) 

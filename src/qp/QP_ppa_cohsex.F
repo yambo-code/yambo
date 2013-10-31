@@ -34,7 +34,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_run,l_sc_srpa
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_IND_Q_ID,PAR_IND_QP_ID,&
-&                        PAR_COM_QP_A2A,PAR_Q_index
+&                        PAR_COM_QP_A2A,PAR_Q_index,n_WF_bands_to_load
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
@@ -163,7 +163,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! WF distributed & load
  !=======================
  !
- call PARALLEL_global_indexes(E,k,q,"GW")
+ call PARALLEL_global_indexes(E,k,q,"Self_Energy")
  !
  ! Redefine iq_to_start to be CPU-dependent
  !
@@ -174,11 +174,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    endif
  enddo
  !
- call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_distribute(max(QP_n_G_bands(2),QP_nb),k%nibz,QP_index=PAR_IND_QP)
+ call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,QP_index=PAR_IND_QP)
  call PARALLEL_WF_index( )
  !
- call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),&
+ call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,n_WF_bands_to_load/),(/1,k%nibz/),&
 #if defined _SC
 &             title='-SC')
 #else

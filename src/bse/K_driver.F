@@ -126,7 +126,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  X_oscillators%q0=BSS_q0
  !
  call PARALLEL_global_indexes(Ken,Xk,q," ",RESET=.TRUE.,X=X_oscillators)
- call PARALLEL_global_indexes(Ken,Xk,q,"BSE",    RESET=.FALSE.,SERIAL=.TRUE.,X=X_oscillators)
+ !call PARALLEL_global_indexes(Ken,Xk,q,"BSE",    RESET=.FALSE.,SERIAL=.TRUE.,X=X_oscillators)
  !
  ! ... and the QP corrections
  !

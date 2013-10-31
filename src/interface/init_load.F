@@ -101,7 +101,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'HF_and_locXC',   '[R XX] Hartree-Fock Self-energy and Vxc')
  call it('r',defs,'gw0',     '[R GW] GoWo Quasiparticle energy levels')
  call it('r',defs,'life',    '[R GW] GoWo Quasiparticle lifetimes')
- call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb interaction')
+ call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb potential')
  call it('r',defs,'cohsex',  '[R Xp] COlumb Hole Screened EXchange')
  !
  ! GPL_EXCLUDE_START

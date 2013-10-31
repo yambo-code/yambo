@@ -47,7 +47,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_RT_CCA_Kernel,&
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,&
-&                         Gr_kind,Gr_description,l_RT_uses_E_RIM
+&                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,&
 &                         rho_convergence,H_rotate,V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
@@ -126,8 +126,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  io_WF=io_SC_components('WF',E,ID(2))
  call io_control(ACTION=OP_RD_CL,COM=REP ,SEC=(/1/),MODE=VERIFY,ID=ID(3)) ! Local potential
  io_V=io_SC_components('V' ,E,ID(3))
- !
- if (.not.associated(E%W)) call error('No W damping in input')
  !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
@@ -426,8 +424,10 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! With    the RIM this cannot be not used, on the fly Gret for el-ph
    ! Without the RIM this implementation could be faster
-   !if (l_elph_scatt)          call RT_G_retarded_EP_initialize(E,k)
+   !
    if (l_elel_scatt) call RT_G_retarded_EE_initialize(E,k,q)
+   !
+   N_Gr_descs=5
    !
    Gr_description(1)=' [Gr] Retarded Green`s function  : '//trim(Gr_kind)
    Gr_description(2)=' [Gr] Damping (c) Energy ref [eV]: '//trim(real2ch(QP_ctl_Wc_E_ref(3,1)*HA2EV))
@@ -438,6 +438,11 @@ subroutine RT_start_and_restart(E,k,q,X)
    Gr_description(5)=' [Gr] Damping (v) [eV,adim,eV^-1]: '//&
 &                    trim(real2ch(QP_ctl_Wv(3,1,1)))//' '//&
 &                    trim(real2ch(QP_ctl_Wv(3,2,1)))//' '//trim(real2ch(QP_ctl_Wv(3,3,1)))
+   !
+ else
+   !
+   N_Gr_descs=1
+   Gr_description(1)=' [Gr] Retarded Green`s function  : none'
    !
  endif
  !

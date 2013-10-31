@@ -54,7 +54,7 @@
   {"DESC",   " ","       (hf/sex only eh-space; lrc only G-space)",0,0,0,0,0},
   {"bss",    "y","BSE solver [opt=h/d/(p/f)i/t]",0,0,1,0,0},                      
   {"DESC",   " ","       (h)aydock/(d)iagonalization/(i)nversion",0,0,0,0,0},
-  {"rim_cut","r","Coulomb interaction",0,0,0,0,0},  
+  {"rim_cut","r","Coulomb potential",0,0,0,0,0},  
   {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0,0},      
   {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0,0},     
   {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0,0},        

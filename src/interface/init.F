@@ -688,18 +688,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! DFT
  !
 #if defined _SC
- if (l_sc_run.and..not.l_real_time) then
-   !
+ if (l_sc_run) then
    call initactivate( 1,'Potential FFTGvecs Gauge SCBands EXXCut')
-   !
-   call initactivate( 1,'SCmixing SClwBand SCnlMix BandMix')
-   call initactivate(-1,'QpntsRXs')
-  if (l_cohsex) call initactivate(1,'GbndRnge UseEbands SCUpWIter')
-   call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
-   if (trim(SC_potential)=='EXX'.or.trim(SC_potential)=='EXXC'.or.&
-&      trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
-   call initactivate(1,'SCdiag Mean_Potential')
-   !
+   if (.not.l_real_time) then
+     call initactivate( 1,'SCmixing SClwBand SCnlMix BandMix')
+     call initactivate(-1,'QpntsRXs')
+     if (l_cohsex) call initactivate(1,'GbndRnge UseEbands SCUpWIter')
+     call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
+     if (trim(SC_potential)=='EXX'.or.trim(SC_potential)=='EXXC'.or.&
+&        trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
+     call initactivate(1,'SCdiag Mean_Potential')
+   endif
  endif
 #endif
  !

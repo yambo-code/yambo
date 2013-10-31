@@ -366,6 +366,8 @@ subroutine RT_X_effective(en)
    !
    subroutine plot_X_effective()
      !
+     character(2) :: chart_string
+     !
      ! ... ordering and frequency step (defines the P(t) periodicity)
      !
      Harmonic_Frequency(1,:)=Probe_Frequency(:)
@@ -373,19 +375,19 @@ subroutine RT_X_effective(en)
      !
      do i_order=min_X_order,X_order,1
        !
-       X_file_name="X_probe_order_"//trim(intc(i_order))
-       if (N_pumps==0.and.i_order==1) X_file_name="eps"
-       !
-       ! Note that the X are plotted as a function of the DETUNING=W_probe-W_pump
-       !
-       call RT_output("open "//trim(X_file_name) )
-       call RT_output(trim(X_file_name))
-       !
        do i_c=1,3
          !
-         call msg('o '//trim(X_file_name),'#')
-         call msg('o '//trim(X_file_name),'#',' Direction '//intc(i_c),INDENT=0)
-         call msg('o '//trim(X_file_name),'#')
+         if (i_c==1) chart_string="_x"
+         if (i_c==2) chart_string="_y"
+         if (i_c==3) chart_string="_z"
+         !
+         X_file_name="X_probe_order_"//trim(intc(i_order))//chart_string
+         if (N_pumps==0.and.i_order==1) X_file_name="eps"//chart_string
+         !
+         ! Note that the X are plotted as a function of the DETUNING=W_probe-W_pump
+         !
+         call RT_output(what="initialize")
+         call RT_output(what="open "//trim(X_file_name) )
          !
          do i_fp=1,N_probe_frequencies
            !
@@ -399,19 +401,17 @@ subroutine RT_X_effective(en)
            else if (N_pumps==1) then
              if (i_order> 1) Unit_of_Measure = (SVCMm12VMm1/AU2VMm1)**(i_order+1)  
            endif
-             !
-             call RT_output(trim(X_file_name),VALUEs=(/aimag(Susceptibility(i_order,i_f,i_c))*Unit_of_Measure,&
-&                                                  real( Susceptibility(i_order,i_f,i_c))*Unit_of_Measure,&
-&                                                  abs(aimag(Susc_err(i_order,i_f,i_c))*Unit_of_Measure),&
-&                                                  abs(real( Susc_err(i_order,i_f,i_c))*Unit_of_Measure)/),&
-&                                                  E=Probe_Frequency(i_f)*HA2EV)
+           !
+           call RT_output(trim(X_file_name),VALUEs=(/aimag(Susceptibility(i_order,i_f,i_c))*Unit_of_Measure,&
+&                                                real( Susceptibility(i_order,i_f,i_c))*Unit_of_Measure,&
+&                                                abs(aimag(Susc_err(i_order,i_f,i_c))*Unit_of_Measure),&
+&                                                abs(real( Susc_err(i_order,i_f,i_c))*Unit_of_Measure)/),&
+&                                                E=Probe_Frequency(i_f)*HA2EV)
            !
          enddo
          call msg('o '//trim(X_file_name),'')
          call msg('o '//trim(X_file_name),'')
        enddo 
-       !
-       call RT_output("close "//trim(X_file_name))
        !
      enddo
    end subroutine

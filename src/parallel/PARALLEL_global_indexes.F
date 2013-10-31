@@ -19,17 +19,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
+subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,mpi_comm_world,&
 &                        PARALLEL_cpu_mat_inversion,CPU_structure,master_cpu,&
 &                        PARALLEL_cpu_mat_diagonalization,PAR_Q_index,PAR_nQ,PAR_n_B_mat_elements,&
 &                        PAR_B_mat_index,PAR_nQP,PAR_nQPp,PAR_QP_index,PAR_QPp_index,PAR_INDEX_copy,&
-&                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy
+&                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load
  use parallel_m,    ONLY:& ! LOGICALS
-&                        l_par_bse,l_par_X_G_q0,l_par_HF,l_par_GW,l_par_RT,&
-&                        l_par_ELPH,l_par_X_G_all_q,l_par_X_G_finite_q
+&                        l_par_bse,l_par_X_G_q0,l_par_RT,&
+&                        l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q
  use parallel_m,    ONLY:& ! COMMUNICATORS
 &                        COMM_reset,PAR_COM_WORLD,&  
 &                        PAR_COM_VAL_INDEX,PAR_COM_CON_INDEX,PAR_COM_Q_A2A,&
@@ -52,7 +52,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use X_m,           ONLY:X_t
- use drivers,       ONLY:l_eval_collisions,l_elph_corr
+ use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC
  use matrix_operate,ONLY:matrix_linear_index
  use BS,            ONLY:BS_bands
 #if defined _ELPH
@@ -76,7 +76,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  character(*)            ::ENVIRONMENT
  type(X_t), optional     ::X
  logical,   optional     ::RESET
- logical,   optional     ::SERIAL
  !
  ! Work Space
  !
@@ -97,10 +96,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
  l_par_X_G_q0       =ENVIRONMENT=="Response_G_space_Zero_Momentum"
  l_par_X_G_finite_q =ENVIRONMENT=="Response_G_space_Finite_Momentum"
  l_par_X_G_all_q    =ENVIRONMENT=="Response_G_space"
- l_par_HF           =ENVIRONMENT=="HF"
- l_par_GW           =ENVIRONMENT=="GW"
+ l_par_SE           =ENVIRONMENT=="Self_Energy"
  l_par_RT           =ENVIRONMENT=="Real_Time"
- l_par_ELPH         =ENVIRONMENT=="ELPH"
  !
  X_type=1
  if (present(X)) then
@@ -573,9 +570,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    !
  endif
  !
- !======================================================================
- if (ENVIRONMENT=="HF".or.ENVIRONMENT=="GW".or.ENVIRONMENT=="ELPH") then
-   !====================================================================
+ !==============================
+ if (ENVIRONMENT=="Self_Energy") then
+   !============================
    !
    call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"q ","qp","b "/),&
 &                                        COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_QP_INDEX,&
@@ -626,14 +623,18 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
    !
    ! G bands
    !
-   if (ENVIRONMENT=="HF") n_bands=(/1,max(E%nbm,QP_nb)/)
-   if (ENVIRONMENT=="GW") n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
+   if (l_HF_and_locXC) n_bands=(/1,max(E%nbm,QP_nb)/)
+   if (l_gw0)          n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
 #if defined _RT
    if (l_eval_collisions)        n_bands=SC_bands
 #endif
 #if defined _ELPH
    if (.not.l_eval_collisions)   n_bands=(/1,QP_PH_n_G_bands/)
 #endif
+   !
+   ! WF bands to load
+   !
+   n_WF_bands_to_load=n_bands(2)
    !
    call PARALLEL_index(PAR_IND_G_b,(/n_bands(2)/),low_range=(/n_bands(1)/),&
 &                      COMM=PAR_COM_G_b_INDEX,CONSECUTIVE=.TRUE.)

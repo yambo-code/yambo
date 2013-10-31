@@ -56,7 +56,7 @@ subroutine WF_alloc(WF)
  !
  if (WF%space=="R") allocate(WF%c(fft_size,WF%N),stat=err)
  if (WF%space=="G") allocate(WF%c(wf_ng,WF%N),stat=err)
- if (WF%space=="C") allocate(WF%c(wf_ncx,WF%N),stat=err)
+ if (WF%space=="C".or.WF%space=="B") allocate(WF%c(wf_ncx,WF%N),stat=err)
  !
  if (err==0) allocate(WF%index(WF%b(2),WF%k(2),WF%spin(2)),stat=err)
  !

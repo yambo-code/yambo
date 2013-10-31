@@ -44,7 +44,7 @@ module parallel_m
  ! Logicals
  !
  logical            :: l_par_bse,l_par_X_G_q0,l_par_X_G_all_q,&
-&                      l_par_X_G_finite_q,l_par_HF,l_par_GW,l_par_RT,l_par_ELPH
+&                      l_par_X_G_finite_q,l_par_SE,l_par_RT
  !
  ! Communicators
  !
@@ -120,6 +120,14 @@ module parallel_m
    integer, pointer :: weight_1D(:)      => null()
    integer, pointer :: first_of_1D(:)    => null()
  end type PP_indexes
+ !
+ ! Number of Bands to load
+ !=========================
+ !
+ ! When the PARALLEL_global_index define a distribution common to HF,GW and e-p
+ ! it defines a global number of bands to load that overwrites the local values
+ !
+ integer            :: n_WF_bands_to_load
  !
  ! Number of Response functions
  !==============================
@@ -298,14 +306,10 @@ module parallel_m
      CPU_structure(3)%Short_Description="X_all_q"
      CPU_structure(4)%Long_Description="BSE"
      CPU_structure(4)%Short_Description="BSE"
-     CPU_structure(5)%Long_Description="GW"
-     CPU_structure(5)%Short_Description="GW"
-     CPU_structure(6)%Long_Description="HF"
-     CPU_structure(6)%Short_Description="HF"
-     CPU_structure(7)%Long_Description="Real_Time"
-     CPU_structure(7)%Short_Description="RT"
-     CPU_structure(8)%Long_Description="Electron_Phonon"
-     CPU_structure(8)%Short_Description="ELPH"
+     CPU_structure(5)%Long_Description="Self_Energy"
+     CPU_structure(5)%Short_Description="SE"
+     CPU_structure(6)%Long_Description="Real_Time"
+     CPU_structure(6)%Short_Description="RT"
    end subroutine
    !
    subroutine COMM_reset(COMM)

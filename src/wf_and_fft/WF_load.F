@@ -32,7 +32,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  use R_lattice,     ONLY:nkibz
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,&
 &                        fftw_plan,fft_g_table,fft_size
- use wave_func,     ONLY:wf_nc_k,wf_igk,&
+ use wave_func,     ONLY:wf_nc_k,wf_igk,WF_buffer,&
 &                        wf_ng,wf_norm_test,wf_ncx,ioWF,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free,WAVEs
@@ -44,7 +44,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
  use global_XC,     ONLY:WF_kind,WF_xc_functional,&
-&                        WF_perturbation,global_xc_string,SE_NONE
+&                        WF_perturbation,global_XC_string,SE_NONE
  use xc_functionals,ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL
 #endif
  implicit none
@@ -65,7 +65,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                   s_2_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
- logical          ::loaded_bounds_ok,use_direct_access,free_and_alloc
+ logical          ::loaded_bounds_ok,use_direct_access,free_and_alloc,buffer_is_ok
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
@@ -94,34 +94,43 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! [1]: check that loaded bounds are larger(equal) then bounds 
  !      asked now
  !
- loaded_bounds_ok=all((/bands_to_load(1)>=WF%b(1),bands_to_load(2)<=WF%b(2),&
-&                       kpts_to_load(1)>=WF%k(1),kpts_to_load(2)<=WF%k(2),&
-&                       s_2_load(1)>=WF%spin(1),s_2_load(2)<=WF%spin(2),&
-&                       WF%space==wf_space_here/))
+ call check_bounds(WF,loaded_bounds_ok)
+ loaded_bounds_ok= WF%space==wf_space_here
  !
- if(loaded_bounds_ok.and.allocated(states_to_load).and.associated(WF%state)) then
+ call check_bounds(WF_buffer,buffer_is_ok)
+ !
+ buffer_is_ok=.FALSE.
+ !
+ if (allocated(states_to_load)) then
    !
-   ikibz=WF%k(1)
-   do while(ikibz<=WF%k(2).and.loaded_bounds_ok) 
-     is   =WF%spin(1)
-     do while(is<=WF%spin(2).and.loaded_bounds_ok) 
-        ib   =WF%b(1)
-        do while(ib<=WF%b(2).and.loaded_bounds_ok) 
-          loaded_bounds_ok=states_to_load(ib,ikibz,is).eqv.WF%state(ib,ikibz,is)
-          ib=ib+1
-        enddo
-        is=is+1
-     enddo
-     ikibz=ikibz+1
-   enddo
+   if (loaded_bounds_ok) then
+     !
+     ! See if the %c in WF is already ok
+     !
+     if (associated(WF%state)) call check_states(WF,loaded_bounds_ok)
+     !
+   endif
    !
+   if (associated(WF_buffer%state).and.wf_space_here/='B') then
+     !
+     ! See if the %c Buffered are ok
+     !
+     buffer_is_ok=.TRUE.
+     !
+     call check_states(WF_buffer,buffer_is_ok)
+     !
+     ! if not clean the buffer
+     !
+     if (.not.buffer_is_ok) call WF_free(WF_buffer)
+     !
+   endif
  endif
  !
  ! [2]: Check FFT size
  !
  if (loaded_bounds_ok) then
    !
-   if (WF%space=="G".or.WF%space=="C") return
+   if (WF%space=="G".or.WF%space=="C".or.WF%space=="B") return
    !
    call fft_setup(iG_max,iGo_max,.true.)
    !
@@ -219,7 +228,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (WF%space=='R') allocate(wf_DP(fft_size))
  if (WF%space=='G') allocate(wf_DP(wf_ng))
- if (WF%space=='C') allocate(wf_DP(wf_ncx))
+ if (WF%space=='C'.or.WF%space=='B') allocate(wf_DP(wf_ncx))
  call mem_est("wf_DP",(/size(wf_DP)/),(/2*DP/))
  !
  ! LOG the states loaded
@@ -227,7 +236,12 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  call PARALLEL_live_message("WF states",LOADED=WF%N,TOTAL=(bands_to_load(2)-bands_to_load(1)+1)*&
 &                           (kpts_to_load(2)-kpts_to_load(1)+1)*(s_2_load(2)-s_2_load(1)+1))
  !
- call msg('rns','[WF] Performing Wave-Functions I/O')
+ if (buffer_is_ok.and.WF%space/="B") then
+   call msg('rns','[WF] Loading Wave-Functions from buffer')
+ else
+   call msg('rns','[WF] Performing Wave-Functions I/O')
+ endif
+ !
  if (WF%space=='R') call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !
  ! Bug-fix (noticed by AF) fixed by AM 26/8/2013
@@ -239,46 +253,50 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! Update of 21/10/2013. This reduced I/O leads to problems and the Al111 test is not 
  ! passed when using few bands. I switch it off.
  !
-!#if defined _NETCDF_IO
-! allocate(wf_disk(2,min(wf_nb_io,WF%b(2)-WF%b(1)+1),wf_ncx,n_spin))
-!#else
- allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
-!#endif
- call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
- !
- call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
- io_err=ioWF(ID,wf_disk)
+ if (.not.buffer_is_ok) then
+   !
+   allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+   !
+   call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
+   io_err=ioWF(ID,wf_disk)
+   !
+ endif
  !
  WF%N=0
  do ikibz=1,nkibz
    !
    do ib_grp=1,wf_nb_io_groups
      !
-     ! Use fragmentation ot NETCDF support to reduce the I/O
-     ! to the k-pts and bands needed only
-     !
-     if (io_fragmented(ID).or.io_netcdf_support(ID)) then
+     if (.not.buffer_is_ok) then
+       !
+       ! Use fragmentation ot NETCDF support to reduce the I/O
+       ! to the k-pts and bands needed only
+       !
+       if (io_fragmented(ID).or.io_netcdf_support(ID)) then
+         if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle
+         if (wf_nb_io*(ib_grp-1)+1>WF%b(2)) cycle
+         !
+         ! In case the states to load are distributed in a complex way
+         ! by PARALLEL_WF_distribute I skip fragments that are not needed
+         ! 
+         if ( allocated(states_to_load) ) then
+           ib1=wf_nb_io*(ib_grp-1)+1
+           ib2=wf_nb_io*ib_grp
+           if(ib2>WF%b(2)) ib2=WF%b(2)
+           if (.not.any(states_to_load(ib1:ib2,ikibz,:))) cycle
+         endif
+       endif
+       !
+       ACTION_=RD_CL_IF_END
+       if (use_direct_access) ACTION_=RD_CL
+       call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
+       !
+       io_err=ioWF(ID,wf_disk)
        if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle
        if (wf_nb_io*(ib_grp-1)+1>WF%b(2)) cycle
        !
-       ! In case the states to load are distributed in a complex way
-       ! by PARALLEL_WF_distribute I skip fragments that are not needed
-       ! 
-       if ( allocated(states_to_load) ) then
-         ib1=wf_nb_io*(ib_grp-1)+1
-         ib2=wf_nb_io*ib_grp
-         if(ib2>WF%b(2)) ib2=WF%b(2)
-         if (.not.any(states_to_load(ib1:ib2,ikibz,:))) cycle
-       endif
      endif
-     !
-     ACTION_=RD_CL_IF_END
-     if (use_direct_access) ACTION_=RD_CL
-     call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
-     !
-     io_err=ioWF(ID,wf_disk)
-     if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle
-     if (wf_nb_io*(ib_grp-1)+1>WF%b(2)) cycle
      !
      do is=1,n_spin
        do ib=wf_nb_io*(ib_grp-1)+1,wf_nb_io*ib_grp
@@ -299,10 +317,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
            if (ig>wf_ng) cycle
            igfft=ig
            if (WF%space=='R') igfft=fft_g_table(ig,1)
-           if (WF%space=='C') igfft=ic
-           wf_DP(igfft)=cmplx(wf_disk(1,i2,ic,is),wf_disk(2,i2,ic,is),DP)
+           if (WF%space=='C'.or.WF%space=='B') igfft=ic
+           if (buffer_is_ok) then
+             wf_DP(igfft)=WF_buffer%c(ic,WF_buffer%index(ib,ikibz,is))
+           else
+             wf_DP(igfft)=cmplx(wf_disk(1,i2,ic,is),wf_disk(2,i2,ic,is),DP)
+           endif
          enddo
-         if (WF%space=='G'.or.WF%space=='C') then
+         if (WF%space=='G'.or.WF%space=='C'.or.WF%space=='B') then
            WF%c(:,WF%N)=wf_DP(:)
            cycle
          endif
@@ -320,18 +342,27 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! CLEAN
  !
- deallocate(wf_disk)
- call mem_est("wf_disk")
+ if (.not.buffer_is_ok) then
+   deallocate(wf_disk)
+   call mem_est("wf_disk")
+ endif
  !
  deallocate(wf_DP)
  call mem_est("wf_DP")
  !
  if(allocated(states_to_load)) then
+   !
    if(associated(WF%state)) nullify(WF%state)
+   !
    allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
+   !
    WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))= &
 &           states_to_load(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))
-   deallocate(states_to_load)
+   !
+   ! When using the buffer the states_to_load must not be cleaned
+   !
+   if (.not.associated(WF_buffer%c)) deallocate(states_to_load)
+   !
  endif
  !
 #if defined _SC
@@ -389,4 +420,32 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (QUIET_alloc) call IO_and_Messaging_switch("+report +log ")
  !
+ contains
+   !
+   subroutine check_bounds(WF_,flag_)
+     type(WAVEs)  :: WF_
+     logical      :: flag_
+     flag_=all((/bands_to_load(1)>=WF_%b(1),bands_to_load(2)<=WF_%b(2),&
+&                kpts_to_load(1)>=WF_%k(1),kpts_to_load(2)<=WF_%k(2),&
+&                s_2_load(1)>=WF_%spin(1),s_2_load(2)<=WF_%spin(2)/))
+   end subroutine
+   !
+   subroutine check_states(WF_,flag_)
+     type(WAVEs)  :: WF_
+     logical      :: flag_
+     ikibz=WF_%k(1)
+     do while(ikibz<=WF_%k(2).and.flag_) 
+       is   =WF_%spin(1)
+       do while(is<=WF_%spin(2).and.flag_) 
+          ib   =WF_%b(1)
+          do while(ib<=WF_%b(2).and.flag_) 
+            flag_=states_to_load(ib,ikibz,is).eqv.WF_%state(ib,ikibz,is)
+            ib=ib+1
+          enddo
+          is=is+1
+       enddo
+       ikibz=ikibz+1
+     enddo
+   end subroutine
+   !
 end subroutine

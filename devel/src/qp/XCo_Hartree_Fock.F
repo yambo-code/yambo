@@ -24,7 +24,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi
- use drivers,       ONLY:l_sc_run,l_sc_exx,l_eval_collisions
+ use drivers,       ONLY:l_sc_run,l_sc_exx,l_eval_collisions,l_gw0
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
@@ -32,7 +32,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
 &                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
 &                        PAR_IND_Q_ID,PAR_n_B_mat_elements,PAR_COM_QP_A2A,&
-&                        PAR_IND_B_mat
+&                        PAR_IND_B_mat,n_WF_bands_to_load
  use collision,     ONLY:ggwinfo,collision_reset
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
@@ -45,7 +45,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use fragments,     ONLY:fragment_status
  use real_time,     ONLY:B_mat_index
 #endif
- use wave_func,     ONLY:WF
+ use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
  use wrapper,       ONLY:V_dot_V
 #if defined _OPENMP
@@ -112,11 +112,17 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! WF distributed & load
  !=======================
  !
- if (.not.l_eval_collisions) call PARALLEL_global_indexes(E,k,q,"HF")
+ if (.not.l_eval_collisions) call PARALLEL_global_indexes(E,k,q,"Self_Energy")
  !
- call PARALLEL_WF_distribute(max(E%nbm,QP_nb),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_distribute(max(E%nbm,QP_nb),k%nibz,QP_index=PAR_IND_QP)
+ call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,QP_index=PAR_IND_QP)
  call PARALLEL_WF_index()
+ !
+ if (l_gw0.and.WF_buffered_IO) then
+   !
+   call WF_load(WF_buffer,0,1,(/1,n_WF_bands_to_load/),(/1,k%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
+   !
+ endif
  !
  call WF_load(WF,QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
  !

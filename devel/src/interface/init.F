@@ -452,19 +452,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    endif
  endif
  !
- if (l_HF_and_locXC) call CPU_activate("HF")
- !
- if (l_gw0) then
-   if (l_elph_corr) call CPU_activate("ELPH")
-   if (l_elel_corr) call CPU_activate("GW")
- endif
+ if (l_HF_and_locXC.or.l_gw0) call CPU_activate("SE")
  !
  if (l_eval_collisions) call CPU_activate("RT")
  !
  if (l_bse) call CPU_activate("BSE")
  !
  if (l_real_time) call CPU_activate("RT")
- !
  !
 #endif
  !

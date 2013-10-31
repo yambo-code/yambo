@@ -293,7 +293,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! I/O
  !
- call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,WF,COLLs,J,GF,OCC)',&
+ call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,OCC)',&
 &                         DBs_IO_control_string,verb_level=V_io)
  !
  ! GPL_EXCLUDE_END
@@ -510,10 +510,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
        if (i_s==2) possible_fields='(q,k,c,v)' ! X_finite_q
        if (i_s==3) possible_fields='(q,k,c,v)' ! X_all_q
        if (i_s==4) possible_fields='(q,k,c,v)' ! BSE
-       if (i_s==5) possible_fields='(q,qp,b)'  ! GW
-       if (i_s==6) possible_fields='(q,qp,b)'  ! HF
-       if (i_s==7) possible_fields='(k,b,q,qp)'! RT
-       if (i_s==8) possible_fields='(q,qp,b)'  ! e-p
+       if (i_s==5) possible_fields='(q,qp,b)'  ! SE
+       if (i_s==6) possible_fields='(k,b,q,qp)'! RT
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"

@@ -41,7 +41,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
  use fragments,     ONLY:fragment_status
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_QPp
+ use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_QPp,PAR_IND_Xk_ibz,PAR_IND_G_b
  use X_m,           ONLY:X_t
  !
  implicit none
@@ -86,7 +86,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    ! PARALLEL Setup
    !================
    call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
-   call PARALLEL_global_indexes(E,k,q,"HF")
+   call PARALLEL_global_indexes(E,k,q,"Self_Energy")
    !
    V_kind=SC_HF
    fragment_status=-1
@@ -121,7 +121,9 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QP,CLEAN_UP=.TRUE.)
      call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QPp)
    else
-     call PARALLEL_global_indexes(E,k,q,"GW")
+     call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+     call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+     call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QP)
    endif
    call PARALLEL_WF_index( )
    !

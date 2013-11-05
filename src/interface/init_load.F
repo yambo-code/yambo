@@ -172,7 +172,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Parallel Setup
  !
 #if defined _OPENMP
- call it(defs,'Threads',      '[OPENMP] Number of threads (leave 0 to use default value)',n_threads,verb_level=V_parallel)
+ call it(defs,'Threads',      '[OPENMP] Number of threads (leave 0 to use default value)',n_threads)
 #endif
 #if defined _MPI 
  call it(defs,'NLogCPUs',     '[PARALLEL] Live-timing CPU`s (0 for all)',n_log_CPUs,verb_level=V_parallel)

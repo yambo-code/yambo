@@ -24,7 +24,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi
- use drivers,       ONLY:l_sc_run,l_sc_exx,l_eval_collisions,l_gw0
+ use drivers,       ONLY:l_sc_run,l_sc_exx,l_eval_collisions,l_gw0,l_cohsex
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
@@ -109,6 +109,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    !
  endif
  !
+#if !defined _SC
  ! WF distributed & load
  !=======================
  !
@@ -117,8 +118,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,QP_index=PAR_IND_QP)
  call PARALLEL_WF_index()
+#endif
  !
- if (l_gw0.and.WF_buffered_IO) then
+ if ((l_gw0.or.l_cohsex).and.WF_buffered_IO) then
    !
    call WF_load(WF_buffer,0,1,(/1,n_WF_bands_to_load/),(/1,k%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
    !

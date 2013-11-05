@@ -38,7 +38,7 @@ subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,CLEAN_
  ! Work Space
  !
  integer :: i_k,i_b,i_bp,i_qp
- logical :: condition
+ logical :: condition,ldummy
  !
  if (present(CLEAN_UP)) then
    !
@@ -66,10 +66,10 @@ subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,CLEAN_
      !
      do i_b=1,NB
        !
+       condition=K_index%element_1D(i_k).and..not.B_index%element_1D(i_b)
+       !
        if (present(Bp_index)) then
-         condition=K_index%element_1D(i_k).and..not.B_index%element_1D(i_b).and..not.Bp_index%element_1D(i_b)
-       else
-         condition=K_index%element_1D(i_k).and..not.B_index%element_1D(i_b)
+         if (i_b<=size(Bp_index%element_1D)) condition=condition.and..not.Bp_index%element_1D(i_b)
        endif
        !
        if (condition) states_to_load(i_b,i_k,:)=.FALSE.

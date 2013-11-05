@@ -38,8 +38,10 @@ subroutine WF_free(WF)
    fft_dim=0
    fft_dim_loaded=0
    fft_multiplier=1
-   deallocate(fft_g_table,fft_rot_r,fft_rot_r_inv)
-   call mem_est('FFT_g_tab FFT_rot')
+   if (allocated(fft_g_table)) then
+     deallocate(fft_g_table,fft_rot_r,fft_rot_r_inv)
+     call mem_est('FFT_g_tab FFT_rot')
+   endif
 #if defined _FFTW
    call dfftw_destroy_plan(fftw_plan)
    fftw_plan=0

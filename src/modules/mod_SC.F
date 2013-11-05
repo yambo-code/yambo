@@ -26,6 +26,7 @@ module SC
  !
  integer           :: SC_bands(2)
  integer           :: SC_nbands
+ integer           :: it_to_start
  integer           :: it_now
  integer           :: SC_iterations
  integer           :: SC_fft_size
@@ -45,6 +46,11 @@ module SC
  logical           :: compatible_SC_DB
  logical           :: found_SC_DB
  logical           :: local_V
+ !
+ ! In a parallel run only the head CPU in the q and b chains can do 
+ ! (b,k) loops
+ !
+ logical           :: HEAD_cpu_in_QP_group=.TRUE.
  !
  ! General flags
  !

@@ -208,6 +208,7 @@ subroutine QP_state_table_setup(en)
  !
  do i1=1,QP_nk
    do i2=1,QP_nb
+     !
      if (.not.QP_state(i2,i1)) cycle
      !
      do i_sp=1,n_sp_pol

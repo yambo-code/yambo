@@ -25,8 +25,8 @@ integer function variables_SC(ID,local_description,what)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr
  use units,          ONLY:AU2Tesla,DEG2RAD,FS2AUT,AU2KWCMm2,HA2EV
  use D_lattice,      ONLY:atoms_string
+ use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc
- use com,            ONLY:error
  use electrons,      ONLY:BZ_RIM_tot_nkpts
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,l_sc_diagonal,&
@@ -37,9 +37,9 @@ integer function variables_SC(ID,local_description,what)
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,              &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_IO_time,                  &
-&                         RT_IO_steps,l_RT_induced_field,l_NE_simulate_BSE,G_MEM_steps,&
+&                         RT_IO_steps,l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,RT_IO_steps_DB,Gr_description,&
-&                         RT_dynamics_jumps,Life_MEM_steps,l_RT_uses_E_RIM,N_Gr_descs
+&                         RT_dynamics_jumps,l_RT_uses_E_RIM,N_Gr_descs
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
@@ -99,8 +99,7 @@ integer function variables_SC(ID,local_description,what)
  !
  io_status_save=io_status(ID)
  !
- VAR_SIZE=6
- call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=VAR_SIZE,MENU=0) 
+ call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=6,MENU=0) 
  !
  i_desc=i_desc+1
  call io_elemental(ID,L0=local_V,&
@@ -108,18 +107,21 @@ integer function variables_SC(ID,local_description,what)
  i_desc=i_desc+1
  call io_elemental(ID,I0=it_now,DB_I0=it_now,&
 &     VAR=' Iteration                       :',DESCRIPTION=local_description(i_desc))
- !
- !
  i_desc=i_desc+1
  call io_elemental(ID,I1=SC_bands,&
 &     VAR=' Bands                           :',CHECK=CHECK_,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_desc))
- !
  i_desc=i_desc+1
+#if defined _RT
  call io_elemental(ID,I0=RT_nk,&
 &     VAR=' Number of K-points              :',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
- !
+#endif
+#if defined _SC && !defined _RT
+ call io_elemental(ID,I0=nkibz,&
+&     VAR=' Number of K-points              :',CHECK=CHECK_,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
+#endif
  i_desc=i_desc+1
  call io_elemental(ID,R0=SC_band_mixing,&
 &     VAR=' Bands mixing                    :',CHECK=CHECK_,OP=(/"=="/),&
@@ -194,6 +196,7 @@ integer function variables_SC(ID,local_description,what)
  !
 #endif
  !
+#if defined _RT
  if (ver_is_gt_or_eq(ID,revision=2877)) then
    call io_elemental(ID,VAR="E-E_vars",VAR_SZ=2,MENU=0) 
  else
@@ -210,6 +213,7 @@ integer function variables_SC(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
  endif
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+#endif
  !
  if (io_status_save==0.and.io_status(ID)<0) then
    io_status(ID)=IO_INCOMPATIBLE_VAR

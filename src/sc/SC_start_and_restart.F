@@ -64,7 +64,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  call parser('SCdiag',         l_SC_diagonal)
  call parser('SCnlMix',        l_SC_nl_mix)
  !
- if(local_V) l_SC_nl_mix=.FALSE.
+ if (local_V) l_SC_nl_mix=.FALSE.
  !
  ! Magnetic logical setup
  !========================
@@ -208,6 +208,7 @@ subroutine SC_start_and_restart(X,E,Xk)
    call MAG_Hamiltonian(.FALSE.)
    !
    ! If exist the non local part of the pseudo then construct kbv
+   !
    call MAG_H_pseudo(Xk)
    !
  endif

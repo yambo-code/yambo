@@ -30,9 +30,10 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_exx,l_sc_srpa,l_sc_cohsex,l_sc_contains_lda,&
-&                         l_eval_collisions,l_oep_exact
+&                         l_eval_collisions
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_t,QP_reset
+ use parallel_m,     ONLY:master_cpu
  use electrons,      ONLY:levels,n_spin
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
@@ -89,8 +90,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      !
      if (l_sc_cohsex) call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
-     call IO_and_Messaging_switch("+report +io_out")
-     !
+     call IO_and_Messaging_switch("+report +io_out",CONDITION=master_cpu)
      !
    endif
    !
@@ -112,7 +112,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    if (l_sc_contains_lda.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)
    if (l_sc_contains_lda.and.     (l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
    !
-   call IO_and_Messaging_switch("+report +log +io_in +io_out")
+   call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
    !
    ! Mixing 
    !========

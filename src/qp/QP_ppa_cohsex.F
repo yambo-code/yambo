@@ -52,9 +52,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
-!#if defined _SC
-! use SC,            ONLY:it_now
-!#endif
+#if defined _SC
+ use SC,            ONLY:it_now,it_to_start
+#endif
  !
  implicit none
  type(levels) ::E
@@ -163,7 +163,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! WF distributed & load
  !=======================
  !
+#if !defined _SC
  call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+#endif
  !
  ! Redefine iq_to_start to be CPU-dependent
  !
@@ -174,10 +176,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    endif
  enddo
  !
+#if !defined _SC
  call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,QP_index=PAR_IND_QP)
  call PARALLEL_WF_index( )
- !
+#endif
  call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,n_WF_bands_to_load/),(/1,k%nibz/),&
 #if defined _SC
 &             title='-SC')
@@ -227,17 +230,17 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 !   call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),timing_steps) 
 ! else 
 !#endif
-   !
-   timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
-&               PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
-&               count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
-   !
+ !
+ timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
+&             PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
+&             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
+ !
+#if defined _SC
+   call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),timing_steps) 
+#else
    if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',timing_steps)
    if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',timing_steps)
-   !
-!#if defined _SC
-! endif
-!#endif
+#endif
  !
  Q_loop: do iqbz=iq_to_start,q%nbz 
    !
@@ -269,21 +272,27 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Poles and Residuals
      !
+#if defined _SC
+     if (it_now==it_to_start) then
+#endif
 !$omp parallel do default(shared), private(i1,i2)
-     do i1=1,X%ng
-       do i2=1,X%ng
-         if (l_ppa) then
-           if (real(X_mat(i1,i2,X_range(1))/X_mat(i1,i2,X_range(2)))<=1._SP) then
-             X_mat(i1,i2,X_range(2))=X%ppaE
+       do i1=1,X%ng
+         do i2=1,X%ng
+           if (l_ppa) then
+             if (real(X_mat(i1,i2,X_range(1))/X_mat(i1,i2,X_range(2)))<=1._SP) then
+               X_mat(i1,i2,X_range(2))=X%ppaE
+             else
+               X_mat(i1,i2,X_range(2))=real( sqrt(X_mat(i1,i2,X_range(1))/X_mat(i1,i2,X_range(2))-1) )
+             endif
            else
-             X_mat(i1,i2,X_range(2))=real( sqrt(X_mat(i1,i2,X_range(1))/X_mat(i1,i2,X_range(2))-1) )
+             X_mat(i1,i2,X_range(1))=X_mat(i1,i2,X_range(1))*isc%gamp(i1,i2)
            endif
-         else
-           X_mat(i1,i2,X_range(1))=X_mat(i1,i2,X_range(1))*isc%gamp(i1,i2)
-         endif
+         enddo
        enddo
-     enddo
 !$omp end parallel do
+#if defined _SC
+     endif
+#endif
      !
      X_is_TR_rotated=.false.
      !
@@ -509,7 +518,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 !   endif
  endif
  call mem_est("ISC-GAMP GW-E")
+#if defined _SC
+ if (io_X) call X_alloc('X')
+#else
  call X_alloc('X')
+#endif
  !
 #if defined _TIMING
  call timing('GW(ppa)',OPR='stop')
@@ -525,7 +538,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call timing('GW(REDUX)',OPR='stop')
 #endif
  !
+#if !defined _SC
  call WF_free(WF)
+#endif
  !
  call collision_reset(isc)
  call collision_reset(iscp)

@@ -59,7 +59,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
 #endif
 #if defined _SC
- use SC,            ONLY:SC_bands
+ use SC,            ONLY:SC_bands,HEAD_cpu_in_QP_group
  use real_time,     ONLY:B_mat_index
 #endif
  use electrons,     ONLY:levels
@@ -186,35 +186,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  PAR_COM_WORLD%n_CPU =ncpu
  !
  if (PARALLEL_n_structures_active==0.and.ncpu>1) call error('Please provide a CPU structure in the input file')
- !
- !=======================================
- if (ENVIRONMENT=="Wave_Functions") then
-   !=====================================
-   !
-   call PARALLEL_assign_chains_and_COMMs(2,ROLE=(/"k","b"/),&
-&                                        COMM_index_1=PAR_COM_WF_k_INDEX,&
-&                                        COMM_index_2=PAR_COM_WF_b_INDEX,COMM_A2A_1=PAR_COM_WF_k_A2A)
-   !
-   ! K-points
-   !
-   call PARALLEL_index(PAR_IND_WF_k,(/Xk%nibz/),COMM=PAR_COM_WF_k_INDEX,CONSECUTIVE=.TRUE.)
-   PAR_IND_WF_k_ID=PAR_COM_WF_k_INDEX%CPU_id
-   !  
-   ! Bands
-   !
-   call PARALLEL_index(PAR_IND_WF_b,(/E%nbm/),COMM=PAR_COM_WF_b_INDEX,CONSECUTIVE=.TRUE.)
-   PAR_IND_WF_b_ID=PAR_COM_WF_b_INDEX%CPU_id
-   !
-   call PARALLEL_live_message("G bands",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1),&
-&                             TOTAL=E%nbm,NCPU=PAR_COM_WF_b_INDEX%n_CPU,&
-&                             CHAIN=PAR_COM_WF_b_INDEX%chain_order)
-   !
-   call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_IND_WF_k%n_of_elements(PAR_IND_WF_k_ID+1),TOTAL=Xk%nibz,&
-&                             NCPU=PAR_COM_WF_k_INDEX%n_CPU,CHAIN=PAR_COM_WF_k_INDEX%chain_order)
-   !
- endif
  !
  !======================================================
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum") then
@@ -402,10 +373,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_WF_k)
    call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_WF_b_INDEX)
+   PAR_IND_WF_b_ID=PAR_COM_WF_b_INDEX%CPU_id
    !
    call PARALLEL_index(PAR_IND_B_mat_ordered,(/ matrix_linear_index(1,SC_bands(2)-SC_bands(1)+1)-1 /),&
 &                      COMM=PAR_COM_WF_b_INDEX,CONSECUTIVE=.TRUE.)
-   PAR_IND_WF_b_ID=PAR_COM_WF_b_INDEX%CPU_id
    !
    call PARALLEL_live_message("Bands Matrix",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_B_mat_ordered%n_of_elements(PAR_IND_WF_b_ID+1),&
@@ -616,6 +587,16 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    allocate(PAR_Q_index(iq_range(2))) 
    call Build_up_index(PAR_IND_Q,iq_range(2),PAR_Q_index,PAR_nQ)
    !
+   ! 0000     0000     <- q
+   ! x0 x0    00 00    <- qp
+   ! 0 0 0 0  0 0 0 0  <- b
+   !
+   ! QP_cpu corresponds to x marked CPU's. This flag is used when isolated QP loops are performed.
+   !
+#if defined _SC
+   HEAD_cpu_in_QP_group=PAR_COM_Q_index%CPU_id==0.and.PAR_COM_QP_A2A%CPU_id==0
+#endif
+   !
    ! K-points
    !
    call PARALLEL_add_Q_to_K_list('k_qp_q_bz',PAR_IND_QP,PAR_IND_QP_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
@@ -641,7 +622,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    PAR_IND_G_b_ID=PAR_COM_G_b_INDEX%CPU_id
    !
 #if defined _RT
+   !
+   ! To calculate the COLLISIONS I need the PAR_B_mat_index, built here.
+   !
    if (l_eval_collisions) call G_b_to_B_mat( )
+   !
 #endif
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT, &

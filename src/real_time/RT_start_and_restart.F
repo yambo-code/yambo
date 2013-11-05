@@ -57,7 +57,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
- use parallel_m,     ONLY:PAR_IND_WF_k,PAR_COM_WF_k_INDEX,PP_redux_wait
+ use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait
  use stderr,         ONLY:real2ch
  implicit none
  !
@@ -221,7 +221,7 @@ subroutine RT_start_and_restart(E,k,q,X)
      !
    endif
    !
-   call PP_redux_wait(XC0_and_HARTREE0,COMM=PAR_COM_WF_k_INDEX%COMM)
+   call PP_redux_wait(XC0_and_HARTREE0)
    !
    ! Now I update <i|r|j> dipoles using G_lesser_reference as
    ! Green function to construct the Hamiltonian

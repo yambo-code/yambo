@@ -31,18 +31,17 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use electrons,      ONLY:n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
- use SC,             ONLY:SC_bands
+ use SC,             ONLY:SC_bands,RT_nk,it_now
  use electrons,      ONLY:nel,levels
  use real_time,      ONLY:l_RT_diamagnetic,NE_dynamics,l_NE_with_fields,RT_ind_J,RT_average_operator,RT_P
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P
- use QP_m,           ONLY:QP_nk
  use parallel_m,     ONLY:PAR_Xk_nibz
  !
  implicit none           
  type(bz_samp),     intent(in) :: k
  type(levels),      intent(in) :: E
- complex(SP),       intent(in) :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
+ complex(SP),       intent(in) :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  type(gauge_field), intent(in) :: A_input
  !
  ! Work Space
@@ -53,9 +52,9 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  do id=1,3
    !
-   call RT_average_operator(VALUE=RT_ind_J(id),O_MATRIX=-DIP_P(id,1:SC_bands(2),1:SC_bands(2),1:PAR_Xk_nibz,1:n_sp_pol),&
+   call RT_average_operator(VALUE=RT_ind_J(id),O_MATRIX=-DIP_P(id,:,:,:,:),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
-   call RT_average_operator(VALUE=RT_P(id),    O_MATRIX=cI*DIP_iR(id,1:SC_bands(2),1:SC_bands(2),1:PAR_Xk_nibz,1:n_sp_pol),&
+   call RT_average_operator(VALUE=RT_P(id),    O_MATRIX=cI*DIP_iR(id,:,:,:,:),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
    !
  enddo

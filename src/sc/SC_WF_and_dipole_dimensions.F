@@ -43,7 +43,7 @@ subroutine SC_WF_and_dipole_dimensions(X)
    X(1)%ib=SC_bands
    X(1)%ng=wf_ng
  else
-   X(1)%ib(2)=SC_bands(2) 
+   X(1)%ib=(/1,SC_bands(2)/)
    X(1)%ng=QP_ng_Sx
  endif
  !

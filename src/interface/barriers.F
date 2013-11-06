@@ -23,9 +23,9 @@ subroutine barriers()
  !
  use drivers
  use pars,       ONLY:schlen
- use D_lattice,  ONLY:i_time_rev,i_space_inv,mag_syms
+ use D_lattice,  ONLY:i_time_rev,i_space_inv
  use BS,         ONLY:BSS_mode
- use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor,n_sp_pol
+ use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor
  use QP_m,       ONLY:QP_solver
  use it_m,       ONLY:switch_off_runlevel
  implicit none
@@ -91,7 +91,7 @@ subroutine barriers()
  endif
  !
  if (l_sc_run) then
-   call switch_off_runlevel('all',on_name='scpot HF_and_locXC cohsex em1s negf magnetic collisions '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='scpot HF_and_locXC cohsex em1s negf magnetic el_el_corr collisions '//trim(always_runlevels))
    goto 1
  endif
  !

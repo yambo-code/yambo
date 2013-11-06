@@ -117,13 +117,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! GPL_EXCLUDE_END
  !
 #if defined _SC 
- call it('r',defs,'scpot',   '[R] Self-Consistent potentials') 
+ call it('r',defs,'scpot',      '[R] Self-Consistent potentials') 
+ call it('r',defs,'collisions', '[R] Eval the extended Collisions')
 #endif
 #if defined _RT
- call it('r',defs,'collisions',      '[R] Eval the extended Collisions')
- call it('r',defs,'negf',            '[R] Real-Time dynamics') 
- call it('r',defs,'el_el_scatt',     '[R] Electron-Electron Scattering')   
- call it('r',defs,'el_ph_scatt',     '[R] Electron-Phonon   Scattering')   
+ call it('r',defs,'negf',       '[R] Real-Time dynamics') 
+ call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
+ call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
 #if defined _MAGNETIC
  call it('r',defs,'magnetic','[R] Magnetic fields')
@@ -135,6 +135,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',   '[R] Electron-Phonon Correlation')   
+#endif
+#if defined _SC
  call it('r',defs,'el_el_corr',   '[R] Electron-Electron Correlation') 
 #endif
  !

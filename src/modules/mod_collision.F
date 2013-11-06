@@ -41,6 +41,8 @@ module collision
    complex(SP), pointer :: rhotw(:)  => null()
  end type ggwinfo
  !
+ logical :: COLLISIONS_parallel_SC_structure=.FALSE.
+ !
  type COLLISIONS_element
    integer(LP), allocatable  :: table(:,:,:)
    complex(SP), allocatable  :: v(:)

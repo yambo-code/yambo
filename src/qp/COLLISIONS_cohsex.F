@@ -34,6 +34,9 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
 &                        PAR_IND_Q,PAR_n_B_mat_elements,PAR_COM_QP_A2A,PAR_COM_G_b_A2A,PAR_QP_index,&
 &                        PAR_IND_B_mat,PAR_Q_index,PAR_IND_QPp,PAR_QPp_index,PAR_nQ,PAR_nQP,PAR_nQPp
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch,io_COLLs
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_n_states,QP_table
@@ -57,7 +60,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  ! Work Space
  !
  integer                  ::i_qp1,i_qp2,i1,i2,iqbz,iqibz,alloc_err,iqs,&
-&                           i_n,i_k,i_k_s,i_k_sp,X_range(2),&
+&                           i_n,i_k,i_k_s,i_k_sp,&
 &                           i_np,i_kmq,i_kmq_s,i_kmq_sp,i_kmq_G0,&
 &                           i_m,i_p,i_p_s,i_p_sp,i_p_star,n_bands,&
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp2_mem,i_qp1_mem
@@ -100,6 +103,10 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioX(X,Xw,ID)
+ !
+#if defined _TIMING
+ call timing('COHSEX Collisions',OPR='start')
+#endif
  !
  ! Test the spatial Inversion
  !   
@@ -176,12 +183,8 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
        !
      endif
      !
-     if (l_elel_scatt) then
-       if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
-       i_q_mem=PAR_Q_index(iqbz)
-     else
-       if (.not.PAR_IND_Q%element_1D(q%sstar(iqbz,1))) cycle
-     endif
+     if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
+     i_q_mem=PAR_Q_index(iqbz)
      !
      ! Scattering geometry (I)
      !=========================
@@ -272,13 +275,6 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
          !
          isc%os(1)=i_np
          !
-         isc_loop: do i_mp=QP_n_G_bands(1),QP_n_G_bands(2)
-           if ( PAR_IND_B_mat%element_1D( B_mat_index(i_np,i_mp) ) ) then
-             call scatterBamp(isc)
-             exit isc_loop
-           endif
-         enddo isc_loop
-         !
          do i_mp=QP_n_G_bands(1),QP_n_G_bands(2)
            !
            if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_np,i_mp) ) ) cycle
@@ -317,6 +313,10 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  enddo QP_loop
  !
  call live_timing()
+ !
+#if defined _TIMING
+ call timing('COHSEX Collisions',OPR='stop')
+#endif
  !
  ! CLEAN
  !

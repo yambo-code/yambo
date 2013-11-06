@@ -54,13 +54,13 @@ module interfaces
      logical,        optional::RESET
    end subroutine
    !
-   subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU,CHAIN)
+   subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU)
      character(*)          :: WHAT
      character(*),optional :: ENVIRONMENT
-     integer,     optional :: LOADED,TOTAL,NCPU,CHAIN
+     integer,     optional :: LOADED,TOTAL,NCPU
    end subroutine
    !
-   subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,CLEAN_UP)
+   subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,Bm_index,CLEAN_UP)
      !
      use parallel_m,      ONLY:PP_indexes
      !
@@ -71,6 +71,7 @@ module interfaces
      type(PP_indexes),    optional :: B_index
      type(PP_indexes),    optional :: Bp_index
      type(PP_indexes),    optional :: QP_index
+     type(PP_indexes),    optional :: Bm_index
      logical, intent(in), optional :: CLEAN_UP
      !
    end subroutine 

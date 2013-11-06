@@ -75,6 +75,7 @@ subroutine COLLISIONS_store(i_qp)
    enddo      
  enddo      
  !
+ !
  call IO_and_Messaging_switch("+DB_is_fragmented")
  !
  if (i_qp==1) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)

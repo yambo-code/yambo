@@ -21,7 +21,7 @@
 !
 subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
- use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_elel_scatt 
+ use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_elel_scatt,l_elel_corr
  use com,           ONLY:error
  use pars,          ONLY:schlen,SP,IP
  use electrons,     ONLY:levels
@@ -34,14 +34,14 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use global_XC,     ONLY:SC_HF,SC_COHSEX
  use collisions_IO, ONLY:V_kind,collisions_IO_alloc,collisions_IO_free,TEMP_COLLISIONS_v,&
 &                        io_COLLISIONS,collisions_RANGES_setup,COLLISIONS_range
- use collision,     ONLY:COLLISIONS
+ use collision,     ONLY:COLLISIONS,COLLISIONS_parallel_SC_structure
  use X_m,           ONLY:X_t
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
  use fragments,     ONLY:fragment_status
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_QPp,PAR_IND_Xk_ibz,PAR_IND_G_b
+ use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_QPp,PAR_IND_Xk_ibz,PAR_IND_G_k,PAR_IND_Bp_mat
  use X_m,           ONLY:X_t
  !
  implicit none
@@ -78,15 +78,24 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call mem_est("fragment_status",(/QP_n_states/),(/IP/))
  endif
  !
- if (l_HF_and_locXC.and..not.l_elel_scatt) then
+ if (l_HF_and_locXC.and.l_elel_corr) then
    !
    call section('+','Hartree-Fock')
    !================================
    !
    ! PARALLEL Setup
    !================
-   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+#if defined _SC && defined _RT
+   call PARALLEL_global_indexes(E,k,q,"Real_Time")
+   call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
+#endif
+#if defined _SC && !defined _RT
    call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+   call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_Xk_ibz,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
+   COLLISIONS_parallel_SC_structure=.TRUE.
+#endif
+   call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QP)
+   call PARALLEL_WF_index( )
    !
    V_kind=SC_HF
    fragment_status=-1
@@ -95,13 +104,16 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    if (io_COLLISIONS(0,ID)/=0.or..not.io_COLLs) then
      !
      if (io_COLLs) then
+       COLLISIONS_range(1,:)=SC_bands
+       COLLISIONS_range(2,:)=SC_bands
+       COLLISIONS_range(3,:)=(/1,QP_nk/)
        allocate(TEMP_COLLISIONS_v(QP_nb,QP_nb,QP_nk))
        call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
        call collisions_IO_alloc()
        call report_disk_usage('HF')
      endif
      !
-     call XCo_Hartree_Fock(E,k,xk,q)
+     call COLLISIONS_Hartree_Fock(E,k,q)
      !
    endif
    !
@@ -118,11 +130,18 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
    if (l_elel_scatt) then
      call PARALLEL_global_indexes(E,k,q,"Real_Time")
-     call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QP,CLEAN_UP=.TRUE.)
+     call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QP,CLEAN_UP=.FALSE.)
      call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QPp)
    else
+#if defined _SC && defined _RT
+     call PARALLEL_global_indexes(E,k,q,"Real_Time")
+     call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
+#endif
+#if defined _SC && !defined _RT
      call PARALLEL_global_indexes(E,k,q,"Self_Energy")
-     call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+     call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_Xk_ibz,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
+     COLLISIONS_parallel_SC_structure=.TRUE.
+#endif
      call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QP)
    endif
    call PARALLEL_WF_index( )

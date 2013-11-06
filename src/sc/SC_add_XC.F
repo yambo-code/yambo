@@ -39,7 +39,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use X_m,            ONLY:X_t
  use xc_functionals, ONLY:V_xc
  use SC,             ONLY:V_xc_sc,local_V,SC_kind,SC_xc_functional,SC_cycle_mixing,&
-&                         G_lesser,SC_bands,SC_R,H_rotate,l_oep_iterative,RT_ibz_coo
+&                         G_lesser,SC_bands,SC_R,H_rotate,l_oep_iterative
  use FFT_m,          ONLY:fft_size
  use IO_m,           ONLY:IO_and_Messaging_switch
  !
@@ -66,15 +66,15 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    if(l_eval_collisions) then
      !     
      G_lesser=(0.,0.)
-     forall(ib=1:SC_bands(2),ik=1:E%nk) G_lesser(ib,ib,RT_ibz_coo(ik,1),1)=(0._SP,1._SP)*E%f(ib,ik,1)
+     forall(ib=1:SC_bands(2),ik=1:E%nk) G_lesser(ib,ib,ik,1)=(0._SP,1._SP)*E%f(ib,ik,1)
      !
      ! Now I build the G_lesser rotating the non interaction one
      ! G_lesser(ib,ib,ik)=(0.,1)*en%f(ib,ik)
      !  
      do ik=1,E%nk
-       call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,RT_ibz_coo(ik,1),1),SC_bands(2),-1)
+       call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik,1),SC_bands(2),-1)
      enddo
-     call COLLISIONS_compose(G_lesser(:,:,RT_ibz_coo(:,1),1))
+     call COLLISIONS_compose(G_lesser(:,:,:,1))
      !    ==========
    else
      !

@@ -25,8 +25,10 @@ subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,Bm_ind
  use wave_func,       ONLY:states_to_load
  use electrons,       ONLY:n_sp_pol
  use QP_m,            ONLY:QP_n_states,QP_table
+#if defined _SC
  use SC,              ONLY:SC_bands
  use real_time,       ONLY:B_mat_index
+#endif
  !
  implicit none
  !
@@ -48,7 +50,7 @@ subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,Bm_ind
    if (allocated(states_to_load)) deallocate(states_to_load)
    allocate(states_to_load(NB,NK,n_sp_pol))
    !
-   states_to_load=.TRUE.
+   states_to_load=CLEAN_UP
    !
  endif
  !
@@ -82,6 +84,7 @@ subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,Bm_ind
    enddo
  endif
  !
+#if defined _SC
  if (present(K_index).and.present(Bm_index)) then
    do i_k=1,NK
      !
@@ -99,6 +102,7 @@ subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,Bm_ind
    enddo
    !
  endif
+#endif
  !
  if (present(QP_index)) then
    !

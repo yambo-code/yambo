@@ -30,10 +30,11 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:error
  use real_time,     ONLY:B_mat_index
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,&
-&                        PAR_IND_Q,PAR_n_B_mat_elements,PAR_COM_QP_A2A,PAR_COM_G_b_A2A,PAR_QP_index,&
-&                        PAR_IND_B_mat,PAR_Q_index,PAR_IND_QPp,PAR_QPp_index,PAR_nQ,PAR_nQP,PAR_nQPp
- use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_QPp_index,PAR_QP_index,&
+&                        PAR_IND_Q,PAR_nQPp,PAR_Q_index,&
+&                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_IND_QPp,&
+&                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
+ use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS,COLLISIONS_parallel_SC_structure
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -127,7 +128,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  if (l_elel_scatt) then
    call live_timing("COHSEX collisions",PAR_nQP*PAR_nQ*PAR_nQPp)
  else
-   call live_timing("COHSEX collisions",PAR_nQP*PAR_nQ*PAR_n_B_mat_elements)
+   call live_timing("COHSEX collisions",PAR_nQP*PAR_nQ*PAR_n_Bp_mat_elements)
  endif
  if (io_err/=0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
@@ -139,7 +140,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
    !
    if (io_COLLs) then
      if (fragment_status(i_qp1)/=-1) then
-       call live_timing(steps=PAR_nQ*PAR_n_B_mat_elements)
+       call live_timing(steps=PAR_nQ*PAR_n_Bp_mat_elements)
        cycle
      endif
    else
@@ -172,14 +173,21 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
        !
        ! Poles and Residuals
        !
-       forall(i1=1:X%ng) X_mat(i1,i1,1)=X_mat(i1,i1,1)+1.
+       if (l_elel_scatt) forall(i1=1:X%ng) X_mat(i1,i1,1)=X_mat(i1,i1,1)+1.
        !
-       if (iqibz==1) then
-         forall(i1=1:X%ng,i2=1:X%ng) EM1s(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
-         if (l_elel_scatt) EM1s(1,1)=X_mat(1,1,1)*sqrt(isc%gamp(1,1)/DL_vol/q%nbz)
-       else
-         forall(i1=1:X%ng,i2=1:X%ng) EM1s(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
-       endif
+!$omp parallel do default(shared), private(i1,i2)
+       do i1=1,X%ng
+         do i2=1,X%ng
+           if (iqibz==1) then
+             EM1s(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
+           else
+             EM1s(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
+           endif
+         enddo
+       enddo
+!$omp end parallel do
+       !
+       if (l_elel_scatt) EM1s(1,1)=X_mat(1,1,1)*sqrt(isc%gamp(1,1)/DL_vol/q%nbz)
        !
      endif
      !
@@ -253,13 +261,24 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
            !
            call M_by_V('N', X%ng, EM1s, conjg(iscp%rhotw), local_rhotw)
            !
+#if defined _OPENMP
+           pre_factor=0.0_SP
+!$omp parallel do default(shared), private(i1), reduction(+:pre_factor)
+           do i1=1,X%ng
+             pre_factor=pre_factor+isc%rhotw(i1)*local_rhotw(i1)
+           enddo
+!$omp end parallel do
+#else
+           pre_factor=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+#endif
+           !
            if (io_COLLs) then
              !
-             TEMP_COLLISIONS_v(i_qp2,i_p_s,iqbz)=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+             TEMP_COLLISIONS_v(i_qp2,i_p_s,iqbz)=pre_factor
              !
            else
              !
-             COLLISIONS(i_qp1_mem)%v3(i_qp2_mem,i_p_s,i_q_mem)=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+             COLLISIONS(i_qp1_mem)%v3(i_qp2_mem,i_p_s,i_q_mem)=pre_factor
              !
            endif
            !
@@ -275,9 +294,11 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
          !
          isc%os(1)=i_np
          !
+         call scatterBamp(isc)
+         !
          do i_mp=QP_n_G_bands(1),QP_n_G_bands(2)
            !
-           if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_np,i_mp) ) ) cycle
+           if ( .not. PAR_IND_Bp_mat%element_1D( B_mat_index(i_np,i_mp) ) ) cycle
            !
            iscp%os(1)=i_mp
            !
@@ -289,11 +310,20 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
            !
            call M_by_V('N', X%ng, EM1s, conjg(iscp%rhotw), local_rhotw)
            !
+#if defined _OPENMP
+           pre_factor=0.0_SP
+!$omp parallel do default(shared), private(i1), reduction(+:pre_factor)
+           do i1=1,X%ng
+             pre_factor=pre_factor+isc%rhotw(i1)*local_rhotw(i1)
+           enddo
+!$omp end parallel do
+#else
            pre_factor=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+#endif
            !
            TEMP_COLLISIONS_v(i_np,i_mp,isc%os(2))=TEMP_COLLISIONS_v(i_np,i_mp,isc%os(2))-4._SP/spin_occ*pi*pre_factor
            !
-           if (q%sstar(iqbz,2)==1) call live_timing(steps=1)
+           call live_timing(steps=1)
            !
          enddo ! loop on the band i_np
          !
@@ -302,13 +332,16 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
      endif
    enddo Q_loop 
    !
-   if (l_elel_scatt) then
-     if (io_COLLs) call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_G_b_A2A%COMM)
-   else
-     call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)
+   if (io_COLLs) then
+     if (COLLISIONS_parallel_SC_structure) then
+       call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)
+       call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_Q_index%COMM)
+     else
+       call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_G_b_A2A%COMM)
+     endif
+     !
+     call COLLISIONS_store(i_qp1)
    endif
-   !
-   if (io_COLLs) call COLLISIONS_store(i_qp1)
    !
  enddo QP_loop
  !

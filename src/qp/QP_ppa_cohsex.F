@@ -273,7 +273,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Poles and Residuals
      !
 #if defined _SC
-     if (it_now==it_to_start) then
+     if (it_now==it_to_start.or.io_X) then
 #endif
 !$omp parallel do default(shared), private(i1,i2)
        do i1=1,X%ng

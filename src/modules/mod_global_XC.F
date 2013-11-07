@@ -95,7 +95,8 @@ module global_XC
    SE_GoWo          = 403, &
    SE_GWo_PPA       = 404, &
    SE_GWo           = 405, &
-   SE_POLARON       = 406
+   SE_POLARON       = 406, &
+   SE_GW_NEQ        = 407
  !
  ! More Self-Energies
  integer, public, parameter :: &

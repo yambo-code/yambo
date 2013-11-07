@@ -28,7 +28,7 @@ integer function io_COLLISIONS(i_qp,ID,X)
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,io_restart_point,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on
- use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX
+ use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ
  use com,           ONLY:error
  use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing
@@ -52,9 +52,11 @@ integer function io_COLLISIONS(i_qp,ID,X)
  character(schlen)     :: desc
  !
  if(V_kind==SC_HF) then
-   db_name     = "COLLISIONS_Vbare"
+   db_name                   = "COLLISIONS_HF"
  elseif(V_kind==SC_COHSEX) then
-   db_name     = "COLLISIONS_Wstatic"
+   db_name                   = "COLLISIONS_COHSEX"
+ elseif(V_kind==SE_GW_NEQ) then
+   db_name = "COLLISIONS_GW_NEQ"
  else
    call error("COLLISIONS I/O : Unknown database type ")
  endif
@@ -62,7 +64,7 @@ integer function io_COLLISIONS(i_qp,ID,X)
  io_COLLISIONS=io_connect(desc=db_name,type=2,ID=ID)
  if(io_COLLISIONS/=0) goto 1
  !
- if (.not.ver_is_gt_or_eq(ID,revision=891)) then
+ if (.not.ver_is_gt_or_eq(ID,revision=2800)) then
    io_COLLISIONS=IO_OUTDATED_DB
    goto 1
  endif
@@ -79,17 +81,14 @@ integer function io_COLLISIONS(i_qp,ID,X)
    !
    io_COLLISIONS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
    !
-   VAR_size=4
-   if (ver_is_gt_or_eq(ID,revision=1428)) VAR_size=5
+   VAR_size=5
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=VAR_size,MENU=0)
    !
    call io_elemental(ID,I1=SC_bands,&
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
    !
-   if (ver_is_gt_or_eq(ID,revision=1428)) then
-     call io_elemental(ID,L0=l_elel_scatt,&
-&         VAR=' Electron-Electron scattering    :',CHECK=.true.,OP=(/"=="/))
-   endif
+   call io_elemental(ID,L0=l_elel_scatt,&
+&       VAR=' Electron-Electron scattering    :',CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(ID,R0=SC_band_mixing,&
 &       VAR=' Bands mixing                    :',CHECK=.true.,OP=(/"=="/))
@@ -111,36 +110,32 @@ integer function io_COLLISIONS(i_qp,ID,X)
 &         VAR=' Exchange Cutoff                 :',CHECK=.true.,OP=(/"=="/))
    else
      !
-     if (ver_is_gt_or_eq(ID,revision=955)) then
-       !
-       ! Global Response Descriptions
-       !==============================
-       call io_elemental(ID,VAR="N_X_descriptions",VAR_SZ=1,MENU=0)
-       if (n_X_descs> 0) call io_elemental(ID,I0=n_X_descs,CHECK=.true.,OP=(/"=="/))
-       if (n_X_descs==0) then
-         call io_elemental(ID,DB_I0=n_X_descs,I0=n_X_descs)
-         n_X_descs=-n_X_descs
-       endif
+     ! Global Response Descriptions
+     !==============================
+     call io_elemental(ID,VAR="N_X_descriptions",VAR_SZ=1,MENU=0)
+     if (n_X_descs> 0) call io_elemental(ID,I0=n_X_descs,CHECK=.true.,OP=(/"=="/))
+     if (n_X_descs==0) then
+       call io_elemental(ID,DB_I0=n_X_descs,I0=n_X_descs)
+       n_X_descs=-n_X_descs
+     endif
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
+     ! In this case I have loaded the em1s DB and I know the parameters.
+     ! I can, therefore, write/read and/or VERIFIY the values
+     !
+     do i_desc=1,iabs(n_X_descs)
+       call io_elemental(ID,VAR='X_descriptions_'//trim(intc(i_desc)),CH0="",VAR_SZ=1,MENU=0)
+       call io_elemental(ID,DB_CH0=X_string,CH0=X_description(i_desc),VAR='',CHECK=n_X_descs>0,OP=(/"=="/))
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        !
-       ! In this case I have loaded the em1s DB and I know the parameters.
-       ! I can, therefore, write/read and/or VERIFIY the values
+       ! For the real-time databases I need to extract from the X_descriptions few parameters which describe
+       ! the response function properties
        !
-       do i_desc=1,iabs(n_X_descs)
-         call io_elemental(ID,VAR='X_descriptions_'//trim(intc(i_desc)),CH0="",VAR_SZ=1,MENU=0)
-         call io_elemental(ID,DB_CH0=X_string,CH0=X_description(i_desc),VAR='',CHECK=n_X_descs>0,OP=(/"=="/))
-         call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-         !
-         ! For the real-time databases I need to extract from the X_descriptions few parameters which describe
-         ! the response function properties
-         !
-         if (read_is_on(ID).and.i_desc<=2) then
-           if (i_desc==1) read (X_string(26:40),*) SC_X_size
-           if (i_desc==2) read (X_string(26:40),'(i2,1x,i3)') SC_X_bands
-         endif
-       enddo
-       !
-     endif
+       if (read_is_on(ID).and.i_desc<=2) then
+         if (i_desc==1) read (X_string(26:40),*) SC_X_size
+         if (i_desc==2) read (X_string(26:40),'(i2,1x,i3)') SC_X_bands
+       endif
+     enddo
      !
      call io_elemental(ID,VAR="INTERACTION_PARAMETERS",VAR_SZ=2,MENU=0)
      !

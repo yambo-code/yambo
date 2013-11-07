@@ -25,9 +25,9 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! exchange, COHSEX etc.. and store them together 
  !
  use pars,            ONLY:IP,SP,LP
- use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_eval_collisions,l_sc_srpa,l_elel_scatt 
+ use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_eval_collisions,l_sc_srpa,l_elel_scatt,l_elel_corr
  use LIVE_t,          ONLY:live_timing
- use global_XC,       ONLY:SC_HF,SC_COHSEX
+ use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
  use QP_m,            ONLY:QP_n_states
  use D_lattice,       ONLY:nsym
  use memory_m,        ONLY:mem_est
@@ -55,14 +55,19 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  n_V_kinds   =0
  io_err      =0
  !
- if(l_sc_hf.or.l_sc_cohsex.or.l_sc_exx) then
+ if((l_sc_hf.or.l_sc_cohsex.or.l_sc_exx).and.l_elel_corr) then
    n_V_kinds          =n_V_kinds+1
    V_kinds(n_V_kinds) =SC_HF
  endif
  !
- if(l_sc_cohsex.or.l_sc_srpa) then
+ if((l_sc_cohsex.or.l_sc_srpa).and.l_elel_corr) then
    n_V_kinds          =n_V_kinds+1
    V_kinds(n_V_kinds) =SC_COHSEX
+ endif
+ !
+ if(l_sc_cohsex.and.l_elel_scatt) then
+   n_V_kinds          =n_V_kinds+1
+   V_kinds(n_V_kinds) =SE_GW_NEQ
  endif
  !
  if (n_V_kinds==0) return

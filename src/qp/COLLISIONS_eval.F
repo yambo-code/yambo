@@ -28,10 +28,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev
  use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk,QP_n_G_bands,QP_state
- use wave_func,     ONLY:WF
+ use wave_func,     ONLY:WF,states_to_load
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands
- use global_XC,     ONLY:SC_HF,SC_COHSEX
+ use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
  use collisions_IO, ONLY:V_kind,collisions_IO_alloc,collisions_IO_free,TEMP_COLLISIONS_v,&
 &                        io_COLLISIONS,collisions_RANGES_setup,COLLISIONS_range
  use collision,     ONLY:COLLISIONS,COLLISIONS_parallel_SC_structure
@@ -52,7 +52,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! WorkSpace
  !
- integer           ::ID
+ integer           ::ID,i_kind
  character(schlen) ::ch
  !
  call section('*','Extended collisions')
@@ -78,13 +78,9 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call mem_est("fragment_status",(/QP_n_states/),(/IP/))
  endif
  !
- if (l_HF_and_locXC.and.l_elel_corr) then
-   !
-   call section('+','Hartree-Fock')
-   !================================
-   !
-   ! PARALLEL Setup
-   !================
+ ! PARALLEL Setup
+ !================
+ if (l_elel_corr) then
 #if defined _SC && defined _RT
    call PARALLEL_global_indexes(E,k,q,"Real_Time")
    call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
@@ -96,6 +92,12 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
 #endif
    call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QP)
    call PARALLEL_WF_index( )
+ endif
+ !
+ if (l_HF_and_locXC.and.l_elel_corr) then
+   !
+   call section('+','Hartree-Fock')
+   !================================
    !
    V_kind=SC_HF
    fragment_status=-1
@@ -121,79 +123,84 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  if (l_cohsex) then
    !
-   if (l_HF_and_locXC)      call section('=','COHSEX')
-   !                        ==========================
-   if (.not.l_HF_and_locXC) call section('+','COHSEX')
-   !
-   ! PARALLEL Setup
-   !================
-   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
-   if (l_elel_scatt) then
-     call PARALLEL_global_indexes(E,k,q,"Real_Time")
-     call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QP,CLEAN_UP=.FALSE.)
-     call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QPp)
-   else
-#if defined _SC && defined _RT
-     call PARALLEL_global_indexes(E,k,q,"Real_Time")
-     call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
-#endif
-#if defined _SC && !defined _RT
-     call PARALLEL_global_indexes(E,k,q,"Self_Energy")
-     call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_Xk_ibz,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
-     COLLISIONS_parallel_SC_structure=.TRUE.
-#endif
-     call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QP)
-   endif
-   call PARALLEL_WF_index( )
-   !
-   if (io_COLLs) then
+   do i_kind=1,2
      !
-     V_kind=SC_COHSEX
-     fragment_status=-1
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+     if ((i_kind==1.and..not.l_elel_corr).or.(i_kind==2.and..not.l_elel_scatt)) cycle
      !
-     if (io_COLLISIONS(0,ID)/=0) then
+     if (i_kind==1.and.l_elel_corr)  then
+       if (l_HF_and_locXC)      call section('=','COHSEX (e-e correlation)')
+       if (.not.l_HF_and_locXC) call section('+','COHSEX (e-e correlation)')
+       V_kind=SC_COHSEX
+     else if (i_kind==2.and.l_elel_scatt) then
+       if (l_elel_corr)      call section('=','COHSEX (e-e scattering)')
+       if (.not.l_elel_corr) call section('+','COHSEX (e-e scattering)')
+       V_kind=SE_GW_NEQ
+     endif
+     !
+     ! PARALLEL Setup (e-e scattering)
+     !=================================
+     if (l_elel_scatt) then
+       call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+       call PARALLEL_global_indexes(E,k,q,"Real_Time")
+       call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QP,CLEAN_UP=.FALSE.)
+       call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QPp)
+       call PARALLEL_WF_index( )
+     endif
+     !
+     if (io_COLLs) then
        !
-       QP_n_G_bands(2)=SC_bands(2)
-       !  
-       ! RL vectors to dimension the COLLISIONS
-       !  
-       call collisions_RANGES_setup()
+       fragment_status=-1
+       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
        !
-       if (.not.allocated(TEMP_COLLISIONS_v)) then
-         allocate(TEMP_COLLISIONS_v(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
-&                                   COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
-&                                   COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
-         call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
-         call collisions_IO_alloc()
+       if (io_COLLISIONS(0,ID)/=0) then
+         !
+         QP_n_G_bands(2)=SC_bands(2)
+         !  
+         ! RL vectors to dimension the COLLISIONS
+         !  
+         call collisions_RANGES_setup()
+         !
+         if (.not.allocated(TEMP_COLLISIONS_v)) then
+           allocate(TEMP_COLLISIONS_v(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
+&                                     COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
+&                                     COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
+           call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
+           call collisions_IO_alloc()
+         endif
+         !
+         call report_disk_usage('COHSEX')
+         !
+         call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2),i_kind) 
+         !
        endif
        !
-       call report_disk_usage('COHSEX')
+     else
        !
-       call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2)) 
+       allocate(COLLISIONS(PAR_nQP))
+       !
+       call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2),i_kind) 
        !
      endif
      !
-   else
+     ! CLEAN
+     !=======
+     if (io_COLLs.or.allocated(TEMP_COLLISIONS_v)) then
+       call WF_free(WF)
+       call collisions_IO_free()
+       deallocate(TEMP_COLLISIONS_v)
+       call mem_est("TEMP_COLLISIONS_v")
+     endif
      !
-     allocate(COLLISIONS(PAR_nQP))
-     !
-     call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2)) 
-     !
-   endif
+   enddo
    !
  endif
  !
  ! CLEAN
  !=======
  !
- if (io_COLLs.or.allocated(TEMP_COLLISIONS_v)) then
+ if (io_COLLs) then
    deallocate(fragment_status)
    call mem_est("fragment_status")
-   call WF_free(WF)
-   call collisions_IO_free()
-   if (allocated(TEMP_COLLISIONS_v)) deallocate(TEMP_COLLISIONS_v)
-   call mem_est("TEMP_COLLISIONS_v")
  endif
  !
  contains

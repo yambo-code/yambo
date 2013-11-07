@@ -125,6 +125,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    endif
  endif
  !
+ !
  ! [2]: Check FFT size
  !
  if (loaded_bounds_ok) then
@@ -176,7 +177,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! Is WF to load ? If not and the space is "R" I need to know the fft_size, at least. 
  !
- if(allocated(states_to_load)) then
+ if (allocated(states_to_load)) then
    WF%to_load=count(states_to_load .eqv. .true.)>0
    if (.not.WF%to_load) then
      if(associated(WF%state)) nullify(WF%state)

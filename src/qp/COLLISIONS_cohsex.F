@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
+subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind)
  !
  ! COHSEX collisions 
  !
@@ -48,7 +48,6 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  use D_lattice,     ONLY:DL_vol,nsym
  use wrapper,       ONLY:M_by_V
  use collisions_IO, ONLY:TEMP_COLLISIONS_v
- use drivers,       ONLY:l_elel_scatt
  use SC,            ONLY:SC_bands
  use fragments,     ONLY:fragment_status
  !
@@ -57,6 +56,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  type(bz_samp)::Xk,k,q
  type(X_t)    ::X
  type(w_samp) ::Xw
+ integer      ::V_kind
  !
  ! Work Space
  !
@@ -96,7 +96,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  ! WFs...
  !
  n_bands=QP_nb
- if (.not.l_elel_scatt) n_bands=max(QP_n_G_bands(2),QP_nb)
+ if (V_kind==1) n_bands=max(QP_n_G_bands(2),QP_nb)
  !
  call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,n_bands/),(/1,k%nibz/),title='-SC')
  !
@@ -125,10 +125,10 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
- if (l_elel_scatt) then
-   call live_timing("COHSEX collisions",PAR_nQP*PAR_nQ*PAR_nQPp)
+ if (V_kind==2) then
+   call live_timing("COHSEX collisions (e-e scattering)",PAR_nQP*PAR_nQ*PAR_nQPp)
  else
-   call live_timing("COHSEX collisions",PAR_nQP*PAR_nQ*PAR_n_Bp_mat_elements)
+   call live_timing("COHSEX collisions (e-e correlation)",PAR_nQP*PAR_nQ*PAR_n_Bp_mat_elements)
  endif
  if (io_err/=0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
@@ -173,7 +173,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
        !
        ! Poles and Residuals
        !
-       if (l_elel_scatt) forall(i1=1:X%ng) X_mat(i1,i1,1)=X_mat(i1,i1,1)+1.
+       if (V_kind==2) forall(i1=1:X%ng) X_mat(i1,i1,1)=X_mat(i1,i1,1)+1.
        !
 !$omp parallel do default(shared), private(i1,i2)
        do i1=1,X%ng
@@ -187,7 +187,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
        enddo
 !$omp end parallel do
        !
-       if (l_elel_scatt) EM1s(1,1)=X_mat(1,1,1)*sqrt(isc%gamp(1,1)/DL_vol/q%nbz)
+       if (V_kind==2) EM1s(1,1)=X_mat(1,1,1)*sqrt(isc%gamp(1,1)/DL_vol/q%nbz)
        !
      endif
      !
@@ -217,7 +217,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw)
      iscp%os =(/0  ,i_kmq,i_kmq_s,i_kmq_sp/)
      iscp%qs =isc%qs
      !
-     if (l_elel_scatt) then
+     if (V_kind==2) then
        !
        i_np     = QP_table(i_qp1,2)
        isc%os(1)= i_np

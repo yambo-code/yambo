@@ -39,6 +39,9 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  use pars,           ONLY:SP,cONE,cZERO
  use wrapper,        ONLY:V_by_V_plus_V
+#if defined _OPENMP
+ use wrapper,        ONLY:V_by_V_plus_V_omp
+#endif
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
@@ -147,8 +150,13 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !
    if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.NE_dynamics.and.PAR_COM_Xk_ibz_A2A%CPU_id==0) then 
      !      
+#if defined _OPENMP
+     call V_by_V_plus_V_omp(SC_nbands,cONE,-XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
+&                           H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+#else
      call V_by_V_plus_V(SC_nbands,cONE,-XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
 &                       H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+#endif
      !
      H_nl_sc=H_nl_sc*(1._SP+tanh((Time+(RT_step*real(Thermal_steps))/2._SP)/ &
 &                    (RT_step*real(Thermal_steps))/SwitchOnTime))/2._SP
@@ -158,8 +166,13 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    ! The bare, frozed VHxc 
    !=======================
    if (l_RT_needs_XC0.and.PAR_COM_Xk_ibz_A2A%CPU_id==0) then
+#if defined _OPENMP
+     call V_by_V_plus_V_omp(SC_nbands,cONE,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
+&                           H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+#else
      call V_by_V_plus_V(SC_nbands,cONE,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
 &                       H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+#endif
    endif
    !
    ! Local XC potentials 
@@ -169,8 +182,13 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    ! Add Ho = T+V_ion
    !==================
    if (PAR_COM_Xk_ibz_A2A%CPU_id==0) then
+#if defined _OPENMP
+     call V_by_V_plus_V_omp(SC_nbands,cONE,Ho(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),&
+&                           H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+#else
      call V_by_V_plus_V(SC_nbands,cONE,Ho(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),&
 &                       H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+#endif
      Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)= &
 &          H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
    endif

@@ -51,6 +51,7 @@ subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,Bm_ind
    allocate(states_to_load(NB,NK,n_sp_pol))
    !
    states_to_load=CLEAN_UP
+   if (ncpu==1) states_to_load=.TRUE.
    !
  endif
  !

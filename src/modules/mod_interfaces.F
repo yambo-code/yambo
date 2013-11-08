@@ -25,6 +25,13 @@ module interfaces
  !
  interface
    !
+   integer function io_COLLISIONS(i_qp,ID,COLL)
+     use collision,  ONLY:COLLISIONS_element
+     integer, intent(inout)             ::ID
+     integer, intent(in)                ::i_qp
+     type(COLLISIONS_element), optional :: COLL
+   end function
+   !
    subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&
 &                     spins_to_load,space,title,impose_free_and_alloc,force_WFo)
      use wave_func,       ONLY:WAVEs

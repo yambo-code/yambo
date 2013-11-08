@@ -27,20 +27,19 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev
- use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk,QP_n_G_bands,QP_state
+ use QP_m,          ONLY:QP_nb,QP_n_states,QP_n_G_bands,QP_state
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
- use collisions_IO, ONLY:V_kind,collisions_IO_alloc,collisions_IO_free,TEMP_COLLISIONS_v,&
-&                        io_COLLISIONS,collisions_RANGES_setup,COLLISIONS_range
- use collision,     ONLY:COLLISIONS,COLLISIONS_parallel_SC_structure
+ use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,COLLISIONS_alloc,COLLISIONS_free,&
+&                        HF_collisions,COHSEX_collisions,GW_NEQ_collisions
  use X_m,           ONLY:X_t
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
  use fragments,     ONLY:fragment_status
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,io_COLLISIONS
  use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_QPp,PAR_IND_Xk_ibz,PAR_IND_G_k,PAR_IND_Bp_mat
  use X_m,           ONLY:X_t
  !
@@ -52,11 +51,15 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! WorkSpace
  !
- integer           ::ID,i_kind
+ integer           ::ID,i_kind,NC
  character(schlen) ::ch
  !
  call section('*','Extended collisions')
  !=======================================
+ !
+ ! If I am calculating the collisions then I can use them
+ !
+ l_use_collisions=.TRUE.
  !
  ! QP states setup
  !
@@ -73,7 +76,9 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! No DB => EVAL
  !===============
  !
+ NC=PAR_nQP
  if (io_COLLs) then
+   NC=1
    allocate(fragment_status(QP_n_states))
    call mem_est("fragment_status",(/QP_n_states/),(/IP/))
  endif
@@ -101,21 +106,13 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    V_kind=SC_HF
    fragment_status=-1
-   if (io_COLLs) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    !
-   if (io_COLLISIONS(0,ID)/=0.or..not.io_COLLs) then
+   if (io_COLLISIONS(0,ID)/=0) then
      !
-     if (io_COLLs) then
-       COLLISIONS_range(1,:)=SC_bands
-       COLLISIONS_range(2,:)=SC_bands
-       COLLISIONS_range(3,:)=(/1,QP_nk/)
-       allocate(TEMP_COLLISIONS_v(QP_nb,QP_nb,QP_nk))
-       call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
-       call collisions_IO_alloc()
-       call report_disk_usage('HF')
-     endif
+     call COLLISIONS_alloc("HF",HF_collisions,NC)
      !
-     call COLLISIONS_Hartree_Fock(E,k,q)
+     call COLLISIONS_Hartree_Fock(E,k,q,HF_collisions)
      !
    endif
    !
@@ -147,49 +144,21 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        call PARALLEL_WF_index( )
      endif
      !
-     if (io_COLLs) then
-       !
-       fragment_status=-1
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       !
-       if (io_COLLISIONS(0,ID)/=0) then
-         !
-         QP_n_G_bands(2)=SC_bands(2)
-         !  
-         ! RL vectors to dimension the COLLISIONS
-         !  
-         if (i_kind/=3) call collisions_RANGES_setup("ee_corr")
-         if (i_kind==3) call collisions_RANGES_setup("ee_scatt")
-         !
-         if (.not.allocated(TEMP_COLLISIONS_v)) then
-           allocate(TEMP_COLLISIONS_v(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
-&                                     COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
-&                                     COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
-           call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
-           call collisions_IO_alloc()
-         endif
-         !
-         call report_disk_usage('COHSEX')
-         !
-         call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2),i_kind) 
-         !
-       endif
-       !
-     else
-       !
-       allocate(COLLISIONS(PAR_nQP))
-       !
-       call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2),i_kind) 
-       !
-     endif
+     fragment_status=-1
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
      !
-     ! CLEAN
-     !=======
-     if (io_COLLs.or.allocated(TEMP_COLLISIONS_v)) then
+     if (io_COLLISIONS(0,ID)/=0) then
+       !
+       if (i_kind==1) call COLLISIONS_alloc("COHSEX",COHSEX_collisions,NC)
+       if (i_kind==2) call COLLISIONS_alloc("GW_NEQ",GW_NEQ_collisions,NC)
+       !
+       QP_n_G_bands(2)=SC_bands(2)
+       !  
+       if (i_kind==1) call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2),i_kind,COHSEX_collisions) 
+       if (i_kind==2) call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2),i_kind,GW_NEQ_collisions) 
+       !
        call WF_free(WF)
-       call collisions_IO_free()
-       deallocate(TEMP_COLLISIONS_v)
-       call mem_est("TEMP_COLLISIONS_v")
+       !
      endif
      !
    enddo
@@ -199,6 +168,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! CLEAN
  !=======
  !
+ call COLLISIONS_free("HF",HF_collisions,NC)
+ call COLLISIONS_free("COHSEX",COHSEX_collisions,NC)
+ call COLLISIONS_free("GW_NEQ",GW_NEQ_collisions,NC)
+ !
  if (io_COLLs) then
    deallocate(fragment_status)
    call mem_est("fragment_status")
@@ -206,17 +179,17 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  contains
    !
-   subroutine report_disk_usage(what)
-     !
-     use com,   ONLY:msg
-     use units, ONLY:Gigabyte
-     !
-     real(SP)     :: disk_space
-     character(*) :: what
-     !
-     disk_space=real(QP_n_states*(QP_nb-SC_bands(1)+1)**2*QP_nk*SP)/Gigabyte
-     if (disk_space > 0.05) call msg('s','[COLLISIONS I/O] '//what//' Disk space required [Gb]:',disk_space)  
-     !
-   end subroutine
+!   subroutine report_disk_usage(what)
+!     !
+!     use com,   ONLY:msg
+!     use units, ONLY:Gigabyte
+!     !
+!     real(SP)     :: disk_space
+!     character(*) :: what
+!     !
+!     disk_space=real(QP_n_states*(QP_nb-SC_bands(1)+1)**2*QP_nk*SP)/Gigabyte
+!     if (disk_space > 0.05) call msg('s','[COLLISIONS I/O] '//what//' Disk space required [Gb]:',disk_space)  
+!     !
+!   end subroutine
    !
 end subroutine

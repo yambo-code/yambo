@@ -19,27 +19,27 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_Hartree_Fock(E,k,q)
+subroutine COLLISIONS_Hartree_Fock(E,k,q,COLL)
  !
  ! Hartree-Fock
  !
- use pars,          ONLY:SP,schlen,DP,pi
+ use pars,          ONLY:SP,schlen,DP,pi,cZERO
  use IO_m,          ONLY:io_COLLs
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels,spin_occ,spin
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,&
-&                        PAR_IND_Q,&
+&                        PAR_IND_Q,PAR_QP_index,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
- use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure
+ use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
+&                        COLLISIONS_element
  use QP_m,          ONLY:QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
  use SC,            ONLY:SC_bands
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- use collisions_IO, ONLY:TEMP_COLLISIONS_v
  use fragments,     ONLY:fragment_status
  use real_time,     ONLY:B_mat_index
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -50,13 +50,14 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
 #endif
  !
  implicit none
- type(levels) ::E       
- type(bz_samp)::k,q
+ type(levels)             ::E       
+ type(bz_samp)            ::k,q
+ type(COLLISIONS_element) ::COLL(:)
  !
  !Work Space
  !
  type(ggwinfo)           ::isc,iscp
- integer                 ::iq,ib,ibp,jb,ik,i_qp,jb2,ik_minus_q,ig
+ integer                 ::iq,ib,ibp,jb,ik,i_qp,jb2,ik_minus_q,ig,i_qp_mem
  complex(DP)             ::DP_Sx
  complex(SP),allocatable ::local_rhotw(:)
  character(schlen)       ::ch
@@ -97,6 +98,8 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
    !
    if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
    !
+   i_qp_mem=PAR_QP_index(i_qp)
+   !
    if (io_COLLs) then
      if (fragment_status(i_qp)/=-1) then
        call live_timing(steps=PAR_nQ*PAR_n_Bp_mat_elements)
@@ -104,7 +107,8 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
      endif
    endif
    !
-   TEMP_COLLISIONS_v=(0.,0.)
+   if (     io_COLLS) COLL(1)%v=cZERO
+   if (.not.io_COLLS) COLL(i_qp_mem)%v=cZERO
    !
    ib =QP_table(i_qp,1)
    ibp=QP_table(i_qp,2)
@@ -173,7 +177,11 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
          !
 #endif
          !
-         TEMP_COLLISIONS_v(jb,jb2,ik_minus_q)=TEMP_COLLISIONS_v(jb,jb2,ik_minus_q)+DP_Sx
+         if (io_COLLs) then
+           COLL(1)%v3(jb,jb2,ik_minus_q)=COLL(1)%v3(jb,jb2,ik_minus_q)+DP_Sx
+         else
+           COLL(i_qp_mem)%v3(jb,jb2,ik_minus_q)=COLL(1)%v3(jb,jb2,ik_minus_q)+DP_Sx
+         endif
          !
          call live_timing(steps=1)
          !
@@ -186,13 +194,13 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
    if (io_COLLs) then
      !
      if (COLLISIONS_parallel_SC_structure) then
-       call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_Q_index%COMM)
+       call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_QP_A2A%COMM)
+       call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_Q_index%COMM)
      else
-       call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_G_b_A2A%COMM)
+       call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_G_b_A2A%COMM)
      endif
      !
-     call COLLISIONS_store(i_qp)
+     call COLLISIONS_store(i_qp,COLL(1))
      !
    endif
    !

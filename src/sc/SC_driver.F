@@ -23,7 +23,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_cohsex,l_eval_collisions,l_sc_contains_lda
+ use drivers,        ONLY:l_sc_cohsex,l_use_collisions,l_sc_contains_lda
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
@@ -43,12 +43,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use stderr,         ONLY:intc,real2ch,log_as_a_file
  use xc_functionals, ONLY:V_xc,E_xc
  use frequency,      ONLY:w_samp
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,ncpu,n_WF_bands_to_load
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,ncpu,n_WF_bands_to_load,PAR_nQP
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder
  use LIVE_t,         ONLY:live_timing
- use collisions_IO,  ONLY:collisions_IO_alloc,collisions_IO_free
+ use collision,      ONLY:COLLISIONS_alloc,COLLISIONS_free,STATIC_collisions
 #if defined _MAGNETIC
  use electrons,       ONLY:Total_magn
 #endif
@@ -119,12 +119,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! COLLISIONS
  !============
  !
- if (l_eval_collisions) call COLLISIONS_load(.FALSE.)
+ if (l_use_collisions) call COLLISIONS_load(.FALSE.)
  !
  ! Initialize SC_R matrix
  !========================
  !
- if(.not.l_SC_RESTART.and.l_eval_collisions) then
+ if(.not.l_SC_RESTART.and.l_use_collisions) then
    !      
    SC_R=(0.,0.)
    forall(i1=1:SC_bands(2))
@@ -284,7 +284,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        if (l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
        !
-       if (.not.l_eval_collisions.and.it_now>1) then
+       if (.not.l_use_collisions.and.it_now>1) then
          !
          ! Rotate H_nl_sc in the WFo basis.
          !
@@ -549,7 +549,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call mem_est("V_mean",(/fft_size*SC_bands(2)/))
      endif
      !
-     if(l_eval_collisions) then
+     if(l_use_collisions) then
        !
        allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk,1))
        call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
@@ -557,7 +557,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        allocate(QP_Vnl_xc(QP_n_states))
        call mem_est("QP_Vnl_xc",(/size(QP_Vnl_xc)/),(/2*SP/))
        !
-       call collisions_IO_alloc()
+       call COLLISIONS_alloc('STATIC',STATIC_collisions,PAR_nQP)
        !
      endif
      !
@@ -587,7 +587,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call mem_est("V_mean")
      endif
      !
-     if(l_eval_collisions) then
+     if(l_use_collisions) then
        !
        deallocate(G_lesser)
        call mem_est("G_lesser")
@@ -595,7 +595,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        if (allocated(QP_Vnl_xc)) deallocate(QP_Vnl_xc)
        call mem_est("QP_Vnl_xc")
        !
-       call collisions_IO_free()
+       call COLLISIONS_free('STATIC',STATIC_collisions,PAR_nQP)
        !
      endif
      !

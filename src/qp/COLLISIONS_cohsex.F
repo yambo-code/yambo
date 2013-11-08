@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind)
+subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL)
  !
  ! COHSEX collisions 
  !
@@ -34,7 +34,8 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind)
 &                        PAR_IND_Q,PAR_nQPp,PAR_Q_index,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_IND_QPp,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
- use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS,COLLISIONS_parallel_SC_structure
+ use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
+&                        COLLISIONS_element
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -45,18 +46,18 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind)
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp
- use D_lattice,     ONLY:DL_vol,nsym
+ use D_lattice,     ONLY:DL_vol
  use wrapper,       ONLY:M_by_V
- use collisions_IO, ONLY:TEMP_COLLISIONS_v
  use SC,            ONLY:SC_bands
  use fragments,     ONLY:fragment_status
  !
  implicit none
- type(levels) ::E
- type(bz_samp)::Xk,k,q
- type(X_t)    ::X
- type(w_samp) ::Xw
- integer      ::V_kind
+ type(levels)             ::E
+ type(bz_samp)            ::Xk,k,q
+ type(X_t)                ::X
+ type(w_samp)             ::Xw
+ integer                  ::V_kind
+ type(COLLISIONS_element) ::COLL(:)
  !
  ! Work Space
  !
@@ -143,11 +144,10 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind)
        call live_timing(steps=PAR_nQ*PAR_n_Bp_mat_elements)
        cycle
      endif
-   else
-     allocate(COLLISIONS(i_qp1_mem)%v3(PAR_nQPp,nsym,PAR_nQ))
    endif
    !
-   TEMP_COLLISIONS_v=cZERO
+   if (     io_COLLS) COLL(1)%v=cZERO
+   if (.not.io_COLLS) COLL(i_qp1_mem)%v=cZERO
    !
    Q_loop: do iqbz=1,q%nbz 
      !
@@ -273,11 +273,11 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind)
            !
            if (io_COLLs) then
              !
-             TEMP_COLLISIONS_v(i_qp2,i_p_s,iqbz)=pre_factor
+             COLL(1)%v3(i_qp2,i_p_s,iqbz)=pre_factor
              !
            else
              !
-             COLLISIONS(i_qp1_mem)%v3(i_qp2_mem,i_p_s,i_q_mem)=pre_factor
+             COLL(i_qp1_mem)%v3(i_qp2_mem,i_p_s,i_q_mem)=pre_factor
              !
            endif
            !
@@ -320,7 +320,15 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind)
            pre_factor=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
 #endif
            !
-           TEMP_COLLISIONS_v(i_np,i_mp,isc%os(2))=TEMP_COLLISIONS_v(i_np,i_mp,isc%os(2))-4._SP/spin_occ*pi*pre_factor
+           if (io_COLLs) then
+             !
+             COLL(1)%v3(i_np,i_mp,isc%os(2))=COLL(1)%v3(i_np,i_mp,isc%os(2))-4._SP/spin_occ*pi*pre_factor
+             !
+           else
+             !
+             COLL(i_qp1_mem)%v3(i_np,i_mp,isc%os(2))=COLL(1)%v3(i_np,i_mp,isc%os(2))-4._SP/spin_occ*pi*pre_factor
+             !
+           endif
            !
            call live_timing(steps=1)
            !
@@ -333,13 +341,13 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind)
    !
    if (io_COLLs) then
      if (COLLISIONS_parallel_SC_structure) then
-       call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_Q_index%COMM)
+       call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_QP_A2A%COMM)
+       call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_Q_index%COMM)
      else
-       call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_G_b_A2A%COMM)
+       call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_G_b_A2A%COMM)
      endif
      !
-     call COLLISIONS_store(i_qp1)
+     call COLLISIONS_store(i_qp1,COLL(1))
    endif
    !
  enddo QP_loop

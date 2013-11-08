@@ -19,12 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_COLLISIONS(i_qp,ID,X)
+integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collisions_IO, ONLY:COLLISIONS_table,n_collisions,V_kind,COLLISIONS_v,COLLISIONS_cutoff,&
-&                        COLLISIONS_range
+ use collision,     ONLY:n_collisions,V_kind,COLLISIONS_cutoff,COLLISIONS_element
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,io_restart_point,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on
@@ -33,29 +32,34 @@ integer function io_COLLISIONS(i_qp,ID,X)
  use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing
  use fragments,     ONLY:io_fragment,Fragments_Restart,Fragments_Synchronize
- use X_m,           ONLY:X_t,n_X_descs,X_description
+ use X_m,           ONLY:n_X_descs,X_description
  use stderr,        ONLY:intc
  use drivers,       ONLY:l_elel_scatt
  !
  implicit none
  !
- integer, intent(inout)::ID
- integer, intent(in)   ::i_qp
- type(X_t),optional    ::X
+ integer, intent(inout)            ::ID
+ integer, intent(in)               ::i_qp
+ type(COLLISIONS_element),optional ::COLL
  !
  ! Work Space
  !
  character(schlen)     :: db_name
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
- integer               :: V_kind_disk,i_desc,VAR_size
+ integer               :: V_kind_disk,i_desc,VAR_size,V_kind_here
  character(lchlen)     :: V_kind_string,X_string
  character(schlen)     :: desc
  !
- if(V_kind==SC_HF) then
+ V_kind_here=V_kind
+ if (present(COLL)) then
+   V_kind_here=COLL%kind
+ endif
+ !
+ if(V_kind_here==SC_HF) then
    db_name                   = "COLLISIONS_HF"
- elseif(V_kind==SC_COHSEX) then
+ elseif(V_kind_here==SC_COHSEX) then
    db_name                   = "COLLISIONS_COHSEX"
- elseif(V_kind==SE_GW_NEQ) then
+ elseif(V_kind_here==SE_GW_NEQ) then
    db_name = "COLLISIONS_GW_NEQ"
  else
    call error("COLLISIONS I/O : Unknown database type ")
@@ -92,10 +96,10 @@ integer function io_COLLISIONS(i_qp,ID,X)
    !
    call io_elemental(ID,R0=SC_band_mixing,&
 &       VAR=' Bands mixing                    :',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,I0=V_kind,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,I0=V_kind_here,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   V_kind_string     =global_XC_string(V_kind,SE_NONE,0,EXT_NONE)
+   V_kind_string     =global_XC_string(V_kind_here,SE_NONE,0,EXT_NONE)
    !
    call io_elemental(ID,VAR='INTERACTION_KIND',CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,CH0=V_kind_string,&
@@ -159,24 +163,24 @@ integer function io_COLLISIONS(i_qp,ID,X)
    call io_bulk(ID,VAR='N_COLLISIONS_STATES',VAR_SZ=(/1/))
    call io_bulk(ID,I0=n_collisions)
    call io_bulk(ID,VAR='COLLISIONS_TABLE',&
-&                  VAR_SZ=(/COLLISIONS_range(1,2)-COLLISIONS_range(1,1)+1,&
-&                           COLLISIONS_range(2,2)-COLLISIONS_range(2,1)+1,&
-&                           COLLISIONS_range(3,2)-COLLISIONS_range(3,1)+1/))
+&                  VAR_SZ=(/COLL%D(1,2)-COLL%D(1,1)+1,&
+&                           COLL%D(2,2)-COLL%D(2,1)+1,&
+&                           COLL%D(3,2)-COLL%D(3,1)+1/))
    !
-   call io_bulk(ID,L3=COLLISIONS_table(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&
-&                                      COLLISIONS_range(2,1):COLLISIONS_range(2,2),&
-&                                      COLLISIONS_range(3,1):COLLISIONS_range(3,2)))
+   call io_bulk(ID,L3=COLL%table(COLL%D(1,1):COLL%D(1,2),&
+&                                COLL%D(2,1):COLL%D(2,2),&
+&                                COLL%D(3,1):COLL%D(3,2)))
    !
    allocate(COLLISIONS_v_disk(n_collisions,2))      
    !
    call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/n_collisions,2/))
    if(write_is_on(ID)) then
-     COLLISIONS_v_disk(:,1) =real(COLLISIONS_v(1:n_collisions))
-     COLLISIONS_v_disk(:,2)=aimag(COLLISIONS_v(1:n_collisions))
+     COLLISIONS_v_disk(:,1) =real(COLL%v(1:n_collisions))
+     COLLISIONS_v_disk(:,2)=aimag(COLL%v(1:n_collisions))
      call io_bulk(ID,R2=COLLISIONS_v_disk)
    else
      call io_bulk(ID,R2=COLLISIONS_v_disk)
-     COLLISIONS_v(1:n_collisions)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
+     COLL%v(1:n_collisions)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
    endif
    !
    deallocate(COLLISIONS_v_disk)

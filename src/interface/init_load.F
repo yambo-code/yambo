@@ -49,7 +49,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _SC
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,SC_up_W_iters,&
 &                        SC_rho_threshold,SC_cycle_mixing,OEP_approx
- use collisions_IO, ONLY:COLLISIONS_cutoff
+ use collision,     ONLY:COLLISIONS_cutoff
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &

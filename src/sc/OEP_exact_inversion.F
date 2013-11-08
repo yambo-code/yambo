@@ -43,7 +43,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  use QP_m,            ONLY:QP_ng_Sx,QP_Vnl_xc,QP_n_states,QP_table,QP_Sc
  use memory_m,        ONLY:mem_est
  use SC,              ONLY:SC_R,H_rotate,it_now
- use drivers,         ONLY:l_eval_collisions,l_sc_srpa
+ use drivers,         ONLY:l_use_collisions,l_sc_srpa
  use wave_func,       ONLY:WF
  !
  ! I/O

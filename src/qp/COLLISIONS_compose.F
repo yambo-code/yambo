@@ -21,13 +21,13 @@
 !
 subroutine COLLISIONS_compose(G_input)
  !
- ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} COLLISIONS(n,n',q,qp_state) x G_lesser(n,n',k-q)
+ ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} STATIC_collisions(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
  use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_sc_srpa
  use pars,             ONLY:SP
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
  use SC,               ONLY:SC_bands
- use collision,        ONLY:COLLISIONS
+ use collision,        ONLY:STATIC_collisions
  use parallel_m,       ONLY:PAR_QP_index,PAR_IND_QP,PP_redux_wait
  !
  implicit none
@@ -59,8 +59,8 @@ subroutine COLLISIONS_compose(G_input)
    do ib=SC_bands(1),QP_nb
      do ibp=SC_bands(1),QP_nb
        do ik=1,QP_nk
-         if(COLLISIONS(i_qp_mem)%table(ib,ibp,ik)/=0) then
-           QP_Vnl_xc(i_qp_mem)=QP_Vnl_xc(i_qp_mem)-(0._SP,1._SP)*COLLISIONS(i_qp_mem)%v(ic)*G_input(ib,ibp,ik)
+         if(STATIC_collisions(i_qp_mem)%table(ib,ibp,ik)/=0) then
+           QP_Vnl_xc(i_qp_mem)=QP_Vnl_xc(i_qp_mem)-(0._SP,1._SP)*STATIC_collisions(i_qp_mem)%v(ic)*G_input(ib,ibp,ik)
            ic=ic+1
          endif
        enddo

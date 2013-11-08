@@ -57,7 +57,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC
  use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
- use collisions_IO,  ONLY:io_COLLISIONS,V_kind
+ use collision,      ONLY:V_kind
+ use interfaces,     ONLY:io_COLLISIONS
 #endif
 #if defined _RT
  use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe

@@ -24,7 +24,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi
- use drivers,       ONLY:l_sc_run,l_sc_exx,l_eval_collisions,l_gw0,l_cohsex
+ use drivers,       ONLY:l_sc_run,l_sc_exx,l_gw0,l_cohsex
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
@@ -75,25 +75,21 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
  !
- if (.not.l_eval_collisions) then
-   !
-   ! QP_table -> report
-   !
-   call msg('r','')
-   i4=(/1,1,0,0/)
-   do while(QP_state_extract(i4)>0)
-     write (ch,'(4(a,i3.3))') 'QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
-     call msg('r',trim(ch))
-   enddo
-   call msg('r','')
-   !
- endif
+ ! QP_table -> report
+ !
+ call msg('r','')
+ i4=(/1,1,0,0/)
+ do while(QP_state_extract(i4)>0)
+   write (ch,'(4(a,i3.3))') 'QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
+   call msg('r',trim(ch))
+ enddo
+ call msg('r','')
  !
 #if !defined _SC
  ! WF distributed & load
  !=======================
  !
- if (.not.l_eval_collisions) call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+ call PARALLEL_global_indexes(E,k,q,"Self_Energy")
  !
  call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,QP_index=PAR_IND_QP)
@@ -124,7 +120,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ch='EXS'
 #if defined _SC
  if (l_sc_run)          ch='HF@it'//trim(intc(it_now))
- if (l_eval_collisions) ch='HF collisions'
 #endif
  !
 ! if (l_sc_exx) then

@@ -57,17 +57,18 @@ module collisions_IO
  !
  contains
    !
-   subroutine collisions_RANGES_setup()
+   subroutine collisions_RANGES_setup(what)
      use drivers,        ONLY:l_elel_scatt
      use SC,             ONLY:SC_bands
      use D_lattice,      ONLY:nsym
      use R_lattice,      ONLY:nqbz,nkibz
      use QP_m,           ONLY:QP_n_states
-     if (l_elel_scatt) then
+     character(*) :: what
+     if (what=="ee_scatt") then
        COLLISIONS_range(1,:)=(/1,QP_n_states/)
        COLLISIONS_range(2,:)=(/1,nsym/)
        COLLISIONS_range(3,:)=(/1,nqbz/)
-     else 
+     else if (what=="ee_corr") then
        COLLISIONS_range(1,:)=SC_bands
        COLLISIONS_range(2,:)=SC_bands
        COLLISIONS_range(3,:)=(/1,nkibz/)

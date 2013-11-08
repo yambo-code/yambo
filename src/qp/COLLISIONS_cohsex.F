@@ -186,8 +186,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind)
          enddo
        enddo
 !$omp end parallel do
-       !
-       if (V_kind==2) EM1s(1,1)=X_mat(1,1,1)*sqrt(isc%gamp(1,1)/DL_vol/q%nbz)
+       if (V_kind==2.and.iqibz==1) EM1s(1,1)=X_mat(1,1,1)*sqrt(isc%gamp(1,1)/DL_vol/q%nbz)
        !
      endif
      !

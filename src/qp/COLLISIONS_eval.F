@@ -28,7 +28,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev
  use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk,QP_n_G_bands,QP_state
- use wave_func,     ONLY:WF,states_to_load
+ use wave_func,     ONLY:WF
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
@@ -158,7 +158,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
          !  
          ! RL vectors to dimension the COLLISIONS
          !  
-         call collisions_RANGES_setup()
+         if (i_kind/=3) call collisions_RANGES_setup("ee_corr")
+         if (i_kind==3) call collisions_RANGES_setup("ee_scatt")
          !
          if (.not.allocated(TEMP_COLLISIONS_v)) then
            allocate(TEMP_COLLISIONS_v(COLLISIONS_range(1,1):COLLISIONS_range(1,2),&

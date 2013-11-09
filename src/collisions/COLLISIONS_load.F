@@ -111,6 +111,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    if (V_kind==SC_HF)     call COLLISIONS_alloc_and_free("HF","collision","alloc",0)
    if (V_kind==SC_COHSEX) call COLLISIONS_alloc_and_free("COHSEX","collision","alloc",0)
    if (V_kind==SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","collision","alloc",0)
+   if (V_kind==SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","v3","alloc distribute",0)
    !
    do i_qp=1,PAR_nQP
      !

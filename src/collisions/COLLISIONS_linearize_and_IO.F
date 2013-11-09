@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_store(what,i_qp,COLL,N)
+subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  !
  use pars,            ONLY:SP
  use QP_m,            ONLY:QP_n_states
@@ -82,4 +82,4 @@ subroutine COLLISIONS_store(what,i_qp,COLL,N)
  !
  call COLLISIONS_alloc_and_free(what,"v1","clean",1)
  !
-end subroutine COLLISIONS_store
+end subroutine COLLISIONS_linearize_and_IO

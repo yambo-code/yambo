@@ -170,7 +170,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
            call COLLISIONS_alloc_and_free("GW_NEQ","v3 table","alloc",1)
          else
            call COLLISIONS_alloc_and_free("GW_NEQ","collision","alloc",0)
-           call COLLISIONS_alloc_and_free("GW_NEQ","v3","alloc",0)
+           call COLLISIONS_alloc_and_free("GW_NEQ","v3","alloc distribute",0)
          endif
        endif
        !

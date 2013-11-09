@@ -192,7 +192,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
      call PP_redux_wait(HF_collisions(1)%v3,COMM=PAR_COM_G_b_A2A%COMM)
    endif
    !
-   call COLLISIONS_store("HF",i_qp,HF_collisions,nHF_collisions)
+   call COLLISIONS_linearize_and_IO("HF",i_qp,HF_collisions,nHF_collisions)
    !
  enddo
  !

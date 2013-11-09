@@ -38,7 +38,7 @@ subroutine SC_start_and_restart(X,E,Xk)
 &                         l_Mean_Potential,l_SC_nl_mix
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t
- use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE
+ use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
  use FFT_m,          ONLY:fft_size
  use interfaces,     ONLY:WF_load
  use wave_func,      ONLY:WF
@@ -235,9 +235,12 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! Checking extended COLLISIONS
  !==============================
  !
- call COLLISIONS_load(.TRUE.)
+ if (io_COLLs) call COLLISIONS_load(.TRUE.)
  !
- if (l_use_collisions) call msg('s' ,'[SC] Extented collisions I/O Used')
- call msg('r' ,'[SC] Extented collisions I/O          :',l_use_collisions)
+ if (l_use_collisions) then
+   call msg('s' ,'[SC] Extented collisions Used')
+   call msg('r' ,'[SC] Extented collisions              :',l_use_collisions)
+   COHSEX_use_empties=.TRUE.
+ endif
  !
 end subroutine SC_start_and_restart

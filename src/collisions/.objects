@@ -1,0 +1,6 @@
+objs = 
+#if defined _SC
+objs = COLLISIONS_alloc_and_free.o COLLISIONS_load.o \
+       COLLISIONS_eval.o   COLLISIONS_store.o \
+       COLLISIONS_compose.o COLLISIONS_cohsex.o COLLISIONS_Hartree_Fock.o
+#endif

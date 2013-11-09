@@ -49,7 +49,6 @@ module collision
  ! EXTENDED COLLISION
  !====================
  !
- integer                  :: n_collisions
  integer                  :: V_kind 
  !
  ! Cut off on exchange matrix elements
@@ -61,111 +60,24 @@ module collision
  logical :: COLLISIONS_parallel_SC_structure=.FALSE.
  !
  type COLLISIONS_element
-   character(schlen)         :: name="none"
-   integer                   :: kind=0
-   integer                   :: D(3,2) ! Dimension
-   integer                   :: N      ! Linear Dimension
-   integer(LP), allocatable  :: table(:,:,:)
-   complex(SP), allocatable  :: v(:)
-   complex(SP), allocatable  :: v3(:,:,:)
+   character(schlen)     :: name="none"
+   integer               :: kind=0
+   integer               :: D(3,2)  ! Dimension (v3)
+   integer               :: N       ! Linear Dimension
+   integer(LP), pointer  :: table(:,:,:) => null()
+   complex(SP), pointer  :: v(:)         => null()
+   complex(SP), pointer  :: v3(:,:,:)    => null()
  end type
  !
+ integer :: nGW_NEQ_collisions=0
  type(COLLISIONS_element), allocatable :: GW_NEQ_collisions(:)
+ integer :: nHF_collisions=0
  type(COLLISIONS_element), allocatable :: HF_collisions(:)
+ integer :: nCOHSEX_collisions=0
  type(COLLISIONS_element), allocatable :: COHSEX_collisions(:)
- type(COLLISIONS_element), allocatable :: STATIC_collisions(:)
+ type(COLLISIONS_element), allocatable :: IO_collision
  !
  contains
-   !
-   subroutine COLLISIONS_alloc(what,COLL,N)
-     use memory_m,       ONLY:mem_est
-     use stderr,         ONLY:intc
-     use QP_m,           ONLY:QP_n_states
-     use SC,             ONLY:SC_bands
-     use D_lattice,      ONLY:nsym
-     use R_lattice,      ONLY:nqbz,nkibz
-     use global_XC,      ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
-     implicit none
-     character(*)             :: what
-     integer                  :: N
-     type(COLLISIONS_element) :: COLL(N)
-     !WS
-     integer :: I,V_dim
-     !
-     if (what=="GW_NEQ") then
-       COLL(1)%D(1,:)=(/1,QP_n_states/)
-       COLL(1)%D(2,:)=(/1,nsym/)
-       COLL(1)%D(3,:)=(/1,nqbz/)
-       COLL(1)%kind=SE_GW_NEQ
-       COLL(1)%name="GW_NEQ"
-     else if (what=="HF".or.what=="COHSEX".or.what=="STATIC") then
-       if (what=="HF")     COLL(1)%kind=SC_HF
-       if (what=="HF")     COLL(1)%name="HF"
-       if (what=="COHSEX") COLL(1)%kind=SC_COHSEX
-       if (what=="COHSEX") COLL(1)%name="COHSEX"
-       COLL(1)%D(1,:)=SC_bands
-       COLL(1)%D(2,:)=SC_bands
-       COLL(1)%D(3,:)=(/1,nkibz/)
-     endif
-     !
-     V_dim=(COLL(1)%D(1,2)-COLL(1)%D(1,1)+1)*&
-&          (COLL(1)%D(2,2)-COLL(1)%D(2,1)+1)*&
-&          (COLL(1)%D(3,2)-COLL(1)%D(3,1)+1)
-     !
-     do I=1,N
-       COLL(I)%D=COLL(1)%D
-       allocate(COLL(I)%v3(COLL(1)%D(1,1):COLL(1)%D(1,2),&
-&                          COLL(1)%D(2,1):COLL(1)%D(2,2),&
-&                          COLL(1)%D(3,1):COLL(1)%D(3,2)))
-       allocate(COLL(I)%table(COLL(1)%D(1,1):COLL(1)%D(1,2),&
-&                             COLL(1)%D(2,1):COLL(1)%D(2,2),&
-&                             COLL(1)%D(3,1):COLL(1)%D(3,2)))
-       allocate(COLL(I)%v(V_dim))
-     enddo
-     call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_table",(/size(COLL(1)%table)/),(/LP/))
-     call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v",(/size(COLL(1)%v)/),(/2*SP/))
-     call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3",(/size(COLL(1)%v3)/),(/2*SP/))
-     !
-   end subroutine
-   !
-   subroutine COLLISIONS_free(what,COLL,N)
-     use memory_m,       ONLY:mem_est
-     use stderr,         ONLY:intc
-     implicit none
-     character(*)             :: what
-     integer                  :: N
-     type(COLLISIONS_element) :: COLL(N)
-     !
-     ! Work Space
-     !
-     integer :: I
-     !
-     do I=1,N
-       !
-       if (allocated(COLL(I)%table)) then
-         deallocate(COLL(I)%table)
-       endif
-       !
-       if (allocated(COLL(I)%v)) then
-         deallocate(COLL(I)%v)
-       endif
-       !
-       if (allocated(COLL(I)%v3)) then
-         deallocate(COLL(I)%v3)
-       endif
-       !
-     enddo
-     !
-     call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_table")
-     call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v")
-     call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3")
-     !
-     if (what=="HF".and.allocated(HF_collisions))         deallocate(HF_collisions)
-     if (what=="COHSEX".and.allocated(COHSEX_collisions)) deallocate(COHSEX_collisions)
-     if (what=="GW_NEQ".and.allocated(GW_NEQ_collisions)) deallocate(GW_NEQ_collisions)
-     if (what=="STATIC".and.allocated(STATIC_collisions)) deallocate(STATIC_collisions)
-     !
-   end subroutine COLLISIONS_free
    !
    subroutine collision_reset(ggw)
      type(ggwinfo)::ggw

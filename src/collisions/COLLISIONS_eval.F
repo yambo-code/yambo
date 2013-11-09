@@ -21,9 +21,9 @@
 !
 subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
- use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_elel_scatt,l_elel_corr
+ use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_elel_scatt,l_elel_corr,l_use_collisions
  use com,           ONLY:error
- use pars,          ONLY:schlen,SP,IP
+ use pars,          ONLY:SP,IP
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev
@@ -32,8 +32,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
- use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,COLLISIONS_alloc,COLLISIONS_free,&
-&                        HF_collisions,COHSEX_collisions,GW_NEQ_collisions
+ use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,nGW_NEQ_collisions,&
+&                        HF_collisions,COHSEX_collisions,GW_NEQ_collisions,nCOHSEX_collisions
  use X_m,           ONLY:X_t
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
@@ -52,7 +52,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! WorkSpace
  !
  integer           ::ID,i_kind,NC
- character(schlen) ::ch
  !
  call section('*','Extended collisions')
  !=======================================
@@ -110,9 +109,16 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    if (io_COLLISIONS(0,ID)/=0) then
      !
-     call COLLISIONS_alloc("HF",HF_collisions,NC)
+     if (io_COLLs) then
+       call COLLISIONS_alloc_and_free("HF","collision","alloc",1)
+       call COLLISIONS_alloc_and_free("HF","v3 table","alloc",1)
+     else
+       call COLLISIONS_alloc_and_free("HF","collision","alloc",0)
+       call COLLISIONS_alloc_and_free("HF","v3","alloc",1)
+       call COLLISIONS_alloc_and_free("HF","table","alloc",0)
+     endif
      !
-     call COLLISIONS_Hartree_Fock(E,k,q,HF_collisions)
+     call COLLISIONS_Hartree_Fock(E,k,q,NC,HF_collisions)
      !
    endif
    !
@@ -149,13 +155,29 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      if (io_COLLISIONS(0,ID)/=0) then
        !
-       if (i_kind==1) call COLLISIONS_alloc("COHSEX",COHSEX_collisions,NC)
-       if (i_kind==2) call COLLISIONS_alloc("GW_NEQ",GW_NEQ_collisions,NC)
+       if (i_kind==1) then
+         if (io_COLLs) then
+           call COLLISIONS_alloc_and_free("COHSEX","collision","alloc",1)
+           call COLLISIONS_alloc_and_free("COHSEX","v3 table","alloc",1)
+         else
+           call COLLISIONS_alloc_and_free("COHSEX","collision","alloc",0)
+           call COLLISIONS_alloc_and_free("COHSEX","v3","alloc",1)
+           call COLLISIONS_alloc_and_free("COHSEX","table","alloc",0)
+         endif
+       else if (i_kind==2) then
+         if (io_COLLs) then
+           call COLLISIONS_alloc_and_free("GW_NEQ","collision","alloc",1)
+           call COLLISIONS_alloc_and_free("GW_NEQ","v3 table","alloc",1)
+         else
+           call COLLISIONS_alloc_and_free("GW_NEQ","collision","alloc",0)
+           call COLLISIONS_alloc_and_free("GW_NEQ","v3","alloc",0)
+         endif
+       endif
        !
        QP_n_G_bands(2)=SC_bands(2)
        !  
-       if (i_kind==1) call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2),i_kind,COHSEX_collisions) 
-       if (i_kind==2) call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2),i_kind,GW_NEQ_collisions) 
+       if (i_kind==1) call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2),i_kind,COHSEX_collisions,nCOHSEX_collisions) 
+       if (i_kind==2) call COLLISIONS_cohsex(X(2),Xk,E,k,q,Xw(2),i_kind,GW_NEQ_collisions,nGW_NEQ_collisions) 
        !
        call WF_free(WF)
        !
@@ -168,13 +190,19 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! CLEAN
  !=======
  !
- call COLLISIONS_free("HF",HF_collisions,NC)
- call COLLISIONS_free("COHSEX",COHSEX_collisions,NC)
- call COLLISIONS_free("GW_NEQ",GW_NEQ_collisions,NC)
- !
  if (io_COLLs) then
    deallocate(fragment_status)
    call mem_est("fragment_status")
+   if (l_elel_corr) then
+     call COLLISIONS_alloc_and_free("HF","all","v3 table",1)
+     if (l_cohsex) call COLLISIONS_alloc_and_free("COHSEX","v3 table","clean",1)
+   endif
+   if (l_elel_scatt) call COLLISIONS_alloc_and_free("GW_NEQ","v3 table","clean",1)
+ else
+   if (l_elel_corr) then
+     call COLLISIONS_alloc_and_free("HF","v3","clean",1)
+     if (l_cohsex) call COLLISIONS_alloc_and_free("COHSEX","v3","clean",1)
+   endif
  endif
  !
  contains

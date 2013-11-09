@@ -43,10 +43,10 @@ subroutine RT_driver(E,X,k,q)
  use memory_m,        ONLY:mem_est
  use com,             ONLY:error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
- use collision,       ONLY:COLLISIONS_alloc,COLLISIONS_free,STATIC_collisions,GW_NEQ_collisions
+ use collision,       ONLY:HF_collisions,COHSEX_collisions,GW_NEQ_collisions
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_nQP
+ use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  !
  implicit none
@@ -142,13 +142,6 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_alloc(E)
  !
- if (io_COLLs) then
-   !
-   if (l_elel_corr)  call COLLISIONS_alloc("STATIC",STATIC_collisions,PAR_nQP)
-   if (l_elel_scatt) call COLLISIONS_alloc("GW_NEQ",GW_NEQ_collisions,PAR_nQP)
-   !
- endif
- !
  ! Restart from a previous RT run or from a SC calculation
  ! 
  call section('=','Start and Restart')
@@ -180,8 +173,8 @@ subroutine RT_driver(E,X,k,q)
    !      
    call RT_free()
    !
-   if (l_elel_corr)  call COLLISIONS_free("STATIC",STATIC_collisions,PAR_nQP)
-   if (l_elel_scatt) call COLLISIONS_free("GW_NEQ",GW_NEQ_collisions,PAR_nQP)
+   !if (l_elel_corr)  call COLLISIONS_free("STATIC","all",STATIC_collisions,PAR_nQP)
+   !if (l_elel_scatt) call COLLISIONS_free("GW_NEQ","all",GW_NEQ_collisions,PAR_nQP)
    !
    call WF_free(WF)
    !
@@ -384,8 +377,9 @@ subroutine RT_driver(E,X,k,q)
  !
  call WF_free(WF)
  !
- if (l_elel_corr)  call COLLISIONS_free("STATIC",STATIC_collisions,PAR_nQP)
- if (l_elel_scatt) call COLLISIONS_free("GW_NEQ",GW_NEQ_collisions,PAR_nQP)
+ if (allocated(HF_collisions))     call COLLISIONS_alloc_and_free("HF","v1 table","clean",0)
+ if (allocated(COHSEX_collisions)) call COLLISIONS_alloc_and_free("COHSEX","v1 table","clean",0)
+ if (allocated(GW_NEQ_collisions)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
  !
  call set_real_printed_length()
  !

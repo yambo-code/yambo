@@ -23,7 +23,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision,     ONLY:n_collisions,V_kind,COLLISIONS_cutoff,COLLISIONS_element
+ use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,io_restart_point,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on
@@ -46,20 +46,15 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  character(schlen)     :: db_name
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
- integer               :: V_kind_disk,i_desc,VAR_size,V_kind_here
+ integer               :: V_kind_disk,i_desc,VAR_size
  character(lchlen)     :: V_kind_string,X_string
  character(schlen)     :: desc
  !
- V_kind_here=V_kind
- if (present(COLL)) then
-   V_kind_here=COLL%kind
- endif
- !
- if(V_kind_here==SC_HF) then
+ if(V_kind==SC_HF) then
    db_name                   = "COLLISIONS_HF"
- elseif(V_kind_here==SC_COHSEX) then
+ elseif(V_kind==SC_COHSEX) then
    db_name                   = "COLLISIONS_COHSEX"
- elseif(V_kind_here==SE_GW_NEQ) then
+ elseif(V_kind==SE_GW_NEQ) then
    db_name = "COLLISIONS_GW_NEQ"
  else
    call error("COLLISIONS I/O : Unknown database type ")
@@ -96,10 +91,10 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    !
    call io_elemental(ID,R0=SC_band_mixing,&
 &       VAR=' Bands mixing                    :',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,I0=V_kind_here,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,I0=V_kind,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   V_kind_string     =global_XC_string(V_kind_here,SE_NONE,0,EXT_NONE)
+   V_kind_string     =global_XC_string(V_kind,SE_NONE,0,EXT_NONE)
    !
    call io_elemental(ID,VAR='INTERACTION_KIND',CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,CH0=V_kind_string,&
@@ -161,7 +156,16 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    call io_fragment(ID,i_fragment=i_qp)
    !
    call io_bulk(ID,VAR='N_COLLISIONS_STATES',VAR_SZ=(/1/))
-   call io_bulk(ID,I0=n_collisions)
+   call io_bulk(ID,I0=COLL%N)
+   !
+ endif
+ !
+ if (any(io_sec(ID,:)==3)) then     
+   !
+   ! QP-based fragmentation
+   !
+   if (.not.any(io_sec(ID,:)==2)) call io_fragment(ID,i_fragment=i_qp)
+   !
    call io_bulk(ID,VAR='COLLISIONS_TABLE',&
 &                  VAR_SZ=(/COLL%D(1,2)-COLL%D(1,1)+1,&
 &                           COLL%D(2,2)-COLL%D(2,1)+1,&
@@ -171,16 +175,16 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
 &                                COLL%D(2,1):COLL%D(2,2),&
 &                                COLL%D(3,1):COLL%D(3,2)))
    !
-   allocate(COLLISIONS_v_disk(n_collisions,2))      
+   allocate(COLLISIONS_v_disk(COLL%N,2))      
    !
-   call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/n_collisions,2/))
+   call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL%N,2/))
    if(write_is_on(ID)) then
-     COLLISIONS_v_disk(:,1) =real(COLL%v(1:n_collisions))
-     COLLISIONS_v_disk(:,2)=aimag(COLL%v(1:n_collisions))
+     COLLISIONS_v_disk(:,1) =real(COLL%v(1:COLL%N))
+     COLLISIONS_v_disk(:,2)=aimag(COLL%v(1:COLL%N))
      call io_bulk(ID,R2=COLLISIONS_v_disk)
    else
      call io_bulk(ID,R2=COLLISIONS_v_disk)
-     COLL%v(1:n_collisions)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
+     COLL%v(1:COLL%N)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
    endif
    !
    deallocate(COLLISIONS_v_disk)

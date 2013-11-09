@@ -34,6 +34,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use X_m,           ONLY:X_t
  use parallel_m,    ONLY:myid,ncpu,MPI_close
  use it_m,          ONLY:it_reset,infile
+ use IO_m,          ONLY:io_COLLs
  use QP_m,          ONLY:QP_ng_Sx
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
@@ -235,7 +236,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! GPL_EXCLUDE_END
  !
- if (l_sc_run.and..not.l_eval_collisions) then
+ if (l_sc_run.and..not.(l_eval_collisions.and.io_COLLs)) then
    !
    ! SC
    !====

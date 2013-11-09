@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_Hartree_Fock(E,k,q,COLL)
+subroutine COLLISIONS_Hartree_Fock(E,k,q)
  !
  ! Hartree-Fock
  !
@@ -33,7 +33,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q,COLL)
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
-&                        COLLISIONS_element
+&                        HF_collisions,nHF_collisions
  use QP_m,          ONLY:QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
  use SC,            ONLY:SC_bands
@@ -52,7 +52,6 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q,COLL)
  implicit none
  type(levels)             ::E       
  type(bz_samp)            ::k,q
- type(COLLISIONS_element) ::COLL(:)
  !
  !Work Space
  !
@@ -107,11 +106,10 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q,COLL)
      endif
    endif
    !
-   if (     io_COLLS) COLL(1)%v=cZERO
-   if (.not.io_COLLS) COLL(i_qp_mem)%v=cZERO
-   !
    ib =QP_table(i_qp,1)
    ibp=QP_table(i_qp,2)
+   !
+   HF_collisions(1)%v3=cZERO
    !
    do iq=1,q%nbz
      !
@@ -177,11 +175,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q,COLL)
          !
 #endif
          !
-         if (io_COLLs) then
-           COLL(1)%v3(jb,jb2,ik_minus_q)=COLL(1)%v3(jb,jb2,ik_minus_q)+DP_Sx
-         else
-           COLL(i_qp_mem)%v3(jb,jb2,ik_minus_q)=COLL(1)%v3(jb,jb2,ik_minus_q)+DP_Sx
-         endif
+         HF_collisions(1)%v3(jb,jb2,ik_minus_q)=HF_collisions(1)%v3(jb,jb2,ik_minus_q)+DP_Sx
          !
          call live_timing(steps=1)
          !
@@ -191,18 +185,14 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q,COLL)
      !
    enddo
    !
-   if (io_COLLs) then
-     !
-     if (COLLISIONS_parallel_SC_structure) then
-       call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_Q_index%COMM)
-     else
-       call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_G_b_A2A%COMM)
-     endif
-     !
-     call COLLISIONS_store(i_qp,COLL(1))
-     !
+   if (COLLISIONS_parallel_SC_structure) then
+     call PP_redux_wait(HF_collisions(1)%v3,COMM=PAR_COM_QP_A2A%COMM)
+     call PP_redux_wait(HF_collisions(1)%v3,COMM=PAR_COM_Q_index%COMM)
+   else
+     call PP_redux_wait(HF_collisions(1)%v3,COMM=PAR_COM_G_b_A2A%COMM)
    endif
+   !
+   call COLLISIONS_store("HF",i_qp,HF_collisions,nHF_collisions)
    !
  enddo
  !

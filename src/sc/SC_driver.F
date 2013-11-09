@@ -44,11 +44,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use xc_functionals, ONLY:V_xc,E_xc
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,ncpu,n_WF_bands_to_load,PAR_nQP
- use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,&
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,IO_colls,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder
  use LIVE_t,         ONLY:live_timing
- use collision,      ONLY:COLLISIONS_alloc,COLLISIONS_free,STATIC_collisions
+ use collision,      ONLY:HF_collisions,COHSEX_collisions
 #if defined _MAGNETIC
  use electrons,       ONLY:Total_magn
 #endif
@@ -119,7 +119,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! COLLISIONS
  !============
  !
- if (l_use_collisions) call COLLISIONS_load(.FALSE.)
+ if (io_COLLs) call COLLISIONS_load(.FALSE.)
  !
  ! Initialize SC_R matrix
  !========================
@@ -557,8 +557,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        allocate(QP_Vnl_xc(QP_n_states))
        call mem_est("QP_Vnl_xc",(/size(QP_Vnl_xc)/),(/2*SP/))
        !
-       call COLLISIONS_alloc('STATIC',STATIC_collisions,PAR_nQP)
-       !
      endif
      !
      if (l_SC_nl_mix) then
@@ -595,7 +593,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        if (allocated(QP_Vnl_xc)) deallocate(QP_Vnl_xc)
        call mem_est("QP_Vnl_xc")
        !
-       call COLLISIONS_free('STATIC',STATIC_collisions,PAR_nQP)
+       if (allocated(HF_collisions))     call COLLISIONS_alloc_and_free("HF","v1 table","clean",0)
+       if (allocated(COHSEX_collisions)) call COLLISIONS_alloc_and_free("COHSEX","v1 table","clean",0)
        !
      endif
      !

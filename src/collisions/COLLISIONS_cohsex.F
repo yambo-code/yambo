@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL)
+subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  !
  ! COHSEX collisions 
  !
@@ -35,7 +35,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL)
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_IND_QPp,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
-&                        COLLISIONS_element
+&                        COLLISIONS_element,nGW_NEQ_collisions,nCOHSEX_collisions
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -57,7 +57,8 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL)
  type(X_t)                ::X
  type(w_samp)             ::Xw
  integer                  ::V_kind
- type(COLLISIONS_element) ::COLL(:)
+ integer                  ::NC
+ type(COLLISIONS_element) ::COLL(NC)
  !
  ! Work Space
  !
@@ -146,8 +147,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL)
      endif
    endif
    !
-   if (     io_COLLS) COLL(1)%v=cZERO
-   if (.not.io_COLLS) COLL(i_qp1_mem)%v=cZERO
+   if (V_kind==1) COLL(1)%v3=cZERO
    !
    Q_loop: do iqbz=1,q%nbz 
      !
@@ -239,7 +239,9 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL)
            !
            i_p_s =k%star(i_p,i_p_star)
            !
+#if defined _RT
            call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,iqibz,iqs,i_pmq_bz,i_pmq_G0)
+#endif
            !
            i_pmq   = k%sstar(i_pmq_bz,1)
            i_pmq_s = k%sstar(i_pmq_bz,2)
@@ -320,15 +322,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL)
            pre_factor=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
 #endif
            !
-           if (io_COLLs) then
-             !
-             COLL(1)%v3(i_np,i_mp,isc%os(2))=COLL(1)%v3(i_np,i_mp,isc%os(2))-4._SP/spin_occ*pi*pre_factor
-             !
-           else
-             !
-             COLL(i_qp1_mem)%v3(i_np,i_mp,isc%os(2))=COLL(1)%v3(i_np,i_mp,isc%os(2))-4._SP/spin_occ*pi*pre_factor
-             !
-           endif
+           COLL(1)%v3(i_np,i_mp,isc%os(2))=COLL(1)%v3(i_np,i_mp,isc%os(2))-4._SP/spin_occ*pi*pre_factor
            !
            call live_timing(steps=1)
            !
@@ -347,7 +341,9 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL)
        call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_G_b_A2A%COMM)
      endif
      !
-     call COLLISIONS_store(i_qp1,COLL(1))
+     if (V_kind==1)              call COLLISIONS_store("COHSEX",i_qp1,COLL,nCOHSEX_collisions)
+     if (V_kind==2.and.io_COLLs) call COLLISIONS_store("GW_NEQ",i_qp2,COLL,nGW_NEQ_collisions)
+     !
    endif
    !
  enddo QP_loop

@@ -27,7 +27,7 @@ subroutine COLLISIONS_compose(G_input)
  use pars,             ONLY:SP
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
  use SC,               ONLY:SC_bands
- use collision,        ONLY:STATIC_collisions
+ use collision,        ONLY:HF_collisions,COHSEX_collisions,nHF_collisions,nCOHSEX_collisions
  use parallel_m,       ONLY:PAR_QP_index,PAR_IND_QP,PP_redux_wait
  !
  implicit none
@@ -36,7 +36,7 @@ subroutine COLLISIONS_compose(G_input)
  !
  ! Work Space
  !
- integer           :: i_qp,ib,ibp,ik,ic,i_qp_mem
+ integer           :: i_qp,ib,ibp,ik,ic1,ic2,i_qp_mem
  !
  if(.not.l_sc_hf.and..not.l_sc_cohsex.and..not.l_sc_exx) return
  !
@@ -54,14 +54,23 @@ subroutine COLLISIONS_compose(G_input)
    !
    i_qp_mem=PAR_QP_index(i_qp)
    !
-   ic=1
+   ic1=1
+   ic2=1
    !
    do ib=SC_bands(1),QP_nb
      do ibp=SC_bands(1),QP_nb
        do ik=1,QP_nk
-         if(STATIC_collisions(i_qp_mem)%table(ib,ibp,ik)/=0) then
-           QP_Vnl_xc(i_qp_mem)=QP_Vnl_xc(i_qp_mem)-(0._SP,1._SP)*STATIC_collisions(i_qp_mem)%v(ic)*G_input(ib,ibp,ik)
-           ic=ic+1
+         if (nHF_collisions>0) then
+           if (HF_collisions(i_qp_mem)%table(ib,ibp,ik)/=0) then
+             QP_Vnl_xc(i_qp_mem)=QP_Vnl_xc(i_qp_mem)-(0._SP,1._SP)*HF_collisions(i_qp_mem)%v(ic1)*G_input(ib,ibp,ik)
+             ic1=ic1+1
+           endif
+         endif
+         if (nCOHSEX_collisions>0) then
+           if (COHSEX_collisions(i_qp_mem)%table(ib,ibp,ik)/=0) then
+             QP_Vnl_xc(i_qp_mem)=QP_Vnl_xc(i_qp_mem)-(0._SP,1._SP)*COHSEX_collisions(i_qp_mem)%v(ic2)*G_input(ib,ibp,ik)
+             ic2=ic2+1
+           endif
          endif
        enddo
      enddo

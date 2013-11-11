@@ -452,7 +452,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          dc(1)=dc(1)*e%f(isc%os(1),isc%os(2),isc%os(4))
          !
-         ! COH
+         ! COH (when no empties are used the COH part is indeed calculated above)
          !
          if (COHSEX_use_empties) dc(2)=2._SP*pi*pre_factor
          !

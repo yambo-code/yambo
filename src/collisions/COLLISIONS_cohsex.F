@@ -341,10 +341,10 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
        call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_G_b_A2A%COMM)
      endif
      !
-     if (V_kind==1)              call COLLISIONS_linearize_and_IO("COHSEX",i_qp1,COLL,nCOHSEX_collisions)
-     if (V_kind==2.and.io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",i_qp1,COLL,nGW_NEQ_collisions)
-     !
    endif
+   !
+   if (V_kind==1)              call COLLISIONS_linearize_and_IO("COHSEX",i_qp1,COLL,nCOHSEX_collisions)
+   if (V_kind==2.and.io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",i_qp1,COLL,nGW_NEQ_collisions)
    !
  enddo QP_loop
  !

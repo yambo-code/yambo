@@ -26,7 +26,7 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
  use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_sc_srpa
  use pars,             ONLY:SP
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
- use SC,               ONLY:SC_bands
+ use SC,               ONLY:SC_bands,HEAD_cpu_in_QP_group
  use collision,        ONLY:HF_collisions,COHSEX_collisions,nHF_collisions,nCOHSEX_collisions
  use parallel_m,       ONLY:PAR_QP_index,PAR_IND_QP,PP_redux_wait
  !
@@ -51,7 +51,7 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
  !
  do i_qp=1,QP_n_states
    !
-   if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+   if (.not.(PAR_IND_QP%element_1D(i_qp).and.HEAD_cpu_in_QP_group)) cycle
    !
    i_qp_mem=PAR_QP_index(i_qp)
    !
@@ -60,16 +60,19 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
    !
    do ib=SC_bands(1),QP_nb
      do ibp=SC_bands(1),QP_nb
+       !
+       !if ( .not. PAR_IND_Bp_mat%element_1D( B_mat_index(ib,ibp) ) ) cycle
+       !
        do ik=1,QP_nk
          if (nHF_collisions>0) then
            if (HF_collisions(i_qp_mem)%table(ib,ibp,ik)/=0) then
-             QP_Vnl_xc(i_qp_mem)=QP_Vnl_xc(i_qp_mem)-(0._SP,1._SP)*HF_collisions(i_qp_mem)%v(ic1)*G_hf_input(ib,ibp,ik)
+             QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-(0._SP,1._SP)*HF_collisions(i_qp_mem)%v(ic1)*G_hf_input(ib,ibp,ik)
              ic1=ic1+1
            endif
          endif
          if (nCOHSEX_collisions>0) then
            if (COHSEX_collisions(i_qp_mem)%table(ib,ibp,ik)/=0) then
-             QP_Vnl_xc(i_qp_mem)=QP_Vnl_xc(i_qp_mem)-(0._SP,1._SP)*COHSEX_collisions(i_qp_mem)%v(ic2)*G_xc_input(ib,ibp,ik)
+             QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-(0._SP,1._SP)*COHSEX_collisions(i_qp_mem)%v(ic2)*G_xc_input(ib,ibp,ik)
              ic2=ic2+1
            endif
          endif

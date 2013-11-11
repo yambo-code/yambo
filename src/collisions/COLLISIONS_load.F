@@ -27,6 +27,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use pars,            ONLY:SP
  use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_use_collisions,l_sc_srpa,l_elel_scatt,l_elel_corr
  use LIVE_t,          ONLY:live_timing
+ use QP_m,            ONLY:QP_n_states
  use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
  use collision,       ONLY:V_kind,GW_NEQ_collisions,COHSEX_collisions,HF_collisions
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP
@@ -102,8 +103,6 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  call live_timing('Collisions DB I/O:',PAR_nQP*n_V_kinds)
  !
- !
- !
  do iv=1,n_V_kinds
    !
    V_kind=V_kinds(iv)
@@ -113,7 +112,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    if (V_kind==SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","collision","alloc",0)
    if (V_kind==SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","v3","alloc distribute",0)
    !
-   do i_qp=1,PAR_nQP
+   do i_qp=1,QP_n_states
      !
      if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
      !
@@ -136,7 +135,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      call io_control(ACTION=RD_CL,SEC=(/3/),ID=ID)
      !
-     if (V_kind==SC_HF) io_err(iv)=io_COLLISIONS(i_qp,ID,HF_collisions(i_qp_mem))
+     if (V_kind==SC_HF)     io_err(iv)=io_COLLISIONS(i_qp,ID,HF_collisions(i_qp_mem))
      if (V_kind==SC_COHSEX) io_err(iv)=io_COLLISIONS(i_qp,ID,COHSEX_collisions(i_qp_mem))
      if (V_kind==SE_GW_NEQ) io_err(iv)=io_COLLISIONS(i_qp,ID,GW_NEQ_collisions(1))
      !

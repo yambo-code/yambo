@@ -69,7 +69,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use stderr,        ONLY:intc
  use com,           ONLY:error
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
- use IO_m,          ONLY:IO_and_Messaging_switch
+ use IO_m,          ONLY:IO_and_Messaging_switch,io_COLLs
  use QP_m,          ONLY:QP_n_states,QP_nb,QP_table,QP_n_G_bands
  use wave_func,     ONLY:states_to_load
  implicit none
@@ -523,6 +523,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             LOADED=PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1),&
 &                             TOTAL=(SC_bands(2)-SC_bands(1)+1)**2,NCPU=PAR_COM_G_b_INDEX%n_CPU)
    !
+   ! 0  0     0  0     <- qp
+   ! x0 x0    x0 x0    <- q
+   !
+   ! QP_cpu corresponds to x marked CPU's. This flag is used when isolated QP loops are performed.
+   !
+   HEAD_cpu_in_QP_group=PAR_COM_Q_A2A%CPU_id==0
+   !
    !.........................................................................
    !   "q" -> Q-points (BZ)
    !.........................................................................
@@ -695,23 +702,23 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
 #if defined _SC
    !
-   ! To calculate the COLLISIONS I need the PAR_B_mat_index, built here.
+   ! To eval/use the COLLISIONS I need the PAR_B_mat_index, built here.
    !
-   if (l_eval_collisions) then
-     call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp')
-     call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT=ENVIRONMENT,&
-&                               LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
-&                               TOTAL=(SC_bands(2)-SC_bands(1)+1)**2,NCPU=PAR_COM_G_b_INDEX%n_CPU)
-   endif
+   call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp')
+   call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT=ENVIRONMENT,&
+&                             LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
+&                             TOTAL=(SC_bands(2)-SC_bands(1)+1)**2,NCPU=PAR_COM_G_b_INDEX%n_CPU)
    !
 #endif
    !
    ! I/O privileges
    !
    if (PARALLEL_n_structures_active>1) then
-     if (.not.l_eval_collisions) call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
-     if (     l_eval_collisions) call IO_and_Messaging_switch("+io_out",&
-&                                     CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_index%CPU_id==0)
+     if (l_eval_collisions.and.io_COLLs) then
+       call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_index%CPU_id==0)
+     else 
+       call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
+     endif
    else
      call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif

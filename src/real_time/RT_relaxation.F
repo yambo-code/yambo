@@ -38,6 +38,9 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,&
 &                         RT_dynamics_jumps,it_start,&
 &                         Life_MEM_steps,SAVED_lifetime,E_P_Ho_abs_lifetime
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -82,10 +85,13 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    l_interpolate = .FALSE.
    l_save        = .FALSE.
  endif
- !
  ! El-El
  !=======
+ !
  if (l_elel_scatt.and.l_evaluate) then
+#if defined _TIMING
+   call timing('RT relaxation (e-e)',OPR='start')
+#endif
    !
    E_E_Hole_lifetime=0._SP
    E_E_Electron_lifetime=0._SP
@@ -97,14 +103,19 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      call RT_Coulomb_relaxation(ik,E,k,q,G_input)
      !
    enddo
+#if defined _TIMING
+   call timing('RT relaxation (e-e)',OPR='end')
+#endif
    !
  endif
- !
-#if defined _ELPH
  !
  ! El-Ph
  !=======
  if (l_elph_scatt.and.l_evaluate) then
+   !
+#if defined _TIMING
+   call timing('RT relaxation (e-p)',OPR='start')
+#endif
    !
    if (l_RT_CCA_Kernel.and.l_elph_scatt) then
      E_P_Hole_lifetime=0._SP
@@ -121,9 +132,11 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      !
    enddo
    !
- endif
- !
+#if defined _TIMING
+   call timing('RT relaxation (e-p)',OPR='end')
 #endif
+   !
+ endif
  !
  ! PARALLEL Mergering
  !====================

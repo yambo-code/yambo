@@ -23,7 +23,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_cohsex,l_use_collisions,l_sc_contains_lda
+ use drivers,        ONLY:l_sc_cohsex,l_use_collisions,l_sc_contains_lda,l_eval_collisions
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
@@ -44,7 +44,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use xc_functionals, ONLY:V_xc,E_xc
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,ncpu
- use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,&
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,io_COLLs,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder
  use LIVE_t,         ONLY:live_timing
@@ -97,11 +97,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  ! Parallel Setup
  !================
- call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
- call PARALLEL_global_indexes(E,k,q,"Self_Energy") 
- call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
- call PARALLEL_WF_index( )
+ if (.not.l_eval_collisions) then
+   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+   call PARALLEL_global_indexes(E,k,q,"Self_Energy") 
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+   call PARALLEL_WF_index( )
+ endif
  !
  ! Initial Start & Restart 
  !==========================

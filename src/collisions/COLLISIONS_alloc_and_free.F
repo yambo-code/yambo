@@ -40,7 +40,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  ! Work Space
  !
  integer :: D(3,2),I_range(2),J,size_
- logical :: l_HF,l_COHSEX,l_GW_NEQ,l_IO,l_v3,l_v1,l_table,l_all,l_alloc,&
+ logical :: l_HF,l_COHSEX,l_GW_NEQ,l_v3,l_v1,l_table,l_all,l_alloc,&
 &           l_link,l_clean,l_collision,l_distribute
  !
  if (I==0) I_range=(/1,PAR_nQP/)
@@ -61,7 +61,6 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  l_all  =index(elements,"all")>0
  l_table    =index(elements,"table")>0
  l_collision=index(elements,"coll")>0
- l_IO   =index(elements,"IO")>0
  !
  ! Actions
  !
@@ -84,12 +83,6 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    if (l_collision.and.l_clean) then
      deallocate(HF_collisions)
      nHF_collisions=0
-   endif
-   if (l_IO.and.l_alloc) then
-      !allocate(IO_collision%v(COLL(J)%N))
-      !COLL(J)%v=cZERO
-      !COLL(J)%D=D
-      !allocate(COLL(J)%v(COLL(J)%N))
    endif
  endif
  !

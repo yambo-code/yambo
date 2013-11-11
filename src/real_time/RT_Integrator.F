@@ -41,6 +41,9 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
  use real_time,      ONLY:EULER,RK2,EULEREXP,RK2EXP,l_NE_with_fields
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:levels
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  character(schlen),    intent(in) :: Integrator
@@ -57,6 +60,10 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
  integer     :: ik,SC_bands2_dot_nibz,ik_rim
  complex(SP) :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP) :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ !
+#if defined _TIMING
+ call timing('RT integrator',OPR='start')
+#endif
  !
  SC_bands2_dot_nibz=SC_nbands**2*k%nibz
  !
@@ -154,5 +161,9 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
    call error(" Unknown Integrator!")
    !
  endif   
+ !
+#if defined _TIMING
+ call timing('RT integrator',OPR='end')
+#endif
  !
 end subroutine RT_Integrator

@@ -60,6 +60,9 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use SC,             ONLY:SC_xc_functional,SC_nbands
  use IO_m,           ONLY:IO_and_Messaging_switch
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -73,6 +76,10 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  logical          :: XC_needs_density
  integer          :: i1,ik
+ !
+#if defined _TIMING
+ call timing('RT Collisions',OPR='start')
+#endif
  !
  ! Density (needed by Hartree and local XCs)
  !=========
@@ -228,10 +235,16 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
      SC_R(i1,i1,:,:)=cONE
    enddo
  endif
+#if defined _TIMING
+ call timing('RT Collisions',OPR='end')
+#endif
  !
  ! Calculate all relaxation terms
  ! ==============================
- call RT_relaxation(G_input,E,k,q,Time)  
+ call RT_relaxation(G_input,E,k,q,Time)
+#if defined _TIMING
+ call timing('RT relaxation',OPR='end')
+#endif
  !
 end subroutine RT_Collision
 

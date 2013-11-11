@@ -19,11 +19,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,Bm_index,CLEAN_UP)
+subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Bm_index,CLEAN_UP)
  !
  use parallel_m,      ONLY:PP_indexes,ncpu
  use wave_func,       ONLY:states_to_load
- use electrons,       ONLY:n_sp_pol
+ use electrons,       ONLY:n_sp_pol,n_bands
+ use R_lattice,       ONLY:nkibz
  use QP_m,            ONLY:QP_n_states,QP_table
 #if defined _SC
  use SC,              ONLY:SC_bands
@@ -32,7 +33,6 @@ subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,Bm_ind
  !
  implicit none
  !
- integer, intent(in)           :: NB,NK
  type(PP_indexes), optional    :: K_index
  type(PP_indexes), optional    :: B_index
  type(PP_indexes), optional    :: Bp_index
@@ -42,8 +42,21 @@ subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,Bm_ind
  !
  ! Work Space
  !
- integer :: i_k,i_b,i_bp,i_qp
+ integer :: i_k,i_b,i_bp,i_qp,NB,NK,NBp
  logical :: condition
+ !
+ NB=n_bands
+ NBp=n_bands
+ NK=nkibz 
+ if (present(K_index)) then 
+   NK=size(K_index%element_1D)
+ endif
+ if (present(B_index)) then 
+   NB=size(B_index%element_1D)
+ endif
+ if (present(Bp_index)) then 
+   NBp=size(Bp_index%element_1D)
+ endif
  !
  if (present(CLEAN_UP)) then
    !
@@ -75,7 +88,7 @@ subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,Bm_ind
        condition=K_index%element_1D(i_k).and..not.B_index%element_1D(i_b)
        !
        if (present(Bp_index)) then
-         if (i_b<=size(Bp_index%element_1D)) condition=condition.and..not.Bp_index%element_1D(i_b)
+         if (i_b<=NBp) condition=condition.and..not.Bp_index%element_1D(i_b)
        endif
        !
        if (condition) states_to_load(i_b,i_k,:)=.FALSE.

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_compose(G_input)
+subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
  !
  ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} STATIC_collisions(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
@@ -32,7 +32,8 @@ subroutine COLLISIONS_compose(G_input)
  !
  implicit none
  !       
- complex(SP), intent(in)   :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
+ complex(SP), intent(in)   :: G_hf_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
+ complex(SP), intent(in)   :: G_xc_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
  !
  ! Work Space
  !
@@ -62,13 +63,13 @@ subroutine COLLISIONS_compose(G_input)
        do ik=1,QP_nk
          if (nHF_collisions>0) then
            if (HF_collisions(i_qp_mem)%table(ib,ibp,ik)/=0) then
-             QP_Vnl_xc(i_qp_mem)=QP_Vnl_xc(i_qp_mem)-(0._SP,1._SP)*HF_collisions(i_qp_mem)%v(ic1)*G_input(ib,ibp,ik)
+             QP_Vnl_xc(i_qp_mem)=QP_Vnl_xc(i_qp_mem)-(0._SP,1._SP)*HF_collisions(i_qp_mem)%v(ic1)*G_hf_input(ib,ibp,ik)
              ic1=ic1+1
            endif
          endif
          if (nCOHSEX_collisions>0) then
            if (COHSEX_collisions(i_qp_mem)%table(ib,ibp,ik)/=0) then
-             QP_Vnl_xc(i_qp_mem)=QP_Vnl_xc(i_qp_mem)-(0._SP,1._SP)*COHSEX_collisions(i_qp_mem)%v(ic2)*G_input(ib,ibp,ik)
+             QP_Vnl_xc(i_qp_mem)=QP_Vnl_xc(i_qp_mem)-(0._SP,1._SP)*COHSEX_collisions(i_qp_mem)%v(ic2)*G_xc_input(ib,ibp,ik)
              ic2=ic2+1
            endif
          endif

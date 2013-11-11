@@ -23,7 +23,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_elel_scatt,l_elel_corr,l_use_collisions
  use com,           ONLY:error
- use pars,          ONLY:SP,IP
+ use pars,          ONLY:IP
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev
@@ -87,14 +87,14 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (l_elel_corr) then
 #if defined _SC && defined _RT
    call PARALLEL_global_indexes(E,k,q,"Real_Time")
-   call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute(K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
 #endif
 #if defined _SC && !defined _RT
    call PARALLEL_global_indexes(E,k,q,"Self_Energy")
-   call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_Xk_ibz,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
    COLLISIONS_parallel_SC_structure=.TRUE.
 #endif
-   call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QP)
+   call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
    call PARALLEL_WF_index( )
  endif
  !
@@ -145,8 +145,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      if (l_elel_scatt) then
        call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
        call PARALLEL_global_indexes(E,k,q,"Real_Time")
-       call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QP,CLEAN_UP=.FALSE.)
-       call PARALLEL_WF_distribute(SC_bands(2),k%nibz,QP_index=PAR_IND_QPp)
+       call PARALLEL_WF_distribute(QP_index=PAR_IND_QP,CLEAN_UP=.FALSE.)
+       call PARALLEL_WF_distribute(QP_index=PAR_IND_QPp)
        call PARALLEL_WF_index( )
      endif
      !

@@ -43,8 +43,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use stderr,         ONLY:intc,real2ch,log_as_a_file
  use xc_functionals, ONLY:V_xc,E_xc
  use frequency,      ONLY:w_samp
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,ncpu,n_WF_bands_to_load,PAR_nQP
- use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,IO_colls,&
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,ncpu
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder
  use LIVE_t,         ONLY:live_timing
@@ -99,8 +99,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !================
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
  call PARALLEL_global_indexes(E,k,q,"Self_Energy") 
- call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,QP_index=PAR_IND_QP)
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
  call PARALLEL_WF_index( )
  !
  ! Initial Start & Restart 
@@ -551,7 +551,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      if(l_use_collisions) then
        !
-       allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk,1))
+       allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk,2))
        call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
        !
        allocate(QP_Vnl_xc(QP_n_states))

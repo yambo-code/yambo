@@ -47,7 +47,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
  use matrix_operate,ONLY:mat_transpose
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -177,8 +177,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  enddo
  !
 #if !defined _SC
- call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,QP_index=PAR_IND_QP)
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
  call PARALLEL_WF_index( )
 #endif
  call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,n_WF_bands_to_load/),(/1,k%nibz/),&
@@ -222,14 +222,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call mem_est("ISC-GAMP",(/X%ng**2+2*isc%ngrho/),errors=(/alloc_err/))
  !
  call PP_redux_wait
- !
-!#if defined _SC
-! if (l_sc_run) then
-!   timing_steps=QP_n_states*px%n_of_elements(myid+1)
-!   if (l_sc_srpa) timing_steps=E%nbf*(maxval(QP_table(:,2))-E%nbf)*maxval(QP_table(:,3))*px%n_of_elements(myid+1)
-!   call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),timing_steps) 
-! else 
-!#endif
  !
  timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
 &             PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&

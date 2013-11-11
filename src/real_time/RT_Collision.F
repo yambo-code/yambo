@@ -114,7 +114,8 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
      !              in G_lesser as exchange or COHSEX(with W fixed) 
      !
      if (l_sc_hf.or.l_sc_cohsex) then
-       call COLLISIONS_compose(G_input(:,:,RT_ibz_coo(:,1))-G_lesser_reference(:,:,RT_ibz_coo(:,1)))
+       call COLLISIONS_compose(G_input(:,:,RT_ibz_coo(:,1))-G_lesser_reference(:,:,RT_ibz_coo(:,1)),&
+&                              G_input(:,:,RT_ibz_coo(:,1))-G_lesser_reference(:,:,RT_ibz_coo(:,1)))
      endif
      !
    endif

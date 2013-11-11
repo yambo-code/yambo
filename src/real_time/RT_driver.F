@@ -105,7 +105,7 @@ subroutine RT_driver(E,X,k,q)
  !
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
  call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
- call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_index( )
  !
  ! Dipoles

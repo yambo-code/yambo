@@ -27,7 +27,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL,IO_and_Messaging_switch,io_COLLs
  use drivers,         ONLY:l_elel_scatt
  use interfaces,      ONLY:io_COLLISIONS
- use parallel_m,      ONLY:PAR_QP_index
+ use parallel_m,      ONLY:PAR_QP_index,myid
  !
  implicit none                                              
  !

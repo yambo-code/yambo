@@ -61,8 +61,6 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
    do ib=SC_bands(1),QP_nb
      do ibp=SC_bands(1),QP_nb
        !
-       !if ( .not. PAR_IND_Bp_mat%element_1D( B_mat_index(ib,ibp) ) ) cycle
-       !
        do ik=1,QP_nk
          if (nHF_collisions>0) then
            if (HF_collisions(i_qp_mem)%table(ib,ibp,ik)/=0) then

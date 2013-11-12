@@ -333,7 +333,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
      endif
    enddo Q_loop 
    !
-   if (io_COLLs) then
+   if (io_COLLs.or.V_kind==1) then
      if (COLLISIONS_parallel_SC_structure) then
        call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_QP_A2A%COMM)
        call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_Q_index%COMM)

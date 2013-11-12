@@ -23,7 +23,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_cohsex,l_eval_collisions,l_sc_contains_lda,l_sc_hf
+ use drivers,        ONLY:l_sc_cohsex,l_use_collisions,l_sc_contains_lda,l_eval_collisions
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
@@ -31,23 +31,24 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,l_Mean_Potential,&
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
 &                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,G_lesser,l_SC_RESTART,&
-&                         l_NSC_shot,l_TF_precond,V_mean,SC_up_W_iters,l_SC_nl_mix
- use wave_func,      ONLY:WF
+&                         l_NSC_shot,l_TF_precond,V_mean,SC_up_W_iters,l_SC_nl_mix,SC_QP_setup,it_to_start
+ use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use matrix_operate, ONLY:mat_dia_inv,DIAGO
- use interfaces,     ONLY:PARALLEL_global_indexes,WF_load
+ use interfaces,     ONLY:PARALLEL_global_indexes,WF_load,PARALLEL_WF_distribute,PARALLEL_WF_index
  use com,            ONLY:msg,warning
- use X_m,            ONLY:X_t,current_iq
+ use X_m,            ONLY:X_t,current_iq,X_alloc
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:intc,real2ch,log_as_a_file
  use xc_functionals, ONLY:V_xc,E_xc
  use frequency,      ONLY:w_samp
- use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,&
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,ncpu
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,io_COLLs,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder
  use LIVE_t,         ONLY:live_timing
- use collisions_IO,  ONLY:collisions_IO_alloc,collisions_IO_free
+ use collision,      ONLY:HF_collisions,COHSEX_collisions
 #if defined _MAGNETIC
  use electrons,       ONLY:Total_magn
 #endif
@@ -66,8 +67,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                            E_conv(n_sp_pol),E_total,E_tot_Hartree,E_tot_xc,max_overlap(SC_bands(2),k%nibz,n_sp_pol)
  real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:)
  real(SP),    allocatable :: delta_rho(:)
- complex(SP), allocatable :: WFo(:,:)
  complex(SP), allocatable :: H_nl_nm1(:,:,:,:)
+ !
+ type(WAVEs)              :: WFo
  ! 
  ! Work Space
  !
@@ -83,39 +85,48 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  integer                  :: first_el(SC_bands(2)),n_of_el(SC_bands(2)),n_deg_grp,&
 &                            b_of_max_proj(SC_bands(2),k%nibz,n_sp_pol)
  !
- ! Initial Start & Restart 
- !==========================
+ ! SC_bands(1)
+ !=============
  !
  if (SC_bands(1)/=1) then
    SC_bands(1)=1
    call warning('Lower bound of band indexes forced to be 1')
  endif
+ !
+ call SC_QP_setup(E)
+ !
+ ! Parallel Setup
+ !================
+ if (.not.l_eval_collisions) then
+   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+   call PARALLEL_global_indexes(E,k,q,"Self_Energy") 
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+   call PARALLEL_WF_index( )
+ endif
+ !
+ ! Initial Start & Restart 
+ !==========================
  ! 
  call SC_start_and_restart(X,E,Xk)
  !
  if (.not.any((/l_SC_RESTART,l_SC_cycle,l_NSC_shot/))) return
  !
- ! Parallel Setup
- !================
- call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
- if (l_sc_cohsex) call PARALLEL_global_indexes(E,k,q,"HF") 
- if (l_sc_hf)     call PARALLEL_global_indexes(E,k,q,"GW")
- !
  ! Allocation(s)...
  !==================
  !
  call SC_alloc(E)
- call SC_local_alloc()
+ call SC_local_alloc( )
  !
  ! COLLISIONS
  !============
  !
- if (l_eval_collisions) call COLLISIONS_load(.FALSE.)
+ if (io_COLLs) call COLLISIONS_load(.FALSE.)
  !
  ! Initialize SC_R matrix
  !========================
  !
- if(.not.l_SC_RESTART.and.l_eval_collisions) then
+ if(.not.l_SC_RESTART.and.l_use_collisions) then
    !      
    SC_R=(0.,0.)
    forall(i1=1:SC_bands(2))
@@ -147,7 +158,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  ! Reference wavefunctions
  !
- WFo   =WF%c
+ call WF_copy(WF,WFo)
  !
  ! Start-Up setup.  Eventually restart setup.
  !
@@ -183,7 +194,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    ! and spin density
    !
-   if(n_sp_pol>1) call el_magnetization(E,k)
+   if (n_sp_pol>1) call el_magnetization(E,k)
    !
 #endif
    !
@@ -192,14 +203,18 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    V_xc_nm1 = V_xc_sc
    rho_nm1  = rho_n
    !
+   it_to_start=it_now+1
+   !
  else if (l_NSC_shot) then
    !
    ! Non-SC shot
    !
+   it_to_start=1
    it_now=0
    !
  else
    !
+   it_to_start=1
    it_now=0
    !
    V_xc_sc  =0.
@@ -258,7 +273,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      if (local_V) then
        !
-       H_nl_sc(:,:,:) = Ho(:,:,ik,:)
+       H_nl_sc(:,:,:) = Ho(:,:,ik,:)/real(ncpu)
        call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WFo)
        !
      else
@@ -271,7 +286,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        if (l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
        !
-       if (.not.l_eval_collisions.and.it_now>1) then
+       if (.not.l_use_collisions.and.it_now>1) then
          !
          ! Rotate H_nl_sc in the WFo basis.
          !
@@ -287,13 +302,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(3))
        io_V=io_SC_components('V',E,ID(3))
        !
-       H_nl_sc = H_nl_sc + Ho(:,:,ik,:)
+       H_nl_sc = H_nl_sc + Ho(:,:,ik,:)/real(ncpu)
        !
        ! Mixing for non-local self-energies
        ! ====================
-       if(l_SC_nl_mix) then
+       if (l_SC_nl_mix) then
           !
-          if(it==1) H_nl_nm1(:,:,ik,:) = H_nl_sc
+          if (it==1) H_nl_nm1(:,:,ik,:) = H_nl_sc
           !
           H_nl_sc = H_nl_nm1(:,:,ik,:) + SC_cycle_mixing*(H_nl_sc - H_nl_nm1(:,:,ik,:))
           H_nl_nm1(:,:,ik,:)= H_nl_sc
@@ -305,10 +320,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo)
        !
      endif
-     ! 
+     !
+     call PP_redux_wait(H_nl_sc)
+     !
      ! Diagonalize H_nl_sc 
      !=====================
-     !
      do i_spin=1,n_sp_pol
        !
        call mat_dia_inv(DIAGO,H_nl_sc(:,:,i_spin),E_real=E%E(:SC_bands(2),ik,i_spin))
@@ -507,6 +523,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  call mem_est("E_bare")
  if (l_SC_cycle.or.l_NSC_shot) then
    call WF_free(WF)
+   call WF_free(WFo)
    call SC_free()
    call SC_local_free()
  endif
@@ -529,27 +546,22 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call mem_est("delta_rho",(/fft_size/),(/SP/))
      endif
      !
-     allocate(WFo(fft_size,WF%N))
-     call mem_est("WFo",(/fft_size*WF%N/))
-     !
      if (l_Mean_Potential) then
        allocate(V_mean(fft_size,SC_bands(2)))
        call mem_est("V_mean",(/fft_size*SC_bands(2)/))
      endif
      !
-     if(l_eval_collisions) then
+     if(l_use_collisions) then
        !
-       allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk,1))
+       allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk,2))
        call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
        !
        allocate(QP_Vnl_xc(QP_n_states))
        call mem_est("QP_Vnl_xc",(/size(QP_Vnl_xc)/),(/2*SP/))
        !
-       call collisions_IO_alloc()
-       !
      endif
      !
-     if(l_SC_nl_mix) then
+     if (l_SC_nl_mix) then
        allocate(H_nl_nm1(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
        call mem_est("H_nl_nm1",(/size(QP_Vnl_xc)/),(/2*SP/))
      endif
@@ -570,15 +582,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if (l_TF_precond) deallocate(delta_rho)
      call mem_est("delta_rho")
      !
-     deallocate(WFo)
-     call mem_est("WFo")
-     !
      if (l_Mean_Potential) then
        deallocate(V_mean)
        call mem_est("V_mean")
      endif
      !
-     if(l_eval_collisions) then
+     if(l_use_collisions) then
        !
        deallocate(G_lesser)
        call mem_est("G_lesser")
@@ -586,14 +595,17 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        if (allocated(QP_Vnl_xc)) deallocate(QP_Vnl_xc)
        call mem_est("QP_Vnl_xc")
        !
-       call collisions_IO_free()
+       if (allocated(HF_collisions))     call COLLISIONS_alloc_and_free("HF","v1 table","clean",0)
+       if (allocated(COHSEX_collisions)) call COLLISIONS_alloc_and_free("COHSEX","v1 table","clean",0)
        !
      endif
      !
-     if(l_SC_nl_mix) then
+     if (l_SC_nl_mix) then
        deallocate(H_nl_nm1)
        call mem_est("H_nl_nm1")
      endif
+     !
+     if (.not.io_X) call X_alloc('X')
      !
    end subroutine
    !

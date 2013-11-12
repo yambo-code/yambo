@@ -26,11 +26,14 @@ subroutine XC_switch()
 &                         OEP_approx,l_oep_EWeight,l_oep_iterative
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
 &                         GS_xc_KIND,GS_xc_FUNCTIONAL
+#if defined _RT
+ use real_time,      ONLY:RT_EE_CORR_kind,RT_EE_SCATT_kind
+#endif
 #if defined _MAGNETIC
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
  use magnetic,       ONLY:MAG_landau,MAG_pauli
 #endif
- use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC,SC_SRPA,EXT_NONE
+ use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC,SC_SRPA,EXT_NONE,SE_GW_NEQ
  use electrons,      ONLY:n_full_bands,n_met_bands
  use com,            ONLY:error
  implicit none
@@ -71,7 +74,13 @@ subroutine XC_switch()
      if (n_full_bands/=n_met_bands) return
    case('COHSEX')
      l_sc_cohsex=.true.
+#if defined _SC && !defined _RT
      SC_kind=SC_COHSEX
+#endif
+#if defined _SC && defined _RT
+     if (l_elel_corr)  RT_EE_CORR_kind=SC_COHSEX
+     if (l_elel_scatt) RT_EE_SCATT_kind=SE_GW_NEQ
+#endif
      SC_xc_functional=0
    case('LDA_X')
      l_sc_contains_lda=.true.

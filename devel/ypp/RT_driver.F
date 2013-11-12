@@ -23,13 +23,15 @@ subroutine RT_driver(en,k)
  !
  use YPP,            ONLY:Use_FFT,RT_P_t,RT_J_t,N_probe_frequencies,&
 &                         N_probes,N_pumps,RT_initialize,RT_databases,X_order,&
-&                         l_RT_X_inversion,l_skip_pol_and_curr_IO,l_force_min_damp
+&                         l_RT_X_inversion,l_skip_pol_and_curr_IO,l_force_min_damp,&
+&                         Probe_path,Pump_path,N_probes
+ use pars,           ONLY:lchlen
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
  use fields,         ONLY:Efield,i_probe
- use parser_m,       ONLY:parser
+ use com,            ONLY:jobstr,error
  implicit none
  !
  type(levels)  :: en
@@ -37,7 +39,9 @@ subroutine RT_driver(en,k)
  !
  ! Work Space
  !
- logical       :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
+ integer           :: i_f
+ character(lchlen) :: jobstr_save
+ logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
  !
  call section("*",'RT Post Processing')
  !
@@ -64,7 +68,23 @@ subroutine RT_driver(en,k)
    !
    ! Database
    !
+   ! Search the database in JOBSTR,Pump_path and Probe_path
    call RT_databases( )
+   jobstr_save=jobstr
+   if (.not.allocated(RT_J_t)) then
+     jobstr=trim(Pump_path)
+     call RT_databases(mesg=trim(Pump_path))
+   endif
+   if (.not.allocated(RT_J_t)) then
+     do i_f=1,N_probes
+       jobstr=trim(Probe_path(i_f))
+       call RT_databases(mesg=trim(Pump_path))
+       if (allocated(RT_J_t)) exit
+     enddo
+   endif
+   jobstr=trim(jobstr_save)
+   !
+   if (.not.allocated(RT_J_t)) call error('J and P databases not found')
    !
    !  Initialization 
    !

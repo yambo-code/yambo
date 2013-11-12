@@ -23,6 +23,7 @@ module real_time
  !
  use SC,         ONLY:G_lesser,SC_R
  use pars,       ONLY:DP,SP,schlen,lchlen
+ use global_XC,  ONLY:SE_NONE
  !
  implicit none
  !
@@ -98,6 +99,11 @@ module real_time
  integer  :: NE_i_time ! = (NE_time-1)/RT_step
  integer  :: RT_dynamics_jumps 
  integer  :: NE_steps
+ !
+ ! Kind of e-e interactions (for the CORR and SCATT parts)
+ !
+ integer           :: RT_EE_CORR_kind=SE_NONE
+ integer           :: RT_EE_SCATT_kind=SE_NONE
  !
  ! ... Memory ...
  !
@@ -183,6 +189,7 @@ module real_time
  !----------------
  !
  integer           :: two_alpha
+ integer           :: N_Gr_descs
  real(SP)          :: Gr_QP_width
  character(schlen) :: Gr_kind = "QP"
  character(lchlen) :: Gr_description(5) 

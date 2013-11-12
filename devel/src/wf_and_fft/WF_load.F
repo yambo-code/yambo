@@ -37,7 +37,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free,WAVEs
  use wave_func,     ONLY:states_to_load
- use interfaces,    ONLY:PARALLEL_live_message
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
 &                        io_fragmented, io_netcdf_support, RD_CL,DUMP,IO_and_Messaging_switch
 #if defined _SC
@@ -126,6 +125,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    endif
  endif
  !
+ !
  ! [2]: Check FFT size
  !
  if (loaded_bounds_ok) then
@@ -177,7 +177,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! Is WF to load ? If not and the space is "R" I need to know the fft_size, at least. 
  !
- if(allocated(states_to_load)) then
+ if (allocated(states_to_load)) then
    WF%to_load=count(states_to_load .eqv. .true.)>0
    if (.not.WF%to_load) then
      if(associated(WF%state)) nullify(WF%state)
@@ -232,9 +232,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  call mem_est("wf_DP",(/size(wf_DP)/),(/2*DP/))
  !
  ! LOG the states loaded
- !
- call PARALLEL_live_message("WF states",LOADED=WF%N,TOTAL=(bands_to_load(2)-bands_to_load(1)+1)*&
-&                           (kpts_to_load(2)-kpts_to_load(1)+1)*(s_2_load(2)-s_2_load(1)+1))
  !
  if (buffer_is_ok.and.WF%space/="B") then
    call msg('rns','[WF] Loading Wave-Functions from buffer')

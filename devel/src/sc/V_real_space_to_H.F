@@ -27,11 +27,14 @@ subroutine V_real_space_to_H(ik,V,H,WF)
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
  use wave_func,      ONLY:WAVEs
  use wrapper,        ONLY:Vstar_dot_V
-#if defined _SC
- use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k
  use matrix_operate, ONLY:matrix_linear_index
+ use SC,             ONLY:SC_bands,HEAD_cpu_in_QP_group
+#if defined _SC || !defined _RT
+ use parallel_m,     ONLY:PAR_IND_QP
 #endif
- use SC,             ONLY:SC_bands
+#if defined _RT
+ use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k
+#endif
  implicit none
  !
  integer     :: ik,i_spin
@@ -44,7 +47,9 @@ subroutine V_real_space_to_H(ik,V,H,WF)
  integer    :: i1,ib,ibp,ifft,ifftp
  complex(SP):: c_ws(fft_size)
  !
+#if defined _RT
  if (.not.PAR_IND_WF_k%element_1D(ik)) return
+#endif
  !
  ! Fill ...
  !
@@ -58,7 +63,10 @@ subroutine V_real_space_to_H(ik,V,H,WF)
    !
    if (ib>ibp) cycle
    !
-#if defined _SC
+#if defined _SC && !defined _RT
+   if (.not.(PAR_IND_QP%element_1D(i1).and.HEAD_cpu_in_QP_group)) cycle
+#endif
+#if defined _RT
    if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
 #endif
    !
@@ -70,7 +78,7 @@ subroutine V_real_space_to_H(ik,V,H,WF)
    !
    H(ib,ibp,i_spin) = H(ib,ibp,i_spin)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:))
    !
- end do
+ enddo
  !
  ! ... and symmetrize
  !

@@ -21,9 +21,13 @@
 !
 module collision
  !
- use pars, ONLY :SP,LP
+ use pars, ONLY :SP,LP,schlen
  !
  implicit none
+ !
+ !====================
+ ! STANDARD COLLISION
+ !====================
  !
  type ggwinfo
    !
@@ -41,53 +45,39 @@ module collision
    complex(SP), pointer :: rhotw(:)  => null()
  end type ggwinfo
  !
+ !====================
+ ! EXTENDED COLLISION
+ !====================
+ !
+ integer                  :: V_kind 
+ !
+ ! Cut off on exchange matrix elements
+ ! Sx_cutoff=0 all, (Sx_cutoff>1 or Sx_cutoff<0)=none
+ !
+ real(SP)                 :: COLLISIONS_cutoff
+ real(SP)                 :: COLLISIONS_max
+ !
+ logical :: COLLISIONS_parallel_SC_structure=.FALSE.
+ !
  type COLLISIONS_element
-   integer(LP), allocatable  :: table(:,:,:)
-   complex(SP), allocatable  :: v(:)
-   complex(SP), allocatable  :: v3(:,:,:)
+   character(schlen)     :: name="none"
+   integer               :: kind=0
+   integer               :: D(3,2)  ! Dimension (v3)
+   integer               :: N       ! Linear Dimension
+   integer(LP), pointer  :: table(:,:,:) => null()
+   complex(SP), pointer  :: v(:)         => null()
+   complex(SP), pointer  :: v3(:,:,:)    => null()
  end type
  !
- type(COLLISIONS_element), allocatable :: COLLISIONS(:)
+ integer :: nGW_NEQ_collisions=0
+ type(COLLISIONS_element), allocatable :: GW_NEQ_collisions(:)
+ integer :: nHF_collisions=0
+ type(COLLISIONS_element), allocatable :: HF_collisions(:)
+ integer :: nCOHSEX_collisions=0
+ type(COLLISIONS_element), allocatable :: COHSEX_collisions(:)
+ type(COLLISIONS_element), allocatable :: IO_collision
  !
  contains
-   !
-   subroutine free_COLLISIONS_v
-     use memory_m,       ONLY:mem_est
-     use stderr,         ONLY:intc
-     use QP_m,           ONLY:QP_n_states
-     use parallel_m,     ONLY:PAR_IND_QP,PAR_QP_index
-     !
-     implicit none
-     !
-     ! Work Space
-     !
-     integer :: i_qp,i_qp_mem
-     !
-     do i_qp=1,QP_n_states
-       !
-       if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
-       i_qp_mem=PAR_QP_index(i_qp)
-       !
-       if (allocated(COLLISIONS(i_qp_mem)%table)) then
-         deallocate(COLLISIONS(i_qp_mem)%table)
-         call mem_est("QP_COLLISIONS_table"//trim(intc((i_qp))))
-       endif
-       !
-       if (allocated(COLLISIONS(i_qp_mem)%v)) then
-         deallocate(COLLISIONS(i_qp_mem)%v)
-         call mem_est("QP_COLLISIONS_v"//trim(intc((i_qp))))
-       endif
-       !
-       if (allocated(COLLISIONS(i_qp_mem)%v3)) then
-         deallocate(COLLISIONS(i_qp_mem)%v3)
-         call mem_est("QP_COLLISIONS_v3"//trim(intc((i_qp))))
-       endif
-       !
-     enddo
-     !
-     deallocate(COLLISIONS)
-     !
-   end subroutine free_COLLISIONS_v
    !
    subroutine collision_reset(ggw)
      type(ggwinfo)::ggw

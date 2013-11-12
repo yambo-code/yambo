@@ -24,26 +24,22 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi
- use drivers,       ONLY:l_sc_run,l_sc_exx,l_eval_collisions,l_gw0
+ use drivers,       ONLY:l_sc_run,l_sc_exx,l_gw0,l_cohsex
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
  use electrons,     ONLY:levels,spin_occ,spin
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
 &                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
-&                        PAR_IND_Q_ID,PAR_n_B_mat_elements,PAR_COM_QP_A2A,&
-&                        PAR_IND_B_mat,n_WF_bands_to_load
+&                        PAR_IND_Q_ID,n_WF_bands_to_load
  use collision,     ONLY:ggwinfo,collision_reset
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
+#if defined _SC
+ use SC,            ONLY:it_now
+#endif
 #if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
-#if defined _SC
- use SC,            ONLY:it_now,SC_bands
- use collisions_IO, ONLY:TEMP_COLLISIONS_v
- use fragments,     ONLY:fragment_status
- use real_time,     ONLY:B_mat_index
 #endif
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
@@ -59,20 +55,15 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !Work Space
  !
  type(ggwinfo)           ::isc,iscp
- integer                 ::iq,ib,ibp,jb,ik,i_qp
- integer                 ::Sx_lower_band,Sx_upper_band,n_lt_bands
-#if defined _RT
- integer                 ::jb2,ik_minus_q
-#endif
+ integer                 ::iq,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands
  complex(DP)             ::DP_Sx
  complex(SP),allocatable ::local_rhotw(:)
  character(schlen)       ::ch
  !
  !QP list
  !
- integer              :: i4(4)
+ integer              :: ig,i4(4)
  integer, external    :: QP_state_extract
- integer              :: ig
  !
  ! Resets & basis setup
  !
@@ -82,43 +73,30 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  Sx_lower_band=1
  Sx_upper_band=E%nbm
  !
-#if defined _RT
- !
- ! COLLISIONS 
- !
- if(l_eval_collisions) then
-   Sx_lower_band=SC_bands(1)
-   Sx_upper_band=SC_bands(2)
- endif
- !
-#endif
- !
  call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
  !
- if (.not.l_eval_collisions) then
-   !
-   ! QP_table -> report
-   !
-   call msg('r','')
-   i4=(/1,1,0,0/)
-   do while(QP_state_extract(i4)>0)
-     write (ch,'(4(a,i3.3))') 'QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
-     call msg('r',trim(ch))
-   enddo
-   call msg('r','')
-   !
- endif
+ ! QP_table -> report
  !
+ call msg('r','')
+ i4=(/1,1,0,0/)
+ do while(QP_state_extract(i4)>0)
+   write (ch,'(4(a,i3.3))') 'QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
+   call msg('r',trim(ch))
+ enddo
+ call msg('r','')
+ !
+#if !defined _SC
  ! WF distributed & load
  !=======================
  !
- if (.not.l_eval_collisions) call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+ call PARALLEL_global_indexes(E,k,q,"Self_Energy")
  !
- call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_distribute(n_WF_bands_to_load,k%nibz,QP_index=PAR_IND_QP)
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
  call PARALLEL_WF_index()
+#endif
  !
- if (l_gw0.and.WF_buffered_IO) then
+ if ((l_gw0.or.l_cohsex).and.WF_buffered_IO) then
    !
    call WF_load(WF_buffer,0,1,(/1,n_WF_bands_to_load/),(/1,k%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
    !
@@ -142,15 +120,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ch='EXS'
 #if defined _SC
  if (l_sc_run)          ch='HF@it'//trim(intc(it_now))
- if (l_eval_collisions) ch='HF collisions'
 #endif
  !
-#if defined _RT
- !
- call live_timing(trim(ch),PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
-&                          PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*PAR_n_B_mat_elements)
- !
-#else
 ! if (l_sc_exx) then
 !   call live_timing(trim(ch),px%n_of_elements(myid+1)*E%nbf*&
 !        &(maxval(QP_table(:,2))-E%nbf)*maxval(QP_table(:,3)))
@@ -162,22 +133,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call live_timing(trim(ch),PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
 &                          PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands)
  !
-#endif
- !
  do i_qp=1,QP_n_states
    !
    if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
-   !
-#if defined _RT
-   !        
-   if (fragment_status(i_qp)/=-1)  then
-     call live_timing(steps=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*PAR_n_B_mat_elements)
-     cycle
-   endif
-   !
-   TEMP_COLLISIONS_v=(0.,0.)
-   !
-#endif
    !
    ib =QP_table(i_qp,1)
    ibp=QP_table(i_qp,2)
@@ -215,46 +173,12 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
      isc%qs(1)=qindx_S(QP_table(i_qp,3),iq,2)
      iscp%qs=isc%qs
      !
-#if defined _RT
-     ik_minus_q=isc%os(2)
-#endif
-     !
      do jb=Sx_lower_band,Sx_upper_band
        !
-#if !defined _RT
        if (.not.PAR_IND_G_b%element_1D(jb)) cycle
-#endif
        !      
        isc%os(1)=jb
        iscp%os=isc%os
-       !
-#if defined _RT
-       !
-       isc_loop: do jb2=SC_bands(1),SC_bands(2)
-         if ( PAR_IND_B_mat%element_1D( B_mat_index(jb,jb2) ) ) then
-           call scatterBamp(isc)
-           exit isc_loop
-         endif
-       enddo isc_loop
-       !
-       !
-       ! Use the full density matrix  -i*G_lesser
-       !
-       ! COLLISIONS(n,n',qp_n_states) = \sum_{G,q} ( rho(m,n,G,q,k) x rho*(m',n',G,q,k) /|q+G|^2 )
-       !
-       do jb2=Sx_lower_band,SC_bands(2)
-         !
-         if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(jb,jb2) ) ) cycle
-         !      
-         iscp%os(1)=jb2
-         if (any(isc%is/=iscp%is).or.any(isc%os/=iscp%os)) then
-            call scatterBamp(iscp)
-         else
-            iscp%rhotw=isc%rhotw
-         endif
-         !
-         local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)
-#else
        !
        call scatterBamp(isc)
        !
@@ -263,7 +187,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
        iscp%rhotw=isc%rhotw
        if (isc%is(1)/=iscp%is(1)) call scatterBamp(iscp)
        !
-#endif
 #if defined _OPENMP
        !
 !$omp parallel do default(shared), private(ig)
@@ -281,32 +204,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
        !
 #endif
        !
-#if defined _RT
-         !
-         TEMP_COLLISIONS_v(jb,jb2,ik_minus_q)=TEMP_COLLISIONS_v(jb,jb2,ik_minus_q)+DP_Sx
-         !
-         if (q%sstar(iq,2)==1) call live_timing(steps=1)
-         !
-       enddo
-#else
-       !
        QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)+DP_Sx
        !
        if (q%sstar(iq,2)==1) call live_timing(steps=1)
        !
-#endif 
-       !
      enddo
      !
    enddo
-   !
-#if defined _RT
-   !
-   call PP_redux_wait(TEMP_COLLISIONS_v,COMM=PAR_COM_QP_A2A%COMM)
-   !
-   if (l_eval_collisions) call COLLISIONS_store(i_qp)
-   !
-#endif
    !
  enddo
  !
@@ -322,9 +226,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call timing('MPI_ALLREDUCE',OPR='start')
 #endif
  !
-#if !defined _RT
  call PP_redux_wait(QP_Vnl_xc)
-#endif
  !
 #if defined _TIMING
  call timing('MPI_ALLREDUCE',OPR='stop')

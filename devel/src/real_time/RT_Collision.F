@@ -39,6 +39,9 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  use pars,           ONLY:SP,cONE,cZERO
  use wrapper,        ONLY:V_by_V_plus_V
+#if defined _OPENMP
+ use wrapper,        ONLY:V_by_V_plus_V_omp
+#endif
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
@@ -52,11 +55,14 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
 &                         l_RT_needs_XC0,Ho_plus_Sigma
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_WF_k_INDEX,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz,PAR_COM_WF_k_INDEX,myid
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_Xk_ibz_A2A
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use SC,             ONLY:SC_xc_functional,SC_nbands
  use IO_m,           ONLY:IO_and_Messaging_switch
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -70,6 +76,10 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  logical          :: XC_needs_density
  integer          :: i1,ik
+ !
+#if defined _TIMING
+ call timing('RT Collisions',OPR='start')
+#endif
  !
  ! Density (needed by Hartree and local XCs)
  !=========
@@ -111,7 +121,8 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
      !              in G_lesser as exchange or COHSEX(with W fixed) 
      !
      if (l_sc_hf.or.l_sc_cohsex) then
-       call COLLISIONS_compose(G_input(:,:,RT_ibz_coo(:,1))-G_lesser_reference(:,:,RT_ibz_coo(:,1)))
+       call COLLISIONS_compose(G_input(:,:,RT_ibz_coo(:,1))-G_lesser_reference(:,:,RT_ibz_coo(:,1)),&
+&                              G_input(:,:,RT_ibz_coo(:,1))-G_lesser_reference(:,:,RT_ibz_coo(:,1)))
      endif
      !
    endif
@@ -145,10 +156,15 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    ! (for all the parts of self-energy different from V_h + V_xc)
    ! I have to subtract XC0_and_HARTREE0 that contains <mk|Vxc(rho0) |nk>
    !
-   if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.NE_dynamics.and.PAR_COM_WF_k_INDEX%CPU_id==0) then 
+   if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.NE_dynamics.and.PAR_COM_Xk_ibz_A2A%CPU_id==0) then 
      !      
+#if defined _OPENMP
+     call V_by_V_plus_V_omp(SC_nbands,cONE,-XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
+&                           H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+#else
      call V_by_V_plus_V(SC_nbands,cONE,-XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
 &                       H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+#endif
      !
      H_nl_sc=H_nl_sc*(1._SP+tanh((Time+(RT_step*real(Thermal_steps))/2._SP)/ &
 &                    (RT_step*real(Thermal_steps))/SwitchOnTime))/2._SP
@@ -157,9 +173,14 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !
    ! The bare, frozed VHxc 
    !=======================
-   if (l_RT_needs_XC0.and.PAR_COM_WF_k_INDEX%CPU_id==0) then
+   if (l_RT_needs_XC0.and.PAR_COM_Xk_ibz_A2A%CPU_id==0) then
+#if defined _OPENMP
+     call V_by_V_plus_V_omp(SC_nbands,cONE,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
+&                           H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+#else
      call V_by_V_plus_V(SC_nbands,cONE,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
 &                       H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+#endif
    endif
    !
    ! Local XC potentials 
@@ -168,9 +189,14 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !  
    ! Add Ho = T+V_ion
    !==================
-   if (PAR_COM_WF_k_INDEX%CPU_id==0) then
+   if (PAR_COM_Xk_ibz_A2A%CPU_id==0) then
+#if defined _OPENMP
+     call V_by_V_plus_V_omp(SC_nbands,cONE,Ho(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),&
+&                           H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+#else
      call V_by_V_plus_V(SC_nbands,cONE,Ho(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),&
 &                       H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+#endif
      Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)= &
 &          H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
    endif
@@ -182,11 +208,10 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  ! The field must be applied in a separate loop driven by the 
  ! X_q_0 PARALLEL roles
  !
- !
  do ik=1,QP_nk 
    !
-   if (.not.PAR_IND_WF_k%element_1D(ik)) then
-     Ho_plus_Sigma=(0._SP,0._SP)
+   if (.not.(PAR_IND_WF_k%element_1D(ik).and.PAR_COM_Xk_ibz_A2A%CPU_id==0)) then
+     Ho_plus_Sigma(:,:,ik,:)=(0._SP,0._SP)
      cycle
    endif
    !
@@ -210,10 +235,16 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
      SC_R(i1,i1,:,:)=cONE
    enddo
  endif
+#if defined _TIMING
+ call timing('RT Collisions',OPR='end')
+#endif
  !
  ! Calculate all relaxation terms
  ! ==============================
- call RT_relaxation(G_input,E,k,q,Time)  
+ call RT_relaxation(G_input,E,k,q,Time)
+#if defined _TIMING
+ call timing('RT relaxation',OPR='end')
+#endif
  !
 end subroutine RT_Collision
 

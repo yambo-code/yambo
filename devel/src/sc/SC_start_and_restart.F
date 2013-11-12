@@ -25,7 +25,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  use electrons,      ONLY:levels,n_sp_pol
  use parser_m,       ONLY:parser 
  use com,            ONLY:msg,warning
- use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_eval_collisions,&
+ use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_use_collisions,&
 &                         l_oep_exact,l_oep_kli,l_oep_slater, l_oep_ceda
  use units,          ONLY:HA2EV
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -38,7 +38,7 @@ subroutine SC_start_and_restart(X,E,Xk)
 &                         l_Mean_Potential,l_SC_nl_mix
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t
- use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE
+ use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
  use FFT_m,          ONLY:fft_size
  use interfaces,     ONLY:WF_load
  use wave_func,      ONLY:WF
@@ -64,7 +64,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  call parser('SCdiag',         l_SC_diagonal)
  call parser('SCnlMix',        l_SC_nl_mix)
  !
- if(local_V) l_SC_nl_mix=.FALSE.
+ if (local_V) l_SC_nl_mix=.FALSE.
  !
  ! Magnetic logical setup
  !========================
@@ -208,6 +208,7 @@ subroutine SC_start_and_restart(X,E,Xk)
    call MAG_Hamiltonian(.FALSE.)
    !
    ! If exist the non local part of the pseudo then construct kbv
+   !
    call MAG_H_pseudo(Xk)
    !
  endif
@@ -234,9 +235,12 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! Checking extended COLLISIONS
  !==============================
  !
- call COLLISIONS_load(.TRUE.)
+ if (io_COLLs) call COLLISIONS_load(.TRUE.)
  !
- if (l_eval_collisions) call msg('s' ,'[SC] Extented collisions I/O Used')
- call msg('r' ,'[SC] Extented collisions I/O          :',l_eval_collisions)
+ if (l_use_collisions) then
+   call msg('s' ,'[SC] Extented collisions Used')
+   call msg('r' ,'[SC] Extented collisions              :',l_use_collisions)
+   COHSEX_use_empties=.TRUE.
+ endif
  !
 end subroutine SC_start_and_restart

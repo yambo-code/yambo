@@ -28,6 +28,7 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  use drivers,        ONLY:l_sc_contains_lda
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_sp_pol,n_spin,nel
+ use parallel_m,     ONLY:master_cpu
  use xc_functionals, ONLY:V_xc,E_xc
  use FFT_m,          ONLY:fft_size
  use SC,             ONLY:local_V,V_hartree_sc,SC_kind,SC_xc_functional,E_bare_Ef
@@ -54,7 +55,7 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  call IO_and_Messaging_switch("-report -log -io_in -io_out")
  call XC_potential_driver(E,k,SC_kind,SC_xc_functional,1)  ! V_xc
  call XC_potential_driver(E,k,SC_kind,SC_xc_functional,0)  ! E_xc
- call IO_and_Messaging_switch("+report +log +io_in +io_out")
+ call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
  !
  ! Hartree & XC
  !

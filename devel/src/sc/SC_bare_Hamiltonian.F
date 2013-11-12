@@ -74,7 +74,6 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  ! ... so first store -Vhartree in Ho ...
  !========================================
  !
- !
 #if defined _MAGNETIC
  !
  ! If we are using yambo_magnetic now Ho already
@@ -104,10 +103,12 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
      enddo
    enddo
    !
+#if defined _RT
    if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+#endif
    !
    ! ... then remove Vh[rho_0] 
-   !=============================
+   !===========================
    !
    call V_real_space_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),WF)
    !

@@ -30,15 +30,16 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_exx,l_sc_srpa,l_sc_cohsex,l_sc_contains_lda,&
-&                         l_eval_collisions,l_oep_exact
+&                         l_use_collisions
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_t,QP_reset
+ use parallel_m,     ONLY:master_cpu
  use electrons,      ONLY:levels,n_spin
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
  use xc_functionals, ONLY:V_xc
  use SC,             ONLY:V_xc_sc,local_V,SC_kind,SC_xc_functional,SC_cycle_mixing,&
-&                         G_lesser,SC_bands,SC_R,H_rotate,l_oep_iterative,RT_ibz_coo
+&                         G_lesser,SC_bands,SC_R,H_rotate,l_oep_iterative
  use FFT_m,          ONLY:fft_size
  use IO_m,           ONLY:IO_and_Messaging_switch
  !
@@ -62,18 +63,20 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    ! Hartee-Fock & COHSEX
    !======================
    !
-   if(l_eval_collisions) then
+   if(l_use_collisions) then
      !     
      G_lesser=(0.,0.)
-     forall(ib=1:SC_bands(2),ik=1:E%nk) G_lesser(ib,ib,RT_ibz_coo(ik,1),1)=(0._SP,1._SP)*E%f(ib,ik,1)
+     forall(ib=1:SC_bands(2),ik=1:E%nk) G_lesser(ib,ib,ik,1)=(0._SP,1._SP)*E%f(ib,ik,1)
+     forall(ib=1:SC_bands(2),ik=1:E%nk) G_lesser(ib,ib,ik,2)=(0._SP,1._SP)*(E%f(ib,ik,1)-1.)
      !
      ! Now I build the G_lesser rotating the non interaction one
      ! G_lesser(ib,ib,ik)=(0.,1)*en%f(ib,ik)
      !  
      do ik=1,E%nk
-       call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,RT_ibz_coo(ik,1),1),SC_bands(2),-1)
+       call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik,1),SC_bands(2),-1)
+       call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik,2),SC_bands(2),-1)
      enddo
-     call COLLISIONS_compose(G_lesser(:,:,RT_ibz_coo(:,1),1))
+     call COLLISIONS_compose(G_lesser(:,:,:,1),G_lesser(:,:,:,2))
      !    ==========
    else
      !
@@ -89,8 +92,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      !
      if (l_sc_cohsex) call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
-     call IO_and_Messaging_switch("+report +io_out")
-     !
+     call IO_and_Messaging_switch("+report +io_out",CONDITION=master_cpu)
      !
    endif
    !
@@ -112,7 +114,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    if (l_sc_contains_lda.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)
    if (l_sc_contains_lda.and.     (l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
    !
-   call IO_and_Messaging_switch("+report +log +io_in +io_out")
+   call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
    !
    ! Mixing 
    !========

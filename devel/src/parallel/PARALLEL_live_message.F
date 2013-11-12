@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NC,CHAIN)
+subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NC)
  !
  use pars,       ONLY:lchlen
  use parallel_m, ONLY:ncpu
@@ -30,7 +30,7 @@ subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NC,CHAIN)
  !
  character(*)          :: WHAT
  character(*),optional :: ENVIRONMENT
- integer,optional      :: LOADED,TOTAL,NC,CHAIN
+ integer,optional      :: LOADED,TOTAL,NC
  character(lchlen)     :: local_message,local_env
  !
  local_message=WHAT
@@ -42,23 +42,17 @@ subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NC,CHAIN)
    local_env=ENVIRONMENT
  endif
  ! 
- if (present(LOADED).and.present(NC).and.present(CHAIN)) then
-   local_message="[PARALLEL "//trim(local_env)//" for "//WHAT//&
-&                            " on "//trim(intc(NC))//" CPU (chain #"//trim(intc(CHAIN))//&
-&                            ")] Loaded-Total-Percentual: "//trim(intc(LOADED))//"-"//&
-&                            trim(intc(TOTAL))//"-"//&
-&                            trim(intc(int(real(LOADED)/real(TOTAL)*100)))//"%"
- else if (present(LOADED).and.present(NC)) then
+ if (present(LOADED).and.present(NC)) then
    local_message="[PARALLEL "//trim(local_env)//" for "//WHAT//&
 &                            " on "//trim(intc(NC))//" CPU] Loaded-Total-Percentual: "//&
 &                            trim(intc(LOADED))//"-"//&
 &                            trim(intc(TOTAL))//"-"//&
-&                            trim(intc(int(real(LOADED)/real(TOTAL)*100)))//"%"
+&                            trim(intc(int(real(LOADED)/real(TOTAL)*1000)))//"o/oo"
  else if (present(LOADED)) then
    local_message="[PARALLEL "//trim(local_env)//" for "//WHAT//&
 &                            "] Loaded-Total-Percentual: "//trim(intc(LOADED))//"-"//&
 &                            trim(intc(TOTAL))//"-"//&
-&                            trim(intc(int(real(LOADED)/real(TOTAL)*100)))//"%"
+&                            trim(intc(int(real(LOADED)/real(TOTAL)*1000)))//"o/oo"
  endif
  !
  if (present(LOADED)) then

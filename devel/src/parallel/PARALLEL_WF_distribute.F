@@ -19,33 +19,52 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,CLEAN_UP)
+subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Bm_index,CLEAN_UP)
  !
  use parallel_m,      ONLY:PP_indexes,ncpu
  use wave_func,       ONLY:states_to_load
- use electrons,       ONLY:n_sp_pol
+ use electrons,       ONLY:n_sp_pol,n_bands
+ use R_lattice,       ONLY:nkibz
  use QP_m,            ONLY:QP_n_states,QP_table
+#if defined _SC
+ use SC,              ONLY:SC_bands
+ use real_time,       ONLY:B_mat_index
+#endif
  !
  implicit none
  !
- integer, intent(in)           :: NB,NK
  type(PP_indexes), optional    :: K_index
  type(PP_indexes), optional    :: B_index
  type(PP_indexes), optional    :: Bp_index
  type(PP_indexes), optional    :: QP_index
+ type(PP_indexes), optional    :: Bm_index
  logical, intent(in), optional :: CLEAN_UP
  !
  ! Work Space
  !
- integer :: i_k,i_b,i_bp,i_qp
+ integer :: i_k,i_b,i_bp,i_qp,NB,NK,NBp
  logical :: condition
+ !
+ NB=n_bands
+ NBp=n_bands
+ NK=nkibz 
+ if (present(K_index)) then 
+   NK=size(K_index%element_1D)
+ endif
+ if (present(B_index)) then 
+   NB=size(B_index%element_1D)
+ endif
+ if (present(Bp_index)) then 
+   NBp=size(Bp_index%element_1D)
+ endif
  !
  if (present(CLEAN_UP)) then
    !
    if (allocated(states_to_load)) deallocate(states_to_load)
    allocate(states_to_load(NB,NK,n_sp_pol))
    !
-   states_to_load=.TRUE.
+   states_to_load=CLEAN_UP
+   if (ncpu==1) states_to_load=.TRUE.
    !
  endif
  !
@@ -66,10 +85,10 @@ subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,CLEAN_
      !
      do i_b=1,NB
        !
+       condition=K_index%element_1D(i_k).and..not.B_index%element_1D(i_b)
+       !
        if (present(Bp_index)) then
-         condition=K_index%element_1D(i_k).and..not.B_index%element_1D(i_b).and..not.Bp_index%element_1D(i_b)
-       else
-         condition=K_index%element_1D(i_k).and..not.B_index%element_1D(i_b)
+         if (i_b<=NBp) condition=condition.and..not.Bp_index%element_1D(i_b)
        endif
        !
        if (condition) states_to_load(i_b,i_k,:)=.FALSE.
@@ -78,6 +97,26 @@ subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,CLEAN_
      !
    enddo
  endif
+ !
+#if defined _SC
+ if (present(K_index).and.present(Bm_index)) then
+   do i_k=1,NK
+     !
+     if (.not.K_index%element_1D(i_k)) states_to_load(:,i_k,:)=.FALSE.
+     !
+     do i_b=SC_bands(1),SC_bands(2)
+       do i_bp=SC_bands(1),SC_bands(2)
+         if (K_index%element_1D(i_k).and..not.Bm_index%element_1D( B_mat_index(i_b,i_bp) ) ) then
+           states_to_load(i_b ,i_k,:)=.FALSE.
+           states_to_load(i_bp,i_k,:)=.FALSE.
+         endif
+       enddo
+     enddo
+     !
+   enddo
+   !
+ endif
+#endif
  !
  if (present(QP_index)) then
    !

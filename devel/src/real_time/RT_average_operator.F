@@ -78,16 +78,13 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
    !
    call make_Hk_matrix(ik_ibz)
    !
-   !do i1=1,SC_bands(1)-1
-   !  VALUE=VALUE+conjg(Hk(i1,i1,1))*en%f(i1,ik_ibz,1)*k%weights(ik_ibz)
-   !enddo
-   ! 
    do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
      !
      VALUE=VALUE-cI*Vstar_dot_V(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
 &                                          G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))*&  
 &                                          k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
    enddo
+   !
  enddo
  !
  if (k%nibz/=nK_mem) call PP_redux_wait(VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
@@ -112,10 +109,6 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
           forall(i1=1:n_sp_pol) Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),i1)= &
 &                                 O_MATRIX(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_mem,i1)
        endif
-       !
-       !do i1=1,SC_bands(1)-1
-       !  Hk(i1,i1,1:n_sp_pol)=O_MATRIX(i1,i1,ik_mem,1:n_sp_pol)       
-       !enddo
        !
      endif
      !

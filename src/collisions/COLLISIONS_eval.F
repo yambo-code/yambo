@@ -140,20 +140,20 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        V_kind=SE_GW_NEQ
      endif
      !
-     ! PARALLEL Setup (e-e scattering)
-     !=================================
-     if (l_elel_scatt) then
-       call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
-       call PARALLEL_global_indexes(E,k,q,"Real_Time")
-       call PARALLEL_WF_distribute(QP_index=PAR_IND_QP,CLEAN_UP=.FALSE.)
-       call PARALLEL_WF_distribute(QP_index=PAR_IND_QPp)
-       call PARALLEL_WF_index( )
-     endif
-     !
      fragment_status=-1
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
      !
      if (io_COLLISIONS(0,ID)/=0) then
+       !
+       ! PARALLEL Setup (e-e scattering)
+       !=================================
+       if (l_elel_scatt) then
+         call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+         call PARALLEL_global_indexes(E,k,q,"Real_Time")
+         call PARALLEL_WF_distribute(QP_index=PAR_IND_QP,CLEAN_UP=.FALSE.)
+         call PARALLEL_WF_distribute(QP_index=PAR_IND_QPp)
+         call PARALLEL_WF_index( )
+       endif
        !
        if (i_kind==1) then
          if (io_COLLs) then
@@ -191,10 +191,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !=======
  !
  if (io_COLLs) then
-   deallocate(fragment_status)
+   if (allocated(fragment_status)) deallocate(fragment_status)
    call mem_est("fragment_status")
    if (l_elel_corr) then
-     call COLLISIONS_alloc_and_free("HF","all","v3 table",1)
+     call COLLISIONS_alloc_and_free("HF","v3 table","clean",1)
      if (l_cohsex) call COLLISIONS_alloc_and_free("COHSEX","v3 table","clean",1)
    endif
    if (l_elel_scatt) call COLLISIONS_alloc_and_free("GW_NEQ","v3 table","clean",1)
@@ -205,19 +205,4 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    endif
  endif
  !
- contains
-   !
-!   subroutine report_disk_usage(what)
-!     !
-!     use com,   ONLY:msg
-!     use units, ONLY:Gigabyte
-!     !
-!     real(SP)     :: disk_space
-!     character(*) :: what
-!     !
-!     disk_space=real(QP_n_states*(QP_nb-SC_bands(1)+1)**2*QP_nk*SP)/Gigabyte
-!     if (disk_space > 0.05) call msg('s','[COLLISIONS I/O] '//what//' Disk space required [Gb]:',disk_space)  
-!     !
-!   end subroutine
-   !
 end subroutine

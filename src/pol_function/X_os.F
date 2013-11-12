@@ -31,9 +31,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
  use parallel_m,    ONLY:PP_redux_wait,PAR_Xk_bz_index,PAR_COM_q_for_Xo
- use openmp,        ONLY:OPENMP_update,n_threads_now,master_thread
+ use openmp,        ONLY:OPENMP_update,n_threads_now,n_threads,master_thread
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
- use interfaces,    ONLY:WF_load,PARALLEL_WF_distribute
+ use interfaces,    ONLY:WF_load
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
  use electrons,     ONLY:levels,spin_occ
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp
@@ -140,6 +140,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  endif
  if (half_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
  !
+ ! Mem est of Xo_residual (to be done here and not in the omp parallel)
+ !------------------------
+ call mem_est("Xo_WS",(/X%ng**2 *n_threads/))
+ !
  ! OpenMP setup
  !==============
  !
@@ -179,7 +183,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  if (iq==1) allocate(rhotw_save(X%ng))
  allocate(isc%rhotw(X%ng))
  allocate(Xo_residual(X%ng,X%ng))
- call mem_est("Xo_WS",(/X%ng**2 *n_threads_now/))
  !
  isave=0
  !

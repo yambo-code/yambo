@@ -29,10 +29,10 @@ subroutine section(mode,name)
  !
  use pars,       ONLY:lchlen,schlen,SP
  use it_m,       ONLY:ofiles_append
- use stderr,     ONLY:string_pack,intc
+ use stderr,     ONLY:string_pack
  use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&
 &                     date_and_time_string
- use parallel_m, ONLY:PP_redux_wait,PARALLEL_message,ncpu
+ use parallel_m, ONLY:PP_redux_wait,ncpu
  use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
 &                     write_to_report,write_the_logo,repfile
 #if defined _TIMING
@@ -52,7 +52,7 @@ subroutine section(mode,name)
  !
  character(schlen):: average_time,min_time,max_time
  !
- call PP_redux_wait
+ call PP_redux_wait()
  !
  ! Get HostName date & time etc...
  !

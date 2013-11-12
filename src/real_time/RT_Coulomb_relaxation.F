@@ -28,7 +28,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,G_lesser)
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,&
 &                          Gr_ee_matrix,l_RT_uses_E_RIM
  use QP_m,            ONLY:QP_n_states,QP_table
- use collision,       ONLY:COLLISIONS
+ use collision,       ONLY:GW_NEQ_collisions
  use parallel_m,      ONLY:PAR_QP_index,PAR_QPp_index,PAR_IND_QP,PAR_IND_QPp,PAR_Q_index,PAR_IND_Q
  !
  implicit none
@@ -96,7 +96,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,G_lesser)
          !
          f_pmq =-cI*G_lesser(i_mp,i_mp,RT_ibz_coo(i_pmq,1))
          !
-         pre_factor=abs(4.*pi*COLLISIONS(i_qp1_mem)%v3(i_qp2_mem,i_p_s,i_q_mem))**2
+         pre_factor=abs(4.*pi*GW_NEQ_collisions(i_qp1_mem)%v3(i_qp2_mem,i_p_s,i_q_mem))**2
          !
          Gr_integral=Gr_ee_matrix(i_qp1_mem,i_qp2_mem,i_q_mem,i_p_s)
          !

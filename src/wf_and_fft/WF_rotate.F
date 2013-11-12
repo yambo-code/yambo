@@ -36,12 +36,12 @@ subroutine WF_rotate(ik,WFo,wf_size)
 #endif
  use electrons,      ONLY:n_sp_pol
  use pars,           ONLY:SP
- use wave_func,      ONLY:WF
+ use wave_func,      ONLY:WAVEs,WF
  use SC,             ONLY:SC_R,SC_bands
  implicit none
  !
  integer     :: ik,wf_size,ig
- complex(SP) :: WFo(wf_size,WF%N)
+ type(WAVEs) :: WFo
  !
  ! Work Space
  !
@@ -52,16 +52,16 @@ subroutine WF_rotate(ik,WFo,wf_size)
    WS_wf=(0.,0.)
    !
    do ib  = 1,SC_bands(2)
-     ifft = WF%index(ib,ik,i_spin)
+     ifft = WFo%index(ib,ik,i_spin)
      do ibp = 1,SC_bands(2)
-       ifftp = WF%index(ibp,ik,i_spin)
+       ifftp = WFo%index(ibp,ik,i_spin)
        !
        if (ifft==0.or.ifftp==0) cycle
        !
 #if defined _OPENMP
-       call V_by_V_plus_V_omp(wf_size,SC_R(ibp,ib,ik,i_spin),WFo(:,ifftp),WS_wf(:,ib))
+       call V_by_V_plus_V_omp(wf_size,SC_R(ibp,ib,ik,i_spin),WFo%c(:,ifftp),WS_wf(:,ib))
 #else
-       call V_by_V_plus_V(wf_size,SC_R(ibp,ib,ik,i_spin),WFo(:,ifftp),WS_wf(:,ib))
+       call V_by_V_plus_V(wf_size,SC_R(ibp,ib,ik,i_spin),WFo%c(:,ifftp),WS_wf(:,ib))
 #endif
        !
      end do

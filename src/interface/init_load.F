@@ -49,7 +49,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _SC
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,SC_up_W_iters,&
 &                        SC_rho_threshold,SC_cycle_mixing,OEP_approx
- use collisions_IO, ONLY:COLLISIONS_cutoff
+ use collision,     ONLY:COLLISIONS_cutoff
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
@@ -101,7 +101,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'HF_and_locXC',   '[R XX] Hartree-Fock Self-energy and Vxc')
  call it('r',defs,'gw0',     '[R GW] GoWo Quasiparticle energy levels')
  call it('r',defs,'life',    '[R GW] GoWo Quasiparticle lifetimes')
- call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb interaction')
+ call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb potential')
  call it('r',defs,'cohsex',  '[R Xp] COlumb Hole Screened EXchange')
  !
  ! GPL_EXCLUDE_START
@@ -117,13 +117,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! GPL_EXCLUDE_END
  !
 #if defined _SC 
- call it('r',defs,'scpot',   '[R] Self-Consistent potentials') 
+ call it('r',defs,'scpot',      '[R] Self-Consistent potentials') 
+ call it('r',defs,'collisions', '[R] Eval the extended Collisions')
 #endif
 #if defined _RT
- call it('r',defs,'collisions',      '[R] Eval the extended Collisions')
- call it('r',defs,'negf',            '[R] Real-Time dynamics') 
- call it('r',defs,'el_el_scatt',     '[R] Electron-Electron Scattering')   
- call it('r',defs,'el_ph_scatt',     '[R] Electron-Phonon   Scattering')   
+ call it('r',defs,'negf',       '[R] Real-Time dynamics') 
+ call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
+ call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
 #if defined _MAGNETIC
  call it('r',defs,'magnetic','[R] Magnetic fields')
@@ -135,6 +135,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',   '[R] Electron-Phonon Correlation')   
+#endif
+#if defined _SC
  call it('r',defs,'el_el_corr',   '[R] Electron-Electron Correlation') 
 #endif
  !
@@ -172,7 +174,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Parallel Setup
  !
 #if defined _OPENMP
- call it(defs,'Threads',      '[OPENMP] Number of threads (leave 0 to use default value)',n_threads,verb_level=V_parallel)
+ call it(defs,'Threads',      '[OPENMP] Number of threads (leave 0 to use default value)',n_threads)
 #endif
 #if defined _MPI 
  call it(defs,'NLogCPUs',     '[PARALLEL] Live-timing CPU`s (0 for all)',n_log_CPUs,verb_level=V_parallel)

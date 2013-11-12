@@ -21,7 +21,7 @@
 !
 subroutine RT_initialize(E,k,q)
  ! 
- use drivers,        ONLY:l_eval_collisions,l_elph_scatt,l_elel_scatt
+ use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt
  use SC,             ONLY:local_V,SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
@@ -291,7 +291,7 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'nr','---I/O---')
  call                          msg('r', 'Time between I/O`s     [fs]:',RT_IO_time/FS2AUT)
- if (l_eval_collisions)   call msg( 'r','Extended collisions   [I/O]:',io_COLLs)
+ if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]:',io_COLLs)
  !
  call msg( 'nr','---Damping and retarded GF---')
  call msg( 'r','Retarded Green`s function   :',Gr_kind)
@@ -329,7 +329,7 @@ subroutine RT_initialize(E,k,q)
      logical :: COLLISIONS_checked
      !
      if (COLLISIONS_checked) then
-       if (l_eval_collisions.and..not.l_elel_scatt) then
+       if (l_use_collisions.and..not.l_elel_scatt) then
          XCfrozen=.FALSE.
          if (Hfrozen) call warning('COLLISIONS used but Hartree frozen')
        endif

@@ -147,6 +147,7 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_Q
  type(PP_indexes),SAVE :: PAR_IND_Xk_ibz
  type(PP_indexes),SAVE :: PAR_IND_Xk_bz
+ type(PP_indexes),SAVE :: PAR_IND_G_k
  !
  ! ... linear response
  type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_X(n_parallel_X_types)
@@ -156,11 +157,12 @@ module parallel_m
  ! ... QP
  type(PP_indexes),SAVE :: PAR_IND_QP
  type(PP_indexes),SAVE :: PAR_IND_QPp
- type(PP_indexes),SAVE :: PAR_IND_B_mat
- type(PP_indexes),SAVE :: PAR_IND_B_mat_ordered
  !
  ! ... G bands
  type(PP_indexes),SAVE :: PAR_IND_G_b
+ type(PP_indexes),SAVE :: PAR_IND_B_mat
+ type(PP_indexes),SAVE :: PAR_IND_Bp_mat
+ type(PP_indexes),SAVE :: PAR_IND_B_mat_ordered
  !
  ! ... WF
  type(PP_indexes),SAVE :: PAR_IND_WF_b
@@ -189,6 +191,7 @@ module parallel_m
  integer            :: PAR_IND_Q_ID
  integer            :: PAR_IND_Xk_ibz_ID
  integer            :: PAR_IND_Xk_bz_ID
+ integer            :: PAR_IND_G_k_ID
  !
  ! ... linear response & BSK
  integer            :: PAR_IND_VAL_BANDS_X_ID(n_parallel_X_types)
@@ -196,6 +199,7 @@ module parallel_m
  !
  ! ... RT
  integer            :: PAR_IND_B_mat_ID
+ integer            :: PAR_IND_Bp_mat_ID
  !
  ! Specific MPI COMMUNICATORS...
  !==============================
@@ -241,6 +245,8 @@ module parallel_m
  integer,allocatable:: PAR_QP_index(:)
  integer            :: PAR_n_B_mat_elements
  integer,allocatable:: PAR_B_mat_index(:,:)
+ integer            :: PAR_n_Bp_mat_elements
+ integer,allocatable:: PAR_Bp_mat_index(:,:)
  integer            :: PAR_nQ
  integer,allocatable:: PAR_Q_index(:)
  integer            :: PAR_Xk_nibz

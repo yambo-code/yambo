@@ -123,7 +123,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! WF distribution 
  !=================
  !
- call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_Xk_ibz,&
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,&
 &                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
 &                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
 &                            CLEAN_UP=.TRUE.)

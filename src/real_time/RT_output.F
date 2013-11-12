@@ -40,13 +40,14 @@ subroutine RT_output(what,VALUEs,TIME,E)
  !
  ! Work space
  !
- integer, parameter       :: n_output_files=50,max_X_order=9
+ integer, parameter       :: n_output_files=100,max_X_order=9
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
- integer                  :: n1,n2,i_f,i_fp,n_headings(n_output_files),next_file,i_order
+ integer                  :: n1,n2,i_f,i_fp,n_headings(n_output_files),next_file,i_order,i_c
  logical                  :: file_is_todo(n_output_files),open_files,initialize
  logical,           save  :: SC_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
  character(schlen)        :: headings(n_output_files,10),append_ch
+ character(2)             :: chart_string(3)
  real(SP)                 :: data_to_dump(20)
  !
  call string_split(what,orders)
@@ -145,17 +146,29 @@ subroutine RT_output(what,VALUEs,TIME,E)
  !
  ! ... energy resolved ...
  !
+ chart_string=(/"_x","_y","_z"/)
+ !
  if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'eps'
- short_file_name(next_file)=trim(append_ch)//'eps'
+&   file_name(next_file)=trim(append_ch)//'eps_along_E'
+ short_file_name(next_file)=trim(append_ch)//'eps_along_E'
  n_headings(next_file)=3
  headings(next_file,2:3)=(/'eps/Im','eps/Re'/)
  headings(next_file,1)="E [eV]"
  next_file=next_file+1
  !
+ do i_c=1,3
+   if (open_files.and..not.file_already_opened(next_file)) &
+&     file_name(next_file)=trim(append_ch)//'eps'//chart_string(i_c)
+   short_file_name(next_file)=trim(append_ch)//'eps'//chart_string(i_c)
+   n_headings(next_file)=3
+   headings(next_file,2:3)=(/'eps/Im','eps/Re'/)
+   headings(next_file,1)="E [eV]"
+   next_file=next_file+1
+ enddo
+ !
  if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'eels'
- short_file_name(next_file)=trim(append_ch)//'eels'
+&   file_name(next_file)=trim(append_ch)//'eels_along_E'
+ short_file_name(next_file)=trim(append_ch)//'eels_along_E'
  n_headings(next_file)=3
  headings(next_file,2:3)=(/'eel/Im','eel/Re'/)
  headings(next_file,1)="E [eV]"
@@ -171,17 +184,19 @@ subroutine RT_output(what,VALUEs,TIME,E)
  !
  do i_order=0,max_X_order,1
    !
-   if (open_files.and..not.file_already_opened(next_file)) &
-&     file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))
-   short_file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))
-   n_headings(next_file)=3
-   headings(next_file,1)="E [eV]"
-   headings(next_file,2:3)=(/'X/Im','X/Re'/)
-   if (i_order.ne.1) then
-      n_headings(next_file)=5
-      headings(next_file,2:5)=(/'X/Im[cm/statV]','X/Re[cm/statV]','err(X/Im)     ','err(X/Re)     '/)
-   endif
-   next_file=next_file+1
+   do i_c=1,3
+     if (open_files.and..not.file_already_opened(next_file)) &
+&       file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))//chart_string(i_c)
+     short_file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))//chart_string(i_c)
+     n_headings(next_file)=3
+     headings(next_file,1)="E [eV]"
+     headings(next_file,2:3)=(/'X/Im','X/Re'/)
+     if (i_order.ne.1) then
+        n_headings(next_file)=5
+        headings(next_file,2:5)=(/'X/Im[cm/statV]','X/Re[cm/statV]','err(X/Im)     ','err(X/Re)     '/)
+     endif
+     next_file=next_file+1
+   enddo
    !
    if (open_files.and..not.file_already_opened(next_file)) &
 &     file_name(next_file)=trim(append_ch)//'dP_W_order_'//trim(intc(i_order))
@@ -293,10 +308,16 @@ subroutine RT_output(what,VALUEs,TIME,E)
        if(l_NE_simulate_IP) n1=4
        data_to_dump(n1:n1+2) = VALUES(n2:n2+2)
        if(l_Debye_TBose_update) data_to_dump(n1+3) = Bose_Temp
-     case('YPP-eps','YPP-eels','YPP-SHG_qssin',&
-&         'YPP-X_probe_order_0','YPP-X_probe_order_1','YPP-X_probe_order_2','YPP-X_probe_order_3',&
-&         'YPP-X_probe_order_4','YPP-X_probe_order_5','YPP-X_probe_order_6','YPP-X_probe_order_7',&
-&         'YPP-X_probe_order_8','YPP-X_probe_order_9',&
+     case('YPP-eps_along_E','YPP-eps_x','YPP-eps_y','YPP-eps_z','YPP-eels_along_E','YPP-SHG_qssin',&
+&         'YPP-X_probe_order_0_x','YPP-X_probe_order_1_x','YPP-X_probe_order_2_x','YPP-X_probe_order_3_x',&
+&         'YPP-X_probe_order_4_x','YPP-X_probe_order_5_x','YPP-X_probe_order_6_x','YPP-X_probe_order_7_x',&
+&         'YPP-X_probe_order_8_x','YPP-X_probe_order_9_x',&
+&         'YPP-X_probe_order_0_y','YPP-X_probe_order_1_y','YPP-X_probe_order_2_y','YPP-X_probe_order_3_y',&
+&         'YPP-X_probe_order_4_y','YPP-X_probe_order_5_y','YPP-X_probe_order_6_y','YPP-X_probe_order_7_y',&
+&         'YPP-X_probe_order_8_y','YPP-X_probe_order_9_y',&
+&         'YPP-X_probe_order_0_z','YPP-X_probe_order_1_z','YPP-X_probe_order_2_z','YPP-X_probe_order_3_z',&
+&         'YPP-X_probe_order_4_z','YPP-X_probe_order_5_z','YPP-X_probe_order_6_z','YPP-X_probe_order_7_z',&
+&         'YPP-X_probe_order_8_z','YPP-X_probe_order_9_z',&
 &         'YPP-dP_W_order_0','YPP-dP_W_order_1','YPP-dP_W_order_2','YPP-dP_W_order_3','YPP-dP_W_order_4',&
 &         'YPP-dP_W_order_5','YPP-dP_W_order_6','YPP-dP_W_order_7','YPP-dP_W_order_8','YPP-dP_W_order_9',&
 &         'YPP-Polarization_W')

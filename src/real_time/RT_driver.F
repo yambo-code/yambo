@@ -22,7 +22,7 @@
 subroutine RT_driver(E,X,k,q)
  !
  use pars,           ONLY:SP,cI
- use drivers,        ONLY:l_eval_collisions,l_elph_scatt,l_elel_scatt 
+ use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_elel_corr
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use LIVE_t,         ONLY:live_timing 
@@ -43,8 +43,7 @@ subroutine RT_driver(E,X,k,q)
  use memory_m,        ONLY:mem_est
  use com,             ONLY:error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
- use collisions_IO,   ONLY:collisions_IO_alloc,collisions_IO_free,collisions_RANGES_setup
- use collision,       ONLY:free_COLLISIONS_v
+ use collision,       ONLY:HF_collisions,COHSEX_collisions,GW_NEQ_collisions
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k
@@ -106,7 +105,7 @@ subroutine RT_driver(E,X,k,q)
  !
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
  call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
- call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_index( )
  !
  ! Dipoles
@@ -143,14 +142,6 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_alloc(E)
  !
- if (io_COLLs) then
-   !
-   call collisions_RANGES_setup()
-   !
-   call collisions_IO_alloc()
-   !
- endif
- !
  ! Restart from a previous RT run or from a SC calculation
  ! 
  call section('=','Start and Restart')
@@ -163,7 +154,7 @@ subroutine RT_driver(E,X,k,q)
    !
    if (io_COLLs) then
      !
-     if (.not.l_eval_collisions) call error('COLLISIONs database missing')
+     if (.not.l_use_collisions) call error('COLLISIONs database missing')
      !
      call COLLISIONS_load(.FALSE.)
      !
@@ -182,7 +173,8 @@ subroutine RT_driver(E,X,k,q)
    !      
    call RT_free()
    !
-   call collisions_IO_free() 
+   !if (l_elel_corr)  call COLLISIONS_free("STATIC","all",STATIC_collisions,PAR_nQP)
+   !if (l_elel_scatt) call COLLISIONS_free("GW_NEQ","all",GW_NEQ_collisions,PAR_nQP)
    !
    call WF_free(WF)
    !
@@ -383,11 +375,11 @@ subroutine RT_driver(E,X,k,q)
  !-----------
  call RT_free()
  !
- call collisions_IO_free() 
- !
  call WF_free(WF)
  !
- if(.not.local_V.and..not.l_NE_simulate_IP) call free_COLLISIONS_v()
+ if (allocated(HF_collisions))     call COLLISIONS_alloc_and_free("HF","v1 table","clean",0)
+ if (allocated(COHSEX_collisions)) call COLLISIONS_alloc_and_free("COHSEX","v1 table","clean",0)
+ if (allocated(GW_NEQ_collisions)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
  !
  call set_real_printed_length()
  !

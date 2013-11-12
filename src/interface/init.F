@@ -57,7 +57,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC
  use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
- use collisions_IO,  ONLY:io_COLLISIONS,V_kind
+ use collision,      ONLY:V_kind
+ use interfaces,     ONLY:io_COLLISIONS
 #endif
 #if defined _RT
  use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe
@@ -452,7 +453,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    endif
  endif
  !
- if (l_HF_and_locXC.or.l_gw0) call CPU_activate("SE")
+ if (l_HF_and_locXC.or.l_gw0.or.l_cohsex) call CPU_activate("SE")
  !
  if (l_eval_collisions) call CPU_activate("RT")
  !
@@ -688,22 +689,21 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! DFT
  !
 #if defined _SC
- if (l_sc_run.and..not.l_real_time) then
-   !
+ if (l_sc_run) then
    call initactivate( 1,'Potential FFTGvecs Gauge SCBands EXXCut')
-   !
-   call initactivate( 1,'SCmixing SClwBand SCnlMix BandMix')
-   call initactivate(-1,'QpntsRXs')
-  if (l_cohsex) call initactivate(1,'GbndRnge UseEbands SCUpWIter')
-   call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
-   if (trim(SC_potential)=='EXX'.or.trim(SC_potential)=='EXXC'.or.&
-&      trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
-   call initactivate(1,'SCdiag Mean_Potential')
-   !
+   if (.not.l_real_time) then
+     call initactivate( 1,'SCmixing SClwBand SCnlMix BandMix')
+     call initactivate(-1,'QpntsRXs')
+     if (l_cohsex) call initactivate(1,'GbndRnge UseEbands SCUpWIter')
+     call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
+     if (trim(SC_potential)=='EXX'.or.trim(SC_potential)=='EXXC'.or.&
+&        trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
+     call initactivate(1,'SCdiag Mean_Potential')
+   endif
  endif
 #endif
  !
-#if defined _RT
+#if defined _SC
  !
  ! REAL-TIME specific
  !
@@ -715,6 +715,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate( 1,'Potential FFTGvecs Gauge SCBands EXXCut')
    !
  endif
+#endif
+#if defined _RT
  !
  if (l_real_time) then
    call QP_ctl_switch('G')
@@ -966,9 +968,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_sc_run=runlevel_is_on('scpot')
        l_real_time=runlevel_is_on('negf')
        l_sc_magnetic=runlevel_is_on('magnetic')
+       l_eval_collisions=runlevel_is_on('collisions')
 #endif
 #if defined _RT
-       l_eval_collisions=runlevel_is_on('collisions')
        l_elel_scatt =runlevel_is_on('el_el_scatt')
        l_elph_scatt=runlevel_is_on('el_ph_scatt')
 #endif
@@ -993,7 +995,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
        l_elel_corr=runlevel_is_on('el_el_corr')
 #else
-       l_elel_corr=l_gw0.or.l_life
+       l_elel_corr=l_gw0.or.l_life.or.l_eval_collisions
 #endif
        !
        ! Check if this runlevel is allowed in the 
@@ -1058,12 +1060,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _RT
      !
-     ! Default collisions are COHSEX, but it is possible to define something different
-     if (l_eval_collisions) then
-       call initactivate(1,'scpot')
-       SC_potential='COHSEX'
-       call initactivate(1,'em1s cohsex HF_and_locXC')
-     else if (l_real_time) then
+     if (l_real_time) then
        call switch_off_runlevel('cohsex',on_name=' ')
        call switch_off_runlevel('HF_and_locXC',on_name=' ')
        call switch_off_runlevel('em1s',on_name=' ')
@@ -1437,9 +1434,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
 #endif
        !
+#if defined  _ELPH 
        ! ELPH
        !
-#if defined  _ELPH 
        if ( trim(rstr_piece(i1)) == 'corrtp' ) then
          if ( trim(rstr_piece(i1+1)) == 'e') l_elel_corr=.true.
          if ( trim(rstr_piece(i1+1)) == 'p') l_elph_corr=.true.
@@ -1468,7 +1465,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if (l_elph_scatt) call initactivate(1,'el_ph_scatt')
          if (l_elel_scatt) call initactivate(1,'el_el_scatt')
        endif
-       !
+#endif
+#if defined  _SC
        if ( trim(rstr_piece(i1)) == 'collisions' ) then
          if ( trim(rstr_piece(i1+1)) == 'c') l_elel_corr=.true.
          if ( trim(rstr_piece(i1+1)) == 's') l_elel_scatt=.true.

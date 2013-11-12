@@ -25,6 +25,13 @@ module interfaces
  !
  interface
    !
+   integer function io_COLLISIONS(i_qp,ID,COLL)
+     use collision,  ONLY:COLLISIONS_element
+     integer, intent(inout)             ::ID
+     integer, intent(in)                ::i_qp
+     type(COLLISIONS_element), optional :: COLL
+   end function
+   !
    subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&
 &                     spins_to_load,space,title,impose_free_and_alloc,force_WFo)
      use wave_func,       ONLY:WAVEs
@@ -54,23 +61,23 @@ module interfaces
      logical,        optional::RESET
    end subroutine
    !
-   subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU,CHAIN)
+   subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU)
      character(*)          :: WHAT
      character(*),optional :: ENVIRONMENT
-     integer,     optional :: LOADED,TOTAL,NCPU,CHAIN
+     integer,     optional :: LOADED,TOTAL,NCPU
    end subroutine
    !
-   subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,CLEAN_UP)
+   subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Bm_index,CLEAN_UP)
      !
      use parallel_m,      ONLY:PP_indexes
      !
      implicit none
      !
-     integer, intent(in)           :: NB,NK
      type(PP_indexes),    optional :: K_index
      type(PP_indexes),    optional :: B_index
      type(PP_indexes),    optional :: Bp_index
      type(PP_indexes),    optional :: QP_index
+     type(PP_indexes),    optional :: Bm_index
      logical, intent(in), optional :: CLEAN_UP
      !
    end subroutine 

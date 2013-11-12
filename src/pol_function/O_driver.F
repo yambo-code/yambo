@@ -83,7 +83,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! WF distribution 
    !=================
    !
-   call PARALLEL_WF_distribute(X%ib(2),Xk%nibz,K_index=PAR_IND_Xk_ibz,&
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,&
 &                              B_index=PAR_IND_CON_BANDS_X(X%whoami),&
 &                              Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
 &                              CLEAN_UP=.TRUE.)

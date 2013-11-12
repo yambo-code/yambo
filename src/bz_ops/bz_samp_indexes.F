@@ -37,7 +37,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
  !
- use pars,           ONLY:SP,schlen,lchlen,IP
+ use pars,           ONLY:SP,lchlen,IP
  use drivers,        ONLY:l_bse
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:gen_fmt
@@ -46,13 +46,12 @@ subroutine bz_samp_indexes(k,Xk,q)
  use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use vec_operate,    ONLY:v_is_zero,c2a
- use R_lattice,      ONLY:b,d3q_factor,RL_vol,g_vec,ng_vec,&
+ use R_lattice,      ONLY:b,d3q_factor,RL_vol,&
 &                         nqibz,nqbz,qindx_X,qindx_B,qindx_S,qp_states_k,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
 &                         q_sstar
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use zeros,          ONLY:G_iku_zero
  use parser_m,       ONLY:parser
 #if defined _ELPH
  use ELPH,           ONLY:elph_use_q_grid
@@ -286,6 +285,11 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  call live_timing()
  !
+ ! For some reason I have seen CPU's loading the DB while/before it is actually written.
+ ! This is avoided here by using the PP_redux_wait call.
+ !
+ call PP_redux_wait()
+ !
  if (.not.connected_grids) call msg('rsn','[RL indx] X & Total k-grids are not connected')
  !
 1 call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=io_db)
@@ -296,7 +300,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  call k_ibz2bz(Xk,'d',.false.)
  deallocate(q_map,q_iptbz)
  if (Xk_grid_is_uniform) deallocate(q%ptbz)
- call PP_redux_wait
+ call PP_redux_wait()
  !
  contains 
    !

@@ -104,7 +104,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      !
    enddo
 #if defined _TIMING
-   call timing('RT relaxation (e-e)',OPR='end')
+   call timing('RT relaxation (e-e)',OPR='stop')
 #endif
    !
  endif
@@ -133,7 +133,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    enddo
    !
 #if defined _TIMING
-   call timing('RT relaxation (e-p)',OPR='end')
+   call timing('RT relaxation (e-p)',OPR='stop')
 #endif
    !
  endif

@@ -163,7 +163,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
  endif   
  !
 #if defined _TIMING
- call timing('RT integrator',OPR='end')
+ call timing('RT integrator',OPR='stop')
 #endif
  !
 end subroutine RT_Integrator

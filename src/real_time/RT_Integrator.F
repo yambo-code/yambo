@@ -111,7 +111,15 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
    !
    if (l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step/2._SP)
    !
+#if defined _TIMING
+   call timing('RT integrator',OPR='stop')
+#endif
+   !
    call RT_Collision(G_new,A_new,E,k,q,Time+T_step/2._SP)
+   !
+#if defined _TIMING
+   call timing('RT integrator',OPR='start')
+#endif
    !
    ! final step G(t+dt)=G(t) + dt * (I1(t+dt/2) - I2(t+dt/2))
    !
@@ -141,7 +149,15 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
    !
    if (l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step/2._SP)
    !
+#if defined _TIMING
+   call timing('RT integrator',OPR='start')
+#endif
+   !
    call RT_Collision(G_new,A_new,E,k,q,Time+T_step/2._SP)
+   !
+#if defined _TIMING
+   call timing('RT integrator',OPR='stop')
+#endif
    !
    ! final step G(t+dt)= U1(t + dt) G(t) U2(t+dt) + dt * Sigma_relax(t+dt/2)
    !
@@ -163,7 +179,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
  endif   
  !
 #if defined _TIMING
- call timing('RT integrator',OPR='end')
+ call timing('RT integrator',OPR='stop')
 #endif
  !
 end subroutine RT_Integrator

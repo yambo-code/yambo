@@ -725,7 +725,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
    if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol UseDebyeE UpdtDebyeT ElPhModes')
    call initactivate(1,'RTjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
-   call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField SkipGFIO SkipOCCIO IOtime COLLISIONS_on_the_fly')
+   call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField SkipGFIO SkipOCCIO IOtime')
    if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
    if (              l_RT_pump_and_probe) call Afield_activate('Pump')
    !

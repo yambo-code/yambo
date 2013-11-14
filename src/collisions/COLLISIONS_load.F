@@ -25,7 +25,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! exchange, COHSEX etc.. 
  !
  use pars,            ONLY:SP
- use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_use_collisions,l_sc_srpa,l_elel_scatt,l_elel_corr
+ use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_use_collisions,l_sc_srpa,l_elel_scatt
  use LIVE_t,          ONLY:live_timing
  use QP_m,            ONLY:QP_n_states
  use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
@@ -54,18 +54,12 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  V_kinds     =0
  !
  condition=l_sc_hf.or.l_sc_cohsex.or.l_sc_exx
-#if defined _RT
- condition=condition.and.l_elel_corr
-#endif
  if (condition) then
    n_V_kinds          =n_V_kinds+1
    V_kinds(n_V_kinds) =SC_HF
  endif
  !
  condition=l_sc_cohsex.or.l_sc_srpa
-#if defined _RT
- condition=condition.and.l_elel_corr
-#endif
  if (condition) then
    n_V_kinds          =n_V_kinds+1
    V_kinds(n_V_kinds) =SC_COHSEX
@@ -148,7 +142,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
              if (.not.PAR_IND_Q%element_1D(i3)) cycle
              i_qpp_mem=PAR_QPp_index(i1)
              i_q_mem  =PAR_Q_index(i3)
-             GW_NEQ_collisions(i_qp_mem)%v3(i1,i2,i3)=GW_NEQ_collisions(1)%v(ic)
+             GW_NEQ_collisions(i_qp_mem)%v3(i_qpp_mem,i2,i_q_mem)=GW_NEQ_collisions(1)%v(ic)
              ic=ic+1
            enddo
          enddo

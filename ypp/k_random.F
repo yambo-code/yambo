@@ -133,6 +133,8 @@ subroutine k_random(Xk,Xen)
  !
  impose_gamma_radius=gamma_radius>0.
  !
+ if (n_RIM_DBs==0.and.BZ_RIM_nkpts==0) return
+ !
  if (n_RIM_DBs==0) then
    !
    call date_and_time(ch(1),ch(2),ch(3),iseed)

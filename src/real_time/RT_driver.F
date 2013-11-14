@@ -173,9 +173,6 @@ subroutine RT_driver(E,X,k,q)
    !      
    call RT_free()
    !
-   !if (l_elel_corr)  call COLLISIONS_free("STATIC","all",STATIC_collisions,PAR_nQP)
-   !if (l_elel_scatt) call COLLISIONS_free("GW_NEQ","all",GW_NEQ_collisions,PAR_nQP)
-   !
    call WF_free(WF)
    !
    call X_alloc("P_square")

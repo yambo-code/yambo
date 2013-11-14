@@ -83,7 +83,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
        if (l_collision) deallocate(HF_collisions)
        call local_alloc_and_free(HF_collisions,nHF_collisions)
      endif
-     nHF_collisions=0
+     if (l_collision) nHF_collisions=0
    else
      call local_alloc_and_free(HF_collisions,nHF_collisions)
    endif
@@ -104,7 +104,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
        if (l_collision) deallocate(COHSEX_collisions)
        call local_alloc_and_free(COHSEX_collisions,nCOHSEX_collisions)
      endif
-     nCOHSEX_collisions=0
+     if (l_collision) nCOHSEX_collisions=0
    else
      call local_alloc_and_free(COHSEX_collisions,nCOHSEX_collisions)
    endif
@@ -129,7 +129,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
        if (l_collision) deallocate(GW_NEQ_collisions)
        call local_alloc_and_free(GW_NEQ_collisions,nGW_NEQ_collisions)
      endif
-     nGW_NEQ_collisions=0
+     if (l_collision) nGW_NEQ_collisions=0
    else
      call local_alloc_and_free(GW_NEQ_collisions,nGW_NEQ_collisions)
    endif

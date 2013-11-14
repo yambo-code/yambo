@@ -203,7 +203,7 @@ module real_time
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
  complex(SP), allocatable :: Sigma_relax(:,:,:)
  !
- real(SP),    allocatable :: rho_reference(:)    ! reference density from SC_lw_band:SC_bands(2)
+ real(SP),    allocatable :: rho_reference(:)    ! reference density from SC_bands(1):SC_bands(2)
  real(SP),    allocatable :: full_rho(:)         ! density of all bands from 1:SC_bands(2)
  !
  ! Integrator Variables

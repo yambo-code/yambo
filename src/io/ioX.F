@@ -52,14 +52,14 @@ integer function ioX(X,Xw,ID)
  character (2)       ::local_XC_KIND
  real(SP),allocatable::X_disk(:,:,:),W_disk(:,:),RL_vecs_disk(:,:)
  !
+#if defined _TIMING
+ call timing('io_X',OPR='start')
+#endif
+ !
  if (.not.io_X) then
    ioX=IO_NOT_ALLOWED
    goto 1
  endif
- !
-#if defined _TIMING
- call timing('io_X',OPR='start')
-#endif
  !
  ! I assume that he RL ordering used to build X is not different
  ! from the one in DB1

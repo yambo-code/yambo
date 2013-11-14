@@ -46,6 +46,9 @@ integer function io_RT_components(what,ID)
 #endif                                
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use fragments,      ONLY:io_fragment
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  integer,      intent(in) :: ID
@@ -63,6 +66,10 @@ integer function io_RT_components(what,ID)
  logical               :: do_IO
  integer               :: i_time_range(2)
  real(SP)              :: A_vecpot_disk(3,3,2)
+ !
+#if defined _TIMING
+ call timing('io_RT_components',OPR='start')
+#endif
  !
  l_occupations=what=="occupations"
  l_THETA      =what=="THETA"
@@ -105,7 +112,7 @@ integer function io_RT_components(what,ID)
      else
        io_RT_components=0
        call io_reset(ID)
-       if(.not.l_J_and_P) return
+       if(.not.l_J_and_P) goto 2
      endif
    endif
  endif
@@ -114,7 +121,7 @@ integer function io_RT_components(what,ID)
    if( (mod(NE_i_time,RT_IO_steps)/=0.and.NE_i_time/=1) .and.NE_dynamics.and.write_is_on(ID)) then
      io_RT_components=0
      call io_reset(ID)
-     return
+     goto 2
    endif
  endif
  if (l_G) then
@@ -377,5 +384,11 @@ integer function io_RT_components(what,ID)
  endif       
  !
 1 call io_disconnect(ID=ID)
+ !
+2 continue
+ !
+#if defined _TIMING
+ call timing('io_RT_components',OPR='stop')
+#endif
  !
 end function

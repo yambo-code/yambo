@@ -295,7 +295,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! I/O
  !
- call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,OCC)',&
+ call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,OCCs,WF,SC)',&
 &                         DBs_IO_control_string,verb_level=V_io)
  !
  ! GPL_EXCLUDE_END
@@ -337,11 +337,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! I/O
  !
- call it(defs,'IOtime',        '[RT] Time between to consecutive I/O',RT_IO_time,verb_level=V_real_time,unit=Time_unit)
+ call it(defs,'IOtime',        '[RT] Time between to consecutive I/O',RT_IO_time,unit=Time_unit)
  call it('f',defs,'SkipGFIO',  '[RT] Do not write on disk the Green Functions',verb_level=V_real_time)
  call it('f',defs,'SkipOCCIO', '[RT] Do not write on disk the Occupations',verb_level=V_real_time)
  call it('f',defs,'SkipJPIO',  '[RT] Do not write on disk the current and polarization',verb_level=V_real_time)
- call it('f',defs,'COLLISIONS_on_the_fly', '[RT] Calculate COLLISIONS on-the-fly',verb_level=V_real_time)
  !
  ! Other parameters of RT (to be switched on using the verbosity)
  !

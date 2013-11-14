@@ -34,7 +34,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
 &                        HF_collisions,nHF_collisions
- use QP_m,          ONLY:QP_ng_Sx,QP_table,QP_nb,QP_n_states
+ use QP_m,          ONLY:QP_ng_Sx,QP_table,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
  use SC,            ONLY:SC_bands
 #if defined _TIMING
@@ -70,13 +70,13 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
  !
  call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
  !
-! if ((l_gw0.or.l_cohsex).and.WF_buffered_IO) then
-!   !
-!   call WF_load(WF_buffer,0,1,(/1,n_WF_bands_to_load/),(/1,k%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
-!   !
-! endif
+ if (WF_buffered_IO) then
+   !
+   call WF_load(WF_buffer,0,1,SC_bands,(/1,k%nibz/),space='B',title='-BUFFER')
+   !
+ endif
  !
- call WF_load(WF,QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF Collisions')
+ call WF_load(WF,QP_ng_Sx,maxval(qindx_S(:,:,2)),SC_bands,(/1,k%nibz/),title='-HF Collisions')
  !
 #if defined _TIMING
  call timing('HF Collisions',OPR='start')

@@ -25,7 +25,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! exchange, COHSEX etc.. 
  !
  use pars,            ONLY:SP
- use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_use_collisions,l_sc_srpa,l_elel_scatt
+ use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_use_collisions,l_sc_srpa,l_elel_scatt,l_elel_corr
  use LIVE_t,          ONLY:live_timing
  use QP_m,            ONLY:QP_n_states
  use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
@@ -66,7 +66,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  endif
  !
 #if defined _RT
- if(l_sc_cohsex.and.l_elel_scatt) then
+ if(l_elel_scatt) then
    n_V_kinds          =n_V_kinds+1
    V_kinds(n_V_kinds) =SE_GW_NEQ
  endif
@@ -122,7 +122,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
         io_err(iv)=io_COLLISIONS(i_qp,ID,COHSEX_collisions(i_qp_mem))
         call COLLISIONS_alloc_and_free("COHSEX","v1 table","alloc",i_qp_mem)
      endif
-     if (V_kind==SE_GW_NEQ.and.i_qp==1) then
+     if (V_kind==SE_GW_NEQ.and..not.associated(GW_NEQ_collisions(1)%v)) then
         io_err(iv)=io_COLLISIONS(i_qp,ID,GW_NEQ_collisions(1))
         call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","alloc",1)
      endif

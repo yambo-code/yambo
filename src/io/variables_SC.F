@@ -338,7 +338,7 @@ integer function variables_SC(ID,local_description,what)
 &    VAR=' [RT] Diagonalization steps      :',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   if (l_J) then
+   if (l_J.or.l_occupations) then
      call io_elemental(ID,DB_I0=RT_IO_steps_DB,I0=RT_IO_JPO_steps,&
 &      VAR=' [RT] IO steps                   :',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))

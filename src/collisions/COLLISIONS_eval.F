@@ -29,8 +29,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use D_lattice,     ONLY:i_time_rev
  use QP_m,          ONLY:QP_nb,QP_n_states,QP_n_G_bands,QP_state
  use wave_func,     ONLY:WF
- use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
- use SC,            ONLY:SC_bands
+ use global_XC,     ONLY:SC_HF,SC_COHSEX,WF_kind,WF_xc_functional
+ use SC,            ONLY:SC_bands,SC_potential
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
  use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,nGW_NEQ_collisions,&
 &                        HF_collisions,COHSEX_collisions,GW_NEQ_collisions,nCOHSEX_collisions
@@ -59,6 +59,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! If I am calculating the collisions then I can use them
  !
  l_use_collisions=.TRUE.
+ l_elel_corr=trim(SC_potential)=="COHSEX"
  !
  ! QP states setup
  !
@@ -84,7 +85,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! PARALLEL Setup
  !================
- if (l_elel_corr) then
+ if (l_elel_corr.or.l_HF_and_locXC) then
 #if defined _SC && defined _RT
    call PARALLEL_global_indexes(E,k,q,"Real_Time")
    call PARALLEL_WF_distribute(K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
@@ -98,7 +99,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call PARALLEL_WF_index( )
  endif
  !
- if (l_HF_and_locXC.and.l_elel_corr) then
+ if (l_HF_and_locXC) then
    !
    call section('+','Hartree-Fock')
    !================================
@@ -193,16 +194,12 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (io_COLLs) then
    if (allocated(fragment_status)) deallocate(fragment_status)
    call mem_est("fragment_status")
-   if (l_elel_corr) then
-     call COLLISIONS_alloc_and_free("HF","v3 table","clean",1)
-     if (l_cohsex) call COLLISIONS_alloc_and_free("COHSEX","v3 table","clean",1)
-   endif
-   if (l_elel_scatt) call COLLISIONS_alloc_and_free("GW_NEQ","v3 table","clean",1)
+   if (l_HF_and_locXC) call COLLISIONS_alloc_and_free("HF","v3 table","clean",1)
+   if (l_elel_corr)    call COLLISIONS_alloc_and_free("COHSEX","v3 table","clean",1)
+   if (l_elel_scatt)   call COLLISIONS_alloc_and_free("GW_NEQ","v3 table","clean",1)
  else
-   if (l_elel_corr) then
-     call COLLISIONS_alloc_and_free("HF","v3","clean",1)
-     if (l_cohsex) call COLLISIONS_alloc_and_free("COHSEX","v3","clean",1)
-   endif
+   if (l_HF_and_locXC) call COLLISIONS_alloc_and_free("HF","v3","clean",1)
+   if (l_elel_corr)    call COLLISIONS_alloc_and_free("COHSEX","v3","clean",1)
  endif
  !
 end subroutine

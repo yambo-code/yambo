@@ -1180,7 +1180,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      ! Work Space
      !
-     integer          ::i1,i2,n_pieces
+     integer          ::i1,i2,n_pieces,i3
      character(schlen)::rstr_piece(2*nrnlvls),strings_to_not_use_as_runlevels(nrnlvls)
      !
      ! Bug fix (17/9/2012). If any string following a -### identifier contains 
@@ -1203,283 +1203,279 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      enddo
      if (n_pieces==0) return
      !
-     INPUT_strings_loop: do i1=1,n_pieces
+     do i3=1,2
        !
-       if (trim(rstr_piece(i1))=='ifile') cycle
-       if (i1>1) then
-         if(trim(rstr_piece(i1-1))=='ifile') cycle
-       endif
-       !
-       do i2=1,nrnlvls
-         if (i1==1) then
-            if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1))) infile_editing=.true.
-         else
-           if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)).and.&
-&               trim(rstr_piece(i1-1)) /= 'jobstr' ) infile_editing=.true.
+       INPUT_strings_loop: do i1=1,n_pieces
+         !
+         if (trim(rstr_piece(i1))=='ifile') cycle
+         if (i1>1) then
+           if(trim(rstr_piece(i1-1))=='ifile') cycle
          endif
-       enddo
-       !
-       if (i1>1) then
+         !
          do i2=1,nrnlvls
-           if (trim(rstr_piece(i1  )) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
-           if (trim(rstr_piece(i1-1)) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
+           if (i1==1) then
+              if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1))) infile_editing=.true.
+           else
+             if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)).and.&
+&                 trim(rstr_piece(i1-1)) /= 'jobstr' ) infile_editing=.true.
+           endif
          enddo
-       endif
-       !
-       ! Run Levels
-       !
-       call initactivate(1, trim(rstr_piece(i1)) )
-       !
-       ! Verbosity
-       ! V_RL=1
-       ! V_kpt=2
-       ! V_sc=3
-       ! V_qp=4
-       ! V_io=5
-       ! V_general=6
-       ! V_resp=7
-       ! V_real_time=8
-       ! V_parallel=9
-       ! V_all=99
-       !
-       if ( trim(rstr_piece(i1)) == 'infver' ) then
-         select case (trim(rstr_piece(i1+1)))
-           case ('RL','rl')
-             infile_verbosity=V_RL
-           case ('kpt','k')
-             infile_verbosity=V_kpt
-           case ('sc','SC')
-             infile_verbosity=V_sc
-           case ('QP','qp')
-             infile_verbosity=V_qp
-           case ('IO','io')
-             infile_verbosity=V_io
-           case ('gen')
-             infile_verbosity=V_general
-           case ('resp','X')
-             infile_verbosity=V_resp
-           case ('rt')
-             infile_verbosity=V_real_time
-           case ('par')
-             infile_verbosity=V_parallel
-           case ('all')
-             infile_verbosity=V_all
-         end select
-       endif
-       !
-       if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' ) Chi_mode='hartree'
-       !
-       ! BSE/LLR
-       !
-       if ( trim(rstr_piece(i1)) == 'optics' )  then
          !
-         if(l_bse.or.l_chi) call error(' -k option given befor -o in the command line')
+         if (i1>1) then
+           do i2=1,nrnlvls
+             if (trim(rstr_piece(i1  )) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
+             if (trim(rstr_piece(i1-1)) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
+           enddo
+         endif
          !
-         l_chi= (trim(rstr_piece(i1+1))=='g' ).or.(trim(rstr_piece(i1+1))=='c')
-         l_bse= (trim(rstr_piece(i1+1))=='eh').or.(trim(rstr_piece(i1+1))=='b')
+         ! Run Levels
          !
-         if (.not.l_chi.and..not.l_bse) l_chi=.true.
+         call initactivate(1, trim(rstr_piece(i1)) )
          !
-         call initactivate(1,'optics')
-         if (l_chi) call initactivate(1,'chi')
-         if (l_bse) call initactivate(1,'bse')
-#if defined _KERR
-         l_kerr=l_bse
-#endif
-         if (l_chi.and.trim(Chi_mode)==' ') Chi_mode='IP'
-         if (l_bse.and.trim(BSK_mode)==' ') BSK_mode='IP'
+         ! Verbosity
+         ! V_RL=1
+         ! V_kpt=2
+         ! V_sc=3
+         ! V_qp=4
+         ! V_io=5
+         ! V_general=6
+         ! V_resp=7
+         ! V_real_time=8
+         ! V_parallel=9
+         ! V_all=99
          !
-       endif
-       !
-       ! Approximation used for the BSE/LLR kernel
-       !
-       if ( trim(rstr_piece(i1)) == 'kernel' )  then
+         if ( trim(rstr_piece(i1)) == 'infver' ) then
+           select case (trim(rstr_piece(i1+1)))
+             case ('RL','rl')
+               infile_verbosity=V_RL
+             case ('kpt','k')
+               infile_verbosity=V_kpt
+             case ('sc','SC')
+               infile_verbosity=V_sc
+             case ('QP','qp')
+               infile_verbosity=V_qp
+             case ('IO','io')
+               infile_verbosity=V_io
+             case ('gen')
+               infile_verbosity=V_general
+             case ('resp','X')
+               infile_verbosity=V_resp
+             case ('rt')
+               infile_verbosity=V_real_time
+             case ('par')
+               infile_verbosity=V_parallel
+             case ('all')
+               infile_verbosity=V_all
+           end select
+         endif
          !
-         ! if the optics option is not present define defaults
-         ! since kernel does not correspond to a runlevel, set 
-         ! infile_editing=.true.           
+         if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' .or.&
+&             runlevel_is_on('em1s')         .or.  runlevel_is_on('em1d')  .or. &
+&             runlevel_is_on('cohsex')  &
+&           ) Chi_mode='hartree'
          !
-         if (.not.l_bse.and..not.l_chi) then
-           l_chi =((trim(rstr_piece(i1+1)) == 'hartree').or.&
-                  &( trim(rstr_piece(i1+1)) == 'lrc'))
-           l_bse =((trim(rstr_piece(i1+1)) == 'alda').or.&
-                  &(trim(rstr_piece(i1+1)) == 'sex').or.&
-                  &(trim(rstr_piece(i1+1)) == 'hf').or.&
-                  &( trim(rstr_piece(i1+1)) == 'bsfxc'))
-           infile_editing=.true.           
+         ! BSE/LLR
+         !
+         if ( trim(rstr_piece(i1)) == 'optics' )  then
+           !
+           l_chi= (trim(rstr_piece(i1+1))=='g' ).or.(trim(rstr_piece(i1+1))=='c')
+           l_bse= (trim(rstr_piece(i1+1))=='eh').or.(trim(rstr_piece(i1+1))=='b')
+           !
+           if (.not.l_chi.and..not.l_bse) l_chi=.true.
+           !
            call initactivate(1,'optics')
            if (l_chi) call initactivate(1,'chi')
            if (l_bse) call initactivate(1,'bse')
-         end if
-         !
-         BSK_mode='Hartree'
-         Chi_mode='Hartree'
-         !
-         if(l_bse)  then
-           if(trim(rstr_piece(i1+1)) == 'hartree')  BSK_mode='Hartree'
-           if(trim(rstr_piece(i1+1)) == 'hf')       BSK_mode='HF'
-           if( trim(rstr_piece(i1+1)) == 'alda')    BSK_mode='ALDA'
-           if(trim(rstr_piece(i1+1)) == 'sex')      BSK_mode='SEX'
-           if( trim(rstr_piece(i1+1)) == 'bsfxc')   BSK_mode='BSfxc'
-         else if(l_chi) then
-           if(trim(rstr_piece(i1+1)) == 'hartree')  Chi_mode='Hartree'
-           if( trim(rstr_piece(i1+1)) == 'alda')    Chi_mode='ALDA'
-           if( trim(rstr_piece(i1+1)) == 'lrc')     Chi_mode='LRC'
-           if( trim(rstr_piece(i1+1)) == 'bsfxc')   Chi_mode='BSfxc'
+#if defined _KERR
+           l_kerr=l_bse
+#endif
+           if (l_chi.and.trim(Chi_mode)==' ') Chi_mode='IP'
+           if (l_bse.and.trim(BSK_mode)==' ') BSK_mode='IP'
+           !
          endif
          !
-         if((trim(rstr_piece(i1+1)) == 'alda').or.&
-           &(trim(rstr_piece(i1+1)) == 'lrc').or.&
-           &(trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
+         ! Approximation used for the BSE/LLR kernel
          !
-         if(l_bse)   call initactivate(1,'bsk')
-         !
-       endif
-       !
-       ! BSE Solver
-       !
-       if ( trim(rstr_piece(i1)) == 'bss' )  then
-         BSS_mode=trim(rstr_piece(i1+1))
-         if (index(BSS_mode,'h')==0.and.index(BSS_mode,'d')==0.and.&
-&            index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0) BSS_mode='h'
-         !
-         ! With and ALDA Fxc the t solver is not permitted
-         !
-         if (l_alda_fxc.and.index(BSS_mode,'t')/=0) BSS_mode='h'
-         if (BSK_mode=='IP') call switch_off_runlevel('bss',on_name=' ')
-         if (BSK_mode==' ') then
-           BSK_mode="SEX"
-           Chi_mode="Hartree"
+         if ( trim(rstr_piece(i1)) == 'kernel' )  then
+           !
+           ! if the optics option is not present define defaults
+           ! since kernel does not correspond to a runlevel, set 
+           ! infile_editing=.true.           
+           !
+           if (.not.l_bse.and..not.l_chi) then
+             l_chi =((trim(rstr_piece(i1+1)) == 'hartree').or.&
+                    &( trim(rstr_piece(i1+1)) == 'lrc'))
+             l_bse =((trim(rstr_piece(i1+1)) == 'alda').or.&
+                    &(trim(rstr_piece(i1+1)) == 'sex').or.&
+                    &(trim(rstr_piece(i1+1)) == 'hf').or.&
+                    &( trim(rstr_piece(i1+1)) == 'bsfxc'))
+             infile_editing=.true.           
+             call initactivate(1,'optics')
+             if (l_chi) call initactivate(1,'chi')
+             if (l_bse) call initactivate(1,'bse')
+           end if
+           !
+           BSK_mode='Hartree'
+           Chi_mode='Hartree'
+           !
+           if(l_bse)  then
+             if(trim(rstr_piece(i1+1)) == 'hartree')  BSK_mode='Hartree'
+             if(trim(rstr_piece(i1+1)) == 'hf')       BSK_mode='HF'
+             if( trim(rstr_piece(i1+1)) == 'alda')    BSK_mode='ALDA'
+             if(trim(rstr_piece(i1+1)) == 'sex')      BSK_mode='SEX'
+             if( trim(rstr_piece(i1+1)) == 'bsfxc')   BSK_mode='BSfxc'
+           else if(l_chi) then
+             if(trim(rstr_piece(i1+1)) == 'hartree')  Chi_mode='Hartree'
+             if( trim(rstr_piece(i1+1)) == 'alda')    Chi_mode='ALDA'
+             if( trim(rstr_piece(i1+1)) == 'lrc')     Chi_mode='LRC'
+             if( trim(rstr_piece(i1+1)) == 'bsfxc')   Chi_mode='BSfxc'
+           endif
+           !
+           if((trim(rstr_piece(i1+1)) == 'alda').or.&
+             &(trim(rstr_piece(i1+1)) == 'lrc').or.&
+             &(trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
+           !
+           if(l_bse)   call initactivate(1,'bsk')
+           !
          endif
          !
-       endif
-       !
-       ! Dyson Solver
-       !
-       if ( trim(rstr_piece(i1)) == 'gw0' ) then
-         QP_solver=trim(rstr_piece(i1+1))
-         if (trim(QP_solver)/='n'.and.trim(QP_solver)/='s'.and.&
-&            trim(QP_solver)/='g') QP_solver='n'
+         ! BSE Solver
+         !
+         if ( trim(rstr_piece(i1)) == 'bss' )  then
+           BSS_mode=trim(rstr_piece(i1+1))
+           if (index(BSS_mode,'h')==0.and.index(BSS_mode,'d')==0.and.&
+&              index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0) BSS_mode='h'
+           !
+           ! With and ALDA Fxc the t solver is not permitted
+           !
+           if (l_alda_fxc.and.index(BSS_mode,'t')/=0) BSS_mode='h'
+           if (BSK_mode=='IP') call switch_off_runlevel('bss',on_name=' ')
+           if (BSK_mode==' ') then
+             BSK_mode="SEX"
+             Chi_mode="Hartree"
+           endif
+           !
+         endif
+         !
+         ! Dyson Solver
+         !
+         if ( trim(rstr_piece(i1)) == 'gw0' ) then
+           QP_solver=trim(rstr_piece(i1+1))
+           if (trim(QP_solver)/='n'.and.trim(QP_solver)/='s'.and.&
+&              trim(QP_solver)/='g') QP_solver='n'
 #if !defined  _ELPH 
-         l_elel_corr=.true.
+           l_elel_corr=.true.
 #endif
-         !
-       endif
-       !
-       ! GW approximation 
-       !
-       if ( trim(rstr_piece(i1)) == 'gwapprx' ) then
-         !
-         if (trim(rstr_piece(i1+1))=='p') then
-           infile_editing=.true.
-           call initactivate(1,'ppa')
-         else if (trim(rstr_piece(i1+1))=='c') then
-           !
-           infile_editing=.true.
-           call initactivate(1,'cohsex gw0') 
            !
          endif
          !
-       endif
-       !
-       ! Surface spectroscopy
-       !
+         ! GW approximation 
+         !
+         if ( trim(rstr_piece(i1)) == 'gwapprx' ) then
+           !
+           if (trim(rstr_piece(i1+1))=='p') then
+             infile_editing=.true.
+             call initactivate(1,'ppa')
+           else if (trim(rstr_piece(i1+1))=='c') then
+             !
+             infile_editing=.true.
+             call initactivate(1,'cohsex gw0') 
+             !
+           endif
+           !
+         endif
+         !
+         ! Surface spectroscopy
+         !
 #if defined _SURF
-       if ( trim(rstr_piece(i1)) == 'sursp' )  then
-         if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
-         if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
-         if ( trim(rstr_piece(i1+1)) == 'b') call initactivate(1,'ras reels')
-       endif
-#endif
-       !
-       ! Sc / NEGF
-       !
-#if defined _SC 
-       if ( trim(rstr_piece(i1)) == 'scpot' )  then
-         if ( trim(rstr_piece(i1+1)) == 'exx' ) then
-           SC_potential='EXX'
-           call initactivate(1,'HF_and_locXC')
-         else if ( trim(rstr_piece(i1+1)) == 'exxc' ) then
-           SC_potential='EXXC'
-           call initactivate(1,'HF_and_locXC')
-         else if ( trim(rstr_piece(i1+1)) == 'srpa' ) then
-           SC_potential='SRPA'
-           call initactivate(1,'cohsex HF_and_locXC')
-         else if ( trim(rstr_piece(i1+1)) == 'c' ) then
-           SC_potential='COHSEX'
-           call initactivate(1,'cohsex HF_and_locXC')
-         else if ( trim(rstr_piece(i1+1)) == 'hf') then
-           SC_potential='HARTREE-FOCK'
-           call initactivate(1,'HF_and_locXC')
-         else if ( trim(rstr_piece(i1+1)) == 'h') then
-           SC_potential='HARTREE'
-         else if ( trim(rstr_piece(i1+1)) == 'd') then
-           SC_potential='default'
+         if ( trim(rstr_piece(i1)) == 'sursp' )  then
+           if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
+           if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
+           if ( trim(rstr_piece(i1+1)) == 'b') call initactivate(1,'ras reels')
          endif
-       endif
+#endif
+         !
+         ! Sc / NEGF
+         !
+#if defined _SC 
+         if ( trim(rstr_piece(i1)) == 'scpot' )  then
+           if ( trim(rstr_piece(i1+1)) == 'exx' ) then
+             SC_potential='EXX'
+             call initactivate(1,'HF_and_locXC')
+           else if ( trim(rstr_piece(i1+1)) == 'exxc' ) then
+             SC_potential='EXXC'
+             call initactivate(1,'HF_and_locXC')
+           else if ( trim(rstr_piece(i1+1)) == 'srpa' ) then
+             SC_potential='SRPA'
+             call initactivate(1,'cohsex HF_and_locXC')
+           else if ( trim(rstr_piece(i1+1)) == 'c' ) then
+             SC_potential='COHSEX'
+             call initactivate(1,'cohsex HF_and_locXC')
+           else if ( trim(rstr_piece(i1+1)) == 'hf') then
+             SC_potential='HARTREE-FOCK'
+             call initactivate(1,'HF_and_locXC')
+           else if ( trim(rstr_piece(i1+1)) == 'h') then
+             SC_potential='HARTREE'
+           else if ( trim(rstr_piece(i1+1)) == 'd') then
+             SC_potential='default'
+           endif
+         endif
 #endif
 #if defined _MAGNETIC
-       if ( trim(rstr_piece(i1)) == 'magnetic' )  then
-         if ( trim(rstr_piece(i1+1)) == 'p' ) then
-           MAG_hamiltonian_type='pauli'
-           MAG_pauli=.true.
-         else if ( trim(rstr_piece(i1+1)) == 'l' ) then
-           MAG_hamiltonian_type='landau'
-           MAG_landau=.true.
-         else if ( trim(rstr_piece(i1+1)) == 'a') then
-           MAG_hamiltonian_type='all'
-           MAG_landau=.true.
-           MAG_pauli=.true.
+         if ( trim(rstr_piece(i1)) == 'magnetic' )  then
+           if ( trim(rstr_piece(i1+1)) == 'p' ) then
+             MAG_hamiltonian_type='pauli'
+             MAG_pauli=.true.
+           else if ( trim(rstr_piece(i1+1)) == 'l' ) then
+             MAG_hamiltonian_type='landau'
+             MAG_landau=.true.
+           else if ( trim(rstr_piece(i1+1)) == 'a') then
+             MAG_hamiltonian_type='all'
+             MAG_landau=.true.
+             MAG_pauli=.true.
+           endif
          endif
-       endif
 #endif
-       !
+         !
 #if defined  _ELPH 
-       ! ELPH
-       !
-       if ( trim(rstr_piece(i1)) == 'corrtp' ) then
-         if ( trim(rstr_piece(i1+1)) == 'e') l_elel_corr=.true.
-         if ( trim(rstr_piece(i1+1)) == 'p') l_elph_corr=.true.
-         if ( trim(rstr_piece(i1+1)) == 'b') then
-           l_elel_corr=.true.
-           l_elph_corr=.true.
+         ! ELPH
+         !
+         if ( trim(rstr_piece(i1)) == 'corrtp' ) then
+           if ( trim(rstr_piece(i1+1)) == 'e') l_elel_corr=.true.
+           if ( trim(rstr_piece(i1+1)) == 'p') l_elph_corr=.true.
+           if ( trim(rstr_piece(i1+1)) == 'b') then
+             l_elel_corr=.true.
+             l_elph_corr=.true.
+           endif
+           if (.not.l_elph_corr.and..not.l_elel_corr) l_elel_corr=.true.
+           if (l_elph_corr) call initactivate(1,'el_ph_corr')
+           if (l_elel_corr) call initactivate(1,'el_el_corr')
          endif
-         if (.not.l_elph_corr.and..not.l_elel_corr) l_elel_corr=.true.
-         if (l_elph_corr) call initactivate(1,'el_ph_corr')
-         if (l_elel_corr) call initactivate(1,'el_el_corr')
-       endif
 #endif
-       !
-       ! RT
-       !
+         !
+         ! RT
+         !
 #if defined  _RT 
-       if ( trim(rstr_piece(i1)) == 'negf' ) then
-         if ( trim(rstr_piece(i1+1)) == 'p' ) l_RT_probe=.true.
-         if ( trim(rstr_piece(i1+1)) == 'pp') l_RT_pump_and_probe=.true.
-       endif
-       !
-       if ( trim(rstr_piece(i1)) == 'scattp' ) then
-         if ( trim(rstr_piece(i1+1)) == 'e') l_elel_scatt=.true.
-         if ( trim(rstr_piece(i1+1)) == 'p') l_elph_scatt=.true.
-         if (.not.l_elph_scatt.and..not.l_elel_scatt) l_elel_scatt=.true.
-         if (l_elph_scatt) call initactivate(1,'el_ph_scatt')
-         if (l_elel_scatt) call initactivate(1,'el_el_scatt')
-       endif
-#endif
-#if defined  _SC
-       if ( trim(rstr_piece(i1)) == 'collisions' ) then
-         if ( trim(rstr_piece(i1+1)) == 'c') l_elel_corr=.true.
-         if ( trim(rstr_piece(i1+1)) == 's') l_elel_scatt=.true.
-         if ( trim(rstr_piece(i1+1)) == 'b') then
-           l_elel_corr=.true.
-           l_elel_scatt=.true.
+         if ( trim(rstr_piece(i1)) == 'negf' ) then
+           if ( trim(rstr_piece(i1+1)) == 'p' ) l_RT_probe=.true.
+           if ( trim(rstr_piece(i1+1)) == 'pp') l_RT_pump_and_probe=.true.
          endif
-         if (l_elel_corr)  call initactivate(1,'el_el_corr')
-         if (l_elel_scatt) call initactivate(1,'el_el_scatt')
-       endif
+         !
+         if ( trim(rstr_piece(i1)) == 'scattp' ) then
+           if ( trim(rstr_piece(i1+1)) == 'e'.or. trim(rstr_piece(i1+1)) == 'b') l_elel_scatt=.true.
+           if ( trim(rstr_piece(i1+1)) == 'p'.or. trim(rstr_piece(i1+1)) == 'b') l_elph_scatt=.true.
+           if (.not.l_elph_scatt.and..not.l_elel_scatt) l_elel_scatt=.true.
+           if (l_elph_scatt) call initactivate(1,'el_ph_scatt')
+           if (l_elel_scatt) then
+             call initactivate(1,'el_el_scatt')
+             if (runlevel_is_on('collisions')) call initactivate(1,'cohsex')
+           endif
+         endif
 #endif
+         !
+       enddo INPUT_strings_loop
        !
-     enddo INPUT_strings_loop
+     enddo
      !
      if (infile_editing) init_=1
      !

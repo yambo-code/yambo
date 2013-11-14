@@ -83,7 +83,8 @@ integer function io_RT_components(what,ID)
  !
  ! Running NE_i_time=io_sec(ID,1)-1 => NE_time=(NE_i_time-1)*RT_step      
  !      
- if (RT_IO_JPO_steps/=0) file_number=(NE_i_Time-1)/RT_IO_JPO_steps
+ if (RT_IO_JPO_steps/=0) file_number=(NE_i_Time-1)/RT_IO_JPO_steps+1
+ if (NE_i_time==1)       file_number=0
  !
  ! Write only every RT_io_steps
  !

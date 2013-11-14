@@ -30,13 +30,13 @@ subroutine RT_initialize(E,k,q)
  use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
-&                         l_RT_diamagnetic,RT_IO_steps,RT_IO_time,l_NE_simulate_BSE,&
+&                         l_RT_diamagnetic,RT_IO_JPO_steps,RT_IO_time,l_NE_simulate_BSE,&
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
 &                         l_RT_induced_field,RT_dynamics_jumps,l_NE_simulate_TDDFT, &
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,            &
-&                         G_MEM_steps,Gr_kind,RIM_ibz_coo,   &
-&                         l_RT_CCA_Kernel,Life_MEM_steps,Fluence,          &
+&                         G_MEM_steps,Gr_kind,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps, &
+&                         l_RT_CCA_Kernel,Life_MEM_steps,Fluence, RT_IO_output_steps,    &
 &                         l_RT_uses_E_RIM,RIM_bz_coo
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
@@ -50,7 +50,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,rest,ik
+ integer                  :: i1,rest,ik,IO_steps(3)
  character(5)             :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_compute_fluence
@@ -83,39 +83,53 @@ subroutine RT_initialize(E,k,q)
  !
  if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step))
  !
- ! Set a number of steps compatible with the cache.
+ ! Set a number of steps. i1=1(J,P,OCCs)  i1=2(output) i1=3(GF).
  ! Negative value forces the step to be set automatically
- !========================================================
+ !==============================================================
  !
- if (RT_IO_time>0) RT_IO_steps=nint(RT_IO_time/RT_step)
- !
- if(RT_IO_steps>0.and.mod(Thermal_steps+NE_steps,RT_IO_steps)/=0) then
+ do i1=1,3
    !
-   rest=mod(Thermal_steps+NE_steps,RT_IO_steps)
-   if(NE_steps/=0) then
-     NE_steps = NE_steps+RT_IO_steps-rest
-   elseif (NE_steps==0.and.Thermal_steps/=0) then
-     Thermal_steps = Thermal_steps+RT_IO_steps-rest
+   if (RT_IO_time(i1)>0) IO_steps(i1) =nint(RT_IO_time(i1)/RT_step)
+   !
+   if(IO_steps(i1)>0.and.mod(Thermal_steps+NE_steps,IO_steps(i1))/=0) then
+     !
+     if (i1>1) cycle
+     !
+     rest=mod(Thermal_steps+NE_steps,IO_steps(i1))
+     if(NE_steps/=0) then
+       NE_steps = NE_steps+IO_steps(i1)-rest
+     elseif (NE_steps==0.and.Thermal_steps/=0) then
+       Thermal_steps = Thermal_steps+IO_steps(i1)-rest
+     endif
+     !
+     ! Set automatically RT_IO_time and RT_IO_steps 
+     !
+   else if (RT_IO_time(i1)<0) then
+     !
+     RT_IO_time(i1) =max(NE_tot_time/1000._SP,RT_step)
+     IO_steps(i1)=nint(RT_IO_time(i1)/RT_step)
+     !
+     if (i1>1) cycle
+     !
+     rest=mod(Thermal_steps+NE_steps,IO_steps(i1))
+     if(rest/=0) NE_steps = NE_steps+IO_steps(i1)-rest
+     !
+     if (RT_IO_steps_DB>0.and.IO_steps(i1)/=RT_IO_steps_DB) then
+       call warning('IO steps read from the existing databases')
+       IO_steps(i1)   =RT_IO_steps_DB
+     endif
+     !
    endif
    !
-   ! Set automatically RT_IO_time and RT_IO_steps 
+   RT_IO_time(i1) =IO_steps(i1)*RT_step
    !
- else if (RT_IO_time<0) then
-   RT_IO_time =max(NE_tot_time/1000._SP,RT_step)
-   RT_IO_steps=nint(RT_IO_time/RT_step)
-   !
-   rest=mod(Thermal_steps+NE_steps,RT_IO_steps)
-   if(rest/=0) NE_steps = NE_steps+RT_IO_steps-rest
-   !
-   if (RT_IO_steps_DB>0.and.RT_IO_steps/=RT_IO_steps_DB) then
-     call warning('IO steps read from the existing databases')
-     RT_IO_steps=RT_IO_steps_DB
-     RT_IO_time =RT_IO_steps*RT_step
-   endif
-   !
- endif
+ enddo
  !
  NE_tot_time=RT_step*NE_steps
+ !
+ RT_IO_JPO_steps    = IO_steps(1)
+ RT_IO_G_steps      = IO_steps(2)
+ RT_IO_output_steps = IO_steps(3)
  !
  ! Dephasing Matrix. Including user-defined matrix-like dephasing factors, constant
  !==================
@@ -290,7 +304,9 @@ subroutine RT_initialize(E,k,q)
  if (l_elel_scatt)        call msg( 'r','El-El Carrier scattering   :',l_elel_scatt)
  !
  call msg( 'nr','---I/O---')
- call                          msg('r', 'Time between I/O`s     [fs]:',RT_IO_time/FS2AUT)
+ call                          msg('r', 'T between I/O of J,P,f [fs]:',RT_IO_time(1)/FS2AUT)
+ call                          msg('r', '          I/O of   GFs [fs]:',RT_IO_time(2)/FS2AUT)
+ call                          msg('r', '               outputs [fs]:',RT_IO_time(3)/FS2AUT)
  if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]:',io_COLLs)
  !
  call msg( 'nr','---Damping and retarded GF---')

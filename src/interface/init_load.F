@@ -337,7 +337,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! I/O
  !
- call it(defs,'IOtime',        '[RT] Time between to consecutive I/O',RT_IO_time,unit=Time_unit)
+ call it(defs,'IOtime',        '[RT] Time between to consecutive I/O (J,P,OCCs - GF - OUTPUT)',RT_IO_time,unit=Time_unit)
  call it('f',defs,'SkipGFIO',  '[RT] Do not write on disk the Green Functions',verb_level=V_real_time)
  call it('f',defs,'SkipOCCIO', '[RT] Do not write on disk the Occupations',verb_level=V_real_time)
  call it('f',defs,'SkipJPIO',  '[RT] Do not write on disk the current and polarization',verb_level=V_real_time)

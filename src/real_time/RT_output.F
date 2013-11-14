@@ -29,7 +29,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,l_Debye_TBose_update, &
-&                         l_NE_simulate_IP
+&                         l_NE_simulate_IP,RT_IO_output_steps,NE_i_time
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -52,6 +52,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
  character(schlen)        :: headings(n_output_files,10),append_ch
  character(2)             :: chart_string(3)
  real(SP)                 :: data_to_dump(20)
+ !
+ if ( NE_i_time> 1.and.mod(NE_i_time,RT_IO_output_steps)/=0 ) return
  !
 #if defined _TIMING
  call timing('RT output',OPR='start')

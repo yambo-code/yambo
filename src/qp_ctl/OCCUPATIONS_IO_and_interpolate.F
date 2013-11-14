@@ -24,7 +24,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use units,          ONLY:BO2ANG,FS2AUT,HA2EV
  use pars,           ONLY:SP,lchlen
  use parser_m,       ONLY:parser
- use real_time,      ONLY:ID,G_lesser,NE_i_time,RT_IO_steps,RT_step,MEM_index,G_MEM_steps
+ use real_time,      ONLY:ID,G_lesser,NE_i_time,RT_IO_JPO_steps,RT_step,MEM_index,G_MEM_steps
  use SC,             ONLY:SC_bands,RT_occupations,RT_nk,l_RT_occupations_in_use
  use IO_m,           ONLY:io_control,NONE,OP_WR_CL,OP_RD,RD_CL,OP_RD_CL,DUMP,variable_is_found
  use electrons,      ONLY:levels,BZ_RIM_nbands,n_sp_pol,n_met_bands,&
@@ -159,14 +159,14 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    ! NE_time=(NE_i_time-1)*RT_step but I/O only when NE_i_time= N * RT_IO_steps
    !
    NE_i_time= (Time+RT_step)/RT_step
-   NE_i_time= NE_i_time-mod(NE_i_time,RT_IO_steps)
+   NE_i_time= NE_i_time-mod(NE_i_time,RT_IO_JPO_steps)
    !
    if (NE_i_time==0       ) then
-     NE_i_time=RT_IO_steps
+     NE_i_time=RT_IO_JPO_steps
    else
-     do i1=NE_i_time,RT_IO_steps,-RT_IO_steps 
+     do i1=NE_i_time,RT_IO_JPO_steps,-RT_IO_JPO_steps 
        !
-       file_number=(i1-1)/RT_IO_steps
+       file_number=(i1-1)/RT_IO_JPO_steps
        !
        if ( variable_is_found(ID(6),'RT_occupations_TIME'//trim(intc(i1)))==1.or.&
 &           file_exists(trim(jobstr)//"/ndb.RT_occupations_"//trim(intc(file_number))).or.&

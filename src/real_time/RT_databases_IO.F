@@ -23,7 +23,7 @@ subroutine RT_databases_IO(E,it)
  !
  use drivers,        ONLY:l_elph_scatt
  use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,NE_i_time,it_start,&
-&                         OCCUPATIONS_IO_and_interpolate,RT_IO_steps
+&                         OCCUPATIONS_IO_and_interpolate,RT_IO_JPO_steps
  use SC,             ONLY:RT_nk
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL,io_GF,io_OCCs,io_J
  use electrons,      ONLY:levels
@@ -48,8 +48,7 @@ subroutine RT_databases_IO(E,it)
  !
  if (it==it_start.and.it_start>1) return
  !
- ! Polarization and current are automaticaly written every RT_IO_stesp
- ! the cache save value at steps different from mod(NE_i_time,RT_IO_steps)/=0)
+ ! Polarization and current are automaticaly written every RT_IO_steps
  !
  if(l_NE_with_fields.and.NE_dynamics.and.io_J) then
    !
@@ -67,9 +66,13 @@ subroutine RT_databases_IO(E,it)
    !
  endif
  !
+ ! Occupations
+ !
+ if (io_OCCs) call OCCUPATIONS_IO_and_interpolate(E,'G')
+ !
  ! Write every RT_IO_steps
  !
- if (.not. (NE_i_time==1.or.mod(NE_i_time,RT_IO_steps)==0) ) return
+ if (.not. (NE_i_time==1.or.mod(NE_i_time,RT_IO_JPO_steps)==0) ) return
  !
  if (it==it_start.and.it_start>1) return
  !
@@ -116,9 +119,5 @@ subroutine RT_databases_IO(E,it)
    enddo
    !
  endif
- !
- ! Occupations
- !
- if (io_OCCs) call OCCUPATIONS_IO_and_interpolate(E,'G')
  !
 end subroutine RT_databases_IO

@@ -33,8 +33,8 @@ integer function io_RT_components(what,ID)
 &                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,&
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found
  use fields,         ONLY:i_Probe,i_Pump
- use real_time,      ONLY:RT_IO_steps,NE_i_time,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Ho_abs_lifetime
+ use real_time,      ONLY:RT_IO_JPO_steps,NE_i_time,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Ho_abs_lifetime,RT_IO_G_steps
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes
 #endif
@@ -83,7 +83,7 @@ integer function io_RT_components(what,ID)
  !
  ! Running NE_i_time=io_sec(ID,1)-1 => NE_time=(NE_i_time-1)*RT_step      
  !      
- if (RT_IO_steps/=0) file_number=(NE_i_Time-1)/RT_IO_steps
+ if (RT_IO_JPO_steps/=0) file_number=(NE_i_Time-1)/RT_IO_JPO_steps
  !
  ! Write only every RT_io_steps
  !
@@ -93,12 +93,12 @@ integer function io_RT_components(what,ID)
      if (l_occupations) io_RT_components=io_connect(desc="RT_occupations",type=2,ID=ID)
    else
      !  
-     do_IO=NE_i_time==1.or.mod(NE_i_time,RT_IO_steps)==0
+     do_IO=NE_i_time==1.or.mod(NE_i_time,RT_IO_JPO_steps)==0
      !
      if(l_J_and_P) then
        do_IO=.false.
-       if(mod(NE_i_time,  RT_IO_steps)  ==0.and.write_is_on(ID))  do_IO=.true.
-       if(mod(NE_i_time-1,RT_IO_steps)  ==0.and.read_is_on(ID))   do_IO=.true.
+       if(mod(NE_i_time,  RT_IO_JPO_steps)  ==0.and.write_is_on(ID))  do_IO=.true.
+       if(mod(NE_i_time-1,RT_IO_JPO_steps)  ==0.and.read_is_on(ID))   do_IO=.true.
      endif
      !
      if(do_IO) then
@@ -118,7 +118,7 @@ integer function io_RT_components(what,ID)
  endif
  !
  if (l_G.or.l_THETA) then
-   if( (mod(NE_i_time,RT_IO_steps)/=0.and.NE_i_time/=1) .and.NE_dynamics.and.write_is_on(ID)) then
+   if( (mod(NE_i_time,RT_IO_G_steps)/=0.and.NE_i_time/=1) .and.NE_dynamics.and.write_is_on(ID)) then
      io_RT_components=0
      call io_reset(ID)
      goto 2
@@ -342,12 +342,12 @@ integer function io_RT_components(what,ID)
      if(write_is_on(ID)) then
        !
        do i1=1,3
-         J_and_P_cache( 2*i1-1,  mod(NE_i_time-1,RT_IO_steps)+1)= real(RT_ind_J(i1))
-         J_and_P_cache( 2*i1,    mod(NE_i_time-1,RT_IO_steps)+1)=aimag(RT_ind_J(i1))
-         J_and_P_cache(6+2*i1-1, mod(NE_i_time-1,RT_IO_steps)+1)= real(RT_P(i1))
-         J_and_P_cache(6+2*i1,   mod(NE_i_time-1,RT_IO_steps)+1)=aimag(RT_P(i1))
-         J_and_P_cache(12+2*i1-1,mod(NE_i_time-1,RT_IO_steps)+1)= 0.
-         J_and_P_cache(12+2*i1,  mod(NE_i_time-1,RT_IO_steps)+1)= 0.
+         J_and_P_cache( 2*i1-1,  mod(NE_i_time-1,RT_IO_JPO_steps)+1)= real(RT_ind_J(i1))
+         J_and_P_cache( 2*i1,    mod(NE_i_time-1,RT_IO_JPO_steps)+1)=aimag(RT_ind_J(i1))
+         J_and_P_cache(6+2*i1-1, mod(NE_i_time-1,RT_IO_JPO_steps)+1)= real(RT_P(i1))
+         J_and_P_cache(6+2*i1,   mod(NE_i_time-1,RT_IO_JPO_steps)+1)=aimag(RT_P(i1))
+         J_and_P_cache(12+2*i1-1,mod(NE_i_time-1,RT_IO_JPO_steps)+1)= 0.
+         J_and_P_cache(12+2*i1,  mod(NE_i_time-1,RT_IO_JPO_steps)+1)= 0.
        enddo
        !
      endif
@@ -355,7 +355,7 @@ integer function io_RT_components(what,ID)
      if (do_IO) then
        !                                
        call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(intc(file_number)), &
-&                      VAR_SZ=(/J_and_P_cache_size,RT_IO_steps/))
+&                      VAR_SZ=(/J_and_P_cache_size,RT_IO_JPO_steps/))
        !
        call io_bulk(ID,R2=J_and_P_cache)
        !
@@ -369,10 +369,10 @@ integer function io_RT_components(what,ID)
        !
        !
        do i1=1,3
-         RT_ind_J(i1)           =cmplx(J_and_P_cache(   2*i1-1,mod(NE_i_time-1,RT_IO_steps)+1), &
-&                                      J_and_P_cache(   2*i1,  mod(NE_i_time-1,RT_IO_steps)+1),SP)
-         RT_P(i1)               =cmplx(J_and_P_cache( 6+2*i1-1,mod(NE_i_time-1,RT_IO_steps)+1), &
-&                                      J_and_P_cache( 6+2*i1  ,mod(NE_i_time-1,RT_IO_steps)+1),SP)
+         RT_ind_J(i1)           =cmplx(J_and_P_cache(   2*i1-1,mod(NE_i_time-1,RT_IO_JPO_steps)+1), &
+&                                      J_and_P_cache(   2*i1,  mod(NE_i_time-1,RT_IO_JPO_steps)+1),SP)
+         RT_P(i1)               =cmplx(J_and_P_cache( 6+2*i1-1,mod(NE_i_time-1,RT_IO_JPO_steps)+1), &
+&                                      J_and_P_cache( 6+2*i1  ,mod(NE_i_time-1,RT_IO_JPO_steps)+1),SP)
        enddo
        !
      endif 

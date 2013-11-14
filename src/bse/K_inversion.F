@@ -24,10 +24,13 @@ subroutine K_inversion(iq,W,E,k,q)
  use pars,           ONLY:SP,pi
  use X_m,            ONLY:X_epsilon,X_drude_term
  use stderr,         ONLY:intc,real2ch
- use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BSS_uses_GreenF,&
-&                         BSE_mode,BS_eh_table,BS_eh_E,BS_bands,BSS_inversion_mode,&
+ use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,&
+&                         BSE_mode,BS_eh_table,BS_eh_E,BSS_inversion_mode,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BS_eh_f,&
 &                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z,BS_mat_diagonal
+#if defined _ELPH
+ use BS,             ONLY:BSS_uses_GreenF,BS_bands
+#endif
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ,levels,BZ_RIM_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_merge,W_duplicate

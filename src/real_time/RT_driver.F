@@ -39,6 +39,7 @@ subroutine RT_driver(E,X,k,q)
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update
+ use plasma,          ONLY:Plasma_free
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
  use com,             ONLY:error
@@ -238,7 +239,7 @@ subroutine RT_driver(E,X,k,q)
    it_mem     =MEM_index(NE_i_time,G_MEM_steps)
    it_mem_p1  =MEM_index(NE_i_time+1,G_MEM_steps)
    !
-   do_output= (NE_i_time==1).or.mod(NE_i_time,RT_IO_steps)==0
+   do_output= mod(NE_i_time-1,RT_IO_steps)==0
    !
    ! Start-Up & Timing
    !===================
@@ -263,7 +264,7 @@ subroutine RT_driver(E,X,k,q)
    !===============
    if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.
    if (stop_now(.FALSE.)) then
-     NE_steps=(int((it-Thermal_steps)/RT_IO_steps)+1)*RT_IO_steps
+     NE_steps=((NE_i_time-1)/RT_IO_steps)*RT_IO_steps+1
      l_Dynamics_is_over=.TRUE.
    endif
    !
@@ -376,6 +377,7 @@ subroutine RT_driver(E,X,k,q)
  call RT_free()
  !
  call WF_free(WF)
+ call Plasma_free()
  !
  if (allocated(HF_collisions))     call COLLISIONS_alloc_and_free("HF","v1 table","clean",0)
  if (allocated(COHSEX_collisions)) call COLLISIONS_alloc_and_free("COHSEX","v1 table","clean",0)

@@ -149,7 +149,6 @@ subroutine RT_occupations_analyze(k,E)
        i_T=1+(i1-1)*n_skip_time
        if(i1==RT_n_FIT) i_T=n_T_steps
        io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-       if(io_Time<0._SP) io_Time=0._SP
        l_RT_Occ_FIT_vec(i_T)=.TRUE.
        if(io_Time>0._SP) RT_occ_Fit_time(i1)=io_Time
      enddo
@@ -190,8 +189,7 @@ subroutine RT_occupations_analyze(k,E)
    !
    if(.not.(l_RT_occ_plot.or.l_RT_Occ_FIT_vec(i_T))) cycle
    !
-   io_Time=0.
-   if (i_T >1) io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+   io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
    if (l_RT_Occ_FIT_vec(i_T)) i1=i1+1
    !

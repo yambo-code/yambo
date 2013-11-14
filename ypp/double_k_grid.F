@@ -22,9 +22,9 @@
 function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  !
  use pars,                ONLY:SP
- use R_lattice,           ONLY:bz_samp,b,k_grid
+ use R_lattice,           ONLY:bz_samp,k_grid
  use electrons,           ONLY:BZ_RIM_table,BZ_RIM_nkpt,&
-                               BZ_RIM_ipol_weight !n_spin
+                               BZ_RIM_ipol_weight
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a

@@ -89,9 +89,9 @@ subroutine RT_initialize(E,k,q)
  !
  if (RT_IO_time>0) RT_IO_steps=nint(RT_IO_time/RT_step)
  !
- if(RT_IO_steps>0.and.mod(Thermal_steps+NE_steps,RT_IO_steps)/=0) then
+ if(RT_IO_steps>0.and.mod(Thermal_steps+NE_steps-1,RT_IO_steps)/=0) then
    !
-   rest=mod(Thermal_steps+NE_steps,RT_IO_steps)
+   rest=mod(Thermal_steps+NE_steps-1,RT_IO_steps)
    if(NE_steps/=0) then
      NE_steps = NE_steps+RT_IO_steps-rest
    elseif (NE_steps==0.and.Thermal_steps/=0) then
@@ -104,7 +104,7 @@ subroutine RT_initialize(E,k,q)
    RT_IO_time =max(NE_tot_time/1000._SP,RT_step)
    RT_IO_steps=nint(RT_IO_time/RT_step)
    !
-   rest=mod(Thermal_steps+NE_steps,RT_IO_steps)
+   rest=mod(Thermal_steps+NE_steps-1,RT_IO_steps)
    if(rest/=0) NE_steps = NE_steps+RT_IO_steps-rest
    !
    if (RT_IO_steps_DB>0.and.RT_IO_steps/=RT_IO_steps_DB) then

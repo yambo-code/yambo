@@ -41,6 +41,9 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !

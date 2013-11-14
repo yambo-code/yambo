@@ -66,20 +66,9 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesse
      ! 
      i_np_shift=i_np+SC_bands(1)-1
      !
-     ! 16/3/2012
-     !
-     ! Including "by hand" the limits on the signs of DELTA I managed to get
-     ! (finally) a converged el-ph dynamics (On 5/9/2013 moved in G_ret initialize).
-     !
-     ! Updated on 29/3/2012 with more tailored constrains. Valid only in systems
-     ! with a gap.
-     !
-     ! n>=n_full_bands+1 => i_np>=n_full_bands+1 
-     !
-     ! Fermi level ----------------
-     !
-     ! n<=n_full_bands => i_np<=n_full_bands 
-     !
+     ! Extra condition: the EP scattering cannot cross the gap
+     ! This could be replaced by a more general condition in RT_G_retarded_convolution
+     ! All other conditions have been already moved in RT_G_retarded_convolution
      if (i_n_shift<=n_full_bands.and.i_np_shift>  n_full_bands) cycle
      if (i_n_shift> n_full_bands.and.i_np_shift<= n_full_bands) cycle
      !
@@ -101,8 +90,8 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesse
            pre_factor=1._SP/real(RT_Nk_ibz(ik_m_q))
          endif
          !
-         P_ph_abs  =RT_G_retarded_convolution(DELTA_E,ph_freq,DELTA_W,E%E_ind_gap(1),+1)
-         P_ph_emit =RT_G_retarded_convolution(DELTA_E,ph_freq,DELTA_W,E%E_ind_gap(1),-1)
+         P_ph_abs  =RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,E%E_ind_gap(1),'EP')
+         P_ph_emit =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,E%E_ind_gap(1),'EP')
          !
          E_P_Hole_lifetime(i_n_shift,ik_rim)=E_P_Hole_lifetime(i_n_shift,ik_rim)+&
 &                                            abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_abs*Bose_f(2)*pre_factor
@@ -116,6 +105,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesse
            E_P_El_abs_lifetime(i_n_shift,ik_rim)=E_P_El_abs_lifetime(i_n_shift,ik_rim)+&
 &                                                abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_abs*Bose_f(1)*pre_factor
          endif
+         !
        enddo
      enddo
      !

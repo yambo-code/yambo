@@ -36,7 +36,7 @@ subroutine build_kpts_map(k,k_save,kpoints_map,action_kind)
  ! 
  ! Work space
  !
- integer               :: i1,ik,ik_save,ic,is
+ integer               :: i1,ik,ik_save
  integer               :: iv(2),nk
  real(SP)              :: v1(3)
  ! 

@@ -712,7 +712,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(-1,'GbndRnge UseEbands BandMix SCUpWIter') 
    call initactivate(-1,'SCIter SCEtresh SCRhoTresh TF_precondition')
    !
-   call initactivate( 1,'Potential FFTGvecs Gauge SCBands EXXCut')
+   call initactivate( 1,'Potential PlasmaPerc FFTGvecs Gauge SCBands EXXCut')
    !
  endif
 #endif
@@ -721,7 +721,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_real_time) then
    call QP_ctl_switch('G')
    call initactivate(-1,'SCmixing')
-   call initactivate(1,'Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTmaxEn RTpumpEhEn RTpumpEhWd RTpumpNel') 
+   call initactivate(1,'Integrator GrKind TwoAlpha PlasmaPerc RADLifeTime PhLifeTime RTmaxEn RTpumpEhEn RTpumpEhWd RTpumpNel') 
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
    if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol UseDebyeE UpdtDebyeT ElPhModes')
    call initactivate(1,'RTjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')

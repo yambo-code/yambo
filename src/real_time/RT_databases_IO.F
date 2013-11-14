@@ -49,7 +49,7 @@ subroutine RT_databases_IO(E,it)
  if (it==it_start.and.it_start>1) return
  !
  ! Polarization and current are automaticaly written every RT_IO_stesp
- ! the cache save value at steps different from mod(NE_i_time,RT_IO_steps)/=0)
+ ! the cache save value at steps different from mod(NE_i_time-1,RT_IO_steps)/=0)
  !
  if(l_NE_with_fields.and.NE_dynamics.and.io_J) then
    !
@@ -69,7 +69,7 @@ subroutine RT_databases_IO(E,it)
  !
  ! Write every RT_IO_steps
  !
- if (.not. (NE_i_time==1.or.mod(NE_i_time,RT_IO_steps)==0) ) return
+ if (.not. (mod(NE_i_time-1,RT_IO_steps)==0) ) return
  !
  if (it==it_start.and.it_start>1) return
  !

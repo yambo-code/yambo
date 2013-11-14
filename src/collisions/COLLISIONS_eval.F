@@ -40,7 +40,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
  use fragments,     ONLY:fragment_status
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,io_COLLISIONS
- use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_QPp,PAR_IND_Xk_ibz,PAR_IND_G_k,PAR_IND_Bp_mat
+ use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_Xk_ibz,PAR_IND_G_k,PAR_IND_Bp_mat
  use X_m,           ONLY:X_t
  !
  implicit none
@@ -151,7 +151,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
          call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
          call PARALLEL_global_indexes(E,k,q,"Real_Time")
          call PARALLEL_WF_distribute(QP_index=PAR_IND_QP,CLEAN_UP=.FALSE.)
-         call PARALLEL_WF_distribute(QP_index=PAR_IND_QPp)
+         !call PARALLEL_WF_distribute(QP_index=PAR_IND_QPp) ! Davide
          call PARALLEL_WF_index( )
        endif
        !

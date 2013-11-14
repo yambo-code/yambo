@@ -31,8 +31,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
  use collision,       ONLY:V_kind,GW_NEQ_collisions,COHSEX_collisions,HF_collisions
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP
- use parallel_m,      ONLY:PAR_nQP,PAR_QP_index,PAR_QPp_index,PAR_IND_QP,PAR_IND_QPp,&
-&                          PAR_nQ,PAR_Q_index,PAR_IND_Q
+ use parallel_m,      ONLY:PAR_nQP,PAR_QP_index,PAR_IND_QP,PAR_IND_Plasma,PAR_IND_Q,&
+&                          PAR_nQ,PAR_Q_index,PAR_nPlasma,PAR_Plasma_index
  use interfaces,      ONLY:io_COLLISIONS
  !
  implicit none
@@ -46,7 +46,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! Work Space
  !
  integer            :: i1,i2,i3,ic,i_qp,ID,io_err(max_V_kinds),V_kinds(max_V_kinds),n_V_kinds,&
-&                      iv,i_qp_mem,i_q_mem,i_qpp_mem
+&                      iv,i_qp_mem,i_q_mem,i_J_mem
  logical            :: condition
  !
  n_V_kinds   =0
@@ -120,6 +120,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      call io_control(ACTION=OP_RD,SEC=(/1,2/),ID=ID)
      !
+     ! To check for GW_NEQ_collisions allocation
      if (V_kind==SC_HF) then
         io_err(iv)=io_COLLISIONS(i_qp,ID,HF_collisions(i_qp_mem))
         call COLLISIONS_alloc_and_free("HF","v1 table","alloc",i_qp_mem)
@@ -144,11 +145,11 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        do i1=GW_NEQ_collisions(1)%D(1,1),GW_NEQ_collisions(1)%D(1,2)
          do i2=GW_NEQ_collisions(1)%D(2,1),GW_NEQ_collisions(1)%D(2,2)
            do i3=GW_NEQ_collisions(1)%D(3,1),GW_NEQ_collisions(1)%D(3,2)
-             if (.not.PAR_IND_QPp%element_1D(i1)) cycle
+             if (.not.PAR_IND_Plasma%element_1D(i1)) cycle
              if (.not.PAR_IND_Q%element_1D(i3)) cycle
-             i_qpp_mem=PAR_QPp_index(i1)
+             i_J_mem  =PAR_Plasma_index(i1)
              i_q_mem  =PAR_Q_index(i3)
-             GW_NEQ_collisions(i_qp_mem)%v3(i1,i2,i3)=GW_NEQ_collisions(1)%v(ic)
+             GW_NEQ_collisions(i_qp_mem)%v3r(i_J_mem,1,i_q_mem)=real(GW_NEQ_collisions(1)%v(ic))
              ic=ic+1
            enddo
          enddo

@@ -21,7 +21,7 @@
 !
 subroutine RT_G_retarded_EE_initialize(E,k,q)
  !
- use pars,           ONLY:SP,rZERO,IP
+ use pars,           ONLY:SP,rZERO,IP,pi,tol2
  use QP_m,           ONLY:QP_n_states,QP_table
  use real_time,      ONLY:Gr_ee_matrix,Gr_kind,two_alpha
  use memory_m,       ONLY:mem_est
@@ -33,6 +33,7 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  use LIVE_t,         ONLY:live_timing
  use electrons,      ONLY:levels
  use matrix_operate, ONLY:matrix_linear_index
+ !
  implicit none
  !
  type(levels)  :: E
@@ -42,8 +43,8 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  !
  integer :: i_qp1,i_qp2,i_qp1_mem,i_qp2_mem,i_n,i_k,i_m,i_p,i_np,i_kmq,i_mp,&
 &           i_q,i_q_s,iqbz,iq_mem,i_p_s,i_p_star,i_pmq_bz,i_pmq,i_pmq_G0,&
-&           i_trans(4),kin_scatt(4),i_t,N_2bodies,N_4bodies,I_ij,I_kl,I_ij_kl,i_trans_ord(4),n_trans
- real(SP):: GAMMA_,E_center
+&           N_2bodies,N_4bodies
+ real(SP):: GAMMA_,E_center,E_nn,E_mm
  !
  real(SP),    external :: HyperbolicSecant_FT
  !
@@ -110,11 +111,11 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
          !
          i_pmq =k%sstar(i_pmq_bz,1)
          !
-         E_center=E%E(i_np,i_kmq,1)-E%E(i_n,i_k,1)+E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)
+         E_nn=E%E(i_np,i_kmq,1)-E%E(i_n,i_k,1)
+         E_mm=E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)
+         E_center=E_nn+E_mm
          !
-         if( abs(E_center)<EPSILON(1._SP) ) cycle
-         !
-         if (abs(E_center)>2.*E%E_ind_gap(1)) cycle
+         if (.not.Energy_Condition(E_nn,E_mm,E_center,E%E_ind_gap(1))) cycle
          !
          GAMMA_ = abs(E%W(i_np,i_kmq,1))+abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))+abs(E%W(i_n,i_k,1))
          !
@@ -122,6 +123,10 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
          !
          if(trim(Gr_kind)=='HS') &
 &           Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s)=HyperbolicSecant_FT(E_center,GAMMA_,2*two_alpha)
+         !
+         !DEBUG>
+         !write (100,*) E_center*27.21, Gr_ee_matrix(i_qp1_mem,i_qp2_mem,iq_mem,i_p_s),GAMMA_*27.21
+         !DEBUG<
          !
        enddo
        !
@@ -135,4 +140,16 @@ subroutine RT_G_retarded_EE_initialize(E,k,q)
  !
  call live_timing()
  !
+ contains
+   !
+   logical function Energy_Condition(E1,E2,Etot,Egap)
+     real(SP) :: E1,E2,Etot,Egap
+     Energy_Condition=.true.
+     if ( abs(E1)  <tol2     ) Energy_Condition=.false.      ! C1a
+     if ( abs(E2)  <tol2     ) Energy_Condition=.false.      ! C1b
+     if ( abs(Etot)<tol2     ) Energy_Condition=.false.      ! C2
+     if ( abs(Etot)>2.*Egap  ) Energy_Condition=.false.      ! C3
+     if (    E1/E2 >0._SP    ) Energy_Condition=.false.      ! C4a+C4b
+   end function Energy_Condition 
+   !
 end subroutine RT_G_retarded_EE_initialize

@@ -86,13 +86,9 @@ integer function io_RT_components(what,ID)
      if (l_occupations) io_RT_components=io_connect(desc="RT_occupations",type=2,ID=ID)
    else
      !  
-     do_IO=NE_i_time==1.or.mod(NE_i_time,RT_IO_steps)==0
+     do_IO=mod(NE_i_time-1,RT_IO_steps)==0
      !
-     if(l_J_and_P) then
-       do_IO=.false.
-       if(mod(NE_i_time,  RT_IO_steps)  ==0.and.write_is_on(ID))  do_IO=.true.
-       if(mod(NE_i_time-1,RT_IO_steps)  ==0.and.read_is_on(ID))   do_IO=.true.
-     endif
+     if(l_J_and_P) do_IO=mod(NE_i_time-1,RT_IO_steps)  ==0
      !
      if(do_IO) then
        if (l_J_and_P)     io_RT_components=io_connect(desc="RT_J_and_P_"//trim(intc(file_number)),type=2,ID=ID)
@@ -111,7 +107,7 @@ integer function io_RT_components(what,ID)
  endif
  !
  if (l_G.or.l_THETA) then
-   if( (mod(NE_i_time,RT_IO_steps)/=0.and.NE_i_time/=1) .and.NE_dynamics.and.write_is_on(ID)) then
+   if( (mod(NE_i_time-1,RT_IO_steps)/=0) .and.NE_dynamics.and.write_is_on(ID)) then
      io_RT_components=0
      call io_reset(ID)
      return

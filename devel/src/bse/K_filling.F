@@ -38,7 +38,6 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
  !
  integer(8) :: i8id,i8nc,test_LT_elements
  integer    :: ik2,ik1,ikk1,ikk2,icv1,icv2,i_cpu,n_blocks,i_scale
- real(SP)   :: filling
  character(schlen) :: ch
  !
  i8nc=ncpu

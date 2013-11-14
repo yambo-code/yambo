@@ -236,14 +236,14 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    enddo
  endif
 #if defined _TIMING
- call timing('RT Collisions',OPR='stop')
+ call timing('RT Collisions',OPR='end')
 #endif
  !
  ! Calculate all relaxation terms
  ! ==============================
  call RT_relaxation(G_input,E,k,q,Time)
 #if defined _TIMING
- call timing('RT relaxation',OPR='stop')
+ call timing('RT relaxation',OPR='end')
 #endif
  !
 end subroutine RT_Collision

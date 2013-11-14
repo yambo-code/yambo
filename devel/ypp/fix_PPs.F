@@ -274,14 +274,14 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        !
        do ic=1,wf_nc_k(ik_save)
          ig_rot=g_rot(is,wf_igk(ic,ik_save))
-		     do ic_rot=1,wf_nc_k(ik)
-		       ig=wf_igk(ic_rot,ik)
-		       if(ig==ig_rot) exit
-		     enddo
-		     !
-		     pp_kb(ic_rot,:,:,:) =pp_kb_store(ic,:,:,:,ik_save)
-		     pp_kbd(ic_rot,:,:,:)=pp_kbd_store(ic,:,:,:,ik_save)
-		     !
+         do ic_rot=1,wf_nc_k(ik)
+           ig=wf_igk(ic_rot,ik)
+           if(ig==ig_rot) exit
+         enddo
+         !
+         pp_kb(ic_rot,:,:,:) =pp_kb_store(ic,:,:,:,ik_save)
+         pp_kbd(ic_rot,:,:,:)=pp_kbd_store(ic,:,:,:,ik_save)
+         !
        enddo
        !
        call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)      

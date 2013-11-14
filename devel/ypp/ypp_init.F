@@ -35,7 +35,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  use electrons,      ONLY:n_spin,n_bands,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:what_is_running
- use QP_m,           ONLY:QP_state
 #if defined _YPP_SC
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nb

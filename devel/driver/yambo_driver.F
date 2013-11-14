@@ -30,7 +30,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  use drivers,       ONLY:l_ppa,l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
-&                        l_gw0,l_elel_corr,l_life,l_acfdt,l_elph_Hamiltonian
+&                        l_gw0,l_elel_corr,l_life,l_acfdt
  use X_m,           ONLY:X_t
  use parallel_m,    ONLY:myid,ncpu,MPI_close
  use it_m,          ONLY:it_reset,infile
@@ -45,6 +45,12 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use frequency,     ONLY:w_samp
 #if defined _SURF
  use ras_module,    ONLY:lras, lreels
+#endif
+#if defined _SC
+ use drivers,       ONLY:l_elel_scatt
+#endif
+#if defined _ELPH
+ use drivers,       ONLY:l_elph_Hamiltonian
 #endif
  !
  implicit none
@@ -186,6 +192,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !===================================
  !
 #if defined _SC 
+ if (l_eval_collisions.or.l_elel_scatt) call Plasma_driver(en,k,q)
  if (l_eval_collisions) call COLLISIONS_eval(en,X,k,xk,q,Xw(:2))
 #endif
  !

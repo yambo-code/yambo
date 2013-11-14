@@ -422,10 +422,12 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  if (l_elph_scatt.or.l_elel_scatt) then
    !
-   ! With    the RIM this cannot be not used, on the fly Gret for el-ph
+   ! With    the RIM this cannot be not used, on the fly Gret
    ! Without the RIM this implementation could be faster
-   !
-   if (l_elel_scatt) call RT_G_retarded_EE_initialize(E,k,q)
+   !if (l_elph_scatt) call RT_G_retarded_EP_initialize(E,k)
+   !if (l_elel_scatt) call RT_G_retarded_EE_initialize(E,k,q)
+   call k_sym2sym(q,'k')
+   call k_sym2sym(k,'k')
    !
    N_Gr_descs=5
    !

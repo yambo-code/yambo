@@ -48,9 +48,10 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! I/O 
  !
  logical           :: l_flag
- integer           :: ID,i_err,i_err_RIM
+ integer           :: ID,i_err
  integer, external :: ioDB1,ioQINDX,iogrot
 #if defined _YPP_RT
+ integer           :: i_err_RIM
  integer, external :: ioE_RIM
 #endif
 #if defined _YPP_ELPH

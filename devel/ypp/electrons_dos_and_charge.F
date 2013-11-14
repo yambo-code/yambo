@@ -30,13 +30,13 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use FFT_m,          ONLY:fft_size
  use YPP,            ONLY:l_density,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,plot_title,l_dos,l_RT_dos,dos_broadening,dos_bands,&
-&                         dos_E_range,dos_E_steps,OCC_T_ref,OCC_T_range,OCC_deltaT,&
-&                         RT_occupations_ref
+&                         dos_E_range,dos_E_steps
  use com,            ONLY:msg,of_open_close
  use functions,      ONLY:Fermi_fnc_derivative
  use QP_CTL_m,       ONLY:QP_apply
  use LIVE_t,         ONLY:live_timing
 #if defined _YPP_RT
+ use YPP,            ONLY:RT_occupations_ref,OCC_T_ref,OCC_T_range,OCC_deltaT
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_output
  use SC,             ONLY:SC_bands,RT_occupations,SC_description,n_SC_descriptions
 #endif
@@ -52,8 +52,12 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  ! Work Space
  ! 
  real(SP), allocatable :: el_den(:)
- real(SP)              :: el_dos(dos_E_steps,n_sp_pol),dos_E,delta_E,f_occ,io_Time,dos_norm,el_dos_max
- integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps,i_fp,io_ID,io_err,ik_rand,i1
+ real(SP)              :: el_dos(dos_E_steps,n_sp_pol),dos_E,delta_E,f_occ,dos_norm,el_dos_max
+#if defined _YPP_RT
+ real(SP)              :: io_Time
+ integer               :: i_fp
+#endif
+ integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps,io_ID,io_err,ik_rand,i1
  character(schlen)     :: ch_ws,titles(4)
  logical               :: l_3D_plot,l_RIM,l_prt_occ_only
  type(PP_indexes)      :: px
@@ -110,9 +114,9 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
    endif
    !
-#endif
-   !
    if(.not.l_RT_dos) OCC_T_range=0.
+   !
+#endif
    !
    if (l_RIM) dos_bands(2)=min(dos_bands(2),BZ_RIM_nbands)
    !
@@ -229,7 +233,9 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
      el_dos_max=max(el_dos_max,maxval(abs(el_dos)))
      !
+#if defined _YPP_RT
      if (l_RT_dos.and.l_3D_plot) call msg('o dos','')
+#endif
      !
      ! Output file
      !

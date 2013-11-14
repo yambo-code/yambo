@@ -147,9 +147,10 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  forall(i1=1:npts) coarse_grid_index(i1)=i_vec( ordered_grid_index(i1) )
  deallocate(i_vec)
  !
- write (ch,'(3a)') '[',title,'-CG] R(p) Tot o/o(of R)  :'
- !
- call msg('rs',trim(ch),(/coarse_grid_N,npts,int(real(coarse_grid_N)/real(dncg)*100.)/))
+ if(.not.trim(title)=='COLL') then
+   write (ch,'(3a)') '[',title,'-CG] R(p) Tot o/o(of R)  :'
+   call msg('rs',trim(ch),(/coarse_grid_N,npts,int(real(coarse_grid_N)/real(dncg)*100.)/))
+ endif
  !
  deallocate(bg_diffs,bg_sorted,bg_sorted_x)
  !

@@ -91,7 +91,8 @@ subroutine barriers()
  endif
  !
  if (l_sc_run) then
-   call switch_off_runlevel('all',on_name='scpot HF_and_locXC cohsex em1s negf magnetic el_el_corr collisions '//trim(always_runlevels))
+   on_runlevels='scpot HF_and_locXC cohsex em1s negf magnetic el_el_corr collisions '
+   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  !

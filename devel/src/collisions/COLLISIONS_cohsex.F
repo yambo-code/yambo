@@ -30,12 +30,13 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:error
  use real_time,     ONLY:B_mat_index
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_QPp_index,PAR_QP_index,&
-&                        PAR_IND_Q,PAR_nQPp,PAR_Q_index,&
-&                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_IND_QPp,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_Plasma_index,PAR_QP_index,&
+&                        PAR_IND_Q,PAR_nPlasma,PAR_Q_index,&
+&                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_IND_Plasma,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
 &                        COLLISIONS_element,nGW_NEQ_collisions,nCOHSEX_collisions
+ use plasma,        ONLY:Plasma_tab_m1,Plasma_grid
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -63,10 +64,10 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  ! Work Space
  !
  integer                  ::i_qp1,i_qp2,i1,i2,iqbz,iqibz,alloc_err,iqs,&
-&                           i_n,i_k,i_k_s,i_k_sp,&
+&                           i_n,i_k,i_k_s,i_k_sp,i_J,i_J_mem,&
 &                           i_np,i_kmq,i_kmq_s,i_kmq_sp,i_kmq_G0,&
 &                           i_m,i_p,i_p_s,i_p_sp,i_p_star,n_bands,&
-&                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp2_mem,i_qp1_mem
+&                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp1_mem
  complex(SP), allocatable ::EM1s(:,:)
  type(ggwinfo)            ::isc,iscp
  integer          ::io_err,ID
@@ -128,7 +129,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
  if (V_kind==2) then
-   call live_timing("COHSEX collisions (e-e scattering)",PAR_nQP*PAR_nQ*PAR_nQPp)
+   call live_timing("COHSEX collisions (e-e scattering)",PAR_nQP*PAR_nQ)
  else
    call live_timing("COHSEX collisions (e-e correlation)",PAR_nQP*PAR_nQ*PAR_n_Bp_mat_elements)
  endif
@@ -147,7 +148,8 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
      endif
    endif
    !
-   if (V_kind==1) COLL(1)%v3=cZERO
+   if (V_kind==1)              COLL(1)%v3c=cZERO
+   if (V_kind==2.and.io_COLLs) COLL(1)%v3r=cZERO
    !
    Q_loop: do iqbz=1,q%nbz 
      !
@@ -164,9 +166,12 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
        !
        ! I/O
        !
-       if (q%nbz==1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,3/),ID=ID)
-       if (iqbz ==1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,2*iqibz+1/),ID=ID)
-       if (iqbz>  1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
+       if (q%nbz==1) then
+         call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,3/),ID=ID)
+       else
+         if (iqbz ==1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,2*iqibz+1/),ID=ID)
+         if (iqbz>  1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
+       endif
        io_err=ioX(X,Xw,ID)
        !
        call IO_and_Messaging_switch("+fragments_IO_log")
@@ -225,9 +230,6 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
        !
        do i_qp2=1,QP_n_states
          !
-         if (.not.PAR_IND_QPp%element_1D(i_qp2)) cycle
-         i_qp2_mem=PAR_QPp_index(i_qp2)
-         !
          i_m     = QP_table(i_qp2,1)
          i_mp    = QP_table(i_qp2,2)
          i_p     = QP_table(i_qp2,3)
@@ -238,6 +240,10 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
            !==========================
            !
            i_p_s =k%star(i_p,i_p_star)
+           !
+           i_J=Plasma_tab_m1(i_qp2,i_p_s,i_q_mem)
+           if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
+           i_J_mem=PAR_Plasma_index(i_J)
            !
 #if defined _RT
            call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,iqibz,iqs,i_pmq_bz,i_pmq_G0)
@@ -275,19 +281,19 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
            !
            if (io_COLLs) then
              !
-             COLL(1)%v3(i_qp2,i_p_s,iqbz)=pre_factor
+             COLL(1)%v3r(i_J,1,iqbz)=COLL(1)%v3r(i_J,1,iqbz)+abs(pre_factor)**2._SP
              !
            else
              !
-             COLL(i_qp1_mem)%v3(i_qp2_mem,i_p_s,i_q_mem)=pre_factor
+             COLL(i_qp1_mem)%v3r(i_J_mem,1,i_q_mem)=COLL(i_qp1_mem)%v3r(i_J_mem,1,i_q_mem)+abs(pre_factor)**2._SP
              !
            endif
            !
          enddo
          !
-         call live_timing(steps=1)
-         !
        enddo
+       !
+       call live_timing(steps=1)
        !
      else
        !
@@ -322,7 +328,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
            pre_factor=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
 #endif
            !
-           COLL(1)%v3(i_np,i_mp,isc%os(2))=COLL(1)%v3(i_np,i_mp,isc%os(2))-4._SP/spin_occ*pi*pre_factor
+           COLL(1)%v3c(i_np,i_mp,isc%os(2))=COLL(1)%v3c(i_np,i_mp,isc%os(2))-4._SP/spin_occ*pi*pre_factor
            !
            call live_timing(steps=1)
            !
@@ -333,14 +339,22 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
      endif
    enddo Q_loop 
    !
-   if (io_COLLs.or.V_kind==1) then
+   if (V_kind==2.and.io_COLLs) then
      if (COLLISIONS_parallel_SC_structure) then
-       call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_Q_index%COMM)
+       call PP_redux_wait(COLL(1)%v3r,COMM=PAR_COM_QP_A2A%COMM)
+       call PP_redux_wait(COLL(1)%v3r,COMM=PAR_COM_Q_index%COMM)
      else
-       call PP_redux_wait(COLL(1)%v3,COMM=PAR_COM_G_b_A2A%COMM)
+       call PP_redux_wait(COLL(1)%v3r,COMM=PAR_COM_G_b_A2A%COMM)
      endif
-     !
+   endif
+   !
+   if (V_kind==1            ) then
+     if (COLLISIONS_parallel_SC_structure) then
+       call PP_redux_wait(COLL(1)%v3c,COMM=PAR_COM_QP_A2A%COMM)
+       call PP_redux_wait(COLL(1)%v3c,COMM=PAR_COM_Q_index%COMM)
+     else
+       call PP_redux_wait(COLL(1)%v3c,COMM=PAR_COM_G_b_A2A%COMM)
+     endif
    endif
    !
    if (V_kind==1)              call COLLISIONS_linearize_and_IO("COHSEX",i_qp1,COLL,nCOHSEX_collisions)

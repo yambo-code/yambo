@@ -95,6 +95,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,&
 &                     Eh_pumped_Nel
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,theta_function_iTo_ref,i_Pump,i_Probe
+ use plasma,     ONLY:Plasma_redux_percent
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -543,6 +544,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Eh_pumped_pair_energy=0.
  Eh_pumped_pair_width=0.1/HA2EV
  Eh_pumped_Nel=0.
+ Plasma_redux_percent=100.
  !
  ! G_retarded
  !

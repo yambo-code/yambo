@@ -28,7 +28,7 @@ subroutine read_bxsf(Xk,Xen)
  use YPP,                 ONLY:wannier_bands, ord_dgrid_ipol
  use electrons,           ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,&
                                BZ_RIM_max_filling,BZ_RIM_nbands, &
-                               n_bands,BZ_RIM_tot_nkpts,BZ_RIM_ipol_weight,n_spin
+                               BZ_RIM_tot_nkpts,BZ_RIM_ipol_weight,n_spin
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:file_exists,msg,error
  use vec_operate,         ONLY:c2a,rlu_k2bz,k2bz,v_is_zero
@@ -58,7 +58,6 @@ subroutine read_bxsf(Xk,Xen)
  real(SP), allocatable :: ene(:,:), &           ! ene(band, kpoint)
                           kpoints(:,:)           ! kpoints([k1x,k1y,k1z],[k2x,k2y,k2z],... )
  character(lchlen) :: dummyline
- character(schlen) :: fname
 
  real(SP) :: efermitest
 

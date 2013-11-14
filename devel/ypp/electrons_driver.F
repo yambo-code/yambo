@@ -25,13 +25,13 @@ subroutine electrons_driver(Xk,Xen)
  Use stderr,         ONLY:intc
  use wave_func,      ONLY:WF,wf_ng
  use FFT_m,          ONLY:fft_size,fft_dim
- use R_lattice,      ONLY:bz_samp,nkibz
+ use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_RT_dos,&
-&                         l_bands,BANDS_range,l_RT_occ_Plot,l_RT_occ_Fit
+&                         l_bands,BANDS_range
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -43,10 +43,14 @@ subroutine electrons_driver(Xk,Xen)
  use R_lattice,      ONLY:qindx_S
  use com,            ONLY:error
 #endif
+#if defined _YPP_RT
+ use YPP,            ONLY:l_RT_occ_Plot,l_RT_occ_Fit
+#endif
 #if defined _YPP_ELPH
  use YPP,            ONLY:elph_residual_treshold
  use ELPH,           ONLY:elph_Ham_bands
  use com,            ONLY:jobstr,file_exists
+ use R_lattice,      ONLY:nkibz
 #endif
 #if defined _YPP_MAGNETIC
  use YPP,            ONLY:l_angular_momentum,l_position
@@ -60,9 +64,13 @@ subroutine electrons_driver(Xk,Xen)
  ! Work Space
  !
  real(SP), allocatable :: el_den(:)
- integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref,iq_ibz,iq_s
- logical               :: flag,l_polaronic_wf
+ integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
+ logical               :: flag
  character(lchlen)     :: ch_ws(2)
+#if defined _YPP_ELPH
+ integer               :: iq_s,iq_ibz
+ logical               :: l_polaronic_wf
+#endif
 #if defined _YPP_SC
  integer               :: ID,io_V
  integer, external     :: io_SC_components

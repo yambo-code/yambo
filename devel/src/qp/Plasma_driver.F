@@ -62,7 +62,7 @@ subroutine Plasma_driver(E,k,q)
  ! PARALLEL Setup
  !================
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
- call PARALLEL_global_indexes(E,k,q,"Real_Time")
+ call PARALLEL_global_indexes(E,k,q,"Real_Time")     ! This call seems to be broken with 16 processors
  !
  Nt=(SC_bands(2)-SC_bands(1)+1)**2
  ! This would work with E_center>0 and is=+1 / -1
@@ -88,7 +88,7 @@ subroutine Plasma_driver(E,k,q)
    !
  enddo
  !
- call PP_redux_wait(N_plasma_poles)
+ call PP_redux_wait(N_plasma_poles,COMM=PAR_COM_Q_A2A%COMM)
  N_plasma_poles=N_plasma_poles/(PAR_COM_Q_A2A%n_CPU)
  max_N_plasma_poles=maxval(N_plasma_poles)
  !

@@ -129,7 +129,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
         io_err(iv)=io_COLLISIONS(i_qp,ID,COHSEX_collisions(i_qp_mem))
         call COLLISIONS_alloc_and_free("COHSEX","v1 table","alloc",i_qp_mem)
      endif
-     if (V_kind==SE_GW_NEQ.and.i_qp==1) then
+     if (V_kind==SE_GW_NEQ.and..not.associated(GW_NEQ_collisions(1)%v)) then
         io_err(iv)=io_COLLISIONS(i_qp,ID,GW_NEQ_collisions(1))
         call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","alloc",1)
      endif

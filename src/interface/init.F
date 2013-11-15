@@ -1060,7 +1060,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _RT
      !
-     if (l_real_time) then
+     if (l_real_time.and..not.l_eval_collisions) then
        call switch_off_runlevel('cohsex',on_name=' ')
        call switch_off_runlevel('HF_and_locXC',on_name=' ')
        call switch_off_runlevel('em1s',on_name=' ')

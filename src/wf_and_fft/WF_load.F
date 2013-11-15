@@ -173,17 +173,23 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (free_and_alloc) call WF_free(WF)
  !
- WF%b=bands_to_load
+ ! Save dimensions
  !
- ! Is WF to load ? If not and the space is "R" I need to know the fft_size, at least. 
+ WF%b=bands_to_load
+ WF%k=kpts_to_load
+ WF%spin=s_2_load
+ WF%space=wf_space_here
+ !
+ ! Is WF must not be loaded %state must be set to .FALSE. before returning.
+ ! This happens, for example, when in a group od cpus some of them do not 
+ ! read the DB
  !
  if (allocated(states_to_load)) then
    WF%to_load=count(states_to_load .eqv. .true.)>0
    if (.not.WF%to_load) then
-     if(associated(WF%state)) nullify(WF%state)
+     if (associated(WF%state)) nullify(WF%state)
      allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
-     WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))= &
-&             states_to_load(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))
+     WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))=.FALSE.
      deallocate(states_to_load)
      return
    endif
@@ -216,10 +222,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  endif
  !
 #endif
- !
- WF%k=kpts_to_load
- WF%spin=s_2_load
- WF%space=wf_space_here
  !
  if (WF%space=='R') call fft_setup(iG_max,iGo_max,.false.)
  if (WF%space=="R") fft_dim_loaded=fft_dim

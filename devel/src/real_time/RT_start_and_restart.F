@@ -146,103 +146,103 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  SC_DB_present =  all((/io_E==0,io_WF==0,io_V==0,.not.l_RT_uses_E_RIM/))
  !
- if(SC_DB_present) then
-   !
-   ! BEGIN RESTART FROM SC
-   !=======================
-   !
-   call msg('snr','[RT] Restart from a Self-Consistent Calculation ')
-   call msg('nr' ,'[RT] Found   accuracy on density      :',rho_convergence)
-   call msg('rn' ,'[RT]                  on energies [ev]:',E_convergence*HA2EV)
-   !
-   if ( E_convergence>0.01.and.rho_convergence>1e-4) &
-&    call warning(" Restart from a non-converged Self-Consistent calculation! ")
-   !
-   if(.not.COHSEX_use_empties) &
-&    call error(" Set UseEbands=.true. in self-consistent GW to be full compatible with RT!! ")
-   !
-   if(l_NE_simulate_BSE) call error(" Real-time BSE not compatible with SC restart yet! ")
-   !
-   !  I only need SC_R than I can reconstruct G_lesser(:,:,:)
-   !  rotating the non-integrating G_lesser
-   !
-   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
-   io_WF=io_SC_components('WF',E,ID(2))
-   !
-   do ik=1,QP_nk
-     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
-     io_WF=io_SC_components('WF',E,ID(2))
-   enddo
-   !
-   ! Now I build the G_lesser rotating the non interaction one
-   ! G_lesser(i1,i1,ik)=(0.,1)*en%f(i1,ik)
-   !
-   do ik=1,QP_nk
-     call H_rotate(SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),G_lesser(:,:,ik,1),SC_nbands,-1)
-   enddo
-   !
-   if (Hfrozen) call el_density_matrix(G_lesser(:,:,:,1),E,k,rho_n,1,.false.)
-   if (Hfrozen) call V_Hartree(rho_n,V_hartree_sc)
-   !
-   V_xc_sc=(0._SP)
-   !
-   if(l_RT_needs_XC0) then
-     !
-     XC0_and_HARTREE0=(0._SP,0._SP)
-     !
-     if (local_V) then 
-       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID(3))  ! Local potential
-       io_V=io_SC_components('V' ,E,ID(3))
-     else
-       call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID(3))  ! Non Local potential
-       io_V=io_SC_components('V' ,E,ID(3))
-     endif
-     !
-     do ik=1,QP_nk
-       !
-       if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-       !
-       if (local_V.and..not.l_NE_simulate_Irredux) then
-         call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF)
-       else if (.not.l_NE_simulate_Irredux) then
-         call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(3))
-         io_V=io_SC_components('V',E,ID(3))
-         XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1:n_sp_pol)=  &
-&                         H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1:n_sp_pol)
-       endif
-       !
-       ! If IP or Irreduxible the hartree term is fixed and stored in XC0_and_HARTREE0
-       ! if I simulate BSE I have to remove the self-energy sigma(G_0)
-       !
-       if(l_NE_simulate_IP.or.l_NE_simulate_Irredux.or.l_NE_simulate_BSE) &
-&         call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2), &
-&                                ik,1:n_sp_pol),WF) 
-     enddo
-     !
-   endif
-   !
-   call PP_redux_wait(XC0_and_HARTREE0)
-   !
-   ! Now I update <i|r|j> dipoles using G_lesser_reference as
-   ! Green function to construct the Hamiltonian
-   !
-   call RT_update(G_lesser(:,:,:,1),SC_R,-1,E,k,X,up_DIP=.true.)
-   call RT_update(G_lesser_reference,SC_R,-1,E,k,X,up_Gref=.true.)
-   !
-   V_xc_sc=(0._SP)
-   !
-   if(l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP) 
-   !
-   ! END RESTART FROM SC
-   !=====================
-   !
- else if (Thermal_steps==0) then
-   !
-   ! During Thermalization G_lesser_reference must be zero
-   !
+! if(SC_DB_present) then
+!   !
+!   ! BEGIN RESTART FROM SC
+!   !=======================
+!   !
+!   call msg('snr','[RT] Restart from a Self-Consistent Calculation ')
+!   call msg('nr' ,'[RT] Found   accuracy on density      :',rho_convergence)
+!   call msg('rn' ,'[RT]                  on energies [ev]:',E_convergence*HA2EV)
+!   !
+!   if ( E_convergence>0.01.and.rho_convergence>1e-4) &
+!&    call warning(" Restart from a non-converged Self-Consistent calculation! ")
+!   !
+!   if(.not.COHSEX_use_empties) &
+!&    call error(" Set UseEbands=.true. in self-consistent GW to be full compatible with RT!! ")
+!   !
+!   if(l_NE_simulate_BSE) call error(" Real-time BSE not compatible with SC restart yet! ")
+!   !
+!   !  I only need SC_R than I can reconstruct G_lesser(:,:,:)
+!   !  rotating the non-integrating G_lesser
+!   !
+!   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
+!   io_WF=io_SC_components('WF',E,ID(2))
+!   !
+!   do ik=1,QP_nk
+!     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
+!     io_WF=io_SC_components('WF',E,ID(2))
+!   enddo
+!   !
+!   ! Now I build the G_lesser rotating the non interaction one
+!   ! G_lesser(i1,i1,ik)=(0.,1)*en%f(i1,ik)
+!   !
+!   do ik=1,QP_nk
+!     call H_rotate(SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),G_lesser(:,:,ik,1),SC_nbands,-1)
+!   enddo
+!   !
+!   if (Hfrozen) call el_density_matrix(G_lesser(:,:,:,1),E,k,rho_n,1)
+!   if (Hfrozen) call V_Hartree(rho_n,V_hartree_sc)
+!   !
+!   V_xc_sc=(0._SP)
+!   !
+!   if(l_RT_needs_XC0) then
+!     !
+!     XC0_and_HARTREE0=(0._SP,0._SP)
+!     !
+!     if (local_V) then 
+!       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID(3))  ! Local potential
+!       io_V=io_SC_components('V' ,E,ID(3))
+!     else
+!       call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID(3))  ! Non Local potential
+!       io_V=io_SC_components('V' ,E,ID(3))
+!     endif
+!     !
+!     do ik=1,QP_nk
+!       !
+!       if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+!       !
+!       if (local_V.and..not.l_NE_simulate_Irredux) then
+!         call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF)
+!       else if (.not.l_NE_simulate_Irredux) then
+!         call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(3))
+!         io_V=io_SC_components('V',E,ID(3))
+!         XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1:n_sp_pol)=  &
+!&                         H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1:n_sp_pol)
+!       endif
+!       !
+!       ! If IP or Irreduxible the hartree term is fixed and stored in XC0_and_HARTREE0
+!       ! if I simulate BSE I have to remove the self-energy sigma(G_0)
+!       !
+!       if(l_NE_simulate_IP.or.l_NE_simulate_Irredux.or.l_NE_simulate_BSE) &
+!&         call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2), &
+!&                                ik,1:n_sp_pol),WF) 
+!     enddo
+!     !
+!   endif
+!   !
+!   call PP_redux_wait(XC0_and_HARTREE0)
+!   !
+!   ! Now I update <i|r|j> dipoles using G_lesser_reference as
+!   ! Green function to construct the Hamiltonian
+!   !
+!   call RT_update(G_lesser(:,:,:,1),SC_R,-1,E,k,X,up_DIP=.true.)
+!   call RT_update(G_lesser_reference,SC_R,-1,E,k,X,up_Gref=.true.)
+!   !
+!   V_xc_sc=(0._SP)
+!   !
+!   if (l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP) 
+!   !
+!   ! END RESTART FROM SC
+!   !=====================
+!   !
+! else if (Thermal_steps==0) then
+!   !
+!   ! During Thermalization G_lesser_reference must be zero
+!   !
    G_lesser_reference=G_lesser(:,:,:,1)
-   !
- endif
+!   !
+! endif
  !
  if (.not.SC_DB_present.and.l_RT_needs_XC0) then
    !
@@ -254,30 +254,30 @@ subroutine RT_start_and_restart(E,k,q,X)
    !  2. V_hartree and rho_full have been already calculated in SC_bare_Hamiltonian
    !
    ! The time evolution is done updating only the contribution
-   ! coming from the bands above SC_lw_band in the density.
+   ! coming from the bands above SC_bands(1) in the density.
    ! Therefore we calculate:
    !
    ! (1) a density containing ALL levels (full_rho)
-   ! (2) a density containing only levels above SC_lw_band (rho_reference)
+   ! (2) a density containing only levels above SC_bands(1) (rho_reference)
    !
    ! in RT_Collision 
    !   V_h/xc[n]=V_h/xc[full_rho]+V_h/xc[rho-rho_reference]
    !
-   ! When SC_lw_band=1 full_rho=rho_reference
+   ! When SC_bands(1)=1 full_rho=rho_reference
    !
    ! The first term is stored here in XC0_and_HARTREE0
    !
    XC0_and_HARTREE0=(0._SP,0._SP)
    !
    ! Rho_reference. Note that altough rh_n has been already calculated 
-   ! in sc_bare_Hamiltonian I need to recalculate it here when SC_lw_band>1
+   ! in sc_bare_Hamiltonian I need to recalculate it here when SC_bands(1)>1
    ! as it is also used in XC_potential_driver
    ! 
-   call el_density_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,k,rho_n,SC_bands(1),.false.)
+   call el_density_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,k,rho_n,SC_bands(1))
    rho_reference=rho_n
    !
    if (allocated(full_rho)) then
-     call el_density_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,k,rho_n,1,.false.)
+     call el_density_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,k,rho_n,1)
      full_rho=rho_n
    endif
    !
@@ -304,7 +304,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    do ik=1,QP_nk
      !
-     if(.not.l_NE_simulate_Irredux.and..not.l_NE_simulate_TDDFT) then
+     if (.not.l_NE_simulate_Irredux.and..not.l_NE_simulate_TDDFT) then
        !
        call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF) 
        !
@@ -381,7 +381,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
    if (it_start>Thermal_steps.and..not.l_NE_simulate_IP) then 
-     call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_reference,SC_bands(1),.false.)
+     call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_reference,SC_bands(1))
    endif
    !
  endif

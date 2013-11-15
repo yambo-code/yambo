@@ -185,6 +185,7 @@ subroutine RT_occupations_analyze(k,E)
  specs(7: 8,2)=(/'         ','         '/)
  !
  ! F(it) for each (ik,ib)
+ !
  do i_T=1,n_T_steps
    !
    if(.not.(l_RT_occ_plot.or.l_RT_Occ_FIT_vec(i_T))) cycle

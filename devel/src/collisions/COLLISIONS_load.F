@@ -25,7 +25,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! exchange, COHSEX etc.. 
  !
  use pars,            ONLY:SP
- use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_use_collisions,l_sc_srpa,l_elel_scatt,l_elel_corr
+ use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_use_collisions,l_sc_srpa,l_elel_scatt
  use LIVE_t,          ONLY:live_timing
  use QP_m,            ONLY:QP_n_states
  use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
@@ -54,25 +54,19 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  V_kinds     =0
  !
  condition=l_sc_hf.or.l_sc_cohsex.or.l_sc_exx
-#if defined _RT
- condition=condition.and.l_elel_corr
-#endif
  if (condition) then
    n_V_kinds          =n_V_kinds+1
    V_kinds(n_V_kinds) =SC_HF
  endif
  !
  condition=l_sc_cohsex.or.l_sc_srpa
-#if defined _RT
- condition=condition.and.l_elel_corr
-#endif
  if (condition) then
    n_V_kinds          =n_V_kinds+1
    V_kinds(n_V_kinds) =SC_COHSEX
  endif
  !
 #if defined _RT
- if(l_sc_cohsex.and.l_elel_scatt) then
+ if(l_elel_scatt) then
    n_V_kinds          =n_V_kinds+1
    V_kinds(n_V_kinds) =SE_GW_NEQ
  endif

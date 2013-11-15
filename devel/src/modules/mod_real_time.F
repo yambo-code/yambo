@@ -23,6 +23,7 @@ module real_time
  !
  use SC,         ONLY:G_lesser,SC_R
  use pars,       ONLY:DP,SP,schlen,lchlen
+ use units,      ONLY:FS2AUT
  use global_XC,  ONLY:SE_NONE
  !
  implicit none
@@ -203,7 +204,7 @@ module real_time
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
  complex(SP), allocatable :: Sigma_relax(:,:,:)
  !
- real(SP),    allocatable :: rho_reference(:)    ! reference density from SC_lw_band:SC_bands(2)
+ real(SP),    allocatable :: rho_reference(:)    ! reference density from SC_bands(1):SC_bands(2)
  real(SP),    allocatable :: full_rho(:)         ! density of all bands from 1:SC_bands(2)
  !
  ! Integrator Variables
@@ -232,12 +233,14 @@ module real_time
  integer,  parameter      :: J_and_P_cache_size=18
  !
  integer                  :: ID(7)
- integer                  :: it_start            ! restart point
- integer                  :: last_it_evaluated=0 ! When RT_dynamics_jumps are non zero this is 
-                                                 ! the last evaluated point
- integer                  :: RT_IO_steps 
- integer                  :: RT_IO_steps_DB 
- real(SP)                 :: RT_IO_time 
+ integer                  :: it_start                 ! restart point
+ integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
+                                                      ! the last evaluated point
+ integer                  :: RT_IO_JPO_steps    = -1
+ integer                  :: RT_IO_output_steps = -1
+ integer                  :: RT_IO_G_steps      = -1
+ integer                  :: RT_IO_steps_DB     = -1
+ real(SP)                 :: RT_IO_time(3)      = -1.*FS2AUT ! Three values for J,P,OCC - OUPUT - GF's
  real(SP), allocatable    :: J_and_P_cache(:,:)
  real(SP), allocatable    :: Fluence(:)
  !
@@ -329,7 +332,7 @@ module real_time
      endif
      !
      if(l_NE_with_fields) then
-       allocate(J_and_P_cache(J_and_P_cache_size,RT_IO_steps))
+       allocate(J_and_P_cache(J_and_P_cache_size,RT_IO_JPO_steps))
        call mem_est('Current_Cache',(/size(J_and_P_cache)/),(/SP/))
      endif
      !

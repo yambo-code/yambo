@@ -22,7 +22,7 @@
 subroutine RT_driver(E,X,k,q)
  !
  use pars,           ONLY:SP,cI
- use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_elel_corr
+ use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use LIVE_t,         ONLY:live_timing 
@@ -35,7 +35,7 @@ subroutine RT_driver(E,X,k,q)
 &                         SC_QP_setup
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
-&                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_steps,&
+&                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_JPO_steps,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update
@@ -64,7 +64,6 @@ subroutine RT_driver(E,X,k,q)
  ! 
  ! Work Space
  !
- logical           :: do_output
  integer           :: it,ik,ib,it_mem,it_mem_p1
  real(SP)          :: E_previous,E_now
  complex(SP)       :: on_the_fly_operators(8)
@@ -174,9 +173,6 @@ subroutine RT_driver(E,X,k,q)
    !      
    call RT_free()
    !
-   !if (l_elel_corr)  call COLLISIONS_free("STATIC","all",STATIC_collisions,PAR_nQP)
-   !if (l_elel_scatt) call COLLISIONS_free("GW_NEQ","all",GW_NEQ_collisions,PAR_nQP)
-   !
    call WF_free(WF)
    !
    call X_alloc("P_square")
@@ -202,7 +198,7 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_output(what="initialize")
  call RT_output(what="open dyn cur pol")
- if(l_NE_with_fields) call RT_output(what="open pot occ")
+ if (l_NE_with_fields) call RT_output(what="open pot occ")
  if (l_elph_scatt.or.l_elel_scatt) call RT_output('open life')
  !
  ! Loop on time
@@ -239,8 +235,6 @@ subroutine RT_driver(E,X,k,q)
    it_mem     =MEM_index(NE_i_time,G_MEM_steps)
    it_mem_p1  =MEM_index(NE_i_time+1,G_MEM_steps)
    !
-   do_output= mod(NE_i_time-1,RT_IO_steps)==0
-   !
    ! Start-Up & Timing
    !===================
    !
@@ -264,7 +258,7 @@ subroutine RT_driver(E,X,k,q)
    !===============
    if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.
    if (stop_now(.FALSE.)) then
-     NE_steps=((NE_i_time-1)/RT_IO_steps)*RT_IO_steps+1
+     NE_steps=((NE_i_time-1)/RT_IO_JPO_steps)*RT_IO_JPO_steps+1
      l_Dynamics_is_over=.TRUE.
    endif
    !
@@ -282,7 +276,7 @@ subroutine RT_driver(E,X,k,q)
    !==========================
    call RT_current_AND_polarization(k,E,G_lesser(:,:,:,it_mem),A_vecpot)
    !
-   if ( (l_elph_scatt.or.l_elel_scatt) .and. do_output) then
+   if (l_elph_scatt.or.l_elel_scatt) then
      !
      ! Mean Carrier Lifetimes
      !=======================
@@ -312,11 +306,9 @@ subroutine RT_driver(E,X,k,q)
    !
 #endif
    !
-   if(do_output) then
-     call RT_output('dyn',real(on_the_fly_operators),TIME=NE_time/FS2AUT)
-     call RT_output('cur pol',TIME=NE_time/FS2AUT)
-     if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
-   endif
+   call RT_output('dyn',real(on_the_fly_operators),TIME=NE_time/FS2AUT)
+   call RT_output('cur pol',TIME=NE_time/FS2AUT)
+   if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
    !
    ! Calculate Collisions and fill SC_R, Ho_plus_Sigma, H_nl_sc
    !============================================================

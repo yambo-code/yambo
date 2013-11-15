@@ -73,21 +73,19 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    D(1,:)=SC_bands
    D(2,:)=SC_bands
    D(3,:)=(/1,nkibz/)
-   if (l_collision) then
-     if(l_alloc) then
-       allocate(HF_collisions(size_))
-       nHF_collisions=size_
-       HF_collisions(:)%kind=SC_HF
-       HF_collisions(:)%name="HF"
+   if (l_collision.and.l_alloc) then
+     allocate(HF_collisions(size_))
+     nHF_collisions=size_
+     HF_collisions(:)%kind=SC_HF
+     HF_collisions(:)%name="HF"
+   endif
+   call local_alloc_and_free(HF_collisions,nHF_collisions)
+   if (l_collision.and.l_clean) then
+     if (allocated(HF_collisions)) then
        call local_alloc_and_free(HF_collisions,nHF_collisions)
+       deallocate(HF_collisions)
      endif
-     if (l_clean) then
-       if (allocated(HF_collisions)) then
-         call local_alloc_and_free(HF_collisions,nHF_collisions)
-         deallocate(HF_collisions)
-       endif
-       nHF_collisions=0
-     endif
+     nHF_collisions=0
    endif
  endif
  !
@@ -95,21 +93,19 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    D(1,:)=SC_bands
    D(2,:)=SC_bands
    D(3,:)=(/1,nkibz/)
-   if (l_collision) then
-     if(l_alloc) then
-       allocate(COHSEX_collisions(size_))
-       nCOHSEX_collisions=size_
-       COHSEX_collisions(:)%kind=SC_COHSEX
-       COHSEX_collisions(:)%name="COHSEX"
+   if (l_collision.and.l_alloc) then
+     allocate(COHSEX_collisions(size_))
+     nCOHSEX_collisions=size_
+     COHSEX_collisions(:)%kind=SC_COHSEX
+     COHSEX_collisions(:)%name="COHSEX"
+   endif
+   call local_alloc_and_free(COHSEX_collisions,nCOHSEX_collisions)
+   if (l_collision.and.l_clean) then
+     if (allocated(COHSEX_collisions)) then
        call local_alloc_and_free(COHSEX_collisions,nCOHSEX_collisions)
+       deallocate(COHSEX_collisions)
      endif
-     if (l_clean) then
-       if (allocated(COHSEX_collisions)) then
-         call local_alloc_and_free(COHSEX_collisions,nCOHSEX_collisions)
-         deallocate(COHSEX_collisions)
-       endif
-       nCOHSEX_collisions=0
-     endif
+     nCOHSEX_collisions=0
    endif
  endif
  !
@@ -121,21 +117,18 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      D(1,:)=(/1,PAR_nPlasma/)
      D(3,:)=(/1,PAR_nQ/)
    endif
-   if (l_collision) then
-     if(l_alloc) then
-       allocate(GW_NEQ_collisions(size_))
-       nGW_NEQ_collisions=size_
-       GW_NEQ_collisions(:)%kind=SE_GW_NEQ
-       GW_NEQ_collisions(:)%name="GW_NEQ"
-       call local_alloc_and_free(GW_NEQ_collisions,nGW_NEQ_collisions)
+   if (l_collision.and.l_alloc) then
+     allocate(GW_NEQ_collisions(size_))
+     nGW_NEQ_collisions=size_
+     GW_NEQ_collisions(:)%kind=SE_GW_NEQ
+     GW_NEQ_collisions(:)%name="GW_NEQ"
+   endif
+   call local_alloc_and_free(GW_NEQ_collisions,nGW_NEQ_collisions)
+   if(l_collision.and.l_clean) then
+     if (allocated(GW_NEQ_collisions)) then
+       deallocate(GW_NEQ_collisions)
      endif
-     if(l_clean) then
-       if (allocated(GW_NEQ_collisions)) then
-         call local_alloc_and_free(GW_NEQ_collisions,nGW_NEQ_collisions)
-         deallocate(GW_NEQ_collisions)
-       endif
-       nGW_NEQ_collisions=0
-     endif
+     nGW_NEQ_collisions=0
    endif
  endif
  !

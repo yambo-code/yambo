@@ -22,7 +22,7 @@
 subroutine RT_driver(E,X,k,q)
  !
  use pars,           ONLY:SP,cI
- use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_elel_corr
+ use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use LIVE_t,         ONLY:live_timing 

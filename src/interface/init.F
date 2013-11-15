@@ -1460,6 +1460,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            if ( trim(rstr_piece(i1+1)) == 'p' ) l_RT_probe=.true.
            if ( trim(rstr_piece(i1+1)) == 'pp') l_RT_pump_and_probe=.true.
          endif
+         if ( trim(rstr_piece(i1)) == 'collisions' ) then
+           if (.not.runlevel_is_on('el_el_scatt').and..not.runlevel_is_on('cohsex').and.&
+&              .not.runlevel_is_on('HF_and_locXC')) call initactivate(1,'HF_and_locXC')
+         endif
          !
          if ( trim(rstr_piece(i1)) == 'scattp' ) then
            if ( trim(rstr_piece(i1+1)) == 'e'.or. trim(rstr_piece(i1+1)) == 'b') l_elel_scatt=.true.
@@ -1468,7 +1472,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            if (l_elph_scatt) call initactivate(1,'el_ph_scatt')
            if (l_elel_scatt) then
              call initactivate(1,'el_el_scatt')
-             if (runlevel_is_on('collisions')) call initactivate(1,'cohsex')
+             if (runlevel_is_on('collisions')) call initactivate(1,'em1s')
            endif
          endif
 #endif

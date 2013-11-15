@@ -25,7 +25,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! exchange, COHSEX etc.. 
  !
  use pars,            ONLY:SP
- use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_use_collisions,l_sc_srpa,l_elel_scatt,l_elel_corr
+ use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_use_collisions,l_sc_srpa,l_elel_scatt
  use LIVE_t,          ONLY:live_timing
  use QP_m,            ONLY:QP_n_states
  use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ

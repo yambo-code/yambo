@@ -59,16 +59,18 @@ subroutine Plasma_driver(E,k,q)
  call k_sym2sym(q,'k')
  call k_sym2sym(k,'k')
  !
+ Nt=(SC_bands(2)-SC_bands(1)+1)**2
+ max_N_plasma_poles=k%nbz*Nt*n_sp_pol
+ ! This would work with E_center>0 and is=+1 / -1
+ !Nt=(SC_bands(2)-SC_bands(1)+1)*(SC_bands(2)-SC_bands(1))/2
+ !
  ! PARALLEL Setup
  !================
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
- call PARALLEL_global_indexes(E,k,q,"Real_Time")     ! This call seems to be broken with 16 processors
+ call PARALLEL_global_indexes(E,k,q,"Real_Time")
  !
- Nt=(SC_bands(2)-SC_bands(1)+1)**2
- ! This would work with E_center>0 and is=+1 / -1
- !Nt=(SC_bands(2)-SC_bands(1)+1)*(SC_bands(2)-SC_bands(1))/2
- allocate(poles(k%nbz*Nt*n_sp_pol),N_plasma_poles(q%nbz))
- allocate(Plasma_tab(k%nbz*Nt*n_sp_pol,PAR_nQ,2))
+ allocate(poles(max_N_plasma_poles),N_plasma_poles(q%nbz))
+ allocate(Plasma_tab(max_N_plasma_poles,PAR_nQ,2))
  allocate(Plasma_tab_m1(QP_n_states,nsym,PAR_nQ))
  call mem_est("Plasma_tab Plasma_tab_m1",(/size(Plasma_tab),size(Plasma_tab_m1)/),(/SP,SP/))
  !

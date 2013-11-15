@@ -280,7 +280,7 @@ module QP_CTL_m
      !
      if ((Eid<3.and.associated(en%Eo).and..not.associated(en%GreenF)).or.associated(en%E_RIM)) then
        !
-       if (associated(en%E_RIM)) then
+       if (associated(en%E_RIM).and.associated(en%Eo)) then
          !
          allocate(RIM_k_done(BZ_RIM_tot_nkpts))
          RIM_k_done=0

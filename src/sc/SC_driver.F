@@ -363,7 +363,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      forall (ib=SC_bands(2)+1:E%nb) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(2),:,:)-E_previous(SC_bands(2),:,:)
      !
-     ! The same for the bands below SC_lw_band
+     ! The same for the bands below SC_bands(1)
      !
      forall (ib=1:SC_bands(1)-1) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(1),:,:)-E_previous(SC_bands(1),:,:)
      !

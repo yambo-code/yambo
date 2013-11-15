@@ -26,7 +26,7 @@ integer function RT_occupations_check(E,k)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use QP_m,           ONLY:OCC_ctl
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,RT_IO_steps,l_RT_CCA_Kernel,&
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,RT_IO_JPO_steps,l_RT_CCA_Kernel,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Ho_abs_lifetime
  use SC,             ONLY:SC_bands,RT_occupations,RT_nk
@@ -89,13 +89,13 @@ integer function RT_occupations_check(E,k)
  !
  call RT_occupations_repair(E)
  !
- if (OCC_deltaT<RT_IO_steps*RT_step) then
+ if (OCC_deltaT<RT_IO_JPO_steps*RT_step) then
    ! 
-   OCC_deltaT=RT_IO_steps*RT_step
+   OCC_deltaT=RT_IO_JPO_steps*RT_step
    ! 
  else
    !
-   OCC_deltaT=nint(OCC_deltaT/RT_IO_steps/RT_step)*RT_IO_steps*RT_step
+   OCC_deltaT=nint(OCC_deltaT/RT_IO_JPO_steps/RT_step)*RT_IO_JPO_steps*RT_step
    !
  endif
  !

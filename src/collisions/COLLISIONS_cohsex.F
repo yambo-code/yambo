@@ -21,7 +21,7 @@
 !
 subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  !
- ! COHSEX collisions 
+ ! COHSEX/GW collisions 
  !
  use pars,          ONLY:SP,pi,schlen,cZERO
  use memory_m,      ONLY:mem_est
@@ -109,7 +109,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  io_err=ioX(X,Xw,ID)
  !
 #if defined _TIMING
- call timing('COHSEX Collisions',OPR='start')
+ call timing('COHSEX/GW Collisions',OPR='start')
 #endif
  !
  ! Test the spatial Inversion
@@ -129,7 +129,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
  if (V_kind==2) then
-   call live_timing("COHSEX collisions (e-e scattering)",PAR_nQP*PAR_nQ)
+   call live_timing("GW collisions (e-e scattering)",PAR_nQP*PAR_nQ)
  else
    call live_timing("COHSEX collisions (e-e correlation)",PAR_nQP*PAR_nQ*PAR_n_Bp_mat_elements)
  endif
@@ -365,7 +365,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  call live_timing()
  !
 #if defined _TIMING
- call timing('COHSEX Collisions',OPR='stop')
+ call timing('COHSEX/GW Collisions',OPR='stop')
 #endif
  !
  ! CLEAN

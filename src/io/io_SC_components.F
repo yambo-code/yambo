@@ -37,6 +37,9 @@ integer function io_SC_components(what,E_sc,ID)
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use fragments,      ONLY:io_fragment
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  implicit none
  !
  integer, intent(in)      :: ID
@@ -51,6 +54,10 @@ integer function io_SC_components(what,E_sc,ID)
  real(SP), allocatable :: TMP_matrix(:,:,:),E_disk(:,:,:)
  integer               :: ik,bands_to_load,ib,i_spin
  logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_T_EL
+ !
+#if defined _TIMING
+ call timing('io_SC_components',OPR='start')
+#endif
  !
  if (.not.io_SC) then
    io_SC_components=IO_NOT_ALLOWED
@@ -241,5 +248,9 @@ integer function io_SC_components(what,E_sc,ID)
  endif
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_SC_components',OPR='stop')
+#endif
  !
 end function

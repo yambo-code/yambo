@@ -145,7 +145,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! CPU's
  !=======
  !
-#if defined _MPI || defined _BLUEGENE
+#if defined _MPI 
  call CPU_structure_load( )
 #endif
  !
@@ -296,7 +296,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! I/O
  !
- call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,OCC)',&
+ call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,OCCs,WF,SC)',&
 &                         DBs_IO_control_string,verb_level=V_io)
  !
  ! GPL_EXCLUDE_END
@@ -339,11 +339,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! I/O
  !
- call it(defs,'IOtime',        '[RT] Time between to consecutive I/O',RT_IO_time,verb_level=V_real_time,unit=Time_unit)
+ call it(defs,'IOtime',        '[RT] Time between to consecutive I/O (J,P,OCCs - GF - OUTPUT)',RT_IO_time,unit=Time_unit)
  call it('f',defs,'SkipGFIO',  '[RT] Do not write on disk the Green Functions',verb_level=V_real_time)
  call it('f',defs,'SkipOCCIO', '[RT] Do not write on disk the Occupations',verb_level=V_real_time)
  call it('f',defs,'SkipJPIO',  '[RT] Do not write on disk the current and polarization',verb_level=V_real_time)
- call it('f',defs,'COLLISIONS_on_the_fly', '[RT] Calculate COLLISIONS on-the-fly',verb_level=V_real_time)
  !
  ! Other parameters of RT (to be switched on using the verbosity)
  !
@@ -502,7 +501,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
    !
 #endif
    !
-#if defined _MPI || defined _BLUEGENE
+#if defined _MPI 
    !
    subroutine CPU_structure_load()
      use parallel_m, ONLY:n_CPU_str_max,CPU_structure

@@ -39,7 +39,7 @@ subroutine WF_apply_symm(isc,WF_symm)
  integer     :: i, isp
  !
  i_wf(1)=WF%index(isc(1),isc(2),isc(4))
-#if defined _BLUEGENE
+#if defined _MPI
  if (i_wf(1)==0) call error('EMPTY WF index @ b:'//trim(intc(isc(1)))//' k:'//&
 &                           trim(intc(isc(2)))//' spin:'//trim(intc(isc(4)))//&
 &                           ' ID:'//trim(intc(myid)))

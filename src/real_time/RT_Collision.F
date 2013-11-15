@@ -46,8 +46,8 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R,&
-&                         RT_ibz_coo,RT_nk
- use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
+&                         RT_ibz_coo,RT_nk,it_now
+ use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc,QP_nb
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,                             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
 &                         G_lesser_reference,                                                  &
@@ -88,43 +88,39 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  XC_needs_density=.not.XCfrozen.and.l_sc_contains_lda.and.SC_xc_functional/=0
  !
- if (it_now==it_start) then
+ if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) &
+&   call el_density_matrix(G_input(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1))
+ !
+ ! The Hartree term is written as
+ !
+ ! V_hartree(G) = V_hartree(rho-rho_0) + V_hartree(rho_0)
+ !
+ ! where V_hartree(rho_0) is stored in XC0_and_HARTREE0
+ !
+ if (.not.Hfrozen.or..not.NE_dynamics) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
+ !
+ if (.not.XCfrozen.or..not.NE_dynamics) then
    !
-   if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) &
-&    call el_density_matrix(G_input(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1),.false.)
-   !
-   ! The Hartree term is written as
-   !
-   ! V_hartree(G) = V_hartree(rho-rho_0) + V_hartree(rho_0)
-   !
-   ! where V_hartree(rho_0) is stored in XC0_and_HARTREE0
-   !
-   if (.not.Hfrozen.or..not.NE_dynamics) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
-   !
-   if(.not.XCfrozen.or..not.NE_dynamics) then
+   if(l_sc_contains_lda.and.SC_xc_functional/=0) then
      !
-     if(l_sc_contains_lda.and.SC_xc_functional/=0) then
-       !
-       ! Reconstruct the full density
-       !
-       if (SC_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
-       !
-       call IO_and_Messaging_switch("-report -log -io_in -io_out")
-       call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
-       call IO_and_Messaging_switch("+report +log +io_in +io_out")
-       V_xc_sc=V_xc
-       !
-     endif
+     ! Reconstruct the full density
      !
-     ! The exchange/cohsex term is written as Sigma(G - G_0) - Sigma(G)
-     ! NOTICE THAT: this approximation is valid only for linear self-energies 
-     !              in G_lesser as exchange or COHSEX(with W fixed) 
+     if (SC_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
      !
-     if (l_sc_hf.or.l_sc_cohsex) then
-       call COLLISIONS_compose(G_input(:,:,RT_ibz_coo(:,1))-G_lesser_reference(:,:,RT_ibz_coo(:,1)),&
-&                              G_input(:,:,RT_ibz_coo(:,1))-G_lesser_reference(:,:,RT_ibz_coo(:,1)))
-     endif
+     call IO_and_Messaging_switch("-report -log -io_in -io_out")
+     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
+     call IO_and_Messaging_switch("+report +log +io_in +io_out")
+     V_xc_sc=V_xc
      !
+   endif
+   !
+   ! The exchange/cohsex term is written as Sigma(G - G_0) - Sigma(G)
+   ! NOTICE THAT: this approximation is valid only for linear self-energies 
+   !              in G_lesser as exchange or COHSEX(with W fixed) 
+   !
+   if (l_sc_hf.or.l_sc_cohsex) then
+     call COLLISIONS_compose(G_input(:,:,RT_ibz_coo(:,1))-G_lesser_reference(:,:,RT_ibz_coo(:,1)),&
+&                            G_input(:,:,RT_ibz_coo(:,1))-G_lesser_reference(:,:,RT_ibz_coo(:,1)))
    endif
    !
  endif
@@ -205,9 +201,6 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  call PP_redux_wait(Ho_plus_Sigma(:,:,:,1))
  !
- ! The field must be applied in a separate loop driven by the 
- ! X_q_0 PARALLEL roles
- !
  do ik=1,QP_nk 
    !
    if (.not.(PAR_IND_WF_k%element_1D(ik).and.PAR_COM_Xk_ibz_A2A%CPU_id==0)) then
@@ -235,16 +228,14 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
      SC_R(i1,i1,:,:)=cONE
    enddo
  endif
+ !
 #if defined _TIMING
- call timing('RT Collisions',OPR='end')
+ call timing('RT Collisions',OPR='stop')
 #endif
  !
  ! Calculate all relaxation terms
  ! ==============================
  call RT_relaxation(G_input,E,k,q,Time)
-#if defined _TIMING
- call timing('RT relaxation',OPR='end')
-#endif
  !
 end subroutine RT_Collision
 

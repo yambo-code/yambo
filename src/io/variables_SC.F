@@ -36,8 +36,8 @@ integer function variables_SC(ID,local_description,what)
 &                         variable_is_found
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,              &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
-&                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_IO_time,                  &
-&                         RT_IO_steps,l_RT_induced_field,G_MEM_steps,&
+&                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_IO_G_steps,              &
+&                         RT_IO_JPO_steps,l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,RT_IO_steps_DB,Gr_description,&
 &                         RT_dynamics_jumps,l_RT_uses_E_RIM,N_Gr_descs
 #if defined _MAGNETIC
@@ -328,7 +328,7 @@ integer function variables_SC(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=9,MENU=0) 
+   call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=8,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_diagonalize,&
 &    VAR=' [RT] QP analysis                :',CHECK=.true.,OP=(/"=="/),&
@@ -338,14 +338,17 @@ integer function variables_SC(ID,local_description,what)
 &    VAR=' [RT] Diagonalization steps      :',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,DB_I0=RT_IO_steps_DB,I0=RT_IO_steps,&
-&    VAR=' [RT] IO steps                   :',CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
-   call io_elemental(ID,R0=RT_IO_time,&
-&    VAR=' [RT] Time between two IOs   [fs]:',CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
-   i_desc=i_desc+1
+   if (l_J.or.l_occupations) then
+     call io_elemental(ID,DB_I0=RT_IO_steps_DB,I0=RT_IO_JPO_steps,&
+&      VAR=' [RT] IO steps                   :',CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
+     i_desc=i_desc+1
+   else if (l_G) then
+     call io_elemental(ID,I0=RT_IO_G_steps,&
+&      VAR=' [RT] IO steps                   :',CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
+     i_desc=i_desc+1
+   endif
    call io_elemental(ID,R0=RAD_LifeTime,&
 &    VAR=' [RT] Radiative life time    [fs]:', CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)

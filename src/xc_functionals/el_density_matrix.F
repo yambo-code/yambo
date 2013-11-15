@@ -43,13 +43,12 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  !
  ! Work Space 
  !
- integer :: ib1,ib2,ik,ifft1,rho_syms,ifft2,ir
- real(SP):: rho_no_sym(fft_size),f_occ
+ integer     :: ib1,ib2,ik,ifft1,rho_syms,ifft2,ir
+ real(SP)    :: rho_no_sym(fft_size)
+ complex(SP) :: f_occ
  !
  rho=0._SP
  rho_no_sym=0._SP
- !
- ! Off-diagonal contributions
  !
  do ik=1,Xk%nibz
    !
@@ -57,7 +56,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
      if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
      ifft1=WF%index(ib1,ik,1)
      f_occ=en%f(ib1,ik,1)
-     rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(ik)*abs(WF%c(:,ifft1))**2.
+     rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,ifft1))**2.)
    enddo
    !
    if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
@@ -72,12 +71,12 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
        ifft2=WF%index(ib2,ik,1)
        !
        if (ib1==ib2) then
-         f_occ=real(-(0._SP,1._SP)*G_lesser(ib1,ib2,ik),SP)
+         f_occ=-(0._SP,1._SP)*G_lesser(ib1,ib2,ik)
        else
-         f_occ=real(-(0._SP,2._SP)*G_lesser(ib1,ib2,ik),SP)
+         f_occ=-(0._SP,2._SP)*G_lesser(ib1,ib2,ik)
        endif
        !
-       rho_no_sym(:)=rho_no_sym(:)+Xk%weights(ik)*f_occ*real(WF%c(:,ifft1)*conjg(WF%c(:,ifft2)))
+       rho_no_sym(:)=rho_no_sym(:)+Xk%weights(ik)*real(f_occ*WF%c(:,ifft1)*conjg(WF%c(:,ifft2)))
        !
      enddo
    enddo

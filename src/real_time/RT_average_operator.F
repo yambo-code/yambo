@@ -30,6 +30,9 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  use wave_func,      ONLY:WF
  use wrapper,        ONLY:Vstar_dot_V
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -47,6 +50,10 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  !
  integer     :: i1,ik,SC_bands2,ik_ibz
  complex(SP) :: Hk(SC_bands(2),SC_bands(2),n_sp_pol)
+ !
+#if defined _TIMING
+ call timing('RT average Op',OPR='start')
+#endif
  !
  SC_bands2=SC_nbands**2
  VALUE=(0._SP,0._SP)
@@ -66,7 +73,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
      enddo
    enddo
    !
-   return
+   goto 1
    !
  endif 
  !
@@ -88,6 +95,12 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  enddo
  !
  if (k%nibz/=nK_mem) call PP_redux_wait(VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ !
+1 continue
+ !
+#if defined _TIMING
+ call timing('RT average Op',OPR='stop')
+#endif
  !
  contains 
    !

@@ -67,7 +67,7 @@ module interfaces
      integer,     optional :: LOADED,TOTAL,NCPU
    end subroutine
    !
-   subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Bm_index,CLEAN_UP)
+   subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Plasma_index,Bm_index,CLEAN_UP)
      !
      use parallel_m,      ONLY:PP_indexes
      !
@@ -77,6 +77,7 @@ module interfaces
      type(PP_indexes),    optional :: B_index
      type(PP_indexes),    optional :: Bp_index
      type(PP_indexes),    optional :: QP_index
+     type(PP_indexes),    optional :: Plasma_index
      type(PP_indexes),    optional :: Bm_index
      logical, intent(in), optional :: CLEAN_UP
      !

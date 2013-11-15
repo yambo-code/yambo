@@ -94,7 +94,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !      asked now
  !
  call check_bounds(WF,loaded_bounds_ok)
- loaded_bounds_ok= WF%space==wf_space_here
+ if (loaded_bounds_ok) loaded_bounds_ok= WF%space==wf_space_here
  !
  call check_bounds(WF_buffer,buffer_is_ok)
  !
@@ -233,11 +233,13 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! LOG the states loaded
  !
+#if !defined _YPP_RT 
  if (buffer_is_ok.and.WF%space/="B") then
    call msg('rns','[WF] Loading Wave-Functions from buffer')
  else
    call msg('rns','[WF] Performing Wave-Functions I/O')
  endif
+#endif
  !
  if (WF%space=='R') call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !

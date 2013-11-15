@@ -144,7 +144,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! CPU's
  !=======
  !
-#if defined _MPI || defined _BLUEGENE
+#if defined _MPI 
  call CPU_structure_load( )
 #endif
  !
@@ -499,7 +499,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
    !
 #endif
    !
-#if defined _MPI || defined _BLUEGENE
+#if defined _MPI 
    !
    subroutine CPU_structure_load()
      use parallel_m, ONLY:n_CPU_str_max,CPU_structure

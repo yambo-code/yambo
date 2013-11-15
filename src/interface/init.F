@@ -442,7 +442,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! CPU structure
  !
-#if defined _MPI || defined _BLUEGENE
+#if defined _MPI 
  !
  if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa) then
    if (l_optics) then

@@ -50,7 +50,7 @@ subroutine symmetries_driver(E,Xk)
  !
  integer               :: action_kind
  !
- if(core_io_path==more_io_path) then
+ if (core_io_path==more_io_path) then
    more_io_path=trim(core_io_path)//"/FixSymm"
    call msg('s','Setting I/O path to "FixSymm"')
  endif

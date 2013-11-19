@@ -30,7 +30,7 @@ integer function ioKB_abinit(ID)
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_abinit
  use memory_m,         ONLY:mem_est
- use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_mode,VERIFY, &
+ use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_mode, &
 &                           io_elemental,io_bulk,io_header,io_fragmented,&
 &                           read_is_on,write_is_on,ver_is_gt_or_eq,io_extension
  use electrons,        ONLY:n_sp_pol
@@ -74,13 +74,13 @@ integer function ioKB_abinit(ID)
    !
    if (read_is_on(ID)) then
      ! 
-     if (.not.allocated(n_atoms_species).and.io_mode(ID)/=VERIFY) then
+     if (.not.allocated(n_atoms_species)) then
        allocate(n_atoms_species(n_atomic_species))
        allocate(atom_pos(3,n_atoms_species_max,n_atomic_species))
        call mem_est("n_atoms_species atom_pos",&
 &                   (/n_atomic_species,size(atom_pos)/),(/IP,SP/))
      endif
-     if (.not.allocated(pp_n_l_comp).and.io_mode(ID)/=VERIFY) then
+     if (.not.allocated(pp_n_l_comp)) then
        allocate(pp_n_l_comp(n_atomic_species))
        call mem_est("pp_n_l_comp",(/n_atomic_species/),(/IP/))
      endif
@@ -93,7 +93,7 @@ integer function ioKB_abinit(ID)
    call io_bulk(ID,I1=pp_n_l_comp)
    !
    if (.not.ver_is_gt_or_eq(ID,revision=898)) pp_n_l_times_proj_max=maxval(pp_n_l_comp)
-   if (read_is_on(ID).and.io_mode(ID)/=VERIFY.and. .not.allocated(pp_table)) then
+   if (read_is_on(ID).and. .not.allocated(pp_table)) then
      allocate(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
      call mem_est("pp_table",(/size(pp_table)/),(/IP/))
    endif

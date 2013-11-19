@@ -96,7 +96,7 @@ subroutine RT_manual_excitation(E,k)
        !
        do ib=SC_bands(1),SC_bands(2)
          if(Pumped_state(ib,ik_rim).and.Pump_level(ib,ik_rim)==i3) coeff=coeff+spin_occ*k%weights(ik)/ &
-&                                                   real(RT_Nk_ibz(ik),SP)/sqrt(abs(real(Pump_level(ib,ik_rim),SP)**(0.2_SP)))
+&                                                   real(RT_Nk_ibz(ik),SP)/sqrt(abs(real(Pump_level(ib,ik_rim),SP)))
        enddo
        !
      enddo

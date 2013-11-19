@@ -38,9 +38,10 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  ! Work Space
  !
  integer   :: ic,i1,i2,i3,i_cycle,io_err,ID,i_ref
- logical   :: local_condition,l_COHSEX,l_GW_NEQ
+ logical   :: local_condition,l_COHSEX,l_GW_NEQ,l_HF
  real(SP)  :: COLLISIONS_max
  !
+ l_HF     =index(what,"HF")>0
  l_COHSEX =index(what,"COHSEX")>0
  l_GW_NEQ =index(what,"GW_NEQ")>0
  !
@@ -49,8 +50,8 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  i_ref=1
  if (.not.io_COLLs) i_ref=PAR_QP_index(i_qp)
  !
- if(l_COHSEX) COLLISIONS_max=maxval(abs(COLL(1)%v3c(:,:,:)))        
- if(l_GW_NEQ) COLLISIONS_max=maxval(abs(COLL(1)%v3r(:,:,:)))        
+ if(l_COHSEX.or.l_HF) COLLISIONS_max=maxval(abs(COLL(1)%v3c(:,:,:)))        
+ if(l_GW_NEQ        ) COLLISIONS_max=maxval(abs(COLL(1)%v3r(:,:,:)))        
  COLL(i_ref)%table(:,:,:)=0
  !
  do i_cycle=1,2
@@ -58,7 +59,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
    do i1=COLL(i_ref)%D(1,1),COLL(i_ref)%D(1,2)
      do i2=COLL(i_ref)%D(2,1),COLL(i_ref)%D(2,2)
        do i3=COLL(i_ref)%D(3,1),COLL(i_ref)%D(3,2)
-         if(l_COHSEX) local_condition=abs(COLL(1)%v3c(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.&
+         if(l_COHSEX.or.l_HF) local_condition=abs(COLL(1)%v3c(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.&
 &                        COLLISIONS_cutoff<0.0.or.l_elel_scatt
          if(l_GW_NEQ) local_condition=abs(COLL(1)%v3r(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.&
 &                        COLLISIONS_cutoff<0.0.or.l_elel_scatt
@@ -66,7 +67,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
            ic=ic+1
            if (i_cycle==2) then
              COLL(i_ref)%table(i1,i2,i3)=1
-             if(l_COHSEX) COLL(i_ref)%v(ic)=COLL(1)%v3c(i1,i2,i3) 
+             if(l_COHSEX.or.l_HF) COLL(i_ref)%v(ic)=COLL(1)%v3c(i1,i2,i3) 
              if(l_GW_NEQ) COLL(i_ref)%v(ic)=cmplx(COLL(1)%v3r(i1,i2,i3),0._SP)
            endif
          endif

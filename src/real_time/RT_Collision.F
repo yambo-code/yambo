@@ -47,7 +47,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R,&
 &                         RT_ibz_coo,RT_nk,it_now
- use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc,QP_nb
+ use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_nb
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,                             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
 &                         G_lesser_reference,                                                  &
@@ -139,12 +139,9 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !=======================================
    if(.not.local_V.and..not.XCfrozen) then
      ! 
-     ! HF
+     ! HF/COHSEX
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
      ! 
-     ! COHSEX
-     if (l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc) 
-     !
    endif
    !
    ! Adiabatic Switching

@@ -46,7 +46,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  integer, parameter       :: n_output_files=100,max_X_order=9
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
- integer                  :: n1,n2,i_f,i_fp,n_headings(n_output_files),next_file,i_order,i_c
+ integer                  :: n1,i_f,i_fp,n_headings(n_output_files),next_file,i_order,i_c
  logical                  :: file_is_todo(n_output_files),open_files,initialize
  logical,           save  :: SC_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
  character(schlen)        :: headings(n_output_files,10),append_ch
@@ -106,16 +106,12 @@ subroutine RT_output(what,VALUEs,TIME,E)
  if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'dynamics'
  short_file_name(next_file)=trim(append_ch)//'dynamics'
- n_headings(next_file)=9
- if(l_NE_simulate_IP)     n_headings(next_file)=n_headings(next_file)-3
- if(l_Debye_TBose_update) n_headings(next_file)=n_headings(next_file)+1
+ n_headings(next_file)=8
  headings(next_file,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
- headings(next_file,4:6)=(/"Hartree [eV]","Exchange[eV]","Correlat[eV]"/)
- n1=7
- if(l_NE_simulate_IP) n1=4
- headings(next_file,n1)="Fluence[kJ/cm^2]"
- headings(next_file,n1+1)="N" 
- headings(next_file,n1+2)="dG" 
+ headings(next_file,4:5)=(/"Hartree [eV]","XC      [eV]"/)
+ headings(next_file,6)="Fluence[kJ/cm^2]"
+ headings(next_file,7)="N" 
+ headings(next_file,8)="dG" 
  if(l_Debye_TBose_update) headings(next_file,n1+3)="Tbose" 
  next_file=next_file+1
  !
@@ -311,12 +307,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
      case('dynamics')
-       data_to_dump(2:6) = VALUES(1:5)
-       n1=7
-       n2=6
-       if(l_NE_simulate_IP) n1=4
-       data_to_dump(n1:n1+2) = VALUES(n2:n2+2)
-       if(l_Debye_TBose_update) data_to_dump(n1+3) = Bose_Temp
+       data_to_dump(2:8) = VALUES(1:7)
      case('YPP-eps_along_E','YPP-eps_x','YPP-eps_y','YPP-eps_z','YPP-eels_along_E','YPP-SHG_qssin',&
 &         'YPP-X_probe_order_0_x','YPP-X_probe_order_1_x','YPP-X_probe_order_2_x','YPP-X_probe_order_3_x',&
 &         'YPP-X_probe_order_4_x','YPP-X_probe_order_5_x','YPP-X_probe_order_6_x','YPP-X_probe_order_7_x',&

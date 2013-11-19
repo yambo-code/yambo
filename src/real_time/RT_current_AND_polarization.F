@@ -48,7 +48,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  integer       :: id
  !
- if(.not.l_NE_with_fields.or..not.NE_dynamics) return
+ if (.not.l_NE_with_fields.or..not.NE_dynamics) return
  !
  do id=1,3
    !
@@ -61,7 +61,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! Diamagnetic term
  !
- if(l_RT_diamagnetic) then
+ if (l_RT_diamagnetic) then
    !
    RT_ind_J(:)=RT_ind_J(:)-A_input%vecpot(:)*real(nel,SP)/SPEED_OF_LIGHT
    !

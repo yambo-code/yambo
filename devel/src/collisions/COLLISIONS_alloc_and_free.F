@@ -143,15 +143,15 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
            allocate(COLL(J)%v3r(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
            COLL(J)%v3r=rZERO
          endif
-         if(l_COHSEX) then
+         if(l_COHSEX.or.l_HF) then
            allocate(COLL(J)%v3c(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
            COLL(J)%v3c=cZERO
          endif
          COLL(J)%D=D
        endif
        if (l_clean.and.(l_v3.or.l_all)) then
-         if (l_GW_NEQ.and.associated(COLL(J)%v3r)) deallocate(COLL(J)%v3r)
-         if (l_COHSEX.and.associated(COLL(J)%v3c)) deallocate(COLL(J)%v3c)
+         if (l_GW_NEQ        .and.associated(COLL(J)%v3r)) deallocate(COLL(J)%v3r)
+         if (l_COHSEX.or.l_HF.and.associated(COLL(J)%v3c)) deallocate(COLL(J)%v3c)
        endif
        if (l_alloc.and.(l_v1.or.l_all)) then
          allocate(COLL(J)%v(COLL(J)%N))
@@ -174,8 +174,8 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
        call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v1",(/size(COLL(1)%v)*(I_range(2)-I_range(1)+1)/))
      endif
      if (l_alloc.and.(l_v3.or.l_all)) then
-       if(l_GW_NEQ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r",(/size(COLL(1)%v3r)*(I_range(2)-I_range(1)+1)/))
-       if(l_COHSEX) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c",(/size(COLL(1)%v3c)*(I_range(2)-I_range(1)+1)/))
+       if(l_GW_NEQ        ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r",(/size(COLL(1)%v3r)*(I_range(2)-I_range(1)+1)/))
+       if(l_COHSEX.or.l_HF) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c",(/size(COLL(1)%v3c)*(I_range(2)-I_range(1)+1)/))
      endif
      if (l_alloc.and.(l_table.or.l_all)) then
        call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_table",(/size(COLL(1)%table)*(I_range(2)-I_range(1)+1)/),(/LP/))
@@ -184,8 +184,8 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
        call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v1")
      endif
      if (l_clean.and.(l_v3.or.l_all)) then
-       if(l_GW_NEQ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r")
-       if(l_COHSEX) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c")
+       if(l_GW_NEQ        ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r")
+       if(l_COHSEX.or.l_HF) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c")
      endif
      if (l_clean.and.(l_table.or.l_all)) then
        call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_table")

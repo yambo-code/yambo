@@ -30,7 +30,7 @@ integer function ioKB_pwscf(ID)
  use matrix_operate,   ONLY:mat_c2r,mat_r2c
  use D_lattice,        ONLY:n_atomic_species,atom_pos,n_atoms_species, &
 &                           n_atoms_species_max
- use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_mode,VERIFY, &
+ use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_mode, &
 &                           io_elemental,io_bulk,io_header,io_fragmented,&
 &                           read_is_on,write_is_on,io_extension
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
@@ -73,13 +73,13 @@ integer function ioKB_pwscf(ID)
    !
    if (read_is_on(ID)) then
      ! 
-     if (.not.allocated(n_atoms_species).and.io_mode(ID)/=VERIFY) then
+     if (.not.allocated(n_atoms_species)) then
        allocate(n_atoms_species(n_atomic_species))
        allocate(atom_pos(3,n_atoms_species_max,n_atomic_species))
        call mem_est("n_atoms_species atom_pos",&
 &                   (/n_atomic_species,size(atom_pos)/),(/IP,SP/))
      endif
-     if (.not.allocated(pp_n_l_comp).and.io_mode(ID)/=VERIFY) then
+     if (.not.allocated(pp_n_l_comp)) then
        allocate(pp_n_l_comp(n_atomic_species))
        call mem_est("pp_n_l_comp",(/n_atomic_species/),(/IP/))
      endif
@@ -91,7 +91,7 @@ integer function ioKB_pwscf(ID)
    call io_bulk(ID,VAR="ATOM_L_COMP",VAR_SZ=(/n_atomic_species/))
    call io_bulk(ID,I1=pp_n_l_comp)
    !
-   if (read_is_on(ID).and.io_mode(ID)/=VERIFY.and. .not.allocated(pp_table)) then
+   if (read_is_on(ID).and. .not.allocated(pp_table)) then
      allocate(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
      call mem_est("pp_table",(/size(pp_table)/),(/IP/))
    endif

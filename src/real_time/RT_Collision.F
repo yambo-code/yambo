@@ -47,15 +47,15 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R,&
 &                         RT_ibz_coo,RT_nk,it_now
- use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_nb
+ use QP_m,           ONLY:QP_nk,QP_Vnl_xc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,                             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
 &                         G_lesser_reference,                                                  &
-&                         l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start,              &
+&                         l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,                       &
 &                         l_RT_needs_XC0,Ho_plus_Sigma
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_Xk_ibz_A2A
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_Xk_ibz_A2A,master_cpu
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use SC,             ONLY:SC_xc_functional,SC_nbands
@@ -109,7 +109,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
      !
      call IO_and_Messaging_switch("-report -log -io_in -io_out")
      call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
-     call IO_and_Messaging_switch("+report +log +io_in +io_out")
+     call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
      V_xc_sc=V_xc
      !
    endif
@@ -126,6 +126,11 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  endif
  !
  Ho_plus_Sigma=cZERO
+ !
+ ! In the following loop there are operations spread among bands that 
+ ! can be done by all cpu's that have PAR_IND_WF_k%element_1D(ik)=T.
+ ! Some operations, instead, must be carried on only by the head CPU in this group
+ ! identified by PAR_COM_Xk_ibz_A2A%CPU_id==0
  !
  do ik=1,QP_nk 
    !
@@ -190,9 +195,10 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
      call V_by_V_plus_V(SC_nbands,cONE,Ho(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),&
 &                       H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
 #endif
-     Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)= &
-&          H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
    endif
+   !
+   Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)= &
+&        H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
    !
  enddo  !---- loop on k-points
  !

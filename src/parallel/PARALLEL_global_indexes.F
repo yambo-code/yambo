@@ -449,6 +449,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      PAR_IND_WF_k%element_1D=.FALSE.
    endif
    !
+   PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=count( PAR_IND_WF_b%element_1D )
+   !
    call PARALLEL_live_message("Bands (WF)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1),&
 &                             TOTAL=SC_bands(2),&

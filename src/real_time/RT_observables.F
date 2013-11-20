@@ -23,18 +23,17 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  use pars,           ONLY:SP,cI,zero_dfl
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex,l_elel_scatt,l_use_collisions
+ use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands,it_now,RT_nk,RT_Nk_ibz,RT_ibz_coo
  use X_m,            ONLY:P_square
- use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,l_NE_with_fields, &
-&                         l_NE_simulate_IP,Fluence
+ use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,l_NE_simulate_IP,Fluence
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc
  use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use IO_m,           ONLY:IO_and_Messaging_switch
- use parallel_m,     ONLY:PAR_Xk_nibz
+ use parallel_m,     ONLY:PAR_Xk_nibz,master_cpu
  !
  implicit none 
  !
@@ -99,7 +98,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
      !
      call IO_and_Messaging_switch("-report -log -io_in -io_out")
      call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0)
-     call IO_and_Messaging_switch("+report +log +io_in +io_out")
+     call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
      !
      call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
      !

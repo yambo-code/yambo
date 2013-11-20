@@ -22,7 +22,11 @@
 subroutine RT_EULEREXP_step(G_new_k,G_old_k,U1_k,U2_k,ik_rim,deltaT)
  !
  use pars,           ONLY:SP,cI,cZERO
+#if defined _OPENMP
+ use wrapper,        ONLY:M_by_M_omp
+#else
  use wrapper,        ONLY:M_by_M
+#endif
  use SC,             ONLY:SC_bands,SC_nbands
  use real_time,      ONLY:Sigma_relax
  !
@@ -41,8 +45,13 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,U1_k,U2_k,ik_rim,deltaT)
  !
  G_new_k=cZERO
  M_tmp=cZERO
+#if defined _OPENMP
+ call M_by_M_omp(SC_nbands,U1_k,G_old_k,M_tmp)
+ call M_by_M_omp(SC_nbands,M_tmp,U2_k,G_new_k)
+#else
  call M_by_M('n','n',SC_nbands,U1_k,G_old_k,M_tmp)
  call M_by_M('n','n',SC_nbands,M_tmp,U2_k,G_new_k)
+#endif
  !
  if(allocated(Sigma_relax))  G_new_k = G_new_k - cI*deltaT*Sigma_relax(:,:,ik_rim)
  !

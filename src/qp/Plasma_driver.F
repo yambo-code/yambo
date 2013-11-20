@@ -117,6 +117,6 @@ subroutine Plasma_driver(E,k,q)
  !deallocate(local_grid)
  !
  write (ch,'(3a)') "[Pl] N(m,m',p,q) --> N(J,q)  :"
- call msg('rs',trim(ch),(/sum(N_plasma_poles),k%nbz*(SC_bands(2)-SC_bands(1)+1)**2*n_sp_pol*q%nbz/))
+ call msg('rs',trim(ch),(/k%nbz*(SC_bands(2)-SC_bands(1)+1)**2*n_sp_pol*q%nbz,sum(N_plasma_poles)/))
  !
 end subroutine Plasma_driver

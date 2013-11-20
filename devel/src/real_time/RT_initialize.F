@@ -81,7 +81,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Use NE_tot_time if provided
  !
- if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step))
+ if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step)+1)
  !
  ! Set a number of steps. i1=1(J,P,OCCs)  i1=2(output) i1=3(GF).
  ! Negative value forces the step to be set automatically
@@ -125,7 +125,7 @@ subroutine RT_initialize(E,k,q)
    !
  enddo
  !
- NE_tot_time=RT_step*NE_steps
+ NE_tot_time=RT_step*(NE_steps-1)
  !
  RT_IO_JPO_steps    = IO_steps(1)
  RT_IO_G_steps      = IO_steps(2)
@@ -288,9 +288,9 @@ subroutine RT_initialize(E,k,q)
  call section('=','Messaging')
  !
  call msg( 'r','---General---')
- call msg( 'r', 'Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
+ call msg( 'r', 'Simulation time        [fs]:',(/-real(Thermal_steps),real(NE_steps-1)/)*RT_step/FS2AUT)
  call msg( 'r', 'NE Steps                   :',NE_steps)
- call msg( 'r', 'NE time                [fs]:',NE_steps*RT_step/FS2AUT)
+ call msg( 'r', 'NE time                [fs]:',(NE_steps-1)*RT_step/FS2AUT)
  call msg( 'r', 'Time jumps                 :',RT_dynamics_jumps*RT_step/FS2AUT)
  call msg( 'r', 'Time jump              [fs]:',RT_dynamics_jumps*RT_step/FS2AUT)
  call msg( 'r', 'Memory depth           [fs]:',T_memory/FS2AUT)

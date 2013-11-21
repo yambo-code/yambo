@@ -120,7 +120,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    D(1,:)=(/1,QP_n_states/)
    D(2,:)=(/1,nsym/)
    D(3,:)=(/1,nqbz/)
-   if (l_distribute) then
+   if (l_distribute.and.(l_v3.or.l_table)) then
      D(1,:)=(/1,PAR_nQPp/)
      D(3,:)=(/1,PAR_nQ/)
    endif
@@ -152,7 +152,6 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
        if (l_alloc.and.(l_v1.or.l_all)) then
          allocate(COLL(J)%v(COLL(J)%N))
          COLL(J)%v=cZERO
-         COLL(J)%D=D
        endif
        if (l_clean.and.(l_v1.or.l_all)) then
          if (associated(COLL(J)%v)) deallocate(COLL(J)%v)

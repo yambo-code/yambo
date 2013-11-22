@@ -26,9 +26,9 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
  use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_sc_srpa
  use pars,             ONLY:SP
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
- use SC,               ONLY:SC_bands,HEAD_cpu_in_QP_group
+ use SC,               ONLY:SC_bands
  use collision,        ONLY:HF_collisions,COHSEX_collisions,nHF_collisions,nCOHSEX_collisions
- use parallel_m,       ONLY:PAR_QP_index,PAR_IND_QP,PP_redux_wait
+ use parallel_m,       ONLY:PAR_QP_index,PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
  !
  implicit none
  !       
@@ -51,7 +51,7 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
  !
  do i_qp=1,QP_n_states
    !
-   if (.not.(PAR_IND_QP%element_1D(i_qp).and.HEAD_cpu_in_QP_group)) cycle
+   if (.not.(PAR_IND_QP%element_1D(i_qp).and.HEAD_QP_cpu)) cycle
    !
    i_qp_mem=PAR_QP_index(i_qp)
    !

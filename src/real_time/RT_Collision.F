@@ -55,7 +55,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
 &                         l_RT_needs_XC0,Ho_plus_Sigma
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_Xk_ibz_A2A,master_cpu
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use SC,             ONLY:SC_xc_functional,SC_nbands
@@ -154,7 +154,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    ! (for all the parts of self-energy different from V_h + V_xc)
    ! I have to subtract XC0_and_HARTREE0 that contains <mk|Vxc(rho0) |nk>
    !
-   if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.NE_dynamics.and.PAR_COM_Xk_ibz_A2A%CPU_id==0) then 
+   if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.NE_dynamics.and.HEAD_k_cpu) then 
      !      
 #if defined _OPENMP
      call V_by_V_plus_V_omp(SC_nbands,cONE,-XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
@@ -171,7 +171,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !
    ! The bare, frozed VHxc 
    !=======================
-   if (l_RT_needs_XC0.and.PAR_COM_Xk_ibz_A2A%CPU_id==0) then
+   if (l_RT_needs_XC0.and.HEAD_k_cpu) then
 #if defined _OPENMP
      call V_by_V_plus_V_omp(SC_nbands,cONE,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
 &                           H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
@@ -187,7 +187,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !  
    ! Add Ho = T+V_ion
    !==================
-   if (PAR_COM_Xk_ibz_A2A%CPU_id==0) then
+   if (HEAD_k_cpu) then
 #if defined _OPENMP
      call V_by_V_plus_V_omp(SC_nbands,cONE,Ho(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),&
 &                           H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
@@ -206,7 +206,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  do ik=1,QP_nk 
    !
-   if (.not.(PAR_IND_WF_k%element_1D(ik).and.PAR_COM_Xk_ibz_A2A%CPU_id==0)) then
+   if (.not.(PAR_IND_WF_k%element_1D(ik).and.HEAD_k_cpu==0)) then
      Ho_plus_Sigma(:,:,ik,:)=(0._SP,0._SP)
      cycle
    endif

@@ -46,6 +46,12 @@ module parallel_m
  logical            :: l_par_bse,l_par_X_G_q0,l_par_X_G_all_q,&
 &                      l_par_X_G_finite_q,l_par_SE,l_par_RT
  !
+ ! In a parallel run only the head CPU in the q and b chains can do 
+ ! (b,k) loops
+ !
+ logical           :: HEAD_QP_cpu=.TRUE.
+ logical           :: HEAD_k_cpu =.TRUE.
+ !
  ! Communicators
  !
  integer, parameter :: MAX_N_OF_CHAINS=100

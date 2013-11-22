@@ -33,7 +33,7 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
  ! Work Space
  !
  integer          ::i_s,i_selected,i_c
- logical          ::q_found,k_found,qp_found
+ logical          ::q_found,k_found,qp_found,b_found
  character(schlen)::c_strings(10),r_strings(10),CPU_string_,ROLE_string_
  !
  i_selected=-1
@@ -41,6 +41,7 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
  qp_found  =.FALSE.
  q_found   =.FALSE.
  k_found   =.FALSE.
+ b_found   =.FALSE.
  !
  do i_s=1,n_CPU_str_max
    !
@@ -84,6 +85,7 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
    PARALLEL_CPU_used(PARALLEL_n_structures_active)=CPU_structure(i_selected)%CPU(i_c)
    PARALLEL_CPU_role(PARALLEL_n_structures_active)=CPU_structure(i_selected)%ROLE(i_c)
    !
+   if (trim(PARALLEL_CPU_role(PARALLEL_n_structures_active))=="b" ) b_found=.TRUE.
    if (trim(PARALLEL_CPU_role(PARALLEL_n_structures_active))=="k" ) k_found=.TRUE.
    if (trim(PARALLEL_CPU_role(PARALLEL_n_structures_active))=="q" ) q_found=.TRUE.
    if (trim(PARALLEL_CPU_role(PARALLEL_n_structures_active))=="qp") qp_found=.TRUE.
@@ -111,22 +113,17 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
    PARALLEL_CPU_role(PARALLEL_n_structures_active)="q"
  endif
  !
+ if (.not.b_found.or.ncpu==1) then
+   PARALLEL_n_structures_active=PARALLEL_n_structures_active+1
+   PARALLEL_CPU_used(PARALLEL_n_structures_active)=1
+   PARALLEL_CPU_role(PARALLEL_n_structures_active)="b"
+ endif
+ !
  if (.not.k_found.or.ncpu==1) then
    PARALLEL_n_structures_active=PARALLEL_n_structures_active+1
    PARALLEL_CPU_used(PARALLEL_n_structures_active)=1
    PARALLEL_CPU_role(PARALLEL_n_structures_active)="k"
  endif
- !
- ! To be checked. These lines assign in PARALLEL_assign_chains_and_COMMs 
- ! n_CPU > 1 even if 'qp' is not provided. To check carefully.
- !
- !DEBUG>
- !if (.not.qp_found.or.ncpu==1) then
- !  PARALLEL_n_structures_active=PARALLEL_n_structures_active+1
- !  PARALLEL_CPU_used(PARALLEL_n_structures_active)=1
- !  PARALLEL_CPU_role(PARALLEL_n_structures_active)="qp"
- !endif
- !DEBUG<
  !
  if (ncpu==1) PARALLEL_n_structures_active=0
  !

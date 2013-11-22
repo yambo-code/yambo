@@ -147,7 +147,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
      endif
    endif
    !
-   if (V_kind==1) COLL(1)%v3=cZERO
+   COLL(1)%v3=cZERO
    !
    Q_loop: do iqbz=1,q%nbz 
      !

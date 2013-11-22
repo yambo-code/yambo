@@ -530,7 +530,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! QP_cpu corresponds to x marked CPU's. This flag is used when isolated QP loops are performed.
    !
-   HEAD_cpu_in_QP_group=PAR_COM_Q_A2A%CPU_id==0
+   HEAD_cpu_in_QP_group=PAR_COM_G_b_A2A%CPU_id==0
    !
    !.........................................................................
    !   "q" -> Q-points (BZ)

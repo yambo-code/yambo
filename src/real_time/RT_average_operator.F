@@ -28,7 +28,11 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  use electrons,      ONLY:n_sp_pol,levels
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:WF
+#if defined _OPENMP
+ use wrapper,        ONLY:Vstar_dot_V_omp
+#else
  use wrapper,        ONLY:Vstar_dot_V
+#endif
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -87,14 +91,23 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
    !
    do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
      !
+#if defined _OPENMP
+     VALUE=VALUE-cI*Vstar_dot_V_omp(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
+&                                             G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))*&  
+&                                             k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+#else
      VALUE=VALUE-cI*Vstar_dot_V(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
-&                                          G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))*&  
-&                                          k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+&                                             G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))*&  
+&                                             k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+#endif
    enddo
    !
  enddo
  !
- if (k%nibz/=nK_mem) call PP_redux_wait(VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ !
+ if (present(O_QP).or.present(O_REAL).or.k%nibz/=nK_mem) then
+   call PP_redux_wait(VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ endif
  !
 1 continue
  !

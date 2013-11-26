@@ -88,7 +88,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  XC_needs_density=.not.XCfrozen.and.l_sc_contains_lda.and.SC_xc_functional/=0
  !
- if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) &
+ if (.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) &
 &   call el_density_matrix(G_input(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1))
  !
  ! The Hartree term is written as
@@ -206,7 +206,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  do ik=1,QP_nk 
    !
-   if (.not.(PAR_IND_WF_k%element_1D(ik).and.HEAD_k_cpu==0)) then
+   if (.not.(PAR_IND_WF_k%element_1D(ik).and.HEAD_k_cpu)) then
      Ho_plus_Sigma(:,:,ik,:)=(0._SP,0._SP)
      cycle
    endif

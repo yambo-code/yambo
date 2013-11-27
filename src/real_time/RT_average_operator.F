@@ -132,10 +132,9 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
      if (present(O_MATRIX)) then
        do ib=SC_bands(1),SC_bands(2)
          do ibp=SC_bands(1),SC_bands(2)
-           if ( .not.PAR_IND_B_mat%element_1D( B_mat_index(ib,ibp)) ) cycle
            do i1=1,n_sp_pol
-             if (     present(TRANS)) Hk(ibp,ib,i1)=O_MATRIX(ibp,ib,ik_mem,i1) 
-             if (.not.present(TRANS)) Hk(ib,ibp,i1)=O_MATRIX(ibp,ib,ik_mem,i1) 
+             if (     present(TRANS)) Hk(ibp,ib,i1)=O_MATRIX(ib,ibp,ik_mem,i1) 
+             if (.not.present(TRANS)) Hk(ib,ibp,i1)=O_MATRIX(ib,ibp,ik_mem,i1) 
            enddo
          enddo
        enddo

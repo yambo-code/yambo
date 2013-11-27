@@ -438,16 +438,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! WFs
    !.........................................................................
    !
-   ! oooooooo    oooooooo
    ! oooo  oooo  oooo  oooo  <- k
    ! Xo Xo Xo Xo Xo Xo Xo Xo <- b
    !
    ! Not all CPU's (o) load the WFs. Only X
    !
-   local_condition=PAR_COM_G_b_A2A%CPU_id>0
-   if (PAR_COM_G_b_A2A%n_CPU==1) local_condition=PAR_COM_Xk_ibz_A2A%CPU_id>0
+   local_condition=PAR_COM_G_b_A2A%CPU_id==0
    !
-   if (local_condition) then
+   if (.not.local_condition) then
      PAR_IND_WF_b%element_1D=.FALSE.
      PAR_IND_WF_k%element_1D=.FALSE.
    endif

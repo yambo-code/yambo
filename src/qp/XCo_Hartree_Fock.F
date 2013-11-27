@@ -130,8 +130,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
 ! endif
  !
  n_lt_bands=count( PAR_IND_G_b%element_1D(:Sx_upper_band) )
- call live_timing(trim(ch),PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
-&                          PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands)
+ if (n_lt_bands>0) call live_timing(trim(ch),PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
+&                                   PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands)
  !
  do i_qp=1,QP_n_states
    !

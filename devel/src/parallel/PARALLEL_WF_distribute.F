@@ -146,11 +146,6 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Plasma_index
  !
 #if defined _RT
  !
- !if (present(Plasma_index)) then
- !  states_to_load=.TRUE.
- !  return
- !endif
- !
  if (present(Plasma_index)) then
    ! 
    do iqbz=1,nkbz

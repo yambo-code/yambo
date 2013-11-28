@@ -47,15 +47,15 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R,&
 &                         RT_ibz_coo,RT_nk,it_now
- use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc,QP_nb
+ use QP_m,           ONLY:QP_nk,QP_Vnl_xc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,                             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
 &                         G_lesser_reference,                                                  &
-&                         l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start,              &
+&                         l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,                       &
 &                         l_RT_needs_XC0,Ho_plus_Sigma
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_Xk_ibz_A2A
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use SC,             ONLY:SC_xc_functional,SC_nbands
@@ -88,7 +88,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  XC_needs_density=.not.XCfrozen.and.l_sc_contains_lda.and.SC_xc_functional/=0
  !
- if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) &
+ if (.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) &
 &   call el_density_matrix(G_input(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1))
  !
  ! The Hartree term is written as
@@ -109,7 +109,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
      !
      call IO_and_Messaging_switch("-report -log -io_in -io_out")
      call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
-     call IO_and_Messaging_switch("+report +log +io_in +io_out")
+     call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
      V_xc_sc=V_xc
      !
    endif
@@ -127,6 +127,11 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  Ho_plus_Sigma=cZERO
  !
+ ! In the following loop there are operations spread among bands that 
+ ! can be done by all cpu's that have PAR_IND_WF_k%element_1D(ik)=T.
+ ! Some operations, instead, must be carried on only by the head CPU in this group
+ ! identified by PAR_COM_Xk_ibz_A2A%CPU_id==0
+ !
  do ik=1,QP_nk 
    !
    if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
@@ -139,12 +144,9 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !=======================================
    if(.not.local_V.and..not.XCfrozen) then
      ! 
-     ! HF
+     ! HF/COHSEX
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
      ! 
-     ! COHSEX
-     if (l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc) 
-     !
    endif
    !
    ! Adiabatic Switching
@@ -152,7 +154,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    ! (for all the parts of self-energy different from V_h + V_xc)
    ! I have to subtract XC0_and_HARTREE0 that contains <mk|Vxc(rho0) |nk>
    !
-   if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.NE_dynamics.and.PAR_COM_Xk_ibz_A2A%CPU_id==0) then 
+   if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.NE_dynamics.and.HEAD_k_cpu) then 
      !      
 #if defined _OPENMP
      call V_by_V_plus_V_omp(SC_nbands,cONE,-XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
@@ -169,7 +171,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !
    ! The bare, frozed VHxc 
    !=======================
-   if (l_RT_needs_XC0.and.PAR_COM_Xk_ibz_A2A%CPU_id==0) then
+   if (l_RT_needs_XC0.and.HEAD_k_cpu) then
 #if defined _OPENMP
      call V_by_V_plus_V_omp(SC_nbands,cONE,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
 &                           H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
@@ -185,7 +187,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !  
    ! Add Ho = T+V_ion
    !==================
-   if (PAR_COM_Xk_ibz_A2A%CPU_id==0) then
+   if (HEAD_k_cpu) then
 #if defined _OPENMP
      call V_by_V_plus_V_omp(SC_nbands,cONE,Ho(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),&
 &                           H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
@@ -193,9 +195,10 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
      call V_by_V_plus_V(SC_nbands,cONE,Ho(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),&
 &                       H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
 #endif
-     Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)= &
-&          H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
    endif
+   !
+   Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)= &
+&        H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
    !
  enddo  !---- loop on k-points
  !
@@ -203,7 +206,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  do ik=1,QP_nk 
    !
-   if (.not.(PAR_IND_WF_k%element_1D(ik).and.PAR_COM_Xk_ibz_A2A%CPU_id==0)) then
+   if (.not.(PAR_IND_WF_k%element_1D(ik).and.HEAD_k_cpu)) then
      Ho_plus_Sigma(:,:,ik,:)=(0._SP,0._SP)
      cycle
    endif

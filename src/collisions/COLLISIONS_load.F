@@ -24,10 +24,11 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  ! Load all collisions contribution from any kind of self-energy 
  ! exchange, COHSEX etc.. 
  !
- use pars,            ONLY:SP
  use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_use_collisions,l_sc_srpa,l_elel_scatt
  use LIVE_t,          ONLY:live_timing
  use QP_m,            ONLY:QP_n_states
+ use R_lattice,       ONLY:nqbz
+ use plasma,          ONLY:max_N_plasma_poles
  use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
  use collision,       ONLY:V_kind,GW_NEQ_collisions,COHSEX_collisions,HF_collisions
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP
@@ -45,7 +46,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  ! Work Space
  !
- integer            :: i1,i2,i3,ic,i_qp,ID,io_err(max_V_kinds),V_kinds(max_V_kinds),n_V_kinds,&
+ integer            :: iqbz,i_J,ic,i_qp,ID,io_err(max_V_kinds),V_kinds(max_V_kinds),n_V_kinds,&
 &                      iv,i_qp_mem,i_q_mem,i_J_mem
  logical            :: condition
  !
@@ -137,17 +138,15 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      if (V_kind==SE_GW_NEQ) io_err(iv)=io_COLLISIONS(i_qp,ID,GW_NEQ_collisions(1))
      !
      if (V_kind==SE_GW_NEQ) then
-       ic=1
-       do i1=GW_NEQ_collisions(1)%D(1,1),GW_NEQ_collisions(1)%D(1,2)
-         do i2=GW_NEQ_collisions(1)%D(2,1),GW_NEQ_collisions(1)%D(2,2)
-           do i3=GW_NEQ_collisions(1)%D(3,1),GW_NEQ_collisions(1)%D(3,2)
-             if (.not.PAR_IND_Plasma%element_1D(i1)) cycle
-             if (.not.PAR_IND_Q%element_1D(i3)) cycle
-             i_J_mem  =PAR_Plasma_index(i1)
-             i_q_mem  =PAR_Q_index(i3)
-             GW_NEQ_collisions(i_qp_mem)%v3r(i_J_mem,1,i_q_mem)=real(GW_NEQ_collisions(1)%v(ic))
-             ic=ic+1
-           enddo
+       ic=0
+       do i_J=1,max_N_plasma_poles
+         do iqbz=1,nqbz
+           ic=ic+1
+           if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
+           if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
+           i_J_mem  =PAR_Plasma_index(i_J)
+           i_q_mem=PAR_Q_index(iqbz)
+           GW_NEQ_collisions(i_qp_mem)%v3r(i_J_mem,1,i_q_mem)=real(GW_NEQ_collisions(1)%v(ic))
          enddo
        enddo
      endif

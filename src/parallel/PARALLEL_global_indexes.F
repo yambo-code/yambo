@@ -29,8 +29,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load,&
 &                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index
  use parallel_m,    ONLY:& ! LOGICALS
-&                        l_par_bse,l_par_X_G_q0,l_par_RT,&
-&                        l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q
+&                        l_par_bse,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
+&                        HEAD_QP_cpu,HEAD_k_cpu
  use parallel_m,    ONLY:& ! COMMUNICATORS
 &                        COMM_reset,PAR_COM_WORLD,&  
 &                        PAR_COM_VAL_INDEX,PAR_COM_CON_INDEX,PAR_COM_Q_A2A,&
@@ -62,7 +62,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
 #endif
 #if defined _SC
- use SC,            ONLY:SC_bands,HEAD_cpu_in_QP_group
+ use SC,            ONLY:SC_bands
  use real_time,     ONLY:B_mat_index
  use plasma,        ONLY:max_N_plasma_poles
 #endif
@@ -84,7 +84,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! Work Space
  !
  integer          :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2
- logical          :: reset_all
+ logical          :: reset_all,local_condition
  character(10)    :: WHAT
  !
  ! Resets...
@@ -440,16 +440,19 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! WFs
    !.........................................................................
    !
-   ! oooooooo    oooooooo
    ! oooo  oooo  oooo  oooo  <- k
    ! Xo Xo Xo Xo Xo Xo Xo Xo <- b
    !
    ! Not all CPU's (o) load the WFs. Only X
    !
-   if (PAR_COM_G_b_A2A%CPU_id>0) then
+   local_condition=PAR_COM_G_b_A2A%CPU_id==0
+   !
+   if (.not.local_condition) then
      PAR_IND_WF_b%element_1D=.FALSE.
      PAR_IND_WF_k%element_1D=.FALSE.
    endif
+   !
+   PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=count( PAR_IND_WF_b%element_1D )
    !
    call PARALLEL_live_message("Bands (WF)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1),&
@@ -530,7 +533,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! QP_cpu corresponds to x marked CPU's. This flag is used when isolated QP loops are performed.
    !
-   HEAD_cpu_in_QP_group=PAR_COM_Q_A2A%CPU_id==0
+   HEAD_k_cpu=PAR_COM_Xk_ibz_A2A%CPU_id==0
+   HEAD_QP_cpu=PAR_COM_G_b_A2A%CPU_id==0
+   if (PAR_COM_G_b_A2A%n_CPU==1) HEAD_QP_cpu=PAR_COM_Xk_ibz_A2A%CPU_id==0
    !
    !.........................................................................
    !   "q" -> Q-points (BZ)
@@ -647,9 +652,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! QP_cpu corresponds to x marked CPU's. This flag is used when isolated QP loops are performed.
    !
-#if defined _SC
-   HEAD_cpu_in_QP_group=PAR_COM_Q_index%CPU_id==0.and.PAR_COM_QP_A2A%CPU_id==0
-#endif
+   HEAD_QP_cpu=PAR_COM_Q_index%CPU_id==0.and.PAR_COM_QP_A2A%CPU_id==0
+   if (PAR_COM_Q_index%n_CPU==1.and.PAR_COM_QP_A2A%n_CPU==1) then
+     HEAD_QP_cpu=PAR_COM_G_b_index%CPU_id==0
+   endif
    !
    ! K-points
    !

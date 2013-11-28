@@ -35,6 +35,10 @@ module wrapper
    module procedure mm_cgemm,mm_c 
  end interface
  !
+ interface M_by_M_omp
+   module procedure mm_c_omp
+ end interface
+ !
  interface M_by_V 
    module procedure mv_cgemv,mv_sgemv,mv_c,mv_r
  end interface
@@ -87,6 +91,23 @@ module wrapper
      call CGEMM(TRANSA,TRANSB,msize,msize,msize,(1._SP,0._SP),A,msize,B,msize,(0._SP,0._SP),C,msize)
 #endif
    end subroutine mm_c
+   !
+   subroutine mm_c_omp(N,A,B,C)
+     integer,  intent(in)  :: N
+     complex(SP), intent(in)  :: A(N,N),B(N,N)
+     complex(SP), intent(out) :: C(N,N)
+     integer :: i,j,k
+!$omp parallel do default(shared), private(i,j)
+     do i=1,N
+       do j=1,N
+         C(i,j) = (0.,0.)
+         do k=1,N
+           C(i,j) = C(i,j) + A(i,k) * B(k,j)
+         enddo
+       enddo
+     enddo
+!$omp end parallel do
+   end subroutine mm_c_omp
    !
    !===================
    ! interface M_by_V 
@@ -181,7 +202,6 @@ module wrapper
      call SAXPY(N,CA,CX,1,CY,1)
 #endif
    end subroutine vv_saxpy   
-
    !
    !=============================
    ! interface V_by_V_plus_V omp
@@ -196,9 +216,9 @@ module wrapper
      integer :: i,j
 !$omp parallel do default(shared), private(i,j)
      do j=1,N
-     do i=1,N
-          CY(i,j) = CY(i,j) + CA * CX(i,j)
-     enddo
+       do i=1,N
+         CY(i,j) = CY(i,j) + CA * CX(i,j)
+       enddo
      enddo
 !$omp end parallel do
    end subroutine MM_caxpy_omp
@@ -212,7 +232,7 @@ module wrapper
      integer :: i
 !$omp parallel do default(shared), private(i)
      do i=1,N
-          CY(i) = CY(i) + CA * CX(i)
+        CY(i) = CY(i) + CA * CX(i)
      enddo
 !$omp end parallel do
    end subroutine vv_caxpy_omp
@@ -226,7 +246,7 @@ module wrapper
      integer :: i
 !$omp parallel do default(shared), private(i)
      do i=1,N
-          CY(i) = CY(i) + CA * CX(i)
+       CY(i) = CY(i) + CA * CX(i)
      enddo
 !$omp end parallel do
    end subroutine vv_saxpy_omp 
@@ -260,7 +280,7 @@ module wrapper
      integer :: i
 !$omp parallel do default(shared), private(i)
      do i=1,N
-         CY(i)=CX(i)
+       CY(i)=CX(i)
      enddo
 !$omp end parallel do
    end subroutine V_copy_omp   
@@ -305,7 +325,6 @@ module wrapper
      V_dot_V=CDOTU(N,CX,1,CY,1)
 #endif
    end function V_dot_V
-   
    !
    !==================
    ! DOT PRODUCTS omp
@@ -320,7 +339,7 @@ module wrapper
      ctmp=0.0_SP
 !$omp parallel do default(shared), private(i), reduction(+:ctmp)
      do i=1,N
-         ctmp=ctmp +conjg(CX(i))*CY(i)
+       ctmp=ctmp +conjg(CX(i))*CY(i)
      enddo 
 !$omp end parallel do
      Vstar_dot_V_omp=ctmp
@@ -335,7 +354,7 @@ module wrapper
      rtmp=0.0_SP
 !$omp parallel do default(shared), private(i), reduction(+:rtmp)
      do i=1,N
-         rtmp=rtmp +CX(i)*CY(i)
+       rtmp=rtmp +CX(i)*CY(i)
      enddo 
 !$omp end parallel do
      real_V_dot_V_omp=rtmp
@@ -350,7 +369,7 @@ module wrapper
      ctmp=0.0_SP
 !$omp parallel do default(shared), private(i), reduction(+:ctmp)
      do i=1,N
-         ctmp=ctmp +CX(i)*CY(i)
+       ctmp=ctmp +CX(i)*CY(i)
      enddo 
 !$omp end parallel do
      V_dot_V_omp=ctmp

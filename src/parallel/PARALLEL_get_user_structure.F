@@ -33,12 +33,11 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
  ! Work Space
  !
  integer          ::i_s,i_selected,i_c
- logical          ::q_found,k_found,qp_found
+ logical          ::q_found,k_found
  character(schlen)::c_strings(10),r_strings(10),CPU_string_,ROLE_string_
  !
  i_selected=-1
  !
- qp_found  =.FALSE.
  q_found   =.FALSE.
  k_found   =.FALSE.
  !
@@ -75,9 +74,10 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
    read(c_strings(i_c),'(i3)') CPU_structure(i_selected)%CPU(i_c)
    read(r_strings(i_c),'(a )') CPU_structure(i_selected)%ROLE(i_c)
    !
-   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="v") cycle
-   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="c") cycle
-   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="b") cycle
+   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="v" ) cycle
+   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="c" ) cycle
+   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="b" ) cycle
+   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="qp") cycle
    !
    PARALLEL_n_structures_active=PARALLEL_n_structures_active+1
    !
@@ -86,7 +86,6 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
    !
    if (trim(PARALLEL_CPU_role(PARALLEL_n_structures_active))=="k" ) k_found=.TRUE.
    if (trim(PARALLEL_CPU_role(PARALLEL_n_structures_active))=="q" ) q_found=.TRUE.
-   if (trim(PARALLEL_CPU_role(PARALLEL_n_structures_active))=="qp") qp_found=.TRUE.
    !
    PARALLEL_CPU_used(PARALLEL_n_structures_active)=2**(log(real(PARALLEL_CPU_used(PARALLEL_n_structures_active)))/log(2.))
    !
@@ -105,6 +104,8 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
    CPU_structure(i_selected)%nCPU_inversion=ncpu
  endif
  !
+ ! The two top fields ("q" and "k") must be defined anyway. But only these two!
+ !
  if (.not.q_found.or.ncpu==1) then
    PARALLEL_n_structures_active=PARALLEL_n_structures_active+1
    PARALLEL_CPU_used(PARALLEL_n_structures_active)=1
@@ -116,17 +117,6 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
    PARALLEL_CPU_used(PARALLEL_n_structures_active)=1
    PARALLEL_CPU_role(PARALLEL_n_structures_active)="k"
  endif
- !
- ! To be checked. These lines assign in PARALLEL_assign_chains_and_COMMs 
- ! n_CPU > 1 even if 'qp' is not provided. To check carefully.
- !
- !DEBUG>
- !if (.not.qp_found.or.ncpu==1) then
- !  PARALLEL_n_structures_active=PARALLEL_n_structures_active+1
- !  PARALLEL_CPU_used(PARALLEL_n_structures_active)=1
- !  PARALLEL_CPU_role(PARALLEL_n_structures_active)="qp"
- !endif
- !DEBUG<
  !
  if (ncpu==1) PARALLEL_n_structures_active=0
  !

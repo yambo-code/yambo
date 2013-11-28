@@ -32,7 +32,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
  use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait,PAR_COM_Q_A2A,PAR_COM_QPp_INDEX
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,&
@@ -156,6 +156,10 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
          endif
        endif
        if (l_RT_CCA_Kernel.and.l_elph_scatt) then
+         E_P_Electron_lifetime(:,ik)=E_P_Electron_lifetime(:,ik)/real(PAR_COM_QPp_INDEX%n_CPU)
+         E_P_Hole_lifetime(:,ik)=E_P_Hole_lifetime(:,ik)/real(PAR_COM_QPp_INDEX%n_CPU)
+         E_P_El_abs_lifetime(:,ik)=E_P_El_abs_lifetime(:,ik)/real(PAR_COM_QPp_INDEX%n_CPU)
+         E_P_Ho_abs_lifetime(:,ik)=E_P_Ho_abs_lifetime(:,ik)/real(PAR_COM_QPp_INDEX%n_CPU)
          call PP_redux_wait(E_P_Electron_lifetime(:,ik))
          call PP_redux_wait(E_P_Hole_lifetime(:,ik))
          call PP_redux_wait(E_P_El_abs_lifetime(:,ik))

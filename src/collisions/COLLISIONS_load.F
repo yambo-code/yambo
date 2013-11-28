@@ -116,16 +116,16 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      call io_control(ACTION=OP_RD,SEC=(/1,2/),ID=ID)
      !
      if (V_kind==SC_HF) then
-        io_err(iv)=io_COLLISIONS(i_qp,ID,HF_collisions(i_qp_mem))
-        call COLLISIONS_alloc_and_free("HF","v1 table","alloc",i_qp_mem)
+       io_err(iv)=io_COLLISIONS(i_qp,ID,HF_collisions(i_qp_mem))
+       call COLLISIONS_alloc_and_free("HF","v1 table","alloc",i_qp_mem)
      endif
      if (V_kind==SC_COHSEX) then
-        io_err(iv)=io_COLLISIONS(i_qp,ID,COHSEX_collisions(i_qp_mem))
-        call COLLISIONS_alloc_and_free("COHSEX","v1 table","alloc",i_qp_mem)
+       io_err(iv)=io_COLLISIONS(i_qp,ID,COHSEX_collisions(i_qp_mem))
+       call COLLISIONS_alloc_and_free("COHSEX","v1 table","alloc",i_qp_mem)
      endif
      if (V_kind==SE_GW_NEQ.and..not.associated(GW_NEQ_collisions(1)%v)) then
-        io_err(iv)=io_COLLISIONS(i_qp,ID,GW_NEQ_collisions(1))
-        call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","alloc",1)
+       io_err(iv)=io_COLLISIONS(i_qp,ID,GW_NEQ_collisions(1))
+       call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","alloc",1)
      endif
      !
      call io_control(ACTION=RD_CL,SEC=(/3/),ID=ID)

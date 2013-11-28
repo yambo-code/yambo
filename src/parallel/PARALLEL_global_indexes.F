@@ -83,7 +83,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! Work Space
  !
  integer          :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2
- logical          :: reset_all,local_condition
+ logical          :: reset_all
  character(10)    :: WHAT
  !
  ! Resets...
@@ -265,6 +265,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                                        COMM_index_4=PAR_COM_VAL_INDEX(X_type),COMM_A2A_1=PAR_COM_Q_A2A,&
 &                                        COMM_A2A_2=PAR_COM_Xk_bz_A2A)
    !
+   ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
+   ! A2A when there is no internal distribution
+   !
+   if (PAR_COM_Q_INDEX%n_CPU==1)then
+     if (PAR_COM_Xk_bz_INDEX%n_CPU==1) then
+       call COMM_copy(PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A)
+     endif
+   endif
+   !
    ! K-points (BZ)
    !
    call PARALLEL_index(PAR_IND_Xk_bz,(/Xk%nbz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=.TRUE.)
@@ -364,6 +373,18 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                                        COMM_A2A_2=PAR_COM_G_b_A2A,&
 &                                        COMM_A2A_3=PAR_COM_Q_A2A)
    !
+   ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
+   ! A2A when there is no internal distribution
+   !
+   if (PAR_COM_Xk_ibz_INDEX%n_CPU==1)then
+     if (PAR_COM_G_b_INDEX%n_CPU==1) then
+       call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_A2A)
+       if (PAR_COM_Q_INDEX%n_CPU==1) then
+         call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_Q_A2A)
+       endif
+     endif
+   endif
+   !
    ! K-points (IBZ)
    !
    call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=.TRUE.)
@@ -435,17 +456,27 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      enddo
    enddo
    !.........................................................................
-   ! WFs
+   ! WFs & QPs
    !.........................................................................
+   !
+   ! 0  0     0  0     <- qp
+   ! x0 x0    x0 x0    <- q
+   !
+   ! QP_cpu corresponds to x marked CPU's. This flag is used when isolated QP loops are performed.
+   !
+   HEAD_k_cpu=PAR_COM_Xk_ibz_A2A%CPU_id==0
+   HEAD_QP_cpu=PAR_COM_G_b_A2A%CPU_id==0
+   !
+   ! AM 28/11/13. This redefinition is needed because the A2A communicator when PAR_COM_Xk_ibz_INDEX%n_CPU==1
+   ! is not well defined. Therefore the definition must be reinforced by using HEAD_k_cpu
+   if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) HEAD_QP_cpu=HEAD_QP_cpu.and.HEAD_k_cpu
    !
    ! oooo  oooo  oooo  oooo  <- k
    ! Xo Xo Xo Xo Xo Xo Xo Xo <- b
    !
    ! Not all CPU's (o) load the WFs. Only X
    !
-   local_condition=PAR_COM_G_b_A2A%CPU_id==0
-   !
-   if (.not.local_condition) then
+   if (.not.HEAD_QP_cpu) then
      PAR_IND_WF_b%element_1D=.FALSE.
      PAR_IND_WF_k%element_1D=.FALSE.
    endif
@@ -526,15 +557,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             LOADED=PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1),&
 &                             TOTAL=(SC_bands(2)-SC_bands(1)+1)**2,NCPU=PAR_COM_G_b_INDEX%n_CPU)
    !
-   ! 0  0     0  0     <- qp
-   ! x0 x0    x0 x0    <- q
-   !
-   ! QP_cpu corresponds to x marked CPU's. This flag is used when isolated QP loops are performed.
-   !
-   HEAD_k_cpu=PAR_COM_Xk_ibz_A2A%CPU_id==0
-   HEAD_QP_cpu=PAR_COM_G_b_A2A%CPU_id==0
-   if (PAR_COM_G_b_A2A%n_CPU==1) HEAD_QP_cpu=PAR_COM_Xk_ibz_A2A%CPU_id==0
-   !
    !.........................................................................
    !   "q" -> Q-points (BZ)
    !.........................................................................
@@ -582,7 +604,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! and then resetted in RT_driver
    !
    if (l_eval_collisions) then
-     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_G_b_A2A%CPU_id==0)
+     call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_QP_cpu)
    else
      call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1.or.&
 &                                                     PAR_COM_Xk_ibz_INDEX%n_CPU==ncpu)
@@ -601,6 +623,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                                        COMM_index_3=PAR_COM_G_b_INDEX,&
 &                                        COMM_A2A_1=PAR_COM_Q_A2A,&
 &                                        COMM_A2A_2=PAR_COM_QP_A2A)
+   !
+   ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
+   ! A2A when there is no internal distribution
+   !
+   if (PAR_COM_Q_INDEX%n_CPU==1)then
+     if (PAR_COM_QP_INDEX%n_CPU==1) then
+       call COMM_copy(PAR_COM_Q_A2A,PAR_COM_QP_A2A)
+     endif
+   endif
    !
    ! QP states
    !
@@ -644,6 +675,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    allocate(PAR_Q_index(iq_range(2))) 
    call Build_up_index(PAR_IND_Q,iq_range(2),PAR_Q_index,PAR_nQ)
    !
+#if defined _SC
+   !
    ! 0000     0000     <- q
    ! x0 x0    00 00    <- qp
    ! 0 0 0 0  0 0 0 0  <- b
@@ -654,6 +687,17 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    if (PAR_COM_Q_index%n_CPU==1.and.PAR_COM_QP_A2A%n_CPU==1) then
      HEAD_QP_cpu=PAR_COM_G_b_index%CPU_id==0
    endif
+#else
+   !
+   ! 0000     0000     <- q
+   ! x0 x0    x0 x0    <- qp
+   ! 0 0 0 0  0 0 0 0  <- b
+   !
+   ! QP_cpu corresponds to x marked CPU's. This flag is used when no b loops are done
+   !
+   HEAD_QP_cpu=PAR_COM_QP_A2A%CPU_id==0
+   !
+#endif
    !
    ! K-points
    !

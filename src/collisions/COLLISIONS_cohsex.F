@@ -322,7 +322,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
            pre_factor=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
 #endif
            !
-           COLL(1)%v3(i_np,i_mp,isc%os(2))=COLL(1)%v3(i_np,i_mp,isc%os(2))-4._SP/spin_occ*pi*pre_factor
+           COLL(1)%v3(i_np,i_mp,i_kmq)=COLL(1)%v3(i_np,i_mp,i_kmq)-4._SP/spin_occ*pi*pre_factor
            !
            call live_timing(steps=1)
            !

@@ -1461,7 +1461,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            if ( trim(rstr_piece(i1+1)) == 'pp') l_RT_pump_and_probe=.true.
          endif
          if ( trim(rstr_piece(i1)) == 'collisions' ) then
-           if (.not.runlevel_is_on('el_el_scatt').and..not.runlevel_is_on('cohsex').and.&
+           if (i3==2.and..not.runlevel_is_on('el_el_scatt').and..not.runlevel_is_on('cohsex').and.&
 &              .not.runlevel_is_on('HF_and_locXC')) call initactivate(1,'HF_and_locXC')
          endif
          !

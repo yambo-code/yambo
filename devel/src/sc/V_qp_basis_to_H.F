@@ -24,10 +24,10 @@ subroutine V_qp_basis_to_H(ik,V,H)
  use electrons,      ONLY:n_sp_pol,spin
  use pars,           ONLY:SP
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
- use SC,             ONLY:SC_bands,HEAD_cpu_in_QP_group
+ use SC,             ONLY:SC_bands
  use matrix_operate, ONLY:matrix_linear_index
 #if defined _SC || !defined _RT
- use parallel_m,     ONLY:PAR_IND_QP
+ use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
 #endif
 #if defined _RT
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k
@@ -58,7 +58,7 @@ subroutine V_qp_basis_to_H(ik,V,H)
    if(ib>ibp) cycle
    !
 #if defined _SC && !defined _RT
-   if (.not.(PAR_IND_QP%element_1D(i1).and.HEAD_cpu_in_QP_group)) cycle
+   if (.not.(PAR_IND_QP%element_1D(i1).and.HEAD_QP_cpu)) cycle
 #endif
 #if defined _RT
    if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle

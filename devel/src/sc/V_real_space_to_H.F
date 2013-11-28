@@ -28,9 +28,9 @@ subroutine V_real_space_to_H(ik,V,H,WF)
  use wave_func,      ONLY:WAVEs
  use wrapper,        ONLY:Vstar_dot_V
  use matrix_operate, ONLY:matrix_linear_index
- use SC,             ONLY:SC_bands,HEAD_cpu_in_QP_group
+ use SC,             ONLY:SC_bands
 #if defined _SC || !defined _RT
- use parallel_m,     ONLY:PAR_IND_QP
+ use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
 #endif
 #if defined _RT
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k
@@ -64,7 +64,7 @@ subroutine V_real_space_to_H(ik,V,H,WF)
    if (ib>ibp) cycle
    !
 #if defined _SC && !defined _RT
-   if (.not.(PAR_IND_QP%element_1D(i1).and.HEAD_cpu_in_QP_group)) cycle
+   if (.not.(PAR_IND_QP%element_1D(i1).and.HEAD_QP_cpu)) cycle
 #endif
 #if defined _RT
    if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle

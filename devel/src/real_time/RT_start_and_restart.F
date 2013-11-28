@@ -57,7 +57,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
- use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait
+ use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,master_cpu
  use stderr,         ONLY:real2ch
  implicit none
  !
@@ -286,7 +286,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    if(l_sc_contains_lda.and.SC_xc_functional/=0) then
      call IO_and_Messaging_switch("-report -log")
      call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
-     call IO_and_Messaging_switch("+report +log")
+     call IO_and_Messaging_switch("+report +log",CONDITION=master_cpu)
    endif
    !
    ! In all cases where Vxc is frozen and we are not doing BSE

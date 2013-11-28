@@ -51,7 +51,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! WorkSpace
  !
- integer           ::ID,i_kind,NC
+ integer       :: ID,i_kind,NC
  !
  call section('*','Extended collisions')
  !=======================================

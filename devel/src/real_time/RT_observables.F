@@ -23,25 +23,24 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  use pars,           ONLY:SP,cI,zero_dfl
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex,l_elel_scatt
+ use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands,it_now,RT_nk,RT_Nk_ibz,RT_ibz_coo
  use X_m,            ONLY:P_square
- use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,l_NE_with_fields, &
-&                         l_NE_simulate_IP,Fluence
+ use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,l_NE_simulate_IP,Fluence
  use electrons,      ONLY:levels
- use QP_m,           ONLY:QP_Vnl_xc,QP_Sc
+ use QP_m,           ONLY:QP_Vnl_xc
  use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use IO_m,           ONLY:IO_and_Messaging_switch
- use parallel_m,     ONLY:PAR_Xk_nibz
+ use parallel_m,     ONLY:PAR_Xk_nibz,master_cpu
  !
  implicit none 
  !
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
  complex(SP),   intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
- complex(SP),   intent(out):: on_the_fly_operators(8)
+ complex(SP),   intent(out):: on_the_fly_operators(7)
  !
  ! WorkSpace
  !
@@ -50,14 +49,13 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! Shadows
  !
  integer     :: ib,ik,ik_rim
- complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex,E_mg,delta_G
+ complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,E_mg,delta_G
  !      
  E_kin    =(0._SP,0._SP)
  E_ion    =(0._SP,0._SP)
  E_h      =(0._SP,0._SP)
  Trace_Gf =(0._SP,0._SP)
  Exc      =(0._SP,0._SP)
- Ex       =(0._SP,0._SP)
  E_mg     =(0._SP,0._SP)
  delta_G  =(0._SP,0._SP)
  !
@@ -75,19 +73,13 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  E_ion = E_ion - E_kin
  !
- if(.not.l_NE_simulate_IP) then
+ if (.not.l_NE_simulate_IP) then
    !
    ! Hartree potential Energy
    !
    call RT_average_operator(VALUE=E_h,O_REAL=V_hartree_sc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
    !
    E_h=E_h/2.
-   !
- endif
- !
- if(l_sc_hf.or.(l_sc_cohsex.and..not.l_elel_scatt).and..not.l_NE_simulate_IP) then
-   !
-   call RT_average_operator(VALUE=Ex,O_QP=QP_Vnl_xc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
    !
  endif
  !
@@ -106,13 +98,13 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
      !
      call IO_and_Messaging_switch("-report -log -io_in -io_out")
      call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0)
-     call IO_and_Messaging_switch("+report +log +io_in +io_out")
+     call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
      !
      call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
      !
-   else if(l_sc_cohsex.and..not.l_elel_scatt) then
-     !      
-     call RT_average_operator(VALUE=Exc,O_QP=QP_Sc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
+   else if (l_sc_hf.or.l_sc_cohsex) then
+     !
+     call RT_average_operator(VALUE=Exc,O_QP=QP_Vnl_xc,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
      !
    endif
    !
@@ -153,8 +145,8 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  ! Transfer the shadow variables
  !
- on_the_fly_operators(1:5)=(/E_kin,E_ion,E_h,Ex,Exc/)*HA2EV
- on_the_fly_operators(6:8)=(/cmplx(Fluence(it_now),0._SP,SP),Trace_Gf,delta_G/)
+ on_the_fly_operators(1:4)=(/E_kin,E_ion,E_h,Exc/)*HA2EV
+ on_the_fly_operators(5:7)=(/cmplx(Fluence(it_now),0._SP,SP),Trace_Gf,delta_G/)
  !
 end subroutine RT_Observables
 

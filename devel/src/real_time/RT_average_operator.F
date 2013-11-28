@@ -28,8 +28,14 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  use electrons,      ONLY:n_sp_pol,levels
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:WF
+#if defined _OPENMP
+ use wrapper,        ONLY:Vstar_dot_V_omp
+#else
  use wrapper,        ONLY:Vstar_dot_V
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
+#endif
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,&
+&                         PAR_COM_Xk_ibz_INDEX,PAR_COM_QPp_INDEX,PAR_IND_B_mat
+ use real_time,      ONLY:B_mat_index
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -87,14 +93,23 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
    !
    do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
      !
+#if defined _OPENMP
+     VALUE=VALUE-cI*Vstar_dot_V_omp(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
+&                                             G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))*&  
+&                                             k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+#else
      VALUE=VALUE-cI*Vstar_dot_V(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
-&                                          G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))*&  
-&                                          k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+&                                             G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))*&  
+&                                             k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+#endif
    enddo
    !
  enddo
  !
- if (k%nibz/=nK_mem) call PP_redux_wait(VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ if (present(O_QP).or.present(O_REAL).or.k%nibz/=nK_mem) then
+   call PP_redux_wait(VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   VALUE=VALUE/PAR_COM_QPp_INDEX%n_CPU
+ endif
  !
 1 continue
  !
@@ -107,22 +122,22 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
    subroutine make_Hk_matrix(ik)
      implicit none
      integer, intent(in) :: ik
-     integer :: i1,ik_mem
+     integer :: i1,ik_mem,ib,ibp
      !
      ik_mem=ik
      if (k%nibz/=nK_mem) ik_mem=PAR_Xk_ibz_index(ik)
      !
      Hk=(0._SP,0._SP)
      !
-     if(present(O_MATRIX)) then
-       if(present(TRANS)) then 
-          forall(i1=1:n_sp_pol) Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),i1)= &
-&                                 transpose(O_MATRIX(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_mem,i1))
-       else
-          forall(i1=1:n_sp_pol) Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),i1)= &
-&                                 O_MATRIX(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_mem,i1)
-       endif
-       !
+     if (present(O_MATRIX)) then
+       do ib=SC_bands(1),SC_bands(2)
+         do ibp=SC_bands(1),SC_bands(2)
+           do i1=1,n_sp_pol
+             if (     present(TRANS)) Hk(ibp,ib,i1)=O_MATRIX(ib,ibp,ik_mem,i1) 
+             if (.not.present(TRANS)) Hk(ib,ibp,i1)=O_MATRIX(ib,ibp,ik_mem,i1) 
+           enddo
+         enddo
+       enddo
      endif
      !
      if(present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk)

@@ -62,8 +62,8 @@ module collision
  type COLLISIONS_element
    character(schlen)     :: name="none"
    integer               :: kind=0
-   integer               :: D(3,2)  ! Dimension (v3)
-   integer               :: N       ! Linear Dimension
+   integer               :: D(3,2)=0 ! Dimension (v3)
+   integer               :: N        ! Linear Dimension
    integer(LP), pointer  :: table(:,:,:) => null()
    complex(SP), pointer  :: v(:)          => null()
    complex(SP), pointer  :: v3c(:,:,:)    => null()

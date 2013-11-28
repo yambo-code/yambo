@@ -357,7 +357,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
 #if defined _SC
    !
-   call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"k ","b ","q ","pl"/),&
+   call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"k ","b ","q ","qp"/),&
 &                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,COMM_index_2=PAR_COM_G_b_INDEX,&
 &                                        COMM_index_3=PAR_COM_Q_INDEX,&
 &                                        COMM_index_4=PAR_COM_Plasma_INDEX,&
@@ -474,7 +474,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !     \__\__ k,n
    !        /
    !      
-   ! "RT"="k.b.q.qp"  .or.   "RT"="k.b.q.pl"
+   ! "RT"="k.b.q.qp"
    !  
    !   "k.b" -> QP (k,n,n')  
    !   "q"   -> q 
@@ -553,7 +553,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             NCPU=PAR_COM_Q_INDEX%n_CPU)
    !
    !.........................................................................
-   !   "pl"  -> Plasma (J)
+   !   "qp"  -> Plasma (J)
    !.........................................................................
    !
 	 call PARALLEL_index(PAR_IND_Plasma,(/max_N_plasma_poles/),COMM=PAR_COM_Plasma_INDEX)

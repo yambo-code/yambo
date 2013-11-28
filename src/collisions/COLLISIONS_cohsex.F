@@ -242,6 +242,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
            i_p_s =k%star(i_p,i_p_star)
            !
            i_J=Plasma_tab_m1(i_qp2,i_p_s,i_q_mem)
+           !
            if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
            i_J_mem=PAR_Plasma_index(i_J)
            !

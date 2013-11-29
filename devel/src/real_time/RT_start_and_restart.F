@@ -286,7 +286,8 @@ subroutine RT_start_and_restart(E,k,q,X)
    if(l_sc_contains_lda.and.SC_xc_functional/=0) then
      call IO_and_Messaging_switch("-report -log")
      call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
-     call IO_and_Messaging_switch("+report +log",CONDITION=master_cpu)
+     call IO_and_Messaging_switch("+report",CONDITION=master_cpu)
+     call IO_and_Messaging_switch("+log")
    endif
    !
    ! In all cases where Vxc is frozen and we are not doing BSE

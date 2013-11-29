@@ -268,10 +268,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
    ! A2A when there is no internal distribution
    !
-   if (PAR_COM_Q_INDEX%n_CPU==1)then
-     if (PAR_COM_Xk_bz_INDEX%n_CPU==1) then
-       call COMM_copy(PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A)
-     endif
+   if (PAR_COM_Xk_bz_INDEX%n_CPU==1) then
+     call COMM_copy(PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A)
    endif
    !
    ! K-points (BZ)
@@ -376,13 +374,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
    ! A2A when there is no internal distribution
    !
-   if (PAR_COM_Xk_ibz_INDEX%n_CPU==1)then
-     if (PAR_COM_G_b_INDEX%n_CPU==1) then
-       call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_A2A)
-       if (PAR_COM_Q_INDEX%n_CPU==1) then
-         call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_Q_A2A)
-       endif
-     endif
+   if (PAR_COM_G_b_INDEX%n_CPU==1) then
+     call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_A2A)
+   endif
+   if (PAR_COM_Q_INDEX%n_CPU==1) then
+     call COMM_copy(PAR_COM_G_b_A2A,PAR_COM_Q_A2A)
    endif
    !
    ! K-points (IBZ)
@@ -623,10 +619,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
    ! A2A when there is no internal distribution
    !
-   if (PAR_COM_Q_INDEX%n_CPU==1)then
-     if (PAR_COM_QP_INDEX%n_CPU==1) then
-       call COMM_copy(PAR_COM_Q_A2A,PAR_COM_QP_A2A)
-     endif
+   if (PAR_COM_QP_INDEX%n_CPU==1) then
+     call COMM_copy(PAR_COM_Q_A2A,PAR_COM_QP_A2A)
    endif
    !
    ! QP states

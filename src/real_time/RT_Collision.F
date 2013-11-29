@@ -132,8 +132,6 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  ! Some operations, instead, must be carried on only by the head CPU in this group
  ! identified by PAR_COM_Xk_ibz_A2A%CPU_id==0
  !
- write (*,*) myid,PAR_IND_WF_k%element_1D(:),HEAD_QP_cpu,HEAD_k_cpu
- !
  do ik=1,QP_nk 
    !
    if (.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu) cycle

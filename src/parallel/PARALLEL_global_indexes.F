@@ -467,10 +467,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    HEAD_k_cpu=PAR_COM_Xk_ibz_A2A%CPU_id==0
    HEAD_QP_cpu=PAR_COM_G_b_A2A%CPU_id==0
    !
-   ! AM 28/11/13. This redefinition is needed because the A2A communicator when PAR_COM_Xk_ibz_INDEX%n_CPU==1
-   ! is not well defined. Therefore the definition must be reinforced by using HEAD_k_cpu
-   if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) HEAD_QP_cpu=HEAD_QP_cpu.and.HEAD_k_cpu
-   !
    ! oooo  oooo  oooo  oooo  <- k
    ! Xo Xo Xo Xo Xo Xo Xo Xo <- b
    !

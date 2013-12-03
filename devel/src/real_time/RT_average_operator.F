@@ -34,7 +34,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  use wrapper,        ONLY:Vstar_dot_V
 #endif
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,&
-&                         PAR_COM_Xk_ibz_INDEX,PAR_COM_Plasma_INDEX,PAR_IND_B_mat
+&                         PAR_COM_Xk_ibz_INDEX,PAR_COM_QPp_INDEX,PAR_IND_B_mat
  use real_time,      ONLY:B_mat_index
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -107,8 +107,14 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  enddo
  !
  if (present(O_QP).or.present(O_REAL).or.k%nibz/=nK_mem) then
+   !
    call PP_redux_wait(VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-   VALUE=VALUE/PAR_COM_Plasma_INDEX%n_CPU
+   !
+   ! When the PAR_COM_Xk_ibz_INDEX%COMM is not defined then the job can be
+   ! overdone. This occurs for a 1.M.P.N CPU structure
+   !
+   if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) VALUE=VALUE/PAR_COM_QPp_INDEX%n_CPU
+   !
  endif
  !
 1 continue

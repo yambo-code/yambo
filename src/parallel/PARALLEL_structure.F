@@ -22,7 +22,6 @@
 subroutine PARALLEL_structure()
  !
  use parallel_m,  ONLY:ncpu,myid,n_MPI,INTER_CHAIN,n_chains,INTRA_CHAIN
- use openmp,      ONLY:OPENMP_initialize
  implicit none
  !
  ! Work Space 
@@ -36,10 +35,6 @@ subroutine PARALLEL_structure()
    INTRA_CHAIN(1)%n_CPU=1
    INTER_CHAIN(1)%n_CPU=1
  endif
- !
- ! OpenMP initialization
- !
- call OPENMP_initialize(.TRUE.)
  !
 #if defined _MPI
  !

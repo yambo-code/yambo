@@ -433,7 +433,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh Threads NLogCPUs DBsIOoff EvalMagn')
+ call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff EvalMagn')
  !
  !FFT
  !
@@ -451,15 +451,28 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    else
      call CPU_activate("X_all_q")
    endif
+   call initactivate(1,'X_Threads')
  endif
  !
- if (l_HF_and_locXC.or.l_gw0.or.l_cohsex) call CPU_activate("SE")
+ if (l_HF_and_locXC.or.l_gw0.or.l_cohsex) then
+   call CPU_activate("SE")
+   call initactivate(1,'SE_Threads')
+ endif
  !
- if (l_eval_collisions) call CPU_activate("RT")
+ if (l_eval_collisions) then
+   call CPU_activate("RT")
+   call initactivate(1,'RT_Threads')
+ endif
  !
- if (l_bse) call CPU_activate("BSE")
+ if (l_bse) then
+   call CPU_activate("BSE")
+   call initactivate(1,'X_Threads')
+ endif
  !
- if (l_real_time) call CPU_activate("RT")
+ if (l_real_time) then
+   call CPU_activate("RT")
+   call initactivate(1,'RT_Threads')
+ endif
  !
 #endif
  !
@@ -908,12 +921,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      character(*) :: what 
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
+#if defined _OPENMP
+     call initactivate(1,what//"_Threads")
+#endif
      if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BSE") then
        call initactivate(1,what//"_nCPU_invert")
      endif
      if (what=="BSE") then
        call initactivate(1,what//"_nCPU_diago")
      endif
+     !
    end subroutine
    !
    subroutine X_activate(mode,what)

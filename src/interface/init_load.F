@@ -75,7 +75,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,RES_tresh
 #endif
  use parallel_m,           ONLY:n_log_CPUs
- use openmp,               ONLY:n_threads
+ use openmp,               ONLY:n_threads_X,n_threads_SE,n_threads_RT
  use IO_m,                 ONLY:DBs_IO_control_string
  !
  implicit none
@@ -174,7 +174,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Parallel Setup
  !
 #if defined _OPENMP
- call it(defs,'Threads',      '[OPENMP] Number of threads (leave 0 to use default value)',n_threads)
+ call it(defs,'X_Threads',       '[OPENMP/X] Number of threads',n_threads_X)
+ call it(defs,'SE_Threads',      '[OPENMP/GW] Number of threads',n_threads_SE)
+ call it(defs,'RT_Threads',      '[OPENMP/RT] Number of threads',n_threads_RT)
 #endif
 #if defined _MPI 
  call it(defs,'NLogCPUs',     '[PARALLEL] Live-timing CPU`s (0 for all)',n_log_CPUs,verb_level=V_parallel)

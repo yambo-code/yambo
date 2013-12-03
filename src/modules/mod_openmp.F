@@ -28,7 +28,10 @@ module OPENMP
  !     from the environment var OMP_NUM_THREADS
  !     any other value given from input will overwrite the environment
  !
- integer     :: n_threads = 0
+ integer     :: n_threads = 0        ! Max number of threads possible
+ integer     :: n_threads_X  = 0    
+ integer     :: n_threads_SE = 0   
+ integer     :: n_threads_RT = 0  
  integer     :: n_threads_now = 0
  logical     :: master_thread=.TRUE.
  !
@@ -44,31 +47,47 @@ module OPENMP
  !
  contains
    !
-   subroutine OPENMP_initialize(DEEP_initialize)
+   subroutine OPENMP_initialize(DEEP_initialize,n_threads_in)
      !
-     logical :: DEEP_initialize
+     logical           :: DEEP_initialize
+     integer, optional :: n_threads_in
      !
      ! if threads are set from input pass the info to the omp env
      !
 #if defined _OPENMP
-     if ( n_threads > 0 ) then 
-       call omp_set_num_threads( n_threads )
+     if (present(n_threads_in)) then
+       call omp_set_num_threads( n_threads_in )
+       n_threads_now=n_threads_in
      else
-       n_threads=omp_get_max_threads()
+       if ( n_threads > 0 ) then 
+         call omp_set_num_threads( n_threads )
+       else
+         n_threads=omp_get_max_threads()
+       endif
+       n_threads_now=n_threads
      endif
      !
-     n_threads_now=1
-     !
      if (.not.DEEP_initialize) return
+     !
+     n_threads_X  = n_threads
+     n_threads_SE = n_threads   
+     n_threads_RT = n_threads  
      !
      call omp_set_dynamic(.false.)
      call omp_set_nested(.false.)
 #else
      !
-     n_threads=1
-     n_threads_now=1
+     n_threads     = 1
+     n_threads_now = 1
+     n_threads_X   = 1
+     n_threads_SE  = 1   
+     n_threads_RT  = 1  
+     if (present(n_threads_in)) then
+       n_threads_in = 1
+     endif
      !
 #endif
+     !
    end subroutine
    !
    subroutine OPENMP_update(master_)

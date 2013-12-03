@@ -44,6 +44,9 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Bm_index,CLE
  !
  integer :: i_k,i_b,i_bp,i_qp,NB,NK,NBp
  logical :: condition
+#if defined _SC
+ logical :: Vl(SC_bands(2))
+#endif
  !
  NB=n_bands
  NBp=n_bands
@@ -102,16 +105,25 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Bm_index,CLE
  if (present(K_index).and.present(Bm_index)) then
    do i_k=1,NK
      !
-     if (.not.K_index%element_1D(i_k)) states_to_load(:,i_k,:)=.FALSE.
-     !
-     do i_b=SC_bands(1),SC_bands(2)
-       do i_bp=SC_bands(1),SC_bands(2)
-         if (K_index%element_1D(i_k).and..not.Bm_index%element_1D( B_mat_index(i_b,i_bp) ) ) then
-           states_to_load(i_b ,i_k,:)=.FALSE.
-           states_to_load(i_bp,i_k,:)=.FALSE.
-         endif
+     if (K_index%element_1D(i_k)) then
+       !
+       Vl=.FALSE. 
+       !
+       do i_b=SC_bands(1),SC_bands(2)
+         do i_bp=SC_bands(1),SC_bands(2)
+           if (Bm_index%element_1D( B_mat_index(i_b,i_bp) ) ) then
+             Vl(i_b )=.TRUE.
+             Vl(i_bp)=.TRUE.
+           endif
+         enddo
        enddo
-     enddo
+       do i_b=SC_bands(1),SC_bands(2)
+         if (.not.Vl(i_b)) states_to_load(i_b,i_k,:)=.FALSE.
+       enddo
+     else
+       states_to_load(:,i_k,:)=.FALSE.
+     endif
+     !
      !
    enddo
    !

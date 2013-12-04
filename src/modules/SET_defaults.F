@@ -123,7 +123,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call CPU_str_reset()
  !
- call OPENMP_initialize(.TRUE.)
+ call OPENMP_initialize( )
  call OPENMP_update(master_thread)
  !
  ! Stack Size 

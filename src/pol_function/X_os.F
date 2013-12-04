@@ -48,6 +48,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
+#if defined _OPENMP
+ use openmp,        ONLY:OPENMP_set_threads,n_threads_X,n_threads_DIP
+#endif
  implicit none
  type(levels)         :: Xen
  type(bz_samp)        :: Xk
@@ -81,8 +84,14 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !  Optical strengths
  !=====================
  if (iq==1) then
+#if defined _OPENMP
+   call OPENMP_set_threads(n_threads_in=n_threads_DIP)
+#endif
    call Dipole_driver(Xen, Xk, X, X%q0)
    call X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
+#if defined _OPENMP
+   call OPENMP_set_threads(n_threads_in=n_threads_X)
+#endif
  endif
  !
  ! WF load

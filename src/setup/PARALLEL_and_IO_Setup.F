@@ -31,7 +31,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use parallel_m,     ONLY:n_nodes,ncpu,n_MPI,n_chains,PARALLEL_message,n_CPU_str_max
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
- use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads
+ use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads
  implicit none
  !
  type(levels)  :: en
@@ -68,7 +68,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
    !
  endif
  !
- n_max_threads=maxval((/n_threads_X,n_threads_SE,n_threads_RT/))
+ n_max_threads=maxval((/n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP/))
  !
  call msg('r', '* THREADS    (max):',n_max_threads)
  call msg('r', '* TOTAL TASKS(max):',n_max_threads*ncpu)

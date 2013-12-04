@@ -62,7 +62,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
 #endif
 #if defined _OPENMP
- use openmp,        ONLY:OPENMP_initialize,n_threads_X,n_threads_SE,n_threads_RT
+ use openmp,        ONLY:OPENMP_set_threads,n_threads_X,n_threads_SE,n_threads_RT
 #endif
 #if defined _SC
  use SC,            ONLY:SC_bands
@@ -186,7 +186,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call IO_and_Messaging_switch("RESET")
    !
 #if defined _OPENMP
-   call OPENMP_initialize(.FALSE.)
+   call OPENMP_set_threads( )
 #endif
    !
  endif
@@ -249,7 +249,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    endif
    !
 #if defined _OPENMP
-   call OPENMP_initialize(.FALSE.,n_threads_in=n_threads_X)
+   call OPENMP_set_threads(n_threads_in=n_threads_X)
 #endif
    !
  endif
@@ -367,7 +367,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    endif
    !
 #if defined _OPENMP
-   call OPENMP_initialize(.FALSE.,n_threads_in=n_threads_X)
+   call OPENMP_set_threads(n_threads_in=n_threads_X)
 #endif
    !
  endif
@@ -620,7 +620,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #endif
    !
 #if defined _OPENMP
-   call OPENMP_initialize(.FALSE.,n_threads_in=n_threads_RT)
+   call OPENMP_set_threads(n_threads_in=n_threads_RT)
 #endif
    !
  endif
@@ -783,7 +783,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    endif
    !
 #if defined _OPENMP
-   call OPENMP_initialize(.FALSE.,n_threads_in=n_threads_SE)
+   call OPENMP_set_threads(n_threads_in=n_threads_SE)
 #endif
    !
  endif

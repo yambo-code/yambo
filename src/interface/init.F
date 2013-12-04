@@ -65,12 +65,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use fields,         ONLY:Efield,i_Pump,i_Probe,Efield_reset,Efield_duplicate
 #endif
 #if defined _MAGNETIC
- use magnetic,        ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
+ use magnetic,       ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
 #endif
 #if defined _SURF
  use ras_module,     ONLY:lras, lreels
 #endif
- use openmp,         ONLY:OPENMP_initialize
+#if defined _OPENMP
+ use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT
+#endif
  !
  implicit none
  !
@@ -410,7 +412,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !Setup on the basis of the DB read/stdin variables
  !Here I can propose values to be written in the input file
  !
- call varsetup1
+ call before_infile_write_setup( )
  !
  !Variables(read from DB files) -> local cache
  !
@@ -451,7 +453,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    else
      call CPU_activate("X_all_q")
    endif
-   call initactivate(1,'X_Threads')
+   call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
  if (l_HF_and_locXC.or.l_gw0.or.l_cohsex) then
@@ -459,19 +461,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'SE_Threads')
  endif
  !
- if (l_eval_collisions) then
+ if (l_eval_collisions.or.l_real_time) then
    call CPU_activate("RT")
    call initactivate(1,'RT_Threads')
  endif
  !
  if (l_bse) then
    call CPU_activate("BSE")
-   call initactivate(1,'X_Threads')
- endif
- !
- if (l_real_time) then
-   call CPU_activate("RT")
-   call initactivate(1,'RT_Threads')
+   call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
 #endif
@@ -849,11 +846,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if(infile_verbosity==V_real_time.and.l_real_time) call DephMatrix_init()
 #endif
  !
- ! After input reading the number of threads could be eventually overwritten
- ! by the user-specified value
- !
- call OPENMP_initialize(.FALSE.)
- !
  if (infile_editing) return
  !
  ! Update Logicals (especially the write_to_log)
@@ -921,9 +913,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      character(*) :: what 
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
-#if defined _OPENMP
-     call initactivate(1,what//"_Threads")
-#endif
      if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BSE") then
        call initactivate(1,what//"_nCPU_invert")
      endif
@@ -1049,7 +1038,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
    end subroutine X_var_setup
    !
-   subroutine varsetup1 
+   subroutine before_infile_write_setup 
      !
      ! After DB reading/stdin logicals
      ! I propose here values for the input file
@@ -1122,8 +1111,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        X(2)%ng=SC_X_size
      endif
 #endif
+#if defined _OPENMP
+     if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa.or.l_bse) then
+       n_threads_X=n_threads
+       n_threads_DIP=n_threads
+     endif
+     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex) n_threads_SE=n_threads
+     if (l_eval_collisions.or.l_real_time) n_threads_RT=n_threads
+#endif
      !
-   end subroutine varsetup1 
+   end subroutine before_infile_write_setup 
    !
    subroutine varsetup2 
      !
@@ -1155,7 +1152,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
      endif
      !
-     ! When running BSE from input file l_bse is FALSE in varsetup1.
+     ! When running BSE from input file l_bse is FALSE in before_infile_write_setup.
      ! In any case I have to overwrite X(2) with PP X(4) only if em1s=F
      !
      if (l_bse.and.io_X_err(2)/=0.and.io_X_err(4)==0.and..not.l_em1s) then

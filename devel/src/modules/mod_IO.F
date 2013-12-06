@@ -48,7 +48,7 @@ module IO_m
  ! Global DB I/O control string
  !
  character(lchlen) :: DBs_IO_control_string = "none"
- logical           :: io_DIP   =.TRUE.
+ logical           :: io_DIP   =.FALSE.
  logical           :: io_X     =.TRUE.
  logical           :: io_WF    =.TRUE.
  logical           :: io_HF    =.TRUE.

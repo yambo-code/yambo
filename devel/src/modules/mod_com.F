@@ -332,7 +332,7 @@ module com
      !
      do i1=1,n_logo_lines
        if (unit_/=6) write (unit_,trim(space_)) logo_line(i1)
-       if (unit_==6.and.i1>=n_logo_lines-1) cycle
+       if (unit_==6.and.i1>=n_logo_lines-2) cycle
        if (unit_==6) call LIVE_message(logo_line(i1),"n","","%s",CPU_TIME=.false.,CPU_ID=.false.)
      enddo
      if (unit_/=6.and.trim(comment_)=='')  write (unit_,'(a)') ' '

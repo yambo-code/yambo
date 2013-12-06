@@ -297,16 +297,24 @@ module parallel_m
    character(lchlen) function PARALLEL_message(i_s)
      use pars,   ONLY:lchlen
      use stderr, ONLY:intc
-     use openmp, ONLY:n_threads
+     use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP
      integer :: i_s
      !
      PARALLEL_message=" "
+     !
+#if !defined _MPI && !defined _OPENMP && !defined _OPEMMPI
+     return
+#endif
      if (i_s>0) then
        if (len_trim(CPU_structure(i_s)%CPU_string)==0) return
      endif
      !
      if (i_s==0) then
-       PARALLEL_message=trim(intc(ncpu))//"(total)"//"-"//trim(intc(n_threads))//"(threads)"
+       PARALLEL_message=trim(intc(ncpu))//"(CPU)"
+       if (n_threads_X>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_X))//"(threads@X)"
+       if (n_threads_DIP>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_DIP))//"(threads@DIP)"
+       if (n_threads_SE>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SE))//"(threads@SE)"
+       if (n_threads_RT>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_RT))//"(threads@RT)"
      else
        PARALLEL_message=trim(CPU_structure(i_s)%Short_Description)//"(environment)-"//&
 &                       trim(CPU_structure(i_s)%CPU_string)//"(CPUs)-"//&

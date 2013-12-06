@@ -29,7 +29,7 @@ AC_ARG_WITH(netcdf_include,AC_HELP_STRING([--with-netcdf-include=<path>],
 AC_ARG_WITH(netcdf_lib,AC_HELP_STRING([--with-netcdf-lib=<path>],
                                   [Path of the NetCDF lib directory]))
 AC_ARG_WITH(netcdf_link,AC_HELP_STRING([--with-netcdf-link=<path>],
-                                  [Specify libs needed by NetCDF or NetCDF/HDF5]))
+                                  [Specific libs needed by NetCDF or NetCDF/HDF5]))
 NETCDF_LINKS=""
 case $with_netcdf_link in
         yes | "") ;;

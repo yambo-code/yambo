@@ -168,9 +168,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    if (l_bs_fxc) then
      call X_write_descriptions(FXC_n_descs,FXC_description)
-     call msg('o eps eel alpha','#',' TDDFT|Fxc size             :'//trim(intc(FXC_n_g_corr)),INDENT=0)    
-     call msg('o eps eel alpha','#','      |Hartree size         :'//trim(intc(X%ng)),INDENT=0)    
-     call msg('o eps eel alpha','#','      |Ordering             :'//trim(X%ordering),INDENT=0)    
+     call msg('o eps_q eel_q alpha','#',' TDDFT|Fxc size             :'//trim(intc(FXC_n_g_corr)),INDENT=0)    
+     call msg('o eps_q eel_q alpha','#','      |Hartree size         :'//trim(intc(X%ng)),INDENT=0)    
+     call msg('o eps_q eel_q alpha','#','      |Ordering             :'//trim(X%ordering),INDENT=0)    
      !
      ! Fxc file titles
      !
@@ -182,8 +182,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! BZ RIM
    !
    if (use_X_RIM) then
-     call msg('o eps eel fxc alpha','#')
-     call msg('o eps eel fxc alpha','# BZ Energy RIM points :',BZ_RIM_tot_nkpts,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','#')
+     call msg('o eps_q eel_q fxc alpha','# BZ Energy RIM points :',BZ_RIM_tot_nkpts,INDENT=0)
    endif
    !
    if (iq==1) call PP_redux_wait
@@ -227,14 +227,14 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    n_output=5
    if(l_rpa_IP.or.l_skip_non_int_eps) n_output=3
-   call msg('o eps eel fxc alpha','#')
-   call X_setup_headers('eps')
-   call msg('o eps',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
-   call X_setup_headers('eel')
-   call msg('o eel',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
+   call msg('o eps_q eel_q fxc alpha','#')
+   call X_setup_headers('eps_q')
+   call msg('o eps_q',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
+   call X_setup_headers('eel_q')
+   call msg('o eel_q',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
    call X_setup_headers('alpha')
    call msg('o alpha','#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
-   call msg('o eps eel alpha','#')
+   call msg('o eps_q eel_q alpha','#')
    !
    do iw=1,wv%n_freqs
      !
@@ -242,7 +242,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      !
      output_data=(/real(wv%p(iw))*HA2EV,aimag(X_epsilon(2,iw)),real(X_epsilon(2,iw)),&
 &                  aimag(X_epsilon(1,iw)),real(X_epsilon(1,iw))/)
-     call msg('o eps','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
+     call msg('o eps_q','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
      !
    enddo
    !
@@ -277,7 +277,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !
        output_data=(/real(wv%p(iw))*HA2EV,aimag(X_epsilon(4,iw)),real(X_epsilon(4,iw)),&
 &                    aimag(X_epsilon(3,iw)),real(X_epsilon(3,iw))/)
-       call msg('o eel','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
+       call msg('o eel_q','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
        !
        ! Alpha
        !

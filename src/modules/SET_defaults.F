@@ -105,7 +105,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #if defined _TIMING
  use timing_m,    ONLY:timing_allocate,nclockx
 #endif
- use openmp,      ONLY:OPENMP_initialize
+ use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread
  !
  implicit none
  !
@@ -124,7 +124,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call CPU_str_reset()
  !
- call OPENMP_initialize(.FALSE.)
+ call OPENMP_initialize( )
+ call OPENMP_update(master_thread)
  !
  ! Stack Size 
  !

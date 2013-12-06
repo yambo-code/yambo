@@ -114,8 +114,8 @@ module X_output
        message(3) = '# Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//') [iku]'
        message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [iku]:'
      endif
-     call msg("o eps",trim(message(1)),Q_plus_G_pt,INDENT=0)
-     call msg("o eel",trim(message(2)),Q_plus_G_pt,INDENT=0)
+     call msg("o eps_q",trim(message(1)),Q_plus_G_pt,INDENT=0)
+     call msg("o eel_q",trim(message(2)),Q_plus_G_pt,INDENT=0)
      call msg("o alpha",trim(message(3)),Q_plus_G_pt,INDENT=0)
      call msg("o fxc",trim(message(4)),Q_plus_G_pt,INDENT=0)
      call msg("o off",trim(message(5)),Q_plus_G_pt,INDENT=0)

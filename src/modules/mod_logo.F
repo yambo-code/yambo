@@ -62,8 +62,8 @@ module LOGO
      ! 
      ! Work Space
      !
-     character(schlen) :: comment(2),ch
-     integer           :: max_length,i1,left_space,iA
+     character(schlen) :: comment(3),ch,MPI_string,OMP_string
+     integer           :: max_length,i1,left_space,iA,ic
      !
      ! Get version and revision
      !
@@ -83,7 +83,20 @@ module LOGO
 !&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_revision))
      ! GPL_INCLUDE_END
      !
-     comment(2)='http://www.yambo-code.org'
+     MPI_string="Serial"
+#if defined _MPI
+     MPI_string="MPI"
+#endif
+#if defined _OPENMPI
+     MPI_string="OpenMPI"
+#endif
+     OMP_string=" "
+#if defined _OPENMP
+     OMP_string="+OpenMP"
+#endif
+     comment(2)=trim(MPI_string)//trim(OMP_string)//" Build"
+     !
+     comment(3)='http://www.yambo-code.org'
      !
      if (ID_logo<0) then
        ID_logo=pickup_a_random(10._SP)
@@ -272,12 +285,11 @@ module LOGO
      !
      n_logo_lines=n_logo_lines+1
      logo_line(n_logo_lines)=' '
-     n_logo_lines=n_logo_lines+1
-     left_space=(max_length-len_trim(comment(1)))/2+1
-     write (logo_line(n_logo_lines),'(t'//trim(intc(left_space))//',a)') trim(comment(1))
-     n_logo_lines=n_logo_lines+1
-     left_space=(max_length-len_trim(comment(2)))/2+1
-     write (logo_line(n_logo_lines),'(t'//trim(intc(left_space))//',a)') trim(comment(2))
+     do ic=1,3
+       n_logo_lines=n_logo_lines+1
+       left_space=(max_length-len_trim(comment(ic)))/2+1
+       write (logo_line(n_logo_lines),'(t'//trim(intc(left_space))//',a)') trim(comment(ic))
+     enddo
      !
    end subroutine
    !

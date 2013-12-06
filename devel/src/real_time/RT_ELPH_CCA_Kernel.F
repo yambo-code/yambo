@@ -21,9 +21,9 @@
 !
 subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesser)
  !  
- use pars,           ONLY:SP,cI,pi
+ use pars,           ONLY:SP,cI,pi,tol2,rZero
  use electrons,      ONLY:levels,spin_occ,n_full_bands
- use SC,             ONLY:SC_bands,RT_ibz_coo,RT_Nk_ibz,RT_nk
+ use SC,             ONLY:SC_bands,RT_ibz_coo,RT_Nk_ibz,RT_nk,RT_occupations_locked
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         B_mat_index,l_RT_uses_E_RIM,RIM_ibz_coo
@@ -43,13 +43,19 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesse
  !
  integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem,ik_rim,ip_rim,i1,i2
  real(SP) :: f_k_m_q,P_ph_abs,P_ph_emit,ph_freq,DELTA_E,DELTA_W,pre_factor
+ real(SP) :: TMP_Hole_lifetime(SC_Bands(1):SC_Bands(2),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2),2),    &
+&            TMP_Electron_lifetime(SC_Bands(1):SC_Bands(2),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2),2)
  real(SP), external :: RT_G_retarded_convolution
+ !
+ ! Zeroing
+ !=========
+ TMP_Hole_lifetime=rZero
+ TMP_Electron_lifetime=rZero
  !
  ! Dimensions
  !============
  !
  B_dim=SC_bands(2)-SC_bands(1)+1
- pre_factor=1._SP
  ik_mem=PAR_Xk_ibz_index(ik)
  iq_mem=PAR_Q_index(i_q)
  !
@@ -61,10 +67,12 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesse
  do i_n=1,B_dim
    !
    i_n_shift=i_n+SC_bands(1)-1
+   if(RT_occupations_locked(i_n_shift,ik)) cycle
    !
    do i_np=1,B_dim
      ! 
      i_np_shift=i_np+SC_bands(1)-1
+     if(RT_occupations_locked(i_np_shift,ik_m_q)) cycle
      !
      ! Extra condition: the EP scattering cannot cross the gap
      ! This could be replaced by a more general condition in RT_G_retarded_convolution
@@ -78,6 +86,8 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesse
      DELTA_E=E%E(i_n_shift,ik,1)-E%E(i_np_shift,ik_m_q,1)
      DELTA_W=abs(E%W(i_n_shift,ik,1))+abs(E%W(i_np_shift,ik_m_q,1))
      !
+     pre_factor=abs(Gkkp(i_np,i_n))**2/real(RT_Nk_ibz(ik_m_q))
+     !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        do ip_rim=RT_ibz_coo(ik_m_q,1),RT_ibz_coo(ik_m_q,2)
          !
@@ -87,23 +97,26 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesse
            i1=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
            i2=ip_rim-RT_ibz_coo(ik_m_q,1)+RIM_ibz_coo(ik_m_q,1)
            DELTA_E=E%E_RIM(i_n_shift,i1,1)-E%E_RIM(i_np_shift,i2,1)
-           pre_factor=1._SP/real(RT_Nk_ibz(ik_m_q))
          endif
          !
          P_ph_abs  =RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,E%E_ind_gap(1),'EP')
          P_ph_emit =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,E%E_ind_gap(1),'EP')
          !
-         E_P_Hole_lifetime(i_n_shift,ik_rim)=E_P_Hole_lifetime(i_n_shift,ik_rim)+&
-&                                            abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_abs*Bose_f(2)*pre_factor
+         if(abs(P_ph_abs)<tol2.and.abs(P_ph_emit)<tol2) cycle
          !
-         E_P_Electron_lifetime(i_n_shift,ik_rim)=E_P_Electron_lifetime(i_n_shift,ik_rim)+&
-&                                                abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_emit*Bose_f(2)*pre_factor
+         TMP_Hole_lifetime(i_n_shift,ik_rim,1)=TMP_Hole_lifetime(i_n_shift,ik_rim,1)+&
+&                                                   f_k_m_q*P_ph_abs*pre_factor
+         TMP_Electron_lifetime(i_n_shift,ik_rim,1)=TMP_Electron_lifetime(i_n_shift,ik_rim,1)+&
+&                                                       (1.-f_k_m_q)*P_ph_emit*pre_factor
          !
-         if (.not.l_skip_ABS) then
-           E_P_Ho_abs_lifetime(i_n_shift,ik_rim)=E_P_Ho_abs_lifetime(i_n_shift,ik_rim)+&
-&                                                abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_emit*Bose_f(1)*pre_factor
-           E_P_El_abs_lifetime(i_n_shift,ik_rim)=E_P_El_abs_lifetime(i_n_shift,ik_rim)+&
-&                                                abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_abs*Bose_f(1)*pre_factor
+         ! Also in case of zero Bose Temp I compute these coefficients
+         ! because I'll need them for the interpolation of the el-el lifetimes
+         !
+         if( abs(Bose_f(1))>tol2 .and. .not.l_skip_abs) then
+           TMP_Hole_lifetime(i_n_shift,ik_rim,2)=TMP_Hole_lifetime(i_n_shift,ik_rim,2)+&
+&                                                     f_k_m_q*P_ph_emit*pre_factor
+           TMP_Electron_lifetime(i_n_shift,ik_rim,2)=TMP_Electron_lifetime(i_n_shift,ik_rim,2)+&
+&                                                         (1.-f_k_m_q)*P_ph_abs*pre_factor
          endif
          !
        enddo
@@ -112,5 +125,24 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesse
    enddo
    !
  enddo
+ !
+ i_n=SC_bands(1)
+ i_np=SC_bands(2)
+ ik_rim=RT_ibz_coo(ik,1)
+ ip_rim=RT_ibz_coo(ik,2)
+ !
+ ! Emission
+ E_P_Hole_lifetime(i_n:i_np,ik_rim:ip_rim)=E_P_Hole_lifetime(i_n:i_np,ik_rim:ip_rim)+&
+&                                            TMP_Hole_lifetime(i_n:i_np,ik_rim:ip_rim,1)*Bose_f(2)
+ E_P_Electron_lifetime(i_n:i_np,ik_rim:ip_rim)=E_P_Electron_lifetime(i_n:i_np,ik_rim:ip_rim)+&
+&                                                TMP_Electron_lifetime(i_n:i_np,ik_rim:ip_rim,1)*Bose_f(2)
+ !
+ if(abs(Bose_f(1))<tol2.or.l_skip_abs) return
+ !
+ ! Absorption
+ E_P_Ho_abs_lifetime(i_n:i_np,ik_rim:ip_rim)=E_P_Ho_abs_lifetime(i_n:i_np,ik_rim:ip_rim)+&
+&                                            TMP_Hole_lifetime(i_n:i_np,ik_rim:ip_rim,2)*Bose_f(1)
+ E_P_El_abs_lifetime(i_n:i_np,ik_rim:ip_rim)=E_P_El_abs_lifetime(i_n:i_np,ik_rim:ip_rim)+&
+&                                                TMP_Electron_lifetime(i_n:i_np,ik_rim:ip_rim,2)*Bose_f(1)
  !
 end subroutine RT_ELPH_CCA_Kernel

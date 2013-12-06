@@ -46,9 +46,9 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  use memory_m   , ONLY:mem_est
  implicit none
  !
- character(*):: title
- integer     :: npts
- real(SP)    :: bg_pt(npts),cg_percentual
+ character(*),intent(in) :: title
+ integer,intent(in)      :: npts
+ real(SP),intent(in)     :: bg_pt(npts),cg_percentual
  !
  ! DEFAULT TRESHOLD
  !

@@ -21,7 +21,7 @@
 !
 subroutine RT_output(what,VALUEs,TIME,E)
  ! 
- use units,          ONLY:HA2EV
+ use units,          ONLY:HA2EV,HA2KEL
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close
  use SC,             ONLY:SC_description,n_SC_descriptions
@@ -104,15 +104,26 @@ subroutine RT_output(what,VALUEs,TIME,E)
  next_file=next_file+1
  !
  if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'energy'
+ short_file_name(next_file)=trim(append_ch)//'energy'
+ n_headings(next_file)=6
+ headings(next_file,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
+ headings(next_file,4:5)=(/"Hartree [eV]","Exc     [eV]"/)
+ headings(next_file,6)="E_tot[eV]"
+ next_file=next_file+1
+ !
+ if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'dynamics'
  short_file_name(next_file)=trim(append_ch)//'dynamics'
- n_headings(next_file)=8
- headings(next_file,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
- headings(next_file,4:5)=(/"Hartree [eV]","XC      [eV]"/)
- headings(next_file,6)="Fluence[kJ/cm^2]"
- headings(next_file,7)="N" 
- headings(next_file,8)="dG" 
- if(l_Debye_TBose_update) headings(next_file,n1+3)="Tbose" 
+ n_headings(next_file)=7
+ if(l_Debye_TBose_update) n_headings(next_file)=n_headings(next_file)+1
+ headings(next_file,2)="Total E[eV]"
+ headings(next_file,3)="Fluence[kJ/cm^2]"
+ headings(next_file,4)="N" 
+ headings(next_file,5)="dG" 
+ headings(next_file,6)="T(hol) [K]" 
+ headings(next_file,7)="T(el)  [K]" 
+ if(l_Debye_TBose_update) headings(next_file,8)="T(bose) [K]" 
  next_file=next_file+1
  !
  do i_order=0,max_X_order,1
@@ -306,8 +317,11 @@ subroutine RT_output(what,VALUEs,TIME,E)
        data_to_dump(2:4) =real(A_vecpot%vecpot(:))
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
+     case('energy')
+       data_to_dump(2:6) = VALUES(1:5)
      case('dynamics')
-       data_to_dump(2:8) = VALUES(1:7)
+       data_to_dump(2:7) = VALUES(1:6)
+       if(l_Debye_TBose_update) data_to_dump(8) = Bose_Temp*HA2KEL
      case('YPP-eps_along_E','YPP-eps_x','YPP-eps_y','YPP-eps_z','YPP-eels_along_E','YPP-SHG_qssin',&
 &         'YPP-X_probe_order_0_x','YPP-X_probe_order_1_x','YPP-X_probe_order_2_x','YPP-X_probe_order_3_x',&
 &         'YPP-X_probe_order_4_x','YPP-X_probe_order_5_x','YPP-X_probe_order_6_x','YPP-X_probe_order_7_x',&

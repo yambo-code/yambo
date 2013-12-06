@@ -94,6 +94,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
  call it('r',defs,'RT_X',        '[R] Response functions Post-Processing')
  call it('r',defs,'RTdos',        '[R] Analize time-dependent DOS')
+ call it('r',defs,'RTbnds',       '[R] Analize time-dependent occupations of Bands')
  call it('r',defs,'RToccPlot',    '[R] Plot time-dependent occupations')
  call it('r',defs,'RToccFit',     '[R] Fit occupations distribution at given time')
 #endif
@@ -123,8 +124,8 @@ subroutine ypp_init_load(defs)
  call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit)
  call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit)
  call it(defs,'OCCTref','NEGF Occupations reference time',OCC_T_ref,unit=Time_unit)
- call it(defs,'OCCnFit','NEGF N of times for occupations distribution FIT',RT_n_FIT) 
  call it('f',defs,'OCCgroup','NEGF If RIM is used group occupations')
+ !
 #endif
  !
  ! BANDS

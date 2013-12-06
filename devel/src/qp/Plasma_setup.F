@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function Plasma_setup(iqbz,E,k,q,poles)
+integer function Plasma_setup(iqbz,E,k,q,poles,N,EH_gas)
  !
  use pars,          ONLY:SP
  use R_lattice,     ONLY:bz_samp
@@ -27,17 +27,19 @@ integer function Plasma_setup(iqbz,E,k,q,poles)
  use electrons,     ONLY:levels,n_sp_pol
  use QP_m,          ONLY:QP_n_states,QP_table
  use frequency,     ONLY:ordered_grid_index,coarse_grid_index,bare_grid_N,Coarse_grid_N,coarse_grid_Pt
- use plasma,        ONLY:Plasma_tab,Plasma_tab_m1,Plasma_grid,N_plasma_poles,max_N_plasma_poles
+ use plasma,        ONLY:plasma_gas
  use parallel_m,    ONLY:PAR_nQ,PAR_Q_index,PAR_IND_Q
  !
  implicit none
  !
- integer       :: iqbz
- type(levels)  :: E 
- type(bz_samp) :: k,q
- real(SP)      :: poles(k%nbz*(SC_bands(2)-SC_bands(1)+1)**2*n_sp_pol)
+ integer          :: iqbz,N
+ type(levels)     :: E 
+ type(bz_samp)    :: k,q
+ type(plasma_gas) :: EH_gas
+ real(SP)         :: poles(N)
  !
  ! Local variables
+ !
  !
  logical       :: l_reallocate=.false.
  integer       :: i_qp,i_q,i_q_s,i_m,i_mp,i_p,i_p_star,i_p_s,i_q_mem,i_q_mem_local,&
@@ -69,10 +71,9 @@ integer function Plasma_setup(iqbz,E,k,q,poles)
      !
      E_center=E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)
      !
-     ! With the following two lines I would move from N**2 to N*(N-1)/2 transitions
-     ! I.e. in silicon with 6 bands from 36 to 15 ...
-     !if(i_m==i_mp .and. iqbz==1) cycle
-     !if(E_center<0.) cycle
+     !IMPLEMENTATION WITH ABS and EMISSION<
+     !if(E_center<0._SP) cycle
+     !IMPLEMENTATION WITH ABS and EMISSION>
      !
      n_poles=n_poles+1
      i_pole=n_poles
@@ -80,11 +81,11 @@ integer function Plasma_setup(iqbz,E,k,q,poles)
      !
      if (iqbz>0) then
        i_pole=ordered_grid_index(n_poles)
-       Plasma_tab(i_pole,i_q_mem,:)=(/i_qp,i_p_s/)
+       EH_gas%tab(i_pole,i_q_mem,:)=(/i_qp,i_p_s/)
        poles(i_pole)=E_center       
        !
        i_pole=coarse_grid_index(n_poles)
-       Plasma_tab_m1(i_qp,i_p_s,i_q_mem)=i_pole
+       EH_gas%tab_m1(i_qp,i_p_s,i_q_mem)=i_pole
      endif
      !
    enddo
@@ -95,33 +96,33 @@ integer function Plasma_setup(iqbz,E,k,q,poles)
  if (iqbz>0 ) then
    !
    if (i_q_mem==1) then
-     allocate(Plasma_grid(Coarse_grid_N,PAR_nQ,2))
-     Plasma_grid=-1
-     N_plasma_poles=0
+     allocate(EH_gas%grid(Coarse_grid_N,PAR_nQ,2))
+     EH_gas%grid=-1
+     EH_gas%N_poles=0
      l_reallocate=.false.
    endif
    !
-   if (i_q_mem>1 ) l_reallocate= ( Coarse_grid_N>max_N_plasma_poles )
+   if (i_q_mem>1 ) l_reallocate= ( Coarse_grid_N>EH_gas%max_N_poles )
    !
-   N_plasma_poles(iqbz)=Coarse_grid_N
-   max_N_plasma_poles=maxval(N_plasma_poles)
+   EH_gas%N_poles(iqbz)=Coarse_grid_N
+   EH_gas%max_N_poles=maxval(EH_gas%N_poles(1:iqbz))
    !
    if (l_reallocate) then
      !
-     allocate(local_grid(max_N_plasma_poles,iqbz-1,2))
+     allocate(local_grid(EH_gas%max_N_poles,iqbz-1,2))
      do iqbz_local=1,iqbz-1
        if (.not.PAR_IND_Q%element_1D(iqbz_local)) cycle
        i_q_mem_local=PAR_Q_index(iqbz_local)
-       local_grid(1:N_plasma_poles(iqbz_local),i_q_mem_local,:)=Plasma_grid(1:N_plasma_poles(iqbz_local),i_q_mem_local,:)
+       local_grid(1:EH_gas%N_poles(iqbz_local),i_q_mem_local,:)=EH_gas%grid(1:EH_gas%N_poles(iqbz_local),i_q_mem_local,:)
      enddo
-     deallocate(Plasma_grid)
+     deallocate(EH_gas%grid)
      !
-     allocate(Plasma_grid(max_N_plasma_poles,q%nbz,2))
-     Plasma_grid=-1
+     allocate(EH_gas%grid(EH_gas%max_N_poles,q%nbz,2))
+     EH_gas%grid=-1
      do iqbz_local=1,iqbz-1
        if (.not.PAR_IND_Q%element_1D(iqbz_local)) cycle
        i_q_mem_local=PAR_Q_index(iqbz_local)
-       Plasma_grid(1:N_plasma_poles(iqbz_local),i_q_mem_local,:)=local_grid(1:N_plasma_poles(iqbz_local),i_q_mem_local,:)
+       EH_gas%grid(1:EH_gas%N_poles(iqbz_local),i_q_mem_local,:)=local_grid(1:EH_gas%N_poles(iqbz_local),i_q_mem_local,:)
      enddo
      deallocate(local_grid)
      !
@@ -130,9 +131,9 @@ integer function Plasma_setup(iqbz,E,k,q,poles)
    ! DEBUG <
    !write(*,*) 'iq= ',iqbz,Coarse_grid_N,sum(bare_grid_N)
    ! DEBUG >
-   do i_cg=1,N_plasma_poles(iqbz)
+   do i_cg=1,EH_gas%N_poles(iqbz)
      n_poles=sum(bare_grid_N(1:i_cg-1))
-     Plasma_grid(i_cg,i_q_mem,:)=(/n_poles+1,n_poles+bare_grid_N(i_cg)/)
+     EH_gas%grid(i_cg,i_q_mem,:)=(/n_poles+1,n_poles+bare_grid_N(i_cg)/)
      ! DEBUG <
      !write(*,*) 'Pole corsed grid= ',i_cg,poles(n_poles+1)
      !write(*,*) 'Associated poles= ',bare_grid_N(i_cg),poles(n_poles+2:n_poles+bare_grid_N(i_cg))

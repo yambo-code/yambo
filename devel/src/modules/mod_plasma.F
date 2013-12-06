@@ -33,38 +33,56 @@ module plasma
  !
  ! plasma_grid: (ipole_cg,iqbz,2)=(J,iq) --> 2=(ipole1,ipole2)=extrema on the big grid
  !
- integer                   ::  max_N_plasma_poles
- real(SP)                  ::  Plasma_redux_percent
+ integer   :: max_N_Plasma_poles
+ real(SP)  :: Plasma_redux_percent
  !
- integer, allocatable      ::  N_plasma_poles(:)       ! iqbz
- integer, allocatable      ::  Plasma_tab(:,:,:)       ! iJ,iqbz,2
- integer, allocatable      ::  Plasma_tab_m1(:,:,:)    ! i_qp,i_pbz,i_qpbz
- integer, allocatable      ::  Plasma_grid(:,:,:)      ! iJ,iqbz,2
+ type plasma_gas
+   integer                   ::  max_N_poles
+   real(SP)                  ::  redux_percent
+   !
+   integer, allocatable      ::  N_poles(:)       ! iqbz
+   integer, allocatable      ::  tab(:,:,:)       ! iJ,iqbz,2
+   integer, allocatable      ::  tab_m1(:,:,:)    ! i_qp,i_pbz,i_qpbz
+   integer, allocatable      ::  grid(:,:,:)      ! iJ,iqbz,2
+   !
+ end type plasma_gas
+ !
+ type(plasma_gas) :: Eh_gas(2)
  !
  contains
    !
-   subroutine Plasma_free()
+   subroutine Plasma_alloc(Gas,DIM_)
      !
      use memory_m,       ONLY:mem_est
+     use D_lattice,      ONLY:nsym
      !
-     if(allocated(N_plasma_poles)) then
-       deallocate(N_plasma_poles)
-     endif
+     type(plasma_gas) :: Gas
+     integer          :: DIM_(3)
      !
-     if(allocated(Plasma_tab)) then
-       deallocate(Plasma_tab)
+     if(.not.allocated(Gas%N_poles)) allocate(Gas%N_poles(DIM_(1)))
+     !
+     if(.not.allocated(Gas%tab).and.Gas%max_N_poles>0) then       
+       allocate(Gas%tab(Gas%max_N_poles,DIM_(2),2))
        call mem_est("Plasma_tab")
      endif
      !
-     if(allocated(Plasma_tab_m1)) then
-       deallocate(Plasma_tab_m1)
+     if(.not.allocated(Gas%tab_m1)) then
+       allocate(Gas%tab_m1(DIM_(3),nsym,DIM_(2)))
        call mem_est("Plasma_tab_m1")
      endif
      !
-     if(allocated(Plasma_grid)) then
-       deallocate(Plasma_grid)
-       call mem_est("Plasma_grid")
-     endif
+   end subroutine
+   !
+   subroutine Plasma_free(Gas)
+     use memory_m,       ONLY:mem_est
+     !
+     type(plasma_gas) :: Gas
+     !
+     if(allocated(Gas%N_poles)) deallocate(Gas%N_poles)
+     if(allocated(Gas%tab))     deallocate(Gas%tab)
+     if(allocated(Gas%tab_m1))  deallocate(Gas%tab_m1)
+     if(allocated(Gas%grid))    deallocate(Gas%grid)
+     call mem_est("Plasma_tab Plasma_tab_m1 Plasma_grid")
      !
    end subroutine
    !

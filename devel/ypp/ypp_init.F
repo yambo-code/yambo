@@ -61,7 +61,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  ! Work Space
  !
- logical          ::l_QP_init
+ logical          ::l_QP_init,l_flag
  type(initdefs)   ::defs
  integer          ::i1,i2
  character(schlen)::rstr_piece(60) 
@@ -123,6 +123,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_RT_occ_Plot=.FALSE.
  l_RT_occ_Fit=.FALSE.
  l_RT_dos=.FALSE.
+ l_RT_bands=.FALSE.
  !
  ! BANDS
  !
@@ -411,6 +412,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
        !
        l_RT_X           =trim(rstr_piece(i1+1))=='X'
        l_RT_dos         =trim(rstr_piece(i1+1))=='d'
+       l_RT_bands       =trim(rstr_piece(i1+1))=='b'
        l_RT_occ_Plot    =trim(rstr_piece(i1+1))=='op'
        l_RT_occ_Fit     =trim(rstr_piece(i1+1))=='of'
        !
@@ -443,6 +445,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
      if ( trim(rstr_piece(i1)) == 'RealTime') then
        if (l_RT_X)           call initactivate(1,'RT_X')
        if (l_RT_dos)         call initactivate(1,'RTdos')
+       if (l_RT_bands)       call initactivate(1,'RTbnds')
        if (l_RT_occ_Plot)    call initactivate(1,'RToccPlot')
        if (l_RT_occ_Fit)     call initactivate(1,'RToccFit')
      endif
@@ -477,6 +480,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_RealTime         = runlevel_is_on('RealTime')
  l_RT_X             = runlevel_is_on('RT_X')
  l_RT_dos           = runlevel_is_on('RTdos')
+ l_RT_bands         = runlevel_is_on('RTbnds')
  l_RT_occ_Plot      = runlevel_is_on('RToccPlot')
  l_RT_occ_Fit       = runlevel_is_on('RToccFit')
  !
@@ -572,9 +576,10 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  endif
 #if defined _YPP_RT
  if (l_RealTime) then
-   if (l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit) call QP_ctl_switch('G')
-   if (l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit) call initactivate(1,"OCCdT OCCTime OCCTref")
-   if (l_RT_occ_Fit)  call initactivate(1,"OCCnFit")
+   l_flag=l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_bands
+   if (l_flag) call QP_ctl_switch('G')
+   if (l_flag) call initactivate(1,"OCCdT OCCTime OCCTref")
+   if (l_RT_bands)    call initactivate(1,"cooIn BKpts BANDS_steps BANDS_range INTERPGrid")
    if (l_RT_occ_Plot) call initactivate(1,"OCCgroup")
  endif
 #endif

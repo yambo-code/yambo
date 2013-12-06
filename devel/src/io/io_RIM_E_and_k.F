@@ -19,25 +19,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioE_RIM(E,ID)
+integer function io_RIM_E_and_k(E,Xk,ID)
  !
  use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_max_filling,&
 &                         BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol,BZ_RIM_ipol_weight,&
 &                         RIM_is_symmetry_expanded
- use R_lattice,      ONLY:nXkbz
+ use R_lattice,      ONLY:nXkbz,bz_samp
  use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,ver_is_gt_or_eq
  implicit none
  !
  type(levels) :: E
+ type(bz_samp):: Xk
  integer      :: ID 
  !
- ioE_RIM=io_connect(desc='E_RIM',type=2,ID=ID)
- if (ioE_RIM/=0) goto 1
+ io_RIM_E_and_k=io_connect(desc='RIM_E_and_k',type=2,ID=ID)
+ if (io_RIM_E_and_k/=0) goto 1
  !
- ioE_RIM=io_header(ID)
+ io_RIM_E_and_k=io_header(ID)
  if (ver_is_gt_or_eq(ID,revision=2740)) then
    call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=1)
  else
@@ -54,17 +55,23 @@ integer function ioE_RIM(E,ID)
  if (read_is_on(ID)) then
    allocate(E%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
    allocate(E%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
+   allocate(Xk%ptbz_RIM(BZ_RIM_tot_nkpts,3))
    allocate(BZ_RIM_nkpt(nXkbz),BZ_RIM_table(nXkbz,BZ_RIM_max_filling))
    allocate(BZ_RIM_ipol_weight(BZ_RIM_max_filling))
-   call mem_est("E_RIM f_RIM BZ_RIM_nkpt BZ_RIM_table",&
-&               (/size(E%E_RIM),size(E%f_RIM),size(BZ_RIM_nkpt),&
-&                 size(BZ_RIM_table)/),(/SP,SP,IP,IP/))
+   call mem_est("E_RIM f_RIM k_RIM BZ_RIM_nkpt BZ_RIM_table",&
+&               (/size(E%E_RIM),size(E%f_RIM),size(Xk%ptbz_RIM),size(BZ_RIM_nkpt),&
+&                 size(BZ_RIM_table)/),(/SP,SP,SP,IP,IP/))
  endif
  !
  ! Eigenvalues
  !
  call io_bulk(ID, VAR="RIM_EIGENVALUES", VAR_SZ=shape(E%E_RIM) ) 
  call io_bulk(ID, R3=E%E_RIM )
+ !
+ ! Kpts
+ !
+ call io_bulk(ID, VAR="RIM_KPTS", VAR_SZ=shape(Xk%ptbz_RIM) ) 
+ call io_bulk(ID, R2=Xk%ptbz_RIM )
  !
  ! RIM Block filling
  !

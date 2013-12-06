@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
+subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,EH_gas,X,RESET)
  !
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,mpi_comm_world,&
@@ -65,8 +65,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #if defined _SC
  use SC,            ONLY:SC_bands
  use real_time,     ONLY:B_mat_index
- use plasma,        ONLY:max_N_plasma_poles
 #endif
+ use plasma,        ONLY:plasma_gas,max_N_plasma_poles
  use electrons,     ONLY:levels
  use stderr,        ONLY:intc
  use com,           ONLY:error
@@ -76,15 +76,16 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use wave_func,     ONLY:states_to_load
  implicit none
  !
- type(levels)            ::E
- type(bz_samp)           ::Xk,q
- character(*)            ::ENVIRONMENT
- type(X_t), optional     ::X
- logical,   optional     ::RESET
+ type(levels)               ::E
+ type(bz_samp)              ::Xk,q
+ character(*)               ::ENVIRONMENT
+ type(plasma_gas), optional ::EH_gas
+ type(X_t), optional        ::X
+ logical,   optional        ::RESET
  !
  ! Work Space
  !
- integer          :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2
+ integer          :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2,N_poles
  logical          :: reset_all
  character(10)    :: WHAT
  !
@@ -577,14 +578,17 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !   "qp"  -> Plasma (J)
    !.........................................................................
    !
-	 call PARALLEL_index(PAR_IND_Plasma,(/max_N_plasma_poles/),COMM=PAR_COM_Plasma_INDEX)
+   N_poles=max_N_plasma_poles
+   if(present(EH_gas)) N_poles=EH_gas%max_N_poles
+   !
+	 call PARALLEL_index(PAR_IND_Plasma,(/N_poles/),COMM=PAR_COM_Plasma_INDEX)
 	 PAR_IND_Plasma_ID=PAR_COM_Plasma_INDEX%CPU_id
 	 PAR_nPlasma=PAR_IND_Plasma%n_of_elements(PAR_IND_Plasma_ID+1)
 	 !
-	 allocate(PAR_Plasma_index(max_N_plasma_poles)) 
-	 call Build_up_index(PAR_IND_Plasma,max_N_plasma_poles,PAR_Plasma_index,PAR_nPlasma)
+	 allocate(PAR_Plasma_index(N_poles)) 
+	 call Build_up_index(PAR_IND_Plasma,N_poles,PAR_Plasma_index,PAR_nPlasma)
 	 !
-	 call PARALLEL_live_message("Plasma gas",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_nPlasma,TOTAL=max_N_plasma_poles,&
+	 call PARALLEL_live_message("Plasma gas",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_nPlasma,TOTAL=N_poles,&
 &                               NCPU=PAR_COM_Plasma_INDEX%n_CPU)
    !
    !.........................................................................

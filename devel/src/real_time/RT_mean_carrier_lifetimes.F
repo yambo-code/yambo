@@ -24,7 +24,8 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
  use pars,           ONLY:SP,cI
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes,&
-&                         E_P_Ho_abs_lifetime
+&                         E_P_Ho_abs_lifetime,&
+&                         NE_i_time,RT_IO_output_steps
  use SC,             ONLY:SC_bands,RT_all2ibz,RT_Nk_ibz,RT_nk
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin_occ
@@ -39,6 +40,8 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
  integer            :: ib,ik
  real(SP)           :: n_h_states,n_e_states,f_occ,pre_factor
  real(SP),parameter :: f_tresh=1.E-5
+ !
+ if ( mod(NE_i_time-1,RT_IO_output_steps)/=0 ) return
  !
  n_h_states=0._SP
  n_e_states=0._SP

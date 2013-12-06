@@ -47,7 +47,7 @@ subroutine read_bxsf(Xk,Xen)
  integer :: nearest_to_g
  integer :: nbands,vband ! total number of bands, highest valence
  integer :: ndim ! total number of dimensions, iterator on dimensions
- integer, external :: ioE_RIM
+ integer, external :: io_RIM_E_and_k
  integer, external :: double_k_grid
  integer :: err_dgrid
  real(SP) :: readene,deltaE
@@ -288,7 +288,7 @@ subroutine read_bxsf(Xk,Xen)
  Xen%E_RIM(:,:RIM_k%nbz,1)=Xen%E_RIM(:,:RIM_k%nbz,1)-deltaE
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=NONE,ID=ID)
- i_err=ioE_RIM(Xen,ID)
+ i_err=io_RIM_E_and_k(Xen,Xk,ID)
  !
  ! clean up
  ! 

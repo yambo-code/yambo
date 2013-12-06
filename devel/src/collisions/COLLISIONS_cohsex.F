@@ -23,7 +23,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  !
  ! COHSEX/GW collisions 
  !
- use pars,          ONLY:SP,pi,schlen,cZERO
+ use pars,          ONLY:SP,pi,schlen,cZERO,rZERO
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin
@@ -36,7 +36,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
 &                        COLLISIONS_element,nGW_NEQ_collisions,nCOHSEX_collisions
- use plasma,        ONLY:Plasma_tab_m1,Plasma_grid
+ use plasma,        ONLY:EH_gas
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -68,6 +68,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
 &                           i_np,i_kmq,i_kmq_s,i_kmq_sp,i_kmq_G0,&
 &                           i_m,i_p,i_p_s,i_p_sp,i_p_star,n_bands,&
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp1_mem
+ real(SP)                 ::E_center
  complex(SP), allocatable ::EM1s(:,:)
  type(ggwinfo)            ::isc,iscp
  integer          ::io_err,ID
@@ -149,7 +150,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
    endif
    !
    if (V_kind==1)              COLL(1)%v3c=cZERO
-   if (V_kind==2.and.io_COLLs) COLL(1)%v3r=cZERO
+   if (V_kind==2.and.io_COLLs) COLL(1)%v3r=rZERO
    !
    Q_loop: do iqbz=1,q%nbz 
      !
@@ -241,11 +242,6 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
            !
            i_p_s =k%star(i_p,i_p_star)
            !
-           i_J=Plasma_tab_m1(i_qp2,i_p_s,i_q_mem)
-           !
-           if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
-           i_J_mem=PAR_Plasma_index(i_J)
-           !
 #if defined _RT
            call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,iqibz,iqs,i_pmq_bz,i_pmq_G0)
 #endif
@@ -260,6 +256,11 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
            !     (i_n,i_k,1)-->--.-->--(i_np,i_kmq,i_kmq_s)
            !
            ! W_{nn'k}{mm'p}^{q} = [W_{n'nk'}{m'mp'}^{-q}]^{*}
+           !
+           i_J=EH_gas(1)%tab_m1(i_qp2,i_p_s,i_q_mem)
+           !
+           if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
+           i_J_mem=PAR_Plasma_index(i_J)
            !
            iscp%is =(/i_m,i_p,i_p_s,i_p_sp/)
            iscp%os =(/i_mp,i_pmq,i_pmq_s,i_pmq_sp/)

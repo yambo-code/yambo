@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_impose_N_conservation(E,k)
+subroutine RT_impose_elel_conserves_E_and_N(E,k)
  !
  use pars,           ONLY:SP,cI
  use electrons,      ONLY:levels,spin_occ
@@ -101,4 +101,4 @@ subroutine RT_impose_N_conservation(E,k)
    !E_E_Hole_lifetime(    :,:)=    E_E_Hole_lifetime(:,:)*(1._SP+prefactor(1))
  endif
  !
-end subroutine RT_impose_N_conservation
+end subroutine RT_impose_elel_conserves_E_and_N

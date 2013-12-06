@@ -39,9 +39,9 @@ real(SP) function RT_G_retarded_convolution(EmEp,Ebose,WmWp,Wbose,Egap,Skind)
  RT_G_retarded_convolution=0._SP
  !
  E_center=EmEp+Ebose
- W_center=WmWp+Wbose
- !
  if (.not.Energy_Condition(EmEp,Ebose,E_center,Egap)) return
+ !
+ W_center=WmWp+Wbose
  !
  if (skind=='EP') local_alpha=  two_alpha  ! El-Ph, 2 GFs
  if (skind=='EE') local_alpha=2*two_alpha  ! El-El, 4 GFs
@@ -52,17 +52,6 @@ real(SP) function RT_G_retarded_convolution(EmEp,Ebose,WmWp,Wbose,Egap,Skind)
  !
  contains
    !
-   ! Davide:
-   ! All these energy conditions can be likely removed
-   ! Conditions C1,C3 and C4 were badly needed with the QP Gr_kind and with the
-   ! old HS via numerical integration which had the problem of the wrong tails.
-   !
-   ! In particular condition C4 should be either removed or changed otherwise I beleive
-   ! it drives the el-el gas to an higher temperature becouse introduces asymmetries in 
-   ! the G_retared_convolution structure... 
-   !
-   ! Conditions C1 and C2 destroy the energy conservation. Verified numerically
-   !
    logical function Energy_Condition(E1,E2,Etot,Egap_)
      use pars,       ONLY:tol2
      real(SP) :: E1,E2,Etot,Egap_
@@ -72,9 +61,6 @@ real(SP) function RT_G_retarded_convolution(EmEp,Ebose,WmWp,Wbose,Egap,Skind)
      if ( abs(Etot)<tol2     ) Energy_Condition=.false.      ! C2
      if ( abs(Etot)>2.*Egap_ ) Energy_Condition=.false.      ! C3
      if (    E1/E2 >0._SP    ) Energy_Condition=.false.      ! C4a+C4b
-     ! Extra condition for El-Ph scattering
-     ! Phonons cannot cross the gap if this is big enough
-     ! if (skind=='EP'.and.abs(E1)>Egap_.and.Egap_>0.1_SP/27.21_SP) Energy_Condition=.false.  ! C5
    end function
    !
 end function RT_G_retarded_convolution

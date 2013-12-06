@@ -55,6 +55,8 @@ module R_lattice
    real(SP), pointer :: pt(:,:)    => null()
    real(SP), pointer :: ptbz(:,:)  => null()
    real(SP), pointer :: weights(:) => null()
+   real(SP), pointer :: pt_RIM(:,:)=> null()
+   real(SP), pointer :: ptbz_RIM(:,:)=> null()
    character(6)      :: description
    character(1)      :: units
    character(1)      :: s_table_mode = " "
@@ -173,6 +175,8 @@ module R_lattice
      if(associated(k%star))     deallocate(k%star)
      if(associated(k%sstar))    deallocate(k%sstar)
      if(associated(k%pt))       deallocate(k%pt)
+     if(associated(k%pt_RIM))   deallocate(k%pt_RIM)
+     if(associated(k%ptbz_RIM)) deallocate(k%ptbz_RIM)
      if(associated(k%ptbz))     deallocate(k%ptbz)
      if(associated(k%weights))  deallocate(k%weights)
      nullify(k%nstar,k%star,k%sstar,k%pt,k%ptbz,k%weights,k%s_table)
@@ -188,6 +192,14 @@ module R_lattice
      BZo%description = BZi%description
      allocate( BZo%pt(BZo%nibz,3) )
      BZo%pt(:,:) = BZi%pt(:,:)
+     if (associated( BZi%pt_RIM )) then
+       allocate( BZo%pt_RIM(size(BZi%pt_RIM,1),3) ) 
+       BZo%pt_RIM=BZi%pt_RIM
+     endif
+     if (associated( BZi%ptbz_RIM )) then
+       allocate( BZo%ptbz_RIM(size(BZi%ptbz_RIM,1),3) ) 
+       BZo%ptbz_RIM=BZi%ptbz_RIM
+     endif
      if (associated( BZi%nstar )) then
        allocate( BZo%nstar(BZo%nibz) ) 
        BZo%nstar=BZi%nstar

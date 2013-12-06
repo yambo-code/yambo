@@ -67,7 +67,7 @@ subroutine k_random(Xk,Xen)
  integer           :: i_err(MAX_RIM_DBs),nsym_save,nsym_RIM_DB
  integer           :: i_time_rev_save,i_time_rev_DB
  integer           :: i_db,i_db_merge,ik_ref(2)
- integer, external :: ioDB1_selective_scan,ioE_RIM
+ integer, external :: ioDB1_selective_scan,io_RIM_E_and_k
  real(SP)          :: dl_sop_save(3,3,48)
  !
  ! Saves 2 check
@@ -366,9 +366,16 @@ subroutine k_random(Xk,Xen)
  allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
  !
  if (USE_BZ_RIM) then
+   !
+   allocate(Xk%pt_RIM(BZ_RIM_tot_nkpts,3))
+   !
    Xen%E_RIM(:,:,:)=RIM_E(i_db_merge)%E(:,:,:)
+   Xk%pt_RIM(:,:)  =RIM_k(i_db_merge)%pt(:,:)
+   !
  else
    ! 
+   allocate(Xk%ptbz_RIM(BZ_RIM_tot_nkpts,3))
+   !
    call live_timing('RIM re-ordering and distribution',Xk%nbz,SERIAL=.true.)
    !                ===============
    i1=0
@@ -377,8 +384,10 @@ subroutine k_random(Xk,Xen)
        i1=i1+1
        if (ik_RIM==1) then
          Xen%E_RIM(:,i1,:)=Xen%E(:BZ_RIM_nbands,BZ_RIM_table(ik_bz,1),:)
+         Xk%ptbz_RIM(i1,:)=Xk%ptbz(ik_bz,:)
        else
          Xen%E_RIM(:,i1,:)=RIM_E(i_db_merge)%E(:,BZ_RIM_table(ik_bz,ik_RIM)-1,:)
+         Xk%ptbz_RIM(i1,:)=RIM_k(i_db_merge)%pt(BZ_RIM_table(ik_bz,ik_RIM)-1,:)
        endif
        BZ_RIM_table(ik_bz,ik_RIM)=ik_RIM+sum(BZ_RIM_nkpt(:ik_bz-1))
      enddo
@@ -392,11 +401,13 @@ subroutine k_random(Xk,Xen)
  ! Final I/O
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=LOG,ID=ID)
- i_err=ioE_RIM(Xen,ID)
+ i_err=io_RIM_E_and_k(Xen,Xk,ID)
  !
  ! CLEAN
  !
  deallocate(BZ_RIM_nkpt,BZ_RIM_table,Xen%E_RIM,BZ_RIM_ipol_weight)
+ if(associated(Xk%ptbz_RIM)) deallocate(Xk%ptbz_RIM)
+ if(associated(Xk%pt_RIM))   deallocate(Xk%pt_RIM)
  call k_ibz2bz(Xk,'d',.false.) 
  call k_ibz2bz(RIM_k(i_db_merge),'d',.false.) 
  !

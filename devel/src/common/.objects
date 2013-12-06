@@ -1,6 +1,6 @@
 RT_objects=
 #if defined _RT
-RT_objects= TEMPERATURE_Debye.o HyperbolicSecant_FT.o
+RT_objects= TEMPERATURE_Debye.o HyperbolicSecant_FT.o Fermi_fnc_fit.o
 #endif
 ELPH_objects=
 #if defined _ELPH

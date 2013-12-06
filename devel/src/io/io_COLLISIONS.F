@@ -91,7 +91,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    if (ver_is_gt_or_eq(ID,revision=1428)) then
      call io_elemental(ID,L0=l_elel_scatt,&
 &         VAR=' Electron-Electron scattering    :',CHECK=.true.,OP=(/"=="/))
-     if (ver_is_gt_or_eq(ID,revision=2885)) then
+     if (ver_is_gt_or_eq(ID,revision=2885).and.l_elel_scatt) then
       call io_elemental(ID,I0=max_N_plasma_poles,&
 &          VAR=' Max N plasma poles              :',CHECK=.true.,OP=(/"=="/))
       call io_elemental(ID,R0=Plasma_redux_percent,&

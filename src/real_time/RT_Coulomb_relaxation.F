@@ -104,9 +104,9 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,G_lesser)
          f_H_factor=f_kmq*f_p*(2._SP-f_pmq)
          !
          E_E_Electron_lifetime(i_n,RT_ibz_coo(i_k,1))= E_E_Electron_lifetime(i_n,RT_ibz_coo(i_k,1))+&
-&                                                   pre_factor*Gr_integral*f_E_factor
+&                                                      pre_factor*Gr_integral*f_E_factor
          E_E_Hole_lifetime(i_n,RT_ibz_coo(i_k,1))    = E_E_Hole_lifetime(i_n,RT_ibz_coo(i_k,1))+&
-&                                                   pre_factor*Gr_integral*F_H_factor
+&                                                      pre_factor*Gr_integral*F_H_factor
          !
        enddo
        !

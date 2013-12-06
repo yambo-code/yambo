@@ -77,6 +77,11 @@ module OPENMP
        call omp_set_num_threads( n_threads )
        n_threads_now=n_threads
      endif
+#else
+     if (present(n_threads_in)) then
+       n_threads_in=1
+       n_threads_now=1
+     endif
 #endif
      !
    end subroutine

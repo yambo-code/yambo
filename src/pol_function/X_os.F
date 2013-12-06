@@ -31,7 +31,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
  use parallel_m,    ONLY:PP_redux_wait,PAR_Xk_bz_index,PAR_COM_q_for_Xo
- use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread
+ use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,n_threads_DIP
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
@@ -47,9 +47,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #endif
 #if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
-#if defined _OPENMP
- use openmp,        ONLY:OPENMP_set_threads,n_threads_X,n_threads_DIP
 #endif
  implicit none
  type(levels)         :: Xen
@@ -84,14 +81,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !  Optical strengths
  !=====================
  if (iq==1) then
-#if defined _OPENMP
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
-#endif
    call Dipole_driver(Xen, Xk, X, X%q0)
    call X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
-#if defined _OPENMP
    call OPENMP_set_threads(n_threads_in=n_threads_X)
-#endif
  endif
  !
  ! WF load

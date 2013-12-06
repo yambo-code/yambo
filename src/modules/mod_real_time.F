@@ -138,6 +138,7 @@ module real_time
  logical                  :: l_RT_uses_E_RIM
  integer,     allocatable :: RIM_ibz_coo(:,:)
  integer,     allocatable :: RIM_bz_coo(:,:)  
+ integer,     allocatable :: RIM_closest_E(:,:)  
  !
  ! ELPH kernel...
  !----------------
@@ -160,7 +161,7 @@ module real_time
  integer,     allocatable :: Q_io_map(:)
  integer,     allocatable :: K_io_map(:)
  !
- ! Hole/Electron Time-dependent life-times
+ ! EL-PH RD life-times
  !-----------------------------------------
  real(SP),    allocatable :: E_P_Hole_lifetime(:,:)
  real(SP),    allocatable :: E_P_Electron_lifetime(:,:)
@@ -171,6 +172,11 @@ module real_time
  !-----------------------
  real(SP),    allocatable :: E_E_Hole_lifetime(:,:)
  real(SP),    allocatable :: E_E_Electron_lifetime(:,:)
+ !
+ ! TMP life-times
+ !-----------------------
+ real(SP),    allocatable :: TMP_Hole_lifetime(:,:)
+ real(SP),    allocatable :: TMP_Electron_lifetime(:,:)
  !
  ! Saved RD life-times
  !-----------------------
@@ -310,12 +316,13 @@ module real_time
    !
    subroutine RT_alloc(en)
      !
-     use pars,           ONLY:SP,schlen,cZERO
+     use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda,l_elph_scatt,l_elel_scatt,&
 &                             l_sc_cohsex         
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n, &
-&                             SC_xc_functional,SC_xc_functional,RT_occupations,RT_nk
+&                             SC_xc_functional,SC_xc_functional,RT_occupations,RT_nk,&
+&                             RT_occupations_locked
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -343,6 +350,10 @@ module real_time
      allocate(G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,G_MEM_steps))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
+     allocate(RT_occupations_locked(SC_bands(1):SC_bands(2),RT_nk))
+     call mem_est("RT_occupations_locked",(/size(RT_occupations_locked)/),(/LP/))
+     RT_occupations_locked=.false.
+     !
      allocate(RT_occupations(SC_bands(1):SC_bands(2),RT_nk))
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
      !
@@ -352,6 +363,13 @@ module real_time
        call mem_est("RT_E_E_lifetimes",(/2*size(E_E_Hole_lifetime)/),(/SP/))
        E_E_Hole_lifetime=0._SP
        E_E_Electron_lifetime=0._SP
+       if(l_RT_uses_E_RIM) then
+         allocate(TMP_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+         allocate(TMP_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+         call mem_est("RT_TMP_lifetimes",(/2*size(TMP_Hole_lifetime)/),(/SP/))
+         TMP_Hole_lifetime=0._SP
+         TMP_Electron_lifetime=0._SP
+       endif
      endif
      !
      if (l_RT_CCA_Kernel.and.l_elph_scatt) then
@@ -418,7 +436,7 @@ module real_time
      !
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
      use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n,RT_occupations,RT_all2ibz,&
-&                             RT_ibz_coo,RT_Nk_ibz
+&                             RT_ibz_coo,RT_Nk_ibz,RT_occupations_locked
      use memory_m,       ONLY:mem_est
      use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
@@ -460,10 +478,18 @@ module real_time
        call mem_est("RT_E_E_lifetimes")
      endif
      !
+     if(allocated(TMP_Hole_lifetime)) then
+       deallocate(TMP_Hole_lifetime,TMP_Electron_lifetime)
+       call mem_est("RT_TMP_lifetimes")
+     endif
+     !
      if(allocated(E_P_Hole_lifetime)) then
        deallocate(E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime)
        call mem_est("RT_E_P_lifetimes")
      endif
+     !
+     deallocate(RT_occupations_locked)
+     call mem_est("RT_occupations_locked")
      !
      deallocate(RT_occupations)
      call mem_est("RT_occupations")

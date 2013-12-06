@@ -31,7 +31,7 @@ integer function RT_occupations_check(E,k)
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Ho_abs_lifetime
  use SC,             ONLY:SC_bands,RT_occupations,RT_nk
  use IO_m,           ONLY:LOG,NONE
- use com,            ONLY:warning
+ use com,            ONLY:error
  use YPP,            ONLY:RT_occupations_ref,OCC_T_ref,OCC_deltaT,OCC_T_range
  !
  implicit none
@@ -75,15 +75,7 @@ integer function RT_occupations_check(E,k)
    !
  endif
  !
- if (.not.allocated(RT_occupations)) then
-   !
-   call warning('Occupations database not found in :'//trim(OCC_ctl(3))//'. Switching to standard DOS')
-   !
-   RT_occupations_check=-1
-   !
-   return
-   !
- endif
+ if (.not.allocated(RT_occupations)) call error('Occupations database not found in :'//trim(OCC_ctl(3))//' ')
  !
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(2))
  !

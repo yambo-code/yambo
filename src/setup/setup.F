@@ -112,11 +112,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                 trim(real2ch(b(1,1)))//' '//trim(real2ch(b(1,2)))//' '//trim(real2ch(b(1,3)))
  call msg('r',dumb_ch1)
  call c2a(b,b(2,:),rv,'kc2i')
- dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
+ dumb_ch1='B2 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
 &                 trim(real2ch(b(2,1)))//' '//trim(real2ch(b(2,2)))//' '//trim(real2ch(b(2,3)))
  call msg('r',dumb_ch1)
  call c2a(b,b(3,:),rv,'kc2i')
- dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
+ dumb_ch1='B3 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
 &                 trim(real2ch(b(3,1)))//' '//trim(real2ch(b(3,2)))//' '//trim(real2ch(b(3,3)))
  call msg('rn',dumb_ch1)
  !

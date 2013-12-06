@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function RT_k_grid(k)
+integer function RT_k_grid(E,k)
  !
  !       K(BZ)                                                    K(IBZ)
  !               E_RIM(RIM_bz_coo(ikbz,:)=RIM_ibz_coo(ik,:))
@@ -34,17 +34,21 @@ integer function RT_k_grid(k)
  !       |____|                      <-------------------/        
  ! 
  !
- use SC,             ONLY:RT_ibz_coo,RT_all2ibz,RT_Nk_ibz
- use electrons,      ONLY:BZ_RIM_nkpt
- use real_time,      ONLY:RIM_bz_coo,RIM_ibz_coo
+ use pars,           ONLY:SP
+ use SC,             ONLY:RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,SC_bands
+ use electrons,      ONLY:levels,BZ_RIM_nkpt
+ use real_time,      ONLY:RIM_bz_coo,RIM_ibz_coo,RIM_closest_E
  use R_lattice,      ONLY:bz_samp
+ !
  implicit none
  !
- type(bz_samp),intent(in)    :: k
+ type(levels), intent(in) :: E
+ type(bz_samp),intent(in) :: k
  !
  ! Work space
  !
- integer :: ik,ik_bz,ik_rim
+ integer :: ik,ik_bz,ik_rim,iE_rim,ik_ref,i_n
+ real(SP):: delta_E,delta_E_ref
  !
  ! Number of K-points
  !====================
@@ -74,6 +78,28 @@ integer function RT_k_grid(k)
  do ik=1,k%nibz
    do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      RT_all2ibz(ik_rim)=ik
+   enddo
+ enddo
+ !
+ if (.not.allocated(RIM_closest_E)) allocate(RIM_closest_E(SC_bands(1):SC_bands(2),RT_k_grid))
+ !
+ forall(ik=1:k%nibz) RIM_closest_E(:,RT_ibz_coo(ik,1))=ik
+ !
+ do ik=1,k%nibz
+   do ik_rim=RT_ibz_coo(ik,1)+1,RT_ibz_coo(ik,2)
+     iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+     do i_n=SC_bands(1),SC_bands(2)
+       !
+       delta_E_ref=100._SP
+       do ik_ref=1,k%nibz
+         delta_E=E%E(i_n,ik_ref,1)-E%E_RIM(i_n,iE_rim,1)
+         if(abs(delta_E)<abs(delta_E_ref)) then
+           delta_E_ref=delta_E
+           RIM_closest_E(i_n,ik_rim)=ik_ref
+         endif
+       enddo
+       !
+     enddo
    enddo
  enddo
  !

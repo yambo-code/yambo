@@ -30,7 +30,7 @@ subroutine electrons_driver(Xk,Xen)
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
-&                         plot_title,l_dos,l_RT_dos,&
+&                         plot_title,l_dos,l_RT_dos,l_RT_bands,&
 &                         l_bands,BANDS_range
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
@@ -56,6 +56,7 @@ subroutine electrons_driver(Xk,Xen)
  use YPP,            ONLY:l_angular_momentum,l_position
 #endif
  use interfaces,     ONLY:WF_load
+ !
  implicit none
  !
  type(bz_samp) ::Xk
@@ -99,7 +100,7 @@ subroutine electrons_driver(Xk,Xen)
  if (.not.flag) flag=l_mean_potential
 #endif
 #if defined _YPP_RT 
- if (.not.flag) flag=any((/l_RT_dos,l_RT_occ_Plot,l_RT_occ_Fit/))
+ if (.not.flag) flag=any((/l_RT_dos,l_RT_bands,l_RT_occ_Plot,l_RT_occ_Fit/))
 #endif
  !
  if (.not.flag) return
@@ -120,7 +121,7 @@ subroutine electrons_driver(Xk,Xen)
  if (.not.flag) flag=l_mean_potential
 #endif
  !
- if (l_bands) nb_to_load=BANDS_range
+ if (l_bands.or.l_RT_bands) nb_to_load=BANDS_range
  !
  if (flag) then
    call QP_state_table_setup(Xen)
@@ -186,7 +187,7 @@ subroutine electrons_driver(Xk,Xen)
  ! BANDS interpolation
  !======================
  !
- if(l_bands) call electrons_bands(Xk,Xen)
+ if(l_bands.or.l_RT_bands) call electrons_bands(Xk,Xen)
  !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
  !==============================================================================

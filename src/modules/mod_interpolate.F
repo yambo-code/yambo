@@ -54,7 +54,7 @@ module interpolate
  !
  interface
    !
-   subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,ID)
+   subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,Nk,ID)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use electrons,  ONLY:levels
@@ -63,6 +63,7 @@ module interpolate
      real(SP),      intent(in), optional :: R1D(:,:),R2D(:,:,:)
      complex(SP),   intent(in), optional :: C1D(:,:),C2D(:,:,:)
      type(levels),  intent(in), optional :: E
+     integer,       intent(in), optional :: Nk
      integer,       intent(out)          :: ID
    end subroutine  eval_interpolation_coeff
    !

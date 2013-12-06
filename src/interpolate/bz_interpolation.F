@@ -40,12 +40,12 @@ subroutine bz_interpolation(R1D,R2D,C1D,C2D,E,USER_k,ID)
   if(interpls(ID)%ndim==0) call error("Interpolation coefficients not present!")
   !
   if(interpls(ID)%interp_type==REAL1D.and.present(R1D)) then
-    call fourier_interpolation(USER_k,R1D,interpls(ID)%engre,interpls(ID)%ndim)
+    call fourier_interpolation(USER_k,R1D,interpls(ID)%engre,interpls(ID)%ndim,USER_k%nibz)
     return
   endif
   !
   allocate(RDATA(interpls(ID)%ndim,USER_k%nibz))
-  call fourier_interpolation(USER_k,RDATA,interpls(ID)%engre,interpls(ID)%ndim)
+  call fourier_interpolation(USER_k,RDATA,interpls(ID)%engre,interpls(ID)%ndim,USER_k%nibz)
   !
   if(interpls(ID)%interp_type==CMPLX1D.and.present(C1D)) then
     !   

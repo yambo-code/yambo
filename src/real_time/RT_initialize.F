@@ -22,7 +22,7 @@
 subroutine RT_initialize(E,k,q)
  ! 
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt
- use SC,             ONLY:local_V,SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz
+ use SC,             ONLY:local_V,SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
@@ -181,7 +181,7 @@ subroutine RT_initialize(E,k,q)
      if(i1==i_Pump) l_compute_Fluence= (Efield(i1)%ef_name=='DELTA') .or. (Efield(i1)%ef_name=='QSSIN') &
 &                                 .or. (Efield(i1)%ef_name=='GAUSS')
      !
-     Efield(i1)%versor         =normalize_v(Efield(i1)%versor)
+     if( any( abs(Efield(i1)%versor(:))>epsilon(1.) ) ) Efield(i1)%versor=normalize_v(Efield(i1)%versor)
      !
      Efield(i1)%int_t_initial  =int(Efield(i1)%t_initial/RT_step)+1
      !
@@ -270,7 +270,7 @@ subroutine RT_initialize(E,k,q)
  allocate(RT_ibz_coo(k%nibz,2))
  allocate(RT_Nk_ibz(k%nibz))
  if (l_RT_uses_E_RIM) then
-   RT_nk=RT_k_grid(k)
+   RT_nk=RT_k_grid(E,k)
  else
    RT_nk=k%nibz
    RT_Nk_ibz=1
@@ -281,6 +281,7 @@ subroutine RT_initialize(E,k,q)
      RT_all2ibz(ik)=ik
    enddo
  endif
+ RT_nstates=RT_nk*(SC_bands(2)-SC_bands(1)+1)
  !
  ! LOG
  ! ===

@@ -62,7 +62,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  logical               :: l_3D_plot,l_RIM,l_prt_occ_only
  type(PP_indexes)      :: px
  !
- integer,     external :: ioE_RIM,RT_occupations_check 
+ integer,     external :: io_RIM_E_and_k,RT_occupations_check 
  !
  !
  call parser('PrtOccOnly',l_prt_occ_only)
@@ -72,7 +72,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  !
  call msg("s",'RIM support ...')
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioE_RIM(Xen,io_ID)
+ io_err=io_RIM_E_and_k(Xen,Xk,io_ID)
  !
  if (io_err==0) then
    call msg("l",'yes')

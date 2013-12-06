@@ -22,15 +22,14 @@
 subroutine Plasma_driver(E,k,q)
  !
  use pars,          ONLY:SP,schlen
+ use stderr,        ONLY:intc
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:nsym
+ use D_lattice,     ONLY:n_atoms
  use SC,            ONLY:SC_bands
  use electrons,     ONLY:levels,n_sp_pol
- use plasma,        ONLY:Plasma_tab,Plasma_tab_m1,N_plasma_poles,&
-&                        Plasma_grid,Max_N_plasma_poles,&
-&                        Plasma_redux_percent
+ use plasma,        ONLY:Plasma_alloc,Plasma_redux_percent,max_N_plasma_poles,Eh_gas
  use QP_m,          ONLY:QP_n_states,QP_nb,QP_state
  use parallel_m,    ONLY:PAR_nPlasma,PAR_nQ,PAR_IND_Q,PAR_Q_index,PP_redux_wait,PAR_COM_Q_A2A
  use interfaces,    ONLY:PARALLEL_global_indexes
@@ -43,10 +42,9 @@ subroutine Plasma_driver(E,k,q)
  ! Work space
  !
  character(schlen)      :: ch
- integer                :: Nt,iqbz,i_q_mem,n_poles
+ integer                :: max_N_poles,iqbz,i_q_mem,n_poles,iplasma
  real(SP), allocatable  :: poles(:)
  !
- !integer, allocatable   :: local_grid(:,:,:)
  integer, external      :: Plasma_setup
  !
  call section('*','Plasma gas')
@@ -59,64 +57,63 @@ subroutine Plasma_driver(E,k,q)
  call k_sym2sym(q,'k')
  call k_sym2sym(k,'k')
  !
- Nt=(SC_bands(2)-SC_bands(1)+1)**2
- max_N_plasma_poles=k%nbz*Nt*n_sp_pol
- ! This would work with E_center>0 and is=+1 / -1
- !Nt=(SC_bands(2)-SC_bands(1)+1)*(SC_bands(2)-SC_bands(1))/2
+ max_N_poles=k%nbz*n_sp_pol*(SC_bands(2)-SC_bands(1)+1)**2
+ EH_gas(:)%max_N_poles=max_N_poles
  !
  ! PARALLEL Setup
  !================
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
  call PARALLEL_global_indexes(E,k,q,"Real_Time")
  !
- allocate(poles(max_N_plasma_poles),N_plasma_poles(q%nbz))
- allocate(Plasma_tab(max_N_plasma_poles,PAR_nQ,2))
- allocate(Plasma_tab_m1(QP_n_states,nsym,PAR_nQ))
- call mem_est("Plasma_tab Plasma_tab_m1",(/size(Plasma_tab),size(Plasma_tab_m1)/),(/SP,SP/))
- !
- do iqbz=1,q%nbz
+ do iplasma=1,1
    !
-   if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
-   i_q_mem=PAR_Q_index(iqbz)
+   call Plasma_alloc(EH_gas(iplasma),(/q%nbz,PAR_nQ,QP_n_states/))
+   allocate(poles(max_N_poles))
+   poles=0._SP
    !
-   ! Define the poles @ iq
-   n_poles=Plasma_setup(-iqbz,E,k,q,poles)
+   ! Plasma approximation level frim input
+   if(iplasma==1) EH_gas(1)%redux_percent=Plasma_redux_percent
+   ! I should obtain about the same number of poles as the number of phonons
+   if(iplasma==2) EH_gas(2)%redux_percent=100._SP                           &
+&    *real(n_atoms,SP)*3._SP*real(q%nbz,SP)/real(sum(EH_gas(1)%N_poles),SP) &
+&    /EH_gas(1)%redux_percent*100._SP
    !
-   ! Group the poles
-   call FREQUENCIES_coarse_grid('COLL',poles,n_poles,Plasma_redux_percent)
+   do iqbz=1,q%nbz
+     !
+     if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
+     i_q_mem=PAR_Q_index(iqbz)
+     !
+     n_poles=max_N_poles
+     !
+     ! Define the poles @ iq, count the real number
+     n_poles=Plasma_setup(-iqbz,E,k,q,poles,n_poles,EH_gas(iplasma))
+     !
+     ! Group the poles
+     call FREQUENCIES_coarse_grid('COLL',poles(:n_poles),n_poles,EH_gas(iplasma)%redux_percent)
+     !
+     ! Create the Poles_tab with the sorted index
+     n_poles=Plasma_setup( iqbz,E,k,q,poles(:n_poles),n_poles,EH_gas(iplasma))
+     !
+   enddo
    !
-   ! Create the Poles_tab with the sorted index
-   n_poles=Plasma_setup( iqbz,E,k,q,poles)
+   deallocate(poles)
+   !
+   call PP_redux_wait(EH_gas(iplasma)%N_poles,COMM=PAR_COM_Q_A2A%COMM)
+   EH_gas(iplasma)%N_poles=EH_gas(iplasma)%N_poles/(PAR_COM_Q_A2A%n_CPU)
+   EH_gas(iplasma)%max_N_poles=maxval(EH_gas(iplasma)%N_poles)
+   !
+   if(iplasma==1) max_N_Plasma_poles=EH_gas(iplasma)%max_N_poles
    !
  enddo
  !
- call PP_redux_wait(N_plasma_poles,COMM=PAR_COM_Q_A2A%COMM)
- N_plasma_poles=N_plasma_poles/(PAR_COM_Q_A2A%n_CPU)
- max_N_plasma_poles=maxval(N_plasma_poles)
- !
  ! PARALLEL Setup
  !================
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
- call PARALLEL_global_indexes(E,k,q,"Real_Time")
+ call PARALLEL_global_indexes(E,k,q,"Real_Time",EH_gas=EH_gas(1))
  !
- !allocate(local_grid(max_N_plasma_poles,PAR_nQ,2))
- !do iqbz=1,q%nbz
- !  if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
- !  i_q_mem=PAR_Q_index(iqbz)
- !  local_grid(1:N_plasma_poles(iqbz),i_q_mem,:)=Plasma_grid(1:N_plasma_poles(iqbz),i_q_mem,:)
- !enddo
- !deallocate(Plasma_grid)
- !!
- !allocate(Plasma_grid(max_N_plasma_poles,PAR_nQ,2))
- !Plasma_grid=-1
- !do iqbz=1,q%nbz
- !  if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
- !  i_q_mem=PAR_Q_index(iqbz)
- !  Plasma_grid(1:N_plasma_poles(iqbz),i_q_mem,:)=local_grid(1:N_plasma_poles(iqbz),i_q_mem,:)
- !enddo
- !deallocate(local_grid)
- !
- write (ch,'(3a)') "[Pl] N(m,m',p,q) --> N(J,q)  :"
- call msg('rs',trim(ch),(/k%nbz*(SC_bands(2)-SC_bands(1)+1)**2*n_sp_pol*q%nbz,sum(N_plasma_poles)/))
+ do iplasma=1,1
+   write (ch,'(3a)') "[Pl("//trim(intc(iplasma))//")] N(m,m',p,q) --> N(J,q)  :"
+   call msg('rs',trim(ch),(/k%nbz*(SC_bands(2)-SC_bands(1)+1)**2*n_sp_pol*q%nbz,sum(EH_gas(iplasma)%N_poles)/))
+ enddo
  !
 end subroutine Plasma_driver

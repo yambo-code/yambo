@@ -178,9 +178,10 @@ module YPP
  !
  logical  :: l_RealTime
  !
- ! (RT) DOS
+ ! (RT) DOS & BANDS
  !
  logical  :: l_RT_dos
+ logical  :: l_RT_bands
  !
  ! Wannier bands
  !
@@ -193,7 +194,6 @@ module YPP
  !
  logical     :: l_RT_occ_Plot
  logical     :: l_RT_occ_Fit
- integer     :: RT_n_FIT=0
  !
  ! Reduce Symmetries
  !

@@ -112,8 +112,10 @@ subroutine Plasma_driver(E,k,q)
  call PARALLEL_global_indexes(E,k,q,"Real_Time",EH_gas=EH_gas(1))
  !
  do iplasma=1,1
-   write (ch,'(3a)') "[Pl("//trim(intc(iplasma))//")] N(m,m',p,q) --> N(J,q)  :"
-   call msg('rs',trim(ch),(/k%nbz*(SC_bands(2)-SC_bands(1)+1)**2*n_sp_pol*q%nbz,sum(EH_gas(iplasma)%N_poles)/))
+   write (ch,'(3a)') "[PLASMA #"//trim(intc(iplasma))//"] Poles reduction:"//&
+&        trim(intc(k%nbz*(SC_bands(2)-SC_bands(1)+1)**2*n_sp_pol*q%nbz))//" => "//&
+&        trim(intc(sum(EH_gas(iplasma)%N_poles)))
+   call msg('rs',trim(ch))
  enddo
  !
 end subroutine Plasma_driver

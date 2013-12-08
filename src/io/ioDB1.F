@@ -40,7 +40,7 @@ integer function ioDB1(E,k,ID)
 &                           DUMP,io_mode,write_is_on,io_code_version,ver_is_gt_or_eq
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_G_bands
  use BS,               ONLY:BS_bands
- use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL
+ use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION
  use global_XC,        ONLY:setup_global_XC,EXT_NONE
 #if defined _SC
  use SC,               ONLY:SC_bands
@@ -86,6 +86,7 @@ integer function ioDB1(E,k,ID)
    ! 15 Electrons               default_nel
    ! 16 XC kind                 GS_xc_KIND
    ! 17 XC functional           GS_xc_FUNCTIONAL 
+   ! 
    !
    ! Added dimensions: (still in SEC=1)
    !
@@ -94,6 +95,8 @@ integer function ioDB1(E,k,ID)
    !------------ 3.0.4 ------------------
    !    Max atoms/species       max_atom_species
    !    No. of atom species     n_atom_species
+   !------------ ?.?.? ------------------
+   !    EXX fraction            GS_exx_FRACTION
    !
    ! ONLY DB1 can define the serial_number 
    !
@@ -180,6 +183,14 @@ integer function ioDB1(E,k,ID)
      call io_elemental(ID,I0=n_atomic_species,CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' No. of atom species             :')
    endif
+     !
+     ! Hybrids stuff
+     !	
+   if (ver_is_gt_or_eq(ID,revision=2962)) then
+       call io_elemental(ID, VAR="EXX_FRACTION",VAR_SZ=1,MENU=0)
+       call io_elemental(ID,R0=GS_exx_FRACTION,   CHECK=.true.,OP=(/"=="/),&
+            &                      VAR=' Exact exchange fraction in XC   :')
+   endif
    if (ver_is_gt_or_eq(ID,revision=1240).and.ver_is_gt_or_eq(ID,(/3,2,5/))) then
      call io_elemental(ID, VAR="mag_syms",VAR_SZ=1,MENU=0)
      call io_elemental(ID, L0=mag_syms,VAR=' Magnetic symmetries             : ')
@@ -211,7 +222,7 @@ integer function ioDB1(E,k,ID)
      ng_closed=ng_vec
      if (.not.ver_is_gt_or_eq(ID,(/3,0,3/))) wf_ng=wf_ncx
      !
-     call setup_global_XC('preset',GS_xc_KIND,xc_functional=GS_xc_functional,perturbation=EXT_NONE)
+     call setup_global_XC('preset',GS_xc_KIND,xc_functional=GS_xc_functional,perturbation=EXT_NONE,exx_fraction=GS_exx_FRACTION)
      !
    endif
    !

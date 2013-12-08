@@ -70,7 +70,7 @@ PJ_RTLIBS    = $(MAIN_LIBS) collisions sc real_time
 #
 # Interfaces
 #
-2YLIBS       = external_c parallel modules parser communicate common io bz_ops 
+2YLIBS       = external_c modules parallel  parser communicate common io bz_ops 
 #
 # YPP
 #

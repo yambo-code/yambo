@@ -75,6 +75,10 @@ module pw_data
   character(256)             :: pw_dft
   logical                    :: pw_lda_plus_u
 
+! EXX part
+  real(dp)                   :: pw_exx_fraction
+  logical                    :: pw_exx_is_active
+
 ! Pseudopotentials
   character(256),allocatable :: psfile(:)
   integer, allocatable       :: nmesh(:), nbeta(:)

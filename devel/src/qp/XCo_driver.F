@@ -22,7 +22,7 @@
 subroutine XCo_driver(E,k,Xk,q)
  !
  use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time
- use pars,          ONLY:schlen
+ use pars,          ONLY:schlen,RZERO,SP
  use com,           ONLY:msg
  use units,         ONLY:HA2EV
  use electrons,     ONLY:levels,n_sp_pol,spin
@@ -33,9 +33,9 @@ subroutine XCo_driver(E,k,Xk,q)
  use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind 
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:WF
+ use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
 #if defined _SC
- use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional,&
-&                        SC_SRPA
+ use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,SC_SRPA
 #endif
  !
  implicit none
@@ -129,6 +129,7 @@ subroutine XCo_driver(E,k,Xk,q)
    if( WF_kind/= SC_COHSEX ) call XCo_local(E,Xk)
 #else
    call XCo_local(E,Xk)
+   QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...
 #endif
    !
  endif

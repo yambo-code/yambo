@@ -57,6 +57,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        RT_ave_dephasing,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,Gr_kind,two_alpha,NE_MEM_treshold
  use fields,        ONLY:Efield
+ use plasma,        ONLY:Plasma_redux_percent
 #endif
 #if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
@@ -318,6 +319,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'Integrator', '[RT] Integrator (RK2 | EULER | EULEREXP | RK2EXP ) ',Integrator_name)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit)
  call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit)
+ call it(defs,'PlasmaPerc', '[RT] Plasma approx (0-100): % of eh pair considered',Plasma_redux_percent,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic secant (HS)',Gr_kind,Verb_level=V_real_time)
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT')

@@ -13,6 +13,8 @@ MODULE qexml_module
   ! in XML format the data produced by Quantum-ESPRESSO package.
   !
   ! Written by Andrea Ferretti (2006).
+  ! Modified by M. Gruening to read exx info's, 
+  ! apparently no official version does that yet
   !
   ! Important parts of the implementation are taken from xml_io_base.f90
   ! (written by Carlo Sbraccia) in the Quantum-ESPRESSO distribution,
@@ -73,14 +75,14 @@ MODULE qexml_module
             qexml_write_symmetry, qexml_write_efield,                 &
             qexml_write_planewaves, qexml_write_spin, qexml_write_xc, &
             qexml_write_occ, qexml_write_bz, qexml_write_phonon,      &
-            qexml_write_bands, qexml_write_bands_info,                &
+            qexml_write_bands, qexml_write_bands_info,qexml_write_exx,&
             qexml_write_gk, qexml_write_wfc, qexml_write_rho
   !
   PUBLIC :: qexml_read_header, qexml_read_cell, qexml_read_ions,      &
             qexml_read_symmetry, qexml_read_efield,                   &
             qexml_read_planewaves, qexml_read_spin, qexml_read_xc,    &
             qexml_read_occ, qexml_read_bz, qexml_read_phonon,         &
-            qexml_read_bands, qexml_read_bands_info,                  &
+            qexml_read_bands, qexml_read_bands_info,qexml_read_exx,   &
             qexml_read_gk, qexml_read_wfc, qexml_read_rho,            &
             read_pseudo_header, read_pseudo_data
 
@@ -1070,6 +1072,30 @@ CONTAINS
       !
     END SUBROUTINE qexml_write_xc
     !
+    SUBROUTINE qexml_write_exx( x_gamma_extrapolation, nqx1, nqx2, nqx3, &
+                          exxdiv_treatment, yukawa, ecutvcut, exx_fraction, &
+                          screening_parameter, exx_is_active )
+      !------------------------------------------------------------------------
+      !
+      LOGICAL,            INTENT(IN) :: x_gamma_extrapolation, exx_is_active
+      INTEGER,  OPTIONAL, INTENT(IN) :: nqx1, nqx2, nqx3
+      CHARACTER(LEN=*),   INTENT(IN) :: exxdiv_treatment
+      REAL(dbl),           INTENT(IN) :: yukawa, ecutvcut, exx_fraction
+      REAL(dbl),           INTENT(IN) :: screening_parameter
+
+      CALL iotk_write_begin(ounit, "EXACT_EXCHANGE" )
+      call iotk_write_dat(ounit, "x_gamma_extrapolation", x_gamma_extrapolation)
+      call iotk_write_dat(ounit, "nqx1", nqx1)
+      call iotk_write_dat(ounit, "nqx2", nqx2)
+      call iotk_write_dat(ounit, "nqx3", nqx3)
+      call iotk_write_dat(ounit, "exxdiv_treatment", exxdiv_treatment)
+      call iotk_write_dat(ounit, "yukawa", yukawa)
+      call iotk_write_dat(ounit, "ecutvcut", ecutvcut)
+      call iotk_write_dat(ounit, "exx_fraction", exx_fraction)
+      call iotk_write_dat(ounit, "screening_parameter", screening_parameter)
+      call iotk_write_dat(ounit, "exx_is_active", exx_is_active)
+      CALL iotk_write_end(ounit, "EXACT_EXCHANGE" )
+    END SUBROUTINE qexml_write_exx    
     !
     !------------------------------------------------------------------------
     SUBROUTINE qexml_write_occ( lgauss, ngauss, degauss, degauss_units, ltetra, ntetra, tetra, &
@@ -2273,6 +2299,39 @@ CONTAINS
       ENDIF 
 
     END SUBROUTINE qexml_read_xc
+    !
+    !
+    SUBROUTINE qexml_read_exx( x_gamma_extrapolation, nqx1, nqx2, nqx3, &
+                          exxdiv_treatment, yukawa, ecutvcut, exx_fraction, &
+                          screening_parameter, exx_is_active, ierr )
+      !------------------------------------------------------------------------
+      !
+      LOGICAL,                     INTENT(OUT) :: exx_is_active
+      REAL(dbl),                    INTENT(OUT) :: exx_fraction
+      INTEGER,                     INTENT(OUT) :: ierr
+      LOGICAL,           OPTIONAL, INTENT(OUT) :: x_gamma_extrapolation
+      INTEGER,           OPTIONAL, INTENT(OUT) :: nqx1, nqx2, nqx3
+      CHARACTER(LEN=*),  OPTIONAL, INTENT(OUT) :: exxdiv_treatment
+      REAL(dbl),          OPTIONAL, INTENT(OUT) :: yukawa, ecutvcut
+      REAL(dbl),          OPTIONAL, INTENT(OUT) :: screening_parameter
+
+      CALL iotk_scan_begin(iunit, "EXACT_EXCHANGE", IERR=ierr)
+      IF ( ierr/=0 ) RETURN
+      ! call iotk_scan_dat(iunit, "x_gamma_extrapolation", x_gamma_extrapolation, IERR=ierr )
+      ! call iotk_scan_dat(iunit, "nqx1", nqx1, IERR=ierr )
+      ! call iotk_scan_dat(iunit, "nqx2", nqx2, IERR=ierr )
+      ! call iotk_scan_dat(iunit, "nqx3", nqx3, IERR=ierr )
+      ! call iotk_scan_dat(iunit, "exxdiv_treatment", exxdiv_treatment, IERR=ierr )
+      ! call iotk_scan_dat(iunit, "yukawa", yukawa, IERR=ierr )
+      ! call iotk_scan_dat(iunit, "ecutvcut", ecutvcut, IERR=ierr )
+      call iotk_scan_dat(iunit, "exx_fraction", exx_fraction, IERR=ierr )
+      IF ( ierr/=0 ) RETURN
+      !      call iotk_scan_dat(iunit, "screening_parameter", screening_parameter, IERR=ierr )
+      call iotk_scan_dat(iunit, "exx_is_active", exx_is_active, IERR=ierr )
+      IF ( ierr/=0 ) RETURN
+      CALL iotk_scan_end(iunit, "EXACT_EXCHANGE", IERR=ierr )
+      IF ( ierr/=0 ) RETURN
+    END SUBROUTINE qexml_read_exx 
     !
     !
     !------------------------------------------------------------------------

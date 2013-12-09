@@ -47,7 +47,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_RT_CCA_Kernel,&
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,&
-&                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs
+&                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,&
 &                         rho_convergence,H_rotate,V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
@@ -56,7 +56,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:WF
- use xc_functionals, ONLY:V_xc
+ use xc_functionals, ONLY:V_xc,XC_potential_driver
  use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,master_cpu
  use stderr,         ONLY:real2ch
  implicit none
@@ -345,7 +345,8 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! Note that the databases must be loaded at the correct time:
    !
-   NE_i_time=it_now
+   NE_i_time=((it_now-1)/RT_IO_G_steps)*RT_IO_G_steps+1
+   it_now=NE_i_time
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
    io_OCCUPATIONS=io_RT_components('occupations',ID_OCCUPATIONS)
@@ -423,10 +424,12 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  if (l_elph_scatt.or.l_elel_scatt) then
    !
-   ! With    the RIM this cannot be not used, on the fly Gret for el-ph
+   ! With    the RIM this cannot be not used, on the fly Gret
    ! Without the RIM this implementation could be faster
-   !
-   if (l_elel_scatt) call RT_G_retarded_EE_initialize(E,k,q)
+   !if (l_elph_scatt) call RT_G_retarded_EP_initialize(E,k)
+   !if (l_elel_scatt) call RT_G_retarded_EE_initialize(E,k,q)
+   call k_sym2sym(q,'k')
+   call k_sym2sym(k,'k')
    !
    N_Gr_descs=5
    !

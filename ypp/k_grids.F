@@ -31,7 +31,7 @@ subroutine k_grids(en,k,Xk,q)
  use YPP,                 ONLY:coo_in,coo_out,q_shift,l_k_grid,l_q_grid,&
 &                              l_shifted_grid,l_high_sym_pts,K_transform
  use LIVE_t,              ONLY:live_timing_is_on
- use zeros,               ONLY:k_iku_zero,k_rlu_zero
+ use zeros,               ONLY:k_iku_zero
  use stderr,              ONLY:set_real_printed_length
  !
  implicit none

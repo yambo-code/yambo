@@ -57,20 +57,21 @@ INTERFCS = a2y p2y e2y c2y
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate common io wf_and_fft 
+BASIC_LIBS     = external_c modules parallel xc_functionals parser communicate common io wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
-               interpolate tddft pol_function collisions qp acfdt bse
+               interpolate tddft pol_function qp acfdt bse
 
 PJ_SURFLIBS  = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_ctl surf \
                setup interface tddft pol_function qp acfdt bse
 
-PJ_SCLIBS    = $(MAIN_LIBS) sc 
-PJ_RTLIBS    = $(MAIN_LIBS) sc real_time
+PJ_SCLIBS    = $(MAIN_LIBS) collisions sc
+PJ_RTLIBS    = $(MAIN_LIBS) collisions sc real_time
 #
 # Interfaces
 #
-2YLIBS       = external_c parallel modules parser communicate common io bz_ops 
+2YLIBS       = external_c modules parallel parser communicate common io bz_ops 
+E2YLIBS      = external_c parallel modules parser communicate common io bz_ops 
 #
 # YPP
 #
@@ -144,7 +145,7 @@ interfaces: libs
 	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
 	XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
-	XLIBS="$(2YLIBS)" ; $(mkx) ; fi
+	XLIBS="$(E2YLIBS)" ; $(mkx) ; fi
 ypp: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)

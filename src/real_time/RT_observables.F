@@ -22,15 +22,16 @@
 subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  use pars,           ONLY:SP,cI,zero_dfl
- use units,          ONLY:HA2EV
+ use units,          ONLY:HA2EV,HA2KEL
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands,it_now,RT_nk,RT_Nk_ibz,RT_ibz_coo
  use X_m,            ONLY:P_square
- use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,l_NE_simulate_IP,Fluence
+ use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen, &
+&                         l_NE_simulate_IP,Fluence,NE_i_time,RT_IO_output_steps
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc
- use xc_functionals, ONLY:E_xc
+ use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_Xk_nibz,master_cpu
@@ -40,7 +41,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
  complex(SP),   intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
- complex(SP),   intent(out):: on_the_fly_operators(7)
+ complex(SP),   intent(out):: on_the_fly_operators(10)
  !
  ! WorkSpace
  !
@@ -49,8 +50,11 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! Shadows
  !
  integer     :: ib,ik,ik_rim
+ real(SP)    :: T_fit(2)
  complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,E_mg,delta_G
- !      
+ !
+ if ( mod(NE_i_time-1,RT_IO_output_steps)/=0 ) return      
+ !
  E_kin    =(0._SP,0._SP)
  E_ion    =(0._SP,0._SP)
  E_h      =(0._SP,0._SP)
@@ -58,6 +62,8 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  Exc      =(0._SP,0._SP)
  E_mg     =(0._SP,0._SP)
  delta_G  =(0._SP,0._SP)
+ T_fit    = 0._SP
+ if(NE_i_time-1>=RT_IO_output_steps) T_fit=real(on_the_fly_operators(9:10))/HA2KEL
  !
  ! Non-interaction kinetc energy
  !
@@ -114,6 +120,11 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  call RT_average_operator(VALUE=Trace_Gf,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
  !
+ ! Electrons and holes temperatures
+ !
+ call RT_occupations_fit(en,k,T_fit)
+ !
+ !
  ! Andrea [21/12/2011]
  ! 
  ! In a semiconductor/isolant delta_G is defined as:
@@ -146,7 +157,8 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! Transfer the shadow variables
  !
  on_the_fly_operators(1:4)=(/E_kin,E_ion,E_h,Exc/)*HA2EV
- on_the_fly_operators(5:7)=(/cmplx(Fluence(it_now),0._SP,SP),Trace_Gf,delta_G/)
+ on_the_fly_operators(5)=(E_kin+E_ion+E_h+Exc)*HA2EV
+ on_the_fly_operators(6:8)=(/cmplx(Fluence(it_now),0._SP,SP),Trace_Gf,delta_G/)
+ on_the_fly_operators(9:10)=cmplx(T_fit(:),0._SP)*HA2KEL
  !
 end subroutine RT_Observables
-

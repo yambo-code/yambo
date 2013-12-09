@@ -61,7 +61,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  character(2)     ::wf_space_here
  character(schlen)::wf_title
  integer          ::i1,ikibz,ib,ib1,ib2,i2,ic,is,ig,igfft,wf_size,ib_grp,&
-&                   s_2_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_
+&                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
  logical          ::loaded_bounds_ok,use_direct_access,free_and_alloc,buffer_is_ok
@@ -86,9 +86,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (present(space)) wf_space_here=space
  !
  wf_title=""
- s_2_load=(/1,n_spin/)
+ s_to_load=(/1,n_spin/)
  if (present(title)) wf_title=title
- if (present(spins_to_load)) s_2_load=spins_to_load
+ if (present(spins_to_load)) s_to_load=spins_to_load
  !
  ! [1]: check that loaded bounds are larger(equal) then bounds 
  !      asked now
@@ -177,7 +177,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  WF%b=bands_to_load
  WF%k=kpts_to_load
- WF%spin=s_2_load
+ WF%spin=s_to_load
  WF%space=wf_space_here
  !
  ! Is WF must not be loaded %state must be set to .FALSE. before returning.
@@ -428,7 +428,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      logical      :: flag_
      flag_=all((/bands_to_load(1)>=WF_%b(1),bands_to_load(2)<=WF_%b(2),&
 &                kpts_to_load(1)>=WF_%k(1),kpts_to_load(2)<=WF_%k(2),&
-&                s_2_load(1)>=WF_%spin(1),s_2_load(2)<=WF_%spin(2)/))
+&                s_to_load(1)>=WF_%spin(1),s_to_load(2)<=WF_%spin(2)/))
    end subroutine
    !
    subroutine check_states(WF_,flag_)

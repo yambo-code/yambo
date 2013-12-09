@@ -65,8 +65,9 @@ module collision
    integer               :: D(3,2)=0 ! Dimension (v3)
    integer               :: N        ! Linear Dimension
    integer(LP), pointer  :: table(:,:,:) => null()
-   complex(SP), pointer  :: v(:)         => null()
-   complex(SP), pointer  :: v3(:,:,:)    => null()
+   complex(SP), pointer  :: v(:)          => null()
+   complex(SP), pointer  :: v3c(:,:,:)    => null()
+   real(SP)   , pointer  :: v3r(:,:,:)    => null()
  end type
  !
  integer :: nGW_NEQ_collisions=0

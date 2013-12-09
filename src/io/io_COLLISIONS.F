@@ -29,6 +29,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ
  use com,           ONLY:error
+ use plasma,        ONLY:N_plasma_poles_global,Plasma_redux_percent
  use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing
  use fragments,     ONLY:io_fragment,Fragments_Restart,Fragments_Synchronize
@@ -81,13 +82,22 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    io_COLLISIONS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
    !
    VAR_size=5
+   if (ver_is_gt_or_eq(ID,revision=2885)) VAR_size=7
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=VAR_size,MENU=0)
    !
    call io_elemental(ID,I1=SC_bands,&
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
    !
-   call io_elemental(ID,L0=l_elel_scatt,&
-&       VAR=' Electron-Electron scattering    :',CHECK=.true.,OP=(/"=="/))
+   if (ver_is_gt_or_eq(ID,revision=1428)) then
+     call io_elemental(ID,L0=l_elel_scatt,&
+&         VAR=' Electron-Electron scattering    :',CHECK=.true.,OP=(/"=="/))
+     if (ver_is_gt_or_eq(ID,revision=2885).and.l_elel_scatt) then
+      call io_elemental(ID,I0=N_plasma_poles_global,&
+&          VAR=' Max N plasma poles (q-resolved) :',CHECK=.true.,OP=(/"=="/))
+      call io_elemental(ID,R0=Plasma_redux_percent,&
+&          VAR=' Plasma redux percent            :',CHECK=.true.,OP=(/"=="/))
+     endif
+   endif
    !
    call io_elemental(ID,R0=SC_band_mixing,&
 &       VAR=' Bands mixing                    :',CHECK=.true.,OP=(/"=="/))
@@ -167,24 +177,38 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    if (.not.any(io_sec(ID,:)==2)) call io_fragment(ID,i_fragment=i_qp)
    !
    call io_bulk(ID,VAR='COLLISIONS_TABLE',&
-&                  VAR_SZ=(/COLL%D(1,2)-COLL%D(1,1)+1,&
-&                           COLL%D(2,2)-COLL%D(2,1)+1,&
-&                           COLL%D(3,2)-COLL%D(3,1)+1/))
+&                    VAR_SZ=(/COLL%D(1,2)-COLL%D(1,1)+1,&
+&                             COLL%D(2,2)-COLL%D(2,1)+1,&
+&                             COLL%D(3,2)-COLL%D(3,1)+1/))
    !
    call io_bulk(ID,L3=COLL%table(COLL%D(1,1):COLL%D(1,2),&
 &                                COLL%D(2,1):COLL%D(2,2),&
 &                                COLL%D(3,1):COLL%D(3,2)))
    !
-   allocate(COLLISIONS_v_disk(COLL%N,2))      
+   if(     V_kind==SE_GW_NEQ) allocate(COLLISIONS_v_disk(COLL%N,1))      
+   if(.not.V_kind==SE_GW_NEQ) allocate(COLLISIONS_v_disk(COLL%N,2))      
    !
-   call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL%N,2/))
-   if(write_is_on(ID)) then
-     COLLISIONS_v_disk(:,1) =real(COLL%v(1:COLL%N))
-     COLLISIONS_v_disk(:,2)=aimag(COLL%v(1:COLL%N))
-     call io_bulk(ID,R2=COLLISIONS_v_disk)
+   if(V_kind==SE_GW_NEQ) then
+     ! Real collisions
+     call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL%N/))
+     if(write_is_on(ID)) then
+       COLLISIONS_v_disk(:,1) =real(COLL%v(1:COLL%N))
+       call io_bulk(ID,R1=COLLISIONS_v_disk(:,1))
+     else
+       call io_bulk(ID,R1=COLLISIONS_v_disk(:,1))
+       COLL%v(1:COLL%N)=CMPLX(COLLISIONS_v_disk(:,1),0._SP)
+     endif
    else
-     call io_bulk(ID,R2=COLLISIONS_v_disk)
-     COLL%v(1:COLL%N)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
+     ! Complex collisions
+     call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL%N,2/))
+     if(write_is_on(ID)) then
+       COLLISIONS_v_disk(:,1) =real(COLL%v(1:COLL%N))
+       COLLISIONS_v_disk(:,2)=aimag(COLL%v(1:COLL%N))
+       call io_bulk(ID,R2=COLLISIONS_v_disk)
+     else
+       call io_bulk(ID,R2=COLLISIONS_v_disk)
+       COLL%v(1:COLL%N)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
+     endif
    endif
    !
    deallocate(COLLISIONS_v_disk)

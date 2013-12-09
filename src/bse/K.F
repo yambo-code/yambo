@@ -55,7 +55,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
  use matrix_operate,ONLY:matrix_linear_index
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
- use xc_functionals,ONLY:F_xc
+ use xc_functionals,ONLY:F_xc,XC_potential_driver
  use wrapper,       ONLY:V_dot_V,Vstar_dot_V,M_by_V
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wave_func,     ONLY:WF
@@ -71,7 +71,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: ikk1,ikk2,live_timing_steps,live_timing_step_size,live_timing_accumulate,&
 &              is1xis2,ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p,&
-&              i_sp1,i_sp2,j_sp1,j_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
+&              i_sp1,i_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
 &              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0,bands_to_load(2),&
 &              iBSE1,iBSE2
  integer    :: iOcv, iOvc
@@ -81,7 +81,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer(8) :: n_K_elements(ncpu),tot_n_K_elements,i8nc,i8id
  real(SP)   :: E_eh_range(2),S_eh_range(2)
- real(SP)   :: filling
  complex(SP),allocatable ::BS_W(:,:,:)
  complex(SP),   external ::tddft_alda_r_space
  logical    :: W_is_em1s,W_is_pp

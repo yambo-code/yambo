@@ -24,8 +24,6 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  use pars,        ONLY:SP,schlen
  use units,       ONLY:BO2ANG
  use com,         ONLY:msg
- use FFT_m,       ONLY:fft_dim
- use D_lattice,   ONLY:a
  use YPP,         ONLY:nr,v2plot,r_hole,v2plot2D,l_norm_to_one,WF_multiplier,plot_dim,&
 &                      plot_title,output_string,l_wavefunction,l_current,use_xcrysden
  use LIVE_t,      ONLY:live_timing

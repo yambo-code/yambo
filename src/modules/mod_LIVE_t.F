@@ -104,7 +104,7 @@ module LIVE_t
      ! cput_seg = Segment CPUT
      ! cput_sec = Section CPUT
      !
-     use openmp,     ONLY:n_threads
+     use openmp,     ONLY:n_threads_now
      use parallel_m, ONLY:myid,ncpu
      implicit none
      logical, optional :: INIT,INIT_SEG,SEG,INIT_SEC,SEC,FIN
@@ -122,7 +122,7 @@ module LIVE_t
 #if defined _BLUEGENE
      cput_tot(myid+1,1)=(cput_now-cput_tot(myid+1,2))
 #else
-     cput_tot(myid+1,1)=(cput_now-cput_tot(myid+1,2))/real(n_threads,SP)
+     cput_tot(myid+1,1)=(cput_now-cput_tot(myid+1,2))/real(n_threads_now,SP)
 #endif
      !
      if (present(INIT_SEC)) cput_sec(myid+1,:)=(/0.d0,cput_now/)
@@ -132,8 +132,8 @@ module LIVE_t
      if (present(SEC)) cput_sec(myid+1,1)=(cput_now-cput_sec(myid+1,2))
      if (present(SEG)) cput_seg(myid+1,1)=(cput_now-cput_seg(myid+1,2))
 #else
-     if (present(SEC)) cput_sec(myid+1,1)=(cput_now-cput_sec(myid+1,2))/real(n_threads,SP)
-     if (present(SEG)) cput_seg(myid+1,1)=(cput_now-cput_seg(myid+1,2))/real(n_threads,SP)
+     if (present(SEC)) cput_sec(myid+1,1)=(cput_now-cput_sec(myid+1,2))/real(n_threads_now,SP)
+     if (present(SEG)) cput_seg(myid+1,1)=(cput_now-cput_seg(myid+1,2))/real(n_threads_now,SP)
 #endif
      !
      if (present(FIN)) deallocate(cput_seg,cput_sec,cput_tot)

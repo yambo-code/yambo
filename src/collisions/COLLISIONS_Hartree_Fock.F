@@ -109,7 +109,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
    ib =QP_table(i_qp,1)
    ibp=QP_table(i_qp,2)
    !
-   HF_collisions(1)%v3=cZERO
+   HF_collisions(1)%v3c=cZERO
    !
    do iq=1,q%nbz
      !
@@ -175,7 +175,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
          !
 #endif
          !
-         HF_collisions(1)%v3(jb,jb2,ik_minus_q)=HF_collisions(1)%v3(jb,jb2,ik_minus_q)+DP_Sx
+         HF_collisions(1)%v3c(jb,jb2,ik_minus_q)=HF_collisions(1)%v3c(jb,jb2,ik_minus_q)+DP_Sx
          !
          call live_timing(steps=1)
          !
@@ -186,10 +186,10 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
    enddo
    !
    if (COLLISIONS_parallel_SC_structure) then
-     call PP_redux_wait(HF_collisions(1)%v3,COMM=PAR_COM_QP_A2A%COMM)
-     call PP_redux_wait(HF_collisions(1)%v3,COMM=PAR_COM_Q_index%COMM)
+     call PP_redux_wait(HF_collisions(1)%v3c,COMM=PAR_COM_QP_A2A%COMM)
+     call PP_redux_wait(HF_collisions(1)%v3c,COMM=PAR_COM_Q_index%COMM)
    else
-     call PP_redux_wait(HF_collisions(1)%v3,COMM=PAR_COM_G_b_A2A%COMM)
+     call PP_redux_wait(HF_collisions(1)%v3c,COMM=PAR_COM_G_b_A2A%COMM)
    endif
    !
    call COLLISIONS_linearize_and_IO("HF",i_qp,HF_collisions,nHF_collisions)

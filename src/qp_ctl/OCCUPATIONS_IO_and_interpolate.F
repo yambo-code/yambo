@@ -159,26 +159,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    ! NE_time=(NE_i_time-1)*RT_step but I/O only when NE_i_time= N * RT_IO_steps
    !
    NE_i_time= (Time+RT_step)/RT_step
-   NE_i_time= NE_i_time-mod(NE_i_time,RT_IO_JPO_steps)
-   !
-   if (NE_i_time==0       ) then
-     NE_i_time=1
-   else
-     do i1=NE_i_time,RT_IO_JPO_steps,-RT_IO_JPO_steps 
-       !
-       file_number=(i1-1)/RT_IO_JPO_steps+1
-       !
-       if ( variable_is_found(ID(6),'RT_occupations_TIME'//trim(intc(i1)))==1.or.&
-&           file_exists(trim(jobstr)//"/ndb.RT_occupations_"//trim(intc(file_number))).or.&
-&           file_exists(trim(jobstr)//"/db.RT_occupations_"//trim(intc(file_number))) ) then
-         NE_i_time=i1
-         exit
-       endif
-       !
-     enddo
-   endif
-   !
-   Time=(NE_i_time-1)*RT_step
+   NE_i_time= NE_i_time-mod(NE_i_time-1,RT_IO_JPO_steps)
    !
    if (.not.allocated(RT_occupations)) then
      allocate(RT_occupations(SC_bands(1):SC_bands(2),RT_nk))

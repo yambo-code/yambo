@@ -47,7 +47,10 @@ subroutine K_output_file(iq,mode)
  character(2)      :: title_mode
  integer           :: iw,n_output_data
  real(SP)          :: output_data(7)
- complex(SP)       :: eels(3,BSS_n_freqs),alpha(3,BSS_n_freqs),beta(3,BSS_n_freqs)
+ complex(SP)       :: eels(3,BSS_n_freqs),alpha(3,BSS_n_freqs)
+#if defined _KERR
+ complex(SP)       :: beta(3,BSS_n_freqs)
+#endif
  logical           :: eval_eels
  !
  ! File Names 

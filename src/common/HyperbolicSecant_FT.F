@@ -25,7 +25,7 @@ real function HyperbolicSecant_FT(E_center,Gamma_HS,alpha)
  ! evaluated at E_center, which correspond to the imaginary part of the Fourier 
  ! transform of 1/2*theta(t)*e^{-i*E_center}*sech^alpha(Gamma/alpha*t)
  !
- use pars,        ONLY:SP,pi
+ use pars,        ONLY:SP,pi,tol0
  use com,         ONLY:error
  !
  implicit none
@@ -41,11 +41,21 @@ real function HyperbolicSecant_FT(E_center,Gamma_HS,alpha)
  if(alpha>10) call error('Hyperbolic secant FFT for alpha>10 not implemented')
  !
  x=real(alpha,SP)*pi*E_center/(2._SP*Gamma_HS)
- sech_x=  2._SP/(exp(x)+exp(-x))
- cosech_x=2._SP/(exp(x)-exp(-x))
  !
- if(mod(alpha,2)==1) F1=(pi/2._SP)*(1._SP/Gamma_HS)*sech_x
- if(mod(alpha,2)==0) F2=(pi/2._SP)*(4._SP/Gamma_HS**2._SP)*E_center*cosech_x
+ if(mod(alpha,2)==1) then
+   sech_x=  2._SP/(exp(x)+exp(-x))
+   F1=(pi/2._SP)*(1._SP/Gamma_HS)*sech_x
+ endif
+ !
+ if(mod(alpha,2)==0) then
+   if(abs(x)>tol0) then
+     cosech_x=2._SP/(exp(x)-exp(-x))
+     F2=(pi/2._SP)*(4._SP/Gamma_HS**2._SP)*E_center*cosech_x
+   else
+     F2=           (4._SP/Gamma_HS)/real(alpha,SP) 
+   endif
+ endif
+ !
  !
  if(alpha>2) prefactor=(1._SP+E_center**2._SP/Gamma_HS**2._SP)
  !

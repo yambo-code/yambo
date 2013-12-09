@@ -40,7 +40,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
  use fragments,     ONLY:fragment_status
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,io_COLLISIONS
- use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_QPp,PAR_IND_Xk_ibz,PAR_IND_G_k,PAR_IND_Bp_mat
+ use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_Xk_ibz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
  use X_m,           ONLY:X_t
  !
  implicit none
@@ -146,11 +146,17 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      ! PARALLEL Setup (e-e scattering)
      !=================================
      if (l_elel_scatt) then
+       !
        call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
        call PARALLEL_global_indexes(E,k,q,"Real_Time")
+       !
+       call PLASMA_build_up(E,k,q)
+       call PLASMA_parallel_setup( )
+       !
        call PARALLEL_WF_distribute(QP_index=PAR_IND_QP,CLEAN_UP=.FALSE.)
-       call PARALLEL_WF_distribute(QP_index=PAR_IND_QPp)
+       call PARALLEL_WF_distribute(Plasma_index=PAR_IND_Plasma)
        call PARALLEL_WF_index( )
+       !
      endif
      !
      if (i_kind==1) then

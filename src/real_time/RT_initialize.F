@@ -22,7 +22,7 @@
 subroutine RT_initialize(E,k,q)
  ! 
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt
- use SC,             ONLY:local_V,SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz
+ use SC,             ONLY:local_V,SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
@@ -81,7 +81,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Use NE_tot_time if provided
  !
- if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step))
+ if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step)+1)
  !
  ! Set a number of steps. i1=1(J,P,OCCs)  i1=2(output) i1=3(GF).
  ! Negative value forces the step to be set automatically
@@ -91,11 +91,11 @@ subroutine RT_initialize(E,k,q)
    !
    if (RT_IO_time(i1)>0) IO_steps(i1) =nint(RT_IO_time(i1)/RT_step)
    !
-   if(IO_steps(i1)>0.and.mod(Thermal_steps+NE_steps,IO_steps(i1))/=0) then
+   if(IO_steps(i1)>0.and.mod(Thermal_steps+NE_steps-1,IO_steps(i1))/=0) then
      !
      if (i1>1) cycle
      !
-     rest=mod(Thermal_steps+NE_steps,IO_steps(i1))
+     rest=mod(Thermal_steps+NE_steps-1,IO_steps(i1))
      if(NE_steps/=0) then
        NE_steps = NE_steps+IO_steps(i1)-rest
      elseif (NE_steps==0.and.Thermal_steps/=0) then
@@ -111,7 +111,7 @@ subroutine RT_initialize(E,k,q)
      !
      if (i1>1) cycle
      !
-     rest=mod(Thermal_steps+NE_steps,IO_steps(i1))
+     rest=mod(Thermal_steps+NE_steps-1,IO_steps(i1))
      if(rest/=0) NE_steps = NE_steps+IO_steps(i1)-rest
      !
      if (RT_IO_steps_DB>0.and.IO_steps(i1)/=RT_IO_steps_DB) then
@@ -125,7 +125,7 @@ subroutine RT_initialize(E,k,q)
    !
  enddo
  !
- NE_tot_time=RT_step*NE_steps
+ NE_tot_time=RT_step*(NE_steps-1)
  !
  RT_IO_JPO_steps    = IO_steps(1)
  RT_IO_G_steps      = IO_steps(2)
@@ -181,7 +181,7 @@ subroutine RT_initialize(E,k,q)
      if(i1==i_Pump) l_compute_Fluence= (Efield(i1)%ef_name=='DELTA') .or. (Efield(i1)%ef_name=='QSSIN') &
 &                                 .or. (Efield(i1)%ef_name=='GAUSS')
      !
-     Efield(i1)%versor         =normalize_v(Efield(i1)%versor)
+     if( any( abs(Efield(i1)%versor(:))>epsilon(1.) ) ) Efield(i1)%versor=normalize_v(Efield(i1)%versor)
      !
      Efield(i1)%int_t_initial  =int(Efield(i1)%t_initial/RT_step)+1
      !
@@ -253,6 +253,9 @@ subroutine RT_initialize(E,k,q)
  !
  call msg('r',' ')
  !
+ call PLASMA_build_up(E,k,q)
+ call PLASMA_parallel_setup( )
+ !
  call COLLISIONS_load(.TRUE.)
  !
  call UPDATE_flags(.TRUE.)
@@ -270,7 +273,7 @@ subroutine RT_initialize(E,k,q)
  allocate(RT_ibz_coo(k%nibz,2))
  allocate(RT_Nk_ibz(k%nibz))
  if (l_RT_uses_E_RIM) then
-   RT_nk=RT_k_grid(k)
+   RT_nk=RT_k_grid(E,k)
  else
    RT_nk=k%nibz
    RT_Nk_ibz=1
@@ -281,6 +284,7 @@ subroutine RT_initialize(E,k,q)
      RT_all2ibz(ik)=ik
    enddo
  endif
+ RT_nstates=RT_nk*(SC_bands(2)-SC_bands(1)+1)
  !
  ! LOG
  ! ===
@@ -288,9 +292,9 @@ subroutine RT_initialize(E,k,q)
  call section('=','Messaging')
  !
  call msg( 'r','---General---')
- call msg( 'r', 'Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
+ call msg( 'r', 'Simulation time        [fs]:',(/-real(Thermal_steps),real(NE_steps-1)/)*RT_step/FS2AUT)
  call msg( 'r', 'NE Steps                   :',NE_steps)
- call msg( 'r', 'NE time                [fs]:',NE_steps*RT_step/FS2AUT)
+ call msg( 'r', 'NE time                [fs]:',(NE_steps-1)*RT_step/FS2AUT)
  call msg( 'r', 'Time jumps                 :',RT_dynamics_jumps*RT_step/FS2AUT)
  call msg( 'r', 'Time jump              [fs]:',RT_dynamics_jumps*RT_step/FS2AUT)
  call msg( 'r', 'Memory depth           [fs]:',T_memory/FS2AUT)

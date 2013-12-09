@@ -24,7 +24,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:BO2ANG
  use stderr,        ONLY:intc
- use FFT_m,         ONLY:fft_dim,fft_size
+ use FFT_m,         ONLY:fft_dim
  use D_lattice,     ONLY:a,alat
  use wave_func,     ONLY:WF,WF_symm,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
@@ -80,7 +80,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  !... Dummy arguments 
  !
- integer      :: iq,ia,i1,i2,i_l,i_spin
+ integer      :: iq,i1,i2,i_l,i_spin
  real(SP)     :: k_dot_r,r_hole_rlu(3)
  !
  type(PP_indexes) ::px

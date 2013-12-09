@@ -72,7 +72,7 @@
   {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0,0},    
 #endif
 #if defined _SC | defined _MAGNETIC | defined _RT
-  {"collisions", "e","Evaluate Collisions [opt=(s)cattering/(c)orrelation]",0,0,0,0,0}, 
+  {"collisions", "e","Evaluate Collisions",0,0,0,0,0}, 
   {"scpot",  "v","Self-Consistent Potential",0,0,1,0,0}, 
   {"DESC",   " ","opt=(hf),(c)ohsex,(exx),(exxc),(srpa),(h)artree,(d)ef",0,0,0,0,0},
 #endif

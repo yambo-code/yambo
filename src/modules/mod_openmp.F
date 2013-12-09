@@ -61,6 +61,10 @@ module OPENMP
      !
      n_threads     = 1
      n_threads_now = 1
+     n_threads_X   = 1
+     n_threads_SE  = 1
+     n_threads_RT  = 1
+     n_threads_DIP = 1
      !
 #endif
      !
@@ -71,6 +75,7 @@ module OPENMP
      integer, optional :: n_threads_in
 #if defined _OPENMP
      if (present(n_threads_in)) then
+       if (n_threads_in==0) n_threads_in=n_threads
        call omp_set_num_threads( n_threads_in )
        n_threads_now=n_threads_in
      else
@@ -80,8 +85,10 @@ module OPENMP
 #else
      if (present(n_threads_in)) then
        n_threads_in=1
-       n_threads_now=1
+     else
+       n_threads=1
      endif
+     n_threads_now=1
 #endif
      !
    end subroutine

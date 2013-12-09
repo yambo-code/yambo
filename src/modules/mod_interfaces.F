@@ -53,12 +53,13 @@ module interfaces
      use X_m,           ONLY:X_t
      use electrons,     ONLY:levels
      use R_lattice,     ONLY:bz_samp
+     use plasma,        ONLY:plasma_gas
      implicit none
-     type(levels)            ::E
-     type(bz_samp)           ::Xk,q
-     character(*)            ::ENVIRONMENT
-     type(X_t),      optional::X
-     logical,        optional::RESET
+     type(levels)             ::E
+     type(bz_samp)            ::Xk,q
+     character(*)             ::ENVIRONMENT
+     type(X_t),       optional::X
+     logical,         optional::RESET
    end subroutine
    !
    subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU)
@@ -67,7 +68,7 @@ module interfaces
      integer,     optional :: LOADED,TOTAL,NCPU
    end subroutine
    !
-   subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Bm_index,CLEAN_UP)
+   subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Plasma_index,Bm_index,CLEAN_UP)
      !
      use parallel_m,      ONLY:PP_indexes
      !
@@ -77,6 +78,7 @@ module interfaces
      type(PP_indexes),    optional :: B_index
      type(PP_indexes),    optional :: Bp_index
      type(PP_indexes),    optional :: QP_index
+     type(PP_indexes),    optional :: Plasma_index
      type(PP_indexes),    optional :: Bm_index
      logical, intent(in), optional :: CLEAN_UP
      !

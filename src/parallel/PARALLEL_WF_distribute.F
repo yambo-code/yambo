@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Bm_index,CLEAN_UP)
+subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Plasma_index,Bm_index,CLEAN_UP)
  !
  use parallel_m,      ONLY:PP_indexes,ncpu
  use wave_func,       ONLY:states_to_load
@@ -30,6 +30,11 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Bm_index,CLE
  use SC,              ONLY:SC_bands
  use real_time,       ONLY:B_mat_index
 #endif
+#if defined _RT
+ use parallel_m,      ONLY:PAR_IND_Q,PAR_Q_index
+ use plasma,          ONLY:EH_gas
+ use R_lattice,       ONLY:nkbz
+#endif
  !
  implicit none
  !
@@ -37,11 +42,15 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Bm_index,CLE
  type(PP_indexes), optional    :: B_index
  type(PP_indexes), optional    :: Bp_index
  type(PP_indexes), optional    :: QP_index
+ type(PP_indexes), optional    :: Plasma_index
  type(PP_indexes), optional    :: Bm_index
  logical, intent(in), optional :: CLEAN_UP
  !
  ! Work Space
  !
+#if defined _RT
+ integer :: i_J,i_J_bg,iqbz,i_q_mem
+#endif
  integer :: i_k,i_b,i_bp,i_qp,NB,NK,NBp
  logical :: condition
 #if defined _SC
@@ -146,5 +155,39 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Bm_index,CLE
    enddo
    !
  endif
+ !
+#if defined _RT
+ !
+ if (present(Plasma_index)) then
+   ! 
+   do iqbz=1,nkbz
+     !
+     if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
+     i_q_mem=PAR_Q_index(iqbz)
+     !
+     do i_J=1,EH_gas(1)%N_poles(iqbz)
+       !
+       if (.not.Plasma_index%element_1D(i_J)) cycle
+       !
+       do i_J_bg=EH_gas(1)%grid(i_J,i_q_mem,1),EH_gas(1)%grid(i_J,i_q_mem,2)
+         !
+         i_qp=EH_gas(1)%tab(i_J_bg,i_q_mem,1)
+         !
+         i_b  = QP_table(i_qp,1)
+         i_bp = QP_table(i_qp,2)
+         i_k  = QP_table(i_qp,3)
+         !
+         states_to_load(i_b ,i_k,:)=.TRUE.
+         states_to_load(i_bp,i_k,:)=.TRUE.
+         !
+       enddo
+       !
+     enddo
+     !
+   enddo
+   !
+ endif
+ !
+#endif
  !
 end subroutine

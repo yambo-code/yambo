@@ -25,9 +25,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,mpi_comm_world,&
 &                        PARALLEL_cpu_mat_inversion,CPU_structure,master_cpu,&
 &                        PARALLEL_cpu_mat_diagonalization,PAR_Q_index,PAR_nQ,PAR_n_B_mat_elements,&
-&                        PAR_B_mat_index,PAR_nQP,PAR_nQPp,PAR_QP_index,PAR_QPp_index,PAR_INDEX_copy,&
+&                        PAR_B_mat_index,PAR_nQP,PAR_QP_index,PAR_INDEX_copy,&
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load,&
-&                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index
+&                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index
  use parallel_m,    ONLY:& ! LOGICALS
 &                        l_par_bse,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
 &                        HEAD_QP_cpu,HEAD_k_cpu
@@ -37,7 +37,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_ibz_A2A,PAR_COM_Q_INDEX,&
 &                        PAR_COM_Xk_bz_INDEX,PAR_COM_INV_INDEX,PAR_COM_INV,&
 &                        PAR_COM_DIAGO_INDEX,PAR_COM_DIAGO,&
-&                        PAR_COM_QP_INDEX,PAR_COM_QPp_INDEX,&
+&                        PAR_COM_QP_INDEX,PAR_COM_Plasma_INDEX,&
 &                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_A2A,&
 &                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
 &                        PAR_COM_q_for_Xo,PAR_COM_k_for_P,PAR_COM_Xk_bz_A2A,PAR_COM_density
@@ -45,12 +45,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,&
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q,PAR_IND_INV,PAR_IND_DIAGO,&
 &                        PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
-&                        PAR_IND_B_mat,PAR_IND_QPp,PAR_IND_DIPk_ibz,PAR_IND_WF_linear,&
+&                        PAR_IND_B_mat,PAR_IND_Plasma,PAR_IND_DIPk_ibz,PAR_IND_WF_linear,&
 &                        PAR_IND_Bp_mat,PAR_IND_G_k
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_INV_ID,PAR_IND_DIAGO_ID,&
-&                        PAR_IND_QP_ID,PAR_IND_G_b_ID,myid,PAR_IND_QPp_ID,&
+&                        PAR_IND_QP_ID,PAR_IND_G_b_ID,myid,PAR_IND_Plasma_ID,&
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID,&
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
@@ -75,11 +75,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use wave_func,     ONLY:states_to_load
  implicit none
  !
- type(levels)            ::E
- type(bz_samp)           ::Xk,q
- character(*)            ::ENVIRONMENT
- type(X_t), optional     ::X
- logical,   optional     ::RESET
+ type(levels)               ::E
+ type(bz_samp)              ::Xk,q
+ character(*)               ::ENVIRONMENT
+ type(X_t), optional        ::X
+ logical,   optional        ::RESET
  !
  ! Work Space
  !
@@ -120,7 +120,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PP_indexes_reset(PAR_IND_CON_BANDS_X(X_type))
    call PP_indexes_reset(PAR_IND_VAL_BANDS_X(X_type))
    call PP_indexes_reset(PAR_IND_QP)
-   call PP_indexes_reset(PAR_IND_QPp)
+   call PP_indexes_reset(PAR_IND_Plasma)
    call PP_indexes_reset(PAR_IND_B_mat)
    call PP_indexes_reset(PAR_IND_Bp_mat)
    call PP_indexes_reset(PAR_IND_B_mat_ordered)
@@ -133,7 +133,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    if (allocated(PAR_B_mat_index))    deallocate(PAR_B_mat_index)
    if (allocated(PAR_Bp_mat_index))   deallocate(PAR_Bp_mat_index)
    if (allocated(PAR_QP_index))       deallocate(PAR_QP_index)
-   if (allocated(PAR_QPp_index))      deallocate(PAR_QPp_index)
+   if (allocated(PAR_Plasma_index))   deallocate(PAR_Plasma_index)
    if (allocated(PAR_Q_index))        deallocate(PAR_Q_index)
    if (allocated(PAR_Xk_ibz_index))   deallocate(PAR_Xk_ibz_index)
    if (allocated(PAR_Xk_bz_index))    deallocate(PAR_Xk_bz_index)
@@ -148,7 +148,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    PAR_IND_INV_ID=0
    PAR_IND_DIAGO_ID=0
    PAR_IND_QP_ID=0
-   PAR_IND_QPp_ID=0
+   PAR_IND_Plasma_ID=0
    PAR_IND_G_b_ID=0
    PAR_IND_G_k_ID=0
    PAR_IND_WF_b_ID=0
@@ -168,7 +168,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call COMM_reset(PAR_COM_INV)
    call COMM_reset(PAR_COM_DIAGO_INDEX)
    call COMM_reset(PAR_COM_DIAGO)
-   call COMM_reset(PAR_COM_QPp_INDEX)
+   call COMM_reset(PAR_COM_Plasma_INDEX)
    call COMM_reset(PAR_COM_QP_INDEX)
    call COMM_reset(PAR_COM_QP_A2A)
    call COMM_reset(PAR_COM_G_b_INDEX)
@@ -373,10 +373,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"k ","b ","q ","qp"/),&
 &                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,COMM_index_2=PAR_COM_G_b_INDEX,&
 &                                        COMM_index_3=PAR_COM_Q_INDEX,&
-&                                        COMM_index_4=PAR_COM_QPp_INDEX,&
+&                                        COMM_index_4=PAR_COM_Plasma_INDEX,&
 &                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
 &                                        COMM_A2A_2=PAR_COM_G_b_A2A,&
 &                                        COMM_A2A_3=PAR_COM_Q_A2A)
+
    !
    ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
    ! A2A when there is no internal distribution
@@ -502,11 +503,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !     \__\__ k,n
    !        /
    !      
-   ! "RT"="k.b.q.qp" 
+   ! "RT"="k.b.q.qp"
    !  
    !   "k.b" -> QP (k,n,n')  
    !   "q"   -> q 
-   !   "qp"  -> QPp (p,m,m')
+   !   "qp"  -> Plasma (J)
    !
    ! e-e correlation (HF and COHSEX)
    !=================================
@@ -572,32 +573,18 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             NCPU=PAR_COM_Q_INDEX%n_CPU)
    !
    !.........................................................................
-   !   "qp"  -> QPp (p,m,m')
-   !.........................................................................
-   !
-   call PARALLEL_index(PAR_IND_QPp,(/QP_n_states/),COMM=PAR_COM_QPp_INDEX)
-   PAR_IND_QPp_ID=PAR_COM_QPp_INDEX%CPU_id
-   PAR_nQPp=PAR_IND_QPp%n_of_elements(PAR_IND_QPp_ID+1)
-   !
-   allocate(PAR_QPp_index(QP_n_states)) 
-   call Build_up_index(PAR_IND_QPp,QP_n_states,PAR_QPp_index,PAR_nQPp)
-   !
-   call PARALLEL_live_message("QPs (level 2)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_nQPp,TOTAL=QP_n_states,&
-&                             NCPU=PAR_COM_QPp_INDEX%n_CPU)
-   !
-   !.........................................................................
    !   "qp"  -> Bp_mat (m,m')
    !.........................................................................
    !
-   call G_b_to_B_mat(PAR_COM_QPp_INDEX,'Bp')
+   call G_b_to_B_mat(PAR_COM_Plasma_INDEX,'Bp')
    call PARALLEL_add_Q_to_K_list('k_qp_q_bz',PAR_IND_QP,PAR_IND_QP_ID,PAR_IND_G_k,PAR_IND_G_k_ID,&
   &                              PAR_IND_Q,PAR_COM_QP_INDEX,(/0,0/),Xk,q)
    call PARALLEL_live_message("K-q (ibz)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_G_k%n_of_elements(PAR_IND_G_k_ID+1),&
-&                             TOTAL=Xk%nibz,NCPU=PAR_COM_QPp_INDEX%n_CPU)
+&                             TOTAL=Xk%nibz,NCPU=PAR_COM_Plasma_INDEX%n_CPU)
    call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
-&                             TOTAL=(SC_bands(2)-SC_bands(1)+1)**2,NCPU=PAR_COM_QPp_INDEX%n_CPU)
+&                             TOTAL=(SC_bands(2)-SC_bands(1)+1)**2,NCPU=PAR_COM_Plasma_INDEX%n_CPU)
    !
    ! When the collisons are note evaluated the I/O is dictated by Response_G_space_Zero_Momentum
    ! and then resetted in RT_driver

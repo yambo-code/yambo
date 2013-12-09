@@ -2,8 +2,9 @@ ELPH_objects =
 #if defined _ELPH 
 ELPH_objects = ELPH_Sigma_c.o ELPH_Hamiltonian.o 
 #endif
+SC_objects =
 #if defined _SC
-SC_objects = QP_load_SC_xc.o RT_EE_scattering_kinematics.o 
+SC_objects = QP_load_SC_xc.o
 #endif
 objs = QP_driver.o QP_newton.o QP_ppa_cohsex.o QP_ppa_EET_terminator.o \
        QP_secant.o QP_real_axis.o QP_W2Sc.o QP_life_transitions.o secant.o bracket.o \

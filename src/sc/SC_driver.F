@@ -44,7 +44,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use xc_functionals, ONLY:V_xc,E_xc
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,ncpu
- use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,io_COLLs,&
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,io_COLLs,io_X,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder
  use LIVE_t,         ONLY:live_timing
@@ -73,7 +73,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin,i_io,io_X
+ integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin,i_io,io_X_err
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch
  integer, external        :: io_SC_components,X_em1
@@ -389,7 +389,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        current_iq=0
        call IO_and_Messaging_switch("-report")
-       io_X=X_em1(E,Xk,q,X(2),Xw(2),.true.)
+       io_X_err=X_em1(E,Xk,q,X(2),Xw(2),.true.)
        call IO_and_Messaging_switch("+report")
        !
        ! Reload and rotate wave-functions if W is updated

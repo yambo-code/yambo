@@ -55,7 +55,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
 #if defined _SC
- use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF
+ use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF,SE_GW_NEQ
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
  use collision,      ONLY:V_kind
  use interfaces,     ONLY:io_COLLISIONS
@@ -96,7 +96,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                     ioCOL_CUT
  logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
  !
- integer, external :: ioE_RIM
+ integer, external :: io_RIM_E_and_k
  !
 #if defined _SC || defined _RT
  integer, external :: io_SC_components,io_RT_components
@@ -275,7 +275,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! E_rim
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioE_RIM(en,io_ID) 
+ io_err=io_RIM_E_and_k(en,k,io_ID) 
  !
  ! xxvxc
  !
@@ -398,6 +398,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
    if (io_COLLISIONS_err/=0) V_kind=-1
  endif
+#endif
+#if defined _SC && defined _RT
+ V_kind=SE_GW_NEQ
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
 #endif
  !
  if (list_dbs) then
@@ -722,7 +727,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(-1,'GbndRnge UseEbands BandMix SCUpWIter') 
    call initactivate(-1,'SCIter SCEtresh SCRhoTresh TF_precondition')
    !
-   call initactivate( 1,'Potential FFTGvecs Gauge SCBands EXXCut')
+   call initactivate( 1,'Potential PlasmaPerc FFTGvecs Gauge SCBands EXXCut')
    !
  endif
 #endif

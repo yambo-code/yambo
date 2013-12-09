@@ -43,7 +43,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  use memory_m,      ONLY:mem_est
  use FFT_m,         ONLY:fft_size
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
- use R_lattice,     ONLY:b,qindx_B,bz_samp
+ use R_lattice,     ONLY:qindx_B,bz_samp
  use BS,            ONLY:O_n_scatt,O_table,O_phase,BS_O,O_n_c_states,O_c_state,&
 &                        O_n_v_states,O_v_state,O_ng,BS_bands,&
 &                        BS_res_K_corr,BS_cpl_K_corr

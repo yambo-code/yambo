@@ -40,15 +40,15 @@ subroutine PLASMA_build_up(E,k,q)
  ! Work space
  !
  character(schlen)      :: ch
- integer                :: iqbz,i_q_mem,n_poles,iplasma
+ integer                :: iqbz,i_q_mem,n_poles,iplasma,N_poles_bare
  real(SP), allocatable  :: poles(:)
- !
  integer, external      :: PLASMA_tables_and_dimensions
  !
  call k_sym2sym(q,'k')
  call k_sym2sym(k,'k')
  !
- N_plasma_poles_global=k%nbz*n_sp_pol*(SC_bands(2)-SC_bands(1)+1)**2
+ N_poles_bare                = k%nbz*n_sp_pol*(SC_bands(2)-SC_bands(1)+1)**2
+ N_plasma_poles_global       = N_poles_bare
  N_plasma_poles_CPU_resolved = N_plasma_poles_global
  !
  do iplasma=1,1
@@ -89,9 +89,8 @@ subroutine PLASMA_build_up(E,k,q)
  enddo
  !
  do iplasma=1,1
-   write (ch,'(3a)') "[PLASMA #"//trim(intc(iplasma))//"] Poles reduction:"//&
-&        trim(intc(k%nbz*(SC_bands(2)-SC_bands(1)+1)**2*n_sp_pol*q%nbz))//" => "//&
-&        trim(intc(sum(EH_gas(iplasma)%N_poles)))
+   write (ch,'(3a)') "[PLASMA #"//trim(intc(iplasma))//"] Poles reduction (ALL q):"//&
+&        trim(intc(N_poles_bare))//" => "//trim(intc(N_plasma_poles_CPU_resolved))
    call msg('rs',trim(ch))
  enddo
  !

@@ -55,7 +55,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
 #if defined _SC
- use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF
+ use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF,SE_GW_NEQ
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
  use collision,      ONLY:V_kind
  use interfaces,     ONLY:io_COLLISIONS
@@ -398,6 +398,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
    if (io_COLLISIONS_err/=0) V_kind=-1
  endif
+#endif
+#if defined _SC && defined _RT
+ V_kind=SE_GW_NEQ
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
 #endif
  !
  if (list_dbs) then

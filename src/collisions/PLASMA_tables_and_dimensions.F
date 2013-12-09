@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function Plasma_setup(iqbz,E,k,q,poles,N,EH_gas)
+integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N,EH_gas)
  !
  use pars,          ONLY:SP
  use R_lattice,     ONLY:bz_samp
@@ -27,7 +27,7 @@ integer function Plasma_setup(iqbz,E,k,q,poles,N,EH_gas)
  use electrons,     ONLY:levels,n_sp_pol
  use QP_m,          ONLY:QP_n_states,QP_table
  use frequency,     ONLY:ordered_grid_index,coarse_grid_index,bare_grid_N,Coarse_grid_N,coarse_grid_Pt
- use plasma,        ONLY:plasma_gas
+ use plasma,        ONLY:plasma_gas,N_plasma_poles_CPU_resolved
  use parallel_m,    ONLY:PAR_nQ,PAR_Q_index,PAR_IND_Q
  !
  implicit none
@@ -91,7 +91,7 @@ integer function Plasma_setup(iqbz,E,k,q,poles,N,EH_gas)
    enddo
  enddo
  !
- Plasma_setup=n_poles
+ PLASMA_tables_and_dimensions=n_poles
  !
  if (iqbz>0 ) then
    !
@@ -102,14 +102,14 @@ integer function Plasma_setup(iqbz,E,k,q,poles,N,EH_gas)
      l_reallocate=.false.
    endif
    !
-   if (i_q_mem>1 ) l_reallocate= ( Coarse_grid_N>EH_gas%max_N_poles )
+   if (i_q_mem>1 ) l_reallocate= ( Coarse_grid_N>N_plasma_poles_CPU_resolved )
    !
    EH_gas%N_poles(iqbz)=Coarse_grid_N
-   EH_gas%max_N_poles=maxval(EH_gas%N_poles(1:iqbz))
+   N_plasma_poles_CPU_resolved=maxval(EH_gas%N_poles(1:iqbz))
    !
    if (l_reallocate) then
      !
-     allocate(local_grid(EH_gas%max_N_poles,iqbz-1,2))
+     allocate(local_grid(N_plasma_poles_CPU_resolved,iqbz-1,2))
      do iqbz_local=1,iqbz-1
        if (.not.PAR_IND_Q%element_1D(iqbz_local)) cycle
        i_q_mem_local=PAR_Q_index(iqbz_local)
@@ -117,7 +117,7 @@ integer function Plasma_setup(iqbz,E,k,q,poles,N,EH_gas)
      enddo
      deallocate(EH_gas%grid)
      !
-     allocate(EH_gas%grid(EH_gas%max_N_poles,q%nbz,2))
+     allocate(EH_gas%grid(N_plasma_poles_CPU_resolved,q%nbz,2))
      EH_gas%grid=-1
      do iqbz_local=1,iqbz-1
        if (.not.PAR_IND_Q%element_1D(iqbz_local)) cycle
@@ -144,4 +144,4 @@ integer function Plasma_setup(iqbz,E,k,q,poles,N,EH_gas)
    !
  endif
  !
-end function Plasma_setup
+end function PLASMA_tables_and_dimensions

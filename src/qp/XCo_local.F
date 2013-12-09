@@ -30,7 +30,7 @@ subroutine XCo_local(E,Xk)
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:WF
- use xc_functionals,ONLY:V_xc,xc_string,XC_potential_driver,magn
+ use xc_functionals,ONLY:V_xc,xc_string,XC_potential_driver,magn,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_exx_fraction
  use wrapper,       ONLY:Vstar_dot_V
 #if defined _OPENMP

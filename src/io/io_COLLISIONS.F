@@ -29,7 +29,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ
  use com,           ONLY:error
- use plasma,        ONLY:max_N_plasma_poles,Plasma_redux_percent
+ use plasma,        ONLY:N_plasma_poles_global,Plasma_redux_percent
  use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing
  use fragments,     ONLY:io_fragment,Fragments_Restart,Fragments_Synchronize
@@ -92,8 +92,8 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
      call io_elemental(ID,L0=l_elel_scatt,&
 &         VAR=' Electron-Electron scattering    :',CHECK=.true.,OP=(/"=="/))
      if (ver_is_gt_or_eq(ID,revision=2885).and.l_elel_scatt) then
-      call io_elemental(ID,I0=max_N_plasma_poles,&
-&          VAR=' Max N plasma poles              :',CHECK=.true.,OP=(/"=="/))
+      call io_elemental(ID,I0=N_plasma_poles_global,&
+&          VAR=' Max N plasma poles (q-resolved) :',CHECK=.true.,OP=(/"=="/))
       call io_elemental(ID,R0=Plasma_redux_percent,&
 &          VAR=' Plasma redux percent            :',CHECK=.true.,OP=(/"=="/))
      endif

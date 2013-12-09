@@ -31,7 +31,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
 &                         l_NE_simulate_IP,Fluence,NE_i_time,RT_IO_output_steps
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc
- use xc_functionals, ONLY:E_xc
+ use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_Xk_nibz,master_cpu

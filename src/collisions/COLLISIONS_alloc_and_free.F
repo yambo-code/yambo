@@ -25,7 +25,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use memory_m,       ONLY:mem_est
  use QP_m,           ONLY:QP_n_states
  use SC,             ONLY:SC_bands
- use plasma,         ONLY:max_N_plasma_poles
+ use plasma,         ONLY:N_plasma_poles_global
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:nqbz,nkibz
  use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ,PAR_nQP
@@ -110,7 +110,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  endif
  !
  if (l_GW_NEQ) then
-   D(1,:)=(/1,max_N_plasma_poles/)
+   D(1,:)=(/1,N_plasma_poles_global/)
    D(2,:)=(/1,1/)
    D(3,:)=(/1,nqbz/)
    if (l_distribute.and.(l_v3.or.l_table)) then

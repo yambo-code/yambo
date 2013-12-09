@@ -253,6 +253,9 @@ subroutine RT_initialize(E,k,q)
  !
  call msg('r',' ')
  !
+ call PLASMA_build_up(E,k,q)
+ call PLASMA_parallel_setup( )
+ !
  call COLLISIONS_load(.TRUE.)
  !
  call UPDATE_flags(.TRUE.)

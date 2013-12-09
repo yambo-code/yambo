@@ -46,9 +46,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #if defined _SURF
  use ras_module,    ONLY:lras, lreels
 #endif
-#if defined _SC
- use drivers,       ONLY:l_elel_scatt
-#endif
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif

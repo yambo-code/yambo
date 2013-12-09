@@ -1,4 +1,4 @@
-!,XC_potential_driver
+!
 ! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 

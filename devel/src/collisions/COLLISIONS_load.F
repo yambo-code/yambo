@@ -115,7 +115,6 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      call io_control(ACTION=OP_RD,SEC=(/1,2/),ID=ID)
      !
-     ! To check for GW_NEQ_collisions allocation
      if (V_kind==SC_HF) then
        io_err(iv)=io_COLLISIONS(i_qp,ID,HF_collisions(i_qp_mem))
        call COLLISIONS_alloc_and_free("HF","v1 table","alloc",i_qp_mem)

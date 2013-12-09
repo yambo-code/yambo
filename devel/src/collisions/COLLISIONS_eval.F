@@ -146,11 +146,17 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      ! PARALLEL Setup (e-e scattering)
      !=================================
      if (l_elel_scatt) then
+       !
        call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
        call PARALLEL_global_indexes(E,k,q,"Real_Time")
+       !
+       call PLASMA_build_up(E,k,q)
+       call PLASMA_parallel_setup( )
+       !
        call PARALLEL_WF_distribute(QP_index=PAR_IND_QP,CLEAN_UP=.FALSE.)
        call PARALLEL_WF_distribute(Plasma_index=PAR_IND_Plasma)
        call PARALLEL_WF_index( )
+       !
      endif
      !
      if (i_kind==1) then

@@ -80,8 +80,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  append_ch=' '
  if (index(what_is_running,'YPP')>0) append_ch='YPP-'
  !
- if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'current'
+ if (open_files.and..not.file_already_opened(next_file)) file_name(next_file)=trim(append_ch)//'current'
  short_file_name(next_file)=trim(append_ch)//'current'
  n_headings(next_file)=4
  headings(next_file,2:4)=(/"j_x","j_y","j_z"/)

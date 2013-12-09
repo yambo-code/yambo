@@ -1,6 +1,7 @@
 objs = 
 #if defined _SC
-objs = RT_EE_scattering_kinematics.o Plasma_driver.o Plasma_setup.o \
+objs = RT_EE_scattering_kinematics.o PLASMA_parallel_setup.o \
+       PLASMA_build_up.o PLASMA_tables_and_dimensions.o \
        COLLISIONS_alloc_and_free.o COLLISIONS_load.o \
        COLLISIONS_eval.o   COLLISIONS_linearize_and_IO.o \
        COLLISIONS_compose.o COLLISIONS_cohsex.o COLLISIONS_Hartree_Fock.o

@@ -29,7 +29,7 @@ subroutine tddft_alda_g_space(E,k)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,G_m_G
  use wave_func,     ONLY:WF
- use xc_functionals,ONLY:F_xc
+ use xc_functionals,ONLY:F_xc,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use interfaces,    ONLY:WF_load
  implicit none

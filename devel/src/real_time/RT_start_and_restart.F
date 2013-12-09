@@ -56,7 +56,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:WF
- use xc_functionals, ONLY:V_xc
+ use xc_functionals, ONLY:V_xc,XC_potential_driver
  use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,master_cpu
  use stderr,         ONLY:real2ch
  implicit none

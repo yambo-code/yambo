@@ -28,7 +28,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use LIVE_t,          ONLY:live_timing
  use QP_m,            ONLY:QP_n_states
  use R_lattice,       ONLY:nqbz
- use plasma,          ONLY:max_N_plasma_poles
+ use plasma,          ONLY:N_plasma_poles_global
  use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
  use collision,       ONLY:V_kind,GW_NEQ_collisions,COHSEX_collisions,HF_collisions
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP
@@ -139,7 +139,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      if (V_kind==SE_GW_NEQ) then
        ic=0
-       do i_J=1,max_N_plasma_poles
+       do i_J=1,N_plasma_poles_global
          do iqbz=1,nqbz
            ic=ic+1
            if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle

@@ -55,7 +55,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
  use matrix_operate,ONLY:matrix_linear_index
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
- use xc_functionals,ONLY:F_xc
+ use xc_functionals,ONLY:F_xc,XC_potential_driver
  use wrapper,       ONLY:V_dot_V,Vstar_dot_V,M_by_V
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wave_func,     ONLY:WF

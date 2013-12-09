@@ -49,7 +49,7 @@ module interfaces
      type(MPI_comm), optional :: COMM
    end subroutine
    !
-   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,EH_gas,X,RESET)
+   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      use X_m,           ONLY:X_t
      use electrons,     ONLY:levels
      use R_lattice,     ONLY:bz_samp
@@ -58,7 +58,6 @@ module interfaces
      type(levels)             ::E
      type(bz_samp)            ::Xk,q
      character(*)             ::ENVIRONMENT
-     type(plasma_gas),optional::EH_gas
      type(X_t),       optional::X
      logical,         optional::RESET
    end subroutine

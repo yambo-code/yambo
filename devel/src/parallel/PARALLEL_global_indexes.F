@@ -19,15 +19,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,EH_gas,X,RESET)
+subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,mpi_comm_world,&
 &                        PARALLEL_cpu_mat_inversion,CPU_structure,master_cpu,&
 &                        PARALLEL_cpu_mat_diagonalization,PAR_Q_index,PAR_nQ,PAR_n_B_mat_elements,&
-&                        PAR_B_mat_index,PAR_nQP,PAR_nPlasma,PAR_QP_index,PAR_Plasma_index,PAR_INDEX_copy,&
+&                        PAR_B_mat_index,PAR_nQP,PAR_QP_index,PAR_INDEX_copy,&
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load,&
-&                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index
+&                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index
  use parallel_m,    ONLY:& ! LOGICALS
 &                        l_par_bse,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
 &                        HEAD_QP_cpu,HEAD_k_cpu
@@ -66,7 +66,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,EH_gas,X,RESET)
  use SC,            ONLY:SC_bands
  use real_time,     ONLY:B_mat_index
 #endif
- use plasma,        ONLY:plasma_gas,max_N_plasma_poles
  use electrons,     ONLY:levels
  use stderr,        ONLY:intc
  use com,           ONLY:error
@@ -79,13 +78,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,EH_gas,X,RESET)
  type(levels)               ::E
  type(bz_samp)              ::Xk,q
  character(*)               ::ENVIRONMENT
- type(plasma_gas), optional ::EH_gas
  type(X_t), optional        ::X
  logical,   optional        ::RESET
  !
  ! Work Space
  !
- integer          :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2,N_poles
+ integer          :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2
  logical          :: reset_all
  character(10)    :: WHAT
  !
@@ -573,23 +571,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,EH_gas,X,RESET)
    call PARALLEL_live_message("Q(bz)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1),TOTAL=q%nbz,&
 &                             NCPU=PAR_COM_Q_INDEX%n_CPU)
-   !
-   !.........................................................................
-   !   "qp"  -> Plasma (J)
-   !.........................................................................
-   !
-   N_poles=max_N_plasma_poles
-   if(present(EH_gas)) N_poles=EH_gas%max_N_poles
-   !
-	 call PARALLEL_index(PAR_IND_Plasma,(/N_poles/),COMM=PAR_COM_Plasma_INDEX)
-	 PAR_IND_Plasma_ID=PAR_COM_Plasma_INDEX%CPU_id
-	 PAR_nPlasma=PAR_IND_Plasma%n_of_elements(PAR_IND_Plasma_ID+1)
-	 !
-	 allocate(PAR_Plasma_index(N_poles)) 
-	 call Build_up_index(PAR_IND_Plasma,N_poles,PAR_Plasma_index,PAR_nPlasma)
-	 !
-	 call PARALLEL_live_message("Plasma gas",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_nPlasma,TOTAL=N_poles,&
-&                               NCPU=PAR_COM_Plasma_INDEX%n_CPU)
    !
    !.........................................................................
    !   "qp"  -> Bp_mat (m,m')

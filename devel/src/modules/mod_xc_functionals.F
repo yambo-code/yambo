@@ -70,25 +70,17 @@ module xc_functionals
       use com,           ONLY:msg,warning
       use libxc_funcs_m, ONLY: XC_LDA_X, XC_LDA_C_PW
       implicit none
-      type(levels), intent(in)  ::en
-      type(bz_samp), intent(in) ::Xk
+      type(levels),  intent(in) :: en
+      type(bz_samp), intent(in) :: Xk
       integer, intent(inout)    :: KIND,FUNCTIONAL
       integer, intent(in)       :: ORDER
       real(SP), intent(inout),optional :: EXX_FRACTION
     end subroutine XC_potential_driver
     !
     subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
-      use pars,          ONLY:SP,DP,PI,RZERO
+      use pars,          ONLY:SP
       use R_lattice,     ONLY:bz_samp
-      use D_lattice,     ONLY:DL_vol, alat
-      use com,           ONLY:msg,warning
-#if defined _RT
-      use SC,            ONLY:rho_n
-#endif
-      use electrons,     ONLY:levels,n_spin,n_spinor
-      use FFT_m,         ONLY:fft_size
-      use wrapper,        ONLY:real_V_dot_V
-      use xc_f90_lib_m   ,  ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
+      use electrons,     ONLY:levels
       implicit none
       type(levels) ::en
       type(bz_samp)::Xk

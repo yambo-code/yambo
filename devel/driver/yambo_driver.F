@@ -188,12 +188,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  if (l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))) call XCo_driver(en,k,Xk,q)
  !
- ! Electron-Hole Plasma
- !======================
-#if defined _RT
- if (l_elel_scatt) call Plasma_driver(en,k,q)
-#endif
- !
  ! EXTENDED COLLISIONS (HF & COHSEX)
  !===================================
 #if defined _SC 

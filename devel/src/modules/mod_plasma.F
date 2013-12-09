@@ -33,13 +33,12 @@ module plasma
  !
  ! plasma_grid: (ipole_cg,iqbz,2)=(J,iq) --> 2=(ipole1,ipole2)=extrema on the big grid
  !
- integer   :: max_N_Plasma_poles
+ integer   :: N_plasma_poles_CPU_resolved = 0
+ integer   :: N_plasma_poles_global = 0
  real(SP)  :: Plasma_redux_percent
  !
  type plasma_gas
-   integer                   ::  max_N_poles
    real(SP)                  ::  redux_percent
-   !
    integer, allocatable      ::  N_poles(:)       ! iqbz
    integer, allocatable      ::  tab(:,:,:)       ! iJ,iqbz,2
    integer, allocatable      ::  tab_m1(:,:,:)    ! i_qp,i_pbz,i_qpbz
@@ -61,8 +60,8 @@ module plasma
      !
      if(.not.allocated(Gas%N_poles)) allocate(Gas%N_poles(DIM_(1)))
      !
-     if(.not.allocated(Gas%tab).and.Gas%max_N_poles>0) then       
-       allocate(Gas%tab(Gas%max_N_poles,DIM_(2),2))
+     if(.not.allocated(Gas%tab).and.N_plasma_poles_CPU_resolved>0) then       
+       allocate(Gas%tab(N_plasma_poles_CPU_resolved,DIM_(2),2))
        call mem_est("Plasma_tab")
      endif
      !

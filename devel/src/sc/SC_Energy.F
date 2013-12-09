@@ -29,7 +29,7 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_sp_pol,n_spin,nel
  use parallel_m,     ONLY:master_cpu
- use xc_functionals, ONLY:V_xc,E_xc
+ use xc_functionals, ONLY:V_xc,E_xc,XC_potential_driver
  use FFT_m,          ONLY:fft_size
  use SC,             ONLY:local_V,V_hartree_sc,SC_kind,SC_xc_functional,E_bare_Ef
  use IO_m,           ONLY:IO_and_Messaging_switch

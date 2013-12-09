@@ -1,4 +1,4 @@
-!
+!,XC_potential_driver
 ! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
@@ -41,7 +41,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK
  use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
-&                         XC_LDA_X,XC_CORRELATION
+&                         XC_LDA_X,XC_CORRELATION,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional
  implicit none
  type(levels) ::Xen,En
@@ -65,7 +65,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  ! ACFDT
  !
- integer       ::iw,il
+ integer       ::iw,il,FUNCTIONAL_,KIND_
  real(SP)      ::Ex_LDA,Ec_LDA,dEc_LDA,ACFDT_EXX,ACFDT_Ec,sug_E_rng
  type(ggwinfo)    ::isc
  type(PP_indexes) ::plw
@@ -96,21 +96,26 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  allocate(E_xc(fft_size),rho(fft_size))
  call el_density(Xen,Xk,rho,.false.)
  !
- call XC_potential_driver(Xen,Xk,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,0)
+ KIND_=XC_EXCHANGE_CORRELATION
+ FUNCTIONAL_=XC_LDA_C_KP
+ call XC_potential_driver(Xen,Xk,KIND_,FUNCTIONAL_,0)
 #if defined _DOUBLE
  dEc_LDA=ddot(fft_size,rho,1,E_xc,1)
 #else 
  dEc_LDA=sdot(fft_size,rho,1,E_xc,1)
 #endif
  !
- call XC_potential_driver(Xen,Xk,XC_EXCHANGE,XC_LDA_X,0)
+ KIND_=XC_EXCHANGE
+ FUNCTIONAL_=XC_LDA_X
+ call XC_potential_driver(Xen,Xk,KIND_,FUNCTIONAL_,0)
 #if defined _DOUBLE
  Ex_LDA=ddot(fft_size,rho,1,E_xc,1)
 #else 
  Ex_LDA=sdot(fft_size,rho,1,E_xc,1)
 #endif
  !
- call XC_potential_driver(Xen,Xk,XC_CORRELATION,WF_xc_functional,0)
+ FUNCTIONAL_=XC_CORRELATION
+ call XC_potential_driver(Xen,Xk,KIND_,WF_xc_functional,0)
 #if defined _DOUBLE
  Ec_LDA=ddot(fft_size,rho,1,E_xc,1)
 #else 

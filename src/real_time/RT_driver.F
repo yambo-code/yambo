@@ -212,6 +212,7 @@ subroutine RT_driver(E,X,k,q)
  do while (.not.l_Dynamics_is_over)
    !
    it=it+1
+   it_now=it   ! used in RESTART
    !
    ! Steps & times ...
    !===================
@@ -255,20 +256,11 @@ subroutine RT_driver(E,X,k,q)
    ! End dynamics ?
    !===============
    if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.
+   !
    if (stop_now(.FALSE.)) then
      NE_steps=((NE_i_time-1)/RT_IO_G_steps)*RT_IO_G_steps+1
      l_Dynamics_is_over=.TRUE.
    endif
-   !
-   ! Write DBs
-   !===========
-   it_now=it ! used in RESTART
-   !
-   call set_real_printed_length()
-   call IO_and_Messaging_switch("-fragments_IO_log")
-   call RT_databases_IO(E,it)
-   call IO_and_Messaging_switch("+fragments_IO_log")
-   call set_real_printed_length(f_length=10,g_length=10)  
    !
    ! Current and Polarization
    !==========================
@@ -309,6 +301,14 @@ subroutine RT_driver(E,X,k,q)
      call RT_mean_carrier_lifetimes(G_lesser(:,:,:,it_mem),E,k)
      call RT_output('life',TIME=NE_time/FS2AUT)
    endif
+   !
+   ! Write DBs
+   !===========
+   call set_real_printed_length()
+   call IO_and_Messaging_switch("-fragments_IO_log")
+   call RT_databases_IO(E,it)
+   call IO_and_Messaging_switch("+fragments_IO_log")
+   call set_real_printed_length(f_length=10,g_length=10)  
    !
    ! Integration
    !=============

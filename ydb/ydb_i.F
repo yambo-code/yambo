@@ -43,7 +43,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  character(schlen)::rstr_piece(n_max_pieces),known_runlevels(200)
  character(lchlen)::PATH,file_name,host_name,file_PATH,runl_PATH,desc_PATH,vers_PATH,db_PATH
  integer          ::hn_len,n_pieces,i1,i_random,i_err,ID,o_random
- integer          ::dz(8),year,day,month,hour,minutes,i_ref,DB_i_ref_,DB_id_
+ integer          ::dz(8),year,day,month,hour,minutes,i_ref,DB_id_
  integer          ::year_now,day_now,month_now
  logical          ::l_found,l_overwrite,l_empty_id
  character(5)     ::cz
@@ -187,7 +187,6 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  !
  i_ref=0
  DB_id_=0
- DB_i_ref_=0
  if (check_for_word("ref")>0) then
    iif=0
    read(rstr_piece(check_for_word("ref")+1),'(i)') i_ref
@@ -225,17 +224,13 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
    iif=0
    if (DB_i_ref(DB_id_)>0) then
      call mk_dir("ID"//trim(intc(DB_i_ref(DB_id_))))
-     call get_ymdf(year,month,day,file_name,DB_i_ref(DB_id_))
+     call get_ymdf(year,month,day,file_name,DB_i_ref(DB_id_),0)
      call build_up_paths(year,month,day,DB_i_ref(DB_id_),0,trim(file_name)) 
      call cp_file(trim(file_PATH),"ID"//trim(intc(DB_i_ref(DB_id_)))//"/",i_err)
      call LIVE_message('Coping '//trim(file_name)//" from ID"//trim(intc(DB_i_ref(DB_id_))),"n","n","%s")
      do i1=1,n_max_DB_elements
        if (DB_i_ref(i1)==DB_i_ref(DB_id_)) then
          call mk_dir("ID"//trim(intc(DB_i_ref(DB_id_)))//"/ID"//trim(intc(DB_id(i1))))
-         call get_ymdf(year,month,day,file_name,DB_id(i1))
-         year=DB_year(i1)
-         month=DB_month(i1)
-         day=DB_day(i1)
          call build_up_paths(year,month,day,DB_i_ref(i1),DB_id(i1),trim(DB_file(i1))) 
          call cp_file(trim(file_PATH),"ID"//trim(intc(DB_i_ref(DB_id_)))//"/ID"//trim(intc(DB_id(i1)))//"/",i_err)
          call LIVE_message('Coping '//trim(DB_file(i1))//" from ID"//trim(intc(DB_id(i1))),"n","","%s")
@@ -257,7 +252,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  if (check_for_word("view")>0) then
    iif=0
    if (DB_i_ref(DB_id_)>0) then
-     call get_ymdf(year,month,day,file_name,DB_i_ref(DB_id_))
+     call get_ymdf(year,month,day,file_name,0,DB_i_ref(DB_id_))
      call build_up_paths(year,month,day,DB_i_ref(DB_id_),&
 &                        DB_id(DB_id_),trim(DB_file(DB_id_))) 
      iif=1
@@ -380,11 +375,11 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
      enddo
    end function
    !
-   subroutine get_ymdf(year_,month_,day_,file_,ID)
-     integer          ::year_,month_,day_,ID,j1
+   subroutine get_ymdf(year_,month_,day_,file_,ID,IREF)
+     integer          ::year_,month_,day_,ID,j1,IREF
      character(lchlen)::file_
      do j1=1,n_max_DB_elements 
-       if(DB_id(j1)==ID) then
+       if( (ID>0.and.DB_id(j1)==ID) .or. (IREF>0.and.DB_i_ref(j1)==IREF)) then
          year_=DB_year(j1)
          month_=DB_month(j1)
          day_=DB_day(j1)

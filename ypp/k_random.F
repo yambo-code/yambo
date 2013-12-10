@@ -34,7 +34,7 @@ subroutine k_random(Xk,Xen)
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
 &                              BZ_RIM_tot_nkpts,n_sp_pol,BZ_RIM_max_filling,&
-&                              BZ_RIM_ipol_weight,E_reset
+&                              BZ_RIM_ipol_weight,E_reset,RIM_is_symmetry_expanded
  use LIVE_t,              ONLY:live_timing
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  !
@@ -50,7 +50,7 @@ subroutine k_random(Xk,Xen)
  integer      ::i1,ik_near,i2,RIM_nk,ik_bz,ik_RIM
  character(lchlen) :: k_rand_fname
  character(schlen) :: dump
- logical           :: No_Weight,l_skip_check,USE_BZ_RIM
+ logical           :: No_Weight,l_skip_check
  real(SP), allocatable :: rand_E(:,:,:)
  !
  ! Random Generator
@@ -129,7 +129,7 @@ subroutine k_random(Xk,Xen)
  !
  call parser('NoWeights',No_Weight)
  call parser('SkipCheck',l_skip_check)
- call parser('BZExpand',USE_BZ_RIM)
+ call parser('BZExpand',RIM_is_symmetry_expanded)
  !
  impose_gamma_radius=gamma_radius>0.
  !
@@ -291,7 +291,7 @@ subroutine k_random(Xk,Xen)
  RIM_nk=RIM_k(i_db_merge)%nibz
  BZ_RIM_tot_nkpts=RIM_k(i_db_merge)%nibz+Xk%nbz-1
  !
- if (USE_BZ_RIM) then
+ if (RIM_is_symmetry_expanded) then
    !
    call section('+','BZ RIM K-points expansion ...')
    !
@@ -339,7 +339,7 @@ subroutine k_random(Xk,Xen)
        cycle
      endif
      !
-     if (USE_BZ_RIM) then
+     if (RIM_is_symmetry_expanded) then
        ik_near=k_the_nearest(RIM_k(i_db_merge)%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
        BZ_RIM_nkpt(ik_near)=BZ_RIM_nkpt(ik_near)+1
        if (allocated(BZ_RIM_table)) BZ_RIM_table(ik_near,BZ_RIM_nkpt(ik_near))=RIM_k(i_db_merge)%sstar(i1,1)
@@ -365,7 +365,7 @@ subroutine k_random(Xk,Xen)
  !
  allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
  !
- if (USE_BZ_RIM) then
+ if (RIM_is_symmetry_expanded) then
    !
    allocate(Xk%pt_RIM(BZ_RIM_tot_nkpts,3))
    !

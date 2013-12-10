@@ -124,7 +124,6 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  call RT_occupations_fit(en,k,T_fit)
  !
- !
  ! Andrea [21/12/2011]
  ! 
  ! In a semiconductor/isolant delta_G is defined as:

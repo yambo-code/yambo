@@ -77,6 +77,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesse
      ! Extra condition: the EP scattering cannot cross the gap
      ! This could be replaced by a more general condition in RT_G_retarded_convolution
      ! All other conditions have been already moved in RT_G_retarded_convolution
+     !
      if (i_n_shift<=n_full_bands.and.i_np_shift>  n_full_bands) cycle
      if (i_n_shift> n_full_bands.and.i_np_shift<= n_full_bands) cycle
      !

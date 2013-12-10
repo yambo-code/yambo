@@ -128,16 +128,9 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N,EH_gas)
      !
    endif
    !
-   ! DEBUG <
-   !write(*,*) 'iq= ',iqbz,Coarse_grid_N,sum(bare_grid_N)
-   ! DEBUG >
    do i_cg=1,EH_gas%N_poles(iqbz)
      n_poles=sum(bare_grid_N(1:i_cg-1))
      EH_gas%grid(i_cg,i_q_mem,:)=(/n_poles+1,n_poles+bare_grid_N(i_cg)/)
-     ! DEBUG <
-     !write(*,*) 'Pole corsed grid= ',i_cg,poles(n_poles+1)
-     !write(*,*) 'Associated poles= ',bare_grid_N(i_cg),poles(n_poles+2:n_poles+bare_grid_N(i_cg))
-     ! DEBUG >
    enddo
    !
    deallocate(ordered_grid_index,coarse_grid_index,bare_grid_N,coarse_grid_Pt)

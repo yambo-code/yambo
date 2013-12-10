@@ -49,7 +49,7 @@ subroutine RT_occupations_analyze(k,E)
  integer               :: ik,ib,i_spin,i_s,i_RT,i_T,n_T_steps,i_fp,n1,n_skip_time
  integer               :: ik_rim,ik_E_rim,ik_RT_rim
  real(SP)              :: io_Time,data_to_plot(10),Plot_deltaT
- real(SP), allocatable :: RT_occupations_sum(:,:),RT_occ(:,:),RT_E(:)
+ real(SP), allocatable :: RT_occupations_sum(:,:),RT_occ(:,:),RT_gamma(:,:,:),RT_E(:)
  character(schlen)     :: titles(8),specs(8,2)
  logical               :: l_ELPH_lifetimes,l_group_occ
  integer,     external :: RT_occupations_check,RT_k_grid
@@ -154,11 +154,16 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! F(it) for each (ik,ib)
  !
- allocate(RT_occupations_sum(3,n_T_steps)) 
- RT_occupations_sum=0._SP
+ if(l_RT_occ_Plot) then
+   allocate(RT_occupations_sum(3,n_T_steps)) 
+   RT_occupations_sum=0._SP
+ endif
  !
- allocate(RT_occ(RT_nstates,n_T_steps))
- RT_occ=0._SP
+ if(l_RT_occ_Fit) then
+   allocate(RT_occ(RT_nstates,n_T_steps),RT_gamma(RT_nstates,n_T_steps,6))
+   RT_occ=0._SP
+   RT_gamma=0._SP
+ endif
  !
  do i_T=1,n_T_steps
    !
@@ -193,36 +198,10 @@ subroutine RT_occupations_analyze(k,E)
        !
        i_RT=i_RT+1
        !
-       ! Prepare f(eps_{ik,ib}) for i_T=it_report
-       !
-       RT_occ(i_RT,i_T)=RT_occupations(ib,ik_rim)     
-       !
-       if (.not.l_RT_occ_Plot) cycle
-       !
-       if(.not.l_group_occ) then
-         output_fname='YPP-RT_occupations_k'//trim(intc(ik_rim))//'_b'//trim(intc(ib))
-         if (i_T==1) call open_file() 
-       endif
-       !
-       RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+&
-&        RT_occupations(ib,ik_rim)*k%weights(ik)/real(RT_NK_ibz(ik),SP)
-       !
-       if (ib==SC_bands(1).and.SC_bands(1)>1) &
-&         RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+ &
-&           spin_occ*k%weights(ik)*real(SC_bands(1)-1)/real(RT_NK_ibz(ik),SP)
-       !
-       data_to_plot(1)=io_TIME/FS2AUT
        if(.not.l_group_occ .or. ik_rim==RT_ibz_coo(ik,1).and.l_group_occ) data_to_plot(2:)=0._SP
        !
-       if (ib<=E%nbf) data_to_plot(2)=data_to_plot(2)+(RT_occupations(ib,ik_rim)-spin_occ)*k%weights(ik)
-       if (ib> E%nbf) data_to_plot(2)=data_to_plot(2)+ RT_occupations(ib,ik_rim)          *k%weights(ik)
-       !
-       if(.not.l_group_occ .or. ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) then
-         data_to_plot(2)=data_to_plot(2)/real(RT_NK_ibz(ik),SP)
-         if (ib<=E%nbf) RT_occupations_sum(1,i_T)=RT_occupations_sum(1,i_T)+data_to_plot(2)
-         if (ib> E%nbf) RT_occupations_sum(2,i_T)=RT_occupations_sum(2,i_T)+data_to_plot(2)
-       endif
-       !
+       ! Lifetimes
+       !===========
        n1=1
        if (l_ELPH_lifetimes) then
          n1=5
@@ -237,6 +216,43 @@ subroutine RT_occupations_analyze(k,E)
          if (l_ELPH_lifetimes) n1=7
          data_to_plot(n1:n1+1)=data_to_plot(n1:n1+1)+ &
 &          (/E_E_Hole_lifetime(ib,ik_rim),E_E_Electron_lifetime(ib,ik_rim)/)*HA2EV*1000.
+       endif
+       !
+       if(ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) &
+&        data_to_plot(3:)=data_to_plot(3:)/real(RT_NK_ibz(ik),SP)
+       !
+       ! Prepare f(eps_{ik,ib}) for i_T=it_report
+       !
+       if(l_RT_occ_Fit) then
+         RT_occ(i_RT,i_T)=RT_occupations(ib,ik_rim)
+         RT_gamma(i_RT,i_T,1:n1-1)=data_to_plot(3:n1+1)
+       endif
+       !
+       if (.not.l_RT_occ_Plot) cycle
+       !
+       if(.not.l_group_occ) then
+         output_fname='YPP-RT_occupations_k'//trim(intc(ik_rim))//'_b'//trim(intc(ib))
+         if (i_T==1) call open_file() 
+       endif
+       !
+       ! Occupations
+       !=============
+       RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+&
+&        RT_occupations(ib,ik_rim)*k%weights(ik)/real(RT_NK_ibz(ik),SP)
+       !
+       if (ib==SC_bands(1).and.SC_bands(1)>1) &
+&         RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+ &
+&           spin_occ*k%weights(ik)*real(SC_bands(1)-1)/real(RT_NK_ibz(ik),SP)
+       !
+       data_to_plot(1)=io_TIME/FS2AUT
+       !
+       if (ib<=E%nbf) data_to_plot(2)=data_to_plot(2)+(RT_occupations(ib,ik_rim)-spin_occ)*k%weights(ik)
+       if (ib> E%nbf) data_to_plot(2)=data_to_plot(2)+ RT_occupations(ib,ik_rim)          *k%weights(ik)
+       !
+       if(.not.l_group_occ .or. ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) then
+         data_to_plot(2)=data_to_plot(2)/real(RT_NK_ibz(ik),SP)
+         if (ib<=E%nbf) RT_occupations_sum(1,i_T)=RT_occupations_sum(1,i_T)+data_to_plot(2)
+         if (ib> E%nbf) RT_occupations_sum(2,i_T)=RT_occupations_sum(2,i_T)+data_to_plot(2)
        endif
        !
        if(ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) &
@@ -276,11 +292,14 @@ subroutine RT_occupations_analyze(k,E)
    call of_open_close(trim(output_fname))
  endif
  !
- ! f(eps_{ik,ib})
+ ! f(eps_{ik,ib}), gamma(eps_{ik,ib})
  !
- if(l_RT_occ_Fit) call YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
+ if(l_RT_occ_Fit) call YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,n1-1,n_T_steps)
  !
- deallocate(RT_E,RT_occ,RT_occupations_sum)
+ if (allocated(RT_E))               deallocate(RT_E)
+ if (allocated(RT_occ))             deallocate(RT_occ)
+ if (allocated(RT_gamma))           deallocate(RT_gamma)
+ if (allocated(RT_occupations_sum)) deallocate(RT_occupations_sum)
  !
  if(.not.l_RT_uses_E_rim) deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_Nk_ibz)
  !

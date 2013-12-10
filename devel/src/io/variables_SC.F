@@ -372,16 +372,18 @@ integer function variables_SC(ID,local_description,what)
    !
    ! G retarded variables
    !======================
-   call io_elemental(ID,VAR="G_retarded_BASE",VAR_SZ=1,MENU=0) 
-   call io_elemental(ID,I0=N_Gr_descs)
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   do i1=1,N_Gr_descs
-     write (ch,'(a,i5.5)') 'G_ret_DESC_strings_',i1
-     call io_elemental(ID,VAR=trim(ch),CH0="",VAR_SZ=1,MENU=0)
-     i_desc=i_desc+1
-     call io_elemental(ID,CH0=Gr_description(i1),VAR='',DESCRIPTION=local_description(i_desc))
+   if (ver_is_gt_or_eq(ID,revision=2877)) then
+     call io_elemental(ID,VAR="G_retarded_BASE",VAR_SZ=1,MENU=0) 
+     call io_elemental(ID,I0=N_Gr_descs)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   enddo
+     do i1=1,N_Gr_descs
+       write (ch,'(a,i5.5)') 'G_ret_DESC_strings_',i1
+       call io_elemental(ID,VAR=trim(ch),CH0="",VAR_SZ=1,MENU=0)
+       i_desc=i_desc+1
+       call io_elemental(ID,CH0=Gr_description(i1),VAR='',DESCRIPTION=local_description(i_desc))
+       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     enddo
+   endif
    !
    ! RIM
    !======================

@@ -19,13 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
+subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  ! 
  ! FIT the occupations with a Gauss–Newton algorithm
  !
  use units,          ONLY:HA2EV,HA2KEL,FS2AUT
- use pars,           ONLY:SP,lchlen
- use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT
+ use pars,           ONLY:SP,lchlen,schlen
+ use YPP,            ONLY:OCC_T_range,OCC_deltaT
  use SC,             ONLY:SC_bands,n_SC_descriptions,SC_description, &
 &                         RT_nk,RT_nstates,RT_ibz_coo
  use QP_m,           ONLY:QP_table,QP_n_states
@@ -38,9 +38,10 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
  !
  implicit none
  !
- integer               :: n_T_steps
+ integer               :: n_T_steps,ngamma
  real(SP)              :: RT_E(RT_nstates)
  real(SP)              :: RT_occ(RT_nstates,n_T_steps)
+ real(SP)              :: RT_gamma(RT_nstates,n_T_steps,ngamma)
  !
  integer, parameter    :: max_iter=10000,fit_dim=1000,nmax_file_report=16
  real(SP)              :: RT_occ_fit(fit_dim,n_T_steps,2),RT_E_fit(fit_dim,2)
@@ -48,16 +49,17 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
  ! Work Space
  !
  real(SP)              :: io_Time
- real(SP)              :: RT_occ_tmp(RT_nstates)
+ real(SP)              :: TMP_vec(RT_nstates)
  real(SP)              :: err_fit(n_T_steps,2)
  real(SP)              :: T_fit(n_T_steps,2)
  real(SP)              :: Ef_fit(n_T_steps,2)
  ! 
- integer  :: ifit,i_s,i_RT,ik,ik_rim,ib,i1,i_T,i2,n1,n2,i_fp,i_spin
+ integer  :: ifit,i_s,i_RT,ik,ik_rim,ib,i1,i_T,i2,n1,n2,i_fp,i_spin,igamma
  integer  :: nfound(3)
  integer  :: E_sort_index(RT_nstates)
  !
  character(10)     ::titles(n_T_steps+1),data_ch(n_T_steps+1,4,2)
+ character(schlen) ::output_fname,gamma_fname(ngamma)
  !
  integer, external :: Fermi_fnc_fit
  !
@@ -67,8 +69,12 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
  !
  call sort(RT_E,indx=E_sort_index)
  do i1=1,n_T_steps
-   RT_occ_tmp(:)=RT_occ(E_sort_index(:),i1)
-   RT_occ(:,i1)=RT_occ_tmp(:)
+   TMP_vec=RT_occ(E_sort_index(:),i1)
+   RT_occ(:,i1)=TMP_vec
+   do i2=1,ngamma
+     TMP_vec=RT_gamma(E_sort_index(:),i1,i2)
+     RT_gamma(:,i1,i2)=TMP_vec
+   enddo
  enddo
  !
  do i1=1,n_T_steps
@@ -115,9 +121,7 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
    !
    output_fname='YPP-RT_occupation_distribution_DATA'
    if(n_T_steps>nmax_file_report) output_fname=trim(output_fname)//'_grp'//trim(intc(i2/nmax_file_report+1))
-   !
    call of_open_close(trim(output_fname),'ot')
-   !
    do i_fp=1,n_SC_descriptions
      call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
    enddo
@@ -127,6 +131,23 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
    call msg('o '//trim(output_fname),'#')
    call msg('o '//trim(output_fname),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
    call msg('o '//trim(output_fname),'#')
+   !
+   do igamma=1,ngamma
+     !
+     gamma_fname(igamma)='YPP-RT_gamma_distribution'//trim(intc(igamma))
+     if(n_T_steps>nmax_file_report) gamma_fname(igamma)=trim(gamma_fname(igamma))//'_grp'&
+&                                                       //trim(intc(i2/nmax_file_report+1))
+     call of_open_close(trim(gamma_fname(igamma)),'ot')
+     do i_fp=1,n_SC_descriptions
+       call msg('o '//trim(gamma_fname(igamma)),'#',trim(SC_description(i_fp)),INDENT=0)
+     enddo
+     !
+     call msg('o '//trim(gamma_fname(igamma)),'#')
+     call msg('o '//trim(gamma_fname(igamma)),'# Lifetimes distribution at different times (f@ time)')
+     call msg('o '//trim(gamma_fname(igamma)),'#')
+     call msg('o '//trim(gamma_fname(igamma)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(gamma_fname(igamma)),'#')
+   enddo
    !
    i_RT=0
    do i_s=1,QP_n_states
@@ -144,13 +165,21 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
        i_RT=i_RT+1
        !
        call msg('o '//trim(output_fname),'',(/RT_E(i_RT)*HA2EV,&
-    &            RT_occ(i_RT,n1:n2)/),INDENT=-2,USE_TABS=.true.)
+&                RT_occ(i_RT,n1:n2)/),INDENT=-2,USE_TABS=.true.)
+       !
+       do igamma=1,ngamma
+         call msg('o '//trim(gamma_fname(igamma)),'',(/RT_E(i_RT)*HA2EV,&
+&                  RT_gamma(i_RT,n1:n2,igamma)/),INDENT=-2,USE_TABS=.true.)
+       enddo
        !
      enddo
      !
    enddo
    !
    call of_open_close(trim(output_fname))
+   do igamma=1,ngamma
+     call of_open_close(trim(gamma_fname(igamma)))
+   enddo
    !
    do ifit=1,2
      !

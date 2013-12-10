@@ -163,4 +163,12 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,EH_gas,G_lesser)
    !
  enddo
  !
+ if (.not.l_RT_uses_E_RIM) return
+ !
+ do i_k_rim=RT_ibz_coo(i_k,1)+1,RT_ibz_coo(i_k,2)
+   E_E_Electron_lifetime(:,i_k_rim)= E_E_Electron_lifetime(:,RT_ibz_coo(i_k,1))
+   E_E_Hole_lifetime(:,i_k_rim)= E_E_Hole_lifetime(:,RT_ibz_coo(i_k,1))
+ enddo  
+ !
+ !
 end subroutine RT_Coulomb_relaxation

@@ -49,7 +49,7 @@ subroutine PLASMA_build_up(E,k,q)
  !
  N_poles_bare                = k%nbz*n_sp_pol*(SC_bands(2)-SC_bands(1)+1)**2
  N_plasma_poles_global       = N_poles_bare
- N_plasma_poles_CPU_resolved = N_plasma_poles_global
+ N_plasma_poles_CPU_resolved = N_poles_bare
  !
  do iplasma=1,1
    !
@@ -89,8 +89,8 @@ subroutine PLASMA_build_up(E,k,q)
  enddo
  !
  do iplasma=1,1
-   write (ch,'(3a)') "[PLASMA #"//trim(intc(iplasma))//"] Poles reduction (ALL q):"//&
-&        trim(intc(N_poles_bare))//" => "//trim(intc(N_plasma_poles_CPU_resolved))
+   write (ch,'(3a)') "[PLASMA #"//trim(intc(iplasma))//"] Poles reduction (ALL q): "//&
+&        trim(intc(N_poles_bare*q%nbz))//" => "//trim(intc(sum(EH_gas(iplasma)%N_poles)))
    call msg('rs',trim(ch))
  enddo
  !

@@ -26,7 +26,6 @@ subroutine RT_Fluence()
  use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,FS2AUT
  use real_time,      ONLY:RT_step,NE_steps,Fluence
  use fields,         ONLY:Efield,small_a,theta_function,ef_i_time,i_Pump
- use LIVE_t,         ONLY:live_timing
  !
  implicit none
  ! 
@@ -48,10 +47,6 @@ subroutine RT_Fluence()
  ! |E(t)|^2= Efield(i_Pump)%amplitude**2 * | small_a' theta + small_a theta' |^2
  !
  I=0._SP
- !
- return
- !
- call live_timing('Fluence:',NE_steps-ef_i_time(i_Pump))
  !
  do it=ef_i_time(i_Pump)+1,NE_steps
    !
@@ -83,11 +78,7 @@ subroutine RT_Fluence()
    if(it<1001) cycle
    if(abs((Fluence(it)-Fluence(it-1000))/Fluence(it))<1.E-5) exit
    !
-   call live_timing(steps=1)
-   !
  enddo
- !
- call live_timing()
  !
  if ( it< (NE_steps+1) ) it=it-1000
  if ( it==(NE_steps+1) ) it=it-1

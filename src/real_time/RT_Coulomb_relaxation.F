@@ -21,7 +21,7 @@
 !
 subroutine RT_Coulomb_relaxation(i_k,E,k,q,EH_gas,G_lesser)
  !  
- use pars,            ONLY:SP,cI,rZero,cZero,pi,tol2
+ use pars,            ONLY:SP,cI,rZero,cZero,pi
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,bz_samp
  use SC,              ONLY:RT_ibz_coo,SC_bands,RT_nk,RT_Nk_ibz,&
@@ -142,33 +142,21 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,EH_gas,G_lesser)
        !
        pre_factor=(4._SP*pi)**2._SP*GW_NEQ_collisions(i_qp1_mem)%v3r(i_J_mem,1,i_q_mem)
        !
-       do i_k_rim=RT_ibz_coo(i_k,1),RT_ibz_coo(i_k,1)
-         do i_kmq_rim=RT_ibz_coo(i_kmq,1),RT_ibz_coo(i_kmq,1)
-           !
-           P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')
-           !
-           if(abs(P_pl_abs)<tol2) cycle
-           !
-           E_E_Hole_lifetime(i_n,i_k_rim)=E_E_Hole_lifetime(i_n,i_k_rim)+&
+       i_k_rim=RT_ibz_coo(i_k,1)
+       !
+       P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')
+       !
+       if(abs(P_pl_abs)<1.E-7) cycle
+       !
+       E_E_Hole_lifetime(i_n,i_k_rim)=E_E_Hole_lifetime(i_n,i_k_rim)+&
 &                                          pre_factor*f_kmq*P_pl_abs*N_plasma(2)
-           E_E_Electron_lifetime(i_n,i_k_rim)=E_E_Electron_lifetime(i_n,i_k_rim)+&
+       E_E_Electron_lifetime(i_n,i_k_rim)=E_E_Electron_lifetime(i_n,i_k_rim)+&
 &                                          pre_factor*(1.-f_kmq)*P_pl_abs*N_plasma(1)
-           !
-         enddo
-       enddo
        !
      enddo
      !
    enddo
    !
  enddo
- !
- if (.not.l_RT_uses_E_RIM) return
- !
- do i_k_rim=RT_ibz_coo(i_k,1)+1,RT_ibz_coo(i_k,2)
-   E_E_Electron_lifetime(:,i_k_rim)= E_E_Electron_lifetime(:,RT_ibz_coo(i_k,1))
-   E_E_Hole_lifetime(:,i_k_rim)= E_E_Hole_lifetime(:,RT_ibz_coo(i_k,1))
- enddo  
- !
  !
 end subroutine RT_Coulomb_relaxation

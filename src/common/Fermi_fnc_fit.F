@@ -39,13 +39,13 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,RT_E_fit,RT_occ_fit,T_fit,Ef_fit,err_
  real(SP),intent(in)   :: RT_occ(RT_nstates)
  !
  integer, parameter    :: fit_dim=1000
- real(SP),intent(out)  :: RT_occ_fit(fit_dim,2)
- real(SP),intent(out)  :: RT_E_fit(fit_dim,2)
- logical, intent(in)   :: l_T_max
+ real(SP), intent(out) :: RT_occ_fit(fit_dim,2)
+ real(SP), intent(out) :: RT_E_fit(fit_dim,2)
+ logical,  intent(in)  :: l_T_max
  !
- real(SP)              :: T_fit(2)
- real(SP)              :: Ef_fit(2)
- real(SP)              :: err_fit(2)
+ real(SP), intent(out) :: T_fit(2)
+ real(SP), intent(out) :: Ef_fit(2)
+ real(SP), intent(out) :: err_fit(4)
  !
  ! Work Space
  !
@@ -110,6 +110,10 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,RT_E_fit,RT_occ_fit,T_fit,Ef_fit,err_
  !
  do ifit=1,nfit
    !
+   ! I cannot fit over constant occupations
+   if( ifit==1 .and. all(RT_occ(1:last_occupied )==RT_occ(1))          ) cycle
+   if( ifit==2 .and. all(RT_occ(last_occupied+1:)==RT_occ(RT_nstates)) ) cycle
+   !
 2000 ntry=ntry+1
    !
    ! Starting point for high temperatures
@@ -124,6 +128,7 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,RT_E_fit,RT_occ_fit,T_fit,Ef_fit,err_
    !
    do i2=1,max_iter
      err_fit(ifit)=0._SP
+     err_fit(ifit+2)=0._SP
      x=0._SP
      Jacob=0._SP
      i_RT=0
@@ -148,12 +153,14 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,RT_E_fit,RT_occ_fit,T_fit,Ef_fit,err_
          x(i_RT)=RT_occ(i_RT)-Fermi_fnc(E_shifted,T_guess(ifit))*spin_occ
          Jacob(i_RT,1)=-Fermi_fnc_T_derivative(E_shifted,T_guess(ifit))*spin_occ
          Jacob(i_RT,2)=-Fermi_fnc_derivative(E_shifted,T_guess(ifit))*spin_occ
-         err_fit(ifit)=err_fit(ifit)+x(i_RT)**2._SP
+         err_fit(ifit)  =err_fit(ifit)+(x(i_RT)/spin_occ)**2._SP
+         err_fit(ifit+2)=max(err_fit(ifit+2),(x(i_RT)/spin_occ)**2._SP)
        enddo
        !
      enddo
      !
-     err_fit(ifit)=sqrt(err_fit(ifit))/real(RT_nstates,SP)
+     err_fit(ifit)  =sqrt(err_fit(ifit))/real(RT_nstates,SP)
+     err_fit(ifit+2)=sqrt(err_fit(ifit+2))
      !
      Jacob_sq=matmul(transpose(Jacob),Jacob)
      !
@@ -170,10 +177,12 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,RT_E_fit,RT_occ_fit,T_fit,Ef_fit,err_
      !write(*,*) Jacob_sq
      !write(*,*) Jacob_sq_m1
      !write(*,*) Fit_new
+     !write(*,*) err_fit
      !DEBUG>
      !
      if(any(isnan(Fit_new(:)))) exit
      if(any(Fit_new(:)==Fit_new(:)+1._SP)) exit
+     !if(all(Fit_new(:)==0._SP)) exit
      !
      T_fit(ifit)=T_guess(ifit)-Fit_new(1)
      Ef_fit(ifit)=Ef_guess(ifit)-Fit_new(2)

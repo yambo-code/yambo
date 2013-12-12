@@ -25,7 +25,7 @@ real function HyperbolicSecant_FT(E_center,Gamma_HS,alpha)
  ! evaluated at E_center, which correspond to the imaginary part of the Fourier 
  ! transform of 1/2*theta(t)*e^{-i*E_center}*sech^alpha(Gamma/alpha*t)
  !
- use pars,        ONLY:SP,pi,tol0
+ use pars,        ONLY:SP,pi,zero_dfl
  use com,         ONLY:error
  !
  implicit none
@@ -48,7 +48,7 @@ real function HyperbolicSecant_FT(E_center,Gamma_HS,alpha)
  endif
  !
  if(mod(alpha,2)==0) then
-   if(abs(x)>tol0) then
+   if(abs(x)>zero_dfl) then
      cosech_x=2._SP/(exp(x)-exp(-x))
      F2=(pi/2._SP)*(4._SP/Gamma_HS**2._SP)*E_center*cosech_x
    else

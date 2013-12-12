@@ -66,7 +66,7 @@ subroutine RT_driver(E,X,k,q)
  !
  integer           :: it,ik,ib,it_mem,it_mem_p1
  real(SP)          :: E_previous,E_now
- complex(SP)       :: on_the_fly_operators(10)
+ complex(SP)       :: on_the_fly_operators(9)
  !
  if (l_elph_scatt.and.l_elel_scatt) then
    call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph AND e-e scattering')
@@ -287,7 +287,7 @@ subroutine RT_driver(E,X,k,q)
 #endif
    !
    call RT_output('ene',real(on_the_fly_operators(1:5)),TIME=NE_time/FS2AUT)
-   call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time/FS2AUT)
+   call RT_output('dyn',real(on_the_fly_operators(5:9)),TIME=NE_time/FS2AUT)
    call RT_output('cur pol',TIME=NE_time/FS2AUT)
    if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
    !

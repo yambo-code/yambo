@@ -53,12 +53,12 @@ real(SP) function RT_G_retarded_convolution(EmEp,Ebose,WmWp,Wbose,Egap,Skind)
  contains
    !
    logical function Energy_Condition(E1,E2,Etot,Egap_)
-     use pars,       ONLY:tol2
      real(SP) :: E1,E2,Etot,Egap_
+     real(SP), parameter :: trash=1.E-7
      Energy_Condition=.true.
-     if ( abs(E1)  <tol2     ) Energy_Condition=.false.      ! C1a
-     if ( abs(E2)  <tol2     ) Energy_Condition=.false.      ! C1b
-     if ( abs(Etot)<tol2     ) Energy_Condition=.false.      ! C2
+     if ( abs(E1)  <1.E-7    ) Energy_Condition=.false.      ! C1a
+     if ( abs(E2)  <1.E-7    ) Energy_Condition=.false.      ! C1b
+     if ( abs(Etot)<1.E-7    ) Energy_Condition=.false.      ! C2
      if ( abs(Etot)>2.*Egap_ ) Energy_Condition=.false.      ! C3
      if (    E1/E2 >0._SP    ) Energy_Condition=.false.      ! C4a+C4b
    end function

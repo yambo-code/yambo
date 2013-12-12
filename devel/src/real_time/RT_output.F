@@ -24,12 +24,13 @@ subroutine RT_output(what,VALUEs,TIME,E)
  use units,          ONLY:HA2EV,HA2KEL
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close
- use SC,             ONLY:SC_description,n_SC_descriptions
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt
+ use SC,             ONLY:SC_description,n_SC_descriptions,it_now
  use fields,         ONLY:A_vecpot
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,l_Debye_TBose_update, &
-&                         l_NE_simulate_IP,RT_IO_output_steps,NE_i_time
+&                         l_NE_simulate_IP,RT_IO_output_steps,NE_i_time!,Fluence
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -49,9 +50,9 @@ subroutine RT_output(what,VALUEs,TIME,E)
  integer                  :: n1,i_f,i_fp,n_headings(n_output_files),next_file,i_order,i_c
  logical                  :: file_is_todo(n_output_files),open_files,initialize
  logical,           save  :: SC_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
- character(schlen)        :: headings(n_output_files,10),append_ch
+ character(schlen)        :: headings(n_output_files,11),append_ch
  character(2)             :: chart_string(3)
- real(SP)                 :: data_to_dump(20)
+ real(SP)                 :: data_to_dump(11)
  !
  if ( mod(NE_i_time-1,RT_IO_output_steps)/=0 ) return
  !
@@ -97,9 +98,11 @@ subroutine RT_output(what,VALUEs,TIME,E)
 &   file_name(next_file)=trim(append_ch)//'vector_potential'
  short_file_name(next_file)=trim(append_ch)//'vector_potential'
  n_headings(next_file)=10
+ !n_headings(next_file)=11
  headings(next_file,2:4 )=(/"A_x","A_y","A_z"/)
  headings(next_file,5:7 )=(/"A'_x","A'_y","A'_z"/)
  headings(next_file,8:10)=(/"A''_x","A''_y","A''_z"/)
+ !headings(next_file,11)="Fluence[kJ/cm^2]"
  next_file=next_file+1
  !
  if (open_files.and..not.file_already_opened(next_file)) &
@@ -114,15 +117,17 @@ subroutine RT_output(what,VALUEs,TIME,E)
  if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'dynamics'
  short_file_name(next_file)=trim(append_ch)//'dynamics'
- n_headings(next_file)=7
- if(l_Debye_TBose_update) n_headings(next_file)=n_headings(next_file)+1
+ n_headings(next_file)=4
+ if (l_elel_scatt.or.l_elph_scatt) n_headings(next_file)=n_headings(next_file)+2
+ if (l_Debye_TBose_update) n_headings(next_file)=n_headings(next_file)+1
  headings(next_file,2)="Total E[eV]"
- headings(next_file,3)="Fluence[kJ/cm^2]"
- headings(next_file,4)="N" 
- headings(next_file,5)="dG" 
- headings(next_file,6)="T(hol) [K]" 
- headings(next_file,7)="T(el)  [K]" 
- if(l_Debye_TBose_update) headings(next_file,8)="T(bose) [K]" 
+ headings(next_file,3)="N" 
+ headings(next_file,4)="dG"
+ if (l_elel_scatt.or.l_elph_scatt) then 
+   headings(next_file,5)="T(hol) [K]" 
+   headings(next_file,6)="T(el)  [K]" 
+   if (l_Debye_TBose_update) headings(next_file,7)="T(bose) [K]"
+ endif
  next_file=next_file+1
  !
  do i_order=0,max_X_order,1
@@ -316,11 +321,13 @@ subroutine RT_output(what,VALUEs,TIME,E)
        data_to_dump(2:4) =real(A_vecpot%vecpot(:))
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
+       !data_to_dump(11)  =Fluence(it_now)
      case('energy')
        data_to_dump(2:6) = VALUES(1:5)
      case('dynamics')
-       data_to_dump(2:7) = VALUES(1:6)
-       if(l_Debye_TBose_update) data_to_dump(8) = Bose_Temp*HA2KEL
+       data_to_dump(2:4) = VALUES(1:3)
+       if(l_elel_scatt.or.l_elph_scatt) data_to_dump(5:6) = VALUES(4:5)
+       if(l_Debye_TBose_update) data_to_dump(7) = Bose_Temp*HA2KEL
      case('YPP-eps_along_E','YPP-eps_x','YPP-eps_y','YPP-eps_z','YPP-eels_along_E','YPP-SHG_qssin',&
 &         'YPP-X_probe_order_0_x','YPP-X_probe_order_1_x','YPP-X_probe_order_2_x','YPP-X_probe_order_3_x',&
 &         'YPP-X_probe_order_4_x','YPP-X_probe_order_5_x','YPP-X_probe_order_6_x','YPP-X_probe_order_7_x',&

@@ -25,10 +25,10 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use units,          ONLY:HA2EV,HA2KEL
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:V_hartree_sc,Ho,SC_bands,it_now,RT_nk,RT_Nk_ibz,RT_ibz_coo
+ use SC,             ONLY:V_hartree_sc,Ho,SC_bands,RT_nk,RT_Nk_ibz,RT_ibz_coo
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen, &
-&                         l_NE_simulate_IP,Fluence,NE_i_time,RT_IO_output_steps
+&                         l_NE_simulate_IP,NE_i_time,RT_IO_output_steps
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc
  use xc_functionals, ONLY:E_xc,XC_potential_driver
@@ -41,7 +41,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
  complex(SP),   intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
- complex(SP),   intent(out):: on_the_fly_operators(10)
+ complex(SP),   intent(out):: on_the_fly_operators(9)
  !
  ! WorkSpace
  !
@@ -63,7 +63,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  E_mg     =(0._SP,0._SP)
  delta_G  =(0._SP,0._SP)
  T_fit    = 0._SP
- if(NE_i_time-1>=RT_IO_output_steps) T_fit=real(on_the_fly_operators(9:10))/HA2KEL
+ if(NE_i_time-1>=RT_IO_output_steps) T_fit=real(on_the_fly_operators(8:9))/HA2KEL
  !
  ! Non-interaction kinetc energy
  !
@@ -122,7 +122,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  ! Electrons and holes temperatures
  !
- call RT_occupations_fit(en,k,T_fit)
+ call RT_occupations_fit(en,k,T_fit,G_lesser)
  !
  !
  ! Andrea [21/12/2011]
@@ -158,7 +158,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  on_the_fly_operators(1:4)=(/E_kin,E_ion,E_h,Exc/)*HA2EV
  on_the_fly_operators(5)=(E_kin+E_ion+E_h+Exc)*HA2EV
- on_the_fly_operators(6:8)=(/cmplx(Fluence(it_now),0._SP,SP),Trace_Gf,delta_G/)
- on_the_fly_operators(9:10)=cmplx(T_fit(:),0._SP)*HA2KEL
+ on_the_fly_operators(6:7)=(/Trace_Gf,delta_G/)
+ on_the_fly_operators(8:9)=cmplx(T_fit(:),0._SP)*HA2KEL
  !
 end subroutine RT_Observables

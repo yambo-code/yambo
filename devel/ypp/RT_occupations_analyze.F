@@ -36,7 +36,7 @@ subroutine RT_occupations_analyze(k,E)
 &                         E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime,&
 &                         RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM
- use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions,SC_bands,&
+ use SC,             ONLY:RT_occupations,SC_bands,&
 &                         RT_nk,RT_nstates,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz
  !
  implicit none
@@ -273,9 +273,6 @@ subroutine RT_occupations_analyze(k,E)
    !
    output_fname='YPP-RT_occupations_ALL'
    call of_open_close(trim(output_fname),'ot')
-   do i_fp=1,n_SC_descriptions
-     call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
-   enddo
    titles(1)='T[fs]'
    titles(2)='Elec.'
    titles(3)='Holes'
@@ -311,9 +308,6 @@ subroutine RT_occupations_analyze(k,E)
      !
      call of_open_close(trim(output_fname),'ot')
      !
-     do i_fp=1,n_SC_descriptions
-       call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
-     enddo
      call msg('o '//trim(output_fname),'#')
      !
      ! Titles

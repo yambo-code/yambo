@@ -32,7 +32,7 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
  use pars,            ONLY:SP,schlen
  use wave_func,       ONLY:states_to_load
  use QP_m,            ONLY:QP_nb,QP_nk,QP_table,QP_n_states
- use electrons,       ONLY:n_bands,n_sp_pol
+ use electrons,       ONLY:n_bands,n_sp_pol,n_spin,n_spinor
  use R_lattice,       ONLY:nkibz,qindx_X    
  use parallel_m,      ONLY:PP_indexes,PP_indexes_reset,myid,PP_redux_wait,ncpu
  use interfaces,      ONLY:PARALLEL_index
@@ -62,7 +62,7 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
  !
  if (present(report)) then
    N_loaded=0.
-   N_loaded(myid+1)=real(count(states_to_load.eqv..TRUE.))/real(n_sp_pol*nkibz*(b_to_load(2)-b_to_load(1)+1))*100.
+   N_loaded(myid+1)=real(count(states_to_load.eqv..TRUE.))/real(n_spin*nkibz*(b_to_load(2)-b_to_load(1)+1))*100.
    call PP_redux_wait(N_loaded) 
    call msg('rs','[Distribute] Average allocated memory is [o/o]:',sum(N_loaded)/real(ncpu))
    return
@@ -74,7 +74,7 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
  call PP_indexes_reset(px)
  !
  if(.not.allocated(states_to_load)) then
-   allocate(states_to_load(n_bands,nkibz,n_sp_pol))
+   allocate(states_to_load(n_bands,nkibz,n_spin))
    states_to_load=.FALSE.
  endif
  !
@@ -185,6 +185,10 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
        !
        states_to_load(iv,ikp,i_spin)=.TRUE.
        states_to_load(ic,ik,i_spin) =.TRUE.
+       if(n_spinor==2) then
+         states_to_load(iv,ikp,2)=.TRUE.
+         states_to_load(ic,ik,2) =.TRUE.
+       endif
        !
      enddo
    enddo

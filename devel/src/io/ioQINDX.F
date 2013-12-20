@@ -35,7 +35,7 @@ integer function ioQINDX(Xk,q,io_db)
  !
  ! Work Space
  !
- integer      :: VAR_SZ,ioMinus_q,ioScatt
+ integer      :: ioScatt
  !
  ioQINDX=io_connect(desc='kindx',type=1,ID=io_db)
  if (ioQINDX/=0) goto 1
@@ -45,13 +45,14 @@ integer function ioQINDX(Xk,q,io_db)
    ioQINDX=io_header(io_db,IMPOSE_SN=.true.)
    !
    ! In V. 3.0.7 a real parameter (RL_v_comp_norm) has been removed
+   ! In revision 3085 the coll indx has been ceated with two new logicals
+   ! in the header
    !
-   if (.not.ver_is_gt_or_eq(io_db,(/3,0,8/))) ioQINDX=-1
+   if (.not.ver_is_gt_or_eq(io_db,(/3,0,8/)))     ioQINDX=-1
+   if (.not.ver_is_gt_or_eq(io_db,revision=3085)) ioQINDX=-1
    if (ioQINDX/=0) goto 1
    !
-   VAR_SZ=8
-   if(ver_is_gt_or_eq(io_db,revision=3085)) VAR_SZ=10
-   call io_elemental(io_db,VAR="PARS",VAR_SZ=VAR_SZ)
+   call io_elemental(io_db,VAR="PARS",VAR_SZ=10)
    !
    call io_elemental(io_db,I0=nXkbz)
    call io_elemental(io_db,&
@@ -62,18 +63,15 @@ integer function ioQINDX(Xk,q,io_db)
    call io_elemental(io_db,I0=q%nbz)
    call io_elemental(io_db,&
 &       VAR=" X grid is uniform     :",L0=Xk_grid_is_uniform)
-   if(ver_is_gt_or_eq(io_db,revision=3085)) then
-     call io_elemental(io_db,&
+   call io_elemental(io_db,&
 &       VAR=" X grid impose -q      :",L0=Xk_impose_minus_q,CHECK=.true.,OP=(/"=="/))
-   endif
    ioQINDX=io_status(io_db)
    !
    call io_elemental(io_db,&
 &       VAR=" BS scattering         :",L0=bse_scattering,CHECK=.true.,OP=(/"=="/))
-   if(ver_is_gt_or_eq(io_db,revision=3085)) then
-     call io_elemental(io_db,&
+   call io_elemental(io_db,&
 &       VAR=" COLL scattering       :",L0=coll_scattering,CHECK=.true.,OP=(/"=="/))
-   endif
+   !
    call io_elemental(io_db,VAR="",VAR_SZ=0)
    ioScatt=io_status(io_db)
    nqbz=q%nbz

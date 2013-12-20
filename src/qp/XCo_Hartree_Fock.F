@@ -86,6 +86,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call msg('r','')
  !
 #if !defined _SC
+ !
  ! WF distributed & load
  !=======================
  !
@@ -94,7 +95,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
  call PARALLEL_WF_index()
-#endif
  !
  if ((l_gw0.or.l_cohsex).and.WF_buffered_IO) then
    !
@@ -103,6 +103,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  endif
  !
  call WF_load(WF,QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
+ !
+#endif
  !
 #if defined _TIMING
  call timing('HF',OPR='start')

@@ -286,7 +286,7 @@ subroutine RT_driver(E,X,k,q)
    !
 #endif
    !
-   call RT_output('ene',real(on_the_fly_operators(1:5)),TIME=NE_time/FS2AUT)
+   call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time/FS2AUT)
    call RT_output('dyn',real(on_the_fly_operators(5:9)),TIME=NE_time/FS2AUT)
    call RT_output('cur pol',TIME=NE_time/FS2AUT)
    if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
@@ -363,8 +363,7 @@ subroutine RT_driver(E,X,k,q)
  call RT_free()
  !
  call WF_free(WF)
- call Plasma_free(EH_gas(1))
- call Plasma_free(EH_gas(2))
+ call Plasma_free(EH_gas)
  !
  if (allocated(HF_collisions))     call COLLISIONS_alloc_and_free("HF","v1 table","clean",0)
  if (allocated(COHSEX_collisions)) call COLLISIONS_alloc_and_free("COHSEX","v1 table","clean",0)

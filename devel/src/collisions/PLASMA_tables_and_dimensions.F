@@ -19,30 +19,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N,EH_gas)
+integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  !
  use pars,          ONLY:SP
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,qindx_C
  use SC,            ONLY:SC_bands
  use electrons,     ONLY:levels,n_sp_pol
  use QP_m,          ONLY:QP_n_states,QP_table
  use frequency,     ONLY:ordered_grid_index,coarse_grid_index,bare_grid_N,Coarse_grid_N,coarse_grid_Pt
- use plasma,        ONLY:plasma_gas,N_plasma_poles_CPU_resolved
+ use plasma,        ONLY:EH_gas
  use parallel_m,    ONLY:PAR_nQ,PAR_Q_index,PAR_IND_Q
+ use memory_m,      ONLY:mem_est
  !
  implicit none
  !
  integer          :: iqbz,N
  type(levels)     :: E 
  type(bz_samp)    :: k,q
- type(plasma_gas) :: EH_gas
  real(SP)         :: poles(N)
  !
  ! Local variables
  !
  !
  logical       :: l_reallocate=.false.
- integer       :: i_qp,i_q,i_q_s,i_m,i_mp,i_p,i_p_star,i_p_s,i_q_mem,i_q_mem_local,&
+ integer       :: i_qp,i_q,i_q_s,i_m,i_mp,i_p,i_p_bz,i_p_star,i_p_s,i_q_mem,i_q_mem_local,&
 &                 i_pmq,i_pmq_bz,i_pmq_G0,iqbz_local,n_poles,i_pole,i_cg
  real(SP)      :: E_center
  !
@@ -64,10 +64,10 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N,EH_gas)
    do i_p_star=1,k%nstar(i_p)
      !
      i_p_s =k%star(i_p,i_p_star)
+     i_p_bz=k%s_table(i_p,i_p_s)
      !
-     call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,i_q,i_q_s,i_pmq_bz,i_pmq_G0)
-     !
-     i_pmq =k%sstar(i_pmq_bz,1)
+     i_pmq_bz = qindx_C(i_p_bz,iabs(iqbz),1)
+     i_pmq   = k%sstar(i_pmq_bz,1)
      !
      E_center=E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)
      !
@@ -102,14 +102,14 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N,EH_gas)
      l_reallocate=.false.
    endif
    !
-   if (i_q_mem>1 ) l_reallocate= ( Coarse_grid_N>N_plasma_poles_CPU_resolved )
+   if (i_q_mem>1 ) l_reallocate= ( Coarse_grid_N>EH_gas%max_N_poles )
    !
    EH_gas%N_poles(iqbz)=Coarse_grid_N
-   N_plasma_poles_CPU_resolved=maxval(EH_gas%N_poles(1:iqbz))
+   EH_gas%max_N_poles=maxval(EH_gas%N_poles(1:iqbz))
    !
    if (l_reallocate) then
      !
-     allocate(local_grid(N_plasma_poles_CPU_resolved,iqbz-1,2))
+     allocate(local_grid(EH_gas%max_N_poles,iqbz-1,2))
      do iqbz_local=1,iqbz-1
        if (.not.PAR_IND_Q%element_1D(iqbz_local)) cycle
        i_q_mem_local=PAR_Q_index(iqbz_local)
@@ -117,7 +117,7 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N,EH_gas)
      enddo
      deallocate(EH_gas%grid)
      !
-     allocate(EH_gas%grid(N_plasma_poles_CPU_resolved,q%nbz,2))
+     allocate(EH_gas%grid(EH_gas%max_N_poles,q%nbz,2))
      EH_gas%grid=-1
      do iqbz_local=1,iqbz-1
        if (.not.PAR_IND_Q%element_1D(iqbz_local)) cycle
@@ -141,6 +141,7 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N,EH_gas)
    enddo
    !
    deallocate(ordered_grid_index,coarse_grid_index,bare_grid_N,coarse_grid_Pt)
+   call mem_est("RGi CGi BGn CGp")
    !
  endif
  !

@@ -31,9 +31,8 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
- use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz
+ use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz,RT_ibz_coo
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait,PAR_COM_Q_A2A,PAR_COM_Plasma_INDEX
- use plasma,         ONLY:EH_gas
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,&
@@ -56,7 +55,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! Work Space
  !
- integer          :: ib1,ib2,ik,it_relative,iplasma,n_plasma
+ integer          :: ib1,ib2,ik,it_relative
  logical          :: l_evaluate,l_interpolate,l_save
  real(SP)         :: f_k(SC_bands(2))
  !
@@ -105,7 +104,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     call RT_Coulomb_relaxation(ik,E,k,q,EH_gas(1),G_input)
+     call RT_Coulomb_relaxation(ik,E,k,q,G_input)
      !
    enddo
    !
@@ -152,10 +151,16 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  if (l_elph_scatt.or.l_elel_scatt) then
    if (l_evaluate) then
+     if (l_elel_scatt) then
+       do ik=1,k%nibz
+         call PP_redux_wait(E_E_Electron_lifetime(:,RT_ibz_coo(ik,1)))
+         call PP_redux_wait(E_E_Hole_lifetime(:,RT_ibz_coo(ik,1)))
+       enddo
+       call RT_Coulomb_interpolation(E,k)
+     endif
+     !
      do ik=1,RT_nk
        if (l_elel_scatt) then
-         call PP_redux_wait(E_E_Electron_lifetime(:,ik))
-         call PP_redux_wait(E_E_Hole_lifetime(:,ik))
          if (l_save) then
            SAVED_lifetime(:,ik,1, it_relative)=E_E_Hole_lifetime(:,ik)
            SAVED_lifetime(:,ik,2, it_relative)=E_E_Electron_lifetime(:,ik)
@@ -198,7 +203,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! Number conservation
  !=====================
- !
  call RT_impose_elel_conserves_E_and_N(E,k)
  !
  ! Dephasing Matrix

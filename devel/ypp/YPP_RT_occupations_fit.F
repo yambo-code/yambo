@@ -31,7 +31,8 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin
  use vec_operate,    ONLY:sort
- use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative,Fermi_fnc_T_derivative
+ use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative, &
+&                         Fermi_fnc_fit,Fermi_fnc_T_derivative
  use com,            ONLY:msg,of_open_close,error
  use stderr,         ONLY:intc,real2ch
  !
@@ -60,8 +61,6 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  character(10)     ::titles(n_T_steps+1),data_ch(n_T_steps+1,5,2)
  character(schlen) ::output_fname,gamma_fname(ngamma)
  !
- integer, external :: Fermi_fnc_fit
- !
  T_fit=0._SP
  Ef_fit=0._SP
  nfound=0
@@ -83,7 +82,8 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
      Ef_fit(i1,:)=Ef_fit(i1-1,:)
    endif
    !
-   nfound(3)=Fermi_fnc_fit(RT_E,RT_occ(:,i1),RT_E_fit,RT_occ_fit(:,i1,:),T_fit(i1,:),Ef_fit(i1,:),err_fit(i1,:),.false.)
+   nfound(3)=Fermi_fnc_fit(RT_E,RT_occ(:,i1),RT_nstates,T_fit(i1,:),Ef_fit(i1,:),err_fit(i1,:),&
+&                            RT_occ_fit_out=RT_occ_fit(:,i1,:),RT_E_fit_out=RT_E_fit)
    !
    if(nfound(3)==1) nfound(1)  =nfound(1)+1
    if(nfound(3)==2) nfound(2)  =nfound(2)+1
@@ -110,11 +110,11 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    gamma_fname(2)='YPP-RT_EE_Elec_gamma'
  ! Only El-Ph
  else if (ngamma==4) then
- ! Both
    gamma_fname(1)='YPP-RT_EP_Hole_gamma'
    gamma_fname(2)='YPP-RT_EP_Elec_gamma'
    gamma_fname(3)='YPP-RT_EP_Hole_abs_gamma'
    gamma_fname(4)='YPP-RT_EP_Elec_abs_gamma'
+ ! Both
  else if (ngamma==6) then
    gamma_fname(1)='YPP-RT_EP_Hole_gamma'
    gamma_fname(2)='YPP-RT_EP_Elec_gamma'

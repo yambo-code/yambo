@@ -46,7 +46,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp
+ use R_lattice,     ONLY:qindx_S,qindx_C,bz_samp
  use D_lattice,     ONLY:DL_vol
  use wrapper,       ONLY:M_by_V
  use SC,            ONLY:SC_bands
@@ -65,8 +65,8 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  !
  integer                  ::i_qp1,i_qp2,i1,i2,iqbz,iqibz,alloc_err,iqs,&
 &                           i_n,i_k,i_k_s,i_k_sp,i_J,i_J_mem,&
-&                           i_np,i_kmq,i_kmq_s,i_kmq_sp,i_kmq_G0,&
-&                           i_m,i_p,i_p_s,i_p_sp,i_p_star,n_bands,&
+&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_sp,i_kmq_G0,&
+&                           i_m,i_p,i_p_bz,i_p_s,i_p_sp,i_p_star,n_bands,&
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp1_mem
  real(SP)                 ::E_center
  complex(SP), allocatable ::EM1s(:,:)
@@ -154,10 +154,9 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
    !
    Q_loop: do iqbz=1,q%nbz 
      !
-     i_kmq_G0 =qindx_S(QP_table(i_qp1,3),iqbz,2)
      iqibz    =q%sstar(iqbz,1)
      iqs      =q%sstar(iqbz,2)
-     isc%qs  =(/i_kmq_G0,iqibz,iqs/)
+     isc%qs  =(/0,iqibz,iqs/)
      !
      if (iqibz/=isc%iqref) then
        !
@@ -204,9 +203,15 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
      i_n     = QP_table(i_qp1,1)
      i_m     = QP_table(i_qp1,2)
      i_k     = QP_table(i_qp1,3)
+     !
      i_k_s   = 1
-     i_kmq   = k%sstar(qindx_S(i_k,iqbz,1),1)
-     i_kmq_s = k%sstar(qindx_S(i_k,iqbz,1),2)
+     !i_kbz  = i_k
+     !
+     i_kmq_bz =qindx_S(i_k,iqbz,1)
+     i_kmq_G0 =qindx_S(i_k,iqbz,2)
+     !
+     i_kmq   = k%sstar(i_kmq_bz,1)
+     i_kmq_s = k%sstar(i_kmq_bz,2)
      !
      ! Spins
      !
@@ -217,10 +222,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
      !
      isc%is  =(/i_n,i_k,i_k_s,i_k_sp/)
      isc%os  =(/0  ,i_kmq,i_kmq_s,i_kmq_sp/)
-     !
-     iscp%is =(/i_m,i_k,i_k_s,i_k_sp/)
-     iscp%os =(/0  ,i_kmq,i_kmq_s,i_kmq_sp/)
-     iscp%qs =isc%qs
+     isc%qs  =(/i_kmq_G0,iqibz,iqs/)
      !
      if (V_kind==2) then
        !
@@ -241,30 +243,30 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
            !==========================
            !
            i_p_s =k%star(i_p,i_p_star)
+           i_p_bz=k%s_table(i_p,i_p_s)
            !
-#if defined _RT
-           call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,iqibz,iqs,i_pmq_bz,i_pmq_G0)
-#endif
+           i_pmq_bz = qindx_C(i_p_bz,iqbz,1)
+           i_pmq_G0 = qindx_C(i_p_bz,iqbz,2)
            !
            i_pmq   = k%sstar(i_pmq_bz,1)
            i_pmq_s = k%sstar(i_pmq_bz,2)
            !
            ! (i_m,i_p,i_p_s)--<--.--<--(i_mp,i_pmq,i_pmq_s)
            !                     |
-           !                    /|\ (iqibz,iqs)
+           !                    /|\ (i_pmq_G0,iqibz,iqs)
            !                     |
            !     (i_n,i_k,1)-->--.-->--(i_np,i_kmq,i_kmq_s)
            !
            ! W_{nn'k}{mm'p}^{q} = [W_{n'nk'}{m'mp'}^{-q}]^{*}
            !
-           i_J=EH_gas(1)%tab_m1(i_qp2,i_p_s,i_q_mem)
+           i_J=EH_gas%tab_m1(i_qp2,i_p_s,i_q_mem)
            !
            if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
            i_J_mem=PAR_Plasma_index(i_J)
            !
            iscp%is =(/i_m,i_p,i_p_s,i_p_sp/)
            iscp%os =(/i_mp,i_pmq,i_pmq_s,i_pmq_sp/)
-           iscp%qs =(/i_pmq_G0,iqibz,1/)
+           iscp%qs =(/i_pmq_G0,iqibz,iqs/)
            !
            call scatterBamp(iscp)
            !
@@ -298,6 +300,17 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
        call live_timing(steps=1)
        !
      else
+       !                      (i_kmq_G0,iqibz,iqs)                    
+       !                       ___________________
+       !                      /                   \
+       !                     /                     \
+       !                     |                     |
+       !     (i_n,i_k,1)-->--.---------->----------.---->----(i_m,i_k,1)
+       !                    i_np,(i_kmq,i_kmq_s),i_mp
+       !
+       iscp%is =(/i_m,i_k,i_k_s,i_k_sp/)
+       iscp%os =(/0  ,i_kmq,i_kmq_s,i_kmq_sp/)
+       iscp%qs =isc%qs
        !
        do i_np=QP_n_G_bands(1),QP_n_G_bands(2)
          !

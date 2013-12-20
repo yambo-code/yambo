@@ -35,6 +35,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,nGW_NEQ_collisions,&
 &                        HF_collisions,COHSEX_collisions,GW_NEQ_collisions,nCOHSEX_collisions
  use X_m,           ONLY:X_t
+ use plasma,        ONLY:EH_gas
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
@@ -151,7 +152,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        call PARALLEL_global_indexes(E,k,q,"Real_Time")
        !
        call PLASMA_build_up(E,k,q)
-       call PLASMA_parallel_setup( )
+       call PLASMA_parallel_setup(EH_gas)
        !
        call PARALLEL_WF_distribute(QP_index=PAR_IND_QP,CLEAN_UP=.FALSE.)
        call PARALLEL_WF_distribute(Plasma_index=PAR_IND_Plasma)

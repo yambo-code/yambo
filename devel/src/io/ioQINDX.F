@@ -21,9 +21,10 @@
 !
 integer function ioQINDX(Xk,q,io_db)
  !
- use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,&
+ use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,qp_states_k,nXkibz,qindx_alloc,&
-&                         Xk_grid_is_uniform,bz_samp,nXkbz
+&                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt,&
+&                         Xk_impose_minus_q
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,read_is_on,io_header,&
 &                         ver_is_gt_or_eq,io_fragmented,io_extension
@@ -33,6 +34,8 @@ integer function ioQINDX(Xk,q,io_db)
  integer      ::io_db
  !
  ! Work Space
+ !
+ integer      :: VAR_SZ,ioMinus_q,ioScatt
  !
  ioQINDX=io_connect(desc='kindx',type=1,ID=io_db)
  if (ioQINDX/=0) goto 1
@@ -46,7 +49,9 @@ integer function ioQINDX(Xk,q,io_db)
    if (.not.ver_is_gt_or_eq(io_db,(/3,0,8/))) ioQINDX=-1
    if (ioQINDX/=0) goto 1
    !
-   call io_elemental(io_db,VAR="PARS",VAR_SZ=8)
+   VAR_SZ=8
+   if(ver_is_gt_or_eq(io_db,revision=3085)) VAR_SZ=10
+   call io_elemental(io_db,VAR="PARS",VAR_SZ=VAR_SZ)
    !
    call io_elemental(io_db,I0=nXkbz)
    call io_elemental(io_db,&
@@ -57,30 +62,54 @@ integer function ioQINDX(Xk,q,io_db)
    call io_elemental(io_db,I0=q%nbz)
    call io_elemental(io_db,&
 &       VAR=" X grid is uniform     :",L0=Xk_grid_is_uniform)
+   if(ver_is_gt_or_eq(io_db,revision=3085)) then
+     call io_elemental(io_db,&
+&       VAR=" X grid impose -q      :",L0=Xk_impose_minus_q,CHECK=.true.,OP=(/"=="/))
+   endif
+   ioQINDX=io_status(io_db)
+   !
    call io_elemental(io_db,&
 &       VAR=" BS scattering         :",L0=bse_scattering,CHECK=.true.,OP=(/"=="/))
+   if(ver_is_gt_or_eq(io_db,revision=3085)) then
+     call io_elemental(io_db,&
+&       VAR=" COLL scattering       :",L0=coll_scattering,CHECK=.true.,OP=(/"=="/))
+   endif
    call io_elemental(io_db,VAR="",VAR_SZ=0)
-   ioQINDX=io_status(io_db)
+   ioScatt=io_status(io_db)
    nqbz=q%nbz
    nqibz=q%nibz
    !
-   if (ioQINDX/=0.or..not.any((/io_sec(io_db,:)>1/))) goto 1
+   if (ioQINDX/=0) goto 1
+   if (.not.any((/io_sec(io_db,:)>1/)) ) then
+     if (ioScatt/=0) ioQINDX=ioScatt
+     goto 1
+   endif
+   !
  endif
  !
  if (any((/io_sec(io_db,:)==2/))) then
-   if (read_is_on(io_db)) allocate(q%pt(q%nibz,3))
-   call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q%pt))
-   call io_bulk(io_db,R2=q%pt)
+   if(ioScatt==0) then
+     if (read_is_on(io_db)) allocate(q%pt(q%nibz,3))
+     call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q%pt))
+     call io_bulk(io_db,R2=q%pt)
+   else
+     allocate(q_pt(nqibz,3))
+     call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q_pt))
+     call io_bulk(io_db,R2=q_pt)
+     ioQINDX=ioScatt
+     goto 1
+   endif
  endif
  !
  ! qindx_X(nqibz,nXkbz,2)
  ! qindx_S(qp_states_k(2),nqbz,2)
- ! (bse_scattering) -> qindx_B(nXkbz,nXkbz,2)
+ ! (bse_scattering)  -> qindx_B(nXkbz,nXkbz,2)
+ ! (coll_scattering) -> qindx_C(nXkbz,nXkbz,2)
  !
  if (any((/io_sec(io_db,:)==3/))) then
    if (read_is_on(io_db)) call qindx_alloc()
    !
-   ! Fragmentation (1)
+   ! Fragmentation (1): eXchange indx
    !
    io_extension(io_db)='kindx'
    if (io_fragmented(io_db)) call io_fragment(io_db,i_fragment=1)
@@ -90,7 +119,7 @@ integer function ioQINDX(Xk,q,io_db)
    !
    if (Xk_grid_is_uniform) then
      !
-     ! Fragmentation (2)
+     ! Fragmentation (2): Self-Energy indx
      !
      io_extension(io_db)='kindx'
      if (io_fragmented(io_db)) call io_fragment(io_db,i_fragment=2)
@@ -99,12 +128,21 @@ integer function ioQINDX(Xk,q,io_db)
    endif
    if (bse_scattering) then
      !
-     ! Fragmentation (3)
+     ! Fragmentation (3): BSE indx
      !
      io_extension(io_db)='kindx'
      if (io_fragmented(io_db)) call io_fragment(io_db,i_fragment=3)
      call io_bulk(io_db,VAR="Bindx",VAR_SZ=shape(qindx_B))
      call io_bulk(io_db,I3=qindx_B)
+   endif
+   if (coll_scattering.and.ver_is_gt_or_eq(io_db,revision=3085)) then
+     !
+     ! Fragmentation (4): COLL indx
+     !
+     io_extension(io_db)='kindx'
+     if (io_fragmented(io_db)) call io_fragment(io_db,i_fragment=4)
+     call io_bulk(io_db,VAR="Cindx",VAR_SZ=shape(qindx_C))
+     call io_bulk(io_db,I3=qindx_C)
    endif
  endif
  !

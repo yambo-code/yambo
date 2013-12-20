@@ -51,6 +51,7 @@ subroutine WF_alloc(WF)
  else
    !
    WF%N=(WF%b(2)-WF%b(1)+1)*(WF%k(2)-WF%k(1)+1)*(WF%spin(2)-WF%spin(1)+1)
+   N_total=WF%N
    !
  endif
  !

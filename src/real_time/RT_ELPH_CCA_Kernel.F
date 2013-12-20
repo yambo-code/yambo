@@ -21,7 +21,7 @@
 !
 subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesser)
  !  
- use pars,           ONLY:SP,cI,pi,tol2,rZero
+ use pars,           ONLY:SP,cI,pi,zero_dfl,rZero
  use electrons,      ONLY:levels,spin_occ,n_full_bands
  use SC,             ONLY:SC_bands,RT_ibz_coo,RT_Nk_ibz,RT_nk,RT_occupations_locked
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
@@ -103,7 +103,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesse
          P_ph_abs  =RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,E%E_ind_gap(1),'EP')
          P_ph_emit =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,E%E_ind_gap(1),'EP')
          !
-         if(abs(P_ph_abs)<tol2.and.abs(P_ph_emit)<tol2) cycle
+         if ( abs(P_ph_abs)<1.E-7 .and. abs(P_ph_emit)<1.E-7 ) cycle
          !
          TMP_Hole_lifetime(i_n_shift,ik_rim,1)=TMP_Hole_lifetime(i_n_shift,ik_rim,1)+&
 &                                                   f_k_m_q*P_ph_abs*pre_factor
@@ -113,7 +113,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesse
          ! Also in case of zero Bose Temp I compute these coefficients
          ! because I'll need them for the interpolation of the el-el lifetimes
          !
-         if( abs(Bose_f(1))>tol2 .and. .not.l_skip_abs) then
+         if( abs(Bose_f(1))>zero_dfl .and. .not.l_skip_abs) then
            TMP_Hole_lifetime(i_n_shift,ik_rim,2)=TMP_Hole_lifetime(i_n_shift,ik_rim,2)+&
 &                                                     f_k_m_q*P_ph_emit*pre_factor
            TMP_Electron_lifetime(i_n_shift,ik_rim,2)=TMP_Electron_lifetime(i_n_shift,ik_rim,2)+&
@@ -138,7 +138,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesse
  E_P_Electron_lifetime(i_n:i_np,ik_rim:ip_rim)=E_P_Electron_lifetime(i_n:i_np,ik_rim:ip_rim)+&
 &                                                TMP_Electron_lifetime(i_n:i_np,ik_rim:ip_rim,1)*Bose_f(2)
  !
- if(abs(Bose_f(1))<tol2.or.l_skip_abs) return
+ if(abs(Bose_f(1))<zero_dfl.or.l_skip_abs) return
  !
  ! Absorption
  E_P_Ho_abs_lifetime(i_n:i_np,ik_rim:ip_rim)=E_P_Ho_abs_lifetime(i_n:i_np,ik_rim:ip_rim)+&

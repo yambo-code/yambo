@@ -45,6 +45,8 @@ subroutine RT_impose_elel_conserves_E_and_N(E,k)
  logical          :: l_energy=.false.
  logical          :: l_n_electrons=.true.
  !
+ return
+ !
  if (.not.l_elel_scatt) return
  !
  SUM_N_Holes   =0._SP
@@ -54,8 +56,9 @@ subroutine RT_impose_elel_conserves_E_and_N(E,k)
  prefactor=0._SP
  !
  do ik=1,k%nibz
-   k_weight=k%weights(ik)/real(RT_Nk_ibz(ik))
-   do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+   k_weight=k%weights(ik) !/real(RT_Nk_ibz(ik))
+   ik_rim=RT_ibz_coo(ik,1)
+   !do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
      do ib=SC_bands(1),SC_bands(2)
        if(ib<=E%nbf) indx=1
@@ -68,7 +71,7 @@ subroutine RT_impose_elel_conserves_E_and_N(E,k)
        SUM_E_Holes(indx)=SUM_E_Holes(indx)+(En*E_E_Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ))*k_weight
        SUM_E_Electrons(indx)=SUM_E_Electrons(indx)+(En*E_E_Electron_lifetime(ib,ik_rim)*f_occ)*k_weight
      enddo
-   enddo
+   !enddo
  enddo
  !
  N_valence=SUM_N_Holes(1)+SUM_N_Electrons(1)

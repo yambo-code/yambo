@@ -25,11 +25,12 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use units,          ONLY:HA2EV,HA2KEL
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:V_hartree_sc,Ho,SC_bands,it_now,RT_nk,RT_Nk_ibz,RT_ibz_coo
+ use SC,             ONLY:V_hartree_sc,Ho,SC_bands,RT_nk,RT_Nk_ibz,RT_ibz_coo
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen, &
-&                         l_NE_simulate_IP,Fluence,NE_i_time,RT_IO_output_steps
- use electrons,      ONLY:levels
+&                         l_NE_simulate_IP,NE_i_time,RT_IO_output_steps, &
+&                         RIM_ibz_coo,l_RT_uses_E_RIM
+ use electrons,      ONLY:levels,spin_occ
  use QP_m,           ONLY:QP_Vnl_xc
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional
@@ -41,17 +42,13 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
  complex(SP),   intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
- complex(SP),   intent(out):: on_the_fly_operators(10)
+ complex(SP),   intent(out):: on_the_fly_operators(9)
  !
  ! WorkSpace
  !
- real(SP)    :: dG_sign
- !
- ! Shadows
- !
- integer     :: ib,ik,ik_rim
- real(SP)    :: T_fit(2)
- complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,E_mg,delta_G
+ integer     :: ib,ik,ik_rim,iE_rim
+ real(SP)    :: Energy,T_fit(2)
+ complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,E_mg,N_holes,N_elecs
  !
  if ( mod(NE_i_time-1,RT_IO_output_steps)/=0 ) return      
  !
@@ -61,9 +58,10 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  Trace_Gf =(0._SP,0._SP)
  Exc      =(0._SP,0._SP)
  E_mg     =(0._SP,0._SP)
- delta_G  =(0._SP,0._SP)
+ N_holes  =(0._SP,0._SP)
+ N_elecs  =(0._SP,0._SP)
  T_fit    = 0._SP
- if(NE_i_time-1>=RT_IO_output_steps) T_fit=real(on_the_fly_operators(9:10))/HA2KEL
+ !if(NE_i_time-1>=RT_IO_output_steps) T_fit=real(on_the_fly_operators(8:9))/HA2KEL
  !
  ! Non-interaction kinetc energy
  !
@@ -122,34 +120,26 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  ! Electrons and holes temperatures
  !
- call RT_occupations_fit(en,k,T_fit)
+ call RT_occupations_fit(en,k,T_fit,G_lesser)
  !
- ! Andrea [21/12/2011]
- ! 
- ! In a semiconductor/isolant delta_G is defined as:
- !
- !  delta_G=\sum_{n=(c,v),k} (-i G_lesser(v,v,k) + i G_lesser(c,c,k)) w_k=
- !          \sum_{n=(c,v),k} (f_vk-f_ck) w_k
- !
- ! where conduction and valence are defined with reference to the unperturbed
- ! system.
- !
- ! This definition is easily extended to metals 
+ ! Number of Holes in the valence band and
+ ! Number of Electrons in the conduction band
+ ! Should be extended for metals...
  !
  do ik=1,en%nk
-   do ib=1,SC_bands(2)
-     !
-     dG_sign=1.
-     if (en%f(ib,ik,1)<zero_dfl) dG_sign=-1.
-     !
-     if (ib<SC_bands(1)) then
-       delta_G=delta_G+dG_sign*en%f(ib,ik,1)*k%weights(ik)
-     else
-       do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)  
-         delta_G=delta_G-dG_sign*cI*G_lesser(ib,ib,ik_rim)*k%weights(ik)/real(RT_Nk_ibz(ik))
-       enddo
-     endif
-     !
+   do ib=SC_bands(1),SC_bands(2)
+     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       if(l_RT_uses_E_RIM) then
+         iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+         Energy=en%E_RIM(ib,iE_rim,1)
+       else
+         Energy=en%E(ib,ik,1)
+       endif
+       if(Energy<=en%Efermi(1) ) N_holes=N_holes+&
+         &  (spin_occ-aimag(G_lesser(ib,ib,ik_rim)))*k%weights(ik)/real(RT_Nk_ibz(ik))
+       if(Energy> en%Efermi(1) ) N_elecs=N_elecs+&
+         &            aimag(G_lesser(ib,ib,ik_rim)) *k%weights(ik)/real(RT_Nk_ibz(ik))
+     enddo
    enddo
  enddo
  !
@@ -157,7 +147,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  on_the_fly_operators(1:4)=(/E_kin,E_ion,E_h,Exc/)*HA2EV
  on_the_fly_operators(5)=(E_kin+E_ion+E_h+Exc)*HA2EV
- on_the_fly_operators(6:8)=(/cmplx(Fluence(it_now),0._SP,SP),Trace_Gf,delta_G/)
- on_the_fly_operators(9:10)=cmplx(T_fit(:),0._SP)*HA2KEL
+ on_the_fly_operators(6:7)=(/Trace_Gf,Trace_Gf-N_holes-N_elecs/)
+ on_the_fly_operators(8:9)=cmplx(T_fit(:),0._SP)*HA2KEL
  !
 end subroutine RT_Observables

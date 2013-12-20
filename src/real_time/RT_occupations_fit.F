@@ -19,20 +19,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_FIT(E,k,T_fit)
+subroutine RT_occupations_fit(E,k,T_fit,G_lesser)
  !
  ! Check if both the electrons and the holes are below a given temperature
  ! In case locks the occupations of states which are not expected to change
  ! any more
  !
- use pars,           ONLY:SP,cZero
+ use pars,           ONLY:SP,cZero,cI
  use QP_m,           ONLY:QP_table,QP_n_states
  use electrons,      ONLY:levels,spin_occ,spin
  use R_lattice,      ONLY:bz_samp
  use drivers,        ONLY:l_elel_scatt
  use vec_operate,    ONLY:sort
- use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo,&
-&                         RT_occupations,RT_occupations_locked,RT_nstates
+ use functions,      ONLY:Fermi_fnc_fit
+ use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo,RT_nk,&
+&                         RT_occupations,RT_occupations_locked
  use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM
  !
  implicit none
@@ -40,17 +41,16 @@ subroutine RT_occupations_FIT(E,k,T_fit)
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k
  real(SP),      intent(out):: T_fit(2)
+ complex(SP),   intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
  integer,  parameter :: fit_dim=1000
  real(SP), parameter :: tresh=1.E-5
  !
  integer  :: i_RT,i_qp,i_b,i_k,i_k_rim,i_k_Erim,i_k_RT,i_spin,i1,&
 &            nfit,E_sort_index(RT_nstates)
- real(SP) :: Ef_fit(2),err_fit(2),E_first_hole,E_last_electron, &
+ real(SP) :: Ef_fit(2),err_fit(4),E_first_hole,E_last_electron, &
 &            RT_occ_fit(fit_dim,2),RT_E_fit(fit_dim,2), &
 &            RT_occ(RT_nstates),RT_occ_tmp(RT_nstates),RT_E(RT_nstates)
- !
- integer, external :: Fermi_fnc_fit
  !
  Ef_fit=0._SP
  !
@@ -78,7 +78,7 @@ subroutine RT_occupations_FIT(E,k,T_fit)
      !
      ! Prepare eps,f(eps) for the report
      !
-     RT_occ(i_RT)=RT_occupations(i_b,i_k_RT)     
+     RT_occ(i_RT)=aimag(G_lesser(i_b ,i_b ,i_k_RT))
      if(     l_RT_uses_E_RIM) RT_E(i_RT)=E%E_RIM(i_b,i_k_Erim,1)
      if(.not.l_RT_uses_E_RIM) RT_E(i_RT)=E%E(i_b,i_k_Erim,1)
      !
@@ -94,16 +94,28 @@ subroutine RT_occupations_FIT(E,k,T_fit)
  RT_occ_tmp(:)=RT_occ(E_sort_index(:))
  RT_occ=RT_occ_tmp
  !
- nfit=fermi_fnc_fit(RT_E,RT_occ,RT_E_fit,RT_occ_fit,T_fit,Ef_fit,err_fit,.true.)
+ nfit=fermi_fnc_fit(RT_E,RT_occ,RT_nstates,T_fit,Ef_fit,err_fit,&
+&       RT_occ_fit_out=RT_occ_fit,RT_E_fit_out=RT_E_fit,l_T_max_in=l_elel_scatt)
+ !
+ return
  !
  if(nfit==0) return
+ if(l_elel_scatt.and. nfit<3) return
  !
- if(nfit<3.and.l_elel_scatt) return
- !
+ if( nfit==3 .and. any(err_fit(3:4)>5.E-2 ) ) then
+   if ( l_elel_scatt ) return
+   if ( all(err_fit(3:4)>5.E-2 ) ) return
+   if ( err_fit(3)<5.E-2 ) nfit=1
+   if ( err_fit(4)<5.E-2 ) nfit=2
+ endif
+ if(nfit==2 .and. err_fit(4)>5.E-2  ) return
+ if(nfit==1 .and. err_fit(3)>5.E-2  ) return
+ ! 
  if(nfit==3.or.nfit==1) then
    do i1=1,fit_dim
-     if(RT_occ_fit(i1,1)<spin_occ-tresh) exit
+     if(RT_occ_fit(i1,1)<(spin_occ-tresh)) exit
    enddo
+   if(i1==fit_dim+1) i1=fit_dim
    E_first_hole=RT_E_fit(i1,1)
  endif
  !
@@ -111,6 +123,7 @@ subroutine RT_occupations_FIT(E,k,T_fit)
    do i1=fit_dim,1,-1
      if(RT_occ_fit(i1,2)>tresh) exit
    enddo
+   if(i1==0) i1=1
    E_last_electron=RT_E_fit(i1,2)
  endif
  !
@@ -145,5 +158,7 @@ subroutine RT_occupations_FIT(E,k,T_fit)
    enddo
    !
  enddo
+ !
+ RT_occupations_locked=.false.
  !
 end subroutine RT_occupations_fit

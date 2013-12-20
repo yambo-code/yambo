@@ -43,7 +43,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
- use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
+ use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets
@@ -227,6 +227,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  n_g_shells=0
  nqibz=0
  ng_closed=0
+ coll_scattering=.false.
  bse_scattering=.false.
  Xk_grid_is_uniform=.true.
  q0_def_norm=1.E-5

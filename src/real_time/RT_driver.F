@@ -66,7 +66,7 @@ subroutine RT_driver(E,X,k,q)
  !
  integer           :: it,ik,ib,it_mem,it_mem_p1
  real(SP)          :: E_previous,E_now
- complex(SP)       :: on_the_fly_operators(10)
+ complex(SP)       :: on_the_fly_operators(9)
  !
  if (l_elph_scatt.and.l_elel_scatt) then
    call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph AND e-e scattering')
@@ -212,6 +212,7 @@ subroutine RT_driver(E,X,k,q)
  do while (.not.l_Dynamics_is_over)
    !
    it=it+1
+   it_now=it   ! used in RESTART
    !
    ! Steps & times ...
    !===================
@@ -255,20 +256,11 @@ subroutine RT_driver(E,X,k,q)
    ! End dynamics ?
    !===============
    if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.
+   !
    if (stop_now(.FALSE.)) then
      NE_steps=((NE_i_time-1)/RT_IO_G_steps)*RT_IO_G_steps+1
      l_Dynamics_is_over=.TRUE.
    endif
-   !
-   ! Write DBs
-   !===========
-   it_now=it ! used in RESTART
-   !
-   call set_real_printed_length()
-   call IO_and_Messaging_switch("-fragments_IO_log")
-   call RT_databases_IO(E,it)
-   call IO_and_Messaging_switch("+fragments_IO_log")
-   call set_real_printed_length(f_length=10,g_length=10)  
    !
    ! Current and Polarization
    !==========================
@@ -294,8 +286,8 @@ subroutine RT_driver(E,X,k,q)
    !
 #endif
    !
-   call RT_output('ene',real(on_the_fly_operators(1:5)),TIME=NE_time/FS2AUT)
-   call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time/FS2AUT)
+   call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time/FS2AUT)
+   call RT_output('dyn',real(on_the_fly_operators(5:9)),TIME=NE_time/FS2AUT)
    call RT_output('cur pol',TIME=NE_time/FS2AUT)
    if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
    !
@@ -309,6 +301,14 @@ subroutine RT_driver(E,X,k,q)
      call RT_mean_carrier_lifetimes(G_lesser(:,:,:,it_mem),E,k)
      call RT_output('life',TIME=NE_time/FS2AUT)
    endif
+   !
+   ! Write DBs
+   !===========
+   call set_real_printed_length()
+   call IO_and_Messaging_switch("-fragments_IO_log")
+   call RT_databases_IO(E,it)
+   call IO_and_Messaging_switch("+fragments_IO_log")
+   call set_real_printed_length(f_length=10,g_length=10)  
    !
    ! Integration
    !=============
@@ -363,8 +363,7 @@ subroutine RT_driver(E,X,k,q)
  call RT_free()
  !
  call WF_free(WF)
- call Plasma_free(EH_gas(1))
- call Plasma_free(EH_gas(2))
+ call Plasma_free(EH_gas)
  !
  if (allocated(HF_collisions))     call COLLISIONS_alloc_and_free("HF","v1 table","clean",0)
  if (allocated(COHSEX_collisions)) call COLLISIONS_alloc_and_free("COHSEX","v1 table","clean",0)

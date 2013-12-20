@@ -19,28 +19,29 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
+subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  ! 
  ! FIT the occupations with a Gauss–Newton algorithm
  !
  use units,          ONLY:HA2EV,HA2KEL,FS2AUT
- use pars,           ONLY:SP,lchlen
- use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT
- use SC,             ONLY:SC_bands,n_SC_descriptions,SC_description, &
-&                         RT_nk,RT_nstates,RT_ibz_coo
+ use pars,           ONLY:SP,lchlen,schlen
+ use YPP,            ONLY:OCC_T_range,OCC_deltaT
+ use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo
  use QP_m,           ONLY:QP_table,QP_n_states
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin
  use vec_operate,    ONLY:sort
- use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative,Fermi_fnc_T_derivative
+ use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative, &
+&                         Fermi_fnc_fit,Fermi_fnc_T_derivative
  use com,            ONLY:msg,of_open_close,error
  use stderr,         ONLY:intc,real2ch
  !
  implicit none
  !
- integer               :: n_T_steps
+ integer               :: n_T_steps,ngamma
  real(SP)              :: RT_E(RT_nstates)
  real(SP)              :: RT_occ(RT_nstates,n_T_steps)
+ real(SP)              :: RT_gamma(RT_nstates,n_T_steps,ngamma)
  !
  integer, parameter    :: max_iter=10000,fit_dim=1000,nmax_file_report=16
  real(SP)              :: RT_occ_fit(fit_dim,n_T_steps,2),RT_E_fit(fit_dim,2)
@@ -48,18 +49,17 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
  ! Work Space
  !
  real(SP)              :: io_Time
- real(SP)              :: RT_occ_tmp(RT_nstates)
- real(SP)              :: err_fit(n_T_steps,2)
+ real(SP)              :: TMP_vec(RT_nstates)
+ real(SP)              :: err_fit(n_T_steps,4)
  real(SP)              :: T_fit(n_T_steps,2)
  real(SP)              :: Ef_fit(n_T_steps,2)
  ! 
- integer  :: ifit,i_s,i_RT,ik,ik_rim,ib,i1,i_T,i2,n1,n2,i_fp,i_spin
+ integer  :: ifit,i_s,i_RT,ik,ik_rim,ib,i1,i_T,i2,n1,n2,i_fp,i_spin,igamma
  integer  :: nfound(3)
  integer  :: E_sort_index(RT_nstates)
  !
- character(10)     ::titles(n_T_steps+1),data_ch(n_T_steps+1,4,2)
- !
- integer, external :: Fermi_fnc_fit
+ character(10)     ::titles(n_T_steps+1),data_ch(n_T_steps+1,5,2)
+ character(schlen) ::output_fname,gamma_fname(ngamma)
  !
  T_fit=0._SP
  Ef_fit=0._SP
@@ -67,8 +67,12 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
  !
  call sort(RT_E,indx=E_sort_index)
  do i1=1,n_T_steps
-   RT_occ_tmp(:)=RT_occ(E_sort_index(:),i1)
-   RT_occ(:,i1)=RT_occ_tmp(:)
+   TMP_vec=RT_occ(E_sort_index(:),i1)
+   RT_occ(:,i1)=TMP_vec
+   do i2=1,ngamma
+     TMP_vec=RT_gamma(E_sort_index(:),i1,i2)
+     RT_gamma(:,i1,i2)=TMP_vec
+   enddo
  enddo
  !
  do i1=1,n_T_steps
@@ -78,7 +82,8 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
      Ef_fit(i1,:)=Ef_fit(i1-1,:)
    endif
    !
-   nfound(3)=Fermi_fnc_fit(RT_E,RT_occ(:,i1),RT_E_fit,RT_occ_fit(:,i1,:),T_fit(i1,:),Ef_fit(i1,:),err_fit(i1,:),.false.)
+   nfound(3)=Fermi_fnc_fit(RT_E,RT_occ(:,i1),RT_nstates,T_fit(i1,:),Ef_fit(i1,:),err_fit(i1,:),&
+&                            RT_occ_fit_out=RT_occ_fit(:,i1,:),RT_E_fit_out=RT_E_fit)
    !
    if(nfound(3)==1) nfound(1)  =nfound(1)+1
    if(nfound(3)==2) nfound(2)  =nfound(2)+1
@@ -96,7 +101,28 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
  data_ch(1,2,1)=' T(h) [K]'
  data_ch(1,2,2)=' T(e) [K]'
  data_ch(1,3,:)=' Ef   [eV]'
- data_ch(1,4,:)=' error'
+ data_ch(1,4,:)=' Avg error'
+ data_ch(1,5,:)=' Max error'
+ !
+ ! Only El-El
+ if(ngamma==2) then
+   gamma_fname(1)='YPP-RT_EE_Hole_gamma'
+   gamma_fname(2)='YPP-RT_EE_Elec_gamma'
+ ! Only El-Ph
+ else if (ngamma==4) then
+   gamma_fname(1)='YPP-RT_EP_Hole_gamma'
+   gamma_fname(2)='YPP-RT_EP_Elec_gamma'
+   gamma_fname(3)='YPP-RT_EP_Hole_abs_gamma'
+   gamma_fname(4)='YPP-RT_EP_Elec_abs_gamma'
+ ! Both
+ else if (ngamma==6) then
+   gamma_fname(1)='YPP-RT_EP_Hole_gamma'
+   gamma_fname(2)='YPP-RT_EP_Elec_gamma'
+   gamma_fname(3)='YPP-RT_EP_Hole_abs_gamma'
+   gamma_fname(4)='YPP-RT_EP_Elec_abs_gamma'
+   gamma_fname(5)='YPP-RT_EE_Hole_gamma'
+   gamma_fname(6)='YPP-RT_EE_Elec_gamma'
+ endif
  !
  do i_T=1,n_T_steps
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
@@ -106,6 +132,7 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
      data_ch(i_T+1,2,ifit)=   trim(real2ch( T_fit(i_T,ifit)*HA2KEL ))
      data_ch(i_T+1,3,ifit)=   trim(real2ch( Ef_fit(i_T,ifit)*HA2EV ))
      data_ch(i_T+1,4,ifit)=   trim(real2ch( err_fit(i_T,ifit) ))
+     data_ch(i_T+1,5,ifit)=   trim(real2ch( err_fit(i_T,ifit+2) ))
    enddo
  enddo
  !
@@ -115,18 +142,26 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
    !
    output_fname='YPP-RT_occupation_distribution_DATA'
    if(n_T_steps>nmax_file_report) output_fname=trim(output_fname)//'_grp'//trim(intc(i2/nmax_file_report+1))
-   !
    call of_open_close(trim(output_fname),'ot')
-   !
-   do i_fp=1,n_SC_descriptions
-     call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
-   enddo
    !
    call msg('o '//trim(output_fname),'#')
    call msg('o '//trim(output_fname),'# Occupations distribution at different times (f@ time)')
    call msg('o '//trim(output_fname),'#')
    call msg('o '//trim(output_fname),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
    call msg('o '//trim(output_fname),'#')
+   !
+   do igamma=1,ngamma
+     !
+     if(n_T_steps>nmax_file_report) gamma_fname(igamma)=trim(gamma_fname(igamma))//'_grp'&
+&                                                       //trim(intc(i2/nmax_file_report+1))
+     call of_open_close(trim(gamma_fname(igamma)),'ot')
+     !
+     call msg('o '//trim(gamma_fname(igamma)),'#')
+     call msg('o '//trim(gamma_fname(igamma)),'# Lifetimes distribution at different times (f@ time)')
+     call msg('o '//trim(gamma_fname(igamma)),'#')
+     call msg('o '//trim(gamma_fname(igamma)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(gamma_fname(igamma)),'#')
+   enddo
    !
    i_RT=0
    do i_s=1,QP_n_states
@@ -144,13 +179,21 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
        i_RT=i_RT+1
        !
        call msg('o '//trim(output_fname),'',(/RT_E(i_RT)*HA2EV,&
-    &            RT_occ(i_RT,n1:n2)/),INDENT=-2,USE_TABS=.true.)
+&                RT_occ(i_RT,n1:n2)/),INDENT=-2,USE_TABS=.true.)
+       !
+       do igamma=1,ngamma
+         call msg('o '//trim(gamma_fname(igamma)),'',(/RT_E(i_RT)*HA2EV,&
+&                  RT_gamma(i_RT,n1:n2,igamma)/),INDENT=-2,USE_TABS=.true.)
+       enddo
        !
      enddo
      !
    enddo
    !
    call of_open_close(trim(output_fname))
+   do igamma=1,ngamma
+     call of_open_close(trim(gamma_fname(igamma)))
+   enddo
    !
    do ifit=1,2
      !
@@ -162,13 +205,9 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,n_T_steps)
      !
      call of_open_close(trim(output_fname),'ot')
      !
-     do i_fp=1,n_SC_descriptions
-       call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
-     enddo
-     !
      call msg('o '//trim(output_fname),'#')
      call msg('o '//trim(output_fname),'# Results of the FIT')
-     do i1=1,4
+     do i1=1,5
        call msg('o '//trim(output_fname),'#',(/data_ch(1,i1,ifit), &
 &                                            data_ch(n1+1:n2+1,i1,ifit)/), INDENT=-2,USE_TABS=.true.)
      enddo

@@ -44,15 +44,15 @@ subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NC)
  ! 
  if (present(LOADED).and.present(NC)) then
    local_message="[PARALLEL "//trim(local_env)//" for "//WHAT//&
-&                            " on "//trim(intc(NC))//" CPU] Loaded-Total-Percentual: "//&
-&                            trim(intc(LOADED))//"-"//&
-&                            trim(intc(TOTAL))//"-"//&
-&                            trim(intc(int(real(LOADED)/real(TOTAL)*1000)))//"o/oo"
+&                            " on "//trim(intc(NC))//" CPU] Loaded/Total (Percentual): "//&
+&                            trim(intc(LOADED))//"/"//&
+&                            trim(intc(TOTAL))//" ("//&
+&                            trim(intc(int(real(LOADED*100)/real(TOTAL))))//"%)"
  else if (present(LOADED)) then
    local_message="[PARALLEL "//trim(local_env)//" for "//WHAT//&
-&                            "] Loaded-Total-Percentual: "//trim(intc(LOADED))//"-"//&
-&                            trim(intc(TOTAL))//"-"//&
-&                            trim(intc(int(real(LOADED)/real(TOTAL)*1000)))//"o/oo"
+&                            "] Loaded/Total (Percentual): "//trim(intc(LOADED))//"/"//&
+&                            trim(intc(TOTAL))//" ("//&
+&                            trim(intc(int(real(LOADED*100)/real(TOTAL))))//"%)"
  endif
  !
  if (present(LOADED)) then

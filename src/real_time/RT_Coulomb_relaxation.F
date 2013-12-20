@@ -19,17 +19,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Coulomb_relaxation(i_k,E,k,q,EH_gas,G_lesser)
+subroutine RT_Coulomb_relaxation(i_k,E,k,q,G_lesser)
  !  
  use pars,            ONLY:SP,cI,rZero,cZero,pi
  use electrons,       ONLY:levels,spin_occ
- use R_lattice,       ONLY:qindx_S,bz_samp
+ use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
  use SC,              ONLY:RT_ibz_coo,SC_bands,RT_nk,RT_Nk_ibz,&
 &                          RT_occupations_locked
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,&
-&                          TMP_Electron_lifetime,TMP_Hole_lifetime,&
 &                          l_RT_uses_E_RIM,RIM_ibz_coo
- use plasma,          ONLY:plasma_gas
+ use plasma,          ONLY:EH_gas
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:GW_NEQ_collisions
  use parallel_m,      ONLY:PAR_QP_index,PAR_IND_QP,PAR_Q_index,&
@@ -39,14 +38,13 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,EH_gas,G_lesser)
  !
  type(levels),     intent(in) :: E
  type(bz_samp),    intent(in) :: k,q
- type(plasma_gas), intent(in) :: EH_gas
  integer,          intent(in) :: i_k
  complex(SP),      intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
  ! Work Space ...
  !
- integer               :: i_qp,i_qp1,i_qp2,i_p,i_kmq,i_pmq,i_n,i_m,i_mp,i_np,i_p_star,i_k_rim,i_kmq_rim,&
-&                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_qp2_mem,i_q_mem,i_pmq_bz,i_pmq_G0,i1,i2,&
+ integer               :: i_qp,i_qp1,i_qp2,i_p,i_p_bz,i_kmq,i_pmq,i_n,i_m,i_mp,i_np,i_p_star,i_k_rim,&
+&                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_qp2_mem,i_q_mem,i_pmq_bz,i1,i2,&
 &                         i_J,i_J_bg,i_J_mem,i_p_rim,i_pmq_rim,i_k_ref
  real(SP)              :: f_p,f_kmq,f_pmq,pre_factor,Gr_integral,P_pl_emit,P_pl_abs,deg_factor,&
 &                         gamma_E_factor,gamma_H_factor,plasma_freq,plasma_width,DELTA_E,DELTA_W,DELTA_Ep,DELTA_Wp
@@ -55,13 +53,6 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,EH_gas,G_lesser)
  complex(SP)           :: E_plasma
  !
  real(SP), external    :: RT_G_retarded_convolution
- !
- ! Zeroing
- !=========
- i1=RT_ibz_coo(i_k,1)
- i2=RT_ibz_coo(i_k,2)
- E_E_Hole_lifetime(:,i1:i2)    =rZero
- E_E_Electron_lifetime(:,i1:i2)=rZero
  !
  do iqbz=1,q%nbz
    !
@@ -91,15 +82,14 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,EH_gas,G_lesser)
        i_mp = QP_table(i_qp,2)
        i_p  = QP_table(i_qp,3)
        !
-       call RT_EE_scattering_kinematics(k,q,i_p,i_p_s,i_q,i_q_s,i_pmq_bz,i_pmq_G0)
+       i_p_bz=k%s_table(i_p,i_p_s)
        !
-       i_pmq =k%sstar(i_pmq_bz,1)
+       i_pmq_bz = qindx_C(i_p_bz,iqbz,1)
+       i_pmq    = k%sstar(i_pmq_bz,1)
        !
        if(RT_occupations_locked(i_m ,i_p  )) cycle
        if(RT_occupations_locked(i_mp,i_pmq)) cycle
        !
-       !
-       !MAIN GRID occupations and energies
        DELTA_E=E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)
        DELTA_W=abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))
        !

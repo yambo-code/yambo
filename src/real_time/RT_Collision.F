@@ -114,7 +114,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
      !
    endif
    !
-   ! The exchange/cohsex term is written as Sigma(G - G_0) - Sigma(G)
+   ! The exchange/cohsex term is written as Sigma(G - G_0) + Sigma(G_0)
    ! NOTICE THAT: this approximation is valid only for linear self-energies 
    !              in G_lesser as exchange or COHSEX(with W fixed) 
    !

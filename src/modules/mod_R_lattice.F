@@ -31,6 +31,7 @@ module R_lattice
  real(SP) :: k_grid_uc_vol
  real(SP) :: k_grid_b(3,3)
  logical  :: Xk_grid_is_uniform
+ logical  :: Xk_impose_minus_q
  !
  ! Q/K-sampling
  !
@@ -72,9 +73,11 @@ module R_lattice
  !
  integer  :: qp_states_k(2)
  logical  :: bse_scattering
+ logical  :: coll_scattering
  integer, allocatable :: qindx_X(:,:,:)
  integer, allocatable :: qindx_B(:,:,:)
  integer, allocatable :: qindx_S(:,:,:)
+ integer, allocatable :: qindx_C(:,:,:)
  !
  ! SYMs
  !
@@ -132,34 +135,43 @@ module R_lattice
    !
    subroutine qindx_alloc()
      use memory_m, ONLY:mem_est
-     integer :: err(3)
+     integer :: err(4)
      err=0
+     !
      allocate(qindx_X(nqibz,nXkbz,2),stat=err(1))
-     if (.not.Xk_grid_is_uniform) then
-       call mem_est("qindx_X",(/size(qindx_X)/),(/IP/),(/err(1)/))
-       return
+     call mem_est("qindx_X",(/size(qindx_X)/),(/IP/),(/err(1)/))
+     if (.not.Xk_grid_is_uniform) return
+     !
+     allocate(qindx_S(qp_states_k(2),nqbz,2),stat=err(3))
+     call mem_est("qindx_S",(/size(qindx_S)/),(/IP/),(/err(3)/))
+     !     
+     if (bse_scattering) then
+       allocate(qindx_B(nXkbz,nXkbz,2),stat=err(2))
+       call mem_est("qindx_B",(/size(qindx_B)/),(/IP/),(/err(2)/))
      endif
-     allocate(qindx_S(qp_states_k(2),nqbz,2),stat=err(2))
-     if (bse_scattering) allocate(qindx_B(nXkbz,nXkbz,2),stat=err(3))
-     if (bse_scattering) call mem_est("qindx_X qindx_S qindx_B",&
-&                        (/size(qindx_X),size(qindx_S),size(qindx_B)/),&
-&                        elements_kind=(/IP,IP,IP/),errors=err)
-     if (.not.bse_scattering) call mem_est("qindx_X qindx_S",&
-&                             (/size(qindx_X),size(qindx_S)/),&
-&                             elements_kind=(/IP,IP/),errors=err(:2))
+     !
+     if (coll_scattering) then
+       allocate(qindx_C(nXkbz,nXkbz,2),stat=err(4))
+       call mem_est("qindx_C",(/size(qindx_C)/),(/IP/),(/err(4)/))
+     endif
+     !
    end subroutine
    !
    subroutine qindx_free()
      use memory_m, ONLY:mem_est
      deallocate(qindx_X)
      call mem_est("qindx_X")
+     if (allocated(qindx_B)) then
+       deallocate(qindx_B)
+       call mem_est("qindx_B")
+     endif
      if (allocated(qindx_S)) then
        deallocate(qindx_S)
        call mem_est("qindx_S")
      endif
-     if (allocated(qindx_B)) then
-       deallocate(qindx_B)
-       call mem_est("qindx_B")
+     if (allocated(qindx_C)) then
+       deallocate(qindx_C)
+       call mem_est("qindx_C")
      endif
    end subroutine qindx_free
    !

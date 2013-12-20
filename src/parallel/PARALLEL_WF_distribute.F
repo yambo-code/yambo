@@ -23,7 +23,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Plasma_index
  !
  use parallel_m,      ONLY:PP_indexes,ncpu
  use wave_func,       ONLY:states_to_load
- use electrons,       ONLY:n_sp_pol,n_bands
+ use electrons,       ONLY:n_spin,n_bands
  use R_lattice,       ONLY:nkibz
  use QP_m,            ONLY:QP_n_states,QP_table
 #if defined _SC
@@ -73,7 +73,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Plasma_index
  if (present(CLEAN_UP)) then
    !
    if (allocated(states_to_load)) deallocate(states_to_load)
-   allocate(states_to_load(NB,NK,n_sp_pol))
+   allocate(states_to_load(NB,NK,n_spin))
    !
    states_to_load=CLEAN_UP
    if (ncpu==1) states_to_load=.TRUE.
@@ -165,13 +165,13 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Plasma_index
      if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
      i_q_mem=PAR_Q_index(iqbz)
      !
-     do i_J=1,EH_gas(1)%N_poles(iqbz)
+     do i_J=1,EH_gas%N_poles(iqbz)
        !
        if (.not.Plasma_index%element_1D(i_J)) cycle
        !
-       do i_J_bg=EH_gas(1)%grid(i_J,i_q_mem,1),EH_gas(1)%grid(i_J,i_q_mem,2)
+       do i_J_bg=EH_gas%grid(i_J,i_q_mem,1),EH_gas%grid(i_J,i_q_mem,2)
          !
-         i_qp=EH_gas(1)%tab(i_J_bg,i_q_mem,1)
+         i_qp=EH_gas%tab(i_J_bg,i_q_mem,1)
          !
          i_b  = QP_table(i_qp,1)
          i_bp = QP_table(i_qp,2)

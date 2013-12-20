@@ -31,8 +31,9 @@ subroutine RT_occupations_fit(E,k,T_fit,G_lesser)
  use R_lattice,      ONLY:bz_samp
  use drivers,        ONLY:l_elel_scatt
  use vec_operate,    ONLY:sort
+ use functions,      ONLY:Fermi_fnc_fit
  use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo,RT_nk,&
-&                         RT_occupations,RT_occupations_locked,RT_nstates
+&                         RT_occupations,RT_occupations_locked
  use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM
  !
  implicit none
@@ -50,8 +51,6 @@ subroutine RT_occupations_fit(E,k,T_fit,G_lesser)
  real(SP) :: Ef_fit(2),err_fit(4),E_first_hole,E_last_electron, &
 &            RT_occ_fit(fit_dim,2),RT_E_fit(fit_dim,2), &
 &            RT_occ(RT_nstates),RT_occ_tmp(RT_nstates),RT_E(RT_nstates)
- !
- integer, external :: Fermi_fnc_fit
  !
  Ef_fit=0._SP
  !
@@ -95,19 +94,22 @@ subroutine RT_occupations_fit(E,k,T_fit,G_lesser)
  RT_occ_tmp(:)=RT_occ(E_sort_index(:))
  RT_occ=RT_occ_tmp
  !
- nfit=fermi_fnc_fit(RT_E,RT_occ,RT_E_fit,RT_occ_fit,T_fit,Ef_fit,err_fit,l_elel_scatt)
+ nfit=fermi_fnc_fit(RT_E,RT_occ,RT_nstates,T_fit,Ef_fit,err_fit,&
+&       RT_occ_fit_out=RT_occ_fit,RT_E_fit_out=RT_E_fit,l_T_max_in=l_elel_scatt)
+ !
+ return
  !
  if(nfit==0) return
  if(l_elel_scatt.and. nfit<3) return
  !
- if( nfit==3 .and. any(err_fit(3:4)>1.E-2 ) ) then
+ if( nfit==3 .and. any(err_fit(3:4)>5.E-2 ) ) then
    if ( l_elel_scatt ) return
-   if ( all(err_fit(3:4)>1.E-2 ) ) return
-   if ( err_fit(3)<1.E-2 ) nfit=1
-   if ( err_fit(4)<1.E-2 ) nfit=2
+   if ( all(err_fit(3:4)>5.E-2 ) ) return
+   if ( err_fit(3)<5.E-2 ) nfit=1
+   if ( err_fit(4)<5.E-2 ) nfit=2
  endif
- if(nfit==2 .and. err_fit(4)>1.E-2  ) return
- if(nfit==1 .and. err_fit(3)>1.E-2  ) return
+ if(nfit==2 .and. err_fit(4)>5.E-2  ) return
+ if(nfit==1 .and. err_fit(3)>5.E-2  ) return
  ! 
  if(nfit==3.or.nfit==1) then
    do i1=1,fit_dim

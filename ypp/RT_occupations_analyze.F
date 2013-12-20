@@ -255,9 +255,6 @@ subroutine RT_occupations_analyze(k,E)
          if (ib> E%nbf) RT_occupations_sum(2,i_T)=RT_occupations_sum(2,i_T)+data_to_plot(2)
        endif
        !
-       if(ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) &
-&        data_to_plot(3:)=data_to_plot(3:)/real(RT_NK_ibz(ik),SP)
-       !
        if(.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) ) then
          call msg('o '//trim(output_fname),'',data_to_plot(:n1+1),INDENT=-2,USE_TABS=.true.)
          if (i_T==n_T_steps) call of_open_close(trim(output_fname))

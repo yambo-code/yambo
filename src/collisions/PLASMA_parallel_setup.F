@@ -19,33 +19,36 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PLASMA_parallel_setup( )
+subroutine PLASMA_parallel_setup(EH_gas)
  !
  use parallel_m,    ONLY:PAR_IND_Plasma,PAR_COM_Plasma_INDEX,PAR_IND_Plasma_ID,PAR_Plasma_index,&
-&                        PAR_nPlasma
+&                        PAR_nPlasma,PP_indexes_reset,COMM_reset
  use interfaces,    ONLY:PARALLEL_live_message,PARALLEL_index
- use plasma,        ONLY:plasma_gas,N_plasma_poles_CPU_resolved
+ use plasma,        ONLY:plasma_gas
+ !
  implicit none
  !
- integer :: i_p !WS
+ type(plasma_gas) :: EH_gas
  !
- call PARALLEL_index(PAR_IND_Plasma,(/N_plasma_poles_CPU_resolved/),COMM=PAR_COM_Plasma_INDEX)
+ integer :: i_p
+ !
+ call PARALLEL_index(PAR_IND_Plasma,(/EH_gas%max_N_poles/),COMM=PAR_COM_Plasma_INDEX)
  PAR_IND_Plasma_ID=PAR_COM_Plasma_INDEX%CPU_id
  PAR_nPlasma=PAR_IND_Plasma%n_of_elements(PAR_IND_Plasma_ID+1)
  !
- allocate(PAR_Plasma_index(N_plasma_poles_CPU_resolved)) 
+ allocate(PAR_Plasma_index(EH_gas%max_N_poles)) 
  !
  PAR_Plasma_index=0
  PAR_nPlasma=0
  !
- do i_p=1,N_plasma_poles_CPU_resolved
+ do i_p=1,EH_gas%max_N_poles
    if (PAR_IND_Plasma%element_1D(i_p)) then
      PAR_nPlasma=PAR_nPlasma+1
      PAR_Plasma_index(i_p)=PAR_nPlasma
    endif
  enddo
  !
- call PARALLEL_live_message("Plasma gas",ENVIRONMENT="Real_Time",LOADED=PAR_nPlasma,TOTAL=N_plasma_poles_CPU_resolved,&
+ call PARALLEL_live_message("Plasma gas",ENVIRONMENT="Real_Time",LOADED=PAR_nPlasma,TOTAL=EH_gas%max_N_poles,&
 &                           NCPU=PAR_COM_Plasma_INDEX%n_CPU)
  !
 end subroutine PLASMA_parallel_setup

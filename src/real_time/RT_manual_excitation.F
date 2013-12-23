@@ -31,6 +31,7 @@ subroutine RT_manual_excitation(E,k)
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg
+ use parser_m,       ONLY:parser
  !
  implicit none
  !
@@ -39,15 +40,16 @@ subroutine RT_manual_excitation(E,k)
  !
  ! Work Space
  !
- integer :: i1,i2,i3,ib,ik,ik_rim
+ integer :: i1,i2,i3,ib,ik,ik_rim,Pump_level(E%nb,E%nk)
  real(SP):: local_E_window,coeff,delta_Nel,occupation,local_energy(2)
- integer :: Pump_level(E%nb,E%nk)
- logical :: Pumped_state(E%nb,E%nk)
+ logical :: Pumped_state(E%nb,E%nk),l_manual_excitation
  !
  ! Possibility to pump by hand one or more electrons up
  !======================================================
  !
- if (Eh_pumped_Nel<=0._SP  ) return
+ call parser('RTpumpEhEn',l_manual_excitation)
+ !
+ if (.not.l_manual_excitation) return
  !
  ! Shift energy with respect to VBM/CBm
  !

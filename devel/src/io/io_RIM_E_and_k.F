@@ -55,7 +55,7 @@ integer function io_RIM_E_and_k(E,Xk,ID)
  if (read_is_on(ID)) then
    allocate(E%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
    allocate(E%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
-   allocate(Xk%ptbz_RIM(BZ_RIM_tot_nkpts,3))
+   if (.not.RIM_is_symmetry_expanded) allocate(Xk%ptbz_RIM(BZ_RIM_tot_nkpts,3))
    allocate(BZ_RIM_nkpt(nXkbz),BZ_RIM_table(nXkbz,BZ_RIM_max_filling))
    allocate(BZ_RIM_ipol_weight(BZ_RIM_max_filling))
    call mem_est("E_RIM f_RIM k_RIM BZ_RIM_nkpt BZ_RIM_table",&
@@ -70,8 +70,10 @@ integer function io_RIM_E_and_k(E,Xk,ID)
  !
  ! Kpts
  !
- call io_bulk(ID, VAR="RIM_KPTS", VAR_SZ=shape(Xk%ptbz_RIM) ) 
- call io_bulk(ID, R2=Xk%ptbz_RIM )
+ if (.not.RIM_is_symmetry_expanded) then
+   call io_bulk(ID, VAR="RIM_KPTS", VAR_SZ=shape(Xk%ptbz_RIM) ) 
+   call io_bulk(ID, R2=Xk%ptbz_RIM )
+ endif
  !
  ! RIM Block filling
  !

@@ -305,7 +305,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        H_nl_sc = H_nl_sc + Ho(:,:,ik,:)/real(ncpu)
        !
        ! Mixing for non-local self-energies
-       ! ====================
+       !====================================
+       !
        if (l_SC_nl_mix) then
           !
           if (it==1) H_nl_nm1(:,:,ik,:) = H_nl_sc
@@ -329,7 +330,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        call mat_dia_inv(DIAGO,H_nl_sc(:,:,i_spin),E_real=E%E(:SC_bands(2),ik,i_spin))
        !
-       ! Rotation (WFo->wf) matrix
+       ! Rotation (WFo->WF) matrix
        !
        SC_R(:,:,ik,i_spin)=H_nl_sc(:,:,i_spin) 
        !

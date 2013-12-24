@@ -277,8 +277,9 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  do ikbz=1,Xk%nbz
    !
-   ikibz=q%sstar(ikbz,1)
-   iks=q%sstar(ikbz,2)
+   ikibz=k%sstar(ikbz,1)
+   iks  =k%sstar(ikbz,2)
+   !
    if (iks/=1.and..not.coll_scattering) cycle
    !
    do ikbz_p=1,k%nbz
@@ -292,12 +293,12 @@ subroutine bz_samp_indexes(k,Xk,q)
      call k_grid_shift(iv1)
      iqbz=q_map(iv1(1),iv1(2),iv1(3))
      !
-     if(iks==1) qindx_S(ikibz,iqbz,1)=ikbz_p
-     if(coll_scattering) qindx_C(ikbz,iqbz,1)=ikbz_p
+     if (iks==1) qindx_S(ikibz,iqbz,1)=ikbz_p
+     if (coll_scattering) qindx_C(ikbz,iqbz,1)=ikbz_p
      v1=k%ptbz(ikbz,:)-k%ptbz(ikbz_p,:)-q%ptbz(iqbz,:)
      call c2a(v_in=v1,mode='ka2i')
      if (iks==1) qindx_S(ikibz,iqbz,2)=G_index(v1)
-     if(coll_scattering) qindx_C(ikbz,iqbz,2)=G_index(v1)
+     if (coll_scattering) qindx_C(ikbz,iqbz,2)=G_index(v1)
    enddo
    !
    if (any(qindx_S(ikibz,:,:)==0)) call error('Null transition detected [qindx_S]')

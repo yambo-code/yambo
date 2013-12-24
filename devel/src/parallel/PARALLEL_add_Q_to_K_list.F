@@ -117,8 +117,12 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
      do iqbz=1,nqbz
        !
        iq=q%sstar(iqbz,1)
-       if (ZONE=="k_qp_q_ibz".and..not.IND_q%element_1D(iq)) cycle
-       if (ZONE=="k_qp_q_bz".and..not.IND_q%element_1D(iqbz)) cycle
+       if (ZONE=="k_qp_q_ibz") then
+         if(.not.IND_q%element_1D(iq)) cycle
+       endif
+       if (ZONE=="k_qp_q_bz") then
+         if(.not.IND_q%element_1D(iqbz)) cycle
+       endif
        !
        ikpbz=qindx_S(ik,iqbz,1)
        ikp  =k%sstar(ikpbz,1)

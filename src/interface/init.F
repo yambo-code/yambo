@@ -462,13 +462,25 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
  !
  if (l_HF_and_locXC.or.l_gw0.or.l_cohsex) then
-   call CPU_activate("SE")
-   call initactivate(1,'SE_Threads')
+   if (l_eval_collisions) then
+#if defined _SC && ! defined _RT
+     call CPU_activate("SE")
+     call initactivate(1,'SE_Threads')
+#else
+     call CPU_activate("RT")
+     call initactivate(1,'RT_Threads')
+#endif
+   else
+     call CPU_activate("SE")
+     call initactivate(1,'SE_Threads')
+   endif
  endif
  !
  if (l_eval_collisions.or.l_real_time) then
+#if defined _SC && defined _RT
    call CPU_activate("RT")
    call initactivate(1,'RT_Threads')
+#endif
  endif
  !
  if (l_bse) then

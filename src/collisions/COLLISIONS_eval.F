@@ -146,7 +146,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      ! PARALLEL Setup (e-e scattering)
      !=================================
-     if (l_elel_scatt) then
+     if (l_elel_scatt.and.i_kind==2) then
        !
        call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
        call PARALLEL_global_indexes(E,k,q,"Real_Time")

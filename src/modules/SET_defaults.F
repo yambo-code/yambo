@@ -546,7 +546,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RT_eh_energy_max=0.
  Eh_pumped_pair_energy=0.
  Eh_pumped_pair_width=0.1/HA2EV
- Eh_pumped_Nel=0.
+ Eh_pumped_Nel=1.
  Plasma_redux_percent=100.
  !
  ! G_retarded

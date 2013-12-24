@@ -34,7 +34,7 @@ module SC
  integer           :: SC_X_bands(2)
  integer           :: SC_X_size
  integer           :: SC_up_W_iters
- integer           :: n_SC_descriptions
+ integer           :: n_SC_descriptions = 0
  real(SP)          :: E_bare_Ef
  real(SP)          :: rho_convergence
  real(SP)          :: E_convergence

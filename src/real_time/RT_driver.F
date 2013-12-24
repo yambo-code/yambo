@@ -266,7 +266,7 @@ subroutine RT_driver(E,X,k,q)
    !==========================
    call RT_current_AND_polarization(k,E,G_lesser(:,:,:,it_mem),A_vecpot)
    !
-   ! Now print Energetics, current and (eventually) potential 
+   ! Now calculate Energetics, current and other observables
    !=========================================================
    call RT_Observables(E,k,G_lesser(:,:,:,it_mem),on_the_fly_operators)
    !
@@ -286,17 +286,12 @@ subroutine RT_driver(E,X,k,q)
    !
 #endif
    !
-   call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time/FS2AUT)
-   call RT_output('dyn',real(on_the_fly_operators(5:9)),TIME=NE_time/FS2AUT)
-   call RT_output('cur pol',TIME=NE_time/FS2AUT)
-   if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
-   !
    ! Calculate Collisions and fill SC_R, Ho_plus_Sigma, H_nl_sc
    !============================================================
    call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
    !
-   ! Mean Carrier Lifetimes
-   !=======================
+   ! Eval and Print Mean Carrier Lifetimes
+   !=======================================
    if (l_elph_scatt.or.l_elel_scatt) then
      call RT_mean_carrier_lifetimes(G_lesser(:,:,:,it_mem),E,k)
      call RT_output('life',TIME=NE_time/FS2AUT)
@@ -309,6 +304,13 @@ subroutine RT_driver(E,X,k,q)
    call RT_databases_IO(E,it)
    call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
+   !
+   ! Print some simple observables
+   !===============================
+   call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time/FS2AUT)
+   call RT_output('dyn',real(on_the_fly_operators(5:9)),TIME=NE_time/FS2AUT)
+   call RT_output('cur pol',TIME=NE_time/FS2AUT)
+   if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
    !
    ! Integration
    !=============

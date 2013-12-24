@@ -36,6 +36,9 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  use X_m,           ONLY:n_X_descs,X_description
  use stderr,        ONLY:intc
  use drivers,       ONLY:l_elel_scatt
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  !
  implicit none
  !
@@ -50,6 +53,10 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  integer               :: V_kind_disk,i_desc,VAR_size
  character(lchlen)     :: V_kind_string,X_string
  character(schlen)     :: desc
+ !
+#if defined _TIMING
+ call timing('io_COLLISIONS',OPR='start')
+#endif
  !
  if(V_kind==SC_HF) then
    db_name                   = "COLLISIONS_HF"
@@ -224,5 +231,9 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  if(io_COLLISIONS==0) io_COLLISIONS=io_restart_point(ID)
  !
  call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_COLLISIONS',OPR='stop')
+#endif
  !
 end function io_COLLISIONS

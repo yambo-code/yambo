@@ -98,11 +98,9 @@ subroutine RT_output(what,VALUEs,TIME,E)
 &   file_name(next_file)=trim(append_ch)//'vector_potential'
  short_file_name(next_file)=trim(append_ch)//'vector_potential'
  n_headings(next_file)=10
- !n_headings(next_file)=11
  headings(next_file,2:4 )=(/"A_x","A_y","A_z"/)
  headings(next_file,5:7 )=(/"A'_x","A'_y","A'_z"/)
  headings(next_file,8:10)=(/"A''_x","A''_y","A''_z"/)
- !headings(next_file,11)="Fluence[kJ/cm^2]"
  next_file=next_file+1
  !
  if (open_files.and..not.file_already_opened(next_file)) &

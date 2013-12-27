@@ -30,7 +30,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,l_Debye_TBose_update, &
-&                         l_NE_simulate_IP,RT_IO_output_steps,NE_i_time!,Fluence
+&                         l_NE_simulate_IP,RT_IO_output_steps,NE_i_time
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -319,7 +319,6 @@ subroutine RT_output(what,VALUEs,TIME,E)
        data_to_dump(2:4) =real(A_vecpot%vecpot(:))
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
-       !data_to_dump(11)  =Fluence(it_now)
      case('energy')
        data_to_dump(2:6) = VALUES(1:5)
      case('dynamics')

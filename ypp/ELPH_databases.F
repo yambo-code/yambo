@@ -419,7 +419,8 @@ integer function ELPH_databases(k,E,q)
        read(99,*) ph_q 
      enddo
      read(99,*) ph_q 
-     if (.not.v_is_zero(ph_q(:)-real(Q_DP(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_freqs_file))
+     if (.not.v_is_zero(ph_q(:)-real(Q_DP(:)),zero_=k_iku_zero).and.&
+&        .not.v_is_zero(ph_q(:)+real(Q_DP(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_freqs_file))
      do i1=1,ph_modes,6
        read(99,*) ph_freqs_sq(iq,i1:min(i1+5,ph_modes))
      enddo
@@ -433,7 +434,8 @@ integer function ELPH_databases(k,E,q)
    endif
    if (use_ext_ph_modes) then
      read(98, *) ws_ch(1),ws_ch(2),ph_q 
-     if (.not.v_is_zero(ph_q(:)-real(Q_DP(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_modes_file))
+     if (.not.v_is_zero(ph_q(:)-real(Q_DP(:)),zero_=k_iku_zero).and.&
+&        .not.v_is_zero(ph_q(:)+real(Q_DP(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_modes_file))
      read(98,*)
      do i1=1,ph_modes
        read(98,*) 

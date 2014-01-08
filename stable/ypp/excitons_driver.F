@@ -214,7 +214,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! 
  ! Loading  Wf 
  !
- if (l_exc_wf) call WF_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
+ if (l_exc_wf.or.(l_spin.and.n_spinor==2)) call WF_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
  !
  ! Exciton's spin (not collinear case)
  !=====================================

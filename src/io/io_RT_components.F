@@ -34,7 +34,7 @@ integer function io_RT_components(what,ID)
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found
  use fields,         ONLY:i_Probe,i_Pump
  use real_time,      ONLY:RT_IO_JPO_steps,NE_i_time,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Ho_abs_lifetime,RT_IO_G_steps
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Ho_abs_lifetime,RT_do_IO
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes
 #endif
@@ -63,7 +63,6 @@ integer function io_RT_components(what,ID)
  integer               :: ik,ib,i_spin,i1
  logical               :: l_V,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_T_EL,l_THETA
  integer               :: file_number,i_time
- logical               :: do_IO
  integer               :: i_time_range(2)
  real(SP)              :: A_vecpot_disk(3,3,2)
  !
@@ -93,11 +92,7 @@ integer function io_RT_components(what,ID)
      if (l_occupations) io_RT_components=io_connect(desc="RT_occupations",type=2,ID=ID)
    else
      !  
-     do_IO=mod(NE_i_time-1,RT_IO_JPO_steps)==0
-     !
-     if(l_J_and_P) do_IO=mod(NE_i_time-1,RT_IO_JPO_steps)  ==0
-     !
-     if(do_IO) then
+     if(RT_do_IO('J')) then
        if (l_J_and_P)     io_RT_components=io_connect(desc="RT_J_and_P_"//trim(intc(file_number)),type=2,ID=ID)
        if (l_occupations) then
          io_RT_components=io_connect(desc="RT_occupations_"//trim(intc(file_number)),type=2,ID=ID)
@@ -114,12 +109,14 @@ integer function io_RT_components(what,ID)
  endif
  !
  if (l_G.or.l_THETA) then
-   if( (mod(NE_i_time-1,RT_IO_G_steps)/=0) .and.NE_dynamics.and.write_is_on(ID)) then
+   !
+   if(.not.RT_do_IO('G').and.NE_dynamics.and.write_is_on(ID)) then
      io_RT_components=0
      call io_reset(ID)
      goto 2
    endif
  endif
+ !
  if (l_G) then
    if (.not.ver_is_gt_or_eq(ID,revision=944).or.G_MEM_steps==2.or.io_sec(ID,1)==1) then
      io_RT_components=io_connect(desc="RT_GreenF",type=2,ID=ID)
@@ -348,7 +345,7 @@ integer function io_RT_components(what,ID)
        !
      endif
      !
-     if (do_IO) then
+     if (RT_do_IO('J')) then
        !                                
        call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(intc(file_number)), &
 &                      VAR_SZ=(/J_and_P_cache_size,RT_IO_JPO_steps/))
@@ -373,7 +370,7 @@ integer function io_RT_components(what,ID)
        !
      endif 
      !
-     if(.not.do_IO) call io_reset(ID) 
+     if(.not.RT_do_IO('J')) call io_reset(ID) 
      !
    endif
    !

@@ -23,7 +23,7 @@ subroutine RT_databases_IO(E,it)
  !
  use drivers,        ONLY:l_elph_scatt
  use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,NE_i_time,it_start,&
-&                         OCCUPATIONS_IO_and_interpolate,RT_IO_JPO_steps
+&                         OCCUPATIONS_IO_and_interpolate,RT_do_IO
  use SC,             ONLY:RT_nk
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL,io_GF,io_OCCs,io_J
  use electrons,      ONLY:levels
@@ -48,9 +48,11 @@ subroutine RT_databases_IO(E,it)
  !
  if (it==it_start.and.it_start>1) return
  !
- ! Polarization and current are automaticaly written every RT_IO_stesp
+ if (.not.RT_do_IO('J').and..not.RT_do_IO('G')) return
  !
- if(l_NE_with_fields.and.NE_dynamics.and.io_J) then
+ ! Polarization and current are automaticaly written every RT_IO_JPO_steps
+ !
+ if (l_NE_with_fields.and.NE_dynamics.and.io_J.and.RT_do_IO('J')) then
    !
    ! Remember that negative time = adiabatic switching
    ! no need to store current
@@ -68,11 +70,11 @@ subroutine RT_databases_IO(E,it)
  !
  ! Occupations
  !
- if (io_OCCs) call OCCUPATIONS_IO_and_interpolate(E,'G')
+ if (io_OCCs.and.RT_do_IO('OCCs')) call OCCUPATIONS_IO_and_interpolate(E,'G')
  !
- ! Write every RT_IO_steps
+ ! Write every RT_IO_G_steps
  !
- if (.not. (mod(NE_i_time-1,RT_IO_JPO_steps)==0) ) return
+ if (.not.RT_do_IO('G')) return
  !
  if (it==it_start.and.it_start>1) return
  !

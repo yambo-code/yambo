@@ -7,7 +7,7 @@ ELPH_objs =
 #if defined _ELPH
 ELPH_objs =  RT_ELPH_zeroing.o RT_ELPH_gkkp_remap.o RT_ELPH_initialize.o \
              RT_ELPH_eq_Kernel.o RT_ELPH_CCA_Kernel.o RT_ELPH_out_of_eq_Kernel.o \
-             RT_ELPH_total_Kernel.o RT_occupations_fit.o
+             RT_ELPH_total_Kernel.o RT_occupations_FIT.o
 #endif
 #if defined _RT
 objs = RT_initialize.o RT_k_grid.o RT_start_and_restart.o RT_update.o \

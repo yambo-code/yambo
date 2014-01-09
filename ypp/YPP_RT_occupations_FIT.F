@@ -144,6 +144,7 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    GRP_string="_"//trim(intc(i2/nmax_file_report+1))//"_of_"//trim(intc(n_T_steps/nmax_file_report+1))
    !
    output_fname(1)='YPP-RT_occupation_distribution_DATA'
+   !
    if (n_T_steps>nmax_file_report) output_fname(1)=trim(output_fname(1))//trim(GRP_string)
    call of_open_close(trim(output_fname(1)),'ot')
    !
@@ -201,8 +202,7 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
      output_fname(1)='YPP-RT_occupation_distribution_FIT'
      if(ifit==1) output_fname(1)=trim(output_fname(1))//'_hole'
      if(ifit==2) output_fname(1)=trim(output_fname(1))//'_electrons'
-     if(n_T_steps>nmax_file_report) &
-&      output_fname(1)=trim(output_fname(1))//'_grp'//trim(intc(i2/nmax_file_report+1))
+     if (n_T_steps>nmax_file_report) output_fname(1)=trim(output_fname(1))//trim(GRP_string)
      !
      call of_open_close(trim(output_fname(1)),'ot')
      !

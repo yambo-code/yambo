@@ -28,14 +28,17 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands,RT_nk,RT_Nk_ibz,RT_ibz_coo
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen, &
-&                         l_NE_simulate_IP,NE_i_time,RT_IO_output_steps, &
-&                         RIM_ibz_coo,l_RT_uses_E_RIM
+&                         l_NE_simulate_IP,NE_i_time, &
+&                         RIM_ibz_coo,l_RT_uses_E_RIM,RT_do_IO
  use electrons,      ONLY:levels,spin_occ
  use QP_m,           ONLY:QP_Vnl_xc
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_Xk_nibz,master_cpu
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none 
  !
@@ -50,7 +53,11 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  real(SP)    :: Energy,T_fit(2)
  complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,E_mg,N_holes,N_elecs
  !
- if ( mod(NE_i_time-1,RT_IO_output_steps)/=0 ) return      
+ if ( .not.RT_do_IO('OUT') ) return      
+ !
+#if defined _TIMING
+ call timing('RT observables',OPR='start')
+#endif
  !
  E_kin    =(0._SP,0._SP)
  E_ion    =(0._SP,0._SP)
@@ -120,7 +127,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  ! Electrons and holes temperatures
  !
- call RT_occupations_fit(en,k,T_fit,G_lesser)
+ call RT_occupations_FIT(en,k,T_fit,G_lesser)
  !
  ! Number of Holes in the valence band and
  ! Number of Electrons in the conduction band
@@ -149,5 +156,9 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  on_the_fly_operators(5)=(E_kin+E_ion+E_h+Exc)*HA2EV
  on_the_fly_operators(6:7)=(/Trace_Gf,Trace_Gf-N_holes-N_elecs/)
  on_the_fly_operators(8:9)=cmplx(T_fit(:),0._SP)*HA2KEL
+ !
+#if defined _TIMING
+ call timing('RT observables',OPR='stop')
+#endif
  !
 end subroutine RT_Observables

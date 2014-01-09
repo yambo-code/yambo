@@ -53,7 +53,7 @@ subroutine RT_initialize(E,k,q)
  !
  integer                  :: i1,rest,ik,IO_steps(3)
  character(5)             :: MSG_ch
- real(SP)                 :: T_memory
+ real(SP)                 :: T_memory,MAX_Fluence,MAX_Fluence_reached_time
  logical                  :: l_Full_RT_T_evolution,l_compute_fluence
  integer,         external:: RT_k_grid
  !
@@ -179,8 +179,8 @@ subroutine RT_initialize(E,k,q)
      !      
      l_NE_with_fields=.true.
      !
-     if(i1==i_Pump) l_compute_Fluence= (Efield(i1)%ef_name=='DELTA') .or. (Efield(i1)%ef_name=='QSSIN') &
-&                                 .or. (Efield(i1)%ef_name=='GAUSS')
+     if (i1==i_Pump) l_compute_Fluence= (Efield(i1)%ef_name=='DELTA') .or. (Efield(i1)%ef_name=='QSSIN') &
+&                                  .or. (Efield(i1)%ef_name=='GAUSS')
      !
      if( any( abs(Efield(i1)%versor(:))>epsilon(1.) ) ) Efield(i1)%versor=normalize_v(Efield(i1)%versor)
      !
@@ -234,7 +234,7 @@ subroutine RT_initialize(E,k,q)
  if (l_NE_with_fields) then
    allocate(Fluence(NE_steps))
    Fluence=0._SP
-   if (l_compute_fluence) call RT_Fluence()
+   if (l_compute_fluence) call RT_Fluence(MAX_Fluence,MAX_Fluence_reached_time)
  endif
  !
  ! Gauge
@@ -333,10 +333,13 @@ subroutine RT_initialize(E,k,q)
    call msg('r','Gauge                       :',trim(global_gauge))
    call msg('r','Pump/Probe periodicity  [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
    call msg('r','Pump/Probe energy step  [eV]:',maxval(Efield(:)%W_step)*HA2EV)
+   call msg('r','Max Fluence        [kJ/cm^2]:',MAX_Fluence)
+   call msg('r','           reached time [fs]:',MAX_Fluence_reached_time)
    do i1=1,n_ext_fields
      if (i_Pump==i_Probe.and.i1/=i_Probe.and..not.any(trim(Efield(i1)%ef_name)==(/'SIN    ','ANTIRES','RES    '/)) ) cycle
      MSG_ch="Pump"
      if (i1==i_Probe) MSG_ch="Probe"
+     call msg('r', MSG_ch//' field                       :'//trim(Efield(i1)%ef_name))
      call msg('r', MSG_ch//' energy window/period [eV/fs]:',(/Efield(i1)%frequency*HA2EV,&
 &                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/))
      call msg('r', MSG_ch//' elemental oscillation   [fs]:',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))/FS2AUT)

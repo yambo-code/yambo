@@ -548,18 +548,11 @@ module real_time
      !
    end subroutine RT_free
    !
-   logical function Gr_ordering_condition(i_n,i_k,i_m,i_p)
-     !
-     integer i_k,i_n,i_p,i_m
-     !
-     Gr_ordering_condition=.FALSE.
-     !
-     if (i_k<i_p) then
-       Gr_ordering_condition=.TRUE.
-     else if (i_k==i_p.and.i_n<=i_m) then
-       Gr_ordering_condition=.TRUE.
-     endif
-     !
+   logical function RT_do_IO(what)
+     character(*) :: what
+     if (what=="J".or.what=="P".or.what=="OCCs") RT_do_IO=mod(NE_i_time-1,RT_IO_JPO_steps)==0
+     if (what=="OUT") RT_do_IO=mod(NE_i_time-1,RT_IO_output_steps)==0
+     if (what=="G")   RT_do_IO=mod(NE_i_time-1,RT_IO_G_steps)==0
    end function
    !
    integer function B_mat_index(ib1,ib2)

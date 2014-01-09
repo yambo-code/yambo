@@ -19,20 +19,19 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Fluence()
+subroutine RT_Fluence(MAX_Fluence,MAX_Fluence_reached_time)
  !
  use pars,           ONLY:SP,pi
- use com,            ONLY:msg
  use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,FS2AUT
- use LIVE_t,         ONLY:live_timing
- use real_time,      ONLY:RT_step,NE_steps,Fluence
+ use real_time,      ONLY:RT_step,NE_steps,Fluence,RT_IO_output_steps
  use fields,         ONLY:Efield,small_a,theta_function,ef_i_time,i_Pump
  !
  implicit none
+ real(SP)     :: MAX_Fluence,MAX_Fluence_reached_time
  ! 
  ! Work Space
  !
- integer      :: it
+ integer      :: it,last_it_evaluated
  real(SP)     :: I(NE_steps),T(NE_steps)
  complex(SP)  :: Field_time,E(NE_steps)
  real(SP),external :: RIntegrate
@@ -47,9 +46,8 @@ subroutine RT_Fluence()
  ! 
  ! |E(t)|^2= Efield(i_Pump)%amplitude**2 * | small_a' theta + small_a theta' |^2
  !
- call msg('s','=== Fluence...')
- !
  I=0._SP
+ last_it_evaluated=0
  !
  do it=ef_i_time(i_Pump)+1,NE_steps
    !
@@ -75,20 +73,23 @@ subroutine RT_Fluence()
    T(it)=T(it)/FS2AUT ! au -> fs
    I(it)=I(it)*1.E-15_SP
    !
+   if (it>10*Efield(i_Pump)%damping/RT_step) cycle
+   if (mod(it,RT_IO_output_steps)/=0) cycle
+   !
    Fluence(it)=RIntegrate(I(:it),T(:it),it)
    !
-   if (it<1001) cycle
-   if (abs((Fluence(it)-Fluence(it-1000))/Fluence(it))<1.E-5) exit
+   if (last_it_evaluated>0 ) Fluence(last_it_evaluated+1:it-1)= Fluence(last_it_evaluated)
+   !
+   last_it_evaluated=it
+   !
+   if (it<3*Efield(i_Pump)%damping/RT_step) cycle
+   !
+   if (abs(Fluence(it)-maxval(Fluence(:it-1)))/Fluence(it)<1.E-5) exit
    !
  enddo
  !
- call msg('l','done ===')
- !
- if ( it< (NE_steps+1) ) it=it-1000
- if ( it==(NE_steps+1) ) it=it-1
- !
- call msg('r','[RT] Max Fluence           [kJ/cm^2]:',Fluence(it))
- call msg('r','     reached at time            [fs]:',T(it))
+ MAX_Fluence=Fluence(it)
+ MAX_Fluence_reached_time=T(it)
  !
  if(it<NE_steps) Fluence(it+1:)=Fluence(it)
  !

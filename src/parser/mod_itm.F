@@ -31,11 +31,11 @@ module it_m
  character(2),parameter :: E_unit='eV'
  character(2),parameter :: G_unit='RL'
  character(2),parameter :: T_unit='eV'
- character(2),parameter :: Time_unit='fs'
+ character(2),parameter :: Time_unit(3)=(/'fs','ps','as'/)
  character(2),parameter :: Bfield_unit='T'
  character(4),parameter :: Efield_unit='V/mm'
  character(5),parameter :: I_unit='kWLm2'
- character(3),parameter :: Angle_unit='deg'
+ character(3),parameter :: Angle_unit(2)=(/'deg','rad'/)
  ! 
  ! Verbosity
  !===========

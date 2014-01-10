@@ -110,7 +110,7 @@ subroutine RT_Coulomb_interpolation(E,k)
  !write(200,*) ' '
  !DEBUG >
  !
- nfit=fermi_fnc_fit(RT_E,RT_occ_sorted,nstates,T_fit,Ef_fit,err_fit)
+ nfit=Fermi_fnc_fit(RT_E,RT_occ_sorted,nstates,T_fit,Ef_fit,err_fit)
  !
  if(nfit==0) return
  !

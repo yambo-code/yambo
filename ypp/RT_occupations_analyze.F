@@ -288,7 +288,7 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! f(eps_{ik,ib}), gamma(eps_{ik,ib})
  !
- if(l_RT_occ_Fit) call YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,n1-1,n_T_steps)
+ if(l_RT_occ_Fit) call RT_occupations_FIT(RT_E,RT_occ,RT_gamma,n1-1,n_T_steps)
  !
  if (allocated(RT_E))               deallocate(RT_E)
  if (allocated(RT_occ))             deallocate(RT_occ)

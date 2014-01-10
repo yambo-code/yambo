@@ -198,10 +198,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    endif
  endif
  !
- ! Number conservation
- !=====================
- call RT_impose_elel_conserves_E_and_N(E,k)
- !
  ! Dephasing Matrix
  !==================
  !

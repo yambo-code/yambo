@@ -84,7 +84,7 @@ subroutine RT_initialize(E,k,q)
  !
  if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step)+1)
  !
- ! Set a number of steps. i1=1(J,P,OCCs)  i1=2(output) i1=3(GF).
+ ! Set a number of steps. i1=1(J,P,OCCs)  i1=2(GF) i1=3(output).
  ! Negative value forces the step to be set automatically
  !==============================================================
  !

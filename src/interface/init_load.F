@@ -311,14 +311,14 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Real Time dynamics
  !
 #if defined _RT
- call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit)
+ call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit(1))
  call it(defs,'NEsteps',    '[RT] Non-equilibrium Time steps',NE_steps)
  call it(defs,'RTjumps',    '[RT] Steps jumped between two RT updates',RT_dynamics_jumps,Verb_level=V_real_time)
- call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit)
+ call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit(1))
  call it(defs,'ThermSteps', '[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
  call it(defs,'Integrator', '[RT] Integrator (RK2 | EULER | EULEREXP | RK2EXP ) ',Integrator_name)
- call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit)
- call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit)
+ call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1))
+ call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit(1))
  call it(defs,'PlasmaPerc', '[RT] Plasma approx (0-100): % of eh pair considered',Plasma_redux_percent,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic secant (HS)',Gr_kind,Verb_level=V_real_time)
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
@@ -342,17 +342,17 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! I/O
  !
- call it(defs,'IOtime',        '[RT] Time between to consecutive I/O (J,P,OCCs - GF - OUTPUT)',RT_IO_time,unit=Time_unit)
+ call it(defs,'IOtime',        '[RT] Time between to consecutive I/O (J,P,OCCs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
  call it('f',defs,'SkipGFIO',  '[RT] Do not write on disk the Green Functions',verb_level=V_real_time)
  call it('f',defs,'SkipOCCIO', '[RT] Do not write on disk the Occupations',verb_level=V_real_time)
  call it('f',defs,'SkipJPIO',  '[RT] Do not write on disk the current and polarization',verb_level=V_real_time)
  !
  ! Other parameters of RT (to be switched on using the verbosity)
  !
- call it(defs,'SwitchOnTime', '[RT Therm] Adiabatic switch on time ',SwitchOnTime,verb_level=V_real_time,unit=Time_unit)
+ call it(defs,'SwitchOnTime', '[RT Therm] Adiabatic switch on time ',SwitchOnTime,verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'RTDiagoSteps', '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)
  call it(defs,'RTAveDeph',    '[RT] Dephasing for all elements not included in RTDePhMatrix', &
-&                             RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit)
+&                             RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit(1))
  call it('f',defs,'Diamagnetic', '[RT] Include the diamagnetic term in current and coupling',verb_level=V_real_time)
  call it('f',defs,'InducedField','[RT] Include induced field in coupling and current',verb_level=V_real_time)
  !
@@ -366,8 +366,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _MAGNETIC
  call it(defs,'Hamiltonian',   '[MAG] Hamiltonian kind [pauli,landau]',MAG_hamiltonian_type,protect=.FALSE.)
  call it(defs,'B_Field',       '[MAG] Magnetic field modulus',MAG_B,unit=Bfield_unit)
- call it(defs,'B_psi',         '[MAG] Magnetic field psi angle',MAG_psi,unit=Angle_unit,verb_level=V_sc)
- call it(defs,'B_theta',       '[MAG] Magnetic field theta angle',MAG_theta,unit=Angle_unit,verb_level=V_sc)
+ call it(defs,'B_psi',         '[MAG] Magnetic field psi angle',MAG_psi,unit=Angle_unit(1),verb_level=V_sc)
+ call it(defs,'B_theta',       '[MAG] Magnetic field theta angle',MAG_theta,unit=Angle_unit(1),verb_level=V_sc)
  call it(defs,'B_Gauge',       '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge,verb_level=V_sc)
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization',verb_level=V_sc)
  call it(defs,'B_radius',      '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
@@ -399,7 +399,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Occupations (NEGF) loader
  !
- call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_ref,verb_level=V_real_time,unit=Time_unit)
+ call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_ref,verb_level=V_real_time,unit=Time_unit(1))
  !
  ! F_xc
  !
@@ -493,13 +493,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &    Efield(i_field)%intensity,unit=I_unit)
      call it(defs,trim(name)//'_Damp',             '[RT '//trim(name)//'] Damping',&
-&    Efield(i_field)%damping,unit=Time_unit)
+&    Efield(i_field)%damping,unit=Time_unit(1))
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
 &    Efield(i_field)%ef_name,verb_level=0)
      call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
 &    Efield(i_field)%versor,verb_level=0)
      call it(defs,trim(name)//'_Tstart',        '[RT '//trim(name)//'] Initial Time',&
-&    Efield(i_field)%t_initial,unit=Time_unit,verb_level=V_real_time)
+&    Efield(i_field)%t_initial,unit=Time_unit(1),verb_level=V_real_time)
    end subroutine
    !
 #endif

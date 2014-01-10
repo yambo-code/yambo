@@ -53,6 +53,11 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  real(SP)    :: Energy,T_fit(2)
  complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,E_mg,N_holes,N_elecs
  !
+ ! Electrons and holes temperatures
+ !
+ T_fit    = 0._SP
+ call RT_occupations_FIT_and_lock(en,k,T_fit,G_lesser)
+ !
  if ( .not.RT_do_IO('OUT') ) return      
  !
 #if defined _TIMING
@@ -67,8 +72,6 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  E_mg     =(0._SP,0._SP)
  N_holes  =(0._SP,0._SP)
  N_elecs  =(0._SP,0._SP)
- T_fit    = 0._SP
- !if(NE_i_time-1>=RT_IO_output_steps) T_fit=real(on_the_fly_operators(8:9))/HA2KEL
  !
  ! Non-interaction kinetc energy
  !
@@ -124,10 +127,6 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! Total number of electrons
  !
  call RT_average_operator(VALUE=Trace_Gf,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
- !
- ! Electrons and holes temperatures
- !
- call RT_occupations_FIT(en,k,T_fit,G_lesser)
  !
  ! Number of Holes in the valence band and
  ! Number of Electrons in the conduction band

@@ -19,13 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_FIT(E,k,T_fit,G_lesser)
+subroutine RT_occupations_FIT_and_lock(E,k,T_fit,G_lesser)
  !
  ! Check if both the electrons and the holes are below a given temperature
  ! In case locks the occupations of states which are not expected to change
  ! any more
  !
  use pars,           ONLY:SP,cZero,cI
+ use units, ONLY:HA2EV
  use QP_m,           ONLY:QP_table,QP_n_states
  use electrons,      ONLY:levels,spin_occ,spin
  use R_lattice,      ONLY:bz_samp
@@ -51,6 +52,7 @@ subroutine RT_occupations_FIT(E,k,T_fit,G_lesser)
  real(SP) :: Ef_fit(2),err_fit(4),E_first_hole,E_last_electron, &
 &            RT_occ_fit(fit_dim,2),RT_E_fit(fit_dim,2), &
 &            RT_occ(RT_nstates),RT_occ_tmp(RT_nstates),RT_E(RT_nstates)
+ real(SP) :: fit_tresh=1.E-2
  !
  Ef_fit=0._SP
  !
@@ -94,22 +96,33 @@ subroutine RT_occupations_FIT(E,k,T_fit,G_lesser)
  RT_occ_tmp(:)=RT_occ(E_sort_index(:))
  RT_occ=RT_occ_tmp
  !
- nfit=fermi_fnc_fit(RT_E,RT_occ,RT_nstates,T_fit,Ef_fit,err_fit,&
-&       RT_occ_fit_out=RT_occ_fit,RT_E_fit_out=RT_E_fit,l_T_max_in=l_elel_scatt)
- !
- return
+ nfit=Fermi_fnc_fit(RT_E,RT_occ,RT_nstates,T_fit,Ef_fit,err_fit,&
+&                   RT_occ_fit_out=RT_occ_fit,RT_E_fit_out=RT_E_fit,l_T_max_in=l_elel_scatt)
  !
  if(nfit==0) return
- if(l_elel_scatt.and. nfit<3) return
+ if(l_elel_scatt.and.nfit<3) return
  !
- if( nfit==3 .and. any(err_fit(3:4)>5.E-2 ) ) then
+ if( nfit==3 .and. any(err_fit(3:4)>fit_tresh ) ) then
    if ( l_elel_scatt ) return
-   if ( all(err_fit(3:4)>5.E-2 ) ) return
-   if ( err_fit(3)<5.E-2 ) nfit=1
-   if ( err_fit(4)<5.E-2 ) nfit=2
+   if ( all(err_fit(3:4)>fit_tresh ) ) return
+   if ( err_fit(3)<fit_tresh ) nfit=1
+   if ( err_fit(4)<fit_tresh ) nfit=2
  endif
- if(nfit==2 .and. err_fit(4)>5.E-2  ) return
- if(nfit==1 .and. err_fit(3)>5.E-2  ) return
+ if(nfit==2 .and. err_fit(4)>fit_tresh  ) return
+ if(nfit==1 .and. err_fit(3)>fit_tresh  ) return
+ !
+ !DEBUG>
+ !if (nfit==3) then
+ !  do i1=1,i_RT
+ !    write (100,*) RT_E(i1)*HA2EV,RT_occ(i1)
+ !  enddo
+ !  do i1=1,fit_dim
+ !    write (200,*) RT_E_fit(i1,1)*HA2EV,RT_occ_fit(i1,1)
+ !    write (300,*) RT_E_fit(i1,2)*HA2EV,RT_occ_fit(i1,2)
+ !  enddo
+ !endif
+ !return
+ !DEBUG<
  ! 
  if(nfit==3.or.nfit==1) then
    do i1=1,fit_dim
@@ -159,6 +172,4 @@ subroutine RT_occupations_FIT(E,k,T_fit,G_lesser)
    !
  enddo
  !
- RT_occupations_locked=.false.
- !
-end subroutine RT_occupations_FIT
+end subroutine RT_occupations_FIT_and_lock

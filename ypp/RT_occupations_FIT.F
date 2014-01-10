@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
+subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  ! 
  ! FIT the occupations with a Gauss–Newton algorithm
  !
@@ -229,4 +229,4 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    enddo
  enddo
  !
-end subroutine YPP_RT_occupations_FIT
+end subroutine RT_occupations_FIT

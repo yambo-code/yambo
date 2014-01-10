@@ -103,11 +103,6 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  do ifit=1,nfit
    T_guess(ifit)=1.E-3
    Ef_guess(ifit)=RT_E(last_occupied+(ifit-1))
-   ! Random guess seems more stable than previous fit guess
-   !if(T_fit(ifit) ==0._SP) T_guess(ifit)=1.E-3
-   !if(Ef_fit(ifit)==0._SP) Ef_guess(ifit)=RT_E(last_occupied+(ifit-1))
-   !if(T_fit(ifit) /=0._SP) T_guess(ifit)=T_fit(ifit)
-   !if(Ef_fit(ifit)/=0._SP) Ef_guess(ifit)=Ef_fit(ifit)
  enddo
  !
  ! DEBUG<
@@ -124,23 +119,15 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  !
  do ifit=1,nfit
    !
-   ! Equilibrium situation
-!   if( (ifit==1 .and. all( abs(RT_occ(1:last_occupied )-spin_occ)<1.E-2)) .or.  &
-!&      (ifit==2 .and. all(     RT_occ(last_occupied+1: )         <1.E-2))  ) then
-!     nfound(ifit)=nfound(ifit)+1
-!     lfound(ifit)=.true.
-!     T_fit(ifit)=1.E-4_SP
-!     Ef_fit(ifit)=(RT_E(last_occupied+1)+RT_E(last_occupied))/2._SP
-!     cycle
-!   endif
-   !
    ! I cannot fit over constant occupations
+   !
    if( ifit==1 .and. all(abs(RT_occ(1:last_occupied )-RT_occ(1))<1.E-3)           ) cycle
    if( ifit==2 .and. all(abs(RT_occ(last_occupied+1:)-RT_occ(nstates))<1.E-3 ) ) cycle
    !
 2000 ntry=ntry+1
    !
    ! Starting point for high temperatures
+   !
    if(ntry>1) then 
      T_guess(ifit)=1.E-3_SP*10**real(ntry-1,SP)
      Ef_guess(ifit)= RT_E(last_occupied+1)*(-1._SP)**real(ifit,SP)
@@ -213,7 +200,8 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
      T_fit(ifit)=T_guess(ifit)-Fit_new(1)
      Ef_fit(ifit)=Ef_guess(ifit)-Fit_new(2)
      !
-     if(abs(T_guess(ifit)-T_fit(ifit))<1.E-6 .and. abs(Ef_guess(ifit)-Ef_fit(ifit))<1.E-3 ) then
+     if(      abs(T_guess(ifit)-T_fit(ifit))<1.E-6 .and. abs(Ef_guess(ifit)-Ef_fit(ifit))<1.E-3 &
+&       .and. abs(Ef_fit(ifit))<0.1 ) then
        nfound(ifit)=nfound(ifit)+1
        lfound(ifit)=.true.
        ntry=0
@@ -241,7 +229,7 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  if(     lfound(1) .and.      lfound(2)) Fermi_fnc_fit=3
  !
  T_now=T_fit
- if(l_T_max.and.Fermi_fnc_fit==3) T_now=maxval(T_fit)
+ if (l_T_max.and.Fermi_fnc_fit==3) T_now=maxval(T_fit)
  !
  !DEBUG<
  !write(*,*) Fermi_fnc_fit

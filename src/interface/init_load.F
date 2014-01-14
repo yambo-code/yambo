@@ -53,7 +53,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
-&                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_jumps,&
+&                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_steps,RT_dynamics_decay_time,&
 &                        RT_ave_dephasing,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,Gr_kind,two_alpha,NE_MEM_treshold
  use fields,        ONLY:Efield
@@ -313,7 +313,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit(1))
  call it(defs,'NEsteps',    '[RT] Non-equilibrium Time steps',NE_steps)
- call it(defs,'RTjumps',    '[RT] Steps jumped between two RT updates',RT_dynamics_jumps,Verb_level=V_real_time)
+ call it(defs,'DYNsteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
+&                           RT_dynamics_steps,Verb_level=V_real_time,unit=Time_unit(1))
+ call it(defs,'DYNdecay',   '[RT] Exponential decay lifetime of the distribution of groups of lifetimes evaluated',&
+&                           RT_dynamics_decay_time,Verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit(1))
  call it(defs,'ThermSteps', '[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
  call it(defs,'Integrator', '[RT] Integrator (RK2 | EULER | EULEREXP | RK2EXP ) ',Integrator_name)
@@ -343,9 +346,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! I/O
  !
  call it(defs,'IOtime',        '[RT] Time between to consecutive I/O (J,P,OCCs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
- call it('f',defs,'SkipGFIO',  '[RT] Do not write on disk the Green Functions',verb_level=V_real_time)
- call it('f',defs,'SkipOCCIO', '[RT] Do not write on disk the Occupations',verb_level=V_real_time)
- call it('f',defs,'SkipJPIO',  '[RT] Do not write on disk the current and polarization',verb_level=V_real_time)
  !
  ! Other parameters of RT (to be switched on using the verbosity)
  !

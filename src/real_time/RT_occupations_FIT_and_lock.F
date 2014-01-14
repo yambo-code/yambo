@@ -25,8 +25,7 @@ subroutine RT_occupations_FIT_and_lock(E,k,T_fit,G_lesser)
  ! In case locks the occupations of states which are not expected to change
  ! any more
  !
- use pars,           ONLY:SP,cZero,cI
- use units, ONLY:HA2EV
+ use pars,           ONLY:SP
  use QP_m,           ONLY:QP_table,QP_n_states
  use electrons,      ONLY:levels,spin_occ,spin
  use R_lattice,      ONLY:bz_samp
@@ -53,6 +52,7 @@ subroutine RT_occupations_FIT_and_lock(E,k,T_fit,G_lesser)
 &            RT_occ_fit(fit_dim,2),RT_E_fit(fit_dim,2), &
 &            RT_occ(RT_nstates),RT_occ_tmp(RT_nstates),RT_E(RT_nstates)
  real(SP) :: fit_tresh=1.E-2
+ !
  !
  Ef_fit=0._SP
  !
@@ -99,6 +99,7 @@ subroutine RT_occupations_FIT_and_lock(E,k,T_fit,G_lesser)
  nfit=Fermi_fnc_fit(RT_E,RT_occ,RT_nstates,T_fit,Ef_fit,err_fit,&
 &                   RT_occ_fit_out=RT_occ_fit,RT_E_fit_out=RT_E_fit,l_T_max_in=l_elel_scatt)
  !
+ return
  if(nfit==0) return
  if(l_elel_scatt.and.nfit<3) return
  !

@@ -33,12 +33,12 @@ subroutine RT_initialize(E,k,q)
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
 &                         l_RT_diamagnetic,RT_IO_JPO_steps,RT_IO_time,l_NE_simulate_BSE,&
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
-&                         l_RT_induced_field,RT_dynamics_jumps,l_NE_simulate_TDDFT, &
+&                         l_RT_induced_field,l_NE_simulate_TDDFT, &
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,Gr_kind,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,Fluence, RT_IO_output_steps,    &
-&                         l_RT_uses_E_RIM,RIM_bz_coo
+&                         l_RT_uses_E_RIM,RIM_bz_coo,RT_dynamics_steps,RT_dynamics_decay_time
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
@@ -142,8 +142,8 @@ subroutine RT_initialize(E,k,q)
  !
  if (.not.RT_is_dumped) call warning('No Dephasing provided. Is the simulation meaningfull ?')
  !
- ! Memory Depth
- !============== 
+ ! Memory Depth (G_lesser)
+ !=========================
  !
  T_memory=0._SP
  if (l_elph_scatt.and.NE_MEM_treshold>0.) then
@@ -151,14 +151,12 @@ subroutine RT_initialize(E,k,q)
    G_MEM_steps=T_memory/RT_step
  endif
  !
- ! Memory Depth
- !============== 
+ ! Memory Depth & Simulation points (Lifetimes)
+ !=============================================
  !
- if (RT_dynamics_jumps<0) RT_dynamics_jumps=0
  Life_MEM_steps=1
- if (RT_dynamics_jumps>0) then
-   Life_MEM_steps=3
- endif
+ if (RT_dynamics_steps(1)>0.) Life_MEM_steps=3
+ Call RT_SET_lifetimes_evaluation_plan( )
  !
  ! External fields checks
  !========================
@@ -296,14 +294,21 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'r','---General---')
  call msg( 'r', 'Simulation time        [fs]:',(/-real(Thermal_steps),real(NE_steps-1)/)*RT_step/FS2AUT)
+ call msg( 'r', 'Step length            [fs]:',RT_step/FS2AUT)
  call msg( 'r', 'NE Steps                   :',NE_steps)
  call msg( 'r', 'NE time                [fs]:',(NE_steps-1)*RT_step/FS2AUT)
- call msg( 'r', 'Time jumps                 :',RT_dynamics_jumps*RT_step/FS2AUT)
- call msg( 'r', 'Time jump              [fs]:',RT_dynamics_jumps*RT_step/FS2AUT)
- call msg( 'r', 'Memory depth           [fs]:',T_memory/FS2AUT)
- call msg( 'r', 'Memory steps               :',G_MEM_steps)
+ call msg( 'r', 'Memory depth(G)        [fs]:',T_memory/FS2AUT)
+ call msg( 'r', 'Memory steps(G)            :',G_MEM_steps)
  call msg( 'r', 'Thermalization steps       :',Thermal_steps)
- call msg( 'r', 'Step length            [fs]:',RT_step/FS2AUT)
+ !
+ if (RT_dynamics_steps(1)>0.) then
+   call msg( 'nr','---Dynamics---')
+   call msg( 'r', 'Steps length (inter/intra) [fs]:',RT_dynamics_steps/FS2AUT)
+   if (RT_dynamics_decay_time>0.) &
+&    call msg( 'r', 'Distribution decay         [fs]:',RT_dynamics_decay_time*RT_step/FS2AUT)
+ endif
+ !
+ call msg( 'nr','---Flags (if any)---')
  if (l_NE_simulate_RPA)   call msg( 'r','Simulate RPA               :',l_NE_simulate_RPA)
  if (l_NE_simulate_BSE)   call msg( 'r','Simulate BSE               :',l_NE_simulate_BSE)
  if (l_NE_simulate_TDDFT) call msg( 'r','Simulate TD-DFT            :',l_NE_simulate_TDDFT)
@@ -343,6 +348,7 @@ subroutine RT_initialize(E,k,q)
      call msg('r', MSG_ch//' energy window/period [eV/fs]:',(/Efield(i1)%frequency*HA2EV,&
 &                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/))
      call msg('r', MSG_ch//' elemental oscillation   [fs]:',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))/FS2AUT)
+     call msg('r', MSG_ch//' damping                 [fs]:',Efield(i1)%damping/FS2AUT)
      call msg('r', MSG_ch//' energy steps                :',Efield(i1)%n_frequencies)
      call msg('r', MSG_ch//' electric field         [V/m]:',Efield(i1)%amplitude*AU2VMm1)
    enddo

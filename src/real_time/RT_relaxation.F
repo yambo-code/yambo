@@ -32,13 +32,12 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
  use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz,RT_ibz_coo
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait,PAR_COM_Q_A2A,PAR_COM_Plasma_INDEX
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait,PAR_COM_Plasma_INDEX
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,&
-&                         RT_dynamics_jumps,it_start,&
+&                         it_start,RT_GAMMA_T_status,RT_step,&
 &                         Life_MEM_steps,SAVED_lifetime,E_P_Ho_abs_lifetime
- use interfaces,    ONLY:PARALLEL_global_indexes
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -56,9 +55,13 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  logical          :: l_evaluate,l_interpolate,l_save
  real(SP)         :: f_k(SC_bands(2))
  !
+ integer , SAVE   :: IT_saved
+ real(SP), SAVE   :: INTERPOLATION_times(3)
+ !
  if(.not.RT_is_dumped.and..not.l_elph_scatt.and..not.l_elel_scatt) return 
  !
  Sigma_relax=cZERO
+ if (it_now==it_start) IT_saved=it_now
  !
  ! Andrea 4/7/2013. Fix of potential anomalous values
  ! of the G_lesser diagonal
@@ -71,24 +74,25 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! Eval or Interpolate ?
  !======================
- it_relative   = mod(it_now-it_start,Life_MEM_steps+RT_dynamics_jumps)+1
- if (it_now-it_start<2*(Life_MEM_steps+RT_dynamics_jumps) ) then
+ it_relative   = RT_GAMMA_T_status(it_now)
+ if (it_relative<0) then
    l_evaluate    = .TRUE.
    l_interpolate = .FALSE.
    l_save        = .FALSE.
- else
-   l_evaluate    = it_relative <= Life_MEM_steps
-   l_interpolate = it_relative >  Life_MEM_steps
+ else if (it_relative==0) then
+   l_evaluate    = .FALSE.
+   l_interpolate = .TRUE.
+   l_save        = l_evaluate
+ else if (it_relative>0) then
+   l_evaluate    = .TRUE.
+   l_interpolate = .FALSE.
    l_save        = l_evaluate
  endif
- if (RT_dynamics_jumps==0) then
-   l_evaluate    = .TRUE.
-   l_interpolate = .FALSE.
-   l_save        = .FALSE.
- endif
+ !
+ if (l_save) call ADD_to_saved_values((it_now-1)*RT_step,INTERPOLATION_times)
+ !
  ! El-El
  !=======
- !
  if (l_elel_scatt.and.l_evaluate) then
 #if defined _TIMING
    call timing('RT relaxation (e-e)',OPR='start')
@@ -159,8 +163,10 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      do ik=1,RT_nk
        if (l_elel_scatt) then
          if (l_save) then
-           SAVED_lifetime(:,ik,1, it_relative)=E_E_Hole_lifetime(:,ik)
-           SAVED_lifetime(:,ik,2, it_relative)=E_E_Electron_lifetime(:,ik)
+           do ib1=SC_bands(1),SC_bands(2)
+             call ADD_to_saved_values(E_E_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,1,:))
+             call ADD_to_saved_values(E_E_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,2,:))
+           enddo
          endif
        endif
        if (l_RT_CCA_Kernel.and.l_elph_scatt) then
@@ -173,10 +179,12 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
          call PP_redux_wait(E_P_El_abs_lifetime(:,ik))
          call PP_redux_wait(E_P_Ho_abs_lifetime(:,ik))
          if (l_save) then
-           SAVED_lifetime(:,ik,3, it_relative)=E_P_Hole_lifetime(:,ik)
-           SAVED_lifetime(:,ik,4, it_relative)=E_P_Electron_lifetime(:,ik)
-           SAVED_lifetime(:,ik,5, it_relative)=E_P_Ho_abs_lifetime(:,ik)
-           SAVED_lifetime(:,ik,6, it_relative)=E_P_El_abs_lifetime(:,ik)
+           do ib1=SC_bands(1),SC_bands(2)
+             call ADD_to_saved_values(E_P_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,3,:))
+             call ADD_to_saved_values(E_P_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,4,:))
+             call ADD_to_saved_values(E_P_Ho_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,5,:))
+             call ADD_to_saved_values(E_P_El_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,6,:))
+           enddo
          endif
        endif
      enddo
@@ -184,14 +192,14 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      do ik=1,RT_nk
        do ib1=SC_bands(1),SC_bands(2)
          if (l_elel_scatt) then
-           call RT_Lifetimes_Interpolation(E_E_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,1,:))
-           call RT_Lifetimes_Interpolation(E_E_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,2,:))
+           call RT_Lifetimes_Interpolation(E_E_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,1,:),INTERPOLATION_times)
+           call RT_Lifetimes_Interpolation(E_E_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,2,:),INTERPOLATION_times)
          endif
          if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-           call RT_Lifetimes_Interpolation(E_P_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,3,:))
-           call RT_Lifetimes_Interpolation(E_P_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,4,:))
-           call RT_Lifetimes_Interpolation(E_P_Ho_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,5,:))
-           call RT_Lifetimes_Interpolation(E_P_El_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,6,:))
+           call RT_Lifetimes_Interpolation(E_P_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,3,:),INTERPOLATION_times)
+           call RT_Lifetimes_Interpolation(E_P_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,4,:),INTERPOLATION_times)
+           call RT_Lifetimes_Interpolation(E_P_Ho_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,5,:),INTERPOLATION_times)
+           call RT_Lifetimes_Interpolation(E_P_El_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,6,:),INTERPOLATION_times)
          endif
        enddo
      enddo
@@ -227,5 +235,18 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    enddo
  endif
  !
+ IT_saved=it_now
+ !
+ contains
+   !
+   subroutine ADD_to_saved_values(VAL,ARRAY)
+     real(SP) :: VAL,ARRAY(Life_MEM_steps)
+     integer  :: i1
+     do i1=1,Life_MEM_steps-1
+       if (IT_saved/=it_now) ARRAY(i1)=ARRAY(i1+1)
+     enddo
+     ARRAY(Life_MEM_steps)=VAL
+   end subroutine
+   !
 end subroutine RT_relaxation
 

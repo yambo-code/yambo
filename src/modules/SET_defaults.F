@@ -89,7 +89,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,l_Debye_TBose_update,&
 &                     SwitchOnTime,l_RT_induced_field,&
 &                     l_RT_diagonalize,RT_is_dumped,RAD_LifeTime,Phase_LifeTime,&
-&                     RT_dynamics_jumps,NE_tot_time,G_MEM_steps,NE_MEM_treshold,&
+&                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,&
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,&
 &                     Eh_pumped_pair_energy,Eh_pumped_pair_width,&
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,&
@@ -528,7 +528,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  RT_step=0.002*FS2AUT
  NE_steps=1
- RT_dynamics_jumps=0
  Thermal_steps=0
  SwitchOnTime = 1./8.
  Integrator_name='RK2'
@@ -544,7 +543,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  G_MEM_steps=2   ! By default only G_lesser@t and @t+1
  RT_nk=0
  RT_eh_energy_max=0.
- Eh_pumped_pair_energy=0.
+ Eh_pumped_pair_energy=-1.
  Eh_pumped_pair_width=0.1/HA2EV
  Eh_pumped_Nel=1.
  Plasma_redux_percent=100.

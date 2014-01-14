@@ -21,15 +21,14 @@
 !
 subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
- use pars,           ONLY:SP,cI,zero_dfl
+ use pars,           ONLY:SP,cI
  use units,          ONLY:HA2EV,HA2KEL
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands,RT_nk,RT_Nk_ibz,RT_ibz_coo
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen, &
-&                         l_NE_simulate_IP,NE_i_time, &
-&                         RIM_ibz_coo,l_RT_uses_E_RIM,RT_do_IO
+&                         l_NE_simulate_IP,RIM_ibz_coo,l_RT_uses_E_RIM,RT_do_IO
  use electrons,      ONLY:levels,spin_occ
  use QP_m,           ONLY:QP_Vnl_xc
  use xc_functionals, ONLY:E_xc,XC_potential_driver
@@ -53,12 +52,12 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  real(SP)    :: Energy,T_fit(2)
  complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,E_mg,N_holes,N_elecs
  !
+ if ( .not.RT_do_IO('OUT') ) return      
+ !
  ! Electrons and holes temperatures
  !
  T_fit    = 0._SP
  call RT_occupations_FIT_and_lock(en,k,T_fit,G_lesser)
- !
- if ( .not.RT_do_IO('OUT') ) return      
  !
 #if defined _TIMING
  call timing('RT observables',OPR='start')

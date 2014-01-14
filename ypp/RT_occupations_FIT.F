@@ -156,6 +156,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    !
    do igamma=1,ngamma
      !
+     output_fname(igamma+1)=trim(gamma_fname(igamma))
      if (n_T_steps>nmax_file_report) output_fname(igamma+1)=trim(gamma_fname(igamma))//trim(GRP_string)
      call of_open_close(trim(output_fname(igamma+1)),'ot')
      !

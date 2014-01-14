@@ -39,7 +39,7 @@ integer function variables_SC(ID,local_description,what)
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_IO_G_steps,              &
 &                         RT_IO_JPO_steps,l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,RT_IO_steps_DB,Gr_description,&
-&                         RT_dynamics_jumps,l_RT_uses_E_RIM,N_Gr_descs
+&                         l_RT_uses_E_RIM,N_Gr_descs,RT_dynamics_steps,RT_dynamics_decay_time
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
@@ -280,7 +280,7 @@ integer function variables_SC(ID,local_description,what)
  !
  if(any((/l_J,l_G,l_occupations/))) then
    !
-   VAR_SIZE=7
+   VAR_SIZE=9
    call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=VAR_SIZE,MENU=0) 
    !
    i_desc=i_desc+1
@@ -294,17 +294,17 @@ integer function variables_SC(ID,local_description,what)
    !
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] Time step              [fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&
+&    VAR=  " [RT] Time step              [fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
    !
-   if(variable_is_found(ID,"TEMPERATURES")/=0) then
-     !
-     i_desc=i_desc+1
-     call io_elemental(ID,&
-&      VAR=" [RT] Time jumps                 :",I0=RT_dynamics_jumps,WARN=.true.,OP=(/"=="/),&
-&      DESCRIPTION=local_description(i_desc))
-     !
-   endif
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT] Inter/intra DYN grps dT[fs]:",R1=RT_dynamics_steps,WARN=.true.,OP=(/"=="/),&
+&    DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT] Time decay of DYN T's  [fs]:",R0=RT_dynamics_decay_time,WARN=.true.,OP=(/"=="/),&
+&    DESCRIPTION=local_description(i_desc))
    !
    i_desc=i_desc+1
    call io_elemental(ID,&

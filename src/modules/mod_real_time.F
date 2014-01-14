@@ -95,16 +95,22 @@ module real_time
  ! ... NE dynamics ...
  !
  logical  :: NE_dynamics
- real(SP) :: NE_time ! <- incremented
- real(SP) :: NE_tot_time ! Total (fixed)
- integer  :: NE_i_time ! = (NE_time-1)/RT_step
- integer  :: RT_dynamics_jumps 
+ real(SP) :: NE_time      ! <- incremented
+ real(SP) :: NE_tot_time  ! Total (fixed)
+ integer  :: NE_i_time   ! = (NE_time-1)/RT_step
  integer  :: NE_steps
+ !
+ ! ... when e-e or e-p is included
+ !
+ real(SP) :: RT_dynamics_steps(2)  =-1.*FS2AUT ! (1) is step between groups of 3, (2) is step in the group of 3.
+ real(SP) :: RT_dynamics_decay_time=-1.*FS2AUT ! For pulsed-like distribution it dumps the distribution of points
+                                               ! in the long-time regime
+ integer(2), allocatable :: RT_GAMMA_T_status(:)
  !
  ! Kind of e-e interactions (for the CORR and SCATT parts)
  !
- integer           :: RT_EE_CORR_kind=SE_NONE
- integer           :: RT_EE_SCATT_kind=SE_NONE
+ integer  :: RT_EE_CORR_kind=SE_NONE
+ integer  :: RT_EE_SCATT_kind=SE_NONE
  !
  ! ... Memory ...
  !
@@ -235,8 +241,6 @@ module real_time
  !
  integer                  :: ID(7)
  integer                  :: it_start                 ! restart point
- integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
-                                                      ! the last evaluated point
  integer                  :: RT_IO_JPO_steps    = -1
  integer                  :: RT_IO_output_steps = -1
  integer                  :: RT_IO_G_steps      = -1
@@ -376,7 +380,7 @@ module real_time
        E_P_Ho_abs_lifetime=0._SP
      endif
      !
-     if (RT_dynamics_jumps>0) then
+     if (RT_dynamics_steps(1)>0.) then
        if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt) then
          allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
          call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
@@ -449,6 +453,11 @@ module real_time
      !
      deallocate(Ho_plus_Sigma)
      call mem_est("Ho_plus_Sigma")
+     !
+     if(allocated(RT_GAMMA_T_status)) then
+       deallocate(RT_GAMMA_T_status)
+       call mem_est("RT_GAMMA_T_status")
+     endif
      !
      if(allocated(Sigma_relax)) then
        deallocate(Sigma_relax)

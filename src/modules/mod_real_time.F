@@ -100,8 +100,11 @@ module real_time
  integer  :: NE_i_time   ! = (NE_time-1)/RT_step
  integer  :: NE_steps
  !
- ! ... when e-e or e-p is included
+ ! Here I control the way the time evolution is sampled for the e-p and e-e
+ ! channels. I will see later if this can be somehow extended/duplicated
+ ! for the static correlations
  !
+ character(schlen) :: RT_dynamics_KIND = "EXP" ! EXP or FIELD
  real(SP) :: RT_dynamics_steps(2)  =-1.*FS2AUT ! (1) is step between groups of 3, (2) is step in the group of 3.
  real(SP) :: RT_dynamics_decay_time=-1.*FS2AUT ! For pulsed-like distribution it dumps the distribution of points
                                                ! in the long-time regime
@@ -181,6 +184,7 @@ module real_time
  !
  ! Saved RD life-times
  !-----------------------
+ real(SP),    allocatable :: SAVED_times(:)
  real(SP),    allocatable :: SAVED_lifetime(:,:,:,:)
  !
  ! ... ouput max/min lifetimes
@@ -240,7 +244,7 @@ module real_time
  integer,  parameter      :: J_and_P_cache_size=18
  !
  integer                  :: ID(7)
- integer                  :: it_start                 ! restart point
+ integer                  :: it_start = 1             ! restart point
  integer                  :: RT_IO_JPO_steps    = -1
  integer                  :: RT_IO_output_steps = -1
  integer                  :: RT_IO_G_steps      = -1
@@ -384,6 +388,7 @@ module real_time
        if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt) then
          allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
          call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
+         allocate(SAVED_times(Life_MEM_steps)) 
        endif
      endif
      !
@@ -482,6 +487,11 @@ module real_time
      if(allocated(E_P_Hole_lifetime)) then
        deallocate(E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime)
        call mem_est("RT_E_P_lifetimes")
+     endif
+     !
+     if(allocated(SAVED_lifetime)) then
+       deallocate(SAVED_lifetime,SAVED_times)
+       call mem_est("SAVED_lifetimes")
      endif
      !
      deallocate(RT_occupations_locked)

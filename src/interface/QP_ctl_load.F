@@ -126,10 +126,5 @@ subroutine QP_ctl_load(defs,i_type)
 &        '[EXTQP '//trim(description_ch(i_type))//'] Occupations database directory',&
 &        OCC_ctl(i_type),verb_level=V_real_time)
 #endif
-#if  defined _YPP_RT
- call it(defs,prefix(i_type)//'fnFdb',&
-&        '[EXTQP '//trim(description_ch(i_type))//'] Occupations database directory',&
-&        OCC_ctl(i_type))
-#endif
  !
 end subroutine

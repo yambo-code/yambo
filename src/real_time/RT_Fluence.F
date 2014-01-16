@@ -47,6 +47,7 @@ subroutine RT_Fluence(MAX_Fluence,MAX_Fluence_reached_time)
  ! |E(t)|^2= Efield(i_Pump)%amplitude**2 * | small_a' theta + small_a theta' |^2
  !
  I=0._SP
+ Fluence=0._SP
  last_it_evaluated=0
  !
  do it=ef_i_time(i_Pump)+1,NE_steps

@@ -36,7 +36,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,&
-&                         it_start,RT_GAMMA_T_status,RT_step,&
+&                         it_start,RT_GAMMA_T_status,RT_step,SAVED_times,&
 &                         Life_MEM_steps,SAVED_lifetime,E_P_Ho_abs_lifetime
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -56,7 +56,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  real(SP)         :: f_k(SC_bands(2))
  !
  integer , SAVE   :: IT_saved
- real(SP), SAVE   :: INTERPOLATION_times(3)
  !
  if(.not.RT_is_dumped.and..not.l_elph_scatt.and..not.l_elel_scatt) return 
  !
@@ -89,7 +88,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    l_save        = l_evaluate
  endif
  !
- if (l_save) call ADD_to_saved_values((it_now-1)*RT_step,INTERPOLATION_times)
+ if (l_save) call ADD_to_saved_values((it_now-1)*RT_step,SAVED_times)
  !
  ! El-El
  !=======
@@ -192,19 +191,23 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      do ik=1,RT_nk
        do ib1=SC_bands(1),SC_bands(2)
          if (l_elel_scatt) then
-           call RT_Lifetimes_Interpolation(E_E_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,1,:),INTERPOLATION_times)
-           call RT_Lifetimes_Interpolation(E_E_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,2,:),INTERPOLATION_times)
+           call RT_Lifetimes_Interpolation(E_E_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,1,:),SAVED_times)
+           call RT_Lifetimes_Interpolation(E_E_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,2,:),SAVED_times)
          endif
          if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-           call RT_Lifetimes_Interpolation(E_P_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,3,:),INTERPOLATION_times)
-           call RT_Lifetimes_Interpolation(E_P_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,4,:),INTERPOLATION_times)
-           call RT_Lifetimes_Interpolation(E_P_Ho_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,5,:),INTERPOLATION_times)
-           call RT_Lifetimes_Interpolation(E_P_El_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,6,:),INTERPOLATION_times)
+           call RT_Lifetimes_Interpolation(E_P_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,3,:),SAVED_times)
+           call RT_Lifetimes_Interpolation(E_P_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,4,:),SAVED_times)
+           call RT_Lifetimes_Interpolation(E_P_Ho_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,5,:),SAVED_times)
+           call RT_Lifetimes_Interpolation(E_P_El_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,6,:),SAVED_times)
          endif
        enddo
      enddo
    endif
  endif
+ !
+ ! Number conservation
+ !=====================
+ call RT_impose_elel_conserves_E_and_N(E,k)
  !
  ! Dephasing Matrix
  !==================

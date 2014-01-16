@@ -19,22 +19,25 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_SET_lifetimes_evaluation_plan( )
+integer function RT_SET_lifetimes_evaluation_plan( )
  !
  ! Here I define the components of an integer array
  ! RT_GAMMA_T_status(NE_steps)
  !
- use pars,           ONLY:IP2
- use fields,         ONLY:Efield
+ use pars,           ONLY:IP2,SP
+ use fields,         ONLY:Efield,i_Pump,ef_i_time,ext_field,Efield_duplicate,small_a
  use memory_m,       ONLY:mem_est
  use real_time,      ONLY:RT_GAMMA_T_status,NE_steps,RT_dynamics_steps,Life_MEM_steps,&
-&                         RT_step,it_start
+&                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time
  !
  implicit none
  !
  ! Work Space
  !
- integer :: it,it_relative,N_inter_steps,N_intra_steps,i_group,itp,Nt_each_group
+ integer         :: it,it_relative,N_inter_steps,N_intra_steps,Nt_each_group,it_last,it_0
+ real(SP)        :: weight(NE_steps)
+ complex(SP)     :: TIME
+ type(ext_field) :: E_dummy
  !
  allocate(RT_GAMMA_T_status(NE_steps))
  call mem_est("RT_GAMMA_T_status",(/NE_steps/),(/IP2/))
@@ -48,38 +51,65 @@ subroutine RT_SET_lifetimes_evaluation_plan( )
  N_inter_steps=RT_dynamics_steps(1)/RT_step
  N_intra_steps=RT_dynamics_steps(2)/RT_step
  !
- Nt_each_group=Life_MEM_steps*N_intra_steps+N_inter_steps
- !
  ! RT_GAMMA_T_status = -1   EVAL no SAVE
- !                      I>0 EVAL and SAVE
+ !                      1   EVAL and SAVE
  !                      0   INTERPOLATE  
  !
- ! Note that the "plan" starts from it_start to allow easily
- ! a restart of the simulation.
+ it_last=1
+ Nt_each_group= Life_MEM_steps*N_intra_steps+N_inter_steps
+ RT_SET_lifetimes_evaluation_plan=0
+ weight=1._SP
  !
- do itp=it_start,NE_steps
+ if (trim(RT_dynamics_KIND)=="FIELD") then
+   call Efield_duplicate(Efield(i_Pump),E_dummy)
+   if (trim(E_dummy%ef_name)=="QSSIN")  E_dummy%ef_name="GAUSS"
+   do it=1,NE_steps
+     TIME=cmplx(RT_step*(it-1)-ef_i_time(i_Pump)*RT_step,0._SP)
+     weight(it)=abs(small_a(TIME,E_dummy,1))**2
+     if (abs(weight(it)-1.)<1.E-5) it_0=it
+   enddo
+ else if (RT_dynamics_decay_time>0.) then
+   do it=1,NE_steps
+     TIME=RT_step*(it-1)
+     weight(it)=exp(-TIME/RT_dynamics_decay_time)
+   enddo
+   it_0=-1
+ endif
+ !
+ do it=1,NE_steps
    !
-   it=itp-it_start+1 
+   it_relative  = mod(it-it_last,Nt_each_group)+1
    !
-   it_relative   = mod(it-1,Nt_each_group)+1
+   if (it_relative>1) cycle
    !
-   i_group = (it-1)/(Life_MEM_steps*N_intra_steps+N_inter_steps)+1
+   if (it==1) then
+     call BUILD_up_group(Life_MEM_steps,1)
+   else if (NE_steps-it+1<N_intra_steps*Life_MEM_steps) then
+     call BUILD_up_group(Life_MEM_steps,1)
+   else
+     call BUILD_up_group(min(N_inter_steps,NE_steps-it+1),N_intra_steps)
+   endif
    !
-   if (i_group==1) RT_GAMMA_T_status(it)=-1
-   if (i_group==2.and.it_relative< Nt_each_group-Life_MEM_steps+1) RT_GAMMA_T_status(it)=-1
-   if (i_group==2.and.it_relative==Nt_each_group-Life_MEM_steps+1) call BUILD_up_group(Life_MEM_steps,1)
-   if (i_group>=3.and.it_relative==1) call BUILD_up_group(N_inter_steps,N_intra_steps)
+   if (it<it_0) then
+     weight(it)=max(weight(it),0.1)  
+   else
+     weight(it)=max(weight(it),0.01)  
+   endif
+   !
+   N_inter_steps=real(RT_dynamics_steps(1))/weight(it)/RT_step
+   N_intra_steps=real(RT_dynamics_steps(2))/weight(it)/RT_step
+   !
+   Nt_each_group= Life_MEM_steps*N_intra_steps+N_inter_steps
+   it_last=it
+   RT_SET_lifetimes_evaluation_plan=RT_SET_lifetimes_evaluation_plan+1
    !
  enddo
- !
- ! Fix the last points in order to have enough points for FIT or evaluate it directly
- !
- if (RT_GAMMA_T_status(NE_steps)==0) return
- !
- do it=NE_steps,1,-1
-   if ( RT_GAMMA_T_status(it) == 0 ) exit
-   RT_GAMMA_T_status(it)=-1
- enddo
+ !DEBUG>
+ ! do it=1,NE_steps
+ !   TIME=RT_step*(it-1)
+ !   write (100,*) real(TIME)/FS2AUT,RT_GAMMA_T_status(it),weight(it)
+ ! enddo
+ !DEBUG<
  !
  contains
    !
@@ -92,11 +122,11 @@ subroutine RT_SET_lifetimes_evaluation_plan( )
        RT_GAMMA_T_status(it_+it-1)=0
        !
        if (INTRA_steps==1) then
-         if (it_<=Life_MEM_steps) RT_GAMMA_T_status(it_+it-1)=it_
+         if (it_<=Life_MEM_steps) RT_GAMMA_T_status(it_+it-1)=1
        else
          if (it_<INTRA_steps*Life_MEM_steps) then
            if (mod(it_-1,INTRA_steps)==0) then
-             RT_GAMMA_T_status(it_+it-1)=it_/INTRA_steps+1
+             RT_GAMMA_T_status(it_+it-1)=1
            endif
          endif
        endif
@@ -105,4 +135,4 @@ subroutine RT_SET_lifetimes_evaluation_plan( )
      !
    end subroutine
    !
-end subroutine RT_SET_lifetimes_evaluation_plan
+end function RT_SET_lifetimes_evaluation_plan

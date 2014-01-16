@@ -55,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_steps,RT_dynamics_decay_time,&
 &                        RT_ave_dephasing,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
-&                        Eh_pumped_pair_width,Eh_pumped_Nel,Gr_kind,two_alpha,NE_MEM_treshold
+&                        Eh_pumped_pair_width,Eh_pumped_Nel,Gr_kind,two_alpha,NE_MEM_treshold,RT_dynamics_KIND
  use fields,        ONLY:Efield
  use plasma,        ONLY:Plasma_redux_percent
 #endif
@@ -313,6 +313,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit(1))
  call it(defs,'NEsteps',    '[RT] Non-equilibrium Time steps',NE_steps)
+ call it(defs,'DYNmode',    '[RT] Step distribution mode',RT_dynamics_KIND,Verb_level=V_real_time)
  call it(defs,'DYNsteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
 &                           RT_dynamics_steps,Verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'DYNdecay',   '[RT] Exponential decay lifetime of the distribution of groups of lifetimes evaluated',&

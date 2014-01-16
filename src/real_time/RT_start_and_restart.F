@@ -47,7 +47,8 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_RT_CCA_Kernel,&
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,&
-&                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps
+&                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps,&
+&                         RT_GAMMA_T_status,Life_MEM_steps,RT_dynamics_steps
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,&
 &                         rho_convergence,H_rotate,V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
@@ -68,7 +69,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Work Space
  !
  integer :: ik,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,&
-&           io_OCCUPATIONS,ID_OCCUPATIONS
+&           io_OCCUPATIONS,ID_OCCUPATIONS,it
  integer, external :: io_SC_components,io_RT_components
  logical :: RESTART,SC_DB_present
  !
@@ -325,8 +326,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Starting point 
  !
- it_start=1
- !
  if (RESTART) then
    !
    ! I use G_lesser(:,:,:) to reconstruct everything
@@ -385,6 +384,15 @@ subroutine RT_start_and_restart(E,k,q,X)
    if (it_start>Thermal_steps.and..not.l_NE_simulate_IP) then 
      call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_reference,SC_bands(1))
    endif
+   !
+   ! Last thing to do is to introduce some more points at the beginning of the simulation to allow 
+   ! a proper fitting
+   !
+   if (RT_dynamics_steps(1)<0.) then
+     do it=it_start,it_start+Life_MEM_steps-1 
+       RT_GAMMA_T_status(it)=1
+     enddo
+   endif 
    !
  endif
  !

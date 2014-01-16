@@ -272,14 +272,12 @@ module fields
    end function Rabi_Factor
    !
    complex(SP) function Divide_by_Field(Field,order)
-     !
      use pars, ONLY: cI,pi
      type(ext_field):: Field
      integer        :: order
      ! work space
      complex(SP) :: E_w
      real(SP)    :: T_0, sigma, W_0, T
-     !
      select case(Field%ef_name)
        case('ANTIRES')
          Divide_by_Field = (1._SP,0._SP)/Field%amplitude**order
@@ -297,7 +295,6 @@ module fields
          Divide_by_Field = (2._SP*cI/E_w)**order
          if (order==0) Divide_by_Field =  (4._SP,0._SP)/(E_w*conjg(E_w))
        end select
-       !
    end function Divide_by_Field
    !
    real(SP) function Efield_strength(Intensity,unit_system)

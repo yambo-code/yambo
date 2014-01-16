@@ -49,6 +49,9 @@ subroutine RT_driver(E,X,k,q)
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -246,15 +249,15 @@ subroutine RT_driver(E,X,k,q)
    endif
    !
    ! Keep a copy of A_vecpot before starting the collisions
-   ! ======================================================
+   !========================================================
    A_vecpot_previous=A_vecpot
    !
    ! Simmetrization
-   !===============
+   !================
    forall( ib=SC_bands(1):SC_bands(2) ) G_lesser(ib,ib,:,it_mem)=cI*aimag(G_lesser(ib,ib,:,it_mem))
    !
    ! End dynamics ?
-   !===============
+   !================
    if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.
    !
    if (stop_now(.FALSE.)) then
@@ -262,7 +265,7 @@ subroutine RT_driver(E,X,k,q)
      l_Dynamics_is_over=.TRUE.
    endif
    !
-   ! Current and Polarization
+   ! Current and Poarization
    !==========================
    call RT_current_AND_polarization(k,E,G_lesser(:,:,:,it_mem),A_vecpot)
    !

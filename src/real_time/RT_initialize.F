@@ -37,8 +37,9 @@ subroutine RT_initialize(E,k,q)
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,Gr_kind,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps, &
-&                         l_RT_CCA_Kernel,Life_MEM_steps,Fluence, RT_IO_output_steps,    &
-&                         l_RT_uses_E_RIM,RIM_bz_coo,RT_dynamics_steps,RT_dynamics_decay_time
+&                         l_RT_CCA_Kernel,Life_MEM_steps,Fluence,RT_IO_output_steps,    &
+&                         l_RT_uses_E_RIM,RIM_bz_coo,RT_dynamics_steps,RT_dynamics_decay_time,&
+&                         RT_dynamics_KIND
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
@@ -51,11 +52,11 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,rest,ik,IO_steps(3)
+ integer                  :: i1,rest,ik,IO_steps(3),N_T_samplings
  character(5)             :: MSG_ch
  real(SP)                 :: T_memory,MAX_Fluence,MAX_Fluence_reached_time
  logical                  :: l_Full_RT_T_evolution,l_compute_fluence
- integer,         external:: RT_k_grid
+ integer,         external:: RT_k_grid,RT_SET_lifetimes_evaluation_plan
  !
  ! Logicals
  !==========
@@ -151,13 +152,6 @@ subroutine RT_initialize(E,k,q)
    G_MEM_steps=T_memory/RT_step
  endif
  !
- ! Memory Depth & Simulation points (Lifetimes)
- !=============================================
- !
- Life_MEM_steps=1
- if (RT_dynamics_steps(1)>0.) Life_MEM_steps=3
- Call RT_SET_lifetimes_evaluation_plan( )
- !
  ! External fields checks
  !========================
  !
@@ -231,9 +225,15 @@ subroutine RT_initialize(E,k,q)
  !=========
  if (l_NE_with_fields) then
    allocate(Fluence(NE_steps))
-   Fluence=0._SP
    if (l_compute_fluence) call RT_Fluence(MAX_Fluence,MAX_Fluence_reached_time)
  endif
+ !
+ ! Memory Depth & Simulation points (Lifetimes)
+ !=============================================
+ !
+ Life_MEM_steps=1
+ if (RT_dynamics_steps(1)>0.) Life_MEM_steps=3
+ N_T_samplings=RT_SET_lifetimes_evaluation_plan( )
  !
  ! Gauge
  !=======
@@ -303,9 +303,11 @@ subroutine RT_initialize(E,k,q)
  !
  if (RT_dynamics_steps(1)>0.) then
    call msg( 'nr','---Dynamics---')
+   call msg( 'r', 'Sampling                       :',RT_dynamics_KIND)
    call msg( 'r', 'Steps length (inter/intra) [fs]:',RT_dynamics_steps/FS2AUT)
-   if (RT_dynamics_decay_time>0.) &
-&    call msg( 'r', 'Distribution decay         [fs]:',RT_dynamics_decay_time*RT_step/FS2AUT)
+   if (RT_dynamics_decay_time>0.) call msg( 'r', 'Distribution decay         [fs]:',&
+&                                                RT_dynamics_decay_time/FS2AUT)
+   call msg( 'r', 'Time points                    :',N_T_samplings*Life_MEM_steps)
  endif
  !
  call msg( 'nr','---Flags (if any)---')

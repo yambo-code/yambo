@@ -26,8 +26,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,G_lesser)
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
  use SC,              ONLY:RT_ibz_coo,SC_bands,RT_nk,RT_Nk_ibz,&
 &                          RT_occupations_locked
- use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,&
-&                          l_RT_uses_E_RIM,RIM_ibz_coo
+ use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime
  use plasma,          ONLY:EH_gas
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:GW_NEQ_collisions

@@ -35,9 +35,10 @@ subroutine RT_Coulomb_interpolation(E,k)
  use functions,       ONLY:Fermi_fnc,Fermi_fnc_fit
  use QP_m,            ONLY:QP_table,QP_n_states
  use SC,              ONLY:RT_ibz_coo,RT_Nk_ibz,SC_bands,it_now
- use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,&
-&                          RIM_closest_E,RIM_ibz_coo,l_RT_uses_E_RIM,&
-&                          MEM_index,G_MEM_steps,G_lesser
+ use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,         &
+&                          RIM_closest_E,RIM_ibz_coo,l_RT_uses_E_RIM,       &
+&                          MEM_index,G_MEM_steps,G_lesser,RT_Tfit_lifetimes,&
+&                          RT_Efit_lifetimes
  !
  implicit none
  !
@@ -46,24 +47,44 @@ subroutine RT_Coulomb_interpolation(E,k)
  !
  ! Work Space ...
  !
- integer               :: nstates
+ integer  :: nstates
  !
- integer               :: i_k,i_k_rim,i_E_rim,i_k_ref,i_qp,i_spin,i_n,i_n_ref,ifit,i_RT,i1,i2,&
-&                         i_sorted,i_unsorted,nfit,RT_table(SC_bands(1):SC_bands(2),k%nibz),&
-&                         E_sort_index(k%nibz*(SC_bands(2)-SC_bands(1)+1))
- real(SP)              :: gamma_E_factor,gamma_H_factor,alpha,beta,x,k_weight,f_occ,&
-&                         SUM_N_Electrons,SUM_N_Holes,Nel_change
- logical               :: l_condition_Hole,l_condition_Elec
+ integer  :: i_k,i_k_rim,i_E_rim,i_k_ref,i_qp,i_spin,i_n,i_n_ref,order, &
+&            ifit,i_RT,i1,i2,i_sorted,i_unsorted,nfit,                  &
+&            RT_table(SC_bands(1):SC_bands(2),k%nibz),                  &
+&            E_sort_index(k%nibz*(SC_bands(2)-SC_bands(1)+1)),          &
+&            E_sort_index_m1(k%nibz*(SC_bands(2)-SC_bands(1)+1))
  !
- real(SP) :: T_fit(2),Ef_fit(2),err_fit(4),deviation( k%nibz*(SC_bands(2)-SC_bands(1)+1) ), &
-&            RT_occ_infinity( k%nibz*(SC_bands(2)-SC_bands(1)+1) ),RT_occ_sorted(k%nibz*(SC_bands(2)-SC_bands(1)+1)),&
+ real(SP) :: gamma_E_factor,gamma_H_factor,alpha,beta,x,k_weight,fac,   &
+&            f_occ,SUM_N_Electrons,SUM_N_Holes,Nel_change,EPS,E_ref(2), &
+&            Energy(2)
+ !
+ logical  :: l_condition_Hole,l_condition_Elec
+ !
+ real(SP) :: T_fit(2),Ef_fit(2),err_fit(4),Hole_coeff(3),Elec_coeff(3), &
+&            deviation( k%nibz*(SC_bands(2)-SC_bands(1)+1) ),           &
+&            RT_occ_infinity( k%nibz*(SC_bands(2)-SC_bands(1)+1) ),     &
+&            RT_occ_sorted(k%nibz*(SC_bands(2)-SC_bands(1)+1)),         &
 &            RT_E(k%nibz*(SC_bands(2)-SC_bands(1)+1))
- !
- ! Step one: I interpolate using the small plasma
  !
  if(.not.l_RT_uses_E_RIM) return
  !
  nstates=k%nibz*(SC_bands(2)-SC_bands(1)+1)
+ !
+ ! Sort energies
+ !
+ i_RT=0
+ !
+ do i_k=1,k%nibz
+   do i_n=SC_bands(1),SC_bands(2)
+     i_RT=i_RT+1
+     RT_E(i_RT)=E%E(i_n,i_k,1)
+   enddo
+ enddo
+ !
+ call sort(RT_E,indx=E_sort_index,indx_m1=E_sort_index_m1)
+ !
+ ! Step 1: start setting all lifetimes in the group identical
  !
  do i_k=1,k%nibz
    !
@@ -80,9 +101,10 @@ subroutine RT_Coulomb_interpolation(E,k)
    enddo
    !
  enddo
- !
- ! Step 2: I use the ratio imposed by the fitting temperature
- !
+ ! 
+ ! Step 2: I correct the gamma on the BIG gid imposing the ratio
+ !         obtained fitting the ratio of the gamma on the SMALL grid
+ !         with a Fermi function
  i_RT=0
  !
  do i_k=1,k%nibz
@@ -91,31 +113,35 @@ subroutine RT_Coulomb_interpolation(E,k)
      i_RT=i_RT+1
      i_k_rim=RT_ibz_coo(i_k,1)
      !
-     RT_occ_infinity(i_RT)=E_E_Hole_lifetime(i_n,i_k_rim)/&
-     &  (E_E_Hole_lifetime(i_n,i_k_rim)+E_E_Electron_lifetime(i_n,i_k_rim))
+     if(i_n<=E%nbf) RT_occ_infinity(i_RT)=1._SP
+     if(i_n> E%nbf) RT_occ_infinity(i_RT)=0._SP 
      !
-     RT_E(i_RT)=E%E(i_n,i_k,1)
+     if(abs(E_E_Hole_lifetime(i_n,i_k_rim)+E_E_Electron_lifetime(i_n,i_k_rim))>0._SP) then
+       RT_occ_infinity(i_RT)=E_E_Hole_lifetime(i_n,i_k_rim)/&
+       &  (E_E_Hole_lifetime(i_n,i_k_rim)+E_E_Electron_lifetime(i_n,i_k_rim))
+     endif
      !
    enddo
    !
  enddo
  !
- call sort(RT_E,indx=E_sort_index)
  RT_occ_sorted(:)=RT_occ_infinity(E_sort_index(:))*spin_occ
  !
- !DEBUG <
- !do i_RT=1,nstates
- !  write(200,*) RT_E(i_RT),RT_occ_infinity(i_RT)
- !enddo
- !write(200,*) ' '
- !DEBUG >
+ T_fit=RT_Tfit_lifetimes(3:4)
+ Ef_fit=RT_Efit_lifetimes(3:4)
  !
- nfit=fermi_fnc_fit(RT_E,RT_occ_sorted,nstates,T_fit,Ef_fit,err_fit)
+ nfit=Fermi_fnc_fit(RT_E,RT_occ_sorted,nstates,T_fit,Ef_fit,err_fit)
+ !
+ RT_Tfit_lifetimes(3:4)=T_fit(1:2)
+ RT_Efit_lifetimes(3:4)=Ef_fit(1:2)
  !
  if(nfit==0) return
  !
- l_condition_Hole=err_fit(3)<0.1
- l_condition_Elec=err_fit(4)<0.1
+ l_condition_Hole=err_fit(3)<0.05
+ l_condition_Elec=err_fit(4)<0.05
+ !
+ if(.not.l_condition_Hole) RT_Tfit_lifetimes(3)=-RT_Tfit_lifetimes(3)
+ if(.not.l_condition_Elec) RT_Tfit_lifetimes(4)=-RT_Tfit_lifetimes(4)
  !
  if(nfit==3) then
    if ( .not.l_condition_Hole .and. .not.l_condition_Elec ) return
@@ -124,10 +150,6 @@ subroutine RT_Coulomb_interpolation(E,k)
  endif
  if ( nfit==2 .and. .not.l_condition_Elec ) return
  if ( nfit==1 .and. .not.l_condition_Hole ) return
- !
- !DEBUG <
- !write(100,*) T_fit*HA2KEL,Ef_fit*HA2EV,err_fit
- !DEBUG > 
  !
  do ifit=1,2
    !
@@ -146,54 +168,24 @@ subroutine RT_Coulomb_interpolation(E,k)
        if(i_n<=E%nbf.and.ifit==2) cycle
        if(i_n> E%nbf.and.ifit==1) cycle
        !
-       if(abs(RT_occ_infinity(i_RT))>0.9) cycle
-       if(abs(RT_occ_infinity(i_RT))<0.1) cycle
-       !
        deviation(i_RT)=RT_occ_infinity(i_RT)-    &
        &                 Fermi_fnc(E%E(i_n,i_k,1)-Ef_fit(ifit),T_fit(ifit))
-       !
-       !SUM_N_Holes=0._SP
-       !SUM_N_Electrons=0._SP
-       !do i_k_rim=RT_ibz_coo(i_k,1),RT_ibz_coo(i_k,2)
-       !  !
-       !  f_occ=aimag(G_lesser(i_n,i_n,i_k_rim,MEM_index(it_now,G_MEM_steps)))
-       !  SUM_N_Holes=SUM_N_Holes+(E_E_Hole_lifetime(i_n,i_k_rim)*(spin_occ-f_occ))*k_weight
-       !  SUM_N_Electrons=SUM_N_Electrons+(E_E_Electron_lifetime(i_n,i_k_rim)*f_occ)*k_weight
-       !  !
-       !enddo
-       !
-       !i_k_rim=RT_ibz_coo(i_k,1)
-       !f_occ=aimag(G_lesser(i_n,i_n,i_k_rim,MEM_index(it_now,G_MEM_steps)))
-       !SUM_N_Holes=k%weights(i_k)*E_E_Hole_lifetime(i_n,i_k_rim)*(spin_occ-f_occ)
-       !SUM_N_Electrons=k%weights(i_k)*E_E_Electron_lifetime(i_n,i_k_rim)*f_occ
-       !!
-       !Nel_change=(SUM_N_Holes-SUM_N_Electrons) !*(1._SP-1._SP/real(RT_Nk_ibz(i_k)))
-       !
-       !DEBUG <
-       !write(100,*) 'Nel_change= ',Nel_change
-       !DEBUG >
        !
        do i_k_rim=RT_ibz_coo(i_k,1)+1,RT_ibz_coo(i_k,2)
          !
          i_E_rim=i_k_rim-RT_ibz_coo(i_k,1)+RIM_ibz_coo(i_k,1)
          !
-         x=Fermi_fnc(E%E_RIM(i_n,i_E_rim,1)-Ef_fit(ifit),T_fit(ifit))+deviation(i_RT)
+         x=Fermi_fnc(E%E_RIM(i_n,i_E_rim,1)-Ef_fit(ifit),T_fit(ifit))+deviation(i_RT) !*fac
+         if(x<0._SP) x=0.0
+         if(x>1._SP) x=1.0
          !
-         if(abs(E_E_Electron_lifetime(i_n,i_k_rim)*x+E_E_Hole_lifetime(i_n,i_k_rim)*(1._SP-x))>0._SP) then
-           alpha= (E_E_Electron_lifetime(i_n,i_k_rim)*x-E_E_Hole_lifetime(i_n,i_k_rim)*(1._SP-x))/ &
-&                 (E_E_Electron_lifetime(i_n,i_k_rim)*x+E_E_Hole_lifetime(i_n,i_k_rim)*(1._SP-x))
-         elseif(abs(E_E_Electron_lifetime(i_n,i_k_rim)*x-E_E_Hole_lifetime(i_n,i_k_rim)*(1._SP-x))>0._SP) then
-           alpha= +1._SP
-         elseif(abs(E_E_Electron_lifetime(i_n,i_k_rim)*x-E_E_Hole_lifetime(i_n,i_k_rim)*(1._SP-x))>0._SP) then
-           alpha= -1._SP
-         else
-           alpha=0._SP
-         endif
+         if(E_E_Hole_lifetime(i_n,i_k_rim)    <1.E-6 ) cycle
+         if(E_E_Electron_lifetime(i_n,i_k_rim)<1.E-6 ) cycle
          !
-         !DEBUG <
-         !write(100,*) 'E= ',E%E_RIM(i_n,i_E_rim,1)*HA2EV
-         !write(100,*) '(x,alpha)= ',x,alpha
-         !DEBUG >
+         alpha=0._SP
+         if(abs(E_E_Electron_lifetime(i_n,i_k_rim)*x+E_E_Hole_lifetime(i_n,i_k_rim)*(1._SP-x))>0._SP) &
+         & alpha= (E_E_Electron_lifetime(i_n,i_k_rim)*x-E_E_Hole_lifetime(i_n,i_k_rim)*(1._SP-x))/    &
+         &        (E_E_Electron_lifetime(i_n,i_k_rim)*x+E_E_Hole_lifetime(i_n,i_k_rim)*(1._SP-x))
          !
          if(abs(alpha)>1._SP) alpha=alpha/abs(alpha)
          !
@@ -201,33 +193,6 @@ subroutine RT_Coulomb_interpolation(E,k)
          E_E_Electron_lifetime(i_n,i_k_rim)=E_E_Electron_lifetime(i_n,i_k_rim)*(1._SP-alpha)
          !
        enddo
-       !
-       ! Additional condition: Keep fixed the number of electrons scattered by the group
-       !
-       !SUM_N_Holes=0._SP
-       !SUM_N_Electrons=0._SP
-       !do i_k_rim=RT_ibz_coo(i_k,1),RT_ibz_coo(i_k,2) ! +1,RT_ibz_coo(i_k,2)
-       !  !
-       !  f_occ=aimag(G_lesser(i_n,i_n,i_k_rim,MEM_index(it_now,G_MEM_steps)))
-       !  SUM_N_Holes=SUM_N_Holes+(E_E_Hole_lifetime(i_n,i_k_rim)*(spin_occ-f_occ))*k_weight
-       !  SUM_N_Electrons=SUM_N_Electrons+(E_E_Electron_lifetime(i_n,i_k_rim)*f_occ)*k_weight
-       !  !
-       !enddo
-       !!
-       !if(abs((SUM_N_Holes-SUM_N_Electrons)/Nel_change)<0.2 ) cycle
-       !if(SUM_N_Holes<1.E-7 .and. SUM_N_Electrons<1.E-7     ) cycle
-       !
-       !i1=RT_ibz_coo(i_k,1) !+1
-       !i2=RT_ibz_coo(i_k,2)
-       !beta=((SUM_N_Electrons-SUM_N_Holes)+Nel_change)/(SUM_N_Electrons+SUM_N_Holes)
-       !if( abs(beta)>0.2 ) beta=0.2*beta/abs(beta)
-       !E_E_Hole_lifetime(i_n,i1:i2)    =E_E_Hole_lifetime(i_n,i1:i2)    *(1._SP+beta)
-       !E_E_Electron_lifetime(i_n,i1:i2)=E_E_Electron_lifetime(i_n,i1:i2)*(1._SP-beta)
-       !
-       !DEBUG <
-       !write(300,*) 'FACTORS= ',SUM_N_Holes-SUM_N_Electrons,Nel_change,SUM_N_Holes-SUM_N_Electrons-Nel_change
-       !write(100,*) '(E,beta)= ',E%E(i_n,i_k,1),beta
-       !DEBUG >
        !
      enddo
    enddo

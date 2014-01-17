@@ -19,13 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,i_err)
+integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,k_symm,i_err)
  !
  ! On output : - k(k_the_nearest,:) is the nearest to k_ref
  !             - k(k_the_nearest,:)==k_ref when i_err=0
  !
  use com,            ONLY:error
  use pars,           ONLY:SP,zero_dfl
+ use zeros,          ONLY:k_iku_zero
  use vec_operate,    ONLY:iku_v_norm,c2a,k2bz
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:rl_sop
@@ -35,6 +36,7 @@ integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,i_err)
  real(SP):: k_ref(3)
  real(SP):: k(n_k,3)
  logical, optional :: ROTATE_k_ref
+ integer, optional :: k_symm
  integer, optional :: i_err
  !
  ! Work Space
@@ -59,7 +61,7 @@ integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,i_err)
    do i1=1,n_k
      v=k_ref-k(i1,:)
      call k2bz(v)
-     if (iku_v_norm(v)<k_distance) then
+     if ( iku_v_norm(v)<(k_distance-iku_v_norm(k_iku_zero)) ) then
        k_distance=iku_v_norm(v)
        k_the_nearest=i1
      endif
@@ -89,9 +91,10 @@ integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,i_err)
      v(3)=abs(v(3)-nint(v(3)))   
      call c2a(v_in=v,mode='ka2i')
      !
-     if (iku_v_norm(v)<k_distance) then
+     if ( iku_v_norm(v)<(k_distance-iku_v_norm(k_iku_zero)) ) then
        k_distance=iku_v_norm(v)
        k_the_nearest=i1
+       k_symm=is
      endif
      if (k_distance<zero_dfl) then
        if (present(i_err)) then

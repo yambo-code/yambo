@@ -42,12 +42,12 @@ subroutine RT_impose_elel_conserves_E_and_N(E,k)
  real(SP)         :: N_valence,N_conduction,delta_N,E_valence,E_conduction,delta_E
  real(SP)         :: SUM_N_Holes(2),SUM_E_Holes(2),SUM_N_Electrons(2),SUM_E_Electrons(2)
  !
- logical          :: l_energy=.false.
+ logical          :: l_energy=.true.
  logical          :: l_n_electrons=.true.
  !
- return
- !
  if (.not.l_elel_scatt) return
+ !
+ ! First on the small grid
  !
  SUM_N_Holes   =0._SP
  SUM_N_Electrons=0._SP
@@ -56,22 +56,18 @@ subroutine RT_impose_elel_conserves_E_and_N(E,k)
  prefactor=0._SP
  !
  do ik=1,k%nibz
-   k_weight=k%weights(ik) !/real(RT_Nk_ibz(ik))
+   k_weight=k%weights(ik)
    ik_rim=RT_ibz_coo(ik,1)
-   !do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
-     do ib=SC_bands(1),SC_bands(2)
-       if(ib<=E%nbf) indx=1
-       if(ib> E%nbf) indx=2
-       f_occ=-cI*G_lesser(ib,ib,ik_rim,MEM_index(it_now,G_MEM_steps))
-       if(     l_RT_uses_E_RIM) En=E%E_RIM(ib,iE_RIM,1)
-       if(.not.l_RT_uses_E_RIM) En=E%E(ib,ik,1)
-       SUM_N_Holes(indx)=SUM_N_Holes(indx)+(E_E_Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ))*k_weight
-       SUM_N_Electrons(indx)=SUM_N_Electrons(indx)+(E_E_Electron_lifetime(ib,ik_rim)*f_occ)*k_weight
-       SUM_E_Holes(indx)=SUM_E_Holes(indx)+(En*E_E_Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ))*k_weight
-       SUM_E_Electrons(indx)=SUM_E_Electrons(indx)+(En*E_E_Electron_lifetime(ib,ik_rim)*f_occ)*k_weight
-     enddo
-   !enddo
+   do ib=SC_bands(1),SC_bands(2)
+     if(ib<=E%nbf) indx=1
+     if(ib> E%nbf) indx=2
+     f_occ=-cI*G_lesser(ib,ib,ik_rim,MEM_index(it_now,G_MEM_steps))
+     En=E%E(ib,ik,1)
+     SUM_N_Holes(indx)=SUM_N_Holes(indx)+(E_E_Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ))*k_weight
+     SUM_N_Electrons(indx)=SUM_N_Electrons(indx)+(E_E_Electron_lifetime(ib,ik_rim)*f_occ)*k_weight
+     SUM_E_Holes(indx)=SUM_E_Holes(indx)+(En*E_E_Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ))*k_weight
+     SUM_E_Electrons(indx)=SUM_E_Electrons(indx)+(En*E_E_Electron_lifetime(ib,ik_rim)*f_occ)*k_weight
+   enddo
  enddo
  !
  N_valence=SUM_N_Holes(1)+SUM_N_Electrons(1)
@@ -87,21 +83,94 @@ subroutine RT_impose_elel_conserves_E_and_N(E,k)
    prefactor(2)=(delta_E*N_valence   -delta_N*E_valence   )/(N_conduction*E_valence-N_valence*E_conduction)
  endif
  if(     l_energy.and..not.l_n_electrons) prefactor(1)=delta_E/(E_conduction+E_valence)
- ! Comment 1 line and uncomment the next line to get the old RT_impose_N_conservation
- !if(.not.l_energy.and.     l_n_electrons) prefactor(1)=delta_N/(N_conduction+N_valence)
- if(.not.l_energy.and.     l_n_electrons) prefactor(1)=delta_N/(sum_N_Electrons(1)+sum_N_Electrons(2))
+ if(.not.l_energy.and.     l_n_electrons) prefactor(1)=delta_N/(N_conduction+N_valence)
  !
  if( isnan(prefactor(1)) ) return
  !
+ do ik=1,k%nibz
+   ik_rim=RT_ibz_coo(ik,1)
+   do ib=SC_bands(1),SC_bands(2)
+     !
+     if(     l_energy.and.     l_n_electrons) then
+       if(ib<=E%nbf) then
+         E_E_Electron_lifetime(ib,ik_rim)=E_E_Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(1))
+         E_E_Hole_lifetime(ib,ik_rim)    =E_E_Hole_lifetime(ib,ik_rim)    *(1._SP+prefactor(1))
+       else
+         E_E_Electron_lifetime(ib,ik_rim)=E_E_Electron_lifetime(ib,ik_rim)*(1._SP+prefactor(2))
+         E_E_Hole_lifetime(ib,ik_rim)    =E_E_Hole_lifetime(ib,ik_rim)    *(1._SP-prefactor(2))
+       endif
+     else
+       E_E_Electron_lifetime(ib,ik_rim)=E_E_Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(1))
+       E_E_Hole_lifetime(ib,ik_rim)    =E_E_Hole_lifetime(ib,ik_rim)    *(1._SP+prefactor(1))
+     endif
+     !
+   enddo
+ enddo
+ !
+ if(.not.l_RT_uses_E_RIM) return
+ !
+ ! Then on the RIM
+ !
+ SUM_N_Holes   =0._SP
+ SUM_N_Electrons=0._SP
+ SUM_E_Holes   =0._SP
+ SUM_E_Electrons=0._SP
+ prefactor=0._SP
+ !
+ do ik=1,k%nibz
+   k_weight=k%weights(ik)/real(RT_Nk_ibz(ik))
+   do ik_rim=RT_ibz_coo(ik,1)+1,RT_ibz_coo(ik,2)
+     iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+     do ib=SC_bands(1),SC_bands(2)
+       if(ib<=E%nbf) indx=1
+       if(ib> E%nbf) indx=2
+       f_occ=-cI*G_lesser(ib,ib,ik_rim,MEM_index(it_now,G_MEM_steps))
+       En=E%E_RIM(ib,iE_rim,1)
+       SUM_N_Holes(indx)=SUM_N_Holes(indx)+(E_E_Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ))*k_weight
+       SUM_N_Electrons(indx)=SUM_N_Electrons(indx)+(E_E_Electron_lifetime(ib,ik_rim)*f_occ)*k_weight
+       SUM_E_Holes(indx)=SUM_E_Holes(indx)+(En*E_E_Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ))*k_weight
+       SUM_E_Electrons(indx)=SUM_E_Electrons(indx)+(En*E_E_Electron_lifetime(ib,ik_rim)*f_occ)*k_weight
+     enddo
+   enddo
+ enddo
+ !
+ N_valence=SUM_N_Holes(1)+SUM_N_Electrons(1)
+ N_conduction=SUM_N_Holes(2)+SUM_N_Electrons(2)
+ delta_N=(SUM_N_Electrons(1)-SUM_N_Holes(1))+(SUM_N_Electrons(2)-SUM_N_Holes(2))
+ !
+ E_valence=SUM_E_Holes(1)+SUM_E_Electrons(1)
+ E_conduction=SUM_E_Holes(2)+SUM_E_Electrons(2)
+ delta_E=(SUM_E_Electrons(1)-SUM_E_Holes(1))+(SUM_E_Electrons(2)-SUM_E_Holes(2))
+ !
  if(     l_energy.and.     l_n_electrons) then
-   E_E_Electron_lifetime(:E%nbf,:)=E_E_Electron_lifetime(:E%nbf,:)*(1._SP-prefactor(1))
-   E_E_Hole_lifetime(    :E%nbf,:)=    E_E_Hole_lifetime(:E%nbf,:)*(1._SP+prefactor(1))
-   E_E_Electron_lifetime(E%nbf+1:,:)=E_E_Electron_lifetime(E%nbf+1:,:)*(1._SP+prefactor(2))
-   E_E_Hole_lifetime(    E%nbf+1:,:)=    E_E_Hole_lifetime(E%nbf+1:,:)*(1._SP-prefactor(2))
- else
-   E_E_Electron_lifetime(:,:)=E_E_Electron_lifetime(:,:)*(1._SP-prefactor(1))
-   ! Comment 1 line to get the old RT_impose_N_conservation
-   !E_E_Hole_lifetime(    :,:)=    E_E_Hole_lifetime(:,:)*(1._SP+prefactor(1))
+   prefactor(1)=(delta_E*N_conduction-delta_N*E_conduction)/(N_conduction*E_valence-N_valence*E_conduction)
+   prefactor(2)=(delta_E*N_valence   -delta_N*E_valence)/(N_conduction*E_valence-N_valence*E_conduction)
  endif
+ if(     l_energy.and..not.l_n_electrons) prefactor(1)=delta_E/(E_conduction+E_valence)
+ if(.not.l_energy.and.     l_n_electrons) prefactor(1)=delta_N/(N_conduction+N_valence)
+ !
+ if( isnan(prefactor(1)) ) return
+ !
+ do ik=1,k%nibz
+   k_weight=k%weights(ik)/real(RT_Nk_ibz(ik))
+   do ik_rim=RT_ibz_coo(ik,1)+1,RT_ibz_coo(ik,2)
+     do ib=SC_bands(1),SC_bands(2)
+       !
+       if(     l_energy.and.     l_n_electrons) then
+         if(ib<=E%nbf) then
+           E_E_Electron_lifetime(ib,ik_rim)=E_E_Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(1))
+           E_E_Hole_lifetime(ib,ik_rim)    =E_E_Hole_lifetime(ib,ik_rim)*(1._SP+prefactor(1))
+         else
+           E_E_Electron_lifetime(ib,ik_rim)=E_E_Electron_lifetime(ib,ik_rim)*(1._SP+prefactor(2))
+           E_E_Hole_lifetime(ib,ik_rim)    =E_E_Hole_lifetime(ib,ik_rim)*(1._SP-prefactor(2))
+         endif
+       else
+         E_E_Electron_lifetime(ib,ik_rim)=E_E_Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(1))
+         E_E_Hole_lifetime(ib,ik_rim)    =E_E_Hole_lifetime(ib,ik_rim)*(1._SP+prefactor(1))
+       endif
+       !
+     enddo
+   enddo
+ enddo
  !
 end subroutine RT_impose_elel_conserves_E_and_N

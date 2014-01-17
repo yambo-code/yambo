@@ -40,7 +40,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
  use R_lattice,      ONLY:bz_samp  
  use real_time,      ONLY:EULER,RK2,EULEREXP,RK2EXP,l_NE_with_fields
  use fields,         ONLY:gauge_field
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,spin_occ
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -57,7 +57,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
  ! 
  ! Work Space
  !
- integer     :: ik,SC_bands2_dot_nibz,ik_rim
+ integer     :: ib,ik,SC_bands2_dot_nibz,ik_rim
  complex(SP) :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP) :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
@@ -169,5 +169,13 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
 #if defined _TIMING
  call timing('RT integrator',OPR='stop')
 #endif
+ !
+ ! Impose 0._SP<= occupations <= 2._SP 
+ do ik=1,RT_nk
+   do ib=SC_bands(1),SC_bands(2)
+     if( aimag(G_new(ib,ib,ik))<0._SP    ) G_new(ib,ib,ik)=cmplx( real(G_new(ib,ib,ik)),0._SP    )
+     if( aimag(G_new(ib,ib,ik))>spin_occ ) G_new(ib,ib,ik)=cmplx( real(G_new(ib,ib,ik)),spin_occ )
+   enddo
+ enddo
  !
 end subroutine RT_Integrator

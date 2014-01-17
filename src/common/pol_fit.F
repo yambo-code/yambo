@@ -23,8 +23,10 @@ subroutine pol_fit(N,X,Y,order,Tt,EPS,t_zero)
  use pars, ONLY:SP
  implicit none
  !
- integer  :: N,order
- real(SP) :: X(N),Y(N),Tt(order+1),EPS,t_zero
+ integer, intent(in)    :: N
+ integer, intent(inout) :: order
+ real(SP),intent(in)    :: X(N),Y(N),t_zero
+ real(SP),intent(out)   :: Tt(order+1),EPS
  ! 
  ! Work Space
  !

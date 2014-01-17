@@ -40,7 +40,7 @@ integer function io_RT_components(what,ID)
 #endif
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,J_and_P_cache_size, &
-&                         G_lesser,NE_dynamics,RT_ind_J,J_and_P_cache,&
+&                         G_lesser,l_NE_dynamics_started,RT_ind_J,J_and_P_cache,&
 &                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight
  use fields,         ONLY:A_vecpot
 #endif                                
@@ -114,7 +114,7 @@ integer function io_RT_components(what,ID)
  endif
  !
  if (l_G.or.l_THETA) then
-   if( (mod(NE_i_time-1,RT_IO_G_steps)/=0) .and.NE_dynamics.and.write_is_on(ID)) then
+   if( (mod(NE_i_time-1,RT_IO_G_steps)/=0) .and.l_NE_dynamics_started.and.write_is_on(ID)) then
      io_RT_components=0
      call io_reset(ID)
      goto 2
@@ -158,7 +158,7 @@ integer function io_RT_components(what,ID)
    endif
    !
    if (io_RT_components/=0) goto 1
-   !
+   ! 
    io_RT_components=variables_SC(ID,local_description,what)
    !=======================================================
    if (io_RT_components/=0) goto 1
@@ -179,7 +179,7 @@ integer function io_RT_components(what,ID)
    if (io_RT_components/=0) goto 1
    !
  endif
- ! 
+ !
  if(l_J_and_P.or.l_occupations) then
    call manage_RD_WR_CL_IF_END(ID,ik,NE_steps)
  else if (l_G) then
@@ -204,7 +204,7 @@ integer function io_RT_components(what,ID)
    ! lesser Green Function diagonal
    !===============================
    !
-   if (io_RT_components/=0) goto 1  
+   if (io_RT_components/=0) goto 1
    !
    if (io_sec(ID,1)>1) then
      !

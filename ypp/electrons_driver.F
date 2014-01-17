@@ -26,6 +26,8 @@ subroutine electrons_driver(Xk,Xen)
  use wave_func,      ONLY:WF,wf_ng
  use FFT_m,          ONLY:fft_size,fft_dim
  use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:i_time_rev
+ use com,            ONLY:error
  use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
@@ -41,7 +43,6 @@ subroutine electrons_driver(Xk,Xen)
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,DUMP
  use SC,             ONLY:V_mean,SC_bands,SC_fft_size
  use R_lattice,      ONLY:qindx_S
- use com,            ONLY:error
 #endif
 #if defined _YPP_RT
  use YPP,            ONLY:l_RT_occ_Plot,l_RT_occ_Fit
@@ -187,7 +188,10 @@ subroutine electrons_driver(Xk,Xen)
  ! BANDS interpolation
  !======================
  !
- if(l_bands.or.l_RT_bands) call electrons_bands(Xk,Xen)
+ if(l_bands.or.l_RT_bands) then
+   if ( i_time_rev==1) call error('Bands interpolation does not work with T-rev symmetry')
+   call electrons_bands(Xk,Xen)
+ endif
  !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
  !==============================================================================

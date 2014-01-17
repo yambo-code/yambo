@@ -32,7 +32,7 @@ module interpolate
  integer               :: nshells
  real(SP), allocatable :: int_sop(:,:,:)
  real(SP), pointer     :: lattice_vectors(:,:)
- real(SP), parameter   :: lpfac = 5.0_SP  ! Use 5 times more waves than nkibz
+ real(SP), parameter   :: lpfac = 50.0_SP  ! Use 50 times more waves than nkibz
  real(SP) :: metric(3,3)
  !
  ! Interpolation type
@@ -117,6 +117,7 @@ module interpolate
    subroutine make_star(R_vec,nsym,symop,nstar,star_vec)
      use vec_operate,    ONLY:v_is_zero
      use D_lattice,      ONLY:i_time_rev
+     !
      implicit none
      !
      integer,  intent(in)   :: nsym

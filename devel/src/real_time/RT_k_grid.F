@@ -27,7 +27,7 @@ integer function RT_k_grid(E,k)
  !ikbz1  | 1  | RIM_bz_coo(ikbz1,:) = RIM_ibz_coo(ik1,:)      ik1 | 1  | RT_ibz_coo(ik1,:)     
  !       |____|                     <----------------------       |____|   
  !        ____                                                     ____
- !ikbz2  | 2  | RIM_bz_coo(ikbz2,:)                           ik2 | 2  | RT_ibz_coo(ik2,:)     
+ !ikbz2  | 2  | RIM_bz_coo(ikbz2,:) = 1                       ik2 | 2  | RT_ibz_coo(ik2,:)     
  !       |____|                                             /     |____|   
  !        ____                                             /
  !ikbz3  | 3  | RIM_bz_coo(ikbz3,:) = RIM_ibz_coo(ik2,:)  /            

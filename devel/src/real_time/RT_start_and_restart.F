@@ -42,7 +42,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use QP_m,           ONLY:QP_nk,COHSEX_use_empties,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:ID,NE_steps,RT_ind_J,&
+ use real_time,      ONLY:ID,NE_steps,RT_ind_J,l_NE_dynamics,&
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_RT_CCA_Kernel,&
@@ -87,8 +87,8 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Set to zero current and fields
  !
- RT_P               =cZERO
- RT_ind_J           =cZERO
+ RT_P              =cZERO
+ RT_ind_J          =cZERO
  ! 
  do ib=SC_bands(1),SC_bands(2)
    do ik=1,RT_nk
@@ -101,10 +101,6 @@ subroutine RT_start_and_restart(E,k,q,X)
      endif
    enddo
  enddo
- !
- ! Possibility to pump by hand one or more electrons up
- !======================================================
- call RT_manual_excitation(E,k)
  !
  ! Build Ho and save initial energies 
  !====================================
@@ -143,6 +139,10 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  RESTART                = io_G ==0
  if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = io_G==0.and.io_THETA==0
+ !
+ ! Possibility to pump by hand one or more electrons up
+ !======================================================
+ if (.not. RESTART) call RT_manual_excitation(E,k)
  !
  SC_DB_present =  all((/io_E==0,io_WF==0,io_V==0,.not.l_RT_uses_E_RIM/))
  !
@@ -388,15 +388,12 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
  endif
  !
- if (l_NE_with_fields) then
-   !
-   NE_i_time=it_start-Thermal_steps
-   !
-   call RT_Ext_fields(A_vecpot,(it_start-1)*RT_step)
-   !
- endif
+ if (l_NE_dynamics) NE_i_time=it_start-Thermal_steps
  !
- A_vecpot_previous =A_vecpot
+ if (l_NE_with_fields) then
+   call RT_Ext_fields(A_vecpot,(it_start-1)*RT_step)
+   A_vecpot_previous =A_vecpot
+ endif
  !
  call msg('r','')
  !
@@ -424,7 +421,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  if (l_elph_scatt.or.l_elel_scatt) then
    !
-   ! With    the RIM this cannot be not used, on the fly Gret
+   ! With    the RIM this cannot be not used, on the fly Gret; 
    ! Without the RIM this implementation could be faster
    !if (l_elph_scatt) call RT_G_retarded_EP_initialize(E,k)
    !if (l_elel_scatt) call RT_G_retarded_EE_initialize(E,k,q)

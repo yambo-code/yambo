@@ -47,7 +47,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! WorkSpace
  !
  integer     :: ib,ik,ik_rim,iE_rim
- real(SP)    :: Energy,T_fit(2)
+ real(SP)    :: Energy,T_fit(2),Ef_fit(2),Occupations(SC_bands(1):SC_bands(2),RT_nk)
  complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,E_mg,N_holes,N_elecs
  !
  if ( mod(NE_i_time-1,RT_IO_output_steps)/=0 ) return      
@@ -60,8 +60,9 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  E_mg     =(0._SP,0._SP)
  N_holes  =(0._SP,0._SP)
  N_elecs  =(0._SP,0._SP)
+ Ef_fit   = 0._SP
  T_fit    = 0._SP
- !if(NE_i_time-1>=RT_IO_output_steps) T_fit=real(on_the_fly_operators(8:9))/HA2KEL
+ if(NE_i_time-1>=RT_IO_output_steps) T_fit=real(on_the_fly_operators(8:9))/HA2KEL
  !
  ! Non-interaction kinetc energy
  !
@@ -120,7 +121,8 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  ! Electrons and holes temperatures
  !
- call RT_occupations_fit(en,k,T_fit,G_lesser)
+ forall(ib=SC_bands(1):SC_bands(2)) Occupations(ib,:)=aimag(G_lesser(ib,ib,:))
+ call RT_occupations_fit(en,k,T_fit,Ef_fit,Occupations)
  !
  ! Number of Holes in the valence band and
  ! Number of Electrons in the conduction band

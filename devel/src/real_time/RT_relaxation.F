@@ -33,10 +33,10 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use R_lattice,      ONLY:bz_samp,nkibz
  use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz,RT_ibz_coo
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait,PAR_COM_Q_A2A,PAR_COM_Plasma_INDEX
- use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
+ use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,l_NE_dynamics_started,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,&
-&                         RT_dynamics_jumps,it_start,&
+&                         RT_dynamics_jumps,it_start,l_RT_uses_E_rim,&
 &                         Life_MEM_steps,SAVED_lifetime,E_P_Ho_abs_lifetime
  use interfaces,    ONLY:PARALLEL_global_indexes
 #if defined _TIMING
@@ -55,7 +55,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! Work Space
  !
- integer          :: ib1,ib2,ik,it_relative
+ integer          :: ib1,ib2,ik,ik_rim,it_relative
  logical          :: l_evaluate,l_interpolate,l_save
  real(SP)         :: f_k(SC_bands(2))
  !
@@ -149,56 +149,54 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! I make copies of the k-resolved matrix. In the future a completely independet
  ! k loop could be implemented
  !
- if (l_elph_scatt.or.l_elel_scatt) then
-   if (l_evaluate) then
-     if (l_elel_scatt) then
-       do ik=1,k%nibz
-         call PP_redux_wait(E_E_Electron_lifetime(:,RT_ibz_coo(ik,1)))
-         call PP_redux_wait(E_E_Hole_lifetime(:,RT_ibz_coo(ik,1)))
-       enddo
-       call RT_Coulomb_interpolation(E,k)
+ if (l_elel_scatt) then
+   do ik=1,k%nibz
+     ik_rim=RT_ibz_coo(ik,1)
+     if (l_evaluate) then
+       call PP_redux_wait(E_E_Electron_lifetime(:,ik_rim))
+       call PP_redux_wait(E_E_Hole_lifetime(:,ik_rim))
      endif
-     !
-     do ik=1,RT_nk
-       if (l_elel_scatt) then
-         if (l_save) then
-           SAVED_lifetime(:,ik,1, it_relative)=E_E_Hole_lifetime(:,ik)
-           SAVED_lifetime(:,ik,2, it_relative)=E_E_Electron_lifetime(:,ik)
-         endif
-       endif
-       if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-         E_P_Electron_lifetime(:,ik)=E_P_Electron_lifetime(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
-         E_P_Hole_lifetime(:,ik)=E_P_Hole_lifetime(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
-         E_P_El_abs_lifetime(:,ik)=E_P_El_abs_lifetime(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
-         E_P_Ho_abs_lifetime(:,ik)=E_P_Ho_abs_lifetime(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
-         call PP_redux_wait(E_P_Electron_lifetime(:,ik))
-         call PP_redux_wait(E_P_Hole_lifetime(:,ik))
-         call PP_redux_wait(E_P_El_abs_lifetime(:,ik))
-         call PP_redux_wait(E_P_Ho_abs_lifetime(:,ik))
-         if (l_save) then
-           SAVED_lifetime(:,ik,3, it_relative)=E_P_Hole_lifetime(:,ik)
-           SAVED_lifetime(:,ik,4, it_relative)=E_P_Electron_lifetime(:,ik)
-           SAVED_lifetime(:,ik,5, it_relative)=E_P_Ho_abs_lifetime(:,ik)
-           SAVED_lifetime(:,ik,6, it_relative)=E_P_El_abs_lifetime(:,ik)
-         endif
-       endif
-     enddo
-   else if (l_interpolate) then
-     do ik=1,RT_nk
+     if (l_save) then
+       SAVED_lifetime(:,ik_rim,1,it_relative)=E_E_Hole_lifetime(:,ik_rim)
+       SAVED_lifetime(:,ik_rim,2,it_relative)=E_E_Electron_lifetime(:,ik_rim)
+     endif
+     if (l_interpolate) then
        do ib1=SC_bands(1),SC_bands(2)
-         if (l_elel_scatt) then
-           call RT_Lifetimes_Interpolation(E_E_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,1,:))
-           call RT_Lifetimes_Interpolation(E_E_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,2,:))
-         endif
-         if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-           call RT_Lifetimes_Interpolation(E_P_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,3,:))
-           call RT_Lifetimes_Interpolation(E_P_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,4,:))
-           call RT_Lifetimes_Interpolation(E_P_Ho_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,5,:))
-           call RT_Lifetimes_Interpolation(E_P_El_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,6,:))
-         endif
+         call RT_Lifetimes_Interpolation(E_E_Hole_lifetime(ib1,ik_rim),SAVED_lifetime(ib1,ik_rim,1,:))
+         call RT_Lifetimes_Interpolation(E_E_Electron_lifetime(ib1,ik_rim),SAVED_lifetime(ib1,ik_rim,2,:))
        enddo
-     enddo
-   endif
+     endif
+   enddo
+   call RT_Coulomb_interpolation(E,k)
+ endif
+ !
+ if(l_RT_CCA_kernel.and.l_elph_scatt) then
+   do ik=1,RT_nk
+     if(l_evaluate) then
+       E_P_Electron_lifetime(:,ik)=E_P_Electron_lifetime(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
+       E_P_Hole_lifetime(:,ik)=E_P_Hole_lifetime(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
+       E_P_El_abs_lifetime(:,ik)=E_P_El_abs_lifetime(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
+       E_P_Ho_abs_lifetime(:,ik)=E_P_Ho_abs_lifetime(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
+       call PP_redux_wait(E_P_Electron_lifetime(:,ik))
+       call PP_redux_wait(E_P_Hole_lifetime(:,ik))
+       call PP_redux_wait(E_P_El_abs_lifetime(:,ik))
+       call PP_redux_wait(E_P_Ho_abs_lifetime(:,ik))
+     endif
+     if (l_save) then
+       SAVED_lifetime(:,ik,3, it_relative)=E_P_Hole_lifetime(:,ik)
+       SAVED_lifetime(:,ik,4, it_relative)=E_P_Electron_lifetime(:,ik)
+       SAVED_lifetime(:,ik,5, it_relative)=E_P_Ho_abs_lifetime(:,ik)
+       SAVED_lifetime(:,ik,6, it_relative)=E_P_El_abs_lifetime(:,ik)
+     endif
+     if (l_interpolate) then
+       do ib1=SC_bands(1),SC_bands(2)
+         call RT_Lifetimes_Interpolation(E_P_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,3,:))
+         call RT_Lifetimes_Interpolation(E_P_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,4,:))
+         call RT_Lifetimes_Interpolation(E_P_Ho_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,5,:))
+         call RT_Lifetimes_Interpolation(E_P_El_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,6,:))
+       enddo
+     endif
+   enddo
  endif
  !
  ! Number conservation
@@ -223,7 +221,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    enddo
  enddo
  !
- if(RT_is_dumped.and.NE_dynamics) then
+ if(RT_is_dumped.and.l_NE_dynamics_started) then
    do ik=1,RT_nk
      do ib1=SC_bands(1),SC_bands(2)
        do ib2=SC_bands(1),SC_bands(2)

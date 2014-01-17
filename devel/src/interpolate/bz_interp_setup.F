@@ -28,11 +28,13 @@ subroutine bz_interp_setup(Xk)
  use interpolate,    ONLY:nshells,lattice_vectors,lpfac,int_sop,nshells,make_star,metric,int_sop
  use D_lattice,      ONLY:nsym,DL_vol,a,dl_sop
  use R_lattice,      ONLY:bz_samp,b
- use electrons,      ONLY:BZ_RIM_nkpt
  use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:sort
  use matrix_operate, ONLY:m3inv
  use com,            ONLY:msg
+#if defined _RT
+ use real_time,      ONLY:RIM_BZ_coo
+#endif
  !
  implicit none
  !
@@ -52,9 +54,12 @@ subroutine bz_interp_setup(Xk)
  ! 
  metric=matmul(a,transpose(a))
  !
- !sphere_radius=(lpfac*Xk%nibz*nsym*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
- if(.not.associated(Xk%pt_RIM)) sphere_radius=(lpfac*Xk%nibz*nsym*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
- if(     associated(Xk%pt_RIM)) sphere_radius=(lpfac*sum(BZ_RIM_nkpt(1:Xk%nibz))*nsym*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
+#if defined _RT
+ if(.not.associated(Xk%pt_RIM)) sphere_radius=(lpfac*Xk%nbz              *3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
+ if(     associated(Xk%pt_RIM)) sphere_radius=(lpfac*RIM_bz_coo(Xk%nbz,2)*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
+#else
+ sphere_radius=(lpfac*Xk%nbz*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
+#endif
  !
  call m3inv(transpose(a),a_inv)
  a_inv=transpose(a_inv)
@@ -71,7 +76,6 @@ subroutine bz_interp_setup(Xk)
    int_sop(:,:,is)=nint(matmul(int_sop(:,:,is),b_inv))
    !
  enddo
-
  !
  nR_max=product(2*R_max+1)
  !

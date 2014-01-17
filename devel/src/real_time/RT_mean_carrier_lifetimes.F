@@ -23,9 +23,9 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
  ! 
  use pars,           ONLY:SP,cI
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes,&
-&                         E_P_Ho_abs_lifetime,&
-&                         NE_i_time,RT_IO_output_steps
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes,  &
+&                         E_P_Ho_abs_lifetime,RT_Tfit_lifetimes,RT_Efit_lifetimes,    &
+&                         NE_i_time,RT_IO_output_steps,l_RT_uses_E_rim
  use SC,             ONLY:SC_bands,RT_all2ibz,RT_Nk_ibz,RT_nk
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin_occ
@@ -38,13 +38,13 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
  ! Work space
  !
  integer            :: ib,ik
- real(SP)           :: n_h_states,n_e_states,f_occ,pre_factor
- real(SP),parameter :: f_tresh=1.E-5
+ real(SP)           :: n_states,pre_factor
+ real(SP)           :: EE_occupations(SC_bands(1):SC_bands(2),RT_nk),&
+&                      EP_occupations(SC_bands(1):SC_bands(2),RT_nk)
  !
  if ( mod(NE_i_time-1,RT_IO_output_steps)/=0 ) return
  !
- n_h_states=0._SP
- n_e_states=0._SP
+ n_states=0._SP
  !
  RT_mean_lifetimes=0._SP
  !
@@ -54,43 +54,44 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
    !
    do ib=SC_bands(1),SC_bands(2)
      !
-     f_occ=-cI*G_lesser(ib,ib,ik)
+     n_states=n_states+pre_factor
      !
-     if (abs(f_occ)>f_tresh) then
-       n_e_states=n_e_states+pre_factor
-       if (allocated(E_P_Hole_lifetime)) then
-         RT_mean_lifetimes(2)=RT_mean_lifetimes(2)+E_P_Electron_lifetime(ib,ik)*pre_factor
-         RT_mean_lifetimes(4)=RT_mean_lifetimes(4)+E_P_El_abs_lifetime(ib,ik)*pre_factor
-       endif
-       if (allocated(E_E_Hole_lifetime)) then
-         RT_mean_lifetimes(6)=RT_mean_lifetimes(6)+E_E_Electron_lifetime(ib,ik)*pre_factor
-       endif
+     if (allocated(E_P_Hole_lifetime)) &
+     &  EP_occupations(ib,ik)=( E_P_Hole_lifetime(ib,ik)+E_P_Ho_abs_lifetime(ib,ik)     ) /  &
+     &                        ( E_P_Hole_lifetime(ib,ik)+E_P_Ho_abs_lifetime(ib,ik) +        &
+     &                          E_P_Electron_lifetime(ib,ik)+E_P_El_abs_lifetime(ib,ik) )*spin_occ
+     !
+     if (allocated(E_E_Hole_lifetime).and..not.l_RT_uses_E_rim) &
+     &  EE_occupations(ib,ik)=  E_E_Hole_lifetime(ib,ik) /      &
+     &                        ( E_E_Hole_lifetime(ib,ik) + E_E_Electron_lifetime(ib,ik) )*spin_occ
+     !
+     if (allocated(E_P_Hole_lifetime)) then
+       RT_mean_lifetimes(2)=RT_mean_lifetimes(2)+E_P_Electron_lifetime(ib,ik)*pre_factor
+       RT_mean_lifetimes(4)=RT_mean_lifetimes(4)+E_P_El_abs_lifetime(ib,ik)*pre_factor
+     endif
+     if (allocated(E_E_Hole_lifetime)) then
+       RT_mean_lifetimes(6)=RT_mean_lifetimes(6)+E_E_Electron_lifetime(ib,ik)*pre_factor
      endif
      !
-     if (abs(f_occ-spin_occ)>f_tresh) then
-       n_h_states=n_h_states+pre_factor
-       if (allocated(E_P_Hole_lifetime)) then
-         RT_mean_lifetimes(1)=RT_mean_lifetimes(1)+E_P_Hole_lifetime(ib,ik)*pre_factor
-         RT_mean_lifetimes(3)=RT_mean_lifetimes(3)+E_P_Ho_abs_lifetime(ib,ik)*pre_factor
-       endif
-       if (allocated(E_E_Hole_lifetime)) then
-         RT_mean_lifetimes(5)=RT_mean_lifetimes(5)+E_E_Hole_lifetime(ib,ik)*pre_factor
-       endif
+     if (allocated(E_P_Hole_lifetime)) then
+       RT_mean_lifetimes(1)=RT_mean_lifetimes(1)+E_P_Hole_lifetime(ib,ik)*pre_factor
+       RT_mean_lifetimes(3)=RT_mean_lifetimes(3)+E_P_Ho_abs_lifetime(ib,ik)*pre_factor
+     endif
+     if (allocated(E_E_Hole_lifetime)) then
+       RT_mean_lifetimes(5)=RT_mean_lifetimes(5)+E_E_Hole_lifetime(ib,ik)*pre_factor
      endif
      !
    enddo
    !
  enddo
  !
- if (n_e_states>0._SP) then
-   RT_mean_lifetimes(2)=RT_mean_lifetimes(2)/n_e_states
-   RT_mean_lifetimes(4)=RT_mean_lifetimes(4)/n_e_states
-   RT_mean_lifetimes(6)=RT_mean_lifetimes(6)/n_e_states
+ if(allocated(E_P_Hole_lifetime)) then
+   call RT_occupations_fit(E,k,RT_Tfit_lifetimes(1:2),RT_Efit_lifetimes(1:2),EP_occupations)
  endif
- if (n_h_states>0._SP) then
-   RT_mean_lifetimes(1)=RT_mean_lifetimes(1)/n_h_states
-   RT_mean_lifetimes(3)=RT_mean_lifetimes(3)/n_h_states
-   RT_mean_lifetimes(5)=RT_mean_lifetimes(5)/n_h_states
+ if(allocated(E_E_Hole_lifetime).and. (.not.l_RT_uses_E_rim)) then
+   call RT_occupations_fit(E,k,RT_Tfit_lifetimes(3:4),RT_Efit_lifetimes(3:4),EE_occupations)
  endif
+ !
+ RT_mean_lifetimes=RT_mean_lifetimes/n_states
  !
 end subroutine RT_mean_carrier_lifetimes

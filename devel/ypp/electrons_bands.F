@@ -85,11 +85,6 @@ subroutine electrons_bands(Xk,Xen)
    allocate(Xk%pt_RIM(Nk,3))
    do ik=1,Xk%nibz
      Xk%pt_RIM(RT_ibz_coo(ik,1):RT_ibz_coo(ik,2),:)=Xk%ptbz_RIM(RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),:)
-     ! DEBUG<
-     !do i1=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     !  write(*,*) i1,Xk%pt_RIM(i1,:)
-     !enddo
-     ! DEBUG>
    enddo
  endif
 #else

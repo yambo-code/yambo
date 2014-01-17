@@ -29,21 +29,23 @@ subroutine RT_initialize(E,k,q)
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
  use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded
- use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
-&                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
-&                         l_RT_diamagnetic,RT_IO_JPO_steps,RT_IO_time,l_NE_simulate_BSE,&
-&                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
-&                         l_RT_induced_field,RT_dynamics_jumps,l_NE_simulate_TDDFT, &
-&                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
-&                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,            &
-&                         G_MEM_steps,Gr_kind,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps, &
-&                         l_RT_CCA_Kernel,Life_MEM_steps,Fluence, RT_IO_output_steps,    &
-&                         l_RT_uses_E_RIM,RIM_bz_coo
+ use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields,      &
+&                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,        &
+&                         l_RT_diamagnetic,RT_IO_JPO_steps,RT_IO_time,l_NE_simulate_BSE, &
+&                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
+&                         l_RT_induced_field,RT_dynamics_jumps,l_NE_simulate_TDDFT,      &
+&                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,            &
+&                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,Gr_kind,         &
+&                         G_MEM_steps,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps,         &
+&                         l_RT_CCA_Kernel,Life_MEM_steps,RT_IO_output_steps,             &
+&                         l_RT_uses_E_RIM,RIM_bz_coo,l_NE_dynamics
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
- use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
-&                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
+ use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,                  &
+&                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength,    &
+&                         l_manual_excitation
  use parser_m,       ONLY:parser
+ !
  implicit none
  !
  type(levels), intent(in) :: E
@@ -54,7 +56,7 @@ subroutine RT_initialize(E,k,q)
  integer                  :: i1,rest,ik,IO_steps(3)
  character(5)             :: MSG_ch
  real(SP)                 :: T_memory
- logical                  :: l_Full_RT_T_evolution,l_compute_fluence
+ logical                  :: l_Full_RT_T_evolution,l_field_is_a_pulse
  integer,         external:: RT_k_grid
  !
  ! Logicals
@@ -65,8 +67,10 @@ subroutine RT_initialize(E,k,q)
  call parser('RTfreezeH',            Hfrozen)
  call parser('RTfreezeXC',           XCfrozen)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
+ call parser('RTpumpEhEn',           l_manual_excitation)
  !
- l_RT_CCA_Kernel=.not.l_Full_RT_T_evolution
+ l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
+ !
  l_NE_simulate_BSE     =.FALSE.
  l_NE_simulate_TDDFT   =.FALSE.
  !
@@ -164,8 +168,6 @@ subroutine RT_initialize(E,k,q)
  !========================
  !
  l_NE_with_fields=.false.
- l_compute_fluence=.false.
- ef_i_time=0
  !
  do i1=1,n_ext_fields
    !      
@@ -175,41 +177,49 @@ subroutine RT_initialize(E,k,q)
      !
      if (.not.field_is_ok( Efield(i1)) ) call error('Field '//trim(Efield(i1)%ef_name)//' not supported')
      !      
-     ef_i_time(i1)=Efield(i1)%t_initial/RT_step
-     !      
      l_NE_with_fields=.true.
      !
-     if(i1==i_Pump) l_compute_Fluence= (Efield(i1)%ef_name=='DELTA') .or. (Efield(i1)%ef_name=='QSSIN') &
-&                                 .or. (Efield(i1)%ef_name=='GAUSS')
+     if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%frequency(1)==0._SP) &
+&      call error(" External "//trim(Efield(i1)%ef_name)//" field has zero frequency.")
      !
-     if( any( abs(Efield(i1)%versor(:))>epsilon(1.) ) ) Efield(i1)%versor=normalize_v(Efield(i1)%versor)
+     if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%damping==0) &
+&      call error(" External "//trim(Efield(i1)%ef_name)//" field has zero damping.")
+     ! 
+     if(Efield(i1)%intensity==0._SP) &
+&      call error(" External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
      !
-     Efield(i1)%int_t_initial  =int(Efield(i1)%t_initial/RT_step)+1
+     if( all( abs(Efield(i1)%versor(:))<epsilon(1.) ) ) &
+&      call error(" External "//trim(Efield(i1)%ef_name)//" field has undefined direction.")
      !
+     Efield(i1)%versor   =normalize_v(Efield(i1)%versor)
      Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
+     !
+     Efield(i1)%t_initial_indx=int(Efield(i1)%t_initial/RT_step)+1
+     Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx)*(RT_step-1)
      !
      call SC_check_symmetries(Efield(i1)%versor)
      !
-     if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%frequency(1)==0._SP) &
-&      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero frequency.")
+     l_field_is_a_pulse= (Efield(i1)%ef_name=='DELTA') .or. (Efield(i1)%ef_name=='QSSIN') &
+&                   .or. (Efield(i1)%ef_name=='GAUSS')
      !
-     if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%damping==0) &
-&      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero damping.")
-     ! 
-     if(Efield(i1)%intensity==0._SP) &
-&      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
-     !
-     if(i1==i_Pump) l_compute_fluence=l_compute_fluence.and..not.(Efield(i1)%intensity==0._SP)
+     if ( l_field_is_a_pulse ) then
+       call RT_Fluence(i1)
+     else
+       Efield(i1)%t_final_indx=NE_steps
+       Efield(i1)%t_final=RT_step
+     endif
      !
    endif
    !
  enddo
  !
+ l_NE_dynamics=l_NE_with_fields.or.l_manual_excitation
+ !
  ! Check on the PROBE/PUMP frequencies
- !==============================================
+ !====================================
  call RT_Field_Commensurable_Frequencies()
  !
- if (.not.l_NE_with_fields) then
+ if ( .not. l_NE_dynamics ) then
    NE_steps=0
    if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields or thermalization provided')
  endif
@@ -228,14 +238,6 @@ subroutine RT_initialize(E,k,q)
  endif
  !
 #endif
- !
- ! Fluence
- !=========
- if (l_NE_with_fields) then
-   allocate(Fluence(NE_steps))
-   Fluence=0._SP
-   if (l_compute_fluence) call RT_Fluence()
- endif
  !
  ! Gauge
  !=======

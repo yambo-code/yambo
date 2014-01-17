@@ -32,9 +32,11 @@ module real_time
  !
  ! NE dynamics
  !
- logical           :: l_NE_with_fields  
- logical           :: l_RT_probe  
- logical           :: l_RT_pump_and_probe  
+ logical           :: l_NE_dynamics  
+ logical           :: l_NE_dynamics_started
+ logical           :: l_NE_with_fields
+ logical           :: l_RT_probe
+ logical           :: l_RT_pump_and_probe
  logical           :: l_Dynamics_is_over  
  !
  ! Inital XC (SC or default) are requested
@@ -78,7 +80,7 @@ module real_time
  !                     |__ ef1/2_i_time
  ! 
  ! NE_time is negative during the Thermal steps. When NE_time is positive
- ! NE_dynamics=.TRUE.
+ ! l_NE_dynamics_started=.TRUE.
  !
  ! ... core step length ...
  !
@@ -94,7 +96,6 @@ module real_time
  !
  ! ... NE dynamics ...
  !
- logical  :: NE_dynamics
  real(SP) :: NE_time ! <- incremented
  real(SP) :: NE_tot_time ! Total (fixed)
  integer  :: NE_i_time ! = (NE_time-1)/RT_step
@@ -180,6 +181,8 @@ module real_time
  ! ... ouput max/min lifetimes
  !-----------------------------
  real(SP)                 :: RT_mean_lifetimes(6)
+ real(SP)                 :: RT_Tfit_lifetimes(4)
+ real(SP)                 :: RT_Efit_lifetimes(4)
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
@@ -243,7 +246,6 @@ module real_time
  integer                  :: RT_IO_steps_DB     = -1
  real(SP)                 :: RT_IO_time(3)      = -1.*FS2AUT ! Three values for J,P,OCC - OUPUT - GF's
  real(SP), allocatable    :: J_and_P_cache(:,:)
- real(SP), allocatable    :: Fluence(:)
  !
  ! Interface
  !
@@ -334,7 +336,7 @@ module real_time
        QP_Vnl_xc=cZERO
      endif
      !
-     if(l_NE_with_fields) then
+     if(l_NE_dynamics) then
        allocate(J_and_P_cache(J_and_P_cache_size,RT_IO_JPO_steps))
        call mem_est('Current_Cache',(/size(J_and_P_cache)/),(/SP/))
      endif
@@ -521,7 +523,7 @@ module real_time
        call mem_est("Occ_natural")
      endif
      !
-     if(l_NE_with_fields) then
+     if(l_NE_dynamics) then
        deallocate(J_and_P_cache)
        call mem_est('Current_Cache')
      endif

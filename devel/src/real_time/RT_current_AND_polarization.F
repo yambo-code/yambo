@@ -33,7 +33,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:SC_bands,RT_nk,it_now
  use electrons,      ONLY:nel,levels
- use real_time,      ONLY:l_RT_diamagnetic,NE_dynamics,l_NE_with_fields,RT_ind_J,RT_average_operator,RT_P
+ use real_time,      ONLY:l_RT_diamagnetic,l_NE_dynamics,l_NE_dynamics_started,&
+&                         RT_ind_J,RT_average_operator,RT_P
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P
  use parallel_m,     ONLY:PAR_Xk_nibz
@@ -48,7 +49,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  integer       :: id
  !
- if (.not.l_NE_with_fields.or..not.NE_dynamics) return
+ if ( .not. (l_NE_dynamics.and.l_NE_dynamics_started) ) return
  !
  do id=1,3
    !

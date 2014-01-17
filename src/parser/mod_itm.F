@@ -96,7 +96,7 @@ module it_m
  integer :: nflines
  integer :: nQP_flines=0
  character(lchlen) :: flines(nvars+maxflags+maxrnlvls)
- character(lchlen) :: QP_flines(10)
+ character(lchlen) :: QP_flines(100)
  !
  ! To handle the variables verbosity I need to create a copy
  ! of the standard variable defs and an array with the verbosity 
@@ -944,7 +944,7 @@ module it_m
      if (ou/=11.and.ou/=12) write (ou,'(a/2a)') '#','# .-Input file : ',trim(infile)
      do i1=1,nflines+nQP_flines
        if (i1<=nflines) ch(1)=flines(i1)
-       if (i1> nflines) ch(1)=QP_flines(i1-nflines)
+       if (i1> nflines) ch(1)=trim(QP_flines(i1-nflines))
        if (master_cpu) then
          if (ou==12) write (ou,'(a)') trim(ch(1))
          if (ou==11) write (ou,'(2a)') ' | ',trim(ch(1))

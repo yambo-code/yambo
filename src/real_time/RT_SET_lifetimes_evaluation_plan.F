@@ -26,6 +26,7 @@ integer function RT_SET_lifetimes_evaluation_plan( )
  !
  use pars,           ONLY:IP2,SP
  use fields,         ONLY:Efield,i_Pump,ef_i_time,ext_field,Efield_duplicate,small_a
+ use units
  use memory_m,       ONLY:mem_est
  use real_time,      ONLY:RT_GAMMA_T_status,NE_steps,RT_dynamics_steps,Life_MEM_steps,&
 &                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time
@@ -34,7 +35,7 @@ integer function RT_SET_lifetimes_evaluation_plan( )
  !
  ! Work Space
  !
- integer         :: it,it_relative,N_inter_steps,N_intra_steps,Nt_each_group,it_last,it_0
+ integer         :: it,it_relative,N_inter_steps,N_intra_steps,Nt_each_group,it_last,it_0,it_
  real(SP)        :: weight(NE_steps)
  complex(SP)     :: TIME
  type(ext_field) :: E_dummy
@@ -44,19 +45,19 @@ integer function RT_SET_lifetimes_evaluation_plan( )
  RT_GAMMA_T_status=0 ! Interpolate
  !
  if (RT_dynamics_steps(1)<0.) then
-   RT_GAMMA_T_status=-1
+   RT_GAMMA_T_status=1
    return
  endif 
  !
  N_inter_steps=RT_dynamics_steps(1)/RT_step
  N_intra_steps=RT_dynamics_steps(2)/RT_step
  !
- ! RT_GAMMA_T_status = -1   EVAL no SAVE
+ ! RT_GAMMA_T_status = -1   KEEP constant 
  !                      1   EVAL and SAVE
  !                      0   INTERPOLATE  
  !
  it_last=1
- Nt_each_group= Life_MEM_steps*N_intra_steps+N_inter_steps
+ Nt_each_group=N_inter_steps
  RT_SET_lifetimes_evaluation_plan=0
  weight=1._SP
  !
@@ -82,12 +83,15 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    !
    if (it_relative>1) cycle
    !
-   if (it==1) then
-     call BUILD_up_group(Life_MEM_steps,1)
-   else if (NE_steps-it+1<N_intra_steps*Life_MEM_steps) then
+   if (NE_steps-it+1<N_intra_steps*Life_MEM_steps) then
      call BUILD_up_group(Life_MEM_steps,1)
    else
      call BUILD_up_group(min(N_inter_steps,NE_steps-it+1),N_intra_steps)
+   endif
+   if (it==1) then
+     do it_=1,N_intra_steps*(Life_MEM_steps-1)
+       if (RT_GAMMA_T_status(it_)==0) RT_GAMMA_T_status(it_)=-1
+     enddo
    endif
    !
    if (it<it_0) then
@@ -99,7 +103,7 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    N_inter_steps=real(RT_dynamics_steps(1))/weight(it)/RT_step
    N_intra_steps=real(RT_dynamics_steps(2))/weight(it)/RT_step
    !
-   Nt_each_group= Life_MEM_steps*N_intra_steps+N_inter_steps
+   Nt_each_group= N_inter_steps
    it_last=it
    RT_SET_lifetimes_evaluation_plan=RT_SET_lifetimes_evaluation_plan+1
    !
@@ -107,8 +111,10 @@ integer function RT_SET_lifetimes_evaluation_plan( )
  !DEBUG>
  ! do it=1,NE_steps
  !   TIME=RT_step*(it-1)
- !   write (100,*) real(TIME)/FS2AUT,RT_GAMMA_T_status(it),weight(it)
+ !   if (RT_GAMMA_T_status(it)==1) write (300,*) real(TIME)/FS2AUT,1
+ !   !write (100,*) real(TIME)/FS2AUT,RT_GAMMA_T_status(it),weight(it)
  ! enddo
+ ! stop
  !DEBUG<
  !
  contains

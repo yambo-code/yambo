@@ -85,10 +85,12 @@ subroutine RT_GAMMA_save_and_interp(Time,E,k,LIFE,SAVE_index)
    LIFE(:,:)=SAVED_lifetime(:,:,SAVE_index,Life_MEM_steps)
  endif
  !
- if (SAVE_index/=4) return
- if (abs(Time-(it_now-1)*RT_step)>1.E-6) return
- write (100,*) Time,LIFE(6,11)*HA2EV*1000.
- if (RT_GAMMA_T_status(it_now)>0) write (200,*) Time,LIFE(6,11)*HA2EV*1000.
+ !DEBUG>
+ !if (SAVE_index/=4) return
+ !if (abs(Time-(it_now-1)*RT_step)>1.E-6) return
+ !write (100,*) Time,LIFE(6,11)*HA2EV*1000.
+ !if (RT_GAMMA_T_status(it_now)>0) write (200,*) Time,LIFE(6,11)*HA2EV*1000.
+ !DEBUG<
  !
  contains
    !

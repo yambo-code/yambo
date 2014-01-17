@@ -47,8 +47,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_RT_CCA_Kernel,&
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,&
-&                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps,&
-&                         RT_GAMMA_T_status,Life_MEM_steps,RT_dynamics_steps
+&                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,&
 &                         rho_convergence,H_rotate,V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
@@ -69,8 +68,8 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Work Space
  !
  integer :: ik,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,&
-&           io_OCCUPATIONS,ID_OCCUPATIONS,it
- integer, external :: io_SC_components,io_RT_components
+&           io_OCCUPATIONS,ID_OCCUPATIONS,it,nt
+ integer, external :: io_SC_components,io_RT_components,RT_SET_lifetimes_evaluation_plan
  logical :: RESTART,SC_DB_present
  !
  ! Initialize the Gf and potentials
@@ -385,14 +384,9 @@ subroutine RT_start_and_restart(E,k,q,X)
      call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_reference,SC_bands(1))
    endif
    !
-   ! Last thing to do is to introduce some more points at the beginning of the simulation to allow 
-   ! a proper fitting
+   ! Last thing to do is to update the planned time sampling time (if needed)
    !
-   if (RT_dynamics_steps(1)<0.) then
-     do it=it_start,it_start+Life_MEM_steps-1 
-       RT_GAMMA_T_status(it)=1
-     enddo
-   endif 
+   nt=RT_SET_lifetimes_evaluation_plan( )
    !
  endif
  !

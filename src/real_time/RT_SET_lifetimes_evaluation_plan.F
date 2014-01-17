@@ -26,10 +26,9 @@ integer function RT_SET_lifetimes_evaluation_plan( )
  !
  use pars,           ONLY:IP2,SP
  use fields,         ONLY:Efield,i_Pump,ef_i_time,ext_field,Efield_duplicate,small_a
- use units
  use memory_m,       ONLY:mem_est
  use real_time,      ONLY:RT_GAMMA_T_status,NE_steps,RT_dynamics_steps,Life_MEM_steps,&
-&                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time
+&                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time,it_start
  !
  implicit none
  !
@@ -40,8 +39,10 @@ integer function RT_SET_lifetimes_evaluation_plan( )
  complex(SP)     :: TIME
  type(ext_field) :: E_dummy
  !
- allocate(RT_GAMMA_T_status(NE_steps))
- call mem_est("RT_GAMMA_T_status",(/NE_steps/),(/IP2/))
+ if (.not.allocated(RT_GAMMA_T_status)) then
+   allocate(RT_GAMMA_T_status(NE_steps))
+   call mem_est("RT_GAMMA_T_status",(/NE_steps/),(/IP2/))
+ endif
  RT_GAMMA_T_status=0 ! Interpolate
  !
  if (RT_dynamics_steps(1)<0.) then
@@ -56,11 +57,18 @@ integer function RT_SET_lifetimes_evaluation_plan( )
  !                      1   EVAL and SAVE
  !                      0   INTERPOLATE  
  !
- it_last=1
- Nt_each_group=N_inter_steps
  RT_SET_lifetimes_evaluation_plan=0
- weight=1._SP
+ if (it_start==1) then
+   it_last=1
+   Nt_each_group=N_inter_steps
+ else
+   it_last=it_start
+   N_inter_steps=real(RT_dynamics_steps(1))/weight(it_start)/RT_step
+   N_intra_steps=real(RT_dynamics_steps(2))/weight(it_start)/RT_step
+   Nt_each_group=N_inter_steps
+ endif
  !
+ weight=1._SP
  if (trim(RT_dynamics_KIND)=="FIELD") then
    call Efield_duplicate(Efield(i_Pump),E_dummy)
    if (trim(E_dummy%ef_name)=="QSSIN")  E_dummy%ef_name="GAUSS"
@@ -77,7 +85,7 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    it_0=-1
  endif
  !
- do it=1,NE_steps
+ do it=it_start,NE_steps
    !
    it_relative  = mod(it-it_last,Nt_each_group)+1
    !
@@ -88,8 +96,8 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    else
      call BUILD_up_group(min(N_inter_steps,NE_steps-it+1),N_intra_steps)
    endif
-   if (it==1) then
-     do it_=1,N_intra_steps*(Life_MEM_steps-1)
+   if (it==it_start) then
+     do it_=it_start,it_start+N_intra_steps*(Life_MEM_steps-1)-1
        if (RT_GAMMA_T_status(it_)==0) RT_GAMMA_T_status(it_)=-1
      enddo
    endif
@@ -109,12 +117,15 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    !
  enddo
  !DEBUG>
- ! do it=1,NE_steps
+ !if (it_start>1) then
+ ! do it=it_start,NE_steps
  !   TIME=RT_step*(it-1)
- !   if (RT_GAMMA_T_status(it)==1) write (300,*) real(TIME)/FS2AUT,1
+ !   write (*,*) it,RT_GAMMA_T_status(it)
+ !   !if (RT_GAMMA_T_status(it)==1) write (300,*) real(TIME)/FS2AUT,1
  !   !write (100,*) real(TIME)/FS2AUT,RT_GAMMA_T_status(it),weight(it)
  ! enddo
  ! stop
+ !endif
  !DEBUG<
  !
  contains

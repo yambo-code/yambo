@@ -32,6 +32,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads
+ use LIVE_t,         ONLY:USER_wall_time_string
  implicit none
  !
  type(levels)  :: en
@@ -79,6 +80,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r','Communications in   ',trim(com_path))
  call msg('r','Input file     is   ',trim(infile))
  call msg('r','Report file    is   ',trim(repfile))
+ if (len_trim(USER_wall_time_string)>0)  call msg('r','User WALL time is   ',trim(USER_wall_time_string))
  if (len_trim(jobstr)>0        ) call msg('r','Job string(main): ',trim(jobstr))
  do i_s=1,n_alt_jobstr
    call msg('r','            (#'//trim(intc(i_s))//'): ',trim(alt_jobstr(i_s)))

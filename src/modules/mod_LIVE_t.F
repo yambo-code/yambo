@@ -21,11 +21,8 @@
 !
 module LIVE_t
  !
- use pars,     ONLY:SP
- use pars,     ONLY:DP
- use pars,     ONLY:schlen
- use pars,     ONLY:lchlen
- use stderr,   ONLY:log_as_a_file
+ use pars,     ONLY:SP,DP,schlen,lchlen
+ use stderr,   ONLY:log_as_a_file,intc
  use openmp,   ONLY:master_thread
  implicit none
  !
@@ -50,6 +47,8 @@ module LIVE_t
  real(SP),allocatable:: cput_tot(:,:)
  real(SP)            :: cput_save
  character(schlen)   :: timing_name
+ character(schlen)   :: USER_wall_time_string=" "
+ integer             :: USER_wall_time(3)=0 ! Days, Hours, Minutes
  !
  ! l_* files
  !
@@ -57,6 +56,32 @@ module LIVE_t
  character(lchlen) :: log_line
  !
  contains
+   !
+   subroutine GET_user_WALL_time( )
+     integer           :: i_pos(3)
+     character(schlen) :: temp_ch
+     i_pos=(/index(trim(USER_wall_time_string),"d"),index(trim(USER_wall_time_string),"h"),index(trim(USER_wall_time_string),"m")/) 
+     if (i_pos(3)/=0) then
+       if (i_pos(2)/=0) then
+         read (USER_wall_time_string(i_pos(2)+1:i_pos(3)-1),'(i)') USER_wall_time(3)
+       else if (i_pos(1)/=0) then
+         read (USER_wall_time_string(i_pos(1)+1:i_pos(3)-1),'(i)') USER_wall_time(3)
+       else 
+         read (USER_wall_time_string(1:i_pos(3)-1),'(i)') USER_wall_time(3)
+       endif
+     endif
+     if (i_pos(2)/=0) then
+       if (i_pos(1)/=0) then
+         read (USER_wall_time_string(i_pos(1)+1:i_pos(2)-1),'(i)') USER_wall_time(2)
+       else 
+         read (USER_wall_time_string(1:i_pos(2)-1),'(i)') USER_wall_time(2)
+       endif
+     endif
+     if (i_pos(1)/=0) then
+       read (USER_wall_time_string(1:i_pos(1)-1),'(i)') USER_wall_time(1)
+     endif
+     USER_wall_time_string=trim(intc(USER_wall_time(1)))//":"//trim(intc(USER_wall_time(2)))//":"//trim(intc(USER_wall_time(3)))
+   end subroutine
    !
    character(lchlen) function date_and_time_string(dt_in,dt_out,skip_host)
      use parallel_m,  ONLY:ncpu

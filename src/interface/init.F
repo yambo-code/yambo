@@ -1202,6 +1202,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    subroutine read_command_line(rstr,init_) 
      !
      use com,    ONLY:error
+     use LIVE_t, ONLY:USER_wall_time_string,GET_user_WALL_time
      use stderr, ONLY:string_split
      use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,&
 &                     V_real_time,V_all,rstatus
@@ -1298,6 +1299,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              case ('all')
                infile_verbosity=V_all
            end select
+         endif
+         !
+         if ( trim(rstr_piece(i1)) == 'wallt' ) then
+           USER_wall_time_string=trim(rstr_piece(i1+1))
+           if (i3==1) call GET_user_WALL_time()
          endif
          !
          if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' .or.&

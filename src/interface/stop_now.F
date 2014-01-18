@@ -29,7 +29,7 @@ logical function stop_now(DO_IT_NOW)
  use X_m,            ONLY:X_t,X_reset
  use it_m,           ONLY:it_reset
  use parallel_m,     ONLY:MPI_close,myid
- use LIVE_t,         ONLY:cput_tot,USER_wall_time
+ use LIVE_t,         ONLY:cput_tot,USER_wall_time,USER_wall_time_string
  use parser_m,       ONLY:parser
  implicit none
  !
@@ -56,7 +56,8 @@ logical function stop_now(DO_IT_NOW)
  call it_reset(0)
  call parser('STOP_NOW',stop_now)
  !
- if ((days==USER_wall_time(1).or.USER_wall_time(1)==0).and.&
+ if (len_trim(USER_wall_time_string)>0.and.&
+&    (days==USER_wall_time(1).or.USER_wall_time(1)==0).and.&
 &    (hours==USER_wall_time(2).or.USER_wall_time(2)==0).and.&
 &    (minutes==USER_wall_time(3).or.USER_wall_time(3)==0)) then
    stop_now=.TRUE.

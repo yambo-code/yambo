@@ -25,7 +25,7 @@ subroutine RT_impose_N(k)
  use electrons,      ONLY:spin_occ,nel
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,it_now,RT_Nk_ibz,RT_ibz_coo
- use real_time,      ONLY:MEM_index,G_MEM_steps,G_lesser,RIM_ibz_co
+ use real_time,      ONLY:MEM_index,G_MEM_steps,G_lesser
  !
  implicit none
  !

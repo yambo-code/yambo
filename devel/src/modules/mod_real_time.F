@@ -181,6 +181,10 @@ module real_time
  ! ... ouput max/min lifetimes
  !-----------------------------
  real(SP)                 :: RT_mean_lifetimes(6)
+ !
+ ! Lifetimes ratio fit
+ logical                  :: l_lftm_fit_stable(2)
+ integer                  :: Nfitted_lifetimes(2)
  real(SP)                 :: RT_Tfit_lifetimes(4)
  real(SP)                 :: RT_Efit_lifetimes(4)
  !

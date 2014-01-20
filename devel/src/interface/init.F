@@ -494,7 +494,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim')
 #if defined  _ELPH 
- if (l_setup) call initactivate(1,'MinusQ')
+ if (l_setup) call initactivate(1,'MinusQ BSEscatt')
 #endif
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'NonPDirs')

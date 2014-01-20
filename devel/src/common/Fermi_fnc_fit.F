@@ -235,6 +235,8 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
      Ef_fit(ifit)=0._SP
      RT_occ_fit(:,ifit)=0._SP
      ntry=0
+     err_fit(ifit)  =99._SP
+     err_fit(ifit+2)=99._SP
    endif     
  enddo
  !

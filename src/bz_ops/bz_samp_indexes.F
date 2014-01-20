@@ -68,7 +68,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  integer :: io_db,io_err,ioQINDX
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,iqs,iks
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3)
- logical :: connected_grids,user_defined_qpts,gamma_point_only,Xk_impose_minus_q_local
+ logical :: connected_grids,user_defined_qpts,gamma_point_only,&
+&           Xk_impose_minus_q_local,bse_setup_scatt
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
  !
  call section('*','Transferred momenta grid')
@@ -82,7 +83,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  if (.not.bse_scattering ) bse_scattering=l_bse
  if (.not.coll_scattering) coll_scattering=l_elel_scatt
 #if defined _ELPH
- bse_scattering=elph_use_q_grid
+ call parser('BSEscatt',bse_setup_scatt)
+ if (.not.bse_scattering ) bse_scattering=elph_use_q_grid.or.bse_setup_scatt
 #endif
  !
  q%description='q'

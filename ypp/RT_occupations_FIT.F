@@ -58,7 +58,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  integer  :: nfound(3)
  integer  :: E_sort_index(RT_nstates)
  !
- character(10)     ::titles(n_T_steps+1),data_ch(n_T_steps+1,5,2)
+ character(10)     ::titles(n_T_steps+1),data_ch(n_T_steps+1,5,2),columns(n_T_steps+1)
  character(schlen) ::output_fname(ngamma+1),gamma_fname(ngamma),GRP_string
  !
  T_fit=0._SP
@@ -96,7 +96,10 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  call msg('s',":: Elec. fitting Temperatures found " &
 &          //trim(intc(nfound(2)))//"/"//trim(intc(n_T_steps)))
  !
- titles(1)='   [eV]   '
+ do i1=1,n_T_steps
+   columns(i1)="  #"//trim(intc(i1+1))
+ enddo
+ titles(1)='  E [eV]  '
  data_ch(1,1,:)=' t    [fs]'
  data_ch(1,2,1)=' T(h) [K]'
  data_ch(1,2,2)=' T(e) [K]'
@@ -151,6 +154,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    call msg('o '//trim(output_fname(1)),'#')
    call msg('o '//trim(output_fname(1)),'# Occupations distribution at different times (f@ time)')
    call msg('o '//trim(output_fname(1)),'#')
+   call msg('o '//trim(output_fname(1)),'#',(/'  #1',columns(1:n2-n1+1)/),INDENT=-2,USE_TABS=.true.)
    call msg('o '//trim(output_fname(1)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
    call msg('o '//trim(output_fname(1)),'#')
    !
@@ -163,6 +167,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
      call msg('o '//trim(output_fname(igamma+1)),'#')
      call msg('o '//trim(output_fname(igamma+1)),'# Lifetimes distribution at different times (f@ time)')
      call msg('o '//trim(output_fname(igamma+1)),'#')
+     call msg('o '//trim(output_fname(igamma+1)),'#',(/'  #1',columns(1:n2-n1+1)/),INDENT=-2,USE_TABS=.true.)
      call msg('o '//trim(output_fname(igamma+1)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
      call msg('o '//trim(output_fname(igamma+1)),'#')
    enddo
@@ -209,6 +214,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
      !
      call msg('o '//trim(output_fname(1)),'#')
      call msg('o '//trim(output_fname(1)),'# Results of the FIT')
+     call msg('o '//trim(output_fname(1)),'#')
      do i1=1,5
        call msg('o '//trim(output_fname(1)),'#',(/data_ch(1,i1,ifit), &
 &                                            data_ch(n1+1:n2+1,i1,ifit)/), INDENT=-2,USE_TABS=.true.)
@@ -217,6 +223,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
      call msg('o '//trim(output_fname(1)),'#')
      call msg('o '//trim(output_fname(1)),'# Fit functions at different time (f@ time)')
      call msg('o '//trim(output_fname(1)),'#')
+     call msg('o '//trim(output_fname(1)),'#',(/'  #1',columns(1:n2-n1+1)/),INDENT=-2,USE_TABS=.true.)
      call msg('o '//trim(output_fname(1)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
      call msg('o '//trim(output_fname(1)),'#')
      !

@@ -40,7 +40,6 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_output
  use SC,             ONLY:SC_bands,RT_occupations,SC_description,n_SC_descriptions
 #endif
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
  use interfaces,     ONLY:PARALLEL_index
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait
  use parser_m,       ONLY:parser
@@ -57,12 +56,12 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  real(SP)              :: io_Time
  integer               :: i_fp
 #endif
- integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps,io_ID,io_err,ik_rand,i1
+ integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps,ik_rand,i1
  character(schlen)     :: ch_ws,titles(4)
  logical               :: l_3D_plot,l_RIM,l_prt_occ_only
  type(PP_indexes)      :: px
  !
- integer,     external :: io_RIM_E_and_k,RT_occupations_check 
+ integer,     external :: RT_occupations_check 
  !
  !
  call parser('PrtOccOnly',l_prt_occ_only)
@@ -70,19 +69,11 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  ! E_rim
  !=======
  !
- call msg("s",'RIM support ...')
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=io_RIM_E_and_k(Xen,Xk,io_ID)
- !
- if (io_err==0) then
-   call msg("l",'yes')
+ l_RIM=.FALSE.
+ if (BZ_RIM_nbands>0) then
    l_RIM=.TRUE.
    call OCCUPATIONS_Extend(Xen,Xen)
- else
-   call msg("l",'no')
  endif
- !
- l_RIM=io_err==0
  !
  ! DOS
  !=====

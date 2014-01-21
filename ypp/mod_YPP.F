@@ -131,7 +131,7 @@ module YPP
  !
  ! BZ RIM
  !
- integer, parameter :: MAX_RIM_DBs=10
+ integer, parameter :: MAX_RIM_DBs=20
  integer  :: n_RIM_DBs
  integer  :: BZ_RIM_nkpts
  logical  :: l_bzrim

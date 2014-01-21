@@ -28,7 +28,7 @@ logical function stop_now(DO_IT_NOW)
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_reset
  use it_m,           ONLY:it_reset
- use parallel_m,     ONLY:MPI_close,myid
+ use parallel_m,     ONLY:MPI_close,myid,ncpu,PP_redux_wait
  use LIVE_t,         ONLY:cput_tot,USER_wall_time,USER_wall_time_string
  use parser_m,       ONLY:parser
  implicit none
@@ -41,7 +41,7 @@ logical function stop_now(DO_IT_NOW)
  type(bz_samp)     ::q,k
  type(X_t)         ::X
  type(w_samp)      ::Xw
- integer           ::ierr,days,hours,minutes
+ integer           ::ierr,days,hours,minutes,i_stop_now(ncpu)
  real(SP)          ::CPU_t
  integer, external ::init
  !
@@ -54,14 +54,21 @@ logical function stop_now(DO_IT_NOW)
  minutes=int(CPU_t/60.d0)
  !
  call it_reset(0)
- call parser('STOP_NOW',stop_now)
+ call parser('STOP_NOW',stop_now) 
  !
+ i_stop_now=0
+ if (stop_now) i_stop_now(myid+1)=1
+ ! 
  if (len_trim(USER_wall_time_string)>0.and.&
-&    (days==USER_wall_time(1).or.USER_wall_time(1)==0).and.&
-&    (hours==USER_wall_time(2).or.USER_wall_time(2)==0).and.&
-&    (minutes==USER_wall_time(3).or.USER_wall_time(3)==0)) then
-   stop_now=.TRUE.
+&    (days>=USER_wall_time(1).or.USER_wall_time(1)==0).and.&
+&    (hours>=USER_wall_time(2).or.USER_wall_time(2)==0).and.&
+&    (minutes>=USER_wall_time(3).or.USER_wall_time(3)==0)) then
+   i_stop_now(myid+1)=1
  endif
+ !
+ call PP_redux_wait(i_stop_now)
+ !
+ stop_now=any(i_stop_now==1)
  !
  if (.not.stop_now) return
  if (.not.DO_IT_NOW) return

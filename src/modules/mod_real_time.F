@@ -32,9 +32,11 @@ module real_time
  !
  ! NE dynamics
  !
- logical           :: l_NE_with_fields  
- logical           :: l_RT_probe  
- logical           :: l_RT_pump_and_probe  
+ logical           :: l_NE_dynamics  
+ logical           :: l_NE_dynamics_started
+ logical           :: l_NE_with_fields
+ logical           :: l_RT_probe
+ logical           :: l_RT_pump_and_probe
  logical           :: l_Dynamics_is_over  
  !
  ! Inital XC (SC or default) are requested
@@ -78,7 +80,7 @@ module real_time
  !                     |__ ef1/2_i_time
  ! 
  ! NE_time is negative during the Thermal steps. When NE_time is positive
- ! NE_dynamics=.TRUE.
+ ! l_NE_dynamics_started=.TRUE.
  !
  ! ... core step length ...
  !
@@ -94,10 +96,10 @@ module real_time
  !
  ! ... NE dynamics ...
  !
- logical  :: NE_dynamics
- real(SP) :: NE_time      ! <- incremented
- real(SP) :: NE_tot_time  ! Total (fixed)
- integer  :: NE_i_time   ! = (NE_time-1)/RT_step
+ real(SP) :: NE_time ! <- incremented
+ real(SP) :: NE_tot_time ! Total (fixed)
+ integer  :: NE_i_time ! = (NE_time-1)/RT_step
+ integer  :: RT_dynamics_jumps 
  integer  :: NE_steps
  !
  ! Here I control the way the time evolution is sampled for the e-p and e-e
@@ -112,8 +114,8 @@ module real_time
  !
  ! Kind of e-e interactions (for the CORR and SCATT parts)
  !
- integer  :: RT_EE_CORR_kind=SE_NONE
- integer  :: RT_EE_SCATT_kind=SE_NONE
+ integer           :: RT_EE_CORR_kind=SE_NONE
+ integer           :: RT_EE_SCATT_kind=SE_NONE
  !
  ! ... Memory ...
  !
@@ -190,6 +192,8 @@ module real_time
  ! ... ouput max/min lifetimes
  !-----------------------------
  real(SP)                 :: RT_mean_lifetimes(6)
+ real(SP)                 :: RT_Tfit_lifetimes(4)
+ real(SP)                 :: RT_Efit_lifetimes(4)
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
@@ -244,7 +248,9 @@ module real_time
  integer,  parameter      :: J_and_P_cache_size=18
  !
  integer                  :: ID(7)
- integer                  :: it_start = 1             ! restart point
+ integer                  :: it_start                 ! restart point
+ integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
+                                                      ! the last evaluated point
  integer                  :: RT_IO_JPO_steps    = -1
  integer                  :: RT_IO_output_steps = -1
  integer                  :: RT_IO_G_steps      = -1
@@ -342,7 +348,7 @@ module real_time
        QP_Vnl_xc=cZERO
      endif
      !
-     if(l_NE_with_fields) then
+     if(l_NE_dynamics) then
        allocate(J_and_P_cache(J_and_P_cache_size,RT_IO_JPO_steps))
        call mem_est('Current_Cache',(/size(J_and_P_cache)/),(/SP/))
      endif
@@ -540,7 +546,7 @@ module real_time
        call mem_est("Occ_natural")
      endif
      !
-     if(l_NE_with_fields) then
+     if(l_NE_dynamics) then
        deallocate(J_and_P_cache)
        call mem_est('Current_Cache')
      endif

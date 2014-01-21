@@ -49,10 +49,10 @@ module R_lattice
  real(SP),allocatable :: q_norm(:)
  type bz_samp
    integer           :: nibz,nbz
-   integer,  pointer :: nstar(:)   => null()
-   integer,  pointer :: star(:,:)  => null()
-   integer,  pointer :: sstar(:,:) => null() 
-   integer,  pointer :: s_table(:,:) => null() 
+   integer,  pointer :: nstar(:)   => null()    ! n° of points in the star
+   integer,  pointer :: star(:,:)  => null()    ! ik,ikstar --> is     is sends ik in ikstar
+   integer,  pointer :: sstar(:,:) => null()    ! ik_bz     --> ik,is  is sends ik in ikbz
+   integer,  pointer :: s_table(:,:) => null()  ! ik,is     --> ik_bz  revers of sstar
    real(SP), pointer :: pt(:,:)    => null()
    real(SP), pointer :: ptbz(:,:)  => null()
    real(SP), pointer :: weights(:) => null()
@@ -120,12 +120,13 @@ module R_lattice
  !
  interface
    !
-   integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,i_err)
+   integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,k_symm,i_err)
      use pars, ONLY: SP
      integer :: n_k
      real(SP):: k_ref(3)
      real(SP):: k(n_k,3)
      logical, optional :: ROTATE_k_ref
+     integer, optional :: k_symm
      integer, optional :: i_err
    end function 
    !

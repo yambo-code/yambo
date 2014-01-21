@@ -40,7 +40,7 @@ integer function io_RT_components(what,ID)
 #endif
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,J_and_P_cache_size, &
-&                         G_lesser,NE_dynamics,RT_ind_J,J_and_P_cache,&
+&                         G_lesser,l_NE_dynamics_started,RT_ind_J,J_and_P_cache,&
 &                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight
  use fields,         ONLY:A_vecpot
 #endif                                
@@ -110,7 +110,7 @@ integer function io_RT_components(what,ID)
  !
  if (l_G.or.l_THETA) then
    !
-   if(.not.RT_do_IO('G').and.NE_dynamics.and.write_is_on(ID)) then
+   if(.not.RT_do_IO('G').and.l_NE_dynamics_started.and.write_is_on(ID)) then
      io_RT_components=0
      call io_reset(ID)
      goto 2

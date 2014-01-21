@@ -28,6 +28,10 @@ subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,Nk,ID)
   use R_lattice,   ONLY:bz_samp
   use electrons,   ONLY:levels,n_sp_pol
   use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells,get_ID
+#if defined _RT
+  use real_time,   ONLY:RIM_ibz_coo
+  use SC,          ONLY:RT_ibz_coo
+#endif
   !
   implicit none
   !
@@ -41,7 +45,7 @@ subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,Nk,ID)
   ! Work Space
   !
   real(SP), allocatable :: RDATA(:,:)
-  integer               :: inpdim(2),i1,i2,Nk_local
+  integer               :: inpdim(2),i1,i2,ik,Nk_local
   !
   call get_ID(ID)
   !
@@ -76,9 +80,22 @@ subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,Nk,ID)
     interpls(ID)%ndim       =inpdim(1)*inpdim(2)
     allocate(interpls(ID)%engre(nshells,interpls(ID)%ndim))
     allocate(RDATA(interpls(ID)%ndim,Nk_local))
-    do i1=1,inpdim(2)
-      RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:Nk_local)            = E%E(1:inpdim(1),1:Nk_local,i1)
-    enddo 
+#if defined _RT
+    if(associated(E%E_RIM)) then
+      do i1=1,inpdim(2)
+        do ik=1,k%nibz
+          RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) =&
+          &             E%E_RIM(1:inpdim(1),RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),i1)
+        enddo
+      enddo 
+    else
+#endif
+      do i1=1,inpdim(2)
+        RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:Nk_local) = E%E(1:inpdim(1),1:Nk_local,i1)
+      enddo
+#if defined _RT
+    endif
+#endif
   elseif(present(R2D)) then
     !
     interpls(ID)%interp_type=REAL2D

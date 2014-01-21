@@ -37,7 +37,7 @@ subroutine RT_driver(E,X,k,q)
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_G_steps,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
-&                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
+&                         it_start,RT_output,NE_time,l_NE_dynamics_started,RT_update,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update
  use plasma,          ONLY:Plasma_free,EH_gas
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
@@ -49,9 +49,6 @@ subroutine RT_driver(E,X,k,q)
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -202,7 +199,8 @@ subroutine RT_driver(E,X,k,q)
  call RT_output(what="initialize")
  call RT_output(what="open dyn ene cur pol")
  if (l_NE_with_fields) call RT_output(what="open pot occ")
- if (l_elph_scatt.or.l_elel_scatt) call RT_output('open life')
+ if (l_elph_scatt) call RT_output('open EPlife')
+ if (l_elel_scatt) call RT_output('open EElife')
  !
  ! Loop on time
  !==============
@@ -235,29 +233,30 @@ subroutine RT_driver(E,X,k,q)
    !
    NE_i_time  =it-Thermal_steps
    NE_time    =(NE_i_time-1)*RT_step
-   NE_dynamics=NE_i_time>=1
    it_mem     =MEM_index(NE_i_time,G_MEM_steps)
    it_mem_p1  =MEM_index(NE_i_time+1,G_MEM_steps)
+   !
+   l_NE_dynamics_started=NE_i_time>=1
    !
    ! Start-Up & Timing
    !===================
    if(it==it_start.or.it==Thermal_steps+1) then
      !
-     if (.not.NE_dynamics) call live_timing('[RT] Thermalization :',Thermal_steps-it_start+1,SERIAL=.true.)
-     if (     NE_dynamics) call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
+     if (.not.l_NE_dynamics_started) call live_timing('[RT] Thermalization :',Thermal_steps-it_start+1,SERIAL=.true.)
+     if (     l_NE_dynamics_started) call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
      !
    endif
    !
    ! Keep a copy of A_vecpot before starting the collisions
-   !========================================================
+   ! ======================================================
    A_vecpot_previous=A_vecpot
    !
    ! Simmetrization
-   !================
+   !===============
    forall( ib=SC_bands(1):SC_bands(2) ) G_lesser(ib,ib,:,it_mem)=cI*aimag(G_lesser(ib,ib,:,it_mem))
    !
    ! End dynamics ?
-   !================
+   !===============
    if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.
    !
    if (stop_now(.FALSE.)) then
@@ -265,7 +264,7 @@ subroutine RT_driver(E,X,k,q)
      l_Dynamics_is_over=.TRUE.
    endif
    !
-   ! Current and Poarization
+   ! Current and Polarization
    !==========================
    call RT_current_AND_polarization(k,E,G_lesser(:,:,:,it_mem),A_vecpot)
    !
@@ -297,7 +296,8 @@ subroutine RT_driver(E,X,k,q)
    !=======================================
    if (l_elph_scatt.or.l_elel_scatt) then
      call RT_mean_carrier_lifetimes(G_lesser(:,:,:,it_mem),E,k)
-     call RT_output('life',TIME=NE_time/FS2AUT)
+     if(l_elph_scatt) call RT_output('EPlife',TIME=NE_time/FS2AUT)
+     if(l_elel_scatt) call RT_output('EElife',TIME=NE_time/FS2AUT)
    endif
    !
    ! Write DBs

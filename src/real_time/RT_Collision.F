@@ -51,7 +51,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,                             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
 &                         G_lesser_reference,                                                  &
-&                         l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,                       &
+&                         l_NE_simulate_IP,Hfrozen,XCfrozen,l_NE_dynamics_started,             &
 &                         l_RT_needs_XC0,Ho_plus_Sigma
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
@@ -84,11 +84,11 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  ! Density (needed by Hartree and local XCs)
  !=========
  !
- ! NE_dynamics=.FALSE. corresponds to Thermalization where the density must be updated
+ ! l_NE_dynamics_started=.FALSE. corresponds to Thermalization where the density must be updated
  !
  XC_needs_density=.not.XCfrozen.and.l_sc_contains_lda.and.SC_xc_functional/=0
  !
- if (.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) &
+ if (.not.Hfrozen.or.XC_needs_density.or..not.l_NE_dynamics_started) &
 &   call el_density_matrix(G_input(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1))
  !
  ! The Hartree term is written as
@@ -97,9 +97,9 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  ! where V_hartree(rho_0) is stored in XC0_and_HARTREE0
  !
- if (.not.Hfrozen.or..not.NE_dynamics) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
+ if (.not.Hfrozen.or..not.l_NE_dynamics_started) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
  !
- if (.not.XCfrozen.or..not.NE_dynamics) then
+ if (.not.XCfrozen.or..not.l_NE_dynamics_started) then
    !
    if(l_sc_contains_lda.and.SC_xc_functional/=0) then
      !
@@ -154,7 +154,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    ! (for all the parts of self-energy different from V_h + V_xc)
    ! I have to subtract XC0_and_HARTREE0 that contains <mk|Vxc(rho0) |nk>
    !
-   if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.NE_dynamics.and.HEAD_k_cpu) then 
+   if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.l_NE_dynamics_started.and.HEAD_k_cpu) then 
      !      
 #if defined _OPENMP
      call V_by_V_plus_V_omp(SC_nbands,cONE,-XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
@@ -215,7 +215,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !
    ! And the gauge field
    !=====================
-   if (l_NE_with_fields.and.NE_dynamics) call RT_apply_field(ik,H_nl_sc,A_input)
+   if (l_NE_with_fields.and.l_NE_dynamics_started) call RT_apply_field(ik,H_nl_sc,A_input)
    !
    Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)= &
 &                Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)+&

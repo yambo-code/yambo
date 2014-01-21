@@ -42,7 +42,8 @@ subroutine RT_Ext_fields(A,time)
  use pars,           ONLY:SP
  use units,          ONLY:SPEED_OF_LIGHT
  use real_time,      ONLY:RT_step,NE_i_time
- use fields,         ONLY:n_ext_fields,Efield,small_a,theta_function,ef_i_time,gauge_field
+ use fields,         ONLY:n_ext_fields,Efield,small_a,theta_function,&
+&                         gauge_field
  !
  implicit none
  type(gauge_field),intent(inout) :: A
@@ -60,11 +61,11 @@ subroutine RT_Ext_fields(A,time)
  !
  do i_f=1,n_ext_fields
    !
-   if(Efield(i_f)%ef_name=="none".or.ef_i_time(i_f)> NE_i_time.or.NE_i_time<1) cycle
+   if(Efield(i_f)%ef_name=="none" .or. Efield(i_f)%t_initial_indx>NE_i_time .or. NE_i_time<1) cycle
    !
    E_times_c=Efield(i_f)%amplitude*Efield(i_f)%versor(:)*SPEED_OF_LIGHT
    !
-   Field_time=cmplx(time-ef_i_time(i_f)*RT_step,0._SP)
+   Field_time=cmplx(time-Efield(i_f)%t_initial,0._SP)
    !
    A%vecpot(:)=A%vecpot(:)-E_times_c(:)*&
 &                     small_a(Field_time,Efield(i_f),0)*theta_function(real(Field_time),RT_step,0)

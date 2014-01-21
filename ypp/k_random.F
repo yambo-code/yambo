@@ -25,7 +25,7 @@ subroutine k_random(Xk,Xen)
  use units,               ONLY:HA2EV
  use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
  use stderr,              ONLY:set_real_printed_length,intc
- use R_lattice,           ONLY:bz_samp,nkibz,k_the_nearest,bz_samp_reset
+ use R_lattice,           ONLY:bz_samp,nkibz,k_the_nearest,bz_samp_reset,rl_sop
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg,of_open_close,error,warning
@@ -47,10 +47,11 @@ subroutine k_random(Xk,Xen)
  !
  real(SP)     ::rand_k(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
 &               gap(2),tmp_zero(3)
- integer      ::i1,ik_near,i2,RIM_nk,ik_bz,ik_RIM
+ integer      ::i1,ik_near,is_near,i2,RIM_nk,ik_bz,ik_RIM
  character(lchlen) :: k_rand_fname
  character(schlen) :: dump
  logical           :: No_Weight,l_skip_check
+ integer,  allocatable :: BZ_SYM_table(:,:)
  real(SP), allocatable :: rand_E(:,:,:)
  !
  ! Random Generator
@@ -309,6 +310,7 @@ subroutine k_random(Xk,Xen)
  !
  ! Xk (IBZ->BZ)
  !
+ call k_sym2sym(Xk,'k')
  call k_ibz2bz(Xk,'i',.true.)
  !
  ! The -1 is for the reference k that should not be added
@@ -323,10 +325,15 @@ subroutine k_random(Xk,Xen)
      !
      allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)))
      BZ_RIM_table=0
-     !
      do i1=1,Xk%nbz
        BZ_RIM_table(i1,1)=Xk%sstar(i1,1)
      enddo
+     !
+     if (.not.RIM_is_symmetry_expanded) then
+       allocate(BZ_SYM_table(Xk%nbz,maxval(BZ_RIM_nkpt)))
+       BZ_SYM_table=0
+       BZ_SYM_table(1:Xk%nbz,1)=1
+     endif
      !
    endif
    !
@@ -344,8 +351,9 @@ subroutine k_random(Xk,Xen)
        BZ_RIM_nkpt(ik_near)=BZ_RIM_nkpt(ik_near)+1
        if (allocated(BZ_RIM_table)) BZ_RIM_table(ik_near,BZ_RIM_nkpt(ik_near))=RIM_k(i_db_merge)%sstar(i1,1)
      else
-       ik_near=k_the_nearest(RIM_k(i_db_merge)%pt(i1,:),Xk%ptbz(:,:),Xk%nbz,ROTATE_k_ref=.TRUE.)
+       ik_near =Xk%s_table( k_the_nearest(RIM_k(i_db_merge)%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is_near) , 1)
        BZ_RIM_nkpt(ik_near)=BZ_RIM_nkpt(ik_near)+1
+       if (allocated(BZ_SYM_table)) BZ_SYM_table(ik_near,BZ_RIM_nkpt(ik_near))=is_near
        if (allocated(BZ_RIM_table)) BZ_RIM_table(ik_near,BZ_RIM_nkpt(ik_near))=i1+1
      endif
      !      
@@ -387,7 +395,7 @@ subroutine k_random(Xk,Xen)
          Xk%ptbz_RIM(i1,:)=Xk%ptbz(ik_bz,:)
        else
          Xen%E_RIM(:,i1,:)=RIM_E(i_db_merge)%E(:,BZ_RIM_table(ik_bz,ik_RIM)-1,:)
-         Xk%ptbz_RIM(i1,:)=RIM_k(i_db_merge)%pt(BZ_RIM_table(ik_bz,ik_RIM)-1,:)
+         Xk%ptbz_RIM(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_RIM) ),RIM_k(i_db_merge)%pt(BZ_RIM_table(ik_bz,ik_RIM)-1,:))
        endif
        BZ_RIM_table(ik_bz,ik_RIM)=ik_RIM+sum(BZ_RIM_nkpt(:ik_bz-1))
      enddo
@@ -406,6 +414,7 @@ subroutine k_random(Xk,Xen)
  ! CLEAN
  !
  deallocate(BZ_RIM_nkpt,BZ_RIM_table,Xen%E_RIM,BZ_RIM_ipol_weight)
+ if(allocated(BZ_SYM_table)) deallocate(BZ_SYM_table)
  if(associated(Xk%ptbz_RIM)) deallocate(Xk%ptbz_RIM)
  if(associated(Xk%pt_RIM))   deallocate(Xk%pt_RIM)
  call k_ibz2bz(Xk,'d',.false.) 

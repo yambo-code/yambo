@@ -21,7 +21,10 @@
 !
 integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit_out,RT_E_fit_out,l_T_max_in)
  ! 
- ! FIT the occupations with a Gauss–Newton algorithm
+ ! FIT the occupations:
+ ! - first try with a standard Gauss–Newton algorithm
+ ! - if this fails try with a damped Gauss–Newton algorithm, with
+ !   increasing damping. This is the Levenberg-Marquartd algorithm
  !
  use pars,           ONLY:SP,lchlen
  use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo
@@ -56,9 +59,10 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  ! Work Space
  !
  integer, parameter    :: max_iter=1000, ntry_max=10, fit_dim=1000
- real(SP)              :: Fit_E_range(2),T_guess(2),Ef_guess(2),T_now(2)
+ real(SP)              :: Fit_E_range(2),T_guess(2),Ef_guess(2),  &
+&                         T_now(2),T_save(2),Ef_save(2)
  !
- logical               :: l_two_temperatures,lfound(2)
+ logical               :: l_two_temperatures,lfound(2),l_dumping(2)
  !
  real(SP)              :: x(nstates),Jacob(nstates,2)
  real(SP)              :: Jacob_sq(2,2),Jacob_sq_m1(2,2),Fit_new(2)
@@ -100,15 +104,24 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
    enddo
  enddo
  !
- do ifit=1,nfit
-   T_guess(ifit)=1.E-3
-   Ef_guess(ifit)=RT_E(last_occupied+(ifit-1))
- enddo
+ T_save=T_fit
+ Ef_save=Ef_fit
  !
- ! DEBUG<
- !write(*,*) ' '
- !write(*,*) T_guess*HA2KEL,Ef_guess*HA2EV
- ! DEBUG>
+ l_dumping=.false.
+ !
+9999 do ifit=1,nfit
+   if(.not.l_dumping(ifit)) then
+     ! Random guess seems more stable than previous
+     ! fit guess in case of Gauss-Newton
+     T_guess(ifit)=1.E-3
+     Ef_guess(ifit)=RT_E(last_occupied+(ifit-1))
+   else
+     if(T_save(ifit) <=0._SP) T_guess(ifit)=1.E-3
+     if(Ef_save(ifit)==0._SP) Ef_guess(ifit)=RT_E(last_occupied+(ifit-1))
+     if(T_save(ifit) > 0._SP) T_guess(ifit)=T_save(ifit)
+     if(Ef_save(ifit)/=0._SP) Ef_guess(ifit)=Ef_save(ifit)
+   endif
+ enddo
  !
  ntry=0
  T_fit=0._SP
@@ -120,22 +133,20 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  do ifit=1,nfit
    !
    ! I cannot fit over constant occupations
-   !
-   if( ifit==1 .and. all(abs(RT_occ(1:last_occupied )-RT_occ(1))<1.E-3)           ) cycle
+   if( ifit==1 .and. all(abs(RT_occ(1:last_occupied )-RT_occ(1))<1.E-3)        ) cycle
    if( ifit==2 .and. all(abs(RT_occ(last_occupied+1:)-RT_occ(nstates))<1.E-3 ) ) cycle
    !
 2000 ntry=ntry+1
    !
    ! Starting point for high temperatures
-   !
    if(ntry>1) then 
      T_guess(ifit)=1.E-3_SP*10**real(ntry-1,SP)
      Ef_guess(ifit)= RT_E(last_occupied+1)*(-1._SP)**real(ifit,SP)
+     if(l_dumping(ifit)) then
+       if(T_save(ifit)>0._SP) T_guess(ifit)=T_save(ifit)
+       if(Ef_save(ifit)/=0._SP) Ef_guess(ifit)=Ef_save(ifit)
+     endif
    endif
-   !
-   !DEBUG<
-   !write(*,*) ifit,ntry,T_guess(ifit)*HA2KEL,Ef_guess(ifit)*HA2EV
-   !DEBUG>
    !
    do i2=1,max_iter
      err_fit(ifit)=0._SP
@@ -177,6 +188,13 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
      !
      Jacob_sq=matmul(transpose(Jacob),Jacob)
      !
+     ! This shifts from the Gauss-Newton algorithm to the
+     ! to the Levenberg-Marquartd algorithm  with a dumping
+     if(l_dumping(ifit)) then
+       Jacob_sq(1,1)=Jacob_sq(1,1)*(1._SP+10.**-real(4-ntry))
+       Jacob_sq(2,2)=Jacob_sq(2,2)*(1._SP+10.**-real(4-ntry))
+     endif
+     !
      Jacob_sq_m1(:,:)=1._SP/(Jacob_sq(1,1)*Jacob_sq(2,2)-Jacob_sq(1,2)*Jacob_sq(2,1))
      Jacob_sq_m1(1,1)= Jacob_sq_m1(1,1)*Jacob_sq(2,2)
      Jacob_sq_m1(2,2)= Jacob_sq_m1(2,2)*Jacob_sq(1,1)
@@ -185,25 +203,17 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
      !
      Fit_new=matmul(Jacob_sq_m1,matmul(transpose(Jacob),x))
      !
-     !DEBUG<
-     !write(*,*) i2,Jacob
-     !write(*,*) Jacob_sq
-     !write(*,*) Jacob_sq_m1
-     !write(*,*) Fit_new
-     !write(*,*) err_fit
-     !DEBUG>
-     !
      if(any(isnan(Fit_new(:)))) exit
      if(any(Fit_new(:)==Fit_new(:)+1._SP)) exit
-     !if(all(Fit_new(:)==0._SP)) exit
      !
      T_fit(ifit)=T_guess(ifit)-Fit_new(1)
      Ef_fit(ifit)=Ef_guess(ifit)-Fit_new(2)
      !
-     if(      abs(T_guess(ifit)-T_fit(ifit))<1.E-6 .and. abs(Ef_guess(ifit)-Ef_fit(ifit))<1.E-3 &
-&       .and. abs(Ef_fit(ifit))<0.1 ) then
+     if( ( abs(Fit_new(1))<1.E-6.and.abs(Fit_new(2))<1.E-3                                     ) .or.  &
+       & ( abs(Fit_new(1))<1.E-5.and.abs(Fit_new(2))<1.E-2.and.i2>70.and.err_fit(ifit+2)<0.05) )  then
        nfound(ifit)=nfound(ifit)+1
        lfound(ifit)=.true.
+       l_dumping(ifit)=.false.
        ntry=0
        exit
      endif
@@ -216,6 +226,11 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
    if(.not.lfound(ifit).and.ntry< ntry_max) goto 2000
    !
    if(.not.lfound(ifit).and.ntry>=ntry_max) then
+     if(.not.l_dumping(ifit)) then
+       l_dumping(ifit)=.true.
+       goto 9999
+     endif
+     l_dumping(ifit)=.false.
      T_fit(ifit) =0._SP
      Ef_fit(ifit)=0._SP
      RT_occ_fit(:,ifit)=0._SP
@@ -229,12 +244,7 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  if(     lfound(1) .and.      lfound(2)) Fermi_fnc_fit=3
  !
  T_now=T_fit
- if (l_T_max.and.Fermi_fnc_fit==3) T_now=maxval(T_fit)
- !
- !DEBUG<
- !write(*,*) Fermi_fnc_fit
- !write(*,*) T_fit,Ef_fit,err_fit
- !DEBUG>
+ if(l_T_max.and.Fermi_fnc_fit==3) T_now=maxval(T_fit)
  !
  do ifit=1,nfit
    !

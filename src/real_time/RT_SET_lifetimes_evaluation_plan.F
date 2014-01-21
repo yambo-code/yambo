@@ -25,7 +25,7 @@ integer function RT_SET_lifetimes_evaluation_plan( )
  ! RT_GAMMA_T_status(NE_steps)
  !
  use pars,           ONLY:IP2,SP
- use fields,         ONLY:Efield,i_Pump,ef_i_time,ext_field,Efield_duplicate,small_a
+ use fields,         ONLY:Efield,i_Pump,ext_field,Efield_duplicate,small_a
  use memory_m,       ONLY:mem_est
  use real_time,      ONLY:RT_GAMMA_T_status,NE_steps,RT_dynamics_steps,Life_MEM_steps,&
 &                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time,it_start
@@ -73,7 +73,7 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    call Efield_duplicate(Efield(i_Pump),E_dummy)
    if (trim(E_dummy%ef_name)=="QSSIN")  E_dummy%ef_name="GAUSS"
    do it=1,NE_steps
-     TIME=cmplx(RT_step*(it-1)-ef_i_time(i_Pump)*RT_step,0._SP)
+     TIME=cmplx(RT_step*(it-1)-Efield(i_Pump)%t_initial_indx*RT_step,0._SP)
      weight(it)=abs(small_a(TIME,E_dummy,1))**2
      if (abs(weight(it)-1.)<1.E-5) it_0=it
    enddo

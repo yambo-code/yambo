@@ -257,7 +257,6 @@ module real_time
  integer                  :: RT_IO_steps_DB     = -1
  real(SP)                 :: RT_IO_time(3)      = -1.*FS2AUT ! Three values for J,P,OCC - OUPUT - GF's
  real(SP), allocatable    :: J_and_P_cache(:,:)
- real(SP), allocatable    :: Fluence(:)
  !
  ! Interface
  !

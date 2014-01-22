@@ -88,7 +88,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,&
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,l_Debye_TBose_update,&
 &                     SwitchOnTime,l_RT_induced_field,&
-&                     l_RT_diagonalize,RT_is_dumped,RAD_LifeTime,Phase_LifeTime,&
+&                     l_RT_diagonalize,RT_is_dephased,RAD_LifeTime,Phase_LifeTime,&
 &                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,&
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,&
 &                     Eh_pumped_pair_energy,Eh_pumped_pair_width,&
@@ -533,7 +533,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Integrator_name='RK2'
  RAD_LifeTime = 0.
  Phase_LifeTime = 0.
- RT_is_dumped=.FALSE.
+ RT_is_dephased=.FALSE.
  l_NE_simulate_RPA=.FALSE.
  RT_diagonalization_steps=-1
  l_RT_diagonalize=.FALSE.

@@ -33,7 +33,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use R_lattice,      ONLY:bz_samp,nkibz
  use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
- use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,l_NE_dynamics_started,RT_Deph_Matrix,&
+ use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dephased,l_NE_dynamics_started,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,&
 &                         RT_GAMMA_T_status,&
@@ -54,9 +54,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  integer          :: ib1,ib2,ik
  real(SP)         :: f_k(SC_bands(2))
  !
- if(.not.RT_is_dumped.and..not.l_elph_scatt.and..not.l_elel_scatt) return 
- !
- Sigma_relax=cZERO
+ if(.not.l_NE_dynamics_started) return
  !
  ! Andrea 4/7/2013. Fix of potential anomalous values
  ! of the G_lesser diagonal
@@ -66,6 +64,20 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      G_input(ib1,ib1,ik)=cI*abs(-cI*G_input(ib1,ib1,ik))
    enddo
  enddo
+ !
+ if(RT_is_dephased) then
+   do ik=1,RT_nk
+     do ib1=SC_bands(1),SC_bands(2)
+       do ib2=SC_bands(1),SC_bands(2)
+         Sigma_relax(ib1,ib2,ik)=-cI*RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))*&
+&                                (G_input(ib1,ib2,ik)-G_lesser_reference(ib1,ib2,ik))
+       enddo
+     enddo
+   enddo
+   if (.not.l_elph_scatt.and..not.l_elel_scatt) return
+ else
+   Sigma_relax=cZERO
+ endif
  !
  ! El-El
  !=======
@@ -162,17 +174,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      endif
    enddo
  enddo
- !
- if(RT_is_dumped.and.l_NE_dynamics_started) then
-   do ik=1,RT_nk
-     do ib1=SC_bands(1),SC_bands(2)
-       do ib2=SC_bands(1),SC_bands(2)
-         Sigma_relax(ib1,ib2,ik)=Sigma_relax(ib1,ib2,ik)-cI*RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))*&
-&                                (G_input(ib1,ib2,ik)-G_lesser_reference(ib1,ib2,ik))
-       enddo
-     enddo
-   enddo
- endif
  !
 end subroutine RT_relaxation
 

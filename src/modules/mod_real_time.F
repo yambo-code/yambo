@@ -142,7 +142,7 @@ module real_time
  !
  real(SP)    :: Phase_LifeTime
  real(SP)    :: RAD_LifeTime
- logical     :: RT_is_dumped
+ logical     :: RT_is_dephased
  !
  ! Relaxation and Dissipation 
  !----------------------------
@@ -248,7 +248,7 @@ module real_time
  integer,  parameter      :: J_and_P_cache_size=18
  !
  integer                  :: ID(7)
- integer                  :: it_start                 ! restart point
+ integer                  :: it_start           = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
                                                       ! the last evaluated point
  integer                  :: RT_IO_JPO_steps    = -1
@@ -400,7 +400,7 @@ module real_time
      allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
      !
-     if(RT_is_dumped.or.l_elph_scatt) then
+     if(RT_is_dephased.or.l_elph_scatt) then
        allocate(Sigma_relax(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
        call mem_est("Sigma_relax",(/size(Sigma_relax)/),(/2*SP/))
      endif

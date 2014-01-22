@@ -34,7 +34,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_RT_diamagnetic,RT_IO_JPO_steps,RT_IO_time,l_NE_simulate_BSE,&
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
 &                         l_RT_induced_field,l_NE_simulate_TDDFT,                   &
-&                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
+&                         RT_diagonalization_steps,RT_is_dephased,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,Gr_kind,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,RT_IO_output_steps,    &
@@ -143,7 +143,7 @@ subroutine RT_initialize(E,k,q)
  !
  call RT_Dephasing_Matrix(E) 
  !
- if (.not.RT_is_dumped) call warning('No Dephasing provided. Is the simulation meaningfull ?')
+ if (.not.RT_is_dephased) call warning('No Dephasing provided. Is the simulation meaningfull ?')
  !
  ! Memory Depth (G_lesser)
  !=========================
@@ -185,7 +185,7 @@ subroutine RT_initialize(E,k,q)
      Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
      !
      Efield(i1)%t_initial_indx=int(Efield(i1)%t_initial/RT_step)+1
-     Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx)*(RT_step-1)
+     Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
      call SC_check_symmetries(Efield(i1)%versor)
      !

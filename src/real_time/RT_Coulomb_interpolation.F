@@ -38,7 +38,7 @@ subroutine RT_Coulomb_interpolation(E,k)
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,         &
 &                          RIM_closest_E,RIM_ibz_coo,l_RT_uses_E_RIM,       &
 &                          MEM_index,G_MEM_steps,G_lesser,RT_Tfit_lifetimes,&
-&                          RT_Efit_lifetimes
+&                          RT_Efit_lifetimes,l_lftm_fit_stable,Nfitted_lifetimes
  !
  implicit none
  !
@@ -59,7 +59,7 @@ subroutine RT_Coulomb_interpolation(E,k)
 &            f_occ,SUM_N_Electrons,SUM_N_Holes,Nel_change,EPS,E_ref(2), &
 &            Energy(2)
  !
- logical  :: l_condition_Hole,l_condition_Elec
+ logical  :: l_condition(2)
  !
  real(SP) :: T_fit(2),Ef_fit(2),err_fit(4),Hole_coeff(3),Elec_coeff(3), &
 &            deviation( k%nibz*(SC_bands(2)-SC_bands(1)+1) ),           &
@@ -132,24 +132,37 @@ subroutine RT_Coulomb_interpolation(E,k)
  !
  nfit=Fermi_fnc_fit(RT_E,RT_occ_sorted,nstates,T_fit,Ef_fit,err_fit)
  !
- RT_Tfit_lifetimes(3:4)=T_fit(1:2)
- RT_Efit_lifetimes(3:4)=Ef_fit(1:2)
+ if (nfit==0) return
  !
- if(nfit==0) return
- !
- l_condition_Hole=err_fit(3)<0.05
- l_condition_Elec=err_fit(4)<0.05
- !
- if(.not.l_condition_Hole) RT_Tfit_lifetimes(3)=-RT_Tfit_lifetimes(3)
- if(.not.l_condition_Elec) RT_Tfit_lifetimes(4)=-RT_Tfit_lifetimes(4)
+ do ifit=1,2
+   !
+   l_condition(ifit)=err_fit(ifit+2)<0.05
+   if (l_condition(ifit) ) Nfitted_lifetimes(ifit)=Nfitted_lifetimes(ifit)+1
+   if (Nfitted_lifetimes(ifit)>500) l_lftm_fit_stable(ifit)=.true.
+   !
+   if (l_condition(ifit) .or. .not.l_lftm_fit_stable(ifit)) then
+     RT_Tfit_lifetimes(ifit+2)=T_fit(ifit)
+     RT_Efit_lifetimes(ifit+2)=Ef_fit(ifit)
+   else if(RT_Tfit_lifetimes(ifit+2)>0._SP) then
+     T_fit(ifit)=RT_Tfit_lifetimes(ifit+2)
+     Ef_fit(ifit)=RT_Efit_lifetimes(ifit+2)
+     l_condition(ifit)=.true.
+   endif
+   !
+   if(.not.l_condition(ifit)) then
+     Nfitted_lifetimes(ifit)=0
+     RT_Tfit_lifetimes(ifit+2)=-RT_Tfit_lifetimes(ifit+2)
+   endif
+   !
+ enddo
  !
  if(nfit==3) then
-   if ( .not.l_condition_Hole .and. .not.l_condition_Elec ) return
-   if ( .not.l_condition_Elec ) nfit=1
-   if ( .not.l_condition_Hole ) nfit=2
+   if ( .not.l_condition(1) .and. .not.l_condition(2) ) return
+   if ( .not.l_condition(2) ) nfit=1
+   if ( .not.l_condition(1) ) nfit=2
  endif
- if ( nfit==2 .and. .not.l_condition_Elec ) return
- if ( nfit==1 .and. .not.l_condition_Hole ) return
+ if ( nfit==1 .and. .not.l_condition(1) ) return
+ if ( nfit==2 .and. .not.l_condition(2) ) return
  !
  do ifit=1,2
    !

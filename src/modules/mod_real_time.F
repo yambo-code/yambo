@@ -189,8 +189,10 @@ module real_time
  real(SP),    allocatable :: SAVED_times(:)
  real(SP),    allocatable :: SAVED_lifetime(:,:,:,:)
  !
- ! ... ouput max/min lifetimes
- !-----------------------------
+ ! ... ouput Lifetimes ratio fit and temperatures
+ !
+ logical                  :: l_lftm_fit_stable(2)
+ integer                  :: Nfitted_lifetimes(2)
  real(SP)                 :: RT_mean_lifetimes(6)
  real(SP)                 :: RT_Tfit_lifetimes(4)
  real(SP)                 :: RT_Efit_lifetimes(4)

@@ -91,9 +91,11 @@ integer function ioQINDX(Xk,q,io_db)
      call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q%pt))
      call io_bulk(io_db,R2=q%pt)
    else
-     allocate(q_pt(nqibz,3))
-     call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q_pt))
-     call io_bulk(io_db,R2=q_pt)
+     if(.not.allocated(q_pt)) then
+       allocate(q_pt(nqibz,3))
+       call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q_pt))
+       call io_bulk(io_db,R2=q_pt)
+     endif
      ioQINDX=ioScatt
      goto 1
    endif

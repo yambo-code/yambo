@@ -168,6 +168,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BoseCut', '[BOSE] Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
 #if defined _ELPH 
  call it('f',defs,'MinusQ', '[KPT] Use -{q} grid',verb_level=V_kpt)
+ call it('f',defs,'BSEscatt', '[KPT] Compute extended k/q scatering',verb_level=V_kpt)
  call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nDBs_used,verb_level=V_kpt) 
 #endif
  call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 

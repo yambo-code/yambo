@@ -19,12 +19,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Coulomb_relaxation(i_k,E,k,q,G_lesser)
+subroutine RT_Coulomb_relaxation(ik,E,k,q,G_lesser)
  !  
  use pars,            ONLY:SP,cI,rZero,cZero,pi
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
- use SC,              ONLY:RT_ibz_coo,SC_bands,RT_nk,RT_Nk_ibz,&
+ use SC,              ONLY:RT_ibz_coo,SC_bands,RT_nk,&
 &                          RT_occupations_locked
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime
  use plasma,          ONLY:EH_gas
@@ -37,16 +37,16 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,G_lesser)
  !
  type(levels),     intent(in) :: E
  type(bz_samp),    intent(in) :: k,q
- integer,          intent(in) :: i_k
+ integer,          intent(in) :: ik
  complex(SP),      intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
  ! Work Space ...
  !
- integer               :: i_qp,i_qp1,i_qp2,i_p,i_p_bz,i_kmq,i_pmq,i_n,i_m,i_mp,i_np,i_p_star,i_k_rim,&
-&                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_qp2_mem,i_q_mem,i_pmq_bz,i1,i2,&
-&                         i_J,i_J_bg,i_J_mem,i_p_rim,i_pmq_rim,i_k_ref
- real(SP)              :: f_p,f_kmq,f_pmq,pre_factor,Gr_integral,P_pl_emit,P_pl_abs,deg_factor,&
-&                         gamma_E_factor,gamma_H_factor,plasma_freq,plasma_width,DELTA_E,DELTA_W,DELTA_Ep,DELTA_Wp
+ integer               :: i_qp,i_qp1,i_p,i_p_bz,ik_m_q,i_pmq,i_n,i_m,i_mp,i_np,ik_rim,&
+&                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_q_mem,i_pmq_bz,i1,i2,&
+&                         i_J,i_J_bg,i_J_mem,ik_m_q_rim
+ real(SP)              :: f_p,f_kmq,f_pmq,pre_factor,P_pl_abs,deg_factor,&
+&                         plasma_freq,plasma_width,DELTA_E,DELTA_W
  !
  real(SP)              :: N_plasma(2)
  complex(SP)           :: E_plasma
@@ -60,7 +60,7 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,G_lesser)
    !
    i_q   = q%sstar(iqbz,1)
    i_q_s = q%sstar(iqbz,2)
-   i_kmq = k%sstar(qindx_S(i_k,iqbz,1),1)
+   ik_m_q= k%sstar(qindx_S(ik,iqbz,1),1)
    !
    do i_J=1,EH_gas%N_poles(iqbz)
      !
@@ -111,9 +111,9 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,G_lesser)
      !
      do i_qp1=1,QP_n_states
        !
-       ! Select only the m.e. of QP_table relative to kpt i_k
+       ! Select only the m.e. of QP_table relative to kpt ik
        !======================================================
-       if (QP_table(i_qp1,3)/=i_k) cycle
+       if (QP_table(i_qp1,3)/=ik) cycle
        !
        if (.not.PAR_IND_QP%element_1D(i_qp1)) cycle
        i_qp1_mem=PAR_QP_index(i_qp1)
@@ -121,26 +121,43 @@ subroutine RT_Coulomb_relaxation(i_k,E,k,q,G_lesser)
        i_n =QP_table(i_qp1,1)
        i_np=QP_table(i_qp1,2)
        !
-       if(RT_occupations_locked(i_n ,i_k  )) cycle
-       if(RT_occupations_locked(i_np,i_kmq)) cycle
-       !
-       f_kmq=-cI*G_lesser(i_np,i_np,RT_ibz_coo(i_kmq,1))/spin_occ
-       !
-       DELTA_E=E%E(i_np,i_kmq,1)-E%E(i_n,i_k,1)
-       DELTA_W=abs(E%W(i_np,i_kmq,1))+abs(E%W(i_n,i_k,1))
+       if (RT_occupations_locked(i_n ,ik  )) cycle
+       if (RT_occupations_locked(i_np,ik_m_q)) cycle
        !
        pre_factor=(4._SP*pi)**2._SP*GW_NEQ_collisions(i_qp1_mem)%v3r(i_J_mem,1,i_q_mem)
        !
-       i_k_rim=RT_ibz_coo(i_k,1)
+       DELTA_W=abs(E%W(i_np,ik_m_q,1))+abs(E%W(i_n,ik,1))
+       !
+#if defined _RT_EE_RIM
+       do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+         do ik_m_q_rim=RT_ibz_coo(ik_m_q,1),RT_ibz_coo(ik_m_q,2)
+           !
+           f_k_m_q=-cI*G_lesser(i_np,i_np,ik_m_q_rim)/spin_occ
+           !
+           i1=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+           i2=ik_m_q_rim-RT_ibz_coo(ik_m_q,1)+RIM_ibz_coo(ik_m_q,1)
+           DELTA_E=E%E_RIM(i_n_shift,i1,1)-E%E_RIM(i_np_shift,i2,1)
+#else
+       !
+       f_kmq=-cI*G_lesser(i_np,i_np,RT_ibz_coo(ik_m_q,1))/spin_occ
+       !
+       DELTA_E=E%E(i_np,ik_m_q,1)-E%E(i_n,ik,1)
+       !
+       ik_rim=RT_ibz_coo(ik,1)
+#endif
        !
        P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')
        !
        if(abs(P_pl_abs)<1.E-7) cycle
        !
-       E_E_Hole_lifetime(i_n,i_k_rim)=E_E_Hole_lifetime(i_n,i_k_rim)+&
+       E_E_Hole_lifetime(i_n,ik_rim)=E_E_Hole_lifetime(i_n,ik_rim)+&
 &                                          pre_factor*f_kmq*P_pl_abs*N_plasma(2)
-       E_E_Electron_lifetime(i_n,i_k_rim)=E_E_Electron_lifetime(i_n,i_k_rim)+&
+       E_E_Electron_lifetime(i_n,ik_rim)=E_E_Electron_lifetime(i_n,ik_rim)+&
 &                                          pre_factor*(1.-f_kmq)*P_pl_abs*N_plasma(1)
+#if defined _RT_EE_RIM
+         enddo
+       enddo
+#endif
        !
      enddo
      !

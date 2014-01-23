@@ -29,23 +29,22 @@ subroutine RT_initialize(E,k,q)
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
  use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded
- use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields,      &
-&                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,        &
-&                         l_RT_diamagnetic,RT_IO_JPO_steps,RT_IO_time,l_NE_simulate_BSE, &
-&                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
-&                         l_RT_induced_field,RT_dynamics_jumps,l_NE_simulate_TDDFT,      &
-&                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,            &
-&                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,Gr_kind,         &
-&                         G_MEM_steps,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps,         &
-&                         l_RT_CCA_Kernel,Life_MEM_steps,RT_IO_output_steps,             &
-&                         l_RT_uses_E_RIM,RIM_bz_coo,l_NE_dynamics
+ use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
+&                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
+&                         l_RT_diamagnetic,RT_IO_JPO_steps,RT_IO_time,l_NE_simulate_BSE,&
+&                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
+&                         l_RT_induced_field,l_NE_simulate_TDDFT,                   &
+&                         RT_diagonalization_steps,RT_is_dephased,RAD_LifeTime,       &
+&                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,            &
+&                         G_MEM_steps,Gr_kind,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps, &
+&                         l_RT_CCA_Kernel,Life_MEM_steps,RT_IO_output_steps,    &
+&                         l_RT_uses_E_RIM,RIM_bz_coo,RT_dynamics_steps,RT_dynamics_decay_time,&
+&                         RT_dynamics_KIND,l_NE_dynamics
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
- use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,                  &
-&                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength,    &
-&                         l_manual_excitation
+ use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
+&                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
  use parser_m,       ONLY:parser
- !
  implicit none
  !
  type(levels), intent(in) :: E
@@ -53,11 +52,11 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,rest,ik,IO_steps(3)
+ integer                  :: i1,rest,ik,IO_steps(3),N_T_samplings
  character(5)             :: MSG_ch
  real(SP)                 :: T_memory
- logical                  :: l_Full_RT_T_evolution,l_field_is_a_pulse
- integer,         external:: RT_k_grid
+ logical                  :: l_Full_RT_T_evolution,l_compute_fluence,l_field_is_a_pulse 
+ integer,         external:: RT_k_grid,RT_SET_lifetimes_evaluation_plan
  !
  ! Logicals
  !==========
@@ -88,7 +87,7 @@ subroutine RT_initialize(E,k,q)
  !
  if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step)+1)
  !
- ! Set a number of steps. i1=1(J,P,OCCs)  i1=2(output) i1=3(GF).
+ ! Set a number of steps. i1=1(J,P,OCCs)  i1=2(GF) i1=3(output).
  ! Negative value forces the step to be set automatically
  !==============================================================
  !
@@ -144,24 +143,15 @@ subroutine RT_initialize(E,k,q)
  !
  call RT_Dephasing_Matrix(E) 
  !
- if (.not.RT_is_dumped) call warning('No Dephasing provided. Is the simulation meaningfull ?')
+ if (.not.RT_is_dephased) call warning('No Dephasing provided. Is the simulation meaningfull ?')
  !
- ! Memory Depth
- !============== 
+ ! Memory Depth (G_lesser)
+ !=========================
  !
  T_memory=0._SP
  if (l_elph_scatt.and.NE_MEM_treshold>0.) then
    T_memory=-1./minval( abs(E%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_treshold)
    G_MEM_steps=T_memory/RT_step
- endif
- !
- ! Memory Depth
- !============== 
- !
- if (RT_dynamics_jumps<0) RT_dynamics_jumps=0
- Life_MEM_steps=1
- if (RT_dynamics_jumps>0) then
-   Life_MEM_steps=3
  endif
  !
  ! External fields checks
@@ -195,7 +185,7 @@ subroutine RT_initialize(E,k,q)
      Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
      !
      Efield(i1)%t_initial_indx=int(Efield(i1)%t_initial/RT_step)+1
-     Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx)*(RT_step-1)
+     Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
      call SC_check_symmetries(Efield(i1)%versor)
      !
@@ -238,6 +228,13 @@ subroutine RT_initialize(E,k,q)
  endif
  !
 #endif
+ !
+ ! Memory Depth & Simulation points (Lifetimes)
+ !=============================================
+ !
+ Life_MEM_steps=1
+ if (RT_dynamics_steps(1)>0.) Life_MEM_steps=3
+ N_T_samplings=RT_SET_lifetimes_evaluation_plan( )
  !
  ! Gauge
  !=======
@@ -298,14 +295,23 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'r','---General---')
  call msg( 'r', 'Simulation time        [fs]:',(/-real(Thermal_steps),real(NE_steps-1)/)*RT_step/FS2AUT)
+ call msg( 'r', 'Step length            [fs]:',RT_step/FS2AUT)
  call msg( 'r', 'NE Steps                   :',NE_steps)
  call msg( 'r', 'NE time                [fs]:',(NE_steps-1)*RT_step/FS2AUT)
- call msg( 'r', 'Time jumps                 :',RT_dynamics_jumps*RT_step/FS2AUT)
- call msg( 'r', 'Time jump              [fs]:',RT_dynamics_jumps*RT_step/FS2AUT)
- call msg( 'r', 'Memory depth           [fs]:',T_memory/FS2AUT)
- call msg( 'r', 'Memory steps               :',G_MEM_steps)
+ call msg( 'r', 'Memory depth(G)        [fs]:',T_memory/FS2AUT)
+ call msg( 'r', 'Memory steps(G)            :',G_MEM_steps)
  call msg( 'r', 'Thermalization steps       :',Thermal_steps)
- call msg( 'r', 'Step length            [fs]:',RT_step/FS2AUT)
+ !
+ if (RT_dynamics_steps(1)>0.) then
+   call msg( 'nr','---Dynamics---')
+   call msg( 'r', 'Sampling                       :',RT_dynamics_KIND)
+   call msg( 'r', 'Steps length (inter/intra) [fs]:',RT_dynamics_steps/FS2AUT)
+   if (RT_dynamics_decay_time>0.) call msg( 'r', 'Distribution decay         [fs]:',&
+&                                                RT_dynamics_decay_time/FS2AUT)
+   call msg( 'r', 'Time points                    :',N_T_samplings*Life_MEM_steps)
+ endif
+ !
+ call msg( 'nr','---Flags (if any)---')
  if (l_NE_simulate_RPA)   call msg( 'r','Simulate RPA               :',l_NE_simulate_RPA)
  if (l_NE_simulate_BSE)   call msg( 'r','Simulate BSE               :',l_NE_simulate_BSE)
  if (l_NE_simulate_TDDFT) call msg( 'r','Simulate TD-DFT            :',l_NE_simulate_TDDFT)
@@ -335,13 +341,17 @@ subroutine RT_initialize(E,k,q)
    call msg('r','Gauge                       :',trim(global_gauge))
    call msg('r','Pump/Probe periodicity  [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
    call msg('r','Pump/Probe energy step  [eV]:',maxval(Efield(:)%W_step)*HA2EV)
+   call msg('r','Max Fluence        [kJ/cm^2]:',Efield(i_Pump)%Fluence( Efield(i_Pump)%t_final_indx ))
+   call msg('r','           reached time [fs]:',Efield(i_Pump)%t_final)
    do i1=1,n_ext_fields
      if (i_Pump==i_Probe.and.i1/=i_Probe.and..not.any(trim(Efield(i1)%ef_name)==(/'SIN    ','ANTIRES','RES    '/)) ) cycle
      MSG_ch="Pump"
      if (i1==i_Probe) MSG_ch="Probe"
+     call msg('r', MSG_ch//' field                       :'//trim(Efield(i1)%ef_name))
      call msg('r', MSG_ch//' energy window/period [eV/fs]:',(/Efield(i1)%frequency*HA2EV,&
 &                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/))
      call msg('r', MSG_ch//' elemental oscillation   [fs]:',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))/FS2AUT)
+     call msg('r', MSG_ch//' damping                 [fs]:',Efield(i1)%damping/FS2AUT)
      call msg('r', MSG_ch//' energy steps                :',Efield(i1)%n_frequencies)
      call msg('r', MSG_ch//' electric field         [V/m]:',Efield(i1)%amplitude*AU2VMm1)
    enddo

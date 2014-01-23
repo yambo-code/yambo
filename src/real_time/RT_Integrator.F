@@ -171,6 +171,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
 #endif
  !
  ! Impose 0._SP<= occupations <= 2._SP 
+ !
  do ik=1,RT_nk
    do ib=SC_bands(1),SC_bands(2)
      if( aimag(G_new(ib,ib,ik))<0._SP    ) G_new(ib,ib,ik)=cmplx( real(G_new(ib,ib,ik)),0._SP    )

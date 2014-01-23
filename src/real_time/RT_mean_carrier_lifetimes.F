@@ -86,10 +86,10 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
  enddo
  !
  if(allocated(E_P_Hole_lifetime)) then
-   call RT_occupations_fit(E,k,RT_Tfit_lifetimes(1:2),RT_Efit_lifetimes(1:2),EP_occupations)
+   call RT_occupations_FIT_and_lock(E,k,RT_Tfit_lifetimes(1:2),RT_Efit_lifetimes(1:2),EP_occupations)
  endif
  if(allocated(E_E_Hole_lifetime).and. (.not.l_RT_uses_E_rim)) then
-   call RT_occupations_fit(E,k,RT_Tfit_lifetimes(3:4),RT_Efit_lifetimes(3:4),EE_occupations)
+   call RT_occupations_FIT_and_lock(E,k,RT_Tfit_lifetimes(3:4),RT_Efit_lifetimes(3:4),EE_occupations)
  endif
  !
  RT_mean_lifetimes=RT_mean_lifetimes/n_states

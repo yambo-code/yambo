@@ -102,6 +102,16 @@ module real_time
  integer  :: RT_dynamics_jumps 
  integer  :: NE_steps
  !
+ ! Here I control the way the time evolution is sampled for the e-p and e-e
+ ! channels. I will see later if this can be somehow extended/duplicated
+ ! for the static correlations
+ !
+ character(schlen) :: RT_dynamics_KIND = "EXP" ! EXP or FIELD
+ real(SP) :: RT_dynamics_steps(2)  =-1.*FS2AUT ! (1) is step between groups of 3, (2) is step in the group of 3.
+ real(SP) :: RT_dynamics_decay_time=-1.*FS2AUT ! For pulsed-like distribution it dumps the distribution of points
+                                               ! in the long-time regime
+ integer(2), allocatable :: RT_GAMMA_T_status(:)
+ !
  ! Kind of e-e interactions (for the CORR and SCATT parts)
  !
  integer           :: RT_EE_CORR_kind=SE_NONE
@@ -132,7 +142,7 @@ module real_time
  !
  real(SP)    :: Phase_LifeTime
  real(SP)    :: RAD_LifeTime
- logical     :: RT_is_dumped
+ logical     :: RT_is_dephased
  !
  ! Relaxation and Dissipation 
  !----------------------------
@@ -176,15 +186,14 @@ module real_time
  !
  ! Saved RD life-times
  !-----------------------
+ real(SP),    allocatable :: SAVED_times(:)
  real(SP),    allocatable :: SAVED_lifetime(:,:,:,:)
  !
- ! ... ouput max/min lifetimes
- !-----------------------------
- real(SP)                 :: RT_mean_lifetimes(6)
+ ! ... ouput Lifetimes ratio fit and temperatures
  !
- ! Lifetimes ratio fit
  logical                  :: l_lftm_fit_stable(2)
  integer                  :: Nfitted_lifetimes(2)
+ real(SP)                 :: RT_mean_lifetimes(6)
  real(SP)                 :: RT_Tfit_lifetimes(4)
  real(SP)                 :: RT_Efit_lifetimes(4)
  !
@@ -241,7 +250,7 @@ module real_time
  integer,  parameter      :: J_and_P_cache_size=18
  !
  integer                  :: ID(7)
- integer                  :: it_start                 ! restart point
+ integer                  :: it_start           = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
                                                       ! the last evaluated point
  integer                  :: RT_IO_JPO_steps    = -1
@@ -382,17 +391,18 @@ module real_time
        E_P_Ho_abs_lifetime=0._SP
      endif
      !
-     if (RT_dynamics_jumps>0) then
+     if (RT_dynamics_steps(1)>0.) then
        if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt) then
          allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
          call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
+         allocate(SAVED_times(Life_MEM_steps)) 
        endif
      endif
      !
      allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
      !
-     if(RT_is_dumped.or.l_elph_scatt) then
+     if(RT_is_dephased.or.l_elph_scatt) then
        allocate(Sigma_relax(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
        call mem_est("Sigma_relax",(/size(Sigma_relax)/),(/2*SP/))
      endif
@@ -456,6 +466,11 @@ module real_time
      deallocate(Ho_plus_Sigma)
      call mem_est("Ho_plus_Sigma")
      !
+     if(allocated(RT_GAMMA_T_status)) then
+       deallocate(RT_GAMMA_T_status)
+       call mem_est("RT_GAMMA_T_status")
+     endif
+     !
      if(allocated(Sigma_relax)) then
        deallocate(Sigma_relax)
        call mem_est("Sigma_relax")
@@ -479,6 +494,11 @@ module real_time
      if(allocated(E_P_Hole_lifetime)) then
        deallocate(E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime)
        call mem_est("RT_E_P_lifetimes")
+     endif
+     !
+     if(allocated(SAVED_lifetime)) then
+       deallocate(SAVED_lifetime,SAVED_times)
+       call mem_est("SAVED_lifetimes")
      endif
      !
      deallocate(RT_occupations_locked)
@@ -554,18 +574,11 @@ module real_time
      !
    end subroutine RT_free
    !
-   logical function Gr_ordering_condition(i_n,i_k,i_m,i_p)
-     !
-     integer i_k,i_n,i_p,i_m
-     !
-     Gr_ordering_condition=.FALSE.
-     !
-     if (i_k<i_p) then
-       Gr_ordering_condition=.TRUE.
-     else if (i_k==i_p.and.i_n<=i_m) then
-       Gr_ordering_condition=.TRUE.
-     endif
-     !
+   logical function RT_do_IO(what)
+     character(*) :: what
+     if (what=="J".or.what=="P".or.what=="OCCs") RT_do_IO=mod(NE_i_time-1,RT_IO_JPO_steps)==0
+     if (what=="OUT") RT_do_IO=mod(NE_i_time-1,RT_IO_output_steps)==0
+     if (what=="G")   RT_do_IO=mod(NE_i_time-1,RT_IO_G_steps)==0
    end function
    !
    integer function B_mat_index(ib1,ib2)

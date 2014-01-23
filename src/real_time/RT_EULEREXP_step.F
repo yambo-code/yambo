@@ -53,6 +53,6 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,U1_k,U2_k,ik_rim,deltaT)
  call M_by_M('n','n',SC_nbands,M_tmp,U2_k,G_new_k)
 #endif
  !
- if(allocated(Sigma_relax))  G_new_k = G_new_k - cI*deltaT*Sigma_relax(:,:,ik_rim)
+ if (allocated(Sigma_relax)) G_new_k = G_new_k - cI*deltaT*Sigma_relax(:,:,ik_rim)
  !
 end subroutine RT_EULEREXP_step

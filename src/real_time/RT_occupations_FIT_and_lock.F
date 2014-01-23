@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_fit(E,k,T_fit,Ef_fit,Occupations)
+subroutine RT_occupations_FIT_and_lock(E,k,T_fit,Ef_fit,Occupations)
  !
  ! Check if both the electrons and the holes are below a given temperature
  ! In case locks the occupations of states which are not expected to change
@@ -99,4 +99,4 @@ subroutine RT_occupations_fit(E,k,T_fit,Ef_fit,Occupations)
    Ef_fit(2)=0._SP
  endif
  !
-end subroutine RT_occupations_fit
+end subroutine RT_occupations_FIT_and_lock

@@ -24,6 +24,7 @@ module LIVE_t
  use pars,     ONLY:SP,DP,schlen,lchlen
  use stderr,   ONLY:log_as_a_file,intc
  use openmp,   ONLY:master_thread
+ !
  implicit none
  !
  ! What is running ?
@@ -63,22 +64,22 @@ module LIVE_t
      i_pos=(/index(trim(USER_wall_time_string),"d"),index(trim(USER_wall_time_string),"h"),index(trim(USER_wall_time_string),"m")/) 
      if (i_pos(3)/=0) then
        if (i_pos(2)/=0) then
-         read (USER_wall_time_string(i_pos(2)+1:i_pos(3)-1),'(i)') USER_wall_time(3)
+         read (USER_wall_time_string(i_pos(2)+1:i_pos(3)-1),*) USER_wall_time(3)
        else if (i_pos(1)/=0) then
-         read (USER_wall_time_string(i_pos(1)+1:i_pos(3)-1),'(i)') USER_wall_time(3)
+         read (USER_wall_time_string(i_pos(1)+1:i_pos(3)-1),*) USER_wall_time(3)
        else 
-         read (USER_wall_time_string(1:i_pos(3)-1),'(i)') USER_wall_time(3)
+         read (USER_wall_time_string(1:i_pos(3)-1),*) USER_wall_time(3)
        endif
      endif
      if (i_pos(2)/=0) then
        if (i_pos(1)/=0) then
-         read (USER_wall_time_string(i_pos(1)+1:i_pos(2)-1),'(i)') USER_wall_time(2)
+         read (USER_wall_time_string(i_pos(1)+1:i_pos(2)-1),*) USER_wall_time(2)
        else 
-         read (USER_wall_time_string(1:i_pos(2)-1),'(i)') USER_wall_time(2)
+         read (USER_wall_time_string(1:i_pos(2)-1),*) USER_wall_time(2)
        endif
      endif
      if (i_pos(1)/=0) then
-       read (USER_wall_time_string(1:i_pos(1)-1),'(i)') USER_wall_time(1)
+       read (USER_wall_time_string(1:i_pos(1)-1),*) USER_wall_time(1)
      endif
      USER_wall_time_string=trim(intc(USER_wall_time(1)))//":"//trim(intc(USER_wall_time(2)))//":"//trim(intc(USER_wall_time(3)))
    end subroutine

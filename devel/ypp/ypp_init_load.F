@@ -121,9 +121,9 @@ subroutine ypp_init_load(defs)
  !
  ! OCCUPATIONS
  !
- call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit)
- call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit)
- call it(defs,'OCCTref','NEGF Occupations reference time',OCC_T_ref,unit=Time_unit)
+ call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit(1))
+ call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit(1))
+ call it(defs,'OCCTref','NEGF Occupations reference time',OCC_T_ref,unit=Time_unit(1))
  call it('f',defs,'OCCgroup','NEGF If RIM is used group occupations')
  !
 #endif
@@ -284,9 +284,9 @@ subroutine ypp_init_load(defs)
  call it(defs,'EnRngeRt','Energy range',X_rt%energy_range,unit=E_unit)
  call it(defs,'ETStpsRt','Total Energy steps',X_rt%energy_steps)
  ! DEBUG>
- !call it(defs,'TmJump'  ,'Time jump (X effective)',t_jump,unit=Time_unit,verb_level=V_real_time)
+ !call it(defs,'TmJump'  ,'Time jump (X effective)',t_jump,unit=Time_unit(1),verb_level=V_real_time)
  ! DEBUG<
- call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit)
+ call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit(1))
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',X_rt%damp)
  call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit) 
  !

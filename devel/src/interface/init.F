@@ -749,10 +749,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call QP_ctl_switch('G')
    call initactivate(-1,'SCmixing')
    call initactivate(1,'Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTmaxEn RTpumpEhEn RTpumpEhWd RTpumpNel') 
-   call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
+   call initactivate(1,'RTstep NEsteps NETime DYNmode DYNsteps DYNdecay DipoleEtresh')
    if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol UseDebyeE UpdtDebyeT ElPhModes')
-   call initactivate(1,'RTjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
-   call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField SkipGFIO SkipOCCIO IOtime')
+   call initactivate(1,'ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
+   call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField IOtime')
    if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
    if (              l_RT_pump_and_probe) call Afield_activate('Pump')
    !
@@ -1202,6 +1202,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    subroutine read_command_line(rstr,init_) 
      !
      use com,    ONLY:error
+     use LIVE_t, ONLY:USER_wall_time_string,GET_user_WALL_time
      use stderr, ONLY:string_split
      use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,&
 &                     V_real_time,V_all,rstatus
@@ -1298,6 +1299,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              case ('all')
                infile_verbosity=V_all
            end select
+         endif
+         !
+         if ( trim(rstr_piece(i1)) == 'wallt' ) then
+           USER_wall_time_string=trim(rstr_piece(i1+1))
+           if (i3==1) call GET_user_WALL_time()
          endif
          !
          if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' .or.&

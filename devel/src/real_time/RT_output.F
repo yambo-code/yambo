@@ -30,7 +30,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,l_Debye_TBose_update, &
-&                         l_NE_simulate_IP,RT_IO_output_steps,NE_i_time,RT_Tfit_lifetimes!,Fluence
+&                         l_NE_simulate_IP,RT_do_IO,NE_i_time,RT_Tfit_lifetimes
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -54,7 +54,10 @@ subroutine RT_output(what,VALUEs,TIME,E)
  character(2)             :: chart_string(3)
  real(SP)                 :: data_to_dump(11)
  !
- if ( mod(NE_i_time-1,RT_IO_output_steps)/=0 ) return
+ open_files=index(what,'open')>0
+ initialize=index(what,'initialize')>0
+ !
+ if ( .not.RT_do_IO('OUT').and..not.open_files.and..not.initialize) return      
  !
 #if defined _TIMING
  call timing('RT output',OPR='start')
@@ -63,9 +66,6 @@ subroutine RT_output(what,VALUEs,TIME,E)
  call string_split(what,orders)
  !
  call set_real_printed_length(f_length=15,g_length=15)
- !
- open_files=index(what,'open')>0
- initialize=index(what,'initialize')>0
  !
  ! File Names & HEADERS
  !----------------------

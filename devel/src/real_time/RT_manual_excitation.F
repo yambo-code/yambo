@@ -56,6 +56,8 @@ subroutine RT_manual_excitation(E,k)
  local_energy(1)=Eh_pumped_pair_energy(1)+E%E_VBM
  local_energy(2)=Eh_pumped_pair_energy(2)+E%E_CBm
  !
+ if (abs(Eh_pumped_pair_energy(2)-Eh_pumped_pair_energy(1))<1.E-5.and.Eh_pumped_pair_energy(1)<0.) return
+ !
  delta_Nel=0._SP
  coeff=0._SP
  Pumped_state=.FALSE.

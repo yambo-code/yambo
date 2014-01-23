@@ -38,26 +38,26 @@ subroutine RT_start_and_restart(E,k,q,X)
  use pars,           ONLY:SP,cI,cZERO,rZERO
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_contains_lda,l_elph_scatt,l_elel_scatt
- use com,            ONLY:msg,warning,error
- use QP_m,           ONLY:QP_nk,COHSEX_use_empties,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
+ use com,            ONLY:msg
+ use QP_m,           ONLY:QP_nk,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:ID,NE_steps,RT_ind_J,l_NE_dynamics,&
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
-&                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_RT_CCA_Kernel,&
+&                         l_RT_needs_XC0,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
+&                         RT_P,RT_step,full_rho,l_RT_CCA_Kernel,&
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps
  use fields,         ONLY:A_vecpot,A_vecpot_previous
- use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,&
-&                         rho_convergence,H_rotate,V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
+ use SC,             ONLY:SC_bands,it_now,H_nl_sc,&
+&                         V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
 &                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional,RT_occupations,SC_nbands
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE,IO_and_Messaging_switch
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc,XC_potential_driver
- use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,master_cpu
+ use parallel_m,     ONLY:PP_redux_wait,master_cpu
  use stderr,         ONLY:real2ch
  implicit none
  !
@@ -68,9 +68,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Work Space
  !
  integer :: ik,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,&
-&           io_OCCUPATIONS,ID_OCCUPATIONS
- integer, external :: io_SC_components,io_RT_components
- logical :: RESTART,SC_DB_present
+&           io_OCCUPATIONS,ID_OCCUPATIONS,it,nt
+ integer, external :: io_SC_components,io_RT_components,RT_SET_lifetimes_evaluation_plan
+ logical :: RESTART
  !
  ! Initialize the Gf and potentials
  !==================================
@@ -101,6 +101,10 @@ subroutine RT_start_and_restart(E,k,q,X)
      endif
    enddo
  enddo
+ !
+ ! Possibility to pump by hand one or more electrons up
+ !======================================================
+ !if (.not. RESTART) call RT_manual_excitation(E,k)
  !
  ! Build Ho and save initial energies 
  !====================================
@@ -140,111 +144,11 @@ subroutine RT_start_and_restart(E,k,q,X)
  RESTART                = io_G ==0
  if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = io_G==0.and.io_THETA==0
  !
- ! Possibility to pump by hand one or more electrons up
- !======================================================
- if (.not. RESTART) call RT_manual_excitation(E,k)
+ ! Reference lesser GF
+ !====================
+ G_lesser_reference=G_lesser(:,:,:,1)
  !
- SC_DB_present =  all((/io_E==0,io_WF==0,io_V==0,.not.l_RT_uses_E_RIM/))
- !
-! if(SC_DB_present) then
-!   !
-!   ! BEGIN RESTART FROM SC
-!   !=======================
-!   !
-!   call msg('snr','[RT] Restart from a Self-Consistent Calculation ')
-!   call msg('nr' ,'[RT] Found   accuracy on density      :',rho_convergence)
-!   call msg('rn' ,'[RT]                  on energies [ev]:',E_convergence*HA2EV)
-!   !
-!   if ( E_convergence>0.01.and.rho_convergence>1e-4) &
-!&    call warning(" Restart from a non-converged Self-Consistent calculation! ")
-!   !
-!   if(.not.COHSEX_use_empties) &
-!&    call error(" Set UseEbands=.true. in self-consistent GW to be full compatible with RT!! ")
-!   !
-!   if(l_NE_simulate_BSE) call error(" Real-time BSE not compatible with SC restart yet! ")
-!   !
-!   !  I only need SC_R than I can reconstruct G_lesser(:,:,:)
-!   !  rotating the non-integrating G_lesser
-!   !
-!   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
-!   io_WF=io_SC_components('WF',E,ID(2))
-!   !
-!   do ik=1,QP_nk
-!     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
-!     io_WF=io_SC_components('WF',E,ID(2))
-!   enddo
-!   !
-!   ! Now I build the G_lesser rotating the non interaction one
-!   ! G_lesser(i1,i1,ik)=(0.,1)*en%f(i1,ik)
-!   !
-!   do ik=1,QP_nk
-!     call H_rotate(SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),G_lesser(:,:,ik,1),SC_nbands,-1)
-!   enddo
-!   !
-!   if (Hfrozen) call el_density_matrix(G_lesser(:,:,:,1),E,k,rho_n,1)
-!   if (Hfrozen) call V_Hartree(rho_n,V_hartree_sc)
-!   !
-!   V_xc_sc=(0._SP)
-!   !
-!   if(l_RT_needs_XC0) then
-!     !
-!     XC0_and_HARTREE0=(0._SP,0._SP)
-!     !
-!     if (local_V) then 
-!       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID(3))  ! Local potential
-!       io_V=io_SC_components('V' ,E,ID(3))
-!     else
-!       call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID(3))  ! Non Local potential
-!       io_V=io_SC_components('V' ,E,ID(3))
-!     endif
-!     !
-!     do ik=1,QP_nk
-!       !
-!       if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-!       !
-!       if (local_V.and..not.l_NE_simulate_Irredux) then
-!         call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF)
-!       else if (.not.l_NE_simulate_Irredux) then
-!         call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(3))
-!         io_V=io_SC_components('V',E,ID(3))
-!         XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1:n_sp_pol)=  &
-!&                         H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1:n_sp_pol)
-!       endif
-!       !
-!       ! If IP or Irreduxible the hartree term is fixed and stored in XC0_and_HARTREE0
-!       ! if I simulate BSE I have to remove the self-energy sigma(G_0)
-!       !
-!       if(l_NE_simulate_IP.or.l_NE_simulate_Irredux.or.l_NE_simulate_BSE) &
-!&         call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2), &
-!&                                ik,1:n_sp_pol),WF) 
-!     enddo
-!     !
-!   endif
-!   !
-!   call PP_redux_wait(XC0_and_HARTREE0)
-!   !
-!   ! Now I update <i|r|j> dipoles using G_lesser_reference as
-!   ! Green function to construct the Hamiltonian
-!   !
-!   call RT_update(G_lesser(:,:,:,1),SC_R,-1,E,k,X,up_DIP=.true.)
-!   call RT_update(G_lesser_reference,SC_R,-1,E,k,X,up_Gref=.true.)
-!   !
-!   V_xc_sc=(0._SP)
-!   !
-!   if (l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP) 
-!   !
-!   ! END RESTART FROM SC
-!   !=====================
-!   !
-! else if (Thermal_steps==0) then
-!   !
-!   ! During Thermalization G_lesser_reference must be zero
-!   !
-   G_lesser_reference=G_lesser(:,:,:,1)
-!   !
-! endif
- !
- if (.not.SC_DB_present.and.l_RT_needs_XC0) then
+ if (l_RT_needs_XC0) then
    !
    ! Build Hartree and XCo 
    !=======================
@@ -325,8 +229,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Starting point 
  !
- it_start=1
- !
  if (RESTART) then
    !
    ! I use G_lesser(:,:,:) to reconstruct everything
@@ -386,6 +288,22 @@ subroutine RT_start_and_restart(E,k,q,X)
      call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_reference,SC_bands(1))
    endif
    !
+   ! Last thing to do is to update the planned time sampling time (if needed)
+   !
+   nt=RT_SET_lifetimes_evaluation_plan( )
+   !
+ else
+   !
+   ! Possibility to pump by hand one or more electrons up
+   !======================================================
+   ! Andrea (22/1/2014). Davide moved this call after SC_bare_Hamiltonian.
+   ! This is correct as in there the density is calculated. BUT the
+   ! density is also re-calculated after to be saved in rho_reference. 
+   ! Thus the only place where the electrons can be moved up by hand
+   ! is here, at the end of everything.
+   !
+   call RT_manual_excitation(E,k)
+   !
  endif
  !
  if (l_NE_dynamics) NE_i_time=it_start-Thermal_steps
@@ -421,10 +339,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  if (l_elph_scatt.or.l_elel_scatt) then
    !
-   ! With    the RIM this cannot be not used, on the fly Gret; 
-   ! Without the RIM this implementation could be faster
-   !if (l_elph_scatt) call RT_G_retarded_EP_initialize(E,k)
-   !if (l_elel_scatt) call RT_G_retarded_EE_initialize(E,k,q)
    call k_sym2sym(q,'k')
    call k_sym2sym(k,'k')
    !

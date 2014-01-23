@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
+subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  ! 
  ! FIT the occupations with a Gauss–Newton algorithm
  !
@@ -58,8 +58,8 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  integer  :: nfound(3)
  integer  :: E_sort_index(RT_nstates)
  !
- character(10)     ::titles(n_T_steps+1),data_ch(n_T_steps+1,5,2)
- character(schlen) ::output_fname,gamma_fname(ngamma)
+ character(10)     ::titles(n_T_steps+1),data_ch(n_T_steps+1,5,2),columns(n_T_steps+1)
+ character(schlen) ::output_fname(ngamma+1),gamma_fname(ngamma),GRP_string
  !
  T_fit=0._SP
  Ef_fit=0._SP
@@ -96,7 +96,10 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  call msg('s',":: Elec. fitting Temperatures found " &
 &          //trim(intc(nfound(2)))//"/"//trim(intc(n_T_steps)))
  !
- titles(1)='   [eV]   '
+ do i1=1,n_T_steps
+   columns(i1)="  #"//trim(intc(i1+1))
+ enddo
+ titles(1)='  E [eV]  '
  data_ch(1,1,:)=' t    [fs]'
  data_ch(1,2,1)=' T(h) [K]'
  data_ch(1,2,2)=' T(e) [K]'
@@ -106,22 +109,22 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  !
  ! Only El-El
  if(ngamma==2) then
-   gamma_fname(1)='YPP-RT_EE_Hole_gamma'
-   gamma_fname(2)='YPP-RT_EE_Elec_gamma'
+   gamma_fname(1)='YPP-RT_EE_Hole_linewidths'
+   gamma_fname(2)='YPP-RT_EE_Elec_linewidths'
  ! Only El-Ph
  else if (ngamma==4) then
-   gamma_fname(1)='YPP-RT_EP_Hole_gamma'
-   gamma_fname(2)='YPP-RT_EP_Elec_gamma'
-   gamma_fname(3)='YPP-RT_EP_Hole_abs_gamma'
-   gamma_fname(4)='YPP-RT_EP_Elec_abs_gamma'
+   gamma_fname(1)='YPP-RT_EP_Hole_linewidths'
+   gamma_fname(2)='YPP-RT_EP_Elec_linewidths'
+   gamma_fname(3)='YPP-RT_EP_Hole_abs_linewidths'
+   gamma_fname(4)='YPP-RT_EP_Elec_abs_linewidths'
  ! Both
  else if (ngamma==6) then
-   gamma_fname(1)='YPP-RT_EP_Hole_gamma'
-   gamma_fname(2)='YPP-RT_EP_Elec_gamma'
-   gamma_fname(3)='YPP-RT_EP_Hole_abs_gamma'
-   gamma_fname(4)='YPP-RT_EP_Elec_abs_gamma'
-   gamma_fname(5)='YPP-RT_EE_Hole_gamma'
-   gamma_fname(6)='YPP-RT_EE_Elec_gamma'
+   gamma_fname(1)='YPP-RT_EP_Hole_linewidths'
+   gamma_fname(2)='YPP-RT_EP_Elec_linewidths'
+   gamma_fname(3)='YPP-RT_EP_Hole_abs_linewidths'
+   gamma_fname(4)='YPP-RT_EP_Elec_abs_linewidths'
+   gamma_fname(5)='YPP-RT_EE_Hole_linewidths'
+   gamma_fname(6)='YPP-RT_EE_Elec_linewidths'
  endif
  !
  do i_T=1,n_T_steps
@@ -137,30 +140,36 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  enddo
  !
  do i2=1,n_T_steps,nmax_file_report
+   !
    n1=i2
    n2=min(n_T_steps,i2+15)
    !
-   output_fname='YPP-RT_occupation_distribution_DATA'
-   if(n_T_steps>nmax_file_report) output_fname=trim(output_fname)//'_grp'//trim(intc(i2/nmax_file_report+1))
-   call of_open_close(trim(output_fname),'ot')
+   GRP_string="_"//trim(intc(i2/nmax_file_report+1))//"_of_"//trim(intc(n_T_steps/nmax_file_report+1))
    !
-   call msg('o '//trim(output_fname),'#')
-   call msg('o '//trim(output_fname),'# Occupations distribution at different times (f@ time)')
-   call msg('o '//trim(output_fname),'#')
-   call msg('o '//trim(output_fname),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
-   call msg('o '//trim(output_fname),'#')
+   output_fname(1)='YPP-RT_occupation_distribution_DATA'
+   !
+   if (n_T_steps>nmax_file_report) output_fname(1)=trim(output_fname(1))//trim(GRP_string)
+   call of_open_close(trim(output_fname(1)),'ot')
+   !
+   call msg('o '//trim(output_fname(1)),'#')
+   call msg('o '//trim(output_fname(1)),'# Occupations distribution at different times (f@ time)')
+   call msg('o '//trim(output_fname(1)),'#')
+   call msg('o '//trim(output_fname(1)),'#',(/'  #1',columns(1:n2-n1+1)/),INDENT=-2,USE_TABS=.true.)
+   call msg('o '//trim(output_fname(1)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
+   call msg('o '//trim(output_fname(1)),'#')
    !
    do igamma=1,ngamma
      !
-     if(n_T_steps>nmax_file_report) gamma_fname(igamma)=trim(gamma_fname(igamma))//'_grp'&
-&                                                       //trim(intc(i2/nmax_file_report+1))
-     call of_open_close(trim(gamma_fname(igamma)),'ot')
+     output_fname(igamma+1)=trim(gamma_fname(igamma))
+     if (n_T_steps>nmax_file_report) output_fname(igamma+1)=trim(gamma_fname(igamma))//trim(GRP_string)
+     call of_open_close(trim(output_fname(igamma+1)),'ot')
      !
-     call msg('o '//trim(gamma_fname(igamma)),'#')
-     call msg('o '//trim(gamma_fname(igamma)),'# Lifetimes distribution at different times (f@ time)')
-     call msg('o '//trim(gamma_fname(igamma)),'#')
-     call msg('o '//trim(gamma_fname(igamma)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
-     call msg('o '//trim(gamma_fname(igamma)),'#')
+     call msg('o '//trim(output_fname(igamma+1)),'#')
+     call msg('o '//trim(output_fname(igamma+1)),'# Lifetimes distribution at different times (f@ time)')
+     call msg('o '//trim(output_fname(igamma+1)),'#')
+     call msg('o '//trim(output_fname(igamma+1)),'#',(/'  #1',columns(1:n2-n1+1)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname(igamma+1)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname(igamma+1)),'#')
    enddo
    !
    i_RT=0
@@ -178,54 +187,54 @@ subroutine YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
        !
        i_RT=i_RT+1
        !
-       call msg('o '//trim(output_fname),'',(/RT_E(i_RT)*HA2EV,&
-&                RT_occ(i_RT,n1:n2)/),INDENT=-2,USE_TABS=.true.)
+       call msg('o '//trim(output_fname(1)),'',(/RT_E(i_RT)*HA2EV,RT_occ(i_RT,n1:n2)/),INDENT=-2,USE_TABS=.true.)
        !
        do igamma=1,ngamma
-         call msg('o '//trim(gamma_fname(igamma)),'',(/RT_E(i_RT)*HA2EV,&
-&                  RT_gamma(i_RT,n1:n2,igamma)/),INDENT=-2,USE_TABS=.true.)
+         call msg('o '//trim(output_fname(igamma+1)),'',(/RT_E(i_RT)*HA2EV,&
+&                 RT_gamma(i_RT,n1:n2,igamma)/),INDENT=-2,USE_TABS=.true.)
        enddo
        !
      enddo
      !
    enddo
    !
-   call of_open_close(trim(output_fname))
+   call of_open_close(trim(output_fname(1)))
    do igamma=1,ngamma
-     call of_open_close(trim(gamma_fname(igamma)))
+     call of_open_close(trim(output_fname(igamma+1)))
    enddo
    !
    do ifit=1,2
      !
-     output_fname='YPP-RT_occupation_distribution_FIT'
-     if(ifit==1) output_fname=trim(output_fname)//'_hole'
-     if(ifit==2) output_fname=trim(output_fname)//'_electrons'
-     if(n_T_steps>nmax_file_report) &
-&      output_fname=trim(output_fname)//'_grp'//trim(intc(i2/nmax_file_report+1))
+     output_fname(1)='YPP-RT_occupation_distribution_FIT'
+     if(ifit==1) output_fname(1)=trim(output_fname(1))//'_hole'
+     if(ifit==2) output_fname(1)=trim(output_fname(1))//'_electrons'
+     if (n_T_steps>nmax_file_report) output_fname(1)=trim(output_fname(1))//trim(GRP_string)
      !
-     call of_open_close(trim(output_fname),'ot')
+     call of_open_close(trim(output_fname(1)),'ot')
      !
-     call msg('o '//trim(output_fname),'#')
-     call msg('o '//trim(output_fname),'# Results of the FIT')
+     call msg('o '//trim(output_fname(1)),'#')
+     call msg('o '//trim(output_fname(1)),'# Results of the FIT')
+     call msg('o '//trim(output_fname(1)),'#')
      do i1=1,5
-       call msg('o '//trim(output_fname),'#',(/data_ch(1,i1,ifit), &
+       call msg('o '//trim(output_fname(1)),'#',(/data_ch(1,i1,ifit), &
 &                                            data_ch(n1+1:n2+1,i1,ifit)/), INDENT=-2,USE_TABS=.true.)
      enddo
      !     
-     call msg('o '//trim(output_fname),'#')
-     call msg('o '//trim(output_fname),'# Fit functions at different time (f@ time)')
-     call msg('o '//trim(output_fname),'#')
-     call msg('o '//trim(output_fname),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
-     call msg('o '//trim(output_fname),'#')
+     call msg('o '//trim(output_fname(1)),'#')
+     call msg('o '//trim(output_fname(1)),'# Fit functions at different time (f@ time)')
+     call msg('o '//trim(output_fname(1)),'#')
+     call msg('o '//trim(output_fname(1)),'#',(/'  #1',columns(1:n2-n1+1)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname(1)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname(1)),'#')
      !
      do i1=1,fit_dim
-       call msg('o '//trim(output_fname),'',(/RT_E_fit(i1,ifit)*HA2EV,&
+       call msg('o '//trim(output_fname(1)),'',(/RT_E_fit(i1,ifit)*HA2EV,&
   &               RT_occ_fit(i1,n1:n2,ifit)/),INDENT=-2,USE_TABS=.true.)
      enddo
      !
-     call of_open_close(trim(output_fname))
+     call of_open_close(trim(output_fname(1)))
      !
    enddo
  enddo
  !
-end subroutine YPP_RT_occupations_fit
+end subroutine RT_occupations_FIT

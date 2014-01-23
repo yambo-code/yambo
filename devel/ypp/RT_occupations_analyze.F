@@ -35,7 +35,7 @@ subroutine RT_occupations_analyze(k,E)
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,&
 &                         E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime,&
-&                         RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM
+&                         RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM,NE_time
  use SC,             ONLY:RT_occupations,SC_bands,&
 &                         RT_nk,RT_nstates,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz
  !
@@ -119,6 +119,10 @@ subroutine RT_occupations_analyze(k,E)
  n_T_steps=RT_occupations_check(E,k)
  !
  if (n_T_steps<0) return
+ if (NE_time<OCC_T_range(2)) then
+   OCC_T_range(2)=NE_time
+   n_T_steps=nint(OCC_T_range(2)/OCC_deltaT)+1
+ endif
  !
  call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
  call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
@@ -288,7 +292,7 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! f(eps_{ik,ib}), gamma(eps_{ik,ib})
  !
- if(l_RT_occ_Fit) call YPP_RT_occupations_FIT(RT_E,RT_occ,RT_gamma,n1-1,n_T_steps)
+ if(l_RT_occ_Fit) call RT_occupations_FIT(RT_E,RT_occ,RT_gamma,n1-1,n_T_steps)
  !
  if (allocated(RT_E))               deallocate(RT_E)
  if (allocated(RT_occ))             deallocate(RT_occ)

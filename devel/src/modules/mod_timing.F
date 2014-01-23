@@ -432,12 +432,7 @@ MODULE timing_m
      DO i=1,list%nclock 
        !
        tmp_clock = list%clock(i)
-       IF ( TRIM(list%clock(i)%name) == TRIM(main_name) .OR. &
-                 list%clock(i)%total_time >= 1000           ) THEN 
-         CALL clock_write(tmp_clock,FORM="hms")
-       ELSE
-         CALL clock_write(tmp_clock,FORM="sec")
-       ENDIF
+       CALL clock_write(tmp_clock,FORM="hms")
        !
      ENDDO
      !

@@ -40,15 +40,16 @@ subroutine RT_GAMMA_save_and_interp(Time,E,k,LIFE,SAVE_index)
  !
  ! Work Space
  !
- integer          :: ib,ik
+ integer          :: ib,ik,ik_rim
  !
  if (RT_GAMMA_T_status(it_now)>0) then 
    !=============================
    if (SAVE_index<=2) then
      do ik=1,k%nibz
-       call PP_redux_wait(LIFE(:,RT_ibz_coo(ik,1)))
+       ik_rim=RT_ibz_coo(ik,1)
+       call PP_redux_wait(LIFE(:,ik_rim))
      enddo
-     call RT_Coulomb_interpolation(E,k)
+     if (SAVE_index==2) call RT_Coulomb_interpolation(E,k)
    else
      do ik=1,RT_nk
        LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
@@ -65,19 +66,38 @@ subroutine RT_GAMMA_save_and_interp(Time,E,k,LIFE,SAVE_index)
    if (l_elel_scatt     .and.SAVE_index==1) call ADD_to_saved_values(Time,SAVED_times)
    if (.not.l_elel_scatt.and.SAVE_index==3) call ADD_to_saved_values(Time,SAVED_times)
    !
-   do ik=1,RT_nk
-     do ib=SC_bands(1),SC_bands(2)
-       call ADD_to_saved_values(LIFE(ib,ik),SAVED_lifetime(ib,ik,SAVE_index,:))
-     enddo
+   do ib=SC_bands(1),SC_bands(2)
+     if (SAVE_index<=2) then
+       ! e-e case
+       do ik=1,k%nibz
+         ik_rim=RT_ibz_coo(ik,1)
+         call ADD_to_saved_values(LIFE(ib,ik_rim),SAVED_lifetime(ib,ik_rim,SAVE_index,:))
+       enddo
+     else
+       ! e-p case
+       do ik=1,RT_nk
+         call ADD_to_saved_values(LIFE(ib,ik),SAVED_lifetime(ib,ik,SAVE_index,:))
+       enddo
+     endif
    enddo
  endif
  !
  if (RT_GAMMA_T_status(it_now)==0) then
    !==============================
-   do ik=1,RT_nk
-     do ib=SC_bands(1),SC_bands(2)
-       call RT_Lifetimes_Interpolation(LIFE(ib,ik),SAVED_lifetime(ib,ik,SAVE_index,:),SAVED_times)
-     enddo
+   do ib=SC_bands(1),SC_bands(2)
+     if (SAVE_index<=2) then
+       ! e-e case
+       do ik=1,k%nibz
+         ik_rim=RT_ibz_coo(ik,1)
+         call RT_Lifetimes_Interpolation(LIFE(ib,ik_rim),SAVED_lifetime(ib,ik_rim,SAVE_index,:),SAVED_times)
+       enddo
+       if (SAVE_index==2) call RT_Coulomb_interpolation(E,k)
+     else
+       ! e-p case
+       do ik=1,RT_nk
+         call RT_Lifetimes_Interpolation(LIFE(ib,ik),SAVED_lifetime(ib,ik,SAVE_index,:),SAVED_times)
+       enddo
+     endif
    enddo
  endif
  !

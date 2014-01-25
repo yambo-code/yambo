@@ -24,7 +24,7 @@ subroutine electrons_bands(Xk,Xen)
  use pars,           ONLY:SP,schlen,lchlen,DP
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,BANDS_range,k_transform,interp_grid, &
-&                         l_RT_bands,l_bands
+&                         l_RT_occ_Bands,l_bands
  use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_tot_Nkpts,BZ_RIM_nkpt,spin_occ
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use com,            ONLY:msg,of_open_close,error,warning
@@ -204,7 +204,7 @@ subroutine electrons_bands(Xk,Xen)
  ! Occupations interpolation.
  !===========================
  !
- if(l_RT_bands) then
+ if(l_RT_occ_Bands) then
    !
    io_TIME=0.
    call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_TIME,imposed_COM=NONE)
@@ -284,8 +284,6 @@ subroutine electrons_bands(Xk,Xen)
  ! 1: bands on circuit    if (BANDS_steps>0) ; 
  ! 2: dos on regular grid if (interp_grid>0) ; 
  !
- ! Common part
- !
  if (l_bands) then
    !
    allocate(values(4+BANDS_range(2)-BANDS_range(1)+1),headings(4+BANDS_range(2)-BANDS_range(1)+1))
@@ -357,7 +355,7 @@ subroutine electrons_bands(Xk,Xen)
  !
 #if defined _YPP_RT
  !
- if(l_RT_bands .and. BANDS_steps> 0) then
+ if(l_RT_occ_Bands .and. BANDS_steps> 0) then
    !
    allocate(values(3),headings(3))
    !
@@ -387,14 +385,11 @@ subroutine electrons_bands(Xk,Xen)
        !
        do ik=1,CIRCUIT_K%nibz
          !
-         !if(i_T==1) call k_transform(CIRCUIT_K%pt(ik,:),"iku")
-         !
          values(1)=real(ik,SP)
-         !values(2:4)=CIRCUIT_K%pt(ik,:)
          values(2)=bands_circuit(ib,1,ik)*HA2EV
          values(3)=occupations_circuit(ib,1,ik,i_T)
-         if(values(3)<0._SP) values(3)=0._SP
-         if(values(3)>2._SP) values(3)=2._SP
+         if(values(3)<0._SP   ) values(3)=0._SP
+         if(values(3)>spin_occ) values(3)=spin_occ
          values(3)=values(3)/3._SP
          call msg('o '//file_name(1),' ',values,INDENT=0,USE_TABS=.true.)
          !
@@ -411,6 +406,5 @@ subroutine electrons_bands(Xk,Xen)
  endif
  !
 #endif
- !
  !
 end subroutine

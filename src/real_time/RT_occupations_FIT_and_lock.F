@@ -88,7 +88,7 @@ subroutine RT_occupations_FIT_and_lock(E,k,T_fit,Ef_fit,Occupations)
  RT_occ=RT_occ_tmp
  !
  nfit=Fermi_fnc_fit(RT_E,RT_occ,RT_nstates,T_fit,Ef_fit,err_fit,&
-&       RT_occ_fit_out=RT_occ_fit,RT_E_fit_out=RT_E_fit,l_T_max_in=l_elel_scatt)
+&       RT_occ_fit_out=RT_occ_fit,RT_E_fit_out=RT_E_fit,l_T_max_in=.false.)
  !
  if(err_fit(1)>0.05) then
    T_fit(1) =-T_fit(1)

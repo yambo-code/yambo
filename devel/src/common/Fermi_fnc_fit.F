@@ -89,7 +89,7 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  if(l_two_temperatures) nfit=2
  !
  E_shift=0.0_SP
- Fit_E_range(1)=RT_E(1)          -E_shift
+ Fit_E_range(1)=RT_E(1)       -E_shift
  Fit_E_range(2)=RT_E(nstates) +E_shift
  !
  do ifit=1,nfit

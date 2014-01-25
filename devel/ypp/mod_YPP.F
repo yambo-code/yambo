@@ -181,7 +181,7 @@ module YPP
  ! (RT) DOS & BANDS
  !
  logical  :: l_RT_dos
- logical  :: l_RT_bands
+ logical  :: l_RT_occ_Bands
  !
  ! Wannier bands
  !

@@ -85,15 +85,15 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use collision,  ONLY:COLLISIONS_cutoff
 #endif
 #if defined _RT || defined _YPP_RT
- use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,&
-&                     RT_diagonalization_steps, l_NE_simulate_RPA,l_Debye_TBose_update,&
-&                     SwitchOnTime,l_RT_induced_field,&
-&                     l_RT_diagonalize,RT_is_dephased,RAD_LifeTime,Phase_LifeTime,&
-&                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,&
-&                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,&
-&                     Eh_pumped_pair_energy,Eh_pumped_pair_width,&
-&                     Gr_kind,two_alpha,l_RT_CCA_Kernel,&
-&                     Eh_pumped_Nel,l_lftm_fit_stable,Nfitted_lifetimes
+ use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,                   &
+&                     RT_diagonalization_steps, l_NE_simulate_RPA,l_Debye_TBose_update,   &
+&                     SwitchOnTime,l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel,  &
+&                     l_RT_diagonalize,RT_is_dephased,RAD_LifeTime,Phase_LifeTime,        &
+&                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,                            &
+&                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,   &
+&                     Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,           &
+&                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
+&                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,theta_function_iTo_ref,i_Pump,i_Probe
  use plasma,     ONLY:Plasma_redux_percent
 #endif
@@ -553,10 +553,14 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Gr_kind="HS"
  two_alpha=1
  !
- ! Lifetimes
+ ! FITs
  !
  l_lftm_fit_stable=.false.
  Nfitted_lifetimes=0
+ RT_Tfit_lifetimes=0.
+ RT_Efit_lifetimes=0.
+ RT_Tfit_occupations=0.
+ RT_Efit_occupations=0.
  !
 #endif
  !

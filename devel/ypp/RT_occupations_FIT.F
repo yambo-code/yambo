@@ -29,7 +29,8 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo
  use QP_m,           ONLY:QP_table,QP_n_states
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels,spin
+ use D_lattice,      ONLY:Bose_Temp
+ use electrons,      ONLY:levels,spin,spin_occ
  use vec_operate,    ONLY:sort
  use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative, &
 &                         Fermi_fnc_fit,Fermi_fnc_T_derivative
@@ -41,21 +42,22 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  integer               :: n_T_steps,ngamma
  real(SP)              :: RT_E(RT_nstates)
  real(SP)              :: RT_occ(RT_nstates,n_T_steps)
- real(SP)              :: RT_gamma(RT_nstates,n_T_steps,ngamma)
+ real(SP)              :: RT_gamma(RT_nstates,n_T_steps,6)
  !
  integer, parameter    :: max_iter=10000,fit_dim=1000,nmax_file_report=16
  real(SP)              :: RT_occ_fit(fit_dim,n_T_steps,2),RT_E_fit(fit_dim,2)
+ real(SP)              :: RT_gamma_ratio(RT_nstates,n_T_steps,2)
  !
  ! Work Space
  !
  real(SP)              :: io_Time
- real(SP)              :: TMP_vec(RT_nstates)
- real(SP)              :: err_fit(n_T_steps,4)
- real(SP)              :: T_fit(n_T_steps,2)
- real(SP)              :: Ef_fit(n_T_steps,2)
+ real(SP)              :: TMP_vec(RT_nstates),data_fit(7,2)
+ real(SP)              :: err_fit(n_T_steps,4),err_fit_gamma(n_T_steps,4)
+ real(SP)              :: T_fit(n_T_steps,2),T_fit_gamma(n_T_steps,4)
+ real(SP)              :: Ef_fit(n_T_steps,2),Ef_fit_gamma(n_T_steps,4)
  ! 
- integer  :: ifit,i_s,i_RT,ik,ik_rim,ib,i1,i_T,i2,n1,n2,i_fp,i_spin,igamma
- integer  :: nfound(3)
+ integer  :: ifit,i_s,i_RT,ik,ik_rim,ib,i1,i_T,i2,n1,n2,i_spin,igamma
+ integer  :: nfound(3),nfound_gamma(5)
  integer  :: E_sort_index(RT_nstates)
  !
  character(10)     ::titles(n_T_steps+1),data_ch(n_T_steps+1,5,2),columns(n_T_steps+1)
@@ -64,6 +66,10 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  T_fit=0._SP
  Ef_fit=0._SP
  nfound=0
+ !
+ T_fit_gamma=0._SP
+ Ef_fit_gamma=0._SP
+ nfound_gamma=0
  !
  call sort(RT_E,indx=E_sort_index)
  do i1=1,n_T_steps
@@ -80,7 +86,11 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    if(i1>1) then
      T_fit(i1,:) =T_fit(i1-1,:)
      Ef_fit(i1,:)=Ef_fit(i1-1,:)
+     T_fit_gamma(i1,:) =T_fit_gamma(i1-1,:)
+     Ef_fit_gamma(i1,:)=Ef_fit_gamma(i1-1,:)
    endif
+   !
+   ! Occupations FIT
    !
    nfound(3)=Fermi_fnc_fit(RT_E,RT_occ(:,i1),RT_nstates,T_fit(i1,:),Ef_fit(i1,:),err_fit(i1,:),&
 &                            RT_occ_fit_out=RT_occ_fit(:,i1,:),RT_E_fit_out=RT_E_fit)
@@ -88,6 +98,32 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    if(nfound(3)==1) nfound(1)  =nfound(1)+1
    if(nfound(3)==2) nfound(2)  =nfound(2)+1
    if(nfound(3)==3) nfound(1:2)=nfound(1:2)+1
+   !
+   ! Lifetimes FIT
+   !
+   if(ngamma==2) RT_gamma_ratio(:,i1,1)=RT_gamma(:,i1,1)/( RT_gamma(:,i1,1)+RT_gamma(:,i1,2) )
+   if(ngamma> 2) RT_gamma_ratio(:,i1,1)=( RT_gamma(:,i1,1)+RT_gamma(:,i1,3) ) / &
+&                                       ( RT_gamma(:,i1,1)+RT_gamma(:,i1,3)+    &
+&                                         RT_gamma(:,i1,2)+RT_gamma(:,i1,4) ) 
+   if(ngamma> 4) RT_gamma_ratio(:,i1,2)=RT_gamma(:,i1,5)/( RT_gamma(:,i1,5)+RT_gamma(:,i1,6) )
+   !
+   RT_gamma_ratio=RT_gamma_ratio*spin_occ
+   !
+   nfound_gamma(5)=Fermi_fnc_fit(RT_E,RT_gamma_ratio(:,i1,1),RT_nstates,T_fit_gamma(i1,1:2),Ef_fit_gamma(i1,1:2),&
+&                            err_fit_gamma(i1,:))
+   !
+   if(nfound_gamma(5)==1) nfound_gamma(1)  =nfound_gamma(1)+1
+   if(nfound_gamma(5)==2) nfound_gamma(2)  =nfound_gamma(2)+1
+   if(nfound_gamma(5)==3) nfound_gamma(1:2)=nfound_gamma(1:2)+1
+   !
+   if(ngamma<=4) cycle
+   !
+   nfound_gamma(5)=Fermi_fnc_fit(RT_E,RT_gamma_ratio(:,i1,2),RT_nstates,T_fit_gamma(i1,3:4),Ef_fit_gamma(i1,3:4),&
+&                            err_fit_gamma(i1,:))
+   !
+   if(nfound_gamma(5)==1) nfound_gamma(3)  =nfound_gamma(3)+1
+   if(nfound_gamma(5)==2) nfound_gamma(4)  =nfound_gamma(4)+1
+   if(nfound_gamma(5)==3) nfound_gamma(3:4)=nfound_gamma(3:4)+1
    !      
  enddo
  !
@@ -96,27 +132,35 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  call msg('s',":: Elec. fitting Temperatures found " &
 &          //trim(intc(nfound(2)))//"/"//trim(intc(n_T_steps)))
  !
- do i1=1,n_T_steps
-   columns(i1)="  #"//trim(intc(i1+1))
- enddo
- titles(1)='  E [eV]  '
- data_ch(1,1,:)=' t    [fs]'
- data_ch(1,2,1)=' T(h) [K]'
- data_ch(1,2,2)=' T(e) [K]'
- data_ch(1,3,:)=' Ef   [eV]'
- data_ch(1,4,:)=' Avg error'
- data_ch(1,5,:)=' Max error'
+ call msg('s',":: Hole lifetimes(1) fitting Temperatures found " &
+&          //trim(intc(nfound_gamma(1)))//"/"//trim(intc(n_T_steps)))
+ call msg('s',":: Elec lifetimes(1) fitting Temperatures found " &
+&          //trim(intc(nfound_gamma(2)))//"/"//trim(intc(n_T_steps)))
+ !
+ if(ngamma>4) then
+ call msg('s',":: Hole lifetimes(2) fitting Temperatures found " &
+&          //trim(intc(nfound_gamma(3)))//"/"//trim(intc(n_T_steps)))
+ call msg('s',":: Elec lifetimes(2) fitting Temperatures found " &
+&          //trim(intc(nfound_gamma(4)))//"/"//trim(intc(n_T_steps)))
+ endif
+ !
+ titles(1)='t [fs]'
+ titles(2:3)=(/'OCC el ','OCC hol'/)   
  !
  ! Only El-El
  if(ngamma==2) then
    gamma_fname(1)='YPP-RT_EE_Hole_linewidths'
    gamma_fname(2)='YPP-RT_EE_Elec_linewidths'
+   titles(4:5)=(/'EE  el ','EE  hol'/)   
+   n1=5
  ! Only El-Ph
  else if (ngamma==4) then
    gamma_fname(1)='YPP-RT_EP_Hole_linewidths'
    gamma_fname(2)='YPP-RT_EP_Elec_linewidths'
    gamma_fname(3)='YPP-RT_EP_Hole_abs_linewidths'
    gamma_fname(4)='YPP-RT_EP_Elec_abs_linewidths'
+   titles(4:5)=(/'EP  el ','EP  hol'/)   
+   n1=5
  ! Both
  else if (ngamma==6) then
    gamma_fname(1)='YPP-RT_EP_Hole_linewidths'
@@ -125,7 +169,63 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    gamma_fname(4)='YPP-RT_EP_Elec_abs_linewidths'
    gamma_fname(5)='YPP-RT_EE_Hole_linewidths'
    gamma_fname(6)='YPP-RT_EE_Elec_linewidths'
+   !gamma_ratio_fname(1)='YPP-RT_EP_linewidths_ratio'
+   !gamma_ratio_fname(2)='YPP-RT_EE_linewidths_ratio'
+   titles(4:7)=(/'EP  el ','EP  hol','EE  el ','EE  hol'/)   
+   n1=7
  endif
+ !
+ output_fname(1)='YPP-RT_Temperatures'
+ output_fname(2)='YPP-RT_Efermi'
+ !
+ call of_open_close(trim(output_fname(1)),'ot')
+ call of_open_close(trim(output_fname(2)),'ot')
+ !
+ call msg('o '//trim(output_fname(1)),'#')
+ call msg('o '//trim(output_fname(1)),'# Fitted temperatures [K]')
+ call msg('o '//trim(output_fname(1)),'#')
+ call msg('o '//trim(output_fname(1)),'#',(/titles(1:n1)/),INDENT=-2,USE_TABS=.true.)
+ !
+ call msg('o '//trim(output_fname(2)),'#')
+ call msg('o '//trim(output_fname(2)),'# Fitted Fermi levels [eV]')
+ call msg('o '//trim(output_fname(2)),'#')
+ call msg('o '//trim(output_fname(2)),'#',(/titles(1:n1)/),INDENT=-2,USE_TABS=.true.)
+ !
+ do i_T=1,n_T_steps
+   io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+   data_fit(1,:)= io_Time/FS2AUT
+   do i1=1,4
+     if(i1<=2) then
+       data_fit(i1+1,1)= T_fit(i_T,i1)*HA2KEL
+       data_fit(i1+1,2)= Ef_fit(i_T,i1)*HA2EV
+     endif
+     data_fit(i1+3,1)= T_fit_gamma(i_T,i1)*HA2KEL
+     data_fit(i1+3,2)= Ef_fit_gamma(i_T,i1)*HA2EV
+   enddo
+   !
+   ! Write temperatures and fermi levels to file
+   !
+   call msg('o '//trim(output_fname(1)),'',(/data_fit(1:n1,1)/),INDENT=-2,USE_TABS=.true.)
+   call msg('o '//trim(output_fname(2)),'',(/data_fit(1:n1,2)/),INDENT=-2,USE_TABS=.true.)
+   !
+ enddo
+ !
+ call of_open_close(trim(output_fname(1)))
+ call of_open_close(trim(output_fname(2)))
+ !
+ do i1=1,n_T_steps+1
+   columns(i1)="  #"//trim(intc(i1))
+ enddo
+ !
+ ! Prepare titles
+ !
+ titles(1)='  E [eV]  '
+ data_ch(1,1,:)=' t    [fs]'
+ data_ch(1,2,1)=' T(h) [K]'
+ data_ch(1,2,2)=' T(e) [K]'
+ data_ch(1,3,:)=' Ef   [eV]'
+ data_ch(1,4,:)=' Avg error'
+ data_ch(1,5,:)=' Max error'
  !
  do i_T=1,n_T_steps
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
@@ -154,11 +254,13 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    call msg('o '//trim(output_fname(1)),'#')
    call msg('o '//trim(output_fname(1)),'# Occupations distribution at different times (f@ time)')
    call msg('o '//trim(output_fname(1)),'#')
-   call msg('o '//trim(output_fname(1)),'#',(/'  #1',columns(1:n2-n1+1)/),INDENT=-2,USE_TABS=.true.)
+   call msg('o '//trim(output_fname(1)),'#',(/columns(1:n2-n1+2)/),INDENT=-2,USE_TABS=.true.)
    call msg('o '//trim(output_fname(1)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
    call msg('o '//trim(output_fname(1)),'#')
    !
    do igamma=1,ngamma
+     !
+     if (Bose_Temp==0._SP .and. igamma>2 .and. igamma<5) cycle 
      !
      output_fname(igamma+1)=trim(gamma_fname(igamma))
      if (n_T_steps>nmax_file_report) output_fname(igamma+1)=trim(gamma_fname(igamma))//trim(GRP_string)
@@ -167,7 +269,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
      call msg('o '//trim(output_fname(igamma+1)),'#')
      call msg('o '//trim(output_fname(igamma+1)),'# Lifetimes distribution at different times (f@ time)')
      call msg('o '//trim(output_fname(igamma+1)),'#')
-     call msg('o '//trim(output_fname(igamma+1)),'#',(/'  #1',columns(1:n2-n1+1)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname(igamma+1)),'#',(/columns(1:n2-n1+2)/),INDENT=-2,USE_TABS=.true.)
      call msg('o '//trim(output_fname(igamma+1)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
      call msg('o '//trim(output_fname(igamma+1)),'#')
    enddo
@@ -190,6 +292,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
        call msg('o '//trim(output_fname(1)),'',(/RT_E(i_RT)*HA2EV,RT_occ(i_RT,n1:n2)/),INDENT=-2,USE_TABS=.true.)
        !
        do igamma=1,ngamma
+         if (Bose_Temp==0._SP .and. igamma>2 .and. igamma<5) cycle
          call msg('o '//trim(output_fname(igamma+1)),'',(/RT_E(i_RT)*HA2EV,&
 &                 RT_gamma(i_RT,n1:n2,igamma)/),INDENT=-2,USE_TABS=.true.)
        enddo
@@ -200,6 +303,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    !
    call of_open_close(trim(output_fname(1)))
    do igamma=1,ngamma
+     if (Bose_Temp==0._SP .and. igamma>2 .and. igamma<5) cycle
      call of_open_close(trim(output_fname(igamma+1)))
    enddo
    !
@@ -223,7 +327,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
      call msg('o '//trim(output_fname(1)),'#')
      call msg('o '//trim(output_fname(1)),'# Fit functions at different time (f@ time)')
      call msg('o '//trim(output_fname(1)),'#')
-     call msg('o '//trim(output_fname(1)),'#',(/'  #1',columns(1:n2-n1+1)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname(1)),'#',(/columns(1:n2-n1+2)/),INDENT=-2,USE_TABS=.true.)
      call msg('o '//trim(output_fname(1)),'#',(/titles(1),titles(n1+1:n2+1)/),INDENT=-2,USE_TABS=.true.)
      call msg('o '//trim(output_fname(1)),'#')
      !

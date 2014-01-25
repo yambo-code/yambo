@@ -102,10 +102,6 @@ subroutine RT_start_and_restart(E,k,q,X)
    enddo
  enddo
  !
- ! Possibility to pump by hand one or more electrons up
- !======================================================
- !if (.not. RESTART) call RT_manual_excitation(E,k)
- !
  ! Build Ho and save initial energies 
  !====================================
  !
@@ -126,6 +122,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  io_WF=io_SC_components('WF',E,ID(2))
  call io_control(ACTION=OP_RD_CL,COM=REP ,SEC=(/1/),MODE=VERIFY,ID=ID(3)) ! Local potential
  io_V=io_SC_components('V' ,E,ID(3))
+ !
+ ! 
+ ! 24/01/2014 Davide: RESTART from DB J_and_P does not work
  !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
@@ -296,12 +295,6 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! Possibility to pump by hand one or more electrons up
    !======================================================
-   ! Andrea (22/1/2014). Davide moved this call after SC_bare_Hamiltonian.
-   ! This is correct as in there the density is calculated. BUT the
-   ! density is also re-calculated after to be saved in rho_reference. 
-   ! Thus the only place where the electrons can be moved up by hand
-   ! is here, at the end of everything.
-   !
    call RT_manual_excitation(E,k)
    !
  endif

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime)
+subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,l_energy,l_n_electrons)
  !
  use pars,           ONLY:SP,cI
  use electrons,      ONLY:levels,spin_occ
@@ -34,6 +34,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime)
  type(bz_samp), intent(in) :: k
  real(SP)                  :: Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk)
  real(SP)                  :: Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk)
+ logical                   :: l_energy,l_n_electrons
  !
  ! Work Space
  !
@@ -42,9 +43,6 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime)
  real(SP)         :: prefactor(2)
  real(SP)         :: N_valence,N_conduction,delta_N,E_valence,E_conduction,delta_E
  real(SP)         :: SUM_N_Holes(2),SUM_E_Holes(2),SUM_N_Electrons(2),SUM_E_Electrons(2)
- !
- logical          :: l_energy=.false.
- logical          :: l_n_electrons=.true.
  !
  SUM_N_Holes    =0._SP
  SUM_N_Electrons=0._SP
@@ -83,7 +81,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime)
    prefactor(2)=(delta_E*N_valence   -delta_N*E_valence   )/(N_conduction*E_valence-N_valence*E_conduction)
  endif
  if(     l_energy.and..not.l_n_electrons) prefactor(1)=delta_E/(E_conduction+E_valence)
- if(.not.l_energy.and.     l_n_electrons) prefactor(1)=delta_N/(sum_N_Electrons(1)+sum_N_Electrons(2))
+ if(.not.l_energy.and.     l_n_electrons) prefactor(1)=delta_N/(N_conduction+N_valence)
  !
  if( isnan(prefactor(1)) ) return
  !
@@ -94,6 +92,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime)
    Hole_lifetime(    E%nbf+1:,:)=    Hole_lifetime(E%nbf+1:,:)*(1._SP-prefactor(2))
  else
    Electron_lifetime(:,:)=Electron_lifetime(:,:)*(1._SP-prefactor(1))
+   Hole_lifetime(:,:)    =Hole_lifetime(:,:)*(1._SP+prefactor(1))
  endif
  !
 end subroutine RT_impose_zero_dE_and_dN

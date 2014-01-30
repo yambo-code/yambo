@@ -25,7 +25,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! following the Allen-Cardona formulation (see for example 
  ! PRB 23, 1495 (1981) )
  !
- use pars,          ONLY:SP,DP,schlen,pi
+ use pars,          ONLY:SP,schlen,pi,rZERO
  use units,         ONLY:HA2EV,HA2THZ
  use parser_m,      ONLY:parser
  use frequency,     ONLY:w_samp,W_reset
@@ -34,9 +34,10 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use com,           ONLY:msg,error
  use drivers,       ONLY:Finite_Tel,l_elel_corr
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index,PAR_QP_index,PAR_IND_QP,&
-&                        PAR_IND_Q_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,PAR_nQP,PAR_nQ,myid
+&                        PAR_IND_Q_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
+                         PAR_COM_Q_A2A,PAR_COM_Q_index
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR_CL
+ use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch
  use QP_ctl_m,      ONLY:QP_ctl_t,reset_QP_ctl
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
@@ -50,7 +51,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        setup_k_plus_q_levels,f_k_plus_q,elph_nDBs_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
 &                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK,ph_qpt,&
-&                        elph_branches,E_k_plus_q
+&                        elph_branches,E_k_plus_q,QP_DW,QP_OMS_Fan
  use interfaces,    ONLY:PARALLEL_global_indexes
  use functions,     ONLY:Fermi_fnc_derivative
 #if defined _TIMING
@@ -65,8 +66,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! WorkSpace  
  !
  integer          ::iq_db,iq_bz,iq_loop,iq_db_ref,iq_s,iq_ibz,ik,ok,ik_bz,okbz,ib,ob,is,il,i_qp,i2,&
-&                   time_order_sign,ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,i_qp_mem,&
-&                   live_timing_steps
+&                   time_order_sign,ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,&
+&                   live_timing_steps,iq_range(2)
  type(w_samp)     ::Sc_W(qp%n_states)
  integer          ::io_err,ID,iv4(4)
  integer, external::ioELPH,QP_state_extract
@@ -92,6 +93,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  do i_qp=1,qp%n_states
    call W_reset(Sc_W(i_qp))
  enddo
+ QP_DW=rZERO
+ QP_OMS_Fan=rZERO
  !
  call reset_QP_ctl(QP_ctl)
  call reset_QP_ctl(QP_ctl_dummy)
@@ -295,7 +298,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    do i_qp=1,QP_n_states
      !
      if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
-     i_qp_mem=PAR_QP_index(i_qp)
      !
      ib   =QP_table(i_qp,1)
      ik   =QP_table(i_qp,3)
@@ -387,15 +389,15 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
            !
            ! "Bose" Term
            !
-           gsqF_life_bose(i_qp_mem,iq_mem,il,iw)= &
-&              gsqF_life_bose(i_qp_mem,iq_mem,il,iw)+2.*pi*elph_gkkp_sq*q_weight(iq_loop)*&
+           gsqF_life_bose(i_qp,iq_mem,il,iw)= &
+&              gsqF_life_bose(i_qp,iq_mem,il,iw)+2.*pi*elph_gkkp_sq*q_weight(iq_loop)*&
 &              ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) + &
 &              time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )
            !
            ! "f" Term
            !
-           gsqF_life_f(i_qp_mem,iq_mem,il,iw)= &
-&               gsqF_life_f(i_qp_mem,iq_mem,il,iw)+pi*elph_gkkp_sq*q_weight(iq_loop)*&
+           gsqF_life_f(i_qp,iq_mem,il,iw)= &
+&               gsqF_life_f(i_qp,iq_mem,il,iw)+pi*elph_gkkp_sq*q_weight(iq_loop)*&
 &               ( ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
 &               time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )*f_occ-&
 &               Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) )
@@ -408,16 +410,16 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
            ! Correction to the Fan-DW term (not in Cardona-Allen paper, possibly
            ! important for metals).
            !
-           gsqF_ca_corr(i_qp_mem,iq_mem,il,iw)=gsqF_ca_corr(i_qp_mem,iq_mem,il,iw)+elph_gkkp_sq*&
+           gsqF_ca_corr(i_qp,iq_mem,il,iw)=gsqF_ca_corr(i_qp,iq_mem,il,iw)+elph_gkkp_sq*&
 &                                              ph_E*one_minus_2f_occ/(delta_E**2.-ph_E**2.)*q_weight(iq_loop)
            !
            ! Cardona-Allen formulation
            !
-           ! (a) Fan Term                                                  this 2 is to be consistent with AC definition
-           !                                                               |
-           !                                                               \/
-           gsqF_fan(i_qp_mem,iq_mem,il,iw)=gsqF_fan(i_qp_mem,iq_mem,il,iw)+2.*elph_gkkp_sq*&
-&                                          delta_E/(delta_E**2.-ph_E**2.)*q_weight(iq_loop)
+           ! (a) Fan Term                                          this 2 is to be consistent with AC definition
+           !                                                       |
+           !                                                      \/
+           gsqF_fan(i_qp,iq_mem,il,iw)=gsqF_fan(i_qp,iq_mem,il,iw)+2.*elph_gkkp_sq*&
+&                                      delta_E/(delta_E**2.-ph_E**2.)*q_weight(iq_loop)
            !
          enddo
          !
@@ -429,7 +431,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          ! (b) Debye Waller Term
          !
-         gsqF_dw(i_qp_mem,iq_mem,il)=gsqF_dw(i_qp_mem,iq_mem,il)-1./2.*&
+         gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)-1./2.*&
 &                                    2.*elph_DW(ik_bz,il,ib,ob)/delta_E_at_gamma*q_weight(iq_loop)/2./ph_E
          !                          /\
          !                           |
@@ -452,14 +454,35 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! Here I use the Cardona-Allen g^2 F functions to evaluate their integrated value.
  ! I also calculate the full frequency dependent self-energy
  !
- call Final_Report_and_actions()
+ call ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
  !
  ! Dump on file gFsq coefficients 
  !
-! if (l_WRgFsq) then
-!   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-!   io_err=ioELPH(ID,'gFsq')
-! endif
+ iq_range=(/nq_to_sum,1/)
+ do iq_loop=1,nq_to_sum
+   if (PAR_Q_index(iq_loop)>0) then
+     iq_range(1)=min(iq_range(1),iq_loop)
+     iq_range(2)=max(iq_range(2),iq_loop)
+   endif
+ enddo
+ !
+ if (l_WRgFsq) then
+   call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_index%COMM)
+   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
+   do iq_loop=iq_range(1),iq_range(2)
+     iq_mem=PAR_Q_index(iq_loop)
+     if (iq_loop==iq_range(1)) then
+       if (iq_loop==1) call io_control(ACTION=OP_WR,COM=REP,SEC=(/1,iq_loop+1/),ID=ID)
+       if (iq_loop> 1) call io_control(ACTION=OP_WR,COM=REP,SEC=(/iq_loop+1/),ID=ID)
+     else if (iq_loop<iq_range(2)) then
+       call io_control(ACTION=WR,COM=REP,SEC=(/iq_loop+1/),ID=ID)
+     else if (iq_loop==iq_range(2)) then
+       call io_control(ACTION=WR_CL,COM=REP,SEC=(/iq_loop+1/),ID=ID)
+     endif
+     io_err=ioELPH(ID,'gFsq')
+   enddo
+   call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
+ endif
  !
  ! CLEAN
  !
@@ -472,188 +495,4 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  call timing('GW(e-p)',OPR='stop')
 #endif
  !
- contains
-   !
-   subroutine Final_Report_and_actions()
-     !
-     use functions, ONLY:bose_f
-     use QP_m,      ONLY:QP_states_simmetrize
-     use parallel_m,ONLY:PAR_COM_Q_index,PAR_COM_Q_A2A,PAR_COM_G_b_INDEX
-     type(w_samp)       ::Sc_local_W
-     complex(DP)        ::DP_FAN(gsqF_energy_steps),DP_DW
-     complex(SP)        ::coefficient,Sc_local(gsqF_energy_steps)
-     real(SP)           ::G_st(QP_n_states),ph_freq,G_dyn(QP_n_states,gsqF_energy_steps,3)
-     !
-     ! Degenerate bands average
-     !
-     do iq_loop=1,elph_nDBs_used
-       if (.not.PAR_IND_Q%element_1D(iq_loop)) cycle
-       iq_mem=PAR_Q_index(iq_loop)
-       do il=elph_branches(1),elph_branches(2)
-         G_st=0._SP
-         G_dyn=0._SP
-         do i_qp=1,QP_n_states
-           i_qp_mem=PAR_QP_index(i_qp)
-           if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
-           G_st(i_qp)     =gsqF_dw(i_qp_mem,iq_mem,il)
-           G_dyn(i_qp,:,1)=gsqF_life_bose(i_qp_mem,iq_mem,il,:)
-           G_dyn(i_qp,:,2)=gsqF_life_f(i_qp_mem,iq_mem,il,:)
-           if (.not.eval_G_using_KK) then
-             G_dyn(i_qp,:,3)=gsqF_fan(i_qp_mem,iq_mem,il,:)
-             G_dyn(i_qp,:,4)=gsqF_ca_corr(i_qp_mem,iq_mem,il,:)
-           endif
-         enddo
-         call PP_redux_wait(G_st,COMM=PAR_COM_Q_A2A%COMM)
-         call PP_redux_wait(G_dyn,COMM=PAR_COM_Q_A2A%COMM)
-         call QP_states_simmetrize(en,vec_2_sim=G_st(:))
-         do iw=1,gsqF_energy_steps
-           call QP_states_simmetrize(en,vec_2_sim=G_dyn(:,iw,1))
-           call QP_states_simmetrize(en,vec_2_sim=G_dyn(:,iw,2))
-           call QP_states_simmetrize(en,vec_2_sim=G_dyn(:,iw,3))
-           call QP_states_simmetrize(en,vec_2_sim=G_dyn(:,iw,4))
-         enddo
-         do i_qp=1,QP_n_states
-           i_qp_mem=PAR_QP_index(i_qp)
-           if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
-           gsqF_dw(i_qp_mem,iq_mem,il)=G_st(i_qp)/real( PAR_COM_G_b_INDEX%n_CPU)
-           gsqF_life_bose(i_qp_mem,iq_mem,il,:)=G_dyn(i_qp,:,1)/real( PAR_COM_G_b_INDEX%n_CPU)
-           gsqF_life_f(i_qp_mem,iq_mem,il,:)=G_dyn(i_qp,:,2)/real( PAR_COM_G_b_INDEX%n_CPU)
-           if (.not.eval_G_using_KK) then
-             gsqF_fan(i_qp_mem,iq_mem,il,:)=G_dyn(i_qp,:,3)/real( PAR_COM_G_b_INDEX%n_CPU)
-             gsqF_ca_corr(i_qp_mem,iq_mem,il,:)=G_dyn(i_qp,:,4)/real( PAR_COM_G_b_INDEX%n_CPU)
-           endif
-         enddo
-       enddo
-     enddo
-     !
-     if (trim(QP_solver)=='n') call live_timing('El-Ph Sc   [sum]',PAR_nQ*PAR_nQP)
-     if (trim(QP_solver)=='g') call live_timing('El-Ph Sc[sum+KK]',PAR_nQ*PAR_nQP+PAR_nQP)
-     !
-     ! Setup the pre-coefficient for the lifetimes related gsqF. In case
-     ! the QP corrections are required these are stored in the immaginary part of DP_FAN.
-     ! If the self-energy has to be plotted, instead, the contribution from the
-     ! lifetimes-related gsqF must be real (spectral function).
-     !
-     coefficient=(0.,1.)
-     !
-     ! Setup energy range for Sc/G plotting (I)
-     !
-     if ( trim(QP_solver)=='g' ) then
-       coefficient=(1.,0.)
-       call W_reset(Sc_local_W)
-       Sc_local_W%n_freqs =QP_Sc_steps
-     endif
-     !
-     do i_qp=1,QP_n_states   
-       !
-       if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
-       i_qp_mem=PAR_QP_index(i_qp)
-       !
-       ! Setup energy range for Sc/G plotting (II)
-       !
-       if ( trim(QP_solver)=='g' ) then
-         call FREQUENCIES_Green_Function(i_qp,Sc_local_W,en%E,.FALSE.)
-         !
-         ! Overwrites the damping defined in FREQUENCIES_Green_Function
-         !
-         forall(iw=1:QP_Sc_steps) Sc_local_W%p(iw)= real( Sc_local_W%p(iw)) + cmplx(0.,0.00001/HA2EV)
-       endif
-       !
-       ib   =QP_table(i_qp,1)
-       ik   =QP_table(i_qp,3)
-       !
-       DP_FAN=cmplx(0.,0.,DP)
-       DP_DW =cmplx(0.,0.,DP)
-       !
-       do iq_loop=1,elph_nDBs_used
-         !
-         if (.not.PAR_IND_Q%element_1D(iq_loop)) cycle
-         iq_mem=PAR_Q_index(iq_loop)
-         !
-         do il=elph_branches(1),elph_branches(2)
-           !
-           if (.not.elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq(iq_loop,il))
-           if (     elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq( q%sstar(iq_loop,1) ,il))
-           !
-           do iw=1,gsqF_energy_steps
-             !
-             ! QP lifetimes/Green's function
-             !-------------------------------
-             if (l_GF_from_CA.and.trim(QP_solver)=='g') then
-               DP_FAN(iw)=DP_FAN(iw)+gsqF_fan(i_qp_mem,iq_mem,il,iw)*(bose_f(ph_freq)+1.)/2.+&
-&                                    gsqF_ca_corr(i_qp_mem,iq_mem,il,iw)
-             else
-               DP_FAN(iw)=DP_FAN(iw)+coefficient*(gsqF_life_bose(i_qp_mem,iq_mem,il,iw)*(bose_f(ph_freq)/2+1.)/2.+&
-&                                    gsqF_life_f(i_qp_mem,iq_mem,il,iw))
-if (i_qp==13) write (*,*) 'A',iw,myid,DP_FAN(iw),gsqF_life_bose(i_qp_mem,iq_mem,il,iw),gsqF_life_f(i_qp_mem,iq_mem,il,iw)
-             endif
-             !
-             if ( trim(QP_solver)=='n' )  then
-               !
-               ! Integrate g^2 F function (QP correction).
-               !
-               ! QP energies: FAN+correction
-               !-----------------------------
-               ! 
-               DP_FAN(iw)=DP_FAN(iw)+gsqF_fan(i_qp_mem,iq_mem,il,iw)*(bose_f(ph_freq)+1.)/2.+&
-&                                    gsqF_ca_corr(i_qp_mem,iq_mem,il,iw)
-               !
-             endif
-             !
-           enddo
-           !
-           ! Integrate g^2 F function (QP correction & spectral function).
-           !
-           ! QP energies : DW
-           !------------------
-           !
-           DP_DW=DP_DW+gsqF_dw(i_qp_mem,iq_mem,il)*(bose_f(ph_freq)+1.)/2.
-           !
-         enddo
-         ! 
-         call live_timing(steps=1)
-         !
-       enddo
-       !
-       if ( trim(QP_solver)=='n' )  then
-         !
-         if (On_Mass_Shell_approx) then
-           QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+DP_FAN(1)+DP_DW
-         else
-           QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+DP_FAN(:)+DP_DW
-         endif
-         !
-       else if ( trim(QP_solver)=='g' )  then
-         !
-         if (.not.l_GF_from_CA) then
-           !
-           Sc_local=(0.,0.)
-           !
-           call Kramers_Kronig(cmplx(DP_FAN(:))/pi,real(Sc_W(i_qp)%p) ,QP_Sc_steps,&
-&                              Sc_local           ,conjg(Sc_local_W%p),QP_Sc_steps,(0.,0.))
-           !
-           QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+Sc_local(:)+DP_DW
-           !
-         else
-           !
-           QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+DP_FAN(:)+DP_DW 
-           !
-         endif
-         !
-         call live_timing(steps=1)
-         !
-       endif
-       !
-     enddo
-     !
-     call PP_redux_wait(QP_Sc)
-     !
-     call live_timing()
-     !
-     ! CLEAN
-     !
-     call W_reset(Sc_local_W)
-     !
-   end subroutine
-   !
 end subroutine

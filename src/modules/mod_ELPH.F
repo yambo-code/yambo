@@ -36,7 +36,6 @@ module ELPH
  logical   :: elph_use_q_grid
  real(SP),    allocatable :: QP_OMS_Fan(:)
  real(SP),    allocatable :: QP_DW(:)
- real(SP),    allocatable :: QP_TadPole(:)
  real(SP),    allocatable :: ph_kpt_bz(:,:)
  real(SP),    allocatable :: ph_qpt(:,:)
  real(SP),    allocatable :: ph_freqs_sq(:,:)
@@ -71,7 +70,8 @@ module ELPH
    !
    subroutine elph_global_alloc(what)
      use memory_m,  ONLY:mem_est
-     use parallel_m,ONLY:PAR_nQ,PAR_nQP
+     use parallel_m,ONLY:PAR_nQ
+     use QP_m,      ONLY:QP_n_states
      use R_lattice, ONLY:nkbz,nqibz
      character(*)      ::what
      integer           ::alloc_err
@@ -82,18 +82,18 @@ module ELPH
          !
          if (.not.allocated(gsqF_fan)) then
            if (.not.eval_G_using_KK) then
-             allocate(gsqF_fan(PAR_nQP,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
+             allocate(gsqF_fan(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
              call mem_est('gsqF_fan',(/size(gsqF_fan)/),(/SP/),errors=(/alloc_err/))
-             allocate(gsqF_ca_corr(PAR_nQP,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
+             allocate(gsqF_ca_corr(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
              call mem_est('gsqF_ca_corr',(/size(gsqF_ca_corr)/),(/SP/),errors=(/alloc_err/))
              gsqF_fan=0.
              gsqF_ca_corr=0.
            endif
-           allocate(gsqF_dw(PAR_nQP,PAR_nQ,ph_modes),stat=alloc_err)
+           allocate(gsqF_dw(QP_n_states,PAR_nQ,ph_modes),stat=alloc_err)
            call mem_est('gsqF_dw',(/size(gsqF_dw)/),(/SP/),errors=(/alloc_err/))
-           allocate(gsqF_life_bose(PAR_nQP,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
+           allocate(gsqF_life_bose(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
            call mem_est('gsqF_life_bose',(/size(gsqF_life_bose)/),(/SP/),errors=(/alloc_err/))
-           allocate(gsqF_life_f(PAR_nQP,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
+           allocate(gsqF_life_f(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps),stat=alloc_err)
            call mem_est('gsqF_life_f',(/size(gsqF_life_f)/),(/SP/),errors=(/alloc_err/))
            gsqF_dw=0.
            gsqF_life_bose=0.

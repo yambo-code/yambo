@@ -1,6 +1,7 @@
 ELPH_objects =
 #if defined _ELPH 
-ELPH_objects = ELPH_Sigma_c.o ELPH_Hamiltonian.o 
+ELPH_objects = ELPH_Sigma_c.o ELPH_Hamiltonian.o ELPH_simmetrize_and_distribute_gsqF.o \
+               ELPH_gsqF_to_Sigma.o
 #endif
 SC_objects =
 #if defined _SC

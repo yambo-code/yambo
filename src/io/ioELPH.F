@@ -40,6 +40,7 @@ integer function ioELPH(ID,what)
  use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use fragments,      ONLY:io_fragment
+ use parallel_m,     ONLY:PAR_Q_index
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -51,7 +52,7 @@ integer function ioELPH(ID,what)
  !
  !Work Space
  !
- integer                ::iq,im,ik,i1,i2,ierr,VAR_SZ_
+ integer                ::iq,im,ik,i1,i2,ierr,VAR_SZ_,i_qp,iq_mem
  real(SP), allocatable  ::elph_gkkp_disk(:,:,:),pol_vec_disk(:,:,:,:)
  character(schlen)      ::db_name
  !
@@ -145,30 +146,6 @@ integer function ioELPH(ID,what)
  iq=maxval(io_sec(ID,:))-1
  if (iq<=0) goto 1
  !
- if (what=='gFsq') then
-   !
-   call io_bulk(ID,VAR="QP_table",VAR_SZ=(/QP_n_states,3+n_sp_pol-1/))
-   call io_bulk(ID,I2=QP_table)
-   call io_bulk(ID,VAR="ELPH_GFSQ_fan",VAR_SZ=(/QP_n_states,elph_nDBs_used,ph_modes/))
-   call io_bulk(ID,R3=gsqF_fan(:,:,:,1))
-   call io_bulk(ID,VAR="ELPH_GFSQ_dw",VAR_SZ=(/QP_n_states,elph_nDBs_used,ph_modes/))
-   call io_bulk(ID,R3=gsqF_dw(:,:,:))
-   call io_bulk(ID,VAR="ELPH_GFSQ_ca_corr",VAR_SZ=(/QP_n_states,elph_nDBs_used,ph_modes/))
-   call io_bulk(ID,R3=gsqF_ca_corr(:,:,:,1))
-   call io_bulk(ID,VAR="ELPH_GFSQ_life_bose",VAR_SZ=(/QP_n_states,elph_nDBs_used,ph_modes/))
-   call io_bulk(ID,R3=gsqF_life_bose(:,:,:,1))
-   call io_bulk(ID,VAR="ELPH_GFSQ_life_f",VAR_SZ=(/QP_n_states,elph_nDBs_used,ph_modes/))
-   call io_bulk(ID,R3=gsqF_life_f(:,:,:,1))
-   !
-   ! PH frequencies
-   !
-   call io_bulk(ID,VAR="PH_FREQS",VAR_SZ=(/elph_nDBs,ph_modes/))
-   call io_bulk(ID,R2=ph_freqs_sq)
-   !
-   goto 1
-   !
- endif
- !
  ! Fragmentation
  !
  call io_fragment(ID,i_fragment=iq,ierr=ierr)
@@ -180,6 +157,40 @@ integer function ioELPH(ID,what)
  if (ierr<0.and.read_is_on(ID)) then
    ioELPH=-1
    goto 1
+ endif
+ !
+ if (what=='gFsq') then
+   !
+   if (iq==1) then
+     call io_bulk(ID,VAR="QP_table",VAR_SZ=(/QP_n_states,3+n_sp_pol-1/))
+     call io_bulk(ID,I2=QP_table)
+   endif
+   !
+   iq_mem=iq
+   if (allocated(PAR_Q_index)) then
+     iq_mem=PAR_Q_index(iq)
+   endif
+   !
+   call io_bulk(ID,VAR="ELPH_GFSQ_fan_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
+   call io_bulk(ID,R2=gsqF_fan(:,iq_mem,:,1))
+   call io_bulk(ID,VAR="ELPH_GFSQ_dw_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
+   call io_bulk(ID,R2=gsqF_dw(:,iq_mem,:))
+   call io_bulk(ID,VAR="ELPH_GFSQ_ca_corr_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
+   call io_bulk(ID,R2=gsqF_ca_corr(:,iq_mem,:,1))
+   call io_bulk(ID,VAR="ELPH_GFSQ_life_bose_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
+   call io_bulk(ID,R2=gsqF_life_bose(:,iq_mem,:,1))
+   call io_bulk(ID,VAR="ELPH_GFSQ_life_f_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
+   call io_bulk(ID,R2=gsqF_life_f(:,iq_mem,:,1))
+   !
+   ! PH frequencies
+   !
+   if (iq==1) then
+     call io_bulk(ID,VAR="PH_FREQS",VAR_SZ=(/elph_nDBs,ph_modes/))
+     call io_bulk(ID,R2=ph_freqs_sq)
+   endif
+   !
+   goto 1
+   !
  endif
  !
  ! Allocation

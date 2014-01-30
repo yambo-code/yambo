@@ -147,7 +147,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! Constant N 
  !============
- call RT_impose_N(k) 
+ !call RT_impose_N(k) 
  !
  ! Zero dN/dT & dE/dT 
  !====================

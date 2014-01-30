@@ -40,7 +40,12 @@ integer function ioELPH(ID,what)
  use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use fragments,      ONLY:io_fragment
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+ !
  implicit none
+ !
  integer      ::ID
  character(*) ::what
  !
@@ -49,6 +54,10 @@ integer function ioELPH(ID,what)
  integer                ::iq,im,ik,i1,i2,ierr,VAR_SZ_
  real(SP), allocatable  ::elph_gkkp_disk(:,:,:),pol_vec_disk(:,:,:,:)
  character(schlen)      ::db_name
+ !
+#if defined _TIMING
+ call timing('io_ELPH',OPR='start')
+#endif
  !
  if (what=='gkkp'.or.what=='no_gkkp') db_name='elph_gkkp'
  if (what=='gkkp_expanded')           db_name='elph_gkkp_expanded'
@@ -277,5 +286,9 @@ integer function ioELPH(ID,what)
  enddo
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_ELPH',OPR='stop')
+#endif
  !
 end function

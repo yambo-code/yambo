@@ -29,6 +29,7 @@ integer function RT_SET_lifetimes_evaluation_plan( )
  use memory_m,       ONLY:mem_est
  use real_time,      ONLY:RT_GAMMA_T_status,NE_steps,RT_dynamics_steps,Life_MEM_steps,&
 &                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time,it_start
+ use LIVE_t,         ONLY:live_timing
  !
  implicit none
  !
@@ -85,7 +86,11 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    it_0=-1
  endif
  !
+ call live_timing('Lifetimes evaluation plan',NE_steps)
+ !
  do it=it_start,NE_steps
+   !
+   call live_timing(steps=1)
    !
    it_relative  = mod(it-it_last,Nt_each_group)+1
    !
@@ -117,13 +122,15 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    !
  enddo
  !
+ call live_timing( )
+ !
  contains
    !
    subroutine BUILD_up_group(INTRA_steps)
      !
      integer :: it_,INTRA_steps
      !
-     do it_=1,NE_steps
+     do it_=1,INTRA_steps*Life_MEM_steps
        !
        if (it_+it-1>NE_steps) cycle
        !

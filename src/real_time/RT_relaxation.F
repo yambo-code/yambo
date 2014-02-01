@@ -147,14 +147,14 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! Constant N 
  !============
- call RT_impose_N(k) 
+ !call RT_impose_N(k) 
  !
  ! Zero dN/dT & dE/dT 
  !====================
- if (l_elel_scatt) call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime)
+ if (l_elel_scatt) call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel') 
  if (l_elph_scatt) then
-   call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime)
-   call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime)
+   call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph')
+   call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph')
  endif
  !
  ! Dephasing Matrix

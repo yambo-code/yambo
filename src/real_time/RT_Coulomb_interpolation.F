@@ -136,7 +136,7 @@ subroutine RT_Coulomb_interpolation(E,k)
  !
  do ifit=1,2
    !
-   l_condition(ifit)=err_fit(ifit+2)<0.05
+   l_condition(ifit)=err_fit(ifit+2)<0.10
    if (l_condition(ifit) ) Nfitted_lifetimes(ifit)=Nfitted_lifetimes(ifit)+1
    if (Nfitted_lifetimes(ifit)>500) l_lftm_fit_stable(ifit)=.true.
    !

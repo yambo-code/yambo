@@ -53,7 +53,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  integer     :: ib,ik,ik_rim,iE_rim
  real(SP)    :: Energy,Occupations(SC_bands(1):SC_bands(2),RT_nk)
- complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,E_mg,N_holes,N_elecs
+ complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,E_mg,N_holes,N_elecs,VALUE_tmp(2)
  !
  if ( .not.RT_do_IO('OUT') ) return      
  !
@@ -136,6 +136,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  do ik=1,en%nk
    do ib=SC_bands(1),SC_bands(2)
+     VALUE_tmp=(0._SP,0._SP)
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        if(l_RT_uses_E_RIM) then
          iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
@@ -143,11 +144,11 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
        else
          Energy=en%E(ib,ik,1)
        endif
-       if(Energy<=en%Efermi(1) ) N_holes=N_holes+&
-         &  (spin_occ-aimag(G_lesser(ib,ib,ik_rim)))*k%weights(ik)/real(RT_Nk_ibz(ik))
-       if(Energy> en%Efermi(1) ) N_elecs=N_elecs+&
-         &            aimag(G_lesser(ib,ib,ik_rim)) *k%weights(ik)/real(RT_Nk_ibz(ik))
+       if(Energy<=en%Efermi(1) ) VALUE_tmp(1)=VALUE_tmp(1)+(spin_occ-aimag(G_lesser(ib,ib,ik_rim)))
+       if(Energy> en%Efermi(1) ) VALUE_tmp(2)=VALUE_tmp(2)+          aimag(G_lesser(ib,ib,ik_rim))
      enddo
+     N_holes=N_holes+VALUE_tmp(1)*k%weights(ik)/real(RT_Nk_ibz(ik))
+     N_elecs=N_elecs+VALUE_tmp(2)*k%weights(ik)/real(RT_Nk_ibz(ik))
    enddo
  enddo
  !

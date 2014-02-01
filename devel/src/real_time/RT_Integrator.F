@@ -94,7 +94,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
    !
  else if(trim(Integrator)==RK2) then
    !
-   ! Evaluate G(t+dt/2)
+   ! Evaluate G(t+dt/2)=G(t) + dt/2 * (I1(t) - I2(t))
    !
    do ik=1,RT_nk
      call RT_build_I1_and_I2(G_old(:,:,ik),RT_all2ibz(ik),ik,I1_k,I2_k)
@@ -117,7 +117,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
    !
    ! final step G(t+dt)=G(t) + dt * (I1(t+dt/2) - I2(t+dt/2))
    !
-    do ik=1,RT_nk
+   do ik=1,RT_nk
      call RT_build_I1_and_I2(G_new(:,:,ik),RT_all2ibz(ik),ik,I1_k,I2_k)
      call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step)
    enddo

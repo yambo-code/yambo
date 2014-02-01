@@ -45,7 +45,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q,G_lesser)
  integer               :: i_qp,i_qp1,i_p,i_p_bz,ik_m_q,i_pmq,i_n,i_m,i_mp,i_np,ik_rim,&
 &                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_q_mem,i_pmq_bz,i1,i2,&
 &                         i_J,i_J_bg,i_J_mem,ik_m_q_rim
- real(SP)              :: f_p,f_kmq,f_pmq,pre_factor,P_pl_abs,deg_factor,&
+ real(SP)              :: f_p,f_kmq,f_pmq,pre_factor,P_pl_abs,&
 &                         plasma_freq,plasma_width,DELTA_E,DELTA_W
  !
  real(SP)              :: N_plasma(2)
@@ -96,10 +96,9 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q,G_lesser)
        f_pmq =-cI*G_lesser(i_mp,i_mp,RT_ibz_coo(i_pmq,1))
        !
        E_plasma=E_plasma+cmplx(delta_E,delta_W)
-       deg_factor=1._SP
        !
-       N_plasma(1)=N_plasma(1)+(2._SP-f_p)*f_pmq/spin_occ/deg_factor
-       N_plasma(2)=N_plasma(2)+(2._SP-f_pmq)*f_p/spin_occ/deg_factor
+       N_plasma(1)=N_plasma(1)+(2._SP-f_p)*f_pmq/spin_occ
+       N_plasma(2)=N_plasma(2)+(2._SP-f_pmq)*f_p/spin_occ
        !
      enddo
      N_plasma=N_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)

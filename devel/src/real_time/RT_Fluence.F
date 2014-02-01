@@ -98,6 +98,8 @@ subroutine RT_Fluence(i_field)
    !
  enddo
  !
+ if(it>NE_steps) it=NE_steps
+ !
  Efield(i_field)%t_final_indx=it
  Efield(i_field)%t_final=(Efield(i_field)%t_final_indx-1)*RT_step
  !

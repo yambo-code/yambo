@@ -54,8 +54,9 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  !
  ! Work Space
  !
- integer     :: i1,ik,SC_bands2,ik_ibz
+ integer     :: i1,ik,ik_RIM,SC_bands2,ik_ibz
  complex(SP) :: Hk(SC_bands(2),SC_bands(2),n_sp_pol)
+ complex(SP) :: VALUE_tmp
  !
 #if defined _TIMING
  call timing('RT average Op',OPR='start')
@@ -74,8 +75,12 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
      VALUE=VALUE+sum(en%f(i1,:,1)*k%weights(:))
    enddo
    do i1=SC_bands(1),SC_bands(2)
-     do ik=1,RT_nk
-       VALUE=VALUE-cI*G(i1,i1,ik)*k%weights(RT_all2ibz(ik))/real(RT_Nk_ibz(RT_all2ibz(ik)))
+     do ik_ibz=1,k%nibz
+       VALUE_tmp=(0._SP,0._SP)
+       do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
+         VALUE_tmp=VALUE_tmp-cI*G(i1,i1,ik)
+       enddo
+       VALUE=VALUE+VALUE_tmp*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
      enddo
    enddo
    !
@@ -91,18 +96,20 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
    !
    call make_Hk_matrix(ik_ibz)
    !
+   VALUE_tmp=(0._SP,0._SP)
+   !
    do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
      !
 #if defined _OPENMP
-     VALUE=VALUE-cI*Vstar_dot_V_omp(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
-&                                             G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))*&  
-&                                             k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+     VALUE_tmp=VALUE_tmp-cI*Vstar_dot_V_omp(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
+&                                             G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))
 #else
-     VALUE=VALUE-cI*Vstar_dot_V(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
-&                                             G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))*&  
-&                                             k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+     VALUE_tmp=VALUE_tmp-cI*Vstar_dot_V(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
+&                                             G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))
 #endif
    enddo
+   !
+   VALUE=VALUE+VALUE_tmp*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
    !
  enddo
  !

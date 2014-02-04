@@ -39,7 +39,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
 &                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,PPA_terminator,l_QP_Expand,QP_G_info
 #if defined _ELPH
- use ELPH,          ONLY:QP_DW,QP_TadPole,QP_OMS_Fan
+ use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
  use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
@@ -362,14 +362,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      !
 #if defined _ELPH
      if (l_elph_corr) then
-       if (On_Mass_Shell_approx) then
-         allocate(QP_OMS_Fan(QP_n_states))
-         call mem_est("QP_OMS_Fan",(/size(QP_OMS_Fan)/))
-       endif
+       allocate(QP_OMS_Fan(QP_n_states))
+       call mem_est("QP_OMS_Fan",(/size(QP_OMS_Fan)/))
        allocate(QP_DW(QP_n_states))
        call mem_est("QP_DW",(/size(QP_DW)/))
-       allocate(QP_TadPole(QP_n_states))
-       call mem_est("QP_TadPole",(/size(QP_TadPole)/))
      endif
 #endif
      !
@@ -397,7 +393,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 #if defined _ELPH
      if (allocated(QP_DW))          deallocate(QP_DW)
      if (allocated(QP_OMS_Fan))     deallocate(QP_OMS_Fan)
-     if (allocated(QP_TadPole))     deallocate(QP_TadPole)
 #endif
      if (allocated(QP_Sc))          deallocate(QP_Sc)
      if (allocated(QP_dSc))         deallocate(QP_dSc)
@@ -420,7 +415,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      call mem_est("QP_G_amplitude_integral")
      call mem_est("QP_Sc QP_dSc qp_GreenF QP_Vnl_xc QP_Vxc qp_GreenF_W QP_G_zoom_er")
      call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state qp_S_total")
-     call mem_est("QP_DW QP_OMS_Fan QP_TadPole")
+     call mem_est("QP_DW QP_OMS_Fan")
    end subroutine
    !
 end subroutine

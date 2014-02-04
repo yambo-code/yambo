@@ -341,8 +341,10 @@ subroutine RT_initialize(E,k,q)
    call msg('r','Gauge                       :',trim(global_gauge))
    call msg('r','Pump/Probe periodicity  [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
    call msg('r','Pump/Probe energy step  [eV]:',maxval(Efield(:)%W_step)*HA2EV)
-   call msg('r','Max Fluence        [kJ/cm^2]:',Efield(i_Pump)%Fluence( Efield(i_Pump)%t_final_indx ))
-   call msg('r','           reached time [fs]:',Efield(i_Pump)%t_final)
+   if ( l_field_is_a_pulse ) then
+     call msg('r','Max Fluence        [kJ/cm^2]:',Efield(i_Pump)%Fluence( Efield(i_Pump)%t_final_indx ))
+     call msg('r','           reached time [fs]:',Efield(i_Pump)%t_final/FS2AUT)
+   endif
    do i1=1,n_ext_fields
      if (i_Pump==i_Probe.and.i1/=i_Probe.and..not.any(trim(Efield(i1)%ef_name)==(/'SIN    ','ANTIRES','RES    '/)) ) cycle
      MSG_ch="Pump"

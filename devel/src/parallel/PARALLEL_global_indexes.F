@@ -604,7 +604,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  !==============================
  if (ENVIRONMENT=="Self_Energy") then
-   !============================
+   !=================================
    !
    call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"q ","qp","b "/),&
 &                                        COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_QP_INDEX,&
@@ -640,7 +640,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      iq_range(2)=nqbz
    endif
 #if defined _ELPH
-   if (ENVIRONMENT=="ELPH".and.l_elph_corr) then
+   if (l_elph_corr) then
      if (elph_use_q_grid) then
        WHAT="bz"
        iq_range(2)=nqbz
@@ -730,8 +730,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                      COMM=PAR_COM_G_b_INDEX,CONSECUTIVE=.TRUE.)
    PAR_IND_G_b_ID=PAR_COM_G_b_INDEX%CPU_id
    !
-   call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT, &
-&                LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz)
    call PARALLEL_live_message("G bands",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
 &                             TOTAL=n_bands(2)-n_bands(1)+1,NCPU=PAR_COM_G_b_INDEX%n_CPU)

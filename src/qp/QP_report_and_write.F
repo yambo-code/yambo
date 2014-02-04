@@ -30,6 +30,9 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
 &                        QP_n_states,QP_dSc_steps,use_GreenF_to_eval_QP,On_Mass_Shell_approx,&
 &                        QP_solver,report_Vnlxc,report_Sc,report_dSc,Vxc_kind,Vnlxc_kind,&
 &                        l_QP_Expand,QP_reset
+#if defined _ELPH
+ use ELPH,          ONLY:QP_DW,QP_OMS_Fan
+#endif
  use electrons,     ONLY:n_sp_pol,spin,levels
  use stderr,        ONLY:gen_fmt
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
@@ -104,6 +107,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    call msg(' r','- E  : QP energy  - Z   : Renormalization factor')
    if (report_Sc) call msg(' r','- So : Sc(Eo)     - S   : Sc(E)')
    if (l_elph_corr) call msg('r', '- Gm : Width [meV]- Gf  : Width [fs]')
+   if (l_elph_corr) call msg('r', '- F  : Fan [eV]  - DW  : DW [eV]')
    if (report_dSc) call msg('rn','- dSp: Sc derivative precision')
    if (report_Vnlxc) then
      call msg('r','- lXC: Starting Local XC ('//trim(Vxc_kind)//')')
@@ -163,7 +167,14 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
    ! GPL_EXCLUDE_START
    !
+#if defined _ELPH
    if (l_elph_corr) then
+     n_shadows=n_shadows+1
+     shadow_string(n_shadows)=' F ='
+     shadow(n_shadows)=QP_OMS_Fan(iqp)*HA2EV
+     n_shadows=n_shadows+1
+     shadow_string(n_shadows)=' DW='
+     shadow(n_shadows)=QP_DW(iqp)*HA2EV
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' Gm='
      shadow(n_shadows)=aimag(qp%E(iqp))*HA2EV/1.E-3
@@ -173,6 +184,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
        shadow(n_shadows)=HBAR_eVfs/aimag(qp%E(iqp))/HA2EV
      endif
    endif 
+#endif
    !
    ! GPL_EXCLUDE_END
    !

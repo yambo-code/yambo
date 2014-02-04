@@ -29,6 +29,7 @@ integer function RT_SET_lifetimes_evaluation_plan( )
  use memory_m,       ONLY:mem_est
  use real_time,      ONLY:RT_GAMMA_T_status,NE_steps,RT_dynamics_steps,Life_MEM_steps,&
 &                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time,it_start
+ use LIVE_t,         ONLY:live_timing
  !
  implicit none
  !
@@ -85,16 +86,20 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    it_0=-1
  endif
  !
+ call live_timing('Lifetimes evaluation plan',NE_steps)
+ !
  do it=it_start,NE_steps
+   !
+   call live_timing(steps=1)
    !
    it_relative  = mod(it-it_last,Nt_each_group)+1
    !
    if (it_relative>1) cycle
    !
    if (NE_steps-it+1<N_intra_steps*Life_MEM_steps) then
-     call BUILD_up_group(Life_MEM_steps,1)
+     call BUILD_up_group(1)
    else
-     call BUILD_up_group(min(N_inter_steps,NE_steps-it+1),N_intra_steps)
+     call BUILD_up_group(N_intra_steps)
    endif
    if (it==it_start) then
      do it_=it_start,it_start+N_intra_steps*(Life_MEM_steps-1)-1
@@ -116,25 +121,18 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    RT_SET_lifetimes_evaluation_plan=RT_SET_lifetimes_evaluation_plan+1
    !
  enddo
- !DEBUG>
- !if (it_start>1) then
- ! do it=it_start,NE_steps
- !   TIME=RT_step*(it-1)
- !   write (*,*) it,RT_GAMMA_T_status(it)
- !   !if (RT_GAMMA_T_status(it)==1) write (300,*) real(TIME)/FS2AUT,1
- !   !write (100,*) real(TIME)/FS2AUT,RT_GAMMA_T_status(it),weight(it)
- ! enddo
- ! stop
- !endif
- !DEBUG<
+ !
+ call live_timing( )
  !
  contains
    !
-   subroutine BUILD_up_group(Group_SIZE,INTRA_steps)
+   subroutine BUILD_up_group(INTRA_steps)
      !
-     integer :: Group_SIZE,it_,INTRA_steps
+     integer :: it_,INTRA_steps
      !
-     do it_=1,Group_SIZE
+     do it_=1,INTRA_steps*Life_MEM_steps
+       !
+       if (it_+it-1>NE_steps) cycle
        !
        RT_GAMMA_T_status(it_+it-1)=0
        !

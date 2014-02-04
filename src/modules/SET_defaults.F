@@ -71,7 +71,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     FXC_is_causal,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
- use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,nQ_memory,&
+ use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,&
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh
 #endif
  use memory_m,   ONLY:mem_reset
@@ -474,7 +474,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  elph_branches=0
  gsqF_energy_steps=2
  eval_G_using_KK=.false.
- nQ_memory=0
  elph_Ham_bands=0
  elph_Ham_ik=1
  RES_tresh=0.01

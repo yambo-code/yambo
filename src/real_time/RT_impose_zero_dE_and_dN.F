@@ -42,7 +42,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  real(SP)         :: f_occ,k_weight,En
  real(SP)         :: prefactor(2)
  real(SP)         :: N_valence,N_conduction,delta_N,E_valence,E_conduction,delta_E
- real(SP)         :: SUM_N_Holes(2),SUM_E_Holes(2),SUM_N_Electrons(2),SUM_E_Electrons(2)
+ real(SP)         :: SUM_N_Holes(2),SUM_E_Holes(2),SUM_N_Electrons(2),SUM_E_Electrons(2),TMP_VALUE(4)
  !
  logical          :: l_energy
  logical          :: l_n_electrons
@@ -135,20 +135,29 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  if(trim(Scatt_kind)=='elel') i1=1
  if(trim(Scatt_kind)=='elph') i1=0
  !
- do ik=1,k%nibz
-   k_weight=k%weights(ik)/real(RT_Nk_ibz(ik))
-   do ik_rim=RT_ibz_coo(ik,1)+i1,RT_ibz_coo(ik,2)
-     iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
-     do ib=SC_bands(1),SC_bands(2)
-       if(ib<=E%nbf) indx=1
-       if(ib> E%nbf) indx=2
+ do ib=SC_bands(1),SC_bands(2)
+   if(ib<=E%nbf) indx=1
+   if(ib> E%nbf) indx=2
+	 do ik=1,k%nibz
+     !
+     TMP_VALUE=0._SP
+		 k_weight=k%weights(ik)/real(RT_Nk_ibz(ik))
+     !
+		 do ik_rim=RT_ibz_coo(ik,1)+i1,RT_ibz_coo(ik,2)
+	     iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
        f_occ=-cI*G_lesser(ib,ib,ik_rim,MEM_index(it_now,G_MEM_steps))
        En=E%E_RIM(ib,iE_rim,1)
-       SUM_N_Holes(indx)=SUM_N_Holes(indx)+(Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ))*k_weight
-       SUM_N_Electrons(indx)=SUM_N_Electrons(indx)+(Electron_lifetime(ib,ik_rim)*f_occ)*k_weight
-       SUM_E_Holes(indx)=SUM_E_Holes(indx)+(En*Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ))*k_weight
-       SUM_E_Electrons(indx)=SUM_E_Electrons(indx)+(En*Electron_lifetime(ib,ik_rim)*f_occ)*k_weight
+       TMP_VALUE(1)=TMP_VALUE(1)+Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ)
+       TMP_VALUE(2)=TMP_VALUE(2)+Electron_lifetime(ib,ik_rim)*f_occ
+       TMP_VALUE(3)=TMP_VALUE(3)+En*Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ)
+       TMP_VALUE(4)=TMP_VALUE(4)+En*Electron_lifetime(ib,ik_rim)*f_occ
      enddo
+     !
+     SUM_N_Holes(indx)=SUM_N_Holes(indx)+TMP_VALUE(1)*k_weight
+     SUM_N_Electrons(indx)=SUM_N_Electrons(indx)+TMP_VALUE(2)*k_weight
+     SUM_E_Holes(indx)=SUM_E_Holes(indx)+TMP_VALUE(3)*k_weight
+     SUM_E_Electrons(indx)=SUM_E_Electrons(indx)+TMP_VALUE(4)*k_weight
+     !
    enddo
  enddo
  !

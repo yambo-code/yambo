@@ -163,11 +163,9 @@ subroutine RT_occupations_analyze(k,E)
    RT_occupations_sum=0._SP
  endif
  !
- if(l_RT_occ_Fit) then
-   allocate(RT_occ(RT_nstates,n_T_steps),RT_gamma(RT_nstates,n_T_steps,6))
-   RT_occ=0._SP
-   RT_gamma=0._SP
- endif
+ allocate(RT_occ(RT_nstates,n_T_steps),RT_gamma(RT_nstates,n_T_steps,6))
+ RT_occ=0._SP
+ RT_gamma=0._SP
  !
  do i_T=1,n_T_steps
    !
@@ -209,28 +207,26 @@ subroutine RT_occupations_analyze(k,E)
        n1=1
        if (l_ELPH_lifetimes) then
          n1=5
-         data_to_plot(3:4)=data_to_plot(3:4) + &
-&           (/E_P_Hole_lifetime(ib,ik_rim),E_P_Electron_lifetime(ib,ik_rim)/)*HA2EV*1000._SP
-         data_to_plot(5:6)=data_to_plot(5:6) + &
-&           (/E_P_Ho_abs_lifetime(ib,ik_rim),E_P_El_abs_lifetime(ib,ik_rim)/)*HA2EV*1000._SP
+         RT_gamma(i_RT,i_T,1)=E_P_Hole_lifetime(ib,ik_rim)
+         RT_gamma(i_RT,i_T,2)=E_P_Electron_lifetime(ib,ik_rim)
+         RT_gamma(i_RT,i_T,3)=E_P_Ho_abs_lifetime(ib,ik_rim)
+         RT_gamma(i_RT,i_T,4)=E_P_El_abs_lifetime(ib,ik_rim)
        endif
        !
        if (l_elel_scatt) then
          n1=3
          if (l_ELPH_lifetimes) n1=7
-         data_to_plot(n1:n1+1)=data_to_plot(n1:n1+1)+ &
-&          (/E_E_Hole_lifetime(ib,ik_rim),E_E_Electron_lifetime(ib,ik_rim)/)*HA2EV*1000.
+         RT_gamma(i_RT,i_T,n1-2)=E_E_Hole_lifetime(ib,ik_rim)
+         RT_gamma(i_RT,i_T,n1-1)=E_E_Electron_lifetime(ib,ik_rim)
        endif
+       !
+       RT_gamma(i_RT,i_T,:)=RT_gamma(i_RT,i_T,:)*HA2EV*1000.
+       RT_occ(i_RT,i_T)=RT_occupations(ib,ik_rim)
+       !
+       data_to_plot(3:8)=data_to_plot(3:8)+RT_gamma(i_RT,i_T,1:6)
        !
        if(ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) &
 &        data_to_plot(3:)=data_to_plot(3:)/real(RT_NK_ibz(ik),SP)
-       !
-       ! Prepare f(eps_{ik,ib}) for i_T=it_report
-       !
-       if(l_RT_occ_Fit) then
-         RT_occ(i_RT,i_T)=RT_occupations(ib,ik_rim)
-         RT_gamma(i_RT,i_T,1:n1-1)=data_to_plot(3:n1+1)
-       endif
        !
        if (.not.l_RT_occ_Plot) cycle
        !

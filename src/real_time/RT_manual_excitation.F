@@ -25,6 +25,7 @@ subroutine RT_manual_excitation(E,k)
  use units,          ONLY:BO2ANG
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
+ use fields,         ONLY:l_manual_excitation
  use SC,             ONLY:SC_bands,RT_ibz_coo,RT_Nk_ibz
  use real_time,      ONLY:G_lesser,Eh_pumped_pair_energy,Eh_pumped_pair_width,  &
 &                         Eh_pumped_Nel
@@ -42,12 +43,10 @@ subroutine RT_manual_excitation(E,k)
  !
  integer :: i1,i2,i3,ib,ik,ik_rim,Pump_level(E%nb,E%nk)
  real(SP):: local_E_window,coeff,delta_Nel,occupation,local_energy(2)
- logical :: Pumped_state(E%nb,E%nk),l_manual_excitation
+ logical :: Pumped_state(E%nb,E%nk)
  !
  ! Possibility to pump by hand one or more electrons up
  !======================================================
- !
- call parser('RTpumpEhEn',l_manual_excitation)
  !
  if (.not.l_manual_excitation) return
  !

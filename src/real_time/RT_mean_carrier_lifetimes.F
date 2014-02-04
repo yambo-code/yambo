@@ -38,7 +38,7 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
  ! Work space
  !
  integer            :: ib,ik
- real(SP)           :: n_states,pre_factor
+ real(SP)           :: n_states,pre_factor,sum_lifetimes(2)
  real(SP)           :: EE_occupations(SC_bands(1):SC_bands(2),RT_nk),&
 &                      EP_occupations(SC_bands(1):SC_bands(2),RT_nk)
  !
@@ -56,14 +56,27 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
      !
      n_states=n_states+pre_factor
      !
-     if (allocated(E_P_Hole_lifetime)) &
-     &  EP_occupations(ib,ik)=( E_P_Hole_lifetime(ib,ik)+E_P_Ho_abs_lifetime(ib,ik)     ) /  &
-     &                        ( E_P_Hole_lifetime(ib,ik)+E_P_Ho_abs_lifetime(ib,ik) +        &
-     &                          E_P_Electron_lifetime(ib,ik)+E_P_El_abs_lifetime(ib,ik) )*spin_occ
+     if (allocated(E_P_Hole_lifetime)) then
+       sum_lifetimes(1)= E_P_Hole_lifetime(ib,ik)+E_P_Ho_abs_lifetime(ib,ik)
+       sum_lifetimes(2)= E_P_Electron_lifetime(ib,ik)+E_P_El_abs_lifetime(ib,ik)+sum_lifetimes(1)
+       if(sum_lifetimes(2)>0._SP) then
+         EP_occupations(ib,ik)=sum_lifetimes(1)/sum_lifetimes(2)*spin_occ
+       else
+         if(ib<=E%nbf) EP_occupations(ib,ik)=spin_occ
+         if(ib> E%nbf) EP_occupations(ib,ik)=0._SP
+       endif
+     endif
      !
-     if (allocated(E_E_Hole_lifetime).and..not.l_RT_uses_E_rim) &
-     &  EE_occupations(ib,ik)=  E_E_Hole_lifetime(ib,ik) /      &
-     &                        ( E_E_Hole_lifetime(ib,ik) + E_E_Electron_lifetime(ib,ik) )*spin_occ
+     if (allocated(E_E_Hole_lifetime).and..not.l_RT_uses_E_rim) then
+       sum_lifetimes(1)= E_E_Hole_lifetime(ib,ik)
+       sum_lifetimes(2)= E_E_Electron_lifetime(ib,ik)+E_E_Hole_lifetime(ib,ik)
+       if(sum_lifetimes(2)>0._SP) then
+         EE_occupations(ib,ik)=sum_lifetimes(1)/sum_lifetimes(2)*spin_occ
+       else
+         if(ib<=E%nbf) EE_occupations(ib,ik)=spin_occ
+         if(ib> E%nbf) EE_occupations(ib,ik)=0._SP
+       endif
+     endif
      !
      if (allocated(E_P_Hole_lifetime)) then
        RT_mean_lifetimes(2)=RT_mean_lifetimes(2)+E_P_Electron_lifetime(ib,ik)*pre_factor

@@ -189,13 +189,18 @@ module real_time
  real(SP),    allocatable :: SAVED_times(:)
  real(SP),    allocatable :: SAVED_lifetime(:,:,:,:)
  !
- ! ... ouput Lifetimes ratio fit and temperatures
+ ! Ouput Lifetimes, ratio fit and temperatures
  !
  logical                  :: l_lftm_fit_stable(2)
  integer                  :: Nfitted_lifetimes(2)
  real(SP)                 :: RT_mean_lifetimes(6)
  real(SP)                 :: RT_Tfit_lifetimes(4)
  real(SP)                 :: RT_Efit_lifetimes(4)
+ !
+ ! Occupations fit
+ !
+ real(SP)                 :: RT_Tfit_occupations(2)
+ real(SP)                 :: RT_Efit_occupations(2)
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
@@ -402,7 +407,7 @@ module real_time
      allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
      !
-     if(RT_is_dephased.or.l_elph_scatt) then
+     if(RT_is_dephased.or.l_elph_scatt.or.l_elel_scatt) then
        allocate(Sigma_relax(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
        call mem_est("Sigma_relax",(/size(Sigma_relax)/),(/2*SP/))
      endif

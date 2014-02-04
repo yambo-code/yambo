@@ -26,10 +26,12 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands,RT_nk,RT_Nk_ibz,RT_ibz_coo
+ use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations
  use X_m,            ONLY:P_square
- use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen, &
-&                         l_NE_simulate_IP,RIM_ibz_coo,l_RT_uses_E_RIM,RT_do_IO,&
-&                         RT_IO_output_steps,NE_i_time
+ use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,         &
+&                         l_NE_simulate_IP,RIM_ibz_coo,l_RT_uses_E_RIM,RT_do_IO, &
+&                         RT_IO_output_steps,NE_i_time,RT_Tfit_occupations,      &
+&                         RT_Efit_occupations
  use electrons,      ONLY:levels,spin_occ
  use QP_m,           ONLY:QP_Vnl_xc
  use xc_functionals, ONLY:E_xc,XC_potential_driver
@@ -50,8 +52,8 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! WorkSpace
  !
  integer     :: ib,ik,ik_rim,iE_rim
- real(SP)    :: Energy,T_fit(2),Ef_fit(2),Occupations(SC_bands(1):SC_bands(2),RT_nk)
- complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,E_mg,N_holes,N_elecs
+ real(SP)    :: Energy,Occupations(SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,E_mg,N_holes,N_elecs,VALUE_tmp(2)
  !
  if ( .not.RT_do_IO('OUT') ) return      
  !
@@ -67,9 +69,6 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  E_mg     =(0._SP,0._SP)
  N_holes  =(0._SP,0._SP)
  N_elecs  =(0._SP,0._SP)
- Ef_fit   = 0._SP
- T_fit    = 0._SP
- if(NE_i_time-1>=RT_IO_output_steps) T_fit=real(on_the_fly_operators(8:9))/HA2KEL
  !
  ! Non-interaction kinetc energy
  !
@@ -129,7 +128,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! Electrons and holes temperatures
  !
  forall(ib=SC_bands(1):SC_bands(2)) Occupations(ib,:)=aimag(G_lesser(ib,ib,:))
- call RT_occupations_FIT_and_lock(en,k,T_fit,Ef_fit,Occupations)
+ call RT_occupations_FIT_and_lock(en,k,RT_Tfit_occupations,RT_Efit_occupations,Occupations)
  !
  ! Number of Holes in the valence band and
  ! Number of Electrons in the conduction band
@@ -137,6 +136,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  do ik=1,en%nk
    do ib=SC_bands(1),SC_bands(2)
+     VALUE_tmp=(0._SP,0._SP)
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        if(l_RT_uses_E_RIM) then
          iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
@@ -144,11 +144,11 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
        else
          Energy=en%E(ib,ik,1)
        endif
-       if(Energy<=en%Efermi(1) ) N_holes=N_holes+&
-         &  (spin_occ-aimag(G_lesser(ib,ib,ik_rim)))*k%weights(ik)/real(RT_Nk_ibz(ik))
-       if(Energy> en%Efermi(1) ) N_elecs=N_elecs+&
-         &            aimag(G_lesser(ib,ib,ik_rim)) *k%weights(ik)/real(RT_Nk_ibz(ik))
+       if(Energy<=en%Efermi(1) ) VALUE_tmp(1)=VALUE_tmp(1)+(spin_occ-aimag(G_lesser(ib,ib,ik_rim)))
+       if(Energy> en%Efermi(1) ) VALUE_tmp(2)=VALUE_tmp(2)+          aimag(G_lesser(ib,ib,ik_rim))
      enddo
+     N_holes=N_holes+VALUE_tmp(1)*k%weights(ik)/real(RT_Nk_ibz(ik))
+     N_elecs=N_elecs+VALUE_tmp(2)*k%weights(ik)/real(RT_Nk_ibz(ik))
    enddo
  enddo
  !
@@ -157,7 +157,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  on_the_fly_operators(1:4)=(/E_kin,E_ion,E_h,Exc/)*HA2EV
  on_the_fly_operators(5)=(E_kin+E_ion+E_h+Exc)*HA2EV
  on_the_fly_operators(6:7)=(/Trace_Gf,Trace_Gf-N_holes-N_elecs/)
- on_the_fly_operators(8:9)=cmplx(T_fit(:),0._SP)*HA2KEL
+ on_the_fly_operators(8:9)=cmplx(RT_Tfit_occupations(:),0._SP)*HA2KEL
  !
 #if defined _TIMING
  call timing('RT observables',OPR='stop')

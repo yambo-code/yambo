@@ -23,7 +23,7 @@ subroutine RT_Fluence(i_field)
  !
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,FS2AUT
- use real_time,      ONLY:RT_step,NE_steps,RT_do_IO,NE_i_time
+ use real_time,      ONLY:RT_step,NE_steps,RT_IO_output_steps
  use fields,         ONLY:Efield,small_a,theta_function
  !
  implicit none
@@ -61,7 +61,6 @@ subroutine RT_Fluence(i_field)
  do it=Efield(i_field)%t_initial_indx,NE_steps
    !
    T(it)=it*RT_step
-   NE_i_time=it
    !
    Field_time=cmplx(T(it)-Efield(i_field)%t_initial,0._SP)
    !
@@ -78,15 +77,14 @@ subroutine RT_Fluence(i_field)
    I(it)=I(it)*AU2KWCMm2
    ! 
    ! To get the fluence in kJ/cm^2 I should translate T in secs. However to get 
-   ! the integration more stable I perform the integration in [fs] and multiply I by 10^-15
-   ! to get the proper dimensioning [sec]
+   ! the integration more stable I multiply I by 10^-15
    !
    T(it)=T(it)/FS2AUT ! au -> fs
    I(it)=I(it)*1.E-15_SP
    !
    if (it>10*Efield(i_field)%damping/RT_step) cycle
    !
-   if (.not.RT_do_IO("OUT")) cycle
+   if (mod(it,RT_IO_output_steps)/=0) cycle
    !
    Fluence(it)=RIntegrate(I(:it),T(:it),it)
    !
@@ -100,9 +98,9 @@ subroutine RT_Fluence(i_field)
    !
  enddo
  !
- if (last_it_evaluated>NE_steps) it=NE_steps
+ if(it>NE_steps) it=NE_steps
  !
- Efield(i_field)%t_final_indx=last_it_evaluated
+ Efield(i_field)%t_final_indx=it
  Efield(i_field)%t_final=(Efield(i_field)%t_final_indx-1)*RT_step
  !
  allocate(Efield(i_field)%Fluence( Efield(i_field)%t_final_indx ) )

@@ -24,8 +24,9 @@ integer function RT_SET_lifetimes_evaluation_plan( )
  ! Here I define the components of an integer array
  ! RT_GAMMA_T_status(NE_steps)
  !
+ use units
  use pars,           ONLY:IP2,SP
- use fields,         ONLY:Efield,i_Pump,ext_field,Efield_duplicate,small_a
+ use fields,         ONLY:Efield,i_Pump,ext_field,Efield_duplicate,small_a,l_manual_excitation
  use memory_m,       ONLY:mem_est
  use real_time,      ONLY:RT_GAMMA_T_status,NE_steps,RT_dynamics_steps,Life_MEM_steps,&
 &                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time,it_start
@@ -70,6 +71,7 @@ integer function RT_SET_lifetimes_evaluation_plan( )
  endif
  !
  weight=1._SP
+ it_0=1
  if (trim(RT_dynamics_KIND)=="FIELD") then
    call Efield_duplicate(Efield(i_Pump),E_dummy)
    if (trim(E_dummy%ef_name)=="QSSIN")  E_dummy%ef_name="GAUSS"
@@ -77,16 +79,29 @@ integer function RT_SET_lifetimes_evaluation_plan( )
      TIME=cmplx(RT_step*(it-1)-Efield(i_Pump)%t_initial_indx*RT_step,0._SP)
      weight(it)=abs(small_a(TIME,E_dummy,1))**2
      if (abs(weight(it)-1.)<1.E-5) it_0=it
+     if (it>Efield(i_Pump)%t_final_indx) then
+       it_0=it
+       weight(it+1:)=weight(it)
+       exit
+     endif
    enddo
- else if (RT_dynamics_decay_time>0.) then
-   do it=1,NE_steps
-     TIME=RT_step*(it-1)
-     weight(it)=exp(-TIME/RT_dynamics_decay_time)
+ endif
+ !
+ if (RT_dynamics_decay_time>0.) then
+   do it=it_0,NE_steps
+     TIME=RT_step*(it-it_0)
+     if(it>1) weight(it)=weight(it-1)
+     if(real(TIME)<RT_dynamics_decay_time) cycle
+     weight(it)=min(1._SP/(real(TIME)/RT_dynamics_decay_time)**0.5_SP,0.05)
    enddo
-   it_0=-1
  endif
  !
  call live_timing('Lifetimes evaluation plan',NE_steps)
+ !
+ do it=it_start,NE_steps
+   if (it< it_0) weight(it)=max(weight(it),0.1)
+   if (it>=it_0) weight(it)=max(weight(it),0.01)
+ enddo
  !
  do it=it_start,NE_steps
    !
@@ -103,14 +118,9 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    endif
    if (it==it_start) then
      do it_=it_start,it_start+N_intra_steps*(Life_MEM_steps-1)-1
-       if (RT_GAMMA_T_status(it_)==0) RT_GAMMA_T_status(it_)=-1
+       if (RT_GAMMA_T_status(it_)==0.and.     l_manual_excitation) RT_GAMMA_T_status(it_)= 1
+       if (RT_GAMMA_T_status(it_)==0.and..not.l_manual_excitation) RT_GAMMA_T_status(it_)=-1
      enddo
-   endif
-   !
-   if (it<it_0) then
-     weight(it)=max(weight(it),0.1)  
-   else
-     weight(it)=max(weight(it),0.01)  
    endif
    !
    N_inter_steps=real(RT_dynamics_steps(1))/weight(it)/RT_step

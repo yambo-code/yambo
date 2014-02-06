@@ -29,7 +29,7 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
 &                        gsqF_life_bose,gsqF_dw,elph_nDBs_used,elph_branches,&
 &                        elph_use_q_grid,ph_freqs_sq,QP_DW,QP_OMS_Fan
  use QP_m,          ONLY:QP_solver,QP_Sc_steps,QP_Sc_steps,QP_n_states,QP_Sc,On_Mass_Shell_approx,&
-&                        l_GF_from_CA,QP_table
+&                        QP_table
  use parallel_m,    ONLY:PAR_nQP,PAR_nQ,PAR_IND_QP,PAR_QP_index,PAR_Q_index,PAR_IND_Q,PP_redux_wait
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp

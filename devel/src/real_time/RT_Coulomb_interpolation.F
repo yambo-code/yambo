@@ -34,7 +34,7 @@ subroutine RT_Coulomb_interpolation(E,k)
  use vec_operate,     ONLY:sort
  use functions,       ONLY:Fermi_fnc,Fermi_fnc_fit
  use QP_m,            ONLY:QP_table,QP_n_states
- use SC,              ONLY:RT_ibz_coo,RT_Nk_ibz,SC_bands,it_now
+ use SC,              ONLY:RT_ibz_coo,RT_Nk_ibz,SC_bands,RT_occupations
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,         &
 &                          RIM_closest_E,RIM_ibz_coo,l_RT_uses_E_RIM,       &
 &                          MEM_index,G_MEM_steps,G_lesser,RT_Tfit_lifetimes,&
@@ -50,14 +50,14 @@ subroutine RT_Coulomb_interpolation(E,k)
  integer  :: nstates
  !
  integer  :: i_k,i_k_rim,i_E_rim,i_k_ref,i_qp,i_spin,i_n,i_n_ref,order, &
-&            ifit,i_RT,i1,i2,i_sorted,i_unsorted,nfit,nelecs,nholes,    &
+&            ifit,i_RT,i1,i2,i_sorted,i_unsorted,nfit,                  &
 &            RT_table(SC_bands(1):SC_bands(2),k%nibz),                  &
 &            E_sort_index(k%nibz*(SC_bands(2)-SC_bands(1)+1)),          &
 &            E_sort_index_m1(k%nibz*(SC_bands(2)-SC_bands(1)+1))
  !
  real(SP) :: gamma_E_factor,gamma_H_factor,alpha,beta,x,k_weight,fac,   &
 &            f_occ,SUM_N_Electrons,SUM_N_Holes,Nel_change,EPS,E_ref(2), &
-&            Energy(2)
+&            Energy(2),nelecs,nholes,VALUE_tmp(2)
  !
  logical  :: l_condition(2)
  !
@@ -106,6 +106,26 @@ subroutine RT_Coulomb_interpolation(E,k)
    enddo
    !
  enddo
+ !
+ ! Check the number of carriers
+ !
+ nholes=0._SP
+ nelecs=0._SP
+ do i_k=1,k%nibz
+   do i_n=SC_bands(1),SC_bands(2)
+     VALUE_tmp=(0._SP,0._SP)
+     do i_k_rim=RT_ibz_coo(i_k,1),RT_ibz_coo(i_k,2)
+       i_E_rim=i_k_rim-RT_ibz_coo(i_k,1)+RIM_ibz_coo(i_k,1)
+       Energy(1)=E%E_RIM(i_n,i_E_rim,1)
+       if(Energy(1)<=E%Efermi(1) ) VALUE_tmp(1)=VALUE_tmp(1)+(spin_occ-RT_occupations(i_n,i_k_rim))
+       if(Energy(1)> E%Efermi(1) ) VALUE_tmp(2)=VALUE_tmp(2)+RT_occupations(i_n,i_k_rim)
+     enddo
+     nholes=nholes+VALUE_tmp(1)*k%weights(i_k)/real(RT_Nk_ibz(i_k))
+     nelecs=nelecs+VALUE_tmp(2)*k%weights(i_k)/real(RT_Nk_ibz(i_k))
+   enddo
+ enddo
+ !
+ if(nholes<1.E-4 .and. nelecs<1.E-4) return
  ! 
  ! Step 2: I correct the gamma on the BIG gid imposing the ratio
  !         obtained fitting the ratio of the gamma on the SMALL grid

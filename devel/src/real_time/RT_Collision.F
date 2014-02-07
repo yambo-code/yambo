@@ -81,6 +81,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  call timing('RT Collisions',OPR='start')
 #endif
  !
+ !
  ! Density (needed by Hartree and local XCs)
  !=========
  !

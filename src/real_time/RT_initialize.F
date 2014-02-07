@@ -214,6 +214,32 @@ subroutine RT_initialize(E,k,q)
    if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields or thermalization provided')
  endif
  !
+ ! RIM support
+ !=============
+ l_RT_uses_E_RIM=BZ_RIM_tot_nkpts>0.and.BZ_RIM_nbands>=SC_bands(2).and..not.RIM_is_symmetry_expanded
+ !
+ if (l_RT_diagonalize.and.l_RT_uses_E_RIM) l_RT_diagonalize=.FALSE.
+ !
+ ! Number of K-points
+ !====================
+ allocate(RIM_ibz_coo(k%nibz,2))
+ allocate(RIM_bz_coo(k%nbz,2))
+ allocate(RT_ibz_coo(k%nibz,2))
+ allocate(RT_Nk_ibz(k%nibz))
+ if (l_RT_uses_E_RIM) then
+   RT_nk=RT_k_grid(E,k)
+ else
+   RT_nk=k%nibz
+   RT_Nk_ibz=1
+   allocate(RT_all2ibz(k%nibz))
+   do ik=1,k%nibz
+     RIM_ibz_coo(ik,:)=ik
+     RT_ibz_coo(ik,:)=ik
+     RT_all2ibz(ik)=ik
+   enddo
+ endif
+ RT_nstates=RT_nk*(SC_bands(2)-SC_bands(1)+1)
+ !
 #if defined _ELPH
  !
  ! Electron-phonon
@@ -223,7 +249,7 @@ subroutine RT_initialize(E,k,q)
    !
    call section('=','El-Ph matrix elements loading and setup')
    !                 =======================================
-   call RT_ELPH_initialize(k,q)
+   call RT_ELPH_initialize(E,k,q)
    !
  endif
  !
@@ -261,32 +287,6 @@ subroutine RT_initialize(E,k,q)
  call COLLISIONS_load(.TRUE.)
  !
  call UPDATE_flags(.TRUE.)
- !
- ! RIM support
- !=============
- l_RT_uses_E_RIM=BZ_RIM_tot_nkpts>0.and.BZ_RIM_nbands>=SC_bands(2).and..not.RIM_is_symmetry_expanded
- !
- if (l_RT_diagonalize.and.l_RT_uses_E_RIM) l_RT_diagonalize=.FALSE.
- !
- ! Number of K-points
- !====================
- allocate(RIM_ibz_coo(k%nibz,2))
- allocate(RIM_bz_coo(k%nbz,2))
- allocate(RT_ibz_coo(k%nibz,2))
- allocate(RT_Nk_ibz(k%nibz))
- if (l_RT_uses_E_RIM) then
-   RT_nk=RT_k_grid(E,k)
- else
-   RT_nk=k%nibz
-   RT_Nk_ibz=1
-   allocate(RT_all2ibz(k%nibz))
-   do ik=1,k%nibz
-     RIM_ibz_coo(ik,:)=ik
-     RT_ibz_coo(ik,:)=ik
-     RT_all2ibz(ik)=ik
-   enddo
- endif
- RT_nstates=RT_nk*(SC_bands(2)-SC_bands(1)+1)
  !
  ! LOG
  ! ===

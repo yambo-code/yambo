@@ -30,7 +30,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,l_Debye_TBose_update, &
-&                         l_NE_simulate_IP,RT_do_IO,NE_i_time,RT_Tfit_lifetimes
+&                         l_NE_simulate_IP,RT_do_IO,NE_i_time,RT_Tfit_lifetimes,&
+&                         Imp_factors,l_RT_uses_E_RIM!,Fluence
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -98,9 +99,11 @@ subroutine RT_output(what,VALUEs,TIME,E)
 &   file_name(next_file)=trim(append_ch)//'vector_potential'
  short_file_name(next_file)=trim(append_ch)//'vector_potential'
  n_headings(next_file)=10
+ !n_headings(next_file)=11
  headings(next_file,2:4 )=(/"A_x","A_y","A_z"/)
  headings(next_file,5:7 )=(/"A'_x","A'_y","A'_z"/)
  headings(next_file,8:10)=(/"A''_x","A''_y","A''_z"/)
+ !headings(next_file,11)="Fluence[kJ/cm^2]"
  next_file=next_file+1
  !
  if (open_files.and..not.file_already_opened(next_file)) &
@@ -169,6 +172,17 @@ subroutine RT_output(what,VALUEs,TIME,E)
  next_file=next_file+1
  !
  headings(1:next_file-1,1)="Time[fs]"
+ !
+ !
+ if (open_files.and.(l_elph_scatt.or.l_elel_scatt).and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'impose_fac'
+ short_file_name(next_file)=trim(append_ch)//'impose_fac'
+ n_headings(next_file)=7
+ headings(next_file,2:7)=(/"ep(1) F1","ep(1) F2","el(1) F1","el(1) F2","el(2) F1","el(2) F2"/)
+ next_file=next_file+1
+ !
+ headings(1:next_file-1,1)="Time[fs]"
+ !
  !
  ! ... energy resolved ...
  !
@@ -358,6 +372,9 @@ subroutine RT_output(what,VALUEs,TIME,E)
      case('mean_EElifetimes')
        data_to_dump(2:3) = RT_mean_lifetimes(5:6)*HA2EV*1000.
        data_to_dump(4:5) = RT_Tfit_lifetimes(3:4)*HA2KEL
+     case('impose_fac')
+       data_to_dump(2:7)=Imp_factors(1:6)
+       !
    end select
    !
    call msg('o '//trim(short_file_name(i_f)),'',data_to_dump(1:n_headings(i_f)),USE_TABS=.TRUE.)

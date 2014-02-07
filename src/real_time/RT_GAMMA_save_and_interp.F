@@ -113,6 +113,7 @@ subroutine RT_GAMMA_save_and_interp(Time,E,k,LIFE,SAVE_index)
      LIFE(:,:)=SAVED_lifetime(:,:,SAVE_index,Life_MEM_steps)
    endif
    if (SAVE_index==2) call RT_Coulomb_interpolation(E,k)
+   if (SAVE_index==2) call RT_Coulomb_interpolation(E,k)
  endif
  !
  contains

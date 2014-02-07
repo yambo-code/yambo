@@ -19,31 +19,37 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_initialize(k,q)
+subroutine RT_ELPH_initialize(E,k,q)
  ! 
  use pars,           ONLY:SP,pi
+ use units,          ONLY:HA2EV
  use real_time,      ONLY:q_weight,elph_gkkp_expanded,THETA_matrix,&
 &                         THETA_matrix_index,Q_io_map,K_io_map,&
-&                         l_RT_CCA_Kernel,l_Debye_TBose_update
+&                         l_RT_CCA_Kernel,l_Debye_TBose_update,l_RT_uses_E_RIM
+ use electrons,      ONLY:levels
  use drivers,        ONLY:l_elph_scatt
  use com,            ONLY:warning
- use R_lattice,      ONLY:RL_vol,bz_samp
+ use R_lattice,      ONLY:RL_vol,bz_samp,qindx_S
  use IO_m,           ONLY:io_control,REP,OP_RD_CL
  use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,W_debye
  use memory_m,       ONLY:mem_est
- use SC,             ONLY:SC_bands
+ use SC,             ONLY:SC_bands,RT_nk
  use QP_m,           ONLY:QP_nk
+ use vec_operate,    ONLY:degeneration_finder
  use parser_m,       ONLY:parser
  use parallel_m,     ONLY:PAR_Q_index,PAR_IND_Q,PAR_nQ,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz
  !
  implicit none
  !
+ type(levels)             :: E
  type(bz_samp),intent(in) :: k,q
  !
  ! Work Space
  !
- integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s,i_n,i_np,ik_bz,ik_mem
+ integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
+&                      first_el(2,SC_bands(2)),n_of_el(2,SC_bands(2)),n_deg_grp(2),i1,i2,i3,ik_store
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes)
+ complex(SP)         ::gkkp_average
  integer, external   ::ioELPH
  logical             ::l_use_Debye_E
  !
@@ -82,6 +88,9 @@ subroutine RT_ELPH_initialize(k,q)
    allocate(THETA_matrix_index(q%nbz,ph_modes,2))
  endif
  !
+ ! Degeneration Finder
+ !====================
+ !
  ! I/O
  !=====
  !
@@ -100,11 +109,16 @@ subroutine RT_ELPH_initialize(k,q)
    !
    do ik=1,k%nibz
      !
-     ik_bz=sum(k%nstar(:ik-1))+1
+     ik_bz    =sum(k%nstar(:ik-1))+1
+     ik_m_q   =k%sstar(qindx_S(ik,iq,1),1)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     ik_mem=PAR_Xk_ibz_index(ik)
+     call degeneration_finder(E%E(:SC_bands(2),ik,1),    SC_bands(2),first_el(1,:),n_of_el(1,:),n_deg_grp(1),0.0001/HA2EV)
+     call degeneration_finder(E%E(:SC_bands(2),ik_m_q,1),SC_bands(2),first_el(2,:),n_of_el(2,:),n_deg_grp(2),0.0001/HA2EV)
+     !
+     ik_mem  =PAR_Xk_ibz_index(ik)
+     ik_store=(PAR_Q_index(iq)-1)*PAR_Xk_nibz+ik_mem
      !
      do i_n=1,elph_nb
        do i_np=1,elph_nb
@@ -113,8 +127,38 @@ subroutine RT_ELPH_initialize(k,q)
          ! where the band indexes have been exchanged. Instead of doing a global change of the notes
          ! and of the code I decided, here, to exchange the indexes:
          !
-         elph_gkkp_expanded((PAR_Q_index(iq)-1)*PAR_Xk_nibz+ik_mem,:,i_n,i_np)=elph_gkkp(K_io_map(ik_bz),:,i_np,i_n)
+         elph_gkkp_expanded(ik_store,:,i_n,i_np)=elph_gkkp(K_io_map(ik_bz),:,i_np,i_n)
          !
+       enddo
+     enddo
+     !
+     ! Feb 2014. Here I symmetrize the gkkp m.e. with respect to denerated bands. This procedure is not
+     ! needed in the case the RIM is not used. But when the RIM is used gkkp m.e. corresponding to transitions between degenerate
+     ! states can be exported to non-degenerate bands belonging to a k of the small grid. In this way
+     ! the detailled balance condition is not satisfied anymore.
+     !
+     do il=1,ph_modes
+       do i1=1,n_deg_grp(1)
+         do i_np=SC_bands(1),SC_bands(2)
+           do i3=1,2
+             gkkp_average=0._SP
+             do i_n=first_el(1,i1),first_el(1,i1)+n_of_el(1,i1)-1
+               if (i3==1) gkkp_average=gkkp_average+abs(elph_gkkp_expanded(ik_store,il,i_n,i_np))**2.
+               if (i3==2) elph_gkkp_expanded(ik_store,il,i_n,i_np)=sqrt(gkkp_average/real(n_of_el(1,i1)))
+             enddo
+           enddo
+         enddo
+       enddo
+       do i1=1,n_deg_grp(2)
+         do i_n=SC_bands(1),SC_bands(2)
+           do i3=1,2
+             gkkp_average=0._SP
+             do i_np=first_el(2,i1),first_el(2,i1)+n_of_el(2,i1)-1
+               if (i3==1) gkkp_average=gkkp_average+abs(elph_gkkp_expanded(ik_store,il,i_n,i_np))**2.
+               if (i3==2) elph_gkkp_expanded(ik_store,il,i_n,i_np)=sqrt(gkkp_average/real(n_of_el(2,i1)))
+             enddo
+           enddo
+         enddo
        enddo
      enddo
      !
@@ -140,6 +184,8 @@ subroutine RT_ELPH_initialize(k,q)
  RADIUS_sphere=(3.*RL_vol/q%nbz/4./pi)**(1./3.)
  !
  call rim_spherical(q%nbz,q%ptbz,q_weight,RADIUS_sphere,2,.FALSE.)
+ !
+ if (l_RT_uses_E_RIM) q_weight=q_weight*real(q%nbz)/real(RT_nk)
  !
  ! THETA matrix indexes
  !======================

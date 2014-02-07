@@ -32,7 +32,7 @@ module interpolate
  integer               :: nshells
  real(SP), allocatable :: int_sop(:,:,:)
  real(SP), pointer     :: lattice_vectors(:,:)
- real(SP), parameter   :: lpfac = 50.0_SP  ! Use 50 times more waves than nkibz
+ real(SP), parameter   :: lpfac = 10.0_SP  ! Use 10 times more waves than nkibz
  real(SP) :: metric(3,3)
  !
  ! Interpolation type

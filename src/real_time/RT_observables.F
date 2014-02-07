@@ -23,7 +23,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  use pars,           ONLY:SP,cI
  use units,          ONLY:HA2EV,HA2KEL
- use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
+ use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex,l_elel_scatt,l_elph_scatt
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands,RT_nk,RT_Nk_ibz,RT_ibz_coo
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations
@@ -127,8 +127,10 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  ! Electrons and holes temperatures
  !
- forall(ib=SC_bands(1):SC_bands(2)) Occupations(ib,:)=aimag(G_lesser(ib,ib,:))
- call RT_occupations_FIT_and_lock(en,k,RT_Tfit_occupations,RT_Efit_occupations,Occupations)
+ if (l_elel_scatt.or.l_elph_scatt) then
+   forall(ib=SC_bands(1):SC_bands(2)) Occupations(ib,:)=aimag(G_lesser(ib,ib,:))
+   call RT_occupations_FIT_and_lock(en,k,RT_Tfit_occupations,RT_Efit_occupations,Occupations)
+ endif
  !
  ! Number of Holes in the valence band and
  ! Number of Electrons in the conduction band

@@ -50,7 +50,7 @@ subroutine RT_Coulomb_interpolation(E,k)
  integer  :: nstates
  !
  integer  :: i_k,i_k_rim,i_E_rim,i_k_ref,i_qp,i_spin,i_n,i_n_ref,order, &
-&            ifit,i_RT,i1,i2,i_sorted,i_unsorted,nfit,                  &
+&            ifit,i_RT,i1,i2,i_sorted,i_unsorted,nfit,nelecs,nholes,    &
 &            RT_table(SC_bands(1):SC_bands(2),k%nibz),                  &
 &            E_sort_index(k%nibz*(SC_bands(2)-SC_bands(1)+1)),          &
 &            E_sort_index_m1(k%nibz*(SC_bands(2)-SC_bands(1)+1))
@@ -65,11 +65,15 @@ subroutine RT_Coulomb_interpolation(E,k)
 &            deviation( k%nibz*(SC_bands(2)-SC_bands(1)+1) ),           &
 &            RT_occ_infinity( k%nibz*(SC_bands(2)-SC_bands(1)+1) ),     &
 &            RT_occ_sorted(k%nibz*(SC_bands(2)-SC_bands(1)+1)),         &
-&            RT_E(k%nibz*(SC_bands(2)-SC_bands(1)+1))
+&            RT_E(k%nibz*(SC_bands(2)-SC_bands(1)+1)),                  &
+&            Hole_lifetimes(k%nibz*(E%nbf-SC_bands(1)+1)),              &
+&            Electron_lifetimes(k%nibz*(SC_bands(2)-E%nbf))
  !
  if(.not.l_RT_uses_E_RIM) return
  !
  nstates=k%nibz*(SC_bands(2)-SC_bands(1)+1)
+ nholes =k%nibz*(E%nbf-SC_bands(1)+1)
+ nelecs =k%nibz*(SC_bands(2)-E%nbf)
  !
  ! Sort energies
  !
@@ -84,7 +88,8 @@ subroutine RT_Coulomb_interpolation(E,k)
  !
  call sort(RT_E,indx=E_sort_index,indx_m1=E_sort_index_m1)
  !
- ! Step 1: start setting all lifetimes in the group identical
+ ! Step 1
+ ! A: start setting all lifetimes in the group identical
  !
  do i_k=1,k%nibz
    !
@@ -136,7 +141,7 @@ subroutine RT_Coulomb_interpolation(E,k)
  !
  do ifit=1,2
    !
-   l_condition(ifit)=err_fit(ifit+2)<0.10
+   l_condition(ifit)=err_fit(ifit+2)<0.05
    if (l_condition(ifit) ) Nfitted_lifetimes(ifit)=Nfitted_lifetimes(ifit)+1
    if (Nfitted_lifetimes(ifit)>500) l_lftm_fit_stable(ifit)=.true.
    !

@@ -185,7 +185,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  call rim_spherical(q%nbz,q%ptbz,q_weight,RADIUS_sphere,2,.FALSE.)
  !
- if (l_RT_uses_E_RIM) q_weight=q_weight*real(q%nbz)/real(RT_nk)
+ !if (l_RT_uses_E_RIM) q_weight=q_weight*real(q%nbz)/real(RT_nk)
  !
  ! THETA matrix indexes
  !======================

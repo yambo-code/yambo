@@ -73,7 +73,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
    !
    do ik=1,RT_nk
      call RT_build_I1_and_I2(G_old(:,:,ik),RT_all2ibz(ik),ik,I1_k,I2_k)
-     call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step)
+     call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,T_step)
    enddo
    !
    if (l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
@@ -98,7 +98,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
    !
    do ik=1,RT_nk
      call RT_build_I1_and_I2(G_old(:,:,ik),RT_all2ibz(ik),ik,I1_k,I2_k)
-     call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step/2._SP)
+     call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,T_step/2._SP)
    enddo
    !
    ! Recalculate I1(t+dt/2) and I2(t+dt/2) using  G(t+dt/2) 
@@ -119,7 +119,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
    !
    do ik=1,RT_nk
      call RT_build_I1_and_I2(G_new(:,:,ik),RT_all2ibz(ik),ik,I1_k,I2_k)
-     call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step)
+     call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,T_step)
    enddo
    !
    if (l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
@@ -169,14 +169,5 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
 #if defined _TIMING
  call timing('RT integrator',OPR='stop')
 #endif
- !
- ! Impose 0._SP<= occupations <= 2._SP 
- !
- do ik=1,RT_nk
-   do ib=SC_bands(1),SC_bands(2)
-     if( aimag(G_new(ib,ib,ik))<0._SP    ) G_new(ib,ib,ik)=cmplx( real(G_new(ib,ib,ik)),0._SP    )
-     if( aimag(G_new(ib,ib,ik))>spin_occ ) G_new(ib,ib,ik)=cmplx( real(G_new(ib,ib,ik)),spin_occ )
-   enddo
- enddo
  !
 end subroutine RT_Integrator

@@ -25,7 +25,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use units,          ONLY:HA2EV,HA2KEL
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex,l_elel_scatt,l_elph_scatt
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:V_hartree_sc,Ho,SC_bands,RT_nk,RT_Nk_ibz,RT_ibz_coo
+ use SC,             ONLY:V_hartree_sc,Ho,SC_bands,RT_nk,RT_Nk_ibz,RT_ibz_coo,RT_occupations
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,         &
@@ -52,7 +52,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! WorkSpace
  !
  integer     :: ib,ik,ik_rim,iE_rim
- real(SP)    :: Energy,Occupations(SC_bands(1):SC_bands(2),RT_nk)
+ real(SP)    :: Energy
  complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,E_mg,N_holes,N_elecs,VALUE_tmp(2)
  !
  if ( .not.RT_do_IO('OUT') ) return      
@@ -128,8 +128,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! Electrons and holes temperatures
  !
  if (l_elel_scatt.or.l_elph_scatt) then
-   forall(ib=SC_bands(1):SC_bands(2)) Occupations(ib,:)=aimag(G_lesser(ib,ib,:))
-   call RT_occupations_FIT_and_lock(en,k,RT_Tfit_occupations,RT_Efit_occupations,Occupations)
+   call RT_occupations_FIT_and_lock(en,k,RT_Tfit_occupations,RT_Efit_occupations,RT_occupations)
  endif
  !
  ! Number of Holes in the valence band and

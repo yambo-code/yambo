@@ -27,7 +27,8 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,U1_k,U2_k,ik_rim,deltaT)
 #else
  use wrapper,        ONLY:M_by_M
 #endif
- use SC,             ONLY:SC_bands,SC_nbands
+ use electrons,      ONLY:spin_occ
+ use SC,             ONLY:SC_bands,SC_nbands,RT_occupations
  use real_time,      ONLY:Sigma_relax
  !
  implicit none
@@ -39,6 +40,7 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,U1_k,U2_k,ik_rim,deltaT)
  complex(SP), intent(out) :: G_new_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  integer,     intent(in)  :: ik_rim
  !
+ integer     :: ib
  complex(SP) :: M_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)) 
  !
  ! G(T+dt) = U1(dt)G(T) U2(dt) - i dt * Sigma_relax
@@ -54,5 +56,14 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,U1_k,U2_k,ik_rim,deltaT)
 #endif
  !
  if (allocated(Sigma_relax)) G_new_k = G_new_k - cI*deltaT*Sigma_relax(:,:,ik_rim)
+ !
+ ! Symmetrization 
+ !================
+ do ib=SC_bands(1),SC_bands(2)
+   G_new_k(ib,ib)=cI*aimag(G_new_k(ib,ib))
+   if( aimag(G_new_k(ib,ib))<0._SP    ) G_new_k(ib,ib)=cmplx(0._SP,0._SP    )
+   if( aimag(G_new_k(ib,ib))>spin_occ ) G_new_k(ib,ib)=cmplx(0._SP,spin_occ )
+   RT_occupations(ib,ik_rim)=aimag(G_new_k(ib,ib))
+ enddo
  !
 end subroutine RT_EULEREXP_step

@@ -120,17 +120,17 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS,G_lesse
        !
        ! Emission
        E_P_Hole_lifetime(i_n_shift,ik_rim)=E_P_Hole_lifetime(i_n_shift,ik_rim)+&
-       &                             TMP_Hole_lifetime(1)*Bose_f(2)*pre_factor
+&                                          TMP_Hole_lifetime(1)*Bose_f(2)*pre_factor
        E_P_Electron_lifetime(i_n_shift,ik_rim)=E_P_Electron_lifetime(i_n_shift,ik_rim)+&
-       &                             TMP_Electron_lifetime(1)*Bose_f(2)*pre_factor
+&                                              TMP_Electron_lifetime(1)*Bose_f(2)*pre_factor
        !
        if(abs(Bose_f(1))<zero_dfl.or.l_skip_abs) cycle
        !
        ! Absorption
        E_P_Ho_abs_lifetime(i_n_shift,ik_rim)=E_P_Ho_abs_lifetime(i_n_shift,ik_rim)+&
-       &                             TMP_Hole_lifetime(2)*Bose_f(1)*pre_factor
+&                                            TMP_Hole_lifetime(2)*Bose_f(1)*pre_factor
        E_P_El_abs_lifetime(i_n_shift,ik_rim)=E_P_El_abs_lifetime(i_n_shift,ik_rim)+&
-       &                             TMP_Electron_lifetime(2)*Bose_f(1)*pre_factor
+&                                            TMP_Electron_lifetime(2)*Bose_f(1)*pre_factor
        !
      enddo
      !

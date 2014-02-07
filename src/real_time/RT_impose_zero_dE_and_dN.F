@@ -200,7 +200,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      k_weight=k%weights(ik)/real(RT_Nk_ibz(ik))
      do ik_rim=RT_ibz_coo(ik,1)+i2,RT_ibz_coo(ik,2)
        !
-       if(     l_energy.and.     l_n_electrons) then
+       if((l_n_carriers.or.l_energy).and.l_n_electrons) then
          if(ib<=E%nbf) then
            Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(1))
            Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)*(1._SP+prefactor(1))

@@ -252,10 +252,6 @@ subroutine RT_driver(E,X,k,q)
    ! ======================================================
    A_vecpot_previous=A_vecpot
    !
-   ! Simmetrization
-   !===============
-   forall( ib=SC_bands(1):SC_bands(2) ) G_lesser(ib,ib,:,it_mem)=cI*aimag(G_lesser(ib,ib,:,it_mem))
-   !
    ! End dynamics ?
    !===============
    if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.

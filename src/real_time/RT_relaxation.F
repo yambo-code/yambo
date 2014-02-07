@@ -56,15 +56,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  if(.not.l_NE_dynamics_started) return
  !
- ! Andrea 4/7/2013. Fix of potential anomalous values
- ! of the G_lesser diagonal
- !
- do ik=1,RT_nk
-   do ib1=SC_bands(1),SC_bands(2)
-     G_input(ib1,ib1,ik)=cI*abs(-cI*G_input(ib1,ib1,ik))
-   enddo
- enddo
- !
  if(RT_is_dephased) then
    do ik=1,RT_nk
      do ib1=SC_bands(1),SC_bands(2)

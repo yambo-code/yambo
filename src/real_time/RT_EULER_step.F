@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,deltaT)
+subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,ik_rim,deltaT)
  !
  use pars,           ONLY:SP,cI
 #if defined _OPENMP
@@ -27,7 +27,8 @@ subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,deltaT)
 #else
  use wrapper,        ONLY:V_by_V_plus_V
 #endif
- use SC,             ONLY:SC_bands,SC_nbands
+ use electrons,      ONLY:spin_occ
+ use SC,             ONLY:SC_bands,SC_nbands,RT_occupations
  !
  implicit none
  !
@@ -36,6 +37,9 @@ subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,deltaT)
  complex(SP), intent(in)  :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(out) :: G_new_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ integer,     intent(in)  :: ik_rim
+ !
+ integer                  :: ib
  !
  ! G(T+dt) = G(T)
  !
@@ -49,5 +53,14 @@ subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,deltaT)
  call V_by_V_plus_V(SC_nbands, -cI*deltaT, I1_k-I2_k, G_new_k)
 #endif
  !
-end subroutine RT_EULER_step   
-
+ !
+ ! Symmetrization 
+ !================
+ do ib=SC_bands(1),SC_bands(2)
+   G_new_k(ib,ib)=cI*aimag(G_new_k(ib,ib))
+   if( aimag(G_new_k(ib,ib))<0._SP    ) G_new_k(ib,ib)=cmplx(0._SP,0._SP    )
+   if( aimag(G_new_k(ib,ib))>spin_occ ) G_new_k(ib,ib)=cmplx(0._SP,spin_occ )
+   RT_occupations(ib,ik_rim)=aimag(G_new_k(ib,ib))
+ enddo
+ !
+end subroutine RT_EULER_step

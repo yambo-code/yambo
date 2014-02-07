@@ -89,7 +89,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,l_Debye_TBose_update,   &
 &                     SwitchOnTime,l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel,  &
 &                     l_RT_diagonalize,RT_is_dephased,RAD_LifeTime,Phase_LifeTime,        &
-&                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,                            &
+&                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,Imp_factors,                &
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,   &
 &                     Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,           &
 &                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
@@ -560,6 +560,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RT_Efit_lifetimes=0.
  RT_Tfit_occupations=0.
  RT_Efit_occupations=0.
+ !
+ Imp_factors=0._SP
  !
 #endif
  !

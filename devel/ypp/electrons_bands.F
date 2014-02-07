@@ -56,7 +56,7 @@ subroutine electrons_bands(Xk,Xen)
  real(SP), allocatable :: bands_grid(:,:,:),bands_circuit(:,:,:)
 #if defined _YPP_RT
  real(SP), allocatable :: occupations_grid(:,:,:,:),occupations_circuit(:,:,:,:),occupations_tmp(:,:,:)
- real(SP)              :: io_Time,Nel_zero,Nhole_zero,Nel,Nhole
+ real(SP)              :: io_Time,Nel_zero,Nhole_zero,Nel,Nhole,Real_Nhole,Real_Nel
  integer               :: i_T,n_T_steps
  integer,     external :: RT_occupations_check,RT_k_grid
 #endif
@@ -230,6 +230,17 @@ subroutine electrons_bands(Xk,Xen)
      call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
      call RT_occupations_repair(Xen)
      !
+     Real_Nhole=0._SP
+     Real_Nel=0._SP
+     do ik=1,Xk%nibz
+       Real_Nhole=Real_Nhole+&
+&       sum((spin_occ-RT_occupations(BANDS_range(1):Xen%nbf,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
+&                      Xk%weights(ik)/real(RT_Nk_ibz(ik))
+       Real_Nel=  Real_Nel+&
+&       sum((RT_occupations(Xen%nbf+1:BANDS_range(2),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
+&                      Xk%weights(ik)/real(RT_Nk_ibz(ik))
+     enddo
+     !
      ! STEP 1: define coefficients for occupations
      !
      do is=1,n_sp_pol
@@ -247,26 +258,24 @@ subroutine electrons_bands(Xk,Xen)
      ! Normilize the occupations
      !
      if (BANDS_steps> 0) then
-       if(i_T==1) then
-         Nhole_zero=sum(spin_occ-occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T))
-         Nel_zero=sum(occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T))
-         Nhole=Nhole_zero
-         Nel=Nel_zero
-       endif
-       !
-       if(i_T>1) then
-         Nhole=sum(spin_occ-occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T))
-         Nel=sum(occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T))
-       endif
-       !
-       !DEBUG<
-       !write(*,*) Nhole,Nhole_zero,Nel,Nel_zero
-       !DEBUG>
        !
        occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)=&
-&        (spin_occ-occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T))/Nhole*Nhole_zero
+         (spin_occ-occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T))
+       !
+       Nhole=sum(occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T))/real(CIRCUIT_k%nibz)
+       Nel=sum(occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T))/real(CIRCUIT_k%nibz)
+       !
+       !DEBUG<
+       !write(*,*) '  '
+       !write(*,*) Nhole,Nel,Real_Nhole,Real_Nel
+       !DEBUG>
+       !
+       if(Nhole>0) &
+       occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)=&
+&         occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)/Nhole*Real_Nhole
+       if(Nel>0) &
        occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)=&
-&        occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)/Nel*Nel_zero
+&         occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)/Nel*Real_Nel
        !
      endif
      !
@@ -388,9 +397,6 @@ subroutine electrons_bands(Xk,Xen)
          values(1)=real(ik,SP)
          values(2)=bands_circuit(ib,1,ik)*HA2EV
          values(3)=occupations_circuit(ib,1,ik,i_T)
-         if(values(3)<0._SP   ) values(3)=0._SP
-         if(values(3)>spin_occ) values(3)=spin_occ
-         values(3)=values(3)/3._SP
          call msg('o '//file_name(1),' ',values,INDENT=0,USE_TABS=.true.)
          !
        enddo

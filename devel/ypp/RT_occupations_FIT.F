@@ -42,7 +42,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  integer               :: n_T_steps,ngamma
  real(SP)              :: RT_E(RT_nstates)
  real(SP)              :: RT_occ(RT_nstates,n_T_steps)
- real(SP)              :: RT_gamma(RT_nstates,n_T_steps,6)
+ real(SP)              :: RT_gamma(RT_nstates,n_T_steps,8)
  !
  integer, parameter    :: max_iter=10000,fit_dim=1000,nmax_file_report=16
  real(SP)              :: RT_occ_fit(fit_dim,n_T_steps,2),RT_E_fit(fit_dim,2)
@@ -61,7 +61,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  integer  :: E_sort_index(RT_nstates)
  !
  character(10)     ::titles(n_T_steps+1),data_ch(n_T_steps+1,5,2),columns(n_T_steps+1)
- character(schlen) ::output_fname(ngamma+1),gamma_fname(ngamma),GRP_string
+ character(schlen) ::output_fname(max(2,ngamma+1)),gamma_fname(ngamma),GRP_string
  !
  T_fit=0._SP
  Ef_fit=0._SP
@@ -99,18 +99,19 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    if(nfound(3)==2) nfound(2)  =nfound(2)+1
    if(nfound(3)==3) nfound(1:2)=nfound(1:2)+1
    !
+   if(ngamma<2) cycle
+   !
    ! Lifetimes FIT
    !
    if(ngamma==2) RT_gamma_ratio(:,i1,1)=RT_gamma(:,i1,1)/( RT_gamma(:,i1,1)+RT_gamma(:,i1,2) )
    if(ngamma> 2) RT_gamma_ratio(:,i1,1)=( RT_gamma(:,i1,1)+RT_gamma(:,i1,3) ) / &
 &                                       ( RT_gamma(:,i1,1)+RT_gamma(:,i1,3)+    &
 &                                         RT_gamma(:,i1,2)+RT_gamma(:,i1,4) ) 
-   if(ngamma> 4) RT_gamma_ratio(:,i1,2)=RT_gamma(:,i1,5)/( RT_gamma(:,i1,5)+RT_gamma(:,i1,6) )
    !
    RT_gamma_ratio=RT_gamma_ratio*spin_occ
    !
    nfound_gamma(5)=Fermi_fnc_fit(RT_E,RT_gamma_ratio(:,i1,1),RT_nstates,T_fit_gamma(i1,1:2),Ef_fit_gamma(i1,1:2),&
-&                            err_fit_gamma(i1,:))
+&                          err_fit_gamma(i1,:))
    !
    if(nfound_gamma(5)==1) nfound_gamma(1)  =nfound_gamma(1)+1
    if(nfound_gamma(5)==2) nfound_gamma(2)  =nfound_gamma(2)+1
@@ -118,8 +119,10 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    !
    if(ngamma<=4) cycle
    !
+   RT_gamma_ratio(:,i1,2)=RT_gamma(:,i1,5)/( RT_gamma(:,i1,5)+RT_gamma(:,i1,6) )
+   !
    nfound_gamma(5)=Fermi_fnc_fit(RT_E,RT_gamma_ratio(:,i1,2),RT_nstates,T_fit_gamma(i1,3:4),Ef_fit_gamma(i1,3:4),&
-&                            err_fit_gamma(i1,:))
+&                          err_fit_gamma(i1,:))
    !
    if(nfound_gamma(5)==1) nfound_gamma(3)  =nfound_gamma(3)+1
    if(nfound_gamma(5)==2) nfound_gamma(4)  =nfound_gamma(4)+1
@@ -132,10 +135,12 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  call msg('s',":: Elec. fitting Temperatures found " &
 &          //trim(intc(nfound(2)))//"/"//trim(intc(n_T_steps)))
  !
- call msg('s',":: Hole lifetimes(1) fitting Temperatures found " &
+ if(ngamma>1) then
+   call msg('s',":: Hole lifetimes(1) fitting Temperatures found " &
 &          //trim(intc(nfound_gamma(1)))//"/"//trim(intc(n_T_steps)))
- call msg('s',":: Elec lifetimes(1) fitting Temperatures found " &
+   call msg('s',":: Elec lifetimes(1) fitting Temperatures found " &
 &          //trim(intc(nfound_gamma(2)))//"/"//trim(intc(n_T_steps)))
+ endif
  !
  if(ngamma>4) then
  call msg('s',":: Hole lifetimes(2) fitting Temperatures found " &
@@ -145,7 +150,8 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  endif
  !
  titles(1)='t [fs]'
- titles(2:3)=(/'OCC el ','OCC hol'/)   
+ titles(2:3)=(/'OCC el ','OCC hol'/)
+ n1=3   
  !
  ! Only El-El
  if(ngamma==2) then
@@ -157,16 +163,16 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  else if (ngamma==4) then
    gamma_fname(1)='YPP-RT_EP_Hole_linewidths'
    gamma_fname(2)='YPP-RT_EP_Elec_linewidths'
-   gamma_fname(3)='YPP-RT_EP_Hole_abs_linewidths'
-   gamma_fname(4)='YPP-RT_EP_Elec_abs_linewidths'
+   gamma_fname(3)='YPP-RT_EP_Ho_abs_linewidths'
+   gamma_fname(4)='YPP-RT_EP_El_abs_linewidths'
    titles(4:5)=(/'EP  el ','EP  hol'/)   
    n1=5
  ! Both
  else if (ngamma==6) then
    gamma_fname(1)='YPP-RT_EP_Hole_linewidths'
    gamma_fname(2)='YPP-RT_EP_Elec_linewidths'
-   gamma_fname(3)='YPP-RT_EP_Hole_abs_linewidths'
-   gamma_fname(4)='YPP-RT_EP_Elec_abs_linewidths'
+   gamma_fname(3)='YPP-RT_EP_Ho_abs_linewidths'
+   gamma_fname(4)='YPP-RT_EP_El_abs_linewidths'
    gamma_fname(5)='YPP-RT_EE_Hole_linewidths'
    gamma_fname(6)='YPP-RT_EE_Elec_linewidths'
    !gamma_ratio_fname(1)='YPP-RT_EP_linewidths_ratio'
@@ -199,6 +205,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
        data_fit(i1+1,1)= T_fit(i_T,i1)*HA2KEL
        data_fit(i1+1,2)= Ef_fit(i_T,i1)*HA2EV
      endif
+     if(ngamma<2) cycle 
      data_fit(i1+3,1)= T_fit_gamma(i_T,i1)*HA2KEL
      data_fit(i1+3,2)= Ef_fit_gamma(i_T,i1)*HA2EV
    enddo

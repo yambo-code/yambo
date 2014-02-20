@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,ik_rim,deltaT)
+subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,ik,deltaT)
  !
  use pars,           ONLY:SP,cI
 #if defined _OPENMP
@@ -37,7 +37,7 @@ subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,ik_rim,deltaT)
  complex(SP), intent(in)  :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(out) :: G_new_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- integer,     intent(in)  :: ik_rim
+ integer,     intent(in)  :: ik
  !
  integer                  :: ib
  !
@@ -60,7 +60,7 @@ subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,ik_rim,deltaT)
    G_new_k(ib,ib)=cI*aimag(G_new_k(ib,ib))
    if( aimag(G_new_k(ib,ib))<0._SP    ) G_new_k(ib,ib)=cmplx(0._SP,0._SP    )
    if( aimag(G_new_k(ib,ib))>spin_occ ) G_new_k(ib,ib)=cmplx(0._SP,spin_occ )
-   RT_occupations(ib,ik_rim)=aimag(G_new_k(ib,ib))
+   RT_occupations(ib,ik)=aimag(G_new_k(ib,ib))
  enddo
  !
 end subroutine RT_EULER_step

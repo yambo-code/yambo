@@ -38,7 +38,8 @@ subroutine RT_Coulomb_interpolation(E,k)
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,         &
 &                          RIM_closest_E,RIM_ibz_coo,l_RT_uses_E_RIM,       &
 &                          MEM_index,G_MEM_steps,G_lesser,RT_Tfit_lifetimes,&
-&                          RT_Efit_lifetimes,l_lftm_fit_stable,Nfitted_lifetimes
+&                          RT_Efit_lifetimes,l_lftm_fit_stable,             &
+&                          Nfitted_lifetimes,RT_do_IO
  !
  implicit none
  !
@@ -155,7 +156,19 @@ subroutine RT_Coulomb_interpolation(E,k)
  T_fit=RT_Tfit_lifetimes(3:4)
  Ef_fit=RT_Efit_lifetimes(3:4)
  !
- nfit=Fermi_fnc_fit(RT_E,RT_occ_sorted,nstates,T_fit,Ef_fit,err_fit)
+ if ( RT_do_IO('OUT') ) then
+   nfit=Fermi_fnc_fit(RT_E,RT_occ_sorted,nstates,T_fit,Ef_fit,err_fit)
+ else
+   nfit=0
+   do ifit=1,2
+     if(T_fit(ifit)> 0._SP) then
+       err_fit(ifit)=0.1
+       nfit=nfit+ifit
+     else
+       err_fit(ifit)=1.0 
+     endif
+   enddo
+ endif
  !
  if (nfit==0) return
  !

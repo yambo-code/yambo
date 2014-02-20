@@ -50,9 +50,8 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,                             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
-&                         G_lesser_reference,                                                  &
-&                         l_NE_simulate_IP,Hfrozen,XCfrozen,l_NE_dynamics_started,             &
-&                         l_RT_needs_XC0,Ho_plus_Sigma
+&                         G_lesser_reference,l_RT_needs_XC0,RIM_ibz_coo,l_RT_uses_E_rim,       &
+&                         l_NE_simulate_IP,Hfrozen,XCfrozen,l_NE_dynamics_started
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu,myid
@@ -75,7 +74,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  ! Work Space
  !
  logical          :: XC_needs_density
- integer          :: i1,ik
+ integer          :: i1,ik,ik_RT,ikp_RT,ik_RIM,ib,ibp
  !
 #if defined _TIMING
  call timing('RT Collisions',OPR='start')
@@ -136,6 +135,9 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  do ik=1,QP_nk 
    !
    if (.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu) cycle
+   !
+   ik_RT =RT_ibz_coo(ik,1)
+   ikp_RT=RT_ibz_coo(ik,2)
    !
    H_nl_sc=cZERO
    !
@@ -198,8 +200,8 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
 #endif
    endif
    !
-   Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)= &
-&        H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
+   forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) &
+   &  Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)=H_nl_sc(ib,ibp,1)
    !
  enddo  !---- loop on k-points
  !
@@ -207,8 +209,11 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  do ik=1,QP_nk 
    !
+   ik_RT =RT_ibz_coo(ik,1)
+   ikp_RT=RT_ibz_coo(ik,2)
+   !
    if (.not.(PAR_IND_WF_k%element_1D(ik).and.HEAD_k_cpu)) then
-     Ho_plus_Sigma(:,:,ik,:)=(0._SP,0._SP)
+     Ho_plus_Sigma(:,:,ik_RT:ikp_RT,:)=(0._SP,0._SP)
      cycle
    endif
    !
@@ -218,16 +223,24 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !=====================
    if (l_NE_with_fields.and.l_NE_dynamics_started) call RT_apply_field(ik,H_nl_sc,A_input)
    !
-   Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)= &
-&                Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)+&
-&                H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
+   forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) &
+&    Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)+&
+&                                            H_nl_sc(ib,ibp,1)
+   if (l_RT_uses_E_RIM) then
+     do ik_RT=RT_ibz_coo(ik,1)+1,RT_ibz_coo(ik,2)
+       ik_RIM=ik_RT-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+       forall(ib=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ib,ik_RT,1)= &
+&        Ho_plus_Sigma(ib,ib,ik_RT,1)-E%E(ib,ik,1)+E%E_RIM(ib,ik_RIM,1)
+     enddo
+   endif
    !  
  enddo  !---- loop on k-points
  !
  call PP_redux_wait(Ho_plus_Sigma(:,:,:,1))
  !
  if(allocated(SC_R)) then
-   SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),:,:) = Ho_plus_Sigma
+   SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),:,:) = &
+&    Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_ibz_coo(:,1),:)
    do i1=1,SC_bands(1)-1
      SC_R(i1,i1,:,:)=cONE
    enddo
@@ -242,4 +255,3 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  call RT_relaxation(G_input,E,k,q,Time)
  !
 end subroutine RT_Collision
-

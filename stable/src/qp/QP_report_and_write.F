@@ -199,11 +199,12 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
    !  Data Format
    !
-   data_fmt=gen_fmt(r_v=shadow(5:n_shadows))
-   shadow_fmt(5:n_shadows) ='(a,'//trim(data_fmt)//')'
    if (l_life) then
      data_fmt=gen_fmt(r_v=shadow(3:n_shadows))
      shadow_fmt(3:n_shadows) ='(a,'//trim(data_fmt)//')'
+   else
+     data_fmt=gen_fmt(r_v=shadow(5:n_shadows))
+     shadow_fmt(5:n_shadows) ='(a,'//trim(data_fmt)//')'
    endif
    !
    ! Spin Strings

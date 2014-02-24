@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_build_I1_and_I2(G_input_k,ik,ik_rim,I1_k,I2_k)
+subroutine RT_build_I1_and_I2(G_input_k,ik,I1_k,I2_k)
  !
  use pars,           ONLY:SP,cZERO
  use real_time,      ONLY:Ho_plus_Sigma,Sigma_relax
@@ -31,7 +31,7 @@ subroutine RT_build_I1_and_I2(G_input_k,ik,ik_rim,I1_k,I2_k)
 #endif
  implicit none
  !
- integer, intent(in)      :: ik,ik_rim
+ integer, intent(in)      :: ik
  complex(SP), intent(in)  :: G_input_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(out) :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(out) :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
@@ -46,6 +46,6 @@ subroutine RT_build_I1_and_I2(G_input_k,ik,ik_rim,I1_k,I2_k)
  call M_by_M('n','n',SC_nbands,G_input_k,Ho_plus_Sigma(:,:,ik,1),I2_k)     
 #endif
  !
- if (allocated(Sigma_relax))  I1_k = I1_k + Sigma_relax(:,:,ik_rim)
+ if (allocated(Sigma_relax))  I1_k = I1_k + Sigma_relax(:,:,ik)
  !
 end subroutine RT_build_I1_and_I2

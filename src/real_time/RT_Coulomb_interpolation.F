@@ -27,15 +27,19 @@ subroutine RT_Coulomb_interpolation(E,k)
  ! the gammas were constant
  ! (For a more sophisticated implementation check revision 3074)
  !  
- use pars,            ONLY:SP
+ use pars,            ONLY:SP,rZero
+ use units,           ONLY:HA2KEL,HA2EV
  use electrons,       ONLY:levels,spin_occ,spin
  use R_lattice,       ONLY:bz_samp
  use vec_operate,     ONLY:sort
  use functions,       ONLY:Fermi_fnc,Fermi_fnc_fit
+ use QP_m,            ONLY:QP_table,QP_n_states
  use SC,              ONLY:RT_ibz_coo,RT_Nk_ibz,SC_bands,RT_occupations
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,         &
-&                          RIM_ibz_coo,l_RT_uses_E_RIM,                     &
-&                          RT_Tfit_lifetimes,RT_Efit_lifetimes,l_lftm_fit_stable,Nfitted_lifetimes
+&                          RIM_closest_E,RIM_ibz_coo,l_RT_uses_E_RIM,       &
+&                          MEM_index,G_MEM_steps,G_lesser,RT_Tfit_lifetimes,&
+&                          RT_Efit_lifetimes,l_lftm_fit_stable,             &
+&                          Nfitted_lifetimes,RT_do_IO
  !
  implicit none
  !
@@ -46,16 +50,19 @@ subroutine RT_Coulomb_interpolation(E,k)
  !
  integer  :: nstates
  !
- integer  :: i_k,i_k_rim,i_E_rim,i_k_ref,i_n,ifit,i_RT,nfit, &
-&            E_sort_index(k%nibz*(SC_bands(2)-SC_bands(1)+1)),&
+ integer  :: i_k,i_k_rim,i_E_rim,i_k_ref,i_qp,i_spin,i_n,i_n_ref,order, &
+&            ifit,i_RT,i1,i2,i_sorted,i_unsorted,nfit,                  &
+&            RT_table(SC_bands(1):SC_bands(2),k%nibz),                  &
+&            E_sort_index(k%nibz*(SC_bands(2)-SC_bands(1)+1)),          &
 &            E_sort_index_m1(k%nibz*(SC_bands(2)-SC_bands(1)+1))
  !
- real(SP) :: alpha,x,k_weight,   &
+ real(SP) :: gamma_E_factor,gamma_H_factor,alpha,beta,x,k_weight,fac,   &
+&            f_occ,SUM_N_Electrons,SUM_N_Holes,Nel_change,EPS,E_ref(2), &
 &            Energy(2),nelecs,nholes,VALUE_tmp(2)
  !
  logical  :: l_condition(2)
  !
- real(SP) :: T_fit(2),Ef_fit(2),err_fit(4), &
+ real(SP) :: T_fit(2),Ef_fit(2),err_fit(4),Hole_coeff(3),Elec_coeff(3), &
 &            deviation( k%nibz*(SC_bands(2)-SC_bands(1)+1) ),           &
 &            RT_occ_infinity( k%nibz*(SC_bands(2)-SC_bands(1)+1) ),     &
 &            RT_occ_sorted(k%nibz*(SC_bands(2)-SC_bands(1)+1)),         &
@@ -149,7 +156,19 @@ subroutine RT_Coulomb_interpolation(E,k)
  T_fit=RT_Tfit_lifetimes(3:4)
  Ef_fit=RT_Efit_lifetimes(3:4)
  !
- nfit=Fermi_fnc_fit(RT_E,RT_occ_sorted,nstates,T_fit,Ef_fit,err_fit)
+ if ( RT_do_IO('OUT') ) then
+   nfit=Fermi_fnc_fit(RT_E,RT_occ_sorted,nstates,T_fit,Ef_fit,err_fit)
+ else
+   nfit=0
+   do ifit=1,2
+     if(T_fit(ifit)> 0._SP) then
+       err_fit(ifit)=0.1
+       nfit=nfit+ifit
+     else
+       err_fit(ifit)=1.0 
+     endif
+   enddo
+ endif
  !
  if (nfit==0) return
  !

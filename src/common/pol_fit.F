@@ -20,7 +20,9 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine pol_fit(N,X,Y,order,Tt,EPS,t_zero)
+ !
  use pars, ONLY:SP
+ !
  implicit none
  !
  integer, intent(in)    :: N

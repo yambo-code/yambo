@@ -21,7 +21,7 @@
 !
 subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP
  use units,          ONLY:HA2EV,HA2KEL
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex,l_elel_scatt,l_elph_scatt
  use R_lattice,      ONLY:bz_samp
@@ -30,8 +30,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,         &
 &                         l_NE_simulate_IP,RIM_ibz_coo,l_RT_uses_E_RIM,RT_do_IO, &
-&                         RT_IO_output_steps,NE_i_time,RT_Tfit_occupations,      &
-&                         RT_Efit_occupations
+&                         RT_Tfit_occupations,RT_Efit_occupations
  use electrons,      ONLY:levels,spin_occ
  use QP_m,           ONLY:QP_Vnl_xc
  use xc_functionals, ONLY:E_xc,XC_potential_driver

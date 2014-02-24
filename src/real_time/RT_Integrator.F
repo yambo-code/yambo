@@ -40,7 +40,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
  use R_lattice,      ONLY:bz_samp  
  use real_time,      ONLY:EULER,RK2,EULEREXP,RK2EXP,l_NE_with_fields
  use fields,         ONLY:gauge_field
- use electrons,      ONLY:levels,spin_occ
+ use electrons,      ONLY:levels
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif

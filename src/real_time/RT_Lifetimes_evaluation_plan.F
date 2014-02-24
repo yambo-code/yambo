@@ -19,24 +19,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function RT_SET_lifetimes_evaluation_plan( )
+integer function RT_Lifetimes_evaluation_plan( )
  !
  ! Here I define the components of an integer array
  ! RT_GAMMA_T_status(NE_steps)
  !
- use units
+ use units,          ONLY:FS2AUT
  use pars,           ONLY:IP2,SP
- use fields,         ONLY:Efield,i_Pump,ext_field,Efield_duplicate,small_a,l_manual_excitation
+ use fields,         ONLY:Efield,i_Pump,ext_field,Efield_duplicate,small_a
  use memory_m,       ONLY:mem_est
- use real_time,      ONLY:RT_GAMMA_T_status,NE_steps,RT_dynamics_steps,Life_MEM_steps,&
-&                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time,it_start
- use LIVE_t,         ONLY:live_timing
+ use real_time,      ONLY:RT_GAMMA_T_status,NE_steps,RT_dynamics_steps,&
+&                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time,it_start,Life_MEM_steps
  !
  implicit none
  !
  ! Work Space
  !
- integer         :: it,it_relative,N_inter_steps,N_intra_steps,Nt_each_group,it_last,it_0,it_
+ integer         :: it,N_inter_steps,N_intra_steps,it_first,it_0,it_,i1,N_blocks
  real(SP)        :: weight(NE_steps)
  complex(SP)     :: TIME
  type(ext_field) :: E_dummy
@@ -52,26 +51,18 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    return
  endif 
  !
- N_inter_steps=RT_dynamics_steps(1)/RT_step
- N_intra_steps=RT_dynamics_steps(2)/RT_step
+ N_inter_steps=nint(RT_dynamics_steps(1)/RT_step)
+ N_intra_steps=nint(RT_dynamics_steps(2)/RT_step)
  !
  ! RT_GAMMA_T_status = -1   KEEP constant 
- !                      1   EVAL and SAVE
+ !                     >0   EVAL and SAVE
  !                      0   INTERPOLATE  
  !
- RT_SET_lifetimes_evaluation_plan=0
- if (it_start==1) then
-   it_last=1
-   Nt_each_group=N_inter_steps
- else
-   it_last=it_start
-   N_inter_steps=real(RT_dynamics_steps(1))/weight(it_start)/RT_step
-   N_intra_steps=real(RT_dynamics_steps(2))/weight(it_start)/RT_step
-   Nt_each_group=N_inter_steps
- endif
+ RT_Lifetimes_evaluation_plan=0
  !
  weight=1._SP
  it_0=1
+ !
  if (trim(RT_dynamics_KIND)=="FIELD") then
    call Efield_duplicate(Efield(i_Pump),E_dummy)
    if (trim(E_dummy%ef_name)=="QSSIN")  E_dummy%ef_name="GAUSS"
@@ -87,77 +78,89 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    enddo
  endif
  !
+ ! Exponential decay for T>To
+ !
  if (RT_dynamics_decay_time>0.) then
    do it=it_0,NE_steps
      TIME=RT_step*(it-it_0)
-     if(it>1) weight(it)=weight(it-1)
-     if(real(TIME)<RT_dynamics_decay_time) cycle
-     weight(it)=min(1._SP/(real(TIME)/RT_dynamics_decay_time)**0.5_SP,0.05)
+     weight(it)=weight(it)*exp(-real(TIME)/RT_dynamics_decay_time)
    enddo
  endif
  !
- call live_timing('Lifetimes evaluation plan',NE_steps)
+ if (it_start> 1) then
+   N_inter_steps=nint(real(RT_dynamics_steps(1))/weight(it_start+1)/RT_step)
+   N_intra_steps=nint(real(RT_dynamics_steps(2))/weight(it_start+1)/RT_step)
+ endif
+ !
+ it_first=it_start+1
  !
  do it=it_start,NE_steps
    if (it< it_0) weight(it)=max(weight(it),0.1)
-   if (it>=it_0) weight(it)=max(weight(it),0.01)
+   if (it>=it_0) weight(it)=max(weight(it),0.001)
  enddo
  !
- do it=it_start,NE_steps
+ ! Number of blocks composed by N_inter_steps elements 
+ !
+ N_blocks=N_inter_steps/N_intra_steps
+ !
+ ! At the beginning I do not have enough points to perform the fit. I, therefore,
+ ! introduce blocks with an increasing number of elements
+ !
+ it=it_start
+ do i1=1,N_intra_steps,2
+   call BUILD_up_group(N_blocks*i1,i1)
+   it=it+N_blocks*i1
+ enddo
+ !
+ ! And now the groups with the full number
+ !
+ do while (it<NE_steps)
    !
-   call live_timing(steps=1)
-   !
-   it_relative  = mod(it-it_last,Nt_each_group)+1
-   !
-   if (it_relative>1) cycle
-   !
-   if (NE_steps-it+1<N_intra_steps*Life_MEM_steps) then
-     call BUILD_up_group(1)
+   if (NE_steps-it+1<N_inter_steps) then
+     call BUILD_up_group(N_inter_steps/N_intra_steps,1)
    else
-     call BUILD_up_group(N_intra_steps)
-   endif
-   if (it==it_start) then
-     do it_=it_start,it_start+N_intra_steps*(Life_MEM_steps-1)-1
-       if (RT_GAMMA_T_status(it_)==0.and.     l_manual_excitation) RT_GAMMA_T_status(it_)= 1
-       if (RT_GAMMA_T_status(it_)==0.and..not.l_manual_excitation) RT_GAMMA_T_status(it_)=-1
-     enddo
+     call BUILD_up_group(N_inter_steps,N_intra_steps)
    endif
    !
-   N_inter_steps=real(RT_dynamics_steps(1))/weight(it)/RT_step
-   N_intra_steps=real(RT_dynamics_steps(2))/weight(it)/RT_step
+   N_inter_steps=nint(real(RT_dynamics_steps(1))/weight(it)/RT_step)
+   N_intra_steps=nint(real(RT_dynamics_steps(2))/weight(it)/RT_step)
    !
-   Nt_each_group= N_inter_steps
-   it_last=it
-   RT_SET_lifetimes_evaluation_plan=RT_SET_lifetimes_evaluation_plan+1
+   it=it+N_inter_steps
+   RT_Lifetimes_evaluation_plan=RT_Lifetimes_evaluation_plan+Life_MEM_steps
    !
  enddo
  !
- call live_timing( )
+ !DEBUG>
+ !do it=1,NE_steps
+ ! TIME=RT_step*(it-1)
+ ! !if (RT_GAMMA_T_status(it)/=0) 
+ ! write (*,'(f6.2,2i6)') real(TIME/FS2AUT),RT_GAMMA_T_status(it),it
+ !enddo
+ !stop
+ !DEBUG<
  !
  contains
    !
-   subroutine BUILD_up_group(INTRA_steps)
+   subroutine BUILD_up_group(N_inter,N_intra)
      !
-     integer :: it_,INTRA_steps
+     integer :: it_,N_inter,N_intra
+     logical :: local_condition
      !
-     do it_=1,INTRA_steps*Life_MEM_steps
+     do it_=1,N_inter
        !
        if (it_+it-1>NE_steps) cycle
        !
        RT_GAMMA_T_status(it_+it-1)=0
        !
-       if (INTRA_steps==1) then
-         if (it_<=Life_MEM_steps) RT_GAMMA_T_status(it_+it-1)=1
+       if (N_intra>1) then
+         local_condition=mod(it_,N_intra)==1
+         if (local_condition) RT_GAMMA_T_status(it_+it-1)=int(real(it_-1)/real(N_intra))+1
        else
-         if (it_<INTRA_steps*Life_MEM_steps) then
-           if (mod(it_-1,INTRA_steps)==0) then
-             RT_GAMMA_T_status(it_+it-1)=1
-           endif
-         endif
+         RT_GAMMA_T_status(it_+it-1)=it_
        endif
        !
      enddo
      !
    end subroutine
    !
-end function RT_SET_lifetimes_evaluation_plan
+end function RT_Lifetimes_evaluation_plan

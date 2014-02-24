@@ -27,18 +27,15 @@ subroutine RT_Coulomb_interpolation(E,k)
  ! the gammas were constant
  ! (For a more sophisticated implementation check revision 3074)
  !  
- use pars,            ONLY:SP,rZero
- use units,           ONLY:HA2KEL,HA2EV
+ use pars,            ONLY:SP
  use electrons,       ONLY:levels,spin_occ,spin
  use R_lattice,       ONLY:bz_samp
  use vec_operate,     ONLY:sort
  use functions,       ONLY:Fermi_fnc,Fermi_fnc_fit
- use QP_m,            ONLY:QP_table,QP_n_states
  use SC,              ONLY:RT_ibz_coo,RT_Nk_ibz,SC_bands,RT_occupations
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,         &
-&                          RIM_closest_E,RIM_ibz_coo,l_RT_uses_E_RIM,       &
-&                          MEM_index,G_MEM_steps,G_lesser,RT_Tfit_lifetimes,&
-&                          RT_Efit_lifetimes,l_lftm_fit_stable,Nfitted_lifetimes
+&                          RIM_ibz_coo,l_RT_uses_E_RIM,                     &
+&                          RT_Tfit_lifetimes,RT_Efit_lifetimes,l_lftm_fit_stable,Nfitted_lifetimes
  !
  implicit none
  !
@@ -49,19 +46,16 @@ subroutine RT_Coulomb_interpolation(E,k)
  !
  integer  :: nstates
  !
- integer  :: i_k,i_k_rim,i_E_rim,i_k_ref,i_qp,i_spin,i_n,i_n_ref,order, &
-&            ifit,i_RT,i1,i2,i_sorted,i_unsorted,nfit,                  &
-&            RT_table(SC_bands(1):SC_bands(2),k%nibz),                  &
-&            E_sort_index(k%nibz*(SC_bands(2)-SC_bands(1)+1)),          &
+ integer  :: i_k,i_k_rim,i_E_rim,i_k_ref,i_n,ifit,i_RT,nfit, &
+&            E_sort_index(k%nibz*(SC_bands(2)-SC_bands(1)+1)),&
 &            E_sort_index_m1(k%nibz*(SC_bands(2)-SC_bands(1)+1))
  !
- real(SP) :: gamma_E_factor,gamma_H_factor,alpha,beta,x,k_weight,fac,   &
-&            f_occ,SUM_N_Electrons,SUM_N_Holes,Nel_change,EPS,E_ref(2), &
+ real(SP) :: alpha,x,k_weight,   &
 &            Energy(2),nelecs,nholes,VALUE_tmp(2)
  !
  logical  :: l_condition(2)
  !
- real(SP) :: T_fit(2),Ef_fit(2),err_fit(4),Hole_coeff(3),Elec_coeff(3), &
+ real(SP) :: T_fit(2),Ef_fit(2),err_fit(4), &
 &            deviation( k%nibz*(SC_bands(2)-SC_bands(1)+1) ),           &
 &            RT_occ_infinity( k%nibz*(SC_bands(2)-SC_bands(1)+1) ),     &
 &            RT_occ_sorted(k%nibz*(SC_bands(2)-SC_bands(1)+1)),         &

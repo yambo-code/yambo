@@ -172,6 +172,15 @@ module real_time
  integer,     allocatable :: Q_io_map(:)
  integer,     allocatable :: K_io_map(:)
  !
+ ! Locks and reference
+ !----------------------
+ logical                  :: l_use_delta_occupations
+ real(SP),    allocatable :: RT_one_minus_occupations(:,:) 
+ real(SP),    allocatable :: RT_delta_occupations(:,:) 
+ real(SP),    allocatable :: RT_occupations_reference(:,:) 
+ logical,     allocatable :: RT_occupations_locked(:,:) 
+ logical,     allocatable :: RT_lifetimes_locked(:,:) 
+ !
  ! EL-PH RD life-times
  !-----------------------------------------
  real(SP),    allocatable :: E_P_Hole_lifetime(:,:)
@@ -337,8 +346,7 @@ module real_time
 &                             l_sc_cohsex         
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n, &
-&                             SC_xc_functional,SC_xc_functional,RT_occupations,RT_nk,&
-&                             RT_occupations_locked,RT_lifetimes_locked
+&                             SC_xc_functional,SC_xc_functional,RT_occupations,RT_nk
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -365,6 +373,16 @@ module real_time
      !
      allocate(G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,G_MEM_steps))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
+     !
+     allocate(RT_one_minus_occupations(SC_bands(1):SC_bands(2),RT_nk))
+     call mem_est("RT_one_minus_occupations",(/size(RT_one_minus_occupations)/),(/SP/))
+     !
+     allocate(RT_delta_occupations(SC_bands(1):SC_bands(2),RT_nk))
+     call mem_est("RT_delta_occupations",(/size(RT_delta_occupations)/),(/SP/))
+     !
+     allocate(RT_occupations_reference(SC_bands(1):SC_bands(2),RT_nk))
+     call mem_est("RT_occupations_reference",(/size(RT_occupations_reference)/),(/SP/))
+     RT_occupations_reference=0._SP
      !
      allocate(RT_occupations_locked(SC_bands(1):SC_bands(2),RT_nk))
      call mem_est("RT_occupations_locked",(/size(RT_occupations_locked)/),(/LP/))
@@ -450,7 +468,7 @@ module real_time
      !
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
      use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n,RT_occupations,RT_all2ibz,&
-&                             RT_ibz_coo,RT_Nk_ibz,RT_occupations_locked,RT_lifetimes_locked
+&                             RT_ibz_coo,RT_Nk_ibz
      use memory_m,       ONLY:mem_est
      use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
@@ -506,6 +524,15 @@ module real_time
        deallocate(SAVED_lifetime,SAVED_times)
        call mem_est("SAVED_lifetimes")
      endif
+     !
+     deallocate(RT_one_minus_occupations)
+     call mem_est("RT_one_minus_occupations")
+     !
+     deallocate(RT_delta_occupations)
+     call mem_est("RT_delta_occupations")
+     !
+     deallocate(RT_occupations_reference)
+     call mem_est("RT_occupations_reference")
      !
      deallocate(RT_occupations_locked)
      call mem_est("RT_occupations_locked")
@@ -585,6 +612,12 @@ module real_time
      if (what=="J".or.what=="P".or.what=="OCCs") RT_do_IO=mod(NE_i_time-1,RT_IO_JPO_steps)==0
      if (what=="OUT") RT_do_IO=mod(NE_i_time-1,RT_IO_output_steps)==0
      if (what=="G")   RT_do_IO=mod(NE_i_time-1,RT_IO_G_steps)==0
+   end function
+   !
+   logical function FIRST_step(it,TIME)
+     integer   :: it
+     real(SP)  :: TIME
+     FIRST_step=abs(TIME-(it-1)*RT_step)<1.E-6
    end function
    !
    integer function B_mat_index(ib1,ib2)

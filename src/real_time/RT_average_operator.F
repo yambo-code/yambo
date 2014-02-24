@@ -22,7 +22,7 @@
 subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  !
  use pars,           ONLY:SP,cI
- use SC,             ONLY:SC_bands,SC_nbands,RT_all2ibz,RT_Nk_ibz,RT_nk,RT_ibz_coo
+ use SC,             ONLY:SC_bands,SC_nbands,RT_Nk_ibz,RT_nk,RT_ibz_coo
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_n_states
  use electrons,      ONLY:n_sp_pol,levels
@@ -34,8 +34,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  use wrapper,        ONLY:Vstar_dot_V
 #endif
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,&
-&                         PAR_COM_Xk_ibz_INDEX,PAR_COM_Plasma_INDEX,PAR_IND_B_mat
- use real_time,      ONLY:B_mat_index
+&                         PAR_COM_Xk_ibz_INDEX,PAR_COM_Plasma_INDEX
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -54,9 +53,8 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  !
  ! Work Space
  !
- integer     :: i1,ik,ik_RIM,SC_bands2,ik_ibz
- complex(SP) :: Hk(SC_bands(2),SC_bands(2),n_sp_pol)
- complex(SP) :: VALUE_tmp
+ integer     :: i1,ik,SC_bands2,ik_ibz
+ complex(SP) :: Hk(SC_bands(2),SC_bands(2),n_sp_pol),VALUE_tmp
  !
 #if defined _TIMING
  call timing('RT average Op',OPR='start')

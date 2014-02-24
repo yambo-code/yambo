@@ -21,13 +21,11 @@
 !
 subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_kind)
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP
  use electrons,      ONLY:levels,spin_occ
- use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,it_now,RT_nk,RT_ibz_coo,RT_Nk_ibz
- use real_time,      ONLY:MEM_index,G_MEM_steps,G_lesser,RIM_ibz_coo,&
-&                         l_RT_uses_E_RIM,Imp_factors
+ use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_occupations
+ use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,Imp_factors
  !
  implicit none
  !
@@ -39,16 +37,18 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  ! Work Space
  !
- integer          :: i1,i2,ib,ik,ik_rim,iE_rim,indx
+ real(SP), parameter :: cut_off=0.1_SP  ! 1 = 100%
+ !
+ integer          :: i1,ib,ik,ik_rim,iE_rim,indx
  real(SP)         :: f_occ,k_weight,En
- real(SP)         :: prefactor(2)
- real(SP)         :: N_valence,N_conduction,delta_N,E_valence,E_conduction,delta_E
+ real(SP)         :: prefactor(3),DEN
+ real(SP)         :: Nv,Nc,dNv,dNc,Ev,Ec,dEv,dEc
  real(SP)         :: SUM_N_Holes(2),SUM_E_Holes(2),SUM_N_Electrons(2),SUM_E_Electrons(2),TMP_VALUE(4)
  !
  logical          :: l_energy,l_n_electrons,l_n_carriers
  !
- if(trim(Scatt_kind)=="elel") then
-   l_energy=.true.
+ if(index(Scatt_kind,'elel')/=0) then
+   l_energy=.false.
    l_n_electrons=.true.
    l_n_carriers=.false.
  endif
@@ -59,91 +59,11 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    l_n_carriers=.true.
  endif
  !
- ! First on the small grid
- !
  SUM_N_Holes   =0._SP
  SUM_N_Electrons=0._SP
  SUM_E_Holes   =0._SP
  SUM_E_Electrons=0._SP
  prefactor=0._SP
- !
- if(trim(Scatt_kind)=="elel".or..not.l_RT_uses_E_RIM) then
-   !
-   do ik=1,k%nibz
-     k_weight=k%weights(ik)
-     ik_rim=RT_ibz_coo(ik,1)
-     do ib=SC_bands(1),SC_bands(2)
-       if(ib<=E%nbf) indx=1
-       if(ib> E%nbf) indx=2
-       f_occ=-cI*G_lesser(ib,ib,ik_rim,MEM_index(it_now,G_MEM_steps))
-       En=E%E(ib,ik,1)
-       SUM_N_Holes(indx)=SUM_N_Holes(indx)+(Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ))*k_weight
-       SUM_N_Electrons(indx)=SUM_N_Electrons(indx)+(Electron_lifetime(ib,ik_rim)*f_occ)*k_weight
-       SUM_E_Holes(indx)=SUM_E_Holes(indx)+(En*Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ))*k_weight
-       SUM_E_Electrons(indx)=SUM_E_Electrons(indx)+(En*Electron_lifetime(ib,ik_rim)*f_occ)*k_weight
-     enddo
-   enddo
-   !
-   N_valence=SUM_N_Holes(1)+SUM_N_Electrons(1)
-   N_conduction=SUM_N_Holes(2)+SUM_N_Electrons(2)
-   delta_N=(SUM_N_Electrons(1)-SUM_N_Holes(1))+(SUM_N_Electrons(2)-SUM_N_Holes(2))
-   !
-   E_valence=SUM_E_Holes(1)+SUM_E_Electrons(1)
-   E_conduction=SUM_E_Holes(2)+SUM_E_Electrons(2)
-   delta_E=(SUM_E_Electrons(1)-SUM_E_Holes(1))+(SUM_E_Electrons(2)-SUM_E_Holes(2))
-   !
-   if(    l_energy.and. l_n_electrons) then
-     prefactor(1)=(delta_E*N_conduction-delta_N*E_conduction)/(N_conduction*E_valence-N_valence*E_conduction)
-     prefactor(2)=(delta_E*N_valence   -delta_N*E_valence   )/(N_conduction*E_valence-N_valence*E_conduction)
-   endif
-   if(l_n_carriers.and. l_n_electrons) then
-     prefactor(1)=(SUM_N_Electrons(1)-SUM_N_Holes(1))/(N_valence)
-     prefactor(2)=(SUM_N_Electrons(2)-SUM_N_Holes(2))/(N_conduction)
-   endif
-   if(.not.l_energy.and..not.l_n_carriers.and.l_n_electrons) prefactor(1)=delta_N/(N_valence+N_conduction)
-   !
-   if( isnan(prefactor(1)) .or. isnan(prefactor(2)) )   goto 100
-   if( prefactor(1)==prefactor(1)+1._SP .or. prefactor(2)==prefactor(2)+1._SP ) goto 100
-   !
-   if( abs(prefactor(1))>0.1_SP ) prefactor(1)=prefactor(1)/abs(prefactor(1))*0.1_SP
-   if( abs(prefactor(2))>0.1_SP ) prefactor(2)=prefactor(2)/abs(prefactor(2))*0.1_SP
-   !
-   do ik=1,k%nibz
-     ik_rim=RT_ibz_coo(ik,1)
-     do ib=SC_bands(1),SC_bands(2)
-       !
-       if((l_energy.or.l_n_carriers).and.l_n_electrons) then
-         if(ib<=E%nbf) then
-           Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(1))
-           Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)    *(1._SP+prefactor(1))
-         else
-           Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP+prefactor(2))
-           Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)    *(1._SP-prefactor(2))
-         endif
-       else
-         Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(1))
-         Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)    *(1._SP+prefactor(1))
-       endif
-       !
-     enddo
-   enddo
-   !
- endif
- !
-100 if(.not.l_RT_uses_E_RIM) goto 200
- !
- if (l_RT_uses_E_RIM.and.trim(Scatt_kind)=="elel") Imp_factors(5:6)=prefactor(1:2)
- !
- ! Then on the RIM
- !
- SUM_N_Holes   =0._SP
- SUM_N_Electrons=0._SP
- SUM_E_Holes   =0._SP
- SUM_E_Electrons=0._SP
- prefactor=0._SP
- !
- if(trim(Scatt_kind)=='elel') i2=1
- if(trim(Scatt_kind)=='elph') i2=0
  !
  do ib=SC_bands(1),SC_bands(2)
    if(ib<=E%nbf) indx=1
@@ -153,14 +73,11 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      TMP_VALUE=0._SP
      k_weight=k%weights(ik)/real(RT_Nk_ibz(ik))
      !
-     do ik_rim=RT_ibz_coo(ik,1)+i2,RT_ibz_coo(ik,2)
-       iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
-       f_occ=-cI*G_lesser(ib,ib,ik_rim,MEM_index(it_now,G_MEM_steps))
-       En=E%E_RIM(ib,iE_rim,1)
-       TMP_VALUE(1)=TMP_VALUE(1)+Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ)
-       TMP_VALUE(2)=TMP_VALUE(2)+Electron_lifetime(ib,ik_rim)*f_occ
-       TMP_VALUE(3)=TMP_VALUE(3)+En*Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ)
-       TMP_VALUE(4)=TMP_VALUE(4)+En*Electron_lifetime(ib,ik_rim)*f_occ
+     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+        iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+       !
+       call eval_E_and_N()
+       !
      enddo
      !
      SUM_N_Holes(indx)=SUM_N_Holes(indx)+TMP_VALUE(1)*k_weight
@@ -171,54 +88,97 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    enddo
  enddo
  !
- N_valence=SUM_N_Holes(1)+SUM_N_Electrons(1)
- N_conduction=SUM_N_Holes(2)+SUM_N_Electrons(2)
- delta_N=(SUM_N_Electrons(1)-SUM_N_Holes(1))+(SUM_N_Electrons(2)-SUM_N_Holes(2))
+ call compute_prefactors()
  !
- E_valence=SUM_E_Holes(1)+SUM_E_Electrons(1)
- E_conduction=SUM_E_Holes(2)+SUM_E_Electrons(2)
- delta_E=(SUM_E_Electrons(1)-SUM_E_Holes(1))+(SUM_E_Electrons(2)-SUM_E_Holes(2))
- !
- if(    l_energy.and. l_n_electrons) then
-   prefactor(1)=(delta_E*N_conduction-delta_N*E_conduction)/(N_conduction*E_valence-N_valence*E_conduction)
-   prefactor(2)=(delta_E*N_valence   -delta_N*E_valence)/(N_conduction*E_valence-N_valence*E_conduction)
- endif
- if(l_n_carriers.and. l_n_electrons) then
-   prefactor(1)=(SUM_N_Electrons(1)-SUM_N_Holes(1))/(N_valence)
-   prefactor(2)=(SUM_N_Electrons(2)-SUM_N_Holes(2))/(N_conduction)
- endif
- if(.not.l_energy.and..not.l_n_carriers.and.l_n_electrons) prefactor(1)=delta_N/(N_valence+N_conduction)
- !
- if( isnan(prefactor(1)) .or. isnan(prefactor(2)) )   goto 200
- if( prefactor(1)==prefactor(1)+1._SP .or. prefactor(2)==prefactor(2)+1._SP ) goto 200
- !
- if( abs(prefactor(1))>0.1_SP ) prefactor(1)=prefactor(1)/abs(prefactor(1))*0.1_SP
- if( abs(prefactor(2))>0.1_SP ) prefactor(2)=prefactor(2)/abs(prefactor(2))*0.1_SP
+ do i1=1,3
+   if( isnan(prefactor(i1)) )               goto 200
+   if( prefactor(i1)==prefactor(i1)+1._SP ) goto 200
+   if( abs(prefactor(i1))>cut_off ) prefactor(i1)=prefactor(i1)/abs(prefactor(i1))*cut_off
+ enddo
  !
  do ib=SC_bands(1),SC_bands(2)
    do ik=1,k%nibz
-     k_weight=k%weights(ik)/real(RT_Nk_ibz(ik))
-     do ik_rim=RT_ibz_coo(ik,1)+i2,RT_ibz_coo(ik,2)
+     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
-       if((l_n_carriers.or.l_energy).and.l_n_electrons) then
-         if(ib<=E%nbf) then
-           Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(1))
-           Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)*(1._SP+prefactor(1))
-         else
-           Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP+prefactor(2))
-           Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)*(1._SP-prefactor(2))
-         endif
-       else
-         Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(1))
-         Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)*(1._SP+prefactor(1))
-       endif
+       call apply_prefactors()
        !
      enddo
    enddo
  enddo
  !
-200 if(trim(Scatt_kind)=="elel")  Imp_factors(3:4)=prefactor(1:2)
+200 if(trim(Scatt_kind)=="elel")  Imp_factors(3:5)=prefactor(1:3)
  !
  if(trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
  !
+ contains
+   !
+   !
+   subroutine eval_E_and_N()
+     !
+     f_occ=RT_occupations(ib,ik_rim)
+     if(.not.l_RT_uses_E_RIM) En=E%E(ib,ik,1)
+     if(     l_RT_uses_E_RIM) En=E%E_RIM(ib,iE_rim,1)
+     TMP_VALUE(1)=TMP_VALUE(1)+   Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ)
+     TMP_VALUE(2)=TMP_VALUE(2)+   Electron_lifetime(ib,ik_rim)*f_occ
+     TMP_VALUE(3)=TMP_VALUE(3)+En*Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ)
+     TMP_VALUE(4)=TMP_VALUE(4)+En*Electron_lifetime(ib,ik_rim)*f_occ
+     !
+   end subroutine eval_E_and_N
+   !
+   !
+   subroutine compute_prefactors()
+     !
+     Nv=SUM_N_Holes(1)+SUM_N_Electrons(1)
+     Nc=SUM_N_Holes(2)+SUM_N_Electrons(2)
+     dNv=SUM_N_Electrons(1)-SUM_N_Holes(1)
+     dNc=SUM_N_Electrons(2)-SUM_N_Holes(2)
+     !
+     Ev=SUM_E_Holes(1)+SUM_E_Electrons(1)
+     Ec=SUM_E_Holes(2)+SUM_E_Electrons(2)
+     dEv=SUM_E_Electrons(1)-SUM_E_Holes(1)
+     dEc=SUM_E_Electrons(2)-SUM_E_Holes(2)
+     !
+     ! Electrons, carriers and Energy
+     if(l_energy.and.l_n_electrons.and.l_n_carriers) then
+       DEN= Nc*dNv*Ev -Nv*dNc*Ec -Nc*dEv*Nv +Nv*dEc*Nc
+       prefactor(3)=( -Nc*dNv*Ev -Nv*dNc*Ec +Nc*dEv*Nv +Nv*dEc*Nc   )/DEN
+       prefactor(2)=2*(  dNv*dNc*Ev - dEv*dNc*Nv )/DEN
+       prefactor(1)=2*(  dNv*dNc*Ec - dNv*dEc*Nc )/DEN
+     endif
+     ! Electrons number and Energy
+     if(l_energy.and.l_n_electrons.and..not.l_n_carriers) then
+       DEN=Nc*Ev-Nv*Ec
+       prefactor(1)=( -(dEv+dEc)*Nc +(dNv+dNc)*Ec )/DEN
+       prefactor(2)=( -(dEv+dEc)*Nv +(dNv+dNc)*Ev )/DEN
+     endif
+     ! Electrons number and carrires number
+     if(l_n_carriers.and.l_n_electrons.and..not.l_energy) then
+       prefactor(1)=-dNv/Nv
+       prefactor(2)= dNc/Nc
+     endif
+     ! Electrons number only
+     if(.not.l_energy.and..not.l_n_carriers.and.l_n_electrons) &
+     &  prefactor(1)=(dNv+dNc)/(Nv+Nc)
+     !
+   end subroutine compute_prefactors
+   !
+   !
+   subroutine apply_prefactors()
+     !
+     if((l_energy.or.l_n_carriers).and.l_n_electrons) then
+       if(ib<=E%nbf) then
+         Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP+prefactor(1)+prefactor(3))
+         Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)*(1._SP-prefactor(1)+prefactor(3))
+       else
+         Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(2)-prefactor(3))
+         Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)*(1._SP+prefactor(2)-prefactor(3))
+       endif
+     else
+       Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(1))
+       Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)*(1._SP+prefactor(1))
+     endif
+     !
+   end subroutine apply_prefactors
+   !
+   !
 end subroutine RT_impose_zero_dE_and_dN

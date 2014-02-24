@@ -108,8 +108,6 @@ module SC
  ! Real-Time occupations
  !
  logical                  :: l_RT_occupations_in_use
- logical,     allocatable :: RT_occupations_locked(:,:) 
- logical,     allocatable :: RT_lifetimes_locked(:,:) 
  real(SP),    allocatable :: RT_occupations(:,:) 
  !
  ! K-points: In case I want to use the G_lesser to define the occupations

@@ -19,29 +19,36 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_Interpolation(Life,Life_SAVED,Times_SAVED)
+subroutine RT_Lifetimes_Interpolation(Life,Time,Life_SAVED,Times_SAVED)
  !
  use pars,           ONLY:SP
- use SC,             ONLY:it_now
- use real_time,      ONLY:Life_MEM_steps,RT_step
+ use real_time,      ONLY:Life_MEM_steps
  !
  implicit none
  !
- real(SP)  :: Life,Life_SAVED(Life_MEM_steps),Times_SAVED(Life_MEM_steps)
+ real(SP)  :: Life,Time,Life_SAVED(Life_MEM_steps),Times_SAVED(Life_MEM_steps)
  !
  ! Work Space
  !
- real(SP)  :: M,Q,dT(Life_MEM_steps),dG(Life_MEM_steps),TIME
+ real(SP)  :: M,Q,dT(Life_MEM_steps),dG(Life_MEM_steps),P(Life_MEM_steps),EPS
+ integer   :: POL_order,i_o
  !
- dT(2)=Times_SAVED(2)-Times_SAVED(1)
- dG(2)=Life_SAVED(2)-Life_SAVED(1)
- dT(3)=Times_SAVED(3)-Times_SAVED(1)
- dG(3)=Life_SAVED(3)-Life_SAVED(1)
- TIME=(it_now-1)*RT_step
- !
- Q=(dT(3)/dT(2)*dG(2)-dG(3))/(dT(3)*(dT(2)-dT(3)))
- M=(dG(3)-Q*(dT(3))**2)/dT(3)
- !
- Life=Life_SAVED(1)+M*(TIME-Times_SAVED(1))+Q*(TIME-Times_SAVED(1))**2
+ if (Life_MEM_steps==3) then
+   dT(2)=Times_SAVED(2)-Times_SAVED(1)
+   dG(2)=Life_SAVED(2)-Life_SAVED(1)
+   dT(3)=Times_SAVED(3)-Times_SAVED(1)
+   dG(3)=Life_SAVED(3)-Life_SAVED(1)
+   Q=(dT(3)/dT(2)*dG(2)-dG(3))/(dT(3)*(dT(2)-dT(3)))
+   M=(dG(3)-Q*(dT(3))**2)/dT(3)
+   Life=Life_SAVED(1)+M*(Time-Times_SAVED(1))+Q*(Time-Times_SAVED(1))**2
+ else
+   POL_order=Life_MEM_steps-2
+   EPS=0.d0
+   call pol_fit(Life_MEM_steps,Times_SAVED,Life_SAVED,POL_order,P(:POL_order+1),EPS,0.d0)
+   Life=0.
+   do i_o=1,POL_order+1
+     Life=Life+Time**(i_o-1)*P(i_o)
+   enddo
+ endif
  !
 end subroutine RT_Lifetimes_Interpolation

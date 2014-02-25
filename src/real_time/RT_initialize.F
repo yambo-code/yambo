@@ -55,8 +55,8 @@ subroutine RT_initialize(E,k,q)
  integer                  :: i1,rest,ik,IO_steps(3),N_T_samplings
  character(5)             :: MSG_ch
  real(SP)                 :: T_memory
- logical                  :: l_Full_RT_T_evolution,l_compute_fluence,l_field_is_a_pulse 
- integer,         external:: RT_k_grid,RT_SET_lifetimes_evaluation_plan
+ logical                  :: l_Full_RT_T_evolution,l_field_is_a_pulse 
+ integer,         external:: RT_k_grid,RT_Lifetimes_evaluation_plan
  !
  ! Logicals
  !==========
@@ -259,8 +259,11 @@ subroutine RT_initialize(E,k,q)
  !=============================================
  !
  Life_MEM_steps=1
- if (RT_dynamics_steps(1)>0.) Life_MEM_steps=3
- N_T_samplings=RT_SET_lifetimes_evaluation_plan( )
+ if (RT_dynamics_steps(1)>0.) then
+   Life_MEM_steps=nint(RT_dynamics_steps(1)/RT_dynamics_steps(2))
+   RT_dynamics_steps(1)=RT_dynamics_steps(2)*Life_MEM_steps
+ endif
+ N_T_samplings=RT_Lifetimes_evaluation_plan( )
  !
  ! Gauge
  !=======
@@ -305,6 +308,7 @@ subroutine RT_initialize(E,k,q)
  if (RT_dynamics_steps(1)>0.) then
    call msg( 'nr','---Dynamics---')
    call msg( 'r', 'Sampling                       :',RT_dynamics_KIND)
+   call msg( 'r', 'Memory steps (Lifetimes)       :',Life_MEM_steps)
    call msg( 'r', 'Steps length (inter/intra) [fs]:',RT_dynamics_steps/FS2AUT)
    if (RT_dynamics_decay_time>0.) call msg( 'r', 'Distribution decay         [fs]:',&
 &                                                RT_dynamics_decay_time/FS2AUT)

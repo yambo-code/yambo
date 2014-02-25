@@ -25,15 +25,13 @@ subroutine RT_occupations_FIT_and_lock(E,k,T_fit,Ef_fit,Occupations)
  ! In case locks the occupations of states which are not expected to change
  ! any more
  !
- use pars,           ONLY:SP,cZero,cI
+ use pars,           ONLY:SP
  use QP_m,           ONLY:QP_table,QP_n_states
- use electrons,      ONLY:levels,spin_occ,spin
+ use electrons,      ONLY:levels,spin
  use R_lattice,      ONLY:bz_samp
- use drivers,        ONLY:l_elel_scatt
  use vec_operate,    ONLY:sort
  use functions,      ONLY:Fermi_fnc_fit
- use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo,RT_nk,&
-&                         RT_occupations,RT_occupations_locked
+ use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo,RT_nk
  use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM
  !
  implicit none
@@ -46,9 +44,9 @@ subroutine RT_occupations_FIT_and_lock(E,k,T_fit,Ef_fit,Occupations)
  integer,  parameter :: fit_dim=1000
  real(SP), parameter :: tresh=1.E-5
  !
- integer  :: i_RT,i_qp,i_b,i_k,i_k_rim,i_k_Erim,i_k_RT,i_spin,i1,&
+ integer  :: i_RT,i_qp,i_b,i_k,i_k_rim,i_k_Erim,i_k_RT,i_spin,&
 &            nfit,E_sort_index(RT_nstates)
- real(SP) :: err_fit(4),E_first_hole,E_last_electron, &
+ real(SP) :: err_fit(4), &
 &            RT_occ_fit(fit_dim,2),RT_E_fit(fit_dim,2), &
 &            RT_occ(RT_nstates),RT_occ_tmp(RT_nstates),RT_E(RT_nstates)
  !

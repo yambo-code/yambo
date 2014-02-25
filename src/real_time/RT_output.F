@@ -25,13 +25,13 @@ subroutine RT_output(what,VALUEs,TIME,E)
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
- use SC,             ONLY:SC_description,n_SC_descriptions,it_now
+ use SC,             ONLY:SC_description,n_SC_descriptions
  use fields,         ONLY:A_vecpot
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,l_Debye_TBose_update, &
-&                         l_NE_simulate_IP,RT_do_IO,NE_i_time,RT_Tfit_lifetimes,&
-&                         Imp_factors,l_RT_uses_E_RIM!,Fluence
+&                         RT_do_IO,RT_Tfit_lifetimes,&
+&                         Imp_factors
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -48,7 +48,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  integer, parameter       :: n_output_files=100,max_X_order=9
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
- integer                  :: n1,i_f,i_fp,n_headings(n_output_files),next_file,i_order,i_c
+ integer                  :: i_f,i_fp,n_headings(n_output_files),next_file,i_order,i_c
  logical                  :: file_is_todo(n_output_files),open_files,initialize
  logical,           save  :: SC_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
  character(schlen)        :: headings(n_output_files,11),append_ch

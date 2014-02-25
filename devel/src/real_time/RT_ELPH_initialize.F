@@ -141,7 +141,7 @@ subroutine RT_ELPH_initialize(E,k,q)
        do i1=1,n_deg_grp(1)
          do i_np=SC_bands(1),SC_bands(2)
            do i3=1,2
-             gkkp_average=0._SP
+             if (i3==1) gkkp_average=0._SP
              do i_n=first_el(1,i1),first_el(1,i1)+n_of_el(1,i1)-1
                if (i3==1) gkkp_average=gkkp_average+abs(elph_gkkp_expanded(ik_store,il,i_n,i_np))**2.
                if (i3==2) elph_gkkp_expanded(ik_store,il,i_n,i_np)=sqrt(gkkp_average/real(n_of_el(1,i1)))
@@ -152,7 +152,7 @@ subroutine RT_ELPH_initialize(E,k,q)
        do i1=1,n_deg_grp(2)
          do i_n=SC_bands(1),SC_bands(2)
            do i3=1,2
-             gkkp_average=0._SP
+             if (i3==1) gkkp_average=0._SP
              do i_np=first_el(2,i1),first_el(2,i1)+n_of_el(2,i1)-1
                if (i3==1) gkkp_average=gkkp_average+abs(elph_gkkp_expanded(ik_store,il,i_n,i_np))**2.
                if (i3==2) elph_gkkp_expanded(ik_store,il,i_n,i_np)=sqrt(gkkp_average/real(n_of_el(2,i1)))

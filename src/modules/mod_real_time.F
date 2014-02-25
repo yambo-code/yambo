@@ -205,7 +205,7 @@ module real_time
  real(SP)                 :: RT_mean_lifetimes(6)
  real(SP)                 :: RT_Tfit_lifetimes(4)
  real(SP)                 :: RT_Efit_lifetimes(4)
- real(SP)                 :: Imp_factors(5)
+ real(SP)                 :: Imp_factors(6)
  !
  ! Occupations fit
  !

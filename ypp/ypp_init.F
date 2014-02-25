@@ -503,6 +503,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_density  =runlevel_is_on('density').and.runlevel_is_on('electrons')
  l_mag      =runlevel_is_on('magnetization')
  l_wannier  =runlevel_is_on('wannier')
+ l_spin     =runlevel_is_on('spin')
  !
  if (.not.l_exc_wf) l_free_hole=.false.
  !

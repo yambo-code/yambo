@@ -134,8 +134,7 @@ integer function io_HF_and_locXC(ID)
              QP_Vxc(i2)=cmplx(Vxc(1),Vxc(2),SP)
              i_found=i_found+1
            endif
-         enddo 
-         QP_table_disk=QP_table(i1,:)
+         enddo
        endif
      endif
    enddo

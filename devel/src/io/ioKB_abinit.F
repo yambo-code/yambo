@@ -93,7 +93,8 @@ integer function ioKB_abinit(ID)
    call io_bulk(ID,I1=pp_n_l_comp)
    !
    if (.not.ver_is_gt_or_eq(ID,revision=898)) pp_n_l_times_proj_max=maxval(pp_n_l_comp)
-   if (read_is_on(ID).and. .not.allocated(pp_table)) then
+   if (read_is_on(ID)) then
+     if(allocated(pp_table)) deallocate(pp_table)
      allocate(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
      call mem_est("pp_table",(/size(pp_table)/),(/IP/))
    endif

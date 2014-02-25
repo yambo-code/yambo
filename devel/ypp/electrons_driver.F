@@ -28,7 +28,7 @@ subroutine electrons_driver(Xk,Xen)
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:i_time_rev
  use com,            ONLY:error
- use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
+ use electrons,      ONLY:levels,n_spinor,spin,n_sp_pol
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
@@ -66,7 +66,7 @@ subroutine electrons_driver(Xk,Xen)
  ! Work Space
  !
  real(SP), allocatable :: el_den(:)
- integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
+ integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_wfp,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
  logical               :: flag
  character(lchlen)     :: ch_ws(2)
 #if defined _YPP_ELPH
@@ -305,10 +305,12 @@ subroutine electrons_driver(Xk,Xen)
    if (l_mean_potential) call section('*','Mean Potential Plot')
 #endif
    !
-   if (n_spinor==2) then
+#if defined _YPP_SC
+   if (n_spinor==2.and.l_mean_potential) then
      call warning ('Non collinear spin support still not implemented')
      goto 1
    endif
+#endif
    !
    i_qp=1
    !
@@ -336,6 +338,7 @@ subroutine electrons_driver(Xk,Xen)
      if (.not.l_mean_potential) then
 #endif
        i_wf=WF%index(ib,ik,i_spin)
+       if (n_spinor==2) i_wfp=WF%index(ib,ik,2)
 #if defined _YPP_SC
      endif
 #endif
@@ -351,6 +354,7 @@ subroutine electrons_driver(Xk,Xen)
      if (.not.l_mean_potential) then 
 #endif
        forall(ir=1:fft_size) v2plot(ir)=real( WF%c(ir,i_wf)*conjg( WF%c(ir,i_wf) ) )
+       if (n_spinor==2) forall(ir=1:fft_size) v2plot(ir)=v2plot(ir) + real( WF%c(ir,i_wfp)*conjg( WF%c(ir,i_wfp) ) )
 #if defined _YPP_SC
      endif
 #endif
@@ -361,7 +365,7 @@ subroutine electrons_driver(Xk,Xen)
        cycle
      else
        !
-       if (n_spin==2) then
+       if (n_sp_pol==2) then
          if (i_spin==1) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_UP_'//trim(intc(plot_dim))
          if (i_spin==2) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_DN_'//trim(intc(plot_dim))
          if (i_spin==1) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' UP'

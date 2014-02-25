@@ -30,10 +30,12 @@ subroutine RT_Lifetimes_Interpolation(Life,Time,Life_SAVED,Times_SAVED)
  !
  ! Work Space
  !
- real(SP)  :: M,Q,dT(Life_MEM_steps),dG(Life_MEM_steps),P(Life_MEM_steps),EPS
+ real(SP)  :: M,Q,dT(Life_MEM_steps),dG(Life_MEM_steps),P(Life_MEM_steps),EPS,Life_SUM
  integer   :: POL_order,i_o
  !
- if (Life_MEM_steps==3) then
+ Life_SUM=sum(abs(Life_SAVED))
+ !
+ if (Life_MEM_steps==3.or.Life_SUM<1.E-5) then
    dT(2)=Times_SAVED(2)-Times_SAVED(1)
    dG(2)=Life_SAVED(2)-Life_SAVED(1)
    dT(3)=Times_SAVED(3)-Times_SAVED(1)

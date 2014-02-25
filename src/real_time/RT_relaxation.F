@@ -65,7 +65,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  real(SP)         :: f_k
  logical          :: l_eval
  !
- if(.not.l_NE_dynamics_started) return
+ if (.not.l_NE_dynamics_started) return
  !
  ! Dephasing matrix
  !==================
@@ -84,7 +84,8 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  if (.not.l_elph_scatt.and..not.l_elel_scatt) return
  !
- l_eval= RT_GAMMA_T_status(it_now)>0.and.( FIRST_step(it_now,Time).or.it_now-it_start+1<=Life_MEM_steps)
+ l_eval= ( RT_GAMMA_T_status(it_now)>0.and.( FIRST_step(it_now,Time).or.it_now-it_start+1<=Life_MEM_steps) ).or.&
+&        Life_MEM_steps==1
  !
  ! Lifetimes History and updates
  !================================
@@ -136,16 +137,15 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! PARALLEL Mergering, SAVE, interpolate
  !=======================================
  if (l_elel_scatt) then
-   call RT_GAMMA_save_and_interp(Time,l_eval,E,k,E_E_Hole_lifetime,1)
-   call RT_GAMMA_save_and_interp(Time,l_eval,E,k,E_E_Electron_lifetime,2)
+   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_E_Hole_lifetime,1)
+   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_E_Electron_lifetime,2)
  endif
  if (l_elph_scatt) then
-   call RT_GAMMA_save_and_interp(Time,l_eval,E,k,E_P_Hole_lifetime,3)
-   call RT_GAMMA_save_and_interp(Time,l_eval,E,k,E_P_Electron_lifetime,4)
-   call RT_GAMMA_save_and_interp(Time,l_eval,E,k,E_P_Ho_abs_lifetime,5)
-   call RT_GAMMA_save_and_interp(Time,l_eval,E,k,E_P_El_abs_lifetime,6)
+   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Hole_lifetime,3)
+   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Electron_lifetime,4)
+   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Ho_abs_lifetime,5)
+   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_El_abs_lifetime,6)
  endif
- !
  !
  ! Zero dN/dT & dE/dT & d(DeltaN)/dT
  !===================================

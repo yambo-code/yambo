@@ -42,7 +42,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
  ! Work Space ...
  !
  integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem,ik_rim,&
-&            ip_rim,i1,i2,ik_m_q_rim
+&            ip_rim,i1,i2
  real(SP) :: P_ph_abs,P_ph_emit,ph_freq,DELTA_E,DELTA_W,pre_factor,&
 &            TMP_Hole_lifetime(2),TMP_Electron_lifetime(2),f_kmq,one_minus_f_kmq,df_kmq
  real(SP), external :: RT_G_retarded_convolution
@@ -84,6 +84,8 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
+       if (RT_occupations_locked(i_n_shift,ik_rim)) cycle
+       !
        ! Zeroing
        !=========
        TMP_Hole_lifetime=rZero
@@ -104,9 +106,9 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
          !
          if ( abs(P_ph_abs)<1.E-7 .and. abs(P_ph_emit)<1.E-7 ) cycle
          !
-         one_minus_f_kmq  = RT_one_minus_occupations(i_np,ik_m_q_rim)/spin_occ
-         f_kmq            = RT_occupations(i_np,ik_m_q_rim)/spin_occ
-         df_kmq           = RT_delta_occupations(i_np,ik_m_q_rim)/spin_occ
+         one_minus_f_kmq  = RT_one_minus_occupations(i_np_shift,ip_rim)/spin_occ
+         f_kmq            = RT_occupations(i_np_shift,ip_rim)/spin_occ
+         df_kmq           = RT_delta_occupations(i_np_shift,ip_rim)/spin_occ
          !
          TMP_Hole_lifetime(1)=TMP_Hole_lifetime(1)+(f_kmq+df_kmq)*P_ph_abs
          TMP_Electron_lifetime(1)=TMP_Electron_lifetime(1)+(one_minus_f_kmq-df_kmq)*P_ph_emit

@@ -25,7 +25,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use units,          ONLY:HA2EV
  use real_time,      ONLY:q_weight,elph_gkkp_expanded,THETA_matrix,&
 &                         THETA_matrix_index,Q_io_map,K_io_map,&
-&                         l_RT_CCA_Kernel,l_Debye_TBose_update,l_RT_uses_E_RIM
+&                         l_RT_CCA_Kernel,l_Debye_TBose_update
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_elph_scatt
  use com,            ONLY:warning
@@ -33,7 +33,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use IO_m,           ONLY:io_control,REP,OP_RD_CL
  use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,W_debye
  use memory_m,       ONLY:mem_est
- use SC,             ONLY:SC_bands,RT_nk
+ use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
  use vec_operate,    ONLY:degeneration_finder
  use parser_m,       ONLY:parser
@@ -47,7 +47,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  ! Work Space
  !
  integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
-&                      first_el(2,SC_bands(2)),n_of_el(2,SC_bands(2)),n_deg_grp(2),i1,i2,i3,ik_store
+&                      first_el(2,SC_bands(2)),n_of_el(2,SC_bands(2)),n_deg_grp(2),i1,i3,ik_store
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes)
  complex(SP)         ::gkkp_average
  integer, external   ::ioELPH
@@ -184,8 +184,6 @@ subroutine RT_ELPH_initialize(E,k,q)
  RADIUS_sphere=(3.*RL_vol/q%nbz/4./pi)**(1./3.)
  !
  call rim_spherical(q%nbz,q%ptbz,q_weight,RADIUS_sphere,2,.FALSE.)
- !
- !if (l_RT_uses_E_RIM) q_weight=q_weight*real(q%nbz)/real(RT_nk)
  !
  ! THETA matrix indexes
  !======================

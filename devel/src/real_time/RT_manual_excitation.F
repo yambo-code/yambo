@@ -32,7 +32,6 @@ subroutine RT_manual_excitation(E,k)
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg
- use parser_m,       ONLY:parser
  !
  implicit none
  !

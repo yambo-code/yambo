@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
+subroutine RT_mean_carrier_lifetimes(E,k)
  ! 
  use pars,           ONLY:SP,cI
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
@@ -31,7 +31,6 @@ subroutine RT_mean_carrier_lifetimes(G_lesser,E,k)
  use electrons,      ONLY:levels,spin_occ
  implicit none
  !
- complex(SP),intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  type(levels)           :: E
  type(bz_samp)          :: k
  !

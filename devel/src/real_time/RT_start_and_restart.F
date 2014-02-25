@@ -69,7 +69,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  integer :: ik,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,it,nt
- integer, external :: io_SC_components,io_RT_components,RT_SET_lifetimes_evaluation_plan
+ integer, external :: io_SC_components,io_RT_components,RT_Lifetimes_evaluation_plan
  logical :: RESTART
  !
  ! Initialize the Gf and potentials
@@ -289,7 +289,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! Last thing to do is to update the planned time sampling time (if needed)
    !
-   nt=RT_SET_lifetimes_evaluation_plan( )
+   nt=RT_Lifetimes_evaluation_plan( )
    !
  else
    !

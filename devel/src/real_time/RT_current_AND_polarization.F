@@ -28,10 +28,9 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  use pars,           ONLY:SP,cI
  use units,          ONLY:SPEED_OF_LIGHT
- use electrons,      ONLY:n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
- use SC,             ONLY:SC_bands,RT_nk,it_now
+ use SC,             ONLY:SC_bands,RT_nk
  use electrons,      ONLY:nel,levels
  use real_time,      ONLY:l_RT_diamagnetic,l_NE_dynamics,l_NE_dynamics_started,&
 &                         RT_ind_J,RT_average_operator,RT_P

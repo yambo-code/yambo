@@ -21,7 +21,7 @@
 !
 subroutine RT_driver(E,X,k,q)
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
@@ -292,7 +292,7 @@ subroutine RT_driver(E,X,k,q)
    ! Eval and Print Mean Carrier Lifetimes
    !=======================================
    if (l_elph_scatt.or.l_elel_scatt) then
-     call RT_mean_carrier_lifetimes(G_lesser(:,:,:,it_mem),E,k)
+     call RT_mean_carrier_lifetimes(E,k)
      if(l_elph_scatt) call RT_output('EPlife',TIME=NE_time/FS2AUT)
      if(l_elel_scatt) call RT_output('EElife',TIME=NE_time/FS2AUT)
      if(l_elel_scatt.or.l_elph_scatt) call RT_output('impose',TIME=NE_time/FS2AUT)

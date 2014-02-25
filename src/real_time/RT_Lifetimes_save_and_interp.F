@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_GAMMA_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
+subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt
@@ -100,7 +100,6 @@ subroutine RT_GAMMA_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    enddo
  else 
    if (RT_GAMMA_T_status(it_now)==0.or. (RT_GAMMA_T_status(it_now)>0.and..not.FIRST_step(it_now,Time)) ) then
- !write (*,*) it_now,'INTERPOLATE'
      !=============================
      ! INTERPOLATE 
      !=============
@@ -159,5 +158,5 @@ subroutine RT_GAMMA_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
      ARRAY(Life_MEM_steps)=VAL
    end subroutine
    !
-end subroutine RT_GAMMA_save_and_interp
+end subroutine RT_Lifetimes_save_and_interp
 

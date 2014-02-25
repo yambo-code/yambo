@@ -147,7 +147,6 @@ subroutine RT_initialize(E,k,q)
  !
  ! Memory Depth (G_lesser)
  !=========================
- !
  T_memory=0._SP
  if (l_elph_scatt.and.NE_MEM_treshold>0.) then
    T_memory=-1./minval( abs(E%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_treshold)
@@ -257,10 +256,10 @@ subroutine RT_initialize(E,k,q)
  !
  ! Memory Depth & Simulation points (Lifetimes)
  !=============================================
- !
  Life_MEM_steps=1
  if (RT_dynamics_steps(1)>0.) then
    Life_MEM_steps=nint(RT_dynamics_steps(1)/RT_dynamics_steps(2))
+   if (Life_MEM_steps<3) Life_MEM_steps=3
    RT_dynamics_steps(1)=RT_dynamics_steps(2)*Life_MEM_steps
  endif
  N_T_samplings=RT_Lifetimes_evaluation_plan( )

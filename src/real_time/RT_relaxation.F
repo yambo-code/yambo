@@ -149,11 +149,11 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! Zero dN/dT & dE/dT & d(DeltaN)/dT
  !===================================
-! if (l_elel_scatt) call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
-! if (l_elph_scatt) then
-!   call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
-!   call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
-! endif
+ !if (l_elel_scatt) call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
+ !if (l_elph_scatt) then
+ !  call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
+ !  call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
+ !endif
  !
  ! Dephasing Matrix & Occupations reference
  !==========================================

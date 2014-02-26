@@ -74,7 +74,8 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      k_weight=k%weights(ik)/real(RT_Nk_ibz(ik))
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-        iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+       !
+       iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
        !
        call eval_E_and_N()
        !

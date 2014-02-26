@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 !
 ! Copyright (C) 1992-2005, Lucia Reining, Valerio Olevano,

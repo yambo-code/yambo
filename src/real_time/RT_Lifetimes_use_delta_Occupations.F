@@ -90,7 +90,11 @@ subroutine RT_Lifetimes_use_delta_Occupations(G,l_eval)
        RT_occupations_reference(ib,ik)= 0._SP
      endif
      !
+     write (100*ik+ib,*) it_now,f_occ
+     !
    enddo
  enddo
+ !
+ write (*,*) count(RT_occupations_locked),(SC_bands(2)-SC_bands(1)+1)*RT_nk
  !
 end subroutine RT_Lifetimes_use_delta_Occupations

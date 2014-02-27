@@ -1,5 +1,5 @@
 ! 
-! Copyright (C) 2000-2014 A. Marini, M. Gruening and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini, M. Gruening and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -196,6 +196,8 @@ module real_time
  ! Saved RD life-times
  !-----------------------
  real(SP),    allocatable :: SAVED_times(:)
+ real(SP),    allocatable :: REF_e_lifetime(:,:)
+ real(SP),    allocatable :: REF_h_lifetime(:,:)
  real(SP),    allocatable :: SAVED_lifetime(:,:,:,:)
  !
  ! Ouput Lifetimes, ratio fit and temperatures
@@ -415,12 +417,13 @@ module real_time
        E_P_Ho_abs_lifetime=0._SP
      endif
      !
-     if (RT_dynamics_steps(1)>0.) then
-       if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt) then
-         allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
-         call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
-         allocate(SAVED_times(Life_MEM_steps)) 
-       endif
+     if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt) then
+       allocate(REF_e_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+       allocate(REF_h_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+       call mem_est("REF_lifetime",(/2*size(REF_e_lifetime)/),(/SP/))
+       allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
+       call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
+       allocate(SAVED_times(Life_MEM_steps)) 
      endif
      !
      allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,n_sp_pol))
@@ -518,6 +521,11 @@ module real_time
      if(allocated(E_P_Hole_lifetime)) then
        deallocate(E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime)
        call mem_est("RT_E_P_lifetimes")
+     endif
+     !
+     if(allocated(REF_e_lifetime)) then
+       deallocate(REF_e_lifetime,REF_h_lifetime)
+       call mem_est("REF_lifetimes")
      endif
      !
      if(allocated(SAVED_lifetime)) then

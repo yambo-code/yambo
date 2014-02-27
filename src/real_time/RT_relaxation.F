@@ -47,7 +47,8 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dephased,l_NE_dynamics_started,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,it_start,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
-&                         RT_GAMMA_T_status,E_P_Ho_abs_lifetime,RT_occupations_reference,FIRST_step
+&                         RT_GAMMA_T_status,E_P_Ho_abs_lifetime,RT_occupations_reference,FIRST_step,&
+&                         REF_e_lifetime,REF_h_lifetime
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -62,7 +63,8 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  ! Work Space
  !
  integer          :: ib1,ib2,ik
- real(SP)         :: f_k
+ real(SP)         :: f_k,GAMMA_h,GAMMA_e,delta_f
+ real(SP),external:: RT_Lifetimes_equilibrium
  logical          :: l_eval
  !
  if (.not.l_NE_dynamics_started) return
@@ -164,16 +166,29 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      !
      if (l_eval) RT_occupations_reference(ib1,ik)=f_k*spin_occ
      !
+     GAMMA_e=0._SP
+     GAMMA_h=0._SP
      if (l_elel_scatt) then
-       Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+E_E_Hole_lifetime(ib1,ik)*(f_k-1._SP)+&
-&                                                      E_E_Electron_lifetime(ib1,ik)*f_k
+       GAMMA_h=E_E_Hole_lifetime(ib1,ik)
+       GAMMA_e=E_E_Electron_lifetime(ib1,ik)
+     endif
+     if (l_RT_CCA_Kernel.and.l_elph_scatt) then
+       GAMMA_h=GAMMA_h+E_P_Hole_lifetime(ib1,ik)+E_P_Ho_abs_lifetime(ib1,ik)
+       GAMMA_e=GAMMA_e+E_P_Electron_lifetime(ib1,ik)+E_P_El_abs_lifetime(ib1,ik)
      endif
      !
-     if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-       Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+&
-&                             (E_P_Hole_lifetime(ib1,ik)+E_P_Ho_abs_lifetime(ib1,ik))*(f_k-1._SP)+&
-&                             (E_P_Electron_lifetime(ib1,ik)+E_P_El_abs_lifetime(ib1,ik))*f_k
+     if (FIRST_step(it_now,Time).and.it_now==it_start) then
+       REF_h_lifetime(ib1,ik)=GAMMA_h
+       REF_e_lifetime(ib1,ik)=GAMMA_e
      endif
+     !
+     delta_f=f_k-RT_Lifetimes_equilibrium(ib1,ik,Time)
+     !
+     GAMMA_h=GAMMA_h-REF_h_lifetime(ib1,ik)
+     GAMMA_e=GAMMA_e-REF_e_lifetime(ib1,ik)
+     !
+     Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+GAMMA_h*(f_k-1._SP)+GAMMA_e*f_k+&
+&                            (REF_h_lifetime(ib1,ik)+REF_e_lifetime(ib1,ik))*delta_f
      !
    enddo
  enddo

@@ -71,11 +71,11 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
      enddo
    endif
    !
-   if (RT_dynamics_steps(1)<0.) return
-   !
    !===========
    ! SAVE
    !===========
+   !
+   if (RT_dynamics_steps(1)<0.) return
    !
    if (l_elel_scatt     .and.SAVE_index==1) call ADD_to_saved_values(Time,SAVED_times)
    if (.not.l_elel_scatt.and.SAVE_index==3) call ADD_to_saved_values(Time,SAVED_times)

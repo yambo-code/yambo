@@ -22,16 +22,19 @@
 subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_elel_scatt
+ use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use units,          ONLY:FS2AUT
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,it_now,RT_nk,RT_ibz_coo
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Plasma_INDEX
  use real_time,      ONLY:RT_GAMMA_T_status,SAVED_times,&
-&                         Life_MEM_steps,SAVED_lifetime,RT_dynamics_steps,FIRST_step
- !
+&                         Life_MEM_steps,SAVED_lifetime,RT_dynamics_steps,&
+&                         FIRST_step,l_RT_impose,E_E_Hole_lifetime,E_E_Electron_lifetime,&
+&                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
+&                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime
  implicit none
+ !
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k
  integer,       intent(in)    :: SAVE_index
@@ -71,6 +74,16 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
      enddo
    endif
    !
+   ! Zero dN/dT & dE/dT & d(DeltaN)/dT
+   !===================================
+   if (l_RT_impose) then
+     if (l_elel_scatt.and.SAVE_index==2) call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
+     if (l_elph_scatt.and.SAVE_index==6) then
+       call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
+       call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
+     endif
+   endif
+   !
    !===========
    ! SAVE
    !===========
@@ -83,7 +96,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    do ib=SC_bands(1),SC_bands(2)
      if (SAVE_index<=2) then
        ! e-e case
-       do ik=1,k%nibz
+       do ik=1,Nk_ee
 #if defined _RT_EE_RIM
          ik_rim=ik
 #else
@@ -106,7 +119,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
      do ib=SC_bands(1),SC_bands(2)
        if (SAVE_index<=2) then
          ! e-e case
-         do ik=1,k%nibz
+         do ik=1,Nk_ee
 #if defined _RT_EE_RIM
            ik_rim=ik
 #else
@@ -130,7 +143,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
      !=============
      if (SAVE_index<=2) then
        ! e-e case
-       do ik=1,k%nibz
+       do ik=1,Nk_ee
 #if defined _RT_EE_RIM
          ik_rim=ik
 #else

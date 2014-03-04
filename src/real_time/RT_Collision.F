@@ -48,13 +48,13 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R,&
 &                         RT_ibz_coo,RT_nk,it_now
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc
- use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,                             &
+ use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,l_RT_uses_E_RIM,             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
-&                         G_lesser_reference,l_RT_needs_XC0,RIM_ibz_coo,l_RT_uses_E_rim,       &
+&                         G_lesser_reference,l_RT_needs_XC0,RIM_ibz_coo,       &
 &                         l_NE_simulate_IP,Hfrozen,XCfrozen,l_NE_dynamics_started
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu,myid
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use SC,             ONLY:SC_xc_functional,SC_nbands
@@ -229,8 +229,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    if (l_RT_uses_E_RIM) then
      do ik_RT=RT_ibz_coo(ik,1)+1,RT_ibz_coo(ik,2)
        ik_RIM=ik_RT-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
-       forall(ib=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ib,ik_RT,1)= &
-&        Ho_plus_Sigma(ib,ib,ik_RT,1)-E%E(ib,ik,1)+E%E_RIM(ib,ik_RIM,1)
+       forall(ib=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)-E%E(ib,ik,1)+E%E_RIM(ib,ik_RIM,1)
      enddo
    endif
    !  

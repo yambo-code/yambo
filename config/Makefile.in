@@ -111,8 +111,8 @@ yambo_sc: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_SC"; $(mksrc)
 	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
 yambo_rt: libs
-	@LIBS2DO="$(PJ_RTLIBS)";ADF="-D_RT -D_SC -D_ELPH"; $(mksrc)
-	@X2DO="yambo_rt"; XPATH="driver";XLIBS="$(PJ_RTLIBS)";ADF="-D_RT -D_SC -D_ELPH";$(mkx)
+	@LIBS2DO="$(PJ_RTLIBS)";ADF="-D_RT -D_SC -D_ELPH -D_RT_EE_RIM"; $(mksrc)
+	@X2DO="yambo_rt"; XPATH="driver";XLIBS="$(PJ_RTLIBS)";ADF="-D_RT -D_SC -D_ELPH -D_RT_EE_RIM";$(mkx)
 yambo_ph: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_ELPH";$(mkx)

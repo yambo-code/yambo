@@ -25,9 +25,12 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
  use SC,              ONLY:RT_ibz_coo,RT_occupations,SC_bands
+#if defined _RT_EE_RIM
+ use SC,              ONLY:RT_nk_ibz
+#endif
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
 &                          RT_delta_occupations,RT_occupations_reference,&
-                           RT_one_minus_occupations
+                           RT_one_minus_occupations,RIM_ibz_coo,l_RT_uses_E_RIM 
  use plasma,          ONLY:EH_gas
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:GW_NEQ_collisions
@@ -169,9 +172,12 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            !
            if (RT_occupations_locked(i_np ,ik_m_q_rim)) cycle
            !
-           i1=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
-           i2=ik_m_q_rim-RT_ibz_coo(ik_m_q,1)+RIM_ibz_coo(ik_m_q,1)
-           DELTA_E=E%E(i_np,i2,1)-E%E(i_n,i1,1)
+           DELTA_E=E%E(i_np,ik_m_q,1)-E%E(i_n,ik,1)
+           if (l_RT_uses_E_RIM) then
+             i1=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+             i2=ik_m_q_rim-RT_ibz_coo(ik_m_q,1)+RIM_ibz_coo(ik_m_q,1)
+             DELTA_E=E%E_RIM(i_np,i2,1)-E%E_RIM(i_n,i1,1)
+           endif
            !
            P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')/&
 &                     real(RT_Nk_ibz(ik_m_q))
@@ -189,7 +195,6 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')
            !
 #endif
-
            !
            if(abs(P_pl_abs)<1.E-7) cycle
            !

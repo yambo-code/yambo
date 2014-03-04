@@ -39,7 +39,7 @@ subroutine RT_initialize(E,k,q)
 &                         G_MEM_steps,Gr_kind,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,RT_IO_output_steps,    &
 &                         l_RT_uses_E_RIM,RIM_bz_coo,RT_dynamics_steps,RT_dynamics_decay_time,&
-&                         RT_dynamics_KIND,l_NE_dynamics
+&                         RT_dynamics_KIND,l_NE_dynamics,l_RT_impose
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
@@ -66,6 +66,7 @@ subroutine RT_initialize(E,k,q)
  call parser('RTfreezeH',            Hfrozen)
  call parser('RTfreezeXC',           XCfrozen)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
+ call parser('RT_impose',            l_RT_impose)
  call parser('RTpumpEhEn',           l_manual_excitation)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt

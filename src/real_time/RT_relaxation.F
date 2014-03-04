@@ -149,14 +149,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_El_abs_lifetime,6)
  endif
  !
- ! Zero dN/dT & dE/dT & d(DeltaN)/dT
- !===================================
- !if (l_elel_scatt) call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
- !if (l_elph_scatt) then
- !  call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
- !  call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
- !endif
- !
  ! Dephasing Matrix & Occupations reference
  !==========================================
  do ik=1,RT_nk
@@ -184,14 +176,17 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      !
      delta_f=f_k-RT_Lifetimes_equilibrium(ib1,ik,Time)
      !
-     GAMMA_h=GAMMA_h-REF_h_lifetime(ib1,ik)
-     GAMMA_e=GAMMA_e-REF_e_lifetime(ib1,ik)
+     !GAMMA_h=GAMMA_h-REF_h_lifetime(ib1,ik)
+     !GAMMA_e=GAMMA_e-REF_e_lifetime(ib1,ik)
      !
-     Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+GAMMA_h*(f_k-1._SP)+GAMMA_e*f_k+&
-&                            (REF_h_lifetime(ib1,ik)+REF_e_lifetime(ib1,ik))*delta_f
+     Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+GAMMA_h*(f_k-1._SP)+GAMMA_e*f_k
+!+&
+!&                            (REF_h_lifetime(ib1,ik)+REF_e_lifetime(ib1,ik))*delta_f
      !
    enddo
  enddo
+ !
+ write (*,*) E_E_Hole_lifetime(SC_bands(1),1)*1000.
  !
 end subroutine RT_relaxation
 

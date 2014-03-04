@@ -36,7 +36,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
  !
  use pars,           ONLY:SP,schlen,cI
  use com,            ONLY:error
- use SC,             ONLY:SC_bands,SC_nbands,RT_ibz_coo,RT_all2ibz,RT_nk
+ use SC,             ONLY:SC_bands,SC_nbands,RT_nk
  use R_lattice,      ONLY:bz_samp  
  use real_time,      ONLY:EULER,RK2,EULEREXP,RK2EXP,l_NE_with_fields,Sigma_relax
  use fields,         ONLY:gauge_field
@@ -57,7 +57,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
  ! 
  ! Work Space
  !
- integer     :: ib,ik,SC_bands2_dot_nibz,ik_rim
+ integer     :: ib,ik,SC_bands2_dot_nibz
  complex(SP) :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP) :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  real(SP),external:: RT_Lifetimes_equilibrium
@@ -161,13 +161,13 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
    !
  endif   
  !
- if (allocated(Sigma_relax)) then
-   do ik=1,RT_nk
-     do ib=SC_bands(1),SC_bands(2)
-       G_new(ib,ib,ik)= G_new(ib,ib,ik) + cI*RT_Lifetimes_equilibrium(ib,ik,Time)
-     enddo
-   enddo
- endif
+! if (allocated(Sigma_relax)) then
+!   do ik=1,RT_nk
+!     do ib=SC_bands(1),SC_bands(2)
+!       G_new(ib,ib,ik)= G_new(ib,ib,ik) + cI*RT_Lifetimes_equilibrium(ib,ik,Time)
+!     enddo
+!   enddo
+! endif
  !
 #if defined _TIMING
  call timing('RT integrator',OPR='stop')

@@ -174,7 +174,7 @@ module real_time
  !
  ! Locks and reference
  !----------------------
- logical                  :: l_RT_impose = .FALSE.
+ logical                  :: l_RT_skip_impose = .FALSE.
  logical                  :: l_use_delta_occupations
  real(SP),    allocatable :: RT_one_minus_occupations(:,:) 
  real(SP),    allocatable :: RT_delta_occupations(:,:) 

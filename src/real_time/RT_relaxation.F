@@ -42,7 +42,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
- use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz
+ use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz,RT_occupations
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dephased,l_NE_dynamics_started,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,it_start,&
@@ -138,6 +138,12 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! PARALLEL Mergering, SAVE, interpolate
  !=======================================
+ do ik=1,RT_nk
+   do ib1=SC_bands(1),SC_bands(2)
+     RT_occupations(ib1,ik)=-cI*G_input(ib1,ib1,ik)
+   enddo
+ enddo
+ !
  if (l_elel_scatt) then
    call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_E_Hole_lifetime,1)
    call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_E_Electron_lifetime,2)
@@ -185,8 +191,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
      !
    enddo
  enddo
- !
- write (*,*) E_E_Hole_lifetime(SC_bands(1),1)*1000.
  !
 end subroutine RT_relaxation
 

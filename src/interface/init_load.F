@@ -327,8 +327,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'PlasmaPerc', '[RT] Plasma approx (0-100): % of eh pair considered',Plasma_redux_percent,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic secant (HS)',Gr_kind,Verb_level=V_real_time)
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
- call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT')
- call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT')
+ call it('f',defs,'RTfreezeH',     '[RT] Hartree not updated during RT')
+ call it('f',defs,'RTfreezeXC',    '[RT] XC potential/self-energy not updated during RT')
+ call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly')
  !
  ! ELPH
  !

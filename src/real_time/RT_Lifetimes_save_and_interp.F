@@ -30,7 +30,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Plasma_INDEX
  use real_time,      ONLY:RT_GAMMA_T_status,SAVED_times,&
 &                         Life_MEM_steps,SAVED_lifetime,RT_dynamics_steps,&
-&                         FIRST_step,l_RT_impose,E_E_Hole_lifetime,E_E_Electron_lifetime,&
+&                         FIRST_step,l_RT_skip_impose,E_E_Hole_lifetime,E_E_Electron_lifetime,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime
  implicit none
@@ -75,14 +75,8 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    endif
    !
    ! Zero dN/dT & dE/dT & d(DeltaN)/dT
-   !===================================
-   if (l_RT_impose) then
-     if (l_elel_scatt.and.SAVE_index==2) call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
-     if (l_elph_scatt.and.SAVE_index==6) then
-       call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
-       call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
-     endif
-   endif
+   !============================================
+   if (.not.l_RT_skip_impose) call Impose_Conservations( )
    !
    !===========
    ! SAVE
@@ -137,6 +131,11 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
          enddo
        endif
      enddo
+     !
+     ! Zero dN/dT & dE/dT & d(DeltaN)/dT
+     !============================================
+     if (.not.l_RT_skip_impose) call Impose_Conservations( )
+     !
    else if (RT_GAMMA_T_status(it_now)<0) then
      !==================================
      ! KEEP CONSTANT 
@@ -161,6 +160,19 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  endif
  !
  contains
+   !
+   subroutine Impose_Conservations( )
+     !
+     ! Zero dN/dT & dE/dT & d(DeltaN)/dT
+     !===================================
+     !
+     if (l_elel_scatt.and.SAVE_index==2) call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
+     if (l_elph_scatt.and.SAVE_index==6) then
+       call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
+       call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
+     endif
+     !
+   end subroutine
    !
    subroutine ADD_to_saved_values(VAL,ARRAY)
      real(SP) :: VAL,ARRAY(Life_MEM_steps)

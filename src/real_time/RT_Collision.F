@@ -51,7 +51,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,l_RT_uses_E_RIM,             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
 &                         G_lesser_reference,l_RT_needs_XC0,RIM_ibz_coo,       &
-&                         l_NE_simulate_IP,Hfrozen,XCfrozen,l_NE_dynamics_started
+&                         l_NE_simulate_IP,Hfrozen,XCfrozen,l_NE_dynamics_started,l_RT_RWA
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu
@@ -77,7 +77,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  integer          :: i1,ik,ik_RT,ikp_RT,ik_RIM,ib,ibp
  !
 #if defined _TIMING
- call timing('RT Collisions',OPR='start')
+ call timing('RT Collision',OPR='start')
 #endif
  !
  !
@@ -88,8 +88,9 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  XC_needs_density=.not.XCfrozen.and.l_sc_contains_lda.and.SC_xc_functional/=0
  !
- if (.not.Hfrozen.or.XC_needs_density.or..not.l_NE_dynamics_started) &
-&   call el_density_matrix(G_input(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1))
+ if (.not.Hfrozen.or.XC_needs_density.or..not.l_NE_dynamics_started) then
+   call el_density_matrix(G_input(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1))
+ endif
  !
  ! The Hartree term is written as
  !
@@ -201,7 +202,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    endif
    !
    forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) &
-   &  Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)=H_nl_sc(ib,ibp,1)
+&        Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)=H_nl_sc(ib,ibp,1)
    !
  enddo  !---- loop on k-points
  !
@@ -224,29 +225,48 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    if (l_NE_with_fields.and.l_NE_dynamics_started) call RT_apply_field(ik,H_nl_sc,A_input)
    !
    forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) &
-&    Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)+&
-&                                            H_nl_sc(ib,ibp,1)
-   if (l_RT_uses_E_RIM) then
+&         Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)+H_nl_sc(ib,ibp,1)
+   !
+   if (l_NE_with_fields.and.l_NE_dynamics_started) call RT_apply_field(ik,H_nl_sc,A_input)
+   !
+   if (l_RT_RWA) then
+     !
+     ! Apply the RWA
+     !===============
+     forall(ib=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ib,ik_RT:ikp_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT:ikp_RT,1)-E%E(ib,ik,1)
+     do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       call RT_apply_RWA(Ho_plus_Sigma(:,:,ik_RT,1),ik_RT,E,Time,"APPLY")
+     enddo
+     !
+   else if (l_RT_uses_E_RIM) then
+     !
+     ! RIM support
+     !============
      do ik_RT=RT_ibz_coo(ik,1)+1,RT_ibz_coo(ik,2)
        ik_RIM=ik_RT-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
-       forall(ib=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)-E%E(ib,ik,1)+E%E_RIM(ib,ik_RIM,1)
+       forall(ib=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)-&
+&                                         E%E(ib,ik,1)+E%E_RIM(ib,ik_RIM,1)
      enddo
    endif
    !  
  enddo  !---- loop on k-points
  !
+ ! All2All
+ !=========
  call PP_redux_wait(Ho_plus_Sigma(:,:,:,1))
  !
+ ! Rotation Matrix
+ !=================
  if(allocated(SC_R)) then
    SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),:,:) = &
-&    Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_ibz_coo(:,1),:)
+&      Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_ibz_coo(:,1),:)
    do i1=1,SC_bands(1)-1
      SC_R(i1,i1,:,:)=cONE
    enddo
  endif
  !
 #if defined _TIMING
- call timing('RT Collisions',OPR='stop')
+ call timing('RT Collision',OPR='stop')
 #endif
  !
  ! Calculate all relaxation terms

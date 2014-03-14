@@ -28,11 +28,11 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,it_now,RT_nk,RT_ibz_coo
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Plasma_INDEX
- use real_time,      ONLY:RT_GAMMA_T_status,SAVED_times,&
+ use real_time,      ONLY:RT_TIME_status,SAVED_times,&
 &                         Life_MEM_steps,SAVED_lifetime,RT_dynamics_steps,&
 &                         FIRST_step,l_RT_skip_impose,E_E_Hole_lifetime,E_E_Electron_lifetime,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
-&                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime
+&                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,ADD_to_saved_values
  implicit none
  !
  type(levels),  intent(in)    :: E
@@ -84,8 +84,8 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    !
    if (RT_dynamics_steps(1)<0.) return
    !
-   if (l_elel_scatt     .and.SAVE_index==1) call ADD_to_saved_values(Time,SAVED_times)
-   if (.not.l_elel_scatt.and.SAVE_index==3) call ADD_to_saved_values(Time,SAVED_times)
+   if (l_elel_scatt     .and.SAVE_index==1) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
+   if (.not.l_elel_scatt.and.SAVE_index==3) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
    !
    do ib=SC_bands(1),SC_bands(2)
      if (SAVE_index<=2) then
@@ -96,17 +96,17 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
 #else
          ik_rim=RT_ibz_coo(ik,1)
 #endif
-         call ADD_to_saved_values(LIFE(ib,ik_rim),SAVED_lifetime(ib,ik_rim,SAVE_index,:))
+         call ADD_to_saved_values(LIFE(ib,ik_rim),SAVED_lifetime(ib,ik_rim,SAVE_index,:),Life_MEM_steps)
        enddo
      else
        ! e-p case
        do ik=1,RT_nk
-         call ADD_to_saved_values(LIFE(ib,ik),SAVED_lifetime(ib,ik,SAVE_index,:))
+         call ADD_to_saved_values(LIFE(ib,ik),SAVED_lifetime(ib,ik,SAVE_index,:),Life_MEM_steps)
        enddo
      endif
    enddo
  else 
-   if (RT_GAMMA_T_status(it_now)==0.or. (RT_GAMMA_T_status(it_now)>0.and..not.FIRST_step(it_now,Time)) ) then
+   if (RT_TIME_status(it_now)==0.or. (RT_TIME_status(it_now)>0.and..not.FIRST_step(it_now,Time)) ) then
      !=============================
      ! INTERPOLATE 
      !=============
@@ -136,7 +136,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
      !============================================
      if (.not.l_RT_skip_impose) call Impose_Conservations( )
      !
-   else if (RT_GAMMA_T_status(it_now)<0) then
+   else if (RT_TIME_status(it_now)<0) then
      !==================================
      ! KEEP CONSTANT 
      !=============
@@ -172,15 +172,6 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
        call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
      endif
      !
-   end subroutine
-   !
-   subroutine ADD_to_saved_values(VAL,ARRAY)
-     real(SP) :: VAL,ARRAY(Life_MEM_steps)
-     integer  :: i1
-     do i1=1,Life_MEM_steps-1
-       ARRAY(i1)=ARRAY(i1+1)
-     enddo
-     ARRAY(Life_MEM_steps)=VAL
    end subroutine
    !
 end subroutine RT_Lifetimes_save_and_interp

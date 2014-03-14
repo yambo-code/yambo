@@ -47,7 +47,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dephased,l_NE_dynamics_started,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,it_start,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
-&                         RT_GAMMA_T_status,E_P_Ho_abs_lifetime,RT_occupations_reference,FIRST_step,&
+&                         RT_TIME_status,E_P_Ho_abs_lifetime,RT_occupations_reference,FIRST_step,&
 &                         REF_e_lifetime,REF_h_lifetime
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -86,7 +86,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  if (.not.l_elph_scatt.and..not.l_elel_scatt) return
  !
- l_eval= ( RT_GAMMA_T_status(it_now)>0.and.( FIRST_step(it_now,Time).or.it_now-it_start+1<=Life_MEM_steps) ).or.&
+ l_eval= ( RT_TIME_status(it_now)>0.and.( FIRST_step(it_now,Time).or.it_now-it_start+1<=Life_MEM_steps) ).or.&
 &        Life_MEM_steps==1
  !
  ! Lifetimes History and updates

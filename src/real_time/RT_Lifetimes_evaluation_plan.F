@@ -28,7 +28,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  use pars,           ONLY:IP2,SP
  use fields,         ONLY:Efield,i_Pump,ext_field,Efield_duplicate,small_a
  use memory_m,       ONLY:mem_est
- use real_time,      ONLY:RT_GAMMA_T_status,NE_steps,RT_dynamics_steps,&
+ use real_time,      ONLY:RT_TIME_status,NE_steps,RT_dynamics_steps,&
 &                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time,it_start,Life_MEM_steps
  !
  implicit none
@@ -40,23 +40,23 @@ integer function RT_Lifetimes_evaluation_plan( )
  complex(SP)     :: TIME
  type(ext_field) :: E_dummy
  !
- if (.not.allocated(RT_GAMMA_T_status)) then
-   allocate(RT_GAMMA_T_status(NE_steps))
-   call mem_est("RT_GAMMA_T_status",(/NE_steps/),(/IP2/))
+ if (.not.allocated(RT_TIME_status)) then
+   allocate(RT_TIME_status(NE_steps))
+   call mem_est("RT_TIME_status",(/NE_steps/),(/IP2/))
  endif
- RT_GAMMA_T_status=0 ! Interpolate
+ RT_TIME_status=0 ! Interpolate
  !
  if (RT_dynamics_steps(1)<0.) then
-   RT_GAMMA_T_status=1
+   RT_TIME_status=1
    return
  endif 
  !
  N_inter_steps=nint(RT_dynamics_steps(1)/RT_step)
  N_intra_steps=nint(RT_dynamics_steps(2)/RT_step)
  !
- ! RT_GAMMA_T_status = -1   KEEP constant 
- !                     >0   EVAL and SAVE
- !                      0   INTERPOLATE  
+ ! RT_TIME_status = -1   KEEP constant 
+ !                  >0   EVAL and SAVE
+ !                   0   INTERPOLATE  
  !
  RT_Lifetimes_evaluation_plan=0
  !
@@ -107,7 +107,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  ! introduce blocks with an increasing number of elements
  !
  it=it_start
- do i1=1,N_intra_steps,2
+ do i1=1,N_intra_steps,N_intra_steps/10
    call BUILD_up_group(N_blocks*i1,i1)
    it=it+N_blocks*i1
  enddo
@@ -126,18 +126,19 @@ integer function RT_Lifetimes_evaluation_plan( )
    N_intra_steps=nint(real(RT_dynamics_steps(2))/weight(it)/RT_step)
    !
    it=it+N_inter_steps
-   RT_Lifetimes_evaluation_plan=RT_Lifetimes_evaluation_plan+Life_MEM_steps
    !
  enddo
  !
  !DEBUG>
  !do it=1,NE_steps
  ! TIME=RT_step*(it-1)
- ! !if (RT_GAMMA_T_status(it)/=0) 
- ! write (*,'(f6.2,2i6)') real(TIME/FS2AUT),RT_GAMMA_T_status(it),it
+ ! if (RT_GAMMA_T_status(it)/=0) write (*,'(f10.6,2i6)') real(TIME/FS2AUT),RT_GAMMA_T_status(it),it
  !enddo
+ !write (*,*) count( RT_GAMMA_T_status/=0 )
  !stop
  !DEBUG<
+ !
+ RT_Lifetimes_evaluation_plan = count( RT_TIME_status/=0 )
  !
  contains
    !
@@ -150,13 +151,13 @@ integer function RT_Lifetimes_evaluation_plan( )
        !
        if (it_+it-1>NE_steps) cycle
        !
-       RT_GAMMA_T_status(it_+it-1)=0
+       RT_TIME_status(it_+it-1)=0
        !
        if (N_intra>1) then
          local_condition=mod(it_,N_intra)==1
-         if (local_condition) RT_GAMMA_T_status(it_+it-1)=int(real(it_-1)/real(N_intra))+1
+         if (local_condition) RT_TIME_status(it_+it-1)=int(real(it_-1)/real(N_intra))+1
        else
-         RT_GAMMA_T_status(it_+it-1)=it_
+         RT_TIME_status(it_+it-1)=it_
        endif
        !
      enddo

@@ -110,7 +110,7 @@ module real_time
  real(SP) :: RT_dynamics_steps(2)  =-1.*FS2AUT ! (1) is step between groups of 3, (2) is step in the group of 3.
  real(SP) :: RT_dynamics_decay_time=-1.*FS2AUT ! For pulsed-like distribution it dumps the distribution of points
                                                ! in the long-time regime
- integer(2), allocatable :: RT_GAMMA_T_status(:)
+ integer(2), allocatable :: RT_TIME_status(:)
  !
  ! Kind of e-e interactions (for the CORR and SCATT parts)
  !
@@ -122,6 +122,7 @@ module real_time
  real(SP) :: NE_MEM_treshold
  integer  :: G_MEM_steps
  integer  :: Life_MEM_steps
+ integer  :: I_MEM_steps    = 0
  !
  ! ... Window on the k-points/bands allowed to follow the dynamics ...
  !
@@ -202,7 +203,7 @@ module real_time
  real(SP),    allocatable :: SAVED_lifetime(:,:,:,:)
  !
  ! Ouput Lifetimes, ratio fit and temperatures
- !
+ !---------------------------------------------
  logical                  :: l_lftm_fit_stable(2)
  integer                  :: Nfitted_lifetimes(2)
  real(SP)                 :: RT_mean_lifetimes(6)
@@ -211,7 +212,7 @@ module real_time
  real(SP)                 :: Imp_factors(6)
  !
  ! Occupations fit
- !
+ !-----------------
  real(SP)                 :: RT_Tfit_occupations(2)
  real(SP)                 :: RT_Efit_occupations(2)
  !
@@ -229,25 +230,31 @@ module real_time
  real(SP)          :: Gr_QP_width
  character(schlen) :: Gr_kind = "QP"
  character(lchlen) :: Gr_description(5) 
- real(SP),    allocatable :: Gr_ee_matrix(:,:,:,:)
- real(SP),    allocatable :: Gr_ep_matrix(:,:,:,:)
  !
  ! GFs
  !-----
  !
  complex(SP), allocatable :: G_lesser_reference(:,:,:)
+ !
+ ! COLLISIONS
+ !------------
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
+ complex(SP), allocatable :: I_coh_SAVE(:,:,:,:)
  complex(SP), allocatable :: Sigma_relax(:,:,:)
+ !
+ ! Density
+ !---------
  !
  real(SP),    allocatable :: rho_reference(:)    ! reference density from SC_bands(1):SC_bands(2)
  real(SP),    allocatable :: full_rho(:)         ! density of all bands from 1:SC_bands(2)
  !
- ! Integrator Variables
+ ! Integrators
  !
- character(schlen), parameter :: EULER    = "EULER"
- character(schlen), parameter :: EULEREXP = "EULEREXP"
- character(schlen), parameter :: RK2      = "RK2"
- character(schlen), parameter :: RK2EXP   = "RK2EXP"
+ logical  :: l_RT_EULER
+ logical  :: l_RT_RK2
+ logical  :: l_RT_EXP
+ logical  :: l_RT_INTERPOLATE
+ logical  :: l_RT_RWA
  !
  ! Integrate exactly the part of the dynamics due to H_o 
  ! as it is done in Comp. Phys. Comm. 123(1999)
@@ -430,6 +437,11 @@ module real_time
      allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,n_sp_pol))
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
      !
+     if (l_RT_INTERPOLATE) then
+       allocate(I_coh_SAVE(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,I_MEM_steps))
+       call mem_est("I_coh_SAVE",(/size(I_coh_SAVE)/),(/2*SP/))
+     endif
+     !
      if(RT_is_dephased.or.l_elph_scatt.or.l_elel_scatt) then
        allocate(Sigma_relax(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
        call mem_est("Sigma_relax",(/size(Sigma_relax)/),(/2*SP/))
@@ -494,9 +506,14 @@ module real_time
      deallocate(Ho_plus_Sigma)
      call mem_est("Ho_plus_Sigma")
      !
-     if(allocated(RT_GAMMA_T_status)) then
-       deallocate(RT_GAMMA_T_status)
-       call mem_est("RT_GAMMA_T_status")
+     if (l_RT_INTERPOLATE) then
+       deallocate(I_coh_SAVE)
+       call mem_est("I_coh_SAVE")
+     endif
+     !
+     if(allocated(RT_TIME_status)) then
+       deallocate(RT_TIME_status)
+       call mem_est("RT_TIME_status")
      endif
      !
      if(allocated(Sigma_relax)) then
@@ -603,17 +620,6 @@ module real_time
        deallocate(Q_io_map,K_io_map)
      endif
      !
-     ! Retarded Green Functions
-     !
-     if (allocated(Gr_ee_matrix)) then
-       deallocate(Gr_ee_matrix)
-       call mem_est("G_ee_matrix")
-     endif
-     if (allocated(Gr_ep_matrix)) then
-       deallocate(Gr_ep_matrix)
-       call mem_est("G_ep_matrix")
-     endif
-     !
    end subroutine RT_free
    !
    logical function RT_do_IO(what)
@@ -643,5 +649,15 @@ module real_time
      if (MEM_index==0) MEM_index=Nt
      if (it        <0) MEM_index=1
    end function
+   !
+   subroutine ADD_to_saved_values(VAL,ARRAY,STEPS)
+     integer  :: STEPS
+     real(SP) :: VAL,ARRAY(STEPS)
+     integer  :: i1
+     do i1=1,STEPS-1
+       ARRAY(i1)=ARRAY(i1+1)
+     enddo
+     ARRAY(STEPS)=VAL
+   end subroutine
    !
 end module

@@ -35,7 +35,7 @@ subroutine RT_driver(E,X,k,q)
 &                         SC_QP_setup
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
-&                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_G_steps,&
+&                         NE_i_time,l_RT_diagonalize,RT_IO_G_steps,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,l_NE_dynamics_started,RT_update,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update
@@ -213,7 +213,7 @@ subroutine RT_driver(E,X,k,q)
  !
  do while (.not.l_Dynamics_is_over)
    !
-   it=it+1
+   it    =it+1
    it_now=it   ! used in RESTART
    !
    ! Steps & times ...
@@ -317,8 +317,7 @@ subroutine RT_driver(E,X,k,q)
    !=============
    ! T -> T+dT step 
    !
-   call RT_Integrator(G_lesser(:,:,:,it_mem_p1),G_lesser(:,:,:,it_mem),A_vecpot,A_vecpot_previous,&
-&                     RT_step,E,k,q,Integrator_name,NE_time)
+   call RT_Integrator(G_lesser(:,:,:,it_mem_p1),G_lesser(:,:,:,it_mem),A_vecpot,A_vecpot_previous,RT_step,E,k,q,NE_time)
    !
    if (it==Thermal_steps) then
      !

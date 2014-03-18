@@ -201,7 +201,7 @@ subroutine RT_driver(E,X,k,q)
  if (l_NE_with_fields) call RT_output(what="open pot occ")
  if (l_elph_scatt) call RT_output('open EPlife')
  if (l_elel_scatt) call RT_output('open EElife')
- if (l_elel_scatt.or.l_elph_scatt) call RT_output('open impose')
+ if (l_elel_scatt.or.l_elph_scatt) call RT_output('open factors')
  !
  ! Loop on time
  !==============
@@ -295,7 +295,7 @@ subroutine RT_driver(E,X,k,q)
      call RT_mean_carrier_lifetimes(E,k)
      if(l_elph_scatt) call RT_output('EPlife',TIME=NE_time/FS2AUT)
      if(l_elel_scatt) call RT_output('EElife',TIME=NE_time/FS2AUT)
-     if(l_elel_scatt.or.l_elph_scatt) call RT_output('impose',TIME=NE_time/FS2AUT)
+     if(l_elel_scatt.or.l_elph_scatt) call RT_output('factors',TIME=NE_time/FS2AUT)
    endif
    !
    ! Write DBs

@@ -315,7 +315,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit(1))
  call it(defs,'NEsteps',    '[RT] Non-equilibrium Time steps',NE_steps)
  call it(defs,'DYNmode',    '[RT] Step distribution mode',RT_dynamics_KIND,Verb_level=V_real_time)
- call it(defs,'COHsteps',   '[RT] Number of steps used to interpolated the Coherent part of the self-energy. Used only with INTERPOLATION',&
+ call it(defs,'COHsteps',   '[RT] Number of steps to interpolate the Coherent part of the self-energy',&
 &                           I_MEM_steps,Verb_level=V_real_time)
  call it(defs,'DYNsteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
 &                           RT_dynamics_steps,Verb_level=V_real_time,unit=Time_unit(1))
@@ -323,7 +323,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                           RT_dynamics_decay_time,Verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit(1))
  call it(defs,'ThermSteps', '[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
- call it(defs,'Integrator', '[RT] Integrator. Use keywords space separated  (RK2 | EULER | EXP | RWA | INTERPOLATE) ',Integrator_name)
+ call it(defs,'Integrator', '[RT] Integrator. Use keywords space separated  (RK2 | EULER | EXP | RWA | INTERPOLATE) ',&
+&                           Integrator_name)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1))
  call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit(1))
  call it(defs,'PlasmaPerc', '[RT] Plasma approx (0-100): % of eh pair considered',Plasma_redux_percent,Verb_level=V_real_time)

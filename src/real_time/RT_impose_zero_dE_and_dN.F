@@ -91,6 +91,8 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  call compute_prefactors()
  !
+ Imp_factors=0._SP
+ !
  do i1=1,3
    if( isnan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._SP ) then
      if (trim(Scatt_kind)=="elel") Imp_factors(3:5)=prefactor(1:3)
@@ -110,8 +112,8 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    enddo
  enddo
  !
- if (trim(Scatt_kind)=="elel") Imp_factors(3:5)=prefactor(1:3)
- if(trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
+ if (trim(Scatt_kind)=="elel")  Imp_factors(3:5)=prefactor(1:3)
+ if (trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
  !
  contains
    !
@@ -128,6 +130,8 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    end subroutine eval_E_and_N
    !
    subroutine compute_prefactors()
+     !
+     prefactor=0._SP
      !
      Nv=SUM_N_Holes(1)+SUM_N_Electrons(1)
      Nc=SUM_N_Holes(2)+SUM_N_Electrons(2)

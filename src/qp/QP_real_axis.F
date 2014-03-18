@@ -33,16 +33,16 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use frequency,     ONLY:w_samp,coarse_grid_index,coarse_grid_N,W_reset
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,    ONLY:PARALLEL_index,WF_load
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
+&                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_IND_Q_ID,PAR_IND_QP_ID,&
+&                        PAR_COM_QP_A2A,n_WF_bands_to_load
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
  use collision,     ONLY:ggwinfo,collision_reset
  use wave_func,     ONLY:WF
  use IO_m,          ONLY:io_control,REP,VERIFY,NONE,RD,RD_CL,OP_RD,&
 &                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END,OP_RD_CL
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
-&                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
-&                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,&
-&                        QP_G_dr,QP_Sc_steps,QP_W_partially_done
+ use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
+&                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,QP_W_partially_done
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use functions,     ONLY:e2et,h2ht,bose_decay
  use memory_m,      ONLY:mem_est
@@ -62,10 +62,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! WorkSpace
  !
  type(ggwinfo)    ::isc,iscp
- type(PP_indexes) ::px
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
  integer :: i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,iq_to_start,iqs,&
-&           iv4(4),io_err,XID,WID,QP_n_W_freqs_redux
+&           iv4(4),io_err,XID,WID,QP_n_W_freqs_redux,timing_steps
  complex(SP) :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng)
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
@@ -78,7 +77,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  call collision_reset(isc)
  call collision_reset(iscp)
- call PP_indexes_reset(px)
  if (l_life) then
    !
    do i1=1,q%nibz
@@ -197,6 +195,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      QP_n_W_freqs_redux=max(QP_n_W_freqs_redux,coarse_grid_N)
      deallocate(coarse_grid_index)
      call mem_est("CGi")
+
+!write (*,*) iqibz,X_life_W(iqibz)%er*HA2EV,X_life_W(iqibz)%n
      !
    enddo
    do iqibz=1,q%nibz
@@ -206,10 +206,17 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    enddo
  endif
  !
+ ! WF distributed & load
+ !=======================
+ !
+ call PARALLEL_global_indexes(Xen,Xk,q,"Self_Energy")
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+ call PARALLEL_WF_index( )
+ !
  ! WFs
  !
- call WF_load(WF,X%ng,maxval(qindx_S(:,:,2)),&
-&            (/QP_n_G_bands(1),max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-Sc')
+ call WF_load(WF,X%ng,maxval(qindx_S(:,:,2)),(/QP_n_G_bands(1),n_WF_bands_to_load/),(/1,k%nibz/),title='-Sc')
  !
  ! Test the spatial Inversion
  !
@@ -222,9 +229,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(X%ng),iscp%rhotw(X%ng),stat=i_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*X%ng/),errors=(/i_err/))
  !
- ! MPI index
- call PARALLEL_index(px,(/QP_n_states,QP_n_G_bands(2)/),low_range=(/1,QP_n_G_bands(1)/))
- !
  QP_Sc=cmplx(0.,0.,SP)
  isc%ngrho=X%ng
  isc%iqref=0
@@ -232,8 +236,13 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! Main Loop
  !===========
  !
- call PP_redux_wait
- call live_timing(trim(Sc_name)//'W0',px%n_of_elements(myid+1)*(q%nbz-iq_to_start+1))
+ call PP_redux_wait()
+ !
+ timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
+&             PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
+&             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
+ !
+ call live_timing(trim(Sc_name)//'W0',timing_steps)
  !
  do iqbz=iq_to_start,q%nbz
    !
@@ -242,6 +251,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=isc%qs(2)
    iqs  =isc%qs(3)
+   !
+   if (.not.PAR_IND_Q%element_1D(q%sstar(iqbz,1))) cycle
    !
    if (iqibz/=isc%iqref) then
      call scatterGamp(isc,'c')
@@ -286,6 +297,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    !
    do i1=1,QP_n_states
      !
+     if (.not.PAR_IND_QP%element_1D(i1)) cycle
+     !
      isc%is=(/QP_table(i1,1),QP_table(i1,3),1,spin(QP_table(i1,:))/)
      isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),spin(QP_table(i1,:))/)
      iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,spin(QP_table(i1,:))/)
@@ -295,12 +308,12 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
+       if (.not.PAR_IND_G_b%element_1D(ib)) cycle
+       !
        isc%os(1)=ib
        i_or=IOR(e2et((/isc%is(:2),isc%is(4)/),(/isc%os(:2),isc%os(4)/),en,life_Fe),&
 &               h2ht((/isc%is(:2),isc%is(4)/),(/isc%os(:2),isc%os(4)/),en,life_Fh))
        if (l_life) QP_n_W_freqs=QP_n_W_freqs+i_or
-       !
-       if (.not.px%element_2D(i1,ib)) cycle
        !
        iscp%os=isc%os
        call live_timing(steps=1)
@@ -345,7 +358,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      enddo
    enddo
    !
-   call PP_redux_wait
    call PP_redux_wait(QP_W)
    !
    ! To be written in W
@@ -413,7 +425,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  call WF_free(WF)
  call collision_reset(isc)
  call collision_reset(iscp)
- call PP_indexes_reset(px)
  call PP_redux_wait()
  !
 end subroutine

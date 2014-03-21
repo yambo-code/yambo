@@ -35,6 +35,7 @@ module QP_m
  integer           :: QP_dSc_steps
  integer           :: QP_Sc_steps
  integer           :: QP_n_W_freqs
+ integer           :: QP_n_W_freqs_redux
  integer           :: QP_nb
  integer           :: QP_nk
  integer           :: QP_n_states

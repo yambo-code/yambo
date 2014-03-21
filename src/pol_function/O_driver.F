@@ -311,7 +311,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    deallocate(X_epsilon)
    !
-   call FREQUENCIES_reset(wv)
+   call FREQUENCIES_reset(wv,"all")
    !
    if (allocated(X_fxc)) deallocate(X_fxc)
    !

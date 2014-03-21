@@ -61,7 +61,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use interfaces,     ONLY:io_COLLISIONS
 #endif
 #if defined _RT
- use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe,I_MEM_steps
+ use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe
  use fields,         ONLY:Efield,i_Pump,i_Probe,Efield_reset,Efield_duplicate
 #endif
 #if defined _MAGNETIC
@@ -461,7 +461,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
- if (l_HF_and_locXC.or.l_gw0.or.l_cohsex) then
+ if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) then
    if (l_eval_collisions) then
 #if defined _SC && ! defined _RT
      call CPU_activate("SE")
@@ -1405,6 +1405,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
            !
          endif
+         !
+         ! Lifetimes
+         !
+         if ( trim(rstr_piece(i1)) == 'life' )  call initactivate(1,'em1d')
          !
          ! GW approximation 
          !

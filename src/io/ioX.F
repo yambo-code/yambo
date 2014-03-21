@@ -53,7 +53,7 @@ integer function ioX(X,Xw,ID)
  real(SP),allocatable::X_disk(:,:,:),W_disk(:,:),RL_vecs_disk(:,:)
  !
 #if defined _TIMING
- call timing('io_X',OPR='start')
+ if (io_X) call timing('io_X',OPR='start')
 #endif
  !
  if (.not.io_X) then

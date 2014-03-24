@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2014 C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,ik,deltaT)
+subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,deltaT)
  !
  use pars,           ONLY:SP,cI
 #if defined _OPENMP
@@ -27,8 +27,7 @@ subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,ik,deltaT)
 #else
  use wrapper,        ONLY:V_by_V_plus_V
 #endif
- use electrons,      ONLY:spin_occ
- use SC,             ONLY:SC_bands,SC_nbands,RT_occupations
+ use SC,             ONLY:SC_bands,SC_nbands
  !
  implicit none
  !
@@ -37,9 +36,6 @@ subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,ik,deltaT)
  complex(SP), intent(in)  :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(out) :: G_new_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- integer,     intent(in)  :: ik
- !
- integer                  :: ib
  !
  ! G(T+dt) = G(T)
  !
@@ -52,15 +48,5 @@ subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,ik,deltaT)
 #else
  call V_by_V_plus_V(SC_nbands, -cI*deltaT, I1_k-I2_k, G_new_k)
 #endif
- !
- !
- ! Symmetrization 
- !================
- do ib=SC_bands(1),SC_bands(2)
-   G_new_k(ib,ib)=cI*aimag(G_new_k(ib,ib))
-   if( aimag(G_new_k(ib,ib))<0._SP    ) G_new_k(ib,ib)=cmplx(0._SP,0._SP    )
-   if( aimag(G_new_k(ib,ib))>spin_occ ) G_new_k(ib,ib)=cmplx(0._SP,spin_occ )
-   RT_occupations(ib,ik)=aimag(G_new_k(ib,ib))
- enddo
  !
 end subroutine RT_EULER_step

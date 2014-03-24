@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -311,7 +311,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    deallocate(X_epsilon)
    !
-   call FREQUENCIES_reset(wv)
+   call FREQUENCIES_reset(wv,"all")
    !
    if (allocated(X_fxc)) deallocate(X_fxc)
    !

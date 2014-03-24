@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -461,7 +461,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
- if (l_HF_and_locXC.or.l_gw0.or.l_cohsex) then
+ if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) then
    if (l_eval_collisions) then
 #if defined _SC && ! defined _RT
      call CPU_activate("SE")
@@ -748,11 +748,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_real_time) then
    call QP_ctl_switch('G')
    call initactivate(-1,'SCmixing')
-   call initactivate(1,'Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTmaxEn RTpumpEhEn RTpumpEhWd RTpumpNel') 
-   call initactivate(1,'RTstep NEsteps NETime DYNmode DYNsteps DYNdecay DipoleEtresh')
+   call initactivate(1,'Integrator ADLifeTime PhLifeTime RTmaxEn RTpumpEhEn RTpumpEhWd RTpumpNel') 
+   call initactivate(1,'RTstep NEsteps NETime DYNmode DYNsteps DYNdecay COHsteps DipoleEtresh')
    if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol UseDebyeE UpdtDebyeT ElPhModes')
    call initactivate(1,'ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
-   call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField IOtime')
+   call initactivate(1,'RTfreezeH RTfreezeXC RTskipImposeN Diamagnetic InducedField IOtime')
    if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
    if (              l_RT_pump_and_probe) call Afield_activate('Pump')
    !
@@ -1405,6 +1405,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
            !
          endif
+         !
+         ! Lifetimes
+         !
+         if ( trim(rstr_piece(i1)) == 'life' )  call initactivate(1,'em1d')
          !
          ! GW approximation 
          !

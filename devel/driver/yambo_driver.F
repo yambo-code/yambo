@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -169,14 +169,14 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Plasmon Pole 
  !--------------
  !
- l_pp_em1=l_ppa.and. ( l_em1d.or.(l_gw0.and.l_elel_corr).or.l_bse )
+ l_pp_em1=l_ppa.and.((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr).or.l_bse )
  !
  if (l_pp_em1)     i_err=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
  !
  ! Dynamical 
  !-----------
  !
- l_dyn_em1= (.not.l_ppa.and..not.l_cohsex) .and. (l_em1d.or.(l_gw0.and.l_elel_corr))
+ l_dyn_em1= (.not.l_ppa.and..not.l_cohsex) .and. ((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr))
  !
  if (l_dyn_em1)    i_err=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
  !

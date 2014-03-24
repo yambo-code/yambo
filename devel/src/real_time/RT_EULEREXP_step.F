@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2014 C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -19,31 +19,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_EULEREXP_step(G_new_k,G_old_k,U1_k,U2_k,ik,deltaT)
+subroutine RT_EULEREXP_step(G_new_k,G_old_k,U1_k,U2_k)
  !
- use pars,           ONLY:SP,cI,cZERO
+ use pars,           ONLY:SP,cZERO
 #if defined _OPENMP
  use wrapper,        ONLY:M_by_M_omp
 #else
  use wrapper,        ONLY:M_by_M
 #endif
- use electrons,      ONLY:spin_occ
- use SC,             ONLY:SC_bands,SC_nbands,RT_occupations
- use real_time,      ONLY:Sigma_relax
+ use SC,             ONLY:SC_bands,SC_nbands
  !
  implicit none
  !
- real(SP),    intent(in)  :: deltaT
  complex(SP), intent(in)  :: G_old_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: U1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: U2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(out) :: G_new_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- integer,     intent(in)  :: ik
  !
- integer     :: ib
  complex(SP) :: M_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)) 
  !
- ! G(T+dt) = U1(dt)G(T) U2(dt) - i dt * Sigma_relax
+ ! G(T+dt) = U1(dt)G(T)U2(dt)
  !
  G_new_k=cZERO
  M_tmp=cZERO
@@ -54,16 +49,5 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,U1_k,U2_k,ik,deltaT)
  call M_by_M('n','n',SC_nbands,U1_k,G_old_k,M_tmp)
  call M_by_M('n','n',SC_nbands,M_tmp,U2_k,G_new_k)
 #endif
- !
- if (allocated(Sigma_relax)) G_new_k = G_new_k - cI*deltaT*Sigma_relax(:,:,ik)
- !
- ! Symmetrization 
- !================
- do ib=SC_bands(1),SC_bands(2)
-   G_new_k(ib,ib)=cI*aimag(G_new_k(ib,ib))
-   if( aimag(G_new_k(ib,ib))<0._SP    ) G_new_k(ib,ib)=cmplx(0._SP,0._SP    )
-   if( aimag(G_new_k(ib,ib))>spin_occ ) G_new_k(ib,ib)=cmplx(0._SP,spin_occ )
-   RT_occupations(ib,ik)=aimag(G_new_k(ib,ib))
- enddo
  !
 end subroutine RT_EULEREXP_step

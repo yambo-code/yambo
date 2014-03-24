@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2014 C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -22,7 +22,7 @@
 subroutine RT_build_I1_and_I2(G_input_k,ik,I1_k,I2_k)
  !
  use pars,           ONLY:SP,cZERO
- use real_time,      ONLY:Ho_plus_Sigma,Sigma_relax
+ use real_time,      ONLY:Ho_plus_Sigma
  use SC,             ONLY:SC_bands,SC_nbands
 #if defined _OPENMP
  use wrapper,        ONLY:M_by_M_omp
@@ -45,7 +45,5 @@ subroutine RT_build_I1_and_I2(G_input_k,ik,I1_k,I2_k)
  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),G_input_k,I1_k)
  call M_by_M('n','n',SC_nbands,G_input_k,Ho_plus_Sigma(:,:,ik,1),I2_k)     
 #endif
- !
- if (allocated(Sigma_relax))  I1_k = I1_k + Sigma_relax(:,:,ik)
  !
 end subroutine RT_build_I1_and_I2

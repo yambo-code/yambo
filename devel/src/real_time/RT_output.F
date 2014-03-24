@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 C. Attaccalite and the YAMBO team
+! Copyright (C) 2000-2014 C. Attaccalite and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU 
@@ -175,8 +175,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
  !
  !
  if (open_files.and.(l_elph_scatt.or.l_elel_scatt).and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'impose_fac'
- short_file_name(next_file)=trim(append_ch)//'impose_fac'
+&   file_name(next_file)=trim(append_ch)//'N_dN_E_conservation_factors'
+ short_file_name(next_file)=trim(append_ch)//'N_dN_E_conservation_factors'
  n_headings(next_file)=7
  headings(next_file,2:7)=(/"ep(1) F1","ep(1) F2","el(1) F1","el(1) F2","el(2) F1","el(2) F2"/)
  next_file=next_file+1
@@ -372,7 +372,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
      case('mean_EElifetimes')
        data_to_dump(2:3) = RT_mean_lifetimes(5:6)*HA2EV*1000.
        data_to_dump(4:5) = RT_Tfit_lifetimes(3:4)*HA2KEL
-     case('impose_fac')
+     case('N_dN_E_conservation_factors')
        data_to_dump(2:7)=Imp_factors(1:6)
        !
    end select

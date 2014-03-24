@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -33,23 +33,31 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use frequency,     ONLY:w_samp,coarse_grid_index,coarse_grid_N,W_reset
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,    ONLY:PARALLEL_index,WF_load
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
+&                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_IND_Q_ID,PAR_IND_QP_ID,&
+&                        PAR_COM_QP_A2A,n_WF_bands_to_load,PAR_Q_index,PAR_COM_Q_A2A
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
  use collision,     ONLY:ggwinfo,collision_reset
  use wave_func,     ONLY:WF
- use IO_m,          ONLY:io_control,REP,VERIFY,NONE,RD,RD_CL,OP_RD,&
-&                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END,OP_RD_CL
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
-&                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
-&                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,&
-&                        QP_G_dr,QP_Sc_steps,QP_W_partially_done
+ use IO_m,          ONLY:io_control,REP,VERIFY,DUMP,NONE,RD,RD_CL,OP_RD,&
+&                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END,OP_RD_CL,io_X
+ use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
+&                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,QP_W_partially_done,&
+&                        QP_n_W_freqs_redux 
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use functions,     ONLY:e2et,h2ht,bose_decay
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev,mag_syms
  use stderr,        ONLY:intc
+#if defined _OPENMP
+ use wrapper,       ONLY:Vstar_dot_V_omp,V_dot_V_omp
+#else
  use wrapper,       ONLY:Vstar_dot_V,V_dot_V
+#endif
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  !
  implicit none
  type(levels) ::en,Xen
@@ -62,10 +70,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! WorkSpace
  !
  type(ggwinfo)    ::isc,iscp
- type(PP_indexes) ::px
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
  integer :: i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,iq_to_start,iqs,&
-&           iv4(4),io_err,XID,WID,QP_n_W_freqs_redux
+&           iv4(4),io_err,X_id,WID,timing_steps,iq_mem,X_range(2)
  complex(SP) :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng)
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
@@ -78,14 +85,11 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  call collision_reset(isc)
  call collision_reset(iscp)
- call PP_indexes_reset(px)
  if (l_life) then
-   !
    do i1=1,q%nibz
      call W_reset(X_life_W(i1))
      X_life_W(i1)%dr=Xw%dr
    enddo
-   !
  else
    do i1=1,qp%n_states
      call W_reset(Sc_W(i1))
@@ -176,6 +180,10 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    !
  endif
  !
+#if defined _TIMING
+ call timing('GW(real-axis)',OPR='start')
+#endif
+ !
  ! Lifetimes Transitions 
  !
  if (l_life) then
@@ -204,12 +212,37 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      i_err=X_em1(Xen,Xk,q,X,X_life_W(iqibz),iqibz>1)
      if (i_err==0) exit
    enddo
+   !
  endif
+ !
+ ! Dynamical interaction DB I/O read to dump the first section variables.
+ ! A verify mode is useless at this stage as 
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=X_id)
+ !
+ if (l_life)      i_err=ioX(X,X_life_W(1),X_id)
+ if (.not.l_life) i_err=ioX(X,Xw,X_id)
+ !
+ ! WF distributed & load
+ !=======================
+ !
+ call PARALLEL_global_indexes(Xen,Xk,q,"Self_Energy")
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+ call PARALLEL_WF_index( )
+ !
+ ! Redefine iq_to_start to be CPU-dependent
+ !
+ do iqbz=1,q%nbz 
+   if (PAR_IND_Q%element_1D(q%sstar(iqbz,1))) then
+     iq_to_start=iqbz
+     exit
+   endif
+ enddo
  !
  ! WFs
  !
- call WF_load(WF,X%ng,maxval(qindx_S(:,:,2)),&
-&            (/QP_n_G_bands(1),max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-Sc')
+ call WF_load(WF,X%ng,maxval(qindx_S(:,:,2)),(/QP_n_G_bands(1),n_WF_bands_to_load/),(/1,k%nibz/),title='-Sc')
  !
  ! Test the spatial Inversion
  !
@@ -222,9 +255,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(X%ng),iscp%rhotw(X%ng),stat=i_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*X%ng/),errors=(/i_err/))
  !
- ! MPI index
- call PARALLEL_index(px,(/QP_n_states,QP_n_G_bands(2)/),low_range=(/1,QP_n_G_bands(1)/))
- !
  QP_Sc=cmplx(0.,0.,SP)
  isc%ngrho=X%ng
  isc%iqref=0
@@ -232,8 +262,13 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! Main Loop
  !===========
  !
- call PP_redux_wait
- call live_timing(trim(Sc_name)//'W0',px%n_of_elements(myid+1)*(q%nbz-iq_to_start+1))
+ call PP_redux_wait()
+ !
+ timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
+&             PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
+&             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
+ !
+ call live_timing(trim(Sc_name)//'W0',timing_steps)
  !
  do iqbz=iq_to_start,q%nbz
    !
@@ -243,31 +278,47 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    iqibz=isc%qs(2)
    iqs  =isc%qs(3)
    !
+   if (.not.PAR_IND_Q%element_1D(iqibz)) cycle
+   !
    if (iqibz/=isc%iqref) then
+     !
+     iq_mem=PAR_Q_index(iqibz)
+     X_range=(/1,QP_n_W_freqs_redux/)
+     !
+     if (.not.io_X) X_range=(/QP_n_W_freqs_redux*(iq_mem-1)+1,QP_n_W_freqs_redux*(iq_mem-1)+X_life_W(iqibz)%n_freqs/)
+     !
      call scatterGamp(isc,'c')
      !
-     ! X I/O
+     ! I/O
      !
-     if (iqbz==iq_to_start) call io_control(ACTION=OP_RD,COM=NONE,&
-&                                SEC=(/1,2,2*iqibz+1/),ID=XID)
-     if (iqbz/=iq_to_start) call io_control(ACTION=RD_CL_IF_END,COM=NONE,&
-&                                SEC=(/2*iqibz,2*iqibz+1/),ID=XID)
-     if (q%nbz==1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=XID)
+     if (io_X) then
+       !
+       if (iqbz==iq_to_start) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=X_id)
+       if (q%nbz==1         ) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=X_id)
+       if (iqbz> iq_to_start) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=X_id)
+       !
+       if (l_life) then
+         !
+         io_err=ioX(X,X_life_W(iqibz),X_id)
+         !
+       else
+         !
+         io_err=ioX(X,Xw,X_id)
+         !
+         ! Xw%er/dr/n are not known here and are not read from ioX so
+         ! I need to redefine them in terms of Xw%p (read from ioX)
+         !
+         Xw%er=(/real(Xw%p(1)),real(Xw%p(Xw%n_freqs))/)
+         Xw%dr=(/aimag(Xw%p(1)),aimag(Xw%p(Xw%n_freqs))/)
+         !
+       endif
+       !
+     endif
      !
      if (l_life) then
-       io_err=ioX(X,X_life_W(iqibz),XID)
-       call X_delta_part(X,X_life_W(iqibz),isc%gamp)
+       call X_delta_part(X%ng,X_life_W(iqibz)%n_freqs,X_mat(:,:,X_range(1):X_range(2)),isc%gamp)
      else
-       !
-       io_err=ioX(X,Xw,XID)
-       !
-       ! Xw%er/dr/n are not known here and are not read from ioX so
-       ! I need to redefine them in terms of Xw%p (read from ioX)
-       !
-       Xw%er=(/real(Xw%p(1)),real(Xw%p(Xw%n_freqs))/)
-       Xw%dr=(/aimag(Xw%p(1)),aimag(Xw%p(Xw%n_freqs))/)
-       call X_delta_part(X,Xw,isc%gamp)
-       !
+       call X_delta_part(X%ng,Xw%n_freqs,X_mat(:,:,X_range(1):X_range(2)),isc%gamp)
      endif
      !
      if (l_life) QP_n_W_freqs=0
@@ -278,13 +329,15 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    !
    if (iqs>nsym/(i_time_rev+1) .and. (i_space_inv==0.or.mag_syms) .and..not.X_is_TR_rotated) then
      X_is_TR_rotated=.true.
-     do i3=1,Xw%n_freqs
+     do i3=X_range(1),X_range(2)
        forall(i1=1:X%ng,i2=1:X%ng) X_mat_ws(i2,i1)=X_mat(i1,i2,i3)
        X_mat(:,:,i3)=X_mat_ws(:,:)
      enddo
    endif
    !
    do i1=1,QP_n_states
+     !
+     if (.not.PAR_IND_QP%element_1D(i1)) cycle
      !
      isc%is=(/QP_table(i1,1),QP_table(i1,3),1,spin(QP_table(i1,:))/)
      isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),spin(QP_table(i1,:))/)
@@ -295,12 +348,12 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
+       if (.not.PAR_IND_G_b%element_1D(ib)) cycle
+       !
        isc%os(1)=ib
        i_or=IOR(e2et((/isc%is(:2),isc%is(4)/),(/isc%os(:2),isc%os(4)/),en,life_Fe),&
 &               h2ht((/isc%is(:2),isc%is(4)/),(/isc%os(:2),isc%os(4)/),en,life_Fh))
        if (l_life) QP_n_W_freqs=QP_n_W_freqs+i_or
-       !
-       if (.not.px%element_2D(i1,ib)) cycle
        !
        iscp%os=isc%os
        call live_timing(steps=1)
@@ -315,8 +368,13 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        if (l_life) then
          !
          i2=life_W_table(iqibz,QP_n_W_freqs)
+         !
          do i3=1,X%ng
-           lrhotw(i3)=V_dot_V(X%ng,isc%rhotw,X_mat(1,i3,i2))
+#if defined _OPENMP
+           lrhotw(i3)=V_dot_V_omp(X%ng,isc%rhotw,X_mat(1,i3,i2+X_range(1)-1))
+#else
+           lrhotw(i3)=V_dot_V(X%ng,isc%rhotw,X_mat(1,i3,i2+X_range(1)-1))
+#endif
          enddo
          !       
          ! To compensate the Tel/w divergence of the Bose function at finite
@@ -325,19 +383,32 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          ! Note that the same procedure is applied in QP_W2Sc when S_c is
          ! calculated
          ! 
-         qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*&
-&                 bose_decay( real(X_life_W(iqibz)%p(i2)) )*&
+#if defined _OPENMP
+         qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*bose_decay( real(X_life_W(iqibz)%p(i2)) )*&
+&                 Vstar_dot_V_omp(X%ng,iscp%rhotw,lrhotw)
+#else
+         qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*bose_decay( real(X_life_W(iqibz)%p(i2)) )*&
 &                 Vstar_dot_V(X%ng,iscp%rhotw,lrhotw)
+#endif
          !
        else ! .not.l_life
          !
          do i2=1,QP_n_W_freqs
            !
            do i3=1,X%ng
-             lrhotw(i3)=V_dot_V(X%ng,isc%rhotw,X_mat(1,i3,i2))
+#if defined _OPENMP
+             lrhotw(i3)=V_dot_V_omp(X%ng,isc%rhotw,X_mat(1,i3,i2+X_range(1)-1))
+#else
+             lrhotw(i3)=V_dot_V(X%ng,isc%rhotw,X_mat(1,i3,i2+X_range(1)-1))
+#endif
            enddo
            !
+#if defined _OPENMP
+           QP_W(i1,ib,i2)=-4._SP/spin_occ*Vstar_dot_V_omp(X%ng,iscp%rhotw,lrhotw)
+#else
            QP_W(i1,ib,i2)=-4._SP/spin_occ*Vstar_dot_V(X%ng,iscp%rhotw,lrhotw)
+#endif
+           !
          enddo
          !
        endif
@@ -345,12 +416,11 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      enddo
    enddo
    !
-   call PP_redux_wait
-   call PP_redux_wait(QP_W)
-   !
    ! To be written in W
    !
    if (.not.l_life) then
+     !
+     call PP_redux_wait(QP_W,COMM=PAR_COM_Q_A2A%COMM)
      !
      QP_W_er=Xw%er
      QP_W_dr=Xw%dr
@@ -409,11 +479,14 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    enddo
  endif
  !
- call X_alloc('X')
+ if (io_X) call X_alloc('X')
  call WF_free(WF)
  call collision_reset(isc)
  call collision_reset(iscp)
- call PP_indexes_reset(px)
  call PP_redux_wait()
+ !
+#if defined _TIMING
+ call timing('GW(real-axis)',OPR='stop')
+#endif
  !
 end subroutine

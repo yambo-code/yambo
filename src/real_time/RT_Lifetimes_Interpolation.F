@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -46,10 +46,10 @@ subroutine RT_Lifetimes_Interpolation(Life,Time,Life_SAVED,Times_SAVED)
  else
    POL_order=Life_MEM_steps-2
    EPS=0.d0
-   call pol_fit(Life_MEM_steps,Times_SAVED-Times_SAVED(1),Life_SAVED,POL_order,P(:POL_order+1),EPS,0.d0)
+   call pol_fit(Life_MEM_steps,Times_SAVED,Life_SAVED,POL_order,P(:POL_order+1),EPS,0.d0)
    Life=0.
    do i_o=1,POL_order+1
-     Life=Life+(Time-Times_SAVED(1))**(i_o-1)*P(i_o)
+     Life=Life+Time**(i_o-1)*P(i_o)
    enddo
  endif
  !

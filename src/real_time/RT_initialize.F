@@ -1,5 +1,5 @@
 !
-!       Copyright (C) 2000-2014 the YAMBO team 
+!       Copyright (C) 2000-2013 the YAMBO team 
 !            http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -39,8 +39,7 @@ subroutine RT_initialize(E,k,q)
 &                         G_MEM_steps,Gr_kind,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,RT_IO_output_steps,    &
 &                         l_RT_uses_E_RIM,RIM_bz_coo,RT_dynamics_steps,RT_dynamics_decay_time,&
-&                         RT_dynamics_KIND,l_NE_dynamics,l_RT_skip_impose,I_MEM_steps,Integrator_name,&
-&                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP
+&                         RT_dynamics_KIND,l_NE_dynamics
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
@@ -67,7 +66,6 @@ subroutine RT_initialize(E,k,q)
  call parser('RTfreezeH',            Hfrozen)
  call parser('RTfreezeXC',           XCfrozen)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
- call parser('RTskipImposeN',        l_RT_skip_impose)
  call parser('RTpumpEhEn',           l_manual_excitation)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
@@ -76,27 +74,6 @@ subroutine RT_initialize(E,k,q)
  l_NE_simulate_TDDFT   =.FALSE.
  !
  l_RT_diagonalize      =RT_diagonalization_steps>1
- !
- ! Integrator FLAGS
- !==================
- !
- l_RT_EULER=index(Integrator_name,'EULER')/=0.or.index(Integrator_name,'euler')/=0
- if (.not.l_RT_EULER) l_RT_RK2=index(Integrator_name,'RK2')/=0.or.index(Integrator_name,'rk2')/=0
- l_RT_RWA=index(Integrator_name,'RWA')/=0.or.index(Integrator_name,'rwa')/=0
- l_RT_EXP=index(Integrator_name,'EXP')/=0.or.index(Integrator_name,'exp')/=0
- if (.not.l_RT_EXP) l_RT_INTERPOLATE=index(Integrator_name,'INTERPOLATE')/=0.or.index(Integrator_name,'interpolate')/=0
- !
- if (l_RT_EULER) Integrator_name = "EULER"
- if (l_RT_RK2) Integrator_name   = "RK2"
- if (l_RT_RWA) Integrator_name = trim(Integrator_name)//" + RWA"
- if (l_RT_EXP) then 
-   Integrator_name = trim(Integrator_name)//" + EXP"
- else if (l_RT_INTERPOLATE) then
-   Integrator_name = trim(Integrator_name)//" + INTERPOLATE"
- endif
- !
- ! Flags UPDATE
- !==============
  !
  call UPDATE_flags(.FALSE.)
  !
@@ -280,14 +257,12 @@ subroutine RT_initialize(E,k,q)
  ! Memory Depth & Simulation points (Lifetimes)
  !=============================================
  Life_MEM_steps=1
- if (l_elph_scatt.or.l_elel_scatt) then
-   if (RT_dynamics_steps(1)>0.) then
-     Life_MEM_steps=nint(RT_dynamics_steps(1)/RT_dynamics_steps(2))
-     if (Life_MEM_steps<3) Life_MEM_steps=3
-     RT_dynamics_steps(1)=RT_dynamics_steps(2)*Life_MEM_steps
-   endif
-   N_T_samplings=RT_Lifetimes_evaluation_plan( )
+ if (RT_dynamics_steps(1)>0.) then
+   Life_MEM_steps=nint(RT_dynamics_steps(1)/RT_dynamics_steps(2))
+   if (Life_MEM_steps<3) Life_MEM_steps=3
+   RT_dynamics_steps(1)=RT_dynamics_steps(2)*Life_MEM_steps
  endif
+ N_T_samplings=RT_Lifetimes_evaluation_plan( )
  !
  ! Gauge
  !=======
@@ -321,14 +296,12 @@ subroutine RT_initialize(E,k,q)
  call section('=','Messaging')
  !
  call msg( 'r','---General---')
- call msg( 'r', 'Integrator                 :',trim(Integrator_name))
  call msg( 'r', 'Simulation time        [fs]:',(/-real(Thermal_steps),real(NE_steps-1)/)*RT_step/FS2AUT)
  call msg( 'r', 'Step length            [fs]:',RT_step/FS2AUT)
  call msg( 'r', 'NE Steps                   :',NE_steps)
  call msg( 'r', 'NE time                [fs]:',(NE_steps-1)*RT_step/FS2AUT)
  call msg( 'r', 'Memory depth(G)        [fs]:',T_memory/FS2AUT)
  call msg( 'r', 'Memory steps(G)            :',G_MEM_steps)
- if  (l_RT_INTERPOLATE) call msg( 'r', 'Memory steps(COHERENT part):',I_MEM_steps)
  call msg( 'r', 'Thermalization steps       :',Thermal_steps)
  !
  if (RT_dynamics_steps(1)>0.) then

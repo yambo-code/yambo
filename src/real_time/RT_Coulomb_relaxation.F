@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -25,12 +25,9 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
  use SC,              ONLY:RT_ibz_coo,RT_occupations,SC_bands
-#if defined _RT_EE_RIM
- use SC,              ONLY:RT_nk_ibz
-#endif
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
 &                          RT_delta_occupations,RT_occupations_reference,&
-                           RT_one_minus_occupations,RIM_ibz_coo,l_RT_uses_E_RIM 
+                           RT_one_minus_occupations
  use plasma,          ONLY:EH_gas
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:GW_NEQ_collisions
@@ -62,9 +59,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  !
  ik_rim    =RT_ibz_coo(ik,1)
  !
-#if !defined _RT_EE_RIM
  if ( all( RT_occupations_locked(SC_bands(1):SC_bands(2),ik_rim) ) ) return
-#endif
  !
  q_loop: do iqbz=1,q%nbz
    !
@@ -160,61 +155,57 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        !
        DELTA_W=abs(E%W(i_np,ik_m_q,1))+abs(E%W(i_n,ik,1))
        !
-       pre_factor=(4._SP*pi)**2._SP*GW_NEQ_collisions(i_qp1_mem)%v3r(i_J_mem,1,i_q_mem)
-       !
 #if defined _RT_EE_RIM
        !
+       pre_factor=(4._SP*pi)**2._SP*GW_NEQ_collisions(i_qp1_mem)%v3r(i_J_mem,1,i_q_mem)/real(RT_Nk_ibz(ik_m_q))
+       !
        do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-         !
-         if (RT_occupations_locked(i_n ,ik_rim)) cycle
          !
          do ik_m_q_rim=RT_ibz_coo(ik_m_q,1),RT_ibz_coo(ik_m_q,2)
            !
            if (RT_occupations_locked(i_np ,ik_m_q_rim)) cycle
            !
-           DELTA_E=E%E(i_np,ik_m_q,1)-E%E(i_n,ik,1)
-           if (l_RT_uses_E_RIM) then
-             i1=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
-             i2=ik_m_q_rim-RT_ibz_coo(ik_m_q,1)+RIM_ibz_coo(ik_m_q,1)
-             DELTA_E=E%E_RIM(i_np,i2,1)-E%E_RIM(i_n,i1,1)
-           endif
-           !
-           P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')/&
-&                     real(RT_Nk_ibz(ik_m_q))
-           !
-#else
-           !
-           if (RT_occupations_locked(i_n ,ik)) cycle
-           !
-           ik_m_q_rim=RT_ibz_coo(ik_m_q,1)
-           !
-           if (RT_occupations_locked(i_np,ik_m_q_rim)) cycle
-           !
-           DELTA_E=E%E(i_np,ik_m_q,1)-E%E(i_n,ik,1)
+           i1=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+           i2=ik_m_q_rim-RT_ibz_coo(ik_m_q,1)+RIM_ibz_coo(ik_m_q,1)
+           DELTA_E=E%E_RIM(i_n_shift,i1,1)-E%E_RIM(i_np_shift,i2,1)
            !
            P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')
            !
-#endif
-           !
            if(abs(P_pl_abs)<1.E-7) cycle
            !
-           one_minus_f_kmq  = RT_one_minus_occupations(i_np,ik_m_q_rim)/spin_occ
-           f_kmq            = RT_occupations(i_np,ik_m_q_rim)/spin_occ
-           f0_kmq           = RT_occupations_reference(i_np,ik_m_q_rim)/spin_occ
-           df_kmq           = RT_delta_occupations(i_np,ik_m_q_rim)/spin_occ
-           !
-           E_E_Hole_lifetime(i_n,ik_rim)=&
-&            E_E_Hole_lifetime(i_n,ik_rim)+pre_factor*P_pl_abs*&
-&            (N_h_plasma*f_kmq        +dN_h_plasma*f0_kmq          +N0_h_plasma*df_kmq)
-           !
-           E_E_Electron_lifetime(i_n,ik_rim)=&
-&            E_E_Electron_lifetime(i_n,ik_rim)+pre_factor*P_pl_abs*&
-&            (N_e_plasma*one_minus_f_kmq+dN_e_plasma*(1._SP-f0_kmq)-N0_e_plasma*df_kmq)
-           !
-#if defined _RT_EE_RIM
+           E_E_Hole_lifetime(i_n,ik_rim)=E_E_Hole_lifetime(i_n,ik_rim)+&
+&                                        pre_factor*RT_H_occupations(i_np,ik_m_q_rim)*P_pl_abs*N_h_plasma
+           E_E_Electron_lifetime(i_n,ik_rim)=E_E_Electron_lifetime(i_n,ik_rim)+&
+&                                            pre_factor*RT_H_occupations(i_np,ik_m_q_rim)*P_pl_abs*N_e_plasma
            !
          enddo
        enddo
+       !
+#else
+       !
+       ik_m_q_rim=RT_ibz_coo(ik_m_q,1)
+       !
+       if (RT_occupations_locked(i_np,ik_m_q_rim)) cycle
+       !
+       pre_factor=(4._SP*pi)**2._SP*GW_NEQ_collisions(i_qp1_mem)%v3r(i_J_mem,1,i_q_mem)
+       !
+       DELTA_E=E%E(i_np,ik_m_q,1)-E%E(i_n,ik,1)
+       !
+       P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')
+       !
+       if(abs(P_pl_abs)<1.E-7) cycle
+       !
+       one_minus_f_kmq  = RT_one_minus_occupations(i_np,ik_m_q_rim)/spin_occ
+       f_kmq            = RT_occupations(i_np,ik_m_q_rim)/spin_occ
+       f0_kmq           = RT_occupations_reference(i_np,ik_m_q_rim)/spin_occ
+       df_kmq           = RT_delta_occupations(i_np,ik_m_q_rim)/spin_occ
+       !
+       E_E_Hole_lifetime(i_n,ik_rim)=&
+&        E_E_Hole_lifetime(i_n,ik_rim)+pre_factor*P_pl_abs*&
+&        (N_h_plasma*f_kmq        +dN_h_plasma*f0_kmq          +N0_h_plasma*df_kmq)
+       E_E_Electron_lifetime(i_n,ik_rim)=&
+&        E_E_Electron_lifetime(i_n,ik_rim)+pre_factor*P_pl_abs*&
+&        (N_e_plasma*one_minus_f_kmq+dN_e_plasma*(1._SP-f0_kmq)-N0_e_plasma*df_kmq)
        !
 #endif
        !

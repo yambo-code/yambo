@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -74,8 +74,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      k_weight=k%weights(ik)/real(RT_Nk_ibz(ik))
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       !
-       iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+        iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
        !
        call eval_E_and_N()
        !
@@ -91,14 +90,9 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  call compute_prefactors()
  !
- Imp_factors=0._SP
- !
  do i1=1,3
-   if( isnan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._SP ) then
-     if (trim(Scatt_kind)=="elel") Imp_factors(3:5)=prefactor(1:3)
-     if(trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
-     return
-   endif
+   if( isnan(prefactor(i1)) )               goto 200
+   if( prefactor(i1)==prefactor(i1)+1._SP ) goto 200
    if( abs(prefactor(i1))>cut_off ) prefactor(i1)=prefactor(i1)/abs(prefactor(i1))*cut_off
  enddo
  !
@@ -112,10 +106,12 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    enddo
  enddo
  !
- if (trim(Scatt_kind)=="elel")  Imp_factors(3:5)=prefactor(1:3)
- if (trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
+200 if(trim(Scatt_kind)=="elel")  Imp_factors(3:5)=prefactor(1:3)
+ !
+ if(trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
  !
  contains
+   !
    !
    subroutine eval_E_and_N()
      !
@@ -129,9 +125,8 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      !
    end subroutine eval_E_and_N
    !
+   !
    subroutine compute_prefactors()
-     !
-     prefactor=0._SP
      !
      Nv=SUM_N_Holes(1)+SUM_N_Electrons(1)
      Nc=SUM_N_Holes(2)+SUM_N_Electrons(2)

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -23,6 +23,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Non interacting Xo
  !
+ use drivers,       ONLY:l_life
+ use IO_m,          ONLY:io_X
  use pars,          ONLY:SP
  use wrapper,       ONLY:V_by_V_plus_V
  use collision,     ONLY:ggwinfo,collision_reset
@@ -112,10 +114,11 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    if (self_detect_E_range) Xw%er=minmax_ehe
    !
-   !  This call is needed as Xw%p is deallocated inside
-   !  the q-loop of X_em1
+   ! This call is needed as Xw%p is deallocated inside
+   ! the q-loop of X_em1. But only when the EM1D is written or when it is not but we are not  doing
+   ! lifetimes calculations
    !
-   call FREQUENCIES_setup(Xw)
+   if (io_X.or.(.not.io_X.and..not.l_life)) call FREQUENCIES_setup(Xw)
    !
  endif 
  !

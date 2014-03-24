@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -24,7 +24,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! Calculates and stores on file the dielectric matrix.
  !
  use pars,          ONLY:SP
- use drivers,       ONLY:l_alda_fxc,l_gw0
+ use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
  use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp
@@ -38,6 +38,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                        PARALLEL_WF_index,WF_load
+ use QP_m,          ONLY:QP_n_W_freqs_redux
  implicit none
  type(levels) ::Xen 
  type(bz_samp)::Xk,q
@@ -47,7 +48,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer           :: iq,Xdb,i_err,iq_to_start,iq_mem,X_range(2)
+ integer           :: iq,Xdb,i_err,iq_to_start,iq_mem,X_range(2),X_n_freqs
  real(SP)          :: minmax_ehe(2)
  integer, external :: ioX
  character(1)      :: sec_mode
@@ -72,17 +73,25 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (X%whoami==2) then
      call section(sec_mode,'Static Dielectric Matrix')
      Xw%n_freqs=1
+     X_n_freqs =1
    else if (X%whoami==3) then
      call section(sec_mode,'Dynamical Dielectric Matrix')
      if (l_gw0) self_detect_E_range=.true.
    else if (X%whoami==4) then
      call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
      Xw%n_freqs=2
+     X_n_freqs =2
      Xw%er=(/epsilon(1._SP),0._SP/)
      Xw%dr=(/0._SP,X%ppaE/)
      X%ordering='c'
    endif
  endif
+ !
+ ! X_n_freqs defines the size of each q-block loaded in memory when io_X=.FALSE.
+ ! Note that in lifetimes calculations it is QP_n_W_freqs_redux=MAX(all q-dependent frequencies)
+ !
+ X_n_freqs             = Xw%n_freqs
+ if (l_life) X_n_freqs = QP_n_W_freqs_redux
  !
  call X_pre_setup(Xen,X)
  !
@@ -114,24 +123,27 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Parallel distribution
  !=======================
- !
- call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
- call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
+ if (.not.(l_life.and.X%iq(1)>1)) then
+   call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
+ endif
  if (io_X)      call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
- if (.not.io_X) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs*PAR_nq/))
+ if (.not.io_X) call X_alloc('X',(/X%ng,X%ng,X_n_freqs*PAR_nq/))
  !
  ! WF distribution 
  !=================
  !
- call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,&
-&                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
-&                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
-&                            CLEAN_UP=.TRUE.)
- !
- if (WF_buffered_IO) then
+ if (.not.(l_life.and.X%iq(1)>1)) then
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,&
+&                              B_index=PAR_IND_CON_BANDS_X(X%whoami),&
+&                              Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
+&                              CLEAN_UP=.TRUE.)
    !
-   call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
-   !
+   if (WF_buffered_IO) then
+     !
+     call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
+     !
+   endif
  endif
  !
  do iq=iq_to_start,X%iq(2)
@@ -153,8 +165,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
    iq_mem=PAR_Q_index(iq)
-   X_range=(/1,Xw%n_freqs/)
-   if (.not.io_X) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
+   X_range               =(/1,Xw%n_freqs/)
+   if (.not.io_X) X_range=(/X_n_freqs*(iq_mem-1)+1,X_n_freqs*(iq_mem-1)+Xw%n_freqs/)
    !
    call X_os(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
    !
@@ -166,21 +178,32 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    !
-   if (iq==iq_to_start) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=Xdb) 
-   !
-   ! Only the cpus that write the q=1 component knows the value of ng_db this must 
-   ! be initialized for all the cpus
-   !
-   if (iq>iq_to_start) then
+   if ( (iq==iq_to_start.and..not.l_life) .or. (iq==1.and.l_life) ) then
+     !
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=Xdb) 
+     !
+   else
+     !
+     ! Only the cpus that write the q=1 component knows the value of ng_db this must 
+     ! be initialized for all the cpus
+     !
      X%ng_db=X%ng
+     !
      call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
+     !
    endif
    !
    i_err=ioX(X,Xw,Xdb)
    !
    ! CLEAN (1)
+   ! Frequencies must not be cleaned in the case of lifetimes calculations when the EM1d
+   ! database is not written on disk
    !
-   call FREQUENCIES_reset(Xw)
+   if (.not.io_X.and.l_life) then
+     call FREQUENCIES_reset(Xw,"coarse_grid")
+   else
+     call FREQUENCIES_reset(Xw,"all")
+   endif
    !
  enddo
  !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -27,7 +27,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(G,l_eval)
  use parallel_m,     ONLY:ncpu
  use real_time,      ONLY:RT_occupations_locked,RT_occupations_reference,&
 &                         RT_delta_occupations,l_use_delta_occupations,  &
-&                         RT_one_minus_occupations,RT_GAMMA_T_status,&
+&                         RT_one_minus_occupations,RT_TIME_status,&
 &                         SAVED_lifetime,Life_MEM_steps,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Hole_lifetime,&
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,E_P_Electron_lifetime
@@ -41,7 +41,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(G,l_eval)
  integer :: ik,ib
  real(SP):: f_sum,f_diff,f_occ,f_occ_reference
  !
- l_use_delta_occupations=RT_GAMMA_T_status(it_now)> 1
+ l_use_delta_occupations=RT_TIME_status(it_now)> 1
  !
  if (.not.l_eval) return
  !

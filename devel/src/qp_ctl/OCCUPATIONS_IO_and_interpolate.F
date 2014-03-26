@@ -24,8 +24,9 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use units,          ONLY:BO2ANG,FS2AUT,HA2EV
  use pars,           ONLY:SP,lchlen
  use parser_m,       ONLY:parser
- use real_time,      ONLY:ID,G_lesser,NE_i_time,RT_IO_JPO_steps,RT_step,MEM_index,G_MEM_steps,RT_IO_steps_DB
- use SC,             ONLY:SC_bands,RT_occupations,RT_nk,l_RT_occupations_in_use
+ use real_time,      ONLY:ID,G_lesser,NE_i_time,RT_IO_JPO_steps,RT_step,MEM_index,&
+&                         RT_E_occupations,G_MEM_steps,RT_IO_steps_DB
+ use SC,             ONLY:SC_bands,RT_nk,l_RT_occupations_in_use
  use IO_m,           ONLY:io_control,NONE,OP_WR_CL,OP_RD,RD_CL,OP_RD_CL,DUMP,variable_is_found
  use electrons,      ONLY:levels,BZ_RIM_nbands,n_sp_pol,n_met_bands,&
 &                         n_full_bands,nel,E_reset,BZ_RIM_tot_nkpts
@@ -80,7 +81,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
 #if defined _RT
    !
    do ib=SC_bands(1),SC_bands(2)
-     RT_occupations(ib,:)=-real((0._SP,1._SP)*G_lesser(ib,ib,:,MEM_index(NE_i_time,G_MEM_steps)))
+     RT_E_occupations(ib,:)=-real((0._SP,1._SP)*G_lesser(ib,ib,:,MEM_index(NE_i_time,G_MEM_steps)))
    enddo
    ! 
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
@@ -158,9 +159,9 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    NE_i_time= (Time+RT_step)/RT_step
    NE_i_time= NE_i_time-mod(NE_i_time-1,RT_IO_JPO_steps)
    !
-   if (.not.allocated(RT_occupations)) then
-     allocate(RT_occupations(SC_bands(1):SC_bands(2),RT_nk))
-     call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
+   if (.not.allocated(RT_E_occupations)) then
+     allocate(RT_E_occupations(SC_bands(1):SC_bands(2),RT_nk))
+     call mem_est("RT_E_occupations",(/size(RT_E_occupations)/),(/SP/))
    endif
    !
 #if defined _RT
@@ -197,7 +198,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
      call interpolate(E%E_RIM(:Nb_to_int,:,1),E%f_RIM(:Nb_to_int,:,1),Nb_to_int,BZ_RIM_tot_nkpts)
    endif
    !
-   call mem_est("RT_occupations")
+   call mem_est("RT_E_occupations")
    ! 
    call E_reset(RT_db1_E) 
    call bz_samp_reset(RT_db1_k)
@@ -218,7 +219,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    !
    if (.not.input_Tel_is_negative) call OCCUPATIONS_Gaps(E)
    !
-   call msg('r','Integarted N. of e-   [input]:',sum(RT_occupations(:,:))/real(RT_nk)+(SC_bands(1)-1)*2._SP)
+   call msg('r','Integarted N. of e-   [input]:',sum(RT_E_occupations(:,:))/real(RT_nk)+(SC_bands(1)-1)*2._SP)
    call msg('r','               [interpolated]:',sum(E%f(:,:,:))/real(nXkibz))
    if (associated(E%f_RIM)) then
       call msg('r','                        [RIM]:',sum(E%f_RIM(:,:,:))/real(BZ_RIM_tot_nkpts))
@@ -254,7 +255,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
             !
             if (abs( RT_E(i1)-En(ib,ik)-RT_E(1)+E_bottom ) < E_diff) then
               !
-              Fn(ib,ik)=RT_occupations( RT_E_table(RT_E_indx(i1),1), RT_E_table(RT_E_indx(i1),2) )
+              Fn(ib,ik)=RT_E_occupations( RT_E_table(RT_E_indx(i1),1), RT_E_table(RT_E_indx(i1),2) )
               !
               E_diff= abs( RT_E(i1)-En(ib,ik)-RT_E(1)+E_bottom )
               !

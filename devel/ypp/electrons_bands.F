@@ -37,9 +37,9 @@ subroutine electrons_bands(Xk,Xen)
  use stderr,         ONLY:real2ch
  use electrons,      ONLY:n_spin
  use units,          ONLY:FS2AUT
- use SC,             ONLY:RT_occupations,RT_Nk,RT_ibz_coo,RT_Nk_ibz
+ use SC,             ONLY:RT_Nk,RT_ibz_coo,RT_Nk_ibz
  use YPP,            ONLY:OCC_T_range,OCC_deltaT
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RIM_ibz_coo
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RIM_ibz_coo,RT_E_occupations
  use IO_m,           ONLY:NONE
 #endif
  !
@@ -234,17 +234,17 @@ subroutine electrons_bands(Xk,Xen)
      Real_Nel=0._SP
      do ik=1,Xk%nibz
        Real_Nhole=Real_Nhole+&
-&       sum((spin_occ-RT_occupations(BANDS_range(1):Xen%nbf,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
+&       sum((spin_occ-RT_E_occupations(BANDS_range(1):Xen%nbf,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
 &                      Xk%weights(ik)/real(RT_Nk_ibz(ik))
        Real_Nel=  Real_Nel+&
-&       sum((RT_occupations(Xen%nbf+1:BANDS_range(2),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
+&       sum((RT_E_occupations(Xen%nbf+1:BANDS_range(2),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
 &                      Xk%weights(ik)/real(RT_Nk_ibz(ik))
      enddo
      !
      ! STEP 1: define coefficients for occupations
      !
      do is=1,n_sp_pol
-       occupations_tmp(BANDS_range(1):BANDS_range(2),is,1:Nk)=RT_occupations(BANDS_range(1):BANDS_range(2),1:Nk)
+       occupations_tmp(BANDS_range(1):BANDS_range(2),is,1:Nk)=RT_E_occupations(BANDS_range(1):BANDS_range(2),1:Nk)
      enddo
      call eval_interpolation_coeff(R2D=occupations_tmp,k=Xk,Nk=Nk,ID=ID_interp)
      !

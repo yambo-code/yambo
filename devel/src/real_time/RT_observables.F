@@ -25,12 +25,12 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use units,          ONLY:HA2EV,HA2KEL
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex,l_elel_scatt,l_elph_scatt
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:V_hartree_sc,Ho,SC_bands,RT_nk,RT_Nk_ibz,RT_ibz_coo,RT_occupations
+ use SC,             ONLY:V_hartree_sc,Ho,SC_bands,RT_nk,RT_Nk_ibz,RT_ibz_coo
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,         &
 &                         l_NE_simulate_IP,RIM_ibz_coo,l_RT_uses_E_RIM,RT_do_IO, &
-&                         RT_Tfit_occupations,RT_Efit_occupations
+&                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations
  use electrons,      ONLY:levels,spin_occ
  use QP_m,           ONLY:QP_Vnl_xc
  use xc_functionals, ONLY:E_xc,XC_potential_driver
@@ -127,7 +127,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! Electrons and holes temperatures
  !
  if (l_elel_scatt.or.l_elph_scatt) then
-   call RT_occupations_FIT_and_lock(en,k,RT_Tfit_occupations,RT_Efit_occupations,RT_occupations)
+   call RT_occupations_FIT_and_lock(en,k,RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations)
  endif
  !
  ! Number of Holes in the valence band and

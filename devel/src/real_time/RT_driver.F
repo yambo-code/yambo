@@ -35,7 +35,7 @@ subroutine RT_driver(E,X,k,q)
 &                         SC_QP_setup
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
-&                         NE_i_time,l_RT_diagonalize,RT_IO_G_steps,&
+&                         NE_i_time,l_RT_diagonalize,RT_IO_G_steps,l_RT_skip_impose,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,l_NE_dynamics_started,RT_update,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update
@@ -201,7 +201,7 @@ subroutine RT_driver(E,X,k,q)
  if (l_NE_with_fields) call RT_output(what="open pot occ")
  if (l_elph_scatt) call RT_output('open EPlife')
  if (l_elel_scatt) call RT_output('open EElife')
- if (l_elel_scatt.or.l_elph_scatt) call RT_output('open factors')
+ if ((l_elel_scatt.or.l_elph_scatt).and..not.l_RT_skip_impose) call RT_output('open factors')
  !
  ! Loop on time
  !==============
@@ -295,7 +295,7 @@ subroutine RT_driver(E,X,k,q)
      call RT_mean_carrier_lifetimes(E,k)
      if(l_elph_scatt) call RT_output('EPlife',TIME=NE_time/FS2AUT)
      if(l_elel_scatt) call RT_output('EElife',TIME=NE_time/FS2AUT)
-     if(l_elel_scatt.or.l_elph_scatt) call RT_output('factors',TIME=NE_time/FS2AUT)
+     if((l_elel_scatt.or.l_elph_scatt).and..not.l_RT_skip_impose) call RT_output('factors',TIME=NE_time/FS2AUT)
    endif
    !
    ! Write DBs

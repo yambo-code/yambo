@@ -24,8 +24,8 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use pars,           ONLY:SP
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_occupations
- use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,Imp_factors
+ use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,RT_Nk_ibz
+ use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,Imp_factors,RT_E_occupations
  !
  implicit none
  !
@@ -119,7 +119,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    !
    subroutine eval_E_and_N()
      !
-     f_occ=RT_occupations(ib,ik_rim)
+     f_occ=RT_E_occupations(ib,ik_rim)
      if(.not.l_RT_uses_E_RIM) En=E%E(ib,ik,1)
      if(     l_RT_uses_E_RIM) En=E%E_RIM(ib,iE_rim,1)
      TMP_VALUE(1)=TMP_VALUE(1)+   Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ)

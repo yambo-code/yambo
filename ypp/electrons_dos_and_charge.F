@@ -37,8 +37,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use LIVE_t,         ONLY:live_timing
 #if defined _YPP_RT
  use YPP,            ONLY:RT_occupations_ref,OCC_T_ref,OCC_T_range,OCC_deltaT
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_output
- use SC,             ONLY:SC_bands,RT_occupations,SC_description,n_SC_descriptions
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_output,RT_E_occupations
+ use SC,             ONLY:SC_bands,SC_description,n_SC_descriptions
 #endif
  use interfaces,     ONLY:PARALLEL_index
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait
@@ -195,7 +195,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
                  f_occ=spin_occ
                  if(l_prt_occ_only) f_occ=Xen%f_RIM(ib,ik_rand,i_spin)
 #if defined _YPP_RT
-                 if (l_RT_dos) f_occ=(RT_occupations(ib,Xk%sstar(ik,1))-RT_occupations_ref(ib,Xk%sstar(ik,1)))
+                 if (l_RT_dos) f_occ=(RT_E_occupations(ib,Xk%sstar(ik,1))-RT_occupations_ref(ib,Xk%sstar(ik,1)))
 #endif
                  el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&
 &                      Fermi_fnc_derivative(Xen%E_RIM(ib,ik_rand,i_spin)-dos_E,dos_broadening)*dos_norm
@@ -206,7 +206,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
                f_occ=spin_occ
                if(l_prt_occ_only) f_occ=Xen%f(ib,ik,i_spin)
 #if defined _YPP_RT
-               if (l_RT_dos) f_occ=(RT_occupations(ib,ik)-RT_occupations_ref(ib,ik))
+               if (l_RT_dos) f_occ=(RT_E_occupations(ib,ik)-RT_occupations_ref(ib,ik))
 #endif
                el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&
 &                    Fermi_fnc_derivative(Xen%E(ib,ik,i_spin)-dos_E,dos_broadening)*Xk%weights(ik)*dos_norm

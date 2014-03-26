@@ -32,10 +32,10 @@ subroutine RT_Coulomb_interpolation(E,k)
  use R_lattice,       ONLY:bz_samp
  use vec_operate,     ONLY:sort
  use functions,       ONLY:Fermi_fnc,Fermi_fnc_fit
- use SC,              ONLY:RT_ibz_coo,RT_Nk_ibz,SC_bands,RT_occupations
+ use SC,              ONLY:RT_ibz_coo,RT_Nk_ibz,SC_bands
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,&
 &                          RIM_ibz_coo,l_RT_uses_E_RIM,&
-&                          RT_Tfit_lifetimes,&
+&                          RT_Tfit_lifetimes,RT_E_occupations,RT_H_occupations,&
 &                          RT_Efit_lifetimes,l_lftm_fit_stable,&
 &                          Nfitted_lifetimes,RT_do_IO
  !
@@ -114,8 +114,8 @@ subroutine RT_Coulomb_interpolation(E,k)
      do i_k_rim=RT_ibz_coo(i_k,1),RT_ibz_coo(i_k,2)
        i_E_rim=i_k_rim-RT_ibz_coo(i_k,1)+RIM_ibz_coo(i_k,1)
        Energy(1)=E%E_RIM(i_n,i_E_rim,1)
-       if(Energy(1)<=E%Efermi(1) ) VALUE_tmp(1)=VALUE_tmp(1)+(spin_occ-RT_occupations(i_n,i_k_rim))
-       if(Energy(1)> E%Efermi(1) ) VALUE_tmp(2)=VALUE_tmp(2)+RT_occupations(i_n,i_k_rim)
+       if(Energy(1)<=E%Efermi(1) ) VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(i_n,i_k_rim)
+       if(Energy(1)> E%Efermi(1) ) VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(i_n,i_k_rim)
      enddo
      nholes=nholes+VALUE_tmp(1)*k%weights(i_k)/real(RT_Nk_ibz(i_k))
      nelecs=nelecs+VALUE_tmp(2)*k%weights(i_k)/real(RT_Nk_ibz(i_k))

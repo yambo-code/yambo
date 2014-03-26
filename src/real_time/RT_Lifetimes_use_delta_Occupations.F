@@ -22,12 +22,13 @@
 subroutine RT_Lifetimes_use_delta_Occupations(G,l_eval)
  !
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
+ use electrons,      ONLY:spin_occ
  use pars,           ONLY:SP
- use SC,             ONLY:SC_bands,RT_nk,RT_occupations,it_now
+ use SC,             ONLY:SC_bands,RT_nk,it_now
  use parallel_m,     ONLY:ncpu
  use real_time,      ONLY:RT_occupations_locked,RT_occupations_reference,&
 &                         RT_delta_occupations,l_use_delta_occupations,  &
-&                         RT_one_minus_occupations,RT_TIME_status,&
+&                         RT_H_occupations,RT_E_occupations,RT_TIME_status,&
 &                         SAVED_lifetime,Life_MEM_steps,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Hole_lifetime,&
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,E_P_Electron_lifetime
@@ -59,8 +60,8 @@ subroutine RT_Lifetimes_use_delta_Occupations(G,l_eval)
        if (abs(f_sum)>1.E-5) then
          if (abs(f_diff/f_sum)<1.E-5) RT_occupations_locked(ib,ik)=.TRUE.
        endif
-       RT_occupations(ib,ik)          = 0._SP
-       RT_one_minus_occupations(ib,ik)= 0._SP
+       RT_E_occupations(ib,ik)        = 0._SP
+       RT_H_occupations(ib,ik)        = 0._SP
        RT_delta_occupations(ib,ik)    = f_diff
        RT_occupations_reference(ib,ik)= f_occ
        if (l_elel_scatt) then
@@ -84,8 +85,8 @@ subroutine RT_Lifetimes_use_delta_Occupations(G,l_eval)
          E_P_Ho_abs_lifetime(ib,ik)=  0._SP
          E_P_El_abs_lifetime(ib,ik)=  0._SP
        endif
-       RT_occupations(ib,ik)          = f_occ
-       RT_one_minus_occupations(ib,ik)= 2._SP-f_occ
+       RT_E_occupations(ib,ik)        = f_occ
+       RT_H_occupations(ib,ik)        = spin_occ-f_occ
        RT_delta_occupations(ib,ik)    = 0._SP
        RT_occupations_reference(ib,ik)= 0._SP
      endif

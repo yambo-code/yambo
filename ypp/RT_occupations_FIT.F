@@ -117,7 +117,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    if(nfound_gamma(5)==2) nfound_gamma(2)  =nfound_gamma(2)+1
    if(nfound_gamma(5)==3) nfound_gamma(1:2)=nfound_gamma(1:2)+1
    !
-   if(ngamma<=4) cycle
+   if(ngamma<=6) cycle
    !
    RT_gamma_ratio(:,i1,2)=RT_gamma(:,i1,5)/( RT_gamma(:,i1,5)+RT_gamma(:,i1,6) )
    !
@@ -160,7 +160,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    titles(4:5)=(/'EE  el ','EE  hol'/)   
    n1=5
  ! Only El-Ph
- else if (ngamma==4) then
+ else if (ngamma==6) then
    gamma_fname(1)='YPP-RT_EP_Hole_linewidths'
    gamma_fname(2)='YPP-RT_EP_Elec_linewidths'
    gamma_fname(3)='YPP-RT_EP_Ho_abs_linewidths'
@@ -168,7 +168,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    titles(4:5)=(/'EP  el ','EP  hol'/)   
    n1=5
  ! Both
- else if (ngamma==6) then
+ else if (ngamma==8) then
    gamma_fname(1)='YPP-RT_EP_Hole_linewidths'
    gamma_fname(2)='YPP-RT_EP_Elec_linewidths'
    gamma_fname(3)='YPP-RT_EP_Ho_abs_linewidths'

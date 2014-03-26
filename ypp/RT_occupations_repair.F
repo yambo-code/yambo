@@ -28,7 +28,8 @@ subroutine RT_occupations_repair(E)
  !
  use units,          ONLY:HA2EV
  use pars,           ONLY:SP
- use SC,             ONLY:SC_bands,RT_occupations
+ use SC,             ONLY:SC_bands
+ use real_time,      ONLY:RT_E_occupations
  use QP_m,           ONLY:QP_table,QP_n_states
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin
@@ -83,8 +84,8 @@ subroutine RT_occupations_repair(E)
          if (i3==1) sym_value=sym_value+E%f(ib,ik,1)/real( n_of_el(i1) )
          if (i3==2) E%f(ib,ik,1)=sym_value
        else
-         if (i3==1) sym_value=sym_value+RT_occupations(ib,ik)/real( n_of_el(i1) )
-         if (i3==2) RT_occupations(ib,ik)=sym_value
+         if (i3==1) sym_value=sym_value+RT_E_occupations(ib,ik)/real( n_of_el(i1) )
+         if (i3==2) RT_E_occupations(ib,ik)=sym_value
        endif
      enddo
    enddo

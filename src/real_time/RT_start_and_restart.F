@@ -40,9 +40,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  use drivers,        ONLY:l_sc_contains_lda,l_elph_scatt,l_elel_scatt
  use com,            ONLY:msg
  use QP_m,           ONLY:QP_nk,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels,n_sp_pol,spin_occ
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:ID,NE_steps,RT_ind_J,l_NE_dynamics,&
+ use real_time,      ONLY:ID,NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         RT_P,RT_step,full_rho,l_RT_CCA_Kernel,&
@@ -51,7 +51,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,it_now,H_nl_sc,&
 &                         V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
-&                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional,RT_occupations,SC_nbands
+&                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional,SC_nbands
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE,IO_and_Messaging_switch
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
@@ -94,11 +94,11 @@ subroutine RT_start_and_restart(E,k,q,X)
    do ik=1,RT_nk
      if (l_RT_uses_E_RIM) then
        G_lesser(ib,ib,ik,1) =cI*E%f_RIM(ib,ik,1)
-       RT_occupations(ib,ik)=E%f_RIM(ib,ik,1)
      else
        G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
-       RT_occupations(ib,ik)=E%f(ib,ik,1)
      endif
+     RT_E_occupations(ib,ik)=aimag(G_lesser(ib,ib,ik,1))
+     RT_H_occupations(ib,ik)=spin_occ-aimag(G_lesser(ib,ib,ik,1))
    enddo
  enddo
  !

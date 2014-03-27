@@ -107,7 +107,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  ! introduce blocks with an increasing number of elements
  !
  it=it_start
- do i1=1,N_intra_steps,N_intra_steps/10
+ do i1=1,N_intra_steps,max(N_intra_steps/10,1)
    call BUILD_up_group(N_blocks*i1,i1)
    it=it+N_blocks*i1
  enddo

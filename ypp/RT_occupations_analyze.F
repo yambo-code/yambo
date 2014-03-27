@@ -35,8 +35,8 @@ subroutine RT_occupations_analyze(k,E)
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,&
 &                         E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime,&
-&                         RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM,NE_time
- use SC,             ONLY:RT_occupations,SC_bands,&
+&                         RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM,NE_time,RT_E_occupations
+ use SC,             ONLY:SC_bands,&
 &                         RT_nk,RT_nstates,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz
  !
  implicit none
@@ -58,7 +58,7 @@ subroutine RT_occupations_analyze(k,E)
  !
  io_TIME=0.
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=io_TIME,imposed_COM=NONE)
- if (.not.allocated(RT_occupations)) call error('OCCUPATIONS database not found')
+ if (.not.allocated(RT_E_occupations)) call error('OCCUPATIONS database not found')
  !
  call parser('OCCgroup',l_group_occ)
  !
@@ -221,7 +221,7 @@ subroutine RT_occupations_analyze(k,E)
        endif
        !
        RT_gamma(i_RT,i_T,:)=RT_gamma(i_RT,i_T,:)*HA2EV*1000.
-       RT_occ(i_RT,i_T)=RT_occupations(ib,ik_rim)
+       RT_occ(i_RT,i_T)=RT_E_occupations(ib,ik_rim)
        !
        data_to_plot(3:8)=data_to_plot(3:8)+RT_gamma(i_RT,i_T,1:6)
        !
@@ -238,7 +238,7 @@ subroutine RT_occupations_analyze(k,E)
        ! Occupations
        !=============
        RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+&
-&        RT_occupations(ib,ik_rim)*k%weights(ik)/real(RT_NK_ibz(ik),SP)
+&        RT_E_occupations(ib,ik_rim)*k%weights(ik)/real(RT_NK_ibz(ik),SP)
        !
        if (ib==SC_bands(1).and.SC_bands(1)>1) &
 &         RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+ &
@@ -246,8 +246,8 @@ subroutine RT_occupations_analyze(k,E)
        !
        data_to_plot(1)=io_TIME/FS2AUT
        !
-       if (ib<=E%nbf) data_to_plot(2)=data_to_plot(2)+(RT_occupations(ib,ik_rim)-spin_occ)*k%weights(ik)
-       if (ib> E%nbf) data_to_plot(2)=data_to_plot(2)+ RT_occupations(ib,ik_rim)          *k%weights(ik)
+       if (ib<=E%nbf) data_to_plot(2)=data_to_plot(2)+(RT_E_occupations(ib,ik_rim)-spin_occ)*k%weights(ik)
+       if (ib> E%nbf) data_to_plot(2)=data_to_plot(2)+ RT_E_occupations(ib,ik_rim)          *k%weights(ik)
        !
        if(.not.l_group_occ .or. ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) then
          data_to_plot(2)=data_to_plot(2)/real(RT_NK_ibz(ik),SP)

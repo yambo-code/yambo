@@ -27,14 +27,14 @@ integer function io_RT_components(what,ID)
  use R_lattice,      ONLY:nkibz,nqbz
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,SC_nbands,&
-&                         RT_nk,RT_occupations,&
+&                         RT_nk,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,&
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found
  use fields,         ONLY:i_Probe,i_Pump
  use real_time,      ONLY:RT_IO_JPO_steps,NE_i_time,E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Ho_abs_lifetime,RT_do_IO
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Ho_abs_lifetime,RT_do_IO,RT_E_occupations
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes
 #endif
@@ -206,7 +206,7 @@ integer function io_RT_components(what,ID)
    if (io_sec(ID,1)>1) then
      !
      call io_bulk(ID,VAR="RT_occupations_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-     call io_bulk(ID,R2=RT_occupations)
+     call io_bulk(ID,R2=RT_E_occupations)
      !
 #if defined _ELPH  && defined _RT
      !

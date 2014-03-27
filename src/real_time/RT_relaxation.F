@@ -42,13 +42,13 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
- use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz,RT_occupations
+ use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dephased,l_NE_dynamics_started,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,it_start,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
 &                         RT_TIME_status,E_P_Ho_abs_lifetime,RT_occupations_reference,FIRST_step,&
-&                         REF_e_lifetime,REF_h_lifetime
+&                         REF_e_lifetime,REF_h_lifetime,RT_E_occupations,RT_H_occupations
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -136,13 +136,18 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    !
  endif
  !
- ! PARALLEL Mergering, SAVE, interpolate
+ ! Restore RT_occupations after call to
+ ! RT_Lifetimes_use_delta_Occupations
  !=======================================
  do ik=1,RT_nk
    do ib1=SC_bands(1),SC_bands(2)
-     RT_occupations(ib1,ik)=-cI*G_input(ib1,ib1,ik)
+     RT_E_occupations(ib1,ik)=         aimag(G_input(ib1,ib1,ik))
+     RT_H_occupations(ib1,ik)=spin_occ-aimag(G_input(ib1,ib1,ik))
    enddo
  enddo
+ !
+ ! PARALLEL Mergering, SAVE, interpolate
+ !=======================================
  !
  if (l_elel_scatt) then
    call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_E_Hole_lifetime,1)

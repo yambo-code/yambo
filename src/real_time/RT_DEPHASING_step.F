@@ -23,8 +23,8 @@ subroutine RT_DEPHASING_step(G_new_k,ik,deltaT)
  !
  use pars,           ONLY:SP,cI
  use electrons,      ONLY:spin_occ
- use SC,             ONLY:SC_bands,RT_occupations
- use real_time,      ONLY:Sigma_relax
+ use SC,             ONLY:SC_bands
+ use real_time,      ONLY:Sigma_relax,RT_E_occupations,RT_H_occupations
  !
  implicit none
  !
@@ -46,7 +46,8 @@ subroutine RT_DEPHASING_step(G_new_k,ik,deltaT)
    G_new_k(ib,ib)=cI*aimag(G_new_k(ib,ib))
    if( aimag(G_new_k(ib,ib))<0._SP    ) G_new_k(ib,ib)=cmplx(0._SP,0._SP    )
    if( aimag(G_new_k(ib,ib))>spin_occ ) G_new_k(ib,ib)=cmplx(0._SP,spin_occ )
-   RT_occupations(ib,ik)=aimag(G_new_k(ib,ib))
+   RT_E_occupations(ib,ik)=         aimag(G_new_k(ib,ib))
+   RT_H_occupations(ib,ik)=spin_occ-aimag(G_new_k(ib,ib))
  enddo
  !
 end subroutine RT_DEPHASING_step

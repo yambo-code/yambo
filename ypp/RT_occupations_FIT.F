@@ -153,30 +153,28 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  titles(2:3)=(/'OCC el ','OCC hol'/)
  n1=3   
  !
- ! Only El-El
  if(ngamma==2) then
+   ! Only El-El
    gamma_fname(1)='YPP-RT_EE_Hole_linewidths'
    gamma_fname(2)='YPP-RT_EE_Elec_linewidths'
    titles(4:5)=(/'EE  el ','EE  hol'/)   
    n1=5
- ! Only El-Ph
- else if (ngamma==6) then
+ else if (ngamma==4) then
+   ! Only El-Ph
    gamma_fname(1)='YPP-RT_EP_Hole_linewidths'
    gamma_fname(2)='YPP-RT_EP_Elec_linewidths'
    gamma_fname(3)='YPP-RT_EP_Ho_abs_linewidths'
    gamma_fname(4)='YPP-RT_EP_El_abs_linewidths'
    titles(4:5)=(/'EP  el ','EP  hol'/)   
    n1=5
- ! Both
- else if (ngamma==8) then
+ else if (ngamma==6) then
+   ! Both
    gamma_fname(1)='YPP-RT_EP_Hole_linewidths'
    gamma_fname(2)='YPP-RT_EP_Elec_linewidths'
    gamma_fname(3)='YPP-RT_EP_Ho_abs_linewidths'
    gamma_fname(4)='YPP-RT_EP_El_abs_linewidths'
    gamma_fname(5)='YPP-RT_EE_Hole_linewidths'
    gamma_fname(6)='YPP-RT_EE_Elec_linewidths'
-   !gamma_ratio_fname(1)='YPP-RT_EP_linewidths_ratio'
-   !gamma_ratio_fname(2)='YPP-RT_EE_linewidths_ratio'
    titles(4:7)=(/'EP  el ','EP  hol','EE  el ','EE  hol'/)   
    n1=7
  endif

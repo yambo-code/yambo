@@ -48,7 +48,8 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,it_start,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
 &                         RT_TIME_status,E_P_Ho_abs_lifetime,RT_occupations_reference,FIRST_step,&
-&                         REF_e_lifetime,REF_h_lifetime,RT_E_occupations,RT_H_occupations
+&                         REF_e_lifetime,REF_h_lifetime,RT_E_occupations,RT_H_occupations,&
+&                         l_RT_skip_impose
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -146,9 +147,24 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    enddo
  enddo
  !
- ! PARALLEL Mergering, SAVE, interpolate
- !=======================================
+ ! PARALLEL Mergering & N/dN conservation (of the evaluated Lifetimes)
+ !=====================================================================
+ if (l_eval) then
+   if (l_elel_scatt) then
+     call RT_Lifetimes_merge(E_E_Hole_lifetime,1)
+     call RT_Lifetimes_merge(E_E_Electron_lifetime,2)
+   endif
+   if (l_elph_scatt) then
+     call RT_Lifetimes_merge(E_P_Hole_lifetime,3)
+     call RT_Lifetimes_merge(E_P_Electron_lifetime,4)
+     call RT_Lifetimes_merge(E_P_Ho_abs_lifetime,5)
+     call RT_Lifetimes_merge(E_P_El_abs_lifetime,6)
+   endif
+   if (.not.l_RT_skip_impose) call Impose_Conservations( )
+ endif
  !
+ ! SAVE, interpolate & N/dN conservation (of the interpolated Lifetimes)
+ !======================================================================
  if (l_elel_scatt) then
    call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_E_Hole_lifetime,1)
    call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_E_Electron_lifetime,2)
@@ -159,6 +175,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Ho_abs_lifetime,5)
    call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_El_abs_lifetime,6)
  endif
+ if (.not.l_eval.and..not.l_RT_skip_impose) call Impose_Conservations( )
  !
  ! Dephasing Matrix & Occupations reference
  !==========================================
@@ -197,5 +214,22 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
    enddo
  enddo
  !
+ contains
+  !
+  subroutine Impose_Conservations( )
+     !
+     ! Zero dN/dT & dE/dT & d(DeltaN)/dT
+     !===================================
+     !
+     if (l_elel_scatt) then
+       call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
+     endif
+     if (l_elph_scatt) then
+       call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
+       call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
+     endif
+     !
+   end subroutine
+   !
 end subroutine RT_relaxation
 

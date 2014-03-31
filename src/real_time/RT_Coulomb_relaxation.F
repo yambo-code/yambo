@@ -121,10 +121,6 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        f0_pmq = RT_occupations_reference(i_mp ,RT_ibz_coo(i_pmq,1))
        df_pmq = RT_delta_occupations(i_mp ,RT_ibz_coo(i_pmq,1))
        Hole_f_pmq  = RT_H_occupations(i_mp,RT_ibz_coo(i_pmq,1))
-       f_pmq  = RT_E_occupations(i_mp ,RT_ibz_coo(i_pmq,1))
-       f0_pmq = RT_occupations_reference(i_mp ,RT_ibz_coo(i_pmq,1))
-       df_pmq = RT_delta_occupations(i_mp ,RT_ibz_coo(i_pmq,1))
-       Hole_f_pmq  = RT_H_occupations(i_mp,RT_ibz_coo(i_pmq,1))
        !
        E_plasma=E_plasma+cmplx(delta_E,delta_W)
        !

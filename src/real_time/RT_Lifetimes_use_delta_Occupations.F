@@ -63,7 +63,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(G,l_eval)
        RT_E_occupations(ib,ik)        = 0._SP
        RT_H_occupations(ib,ik)        = 0._SP
        RT_delta_occupations(ib,ik)    = f_diff
-       RT_occupations_reference(ib,ik)= f_occ
+       RT_occupations_reference(ib,ik)= f_occ_reference
        if (l_elel_scatt) then
          E_E_Hole_lifetime(ib,ik)=    SAVED_lifetime(ib,ik,1,Life_MEM_steps)/real(ncpu)
          E_E_Electron_lifetime(ib,ik)=SAVED_lifetime(ib,ik,2,Life_MEM_steps)/real(ncpu)

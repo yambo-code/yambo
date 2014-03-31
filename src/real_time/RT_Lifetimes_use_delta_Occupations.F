@@ -42,7 +42,9 @@ subroutine RT_Lifetimes_use_delta_Occupations(G,l_eval)
  integer :: ik,ib
  real(SP):: f_sum,f_diff,f_occ,f_occ_reference
  !
- l_use_delta_occupations=RT_TIME_status(it_now)> 1
+ l_use_delta_occupations=.FALSE.
+ !
+!RT_TIME_status(it_now)> 1
  !
  if (.not.l_eval) return
  !
@@ -58,12 +60,12 @@ subroutine RT_Lifetimes_use_delta_Occupations(G,l_eval)
        f_sum  =  (f_occ+f_occ_reference)/2.
        f_diff =   f_occ-f_occ_reference
        if (abs(f_sum)>1.E-5) then
-         if (abs(f_diff/f_sum)<1.E-5) RT_occupations_locked(ib,ik)=.TRUE.
+         if (abs(f_diff/f_sum)<1.E-7) RT_occupations_locked(ib,ik)=.TRUE.
        endif
        RT_E_occupations(ib,ik)        = 0._SP
        RT_H_occupations(ib,ik)        = 0._SP
        RT_delta_occupations(ib,ik)    = f_diff
-       RT_occupations_reference(ib,ik)= f_occ_reference
+       RT_occupations_reference(ib,ik)= f_occ
        if (l_elel_scatt) then
          E_E_Hole_lifetime(ib,ik)=    SAVED_lifetime(ib,ik,1,Life_MEM_steps)/real(ncpu)
          E_E_Electron_lifetime(ib,ik)=SAVED_lifetime(ib,ik,2,Life_MEM_steps)/real(ncpu)

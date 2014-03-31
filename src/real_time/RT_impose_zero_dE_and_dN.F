@@ -91,12 +91,13 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  call compute_prefactors()
  !
- Imp_factors=0._SP
+ if (trim(Scatt_kind)=="elel")  Imp_factors(3:5)=0._SP
+ if (trim(Scatt_kind)=="elph1") Imp_factors(1:2)=0._SP
  !
  do i1=1,3
    if( isnan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._SP ) then
-     if (trim(Scatt_kind)=="elel") Imp_factors(3:5)=prefactor(1:3)
-     if(trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
+     if (trim(Scatt_kind)=="elel")  Imp_factors(3:5)=prefactor(1:3)
+     if (trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
      return
    endif
    if( abs(prefactor(i1))>cut_off ) prefactor(i1)=prefactor(i1)/abs(prefactor(i1))*cut_off

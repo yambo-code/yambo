@@ -19,14 +19,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_merge(LIFE,SAVE_index)
+subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  !
  use pars,           ONLY:SP
- use R_lattice,      ONLY:nkibz
+ use R_lattice,      ONLY:nkibz,bz_samp
+ use electrons,      ONLY:levels
  use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Plasma_INDEX
  implicit none
  !
+ type(levels),  intent(in)    :: E
+ type(bz_samp), intent(in)    :: k
  integer,       intent(in)    :: SAVE_index
  real(SP),      intent(inout) :: LIFE(SC_bands(1):SC_bands(2),RT_nk)
  !

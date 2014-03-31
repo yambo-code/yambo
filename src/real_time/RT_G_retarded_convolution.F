@@ -39,7 +39,6 @@ real(SP) function RT_G_retarded_convolution(EmEp,Ebose,WmWp,Wbose,Egap,Skind)
  RT_G_retarded_convolution=0._SP
  !
  E_center=EmEp+Ebose
- if (.not.Energy_Condition(EmEp,Ebose,E_center,Egap)) return
  !
  W_center=WmWp+Wbose
  !
@@ -50,17 +49,4 @@ real(SP) function RT_G_retarded_convolution(EmEp,Ebose,WmWp,Wbose,Egap,Skind)
  !
  if (trim(Gr_kind)=='HS') RT_G_retarded_convolution=HyperbolicSecant_FT(E_center,W_center,local_alpha)
  !
- contains
-   !
-   logical function Energy_Condition(E1,E2,Etot,Egap_)
-     real(SP) :: E1,E2,Etot,Egap_
-     real(SP), parameter :: trash=1.E-7
-     Energy_Condition=.true.
-     if ( abs(E1)  <1.E-7    ) Energy_Condition=.false.      ! C1a
-     if ( abs(E2)  <1.E-7    ) Energy_Condition=.false.      ! C1b
-     if ( abs(Etot)<1.E-7    ) Energy_Condition=.false.      ! C2
-     if ( abs(Etot)>2.*Egap_ ) Energy_Condition=.false.      ! C3
-     if (    E1/E2 >0._SP    ) Energy_Condition=.false.      ! C4a+C4b
-   end function
-   !
 end function RT_G_retarded_convolution

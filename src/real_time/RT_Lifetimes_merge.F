@@ -26,6 +26,8 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  use electrons,      ONLY:levels
  use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Plasma_INDEX
+ use real_time,      ONLY:REF_lifetime,l_equilibrium_lifetimes
+ !
  implicit none
  !
  type(levels),  intent(in)    :: E
@@ -62,6 +64,13 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
      LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
      call PP_redux_wait(LIFE(:,ik))
    enddo
+ endif
+ !
+ if (l_equilibrium_lifetimes) then
+   REF_lifetime(:,:,SAVE_index)=LIFE
+   return
+ else
+   LIFE=LIFE+REF_lifetime(:,:,SAVE_index)
  endif
  !
 end subroutine RT_Lifetimes_merge

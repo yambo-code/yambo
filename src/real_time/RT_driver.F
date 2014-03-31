@@ -167,7 +167,6 @@ subroutine RT_driver(E,X,k,q)
  !====================
  if (l_elph_scatt.or.l_elel_scatt) call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
  !
- !
  ! qindx_X and qindx_S not needed in real-time 
  ! they are used only in dipoles and collisions calculations
  !

@@ -367,10 +367,10 @@ subroutine RT_output(what,VALUEs,TIME,E)
        data_to_dump(1:2)=(/Time,E/)
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-2)
      case('mean_EPlifetimes')
-       data_to_dump(2:5) = RT_mean_lifetimes(1:4)*HA2EV*1000.
+       data_to_dump(2:5) = RT_mean_lifetimes(3:6)*HA2EV*1000.
        data_to_dump(6:7) = RT_Tfit_lifetimes(1:2)*HA2KEL
      case('mean_EElifetimes')
-       data_to_dump(2:3) = RT_mean_lifetimes(5:6)*HA2EV*1000.
+       data_to_dump(2:3) = RT_mean_lifetimes(1:2)*HA2EV*1000.
        data_to_dump(4:5) = RT_Tfit_lifetimes(3:4)*HA2KEL
      case('N_dN_E_conservation_factors')
        data_to_dump(2:6)=Imp_factors(1:5)

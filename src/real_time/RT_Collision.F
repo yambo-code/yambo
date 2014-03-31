@@ -75,11 +75,13 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  logical          :: XC_needs_density
  integer          :: i1,ik,ik_RT,ikp_RT,ik_RIM,ib,ibp
+ complex(SP)      :: G_input_full(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
 #if defined _TIMING
  call timing('RT Collision',OPR='start')
 #endif
  !
+ G_input_full=G_input+G_lesser_reference
  !
  ! Density (needed by Hartree and local XCs)
  !=========
@@ -89,7 +91,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  XC_needs_density=.not.XCfrozen.and.l_sc_contains_lda.and.SC_xc_functional/=0
  !
  if (.not.Hfrozen.or.XC_needs_density.or..not.l_NE_dynamics_started) then
-   call el_density_matrix(G_input(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1))
+   call el_density_matrix(G_input_full(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1))
  endif
  !
  ! The Hartree term is written as
@@ -119,10 +121,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    ! NOTICE THAT: this approximation is valid only for linear self-energies 
    !              in G_lesser as exchange or COHSEX(with W fixed) 
    !
-   if (l_sc_hf.or.l_sc_cohsex) then
-     call COLLISIONS_compose(G_input(:,:,RT_ibz_coo(:,1))-G_lesser_reference(:,:,RT_ibz_coo(:,1)),&
-&                            G_input(:,:,RT_ibz_coo(:,1))-G_lesser_reference(:,:,RT_ibz_coo(:,1)))
-   endif
+   if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_compose(G_input(:,:,RT_ibz_coo(:,1)),G_input(:,:,RT_ibz_coo(:,1)))
    !
  endif
  !
@@ -271,6 +270,6 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  ! Calculate all relaxation terms
  ! ==============================
- call RT_relaxation(G_input,E,k,q,Time)
+ call RT_relaxation(G_input,E,k,q,Time,.false.)
  !
 end subroutine RT_Collision

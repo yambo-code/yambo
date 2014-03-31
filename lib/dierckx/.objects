@@ -1,0 +1,7 @@
+#if defined _DOUBLE
+objs = fpbacp.o  fpbspl.o  fpdisc.o  fpknot.o  fprati.o \
+       fpchep.o  fpgivs.o  fpperi.o  fprota.o  percur.o  splev.o 
+#else
+objs = fpbacp.o  fpbspl.o  fpdisc.o  fpknot.o  fprati.o \
+       fpchep.o  fpgivs.o  fpperi.o  fprota.o  percur.o  splev.o
+#endif

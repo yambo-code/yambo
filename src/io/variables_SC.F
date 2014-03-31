@@ -299,7 +299,7 @@ integer function variables_SC(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    !
    if(variable_is_found(ID,"TEMPERATURES")/=0) then
-     if (ver_is_gt_or_eq(ID,revision=3120)) then
+     if (ver_is_gt_or_eq(ID,revision=3163)) then
        i_desc=i_desc+1
        call io_elemental(ID,&
 &        VAR=" [RT-DYN-dT] Inter/intra grps[fs]:",R1=RT_dynamics_steps,CHECK=.true.,OP=(/"=="/),&

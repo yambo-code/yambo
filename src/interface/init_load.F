@@ -55,7 +55,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_steps,RT_dynamics_decay_time,&
 &                        RT_ave_dephasing,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
-&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_dynamics_KIND,I_MEM_steps
+&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_dynamics_KIND,I_MEM_steps,&
+&                        Gr_kind,two_alpha
  use fields,        ONLY:Efield
  use plasma,        ONLY:Plasma_redux_percent
 #endif
@@ -321,6 +322,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                           RT_dynamics_steps,Verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'DYNdecay',   '[RT] Exponential decay lifetime of the distribution of groups of lifetimes evaluated',&
 &                           RT_dynamics_decay_time,Verb_level=V_real_time,unit=Time_unit(1))
+ call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
+ call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic secant (HS)',Gr_kind,Verb_level=V_real_time)
  call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit(1))
  call it(defs,'ThermSteps', '[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
  call it(defs,'Integrator', '[RT] Integrator. Use keywords space separated  (RK2 | EULER | EXP | RWA | INTERPOLATE) ',&

@@ -31,15 +31,17 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
  !
  !    y(t+dt) = y(t) + dt * f(t+dt/2,y(t+dt/2))
  !
- ! Notice that G_old is never overwritten       
+ ! Notice that G_old is never overwritten (It is modified by the RWA)      
  ! ------------------------------------------------------------
  !
  use pars,           ONLY:SP,schlen
  use SC,             ONLY:SC_bands,RT_nk
  use R_lattice,      ONLY:bz_samp  
- use real_time,      ONLY:l_RT_EULER,l_RT_RK2,l_RT_EXP,l_RT_INTERPOLATE,l_RT_RWA,l_NE_with_fields
+ use real_time,      ONLY:l_RT_EULER,l_RT_RK2,l_RT_EXP,l_RT_INTERPOLATE,l_RT_RWA, &
+&                         l_NE_with_fields,G_lesser_reference,RT_E_occupations,   &
+&                         RT_H_occupations,RT_delta0_occupations
  use fields,         ONLY:gauge_field
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,spin_occ
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -65,56 +67,13 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
  !
  if(l_RT_EULER) then
    !
-   do ik=1,RT_nk
-     !
-     if (l_RT_RWA) call RT_apply_RWA(G_old(:,:,ik),ik,E,Time,"APPLY")
-     !
-     if (l_RT_EXP) then
-       !
-       ! U(t) = exp ( Ho_plus_Sigma * t)
-       !
-       call RT_build_U1_and_U2(ik,I1_k,I2_k,T_step)
-       !
-       ! G(T+dt) = U(dt) G(T) U(-dt) - i dt * Simga_relax(T)
-       !
-       call RT_EULEREXP_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,T_step)
-       !
-     else
-       !
-       call RT_build_I1_and_I2(G_old(:,:,ik),ik,I1_k,I2_k)
-       !
-       ! G(T+dt) = G(T) - i dt *(I1(T) - I2(T))
-       !
-       if (.not.l_RT_INTERPOLATE) call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step)
-       if (l_RT_INTERPOLATE)      call RT_INTERPOLATED_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,Time,T_step,.TRUE.)
-       !
-     endif
-     !
-     if (l_RT_RWA) call RT_apply_RWA(G_new(:,:,ik),ik,E,Time+T_step,"REMOVE")
-     !
-     ! Dephasing and carriers relaxation step
-     !
-     call RT_DEPHASING_step(G_new(:,:,ik),ik,T_step)
-     !
-   enddo
+   call RT_evolve(T_step)
    !
  else if (l_RT_RK2) then
    !
    ! Evaluate @ dt/2
    !
-   do ik=1,RT_nk
-     if (l_RT_RWA) call RT_apply_RWA(G_old(:,:,ik),ik,E,Time,"APPLY")
-     if (l_RT_EXP) then
-       call RT_build_U1_and_U2(ik,I1_k,I2_k,T_step/2._SP)
-       call RT_EULEREXP_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k)
-     else
-       call RT_build_I1_and_I2(G_old(:,:,ik),ik,I1_k,I2_k)
-       if (.not.l_RT_INTERPOLATE) call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step/2._SP)
-       if (l_RT_INTERPOLATE)      call RT_INTERPOLATED_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,Time,T_step/2.)
-     endif
-     if (l_RT_RWA) call RT_apply_RWA(G_new(:,:,ik),ik,E,Time+T_step/2.,"REMOVE")
-     call RT_DEPHASING_step(G_new(:,:,ik),ik,T_step/2.)
-   enddo
+   call RT_evolve(T_step/2._SP)
    !
    if (l_NE_with_fields) call RT_propagate_fields(k,E,G_new,A_new,A_old,Time,T_step/2._SP)
    !
@@ -132,18 +91,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
    !
    ! final step @ dt
    !
-   do ik=1,RT_nk
-     if (l_RT_EXP) then
-       call RT_build_U1_and_U2(ik,I1_k,I2_k,T_step)
-       call RT_EULEREXP_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k)
-     else
-       call RT_build_I1_and_I2(G_new(:,:,ik),ik,I1_k,I2_k)
-       if (.not.l_RT_INTERPOLATE) call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step)
-       if (l_RT_INTERPOLATE)      call RT_INTERPOLATED_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,Time,T_step)
-     endif
-     if (l_RT_RWA) call RT_apply_RWA(G_new(:,:,ik),ik,E,Time+T_step,"REMOVE")
-     call RT_DEPHASING_step(G_new(:,:,ik),ik,T_step)
-   enddo
+   call RT_evolve(T_step)
    !
  endif
  !
@@ -153,4 +101,72 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
  call timing('RT integrator',OPR='stop')
 #endif
  !
+ contains
+   !
+   subroutine RT_evolve(dT)
+     !
+     real(SP),intent(in)    :: dT
+     !
+     integer                :: ib
+     complex(SP)            :: G_old_full(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     !
+     do ik=1,RT_nk
+       !
+       if (l_RT_RWA) then
+         call RT_apply_RWA(G_old(:,:,ik),ik,E,Time,"APPLY")
+         call RT_apply_RWA(G_lesser_reference(:,:,ik),ik,E,Time,"APPLY")
+       endif
+       !
+       G_old_full=G_old(:,:,ik)+G_lesser_reference(:,:,ik)
+       !
+       if (l_RT_EXP) then
+         !
+         ! U(t) = exp ( Ho_plus_Sigma * t)
+         !
+         call RT_build_U1_and_U2(ik,I1_k,I2_k,dT)
+         !
+         ! G(T+dt) = U(dt) G(T) U(-dt)
+         !
+         call RT_EULEREXP_step(G_new(:,:,ik),G_old_full,I1_k,I2_k,ik,dT)
+         G_new(:,:,ik)=G_new(:,:,ik)-G_lesser_reference(:,:,ik)
+         !
+       else
+         !
+         ! I1(t) = Ho_plus_Sigma*G ;  I1(t) = G*Ho_plus_Sigma
+         !
+         call RT_build_I1_and_I2(G_old_full,ik,I1_k,I2_k)
+         !
+         ! G(T+dt) = G(T) - i dt *(I1(T) - I2(T))
+         !
+         if (.not.l_RT_INTERPOLATE) call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,dT)
+         if (l_RT_INTERPOLATE)      call RT_INTERPOLATED_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,Time,dT,.TRUE.)
+         !
+       endif
+       !
+       if (l_RT_RWA) then
+         call RT_apply_RWA(G_old(:,:,ik),ik,E,Time,"REMOVE")
+         call RT_apply_RWA(G_lesser_reference(:,:,ik),ik,E,Time,"REMOVE")
+         call RT_apply_RWA(G_new(:,:,ik),ik,E,Time+dT,"REMOVE")
+       endif
+       !
+       ! Dephasing and carriers relaxation step
+       ! G(T+dt) = G(T) - i dt * Simga_relax(T)
+       !
+       call RT_DEPHASING_step(G_new(:,:,ik),ik,dT)
+       !
+       ! Update the occupations:
+       !  RT_delta0_occupations are always sensitive to small changes 
+       !  for Gref~spin_occ RT_H_occ is also sensitivi
+       !  for Gref~0        RT_E_occ is also sensitive
+       !
+       do ib=SC_bands(1),SC_bands(2)
+         RT_delta0_occupations(ib,ik)=aimag(G_new(ib,ib,ik))
+         RT_E_occupations(ib,ik)= aimag(G_new(ib,ib,ik))+            aimag(G_lesser_reference(ib,ib,ik))
+         RT_H_occupations(ib,ik)=-aimag(G_new(ib,ib,ik))+ ( spin_occ-aimag(G_lesser_reference(ib,ib,ik)) )
+       enddo
+       !
+     enddo
+     !
+   end subroutine RT_evolve
+   !
 end subroutine RT_Integrator

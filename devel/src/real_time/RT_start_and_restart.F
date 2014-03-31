@@ -45,9 +45,11 @@ subroutine RT_start_and_restart(E,k,q,X)
  use real_time,      ONLY:ID,NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         RT_P,RT_step,full_rho,l_RT_CCA_Kernel,&
+&                         RT_P,RT_step,full_rho,l_RT_CCA_Kernel,dG_lesser, &
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,&
-&                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps
+&                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps,&
+&                         l_equilibrium_lifetimes,RT_E_occupations_reference,&
+&                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,it_now,H_nl_sc,&
 &                         V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
@@ -78,12 +80,22 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! G_lesser(T=0,T=0)=Go and G_lesser_old(T=0,T=0)=Go
  !
  G_lesser          =cZERO
+ dG_lesser         =cZERO
  G_lesser_reference=cZERO
  rho_reference     =rZERO
  if(allocated(full_rho)) full_rho=cZERO
  V_xc_sc           =rZERO
  V_hartree_sc      =rZERO
  H_nl_sc           =cZERO
+ !
+ ! Set to zero occupations
+ !
+ RT_E_occupations=rzero
+ RT_H_occupations=rzero
+ RT_E_occupations_reference=rzero
+ RT_H_occupations_reference=rzero
+ RT_delta0_occupations=rzero
+ RT_delta_occupations=rzero
  !
  ! Set to zero current and fields
  !
@@ -97,10 +109,11 @@ subroutine RT_start_and_restart(E,k,q,X)
      else
        G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
      endif
-     RT_E_occupations(ib,ik)=aimag(G_lesser(ib,ib,ik,1))
-     RT_H_occupations(ib,ik)=spin_occ-aimag(G_lesser(ib,ib,ik,1))
+     RT_E_occupations(ib,:)=         aimag(G_lesser(ib,ib,ik,1))
+     RT_H_occupations(ib,:)=spin_occ-aimag(G_lesser(ib,ib,ik,1))
    enddo
  enddo
+ !
  !
  ! Build Ho and save initial energies 
  !====================================
@@ -143,9 +156,13 @@ subroutine RT_start_and_restart(E,k,q,X)
  RESTART                = io_G ==0
  if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = io_G==0.and.io_THETA==0
  !
- ! Reference lesser GF
- !====================
+ ! Reference lesser GF and occupations
+ !=====================================
  G_lesser_reference=G_lesser(:,:,:,1)
+ do ib=SC_bands(1),SC_bands(2)
+   RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
+   RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
+ enddo
  !
  if (l_RT_needs_XC0) then
    !
@@ -298,6 +315,14 @@ subroutine RT_start_and_restart(E,k,q,X)
    call RT_manual_excitation(E,k)
    !
  endif
+ !
+ ! Update occupations after manual pump or G_lesser from DB (?)
+ !==============================================================
+ do ib=SC_bands(1),SC_bands(2)
+   RT_E_occupations(ib,:)= aimag(dG_lesser(ib,ib,:,1))+          aimag(G_lesser_reference(ib,ib,:))
+   RT_H_occupations(ib,:)=-aimag(dG_lesser(ib,ib,:,1))+(spin_occ-aimag(G_lesser_reference(ib,ib,:)))
+   RT_delta0_occupations(ib,:)=aimag(dG_lesser(ib,ib,:,1))
+ enddo
  !
  if (l_NE_dynamics) NE_i_time=it_start-Thermal_steps
  !

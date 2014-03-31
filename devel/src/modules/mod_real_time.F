@@ -176,11 +176,14 @@ module real_time
  ! Locks and reference
  !----------------------
  logical                  :: l_RT_skip_impose = .FALSE.
- logical                  :: l_use_delta_occupations
+ logical                  :: l_use_updated_reference
+ logical                  :: l_equilibrium_lifetimes
  real(SP),    allocatable :: RT_E_occupations(:,:) 
  real(SP),    allocatable :: RT_H_occupations(:,:) 
+ real(SP),    allocatable :: RT_delta0_occupations(:,:) 
  real(SP),    allocatable :: RT_delta_occupations(:,:) 
- real(SP),    allocatable :: RT_occupations_reference(:,:) 
+ real(SP),    allocatable :: RT_E_occupations_reference(:,:) 
+ real(SP),    allocatable :: RT_H_occupations_reference(:,:)
  logical,     allocatable :: RT_occupations_locked(:,:) 
  logical,     allocatable :: RT_lifetimes_locked(:,:) 
  !
@@ -199,8 +202,7 @@ module real_time
  ! Saved RD life-times
  !-----------------------
  real(SP),    allocatable :: SAVED_times(:)
- real(SP),    allocatable :: REF_e_lifetime(:,:)
- real(SP),    allocatable :: REF_h_lifetime(:,:)
+ real(SP),    allocatable :: REF_lifetime(:,:,:)
  real(SP),    allocatable :: SAVED_lifetime(:,:,:,:)
  !
  ! Ouput Lifetimes, ratio fit and temperatures
@@ -236,6 +238,7 @@ module real_time
  !-----
  !
  complex(SP), allocatable :: G_lesser_reference(:,:,:)
+ complex(SP), allocatable :: dG_lesser(:,:,:,:)
  !
  ! COLLISIONS
  !------------
@@ -388,12 +391,19 @@ module real_time
      allocate(RT_H_occupations(SC_bands(1):SC_bands(2),RT_nk))
      call mem_est("RT_H_occupations",(/size(RT_H_occupations)/),(/SP/))
      !
+     allocate(RT_delta0_occupations(SC_bands(1):SC_bands(2),RT_nk))
+     call mem_est("RT_delta0_occupations",(/size(RT_delta0_occupations)/),(/SP/))
+     !
      allocate(RT_delta_occupations(SC_bands(1):SC_bands(2),RT_nk))
      call mem_est("RT_delta_occupations",(/size(RT_delta_occupations)/),(/SP/))
      !
-     allocate(RT_occupations_reference(SC_bands(1):SC_bands(2),RT_nk))
-     call mem_est("RT_occupations_reference",(/size(RT_occupations_reference)/),(/SP/))
-     RT_occupations_reference=0._SP
+     allocate(RT_E_occupations_reference(SC_bands(1):SC_bands(2),RT_nk))
+     call mem_est("RT_E_occupations_reference",(/size(RT_E_occupations_reference)/),(/SP/))
+     RT_E_occupations_reference=0._SP
+     !
+     allocate(RT_H_occupations_reference(SC_bands(1):SC_bands(2),RT_nk))
+     call mem_est("RT_H_occupations_reference",(/size(RT_H_occupations_reference)/),(/SP/))
+     RT_H_occupations_reference=0._SP
      !
      allocate(RT_occupations_locked(SC_bands(1):SC_bands(2),RT_nk))
      call mem_est("RT_occupations_locked",(/size(RT_occupations_locked)/),(/LP/))
@@ -427,12 +437,12 @@ module real_time
      endif
      !
      if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt) then
-       allocate(REF_e_lifetime(SC_bands(1):SC_bands(2),RT_nk))
-       allocate(REF_h_lifetime(SC_bands(1):SC_bands(2),RT_nk))
-       call mem_est("REF_lifetime",(/2*size(REF_e_lifetime)/),(/SP/))
+       allocate(REF_lifetime(SC_bands(1):SC_bands(2),RT_nk,8))
+       call mem_est("REF_lifetime",(/size(REF_lifetime)/),(/SP/))
        allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
        call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
        allocate(SAVED_times(Life_MEM_steps)) 
+       SAVED_lifetime=0._SP
      endif
      !
      allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,n_sp_pol))
@@ -459,6 +469,9 @@ module real_time
      !
      allocate(G_lesser_reference(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
      call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
+     !
+     allocate(dG_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,G_MEM_steps))
+     call mem_est("dG_lesser",(/size(dG_lesser)/),(/2*SP/))
      !
      allocate(rho_reference(fft_size))
      call mem_est("rho_reference",(/fft_size/),(/SP/))
@@ -542,24 +555,30 @@ module real_time
        call mem_est("RT_E_P_lifetimes")
      endif
      !
-     if(allocated(REF_e_lifetime)) then
-       deallocate(REF_e_lifetime,REF_h_lifetime)
-       call mem_est("REF_lifetimes")
+     if(allocated(REF_lifetime)) then
+       deallocate(REF_lifetime)
+       call mem_est("REF_lifetime")
      endif
      !
      if(allocated(SAVED_lifetime)) then
        deallocate(SAVED_lifetime,SAVED_times)
-       call mem_est("SAVED_lifetimes")
+       call mem_est("SAVED_lifetime")
      endif
      !
      deallocate(RT_H_occupations)
      call mem_est("RT_H_occupations")
      !
+     deallocate(RT_delta0_occupations)
+     call mem_est("RT_delta0_occupations")
+     !
      deallocate(RT_delta_occupations)
      call mem_est("RT_delta_occupations")
      !
-     deallocate(RT_occupations_reference)
-     call mem_est("RT_occupations_reference")
+     deallocate(RT_E_occupations_reference)
+     call mem_est("RT_E_occupations_reference")
+     !
+     deallocate(RT_H_occupations_reference)
+     call mem_est("RT_H_occupations_reference")
      !
      deallocate(RT_occupations_locked)
      call mem_est("RT_occupations_locked")
@@ -588,6 +607,9 @@ module real_time
      !
      deallocate(G_lesser_reference)
      call mem_est("Gf_l_ref")
+     !
+     deallocate(dG_lesser)
+     call mem_est("dG_lesser")
      !
      if(allocated(rho_reference)) then
        deallocate(rho_reference)

@@ -30,7 +30,8 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,         &
 &                         l_NE_simulate_IP,RIM_ibz_coo,l_RT_uses_E_RIM,RT_do_IO, &
-&                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations
+&                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,&
+&                         RT_H_occupations
  use electrons,      ONLY:levels,spin_occ
  use QP_m,           ONLY:QP_Vnl_xc
  use xc_functionals, ONLY:E_xc,XC_potential_driver
@@ -144,8 +145,8 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
        else
          Energy=en%E(ib,ik,1)
        endif
-       if(Energy<=en%Efermi(1) ) VALUE_tmp(1)=VALUE_tmp(1)+(spin_occ-aimag(G_lesser(ib,ib,ik_rim)))
-       if(Energy> en%Efermi(1) ) VALUE_tmp(2)=VALUE_tmp(2)+          aimag(G_lesser(ib,ib,ik_rim))
+       if(Energy<=en%Efermi(1) ) VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib,ik_rim)
+       if(Energy> en%Efermi(1) ) VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib,ik_rim)
      enddo
      N_holes=N_holes+VALUE_tmp(1)*k%weights(ik)/real(RT_Nk_ibz(ik))
      N_elecs=N_elecs+VALUE_tmp(2)*k%weights(ik)/real(RT_Nk_ibz(ik))

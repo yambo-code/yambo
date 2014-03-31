@@ -31,6 +31,7 @@ debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
 do_local    = @compile_local@
+do_dierckx  = @compile_dierckx@
 do_p2y      = @compile_p2y@
 do_e2y      = @compile_e2y@
 shell       = @SHELL@
@@ -94,6 +95,8 @@ libs:
 	@if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
 	DIR2GO="lib" ; $(mklib); fi
 	@if test "$(do_local)" = yes ; then LIBS2DO="local" ; \
+	DIR2GO="lib" ; $(mklib); fi
+	@if test "$(do_dierckx)" = yes ; then LIBS2DO="dierckx" ; \
 	DIR2GO="lib" ; $(mklib); fi
 yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)

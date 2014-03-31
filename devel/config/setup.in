@@ -40,6 +40,7 @@ includedir  = @srcdir_path@/include
 lblas       = @BLAS_LIBS@
 llapack     = @LAPACK_LIBS@
 llocal      = @LOCAL_LIBS@
+ldierckx    = @DIERCKX_LIBS@
 lblacs      = @BLACS_LIBS@
 lscalapack  = @SCALAPACK_LIBS@
 lmpi        = @MPILIBS@

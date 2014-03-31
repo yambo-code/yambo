@@ -28,7 +28,7 @@ subroutine RT_manual_excitation(E,k)
  use fields,         ONLY:l_manual_excitation
  use SC,             ONLY:SC_bands,RT_ibz_coo,RT_Nk_ibz
  use real_time,      ONLY:G_lesser,Eh_pumped_pair_energy,Eh_pumped_pair_width,  &
-&                         Eh_pumped_Nel
+&                         Eh_pumped_Nel,dG_lesser,G_lesser
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg
@@ -116,15 +116,17 @@ subroutine RT_manual_excitation(E,k)
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        if (Pump_level(ib,ik)>0) then
-         G_lesser(ib,ib,ik_rim,1)=cI*spin_occ*occupation
-         delta_Nel=delta_Nel-cI*G_lesser(ib,ib,ik_rim,1)*k%weights(ik)*2._SP/real(RT_Nk_ibz(ik))
+         dG_lesser(ib,ib,ik_rim,1)= cI*spin_occ*occupation
+         delta_Nel=delta_Nel-cI*dG_lesser(ib,ib,ik_rim,1)*k%weights(ik)*2._SP/real(RT_Nk_ibz(ik))
        else if (Pump_level(ib,ik)<0) then
-         G_lesser(ib,ib,ik_rim,1)=cI*spin_occ*(1._SP-occupation)
+         dG_lesser(ib,ib,ik_rim,1)=-cI*spin_occ*occupation
        endif
      enddo
      !
    enddo   
  enddo
+ !
+ G_lesser(:,:,:,1)=G_lesser(:,:,:,1)+dG_lesser(:,:,:,1)
  !
  call msg('sr','[RT] Carrier number and density [none,cm-3]:',delta_Nel*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24)/))
  !

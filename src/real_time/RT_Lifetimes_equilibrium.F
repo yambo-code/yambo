@@ -22,7 +22,7 @@
 real(SP) function RT_Lifetimes_equilibrium(i_n,i_k,Time)
  !
  use pars,           ONLY:SP
- use real_time,      ONLY:REF_e_lifetime,REF_h_lifetime
+ use real_time,      ONLY:REF_lifetime
  use electrons,      ONLY:n_full_bands
  !
  implicit none
@@ -32,13 +32,22 @@ real(SP) function RT_Lifetimes_equilibrium(i_n,i_k,Time)
  !
  ! Work Space
  !
+ integer         :: i1
  real(SP)        :: Gamma_ratio,E,f_ref
+ real(SP)        :: Life_H,Life_E
  !
- Gamma_ratio=REF_e_lifetime(i_n,i_k)/(REF_e_lifetime(i_n,i_k)+REF_h_lifetime(i_n,i_k))
+ Life_H=0._SP
+ Life_E=0._SP
+ do i1=1,7,2
+   Life_H=Life_H+REF_lifetime(i_n,i_k,i1)
+   Life_E=Life_E+REF_lifetime(i_n,i_k,i1+1)
+ enddo
+ !
+ Gamma_ratio=Life_H/(Life_E+Life_H)
  !
  f_ref=0._SP
  if (i_n<=n_full_bands) f_ref=1._SP
  !
- RT_Lifetimes_equilibrium=(Gamma_ratio-f_ref)*exp(-(REF_e_lifetime(i_n,i_k)+REF_h_lifetime(i_n,i_k))*Time)+Gamma_ratio
+ RT_Lifetimes_equilibrium=(f_ref-Gamma_ratio)*exp(-(Life_H+Life_E)*Time)+Gamma_ratio
  !
 end function RT_Lifetimes_equilibrium

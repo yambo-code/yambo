@@ -189,12 +189,14 @@ subroutine RT_occupations_analyze(k,E)
      if (ib<SC_bands(1)) cycle
      if (ib>SC_bands(2)) cycle
      !
-     if(l_group_occ) then
-       output_fname='YPP-RT_occupations_k'//trim(intc(ik))//'_b'//trim(intc(ib))
-       if(i_T==1) call open_file()
-     endif
+     !if(l_group_occ) then
+     output_fname='YPP-RT_occupations_k'//trim(intc(ik))//'_b'//trim(intc(ib))
+     if(i_T==1) call open_file()
+     !endif
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       !
+       if(.not.l_RT_occ_Fit .and. .not.l_group_occ .and. ik_rim>RT_ibz_coo(ik,1)) cycle
        !
        if (ik_rim>RT_nk) cycle
        !
@@ -230,26 +232,28 @@ subroutine RT_occupations_analyze(k,E)
        !
        if (.not.l_RT_occ_Plot) cycle
        !
-       if(.not.l_group_occ) then
-         output_fname='YPP-RT_occupations_k'//trim(intc(ik_rim))//'_b'//trim(intc(ib))
-         if (i_T==1) call open_file() 
-       endif
+       !if(.not.l_group_occ) then
+       !  output_fname='YPP-RT_occupations_k'//trim(intc(ik_rim))//'_b'//trim(intc(ib))
+       !  if (i_T==1) call open_file() 
+       !endif
        !
        ! Occupations
        !=============
-       RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+&
-&        RT_E_occupations(ib,ik_rim)*k%weights(ik)/real(RT_NK_ibz(ik),SP)
-       !
-       if (ib==SC_bands(1).and.SC_bands(1)>1) &
-&         RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+ &
-&           spin_occ*k%weights(ik)*real(SC_bands(1)-1)/real(RT_NK_ibz(ik),SP)
+       if(l_group_occ) then
+         RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+&
+&          RT_E_occupations(ib,ik_rim)*k%weights(ik)/real(RT_NK_ibz(ik),SP)
+         !
+         if (ib==SC_bands(1).and.SC_bands(1)>1) &
+&          RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+ &
+&          spin_occ*k%weights(ik)*real(SC_bands(1)-1)/real(RT_NK_ibz(ik),SP)
+       endif
        !
        data_to_plot(1)=io_TIME/FS2AUT
        !
        if (ib<=E%nbf) data_to_plot(2)=data_to_plot(2)+(RT_E_occupations(ib,ik_rim)-spin_occ)*k%weights(ik)
        if (ib> E%nbf) data_to_plot(2)=data_to_plot(2)+ RT_E_occupations(ib,ik_rim)          *k%weights(ik)
        !
-       if(.not.l_group_occ .or. ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) then
+       if(.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) ) then
          data_to_plot(2)=data_to_plot(2)/real(RT_NK_ibz(ik),SP)
          if (ib<=E%nbf) RT_occupations_sum(1,i_T)=RT_occupations_sum(1,i_T)+data_to_plot(2)
          if (ib> E%nbf) RT_occupations_sum(2,i_T)=RT_occupations_sum(2,i_T)+data_to_plot(2)

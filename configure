@@ -602,6 +602,7 @@ OPENMPI_str
 OPENMP_str
 SLK_str
 LOCAL_str
+DIERCKX_str
 LAPACK_str
 BLAS_str
 PW_str
@@ -639,6 +640,8 @@ openmpi_cpp
 MPICC
 PFC
 LOCAL_LIBS
+DIERCKX_LIBS
+compile_dierckx
 compile_local
 compile_lapack
 compile_blas
@@ -8920,6 +8923,8 @@ if test x"$acx_dlaran_ok" = xno; then
  LOCAL_LIBS="-llocal"
 fi
 
+compile_dierckx=yes
+DIERCKX_LIBS="-ldierckx"
 
 #
 # ============================================================================
@@ -9975,6 +9980,9 @@ if test "$compile_blas" = "yes" ; then BLAS_str="X"; fi
 
 LOCAL_str=" "
 if test "$compile_local" = "yes" ; then LOCAL_str="X"; fi
+
+DIERCKX_str=" "
+if test "$compile_dierckx" = "yes" ; then DIERCKX_str="X"; fi
 
 SLK_str=" "
 if test "$enable_scalapack" = "yes" ; then SLK_str="X"; fi

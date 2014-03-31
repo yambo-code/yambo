@@ -26,9 +26,12 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,it_now,RT_nk,RT_ibz_coo
- use real_time,      ONLY:RT_TIME_status,SAVED_times,&
+ use real_time,      ONLY:RT_TIME_status,SAVED_times,FIRST_step,&
 &                         Life_MEM_steps,SAVED_lifetime,RT_dynamics_steps,&
-&                         FIRST_step,ADD_to_saved_values
+&                         ADD_to_saved_values,&
+&                         RT_E_occupations,RT_E_occupations_reference,&
+&                         RT_H_occupations,RT_H_occupations_reference
+ !
  implicit none
  !
  type(levels),  intent(in)    :: E
@@ -76,8 +79,15 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
        enddo
      endif
    enddo
- else 
-   if (RT_TIME_status(it_now)==0.or. (RT_TIME_status(it_now)>0.and..not.FIRST_step(it_now,Time)) ) then
+   ! Store the occupations related to the last saved lifetimes
+   if (SAVE_index==1.or.(.not.l_elel_scatt.and.SAVE_index==3)) then
+     RT_E_occupations_reference=RT_E_occupations
+     RT_H_occupations_reference=RT_H_occupations
+   endif
+   !
+ else
+   !
+   if (RT_TIME_status(it_now)>=0.or. (RT_TIME_status(it_now)>0.and..not.FIRST_step(it_now,Time)) ) then
      !=============================
      ! INTERPOLATE 
      !=============

@@ -29,8 +29,9 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use SC,              ONLY:RT_nk_ibz
 #endif
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
-&                          RT_delta_occupations,RT_occupations_reference,&
-                           RT_H_occupations,RT_E_occupations,RIM_ibz_coo,l_RT_uses_E_RIM 
+&                          RT_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
+&                          RT_H_occupations,RT_E_occupations,RIM_ibz_coo,l_RT_uses_E_RIM,&
+&                          l_equilibrium_lifetimes
  use plasma,          ONLY:EH_gas
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:GW_NEQ_collisions
@@ -47,15 +48,17 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  integer               :: i_qp,i_qp1,i_p,i_p_bz,ik_m_q,i_pmq,i_n,i_m,i_mp,i_np,ik_rim,&
 &                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_q_mem,i_pmq_bz,i1,i2,&
 &                         i_J,i_J_bg,i_J_mem,ik_m_q_rim
- real(SP)              :: pre_factor,P_pl_abs,DELTA_E,DELTA_W
+ !
+ real(SP)              :: pre_factor,P_pl_abs,DELTA_E,DELTA_W,TMP_Hole_lifetime,TMP_Electron_lifetime
  !
  ! Occupations
  !
- real(SP)              :: f_p,f_pmq,df_p,df_pmq,f0_p,f0_pmq,f_kmq,df_kmq,f0_kmq,Hole_f_kmq,Hole_f_pmq,Hole_f_p
+ real(SP)              :: df_p,f0_p,df_pmq,f0_pmq,df_kmq,f0_kmq,Hole_f0_kmq,Hole_f0_pmq,Hole_f0_p,&
+&                         Electron_occupation,Hole_occupation
  !
  ! Plasma
  !
- real(SP)              :: N_h_plasma,N_e_plasma,dN_h_plasma,dN_e_plasma,N0_h_plasma,N0_e_plasma,plasma_freq,plasma_width
+ real(SP)              :: dN_h_plasma,dN_e_plasma,N0_h_plasma,N0_e_plasma,plasma_freq,plasma_width
  complex(SP)           :: E_plasma
  !
  real(SP), external    :: RT_G_retarded_convolution
@@ -83,8 +86,6 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
      i_J_mem=PAR_Plasma_index(i_J)
      !
      E_plasma   =cZero
-     N_e_plasma =rZero
-     N_h_plasma =rZero
      N0_e_plasma=rZero
      N0_h_plasma=rZero
      dN_e_plasma=rZero
@@ -112,34 +113,29 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        DELTA_E=E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)
        DELTA_W=abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))
        !
-       f_p    = RT_E_occupations(i_m ,RT_ibz_coo(i_p,1))
-       f0_p   = RT_occupations_reference(i_m ,RT_ibz_coo(i_p,1))
+       f0_p   = RT_E_occupations_reference(i_m ,RT_ibz_coo(i_p,1))
        df_p   = RT_delta_occupations(i_m ,RT_ibz_coo(i_p,1))
-       Hole_f_p    = RT_H_occupations(i_m ,RT_ibz_coo(i_p,1))
+       Hole_f0_p   = RT_H_occupations_reference(i_m ,RT_ibz_coo(i_p,1))
        !
-       f_pmq  = RT_E_occupations(i_mp ,RT_ibz_coo(i_pmq,1))
-       f0_pmq = RT_occupations_reference(i_mp ,RT_ibz_coo(i_pmq,1))
+       f0_pmq = RT_E_occupations_reference(i_mp ,RT_ibz_coo(i_pmq,1))
        df_pmq = RT_delta_occupations(i_mp ,RT_ibz_coo(i_pmq,1))
-       Hole_f_pmq  = RT_H_occupations(i_mp,RT_ibz_coo(i_pmq,1))
+       Hole_f0_pmq  = RT_H_occupations_reference(i_mp ,RT_ibz_coo(i_pmq,1))
        !
        E_plasma=E_plasma+cmplx(delta_E,delta_W)
        !
-       N_e_plasma =N_e_plasma+Hole_f_p*f_pmq/spin_occ
-       N_h_plasma =N_h_plasma+f_p*Hole_f_pmq/spin_occ
-       N0_e_plasma=N0_e_plasma+(2._SP-f0_p)*f0_pmq/spin_occ
-       N0_h_plasma=N0_h_plasma+f0_p*(2._SP-f0_pmq)/spin_occ
-       dN_e_plasma=dN_e_plasma-df_p*f0_pmq/spin_occ+(2._SP-f0_p)*df_pmq/spin_occ-df_p*df_pmq/spin_occ
-       dN_h_plasma=dN_h_plasma+df_p*(2._SP-f0_pmq)/spin_occ-f0_p*df_pmq/spin_occ-df_p*df_pmq/spin_occ
+       N0_e_plasma=N0_e_plasma+Hole_f0_p*f0_pmq/spin_occ
+       N0_h_plasma=N0_h_plasma+f0_p*Hole_f0_pmq/spin_occ
+       dN_e_plasma=dN_e_plasma-df_p*f0_pmq/spin_occ+Hole_f0_p*df_pmq/spin_occ-df_p*df_pmq/spin_occ
+       dN_h_plasma=dN_h_plasma+df_p*Hole_f0_pmq/spin_occ-f0_p*df_pmq/spin_occ-df_p*df_pmq/spin_occ
        !
      enddo
      !
-     dN_e_plasma=dN_e_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
-     dN_h_plasma=dN_h_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
+     E_plasma   =E_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
+     !
      N0_e_plasma=N0_e_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
      N0_h_plasma=N0_h_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
-     N_e_plasma =N_e_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
-     N_h_plasma =N_h_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
-     E_plasma   =E_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
+     dN_e_plasma=dN_e_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
+     dN_h_plasma=dN_h_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
      !
      ! Unlike phonons, plasmons have a finite lifetime
      !
@@ -168,6 +164,9 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
          !
          if (RT_occupations_locked(i_n ,ik_rim)) cycle
          !
+         TMP_Hole_lifetime=rZero
+         TMP_Electron_lifetime=rZero
+         !
          do ik_m_q_rim=RT_ibz_coo(ik_m_q,1),RT_ibz_coo(ik_m_q,2)
            !
            if (RT_occupations_locked(i_np ,ik_m_q_rim)) cycle
@@ -184,6 +183,9 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            !
 #else
            !
+           TMP_Hole_lifetime=rZero
+           TMP_Electron_lifetime=rZero
+           !
            if (RT_occupations_locked(i_n ,ik)) cycle
            !
            ik_m_q_rim=RT_ibz_coo(ik_m_q,1)
@@ -198,23 +200,34 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            !
            if(abs(P_pl_abs)<1.E-7) cycle
            !
-           Hole_f_kmq       = RT_H_occupations(i_np,ik_m_q_rim)/spin_occ
-           f_kmq            = RT_E_occupations(i_np,ik_m_q_rim)/spin_occ
-           f0_kmq           = RT_occupations_reference(i_np,ik_m_q_rim)/spin_occ
+           f0_kmq           = RT_E_occupations_reference(i_np,ik_m_q_rim)/spin_occ
+           Hole_f0_kmq      = RT_H_occupations_reference(i_np,ik_m_q_rim)/spin_occ
            df_kmq           = RT_delta_occupations(i_np,ik_m_q_rim)/spin_occ
            !
-           E_E_Hole_lifetime(i_n,ik_rim)=&
-&            E_E_Hole_lifetime(i_n,ik_rim)+pre_factor*P_pl_abs*&
-&            (N_h_plasma*f_kmq        +dN_h_plasma*f0_kmq          +N0_h_plasma*df_kmq)
+           if(l_equilibrium_lifetimes) then
+             Hole_occupation     = N0_h_plasma*f0_kmq     
+             Electron_occupation = N0_e_plasma*Hole_f0_kmq
+           else
+             Hole_occupation     = dN_h_plasma*f0_kmq      + N0_h_plasma*df_kmq + dN_h_plasma*df_kmq
+             Electron_occupation = dN_e_plasma*Hole_f0_kmq - N0_e_plasma*df_kmq - dN_e_plasma*df_kmq
+           endif
            !
-           E_E_Electron_lifetime(i_n,ik_rim)=&
-&            E_E_Electron_lifetime(i_n,ik_rim)+pre_factor*P_pl_abs*&
-&            (N_e_plasma*Hole_f_kmq+dN_e_plasma*(1._SP-f0_kmq)-N0_e_plasma*df_kmq)
+           TMP_Hole_lifetime=TMP_Hole_lifetime+P_pl_abs*Hole_occupation
+           TMP_Electron_lifetime=TMP_Electron_lifetime+P_pl_abs*Electron_occupation
            !
 #if defined _RT_EE_RIM
            !
          enddo
+         !
+         E_E_Hole_lifetime(i_n,ik_rim)=E_E_Hole_lifetime(i_n,ik_rim)+TMP_Hole_lifetime*pre_factor
+         E_E_Electron_lifetime(i_n,ik_rim)=E_E_Electron_lifetime(i_n,ik_rim)+TMP_Electron_lifetime*pre_factor
+         !
        enddo
+       !
+#else
+       !
+       E_E_Hole_lifetime(i_n,ik_rim)=E_E_Hole_lifetime(i_n,ik_rim)+TMP_Hole_lifetime*pre_factor
+       E_E_Electron_lifetime(i_n,ik_rim)=E_E_Electron_lifetime(i_n,ik_rim)+TMP_Electron_lifetime*pre_factor
        !
 #endif
        !

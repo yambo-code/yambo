@@ -38,7 +38,8 @@ subroutine RT_driver(E,X,k,q)
 &                         NE_i_time,l_RT_diagonalize,RT_IO_G_steps,l_RT_skip_impose,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,l_NE_dynamics_started,RT_update,&
-&                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update
+&                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update,&
+&                         dG_lesser
  use plasma,          ONLY:Plasma_free,EH_gas
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
@@ -161,6 +162,11 @@ subroutine RT_driver(E,X,k,q)
    endif
    !
  endif
+ !
+ ! Reference lifetimes 
+ !====================
+ if (l_elph_scatt.or.l_elel_scatt) call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
+ !
  !
  ! qindx_X and qindx_S not needed in real-time 
  ! they are used only in dipoles and collisions calculations
@@ -287,7 +293,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Calculate Collisions and fill SC_R, Ho_plus_Sigma, H_nl_sc
    !============================================================
-   call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
+   call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
    !
    ! Eval and Print Mean Carrier Lifetimes
    !=======================================
@@ -317,14 +323,16 @@ subroutine RT_driver(E,X,k,q)
    !=============
    ! T -> T+dT step 
    !
-   call RT_Integrator(G_lesser(:,:,:,it_mem_p1),G_lesser(:,:,:,it_mem),A_vecpot,A_vecpot_previous,RT_step,E,k,q,NE_time)
+   call RT_Integrator(dG_lesser(:,:,:,it_mem_p1),dG_lesser(:,:,:,it_mem),A_vecpot,A_vecpot_previous,RT_step,E,k,q,NE_time)
+   !
+   G_lesser(:,:,:,it_mem_p1)=G_lesser_reference+dG_lesser(:,:,:,it_mem_p1)
    !
    if (it==Thermal_steps) then
      !
      ! I freeze the last self-energy + hartree in XC0_and_HARTREE and I work
      ! only with the differences rho-rho_reference and G_lesser-G_lesser_reference
      ! 
-     call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
+     call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
      XC0_and_HARTREE0=SC_R-Ho
      !
    endif

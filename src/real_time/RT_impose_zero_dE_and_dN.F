@@ -22,10 +22,11 @@
 subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_kind)
  !
  use pars,           ONLY:SP
- use electrons,      ONLY:levels,spin_occ
+ use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,RT_Nk_ibz
- use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,Imp_factors,RT_E_occupations
+ use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,Imp_factors, &
+&                         RT_E_occupations,RT_H_occupations
  !
  implicit none
  !
@@ -40,7 +41,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  real(SP), parameter :: cut_off=0.1_SP  ! 1 = 100%
  !
  integer          :: i1,ib,ik,ik_rim,iE_rim,indx
- real(SP)         :: f_occ,k_weight,En
+ real(SP)         :: f_E_occ,f_H_occ,k_weight,En
  real(SP)         :: prefactor(3),DEN
  real(SP)         :: Nv,Nc,dNv,dNc,Ev,Ec,dEv,dEc
  real(SP)         :: SUM_N_Holes(2),SUM_E_Holes(2),SUM_N_Electrons(2),SUM_E_Electrons(2),TMP_VALUE(4)
@@ -91,13 +92,13 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  call compute_prefactors()
  !
- if (trim(Scatt_kind)=="elel")  Imp_factors(3:5)=0._SP
- if (trim(Scatt_kind)=="elph1") Imp_factors(1:2)=0._SP
+ if(trim(Scatt_kind)=="elel" ) Imp_factors(3:5)=0._SP
+ if(trim(Scatt_kind)=="elph1") Imp_factors(1:2)=0._SP
  !
  do i1=1,3
    if( isnan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._SP ) then
-     if (trim(Scatt_kind)=="elel")  Imp_factors(3:5)=prefactor(1:3)
-     if (trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
+     if (trim(Scatt_kind)=="elel") Imp_factors(3:5)=prefactor(1:3)
+     if(trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
      return
    endif
    if( abs(prefactor(i1))>cut_off ) prefactor(i1)=prefactor(i1)/abs(prefactor(i1))*cut_off
@@ -120,13 +121,14 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    !
    subroutine eval_E_and_N()
      !
-     f_occ=RT_E_occupations(ib,ik_rim)
+     f_E_occ=RT_E_occupations(ib,ik_rim)
+     f_H_occ=RT_H_occupations(ib,ik_rim)
      if(.not.l_RT_uses_E_RIM) En=E%E(ib,ik,1)
      if(     l_RT_uses_E_RIM) En=E%E_RIM(ib,iE_rim,1)
-     TMP_VALUE(1)=TMP_VALUE(1)+   Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ)
-     TMP_VALUE(2)=TMP_VALUE(2)+   Electron_lifetime(ib,ik_rim)*f_occ
-     TMP_VALUE(3)=TMP_VALUE(3)+En*Hole_lifetime(ib,ik_rim)*(spin_occ-f_occ)
-     TMP_VALUE(4)=TMP_VALUE(4)+En*Electron_lifetime(ib,ik_rim)*f_occ
+     TMP_VALUE(1)=TMP_VALUE(1)+   Hole_lifetime(ib,ik_rim)*    f_H_occ
+     TMP_VALUE(2)=TMP_VALUE(2)+   Electron_lifetime(ib,ik_rim)*f_E_occ
+     TMP_VALUE(3)=TMP_VALUE(3)+En*Hole_lifetime(ib,ik_rim)*    f_H_occ
+     TMP_VALUE(4)=TMP_VALUE(4)+En*Electron_lifetime(ib,ik_rim)*f_E_occ
      !
    end subroutine eval_E_and_N
    !

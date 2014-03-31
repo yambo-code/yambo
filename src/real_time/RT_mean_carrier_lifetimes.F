@@ -37,6 +37,7 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  ! Work space
  !
  integer            :: ib,ik
+ logical            :: l_local
  real(SP)           :: n_states,pre_factor,sum_lifetimes(2)
  real(SP)           :: EE_occupations(SC_bands(1):SC_bands(2),RT_nk),&
 &                      EP_occupations(SC_bands(1):SC_bands(2),RT_nk)
@@ -77,20 +78,22 @@ subroutine RT_mean_carrier_lifetimes(E,k)
        endif
      endif
      !
-     if (allocated(E_P_Hole_lifetime)) then
-       RT_mean_lifetimes(2)=RT_mean_lifetimes(2)+E_P_Electron_lifetime(ib,ik)*pre_factor
-       RT_mean_lifetimes(4)=RT_mean_lifetimes(4)+E_P_El_abs_lifetime(ib,ik)*pre_factor
-     endif
      if (allocated(E_E_Hole_lifetime)) then
-       RT_mean_lifetimes(6)=RT_mean_lifetimes(6)+E_E_Electron_lifetime(ib,ik)*pre_factor
+       RT_mean_lifetimes(1)=RT_mean_lifetimes(1)+E_E_Hole_lifetime(ib,ik)*pre_factor
      endif
      !
      if (allocated(E_P_Hole_lifetime)) then
-       RT_mean_lifetimes(1)=RT_mean_lifetimes(1)+E_P_Hole_lifetime(ib,ik)*pre_factor
-       RT_mean_lifetimes(3)=RT_mean_lifetimes(3)+E_P_Ho_abs_lifetime(ib,ik)*pre_factor
+       RT_mean_lifetimes(3)=RT_mean_lifetimes(3)+E_P_Electron_lifetime(ib,ik)*pre_factor
+       RT_mean_lifetimes(5)=RT_mean_lifetimes(5)+E_P_El_abs_lifetime(ib,ik)*pre_factor
      endif
-     if (allocated(E_E_Hole_lifetime)) then
-       RT_mean_lifetimes(5)=RT_mean_lifetimes(5)+E_E_Hole_lifetime(ib,ik)*pre_factor
+     !
+     if (allocated(E_E_Electron_lifetime)) then
+       RT_mean_lifetimes(2)=RT_mean_lifetimes(2)+E_E_Electron_lifetime(ib,ik)*pre_factor
+     endif
+     !
+     if (allocated(E_P_Electron_lifetime)) then
+       RT_mean_lifetimes(4)=RT_mean_lifetimes(4)+E_P_Hole_lifetime(ib,ik)*pre_factor
+       RT_mean_lifetimes(6)=RT_mean_lifetimes(6)+E_P_Ho_abs_lifetime(ib,ik)*pre_factor
      endif
      !
    enddo
@@ -100,7 +103,12 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  if(allocated(E_P_Hole_lifetime)) then
    call RT_occupations_FIT_and_lock(E,k,RT_Tfit_lifetimes(1:2),RT_Efit_lifetimes(1:2),EP_occupations)
  endif
- if(allocated(E_E_Hole_lifetime).and. (.not.l_RT_uses_E_rim)) then
+ !
+ l_local=allocated(E_E_Hole_lifetime)
+#if !defined _RT_EE_RIM
+ l_local= l_local .and. .not.l_RT_uses_E_rim
+#endif
+ if(l_local) then
    call RT_occupations_FIT_and_lock(E,k,RT_Tfit_lifetimes(3:4),RT_Efit_lifetimes(3:4),EE_occupations)
  endif
  !

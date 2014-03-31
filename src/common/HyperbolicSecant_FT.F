@@ -87,7 +87,7 @@ real function HyperbolicSecant_FT(E_center,Gamma_HS,alpha)
  ! F_{alpha+2}=F_{alpha}*prefactor*(alpha/alpha+1)
  !
  !DEBUG <
- ! write(*,*) E_center,HyperbolicSecant_FT,Gamma_HS
+ !write(100,*) E_center,HyperbolicSecant_FT,Gamma_HS
  !DEBUG >
  !
 end function

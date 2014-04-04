@@ -41,7 +41,7 @@ integer function io_RT_components(what,ID)
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,J_and_P_cache_size, &
 &                         G_lesser,l_NE_dynamics_started,RT_ind_J,J_and_P_cache,&
-&                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight
+&                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight_RT
  use fields,         ONLY:A_vecpot
 #endif                                
  use matrix_operate, ONLY:mat_c2r,mat_r2c
@@ -169,7 +169,7 @@ integer function io_RT_components(what,ID)
    !
    if (l_THETA) then
      call io_bulk(ID,VAR="Q_weight",VAR_SZ=(/nqbz/))
-     call io_bulk(ID,R1=q_weight)
+     call io_bulk(ID,R1=q_weight_RT(:,1,1))
    endif
    !
    io_RT_components=io_status(ID)

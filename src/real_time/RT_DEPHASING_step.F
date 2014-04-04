@@ -32,11 +32,8 @@ subroutine RT_DEPHASING_step(G_new_k,ik,deltaT)
  integer,     intent(in)  :: ik
  real(SP),    intent(in)  :: deltaT
  !
- ! Work Space
  !
- integer                  :: ib
- !
- ! G = G - i dT Sigma
+ ! dG = dG - i dT Sigma
  !====================
  if (allocated(Sigma_relax)) G_new_k = G_new_k - cI*deltaT*Sigma_relax(:,:,ik)
  !

@@ -156,13 +156,30 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
        !
        ! Update the occupations:
        !  RT_delta0_occupations are always sensitive to small changes 
-       !  for Gref~spin_occ RT_H_occ is also sensitivi
+       !  for Gref~spin_occ RT_H_occ is also sensitive
        !  for Gref~0        RT_E_occ is also sensitive
        !
        do ib=SC_bands(1),SC_bands(2)
-         RT_delta0_occupations(ib,ik)=aimag(G_new(ib,ib,ik))
          RT_E_occupations(ib,ik)= aimag(G_new(ib,ib,ik))+            aimag(G_lesser_reference(ib,ib,ik))
          RT_H_occupations(ib,ik)=-aimag(G_new(ib,ib,ik))+ ( spin_occ-aimag(G_lesser_reference(ib,ib,ik)) )
+         !
+         ! Symmetrization
+         !
+         G_new(ib,ib,ik)=cmplx(0._SP,aimag(G_new(ib,ib,ik)))
+         !
+         if( RT_E_occupations(ib,ik)<0._SP  .or. RT_H_occupations(ib,ik)>spin_occ ) then
+           RT_E_occupations(ib,ik)=0._SP
+           RT_H_occupations(ib,ik)=spin_occ
+           G_new(ib,ib,ik)=-cmplx(0._SP,aimag(G_lesser_reference(ib,ib,ik)))
+         endif
+         if( RT_H_occupations(ib,ik)<0._SP  .or. RT_E_occupations(ib,ik)>spin_occ) then
+           RT_E_occupations(ib,ik)=spin_occ
+           RT_H_occupations(ib,ik)=0._SP
+           G_new(ib,ib,ik)= cmplx(0._SP,spin_occ-aimag(G_lesser_reference(ib,ib,ik)))
+         endif
+         !
+         RT_delta0_occupations(ib,ik)=aimag(G_new(ib,ib,ik))
+         !
        enddo
        !
      enddo

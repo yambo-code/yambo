@@ -24,14 +24,11 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use pars,            ONLY:SP,rZero,cZero,pi
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
- use SC,              ONLY:RT_ibz_coo,SC_bands
-#if defined _RT_EE_RIM
- use SC,              ONLY:RT_nk_ibz
-#endif
+ use SC,              ONLY:RT_ibz_coo,SC_bands,RT_nk_ibz
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
 &                          RT_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                          RT_H_occupations,RT_E_occupations,RIM_ibz_coo,l_RT_uses_E_RIM,&
-&                          l_equilibrium_lifetimes
+&                          l_equilibrium_lifetimes,RIM_EE_scatt_table
  use plasma,          ONLY:EH_gas
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:GW_NEQ_collisions
@@ -48,8 +45,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  integer               :: i_qp,i_qp1,i_p,i_p_bz,ik_m_q,i_pmq,i_n,i_m,i_mp,i_np,ik_rim,&
 &                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_q_mem,i_pmq_bz,i1,i2,&
 &                         i_J,i_J_bg,i_J_mem,ik_m_q_rim
- !
- real(SP)              :: pre_factor,P_pl_abs,DELTA_E,DELTA_W,TMP_Hole_lifetime,TMP_Electron_lifetime
+ real(SP)              :: pre_factor,P_pl_abs,P_pl_emit,DELTA_E,DELTA_W,TMP_Hole_lifetime,TMP_Electron_lifetime
  !
  ! Occupations
  !
@@ -64,10 +60,6 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  real(SP), external    :: RT_G_retarded_convolution
  !
  ik_rim    =RT_ibz_coo(ik,1)
- !
-#if !defined _RT_EE_RIM
- if ( all( RT_occupations_locked(SC_bands(1):SC_bands(2),ik_rim) ) ) return
-#endif
  !
  q_loop: do iqbz=1,q%nbz
    !
@@ -117,11 +109,18 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        df_p   = RT_delta_occupations(i_m ,RT_ibz_coo(i_p,1))
        Hole_f0_p   = RT_H_occupations_reference(i_m ,RT_ibz_coo(i_p,1))
        !
+       ! Here I could change from between Delta E>0 and Delta E<0
+       ! To just E_center>0 and is=-1 / +1
+       ! I'm forced to do like that with the occupations
        f0_pmq = RT_E_occupations_reference(i_mp ,RT_ibz_coo(i_pmq,1))
        df_pmq = RT_delta_occupations(i_mp ,RT_ibz_coo(i_pmq,1))
        Hole_f0_pmq  = RT_H_occupations_reference(i_mp ,RT_ibz_coo(i_pmq,1))
        !
        E_plasma=E_plasma+cmplx(delta_E,delta_W)
+       !IMPLEMENTATION WITH ABS and EMISSION<
+       !if(delta_E> 0._SP) deg_factor=1._SP
+       !if(delta_E==0._SP) deg_factor=2._SP
+       !IMPLEMENTATION WITH ABS and EMISSION>
        !
        N0_e_plasma=N0_e_plasma+Hole_f0_p*f0_pmq/spin_occ
        N0_h_plasma=N0_h_plasma+f0_p*Hole_f0_pmq/spin_occ
@@ -158,8 +157,6 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        !
        pre_factor=(4._SP*pi)**2._SP*GW_NEQ_collisions(i_qp1_mem)%v3r(i_J_mem,1,i_q_mem)
        !
-#if defined _RT_EE_RIM
-       !
        do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
          !
          if (RT_occupations_locked(i_n ,ik_rim)) cycle
@@ -167,7 +164,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
          TMP_Hole_lifetime=rZero
          TMP_Electron_lifetime=rZero
          !
-         do ik_m_q_rim=RT_ibz_coo(ik_m_q,1),RT_ibz_coo(ik_m_q,2)
+         do ik_m_q_rim=RIM_EE_scatt_table(ik_rim,iqbz,1),RIM_EE_scatt_table(ik_rim,iqbz,2)
            !
            if (RT_occupations_locked(i_np ,ik_m_q_rim)) cycle
            !
@@ -179,24 +176,13 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            endif
            !
            P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')/&
-&                     real(RT_Nk_ibz(ik_m_q))
+&                     real(RIM_EE_scatt_table(ik_rim,iqbz,2)-RIM_EE_scatt_table(ik_rim,iqbz,1)+1)
+           P_pl_emit =0._SP
+           !IMPLEMENTATION WITH ABS and EMISSION<
+           !P_pl_emit =RT_G_retarded_convolution(DELTA_E,-plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')/&
+           !&          real(RT_Nk_ibz(ik_m_q))
+           !IMPLEMENTATION WITH ABS and EMISSION>
            !
-#else
-           !
-           TMP_Hole_lifetime=rZero
-           TMP_Electron_lifetime=rZero
-           !
-           if (RT_occupations_locked(i_n ,ik)) cycle
-           !
-           ik_m_q_rim=RT_ibz_coo(ik_m_q,1)
-           !
-           if (RT_occupations_locked(i_np,ik_m_q_rim)) cycle
-           !
-           DELTA_E=E%E(i_np,ik_m_q,1)-E%E(i_n,ik,1)
-           !
-           P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')
-           !
-#endif
            !
            if(abs(P_pl_abs)<1.E-7) cycle
            !
@@ -212,10 +198,11 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
              Electron_occupation = dN_e_plasma*Hole_f0_kmq - N0_e_plasma*df_kmq - dN_e_plasma*df_kmq
            endif
            !
-           TMP_Hole_lifetime=TMP_Hole_lifetime+P_pl_abs*Hole_occupation
-           TMP_Electron_lifetime=TMP_Electron_lifetime+P_pl_abs*Electron_occupation
+           TMP_Hole_lifetime=TMP_Hole_lifetime+P_pl_abs*Hole_occupation              !+&
+!&                                             P_pl_emit*Electron_occupation
            !
-#if defined _RT_EE_RIM
+           TMP_Electron_lifetime=TMP_Electron_lifetime+P_pl_abs*Electron_occupation  !+&
+!&                                                     P_pl_emit*Hole_occupation
            !
          enddo
          !
@@ -223,13 +210,6 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
          E_E_Electron_lifetime(i_n,ik_rim)=E_E_Electron_lifetime(i_n,ik_rim)+TMP_Electron_lifetime*pre_factor
          !
        enddo
-       !
-#else
-       !
-       E_E_Hole_lifetime(i_n,ik_rim)=E_E_Hole_lifetime(i_n,ik_rim)+TMP_Hole_lifetime*pre_factor
-       E_E_Electron_lifetime(i_n,ik_rim)=E_E_Electron_lifetime(i_n,ik_rim)+TMP_Electron_lifetime*pre_factor
-       !
-#endif
        !
      enddo
      !

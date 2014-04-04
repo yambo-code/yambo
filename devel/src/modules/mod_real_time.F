@@ -151,6 +151,7 @@ module real_time
  integer,     allocatable :: RIM_ibz_coo(:,:)
  integer,     allocatable :: RIM_bz_coo(:,:)  
  integer,     allocatable :: RIM_closest_E(:,:)  
+ integer,     allocatable :: RIM_EE_scatt_table(:,:,:)  
  !
  ! ELPH kernel...
  !----------------
@@ -163,7 +164,7 @@ module real_time
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
  !
- real(SP),    allocatable :: Q_weight(:)
+ real(SP),    allocatable :: q_weight_RT(:,:,:)
  ! ... THETA matrix
  complex(SP), allocatable :: THETA_matrix(:,:,:,:)
  ! ... Q-parallelization  and GKKP
@@ -513,6 +514,7 @@ module real_time
      endif
      !
      deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz)
+     if(allocated(RIM_EE_scatt_table)) deallocate(RIM_EE_scatt_table)
      !
      deallocate(E_xc)
      call mem_est('Exc')
@@ -592,7 +594,7 @@ module real_time
      deallocate(G_lesser)
      call mem_est("G_lesser")
      !
-     if (allocated(q_weight)) deallocate(q_weight)
+     if (allocated(q_weight_RT)) deallocate(q_weight_RT)
      !
      if (allocated(THETA_matrix)) then
        deallocate(THETA_matrix)

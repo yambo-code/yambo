@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
+subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,Gkkp,l_skip_ABS)
  !  
  use pars,           ONLY:SP,zero_dfl,rZero
  use electrons,      ONLY:levels,n_full_bands,spin_occ
@@ -28,7 +28,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         B_mat_index,l_RT_uses_E_RIM,RIM_ibz_coo,RT_occupations_locked,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
-&                         RT_delta_occupations,l_equilibrium_lifetimes
+&                         RT_delta_occupations,l_equilibrium_lifetimes,q_weight_RT	
  use ELPH,           ONLY:ph_freqs_sq
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
  !
@@ -36,7 +36,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
  !
  type(levels),  intent(in) :: E
  integer,       intent(in) :: ik,ik_m_q,i_q,i_l
- real(SP),      intent(in) :: Bose_f(2)
+ real(SP),      intent(in) :: N_q
  complex(SP),   intent(in) :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  logical,       intent(in) :: l_skip_ABS
  !
@@ -69,8 +69,6 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
      i_np_shift=i_np+SC_bands(1)-1
      !
      ! Extra condition: the EP scattering cannot cross the gap
-     ! This could be replaced by a more general condition in RT_G_retarded_convolution
-     ! All other conditions have been already moved in RT_G_retarded_convolution
      !
      if (i_n_shift<=n_full_bands.and.i_np_shift>  n_full_bands) cycle
      if (i_n_shift> n_full_bands.and.i_np_shift<= n_full_bands) cycle
@@ -118,10 +116,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
          TMP_Hole_lifetime(1)=TMP_Hole_lifetime(1)+f_kmq*P_ph_abs
          TMP_Electron_lifetime(1)=TMP_Electron_lifetime(1)+Hole_f_kmq*P_ph_emit
          !
-         ! Also in case of zero Bose Temp I compute these coefficients
-         ! because I'll need them for the interpolation of the el-el lifetimes
-         !
-         if( abs(Bose_f(1))>zero_dfl .and. .not.l_skip_ABS) then
+         if( abs(N_q)>zero_dfl .and. .not.l_skip_ABS) then
            TMP_Hole_lifetime(2)=TMP_Hole_lifetime(2)+f_kmq*P_ph_emit
            TMP_Electron_lifetime(2)=TMP_Electron_lifetime(2)+Hole_f_kmq*P_ph_abs
          endif
@@ -130,17 +125,25 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,Bose_f,E,Gkkp,l_skip_ABS)
        !
        ! Emission
        E_P_Hole_lifetime(i_n_shift,ik_rim)=E_P_Hole_lifetime(i_n_shift,ik_rim)+&
-&                                          TMP_Hole_lifetime(1)*Bose_f(2)*pre_factor
+&                                          TMP_Hole_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,1)
        E_P_Electron_lifetime(i_n_shift,ik_rim)=E_P_Electron_lifetime(i_n_shift,ik_rim)+&
-&                                              TMP_Electron_lifetime(1)*Bose_f(2)*pre_factor
+&                                              TMP_Electron_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,1)
        !
-       if(abs(Bose_f(1))<zero_dfl.or.l_skip_ABS) cycle
+       if(abs(N_q)<zero_dfl) cycle
+       !
+       ! Stimulated Emission
+       E_P_Hole_lifetime(i_n_shift,ik_rim)=E_P_Hole_lifetime(i_n_shift,ik_rim)+&
+&                                          TMP_Hole_lifetime(1)*N_q*pre_factor*q_weight_RT(i_q,i_l,2)
+       E_P_Electron_lifetime(i_n_shift,ik_rim)=E_P_Electron_lifetime(i_n_shift,ik_rim)+&
+&                                              TMP_Electron_lifetime(1)*N_q*pre_factor*q_weight_RT(i_q,i_l,2)
+       !
+       if(l_skip_ABS) cycle
        !
        ! Absorption
        E_P_Ho_abs_lifetime(i_n_shift,ik_rim)=E_P_Ho_abs_lifetime(i_n_shift,ik_rim)+&
-&                                            TMP_Hole_lifetime(2)*Bose_f(1)*pre_factor
+&                                            TMP_Hole_lifetime(2)*N_q*pre_factor*q_weight_RT(i_q,i_l,2)
        E_P_El_abs_lifetime(i_n_shift,ik_rim)=E_P_El_abs_lifetime(i_n_shift,ik_rim)+&
-&                                            TMP_Electron_lifetime(2)*Bose_f(1)*pre_factor
+&                                            TMP_Electron_lifetime(2)*N_q*pre_factor*q_weight_RT(i_q,i_l,2)
        !
      enddo
      !

@@ -34,6 +34,7 @@ module ELPH
  integer   :: elph_branches(2)
  real(SP)  :: W_debye
  logical   :: elph_use_q_grid
+ real(SP),    allocatable :: elph_acustic_velocity(:,:)
  real(SP),    allocatable :: QP_OMS_Fan(:)
  real(SP),    allocatable :: QP_DW(:)
  real(SP),    allocatable :: ph_kpt_bz(:,:)

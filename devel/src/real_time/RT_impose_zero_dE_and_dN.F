@@ -26,7 +26,8 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,RT_Nk_ibz
  use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,Imp_factors, &
-&                         RT_E_occupations,RT_H_occupations
+&                         RT_E_occupations,RT_H_occupations,REF_lifetime,&
+&                         l_equilibrium_lifetimes
  !
  implicit none
  !
@@ -40,7 +41,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  real(SP), parameter :: cut_off=0.1_SP  ! 1 = 100%
  !
- integer          :: i1,ib,ik,ik_rim,iE_rim,indx
+ integer          :: i1,ib,ik,ik_rim,iE_rim,indx,iref
  real(SP)         :: f_E_occ,f_H_occ,k_weight,En
  real(SP)         :: prefactor(3),DEN
  real(SP)         :: Nv,Nc,dNv,dNc,Ev,Ec,dEv,dEc
@@ -58,6 +59,16 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    l_energy=.false.
    l_n_electrons=.true.
    l_n_carriers=.true.
+ endif
+ !
+ if (trim(Scatt_kind)=="elel" ) iref=1
+ if (trim(Scatt_kind)=="elph1") iref=3
+ if (trim(Scatt_kind)=="elph2") iref=5
+ if (trim(Scatt_kind)=="elph3") iref=7
+ !
+ if(.not.l_equilibrium_lifetimes) then
+   Hole_lifetime=    Hole_lifetime+REF_lifetime(:,:,iref)
+   Electron_lifetime=Electron_lifetime+REF_lifetime(:,:,iref+1)
  endif
  !
  SUM_N_Holes   =0._SP
@@ -116,6 +127,14 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  if (trim(Scatt_kind)=="elel")  Imp_factors(3:5)=prefactor(1:3)
  if (trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
+ !
+ if(l_equilibrium_lifetimes) then
+   REF_lifetime(:,:,iref)=Hole_lifetime
+   REF_lifetime(:,:,iref+1)=Electron_lifetime
+ else
+   Hole_lifetime=    Hole_lifetime-REF_lifetime(:,:,iref)
+   Electron_lifetime=Electron_lifetime-REF_lifetime(:,:,iref+1)
+ endif
  !
  contains
    !

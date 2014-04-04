@@ -50,7 +50,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  ! Work Space
  !
- type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K
+ type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K,Xq_tmp
  real(SP)              :: real_ctl,v(3),max_dist
  real(SP), allocatable :: distances(:),values(:)
  real(SP), allocatable :: bands_grid(:,:,:),bands_circuit(:,:,:)
@@ -81,7 +81,7 @@ subroutine electrons_bands(Xk,Xen)
  !
 #if defined _YPP_RT
  if(BZ_RIM_tot_Nkpts> 0) then
-   Nk=RT_k_grid(Xen,Xk)
+   Nk=RT_k_grid(Xen,Xk,Xq_tmp)
    allocate(Xk%pt_RIM(Nk,3))
    do ik=1,Xk%nibz
      Xk%pt_RIM(RT_ibz_coo(ik,1):RT_ibz_coo(ik,2),:)=Xk%ptbz_RIM(RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),:)

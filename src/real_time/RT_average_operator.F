@@ -19,10 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
+subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,RIM,nK_mem)
  !
  use pars,           ONLY:SP,cI
  use SC,             ONLY:SC_bands,SC_nbands,RT_Nk_ibz,RT_nk,RT_ibz_coo
+ use real_time,      ONLY:RIM_ibz_coo
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_n_states
  use electrons,      ONLY:n_sp_pol,levels
@@ -48,17 +49,21 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
  real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
- logical,         optional, intent(in) :: TRANS
+ logical,         optional, intent(in) :: TRANS,RIM
  type(levels),    optional, intent(in) :: en
  !
  ! Work Space
  !
- integer     :: i1,ik,SC_bands2,ik_ibz
+ integer     :: i1,ik,SC_bands2,ik_ibz,iE_rim
  complex(SP) :: Hk(SC_bands(2),SC_bands(2),n_sp_pol),VALUE_tmp
+ logical     :: l_rim_local
  !
 #if defined _TIMING
  call timing('RT average Op',OPR='start')
 #endif
+ !
+ l_rim_local=.false.
+ if(present(RIM)) l_rim_local=RIM
  !
  SC_bands2=SC_nbands**2
  VALUE=(0._SP,0._SP)
@@ -92,11 +97,14 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
      if (.not.PAR_IND_Xk_ibz%element_1D(ik_ibz)) cycle   
    endif
    !
-   call make_Hk_matrix(ik_ibz)
+   if(.not.l_rim_local) call make_Hk_matrix(ik_ibz,1)
    !
    VALUE_tmp=(0._SP,0._SP)
    !
    do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
+     !
+     iE_rim=ik-RT_ibz_coo(ik_ibz,1)+RIM_ibz_coo(ik_ibz,1)
+     if(l_rim_local) call make_Hk_matrix(ik_ibz,iE_rim)
      !
 #if defined _OPENMP
      VALUE_tmp=VALUE_tmp-cI*Vstar_dot_V_omp(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
@@ -130,9 +138,9 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
  !
  contains 
    !
-   subroutine make_Hk_matrix(ik)
+   subroutine make_Hk_matrix(ik,iE_rim)
      implicit none
-     integer, intent(in) :: ik
+     integer, intent(in) :: ik,iE_rim
      integer :: i1,ik_mem,ib,ibp
      !
      ik_mem=ik
@@ -146,6 +154,9 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
            do i1=1,n_sp_pol
              if (     present(TRANS)) Hk(ibp,ib,i1)=O_MATRIX(ib,ibp,ik_mem,i1) 
              if (.not.present(TRANS)) Hk(ib,ibp,i1)=O_MATRIX(ib,ibp,ik_mem,i1) 
+             !
+             if (l_rim_local.and.ib==ibp) Hk(ib,ib,i1)=Hk(ib,ib,i1) &
+&                                           -en%E(ib,ik,i1)+en%E_RIM(ib,iE_rim,i1)
            enddo
          enddo
        enddo

@@ -148,22 +148,29 @@ module real_time
  ! Relaxation and Dissipation 
  !----------------------------
  logical                  :: l_RT_uses_E_RIM
+ logical,     allocatable :: RIM_EE_scatt_table(:,:)  
+ integer,     allocatable :: RIM_EE_Nk_table(:,:)  
  integer,     allocatable :: RIM_ibz_coo(:,:)
  integer,     allocatable :: RIM_bz_coo(:,:)  
  integer,     allocatable :: RIM_closest_E(:,:)  
+ real(SP)                 :: RIM_EE_percent
  !
  ! ELPH kernel...
  !----------------
  !
  logical     :: l_RT_CCA_Kernel
  logical     :: l_Debye_TBose_update
+ !
+ ! Manual pump
+ !
  real(SP)    :: Eh_pumped_Nel
  real(SP)    :: Eh_pumped_pair_energy(2)
  real(SP)    :: Eh_pumped_pair_width
+ real(SP)    :: l_RT_low_carr_den
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
  !
- real(SP),    allocatable :: Q_weight(:)
+ real(SP),    allocatable :: q_weight_RT(:,:,:)
  ! ... THETA matrix
  complex(SP), allocatable :: THETA_matrix(:,:,:,:)
  ! ... Q-parallelization  and GKKP
@@ -176,6 +183,7 @@ module real_time
  ! Locks and reference
  !----------------------
  logical                  :: l_RT_skip_impose = .FALSE.
+ logical                  :: l_RT_EE_impose_E = .FALSE.
  logical                  :: l_use_updated_reference
  logical                  :: l_equilibrium_lifetimes
  real(SP),    allocatable :: RT_E_occupations(:,:) 
@@ -301,7 +309,7 @@ module real_time
      real(SP), optional, intent(in) :: E
    end subroutine
    !
-   subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,nK_mem)
+   subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,RIM,nK_mem)
      use pars,       ONLY:SP
      use SC,         ONLY:SC_bands
      use R_lattice,  ONLY:bz_samp 
@@ -316,7 +324,7 @@ module real_time
      complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
      complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
      real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
-     logical,         optional, intent(in) :: TRANS
+     logical,         optional, intent(in) :: TRANS,RIM
    end subroutine RT_average_operator
    !
    subroutine RT_update(G_input,SC_R,it,E,k,X,up_Gref,up_DIP,an_QP)
@@ -513,6 +521,7 @@ module real_time
      endif
      !
      deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz)
+     if(allocated(RIM_EE_scatt_table)) deallocate(RIM_EE_scatt_table)
      !
      deallocate(E_xc)
      call mem_est('Exc')
@@ -592,7 +601,7 @@ module real_time
      deallocate(G_lesser)
      call mem_est("G_lesser")
      !
-     if (allocated(q_weight)) deallocate(q_weight)
+     if (allocated(q_weight_RT)) deallocate(q_weight_RT)
      !
      if (allocated(THETA_matrix)) then
        deallocate(THETA_matrix)

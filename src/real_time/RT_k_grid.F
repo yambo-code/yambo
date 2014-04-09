@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function RT_k_grid(E,k)
+integer function RT_k_grid(E,k,q)
  !
  !       K(BZ)                                                    K(IBZ)
  !               E_RIM(RIM_bz_coo(ikbz,:)=RIM_ibz_coo(ik,:))
@@ -35,19 +35,25 @@ integer function RT_k_grid(E,k)
  ! 
  !
  use pars,           ONLY:SP
+ use drivers,        ONLY:l_elel_scatt
+ use R_lattice,      ONLY:qindx_S
  use SC,             ONLY:RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,SC_bands
  use electrons,      ONLY:levels,BZ_RIM_nkpt
- use real_time,      ONLY:RIM_bz_coo,RIM_ibz_coo,RIM_closest_E
+ use real_time,      ONLY:RIM_bz_coo,RIM_ibz_coo,RIM_closest_E,RIM_EE_scatt_table,&
+&                         RIM_EE_percent,RIM_EE_Nk_table
  use R_lattice,      ONLY:bz_samp
  !
  implicit none
  !
  type(levels), intent(in) :: E
  type(bz_samp),intent(in) :: k
+ type(bz_samp),intent(in) :: q
  !
  ! Work space
  !
- integer :: ik,ik_bz,ik_rim,iE_rim,ik_ref,i_n
+ logical :: l_check(k%nibz,k%nibz)
+ integer :: ik,ik_bz,ik_rim,ikp_rim,iE_rim,ik_ref,i_n,i_n_ref,iqbz,ik_m_q,&
+&           ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
  real(SP):: delta_E,delta_E_ref
  !
  ! Number of K-points
@@ -83,7 +89,9 @@ integer function RT_k_grid(E,k)
  !
  if (.not.allocated(RIM_closest_E)) allocate(RIM_closest_E(SC_bands(1):SC_bands(2),RT_k_grid))
  !
- forall(ik=1:k%nibz) RIM_closest_E(:,RT_ibz_coo(ik,1))=ik
+ do i_n=SC_bands(1),SC_bands(2)
+   forall(ik=1:k%nibz) RIM_closest_E(i_n,RT_ibz_coo(ik,1))=ik
+ enddo
  !
  do ik=1,k%nibz
    do ik_rim=RT_ibz_coo(ik,1)+1,RT_ibz_coo(ik,2)
@@ -102,5 +110,67 @@ integer function RT_k_grid(E,k)
      enddo
    enddo
  enddo
+ !
+ if(l_elel_scatt) then
+   !
+   if(.not.allocated(RIM_EE_scatt_table)) then
+     allocate(RIM_EE_scatt_table(RT_k_grid,RT_k_grid))
+     allocate(RIM_EE_Nk_table(RT_k_grid,k%nibz))
+   endif
+   !
+   l_check=.false.
+   RIM_EE_scatt_table=.false.
+   RIM_EE_Nk_table=0
+   !
+   do iqbz=1,q%nbz
+     do ik=1,k%nibz
+       !
+       ik_m_q= k%sstar(qindx_S(ik,iqbz,1),1)
+       !
+       if(l_check(ik,ik_m_q)) cycle
+       if(l_check(ik_m_q,ik)) cycle
+       !
+       Nk_rim=RT_Nk_ibz(ik)
+       Nk_m_q_rim=RT_Nk_ibz(ik_m_q)
+       !
+       if( Nk_rim<Nk_m_q_rim ) cycle
+       !
+       l_check(ik,ik_m_q)=.true.
+       l_check(ik_m_q,ik)=.true.
+       !
+       N_pts=max(1,int(real(Nk_m_q_rim)*RIM_EE_percent/100._SP))
+       N_loops=max(1, (Nk_rim*N_pts-1)/(Nk_m_q_rim) )
+       !
+       i_loops=1
+       ik_m_q_rim=RT_ibz_coo(ik_m_q,1)-1
+       !
+       do while (i_loops< N_loops+1)
+         do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+           !
+           do i1=1,N_pts
+             ik_m_q_rim=ik_m_q_rim+1
+             if(ik_m_q_rim>RT_ibz_coo(ik_m_q,2)) then
+               ik_m_q_rim=RT_ibz_coo(ik_m_q,1)
+               i_loops=i_loops+1
+             endif
+             !
+             RIM_EE_scatt_table(ik_m_q_rim,ik_rim)=.true.
+             RIM_EE_Nk_table(ik_rim,ik_m_q)=RIM_EE_Nk_table(ik_rim,ik_m_q)+1
+             !
+             RIM_EE_scatt_table(ik_rim,ik_m_q_rim)=.true.
+             RIM_EE_Nk_table(ik_m_q_rim,ik)=RIM_EE_Nk_table(ik_m_q_rim,ik)+1
+             !
+           enddo
+           !
+           if(ik_m_q_rim==RT_ibz_coo(ik_m_q,2)) i_loops=i_loops+1
+           !
+         enddo
+         !
+       enddo
+       !
+     enddo
+   enddo
+   !
+ endif
  !
 end function RT_k_grid

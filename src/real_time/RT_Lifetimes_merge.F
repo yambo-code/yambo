@@ -22,9 +22,9 @@
 subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  !
  use pars,           ONLY:SP
- use R_lattice,      ONLY:nkibz,bz_samp
  use electrons,      ONLY:levels
- use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo
+ use R_lattice,      ONLY:bz_samp
+ use SC,             ONLY:SC_bands,RT_nk
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Plasma_INDEX
  use real_time,      ONLY:REF_lifetime,l_equilibrium_lifetimes
  !
@@ -37,40 +37,16 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  !
  ! Work Space
  !
- integer          :: ib,ik,ik_rim,Nk_ee
- !
- Nk_ee=nkibz
-#if defined _RT_EE_RIM
- Nk_ee=RT_nk
-#endif
+ integer          :: ik
  !
  !===========
  ! ALL 2 ALL
  !
- if (SAVE_index<=2) then
-   do ik=1,Nk_ee
-#if defined _RT_EE_RIM
-     ik_rim=ik
-#else
-     ik_rim=RT_ibz_coo(ik,1)
-#endif
-     call PP_redux_wait(LIFE(:,ik_rim))
-   enddo
-#if !defined _RT_EE_RIM
-   if (SAVE_index==2) call RT_Coulomb_interpolation(E,k)
-#endif
- else
-   do ik=1,RT_nk
-     LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
-     call PP_redux_wait(LIFE(:,ik))
-   enddo
- endif
+ do ik=1,RT_nk
+   if (SAVE_index>2) LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
+   call PP_redux_wait(LIFE(:,ik))
+ enddo
  !
- if (l_equilibrium_lifetimes) then
-   REF_lifetime(:,:,SAVE_index)=LIFE
-   return
- else
-   LIFE=LIFE+REF_lifetime(:,:,SAVE_index)
- endif
+ if (l_equilibrium_lifetimes) REF_lifetime(:,:,SAVE_index)=LIFE
  !
 end subroutine RT_Lifetimes_merge

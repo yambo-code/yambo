@@ -41,7 +41,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,RT_nk
- use real_time,      ONLY:Sigma_relax,q_weight,elph_gkkp_expanded,l_RT_CCA_Kernel
+ use real_time,      ONLY:Sigma_relax,elph_gkkp_expanded,l_RT_CCA_Kernel
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_nibz,PAR_Xk_ibz_index
@@ -96,12 +96,12 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
    !
    do il=elph_branches(1),elph_branches(2)
      !
-     if (ph_freqs_sq(iqbz,il)<epsilon(1._SP)) cycle
-     !
      ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
      !
-     if (iqbz==1 .and. il<=3) cycle  ! For the RIM one should consider an approximation of the q=0 scattering
-     if (ph_freq<1.E-6)       cycle
+     !  This freuqency, which in principle should not be included, describes the region
+     !  around q=0, which is taken into account by the integral embodied in the q_qeights
+     !  Thus I do not cycle
+     !  if ( (iqbz==1 .and. il<=3) ) cycle
      !
      ! N+/-
      !
@@ -112,10 +112,11 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
      Gkkp=(0._SP,0._SP)
      do i_n=SC_bands(1),SC_bands(2)
        i_n_m=i_n-SC_bands(1)+1
-       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_n,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
+       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_n,i_n)
        do i_np=SC_bands(1),SC_bands(2)
+         if(i_n==i_np) cycle
          i_np_m=i_np-SC_bands(1)+1
-         Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_np,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
+         Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_np,i_n)
        enddo 
      enddo
      !
@@ -124,7 +125,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
        ! Complete Collision Approximation (CCA)
        !=======================================
        !
-       call RT_ELPH_CCA_Kernel(ik,ik_m_q,iqbz,il,N_q,E,Gkkp,l_skip_ABS)
+       call RT_ELPH_CCA_Kernel(ik,ik_m_q,iqbz,il,N_q(1),E,Gkkp,l_skip_ABS)
        !
      else
        !

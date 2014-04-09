@@ -93,7 +93,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,   &
 &                     Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,           &
 &                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
-&                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations
+&                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,RIM_EE_percent
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,theta_function_iTo_ref,i_Pump,i_Probe
  use plasma,     ONLY:Plasma_redux_percent
 #endif
@@ -545,7 +545,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Eh_pumped_pair_energy=-1./HA2EV
  Eh_pumped_pair_width=0.1/HA2EV
  Eh_pumped_Nel=1.
- Plasma_redux_percent=100.
+ Plasma_redux_percent=100._SP
+ RIM_EE_percent=0._SP
  !
  ! G_retarded
  !

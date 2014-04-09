@@ -104,11 +104,7 @@ subroutine RT_mean_carrier_lifetimes(E,k)
    call RT_occupations_FIT_and_lock(E,k,RT_Tfit_lifetimes(1:2),RT_Efit_lifetimes(1:2),EP_occupations)
  endif
  !
- l_local=allocated(E_E_Hole_lifetime)
-#if !defined _RT_EE_RIM
- l_local= l_local .and. .not.l_RT_uses_E_rim
-#endif
- if(l_local) then
+ if(allocated(E_E_Hole_lifetime)) then
    call RT_occupations_FIT_and_lock(E,k,RT_Tfit_lifetimes(3:4),RT_Efit_lifetimes(3:4),EE_occupations)
  endif
  !

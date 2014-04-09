@@ -40,9 +40,10 @@ subroutine RT_initialize(E,k,q)
 &                         l_RT_CCA_Kernel,Life_MEM_steps,RT_IO_output_steps,    &
 &                         l_RT_uses_E_RIM,RIM_bz_coo,RT_dynamics_steps,RT_dynamics_decay_time,&
 &                         RT_dynamics_KIND,l_NE_dynamics,l_RT_skip_impose,I_MEM_steps,Integrator_name,&
-&                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP
+&                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
+&                         RIM_EE_Nk_table,l_RT_EE_impose_E,l_RT_low_carr_den
  use IO_m,           ONLY:io_COLLs
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,qindx_S
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
  use parser_m,       ONLY:parser
@@ -53,7 +54,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,rest,ik,IO_steps(3),N_T_samplings
+ integer                  :: i1,rest,ik,iqbz,IO_steps(3),N_T_samplings
  character(5)             :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_field_is_a_pulse 
@@ -68,7 +69,9 @@ subroutine RT_initialize(E,k,q)
  call parser('RTfreezeXC',           XCfrozen)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
  call parser('RTskipImposeN',        l_RT_skip_impose)
+ call parser('RTeeImposeE',          l_RT_EE_impose_E)
  call parser('RTpumpEhEn',           l_manual_excitation)
+ call parser('RTLowCarrDen',         l_RT_low_carr_den)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
  !
@@ -249,11 +252,17 @@ subroutine RT_initialize(E,k,q)
  allocate(RT_ibz_coo(k%nibz,2))
  allocate(RT_Nk_ibz(k%nibz))
  if (l_RT_uses_E_RIM) then
-   RT_nk=RT_k_grid(E,k)
+   RT_nk=RT_k_grid(E,k,q)
  else
    RT_nk=k%nibz
    RT_Nk_ibz=1
    allocate(RT_all2ibz(k%nibz))
+   if(l_elel_scatt) then
+     allocate(RIM_EE_scatt_table(k%nibz,q%nbz))
+     allocate(RIM_EE_Nk_table(k%nibz,k%nibz))
+     RIM_EE_scatt_table=.true.
+     RIM_EE_Nk_table=1
+   endif
    do ik=1,k%nibz
      RIM_ibz_coo(ik,:)=ik
      RT_ibz_coo(ik,:)=ik

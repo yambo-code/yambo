@@ -105,8 +105,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
      !
      ! N+/-
      !
-     if(ph_freq> 0._SP) N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
-     if(ph_freq==0._SP) N_q    = (1._SP          +(/0._SP,spin_occ/))/spin_occ
+     N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
      !
      ! Note the m.e. in Gkkp are stored with indexes order exchanged
      !
@@ -115,6 +114,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
        i_n_m=i_n-SC_bands(1)+1
        Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_n,i_n)
        do i_np=SC_bands(1),SC_bands(2)
+         if(i_n==i_np) cycle
          i_np_m=i_np-SC_bands(1)+1
          Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_np,i_n)
        enddo 

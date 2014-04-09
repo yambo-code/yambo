@@ -212,10 +212,8 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! RIM
  !=====
- n_weights=1
- if(Bose_temp>0._SP) n_weights=2
  !
- allocate(q_weight_RT(q%nbz,elph_branches(1):elph_branches(2),n_weights))
+ allocate(q_weight_RT(q%nbz,elph_branches(1):elph_branches(2),2))
  q_weight_RT=0._SP
  q_weight_tmp=0._SP
  q_weight_bose_tmp=0._SP
@@ -241,9 +239,6 @@ subroutine RT_ELPH_initialize(E,k,q)
      else
        if(sqrt(ph_freqs_sq(iq,il))>0.) q_weight_RT(iq,il,:)=1._SP/real(q%nbz)/sqrt(ph_freqs_sq(iq,il))
      endif
-     !DEBUG<
-     !write(*,*) iq,il,q_weight_RT(iq,il,:)
-     !DEBUG>
    enddo
    !
  enddo

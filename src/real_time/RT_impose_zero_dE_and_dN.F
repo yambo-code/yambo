@@ -27,7 +27,8 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,RT_Nk_ibz
  use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,Imp_factors, &
 &                         RT_E_occupations,RT_H_occupations,REF_lifetime,&
-&                         l_equilibrium_lifetimes
+&                         l_equilibrium_lifetimes,RT_delta0_occupations,&
+&                         l_RT_EE_impose_E
  !
  implicit none
  !
@@ -42,7 +43,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  real(SP), parameter :: cut_off=0.1_SP  ! 1 = 100%
  !
  integer          :: i1,ib,ik,ik_rim,iE_rim,indx,iref
- real(SP)         :: f_E_occ,f_H_occ,k_weight,En
+ real(SP)         :: f_E_occ,f_H_occ,df_occ,k_weight,En,Hole_fac,Elec_fac
  real(SP)         :: prefactor(3),DEN
  real(SP)         :: Nv,Nc,dNv,dNc,Ev,Ec,dEv,dEc
  real(SP)         :: SUM_N_Holes(2),SUM_E_Holes(2),SUM_N_Electrons(2),SUM_E_Electrons(2),TMP_VALUE(4)
@@ -50,7 +51,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  logical          :: l_energy,l_n_electrons,l_n_carriers
  !
  if(index(Scatt_kind,'elel')/=0) then
-   l_energy=.false.
+   l_energy=l_RT_EE_impose_E
    l_n_electrons=.true.
    l_n_carriers=.false.
  endif
@@ -66,9 +67,9 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  if (trim(Scatt_kind)=="elph2") iref=5
  if (trim(Scatt_kind)=="elph3") iref=7
  !
- if(.not.l_equilibrium_lifetimes) then
-   Hole_lifetime=    Hole_lifetime+REF_lifetime(:,:,iref)
-   Electron_lifetime=Electron_lifetime+REF_lifetime(:,:,iref+1)
+ if(l_equilibrium_lifetimes) then
+   REF_lifetime(:,:,iref)=  0._SP
+   REF_lifetime(:,:,iref+1)=0._SP
  endif
  !
  SUM_N_Holes   =0._SP
@@ -131,9 +132,6 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  if(l_equilibrium_lifetimes) then
    REF_lifetime(:,:,iref)=Hole_lifetime
    REF_lifetime(:,:,iref+1)=Electron_lifetime
- else
-   Hole_lifetime=    Hole_lifetime-REF_lifetime(:,:,iref)
-   Electron_lifetime=Electron_lifetime-REF_lifetime(:,:,iref+1)
  endif
  !
  contains
@@ -142,12 +140,15 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      !
      f_E_occ=RT_E_occupations(ib,ik_rim)
      f_H_occ=RT_H_occupations(ib,ik_rim)
+     df_occ=RT_delta0_occupations(ib,ik_rim)
+     Hole_fac=Hole_lifetime(ib,ik_rim)    *f_H_occ-REF_lifetime(ib,ik_rim,iref  )*df_occ
+     Elec_fac=Electron_lifetime(ib,ik_rim)*f_E_occ+REF_lifetime(ib,ik_rim,iref+1)*df_occ
      if(.not.l_RT_uses_E_RIM) En=E%E(ib,ik,1)
      if(     l_RT_uses_E_RIM) En=E%E_RIM(ib,iE_rim,1)
-     TMP_VALUE(1)=TMP_VALUE(1)+   Hole_lifetime(ib,ik_rim)*    f_H_occ
-     TMP_VALUE(2)=TMP_VALUE(2)+   Electron_lifetime(ib,ik_rim)*f_E_occ
-     TMP_VALUE(3)=TMP_VALUE(3)+En*Hole_lifetime(ib,ik_rim)*    f_H_occ
-     TMP_VALUE(4)=TMP_VALUE(4)+En*Electron_lifetime(ib,ik_rim)*f_E_occ
+     TMP_VALUE(1)=TMP_VALUE(1)+   Hole_fac
+     TMP_VALUE(2)=TMP_VALUE(2)+   Elec_fac
+     TMP_VALUE(3)=TMP_VALUE(3)+En*Hole_fac
+     TMP_VALUE(4)=TMP_VALUE(4)+En*Elec_fac
      !
    end subroutine eval_E_and_N
    !
@@ -194,15 +195,21 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      !
      if((l_energy.or.l_n_carriers).and.l_n_electrons) then
        if(ib<=E%nbf) then
-         Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP+prefactor(1)+prefactor(3))
-         Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)*(1._SP-prefactor(1)+prefactor(3))
+         Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP+prefactor(1))+&  !+prefactor(3))
+&                                     REF_lifetime(ib,ik_rim,iref+1)*prefactor(1)
+         Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)    *(1._SP-prefactor(1))-&  !+prefactor(3))
+&                                     REF_lifetime(ib,ik_rim,iref  )*prefactor(1)
        else
-         Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(2)-prefactor(3))
-         Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)*(1._SP+prefactor(2)-prefactor(3))
+         Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(2))-&  !-prefactor(3))
+&                                     REF_lifetime(ib,ik_rim,iref+1)*prefactor(2)
+         Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)    *(1._SP+prefactor(2))+&  !-prefactor(3))
+&                                     REF_lifetime(ib,ik_rim,iref  )*prefactor(2)
        endif
      else
-       Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(1))
-       Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)*(1._SP+prefactor(1))
+       Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(1))  -&
+&                                   REF_lifetime(ib,ik_rim,iref+1)*prefactor(1)
+       Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)    *(1._SP+prefactor(1))  +&
+&                                   REF_lifetime(ib,ik_rim,iref  )*prefactor(1)
      endif
      !
    end subroutine apply_prefactors

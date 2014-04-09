@@ -54,13 +54,14 @@ integer function io_RIM_E_and_k(E,Xk,ID)
  !
  if (read_is_on(ID)) then
    allocate(E%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
+   allocate(E%W_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
    allocate(E%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
    if (.not.RIM_is_symmetry_expanded) allocate(Xk%ptbz_RIM(BZ_RIM_tot_nkpts,3))
    allocate(BZ_RIM_nkpt(nXkbz),BZ_RIM_table(nXkbz,BZ_RIM_max_filling))
    allocate(BZ_RIM_ipol_weight(BZ_RIM_max_filling))
-   call mem_est("E_RIM f_RIM k_RIM BZ_RIM_nkpt BZ_RIM_table",&
-&               (/size(E%E_RIM),size(E%f_RIM),size(Xk%ptbz_RIM),size(BZ_RIM_nkpt),&
-&                 size(BZ_RIM_table)/),(/SP,SP,SP,IP,IP/))
+   call mem_est("E_RIM W_RIM f_RIM k_RIM BZ_RIM_nkpt BZ_RIM_table",&
+&               (/size(E%E_RIM),size(E%W_RIM),size(E%f_RIM),size(Xk%ptbz_RIM),size(BZ_RIM_nkpt),&
+&                 size(BZ_RIM_table)/),(/SP,SP,SP,SP,IP,IP/))
  endif
  !
  ! Eigenvalues

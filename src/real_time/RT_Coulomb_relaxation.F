@@ -28,7 +28,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
 &                          RT_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                          RT_H_occupations,RT_E_occupations,RIM_ibz_coo,l_RT_uses_E_RIM,&
-&                          l_equilibrium_lifetimes,RIM_EE_scatt_table
+&                          l_equilibrium_lifetimes,RIM_EE_scatt_table,RIM_EE_Nk_table
  use plasma,          ONLY:EH_gas
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:GW_NEQ_collisions
@@ -102,7 +102,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        if (RT_occupations_locked(i_m ,RT_ibz_coo(i_p,1)))   cycle
        if (RT_occupations_locked(i_mp,RT_ibz_coo(i_pmq,1))) cycle
        !
-       DELTA_E=E%E(i_m,i_p,1)-E%E(i_mp,i_pmq,1)
+       DELTA_E=    E%E(i_m,i_p,1) -    E%E(i_mp,i_pmq,1)
        DELTA_W=abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))
        !
        f0_p   = RT_E_occupations_reference(i_m ,RT_ibz_coo(i_p,1))
@@ -153,6 +153,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        i_n =QP_table(i_qp1,1)
        i_np=QP_table(i_qp1,2)
        !
+       DELTA_E=    E%E(i_np,ik_m_q,1) -    E%E(i_n,ik,1)
        DELTA_W=abs(E%W(i_np,ik_m_q,1))+abs(E%W(i_n,ik,1))
        !
        pre_factor=(4._SP*pi)**2._SP*GW_NEQ_collisions(i_qp1_mem)%v3r(i_J_mem,1,i_q_mem)
@@ -164,19 +165,21 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
          TMP_Hole_lifetime=rZero
          TMP_Electron_lifetime=rZero
          !
-         do ik_m_q_rim=RIM_EE_scatt_table(ik_rim,iqbz,1),RIM_EE_scatt_table(ik_rim,iqbz,2)
+         do ik_m_q_rim=RT_ibz_coo(ik_m_q,1),RT_ibz_coo(ik_m_q,2)
+           !
+           if( .not.RIM_EE_scatt_table(ik_m_q_rim,ik_rim) ) cycle
            !
            if (RT_occupations_locked(i_np ,ik_m_q_rim)) cycle
            !
-           DELTA_E=E%E(i_np,ik_m_q,1)-E%E(i_n,ik,1)
            if (l_RT_uses_E_RIM) then
              i1=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
              i2=ik_m_q_rim-RT_ibz_coo(ik_m_q,1)+RIM_ibz_coo(ik_m_q,1)
-             DELTA_E=E%E_RIM(i_np,i2,1)-E%E_RIM(i_n,i1,1)
+             DELTA_E=    E%E_RIM(i_np,i2,1) -    E%E_RIM(i_n,i1,1)
+             DELTA_W=abs(E%W_RIM(i_np,i2,1))+abs(E%W_RIM(i_n,i1,1))
            endif
            !
            P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')/&
-&                     real(RIM_EE_scatt_table(ik_rim,iqbz,2)-RIM_EE_scatt_table(ik_rim,iqbz,1)+1)
+&                     real(RIM_EE_Nk_table(ik_rim,ik_m_q))
            P_pl_emit =0._SP
            !IMPLEMENTATION WITH ABS and EMISSION<
            !P_pl_emit =RT_G_retarded_convolution(DELTA_E,-plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')/&

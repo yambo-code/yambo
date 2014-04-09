@@ -80,7 +80,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !  
  ! E_ion = - i Tr {Ho G^<} - Ekin
  !
- call RT_average_operator(VALUE=E_ion,O_MATRIX=Ho,G=G_lesser(:,:,:),en=en,k=k,nK_mem=k%nibz)
+ call RT_average_operator(VALUE=E_ion,O_MATRIX=Ho,G=G_lesser(:,:,:),en=en,k=k,RIM=l_RT_uses_E_RIM,nK_mem=k%nibz)
  !
  E_ion = E_ion - E_kin
  !

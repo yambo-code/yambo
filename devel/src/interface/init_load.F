@@ -56,7 +56,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_steps,RT_dynamics_decay_time,&
 &                        RT_ave_dephasing,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_dynamics_KIND,I_MEM_steps,&
-&                        Gr_kind,two_alpha
+&                        Gr_kind,two_alpha,RIM_EE_percent
  use fields,        ONLY:Efield
  use plasma,        ONLY:Plasma_redux_percent
 #endif
@@ -331,21 +331,15 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1))
  call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit(1))
  call it(defs,'PlasmaPerc', '[RT] Plasma approx (0-100): % of eh pair considered',Plasma_redux_percent,Verb_level=V_real_time)
+ call it(defs,'EERimPerc',  '[RT] EE RIM (0-100): % of the RIM points used in EE scatt',RIM_EE_percent,Verb_level=V_real_time)
  call it('f',defs,'RTfreezeH',     '[RT] Hartree not updated during RT')
  call it('f',defs,'RTfreezeXC',    '[RT] XC potential/self-energy not updated during RT')
  call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly')
+ call it('f',defs,'RTeeImposeE',   '[RT] Conservation of E imposed by hand on-the-fly for EE scatt')
  !
  ! ELPH
  !
  call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_treshold)
- call it(defs,'RTmaxEn',    '[RT] Max e/h energy to define the states that are evolved',RT_eh_energy_max,&
-&                            Verb_level=V_real_time,unit=E_unit)
- call it(defs,'RTpumpEhEn', '[RT] Energy centers of the levels to be inverted by hand',Eh_pumped_pair_energy,&
-&                            Verb_level=V_real_time,unit=E_unit)
- call it(defs,'RTpumpEhWd', '[RT] Energy window of the levels to be inverted by hand',Eh_pumped_pair_width,&
-&                            Verb_level=V_real_time,unit=E_unit)
- call it(defs,'RTpumpNel',  '[RT] Number of electrons pumbed by hand per unit cell',Eh_pumped_Nel,&
-&                            Verb_level=V_real_time)
  call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes')
  call it('f',defs,'UpdtDebyeT','[RT] Update Bose Temp assuming phonons are always at equilibrium')
  call it('f',defs,'RT_T_evol',   '[RT] Use a complete Time evolution instead of the CCA')
@@ -363,7 +357,17 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'Diamagnetic', '[RT] Include the diamagnetic term in current and coupling',verb_level=V_real_time)
  call it('f',defs,'InducedField','[RT] Include induced field in coupling and current',verb_level=V_real_time)
  !
- ! External fields
+ ! External fields or Manual pump
+ !
+ call it(defs,'RTmaxEn',    '[RT] Max e/h energy to define the states that are evolved',RT_eh_energy_max,&
+&                            Verb_level=V_real_time,unit=E_unit)
+ call it(defs,'RTpumpEhEn', '[RT] Energy centers of the levels to be inverted by hand',Eh_pumped_pair_energy,&
+&                            Verb_level=V_real_time,unit=E_unit)
+ call it(defs,'RTpumpEhWd', '[RT] Energy window of the levels to be inverted by hand',Eh_pumped_pair_width,&
+&                            Verb_level=V_real_time,unit=E_unit)
+ call it(defs,'RTpumpNel',  '[RT] Number of electrons pumbed by hand per unit cell',Eh_pumped_Nel,&
+&                            Verb_level=V_real_time)
+ call it('f',defs,'RTLowCarrDen',   '[RT] Use approximations for low carriers density regime')
  !
  call Afield(1) ! Probe
  call Afield(2) ! Pump

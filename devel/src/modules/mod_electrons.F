@@ -86,8 +86,9 @@ module electrons
    complex(SP),pointer :: GreenF(:,:,:,:)     => null()
    ! 
    ! Fine energy grid
-   !  
+   !   
    real(SP),   pointer :: E_RIM(:,:,:)        => null()
+   real(SP),   pointer :: W_RIM(:,:,:)        => null()
    real(SP),   pointer :: f_RIM(:,:,:)        => null()
    !
  end type levels
@@ -164,9 +165,11 @@ module electrons
      !
      if (BZ_RIM_nbands/=0.and.Ei%nk==Eo%nk) then
        allocate(Eo%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
+       allocate(Eo%W_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
        allocate(Eo%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
-       call mem_est("E_RIM f_RIM",(/size(Eo%E_RIM),size(Eo%f_RIM)/),(/SP,SP/))
+       call mem_est("E_RIM W_RIM f_RIM",(/size(Eo%E_RIM),size(Eo%W_RIM),size(Eo%f_RIM)/),(/SP,SP,SP/))
        Eo%E_RIM=Ei%E_RIM
+       Eo%W_RIM=Ei%W_RIM
        Eo%f_RIM=Ei%f_RIM
      endif
      !
@@ -199,9 +202,10 @@ module electrons
      call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
      !
      if(associated(E%E_RIM))      deallocate(E%E_RIM)
+     if(associated(E%W_RIM))      deallocate(E%W_RIM)
      if(associated(E%f_RIM))      deallocate(E%f_RIM)
-     nullify(E%E_RIM,E%f_RIM)
-     call mem_est("E_RIM f_RIM")
+     nullify(E%E_RIM,E%W_RIM,E%f_RIM)
+     call mem_est("E_RIM W_RIM f_RIM")
      !
    end subroutine
    !

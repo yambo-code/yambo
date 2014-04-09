@@ -49,9 +49,10 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps,&
 &                         l_equilibrium_lifetimes,RT_E_occupations_reference,&
-&                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations
+&                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
+&                         RIM_ibz_coo
  use fields,         ONLY:A_vecpot,A_vecpot_previous
- use SC,             ONLY:SC_bands,it_now,H_nl_sc,&
+ use SC,             ONLY:SC_bands,it_now,H_nl_sc,RT_ibz_coo,&
 &                         V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
 &                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional,SC_nbands
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE,IO_and_Messaging_switch
@@ -69,7 +70,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Work Space
  !
- integer :: ik,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,&
+ integer :: ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,it,nt
  integer, external :: io_SC_components,io_RT_components,RT_Lifetimes_evaluation_plan
  logical :: RESTART
@@ -103,14 +104,18 @@ subroutine RT_start_and_restart(E,k,q,X)
  RT_ind_J          =cZERO
  ! 
  do ib=SC_bands(1),SC_bands(2)
-   do ik=1,RT_nk
-     if (l_RT_uses_E_RIM) then
-       G_lesser(ib,ib,ik,1) =cI*E%f_RIM(ib,ik,1)
-     else
-       G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
-     endif
-     RT_E_occupations(ib,:)=         aimag(G_lesser(ib,ib,ik,1))
-     RT_H_occupations(ib,:)=spin_occ-aimag(G_lesser(ib,ib,ik,1))
+   do ik=1,k%nibz
+     do ik_RT_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       ik_E_rim=ik_RT_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+       if (l_RT_uses_E_RIM) then
+         G_lesser(ib,ib,ik_RT_rim,1) =cI*E%f_RIM(ib,ik_E_rim,1)
+         if(associated(E%W)) E%W_RIM(ib,ik_E_rim,1)=E%W(ib,ik,1)
+       else
+         G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
+       endif
+       RT_E_occupations(ib,ik_RT_rim)=         aimag(G_lesser(ib,ib,ik_RT_rim,1))
+       RT_H_occupations(ib,ik_RT_rim)=spin_occ-aimag(G_lesser(ib,ib,ik_RT_rim,1))
+     enddo
    enddo
  enddo
  !

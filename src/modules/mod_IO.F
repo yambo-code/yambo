@@ -462,11 +462,16 @@ module IO_m
      !
    end function
    !
-   subroutine io_disconnect(ID)
+   subroutine io_disconnect(ID,FORCE)
      !
-     integer :: ID
+     integer           :: ID
+     logical, optional :: FORCE
      !
-     if (.not.close_is_on(ID).and.io_status(ID)>=0) return
+     if (present(FORCE)) then
+       if (.not.FORCE.and..not.close_is_on(ID).and.io_status(ID)>=0) return
+     else
+       if (.not.close_is_on(ID).and.io_status(ID)>=0) return
+     endif
      !
      if (file_is_open(io_file(ID),ID)) then
        if (io_netcdf_support(ID)) then
@@ -476,6 +481,7 @@ module IO_m
        else
          close(unit=io_unit(ID))
        endif
+       io_unit(ID)=0
      endif
      !
      if (io_resetable(ID)) call io_reset(ID)

@@ -1,4 +1,7 @@
-objs = col_driver.o rim.o rim_integrate.o rim_spherical.o rim_spherical_bose.o \
+#if defined _RT 
+RT_objects = rim_spherical_bose.o
+#endif
+objs = col_driver.o rim.o rim_integrate.o rim_spherical.o $(RT_objects) \
        bessel_F2.o bessel_F3.o bessel_F4.o bessel_F5.o bessel_F6.o bessel_J0.o \
        cutoff_driver.o cutoff_sphere.o cutoff_box.o \
        cutoff_test.o cutoff_cylinder.o

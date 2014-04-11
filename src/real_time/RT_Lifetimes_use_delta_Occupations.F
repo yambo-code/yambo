@@ -43,8 +43,8 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  integer :: ik,ib
  real(SP):: f_sum,f_diff,f_E_occ,f_H_occ,f_E_occ_reference,f_H_occ_reference,df_max
  !
- !
  l_use_updated_reference=.not.l_equilibrium_lifetimes
+ !
  if(l_use_updated_reference) l_use_updated_reference=(RT_TIME_status(it_now)> 1)
  !
  if (.not.l_eval) return

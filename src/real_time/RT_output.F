@@ -118,15 +118,16 @@ subroutine RT_output(what,VALUEs,TIME,E)
  if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'dynamics'
  short_file_name(next_file)=trim(append_ch)//'dynamics'
- n_headings(next_file)=4
+ n_headings(next_file)=5
  if (l_elel_scatt.or.l_elph_scatt) n_headings(next_file)=n_headings(next_file)+2
  if (l_Debye_TBose_update) n_headings(next_file)=n_headings(next_file)+1
  headings(next_file,2)="Total E[eV]"
- headings(next_file,3)="N" 
- headings(next_file,4)="dG"
+ headings(next_file,3)="delta N" 
+ headings(next_file,4)="N(Holes)"
+ headings(next_file,5)="N(Elecs)"
  if (l_elel_scatt.or.l_elph_scatt) then 
-   headings(next_file,5)="T(hol) [K]" 
-   headings(next_file,6)="T(el)  [K]" 
+   headings(next_file,6)="T(hol) [K]" 
+   headings(next_file,7)="T(el)  [K]" 
    if (l_Debye_TBose_update) headings(next_file,7)="T(bose) [K]"
  endif
  next_file=next_file+1

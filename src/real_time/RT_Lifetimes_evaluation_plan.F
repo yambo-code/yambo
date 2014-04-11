@@ -69,8 +69,9 @@ integer function RT_Lifetimes_evaluation_plan( )
    do it=1,NE_steps
      TIME=cmplx(RT_step*(it-1)-Efield(i_Pump)%t_initial_indx*RT_step,0._SP)
      weight(it)=abs(small_a(TIME,E_dummy,1))**2
-     if (abs(weight(it)-1.)<1.E-5) it_0=it
+     if (abs(weight(it)-1.)<1.E-7) it_0=it
      if (it>Efield(i_Pump)%t_final_indx) then
+       !
        it_0=it
        weight(it+1:)=weight(it)
        exit
@@ -96,7 +97,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  do it=it_start,NE_steps
    if (it< it_0) weight(it)=max(weight(it),0.1)
-   if (it>=it_0) weight(it)=max(weight(it),0.001)
+   if (it>=it_0) weight(it)=max(weight(it),0.01)
  enddo
  !
  ! Number of blocks composed by N_inter_steps elements 

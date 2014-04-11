@@ -228,15 +228,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time,l_flag)
    E_P_El_abs_lifetime   = E_P_El_abs_lifetime   + REF_lifetime(:,:,6)
  endif
  !
- ! Redefine the width of each electronic level with the new lifetimes
- !do ik=1,k%nibz
- !  E%W(SC_bands(1):SC_bands(2),ik,1)=&
- !    GAMMA_total(SC_bands(1):SC_bands(2),RT_ibz_coo(ik,1))
- !  E%W_RIM(SC_bands(1):SC_bands(2),RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),1)=&
- !&    GAMMA_total(SC_bands(1):SC_bands(2),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) 
- !enddo
- !
- !
  contains
    !
    subroutine Impose_Conservations( )

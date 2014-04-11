@@ -44,7 +44,8 @@ integer function io_HF_and_locXC(ID)
  !
  if (.not.io_HF) then
    io_HF_and_locXC=IO_NOT_ALLOWED
-   goto 1
+   call io_disconnect(ID,FORCE=.TRUE.)
+   return
  endif
  !
 #if defined _TIMING

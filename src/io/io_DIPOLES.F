@@ -50,7 +50,8 @@ integer function io_DIPOLES(X,Xen,ID)
  !
  if (.not.io_DIP) then
    io_DIPOLES=IO_NOT_ALLOWED
-   goto 1
+   call io_disconnect(ID,FORCE=.TRUE.)
+   return
  endif
  !
 #if defined _TIMING

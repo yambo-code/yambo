@@ -58,7 +58,8 @@ integer function ioX(X,Xw,ID)
  !
  if (.not.io_X) then
    ioX=IO_NOT_ALLOWED
-   goto 1
+   call io_disconnect(ID,FORCE=.TRUE.)
+   return
  endif
  !
  ! I assume that he RL ordering used to build X is not different

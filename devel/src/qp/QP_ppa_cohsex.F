@@ -365,7 +365,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          dc(1) = sp_dummy
          !
+         ! Bug spotted by D.V. (April 2014). HEAD_QP_cpu is defined differently when
+         ! the _SC flag is used or not. The point is that in SE calculations HEAD_QP_cpu is used
+         ! in cases where no band loops are done (like here). In _SC instead 
+         ! it is needed for a different purpose. This is why I use PAR_COM_QP_A2A%CPU_id in this case.
+         !
+#if defined _SC
+         if (PAR_COM_QP_A2A%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+#else
          if (HEAD_QP_cpu) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+#endif
          !
          dc=cZERO
          !

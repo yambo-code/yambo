@@ -30,13 +30,14 @@ integer function io_SC_components(what,E_sc,ID)
 &                         SC_R,V_xc_sc,local_V,H_nl_sc,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
-&                         io_sec,io_bulk,read_is_on,write_is_on,&
-&                         manage_RD_WR_CL_IF_END,variable_is_found,io_SC,IO_NOT_ALLOWED
+&                         io_sec,io_bulk,read_is_on,write_is_on,close_is_on,&
+&                         manage_RD_WR_CL_IF_END,variable_is_found,io_SC,IO_NOT_ALLOWED,io_unit,IO_write
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use fragments,      ONLY:io_fragment
+ use parallel_m
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -55,14 +56,15 @@ integer function io_SC_components(what,E_sc,ID)
  integer               :: ik,bands_to_load,ib,i_spin
  logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_T_EL
  !
+ if (.not.io_SC) then
+   io_SC_components=IO_NOT_ALLOWED
+   call io_disconnect(ID=ID,FORCE=.TRUE.)
+   return
+ endif
+ !
 #if defined _TIMING
  call timing('io_SC_components',OPR='start')
 #endif
- !
- if (.not.io_SC) then
-   io_SC_components=IO_NOT_ALLOWED
-   goto 1
- endif
  !
  l_E =what=="E"
  l_MP=what=="MP"

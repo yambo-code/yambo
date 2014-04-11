@@ -74,9 +74,9 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,RIM,nK_me
    !
    ! Total number of electrons
    !
-   do i1=1,SC_bands(1)-1
-     VALUE=VALUE+sum(en%f(i1,:,1)*k%weights(:))
-   enddo
+   !do i1=1,SC_bands(1)-1
+   !  VALUE=VALUE+sum(en%f(i1,:,1)*k%weights(:))
+   !enddo
    do i1=SC_bands(1),SC_bands(2)
      do ik_ibz=1,k%nibz
        VALUE_tmp=(0._SP,0._SP)

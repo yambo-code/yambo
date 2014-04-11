@@ -46,7 +46,7 @@ subroutine RT_Fluence(i_field)
  ! 
  ! |E(t)|^2= Efield(i_field)%amplitude**2 * | small_a' theta + small_a theta' |^2
  !
- if ( Efield(i_field)%intensity<1.E-7_SP ) then
+ if ( Efield(i_field)%intensity<1.E-15_SP ) then
    Efield(i_field)%t_final=Efield(i_field)%t_initial
    Efield(i_field)%t_final_indx=Efield(i_field)%t_initial_indx
    allocate(Efield(i_field)%Fluence(1) )

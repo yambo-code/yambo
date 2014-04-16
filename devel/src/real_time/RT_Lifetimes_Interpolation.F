@@ -44,7 +44,7 @@ subroutine RT_Lifetimes_Interpolation(Life,Time,Life_SAVED,Times_SAVED)
    M=(dG(3)-Q*(dT(3))**2)/dT(3)
    Life=Life_SAVED(1)+M*(Time-Times_SAVED(1))+Q*(Time-Times_SAVED(1))**2
  else
-   POL_order=2 !Life_MEM_steps-2
+   POL_order=2
    EPS=0.d0
    call pol_fit(Life_MEM_steps,Times_SAVED-Times_SAVED(1),Life_SAVED,POL_order,P(:POL_order+1),EPS,0.d0)
    Life=0.

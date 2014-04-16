@@ -134,17 +134,17 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,Gkkp,l_skip_ABS)
        !
        ! Stimulated Emission
        E_P_Hole_lifetime(i_n_shift,ik_rim)=E_P_Hole_lifetime(i_n_shift,ik_rim)+&
-&                                          TMP_Hole_lifetime(1)*N_q*pre_factor*q_weight_RT(i_q,i_l,2)
+&                                          TMP_Hole_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,2)
        E_P_Electron_lifetime(i_n_shift,ik_rim)=E_P_Electron_lifetime(i_n_shift,ik_rim)+&
-&                                              TMP_Electron_lifetime(1)*N_q*pre_factor*q_weight_RT(i_q,i_l,2)
+&                                              TMP_Electron_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,2)
        !
        if(l_skip_ABS) cycle
        !
        ! Absorption
        E_P_Ho_abs_lifetime(i_n_shift,ik_rim)=E_P_Ho_abs_lifetime(i_n_shift,ik_rim)+&
-&                                            TMP_Hole_lifetime(2)*N_q*pre_factor*q_weight_RT(i_q,i_l,2)
+&                                            TMP_Hole_lifetime(2)*pre_factor*q_weight_RT(i_q,i_l,2)
        E_P_El_abs_lifetime(i_n_shift,ik_rim)=E_P_El_abs_lifetime(i_n_shift,ik_rim)+&
-&                                            TMP_Electron_lifetime(2)*N_q*pre_factor*q_weight_RT(i_q,i_l,2)
+&                                            TMP_Electron_lifetime(2)*pre_factor*q_weight_RT(i_q,i_l,2)
        !
      enddo
      !

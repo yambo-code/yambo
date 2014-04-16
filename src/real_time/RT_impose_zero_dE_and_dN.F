@@ -22,7 +22,7 @@
 subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_kind)
  !
  use pars,           ONLY:SP
- use electrons,      ONLY:levels,spin_occ
+ use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,RT_Nk_ibz
  use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,Imp_factors, &

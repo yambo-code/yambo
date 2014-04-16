@@ -141,7 +141,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  call io_control(ACTION=OP_RD_CL,COM=REP ,SEC=(/1/),MODE=VERIFY,ID=ID(3)) ! Local potential
  io_V=io_SC_components('V' ,E,ID(3))
  !
- ! 
  ! 24/01/2014 Davide: RESTART from DB J_and_P does not work
  !
  COM_=REP

@@ -26,11 +26,11 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
  use units,         ONLY:HA2EV
  use LIVE_t,        ONLY:live_timing
  use ELPH,          ONLY:gsqF_energy_steps,gsqF_energy_steps,gsqF_ca_corr,gsqF_fan,gsqF_life_f,&
-&                        gsqF_life_bose,gsqF_dw,elph_nDBs_used,elph_branches,&
+&                        gsqF_life_bose,gsqF_dw,elph_branches,&
 &                        elph_use_q_grid,ph_freqs_sq,QP_DW,QP_OMS_Fan
  use QP_m,          ONLY:QP_solver,QP_Sc_steps,QP_Sc_steps,QP_n_states,QP_Sc,On_Mass_Shell_approx,&
 &                        QP_table
- use parallel_m,    ONLY:PAR_nQP,PAR_nQ,PAR_IND_QP,PAR_QP_index,PAR_Q_index,PAR_IND_Q,PP_redux_wait
+ use parallel_m,    ONLY:PAR_nQP,PAR_nQ,PAR_IND_QP,PAR_Q_index,PAR_IND_Q,PP_redux_wait
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp,W_reset
@@ -90,7 +90,7 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
    DP_FAN=cmplx(0.,0.,DP)
    DP_DW =cmplx(0.,0.,DP)
    !
-   do iq_loop=1,elph_nDBs_used
+   do iq_loop=1,PAR_nQ
      !
      if (.not.PAR_IND_Q%element_1D(iq_loop)) cycle
      iq_mem=PAR_Q_index(iq_loop)
@@ -132,9 +132,9 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
        !------------------
        !
        DP_DW=DP_DW+gsqF_dw(i_qp,iq_mem,il)*(bose_f(ph_freq)+1.)/2.
-       !
+       ! 
      enddo
-     ! 
+     !
      call live_timing(steps=1)
      !
    enddo

@@ -112,6 +112,10 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      if (trim(Scatt_kind)=="elel") Imp_factors(3:5)=prefactor(1:3)
      if(trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
      return
+     if(l_equilibrium_lifetimes) then
+       REF_lifetime(:,:,iref)=Hole_lifetime
+       REF_lifetime(:,:,iref+1)=Electron_lifetime
+     endif
    endif
    if( abs(prefactor(i1))>cut_off ) prefactor(i1)=prefactor(i1)/abs(prefactor(i1))*cut_off
  enddo

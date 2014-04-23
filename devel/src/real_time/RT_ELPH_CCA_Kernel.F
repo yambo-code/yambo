@@ -28,7 +28,8 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,Gkkp,l_skip_ABS)
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         B_mat_index,l_RT_uses_E_RIM,RIM_ibz_coo,RT_occupations_locked,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
-&                         RT_delta_occupations,l_equilibrium_lifetimes,q_weight_RT,l_RT_low_carr_den
+&                         RT_delta_occupations,l_equilibrium_lifetimes,q_weight_RT,l_RT_low_carr_den,&
+&                         RT_eh_en,RT_scatt_tresh
  use ELPH,           ONLY:ph_freqs_sq
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
  !
@@ -76,8 +77,15 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,Gkkp,l_skip_ABS)
      if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n_shift,i_np_shift) ) ) cycle
      i_b_mat_mem=PAR_B_mat_index(i_n_shift,i_np_shift)
      !
-     DELTA_E=    E%E(i_n_shift,ik,1) -    E%E(i_np_shift,ik_m_q,1)
-     DELTA_W=abs(E%W(i_n_shift,ik,1))+abs(E%W(i_np_shift,ik_m_q,1))
+     if (.not. l_RT_uses_E_RIM) then
+       !
+       if(E%E(i_np_shift,ik_m_q,1)<RT_eh_en(1) .or. E%E(i_np_shift,ik_m_q,1)>RT_eh_en(2)) cycle
+       if(E%E(i_n_shift ,ik    ,1)<RT_eh_en(1) .or. E%E(i_n_shift ,ik    ,1)>RT_eh_en(2)) cycle
+       !
+       DELTA_E=    E%E(i_n_shift,ik,1) -    E%E(i_np_shift,ik_m_q,1)
+       DELTA_W=abs(E%W(i_n_shift,ik,1))+abs(E%W(i_np_shift,ik_m_q,1))
+       !
+     endif
      !
      pre_factor=abs(Gkkp(i_np,i_n))**2/real(RT_Nk_ibz(ik_m_q))
      !
@@ -95,14 +103,20 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,Gkkp,l_skip_ABS)
          if (RT_occupations_locked(i_np_shift,ip_rim)) cycle
          !
          if (l_RT_uses_E_RIM) then
+           !
            i1=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
            i2=ip_rim-RT_ibz_coo(ik_m_q,1)+RIM_ibz_coo(ik_m_q,1)
+           !
+           if(E%E_RIM(i_np_shift,i2,1)<RT_eh_en(1) .or. E%E_RIM(i_np_shift,i2,1)>RT_eh_en(2)) cycle
+           if(E%E_RIM(i_n_shift ,i1,1)<RT_eh_en(1) .or. E%E_RIM(i_n_shift ,i1,1)>RT_eh_en(2)) cycle
+           !
            DELTA_E=    E%E_RIM(i_n_shift,i1,1) -    E%E_RIM(i_np_shift,i2,1)
            DELTA_W=abs(E%W_RIM(i_n_shift,i1,1))+abs(E%W_RIM(i_np_shift,i2,1))
+           !
          endif
          !
-         P_ph_abs  =RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,E%E_ind_gap(1),'EP')
-         P_ph_emit =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,E%E_ind_gap(1),'EP')
+         P_ph_abs  =RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,RT_scatt_tresh,'EP')
+         P_ph_emit =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,RT_scatt_tresh,'EP')
          !
          if ( abs(P_ph_abs)<1.E-7 .and. abs(P_ph_emit)<1.E-7 ) cycle
          !

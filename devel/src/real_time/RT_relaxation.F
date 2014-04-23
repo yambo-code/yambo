@@ -86,7 +86,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time,l_flag)
        enddo
      enddo
    enddo
- else
+ else if(l_elph_scatt.or.l_elel_scatt) then
    Sigma_relax=cZERO
  endif
  !
@@ -215,18 +215,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time,l_flag)
      !
    enddo
  enddo
- !
- ! Store the full Lifetimes for mean_lifetimes call and I/O
- if (l_elel_scatt) then
-   E_E_Hole_lifetime    =E_E_Hole_lifetime     + REF_lifetime(:,:,1)
-   E_E_Electron_lifetime=E_E_Electron_lifetime + REF_lifetime(:,:,2)
- endif
- if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-   E_P_Hole_lifetime     = E_P_Hole_lifetime     + REF_lifetime(:,:,3)
-   E_P_Electron_lifetime = E_P_Electron_lifetime + REF_lifetime(:,:,4)
-   E_P_Ho_abs_lifetime   = E_P_Ho_abs_lifetime   + REF_lifetime(:,:,5)
-   E_P_El_abs_lifetime   = E_P_El_abs_lifetime   + REF_lifetime(:,:,6)
- endif
  !
  contains
    !

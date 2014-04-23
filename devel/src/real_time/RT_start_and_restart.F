@@ -50,7 +50,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps,&
 &                         l_equilibrium_lifetimes,RT_E_occupations_reference,&
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
-&                         RIM_ibz_coo
+&                         RIM_ibz_coo,RT_eh_en,REF_Lifetime
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,it_now,H_nl_sc,RT_ibz_coo,&
 &                         V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
@@ -70,7 +70,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Work Space
  !
- integer :: ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,&
+ integer :: ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,it,nt
  integer, external :: io_SC_components,io_RT_components,RT_Lifetimes_evaluation_plan
  logical :: RESTART
@@ -82,7 +82,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  G_lesser          =cZERO
  dG_lesser         =cZERO
- G_lesser_reference=cZERO
  rho_reference     =rZERO
  if(allocated(full_rho)) full_rho=cZERO
  V_xc_sc           =rZERO
@@ -119,6 +118,14 @@ subroutine RT_start_and_restart(E,k,q,X)
    enddo
  enddo
  !
+ ! Reference occupations and G
+ !
+ G_lesser_reference=G_lesser(:,:,:,1)
+ do ib=SC_bands(1),SC_bands(2)
+   RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
+   RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
+ enddo
+ !
  !
  ! Build Ho and save initial energies 
  !====================================
@@ -150,23 +157,20 @@ subroutine RT_start_and_restart(E,k,q,X)
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
  io_G=io_RT_components('G',ID(5))
  !
+ ! Reference G_lesser and Lifetimes
+ !
+ call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(8)) ! Reference
+ io_REF=io_RT_components('REF',ID(8))
+ !
  ! ELPH Theta matrix
  !
- call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(7)) ! G_lesser
+ call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(7)) ! THETA matrix
  io_THETA=io_RT_components('THETA',ID(7))
  !
  ! To restart from RT only the G_lesser is necessary
  !
- RESTART                = io_G ==0
- if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = io_G==0.and.io_THETA==0
- !
- ! Reference lesser GF and occupations
- !=====================================
- G_lesser_reference=G_lesser(:,:,:,1)
- do ib=SC_bands(1),SC_bands(2)
-   RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
-   RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
- enddo
+ RESTART                = (io_G ==0).and.(io_REF==0)
+ if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = RESTART.and.(io_THETA==0)
  !
  if (l_RT_needs_XC0) then
    !
@@ -253,6 +257,9 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! I use G_lesser(:,:,:) to reconstruct everything
    ! and I read it_now from the databases. 
+   !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=VERIFY,ID=ID(8))
+   io_REF=io_RT_components('REF',ID(8))
    !
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5))
    io_G=io_RT_components('G',ID(5))
@@ -355,6 +362,23 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  if (.not.associated(E%Eo)) allocate(E%Eo(SC_bands(2),QP_nk,n_sp_pol))
  E%Eo(1:SC_bands(2),1:QP_nk,1:n_sp_pol)=E%E(1:SC_bands(2),1:QP_nk,1:n_sp_pol)
+ !
+ ! Define RT_eh_en
+ !================
+ if( all(RT_eh_en(:)==0._SP) ) then
+   ! Case A: was not defined in input
+   if (l_RT_uses_E_rim) then
+     RT_eh_en(1)=minval(E%E_RIM(SC_bands(1):SC_bands(2),:,:)) 
+     RT_eh_en(2)=maxval(E%E_RIM(SC_bands(1):SC_bands(2),:,:)) 
+   else
+     RT_eh_en(1)=minval(E%E(SC_bands(1):SC_bands(2),:,:)) 
+     RT_eh_en(2)=maxval(E%E(SC_bands(1):SC_bands(2),:,:)) 
+   endif
+ else
+   ! Case B: was defined in input
+   RT_eh_en(1)=RT_eh_en(1)+E%E_VBM
+   RT_eh_en(2)=RT_eh_en(2)+E%E_CBm
+ endif
  !
  ! Retarded Green Functions matrix
  ! ===============================

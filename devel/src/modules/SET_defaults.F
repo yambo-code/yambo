@@ -90,10 +90,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     SwitchOnTime,l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel,  &
 &                     l_RT_diagonalize,RT_is_dephased,RAD_LifeTime,Phase_LifeTime,        &
 &                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,Imp_factors,                &
-&                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,   &
+&                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_en,           &
 &                     Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,           &
 &                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
-&                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,RIM_EE_percent
+&                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
+&                     RIM_EE_percent,RT_scatt_tresh
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,theta_function_iTo_ref,i_Pump,i_Probe
  use plasma,     ONLY:Plasma_redux_percent
 #endif
@@ -541,7 +542,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  NE_MEM_treshold=0.
  G_MEM_steps=2   ! By default only G_lesser@t and @t+1
  RT_nk=0
- RT_eh_energy_max=0.
+ RT_eh_en=0._SP
+ RT_scatt_tresh=1.
  Eh_pumped_pair_energy=-1./HA2EV
  Eh_pumped_pair_width=0.1/HA2EV
  Eh_pumped_Nel=1.

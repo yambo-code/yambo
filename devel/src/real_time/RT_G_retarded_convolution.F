@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-real(SP) function RT_G_retarded_convolution(EmEp,Ebose,WmWp,Wbose,Egap,Skind)
+real(SP) function RT_G_retarded_convolution(EmEp,Ebose,WmWp,Wbose,Etresh,Skind)
  !
  use pars,       ONLY:SP
  use real_time,  ONLY:Gr_kind,two_alpha
  !
  implicit none
  !
- real(SP)     :: EmEp,WmWp,Egap
+ real(SP)     :: EmEp,WmWp,Etresh
  real(SP)     :: Ebose,Wbose
  character(2) :: Skind
  !
@@ -39,6 +39,7 @@ real(SP) function RT_G_retarded_convolution(EmEp,Ebose,WmWp,Wbose,Egap,Skind)
  RT_G_retarded_convolution=0._SP
  !
  E_center=EmEp+Ebose
+ if (.not.Energy_Condition(EmEp,Ebose,E_center,Etresh)) return
  !
  W_center=WmWp+Wbose
  !
@@ -49,4 +50,16 @@ real(SP) function RT_G_retarded_convolution(EmEp,Ebose,WmWp,Wbose,Egap,Skind)
  !
  if (trim(Gr_kind)=='HS') RT_G_retarded_convolution=HyperbolicSecant_FT(E_center,W_center,local_alpha)
  !
+ contains
+   !
+   ! Davide:
+   !
+   logical function Energy_Condition(E1,E2,Etot,Etresh_)
+     real(SP) :: E1,E2,Etot,Etresh_
+     Energy_Condition=.true.
+     if ( abs(Etot)>Etresh_ ) Energy_Condition=.false.
+     if (  E2==0            ) return
+     if (  E1/E2   >0._SP   ) Energy_Condition=.false.
+   end function
+   !
 end function RT_G_retarded_convolution

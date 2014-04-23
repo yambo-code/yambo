@@ -28,7 +28,8 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
 &                          RT_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                          RT_H_occupations,RT_E_occupations,RIM_ibz_coo,l_RT_uses_E_RIM,&
-&                          l_equilibrium_lifetimes,RIM_EE_scatt_table,RIM_EE_Nk_table
+&                          l_equilibrium_lifetimes,RIM_EE_scatt_table,RIM_EE_Nk_table,RT_eh_en,&
+&                          RT_scatt_tresh
  use plasma,          ONLY:EH_gas
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:GW_NEQ_collisions
@@ -109,18 +110,11 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        df_p   = RT_delta_occupations(i_m ,RT_ibz_coo(i_p,1))
        Hole_f0_p   = RT_H_occupations_reference(i_m ,RT_ibz_coo(i_p,1))
        !
-       ! Here I could change from between Delta E>0 and Delta E<0
-       ! To just E_center>0 and is=-1 / +1
-       ! I'm forced to do like that with the occupations
        f0_pmq = RT_E_occupations_reference(i_mp ,RT_ibz_coo(i_pmq,1))
        df_pmq = RT_delta_occupations(i_mp ,RT_ibz_coo(i_pmq,1))
        Hole_f0_pmq  = RT_H_occupations_reference(i_mp ,RT_ibz_coo(i_pmq,1))
        !
        E_plasma=E_plasma+cmplx(delta_E,delta_W)
-       !IMPLEMENTATION WITH ABS and EMISSION<
-       !if(delta_E> 0._SP) deg_factor=1._SP
-       !if(delta_E==0._SP) deg_factor=2._SP
-       !IMPLEMENTATION WITH ABS and EMISSION>
        !
        N0_e_plasma=N0_e_plasma+Hole_f0_p*f0_pmq/spin_occ
        N0_h_plasma=N0_h_plasma+f0_p*Hole_f0_pmq/spin_occ
@@ -153,8 +147,15 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        i_n =QP_table(i_qp1,1)
        i_np=QP_table(i_qp1,2)
        !
-       DELTA_E=    E%E(i_np,ik_m_q,1) -    E%E(i_n,ik,1)
-       DELTA_W=abs(E%W(i_np,ik_m_q,1))+abs(E%W(i_n,ik,1))
+       if (.not. l_RT_uses_E_RIM) then
+         !
+         if(E%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. E%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
+         if(E%E(i_n ,ik    ,1)<RT_eh_en(1) .or. E%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
+         !
+         DELTA_E=    E%E(i_np,ik_m_q,1) -    E%E(i_n,ik,1)
+         DELTA_W=abs(E%W(i_np,ik_m_q,1))+abs(E%W(i_n,ik,1))
+         !
+       endif
        !
        pre_factor=(4._SP*pi)**2._SP*GW_NEQ_collisions(i_qp1_mem)%v3r(i_J_mem,1,i_q_mem)
        !
@@ -172,20 +173,20 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            if (RT_occupations_locked(i_np ,ik_m_q_rim)) cycle
            !
            if (l_RT_uses_E_RIM) then
+             !
              i1=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
              i2=ik_m_q_rim-RT_ibz_coo(ik_m_q,1)+RIM_ibz_coo(ik_m_q,1)
+             !
+             if(E%E_RIM(i_np,i2,1)<RT_eh_en(1) .or. E%E_RIM(i_np,i2,1)>RT_eh_en(2)) cycle
+             if(E%E_RIM(i_n ,i1,1)<RT_eh_en(1) .or. E%E_RIM(i_n ,i1,1)>RT_eh_en(2)) cycle
+             !
              DELTA_E=    E%E_RIM(i_np,i2,1) -    E%E_RIM(i_n,i1,1)
              DELTA_W=abs(E%W_RIM(i_np,i2,1))+abs(E%W_RIM(i_n,i1,1))
+             !
            endif
            !
-           P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')/&
+           P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,RT_scatt_tresh,'EE')/&
 &                     real(RIM_EE_Nk_table(ik_rim,ik_m_q))
-           P_pl_emit =0._SP
-           !IMPLEMENTATION WITH ABS and EMISSION<
-           !P_pl_emit =RT_G_retarded_convolution(DELTA_E,-plasma_freq,DELTA_W,plasma_width,E%E_ind_gap(1),'EE')/&
-           !&          real(RT_Nk_ibz(ik_m_q))
-           !IMPLEMENTATION WITH ABS and EMISSION>
-           !
            !
            if(abs(P_pl_abs)<1.E-7) cycle
            !
@@ -201,11 +202,8 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
              Electron_occupation = dN_e_plasma*Hole_f0_kmq - N0_e_plasma*df_kmq - dN_e_plasma*df_kmq
            endif
            !
-           TMP_Hole_lifetime=TMP_Hole_lifetime+P_pl_abs*Hole_occupation              !+&
-!&                                             P_pl_emit*Electron_occupation
-           !
-           TMP_Electron_lifetime=TMP_Electron_lifetime+P_pl_abs*Electron_occupation  !+&
-!&                                                     P_pl_emit*Hole_occupation
+           TMP_Hole_lifetime=TMP_Hole_lifetime+P_pl_abs*Hole_occupation
+           TMP_Electron_lifetime=TMP_Electron_lifetime+P_pl_abs*Electron_occupation
            !
          enddo
          !

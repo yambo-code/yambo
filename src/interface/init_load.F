@@ -54,7 +54,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_steps,RT_dynamics_decay_time,&
-&                        RT_ave_dephasing,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time,&
+&                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_IO_time,RT_scatt_tresh,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_dynamics_KIND,I_MEM_steps,&
 &                        Gr_kind,two_alpha,RIM_EE_percent
  use fields,        ONLY:Efield
@@ -313,28 +313,44 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Real Time dynamics
  !
 #if defined _RT
+ !
+ call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
+ call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic secant (HS)',Gr_kind,Verb_level=V_real_time)
+ call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1))
+ call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit(1))
+ !
+ ! Dynamics
+ !
+ call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly')
  call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit(1))
  call it(defs,'NEsteps',    '[RT] Non-equilibrium Time steps',NE_steps)
+ call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit(1))
+ call it(defs,'Integrator', '[RT] Integrator. Use keywords space separated  (RK2 | EULER | EXP | RWA | INTERPOLATE) ',&
+&                           Integrator_name)
+ call it(defs,'IOtime',     '[RT] Time between to consecutive I/O (J,P,OCCs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
+ call it(defs,'RTehEny',    '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
+ !
+ ! Correlation
+ !
+ call it('f',defs,'RTfreezeH',     '[RT] Hartree not updated during RT')
+ call it('f',defs,'RTfreezeXC',    '[RT] XC potential/self-energy not updated during RT')
+ call it(defs,'COHsteps',          '[RT] Number of steps to interpolate the Coherent part of the self-energy',&
+&                                   I_MEM_steps,Verb_level=V_real_time)
+ !
+ ! Scattering
+ !
  call it(defs,'DYNmode',    '[RT] Step distribution mode',RT_dynamics_KIND,Verb_level=V_real_time)
- call it(defs,'COHsteps',   '[RT] Number of steps to interpolate the Coherent part of the self-energy',&
-&                           I_MEM_steps,Verb_level=V_real_time)
  call it(defs,'DYNsteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
 &                           RT_dynamics_steps,Verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'DYNdecay',   '[RT] Exponential decay lifetime of the distribution of groups of lifetimes evaluated',&
 &                           RT_dynamics_decay_time,Verb_level=V_real_time,unit=Time_unit(1))
- call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
- call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic secant (HS)',Gr_kind,Verb_level=V_real_time)
- call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit(1))
- call it(defs,'ThermSteps', '[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
- call it(defs,'Integrator', '[RT] Integrator. Use keywords space separated  (RK2 | EULER | EXP | RWA | INTERPOLATE) ',&
-&                           Integrator_name)
- call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1))
- call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit(1))
+ call it(defs,'ScatTresh',  '[RT] Treshold on the eh enrgy to compute the scattering',RT_scatt_tresh,&
+&                           unit=E_unit,verb_level=V_real_time)
+ !
+ ! EE scattering
+ !
  call it(defs,'PlasmaPerc', '[RT] Plasma approx (0-100): % of eh pair considered',Plasma_redux_percent,Verb_level=V_real_time)
  call it(defs,'EERimPerc',  '[RT] EE RIM (0-100): % of the RIM points used in EE scatt',RIM_EE_percent,Verb_level=V_real_time)
- call it('f',defs,'RTfreezeH',     '[RT] Hartree not updated during RT')
- call it('f',defs,'RTfreezeXC',    '[RT] XC potential/self-energy not updated during RT')
- call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly')
  call it('f',defs,'RTeeImposeE',   '[RT] Conservation of E imposed by hand on-the-fly for EE scatt')
  !
  ! ELPH
@@ -344,23 +360,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'UpdtDebyeT','[RT] Update Bose Temp assuming phonons are always at equilibrium')
  call it('f',defs,'RT_T_evol',   '[RT] Use a complete Time evolution instead of the CCA')
  !
- ! I/O
- !
- call it(defs,'IOtime',        '[RT] Time between to consecutive I/O (J,P,OCCs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
- !
- ! Other parameters of RT (to be switched on using the verbosity)
- !
- call it(defs,'SwitchOnTime', '[RT Therm] Adiabatic switch on time ',SwitchOnTime,verb_level=V_real_time,unit=Time_unit(1))
- call it(defs,'RTDiagoSteps', '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)
- call it(defs,'RTAveDeph',    '[RT] Dephasing for all elements not included in RTDePhMatrix', &
-&                             RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit(1))
- call it('f',defs,'Diamagnetic', '[RT] Include the diamagnetic term in current and coupling',verb_level=V_real_time)
- call it('f',defs,'InducedField','[RT] Include induced field in coupling and current',verb_level=V_real_time)
- !
  ! External fields or Manual pump
  !
- call it(defs,'RTmaxEn',    '[RT] Max e/h energy to define the states that are evolved',RT_eh_energy_max,&
-&                            Verb_level=V_real_time,unit=E_unit)
  call it(defs,'RTpumpEhEn', '[RT] Energy centers of the levels to be inverted by hand',Eh_pumped_pair_energy,&
 &                            Verb_level=V_real_time,unit=E_unit)
  call it(defs,'RTpumpEhWd', '[RT] Energy window of the levels to be inverted by hand',Eh_pumped_pair_width,&
@@ -371,6 +372,24 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call Afield(1) ! Probe
  call Afield(2) ! Pump
+ !
+ ! OLD / EXPERIMENTAL
+ !
+ ! 1 - Thermalization
+ !
+ call it(defs,'ThermSteps',   '[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
+ call it(defs,'SwitchOnTime', '[RT Therm] Adiabatic switch on time ',SwitchOnTime,verb_level=V_real_time,unit=Time_unit(1))
+ call it(defs,'RTDiagoSteps', '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)
+ !
+ ! 2 - Induced Field
+ !
+ call it('f',defs,'Diamagnetic', '[RT] Include the diamagnetic term in current and coupling',verb_level=V_real_time)
+ call it('f',defs,'InducedField','[RT] Include induced field in coupling and current',verb_level=V_real_time)
+ !
+ ! 3 - Other
+ !
+ call it(defs,'RTAveDeph',    '[RT] Dephasing for all elements not included in RTDePhMatrix', &
+&                             RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit(1))
  !
 #endif
  !

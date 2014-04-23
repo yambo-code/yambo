@@ -48,6 +48,7 @@ subroutine RT_databases_IO(E,it)
  !
  if (it==it_start.and.it_start>1) return
  !
+ !
  if (.not.RT_do_IO('J').and..not.RT_do_IO('G')) return
  !
  ! Polarization and current are automaticaly written every RT_IO_JPO_steps

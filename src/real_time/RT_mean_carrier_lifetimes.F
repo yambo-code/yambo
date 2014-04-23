@@ -25,7 +25,7 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes,  &
 &                         E_P_Ho_abs_lifetime,RT_Tfit_lifetimes,RT_Efit_lifetimes,    &
-&                         NE_i_time,RT_IO_output_steps,l_RT_uses_E_rim
+&                         NE_i_time,RT_IO_output_steps,l_RT_uses_E_rim,REF_Lifetime
  use SC,             ONLY:SC_bands,RT_all2ibz,RT_Nk_ibz,RT_nk
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin_occ
@@ -42,6 +42,15 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  real(SP)           :: EE_occupations(SC_bands(1):SC_bands(2),RT_nk),&
 &                      EP_occupations(SC_bands(1):SC_bands(2),RT_nk)
  !
+ real(SP)           :: LOCAL_Lifetime(SC_bands(1):SC_bands(2),RT_nk,6)
+ !
+ if (allocated(E_E_Hole_lifetime))     LOCAL_Lifetime(:,:,1)=REF_Lifetime(:,:,1)+E_E_Hole_lifetime
+ if (allocated(E_E_Electron_lifetime)) LOCAL_Lifetime(:,:,2)=REF_Lifetime(:,:,2)+E_E_Electron_lifetime
+ if (allocated(E_P_Hole_lifetime))     LOCAL_Lifetime(:,:,3)=REF_Lifetime(:,:,3)+E_P_Hole_lifetime
+ if (allocated(E_P_Electron_lifetime)) LOCAL_Lifetime(:,:,4)=REF_Lifetime(:,:,4)+E_P_Electron_lifetime
+ if (allocated(E_P_Ho_abs_lifetime))   LOCAL_Lifetime(:,:,5)=REF_Lifetime(:,:,5)+E_P_Ho_abs_lifetime
+ if (allocated(E_P_El_abs_lifetime))   LOCAL_Lifetime(:,:,6)=REF_Lifetime(:,:,6)+E_P_El_abs_lifetime
+ !
  if ( mod(NE_i_time-1,RT_IO_output_steps)/=0 ) return
  !
  n_states=0._SP
@@ -57,8 +66,8 @@ subroutine RT_mean_carrier_lifetimes(E,k)
      n_states=n_states+pre_factor
      !
      if (allocated(E_P_Hole_lifetime)) then
-       sum_lifetimes(1)= E_P_Hole_lifetime(ib,ik)+E_P_Ho_abs_lifetime(ib,ik)
-       sum_lifetimes(2)= E_P_Electron_lifetime(ib,ik)+E_P_El_abs_lifetime(ib,ik)+sum_lifetimes(1)
+       sum_lifetimes(1)= LOCAL_Lifetime(ib,ik,3)+LOCAL_Lifetime(ib,ik,5)
+       sum_lifetimes(2)= LOCAL_Lifetime(ib,ik,4)+LOCAL_Lifetime(ib,ik,6)+sum_lifetimes(1)
        if(sum_lifetimes(2)>0._SP) then
          EP_occupations(ib,ik)=sum_lifetimes(1)/sum_lifetimes(2)*spin_occ
        else
@@ -74,8 +83,8 @@ subroutine RT_mean_carrier_lifetimes(E,k)
      endif
      !
      if (allocated(E_E_Hole_lifetime).and..not.l_RT_uses_E_rim) then
-       sum_lifetimes(1)= E_E_Hole_lifetime(ib,ik)
-       sum_lifetimes(2)= E_E_Electron_lifetime(ib,ik)+E_E_Hole_lifetime(ib,ik)
+       sum_lifetimes(1)= LOCAL_Lifetime(ib,ik,1)
+       sum_lifetimes(2)= LOCAL_Lifetime(ib,ik,1)+LOCAL_Lifetime(ib,ik,2)
        if(sum_lifetimes(2)>0._SP) then
          EE_occupations(ib,ik)=sum_lifetimes(1)/sum_lifetimes(2)*spin_occ
        else

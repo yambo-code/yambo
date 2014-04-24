@@ -75,8 +75,13 @@ subroutine RT_initialize(E,k,q)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
  !
- l_NE_simulate_BSE     =.FALSE.
- l_NE_simulate_TDDFT   =.FALSE.
+ l_NE_simulate_RPA     =.not.Hfrozen.and.     XCfrozen
+ l_NE_simulate_IP      =     Hfrozen.and.     XCfrozen
+ l_NE_simulate_Irredux =     Hfrozen.and..not.XCfrozen
+ if (                   .not.Hfrozen.and..not.XCfrozen) then
+   l_NE_simulate_BSE     =.not.local_V
+   l_NE_simulate_TDDFT   =local_V
+ endif
  !
  l_RT_diagonalize      =RT_diagonalization_steps>1
  !

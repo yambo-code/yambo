@@ -302,17 +302,17 @@ integer function variables_SC(ID,local_description,what)
      if (ver_is_gt_or_eq(ID,revision=3163)) then
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [RT-DYN-dT] Inter/intra grps[fs]:",R1=RT_dynamics_steps,CHECK=.true.,OP=(/"=="/),&
+&        VAR=" [RT-DYN-dT] Inter/intra grps[fs]:",R1=RT_dynamics_steps,WARN=.true.,OP=(/"==","=="/),&
 &        DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [RT-DYN-dT] Time decay      [fs]:",R0=RT_dynamics_decay_time,CHECK=.true.,OP=(/"=="/),&
+&        VAR=" [RT-DYN-dT] Time decay      [fs]:",R0=RT_dynamics_decay_time,WARN=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
        i_desc=i_desc+1
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        call io_elemental(ID,VAR='RT_DYNAMICS_kind',CH0="",VAR_SZ=1,MENU=0)
        call io_elemental(ID,CH0=RT_dynamics_KIND, &
-&        VAR=" [RT-DYN-dT] Sampling            :",CHECK=.true.,OP=(/"=="/),&
+&        VAR=" [RT-DYN-dT] Sampling            :",WARN=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc))
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        call io_elemental(ID,VAR="RT_DYNAMICS_more",VAR_SZ=3,MENU=0) 

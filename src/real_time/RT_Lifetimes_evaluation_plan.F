@@ -46,7 +46,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  endif
  RT_TIME_status=0 ! Interpolate
  !
- if (RT_dynamics_steps(1)<0.) then
+ if (RT_dynamics_steps(1)<0. .or. it_start>=NE_steps) then
    RT_TIME_status=1
    return
  endif 

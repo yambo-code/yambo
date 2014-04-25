@@ -31,6 +31,7 @@ subroutine RT_driver(E,X,k,q)
  use wave_func,      ONLY:WF
  use interfaces,     ONLY:WF_load
  use R_lattice,      ONLY:bz_samp,qindx_free
+ use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho,&
 &                         SC_QP_setup
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
@@ -39,7 +40,7 @@ subroutine RT_driver(E,X,k,q)
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,l_NE_dynamics_started,RT_update,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update,&
-&                         dG_lesser
+&                         dG_lesser,ID
  use plasma,          ONLY:Plasma_free,EH_gas
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
@@ -65,9 +66,11 @@ subroutine RT_driver(E,X,k,q)
  ! 
  ! Work Space
  !
- integer           :: it,ik,ib,it_mem,it_mem_p1
+ integer           :: it,ik,ib,it_mem,it_mem_p1,io_REF
  real(SP)          :: E_previous,E_now
  complex(SP)       :: on_the_fly_operators(10)
+ !
+ integer, external :: io_RT_components
  !
  if (l_elph_scatt.and.l_elel_scatt) then
    call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph AND e-e scattering')
@@ -165,7 +168,14 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Reference lifetimes 
  !====================
- if (l_elph_scatt.or.l_elel_scatt) call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
+ if ( (l_elph_scatt.or.l_elel_scatt) .and.it_start==1) then
+   !
+   call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
+   !
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
+   io_REF=io_RT_components('REF',ID(8))
+   !
+ endif
  !
  ! qindx_X and qindx_S not needed in real-time 
  ! they are used only in dipoles and collisions calculations

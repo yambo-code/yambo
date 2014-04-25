@@ -41,7 +41,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_RT_uses_E_RIM,RIM_bz_coo,RT_dynamics_steps,RT_dynamics_decay_time,&
 &                         RT_dynamics_KIND,l_NE_dynamics,l_RT_skip_impose,I_MEM_steps,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
-&                         RIM_EE_Nk_table,l_RT_EE_impose_E,l_RT_low_carr_den
+&                         RIM_EE_Nk_table,l_RT_EE_impose_E,l_RT_low_carr_den,RT_eh_en
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp,qindx_S
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
@@ -75,8 +75,13 @@ subroutine RT_initialize(E,k,q)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
  !
- l_NE_simulate_BSE     =.FALSE.
- l_NE_simulate_TDDFT   =.FALSE.
+ l_NE_simulate_RPA     =.not.Hfrozen.and.     XCfrozen
+ l_NE_simulate_IP      =     Hfrozen.and.     XCfrozen
+ l_NE_simulate_Irredux =     Hfrozen.and..not.XCfrozen
+ if (                   .not.Hfrozen.and..not.XCfrozen) then
+   l_NE_simulate_BSE     =.not.local_V
+   l_NE_simulate_TDDFT   =local_V
+ endif
  !
  l_RT_diagonalize      =RT_diagonalization_steps>1
  !
@@ -97,11 +102,6 @@ subroutine RT_initialize(E,k,q)
  else if (l_RT_INTERPOLATE) then
    Integrator_name = trim(Integrator_name)//" + INTERPOLATE"
  endif
- !
- ! Flags UPDATE
- !==============
- !
- call UPDATE_flags(.FALSE.)
  !
  ! If I am doing a NE loop in all cases I need to evaluate XC or Hartree correspoding to the
  ! starting basis. During the thermalization, instead, the potentials are updated
@@ -322,8 +322,6 @@ subroutine RT_initialize(E,k,q)
  !
  call COLLISIONS_load(.TRUE.)
  !
- call UPDATE_flags(.TRUE.)
- !
  ! LOG
  ! ===
  !
@@ -398,28 +396,4 @@ subroutine RT_initialize(E,k,q)
    enddo
  endif
  !
- contains
-   !
-   subroutine UPDATE_flags(COLLISIONS_checked)
-     !
-     logical :: COLLISIONS_checked
-     !
-     if (COLLISIONS_checked) then
-       if (l_use_collisions.and..not.l_elel_scatt) then
-         XCfrozen=.FALSE.
-         if (Hfrozen) call warning('COLLISIONS used but Hartree frozen')
-       endif
-     endif
-     !
-     if (l_elel_scatt) XCfrozen=.TRUE.
-     !
-     l_NE_simulate_RPA     =.not.Hfrozen.and.     XCfrozen
-     l_NE_simulate_IP      =     Hfrozen.and.     XCfrozen
-     l_NE_simulate_Irredux =     Hfrozen.and..not.XCfrozen
-     if (                   .not.Hfrozen.and..not.XCfrozen) then
-       l_NE_simulate_BSE     =.not.local_V
-       l_NE_simulate_TDDFT   =local_V
-     endif
-   end subroutine
-   !
 end subroutine RT_initialize

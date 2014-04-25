@@ -126,7 +126,8 @@ module real_time
  !
  ! ... Window on the k-points/bands allowed to follow the dynamics ...
  !
- real(SP)             :: RT_eh_energy_max
+ real(SP)             :: RT_eh_en(2)
+ real(SP)             :: RT_scatt_tresh
  !
  ! Macroscopic induced current ... 
  !--------------------------------
@@ -286,7 +287,7 @@ module real_time
  !
  integer,  parameter      :: J_and_P_cache_size=18
  !
- integer                  :: ID(7)
+ integer                  :: ID(8)
  integer                  :: it_start           = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
                                                       ! the last evaluated point

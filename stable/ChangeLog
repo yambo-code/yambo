@@ -1,3 +1,1367 @@
+2014-02-21 17:38:19 r3186 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.1
+
+	*  config/configure.ac configure include/version.inc io/io_HF_and_locXC.F qp/QP_report_and_write.F
+
+	Bugs:
+	- Restart from ndb.QP with different number of QP_nstates fixed
+	- QP_report works properly if l_life
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2014-02-21 15:30:46 r3184 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc io/ioKB_abinit.F io/ioKB_pwscf.F
+
+	Bugs:
+	- ioKB, in reading mode, was not reading pp_table if it was already allocated
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2014-01-25 17:27:41 r3152 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  devel/config/configure.ac devel/configure devel/include/version.inc stable/config/configure.ac stable/configure stable/include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Updating versions in the trunk for the release of the new GPL.
+	  STABLE: 3.4.0 --> 3.4.1  will be the new stable GPL
+	  DEVEL:  3.4.0 --> 4.0.0  will be the new devel GPL
+
+	Patch sent by: Davide
+
+2014-01-08 15:50:46 r3112 Andrea Marini <andrea.marini@cnr.it>
+
+	Fixed imposed order in command line for BS solver. Removed bug in evaluation of non-collinear excitonic spin. Still nonsense numbers tough
+
+2013-12-17 21:41:46 r3087 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc wf_and_fft/WF_states_setup.F
+
+	Bugs:
+	- Fixed a bug in WF_states_setup affecting runs with -M option and n_spinor=2
+	  (Bug pointed out by a user)
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2013-12-08 18:11:20 r3041 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc ypp/electrons_driver.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- ypp can now plot the WFs also in case nspinor=2
+
+	Patch sent by: Davide
+
+2013-11-19 13:23:35 r2953 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc io/ioKB_abinit.F io/ioKB_pwscf.F
+
+	Bugs:
+	- Reverted changes introduced with commit 2440 in ioKB and which are clearly wrong
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-11-08 12:15:47 r2900 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  include/version.inc xc_functionals/XC_libxc_driver.F config/configure.ac configure
+
+	Bugs:
+	- xc_functionals/XC_libxc_driver.F was returning a wrong V_xc for systems with
+	  a somewhere negative local magnetization and n_sp_pol=2. Bugs pointed out by AF.
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2013-10-10 10:54:39 r2767 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Add forgot file e2y_wf_components.F
+
+2013-10-06 20:38:52 r2750 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  e2y/e2y_kb_pp.F e2y/etsf_data.F e2y/e2y_wf.F e2y/e2y_i.F e2y/.objects e2y/e2y_db1.F include/version.inc driver/e2y.h configure modules/mod_vec_operate.F config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+
+	- e2y interface from KSS-etsf file know writes wfs on components.
+	  Used same trick of a2y. Still to be checked the cases nspin>1.
+
+	- e2y now can read also WFK-etsf files. However
+	  1) the kb form factors are not present (i.e. ns.kb_pp DBs is not created).
+	     Need work from the abinit group, for the creation of a NETCDF-etsf file
+	     containing this infos.
+	  2) The generation of the complete gvectors-grid is very slow.
+	     Nsym times double loop on ng_vec.
+	     Also (this is not an issue) the resulting wf_ng is different from wf_ng
+	     obtained from the KSS file, simply because the ordering of the gvectors
+	     inside the last shell is different.
+
+	Patch sent by: Davide
+
+2013-10-03 22:39:09 r2749 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure e2y/e2y_db1.F include/version.inc config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- e2y is now working again, at least for Si with nspin=1.
+	  Test with abinit-7.4.1
+
+	Patch sent by: Davide
+
+2013-10-03 20:42:40 r2748 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure io/ioDB1.F modules/std_presets.F pol_function/Dipole_shifted_grids.F sbin/make_makefile.sh.in config/configure.ac int_modules/mod_xc2y.F e2y/e2y_i.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fixed few bugs in Dipole_shifted grids. However, as pointed out also by Myrta, dipoles with this procedure are wrong,
+	  because of phase problems with the WFs. Only RPA-IP spectra are OK when all degenerate bands are included.
+	- Fixed e2y compilation fixed. To be checked if it works.
+
+	Patch sent by: Davide
+
+2013-09-19 11:35:12 r2733 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure qp/COLLISIONS_IO_cohsex.F include/version.inc config/configure.ac
+
+	Bugs:
+	- Two small bug-fix
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-09-18 09:25:42 r2726 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  parser/mod_itm.F interface/QP_init.F config/configure.ac ypp/ypp_i.F ypp/ypp_init.F include/version.inc configure
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Bug fix imported from trunk/devel
+
+	Patch sent by: Davide
+
+2013-09-10 15:13:05 r2706 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure io/ioBSS_invert.F config/configure.ac ypp/k_random.F ypp/fix_PPs.F include/version.inc
+
+	Bugs:
+	- io/ioBSS_invert.F: fixed old bug due to a non correct merge with my branch which prevented
+	  the inversion solver from working properly
+	- ypp/k_random.F: when we have a fine grid we need to redefine the zeros on the kpts
+	- ypp/fix_PPs.F: fixed small bug
+
+	Additions:
+	-
+	Changes:
+	- ypp/k_random.F: also other small improvements
+
+	Patch sent by: Davide
+
+2013-09-09 11:54:14 r2704 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  qp/ELPH_Hamiltonian.F ypp/k_random.F include/version.inc config/configure.ac configure
+
+	Bugs:
+	- Fixed long line in ELPH_Hamiltonian.F
+	- Fixed small bug in RIM with spin
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2013-08-06 12:53:33 r2611 Myrta Gruning <m.gruening@qub.ac.uk>
+
+	Version 3.4.0
+
+	*   qp/ELPH_Hamiltonian.F
+
+	Bugs: Wrong type in array aborted compilation
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2013-08-05 10:38:35 r2608 Andrea Marini <andrea.marini@cnr.it>
+
+	Fixed wrong logicals in external QP database I/O
+
+2013-08-05 09:52:56 r2607 Andrea Marini <andrea.marini@cnr.it>
+
+	Wrong stop in OCCUPATIONS load fixed during a simple _sc run
+
+2013-07-19 08:39:56 r2582 Andrea Marini <andrea.marini@cnr.it>
+
+	Hiroki bug-fix aded to ELPH_Sigma_c.F
+
+2013-07-18 00:10:45 r2579 Andrea Marini <andrea.marini@cnr.it>
+
+	e-p Hamiltonian: added e-p states analysis and residual treshold
+
+2013-07-11 13:11:59 r2550 Andrea Marini <andrea.marini@cnr.it>
+
+	Version 3.4.0
+
+	*  configure include/version.inc config/configure.ac qp/QP_driver.F qp/ELPH_Sigma_c.F qp_ctl/QP_apply_global_stretch.F qp_ctl/mod_QP_CTL.F interface/init.F setup/QP_external_corrections.F io/ioELPH.F modules/mod_ELPH.F
+
+	Additions:
+	- [ELPH] Added external QP corrections and stretching  on the k+q levels read
+	  from PW
+
+	Changes:
+	- [ELPH] Added partial DW and Fan components of the self-energy corrections (to code)
+	- [ELPH] Tad-Pole diagram started.
+
+	Patch sent by: Andrea
+
+2013-07-08 15:41:03 r2491 Andrea Marini <andrea.marini@cnr.it>
+
+	OLD trunk now in trunk/stable. Andrea's devel (with new MPI support) now in trunk/devel
+
+2013-07-08 15:37:37 r2490 Andrea Marini <andrea.marini@cnr.it>
+
+	Temporary trunk-stable added
+
+2013-07-08 12:30:19 r2488 Andrea Marini <andrea.marini@cnr.it>
+
+	Added option to use external (PW-compatible) interpolated modes file
+
+2013-07-04 13:35:38 r2479 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  qp/XCo_Hartree_Fock.F qp/COLLISIONS_IO_eval.F qp/COLLISIONS_IO_cohsex.F qp/COLLISIONS_IO_HF.F qp/.objects qp/COLLISIONS_IO_compose.F real_time/RT_start_and_restart.F real_time/RT_initialize.F
+
+	Bugs:
+	 -[RT] Fixed COLLISIONS when l_carrier_dynamics=.false.
+
+	Changes:
+	 -[RT] XC0_and_HARTREE0 not allocated anymore
+	 -[RT] Hartree-Fock Collisions calculated in a separed file COLLISION_IO_HF.F
+
+2013-07-02 14:59:28 r2467 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  sc/SC_bare_Hamiltonian.F modules/std_presets.F modules/mod_real_time.F qp/COLLISIONS_IO_compose.F
+
+	(forgot the message in previous commit)
+
+	Bugs:
+	 -[RT] QP_Vnl_xc not allocated at the first call of RT_observable.F
+	 -[RT] l_NSC_shot undefined in IO
+
+	Changes:
+	 -[RT/SC] SC_bare_hamiltonian.F parallalized
+
+2013-07-02 14:57:50 r2466 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  lib/libxc/build/Makefile.in lib/libxc/aclocal.m4 lib/libxc/configure lib/libxc/Makefile.in lib/libxc/Makefile.in lib/libxc/testsuite/Makefile.in sc/SC_bare_Hamiltonian.F modules/std_presets.F modules/mod_real_time.F qp/COLLISIONS_IO_compose.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2013-07-02 14:09:57 r2463 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc interface/init.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Command line improved
+	  * error message if -k option given before -o option
+	  * yambo -y ? activate SEX option by default with Hartree screening
+
+	Patch sent by: Davide
+
+2013-06-27 11:43:52 r2446 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc bse/K_inversion.F
+
+	Bugs:
+	- small bug in K_inversion for causal mode.
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-06-26 14:56:04 r2441 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc p2y/PP_PWscf_driver.F p2y/qexml_v4.0.F
+
+	Bugs:
+	- [p2y] Fixed bug for pseudo without non-local components
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-06-26 01:16:28 r2440 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  branches/gpl/config/configure.ac branches/gpl/configure branches/gpl/include/version.inc branches/gpl/interface/init_load.F branches/gpl/io/ioKB_abinit.F branches/gpl/io/ioKB_pwscf.F branches/gpl/ypp/symmetries_driver.F trunk/config/configure.ac trunk/configure trunk/include/version.inc trunk/interface/barriers.F trunk/interface/init_load.F trunk/io/ioKB_abinit.F trunk/io/ioKB_pwscf.F trunk/ypp/symmetries_driver.F
+
+	Bugs:
+	- fixed ypp/symmetry_driver for the extend_symmetries mode
+	- fixed GPL flags for yambo_surf
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-06-25 15:08:25 r2433 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc bse/.objects_gpl common/.objects_gpl ypp/electrons_driver.F
+
+	Bugs:
+	- ypp compilation issue fissed
+	- .object_gpl fixed
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-06-24 11:52:14 r2429 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  io/io_RT_components.F ypp/electrons_driver.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2013-06-20 14:26:04 r2423 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  io/io_Vnl.F io/io_RT_components.F modules/mod_parallel.F wf_and_fft/WF_load.F pol_function/Dipole_transverse.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2013-06-19 16:27:11 r2419 Andrea Marini <andrea.marini@cnr.it>
+
+	Polaronic WFs normalized and taken the abs
+
+2013-06-19 14:30:18 r2417 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc bse/.objects bse/K.F bse/K_BSload_diag.F bse/K_BSmat_by_V.F bse/K_Haydock.F bse/K_inversion.F common/.objects common/full_inversion.F common/pert_inversion.F modules/mod_BS.F pol_function/Dipole_kb_init.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Perturbative inversion now uses (a modified version of) K_BSmat_by_V.F so that
+	  the whole BS_mat is not allocated, as for the Haydock solver.
+	  Implementation from my branch.
+
+	  To be checked if yambo_distributed works with this implementation.
+
+	Patch sent by: Davide
+
+2013-06-19 14:22:09 r2416 Andrea Marini <andrea.marini@cnr.it>
+
+	Added treshold for polaronic residuals processing and fixed few bugs
+
+2013-06-19 12:34:13 r2414 Andrea Marini <andrea.marini@cnr.it>
+
+	Plot of polaronic wf's re-implemented. Improved I/O and fixed several bugs
+
+2013-06-19 11:11:58 r2412 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  configure include/version.inc config/configure.ac modules/mod_IO.F sbin/make_makefile.sh.in
+
+	Additions:
+	 -New option --enable-keep-src to keep .f90 files during compilation
+
+2013-06-18 10:38:17 r2411 Andrea Marini <andrea.marini@cnr.it>
+
+2013-06-17 12:42:30 r2409 Andrea Marini <andrea.marini@cnr.it>
+
+	Bug fixed in ELPH_Hamiltonian.F
+
+2013-06-03 11:08:53 r2378 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc bse/K_driver.F bse/K_eh_setup.F bse/K_inversion.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- BSEmod="causal" implemented also in the inversion solver
+	Patch sent by: Davide
+
+2013-06-02 17:51:07 r2376 Andrea Marini <andrea.marini@cnr.it>
+
+	Added more fields in QP of to monitor the energy spread of the spectral functions in order ro easily identify non-QP structures
+
+2013-05-28 10:01:33 r2363 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  common/G_index.F pol_function/X_os.F ypp/symmetries_driver.F
+
+	Bugs:
+	 -Fixed G_index for the case of energy degenerate shells
+
+	Changes:
+	 -Wave-function is not loaded anymore for the IP case
+
+2013-05-27 22:55:38 r2362 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc ypp/fix_PPs.F ypp/fix_WFs_and_E.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- ypp now rotates also the ns.kb_pp_pwscf DBs when removing symmetries
+	Patch sent by: Davide
+
+2013-05-27 13:32:30 r2357 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure driver/p2y.h include/version.inc int_modules/mod_com2y.F p2y/PP_PWscf_driver.F p2y/p2y_db1.F p2y/p2y_i.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- removed -g option from p2y
+
+	Patch sent by: Davide
+
+2013-05-27 12:10:35 r2355 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  common/G_index.F
+
+	Bugs:
+	 -Fixed bug with G_index for particular systems
+
+2013-05-23 08:43:23 r2339 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac interpolate/grid_generator.F ypp/electrons_bands.F configure include/version.inc
+
+	Changes:
+	 -Fixed k-grid generator
+
+2013-05-20 17:29:12 r2330 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  ypp/k_grids.F
+
+	Bugs:
+	 -Small bug in output
+
+2013-05-19 22:54:51 r2326 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc p2y/PP_PWscf_driver.F
+
+	Bugs:
+	- Fixed ns.kb_pp_pwscf in p2y for parallel runs
+	  I/O is fragmented, not parallelized
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-05-16 18:18:11 r2321 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  qp_ctl/OCCUPATIONS_IO_and_interpolate.F wf_and_fft/WF_apply_symm.F interface/init.F real_time/RT_databases_IO.F real_time/RT_start_and_restart.F + io/.objects io/io_SC_components.F ypp/ypp_init.F ypp/RT_databases.F
+
+	Changes:
+	 -I/O separated for SC and RT
+
+2013-05-16 14:04:57 r2317 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  real_time/RT_databases_IO.F real_time/RT_initialize.F io/io_SC_components.F
+
+	Bugs:
+	 -[RT] Bug reading and writing current and polarization, now yambo_rt reproduces
+	       the results of rev  2000
+
+2013-05-15 20:27:56 r2315 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  pol_function/X_bare_RIM_GreenF.F real_time/RT_initialize.F
+
+	Bugs:
+	 -[RT] Fixed the right size NE_steps when RT_IO_time < 0
+
+2013-05-15 18:22:11 r2313 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  include/version.inc config/configure.ac configure bse/K_inversion.F pol_function/X_bare_RIM_GreenF.F pol_function/X_simple_GreenF.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- BSE computes the causal L, not the T-ordered. Thus I need the antiresonant term of the causal Green ('ca'),
+	  not the antiresonant term of the T-ordered Green function ('a'). Compare also with the definition of 'sa'.
+
+	Patch sent by: Davide
+
+2013-05-15 18:00:59 r2312 Andrea Marini <andrea.marini@cnr.it>
+
+	Bug fix in BSE inversion using GF's (including also Davide's comment)
+
+2013-05-15 12:19:36 r2308 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure setup/setup.F communicate/REPORT_Energies.F bz_ops/bz_samp_indexes.F pol_function/Dipole_kb_init.F config/configure.ac ypp/symmetries_driver.F include/version.inc
+
+	Bugs:
+	- Commented lines computing the magnetization in ypp/symmetries_driver.F
+	  There is a bug to be fixed there.
+
+	Additions:
+	-
+	Changes:
+	- q-points, k-points, DL vectors and RL vectors now are written in the report file
+	  also in cartesian coordinates (cc) which are more physical than the internal
+	  k units (iku). The latter however are kept for consistency with previous report files.
+
+	Patch sent by: Davide
+
+2013-05-15 10:05:25 r2306 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.3.1
+
+	*  ypp/RT_X_effective.F
+
+	Changes:
+	 -Changed X2 output to be plotable with gnuplot
+
+2013-05-11 22:41:02 r2304 Andrea Marini <andrea.marini@cnr.it>
+
+	Version 3.4.0
+
+	*  configure include/version.inc config/configure.ac bse/K_inversion.F
+
+	Bugs:
+	- Bug fixed in K_inversion
+
+	Changes:
+	- K_inversion "f" mode forced to invert all not-converged frequencies instead of using
+	  a recursive procedure (see old value of max_freqs_full_inv_ratio)
+
+	Patch sent by: Andrea
+
+2013-05-10 16:49:01 r2303 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure wf_and_fft/WF_apply_symm.F config/configure.ac include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- WF_apply_symm reverted to last version. New version was very slow.
+	  Presently WF_symm and WF_apply_symm contains almost the same code however.
+
+	Patch sent by: Davide
+
+2013-05-10 09:57:06 r2301 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  pol_function/Dipole_kb_pwscf_comp.F interface/init.F config/configure.ac include/version.inc configure
+
+	Bugs:
+	- If MaxGvecs is reduced below wf_ng a check is needed [ wf_igk(ic,ik)=ig<wf_ng ]
+	  in loops on component.
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-05-09 10:32:29 r2298 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  ypp/electrons_bands.F modules/mod_fields.F modules/mod_parallel.F qp_ctl/QP_load_DB.F
+
+	Bugs:
+	 -Fixed bug reading quasi-particle databases
+	 -Fixed bug ploting the interpolated band structure
+
+2013-05-08 15:57:52 r2294 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure config/configure.ac ypp/fix_PPs.F include/version.inc
+
+	Bugs:
+	- bug fixed in ypp/fix_PPs.F:
+	  ioKB_PP is now ioKB_abinit and PP_alloc is now PP_alloc_abinit.
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-05-08 14:44:06 r2292 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure pol_function/.objects_gpl io/.objects_gpl include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fixed gpl files
+
+	Patch sent by: Davide
+
+2013-05-06 14:30:07 r2288 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure pol_function/Dipole_kb_init.F pol_function/Dipole_transverse.F config/configure.ac include/version.inc
+
+	Bugs:
+	- Fixed bug in ns.kb_pp I/O introduced with last commit
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-05-06 12:17:54 r2287 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure int_modules/mod_com2y.F p2y/pw_atoms_module.F + p2y/.objects p2y/pw_pseudovelocity_module.F + p2y/Vnl_driver.F p2y/p2y_i.F a2y/a2y_wf.F a2y/a2y_i.F pol_function/Dipole_transverse.F pol_function/Dipole_kb_pp_comp.F pol_function/Dipole_kb_Ylm.F pol_function/Dipole_kb_init.F pol_function/.objects + pol_function/Dipole_kb_pwscf_comp.F + io/ioKB_pwscf.F io/ioKB_PP.F io/.objects modules/mod_pseudo.F interface/init.F driver/p2y.h lib/libxc/config.h.in lib/libxc/configure include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [x,Vnl] commutator via KB form factor for p2y included.
+	  Old implementation in p2y erased. However yambo is still able to read ns.Vnl DB.
+	  The new implementation is identical to one in a2y for n_spin=1 .
+	  However for n_spin=2 the two implementations are slightly different. Thus now a2y
+	  creates the ns.kb_pp DBs while p2y creates the ns.kb_pp_pwscf DB
+	  The CPU-time-consuming subroutine "src/pol_function/Dipole_kb_sum.F" is common
+	  and it did not change with the present commit.
+
+	Patch sent by: Davide
+
+2013-05-03 15:03:07 r2279 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac include/version.inc configure common/OCCUPATIONS_Fermi.F
+
+	Bugs:
+	- E%f was allocated n_spin instead of n_sp_pol in common/OCCUPATIONS_Fermi.F
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-05-02 19:45:17 r2277 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.4.0
+
+	*  config/Makefile.in_gpl
+
+	Bugs:
+	- Took branches/gpl version, now everything compiles (!)
+
+2013-05-02 19:14:06 r2276 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.4.0
+
+	*  surf_modules/.objects surf_modules/.objects_gpl io/.objects_gpl modules/.objects_gpl wf_and_fft/.objects_gpl pol_function/.objects_gpl ypp/.objects_gpl sbin/yamboo_new.pl config/Makefile.in_gpl
+
+	Bugs:
+	- Corrected more bugs in new yamboo script.
+	- Corrected several missing objects in .objects_gpl files. Check that this is what you intend in the GPL!
+	Additions:
+	- Ready to test the new GPL ++ source, try with
+	  ./sbin/yamboo_new.pl -p="KERR SURF YPP_SURF ELPH YPP_ELPH"
+
+	- yambo_kerr, yambo_ph, ypp_ph compile after yamboo.pl
+	- yambo_surf, ypp_surf don't compile, to be fixed
+
+2013-05-02 17:34:20 r2274 Andrea Marini <andrea.marini@cnr.it>
+
+	Version 3.4.0
+
+	*  configure include/version.inc config/configure.ac pol_function/X_bare_RIM_GreenF.F pol_function/X_os.F io/ioELPH.F ypp/ypp_init.F ypp/ypp_init_load.F
+
+	Bugs:
+	- bug in ioELPH fixed
+	- Old fr argument of X_bare_RIM_GreenF removed
+
+	Additions:
+	- Electronic/Bosonic temperatures input variables added
+
+	Patch sent by: Andrea
+
+2013-05-01 10:54:04 r2268 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  modules/.objects modules/.objects_gpl
+
+	Bugs:
+	 -Changed modules order to fix compilation issues
+
+2013-05-01 00:33:43 r2265 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  wf_and_fft/.objects wf_and_fft/WF_symm.F wf_and_fft/WF_apply_symm.F modules/mod_wave_func.F config/configure.ac ypp/excitons_driver.F ypp/ypp_init_load.F include/version.inc configure
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- WF_symm rotates WFs point by point. Needed by excitons_driver.
+
+	Patch sent by: Davide
+
+2013-04-30 17:15:47 r2263 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.4.0
+
+	*  include/latest_info.inc sbin/yamboo.pl sbin/yamboo_new.pl
+
+	Additions:
+	- Improved yamboo.pl script for multiple projects, needs complete testing
+
+2013-04-30 12:03:09 r2256 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	trying again
+
+2013-04-30 11:55:35 r2254 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Revision set automatically by subversion in file include/latest_info.inc
+
+2013-04-30 09:34:44 r2252 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  ypp/excitons_driver.F
+
+	Bugs:
+	- Forgot ikibz index fix in previous commit
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-04-30 09:32:48 r2251 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  pol_function/Dipole_transverse.F pol_function/Dipole_kb_Ylm.F config/configure.ac ypp/excitons_driver.F include/version.inc configure
+
+	Bugs:
+	- Fixed a bug in excitons_driver. Bug pointed by a user.
+	  Forum message: "ypp excitons wave plot :: Segmentation fault :: ver 3.4.0"
+
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-04-29 17:21:03 r2248 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Working on new yamboo.pl script (not working yet)
+
+2013-04-26 20:04:32 r2238 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc bz_ops/k_expand.F
+
+	Bugs:
+	- wrong dimensions in mem_est call
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-04-26 17:38:48 r2237 Andrea Marini <andrea.marini@cnr.it>
+
+	Second frequency removed in response to make the merge with the parallel branch easier
+
+2013-04-26 13:56:05 r2227 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.3.1
+
+	*  interface/init.F
+
+	Changes:
+	 -[RT] IOtime moved in the input flags
+
+2013-04-25 19:35:02 r2224 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc pol_function/Dipole_shifted_grids.F wf_and_fft/WF_apply_symm.F
+
+	Bugs:
+	- Finally fixed bug in WF_apply_symm with spinors
+	Additions:
+	-
+	Changes:
+	- Wrapper used also in Dipoles_shifted_grids
+
+	Patch sent by: Davide
+
+2013-04-25 13:46:12 r2221 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.3.1
+
+	*  modules/mod_timing.F common/G_index.F
+
+	Bugs:
+	 -Fixed bug in particular case, G_index simplified.
+	 -Fixed bug for more than 100 processors in mod_timing.F
+
+2013-04-24 17:20:28 r2219 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure bse/K_kerr_IP.F bse/K_Haydock.F bse/K_IP.F bse/K_diagonalization.F bse/K_driver.F bse/K_solvers.F bse/K_eh_setup.F bse/K_inversion.F config/configure.ac include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- BSEmod="causal" now supported also by Haydock solver
+	- Occupations moved inside BSS_rhoq0 and also supported by Haydock
+	  solver for the Hermetian case (i.e. BSEmod="causal")
+	- Drude term in bse now included also via the Haydock solver
+
+	Patch sent by: Davide
+
+2013-04-24 11:57:33 r2214 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac include/version.inc configure interface/init_load.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Haydock_treshold input variable is now a standard variable
+
+	Patch sent by: Davide
+
+2013-04-23 20:01:22 r2210 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.4.0
+
+	*  ypp/ypp_init_load.F ypp/electrons_dos_and_charge.F ypp/ypp_init.F
+
+	Changes:
+	 -ypp -s s now plots the full DOS
+	 -Added new flag PrtOccOnly to plot DOS multiplied by the occupation
+
+2013-04-23 17:07:35 r2208 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure wf_and_fft/WF_apply_symm.F config/configure.ac include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fixed revision numbering
+
+	Patch sent by: Davide
+
+2013-04-23 10:38:30 r2204 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Updated version to: 3.4.0
+
+2013-04-23 10:37:14 r2203 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Fixed GPL generation
+
+2013-04-22 14:39:14 r2200 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.3.1
+
+	*  include/version.inc p2y/pw_pseudovelocity_module.F setup/build_spin_sop.F wf_and_fft/WF_apply_symm.F bse/K_driver.F config/configure.ac
+
+	Bugs:
+	- p2y -c works also if not all psp contains SO
+	- BS_bands boundaries fixed
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-04-21 17:26:17 r2196 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.3.1
+
+	*  config/configure.ac configure include/version.inc bse/K_eh_setup.F
+
+	Bugs:
+	- BS_bands check moved from K_eh_setup to K_driver
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-04-19 14:46:32 r2192 Andrea Marini <andrea.marini@cnr.it>
+
+	Version 3.3.1
+
+	*  include/version.inc config/configure.ac qp_ctl/QP_apply_DB_interpolation.F qp_ctl/QP_merge_DBs.F parser/mod_parser_m.F parser/mod_itm.F bz_ops/k_the_nearest.F interface/init.F modules/mod_R_lattice.F ypp/ypp_init.F + ypp/ypp_init_load.F ypp/read_bxsf.F ypp/qpdb_setup.F ypp/qpdb_init.F ypp/mod_YPP.F ypp/ypp_i.F ypp/.objects ypp/.objects_gpl ypp/QP_DBs_merge.F + ypp/k_random.F driver/ypp.h
+
+	Additions:
+	- Added options to ">ypp -q" to merge QP databases.
+	- Added utility in ypp to merge QP databases.
+	- Added to the parser matrix-like character variables.
+
+	Changes:
+	- k_the_nearest moved as interface in the RL module
+	- Switched off automatic em1s runlevel with "-o b" to allow the post-inversion of the
+	  BSE using the RIM without that the em1s database is rebuild again.
+	- ypp/qpdb_setup.F and ypp/qpdb_init.F renamed.
+
+	Patch sent by: Andrea
+
+2013-04-16 13:20:24 r2181 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.3.1
+
+	*  include/version.inc config/configure.ac surf_modules/mod_ras.F surf/Write_RAS.F surf/Surface_driver.F ypp/ras_ypp.F ypp/reels_ypp.F
+
+	Changes:
+	- [SURF] Tidying labels of output files
+
+	Patch sent by: Conor
+
+2013-04-16 11:51:28 r2180 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.3.1
+
+	*  interpolate/grid_generator.F interpolate/eval_interpolation_coeff.F interpolate/.objects ypp/ypp_init_load.F ypp/ypp_init.F ypp/electrons_bands.F ypp/mod_YPP.F
+
+	Changes:
+	 -Fixed interpolation input and interpolation on regular grids
+
+2013-04-16 09:32:10 r2176 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.3.1
+
+	*  interface/init_load.F
+
+	Changes:
+	 -Changed verbosity for QpntsRXs QpntsRXp QpntsRXx
+
+2013-04-15 10:44:16 r2170 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.3.1
+
+	*  config/configure.ac configure common/G_index.F include/version.inc
+
+	Bugs:
+	- Fixed bug in G_index.F for systems with many shells
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-04-14 18:53:42 r2166 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Move to web
+
+2013-04-14 18:30:21 r2165 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Removed useless commented line
+
+2013-04-14 18:28:21 r2164 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.3.1
+
+	*  config/configure.ac configure include/version.inc pol_function/Dipole_kb_Ylm.F pol_function/Dipole_kb_pp_comp.F pol_function/Dipole_kb_sum.F pol_function/Dipole_transverse.F
+
+	Bugs:
+	- Fixed old bug in Dipole_kb_Ylm.F which affected [x,Vnl] abinit
+	  for all calculations if the projectors of Vnl had l>0
+	  Now runs with different symmetries gives exactly the same result.
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-04-08 17:09:49 r2162 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.3.1
+
+	*  include/version.inc configure common/G_rot_grid.F
+
+	Bugs:
+	- Fixed G_rot_grid bug in trunk. Affected ypp when grids were rotated
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-04-07 17:34:58 r2155 Andrea Marini <andrea.marini@cnr.it>
+
+	Hartree is default Chi_mode in em1s/em1d
+
+2013-04-07 16:15:28 r2152 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.3.1
+
+	*  interface/init_load.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Double commit GPL and trunk:
+	  removed bsfxc option in the GPL
+
+	Patch sent by: Davide
+
+2013-04-07 11:25:25 r2149 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.3.1
+
+	*  driver/yambo.h_gpl driver/ypp.h_gpl
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Double commit trunk and GPL
+	  yambo.h and ypp.h for GPL fixed
+
+	Patch sent by: Davide
+
+2013-04-06 18:34:15 r2145 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.3.1
+
+	*  common/G_index.F ypp/fix_WFs_Gshells.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Double commit in GPL and trunk:
+	  Code which closes the shells against general symemtries is not yet ready.
+	  Removed from GPL
+
+	Patch sent by: Davide
+
+2013-04-06 15:18:57 r2142 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.3.1
+
+	*  io/ioQP.F
+
+	Bugs:
+	 -Yambo checks the ndb.QP type, if it is different it recalculates it
+
+2013-04-06 14:19:56 r2141 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.3.1
+
+	*  ypp/ypp_i.F ypp/ypp_init.F ypp/ypp_init_load.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Double commit trunk+GPL
+	- ypp fix symmetries now also included in the GPL
+
+	Patch sent by: Davide
+
+2013-04-06 13:46:55 r2140 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.3.1
+
+	*  interface/init_load.F setup/setup.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Double commit trunk+GPL
+	A) init_load DrudeWBS moved. Now it is correctly loaded in the GPL
+	B) Mag symmetries included also in GPL
+
+	Patch sent by: Davide
+
+2013-04-06 03:47:49 r2130 Andrea Marini <andrea.marini@cnr.it>
+
+	_SURF copyright year updated
+
+2013-04-06 02:24:05 r2127 Andrea Marini <andrea.marini@cnr.it>
+
+	minor changes to extract the gpl source
+
+2013-04-05 12:53:51 r2107 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.3.1
+
+	*  interface/init_load.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- eh-interaction also in coupling logial is a default variable
+
+	Patch sent by: Davide
+
+2013-04-05 11:13:02 r2104 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.3.1
+
+	*  interface/init_load.F
+
+	Bugs:
+	 -Fixed bug with verbosity -V QP
+
+2013-04-05 10:17:48 r2099 Claudio Attaccalite <claudio.attaccalite@gmail.com>
+
+	Version 3.3.1
+
+	*  driver/yambo.h driver/yambo.h_gpl
+
+	Changes:
+	 -Added some comments on BSE solvers
+
+2013-04-04 11:52:52 r2096 Myrta Gruning <m.gruening@qub.ac.uk>
+
+	Version 3.3.1
+
+	*  interface/init.F
+
+	Bugs: -o b -y <solver> was producing and input that produced a segfault
+	      now in this case bss runlevel is switched off
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2013-04-04 08:53:00 r2094 Andrea Marini <andrea.marini@cnr.it>
+
+	Few conflicts fixed
+
+2013-04-03 23:54:30 r2093 Andrea Marini <andrea.marini@cnr.it>
+
+	Version 3.3.1
+
+	*  include/version.inc interface/init_load.F interface/init.F bse/K_driver.F bse/K_IP.F bse/K.F
+
+	BS-based Fxc works when launnched on the fly (-k BSfxc -y t). It does not work when used
+	as a simple post-solved (-k sex -y t). This part must be fixed. Moreover I am not sure anymore
+	about the correct removal of the exchange part.
+
+	All this section will be revisioned after the school.
+
+	Patch sent by: Andrea
+
+2013-04-03 23:38:56 r2092 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.3.1
+
+	*  driver/yambo.h include/version.inc bse/K_IP.F bse/K_driver.F bse/K_solvers.F interface/barriers.F interface/init.F interface/init_load.F modules/mod_BS.F modules/mod_TDDFT.F modules/mod_X.F modules/mod_drivers.F modules/std_presets.F pol_function/O_driver.F real_time/.objects
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Input command line reorgainzation improved. (patch by Myrta and Davide)
+
+	Patch sent by: Davide
+
+2013-04-03 22:33:35 r2091 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.3.1
+
+	*  surf_modules/mod_surface_geometry.F surf/Extract_eps_surf.F surf/Write_REELS.F interface/init.F ypp/ypp_i.F ypp/ypp_init_load.F ypp/ypp_init.F ypp/ras_ypp.F driver/ypp.h include/version.inc
+
+	Additions:
+	- [SURF] ypp_surf routines fixed, output tidied up
+
+	Patch sent by: Conor
+
+2013-04-02 20:11:24 r2087 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.3.1
+
+	*  include/version.inc config/Makefile.in_gpl config/Makefile.in surf surf/Write_eps_tensor.F surf/Calc_REELS.F surf/Write_RAS.F surf/Extract_eps_surf.F surf/io_DIPOLES_cut.F surf/Dipole_driver_cut.F surf/Dipole_transverse_cut.F surf/Surface_driver.F surf/.objects surf/Write_REELS.F pol_function/X_os.F pol_function/Dipole_dip_dot_field.F setup/QP_external_corrections.F interface/init_load.F interface/init.F surf_modules surf_modules/mod_reels.F surf_modules/ras_presets.F surf_modules/mod_convolute.F surf_modules/mod_optcut.F surf_modules/mod_eels_kinematics.F surf_modules/mod_eels_detector.F surf_modules/mod_numerical_integration.F surf_modules/mod_surface_geometry.F surf_modules/.objects surf_modules/mod_model_loss_function.F surf_modules/mod_ras.F surf_modules/io_loc.F surf_modules/mod_bulkeps.F surf_modules/.objects_gpl ChangeLog ypp/reels_ypp.F ypp/mod_YPP.F ypp/ras_generate_epsdb.F ypp/.objects ypp/ras_trans_ypp.F ypp/ras_ypp.F driver/yambo_driver.F driver/driver.c driver/yambo.h driver/ypp.h
+
+	Additions:
+	- [SURF] Surface spectroscopy project re-inserted into trunk. Some basic tests passed but needs more checking.
+	  Executables/projects renamed as yambo_surf and ypp_surf; D_SURF precompilation flag.
+
+	Patch sent by: Conor
+
 2013-03-30 16:28:06 r2085 Conor Hogan <conor.hogan@roma2.infn.it>
 
 	Version 3.2.5

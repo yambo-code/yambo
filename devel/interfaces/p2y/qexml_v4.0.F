@@ -3342,6 +3342,8 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh,psp_has_so, &
     cd_tmp=cmplx(d_tmp,0._SP)
     call mat_dia_inv(DIAGO,cd_tmp,E_real=d)
     d_tmp=real(cd_tmp)
+  else
+    d=d_tmp(1,1)
   endif
   !
   lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))

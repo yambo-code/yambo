@@ -50,7 +50,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
  type(bz_samp),        intent(in) :: k,q
  type(levels),         intent(in) :: E
  real(SP),             intent(in) :: T_step,Time
- complex(SP),          intent(in) :: G_old(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),       intent(inout) :: G_old(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  complex(SP),       intent(inout) :: G_new(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  type(gauge_field),    intent(in) :: A_old
  type(gauge_field), intent(inout) :: A_new
@@ -105,6 +105,8 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
    !
    subroutine RT_evolve(dT)
      !
+     use real_time,   ONLY:RT_apply_RWA
+     !
      real(SP),intent(in)    :: dT
      !
      integer                :: ib
@@ -112,10 +114,8 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
      !
      do ik=1,RT_nk
        !
-       if (l_RT_RWA) then
-         call RT_apply_RWA(G_old(:,:,ik),ik,E,Time,"APPLY")
-         call RT_apply_RWA(G_lesser_reference(:,:,ik),ik,E,Time,"APPLY")
-       endif
+       if (l_RT_RWA) call RT_apply_RWA(ik,E,Time,"APPLY",G_old(:,:,ik),&
+         &                                            M2=G_lesser_reference(:,:,ik))
        !
        G_old_full=G_old(:,:,ik)+G_lesser_reference(:,:,ik)
        !
@@ -143,11 +143,8 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
          !
        endif
        !
-       if (l_RT_RWA) then
-         call RT_apply_RWA(G_old(:,:,ik),ik,E,Time,"REMOVE")
-         call RT_apply_RWA(G_lesser_reference(:,:,ik),ik,E,Time,"REMOVE")
-         call RT_apply_RWA(G_new(:,:,ik),ik,E,Time+dT,"REMOVE")
-       endif
+       if (l_RT_RWA) call RT_apply_RWA(ik,E,Time,"REMOVE",G_old(:,:,ik),&
+         &                  M2=G_lesser_reference(:,:,ik),M3=G_new(:,:,ik))
        !
        ! Dephasing and carriers relaxation step
        ! G(T+dt) = G(T) - i dt * Simga_relax(T)

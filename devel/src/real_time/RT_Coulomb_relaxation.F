@@ -45,7 +45,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  !
  integer               :: i_qp,i_qp1,i_p,i_p_bz,ik_m_q,i_pmq,i_n,i_m,i_mp,i_np,ik_rim,&
 &                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_q_mem,i_pmq_bz,i1,i2,&
-&                         i_J,i_J_bg,i_J_mem,ik_m_q_rim
+&                         i_J,i_J_bg,i_J_mem,ik_m_q_rim,N_poles_grouped
  real(SP)              :: pre_factor,P_pl_abs,P_pl_emit,DELTA_E,DELTA_W,TMP_Hole_lifetime,TMP_Electron_lifetime
  !
  ! Occupations
@@ -84,6 +84,8 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
      dN_e_plasma=rZero
      dN_h_plasma=rZero
      !
+     N_poles_grouped=0
+     !
      ! Define plasma occupations and Energies
      !========================================
      do i_J_bg=EH_gas%grid(i_J,i_q_mem,1),EH_gas%grid(i_J,i_q_mem,2)
@@ -102,6 +104,11 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        !
        if (RT_occupations_locked(i_m ,RT_ibz_coo(i_p,1)))   cycle
        if (RT_occupations_locked(i_mp,RT_ibz_coo(i_pmq,1))) cycle
+       !
+       if(E%E(i_mp,i_pmq,1)<RT_eh_en(1) .or. E%E(i_mp,i_pmq,1)>RT_eh_en(2)) cycle
+       if(E%E(i_m ,i_p  ,1)<RT_eh_en(1) .or. E%E(i_m ,i_p  ,1)>RT_eh_en(2)) cycle
+       !
+       N_poles_grouped=N_poles_grouped+1
        !
        DELTA_E=    E%E(i_m,i_p,1) -    E%E(i_mp,i_pmq,1)
        DELTA_W=abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))
@@ -123,12 +130,16 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        !
      enddo
      !
-     E_plasma   =E_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
+     if (N_poles_grouped==0) cycle
      !
-     N0_e_plasma=N0_e_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
-     N0_h_plasma=N0_h_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
-     dN_e_plasma=dN_e_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
-     dN_h_plasma=dN_h_plasma/real(EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1,SP)
+     !N_poles_grouped=EH_gas%grid(i_J,i_q_mem,2)-EH_gas%grid(i_J,i_q_mem,1)+1
+     !
+     E_plasma   =E_plasma/real(N_poles_grouped,SP)
+     !
+     N0_e_plasma=N0_e_plasma/real(N_poles_grouped,SP)
+     N0_h_plasma=N0_h_plasma/real(N_poles_grouped,SP)
+     dN_e_plasma=dN_e_plasma/real(N_poles_grouped,SP)
+     dN_h_plasma=dN_h_plasma/real(N_poles_grouped,SP)
      !
      ! Unlike phonons, plasmons have a finite lifetime
      !

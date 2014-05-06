@@ -88,17 +88,16 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    !
    io_COLLISIONS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
    !
-   VAR_size=5
-   if (ver_is_gt_or_eq(ID,revision=2885)) VAR_size=7
+   VAR_size=7
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=VAR_size,MENU=0)
    !
    call io_elemental(ID,I1=SC_bands,&
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
    !
-   if (ver_is_gt_or_eq(ID,revision=1428)) then
+   if (V_kind==SE_GW_NEQ) then
      call io_elemental(ID,L0=l_elel_scatt,&
-&         VAR=' Electron-Electron scattering    :',CHECK=.true.,OP=(/"=="/))
-     if (ver_is_gt_or_eq(ID,revision=2885).and.l_elel_scatt) then
+&         VAR=' Electron-Electron scattering    :',WARN=.true.,OP=(/"=="/))
+     if(l_elel_scatt) then
       call io_elemental(ID,I0=N_plasma_poles_global,&
 &          VAR=' Max N plasma poles (q-resolved) :',CHECK=.true.,OP=(/"=="/))
       call io_elemental(ID,R0=Plasma_redux_percent,&

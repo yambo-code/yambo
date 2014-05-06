@@ -50,7 +50,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,l_RT_uses_E_RIM,             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
-&                         G_lesser_reference,l_RT_needs_XC0,RIM_ibz_coo,       &
+&                         G_lesser_reference,l_RT_needs_XC0,RIM_ibz_coo,RT_apply_RWA,          &
 &                         l_NE_simulate_IP,Hfrozen,XCfrozen,l_NE_dynamics_started,l_RT_RWA
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
@@ -234,7 +234,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
      !===============
      forall(ib=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ib,ik_RT:ikp_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT:ikp_RT,1)-E%E(ib,ik,1)
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       call RT_apply_RWA(Ho_plus_Sigma(:,:,ik_RT,1),ik_RT,E,Time,"APPLY")
+       call RT_apply_RWA(ik_RT,E,Time,"APPLY",Ho_plus_Sigma(:,:,ik_RT,1))
      enddo
      !
    else if (l_RT_uses_E_RIM) then

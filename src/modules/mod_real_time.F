@@ -355,8 +355,18 @@ module real_time
      integer , optional, intent(in)    :: imposed_COM
    end subroutine OCCUPATIONS_IO_and_interpolate
    !
-   subroutine RT_Integrator(G_new,G_old,Avec,Avec_old,T_step,Xen,k,q,Integrator,Time)
-   end subroutine RT_Integrator
+   subroutine RT_apply_RWA(ik,E,Time,MODE,M1,M2,M3)
+     use pars,           ONLY:SP
+     use electrons,      ONLY:levels
+     use SC,             ONLY:SC_bands
+     integer,      intent(in)     :: ik
+     type(levels), intent(in)     :: E
+     real(SP),     intent(in)     :: Time
+     character(*), intent(in)     :: MODE
+     complex(SP),  intent(inout)            :: M1(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     complex(SP),  intent(inout), optional  :: M2(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     complex(SP),  intent(inout), optional  :: M3(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+   end subroutine RT_apply_RWA
    !
  end interface
  !

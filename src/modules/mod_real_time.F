@@ -355,8 +355,18 @@ module real_time
      integer , optional, intent(in)    :: imposed_COM
    end subroutine OCCUPATIONS_IO_and_interpolate
    !
-   subroutine RT_Integrator(G_new,G_old,Avec,Avec_old,T_step,Xen,k,q,Integrator,Time)
-   end subroutine RT_Integrator
+   subroutine RT_apply_RWA(ik,E,Time,MODE,M1,M2,M3)
+     use pars,           ONLY:SP
+     use electrons,      ONLY:levels
+     use SC,             ONLY:SC_bands
+     integer,      intent(in)     :: ik
+     type(levels), intent(in)     :: E
+     real(SP),     intent(in)     :: Time
+     character(*), intent(in)     :: MODE
+     complex(SP),  intent(inout)            :: M1(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     complex(SP),  intent(inout), optional  :: M2(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     complex(SP),  intent(inout), optional  :: M3(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+   end subroutine RT_apply_RWA
    !
  end interface
  !
@@ -446,8 +456,8 @@ module real_time
      endif
      !
      if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt) then
-       allocate(REF_lifetime(SC_bands(1):SC_bands(2),RT_nk,8))
-       call mem_est("REF_lifetime",(/size(REF_lifetime)/),(/SP/))
+       allocate(REF_lifetime(SC_bands(1):SC_bands(2),RT_nk,6))
+       call mem_est("REF_lifetime",(/size(REF_lifetime)/),(/SP/)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
        allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
        call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
        allocate(SAVED_times(Life_MEM_steps)) 

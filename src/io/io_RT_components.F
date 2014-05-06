@@ -26,8 +26,7 @@ integer function io_RT_components(what,ID)
  use pars,           ONLY:SP,lchlen
  use R_lattice,      ONLY:nkibz,nqbz
  use stderr,         ONLY:intc
- use SC,             ONLY:SC_bands,SC_nbands,&
-&                         RT_nk,&
+ use SC,             ONLY:SC_bands,SC_nbands,RT_nk,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,&
@@ -58,13 +57,11 @@ integer function io_RT_components(what,ID)
  ! Work Space
  !
  integer, external     :: variables_SC
- character(lchlen)     :: local_description(100),ch
+ character(lchlen)     :: local_description(100),db_name
  !
  real(SP), allocatable :: TMP_matrix(:,:,:)
- integer               :: ik,ib,i_spin,i1
+ integer               :: ik,ib,i_spin,i1,file_number,i_time,i_time_range(2)
  logical               :: l_V,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_T_EL,l_THETA,l_REF
- integer               :: file_number,i_time
- integer               :: i_time_range(2)
  real(SP)              :: A_vecpot_disk(3,3,2)
  !
 #if defined _TIMING
@@ -75,8 +72,10 @@ integer function io_RT_components(what,ID)
  l_THETA      =what=="THETA"
  l_J_and_P    =what=="J_and_P"
  l_G          =what=="G"
- !
  l_REF        =what=="REF"
+ !
+ db_name=what
+ if (l_REF) db_name="reference_G_and_occupations"
  !
  ! When the db.scV is used for single non-SC shot the number
  ! of bands and SC_mixing can be not respected. 
@@ -90,23 +89,21 @@ integer function io_RT_components(what,ID)
  ! Write only every RT_io_steps
  !
  if (l_J_and_P.or.l_occupations) then
-   if(io_sec(ID,1)==1) then 
-     if (l_J_and_P)     io_RT_components=io_connect(desc="RT_J_and_P",type=2,ID=ID)
-     if (l_occupations) io_RT_components=io_connect(desc="RT_delta_occ",type=2,ID=ID)
+   if (io_sec(ID,1)==1) then 
+     io_RT_components=io_connect(desc="RT_"//trim(db_name),type=2,ID=ID)
    else
-     !  
-     if(RT_do_IO('J')) then
-       if (l_J_and_P)     io_RT_components=io_connect(desc="RT_J_and_P_"//trim(intc(file_number)),type=2,ID=ID)
+     if (RT_do_IO('J')) then
+       if (l_J_and_P)     io_RT_components=io_connect(desc="RT_"//trim(db_name)//"_Time_"//trim(intc(file_number)),type=2,ID=ID)
        if (l_occupations) then
-         io_RT_components=io_connect(desc="RT_delta_occ_"//trim(intc(file_number)),type=2,ID=ID)
+         io_RT_components=io_connect(desc="RT_"//trim(db_name)//"_Time_"//trim(intc(file_number)),type=2,ID=ID)
          if (read_is_on(ID).and.io_RT_components==IO_NO_DATABASE) then
-           io_RT_components=io_connect(desc="RT_delta_occ",type=2,ID=ID)
+           io_RT_components=io_connect(desc="RT_"//trim(db_name),type=2,ID=ID)
          endif
        endif
      else
        io_RT_components=0
        call io_reset(ID)
-       if(.not.l_J_and_P) goto 2
+       if (.not.l_J_and_P) goto 2
      endif
    endif
  endif
@@ -122,15 +119,15 @@ integer function io_RT_components(what,ID)
  !
  if (l_G) then
    if (.not.ver_is_gt_or_eq(ID,revision=944).or.G_MEM_steps==2.or.io_sec(ID,1)==1) then
-     io_RT_components=io_connect(desc="RT_GreenF",type=2,ID=ID)
+     io_RT_components=io_connect(desc="RT_"//trim(db_name),type=2,ID=ID)
    else
-     io_RT_components=io_connect(desc="RT_GreenF_"//trim(intc(file_number)),type=2,ID=ID)
+     io_RT_components=io_connect(desc="RT_"//trim(db_name)//"_"//trim(intc(file_number)),type=2,ID=ID)
    endif
  endif
  !
- if (l_THETA)       io_RT_components=io_connect(desc="RT_THETA",type=2,ID=ID)
+ if (l_THETA) io_RT_components=io_connect(desc="RT_THETA",type=2,ID=ID)
  !
- if (l_REF.and.io_sec(ID,1)==1) io_RT_components=io_connect(desc="RT_Reference",type=2,ID=ID)
+ if (l_REF.and.io_sec(ID,1)==1) io_RT_components=io_connect(desc="RT_"//trim(db_name),type=2,ID=ID)
  !
  if (io_RT_components/=0) goto 1
  !
@@ -304,12 +301,6 @@ integer function io_RT_components(what,ID)
      if (read_is_on(ID))  call mat_r2c(TMP_matrix,dG_lesser(:,:,ik,MEM_index(NE_i_time,G_MEM_steps)))
    endif
    !
-   call io_bulk(ID,VAR="G_lesser_ref_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&       VAR_SZ=(/SC_nbands,SC_nbands,2/))
-   if (write_is_on(ID)) call mat_c2r(G_lesser_reference(:,:,ik),TMP_matrix)
-   call io_bulk(ID,R3=TMP_matrix)
-   if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser_reference(:,:,ik))
-   !
    if(l_NE_with_fields.and.ik==RT_nk) then
      call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/3,3,2/))
      if (write_is_on(ID)) then
@@ -339,7 +330,7 @@ integer function io_RT_components(what,ID)
    !
    if (io_RT_components/=0) goto 1  
    !
-   if (allocated(E_E_Hole_lifetime)) then
+   if (allocated(REF_lifetime)) then
      !
      call io_bulk(ID,VAR="RT_E_E_REF_Hole_lifetime",VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=REF_lifetime(:,:,1))
@@ -347,11 +338,7 @@ integer function io_RT_components(what,ID)
      call io_bulk(ID,VAR="RT_E_E_REF_Electron_lifetime",VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=REF_lifetime(:,:,2))
      !
-   endif
-   !
 #if defined _ELPH  && defined _RT
-   !
-   if (allocated(E_P_Hole_lifetime)) then
      !
      call io_bulk(ID,VAR="RT_E_P_REF_Hole_lifetime",VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=REF_lifetime(:,:,3))
@@ -365,9 +352,25 @@ integer function io_RT_components(what,ID)
      call io_bulk(ID,VAR="RT_E_P_REF_El_abs_lifetime",VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=REF_lifetime(:,:,6))
      !
+#endif
+     !
    endif
    !
-#endif
+   if (allocated(G_lesser_reference)) then
+     !
+     allocate(TMP_matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),2))
+     !
+     do ik=1,RT_nk
+       call io_bulk(ID,VAR="G_lesser_ref_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
+&                      VAR_SZ=(/SC_nbands,SC_nbands,2/))
+       if (write_is_on(ID)) call mat_c2r(G_lesser_reference(:,:,ik),TMP_matrix)
+       call io_bulk(ID,R3=TMP_matrix)
+       if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser_reference(:,:,ik))
+     enddo
+     !
+     deallocate(TMP_matrix)
+     !
+   endif
    !
  endif
  !
@@ -405,7 +408,6 @@ integer function io_RT_components(what,ID)
      if(read_is_on(ID)) then
        !
        ! Read from cache
-       !
        !
        do i1=1,3
          RT_ind_J(i1)           =cmplx(J_and_P_cache(   2*i1-1,mod(NE_i_time-1,RT_IO_JPO_steps)+1), &

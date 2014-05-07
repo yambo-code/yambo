@@ -360,6 +360,8 @@ integer function io_RT_components(what,ID)
      !
      allocate(TMP_matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),2))
      !
+     i_spin=1
+     !
      do ik=1,RT_nk
        call io_bulk(ID,VAR="G_lesser_ref_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
 &                      VAR_SZ=(/SC_nbands,SC_nbands,2/))

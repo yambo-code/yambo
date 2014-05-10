@@ -339,7 +339,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
      endif
 #endif
 #if defined _KERR
-     if(trim(global_gauge)=='velocity') call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
+     if(trim(global_gauge)=='velocity') call pp_redux_wait(DIP_P(:,:,:,ik,i_spin))
 #endif
    enddo
    !
@@ -358,7 +358,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          P_square(ic,iv,ik_mem,:)= conjg(P_square(iv,ic,ik_mem,:))
 #endif        
 #if defined _KERR
-         if(trim(global_gauge)=="velocity")DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
+         if(trim(global_gauge)=="velocity") DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
 #endif        
        enddo
      enddo

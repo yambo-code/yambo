@@ -50,7 +50,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps,&
 &                         l_equilibrium_lifetimes,RT_E_occupations_reference,&
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
-&                         RIM_ibz_coo,RT_eh_en,REF_Lifetime
+&                         RIM_ibz_coo,RT_eh_en,REF_Lifetime,G_MEM_steps,MEM_index
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,it_now,H_nl_sc,RT_ibz_coo,&
 &                         V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
@@ -126,7 +126,6 @@ subroutine RT_start_and_restart(E,k,q,X)
    RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
  enddo
  !
- !
  ! Build Ho and save initial energies 
  !====================================
  !
@@ -167,9 +166,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(7)) ! THETA matrix
  io_THETA=io_RT_components('THETA',ID(7))
  !
- ! To restart from RT only the G_lesser is necessary
+ ! To restart from RT only the G_lesser is necessary (latest and reference)
  !
- RESTART                = (io_G ==0).and.(io_REF==0)
+ RESTART = (io_G ==0).and.(io_REF==0)
  if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = RESTART.and.(io_THETA==0)
  !
  if (l_RT_needs_XC0) then
@@ -201,11 +200,11 @@ subroutine RT_start_and_restart(E,k,q,X)
    ! in sc_bare_Hamiltonian I need to recalculate it here when SC_bands(1)>1
    ! as it is also used in XC_potential_driver
    ! 
-   call el_density_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,k,rho_n,SC_bands(1))
+   call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1))
    rho_reference=rho_n
    !
    if (allocated(full_rho)) then
-     call el_density_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,k,rho_n,1)
+     call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_n,1)
      full_rho=rho_n
    endif
    !
@@ -289,6 +288,11 @@ subroutine RT_start_and_restart(E,k,q,X)
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(7))
        io_THETA=io_RT_components('THETA',ID(7))
      endif
+     !
+     ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
+     !
+     G_lesser(:,:,ik,MEM_index(NE_i_time,G_MEM_steps))=&
+&            G_lesser_reference(:,:,ik)+dG_lesser(:,:,ik,MEM_index(NE_i_time,G_MEM_steps))
      !
    enddo
    !

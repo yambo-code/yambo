@@ -24,16 +24,14 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  ! FIT the occupations with a Gauss–Newton algorithm
  !
  use units,          ONLY:HA2EV,HA2KEL,FS2AUT
- use pars,           ONLY:SP,lchlen,schlen
+ use pars,           ONLY:SP,schlen
  use YPP,            ONLY:OCC_T_range,OCC_deltaT
  use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo
  use QP_m,           ONLY:QP_table,QP_n_states
- use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:Bose_Temp
  use electrons,      ONLY:levels,spin,spin_occ
  use vec_operate,    ONLY:sort
- use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative, &
-&                         Fermi_fnc_fit,Fermi_fnc_T_derivative
+ use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative,Fermi_fnc_fit
  use com,            ONLY:msg,of_open_close,error
  use stderr,         ONLY:intc,real2ch
  !
@@ -111,7 +109,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    RT_gamma_ratio=RT_gamma_ratio*spin_occ
    !
    nfound_gamma(5)=Fermi_fnc_fit(RT_E,RT_gamma_ratio(:,i1,1),RT_nstates,T_fit_gamma(i1,1:2),Ef_fit_gamma(i1,1:2),&
-&                          err_fit_gamma(i1,:))
+&                                err_fit_gamma(i1,:))
    !
    if(nfound_gamma(5)==1) nfound_gamma(1)  =nfound_gamma(1)+1
    if(nfound_gamma(5)==2) nfound_gamma(2)  =nfound_gamma(2)+1
@@ -149,7 +147,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
 &          //trim(intc(nfound_gamma(4)))//"/"//trim(intc(n_T_steps)))
  endif
  !
- titles(1)='t [fs]'
+ titles(1)='Time [fs]'
  titles(2:3)=(/'OCC el ','OCC hol'/)
  n1=3   
  !
@@ -188,16 +186,21 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  call msg('o '//trim(output_fname(1)),'#')
  call msg('o '//trim(output_fname(1)),'# Fitted temperatures [K]')
  call msg('o '//trim(output_fname(1)),'#')
- call msg('o '//trim(output_fname(1)),'#',(/titles(1:n1)/),INDENT=-2,USE_TABS=.true.)
+ call msg('o '//trim(output_fname(1)),'#',(/titles(1:n1)/),INDENT=0,USE_TABS=.true.)
+ call msg('o '//trim(output_fname(1)),'#')
  !
  call msg('o '//trim(output_fname(2)),'#')
  call msg('o '//trim(output_fname(2)),'# Fitted Fermi levels [eV]')
  call msg('o '//trim(output_fname(2)),'#')
- call msg('o '//trim(output_fname(2)),'#',(/titles(1:n1)/),INDENT=-2,USE_TABS=.true.)
+ call msg('o '//trim(output_fname(2)),'#',(/titles(1:n1)/),INDENT=0,USE_TABS=.true.)
+ call msg('o '//trim(output_fname(2)),'#')
  !
  do i_T=1,n_T_steps
+   !
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+   !
    data_fit(1,:)= io_Time/FS2AUT
+   !
    do i1=1,4
      if(i1<=2) then
        data_fit(i1+1,1)= T_fit(i_T,i1)*HA2KEL
@@ -224,8 +227,8 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  !
  ! Prepare titles
  !
- titles(1)='  E [eV]  '
- data_ch(1,1,:)=' t    [fs]'
+ titles(1)     =' E [eV]'
+ data_ch(1,1,:)=' Time [fs]'
  data_ch(1,2,1)=' T(h) [K]'
  data_ch(1,2,2)=' T(e) [K]'
  data_ch(1,3,:)=' Ef   [eV]'
@@ -298,8 +301,8 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
        !
        do igamma=1,ngamma
          if (Bose_Temp==0._SP .and. igamma>2 .and. igamma<5) cycle
-         call msg('o '//trim(output_fname(igamma+1)),'',(/RT_E(i_RT)*HA2EV,&
-&                 RT_gamma(i_RT,n1:n2,igamma)/),INDENT=-2,USE_TABS=.true.)
+         call msg('o '//trim(output_fname(igamma+1)),'',(/RT_E(i_RT)*HA2EV,RT_gamma(i_RT,n1:n2,igamma)/),&
+&                                                         INDENT=-2,USE_TABS=.true.)
        enddo
        !
      enddo
@@ -338,7 +341,7 @@ subroutine RT_occupations_FIT(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
      !
      do i1=1,fit_dim
        call msg('o '//trim(output_fname(1)),'',(/RT_E_fit(i1,ifit)*HA2EV,&
-  &               RT_occ_fit(i1,n1:n2,ifit)/),INDENT=-2,USE_TABS=.true.)
+&                                                RT_occ_fit(i1,n1:n2,ifit)/),INDENT=-2,USE_TABS=.true.)
      enddo
      !
      call of_open_close(trim(output_fname(1)))

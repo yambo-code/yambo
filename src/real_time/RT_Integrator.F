@@ -157,6 +157,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
        !  for Gref~0        RT_E_occ is also sensitive
        !
        do ib=SC_bands(1),SC_bands(2)
+         !
          RT_E_occupations(ib,ik)= aimag(G_new(ib,ib,ik))+            aimag(G_lesser_reference(ib,ib,ik))
          RT_H_occupations(ib,ik)=-aimag(G_new(ib,ib,ik))+ ( spin_occ-aimag(G_lesser_reference(ib,ib,ik)) )
          !

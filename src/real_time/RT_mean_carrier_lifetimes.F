@@ -22,6 +22,7 @@
 subroutine RT_mean_carrier_lifetimes(E,k)
  ! 
  use pars,           ONLY:SP,cI
+ use units,          ONLY:HA2KEL
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes,  &
 &                         E_P_Ho_abs_lifetime,RT_Tfit_lifetimes,RT_Efit_lifetimes,    &
@@ -103,10 +104,14 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  !
  if(allocated(E_P_Hole_lifetime)) then
    call RT_occupations_FIT_and_lock(E,k,RT_Tfit_lifetimes(1:2),RT_Efit_lifetimes(1:2),EP_occupations)
+   if (RT_Tfit_lifetimes(1)>50000/HA2KEL.or.RT_Tfit_lifetimes(1)<0.) RT_Tfit_lifetimes(1)=0.
+   if (RT_Tfit_lifetimes(2)>50000/HA2KEL.or.RT_Tfit_lifetimes(2)<0.) RT_Tfit_lifetimes(2)=0.
  endif
  !
  if(allocated(E_E_Hole_lifetime)) then
    call RT_occupations_FIT_and_lock(E,k,RT_Tfit_lifetimes(3:4),RT_Efit_lifetimes(3:4),EE_occupations)
+   if (RT_Tfit_lifetimes(3)>50000/HA2KEL.or.RT_Tfit_lifetimes(3)<0.) RT_Tfit_lifetimes(3)=0.
+   if (RT_Tfit_lifetimes(4)>50000/HA2KEL.or.RT_Tfit_lifetimes(4)<0.) RT_Tfit_lifetimes(4)=0.
  endif
  !
  RT_mean_lifetimes=RT_mean_lifetimes/n_states

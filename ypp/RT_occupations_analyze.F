@@ -27,29 +27,28 @@ subroutine RT_occupations_analyze(k,E)
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,set_real_printed_length
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:nel,levels,BZ_RIM_nbands,spin,spin_occ,n_sp_pol
- use QP_m,           ONLY:QP_state,QP_table,QP_n_states
- use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT,l_RT_Occ_FIT,l_RT_occ_Plot
- use com,            ONLY:msg,of_open_close,warning,error
+ use electrons,      ONLY:nel,levels,spin,spin_occ
+ use QP_m,           ONLY:QP_table,QP_n_states
+ use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT,l_RT_occ_FIT,l_RT_occ_Plot
+ use com,            ONLY:msg,of_open_close,error
  use IO_m,           ONLY:NONE
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,&
 &                         E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime,&
 &                         RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM,NE_time,RT_E_occupations
- use SC,             ONLY:SC_bands,&
-&                         RT_nk,RT_nstates,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz
+ use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz
  !
  implicit none
  !
- type(bz_samp) ::k
- type(levels)  ::E
+ type(bz_samp) :: k
+ type(levels)  :: E
  !
  ! Work Space
  !
- type(bz_samp) ::q
- integer               :: ik,ib,i_spin,i_s,i_RT,i_T,n_T_steps,i_fp,n1,n_skip_time
+ type(bz_samp) :: q
+ integer               :: ik,ib,i_spin,i_s,i_RT,i_T,n_T_steps,n1
  integer               :: ik_rim,ik_E_rim,ik_RT_rim
- real(SP)              :: io_Time,data_to_plot(10),Plot_deltaT
+ real(SP)              :: io_Time,data_to_plot(10)
  real(SP), allocatable :: RT_occupations_sum(:,:),RT_occ(:,:),RT_gamma(:,:,:),RT_E(:)
  character(schlen)     :: titles(8),specs(8,2)
  logical               :: l_ELPH_lifetimes,l_group_occ
@@ -165,7 +164,7 @@ subroutine RT_occupations_analyze(k,E)
  endif
  !
  allocate(RT_occ(RT_nstates,n_T_steps),RT_gamma(RT_nstates,n_T_steps,6))
- RT_occ=0._SP
+ RT_occ  =0._SP
  RT_gamma=0._SP
  !
  do i_T=1,n_T_steps
@@ -177,6 +176,7 @@ subroutine RT_occupations_analyze(k,E)
    call RT_occupations_repair(E)
    !
    i_RT=0
+   !
    do i_s=1,QP_n_states
      !
      ! n   =QP_table(i_s,1)
@@ -190,20 +190,21 @@ subroutine RT_occupations_analyze(k,E)
      if (ib<SC_bands(1)) cycle
      if (ib>SC_bands(2)) cycle
      !
-     !if(l_group_occ) then
+     if (l_group_occ.and.l_RT_occ_plot) then
        output_fname='YPP-RT_occupations_k'//trim(intc(ik))//'_b'//trim(intc(ib))
-       if(i_T==1) call open_file()
-     !endif
+       if (i_T==1) call open_file()
+     endif
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
-       if(l_RT_occ_plot.and. .not.l_group_occ .and. ik_rim>RT_ibz_coo(ik,1)) cycle
-       !
-       if (ik_rim>RT_nk) cycle
+       if (.not.l_group_occ.and.l_RT_occ_plot) then
+         output_fname='YPP-RT_occupations_k'//trim(intc(ik_rim))//'_b'//trim(intc(ib))
+         if (i_T==1) call open_file()
+       endif
        !
        i_RT=i_RT+1
        !
-       if(.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,1).and.l_group_occ)) data_to_plot(2:)=0._SP
+       if (.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,1).and.l_group_occ)) data_to_plot(2:)=0._SP
        !
        ! Lifetimes
        !===========
@@ -224,36 +225,29 @@ subroutine RT_occupations_analyze(k,E)
        endif
        !
        RT_gamma(i_RT,i_T,:)=RT_gamma(i_RT,i_T,:)*HA2EV*1000.
+       !
        RT_occ(i_RT,i_T)=RT_E_occupations(ib,ik_rim)
+       !
+       if (.not.l_RT_occ_plot) cycle
        !
        data_to_plot(3:8)=data_to_plot(3:8)+RT_gamma(i_RT,i_T,1:6)
        !
-       if(ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) &
-&        data_to_plot(3:)=data_to_plot(3:)/real(RT_NK_ibz(ik),SP)
-       !
-       if (.not.l_RT_occ_Plot) cycle
-       !
-       !if(.not.l_group_occ) then
-       !  output_fname='YPP-RT_occupations_k'//trim(intc(ik_rim))//'_b'//trim(intc(ib))
-       !  if (i_T==1) call open_file() 
-       !endif
+       if(ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) data_to_plot(3:)=data_to_plot(3:)/real(RT_Nk_ibz(ik),SP)
        !
        ! Occupations
        !=============
-       RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+&
-&        RT_E_occupations(ib,ik_rim)*k%weights(ik)/real(RT_NK_ibz(ik),SP)
+       RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+RT_E_occupations(ib,ik_rim)*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
        !
-       if (ib==SC_bands(1).and.SC_bands(1)>1) &
-&         RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+ &
-&           spin_occ*k%weights(ik)*real(SC_bands(1)-1)/real(RT_NK_ibz(ik),SP)
+       if (ib==SC_bands(1).and.SC_bands(1)>1) RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+ &
+&                                             spin_occ*k%weights(ik)*real(SC_bands(1)-1)/real(RT_Nk_ibz(ik),SP)
        !
        data_to_plot(1)=io_TIME/FS2AUT
        !
        if (ib<=E%nbf) data_to_plot(2)=data_to_plot(2)+(RT_E_occupations(ib,ik_rim)-spin_occ)*k%weights(ik)
        if (ib> E%nbf) data_to_plot(2)=data_to_plot(2)+ RT_E_occupations(ib,ik_rim)          *k%weights(ik)
        !
-       if(.not.l_group_occ .or. ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) then
-         data_to_plot(2)=data_to_plot(2)/real(RT_NK_ibz(ik),SP)
+       if(.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) ) then
+         data_to_plot(2)=data_to_plot(2)/real(RT_Nk_ibz(ik),SP)
          if (ib<=E%nbf) RT_occupations_sum(1,i_T)=RT_occupations_sum(1,i_T)+data_to_plot(2)
          if (ib> E%nbf) RT_occupations_sum(2,i_T)=RT_occupations_sum(2,i_T)+data_to_plot(2)
        endif
@@ -267,7 +261,7 @@ subroutine RT_occupations_analyze(k,E)
    enddo
  enddo
  !
- if(l_RT_occ_plot .and. .false.) then
+ if (l_RT_occ_plot) then
    !
    ! Sum_{ib,ik} f_{ik,ib}(it)
    !

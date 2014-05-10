@@ -44,7 +44,7 @@ subroutine RT_driver(E,X,k,q)
  use plasma,          ONLY:Plasma_free,EH_gas
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
- use com,             ONLY:error
+ use com,             ONLY:error,msg
  use fields,          ONLY:A_vecpot,A_vecpot_previous
  use collision,       ONLY:HF_collisions,COHSEX_collisions,GW_NEQ_collisions
  use QP_CTL_m,        ONLY:QP_apply
@@ -166,14 +166,19 @@ subroutine RT_driver(E,X,k,q)
    !
  endif
  !
- ! Reference lifetimes 
- !====================
+ ! Reference lifetimes & G_lesser
+ !================================
+ !
  if ( (l_elph_scatt.or.l_elel_scatt) .and.it_start==1) then
+   !
+   call msg('s','Reference Lifetimes and G_lesser (eval and I/O)...')
    !
    call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
+   !
+   call msg('l','done')
    !
  endif
  !

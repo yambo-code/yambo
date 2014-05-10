@@ -159,9 +159,9 @@ subroutine RT_relaxation(G_input,E,k,q,Time,l_flag)
    endif
  endif
  !
- if (l_eval) call Impose_Conservations( )
- !
  if (l_equilibrium_lifetimes) return
+ !
+ if (l_eval) call Impose_Conservations( )
  !
  ! SAVE, interpolate & N/dN conservation (of the interpolated Lifetimes)
  !======================================================================

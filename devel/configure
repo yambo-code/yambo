@@ -778,7 +778,7 @@ ac_user_opts='
 enable_option_checking
 with_editor
 enable_debug
-enable_keepsource
+enable_keep_src
 enable_dp
 with_iotk
 with_p2y
@@ -5475,14 +5475,14 @@ if test x"$enable_debug" = "x"; then enable_debug="yes"; fi
 
 # =============================================================================
 # KEEP SOURCE FILES
-# Check whether --enable-keepsource was given.
-if test "${enable_keepsource+set}" = set; then :
-  enableval=$enable_keepsource;
+# Check whether --enable-keep-src was given.
+if test "${enable_keep_src+set}" = set; then :
+  enableval=$enable_keep_src;
 fi
 
 dp_cpp=""
 if test x"$enable_keep_src" = "x";    then enable_keep_src="no" ; fi
-if test x"$enable_keep_src" = "xyes"; then enalbe_keep_src="yes"; fi
+if test x"$enable_keep_src" = "xyes"; then enable_keep_src="yes"; fi
 
 # ============================================================================
 # DP
@@ -5602,8 +5602,14 @@ if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
 openmp_cpp=" "
 OPENMPLIBS=" "
 if test x"$enable_open_mp" = "xyes"; then
- OPENMPLIBS="-openmp -lpthread";
+ #
+ if test x"$ac_compiler_gnu" = x"yes"; then
+   OPENMPLIBS="-fopenmp -lpthread";
+ else
+   OPENMPLIBS="-openmp -lpthread";
+ fi
  openmp_cpp="-D_OPENMP"
+ #
 fi
 
 # ============================================================================
@@ -9099,7 +9105,6 @@ if test x"$acx_dlaran_ok" = xno; then
  compile_local=yes
  LOCAL_LIBS="-llocal"
 fi
-
 
 #
 # ============================================================================

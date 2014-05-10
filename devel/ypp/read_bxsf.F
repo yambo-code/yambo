@@ -21,7 +21,7 @@
 !
 subroutine read_bxsf(Xk,Xen)
  !
- use pars,                ONLY:SP,lchlen,schlen
+ use pars,                ONLY:SP,lchlen
  use units,               ONLY:pi,HA2EV,BO2ANG
  use R_lattice,           ONLY:bz_samp,b,k_grid,k_the_nearest
  use parser_m,            ONLY:parser

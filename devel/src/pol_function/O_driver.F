@@ -47,8 +47,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load
  !
  implicit none
- type(levels)  ::Xen
- type(bz_samp) ::Xk,q
+ type(levels)  :: Xen
+ type(bz_samp) :: Xk,q
  type(X_t)     :: X
  type(w_samp)  :: wv 
  ! 

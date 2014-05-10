@@ -64,7 +64,6 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  if (trim(Scatt_kind)=="elel" ) iref=1
  if (trim(Scatt_kind)=="elph1") iref=3
  if (trim(Scatt_kind)=="elph2") iref=5
- if (trim(Scatt_kind)=="elph3") iref=7
  !
  SUM_N_Holes   =0._SP
  SUM_N_Electrons=0._SP

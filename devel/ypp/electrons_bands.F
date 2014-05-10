@@ -21,11 +21,11 @@
 !
 subroutine electrons_bands(Xk,Xen)
  !
- use pars,           ONLY:SP,schlen,lchlen,DP
+ use pars,           ONLY:SP,schlen,DP
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,BANDS_range,k_transform,interp_grid, &
 &                         l_RT_occ_Bands,l_bands
- use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_tot_Nkpts,BZ_RIM_nkpt,spin_occ
+ use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_tot_Nkpts,spin_occ
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use com,            ONLY:msg,of_open_close,error,warning
  use vec_operate,    ONLY:c2a,v_norm
@@ -56,7 +56,7 @@ subroutine electrons_bands(Xk,Xen)
  real(SP), allocatable :: bands_grid(:,:,:),bands_circuit(:,:,:)
 #if defined _YPP_RT
  real(SP), allocatable :: occupations_grid(:,:,:,:),occupations_circuit(:,:,:,:),occupations_tmp(:,:,:)
- real(SP)              :: io_Time,Nel_zero,Nhole_zero,Nel,Nhole,Real_Nhole,Real_Nel
+ real(SP)              :: io_Time,Nel,Nhole,Real_Nhole,Real_Nel
  integer               :: i_T,n_T_steps
  integer,     external :: RT_occupations_check,RT_k_grid
 #endif

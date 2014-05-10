@@ -21,7 +21,6 @@
 !
 subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  !
- use pars,                ONLY:SP
  use com,                 ONLY:msg
  use memory_m,            ONLY:mem_est
  use vec_operate,         ONLY:v_norm,i_sort

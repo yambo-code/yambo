@@ -456,8 +456,8 @@ module real_time
      endif
      !
      if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt) then
-       allocate(REF_lifetime(SC_bands(1):SC_bands(2),RT_nk,8))
-       call mem_est("REF_lifetime",(/size(REF_lifetime)/),(/SP/))
+       allocate(REF_lifetime(SC_bands(1):SC_bands(2),RT_nk,6))
+       call mem_est("REF_lifetime",(/size(REF_lifetime)/),(/SP/)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
        allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
        call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
        allocate(SAVED_times(Life_MEM_steps)) 

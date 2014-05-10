@@ -25,7 +25,10 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use pars,           ONLY:SP,lchlen
  use parser_m,       ONLY:parser
  use real_time,      ONLY:ID,G_lesser,NE_i_time,RT_IO_JPO_steps,RT_step,MEM_index,&
-&                         RT_E_occupations,G_MEM_steps,RT_IO_steps_DB
+&                         RT_E_occupations,G_MEM_steps,RT_IO_steps_DB,REF_lifetime,&
+&                         G_lesser_reference,RT_delta0_occupations,E_P_Hole_lifetime,&
+&                         E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
+                          E_E_Hole_lifetime,E_E_Electron_lifetime
  use SC,             ONLY:SC_bands,RT_nk,l_RT_occupations_in_use
  use IO_m,           ONLY:io_control,NONE,OP_WR_CL,OP_RD,RD_CL,OP_RD_CL,DUMP,variable_is_found
  use electrons,      ONLY:levels,BZ_RIM_nbands,n_sp_pol,n_met_bands,&
@@ -162,6 +165,8 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    if (.not.allocated(RT_E_occupations)) then
      allocate(RT_E_occupations(SC_bands(1):SC_bands(2),RT_nk))
      call mem_est("RT_E_occupations",(/size(RT_E_occupations)/),(/SP/))
+     allocate(RT_delta0_occupations(SC_bands(1):SC_bands(2),RT_nk))
+     call mem_est("RT_delta0_occupations",(/size(RT_delta0_occupations)/),(/SP/))
    endif
    !
 #if defined _RT
@@ -170,6 +175,38 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID(6))
    io_err_occ=io_RT_components('occupations',ID(6))
 #endif
+   ! 
+   ! REFERENCE I/O
+   !===============
+   !  
+#if defined _RT
+   if (.not.allocated(REF_lifetime)) then
+     allocate(REF_lifetime(SC_bands(1):SC_bands(2),RT_nk,6))
+     call mem_est("REF_lifetime",(/size(REF_lifetime)/),(/SP/))
+     allocate(G_lesser_reference(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
+     call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID(6))
+     io_err_occ=io_RT_components('REF',ID(6))
+   endif
+#endif
+   !
+   ! Add to the read occupations/lifetimes the reference part
+   !
+   do ik=1,RT_nk
+     do ib=SC_bands(1),SC_bands(2)
+       RT_E_occupations(ib,ik)=RT_delta0_occupations(ib,ik)+aimag(G_lesser_reference(ib,ib,ik))
+       if (allocated(E_E_Hole_lifetime)) then
+         E_E_Hole_lifetime(ib,ik)=E_E_Hole_lifetime(ib,ik)+REF_lifetime(ib,ik,1)  
+         E_E_Electron_lifetime(ib,ik)=E_E_Electron_lifetime(ib,ik)+REF_lifetime(ib,ik,2)  
+       endif
+       if (allocated(E_P_Hole_lifetime)) then
+         E_P_Hole_lifetime(ib,ik)=E_P_Hole_lifetime(ib,ik)+REF_lifetime(ib,ik,3)  
+         E_P_Electron_lifetime(ib,ik)=E_P_Electron_lifetime(ib,ik)+REF_lifetime(ib,ik,4)  
+         E_P_Ho_abs_lifetime(ib,ik)=E_P_Ho_abs_lifetime(ib,ik)+REF_lifetime(ib,ik,5)  
+         E_P_El_abs_lifetime(ib,ik)=E_P_El_abs_lifetime(ib,ik)+REF_lifetime(ib,ik,6)  
+       endif
+     enddo
+   enddo
    !
    jobstr=jobstr_save
    !

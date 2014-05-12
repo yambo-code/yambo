@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_apply_RWA(ik,E,Time,MODE,M1,M2,M3)
+subroutine RT_apply_RWA(ik,E,Time,dT,MODE,M1,M2,M3)
  !
  use pars,           ONLY:SP,cI
  use SC,             ONLY:RT_ibz_coo,SC_bands,RT_all2ibz
@@ -30,7 +30,7 @@ subroutine RT_apply_RWA(ik,E,Time,MODE,M1,M2,M3)
  !
  integer,      intent(in)     :: ik
  type(levels), intent(in)     :: E
- real(SP),     intent(in)     :: Time
+ real(SP),     intent(in)     :: Time,dT
  character(*), intent(in)     :: MODE
  !
  complex(SP),  intent(inout)            :: M1(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
@@ -40,8 +40,8 @@ subroutine RT_apply_RWA(ik,E,Time,MODE,M1,M2,M3)
  ! Work space
  !
  integer  :: i_n,i_np,ik_RIM,ik_ibz
- real(SP) :: deltaE,pre_factor,alpha
- complex(SP) :: phase
+ real(SP) :: deltaE,pre_factor,alpha,alpha1
+ complex(SP) :: phase,phase1
  !
  if (MODE=="APPLY" ) pre_factor= 1._SP
  if (MODE=="REMOVE") pre_factor=-1._SP
@@ -62,8 +62,11 @@ subroutine RT_apply_RWA(ik,E,Time,MODE,M1,M2,M3)
        M2(i_np,i_n)=M2(i_np,i_n)*conjg(phase)
      endif
      if(present(M3)) then
-       M3(i_n,i_np)=M3(i_n,i_np)*      phase
-       M3(i_np,i_n)=M3(i_np,i_n)*conjg(phase)
+       alpha1=pre_factor*deltaE*dT
+       !phase1=1._SP +cI*alpha1 -alpha1**2._SP/2._SP -cI*alpha1**3._SP/6._SP
+       phase1=cmplx(cos(alpha1),sin(alpha1))
+       M3(i_n,i_np)=M3(i_n,i_np)*      phase *phase1
+       M3(i_np,i_n)=M3(i_np,i_n)*conjg(phase *phase1)
      endif
    enddo
  enddo

@@ -234,7 +234,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
      !===============
      forall(ib=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ib,ik_RT:ikp_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT:ikp_RT,1)-E%E(ib,ik,1)
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       call RT_apply_RWA(ik_RT,E,Time,"APPLY",Ho_plus_Sigma(:,:,ik_RT,1))
+       call RT_apply_RWA(ik_RT,E,Time,0.,"APPLY",Ho_plus_Sigma(:,:,ik_RT,1))
      enddo
      !
    else if (l_RT_uses_E_RIM) then

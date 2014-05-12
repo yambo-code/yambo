@@ -27,7 +27,9 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,RT_Nk_ibz
  use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,Imp_factors, &
 &                         RT_E_occupations,RT_H_occupations,REF_lifetime,&
-&                         RT_delta0_occupations,l_RT_EE_impose_E
+&                         l_equilibrium_lifetimes,RT_delta0_occupations,&
+&                         l_RT_EE_impose_E,RT_E_occupations_reference,&
+&                         RT_H_occupations_reference
  !
  implicit none
  !
@@ -64,6 +66,11 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  if (trim(Scatt_kind)=="elel" ) iref=1
  if (trim(Scatt_kind)=="elph1") iref=3
  if (trim(Scatt_kind)=="elph2") iref=5
+ !
+ if(l_equilibrium_lifetimes) then
+   REF_lifetime(:,:,iref)=  0._SP
+   REF_lifetime(:,:,iref+1)=0._SP
+ endif
  !
  SUM_N_Holes   =0._SP
  SUM_N_Electrons=0._SP
@@ -104,6 +111,10 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    if( isnan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._SP ) then
      if (trim(Scatt_kind)=="elel") Imp_factors(3:5)=prefactor(1:3)
      if(trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
+     if(l_equilibrium_lifetimes) then
+       REF_lifetime(:,:,iref)=Hole_lifetime
+       REF_lifetime(:,:,iref+1)=Electron_lifetime
+     endif
      return
    endif
    if( abs(prefactor(i1))>cut_off ) prefactor(i1)=prefactor(i1)/abs(prefactor(i1))*cut_off
@@ -122,12 +133,22 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  if (trim(Scatt_kind)=="elel")  Imp_factors(3:5)=prefactor(1:3)
  if (trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
  !
+ if(l_equilibrium_lifetimes) then
+   REF_lifetime(:,:,iref)=Hole_lifetime
+   REF_lifetime(:,:,iref+1)=Electron_lifetime
+ endif
+ !
  contains
    !
    subroutine eval_E_and_N()
      !
-     f_E_occ=RT_E_occupations(ib,ik_rim)
-     f_H_occ=RT_H_occupations(ib,ik_rim)
+     if(l_equilibrium_lifetimes) then
+       f_E_occ=RT_E_occupations_reference(ib,ik_rim)
+       f_H_occ=RT_H_occupations_reference(ib,ik_rim)
+     else
+       f_E_occ=RT_E_occupations(ib,ik_rim)
+       f_H_occ=RT_H_occupations(ib,ik_rim)
+     endif
      df_occ=RT_delta0_occupations(ib,ik_rim)
      Hole_fac=Hole_lifetime(ib,ik_rim)    *f_H_occ-REF_lifetime(ib,ik_rim,iref  )*df_occ
      Elec_fac=Electron_lifetime(ib,ik_rim)*f_E_occ+REF_lifetime(ib,ik_rim,iref+1)*df_occ

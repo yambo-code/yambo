@@ -114,7 +114,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
      !
      do ik=1,RT_nk
        !
-       if (l_RT_RWA) call RT_apply_RWA(ik,E,Time,"APPLY",G_old(:,:,ik),&
+       if (l_RT_RWA) call RT_apply_RWA(ik,E,Time,dT,"APPLY",G_old(:,:,ik),&
          &                                            M2=G_lesser_reference(:,:,ik))
        !
        G_old_full=G_old(:,:,ik)+G_lesser_reference(:,:,ik)
@@ -143,7 +143,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
          !
        endif
        !
-       if (l_RT_RWA) call RT_apply_RWA(ik,E,Time,"REMOVE",G_old(:,:,ik),&
+       if (l_RT_RWA) call RT_apply_RWA(ik,E,Time,dT,"REMOVE",G_old(:,:,ik),&
          &                  M2=G_lesser_reference(:,:,ik),M3=G_new(:,:,ik))
        !
        ! Dephasing and carriers relaxation step

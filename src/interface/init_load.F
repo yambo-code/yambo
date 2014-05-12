@@ -344,7 +344,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                           RT_dynamics_steps,Verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'DYNdecay',   '[RT] Exponential decay lifetime of the distribution of groups of lifetimes evaluated',&
 &                           RT_dynamics_decay_time,Verb_level=V_real_time,unit=Time_unit(1))
- call it(defs,'ScatTresh',  '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
+ call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)
  !
  ! EE scattering

@@ -41,7 +41,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_RT_uses_E_RIM,RIM_bz_coo,RT_dynamics_steps,RT_dynamics_decay_time,&
 &                         RT_dynamics_KIND,l_NE_dynamics,l_RT_skip_impose,I_MEM_steps,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
-&                         RIM_EE_Nk_table,l_RT_EE_impose_E,l_RT_low_carr_den,RT_eh_en
+&                         RIM_EE_Nk_table,l_RT_EE_impose_E,RT_eh_en
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp,qindx_S
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
@@ -71,7 +71,6 @@ subroutine RT_initialize(E,k,q)
  call parser('RTskipImposeN',        l_RT_skip_impose)
  call parser('RTeeImposeE',          l_RT_EE_impose_E)
  call parser('RTpumpEhEn',           l_manual_excitation)
- call parser('RTLowCarrDen',         l_RT_low_carr_den)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
  !
@@ -197,9 +196,6 @@ subroutine RT_initialize(E,k,q)
      if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%frequency(1)==0._SP) &
 &      call error(" External "//trim(Efield(i1)%ef_name)//" field has zero frequency.")
      !
-     if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%damping==0) &
-&      call error(" External "//trim(Efield(i1)%ef_name)//" field has zero damping.")
-     ! 
      if(Efield(i1)%intensity==0._SP) &
 &      call error(" External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
      !

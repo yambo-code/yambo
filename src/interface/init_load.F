@@ -368,7 +368,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                            Verb_level=V_real_time,unit=E_unit)
  call it(defs,'RTpumpNel',  '[RT] Number of electrons pumbed by hand per unit cell',Eh_pumped_Nel,&
 &                            Verb_level=V_real_time)
- call it('f',defs,'RTLowCarrDen',   '[RT] Use approximations for low carriers density regime')
  !
  call Afield(1) ! Probe
  call Afield(2) ! Pump

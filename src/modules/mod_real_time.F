@@ -167,7 +167,6 @@ module real_time
  real(SP)    :: Eh_pumped_Nel
  real(SP)    :: Eh_pumped_pair_energy(2)
  real(SP)    :: Eh_pumped_pair_width
- real(SP)    :: l_RT_low_carr_den
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
  !

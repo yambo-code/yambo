@@ -115,6 +115,7 @@ subroutine RT_paths(en)
  !=============
  !
  if (N_probes==0.and.N_pumps==0) then
+   !
    call RT_databases(IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
    !
    ! I can use ANTIRES/RES probes with multiple frequencies only by using
@@ -122,6 +123,9 @@ subroutine RT_paths(en)
    !
    if (Efield(i_Probe)%n_frequencies>1) IO_error=.TRUE.
    if (.not.IO_error)                   N_probes=1
+   !
+   Probe_path(1)=jobstr
+   !
  endif
  !
  call msg('s',':: Pump   found      :',N_pumps)

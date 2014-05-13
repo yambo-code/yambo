@@ -166,10 +166,10 @@ subroutine RT_driver(E,X,k,q)
    !
  endif
  !
- ! Reference lifetimes & G_lesser
- !================================
+ ! Reference lifetimes and/or G_lesser
+ !=====================================
  !
- if ( (l_elph_scatt.or.l_elel_scatt) .and.it_start==1) then
+ if (it_start==1) then
    !
    call msg('s','Reference Lifetimes and G_lesser (eval and I/O)...')
    !
@@ -328,8 +328,10 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Print some simple observables
    !===============================
-   call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time/FS2AUT)
-   call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time/FS2AUT)
+   if (NE_time>0.) then
+     call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time/FS2AUT)
+     call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time/FS2AUT)
+   endif
    call RT_output('cur pol',TIME=NE_time/FS2AUT)
    if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
    !

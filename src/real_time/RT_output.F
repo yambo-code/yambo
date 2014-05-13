@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_output(what,VALUEs,TIME,E)
+subroutine RT_output(what,VALUES,TIME,E)
  ! 
  use units,          ONLY:HA2EV,HA2KEL
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
- use SC,             ONLY:SC_description,n_SC_descriptions
- use fields,         ONLY:A_vecpot
+ use SC,             ONLY:SC_description,n_SC_descriptions,it_now
+ use fields,         ONLY:A_vecpot,Efield,n_ext_fields
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,l_Debye_TBose_update, &
@@ -39,7 +39,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  implicit none
  !
  character(*),       intent(in) :: what
- real(SP), optional, intent(in) :: VALUEs(:) 
+ real(SP), optional, intent(in) :: VALUES(:) 
  real(SP), optional, intent(in) :: TIME
  real(SP), optional, intent(in) :: E
  !
@@ -98,12 +98,11 @@ subroutine RT_output(what,VALUEs,TIME,E)
  if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'vector_potential'
  short_file_name(next_file)=trim(append_ch)//'vector_potential'
- n_headings(next_file)=10
- !n_headings(next_file)=11
+ n_headings(next_file)=11
  headings(next_file,2:4 )=(/"A_x","A_y","A_z"/)
  headings(next_file,5:7 )=(/"A'_x","A'_y","A'_z"/)
  headings(next_file,8:10)=(/"A''_x","A''_y","A''_z"/)
- !headings(next_file,11)="Fluence[kJ/cm^2]"
+ headings(next_file,11)="Fluence[kJ/cm^2]"
  next_file=next_file+1
  !
  if (open_files.and..not.file_already_opened(next_file)) &
@@ -111,7 +110,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  short_file_name(next_file)=trim(append_ch)//'energy'
  n_headings(next_file)=6
  headings(next_file,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
- headings(next_file,4:5)=(/"Hartree [eV]","Exc     [eV]"/)
+ headings(next_file,4:5)=(/"Delta Ha [eV]","Delta Exc[eV]"/)
  headings(next_file,6)="E_tot[eV]"
  next_file=next_file+1
  !
@@ -342,11 +341,16 @@ subroutine RT_output(what,VALUEs,TIME,E)
        data_to_dump(2:4) =real(A_vecpot%vecpot(:))
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
-       !data_to_dump(11)  =Fluence(it_now)
+       data_to_dump(11)=0._SP
+       do i_fp=1,n_ext_fields
+         if (allocated(Efield(i_fp)%Fluence)) then
+           data_to_dump(11)=data_to_dump(11)+real( Efield(i_fp)%Fluence(it_now))
+         endif
+       enddo
      case('energy')
        data_to_dump(2:6) = VALUES(1:5)
      case('dynamics')
-       data_to_dump(2:4) = VALUES(1:3)
+       data_to_dump(2:5) = VALUES(1:4)
        if(l_elel_scatt.or.l_elph_scatt) data_to_dump(5:7) = VALUES(4:6)
        if(l_Debye_TBose_update) data_to_dump(7) = Bose_Temp*HA2KEL
      case('YPP-eps_along_E','YPP-eps_x','YPP-eps_y','YPP-eps_z','YPP-eels_along_E','YPP-SHG_qssin',&

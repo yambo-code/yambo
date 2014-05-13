@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2014 D. Sangalli and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): DS
 !
 ! Copyright (C) 1992-2005, Lucia Reining, Valerio Olevano,
 !   Francesco Sottile, Stefan Albrecht, Giovanni Onida,

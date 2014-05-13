@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -46,7 +48,7 @@ subroutine RT_X_effective(en)
  real(SP)          :: Pump_Frequency(1),Unit_of_Measure
  complex(SP)       :: running_X(0:X_order,3),runn_err(0:X_order,3)
  logical           :: Probe_consistency_error,CONVERGENCE_is_reached,Iterative_analysis,dump_dP,&
-&                     one_P_many_W,many_P_one_W,one_P_one_W
+&                     one_P_many_W,many_P_one_W,one_P_one_W,IO_error
  real(SP),    allocatable    :: RT_P_probe(:,:,:),RT_P_pump(:,:),Probe_Frequency(:),&
 &                               Harmonic_Frequency(:,:),RT_P_save(:,:,:)
  complex(SP), allocatable    :: X_effective(:,:,:),Susceptibility(:,:,:)
@@ -97,7 +99,7 @@ subroutine RT_X_effective(en)
  !
  if (N_pumps>0) then
    jobstr=trim(Pump_path)
-   call RT_databases(COM_=NONE,mesg=trim(Pump_path))
+   call RT_databases(IO_error=IO_error,COM_=NONE,mesg=trim(Pump_path))
    RT_P_pump=real(RT_P_t(:,1:3))
    Pump_Frequency=Efield(i_Pump)%frequency(1)
    min_X_order=0
@@ -113,8 +115,10 @@ subroutine RT_X_effective(en)
  do i_f=1,N_probes
    !
    jobstr=trim(Probe_path(i_f))
-   if (i_f==1) call RT_databases(COM_=LOG, mesg=trim(jobstr))
-   if (i_f> 1) call RT_databases(COM_=NONE,mesg=trim(jobstr))
+   if (i_f==1) call RT_databases(IO_error=IO_error,COM_=LOG, mesg=trim(jobstr))
+   if (i_f> 1) call RT_databases(IO_error=IO_error,COM_=NONE,mesg=trim(jobstr))
+   !
+   if (IO_error) call error("J_and_P databases I/O error")
    !
    if (i_f==1) then
      call Efield_duplicate(Efield(i_Probe),Efield_probe)

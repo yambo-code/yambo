@@ -1,6 +1,8 @@
 ! 
-! Copyright (C) 2000-2013 A. Marini, M. Gruening and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM MG
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -167,7 +169,6 @@ module real_time
  real(SP)    :: Eh_pumped_Nel
  real(SP)    :: Eh_pumped_pair_energy(2)
  real(SP)    :: Eh_pumped_pair_width
- real(SP)    :: l_RT_low_carr_den
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
  !

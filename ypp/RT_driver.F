@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2014 C. Attaccalite, A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -69,6 +71,7 @@ subroutine RT_driver(en,k)
    ! Database
    !
    ! Search the database in JOBSTR,Pump_path and Probe_path
+   !
    call RT_databases( )
    jobstr_save=jobstr
    if (.not.allocated(RT_J_t)) then

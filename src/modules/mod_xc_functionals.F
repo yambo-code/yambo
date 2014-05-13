@@ -1,8 +1,10 @@
 !
 ! Copyright (C) 2003 M. Marques, A. Castro, A. Rubio, G. Bertsch
 !
-! Copyright (C) 2000-2014 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or

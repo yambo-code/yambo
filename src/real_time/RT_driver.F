@@ -46,7 +46,7 @@ subroutine RT_driver(E,X,k,q)
  use plasma,          ONLY:Plasma_free,EH_gas
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
- use com,             ONLY:error,msg
+ use com,             ONLY:warning,msg
  use fields,          ONLY:A_vecpot,A_vecpot_previous
  use collision,       ONLY:HF_collisions,COHSEX_collisions,GW_NEQ_collisions
  use QP_CTL_m,        ONLY:QP_apply
@@ -160,9 +160,16 @@ subroutine RT_driver(E,X,k,q)
    !
    if (io_COLLs) then
      !
-     if (.not.l_use_collisions) call error('COLLISIONs database missing')
-     !
-     call COLLISIONS_load(.FALSE.)
+     if (l_use_collisions) then
+       !
+       call COLLISIONS_load(.FALSE.)
+       !
+     else
+       !
+       call warning('COLLISIONs database missing')
+       l_elel_scatt=.FALSE.
+       !
+     endif
      !
    endif
    !

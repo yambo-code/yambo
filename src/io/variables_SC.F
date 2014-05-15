@@ -48,7 +48,7 @@ integer function variables_SC(ID,local_description,what)
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
 #endif
 #if defined _ELPH
- use ELPH,           ONLY:ph_modes
+ use ELPH,           ONLY:ph_modes,elph_branches
 #endif
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC
  use fields,         ONLY:global_gauge,n_ext_fields,Efield
@@ -178,7 +178,10 @@ integer function variables_SC(ID,local_description,what)
  !
 #if defined _ELPH
  !
- call io_elemental(ID,VAR="ELPH_vars",VAR_SZ=4,MENU=0) 
+ VAR_SIZE=4
+ if (ver_is_gt_or_eq(ID,revision=3353)) VAR_SIZE=5
+ call io_elemental(ID,VAR="ELPH_vars",VAR_SZ=VAR_SIZE,MENU=0) 
+ !
  i_desc=i_desc+1
  call io_elemental(ID,L0=l_elph_scatt,&
 &   VAR=" [E-P] Electron-phonon           :", CHECK=.true.,OP=(/"=="/),&
@@ -188,13 +191,20 @@ integer function variables_SC(ID,local_description,what)
 &   VAR=" [E-P] Completed Collision(CCA)  :", CHECK=.true.,OP=(/"=="/),&
 &   DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,&
-&   VAR=" [E-P] Phonon modes              :",I0=ph_modes,CHECK=.true.,OP=(/"=="/),&
-&   DESCRIPTION=local_description(i_desc))
+ if (ver_is_gt_or_eq(ID,revision=3353)) then
+   call io_elemental(ID, &
+&     VAR=" [E-P] Branches                  :",I1=elph_branches,CHECK=.true.,OP=(/"==","=="/),&
+&     DESCRIPTION=local_description(i_desc))
+ else
+   call io_elemental(ID,&
+&     VAR=" [E-P] Phonon modes              :",I0=ph_modes,CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
+ endif
  i_desc=i_desc+1
  call io_elemental(ID, &
 &   VAR=" [E-P] Memory steps              :",I0=G_MEM_steps,CHECK=.true.,OP=(/"=="/),&
 &   DESCRIPTION=local_description(i_desc))
+ !
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
 #endif

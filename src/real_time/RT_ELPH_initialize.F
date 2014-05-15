@@ -34,7 +34,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use com,            ONLY:warning
  use D_lattice,      ONLY:Bose_Temp
  use R_lattice,      ONLY:RL_vol,bz_samp,qindx_S
- use IO_m,           ONLY:io_control,REP,OP_RD_CL
+ use IO_m,           ONLY:io_control,REP,OP_RD_CL,VERIFY,NONE
  use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,W_debye,elph_branches
  use functions,      ONLY:bose_f
  use memory_m,       ONLY:mem_est
@@ -43,7 +43,8 @@ subroutine RT_ELPH_initialize(E,k,q)
  use vec_operate,    ONLY:degeneration_finder
  use parser_m,       ONLY:parser
  use R_lattice,      ONLY:RIM_n_rand_pts
- use parallel_m,     ONLY:PAR_Q_index,PAR_IND_Q,PAR_nQ,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_Q_index,PAR_IND_Q,PAR_nQ,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
+&                         PP_redux_wait,PAR_COM_Q_INDEX
  use functions,      ONLY:bose_f
  !
  implicit none
@@ -54,12 +55,18 @@ subroutine RT_ELPH_initialize(E,k,q)
  ! Work Space
  !
  integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
-&                      first_el(2,SC_bands(2)),n_of_el(2,SC_bands(2)),n_deg_grp(2),i1,i2,ik_store
+&                      first_el(2,SC_bands(2)),n_of_el(2,SC_bands(2)),n_deg_grp(2),i1,i2,ik_store,io_REF
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes),q_mod(q%nbz),q0_mod,&
 &                      q_weight_tmp(q%nbz,2),ph_mean_speed(3),ph_E
  complex(SP)         ::gkkp_average
- integer, external   ::ioELPH
+ integer, external   ::ioELPH,io_RT_components
  logical             ::l_use_Debye_E
+ !
+ ! Restart
+ !==========
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID) 
+ io_REF=io_RT_components('REF',ID)
  !
  ! Logicals
  !==========
@@ -176,75 +183,86 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ph_freqs_sq=ph_Esq_local
  !
- if(any(ph_freqs_sq<0.)) call warning('Imaginary phonon frequencies found. Please check.')
+ if (any(ph_freqs_sq<0.)) call warning('Imaginary phonon frequencies found. Please check.')
  !
  ! Test of the effect of using a single optical mode
  !
  if (l_use_Debye_E) ph_freqs_sq=W_debye**2.
  !
- ! RIM support
- !=============
- !
- ! Here It would be possible to have one different weight for each elph_mode.
- ! However in practice I assume there are two possibilities:
- ! 1 - acustic phonons w_ph(i) ~ \alpha(i)*|q|
- ! 2 - optical phonons w_ph(i) ~ const(i)
- !
- allocate(q_weight_RT(q%nbz,elph_branches(1):elph_branches(2),2))
- q0_mod=(3.*RL_vol/4./4./pi)**(1./3.)
- i1=0
- ph_mean_speed=0._SP
- q_mod=0._SP
- q_weight_RT=0._SP
- !
- if (RIM_n_rand_pts>0) then
+ if (io_REF/=0) then
    !
-   call k_ibz2bz(q,'c',.TRUE.)  
+   ! RIM support
+   !=============
+   !
+   ! Here It would be possible to have one different weight for each elph_mode.
+   ! However in practice I assume there are two possibilities:
+   ! 1 - acustic phonons w_ph(i) ~ \alpha(i)*|q|
+   ! 2 - optical phonons w_ph(i) ~ const(i)
+   !
+   allocate(q_weight_RT(q%nbz,elph_branches(1):elph_branches(2),2))
+   q0_mod=(3.*RL_vol/4./4./pi)**(1./3.)
+   i1=0
+   ph_mean_speed=0._SP
+   q_mod=0._SP
+   q_weight_RT=0._SP
+   !
+   if (RIM_n_rand_pts>0) then
+     !
+     call k_ibz2bz(q,'c',.TRUE.)  
+     !
+     do iq=1,q%nbz
+       !
+       if (.not.PAR_IND_Q%element_1D(iq)) cycle
+       !
+       iq_io=Q_io_map(iq)
+       !
+       q_mod(iq)=v_norm(q%ptbz(iq,:))
+       !
+       if (q_mod(iq)>q0_mod.or.iq==1) cycle
+       !
+       i1=i1+1
+       !
+       do il=1,3
+         ph_mean_speed(il)=ph_mean_speed(il)+sqrt(ph_freqs_sq(iq_io,il))/q_mod(iq)
+       enddo
+       !
+     enddo
+     !
+     ph_mean_speed=ph_mean_speed/float(i1)
+     !
+     call k_ibz2bz(q,'i',.TRUE.)  
+     !
+   endif
+   !
+   call PP_redux_wait(ph_mean_speed)
+   ph_mean_speed=ph_mean_speed/real( PAR_COM_Q_INDEX%n_CPU )
+   !
+   RADIUS_sphere=(3.*RL_vol/q%nbz/4./pi)**(1./3.)
+   !
+   call rim_spherical(q%nbz,q%ptbz,q_weight_tmp(:,1),RADIUS_sphere,1,.FALSE.)
+   call rim_spherical(q%nbz,q%ptbz,q_weight_tmp(:,2),RADIUS_sphere,2,.FALSE.)
    !
    do iq=1,q%nbz
      !
-     q_mod(iq)=v_norm(q%ptbz(iq,:))
-     !
-     if (q_mod(iq)>q0_mod.or.iq==1) cycle
-     !
-     i1=i1+1
-     !
-     do il=1,3
-       ph_mean_speed(il)=ph_mean_speed(il)+sqrt(ph_freqs_sq(iq,il))/q_mod(iq)
+     do il=elph_branches(1),elph_branches(2)
+       !
+       ph_E=sqrt(abs(ph_freqs_sq(iq,il)))
+       !
+       if (ph_E>0.) then
+         q_weight_RT(iq,il,1)=1./ph_E/float(q%nbz)
+         q_weight_RT(iq,il,2)=bose_f(ph_E)/ph_E/float(q%nbz)/spin_occ
+       endif
+       !
+       if (RIM_n_rand_pts>0.and.q_mod(iq)<=q0_mod .and. il<=3) then
+         q_weight_RT(iq,il,1)=q_weight_tmp(iq,1)/ph_mean_speed(il)
+         q_weight_RT(iq,il,2)=Bose_temp*q_weight_tmp(iq,2)/ph_mean_speed(il)**2/spin_occ
+       endif
+       !
      enddo
      !
    enddo
    !
-   ph_mean_speed=ph_mean_speed/float(i1)
-   !
-   call k_ibz2bz(q,'i',.TRUE.)  
-   !
  endif
- !
- RADIUS_sphere=(3.*RL_vol/q%nbz/4./pi)**(1./3.)
- !
- call rim_spherical(q%nbz,q%ptbz,q_weight_tmp(:,1),RADIUS_sphere,1,.FALSE.)
- call rim_spherical(q%nbz,q%ptbz,q_weight_tmp(:,2),RADIUS_sphere,2,.FALSE.)
- !
- do iq=1,q%nbz
-   !
-   do il=elph_branches(1),elph_branches(2)
-     !
-     ph_E=sqrt(abs(ph_freqs_sq(iq,il)))
-     !
-     if (ph_E>0.) then
-       q_weight_RT(iq,il,1)=1./ph_E/float(q%nbz)
-       q_weight_RT(iq,il,2)=bose_f(ph_E)/ph_E/float(q%nbz)/spin_occ
-     endif
-     !
-     if (RIM_n_rand_pts>0.and.q_mod(iq)<=q0_mod .and. il<=3) then
-       q_weight_RT(iq,il,1)=q_weight_tmp(iq,1)/ph_mean_speed(il)
-       q_weight_RT(iq,il,2)=Bose_temp*q_weight_tmp(iq,2)/ph_mean_speed(il)**2/spin_occ
-     endif
-     !
-   enddo
-   !
- enddo
  !
  ! THETA matrix indexes
  !======================

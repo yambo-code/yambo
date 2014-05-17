@@ -71,7 +71,7 @@ subroutine RT_propagate_fields(k,E,G_new,A_new,A_old,T,T_step)
  !
  type(gauge_field) :: A_ext
  !
- if (l_RT_induced_field.and. .false.) then 
+ if (l_RT_induced_field) then 
    !
    ! External current
    !

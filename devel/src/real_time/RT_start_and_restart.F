@@ -248,7 +248,8 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    V_xc_sc=(0._SP)
    !
-   if (l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP)
+   V_hartree_sc=(0._SP)
+   !if (l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP)
    !
  endif
  !

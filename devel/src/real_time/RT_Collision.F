@@ -45,6 +45,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  use wrapper,        ONLY:V_by_V_plus_V_omp
 #endif
  use electrons,      ONLY:levels
+ use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R,&
@@ -77,6 +78,7 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  logical          :: XC_needs_density
  integer          :: i1,ik,ik_RT,ikp_RT,ik_RIM,ib,ibp
+ real(SP)         :: delta_rho(fft_size)
  complex(SP)      :: G_input_full(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
 #if defined _TIMING
@@ -93,7 +95,8 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  XC_needs_density=.not.XCfrozen.and.l_sc_contains_lda.and.SC_xc_functional/=0
  !
  if (.not.Hfrozen.or.XC_needs_density.or..not.l_NE_dynamics_started) then
-   call el_density_matrix(G_input_full(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1))
+   call el_density_matrix(G_input(:,:,RT_ibz_coo(:,1)),E,k,delta_rho,SC_bands(1))
+   rho_n=rho_reference+delta_rho
  endif
  !
  ! The Hartree term is written as
@@ -102,15 +105,15 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  ! where V_hartree(rho_0) is stored in XC0_and_HARTREE0
  !
- if (.not.Hfrozen.or..not.l_NE_dynamics_started) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
+ if (.not.Hfrozen.or..not.l_NE_dynamics_started) call V_Hartree(delta_rho,V_hartree_sc)
  !
  if (.not.XCfrozen.or..not.l_NE_dynamics_started) then
    !
    if(l_sc_contains_lda.and.SC_xc_functional/=0) then
      !
      ! Reconstruct the full density
-     !
-     if (SC_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
+     ! Here I should also consider and implementation in terms of delta_rho
+     if (SC_bands(1)>1) rho_n=full_rho+delta_rho
      !
      call IO_and_Messaging_switch("-report -log -io_in -io_out")
      call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
@@ -211,44 +214,39 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  !
  do ik=1,QP_nk 
    !
-   ik_RT =RT_ibz_coo(ik,1)
-   ikp_RT=RT_ibz_coo(ik,2)
-   !
    if (.not.(PAR_IND_WF_k%element_1D(ik).and.HEAD_k_cpu)) then
-     Ho_plus_Sigma(:,:,ik_RT:ikp_RT,:)=(0._SP,0._SP)
+     Ho_plus_Sigma(:,:,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2),:)=(0._SP,0._SP)
      cycle
    endif
    !
-   H_nl_sc=cZERO
-   !
-   ! And the gauge field
-   !=====================
-   if (l_NE_with_fields.and.l_NE_dynamics_started) call RT_apply_field(ik,H_nl_sc,A_input)
-   !
-   forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) &
-&         Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)+H_nl_sc(ib,ibp,1)
-   !
-   if (l_NE_with_fields.and.l_NE_dynamics_started) call RT_apply_field(ik,H_nl_sc,A_input)
-   !
-   if (l_RT_RWA) then
+   do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+     ik_RIM=ik_RT-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
      !
-     ! Apply the RWA
-     !===============
-     forall(ib=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ib,ik_RT:ikp_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT:ikp_RT,1)-E%E(ib,ik,1)
-     do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+     H_nl_sc=cZERO
+     !
+     ! And the gauge field
+     !=====================
+     if (l_NE_with_fields.and.l_NE_dynamics_started) call RT_apply_field(ik,ik_RIM,E,H_nl_sc,A_input)
+     !
+     forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) &
+&           Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp,1)
+     !
+     if (l_RT_RWA) then
+       !
+       ! Apply the RWA
+       !===============
+       forall(ib=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)-E%E(ib,ik,1)
        call RT_apply_RWA(ik_RT,E,Time,0.,"APPLY",Ho_plus_Sigma(:,:,ik_RT,1))
-     enddo
-     !
-   else if (l_RT_uses_E_RIM) then
-     !
-     ! RIM support
-     !============
-     do ik_RT=RT_ibz_coo(ik,1)+1,RT_ibz_coo(ik,2)
-       ik_RIM=ik_RT-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+       !
+     else if (l_RT_uses_E_RIM) then
+       !
+       ! RIM support
+       !============
        forall(ib=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)-&
 &                                         E%E(ib,ik,1)+E%E_RIM(ib,ik_RIM,1)
-     enddo
-   endif
+     endif
+     !
+   enddo
    !  
  enddo  !---- loop on k-points
  !

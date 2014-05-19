@@ -37,8 +37,8 @@ subroutine V_qp_basis_to_H(ik,V,H)
  implicit none
  !
  integer     :: ik
- complex(SP) :: V(QP_n_states)
- complex(SP) :: H(QP_nb,QP_nb,n_sp_pol)
+ complex(SP),intent(in)  :: V(QP_n_states)
+ complex(SP),intent(out) :: H(QP_nb,QP_nb,n_sp_pol)
  !
  ! Work Space
  !

@@ -354,7 +354,7 @@ subroutine RT_output(what,VALUES,TIME,E)
      case('dynamics')
        data_to_dump(2:5) = VALUES(1:4)
        if(l_elel_scatt.or.l_elph_scatt) data_to_dump(5:7) = VALUES(4:6)
-       if(l_Debye_TBose_update) data_to_dump(7) = Bose_Temp*HA2KEL
+       if(l_Debye_TBose_update) data_to_dump(8) = Bose_Temp*HA2KEL
      case('YPP-eps_along_E','YPP-eps_x','YPP-eps_y','YPP-eps_z','YPP-eels_along_E','YPP-SHG_qssin',&
 &         'YPP-X_probe_order_0_x','YPP-X_probe_order_1_x','YPP-X_probe_order_2_x','YPP-X_probe_order_3_x',&
 &         'YPP-X_probe_order_4_x','YPP-X_probe_order_5_x','YPP-X_probe_order_6_x','YPP-X_probe_order_7_x',&

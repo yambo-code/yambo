@@ -156,7 +156,7 @@ module real_time
  integer,     allocatable :: RIM_ibz_coo(:,:)
  integer,     allocatable :: RIM_bz_coo(:,:)  
  integer,     allocatable :: RIM_closest_E(:,:)  
- real(SP)                 :: RIM_EE_percent
+ real(SP)                 :: RIM_EE_percent 
  !
  ! ELPH kernel...
  !----------------

@@ -550,7 +550,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Eh_pumped_pair_width=0.1/HA2EV
  Eh_pumped_Nel=1.
  Plasma_redux_percent=100._SP
- RIM_EE_percent=0._SP
+ RIM_EE_percent=100._SP
  !
  ! G_retarded
  !

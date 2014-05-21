@@ -51,6 +51,7 @@ subroutine RT_DEPHASING_step(G_new_k,ik,T,deltaT)
  !
  if (allocated(I_relax_dyn)) then
    do ib=SC_bands(1),SC_bands(2)
+     write (*,*) Life_MEM_steps
      do i_n=1,Life_MEM_steps
        G_new_k(ib,ib) = G_new_k(ib,ib) - cI*(I_relax_dyn(ib,ik,1,i_n)+I_relax_dyn(ib,ik,2,i_n))*&
 &                       ((T+deltaT-SAVED_times(1))**i_n-(T-SAVED_times(1))**i_n)/real(i_n)

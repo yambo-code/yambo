@@ -43,7 +43,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,RT_nk
- use real_time,      ONLY:Sigma_relax,elph_gkkp_expanded,l_RT_CCA_Kernel
+ use real_time,      ONLY:I_relax_static,elph_gkkp_expanded,l_RT_CCA_Kernel
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_nibz,PAR_Xk_ibz_index
@@ -167,7 +167,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
    !
    do i_n=SC_bands(1),SC_bands(2)
      do i_np=SC_bands(1),SC_bands(2)
-       Sigma_relax(i_n,i_np,ik)=Sigma_relax(i_n,i_np,ik)+S_mat_sum(i_n-SC_bands(1)+1,i_np-SC_bands(1)+1)
+       I_relax_static(i_n,i_np,ik)=I_relax_static(i_n,i_np,ik)+S_mat_sum(i_n-SC_bands(1)+1,i_np-SC_bands(1)+1)
      enddo 
    enddo
    !

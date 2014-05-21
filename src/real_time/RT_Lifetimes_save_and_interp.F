@@ -34,7 +34,8 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
 &                         Life_MEM_steps,SAVED_lifetime,RT_dynamics_steps,&
 &                         ADD_to_saved_values,l_equilibrium_lifetimes,&
 &                         RT_E_occupations,RT_E_occupations_reference,&
-&                         RT_H_occupations,RT_H_occupations_reference
+&                         RT_H_occupations,RT_H_occupations_reference,&
+&                         I_relax_dyn
  !
  implicit none
  !
@@ -63,6 +64,13 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    do ib=SC_bands(1),SC_bands(2)
      do ik=1,RT_nk
        call ADD_to_saved_values(LIFE(ib,ik),SAVED_lifetime(ib,ik,SAVE_index,:),Life_MEM_steps)
+       !
+       if (SAVE_index==1.or.SAVE_index==3.or.SAVE_index==5) then
+         I_relax_dyn(ib,ik,1,1)=I_relax_dyn(ib,ik,1,1)+LIFE(ib,ik)
+       else
+         I_relax_dyn(ib,ik,2,1)=I_relax_dyn(ib,ik,2,1)+LIFE(ib,ik)
+       endif
+       !
      enddo
    enddo
    !
@@ -80,7 +88,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
      !=============
      do ib=SC_bands(1),SC_bands(2)
        do ik=1,RT_nk
-         call RT_Lifetimes_Interpolation(LIFE(ib,ik),Time,SAVED_lifetime(ib,ik,SAVE_index,:),SAVED_times)
+         call RT_Lifetimes_Interpolation(ib,ik,SAVE_index,LIFE(ib,ik),Time,SAVED_lifetime(ib,ik,SAVE_index,:),SAVED_times)
        enddo
      enddo
      !

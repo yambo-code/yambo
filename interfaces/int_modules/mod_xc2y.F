@@ -31,7 +31,7 @@ module mod_xc2y
  !
  implicit none
  !
- integer, parameter :: N_Abinit_XC = 28,N_PW_X = 10, N_PW_C = 13, N_PW_GX = 16, N_PW_GC = 13 
+ integer, parameter :: N_Abinit_XC = 28,N_PW_X = 10, N_PW_C = 13, N_PW_GX = 17, N_PW_GC = 13 
  !
  !  Map for ABINIT/ETSF_IO
  !
@@ -73,7 +73,7 @@ module mod_xc2y
 & (/ 'NOC ', 'PZ  ','LDA ', 'VWN ', 'LYP ', 'PW  ', 'WIG ', 'HL  ', 'OBZ ', &
 &    'OBW ', 'GL  ' , 'B3LP', 'KZK ' /)
  character(len=7),parameter,dimension(N_PW_GX) :: PW_GX=& 
-& (/ 'NOGX ', 'B88  ', 'GGX  ', 'PW91 ', 'PBX  ', 'PBE  ', 'RPB  ', 'HCTH ', 'OPTX ',&
+& (/ 'NOGX ', 'B88  ', 'BLYP ', 'GGX  ', 'PW91 ', 'PBX  ', 'PBE  ', 'RPB  ', 'HCTH ', 'OPTX ',&
 &    'META ', 'PB0X ', 'PBE0 ', 'B3LP ', 'B3LYP', 'PSX  ', 'WCX  '/)
  character(len=7),parameter,dimension(N_PW_GC) :: PW_GC=&
 & (/ 'NOGC ', 'P86  ', 'GGC  ', 'PW91 ', 'BLYP ', 'PBC  ', 'PBE  ','PBE0 ','HCTH ', 'META ','B3LP ', 'B3LYP', 'PSC  '/)
@@ -86,7 +86,7 @@ module mod_xc2y
 &    XC_LDA_C_WIGNER, XC_LDA_C_HL, XC_LDA_C_OB_PZ, XC_LDA_C_OB_PW,XC_LDA_C_GL,&
 &    NOXC, XC_NOT_AVAILABLE/)
  integer,parameter,dimension(N_PW_GX) :: PWGX2LIBXC=&
-& (/ NOXC, XC_GGA_X_B88, XC_GGA_X_PW91, XC_GGA_X_PW91, XC_GGA_X_PBE, XC_GGA_X_PBE, XC_GGA_X_PBE_R,&
+& (/ NOXC, XC_GGA_X_B88, XC_GGA_X_B88, XC_GGA_X_PW91, XC_GGA_X_PW91, XC_GGA_X_PBE, XC_GGA_X_PBE, XC_GGA_X_PBE_R,&
 &    XC_GGA_XC_HCTH_93, XC_GGA_X_OPTX, XC_MGGA_X_TPSS, XC_HYB_GGA_XC_PBEH, XC_HYB_GGA_XC_PBEH, &
 &    XC_HYB_GGA_XC_B3LYP, XC_HYB_GGA_XC_B3LYP, XC_GGA_X_PBE_SOL, XC_GGA_X_WC/)
  integer,parameter,dimension(N_PW_GC) :: PWGC2LIBXC=&

@@ -36,7 +36,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
  ! Notice that G_old is never overwritten (It is modified by the RWA)      
  ! ------------------------------------------------------------
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,cZERO,cONE
  use SC,             ONLY:SC_bands,RT_nk
  use R_lattice,      ONLY:bz_samp  
  use real_time,      ONLY:l_RT_EULER,l_RT_RK2,l_RT_EXP,l_RT_INTERPOLATE,l_RT_RWA, &
@@ -57,11 +57,6 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
  type(gauge_field),    intent(in) :: A_old
  type(gauge_field), intent(inout) :: A_new
  ! 
- ! Work Space
- !
- integer     :: ik
- complex(SP) :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP) :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
 #if defined _TIMING
  call timing('RT integrator',OPR='start')
@@ -111,13 +106,23 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
      !
      real(SP),intent(in)    :: dT
      !
-     integer                :: ib
+     integer                :: ik,ib
      complex(SP)            :: G_old_full(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     complex(SP)            :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     complex(SP)            :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     complex(SP)            :: I1_matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     !
+     if(l_RT_EXP) then
+       I1_matrix=cZERO
+       do ib=SC_bands(1),SC_bands(2)
+         I1_matrix(ib,ib)=cONE
+       enddo
+     endif
      !
      do ik=1,RT_nk
        !
        if (l_RT_RWA) call RT_apply_RWA(ik,E,Time,dT,"APPLY",G_old(:,:,ik),&
-         &                                            M2=G_lesser_reference(:,:,ik))
+&                                      M2=G_lesser_reference(:,:,ik))
        !
        G_old_full=G_old(:,:,ik)+G_lesser_reference(:,:,ik)
        !
@@ -129,8 +134,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
          !
          ! G(T+dt) = U(dt) G(T) U(-dt)
          !
-         call RT_EULEREXP_step(G_new(:,:,ik),G_old_full,I1_k,I2_k,ik,dT)
-         G_new(:,:,ik)=G_new(:,:,ik)-G_lesser_reference(:,:,ik)
+         call RT_EULEREXP_step(G_new(:,:,ik),G_old(:,:,ik),G_lesser_reference(:,:,ik),I1_k,I2_k,I1_matrix)
          !
        else
          !
@@ -146,12 +150,12 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
        endif
        !
        if (l_RT_RWA) call RT_apply_RWA(ik,E,Time,dT,"REMOVE",G_old(:,:,ik),&
-         &                  M2=G_lesser_reference(:,:,ik),M3=G_new(:,:,ik))
+&                                      M2=G_lesser_reference(:,:,ik),M3=G_new(:,:,ik))
        !
        ! Dephasing and carriers relaxation step
        ! G(T+dt) = G(T) - i dt * Simga_relax(T)
        !
-       call RT_DEPHASING_step(G_new(:,:,ik),ik,dT)
+       call RT_DEPHASING_step(G_new(:,:,ik),ik,Time,dT)
        !
        ! Update the occupations:
        !  RT_delta0_occupations are always sensitive to small changes 

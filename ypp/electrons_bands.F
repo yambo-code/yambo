@@ -41,7 +41,7 @@ subroutine electrons_bands(Xk,Xen)
  use units,          ONLY:FS2AUT
  use SC,             ONLY:RT_Nk,RT_ibz_coo,RT_Nk_ibz
  use YPP,            ONLY:OCC_T_range,OCC_deltaT
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RIM_ibz_coo,RT_E_occupations
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RIM_ibz_coo,RT_delta0_occupations
  use IO_m,           ONLY:NONE
 #endif
  !
@@ -99,11 +99,11 @@ subroutine electrons_bands(Xk,Xen)
  !
  kgrid_main_loop: do while(real_ctl/=999._SP)
    if (associated(USER_K%pt)) deallocate(USER_K%pt)
-     allocate(USER_K%pt(USER_K%nibz,3))
-     USER_K%pt(USER_K%nibz,:)=(/0._SP,0._SP,999._SP/)
-     call parser('BKpts',USER_K%pt)
-     real_ctl=USER_K%pt(USER_K%nibz,3)
-     if (real_ctl/=999._SP)  USER_K%nibz=USER_K%nibz+1
+   allocate(USER_K%pt(USER_K%nibz,3))
+   USER_K%pt(USER_K%nibz,:)=(/0._SP,0._SP,999._SP/)
+   call parser('BKpts',USER_K%pt)
+   real_ctl=USER_K%pt(USER_K%nibz,3)
+   if (real_ctl/=999._SP)  USER_K%nibz=USER_K%nibz+1
  enddo kgrid_main_loop
  !
  USER_K%nibz=USER_K%nibz-1
@@ -235,18 +235,18 @@ subroutine electrons_bands(Xk,Xen)
      Real_Nhole=0._SP
      Real_Nel=0._SP
      do ik=1,Xk%nibz
-       Real_Nhole=Real_Nhole+&
-&       sum((spin_occ-RT_E_occupations(BANDS_range(1):Xen%nbf,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
+       Real_Nhole=Real_Nhole-&
+&       sum((RT_delta0_occupations(BANDS_range(1):Xen%nbf,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
 &                      Xk%weights(ik)/real(RT_Nk_ibz(ik))
        Real_Nel=  Real_Nel+&
-&       sum((RT_E_occupations(Xen%nbf+1:BANDS_range(2),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
+&       sum((RT_delta0_occupations(Xen%nbf+1:BANDS_range(2),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
 &                      Xk%weights(ik)/real(RT_Nk_ibz(ik))
      enddo
      !
      ! STEP 1: define coefficients for occupations
      !
      do is=1,n_sp_pol
-       occupations_tmp(BANDS_range(1):BANDS_range(2),is,1:Nk)=RT_E_occupations(BANDS_range(1):BANDS_range(2),1:Nk)
+       occupations_tmp(BANDS_range(1):BANDS_range(2),is,1:Nk)=RT_delta0_occupations(BANDS_range(1):BANDS_range(2),1:Nk)
      enddo
      call eval_interpolation_coeff(R2D=occupations_tmp,k=Xk,Nk=Nk,ID=ID_interp)
      !
@@ -261,11 +261,8 @@ subroutine electrons_bands(Xk,Xen)
      !
      if (BANDS_steps> 0) then
        !
-       occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)=&
-         (spin_occ-occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T))
-       !
-       Nhole=sum(occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T))/real(CIRCUIT_k%nibz)
-       Nel=sum(occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T))/real(CIRCUIT_k%nibz)
+       Nhole=-sum(occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T))/real(CIRCUIT_k%nibz)
+       Nel=   sum(occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T))/real(CIRCUIT_k%nibz)
        !
        !DEBUG<
        !write(*,*) '  '

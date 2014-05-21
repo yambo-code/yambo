@@ -31,7 +31,8 @@ integer function RT_Lifetimes_evaluation_plan( )
  use fields,         ONLY:Efield,i_Pump,ext_field,Efield_duplicate,small_a
  use memory_m,       ONLY:mem_est
  use real_time,      ONLY:RT_TIME_status,NE_steps,RT_dynamics_steps,&
-&                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time,it_start,Life_MEM_steps
+&                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time,it_start,&
+&                         Life_MEM_steps
  !
  implicit none
  !
@@ -106,10 +107,11 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  N_blocks=N_inter_steps/N_intra_steps
  !
+ it=it_start
+ !
  ! At the beginning I do not have enough points to perform the fit. I, therefore,
  ! introduce blocks with an increasing number of elements
  !
- it=it_start
  do i1=1,N_intra_steps,max(N_intra_steps/10,1)
    call BUILD_up_group(N_blocks*i1,i1)
    it=it+N_blocks*i1
@@ -131,15 +133,6 @@ integer function RT_Lifetimes_evaluation_plan( )
    it=it+N_inter_steps
    !
  enddo
- !
- !DEBUG>
- !do it=1,NE_steps
- ! TIME=RT_step*(it-1)
- ! if (RT_GAMMA_T_status(it)/=0) write (*,'(f10.6,2i6)') real(TIME/FS2AUT),RT_GAMMA_T_status(it),it
- !enddo
- !write (*,*) count( RT_GAMMA_T_status/=0 )
- !stop
- !DEBUG<
  !
  RT_Lifetimes_evaluation_plan = count( RT_TIME_status/=0 )
  !

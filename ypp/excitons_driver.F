@@ -336,7 +336,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
      !
      ! (***) Daniele 15/7/07 rev Andrea 12/07:
      ! 
-     ! The number of cells are always odd so that the hole can
+     ! The number of cells is always odd so that the hole can
      ! be placed in the middle.
      !
      r_hole_rlu(j1)=r_hole_rlu(j1)+ncell(j1)/2*fft_dim(j1)

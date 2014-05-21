@@ -184,8 +184,8 @@ module real_time
  !
  ! Locks and reference
  !----------------------
- logical                  :: l_RT_skip_impose = .FALSE.
- logical                  :: l_RT_EE_impose_E = .FALSE.
+ logical                  :: l_RT_skip_impose    = .FALSE.
+ logical                  :: l_RT_EE_impose_E    = .FALSE.
  logical                  :: l_use_updated_reference
  logical                  :: l_equilibrium_lifetimes
  real(SP),    allocatable :: RT_E_occupations(:,:) 
@@ -254,7 +254,8 @@ module real_time
  !------------
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
  complex(SP), allocatable :: I_coh_SAVE(:,:,:,:)
- complex(SP), allocatable :: Sigma_relax(:,:,:)
+ complex(SP), allocatable :: I_relax_static(:,:,:)
+ complex(SP), allocatable :: I_relax_dyn(:,:,:,:)
  !
  ! Density
  !---------
@@ -473,9 +474,14 @@ module real_time
        call mem_est("I_coh_SAVE",(/size(I_coh_SAVE)/),(/2*SP/))
      endif
      !
-     if(RT_is_dephased.or.l_elph_scatt.or.l_elel_scatt) then
-       allocate(Sigma_relax(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
-       call mem_est("Sigma_relax",(/size(Sigma_relax)/),(/2*SP/))
+     if(RT_is_dephased) then
+       allocate(I_relax_static(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
+       call mem_est("I_relax_static",(/size(I_relax_static)/),(/2*SP/))
+     endif
+     !
+     if(l_elph_scatt.or.l_elel_scatt) then
+       allocate(I_relax_dyn(SC_bands(1):SC_bands(2),RT_nk,2,Life_MEM_steps))
+       call mem_est("I_relax_dyn",(/size(I_relax_static)/),(/2*SP/))
      endif
      !
      if(l_RT_needs_XC0) then
@@ -551,9 +557,14 @@ module real_time
        call mem_est("RT_TIME_status")
      endif
      !
-     if(allocated(Sigma_relax)) then
-       deallocate(Sigma_relax)
-       call mem_est("Sigma_relax")
+     if(allocated(I_relax_static)) then
+       deallocate(I_relax_static)
+       call mem_est("I_relax_static")
+     endif
+     !
+     if(allocated(I_relax_dyn)) then
+       deallocate(I_relax_dyn)
+       call mem_est("I_relax_dyn")
      endif
      !  
      if(allocated(XC0_and_HARTREE0)) then

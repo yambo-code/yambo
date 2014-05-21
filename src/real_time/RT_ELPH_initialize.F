@@ -77,7 +77,8 @@ subroutine RT_ELPH_initialize(E,k,q)
  io_err=ioELPH(ID,'gkkp_expanded')
  !
  if (io_err/=0) then
-   l_elph_scatt=.FALSE.
+   l_elph_scatt   =.FALSE.
+   l_RT_CCA_Kernel=.FALSE.
    call warning('ELPH database not found. E-P scattering switched off')
    return
  endif

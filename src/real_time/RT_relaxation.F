@@ -67,7 +67,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time,l_flag)
  ! Work Space
  !
  integer          :: ib1,ib2,ik,i_n
- real(SP)         :: f_E_k,f_H_k,df_k,dGAMMA_h,dGAMMA_e,GAMMA0_h,GAMMA0_e,Sigma0,dSigma,GAMMA_h,GAMMA_e
+ real(SP)         :: f_E_k,f_H_k,df_k,dGAMMA_h,dGAMMA_e,GAMMA0_h,GAMMA0_e
  complex(SP)      :: G_input_full(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  logical          :: l_eval
  !
@@ -188,10 +188,6 @@ subroutine RT_relaxation(G_input,E,k,q,Time,l_flag)
  !
  ! Dephasing Matrix & Occupations reference
  !==========================================
- !
- Sigma0=0._SP
- dSigma=0._SP
- !
  do ik=1,RT_nk
    do ib1=SC_bands(1),SC_bands(2)
      !
@@ -217,15 +213,17 @@ subroutine RT_relaxation(G_input,E,k,q,Time,l_flag)
        GAMMA0_e=GAMMA0_e+REF_lifetime(ib1,ik,4)+REF_lifetime(ib1,ik,6)
      endif
      !
-     GAMMA_h=GAMMA0_h+dGAMMA_h
-     GAMMA_e=GAMMA0_e+dGAMMA_e
-     !
-     I_relax_dyn(ib1,ik,1,1)= GAMMA0_h*df_k -I_relax_dyn(ib1,ik,1,1)*f_H_k 
-     I_relax_dyn(ib1,ik,2,1)= GAMMA0_e*df_k +I_relax_dyn(ib1,ik,2,1)*f_E_k 
-     do i_n=2,Life_MEM_steps
-       I_relax_dyn(ib1,ik,1,i_n)= -I_relax_dyn(ib1,ik,1,i_n)*f_H_k 
-       I_relax_dyn(ib1,ik,2,i_n)=  I_relax_dyn(ib1,ik,2,i_n)*f_E_k 
-     enddo
+     if (Life_MEM_steps==1) then
+       I_relax_dyn(ib1,ik,1,1)= GAMMA0_h*df_k - dGAMMA_h*f_H_k
+       I_relax_dyn(ib1,ik,2,1)= GAMMA0_e*df_k + dGAMMA_e*f_E_k
+     else
+       I_relax_dyn(ib1,ik,1,1)= GAMMA0_h*df_k -I_relax_dyn(ib1,ik,1,1)*f_H_k 
+       I_relax_dyn(ib1,ik,2,1)= GAMMA0_e*df_k +I_relax_dyn(ib1,ik,2,1)*f_E_k 
+       do i_n=2,Life_MEM_steps
+         I_relax_dyn(ib1,ik,1,i_n)= -I_relax_dyn(ib1,ik,1,i_n)*f_H_k 
+         I_relax_dyn(ib1,ik,2,i_n)=  I_relax_dyn(ib1,ik,2,i_n)*f_E_k 
+       enddo
+     endif
      !
    enddo
  enddo

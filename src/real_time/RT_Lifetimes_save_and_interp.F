@@ -54,10 +54,9 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  !
  if (EVAL) then
    !
-   !===========
+   !======
    ! SAVE
-   !===========
-   !
+   !======
    if (l_elel_scatt     .and.SAVE_index==1) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
    if (.not.l_elel_scatt.and.SAVE_index==3) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
    !
@@ -75,6 +74,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    enddo
    !
    ! Store the occupations related to the last saved lifetimes
+   !-----------------------------------------------------------
    if (SAVE_index==1.or.(.not.l_elel_scatt.and.SAVE_index==3)) then
      RT_E_occupations_reference=RT_E_occupations
      RT_H_occupations_reference=RT_H_occupations
@@ -83,7 +83,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  else
    !
    if (RT_TIME_status(it_now)==0 .or. (RT_TIME_status(it_now)>0.and..not.FIRST_step(it_now,Time)) ) then
-     !=============================
+     !==============
      ! INTERPOLATE 
      !=============
      do ib=SC_bands(1),SC_bands(2)
@@ -93,9 +93,9 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
      enddo
      !
    else if (RT_TIME_status(it_now)<0) then
-     !==================================
+     !===============
      ! KEEP CONSTANT 
-     !=============
+     !===============
      !
      LIFE=SAVED_lifetime(:,:,SAVE_index,Life_MEM_steps)
      !

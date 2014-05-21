@@ -464,6 +464,7 @@ module real_time
        call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
        allocate(SAVED_times(Life_MEM_steps)) 
        SAVED_lifetime=0._SP
+       SAVED_times=0._SP
      endif
      !
      allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,n_sp_pol))

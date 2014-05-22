@@ -1,4 +1,3 @@
-!
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
@@ -110,7 +109,8 @@ subroutine RT_ELPH_initialize(E,k,q)
  ! I/O
  !=====
  !
- i_counter=0
+ i_counter   =0
+ ph_Esq_local=0._SP
  !
  do iq=1,q%nbz
    !
@@ -184,6 +184,8 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ph_freqs_sq=ph_Esq_local
  !
+ call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
+ !
  if (any(ph_freqs_sq<0.)) call warning('Imaginary phonon frequencies found. Please check.')
  !
  ! Test of the effect of using a single optical mode
@@ -213,10 +215,6 @@ subroutine RT_ELPH_initialize(E,k,q)
      !
      do iq=1,q%nbz
        !
-       if (.not.PAR_IND_Q%element_1D(iq)) cycle
-       !
-       iq_io=Q_io_map(iq)
-       !
        q_mod(iq)=v_norm(q%ptbz(iq,:))
        !
        if (q_mod(iq)>q0_mod.or.iq==1) cycle
@@ -224,7 +222,7 @@ subroutine RT_ELPH_initialize(E,k,q)
        i1=i1+1
        !
        do il=1,3
-         ph_mean_speed(il)=ph_mean_speed(il)+sqrt(ph_freqs_sq(iq_io,il))/q_mod(iq)
+         ph_mean_speed(il)=ph_mean_speed(il)+sqrt(ph_freqs_sq(iq,il))/q_mod(iq)
        enddo
        !
      enddo
@@ -234,9 +232,6 @@ subroutine RT_ELPH_initialize(E,k,q)
      call k_ibz2bz(q,'i',.TRUE.)  
      !
    endif
-   !
-   call PP_redux_wait(ph_mean_speed)
-   ph_mean_speed=ph_mean_speed/real( PAR_COM_Q_INDEX%n_CPU )
    !
    RADIUS_sphere=(3.*RL_vol/q%nbz/4./pi)**(1./3.)
    !

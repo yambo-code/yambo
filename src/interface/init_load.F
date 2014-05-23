@@ -58,7 +58,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_steps,RT_dynamics_decay_time,&
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_IO_time,RT_scatt_tresh,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_dynamics_KIND,I_MEM_steps,&
-&                        Gr_kind,two_alpha,RIM_EE_percent
+&                        Gr_kind,two_alpha,RIM_EE_percent,TIME_EE_impose_dN
  use fields,        ONLY:Efield
  use plasma,        ONLY:Plasma_redux_percent
 #endif
@@ -353,6 +353,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'PlasmaPerc', '[RT] Plasma approx (0-100): % of eh pair considered',Plasma_redux_percent,Verb_level=V_real_time)
  call it(defs,'EERimPerc',  '[RT] EE RIM (0-100): % of the RIM points used in EE scatt',RIM_EE_percent,Verb_level=V_real_time)
+ call it(defs,'TeeImposedN','[RT] Time at which the dN conservation is switched-on on e-e (negative means never)',&
+&             TIME_EE_impose_dN,Verb_level=V_real_time,unit=Time_unit(1))
  call it('f',defs,'RTeeImposeE',   '[RT] Conservation of E imposed by hand on-the-fly for EE scatt')
  !
  ! ELPH

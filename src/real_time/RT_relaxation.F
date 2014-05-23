@@ -236,11 +236,12 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
      if (l_RT_skip_impose) return
      !
      if (l_elel_scatt) then
-       call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
+       call RT_impose_zero_dE_and_dN(Time,E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
      endif
      if (l_elph_scatt) then
-       call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
-       if(Bose_Temp>0._SP) call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
+       call RT_impose_zero_dE_and_dN(Time,E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
+       if (Bose_Temp>0._SP) call RT_impose_zero_dE_and_dN(Time,E,k,E_P_Ho_abs_lifetime,&
+&                                                         E_P_El_abs_lifetime,'elph2')
      endif
      !
    end subroutine

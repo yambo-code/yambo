@@ -43,7 +43,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_RT_uses_E_RIM,RIM_bz_coo,RT_dynamics_steps,RT_dynamics_decay_time,&
 &                         RT_dynamics_KIND,l_NE_dynamics,l_RT_skip_impose,I_MEM_steps,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
-&                         RIM_EE_Nk_table,l_RT_EE_impose_E,RIM_EE_percent,RIM_EE_Nk_table
+&                         RIM_EE_Nk_table,l_RT_EE_impose_E,RIM_EE_percent,RIM_EE_Nk_table,TIME_EE_impose_dN
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp,qindx_S
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
@@ -371,6 +371,7 @@ subroutine RT_initialize(E,k,q)
    call msg( 'nr','---Conservation Rules---')
    call msg( 'r','Carrier and electrons number:',.not.l_RT_skip_impose)
    if (l_elel_scatt) call msg( 'r','Energy (e-e only)           :',l_RT_EE_impose_E)
+   if (TIME_EE_impose_dN>0.) call msg( 'r', 'Time for dN       (e-e)[fs]:',TIME_EE_impose_dN/FS2AUT)
  endif
  !
  call msg( 'nr','---RIM---')

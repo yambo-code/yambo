@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_kind)
+subroutine RT_impose_zero_dE_and_dN(Time,E,k,Hole_lifetime,Electron_lifetime,Scatt_kind)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
@@ -31,12 +31,13 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
 &                         RT_E_occupations,RT_H_occupations,REF_lifetime,&
 &                         l_equilibrium_lifetimes,RT_delta0_occupations,&
 &                         l_RT_EE_impose_E,RT_E_occupations_reference,&
-&                         RT_H_occupations_reference
+&                         RT_H_occupations_reference,TIME_EE_impose_dN
  !
  implicit none
  !
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k
+ real(SP),      intent(in)    :: Time
  real(SP),      intent(inout) :: Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk)
  real(SP),      intent(inout) :: Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk)
  character(5),  intent(in)    :: Scatt_kind
@@ -56,7 +57,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  if(index(Scatt_kind,'elel')/=0) then
    l_energy=l_RT_EE_impose_E
    l_n_electrons=.true.
-   l_n_carriers=.false.
+   l_n_carriers=TIME_EE_impose_dN>0..and.Time>=TIME_EE_impose_dN
  endif
  !
  if(index(Scatt_kind,'elph')/=0) then

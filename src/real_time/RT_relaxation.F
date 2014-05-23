@@ -51,7 +51,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
 &                         RT_TIME_status,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         REF_lifetime,it_start,RT_E_occupations,RT_H_occupations,FIRST_step,&
-&                         l_equilibrium_lifetimes,l_RT_skip_impose,RT_delta0_occupations,RIM_ibz_coo,I_relax_dyn
+&                         l_initial_equilibrium,l_RT_skip_impose,RT_delta0_occupations,RIM_ibz_coo,I_relax_dyn
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -70,16 +70,16 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  real(SP)         :: f_E_k,f_H_k,df_k,dGAMMA_h,dGAMMA_e,GAMMA0_h,GAMMA0_e
  logical          :: l_eval
  !
- l_equilibrium_lifetimes=l_flag
+ l_initial_equilibrium=l_flag
  !
- if (.not.l_NE_dynamics_started .and. .not.l_equilibrium_lifetimes) return
+ if (.not.l_NE_dynamics_started .and. .not.l_initial_equilibrium) return
  !
  I_relax_static=cZERO
  I_relax_dyn=cZERO
  !
  ! Dephasing matrix
  !==================
- if (RT_is_dephased.and. .not.l_equilibrium_lifetimes) then
+ if (RT_is_dephased.and. .not.l_initial_equilibrium) then
    do ik=1,RT_nk
      do ib1=SC_bands(1),SC_bands(2)
        do ib2=SC_bands(1),SC_bands(2)
@@ -94,9 +94,9 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  !
  if (.not.l_elph_scatt.and..not.l_elel_scatt) return
  !
- l_eval=l_equilibrium_lifetimes 
+ l_eval=l_initial_equilibrium 
  !
- if (.not.l_equilibrium_lifetimes) then
+ if (.not.l_initial_equilibrium) then
    l_eval= ( RT_TIME_status(it_now)>0 .and. &
 &            (FIRST_step(it_now,Time) .or. it_now-it_start+1<=Life_MEM_steps ) ).or. &
 &          Life_MEM_steps==1
@@ -166,7 +166,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  !
  if (l_eval) call Impose_Conservations( )
  !
- if (l_equilibrium_lifetimes) return
+ if (l_initial_equilibrium) return
  !
  ! SAVE, interpolate & N/dN conservation (of the interpolated Lifetimes)
  !======================================================================

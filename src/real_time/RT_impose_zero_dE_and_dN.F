@@ -29,7 +29,7 @@ subroutine RT_impose_zero_dE_and_dN(Time,E,k,Hole_lifetime,Electron_lifetime,Sca
  use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,RT_Nk_ibz
  use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,Imp_factors, &
 &                         RT_E_occupations,RT_H_occupations,REF_lifetime,&
-&                         l_equilibrium_lifetimes,RT_delta0_occupations,&
+&                         l_initial_equilibrium,RT_delta0_occupations,&
 &                         l_RT_EE_impose_E,RT_E_occupations_reference,&
 &                         RT_H_occupations_reference,TIME_EE_impose_dN
  !
@@ -70,7 +70,7 @@ subroutine RT_impose_zero_dE_and_dN(Time,E,k,Hole_lifetime,Electron_lifetime,Sca
  if (trim(Scatt_kind)=="elph1") iref=3
  if (trim(Scatt_kind)=="elph2") iref=5
  !
- if(l_equilibrium_lifetimes) then
+ if(l_initial_equilibrium) then
    REF_lifetime(:,:,iref)=  0._SP
    REF_lifetime(:,:,iref+1)=0._SP
  endif
@@ -114,7 +114,7 @@ subroutine RT_impose_zero_dE_and_dN(Time,E,k,Hole_lifetime,Electron_lifetime,Sca
    if( isnan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._SP ) then
      if (trim(Scatt_kind)=="elel") Imp_factors(3:5)=prefactor(1:3)
      if(trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
-     if(l_equilibrium_lifetimes) then
+     if(l_initial_equilibrium) then
        REF_lifetime(:,:,iref)=Hole_lifetime
        REF_lifetime(:,:,iref+1)=Electron_lifetime
      endif
@@ -136,7 +136,7 @@ subroutine RT_impose_zero_dE_and_dN(Time,E,k,Hole_lifetime,Electron_lifetime,Sca
  if (trim(Scatt_kind)=="elel")  Imp_factors(3:5)=prefactor(1:3)
  if (trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
  !
- if(l_equilibrium_lifetimes) then
+ if(l_initial_equilibrium) then
    REF_lifetime(:,:,iref)=Hole_lifetime
    REF_lifetime(:,:,iref+1)=Electron_lifetime
  endif
@@ -145,7 +145,7 @@ subroutine RT_impose_zero_dE_and_dN(Time,E,k,Hole_lifetime,Electron_lifetime,Sca
    !
    subroutine eval_E_and_N()
      !
-     if(l_equilibrium_lifetimes) then
+     if(l_initial_equilibrium) then
        f_E_occ=RT_E_occupations_reference(ib,ik_rim)
        f_H_occ=RT_H_occupations_reference(ib,ik_rim)
      else

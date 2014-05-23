@@ -30,7 +30,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
 &                          RT_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                          RT_H_occupations,RT_E_occupations,RIM_ibz_coo,l_RT_uses_E_RIM,&
-&                          l_equilibrium_lifetimes,RIM_EE_scatt_table,RIM_EE_Nk_table,RT_eh_en,&
+&                          l_initial_equilibrium,RIM_EE_scatt_table,RIM_EE_Nk_table,RT_eh_en,&
 &                          RT_scatt_tresh
  use plasma,          ONLY:EH_gas
  use QP_m,            ONLY:QP_n_states,QP_table
@@ -207,7 +207,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            Hole_f0_kmq      = RT_H_occupations_reference(i_np,ik_m_q_rim)/spin_occ
            df_kmq           = RT_delta_occupations(i_np,ik_m_q_rim)/spin_occ
            !
-           if(l_equilibrium_lifetimes) then
+           if(l_initial_equilibrium) then
              Hole_occupation     = N0_h_plasma*f0_kmq     
              Electron_occupation = N0_e_plasma*Hole_f0_kmq
            else

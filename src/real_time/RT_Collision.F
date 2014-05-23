@@ -46,7 +46,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
 #endif
  use electrons,      ONLY:levels
  use FFT_m,          ONLY:fft_size
- use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex,l_BGR
+ use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R,&
 &                         RT_ibz_coo,RT_nk,it_now
@@ -54,7 +54,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,rho_full,l_RT_uses_E_RIM,             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
 &                         G_lesser_reference,l_RT_needs_XC0,RIM_ibz_coo,RT_apply_RWA,          &
-&                         l_NE_simulate_IP,Hfrozen,XCfrozen,l_NE_dynamics_started,l_RT_RWA
+&                         l_NE_simulate_IP,Hfrozen,XCfrozen,l_NE_dynamics_started,l_RT_RWA,l_BGR
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu
@@ -297,12 +297,11 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
 #endif
  !
  ! BGR
- ! ====
- !
- if (l_BGR) call RT_BGR(dG_in,E)
+ !=====
+ if (l_BGR) call RT_BGR(dG_in,E,k)
  !
  ! Calculate all relaxation terms
- ! ==============================
+ !================================
  call RT_relaxation(dG_in,E,k,q,Time,.false.)
  !
 end subroutine RT_Collision

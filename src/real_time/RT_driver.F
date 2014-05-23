@@ -42,7 +42,7 @@ subroutine RT_driver(E,X,k,q)
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,l_NE_dynamics_started,RT_update,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update,&
-&                         dG_lesser,ID
+&                         dG_lesser,ID,l_BGR
  use plasma,          ONLY:Plasma_free,EH_gas
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
@@ -184,7 +184,7 @@ subroutine RT_driver(E,X,k,q)
    !
    call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
    !
-   call RT_BGR(dG_lesser(:,:,:,1),E)
+   call RT_BGR(dG_lesser(:,:,:,1),E,k)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
@@ -193,8 +193,7 @@ subroutine RT_driver(E,X,k,q)
    !
  endif
  !
- ! qindx_X and qindx_S not needed in real-time 
- ! they are used only in dipoles and collisions calculations
+ ! Qindx_X and Qindx_S not needed in real-time they are used only in dipoles and collisions calculations
  !
  if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free()
  !
@@ -212,9 +211,9 @@ subroutine RT_driver(E,X,k,q)
    !
  endif
  !
- ! IP calculation => No need of WFs and Density
+ ! IP calculation & not BGR => No need of WFs and Density
  !
- if(l_NE_simulate_IP) then  
+ if(l_NE_simulate_IP.and..not.l_BGR) then  
    !
    call WF_free(WF)
    !

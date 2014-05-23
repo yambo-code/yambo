@@ -150,9 +150,14 @@ module real_time
  !
  ! BGR
  !----------------------------
- real(SP),    allocatable :: REF_V_xc_sc(:)  
- real(SP),    allocatable :: REF_V_hartree_sc(:)  
- complex(SP), allocatable :: REF_QP_Vnl_xc(:)  
+ logical                  :: l_BGR=.false.
+ real(SP),    allocatable :: BGR_hartree(:,:,:)  
+ real(SP),    allocatable :: BGR_V_xc(:,:,:)  
+ real(SP),    allocatable :: BGR_HF(:,:,:)  
+ real(SP),    allocatable :: BGR_COHSEX(:,:,:)  
+ real(SP),    allocatable :: REF_V_xc_sc(:,:)  
+ real(SP),    allocatable :: REF_V_hartree_sc(:,:)  
+ real(SP),    allocatable :: REF_QP_Vnl_xc(:)  
  !
  ! Relaxation and Dissipation 
  !----------------------------
@@ -197,7 +202,7 @@ module real_time
  ! Locks and reference
  !----------------------
  logical                  :: l_use_updated_reference
- logical                  :: l_equilibrium_lifetimes
+ logical                  :: l_initial_equilibrium
  real(SP),    allocatable :: RT_E_occupations(:,:) 
  real(SP),    allocatable :: RT_H_occupations(:,:) 
  real(SP),    allocatable :: RT_delta0_occupations(:,:) 
@@ -388,9 +393,9 @@ module real_time
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda,l_elph_scatt,l_elel_scatt,&
-&                             l_sc_cohsex,l_BGR
+&                             l_sc_cohsex
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n, &
+     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare, &
 &                             SC_xc_functional,SC_xc_functional,RT_nk
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
@@ -513,10 +518,18 @@ module real_time
      if (l_BGR) then
        allocate(REF_QP_Vnl_xc(QP_n_states))
        call mem_est("REF_QP_Vnl_xc",(/size(REF_QP_Vnl_xc)/),(/2*SP/))
-       allocate(REF_V_xc_sc(fft_size))
-       call mem_est("REF_V_xc_sc",(/fft_size/),(/SP/))
-       allocate(REF_V_hartree_sc(fft_size))
-       call mem_est("REF_V_hartree_sc",(/fft_size/),(/SP/))
+       allocate(REF_V_xc_sc(fft_size,n_sp_pol))
+       call mem_est("REF_V_xc_sc",(/fft_size*n_sp_pol/),(/SP/))
+       allocate(REF_V_hartree_sc(fft_size,n_sp_pol))
+       call mem_est("REF_V_hartree_sc",(/fft_size*n_sp_pol/),(/SP/))
+       allocate(BGR_hartree(SC_bands(2),QP_nk,n_sp_pol))
+       call mem_est("BGR_hartree",(/size(BGR_hartree)/),(/SP/))
+       allocate(BGR_V_xc(SC_bands(2),QP_nk,n_sp_pol))
+       call mem_est("BGR_V_xc",(/size(BGR_V_xc)/),(/SP/))
+       allocate(BGR_HF(SC_bands(2),QP_nk,n_sp_pol))
+       call mem_est("BGR_HF",(/size(BGR_HF)/),(/SP/))
+       allocate(BGR_COHSEX(SC_bands(2),QP_nk,n_sp_pol))
+       call mem_est("BGR_COHSEX",(/size(BGR_COHSEX)/),(/SP/))
      endif
      !
      allocate(rho_reference(fft_size))
@@ -543,7 +556,7 @@ module real_time
    subroutine RT_free
      !
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
-     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n,RT_all2ibz,&
+     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,RT_all2ibz,&
 &                             RT_ibz_coo,RT_Nk_ibz
      use memory_m,       ONLY:mem_est
      use QP_m,           ONLY:QP_Vnl_xc
@@ -617,9 +630,11 @@ module real_time
        call mem_est("SAVED_lifetime")
      endif
      !
-     if(allocated(REF_QP_Vnl_xc)) then
+     if(l_BGR) then
        deallocate(REF_QP_Vnl_xc,REF_V_xc_sc,REF_V_hartree_sc)
        call mem_est("REF_QP_Vnl_xc REF_V_xc_sc REF_V_hartree_sc")
+       deallocate(BGR_hartree,BGR_V_xc,BGR_COHSEX,BGR_HF)
+       call mem_est("BGR_hartree BGR_V_xc BGR_COHSEX BGR_HF")
      endif
      !
      deallocate(RT_H_occupations)

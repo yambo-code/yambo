@@ -50,7 +50,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         RT_P,RT_step,rho_full,l_RT_CCA_Kernel,dG_lesser, &
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps,&
-&                         l_equilibrium_lifetimes,RT_E_occupations_reference,&
+&                         l_initial_equilibrium,RT_E_occupations_reference,&
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
 &                         RIM_ibz_coo,RT_eh_en,REF_Lifetime,G_MEM_steps,MEM_index
  use fields,         ONLY:A_vecpot,A_vecpot_previous

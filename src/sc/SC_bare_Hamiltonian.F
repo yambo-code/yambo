@@ -32,6 +32,9 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp
  use xc_functionals, ONLY:V_xc
+#if defined _RT
+ use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc
+#endif
 #if defined _MAGNETIC
  use drivers,        ONLY:l_sc_magnetic
 #endif
@@ -120,6 +123,17 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
    call V_qp_basis_to_H(ik,-QP_Vxc,Ho(:,:,ik,:))
    !
  enddo
+ !
+#if defined _RT
+ !
+ ! Save the reference xc and Hartree potentials 
+ ! to calculate the BGR
+ !==============================================
+ !
+ REF_V_xc_sc=V_xc_sc
+ REF_V_hartree_sc=V_hartree_sc
+ !
+#endif
  !
  deallocate(QP_Vxc)
  call mem_est("QP_Vxc")

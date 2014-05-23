@@ -29,7 +29,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  use SC,             ONLY:SC_bands,RT_nk,it_now
  use parallel_m,     ONLY:ncpu
  use real_time,      ONLY:RT_occupations_locked,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                         RT_delta_occupations,l_use_updated_reference,l_equilibrium_lifetimes,&
+&                         RT_delta_occupations,l_use_updated_reference,l_initial_equilibrium,&
 &                         RT_H_occupations,RT_E_occupations,RT_TIME_status,RT_delta0_occupations,&
 &                         SAVED_lifetime,Life_MEM_steps,REF_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Hole_lifetime,&
@@ -45,7 +45,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  integer :: ik,ib
  real(SP):: f_sum,f_diff,f_E_occ,f_H_occ,f_E_occ_reference,f_H_occ_reference,df_max
  !
- l_use_updated_reference=.not.l_equilibrium_lifetimes
+ l_use_updated_reference=.not.l_initial_equilibrium
  !
  if(l_use_updated_reference) l_use_updated_reference=(RT_TIME_status(it_now)> 1)
  !

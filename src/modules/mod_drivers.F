@@ -49,6 +49,10 @@ module drivers
  logical :: l_elel_corr
  logical :: l_elph_corr
  !
+ ! On-the-fly BGR
+ !
+ logical :: l_BGR
+ !
  ! The non-eq. self-energy scattering "kind"
  !
  logical :: l_elel_scatt

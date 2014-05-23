@@ -119,9 +119,8 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
      !        
      ! Exc Energy from E_xc[rho_n] energy density
      !
-     call IO_and_Messaging_switch("-report -log -io_in -io_out")
-     call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0)
-     call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
+     call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0,&
+&                             MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)
      !
      call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
      !

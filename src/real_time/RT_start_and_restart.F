@@ -47,7 +47,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use real_time,      ONLY:ID,NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         RT_P,RT_step,full_rho,l_RT_CCA_Kernel,dG_lesser, &
+&                         RT_P,RT_step,rho_full,l_RT_CCA_Kernel,dG_lesser, &
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps,&
 &                         l_equilibrium_lifetimes,RT_E_occupations_reference,&
@@ -85,7 +85,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  G_lesser          =cZERO
  dG_lesser         =cZERO
  rho_reference     =rZERO
- if(allocated(full_rho)) full_rho=cZERO
+ if(allocated(rho_full)) rho_full=cZERO
  V_xc_sc           =rZERO
  V_hartree_sc      =rZERO
  H_nl_sc           =cZERO
@@ -186,36 +186,34 @@ subroutine RT_start_and_restart(E,k,q,X)
    ! coming from the bands above SC_bands(1) in the density.
    ! Therefore we calculate:
    !
-   ! (1) a density containing ALL levels (full_rho)
+   ! (1) a density containing ALL levels (rho_full)
    ! (2) a density containing only levels above SC_bands(1) (rho_reference)
    !
    ! in RT_Collision 
-   !   V_h/xc[n]=V_h/xc[full_rho]+V_h/xc[rho-rho_reference]
+   !   V_h/xc[n]=V_h/xc[rho_full]+V_h/xc[rho-rho_reference]
    !
-   ! When SC_bands(1)=1 full_rho=rho_reference
+   ! When SC_bands(1)=1 rho_full=rho_reference
    !
    ! The first term is stored here in XC0_and_HARTREE0
    !
    XC0_and_HARTREE0=(0._SP,0._SP)
    !
-   ! Rho_reference. Note that altough rh_n has been already calculated 
+   ! Rho_reference. Note that altough rho_n has been already calculated 
    ! in sc_bare_Hamiltonian I need to recalculate it here when SC_bands(1)>1
    ! as it is also used in XC_potential_driver
    ! 
    call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1))
    rho_reference=rho_n
    !
-   if (allocated(full_rho)) then
+   if (allocated(rho_full)) then ! rho_full is allocated if l_sc_contains_lda.and.SC_xc_functional/=0.and.SC_bands(1)>1
      call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_n,1)
-     full_rho=rho_n
+     rho_full=rho_n
    endif
    !
    ! Calculate V_xc
    !
    if(l_sc_contains_lda.and.SC_xc_functional/=0) then
-     call IO_and_Messaging_switch("-report -log")
-     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
-     call IO_and_Messaging_switch("+report",CONDITION=master_cpu)
+     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1,MUTE="-report -log",unMUTE=master_cpu)
      call IO_and_Messaging_switch("+log")
    endif
    !
@@ -249,7 +247,6 @@ subroutine RT_start_and_restart(E,k,q,X)
    V_xc_sc=(0._SP)
    !
    V_hartree_sc=(0._SP)
-   !if (l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP)
    !
  endif
  !

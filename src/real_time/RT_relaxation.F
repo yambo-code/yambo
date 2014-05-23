@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_relaxation(G_input,E,k,q,Time,l_flag)
+subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  !
  ! This subroutine calculate relaxation term coming from off-diagonal part
  ! of the self-energy in time, from the electron-phonon and/or electron-electron 
@@ -62,20 +62,17 @@ subroutine RT_relaxation(G_input,E,k,q,Time,l_flag)
  type(bz_samp), intent(in)    :: k,q
  logical,       intent(in)    :: l_flag
  real(SP),      intent(in)    :: Time
- complex(SP),   intent(inout) :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),   intent(inout) :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
  ! Work Space
  !
  integer          :: ib1,ib2,ik,i_n
  real(SP)         :: f_E_k,f_H_k,df_k,dGAMMA_h,dGAMMA_e,GAMMA0_h,GAMMA0_e
- complex(SP)      :: G_input_full(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  logical          :: l_eval
  !
  l_equilibrium_lifetimes=l_flag
  !
  if (.not.l_NE_dynamics_started .and. .not.l_equilibrium_lifetimes) return
- !
- G_input_full=G_input+G_lesser_reference
  !
  I_relax_static=cZERO
  I_relax_dyn=cZERO
@@ -86,7 +83,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time,l_flag)
    do ik=1,RT_nk
      do ib1=SC_bands(1),SC_bands(2)
        do ib2=SC_bands(1),SC_bands(2)
-         I_relax_static(ib1,ib2,ik)=-cI*RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))*G_input(ib1,ib2,ik)
+         I_relax_static(ib1,ib2,ik)=-cI*RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))*dG_in(ib1,ib2,ik)
        enddo
      enddo
    enddo
@@ -142,7 +139,7 @@ subroutine RT_relaxation(G_input,E,k,q,Time,l_flag)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     call RT_ELPH_total_Kernel(ik,E,k,q,Time,G_input_full) 
+     call RT_ELPH_total_Kernel(ik,E,k,q,Time) 
      !
    enddo
    !

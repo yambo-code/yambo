@@ -42,7 +42,7 @@ integer function variables_SC(ID,local_description,what)
 &                         RT_IO_JPO_steps,l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,RT_IO_steps_DB,Gr_description,&
 &                         l_RT_uses_E_RIM,N_Gr_descs,RT_dynamics_steps,RT_dynamics_decay_time,&
-&                         RT_dynamics_KIND
+&                         RT_dynamics_KIND,l_RT_skip_impose,l_RT_EE_impose_E,RIM_EE_percent
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
@@ -417,7 +417,9 @@ integer function variables_SC(ID,local_description,what)
    !
    ! RIM
    !======================
-   call io_elemental(ID,VAR="RIM_support",VAR_SZ=2,MENU=0) 
+   VAR_SIZE=2
+   if (ver_is_gt_or_eq(ID,revision=3387)) VAR_SIZE=3
+   call io_elemental(ID,VAR="RIM_support",VAR_SZ=VAR_SIZE,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_uses_E_RIM,&
 &    VAR=' [RIM] Random Energies support   :',  CHECK=.true.,OP=(/"=="/),&
@@ -426,8 +428,31 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,I0=BZ_RIM_tot_nkpts,&
 &    VAR=' [RIM] Random k-point            :',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
+   if (ver_is_gt_or_eq(ID,revision=3387)) then
+     i_desc=i_desc+1
+     call io_elemental(ID,R0=RIM_EE_percent,&
+&      VAR=' [RIM] Used for e-e         [o/o]:',  CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
+   endif
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
+   ! CONSTRAINS
+   !======================
+   if (ver_is_gt_or_eq(ID,revision=3387)) then
+     call io_elemental(ID,VAR="CONSTRAINS",VAR_SZ=VAR_SIZE,MENU=0) 
+     i_desc=i_desc+1
+     call io_elemental(ID,L0=.not.l_RT_skip_impose,&
+&      VAR=' [CONSTRAINS] N & dN  (e-e & e-p):',  CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc))
+     i_desc=i_desc+1
+     call io_elemental(ID,L0=l_RT_EE_impose_E,&
+&      VAR=' [CONSTRAINS] IP Energy     (e-e):',  CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   endif
+   !
+   ! FIELDS
+   !======================
    if (l_NE_with_fields_disk) then
      !
      call io_elemental(ID,VAR="GAUGE_TYPE",CH0="",VAR_SZ=1,MENU=0)

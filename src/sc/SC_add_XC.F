@@ -28,7 +28,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  ! The definition of the XC part is the same in the two approches. The only
  ! difference is that in _XC the operator is written in the SC basis, while
- ! _RT works in the LDa basis.
+ ! _RT works in the input basis.
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_exx,l_sc_srpa,l_sc_cohsex,l_sc_contains_lda,&
@@ -110,13 +110,10 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    !
    ! GPL_EXCLUDE_END
    !
-   call IO_and_Messaging_switch("-report -log -io_in -io_out")
-   !
-   if (l_sc_contains_lda) call XC_potential_driver(E,Xk,SC_kind,SC_xc_functional,1)
+   if (l_sc_contains_lda) call XC_potential_driver(E,Xk,SC_kind,SC_xc_functional,1,&
+&                                                  MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)
    if (l_sc_contains_lda.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)
    if (l_sc_contains_lda.and.     (l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
-   !
-   call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
    !
    ! Mixing 
    !========

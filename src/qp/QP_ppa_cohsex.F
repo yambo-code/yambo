@@ -375,7 +375,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if defined _SC
          if (PAR_COM_QP_A2A%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
 #else
-         if (HEAD_QP_cpu) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+         if (HEAD_QP_cpu)              QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
 #endif
          !
          dc=cZERO

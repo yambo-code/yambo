@@ -34,7 +34,6 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  use xc_functionals, ONLY:V_xc,E_xc,XC_potential_driver
  use FFT_m,          ONLY:fft_size
  use SC,             ONLY:local_V,V_hartree_sc,SC_kind,SC_xc_functional,E_bare_Ef
- use IO_m,           ONLY:IO_and_Messaging_switch
  !
  implicit none
  !
@@ -54,10 +53,10 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  if (.not.l_sc_contains_lda.and..not. local_V) return
  !
  call V_Hartree(rho,V_hartree_sc)                           ! V_Hartree
- call IO_and_Messaging_switch("-report -log -io_in -io_out")
- call XC_potential_driver(E,k,SC_kind,SC_xc_functional,1)  ! V_xc
- call XC_potential_driver(E,k,SC_kind,SC_xc_functional,0)  ! E_xc
- call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
+ call XC_potential_driver(E,k,SC_kind,SC_xc_functional,1,&
+&                         MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)  ! V_xc
+ call XC_potential_driver(E,k,SC_kind,SC_xc_functional,0,& 
+&                         MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)  ! E_xc
  !
  ! Hartree & XC
  !

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM MG
+! Authors (see AUTHORS file for details): AM MG DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -148,6 +148,12 @@ module real_time
  real(SP)    :: RAD_LifeTime
  logical     :: RT_is_dephased
  !
+ ! BGR
+ !----------------------------
+ real(SP),    allocatable :: REF_V_xc_sc(:)  
+ real(SP),    allocatable :: REF_V_hartree_sc(:)  
+ complex(SP), allocatable :: REF_QP_Vnl_xc(:)  
+ !
  ! Relaxation and Dissipation 
  !----------------------------
  logical                  :: l_RT_uses_E_RIM
@@ -261,7 +267,7 @@ module real_time
  !---------
  !
  real(SP),    allocatable :: rho_reference(:)    ! reference density from SC_bands(1):SC_bands(2)
- real(SP),    allocatable :: full_rho(:)         ! density of all bands from 1:SC_bands(2)
+ real(SP),    allocatable :: rho_full(:)         ! density of all bands from 1:SC_bands(2)
  !
  ! Integrators
  !
@@ -378,7 +384,7 @@ module real_time
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda,l_elph_scatt,l_elel_scatt,&
-&                             l_sc_cohsex         
+&                             l_sc_cohsex,l_BGR
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n, &
 &                             SC_xc_functional,SC_xc_functional,RT_nk
@@ -500,12 +506,21 @@ module real_time
      allocate(dG_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,G_MEM_steps))
      call mem_est("dG_lesser",(/size(dG_lesser)/),(/2*SP/))
      !
+     if (l_BGR) then
+       allocate(REF_QP_Vnl_xc(QP_n_states))
+       call mem_est("REF_QP_Vnl_xc",(/size(REF_QP_Vnl_xc)/),(/2*SP/))
+       allocate(REF_V_xc_sc(fft_size))
+       call mem_est("REF_V_xc_sc",(/fft_size/),(/SP/))
+       allocate(REF_V_hartree_sc(fft_size))
+       call mem_est("REF_V_hartree_sc",(/fft_size/),(/SP/))
+     endif
+     !
      allocate(rho_reference(fft_size))
      call mem_est("rho_reference",(/fft_size/),(/SP/))
      !
      if(l_sc_contains_lda.and.SC_xc_functional/=0.and.SC_bands(1)>1) then
-       allocate(full_rho(fft_size))
-       call mem_est("full_rho",(/fft_size/),(/SP/))
+       allocate(rho_full(fft_size))
+       call mem_est("rho_full",(/fft_size/),(/SP/))
      endif
      !
      ! Reference energies
@@ -598,6 +613,11 @@ module real_time
        call mem_est("SAVED_lifetime")
      endif
      !
+     if(allocated(REF_QP_Vnl_xc)) then
+       deallocate(REF_QP_Vnl_xc,REF_V_xc_sc,REF_V_hartree_sc)
+       call mem_est("REF_QP_Vnl_xc REF_V_xc_sc REF_V_hartree_sc")
+     endif
+     !
      deallocate(RT_H_occupations)
      call mem_est("RT_H_occupations")
      !
@@ -649,9 +669,9 @@ module real_time
        call mem_est("rho_reference")
      endif
      !
-     if(allocated(full_rho)) then
-       deallocate(full_rho)
-       call mem_est("full_rho")
+     if(allocated(rho_full)) then
+       deallocate(rho_full)
+       call mem_est("rho_full")
      endif
      !
      deallocate(E_bare)

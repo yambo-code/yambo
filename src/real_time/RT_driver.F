@@ -180,9 +180,11 @@ subroutine RT_driver(E,X,k,q)
  !
  if (it_start==1) then
    !
-   call msg('s','Reference Lifetimes and G_lesser (eval and I/O)...')
+   call msg('s','Reference Lifetimes, GF, Self-Energy ...')
    !
    call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
+   !
+   call RT_BGR(dG_lesser(:,:,:,1),E)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))

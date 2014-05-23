@@ -23,7 +23,7 @@
 !
 subroutine RT_initialize(E,k,q)
  ! 
- use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt
+ use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_BGR
  use SC,             ONLY:local_V,SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
@@ -65,6 +65,7 @@ subroutine RT_initialize(E,k,q)
  ! Logicals
  !==========
  !
+ call parser('BGR',                  l_BGR)
  call parser('Diamagnetic',          l_RT_diamagnetic)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RTfreezeH',            Hfrozen)
@@ -254,6 +255,7 @@ subroutine RT_initialize(E,k,q)
  else
    RT_nk=k%nibz
    RT_Nk_ibz=1
+   RIM_EE_percent=0.
    allocate(RT_all2ibz(k%nibz))
    if(l_elel_scatt) then
      allocate(RIM_EE_scatt_table(k%nibz,q%nbz))
@@ -352,6 +354,7 @@ subroutine RT_initialize(E,k,q)
  if (l_NE_simulate_TDDFT) call msg( 'r','Simulate TD-DFT            :',l_NE_simulate_TDDFT)
  if (l_elph_scatt)        call msg( 'r','El-Ph Carrier scattering   :',l_elph_scatt)
  if (l_elel_scatt)        call msg( 'r','El-El Carrier scattering   :',l_elel_scatt)
+ if (l_BGR)               call msg( 'r','On-the-fly BGR computed    :',l_BGR)
  !
  call msg( 'nr','---I/O---')
  call                          msg('r', 'T between I/O of J,P,f [fs]:',RT_IO_time(1)/FS2AUT)
@@ -363,6 +366,12 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r','Retarded Green`s function   :',Gr_kind)
  call msg( 'r', 'Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000._SP/))
  call msg( 'r', 'Damping (Radiative)[fs/meV]:',(/RAD_LifeTime/FS2AUT,   HBAR_eVfs/RAD_LifeTime*FS2AUT*1000._SP/))
+ !
+ if (.not.l_RT_skip_impose.or.l_RT_EE_impose_E) then
+   call msg( 'nr','---Conservation Rules---')
+   call msg( 'r','Carrier and electrons number:',.not.l_RT_skip_impose)
+   if (l_elel_scatt) call msg( 'r','Energy (e-e only)           :',l_RT_EE_impose_E)
+ endif
  !
  call msg( 'nr','---RIM---')
  call msg( 'r', 'Energy RIM support           :',l_RT_uses_E_RIM)

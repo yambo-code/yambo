@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
+subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !  
  ! In this routine I do not perform a time step. I calculate
  ! the el-ph Kernel at time TIME using an approximate iterative scheme (light but approximated).
@@ -55,7 +55,6 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
  type(bz_samp), intent(in) :: k,q
  integer,       intent(in) :: ik
  real(SP),      intent(in) :: TIME
- complex(SP),   intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
  ! Work Space ...
  !

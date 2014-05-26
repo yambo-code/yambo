@@ -195,6 +195,7 @@ module real_time
  !
  ! Locks and reference
  !----------------------
+ real(SP)                 :: TIME_EE_STOP        = -1.
  real(SP)                 :: TIME_EE_impose_dN   = -1.
  logical                  :: l_RT_skip_impose    = .FALSE.
  logical                  :: l_RT_EE_impose_E    = .FALSE.

@@ -51,7 +51,8 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
 &                         RT_TIME_status,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         REF_lifetime,it_start,RT_E_occupations,RT_H_occupations,FIRST_step,&
-&                         l_initial_equilibrium,l_RT_skip_impose,RT_delta0_occupations,RIM_ibz_coo,I_relax_dyn
+&                         l_initial_equilibrium,l_RT_skip_impose,RT_delta0_occupations,RIM_ibz_coo,&
+&                         I_relax_dyn,TIME_EE_STOP
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -73,6 +74,10 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  l_initial_equilibrium=l_flag
  !
  if (.not.l_NE_dynamics_started .and. .not.l_initial_equilibrium) return
+ !
+ ! Switch-off e-e
+ !==================
+ if (TIME_EE_STOP>0.) l_elel_scatt=Time<=TIME_EE_STOP
  !
  I_relax_static=cZERO
  I_relax_dyn=cZERO

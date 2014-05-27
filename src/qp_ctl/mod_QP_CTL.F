@@ -56,6 +56,7 @@ module QP_CTL_m
    complex(SP):: Z
    character(schlen):: db
    character(schlen):: short_descr
+   !
  end type
  !
  contains
@@ -336,6 +337,7 @@ module QP_CTL_m
        Fermi_en%E(:,:,:)=en%E(:,:nXkibz,:)
        !
        call OCCUPATIONS_Fermi(Fermi_en,k,1)
+ write (*,*) En%E(4,1,1),En%E(5,1,1),En%Efermi(1)
        !
        ! In OCCUPATIONS_Fermi the Fermi_en the %E and CBm and VMB are coherent. 
        ! Instead the en%E are out-of-date and are not shifted in OCCUPATIONS_Extend.

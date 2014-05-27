@@ -171,6 +171,8 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
      N_elecs=N_elecs+VALUE_tmp(2)*k%weights(ik)/real(RT_Nk_ibz(ik))
    enddo
  enddo
+ write (*,*) N_holes,N_elecs
+ stop
  !
  ! Transfer the shadow variables
  !

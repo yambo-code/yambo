@@ -3344,6 +3344,7 @@ subroutine read_upf_parameters_v2(u,nmesh,nbeta,mesh,psp_has_so, &
     d_tmp=real(cd_tmp)
   else
     d=d_tmp(1,1)
+    d_tmp(1,1)=1._SP
   endif
   !
   lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))

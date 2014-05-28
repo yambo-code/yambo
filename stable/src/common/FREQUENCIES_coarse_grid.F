@@ -68,7 +68,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  integer ,allocatable:: bg_sorted_x(:),i_vec(:)
  real(SP),allocatable:: bg_diffs(:),bg_sorted(:)
  !
- if (cg_percentual==0.or.npts==1) then
+ if (cg_percentual==0._SP .or. npts==1) then
    !
    ! Zero cg_percentual does nothing!  This is used when 
    ! the response function is calculated using an external set of

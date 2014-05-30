@@ -322,6 +322,7 @@ integer function ELPH_databases(k,E,q)
    !
    ! HEADER 
    !
+   K_DP=0._DP
    read (io_unit(ID)) ph_modes,elph_nk,elph_nb
    read (io_unit(ID)) alat_DP,Q_DP,K_DP(:,:elph_nk) 
    !
@@ -341,12 +342,13 @@ integer function ELPH_databases(k,E,q)
    else
      if (idb_==-1) call msg("l","[PHONON] ...")
      !
-     ! In PW Q/K points are in cartesian coordinates (units of 2 PI /alat_DP)  
+     ! In PW Q/K points are in units of 2 PI/alat_DP
      !
      !  K_pw=K_cc*alat_DP/2/pi
      !  K_yambo=K_cc*alat(:)/2/pi=K_pw*alat(:)/alat_DP
      !
      ph_q_disk(:)=Q_DP(:)/alat_DP*alat(:)
+     !
      forall (i1=1:elph_nk) K_(:,i1)=K_DP(:,i1)/alat_DP*alat(:)
      !
    endif

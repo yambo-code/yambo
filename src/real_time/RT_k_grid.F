@@ -39,6 +39,7 @@ integer function RT_k_grid(E,k,q)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
+ use LIVE_t,         ONLY:what_is_running
  use SC,             ONLY:RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,SC_bands
  use electrons,      ONLY:levels,BZ_RIM_nkpt
  use real_time,      ONLY:RIM_bz_coo,RIM_ibz_coo,RIM_closest_E,RIM_EE_scatt_table,&
@@ -113,7 +114,7 @@ integer function RT_k_grid(E,k,q)
    enddo
  enddo
  !
- if(l_elel_scatt) then
+ if( l_elel_scatt .and. (index(what_is_running,'YPP')==0) ) then
    !
    if(.not.allocated(RIM_EE_scatt_table)) then
      allocate(RIM_EE_scatt_table(RT_k_grid,RT_k_grid))

@@ -21,11 +21,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.0 r.3394 , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.0 r.3400 , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="0"
-SREVISION="3394"
+SREVISION="3400"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -104,7 +104,7 @@ AC_SUBST(enable_debug)
 AC_ARG_ENABLE(keepsource, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is no.]))
 dp_cpp=""
 if test x"$enable_keep_src" = "x";    then enable_keep_src="no" ; fi
-if test x"$enable_keep_src" = "xyes"; then enalbe_keep_src="yes"; fi
+if test x"$enable_keep_src" = "xyes"; then enable_keep_src="yes"; fi
 AC_SUBST(enable_keep_src)
 # ============================================================================
 # DP

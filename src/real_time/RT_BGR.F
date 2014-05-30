@@ -108,6 +108,8 @@ subroutine RT_BGR(G,E,k)
  !
  if (l_sc_hf.or.l_sc_cohsex) then
    !
+   write (*,*) 'here'
+   !
    do ik=1,nkibz
      !
      ik_ref=RT_ibz_coo(ik,1)

@@ -778,6 +778,7 @@ ac_user_opts='
 enable_option_checking
 with_editor
 enable_debug
+enable_keep_src
 enable_dp
 with_iotk
 with_p2y

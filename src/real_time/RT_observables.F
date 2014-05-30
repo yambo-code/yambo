@@ -164,15 +164,13 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
        else
          Energy=en%E(ib,ik,1)
        endif
-       if ( Energy<=en%Efermi(1) ) VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib,ik_rim)
-       if ( Energy> en%Efermi(1) ) VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib,ik_rim)
+       if ( Energy<=0. ) VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib,ik_rim)
+       if ( Energy> 0. ) VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib,ik_rim)
      enddo
      N_holes=N_holes+VALUE_tmp(1)*k%weights(ik)/real(RT_Nk_ibz(ik))
      N_elecs=N_elecs+VALUE_tmp(2)*k%weights(ik)/real(RT_Nk_ibz(ik))
    enddo
  enddo
- write (*,*) N_holes,N_elecs
- stop
  !
  ! Transfer the shadow variables
  !

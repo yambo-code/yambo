@@ -52,7 +52,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
 &                         RT_ibz_coo,RT_nk,it_now
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,rho_full,l_RT_uses_E_RIM,             &
-&                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
+&                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,                 & 
 &                         G_lesser_reference,l_RT_needs_XC0,RIM_ibz_coo,RT_apply_RWA,          &
 &                         l_NE_simulate_IP,Hfrozen,XCfrozen,l_NE_dynamics_started,l_RT_RWA,l_BGR
  use fields,         ONLY:gauge_field
@@ -75,19 +75,13 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! Work Space
  !
- logical          :: XC_needs_density
+ logical          :: we_need_density
  integer          :: i1,ik,ik_RT,ikp_RT,ik_RIM,ib,ibp
  real(SP)         :: delta_rho(fft_size)
- complex(SP)      :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
 #if defined _TIMING
  call timing('RT Collision',OPR='start')
 #endif
- !
- ! Full Lesser GF
- !================
- !
- G_input=dG_in+G_lesser_reference
  !
  ! Contribution from \delta\Sigma_coherent
  !=========================================
@@ -96,11 +90,17 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! l_NE_dynamics_started=.FALSE. corresponds to Thermalization where the density must be updated
  !
- XC_needs_density=.not.XCfrozen.and.l_sc_contains_lda.and.SC_xc_functional/=0
+ we_need_density= (.not.XCfrozen.and.l_sc_contains_lda.and.SC_xc_functional/=0) .or. &
+&                  .not.Hfrozen.or..not.l_NE_dynamics_started.or.l_BGR 
  !
- if (.not.Hfrozen.or.XC_needs_density.or..not.l_NE_dynamics_started.or.l_BGR) then
-   call el_density_matrix(G_input(:,:,RT_ibz_coo(:,1)),E,k,delta_rho,SC_bands(1))
-   rho_n=rho_reference+delta_rho
+ if (we_need_density) then
+   !
+   ! Contribution only from the changed occupations about SC_bands(1)
+   !
+   call el_density_matrix(dG_in(:,:,RT_ibz_coo(:,1)),E,k,delta_rho,SC_bands(1))
+   !
+   rho_n=rho_full+delta_rho
+   !
  endif
  !
  ! The Hartree term is written as
@@ -130,10 +130,6 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
      !  V_xc(G) = V_xc(rho) 
      !
      ! note that XC0_and_HARTREE0 DOES NOT contains V_xc(rho_0) when V_xc is updated
-     !
-     ! Reconstruct the full density
-     !
-     if (SC_bands(1)>1) rho_n=rho_full+delta_rho
      !
      call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1,&
 &                             MUTE="-report -log -io_in -io_out",unMUTE=master_cpu)

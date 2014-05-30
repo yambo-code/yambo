@@ -21,11 +21,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.0 r.3400 , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.0 r.3401 , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="0"
-SREVISION="3400"
+SREVISION="3401"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -101,7 +101,7 @@ if test x"$enable_debug" = "x"; then enable_debug="yes"; fi
 AC_SUBST(enable_debug)
 # ============================================================================= 
 # KEEP SOURCE FILES 
-AC_ARG_ENABLE(keepsource, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is no.]))
+AC_ARG_ENABLE(keep-src, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is no.]))
 dp_cpp=""
 if test x"$enable_keep_src" = "x";    then enable_keep_src="no" ; fi
 if test x"$enable_keep_src" = "xyes"; then enable_keep_src="yes"; fi
@@ -185,8 +185,15 @@ AC_SUBST(bluegene_cpp)
 AC_ARG_ENABLE(openmpi, AC_HELP_STRING([--enable-openmpi],[OpenMPI specific code instructions.]))
 if test x"$enable_openmpi" = "x"; then enable_openmpi="no"; fi
 openmpi_cpp=" "
-if test x"$enable_openmpi" = "xyes"; then 
+if test x"$enable_openmpi" = "xyes"; then
+ #
+ if test x"$ac_compiler_gnu" = x"yes"; then
+   OPENMPLIBS="-fopenmp -lpthread";
+ else
+   OPENMPLIBS="-openmp -lpthread";
+ fi
  openmpi_cpp="-D_OPENMPI"
+ #
 fi
 # ============================================================================
 #

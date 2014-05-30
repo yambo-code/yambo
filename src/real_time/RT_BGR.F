@@ -104,9 +104,6 @@ subroutine RT_BGR(G,E,k)
    !
    call PP_redux_wait(BGR_V_xc)
    !
-   write (*,*) (BGR_Hartree(5,1,1)-BGR_Hartree(4,1,1))*HA2EV
-   write (*,*) (BGR_V_xc(5,1,1)-BGR_V_xc(4,1,1))*HA2EV
-   !
  endif
  !
  if (l_sc_hf.or.l_sc_cohsex) then

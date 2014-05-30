@@ -123,6 +123,11 @@ integer function ELPH_databases(k,E,q)
    !
  endif
  !
+ ! Define elph_nk_bz before the ioELPH call to avoid a  io_elph_err<0 here and 
+ ! >0 after elph_nk_bz is defined
+ !
+ elph_nk_bz=k%nbz
+ !
  ! KBZ + SYM table
  !
  allocate(ikbz_is_table(k%nbz,nsym))
@@ -156,7 +161,6 @@ integer function ELPH_databases(k,E,q)
  ! Keep a copy of k-points to be used by _RT to rotate the unperturbed gkkp m.e.
  !
  ph_kpt_bz=k%ptbz
- elph_nk_bz=k%nbz
  !
  ! ... rebuilding of ph q-points table
  !

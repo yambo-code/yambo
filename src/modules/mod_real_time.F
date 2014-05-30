@@ -277,7 +277,7 @@ module real_time
  !---------
  !
  real(SP),    allocatable :: rho_reference(:)    ! reference density from SC_bands(1):SC_bands(2)
- real(SP),    allocatable :: rho_full(:)         ! density of all bands from 1:SC_bands(2)
+ real(SP),    allocatable :: rho_full(:)         ! reference density from all bands 
  !
  ! Integrators
  !

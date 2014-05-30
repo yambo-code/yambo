@@ -25,7 +25,6 @@ subroutine RT_BGR(G,E,k)
  !
  ! This routine calculates the BGR
  !
- use units
  use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,V_hartree_sc,V_xc_sc,rho_n
@@ -35,10 +34,10 @@ subroutine RT_BGR(G,E,k)
 #endif
  use electrons,      ONLY:levels,n_sp_pol
  use parallel_m,     ONLY:master_cpu
- use QP_m,           ONLY:QP_Vnl_xc
+ use QP_m,           ONLY:QP_Vnl_xc,QP_table,QP_n_states
  use wave_func,      ONLY:WF
- use real_time,      ONLY:G_lesser_reference,l_initial_equilibrium,REF_V_xc_sc,&
-&                         REF_V_hartree_sc,REF_QP_Vnl_xc,BGR_Hartree,BGR_HF,BGR_V_xc,BGR_COHSEX
+ use real_time,      ONLY:G_lesser_reference,l_initial_equilibrium,REF_V_xc_sc,BGR,&
+&                         REF_V_hartree_sc,REF_QP_Vnl_xc,BGR_Hartree,BGR_V_xc,BGR_Self_Energy
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait
@@ -51,18 +50,17 @@ subroutine RT_BGR(G,E,k)
  !
  ! Work Space
  !
- complex(SP)  :: G_hf(SC_bands(2),SC_bands(2),nkibz),G_cohsex(SC_bands(2),SC_bands(2),nkibz)
- complex(SP)  :: H(SC_bands(2),SC_bands(2),n_sp_pol)
- integer      :: ib,ik,ik_ref
+ complex(SP)  :: G_hf(SC_bands(2),SC_bands(2),nkibz),G_cohsex(SC_bands(2),SC_bands(2),nkibz),&
+&                H(SC_bands(2),SC_bands(2),n_sp_pol)
+ integer      :: ib,ik,ik_ref,i_qp,ibp
  !
 #if defined _TIMING
  call timing('RT BGR',OPR='start')
 #endif
  !
- BGR_Hartree=0.
- BGR_V_xc=0.
- BGR_HF=0.
- BGR_COHSEX=0.
+ BGR_Hartree    =0.
+ BGR_V_xc       =0.
+ BGR_Self_Energy=0.
  !
  if (.not.l_initial_equilibrium) then
    !
@@ -100,15 +98,14 @@ subroutine RT_BGR(G,E,k)
      !
    enddo
    !
-   call PP_redux_wait(BGR_Hartree)
+   ! All to All
    !
+   call PP_redux_wait(BGR_Hartree)
    call PP_redux_wait(BGR_V_xc)
    !
  endif
  !
  if (l_sc_hf.or.l_sc_cohsex) then
-   !
-   write (*,*) 'here'
    !
    do ik=1,nkibz
      !
@@ -127,7 +124,32 @@ subroutine RT_BGR(G,E,k)
    !
    call COLLISIONS_compose(G_hf,G_cohsex)
    !
+   if (l_initial_equilibrium) then
+     !
+     REF_QP_Vnl_xc=QP_Vnl_xc
+     !
+   else
+     !
+     do i_qp=1,QP_n_states
+       ib =QP_table(i_qp,1)
+       ibp=QP_table(i_qp,2)
+       ik =QP_table(i_qp,3)
+       !
+       if (ib/=ibp) cycle
+       !
+       BGR_Self_Energy(ib,ik,1)=real(QP_Vnl_xc(i_qp)-REF_QP_Vnl_xc(i_qp))
+       !
+     enddo
+     !
+   endif
+   !
  endif
+ !
+ ! Evaluation of the contribution to the minimal gap
+ !
+ BGR(1)=BGR_Hartree(5,1,1)-BGR_Hartree(4,1,1)
+ BGR(2)=BGR_V_xc(5,1,1)-BGR_V_xc(4,1,1)
+ BGR(3)=BGR_Self_Energy(5,1,1)-BGR_Self_Energy(4,1,1)
  !
 #if defined _TIMING
  call timing('RT BGR',OPR='stop')

@@ -153,11 +153,11 @@ module real_time
  logical                  :: l_BGR=.false.
  real(SP),    allocatable :: BGR_hartree(:,:,:)  
  real(SP),    allocatable :: BGR_V_xc(:,:,:)  
- real(SP),    allocatable :: BGR_HF(:,:,:)  
- real(SP),    allocatable :: BGR_COHSEX(:,:,:)  
+ real(SP),    allocatable :: BGR_Self_Energy(:,:,:)  
  real(SP),    allocatable :: REF_V_xc_sc(:,:)  
  real(SP),    allocatable :: REF_V_hartree_sc(:,:)  
  real(SP),    allocatable :: REF_QP_Vnl_xc(:)  
+ real(SP)                 :: BGR(3) ! BGR at the minimal gap (H, xc, SE)
  !
  ! Relaxation and Dissipation 
  !----------------------------
@@ -527,16 +527,14 @@ module real_time
        call mem_est("BGR_hartree",(/size(BGR_hartree)/),(/SP/))
        allocate(BGR_V_xc(SC_bands(2),QP_nk,n_sp_pol))
        call mem_est("BGR_V_xc",(/size(BGR_V_xc)/),(/SP/))
-       allocate(BGR_HF(SC_bands(2),QP_nk,n_sp_pol))
-       call mem_est("BGR_HF",(/size(BGR_HF)/),(/SP/))
-       allocate(BGR_COHSEX(SC_bands(2),QP_nk,n_sp_pol))
-       call mem_est("BGR_COHSEX",(/size(BGR_COHSEX)/),(/SP/))
+       allocate(BGR_Self_Energy(SC_bands(2),QP_nk,n_sp_pol))
+       call mem_est("BGR_Self_Energy",(/size(BGR_Self_Energy)/),(/SP/))
      endif
      !
      allocate(rho_reference(fft_size))
      call mem_est("rho_reference",(/fft_size/),(/SP/))
      !
-     if(l_sc_contains_lda.and.SC_xc_functional/=0.and.SC_bands(1)>1) then
+     if( (l_sc_contains_lda.and.SC_xc_functional/=0.and.SC_bands(1)>1) .or. l_BGR) then
        allocate(rho_full(fft_size))
        call mem_est("rho_full",(/fft_size/),(/SP/))
      endif
@@ -634,8 +632,8 @@ module real_time
      if(l_BGR) then
        deallocate(REF_QP_Vnl_xc,REF_V_xc_sc,REF_V_hartree_sc)
        call mem_est("REF_QP_Vnl_xc REF_V_xc_sc REF_V_hartree_sc")
-       deallocate(BGR_hartree,BGR_V_xc,BGR_COHSEX,BGR_HF)
-       call mem_est("BGR_hartree BGR_V_xc BGR_COHSEX BGR_HF")
+       deallocate(BGR_hartree,BGR_V_xc,BGR_Self_Energy)
+       call mem_est("BGR_hartree BGR_V_xc BGR_Self_Energy")
      endif
      !
      deallocate(RT_H_occupations)

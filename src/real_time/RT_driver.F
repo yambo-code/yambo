@@ -184,7 +184,7 @@ subroutine RT_driver(E,X,k,q)
    !
    call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
    !
-   call RT_BGR(dG_lesser(:,:,:,1),E,k)
+   if (l_BGR) call RT_BGR(dG_lesser(:,:,:,1),E,k)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
@@ -231,6 +231,7 @@ subroutine RT_driver(E,X,k,q)
  if (l_NE_with_fields) call RT_output(what="open pot occ")
  if (l_elph_scatt) call RT_output('open EPlife')
  if (l_elel_scatt) call RT_output('open EElife')
+ if (l_BGR)        call RT_output('open BGR')
  if ((l_elel_scatt.or.l_elph_scatt).and..not.l_RT_skip_impose) call RT_output('open factors')
  !
  ! Loop on time
@@ -318,6 +319,10 @@ subroutine RT_driver(E,X,k,q)
    ! Calculate Collisions and fill SC_R, Ho_plus_Sigma, H_nl_sc
    !============================================================
    call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
+   !
+   ! BGR
+   !=======================================
+   if (l_BGR) call RT_output('BGR',TIME=NE_time/FS2AUT)
    !
    ! Eval and Print Mean Carrier Lifetimes
    !=======================================

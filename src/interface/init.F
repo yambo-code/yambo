@@ -131,6 +131,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SURF
  what_is_running='YAMBO_SURF'
 #endif
+#if defined _QED
+ what_is_running='YAMBO_QED'
+#endif
  !
  ! CPU structure
  !

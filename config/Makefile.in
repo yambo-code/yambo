@@ -50,7 +50,7 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
 TARGETS  = all yambo interfaces ypp ydb
 UTILS    = changelog
 CLEANS   = clean clean_all
-PROJECTS = yambo_ph yambo_sc yambo_rt yambo_kerr yambo_surf\
+PROJECTS = yambo_ph yambo_sc yambo_rt yambo_kerr yambo_surf yambo_qed\
            ypp_rt ypp_ph ypp_sc ypp_magnetic ypp_surf
 BROKEN   = yambo_magnetic 
 DEBUG    = 
@@ -121,6 +121,9 @@ yambo_ph: libs
 yambo_surf: libs
 	@LIBS2DO="$(PJ_SURFLIBS)";ADF="-D_SURF"; $(mksrc)
 	@X2DO="yambo_surf"; XPATH="driver";XLIBS="$(PJ_SURFLIBS)";ADF="-D_SURF";$(mkx)
+yambo_qed: libs
+	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_QED"; $(mksrc)
+	@X2DO="yambo_qed"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_QED";$(mkx)
 ypp_ph: libs
 	@LIBS2DO="$(YPPLIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)

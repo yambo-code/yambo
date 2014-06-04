@@ -27,6 +27,7 @@ module real_time
  use pars,       ONLY:DP,SP,schlen,lchlen
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:SE_NONE
+ use electrons,  ONLY:levels
  !
  implicit none
  !
@@ -157,7 +158,8 @@ module real_time
  real(SP),    allocatable :: REF_V_xc_sc(:,:)  
  real(SP),    allocatable :: REF_V_hartree_sc(:,:)  
  real(SP),    allocatable :: REF_QP_Vnl_xc(:)  
- real(SP)                 :: BGR(3) ! BGR at the minimal gap (H, xc, SE)
+ real(SP)                 :: BGR(5) ! (BGR at the minimum dir/ind gap, H contrib., xc contrib., SE contrib.)
+ type(levels)             :: E_reference
  !
  ! Relaxation and Dissipation 
  !----------------------------

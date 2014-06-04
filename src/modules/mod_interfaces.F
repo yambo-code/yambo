@@ -86,7 +86,7 @@ module interfaces
      !
    end subroutine 
    !
-   subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m)
+   subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m,I_dir)
      use pars,          ONLY: SP
      use electrons,     ONLY:levels,n_sp_pol
      type(levels)       :: E
@@ -94,6 +94,7 @@ module interfaces
      real(SP), optional :: E_g_ind(n_sp_pol,2) ! min - max
      integer , optional :: N_f(n_sp_pol)
      integer , optional :: N_m(n_sp_pol)
+     integer , optional :: I_dir(2)
    end subroutine 
    !
    subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_index_2,COMM_index_3,&

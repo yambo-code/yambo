@@ -26,33 +26,38 @@ subroutine RT_BGR(G,E,k)
  ! This routine calculates the BGR
  !
  use pars,           ONLY:SP
+ use units
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
- use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,V_hartree_sc,V_xc_sc,rho_n
+ use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,V_hartree_sc,V_xc_sc,rho_n,&
+&                         RT_ibz_coo,RT_all2ibz
  use R_lattice,      ONLY:nkibz,bz_samp
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels,n_sp_pol,E_duplicate
  use parallel_m,     ONLY:master_cpu
  use QP_m,           ONLY:QP_Vnl_xc,QP_table,QP_n_states
  use wave_func,      ONLY:WF
  use real_time,      ONLY:G_lesser_reference,l_initial_equilibrium,REF_V_xc_sc,BGR,&
-&                         REF_V_hartree_sc,REF_QP_Vnl_xc,BGR_Hartree,BGR_V_xc,BGR_Self_Energy
+&                         REF_V_hartree_sc,REF_QP_Vnl_xc,BGR_Hartree,BGR_V_xc,BGR_Self_Energy,&
+&                         l_RT_uses_E_RIM,RIM_ibz_coo,E_reference
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait
+ use interfaces,     ONLY:OCCUPATIONS_Gaps
  !
  implicit none
  !
- type(levels),  intent(in) :: E
- type(bz_samp), intent(in) :: k
- complex(SP),   intent(in) :: G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ type(levels),  intent(inout) :: E
+ type(bz_samp), intent(in)    :: k
+ complex(SP),   intent(in)    :: G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
  ! Work Space
  !
  complex(SP)  :: G_hf(SC_bands(2),SC_bands(2),nkibz),G_cohsex(SC_bands(2),SC_bands(2),nkibz),&
 &                H(SC_bands(2),SC_bands(2),n_sp_pol)
- integer      :: ib,ik,ik_ref,i_qp,ibp
+ real(SP)     :: deltaE
+ integer      :: ib,ik,ik_ref,i_qp,ibp,I_dir(2),ik_ibz,ik_RIM
  !
 #if defined _TIMING
  call timing('RT BGR',OPR='start')
@@ -61,6 +66,10 @@ subroutine RT_BGR(G,E,k)
  BGR_Hartree    =0.
  BGR_V_xc       =0.
  BGR_Self_Energy=0.
+ !
+ if (l_initial_equilibrium) then
+   call E_duplicate(E,E_reference)
+ endif
  !
  if (.not.l_initial_equilibrium) then
    !
@@ -107,15 +116,17 @@ subroutine RT_BGR(G,E,k)
  !
  if (l_sc_hf.or.l_sc_cohsex) then
    !
+   G_hf    =(0._SP,0._SP)
+   G_cohsex=(0._SP,0._SP)
+   !
    do ik=1,nkibz
      !
      ik_ref=RT_ibz_coo(ik,1)
      !
      do ib=1,SC_bands(2)
-       if (ib<SC_bands(1)) then
-         G_hf(ib,ib,ik)    =(0._SP,1._SP)*E%f(ib,ik,1)
-         G_cohsex(ib,ib,ik)=(0._SP,1._SP)*(E%f(ib,ik,1)-1.)
-       else
+       G_hf(ib,ib,ik)    =(0._SP,1._SP)*E%f(ib,ik,1)
+       G_cohsex(ib,ib,ik)=(0._SP,1._SP)*(E%f(ib,ik,1)-1.)
+       if (ib>=SC_bands(1).and..not.l_initial_equilibrium) then
          G_hf(ib,ib,ik)    =G(ib,ib,ik_ref)+G_lesser_reference(ib,ib,ik_ref)
          G_cohsex(ib,ib,ik)=G(ib,ib,ik_ref)+G_lesser_reference(ib,ib,ik_ref)- (0._SP,1._SP)
        endif
@@ -145,11 +156,40 @@ subroutine RT_BGR(G,E,k)
    !
  endif
  !
- ! Evaluation of the contribution to the minimal gap
- !
- BGR(1)=BGR_Hartree(5,1,1)-BGR_Hartree(4,1,1)
- BGR(2)=BGR_V_xc(5,1,1)-BGR_V_xc(4,1,1)
- BGR(3)=BGR_Self_Energy(5,1,1)-BGR_Self_Energy(4,1,1)
+ if (.not.l_initial_equilibrium) then
+   !
+   ! Corrections of the Energy Levels
+   !
+   do ik=1,RT_nk
+     !
+     ik_ibz=RT_all2ibz(ik)
+     ik_RIM=ik-RT_ibz_coo(ik_ibz,1)+RIM_ibz_coo(ik_ibz,1)
+     !
+     do ib=SC_bands(1),SC_bands(2)
+       !
+       deltaE=BGR_Hartree(ib,ik_ibz,1)+BGR_V_xc(ib,ik,1)+BGR_Self_Energy(ib,ik_ibz,1)
+       !
+       if (     l_RT_uses_E_RIM) E%E_RIM(ib,ik_RIM,1)=E_reference%E_RIM(ib,ik_RIM,1)+deltaE
+       if (.not.l_RT_uses_E_RIM) E%E(ib,ik,1)=E_reference%E(ib,ik,1)+deltaE
+       !
+     enddo
+     !
+   enddo
+   !
+   ! Evaluation of the contribution to the minimal gap
+   !
+   call OCCUPATIONS_Gaps(E,I_dir=I_dir)
+   !
+   ib=I_dir(1)
+   ik=I_dir(2)
+   !
+   BGR(1)=E%E_dir_gap(1)
+   BGR(2)=E%E_ind_gap(1)
+   BGR(3)=    BGR_Hartree(ib+1,ik,1)-    BGR_Hartree(ib,ik,1)
+   BGR(4)=       BGR_V_xc(ib+1,ik,1)-       BGR_V_xc(ib,ik,1)
+   BGR(5)=BGR_Self_Energy(ib+1,ik,1)-BGR_Self_Energy(ib,ik,1)
+   !
+ endif
  !
 #if defined _TIMING
  call timing('RT BGR',OPR='stop')

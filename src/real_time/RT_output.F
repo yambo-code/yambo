@@ -183,10 +183,14 @@ subroutine RT_output(what,VALUES,TIME,E)
  if (open_files.and.l_BGR.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'BGR'
  short_file_name(next_file)=trim(append_ch)//'BGR'
- n_headings(next_file)=5
- headings(next_file,2:4)=(/" Total ","Hartree","XC(DFT)"/)
- if (l_sc_cohsex) headings(next_file,5)="COHSEX"
- if (l_sc_hf    ) headings(next_file,5)="  HF  "
+ n_headings(next_file)=7
+ headings(next_file,2:3)=(/"Dir Gap","Ind Gap"/)
+ headings(next_file,4  )=  "H+XC"  
+ if (l_sc_cohsex) headings(next_file,4)="H+XC+COHSEX"
+ if (l_sc_hf    ) headings(next_file,4)="H+XC+HF"
+ headings(next_file,5:6)=(/"Hartree","XC(DFT)"/)
+ if (l_sc_cohsex) headings(next_file,7)="COHSEX"
+ if (l_sc_hf    ) headings(next_file,7)="  HF  "
  next_file=next_file+1
  !
  headings(1:next_file-1,1)="Time[fs]"
@@ -355,8 +359,10 @@ subroutine RT_output(what,VALUES,TIME,E)
          endif
        enddo
      case('BGR')
-       data_to_dump(2)   = sum(BGR(1:3))*HA2EV
-       data_to_dump(3:5) = BGR(1:3)*HA2EV
+       data_to_dump(2:3) = BGR(1:2)*HA2EV
+       data_to_dump(5:7) = BGR(3:5)*HA2EV
+       data_to_dump(4)   = (BGR(3)+BGR(4))*HA2EV
+       if (l_sc_cohsex.or.l_sc_hf) data_to_dump(4)   = (BGR(3)+BGR(4)+BGR(5))*HA2EV
      case('energy')
        data_to_dump(2:6) = VALUES(1:5)
      case('dynamics')

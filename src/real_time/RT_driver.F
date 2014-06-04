@@ -42,7 +42,7 @@ subroutine RT_driver(E,X,k,q)
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,l_NE_dynamics_started,RT_update,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update,&
-&                         dG_lesser,ID,l_BGR
+&                         dG_lesser,ID,l_BGR,l_initial_equilibrium
  use plasma,          ONLY:Plasma_free,EH_gas
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
@@ -156,7 +156,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Collisions
  !
- if((.not.local_V.and..not.l_NE_simulate_IP).or.l_elel_scatt) then
+ if((.not.local_V.and..not.l_NE_simulate_IP).or.l_elel_scatt.or.(.not.local_V.and.l_BGR)) then
    !
    if (io_COLLs) then
      !
@@ -190,6 +190,8 @@ subroutine RT_driver(E,X,k,q)
    io_REF=io_RT_components('REF',ID(8))
    !
    call msg('l','done')
+   !
+   l_initial_equilibrium=.FALSE.
    !
  endif
  !

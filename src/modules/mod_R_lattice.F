@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,6 +33,7 @@ module R_lattice
  real(SP) :: k_grid_uc_vol
  real(SP) :: k_grid_b(3,3)
  logical  :: Xk_grid_is_uniform
+ logical  :: Xk_impose_minus_q
  !
  ! Q/K-sampling
  !
@@ -48,13 +51,15 @@ module R_lattice
  real(SP),allocatable :: q_norm(:)
  type bz_samp
    integer           :: nibz,nbz
-   integer,  pointer :: nstar(:)   => null()
-   integer,  pointer :: star(:,:)  => null()
-   integer,  pointer :: sstar(:,:) => null() 
-   integer,  pointer :: s_table(:,:) => null() 
+   integer,  pointer :: nstar(:)   => null()    ! n° of points in the star
+   integer,  pointer :: star(:,:)  => null()    ! ik,ikstar --> is     is sends ik in ikstar
+   integer,  pointer :: sstar(:,:) => null()    ! ik_bz     --> ik,is  is sends ik in ikbz
+   integer,  pointer :: s_table(:,:) => null()  ! ik,is     --> ik_bz  revers of sstar
    real(SP), pointer :: pt(:,:)    => null()
    real(SP), pointer :: ptbz(:,:)  => null()
    real(SP), pointer :: weights(:) => null()
+   real(SP), pointer :: pt_RIM(:,:)=> null()
+   real(SP), pointer :: ptbz_RIM(:,:)=> null()
    character(6)      :: description
    character(1)      :: units
    character(1)      :: s_table_mode = " "
@@ -70,9 +75,11 @@ module R_lattice
  !
  integer  :: qp_states_k(2)
  logical  :: bse_scattering
+ logical  :: coll_scattering
  integer, allocatable :: qindx_X(:,:,:)
  integer, allocatable :: qindx_B(:,:,:)
  integer, allocatable :: qindx_S(:,:,:)
+ integer, allocatable :: qindx_C(:,:,:)
  !
  ! SYMs
  !
@@ -115,12 +122,13 @@ module R_lattice
  !
  interface
    !
-   integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,i_err)
+   integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,k_symm,i_err)
      use pars, ONLY: SP
      integer :: n_k
      real(SP):: k_ref(3)
      real(SP):: k(n_k,3)
      logical, optional :: ROTATE_k_ref
+     integer, optional :: k_symm
      integer, optional :: i_err
    end function 
    !
@@ -130,34 +138,43 @@ module R_lattice
    !
    subroutine qindx_alloc()
      use memory_m, ONLY:mem_est
-     integer :: err(3)
+     integer :: err(4)
      err=0
+     !
      allocate(qindx_X(nqibz,nXkbz,2),stat=err(1))
-     if (.not.Xk_grid_is_uniform) then
-       call mem_est("qindx_X",(/size(qindx_X)/),(/IP/),(/err(1)/))
-       return
+     call mem_est("qindx_X",(/size(qindx_X)/),(/IP/),(/err(1)/))
+     if (.not.Xk_grid_is_uniform) return
+     !
+     allocate(qindx_S(qp_states_k(2),nqbz,2),stat=err(3))
+     call mem_est("qindx_S",(/size(qindx_S)/),(/IP/),(/err(3)/))
+     !     
+     if (bse_scattering) then
+       allocate(qindx_B(nXkbz,nXkbz,2),stat=err(2))
+       call mem_est("qindx_B",(/size(qindx_B)/),(/IP/),(/err(2)/))
      endif
-     allocate(qindx_S(qp_states_k(2),nqbz,2),stat=err(2))
-     if (bse_scattering) allocate(qindx_B(nXkbz,nXkbz,2),stat=err(3))
-     if (bse_scattering) call mem_est("qindx_X qindx_S qindx_B",&
-&                        (/size(qindx_X),size(qindx_S),size(qindx_B)/),&
-&                        elements_kind=(/IP,IP,IP/),errors=err)
-     if (.not.bse_scattering) call mem_est("qindx_X qindx_S",&
-&                             (/size(qindx_X),size(qindx_S)/),&
-&                             elements_kind=(/IP,IP/),errors=err(:2))
+     !
+     if (coll_scattering) then
+       allocate(qindx_C(nXkbz,nXkbz,2),stat=err(4))
+       call mem_est("qindx_C",(/size(qindx_C)/),(/IP/),(/err(4)/))
+     endif
+     !
    end subroutine
    !
    subroutine qindx_free()
      use memory_m, ONLY:mem_est
      deallocate(qindx_X)
      call mem_est("qindx_X")
+     if (allocated(qindx_B)) then
+       deallocate(qindx_B)
+       call mem_est("qindx_B")
+     endif
      if (allocated(qindx_S)) then
        deallocate(qindx_S)
        call mem_est("qindx_S")
      endif
-     if (allocated(qindx_B)) then
-       deallocate(qindx_B)
-       call mem_est("qindx_B")
+     if (allocated(qindx_C)) then
+       deallocate(qindx_C)
+       call mem_est("qindx_C")
      endif
    end subroutine qindx_free
    !
@@ -173,6 +190,8 @@ module R_lattice
      if(associated(k%star))     deallocate(k%star)
      if(associated(k%sstar))    deallocate(k%sstar)
      if(associated(k%pt))       deallocate(k%pt)
+     if(associated(k%pt_RIM))   deallocate(k%pt_RIM)
+     if(associated(k%ptbz_RIM)) deallocate(k%ptbz_RIM)
      if(associated(k%ptbz))     deallocate(k%ptbz)
      if(associated(k%weights))  deallocate(k%weights)
      nullify(k%nstar,k%star,k%sstar,k%pt,k%ptbz,k%weights,k%s_table)
@@ -188,6 +207,14 @@ module R_lattice
      BZo%description = BZi%description
      allocate( BZo%pt(BZo%nibz,3) )
      BZo%pt(:,:) = BZi%pt(:,:)
+     if (associated( BZi%pt_RIM )) then
+       allocate( BZo%pt_RIM(size(BZi%pt_RIM,1),3) ) 
+       BZo%pt_RIM=BZi%pt_RIM
+     endif
+     if (associated( BZi%ptbz_RIM )) then
+       allocate( BZo%ptbz_RIM(size(BZi%ptbz_RIM,1),3) ) 
+       BZo%ptbz_RIM=BZi%ptbz_RIM
+     endif
      if (associated( BZi%nstar )) then
        allocate( BZo%nstar(BZo%nibz) ) 
        BZo%nstar=BZi%nstar

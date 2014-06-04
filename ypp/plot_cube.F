@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 D. Varsano, A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM DV
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -25,7 +27,7 @@ subroutine plot_cube()
  use FFT_m,       ONLY:fft_dim 
  use LOGO,        ONLY:code_version
  use com,         ONLY:msg
- use YPP,         ONLY:nr,v2plot,ncell,r_hole,plot_dim,l_free_hole,&
+ use YPP,         ONLY:nr,v2plot,ncell,r_hole,l_free_hole,&
 &                      l_norm_to_one,WF_multiplier,l_exc_wf,plot_title,output_string
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species,a,atom_pos,Z_species,n_atoms
  use LIVE_t,      ONLY:live_timing
@@ -63,9 +65,9 @@ subroutine plot_cube()
      do i1=0,ncell(1)-1
        do i2=0,ncell(2)-1
          do i3=0,ncell(3)-1
-       	   rv(1)=atom_pos(1,ia,is)+i1*a(1,1)+i2*a(2,1)+i3*a(3,1)
-     	   rv(2)=atom_pos(2,ia,is)+i1*a(1,2)+i2*a(2,2)+i3*a(3,2)
-     	   rv(3)=atom_pos(3,ia,is)+i1*a(1,3)+i2*a(2,3)+i3*a(3,3)   
+           rv(1)=atom_pos(1,ia,is)+i1*a(1,1)+i2*a(2,1)+i3*a(3,1)
+           rv(2)=atom_pos(2,ia,is)+i1*a(1,2)+i2*a(2,2)+i3*a(3,2)
+           rv(3)=atom_pos(3,ia,is)+i1*a(1,3)+i2*a(2,3)+i3*a(3,3)   
            write(ch,'(2i5,3f10.5)') Z_species(is), Z_species(is),rv(:)
            call msg(output_string,'',ch,INDENT=0,USE_TABS=.FALSE.)
          enddo

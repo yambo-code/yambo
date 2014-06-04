@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,7 +25,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
  !
  use pars,      ONLY:SP,lchlen,schlen
  use units,     ONLY:HA2EV,HBAR_eVfs
- use drivers,   ONLY:l_life,l_ph_corr
+ use drivers,   ONLY:l_life,l_elph_corr
  use com,       ONLY:msg,of_open_close
  use electrons, ONLY:levels,spin,n_sp_pol
  use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Vnl_xc,QP_table,&
@@ -82,7 +84,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
  if (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP) then
    ntitles=14
    titles_order(:14)=(/9,10,5,8,12,15,16,17,18,19,20,21,22,23/)
- else if (l_ph_corr) then
+ else if (l_elph_corr) then
    ntitles=ntitles+1
    titles_order(ntitles)=12
  endif

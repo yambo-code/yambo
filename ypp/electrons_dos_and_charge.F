@@ -1,6 +1,8 @@
 ! 
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -30,17 +32,16 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use FFT_m,          ONLY:fft_size
  use YPP,            ONLY:l_density,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,plot_title,l_dos,l_RT_dos,dos_broadening,dos_bands,&
-&                         dos_E_range,dos_E_steps,OCC_T_ref,OCC_T_range,OCC_deltaT,&
-&                         RT_occupations_ref
+&                         dos_E_range,dos_E_steps
  use com,            ONLY:msg,of_open_close
  use functions,      ONLY:Fermi_fnc_derivative
  use QP_CTL_m,       ONLY:QP_apply
  use LIVE_t,         ONLY:live_timing
 #if defined _YPP_RT
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_output
- use SC,             ONLY:SC_bands,RT_occupations,SC_description,n_SC_descriptions
+ use YPP,            ONLY:RT_occupations_ref,OCC_T_ref,OCC_T_range,OCC_deltaT
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_output,RT_E_occupations
+ use SC,             ONLY:SC_bands,SC_description,n_SC_descriptions
 #endif
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
  use interfaces,     ONLY:PARALLEL_index
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait
  use parser_m,       ONLY:parser
@@ -52,13 +53,17 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  ! Work Space
  ! 
  real(SP), allocatable :: el_den(:)
- real(SP)              :: el_dos(dos_E_steps,n_sp_pol),dos_E,delta_E,f_occ,io_Time,dos_norm,el_dos_max
- integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps,i_fp,io_ID,io_err,ik_rand,i1
+ real(SP)              :: el_dos(dos_E_steps,n_sp_pol),dos_E,delta_E,f_occ,dos_norm,el_dos_max
+#if defined _YPP_RT
+ real(SP)              :: io_Time
+ integer               :: i_fp
+#endif
+ integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps,ik_rand,i1
  character(schlen)     :: ch_ws,titles(4)
  logical               :: l_3D_plot,l_RIM,l_prt_occ_only
  type(PP_indexes)      :: px
  !
- integer,     external :: ioE_RIM,RT_occupations_check 
+ integer,     external :: RT_occupations_check 
  !
  !
  call parser('PrtOccOnly',l_prt_occ_only)
@@ -66,19 +71,11 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  ! E_rim
  !=======
  !
- call msg("s",'RIM support ...')
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioE_RIM(Xen,io_ID)
- !
- if (io_err==0) then
-   call msg("l",'yes')
+ l_RIM=.FALSE.
+ if (BZ_RIM_nbands>0) then
    l_RIM=.TRUE.
    call OCCUPATIONS_Extend(Xen,Xen)
- else
-   call msg("l",'no')
  endif
- !
- l_RIM=io_err==0
  !
  ! DOS
  !=====
@@ -93,26 +90,26 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
 #if defined _YPP_RT
    !
-   if(l_RT_dos) then
+   if (l_RT_dos) then
      !
-		 n_T_steps=RT_occupations_check(Xen,Xk)
-		 l_3D_plot=.not.n_T_steps==1
-		 !
-		 if (.not.n_T_steps>0.and..not.l_3D_plot) return
-		 !
-		 dos_bands=SC_bands
-		 !
-		 call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
-		 call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
-		 call msg('s','Time ref   [fs]:',OCC_T_ref/FS2AUT)
-		 call msg('s','Time steps     :',n_T_steps)
-		 call msg('s','Energy steps   :',dos_E_steps)
+     n_T_steps=RT_occupations_check(Xen,Xk)
+     l_3D_plot=.not.n_T_steps==1
+     !
+     if (.not.n_T_steps>0.and..not.l_3D_plot) return
+     !
+     dos_bands=SC_bands
+     !
+     call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
+     call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
+     call msg('s','Time ref   [fs]:',OCC_T_ref/FS2AUT)
+     call msg('s','Time steps     :',n_T_steps)
+     call msg('s','Energy steps   :',dos_E_steps)
      !
    endif
    !
-#endif
-   !
    if(.not.l_RT_dos) OCC_T_range=0.
+   !
+#endif
    !
    if (l_RIM) dos_bands(2)=min(dos_bands(2),BZ_RIM_nbands)
    !
@@ -178,7 +175,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
      if(l_RT_dos) then
        call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
-       call RT_occupations_repair(Xen,Xk)
+       call RT_occupations_repair(Xen)
      endif
 #endif
      !
@@ -200,7 +197,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
                  f_occ=spin_occ
                  if(l_prt_occ_only) f_occ=Xen%f_RIM(ib,ik_rand,i_spin)
 #if defined _YPP_RT
-                 if (l_RT_dos) f_occ=(RT_occupations(ib,Xk%sstar(ik,1))-RT_occupations_ref(ib,Xk%sstar(ik,1)))
+                 if (l_RT_dos) f_occ=(RT_E_occupations(ib,Xk%sstar(ik,1))-RT_occupations_ref(ib,Xk%sstar(ik,1)))
 #endif
                  el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&
 &                      Fermi_fnc_derivative(Xen%E_RIM(ib,ik_rand,i_spin)-dos_E,dos_broadening)*dos_norm
@@ -211,7 +208,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
                f_occ=spin_occ
                if(l_prt_occ_only) f_occ=Xen%f(ib,ik,i_spin)
 #if defined _YPP_RT
-               if (l_RT_dos) f_occ=(RT_occupations(ib,ik)-RT_occupations_ref(ib,ik))
+               if (l_RT_dos) f_occ=(RT_E_occupations(ib,ik)-RT_occupations_ref(ib,ik))
 #endif
                el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&
 &                    Fermi_fnc_derivative(Xen%E(ib,ik,i_spin)-dos_E,dos_broadening)*Xk%weights(ik)*dos_norm
@@ -229,7 +226,9 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
      el_dos_max=max(el_dos_max,maxval(abs(el_dos)))
      !
+#if defined _YPP_RT
      if (l_RT_dos.and.l_3D_plot) call msg('o dos','')
+#endif
      !
      ! Output file
      !
@@ -272,7 +271,6 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
    allocate(el_den(fft_size))
    !
-   !call PARALLEL_global_indexes(Xen,Xk,q,"DENSITY") 
    call el_density(Xen,Xk,el_den,.FALSE.) 
    v2plot=el_den
    !

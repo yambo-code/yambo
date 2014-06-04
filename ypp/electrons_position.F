@@ -25,13 +25,14 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  use stderr,         ONLY:intc
  use FFT_m,          ONLY:fft_dim,fft_size
  use D_lattice,      ONLY:a
- use wave_func,      ONLY:wf,wf_state,WF_load,WF_free
+ use wave_func,      ONLY:WF
  use electrons,      ONLY:n_sp_pol
  use LIVE_t,         ONLY:live_timing
  use com,            ONLY:msg,of_open_close,error
  use YPP,            ONLY:output_fname
  use stderr,         ONLY:intc
  use magnetic,       ONLY:load_cc,free_cc,x
+ use interfaces,     ONLY:WF_load
  !
  implicit none
  !
@@ -92,7 +93,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  !
  do ik=nkpt_pos(1),nkpt_pos(2)
    !
-   call WF_load(0,1,nband_pos,(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
+   call WF_load(WF,0,1,nband_pos,(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
    !
    if(ik==nkpt_pos(1)) then
      nkpt_tot   = nkpt_pos(2)-nkpt_pos(1)+1
@@ -115,7 +116,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
    !
    do i_spin=1,n_sp_pol
      do ib=nband_pos(1),nband_pos(2)
-       ifft=wf_state(ib,ik,i_spin)
+       ifft=WF%index(ib,ik,i_spin)
        if(i_spin==2) cycle
        !
        ! *******************************
@@ -125,11 +126,11 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
          ! 1)  3D
          if(l_3d) then
            do i1=1,3
-             x_tmp(:,i1)=x(:,i1)**power*wf(:,ifft)
+             x_tmp(:,i1)=x(:,i1)**power*WF%c(:,ifft)
 #if defined _DOUBLE
-             x_med(i1) = zdotc(fft_size,wf(:,ifft),1,x_tmp(:,i1),1)
+             x_med(i1) = zdotc(fft_size,WF%c(:,ifft),1,x_tmp(:,i1),1)
 #else
-             x_med(i1) = cdotc(fft_size,wf(:,ifft),1,x_tmp(:,i1),1)
+             x_med(i1) = cdotc(fft_size,WF%c(:,ifft),1,x_tmp(:,i1),1)
 #endif
              x_med(i1) = x_med(i1)**(1./power)
            enddo
@@ -148,19 +149,19 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
          if (l_3d) then
            do ir=1,fft_size
              tmp_var=sqrt((x(ir,1)**2+x(ir,2)**2))
-             rperp_tmp(ir)=tmp_var**power*wf(ir,ifft)
-             z_tmp(ir)=x(ir,3)**power*wf(ir,ifft)
-             if ( x(ir,1)> 0 ) phi_tmp(ir)=(0.5*pi+atan(x(ir,2)/x(ir,1)))*wf(ir,ifft)
-             if ( x(ir,1)< 0 ) phi_tmp(ir)=(1.5*pi+atan(x(ir,2)/x(ir,1)))*wf(ir,ifft)
+             rperp_tmp(ir)=tmp_var**power*WF%c(ir,ifft)
+             z_tmp(ir)=x(ir,3)**power*WF%c(ir,ifft)
+             if ( x(ir,1)> 0 ) phi_tmp(ir)=(0.5*pi+atan(x(ir,2)/x(ir,1)))*WF%c(ir,ifft)
+             if ( x(ir,1)< 0 ) phi_tmp(ir)=(1.5*pi+atan(x(ir,2)/x(ir,1)))*WF%c(ir,ifft)
            enddo
 #if defined _DOUBLE
-           rperp_med = zdotc(fft_size,wf(:,ifft),1,rperp_tmp(:),1)
-           z_med     = zdotc(fft_size,wf(:,ifft),1,    z_tmp(:),1)
-           phi_med   = zdotc(fft_size,wf(:,ifft),1,  phi_tmp(:),1)
+           rperp_med = zdotc(fft_size,WF%c(:,ifft),1,rperp_tmp(:),1)
+           z_med     = zdotc(fft_size,WF%c(:,ifft),1,    z_tmp(:),1)
+           phi_med   = zdotc(fft_size,WF%c(:,ifft),1,  phi_tmp(:),1)
 #else
-           rperp_med = cdotc(fft_size,wf(:,ifft),1,rperp_tmp(:),1)
-           z_med     = cdotc(fft_size,wf(:,ifft),1,    z_tmp(:),1)
-           phi_med   = cdotc(fft_size,wf(:,ifft),1,  phi_tmp(:),1)
+           rperp_med = cdotc(fft_size,WF%c(:,ifft),1,rperp_tmp(:),1)
+           z_med     = cdotc(fft_size,WF%c(:,ifft),1,    z_tmp(:),1)
+           phi_med   = cdotc(fft_size,WF%c(:,ifft),1,  phi_tmp(:),1)
 #endif
            rperp_med = rperp_med**(1./power)
            z_med     = z_med**(1./power)
@@ -171,8 +172,8 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
          endif
          ! 2)  2D
          if(l_2d) then
-           wf_tmp_2d(:,:,:)=reshape(wf(:,ifft),(/fft_dim(1),fft_dim(2),fft_dim(3)/))
-           rperp_tmp_2d(:,:,:)=reshape(sqrt((x(:,1)**2+x(:,2)**2))**power*wf(:,ifft),&
+           wf_tmp_2d(:,:,:)=reshape(WF%c(:,ifft),(/fft_dim(1),fft_dim(2),fft_dim(3)/))
+           rperp_tmp_2d(:,:,:)=reshape(sqrt((x(:,1)**2+x(:,2)**2))**power*WF%c(:,ifft),&
 &                                   (/fft_dim(1),fft_dim(2),fft_dim(3)/))
            rperp_med=(0.,0.)
            do ir3 = 0, fft_dim(3)-1         ! z 
@@ -199,20 +200,20 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
        if(l_spherical) then
          do ir=1,fft_size
            tmp_var=sqrt((x(ir,1)**2+x(ir,2)**2+x(ir,3)**2))
-           r_tmp(ir)=tmp_var**power*wf(ir,ifft)
+           r_tmp(ir)=tmp_var**power*WF%c(ir,ifft)
            tmp_var=sqrt(x(ir,1)**2+x(ir,2)**2)
-           theta_tmp(ir)=atan(x(ir,3)/tmp_var)*wf(ir,ifft)
-           if ( x(ir,1)> 0 ) psi_tmp(ir)=(0.5*pi+atan(x(ir,2)/x(ir,1)))*wf(ir,ifft)
-           if ( x(ir,1)< 0 ) psi_tmp(ir)=(1.5*pi+atan(x(ir,2)/x(ir,1)))*wf(ir,ifft)
+           theta_tmp(ir)=atan(x(ir,3)/tmp_var)*WF%c(ir,ifft)
+           if ( x(ir,1)> 0 ) psi_tmp(ir)=(0.5*pi+atan(x(ir,2)/x(ir,1)))*WF%c(ir,ifft)
+           if ( x(ir,1)< 0 ) psi_tmp(ir)=(1.5*pi+atan(x(ir,2)/x(ir,1)))*WF%c(ir,ifft)
          enddo
 #if defined _DOUBLE
-         r_med = zdotc(fft_size,wf(:,ifft),1,rperp_tmp(:),1)
-         theta_med = zdotc(fft_size,wf(:,ifft),1,theta_tmp(:),1)
-         psi_med   = zdotc(fft_size,wf(:,ifft),1,  psi_tmp(:),1)
+         r_med = zdotc(fft_size,WF%c(:,ifft),1,rperp_tmp(:),1)
+         theta_med = zdotc(fft_size,WF%c(:,ifft),1,theta_tmp(:),1)
+         psi_med   = zdotc(fft_size,WF%c(:,ifft),1,  psi_tmp(:),1)
 #else
-         rperp_med = cdotc(fft_size,wf(:,ifft),1,rperp_tmp(:),1)
-         theta_med = cdotc(fft_size,wf(:,ifft),1,theta_tmp(:),1)
-         psi_med   = cdotc(fft_size,wf(:,ifft),1,  psi_tmp(:),1)
+         rperp_med = cdotc(fft_size,WF%c(:,ifft),1,rperp_tmp(:),1)
+         theta_med = cdotc(fft_size,WF%c(:,ifft),1,theta_tmp(:),1)
+         psi_med   = cdotc(fft_size,WF%c(:,ifft),1,  psi_tmp(:),1)
 #endif
          r_med=r_med**(1./power)
        endif
@@ -226,7 +227,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
    enddo
    !
    if(l_2d) call of_open_close(trim(output_fname))
-   call WF_free()
+   call WF_free(WF)
    !
  enddo
  !

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 D. Sangalli, C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,12 +23,11 @@
 !
 subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  !
- use pars,                ONLY:SP
  use com,                 ONLY:msg
  use memory_m,            ONLY:mem_est
  use vec_operate,         ONLY:v_norm,i_sort
  use wave_func,           ONLY:wf_nc_k, wf_igk,wf_ncx,wf_ng
- use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,g_vec
+ use R_lattice,           ONLY:bz_samp,g_rot,ng_closed
  use vec_operate,         ONLY:v_norm
  use D_lattice,           ONLY:nsym
  !

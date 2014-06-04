@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -28,8 +30,11 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,Fragmented_IO
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use parallel_m,     ONLY:n_nodes,ncpu,n_MPI,n_threads,n_chains,&
-&                         PARALLEL_message,n_CPU_str_max
+ use parallel_m,     ONLY:n_nodes,ncpu,n_MPI,n_chains,PARALLEL_message,n_CPU_str_max
+ use parser_m,       ONLY:parser
+ use wave_func,      ONLY:WF_buffered_IO
+ use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads
+ use LIVE_t,         ONLY:USER_wall_time_string
  implicit none
  !
  type(levels)  :: en
@@ -37,37 +42,47 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! 
  ! Work Space
  !
- integer           :: ID,io_err,i_s
+ integer           :: ID,io_err,i_s,n_max_threads
  integer, external :: ioDB1
  !
  call section('*','CPU structure, Files & I/O Directories') 
  !
+ ! Buffered I/O ?
+ !
+ call parser('WFbuffIO'   ,WF_buffered_IO)
+ !
  ! CPU structure
  !===============
  !
- if (ncpu>1) then
+ if (ncpu>1.or.n_threads>1) then
    !
    do i_s=0,n_CPU_str_max
      if (len_trim(PARALLEL_message(i_s))==0) cycle
-     call msg( 's','CPU structure:',trim(PARALLEL_message(i_s)))
-     call msg( 'r','* CPU structure :',trim(PARALLEL_message(i_s)))
+     call msg( 's','CPU-Threads:',trim(PARALLEL_message(i_s)))
+     call msg( 'r','* CPU-Threads     :',trim(PARALLEL_message(i_s)))
    enddo
    !
-   call msg( 'r','* MPI CHAINS    :',n_chains)
-   call msg( 'r','* MPI CPU       :',n_MPI)
-   call msg( 'r','* THREADS       :',n_threads)
+   call msg( 'r','* MPI CHAINS      :',n_chains)
+   call msg( 'r','* MPI CPU         :',n_MPI)
+   !
  else
    !
-   call msg ('r','* CPU           :',ncpu)
+   call msg ('r','* CPU             :',ncpu)
    !
  endif
- call msg('r','* I/O NODES     :',n_nodes)
- call msg('rn','* Fragmented I/O:',Fragmented_IO)
- call msg('r','CORE databases in ',trim(core_io_path))
- call msg('r','Additional I/O in ',trim(more_io_path))
- call msg('r','Communications in ',trim(com_path))
- call msg('r','Input file     is ',trim(infile))
- call msg('r','Report file    is ',trim(repfile))
+ !
+ n_max_threads=maxval((/n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP/))
+ !
+ call msg('r', '* THREADS    (max):',n_max_threads)
+ call msg('r', '* TOTAL TASKS(max):',n_max_threads*ncpu)
+ call msg('r', '* I/O NODES       :',n_nodes)
+ call msg('rn','* Fragmented I/O  :',Fragmented_IO)
+ call msg('r','CORE databases in   ',trim(core_io_path))
+ call msg('r','Additional I/O in   ',trim(more_io_path))
+ call msg('r','Communications in   ',trim(com_path))
+ call msg('r','Input file     is   ',trim(infile))
+ call msg('r','Report file    is   ',trim(repfile))
+ if (len_trim(USER_wall_time_string)>0)  call msg('r','User WALL time is   ',trim(USER_wall_time_string))
  if (len_trim(jobstr)>0        ) call msg('r','Job string(main): ',trim(jobstr))
  do i_s=1,n_alt_jobstr
    call msg('r','            (#'//trim(intc(i_s))//'): ',trim(alt_jobstr(i_s)))

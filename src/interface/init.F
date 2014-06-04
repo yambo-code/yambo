@@ -1,6 +1,6 @@
-!
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,7 +31,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use pars,           ONLY:schlen,lchlen
  use parser_m,       ONLY:parser
  use units,          ONLY:HA2EV
- use electrons,      ONLY:levels,E_reset,n_sp_pol
+ use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
@@ -55,19 +55,23 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
 #if defined _SC
- use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF
+ use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF,SE_GW_NEQ
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
- use collisions_IO,  ONLY:io_COLLISIONS,V_kind
+ use collision,      ONLY:V_kind
+ use interfaces,     ONLY:io_COLLISIONS
 #endif
 #if defined _RT
- use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe,Dynamics_Kind
+ use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe
  use fields,         ONLY:Efield,i_Pump,i_Probe,Efield_reset,Efield_duplicate
 #endif
 #if defined _MAGNETIC
- use magnetic,        ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
+ use magnetic,       ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
 #endif
 #if defined _SURF
  use ras_module,     ONLY:lras, lreels
+#endif
+#if defined _OPENMP
+ use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT
 #endif
  !
  implicit none
@@ -86,17 +90,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,io_KB_abinit_err,io_KB_pwscf_err,&
-&                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G,io_Gr
+&                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G
  integer, external :: ioX,io_DIPOLES,ioGROT,ioQINDX,ioRIM,&
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_abinit,ioKB_pwscf,&
 &                     ioCOL_CUT
  logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
- character(6)      :: X_size
  !
- integer, external :: ioE_RIM
+ integer, external :: io_RIM_E_and_k
  !
 #if defined _SC || defined _RT
- integer, external :: io_SC_components,io_G_retarded,io_RT_components
+ integer, external :: io_SC_components,io_RT_components
 #endif
 #if defined _ELPH 
  integer           :: ioELPH_err
@@ -129,7 +132,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='YAMBO_SURF'
 #endif
  !
- !CPU structure
+ ! CPU structure
  !
  call PARALLEL_structure()
  !
@@ -137,7 +140,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call SET_logicals()
  !
- !Presets (input)
+ ! Presets (input)
  !
  init = 0
  !
@@ -272,7 +275,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! E_rim
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioE_RIM(en,io_ID) 
+ io_err=io_RIM_E_and_k(en,k,io_ID) 
  !
  ! xxvxc
  !
@@ -373,10 +376,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  io_J_and_P=io_RT_components('J_and_P',io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_G=io_RT_components('G',io_ID)
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_Gr=io_G_retarded(io_ID,"G_retarded")
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_Gr=io_G_retarded(io_ID,"G_retarded_matrix")
 #endif
  !
  ! SC 
@@ -400,6 +399,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (io_COLLISIONS_err/=0) V_kind=-1
  endif
 #endif
+#if defined _SC && defined _RT
+ V_kind=SE_GW_NEQ
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
+#endif
  !
  if (list_dbs) then
    call msg('s','')
@@ -413,7 +417,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !Setup on the basis of the DB read/stdin variables
  !Here I can propose values to be written in the input file
  !
- call varsetup1
+ call before_infile_write_setup( )
  !
  !Variables(read from DB files) -> local cache
  !
@@ -436,40 +440,53 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh Threads NLogCPUs SkipWRITE EvalMagn')
+ call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff EvalMagn')
  !
  !FFT
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,&
-&          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs')
+&          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs WFbuffIO')
  !
  ! CPU structure
  !
-#if defined _MPI || defined _BLUEGENE
+#if defined _MPI 
  !
  if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa) then
-   call CPU_activate("X_q_0")
-   call CPU_activate("X_all_q")
-   if (l_alda_fxc) call CPU_activate("DENSITY")
+   if (l_optics) then
+     call CPU_activate("X_q_0")
+     call CPU_activate("X_finite_q")
+   else
+     call CPU_activate("X_all_q")
+   endif
+   call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
- if (l_HF_and_locXC) call CPU_activate("HF")
- !
- if (l_gw0) then
-   if (l_ph_corr) call CPU_activate("ELPH")
-   if (l_el_corr) call CPU_activate("GW")
+ if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) then
+   if (l_eval_collisions) then
+#if defined _SC && ! defined _RT
+     call CPU_activate("SE")
+     call initactivate(1,'SE_Threads')
+#else
+     call CPU_activate("RT")
+     call initactivate(1,'RT_Threads')
+#endif
+   else
+     call CPU_activate("SE")
+     call initactivate(1,'SE_Threads')
+   endif
  endif
  !
- if (l_eval_collisions) call CPU_activate("RT")
- !
- if (l_bse) call CPU_activate("BSE")
- !
- if (l_real_time) then
+ if (l_eval_collisions.or.l_real_time) then
+#if defined _SC && defined _RT
    call CPU_activate("RT")
-   call CPU_activate("WF")
-   call CPU_activate("X_q_0")
+   call initactivate(1,'RT_Threads')
+#endif
  endif
  !
+ if (l_bse) then
+   call CPU_activate("BSE")
+   call initactivate(1,'X_Threads DIP_Threads')
+ endif
  !
 #endif
  !
@@ -477,7 +494,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim')
 #if defined  _ELPH 
- if (l_setup) call initactivate(1,'MinusQ')
+ if (l_setup) call initactivate(1,'MinusQ BSEscatt')
 #endif
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'NonPDirs')
@@ -521,9 +538,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Optics(not bse) nor GW (no PP)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
-   X_size='NGsBlk'
-   if(l_rpa_IP) X_size='      '
-   call X_activate('Xd',(/X_size,'QpntsR','BndsRn',&
+   call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
    !
@@ -593,7 +608,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! Special project dependent variables
    !
 #if defined _ELPH 
-   if (l_ph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
+   if (l_elph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
 #endif
  endif
  !
@@ -630,7 +645,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_gw0.or.l_life) then
    !
-   if (l_el_corr) then
+   if (l_elel_corr) then
      !
      call QP_ctl_switch('X')
      call QP_ctl_switch('G')
@@ -657,7 +672,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_life) then
        call initactivate(1,'LifeTrCG')
-       if (l_el_corr) call X_activate('Xd',(/'BndsRn','NGsBlk',&
+       if (l_elel_corr) call X_activate('Xd',(/'BndsRn','NGsBlk',&
 &                                     'DmRnge','CGrdSp',&
 &                                     'DrudeW','EhEngy','LongDr'/)) 
      endif
@@ -667,12 +682,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call QP_ctl_switch('G')
    !
-   if (l_ph_corr) then
+   if (l_elph_corr) then
      call initactivate(1,'DysSolver')
      call initactivate(1,'GphBRnge ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQpts')
      call initactivate(1,'WRgFsq NewtDchk OnMassShell')
    endif
-   if (trim(QP_solver)=="g".and.l_ph_corr) then
+   if (trim(QP_solver)=="g".and.l_elph_corr) then
      call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
      call initactivate(-1,'WRgFsq NewtDchk GDamping ExtendOut OnMassShell')
    endif
@@ -702,16 +717,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SC
  if (l_sc_run) then
-   !
-   call initactivate( 1,'Potential FFTGvecs Gauge SCBands EXXCut CollPath')
-   !
-   if (l_eval_collisions) then
-     !
-     call initactivate( 1,'DynKind')
-     call initactivate(-1,'CollPath')
-     !
-   else if (.not.l_real_time) then
-     !
+   call initactivate( 1,'Potential FFTGvecs Gauge SCBands EXXCut')
+   if (.not.l_real_time) then
      call initactivate( 1,'SCmixing SClwBand SCnlMix BandMix')
      call initactivate(-1,'QpntsRXs')
      if (l_cohsex) call initactivate(1,'GbndRnge UseEbands SCUpWIter')
@@ -720,27 +727,34 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &        trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
      call initactivate(1,'SCdiag Mean_Potential')
    endif
-   !
-   if (l_eval_collisions) then
-     call initactivate(-1,'GbndRnge UseEbands BandMix') 
-   else if (.not.l_real_time) then
-     call initactivate(1,'SCdiag Mean_Potential')
-   endif
  endif
 #endif
  !
-#if defined _RT
+#if defined _SC
  !
  ! REAL-TIME specific
+ !
+ if (l_eval_collisions) then
+   !
+   call initactivate(-1,'GbndRnge UseEbands BandMix SCUpWIter') 
+   call initactivate(-1,'SCIter SCEtresh SCRhoTresh TF_precondition')
+   !
+   call initactivate( 1,'Potential PlasmaPerc FFTGvecs Gauge SCBands EXXCut')
+   !
+ endif
+#endif
+#if defined _RT
  !
  if (l_real_time) then
    call QP_ctl_switch('G')
    call initactivate(-1,'SCmixing')
-   call initactivate(1,'Integrator DynKind RADLifeTime PhLifeTime RTmaxEn RTpumpEhEn RTpumpEhWd RTpumpNel') 
-   call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
-   if (l_ph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol UseDebyeE UpdtDebyeT ElPhModes')
-   call initactivate(1,'RTjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
-   call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField SkipGFIO SkipOCCIO IOtime COLLISIONS_on_the_fly')
+   call initactivate(1,'Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
+   call initactivate(1,'RTstep NEsteps NETime DYNmode DYNsteps DYNdecay COHsteps DipoleEtresh')
+   if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol UseDebyeE UpdtDebyeT ElPhModes')
+   if (l_elel_scatt) call initactivate( 1,'PlasmaPerc EERimPerc')
+   call initactivate(1,'ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
+   call initactivate(1,'RTfreezeH RTfreezeXC RTskipImposeN RTeeImposeE Diamagnetic InducedField IOtime')
+   call initactivate(1,'RTpumpEhEn RTpumpEhWd RTpumpNel')
    if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
    if (              l_RT_pump_and_probe) call Afield_activate('Pump')
    !
@@ -915,15 +929,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
    !
    subroutine CPU_activate(what)
-     character(*) :: what ! X_q_0 X_all_q GW HF BSE DENSITY RT
+     character(*) :: what 
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
-     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_all_q".or.what=="BSE") then
+     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BSE") then
        call initactivate(1,what//"_nCPU_invert")
      endif
      if (what=="BSE") then
        call initactivate(1,what//"_nCPU_diago")
      endif
+     !
    end subroutine
    !
    subroutine X_activate(mode,what)
@@ -978,10 +993,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_sc_run=runlevel_is_on('scpot')
        l_real_time=runlevel_is_on('negf')
        l_sc_magnetic=runlevel_is_on('magnetic')
+       l_eval_collisions=runlevel_is_on('collisions')
 #endif
 #if defined _RT
-       l_eval_collisions=runlevel_is_on('collisions')
-       l_carrier_dynamics =trim(Dynamics_Kind)=="C"
+       l_elel_scatt =runlevel_is_on('el_el_scatt')
+       l_elph_scatt=runlevel_is_on('el_ph_scatt')
 #endif
 #if defined  _SURF
        lreels=runlevel_is_on('reels')
@@ -992,19 +1008,19 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! Only in this case ioELPH_err is defined
          !
-         l_ph_corr=runlevel_is_on('el_ph').and.(ioELPH_err==0.or.l_real_time)
+         l_elph_corr=runlevel_is_on('el_ph_corr').and.(ioELPH_err==0.or.l_real_time)
          ! GPL_EXCLUDE_START
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.ioELPH_err==0
          ! GPL_EXCLUDE_END
        else
-         l_ph_corr=runlevel_is_on('el_ph')
+         l_elph_corr=runlevel_is_on('el_ph_corr')
          ! GPL_EXCLUDE_START
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
          ! GPL_EXCLUDE_END
        endif
-       l_el_corr=runlevel_is_on('el_el')
+       l_elel_corr=runlevel_is_on('el_el_corr')
 #else
-       l_el_corr=l_gw0.or.l_life
+       l_elel_corr=l_gw0.or.l_life.or.l_eval_collisions
 #endif
        !
        ! Check if this runlevel is allowed in the 
@@ -1041,7 +1057,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
    end subroutine X_var_setup
    !
-   subroutine varsetup1 
+   subroutine before_infile_write_setup 
      !
      ! After DB reading/stdin logicals
      ! I propose here values for the input file
@@ -1061,14 +1077,15 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SURF
      X(3)%iq = 1  ! 2 components
      X(3)%ordering = 'c'
-     Xw(3)%n = 101 ! 2 components
+     Xw(3)%n_freqs = 101 
 #endif 
 #if defined  _ELPH 
-     if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
+     if (.not.l_elel_corr.and..not.l_elph_corr) l_elel_corr=.true.
      elph_nDBs_used=elph_nDBs
 #endif
-#if defined _RT 
-     if (l_real_time) then
+#if defined _RT
+     !
+     if (l_real_time.and..not.l_eval_collisions) then
        call switch_off_runlevel('cohsex',on_name=' ')
        call switch_off_runlevel('HF_and_locXC',on_name=' ')
        call switch_off_runlevel('em1s',on_name=' ')
@@ -1076,12 +1093,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_em1s        =.FALSE.
        l_HF_and_locXC=.FALSE.
      endif
+     !
 #endif
-     if (l_gw0.and.l_el_corr) call initactivate(1,'HF_and_locXC')
-    !
+     if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
+     !
      if (l_ppa)    call initactivate(1,'em1d')
      if (l_gw0.and..not.l_ppa.and..not.l_cohsex.and..not.&
-&        l_HF_and_locXC)    call initactivate(1,'em1d')
+&        l_HF_and_locXC.and..not.l_elph_corr)  &
+&                  call initactivate(1,'em1d')
      if (l_cohsex) call initactivate(1,'em1s')
      if (l_W_eh)   call initactivate(1,'em1s')
      if (l_bsk)    call initactivate(1,'optics')
@@ -1111,8 +1130,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        X(2)%ng=SC_X_size
      endif
 #endif
+#if defined _OPENMP
+     if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa.or.l_bse) then
+       n_threads_X=n_threads
+       n_threads_DIP=n_threads
+     endif
+     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex) n_threads_SE=n_threads
+     if (l_eval_collisions.or.l_real_time) n_threads_RT=n_threads
+#endif
      !
-   end subroutine varsetup1 
+   end subroutine before_infile_write_setup 
    !
    subroutine varsetup2 
      !
@@ -1144,7 +1171,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
      endif
      !
-     ! When running BSE from input file l_bse is FALSE in varsetup1.
+     ! When running BSE from input file l_bse is FALSE in before_infile_write_setup.
      ! In any case I have to overwrite X(2) with PP X(4) only if em1s=F
      !
      if (l_bse.and.io_X_err(2)/=0.and.io_X_err(4)==0.and..not.l_em1s) then
@@ -1152,7 +1179,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call W_duplicate(Xw(4),Xw(2))
      endif
 #if !defined _ELPH 
-     if (l_gw0) l_el_corr=.true.
+     if (l_gw0) l_elel_corr=.true.
 #endif
      !
 #if defined _RT 
@@ -1176,6 +1203,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    subroutine read_command_line(rstr,init_) 
      !
+     use com,    ONLY:error
+     use LIVE_t, ONLY:USER_wall_time_string,GET_user_WALL_time
      use stderr, ONLY:string_split
      use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,&
 &                     V_real_time,V_all,rstatus
@@ -1185,7 +1214,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      ! Work Space
      !
-     integer          ::i1,i2,n_pieces
+     integer          ::i1,i2,n_pieces,i3
      character(schlen)::rstr_piece(2*nrnlvls),strings_to_not_use_as_runlevels(nrnlvls)
      !
      ! Bug fix (17/9/2012). If any string following a -### identifier contains 
@@ -1208,256 +1237,292 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      enddo
      if (n_pieces==0) return
      !
-     INPUT_strings_loop: do i1=1,n_pieces
+     do i3=1,2
        !
-       if (trim(rstr_piece(i1))=='ifile') cycle
-       if (i1>1) then
-         if(trim(rstr_piece(i1-1))=='ifile') cycle
-       endif
-       !
-       do i2=1,nrnlvls
-         if (i1==1) then
-            if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1))) infile_editing=.true.
-         else
-           if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)).and.&
-&               trim(rstr_piece(i1-1)) /= 'jobstr' ) infile_editing=.true.
+       INPUT_strings_loop: do i1=1,n_pieces
+         !
+         if (trim(rstr_piece(i1))=='ifile') cycle
+         if (i1>1) then
+           if(trim(rstr_piece(i1-1))=='ifile') cycle
          endif
-       enddo
-       !
-       if (i1>1) then
+         !
          do i2=1,nrnlvls
-           if (trim(rstr_piece(i1  )) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
-           if (trim(rstr_piece(i1-1)) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
+           if (i1==1) then
+              if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1))) infile_editing=.true.
+           else
+             if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)).and.&
+&                 trim(rstr_piece(i1-1)) /= 'jobstr' ) infile_editing=.true.
+           endif
          enddo
-       endif
-       !
-       ! Run Levels
-       !
-       call initactivate(1, trim(rstr_piece(i1)) )
-       !
-       ! Verbosity
-       ! V_RL=1
-       ! V_kpt=2
-       ! V_sc=3
-       ! V_qp=4
-       ! V_io=5
-       ! V_general=6
-       ! V_resp=7
-       ! V_real_time=8
-       ! V_parallel=9
-       ! V_all=99
-       !
-       if ( trim(rstr_piece(i1)) == 'infver' ) then
-         select case (trim(rstr_piece(i1+1)))
-           case ('RL','rl')
-             infile_verbosity=V_RL
-           case ('kpt','k')
-             infile_verbosity=V_kpt
-           case ('sc','SC')
-             infile_verbosity=V_sc
-           case ('QP','qp')
-             infile_verbosity=V_qp
-           case ('IO','io')
-             infile_verbosity=V_io
-           case ('gen')
-             infile_verbosity=V_general
-           case ('resp','X')
-             infile_verbosity=V_resp
-           case ('rt')
-             infile_verbosity=V_real_time
-           case ('par')
-             infile_verbosity=V_parallel
-           case ('all')
-             infile_verbosity=V_all
-         end select
-       endif
-       !
-       if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' ) Chi_mode='hartree'
-       !
-       ! BSE/LLR
-       !
-       if ( trim(rstr_piece(i1)) == 'optics' )  then
-         l_chi= (trim(rstr_piece(i1+1))=='g' ).or.(trim(rstr_piece(i1+1))=='c')
-         l_bse= (trim(rstr_piece(i1+1))=='eh').or.(trim(rstr_piece(i1+1))=='b')
          !
-         if (.not.l_chi.and..not.l_bse) l_chi=.true.
+         if (i1>1) then
+           do i2=1,nrnlvls
+             if (trim(rstr_piece(i1  )) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
+             if (trim(rstr_piece(i1-1)) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
+           enddo
+         endif
          !
-         call initactivate(1,'optics')
-         if (l_chi) call initactivate(1,'chi')
-         if (l_bse) call initactivate(1,'bse')
-#if defined _KERR
-         l_kerr=l_bse
-#endif
-         if (l_chi) Chi_mode='IP'
-         if (l_bse) BSK_mode='IP'
+         ! Run Levels
          !
-       endif
-       !
-       ! Approximation used for the BSE/LLR kernel
-       !
-       if ( trim(rstr_piece(i1)) == 'kernel' )  then
+         call initactivate(1, trim(rstr_piece(i1)) )
          !
-         ! if the optics option is not present define defaults
-         ! since kernel does not correspond to a runlevel, set 
-         ! infile_editing=.true.           
+         ! Verbosity
+         ! V_RL=1
+         ! V_kpt=2
+         ! V_sc=3
+         ! V_qp=4
+         ! V_io=5
+         ! V_general=6
+         ! V_resp=7
+         ! V_real_time=8
+         ! V_parallel=9
+         ! V_all=99
          !
-         if (.not.l_bse.and..not.l_chi) then
-           l_chi =((trim(rstr_piece(i1+1)) == 'hartree').or.&
-                  &( trim(rstr_piece(i1+1)) == 'lrc'))
-           l_bse =((trim(rstr_piece(i1+1)) == 'alda').or.&
-                  &(trim(rstr_piece(i1+1)) == 'sex').or.&
-                  &(trim(rstr_piece(i1+1)) == 'hf').or.&
-                  &( trim(rstr_piece(i1+1)) == 'bsfxc'))
-           infile_editing=.true.           
+         if ( trim(rstr_piece(i1)) == 'infver' ) then
+           select case (trim(rstr_piece(i1+1)))
+             case ('RL','rl')
+               infile_verbosity=V_RL
+             case ('kpt','k')
+               infile_verbosity=V_kpt
+             case ('sc','SC')
+               infile_verbosity=V_sc
+             case ('QP','qp')
+               infile_verbosity=V_qp
+             case ('IO','io')
+               infile_verbosity=V_io
+             case ('gen')
+               infile_verbosity=V_general
+             case ('resp','X')
+               infile_verbosity=V_resp
+             case ('rt')
+               infile_verbosity=V_real_time
+             case ('par')
+               infile_verbosity=V_parallel
+             case ('all')
+               infile_verbosity=V_all
+           end select
+         endif
+         !
+         if ( trim(rstr_piece(i1)) == 'wallt' ) then
+           USER_wall_time_string=trim(rstr_piece(i1+1))
+           if (i3==1) call GET_user_WALL_time()
+         endif
+         !
+         if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' .or.&
+&             runlevel_is_on('em1s')         .or.  runlevel_is_on('em1d')  .or. &
+&             runlevel_is_on('cohsex')  &
+&           ) Chi_mode='hartree'
+         !
+         ! BSE/LLR
+         !
+         if ( trim(rstr_piece(i1)) == 'optics' )  then
+           !
+           l_chi= (trim(rstr_piece(i1+1))=='g' ).or.(trim(rstr_piece(i1+1))=='c')
+           l_bse= (trim(rstr_piece(i1+1))=='eh').or.(trim(rstr_piece(i1+1))=='b')
+           !
+           if (.not.l_chi.and..not.l_bse) l_chi=.true.
+           !
            call initactivate(1,'optics')
            if (l_chi) call initactivate(1,'chi')
            if (l_bse) call initactivate(1,'bse')
-         end if
-         !
-         BSK_mode='Hartree'
-         Chi_mode='Hartree'
-         !
-         if(l_bse)  then
-           if(trim(rstr_piece(i1+1)) == 'hartree')  BSK_mode='Hartree'
-           if(trim(rstr_piece(i1+1)) == 'hf')       BSK_mode='HF'
-           if( trim(rstr_piece(i1+1)) == 'alda')    BSK_mode='ALDA'
-           if(trim(rstr_piece(i1+1)) == 'sex')      BSK_mode='SEX'
-           if( trim(rstr_piece(i1+1)) == 'bsfxc')   BSK_mode='BSfxc'
-         else if(l_chi) then
-           if(trim(rstr_piece(i1+1)) == 'hartree')  Chi_mode='Hartree'
-           if( trim(rstr_piece(i1+1)) == 'alda')    Chi_mode='ALDA'
-           if( trim(rstr_piece(i1+1)) == 'lrc')     Chi_mode='LRC'
-           if( trim(rstr_piece(i1+1)) == 'bsfxc')   Chi_mode='BSfxc'
+#if defined _KERR
+           l_kerr=l_bse
+#endif
+           if (l_chi.and.trim(Chi_mode)==' ') Chi_mode='IP'
+           if (l_bse.and.trim(BSK_mode)==' ') BSK_mode='IP'
+           !
          endif
          !
-         if((trim(rstr_piece(i1+1)) == 'alda').or.&
-           &(trim(rstr_piece(i1+1)) == 'lrc').or.&
-           &(trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
+         ! Approximation used for the BSE/LLR kernel
          !
-         if(l_bse)   call initactivate(1,'bsk')
+         if ( trim(rstr_piece(i1)) == 'kernel' )  then
+           !
+           ! if the optics option is not present define defaults
+           ! since kernel does not correspond to a runlevel, set 
+           ! infile_editing=.true.           
+           !
+           if (.not.l_bse.and..not.l_chi) then
+             l_chi =((trim(rstr_piece(i1+1)) == 'hartree').or.&
+                    &( trim(rstr_piece(i1+1)) == 'lrc'))
+             l_bse =((trim(rstr_piece(i1+1)) == 'alda').or.&
+                    &(trim(rstr_piece(i1+1)) == 'sex').or.&
+                    &(trim(rstr_piece(i1+1)) == 'hf').or.&
+                    &( trim(rstr_piece(i1+1)) == 'bsfxc'))
+             infile_editing=.true.           
+             call initactivate(1,'optics')
+             if (l_chi) call initactivate(1,'chi')
+             if (l_bse) call initactivate(1,'bse')
+           end if
+           !
+           BSK_mode='Hartree'
+           Chi_mode='Hartree'
+           !
+           if(l_bse)  then
+             if(trim(rstr_piece(i1+1)) == 'hartree')  BSK_mode='Hartree'
+             if(trim(rstr_piece(i1+1)) == 'hf')       BSK_mode='HF'
+             if( trim(rstr_piece(i1+1)) == 'alda')    BSK_mode='ALDA'
+             if(trim(rstr_piece(i1+1)) == 'sex')      BSK_mode='SEX'
+             if( trim(rstr_piece(i1+1)) == 'bsfxc')   BSK_mode='BSfxc'
+           else if(l_chi) then
+             if(trim(rstr_piece(i1+1)) == 'hartree')  Chi_mode='Hartree'
+             if( trim(rstr_piece(i1+1)) == 'alda')    Chi_mode='ALDA'
+             if( trim(rstr_piece(i1+1)) == 'lrc')     Chi_mode='LRC'
+             if( trim(rstr_piece(i1+1)) == 'bsfxc')   Chi_mode='BSfxc'
+           endif
+           !
+           if((trim(rstr_piece(i1+1)) == 'alda').or.&
+             &(trim(rstr_piece(i1+1)) == 'lrc').or.&
+             &(trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
+           !
+           if(l_bse)   call initactivate(1,'bsk')
+           !
+         endif
          !
-       endif
-       !
-       ! BSE Solver
-       !
-       if ( trim(rstr_piece(i1)) == 'bss' )  then
-         BSS_mode=trim(rstr_piece(i1+1))
-         if (index(BSS_mode,'h')==0.and.index(BSS_mode,'d')==0.and.&
-&            index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0) BSS_mode='h'
+         ! BSE Solver
          !
-         ! With and ALDA Fxc the t solver is not permitted
+         if ( trim(rstr_piece(i1)) == 'bss' )  then
+           BSS_mode=trim(rstr_piece(i1+1))
+           if (index(BSS_mode,'h')==0.and.index(BSS_mode,'d')==0.and.&
+&              index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0) BSS_mode='h'
+           !
+           ! With and ALDA Fxc the t solver is not permitted
+           !
+           if (l_alda_fxc.and.index(BSS_mode,'t')/=0) BSS_mode='h'
+           if (BSK_mode=='IP') call switch_off_runlevel('bss',on_name=' ')
+           if (BSK_mode==' ') then
+             BSK_mode="SEX"
+             Chi_mode="Hartree"
+           endif
+           !
+         endif
          !
-         if (l_alda_fxc.and.index(BSS_mode,'t')/=0) BSS_mode='h'
-         if (BSK_mode=='IP') call switch_off_runlevel('bss',on_name=' ')
+         ! Dyson Solver
          !
-       endif
-       !
-       ! Dyson Solver
-       !
-       if ( trim(rstr_piece(i1)) == 'gw0' ) then
-         QP_solver=trim(rstr_piece(i1+1))
-         if (trim(QP_solver)/='n'.and.trim(QP_solver)/='s'.and.&
-&            trim(QP_solver)/='g') QP_solver='n'
+         if ( trim(rstr_piece(i1)) == 'gw0' ) then
+           QP_solver=trim(rstr_piece(i1+1))
+           if (trim(QP_solver)/='n'.and.trim(QP_solver)/='s'.and.&
+&              trim(QP_solver)/='g') QP_solver='n'
 #if !defined  _ELPH 
-         l_el_corr=.true.
+           l_elel_corr=.true.
 #endif
-         !
-       endif
-       !
-       ! GW approximation 
-       !
-       if ( trim(rstr_piece(i1)) == 'gwapprx' ) then
-         !
-         if (trim(rstr_piece(i1+1))=='p') then
-           infile_editing=.true.
-           call initactivate(1,'ppa')
-         else if (trim(rstr_piece(i1+1))=='c') then
-           !
-           infile_editing=.true.
-           call initactivate(1,'cohsex gw0') 
            !
          endif
          !
-       endif
-       !
-       ! Surface spectroscopy
-       !
+         ! Lifetimes
+         !
+         if ( trim(rstr_piece(i1)) == 'life' )  call initactivate(1,'em1d')
+         !
+         ! GW approximation 
+         !
+         if ( trim(rstr_piece(i1)) == 'gwapprx' ) then
+           !
+           if (trim(rstr_piece(i1+1))=='p') then
+             infile_editing=.true.
+             call initactivate(1,'ppa')
+           else if (trim(rstr_piece(i1+1))=='c') then
+             !
+             infile_editing=.true.
+             call initactivate(1,'cohsex gw0') 
+             !
+           endif
+           !
+         endif
+         !
+         ! Surface spectroscopy
+         !
 #if defined _SURF
-       if ( trim(rstr_piece(i1)) == 'sursp' )  then
-         if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
-         if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
-         if ( trim(rstr_piece(i1+1)) == 'b') call initactivate(1,'ras reels')
-       endif
-#endif
-       !
-       ! Sc / NEGF
-       !
-#if defined _SC 
-       if ( trim(rstr_piece(i1)) == 'scpot' )  then
-         if ( trim(rstr_piece(i1+1)) == 'exx' ) then
-           SC_potential='EXX'
-           call initactivate(1,'HF_and_locXC')
-         else if ( trim(rstr_piece(i1+1)) == 'exxc' ) then
-           SC_potential='EXXC'
-           call initactivate(1,'HF_and_locXC')
-         else if ( trim(rstr_piece(i1+1)) == 'srpa' ) then
-           SC_potential='SRPA'
-           call initactivate(1,'cohsex HF_and_locXC')
-         else if ( trim(rstr_piece(i1+1)) == 'c' ) then
-           SC_potential='COHSEX'
-           call initactivate(1,'cohsex HF_and_locXC')
-         else if ( trim(rstr_piece(i1+1)) == 'hf') then
-           SC_potential='HARTREE-FOCK'
-           call initactivate(1,'HF_and_locXC')
-         else if ( trim(rstr_piece(i1+1)) == 'h') then
-           SC_potential='HARTREE'
-         else if ( trim(rstr_piece(i1+1)) == 'd') then
-           SC_potential='default'
+         if ( trim(rstr_piece(i1)) == 'sursp' )  then
+           if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
+           if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
+           if ( trim(rstr_piece(i1+1)) == 'b') call initactivate(1,'ras reels')
          endif
-       endif
+#endif
+         !
+         ! Sc / NEGF
+         !
+#if defined _SC 
+         if ( trim(rstr_piece(i1)) == 'scpot' )  then
+           if ( trim(rstr_piece(i1+1)) == 'exx' ) then
+             SC_potential='EXX'
+             call initactivate(1,'HF_and_locXC')
+           else if ( trim(rstr_piece(i1+1)) == 'exxc' ) then
+             SC_potential='EXXC'
+             call initactivate(1,'HF_and_locXC')
+           else if ( trim(rstr_piece(i1+1)) == 'srpa' ) then
+             SC_potential='SRPA'
+             call initactivate(1,'cohsex HF_and_locXC')
+           else if ( trim(rstr_piece(i1+1)) == 'c' ) then
+             SC_potential='COHSEX'
+             call initactivate(1,'cohsex HF_and_locXC')
+           else if ( trim(rstr_piece(i1+1)) == 'hf') then
+             SC_potential='HARTREE-FOCK'
+             call initactivate(1,'HF_and_locXC')
+           else if ( trim(rstr_piece(i1+1)) == 'h') then
+             SC_potential='HARTREE'
+           else if ( trim(rstr_piece(i1+1)) == 'd') then
+             SC_potential='default'
+           endif
+         endif
 #endif
 #if defined _MAGNETIC
-       if ( trim(rstr_piece(i1)) == 'magnetic' )  then
-         if ( trim(rstr_piece(i1+1)) == 'p' ) then
-           MAG_hamiltonian_type='pauli'
-           MAG_pauli=.true.
-         else if ( trim(rstr_piece(i1+1)) == 'l' ) then
-           MAG_hamiltonian_type='landau'
-           MAG_landau=.true.
-         else if ( trim(rstr_piece(i1+1)) == 'a') then
-           MAG_hamiltonian_type='all'
-           MAG_landau=.true.
-           MAG_pauli=.true.
+         if ( trim(rstr_piece(i1)) == 'magnetic' )  then
+           if ( trim(rstr_piece(i1+1)) == 'p' ) then
+             MAG_hamiltonian_type='pauli'
+             MAG_pauli=.true.
+           else if ( trim(rstr_piece(i1+1)) == 'l' ) then
+             MAG_hamiltonian_type='landau'
+             MAG_landau=.true.
+           else if ( trim(rstr_piece(i1+1)) == 'a') then
+             MAG_hamiltonian_type='all'
+             MAG_landau=.true.
+             MAG_pauli=.true.
+           endif
          endif
-       endif
 #endif
-       !
-       ! ELPH
-       !
+         !
 #if defined  _ELPH 
-       if ( trim(rstr_piece(i1)) == 'corrtp' ) then
-         if ( trim(rstr_piece(i1+1)) == 'e') l_el_corr=.true.
-         if ( trim(rstr_piece(i1+1)) == 'p') l_ph_corr=.true.
-         if ( trim(rstr_piece(i1+1)) == 'b') then
-           l_el_corr=.true.
-           l_ph_corr=.true.
+         ! ELPH
+         !
+         if ( trim(rstr_piece(i1)) == 'corrtp' ) then
+           if ( trim(rstr_piece(i1+1)) == 'e') l_elel_corr=.true.
+           if ( trim(rstr_piece(i1+1)) == 'p') l_elph_corr=.true.
+           if ( trim(rstr_piece(i1+1)) == 'b') then
+             l_elel_corr=.true.
+             l_elph_corr=.true.
+           endif
+           if (.not.l_elph_corr.and..not.l_elel_corr) l_elel_corr=.true.
+           if (l_elph_corr) call initactivate(1,'el_ph_corr')
+           if (l_elel_corr) call initactivate(1,'el_el_corr')
          endif
-         if (.not.l_ph_corr.and..not.l_el_corr) l_el_corr=.true.
-         if (l_ph_corr) call initactivate(1,'el_ph')
-         if (l_el_corr) call initactivate(1,'el_el')
-       endif
 #endif
-       !
-       ! RT
-       !
+         !
+         ! RT
+         !
 #if defined  _RT 
-       if ( trim(rstr_piece(i1)) == 'negf' ) then
-         if ( trim(rstr_piece(i1+1)) == 'p' ) l_RT_probe=.true.
-         if ( trim(rstr_piece(i1+1)) == 'pp') l_RT_pump_and_probe=.true.
-       endif
+         if ( trim(rstr_piece(i1)) == 'negf' ) then
+           if ( trim(rstr_piece(i1+1)) == 'p' ) l_RT_probe=.true.
+           if ( trim(rstr_piece(i1+1)) == 'pp') l_RT_pump_and_probe=.true.
+         endif
+         if ( trim(rstr_piece(i1)) == 'collisions' ) then
+           if (i3==2.and..not.runlevel_is_on('el_el_scatt').and..not.runlevel_is_on('cohsex').and.&
+&              .not.runlevel_is_on('HF_and_locXC')) call initactivate(1,'HF_and_locXC')
+         endif
+         !
+         if ( trim(rstr_piece(i1)) == 'scattp' ) then
+           if ( trim(rstr_piece(i1+1)) == 'e'.or. trim(rstr_piece(i1+1)) == 'b') l_elel_scatt=.true.
+           if ( trim(rstr_piece(i1+1)) == 'p'.or. trim(rstr_piece(i1+1)) == 'b') l_elph_scatt=.true.
+           if (.not.l_elph_scatt.and..not.l_elel_scatt) l_elel_scatt=.true.
+           if (l_elph_scatt) call initactivate(1,'el_ph_scatt')
+           if (l_elel_scatt) then
+             call initactivate(1,'el_el_scatt')
+             if (runlevel_is_on('collisions')) call initactivate(1,'em1s')
+           endif
+         endif
 #endif
+         !
+       enddo INPUT_strings_loop
        !
-     enddo INPUT_strings_loop
+     enddo
      !
      if (infile_editing) init_=1
      !

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_delta_part(X,Xw,Gamp)
+subroutine X_delta_part(NG,NW,X,Gamp)
  !
  ! The goal of this routine is to construct the "delta-like" part
  ! of the inverse dielectric matrix.
@@ -54,27 +56,26 @@ subroutine X_delta_part(X,Xw,Gamp)
  !
  use pars,          ONLY:SP
  use D_lattice,     ONLY:i_space_inv
- use X_m,           ONLY:X_t,X_mat
- use frequency,     ONLY:w_samp
  implicit none
- type(X_t)    :: X
- type(w_samp) :: Xw
- complex(SP)  :: Gamp(X%ng,X%ng)
+ !
+ integer      :: NG,NW
+ complex(SP)  :: Gamp(NG,NG)
+ complex(SP)  :: X(NG,NG,NW)
  !
  ! Work Space
  !
  integer    :: i1,i2,i3
- complex(SP):: Xt(X%ng,X%ng)
+ complex(SP):: Xt(NG,NG)
  !
  if (i_space_inv==1) then
-   forall(i1=1:X%ng,i2=1:X%ng,i3=1:Xw%n_freqs) &
-&        X_mat(i1,i2,i3)=aimag(X_mat(i1,i2,i3))*Gamp(i1,i2)
+   forall(i1=1:NG,i2=1:NG,i3=1:NW) &
+&        X(i1,i2,i3)=aimag(X(i1,i2,i3))*Gamp(i1,i2)
  else
-   do i3=1,Xw%n_freqs
-     forall(i1=1:X%ng,i2=1:X%ng) Xt(i1,i2)=X_mat(i1,i2,i3)*Gamp(i1,i2)
-     forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,i3)=&
-&                                     0.5*aimag(Xt(i1,i2)+Xt(i2,i1))-&
-&                                (0.,0.5)* real(Xt(i1,i2)-Xt(i2,i1))
+   do i3=1,NW
+     forall(i1=1:NG,i2=1:NG) Xt(i1,i2)  =X(i1,i2,i3)*Gamp(i1,i2)
+     forall(i1=1:NG,i2=1:NG) X(i1,i2,i3)=&
+&                                    0.5*aimag(Xt(i1,i2)+Xt(i2,i1))-&
+&                               (0.,0.5)* real(Xt(i1,i2)-Xt(i2,i1))
    enddo
  endif
  !

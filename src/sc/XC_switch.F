@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -30,7 +32,7 @@ subroutine XC_switch()
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
  use magnetic,       ONLY:MAG_landau,MAG_pauli
 #endif
- use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC,SC_SRPA,EXT_NONE
+ use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC,SC_SRPA,EXT_NONE,SE_GW_NEQ
  use electrons,      ONLY:n_full_bands,n_met_bands
  use com,            ONLY:error
  implicit none

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -51,6 +53,8 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  if (.not.associated(E%f)) allocate(E%f(E%nb,E%nk,n_sp_pol))
  !
  E%Efermi=Xe%Efermi
+ E%E_VBM =Xe%E_VBM
+ E%E_CBm =Xe%E_CBm
  call f_build(Xe%Efermi(1))
  call OCCUPATIONS_Gaps(E)
  !
@@ -60,6 +64,8 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  !
  if (E%nbf==Xe%nbf.and.E%nbm==Xe%nbm) then
    E%E=E%E-E%Efermi(1)
+   E%E_VBM =E%E_VBM-E%Efermi(1)
+   E%E_CBm =E%E_CBm-E%Efermi(1)
    if (associated(E%E_RIM)) E%E_RIM =E%E_RIM -E%Efermi(1)
    return
  endif
@@ -80,6 +86,8 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  enddo
  !
  E%E=E%E-E%Efermi(1)
+ E%E_VBM =E%E_VBM-E%Efermi(1)
+ E%E_CBm =E%E_CBm-E%Efermi(1)
  if (associated(Xe%E_RIM)) then
    E%E_RIM =E%E_RIM -E%Efermi(1)
    Xe%E_RIM=Xe%E_RIM-E%Efermi(1)

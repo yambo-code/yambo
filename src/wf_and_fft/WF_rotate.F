@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,14 +33,17 @@ subroutine WF_rotate(ik,WFo,wf_size)
  ! Extended only to collinear case
  !
  use wrapper,        ONLY:V_by_V_plus_V
+#if defined _OPENMP
+ use wrapper,        ONLY:V_by_V_plus_V_omp
+#endif
  use electrons,      ONLY:n_sp_pol
  use pars,           ONLY:SP
- use wave_func,      ONLY:wf_state,wf_n_states,wf
+ use wave_func,      ONLY:WAVEs,WF
  use SC,             ONLY:SC_R,SC_bands
  implicit none
  !
- integer     :: ik,wf_size
- complex(SP) :: WFo(wf_size,wf_n_states)
+ integer     :: ik,wf_size,ig
+ type(WAVEs) :: WFo
  !
  ! Work Space
  !
@@ -49,20 +54,30 @@ subroutine WF_rotate(ik,WFo,wf_size)
    WS_wf=(0.,0.)
    !
    do ib  = 1,SC_bands(2)
-     ifft = wf_state(ib,ik,i_spin)
+     ifft = WFo%index(ib,ik,i_spin)
      do ibp = 1,SC_bands(2)
-       ifftp = wf_state(ibp,ik,i_spin)
+       ifftp = WFo%index(ibp,ik,i_spin)
        !
        if (ifft==0.or.ifftp==0) cycle
        !
-       call V_by_V_plus_V(wf_size,SC_R(ibp,ib,ik,i_spin),WFo(:,ifftp),WS_wf(:,ib))
+#if defined _OPENMP
+       call V_by_V_plus_V_omp(wf_size,SC_R(ibp,ib,ik,i_spin),WFo%c(:,ifftp),WS_wf(:,ib))
+#else
+       call V_by_V_plus_V(wf_size,SC_R(ibp,ib,ik,i_spin),WFo%c(:,ifftp),WS_wf(:,ib))
+#endif
        !
      end do
    end do
    !
+!$omp parallel default(shared), private(ig,ib)
    do ib=1,SC_bands(2)
-     wf(:,wf_state(ib,ik,i_spin))=WS_wf(:,ib)
+!$omp do
+     do ig=1,wf_size
+        WF%c(ig,WF%index(ib,ik,i_spin))=WS_wf(ig,ib)
+     enddo
+!$omp end do
    enddo
+!$omp end parallel
    !
  enddo
  !

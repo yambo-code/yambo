@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -26,24 +28,27 @@ subroutine V_qp_basis_to_H(ik,V,H)
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
  use SC,             ONLY:SC_bands
  use matrix_operate, ONLY:matrix_linear_index
- use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_COM_WF_k_A2A,PP_redux_wait,PAR_IND_WF_k
+#if defined _SC || !defined _RT
+ use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
+#endif
+#if defined _RT
+ use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k
+#endif
  implicit none
  !
  integer     :: ik
- complex(SP) :: V(QP_n_states)
- complex(SP) :: H(QP_nb,QP_nb,n_sp_pol)
+ complex(SP),intent(in)  :: V(QP_n_states)
+ complex(SP),intent(out) :: H(QP_nb,QP_nb,n_sp_pol)
  !
  ! Work Space
  !
  integer    :: i1,ib,ibp,i_spin
  !
+ ! Fill ...
+ !
 #if defined _RT
  if (.not.PAR_IND_WF_k%element_1D(ik)) return
- !
- H(:,:,:) = H(:,:,:)/real(PAR_COM_WF_k_A2A%n_CPU)
 #endif
- !
- ! Fill ...
  !
  do i1=1,QP_n_states
    !
@@ -54,6 +59,9 @@ subroutine V_qp_basis_to_H(ik,V,H)
    !
    if(ib>ibp) cycle
    !
+#if defined _SC && !defined _RT
+   if (.not.(PAR_IND_QP%element_1D(i1).and.HEAD_QP_cpu)) cycle
+#endif
 #if defined _RT
    if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
 #endif
@@ -70,9 +78,5 @@ subroutine V_qp_basis_to_H(ik,V,H)
    if (ib/=ibp) H(ibp,ib,i_spin) = conjg(H(ib,ibp,i_spin))
    !
  end do
- !
-#if defined _RT
- call PP_redux_wait(H,COMM=PAR_COM_WF_k_A2A%COMM)
-#endif
  !
 end subroutine 

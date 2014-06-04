@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -32,7 +34,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,spin
  use FFT_m,        ONLY:fft_size
  use stderr,       ONLY:intc
- use wave_func,    ONLY:WF_load,WF_free
+ use interfaces,   ONLY:WF_load
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
@@ -55,9 +57,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
  use matrix_operate,ONLY:matrix_linear_index
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
- use xc_functionals,ONLY:F_xc
+ use xc_functionals,ONLY:F_xc,XC_potential_driver
  use wrapper,       ONLY:V_dot_V,Vstar_dot_V,M_by_V
  use global_XC,     ONLY:WF_kind,WF_xc_functional
+ use wave_func,     ONLY:WF
  !
  implicit none
  type(levels)  ::Ken 
@@ -70,7 +73,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: ikk1,ikk2,live_timing_steps,live_timing_step_size,live_timing_accumulate,&
 &              is1xis2,ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p,&
-&              i_sp1,i_sp2,j_sp1,j_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
+&              i_sp1,i_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
 &              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0,bands_to_load(2),&
 &              iBSE1,iBSE2
  integer    :: iOcv, iOvc
@@ -80,7 +83,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer(8) :: n_K_elements(ncpu),tot_n_K_elements,i8nc,i8id
  real(SP)   :: E_eh_range(2),S_eh_range(2)
- real(SP)   :: filling
  complex(SP),allocatable ::BS_W(:,:,:)
  complex(SP),   external ::tddft_alda_r_space
  logical    :: W_is_em1s,W_is_pp
@@ -221,7 +223,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_START
    !
-   call WF_load(max(O_ng,BS_n_g_exch),1,BS_bands,(/1,BS_columns/),space='R',title='-BSK->Fxc')
+   call WF_load(WF,max(O_ng,BS_n_g_exch),1,BS_bands,(/1,BS_columns/),space='R',title='-BSK->Fxc')
    !
    ! GPL_EXCLUDE_END
    !
@@ -230,7 +232,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    bands_to_load=BS_bands
    if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
    !
-   call WF_load(max(O_ng,BS_n_g_exch),1,bands_to_load,(/1,BS_columns/),&
+   call WF_load(WF,max(O_ng,BS_n_g_exch),1,bands_to_load,(/1,BS_columns/),&
 &               space='R',title='-BSK')
    !
  endif
@@ -656,6 +658,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Final CLEAN
  !
- call WF_free()
+ call WF_free(WF)
  !
 end subroutine

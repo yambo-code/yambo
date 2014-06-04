@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -29,9 +31,9 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym,i_time_rev
  use FFT_m,         ONLY:fft_size,fft_rot_r
- use wave_func,     ONLY:wf_state,wf
+ use wave_func,     ONLY:WF
  use SC,            ONLY:SC_bands
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_WF_k_A2A,PAR_IND_B_mat_ordered
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
  use matrix_operate,ONLY:matrix_linear_index
  !
  implicit none
@@ -43,23 +45,23 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  !
  ! Work Space 
  !
- integer :: ib1,ib2,ik,ifft1,rho_syms,ifft2,ir
- real(SP):: rho_no_sym(fft_size),f_occ
+ integer     :: ib1,ib2,ik,ifft1,rho_syms,ifft2,ir
+ real(SP)    :: rho_no_sym(fft_size)
+ complex(SP) :: f_occ
  !
  rho=0._SP
  rho_no_sym=0._SP
  !
- ! Off-diagonal contributions
- !
  do ik=1,Xk%nibz
    !
-   if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-   !
    do ib1=lowest_band,SC_bands(1)-1
-     ifft1=wf_state(ib1,ik,1)
+     if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
+     ifft1=WF%index(ib1,ik,1)
      f_occ=en%f(ib1,ik,1)
-     rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(ik)*abs(wf(:,ifft1))**2./real(PAR_COM_WF_k_A2A%n_CPU)
+     rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,ifft1))**2.)
    enddo
+   !
+   if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
    !      
    do ib1=SC_bands(1),SC_bands(2)
      !
@@ -67,16 +69,16 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
        !
        if (.not.PAR_IND_B_mat_ordered%element_1D(  matrix_linear_index(ib1-SC_bands(1)+1,ib2-SC_bands(1)+1)-1 )) cycle
        !      
-       ifft1=wf_state(ib1,ik,1)
-       ifft2=wf_state(ib2,ik,1)
+       ifft1=WF%index(ib1,ik,1)
+       ifft2=WF%index(ib2,ik,1)
        !
        if (ib1==ib2) then
-         f_occ=real(-(0._SP,1._SP)*G_lesser(ib1,ib2,ik),SP)
+         f_occ=-(0._SP,1._SP)*G_lesser(ib1,ib2,ik)
        else
-         f_occ=real(-(0._SP,2._SP)*G_lesser(ib1,ib2,ik),SP)
+         f_occ=-(0._SP,2._SP)*G_lesser(ib1,ib2,ik)
        endif
        !
-       rho_no_sym(:)=rho_no_sym(:)+Xk%weights(ik)*f_occ*real(wf(:,ifft1)*conjg(wf(:,ifft2)))
+       rho_no_sym(:)=rho_no_sym(:)+Xk%weights(ik)*real(f_occ*WF%c(:,ifft1)*conjg(WF%c(:,ifft2)))
        !
      enddo
    enddo

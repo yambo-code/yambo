@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 D. Sangalli and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -22,7 +24,7 @@
 function WF_symm(ifft,isc)
  !
  use pars,          ONLY:SP
- use wave_func,     ONLY:wf,wf_state
+ use wave_func,     ONLY:WF
  use FFT_m,         ONLY:fft_rot_r
  use electrons,     ONLY:n_spinor
  use D_lattice,     ONLY:nsym,spin_sop,i_time_rev,idt_index
@@ -36,22 +38,22 @@ function WF_symm(ifft,isc)
  integer     :: ifft
  integer     :: i_wf(n_spinor)
  !
- i_wf(1)=wf_state(isc(1),isc(2),isc(4))
- if(n_spinor==2)  i_wf(2)=wf_state(isc(1),isc(2),2)
+ i_wf(1)=WF%index(isc(1),isc(2),isc(4))
+ if(n_spinor==2)  i_wf(2)=WF%index(isc(1),isc(2),2)
  !
  if(isc(3)==idt_index) then
-   WF_symm(1)=wf(ifft,i_wf(1))
-   if(n_spinor==2) WF_symm(2)=wf(ifft,i_wf(2))
+   WF_symm(1)=WF%c(ifft,i_wf(1))
+   if(n_spinor==2) WF_symm(2)=WF%c(ifft,i_wf(2))
    return
  endif
  !
- if(n_spinor==1) WF_symm(1)=wf(fft_rot_r(isc(3),ifft),i_wf(1))
+ if(n_spinor==1) WF_symm(1)=WF%c(fft_rot_r(isc(3),ifft),i_wf(1))
  !
  if (n_spinor==2) then
-   WF_symm(1)=spin_sop(1,1,isc(3))*wf(fft_rot_r(isc(3),ifft),i_wf(1))+ &
-&                    spin_sop(1,2,isc(3))*wf(fft_rot_r(isc(3),ifft),i_wf(2))
-   WF_symm(2)=spin_sop(2,1,isc(3))*wf(fft_rot_r(isc(3),ifft),i_wf(1))+ &
-&                    spin_sop(2,2,isc(3))*wf(fft_rot_r(isc(3),ifft),i_wf(2))
+   WF_symm(1)=spin_sop(1,1,isc(3))*WF%c(fft_rot_r(isc(3),ifft),i_wf(1))+ &
+&                    spin_sop(1,2,isc(3))*WF%c(fft_rot_r(isc(3),ifft),i_wf(2))
+   WF_symm(2)=spin_sop(2,1,isc(3))*WF%c(fft_rot_r(isc(3),ifft),i_wf(1))+ &
+&                    spin_sop(2,2,isc(3))*WF%c(fft_rot_r(isc(3),ifft),i_wf(2))
  endif
  !
  if(isc(3)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 D. Sangalli, C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -28,12 +30,13 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
 &                              OP_APP,cp_file,cp_directory,Fragmented_IO, &
 &                              io_fragmented,OP_RD_CL,RD_CL,RD
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
- &                             wf_state,WF_load,wf_state,wf,WF_free,wf_nb_io_groups
- use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol
+ &                             WF,wf_nb_io_groups
+ use electrons,           ONLY:levels,E_reset,n_spin
  use LIVE_t,              ONLY:live_timing
  use stderr,              ONLY:intc
  use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz,ng_vec
  use D_lattice,           ONLY:spin_sop
+ use interfaces,          ONLY:WF_load
  !
  implicit none
  !
@@ -86,7 +89,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  core_io_path=more_io_path
  !
  call section('=',"Energies and WFs shells")
- !===========================
+ !===========================================
  !
  allocate(wf_igk_save(wf_ncx,k_save%nibz))
  wf_nc_k_save=wf_nc_k
@@ -186,13 +189,13 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          nkibz=k_save%nibz
          wf_ncx=wf_ncx_save
          core_io_path=core_io_path_save
-         call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
+         call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
          !
          do ib=nb1,nb2
            do i_spin=1,n_spin
-             i_wf=wf_state(ib,ik_save,i_spin)
-             wf_disk(1,ib,:wf_nc_k_new(ik),i_spin)=  real(wf(:wf_nc_k_save(ik_save),i_wf))
-             wf_disk(2,ib,:wf_nc_k_new(ik),i_spin)= aimag(wf(:wf_nc_k_save(ik_save),i_wf))
+             i_wf=WF%index(ib,ik_save,i_spin)
+             wf_disk(1,ib,:wf_nc_k_new(ik),i_spin)=  real(WF%c(:wf_nc_k_save(ik_save),i_wf))
+             wf_disk(2,ib,:wf_nc_k_new(ik),i_spin)= aimag(WF%c(:wf_nc_k_save(ik_save),i_wf))
            enddo
          enddo
          !
@@ -245,7 +248,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        nkibz=k_save%nibz
        wf_ncx=wf_ncx_save
        core_io_path=core_io_path_save
-       call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
+       call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
        !
        do ib=nb1,nb2
          !
@@ -253,9 +256,9 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          !
          do i_spin=1,n_spin
            !
-           i_wf=wf_state(ib,ik_save,i_spin)
+           i_wf=WF%index(ib,ik_save,i_spin)
            !
-           forall(ic=1:wf_nc_k_save(ik_save)) wf_tmp(ic_rot_table(ic),i_spin)=wf(ic,i_wf)
+           forall(ic=1:wf_nc_k_save(ik_save)) wf_tmp(ic_rot_table(ic),i_spin)=WF%c(ic,i_wf)
            !
          enddo
          !
@@ -311,13 +314,13 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        nkibz=k_save%nibz
        wf_ncx=wf_ncx_save
        core_io_path=core_io_path_save
-       call WF_load(wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
+       call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
        !
        do ib=nb1,nb2
          do i_spin=1,n_spin
-           i_wf=wf_state(ib,ik_save,i_spin)
-           wf_disk(1,ib,1:wf_ncx_new,i_spin)= real(wf(1:wf_ncx_new,i_wf))
-           wf_disk(2,ib,1:wf_ncx_new,i_spin)= aimag(wf(1:wf_ncx_new,i_wf))
+           i_wf=WF%index(ib,ik_save,i_spin)
+           wf_disk(1,ib,1:wf_ncx_new,i_spin)= real(WF%c(1:wf_ncx_new,i_wf))
+           wf_disk(2,ib,1:wf_ncx_new,i_spin)= aimag(WF%c(1:wf_ncx_new,i_wf))
          enddo
        enddo
        !
@@ -358,7 +361,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  ! CLEAN
  !=======
  call E_reset(E_new)
- call WF_free()
+ call WF_free(WF)
  deallocate(wf_disk)
  call mem_est("wf_disk")
  !

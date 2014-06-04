@@ -1,235 +1,1662 @@
-2013-03-17 23:01:56 r2006 Andrea Marini <andrea.marini@roma2.infn.it>
+2014-04-09 10:39:15 r3278 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.2.5
+	Version 4.0.0
 
-	*  sbin/svn2cl.pl include/version.inc
-
-	Changes:
-	- Updated Changelog generator. Testing commit to trunk!
-
-2013-03-27 21:50:03 r2083 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.3.1
-
-	*  configure parser/ps_convert.F parser/mod_parser_m.F setup/build_spin_sop.F interface/init_load.F modules/mod_BS.F bse/K_scattering.F include/version.inc config/configure.ac
+	*  . config/configure.ac configure include/version.inc interface/init.F interface/init_load.F io/io_RIM_E_and_k.F modules/SET_defaults.F modules/mod_electrons.F modules/mod_real_time.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_ELPH_initialize.F real_time/RT_ELPH_total_Kernel.F real_time/RT_average_operator.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_initialize.F real_time/RT_k_grid.F real_time/RT_observables.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F
 
 	Bugs:
-	- Fixed bug in build_spin_sop, introduced with the last commit
-	- Fexed bug in O_phase for n_spinor=2
+	-
 	Additions:
 	-
 	Changes:
-	- Drude input variable moved under -V resp from -V RL
-	- ps_convert correctly pars also input cut-off variables at zero eV. Now should finally work
+	- Merged with devel-davide:
+	  1) Bug fix Energy with RIM is now correct
+	  2) EE_scatt + RIM, the number of RIM points used is now controlled by the input variable EERimPerc.
+	     Default is 0., i.e. the minimum possible. Old behavior is with 100. (=100%)
+	  3) Also RT_impose uses dGamma*f+Gamma0*df. Calls in RT_relaxation restored before the interpolation
+	  4) RTeeImposeE controls if impose on energy is used for EE scatt
+	  5) The energy type has also the %W_RIM structure. Presently these are all equal to %W on the small grid
+	  6) Other minor bug fix
 
 	Patch sent by: Davide
 
-2013-03-27 15:26:30 r2078 Andrea Marini <andrea.marini@cnr.it>
+2014-04-04 15:47:34 r3272 Davide Sangalli <davide.sangalli@gmail.com>
 
-	BSSInvMode introduced from devel-andrea was not initialized correctly. K_inversion was not working
+	Version 4.0.0
 
-2013-03-26 18:43:02 r2071 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.3.1
-
-	*  include/version.inc config/configure.ac configure wf_and_fft/scatter_Bamp.F setup/build_spin_sop.F setup/setup.F interface/init_load.F interface/init.F
+	*  . config/Makefile.in config/configure.ac configure include/version.inc coulomb/.objects + io/io_RT_components.F modules/mod_ELPH.F modules/mod_real_time.F real_time/.objects real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_DEPHASING_step.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_ELPH_initialize.F real_time/RT_ELPH_total_Kernel.F real_time/RT_G_retarded_convolution.F real_time/RT_Integrator.F real_time/RT_Lifetimes_Interpolation.F real_time/RT_Lifetimes_equilibrium.F real_time/RT_Lifetimes_merge.F real_time/RT_Lifetimes_save_and_interp.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_initialize.F real_time/RT_k_grid.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_relaxation.F ypp/RT_occupations_analyze.F ypp/electrons_bands.F
 
 	Bugs:
-	- init.F: BSE with screened interaction kernel had always exchange coupling on.
-	- Spin_sop, fixed old bug
+	-
 	Additions:
 	-
 	Changes:
-	- Renamed BSE drude varaible from DrudeW to DrudeWBS to avoid the latter to appear in
-	  calculations in G-space
-	- setup, warning message fot mag_syms moved in the GPL
+	- merged with devel-davide
 
 	Patch sent by: Davide
 
-2013-03-26 16:17:34 r2068 Andrea Marini <andrea.marini@cnr.it>
+2014-03-31 16:15:28 r3256 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Fixed BUG in random k-points generation. The points were NOT shifted in the IBZ after the random generation
+	Version 4.0.0
 
-2013-03-26 14:42:06 r2067 Andrea Marini <andrea.marini@cnr.it>
+	*  . config/Makefile.in config/configure.ac config/setup.in configure include/version.inc + lib/libxc/config.h.in lib/libxc/configure sbin/make_makefile.sh.in common/.objects common/HyperbolicSecant_FT.F + interface/init.F interface/init_load.F io/variables_SC.F modules/mod_real_time.F real_time/.objects real_time/RT_Collision.F real_time/RT_Coulomb_relaxation.F real_time/RT_DEPHASING_step.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_ELPH_total_Kernel.F real_time/RT_Integrator.F real_time/RT_Lifetimes_Interpolation.F real_time/RT_Lifetimes_equilibrium.F + real_time/RT_Lifetimes_save_and_interp.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_driver.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_manual_excitation.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_observables.F real_time/RT_output.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F ypp/RT_occupations_analyze.F
 
-	Internal version counter updated
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with devel davide:
+	  1) Dynamics is in terms of dG<
+	  2) Lifetimes are computed as Gamma0 + dGamma
+	  3) Created spline_fit subroutine for interpolation, which uses the dierckx library in lib/dierckx.
+	     Presently it is not used. Spline does not work for extrapolation
 
-2013-03-26 14:39:35 r2066 Andrea Marini <andrea.marini@cnr.it>
+	Patch sent by: Davide
 
-	Added ypp option to print internal Q/K points
+2014-03-26 14:58:35 r3237 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  . config/configure.ac configure include/version.inc io/io_RT_components.F modules/mod_SC.F modules/mod_real_time.F qp_ctl/OCCUPATIONS_IO_and_interpolate.F real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_DEPHASING_step.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_Lifetimes_evaluation_plan.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_driver.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_observables.F real_time/RT_output.F real_time/RT_propagate_fields.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F ypp/RT_occupations_check.F ypp/RT_occupations_repair.F ypp/electrons_bands.F ypp/electrons_dos_and_charge.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- merged with devel-davide.
+	  Main change: RT_H_occupations and RT_E_occupations
+
+	Patch sent by: Davide
+
+2014-03-24 11:58:14 r3231 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea
+
+2014-02-25 17:35:39 r3201 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea
+
+2014-02-25 10:24:53 r3199 Andrea Marini <andrea.marini@cnr.it>
+
+	devel-trunk and devel-andrea merged and synchronized
+
+2014-02-25 10:07:15 r3196 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  real_time/RT_ELPH_initialize.F
+
+	Bugs:
+	- Bug fix in RT_ELPH_initialize fixed again. Likely the commit was lost with the changes in the repo
+
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2014-02-25 10:01:02 r3195 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  . config/configure.ac configure include/version.inc io/ioKB_abinit.F io/ioKB_pwscf.F io/io_HF_and_locXC.F modules/mod_real_time.F qp/QP_report_and_write.F ypp/electrons_driver.F ypp/excitons_driver.F ypp/ypp_init.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with trunk stable. Bug fix imported
+
+	Patch sent by: Davide
+
+2014-02-20 10:27:22 r3181 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc lib/libxc/configure modules/mod_real_time.F real_time/RT_Collision.F real_time/RT_Coulomb_interpolation.F real_time/RT_EULEREXP_step.F real_time/RT_EULER_step.F real_time/RT_Integrator.F real_time/RT_build_I1_and_I2.F real_time/RT_propagate_fields.F ypp/RT_occupations_FIT.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Patch imported from tmp_repository: RIM in Ho_plus_sigma
+
+	Patch sent by: Davide
+
+2014-02-07 18:15:02 r3177 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea
+
+2014-02-07 17:18:40 r3174 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  . config/configure.ac configure include/version.inc real_time/RT_Collision.F real_time/RT_Coulomb_interpolation.F real_time/RT_EULEREXP_step.F real_time/RT_EULER_step.F real_time/RT_GAMMA_save_and_interp.F real_time/RT_Integrator.F real_time/RT_driver.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_observables.F real_time/RT_relaxation.F
+
+	Bugs:
+	- Fixed two bugs intoduced by previous commit
+	Additions:
+	-
+	Changes:
+	merged with devel davide:
+	- Conditions on G_lessere are imposed during integratio
+	- RT_Coulomb interpolation starts only if the number of Carriers is above 1.E-4
+
+	Patch sent by: Davide
+
+2014-02-07 17:01:00 r3172 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  . config/configure.ac configure include/version.inc modules/SET_defaults.F modules/mod_interpolate.F modules/mod_real_time.F real_time/RT_Coulomb_interpolation.F real_time/RT_ELPH_initialize.F real_time/RT_driver.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_initialize.F real_time/RT_observables.F real_time/RT_output.F real_time/RT_relaxation.F ypp/electrons_bands.F
+
+	Bugs:
+	- Fixed ELPH+RIM GKKP renormalization factor [Andrea]
+	- Work-around for ELPH+RIM GKKP if small grid levels are degenerate while
+	  big grid levels are not [Andrea]
+	Additions:
+	-
+	Changes:
+	- Factors from RT_impose are written in output [Davide]
+	- RT_impose now imposes:
+	  * Nel and energy for EL-EL
+	  * Nel and dG for EL-PH
+
+	Patch sent by: Davide
+
+2014-02-06 12:37:24 r3167 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  . config/configure.ac configure include/version.inc qp/ELPH_gsqF_to_Sigma.F real_time/RT_SET_lifetimes_evaluation_plan.F
+
+	Bugs:
+	- Fixed compilation issue
+	Additions:
+	-
+	Changes:
+	- RT_SET lifetimes two different modes, i.e. FIELD and EXP can be activated together.
+	  The first one (FIELD) is activated only if trim(RT_dynamics_KIND)=="FIELD" and for the time the field is on.
+	  The second one (EXP) is activated if RT_dynamics_decay_time>0
+	  * from t=0 if no field is present
+	  * from t=t0, i.e. after the field is off, when a field is present
+
+	Patch sent by: Davide
+
+2014-02-04 10:38:11 r3165 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea
+
+2014-02-01 18:15:31 r3162 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_Fluence.F real_time/RT_GAMMA_save_and_interp.F real_time/RT_Integrator.F real_time/RT_average_operator.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_observables.F real_time/RT_relaxation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- RT_Coulomb_interpolation. Condition on the error is less strict
+	- If RIM is used sums over RT_nk are grouped. This way the error on the final result is smaller
+	  real_time/RT_observables.F, real_time/RT_impose_zero_dE_and_dN.F and src/real_time/RT_ELPH_CCA_Kernel.F
+	  subroutines affected
+	- RT_impose_zero_dE_and_dN changed
+
+	Patch sent by: Davide
+
+2014-01-25 17:27:41 r3152 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  devel/config/configure.ac devel/configure devel/include/version.inc stable/config/configure.ac stable/configure stable/include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Updating versions in the trunk for the release of the new GPL.
+	  STABLE: 3.4.0 --> 3.4.1  will be the new stable GPL
+	  DEVEL:  3.4.0 --> 4.0.0  will be the new devel GPL
+
+	Patch sent by: Davide
+
+2014-01-25 17:21:53 r3151 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/configure.ac configure include/version.inc common/Fermi_fnc_fit.F modules/SET_defaults.F modules/mod_real_time.F real_time/RT_manual_excitation.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_observables.F real_time/RT_occupations_FIT_and_lock.F real_time/RT_start_and_restart.F ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F ypp/electrons_bands.F ypp/electrons_driver.F ypp/mod_YPP.F ypp/ypp_i.F ypp/ypp_init.F ypp/ypp_init_load.F of conflicts:
+
+	Bugs:
+	- Sigma_relax was not allocated when l_elel_scatt=.true. and l_elph_scatt=.false.
+	- ypp_rt: plot of gamma(E) was wrong
+	- ypp_rt: fixed generation of input file for interpolation of f_occ on the band structure
+	- fixed small error in the construction of the EP lifetimes ratio = Gh/(Gh+Ge)
+	Additions:
+	-
+	Changes:
+	- ypp_rt: Now Te(t) an Th(t) are generated
+	-
+	Patch sent by: Davide
+
+2014-01-24 13:25:13 r3147 Andrea Marini <andrea.marini@cnr.it>
+
+	devel-andrea and trunk-devel merged
+
+2014-01-23 16:15:33 r3145 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  modules/mod_LIVE_t.F
+
+	Bugs:
+	- Now the code compiles also with gfortran
+
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2014-01-23 12:24:13 r3144 Andrea Marini <andrea.marini@cnr.it>
+
+	trunk-devel and branches-devel-andrea now merged
+
+2014-01-20 14:19:09 r3135 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/configure.ac configure include/version.inc bz_ops/bz_samp_indexes.F common/Fermi_fnc_fit.F interface/init.F interface/init_load.F io/ioQINDX.F modules/SET_defaults.F modules/mod_real_time.F real_time/RT_Coulomb_interpolation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	* merged with devel-davide:
+	- RT_Coulom_interpolation uses the temperature from the previous step in case
+	  Fermi_fnc_fit fails fitting the EE_lifetimes ratio
+	- BSE scattering table can be computed running the setup
+
+	Patch sent by: Davide
+
+2014-01-17 16:57:21 r3128 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/configure.ac configure include/version.inc bz_ops/k_the_nearest.F collisions/COLLISIONS_cohsex.F common/Fermi_fnc_fit.F common/pol_fit.F interpolate/bz_interp_setup.F interpolate/eval_interpolation_coeff.F io/io_RT_components.F modules/mod_R_lattice.F modules/mod_fields.F modules/mod_interpolate.F modules/mod_real_time.F real_time/RT_Collision.F real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_Ext_fields.F real_time/RT_Fluence.F real_time/RT_Integrator.F real_time/RT_current_AND_polarization.F real_time/RT_databases_IO.F real_time/RT_driver.F real_time/RT_impose_elel_conserves_E_and_N.F real_time/RT_initialize.F real_time/RT_k_grid.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_observables.F real_time/RT_occupations_fit.F real_time/RT_output.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F ypp/electrons_bands.F ypp/electrons_driver.F ypp/k_random.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	*** BIG COMMIT FROM MERGE WITH MY DEVEL. - [YAMBO_RT - YPP_RT] **
+	    THE CODE COMPILES BUT MORE TESTS ARE NEEDED. I STILL HAVE SMALL BUT
+	    NON NEGLIGIBLE DIFFERENCES BETWEEN THE TRUNK AND MY BRANCH
+
+	* MAIN CHANGES:
+	- RT_Coulomb_interpolation now works properly using as input the results of Fermi_fnc_fit.
+	  Als Fermi_fnc_fit has been improvede because the dynamics with l_elel_scatt + l_elph_scatt
+	  dependes deeply on its ability to fit the ratio between the RT_EE_lifetimes.
+	  Also the interpolation in energy is done after the interpolation in time.
+	- Interpolation of the band structue finally works properly with the RIM.
+	  [RIM] If the points of the RIM/BIG grid are not expanded they are associated
+	  only the point in the IBZ. This is needed for a correct interpolation. The RIM
+	  structure should be improved in view of BSE and other calculations.
+
+	* OTHER CHANGES:
+	- k_the_nearest in case ROTATE_K_REF=.true. gives in output also the symmetry which
+	  points to the rotated k_point
+	- cosmetic changes in COLLISION_cohsex
+	- logical  renamed NE_dynamics      --> l_NE_dynamics_started
+	  new logicals                      --> l_NE_dynamics
+	                                    --> l_manual_excitations (thus l_NE_with_fields=.false. in this case)
+	- New time structure for fields: t_initial, t_initial_indx, t_final, t_final_indx
+	  The latter is computed from RT_fluence
+	- The ration gamma_h/(gamma_h+gamma_e) is fitted on the fly and the output printed.
+	  A negative temperature means a fit with an error above a given treshold.
+	  Also the EE and the EP lifetimes are written in different files
+	- Condition on the occupations: the must remain between 0 and spin_occ
+	- RT_impose_elel_conserves_E_and_N now works separately on the small and the big grid in
+	  case the RIM is used. This because on the small grid we do not need to change the lifetimes.
+	  This is likely to be changed with new Andrea's lifetimes interpolation
+
+	Patch sent by: Davide
+
+2013-12-24 15:25:25 r3106 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea
+
+2013-12-20 12:02:50 r3092 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  io/ioQINDX.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- OLD ndb.kindx are re-computed by default
+
+	Patch sent by: Davide
+
+2013-12-20 02:10:59 r3091 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/configure.ac configure include/version.inc bz_ops/bz_samp_indexes.F collisions/.objects collisions/COLLISIONS_cohsex.F collisions/COLLISIONS_eval.F collisions/PLASMA_build_up.F collisions/PLASMA_parallel_setup.F collisions/PLASMA_tables_and_dimensions.F collisions/RT_EE_scattering_kinematics.F common/Fermi_fnc_fit.F io/ioQINDX.F modules/SET_defaults.F modules/mod_R_lattice.F modules/mod_SC.F modules/mod_functions.F modules/mod_plasma.F modules/mod_real_time.F parallel/PARALLEL_WF_distribute.F parallel/PARALLEL_live_message.F real_time/.objects real_time/RT_Collision.F real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_driver.F real_time/RT_impose_elel_conserves_E_and_N.F real_time/RT_initialize.F real_time/RT_observables.F real_time/RT_occupations_fit.F real_time/RT_relaxation.F wf_and_fft/WF_alloc.F ypp/RT_occupations_analyze.F ypp/YPP_RT_occupations_fit.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- merged with devel-davide. Main change: fixed collisions, now iGo_pmq is ok and electrons number is conserved
+
+	Patch sent by: Davide
+
+2013-12-12 14:20:16 r3070 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc common/Fermi_fnc_fit.F common/HyperbolicSecant_FT.F modules/mod_pars.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_Fluence.F real_time/RT_G_retarded_convolution.F real_time/RT_driver.F real_time/RT_observables.F real_time/RT_occupations_fit.F real_time/RT_output.F ypp/RT_occupations_analyze.F ypp/YPP_RT_occupations_fit.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fixed RT_occupations_fit, now a chech is done on the quality of the FIT
+	- Few changes in the output:
+	  * RT_fluence removed from .dynamics file. Now only Etot, Nel and DeltaG are printed
+	  * headers removed from file created by RT_ocupations_analyze [ypp_rt]
+	  * Temperatures are printed only if (l_elel_scatt .or. l_elph_scatt)
+	 - Code cleaning: removed tol0 and tol2 from pars mod
+	- RIM removed from elel_scatt in view of the new implementation based on lifetimes ratio
+
+	Patch sent by: Davide
+
+2013-12-10 18:48:09 r3064 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/configure.ac configure include/version.inc collisions/PLASMA_build_up.F io/variables_SC.F real_time/RT_Coulomb_relaxation.F real_time/RT_driver.F ypp/RT_occupations_analyze.F ypp/YPP_RT_occupations_fit.F
+
+	Bugs:
+	- Fixed message (number of poles) in Plamsa_build_up
+	-
+	Additions:
+	-
+	Changes:
+	- Coulomb relaxation with RIM restored to old behaviour which produces
+	  wrong "blocks of occupations" in case only el-el scattering is active and which
+	  competes with el-ph, when also the latter is active, preventing the electrons
+	  from correctly thermalizing
+	- ypp_rt now plots also gamma(E) with f(E) at given T (-o tf)
+	- IO of occupations and gammas is done after evaluating the gammas
+	- (Partially) restored compatibility with old occupations DBs
+
+	Patch sent by: Davide
+
+2013-12-09 17:06:25 r3052 Andrea Marini <andrea.marini@cnr.it>
+
+	Missing file
+
+2013-12-09 15:58:54 r3050 Andrea Marini <andrea.marini@cnr.it>
+
+2013-12-09 13:45:14 r3049 Andrea Marini <andrea.marini@cnr.it>
+
+	Version 3.4.0
+
+	*  configure include/version.inc config/configure.ac qp/XCo_local.F acfdt/acfdt_tot_energy.F parallel/PARALLEL_global_indexes.F interface/init.F real_time/RT_initialize.F real_time/RT_start_and_restart.F real_time/RT_Collision.F real_time/RT_output.F real_time/RT_observables.F sc/SC_add_XC.F sc/SC_Energy.F tddft/tddft_alda_g_space.F io/io_COLLISIONS.F modules/mod_xc_functionals.F modules/mod_plasma.F modules/mod_interfaces.F bse/K.F collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_load.F collisions/Plasma_setup.F + + collisions/.objects collisions/COLLISIONS_eval.F collisions/Plasma_driver.F driver/yambo_driver.F
+
+	Bugs:
+	- Fixed bug introduced by the new XC_potential_driver interface
+
+	Changes:
+	- Created ad-hoc parallel routine for the Plasma and renamed all the Plasma
+	  routines.
+
+	*** SERIAL TESTS PASSED ***
+
+	Patch sent by: Andrea
+
+2013-12-08 19:33:25 r3044 Myrta Gruning <m.gruening@qub.ac.uk>
+
+	Version 3.4.0
+
+	*  . configure include/version.inc p2y/qexml_v4.0.F p2y/p2y_db1.F p2y/mod_p2y.F p2y/mod_pw_data.F int_modules/mod_xc2y.F config/configure.ac lib/libxc/configure io/ioDB1.F modules/mod_global_XC.F modules/mod_xc_functionals.F modules/SET_defaults.F xc_functionals/XC_potential_driver.F xc_functionals/XC_libxc_driver.F qp/XCo_local.F qp/XCo_driver.F
+
+	Bugs:
+	-
+	Additions: Interface for hybrids (B3LYP and PBE0 only) in p2y. In XCo_driver the matrix elements for B3LYP and PBE0 are calculated
+	-
+	Changes:
+	-
+	(Merged devel-myrta diffs into trunk)
+
+2013-12-08 18:59:43 r3042 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/Makefile.in config/configure.ac configure include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- e2y compiles
+
+	Patch sent by: Davide
+
+2013-12-08 18:03:59 r3040 Myrta Gruning <m.gruening@qub.ac.uk>
+
+	Version 3.4.0
+
+	*  config/Makefile.in
+
+	Bugs: Error in dependencies for interfaces libs prevented compilation when 'make interfaces' from clean
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2013-12-06 18:54:48 r3035 Andrea Marini <andrea.marini@cnr.it>
+
+	Bug fixed to pass TD-SEX in serial
+
+2013-12-06 15:41:46 r3033 Andrea Marini <andrea.marini@cnr.it>
+
+	Timing in openmp done using n_threads_now
+
+2013-12-06 14:30:57 r3032 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/configure.ac configure driver/ypp.h include/version.inc collisions/COLLISIONS_cohsex.F common/.objects common/FREQUENCIES_coarse_grid.F + interface/init.F interpolate/bz_interp_coeff.F interpolate/bz_interp_setup.F interpolate/bz_interpolation.F interpolate/eval_interpolation_coeff.F interpolate/fourier_interpolation.F io/.objects io/ioE_RIM.F + modules/.objects modules/mod_R_lattice.F modules/mod_SC.F modules/mod_interfaces.F modules/mod_interpolate.F modules/mod_plasma.F modules/mod_real_time.F parallel/PARALLEL_WF_distribute.F parallel/PARALLEL_global_indexes.F qp/Plasma_driver.F qp/Plasma_setup.F real_time/.objects real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_G_retarded_convolution.F real_time/RT_driver.F real_time/RT_impose_N_conservation.F + real_time/RT_initialize.F real_time/RT_k_grid.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_observables.F + real_time/RT_output.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F setup/setup.F ypp/.objects ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F ypp/RT_occupations_check.F + ypp/electrons_bands.F ypp/electrons_dos_and_charge.F ypp/electrons_driver.F ypp/k_random.F ypp/mod_YPP.F ypp/read_bxsf.F ypp/ypp_i.F ypp/ypp_init.F ypp/ypp_init_load.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with devel-davide:
+	  * Plasma is now a type
+	  * RIM dbs contains also kpts (tested only with RT RIM). RIM kpts are saved in the
+	    new elements of the bz_samp struture (%pt_RIM and %ptbz_RIM) as RIM energies are
+	    saved in the levels structure (%E_RIM)
+	  * ypp can interpolate occupations on the band structure also from a RIM run thanks to
+	    the new RIM structure and using Claudio's interplation subroutines (l_RT_bands)
+	  * FIT of the electrons and holes temperatures on the fly
+	  * Parallel global index for real-time are now based on EH_gas (plasma type).
+	    Names still to be improved
+	  * When the RT_rim structure is constructed (function RT_k_grid) a new structure is computed,
+	    RIM_closest_E(i_n,i_k_rim) = i_k which is closest in energy (within the same i_n)
+	  * Output file .dynamics now contains the Temperatures of the fit and the total energy.
+	    The components of the energy are written in the .energy output file
+	  * Mean carrier lifetimes are printed after they are computed.
+	  * RT_impose_N_conservation rewritten although it contains only the the N conservation for the moment
+	  * it_now for restart fixed
+	  * RT_occupations analyze structure improved
+
+	Patch sent by: Davide
+
+2013-12-06 11:58:36 r3026 Andrea Marini <andrea.marini@cnr.it>
+
+	merged with devel-andrea
+
+2013-12-06 09:02:10 r3023 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea
+
+2013-12-03 15:53:32 r3015 Andrea Marini <andrea.marini@cnr.it>
+
+	Version updated
+
+2013-12-03 15:53:18 r3014 Andrea Marini <andrea.marini@cnr.it>
+
+	Merge problems fixed. All non-RT tests passed with all possible CPU configurations
+
+2013-12-03 13:47:35 r3013 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea@r3012
+
+2013-11-29 17:49:53 r3002 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . configure include/version.inc collisions/COLLISIONS_cohsex.F collisions/COLLISIONS_load.F parallel/PARALLEL_global_indexes.F real_time/RT_Collision.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with devel-andrea
+
+	Patch sent by: Davide
+
+2013-11-28 17:45:55 r2993 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure include/version.inc collisions/COLLISIONS_cohsex.F interface/init_load.F modules/mod_parallel.F parallel/PARALLEL_WF_distribute.F parallel/PARALLEL_global_indexes.F real_time/RT_average_operator.F
+
+	Bugs:
+	- Fixed small bug. Parallelization over collisions seems working
+
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2013-11-28 16:15:39 r2992 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with devel-andrea
+
+2013-11-21 11:31:46 r2962 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- confiugre with "--enable-open-mp" option works also with gfortran
+
+	Patch sent by: Davide
+
+2013-11-20 17:15:31 r2958 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc qp/Plasma_driver.F real_time/RT_initialize.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fixed output of total time and Plasma approximation
+
+	Patch sent by: Davide
+
+2013-11-19 13:43:27 r2954 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/configure.ac configure include/version.inc collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_linearize_and_IO.F collisions/COLLISIONS_load.F interface/init.F io/ioKB_abinit.F io/ioKB_pwscf.F real_time/RT_manual_excitation.F wf_and_fft/WF_load.F
+
+	Bugs:
+	- fixed bug with real collisions I/O (HF)
+	Additions:
+	-
+	Changes:
+	- merged with trunk/stable (bug fix for ioKB)
+	- merged with devel-andrea (bug fixes)
+	- RT_manual_excitations reverted to previous version, otherwise yambo did not overcome RT tests
+
+	Patch sent by: Davide
+
+2013-11-15 17:43:58 r2947 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with devel-andrea
+
+2013-11-15 15:30:57 r2946 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc collisions/COLLISIONS_load.F qp/Plasma_driver.F wf_and_fft/WF_load.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Bug fixes for parallel runs
+
+	Patch sent by: Davide
+
+2013-11-15 12:37:12 r2941 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc collisions/COLLISIONS_alloc_and_free.F interface/init_load.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Hopefully this time collisions/COLLISIONS_alloc_and_free.F is ok ...
+
+	Patch sent by: Davide
+
+2013-11-15 11:34:57 r2940 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_eval.F modules/mod_interfaces.F parallel/PARALLEL_WF_distribute.F qp/Plasma_driver.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fixed bug in allocation-deallocation of collisions (COLLISIONS_alloc_and_free.F)
+	- yambo_rt now works in parallel, however the last level (Plasma) is still broken
+	- Plasma structure inside PARALLEL_WF_distribute is ok
+
+	Patch sent by: Davide
+
+2013-11-14 18:03:46 r2931 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fixed revision after previous commit
+	- Correct commit.msg file related to the previous commit:
+	  * Plasma structure introducted from my branch. Also started work for parallel
+	    Plasma structure. Still on working ...
+	  * Collisions v3 is now collisions%v3r for l_elel_sattering and
+	                         collisions%v3c for l_elel_sattering
+	  * Changed RT_impose_N_conservation
+	  * Removed several unused variables in ypp and in other subroutines
+	  * improved Hyperbolic_secant implementation
+	  * improved RT_manual_excitations in the RIM case.
+	  * Fixed the RT_io_steps and all related procedures.
+	    Now it=1 | T=0.      |   file=0
+	         .   |  .        |   .
+	        it=n | T=(n-1)*T |  file=(n-1)/RT_io_steps <--> if( (mod(n-1),RT_io_steps)==0 )
+	         .   |  .        |   .
+
+	Patch sent by: Davide
+
+2013-11-14 17:22:11 r2929 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . include/version.inc config/configure.ac configure xc_functionals/XC_libxc_driver.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- merged with trunk stable. Bug-fix imported
+	- fixed version numbering in config/configure.ac
+
+	Patch sent by: Davide
+
+2013-11-13 11:34:40 r2919 Andrea Marini <andrea.marini@cnr.it>
+
+	Small bugs in timing stop
+
+2013-11-12 18:02:01 r2918 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea@r2917
+
+2013-11-08 12:20:12 r2901 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . include/version.inc config/configure.ac configure xc_functionals/XC_libxc_driver.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- merged with trunk stable. Bug-fix imported
+	- fixed version numbering in config/configure.ac
+
+	Patch sent by: Davide
+
+2013-10-31 11:54:51 r2881 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea@r2880
+
+2013-10-30 12:46:52 r2868 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  include/version.inc configure parallel/PARALLEL_global_indexes.F wf_and_fft/WF_load.F
+
+	Bugs:
+	- gfortran asks for .eqv. instead of == when comparing two logicals
+	- B_mat_index is defined from SC_bands(1), loop fixed
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-10-30 11:12:53 r2865 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea@2864
+
+2013-10-29 17:14:20 r2854 Andrea Marini <andrea.marini@cnr.it>
+
+	Revision number updated
+
+2013-10-29 17:13:48 r2853 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andre@r2849
+
+2013-10-29 12:25:50 r2844 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  modules/SET_defaults.F common/OCCUPATIONS_Fermi.F real_time/RT_manual_excitation.F include/version.inc config/configure.ac configure
+
+	Bugs:
+	- Fixed bug in OCCUPATIONS_Fermi
+	Additions:
+	-
+	Changes:
+	- Input energy for RT_manual_excitations is not changed by yambo
+	- IO_time set by default to 0.5 fs
+
+	Patch sent by: Davide
+
+2013-10-28 12:47:20 r2830 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/configure.ac ypp/RT_occupations_check.F ypp/RT_occupations_analyze.F include/version.inc driver/yambo_driver.F driver/yambo.h configure parallel/PARALLEL_global_indexes.F io/io_COLLISIONS.F io/COLLISIONS_load.F io/variables_SC.F modules/SET_defaults.F modules/mod_electrons.F modules/mod_collisions_IO.F modules/mod_real_time.F modules/mod_drivers.F qp/QP_newton.F qp/QP_of.F qp/QP_driver.F qp/QP_descriptions.F qp/COLLISIONS_cohsex.F qp/COLLISIONS_store.F qp/QP_report_and_write.F qp/ELPH_Sigma_c.F qp/COLLISIONS_eval.F qp_ctl/mod_QP_CTL.F setup/QP_external_corrections.F setup/QP_state_table_setup.F interface/init_load.F interface/init.F interface/barriers.F real_time/RT_observables.F real_time/RT_databases_IO.F real_time/RT_initialize.F real_time/RT_start_and_restart.F real_time/RT_driver.F real_time/RT_impose_N_conservation.F real_time/RT_ELPH_initialize.F real_time/RT_ELPH_zeroing.F real_time/RT_manual_excitation.F real_time/RT_relaxation.F common/OCCUPATIONS_Extend.F common/OCCUPATIONS_Fermi.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with devel-davide:
+	  1) Energy references are now relative to Valence Band Maximum (VBM) and
+	     Conduction Band minimum (CBm). E_VBM and E_CBm are now part of the levels structure.
+	  2) Logicals and runlevels reorganized:
+	     * yambo_ph/yambo_rt -c [(e)lectrons/(p)honons/(b)oth] controls
+	       l_elel_corr  and l_elph_corr  refer to equilibrium     self-energy
+	     * yambo_rt -s [(e)lectrons/(p)honons/(b)oth] controls
+	       l_elel_scatt and l_elph_scatt refer to out-of-equirium self-energy = Scattering terms
+	  3) "rim_cut" runlevel is now yambo -r
+
+	Patch sent by: Davide
+
+2013-10-23 16:17:58 r2817 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac config/Makefile.in configure qp_ctl/QP_apply_global_stretch.F real_time/RT_impose_N_conservation.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_driver.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_Coulomb_relaxation.F real_time/RT_Collision.F common/OCCUPATIONS_Fermi.F include/version.inc
+
+	Bugs:
+	- Fixed a couple of bugs in carrier dynamics with el-el scattering and RIM
+	- e2y now compiles also in the trunk/devel (thanks Conor)
+	Additions:
+	-
+	Changes:
+	- The Fermi level is now always in the middle between the VBM and the CBm, also at T=0
+
+	Patch sent by: Davide
+
+2013-10-22 14:42:53 r2812 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Fixed wrong merge with my branch
+
+2013-10-22 14:26:22 r2811 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . ypp/RT_occupations_repair.F ypp/RT_occupations_analyze.F ypp/electrons_dos_and_charge.F ypp/RT_occupations_FIT.F include/version.inc config/configure.ac configure modules/mod_real_time.F modules/SET_defaults.F common/HyperbolicSecant_FT.F interface/init_load.F interface/init.F real_time/RT_start_and_restart.F real_time/RT_k_grid.F real_time/RT_impose_N_conservation.F real_time/RT_G_retarded_EP_initialize.F real_time/RT_ELPH_initialize.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_ELPH_total_Kernel.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_G_retarded_convolution.F io/io_RT_components.F io/variables_SC.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with devel-davide:
+	  * fixed bug in RT_impose_nel_conservation
+	  * fixed restart with RIM
+	  * ypp_rt -t o? works alo without RIM. do with RT still to be fixed
+
+	Patch sent by: Davide
+
+2013-10-15 10:41:09 r2786 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/configure.ac ypp/k_random.F ypp/ypp_init_load.F ypp/ypp_init.F ypp/RT_occupations_analyze.F include/version.inc configure real_time/RT_G_retarded_EE_initialize.F real_time/RT_initialize.F real_time/RT_start_and_restart.F real_time/RT_G_retarded_EP_initialize.F io/variables_SC.F modules/mod_real_time.F modules/SET_defaults.F modules/mod_com.F of conflicts:
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- merged with devel-davide:
+	  * cleaned code from Gred DB
+	  * working on ypp_rt with RIM (likely ypp_rt withou RIM is not working now...)
+
+	Patch sent by: Davide
+
+2013-10-11 18:48:03 r2777 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . qp_ctl/QP_apply_global_stretch.F modules/mod_SC.F modules/SET_defaults.F modules/mod_real_time.F common/HyperbolicSecant_FT.F bz_ops/bz_samp_indexes.F interface/init_load.F interface/init.F real_time/RT_start_and_restart.F real_time/RT_G_retarded_EP_initialize.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_G_retarded_convolution.F real_time/RT_manual_excitation.F real_time/RT_ELPH_CCA_Kernel.F io/.objects io/io_G_retarded.F config/configure.ac ypp/RT_G_retarded_frequency.F ypp/mod_YPP.F ypp/.objects ypp/ypp_init_load.F ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F ypp/ypp_init.F ypp/RT_G_retarded.F ypp/RT_occupations_check.F ypp/ypp_i.F include/version.inc driver/ypp.h configure
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- merged with devel-davide:
+	  * Gret removed fom ypp, now can be decided in input
+	  * fixed Efermi shift for manual_excitations and E%W
+	  * ypp_rt -t of and -t op is now working with RIM (maybe it is not without RIM...)
+
+	Patch sent by: Davide
+
+2013-10-10 14:11:28 r2773 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . configure common/.objects + config/configure.ac ypp/RT_occupations_analyze.F ypp/RT_occupations_FIT.F include/version.inc of conflicts:
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- merged with devel-davide
+
+	Patch sent by: Davide
+
+2013-10-10 14:09:56 r2772 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea@2771
+
+2013-10-10 12:04:58 r2769 Davide Sangalli <davide.sangalli@gmail.com>
+
+	fixed small compilation issue
+
+2013-10-10 11:48:43 r2768 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk stable
+
+2013-10-09 18:31:59 r2764 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . e2y/e2y_i.F e2y/etsf_data.F e2y/e2y_kb_pp.F e2y/e2y_wf.F e2y/.objects e2y/e2y_db1.F int_modules/mod_xc2y.F include/version.inc driver/e2y.h configure pol_function/Dipole_shifted_grids.F io/ioDB1.F modules/mod_vec_operate.F sbin/make_makefile.sh.in config/configure.ac ypp/ypp_init.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with trunk stable up to rev 2673
+
+	Patch sent by: Davide
+
+2013-10-09 18:23:45 r2763 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea@2761
+
+2013-10-07 18:46:55 r2753 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  include/version.inc configure real_time/RT_G_retarded_EP_initialize.F
+
+	Bugs:
+	- Fixed an old bug due to a typo "i_s" instead of "is"
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-09-20 09:22:11 r2736 Davide Sangalli <davide.sangalli@gmail.com>
+
+	removed debug lines I left with the last commit
+
+2013-09-19 14:37:13 r2734 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  wf_and_fft/WF_load.F qp/COLLISIONS_cohsex.F ypp/ypp_init.F ypp/k_random.F ypp/ypp_init_load.F include/version.inc configure
+
+	Bugs:
+	- Fixed bug in k_random introduced after merge with trunk stable
+	- "RT-X" renamer "RT_X" because the "-" symbol is not correcty handled by the parser
+	- mem est error fixed in COLLISIONS_cohsex.F
+	Additions:
+	-
+	Changes:
+	- WF_load allocation temporary restored to wf_nb_io to make the code work in linear respone
+	  calculations. To introduce a smaller allocation one should likely change the io_dimensions in ioWF
+
+	Patch sent by: Davide
+
+2013-09-18 17:33:34 r2730 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea@2729
+
+2013-09-18 12:10:57 r2728 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure interface/init.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- reverted commit r2710 by AndreaM to interface/init.F otherwise
+	  yambo_devel is running by default the em1d runlevel
+	- fixed enable_keep_src flag in yambo/devel
+
+	Patch sent by: Davide
+
+2013-09-17 11:32:39 r2725 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . io/ioBSS_invert.F qp/ELPH_Hamiltonian.F lib/libxc/configure ypp/k_random.F ypp/fix_PPs.F include/version.inc configure
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with trunk/stable up to last revision
+
+	Patch sent by: Davide
+
+2013-09-17 11:13:57 r2724 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . io/ioELPH.F setup/QP_external_corrections.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- merge with trunk/stable up to rev 2500 completed with the small changes left.
+
+	Patch sent by: Davide
+
+2013-09-17 10:50:47 r2723 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . include/version.inc configure modules/mod_real_time.F modules/SET_defaults.F interface/init.F sc/SC_bare_Hamiltonian.F + ypp/ELPH_databases.F ypp/mod_YPP.F ypp/ypp_init.F ypp/ypp_init_load.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with trunk up to rev2500.  Subroutines excluded from merging:
+	* src/real_time/RT_start_and_restart.F
+	* src/real_time/RT_initialize.F
+	* src/qp/COLLISIONS_IO_eval.F
+	* src/qp/COLLISIONS_IO_cohsex.F
+	* src/qp/COLLISIONS_IO_compose.F
+
+	Patch sent by: Davide
+
+2013-09-11 16:00:55 r2710 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea@2709
+
+2013-09-04 12:52:12 r2695 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea@2694
+
+2013-09-04 12:45:00 r2693 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . configure common/TEMPERATURE_Debye.F interface/init_load.F real_time/RT_ELPH_initialize.F real_time/RT_driver.F ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- merged with devel davide:
+	  TEMPERATURE_Debye improved
+	  Occuations_FIT output restyling
+
+	Patch sent by: Davide
+
+2013-08-31 11:12:12 r2681 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  include/version.inc configure driver/ypp.h ypp/ypp_init.F ypp/ypp_init_load.F ypp/RT_occupations_repair.F ypp/electrons_driver.F ypp/RT_occupations_analyze.F ypp/RT_occupations_FIT.F ypp/mod_YPP.F ypp/RT_occupations_check.F ypp/ypp_i.F
+
+	Bugs:
+	- Now RT_occ_repair works aso if the QP range in input is different from
+	  the range defined by SC_bands
+	- Fixed another but in RT_occupations_repair
+	Additions:
+	-
+	Changes:
+	- RToccFit and RToccPot are now two differet runlevels
+	- cleaning of unused variables
+
+	Patch sent by: Davide
+
+2013-08-30 18:32:31 r2679 Andrea Marini <andrea.marini@cnr.it>
+
+	Wrong merge of RT_observables.F fixed
+
+2013-08-30 17:21:38 r2677 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea@2676
+
+2013-08-29 14:19:37 r2666 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  io/io_P_and_P2.F real_time/RT_current_AND_polarization.F real_time/RT_start_and_restart.F include/version.inc configure
+
+	Bugs:
+	- Now parallel runs and restart in parallel works on my laptop also with "DEBUG" flags
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2013-08-29 13:45:12 r2665 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  include/version.inc configure io/io_DIPOLES.F
+
+	Bugs:
+	- RT restart is now working.
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-08-27 18:12:52 r2661 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . modules/mod_real_time.F real_time/RT_Fluence.F real_time/RT_observables.F real_time/RT_initialize.F include/version.inc configure
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- code speed-up from devel-davide: RT_fluence computation modified
+
+	Patch sent by: Davide
+
+2013-08-26 14:26:47 r2653 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  include/version.inc configure parallel/PARALLEL_get_user_structure.F setup/PARALLEL_and_IO_Setup.F modules/mod_parallel.F
+
+	Bugs:
+	- Fixed two errors introduced with the last commit
+	- Small bug fix
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2013-08-26 14:24:21 r2652 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea@2651
+
+2013-08-26 08:20:02 r2649 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . ypp/ypp_i.F ypp/ypp_init.F ypp/ypp_init_load.F ypp/RT_occupations_repair.F ypp/electrons_driver.F ypp/RT_occupations_analyze.F ypp/RT_occupations_FIT.F ypp/mod_YPP.F ypp/electrons_dos_and_charge.F include/version.inc configure driver/ypp.h
+
+	Bugs:
+	- Fixed small bug in parallelization
+	Additions:
+	-
+	Changes:
+	- Improved Fermi function FIT subroutine
+	- RT_dos and RT_occupations analysis in ypp reorganized
+
+	Patch sent by: Davide
+
+2013-08-20 15:51:41 r2644 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . configure include/version.inc ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	- Fixed small bug in ypp/RT_occupations_analyze.F
+	Additions:
+	-
+	Changes:
+	- small improvements in temperature FIT
+
+	Patch sent by: Davide
+
+2013-08-13 13:11:58 r2642 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with devel-davide
+
+2013-08-08 16:15:47 r2627 Andrea Marini <andrea.marini@cnr.it>
+
+2013-08-08 16:12:46 r2626 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with devel-andrea@2625
+
+2013-08-05 10:38:35 r2608 Andrea Marini <andrea.marini@cnr.it>
+
+	Fixed wrong logicals in external QP database I/O
+
+2013-07-19 16:46:26 r2587 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with devel-andrea
+
+2013-07-15 18:20:37 r2577 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with devel-andrea
+
+2013-07-12 09:26:15 r2567 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/configure.ac configure include/version.inc modules/SET_defaults.F qp/XCo_local.F ypp/RT_occupations_analyze.F ypp/RT_occupations_check.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with devel-davide: XCo_local computes hermitian part
+	                            changed how ypp_rt -s o uses logicals
+	Patch sent by: Davide
+
+2013-07-11 12:06:17 r2548 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/acx_report.m4 config/configure.ac config/report.in configure doc/README.branches_and_trunk driver/driver.c driver/ydb.h include/version.inc modules/mod_parallel.F sc/V_real_space_to_H.F ydb/ydb_i.F ypp/electrons_dos_and_charge.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- merged with devel-andrea
+
+	Patch sent by: Davide
+
+2013-07-10 16:47:30 r2538 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  common/.objects common/TEMPERATURE_Debye.F io/io_G_retarded.F sc/V_qp_basis_to_H.F sc/V_real_space_to_H.F ypp/RT_G_retarded.F
+
+	Bugs:
+	- io operators dimension different from variable dimension in io_G_retarded
+	- build only hermetian part in V_qp_basis_to_H.F and V_real_space_to_H.F
+	- A_w_DP set to zero only if allocated
+	- first rought inplementation of TEMPERATURE_Debye.F subroutine inserted
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-07-09 12:51:01 r2535 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  qp/COLLISIONS_cohsex.F
+
+	Bugs:
+	- errors was not initialized to zero
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-07-09 12:10:29 r2534 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  parallel/PARALLEL_global_indexes.F wf_and_fft/WF_load.F
+
+	Bugs:
+	- Fixed bug in WF_load when wf_nb_io > states_to_load(2)
+	Additions:
+	-
+	Changes:
+	- Fixed long line in parallel/PARALLEL_global_indexes.F for gfortran
+
+	Patch sent by: Davide
+
+2013-07-09 10:26:52 r2497 Andrea Marini <andrea.marini@cnr.it>
+
+	trunk/devel rebuilt from devel-andrea@rev2494
+
+2013-07-08 18:49:40 r2494 Andrea Marini <andrea.marini@cnr.it>
+
+	Input file logicals for collisions and for real-time dynamics fixed. Added G_r descriptions in database
+
+2013-07-06 00:35:10 r2487 Andrea Marini <andrea.marini@cnr.it>
+
+	Jumps field added to databases
+
+2013-07-05 22:58:29 r2486 Andrea Marini <andrea.marini@cnr.it>
+
+	Real-Time interpolation of Lifetimes implemented and (almost) tested
+
+2013-07-05 19:09:24 r2485 Andrea Marini <andrea.marini@cnr.it>
+
+	Introduced time-interpolation of lifetimes to use time-jumps during simulation
+
+2013-07-04 18:49:10 r2482 Andrea Marini <andrea.marini@cnr.it>
+
+2013-07-04 18:41:49 r2481 Andrea Marini <andrea.marini@cnr.it>
+
+	More on YDB. Input addition and external edit of description coded
+
+2013-07-04 13:10:21 r2478 Andrea Marini <andrea.marini@cnr.it>
+
+	Bug fixed and QP controls added in ypp.in
+
+2013-07-03 18:49:25 r2476 Andrea Marini <andrea.marini@cnr.it>
+
+	ydb some more istructions added
+
+2013-07-03 17:43:21 r2475 Andrea Marini <andrea.marini@cnr.it>
+
+2013-07-03 16:44:40 r2474 Andrea Marini <andrea.marini@cnr.it>
+
+	Small bug fixed in RT_manual_excitation.F and more coding of ydb
+
+2013-07-03 12:55:38 r2472 Andrea Marini <andrea.marini@cnr.it>
+
+	BUG fixed
+
+2013-07-03 10:07:15 r2471 Andrea Marini <andrea.marini@cnr.it>
+
+	Small BUG fix in COLLISIONS eval and RT output made o/w/c at each I/O
+
+2013-07-02 17:51:50 r2469 Andrea Marini <andrea.marini@cnr.it>
+
+	Minore bugs fixed
+
+2013-07-02 14:02:02 r2462 Andrea Marini <andrea.marini@cnr.it>
+
+	New algorithm cpu-saving and memory-saving for the evaluation of e-e part of the G_retarded
+
+2013-07-01 18:42:05 r2459 Andrea Marini <andrea.marini@cnr.it>
+
+	ydb steps forward
+
+2013-07-01 17:35:05 r2458 Andrea Marini <andrea.marini@cnr.it>
+
+	Version 3.4.0
+
+	*  config/Makefile.in real_time/RT_G_retarded_EE_initialize.F real_time/RT_start_and_restart.F real_time/RT_G_retarded_EP_initialize.F io/variables_SC.F io/io_RT_components.F io/io_G_retarded.F modules/mod_real_time.F driver/ydb.h driver/driver.c sbin/make_makefile.sh.in ydb ydb/.objects ydb/ydb_i.F
+
+	Bugs:
+	- I/O problem in reading G_ret DB. The logical was not put false even if there were errors in the I/O.
+
+	Additions:
+	- Speed-up also for the e-p G_ret convolution using external G_retarded (like HC).
+	- Added G_ret variables to the RT databases.
+	- New project started (ydb).
+
+	Patch sent by: Andrea
+
+2013-07-01 13:24:26 r2455 Andrea Marini <andrea.marini@cnr.it>
+
+	Speed-up trick of the e-e G retarted build-up
+
+2013-06-28 09:55:32 r2452 Andrea Marini <andrea.marini@cnr.it>
+
+	Minore BGQ-related bugs fixed and Occupations analysis re-activated
+
+2013-06-27 18:38:52 r2450 Andrea Marini <andrea.marini@cnr.it>
+
+	3rd job string implemented
+
+2013-06-27 17:29:56 r2449 Andrea Marini <andrea.marini@cnr.it>
+
+	Fixed parallel I/O in dipoles during _RT and restart (due to wrong Occupations I/O)
+
+2013-06-27 15:53:33 r2448 Andrea Marini <andrea.marini@cnr.it>
+
+	Removed debug lines used for back-compatibility
+
+2013-06-27 13:46:35 r2447 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with trunk@2446. Added parallel options in serial compilation + _BLUEGENE flag
+
+2013-06-27 11:29:15 r2444 Andrea Marini <andrea.marini@cnr.it>
+
+	Old timing module renamed in LIVE_t and new timing module (based on A. Ferretti WanT) added. Still to fix and integrate to Yambo, though
+
+2013-06-27 10:19:03 r2442 Andrea Marini <andrea.marini@cnr.it>
+
+	Version 3.4.0
+
+	*  configure include/version.inc config/configure.ac qp_ctl/QP_apply_global_stretch.F qp_ctl/mod_QP_CTL.F qp_ctl/OCCUPATIONS_IO_and_interpolate.F parser/mod_itm.F parallel/PARALLEL_global_indexes.F interface/QP_ctl_load.F interface/QP_ctl_switch.F interface/init.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_initialize.F real_time/RT_start_and_restart.F real_time/RT_databases_IO.F io/io_SC_components.F io/io_RT_components.F io/io_G_retarded.F modules/mod_QP.F ypp/ypp_init.F ypp/RT_X_effective.F ypp/RT_databases.F ypp/RT_driver.F ypp/mod_YPP.F ypp/RT_paths.F ypp/ypp_init_load.F driver/ypp.h
+
+	Additions:
+	- Added reference energy in the quadratic analytic formula for the electronic linwidths.
+
+	Changes:
+	- Clean-up of arguments in io_RT_components and io_SC_components and in related calls.
+	- ypp.h field for G_retarded changed from CCA to Gret.
+
+	Patch sent by: Andrea
+
+2013-06-25 21:59:26 r2437 Andrea Marini <andrea.marini@cnr.it>
+
+	Small bug fixed
+
+2013-06-25 18:17:28 r2436 Andrea Marini <andrea.marini@cnr.it>
+
+	e-e and e-p scattering now fully working in parallel, including on-the-fly collisions evaluation
+
+2013-06-25 08:35:44 r2432 Andrea Marini <andrea.marini@cnr.it>
+
+	e-p Gr activated. ypp_rt simplified and QP-lie Gr trated real-time
+
+2013-06-24 18:22:26 r2431 Andrea Marini <andrea.marini@cnr.it>
+
+	attosecond unit added. Fixed on-the-fly calculation of em1s and severa alloc/dealloc points
+
+2013-06-23 22:32:12 r2427 Andrea Marini <andrea.marini@cnr.it>
+
+	Om-the-fly COLLISIONS now working. Re-activated flags for real-time G_retarded evaluation
+
+2013-06-22 22:29:42 r2426 Andrea Marini <andrea.marini@cnr.it>
+
+	On the way of calculating the collisions on-the-fly (Without I/O). BUG to fix
+
+2013-06-20 13:00:45 r2422 Andrea Marini <andrea.marini@cnr.it>
+
+	Option to calculated collisions (still only on disk) and do, at the same time, the rt dynamics done
+
+2013-06-07 17:28:40 r2398 Andrea Marini <andrea.marini@cnr.it>
+
+	Devel branch for Andrea Ferretti added
+
+2013-06-06 12:43:50 r2394 Andrea Marini <andrea.marini@cnr.it>
+
+	Minor compilation bugs fixed
+
+2013-06-06 11:38:11 r2393 Andrea Marini <andrea.marini@cnr.it>
+
+	devel-open-mp source backuped to merge my branch in the devel-open-mp
+
+2013-06-06 00:58:01 r2392 Andrea Marini <andrea.marini@cnr.it>
+
+	Version 3.4.0
+
+	*  configure include/version.inc config/configure.ac qp/COLLISIONS_cohsex.F qp/RT_EE_scattering_kinematics.F parallel/PARALLEL_assign_chains_and_COMMs.F parallel/PARALLEL_global_indexes.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_driver.F real_time/RT_relaxation.F real_time/RT_Coulomb_relaxation.F modules/mod_parallel.F modules/mod_interfaces.F
+
+	Additions
+	- Added DEBUG Field in RT_EE_scattering_kinematics to allow comparisons with old revision containing a bug in the e-e scattering kinematics.
+
+	Changes:
+	- CARRIER Collisions parallelized. Still EM1S I/O problematic. Solution would be to recalculate everything on-the-fly.
+
+	Patch sent by: Andrea
+
+2013-06-05 01:22:44 r2389 Andrea Marini <andrea.marini@cnr.it>
+
+2013-06-05 00:07:39 r2387 Andrea Marini <andrea.marini@cnr.it>
+
+	Global renaming of COLLISIONS_IO -> COLLISIONS
+
+2013-06-04 23:59:50 r2386 Andrea Marini <andrea.marini@cnr.it>
+
+	Version 3.4.0
+
+	*  config/configure.ac parallel/PARALLEL_global_indexes.F setup/PARALLEL_and_IO_Setup.F sc/V_real_space_to_H.F sc/V_qp_basis_to_H.F sc/SC_driver.F sc/SC_bare_Hamiltonian.F io/COLLISIONS_IO_load.F modules/mod_collisions_IO.F qp/COLLISIONS_IO_compose.F qp/XCo_Hartree_Fock.F qp/COLLISIONS_IO_eval.F qp/COLLISIONS_IO_cohsex.F configure include/version.inc
+
+	Additions:
+	- Started addition of possibility to calculate on-the-fly the collisions (no I/O).
+
+	Changes:
+	- COLLISIONS (polarization case only) parallelized.
+	- yambo_sc (serial only) now working.
+
+	Patch sent by: Andrea
+
+2013-06-04 10:00:08 r2383 Andrea Marini <andrea.marini@cnr.it>
+
+	Small BUG in dipoles fixed
+
+2013-06-03 22:11:12 r2381 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with trunk@2380
+
+2013-06-03 18:19:37 r2380 Andrea Marini <andrea.marini@cnr.it>
+
+	Small bug in G-space ALDA and CPU_structure changed
+
+2013-05-31 18:18:20 r2373 Andrea Marini <andrea.marini@cnr.it>
+
+	Missing routine added
+
+2013-05-31 18:17:50 r2372 Andrea Marini <andrea.marini@cnr.it>
+
+	G_retarded initialization routines completed. Old one removed
+
+2013-05-28 13:39:22 r2365 Andrea Marini <andrea.marini@cnr.it>
+
+	Saving commit
+
+2013-05-27 13:25:47 r2356 Andrea Marini <andrea.marini@cnr.it>
+
+	Version 3.4.0
+
+	*  configure include/version.inc config/configure.ac qp/COLLISIONS_IO_compose.F parallel/PARALLEL_global_indexes.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_initialize.F real_time/RT_relaxation.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_zeroing.F io/COLLISIONS_IO_load.F modules/mod_real_time.F modules/mod_parallel.F modules/mod_collisions_IO.F modules/mod_collision.F
+
+	Changes:
+	- Old parallel structure inside _RT removed. Carrier dynamics now running in multi-level
+	  parallel mode.
+
+	Patch sent by: Andrea
+
+2013-05-24 18:33:24 r2351 Andrea Marini <andrea.marini@cnr.it>
+
+	QP_G_b->G_b renaming and added second (quasiparticle) QPp parallel structure
+
+2013-05-24 18:12:59 r2350 Andrea Marini <andrea.marini@cnr.it>
+
+	Collisions CACHE removed
+
+2013-05-24 16:09:02 r2348 Andrea Marini <andrea.marini@cnr.it>
+
+	Version 3.4.0
+
+	*  configure include/version.inc config/configure.ac xc_functionals/el_density_matrix.F qp/XCo_local.F parallel/PARALLEL_global_indexes.F pol_function/Dipole_transverse.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_ELPH_total_Kernel.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F real_time/RT_average_operator.F real_time/RT_Collision.F real_time/RT_ELPH_CCA_Kernel.F + real_time/RT_CCA_initialize.F real_time/RT_ELPH_initialize.F real_time/.objects sc/V_real_space_to_H.F sc/V_qp_basis_to_H.F sc/SC_bare_Hamiltonian.F io/io_G_retarded.F modules/mod_real_time.F modules/mod_parallel.F
+
+	Layered Parallel structure extended to RT. E-P relaxation working. E-E under work. Introduced, for the first time, different
+	simultaneous levels of parallelization working at the same time.
+
+	RT_CPU= "2.2.2"                # [PARALLEL] CPUs for each role
+	RT_ROLEs= "k.q.b"              # [PARALLEL] CPUs roles (k,b,q,qp)
+	WF_CPU= "4.2"                # [PARALLEL] CPUs for each role
+	WF_ROLEs= "k.b"              # [PARALLEL] CPUs roles (k,b)
+	X_q_0_CPU= "2.2.2"             # [PARALLEL] CPUs for each role
+	X_q_0_ROLEs= "k.c.v"           # [PARALLEL] CPUs roles (k,c,v)
+
+	Additions:
+	- PARALLEL band elements distribution introduced in: XCo_local.F, V_real_space_to_H.F,
+	  V_qp_basis_to_H.F
+
+	Changes:
+	- el_density.F splitted in el_density.F and el_density_matrix.F (NEW)
+	- More precise available fields description added in init_load.F
+	- RT_phase_space and old parallel structure will be soon completely removed
+	- Retarded GFs initialization moved and splitted in e-p and e-e. I/O removed.
+
+	Patch sent by: Andrea
+
+2013-05-22 18:28:33 r2338 Andrea Marini <andrea.marini@cnr.it>
+
+	Massive changes. Detailed commit after stabilization and checking.
+
+2013-05-17 18:07:13 r2323 Andrea Marini <andrea.marini@cnr.it>
+
+	k and q parallelization on el-ph kernel works. Interaction with QP routines still unstable
+
+2013-05-16 15:58:05 r2319 Andrea Marini <andrea.marini@cnr.it>
+
+	Introducing the PARALLEL layered structure in RT
+
+2013-05-15 19:18:33 r2314 Andrea Marini <andrea.marini@cnr.it>
+
+	Dipole_transverse parallel fix
+
+2013-05-09 15:31:50 r2299 Andrea Marini <andrea.marini@cnr.it>
+
+	Started fixing _RT compilation
+
+2013-05-01 22:02:22 r2270 Andrea Marini <andrea.marini@cnr.it>
+
+	Parallel ALDA in real-space fixed
+
+2013-05-01 00:38:20 r2267 Andrea Marini <andrea.marini@cnr.it>
+
+	ALDA in real-space now working in serial. Still problems when running in parallel
+
+2013-04-30 18:00:42 r2264 Andrea Marini <andrea.marini@cnr.it>
+
+	On the way of fixing the real-space ALDA
+
+2013-04-29 18:18:02 r2250 Andrea Marini <andrea.marini@cnr.it>
+
+	Missing mergering with trunk of O_driver done
+
+2013-04-24 17:28:59 r2220 Andrea Marini <andrea.marini@cnr.it>
+
+	Starting fixing the _RT project
+
+2013-04-24 11:04:24 r2213 Andrea Marini <andrea.marini@cnr.it>
+
+	SET_defaults merged conflicts fixed
+
+2013-04-24 10:07:01 r2211 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with trunk@2210
 
 2013-03-25 21:05:27 r2060 Andrea Marini <andrea.marini@cnr.it>
 
 	Fixed a bug in rim_spherical (yambo_ph) and added indirect gap states in Silicon test
 
-2013-03-25 12:37:08 r2055 Davide Sangalli <davide.sangalli@gmail.com>
+2013-03-25 12:42:17 r2056 Andrea Marini <andrea.marini@cnr.it>
 
-	Version 3.3.1
+	Several typos in yambo_ph and ypp_ph fixed
 
-	*  include/version.inc bse/K_IP.F interface/init.F
+2013-03-22 17:19:10 r2047 Andrea Marini <andrea.marini@cnr.it>
 
-	Bugs:
-	- Fixed bug which was redefining BS_identifier in K_IP, preventing restart
-	- Fixed bug in init.F which was erroneusly defining BS_cpl_mode in some cases
-	Additions:
-	-
-	Changes:
-	-
-	Patch sent by: Davide
+	Version 3.3.0
 
-2013-03-24 19:39:23 r2051 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.3.1
-
-	*  include/version.inc p2y/mod_p2y.F p2y/mod_pw_data.F p2y/qexml_v4.0.F
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- p2y reads WFs from LDA+U ground-state, however a warning message is printed.
-	  The Hubbard U correction is presently not implemented neither in the computation
-	  of the QP-corrections, not in the commutator [x,H_nl] of x with the non
-	  local part of the Hamiltonian
-
-	Patch sent by: Davide
-
-2013-03-22 17:50:53 r2048 Andrea Marini <andrea.marini@cnr.it>
-
-	Minor style changes and ELPH/GPL barriers removed
-
-2013-03-22 13:08:45 r2041 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.3.1
-
-	*  include/version.inc ypp/electrons_dos_and_charge.F
-
-	Bugs:
-	- RT_output calls moved inside _RT project
-	Additions:
-	-
-	Changes:
-	-
-	Patch sent by: Davide
-
-2013-03-21 15:47:07 r2037 Claudio Attaccalite <claudio.attaccalite@gmail.com>
-
-	Version 3.3.1
-
-	*  modules/mod_fields.F
-
-	Bugs:
-	 -[RT] Fixed bug due to the use of "nint" on some systems, substituted with "floor"
-
-2013-03-20 14:08:59 r2031 Claudio Attaccalite <claudio.attaccalite@gmail.com>
-
-	Version 3.3.1
-
-	*  ypp/ELPH_atomic_amplitude.F ypp/ELPH_eliashberg_dos.F driver/yambo.h
-
-	Bugs:
-	 -[RT] Fixed compilation issues
-
-	Changes:
-	 -[RT] Real-time input changed in -q to be compatible with -k of the Kernels
-	 -[RT] Probe_Tstart can be defiend also with the probe only
-
-2013-03-20 12:57:34 r2030 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.3.1
-
-	*  config/Makefile.in driver/driver.c include/version.inc sbin/yamboo.pl bse/.objects bse/K_driver.F bse/K_kerr_IP.F bse/K_output_file.F interface/barriers.F interface/init.F interface/init_load.F io/.objects modules/.objects modules/mod_KERR.F modules/mod_X_output.F modules/mod_drivers.F modules/mod_units.F pol_function/Dipole_dip_dot_field.F pol_function/Dipole_driver.F pol_function/Dipole_transverse.F
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- KERR project moved in the trunk. Only IP-RPA part.
-
-	Patch sent by: Davide
-
-2013-03-20 11:02:32 r2027 Claudio Attaccalite <claudio.attaccalite@gmail.com>
-
-	Version 3.3.1
-
-	*  real_time/RT_observables.F real_time/RT_ELPH_total_Kernel.F real_time/RT_initialize.F real_time/RT_relaxation.F
-
-	Bugs:
-	 -[RT] Fixed segmentation fault when RT_is_dumped=.false.
-	 -[RT] Fixed compilation issues
-
-2013-03-19 17:53:25 r2025 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.3.1
-
-	*  include/version.inc common/OCCUPATIONS_Fermi.F communicate/REPORT_Occupations.F
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- Fixed REPORT_occupations messages to avoid double messages.
-	  Now both "n met el" and  "f_occ met" are reported
-
-	Patch sent by: Davide
-
-2013-03-19 11:47:00 r2019 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.3.1
-
-	*  include/version.inc interface/init.F interface/init_load.F modules/std_presets.F modules/mod_drivers.F bse/K_eh_setup.F
-
-	Bugs:
-	- BS_bands check in K_eh_setup fixed
-	Additions:
-	-
-	Changes:
-	- By default the correlation part of the kernel is included only in the resonant/anti-resonant term
-	  It can be inserted in the coupling with the flag "WehCpl
-
-	Patch sent by: Davide
-
-2013-03-19 11:09:54 r2018 Claudio Attaccalite <claudio.attaccalite@gmail.com>
-
-	Version 3.3.1
-
-	*  configure config/acx_fortran_flags.m4 config/acx_get_fc_version.m4
-
-	Bugs:
-	 -Fixed compilation with intel fortran 13
-
-2013-03-19 09:16:29 r2017 Claudio Attaccalite <claudio.attaccalite@gmail.com>
-
-	Version 3.3.1
-
-	*  configure config/netcdf_f90.m4
-
-	Changes:
-	 -The option --with-netcdf-link now overwrites the nc-config parameters
-
-2013-03-18 10:39:02 r2009 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.3.1
-
-	*  pol_function/Dipole_driver.F include/version.inc
-
-	Bugs:
-	- Fixed bug introduced removing MANYK project
+	*  include/version.inc xc_functionals/el_density.F parallel/PARALLEL_global_indexes.F pol_function/O_driver.F interface/init.F tddft/tddft_alda_g_space.F modules/mod_parallel.F bse/K_Haydock.F
 
 	Additions:
-	-
+	- Parallel support of ALDA in G-space response function
+	- Added DENSITY parallel environment
+
 	Changes:
-	-
-	Patch sent by: Davide
+	- Fixed Haydock live-timing
+
+	Patch sent by: Andrea
+
+2013-03-22 14:31:18 r2043 Andrea Marini <andrea.marini@cnr.it>
+
+	Version 3.3.0
+
+	*  configure include/version.inc qp/QP_ppa_cohsex.F parallel/PARALLEL_global_indexes.F parallel/PARALLEL_structure.F pol_function/Dipole_driver.F communicate/section.F modules/mod_X_output.F modules/mod_timing.F modules/mod_IO.F modules/mod_matrix_operate.F modules/mod_interfaces.F bse/K_driver.F bse/K_diagonalization.F
+
+	Bugs:
+	- Live timing of QP_ppa_cohsex fixed
+	- I/O bug in Dipole_driver
+	- Bug in mod_matrix_operate and in calls in K_diagonalization to it
+
+	Additions:
+	- skip_host logical to avoid the printing of the hostname
+
+	Changes:
+	- Parallel structure of devel-open-mp merged with the standard coding. Old-style BSE now works.
+
+	Patch sent by: Andrea
+
+2013-03-21 16:16:38 r2038 Andrea Marini <andrea.marini@cnr.it>
+
+	Bug fixed in PARALLEL_assign_chains_and_COMMs
+
+2013-03-20 18:19:57 r2033 Andrea Marini <andrea.marini@cnr.it>
+
+	BSE fixed using serial version of OPEN-MP parallel structure
+
+2013-03-19 17:15:30 r2023 Andrea Marini <andrea.marini@cnr.it>
+
+	Parallel Structure of devel-open-mp included
+
+2013-03-19 06:40:36 r2016 Andrea Marini <andrea.marini@cnr.it>
+
+	Merged with trunk@2015
+
+2013-03-18 01:00:39 r2008 Andrea Marini <andrea.marini@cnr.it>
+
+	_DISTRIBUTED project removed
 
 2013-03-18 00:38:44 r2007 Andrea Marini <andrea.marini@cnr.it>
 
 	devel-andrea and trunk merged
 
-2013-03-15 21:05:06 r2002 Davide Sangalli <davide.sangalli@gmail.com>
+2013-03-17 23:01:56 r2006 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.3.0
 
@@ -241,7 +1668,7 @@
 
 	Patch sent by: Andrea
 
-2013-03-13 00:13:58 r1968 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-03-13 00:13:58 r1968 Andrea Marini <andrea.marini@cnr.it>
 
 	init_convert splitted in two
 
@@ -249,35 +1676,35 @@
 
 	Global variable renaming and moving in order to reduce conflicts during the mergering procedure of the devel-open-mp branch
 
-2013-03-12 21:55:59 r1965 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-03-12 21:55:59 r1965 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk@1964 fixing ALL problems with previous mergering
 
-2013-03-12 18:12:39 r1961 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-03-12 18:12:39 r1961 Andrea Marini <andrea.marini@cnr.it>
 
 	Reverting to revision 1957 for severe mergering problems
 
-2013-03-12 17:47:41 r1959 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-03-12 17:47:41 r1959 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with devel-andrea@1958
 
-2013-03-12 17:13:51 r1958 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-03-12 17:13:51 r1958 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk@1957
 
-2013-02-27 09:44:43 r1889 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-02-27 09:44:43 r1889 Andrea Marini <andrea.marini@cnr.it>
 
 	Versions in devel-andrea and devel-openmp updated. SLK m4 fixed in devel-andrea
 
-2013-02-26 07:06:18 r1872 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-02-26 07:06:18 r1872 Andrea Marini <andrea.marini@cnr.it>
 
 	Version numbering updated
 
-2013-02-26 06:43:28 r1870 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-02-26 06:43:28 r1870 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk@1869
 
-2013-02-04 16:44:10 r1786 gruning
+2013-02-04 16:44:10 r1786 Myrta Gruning <m.gruening@qub.ac.uk>
 
 	Version 3.2.5
 
@@ -292,15 +1719,15 @@
 	Changes:
 	-
 
-2013-02-01 08:19:56 r1766 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-02-01 08:19:56 r1766 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk@1765
 
-2013-01-24 18:45:30 r1744 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-01-24 18:45:30 r1744 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk@1743
 
-2013-01-21 14:15:04 r1730 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-01-21 14:15:04 r1730 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -317,11 +1744,11 @@
 
 	Patch sent by: Andrea
 
-2013-01-18 11:51:58 r1725 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-01-18 11:51:58 r1725 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk@1724
 
-2013-01-15 18:54:12 r1715 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-01-15 18:54:12 r1715 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -333,25 +1760,25 @@
 
 	Patch sent by: Andrea
 
-2013-01-14 18:37:15 r1708 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-01-14 18:37:15 r1708 Andrea Marini <andrea.marini@cnr.it>
 
 	Several BUGs fixed in G_retarded post-convolution
 
-2013-01-01 16:28:22 r1691 Andrea Marini <andrea.marini@roma2.infn.it>
+2013-01-01 16:28:22 r1691 Andrea Marini <andrea.marini@cnr.it>
 
 	Global year update in Copyright headers in: trunk, devel-andrea and devel-openmp
 
-2012-12-31 00:44:21 r1689 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-31 00:44:21 r1689 Andrea Marini <andrea.marini@cnr.it>
 
 	Resized energy constrain of the G_r tails on the basis of the 1% of the top value
 
-2012-12-30 23:29:56 r1688 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-30 23:29:56 r1688 Andrea Marini <andrea.marini@cnr.it>
 
-2012-12-30 22:26:41 r1687 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-30 22:26:41 r1687 Andrea Marini <andrea.marini@cnr.it>
 
 	Improved energy barriers for G_retarded
 
-2012-12-30 12:38:16 r1685 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-30 12:38:16 r1685 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -365,7 +1792,7 @@
 
 	Patch sent by: Andrea
 
-2012-12-29 22:57:49 r1682 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-29 22:57:49 r1682 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -380,7 +1807,7 @@
 
 	Patch sent by: Andrea
 
-2012-12-27 17:52:25 r1677 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-27 17:52:25 r1677 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -397,27 +1824,27 @@
 
 	Patch sent by: Andrea
 
-2012-12-26 11:03:38 r1675 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-26 11:03:38 r1675 Andrea Marini <andrea.marini@cnr.it>
 
 	Small bug-fix in manual excitation algorithm
 
-2012-12-20 18:24:17 r1673 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-20 18:24:17 r1673 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk@1672
 
-2012-12-14 11:23:50 r1660 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-14 11:23:50 r1660 Andrea Marini <andrea.marini@cnr.it>
 
 	devel-andrea and devel-openmp merged with trunk@1659
 
-2012-12-11 12:14:10 r1636 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-11 12:14:10 r1636 Andrea Marini <andrea.marini@cnr.it>
 
 	devel-andrea and devel-open-mp merged with trunk@1635
 
-2012-12-05 13:57:51 r1615 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-05 13:57:51 r1615 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk@1614
 
-2012-12-05 13:40:23 r1613 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-05 13:40:23 r1613 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -431,11 +1858,11 @@
 
 	Patch sent by: Andrea
 
-2012-12-03 18:01:22 r1608 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-03 18:01:22 r1608 Andrea Marini <andrea.marini@cnr.it>
 
 	Added energy barrier to CCA QP-like G_retarded prefactots
 
-2012-12-03 12:50:03 r1607 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-03 12:50:03 r1607 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -447,15 +1874,15 @@
 
 	Patch sent by: Andrea
 
-2012-12-02 22:22:01 r1606 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-12-02 22:22:01 r1606 Andrea Marini <andrea.marini@cnr.it>
 
 	G shells finder re-writing started
 
-2012-11-28 22:11:57 r1602 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-11-28 22:11:57 r1602 Andrea Marini <andrea.marini@cnr.it>
 
 	Sync with devel-open-mp in what regards small changes not relative to sources deeply under development
 
-2012-11-27 15:36:29 r1596 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-11-27 15:36:29 r1596 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -470,7 +1897,7 @@
 
 	Patch sent by: Andrea
 
-2012-11-22 16:17:05 r1591 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-11-22 16:17:05 r1591 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -487,7 +1914,7 @@
 
 	Patch sent by: Andrea
 
-2012-11-21 13:02:06 r1590 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-11-21 13:02:06 r1590 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -501,7 +1928,7 @@
 
 	Patch sent by: Andrea
 
-2012-11-16 18:12:23 r1589 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-11-16 18:12:23 r1589 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -515,7 +1942,7 @@
 
 	Patch sent by: Andrea
 
-2012-11-12 18:35:41 r1588 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-11-12 18:35:41 r1588 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -529,11 +1956,11 @@
 
 	Patch sent by: Andrea
 
-2012-11-09 18:51:31 r1587 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-11-09 18:51:31 r1587 Andrea Marini <andrea.marini@cnr.it>
 
 	Retarded Green function build-up and I/O done
 
-2012-11-06 18:15:43 r1583 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-11-06 18:15:43 r1583 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -544,27 +1971,27 @@
 
 	Patch sent by: Andrea
 
-2012-11-02 10:54:49 r1577 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-11-02 10:54:49 r1577 Andrea Marini <andrea.marini@cnr.it>
 
 	merged at trunk@1576
 
-2012-10-26 18:13:35 r1568 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-26 18:13:35 r1568 Andrea Marini <andrea.marini@cnr.it>
 
 	[RT] ypp_rt prints occupations as a function of carrier density
 
-2012-10-24 15:48:53 r1563 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-24 15:48:53 r1563 Andrea Marini <andrea.marini@cnr.it>
 
 	Internal revision updated
 
-2012-10-24 15:47:18 r1562 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-24 15:47:18 r1562 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged at trunk@1561, removed TEST_2 ypp and yambo projects, revised the ypp options
 
-2012-10-23 11:09:18 r1553 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-23 11:09:18 r1553 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk@1552
 
-2012-10-19 11:48:35 r1538 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-19 11:48:35 r1538 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -584,7 +2011,7 @@
 
 	Patch sent by: Andrea
 
-2012-10-10 13:27:20 r1525 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-10 13:27:20 r1525 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -599,29 +2026,29 @@
 
 	Patch sent by: Andrea
 
-2012-10-09 18:25:50 r1522 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-09 18:25:50 r1522 Andrea Marini <andrea.marini@cnr.it>
 
-2012-10-09 18:05:56 r1520 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-09 18:05:56 r1520 Andrea Marini <andrea.marini@cnr.it>
 
 	Other BUG induced by the mergering with the trunk fixed
 
-2012-10-09 17:31:42 r1518 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-09 17:31:42 r1518 Andrea Marini <andrea.marini@cnr.it>
 
 	Repeted QP_table creation moved in a dedicated routine
 
-2012-10-08 14:40:47 r1514 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-08 14:40:47 r1514 Andrea Marini <andrea.marini@cnr.it>
 
 	Bug introduced by the mergering fixed
 
-2012-10-08 12:37:41 r1513 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-08 12:37:41 r1513 Andrea Marini <andrea.marini@cnr.it>
 
 	Inconsistencies introduced by the mergering with the trunk fixed
 
-2012-10-08 11:44:26 r1512 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-08 11:44:26 r1512 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk@1510. Added option to use a single Debye frequency in RT
 
-2012-10-04 18:03:06 r1504 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-04 18:03:06 r1504 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -636,19 +2063,19 @@
 
 	Patch sent by: Andrea
 
-2012-10-02 13:04:19 r1503 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-02 13:04:19 r1503 Andrea Marini <andrea.marini@cnr.it>
 
 	Minor bug fix in RT_occupations_repair
 
-2012-10-01 18:31:20 r1501 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-01 18:31:20 r1501 Andrea Marini <andrea.marini@cnr.it>
 
 	el-el Lifetimes support added to ypp_rt
 
-2012-10-01 15:04:42 r1497 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-01 15:04:42 r1497 Andrea Marini <andrea.marini@cnr.it>
 
 	Bug fix in RT_Coulomb_relaxation.F
 
-2012-10-01 12:46:28 r1496 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-10-01 12:46:28 r1496 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -665,7 +2092,7 @@
 
 	Patch sent by: Andrea
 
-2012-09-28 18:34:28 r1494 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-28 18:34:28 r1494 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -677,31 +2104,31 @@
 
 	Patch sent by: Andrea
 
-2012-09-28 14:48:52 r1492 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-28 14:48:52 r1492 Andrea Marini <andrea.marini@cnr.it>
 
 	DEBUG version
 
-2012-09-24 13:05:10 r1480 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-24 13:05:10 r1480 Andrea Marini <andrea.marini@cnr.it>
 
 	Wrong call in yambo_driver
 
-2012-09-24 12:44:01 r1479 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-24 12:44:01 r1479 Andrea Marini <andrea.marini@cnr.it>
 
 	Fixed ambigous use of Xk-k Xen-en in real_time routines
 
-2012-09-24 11:09:35 r1478 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-24 11:09:35 r1478 Andrea Marini <andrea.marini@cnr.it>
 
 	Wrong calling argument in QP_driver (left over after DEBUG)
 
-2012-09-24 11:08:33 r1477 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-24 11:08:33 r1477 Andrea Marini <andrea.marini@cnr.it>
 
 	Lost OPENMP flag restored. Removed unused TIME argument in e-e scattering routine
 
-2012-09-19 16:36:47 r1473 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-19 16:36:47 r1473 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk@r1472
 
-2012-09-17 11:20:01 r1462 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-17 11:20:01 r1462 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -713,7 +2140,7 @@
 
 	Patch sent by: Andrea
 
-2012-09-16 19:19:15 r1460 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-16 19:19:15 r1460 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -725,15 +2152,15 @@
 
 	Patch sent by: Andrea
 
-2012-09-16 09:56:50 r1459 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-16 09:56:50 r1459 Andrea Marini <andrea.marini@cnr.it>
 
 	Memory dimension in COLLISIONS allocation fixed
 
-2012-09-16 00:26:17 r1458 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-16 00:26:17 r1458 Andrea Marini <andrea.marini@cnr.it>
 
 	Minor BUG fixes. Major BUG (related to overdimensioning of QP_table) still to find and fix in RT-related calls
 
-2012-09-15 21:37:11 r1457 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-15 21:37:11 r1457 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -745,7 +2172,7 @@
 
 	Patch sent by: Andrea
 
-2012-09-14 23:51:40 r1456 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-14 23:51:40 r1456 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -760,15 +2187,15 @@
 
 	Patch sent by: Andrea
 
-2012-09-14 12:06:00 r1453 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-14 12:06:00 r1453 Andrea Marini <andrea.marini@cnr.it>
 
 	Gfortran-related typo
 
-2012-09-14 11:40:33 r1452 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-14 11:40:33 r1452 Andrea Marini <andrea.marini@cnr.it>
 
 	Wrong names of E-P lifetimes in ypp fixed
 
-2012-09-13 23:49:47 r1451 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-13 23:49:47 r1451 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -780,7 +2207,7 @@
 
 	Patch sent by: Andrea
 
-2012-09-13 18:11:22 r1450 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-13 18:11:22 r1450 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -795,7 +2222,7 @@
 
 	Patch sent by: Andrea
 
-2012-09-13 11:09:41 r1442 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-09-13 11:09:41 r1442 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -815,23 +2242,23 @@
 
 	Patch sent by: Andrea
 
-2012-08-10 14:13:32 r1410 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-08-10 14:13:32 r1410 Andrea Marini <andrea.marini@cnr.it>
 
 	Re-added OpenMP configure flags and fixed ioQP bug
 
-2012-08-09 17:17:16 r1409 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-08-09 17:17:16 r1409 Andrea Marini <andrea.marini@cnr.it>
 
 	Minor bugs fixed and merged with trunk@1408
 
-2012-08-03 11:25:04 r1401 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-08-03 11:25:04 r1401 Andrea Marini <andrea.marini@cnr.it>
 
 	K_scattering.F removed
 
-2012-08-02 16:16:08 r1400 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-08-02 16:16:08 r1400 Andrea Marini <andrea.marini@cnr.it>
 
 	Missing SP prevented compilation
 
-2012-07-30 11:11:09 r1399 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-07-30 11:11:09 r1399 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -845,7 +2272,7 @@
 
 	Patch sent by: Andrea
 
-2012-07-25 21:43:43 r1385 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-07-25 21:43:43 r1385 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -860,15 +2287,15 @@
 
 	Patch sent by: Andrea
 
-2012-07-24 12:37:46 r1382 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-07-24 12:37:46 r1382 Andrea Marini <andrea.marini@cnr.it>
 
 	OpenMP flags fixed
 
-2012-07-24 11:38:04 r1381 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-07-24 11:38:04 r1381 Andrea Marini <andrea.marini@cnr.it>
 
 	OpenMP Fortran flags added
 
-2012-07-23 23:09:56 r1380 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-07-23 23:09:56 r1380 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -885,31 +2312,31 @@
 
 	Patch sent by: Andrea
 
-2012-07-23 15:46:48 r1378 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-07-23 15:46:48 r1378 Andrea Marini <andrea.marini@cnr.it>
 
 	Mergering with trunk@1375
 
-2012-07-23 15:37:52 r1377 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-07-23 15:37:52 r1377 Andrea Marini <andrea.marini@cnr.it>
 
 	Mergering with trunk@1339 and several related bug-fixes in the ELPH dynamics
 
-2012-06-22 13:55:09 r1327 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-06-22 13:55:09 r1327 Andrea Marini <andrea.marini@cnr.it>
 
 	Wannier GPL barrier removed
 
-2012-06-20 11:26:30 r1317 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-06-20 11:26:30 r1317 Andrea Marini <andrea.marini@cnr.it>
 
 	Devel branch for Fabio Affinito added
 
-2012-06-14 15:44:53 r1303 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-06-14 15:44:53 r1303 Andrea Marini <andrea.marini@cnr.it>
 
 	Added oscillators Energy treshold and merged with trunk@1302
 
-2012-06-13 16:55:13 r1297 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-06-13 16:55:13 r1297 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk @ rev 1296
 
-2012-06-12 12:06:18 r1293 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-06-12 12:06:18 r1293 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -924,11 +2351,11 @@
 
 	Patch sent by: Andrea
 
-2012-06-11 17:01:03 r1291 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-06-11 17:01:03 r1291 Andrea Marini <andrea.marini@cnr.it>
 
 	Bug fix in QP-lifetimes loading
 
-2012-06-11 16:50:34 r1290 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-06-11 16:50:34 r1290 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -945,11 +2372,11 @@
 
 	Patch sent by: Andrea
 
-2012-06-10 18:39:38 r1289 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-06-10 18:39:38 r1289 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunl@1288
 
-2012-06-09 16:43:31 r1286 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-06-09 16:43:31 r1286 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -965,15 +2392,15 @@
 
 	Patch sent by: Andrea
 
-2012-06-06 11:52:18 r1274 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-06-06 11:52:18 r1274 Andrea Marini <andrea.marini@cnr.it>
 
 	devel-david branch added. Reserved to David Kammerlander <kammerlander.david@gmail.com>
 
-2012-05-31 16:21:32 r1270 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-31 16:21:32 r1270 Andrea Marini <andrea.marini@cnr.it>
 
 	Improved version of OCCUPATIONS_IO_and_interpolate [devel-andrea] and mergering with the trunk@1255 done
 
-2012-05-25 18:24:30 r1265 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-25 18:24:30 r1265 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -990,31 +2417,31 @@
 
 	Patch sent by: Andrea
 
-2012-05-22 18:47:09 r1260 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-22 18:47:09 r1260 Andrea Marini <andrea.marini@cnr.it>
 
 	CHECK in RIM components of io_COLLISIONS switched off
 
-2012-05-22 18:05:18 r1257 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-22 18:05:18 r1257 Andrea Marini <andrea.marini@cnr.it>
 
 	[devel-andrea] merged with trunk @ rev 1255. [trunk] bug fix in RT_fix_symmetries.F
 
-2012-05-22 17:58:40 r1256 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-22 17:58:40 r1256 Andrea Marini <andrea.marini@cnr.it>
 
 	Bug fix in E_field rotation
 
-2012-05-22 16:28:09 r1254 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-22 16:28:09 r1254 Andrea Marini <andrea.marini@cnr.it>
 
 	EQ symmetries removed
 
-2012-05-22 15:56:36 r1253 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-22 15:56:36 r1253 Andrea Marini <andrea.marini@cnr.it>
 
 	merged with trunk @ rev 1252
 
-2012-05-18 17:04:01 r1240 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-18 17:04:01 r1240 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk@rev 1239
 
-2012-05-15 17:30:18 r1231 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-15 17:30:18 r1231 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1031,7 +2458,7 @@
 
 	Patch sent by: Andrea
 
-2012-05-14 17:46:32 r1225 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-14 17:46:32 r1225 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1043,19 +2470,19 @@
 
 	Patch sent by: Davide
 
-2012-05-11 15:36:57 r1220 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-11 15:36:57 r1220 Andrea Marini <andrea.marini@cnr.it>
 
 	Small TYPO in the LDA string definition
 
-2012-05-11 14:03:11 r1217 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-11 14:03:11 r1217 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk @ revision 1215
 
-2012-05-09 18:03:01 r1208 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-09 18:03:01 r1208 Andrea Marini <andrea.marini@cnr.it>
 
 	Small bug in ioDB1 and in the definition of the el_dos file as output file
 
-2012-05-09 11:56:12 r1206 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-09 11:56:12 r1206 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1068,11 +2495,11 @@
 
 	Patch sent by: Andrea
 
-2012-05-08 09:18:07 r1202 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-08 09:18:07 r1202 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk @ revision 1197
 
-2012-05-08 09:07:46 r1201 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-08 09:07:46 r1201 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1084,35 +2511,35 @@
 
 	Patch sent by: Andrea
 
-2012-05-04 11:23:02 r1193 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-04 11:23:02 r1193 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk @ revision 1190
 
-2012-05-04 11:15:18 r1192 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-05-04 11:15:18 r1192 Andrea Marini <andrea.marini@cnr.it>
 
 	Small typos and bug fix
 
-2012-04-05 13:10:04 r1163 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-04-05 13:10:04 r1163 Andrea Marini <andrea.marini@cnr.it>
 
 	Merged with trunk @ revision 1162
 
-2012-04-04 12:07:12 r1160 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-04-04 12:07:12 r1160 Andrea Marini <andrea.marini@cnr.it>
 
 	Added max_value of 2D time-dependent DOS
 
-2012-04-04 00:31:28 r1159 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-04-04 00:31:28 r1159 Andrea Marini <andrea.marini@cnr.it>
 
 	small change to the RT dos
 
-2012-04-03 17:48:45 r1158 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-04-03 17:48:45 r1158 Andrea Marini <andrea.marini@cnr.it>
 
 	Minor bug fixes
 
-2012-04-03 14:49:26 r1157 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-04-03 14:49:26 r1157 Andrea Marini <andrea.marini@cnr.it>
 
 	Last patch revised and completed
 
-2012-04-03 02:04:52 r1156 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-04-03 02:04:52 r1156 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1124,27 +2551,27 @@
 
 	Patch sent by: Andrea
 
-2012-03-30 18:51:59 r1154 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-30 18:51:59 r1154 Andrea Marini <andrea.marini@cnr.it>
 
 	Bug fix in QP_state_table_setup.F
 
-2012-03-30 16:46:44 r1153 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-30 16:46:44 r1153 Andrea Marini <andrea.marini@cnr.it>
 
 	Bug fixed in IO_RT_time setup. Restart now is working again.
 
-2012-03-29 22:35:00 r1151 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-29 22:35:00 r1151 Andrea Marini <andrea.marini@cnr.it>
 
 	More stringent energy conservation constrain added
 
-2012-03-28 12:52:14 r1150 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-28 12:52:14 r1150 Andrea Marini <andrea.marini@cnr.it>
 
 	Giant Bug in finite T el-ph Kernel fixed
 
-2012-03-27 17:00:17 r1149 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-27 17:00:17 r1149 Andrea Marini <andrea.marini@cnr.it>
 
 	I/O skipped directly in RT_databases_IO
 
-2012-03-27 11:30:37 r1147 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-27 11:30:37 r1147 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1155,19 +2582,19 @@
 
 	Patch sent by: Andrea
 
-2012-03-26 23:34:44 r1146 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-26 23:34:44 r1146 Andrea Marini <andrea.marini@cnr.it>
 
 	Report of electronic density [cm⁻3] added during setup
 
-2012-03-23 17:31:57 r1139 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-23 17:31:57 r1139 Andrea Marini <andrea.marini@cnr.it>
 
 	Bug-fix in Occupations I/O (again)
 
-2012-03-23 16:35:52 r1138 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-23 16:35:52 r1138 Andrea Marini <andrea.marini@cnr.it>
 
 	Bug-fix in Occupations I/O
 
-2012-03-23 13:58:00 r1137 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-23 13:58:00 r1137 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1184,7 +2611,7 @@
 
 	Patch sent by: Andrea
 
-2012-03-21 14:53:47 r1131 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-21 14:53:47 r1131 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1198,7 +2625,7 @@
 
 	Patch sent by: Andrea
 
-2012-03-21 00:03:05 r1130 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-21 00:03:05 r1130 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1217,7 +2644,7 @@
 
 	Patch sent by: Andrea
 
-2012-03-20 16:24:51 r1129 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-20 16:24:51 r1129 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1229,11 +2656,11 @@
 
 	Patch sent by: Andrea
 
-2012-03-16 16:47:41 r1127 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-16 16:47:41 r1127 Andrea Marini <andrea.marini@cnr.it>
 
 	Small bug in gkkp m.e. definition. Little effect on final dynamics
 
-2012-03-16 16:28:34 r1126 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-16 16:28:34 r1126 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1246,11 +2673,11 @@
 
 	Patch sent by: Andrea
 
-2012-03-15 13:59:34 r1125 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-15 13:59:34 r1125 Andrea Marini <andrea.marini@cnr.it>
 
 	devel-andrea moved
 
-2012-03-15 13:56:00 r1124 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-15 13:56:00 r1124 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1264,7 +2691,7 @@
 
 	Patch sent by: Andrea
 
-2012-03-12 09:52:51 r1121 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-12 09:52:51 r1121 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1275,7 +2702,7 @@
 
 	Patch sent by: Andrea
 
-2012-03-09 17:29:16 r1120 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-09 17:29:16 r1120 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1287,7 +2714,7 @@
 
 	Patch sent by: Andrea
 
-2012-03-02 18:02:06 r1114 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-03-02 18:02:06 r1114 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1306,7 +2733,7 @@
 
 	Patch sent by: Andrea
 
-2012-02-28 12:51:51 r1110 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-02-28 12:51:51 r1110 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1323,7 +2750,7 @@
 
 	Patch sent by: Andrea
 
-2012-02-24 17:59:03 r1108 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-02-24 17:59:03 r1108 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1338,11 +2765,11 @@
 
 	Patch sent by: Andrea
 
-2012-02-17 18:46:11 r1102 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-02-17 18:46:11 r1102 Andrea Marini <andrea.marini@cnr.it>
 
 	Bug fixes in init.F and COLLISIONS_IO
 
-2012-02-17 00:35:42 r1099 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-02-17 00:35:42 r1099 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1359,11 +2786,11 @@
 
 	Patch sent by: Andrea
 
-2012-02-15 19:18:31 r1097 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-02-15 19:18:31 r1097 Andrea Marini <andrea.marini@cnr.it>
 
 	Minor organization issues fixed
 
-2012-02-14 13:26:57 r1091 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-02-14 13:26:57 r1091 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1381,7 +2808,7 @@
 
 	Patch sent by: Andrea
 
-2012-02-10 18:06:55 r1089 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-02-10 18:06:55 r1089 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1401,7 +2828,7 @@
 
 	Patch sent by: Andrea
 
-2012-02-08 17:44:33 r1085 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-02-08 17:44:33 r1085 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1412,7 +2839,7 @@
 
 	Patch sent by: Andrea
 
-2012-02-08 11:31:49 r1082 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-02-08 11:31:49 r1082 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1424,7 +2851,7 @@
 
 	Patch sent by: Andrea
 
-2012-02-01 18:18:20 r1074 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-02-01 18:18:20 r1074 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1435,17 +2862,17 @@
 
 	Patch sent by: Andrea
 
-2012-01-30 18:45:57 r1070 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-01-30 18:45:57 r1070 Andrea Marini <andrea.marini@cnr.it>
 
 	Few steps forward in gkkp analysis
 
-2012-01-30 11:25:38 r1068 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-01-30 11:25:38 r1068 Andrea Marini <andrea.marini@cnr.it>
 
 	Update Changelog
 
-2012-01-30 11:22:14 r1067 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-01-30 11:22:14 r1067 Andrea Marini <andrea.marini@cnr.it>
 
-2012-01-27 18:20:11 r1065 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-01-27 18:20:11 r1065 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1457,7 +2884,7 @@
 
 	Patch sent by: Andrea
 
-2012-01-25 11:29:44 r1055 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-01-25 11:29:44 r1055 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1474,7 +2901,7 @@
 
 	Patch sent by: Andrea
 
-2012-01-20 18:19:17 r1045 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-01-20 18:19:17 r1045 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1485,15 +2912,15 @@
 
 	Patch sent by: Andrea
 
-2012-01-19 15:53:45 r1042 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-01-19 15:53:45 r1042 Andrea Marini <andrea.marini@cnr.it>
 
 	[RT] Fixed bug in definition of dG for metals
 
-2012-01-19 15:52:45 r1041 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-01-19 15:52:45 r1041 Andrea Marini <andrea.marini@cnr.it>
 
 	[RT] Added option to plot the fixed time DOS
 
-2012-01-17 16:23:33 r1035 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-01-17 16:23:33 r1035 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1514,7 +2941,7 @@
 
 	Patch sent by: Andrea
 
-2012-01-16 16:21:17 r1030 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-01-16 16:21:17 r1030 Andrea Marini <andrea.marini@cnr.it>
 
 	Version 3.2.5
 
@@ -1529,11 +2956,11 @@
 
 	Patch sent by: Andrea
 
-2012-01-14 17:52:38 r1018 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-01-14 17:52:38 r1018 Andrea Marini <andrea.marini@cnr.it>
 
 	devel-andrea added
 
-2012-01-12 12:50:43 r1016 Andrea Marini <andrea.marini@roma2.infn.it>
+2012-01-12 12:50:43 r1016 Andrea Marini <andrea.marini@cnr.it>
 
 	Mergering of gpl+elph branch with trunk@revision 1016
 

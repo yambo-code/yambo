@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini, C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_propagate_fields(A_new,A_old,T,T_step)
+subroutine RT_propagate_fields(k,E,G_new,A_new,A_old,T,T_step)
  !
  ! The external and total fields in Yambo are defined and organized as follow:
  !
@@ -50,10 +52,17 @@ subroutine RT_propagate_fields(A_new,A_old,T,T_step)
  !
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
+ use R_lattice,      ONLY:bz_samp
+ use electrons,      ONLY:levels
+ use SC,             ONLY:SC_bands,RT_nk
  use real_time,      ONLY:RT_ind_J,l_RT_induced_field
  use fields,         ONLY:gauge_field
+ !
  implicit none
  !
+ type(bz_samp),        intent(in) :: k
+ type(levels),         intent(in) :: E
+ complex(SP),          intent(in) :: G_new(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  real(SP),             intent(in) :: T,T_step
  type(gauge_field),    intent(in) :: A_old
  type(gauge_field), intent(inout) :: A_new
@@ -70,7 +79,7 @@ subroutine RT_propagate_fields(A_new,A_old,T,T_step)
    !
    ! Induced current
    !
-   !  call RT_current_AND_polarization(k,E,G_lesser_previous,A_vecpot)
+   call RT_current_AND_polarization(k,E,G_new,A_ext)
    !
    ! Integrate the eq. for the vector potential
    !

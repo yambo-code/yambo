@@ -2,8 +2,10 @@
 # autoconf macro for detecting NetCDF module file
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-# Copyright (C) 2000-2013 A. Marini and the YAMBO team
+#        Copyright (C) 2000-2014 the YAMBO team
 #              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -29,7 +31,7 @@ AC_ARG_WITH(netcdf_include,AC_HELP_STRING([--with-netcdf-include=<path>],
 AC_ARG_WITH(netcdf_lib,AC_HELP_STRING([--with-netcdf-lib=<path>],
                                   [Path of the NetCDF lib directory]))
 AC_ARG_WITH(netcdf_link,AC_HELP_STRING([--with-netcdf-link=<path>],
-                                  [Specify libs needed by NetCDF or NetCDF/HDF5]))
+                                  [Specific libs needed by NetCDF or NetCDF/HDF5]))
 NETCDF_LINKS=""
 case $with_netcdf_link in
         yes | "") ;;

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 M. Gruening and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): MG
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -38,7 +40,7 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
- use wave_func,       ONLY:wf,wf_state
+ use wave_func,       ONLY:WF
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
  use SC,              ONLY:l_oep_EWeight
@@ -69,8 +71,8 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  do iv1 = 1 ,E%nbm
    do ik = 1,k%nibz
      if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+E%Efermi(1)
-     ifft=wf_state(iv1,ik,1)
-     f(:)=conjg(wf(:,ifft))*U_x(ik,iv1,:)
+     ifft=WF%index(iv1,ik,1)
+     f(:)=conjg(WF%c(:,ifft))*U_x(ik,iv1,:)
      Vslt_DP = Vslt_DP + E%f(iv1,ik,1)*real(f,DP)*k%weights(ik)/EWeight
    end do
  end do

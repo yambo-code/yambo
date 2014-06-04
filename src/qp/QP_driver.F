@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,7 +26,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
- use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr,l_cohsex,Finite_Tel
+ use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
@@ -39,7 +41,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
 &                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,PPA_terminator,l_QP_Expand,QP_G_info
 #if defined _ELPH
- use ELPH,          ONLY:QP_DW,QP_TadPole,QP_OMS_Fan
+ use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
  use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
@@ -74,9 +76,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! S_x/Vxc are always need if not l_life or el. correlations is
  ! skipped
  !==============================================================
- if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_el_corr.and..not.l_life) return
+ if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_elel_corr.and..not.l_life) return
  !
- if (.not.l_el_corr.and..not.l_ph_corr) then
+ if (.not.l_elel_corr.and..not.l_elph_corr) then
    call warning('Both e-p and e-e correlation switched off')
    return
  endif
@@ -105,7 +107,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]:',QP_G_er*HA2EV)
    call msg('rn','[Green] Sc damping range                             [ev]:',QP_G_dr*HA2EV)
    !
-   GF_is_causal=Finite_Tel.or.l_ph_corr 
+   GF_is_causal=Finite_Tel.or.l_elph_corr 
    !
  else if (.not.l_life) then
    return
@@ -142,7 +144,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    ! GPL_EXCLUDE_START
    !
-   if (l_ph_corr) QP_DB_kind=SE_POLARON 
+   if (l_elph_corr) QP_DB_kind=SE_POLARON 
    !
    if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA
    !
@@ -296,11 +298,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  if (trim(QP_solver)=='g') then
    !
-   if (l_el_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   if (l_elel_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
    !
 # if defined _ELPH 
    !
-   if (l_ph_corr)                                    call ELPH_Sigma_c(en,k,q,qp)
+   if (l_elph_corr)                                    call ELPH_Sigma_c(en,k,q,qp)
    !
 #endif
    !
@@ -361,15 +363,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      call mem_est("QP_Sc",(/size(QP_Sc)/))
      !
 #if defined _ELPH
-     if (l_ph_corr) then
-       if (On_Mass_Shell_approx) then
-         allocate(QP_OMS_Fan(QP_n_states))
-         call mem_est("QP_OMS_Fan",(/size(QP_OMS_Fan)/))
-       endif
+     if (l_elph_corr) then
+       allocate(QP_OMS_Fan(QP_n_states))
+       call mem_est("QP_OMS_Fan",(/size(QP_OMS_Fan)/))
        allocate(QP_DW(QP_n_states))
        call mem_est("QP_DW",(/size(QP_DW)/))
-       allocate(QP_TadPole(QP_n_states))
-       call mem_est("QP_TadPole",(/size(QP_TadPole)/))
      endif
 #endif
      !
@@ -397,7 +395,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 #if defined _ELPH
      if (allocated(QP_DW))          deallocate(QP_DW)
      if (allocated(QP_OMS_Fan))     deallocate(QP_OMS_Fan)
-     if (allocated(QP_TadPole))     deallocate(QP_TadPole)
 #endif
      if (allocated(QP_Sc))          deallocate(QP_Sc)
      if (allocated(QP_dSc))         deallocate(QP_dSc)
@@ -420,7 +417,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      call mem_est("QP_G_amplitude_integral")
      call mem_est("QP_Sc QP_dSc qp_GreenF QP_Vnl_xc QP_Vxc qp_GreenF_W QP_G_zoom_er")
      call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state qp_S_total")
-     call mem_est("QP_DW QP_OMS_Fan QP_TadPole")
+     call mem_est("QP_DW QP_OMS_Fan")
    end subroutine
    !
 end subroutine

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -27,14 +29,17 @@ subroutine section(mode,name)
  !      = p     : increase level only in this section
  !      = #     : increase level #
  !
- use pars
+ use pars,       ONLY:lchlen,schlen,SP
  use it_m,       ONLY:ofiles_append
- use stderr,     ONLY:string_pack,intc
+ use stderr,     ONLY:string_pack
  use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&
 &                     date_and_time_string
- use parallel_m, ONLY:PP_redux_wait,PARALLEL_message,ncpu
+ use parallel_m, ONLY:PP_redux_wait,ncpu
  use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
 &                     write_to_report,write_the_logo,repfile
+#if defined _TIMING
+ use timing_m,   ONLY:timing_upto_now
+#endif
  implicit none
  character(1)::mode
  character(*)::name
@@ -49,7 +54,7 @@ subroutine section(mode,name)
  !
  character(schlen):: average_time,min_time,max_time
  !
- call PP_redux_wait
+ call PP_redux_wait()
  !
  ! Get HostName date & time etc...
  !
@@ -124,6 +129,7 @@ subroutine section(mode,name)
  ! Finalize
  !
  if (mode=='X') then
+   !
    cput_here=cput_tot(:,1)
    call PP_redux_wait(cput_here)
    !
@@ -152,11 +158,21 @@ subroutine section(mode,name)
    !
    if (all((/trim(min_time)/='',trim(max_time)/='',trim(average_time)/=''/))) then
      !
-     ch = 'CpuTiming Min/Max/Average:'
      write (ch,'(6a)')     'Timing   [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
-     call msg('nrn',trim(ch))
+     !
+#if defined _TIMING
+    call msg('nr',trim(ch))
+    call timing_upto_now()
+#else
+    call msg('nrn',trim(ch))
+#endif
+     !
      call ofiles_append(line=" ")
      call ofiles_append(line=trim(ch))
+     !
+   else
+     !
+     call msg('nr'," ")
      !
    endif
    !

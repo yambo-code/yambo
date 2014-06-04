@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 C. Attaccalite, A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -85,7 +87,7 @@ subroutine RT_initialize(dump_and_write)
    ! has be applied also the initial part otherwise 
    ! there will problems doing FFT for the non-zero starting point 
    !
-   call msg('r','[RT] Optimal damping factor: '//trim(real2ch(W_RT_induced_step*HA2EV))//' eV')
+   call msg('s','[RT] Optimal damping factor: '//trim(real2ch(W_RT_induced_step*HA2EV))//' eV')
    !
    call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_J_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
    call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,6)
@@ -96,7 +98,8 @@ subroutine RT_initialize(dump_and_write)
  !
  call section("=",'Writing input current and Polarization')
  !=========================================================
- call RT_output("open cur pol")
+ call RT_output(what="initialize")
+ call RT_output(what="open cur pol")
  !
  do i_t=1,NE_steps
    RT_ind_J    =RT_J_t(i_t,:)
@@ -104,7 +107,5 @@ subroutine RT_initialize(dump_and_write)
    call RT_output('pol',TIME=(i_t-1)*RT_step/FS2AUT)
    if (allocated(RT_J_t)) call RT_output('cur',TIME=(i_t-1)*RT_step/FS2AUT)
  enddo
- !
- call RT_output("close cur pol")
  !
 end subroutine

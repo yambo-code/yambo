@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini & M. Bruno and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -96,13 +98,17 @@ module matrix_operate
      integer     :: D,i1,i2
      complex, allocatable :: V(:)
      D=size(M,1)
+!$omp parallel default(shared), private(V,i1)
      allocate(V(D))
+!$omp do 
      do i1=1,D
        V(i1:D)=M(i1,i1:D)
        M(i1,i1:D)=M(i1:D,i1)
        M(i1:D,i1)=V(i1:D)
      enddo
+!$omp end do
      deallocate(V)
+!$omp end parallel
    end subroutine
    !
    subroutine mat_r2c_ordered(mr,mc,m_order) 

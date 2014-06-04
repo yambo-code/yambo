@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -28,7 +30,7 @@ subroutine K_diagonalization(iq,W)
  use wrapper,        ONLY:M_by_M,Vstar_dot_V,V_dot_V
  use X_m,            ONLY:X_epsilon,X_drude_term
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,&
-&                         BSS_write_eig_2_db,BS_eh_W,BS_eh_E,BS_anti_res
+&                         BSS_write_eig_2_db,BS_eh_W,BS_anti_res
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,INV
@@ -50,7 +52,7 @@ subroutine K_diagonalization(iq,W)
  ! Work Space
  !
  type(PP_indexes)     ::px
- integer              ::i1,iw,BS_H_dim
+ integer              ::i1,BS_H_dim
  logical              ::K_is_not_hermitian
  real(SP)             ::gauge_factor,Co
  !

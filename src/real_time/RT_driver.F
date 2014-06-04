@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini, C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,33 +23,36 @@
 !
 subroutine RT_driver(E,X,k,q)
  !
- use pars,           ONLY:SP,cI
- use drivers,        ONLY:l_eval_collisions,l_ph_corr,l_carrier_dynamics 
+ use pars,           ONLY:SP
+ use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,X_alloc
- use wave_func,      ONLY:WF_load,WF_free
+ use wave_func,      ONLY:WF
+ use interfaces,     ONLY:WF_load
  use R_lattice,      ONLY:bz_samp,qindx_free
+ use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho,&
 &                         SC_QP_setup
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
-&                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_steps,&
+&                         NE_i_time,l_RT_diagonalize,RT_IO_G_steps,l_RT_skip_impose,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
-&                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
-&                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update
+&                         it_start,RT_output,NE_time,l_NE_dynamics_started,RT_update,&
+&                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update,&
+&                         dG_lesser,ID
+ use plasma,          ONLY:Plasma_free,EH_gas
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
- use com,             ONLY:error
+ use com,             ONLY:error,msg
  use fields,          ONLY:A_vecpot,A_vecpot_previous
- use collisions_IO,   ONLY:collisions_IO_alloc,collisions_IO_free,collisions_RANGES_setup,l_STORE_COLLISIONS
- use collision,       ONLY:free_COLLISIONS_v
+ use collision,       ONLY:HF_collisions,COHSEX_collisions,GW_NEQ_collisions
  use QP_CTL_m,        ONLY:QP_apply
- use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
+ use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k
- use IO_m,            ONLY:IO_and_Messaging_switch
+ use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  !
  implicit none
  !
@@ -56,30 +61,31 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Notice that E is never changed!
  !
- type(levels)  :: E
- type(bz_samp) :: k,q
- type(X_t)     :: X(2)
- logical, external  ::stop_now
+ type(levels)      :: E
+ type(bz_samp)     :: k,q
+ type(X_t)         :: X(2)
+ logical, external :: stop_now
  ! 
  ! Work Space
  !
- logical                  :: do_output
- integer                  :: it,ik,ib,it_mem,it_mem_p1
- real(SP)                 :: E_previous,E_now
- complex(SP)              :: on_the_fly_operators(8)
+ integer           :: it,ik,ib,it_mem,it_mem_p1,io_REF
+ real(SP)          :: E_previous,E_now
+ complex(SP)       :: on_the_fly_operators(10)
  !
- if (l_ph_corr.and.l_carrier_dynamics) then
+ integer, external :: io_RT_components
+ !
+ if (l_elph_scatt.and.l_elel_scatt) then
    call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph AND e-e scattering')
- else if (l_ph_corr) then
+ else if (l_elph_scatt) then
    call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph scattering')
- else if (l_carrier_dynamics) then
+ else if (l_elel_scatt) then
    call section('*',trim(SC_potential)//' Real-Time Dynamics including e-e scattering')
  else
    call section('*',trim(SC_potential)//' Real-Time Dynamics')
  endif
  !
  call section('+','Initialization')
- !########################################################################################
+ !#################################
  !
  call set_real_printed_length(f_length=10,g_length=10)  
  !
@@ -100,16 +106,16 @@ subroutine RT_driver(E,X,k,q)
  !
  call SC_QP_setup(E)
  !
- ! Parallel Setups (I)
- !=====================
+ ! Parallel Setups
+ !=================
  !
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
- call PARALLEL_global_indexes(E,k,q,"Response_G_space_Zero_Momentum",RESET=.FALSE.,X=X(1))
- call PARALLEL_global_indexes(E,k,q,"Wave_Functions",RESET=.FALSE.)
  call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
+ call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_index( )
  !
  ! Dipoles
- !========
+ !=========
  !
  ! before loading the WF in R-space I check and/or calculate
  ! the optical collisions that are done in G-space and would
@@ -127,9 +133,7 @@ subroutine RT_driver(E,X,k,q)
  ! WFs loading
  !=============
  !
- call PARALLEL_WF_distribute(SC_bands(2),k%nibz,K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
- !
- call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
+ call WF_load(WF,WF_G_max,WF_Go_indx,(/1,SC_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
  !
  ! QP-corrections 
  !================
@@ -144,14 +148,6 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_alloc(E)
  !
- if (l_STORE_COLLISIONS) then
-   !
-   call collisions_RANGES_setup()
-   !
-   call collisions_IO_alloc()
-   !
- endif
- !
  ! Restart from a previous RT run or from a SC calculation
  ! 
  call section('=','Start and Restart')
@@ -160,11 +156,11 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Collisions
  !
- if((.not.local_V.and..not.l_NE_simulate_IP).or.l_carrier_dynamics) then
+ if((.not.local_V.and..not.l_NE_simulate_IP).or.l_elel_scatt) then
    !
-   if (l_STORE_COLLISIONS) then
+   if (io_COLLs) then
      !
-     if (.not.l_eval_collisions) call error('COLLISIONs database missing')
+     if (.not.l_use_collisions) call error('COLLISIONs database missing')
      !
      call COLLISIONS_load(.FALSE.)
      !
@@ -172,10 +168,26 @@ subroutine RT_driver(E,X,k,q)
    !
  endif
  !
+ ! Reference lifetimes and/or G_lesser
+ !=====================================
+ !
+ if (it_start==1) then
+   !
+   call msg('s','Reference Lifetimes and G_lesser (eval and I/O)...')
+   !
+   call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
+   !
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
+   io_REF=io_RT_components('REF',ID(8))
+   !
+   call msg('l','done')
+   !
+ endif
+ !
  ! qindx_X and qindx_S not needed in real-time 
  ! they are used only in dipoles and collisions calculations
  !
- if (.not.l_ph_corr.and..not.l_carrier_dynamics) call qindx_free()
+ if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free()
  !
  ! Calculation already done
  !
@@ -183,9 +195,7 @@ subroutine RT_driver(E,X,k,q)
    !      
    call RT_free()
    !
-   call collisions_IO_free() 
-   !
-   call WF_free()
+   call WF_free(WF)
    !
    call X_alloc("P_square")
    !
@@ -197,7 +207,7 @@ subroutine RT_driver(E,X,k,q)
  !
  if(l_NE_simulate_IP) then  
    !
-   call WF_free()
+   call WF_free(WF)
    !
    call mem_est("rho_reference rho")
    !
@@ -209,9 +219,11 @@ subroutine RT_driver(E,X,k,q)
  !==========================
  !
  call RT_output(what="initialize")
- call RT_output(what="open dyn cur pol")
- if(l_NE_with_fields) call RT_output(what="open pot occ")
- if (l_ph_corr.or.l_carrier_dynamics) call RT_output('open life')
+ call RT_output(what="open dyn ene cur pol")
+ if (l_NE_with_fields) call RT_output(what="open pot occ")
+ if (l_elph_scatt) call RT_output('open EPlife')
+ if (l_elel_scatt) call RT_output('open EElife')
+ if ((l_elel_scatt.or.l_elph_scatt).and..not.l_RT_skip_impose) call RT_output('open factors')
  !
  ! Loop on time
  !==============
@@ -223,7 +235,8 @@ subroutine RT_driver(E,X,k,q)
  !
  do while (.not.l_Dynamics_is_over)
    !
-   it=it+1
+   it    =it+1
+   it_now=it   ! used in RESTART
    !
    ! Steps & times ...
    !===================
@@ -243,76 +256,50 @@ subroutine RT_driver(E,X,k,q)
    !
    NE_i_time  =it-Thermal_steps
    NE_time    =(NE_i_time-1)*RT_step
-   NE_dynamics=NE_i_time>=1
    it_mem     =MEM_index(NE_i_time,G_MEM_steps)
    it_mem_p1  =MEM_index(NE_i_time+1,G_MEM_steps)
    !
-   do_output= (NE_i_time==1).or.mod(NE_i_time,RT_IO_steps)==0
+   l_NE_dynamics_started=NE_i_time>=1
    !
    ! Start-Up & Timing
    !===================
-   !
    if(it==it_start.or.it==Thermal_steps+1) then
      !
-     if (.not.NE_dynamics) call live_timing('[RT] Thermalization :',Thermal_steps-it_start+1,SERIAL=.true.)
-     if (     NE_dynamics) call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
+     if (.not.l_NE_dynamics_started) call live_timing('[RT] Thermalization :',Thermal_steps-it_start+1,SERIAL=.true.)
+     if (     l_NE_dynamics_started) call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
      !
    endif
    !
    ! Keep a copy of A_vecpot before starting the collisions
-   ! ===========
-   !
+   ! ======================================================
    A_vecpot_previous=A_vecpot
-   !
-   ! Simmetrization
-   !
-   forall( ib=SC_bands(1):SC_bands(2) )  G_lesser(ib,ib,:,it_mem)=cI*aimag(G_lesser(ib,ib,:,it_mem))
    !
    ! End dynamics ?
    !===============
    if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.
+   !
    if (stop_now(.FALSE.)) then
-      NE_steps=(int((it-Thermal_steps)/RT_IO_steps)+1)*RT_IO_steps
-      l_Dynamics_is_over=.TRUE.
+     NE_steps=((NE_i_time-1)/RT_IO_G_steps)*RT_IO_G_steps+1
+     l_Dynamics_is_over=.TRUE.
    endif
-   !
-   ! Write DBs
-   !===========
-   it_now=it ! used in RESTART
-   !
-   call set_real_printed_length()
-   call IO_and_Messaging_switch("-fragments_IO_log")
-   call RT_databases_IO(E,it)
-   call IO_and_Messaging_switch("+fragments_IO_log")
-   call set_real_printed_length(f_length=10,g_length=10)  
    !
    ! Current and Polarization
    !==========================
-   call RT_current_AND_polarization(k,E,G_lesser(:,:,:,it_mem),A_vecpot)
+   call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,it_mem),A_vecpot)
    !
-   if ( (l_ph_corr.or.l_carrier_dynamics) .and. do_output) then
-     !
-     ! Mean Carrier Lifetimes
-     !=======================
-     call RT_mean_carrier_lifetimes(G_lesser(:,:,:,it_mem),E,k)
-     call RT_output('life',TIME=NE_time/FS2AUT)
-     !
-   endif
-   !
-   ! Now print Energetics, current and (eventually) potential 
+   ! Now calculate Energetics, current and other observables
    !=========================================================
-   !
-   call RT_Observables(E,k,G_lesser(:,:,:,it_mem),on_the_fly_operators)
+   call RT_Observables(E,k,dG_lesser(:,:,:,it_mem),on_the_fly_operators)
    !
 #if defined _ELPH
    !
    ! Update Bose Temp and Phonons distribution
    !===========================================
    if (l_Debye_TBose_update) then
-     if (it==it_start) E_previous=real(on_the_fly_operators(1)+on_the_fly_operators(2))
+     if (it==it_start) E_previous=real(on_the_fly_operators(5))
      if (abs(nint(NE_time/FS2AUT)-(NE_time/FS2AUT))< RT_step/FS2AUT .and. &
 &            nint(NE_time/FS2AUT)-(NE_time/FS2AUT) > 0. ) then
-       E_now=real(on_the_fly_operators(1)+on_the_fly_operators(2))
+       E_now=real(on_the_fly_operators(5))
        call TEMPERATURE_Debye(E_previous-E_now)
        E_previous=E_now
      endif
@@ -320,37 +307,57 @@ subroutine RT_driver(E,X,k,q)
    !
 #endif
    !
-   if(do_output) then
-     call RT_output('dyn',real(on_the_fly_operators),TIME=NE_time/FS2AUT)
-     call RT_output('cur pol',TIME=NE_time/FS2AUT)
-     if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
-   endif
-   !
    ! Calculate Collisions and fill SC_R, Ho_plus_Sigma, H_nl_sc
    !============================================================
+   call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
    !
-   call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
+   ! Eval and Print Mean Carrier Lifetimes
+   !=======================================
+   if (l_elph_scatt.or.l_elel_scatt) then
+     call RT_mean_carrier_lifetimes(E,k)
+     if(l_elph_scatt) call RT_output('EPlife',TIME=NE_time/FS2AUT)
+     if(l_elel_scatt) call RT_output('EElife',TIME=NE_time/FS2AUT)
+     if((l_elel_scatt.or.l_elph_scatt).and..not.l_RT_skip_impose) call RT_output('factors',TIME=NE_time/FS2AUT)
+   endif
+   !
+   ! Write DBs
+   !===========
+   call set_real_printed_length()
+   call IO_and_Messaging_switch("-fragments_IO_log")
+   call RT_databases_IO(E,it)
+   call IO_and_Messaging_switch("+fragments_IO_log")
+   call set_real_printed_length(f_length=10,g_length=10)  
+   !
+   ! Print some simple observables
+   !===============================
+   if (NE_time>0.) then
+     call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time/FS2AUT)
+     call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time/FS2AUT)
+   endif
+   call RT_output('cur pol',TIME=NE_time/FS2AUT)
+   if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
    !
    ! Integration
    !=============
    ! T -> T+dT step 
    !
-   call RT_Integrator(G_lesser(:,:,:,it_mem_p1),G_lesser(:,:,:,it_mem),A_vecpot,A_vecpot_previous,&
-&                     RT_step,E,k,q,Integrator_name,NE_time)
+   call RT_Integrator(dG_lesser(:,:,:,it_mem_p1),dG_lesser(:,:,:,it_mem),A_vecpot,A_vecpot_previous,RT_step,E,k,q,NE_time)
    !
-   if(it==Thermal_steps) then
+   G_lesser(:,:,:,it_mem_p1)=G_lesser_reference+dG_lesser(:,:,:,it_mem_p1)
+   !
+   if (it==Thermal_steps) then
      !
      ! I freeze the last self-energy + hartree in XC0_and_HARTREE and I work
      ! only with the differences rho-rho_reference and G_lesser-G_lesser_reference
      ! 
-     call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
+     call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
      XC0_and_HARTREE0=SC_R-Ho
      !
    endif
    !
    ! Diagonalization
    ! ===============
-   if(it==Thermal_steps.or. (mod(it,RT_diagonalization_steps)==0.and.RT_diagonalization_steps>0) ) then
+   if (it==Thermal_steps.or. (mod(it,RT_diagonalization_steps)==0.and.RT_diagonalization_steps>0) ) then
      !
      do ik=1,E%nk
        call mat_dia_inv(DIAGO,SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),E_real=E%E(:SC_bands(2),ik,1))
@@ -369,7 +376,6 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Timing
    !========
-   !
    call live_timing(steps=1)
    !
    if (it==Thermal_steps) call live_timing()
@@ -384,11 +390,12 @@ subroutine RT_driver(E,X,k,q)
  !-----------
  call RT_free()
  !
- call collisions_IO_free() 
+ call WF_free(WF)
+ call Plasma_free(EH_gas)
  !
- call WF_free()
- !
- if(.not.local_V.and..not.l_NE_simulate_IP) call free_COLLISIONS_v()
+ if (allocated(HF_collisions))     call COLLISIONS_alloc_and_free("HF","v1 table","clean",0)
+ if (allocated(COHSEX_collisions)) call COLLISIONS_alloc_and_free("COHSEX","v1 table","clean",0)
+ if (allocated(GW_NEQ_collisions)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
  !
  call set_real_printed_length()
  !

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,9 +25,9 @@ subroutine barriers()
  !
  use drivers
  use pars,       ONLY:schlen
- use D_lattice,  ONLY:i_time_rev,i_space_inv,mag_syms
+ use D_lattice,  ONLY:i_time_rev,i_space_inv
  use BS,         ONLY:BSS_mode
- use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor,n_sp_pol
+ use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor
  use QP_m,       ONLY:QP_solver
  use it_m,       ONLY:switch_off_runlevel
  implicit none
@@ -47,7 +49,7 @@ subroutine barriers()
  gw0_raxis=l_gw0.and..not.l_cohsex.and..not.l_ppa
  gw0_ppa=l_gw0.and.l_ppa
  gw0_cohsex=l_gw0.and.l_cohsex
- gw0_el_ph=l_gw0.and.l_ph_corr
+ gw0_el_ph=l_gw0.and.l_elph_corr
  alda_r_space=l_alda_fxc.and.l_bse
  alda_g_space=l_alda_fxc.and..not.l_bse
  bss_diago=l_bss.and.index(BSS_mode,'d')/=0
@@ -79,19 +81,27 @@ subroutine barriers()
  ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_real_time) then
-   call switch_off_runlevel('all',on_name='scpot HF_and_locXC cohsex el_ph em1s negf collisions '//trim(always_runlevels))
+   on_runlevels='scpot HF_and_locXC cohsex em1s negf collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt'
+   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
+   goto 1
+ endif
+ !
+ if (l_eval_collisions) then
+   on_runlevels='scpot HF_and_locXC cohsex em1s collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt'
+   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  !
  if (l_sc_run) then
-   call switch_off_runlevel('all',on_name='scpot HF_and_locXC cohsex em1s negf magnetic collisions '//trim(always_runlevels))
+   on_runlevels='scpot HF_and_locXC cohsex em1s negf magnetic el_el_corr collisions '
+   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  !
  ! GPL_EXCLUDE_END SC_IGNORE
  !
  if (gw0_cohsex) then
-   call switch_off_runlevel('all',on_name='gw0 em1s cohsex el_el el_ph HF_and_locXC '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='gw0 em1s cohsex el_el_corr el_ph_corr HF_and_locXC '//trim(always_runlevels))
    goto 1
  endif
  !
@@ -110,16 +120,16 @@ subroutine barriers()
  endif
  !
  if (gw0_raxis) then
-   on_runlevels='gw0 em1d el_el el_ph HF_and_locXC'
+   on_runlevels='gw0 em1d el_el_corr el_ph_corr HF_and_locXC'
    ! GPL_INCLUDE_START 
-   !on_runlevels='gw0 em1d el_el HF_and_locXC'
+   !on_runlevels='gw0 em1d el_el_corr HF_and_locXC'
    ! GPL_INCLUDE_END 
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  !
  if (gw0_ppa) then
-   on_runlevels='gw0 ppa em1d el_el el_ph HF_and_locXC'
+   on_runlevels='gw0 ppa em1d el_el_corr el_ph_corr HF_and_locXC'
    ! GPL_INCLUDE_START SC_IGNORE
    !on_runlevels='gw0 ppa em1d HF_and_locXC'
    ! GPL_INCLUDE_END SC_IGNORE

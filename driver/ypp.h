@@ -1,6 +1,8 @@
 /*
-  Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+         Copyright (C) 2000-2014 the YAMBO team
                http://www.yambo-code.org
+ 
+  Authors (see AUTHORS file for details): AM
   
   This file is distributed under the terms of the GNU 
   General Public License. You can redistribute it and/or 
@@ -76,8 +78,7 @@
   {"bzrim",   "r","BZ energy RIM analyzer",0,0,0,0,0}, 
   {"fixsyms", "n","Remove symmetries not consistent with an external perturbation",0,0,0,0,0}, 
 #if defined _YPP_RT
-  {"RealTime","t","Real Time [(X)response,(d)os,(op)OccPlot,(of)OccFit]",0,0,1,0,0}, 
-  {"Gret",    "c","Retarded GFs",0,0,0,0,0}, 
+  {"RealTime","t","Real Time [(X)response,(d)os,(b)ands,(op)OccPlot,(of)OccFit]",0,0,1,0,0}, 
 #endif
 #if defined _YPP_ELPH
   {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 

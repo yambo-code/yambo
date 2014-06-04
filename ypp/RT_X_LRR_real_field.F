@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 C. Attaccalite, A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -167,7 +169,8 @@ subroutine RT_X_LRR_real_field(en)
  !
  EPS=1._DP
  !
- call RT_output("open eps eels")
+ call RT_output(what="initialize")
+ call RT_output(what="open eps_along_E eels_along_E")
  do i_w = 1, X_rt%energy_steps
    !
    EPS(i_w,1) = EPS(i_w,1)-4._SP*pi*dot_product(Efield(i_Probe)%versor(:),X_irrep(i_w,:3))/E_w(i_w)
@@ -175,13 +178,12 @@ subroutine RT_X_LRR_real_field(en)
    EELS(i_w,:)=1._DP/EPS(i_w,:)
    !
    W_reached = real(freqs(i_w))
-   call RT_output('eps',VALUEs=(/ aimag(EPS(i_w,1)),real(EPS(i_w,1)),&
+   call RT_output('eps_along_E',VALUEs=(/ aimag(EPS(i_w,1)),real(EPS(i_w,1)),&
 &                          aimag(EPS(i_w,2)),real(EPS(i_w,2))/),E=W_reached*HA2EV)
-   call RT_output('eel',VALUEs=(/-aimag(EELS(i_w,1)),real(EELS(i_w,1)),&
+   call RT_output('eels_along_E',VALUEs=(/-aimag(EELS(i_w,1)),real(EELS(i_w,1)),&
 &                         -aimag(EELS(i_w,2)),real(EELS(i_w,2))/),E=W_reached*HA2EV)
    !
  enddo
- call RT_output("close eps eel")
  !
  deallocate(EELS,EPS,X_irrep,E_w)
  call mem_est("EELS EPS X_irrep E_w")

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +23,7 @@
 !
 subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
- use drivers,       ONLY:l_ph_corr,l_el_corr,l_life,l_cohsex
+ use drivers,       ONLY:l_elph_corr,l_elel_corr,l_life,l_cohsex
  use units,         ONLY:HA2EV,HBAR_eVfs
  use pars,          ONLY:SP,schlen,lchlen
  use com,           ONLY:msg
@@ -30,6 +32,9 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
 &                        QP_n_states,QP_dSc_steps,use_GreenF_to_eval_QP,On_Mass_Shell_approx,&
 &                        QP_solver,report_Vnlxc,report_Sc,report_dSc,Vxc_kind,Vnlxc_kind,&
 &                        l_QP_Expand,QP_reset
+#if defined _ELPH
+ use ELPH,          ONLY:QP_DW,QP_OMS_Fan
+#endif
  use electrons,     ONLY:n_sp_pol,spin,levels
  use stderr,        ONLY:gen_fmt
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
@@ -69,7 +74,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !============================================================
  !
  report_Sc=.not.QPdb_read_err==0.and..not.On_Mass_Shell_approx.and..not.use_GreenF_to_eval_QP
- report_Vnlxc=l_el_corr.and..not.l_life
+ report_Vnlxc=l_elel_corr.and..not.l_life
  report_dSc=.not.On_Mass_Shell_approx.and..not.trim(QP_solver)=='g'.and..not.use_GreenF_to_eval_QP.and..not.l_cohsex
  do_IO=.TRUE.
  if (l_life.or.QPdb_read_err==0) then
@@ -103,7 +108,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  else 
    call msg(' r','- E  : QP energy  - Z   : Renormalization factor')
    if (report_Sc) call msg(' r','- So : Sc(Eo)     - S   : Sc(E)')
-   if (l_ph_corr) call msg('r', '- Gm : Width [meV]- Gf  : Width [fs]')
+   if (l_elph_corr) call msg('r', '- Gm : Width [meV]- Gf  : Width [fs]')
+   if (l_elph_corr) call msg('r', '- F  : Fan [eV]  - DW  : DW [eV]')
    if (report_dSc) call msg('rn','- dSp: Sc derivative precision')
    if (report_Vnlxc) then
      call msg('r','- lXC: Starting Local XC ('//trim(Vxc_kind)//')')
@@ -163,7 +169,14 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
    ! GPL_EXCLUDE_START
    !
-   if (l_ph_corr) then
+#if defined _ELPH
+   if (l_elph_corr) then
+     n_shadows=n_shadows+1
+     shadow_string(n_shadows)=' F ='
+     shadow(n_shadows)=QP_OMS_Fan(iqp)*HA2EV
+     n_shadows=n_shadows+1
+     shadow_string(n_shadows)=' DW='
+     shadow(n_shadows)=QP_DW(iqp)*HA2EV
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' Gm='
      shadow(n_shadows)=aimag(qp%E(iqp))*HA2EV/1.E-3
@@ -173,6 +186,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
        shadow(n_shadows)=HBAR_eVfs/aimag(qp%E(iqp))/HA2EV
      endif
    endif 
+#endif
    !
    ! GPL_EXCLUDE_END
    !
@@ -199,11 +213,12 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
    !  Data Format
    !
-   data_fmt=gen_fmt(r_v=shadow(5:n_shadows))
-   shadow_fmt(5:n_shadows) ='(a,'//trim(data_fmt)//')'
    if (l_life) then
      data_fmt=gen_fmt(r_v=shadow(3:n_shadows))
      shadow_fmt(3:n_shadows) ='(a,'//trim(data_fmt)//')'
+   else
+     data_fmt=gen_fmt(r_v=shadow(5:n_shadows))
+     shadow_fmt(5:n_shadows) ='(a,'//trim(data_fmt)//')'
    endif
    !
    ! Spin Strings

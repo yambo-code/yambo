@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -30,14 +32,14 @@ subroutine V_mean_potential(ik,WFo)
  ! |n_o> is a bare (unpertirbed) state
  !
  use pars,           ONLY:SP
- use wave_func,      ONLY:wf_state,wf_n_states,wf
+ use wave_func,      ONLY:WAVEs
  use FFT_m,          ONLY:fft_size
  use SC,             ONLY:SC_R,SC_bands,H_nl_sc,V_mean
  use wrapper,        ONLY:M_by_M
  implicit none
  !
  integer     :: ik
- complex(SP) :: WFo(fft_size,wf_n_states)
+ type(WAVEs) :: WFo
  !
  ! Work Space
  !
@@ -69,16 +71,16 @@ subroutine V_mean_potential(ik,WFo)
    !
    do ibp=1,SC_bands(2)
      !
-     ifft=wf_state(ibp,ik,1)
+     ifft=WFo%index(ibp,ik,1)
      !
-     V_mean(:,ib)=V_mean(:,ib)+WFo(:,ifft)*Sigma_times_R(ibp,ib)
+     V_mean(:,ib)=V_mean(:,ib)+WFo%c(:,ifft)*Sigma_times_R(ibp,ib)
      !
    enddo
    !
-   ifft=wf_state(ib,ik,1)
+   ifft=WFo%index(ib,ik,1)
    !
    do ir=1,fft_size
-     V_mean(ir,ib)=V_mean(ir,ib)/wf(ir,ifft)
+     V_mean(ir,ib)=V_mean(ir,ib)/WFo%c(ir,ifft)
    enddo
    !
  enddo

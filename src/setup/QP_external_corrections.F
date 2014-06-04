@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,6 +33,9 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  use IO_m,          ONLY:REP
  use QP_m,          ONLY:OCC_T_ref
 #endif
+#if defined _ELPH
+ use ELPH,          ONLY:E_k_p_q,elph_nb
+#endif
 #if defined _SURF
  use ras_module,    ONLY:lras, lreels
 #endif
@@ -58,7 +63,7 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
 #if defined _SURF
         lras.or.lreels.or.&
 #endif
-        (l_gw0.and..not.l_ppa.and.l_el_corr).or.l_life
+        (l_gw0.and..not.l_ppa.and.l_elel_corr).or.l_life
  if (apply_QP)  call QP_apply(X(3)%ib,Xen,Xk,"X",msg_fmt='s')
 #if defined _SC
  if (apply_QP)  apply_QP=.not.l_sc_run.and..not.l_real_time
@@ -76,19 +81,29 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  !
  ! - Plasmon Pole X -
  !
- apply_QP=(l_em1d.and.l_ppa).or.(l_gw0.and.l_ppa.and.l_el_corr)
+ apply_QP=(l_em1d.and.l_ppa).or.(l_gw0.and.l_ppa.and.l_elel_corr)
  if (apply_QP)  call QP_apply(X(4)%ib,Xen,Xk,"X",msg_fmt='s')
 #if defined _SC
  if (apply_QP)  apply_QP=.not.l_sc_run.and..not.l_real_time
  if (apply_QP)  call OCCUPATIONS_IO_and_interpolate(Xen,'X',Xk,Time=OCC_T_ref,imposed_COM=REP)
 #endif
  !
- ! - Green's Function (not the one used in the BSE -
+ ! - Green's Function (not the one used in the BSE) -
  !
  if (l_gw0)     call QP_apply((/1,n_bands/),en,k,"G",msg_fmt='s')
 #if defined _SC
  if (apply_QP)  apply_QP=.not.l_sc_run.and..not.l_real_time
  if (apply_QP)  call OCCUPATIONS_IO_and_interpolate(en,'G',k,Time=OCC_T_ref,imposed_COM=REP)
+#endif
+ !
+#if defined _ELPH
+ !
+ ! - Green's Function (k+q levels loaded for the _ELPH)
+ !
+ if (l_gw0.and.l_elph_corr) then
+   call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt='s')
+ endif
+ !
 #endif
  !
 end subroutine

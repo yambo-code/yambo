@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 D. Sangalli, C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -274,14 +276,14 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        !
        do ic=1,wf_nc_k(ik_save)
          ig_rot=g_rot(is,wf_igk(ic,ik_save))
-		     do ic_rot=1,wf_nc_k(ik)
-		       ig=wf_igk(ic_rot,ik)
-		       if(ig==ig_rot) exit
-		     enddo
-		     !
-		     pp_kb(ic_rot,:,:,:) =pp_kb_store(ic,:,:,:,ik_save)
-		     pp_kbd(ic_rot,:,:,:)=pp_kbd_store(ic,:,:,:,ik_save)
-		     !
+         do ic_rot=1,wf_nc_k(ik)
+           ig=wf_igk(ic_rot,ik)
+           if(ig==ig_rot) exit
+         enddo
+         !
+         pp_kb(ic_rot,:,:,:) =pp_kb_store(ic,:,:,:,ik_save)
+         pp_kbd(ic_rot,:,:,:)=pp_kbd_store(ic,:,:,:,ik_save)
+         !
        enddo
        !
        call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)      
@@ -375,7 +377,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      pp_kbs=pp_kbs_store
      !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
-     ioKB_abinit_err=ioKB_abinit(ID) 
+     ioKB_pwscf_err=ioKB_pwscf(ID) 
      !
      do ik=1,k%nibz
        !

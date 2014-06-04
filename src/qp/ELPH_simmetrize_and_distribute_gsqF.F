@@ -1,0 +1,82 @@
+!
+!        Copyright (C) 2000-2014 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine ELPH_simmetrize_and_distribute_gsqF(en)
+ !
+ use electrons,     ONLY:levels
+ use functions,     ONLY:bose_f
+ use QP_m,          ONLY:QP_states_simmetrize
+ use parallel_m,    ONLY:PAR_COM_Q_A2A,PAR_COM_G_b_INDEX,&
+&                        PAR_COM_Q_A2A,PP_redux_wait,&
+&                        PAR_Q_index,PAR_IND_Q
+ use ELPH,          ONLY:gsqF_energy_steps,gsqF_ca_corr,gsqF_fan,gsqF_life_f,gsqF_life_bose,&
+&                        gsqF_dw,eval_G_using_KK,elph_nDBs_used,elph_branches
+ !
+ implicit none
+ type(levels)  ::en
+ !
+ ! Work Space
+ !
+ integer            ::iw,iq_loop,iq_mem,il
+ !
+ ! Degenerate bands average
+ !
+ do iq_loop=1,elph_nDBs_used
+   !
+   if (.not.PAR_IND_Q%element_1D(iq_loop)) cycle
+   iq_mem=PAR_Q_index(iq_loop)
+   !
+   do il=elph_branches(1),elph_branches(2)
+     !
+     call PP_redux_wait(gsqF_dw(:,iq_mem,il),COMM=PAR_COM_Q_A2A%COMM)
+     call QP_states_simmetrize(en,vec_2_sim=gsqF_dw(:,iq_mem,il))
+     gsqF_dw(:,iq_mem,il)=gsqF_dw(:,iq_mem,il)/real( PAR_COM_G_b_INDEX%n_CPU)
+     !
+     do iw=1,gsqF_energy_steps
+       !
+       call PP_redux_wait(gsqF_life_bose(:,iq_mem,il,iw),COMM=PAR_COM_Q_A2A%COMM)
+       call QP_states_simmetrize(en,vec_2_sim=gsqF_life_bose(:,iq_mem,il,iw))
+       gsqF_life_bose(:,iq_mem,il,iw)=gsqF_life_bose(:,iq_mem,il,iw)/real( PAR_COM_G_b_INDEX%n_CPU)
+       !
+       call PP_redux_wait(gsqF_life_f(:,iq_mem,il,iw),COMM=PAR_COM_Q_A2A%COMM)
+       call QP_states_simmetrize(en,vec_2_sim=gsqF_life_f(:,iq_mem,il,iw))
+       gsqF_life_f(:,iq_mem,il,iw)=gsqF_life_f(:,iq_mem,il,iw)/real( PAR_COM_G_b_INDEX%n_CPU)
+       !
+       if (.not.eval_G_using_KK) then
+         !
+         call PP_redux_wait(gsqF_fan(:,iq_mem,il,iw),COMM=PAR_COM_Q_A2A%COMM)
+         call QP_states_simmetrize(en,vec_2_sim=gsqF_fan(:,iq_mem,il,iw))
+         gsqF_fan(:,iq_mem,il,iw)=gsqF_fan(:,iq_mem,il,iw)/real( PAR_COM_G_b_INDEX%n_CPU)
+         !
+         call PP_redux_wait(gsqF_ca_corr(:,iq_mem,il,iw),COMM=PAR_COM_Q_A2A%COMM)
+         call QP_states_simmetrize(en,vec_2_sim=gsqF_ca_corr(:,iq_mem,il,iw))
+         gsqF_ca_corr(:,iq_mem,il,iw)=gsqF_ca_corr(:,iq_mem,il,iw)/real( PAR_COM_G_b_INDEX%n_CPU)
+         !
+       endif
+       !
+     enddo
+     !
+   enddo
+ enddo
+ !
+end subroutine

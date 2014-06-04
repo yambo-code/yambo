@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -148,7 +150,8 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    do i1=i_Ef(1),i_Ef(2),1
      call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
      if ( abs(n_of_el_from_zero(1)) < nel_diff_zero) then
-       E%Efermi(1)=E_sorted(i1)
+       if( (E%nk*E%nb*n_sp_pol)> i1 ) E%Efermi(1)=E_sorted(i1)
+       if( (E%nk*E%nb*n_sp_pol)==i1 ) E%Efermi(1)= E_sorted(i1)
        Fermi_is_converged=.true.
        exit
      endif
@@ -218,6 +221,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    endif
    !
  enddo
+ !
  E%E(:,:,:)=E%E(:,:,:)-E%Efermi(1)
  !
  ! If %E_RIM is associated I simply extend the %E occupations to %E_RIM
@@ -239,13 +243,17 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  call OCCUPATIONS_Gaps(E)
  !
+ E%E_VBM=maxval(E%E(E%nbf  ,:,:))
+ E%E_CBm=minval(E%E(E%nbm+1,:,:))
+ !
  ! Mode = 1. Define E%f and exits
  !
  if (mode==1) return
  !
  ! Complete Report
  !
- call msg('r',  'Fermi Level        [ev]:',E%Efermi(1)*HA2EV)
+ call msg('r',  'Fermi Level        [ev]: ',E%Efermi(1)*HA2EV)
+ call msg('r',  'VBM / CBm          [ev]: ',(/E%E_VBM,E%E_CBm/)*HA2EV)
  call msg('r',  'Electronic Temp. [ev K]: ',(/Tel*HA2EV,Tel*HA2KEL/))
  call msg('r',  'Bosonic    Temp. [ev K]: ',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
  call msg('r',  'El. density      [cm-3]: ',(/nel/(DL_vol*BO2ANG**3*1.E-24)/))

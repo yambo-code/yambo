@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 M. Gruning and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): MG
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -30,7 +32,7 @@ subroutine OEP_Weighted_Density(en,Xk,rho)
   use R_lattice,     ONLY:bz_samp
   use D_lattice,     ONLY:nsym
   use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_inv
-  use wave_func,     ONLY:wf_state,wf
+  use wave_func,     ONLY:WF
   use SC,            ONLY:l_oep_EWeight
   !
   implicit none
@@ -48,12 +50,12 @@ subroutine OEP_Weighted_Density(en,Xk,rho)
   !
   do i1=1,en%nbm
     do i2=1,Xk%nibz
-      if (size(wf_state,1)<i1) cycle
-      if (size(wf_state,2)<i2) cycle
+      if (size(WF%index,1)<i1) cycle
+      if (size(WF%index,2)<i2) cycle
       !
-      ifft=wf_state(i1,i2,1)
+      ifft=WF%index(i1,i2,1)
       EWeight = en%e(i1,i2,1)+en%Efermi(1)
-      rho_no_sym(:)=rho_no_sym(:)+en%f(i1,i2,1)*Xk%weights(i2)/EWeight*abs(wf(:,ifft))**2
+      rho_no_sym(:)=rho_no_sym(:)+en%f(i1,i2,1)*Xk%weights(i2)/EWeight*abs(WF%c(:,ifft))**2
     enddo
   enddo
   !

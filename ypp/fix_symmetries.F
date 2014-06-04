@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 D. Sangalli, C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -30,7 +32,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  use electrons,           ONLY:n_spinor,Total_magn
  use R_lattice,           ONLY:rl_sop
  use vec_operate,         ONLY:v_norm
- use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,mag_syms,&
+ use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
  !
  implicit none
@@ -380,7 +382,7 @@ subroutine atoms_check_symm(symm_to_check,n_syms_to_check,found_symm)
  use pars,           ONLY:zero_dfl
  use matrix_operate, ONLY:m3inv
  use pars,           ONLY:SP
- use D_lattice,      ONLY:atom_pos,a,n_atomic_species,n_atoms_species,alat
+ use D_lattice,      ONLY:atom_pos,a,n_atomic_species,n_atoms_species
  !
  implicit none
  !

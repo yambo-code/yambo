@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,35 +21,40 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
+subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,Gkkp,l_skip_ABS)
  !  
- use pars,           ONLY:SP,cI,pi
- use electrons,      ONLY:levels,spin_occ,n_full_bands
- use SC,             ONLY:SC_bands,it_now
- use real_time,      ONLY:G_lesser,MEM_index,E_P_Hole_lifetime,E_P_Electron_lifetime,&
+ use pars,           ONLY:SP,zero_dfl,rZero
+ use electrons,      ONLY:levels,n_full_bands,spin_occ
+ use SC,             ONLY:SC_bands,RT_ibz_coo,RT_Nk_ibz
+ use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         Gr_ep_matrix,B_mat_index,G_MEM_steps
- use ELPH,           ONLY:ph_freqs_sq,ph_modes
+&                         B_mat_index,l_RT_uses_E_RIM,RIM_ibz_coo,RT_occupations_locked,&
+&                         RT_H_occupations_reference,RT_E_occupations_reference,&
+&                         RT_delta_occupations,l_equilibrium_lifetimes,q_weight_RT,&
+&                         RT_eh_en,RT_scatt_tresh
+ use ELPH,           ONLY:ph_freqs_sq
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
  !
  implicit none
  !
- type(levels),  intent(in)  :: E
- integer,       intent(in)  :: ik,ik_m_q,i_q,i_l
- real(SP),      intent(in)  :: Bose_f(2),f_k(SC_bands(2)-SC_bands(1)+1)
- complex(SP),   intent(in)  :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- logical :: l_skip_ABS
+ type(levels),  intent(in) :: E
+ integer,       intent(in) :: ik,ik_m_q,i_q,i_l
+ real(SP),      intent(in) :: N_q
+ complex(SP),   intent(in) :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+ logical,       intent(in) :: l_skip_ABS
  !
  ! Work Space ...
  !
- integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem
- real(SP) :: f_k_m_q,P_ph_abs,P_ph_emit,ph_freq
+ integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem,ik_rim,&
+&            ip_rim,i1,i2
+ real(SP) :: P_ph_abs,P_ph_emit,ph_freq,DELTA_E,DELTA_W,pre_factor,&
+&            TMP_Hole_lifetime(2),TMP_Electron_lifetime(2),f_kmq,Hole_f_kmq
+ real(SP), external :: RT_G_retarded_convolution
  !
  ! Dimensions
  !============
  !
  B_dim=SC_bands(2)-SC_bands(1)+1
- !
  ik_mem=PAR_Xk_ibz_index(ik)
  iq_mem=PAR_Q_index(i_q)
  !
@@ -61,22 +68,10 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
    i_n_shift=i_n+SC_bands(1)-1
    !
    do i_np=1,B_dim
-     ! 
+     !
      i_np_shift=i_np+SC_bands(1)-1
      !
-     ! 16/3/2012
-     !
-     ! Including "by hand" the limits on the signs of DELTA I managed to get
-     ! (finally) a converged el-ph dynamics (On 5/9/2013 moved in G_ret initialize).
-     !
-     ! Updated on 29/3/2012 with more tailored constrains. Valid only in systems
-     ! with a gap.
-     !
-     ! n>=n_full_bands+1 => i_np>=n_full_bands+1 
-     !
-     ! Fermi level ----------------
-     !
-     ! n<=n_full_bands => i_np<=n_full_bands 
+     ! Extra condition: the EP scattering cannot cross the gap
      !
      if (i_n_shift<=n_full_bands.and.i_np_shift>  n_full_bands) cycle
      if (i_n_shift> n_full_bands.and.i_np_shift<= n_full_bands) cycle
@@ -84,23 +79,90 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,f_k,Bose_f,E,Gkkp,l_skip_ABS)
      if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n_shift,i_np_shift) ) ) cycle
      i_b_mat_mem=PAR_B_mat_index(i_n_shift,i_np_shift)
      !
-     f_k_m_q=-cI*G_lesser(i_np+SC_bands(1)-1,i_np+SC_bands(1)-1,ik_m_q,MEM_index(it_now,G_MEM_steps))/spin_occ
+     if (.not. l_RT_uses_E_RIM) then
+       !
+       if(E%E(i_np_shift,ik_m_q,1)<RT_eh_en(1) .or. E%E(i_np_shift,ik_m_q,1)>RT_eh_en(2)) cycle
+       if(E%E(i_n_shift ,ik    ,1)<RT_eh_en(1) .or. E%E(i_n_shift ,ik    ,1)>RT_eh_en(2)) cycle
+       !
+       DELTA_E=    E%E(i_n_shift,ik,1) -    E%E(i_np_shift,ik_m_q,1)
+       DELTA_W=abs(E%W(i_n_shift,ik,1))+abs(E%W(i_np_shift,ik_m_q,1))
+       !
+     endif
      !
-     P_ph_abs =Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,i_l+ph_modes)
-     P_ph_emit=Gr_ep_matrix(ik_mem,i_b_mat_mem,iq_mem,i_l)
+     pre_factor=abs(Gkkp(i_np,i_n))**2/real(RT_Nk_ibz(ik_m_q))
      !
-     E_P_Hole_lifetime(i_n_shift,ik)=E_P_Hole_lifetime(i_n_shift,ik)+&
-&                                    abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_abs*Bose_f(2)
-     if (.not.l_skip_ABS) &
-&     E_P_Ho_abs_lifetime(i_n_shift,ik)=E_P_Ho_abs_lifetime(i_n_shift,ik)+&
-&                                      abs(Gkkp(i_np,i_n))**2*f_k_m_q*P_ph_emit*Bose_f(1)
-     !
-     E_P_Electron_lifetime(i_n_shift,ik)=E_P_Electron_lifetime(i_n_shift,ik)+&
-&                                        abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_emit*Bose_f(2)
-     !
-     if (.not.l_skip_ABS) &
-&     E_P_El_abs_lifetime(i_n_shift,ik)=E_P_El_abs_lifetime(i_n_shift,ik)+&
-&                                      abs(Gkkp(i_np,i_n))**2*(1.-f_k_m_q)*P_ph_abs*Bose_f(1)
+     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       !
+       if (RT_occupations_locked(i_n_shift,ik_rim)) cycle
+       !
+       ! Zeroing
+       !=========
+       TMP_Hole_lifetime=rZero
+       TMP_Electron_lifetime=rZero
+       !
+       do ip_rim=RT_ibz_coo(ik_m_q,1),RT_ibz_coo(ik_m_q,2)
+         !
+         if (RT_occupations_locked(i_np_shift,ip_rim)) cycle
+         !
+         if (l_RT_uses_E_RIM) then
+           !
+           i1=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+           i2=ip_rim-RT_ibz_coo(ik_m_q,1)+RIM_ibz_coo(ik_m_q,1)
+           !
+           if(E%E_RIM(i_np_shift,i2,1)<RT_eh_en(1) .or. E%E_RIM(i_np_shift,i2,1)>RT_eh_en(2)) cycle
+           if(E%E_RIM(i_n_shift ,i1,1)<RT_eh_en(1) .or. E%E_RIM(i_n_shift ,i1,1)>RT_eh_en(2)) cycle
+           !
+           DELTA_E=    E%E_RIM(i_n_shift,i1,1) -    E%E_RIM(i_np_shift,i2,1)
+           DELTA_W=abs(E%W_RIM(i_n_shift,i1,1))+abs(E%W_RIM(i_np_shift,i2,1))
+           !
+         endif
+         !
+         P_ph_abs  =RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,RT_scatt_tresh,'EP')
+         P_ph_emit =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,RT_scatt_tresh,'EP')
+         !
+         if ( abs(P_ph_abs)<1.E-7 .and. abs(P_ph_emit)<1.E-7 ) cycle
+         !
+         if(l_equilibrium_lifetimes) then
+           f_kmq      = RT_E_occupations_reference(i_np_shift,ip_rim)/spin_occ
+           Hole_f_kmq = RT_H_occupations_reference(i_np_shift,ip_rim)/spin_occ
+         else
+           f_kmq      =  RT_delta_occupations(i_np_shift,ip_rim)/spin_occ
+           Hole_f_kmq = -RT_delta_occupations(i_np_shift,ip_rim)/spin_occ
+         endif
+         !
+         TMP_Hole_lifetime(1)=TMP_Hole_lifetime(1)+f_kmq*P_ph_abs
+         TMP_Electron_lifetime(1)=TMP_Electron_lifetime(1)+Hole_f_kmq*P_ph_emit
+         !
+         if( abs(N_q)>zero_dfl .and. .not.l_skip_ABS) then
+           TMP_Hole_lifetime(2)=TMP_Hole_lifetime(2)+f_kmq*P_ph_emit
+           TMP_Electron_lifetime(2)=TMP_Electron_lifetime(2)+Hole_f_kmq*P_ph_abs
+         endif
+         !
+       enddo
+       !
+       ! Emission
+       E_P_Hole_lifetime(i_n_shift,ik_rim)=E_P_Hole_lifetime(i_n_shift,ik_rim)+&
+&                                          TMP_Hole_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,1)
+       E_P_Electron_lifetime(i_n_shift,ik_rim)=E_P_Electron_lifetime(i_n_shift,ik_rim)+&
+&                                              TMP_Electron_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,1)
+       !
+       if(abs(N_q)<zero_dfl) cycle
+       !
+       ! Stimulated Emission
+       E_P_Hole_lifetime(i_n_shift,ik_rim)=E_P_Hole_lifetime(i_n_shift,ik_rim)+&
+&                                          TMP_Hole_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,2)
+       E_P_Electron_lifetime(i_n_shift,ik_rim)=E_P_Electron_lifetime(i_n_shift,ik_rim)+&
+&                                              TMP_Electron_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,2)
+       !
+       if(l_skip_ABS) cycle
+       !
+       ! Absorption
+       E_P_Ho_abs_lifetime(i_n_shift,ik_rim)=E_P_Ho_abs_lifetime(i_n_shift,ik_rim)+&
+&                                            TMP_Hole_lifetime(2)*pre_factor*q_weight_RT(i_q,i_l,2)
+       E_P_El_abs_lifetime(i_n_shift,ik_rim)=E_P_El_abs_lifetime(i_n_shift,ik_rim)+&
+&                                            TMP_Electron_lifetime(2)*pre_factor*q_weight_RT(i_q,i_l,2)
+       !
+     enddo
      !
    enddo
    !

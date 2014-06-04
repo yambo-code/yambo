@@ -1,6 +1,8 @@
 #
-# Copyright (C) 2000-2013 A. Marini and the YAMBO team
+#        Copyright (C) 2000-2014 the YAMBO team
 #              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -41,6 +43,7 @@ case "${FC}" in
       VER_11=`grep 11. ver_ | wc -l`
       VER_12=`grep 12. ver_ | wc -l`
       VER_13=`grep 13. ver_ | wc -l`
+      VER_14=`grep 14. ver_ | wc -l`
       if ! test "$VER_8" = "0"; then
        FCVERSION="8"
       fi
@@ -58,6 +61,9 @@ case "${FC}" in
       fi
       if ! test "$VER_13" = "0"; then
        FCVERSION="13"
+      fi
+      if ! test "$VER_14" = "0"; then
+       FCVERSION="14"
       fi
       rm -f ver_
       ;;

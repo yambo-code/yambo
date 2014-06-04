@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -721,7 +723,7 @@ contains
  !
  subroutine get_xc
    use com,        ONLY : warning,error
-   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND
+   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION
    use mod_xc2y, ONLY: XC_yamboID,  XC_yamboID2kind
    implicit none
 #if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
@@ -729,6 +731,10 @@ contains
    if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
    GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
    GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+#endif
+#if defined _P2Y_V50
+   call qexml_read_exx(exx_fraction=pw_exx_fraction, exx_is_active=pw_exx_is_active,ierr=ierr)
+   if (pw_exx_is_active) GS_exx_FRACTION = pw_exx_fraction
 #endif
  end subroutine get_xc
  !

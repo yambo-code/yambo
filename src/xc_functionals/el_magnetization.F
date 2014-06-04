@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 D. De Fausti and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details):
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -33,7 +35,7 @@ subroutine el_magnetization(en,Xk)
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
  use D_lattice,      ONLY:nsym,DL_vol,dl_sop,i_time_rev,inv_index
  use FFT_m,          ONLY:fft_size,fft_rot_r
- use wave_func,      ONLY:wf_state,wf
+ use wave_func,      ONLY:WF
  use xc_functionals, ONLY:magn
  !
  use electrons,      ONLY:Total_magn
@@ -59,8 +61,8 @@ subroutine el_magnetization(en,Xk)
  do i1=1,en%nbm
    do i2=1,Xk%nibz
      !
-     ifft_up=wf_state(i1,i2,1)
-     ifft_dn=wf_state(i1,i2,2)
+     ifft_up=WF%index(i1,i2,1)
+     ifft_dn=WF%index(i1,i2,2)
      !
      if (ifft_up==0 .or. ifft_dn==0) cycle
      if (n_spinor==2) then
@@ -68,21 +70,21 @@ subroutine el_magnetization(en,Xk)
        ! mx
        !
        cv(:,1)=cv(:,1)+Xk%weights(i2)*(&
-&              en%f(i1,i2,1)*conjg(wf(:,ifft_up))*wf(:,ifft_dn)&
-&             +en%f(i1,i2,1)*conjg(wf(:,ifft_dn))*wf(:,ifft_up) )
+&              en%f(i1,i2,1)*conjg(WF%c(:,ifft_up))*WF%c(:,ifft_dn)&
+&             +en%f(i1,i2,1)*conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_up) )
        !
        ! my
        !
        cv(:,2)=cv(:,2)+Xk%weights(i2)*(0._SP,-1._SP)*(&
-&              en%f(i1,i2,1)*conjg(wf(:,ifft_up))*wf(:,ifft_dn)&
-&             -en%f(i1,i2,1)*conjg(wf(:,ifft_dn))*wf(:,ifft_up) )
+&              en%f(i1,i2,1)*conjg(WF%c(:,ifft_up))*WF%c(:,ifft_dn)&
+&             -en%f(i1,i2,1)*conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_up) )
      endif
      !
      ! mz
      !
      cv(:,3)=cv(:,3)+Xk%weights(i2)*(&
-&            en%f(i1,i2,1)*conjg(wf(:,ifft_up))*wf(:,ifft_up)&
-&           -en%f(i1,i2,n_sp_pol)*conjg(wf(:,ifft_dn))*wf(:,ifft_dn) )
+&            en%f(i1,i2,1)*conjg(WF%c(:,ifft_up))*WF%c(:,ifft_up)&
+&           -en%f(i1,i2,n_sp_pol)*conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_dn) )
    enddo
  enddo
  !

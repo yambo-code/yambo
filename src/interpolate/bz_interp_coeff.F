@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2010 C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues)
+subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
   ! Interpolation scheme (PRB 38 p2721)
   ! Aug2002 Georg Madsen : First version based on subroutine from D.Singh
   ! Apr2004 Georg Madsen : blocked dgemm version
@@ -38,8 +40,9 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues)
   implicit none
   !
   integer,       intent(in)  :: nvalues
+  integer,       intent(in)  :: Nk
   type(bz_samp), intent(in)  :: Xk
-  real(SP),      intent(in)  :: VALUEs(nvalues,Xk%nibz)
+  real(SP),      intent(in)  :: VALUEs(nvalues,Nk)
   complex(DP),   intent(out) :: engre(nshells,nvalues)
   !
   ! Work Space
@@ -50,27 +53,26 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues)
   real(DP)  :: R2_min,R2,roughness_func
   real(DP), parameter :: twopi=2._SP*pi
   real(SP)  :: v(3),star_vec(3,nsym)
-  integer   :: ik,ik2,iv,i1,i2,nstar,nkm1,info,ikn,ikibz,nkpt
+  integer   :: ik,ik2,iv,i1,i2,nstar,Nkm1,info,ikn,ikibz
   integer, allocatable :: ipiv(:)
   !
-  nkpt=Xk%nibz             ! number of k-points in the BZ
-  nkm1=Xk%nibz-1           ! number of k-points minus 1 in the BZ
-  ikn =Xk%nibz             ! last k-point index
+  Nkm1=Nk-1           ! number of k-points minus 1 in the BZ
+  ikn =Nk             ! last k-point index
   !
-  allocate(delta(nkm1,nvalues))
+  allocate(delta(Nkm1,nvalues))
   call mem_est("delta",(/size(delta)/),(/SP/))
   allocate(rho(nshells))
   call mem_est("rho",(/nshells/),(/SP/))
-  allocate(h_mat(nkm1,nkm1),star_1(nshells,nkpt),star_2(nshells,nkm1))
+  allocate(h_mat(Nkm1,Nkm1),star_1(nshells,Nk),star_2(nshells,Nkm1))
   call mem_est("h_mat star_1 star_2",(/size(h_mat),size(star_1),size(star_2)/),(/2*SP,2*SP,2*SP/))
-  allocate(ipiv(nkm1))
+  allocate(ipiv(Nkm1))
   call mem_est("ipiv",(/size(ipiv)/),(/IP/))
   !
   ! Construct delta_epsilon eq. 10
   !
   delta=cZERO
   !
-  do ik=1,nkm1
+  do ik=1,Nkm1
     delta(ik,:)=VALUEs(:,ik)-VALUEs(:,ikn)
   enddo
   !
@@ -88,8 +90,9 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues)
   !
   do i1=2,nshells
     call make_star(lattice_vectors(:,i1),nsym,int_sop,nstar,star_vec) 
-    do ik=1,nkpt
-      call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
+    do ik=1,Nk
+      if(Nk==Xk%nibz) call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
+      if(Nk> Xk%nibz) call c2a(v_in=Xk%pt_RIM(ik,:),v_out=v,mode='ki2a')
       do i2=1,nstar
         star_1(i1,ik)=star_1(i1,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,i2)))
       enddo
@@ -97,33 +100,33 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues)
     star_1(i1,:)=star_1(i1,:)/real(nstar)
   enddo
   !
-  do ik=1,nkm1
-    star_1(2:nshells,ik) = star_1(2:nshells,ik) - star_1(2:nshells,nkpt)
+  do ik=1,Nkm1
+    star_1(2:nshells,ik) = star_1(2:nshells,ik) - star_1(2:nshells,Nk)
   enddo
   !
-  do ik=1,nkm1
+  do ik=1,Nkm1
     star_2(2:nshells,ik)=conjg(star_1(2:nshells,ik))/rho(2:nshells)
   enddo
   !
-  do ik=1,nkm1
-    do ik2=ik,nkm1
+  do ik=1,Nkm1
+    do ik2=ik,Nkm1
       h_mat(ik,ik2)=sum(star_1(2:nshells,ik)*star_2(2:nshells,ik2))
       h_mat(ik2,ik)=conjg(h_mat(ik,ik2))
     enddo
   enddo
   !
 #if defined _DOUBLE
-  call ZGETRF(nkm1,nkm1,h_mat,nkm1,ipiv,info)
+  call ZGETRF(Nkm1,Nkm1,h_mat,Nkm1,ipiv,info)
 #else
-  call CGETRF(nkm1,nkm1,h_mat,nkm1,ipiv,info)
+  call CGETRF(Nkm1,Nkm1,h_mat,Nkm1,ipiv,info)
 #endif
   !
   if(info/=0) call error("[Interp] Error in factorization ")
   !
 #if defined _DOUBLE
-  call  ZGETRS('N',nkm1,nvalues,h_mat,nkm1,ipiv,delta,nkm1,info)
+  call  ZGETRS('N',Nkm1,nvalues,h_mat,Nkm1,ipiv,delta,Nkm1,info)
 #else
-  call  CGETRS('N',nkm1,nvalues,h_mat,nkm1,ipiv,delta,nkm1,info)
+  call  CGETRS('N',Nkm1,nvalues,h_mat,Nkm1,ipiv,delta,Nkm1,info)
 #endif
   !
   if(info/=0) call error("[Interp] Error in -getrs")
@@ -131,11 +134,11 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues)
   engre=cZERO
   !
   forall(i1=2:nshells,iv=1:nvalues)
-    engre(i1,iv)=sum(delta(1:nkm1,iv)*star_2(i1,1:nkm1))
+    engre(i1,iv)=sum(delta(1:Nkm1,iv)*star_2(i1,1:Nkm1))
   end forall
   !
   do iv=1,nvalues
-    engre(1,iv)=VALUEs(iv,ikn) - sum(engre(2:nshells,iv)*star_1(2:nshells,nkpt))
+    engre(1,iv)=VALUEs(iv,ikn) - sum(engre(2:nshells,iv)*star_1(2:nshells,Nk))
   enddo
   !
   ! Deallocation
@@ -147,7 +150,7 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues)
   deallocate(delta,rho)
   call mem_est("delta rho")
   !
-  call k_compare(Xk,VALUEs,engre,nshells,nvalues)
+  call k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
   !
 end subroutine bz_interp_coeff
 
@@ -161,7 +164,7 @@ pure real(DP) function roughness_func(R2,R2_min)
   !
 end function roughness_func
 
-subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues)
+subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
   use units,          ONLY:HA2EV
   use pars,           ONLY:SP,DP,schlen
   use R_lattice,      ONLY:bz_samp
@@ -170,8 +173,8 @@ subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues)
   !
   implicit none
   type(bz_samp), intent(in) :: Xk
-  integer,       intent(in) :: nvalues,nshells
-  real(SP),      intent(in) :: VALUEs(nvalues,Xk%nibz)
+  integer,       intent(in) :: nvalues,nshells,Nk
+  real(SP),      intent(in) :: VALUEs(nvalues,Nk)
   complex(DP),   intent(in) :: engre(nshells,nvalues)
   !
   ! Work Space
@@ -181,21 +184,21 @@ subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues)
   real(SP), allocatable :: new_VALUEs(:,:)
   real(SP) :: ave_err,max_err
   !
-  allocate(new_VALUEs(nvalues,Xk%nibz))
+  allocate(new_VALUEs(nvalues,Nk))
   !
-  call fourier_interpolation(Xk,new_VALUEs,engre,nvalues)
+  call fourier_interpolation(Xk,new_VALUEs,engre,nvalues,Nk)
   !
   max_err=0._SP
   ave_err=0._SP
   !
-  do ik=1,Xk%nibz
+  do ik=1,Nk
     do iv=1,nvalues
         ave_err=ave_err+abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))
         if(abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))>max_err) max_err=abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))
      enddo
   enddo
   !
-  ave_err=ave_err/real(nvalues*Xk%nibz)
+  ave_err=ave_err/real(nvalues*Nk)
   !
   write(dump_ch,'(a,f16.8,a,f16.8)') '[Interp] Max error = ',max_err,' average error = ',ave_err
   call msg('s',dump_ch)

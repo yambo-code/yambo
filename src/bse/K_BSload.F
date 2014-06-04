@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2009 A. Marini, M. Gruning and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM MG
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -35,8 +37,7 @@ subroutine K_BSload(iq)
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nXkibz
  use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_k_and_row_restart,BS_eh_E,&
-&                         BS_DB_is_fragmented,BS_K_coupling,&
-&                         BS_cpl_mat
+&                         BS_K_coupling
  use matrix_operate, ONLY:matrix_linear_index
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_control,OP_RD,RD,NONE,RD_CL,OP_RD_CL
@@ -47,7 +48,6 @@ subroutine K_BSload(iq)
  !
  integer         ::ik1,ik2,i1,i2,BS_H_dim
  type(X_t)       ::X
- type(PP_indexes)::Kp
  ! 
  ! I/O
  ! 

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -25,6 +27,31 @@ module functions
  implicit none
  !
  real(SP)     :: bose_E_cut
+ !
+ interface
+   !
+   integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit_out,RT_E_fit_out,l_T_max_in)
+     !
+     use pars, ONLY: SP
+     !
+     ! This function makes a fit of RT_occ(RT_E) to the Fermi-Dirac function using two
+     ! temperature and two fermi level, one for the valence and one for the conduction
+     !
+     integer, intent(in)   :: nstates
+     real(SP),intent(in)   :: RT_E(nstates)
+     real(SP),intent(in)   :: RT_occ(nstates)
+     !
+     real(SP), intent(out) :: T_fit(2)
+     real(SP), intent(out) :: Ef_fit(2)
+     real(SP), intent(out) :: err_fit(4)
+     !
+     logical,  intent(in),  optional :: l_T_max_in
+     real(SP), intent(out), optional :: RT_occ_fit_out(1000,2)
+     real(SP), intent(out), optional :: RT_E_fit_out(1000,2)
+     !
+   end function Fermi_fnc_fit
+   !
+ end interface
  !
  contains
    !

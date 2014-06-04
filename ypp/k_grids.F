@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,7 +33,7 @@ subroutine k_grids(en,k,Xk,q)
  use YPP,                 ONLY:coo_in,coo_out,q_shift,l_k_grid,l_q_grid,&
 &                              l_shifted_grid,l_high_sym_pts,K_transform
  use LIVE_t,              ONLY:live_timing_is_on
- use zeros,               ONLY:k_iku_zero,k_rlu_zero
+ use zeros,               ONLY:k_iku_zero
  use stderr,              ONLY:set_real_printed_length
  !
  implicit none

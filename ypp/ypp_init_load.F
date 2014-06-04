@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,9 +25,6 @@ subroutine ypp_init_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit
-#if defined _YPP_RT
- use real_time,     ONLY:Gr_kind,Gr_bands,Gr_E_window,Gr_T_window
-#endif
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
@@ -95,11 +94,11 @@ subroutine ypp_init_load(defs)
  !
 #if defined _YPP_RT
  call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
- call it('r',defs,'RT-X',         '[R] Response functions Post-Processing')
+ call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
  call it('r',defs,'RTdos',        '[R] Analize time-dependent DOS')
+ call it('r',defs,'RToccBnd',     '[R] Analize time-dependent occupations of Bands')
  call it('r',defs,'RToccPlot',    '[R] Plot time-dependent occupations')
  call it('r',defs,'RToccFit',     '[R] Fit occupations distribution at given time')
- call it('r',defs,'Gret',         '[R] Retarded GFs')
 #endif
 #if defined _YPP_SC
  call it('r',defs,'MeanPot', '[R] Mean Potential')
@@ -124,12 +123,11 @@ subroutine ypp_init_load(defs)
  !
  ! OCCUPATIONS
  !
- call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit)
- call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit)
- call it(defs,'OCCTref','NEGF Occupations reference time',OCC_T_ref,unit=Time_unit)
- call it('f',defs,'OCCPlot','NEGF Plot f(t) for all k and n')
- call it('f',defs,'OCCFit','NEGF Make a FIT of the occ. with Fermi Function')
- call it(defs,'OCCnFit','NEGF N of times for occupations distribution FIT',RT_n_FIT) 
+ call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit(1))
+ call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit(1))
+ call it(defs,'OCCTref','NEGF Occupations reference time',OCC_T_ref,unit=Time_unit(1))
+ call it('f',defs,'OCCgroup','NEGF If RIM is used group occupations')
+ !
 #endif
  !
  ! BANDS
@@ -202,6 +200,7 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'DBsPATH',  'Path to the PW el-ph databases',elph_dbs_path)
  call it(defs,'PHfreqF',  'PWscf format file containing the phonon frequencies',ph_freqs_file)
+ call it(defs,'PHmodeF',  'PWscf format file containing the phonon modes',ph_modes_file)
  call it(defs,'EfGbroad', 'Fermi surface broadening (Gamma)',elph_gamma_broad,E_unit)
  call it(defs,'PhBroad','Phonon broadening (Eliashberg & DOS)',ph_broad,E_unit)
  call it(defs,'EEfermi','External Fermi Level (Eliashberg)',elph_Ef,E_unit)
@@ -247,6 +246,7 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
  call it('f',defs,'SkipCheck' , 'Skip internal consistency check on k-point grids')
+ call it('f',defs,'BZExpand' , 'Expand the RIM k-points in the whole BZ by using the symmetries')
  !
  ! Wannier bands
  !
@@ -277,15 +277,6 @@ subroutine ypp_init_load(defs)
  !
 #if defined _YPP_RT
  !
- ! Retarded GFs
- !
- call it(defs,'GFbands', 'Bands',Gr_bands) 
- call it(defs,'GFkind',  'Green`s function kind ("QP","QP-cut","BOX","HC"),',Gr_kind) 
- call it(defs,'T_step',  'Time step in the integration',GF_T_step,unit=Time_unit) 
- call it(defs,'T_window','Time window',Gr_T_window,unit=Time_unit) 
- call it(defs,'E_step',  'Energy step in the integration',Gr_E_step,unit=E_unit) 
- call it(defs,'E_window','Energy window',Gr_E_window,unit=E_unit) 
- !
  ! Post-Processing
  !
  call it(defs,'Xorder','Max order of the response functions',X_order)
@@ -295,14 +286,14 @@ subroutine ypp_init_load(defs)
  call it(defs,'EnRngeRt','Energy range',X_rt%energy_range,unit=E_unit)
  call it(defs,'ETStpsRt','Total Energy steps',X_rt%energy_steps)
  ! DEBUG>
- !call it(defs,'TmJump'  ,'Time jump (X effective)',t_jump,unit=Time_unit,verb_level=V_real_time)
+ !call it(defs,'TmJump'  ,'Time jump (X effective)',t_jump,unit=Time_unit(1),verb_level=V_real_time)
  ! DEBUG<
- call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit)
+ call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit(1))
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',X_rt%damp)
  call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit) 
  !
  call it('f',defs,'FrMinDamp','Force minimal damping',verb_level=V_real_time)
- call it('f',defs,'SkipJP_IO','Do not write P(t) and J(t)',verb_level=V_real_time)
+ call it('f',defs,'SkipJP_IO','Do not write P(t) and J(t)')
  call it('f',defs,'RmAsymLim','Remove Asymptotic limit from P or J',verb_level=V_real_time) 
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
  !

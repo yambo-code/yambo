@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -125,11 +127,6 @@ subroutine QP_ctl_load(defs,i_type)
  call it(defs,prefix(i_type)//'fnFdb',&
 &        '[EXTQP '//trim(description_ch(i_type))//'] Occupations database directory',&
 &        OCC_ctl(i_type),verb_level=V_real_time)
-#endif
-#if  defined _YPP_RT
- call it(defs,prefix(i_type)//'fnFdb',&
-&        '[EXTQP '//trim(description_ch(i_type))//'] Occupations database directory',&
-&        OCC_ctl(i_type))
 #endif
  !
 end subroutine

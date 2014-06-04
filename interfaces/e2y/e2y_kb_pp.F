@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 C. Hogan and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CH
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -45,7 +47,10 @@ subroutine e2y_kb_pp( ikibz, ncid )
   use pseudo,               only : pp_n_l_times_proj_max,pp_n_l_comp,&
 &                                  pp_kbs,pp_kb,pp_kbd
   use wave_func,            only : wf_ncx,wf_nc_k
+  use mod_com2y,            only : ng_vec_abinit
+  !
   implicit none
+  !
   integer,        intent(in)    :: ncid, ikibz
   ! 
   ! Work Space
@@ -73,7 +78,7 @@ subroutine e2y_kb_pp( ikibz, ncid )
   call etsf_io_low_read_var(ncid, "kb_formfactors", &
                             & pp_section, lstat, error_data = error_data, &
 &                             start = start, count =  count )
-  forall( ig=1:wf_nc_k(ikibz), ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
+  forall( ig=1:ng_vec_abinit, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kb(ig,ia,ip,1) = pp_section(ig,ip,ia)
   !
   ! Form factor derivatives 
@@ -81,7 +86,7 @@ subroutine e2y_kb_pp( ikibz, ncid )
   call etsf_io_low_read_var(ncid, "kb_formfactor_derivative", &
                             & pp_section, lstat, error_data = error_data, &
 &                             start = start, count = count)
-  forall( ig=1:wf_nc_k(ikibz), ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
+  forall( ig=1:ng_vec_abinit, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kbd(ig,ia,ip,1) = pp_section(ig,ip,ia)
   !
   ! Form factor signs

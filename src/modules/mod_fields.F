@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -36,11 +38,16 @@ module fields
  !
  ! GPL_EXCLUDE_START
  !
+ logical           :: l_manual_excitation
+ !
  ! Electric Field(s)
  ! 
  type ext_field
+   character(schlen) :: ef_name
    real(SP) :: t_initial
-   integer  :: int_t_initial
+   integer  :: t_initial_indx  ! time index of extern field switch on  (input variable)
+   real(SP) :: t_final
+   integer  :: t_final_indx    ! time index of extern field switch off (computed in RT_Fluence)
    integer  :: n_frequencies
    real(SP) :: frequency(2)
    real(SP) :: damping
@@ -48,7 +55,7 @@ module fields
    real(SP) :: amplitude
    real(SP) :: W_step
    real(SP) :: versor(3)
-   character(schlen) :: ef_name
+   real(SP), allocatable :: Fluence(:)
  end type ext_field
  !
  integer, parameter  :: n_ext_fields=2
@@ -59,7 +66,6 @@ module fields
  ! ... switch on time of external field
  !
  integer  :: theta_function_iTo_ref
- integer  :: ef_i_time(n_ext_fields) ! time index of extern field switch on
  !
  ! Vector potential
  ! 
@@ -227,7 +233,9 @@ module fields
    subroutine Efield_duplicate(E1,E2)
      type(ext_field) :: E1,E2
      E2%t_initial=E1%t_initial  
-     E2%int_t_initial=E1%int_t_initial  
+     E2%t_initial_indx=E1%t_initial_indx  
+     E2%t_final=E1%t_final  
+     E2%t_final_indx=E1%t_final_indx  
      E2%frequency=E1%frequency  
      E2%n_frequencies=E1%n_frequencies  
      E2%W_step=E1%W_step  
@@ -241,7 +249,9 @@ module fields
    subroutine Efield_reset(E)
      type(ext_field) :: E
      E%t_initial    =0._SP
-     E%int_t_initial=0
+     E%t_initial_indx=0
+     E%t_final      =0._SP
+     E%t_final_indx =0
      E%frequency    =0._SP
      E%n_frequencies=1
      E%W_step       =0._SP

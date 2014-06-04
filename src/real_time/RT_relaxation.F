@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini, C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_relaxation(G_input,E,k,q,Time)
+subroutine RT_relaxation(G_input,E,k,q,Time,l_flag)
  !
  ! This subroutine calculate relaxation term coming from off-diagonal part
  ! of the self-energy in time, from the electron-phonon and/or electron-electron 
@@ -27,183 +29,214 @@ subroutine RT_relaxation(G_input,E,k,q,Time)
  !
  ! Output: Sigma_relax
  !
+ ! Complicate scheme of INTERPOLATION + dF use
+ !
+ ! i:  1 1      2  2        3 3 4 4 5 5 6 6 7 7 ...
+ ! T:  T T+dT/2 T' T'+dT/2  ....
+ ! 
+ ! After Life_MEM_steps steps... I(interpolation) E(valuation) dF
+ ! 
+ ! I     X      X  X          X X X  
+ ! E  X                     X       X
+ ! dF                       X       X
+ !
  use pars,           ONLY:SP,cI,cZERO
  use electrons,      ONLY:levels,spin_occ
- use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
- use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,it_now
- use QP_m,           ONLY:QP_nk
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PP_redux_wait
- use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dumped,NE_dynamics,RT_Deph_Matrix,&
-&                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,MEM_index,&
-&                         G_lesser,G_MEM_steps,RT_dynamics_jumps,it_start,&
-&                         Life_MEM_steps,SAVED_lifetime,E_P_Ho_abs_lifetime
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt
+ use R_lattice,      ONLY:bz_samp,nkibz
+ use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz,RT_ibz_coo
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz
+ use real_time,      ONLY:Sigma_relax,G_lesser_reference,RT_is_dephased,l_NE_dynamics_started,RT_Deph_Matrix,&
+&                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
+&                         RT_TIME_status,RT_E_occupations_reference,RT_H_occupations_reference,&
+&                         REF_lifetime,it_start,RT_E_occupations,RT_H_occupations,FIRST_step,&
+&                         l_equilibrium_lifetimes,l_RT_skip_impose,RT_delta0_occupations,RIM_ibz_coo
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
- type(levels),  intent(in)    :: E
+ type(levels),  intent(inout) :: E
  type(bz_samp), intent(in)    :: k,q
+ logical,       intent(in)    :: l_flag
  real(SP),      intent(in)    :: Time
- complex(SP),   intent(in)    :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
+ complex(SP),   intent(inout) :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
  ! Work Space
  !
- integer          :: ib1,ib2,ik,it_relative
- logical          :: l_evaluate,l_interpolate,l_save
- real(SP)         :: f_k(SC_bands(2))
+ integer          :: ib1,ib2,ik
+ real(SP)         :: f_E_k,f_H_k,df_k,dGAMMA_h,dGAMMA_e,GAMMA0_h,GAMMA0_e,Sigma0,dSigma,&
+&                    GAMMA_total(SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP)      :: G_input_full(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ logical          :: l_eval
  !
- if(.not.RT_is_dumped.and..not.l_ph_corr.and..not.l_carrier_dynamics) return 
+ l_equilibrium_lifetimes=l_flag
  !
- Sigma_relax=cZERO
+ if (.not.l_NE_dynamics_started .and. .not.l_equilibrium_lifetimes) return
  !
- ! Andrea 4/7/2013. Fix of potential anomalous values
- ! of the G_lesser diagonal
+ G_input_full=G_input+G_lesser_reference
  !
- do ik=1,QP_nk
-   do ib1=SC_bands(1),SC_bands(2)
-     G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps))=&
-&            cI*abs(-cI*G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps)))
+ ! Dephasing matrix
+ !==================
+ if (RT_is_dephased.and. .not.l_equilibrium_lifetimes) then
+   do ik=1,RT_nk
+     do ib1=SC_bands(1),SC_bands(2)
+       do ib2=SC_bands(1),SC_bands(2)
+         Sigma_relax(ib1,ib2,ik)=-cI*RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))*G_input(ib1,ib2,ik)
+       enddo
+     enddo
    enddo
- enddo
+ else if(l_elph_scatt.or.l_elel_scatt) then
+   Sigma_relax=cZERO
+ endif
  !
- ! Eval or Interpolate ?
- !======================
- it_relative   = mod(it_now-it_start,Life_MEM_steps+RT_dynamics_jumps)+1
- if (it_now-it_start<2*(Life_MEM_steps+RT_dynamics_jumps) ) then
-   l_evaluate    = .TRUE.
-   l_interpolate = .FALSE.
-   l_save        = .FALSE.
- else
-   l_evaluate    = it_relative <= Life_MEM_steps
-   l_interpolate = it_relative >  Life_MEM_steps
-   l_save        = l_evaluate
- endif
- if (RT_dynamics_jumps==0) then
-   l_evaluate    = .TRUE.
-   l_interpolate = .FALSE.
-   l_save        = .FALSE.
- endif
+ if (.not.l_elph_scatt.and..not.l_elel_scatt) return
+ !
+ l_eval=l_equilibrium_lifetimes
+ if (.not.l_equilibrium_lifetimes) &
+&  l_eval= ( RT_TIME_status(it_now)>0 .and. (FIRST_step(it_now,Time) .or. it_now-it_start+1<=Life_MEM_steps ) ) &
+&          .or. Life_MEM_steps==1
+ !
+ ! Lifetimes History and updates
+ !================================
+ call RT_Lifetimes_use_delta_Occupations(l_eval)
  !
  ! El-El
  !=======
- if (l_carrier_dynamics.and.l_evaluate) then
+ if(l_elel_scatt.and.l_eval ) then
+#if defined _TIMING
+   call timing('RT relaxation (e-e)',OPR='start')
+#endif
    !
-   E_E_Hole_lifetime=0._SP
-   E_E_Electron_lifetime=0._SP
-   !
-   do ik=1,QP_nk
+   do ik=1,nkibz
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     call RT_Coulomb_relaxation(ik,E,k,q) 
+     call RT_Coulomb_relaxation(ik,E,k,q)
      !
    enddo
    !
+#if defined _TIMING
+   call timing('RT relaxation (e-e)',OPR='stop')
+#endif
+   !
  endif
- !
-#if defined _ELPH
  !
  ! El-Ph
  !=======
- if (l_ph_corr.and.l_evaluate) then
+ if(l_elph_scatt.and.l_eval) then
    !
-   if (l_RT_CCA_Kernel.and.l_ph_corr) then
-     E_P_Hole_lifetime=0._SP
-     E_P_Electron_lifetime=0._SP
-     E_P_El_abs_lifetime=0._SP
-     E_P_Ho_abs_lifetime=0._SP
-   endif
+#if defined _TIMING
+   call timing('RT relaxation (e-p)',OPR='start')
+#endif
    !
-   do ik=1,QP_nk
+   do ik=1,nkibz
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     call RT_ELPH_total_Kernel(ik,E,k,q,Time) 
+     call RT_ELPH_total_Kernel(ik,E,k,q,Time,G_input_full) 
      !
    enddo
    !
+#if defined _TIMING
+   call timing('RT relaxation (e-p)',OPR='stop')
+#endif
+   !
  endif
  !
-#endif
- !
- ! PARALLEL Mergering
- !====================
- !
- ! I make copies of the k-resolved matrix. In the future a completely independet
- ! k loop could be implemented
- !
- if (l_ph_corr.or.l_carrier_dynamics) then
-   if (l_evaluate) then
-     do ik=1,QP_nk
-       if (l_carrier_dynamics) then
-         call PP_redux_wait(E_E_Electron_lifetime(:,ik))
-         call PP_redux_wait(E_E_Hole_lifetime(:,ik))
-         if (l_save) then
-           SAVED_lifetime(:,ik,1, it_relative)=E_E_Hole_lifetime(:,ik)
-           SAVED_lifetime(:,ik,2, it_relative)=E_E_Electron_lifetime(:,ik)
-         endif
-       endif
-       if (l_RT_CCA_Kernel.and.l_ph_corr) then
-         call PP_redux_wait(E_P_Electron_lifetime(:,ik))
-         call PP_redux_wait(E_P_Hole_lifetime(:,ik))
-         call PP_redux_wait(E_P_El_abs_lifetime(:,ik))
-         call PP_redux_wait(E_P_Ho_abs_lifetime(:,ik))
-         if (l_save) then
-           SAVED_lifetime(:,ik,3, it_relative)=E_P_Hole_lifetime(:,ik)
-           SAVED_lifetime(:,ik,4, it_relative)=E_P_Electron_lifetime(:,ik)
-           SAVED_lifetime(:,ik,5, it_relative)=E_P_Ho_abs_lifetime(:,ik)
-           SAVED_lifetime(:,ik,6, it_relative)=E_P_El_abs_lifetime(:,ik)
-         endif
-       endif
-     enddo
-   else if (l_interpolate) then
-     do ik=1,QP_nk
-       do ib1=SC_bands(1),SC_bands(2)
-         if (l_carrier_dynamics) then
-           call RT_Lifetimes_Interpolation(E_E_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,1,:))
-           call RT_Lifetimes_Interpolation(E_E_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,2,:))
-         endif
-         if (l_RT_CCA_Kernel.and.l_ph_corr) then
-           call RT_Lifetimes_Interpolation(E_P_Hole_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,3,:))
-           call RT_Lifetimes_Interpolation(E_P_Electron_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,4,:))
-           call RT_Lifetimes_Interpolation(E_P_Ho_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,5,:))
-           call RT_Lifetimes_Interpolation(E_P_El_abs_lifetime(ib1,ik),SAVED_lifetime(ib1,ik,6,:))
-         endif
-       enddo
-     enddo
+ ! PARALLEL Mergering & N/dN conservation (of the evaluated Lifetimes)
+ !=====================================================================
+ if (l_eval) then
+   if (l_elel_scatt) then
+     call RT_Lifetimes_merge(E,k,E_E_Hole_lifetime,1)
+     call RT_Lifetimes_merge(E,k,E_E_Electron_lifetime,2)
+   endif
+   if (l_elph_scatt) then
+     call RT_Lifetimes_merge(E,k,E_P_Hole_lifetime,3)
+     call RT_Lifetimes_merge(E,k,E_P_Electron_lifetime,4)
+     call RT_Lifetimes_merge(E,k,E_P_Ho_abs_lifetime,5)
+     call RT_Lifetimes_merge(E,k,E_P_El_abs_lifetime,6)
    endif
  endif
  !
- ! Number conservation
- !=====================
+ if (l_eval) call Impose_Conservations( )
  !
- call RT_impose_N_conservation(E,k)
+ if (l_equilibrium_lifetimes) return
  !
- ! Dephasing Matrix
- !==================
+ ! SAVE, interpolate & N/dN conservation (of the interpolated Lifetimes)
+ !======================================================================
+ if (l_elel_scatt) then
+   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_E_Hole_lifetime,1)
+   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_E_Electron_lifetime,2)
+ endif
+ if (l_elph_scatt) then
+   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Hole_lifetime,3)
+   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Electron_lifetime,4)
+   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Ho_abs_lifetime,5)
+   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_El_abs_lifetime,6)
+ endif
  !
- do ik=1,QP_nk
+ if (.not.l_eval) call Impose_Conservations( )
+ !
+ ! Dephasing Matrix & Occupations reference
+ !==========================================
+ !
+ Sigma0=0._SP
+ dSigma=0._SP
+ !
+ do ik=1,RT_nk
    do ib1=SC_bands(1),SC_bands(2)
-     f_k(ib1)=-cI*G_lesser(ib1,ib1,ik,MEM_index(it_now,G_MEM_steps))/spin_occ
-     if (l_carrier_dynamics) then
-       Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+E_E_Hole_lifetime(ib1,ik)*(f_k(ib1)-1._SP)+&
-&                                                      E_E_Electron_lifetime(ib1,ik)*f_k(ib1)
+     !
+     f_E_k=RT_E_occupations(ib1,ik)/spin_occ
+     f_H_k=RT_H_occupations(ib1,ik)/spin_occ
+     !
+     df_k=RT_delta0_occupations(ib1,ik)/spin_occ
+     !
+     dGAMMA_e=0._SP
+     dGAMMA_h=0._SP
+     GAMMA0_e=0._SP
+     GAMMA0_h=0._SP
+     if (l_elel_scatt) then
+       dGAMMA_h=E_E_Hole_lifetime(ib1,ik)
+       dGAMMA_e=E_E_Electron_lifetime(ib1,ik)
+       GAMMA0_h=REF_lifetime(ib1,ik,1)
+       GAMMA0_e=REF_lifetime(ib1,ik,2)
      endif
-     if (l_RT_CCA_Kernel.and.l_ph_corr) then
-       Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik)+&
-&                             (E_P_Hole_lifetime(ib1,ik)+E_P_Ho_abs_lifetime(ib1,ik))*(f_k(ib1)-1._SP)+&
-&                             (E_P_Electron_lifetime(ib1,ik)+E_P_El_abs_lifetime(ib1,ik))*f_k(ib1)
+     if (l_RT_CCA_Kernel.and.l_elph_scatt) then
+       dGAMMA_h=dGAMMA_h+ E_P_Hole_lifetime(ib1,ik)+E_P_Ho_abs_lifetime(ib1,ik)
+       dGAMMA_e=dGAMMA_e+ E_P_Electron_lifetime(ib1,ik)+E_P_El_abs_lifetime(ib1,ik)
+       GAMMA0_h=GAMMA0_h+REF_lifetime(ib1,ik,3)+REF_lifetime(ib1,ik,5)
+       GAMMA0_e=GAMMA0_e+REF_lifetime(ib1,ik,4)+REF_lifetime(ib1,ik,6)
      endif
+     !
+     GAMMA_total(ib1,ik)=GAMMA0_h+GAMMA0_e+dGAMMA_h+dGAMMA_e
+     !
+     Sigma_relax(ib1,ib1,ik)=Sigma_relax(ib1,ib1,ik) +(GAMMA0_h*df_k  + GAMMA0_e*df_k -dGAMMA_h*f_H_k + dGAMMA_e*f_E_k )
+     !
    enddo
  enddo
  !
- if(RT_is_dumped.and.NE_dynamics) then
-   forall(ib1=SC_bands(1):SC_bands(2),ib2=SC_bands(1):SC_bands(2)) 
-     Sigma_relax(ib1,ib2,:)=Sigma_relax(ib1,ib2,:)-cI*RT_Deph_Matrix(ib1,ib2,:)*&
-&                           (G_input(ib1,ib2,:)-G_lesser_reference(ib1,ib2,:))
-   end forall
- endif
- !
+ contains
+   !
+   subroutine Impose_Conservations( )
+     !
+     use D_lattice, ONLY:Bose_Temp
+     !
+     ! Zero dN/dT & dE/dT & d(DeltaN)/dT
+     !===================================
+     if(l_RT_skip_impose) return
+     !
+     if (l_elel_scatt) then
+       call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
+     endif
+     if (l_elph_scatt) then
+       call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
+       if(Bose_Temp>0._SP) call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
+     endif
+     !
+   end subroutine
+   !
 end subroutine RT_relaxation
 

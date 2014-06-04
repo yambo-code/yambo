@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 C. Hogan and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CH
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -25,15 +27,15 @@
    use pars,                    ONLY : SP, pi, schlen
    use parser_m,                ONLY : parser
    use surface_geometry,        ONLY : setup_gvecaff, gvecaff
-   use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load, WF_free, wf_norm_test
+   use wave_func,               ONLY : WF, wf_ng, wf_norm_test
    use D_lattice,               ONLY : alat, DL_vol
    use R_lattice,               ONLY : g_vec, nkibz
    use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, NONE
    use electrons,               ONLY : n_bands,n_spin,n_spinor,n_sp_pol
-   use LIVE_t,                  ONLY : live_LIVE_t,live_timing_is_on
+   use LIVE_t,                  ONLY : live_timing,live_timing_is_on
    use stderr,                  ONLY : intc
    use parallel_m,              ONLY : PP_redux_wait,PP_indexes,myid,PP_indexes_reset
-   use interfaces,              ONLY : PARALLEL_index
+   use interfaces,              ONLY : PARALLEL_index,WF_load
    implicit none
    ! 
    ! Work Space
@@ -71,11 +73,11 @@
    wf_norm_test = .true.
 
    do ik=loc_kpts(1),loc_kpts(2)
-     call WF_load(ngloc,1,loc_bands,(/ik,ik/),space='G',impose_free_and_alloc=.TRUE.,title='-LOC')
+     call WF_load(WF,ngloc,1,loc_bands,(/ik,ik/),space='G',impose_free_and_alloc=.TRUE.,title='-LOC')
  
      call live_timing('Localization k('//trim(intc(ik))//')',loc_bands(2)-loc_bands(1)+1,SERIAL=.true.)
      do ib=loc_bands(1),loc_bands(2)
-       ibfft=wf_state(ib,ik,1)
+       ibfft=WF%index(ib,ik,1)
        rhoint = 0.0_SP
        do ig1=1,ngloc
          do ig2=1,ngloc
@@ -83,11 +85,11 @@
 &             gvecaff(ig1,iy).ne.gvecaff(ig2,iy)) cycle
            ngz = gvecaff(ig2,iz) - gvecaff(ig1,iz)
            if(ngz.eq.0) then
-             rhoint = rhoint + real(upperlim-lowerlim) * conjg(wf(ig2,ibfft))*wf(ig1,ibfft)
+             rhoint = rhoint + real(upperlim-lowerlim) * conjg(WF%c(ig2,ibfft))*WF%c(ig1,ibfft)
            else
              gz = real(ngz)*2.0_SP*pi
              int = -ci/gz*( exp(ci*gz*upperlim) - exp(ci*gz*lowerlim) )
-             rhoint = rhoint + int * conjg(wf(ig2,ibfft))*wf(ig1,ibfft)
+             rhoint = rhoint + int * conjg(WF%c(ig2,ibfft))*WF%c(ig1,ibfft)
            endif
 
          enddo

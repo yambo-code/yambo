@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 C. Attaccalite and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA
 !
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,42 +21,54 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_output(what,VALUEs,TIME,E)
+subroutine RT_output(what,VALUES,TIME,E)
  ! 
- use units,          ONLY:HA2EV
+ use units,          ONLY:HA2EV,HA2KEL
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close
- use SC,             ONLY:SC_description,n_SC_descriptions
- use fields,         ONLY:A_vecpot
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt
+ use SC,             ONLY:SC_description,n_SC_descriptions,it_now
+ use fields,         ONLY:A_vecpot,Efield,n_ext_fields
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,l_Debye_TBose_update, &
-&                         l_NE_simulate_IP
+&                         RT_do_IO,RT_Tfit_lifetimes,&
+&                         Imp_factors
  use LIVE_t,         ONLY:what_is_running
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  character(*),       intent(in) :: what
- real(SP), optional, intent(in) :: VALUEs(:) 
+ real(SP), optional, intent(in) :: VALUES(:) 
  real(SP), optional, intent(in) :: TIME
  real(SP), optional, intent(in) :: E
  !
  ! Work space
  !
- integer, parameter       :: n_output_files=50,max_X_order=9
+ integer, parameter       :: n_output_files=100,max_X_order=9
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
- integer                  :: n1,n2,i_f,i_fp,n_headings(n_output_files),next_file,i_order
+ integer                  :: i_f,i_fp,n_headings(n_output_files),next_file,i_order,i_c
  logical                  :: file_is_todo(n_output_files),open_files,initialize
  logical,           save  :: SC_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
- character(schlen)        :: headings(n_output_files,10),append_ch
- real(SP)                 :: data_to_dump(20)
+ character(schlen)        :: headings(n_output_files,11),append_ch
+ character(2)             :: chart_string(3)
+ real(SP)                 :: data_to_dump(11)
+ !
+ open_files=index(what,'open')>0
+ initialize=index(what,'initialize')>0
+ !
+ if ( .not.RT_do_IO('OUT').and..not.open_files.and..not.initialize) return      
+ !
+#if defined _TIMING
+ call timing('RT output',OPR='start')
+#endif
  !
  call string_split(what,orders)
  !
  call set_real_printed_length(f_length=15,g_length=15)
- !
- open_files=index(what,'open')>0
- initialize=index(what,'initialize')>0
  !
  ! File Names & HEADERS
  !----------------------
@@ -70,8 +84,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  append_ch=' '
  if (index(what_is_running,'YPP')>0) append_ch='YPP-'
  !
- if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'current'
+ if (open_files.and..not.file_already_opened(next_file)) file_name(next_file)=trim(append_ch)//'current'
  short_file_name(next_file)=trim(append_ch)//'current'
  n_headings(next_file)=4
  headings(next_file,2:4)=(/"j_x","j_y","j_z"/)
@@ -87,26 +100,37 @@ subroutine RT_output(what,VALUEs,TIME,E)
  if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'vector_potential'
  short_file_name(next_file)=trim(append_ch)//'vector_potential'
- n_headings(next_file)=10
+ n_headings(next_file)=11
  headings(next_file,2:4 )=(/"A_x","A_y","A_z"/)
  headings(next_file,5:7 )=(/"A'_x","A'_y","A'_z"/)
  headings(next_file,8:10)=(/"A''_x","A''_y","A''_z"/)
+ headings(next_file,11)="Fluence[kJ/cm^2]"
+ next_file=next_file+1
+ !
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'energy'
+ short_file_name(next_file)=trim(append_ch)//'energy'
+ n_headings(next_file)=6
+ headings(next_file,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
+ headings(next_file,4:5)=(/"Delta Ha [eV]","Delta Exc[eV]"/)
+ headings(next_file,6)="E_tot[eV]"
  next_file=next_file+1
  !
  if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'dynamics'
  short_file_name(next_file)=trim(append_ch)//'dynamics'
- n_headings(next_file)=9
- if(l_NE_simulate_IP)     n_headings(next_file)=n_headings(next_file)-3
- if(l_Debye_TBose_update) n_headings(next_file)=n_headings(next_file)+1
- headings(next_file,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
- headings(next_file,4:6)=(/"Hartree [eV]","Exchange[eV]","Correlat[eV]"/)
- n1=7
- if(l_NE_simulate_IP) n1=4
- headings(next_file,n1)="Fluence[kJ/cm^2]"
- headings(next_file,n1+1)="N" 
- headings(next_file,n1+2)="dG" 
- if(l_Debye_TBose_update) headings(next_file,n1+3)="Tbose" 
+ n_headings(next_file)=5
+ if (l_elel_scatt.or.l_elph_scatt) n_headings(next_file)=n_headings(next_file)+2
+ if (l_Debye_TBose_update) n_headings(next_file)=n_headings(next_file)+1
+ headings(next_file,2)="Total E[eV]"
+ headings(next_file,3)="delta N" 
+ headings(next_file,4)="N(Holes)"
+ headings(next_file,5)="N(Elecs)"
+ if (l_elel_scatt.or.l_elph_scatt) then 
+   headings(next_file,6)="T(hol) [K]" 
+   headings(next_file,7)="T(el)  [K]" 
+   if (l_Debye_TBose_update) headings(next_file,7)="T(bose) [K]"
+ endif
  next_file=next_file+1
  !
  do i_order=0,max_X_order,1
@@ -132,30 +156,61 @@ subroutine RT_output(what,VALUEs,TIME,E)
  headings(next_file,2:4)=(/"dPol_x","dPol_y","dPol_z"/)
  next_file=next_file+1
  !
- if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'mean_lifetimes'
- short_file_name(next_file)=trim(append_ch)//'mean_lifetimes'
+ if (open_files.and.l_elph_scatt.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'mean_EPlifetimes'
+ short_file_name(next_file)=trim(append_ch)//'mean_EPlifetimes'
  n_headings(next_file)=7
- headings(next_file,2:3)=(/"e-p Hole  [meV]","e-p Elec  [meV]"/)
- headings(next_file,4:5)=(/"e-p H abs [meV]","e-p E abs [meV]"/)
- headings(next_file,6:7)=(/"e-e Hole  [meV]","e-e Elec  [meV]"/)
+ headings(next_file,2:3)=(/"Hole  [meV]","Elec  [meV]"/)
+ headings(next_file,4:5)=(/"H abs [meV]","E abs [meV]"/)
+ headings(next_file,6:7)=(/"T Hole  [K]","T Elec  [K]"/)
+ next_file=next_file+1
+ !
+ if (open_files.and.l_elel_scatt.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'mean_EElifetimes'
+ short_file_name(next_file)=trim(append_ch)//'mean_EElifetimes'
+ n_headings(next_file)=5
+ headings(next_file,2:3)=(/"Hole [meV]","Elec [meV]"/)
+ headings(next_file,4:5)=(/"T Hole [K]","T Elec [K]"/)
  next_file=next_file+1
  !
  headings(1:next_file-1,1)="Time[fs]"
  !
+ !
+ if (open_files.and.(l_elph_scatt.or.l_elel_scatt).and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'N_dN_E_conservation_factors'
+ short_file_name(next_file)=trim(append_ch)//'N_dN_E_conservation_factors'
+ n_headings(next_file)=6
+ headings(next_file,2:6)=(/"elph F1","elph F2","elel F1","elel F2","elel F3"/)
+ next_file=next_file+1
+ !
+ headings(1:next_file-1,1)="Time[fs]"
+ !
+ !
  ! ... energy resolved ...
  !
+ chart_string=(/"_x","_y","_z"/)
+ !
  if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'eps'
- short_file_name(next_file)=trim(append_ch)//'eps'
+&   file_name(next_file)=trim(append_ch)//'eps_along_E'
+ short_file_name(next_file)=trim(append_ch)//'eps_along_E'
  n_headings(next_file)=3
  headings(next_file,2:3)=(/'eps/Im','eps/Re'/)
  headings(next_file,1)="E [eV]"
  next_file=next_file+1
  !
+ do i_c=1,3
+   if (open_files.and..not.file_already_opened(next_file)) &
+&     file_name(next_file)=trim(append_ch)//'eps'//chart_string(i_c)
+   short_file_name(next_file)=trim(append_ch)//'eps'//chart_string(i_c)
+   n_headings(next_file)=3
+   headings(next_file,2:3)=(/'eps/Im','eps/Re'/)
+   headings(next_file,1)="E [eV]"
+   next_file=next_file+1
+ enddo
+ !
  if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'eels'
- short_file_name(next_file)=trim(append_ch)//'eels'
+&   file_name(next_file)=trim(append_ch)//'eels_along_E'
+ short_file_name(next_file)=trim(append_ch)//'eels_along_E'
  n_headings(next_file)=3
  headings(next_file,2:3)=(/'eel/Im','eel/Re'/)
  headings(next_file,1)="E [eV]"
@@ -171,17 +226,19 @@ subroutine RT_output(what,VALUEs,TIME,E)
  !
  do i_order=0,max_X_order,1
    !
-   if (open_files.and..not.file_already_opened(next_file)) &
-&     file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))
-   short_file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))
-   n_headings(next_file)=3
-   headings(next_file,1)="E [eV]"
-   headings(next_file,2:3)=(/'X/Im','X/Re'/)
-   if (i_order.ne.1) then
-      n_headings(next_file)=5
-      headings(next_file,2:5)=(/'X/Im[cm/statV]','X/Re[cm/statV]','err(X/Im)     ','err(X/Re)     '/)
-   endif
-   next_file=next_file+1
+   do i_c=1,3
+     if (open_files.and..not.file_already_opened(next_file)) &
+&       file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))//chart_string(i_c)
+     short_file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))//chart_string(i_c)
+     n_headings(next_file)=3
+     headings(next_file,1)="E [eV]"
+     headings(next_file,2:3)=(/'X/Im','X/Re'/)
+     if (i_order.ne.1) then
+        n_headings(next_file)=5
+        headings(next_file,2:5)=(/'X/Im[cm/statV]','X/Re[cm/statV]','err(X/Im)     ','err(X/Re)     '/)
+     endif
+     next_file=next_file+1
+   enddo
    !
    if (open_files.and..not.file_already_opened(next_file)) &
 &     file_name(next_file)=trim(append_ch)//'dP_W_order_'//trim(intc(i_order))
@@ -238,7 +295,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
    !
    call set_real_printed_length( )
    !
-   return
+   goto 1
    !
  endif
  !
@@ -286,17 +343,28 @@ subroutine RT_output(what,VALUEs,TIME,E)
        data_to_dump(2:4) =real(A_vecpot%vecpot(:))
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
-     case('dynamics')
+       data_to_dump(11)=0._SP
+       do i_fp=1,n_ext_fields
+         if (allocated(Efield(i_fp)%Fluence)) then
+           data_to_dump(11)=data_to_dump(11)+real( Efield(i_fp)%Fluence(it_now))
+         endif
+       enddo
+     case('energy')
        data_to_dump(2:6) = VALUES(1:5)
-       n1=7
-       n2=6
-       if(l_NE_simulate_IP) n1=4
-       data_to_dump(n1:n1+2) = VALUES(n2:n2+2)
-       if(l_Debye_TBose_update) data_to_dump(n1+3) = Bose_Temp
-     case('YPP-eps','YPP-eels','YPP-SHG_qssin',&
-&         'YPP-X_probe_order_0','YPP-X_probe_order_1','YPP-X_probe_order_2','YPP-X_probe_order_3',&
-&         'YPP-X_probe_order_4','YPP-X_probe_order_5','YPP-X_probe_order_6','YPP-X_probe_order_7',&
-&         'YPP-X_probe_order_8','YPP-X_probe_order_9',&
+     case('dynamics')
+       data_to_dump(2:5) = VALUES(1:4)
+       if(l_elel_scatt.or.l_elph_scatt) data_to_dump(5:7) = VALUES(4:6)
+       if(l_Debye_TBose_update) data_to_dump(8) = Bose_Temp*HA2KEL
+     case('YPP-eps_along_E','YPP-eps_x','YPP-eps_y','YPP-eps_z','YPP-eels_along_E','YPP-SHG_qssin',&
+&         'YPP-X_probe_order_0_x','YPP-X_probe_order_1_x','YPP-X_probe_order_2_x','YPP-X_probe_order_3_x',&
+&         'YPP-X_probe_order_4_x','YPP-X_probe_order_5_x','YPP-X_probe_order_6_x','YPP-X_probe_order_7_x',&
+&         'YPP-X_probe_order_8_x','YPP-X_probe_order_9_x',&
+&         'YPP-X_probe_order_0_y','YPP-X_probe_order_1_y','YPP-X_probe_order_2_y','YPP-X_probe_order_3_y',&
+&         'YPP-X_probe_order_4_y','YPP-X_probe_order_5_y','YPP-X_probe_order_6_y','YPP-X_probe_order_7_y',&
+&         'YPP-X_probe_order_8_y','YPP-X_probe_order_9_y',&
+&         'YPP-X_probe_order_0_z','YPP-X_probe_order_1_z','YPP-X_probe_order_2_z','YPP-X_probe_order_3_z',&
+&         'YPP-X_probe_order_4_z','YPP-X_probe_order_5_z','YPP-X_probe_order_6_z','YPP-X_probe_order_7_z',&
+&         'YPP-X_probe_order_8_z','YPP-X_probe_order_9_z',&
 &         'YPP-dP_W_order_0','YPP-dP_W_order_1','YPP-dP_W_order_2','YPP-dP_W_order_3','YPP-dP_W_order_4',&
 &         'YPP-dP_W_order_5','YPP-dP_W_order_6','YPP-dP_W_order_7','YPP-dP_W_order_8','YPP-dP_W_order_9',&
 &         'YPP-Polarization_W')
@@ -305,8 +373,15 @@ subroutine RT_output(what,VALUEs,TIME,E)
      case('YPP-X_effective','YPP-el_dos')
        data_to_dump(1:2)=(/Time,E/)
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-2)
-     case('mean_lifetimes')
-       data_to_dump(2:n_headings(i_f)) = RT_mean_lifetimes(1:n_headings(i_f)-1)*HA2EV*1000.
+     case('mean_EPlifetimes')
+       data_to_dump(2:5) = RT_mean_lifetimes(3:6)*HA2EV*1000.
+       data_to_dump(6:7) = RT_Tfit_lifetimes(1:2)*HA2KEL
+     case('mean_EElifetimes')
+       data_to_dump(2:3) = RT_mean_lifetimes(1:2)*HA2EV*1000.
+       data_to_dump(4:5) = RT_Tfit_lifetimes(3:4)*HA2KEL
+     case('N_dN_E_conservation_factors')
+       data_to_dump(2:6)=Imp_factors(1:5)
+       !
    end select
    !
    call msg('o '//trim(short_file_name(i_f)),'',data_to_dump(1:n_headings(i_f)),USE_TABS=.TRUE.)
@@ -316,5 +391,11 @@ subroutine RT_output(what,VALUEs,TIME,E)
  enddo
  !
  call set_real_printed_length( )
+ !
+1 continue
+ !
+#if defined _TIMING
+ call timing('RT output',OPR='stop')
+#endif
  !
 end subroutine RT_output

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 D. Varsano, A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM DV
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -24,9 +26,9 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:BO2ANG
  use stderr,        ONLY:intc
- use FFT_m,         ONLY:fft_dim,fft_size
+ use FFT_m,         ONLY:fft_dim
  use D_lattice,     ONLY:a,alat
- use wave_func,     ONLY:WF_load,wf,WF_symm,WF_free,wf_ng
+ use wave_func,     ONLY:WF,WF_symm,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
@@ -42,7 +44,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &                        BSS_n_descs,BSS_description
  use electrons,     ONLY:levels,n_sp_pol,spin,n_spinor
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,    ONLY:PARALLEL_index
+ use interfaces,    ONLY:PARALLEL_index,WF_load
  use com,           ONLY:msg,error,warning,of_open_close
  use X_m,           ONLY:X_t
  use memory_m,      ONLY:mem_est
@@ -80,7 +82,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  !... Dummy arguments 
  !
- integer      :: iq,ia,i1,i2,i_l,i_spin
+ integer      :: iq,i1,i2,i_l,i_spin
  real(SP)     :: k_dot_r,r_hole_rlu(3)
  !
  type(PP_indexes) ::px
@@ -214,7 +216,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! 
  ! Loading  Wf 
  !
- if (l_exc_wf) call WF_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
+ if (l_exc_wf.or.(l_spin.and.n_spinor==2)) call WF_load(WF,wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
  !
  ! Exciton's spin (not collinear case)
  !=====================================
@@ -334,7 +336,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
      !
      ! (***) Daniele 15/7/07 rev Andrea 12/07:
      ! 
-     ! The number of cells are always odd so that the hole can
+     ! The number of cells is always odd so that the hole can
      ! be placed in the middle.
      !
      r_hole_rlu(j1)=r_hole_rlu(j1)+ncell(j1)/2*fft_dim(j1)
@@ -463,7 +465,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  call mem_est('v2plot BS_R_E')
  deallocate(BS_eh_table,BS_mat,wf_vc)
  call mem_est('BS_eh_table BS_mat wf_vc')
- call WF_free()
+ call WF_free(WF)
  !
  contains
    !

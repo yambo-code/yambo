@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 D. Varsano, M. Palummo and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): DV
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -24,13 +26,10 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:levels,n_sp_pol,spin
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
- use SC,             ONLY:Ho,E_bare,V_xc_sc,V_hartree_sc,rho_n
+ use SC,             ONLY:Ho,E_bare,V_xc_sc,V_hartree_sc,rho_n,G_lesser,RT_ibz_coo
  use memory_m,       ONLY:mem_est
-#if defined _RT
- use real_time,      ONLY:G_lesser
-#endif
- use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_COM_WF_k_INDEX
- use wave_func,      ONLY:wf
+ use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
+ use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp
  use xc_functionals, ONLY:V_xc
 #if defined _MAGNETIC
@@ -54,7 +53,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  ! Note that G_lesser here is the non-interacting one (occupations on the diagonal) only
  !
- call el_density_matrix(G_lesser,E,Xk,rho_n,1,.false.)
+ call el_density_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,Xk,rho_n,1,.false.)
  !
 #else
  !
@@ -77,7 +76,6 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  ! ... so first store -Vhartree in Ho ...
  !========================================
  !
- !
 #if defined _MAGNETIC
  !
  ! If we are using yambo_magnetic now Ho already
@@ -94,23 +92,27 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  call V_Hartree(rho_n,V_hartree_sc)
  !
  V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
- !
+ ! 
  do ik=1,QP_nk
    !
-#if defined _RT
-   if (.not.PAR_IND_WF_k%element_1D(ik)) then
-     Ho(:,:,ik,:)  =cZERO
-     cycle
-   endif
-#endif
-   !
-   call V_real_space_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),wf)
+   ! Add bare energies ... 
+   !=======================
    !
    do ib=1,QP_nb
+     if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
      do i_spin=1,n_sp_pol
-       Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) + E_bare(ib,ik,i_spin)
+       Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) + E_bare(ib,ik,i_spin)  
      enddo
    enddo
+   !
+#if defined _RT
+   if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+#endif
+   !
+   ! ... then remove Vh[rho_0] 
+   !===========================
+   !
+   call V_real_space_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),WF)
    !
    ! ... then remove Vxc[rho_0] also
    !=================================
@@ -122,8 +124,6 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  deallocate(QP_Vxc)
  call mem_est("QP_Vxc")
  !
-#if defined _RT
- call PP_redux_wait(Ho,COMM=PAR_COM_WF_k_INDEX%COMM)
-#endif
+ call PP_redux_wait(Ho)
  !
 end subroutine SC_bare_Hamiltonian

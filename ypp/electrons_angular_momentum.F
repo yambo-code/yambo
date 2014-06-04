@@ -1,6 +1,8 @@
 ! 
-! Copyright (C) 2000-2013 A. Marini, D. Sangalli and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -34,8 +36,8 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
 &                         MAG_gauge,load_cc,free_cc,x
  use FFT_m,          ONLY:fft_size
  use D_lattice,      ONLY:a
- use wave_func,      ONLY:wf,wf_x,wf_y,wf_z,wf_state,WF_load, &
-&                         WF_free,WF_derivative_free
+ use interfaces,     ONLY:WF_load
+ use wave_func,      ONLY:WF,wf_x,wf_y,wf_z,WF_derivative_free
  use SC,             ONLY:load_SC_components
  use electrons,      ONLY:n_sp_pol
  use LIVE_t,         ONLY:live_timing
@@ -148,7 +150,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
    !
    ! First wf_derivative (important)
    call WF_derivative(nband_angular,(/ik,ik/),do_derivative)
-   call WF_load(0,1,nband_angular,(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
+   call WF_load(WF,0,1,nband_angular,(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
    !
    if(ik==nkpt_angular(1)) then
      if(.not.MAG_landau) call live_timing("ypp: L",nkpt_tot*n_sp_pol*nband_tot)
@@ -157,7 +159,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
    !
    do i_spin=1,n_sp_pol
      do ib=nband_angular(1),nband_angular(2)
-       ifft=wf_state(ib,ik,i_spin)
+       ifft=WF%index(ib,ik,i_spin)
        if(i_spin==2.and..not.MAG_pauli) cycle
        !
        ! Li =(r x p)_i for i=x,y,z
@@ -171,21 +173,21 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
          ! Mi = [r x (p + 1/c*A)]_i = Li +1/c*(r x A)_i for i=x,y,z
          ! These are the mechanicals momenta and are gauge independent
          if(angular_dir(1)) M_tmp(1,:)=L_tmp(1,:)+1./SPEED_OF_LIGHT*(x(:,2)*A_magn_z(:)- &
-&                             x(:,3)*A_magn_y(:))*wf(:,ifft)
+&                             x(:,3)*A_magn_y(:))*WF%c(:,ifft)
          if(angular_dir(2)) M_tmp(2,:)=L_tmp(2,:)+1./SPEED_OF_LIGHT*(x(:,3)*A_magn_x(:)- &
-&                             x(:,1)*A_magn_z(:))*wf(:,ifft)
+&                             x(:,1)*A_magn_z(:))*WF%c(:,ifft)
          if(angular_dir(3)) M_tmp(3,:)=L_tmp(3,:)+1./SPEED_OF_LIGHT*(x(:,1)*A_magn_y(:)- &
-&                             x(:,2)*A_magn_x(:))*wf(:,ifft)
+&                             x(:,2)*A_magn_x(:))*WF%c(:,ifft)
        endif
        !
        do i1=1,3
          if(.not.angular_dir(i1)) cycle
 #if defined _DOUBLE
-         L(i1) = zdotc(fft_size,wf(:,ifft),1,L_tmp(i1,:),1)
-         if(MAG_landau) M(i1) = zdotc(fft_size,wf(:,ifft),1,M_tmp(i1,:),1)
+         L(i1) = zdotc(fft_size,WF%c(:,ifft),1,L_tmp(i1,:),1)
+         if(MAG_landau) M(i1) = zdotc(fft_size,WF%c(:,ifft),1,M_tmp(i1,:),1)
 #else
-         L(i1) = cdotc(fft_size,wf(:,ifft),1,L_tmp(i1,:),1)
-         if(MAG_landau) M(i1) = cdotc(fft_size,wf(:,ifft),1,M_tmp(i1,:),1)
+         L(i1) = cdotc(fft_size,WF%c(:,ifft),1,L_tmp(i1,:),1)
+         if(MAG_landau) M(i1) = cdotc(fft_size,WF%c(:,ifft),1,M_tmp(i1,:),1)
 #endif
          L_tot(i1,ik)=L_tot(i1,ik)+L(i1)
          if(MAG_landau) M_tot(i1,ik)=M_tot(i1,ik)+M(i1)
@@ -221,7 +223,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
    endif
    !
    call WF_derivative_free()
-   call WF_free()
+   call WF_free(WF)
    !
  enddo
  !

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -26,11 +28,11 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use ACFDT,          ONLY:ACFDT_n_freqs,ACFDT_n_lambda,ACFDT_E_range
  use FFT_m,          ONLY:fft_size
  use frequency,      ONLY:w_samp,W_reset
- use wave_func,      ONLY:WF_load,WF_free
+ use wave_func,      ONLY:WF
  use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index
+ use interfaces,     ONLY:PARALLEL_index,WF_load
  use R_lattice,      ONLY:bz_samp,bare_qpg,nqibz
  use electrons,      ONLY:levels,nel
  use D_lattice,      ONLY:DL_vol
@@ -41,7 +43,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK
  use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
-&                         XC_LDA_X,XC_CORRELATION
+&                         XC_LDA_X,XC_CORRELATION,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional
  implicit none
  type(levels) ::Xen,En
@@ -65,7 +67,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  ! ACFDT
  !
- integer       ::iw,il
+ integer       ::iw,il,FUNCTIONAL_,KIND_
  real(SP)      ::Ex_LDA,Ec_LDA,dEc_LDA,ACFDT_EXX,ACFDT_Ec,sug_E_rng
  type(ggwinfo)    ::isc
  type(PP_indexes) ::plw
@@ -91,26 +93,31 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  call msg('s','[ACFDT] LDA Total energy')
  !
- call WF_load(0,1,(/1,Xen%nbm/),(/1,Xk%nibz/),title='-Density')
+ call WF_load(WF,0,1,(/1,Xen%nbm/),(/1,Xk%nibz/),title='-Density')
  !
  allocate(E_xc(fft_size),rho(fft_size))
  call el_density(Xen,Xk,rho,.false.)
  !
- call XC_potential_driver(Xen,Xk,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,0)
+ KIND_=XC_EXCHANGE_CORRELATION
+ FUNCTIONAL_=XC_LDA_C_KP
+ call XC_potential_driver(Xen,Xk,KIND_,FUNCTIONAL_,0)
 #if defined _DOUBLE
  dEc_LDA=ddot(fft_size,rho,1,E_xc,1)
 #else 
  dEc_LDA=sdot(fft_size,rho,1,E_xc,1)
 #endif
  !
- call XC_potential_driver(Xen,Xk,XC_EXCHANGE,XC_LDA_X,0)
+ KIND_=XC_EXCHANGE
+ FUNCTIONAL_=XC_LDA_X
+ call XC_potential_driver(Xen,Xk,KIND_,FUNCTIONAL_,0)
 #if defined _DOUBLE
  Ex_LDA=ddot(fft_size,rho,1,E_xc,1)
 #else 
  Ex_LDA=sdot(fft_size,rho,1,E_xc,1)
 #endif
  !
- call XC_potential_driver(Xen,Xk,XC_CORRELATION,WF_xc_functional,0)
+ FUNCTIONAL_=XC_CORRELATION
+ call XC_potential_driver(Xen,Xk,KIND_,WF_xc_functional,0)
 #if defined _DOUBLE
  Ec_LDA=ddot(fft_size,rho,1,E_xc,1)
 #else 
@@ -118,7 +125,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
 #endif
  !
  deallocate(E_xc,rho)
- call WF_free()
+ call WF_free(WF)
  !
  ! Correlatin Setup
  !

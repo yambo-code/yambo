@@ -1,6 +1,8 @@
 
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -50,6 +52,8 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  logical           :: l_flag
  integer           :: ID,i_err
  integer, external :: ioDB1,ioQINDX,iogrot
+ integer           :: i_err_RIM
+ integer, external :: io_RIM_E_and_k
 #if defined _YPP_ELPH
  integer, external :: ELPH_databases
 #endif
@@ -126,6 +130,12 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call section('*','K-point grid')
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
  i_err=ioQINDX(k,q,ID)
+ !
+ ! Rim energies and kpts
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
+ i_err_RIM=io_RIM_E_and_k(en,Xk,ID) 
+ !
  ! 
  ! Allocate and fill the k_pt/q_pt array for the DBs header
  !
@@ -175,9 +185,6 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (l_RT_X) call RT_driver(en,k)
  !   ======
  !
- if (l_retarded_GFs) call RT_G_retarded(en,k)
- !  ================
- !  
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -190,7 +197,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (l_flag) l_flag=.not.l_eliashberg
 #endif
 #if defined _YPP_RT
- if(.not.l_flag) l_flag=l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit
+ if(.not.l_flag) l_flag=l_RT_dos.or.l_RT_occ_Bands.or.l_RT_occ_Plot.or.l_RT_occ_Fit
 #endif
  !
  if (l_flag) call electrons_driver(Xk,Xen)

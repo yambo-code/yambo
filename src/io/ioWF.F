@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,12 +33,19 @@ integer function ioWF(ID,wf)
 &                           RD_CL_IF_END,RD_CL,io_action,&
 &                           io_elemental,io_fragmented,Fragmented_IO,write_is_on
  use fragments,        ONLY:io_fragment
+#if defined _TIMING
+ use timing_m,         ONLY:timing
+#endif
  implicit none
  integer,       intent(in) :: ID
  real(SP),      optional   :: wf(:,:,:,:)
  !
  integer                   :: ik,ib_grp,head_io
  character(schlen)         :: VAR_NAME
+ !
+#if defined _TIMING
+ call timing('io_WF',OPR='start')
+#endif
  !
  head_io=0
  select case ( count((/io_sec(ID,:)/=0/)) )
@@ -126,5 +135,9 @@ integer function ioWF(ID,wf)
  endif
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_WF',OPR='stop')
+#endif
  !
 end function ioWF

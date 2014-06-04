@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,21 +21,20 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Fluence()
+subroutine RT_Fluence(i_field)
  !
  use pars,           ONLY:SP,pi
- use com,            ONLY:msg
  use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,FS2AUT
- use real_time,      ONLY:RT_step,NE_steps,Fluence
- use fields,         ONLY:Efield,small_a,theta_function,ef_i_time,i_Pump
- use LIVE_t,         ONLY:live_timing
+ use real_time,      ONLY:RT_step,NE_steps,RT_IO_output_steps
+ use fields,         ONLY:Efield,small_a,theta_function
  !
  implicit none
+ integer      :: i_field
  ! 
  ! Work Space
  !
- integer      :: it
- real(SP)     :: I(NE_steps),T(NE_steps)
+ integer      :: it,last_it_evaluated
+ real(SP)     :: I(NE_steps),T(NE_steps),Fluence(NE_steps)
  complex(SP)  :: Field_time,E(NE_steps)
  real(SP),external :: RIntegrate
  !
@@ -41,32 +42,37 @@ subroutine RT_Fluence()
  !
  ! From RT_Ext_fields we see that
  !
- ! A'(t)=-Efield(i_Pump)%amplitude*Efield(i_Pump)%versor(:)*SPEED_OF_LIGHT * (small_a' theta + small_a theta')
+ ! A'(t)=-Efield(i_field)%amplitude*Efield(i_field)%versor(:)*SPEED_OF_LIGHT * (small_a' theta + small_a theta')
  !
  ! Thus
  ! 
- ! |E(t)|^2= Efield(i_Pump)%amplitude**2 * | small_a' theta + small_a theta' |^2
+ ! |E(t)|^2= Efield(i_field)%amplitude**2 * | small_a' theta + small_a theta' |^2
+ !
+ if ( Efield(i_field)%intensity<1.E-15_SP ) then
+   Efield(i_field)%t_final=Efield(i_field)%t_initial
+   Efield(i_field)%t_final_indx=Efield(i_field)%t_initial_indx
+   allocate(Efield(i_field)%Fluence(1) )
+   Efield(i_field)%Fluence=0._SP
+   return
+ endif
  !
  I=0._SP
+ Fluence=0._SP
+ last_it_evaluated=0
  !
- return
- !
- call live_timing('Fluence:',NE_steps-ef_i_time(i_Pump))
- !
- do it=ef_i_time(i_Pump)+1,NE_steps
+ do it=Efield(i_field)%t_initial_indx,NE_steps
    !
    T(it)=it*RT_step
    !
-   Field_time=cmplx(T(it)-ef_i_time(i_Pump)*RT_step,0._SP)
+   Field_time=cmplx(T(it)-Efield(i_field)%t_initial,0._SP)
    !
    ! I(t) = \frac{c}{8\pi} E^2(t)
    !
-   E(it)=Efield(i_Pump)%amplitude*&
-&        small_a(Field_time,Efield(i_Pump),1)*theta_function(real(Field_time),RT_step,0)+&
-&        small_a(Field_time,Efield(i_Pump),0)*theta_function(real(Field_time),RT_step,1)
+   E(it)=Efield(i_field)%amplitude*&
+&        small_a(Field_time,Efield(i_field),1)*theta_function(real(Field_time),RT_step,0)+&
+&        small_a(Field_time,Efield(i_field),0)*theta_function(real(Field_time),RT_step,1)
    !
    I(it)=SPEED_OF_LIGHT/8./pi*abs(E(it))**2.
-   !
    !
    ! From au to kW/cm^2
    !
@@ -78,24 +84,30 @@ subroutine RT_Fluence()
    T(it)=T(it)/FS2AUT ! au -> fs
    I(it)=I(it)*1.E-15_SP
    !
+   if (it>10*Efield(i_field)%damping/RT_step) cycle
+   !
+   if (mod(it,RT_IO_output_steps)/=0) cycle
+   !
    Fluence(it)=RIntegrate(I(:it),T(:it),it)
    !
-   if(it<1001) cycle
-   if(abs((Fluence(it)-Fluence(it-1000))/Fluence(it))<1.E-5) exit
+   if (last_it_evaluated>0 ) Fluence(last_it_evaluated+1:it-1)= Fluence(last_it_evaluated)
    !
-   call live_timing(steps=1)
+   last_it_evaluated=it
+   !
+   if (it<3*Efield(i_field)%damping/RT_step) cycle
+   !
+   if (abs(Fluence(it)-maxval(Fluence(:it-1)))/Fluence(it)<1.E-5) exit
    !
  enddo
  !
- call live_timing()
+ if(it>NE_steps) it=NE_steps
  !
- if ( it< (NE_steps+1) ) it=it-1000
- if ( it==(NE_steps+1) ) it=it-1
+ Efield(i_field)%t_final_indx=it
+ Efield(i_field)%t_final=(Efield(i_field)%t_final_indx-1)*RT_step
  !
- call msg('l','done ==')
- !
- call msg('r','[RT] Max Fluence           [kJ/cm^2]:',Fluence(it))
- call msg('r','     reached at time            [fs]:',T(it))
+ allocate(Efield(i_field)%Fluence( Efield(i_field)%t_final_indx ) )
+ Efield(i_field)%Fluence(:Efield(i_field)%t_final_indx)=&
+&                Fluence(:Efield(i_field)%t_final_indx)
  !
  if(it<NE_steps) Fluence(it+1:)=Fluence(it)
  !

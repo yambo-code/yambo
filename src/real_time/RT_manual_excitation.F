@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -25,9 +27,10 @@ subroutine RT_manual_excitation(E,k)
  use units,          ONLY:BO2ANG
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands
+ use fields,         ONLY:l_manual_excitation
+ use SC,             ONLY:SC_bands,RT_ibz_coo,RT_Nk_ibz
  use real_time,      ONLY:G_lesser,Eh_pumped_pair_energy,Eh_pumped_pair_width,  &
-&                         Eh_pumped_Nel
+&                         Eh_pumped_Nel,dG_lesser,G_lesser
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg
@@ -39,15 +42,21 @@ subroutine RT_manual_excitation(E,k)
  !
  ! Work Space
  !
- integer :: i1,i2,i3,ib,ik
- real(SP):: local_E_window,coeff,delta_Nel
- integer :: Pump_level(E%nb,E%nk)
+ integer :: i1,i2,i3,ib,ik,ik_rim,Pump_level(E%nb,E%nk)
+ real(SP):: local_E_window,coeff,delta_Nel,occupation,local_energy(2)
  logical :: Pumped_state(E%nb,E%nk)
  !
  ! Possibility to pump by hand one or more electrons up
  !======================================================
  !
- if (Eh_pumped_pair_energy(2)<=0._SP .or. Eh_pumped_Nel<=0._SP  ) return
+ if (.not.l_manual_excitation) return
+ !
+ ! Shift energy with respect to VBM/CBm
+ !
+ local_energy(1)=Eh_pumped_pair_energy(1)+E%E_VBM
+ local_energy(2)=Eh_pumped_pair_energy(2)+E%E_CBm
+ !
+ if (abs(Eh_pumped_pair_energy(2)-Eh_pumped_pair_energy(1))<1.E-5.and.Eh_pumped_pair_energy(1)<0.) return
  !
  delta_Nel=0._SP
  coeff=0._SP
@@ -68,9 +77,9 @@ subroutine RT_manual_excitation(E,k)
          if (Pumped_state(ib,ik)) cycle
          !
          if (i1==0) then
-           if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(1))<local_E_window) i1=ib
+           if(abs(E%E(ib,ik,1)-local_energy(1))<local_E_window) i1=ib
          else
-           if(abs(E%E(ib,ik,1)-Eh_pumped_pair_energy(2))<local_E_window) then
+           if(abs(E%E(ib,ik,1)-local_energy(2))<local_E_window) then
              if(i1==ib) cycle
              Pumped_state(i1,ik)=.TRUE.
              Pumped_state(ib,ik)=.TRUE.
@@ -103,16 +112,23 @@ subroutine RT_manual_excitation(E,k)
  do ik=1,E%nk
    do ib=SC_bands(1),SC_bands(2)
      !
-     if(.not.Pumped_state(ib,ik)) cycle
-     if(Pump_level(ib,ik)>0) G_lesser(ib,ib,ik,1)=cI*spin_occ*       &
-&                              min(1._SP,1._SP/sqrt(abs(real(Pump_level(ib,ik),SP)))/coeff)
-     if(Pump_level(ib,ik)<0) G_lesser(ib,ib,ik,1)=cI*spin_occ*(1._SP-&
-&                              min(1._SP,1._SP/sqrt(abs(real(Pump_level(ib,ik),SP)))/coeff))
+     if (.not.Pumped_state(ib,ik)) cycle
      !
-     if(Pump_level(ib,ik)>0) delta_Nel=delta_Nel-cI*G_lesser(ib,ib,ik,1)*k%weights(ik)*2._SP
+     occupation=min(1._SP,1._SP/sqrt(abs(real(Pump_level(ib,ik),SP)))/coeff)
+     !
+     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       if (Pump_level(ib,ik)>0) then
+         dG_lesser(ib,ib,ik_rim,1)= cI*spin_occ*occupation
+         delta_Nel=delta_Nel-cI*dG_lesser(ib,ib,ik_rim,1)*k%weights(ik)*2._SP/real(RT_Nk_ibz(ik))
+       else if (Pump_level(ib,ik)<0) then
+         dG_lesser(ib,ib,ik_rim,1)=-cI*spin_occ*occupation
+       endif
+     enddo
      !
    enddo   
  enddo
+ !
+ G_lesser(:,:,:,1)=G_lesser(:,:,:,1)+dG_lesser(:,:,:,1)
  !
  call msg('sr','[RT] Carrier number and density [none,cm-3]:',delta_Nel*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24)/))
  !

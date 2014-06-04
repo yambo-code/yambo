@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 M. Gruening and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): MG
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -44,11 +46,11 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table,QP_ng_Sx
  use memory_m,        ONLY:mem_est
  use SC,              ONLY:it_now,l_oep_EWeight
- use drivers,         ONLY:l_eval_collisions,l_oep_kli,l_oep_ceda
+ use drivers,         ONLY:l_use_collisions,l_oep_kli,l_oep_ceda
  use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
- use wave_func,       ONLY:wf_state,wf
+ use wave_func,       ONLY:WF
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
  !
@@ -119,13 +121,13 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
      if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+ E%Efermi(1) 
      do iv2 = 1, iv1!E%nbf
        if (l_oep_kli.and.(iv2.ne.iv1)) cycle
-       ifft=wf_state(iv1,ik,1)
-       offt=wf_state(iv2,ik,1)
+       ifft=WF%index(iv1,ik,1)
+       offt=WF%index(iv2,ik,1)
        rhotw_sum = (0._SP,0._SP)
        rhotw_sum_TR = (0._SP,0._SP)
        Prefactor = 1.0_SP
        if (iv1.ne.iv2) Prefactor = 2.0_SP
-       SigmaXC = dot_product(wf(:,ifft),U(ik,iv2,:)) 
+       SigmaXC = dot_product(WF%c(:,ifft),U(ik,iv2,:)) 
        do i1 = 1,k%nstar(ik)
          is  = k%star(ik,i1)
          l_is_TR = is>nsym/(i_time_rev+1)
@@ -133,7 +135,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
          isc%os = (/iv2,ik,is,1/)
          isc%qs = (/1,1,1/)
          call scatterBamp(isc)
-         rhotw_ds(:)=conjg(wf(fft_rot_r(is,:),ifft))*wf(fft_rot_r(is,:),offt)/EWeight
+         rhotw_ds(:)=conjg(WF%c(fft_rot_r(is,:),ifft))*WF%c(fft_rot_r(is,:),offt)/EWeight
          rhotw_ds =rhotw_ds/(rho*real(fft_size,SP)) 
          rhotw_rs = (0._SP,0._SP)
 #if defined _FFTW

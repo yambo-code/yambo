@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -47,7 +49,10 @@ subroutine K_output_file(iq,mode)
  character(2)      :: title_mode
  integer           :: iw,n_output_data
  real(SP)          :: output_data(7)
- complex(SP)       :: eels(3,BSS_n_freqs),alpha(3,BSS_n_freqs),beta(3,BSS_n_freqs)
+ complex(SP)       :: eels(3,BSS_n_freqs),alpha(3,BSS_n_freqs)
+#if defined _KERR
+ complex(SP)       :: beta(3,BSS_n_freqs)
+#endif
  logical           :: eval_eels
  !
  ! File Names 

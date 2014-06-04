@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,28 +21,39 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_Interpolation(Life,Life_SAVED)
+subroutine RT_Lifetimes_Interpolation(Life,Time,Life_SAVED,Times_SAVED)
  !
  use pars,           ONLY:SP
- use SC,             ONLY:it_now
- use real_time,      ONLY:RT_step,Life_MEM_steps,RT_dynamics_jumps
+ use real_time,      ONLY:Life_MEM_steps
  !
  implicit none
  !
- real(SP)  :: Life,Life_SAVED(Life_MEM_steps)
+ real(SP)  :: Life,Time,Life_SAVED(Life_MEM_steps),Times_SAVED(Life_MEM_steps)
  !
  ! Work Space
  !
- integer   :: it_first
- real(SP)  :: T_first,T_now,M(Life_MEM_steps-1)
+ real(SP)  :: M,Q,dT(Life_MEM_steps),dG(Life_MEM_steps),P(Life_MEM_steps),EPS,Life_SUM
+ integer   :: POL_order,i_o
  !
- it_first=int(real(it_now-1)/real(Life_MEM_steps+RT_dynamics_jumps))*(Life_MEM_steps+RT_dynamics_jumps)+1
- T_first=(it_first-1)*RT_step
- T_now=(it_now-1)*RT_step
+ Life_SUM=sum(abs(Life_SAVED))
  !
- M(1)=(4._SP*Life_SAVED(2)-3._SP*Life_SAVED(1)-Life_SAVED(3))/2._SP/RT_step
- M(2)=(Life_SAVED(3)-2._SP*Life_SAVED(2)+Life_SAVED(1))/2._SP/RT_step**2
+ if (Life_MEM_steps==3.or.Life_SUM<1.E-5) then
+   dT(2)=Times_SAVED(2)-Times_SAVED(1)
+   dG(2)=Life_SAVED(2)-Life_SAVED(1)
+   dT(3)=Times_SAVED(3)-Times_SAVED(1)
+   dG(3)=Life_SAVED(3)-Life_SAVED(1)
+   Q=(dT(3)/dT(2)*dG(2)-dG(3))/(dT(3)*(dT(2)-dT(3)))
+   M=(dG(3)-Q*(dT(3))**2)/dT(3)
+   Life=Life_SAVED(1)+M*(Time-Times_SAVED(1))+Q*(Time-Times_SAVED(1))**2
+ else
+   POL_order=2
+   EPS=0.d0
+   call pol_fit(Life_MEM_steps,Times_SAVED-Times_SAVED(1),Life_SAVED,POL_order,P(:POL_order+1),EPS,0.d0)
+   Life=0.
+   do i_o=1,POL_order+1
+     Life=Life+(Time-Times_SAVED(1))**(i_o-1)*P(i_o)
+   enddo
+ endif
  !
- Life=Life_SAVED(1)+M(1)*(T_now-T_first)+M(2)*(T_now-T_first)**2
  !
 end subroutine RT_Lifetimes_Interpolation

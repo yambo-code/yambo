@@ -1,6 +1,8 @@
 
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -202,15 +204,18 @@ module vec_operate
      !
    end function rlu_v_norm
    !
-   subroutine sort(arrin,arrout,indx)                             
+   subroutine sort(arrin,arrout,indx,indx_m1)                             
      !
      ! Sort real(dt) values from arrin into array 
-     ! arrout and give permutations in indx.
+     ! arrout and give permutations in indx, indx_m1.
      ! Content of indx is destroyed.
+     ! indx_m1: j went to   position indx_m1(j)
+     ! indx   : i came from position indx(i) 
      !
      real(SP)::  arrin(:)
-     integer,  optional::  indx(:)
      real(SP), optional::  arrout(:)
+     integer,  optional::  indx(:)
+     integer,  optional::  indx_m1(:)
      !
      ! local variables
      !
@@ -275,6 +280,7 @@ module vec_operate
      if (present(arrout)) arrout=l_arrout
      if (.not.present(arrout)) arrin=l_arrout
      if (present(indx)) indx=l_indx
+     if (present(indx_m1)) forall( i=1:n) indx_m1(l_indx(i))=i
      deallocate(l_indx,l_arrout)
    end subroutine sort
    !

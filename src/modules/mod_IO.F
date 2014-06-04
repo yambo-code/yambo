@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -45,6 +47,19 @@ module IO_m
  logical :: Fragmented_IO
  logical :: Fragmented_IO_save
  !
+ ! Global DB I/O control string
+ !
+ character(lchlen) :: DBs_IO_control_string = "none"
+ logical           :: io_DIP   =.FALSE.
+ logical           :: io_X     =.TRUE.
+ logical           :: io_WF    =.TRUE.
+ logical           :: io_HF    =.TRUE.
+ logical           :: io_COLLs =.TRUE.
+ logical           :: io_J     =.TRUE.
+ logical           :: io_OCCs  =.TRUE.
+ logical           :: io_GF    =.TRUE.
+ logical           :: io_SC    =.TRUE.
+ !
  ! Actions
  !
  integer, parameter:: RD_CL=1,OP_RD_CL=2,OP_WR_CL=3,OP_APP_WR_CL=4,OP_RD=5,OP_APP=6,&
@@ -65,7 +80,7 @@ module IO_m
  ! I/O errors
  !
  integer, parameter:: IO_NO_DATABASE=-1,IO_INCOMPATIBLE_VAR=-2,IO_GENERIC_ERROR=-3,&
-&                     IO_NO_BINDING_ERROR=-4,IO_NO_ERROR=0,IO_OUTDATED_DB=-5
+&                     IO_NO_BINDING_ERROR=-4,IO_NO_ERROR=0,IO_OUTDATED_DB=-5,IO_NOT_ALLOWED=-6
  !
  ! Units
  !
@@ -449,11 +464,16 @@ module IO_m
      !
    end function
    !
-   subroutine io_disconnect(ID)
+   subroutine io_disconnect(ID,FORCE)
      !
-     integer :: ID
+     integer           :: ID
+     logical, optional :: FORCE
      !
-     if (.not.close_is_on(ID).and.io_status(ID)>=0) return
+     if (present(FORCE)) then
+       if (.not.FORCE.and..not.close_is_on(ID).and.io_status(ID)>=0) return
+     else
+       if (.not.close_is_on(ID).and.io_status(ID)>=0) return
+     endif
      !
      if (file_is_open(io_file(ID),ID)) then
        if (io_netcdf_support(ID)) then
@@ -463,6 +483,7 @@ module IO_m
        else
          close(unit=io_unit(ID))
        endif
+       io_unit(ID)=0
      endif
      !
      if (io_resetable(ID)) call io_reset(ID)

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini, C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,122 +21,173 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Integrator,Time)
+subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
  !
  !  This subroutine perform integration using different methods
  !
- ! if(Integrator=="EULER") simple Euler's method
+ ! if(l_RT_EULER) simple Euler's method
  !
  !    y(t+dt) = y(t) + dt * f(t,y(t))
  !
- ! elseif(Integrator=="RK2")  Runge-Kutta 2nd order
+ ! else if(l_RT_RK2)  Runge-Kutta 2nd order
  !
  !    y(t+dt) = y(t) + dt * f(t+dt/2,y(t+dt/2))
  !
- ! Notice that G_old is never overwritten       
+ ! Notice that G_old is never overwritten (It is modified by the RWA)      
  ! ------------------------------------------------------------
  !
- use pars,           ONLY:SP,schlen
- use com,            ONLY:error
- use SC,             ONLY:SC_bands,SC_nbands
+ use pars,           ONLY:SP,schlen,cZERO,cONE
+ use SC,             ONLY:SC_bands,RT_nk
  use R_lattice,      ONLY:bz_samp  
- use real_time,      ONLY:EULER,RK2,EULEREXP,RK2EXP,l_NE_with_fields
+ use real_time,      ONLY:l_RT_EULER,l_RT_RK2,l_RT_EXP,l_RT_INTERPOLATE,l_RT_RWA, &
+&                         l_NE_with_fields,G_lesser_reference,RT_E_occupations,   &
+&                         RT_H_occupations,RT_delta0_occupations
  use fields,         ONLY:gauge_field
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,spin_occ
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
- character(schlen),    intent(in) :: Integrator
  type(bz_samp),        intent(in) :: k,q
  type(levels),         intent(in) :: E
  real(SP),             intent(in) :: T_step,Time
- complex(SP),          intent(in) :: G_old(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),k%nibz)
- complex(SP),       intent(inout) :: G_new(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),k%nibz)
+ complex(SP),       intent(inout) :: G_old(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),       intent(inout) :: G_new(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  type(gauge_field),    intent(in) :: A_old
  type(gauge_field), intent(inout) :: A_new
  ! 
- ! Work Space
  !
- integer     :: ik,SC_bands2_dot_nibz
- complex(SP) :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP) :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+#if defined _TIMING
+ call timing('RT integrator',OPR='start')
+#endif
  !
- SC_bands2_dot_nibz=SC_nbands**2*k%nibz
- !
- if(trim(Integrator)==EULER) then
+ if(l_RT_EULER) then
    !
-   ! G(T+dt) = G(T) - i dt *(I1(T) - I2(T))
+   call RT_evolve(T_step)
    !
-   do ik=1,k%nibz
-     call RT_build_I1_and_I2(G_old(:,:,ik),ik,I1_k,I2_k)
-     call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step)
-   enddo
+ else if (l_RT_RK2) then
    !
-   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
+   ! Evaluate @ dt/2
    !
- elseif(trim(Integrator)==EULEREXP) then
+   call RT_evolve(T_step/2._SP)
    !
-   ! G(T+dt) = U(dt) G(T) U(-dt) - i dt * Simga_relax(T)
-   ! U(t) = exp ( Ho_plus_Sigma * t)
+   if (l_NE_with_fields) call RT_propagate_fields(k,E,G_new,A_new,A_old,Time,T_step/2._SP)
    !
-   do ik=1,k%nibz
-     call RT_build_U1_and_U2(ik,I1_k,I2_k,T_step)
-     call RT_EULEREXP_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,T_step)
-   enddo
-   !
-   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
-   !
- elseif(trim(Integrator)==RK2) then
-   !
-   ! Evaluate G(t+dt/2)
-   !
-   do ik=1,k%nibz
-     call RT_build_I1_and_I2(G_old(:,:,ik),ik,I1_k,I2_k)
-     call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step/2._SP)
-   enddo
+#if defined _TIMING
+   call timing('RT integrator',OPR='stop')
+#endif
    !
    ! Recalculate I1(t+dt/2) and I2(t+dt/2) using  G(t+dt/2) 
    !
-   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step/2._SP)
-   !
    call RT_Collision(G_new,A_new,E,k,q,Time+T_step/2._SP)
    !
-   ! final step G(t+dt)=G(t) + dt * (I1(t+dt/2) - I2(t+dt/2))
+#if defined _TIMING
+   call timing('RT integrator',OPR='start')
+#endif
    !
-    do ik=1,k%nibz
-     call RT_build_I1_and_I2(G_new(:,:,ik),ik,I1_k,I2_k)
-     call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,T_step)
-   enddo
+   ! final step @ dt
    !
-   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
+   call RT_evolve(T_step)
    !
- elseif(trim(Integrator)==RK2EXP) then
-   !
-   ! Evaluate G(t+dt/2)
-   !
-   do ik=1,k%nibz
-     call RT_build_U1_and_U2(ik,I1_k,I2_k,T_step/2._SP)
-     call RT_EULEREXP_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,T_step/2._SP)
-   enddo
-   !
-   ! Recalculate I1(t+dt/2) and Ho_plus_Sigma(t+dt/2) using  G(t+dt/2) 
-   !
-   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step/2._SP)
-   !
-   call RT_Collision(G_new,A_new,E,k,q,Time+T_step/2._SP)
-   !
-   ! final step G(t+dt)= U1(t + dt) G(t) U2(t+dt) + dt * Sigma_relax(t+dt/2)
-   !
-    do ik=1,k%nibz
-     call RT_build_U1_and_U2(ik,I1_k,I2_k,T_step)
-     call RT_EULEREXP_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,T_step)
-   enddo
-   !
-   if(l_NE_with_fields) call RT_propagate_fields(A_new,A_old,Time,T_step)
-   !
- else
-   !
-   call error(" Unknown Integrator!")
-   !
- endif   
+ endif
  !
+ if (l_NE_with_fields) call RT_propagate_fields(k,E,G_new,A_new,A_old,Time,T_step)
+ !
+#if defined _TIMING
+ call timing('RT integrator',OPR='stop')
+#endif
+ !
+ contains
+   !
+   subroutine RT_evolve(dT)
+     !
+     use real_time,   ONLY:RT_apply_RWA
+     !
+     real(SP),intent(in)    :: dT
+     !
+     integer                :: ik,ib
+     complex(SP)            :: G_old_full(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     complex(SP)            :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     complex(SP)            :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     complex(SP)            :: I1_matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     !
+     if(l_RT_EXP) then
+       I1_matrix=cZERO
+       do ib=SC_bands(1),SC_bands(2)
+         I1_matrix(ib,ib)=cONE
+       enddo
+     endif
+     !
+     do ik=1,RT_nk
+       !
+       if (l_RT_RWA) call RT_apply_RWA(ik,E,Time,dT,"APPLY",G_old(:,:,ik),&
+         &                                            M2=G_lesser_reference(:,:,ik))
+       !
+       G_old_full=G_old(:,:,ik)+G_lesser_reference(:,:,ik)
+       !
+       if (l_RT_EXP) then
+         !
+         ! U(t) = exp ( Ho_plus_Sigma * t)
+         !
+         call RT_build_U1_and_U2(ik,I1_k,I2_k,dT)
+         !
+         ! G(T+dt) = U(dt) G(T) U(-dt)
+         !
+         call RT_EULEREXP_step(G_new(:,:,ik),G_old(:,:,ik),G_lesser_reference(:,:,ik),I1_k,I2_k,I1_matrix)
+         !
+       else
+         !
+         ! I1(t) = Ho_plus_Sigma*G ;  I1(t) = G*Ho_plus_Sigma
+         !
+         call RT_build_I1_and_I2(G_old_full,ik,I1_k,I2_k)
+         !
+         ! G(T+dt) = G(T) - i dt *(I1(T) - I2(T))
+         !
+         if (.not.l_RT_INTERPOLATE) call RT_EULER_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,dT)
+         if (l_RT_INTERPOLATE)      call RT_INTERPOLATED_step(G_new(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,Time,dT,.TRUE.)
+         !
+       endif
+       !
+       if (l_RT_RWA) call RT_apply_RWA(ik,E,Time,dT,"REMOVE",G_old(:,:,ik),&
+         &                  M2=G_lesser_reference(:,:,ik),M3=G_new(:,:,ik))
+       !
+       ! Dephasing and carriers relaxation step
+       ! G(T+dt) = G(T) - i dt * Simga_relax(T)
+       !
+       call RT_DEPHASING_step(G_new(:,:,ik),ik,dT)
+       !
+       ! Update the occupations:
+       !  RT_delta0_occupations are always sensitive to small changes 
+       !  for Gref~spin_occ RT_H_occ is also sensitive
+       !  for Gref~0        RT_E_occ is also sensitive
+       !
+       do ib=SC_bands(1),SC_bands(2)
+         !
+         RT_E_occupations(ib,ik)= aimag(G_new(ib,ib,ik))+            aimag(G_lesser_reference(ib,ib,ik))
+         RT_H_occupations(ib,ik)=-aimag(G_new(ib,ib,ik))+ ( spin_occ-aimag(G_lesser_reference(ib,ib,ik)) )
+         !
+         ! Symmetrization
+         !
+         G_new(ib,ib,ik)=cmplx(0._SP,aimag(G_new(ib,ib,ik)))
+         !
+         if( RT_E_occupations(ib,ik)<0._SP  .or. RT_H_occupations(ib,ik)>spin_occ ) then
+           RT_E_occupations(ib,ik)=0._SP
+           RT_H_occupations(ib,ik)=spin_occ
+           G_new(ib,ib,ik)=-cmplx(0._SP,aimag(G_lesser_reference(ib,ib,ik)))
+         endif
+         if( RT_H_occupations(ib,ik)<0._SP  .or. RT_E_occupations(ib,ik)>spin_occ) then
+           RT_E_occupations(ib,ik)=spin_occ
+           RT_H_occupations(ib,ik)=0._SP
+           G_new(ib,ib,ik)= cmplx(0._SP,spin_occ-aimag(G_lesser_reference(ib,ib,ik)))
+         endif
+         !
+         RT_delta0_occupations(ib,ik)=aimag(G_new(ib,ib,ik))
+         !
+       enddo
+       !
+     enddo
+     !
+   end subroutine RT_evolve
+   !
 end subroutine RT_Integrator

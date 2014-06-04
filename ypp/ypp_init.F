@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -35,7 +37,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  use electrons,      ONLY:n_spin,n_bands,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:what_is_running
- use QP_m,           ONLY:QP_state
 #if defined _YPP_SC
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nb
@@ -62,7 +63,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  ! Work Space
  !
- logical          ::l_QP_init
+ logical          ::l_QP_init,l_flag
  type(initdefs)   ::defs
  integer          ::i1,i2
  character(schlen)::rstr_piece(60) 
@@ -120,9 +121,11 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  OCC_T_range=0.
  OCC_deltaT=0.
  l_RealTime=.FALSE.
+ l_RT_X=.FALSE.
  l_RT_occ_Plot=.FALSE.
  l_RT_occ_Fit=.FALSE.
  l_RT_dos=.FALSE.
+ l_RT_occ_Bands=.FALSE.
  !
  ! BANDS
  !
@@ -176,6 +179,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  elph_Ef=0.
  elph_dbs_path='.'
  ph_freqs_file='none'
+ ph_modes_file='none'
  gsqF_energy_steps=1
  !
 #endif
@@ -410,6 +414,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
        !
        l_RT_X           =trim(rstr_piece(i1+1))=='X'
        l_RT_dos         =trim(rstr_piece(i1+1))=='d'
+       l_RT_occ_Bands       =trim(rstr_piece(i1+1))=='b'
        l_RT_occ_Plot    =trim(rstr_piece(i1+1))=='op'
        l_RT_occ_Fit     =trim(rstr_piece(i1+1))=='of'
        !
@@ -440,8 +445,9 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
      endif
 #if defined _YPP_RT
      if ( trim(rstr_piece(i1)) == 'RealTime') then
-       if (l_RT_X)           call initactivate(1,'RT-X')
+       if (l_RT_X)           call initactivate(1,'RT_X')
        if (l_RT_dos)         call initactivate(1,'RTdos')
+       if (l_RT_occ_Bands)       call initactivate(1,'RToccBnd')
        if (l_RT_occ_Plot)    call initactivate(1,'RToccPlot')
        if (l_RT_occ_Fit)     call initactivate(1,'RToccFit')
      endif
@@ -474,12 +480,12 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT
  l_RealTime         = runlevel_is_on('RealTime')
- l_RT_X             = runlevel_is_on('RT-X')
+ l_RT_X             = runlevel_is_on('RT_X')
  l_RT_dos           = runlevel_is_on('RTdos')
+ l_RT_occ_Bands         = runlevel_is_on('RToccBnd')
  l_RT_occ_Plot      = runlevel_is_on('RToccPlot')
  l_RT_occ_Fit       = runlevel_is_on('RToccFit')
  !
- l_retarded_GFs     = runlevel_is_on('Gret')
 #endif
 #if defined _YPP_MAGNETIC
  l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
@@ -499,6 +505,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_density  =runlevel_is_on('density').and.runlevel_is_on('electrons')
  l_mag      =runlevel_is_on('magnetization')
  l_wannier  =runlevel_is_on('wannier')
+ l_spin     =runlevel_is_on('spin')
  !
  if (.not.l_exc_wf) l_free_hole=.false.
  !
@@ -556,12 +563,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
    call initactivate(1,"TmRngeRt TmJumps DampMode DampFactor SkipJP_IO FrMinDamp RmAsymLim UseFFT")
  endif
  !
- if (l_retarded_GFs) then
-   call initactivate(1,"GFkind GFbands T_step T_window E_step E_window")
-   call QP_ctl_switch('G')
-   call initactivate(-1,"GfnFdb OCCTime")
- endif
- ! 
 #endif
  !
  ! Wannier 90 interface
@@ -570,7 +571,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (l_bzrim) call initactivate(1,"BZ_RIM_Nk cooOut OutputAlat SkipCheck NoWeights GammaRadius")
+ if (l_bzrim) call initactivate(1,"BZ_RIM_Nk cooOut OutputAlat SkipCheck BZExpand NoWeights GammaRadius")
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call QP_ctl_switch('G')
@@ -578,9 +579,11 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  endif
 #if defined _YPP_RT
  if (l_RealTime) then
-   if (l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit) call QP_ctl_switch('G')
-   if (l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit) call initactivate(1,"OCCdT OCCTime OCCTref")
-   if (l_RT_occ_Fit) call initactivate(1,"OCCnFit")
+   l_flag=l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_occ_Bands
+   if (l_flag) call QP_ctl_switch('G')
+   if (l_flag) call initactivate(1,"OCCdT OCCTime OCCTref")
+   if (l_RT_occ_Bands)    call initactivate(1,"cooIn BKpts BANDS_steps BANDS_range")
+   if (l_RT_occ_Plot) call initactivate(1,"OCCgroup")
  endif
 #endif
  !
@@ -611,7 +614,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF GkkpExpand")
+ if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF PHmodeF GkkpExpand")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EEfermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif

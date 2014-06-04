@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -114,8 +116,8 @@ module X_output
        message(3) = '# Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//') [iku]'
        message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [iku]:'
      endif
-     call msg("o eps",trim(message(1)),Q_plus_G_pt,INDENT=0)
-     call msg("o eel",trim(message(2)),Q_plus_G_pt,INDENT=0)
+     call msg("o eps_q",trim(message(1)),Q_plus_G_pt,INDENT=0)
+     call msg("o eel_q",trim(message(2)),Q_plus_G_pt,INDENT=0)
      call msg("o alpha",trim(message(3)),Q_plus_G_pt,INDENT=0)
      call msg("o fxc",trim(message(4)),Q_plus_G_pt,INDENT=0)
      call msg("o off",trim(message(5)),Q_plus_G_pt,INDENT=0)

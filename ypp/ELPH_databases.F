@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,7 +33,7 @@ integer function ELPH_databases(k,E,q)
  use R_lattice,           ONLY:bz_samp,qindx_B
  use D_lattice,           ONLY:nsym,n_atoms
  use parser_m,            ONLY:parser
- use YPP,                 ONLY:ph_freqs_file,l_gkkp_expand
+ use YPP,                 ONLY:ph_freqs_file,l_gkkp_expand,ph_modes_file
  use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
  use LIVE_t,              ONLY:live_timing
  implicit none
@@ -49,7 +51,7 @@ integer function ELPH_databases(k,E,q)
  !
  integer            ::idb,io_err,io_elph_err,ID,nDBs_disk
  integer, external  ::ioELPH 
- logical            ::use_ext_ph_freqs,abinit_DB
+ logical            ::use_ext_ph_freqs,use_ext_ph_modes,abinit_DB
  character(schlen)  ::db_name
  !
  !... dummies 
@@ -133,6 +135,20 @@ integer function ELPH_databases(k,E,q)
  !
  if (io_elph_err==0) return
  !
+ ! External freqs & modes ?
+ !
+ use_ext_ph_freqs=.false.
+ if (file_exists(trim(ph_freqs_file))) then
+   call msg('s',"Phonon frequencies (re)read from: "//trim(ph_freqs_file))
+   use_ext_ph_freqs=.true.
+ endif
+ !
+ use_ext_ph_modes=.false.
+ if (file_exists(trim(ph_modes_file))) then
+   call msg('s',"Phonon modes (re)read from: "//trim(ph_modes_file))
+   use_ext_ph_modes=.true.
+ endif
+ !
  ! Allocation...
  !
  call elph_global_alloc('gkkp')
@@ -162,10 +178,10 @@ integer function ELPH_databases(k,E,q)
  ! phonon frequencies read from the s.dbph* files. In this way I can, for example, 
  ! use ph freqs obtained via interpolation (q2r, matdyn ...).
  ! 
- use_ext_ph_freqs=.false.
- if (file_exists(trim(ph_freqs_file))) then
-   call msg('s',"Phonon frequencies (re)read from: "//trim(ph_freqs_file))
-   use_ext_ph_freqs=.true.
+ if (use_ext_ph_modes) then
+   open(unit=98,file=trim(ph_modes_file))
+   read(98,*)
+   read(98,*)
  endif
  !
  call live_timing('ELPH databases (WRITE)',nDBs_disk,SERIAL=.true.)
@@ -225,6 +241,9 @@ integer function ELPH_databases(k,E,q)
  enddo
  call live_timing()
  !
+ if (use_ext_ph_freqs) close(99)
+ if (use_ext_ph_modes) close(98)
+ !
  call msg("s",':: Modes           :',ph_modes)
  call msg("s",':: Bands range     :',elph_nb)
  !
@@ -277,7 +296,8 @@ integer function ELPH_databases(k,E,q)
    !
    integer           :: ID,io_err,type_
    character(schlen) :: db_name
-   real(SP)          :: dVRY2Ha,ph_q_disk(3),ph_q(3),K_(3,k%nbz)
+   character(1)      :: ws_ch(2)
+   real(SP)          :: dVRY2Ha,ph_q_disk(3),ph_q(3),K_(3,k%nbz),w_vec_pot(6),pol_vec_norm
    real(DP)          :: K_DP(3,k%nbz),alat_DP,Q_DP(3),Ek(n_bands),&
 &                       Ek_p_q(n_bands),GS_E_k_shift
    real(DP),    allocatable :: ph_freqs_sq_disk(:)
@@ -285,7 +305,7 @@ integer function ELPH_databases(k,E,q)
    !
    ! K Table
    !
-   integer           :: i1,ik,k_found(k%nbz),k2k_tab(k%nbz),ikbz_rot,iq_check
+   integer           :: i1,ic,ik,k_found(k%nbz),k2k_tab(k%nbz),ikbz_rot,iq_check
    integer           :: nsmall,small(nsym)
    !
    ELPH_databases_io=-1
@@ -368,9 +388,10 @@ integer function ELPH_databases(k,E,q)
      if (k2k_tab(i1)==0) ELPH_databases_io=-2
    enddo
    !
-   ! Phonon Frequencies
+   ! Phonon Frequencies & Modes
    !
    allocate(ph_freqs_sq_disk(ph_modes))
+   allocate(pol_vec(ph_modes,n_atoms,3))
    !
    ! GS energies are in Rydbergs(PW)/Hartree(Abinit). Here we have the phonon frequencies square
    !
@@ -400,7 +421,8 @@ integer function ELPH_databases(k,E,q)
        read(99,*) ph_q 
      enddo
      read(99,*) ph_q 
-     if (.not.v_is_zero(ph_q(:)-real(Q_DP(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_freqs_file))
+     if (.not.v_is_zero(ph_q(:)-real(Q_DP(:)),zero_=k_iku_zero).and.&
+&        .not.v_is_zero(ph_q(:)+real(Q_DP(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_freqs_file))
      do i1=1,ph_modes,6
        read(99,*) ph_freqs_sq(iq,i1:min(i1+5,ph_modes))
      enddo
@@ -412,13 +434,29 @@ integer function ELPH_databases(k,E,q)
        if (.not.abinit_DB)  ph_freqs_sq(iq,il)=ph_freqs_sq(iq,il)/4._SP
      enddo
    endif
+   if (use_ext_ph_modes) then
+     read(98, *) ws_ch(1),ws_ch(2),ph_q 
+     if (.not.v_is_zero(ph_q(:)-real(Q_DP(:)),zero_=k_iku_zero).and.&
+&        .not.v_is_zero(ph_q(:)+real(Q_DP(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_modes_file))
+     read(98,*)
+     do i1=1,ph_modes
+       read(98,*) 
+       do ia=1,n_atoms
+         read(98,*) ws_ch(1),w_vec_pot
+         forall(ic=1:3) pol_vector(i1,ia,ic)=cmplx(w_vec_pot(2*(ic-1)+1),w_vec_pot(2*ic),SP)
+       enddo
+     enddo
+     read(98,*)
+     read(98,*)
+     read(98,*)
+   endif
    !
    elph_gkkp=(0._SP,0._SP)
    elph_DW  =(0._SP,0._SP)
    ! 
    ! ELPH_gkkp 
    !
-   allocate(gkkp_disk(elph_nb,elph_nb,ph_modes),pol_vec(ph_modes,n_atoms,3))
+   allocate(gkkp_disk(elph_nb,elph_nb,ph_modes))
    !
    ! Reading
    !
@@ -448,7 +486,24 @@ integer function ELPH_databases(k,E,q)
      read (io_unit(ID)) gkkp_disk
      read (io_unit(ID)) pol_vec
      !
-     if (ik==1) pol_vector=pol_vec
+     if (ik==1.and..not.use_ext_ph_modes) pol_vector=pol_vec
+     !
+     !DEBUG>
+     !if (ik==1) then
+     !  write (*,'(a,i3)') 'q=',iabs(idb_)
+     !  do il=1,ph_modes
+     !    pol_vec_norm=0._SP
+     !    do ia=1,n_atoms
+     !      do ic=1,3
+     !        pol_vec_norm=pol_vec_norm+conjg(pol_vec(il,ia,ic))*pol_vec(il,ia,ic)
+     !      enddo
+     !      write (*,'(a,i2,6f10.6)') 'Matd file ia',ia,pol_vector(il,ia,:)/159.25556471558120362737
+     !      write (*,'(a,i2,6f10.6)') 'DBPH file ia',ia,pol_vec(il,ia,:)
+     !    enddo
+     !    write (*,'(a,i3,a,f9.6)') 'mode=',il,' norm=',pol_vec_norm
+     !  enddo
+     !endif
+     !DEBUG<
      !
      if (idb==1) read (io_unit(ID)) grad_at_gamma(k2k_tab(ik),:,:,:,:)
      !

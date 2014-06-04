@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -33,8 +35,7 @@ subroutine K_eps_interpolate(nW,W,err)
  !
  integer, parameter :: order_max=3,n_pts_max=5
  integer    ::iw,iw_fit,n_pts,order,i1
- real(SP)   ::r_fit_pt(n_pts_max)
- real(SP)   ::EPS,Dy(n_pts_max),Dx(n_pts_max),Pol_coeff(order_max+1)
+ real(SP)   ::r_fit_pt(n_pts_max),EPS,Dy(n_pts_max),Dx(n_pts_max),Pol_coeff(order_max+1)
  !
  w_loop: do iw=1,nW
    if (err(iw)/=0) then

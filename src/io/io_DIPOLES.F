@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -28,9 +30,13 @@ integer function io_DIPOLES(X,Xen,ID)
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_fragmented,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
-&                        RD_CL_IF_END,RD_CL,io_action
+&                        RD_CL_IF_END,RD_CL,io_action,&
+&                        IO_NOT_ALLOWED,io_DIP
  use fragments,     ONLY:io_fragment
  use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_nibz
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  !
  implicit none
  type(X_t)   ::X
@@ -43,6 +49,16 @@ integer function io_DIPOLES(X,Xen,ID)
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  real(SP),allocatable :: DIP_iR_disk(:,:,:)
+ !
+ if (.not.io_DIP) then
+   io_DIPOLES=IO_NOT_ALLOWED
+   call io_disconnect(ID,FORCE=.TRUE.)
+   return
+ endif
+ !
+#if defined _TIMING
+ call timing('io_DIPOLES',OPR='start')
+#endif
  !
  io_DIPOLES=io_connect(desc='dipoles',type=2,ID=ID)
  if (io_DIPOLES/=0) goto 1
@@ -104,5 +120,9 @@ integer function io_DIPOLES(X,Xen,ID)
  deallocate(DIP_iR_disk)
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ if (io_DIP) call timing('io_DIPOLES',OPR='stop')
+#endif
  !
 end function

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -25,36 +27,61 @@ module interfaces
  !
  interface
    !
-   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET,SERIAL)
+   integer function io_COLLISIONS(i_qp,ID,COLL)
+     use collision,  ONLY:COLLISIONS_element
+     integer, intent(inout)             ::ID
+     integer, intent(in)                ::i_qp
+     type(COLLISIONS_element), optional :: COLL
+   end function
+   !
+   subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&
+&                     spins_to_load,space,title,impose_free_and_alloc,force_WFo)
+     use wave_func,       ONLY:WAVEs
+     integer :: iG_max,iGo_max,bands_to_load(2),kpts_to_load(2)
+     type(WAVEs)           :: WF
+     integer,     optional :: spins_to_load(2)
+     character(*),optional :: space
+     character(*),optional :: title
+     logical     ,optional :: impose_free_and_alloc
+     logical     ,optional :: force_WFo
+   end subroutine
+   !
+   subroutine PARALLEL_WF_index(COMM)
+     use parallel_m,      ONLY:MPI_comm
+     type(MPI_comm), optional :: COMM
+   end subroutine
+   !
+   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      use X_m,           ONLY:X_t
      use electrons,     ONLY:levels
      use R_lattice,     ONLY:bz_samp
+     use plasma,        ONLY:plasma_gas
      implicit none
-     type(levels)            ::E
-     type(bz_samp)           ::Xk,q
-     character(*)            ::ENVIRONMENT
-     type(X_t),      optional::X
-     logical,        optional::RESET
-     logical,        optional::SERIAL
+     type(levels)             ::E
+     type(bz_samp)            ::Xk,q
+     character(*)             ::ENVIRONMENT
+     type(X_t),       optional::X
+     logical,         optional::RESET
    end subroutine
    !
-   subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU,CHAIN)
+   subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU)
      character(*)          :: WHAT
      character(*),optional :: ENVIRONMENT
-     integer,     optional :: LOADED,TOTAL,NCPU,CHAIN
+     integer,     optional :: LOADED,TOTAL,NCPU
    end subroutine
    !
-   subroutine PARALLEL_WF_distribute(NB,NK,B_index,Bp_index,K_index,QP_index,CLEAN_UP)
+   subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Plasma_index,Bm_index,CLEAN_UP)
      !
      use parallel_m,      ONLY:PP_indexes
      !
      implicit none
      !
-     integer, intent(in)           :: NB,NK
      type(PP_indexes),    optional :: K_index
      type(PP_indexes),    optional :: B_index
      type(PP_indexes),    optional :: Bp_index
      type(PP_indexes),    optional :: QP_index
+     type(PP_indexes),    optional :: Plasma_index
+     type(PP_indexes),    optional :: Bm_index
      logical, intent(in), optional :: CLEAN_UP
      !
    end subroutine 

@@ -1,6 +1,8 @@
 ! 
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -23,15 +25,17 @@ subroutine electrons_driver(Xk,Xen)
  !
  use pars,           ONLY:SP,lchlen
  Use stderr,         ONLY:intc
- use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state
+ use wave_func,      ONLY:WF,wf_ng
  use FFT_m,          ONLY:fft_size,fft_dim
- use R_lattice,      ONLY:bz_samp,nkibz
- use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
+ use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:i_time_rev
+ use com,            ONLY:error
+ use electrons,      ONLY:levels,n_spinor,spin,n_sp_pol
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
-&                         plot_title,l_dos,l_RT_dos,&
-&                         l_bands,BANDS_range,l_RT_occ_Plot,l_RT_occ_Fit
+&                         plot_title,l_dos,l_RT_dos,l_RT_occ_Bands,&
+&                         l_bands,BANDS_range
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -41,16 +45,21 @@ subroutine electrons_driver(Xk,Xen)
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,DUMP
  use SC,             ONLY:V_mean,SC_bands,SC_fft_size
  use R_lattice,      ONLY:qindx_S
- use com,            ONLY:error
+#endif
+#if defined _YPP_RT
+ use YPP,            ONLY:l_RT_occ_Plot,l_RT_occ_Fit
 #endif
 #if defined _YPP_ELPH
  use YPP,            ONLY:elph_residual_treshold
  use ELPH,           ONLY:elph_Ham_bands
  use com,            ONLY:jobstr,file_exists
+ use R_lattice,      ONLY:nkibz
 #endif
 #if defined _YPP_MAGNETIC
  use YPP,            ONLY:l_angular_momentum,l_position
 #endif
+ use interfaces,     ONLY:WF_load
+ !
  implicit none
  !
  type(bz_samp) ::Xk
@@ -59,9 +68,13 @@ subroutine electrons_driver(Xk,Xen)
  ! Work Space
  !
  real(SP), allocatable :: el_den(:)
- integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref,iq_ibz,iq_s
- logical               :: flag,l_polaronic_wf
+ integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_wfp,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
+ logical               :: flag
  character(lchlen)     :: ch_ws(2)
+#if defined _YPP_ELPH
+ integer               :: iq_s,iq_ibz
+ logical               :: l_polaronic_wf
+#endif
 #if defined _YPP_SC
  integer               :: ID,io_V
  integer, external     :: io_SC_components
@@ -90,7 +103,7 @@ subroutine electrons_driver(Xk,Xen)
  if (.not.flag) flag=l_mean_potential
 #endif
 #if defined _YPP_RT 
- if (.not.flag) flag=any((/l_RT_dos,l_RT_occ_Plot,l_RT_occ_Fit/))
+ if (.not.flag) flag=any((/l_RT_dos,l_RT_occ_Bands,l_RT_occ_Plot,l_RT_occ_Fit/))
 #endif
  !
  if (.not.flag) return
@@ -111,7 +124,7 @@ subroutine electrons_driver(Xk,Xen)
  if (.not.flag) flag=l_mean_potential
 #endif
  !
- if (l_bands) nb_to_load=BANDS_range
+ if (l_bands.or.l_RT_occ_Bands) nb_to_load=BANDS_range
  !
  if (flag) then
    call QP_state_table_setup(Xen)
@@ -144,7 +157,7 @@ subroutine electrons_driver(Xk,Xen)
 #endif
  !
  if(flag) then
-   call WF_load(wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
+   call WF_load(WF,wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
    nr=fft_dim
    allocate(v2plot(fft_size))
 #if defined _YPP_ELPH
@@ -177,7 +190,10 @@ subroutine electrons_driver(Xk,Xen)
  ! BANDS interpolation
  !======================
  !
- if(l_bands) call electrons_bands(Xk,Xen)
+ if(l_bands.or.l_RT_occ_Bands) then
+   if ( i_time_rev==1) call error('Bands interpolation does not work with T-rev symmetry')
+   call electrons_bands(Xk,Xen)
+ endif
  !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
  !==============================================================================
@@ -229,9 +245,9 @@ subroutine electrons_driver(Xk,Xen)
          !
          if (il==0) then
            !
-           i_wf=wf_state(ib,ik,1)
+           i_wf=WF%index(ib,ik,1)
            !
-           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+wf(ir,i_wf)
+           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+WF%c(ir,i_wf)
            !
          else
            !
@@ -291,10 +307,12 @@ subroutine electrons_driver(Xk,Xen)
    if (l_mean_potential) call section('*','Mean Potential Plot')
 #endif
    !
-   if (n_spinor==2) then
+#if defined _YPP_SC
+   if (n_spinor==2.and.l_mean_potential) then
      call warning ('Non collinear spin support still not implemented')
      goto 1
    endif
+#endif
    !
    i_qp=1
    !
@@ -321,7 +339,8 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_SC
      if (.not.l_mean_potential) then
 #endif
-       i_wf=wf_state(ib,ik,i_spin)
+       i_wf=WF%index(ib,ik,i_spin)
+       if (n_spinor==2) i_wfp=WF%index(ib,ik,2)
 #if defined _YPP_SC
      endif
 #endif
@@ -336,7 +355,8 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_SC
      if (.not.l_mean_potential) then 
 #endif
-       forall(ir=1:fft_size) v2plot(ir)=real( wf(ir,i_wf)*conjg( wf(ir,i_wf) ) )
+       forall(ir=1:fft_size) v2plot(ir)=real( WF%c(ir,i_wf)*conjg( WF%c(ir,i_wf) ) )
+       if (n_spinor==2) forall(ir=1:fft_size) v2plot(ir)=v2plot(ir) + real( WF%c(ir,i_wfp)*conjg( WF%c(ir,i_wfp) ) )
 #if defined _YPP_SC
      endif
 #endif
@@ -347,7 +367,7 @@ subroutine electrons_driver(Xk,Xen)
        cycle
      else
        !
-       if (n_spin==2) then
+       if (n_sp_pol==2) then
          if (i_spin==1) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_UP_'//trim(intc(plot_dim))
          if (i_spin==2) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_DN_'//trim(intc(plot_dim))
          if (i_spin==1) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' UP'
@@ -482,7 +502,7 @@ subroutine electrons_driver(Xk,Xen)
  ! GPL_EXCLUDE_END
  !
 1 continue
- call WF_free()
+ call WF_free(WF)
  if (allocated(v2plot))   deallocate(v2plot)
  if (allocated(QP_table)) deallocate(QP_table,QP_state)
  if (allocated(magn))     deallocate(magn)

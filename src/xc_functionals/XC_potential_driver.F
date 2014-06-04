@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 M. Gruning and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): MG
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,23 +21,31 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
+subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION)
  !
  ! Wrapper for calculation of the XC potential. If available libxc,
  ! will be used instead of internal routines
  !
- use pars,          ONLY:SP,DP
+ use pars,          ONLY:SP,DP,RZERO
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
  use com,           ONLY:msg,warning
  use libxc_funcs_m, ONLY: XC_LDA_X, XC_LDA_C_PW
- use xc_functionals,ONLY:XC_EXCHANGE_CORRELATION,xc_string,&
+ use xc_functionals,ONLY:XC_EXCHANGE_CORRELATION,xc_string,XC_libxc_driver,&
 &                        XC_NOT_AVAILABLE,XC_FACTOR,current_xc_string,LIBXC_message_done
  implicit none
  type(levels), intent(in)  ::en
  type(bz_samp), intent(in) ::Xk
  integer, intent(inout)    :: KIND,FUNCTIONAL
  integer, intent(in)       :: ORDER
+ real(SP), intent(inout),optional :: EXX_FRACTION
+ !
+ ! Work space
+ !
+ real(SP) ::local_exx_fraction
+ !
+ local_exx_fraction = RZERO
+ if (present(EXX_FRACTION)) local_exx_fraction = EXX_FRACTION
  !
  ! COM
  !
@@ -58,8 +68,10 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    LIBXC_message_done=.TRUE.
  endif
  !
- call XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
+ call XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION=local_exx_fraction)
+ if (local_exx_fraction.gt.RZERO) then
+   if (present(EXX_FRACTION)) EXX_FRACTION = local_exx_fraction 
+   call msg('rsn','[xc] Hybrid functional. EXX fraction: ',EXX_FRACTION)
+ end if
  !
 end subroutine XC_potential_driver
-
-

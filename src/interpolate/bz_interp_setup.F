@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2010 C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -32,8 +34,12 @@ subroutine bz_interp_setup(Xk)
  use vec_operate,    ONLY:sort
  use matrix_operate, ONLY:m3inv
  use com,            ONLY:msg
+#if defined _RT
+ use real_time,      ONLY:RIM_BZ_coo
+#endif
  !
  implicit none
+ !
  type(bz_samp) :: Xk
  !
  !Work Space
@@ -50,7 +56,12 @@ subroutine bz_interp_setup(Xk)
  ! 
  metric=matmul(a,transpose(a))
  !
- sphere_radius=(lpfac*Xk%nibz*nsym*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
+#if defined _RT
+ if(.not.associated(Xk%pt_RIM)) sphere_radius=(lpfac*Xk%nbz              *3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
+ if(     associated(Xk%pt_RIM)) sphere_radius=(lpfac*RIM_bz_coo(Xk%nbz,2)*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
+#else
+ sphere_radius=(lpfac*Xk%nbz*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
+#endif
  !
  call m3inv(transpose(a),a_inv)
  a_inv=transpose(a_inv)
@@ -67,7 +78,6 @@ subroutine bz_interp_setup(Xk)
    int_sop(:,:,is)=nint(matmul(int_sop(:,:,is),b_inv))
    !
  enddo
-
  !
  nR_max=product(2*R_max+1)
  !

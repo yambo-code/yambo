@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -30,7 +32,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  !--------
  ! coarse_grid_N          ! Coarse grid points
  ! coarse_grid_Pt         ! Coarse grid point
- ! coarse_grid_index(ibg) ! Tells the index in the reordered (not coarse) 
+ ! coarse_grid_index(ibg) ! Tells the index in the coarse
  !                        ! grid of the ibg-th element
  !                        ! of the original (not sorted) grid
  ! ordered_grid_index(ibg)! Tells the index in the reordered (not coarse) 
@@ -46,9 +48,9 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  use memory_m   , ONLY:mem_est
  implicit none
  !
- character(*):: title
- integer     :: npts
- real(SP)    :: bg_pt(npts),cg_percentual
+ character(*),intent(in) :: title
+ integer,intent(in)      :: npts
+ real(SP),intent(in)     :: bg_pt(npts),cg_percentual
  !
  ! DEFAULT TRESHOLD
  !
@@ -63,7 +65,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  integer ,allocatable:: bg_sorted_x(:),i_vec(:)
  real(SP),allocatable:: bg_diffs(:),bg_sorted(:)
  !
- if (cg_percentual==0.or.npts==1) then
+ if (cg_percentual==0._SP .or. npts==1) then
    !
    ! Zero cg_percentual does nothing!  This is used when 
    ! the response function is calculated using an external set of
@@ -147,9 +149,10 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  forall(i1=1:npts) coarse_grid_index(i1)=i_vec( ordered_grid_index(i1) )
  deallocate(i_vec)
  !
- write (ch,'(3a)') '[',title,'-CG] R(p) Tot o/o(of R)  :'
- !
- call msg('rs',trim(ch),(/coarse_grid_N,npts,int(real(coarse_grid_N)/real(dncg)*100.)/))
+ if(.not.trim(title)=='COLL') then
+   write (ch,'(3a)') '[',title,'-CG] R(p) Tot o/o(of R)  :'
+   call msg('rs',trim(ch),(/coarse_grid_N,npts,int(real(coarse_grid_N)/real(dncg)*100.)/))
+ endif
  !
  deallocate(bg_diffs,bg_sorted,bg_sorted_x)
  !

@@ -1,6 +1,8 @@
 #
-# Copyright (C) 2000-2013 A. Marini and the YAMBO team
+#        Copyright (C) 2000-2014 the YAMBO team
 #              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -26,7 +28,7 @@ netcdf      = @dnetcdf@
 scalapack   = @dscalapack@
 precision   = @dp_cpp@
 fft         = @FFT_CPP@
-xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @openmpi_cpp@
+xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @openmpi_cpp@ @time_profile_cpp@
 debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
@@ -48,29 +50,30 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
 TARGETS  = all yambo interfaces ypp ydb
 UTILS    = changelog
 CLEANS   = clean clean_all
-PROJECTS = yambo_ph yambo_sc yambo_magnetic yambo_rt yambo_kerr yambo_surf\
+PROJECTS = yambo_ph yambo_sc yambo_rt yambo_kerr yambo_surf\
            ypp_rt ypp_ph ypp_sc ypp_magnetic ypp_surf
-BROKEN   = 
+BROKEN   = yambo_magnetic 
 DEBUG    = 
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
 INTERFCS = a2y p2y e2y c2y
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate common io wf_and_fft 
+BASIC_LIBS     = external_c modules parallel xc_functionals parser communicate common io wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
                interpolate tddft pol_function qp acfdt bse
 
-PJ_SURFLIBS   = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_ctl surf \
+PJ_SURFLIBS  = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_ctl surf \
                setup interface tddft pol_function qp acfdt bse
 
-PJ_SCLIBS          = $(MAIN_LIBS) sc 
-PJ_RTLIBS          = $(MAIN_LIBS) sc real_time
+PJ_SCLIBS    = $(MAIN_LIBS) collisions sc
+PJ_RTLIBS    = $(MAIN_LIBS) collisions sc real_time
 #
 # Interfaces
 #
 2YLIBS       = external_c modules parallel parser communicate common io bz_ops 
+E2YLIBS      = external_c parallel modules parser communicate common io bz_ops 
 #
 # YPP
 #
@@ -144,7 +147,7 @@ interfaces: libs
 	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
 	XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
-	XLIBS="$(2YLIBS)" ; $(mkx) ; fi
+	XLIBS="$(E2YLIBS)" ; $(mkx) ; fi
 ypp: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)

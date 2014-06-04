@@ -1,6 +1,8 @@
 ! 
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -19,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_repair(E,k)
+subroutine RT_occupations_repair(E)
  !
  ! Andrea April 2nd 2012
  ! 
@@ -28,7 +30,8 @@ subroutine RT_occupations_repair(E,k)
  !
  use units,          ONLY:HA2EV
  use pars,           ONLY:SP
- use SC,             ONLY:SC_bands,RT_occupations
+ use SC,             ONLY:SC_bands
+ use real_time,      ONLY:RT_E_occupations
  use QP_m,           ONLY:QP_table,QP_n_states
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin
@@ -36,7 +39,6 @@ subroutine RT_occupations_repair(E,k)
  !
  implicit none
  !
- type(bz_samp) :: k
  type(levels)  :: E
  !
  ! Work Space
@@ -48,6 +50,8 @@ subroutine RT_occupations_repair(E,k)
  !
  real(SP)              :: sym_value
  real(SP), allocatable :: Eo_sorted(:)
+ !
+ return ! skip occupations repair for the moment
  !
  if(.not.allocated(QP_table)) call QP_state_table_setup(E)
  !
@@ -82,8 +86,8 @@ subroutine RT_occupations_repair(E,k)
          if (i3==1) sym_value=sym_value+E%f(ib,ik,1)/real( n_of_el(i1) )
          if (i3==2) E%f(ib,ik,1)=sym_value
        else
-         if (i3==1) sym_value=sym_value+RT_occupations(ib,ik)/real( n_of_el(i1) )
-         if (i3==2) RT_occupations(ib,ik)=sym_value
+         if (i3==1) sym_value=sym_value+RT_E_occupations(ib,ik)/real( n_of_el(i1) )
+         if (i3==2) RT_E_occupations(ib,ik)=sym_value
        endif
      enddo
    enddo

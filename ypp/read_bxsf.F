@@ -21,14 +21,14 @@
 !
 subroutine read_bxsf(Xk,Xen)
  !
- use pars,                ONLY:SP,lchlen,schlen
+ use pars,                ONLY:SP,lchlen
  use units,               ONLY:pi,HA2EV,BO2ANG
  use R_lattice,           ONLY:bz_samp,b,k_grid,k_the_nearest
  use parser_m,            ONLY:parser
  use YPP,                 ONLY:wannier_bands, ord_dgrid_ipol
  use electrons,           ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,&
                                BZ_RIM_max_filling,BZ_RIM_nbands, &
-                               n_bands,BZ_RIM_tot_nkpts,BZ_RIM_ipol_weight,n_spin
+                               BZ_RIM_tot_nkpts,BZ_RIM_ipol_weight,n_spin
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:file_exists,msg,error
  use vec_operate,         ONLY:c2a,rlu_k2bz,k2bz,v_is_zero
@@ -47,7 +47,7 @@ subroutine read_bxsf(Xk,Xen)
  integer :: nearest_to_g
  integer :: nbands,vband ! total number of bands, highest valence
  integer :: ndim ! total number of dimensions, iterator on dimensions
- integer, external :: ioE_RIM
+ integer, external :: io_RIM_E_and_k
  integer, external :: double_k_grid
  integer :: err_dgrid
  real(SP) :: readene,deltaE
@@ -58,7 +58,6 @@ subroutine read_bxsf(Xk,Xen)
  real(SP), allocatable :: ene(:,:), &           ! ene(band, kpoint)
                           kpoints(:,:)           ! kpoints([k1x,k1y,k1z],[k2x,k2y,k2z],... )
  character(lchlen) :: dummyline
- character(schlen) :: fname
 
  real(SP) :: efermitest
 
@@ -289,7 +288,7 @@ subroutine read_bxsf(Xk,Xen)
  Xen%E_RIM(:,:RIM_k%nbz,1)=Xen%E_RIM(:,:RIM_k%nbz,1)-deltaE
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=NONE,ID=ID)
- i_err=ioE_RIM(Xen,ID)
+ i_err=io_RIM_E_and_k(Xen,Xk,ID)
  !
  ! clean up
  ! 

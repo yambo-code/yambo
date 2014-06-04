@@ -1,6 +1,8 @@
 #
-# Copyright (C) 2000-2013 A. Marini and the YAMBO team
+#        Copyright (C) 2000-2014 the YAMBO team
 #              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -44,6 +46,9 @@ if test "$libxc" = "yes" ; then LIBXC_str="X"; fi
 NETCDF_LF_str=" "
 if test "$enable_netcdf_LFS" = "yes" &&  test "$netcdf" = "yes" ; then NETCDF_LF_str="X"; fi
 
+TIME_profile_str=" "
+if test "$enable_time_profile" = "yes" ; then TIME_profile_str="X"; fi
+
 PW_str=" "
 if test "$compile_p2y" = "yes" ; then PW_str="X"; fi
 
@@ -64,9 +69,6 @@ if test "$compile_local" = "yes" ; then LOCAL_str="X"; fi
 
 SLK_str=" "
 if test "$enable_scalapack" = "yes" ; then SLK_str="X"; fi
-
-OPENMP_str=" "
-if test "$enable_openmp" = "yes" ; then OPENMP_str="X"; fi
 
 BGQ_str=" "
 if test "$enable_bluegene" = "yes" ; then BGQ_str="X"; fi
@@ -94,5 +96,6 @@ AC_SUBST(SLK_str)
 AC_SUBST(OPENMP_str)
 AC_SUBST(OPENMPI_str)
 AC_SUBST(BGQ_str)
+AC_SUBST(TIME_profile_str)
 
 ])

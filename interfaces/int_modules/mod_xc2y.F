@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 Myrta Gruning and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): MG
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -26,9 +28,10 @@ module mod_xc2y
  use xc_f90_lib_m,   ONLY:xc_f90_func_init, xc_f90_func_end, &
 &                         xc_f90_info_kind, XC_UNPOLARIZED
  use xc_functionals, ONLY:XC_FACTOR, XC_NOT_AVAILABLE, NOXC, XC_libxcID 
+ !
  implicit none
  !
- integer, parameter :: N_Abinit_XC = 28,N_PW_X = 10, N_PW_C = 13, N_PW_GX = 14, N_PW_GC = 11 
+ integer, parameter :: N_Abinit_XC = 28,N_PW_X = 10, N_PW_C = 13, N_PW_GX = 17, N_PW_GC = 13 
  !
  !  Map for ABINIT/ETSF_IO
  !
@@ -62,18 +65,18 @@ module mod_xc2y
     XC_GGA_XC_HCTH_407*XC_FACTOR,                 & !ixc= 27 
     XC_NOT_AVAILABLE/)                              !ixc= 28
  !
- ! Map for PWSCF
+ ! Map for PWSCF (note that some of the acronims were used in past versions of pw.x 
  ! 
  character(len=6),parameter,dimension(N_PW_X) :: PW_X=&  
 & (/'NOX ', 'SLA ','LDA ', 'SL1 ', 'RXC ', 'OEP ', 'HF  ', 'PB0X', 'B3LP', 'KZK '/)
  character(len=6),parameter,dimension(N_PW_C) :: PW_C=&  
 & (/ 'NOC ', 'PZ  ','LDA ', 'VWN ', 'LYP ', 'PW  ', 'WIG ', 'HL  ', 'OBZ ', &
 &    'OBW ', 'GL  ' , 'B3LP', 'KZK ' /)
- character(len=6),parameter,dimension(N_PW_GX) :: PW_GX=& 
-& (/ 'NOGX', 'B88 ', 'GGX ', 'PW91', 'PBX ', 'PBE ', 'RPB ', 'HCTH', 'OPTX',&
-&    'META', 'PB0X', 'B3LP','PSX ', 'WCX '/)
- character(len=6),parameter,dimension(N_PW_GC) :: PW_GC=&
-& (/ 'NOGC', 'P86 ', 'GGC ', 'PW91', 'BLYP', 'PBC ', 'PBE ', 'HCTH', 'META','B3LP', 'PSC '/)
+ character(len=7),parameter,dimension(N_PW_GX) :: PW_GX=& 
+& (/ 'NOGX ', 'B88  ', 'BLYP ', 'GGX  ', 'PW91 ', 'PBX  ', 'PBE  ', 'RPB  ', 'HCTH ', 'OPTX ',&
+&    'META ', 'PB0X ', 'PBE0 ', 'B3LP ', 'B3LYP', 'PSX  ', 'WCX  '/)
+ character(len=7),parameter,dimension(N_PW_GC) :: PW_GC=&
+& (/ 'NOGC ', 'P86  ', 'GGC  ', 'PW91 ', 'BLYP ', 'PBC  ', 'PBE  ','PBE0 ','HCTH ', 'META ','B3LP ', 'B3LYP', 'PSC  '/)
  ! 
  integer,parameter,dimension(N_PW_X) :: PWX2LIBXC=&
 & (/ NOXC, XC_LDA_X*XC_FACTOR, XC_LDA_X*XC_FACTOR, XC_LDA_X*XC_FACTOR+XC_LDA_C_XALPHA, XC_NOT_AVAILABLE, &
@@ -83,14 +86,14 @@ module mod_xc2y
 &    XC_LDA_C_WIGNER, XC_LDA_C_HL, XC_LDA_C_OB_PZ, XC_LDA_C_OB_PW,XC_LDA_C_GL,&
 &    NOXC, XC_NOT_AVAILABLE/)
  integer,parameter,dimension(N_PW_GX) :: PWGX2LIBXC=&
-& (/ NOXC, XC_GGA_X_B88, XC_GGA_X_PW91, XC_GGA_X_PW91, XC_GGA_X_PBE, XC_GGA_X_PBE, XC_GGA_X_PBE_R,&
-&    XC_GGA_XC_HCTH_93, XC_GGA_X_OPTX, XC_MGGA_X_TPSS, XC_HYB_GGA_XC_PBEH,&
-&    XC_HYB_GGA_XC_B3LYP, XC_GGA_X_PBE_SOL, XC_GGA_X_WC/)
+& (/ NOXC, XC_GGA_X_B88, XC_GGA_X_B88, XC_GGA_X_PW91, XC_GGA_X_PW91, XC_GGA_X_PBE, XC_GGA_X_PBE, XC_GGA_X_PBE_R,&
+&    XC_GGA_XC_HCTH_93, XC_GGA_X_OPTX, XC_MGGA_X_TPSS, XC_HYB_GGA_XC_PBEH, XC_HYB_GGA_XC_PBEH, &
+&    XC_HYB_GGA_XC_B3LYP, XC_HYB_GGA_XC_B3LYP, XC_GGA_X_PBE_SOL, XC_GGA_X_WC/)
  integer,parameter,dimension(N_PW_GC) :: PWGC2LIBXC=&
 & (/ NOXC, XC_GGA_C_P86, XC_GGA_C_PW91, XC_GGA_C_PW91, XC_GGA_C_LYP, XC_GGA_C_PBE, XC_GGA_C_PBE, NOXC,&
-&    XC_MGGA_C_TPSS, NOXC, XC_GGA_C_PBE_SOL/)
+&    NOXC, XC_MGGA_C_TPSS, NOXC, NOXC, XC_GGA_C_PBE_SOL/)
  !
- ! Note that in libxc some functional as b3lyp and hcth are defined as one xc functional 
+ ! Note that in libxc some functional as b3lyp, pbe0 and hcth are defined as one xc functional 
  ! e.g. exchange and correlation are not separable!!!
  ! Note as well that in libxc the GGA contains the whole functional, not only the corrections as in
  ! 
@@ -101,7 +104,8 @@ module mod_xc2y
    integer, intent(in),optional   :: abinit_func
    character(256), intent(in),optional :: pw_func
    !
-   integer ii
+!   LOGICAL, EXTERNAL             :: matches
+   integer ii,XC_yamboID_ 
    !
    XC_yamboID = XC_NOT_AVAILABLE 
    select case(dft_program)
@@ -119,18 +123,21 @@ module mod_xc2y
        if (.not.present(pw_func)) return
        !
        do ii=1,N_PW_GX ! I scan before the GGAs
-         if (index(pw_func,trim(PW_GX(ii))).ne.0) XC_yamboID = PWGX2LIBXC(ii)*XC_FACTOR
+        if (matches(PW_GX(ii),pw_func)) XC_yamboID = PWGX2LIBXC(ii)*XC_FACTOR
        end do
-       do ii=1,N_PW_GC
-         if (index(pw_func,trim(PW_GC(ii))).ne.0) XC_yamboID = XC_yamboID + PWGC2LIBXC(ii)
-       end do
+       if (XC_ComponentsAreSeparate(XC_yamboID)) then
+         do ii=1,N_PW_GC
+           if (matches(PW_GC(ii),pw_func)) XC_yamboID_ = PWGC2LIBXC(ii)
+         end do
+         XC_yamboID = XC_yamboID + XC_yamboID_
+       endif
        if (XC_yamboID == XC_NOT_AVAILABLE .or. XC_yamboID == NOXC) then ! Only if no GGAs or no 
                                                                         ! XC are found I scan LDA (this avoids 'double counting')
          do ii=1,N_PW_X
-           if (index(pw_func,trim(PW_X(ii))).ne.0) XC_yamboID = PWX2LIBXC(ii)
+           if (matches(PW_X(ii),pw_func)) XC_yamboID = PWX2LIBXC(ii)
          end do
          do ii=1,N_PW_C
-           if (index(pw_func,trim(PW_C(ii))).ne.0) XC_yamboID = XC_yamboID + PWC2LIBXC(ii)
+           if (matches(PW_C(ii),pw_func)) XC_yamboID = XC_yamboID + PWC2LIBXC(ii)
          end do
        end if
      case DEFAULT 
@@ -156,4 +163,50 @@ module mod_xc2y
      !
    end function XC_yamboID2kind
    !
-end module mod_xc2y
+   logical function XC_ComponentsAreSeparate(yamboID)
+     integer, intent(in) :: yamboID
+     integer ID
+     logical lcheck
+     !
+     ID=yamboID/XC_FACTOR
+     lcheck = (ID==XC_GGA_XC_HCTH_93).or.&
+             &(ID==XC_HYB_GGA_XC_PBEH).or.&
+             &(ID==XC_HYB_GGA_XC_B3LYP)
+     XC_ComponentsAreSeparate=.not.lcheck
+   end function XC_ComponentsAreSeparate
+   !
+   !-----------------------------------------------------------------------
+   FUNCTION matches( string1, string2 )  
+   !-----------------------------------------------------------------------
+     !
+     ! ... .TRUE. if string1 is contained in string2, .FALSE. otherwise
+     !
+     IMPLICIT NONE
+     !
+     CHARACTER (LEN=*), INTENT(IN) :: string1, string2
+     LOGICAL                       :: matches
+     INTEGER                       :: len1, len2, l  
+     !
+     !
+     len1 = LEN_TRIM( string1 )  
+     len2 = LEN_TRIM( string2 )  
+     !
+     DO l = 1, ( len2 - len1 + 1 )  
+       !   
+       IF ( string1(1:len1) == string2(l:(l+len1-1)) ) THEN  
+         !
+         matches = .TRUE.  
+         !
+         RETURN  
+         !
+       END IF
+       !
+     END DO
+     !
+     matches = .FALSE.
+     ! 
+     RETURN
+     !
+   END FUNCTION matches
+   !
+ end module mod_xc2y

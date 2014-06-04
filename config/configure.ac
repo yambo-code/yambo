@@ -1,6 +1,8 @@
 #
-# Copyright (C) 2000-2013 A. Marini and the YAMBO team
+#        Copyright (C) 2000-2014 the YAMBO team
 #              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -19,11 +21,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.4.0 r.2718 , yambo@yambo-code.org)
-SVERSION="3"
-SPATCHLEVEL="4"
+AC_INIT(Yambo, 4.0.0 r.3401 , yambo@yambo-code.org)
+SVERSION="4"
+SPATCHLEVEL="0"
 SSUBLEVEL="0"
-SREVISION="2718"
+SREVISION="3401"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -99,10 +101,10 @@ if test x"$enable_debug" = "x"; then enable_debug="yes"; fi
 AC_SUBST(enable_debug)
 # ============================================================================= 
 # KEEP SOURCE FILES 
-AC_ARG_ENABLE(keepsource, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is no.]))
+AC_ARG_ENABLE(keep-src, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is no.]))
 dp_cpp=""
 if test x"$enable_keep_src" = "x";    then enable_keep_src="no" ; fi
-if test x"$enable_keep_src" = "xyes"; then enalbe_keep_src="yes"; fi
+if test x"$enable_keep_src" = "xyes"; then enable_keep_src="yes"; fi
 AC_SUBST(enable_keep_src)
 # ============================================================================
 # DP
@@ -183,10 +185,16 @@ AC_SUBST(bluegene_cpp)
 AC_ARG_ENABLE(openmpi, AC_HELP_STRING([--enable-openmpi],[OpenMPI specific code instructions.]))
 if test x"$enable_openmpi" = "x"; then enable_openmpi="no"; fi
 openmpi_cpp=" "
-if test x"$enable_openmpi" = "xyes"; then 
+if test x"$enable_openmpi" = "xyes"; then
+ #
+ if test x"$ac_compiler_gnu" = x"yes"; then
+   OPENMPLIBS="-fopenmp -lpthread";
+ else
+   OPENMPLIBS="-openmp -lpthread";
+ fi
  openmpi_cpp="-D_OPENMPI"
+ #
 fi
-AC_SUBST(openmpi_cpp)
 # ============================================================================
 #
 # OpenMP
@@ -200,6 +208,18 @@ if test x"$enable_open_mp" = "xyes"; then
  openmp_cpp="-D_OPENMP"
 fi
 AC_SUBST(OPENMPLIBS)
+# ============================================================================
+#
+# Time Profiling (mod_timing)
+#
+AC_ARG_ENABLE(time-profile, AC_HELP_STRING([--enable-time-profile],
+              [Extended timing profile of specific sections]))
+if test x"$enable_time_profile" = "x"; then enable_time_profile="no"; fi
+time_profile_cpp=" "
+if test x"$enable_time_profile" = "xyes"; then 
+ time_profile_cpp="-D_TIMING"
+fi
+AC_SUBST(time_profile_cpp)
 # ============================================================================
 #
 # Verbose compilation
@@ -383,6 +403,7 @@ if test "$mpibuild" = "yes"; then
   PCC=""
   PCCFLAGS=""
  fi
+ AC_SUBST(openmpi_cpp)
  AC_SUBST(openmp_cpp)
  AC_SUBST(mpi_cpp)
  AC_SUBST(MPILIBS)

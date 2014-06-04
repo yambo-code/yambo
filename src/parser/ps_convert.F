@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -65,10 +67,10 @@ subroutine ps_convert(rvar,ivar,v_name)
  !
  ! check if the var is a Time variable (incompatible with energy types)
  !
- var_is_time     =trim(v_s_unit)==Time_unit
+ var_is_time     =any((/trim(v_s_unit)==Time_unit/))
  var_is_B        =trim(v_s_unit)==Bfield_unit
  var_is_E        =trim(v_s_unit)==Efield_unit
- var_is_angle    =trim(v_s_unit)==Angle_unit
+ var_is_angle    =any((/trim(v_s_unit)==Angle_unit/))
  var_is_intensity=trim(v_s_unit)==I_unit
  !
  if (ivar>=0) then

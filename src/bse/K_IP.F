@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 D. Sangalli and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -139,6 +141,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  if (iq==1) then
    !
    call Dipole_driver(Ken,Xk,X_oscillators,BSS_q0)
+ stop
    BSS_Vnl_included=X_oscillators%Vnl_included
    if(l_rpa_IP) call live_timing('Eps0',BS_K_dim)
    do i1=1,BS_K_dim

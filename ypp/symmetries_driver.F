@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 C. Attaccalite, A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -29,8 +31,9 @@ subroutine symmetries_driver(E,Xk)
  use com,                 ONLY:msg,core_io_path,more_io_path
  use R_lattice,           ONLY:bz_samp,ng_closed,ng_vec,bz_samp_reset,bz_samp_duplicate
  use D_lattice,           ONLY:nsym
- use wave_func,           ONLY:wf_ng,WF_load,WF_free
+ use wave_func,           ONLY:wf_ng,WF
  use stderr,              ONLY:intc
+ use interfaces,          ONLY:WF_load
  !
  implicit none
  !
@@ -49,7 +52,7 @@ subroutine symmetries_driver(E,Xk)
  !
  integer               :: action_kind
  !
- if(core_io_path==more_io_path) then
+ if (core_io_path==more_io_path) then
    more_io_path=trim(core_io_path)//"/FixSymm"
    call msg('s','Setting I/O path to "FixSymm"')
  endif
@@ -68,12 +71,12 @@ subroutine symmetries_driver(E,Xk)
  ! Check if the system is magnetic
  ! Magnetization must be considered to derive syms if n_spinor==2
  if(n_spinor==2) then
-   call WF_load(0,1,(/1,E%nbm/),(/1,Xk%nibz/),title='-Magn')
+   call WF_load(WF,0,1,(/1,E%nbm/),(/1,Xk%nibz/),title='-Magn')
    allocate(magn(fft_size,3))
    call el_magnetization(E,Xk)
    call msg('s','Total magnetization (x,y,z) [Bohr_magneton] :',real(Total_magn(:),SP))
    deallocate(magn)
-   call WF_free()
+   call WF_free(WF)
  endif
  !
  ! Expansion of default k-points

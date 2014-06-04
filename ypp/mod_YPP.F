@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -118,6 +120,7 @@ module YPP
  real(SP):: elph_residual_treshold = 0.
  character(schlen) :: elph_dbs_path
  character(schlen) :: ph_freqs_file
+ character(schlen) :: ph_modes_file
  !
  ! Wannier interface
  !
@@ -130,7 +133,7 @@ module YPP
  !
  ! BZ RIM
  !
- integer, parameter :: MAX_RIM_DBs=10
+ integer, parameter :: MAX_RIM_DBs=20
  integer  :: n_RIM_DBs
  integer  :: BZ_RIM_nkpts
  logical  :: l_bzrim
@@ -177,9 +180,10 @@ module YPP
  !
  logical  :: l_RealTime
  !
- ! (RT) DOS
+ ! (RT) DOS & BANDS
  !
  logical  :: l_RT_dos
+ logical  :: l_RT_occ_Bands
  !
  ! Wannier bands
  !
@@ -192,7 +196,6 @@ module YPP
  !
  logical     :: l_RT_occ_Plot
  logical     :: l_RT_occ_Fit
- integer     :: RT_n_FIT=0
  !
  ! Reduce Symmetries
  !
@@ -202,7 +205,6 @@ module YPP
  !
  ! (RT) Retarded Green's functions
  !
- logical  :: l_retarded_GFs
  integer  :: Ret_GF_bands(2)      ! Bands Range
  real(SP) :: Gr_E_step
  real(SP) :: GF_T_step

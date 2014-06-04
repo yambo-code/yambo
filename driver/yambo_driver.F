@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -30,17 +32,24 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  use drivers,       ONLY:l_ppa,l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
-&                        l_gw0,l_el_corr,l_life,l_acfdt,l_elph_Hamiltonian
+&                        l_gw0,l_elel_corr,l_life,l_acfdt
  use X_m,           ONLY:X_t
  use parallel_m,    ONLY:myid,ncpu,MPI_close
  use it_m,          ONLY:it_reset,infile
+ use IO_m,          ONLY:io_COLLs
  use QP_m,          ONLY:QP_ng_Sx
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
+#if defined _TIMING
+ use timing_m,      ONLY:timing_overview,timing_deallocate,global_list
+#endif
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
 #if defined _SURF
  use ras_module,    ONLY:lras, lreels
+#endif
+#if defined _ELPH
+ use drivers,       ONLY:l_elph_Hamiltonian
 #endif
  !
  implicit none
@@ -162,14 +171,14 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Plasmon Pole 
  !--------------
  !
- l_pp_em1=l_ppa.and. ( l_em1d.or.(l_gw0.and.l_el_corr).or.l_bse )
+ l_pp_em1=l_ppa.and.((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr).or.l_bse )
  !
  if (l_pp_em1)     i_err=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
  !
  ! Dynamical 
  !-----------
  !
- l_dyn_em1= (.not.l_ppa.and..not.l_cohsex) .and. (l_em1d.or.(l_gw0.and.l_el_corr))
+ l_dyn_em1= (.not.l_ppa.and..not.l_cohsex) .and. ((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr))
  !
  if (l_dyn_em1)    i_err=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
  !
@@ -180,8 +189,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! EXTENDED COLLISIONS (HF & COHSEX)
  !===================================
- !
-#if defined _RT 
+#if defined _SC 
  if (l_eval_collisions) call COLLISIONS_eval(en,X,k,xk,q,Xw(:2))
 #endif
  !
@@ -232,7 +240,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! GPL_EXCLUDE_END
  !
- if (l_sc_run) then
+ if (l_sc_run.and..not.(l_eval_collisions.and.io_COLLs)) then
    !
    ! SC
    !====
@@ -260,9 +268,16 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! GPL_EXCLUDE_END
  !
+#if defined _TIMING
+ !
+ ! Timing Overview
+ !=================
+ call section('*','Timing Overview')
+ call timing_overview(LIST=global_list,MAIN_NAME="yambo")
+#endif
+ !
  ! GAME OVER :(
  !==============
- !
  call section('X','Game Over & Game summary')
  !
  ! Update init defs
@@ -270,7 +285,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  i_err=init(en,q,k,X,Xw,instr,lnstr,.false.,.true.)
  !
  ! Finalize
- !
+#if defined _TIMING
+ call timing_deallocate( )
+#endif
  call it_reset(-1)
  call MPI_close
  !

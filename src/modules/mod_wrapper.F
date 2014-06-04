@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -35,6 +37,10 @@ module wrapper
    module procedure mm_cgemm,mm_c 
  end interface
  !
+ interface M_by_M_omp
+   module procedure mm_c_omp
+ end interface
+ !
  interface M_by_V 
    module procedure mv_cgemv,mv_sgemv,mv_c,mv_r
  end interface
@@ -43,10 +49,19 @@ module wrapper
    module procedure vv_saxpy,vv_caxpy,MM_caxpy
  end interface
  !
+ interface V_by_V_plus_V_omp
+   module procedure vv_saxpy_omp,vv_caxpy_omp,MM_caxpy_omp
+ end interface
+ !
  public :: V_copy
  public :: Vstar_dot_V
  public :: V_dot_V
  public :: real_V_dot_V
+ !
+ public :: V_copy_omp
+ public :: Vstar_dot_V_omp
+ public :: V_dot_V_omp
+ public :: real_V_dot_V_omp
  !
  contains
    !
@@ -78,6 +93,23 @@ module wrapper
      call CGEMM(TRANSA,TRANSB,msize,msize,msize,(1._SP,0._SP),A,msize,B,msize,(0._SP,0._SP),C,msize)
 #endif
    end subroutine mm_c
+   !
+   subroutine mm_c_omp(N,A,B,C)
+     integer,  intent(in)  :: N
+     complex(SP), intent(in)  :: A(N,N),B(N,N)
+     complex(SP), intent(out) :: C(N,N)
+     integer :: i,j,k
+!$omp parallel do default(shared), private(i,j)
+     do i=1,N
+       do j=1,N
+         C(i,j) = (0.,0.)
+         do k=1,N
+           C(i,j) = C(i,j) + A(i,k) * B(k,j)
+         enddo
+       enddo
+     enddo
+!$omp end parallel do
+   end subroutine mm_c_omp
    !
    !===================
    ! interface M_by_V 
@@ -173,6 +205,55 @@ module wrapper
 #endif
    end subroutine vv_saxpy   
    !
+   !=============================
+   ! interface V_by_V_plus_V omp
+   !=============================
+   !
+   subroutine MM_caxpy_omp(N, CA, CX,  CY )
+     complex(SP), intent(in) :: CA
+     integer,     intent(in) :: N
+     complex(SP), intent(in) :: CX(N,N)
+     complex(SP), intent(out):: CY(N,N)
+     !
+     integer :: i,j
+!$omp parallel do default(shared), private(i,j)
+     do j=1,N
+       do i=1,N
+         CY(i,j) = CY(i,j) + CA * CX(i,j)
+       enddo
+     enddo
+!$omp end parallel do
+   end subroutine MM_caxpy_omp
+   !
+   subroutine vv_caxpy_omp(N, CA, CX,  CY )
+     complex(SP), intent(in) :: CA
+     integer,     intent(in) :: N
+     complex(SP), intent(in) :: CX(*)
+     complex(SP), intent(out):: CY(*)
+     !
+     integer :: i
+!$omp parallel do default(shared), private(i)
+     do i=1,N
+        CY(i) = CY(i) + CA * CX(i)
+     enddo
+!$omp end parallel do
+   end subroutine vv_caxpy_omp
+   !
+   subroutine vv_saxpy_omp(N, CA, CX, CY )
+     real(SP),    intent(in) :: CA
+     integer,     intent(in) :: N
+     real(SP),    intent(in) :: CX(*)
+     real(SP),    intent(out):: CY(*)
+     !
+     integer :: i
+!$omp parallel do default(shared), private(i)
+     do i=1,N
+       CY(i) = CY(i) + CA * CX(i)
+     enddo
+!$omp end parallel do
+   end subroutine vv_saxpy_omp 
+
+   !
    !======
    ! COPY 
    !======
@@ -187,6 +268,25 @@ module wrapper
      call ccopy(N,CX,1,CY,1)
 #endif
    end subroutine V_copy   
+
+   !
+   !==========
+   ! COPY omp 
+   !==========
+   !
+   subroutine V_copy_omp(N,CX,CY)
+     integer,    intent(in)  :: N
+     complex(SP),intent(in)  :: CX(*)
+     complex(SP),intent(out) :: CY(*)
+     !
+     integer :: i
+!$omp parallel do default(shared), private(i)
+     do i=1,N
+       CY(i)=CX(i)
+     enddo
+!$omp end parallel do
+   end subroutine V_copy_omp   
+
    !
    !==============
    ! DOT PRODUCTS
@@ -227,5 +327,54 @@ module wrapper
      V_dot_V=CDOTU(N,CX,1,CY,1)
 #endif
    end function V_dot_V
+   !
+   !==================
+   ! DOT PRODUCTS omp
+   !==================
+   !
+   complex(SP) function Vstar_dot_V_omp(N,CX,CY)
+     integer,    intent(in) :: N
+     complex(SP),intent(in) :: CX(*),CY(*)
+     integer     :: i
+     complex(SP) :: ctmp
+     !
+     ctmp=0.0_SP
+!$omp parallel do default(shared), private(i), reduction(+:ctmp)
+     do i=1,N
+       ctmp=ctmp +conjg(CX(i))*CY(i)
+     enddo 
+!$omp end parallel do
+     Vstar_dot_V_omp=ctmp
+   end function Vstar_dot_V_omp
+   !
+   real(SP) function real_V_dot_V_omp(N,CX,CY)
+     integer, intent(in) :: N
+     real(SP),intent(in) :: CX(*),CY(*)
+     integer  :: i
+     real(SP) :: rtmp
+     !
+     rtmp=0.0_SP
+!$omp parallel do default(shared), private(i), reduction(+:rtmp)
+     do i=1,N
+       rtmp=rtmp +CX(i)*CY(i)
+     enddo 
+!$omp end parallel do
+     real_V_dot_V_omp=rtmp
+   end function real_V_dot_V_omp
+   !
+   complex(SP) function V_dot_V_omp(N,CX,CY)
+     integer,    intent(in) :: N
+     complex(SP),intent(in) :: CX(*),CY(*)
+     integer     :: i
+     complex(SP) :: ctmp
+     !
+     ctmp=0.0_SP
+!$omp parallel do default(shared), private(i), reduction(+:ctmp)
+     do i=1,N
+       ctmp=ctmp +CX(i)*CY(i)
+     enddo 
+!$omp end parallel do
+     V_dot_V_omp=ctmp
+   end function V_dot_V_omp
    !
 end module

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -37,7 +39,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_eh_en,BSE_mode,&
 &                         BSS_uses_RIM,BSS_q0
- use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
+ use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal,FXC_n_g_corr
  use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
@@ -126,8 +128,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  X_oscillators%q0=BSS_q0
  !
  call PARALLEL_global_indexes(Ken,Xk,q," ",RESET=.TRUE.,X=X_oscillators)
- call PARALLEL_global_indexes(Ken,Xk,q,"DENSITY",RESET=.FALSE.,SERIAL=.TRUE.,X=X_oscillators)
- call PARALLEL_global_indexes(Ken,Xk,q,"BSE",    RESET=.FALSE.,SERIAL=.TRUE.,X=X_oscillators)
+ !call PARALLEL_global_indexes(Ken,Xk,q,"BSE",    RESET=.FALSE.,SERIAL=.TRUE.,X=X_oscillators)
  !
  ! ... and the QP corrections
  !

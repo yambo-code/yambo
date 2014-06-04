@@ -1,4 +1,4 @@
-! 
+ 
 ! Copyright (C) 2004 WanT Group
 ! 
 ! This file is distributed under the terms of the 
@@ -8,11 +8,12 @@
 ! 
 ! <INFO>
 !
-MODULE timing_module
+MODULE timing_m
  !
- USE kinds,             ONLY : dbl
- USE mp_global,         ONLY : nproc
- USE mp,                ONLY : mp_sum
+ USE pars,          ONLY:SP,DP
+ USE com,           ONLY:error
+ USE parallel_m,    ONLY:ncpu,PP_redux_wait,mpi_comm_world
+ USE openmp,        ONLY:master_thread
  !
  IMPLICIT NONE
  PRIVATE
@@ -25,30 +26,29 @@ MODULE timing_module
  ! SUBROUTINE  timing(name[,opr])
  ! SUBROUTINE  timing_allocate(nclock_max)
  ! SUBROUTINE  timing_deallocate()
- ! SUBROUTINE  timing_overview(unit,list[,main_name])
- ! SUBROUTINE  timing_upto_now(unit)
+ ! SUBROUTINE  timing_overview(list[,main_name])
+ ! SUBROUTINE  timing_upto_now()
  ! SUBROUTINE  clock_start(obj)
  ! SUBROUTINE  clock_stop(obj)
  ! SUBROUTINE  clock_update(obj)
  ! SUBROUTINE  clock_find(list,name,found,index)
  ! </INFO>
  !
- !
- INTEGER, PARAMETER             :: nclockx = 500
+ INTEGER, PARAMETER             :: nclockx = 200
  INTEGER, PARAMETER             :: str_len = 200
  !
  TYPE clock
    CHARACTER(str_len)          :: name              ! clock name
    INTEGER                     :: call_number       ! number of runs for this clock
-   REAL(dbl)                   :: start             ! last start
-   REAL(dbl)                   :: stop              ! last stop 
-   REAL(dbl)                   :: total_time        ! total time up to now
+   REAL(DP)                    :: start             ! last start
+   REAL(DP)                    :: stop              ! last stop 
+   REAL(SP)                    :: total_time        ! total time up to now
    LOGICAL                     :: running           ! true if clock is counting
    LOGICAL                     :: alloc 
  END TYPE clock
  !     
  TYPE clock_list
-   TYPE(clock), POINTER        :: clock(:)
+   TYPE(clock), POINTER        :: clock(:) => null()
    CHARACTER(str_len)          :: name              ! list name
    INTEGER                     :: nclock            ! actual number of clocks
    INTEGER                     :: nclock_max        ! max number of clocks
@@ -56,12 +56,9 @@ MODULE timing_module
  END TYPE clock_list
  !
  TYPE(clock_list), SAVE         :: internal_list     ! internal use clock
- TYPE(clock_list), SAVE         :: global_list       ! internal use clock
+ TYPE(clock_list), SAVE         :: global_list       ! global use clock
  LOGICAL                        :: alloc = .FALSE.   ! global alloc flag
  !   
- REAL(dbl)  :: cclock 
- EXTERNAL   :: cclock
- !
  ! end of declarations
  !
  INTERFACE ASSIGNMENT(=)
@@ -90,7 +87,9 @@ MODULE timing_module
      LOGICAL                               :: found
      INTEGER                               :: index
      !
-     IF ( LEN( TRIM(name)) == 0 )  CALL errore('timing','Invalid name',1)
+     if (.not.master_thread) return
+     !
+     IF ( LEN( TRIM(name)) == 0 )  CALL error('timing: Invalid name')
      opr_ = " "
      IF ( PRESENT(opr) ) opr_ = TRIM(opr)
      !
@@ -103,8 +102,8 @@ MODULE timing_module
          opr_ = "start"
          CALL clock_allocate(TRIM(name), global_list%nclock, global_list%clock(index))
        ELSE 
-         CALL errore('timing','Clock NOT found for operation '//TRIM(opr_)//' in '&
-                     //TRIM(name),1)
+         CALL error('timing: Clock NOT found for operation '//TRIM(opr_)//' in '&
+                     //TRIM(name))
        ENDIF
      ELSE
      !
@@ -112,8 +111,8 @@ MODULE timing_module
      !
      IF ( global_list%clock(index)%running )  THEN
        IF ( PRESENT(opr) .AND. TRIM(opr_) /= "stop" .AND. TRIM(opr_) /= "STOP" )  &
-         CALL errore('timing','Operation '//TRIM(opr_)//' NOT allowed in '&
-                     //TRIM(name),1)
+         CALL error('timing: Operation '//TRIM(opr_)//' NOT allowed in '&
+                     //TRIM(name))
          opr_ = "stop"
        ELSE
          IF ( .NOT. PRESENT(opr) )  opr_ = "start"
@@ -128,7 +127,7 @@ MODULE timing_module
        CASE("stop","STOP")
          CALL clock_stop( global_list%clock(index) ) 
        CASE DEFAULT
-         CALL errore('timing','Invalid operation '//TRIM(opr_),1)
+         CALL error('timing:  Invalid operation '//TRIM(opr_))
      END SELECT
      !
    END SUBROUTINE timing
@@ -137,7 +136,7 @@ MODULE timing_module
      IMPLICIT NONE
      INTEGER,             INTENT(in)  :: nclock_max_
      !
-     IF ( nclock_max_ < 1 ) CALL errore('timing_allocate','Invalid NCLOCK_MAX',1)
+     IF ( nclock_max_ < 1 ) CALL error('timing_allocate:  Invalid NCLOCK_MAX')
      !
      ! public clocks
      !
@@ -170,12 +169,12 @@ MODULE timing_module
      CHARACTER(19)                         :: sub_name='clock_list_allocate'
      INTEGER                               :: iclock, ierr
      !
-     IF ( obj%alloc ) CALL errore(sub_name,'List already allocated',1)
-     IF ( nclock_max_ < 1 ) CALL errore(sub_name,'Invalid NCLOCK_MAX',1)
-     IF ( LEN_TRIM(name) == 0) CALL errore(sub_name,'Invalid NAME',1)
+     IF ( obj%alloc ) CALL error(sub_name//': List already allocated')
+     IF ( nclock_max_ < 1 ) CALL error(sub_name//': Invalid NCLOCK_MAX')
+     IF ( LEN_TRIM(name) == 0) CALL error(sub_name//': Invalid NAME')
      !
      ALLOCATE( obj%clock(nclock_max_), STAT=ierr )
-     IF ( ierr /= 0 ) CALL errore(sub_name,'Unable to allocate CLOCK',ABS(ierr))
+     IF ( ierr /= 0 ) CALL error(sub_name//': Unable to allocate CLOCK')
      !
      DO iclock=1,nclock_max_
        obj%clock(iclock)%alloc = .FALSE.
@@ -192,9 +191,9 @@ MODULE timing_module
      TYPE(clock_list),       INTENT(inout) :: obj    
      CHARACTER(21)                         :: sub_name='clock_list_deallocate'
      INTEGER                               :: ierr
-     IF ( .NOT. obj%alloc ) CALL errore(sub_name,'List not yet allocated',1)
+     IF ( .NOT. obj%alloc ) CALL error(sub_name//': List not yet allocated')
      DEALLOCATE( obj%clock, STAT=ierr)
-     IF ( ierr /= 0 ) CALL errore(sub_name,'Unable to deallocate CLOCK',ABS(ierr))
+     IF ( ierr /= 0 ) CALL error(sub_name//': Unable to deallocate CLOCK')
      obj%nclock = 0
      obj%nclock_max = 0
      obj%alloc=.FALSE.
@@ -206,8 +205,8 @@ MODULE timing_module
      INTEGER,               INTENT(inout) :: nclock
      TYPE(clock),           INTENT(inout) :: obj    
      !
-     IF ( obj%alloc ) CALL errore('clock_allocate','Clock already allocated',1)
-     IF ( LEN( TRIM(name)) == 0 )  CALL errore('clock_allocate','Invalid name',1)
+     IF ( obj%alloc ) CALL error('clock_allocate: Clock already allocated')
+     IF ( LEN( TRIM(name)) == 0 )  CALL error('clock_allocate:  Invalid name')
      !
      nclock = nclock + 1
      obj%name=TRIM(name)
@@ -223,7 +222,7 @@ MODULE timing_module
      IMPLICIT NONE
      TYPE(clock),    INTENT(inout) :: obj1    
      TYPE(clock),    INTENT(in)    :: obj2    
-     IF ( .NOT. obj2%alloc ) CALL errore('clock_assignment','Clock2 not allocated',1)
+     IF ( .NOT. obj2%alloc ) CALL error('clock_assignment:  Clock2 not allocated')
      obj1%name = obj2%name
      obj1%call_number = obj2%call_number
      obj1%start = obj2%start
@@ -240,8 +239,8 @@ MODULE timing_module
      LOGICAL,               INTENT(out)   :: found
      INTEGER,               INTENT(out)   :: index
      INTEGER                              :: i
-     IF ( .NOT. list%alloc ) CALL errore('clock_find','List not yet allocated',1)
-     IF ( LEN( TRIM(name)) == 0 )  CALL errore('clock_find','Invalid name',1)
+     IF ( .NOT. list%alloc ) CALL error('clock_find:  List not yet allocated')
+     IF ( LEN( TRIM(name)) == 0 )  CALL error('clock_find:  Invalid name')
      found = .FALSE.
      index = 0
      DO i=1,list%nclock
@@ -255,27 +254,34 @@ MODULE timing_module
      ! clock not found, pointing to next available clock
      !
      IF ( .NOT. found ) index = list%nclock + 1
-     IF ( index > list%nclock_max ) CALL errore('clock_find','too many clocks',index)
+     IF ( index > list%nclock_max ) CALL error('clock_find:  too many clocks')
      !
    END SUBROUTINE clock_find
    !
    SUBROUTINE clock_start(obj)
+     use LIVE_t, ONLY:cti
      IMPLICIT NONE
      TYPE(clock),            INTENT(inout) :: obj    
-     IF ( .NOT. obj%alloc  ) CALL errore('clock_start','clock not yet allocated',1)
-     obj%start = cclock()
+     IF ( .NOT. obj%alloc  ) CALL error('clock_start:  clock not yet allocated')
+     call cti(obj%start)
      obj%running = .TRUE.
      obj%call_number = obj%call_number + 1
    END SUBROUTINE clock_start
    !
    SUBROUTINE clock_stop(obj)
+     use openmp, ONLY:n_threads_now
+     use LIVE_t, ONLY:cti
      IMPLICIT NONE
      TYPE(clock),           INTENT(inout) :: obj    
-     IF ( .NOT. obj%alloc  )   CALL errore('clock_stop','Clock NOT allocated',1)
+     IF ( .NOT. obj%alloc  )   CALL error('clock_stop:  Clock NOT allocated')
      IF ( .NOT. obj%running  ) & 
-           CALL errore('clock_stop','Clock '//TRIM(obj%name)//'NOT running',1)
-     obj%stop = cclock()
-     obj%total_time = obj%total_time + obj%stop - obj%start
+           CALL error('clock_stop:  Clock '//TRIM(obj%name)//'NOT running')
+     call cti(obj%stop)
+#if defined _BLUEGENE
+     obj%total_time = obj%total_time + (real(obj%stop,SP) - real(obj%start,SP))
+#else
+     obj%total_time = obj%total_time + (real(obj%stop,SP) - real(obj%start,SP))/real(n_threads_now)
+#endif
      obj%running = .FALSE.
    END SUBROUTINE clock_stop
    !
@@ -289,17 +295,20 @@ MODULE timing_module
      ENDIF
    END SUBROUTINE clock_update
    !
-   SUBROUTINE clock_write(unit,obj,form)
+   SUBROUTINE clock_write(obj,form)
+     use pars,       ONLY:lchlen
+     use LIVE_t,     ONLY:LIVE_message
+     use com,        ONLY:msg
      IMPLICIT NONE
-     INTEGER,                INTENT(in) :: unit
      TYPE(clock),         INTENT(inout) :: obj    
      CHARACTER(*), OPTIONAL, INTENT(in) :: form
      CHARACTER(3)                       :: form_
      CHARACTER(256)                     :: str
+     CHARACTER(lchlen)                  :: local_ch
      INTEGER                            :: nhour,nmin
      INTEGER                            :: call_number
-     REAL(dbl)                          :: total_time
-     REAL(dbl)                          :: nsec
+     REAL(SP)                           :: total_time
+     REAL(SP)                           :: nsec
      !
      form_="sec"
      IF ( PRESENT(form) ) form_ = TRIM(form)
@@ -316,130 +325,117 @@ MODULE timing_module
      str(4:) = ' '
      IF ( TRIM(str) == 'mp_' .OR. TRIM(str) == 'para_' ) THEN
        !
-       CALL mp_sum( total_time )
-       total_time = total_time / REAL( nproc, dbl )
+       CALL PP_redux_wait( total_time )
+       total_time = total_time / REAL( ncpu, SP )
        !
-       CALL mp_sum( call_number )
-       call_number = NINT ( call_number / REAL( nproc, dbl ) )
+       CALL PP_redux_wait( (/call_number/) )
+       call_number = NINT ( call_number / REAL( ncpu, SP ) )
        !
      ENDIF
      !
-     IF ( ionode ) THEN
-       !
-       SELECT CASE ( TRIM(form_) ) 
-         CASE ( "hms" )
-           nhour = INT( total_time / 3600 )
-           nmin =  INT( (total_time-3600 * nhour) / 60 )
-           nsec =  INT( total_time-3600 * nhour - 60 * nmin )
-           IF ( call_number == 1 )  THEN
-             IF (nhour > 0) THEN
-               WRITE (unit, '(5x,a20," : ",3x,i2,"h",i2,"m CPU ")') &
-                           TRIM(obj%name), nhour, nmin
-             ELSEIF (nmin > 0) THEN
-               WRITE (unit, '(5x,a20," : ",i2,"m",f5.2,"s CPU ")') &
-                     TRIM(obj%name), nmin, nsec
-             ELSE
-               WRITE (unit, '(5x,a20," : ",3x,f5.2,"s CPU ")') &
-                     TRIM(obj%name), nsec
-             ENDIF
+     SELECT CASE ( TRIM(form_) ) 
+       CASE ( "hms" )
+         nhour = INT( total_time / 3600 )
+         nmin =  INT( (total_time-3600 * nhour) / 60 )
+         nsec =  INT( total_time-3600 * nhour - 60 * nmin )
+         IF ( call_number == 1 )  THEN
+           IF (nhour > 0) THEN
+             WRITE (local_ch, '(a20," : ",3x,i2,"h",i2,"m CPU ")') &
+                         TRIM(obj%name), nhour, nmin
+           ELSEIF (nmin > 0) THEN
+             WRITE (local_ch, '(a20," : ",i2,"m",f5.2,"s CPU ")') &
+                   TRIM(obj%name), nmin, nsec
            ELSE
-             IF (nhour > 0) THEN
-               WRITE(unit,'(5x,a20," : ",3x,i2,"h",i2,"m CPU (", &
-                     &  i8," calls,",f8.3," s avg)")') TRIM(obj%name), nhour, nmin, &
-                     call_number , total_time / REAL( call_number, dbl )
-             ELSEIF (nmin > 0) THEN
-               WRITE (unit, '(5x,a20," : ",i2,"m",f5.2,"s CPU (", &
-                     &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nmin, nsec, &
-                          call_number , total_time / REAL( call_number, dbl )
-             ELSE
-               WRITE (unit, '(5x,a20," : ",3x,f5.2,"s CPU (", &
-                     &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nsec, &
-                          call_number , total_time / REAL( call_number, dbl )
-             ENDIF
+             WRITE (local_ch, '(a20," : ",3x,f5.2,"s CPU ")') &
+                   TRIM(obj%name), nsec
            ENDIF
-         CASE ( "sec" )
+           if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+           call msg('r',local_ch(:100))
+         ELSE
+           IF (nhour > 0) THEN
+             WRITE(local_ch,'(a20," : ",3x,i2,"h",i2,"m CPU (", &
+                   &  i8," calls,",f8.3," s avg)")') TRIM(obj%name), nhour, nmin, &
+                   call_number , total_time / REAL( call_number, SP )
+           ELSEIF (nmin > 0) THEN
+             WRITE (local_ch, '(a20," : ",i2,"m",f5.2,"s CPU (", &
+                   &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nmin, nsec, &
+                        call_number , total_time / REAL( call_number, SP )
+           ELSE
+             WRITE (local_ch, '(a20," : ",3x,f5.2,"s CPU (", &
+                   &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nsec, &
+                        call_number , total_time / REAL( call_number, SP )
+           ENDIF
+           if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+           call msg('r',local_ch(:100))
+         ENDIF
+       CASE ( "sec" )
          !
          ! time in seconds
          !
          IF ( call_number == 1) THEN
-           WRITE (unit, '(5x,a20," :",f9.2,"s CPU")') TRIM(obj%name), total_time
+           WRITE (local_ch, '(a20," :",f9.2,"s CPU")') TRIM(obj%name), total_time
          ELSE
-           WRITE (unit, '(5x,a20," :",f9.2,"s CPU (", i8," calls,",f8.3," s avg)")')  &
+           WRITE (local_ch, '(a20," :",f9.2,"s CPU (", i8," calls,",f8.3," s avg)")')  &
                         TRIM(obj%name) , total_time , call_number ,   &
-                        total_time / REAL( call_number, dbl )
+                        total_time / REAL( call_number, SP )
          ENDIF
-         CASE DEFAULT
-           CALL errore('clock_write','Invalid FORM '//TRIM(form_),1 )
-       END SELECT
-       !
-     ENDIF
+         if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
+         call msg('r',local_ch(:100))
+       CASE DEFAULT
+         CALL error('clock_write:  Invalid FORM '//TRIM(form_) )
+     END SELECT
      !
    END SUBROUTINE clock_write        
    !
-   SUBROUTINE timing_upto_now(unit)
+   SUBROUTINE timing_upto_now()
+     use pars,    ONLY:lchlen
+     use com,     ONLY:msg
+     use stderr,  ONLY:real2ch
      IMPLICIT NONE
-     INTEGER,                INTENT(in) :: unit
-     REAL(dbl) :: total_time
+     REAL(SP) :: total_time
+     character(lchlen)::ch
      !
      IF ( .NOT. internal_list%alloc ) & 
-          CALL errore('timing_upto_now','Internal clock not allocated',1)
+          CALL error('timing_upto_now:  Internal clock not allocated')
      CALL clock_update(internal_list%clock(1))
      !
      ! recovering over pools may create deadlocks
      !
      total_time  = internal_list%clock(1)%total_time
      !
-     !CALL mp_sum( total_time )
-     !total_time = total_time / REAL( nproc, dbl )
-     !
-     IF ( ionode ) THEN
-       WRITE(unit,"(30x,'Total time spent up to now :',F9.2,' secs',/)") total_time
-     ENDIF
+     ch='            [Time-Profile]: '//trim(real2ch(internal_list%clock(1)%total_time))//'s'
+     call msg('rn',ch(:100))
      !
    END SUBROUTINE timing_upto_now    
    !
-   SUBROUTINE timing_overview(unit,list,main_name)
+   SUBROUTINE timing_overview(list,main_name)
+     use LIVE_t,     ONLY:LIVE_message
+     use com,        ONLY:msg
      IMPLICIT NONE
      TYPE(clock_list),       INTENT(in) :: list
-     INTEGER,                INTENT(in) :: unit
      CHARACTER(*),           INTENT(in) :: main_name
      TYPE(clock)                        :: tmp_clock
      CHARACTER(20)                      :: form
      INTEGER                            :: i
      !
-     IF ( .NOT. list%alloc ) CALL errore('timing_overview','list not allocated',1)
-     IF ( ionode ) THEN
-       !
-       INQUIRE(UNIT=unit,FORM=form)
-       IF ( TRIM(form) ==  "unformatted" .OR. TRIM(form) == "UNFORMATTED" ) &
-          CALL errore('Timing_overview','UNIT unformatted',1)
-       !
-     ENDIF
+     IF ( .NOT. list%alloc ) CALL error('timing_overview:  list not allocated')
      !
-     IF (ionode) WRITE(unit,"(/,3x,'<',a,' routines>')") TRIM(list%name)
+     if (ncpu>1) call LIVE_message(message='Routines: '//TRIM(list%name),lfmt="n",CPU_TIME=.FALSE.)
+     call msg('r','Routines: '//TRIM(list%name)//' (Only MASTER cpu here)')
      !
      IF ( list%nclock == 0 ) THEN
-       IF ( ionode ) WRITE(unit,"(7x,'No clock to display',/)") 
+       if (ncpu>1) call LIVE_message(message='No clock to display',lfmt="n",CPU_TIME=.FALSE.)
+       call msg('r','No clock to display')
        RETURN
      ENDIF
-     !
-     IF( ionode ) WRITE(unit,"(13x,'clock number : ',i5,/)") list%nclock
      !
      DO i=1,list%nclock 
        !
        tmp_clock = list%clock(i)
-       IF ( TRIM(list%clock(i)%name) == TRIM(main_name) .OR. &
-                 list%clock(i)%total_time >= 1000           ) THEN 
-         CALL clock_write(unit,tmp_clock,FORM="hms")
-         IF ( TRIM(list%clock(i)%name) == TRIM(main_name) .AND. ionode)  WRITE(unit,"()")
-       ELSE
-         CALL clock_write(unit,tmp_clock,FORM="sec")
-       ENDIF
+       CALL clock_write(tmp_clock,FORM="hms")
        !
      ENDDO
      !
-     IF( ionode ) WRITE(unit,"(/)")
-     !
    END SUBROUTINE timing_overview
    !
-END MODULE timing_module
+END MODULE timing_m

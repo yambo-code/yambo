@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -28,11 +30,10 @@ subroutine tddft_alda_g_space(E,k)
  use FFT_m,         ONLY:fft_size,fftw_plan,fft_dim,fft_g_table
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,G_m_G
- use wave_func,     ONLY:WF_load,WF_free
- use xc_functionals,ONLY:F_xc
+ use wave_func,     ONLY:WF
+ use xc_functionals,ONLY:F_xc,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
- use interfaces,    ONLY:PARALLEL_WF_distribute
- use parallel_m,    ONLY:PAR_IND_G_b,PAR_IND_Xk_ibz
+ use interfaces,    ONLY:WF_load
  implicit none
  type(levels) ::E
  type(bz_samp)::k
@@ -55,9 +56,7 @@ subroutine tddft_alda_g_space(E,k)
  ! WF distributed & load
  !=======================
  !
- call PARALLEL_WF_distribute(E%nbm,k%nibz,K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
- !
- call WF_load(0,1,(/1,E%nbm/),(/1,k%nibz/),title='-Rho')
+ call WF_load(WF,0,1,(/1,E%nbm/),(/1,k%nibz/),title='-Rho')
  !
  ! ALDA functional
  !
@@ -87,6 +86,6 @@ subroutine tddft_alda_g_space(E,k)
  ! Clean
  !
  deallocate(F_xc,F_xc_DP)
- call WF_free()
+ call WF_free(WF)
  !
 end subroutine

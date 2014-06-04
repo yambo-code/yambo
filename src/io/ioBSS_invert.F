@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,20 +21,22 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
+integer function ioBSS_invert(iq,n_,IO_dim,inv_err,eps,W_disk,ID)
  !
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_uses_RIM,BSS_dr,&
-&                        BSS_damp_reference
+&                        BSS_damp_reference,BSE_mode
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,read_is_on,write_is_on
  implicit none
- integer      :: iq,n_,inv_err(n_)
- real(SP)     :: eps(2,n_)
+ integer      :: iq,n_
+ integer      :: IO_dim
+ integer      :: inv_err(n_)
+ real(SP)     :: eps(2,n_,IO_dim)
  type(w_samp) :: W_disk
  !
  ! Work Space
@@ -104,8 +108,8 @@ integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
    !
    deallocate(W)
    !
-   call io_bulk(ID,'EPSILON',VAR_SZ=(/2,W_disk%n_freqs/))
-   call io_bulk(ID,R2=eps)
+   call io_bulk(ID,'EPSILON',VAR_SZ=(/2,W_disk%n_freqs,IO_dim/))
+   call io_bulk(ID,R3=eps)
    !
  endif
  !

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,51 +26,63 @@ subroutine RT_build_U1_and_U2(ik,U1_k,U2_k,dT)
   use pars,           ONLY:SP,cZERO,cONE,cI
   use real_time,      ONLY:Ho_plus_Sigma
   use SC,             ONLY:SC_bands,SC_nbands
-  use wrapper,        ONLY:M_by_M
+#if defined _OPENMP
+ use wrapper,         ONLY:M_by_M_omp
+#else
+ use wrapper,         ONLY:M_by_M
+#endif
   implicit none
   !
-  integer, intent(in)     :: ik
+  integer,     intent(in)  :: ik
   complex(SP), intent(out) :: U1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
   complex(SP), intent(out) :: U2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
   real(SP),    intent(in)  :: dT
   !
-  complex(SP)  :: M_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+  complex(SP)  :: M1_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
   complex(SP)  :: M2_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
   complex(SP)  :: idT
-  integer :: i1
   !
-  U1_k=cZERO
-  U2_k=cZERO
-  idT =-cI*dT
-  !
-  ! Taylor expantion
+  ! Taylor expansion
   !
   ! U(t) = exp(H * t) = 1 + (Ht) + (Ht)^2/2! + (Ht)^3/3! + (Ht)^4/4! + O(Ht^5)
+  !                     however the 1 is stored in another matix
   !
-  do i1=SC_bands(1),SC_bands(2)
-    U1_k(i1,i1)=cONE
-    U2_k(i1,i1)=cONE
-  enddo
+  idT =-cI*dT
+  U1_k=+idT*Ho_plus_Sigma(:,:,ik,1)
+  U2_k=-idT*Ho_plus_Sigma(:,:,ik,1)
   !
-  U1_k=U1_k+idT*Ho_plus_Sigma(:,:,ik,1)
-  U2_k=U2_k-idT*Ho_plus_Sigma(:,:,ik,1)
+#if defined _OPENMP
+  call M_by_M_omp(SC_nbands,Ho_plus_Sigma(:,:,ik,1),Ho_plus_Sigma(:,:,ik,1),M1_tmp)
+#else
+  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),Ho_plus_Sigma(:,:,ik,1),M1_tmp)
+#endif
   !
-  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),Ho_plus_Sigma(:,:,ik,1),M_tmp)
+  U1_k=U1_k+idT**2*M1_tmp/2._SP
+  U2_k=U2_k+idT**2*M1_tmp/2._SP
   !
-  U1_k=U1_k+idT**2*M_tmp/2._SP
-  U2_k=U2_k+idT**2*M_tmp/2._SP
-  !
-  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M_tmp,M2_tmp)
+#if defined _OPENMP
+  call M_by_M_omp(SC_nbands,Ho_plus_Sigma(:,:,ik,1),M1_tmp,M2_tmp)
+#else
+  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M1_tmp,M2_tmp)
+#endif
   !
   U1_k=U1_k+idT**3*M2_tmp/6._SP
   U2_k=U2_k-idT**3*M2_tmp/6._SP
   !
-  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M2_tmp,M_tmp)
+#if defined _OPENMP
+  call M_by_M_omp(SC_nbands,Ho_plus_Sigma(:,:,ik,1),M2_tmp,M1_tmp)
+#else
+  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M2_tmp,M1_tmp)
+#endif
   !
-  U1_k=U1_k+idT**4*M_tmp/24._SP
-  U2_k=U2_k+idT**4*M_tmp/24._SP
+  U1_k=U1_k+idT**4*M1_tmp/24._SP
+  U2_k=U2_k+idT**4*M1_tmp/24._SP
   !
-  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M_tmp,M2_tmp)
+#if defined _OPENMP
+  call M_by_M_omp(SC_nbands,Ho_plus_Sigma(:,:,ik,1),M1_tmp,M2_tmp)
+#else
+  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M1_tmp,M2_tmp)
+#endif
   !
   U1_k=U1_k+idT**5*M2_tmp/120._SP
   U2_k=U2_k-idT**5*M2_tmp/120._SP

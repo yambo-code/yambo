@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -35,7 +37,7 @@ subroutine QP_state_table_setup(en)
  !
  use pars,          ONLY:SP,IP
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_sc_run,l_real_time,l_eval_collisions,l_carrier_dynamics
+ use drivers,       ONLY:l_sc_run,l_real_time,l_eval_collisions,l_elel_scatt
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,SC_bands_mixed,SC_band_mixing 
  use electrons,     ONLY:levels,n_sp_pol
@@ -208,6 +210,7 @@ subroutine QP_state_table_setup(en)
  !
  do i1=1,QP_nk
    do i2=1,QP_nb
+     !
      if (.not.QP_state(i2,i1)) cycle
      !
      do i_sp=1,n_sp_pol
@@ -227,7 +230,7 @@ subroutine QP_state_table_setup(en)
          if (n_sp_pol==2) QP_table(QP_n_states,4)=i_sp
          !
 #if defined _RT
-         if (l_carrier_dynamics.and.i3>0) then
+         if (l_elel_scatt.and.i3>0) then
            QP_n_states=QP_n_states+1
            QP_table(QP_n_states,1)=i2+i3
            QP_table(QP_n_states,2)=i2

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2010 C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues)
+subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
   !
   use pars,           ONLY:SP,pi,cI,cZERO,DP
   use interpolate,    ONLY:nshells,lattice_vectors,make_star,metric,int_sop
@@ -30,18 +32,19 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues)
   implicit none
   !
   integer,intent(in)        :: nvalues
+  integer,intent(in)        :: Nk
   type(bz_samp), intent(in) :: USER_k
-  real(SP), intent(out)     :: VALUES(nvalues,USER_k%nibz)
+  real(SP), intent(out)     :: VALUES(nvalues,Nk)
   real(SP), parameter       :: twopi=2._SP*pi
   complex(DP), intent(in)   :: engre(nshells,nvalues)
   !
   ! Work Space
   !
-  integer :: i1,iv,ik,is,nstar
+  integer  :: i1,iv,ik,is,nstar
   real(SP) :: star_vec(3,nsym),v(3)
   complex(SP), allocatable :: star(:,:)
   !
-  allocate (star(nshells,USER_k%nibz))
+  allocate (star(nshells,Nk))
   call mem_est("star",(/size(star)/),(/SP/))
   !
   ! Make stars
@@ -49,8 +52,9 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues)
   star=cZERO
   do i1=1,nshells
      call make_star(lattice_vectors(:,i1),nsym,int_sop,nstar,star_vec)  
-     do ik=1,USER_k%nibz
-       call c2a(v_in=USER_k%pt(ik,:),v_out=v,mode='ki2a')
+     do ik=1,Nk
+       if(Nk==USER_k%nibz) call c2a(v_in=USER_k%pt(ik,:),v_out=v,mode='ki2a')
+       if(Nk> USER_k%nibz) call c2a(v_in=USER_k%pt_RIM(ik,:),v_out=v,mode='ki2a')
        do is=1,nstar
          star(i1,ik)=star(i1,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,is)))
        enddo
@@ -58,7 +62,7 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues)
     enddo
   enddO
   !
-  do ik=1,USER_k%nibz
+  do ik=1,Nk
     do iv=1,nvalues
       VALUES(iv,ik) = sum(engre(1:nshells,iv)*star(1:nshells,ik))
     enddo

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -27,7 +29,8 @@ integer function io_P_and_P2(X,Xen,ID)
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_fragmented,&
-&                        io_bulk,read_is_on,write_is_on,io_header,io_extension
+&                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
+&                        IO_NOT_ALLOWED,io_DIP
  use fragments,     ONLY:io_fragment
  use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_IND_Xk_ibz
  !
@@ -42,6 +45,11 @@ integer function io_P_and_P2(X,Xen,ID)
  character(schlen)    :: VAR_name
  real(SP),allocatable :: disk_data(:,:,:)
  integer, external    :: variables_DIPOLES
+ !
+ if (.not.io_DIP) then
+   io_P_and_P2=IO_NOT_ALLOWED
+   goto 1
+ endif
  !
  io_P_and_P2=io_connect(desc='P_and_P2',type=2,ID=ID)
  if (io_P_and_P2/=0) goto 1

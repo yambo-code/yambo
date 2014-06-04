@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -19,43 +21,40 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NCPU,CHAIN)
+subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NC)
  !
- use pars,   ONLY:lchlen
- use LIVE_t, ONLY:LIVE_message
- use stderr, ONLY:intc
+ use pars,       ONLY:lchlen
+ use parallel_m, ONLY:ncpu
+ use LIVE_t,     ONLY:LIVE_message
+ use stderr,     ONLY:intc
  !
  implicit none
  !
  character(*)          :: WHAT
  character(*),optional :: ENVIRONMENT
- integer,optional      :: LOADED,TOTAL,NCPU,CHAIN
+ integer,optional      :: LOADED,TOTAL,NC
  character(lchlen)     :: local_message,local_env
  !
  local_message=WHAT
+ !
+ if (ncpu==1) return
  !
  local_env="distribution"
  if (present(ENVIRONMENT)) then
    local_env=ENVIRONMENT
  endif
  ! 
- if (present(LOADED).and.present(NCPU).and.present(CHAIN)) then
+ if (present(LOADED).and.present(NC)) then
    local_message="[PARALLEL "//trim(local_env)//" for "//WHAT//&
-&                            " on "//trim(intc(NCPU))//" CPU (chain #"//trim(intc(CHAIN))//&
-&                            ")] Loaded-Total-Percentual: "//trim(intc(LOADED))//"-"//&
-&                            trim(intc(TOTAL))//"-"//&
-&                            trim(intc(int(real(LOADED)/real(TOTAL)*100)))//"%"
- else if (present(LOADED).and.present(NCPU)) then
-   local_message="[PARALLEL "//trim(local_env)//" for "//WHAT//&
-&                            " on "//trim(intc(NCPU))//" CPU] Loaded-Total-Percentual: "//&
-&                            trim(intc(LOADED))//"-"//&
-&                            trim(intc(TOTAL))//"-"//&
-&                            trim(intc(int(real(LOADED)/real(TOTAL)*100)))//"%"
+&                            " on "//trim(intc(NC))//" CPU] Loaded/Total (Percentual): "//&
+&                            trim(intc(LOADED))//"/"//&
+&                            trim(intc(TOTAL))//" ("//&
+&                            trim(intc(int(real(LOADED*100)/real(TOTAL))))//"%)"
  else if (present(LOADED)) then
    local_message="[PARALLEL "//trim(local_env)//" for "//WHAT//&
-&                            "] Loaded-Total-Percentual: "//trim(intc(LOADED))//"-"//&
-&                            trim(intc(TOTAL))//"-"//&
-&                            trim(intc(int(real(LOADED)/real(TOTAL)*100)))//"%"
+&                            "] Loaded/Total (Percentual): "//trim(intc(LOADED))//"/"//&
+&                            trim(intc(TOTAL))//" ("//&
+&                            trim(intc(int(real(LOADED*100)/real(TOTAL))))//"%)"
  endif
  !
  if (present(LOADED)) then

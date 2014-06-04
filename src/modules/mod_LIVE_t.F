@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,11 +23,10 @@
 !
 module LIVE_t
  !
- use pars,     ONLY:SP
- use pars,     ONLY:DP
- use pars,     ONLY:schlen
- use pars,     ONLY:lchlen
- use stderr,   ONLY:log_as_a_file
+ use pars,     ONLY:SP,DP,schlen,lchlen
+ use stderr,   ONLY:log_as_a_file,intc
+ use openmp,   ONLY:master_thread
+ !
  implicit none
  !
  ! What is running ?
@@ -49,6 +50,8 @@ module LIVE_t
  real(SP),allocatable:: cput_tot(:,:)
  real(SP)            :: cput_save
  character(schlen)   :: timing_name
+ character(schlen)   :: USER_wall_time_string=" "
+ integer             :: USER_wall_time(3)=0 ! Days, Hours, Minutes
  !
  ! l_* files
  !
@@ -56,6 +59,32 @@ module LIVE_t
  character(lchlen) :: log_line
  !
  contains
+   !
+   subroutine GET_user_WALL_time( )
+     integer           :: i_pos(3)
+     character(schlen) :: temp_ch
+     i_pos=(/index(trim(USER_wall_time_string),"d"),index(trim(USER_wall_time_string),"h"),index(trim(USER_wall_time_string),"m")/) 
+     if (i_pos(3)/=0) then
+       if (i_pos(2)/=0) then
+         read (USER_wall_time_string(i_pos(2)+1:i_pos(3)-1),*) USER_wall_time(3)
+       else if (i_pos(1)/=0) then
+         read (USER_wall_time_string(i_pos(1)+1:i_pos(3)-1),*) USER_wall_time(3)
+       else 
+         read (USER_wall_time_string(1:i_pos(3)-1),*) USER_wall_time(3)
+       endif
+     endif
+     if (i_pos(2)/=0) then
+       if (i_pos(1)/=0) then
+         read (USER_wall_time_string(i_pos(1)+1:i_pos(2)-1),*) USER_wall_time(2)
+       else 
+         read (USER_wall_time_string(1:i_pos(2)-1),*) USER_wall_time(2)
+       endif
+     endif
+     if (i_pos(1)/=0) then
+       read (USER_wall_time_string(1:i_pos(1)-1),*) USER_wall_time(1)
+     endif
+     USER_wall_time_string=trim(intc(USER_wall_time(1)))//":"//trim(intc(USER_wall_time(2)))//":"//trim(intc(USER_wall_time(3)))
+   end subroutine
    !
    character(lchlen) function date_and_time_string(dt_in,dt_out,skip_host)
      use parallel_m,  ONLY:ncpu
@@ -89,6 +118,7 @@ module LIVE_t
      character(*),optional :: message
      integer     ,optional :: steps
      logical     ,optional :: SERIAL
+     if (.not.master_thread) return
      if (.not.live_timing_is_on) return
      if (present(message).and.present(steps)) then
        if (present(SERIAL))      call live_timing_activate(message,steps)
@@ -102,7 +132,8 @@ module LIVE_t
      ! cput_seg = Segment CPUT
      ! cput_sec = Section CPUT
      !
-     use parallel_m, ONLY : myid,ncpu
+     use openmp,     ONLY:n_threads_now
+     use parallel_m, ONLY:myid,ncpu
      implicit none
      logical, optional :: INIT,INIT_SEG,SEG,INIT_SEC,SEC,FIN
      !
@@ -116,13 +147,22 @@ module LIVE_t
        cput_tot=0.d0
        cput_tot(myid+1,2)=cput_now
      endif
-     cput_tot(myid+1,1)=cput_now-cput_tot(myid+1,2)
+#if defined _BLUEGENE
+     cput_tot(myid+1,1)=(cput_now-cput_tot(myid+1,2))
+#else
+     cput_tot(myid+1,1)=(cput_now-cput_tot(myid+1,2))/real(n_threads_now,SP)
+#endif
      !
      if (present(INIT_SEC)) cput_sec(myid+1,:)=(/0.d0,cput_now/)
      if (present(INIT_SEG)) cput_seg(myid+1,:)=(/0.d0,cput_now/)
      !
-     if (present(SEC)) cput_sec(myid+1,1)=cput_now-cput_sec(myid+1,2)
-     if (present(SEG)) cput_seg(myid+1,1)=cput_now-cput_seg(myid+1,2)
+#if defined _BLUEGENE
+     if (present(SEC)) cput_sec(myid+1,1)=(cput_now-cput_sec(myid+1,2))
+     if (present(SEG)) cput_seg(myid+1,1)=(cput_now-cput_seg(myid+1,2))
+#else
+     if (present(SEC)) cput_sec(myid+1,1)=(cput_now-cput_sec(myid+1,2))/real(n_threads_now,SP)
+     if (present(SEG)) cput_seg(myid+1,1)=(cput_now-cput_seg(myid+1,2))/real(n_threads_now,SP)
+#endif
      !
      if (present(FIN)) deallocate(cput_seg,cput_sec,cput_tot)
      !
@@ -200,7 +240,7 @@ module LIVE_t
      if (ncpu/=1.and.add_cpu_id.and.(index(lfmt_,"n")>0.or.index(lfmt_,"r")>0.)) then
        write (message_composed,'(a,i4.4,2a)') 'P',myid+1,': ',trim(message)
      endif
-     add_cput=live_timing_is_on
+     add_cput=live_timing_is_on.and.master_thread
      if (present(CPU_TIME)) then
        add_cput=CPU_TIME
      endif

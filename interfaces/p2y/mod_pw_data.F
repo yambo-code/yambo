@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 C. Hogan and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CH
 !   
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or
@@ -74,6 +76,10 @@ module pw_data
 ! XC
   character(256)             :: pw_dft
   logical                    :: pw_lda_plus_u
+
+! EXX part
+  real(dp)                   :: pw_exx_fraction
+  logical                    :: pw_exx_is_active
 
 ! Pseudopotentials
   character(256),allocatable :: psfile(:)

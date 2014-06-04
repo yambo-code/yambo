@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini, M. Gruening and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM MG
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -26,6 +28,7 @@ module SC
  !
  integer           :: SC_bands(2)
  integer           :: SC_nbands
+ integer           :: it_to_start
  integer           :: it_now
  integer           :: SC_iterations
  integer           :: SC_fft_size
@@ -33,7 +36,7 @@ module SC
  integer           :: SC_X_bands(2)
  integer           :: SC_X_size
  integer           :: SC_up_W_iters
- integer           :: n_SC_descriptions
+ integer           :: n_SC_descriptions = 0
  real(SP)          :: E_bare_Ef
  real(SP)          :: rho_convergence
  real(SP)          :: E_convergence
@@ -97,16 +100,22 @@ module SC
  !
  complex(SP), allocatable :: G_lesser(:,:,:,:) ! Band, Band, K, Time
  !
+ ! Table pointing to the position of the uniform grid points in the
+ ! G_lesser structure
+ !
+ integer,     allocatable :: RT_ibz_coo(:,:)
+ integer,     allocatable :: RT_all2ibz(:)  
+ integer,     allocatable :: RT_Nk_ibz(:)  
+ !
  ! Real-Time occupations
  !
  logical                  :: l_RT_occupations_in_use
- real(SP),    allocatable :: RT_occupations(:,:) 
  !
  ! K-points: In case I want to use the G_lesser to define the occupations
- ! of a post-run I need to store in the database a copy of the K grid uses
+ ! of a post-run I need to keep here the number of k-points 
  !
  integer                 :: RT_nk
- real(SP), allocatable   :: RT_k(:,:)
+ integer                 :: RT_nstates
  !
  interface
    !

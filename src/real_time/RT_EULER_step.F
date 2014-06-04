@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -22,7 +24,11 @@
 subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,deltaT)
  !
  use pars,           ONLY:SP,cI
+#if defined _OPENMP
+ use wrapper,        ONLY:V_by_V_plus_V_omp
+#else
  use wrapper,        ONLY:V_by_V_plus_V
+#endif
  use SC,             ONLY:SC_bands,SC_nbands
  !
  implicit none
@@ -39,7 +45,10 @@ subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,deltaT)
  !
  ! G(T+dt) = G(T) - i dt *(I1(T) - I2(T))
  !
+#if defined _OPENMP
+ call V_by_V_plus_V_omp(SC_nbands, -cI*deltaT, I1_k-I2_k, G_new_k)
+#else
  call V_by_V_plus_V(SC_nbands, -cI*deltaT, I1_k-I2_k, G_new_k)
+#endif
  !
-end subroutine RT_EULER_step   
-
+end subroutine RT_EULER_step

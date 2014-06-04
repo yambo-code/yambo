@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -20,11 +22,15 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine pol_fit(N,X,Y,order,Tt,EPS,t_zero)
+ !
  use pars, ONLY:SP
+ !
  implicit none
  !
- integer  :: N,order
- real(SP) :: X(N),Y(N),Tt(order+1),EPS,t_zero
+ integer, intent(in)    :: N
+ integer, intent(inout) :: order
+ real(SP),intent(in)    :: X(N),Y(N),t_zero
+ real(SP),intent(out)   :: Tt(order+1),EPS
  ! 
  ! Work Space
  !

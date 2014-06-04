@@ -1,6 +1,8 @@
 /*
-  Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+         Copyright (C) 2000-2014 the YAMBO team
                http://www.yambo-code.org
+ 
+  Authors (see AUTHORS file for details): AM
   
   This file is distributed under the terms of the GNU 
   General Public License. You can redistribute it and/or 
@@ -37,7 +39,7 @@
   {"help",  "h","Short Help",0,0,0,0,0}, 
   {"lhelp", "H","Long Help",0,0,0,0,0}, 
   {"nompi", "N","Skip MPI initialization",0,0,0,0,0},
-  {"ifile", "F","ETSF filename",0,0,1,0,0},
+  {"ifile", "F","KSS or WFK filename",0,0,1,0,0},
   {"odir","O","Output directory",0,0,1,0,0},
   {"dbfrag","S","DataBases fragmentation",0,0,0,0,0},
   {NULL,NULL,NULL,0,0,0,0,0}

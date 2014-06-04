@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +23,7 @@
 !
 subroutine ELPH_Hamiltonian(en,k,q)
  !
- use pars,          ONLY:SP,lchlen
+ use pars,          ONLY:SP,lchlen,rZERO
  use units,         ONLY:HA2EV
  use ELPH,          ONLY:elph_global_alloc,elph_global_free,elph_Ham_bands,elph_Ham_ik,&
 &                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector,RES_tresh
@@ -286,8 +288,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
          ok_bz  =qindx_S(elph_Ham_ik,iq_bz,1)
          ok_ibz =k%sstar(ok_bz,1)
          ok_s   =k%sstar(ok_bz,2)
-         if (iq_bz==0) call msg('o Ham','#',(/real(ibp,SP),0.,0.,0.,residual/),INDENT=0,USE_TABS=.true.)
-         if (iq_bz> 0) call msg('o Ham','#',(/real(ibp,SP),real(iq_ibz,SP),real(ok_ibz,SP),&
+         if (iq_bz==0) call msg('o Ham','#',(/real(ibp,SP),rZERO,rZERO,rZERO,residual/),INDENT=0,USE_TABS=.true.)
+         if (iq_bz> 0) call msg('o Ham','#',(/real(ibp,SP),real(iq_ibz,SP),real(ok_ibz,SP), &
 &                                             real(il,SP),residual/),INDENT=0,USE_TABS=.true.)
        endif
      enddo

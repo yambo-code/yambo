@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -49,8 +51,8 @@ module com
  ! 
  ! Output Files/Report File
  !
- integer,parameter  :: nofs=200
- integer,parameter  :: max_open_ofs=200
+ integer,parameter  :: nofs=400
+ integer,parameter  :: max_open_ofs=400
  integer, parameter :: num_of_alternative_locations=8+8*n_max_jobstr
  character(lchlen)  :: of(nofs)
  character(lchlen)  :: opened_of(max_open_ofs)
@@ -332,7 +334,7 @@ module com
      !
      do i1=1,n_logo_lines
        if (unit_/=6) write (unit_,trim(space_)) logo_line(i1)
-       if (unit_==6.and.i1>=n_logo_lines-1) cycle
+       if (unit_==6.and.i1>=n_logo_lines-2) cycle
        if (unit_==6) call LIVE_message(logo_line(i1),"n","","%s",CPU_TIME=.false.,CPU_ID=.false.)
      enddo
      if (unit_/=6.and.trim(comment_)=='')  write (unit_,'(a)') ' '

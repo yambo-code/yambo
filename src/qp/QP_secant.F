@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -57,7 +59,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  use QP_m,          ONLY:QP_t,QP_Vxc,QP_Vnl_xc,QP_Sc,QP_n_W_freqs,QP_W,QP_n_states,&
 &                        QP_solver_state,QP_dSc_steps,QP_dSc,&
 &                        QP_W_dr,QP_W_er,QP_dSc_delta,QP_W_partially_done
- use IO_m,          ONLY:io_control,NONE,RD,RD_CL,OP_RD
+ use IO_m,          ONLY:io_control,NONE,RD,RD_CL,OP_RD,OP_RD_CL
  use stderr,        ONLY:intc
  use com,           ONLY:warning
  !
@@ -217,9 +219,10 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
      QP_Sc=(0._SP,0._SP)
      do iqbz=1,q%nbz
        !
-       if (iqbz==1) call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,2,3/),ID=ID)
-       if (iqbz> 1.and.iqbz<q%nbz) call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=ID)
-       if (iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=ID)
+       if (iqbz==1.and.iqbz<q%nbz)  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,2,3/),ID=ID)
+       if (iqbz> 1.and.iqbz<q%nbz)  call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=ID)
+       if (iqbz> 1.and.iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=ID)
+       if (iqbz==1.and.iqbz==q%nbz) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
        io_err=ioQP('W',qp,ID)
        !
        Xw%er=QP_W_er

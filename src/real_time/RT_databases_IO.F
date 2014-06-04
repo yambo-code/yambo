@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini, C. Attaccalite and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,12 +23,11 @@
 !                  
 subroutine RT_databases_IO(E,it)
  !
- use QP_m,           ONLY:QP_nk
- use drivers,        ONLY:l_ph_corr
- use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,NE_i_time,it_start,&
-&                         OCCUPATIONS_IO_and_interpolate,RT_IO_steps,&
-&                         l_RT_skip_GF_IO,l_RT_skip_OCC_IO,l_RT_skip_JandP_IO
- use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL
+ use drivers,        ONLY:l_elph_scatt
+ use real_time,      ONLY:ID,l_NE_dynamics_started,NE_i_time,it_start,&
+&                         OCCUPATIONS_IO_and_interpolate,RT_do_IO,l_NE_dynamics
+ use SC,             ONLY:RT_nk
+ use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL,io_GF,io_OCCs,io_J
  use electrons,      ONLY:levels
 #if defined _ELPH
  use parallel_m,     ONLY:PP_redux_wait
@@ -49,10 +50,12 @@ subroutine RT_databases_IO(E,it)
  !
  if (it==it_start.and.it_start>1) return
  !
- ! Polarization and current are automaticaly written every RT_IO_stesp
- ! the cache save value at steps different from mod(NE_i_time,RT_IO_steps)/=0)
  !
- if(l_NE_with_fields.and.NE_dynamics.and..not.l_RT_skip_JandP_IO) then
+ if (.not.RT_do_IO('J').and..not.RT_do_IO('G')) return
+ !
+ ! Polarization and current are automaticaly written every RT_IO_JPO_steps
+ !
+ if(l_NE_dynamics.and.l_NE_dynamics_started.and.RT_do_IO('J')) then
    !
    ! Remember that negative time = adiabatic switching
    ! no need to store current
@@ -68,16 +71,20 @@ subroutine RT_databases_IO(E,it)
    !
  endif
  !
- ! Write every RT_IO_steps
+ ! Occupations
  !
- if (.not. (NE_i_time==1.or.mod(NE_i_time,RT_IO_steps)==0) ) return
+ if (io_OCCs.and.RT_do_IO('OCCs')) call OCCUPATIONS_IO_and_interpolate(E,'G')
+ !
+ ! Write every RT_IO_G_steps
+ !
+ if (.not.RT_do_IO('G')) return
  !
  if (it==it_start.and.it_start>1) return
  !
  ! Write G_lesser
  !================
  !
- if (.not.l_RT_skip_GF_IO) then
+ if (io_GF) then
    !
    io_G=0
    io_THETA=0
@@ -87,17 +94,17 @@ subroutine RT_databases_IO(E,it)
    io_G=io_RT_components('G',ID(5))
    !
 #if defined _ELPH
-   if (l_ph_corr.and..not.l_RT_CCA_Kernel) then
+   if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
      call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(7))
      io_THETA=io_RT_components('THETA',ID(7))
    endif
 #endif
    !
-   do ik = 1, QP_nk 
+   do ik = 1, RT_nk 
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
 #if defined _ELPH
-     if (l_ph_corr.and..not.l_RT_CCA_Kernel) then
+     if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
        !
        ! The I/O of the THETA matrix is tricky when the run is parallel.
        ! The point is that every CPU evolves a certain group of q-points.
@@ -117,9 +124,5 @@ subroutine RT_databases_IO(E,it)
    enddo
    !
  endif
- !
- ! Occupations
- !
- if (.not.l_RT_skip_OCC_IO) call OCCUPATIONS_IO_and_interpolate(E,'G')
  !
 end subroutine RT_databases_IO

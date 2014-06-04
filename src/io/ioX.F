@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -33,9 +35,12 @@ integer function ioX(X,Xw,ID)
 &                        read_is_on,write_is_on,io_header,&
 &                        RD_CL,RD_CL_IF_END,io_action,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
-&                        NONE,IO_INCOMPATIBLE_VAR
+&                        NONE,IO_INCOMPATIBLE_VAR,io_X,IO_NOT_ALLOWED
  use stderr,        ONLY:intc
  use fragments,     ONLY:io_fragment,Fragments_Restart
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  implicit none
  type(X_t)   :: X
  type(w_samp):: Xw
@@ -48,6 +53,16 @@ integer function ioX(X,Xw,ID)
  character (schlen)  ::ch,db_desc
  character (2)       ::local_XC_KIND
  real(SP),allocatable::X_disk(:,:,:),W_disk(:,:),RL_vecs_disk(:,:)
+ !
+#if defined _TIMING
+ if (io_X) call timing('io_X',OPR='start')
+#endif
+ !
+ if (.not.io_X) then
+   ioX=IO_NOT_ALLOWED
+   call io_disconnect(ID,FORCE=.TRUE.)
+   return
+ endif
  !
  ! I assume that he RL ordering used to build X is not different
  ! from the one in DB1
@@ -234,6 +249,10 @@ integer function ioX(X,Xw,ID)
  ioX=io_restart_point(ID)
  !
 1 call io_disconnect(ID)
+ !
+#if defined _TIMING
+ if (io_X) call timing('io_X',OPR='stop')
+#endif
  !
  contains
    !

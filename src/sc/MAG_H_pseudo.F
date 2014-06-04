@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 D. Sangalli and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): DS
 !
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,7 +26,7 @@ subroutine MAG_H_pseudo(Xk)
  use pars,          ONLY:SP
  use electrons,     ONLY:n_spin,n_spinor
  use wrapper,       ONLY:V_dot_V
- use wave_func,     ONLY:wf,wf_ng,WF_load,WF_free,wf_state,wf_n_states
+ use wave_func,     ONLY:WF,wf_ng
  use FFT_m,         ONLY:fft_size
  use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table
  use R_lattice,     ONLY:bz_samp
@@ -34,6 +36,7 @@ subroutine MAG_H_pseudo(Xk)
  use memory_m,      ONLY:mem_est
  use magnetic,      ONLY:new_pp,old_pp
  use IO_m,          ONLY:OP_RD_CL,OP_RD,RD,RD_CL,io_control,REP,VERIFY
+ use interfaces,    ONLY:WF_load
  !
  implicit none
  !
@@ -91,7 +94,7 @@ subroutine MAG_H_pseudo(Xk)
  !
  do ik=1,Xk%nibz
    !
-   call WF_load(0,1,(/1,SC_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
+   call WF_load(WF,0,1,(/1,SC_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
    !
    if (ik< Xk%nibz) call io_control(ACTION=RD   ,SEC=(/ik+1/),ID=ID)
    if (ik==Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
@@ -111,14 +114,14 @@ subroutine MAG_H_pseudo(Xk)
        !     
        do ib=1,SC_bands(2)
          !
-         iwf=wf_state(ib,ik,i_spin)
+         iwf=WF%index(ib,ik,i_spin)
          !
-         kbv_ks_space(ib,1)=V_dot_V(fft_size,wf(:,iwf),new_pp(:,i1))
-         kbv_ks_space(ib,2)=V_dot_V(fft_size,wf(:,iwf),old_pp(:,i1))
+         kbv_ks_space(ib,1)=V_dot_V(fft_size,WF%c(:,iwf),new_pp(:,i1))
+         kbv_ks_space(ib,2)=V_dot_V(fft_size,WF%c(:,iwf),old_pp(:,i1))
          !
          do ibp=1,ib
            !
-           iwfp=wf_state(ibp,ik,i_spin)
+           iwfp=WF%index(ibp,ik,i_spin)
            !
            H_pseudo(ibp,ib)=conjg(kbv_ks_space(ibp,1))*kbv_ks_space(ib,1)-conjg(kbv_ks_space(ibp,2))*kbv_ks_space(ib,2)
            if(ib/=ibp) H_pseudo(ib,ibp)=conjg(H_pseudo(ibp,ib))
@@ -134,7 +137,7 @@ subroutine MAG_H_pseudo(Xk)
    !
    call live_timing(steps=1)
    !
-   call WF_free()
+   call WF_free(WF)
    !
  enddo  ! ik
  !

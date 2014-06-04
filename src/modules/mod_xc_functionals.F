@@ -1,8 +1,10 @@
 !
 ! Copyright (C) 2003 M. Marques, A. Castro, A. Rubio, G. Bertsch
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -31,10 +33,11 @@ module xc_functionals
  !
  integer     , public :: GS_xc_KIND
  integer     , public :: GS_xc_FUNCTIONAL
+ real(SP), public :: GS_exx_FRACTION
  real(SP), public, allocatable:: magn(:,:)
  real(SP), public, allocatable:: V_xc(:,:)
  real(SP), public, allocatable:: E_xc(:)
- real(SP), public, allocatable:: F_xc(:) 
+ real(SP), public, allocatable:: F_xc(:)
  !
  ! Messagging
  !
@@ -47,6 +50,7 @@ module xc_functionals
    integer         :: id               
    integer         :: spin_channels     
    integer         :: flags
+   real(SP) :: exx_fraction
    character(lchlen) :: name
    type(xc_f90_pointer_t) :: conf
    type(xc_f90_pointer_t) :: info
@@ -59,6 +63,34 @@ module xc_functionals
     XC_LDA_C_KP      = 99
  !
  character(*), parameter, dimension(3) :: XC_KIND_DESCR = (/'(X) ','(C) ','(XC)'/)
+ !
+ interface
+   subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION)
+      use pars,          ONLY:SP,DP,RZERO
+      use R_lattice,     ONLY:bz_samp
+      use electrons,     ONLY:levels
+      use com,           ONLY:msg,warning
+      use libxc_funcs_m, ONLY: XC_LDA_X, XC_LDA_C_PW
+      implicit none
+      type(levels),  intent(in) :: en
+      type(bz_samp), intent(in) :: Xk
+      integer, intent(inout)    :: KIND,FUNCTIONAL
+      integer, intent(in)       :: ORDER
+      real(SP), intent(inout),optional :: EXX_FRACTION
+    end subroutine XC_potential_driver
+    !
+    subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
+      use pars,          ONLY:SP
+      use R_lattice,     ONLY:bz_samp
+      use electrons,     ONLY:levels
+      implicit none
+      type(levels) ::en
+      type(bz_samp)::Xk
+      integer      ::FUNCTIONAL,ORDER
+      real(SP), optional :: EXX_FRACTION
+    end subroutine XC_libxc_driver
+    !
+ end interface
  !
  contains
    !
@@ -84,11 +116,12 @@ module xc_functionals
      !
      use xc_f90_types_m
      use xc_f90_lib_m, ONLY:xc_f90_func_init,xc_f90_info_family,&
-          xc_f90_info_kind,xc_f90_info_flags
+          xc_f90_info_kind,xc_f90_info_flags,xc_f90_hyb_gga_exx_coef
      implicit none
      integer, intent(in) :: fun, nsp
      type(xc_fnctl_t), intent(out) :: f(2)
      integer :: ixc
+     real(xc_f90_kind) :: Xfrac
      type(xc_f90_pointer_t) :: p,info 
      !
      do ixc=1,2
@@ -99,6 +132,10 @@ module xc_functionals
        f(ixc)%family=xc_f90_info_family(info)
        f(ixc)%kind=xc_f90_info_kind(info)
        f(ixc)%id=fun
+       Xfrac = 0.
+       if (f(ixc)%family==XC_FAMILY_HYB_GGA)&
+       &call xc_f90_hyb_gga_exx_coef(p,Xfrac)
+       f(ixc)%exx_fraction=real(Xfrac,SP)
        f(ixc)%spin_channels=nsp
        f(ixc)%flags=xc_f90_info_flags(info)
        f(ixc)%conf=p

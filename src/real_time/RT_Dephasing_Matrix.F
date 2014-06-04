@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -30,7 +32,7 @@ subroutine RT_Dephasing_Matrix(E)
  use SC,            ONLY:SC_bands
  use QP_m,          ONLY:QP_nk
  use R_lattice,     ONLY:nkibz
- use real_time,     ONLY:RT_Deph_Matrix,RT_is_dumped,Phase_LifeTime,RAD_LifeTime
+ use real_time,     ONLY:RT_Deph_Matrix,RT_is_dephased,Phase_LifeTime,RAD_LifeTime
  implicit none
  !
  type(levels), intent(in) :: E
@@ -64,7 +66,7 @@ subroutine RT_Dephasing_Matrix(E)
    !
    RT_Deph_Matrix(:,:,:)=(0._SP,0._SP)
    !
-   RT_is_dumped=.TRUE.
+   RT_is_dephased=.TRUE.
    !
  else
    !

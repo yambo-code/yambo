@@ -1,6 +1,8 @@
 #
-# Copyright (C) 2000-2013 A. Marini and the YAMBO team
+#        Copyright (C) 2000-2014 the YAMBO team
 #              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -59,7 +61,7 @@ i?86*linux*)
   *ifort*)
     CPU_FLAG=""
     case "${FCVERSION}" in
-      *11* | *12* | *13* )
+      *11* | *12* | *13* |*14* )
        CPU_FLAG="-xHost"
        ;;
       *10*)
@@ -194,7 +196,7 @@ ia64*linux* )
   *ifort*)
     CPU_FLAG=""
     case "${FCVERSION}" in
-      *11* | *12* | *13* )
+      *11* | *12* | *13* |*14* )
        CPU_FLAG="-xHost"
        ;;
       *10*)

@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -43,7 +45,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
- use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
+ use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets
@@ -57,7 +59,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,&
 &                     string_split,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
- use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
+ use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,&
 &                     Fragmented_IO,Fragmented_IO_save 
@@ -71,36 +73,42 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     FXC_is_causal,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
- use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,nQ_memory,&
-&                     elph_Ham_bands,elph_Ham_ik,elph_branches
+ use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,&
+&                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh
 #endif
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
- use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
+ use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND, GS_exx_FRACTION 
 #if defined _SC
- use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,&
+ use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,RT_nk,&
 &                     l_Mean_Potential,l_RT_occupations_in_use,SC_up_W_iters,l_SC_diagonal,&
 &                     l_SC_nl_mix
- use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff,COLLISIONS_path
+ use collision,  ONLY:COLLISIONS_cutoff
 #endif
 #if defined _RT || defined _YPP_RT
- use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,&
-&                     RT_diagonalization_steps, l_NE_simulate_RPA,l_Debye_TBose_update,&
-&                     SwitchOnTime,RT_IO_steps,RT_IO_steps_DB,l_RT_induced_field,RT_IO_time,&
-&                     l_RT_diagonalize,RT_is_dumped,RAD_LifeTime,Phase_LifeTime,&
-&                     RT_dynamics_jumps,NE_tot_time,G_MEM_steps,NE_MEM_treshold,&
-&                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,&
-&                     Eh_pumped_pair_energy,Dynamics_Kind,Eh_pumped_pair_width,Gr_bands,&
-&                     Gr_T_window,Gr_T_steps,Gr_E_window,Gr_E_steps,Gr_kind,l_RT_CCA_Kernel,&
-&                     Eh_pumped_Nel
+ use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,                   &
+&                     RT_diagonalization_steps, l_NE_simulate_RPA,l_Debye_TBose_update,   &
+&                     SwitchOnTime,l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel,  &
+&                     l_RT_diagonalize,RT_is_dephased,RAD_LifeTime,Phase_LifeTime,        &
+&                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,Imp_factors,                &
+&                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_en,           &
+&                     Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,           &
+&                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
+&                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
+&                     RIM_EE_percent,RT_scatt_tresh
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,theta_function_iTo_ref,i_Pump,i_Probe
+ use plasma,     ONLY:Plasma_redux_percent
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
 #endif
  use interpolate, ONLY:interpls,max_interpls
+#if defined _TIMING
+ use timing_m,    ONLY:timing_allocate,nclockx
+#endif
+ use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread
  !
  implicit none
  !
@@ -119,9 +127,18 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call CPU_str_reset()
  !
+ call OPENMP_initialize( )
+ call OPENMP_update(master_thread)
+ !
  ! Stack Size 
  !
  call remove_stack_limit()
+ !
+ ! Clocks
+ !
+#if defined _TIMING
+ call timing_allocate(nclockx)
+#endif
  !
  ! ZEROs 
  !
@@ -213,6 +230,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  n_g_shells=0
  nqibz=0
  ng_closed=0
+ coll_scattering=.false.
  bse_scattering=.false.
  Xk_grid_is_uniform=.true.
  q0_def_norm=1.E-5
@@ -271,8 +289,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_W_eh_diag=.false.
  l_W_eh_cpl=.false.
  l_acfdt=.false.
- l_el_corr=.false.
- l_ph_corr=.false.
+ l_elel_corr=.false.
+ l_elph_corr=.false.
+ l_elel_scatt=.false.
+ l_elph_scatt=.false.
  l_sc_run=.false.
  l_sc_hf=.false.
  l_sc_cohsex=.false.
@@ -281,7 +301,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_sc_magnetic=.false.
  l_eval_collisions=.false.
  l_elph_Hamiltonian=.false.
- l_carrier_dynamics=.false.
  !
  !electrons
  !
@@ -304,10 +323,14 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  !wave_func
  !
- wf_b=0
- wf_k=0
+ WF%b=0
+ WF%k=0
+ WF%space=' '
+ WF_buffer%b=0
+ WF_buffer%k=0
+ WF_buffer%space=' '
+ WF_buffered_IO=.FALSE.
  wf_ng=0
- wf_space=' '
  wf_norm_test=.true.
  wf_nb_io=0
  wf_nb_io_groups=1
@@ -443,6 +466,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  GS_xc_FUNCTIONAL=-1             ! unknow 
  GS_xc_KIND=-1                   ! unknow 
+ GS_exx_FRACTION=0.0             ! no EXX part  
  !
 #if defined _ELPH 
  !
@@ -453,9 +477,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  elph_branches=0
  gsqF_energy_steps=2
  eval_G_using_KK=.false.
- nQ_memory=0
  elph_Ham_bands=0
  elph_Ham_ik=1
+ RES_tresh=0.01
 #endif
  !
 #if defined _SC
@@ -475,11 +499,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  COLLISIONS_cutoff=0.001
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
+ l_NSC_shot  =.FALSE.
  !
  ! COLLISIONS I/O
  !
- n_collisions=0
- COLLISIONS_path=" "
  COLLISIONS_cutoff=0.0005
  !
 #endif
@@ -496,8 +519,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! RT dynamics 
  !
- l_carrier_dynamics=.FALSE.
- Dynamics_Kind="P"
  l_RT_CCA_Kernel=.FALSE.
  l_Debye_TBose_update=.FALSE.
  !
@@ -509,37 +530,43 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  RT_step=0.002*FS2AUT
  NE_steps=1
- RT_dynamics_jumps=0
  Thermal_steps=0
  SwitchOnTime = 1./8.
  Integrator_name='RK2'
  RAD_LifeTime = 0.
  Phase_LifeTime = 0.
- RT_is_dumped=.FALSE.
+ RT_is_dephased=.FALSE.
  l_NE_simulate_RPA=.FALSE.
  RT_diagonalization_steps=-1
  l_RT_diagonalize=.FALSE.
- RT_IO_steps=-1
- RT_IO_steps_DB=-1
- RT_IO_time=-1.
  l_RT_induced_field=.FALSE.
  NE_tot_time= 5*RAD_LifeTime
  NE_MEM_treshold=0.
  G_MEM_steps=2   ! By default only G_lesser@t and @t+1
  RT_nk=0
- RT_eh_energy_max=0.
+ RT_eh_en=0._SP
+ RT_scatt_tresh=1.
  Eh_pumped_pair_energy=-1./HA2EV
  Eh_pumped_pair_width=0.1/HA2EV
  Eh_pumped_Nel=1.
+ Plasma_redux_percent=100._SP
+ RIM_EE_percent=0._SP
  !
  ! G_retarded
  !
- Gr_bands=0
- Gr_T_window=0.
- Gr_T_steps=0
- Gr_E_window=0.
- Gr_E_steps=0
- Gr_kind=" "
+ Gr_kind="HS"
+ two_alpha=1
+ !
+ ! FITs
+ !
+ l_lftm_fit_stable=.false.
+ Nfitted_lifetimes=0
+ RT_Tfit_lifetimes=0.
+ RT_Efit_lifetimes=0.
+ RT_Tfit_occupations=0.
+ RT_Efit_occupations=0.
+ !
+ Imp_factors=0._SP
  !
 #endif
  !

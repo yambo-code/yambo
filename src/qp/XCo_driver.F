@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -22,20 +24,20 @@
 subroutine XCo_driver(E,k,Xk,q)
  !
  use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time
- use pars,          ONLY:schlen
+ use pars,          ONLY:schlen,RZERO,SP
  use com,           ONLY:msg
  use units,         ONLY:HA2EV
- use electrons,     ONLY:levels,n_sp_pol,spin
+ use electrons,     ONLY:levels,n_sp_pol,spin,E_reset,E_duplicate
  use stderr,        ONLY:intc,real2ch
  use R_lattice,     ONLY:bz_samp
  use parallel_m,    ONLY:PP_redux_wait
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind 
  use memory_m,      ONLY:mem_est
- use wave_func,     ONLY:WF_free
+ use wave_func,     ONLY:WF
+ use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
 #if defined _SC
- use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional,&
-      &                        SC_SRPA
+ use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,SC_SRPA
 #endif
  !
  implicit none
@@ -44,9 +46,11 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  ! WorkSpace
  !
+ type(levels) ::E_dummy
+ !
  ! Reporting
  !
- integer           ::i_qp,ib,ik,ibp
+ integer           ::i_qp,ib,ik,ibp,ikp,i_s
  character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt
  !
  ! IO
@@ -129,12 +133,13 @@ subroutine XCo_driver(E,k,Xk,q)
    if( WF_kind/= SC_COHSEX ) call XCo_local(E,Xk)
 #else
    call XCo_local(E,Xk)
+   QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...
 #endif
    !
  endif
  !
  if (.not.l_sc_run)  then
-   call WF_free()
+   call WF_free(WF)
    call XCo_report_and_IO()
  endif
  !
@@ -166,6 +171,9 @@ subroutine XCo_driver(E,k,Xk,q)
      Vxc_kind='DFT'
 #endif
      !
+     call E_reset(E_dummy)
+     call E_duplicate(E,E_dummy)
+     !
      ik=QP_table(1,3)
      call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
      !
@@ -173,15 +181,22 @@ subroutine XCo_driver(E,k,Xk,q)
        !
        ib =QP_table(i_qp,1)
        ibp=QP_table(i_qp,2)
-       if (QP_table(i_qp,3)/=ik) then
-         ik=QP_table(i_qp,3)
+       ikp=QP_table(i_qp,3)
+       i_s=spin(QP_table(i_qp,:))
+       !
+       if (ib==ibp) then
+         E_dummy%E(ib,ikp,i_s)=E%E(ib,ikp,i_s)+QP_Vnl_xc(i_qp)-QP_Vxc(i_qp)
+       endif
+       !
+       if (ikp/=ik) then
+         ik=ikp
          call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
        endif
        !
        ch_spin=' '
        !
-       if (n_sp_pol==2.and.spin(QP_table(i_qp,:))==1) ch_spin='(up)'
-       if (n_sp_pol==2.and.spin(QP_table(i_qp,:))==2) ch_spin='(dn)'
+       if (n_sp_pol==2.and.i_s==1) ch_spin='(up)'
+       if (n_sp_pol==2.and.i_s==2) ch_spin='(dn)'
        ! 
        nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|'//trim(Vnlxc_kind)//'|'//trim(intc(ibp))&
 &         //trim(ch_spin)//'> ='
@@ -206,6 +221,12 @@ subroutine XCo_driver(E,k,Xk,q)
        call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
        io_err=io_HF_and_locXC(ID)
      endif
+     !
+     ! Direct GAP
+     !
+     call section('+',trim(Vnlxc_kind)//' occupations report')
+     call REPORT_Occupations(E_dummy)
+     call E_reset(E_dummy)
      !
      ! MPI barrier
      !

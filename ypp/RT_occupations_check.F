@@ -1,6 +1,8 @@
 ! 
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -22,17 +24,17 @@
 integer function RT_occupations_check(E,k)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_ph_corr,l_carrier_dynamics
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use QP_m,           ONLY:OCC_ctl
- use com,            ONLY:msg
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,RT_IO_steps,l_RT_CCA_Kernel,&
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,RT_IO_JPO_steps,l_RT_CCA_Kernel,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Ho_abs_lifetime
- use SC,             ONLY:SC_bands,RT_occupations
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Ho_abs_lifetime,&
+&                         RT_E_occupations
+ use SC,             ONLY:SC_bands,RT_nk
  use IO_m,           ONLY:LOG,NONE
- use com,            ONLY:warning,error
+ use com,            ONLY:error
  use YPP,            ONLY:RT_occupations_ref,OCC_T_ref,OCC_deltaT,OCC_T_range
  !
  implicit none
@@ -42,63 +44,53 @@ integer function RT_occupations_check(E,k)
  !
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(1),imposed_COM=LOG)
  !
- if (.not.allocated(RT_occupations)) call error('OCCUPATIONS database not found')
- !
- call RT_occupations_repair(E,k)
+ call RT_occupations_repair(E)
  !
  if (.not.allocated(RT_occupations_ref)) then 
    !
-   allocate(RT_occupations_ref(SC_bands(1):SC_bands(2),k%nibz))
+   allocate(RT_occupations_ref(SC_bands(1):SC_bands(2),RT_nk))
    !
    RT_occupations_ref=0.
    !
  endif
  !
- if ((l_ph_corr.and.l_RT_CCA_Kernel).and..not.allocated(E_P_Hole_lifetime)) then
-   allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),k%nibz))
-   allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),k%nibz))
-   allocate(E_P_El_abs_lifetime(SC_bands(1):SC_bands(2),k%nibz))
-   allocate(E_P_Ho_abs_lifetime(SC_bands(1):SC_bands(2),k%nibz))
+ if ((l_elph_scatt.and.l_RT_CCA_Kernel).and..not.allocated(E_P_Hole_lifetime)) then
+   allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+   allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+   allocate(E_P_El_abs_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+   allocate(E_P_Ho_abs_lifetime(SC_bands(1):SC_bands(2),RT_nk))
    E_P_El_abs_lifetime=0._SP ! This is read only after rev. 2694
    E_P_Ho_abs_lifetime=0._SP 
  endif
  !
- if (l_carrier_dynamics.and..not.allocated(E_E_Hole_lifetime)) then
-   allocate(E_E_Hole_lifetime(SC_bands(1):SC_bands(2),k%nibz))
-   allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),k%nibz))
+ if (l_elel_scatt.and..not.allocated(E_E_Hole_lifetime)) then
+   allocate(E_E_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
+   allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
  endif
  !
  if (OCC_T_ref>=0.) then
    !
    call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_ref,imposed_COM=NONE)
    !
-   call RT_occupations_repair(E,k)
+   call RT_occupations_repair(E)
    !
-   RT_occupations_ref=RT_occupations
+   RT_occupations_ref=RT_E_occupations
    !
  endif
  !
- if (.not.allocated(RT_occupations)) then
-   !
-   call warning('Occupations database not found in :'//trim(OCC_ctl(3))//'. Switching to standard DOS')
-   !
-   RT_occupations_check=-1
-   !
-   return
-   !
- endif
+ if (.not.allocated(RT_E_occupations)) call error('Occupations database not found in :'//trim(OCC_ctl(3))//' ')
  !
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(2))
  !
- call RT_occupations_repair(E,k)
+ call RT_occupations_repair(E)
  !
- if (OCC_deltaT<RT_IO_steps*RT_step) then
+ if (OCC_deltaT<RT_IO_JPO_steps*RT_step) then
    ! 
-   OCC_deltaT=RT_IO_steps*RT_step
+   OCC_deltaT=RT_IO_JPO_steps*RT_step
    ! 
  else
    !
-   OCC_deltaT=nint(OCC_deltaT/RT_IO_steps/RT_step)*RT_IO_steps*RT_step
+   OCC_deltaT=nint(OCC_deltaT/RT_IO_JPO_steps/RT_step)*RT_IO_JPO_steps*RT_step
    !
  endif
  !

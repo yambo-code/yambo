@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -101,7 +103,7 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
      !
    enddo
    !
- else if (ZONE=="k_qp_q_bz") then
+ else if (ZONE=="k_qp_q_ibz".or.ZONE=="k_qp_q_bz") then
    !
    do iqp=1,QP_n_states
      !
@@ -117,8 +119,12 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
      do iqbz=1,nqbz
        !
        iq=q%sstar(iqbz,1)
-       !
-       if (.not.IND_q%element_1D(iq)) cycle
+       if (ZONE=="k_qp_q_ibz") then
+         if(.not.IND_q%element_1D(iq)) cycle
+       endif
+       if (ZONE=="k_qp_q_bz") then
+         if(.not.IND_q%element_1D(iqbz)) cycle
+       endif
        !
        ikpbz=qindx_S(ik,iqbz,1)
        ikp  =k%sstar(ikpbz,1)

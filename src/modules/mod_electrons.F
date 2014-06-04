@@ -1,6 +1,8 @@
 !
-! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
+!        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -66,6 +68,8 @@ module electrons
    real(SP)        :: Efermi(3)
    real(SP)        :: E_dir_gap(2) ! 1-2 refers to spin polarizations
    real(SP)        :: E_ind_gap(2)
+   real(SP)        :: E_VBM        ! Valence    Band Maximum
+   real(SP)        :: E_CBm        ! Conduction Band minimum
    !
    ! QP corrections
    !
@@ -84,17 +88,19 @@ module electrons
    complex(SP),pointer :: GreenF(:,:,:,:)     => null()
    ! 
    ! Fine energy grid
-   !  
+   !   
    real(SP),   pointer :: E_RIM(:,:,:)        => null()
+   real(SP),   pointer :: W_RIM(:,:,:)        => null()
    real(SP),   pointer :: f_RIM(:,:,:)        => null()
    !
  end type levels
  ! 
  ! Fine energy grid Tables
  !   
- integer  :: BZ_RIM_max_filling
+ integer  :: BZ_RIM_max_filling = 1
  integer  :: BZ_RIM_tot_nkpts
  integer  :: BZ_RIM_nbands
+ logical  :: RIM_is_symmetry_expanded=.FALSE.
  integer ,allocatable :: BZ_RIM_nkpt(:)
  integer ,allocatable :: BZ_RIM_table(:,:)
  real(SP),allocatable :: BZ_RIM_ipol_weight(:)
@@ -119,6 +125,8 @@ module electrons
        Eo%kf=Ei%kf
        Eo%sf=Ei%sf
        Eo%Efermi=Ei%Efermi
+       Eo%E_VBM=Ei%E_VBM
+       Eo%E_CBm=Ei%E_CBm
        Eo%E_dir_gap=Ei%E_dir_gap
      endif
      allocate(Eo%E(Eo%nb,Eo%nk,n_sp_pol),Eo%f(Eo%nb,Eo%nk,n_sp_pol))
@@ -159,9 +167,11 @@ module electrons
      !
      if (BZ_RIM_nbands/=0.and.Ei%nk==Eo%nk) then
        allocate(Eo%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
+       allocate(Eo%W_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
        allocate(Eo%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
-       call mem_est("E_RIM f_RIM",(/size(Eo%E_RIM),size(Eo%f_RIM)/),(/SP,SP/))
+       call mem_est("E_RIM W_RIM f_RIM",(/size(Eo%E_RIM),size(Eo%W_RIM),size(Eo%f_RIM)/),(/SP,SP,SP/))
        Eo%E_RIM=Ei%E_RIM
+       Eo%W_RIM=Ei%W_RIM
        Eo%f_RIM=Ei%f_RIM
      endif
      !
@@ -172,6 +182,8 @@ module electrons
      type(levels)::E
      E%E_dir_gap=0.
      E%Efermi=0.
+     E%E_VBM=0.
+     E%E_CBm=0.
      E%nb=0
      E%nk=0
      E%nbf=0 
@@ -192,9 +204,10 @@ module electrons
      call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
      !
      if(associated(E%E_RIM))      deallocate(E%E_RIM)
+     if(associated(E%W_RIM))      deallocate(E%W_RIM)
      if(associated(E%f_RIM))      deallocate(E%f_RIM)
-     nullify(E%E_RIM,E%f_RIM)
-     call mem_est("E_RIM f_RIM")
+     nullify(E%E_RIM,E%W_RIM,E%f_RIM)
+     call mem_est("E_RIM W_RIM f_RIM")
      !
    end subroutine
    !

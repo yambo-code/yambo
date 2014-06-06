@@ -55,7 +55,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
- use matrix_operate,ONLY:matrix_linear_index
+ use matrix_operate,ONLY:UP_matrix_index
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use wrapper,       ONLY:V_dot_V,Vstar_dot_V,M_by_V
@@ -593,9 +593,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      else
        if (ik2==1.and.ik1==1) then
-         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,matrix_linear_index(1,1)/),ID=ID)
+         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,UP_matrix_index(1,1)/),ID=ID)
        else
-         call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/matrix_linear_index(ik1,ik2)/),ID=ID)
+         call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/UP_matrix_index(ik1,ik2)/),ID=ID)
        endif
        ioBS_err=ioBS(iq,X,ID)
      endif

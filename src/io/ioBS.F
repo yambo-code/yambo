@@ -27,7 +27,7 @@ integer function ioBS(iq,X,ID)
  use X_m,           ONLY:X_t
  use R_lattice,     ONLY:nXkibz
  use stderr,        ONLY:intc
- use matrix_operate,ONLY:mat_c2r,mat_r2c,matrix_linear_index
+ use matrix_operate,ONLY:mat_c2r,mat_r2c,UP_matrix_index
  use BS,            ONLY:BS_mat,BS_K_dim,BS_K_coupling,&
 &                        BS_blk_dim,BS_k_and_row_restart,BS_res_mode,BS_blocks,&
 &                        BS_DB_is_fragmented,&
@@ -188,7 +188,7 @@ integer function ioBS(iq,X,ID)
  !
  deallocate(BS_mat_disk)
  !
- call Fragments_Restart(ID,current_fragment=i_fragment,fragments_todo=matrix_linear_index(1,nXkibz))
+ call Fragments_Restart(ID,current_fragment=i_fragment,fragments_todo=UP_matrix_index(1,nXkibz))
  ioBS=io_restart_point(ID)
  !
 1 call io_disconnect(ID)

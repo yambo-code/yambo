@@ -179,6 +179,11 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_WF_k
  type(PP_indexes),SAVE :: PAR_IND_WF_linear
  !
+ ! ... Transitions
+ type(PP_indexes),allocatable,SAVE :: PAR_IND_eh(:)
+ type(PP_indexes)            ,SAVE :: PAR_IND_T_ordered
+ type(PP_indexes)            ,SAVE :: PAR_IND_T_all
+ !
  ! Specific MPI ID's ...
  !======================
  !
@@ -275,6 +280,10 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_q_for_Xo
  type(MPI_comm),SAVE :: PAR_COM_k_for_P
+ !
+ ! ... BSK
+ type(MPI_comm),SAVE :: PAR_COM_eh_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_T_INDEX
  !
  ! ... density
  type(MPI_comm),SAVE :: PAR_COM_density

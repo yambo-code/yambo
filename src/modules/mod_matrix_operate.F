@@ -49,19 +49,30 @@ module matrix_operate
  !
  contains
    !
-   integer function matrix_linear_index(i1,i2)
+   integer function matrix_index(i1,i2,n)
+     !
+     ! Linear index of a matrix (nxn)
+     !
+     integer :: i1,i2,n
+     matrix_index=(i1-1)*n+i2
+     !
+   end function
+   !
+   integer function UP_matrix_index(i1,i2)
+     !
+     ! Linear index of the upper triangular of a matrix
      !
      ! Note that:
      !
-     !  matrix_linear_index(1,1)=2
-     !  matrix_linear_index(2,2)=3
-     !  matrix_linear_index(1,2)=4
-     !  matrix_linear_index(3,3)=5
-     !  matrix_linear_index(2,3)=6
-     !  matrix_linear_index(1,3)=7
+     !  UP_matrix_index(1,1)=2
+     !  UP_matrix_index(2,2)=3
+     !  UP_matrix_index(1,2)=4
+     !  UP_matrix_index(3,3)=5
+     !  UP_matrix_index(2,3)=6
+     !  UP_matrix_index(1,3)=7
      !
      integer :: i1,i2
-     matrix_linear_index=(i2**2+i2)/2-i1+2
+     UP_matrix_index=(i2**2+i2)/2-i1+2
      !
    end function
    !

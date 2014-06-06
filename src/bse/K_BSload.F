@@ -38,7 +38,7 @@ subroutine K_BSload(iq)
  use R_lattice,      ONLY:nXkibz
  use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_k_and_row_restart,BS_eh_E,&
 &                         BS_K_coupling
- use matrix_operate, ONLY:matrix_linear_index
+ use matrix_operate, ONLY:UP_matrix_index
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_control,OP_RD,RD,NONE,RD_CL,OP_RD_CL
  implicit none
@@ -74,7 +74,7 @@ subroutine K_BSload(iq)
        !
        ! BS I/O
        ! 
-       call io_control(ACTION=ACTION,COM=NONE,SEC=(/matrix_linear_index(ik1,ik2)/),ID=ID)
+       call io_control(ACTION=ACTION,COM=NONE,SEC=(/UP_matrix_index(ik1,ik2)/),ID=ID)
        ioBS_err=ioBS(iq,X,ID)
        !
        if (ik1==ik2) then

@@ -50,7 +50,7 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
 &                         BS_DB_is_fragmented,BS_K_coupling,&
 &                         BS_cpl_mat,BSS_uses_RIM
  use X_m,            ONLY:X_t
- use matrix_operate, ONLY:matrix_linear_index
+ use matrix_operate, ONLY:UP_matrix_index
  use IO_m,           ONLY:io_control,OP_RD,RD,NONE,RD_CL,OP_RD_CL
  use wrapper,        ONLY:M_by_V
  !
@@ -103,7 +103,7 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
    else
      if (l_Hay) then
        call PP_indexes_reset(Kp)
-       call PARALLEL_index(Kp,(/matrix_linear_index(1,nXkibz)-1/))
+       call PARALLEL_index(Kp,(/UP_matrix_index(1,nXkibz)-1/))
      endif
      if (iter==1) call mem_est('BS_mat',(/maxval(BS_blk_dim)**2/)) 
    endif
@@ -119,7 +119,7 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
          frag_pointer=BS_k_and_row_restart(:2)
          BS_k_and_row_restart=0
          if (l_Hay) then
-           if(.not.Kp%element_1D(matrix_linear_index(ik1,ik2)-1)) cycle
+           if(.not.Kp%element_1D(UP_matrix_index(ik1,ik2)-1)) cycle
          endif
          allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
          if (BS_K_coupling) allocate(BS_cpl_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
@@ -130,7 +130,7 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
        !
        ! BS I/O
        ! 
-       call io_control(ACTION=ACTION,COM=NONE,SEC=(/matrix_linear_index(ik1,ik2)/),ID=ID)
+       call io_control(ACTION=ACTION,COM=NONE,SEC=(/UP_matrix_index(ik1,ik2)/),ID=ID)
        ioBS_err=ioBS(iq,X,ID)
        !
        if (ik1==ik2) then

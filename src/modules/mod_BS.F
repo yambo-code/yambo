@@ -63,6 +63,18 @@ module BS
  complex(SP), allocatable :: BS_eh_Z(:)
  real(SP)   , allocatable :: BS_eh_W(:)
  !
+ ! Blocks ...
+ !
+ type BS_block
+   integer                       :: ik         ! ik index
+   integer                       :: size(2)    ! rows x columns
+   integer                       :: corner(2)  ! corner in the eh space@ik
+   complex(SP), allocatable      :: mat(:,:)
+ end type BS_block
+ !
+ integer                    :: n_BS_blks = 0
+ type(BS_block), allocatable:: BS_blk(:)
+ !
  ! Oscillators ...
  !
  integer  :: O_ng
@@ -135,13 +147,13 @@ module BS
    !
    function BS_blocks(I)
      use R_lattice,      ONLY:nXkibz
-     use matrix_operate, ONLY:matrix_linear_index
+     use matrix_operate, ONLY:UP_matrix_index
      integer :: BS_blocks(2)
      integer :: I,ik1,ik2
      BS_blocks=0
      do ik1=1,nXkibz
        do ik2=1,nXkibz
-         if (matrix_linear_index(ik1,ik2)==I) then
+         if (UP_matrix_index(ik1,ik2)==I) then
            BS_blocks=(/ik1,ik2/)
            return
          endif

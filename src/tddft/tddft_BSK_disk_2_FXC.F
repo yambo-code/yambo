@@ -29,7 +29,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use R_lattice,     ONLY:nqbz,bz_samp,nXkibz
  use BS,            ONLY:BS_mat,BS_res_K_exchange,BS_n_g_exch,&
 &                        BS_bands,BS_blk_dim,BS_K_dim,BS_k_and_row_restart
- use matrix_operate,ONLY:matrix_linear_index
+ use matrix_operate,ONLY:UP_matrix_index
  use com,           ONLY:isec
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_redux_wait
@@ -121,7 +121,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
      !
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
-     call io_control(ACTION=ACTION,COM=NONE,SEC=(/matrix_linear_index(ik1,ik2)/),ID=ID)
+     call io_control(ACTION=ACTION,COM=NONE,SEC=(/UP_matrix_index(ik1,ik2)/),ID=ID)
      ioBS_err=ioBS(iq,X_static,ID)
      !
      if (BS_res_K_exchange) then

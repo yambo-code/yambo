@@ -550,7 +550,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
        if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
        if (i_s==2) possible_fields='(q,k,c,v)' ! X_finite_q
        if (i_s==3) possible_fields='(q,k,c,v)' ! X_all_q
-       if (i_s==4) possible_fields='(q,k,c,v)' ! BSE
+       if (i_s==4) possible_fields='(q,k,eh,t)'! BSE
        if (i_s==5) possible_fields='(q,qp,b)'  ! SE
        if (i_s==6) possible_fields='(k,b,q,qp)'! RT
        !

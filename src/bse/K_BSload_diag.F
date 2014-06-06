@@ -34,7 +34,7 @@ subroutine K_BSload_diag(iq)
  use pars,           ONLY:SP
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:nXkibz
- use matrix_operate, ONLY:matrix_linear_index
+ use matrix_operate, ONLY:UP_matrix_index
  use BS,             ONLY:BS_mat,BS_mat_diagonal,BS_K_dim,BS_blk_dim,BS_k_and_row_restart,&
 &                         BS_DB_is_fragmented,BS_K_coupling
  use X_m,            ONLY:X_t
@@ -87,7 +87,7 @@ subroutine K_BSload_diag(iq)
    !
    ! BS I/O
    ! 
-   call io_control(ACTION=ACTION,COM=NONE,SEC=(/matrix_linear_index(ik,ik)/),ID=ID)
+   call io_control(ACTION=ACTION,COM=NONE,SEC=(/UP_matrix_index(ik,ik)/),ID=ID)
    ioBS_err=ioBS(iq,X,ID)
    !
    forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik)) &

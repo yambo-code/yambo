@@ -71,26 +71,36 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  integer     :: Max_G_m_G,ik
  integer, external :: eval_G_minus_G
  !
+ call section('*','Response Functions in Transition space')
+ !=========================================================
+ !
+ ! Tranferred momentum. Only Gamma now
+ !=====================================
+ !
+ iq=BS_q(1)
+ !
 #if defined _SC
  !
  ! The NE occupations globally redefine the metallic/full bands. So they must
+ !====================
  ! be loaded first.
  !
  call OCCUPATIONS_IO_and_interpolate(Ken,'K',k=Xk,Time=OCC_T_ref,imposed_COM=REP)
 #endif
  !
+ ! TDDFT setup and Resets
+ !========================
+ !
  call X_reset(X_tddft)
  call W_reset(W_bss)
- !
- ! TDDFT setup
  !
  call tddft_do_X_W_typs(-1,X_tddft,Xw)
  !
  if(BS_bands(1)<1        ) BS_bands(1)=1
  if(BS_bands(2)>Ken%nb   ) BS_bands(2)=Ken%nb
  !
- ! In these two lines I ensure the at least all the metallic
- ! states are included (metallic case) or that at least
+ ! In these two lines I ensure the at least all the metallic states are included (metallic case) or that at least
+ !                    ==========================================================
  ! 1 valence state and 1 conduction state are included (non metallic case)
  !
  if(Ken%nbf+1>=Ken%nbm) Bands_limits=(/Ken%nbf,Ken%nbf+1/)
@@ -108,27 +118,35 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  endif
  !
 #if defined _SC || defined _KERR
+ !                 =============
  if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
    call warning("Not a valid gauge in input. Switching to lenght gauge")
    global_gauge="length"
  endif
 #endif
  !
- ! If using ALDA enough bands must be loaded to
- ! be able to calculate the density
- !
+ ! If using ALDA enough bands must be loaded to be able to calculate the density
+ !          ================================
  bands_to_correct=BS_bands
  if (l_alda_fxc) bands_to_correct=(/1,BS_bands(2)/)
  !
- ! Pre-Setup of Parallel variables
- !
+ ! PARALLEL SETUP
+ !================
  call X_duplicate(X_static_pp,X_oscillators) 
  X_oscillators%whoami=5
  X_oscillators%ib=BS_bands
  X_oscillators%q0=BSS_q0
  !
- call PARALLEL_global_indexes(Ken,Xk,q," ",RESET=.TRUE.,X=X_oscillators)
- !call PARALLEL_global_indexes(Ken,Xk,q,"BSE",    RESET=.FALSE.,SERIAL=.TRUE.,X=X_oscillators)
+ ! ... EH space (no parallelization)
+ allocate(BS_blk_dim(Xk%nibz))
+ call K_eh_setup(iq,Ken,Xk,X_oscillators%Wd)
+ !
+ !... Parallel distribution
+ call PARALLEL_global_indexes(Ken,Xk,q,"BSE",X=X_oscillators)
+ stop
+ !
+ ! Blocks Build-UP
+ !=================
  !
  ! ... and the QP corrections
  !
@@ -205,13 +223,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n_freqs
  !
- iq=BS_q(1)
- !
  call section('+','Main loop')
  !
  ! 1. The IP Part (Dipoles and eh-energies)...
- ! ================
+ ! ============================================
  call K_IP(iq,Ken,Xk,X_oscillators,W_bss)
+ stop
  !
  ! 2. The KERNEL
  ! ================

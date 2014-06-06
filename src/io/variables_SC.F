@@ -442,11 +442,11 @@ integer function variables_SC(ID,local_description,what)
      call io_elemental(ID,VAR="CONSTRAINS",VAR_SZ=VAR_SIZE,MENU=0) 
      i_desc=i_desc+1
      call io_elemental(ID,L0=.not.l_RT_skip_impose,&
-&      VAR=' [CONSTRAINS] N & dN  (e-e & e-p):',  CHECK=.true.,OP=(/"=="/),&
+&      VAR=' [CONSTRAINS] N (ee+ep) & dN (ep):',  CHECK=.true.,OP=(/"=="/),&
 &      DESCRIPTION=local_description(i_desc))
      i_desc=i_desc+1
      call io_elemental(ID,L0=l_RT_EE_impose_E,&
-&      VAR=' [CONSTRAINS] IP Energy     (e-e):',  CHECK=.true.,OP=(/"=="/),&
+&      VAR=' [CONSTRAINS] IP Energy      (ee):',  CHECK=.true.,OP=(/"=="/),&
 &      DESCRIPTION=local_description(i_desc))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif

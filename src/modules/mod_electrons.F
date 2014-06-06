@@ -108,7 +108,6 @@ module electrons
  contains
    !
    subroutine E_duplicate(Ei,Eo)
-     use com,       ONLY:warning
      use memory_m,  ONLY:mem_est
      type(levels):: Ei,Eo
      !
@@ -157,7 +156,6 @@ module electrons
          allocate(Eo%QP_corrected(QP_corrected_bounds(1),QP_corrected_bounds(2),n_sp_pol))
          call mem_est("E-QP_corrected",(/size(Eo%QP_corrected)/),(/IP/))
          Eo%QP_corrected=Ei%QP_corrected
-         call warning(' QP corrections transferred in energy levels duplication')
        endif
      else
        Eo%E(:,:,:)=Ei%E(:,:Eo%nk,:)

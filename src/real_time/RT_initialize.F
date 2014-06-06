@@ -78,6 +78,11 @@ subroutine RT_initialize(E,k,q)
  !
  if (TIME_EE_impose_dN>0.) l_RT_EE_impose_E=.FALSE.
  !
+ if (l_RT_skip_impose.and.l_RT_EE_impose_E) then
+   l_RT_EE_impose_E=.TRUE.
+   call warning('IO steps read from the existing databases')
+ endif
+ !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
  !
  l_NE_simulate_RPA     =.not.Hfrozen.and.     XCfrozen
@@ -372,9 +377,9 @@ subroutine RT_initialize(E,k,q)
  !
  if (.not.l_RT_skip_impose.or.l_RT_EE_impose_E) then
    call msg( 'nr','---Conservation Rules---')
-   call msg( 'r','Carrier and electrons number:',.not.l_RT_skip_impose)
-   if (l_elel_scatt) call msg( 'r','Energy (e-e only)           :',l_RT_EE_impose_E)
-   if (TIME_EE_impose_dN>0.) call msg( 'r', 'Time for dN       (e-e)[fs]:',TIME_EE_impose_dN/FS2AUT)
+   call msg( 'r','dN (e-p) and N (e-p + e-e)  :',.not.l_RT_skip_impose)
+   if (l_elel_scatt) call msg( 'r','Energy (e-e)                :',l_RT_EE_impose_E)
+   if (TIME_EE_impose_dN>0.) call msg( 'r', 'Time for dN (e-e)      [fs]:',TIME_EE_impose_dN/FS2AUT)
  endif
  !
  call msg( 'nr','---RIM---')

@@ -52,7 +52,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q,PAR_IND_INV,PAR_IND_DIAGO,&
 &                        PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
 &                        PAR_IND_B_mat,PAR_IND_Plasma,PAR_IND_DIPk_ibz,PAR_IND_WF_linear,&
-&                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_eh,PAR_IND_T_ordered,PAR_IND_T_all,&
+&                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_eh,PAR_IND_T,&
 &                        PAR_IND_Xp_bz
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
@@ -138,8 +138,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PP_indexes_reset(PAR_IND_WF_b)
    call PP_indexes_reset(PAR_IND_WF_k)
    call PP_indexes_reset(PAR_IND_WF_linear)
-   call PP_indexes_reset(PAR_IND_T_ordered)
-   call PP_indexes_reset(PAR_IND_T_all)
+   call PP_indexes_reset(PAR_IND_T)
    !
    if (ENVIRONMENT=="BSK") then
      if (.not.allocated(PAR_IND_eh)) then
@@ -901,18 +900,22 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    BS_nT_grps=sum( BS_nT_grps_at_k )
    !
-   ! Now each CPU of the PAR_COM_eh_INDEX has n_BS_T_grps groups of e/h pairs
+   call PARALLEL_live_message("Transition Groups",ENVIRONMENT=ENVIRONMENT,&
+&                             LOADED=PAR_BS_nT_grps,TOTAL=PAR_BS_nT_grps,&
+&                             NCPU=PAR_COM_eh_INDEX%n_CPU)
+   !
+   ! Now each CPU of the PAR_COM_eh_INDEX has PAR_BS_nT_grps  groups of e/h pairs
    !
    ! The task now is to distribute the transitions:
    !  
-   ! (a) Group@k->Group'@p (k,p fixed and k=/p )
+   ! Group@k (among PAR_BS_nT_grps) ->Group'@p (among BS_nT_grps)
    !
-   !call PARALLEL_index(PAR_IND_T_all,(/n_BS_T_grps**2/),COMM=PAR_COM_T_INDEX,CONSECUTIVE=.TRUE.)
+   call PARALLEL_index(PAR_IND_T,(/PAR_BS_nT_grps,PAR_BS_nT_grps/),COMM=PAR_COM_T_INDEX)
+   !
+   call PARALLEL_live_message("Transition Scatterings",ENVIRONMENT=ENVIRONMENT,&
+&                             LOADED=PAR_IND_T%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),TOTAL=PAR_BS_nT_grps*PAR_BS_nT_grps,&
+&                             NCPU=PAR_COM_T_INDEX%n_CPU)
    !  
-   ! (b) Group@k->Group'@k (k,p fixed and k=p )
-   !
-   !call PARALLEL_index(PAR_IND_T_ordered,(/UP_matrix_index(1,n_BS_T_grps)/),COMM=PAR_COM_T_INDEX,CONSECUTIVE=.TRUE.)
-   !
  endif
  !
  call PARALLEL_live_message("Matrix Inversion uses "//trim(intc(PAR_COM_INV%n_CPU))//" CPUs")

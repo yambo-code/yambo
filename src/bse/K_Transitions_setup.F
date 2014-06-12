@@ -42,14 +42,16 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
- use com,          ONLY:warning
+ use com,          ONLY:warning,error
+ use stderr,       ONLY:intc
  use BS,           ONLY:BS_K_dim,O_v_state,O_c_state,&
 &                       O_n_v_states,O_n_c_states,BS_eh_en,&
 &                       BS_bands,BS_nT_at_k,BS_anti_res,&
 &                       BS_not_const_eh_f,BS_drude_f_eh,&
-&                       BSE_mode
- use BS,           ONLY:BS_T_grp
- use parallel_m,   ONLY:PAR_BS_nT_grps,PAR_BS_T_grps_index,PAR_IND_Xk_bz,PAR_IND_eh
+&                       BSE_mode,BS_T_grp,BS_K_coupling
+ use parallel_m,   ONLY:PAR_BS_nT_grps,PAR_BS_T_grps_index,PAR_IND_Xk_bz,PAR_IND_eh,&
+&                       PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_eh_INDEX,&
+&                       PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
  use R_lattice,    ONLY:qindx_X,bz_samp
  !
@@ -73,17 +75,33 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  if (FILL_the_groups) then
    allocate(BS_T_grp(PAR_BS_nT_grps))
    allocate(PAR_BS_T_grps_index(PAR_BS_nT_grps))
+   call mem_est("PAR_BS_T_grps_index",(/PAR_BS_nT_grps/),(/IP/))
    do i_g=1,PAR_BS_nT_grps
      PAR_BS_T_grps_index(i_g)=0
      BS_T_grp(i_g)%size=0
    enddo
    n_loops=2
+   if (any(BS_nT_at_k==0)) then
+     call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
+   endif
+   !
+   allocate(PAR_IND_CON_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%n_CPU+1))
+   allocate(PAR_IND_VAL_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%n_CPU+1))
+   allocate(PAR_IND_CON_BANDS_X(5)%element_1D(BS_bands(2)))
+   allocate(PAR_IND_VAL_BANDS_X(5)%element_1D(BS_bands(2)))
+   PAR_IND_CON_BANDS_X(5)%n_of_elements=0
+   PAR_IND_VAL_BANDS_X(5)%n_of_elements=0
+   PAR_IND_CON_BANDS_X(5)%element_1D=.FALSE.
+   PAR_IND_VAL_BANDS_X(5)%element_1D=.FALSE.
+   PAR_IND_CON_BANDS_X_ID(5)=PAR_COM_eh_INDEX%CPU_id+1
+   PAR_IND_VAL_BANDS_X_ID(5)=PAR_COM_eh_INDEX%CPU_id+1
+   !
  else
    allocate(BS_nT_at_k(Xk%nbz))
    call mem_est("BS_nT_at_k",(/Xk%nbz/),(/IP/))
    BS_nT_at_k=0
    n_loops=1
- endif
+ endif 
  !
  !if (BS_res_K_corr) then
  !  O_n_v_states=0
@@ -138,16 +156,28 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
                  !
                  nT=BS_T_grp(i_PAR_nT_grps)%size
                  !
+                 allocate(BS_T_grp(i_PAR_nT_grps)%dipoles_R(nT))
+                 call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(i_PAR_nT_grps)),(/nT/))
+                 if (BS_K_coupling) then
+                   allocate(BS_T_grp(i_PAR_nT_grps)%dipoles_A(nT))
+                   call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(i_PAR_nT_grps)),(/nT/))
+                 endif
                  allocate(BS_T_grp(i_PAR_nT_grps)%table(nT,3))
+                 call mem_est("BS_T_grp_table_N"//trim(intc(i_PAR_nT_grps)),(/nT/),(/IP/))
                  allocate(BS_T_grp(i_PAR_nT_grps)%E(nT))
+                 call mem_est("BS_T_grp_E_N"//trim(intc(i_PAR_nT_grps)),(/nT/),(/SP/))
                  allocate(BS_T_grp(i_PAR_nT_grps)%f(nT))
+                 call mem_est("BS_T_grp_f_N"//trim(intc(i_PAR_nT_grps)),(/nT/),(/SP/))
                  if (associated(Ken%Z)) then
                    allocate(BS_T_grp(i_PAR_nT_grps)%Z(nT))
+                   call mem_est("BS_T_grp_Z_N"//trim(intc(i_PAR_nT_grps)),(/nT/))
                  endif
                  if (associated(Ken%W)) then
                    allocate(BS_T_grp(i_PAR_nT_grps)%W(nT))
+                   call mem_est("BS_T_grp_W_N"//trim(intc(i_PAR_nT_grps)),(/nT/),(/SP/))
                  endif
                  !
+                 BS_T_grp(i_PAR_nT_grps)%ik      =ikbz
                  BS_T_grp(i_PAR_nT_grps)%first_cv=BS_K_dim
                  !
                endif
@@ -161,6 +191,19 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
                i_T_in_the_grp=i_T_in_the_grp+1
                !
                BS_T_grp(i_PAR_nT_grps)%table(i_T_in_the_grp,:)=(/iv,ic,i_sp/)
+               !
+               if (.not.PAR_IND_CON_BANDS_X(5)%element_1D(ic)) then
+                 PAR_IND_CON_BANDS_X(5)%element_1D(ic)=.TRUE.
+                 PAR_IND_CON_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%n_CPU+1)=&
+&                                       PAR_IND_CON_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%n_CPU+1)+1
+               endif
+               !
+               if (.not.PAR_IND_VAL_BANDS_X(5)%element_1D(iv)) then
+                 PAR_IND_VAL_BANDS_X(5)%element_1D(iv)=.TRUE.
+                 PAR_IND_VAL_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%n_CPU+1)=&
+&                                       PAR_IND_VAL_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%n_CPU+1)+1
+               endif
+               !
                BS_T_grp(i_PAR_nT_grps)%E(i_T_in_the_grp)=E_eh
                BS_T_grp(i_PAR_nT_grps)%f(i_T_in_the_grp)=f_eh
                if (associated(Ken%Z)) then

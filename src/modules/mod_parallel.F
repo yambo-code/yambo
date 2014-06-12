@@ -182,8 +182,7 @@ module parallel_m
  !
  ! ... Transitions
  type(PP_indexes),allocatable,SAVE :: PAR_IND_eh(:)
- type(PP_indexes)            ,SAVE :: PAR_IND_T_ordered
- type(PP_indexes)            ,SAVE :: PAR_IND_T_all
+ type(PP_indexes)            ,SAVE :: PAR_IND_T
  !
  ! Specific MPI ID's ...
  !======================

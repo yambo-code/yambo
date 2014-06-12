@@ -32,18 +32,20 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_nbands
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
- use BS,             ONLY:BS_bands,BS_q,BS_nT_at_k,BS_eh_table,BS_eh_E,BS_eh_f,&
+ use BS,             ONLY:BS_bands,BS_q,BS_nT_at_k,&
 &                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,BSS_rhoq0,&
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_eh_en,BSE_mode,&
-&                         BSS_uses_RIM,BSS_q0,BS_nT_grps_at_k
+&                         BSS_damp_reference,BS_columns,BS_eh_en,BSE_mode,&
+&                         BSS_uses_RIM,BSS_q0,BS_nT_grps_at_k,BS_T_grp
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_causal,FXC_n_g_corr
  use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
- use parallel_m,     ONLY:PP_redux_wait
- use interfaces,     ONLY:PARALLEL_global_indexes
+ use parallel_m,     ONLY:PP_redux_wait,PAR_BS_nT_grps,PAR_BS_T_grps_index,PAR_IND_CON_BANDS_X,&
+&                         PAR_IND_VAL_BANDS_X,PAR_IND_Xk_ibz
+ use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,WF_load
+ use wave_func,      ONLY:WF_buffered_IO,WF,WF_buffer
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
 #if defined _SC
@@ -66,8 +68,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! Work Space
  !
  type(X_t)   :: X_tddft,X_oscillators
- integer     :: iq,bands_to_correct(2),Bands_limits(2)
- integer     :: Max_G_m_G,ik
+ integer     :: iq,bands_to_correct(2),Bands_limits(2),Max_G_m_G,ik,i_g
  integer, external :: eval_G_minus_G
  !
  call section('*','Response Functions in Transition space')
@@ -129,38 +130,15 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  bands_to_correct=BS_bands
  if (l_alda_fxc) bands_to_correct=(/1,BS_bands(2)/)
  !
- ! PARALLEL SETUP
- !================
- call X_duplicate(X_static_pp,X_oscillators) 
- X_oscillators%whoami=5
- X_oscillators%ib=BS_bands
- X_oscillators%q0=BSS_q0
- !
- ! ... EH space (no parallelization)
- call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd,.FALSE.)
- !
- !... Parallel distribution
- call PARALLEL_global_indexes(Ken,Xk,q,"BSK",X=X_oscillators)
- !
- ! ... EH space (with parallelization) and Transition groups build-up
- call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd,.TRUE.)
- do while (.TRUE.)
- enddo
- !
- !... Blocks build-up
- call K_blocks( Xk )
- !
- ! Blocks Build-UP
- !=================
- !
  ! ... and the QP corrections
- !
+ !             ==============
  call QP_apply(bands_to_correct,Ken,Xk,"K",msg_fmt='s')
  !
  ! GPL_EXCLUDE_START
  !
  ! If the em1s DB has been calculated in the same run
  ! of a BS-Fxc kernel construction that l_bs_fxc is set .FALSE.
+ !      =============
  ! in tddft_do_X_W_typs. So here we need to check again if
  ! l_bs_fxc has been provided
  !
@@ -169,6 +147,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! GPL_EXCLUDE_END
  !
  ! W RL size setup looking at the max index of G-G' 
+ ! =========
  !
  Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
  if (BS_n_g_W/= Max_G_m_G ) then
@@ -187,6 +166,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! GPL_EXCLUDE_START  
  !
  if (l_bs_fxc.or.index(BSS_mode,'t')/=0) then
+   !
    ! Remove the exchange from the BS_mode
    ! if TDDFT Fxc is obtained from K
    !
@@ -199,7 +179,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! GPL_EXCLUDE_END
  !
  ! Logicals (Drivers)
- !
+ !====================
  BS_res_K_corr=index(BS_res_mode,'c')/=0
  BS_res_K_exchange=index(BS_res_mode,'x')/=0
  BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
@@ -214,26 +194,57 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  BS_K_is_ALDA=l_alda_fxc
  !
  ! Energy points
- !
+ !===============
  W_bss%n_freqs=BSS_n_freqs
  W_bss%er=BSS_er
  W_bss%dr=BSS_dr
  W_bss%damp_reference=BSS_damp_reference
  !
  ! RIM support
- !
+ !=============
  BSS_uses_RIM = (BZ_RIM_nbands>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
  !
  W_bss%per_memstps=FXC_per_memstps
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n_freqs
  !
- call section('+','Main loop')
+ ! PARALLEL SETUP
+ !================
+ call X_duplicate(X_static_pp,X_oscillators) 
+ X_oscillators%whoami=5
+ X_oscillators%ib=BS_bands
+ X_oscillators%q0=BSS_q0
  !
- ! 1. The IP Part (Dipoles and eh-energies)...
- ! ============================================
+ ! ... EH space (no parallelization)
+ call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd,.FALSE.)
+ !
+ !... Parallel distribution
+ call PARALLEL_global_indexes(Ken,Xk,q,"BSK",X=X_oscillators)
+ !
+ ! ... EH space (with parallelization) and Transition groups build-up
+ call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd,.TRUE.)
+ !
+ !... Blocks build-up
+ call K_blocks( )
+ !
+ ! Wave Functions distribution
+ !=============================
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,&
+&                            B_index=PAR_IND_CON_BANDS_X(X_oscillators%whoami),&
+&                            Bp_index=PAR_IND_VAL_BANDS_X(X_oscillators%whoami),&
+&                            CLEAN_UP=.TRUE.)
+ !
+ if (WF_buffered_IO) then
+   !
+   call WF_load(WF_buffer,0,1,BS_bands,(/1,Xk%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
+   !
+ endif
+ !
+ call section('=','Main loop')
+ !
+ ! 1. The IP Part (Dipoles included) ...
+ ! ======================================
  call K_IP(iq,Ken,Xk,X_oscillators,W_bss)
- stop
  !
  ! 2. The KERNEL
  ! ================
@@ -275,16 +286,32 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! CLEAN
  !
- if (allocated(BSS_rhoq0))       deallocate(BSS_rhoq0)
- if (allocated(BS_nT_at_k))      deallocate(BS_nT_at_k)
- if (allocated(BS_nT_grps_at_k)) deallocate(BS_nT_grps_at_k)
- call mem_est("BS_nT_at_k BSS_rhoq0 BS_nT_grps_at_k")
+ if (allocated(BS_nT_at_k))          deallocate(BS_nT_at_k)
+ if (allocated(BS_nT_grps_at_k))     deallocate(BS_nT_grps_at_k)
+ if (allocated(PAR_BS_T_grps_index)) deallocate(PAR_BS_T_grps_index)
+ call mem_est("BS_nT_at_k PAR_BS_T_grps_index BS_nT_grps_at_k")
  !
- if (allocated(BS_eh_table)) deallocate(BS_eh_table)
- if (allocated(BS_eh_E))     deallocate(BS_eh_E)
- if (allocated(BS_eh_f))     deallocate(BS_eh_f)
- if (allocated(BS_eh_W))     deallocate(BS_eh_W)
- if (allocated(BS_eh_Z))     deallocate(BS_eh_Z)
- call mem_est("BS_eh_table BS_eh_E BS_eh_f BS_eh_W BS_eh_Z")
+ do i_g=1,PAR_BS_nT_grps
+   deallocate(BS_T_grp(i_g)%dipoles_R)
+   call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(i_g)))
+   if (BS_K_coupling) then
+     deallocate(BS_T_grp(i_g)%dipoles_A)
+     call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(i_g)))
+   endif
+   deallocate(BS_T_grp(i_g)%table)
+   call mem_est("BS_T_grp_table_N"//trim(intc(i_g)))
+   deallocate(BS_T_grp(i_g)%E)
+   call mem_est("BS_T_grp_E_N"//trim(intc(i_g)))
+   deallocate(BS_T_grp(i_g)%f)
+   call mem_est("BS_T_grp_f_N"//trim(intc(i_g)))
+   if (associated(Ken%Z)) then
+     deallocate(BS_T_grp(i_g)%Z)
+     call mem_est("BS_T_grp_Z_N"//trim(intc(i_g)))
+   endif
+   if (associated(Ken%W)) then
+     deallocate(BS_T_grp(i_g)%W)
+     call mem_est("BS_T_grp_W_N"//trim(intc(i_g)))
+   endif
+ enddo
  !
 end subroutine

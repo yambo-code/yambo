@@ -21,169 +21,103 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_blocks(Xk)
+subroutine K_blocks( )
  !
-! use pars,         ONLY:SP,IP
-! use memory_m,     ONLY:mem_est
-! use com,          ONLY:error
- use parallel_m,   ONLY:PAR_IND_Xk_bz,PAR_IND_Xp_bz,PAR_IND_T_ordered,PAR_IND_T_all
- use BS,           ONLY:BS_K_dim,BS_eh_table,BS_blk,n_BS_blks,BS_nT_at_k
-!E,BS_eh_f,BS_eh_en,&
-!&                       BS_eh_table,BS_bands,BS_K_coupling,&
-!&                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z
-! use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
- use R_lattice,    ONLY:bz_samp,nqbz,qindx_B
+ ! Create and Fille the BSK blocks
+ !
+ !type BS_block
+ !  integer                       :: ik         ! ik index
+ !  integer                       :: ip         ! ip index (ik -> ip transition)
+ !  integer                       :: iT_k       ! Index (among n_BS_T_grps) of the cv transitions @ k
+ !  integer                       :: iT_p       ! Index (among n_BS_T_grps) of the cv transitions @ p
+ !  integer                       :: size(2)    ! rows x columns
+ !  character(1)                  :: mode       ! "R"esonant/"A"ntiresonant
+ !  complex(SP), allocatable      :: mat(:,:)
+ !end type BS_block
+ !
+ use memory_m,     ONLY:mem_est
+ use parallel_m,   ONLY:PAR_IND_T,PAR_BS_nT_grps,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_eh_INDEX
+ use interfaces,   ONLY:PARALLEL_live_message
+ use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,BS_K_dim,BS_bands
+ use com,          ONLY:msg
  !
  implicit none
  !
- type(bz_samp) :: Xk
- !
  ! Work Space
  !
- integer              :: Iblk,Jblk,ipbz,ikbz,Ieh,Jeh
+ integer              :: i_T,j_T,i_loop,n_tot_blocks,tot_size
  !
  call section('=','CPU-dependent Block structure')
  !
- do ikbz=1,Xk%nbz
+ do i_loop=1,2
    !
-   if (.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle 
+   tot_size=0
    !
-   do ipbz=1,Xk%nbz
+   if (i_loop==2) then
+     allocate(BS_blk(n_BS_blks))
+   endif
+   !
+   n_BS_blks=0
+   !
+   do i_T=1,PAR_BS_nT_grps
      !
-     if (.not.PAR_IND_Xp_bz%element_1D(ipbz)) cycle 
-     !
-     do Iblk=1,BS_nT_at_k(ikbz)
-       Ieh=sum(BS_nT_at_k(1:ikbz-1))+Iblk
-       do Jblk=1,BS_nT_at_k(ipbz)
-         Jeh=sum(BS_nT_at_k(1:ipbz-1))+Jblk
-         !write (*,*) Ieh,Jeh
-       enddo
+     do j_T=1,PAR_BS_nT_grps
+       !
+       if (.not.PAR_IND_T%element_2D(i_T,j_T)) cycle 
+       !
+       if (BS_T_grp(i_T)%ik<=BS_T_grp(j_T)%ik) then
+         !
+         n_BS_blks=n_BS_blks+1
+         !
+         if (i_loop==2) then
+           allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+           tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
+           BS_blk(n_BS_blks)%mode="R"
+           BS_blk(n_BS_blks)%iT_k=i_T
+           BS_blk(n_BS_blks)%iT_p=j_T
+           BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
+           BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
+         endif
+         !
+       endif
+       !
+       if (BS_K_coupling) then
+         n_BS_blks=n_BS_blks+1
+         if (i_loop==2) then
+           allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+           tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
+           BS_blk(n_BS_blks)%mode="A"
+           BS_blk(n_BS_blks)%iT_k=i_T
+           BS_blk(n_BS_blks)%iT_p=j_T
+           BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
+           BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
+         endif
+       endif
+       !
      enddo
      !
    enddo
+   !
  enddo
-
  !
-!ic(BS_bands(2),n_sp_pol),Iiv(BS_bands(2),n_sp_pol)
-! integer :: ikbz,iv,ic,ik,ikp,i_sp
-! real(SP):: E_eh,f_eh
+ n_tot_blocks=(BS_nT_grps**2-BS_nT_grps)/2+BS_nT_grps
+ if (BS_K_coupling) n_tot_blocks=n_tot_blocks+BS_nT_grps**2
  !
-! if (BS_blk_label=="k") n_BS_blks=PAR_Xk_nibz
-! if (BS_blk_label=="c") n_BS_blks=PAR_IND_CON_BANDS_X(5)%n_of_elements(PAR_COM_CON_INDEX(5)%CPU_id+1)
-! if (BS_blk_label=="v") n_BS_blks=PAR_IND_VAL_BANDS_X(5)%n_of_elements(PAR_COM_VAL_INDEX(5)%CPU_id+1)
-! !
-! n_BS_blks=n_BS_blks**2
-! !
-! allocate(BS_blk(n_BS_blks),blk_id(n_BS_blks))
-! !
-! blk_id=0
-! !
-! do I=1,BS_K_dim
-!   !
-!   ikbz=BS_eh_table(I,1)
-!   iv  =BS_eh_table(I,2)
-!   ic  =BS_eh_table(I,3)
-!   !
-!   if (.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle 
-!   if (.not.PAR_IND_CON_BANDS_X(5)%element_1D(ic)) cycle 
-!   if (.not.PAR_IND_VAL_BANDS_X(5)%element_1D(iv)) cycle 
-!   !
-!   do iqbz=1,nqbz
-!     !
-!     if (.not.PAR_IND_Q%element_1D(iqbz)) cycle 
-!     !
-!     !
-!   enddo
-!   !
-! enddo
-! !
-! deallocate(blk_id)
+ call PARALLEL_live_message("BSK blocks",LOADED=n_BS_blks,TOTAL=n_tot_blocks)
  !
-! do while(.TRUE.) 
-!   !
-!   BS_K_dim=0
-!   !
-!   do ikbz=1,Xk%nbz
-!     !
-!     Iic=0
-!     Iiv=0
-!     !
-!     do iv=BS_bands(1),Ken%nbm
-!       do ic=Ken%nbf+1,BS_bands(2)
-!         !
-!         ik =Xk%sstar(ikbz,1)
-!         ikp=Xk%sstar(qindx_X(iq,ikbz,1),1)
-!         !
-!         do i_sp=1,n_sp_pol
-!           !
-!           E_eh=Ken%E(ic,ik,i_sp)-Ken%E(iv,ikp,i_sp)
-!           if (abs(E_eh)<1.E-5) cycle
-!           !
-!           ! Same ordering procedure of the Xo case (see X_eh_setup.F)
-!           !
-!           f_eh=Ken%f(iv,ikp,i_sp)*(spin_occ-Ken%f(ic,ik,i_sp))
-!           if (abs(f_eh)<epsilon(1._SP)) cycle
-!           !
-!           ! Additional (?) condition for spin-resolved calculations
-!           !
-!           if (n_spin==2.and. &
-!&              (Ken%f(iv,ikp,i_sp)<=filled_tresh.or.&
-!&               abs(spin_occ-Ken%f(ic,ik,i_sp))<=filled_tresh) ) cycle
-!           !
-!           ! A 5% fractional occupation swiches on the particular
-!           ! treatment of finite temp. BSE 
-!           !
-!           f_eh=f_eh/spin_occ/spin_occ          
-!           if ( abs(f_eh-1.)> filled_tresh) BS_not_const_eh_f=.TRUE.
-!           !
-!           ! The e/h occ must be 1. in the T=0 case as the spin factor (spin_occ)
-!           ! would erronously increase the e-e scattering
-!           !
-!           if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0.,&
-!&                    abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0./))) cycle
-!           !
-!           BS_K_dim=BS_K_dim+1
-!           !
-!           if (allocated(BS_eh_table)) then
-!             if (n_sp_pol==2) BS_eh_table(BS_K_dim,:)=(/ikbz,iv,ic,i_sp/)
-!             if (n_sp_pol==1) BS_eh_table(BS_K_dim,:)=(/ikbz,iv,ic/)
-!           endif
-!           !
-!           if (allocated(BS_eh_E)) BS_eh_E(BS_K_dim)=E_eh
-!           if (allocated(BS_eh_f)) BS_eh_f(BS_K_dim)=f_eh
-!           if (allocated(BS_eh_W)) BS_eh_W(BS_K_dim)=Ken%W(ic,ik,i_sp)-Ken%W(iv,ikp,i_sp)
-!           if (allocated(BS_eh_Z)) BS_eh_Z(BS_K_dim)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
-!           !
-!           Iiv(iv,i_sp)=1
-!           Iic(ic,i_sp)=1
-!           !
-!         enddo
-!       enddo
-!     enddo
-!     !
-!     if (.not.BS_K_coupling.and.BS_not_const_eh_f) then
-!       call error('Fractional e/h occupations found. BS coupling forced.')
-!     endif
-!     !
-!   enddo
-!   !
-!   if (allocated(BS_eh_table)) return
-!   !
-!   ! Allocations
-!   !
-!   allocate(BS_eh_table(BS_K_dim,3+n_sp_pol-1),BS_eh_E(BS_K_dim),BS_eh_f(BS_K_dim))
-!   call mem_est("BS_eh_table BS_eh_E BS_eh_f",&
-!&               (/(3+n_sp_pol-1)*BS_K_dim,BS_K_dim,BS_K_dim/),(/IP,SP,SP/))
-!   !
-!   if (associated(Ken%W)) then
-!     allocate(BS_eh_W(BS_K_dim))
-!     call mem_est("BS_eh_W",(/BS_K_dim/),(/SP/))
-!   endif
-!   if (associated(Ken%Z)) then
-!     allocate(BS_eh_Z(BS_K_dim))
-!     call mem_est("BS_eh_Z",(/BS_K_dim/),(/SP/))
-!   endif
-!   !
-! enddo
-! !
+ call PARALLEL_live_message("BSK CON bands",&
+&                            LOADED=PAR_IND_CON_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%n_CPU+1),&
+&                            TOTAL=BS_bands(2)-BS_bands(1)+1)
+ !
+ call PARALLEL_live_message("BSK VAL bands",&
+&                            LOADED=PAR_IND_VAL_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%n_CPU+1),&
+&                            TOTAL=BS_bands(2)-BS_bands(1)+1)
+ !
+ call mem_est("BSK",(/tot_size/))
+ !
+ ! REPORT
+ !
+ call msg('r','[BSK] Size   (total)',BS_K_dim)
+ call msg('r','[BSK] Blocks (total)',n_tot_blocks)
+ !
 end subroutine

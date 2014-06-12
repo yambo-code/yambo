@@ -68,6 +68,8 @@ module BS
    integer                       :: first_cv   ! Position in the cv transitions @ k
    integer                       :: size       
    complex(SP), allocatable      :: table(:,:) ! (/iv,ic,i_sp/)
+   complex(SP), allocatable      :: dipoles_R(:)
+   complex(SP), allocatable      :: dipoles_A(:)
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: f(:)

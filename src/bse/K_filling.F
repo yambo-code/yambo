@@ -27,7 +27,7 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
  use pars,         ONLY:SP,schlen
  use com,          ONLY:msg
  use functions,    ONLY:K_scatter
- use BS,           ONLY:BS_eh_E,BS_columns,BS_blk_dim,BS_k_and_row_restart
+ use BS,           ONLY:BS_eh_E,BS_columns,BS_nT_at_k,BS_k_and_row_restart
  use parallel_m,   ONLY:myid,ncpu,PP_redux_wait
  use LIVE_t,       ONLY:live_timing,nhash
  implicit none
@@ -64,15 +64,15 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
  do ik2=1,BS_columns
    do ik1=ik2,1,-1
      !
-     ikk1=sum(BS_blk_dim(:ik1-1))
-     ikk2=sum(BS_blk_dim(:ik2-1))
+     ikk1=sum(BS_nT_at_k(:ik1-1))
+     ikk2=sum(BS_nT_at_k(:ik2-1))
      !
      call live_timing(steps=1)
      if (ik2<BS_k_and_row_restart(2)) cycle
      if (ik2==BS_k_and_row_restart(2).and.ik1>=BS_k_and_row_restart(1)) cycle
      !
-     do icv1=1,BS_blk_dim(ik1)
-       do icv2=1,BS_blk_dim(ik2)
+     do icv1=1,BS_nT_at_k(ik1)
+       do icv2=1,BS_nT_at_k(ik2)
          if (ik1==ik2.and.icv2<icv1) cycle
          tot_n_K_elements=tot_n_K_elements+1
          if (.not.K_scatter(abs(BS_eh_E(ikk1+icv1)),abs(BS_eh_E(ikk2+icv2)),&

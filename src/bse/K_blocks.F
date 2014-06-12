@@ -26,9 +26,8 @@ subroutine K_blocks(Xk)
 ! use pars,         ONLY:SP,IP
 ! use memory_m,     ONLY:mem_est
 ! use com,          ONLY:error
- use parallel_m,   ONLY:PAR_IND_Xk_bz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
-&                       PAR_COM_CON_INDEX,PAR_COM_VAL_INDEX,PAR_Xk_nibz
- use BS,           ONLY:BS_K_dim,BS_eh_table,BS_blk_label,BS_blk,n_BS_blks
+ use parallel_m,   ONLY:PAR_IND_Xk_bz,PAR_IND_Xp_bz,PAR_IND_T_ordered,PAR_IND_T_all
+ use BS,           ONLY:BS_K_dim,BS_eh_table,BS_blk,n_BS_blks,BS_nT_at_k
 !E,BS_eh_f,BS_eh_en,&
 !&                       BS_eh_table,BS_bands,BS_K_coupling,&
 !&                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z
@@ -41,43 +40,64 @@ subroutine K_blocks(Xk)
  !
  ! Work Space
  !
- integer              :: I,ikbz,iv,ic,ik,iqbz
- integer, allocatable :: blk_id(:)
+ integer              :: Iblk,Jblk,ipbz,ikbz,Ieh,Jeh
+ !
+ call section('=','CPU-dependent Block structure')
+ !
+ do ikbz=1,Xk%nbz
+   !
+   if (.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle 
+   !
+   do ipbz=1,Xk%nbz
+     !
+     if (.not.PAR_IND_Xp_bz%element_1D(ipbz)) cycle 
+     !
+     do Iblk=1,BS_nT_at_k(ikbz)
+       Ieh=sum(BS_nT_at_k(1:ikbz-1))+Iblk
+       do Jblk=1,BS_nT_at_k(ipbz)
+         Jeh=sum(BS_nT_at_k(1:ipbz-1))+Jblk
+         !write (*,*) Ieh,Jeh
+       enddo
+     enddo
+     !
+   enddo
+ enddo
+
  !
 !ic(BS_bands(2),n_sp_pol),Iiv(BS_bands(2),n_sp_pol)
 ! integer :: ikbz,iv,ic,ik,ikp,i_sp
 ! real(SP):: E_eh,f_eh
  !
- if (BS_blk_label=="k") n_BS_blks=PAR_Xk_nibz
- if (BS_blk_label=="c") n_BS_blks=PAR_IND_CON_BANDS_X(5)%n_of_elements(PAR_COM_CON_INDEX(5)%CPU_id+1)
- if (BS_blk_label=="v") n_BS_blks=PAR_IND_VAL_BANDS_X(5)%n_of_elements(PAR_COM_VAL_INDEX(5)%CPU_id+1)
- !
- n_BS_blks=n_BS_blks**2
- !
- allocate(BS_blk(n_BS_blks),blk_id(n_BS_blks))
- !
- blk_id=0
- !
- do I=1,BS_K_dim
-   !
-   ikbz=BS_eh_table(I,1)
-   iv  =BS_eh_table(I,2)
-   ic  =BS_eh_table(I,3)
-   !
-   if (.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle 
-   if (.not.PAR_IND_CON_BANDS_X(5)%element_1D(ic)) cycle 
-   if (.not.PAR_IND_VAL_BANDS_X(5)%element_1D(iv)) cycle 
-   !
-   do iqbz=1,nqbz
-     !
-     if (.not.PAR_IND_Q%element_1D(iqbz)) cycle 
-     !
-     !
-   enddo
-   !
- enddo
- !
- deallocate(blk_id)
+! if (BS_blk_label=="k") n_BS_blks=PAR_Xk_nibz
+! if (BS_blk_label=="c") n_BS_blks=PAR_IND_CON_BANDS_X(5)%n_of_elements(PAR_COM_CON_INDEX(5)%CPU_id+1)
+! if (BS_blk_label=="v") n_BS_blks=PAR_IND_VAL_BANDS_X(5)%n_of_elements(PAR_COM_VAL_INDEX(5)%CPU_id+1)
+! !
+! n_BS_blks=n_BS_blks**2
+! !
+! allocate(BS_blk(n_BS_blks),blk_id(n_BS_blks))
+! !
+! blk_id=0
+! !
+! do I=1,BS_K_dim
+!   !
+!   ikbz=BS_eh_table(I,1)
+!   iv  =BS_eh_table(I,2)
+!   ic  =BS_eh_table(I,3)
+!   !
+!   if (.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle 
+!   if (.not.PAR_IND_CON_BANDS_X(5)%element_1D(ic)) cycle 
+!   if (.not.PAR_IND_VAL_BANDS_X(5)%element_1D(iv)) cycle 
+!   !
+!   do iqbz=1,nqbz
+!     !
+!     if (.not.PAR_IND_Q%element_1D(iqbz)) cycle 
+!     !
+!     !
+!   enddo
+!   !
+! enddo
+! !
+! deallocate(blk_id)
  !
 ! do while(.TRUE.) 
 !   !

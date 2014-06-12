@@ -453,7 +453,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _MPI 
  !
- if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa) then
+ if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa) then
    if (l_optics) then
      call CPU_activate("X_q_0")
      call CPU_activate("X_finite_q")
@@ -486,7 +486,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
  !
  if (l_bse) then
-   call CPU_activate("BSE")
+   call CPU_activate("BSK")
    call initactivate(1,'X_Threads DIP_Threads')
  endif
  !

@@ -45,7 +45,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use X_m,          ONLY:X_alloc,X_t,X_mat
  use BS,           ONLY:BS_bands,BS_eh_E,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,O_n_c_states,&
-&                       BS_n_g_W,BS_blk_dim,O_table,BS_mat,BS_mat_diagonal,&
+&                       BS_n_g_W,BS_nT_at_k,O_table,BS_mat,BS_mat_diagonal,&
 &                       O_phase,O_c_state,O_v_state,O_ng,BS_eh_table,BS_columns,&
 &                       BS_n_g_exch,BS_identifier,BS_K_coupling,O_n_v_states,&
 &                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
@@ -247,7 +247,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call mem_est('O_table',(/size(O_table)/),elements_kind=(/SP/),errors=(/alloc_err(1)/))
  !
  O_dim=-1
- O_x_dim=maxval(BS_blk_dim)
+ O_x_dim=maxval(BS_nT_at_k)
  do ik2=1,BS_columns
    do ik1=ik2,1,-1
      !
@@ -391,7 +391,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call PP_redux_wait
  do ik2=1,BS_columns
    !
-   ikk2=sum(BS_blk_dim(:ik2-1))
+   ikk2=sum(BS_nT_at_k(:ik2-1))
    !
    if (load_O_X) call K_exchange(.not.l_col_cut,iq,ik2,Xk,O2x,O_x_dim) 
    !
@@ -399,10 +399,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
      !
-     ikk1=sum(BS_blk_dim(:ik1-1))
+     ikk1=sum(BS_nT_at_k(:ik1-1))
      !
-     allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
-     if (BS_K_coupling) allocate(BS_cpl_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
+     allocate(BS_mat(BS_nT_at_k(ik1),BS_nT_at_k(ik2)))
+     if (BS_K_coupling) allocate(BS_cpl_mat(BS_nT_at_k(ik1),BS_nT_at_k(ik2)))
      !
      if (BS_res_K_corr) call K_scattering(iq,ik1,ik2,Xk,q)  
      !
@@ -416,7 +416,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        ! 1./bare_qpg as O2x is conjugated in the cdotc call.
        !
        if(l_col_cut) then 
-         do i1=1,BS_blk_dim(ik1)
+         do i1=1,BS_nT_at_k(ik1)
            do i2=1,BS_n_g_exch
              O1x(i2,i1)=O1x(i2,i1)/bare_qpg(iq,i2)**2
            enddo
@@ -436,7 +436,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      if (BS_K_coupling) BS_cpl_mat=(0.,0.)
      !
      call PP_redux_wait
-     do icv1=1,BS_blk_dim(ik1)
+     do icv1=1,BS_nT_at_k(ik1)
        iBSE1=ikk1+icv1
        ik1bz=BS_eh_table(iBSE1,1)
        iv1=BS_eh_table(iBSE1,2)
@@ -446,7 +446,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        is1p=Xk%sstar( qindx_X(iq,ik1bz,1) ,2)
        !
-       do icv2=1,BS_blk_dim(ik2)
+       do icv2=1,BS_nT_at_k(ik2)
          !
          if (ik1==ik2.and.icv2<icv1) cycle
          iBSE2=ikk2+icv2

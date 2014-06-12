@@ -132,7 +132,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Dimensions and Tables
  ! 
  !allocate(BS_blk_dim(Xk%nibz))
- call mem_est("BS_blk_dim",(/Xk%nbz/),(/IP/))
+ call mem_est("BS_nT_at_k",(/Xk%nbz/),(/IP/))
  !
  if (BS_res_K_corr) then
    !

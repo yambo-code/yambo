@@ -34,7 +34,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use electrons,     ONLY:levels,spin_occ,spin,n_sp_pol
  use X_m,           ONLY:X_t,X_epsilon,X_drude_term,alpha_dim,eps_2_alpha,           &
 &                        DIP_q_dot_iR,X_drude_term,X_alloc,iw_ref
- use BS,            ONLY:BS_columns,BS_blk_dim,BS_k_and_row_restart,   &
+ use BS,            ONLY:BS_columns,BS_nT_at_k,BS_k_and_row_restart,   &
 &                        BSS_rhoq0,BS_eh_f,BS_eh_E,BS_eh_table,BSS_Vnl_included,     &
 &                        BS_eh_W,BS_anti_res,BS_drude_f_eh,BS_K_coupling, &
 &                        BS_K_dim,BSS_n_freqs,BSS_q0,BS_res_K_corr,O_n_c_states,     &
@@ -72,8 +72,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! Dimensions and Tables
  ! 
- allocate(BS_blk_dim(Xk%nibz))
- call mem_est("BS_blk_dim",(/Xk%nbz/),(/IP/))
+ allocate(BS_nT_at_k(Xk%nibz))
+ call mem_est("BS_nT_at_k",(/Xk%nbz/),(/IP/))
  !
  if (BS_res_K_corr) then
    !
@@ -101,9 +101,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    enddo
  endif
  !
- call K_eh_setup(iq,Ken,Xk,X_oscillators%Wd)
+ call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd)
  !
- if (any(BS_blk_dim==0)) then
+ if (any(BS_nT_at_k==0)) then
    call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
  endif
  !

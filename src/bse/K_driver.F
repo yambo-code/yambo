@@ -32,15 +32,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_nbands
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
- use BS,             ONLY:BS_bands,BS_q,BS_blk_dim,BS_eh_table,BS_eh_E,BS_eh_f,&
+ use BS,             ONLY:BS_bands,BS_q,BS_nT_at_k,BS_eh_table,BS_eh_E,BS_eh_f,&
 &                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,BSS_rhoq0,&
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSS_damp_reference,BS_eh_Z,BS_eh_W,BS_columns,BS_eh_en,BSE_mode,&
-&                         BSS_uses_RIM,BSS_q0
- use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,&
-&                         FXC_is_causal,FXC_n_g_corr
+&                         BSS_uses_RIM,BSS_q0,BS_nT_grps_at_k
+ use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_causal,FXC_n_g_corr
  use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PP_redux_wait
@@ -138,12 +137,18 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  X_oscillators%q0=BSS_q0
  !
  ! ... EH space (no parallelization)
- allocate(BS_blk_dim(Xk%nibz))
- call K_eh_setup(iq,Ken,Xk,X_oscillators%Wd)
+ call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd,.FALSE.)
  !
  !... Parallel distribution
- call PARALLEL_global_indexes(Ken,Xk,q,"BSE",X=X_oscillators)
- stop
+ call PARALLEL_global_indexes(Ken,Xk,q,"BSK",X=X_oscillators)
+ !
+ ! ... EH space (with parallelization) and Transition groups build-up
+ call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd,.TRUE.)
+ do while (.TRUE.)
+ enddo
+ !
+ !... Blocks build-up
+ call K_blocks( Xk )
  !
  ! Blocks Build-UP
  !=================
@@ -270,9 +275,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! CLEAN
  !
- if (allocated(BSS_rhoq0))   deallocate(BSS_rhoq0)
- if (allocated(BS_blk_dim))  deallocate(BS_blk_dim)
- call mem_est("BS_blk_dim BSS_rhoq0")
+ if (allocated(BSS_rhoq0))       deallocate(BSS_rhoq0)
+ if (allocated(BS_nT_at_k))      deallocate(BS_nT_at_k)
+ if (allocated(BS_nT_grps_at_k)) deallocate(BS_nT_grps_at_k)
+ call mem_est("BS_nT_at_k BSS_rhoq0 BS_nT_grps_at_k")
  !
  if (allocated(BS_eh_table)) deallocate(BS_eh_table)
  if (allocated(BS_eh_E))     deallocate(BS_eh_E)

@@ -155,6 +155,7 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_Q
  type(PP_indexes),SAVE :: PAR_IND_Xk_ibz
  type(PP_indexes),SAVE :: PAR_IND_Xk_bz
+ type(PP_indexes),SAVE :: PAR_IND_Xp_bz
  type(PP_indexes),SAVE :: PAR_IND_G_k
  !
  ! ... linear response
@@ -208,6 +209,7 @@ module parallel_m
  integer            :: PAR_IND_Q_ID
  integer            :: PAR_IND_Xk_ibz_ID
  integer            :: PAR_IND_Xk_bz_ID
+ integer            :: PAR_IND_Xp_bz_ID
  integer            :: PAR_IND_G_k_ID
  !
  ! ... linear response & BSK
@@ -217,6 +219,9 @@ module parallel_m
  ! ... RT
  integer            :: PAR_IND_B_mat_ID
  integer            :: PAR_IND_Bp_mat_ID
+ !
+ ! ... BSK
+ integer            :: PAR_IND_eh_ID
  !
  ! Specific MPI COMMUNICATORS...
  !==============================
@@ -272,8 +277,11 @@ module parallel_m
  integer,allocatable:: PAR_Xk_ibz_index(:)
  integer            :: PAR_DIPk_nibz
  integer,allocatable:: PAR_DIPk_ibz_index(:)
+ integer            :: PAR_Xp_nbz
  integer            :: PAR_Xk_nbz
  integer,allocatable:: PAR_Xk_bz_index(:)
+ integer            :: PAR_BS_nT_grps 
+ integer,allocatable:: PAR_BS_T_grps_index(:)
  !
  ! ... linear response & BSK
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
@@ -341,8 +349,8 @@ module parallel_m
      CPU_structure(2)%Short_Description="X_finite_q"
      CPU_structure(3)%Long_Description="Response_G_space"
      CPU_structure(3)%Short_Description="X_all_q"
-     CPU_structure(4)%Long_Description="BSE"
-     CPU_structure(4)%Short_Description="BSE"
+     CPU_structure(4)%Long_Description="BSK"
+     CPU_structure(4)%Short_Description="BSK"
      CPU_structure(5)%Long_Description="Self_Energy"
      CPU_structure(5)%Short_Description="SE"
      CPU_structure(6)%Long_Description="Real_Time"

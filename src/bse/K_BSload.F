@@ -36,7 +36,7 @@ subroutine K_BSload(iq)
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nXkibz
- use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_k_and_row_restart,BS_eh_E,&
+ use BS,             ONLY:BS_mat,BS_K_dim,BS_nT_at_k,BS_k_and_row_restart,BS_eh_E,&
 &                         BS_K_coupling
  use matrix_operate, ONLY:UP_matrix_index
  use X_m,            ONLY:X_t
@@ -67,7 +67,7 @@ subroutine K_BSload(iq)
  !
  do ik2=1,nXkibz
    do ik1=ik2,1,-1
-     BS_k_and_row_restart(:2)=(/ sum(BS_blk_dim(:ik1-1)),sum(BS_blk_dim(:ik2-1)) /)
+     BS_k_and_row_restart(:2)=(/ sum(BS_nT_at_k(:ik1-1)),sum(BS_nT_at_k(:ik2-1)) /)
      !
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
@@ -79,7 +79,7 @@ subroutine K_BSload(iq)
        !
        if (ik1==ik2) then
          !
-         forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1)) &
+         forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik1)) &
 &              BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(i1)
          !
          ! On diagonal block simmetrization
@@ -93,7 +93,7 @@ subroutine K_BSload(iq)
          !
          ! in coupling i2=BS_K_dim+1,BS_K_dim+i1-1
          !
-         do i1=BS_k_and_row_restart(1)+1,BS_k_and_row_restart(1)+BS_blk_dim(ik1)
+         do i1=BS_k_and_row_restart(1)+1,BS_k_and_row_restart(1)+BS_nT_at_k(ik1)
            do i2=1,i1-1
              BS_mat(i1,i2)=conjg(BS_mat(i2,i1))
              !
@@ -109,13 +109,13 @@ subroutine K_BSload(iq)
          !  Resonant K is hermitian
          !  Coupling K is simmetric
          !
-         forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1),&
-&                i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik2)) &
+         forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik1),&
+&                i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_nT_at_k(ik2)) &
 &                BS_mat(i2,i1)=conjg(BS_mat(i1,i2))
          !
          if (BS_K_coupling) then
-           forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1),&
-&                  i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik2)) &
+           forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik1),&
+&                  i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_nT_at_k(ik2)) &
 &                  BS_mat(i2,BS_K_dim+i1)=BS_mat(i1,BS_K_dim+i2)
          endif
            !

@@ -53,7 +53,7 @@ module BS
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
  integer    , allocatable :: BS_eh_table(:,:)
- integer    , allocatable :: BS_blk_dim(:)
+ integer    , allocatable :: BS_nT_at_k(:)
  complex(SP), allocatable :: BS_mat(:,:)
  complex(SP), allocatable :: BS_cpl_mat(:,:)
  real(SP)   , allocatable :: BS_eh_E(:)

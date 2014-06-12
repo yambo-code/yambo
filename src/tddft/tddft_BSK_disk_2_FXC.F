@@ -28,7 +28,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:nqbz,bz_samp,nXkibz
  use BS,            ONLY:BS_mat,BS_res_K_exchange,BS_n_g_exch,&
-&                        BS_bands,BS_blk_dim,BS_K_dim,BS_k_and_row_restart
+&                        BS_bands,BS_nT_at_k,BS_K_dim,BS_k_and_row_restart
  use matrix_operate,ONLY:UP_matrix_index
  use com,           ONLY:isec
  use LIVE_t,        ONLY:live_timing
@@ -76,7 +76,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  ! Constants & dimensions
  !
  Co=4.*pi/(DL_vol*real(nqbz))
- O_x_dim=maxval(BS_blk_dim)
+ O_x_dim=maxval(BS_nT_at_k)
  !
  ! WF loading
  !
@@ -91,7 +91,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  ! Kernel 2 FXC
  !
  allocate(FXC_K_diagonal(BS_K_dim),FXC(FXC_n_g_corr,FXC_n_g_corr,W%n_freqs))
- O_x_dim=maxval(BS_blk_dim)
+ O_x_dim=maxval(BS_nT_at_k)
  call mem_est("FXC_K_diagonal FXC",(/BS_K_dim,size(FXC)/),(/SP,2*SP/))
  FXC_K_diagonal=0._SP
  FXC=(0._SP,0._SP)
@@ -117,7 +117,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
      if (ik1/=ik2) call K_exchange(.true.,iq,ik1,Xk,O1x,O_x_dim)
      if (ik1==ik2) O1x=O2x
      !
-     allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
+     allocate(BS_mat(BS_nT_at_k(ik1),BS_nT_at_k(ik2)))
      !
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
@@ -125,8 +125,8 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
      ioBS_err=ioBS(iq,X_static,ID)
      !
      if (BS_res_K_exchange) then
-       do icv1=1,BS_blk_dim(ik1)
-         do icv2=1,BS_blk_dim(ik2)
+       do icv1=1,BS_nT_at_k(ik1)
+         do icv2=1,BS_nT_at_k(ik2)
            if (ik1==ik2.and.icv2<icv1) cycle
            !
 #if defined _DOUBLE

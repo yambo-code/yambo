@@ -54,7 +54,6 @@ module BS
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
  integer    , allocatable :: BS_eh_table(:,:)
- integer    , allocatable :: BS_blk_dim(:)
  complex(SP), allocatable :: BS_mat_diagonal(:)
  complex(SP), allocatable :: BS_mat(:,:)
  complex(SP), allocatable :: BS_cpl_mat(:,:)
@@ -63,12 +62,31 @@ module BS
  complex(SP), allocatable :: BS_eh_Z(:)
  real(SP)   , allocatable :: BS_eh_W(:)
  !
- ! Blocks ...
+ ! CV transitions space ...
+ type BS_T_group
+   integer                       :: ik         ! ik index
+   integer                       :: first_cv   ! Position in the cv transitions @ k
+   integer                       :: size       
+   complex(SP), allocatable      :: table(:,:) ! (/iv,ic,i_sp/)
+   complex(SP), allocatable      :: Z(:)
+   real(SP)   , allocatable      :: E(:)
+   real(SP)   , allocatable      :: f(:)
+   real(SP)   , allocatable      :: W(:)
+ end type BS_T_group
  !
+ type(BS_T_group), allocatable  :: BS_T_grp(:)
+ integer         , allocatable  :: BS_nT_at_k(:)
+ integer         , allocatable  :: BS_nT_grps_at_k(:)
+ integer                        :: BS_nT_grps
+ !
+ ! Blocks ...
  type BS_block
    integer                       :: ik         ! ik index
+   integer                       :: ip         ! ip index (ik -> ip transition)
+   integer                       :: iT_k       ! Index (among n_BS_T_grps) of the cv transitions @ k
+   integer                       :: iT_p       ! Index (among n_BS_T_grps) of the cv transitions @ p
    integer                       :: size(2)    ! rows x columns
-   integer                       :: corner(2)  ! corner in the eh space@ik
+   character(1)                  :: mode       ! "R"esonant/"A"ntiresonant
    complex(SP), allocatable      :: mat(:,:)
  end type BS_block
  !

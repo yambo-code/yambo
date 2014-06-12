@@ -24,7 +24,7 @@
 subroutine K_exchange(divide_by_qpg,iq,ik,Xk,Ox,X_dim)
  !
  use pars,           ONLY:SP
- use BS,             ONLY:BS_n_g_exch,BS_eh_table,BS_blk_dim,BS_bands
+ use BS,             ONLY:BS_n_g_exch,BS_eh_table,BS_nT_at_k,BS_bands
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
  use collision,      ONLY:ggwinfo,collision_reset
@@ -50,8 +50,8 @@ subroutine K_exchange(divide_by_qpg,iq,ik,Xk,Ox,X_dim)
  !
  nnst=0
  !
- Hi=sum(BS_blk_dim(:ik-1))
- do i1=1,BS_blk_dim(ik)
+ Hi=sum(BS_nT_at_k(:ik-1))
+ do i1=1,BS_nT_at_k(ik)
    ikbz=BS_eh_table(i1+Hi,1)
    iv1=BS_eh_table(i1+Hi,2)
    ic1=BS_eh_table(i1+Hi,3)

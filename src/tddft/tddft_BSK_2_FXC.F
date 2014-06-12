@@ -26,7 +26,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use pars,          ONLY:SP
  use electrons,     ONLY:spin_occ,spin
  use X_m,           ONLY:DIP_q_dot_iR,X_t
- use BS,            ONLY:BS_blk_dim,BS_eh_table,BS_mat,BS_eh_E,BS_eh_W
+ use BS,            ONLY:BS_nT_at_k,BS_eh_table,BS_mat,BS_eh_E,BS_eh_W
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_K_diagonal,FXC,&
 &                        FXC_is_causal,ioBS_Fxc
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
@@ -68,7 +68,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! Constants and coordinates
  !
- blk_pos=(/sum(BS_blk_dim(:ik1-1)),sum(BS_blk_dim(:ik2-1))/)
+ blk_pos=(/sum(BS_nT_at_k(:ik1-1)),sum(BS_nT_at_k(:ik2-1))/)
  Co=spin_occ/(DL_vol*real(nXkbz))
  !
  ! [IO] READ PARS & FXC_K_diagonal 
@@ -80,7 +80,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  ! Exchange Oscillators Renormalization
  !
  if (iq==1) then
-   do i1=blk_pos(1)+1,blk_pos(1)+BS_blk_dim(ik1)
+   do i1=blk_pos(1)+1,blk_pos(1)+BS_nT_at_k(ik1)
      ik=BS_eh_table(i1,1)
      iv=BS_eh_table(i1,2)
      ic=BS_eh_table(i1,3)
@@ -88,7 +88,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
      O1x(1,i1-blk_pos(1))=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))/bare_qpg(iq,1)
    enddo
    if (ik1/=ik2) then
-     do i1=blk_pos(2)+1,blk_pos(2)+BS_blk_dim(ik2)
+     do i1=blk_pos(2)+1,blk_pos(2)+BS_nT_at_k(ik2)
        ik=BS_eh_table(i1,1)
        iv=BS_eh_table(i1,2)
        ic=BS_eh_table(i1,3)
@@ -100,20 +100,20 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    endif
  endif
  !
- allocate(conjg_O1x_qpg(FXC_n_g_corr,BS_blk_dim(ik1)))
- allocate(O2x_qpg(BS_blk_dim(ik2),FXC_n_g_corr))
+ allocate(conjg_O1x_qpg(FXC_n_g_corr,BS_nT_at_k(ik1)))
+ allocate(O2x_qpg(BS_nT_at_k(ik2),FXC_n_g_corr))
  allocate(blk_Eo(2,O_x_dim))
  !
- forall(i1=1:FXC_n_g_corr) conjg_O1x_qpg(i1,:BS_blk_dim(ik1))=conjg(O1x(i1,:BS_blk_dim(ik1)))*bare_qpg(iq,i1)
- forall(i2=1:FXC_n_g_corr) O2x_qpg(:BS_blk_dim(ik2),i2)=O2x(i2,:BS_blk_dim(ik2))*bare_qpg(iq,i2)
+ forall(i1=1:FXC_n_g_corr) conjg_O1x_qpg(i1,:BS_nT_at_k(ik1))=conjg(O1x(i1,:BS_nT_at_k(ik1)))*bare_qpg(iq,i1)
+ forall(i2=1:FXC_n_g_corr) O2x_qpg(:BS_nT_at_k(ik2),i2)=O2x(i2,:BS_nT_at_k(ik2))*bare_qpg(iq,i2)
  !
  ! Kernel diagonal and simmetrization
  !
  if (ik1==ik2) then
-   forall(i1=1:BS_blk_dim(ik1)) FXC_K_diagonal(blk_pos(1)+i1)=real(BS_mat(i1,i1))
-   forall(i1=1:BS_blk_dim(ik1)) BS_mat(i1,i1)=(0.,0.)
-   do i1=1,BS_blk_dim(ik1)
-     do i2=i1+1,BS_blk_dim(ik1)
+   forall(i1=1:BS_nT_at_k(ik1)) FXC_K_diagonal(blk_pos(1)+i1)=real(BS_mat(i1,i1))
+   forall(i1=1:BS_nT_at_k(ik1)) BS_mat(i1,i1)=(0.,0.)
+   do i1=1,BS_nT_at_k(ik1)
+     do i2=i1+1,BS_nT_at_k(ik1)
        BS_mat(i2,i1)=conjg(BS_mat(i1,i2))
      enddo
    enddo
@@ -121,19 +121,19 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! BS diagonal + Non interacting energies and widths
  !
- forall(i1=1:BS_blk_dim(ik1)) blk_Eo(1,i1)=BS_eh_E(blk_pos(1)+i1)+&
+ forall(i1=1:BS_nT_at_k(ik1)) blk_Eo(1,i1)=BS_eh_E(blk_pos(1)+i1)+&
 &                                          FXC_K_diagonal(blk_pos(1)+i1)
- forall(i2=1:BS_blk_dim(ik2)) blk_Eo(2,i2)=BS_eh_E(blk_pos(2)+i2)+&
+ forall(i2=1:BS_nT_at_k(ik2)) blk_Eo(2,i2)=BS_eh_E(blk_pos(2)+i2)+&
 &                                          FXC_K_diagonal(blk_pos(2)+i2)
  !
  if (allocated(BS_eh_W)) then
-   forall(i1=1:BS_blk_dim(ik1)) blk_Eo(1,i1)=blk_Eo(1,i1)+(0.,1.)*BS_eh_W(blk_pos(1)+i1)
-   forall(i2=1:BS_blk_dim(ik2)) blk_Eo(1,i2)=blk_Eo(1,i2)+(0.,1.)*BS_eh_W(blk_pos(2)+i2)
+   forall(i1=1:BS_nT_at_k(ik1)) blk_Eo(1,i1)=blk_Eo(1,i1)+(0.,1.)*BS_eh_W(blk_pos(1)+i1)
+   forall(i2=1:BS_nT_at_k(ik2)) blk_Eo(1,i2)=blk_Eo(1,i2)+(0.,1.)*BS_eh_W(blk_pos(2)+i2)
  endif
  !
  ! Projectors
  !
- forall(i1=1:BS_blk_dim(ik1),i2=1:BS_blk_dim(ik2)) &
+ forall(i1=1:BS_nT_at_k(ik1),i2=1:BS_nT_at_k(ik2)) &
 &      BS_mat(i1,i2)=BS_mat(i1,i2)*Fb2x1(blk_Eo(1,i1),blk_Eo(2,i2),E_same_treshold)
  !
  ! Degenerations:
@@ -144,8 +144,8 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  ! As Fb2x1 mulitplies by E_same_treshold  in the limit of small 
  ! E_same_treshold the result is independent on E_same_treshold.
  !
- do i1=1,BS_blk_dim(ik1)
-   do i2=1,BS_blk_dim(ik2)
+ do i1=1,BS_nT_at_k(ik1)
+   do i2=1,BS_nT_at_k(ik2)
      blk_Eo(1,i1)=blk_Eo(1,i1)+2.*Fb2x2(blk_Eo(1,i1),blk_Eo(2,i2),&
 &                                       E_same_treshold)*E_same_treshold
    enddo
@@ -153,23 +153,23 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! Residuals
  !
- allocate(left_R(FXC_n_g_corr,BS_blk_dim(ik2)))
- allocate(right_R(BS_blk_dim(ik1),FXC_n_g_corr))
+ allocate(left_R(FXC_n_g_corr,BS_nT_at_k(ik2)))
+ allocate(right_R(BS_nT_at_k(ik1),FXC_n_g_corr))
  left_R=(0._SP,0._SP)
  right_R=(0._SP,0._SP)
  !
  call PP_indexes_reset(p1)
  call PP_indexes_reset(p2)
  !
- call PARALLEL_index(p1,(/BS_blk_dim(ik1)/))
- do i1=1,BS_blk_dim(ik1)
+ call PARALLEL_index(p1,(/BS_nT_at_k(ik1)/))
+ do i1=1,BS_nT_at_k(ik1)
    if (.not.p1%element_1D(i1)) cycle
    right_R(i1,:)=matmul(BS_mat(i1,:),O2x_qpg(:,:))
  enddo
  call PP_redux_wait(right_R)
  !
- call PARALLEL_index(p2,(/BS_blk_dim(ik2)/))
- do i2=1,BS_blk_dim(ik2)
+ call PARALLEL_index(p2,(/BS_nT_at_k(ik2)/))
+ do i2=1,BS_nT_at_k(ik2)
    if (.not.p2%element_1D(i2)) cycle
    left_R(:,i2)=-matmul(conjg_O1x_qpg(:,:),BS_mat(:,i2))
  enddo
@@ -180,7 +180,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! Fxc
  !
- allocate(wk1(BS_blk_dim(ik1),FXC_n_g_corr),wk2(FXC_n_g_corr,BS_blk_dim(ik2)),&
+ allocate(wk1(BS_nT_at_k(ik1),FXC_n_g_corr),wk2(FXC_n_g_corr,BS_nT_at_k(ik2)),&
 &         FXC_temp(FXC_n_g_corr,FXC_n_g_corr))
  !
  COM_MODE=NONE
@@ -214,13 +214,13 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    ! Upper diagonal block contribution
    !
    if (FXC_is_causal) then 
-     forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)*(&
+     forall(i1=1:BS_nT_at_k(ik1)) wk1(i1,:)=right_R(i1,:)*(&
 &          1._SP/(W%p(iw)-blk_Eo(1,i1))+1._SP/(-W%p(iw)-blk_Eo(1,i1)) )
-     forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)*(&
+     forall(i2=1:BS_nT_at_k(ik2)) wk2(:,i2)= left_R(:,i2)*(&
 &          1._SP/(W%p(iw)-blk_Eo(2,i2))+1._SP/(-W%p(iw)-blk_Eo(2,i2)) )
    else
-     forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)/(W%p(iw)-blk_Eo(1,i1))
-     forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)/(W%p(iw)-blk_Eo(2,i2))
+     forall(i1=1:BS_nT_at_k(ik1)) wk1(i1,:)=right_R(i1,:)/(W%p(iw)-blk_Eo(1,i1))
+     forall(i2=1:BS_nT_at_k(ik2)) wk2(:,i2)= left_R(:,i2)/(W%p(iw)-blk_Eo(2,i2))
    endif
    !
    FXC(:,:,iw)=FXC(:,:,iw)+Co*(matmul(conjg_O1x_qpg,wk1)+matmul(wk2,O2x_qpg))
@@ -229,13 +229,13 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    !
    if (ik1/=ik2) then
      if (FXC_is_causal) then 
-       forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)*(&
+       forall(i1=1:BS_nT_at_k(ik1)) wk1(i1,:)=right_R(i1,:)*(&
 &          1._SP/(-conjg(W%p(iw))-blk_Eo(1,i1))+1._SP/(conjg(W%p(iw))-blk_Eo(1,i1)) )
-       forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)*(&
+       forall(i2=1:BS_nT_at_k(ik2)) wk2(:,i2)= left_R(:,i2)*(&
 &          1._SP/(-conjg(W%p(iw))-blk_Eo(2,i2))+1._SP/(conjg(W%p(iw))-blk_Eo(2,i2)) )
      else
-       forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)/(conjg(W%p(iw))-blk_Eo(1,i1))
-       forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)/(conjg(W%p(iw))-blk_Eo(2,i2))
+       forall(i1=1:BS_nT_at_k(ik1)) wk1(i1,:)=right_R(i1,:)/(conjg(W%p(iw))-blk_Eo(1,i1))
+       forall(i2=1:BS_nT_at_k(ik2)) wk2(:,i2)= left_R(:,i2)/(conjg(W%p(iw))-blk_Eo(2,i2))
      endif
      !
      FXC_temp=Co*(matmul(conjg_O1x_qpg,wk1)+matmul(wk2,O2x_qpg))

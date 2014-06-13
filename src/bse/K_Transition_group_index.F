@@ -57,7 +57,6 @@ integer function K_T_group_index(I)
  enddo
  !
 1 continue
- !if (PAR_COM_eh_INDEX%CPU_id==0) write (*,*) "I J (1)",I,J, ik_I,BS_nT_grps_at_k(:ik_I)
  !
  if (J==0) then
    K_T_group_index=sum( BS_nT_grps_at_k(:ik_I) )
@@ -70,8 +69,6 @@ integer function K_T_group_index(I)
  !
  I_mean=BS_nT_at_k(ik)/N
  !
- !if (PAR_COM_eh_INDEX%CPU_id==0) write (*,*) "I J (1a)",I,J,K_T_group_index,I_mean
- !
  if (I_mean>0) then
    do i_g=1,N
      if (J>I_mean) then
@@ -81,7 +78,6 @@ integer function K_T_group_index(I)
      endif
    enddo
  endif
- !if (PAR_COM_eh_INDEX%CPU_id==0) write (*,*) "I J K (2)",I,J,K,K_T_group_index
  !
  if (I_mean>0.and.K>=I_mean) return
  !

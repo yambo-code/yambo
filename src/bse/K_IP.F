@@ -172,7 +172,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
          BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_q_dot_iR(ic,iv,ik,i_sp)*sqrt(BS_T_grp(i_T_g)%f(i_T))
 #endif
        endif
-       !
+       !    
        X_epsilon(3,:)=X_epsilon(3,:)-BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg( BS_T_grp(i_T_g)%dipoles_R(i_T) )*&
 &                     local_Z/(W_bss%p(:)-BS_T_grp(i_T_g)%E(i_T))
        !

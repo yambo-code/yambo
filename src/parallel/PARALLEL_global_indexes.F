@@ -34,7 +34,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index,PAR_Xp_nbz,PP_redux_wait,&
 &                        PAR_BS_T_grps_index,PAR_BS_nT_grps
  use parallel_m,    ONLY:& ! LOGICALS
-&                        l_par_bse,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
+&                        l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
 &                        HEAD_QP_cpu,HEAD_k_cpu
  use parallel_m,    ONLY:& ! COMMUNICATORS
 &                        COMM_reset,PAR_COM_WORLD,&  
@@ -104,7 +104,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  ! Logicals
  !
- l_par_bse          =ENVIRONMENT=="BSK"
+ l_par_X_T          =ENVIRONMENT=="Response_T_space"
  l_par_X_G_q0       =ENVIRONMENT=="Response_G_space_Zero_Momentum"
  l_par_X_G_finite_q =ENVIRONMENT=="Response_G_space_Finite_Momentum"
  l_par_X_G_all_q    =ENVIRONMENT=="Response_G_space"
@@ -116,7 +116,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    X_type=X%whoami
  endif
  !
- if (ENVIRONMENT=="BSK") X_type=5
+ if (ENVIRONMENT=="Response_T_space") X_type=5
  !
  if (reset_all) then
    !
@@ -140,7 +140,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PP_indexes_reset(PAR_IND_WF_linear)
    call PP_indexes_reset(PAR_IND_T)
    !
-   if (ENVIRONMENT=="BSK") then
+   if (ENVIRONMENT=="Response_T_space") then
      if (.not.allocated(PAR_IND_eh)) then
        allocate(PAR_IND_eh(Xk%nbz))
        do i_k=1,Xk%nbz
@@ -283,9 +283,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
  endif
  !
- !===========================
- if (ENVIRONMENT=="BSK") then
-   !=========================
+ !========================================
+ if (ENVIRONMENT=="Response_T_space") then
+   !======================================
    !
    call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"q ","k ","eh","t "/),&
 &                                        COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_Xk_bz_INDEX,&
@@ -299,7 +299,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  !==========================================================================================
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space".or.&
-     ENVIRONMENT=="BSK") then
+     ENVIRONMENT=="Response_T_space") then
    !========================================================================================
    !
    ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
@@ -309,7 +309,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      call COMM_copy(PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A)
    endif
    !
-   ! Q-points (IBZ in LLR, BZ for BSK)
+   ! Q-points (IBZ in LLR, BZ for BS)
    !
    if (ENVIRONMENT=="Response_G_space_Finite_Momentum") then
      WHAT="ibz"
@@ -334,7 +334,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    allocate(PAR_Xk_bz_index(Xk%nbz))
    call Build_up_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_index,PAR_Xk_nbz)
    !
-   ! Q-points (IBZ in LLR, in BZ BSK)
+   ! Q-points (IBZ in LLR, in BZ BS)
    !
    call PARALLEL_index(PAR_IND_Q,(/iq_range(2)/),low_range=(/iq_range(1)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.)
    PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
@@ -348,7 +348,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    allocate(PAR_Q_index(iq_range(2))) 
    call Build_up_index(PAR_IND_Q,iq_range(2),PAR_Q_index,PAR_nQ)
    !
-   if (  ENVIRONMENT=="BSK" ) then
+   if (  ENVIRONMENT=="Response_T_space" ) then
      !
      ! K-points (BZ) after shifting of Q (BZ)
      !
@@ -360,6 +360,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      !
      call fill_IBZk_using_BZk(PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_COM_Xk_bz_INDEX)
      call fill_IBZk_using_BZk(PAR_IND_Xk_ibz,PAR_IND_Xp_bz,PAR_COM_Xk_bz_INDEX)
+     !
+     !.........................................................................
+     ! Wave Functions (derived from PAR_COM_Xk_ibz_INDEX and PAR_COM_G_b_INDEX)
+     !.........................................................................
+     !
+     call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_WF_k)
+     call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_WF_b_INDEX)
+     PAR_IND_WF_b_ID=PAR_COM_WF_b_INDEX%CPU_id
      !
      call PARALLEL_live_message("P(bz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xp_nbz,TOTAL=Xk%nbz)
      !
@@ -373,17 +381,17 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                                  PAR_IND_Q,PAR_COM_Xk_bz_INDEX,iq_range,Xk,q)
      PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
      !
-     ! ... indexes
-     !
-     allocate(PAR_Xk_ibz_index(Xk%nibz))
-     call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
-     !
-     call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz)
-     !
    endif
    !
+   ! ... indexes
+   !
+   allocate(PAR_Xk_ibz_index(Xk%nibz))
+   call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
+   !
+   call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz)
+   !
    PARALLEL_cpu_mat_inversion=CPU_structure(2)%nCPU_inversion
-   if (ENVIRONMENT=="BSK") PARALLEL_cpu_mat_inversion=CPU_structure(4)%nCPU_inversion
+   if (ENVIRONMENT=="Response_T_space") PARALLEL_cpu_mat_inversion=CPU_structure(4)%nCPU_inversion
    if (ENVIRONMENT=="Response_G_space") PARALLEL_cpu_mat_inversion=CPU_structure(3)%nCPU_inversion
    !
    ! Inversion
@@ -391,7 +399,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'INV',PAR_COM_INV_INDEX,PAR_COM_INV)
    PAR_IND_INV_ID=PAR_COM_INV_INDEX%CPU_id
    !
-   if (ENVIRONMENT=="BSK") then
+   if (ENVIRONMENT=="Response_T_space") then
      !
      PARALLEL_cpu_mat_diagonalization=CPU_structure(4)%nCPU_diagonalization
      !
@@ -861,7 +869,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  endif
  !
  !========================================================================================================
- if (ENVIRONMENT=="BSK") then
+ if (ENVIRONMENT=="Response_T_space") then
    !======================================================================================================
    !
    ! E/h pairs (k resolved)

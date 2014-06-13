@@ -45,7 +45,7 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_bse,l_par_X_G_q0,l_par_X_G_all_q,&
+ logical            :: l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,&
 &                      l_par_X_G_finite_q,l_par_SE,l_par_RT
  !
  ! In a parallel run only the head CPU in the q and b chains can do 
@@ -348,8 +348,8 @@ module parallel_m
      CPU_structure(2)%Short_Description="X_finite_q"
      CPU_structure(3)%Long_Description="Response_G_space"
      CPU_structure(3)%Short_Description="X_all_q"
-     CPU_structure(4)%Long_Description="BSK"
-     CPU_structure(4)%Short_Description="BSK"
+     CPU_structure(4)%Long_Description="Response_T_space"
+     CPU_structure(4)%Short_Description="BS"
      CPU_structure(5)%Long_Description="Self_Energy"
      CPU_structure(5)%Short_Description="SE"
      CPU_structure(6)%Long_Description="Real_Time"

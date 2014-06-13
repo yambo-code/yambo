@@ -24,25 +24,24 @@
 subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  use pars,           ONLY:SP,IP
- use units,          ONLY:HA2EV
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,warning
  use memory_m,       ONLY:mem_est
- use stderr,         ONLY:string_remove,string_add,intc,real2ch
+ use stderr,         ONLY:string_remove
  use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_nbands
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
- use BS,             ONLY:BS_bands,BS_q,BS_nT_at_k,&
-&                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,BSS_rhoq0,&
+ use BS,             ONLY:BS_bands,BS_q,&
+&                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,&
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference,BS_columns,BS_eh_en,BSE_mode,&
-&                         BSS_uses_RIM,BSS_q0,BS_nT_grps_at_k,BS_T_grp
+&                         BSS_damp_reference,BS_columns,BSE_mode,&
+&                         BSS_uses_RIM,BSS_q0,BS_free
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_causal,FXC_n_g_corr
  use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
- use parallel_m,     ONLY:PP_redux_wait,PAR_BS_nT_grps,PAR_BS_T_grps_index,PAR_IND_CON_BANDS_X,&
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_CON_BANDS_X,&
 &                         PAR_IND_VAL_BANDS_X,PAR_IND_Xk_ibz
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,WF_load
  use wave_func,      ONLY:WF_buffered_IO,WF,WF_buffer
@@ -68,7 +67,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! Work Space
  !
  type(X_t)   :: X_tddft,X_oscillators
- integer     :: iq,bands_to_correct(2),Bands_limits(2),Max_G_m_G,ik,i_g
+ integer     :: iq,bands_to_correct(2),Max_G_m_G
  integer, external :: eval_G_minus_G
  !
  call section('*','Response Functions in Transition space')
@@ -95,27 +94,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  call W_reset(W_bss)
  !
  call tddft_do_X_W_typs(-1,X_tddft,Xw)
- !
- if(BS_bands(1)<1        ) BS_bands(1)=1
- if(BS_bands(2)>Ken%nb   ) BS_bands(2)=Ken%nb
- !
- ! In these two lines I ensure the at least all the metallic states are included (metallic case) or that at least
- !                    ==========================================================
- ! 1 valence state and 1 conduction state are included (non metallic case)
- !
- if(Ken%nbf+1>=Ken%nbm) Bands_limits=(/Ken%nbf,Ken%nbf+1/)
- if(Ken%nbf+1< Ken%nbm) Bands_limits=(/Ken%nbf+1,Ken%nbm/)
- if (any((/BS_bands(1)>Bands_limits(1),BS_bands(2)<Bands_limits(2)/))) then
-   if(BS_bands(1)>Bands_limits(1)) BS_bands(1)=Bands_limits(1)
-   if(BS_bands(2)<Bands_limits(2)) BS_bands(1)=Bands_limits(2)
-   BS_eh_en=(/1.,-1./)
-   do ik=1,Xk%nibz
-     if (Ken%f(BS_bands(1),ik,1)>1.E-5) BS_eh_en(1)=min(BS_eh_en(1),Ken%E(BS_bands(1),ik,1))
-     if (Ken%f(BS_bands(2),ik,1)>1.E-5) BS_eh_en(2)=max(BS_eh_en(2),Ken%E(BS_bands(2),ik,1))
-   enddo
-   call warning('BS bands redefined to be :'//trim(intc(BS_bands(1)))//' - '//trim(intc(BS_bands(2))))
-   call warning('E/h energy range :'//trim(real2ch(BS_eh_en(1)*HA2EV))//' - '//trim(real2ch(BS_eh_en(2)*HA2EV))//' eV')
- endif
  !
 #if defined _SC || defined _KERR
  !                 =============
@@ -149,30 +127,32 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! W RL size setup looking at the max index of G-G' 
  ! =========
  !
- Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
- if (BS_n_g_W/= Max_G_m_G ) then
-   BS_n_g_W= Max_G_m_G
-   call warning (' W size reduced due to symmetry constraints')
-   call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
+ if (.not.l_rpa_IP) then
+   Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
+   if (BS_n_g_W/= Max_G_m_G ) then
+     BS_n_g_W= Max_G_m_G
+     call warning (' W size reduced due to symmetry constraints')
+     call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
+   endif
  endif
- !
-#if defined _KERR
- call parser('EvalKerr',l_kerr)
- if(l_kerr) call parser('AnHall',l_anomalous_Hall)
-#endif
- !
- if(l_rpa_IP.and.trim(BSE_mode)=='coupling') BSE_mode='causal'
  !
  ! GPL_EXCLUDE_START  
  !
- if (l_bs_fxc.or.index(BSS_mode,'t')/=0) then
+ if (l_bs_fxc) then
+   !==========
    !
-   ! Remove the exchange from the BS_mode
-   ! if TDDFT Fxc is obtained from K
+   BS_n_g_exch=FXC_n_g_corr
    !
-   if (index(BSS_mode,'t')==0) BS_res_mode=trim( string_remove(BS_res_mode,'x') )
-   BSE_mode='causal'
-   call parser('FxcCausal',FXC_is_causal)
+   if (index(BSS_mode,'t')/=0) then
+     !
+     ! Remove the exchange from the BS_mode
+     ! if TDDFT Fxc is obtained from K
+     !
+     if (index(BSS_mode,'t')==0) BS_res_mode=trim( string_remove(BS_res_mode,'x') )
+     BSE_mode='causal'
+     call parser('FxcCausal',FXC_is_causal)
+     !
+   endif
    !
  endif
  !
@@ -180,18 +160,20 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Logicals (Drivers)
  !====================
+ if (l_rpa_IP.and.trim(BSE_mode)=='coupling') BSE_mode='causal'
+ !
  BS_res_K_corr=index(BS_res_mode,'c')/=0
  BS_res_K_exchange=index(BS_res_mode,'x')/=0
  BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
  BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
- BS_anti_res=index(BSE_mode,'c')/=0
- !
- if (l_bs_fxc) BS_n_g_exch=FXC_n_g_corr
- !
+ BS_anti_res=index(BSE_mode,'causal')/=0
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
- !
  BS_K_is_ALDA=l_alda_fxc
+#if defined _KERR
+ call parser('EvalKerr',l_kerr)
+ if(l_kerr) call parser('AnHall',l_anomalous_Hall)
+#endif
  !
  ! Energy points
  !===============
@@ -204,6 +186,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !=============
  BSS_uses_RIM = (BZ_RIM_nbands>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
  !
+ ! Frequencies 
+ !=============
  W_bss%per_memstps=FXC_per_memstps
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n_freqs
@@ -219,7 +203,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd,.FALSE.)
  !
  !... Parallel distribution
- call PARALLEL_global_indexes(Ken,Xk,q,"BSK",X=X_oscillators)
+ call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
  !
  ! ... EH space (with parallelization) and Transition groups build-up
  call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd,.TRUE.)
@@ -286,32 +270,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! CLEAN
  !
- if (allocated(BS_nT_at_k))          deallocate(BS_nT_at_k)
- if (allocated(BS_nT_grps_at_k))     deallocate(BS_nT_grps_at_k)
- if (allocated(PAR_BS_T_grps_index)) deallocate(PAR_BS_T_grps_index)
- call mem_est("BS_nT_at_k PAR_BS_T_grps_index BS_nT_grps_at_k")
- !
- do i_g=1,PAR_BS_nT_grps
-   deallocate(BS_T_grp(i_g)%dipoles_R)
-   call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(i_g)))
-   if (BS_K_coupling) then
-     deallocate(BS_T_grp(i_g)%dipoles_A)
-     call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(i_g)))
-   endif
-   deallocate(BS_T_grp(i_g)%table)
-   call mem_est("BS_T_grp_table_N"//trim(intc(i_g)))
-   deallocate(BS_T_grp(i_g)%E)
-   call mem_est("BS_T_grp_E_N"//trim(intc(i_g)))
-   deallocate(BS_T_grp(i_g)%f)
-   call mem_est("BS_T_grp_f_N"//trim(intc(i_g)))
-   if (associated(Ken%Z)) then
-     deallocate(BS_T_grp(i_g)%Z)
-     call mem_est("BS_T_grp_Z_N"//trim(intc(i_g)))
-   endif
-   if (associated(Ken%W)) then
-     deallocate(BS_T_grp(i_g)%W)
-     call mem_est("BS_T_grp_W_N"//trim(intc(i_g)))
-   endif
- enddo
+ call BS_free( ) 
  !
 end subroutine

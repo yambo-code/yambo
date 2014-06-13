@@ -181,4 +181,37 @@ module BS
      enddo
    end function
    !
+   subroutine BS_free()
+     use stderr,     ONLY:intc
+     use memory_m,   ONLY:mem_est
+     use parallel_m, ONLY:PAR_BS_T_grps_index,PAR_BS_nT_grps
+     integer :: i_g
+     if (allocated(BS_nT_at_k))          deallocate(BS_nT_at_k)
+     if (allocated(BS_nT_grps_at_k))     deallocate(BS_nT_grps_at_k)
+     if (allocated(PAR_BS_T_grps_index)) deallocate(PAR_BS_T_grps_index)
+     call mem_est("BS_nT_at_k PAR_BS_T_grps_index BS_nT_grps_at_k")
+     do i_g=1,PAR_BS_nT_grps
+       deallocate(BS_T_grp(i_g)%dipoles_R)
+       call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(i_g)))
+       if (BS_K_coupling) then
+         deallocate(BS_T_grp(i_g)%dipoles_A)
+         call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(i_g)))
+       endif
+       deallocate(BS_T_grp(i_g)%table)
+       call mem_est("BS_T_grp_table_N"//trim(intc(i_g)))
+       deallocate(BS_T_grp(i_g)%E)
+       call mem_est("BS_T_grp_E_N"//trim(intc(i_g)))
+       deallocate(BS_T_grp(i_g)%f)
+       call mem_est("BS_T_grp_f_N"//trim(intc(i_g)))
+       if (allocated(BS_T_grp(i_g)%Z)) then
+         deallocate(BS_T_grp(i_g)%Z)
+         call mem_est("BS_T_grp_Z_N"//trim(intc(i_g)))
+       endif
+       if (allocated(BS_T_grp(i_g)%W)) then
+         deallocate(BS_T_grp(i_g)%W)
+         call mem_est("BS_T_grp_W_N"//trim(intc(i_g)))
+       endif
+     enddo
+   end subroutine
+   !
 end module BS

@@ -486,7 +486,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
  !
  if (l_bse) then
-   call CPU_activate("BSK")
+   call CPU_activate("BS")
    call initactivate(1,'X_Threads DIP_Threads')
  endif
  !

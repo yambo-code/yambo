@@ -51,7 +51,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
 &                       BSE_mode,BS_T_grp,BS_K_coupling
  use parallel_m,   ONLY:PAR_BS_nT_grps,PAR_BS_T_grps_index,PAR_IND_Xk_bz,PAR_IND_eh,&
 &                       PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_eh_INDEX,&
-&                       PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID
+&                       PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,myid
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
  use R_lattice,    ONLY:qindx_X,bz_samp
  !
@@ -93,8 +93,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
    PAR_IND_VAL_BANDS_X(5)%n_of_elements=0
    PAR_IND_CON_BANDS_X(5)%element_1D=.FALSE.
    PAR_IND_VAL_BANDS_X(5)%element_1D=.FALSE.
-   PAR_IND_CON_BANDS_X_ID(5)=PAR_COM_eh_INDEX%CPU_id+1
-   PAR_IND_VAL_BANDS_X_ID(5)=PAR_COM_eh_INDEX%CPU_id+1
+   PAR_IND_CON_BANDS_X_ID(5)=PAR_COM_eh_INDEX%CPU_id
+   PAR_IND_VAL_BANDS_X_ID(5)=PAR_COM_eh_INDEX%CPU_id
    !
  else
    allocate(BS_nT_at_k(Xk%nbz))
@@ -187,21 +187,20 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
              if (i_loop==1) BS_T_grp(i_PAR_nT_grps)%size=BS_T_grp(i_PAR_nT_grps)%size+1
              !
              if (i_loop==2) then
-               !
                i_T_in_the_grp=i_T_in_the_grp+1
                !
                BS_T_grp(i_PAR_nT_grps)%table(i_T_in_the_grp,:)=(/iv,ic,i_sp/)
                !
                if (.not.PAR_IND_CON_BANDS_X(5)%element_1D(ic)) then
                  PAR_IND_CON_BANDS_X(5)%element_1D(ic)=.TRUE.
-                 PAR_IND_CON_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%n_CPU+1)=&
-&                                       PAR_IND_CON_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%n_CPU+1)+1
+                 PAR_IND_CON_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)=&
+&                                       PAR_IND_CON_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)+1
                endif
                !
                if (.not.PAR_IND_VAL_BANDS_X(5)%element_1D(iv)) then
                  PAR_IND_VAL_BANDS_X(5)%element_1D(iv)=.TRUE.
-                 PAR_IND_VAL_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%n_CPU+1)=&
-&                                       PAR_IND_VAL_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%n_CPU+1)+1
+                 PAR_IND_VAL_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)=&
+&                                       PAR_IND_VAL_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)+1
                endif
                !
                BS_T_grp(i_PAR_nT_grps)%E(i_T_in_the_grp)=E_eh
@@ -232,12 +231,14 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
    !
  enddo
  !
+ write (*,*) myid, PAR_IND_VAL_BANDS_X(5)%element_1D
+ write (*,*) myid, PAR_IND_CON_BANDS_X(5)%element_1D
+ !
  if (.not.FILL_the_groups.and..not.BS_anti_res.and.BS_not_const_eh_f) then
    call warning('Fractional e/h occupations. Causal BSEmode forced.')
    BSE_mode='causal'
    BS_anti_res=.true.
  endif
- !
  !
 !     if (.not.BS_res_K_corr) cycle
      !

@@ -100,6 +100,7 @@ module wave_func
      use pars,        ONLY: SP
      use electrons,   ONLY: n_spinor
      integer             :: ifft,isc(4)
+     complex(SP),dimension(n_spinor) :: WF_symm
    end function
    !
  end interface 

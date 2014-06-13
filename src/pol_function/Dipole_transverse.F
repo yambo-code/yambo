@@ -69,8 +69,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  integer                      :: ID,io_err(3),ioKB_abinit_err,ioKB_pwscf_err,io_Vnl_err
  integer, external            :: ioKB_abinit,ioKB_pwscf,io_Vnl
  !
-  
-  Dipole_kb_init(Xen,X,io_err,ID)
+ call Dipole_kb_init(Xen,X,io_err,ID)
  !
  ioKB_abinit_err= io_err(1)
  ioKB_pwscf_err = io_err(2)

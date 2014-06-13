@@ -20,5 +20,5 @@ objs = mod_pars.o mod_units.o  mod_stderr.o mod_openmp.o mod_parallel.o \
        mod_IO.o $(ELPH_objects) mod_xc_functionals.o mod_global_XC.o \
        mod_X_output.o mod_plasma.o \
        $(SC_objects) $(RT_objects) $(MAGNETIC_objects) \
-       mod_collision.o mod_interfaces.o  \
+       mod_collision.o mod_interfaces.o  mod_QED.o \
        mod_fragments.o SET_logicals.o SET_defaults.o

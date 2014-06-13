@@ -46,6 +46,7 @@ module drivers
  !
  ! The self-energy correlation "kind"
  !
+ logical :: l_elphoton_corr
  logical :: l_elel_corr
  logical :: l_elph_corr
  !

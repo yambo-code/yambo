@@ -35,7 +35,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 &                        DIP_q_dot_iR,X_drude_term,X_alloc,iw_ref
  use BS,            ONLY:BSS_Vnl_included,BS_anti_res,BS_drude_f_eh,&
 &                        BS_K_dim,BSS_n_freqs,BSS_q0,BS_T_grp,BS_K_coupling
- use parallel_m,    ONLY:PAR_BS_nT_grps,PP_redux_wait
+ use parallel_m,    ONLY:PAR_BS_nT_grps,PP_redux_wait,PAR_COM_eh_INDEX
 #if defined _KERR
  use drivers,       ONLY:l_kerr
  use com,           ONLY:warning
@@ -225,7 +225,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! ALL 2 ALL
  !
- call PP_redux_wait( X_epsilon )
+ call PP_redux_wait( X_epsilon ,COMM=PAR_COM_eh_INDEX%COMM )
  !
  if (l_rpa_IP) then
    !  

@@ -52,7 +52,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q,PAR_IND_INV,PAR_IND_DIAGO,&
 &                        PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
 &                        PAR_IND_B_mat,PAR_IND_Plasma,PAR_IND_DIPk_ibz,PAR_IND_WF_linear,&
-&                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_eh,PAR_IND_T,&
+&                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_eh,PAR_IND_T,PAR_IND_WF_b_and_k,&
 &                        PAR_IND_Xp_bz
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
@@ -137,6 +137,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PP_indexes_reset(PAR_IND_G_k)
    call PP_indexes_reset(PAR_IND_WF_b)
    call PP_indexes_reset(PAR_IND_WF_k)
+   call PP_indexes_reset(PAR_IND_WF_b_and_k)
    call PP_indexes_reset(PAR_IND_WF_linear)
    call PP_indexes_reset(PAR_IND_T)
    !
@@ -294,6 +295,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                                        COMM_A2A_1=PAR_COM_Q_A2A) 
    !
    PAR_IND_eh_ID=PAR_COM_eh_INDEX%CPU_id+1
+   !
+   ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
+   ! while WF's are indexed using WF_linear
+   !
+   call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX(X_type))
+   call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX(X_type))
    !
  endif
  !
@@ -836,10 +843,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  !==========================================================================================================
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum".or.ENVIRONMENT=="Response_G_space_Finite_Momentum".or.&
-&    ENVIRONMENT=="Response_G_space") then
+&    ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_T_space") then
    !========================================================================================================
    !
    n_bands= (/E%nbf+1,X%ib(2)/)
+   if (ENVIRONMENT=="Response_T_space") n_bands= (/E%nbf+1,BS_bands(2)/)
    !
    ! Response functions conduction bands
    !
@@ -856,6 +864,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! Response functions valence bands
    !
    n_bands= (/X%ib(1),E%nbm/)
+   if (ENVIRONMENT=="Response_T_space") n_bands= (/BS_bands(1),E%nbm/)
    !
    call PARALLEL_index(PAR_IND_VAL_BANDS_X(X_type),(/n_bands(2)/),low_range=(/n_bands(1)/),&
 &                      COMM=PAR_COM_VAL_INDEX(X_type),CONSECUTIVE=.TRUE.)
@@ -902,7 +911,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    PAR_BS_nT_grps=sum( BS_nT_grps_at_k )
    !
-   call PP_redux_wait(BS_nT_grps_at_k)
+   call PP_redux_wait(BS_nT_grps_at_k,COMM=PAR_COM_eh_INDEX%COMM)
    !
    ! ALL k are diveded in BS_nT_grps groups of transitions and each CPU takes PAR_BS_nT_grps of them
    !
@@ -916,9 +925,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! The task now is to distribute the transitions:
    !  
-   ! Group@k (among PAR_BS_nT_grps) ->Group'@p (among BS_nT_grps)
+   ! Group@k (among PAR_Xk_nbz) ->Group'@p (among PAR_BS_nT_grps)
    !
-   call PARALLEL_index(PAR_IND_T,(/PAR_BS_nT_grps,PAR_BS_nT_grps/),COMM=PAR_COM_T_INDEX)
+   call PARALLEL_index(PAR_IND_T,(/PAR_Xk_nbz,PAR_BS_nT_grps/),COMM=PAR_COM_T_INDEX)
    !
    call PARALLEL_live_message("Transition Scatterings",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_T%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),TOTAL=PAR_BS_nT_grps*PAR_BS_nT_grps,&

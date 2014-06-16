@@ -178,6 +178,7 @@ module parallel_m
  ! ... WF
  type(PP_indexes),SAVE :: PAR_IND_WF_b
  type(PP_indexes),SAVE :: PAR_IND_WF_k
+ type(PP_indexes),SAVE :: PAR_IND_WF_b_and_k
  type(PP_indexes),SAVE :: PAR_IND_WF_linear
  !
  ! ... Transitions

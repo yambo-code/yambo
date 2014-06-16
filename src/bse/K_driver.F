@@ -41,8 +41,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_causal,FXC_n_g_corr
  use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_CON_BANDS_X,&
-&                         PAR_IND_VAL_BANDS_X,PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,WF_load
  use wave_func,      ONLY:WF_buffered_IO,WF,WF_buffer
  use R_lattice,      ONLY:bz_samp,qindx_B
@@ -213,18 +212,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Wave Functions distribution
  !=============================
- call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,&
-&                            B_index=PAR_IND_CON_BANDS_X(X_oscillators%whoami),&
-&                            Bp_index=PAR_IND_VAL_BANDS_X(X_oscillators%whoami),&
-&                            CLEAN_UP=.TRUE.)
+ !
+ call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.FALSE.)
  !
  if (WF_buffered_IO) then
    !
    call WF_load(WF_buffer,0,1,BS_bands,(/1,Xk%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
    !
  endif
- !
- call section('=','Main loop')
  !
  ! 1. The IP Part (Dipoles included) ...
  ! ======================================
@@ -233,6 +228,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! 2. The KERNEL
  ! ================
  if (.not.l_rpa_IP) call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
+ stop
  !
  ! 3. The SOLVER
  ! =================

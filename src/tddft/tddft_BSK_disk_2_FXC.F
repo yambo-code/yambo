@@ -110,11 +110,11 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  BS_k_and_row_restart=0
  do ik2=1,nXkibz
    !
-   call K_exchange(.true.,iq,ik2,Xk,O2x,O_x_dim)
+   !call K_exchange(.true.,iq,ik2,Xk,O2x,O_x_dim)
    !
    do ik1=ik2,1,-1
      !
-     if (ik1/=ik2) call K_exchange(.true.,iq,ik1,Xk,O1x,O_x_dim)
+     !if (ik1/=ik2) call K_exchange(.true.,iq,ik1,Xk,O1x,O_x_dim)
      if (ik1==ik2) O1x=O2x
      !
      allocate(BS_mat(BS_nT_at_k(ik1),BS_nT_at_k(ik2)))

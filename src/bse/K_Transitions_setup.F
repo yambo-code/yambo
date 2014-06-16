@@ -27,6 +27,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !
  !   BS_K_dim
  !
+ !   PAR_BS_T_grps_index(i_Group_par) = i_Group_global ! with i_Group_par \in PAR_BS_nT_grps and
+ !                                                            i_Group_global \in BS_nT_grps
+ !
+ !
  ! Filling (FILL_the_groups=.TRUE.) of Transition groups
  !
  !type BS_T_group
@@ -48,12 +52,13 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
 &                       O_n_v_states,O_n_c_states,BS_eh_en,&
 &                       BS_bands,BS_nT_at_k,BS_anti_res,&
 &                       BS_not_const_eh_f,BS_drude_f_eh,&
-&                       BSE_mode,BS_T_grp,BS_K_coupling
+&                       BSE_mode,BS_T_grp,BS_K_coupling,BS_nT_grps
  use parallel_m,   ONLY:PAR_BS_nT_grps,PAR_BS_T_grps_index,PAR_IND_Xk_bz,PAR_IND_eh,&
-&                       PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_eh_INDEX,&
-&                       PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,myid
+&                       PAR_IND_WF_b_and_k,PAR_COM_eh_INDEX,myid
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
+ use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
+ use interfaces,   ONLY:PARALLEL_live_message
  !
  implicit none
  type(levels) :: Ken
@@ -65,14 +70,15 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  ! Work Space
  !
  integer :: Iic(BS_bands(2),n_sp_pol),Iiv(BS_bands(2),n_sp_pol),ikbz,iv,ic,ik,ikp,i_sp,&
-&           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_PAR_nT_grps,i_T_at_k,i_T_in_the_grp,nT
+&           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_PAR_nT_grps,i_T_at_k,i_T_in_the_grp,nT,&
+&           i_PAR_nT_grps_mem
  integer, external :: K_T_group_index
  real(SP):: E_eh,f_eh
  !
- if (.not.FILL_the_groups) call section('+','Transition Space definition')
- if (FILL_the_groups)      call section('=','Transition Groups build-up')
+ if (FILL_the_groups) call section('+','Transition Groups build-up')
  !
  if (FILL_the_groups) then
+   !
    allocate(BS_T_grp(PAR_BS_nT_grps))
    allocate(PAR_BS_T_grps_index(PAR_BS_nT_grps))
    call mem_est("PAR_BS_T_grps_index",(/PAR_BS_nT_grps/),(/IP/))
@@ -85,16 +91,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
    endif
    !
-   allocate(PAR_IND_CON_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%n_CPU+1))
-   allocate(PAR_IND_VAL_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%n_CPU+1))
-   allocate(PAR_IND_CON_BANDS_X(5)%element_1D(BS_bands(2)))
-   allocate(PAR_IND_VAL_BANDS_X(5)%element_1D(BS_bands(2)))
-   PAR_IND_CON_BANDS_X(5)%n_of_elements=0
-   PAR_IND_VAL_BANDS_X(5)%n_of_elements=0
-   PAR_IND_CON_BANDS_X(5)%element_1D=.FALSE.
-   PAR_IND_VAL_BANDS_X(5)%element_1D=.FALSE.
-   PAR_IND_CON_BANDS_X_ID(5)=PAR_COM_eh_INDEX%CPU_id
-   PAR_IND_VAL_BANDS_X_ID(5)=PAR_COM_eh_INDEX%CPU_id
+   allocate(PAR_IND_WF_b_and_k%element_2D(BS_bands(2),Xk%nibz))
+   PAR_IND_WF_b_and_k%element_2D=.FALSE.
    !
  else
    allocate(BS_nT_at_k(Xk%nbz))
@@ -137,10 +135,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
            !
            if (FILL_the_groups) then
              !
+             i_T_group_now=K_T_group_index(BS_K_dim)
+             !
              if (.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
              if (.not.PAR_IND_eh(ikbz)%element_1D(i_T_at_k)) cycle
-             !
-             i_T_group_now=K_T_group_index(BS_K_dim)
              !
              if (i_T_group_now/=i_T_group_last) then
                !
@@ -152,7 +150,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
                  !
                  PAR_BS_T_grps_index(i_PAR_nT_grps)=i_T_group_now
                  !
-               else
+               else if (i_loop==2) then
                  !
                  nT=BS_T_grp(i_PAR_nT_grps)%size
                  !
@@ -184,24 +182,18 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
                !
              endif
              !
-             if (i_loop==1) BS_T_grp(i_PAR_nT_grps)%size=BS_T_grp(i_PAR_nT_grps)%size+1
-             !
-             if (i_loop==2) then
+             if (i_loop==1) then
+               !
+               BS_T_grp(i_PAR_nT_grps)%size=BS_T_grp(i_PAR_nT_grps)%size+1
+               !
+             else if (i_loop==2) then
+               !
                i_T_in_the_grp=i_T_in_the_grp+1
                !
                BS_T_grp(i_PAR_nT_grps)%table(i_T_in_the_grp,:)=(/iv,ic,i_sp/)
                !
-               if (.not.PAR_IND_CON_BANDS_X(5)%element_1D(ic)) then
-                 PAR_IND_CON_BANDS_X(5)%element_1D(ic)=.TRUE.
-                 PAR_IND_CON_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)=&
-&                                       PAR_IND_CON_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)+1
-               endif
-               !
-               if (.not.PAR_IND_VAL_BANDS_X(5)%element_1D(iv)) then
-                 PAR_IND_VAL_BANDS_X(5)%element_1D(iv)=.TRUE.
-                 PAR_IND_VAL_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)=&
-&                                       PAR_IND_VAL_BANDS_X(5)%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)+1
-               endif
+               PAR_IND_WF_b_and_k%element_2D(ic, ik)=.TRUE.
+               PAR_IND_WF_b_and_k%element_2D(iv,ikp)=.TRUE.
                !
                BS_T_grp(i_PAR_nT_grps)%E(i_T_in_the_grp)=E_eh
                BS_T_grp(i_PAR_nT_grps)%f(i_T_in_the_grp)=f_eh
@@ -231,13 +223,23 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
    !
  enddo
  !
- write (*,*) myid, PAR_IND_VAL_BANDS_X(5)%element_1D
- write (*,*) myid, PAR_IND_CON_BANDS_X(5)%element_1D
+ !write (*,*) myid, PAR_IND_VAL_BANDS_X(5)%element_1D
+ !write (*,*) myid, PAR_IND_CON_BANDS_X(5)%element_1D
  !
  if (.not.FILL_the_groups.and..not.BS_anti_res.and.BS_not_const_eh_f) then
    call warning('Fractional e/h occupations. Causal BSEmode forced.')
    BSE_mode='causal'
    BS_anti_res=.true.
+ endif
+ !
+ if (FILL_the_groups) then
+   call PARALLEL_live_message("WF's",LOADED=count(PAR_IND_WF_b_and_k%element_2D),TOTAL=Xk%nibz*(BS_bands(2)-BS_bands(1)+1))
+ endif
+ !
+ ! REPORT
+ !
+ if (FILL_the_groups) then
+   call msg('r','[BSK] Transition groups (total)',BS_nT_grps)
  endif
  !
 !     if (.not.BS_res_K_corr) cycle

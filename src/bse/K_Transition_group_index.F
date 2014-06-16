@@ -28,7 +28,7 @@ integer function K_T_group_index(I)
  !
  use R_lattice,    ONLY:nXkbz
  use BS,           ONLY:BS_nT_at_k,BS_nT_grps_at_k
- use parallel_m,   ONLY:PAR_COM_eh_INDEX
+ use parallel_m,   ONLY:PAR_COM_eh_INDEX,myid
  !
  implicit none
  !

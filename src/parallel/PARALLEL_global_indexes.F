@@ -46,7 +46,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_A2A,&
 &                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
 &                        PAR_COM_q_for_Xo,PAR_COM_k_for_P,PAR_COM_Xk_bz_A2A,PAR_COM_density,&
-&                        PAR_COM_eh_INDEX,PAR_COM_T_index
+&                        PAR_COM_eh_INDEX,PAR_COM_T_index,PAR_COM_eh_A2A
  use parallel_m,    ONLY:& ! INDEXES
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,&
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q,PAR_IND_INV,PAR_IND_DIAGO,&
@@ -203,6 +203,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call COMM_reset(PAR_COM_k_for_P)
    call COMM_reset(PAR_COM_density)
    call COMM_reset(PAR_COM_eh_INDEX)
+   call COMM_reset(PAR_COM_eh_A2A)
    call COMM_reset(PAR_COM_T_INDEX)
    !
    call IO_and_Messaging_switch("RESET")
@@ -292,7 +293,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                                        COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_Xk_bz_INDEX,&
 &                                        COMM_index_3=PAR_COM_eh_INDEX,&
 &                                        COMM_index_4=PAR_COM_T_INDEX,&
-&                                        COMM_A2A_1=PAR_COM_Q_A2A) 
+&                                        COMM_A2A_1=PAR_COM_Q_A2A ,&
+&                                        COMM_A2A_2=PAR_COM_Xk_bz_A2A,&
+&                                        COMM_A2A_3=PAR_COM_eh_A2A) 
    !
    PAR_IND_eh_ID=PAR_COM_eh_INDEX%CPU_id+1
    !

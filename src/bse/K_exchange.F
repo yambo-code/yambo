@@ -21,77 +21,102 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_exchange(divide_by_qpg,iq,ik,Xk,Ox,X_dim)
+subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
  !
- use pars,           ONLY:SP
- use BS,             ONLY:BS_n_g_exch,BS_eh_table,BS_nT_at_k,BS_bands
+ use BS,             ONLY:BS_n_g_exch
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
+ use BS,             ONLY:BS_T_grp,BS_collision,BS_oscillators_alloc
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
- use collision,      ONLY:ggwinfo,collision_reset
- use electrons,      ONLY:n_sp_pol,spin
+ use parallel_m,     ONLY:PAR_COM_eh_A2A,PAR_IND_eh,PP_redux_wait
  !
  implicit none
- type(bz_samp) ::Xk
- integer       :: ik,iq,X_dim
- complex(SP)   :: Ox(BS_n_g_exch,X_dim)
+ type(bz_samp) :: Xk
+ integer       :: iq,i_T
  logical       :: divide_by_qpg
  !
  ! Work Space
  !
- type(ggwinfo)::isc
- integer :: i1,i2,i3,ikp,ikpbz,ikbz,iv1,ic1,is,isp,Hi,b_ref,i_sp
- integer :: nnst(BS_bands(2)-BS_bands(1)+1,BS_bands(2)-BS_bands(1)+1,nsym,n_sp_pol)
+ integer :: i_T_el,i_c,i_v,i_spin,i_k_bz,i_k,i_s,i_g1,i_g2,i_p_bz,i_p,i_sp
  !
- call collision_reset(isc)
+ ! Oscillators already done ?
  !
- b_ref=BS_bands(1)-1
- isc%ngrho=BS_n_g_exch
- allocate(isc%rhotw(BS_n_g_exch))
+ if (allocated( BS_T_grp(i_T)%O_x )) return
  !
- nnst=0
+ ! Allocate
  !
- Hi=sum(BS_nT_at_k(:ik-1))
- do i1=1,BS_nT_at_k(ik)
-   ikbz=BS_eh_table(i1+Hi,1)
-   iv1=BS_eh_table(i1+Hi,2)
-   ic1=BS_eh_table(i1+Hi,3)
-   i_sp=spin(BS_eh_table(i1+Hi,:))
-   ikpbz=qindx_X(iq,ikbz,1)
-   is= Xk%sstar(ikbz,2)
-   ikp=Xk%sstar(ikpbz,1)
-   isp=Xk%sstar(ikpbz,2)
-   isc%is=(/ic1,ik,is,i_sp/)
-   isc%os=(/iv1,ikp,isp,i_sp/)
-   isc%qs=(/qindx_X(iq,ikbz,2),iq,1/)
-   select case (iq)
-     case(1)
-       if (is==1) then
-         isc%is(3)=1
-         isc%os(3)=1
-         call scatterBamp(isc)
-         if (divide_by_qpg) then
-           forall(i2=1:BS_n_g_exch) Ox(i2,i1)=isc%rhotw(i2)/bare_qpg(iq,i2)
-         else
-           forall(i2=1:BS_n_g_exch) Ox(i2,i1)=isc%rhotw(i2)
-         endif
-         nnst(ic1-b_ref,iv1-b_ref,1,i_sp)=i1
-       else
-         do i2=1,BS_n_g_exch
-           i3=g_rot(sop_inv(is),i2)
-           Ox(i2,i1)=Ox(i3,nnst(ic1-b_ref,iv1-b_ref,1,i_sp))
-         enddo
-         if (is>nsym/(i_time_rev+1))  Ox(:,i1)=conjg(Ox(:,i1))
-       endif
-     case(2:)
-       call scatterBamp(isc)
-       if (divide_by_qpg) then
-         forall(i2=1:BS_n_g_exch) Ox(i2,i1)=isc%rhotw(i2)/bare_qpg(iq,i2)
-       else
-         forall(i2=1:BS_n_g_exch) Ox(i2,i1)=isc%rhotw(i2)
-       endif
-   end select
- enddo
+ call BS_oscillators_alloc(.TRUE.,i_T,.FALSE.,0)
  !
- call collision_reset(isc)
+ ! Now the evaluation of the oscillators.
+ !
+ ! Note that, in contrast to the previous implementation, each set of CPU's
+ ! has one specific K assigned. Thus no rotation can be performed in the internal
+ ! group of transitions. 
+ !
+ i_k_bz=BS_T_grp(i_T)%ik
+ i_k   =Xk%sstar(i_k_bz,1)
+ i_s   =Xk%sstar(i_k_bz,2)
+ !
+ i_p_bz=qindx_X(iq,i_k_bz,1)
+ i_p   =Xk%sstar(i_p_bz,1)
+ i_sp  =Xk%sstar(i_p_bz,2)
+ !
+ BS_collision%ngrho=BS_n_g_exch
+ !
+ allocate(BS_collision%rhotw(BS_n_g_exch))
+ !
+ T_loop: do i_T_el=1,BS_T_grp(i_T)%size
+   !
+   if (.not.PAR_IND_eh(i_k_bz)%element_1D(i_T_el)) cycle
+   !
+   i_v   =BS_T_grp(i_T)%table(i_T_el,1)
+   i_c   =BS_T_grp(i_T)%table(i_T_el,2)
+   i_spin=BS_T_grp(i_T)%table(i_T_el,3)
+   !
+   BS_collision%is=(/i_c,i_k,i_s,i_spin/)
+   BS_collision%os=(/i_v,i_p,i_sp,i_spin/)
+   BS_collision%qs=(/qindx_X(iq,i_k_bz,2),iq,1/)
+   !
+   if (iq==1) then
+     !
+     BS_collision%is(3)=1
+     BS_collision%os(3)=1
+     !
+     call scatterBamp(BS_collision)
+     !
+!$omp parallel do default(shared), private(i_g1,i_g2)
+     do i_g1=1,BS_n_g_exch
+       !
+       i_g2=g_rot(sop_inv(i_s),i_g1)
+       !
+       if (divide_by_qpg)      BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g2)/bare_qpg(iq,i_g2)
+       if (.not.divide_by_qpg) BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g2)
+       !
+       if (i_s>nsym/(i_time_rev+1))  BS_T_grp(i_T)%O_x(i_g1,i_T_el)=conjg(BS_T_grp(i_T)%O_x(i_g1,i_T_el))
+       !
+     enddo
+!$omp end parallel do
+     !
+   else
+     !
+     call scatterBamp(BS_collision)
+     !
+!$omp parallel do default(shared), private(i_g1)
+     do i_g1=1,BS_n_g_exch
+       !
+       if (divide_by_qpg)      BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
+       if (.not.divide_by_qpg) BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g1)
+       !
+     enddo
+!$omp end parallel do
+     !
+   endif
+   !
+ enddo T_loop
+ !
+ deallocate(BS_collision%rhotw)
+ !
+ ! A2A
+ !
+ call PP_redux_wait( BS_T_grp(i_T)%O_x , COMM=PAR_COM_eh_A2A%COMM )
  !
 end subroutine

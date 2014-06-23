@@ -45,6 +45,7 @@ module collision
    integer :: ngrho,iqref
    complex(SP), pointer :: gamp(:,:) => null()
    complex(SP), pointer :: rhotw(:)  => null()
+   !
  end type ggwinfo
  !
  !====================

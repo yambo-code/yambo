@@ -51,7 +51,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
 &                       BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0,BSS_uses_RIM,&
-&                       O_n_scatt,BS_O,BS_cpl_K_corr
+&                       O_n_scatt,BS_O,BS_cpl_K_corr,BS_collision
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
@@ -79,7 +79,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0,bands_to_load(2),&
 &              iBSE1,iBSE2
  integer    :: iOcv, iOvc
- complex(SP):: Co,H_res_x,H_res_c,H_cpl_x,H_cpl_c
+ complex(SP):: Co,H_res_x,H_res_c,H_cpl_x,H_cpl_c,H_x,H_c
  !
  integer    :: i_block,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p
@@ -114,6 +114,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ioBS_err    =-1
  ioBS_Fxc_err=-1
  call parser('ALLGexx',l_USE_all_Gexx)
+ !
+ call collision_reset(BS_collision)
  !
  ! Titles
  !========
@@ -414,6 +416,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    i_Tgrp_k=BS_blk(i_block)%iT_k
    i_Tgrp_p=BS_blk(i_block)%iT_p
    !
+   ! Exchange oscillators
+   !----------------------
+   ! 
+   call K_exchange(.not.l_col_cut,iq,Xk,i_Tgrp_k)
+   !
+   if (i_Tgrp_k/=i_Tgrp_p) call K_exchange(.not.l_col_cut,iq,Xk,i_Tgrp_p)
+   !
+   ! Transitions Loop
+   !------------------
+   !
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      !
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
@@ -428,6 +440,36 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        i_k_spin=BS_T_grp(i_Tgrp_k)%table(i_Tk,3)
        i_p_spin=BS_T_grp(i_Tgrp_p)%table(i_Tp,3)
+       !
+       H_x=(0.,0.)
+       H_c=(0.,0.)
+       ! 
+       ! :::Exchange:::
+       !
+       if (BS_blk(i_block)%mode=="R") then
+         if (BS_res_K_exchange) then
+           H_x=Vstar_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp), BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+         endif
+       else if (BS_blk(i_block)%mode=="A") then
+         if (BS_cpl_K_exchange) then
+           H_x=V_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
+&                                   BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+         endif
+       endif
+       !
+       ! :::ALDA        (resonant):::
+       !
+!       if (BS_K_is_ALDA) H_res_x=H_res_x+&
+!&                        tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
+!&                                              (/iv1,iv2/),(/is1,is2,is1,is2/),1)
+       !
+       ! :::ALDA        (coupling):::
+       !
+!       if (BS_K_is_ALDA) H_cpl_x=H_cpl_x+&
+!&                        tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
+!&                                              (/iv1,iv2/),(/is1,is2,is1,is2/),2)
+       !
+       BS_blk(i_block)%mat(i_Tk,i_Tp)=H_x*real(spin_occ)*Co-H_c
        !
      enddo 
      !

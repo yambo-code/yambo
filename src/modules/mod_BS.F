@@ -23,22 +23,13 @@
 !
 module BS
  !
- use pars, ONLY:SP,schlen,lchlen
+ use pars,      ONLY:SP,schlen,lchlen
+ use collision, ONLY:ggwinfo
+ !
  implicit none
  !
- ! BS Kernel building
- !
- integer :: BS_n_g_exch
- integer :: BS_K_dim
- integer :: BS_bands(2)
- integer :: BS_columns
- integer :: BS_n_g_W
- integer :: BS_q(2)
- integer :: BS_identifier
- integer :: BS_k_and_row_restart(2)
- real(SP):: BS_eh_en(2)
- real(SP):: BS_eh_win(2)
- real(SP):: BS_drude_f_eh
+ ! Modes and logicals
+ !====================
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
  logical :: BS_anti_res
@@ -53,27 +44,47 @@ module BS
  character(schlen) :: BSK_mode
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
- integer    , allocatable :: BS_eh_table(:,:)
- complex(SP), allocatable :: BS_mat_diagonal(:)
- complex(SP), allocatable :: BS_mat(:,:)
- complex(SP), allocatable :: BS_cpl_mat(:,:)
- real(SP)   , allocatable :: BS_eh_E(:)
- real(SP)   , allocatable :: BS_eh_f(:)
- complex(SP), allocatable :: BS_eh_Z(:)
- real(SP)   , allocatable :: BS_eh_W(:)
+ !
+ ! Dimensions
+ !=============
+ integer :: BS_K_dim
+ integer :: BS_bands(2)
+ integer :: BS_q(2)
+ integer :: BS_identifier
+ !
+ ! Drude occupation
+ !------------------
+ real(SP):: BS_drude_f_eh
+ !
+ ! PW components ...
+ !==================
+ integer :: O_ng
+ integer :: BS_n_g_exch
+ integer :: BS_n_g_W
+ !
+ ! Collision
+ !===========
+ type(ggwinfo) :: BS_collision
  !
  ! CV transitions space ...
+ !=========================
  type BS_T_group
-   integer                       :: ik         ! ik index
+   !
+   integer                       :: ik         ! ik index (BZ)
    integer                       :: first_cv   ! Position in the cv transitions @ k
    integer                       :: size       
-   complex(SP), allocatable      :: table(:,:) ! (/iv,ic,i_sp/)
+   complex(SP), allocatable      :: table(:,:) ! (/iv,ic,i_sp/) (i_sp is spin)
    complex(SP), allocatable      :: dipoles_R(:)
    complex(SP), allocatable      :: dipoles_A(:)
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: f(:)
    real(SP)   , allocatable      :: W(:)
+   !
+   ! Exchange Oscillators
+   !
+   complex(SP), allocatable      :: O_x(:,:)
+   !
  end type BS_T_group
  !
  type(BS_T_group), allocatable  :: BS_T_grp(:)
@@ -82,36 +93,66 @@ module BS
  integer                        :: BS_nT_grps
  !
  ! Blocks ...
+ !============
  type BS_block
-   integer                       :: ik         ! ik index
-   integer                       :: ip         ! ip index (ik -> ip transition)
+   integer                       :: ik         ! ik index (BZ)
+   integer                       :: ip         ! ip index (ik -> ip transition) (BZ)
    integer                       :: iT_k       ! Index (among n_BS_T_grps) of the cv transitions @ k
    integer                       :: iT_p       ! Index (among n_BS_T_grps) of the cv transitions @ p
    integer                       :: size(2)    ! rows x columns
    character(1)                  :: mode       ! "R"esonant/"A"ntiresonant
+   !
+   ! Matrix Block
+   !--------------
    complex(SP), allocatable      :: mat(:,:)
+   !
+   ! Oscillators...
+   !
+   ! ... correlation (resonant)
+   !----------------------------
+   integer                       :: N_C_cc_oscillators 
+   integer                       :: N_C_vv_oscillators 
+   integer(SP), allocatable      :: O_c_cc_table(:)
+   integer(SP), allocatable      :: O_c_vv_table(:)
+   complex(SP), allocatable      :: O_cc(:,:)
+   complex(SP), allocatable      :: O_vv(:,:)
+   !
+   ! ... correlation (anti-resonant)
+   !---------------------------------
+   integer                       :: N_C_cv_oscillators = 0
+   integer(SP), allocatable      :: O_c_cv_table(:)
+   complex(SP), allocatable      :: O_cv(:,:)
+   !
  end type BS_block
  !
  integer                    :: n_BS_blks = 0
  type(BS_block), allocatable:: BS_blk(:)
  !
- ! Oscillators ...
- !
- integer  :: O_ng
  integer,    allocatable :: O_table(:,:,:,:,:)
  complex(SP),allocatable :: O_phase(:,:,:)
  !
  ! ... first table of possible c/v states
- !
  integer,    allocatable :: O_n_c_states(:,:)
  integer,    allocatable :: O_n_v_states(:,:)
  integer,    allocatable :: O_c_state(:,:,:)
  integer,    allocatable :: O_v_state(:,:,:)
  !
  ! ... then table of possible cv->nm transitions
- !
  integer  :: O_n_scatt
  complex(SP),allocatable :: BS_O(:,:)
+ !
+ integer :: BS_columns
+ integer :: BS_k_and_row_restart(2)
+ real(SP):: BS_eh_en(2)
+ real(SP):: BS_eh_win(2)
+ integer    , allocatable :: BS_eh_table(:,:)
+ complex(SP), allocatable :: BS_mat_diagonal(:)
+ complex(SP), allocatable :: BS_mat(:,:)
+ complex(SP), allocatable :: BS_cpl_mat(:,:)
+ real(SP)   , allocatable :: BS_eh_E(:)
+ real(SP)   , allocatable :: BS_eh_f(:)
+ complex(SP), allocatable :: BS_eh_Z(:)
+ real(SP)   , allocatable :: BS_eh_W(:)
  !
  ! Solvers
  !
@@ -181,7 +222,27 @@ module BS
      enddo
    end function
    !
-   subroutine BS_free()
+   subroutine BS_oscillators_alloc(EXCHANGE,iT,CORRELATION,iB)
+     !
+     use pars,       ONLY:IP
+     use stderr,     ONLY:intc
+     use memory_m,   ONLY:mem_est
+     !
+     logical :: EXCHANGE,CORRELATION
+     integer :: iT,iB
+     !
+     if (EXCHANGE) then
+       allocate(BS_T_grp(iT)%O_x(BS_n_g_exch,BS_T_grp(iT)%size))
+       call mem_est("BS_T_group_"//trim(intc(iT))//"_X_oscillators",(/size (BS_T_grp(iT)%O_x)/))
+     endif
+     !
+   end subroutine
+   !
+   subroutine BS_oscillators_free( )
+     !
+   end subroutine
+   !
+   subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
      use parallel_m, ONLY:PAR_BS_T_grps_index,PAR_BS_nT_grps

@@ -290,6 +290,7 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_k_for_P
  !
  ! ... BSK
+ type(MPI_comm),SAVE :: PAR_COM_eh_A2A
  type(MPI_comm),SAVE :: PAR_COM_eh_INDEX
  type(MPI_comm),SAVE :: PAR_COM_T_INDEX
  !

@@ -101,11 +101,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
    n_loops=1
  endif 
  !
- !if (BS_res_K_corr) then
- !  O_n_v_states=0
- !  O_n_c_states=0
- !endif
- !
  do i_loop=1,n_loops
    !
    BS_K_dim=0
@@ -116,9 +111,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
    do ikbz=1,Xk%nbz
      !
      i_T_at_k=0
-     !
-     !Iic=0
-     !Iiv=0
      !
      do iv=BS_bands(1),Ken%nbm
        do ic=Ken%nbf+1,BS_bands(2)
@@ -212,9 +204,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
              !
            endif
            !
-!           Iiv(iv,i_sp)=1
-!           Iic(ic,i_sp)=1
-           !
          enddo
        enddo
      enddo
@@ -222,9 +211,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
    enddo
    !
  enddo
- !
- !write (*,*) myid, PAR_IND_VAL_BANDS_X(5)%element_1D
- !write (*,*) myid, PAR_IND_CON_BANDS_X(5)%element_1D
  !
  if (.not.FILL_the_groups.and..not.BS_anti_res.and.BS_not_const_eh_f) then
    call warning('Fractional e/h occupations. Causal BSEmode forced.')
@@ -241,56 +227,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  if (FILL_the_groups) then
    call msg('r','[BSK] Transition groups (total)',BS_nT_grps)
  endif
- !
-!     if (.not.BS_res_K_corr) cycle
-     !
-!     do iv=BS_bands(1),Ken%nbm
-!       do i_sp=1,n_sp_pol
-!         !
-!         if (Iiv(iv,i_sp)==1) then
-!           O_n_v_states(ikbz,i_sp)=O_n_v_states(ikbz,i_sp)+1
-!           if (allocated(O_v_state)) O_v_state(ikbz,O_n_v_states(ikbz,i_sp),i_sp)=iv
-!         endif
-!         !
-!       enddo
-!     enddo
-!     !
-!     do ic=Ken%nbf+1,BS_bands(2)
-!       do i_sp=1,n_sp_pol
-!         !
-!         if (Iic(ic,i_sp)==1) then
-!            O_n_c_states(ikbz,i_sp)=O_n_c_states(ikbz,i_sp)+1
-!            if (allocated(O_c_state)) O_c_state(ikbz,O_n_c_states(ikbz,i_sp),i_sp)=ic
-!         endif
-!         !
-!       enddo
-!     enddo
-!   enddo
-   !
-!   if (allocated(BS_eh_table)) return
-   !
-   ! Allocations
-   !
-!   allocate(BS_eh_table(BS_K_dim,3+n_sp_pol-1),BS_eh_E(BS_K_dim),BS_eh_f(BS_K_dim))
-!   call mem_est("BS_eh_table BS_eh_E BS_eh_f",&
-!&               (/(3+n_sp_pol-1)*BS_K_dim,BS_K_dim,BS_K_dim/),(/IP,SP,SP/))
-!   !
-!   if (associated(Ken%W)) then
-!     allocate(BS_eh_W(BS_K_dim))
-!     call mem_est("BS_eh_W",(/BS_K_dim/),(/SP/))
-!   endif
-!   if (associated(Ken%Z)) then
-!     allocate(BS_eh_Z(BS_K_dim))
-!     call mem_est("BS_eh_Z",(/BS_K_dim/))
-!   endif
-!   !
-!   if (.not.BS_res_K_corr) cycle
-!   !
-!   allocate(O_v_state(Xk%nbz,maxval(O_n_v_states),n_sp_pol),&
-!&           O_c_state(Xk%nbz,maxval(O_n_c_states),n_sp_pol))
-!   call mem_est("O_v_state O_c_state",(/size(O_v_state),size(O_c_state)/),(/IP,IP/))
-!   !
-! enddo
  !
  contains
    !

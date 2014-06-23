@@ -119,6 +119,24 @@ subroutine QED_Sigma_c(E,k,q,qp)
 !       endif
 !       write(*,*) i_m, QP_n_G_bands(2)
        write(*,*) 'is it working?'
+
+    ir = 0
+     do ir1 = 0, fft_dim(1)-1
+       do ir2 = 0, fft_dim(2)-1
+         do ir3 = 0, fft_dim(3)-1
+           ir = 1 + ir1 + ir2*fft_dim(1) + ir3*fft_dim(1)*fft_dim(2)
+           r_cell_cc(:,ir) = ir1*a(1,:)/fft_dim(1) +&
+&                            ir2*a(2,:)/fft_dim(2) +&
+&                            ir3*a(3,:)/fft_dim(3)
+         end do
+       end do
+     end do
+
+
+
+
+
+ik1bz=sum(Xk%nstar(:ik1-1))+i1
        !
        do i_c=1,3
          do i_cp=1,3

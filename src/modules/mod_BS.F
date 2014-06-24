@@ -88,7 +88,7 @@ module BS
  end type BS_T_group
  !
  type(BS_T_group), allocatable  :: BS_T_grp(:)
- integer         , allocatable  :: BS_T_grp_ranges(:,:)
+ integer         , allocatable  :: BS_T_grp_1st_el(:)
  integer         , allocatable  :: BS_nT_at_k(:)
  integer         , allocatable  :: BS_nT_grps_at_k(:)
  integer                        :: BS_nT_grps
@@ -208,14 +208,14 @@ module BS
  contains
    !
    integer function T_group(I)
-     use parallel_m, ONLY:PAR_BS_nT_grps
      integer :: i_g,I
-     do i_g=1,PAR_BS_nT_grps
-       if (BS_T_grp_ranges(i_g,1)<=I.and.I<=BS_T_grp_ranges(i_g,2)) then
+     do i_g=1,BS_nT_grps-1
+       if (BS_T_grp_1st_el(i_g)<=I.and.I<BS_T_grp_1st_el(i_g+1)) then
          T_group=i_g
          return
        endif
      enddo
+     if (I>=BS_T_grp_1st_el(BS_nT_grps-1)) T_group=BS_nT_grps
    end function
    !
    function BS_blocks(I)

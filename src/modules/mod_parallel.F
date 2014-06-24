@@ -156,7 +156,6 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_Kk_ibz
  type(PP_indexes),SAVE :: PAR_IND_Xk_ibz
  type(PP_indexes),SAVE :: PAR_IND_Xk_bz
- type(PP_indexes),SAVE :: PAR_IND_Kp_bz
  type(PP_indexes),SAVE :: PAR_IND_G_k
  !
  ! ... linear response
@@ -184,6 +183,7 @@ module parallel_m
  !
  ! ... Transitions
  type(PP_indexes),allocatable,SAVE :: PAR_IND_eh(:)
+ type(PP_indexes)            ,SAVE :: PAR_IND_T_groups
  type(PP_indexes)            ,SAVE :: PAR_IND_T
  !
  ! Specific MPI ID's ...
@@ -211,7 +211,6 @@ module parallel_m
  integer            :: PAR_IND_Kk_ibz_ID
  integer            :: PAR_IND_Xk_ibz_ID
  integer            :: PAR_IND_Xk_bz_ID
- integer            :: PAR_IND_Kp_bz_ID
  integer            :: PAR_IND_G_k_ID
  !
  ! ... linear response & BSK
@@ -280,7 +279,6 @@ module parallel_m
  integer,allocatable:: PAR_Xk_ibz_index(:)
  integer            :: PAR_DIPk_nibz
  integer,allocatable:: PAR_DIPk_ibz_index(:)
- integer            :: PAR_Kp_nbz
  integer            :: PAR_Xk_nbz
  integer,allocatable:: PAR_Xk_bz_index(:)
  integer            :: PAR_BS_nT_grps 

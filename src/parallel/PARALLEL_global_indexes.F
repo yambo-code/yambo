@@ -30,7 +30,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PARALLEL_cpu_mat_diagonalization,PAR_Q_index,PAR_nQ,PAR_n_B_mat_elements,&
 &                        PAR_B_mat_index,PAR_nQP,PAR_QP_index,PAR_INDEX_copy,&
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load,&
-&                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index,PAR_Kp_nbz,&
+&                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index,&
 &                        PAR_BS_T_grps_index,PAR_BS_nT_grps,PAR_Kk_nibz
  use parallel_m,    ONLY:& ! LOGICALS
 &                        l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
@@ -52,20 +52,19 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
 &                        PAR_IND_B_mat,PAR_IND_Plasma,PAR_IND_DIPk_ibz,PAR_IND_WF_linear,&
 &                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_eh,PAR_IND_T,PAR_IND_WF_b_and_k,&
-&                        PAR_IND_Kp_bz,PAR_IND_Kk_ibz
+&                        PAR_IND_T_groups,PAR_IND_Kk_ibz
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_INV_ID,PAR_IND_DIAGO_ID,&
 &                        PAR_IND_QP_ID,PAR_IND_G_b_ID,myid,PAR_IND_Plasma_ID,&
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID,&
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,&
-&                        PAR_IND_Kp_bz_ID,PAR_IND_eh_ID,PAR_IND_Kk_ibz_ID
+&                        PAR_IND_Kk_ibz_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use X_m,           ONLY:X_t
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life
  use matrix_operate,ONLY:UP_matrix_index
  use BS,            ONLY:BS_bands,BS_nT_at_k,BS_nT_grps
- use vec_operate,   ONLY:i_bz
 #if defined _ELPH
  use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
 #endif
@@ -91,7 +90,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  ! Work Space
  !
- integer              :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2,i_s
+ integer              :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2
  logical              :: reset_all
  character(10)        :: WHAT,WHATp
  !
@@ -123,10 +122,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PP_indexes_reset(PAR_IND_INV)
    call PP_indexes_reset(PAR_IND_DIAGO)
    call PP_indexes_reset(PAR_IND_Q)
+   call PP_indexes_reset(PAR_IND_T_groups)
    call PP_indexes_reset(PAR_IND_Kk_ibz)
    call PP_indexes_reset(PAR_IND_Xk_ibz)
    call PP_indexes_reset(PAR_IND_Xk_bz)
-   call PP_indexes_reset(PAR_IND_Kp_bz)
    call PP_indexes_reset(PAR_IND_CON_BANDS_X(X_type))
    call PP_indexes_reset(PAR_IND_VAL_BANDS_X(X_type))
    call PP_indexes_reset(PAR_IND_QP)
@@ -165,7 +164,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    PAR_IND_Q_ID=0
    PAR_IND_Xk_ibz_ID=0
    PAR_IND_Xk_bz_ID=0
-   PAR_IND_Kp_bz_ID=0
    PAR_IND_CON_BANDS_X_ID(X_type)=0
    PAR_IND_VAL_BANDS_X_ID(X_type)=0
    PAR_IND_INV_ID=0
@@ -305,43 +303,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    else if ( ENVIRONMENT=="Response_G_space") then
      WHAT="ibz"
      iq_range=(/1,nqibz/)
-   else 
-     WHAT="bz"
-     iq_range=(/1,nqbz/)
    endif
    !
-   ! K-points (G_space in BZ) (T_space first IBZ then BZ)
+   ! K-points 
    !
-   if ( ENVIRONMENT=="Response_T_space") then
-     !
-     ! In T space I first distribute the IBZ and then I assign on each CPU also the corresponding
-     !
-     call PARALLEL_index(PAR_IND_Kk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=.TRUE.)
-     !
-     PAR_Kk_nibz=PAR_IND_Kk_ibz%n_of_elements(PAR_IND_Xk_bz_ID+1)
-     ! 
-     PAR_IND_Xk_bz_ID=PAR_COM_Xk_bz_INDEX%CPU_id
-     !
-     PAR_Xk_nbz=0
-     allocate(PAR_IND_Xk_bz%n_of_elements(PAR_COM_Xk_bz_INDEX%n_CPU),PAR_IND_Xk_bz%element_1D( Xk%nbz ))
-     PAR_IND_Xk_bz%n_of_elements=0
-     PAR_IND_Xk_bz%element_1D=.FALSE.
-     do i_k=1,Xk%nibz
-       if (.not.PAR_IND_Kk_ibz%element_1D(i_k)) cycle
-       do i_s=1,Xk%nstar(i_k)
-         i_k_bz=i_bz(i_k,i_s,Xk)
-         PAR_Xk_nbz=PAR_Xk_nbz+1
-         PAR_IND_Xk_bz%element_1D(i_k_bz)=.TRUE.
-       enddo
-     enddo
-     !
-     PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1)=PAR_Xk_nbz
-     !
-   else
-     call PARALLEL_index(PAR_IND_Xk_bz,(/Xk%nbz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=.TRUE.)
-     PAR_IND_Xk_bz_ID=PAR_COM_Xk_bz_INDEX%CPU_id
-     PAR_Xk_nbz=PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1)
-   endif
+   call PARALLEL_index(PAR_IND_Xk_bz,(/Xk%nbz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=.TRUE.)
+   PAR_IND_Xk_bz_ID=PAR_COM_Xk_bz_INDEX%CPU_id
+   PAR_Xk_nbz=PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1)
    !
    call PARALLEL_live_message("K(bz)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Xk_bz%n_of_elements(PAR_COM_Xk_bz_INDEX%CPU_id+1),TOTAL=Xk%nbz,&
@@ -363,32 +331,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    allocate(PAR_Q_index(iq_range(2))) 
    call Build_up_index(PAR_IND_Q,iq_range(2),PAR_Q_index,PAR_nQ)
    !
-   if (  ENVIRONMENT=="Response_T_space" ) then
-     !
-     ! K-points (BZ) after shifting of Q (BZ)
-     !
-     WHATp="k_bz_q_bz_p_bz" 
-     !
-     call PARALLEL_add_Q_to_K_list(trim(WHATp),PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_Kp_bz,PAR_IND_Kp_bz_ID,&
-&                                  PAR_IND_Q,PAR_COM_Xk_bz_INDEX,iq_range,Xk,q)
-     PAR_Kp_nbz=PAR_IND_Kp_bz%n_of_elements(PAR_IND_Kp_bz_ID+1)
-     !
-     call fill_IBZk_using_BZk(PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_COM_Xk_bz_INDEX)
-     call fill_IBZk_using_BZk(PAR_IND_Xk_ibz,PAR_IND_Kp_bz,PAR_COM_Xk_bz_INDEX)
-     !
-     call PARALLEL_live_message("P(bz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Kp_nbz,TOTAL=Xk%nbz)
-     !
-   else
-     !
-     ! K-points (IBZ) after shifting of Q (BZ/IBZ)
-     !
-     WHATp="k_bz_q_"//trim(WHAT) 
-     !
-     call PARALLEL_add_Q_to_K_list(trim(WHATp),PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
-&                                  PAR_IND_Q,PAR_COM_Xk_bz_INDEX,iq_range,Xk,q)
-     PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
-     !
-   endif
+   ! K-points (IBZ) after shifting of Q (BZ/IBZ)
+   !
+   WHATp="k_bz_q_"//trim(WHAT) 
+   !
+   call PARALLEL_add_Q_to_K_list(trim(WHATp),PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
+&                                PAR_IND_Q,PAR_COM_Xk_bz_INDEX,iq_range,Xk,q)
+   PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
+   !
    !
    ! ... indexes
    !
@@ -398,24 +348,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz)
    !
    PARALLEL_cpu_mat_inversion=CPU_structure(2)%nCPU_inversion
-   if (ENVIRONMENT=="Response_T_space") PARALLEL_cpu_mat_inversion=CPU_structure(4)%nCPU_inversion
-   if (ENVIRONMENT=="Response_G_space") PARALLEL_cpu_mat_inversion=CPU_structure(3)%nCPU_inversion
+   PARALLEL_cpu_mat_inversion=CPU_structure(3)%nCPU_inversion
    !
    ! Inversion
    !
    call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'INV',PAR_COM_INV_INDEX,PAR_COM_INV)
    PAR_IND_INV_ID=PAR_COM_INV_INDEX%CPU_id
-   !
-   if (ENVIRONMENT=="Response_T_space") then
-     !
-     PARALLEL_cpu_mat_diagonalization=CPU_structure(4)%nCPU_diagonalization
-     !
-     ! Diagonalization
-     !
-     call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'DIAGO',PAR_COM_DIAGO_INDEX,PAR_COM_DIAGO)
-     PAR_IND_DIAGO_ID=PAR_COM_DIAGO_INDEX%CPU_id
-     !
-   endif
    !
    ! I/O privileges
    !
@@ -846,36 +784,48 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !======================================================================================================
    !
    call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"k ","eh","t "/),&
-&                                        COMM_index_1=PAR_COM_Kk_ibz_INDEX,&
-&                                        COMM_index_3=PAR_COM_eh_INDEX,&
-&                                        COMM_index_4=PAR_COM_T_INDEX,&
-&                                        COMM_A2A_3=PAR_COM_eh_A2A) 
+&                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
+&                                        COMM_index_2=PAR_COM_eh_INDEX,&
+&                                        COMM_index_3=PAR_COM_T_INDEX,&
+&                                        COMM_A2A_2=PAR_COM_eh_A2A) 
    !
    ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
-   ! while WF's are indexed using WF_linear
    !
    call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX(X_type))
    call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX(X_type))
    !
+   ! K-points (IBZ)
+   !
+   call PARALLEL_index(PAR_IND_Kk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=.TRUE.)
+   PAR_IND_Kk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id+1
+   PAR_Kk_nibz=PAR_IND_Kk_ibz%n_of_elements(PAR_IND_Kk_ibz_ID+1)
+   ! 
+   ! Dipoles k-points uses same distribution of K k-points
+   !
+   call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_DIPk_ibz)
+   PAR_DIPk_nibz=PAR_Kk_nibz
+   !
    ! E/h pairs (k resolved)
    !
    ! In this part I distribute the eh transitions within each k. The COMM for this indexing is PAR_COM_eh_INDEX.
-   ! Once the group of transitions are build-up the goal is to map them in the total world of transitions groups.
+   ! I fill the PAR_IND_eh for all k in order to define the total number of Transition groups
    !
    do i_k=1,Xk%nibz
-     !
-     if (.not.PAR_IND_Kk_ibz%element_1D(i_k)) cycle
      !
      call PARALLEL_index(PAR_IND_eh(i_k),(/BS_nT_at_k(i_k)/),COMM=PAR_COM_eh_INDEX,CONSECUTIVE=.TRUE.)
      !
    enddo
    !
+   ! Now I find calculate the total (BS_nT_grps) and cpu-restricted (PAR_BS_nT_grps) number of Transition groups.
+   ! In this case the PAR_BS_nT_grps groups belong only to the columns of the kernel.
+   !
    call PARALLEL_Transitions_grouping(Xk)
    !
-   call PARALLEL_live_message("Transition Groups",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_BS_nT_grps,TOTAL=PAR_BS_nT_grps,&
-&                             NCPU=PAR_COM_eh_INDEX%n_CPU)
+   call PARALLEL_live_message("Transition Groups (columns)",ENVIRONMENT=ENVIRONMENT,&
+&                             LOADED=PAR_BS_nT_grps,TOTAL=BS_nT_grps)
    !
+ do while(.true.)
+ enddo
    ! Now each CPU of the PAR_COM_eh_INDEX has PAR_BS_nT_grps  groups of e/h pairs
    !
    ! The task now is to distribute the transitions:
@@ -887,6 +837,42 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_live_message("Transition Scatterings",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_T%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),TOTAL=BS_nT_grps*BS_nT_grps,&
 &                             NCPU=PAR_COM_T_INDEX%n_CPU)
+   !
+!   call PARALLEL_live_message("Transition Groups",ENVIRONMENT=ENVIRONMENT,&
+!&                             LOADED=PAR_BS_nT_grps,TOTAL=PAR_BS_nT_grps,&
+!&                             NCPU=PAR_COM_eh_INDEX%n_CPU)
+
+!   if (  ENVIRONMENT=="Response_T_space" ) then
+!     !
+!     ! K-points (BZ) after shifting of Q (BZ)
+!     !
+!     WHATp="k_bz_q_bz_p_bz" 
+!     !
+!     call PARALLEL_add_Q_to_K_list(trim(WHATp),PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_Kp_bz,PAR_IND_Kp_bz_ID,&
+!&                                  PAR_IND_Q,PAR_COM_Xk_bz_INDEX,iq_range,Xk,q)
+!     PAR_Kp_nbz=PAR_IND_Kp_bz%n_of_elements(PAR_IND_Kp_bz_ID+1)
+!     !
+!     call fill_IBZk_using_BZk(PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_COM_Xk_bz_INDEX)
+!     call fill_IBZk_using_BZk(PAR_IND_Xk_ibz,PAR_IND_Kp_bz,PAR_COM_Xk_bz_INDEX)
+!     !
+!     call PARALLEL_live_message("P(bz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Kp_nbz,TOTAL=Xk%nbz)
+!     !
+!   else
+   !
+   ! Inversion
+   !
+   PARALLEL_cpu_mat_inversion=CPU_structure(4)%nCPU_inversion
+   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'INV',PAR_COM_INV_INDEX,PAR_COM_INV)
+   PAR_IND_INV_ID=PAR_COM_INV_INDEX%CPU_id
+   !
+   ! Diagonalization
+   !
+   PARALLEL_cpu_mat_diagonalization=CPU_structure(4)%nCPU_diagonalization
+   call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'DIAGO',PAR_COM_DIAGO_INDEX,PAR_COM_DIAGO)
+   PAR_IND_DIAGO_ID=PAR_COM_DIAGO_INDEX%CPU_id
+   !
+   !
+   call OPENMP_set_threads(n_threads_in=n_threads_X)
    !  
  endif
  !

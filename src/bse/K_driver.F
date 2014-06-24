@@ -207,6 +207,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! ... EH space (with parallelization) and Transition groups build-up
  call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd,.TRUE.)
  !
+ do while (.true.)
+ enddo
+ !
  !... Blocks build-up
  call K_blocks( )
  !

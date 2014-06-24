@@ -3,5 +3,5 @@ objs =  check_for_a_redundant_IO.o  PARALLEL_live_message.o \
         PARALLEL_get_user_structure.o PARALLEL_assign_chains_and_COMMs.o \
         PARALLEL_assign_LIN_ALGEBRA_COMMs.o PARALLEL_WF_index.o \
         PARALLEL_structure.o PARALLEL_build_up_child_chains.o \
-        PARALLEL_wait.o \
+        PARALLEL_wait.o PARALLEL_Transitions_grouping.o \
         PARALLEL_global_indexes.o PARALLEL_index.o PARALLEL_WF_distribute.o 

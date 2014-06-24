@@ -24,15 +24,14 @@
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  use pars,          ONLY:IP
- use memory_m,      ONLY:mem_est
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_Xk_nbz,&
 &                        PAR_Xk_bz_index,PARALLEL_n_structures_active,ncpu,mpi_comm_world,&
 &                        PARALLEL_cpu_mat_inversion,CPU_structure,master_cpu,&
 &                        PARALLEL_cpu_mat_diagonalization,PAR_Q_index,PAR_nQ,PAR_n_B_mat_elements,&
 &                        PAR_B_mat_index,PAR_nQP,PAR_QP_index,PAR_INDEX_copy,&
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load,&
-&                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index,PAR_Xp_nbz,PP_redux_wait,&
-&                        PAR_BS_T_grps_index,PAR_BS_nT_grps
+&                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index,PAR_Kp_nbz,&
+&                        PAR_BS_T_grps_index,PAR_BS_nT_grps,PAR_Kk_nibz
  use parallel_m,    ONLY:& ! LOGICALS
 &                        l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
 &                        HEAD_QP_cpu,HEAD_k_cpu
@@ -46,26 +45,27 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_A2A,&
 &                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
 &                        PAR_COM_q_for_Xo,PAR_COM_k_for_P,PAR_COM_Xk_bz_A2A,PAR_COM_density,&
-&                        PAR_COM_eh_INDEX,PAR_COM_T_index,PAR_COM_eh_A2A
+&                        PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX
  use parallel_m,    ONLY:& ! INDEXES
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,&
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q,PAR_IND_INV,PAR_IND_DIAGO,&
 &                        PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
 &                        PAR_IND_B_mat,PAR_IND_Plasma,PAR_IND_DIPk_ibz,PAR_IND_WF_linear,&
 &                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_eh,PAR_IND_T,PAR_IND_WF_b_and_k,&
-&                        PAR_IND_Xp_bz
+&                        PAR_IND_Kp_bz,PAR_IND_Kk_ibz
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_INV_ID,PAR_IND_DIAGO_ID,&
 &                        PAR_IND_QP_ID,PAR_IND_G_b_ID,myid,PAR_IND_Plasma_ID,&
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID,&
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,&
-&                        PAR_IND_Xp_bz_ID,PAR_IND_eh_ID
+&                        PAR_IND_Kp_bz_ID,PAR_IND_eh_ID,PAR_IND_Kk_ibz_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use X_m,           ONLY:X_t
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life
  use matrix_operate,ONLY:UP_matrix_index
- use BS,            ONLY:BS_bands,BS_nT_at_k,BS_nT_grps,BS_nT_grps_at_k
+ use BS,            ONLY:BS_bands,BS_nT_at_k,BS_nT_grps
+ use vec_operate,   ONLY:i_bz
 #if defined _ELPH
  use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
 #endif
@@ -91,7 +91,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  ! Work Space
  !
- integer              :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2,i_t
+ integer              :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2,i_s
  logical              :: reset_all
  character(10)        :: WHAT,WHATp
  !
@@ -123,9 +123,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PP_indexes_reset(PAR_IND_INV)
    call PP_indexes_reset(PAR_IND_DIAGO)
    call PP_indexes_reset(PAR_IND_Q)
+   call PP_indexes_reset(PAR_IND_Kk_ibz)
    call PP_indexes_reset(PAR_IND_Xk_ibz)
    call PP_indexes_reset(PAR_IND_Xk_bz)
-   call PP_indexes_reset(PAR_IND_Xp_bz)
+   call PP_indexes_reset(PAR_IND_Kp_bz)
    call PP_indexes_reset(PAR_IND_CON_BANDS_X(X_type))
    call PP_indexes_reset(PAR_IND_VAL_BANDS_X(X_type))
    call PP_indexes_reset(PAR_IND_QP)
@@ -143,8 +144,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    if (ENVIRONMENT=="Response_T_space") then
      if (.not.allocated(PAR_IND_eh)) then
-       allocate(PAR_IND_eh(Xk%nbz))
-       do i_k=1,Xk%nbz
+       allocate(PAR_IND_eh(Xk%nibz))
+       do i_k=1,Xk%nibz
          call PP_indexes_reset(PAR_IND_eh(i_k))
        enddo
      endif
@@ -164,7 +165,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    PAR_IND_Q_ID=0
    PAR_IND_Xk_ibz_ID=0
    PAR_IND_Xk_bz_ID=0
-   PAR_IND_Xp_bz_ID=0
+   PAR_IND_Kp_bz_ID=0
    PAR_IND_CON_BANDS_X_ID(X_type)=0
    PAR_IND_VAL_BANDS_X_ID(X_type)=0
    PAR_IND_INV_ID=0
@@ -285,32 +286,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
  endif
  !
- !========================================
- if (ENVIRONMENT=="Response_T_space") then
-   !======================================
-   !
-   call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"q ","k ","eh","t "/),&
-&                                        COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_Xk_bz_INDEX,&
-&                                        COMM_index_3=PAR_COM_eh_INDEX,&
-&                                        COMM_index_4=PAR_COM_T_INDEX,&
-&                                        COMM_A2A_1=PAR_COM_Q_A2A ,&
-&                                        COMM_A2A_2=PAR_COM_Xk_bz_A2A,&
-&                                        COMM_A2A_3=PAR_COM_eh_A2A) 
-   !
-   PAR_IND_eh_ID=PAR_COM_eh_INDEX%CPU_id+1
-   !
-   ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
-   ! while WF's are indexed using WF_linear
-   !
-   call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX(X_type))
-   call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX(X_type))
-   !
- endif
- !
- !==========================================================================================
- if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space".or.&
-     ENVIRONMENT=="Response_T_space") then
-   !========================================================================================
+ !============================================================================================
+ if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space") then
+   !==========================================================================================
    !
    ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
    ! A2A when there is no internal distribution
@@ -332,11 +310,38 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      iq_range=(/1,nqbz/)
    endif
    !
-   ! K-points (BZ)
+   ! K-points (G_space in BZ) (T_space first IBZ then BZ)
    !
-   call PARALLEL_index(PAR_IND_Xk_bz,(/Xk%nbz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=.TRUE.)
-   PAR_IND_Xk_bz_ID=PAR_COM_Xk_bz_INDEX%CPU_id
-   PAR_Xk_nbz=PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1)
+   if ( ENVIRONMENT=="Response_T_space") then
+     !
+     ! In T space I first distribute the IBZ and then I assign on each CPU also the corresponding
+     !
+     call PARALLEL_index(PAR_IND_Kk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=.TRUE.)
+     !
+     PAR_Kk_nibz=PAR_IND_Kk_ibz%n_of_elements(PAR_IND_Xk_bz_ID+1)
+     ! 
+     PAR_IND_Xk_bz_ID=PAR_COM_Xk_bz_INDEX%CPU_id
+     !
+     PAR_Xk_nbz=0
+     allocate(PAR_IND_Xk_bz%n_of_elements(PAR_COM_Xk_bz_INDEX%n_CPU),PAR_IND_Xk_bz%element_1D( Xk%nbz ))
+     PAR_IND_Xk_bz%n_of_elements=0
+     PAR_IND_Xk_bz%element_1D=.FALSE.
+     do i_k=1,Xk%nibz
+       if (.not.PAR_IND_Kk_ibz%element_1D(i_k)) cycle
+       do i_s=1,Xk%nstar(i_k)
+         i_k_bz=i_bz(i_k,i_s,Xk)
+         PAR_Xk_nbz=PAR_Xk_nbz+1
+         PAR_IND_Xk_bz%element_1D(i_k_bz)=.TRUE.
+       enddo
+     enddo
+     !
+     PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1)=PAR_Xk_nbz
+     !
+   else
+     call PARALLEL_index(PAR_IND_Xk_bz,(/Xk%nbz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=.TRUE.)
+     PAR_IND_Xk_bz_ID=PAR_COM_Xk_bz_INDEX%CPU_id
+     PAR_Xk_nbz=PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1)
+   endif
    !
    call PARALLEL_live_message("K(bz)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Xk_bz%n_of_elements(PAR_COM_Xk_bz_INDEX%CPU_id+1),TOTAL=Xk%nbz,&
@@ -344,7 +349,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    allocate(PAR_Xk_bz_index(Xk%nbz))
    call Build_up_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_index,PAR_Xk_nbz)
    !
-   ! Q-points (IBZ in LLR, in BZ BS)
+   ! Q-points (IBZ in G_space, in BZ T_space)
    !
    call PARALLEL_index(PAR_IND_Q,(/iq_range(2)/),low_range=(/iq_range(1)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.)
    PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
@@ -364,22 +369,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      !
      WHATp="k_bz_q_bz_p_bz" 
      !
-     call PARALLEL_add_Q_to_K_list(trim(WHATp),PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_Xp_bz,PAR_IND_Xp_bz_ID,&
+     call PARALLEL_add_Q_to_K_list(trim(WHATp),PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_Kp_bz,PAR_IND_Kp_bz_ID,&
 &                                  PAR_IND_Q,PAR_COM_Xk_bz_INDEX,iq_range,Xk,q)
-     PAR_Xp_nbz=PAR_IND_Xp_bz%n_of_elements(PAR_IND_Xp_bz_ID+1)
+     PAR_Kp_nbz=PAR_IND_Kp_bz%n_of_elements(PAR_IND_Kp_bz_ID+1)
      !
      call fill_IBZk_using_BZk(PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_COM_Xk_bz_INDEX)
-     call fill_IBZk_using_BZk(PAR_IND_Xk_ibz,PAR_IND_Xp_bz,PAR_COM_Xk_bz_INDEX)
+     call fill_IBZk_using_BZk(PAR_IND_Xk_ibz,PAR_IND_Kp_bz,PAR_COM_Xk_bz_INDEX)
      !
-     !.........................................................................
-     ! Wave Functions (derived from PAR_COM_Xk_ibz_INDEX and PAR_COM_G_b_INDEX)
-     !.........................................................................
-     !
-     call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_WF_k)
-     call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_WF_b_INDEX)
-     PAR_IND_WF_b_ID=PAR_COM_WF_b_INDEX%CPU_id
-     !
-     call PARALLEL_live_message("P(bz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xp_nbz,TOTAL=Xk%nbz)
+     call PARALLEL_live_message("P(bz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Kp_nbz,TOTAL=Xk%nbz)
      !
    else
      !
@@ -844,6 +841,55 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
  endif
  !
+ !========================================================================================================
+ if (ENVIRONMENT=="Response_T_space") then
+   !======================================================================================================
+   !
+   call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"k ","eh","t "/),&
+&                                        COMM_index_1=PAR_COM_Kk_ibz_INDEX,&
+&                                        COMM_index_3=PAR_COM_eh_INDEX,&
+&                                        COMM_index_4=PAR_COM_T_INDEX,&
+&                                        COMM_A2A_3=PAR_COM_eh_A2A) 
+   !
+   ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
+   ! while WF's are indexed using WF_linear
+   !
+   call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX(X_type))
+   call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX(X_type))
+   !
+   ! E/h pairs (k resolved)
+   !
+   ! In this part I distribute the eh transitions within each k. The COMM for this indexing is PAR_COM_eh_INDEX.
+   ! Once the group of transitions are build-up the goal is to map them in the total world of transitions groups.
+   !
+   do i_k=1,Xk%nibz
+     !
+     if (.not.PAR_IND_Kk_ibz%element_1D(i_k)) cycle
+     !
+     call PARALLEL_index(PAR_IND_eh(i_k),(/BS_nT_at_k(i_k)/),COMM=PAR_COM_eh_INDEX,CONSECUTIVE=.TRUE.)
+     !
+   enddo
+   !
+   call PARALLEL_Transitions_grouping(Xk)
+   !
+   call PARALLEL_live_message("Transition Groups",ENVIRONMENT=ENVIRONMENT,&
+&                             LOADED=PAR_BS_nT_grps,TOTAL=PAR_BS_nT_grps,&
+&                             NCPU=PAR_COM_eh_INDEX%n_CPU)
+   !
+   ! Now each CPU of the PAR_COM_eh_INDEX has PAR_BS_nT_grps  groups of e/h pairs
+   !
+   ! The task now is to distribute the transitions:
+   !  
+   ! Group@k (among PAR_BS_nT_grps) ->Group'@p (among BS_nT_grps)
+   !
+   call PARALLEL_index(PAR_IND_T,(/PAR_BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX)
+   !
+   call PARALLEL_live_message("Transition Scatterings",ENVIRONMENT=ENVIRONMENT,&
+&                             LOADED=PAR_IND_T%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),TOTAL=BS_nT_grps*BS_nT_grps,&
+&                             NCPU=PAR_COM_T_INDEX%n_CPU)
+   !  
+ endif
+ !
  !==========================================================================================================
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum".or.ENVIRONMENT=="Response_G_space_Finite_Momentum".or.&
 &    ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_T_space") then
@@ -878,64 +924,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             TOTAL=n_bands(2)-n_bands(1)+1,&
 &                             NCPU=PAR_COM_VAL_INDEX(X_type)%n_CPU)
    !
- endif
- !
- !========================================================================================================
- if (ENVIRONMENT=="Response_T_space") then
-   !======================================================================================================
-   !
-   ! E/h pairs (k resolved)
-   !
-   ! In this part I distribute the eh transitions within each k. The COMM for this indexing is PAR_COM_eh_INDEX.
-   ! Once the group of transitions are build-up the goal is to map them in the total world of transitions groups.
-   !
-   allocate(BS_nT_grps_at_k(Xk%nbz))
-   call mem_est("BS_nT_grps_at_k",(/Xk%nbz/),(/IP/))
-   !
-   BS_nT_grps_at_k=0
-   !
-   do i_k=1,Xk%nbz
-     !
-     if (.not.PAR_IND_Xk_bz%element_1D(i_k)) cycle
-     !
-     call PARALLEL_index(PAR_IND_eh(i_k),(/BS_nT_at_k(i_k)/),COMM=PAR_COM_eh_INDEX,CONSECUTIVE=.TRUE.)
-     !
-     do i_t=1,BS_nT_at_k(i_k)
-       if (PAR_IND_eh(i_k)%element_1D(i_t)) then
-         if ( i_t==1 .or. (i_t>1.and..not.PAR_IND_eh(i_k)%element_1D(i_t-1)) ) then
-            BS_nT_grps_at_k(i_k)=BS_nT_grps_at_k(i_k)+1
-         endif
-       endif
-     enddo
-     !
-   enddo
-   !
-   ! Each k is diveded in BS_nT_grps_at_k(k) groups of Transitions.
-   !
-   PAR_BS_nT_grps=sum( BS_nT_grps_at_k )
-   !
-   call PP_redux_wait(BS_nT_grps_at_k,COMM=PAR_COM_eh_INDEX%COMM)
-   !
-   ! ALL k are diveded in BS_nT_grps groups of transitions and each CPU takes PAR_BS_nT_grps of them
-   !
-   BS_nT_grps=sum( BS_nT_grps_at_k )
-   !
-   call PARALLEL_live_message("Transition Groups",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_BS_nT_grps,TOTAL=PAR_BS_nT_grps,&
-&                             NCPU=PAR_COM_eh_INDEX%n_CPU)
-   !
-   ! Now each CPU of the PAR_COM_eh_INDEX has PAR_BS_nT_grps  groups of e/h pairs
-   !
-   ! The task now is to distribute the transitions:
-   !  
-   ! Group@k (among PAR_Xk_nbz) ->Group'@p (among PAR_BS_nT_grps)
-   !
-   call PARALLEL_index(PAR_IND_T,(/PAR_Xk_nbz,PAR_BS_nT_grps/),COMM=PAR_COM_T_INDEX)
-   !
-   call PARALLEL_live_message("Transition Scatterings",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_IND_T%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),TOTAL=PAR_BS_nT_grps*PAR_BS_nT_grps,&
-&                             NCPU=PAR_COM_T_INDEX%n_CPU)
-   !  
  endif
  !
  call PARALLEL_live_message("Matrix Inversion uses "//trim(intc(PAR_COM_INV%n_CPU))//" CPUs")

@@ -73,7 +73,7 @@ module BS
    integer                       :: ik         ! ik index (BZ)
    integer                       :: first_cv   ! Position in the cv transitions @ k
    integer                       :: size       
-   complex(SP), allocatable      :: table(:,:) ! (/iv,ic,i_sp/) (i_sp is spin)
+   complex(SP), allocatable      :: table(:,:) ! (/is,iv,ic,i_sp/) (i_sp is spin, is is symmetry)
    complex(SP), allocatable      :: dipoles_R(:)
    complex(SP), allocatable      :: dipoles_A(:)
    complex(SP), allocatable      :: Z(:)
@@ -88,6 +88,7 @@ module BS
  end type BS_T_group
  !
  type(BS_T_group), allocatable  :: BS_T_grp(:)
+ integer         , allocatable  :: BS_T_grp_ranges(:,:)
  integer         , allocatable  :: BS_nT_at_k(:)
  integer         , allocatable  :: BS_nT_grps_at_k(:)
  integer                        :: BS_nT_grps
@@ -206,6 +207,17 @@ module BS
  !
  contains
    !
+   integer function T_group(I)
+     use parallel_m, ONLY:PAR_BS_nT_grps
+     integer :: i_g,I
+     do i_g=1,PAR_BS_nT_grps
+       if (BS_T_grp_ranges(i_g,1)<=I.and.I<=BS_T_grp_ranges(i_g,2)) then
+         T_group=i_g
+         return
+       endif
+     enddo
+   end function
+   !
    function BS_blocks(I)
      use R_lattice,      ONLY:nXkibz
      use matrix_operate, ONLY:UP_matrix_index
@@ -239,6 +251,40 @@ module BS
    end subroutine
    !
    subroutine BS_oscillators_free( )
+     !
+   end subroutine
+   !
+   subroutine BS_Blocks_and_Transitions_alloc(E,iT)
+     !
+     use pars,       ONLY:IP
+     use stderr,     ONLY:intc
+     use memory_m,   ONLY:mem_est
+     use electrons,     ONLY:levels
+     integer      :: iT,nT
+     type(levels) :: E
+     !
+     nT=BS_T_grp(iT)%size
+     !
+     allocate(BS_T_grp(iT)%dipoles_R(nT))
+     call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(iT)),(/nT/))
+     if (BS_K_coupling) then
+       allocate(BS_T_grp(iT)%dipoles_A(nT))
+       call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(iT)),(/nT/))
+     endif
+     allocate(BS_T_grp(iT)%table(nT,4))
+     call mem_est("BS_T_grp_table_N"//trim(intc(iT)),(/nT/),(/IP/))
+     allocate(BS_T_grp(iT)%E(nT))
+     call mem_est("BS_T_grp_E_N"//trim(intc(iT)),(/nT/),(/SP/))
+     allocate(BS_T_grp(iT)%f(nT))
+     call mem_est("BS_T_grp_f_N"//trim(intc(iT)),(/nT/),(/SP/))
+     if (associated(E%Z)) then
+       allocate(BS_T_grp(iT)%Z(nT))
+       call mem_est("BS_T_grp_Z_N"//trim(intc(iT)),(/nT/))
+     endif
+     if (associated(E%W)) then
+       allocate(BS_T_grp(iT)%W(nT))
+       call mem_est("BS_T_grp_W_N"//trim(intc(iT)),(/nT/),(/SP/))
+     endif
      !
    end subroutine
    !

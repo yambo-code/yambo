@@ -223,7 +223,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! 3. The SOLVER
  ! =================
- if (l_bss.and.BS_columns==Xk%nibz) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
+ if (l_bss) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
  !
  ! GPL_EXCLUDE_START
  !
@@ -255,7 +255,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! GPL_EXCLUDE_END
  !
- ! CLEAN
+ ! CLEAN (Blocks)
  !
  call BS_Blocks_and_Transitions_free( ) 
  !

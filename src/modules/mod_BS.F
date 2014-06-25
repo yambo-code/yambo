@@ -234,23 +234,32 @@ module BS
      enddo
    end function
    !
-   subroutine BS_oscillators_alloc(EXCHANGE,iT,CORRELATION,iB)
+   subroutine BS_oscillators_alloc(EXCHANGE,iG,CORRELATION,iB)
      !
      use pars,       ONLY:IP
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
      !
      logical :: EXCHANGE,CORRELATION
-     integer :: iT,iB
+     integer :: iG,iB
      !
      if (EXCHANGE) then
-       allocate(BS_T_grp(iT)%O_x(BS_n_g_exch,BS_T_grp(iT)%size))
-       call mem_est("BS_T_group_"//trim(intc(iT))//"_X_oscillators",(/size (BS_T_grp(iT)%O_x)/))
+       allocate(BS_T_grp(iG)%O_x(BS_n_g_exch,BS_T_grp(iG)%size))
+       call mem_est("BS_T_group_"//trim(intc(iG))//"_X_oscillators",(/size (BS_T_grp(iG)%O_x)/))
      endif
      !
    end subroutine
    !
    subroutine BS_oscillators_free( )
+     use stderr,     ONLY:intc
+     use memory_m,   ONLY:mem_est
+     integer :: iG
+     do iG=1,BS_nT_grps
+       if (allocated(BS_T_grp(iG)%O_x)) then
+         deallocate(BS_T_grp(iG)%O_x)
+         call mem_est("BS_T_group_"//trim(intc(iG))//"_X_oscillators")
+       endif
+     enddo
      !
    end subroutine
    !
@@ -293,13 +302,15 @@ module BS
      use memory_m,   ONLY:mem_est
      use parallel_m, ONLY:PAR_BS_T_grps_index,PAR_BS_nT_col_grps
      integer :: i_g
+     !
      if (allocated(BS_nT_at_k))          deallocate(BS_nT_at_k)
      if (allocated(BS_nT_grps_at_k))     deallocate(BS_nT_grps_at_k)
      if (allocated(PAR_BS_T_grps_index)) deallocate(PAR_BS_T_grps_index)
      call mem_est("BS_nT_at_k PAR_BS_T_grps_index BS_nT_grps_at_k")
+     !
      do i_g=1,BS_nT_grps
        !
-       if (BS_T_grp(i_g)%size==0) cycle
+       if (.not.allocated(BS_T_grp(i_g)%table)) cycle
        !
        deallocate(BS_T_grp(i_g)%dipoles_R)
        call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(i_g)))

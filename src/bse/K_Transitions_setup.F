@@ -123,6 +123,12 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
                !
                i_T_group_now=T_group(BS_K_dim)
                !
+               if (i_loop==1) then
+                 !
+                 BS_T_grp(i_T_group_now)%size=BS_T_grp(i_T_group_now)%size+1
+                 !
+               endif
+               !
                if (.not.PAR_IND_T_groups%element_1D(i_T_group_now).and.&
 &                  .not.any( PAR_IND_T_ordered%element_2D(:,i_T_group_now)).and.&
 &                  .not.(BS_K_coupling.and.any( PAR_IND_T_all%element_2D(:,i_T_group_now) ))) cycle
@@ -145,11 +151,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
                  !
                endif
                !
-               if (i_loop==1) then
-                 !
-                 BS_T_grp(i_T_group_now)%size=BS_T_grp(i_T_group_now)%size+1
-                 !
-               else if (i_loop==2) then
+               if (i_loop==2) then
                  !
                  i_T_in_the_grp=i_T_in_the_grp+1
                  !

@@ -199,7 +199,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
 #endif
  !
- if (BSS_uses_RIM) call K_BSload_diag(iq)
+ if (BSS_uses_RIM) call K_stored_in_a_BIG_matrix(iq)
  !
  call live_timing('Green`s function',BS_K_dim)
  !
@@ -347,7 +347,7 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    ! Kernel loading
    !
-   call K_BSload(iq)
+   call K_stored_in_a_BIG_matrix(iq)
    !  
    ! I need to remove the -1 in the coupling part due to the change of sign
    ! of the occupations. This -1 is now embodied in the Green's function

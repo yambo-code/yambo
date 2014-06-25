@@ -51,7 +51,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
 &                       BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0,BSS_uses_RIM,&
-&                       O_n_scatt,BS_O,BS_cpl_K_corr,BS_collision
+&                       O_n_scatt,BS_O,BS_cpl_K_corr,BS_collision,BS_oscillators_free
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
@@ -366,7 +366,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! DB identifier 
  !===============
- !
  BS_identifier=pickup_a_random(10000._SP)
  !
  call section('=','Kernel loop')
@@ -405,14 +404,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  do i_block=1,n_BS_blks
    !
-   i_k_bz=BS_blk(i_block)%ik
-   i_p_bz=BS_blk(i_block)%ip
-   !
-   i_k  =Xk%sstar(i_k_bz,1)
-   i_k_s=Xk%sstar(i_k_bz,1)
-   i_p  =Xk%sstar(i_p_bz,1)
-   i_p_s=Xk%sstar(i_p_bz,1)
-   !
    i_Tgrp_k=BS_blk(i_block)%iT_k
    i_Tgrp_p=BS_blk(i_block)%iT_p
    !
@@ -430,16 +421,24 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        !
-       if (i_k_bz==i_p_bz.and.i_Tk<i_Tp) cycle
+       i_k_bz=BS_T_grp(i_Tgrp_k)%table(i_Tk,1)
+       i_p_bz=BS_T_grp(i_Tgrp_p)%table(i_Tp,1)
        !
-       i_v_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,1)
-       i_c_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,2)
+       i_k  =Xk%sstar(i_k_bz,1)
+       i_k_s=Xk%sstar(i_k_bz,1)
+       i_p  =Xk%sstar(i_p_bz,1)
+       i_p_s=Xk%sstar(i_p_bz,1)
        !
-       i_v_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,1)
-       i_c_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,2)
+       if (i_Tgrp_k==i_Tgrp_p.and.i_Tk>i_Tp) cycle
        !
-       i_k_spin=BS_T_grp(i_Tgrp_k)%table(i_Tk,3)
-       i_p_spin=BS_T_grp(i_Tgrp_p)%table(i_Tp,3)
+       i_v_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,2)
+       i_c_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,3)
+       !
+       i_v_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,2)
+       i_c_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,3)
+       !
+       i_k_spin=BS_T_grp(i_Tgrp_k)%table(i_Tk,4)
+       i_p_spin=BS_T_grp(i_Tgrp_p)%table(i_Tp,4)
        !
        H_x=(0.,0.)
        H_c=(0.,0.)
@@ -491,6 +490,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! GLOBAL CLEANING 
  !=================
+ !
+ call BS_oscillators_free( )
  !
  !deallocate(O_table)
  !call mem_est("O_table")

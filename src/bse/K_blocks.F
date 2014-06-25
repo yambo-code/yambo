@@ -70,6 +70,7 @@ subroutine K_blocks( )
        if (i_loop==2) then
          allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
          tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
+         BS_blk(n_BS_blks)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
          BS_blk(n_BS_blks)%mode="R"
          BS_blk(n_BS_blks)%iT_k=i_T
          BS_blk(n_BS_blks)%iT_p=j_T
@@ -84,6 +85,7 @@ subroutine K_blocks( )
          if (i_loop==2) then
            allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
            tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
+           BS_blk(n_BS_blks)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
            BS_blk(n_BS_blks)%mode="A"
            BS_blk(n_BS_blks)%iT_k=i_T
            BS_blk(n_BS_blks)%iT_p=j_T

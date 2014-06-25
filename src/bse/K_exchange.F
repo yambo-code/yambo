@@ -27,16 +27,16 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
  use BS,             ONLY:BS_T_grp,BS_collision,BS_oscillators_alloc
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
- use parallel_m,     ONLY:PAR_COM_eh_A2A,PAR_IND_eh,PP_redux_wait
- !
  implicit none
+ !
  type(bz_samp) :: Xk
  integer       :: iq,i_T
  logical       :: divide_by_qpg
  !
  ! Work Space
  !
- integer :: i_T_el,i_c,i_v,i_spin,i_k_bz,i_k,i_s,i_g1,i_g2,i_p_bz,i_p,i_sp
+ integer :: i_T_el,i_c,i_v,i_spin,i_k_bz,i_k,i_s,i_g1,i_g2,i_p_bz,i_p,&
+&           i_sp,i_T_last_with_identity_sym
  !
  ! Oscillators already done ?
  !
@@ -48,29 +48,23 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
  !
  ! Now the evaluation of the oscillators.
  !
- ! Note that, in contrast to the previous implementation, each set of CPU's
- ! has one specific K assigned. Thus no rotation can be performed in the internal
- ! group of transitions. 
- !
- i_k_bz=BS_T_grp(i_T)%ik
- i_k   =Xk%sstar(i_k_bz,1)
- i_s   =Xk%sstar(i_k_bz,2)
- !
- i_p_bz=qindx_X(iq,i_k_bz,1)
- i_p   =Xk%sstar(i_p_bz,1)
- i_sp  =Xk%sstar(i_p_bz,2)
- !
  BS_collision%ngrho=BS_n_g_exch
  !
  allocate(BS_collision%rhotw(BS_n_g_exch))
  !
  T_loop: do i_T_el=1,BS_T_grp(i_T)%size
    !
-   if (.not.PAR_IND_eh(i_k_bz)%element_1D(i_T_el)) cycle
+   i_k_bz=BS_T_grp(i_T)%table(i_T_el,1)
+   i_k   =Xk%sstar(i_k_bz,1)
+   i_s   =Xk%sstar(i_k_bz,2)
    !
-   i_v   =BS_T_grp(i_T)%table(i_T_el,1)
-   i_c   =BS_T_grp(i_T)%table(i_T_el,2)
-   i_spin=BS_T_grp(i_T)%table(i_T_el,3)
+   i_p_bz=qindx_X(iq,i_k_bz,1)
+   i_p   =Xk%sstar(i_p_bz,1)
+   i_sp  =Xk%sstar(i_p_bz,2)
+   !
+   i_v   =BS_T_grp(i_T)%table(i_T_el,2)
+   i_c   =BS_T_grp(i_T)%table(i_T_el,3)
+   i_spin=BS_T_grp(i_T)%table(i_T_el,4)
    !
    BS_collision%is=(/i_c,i_k,i_s,i_spin/)
    BS_collision%os=(/i_v,i_p,i_sp,i_spin/)
@@ -78,23 +72,39 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
    !
    if (iq==1) then
      !
+     i_T_last_with_identity_sym=-1
+     if (i_s>1) then
+       do i_T_last_with_identity_sym=i_T_el-1,1,-1
+         if (all( BS_T_grp(i_T)%table(i_T_last_with_identity_sym,:)==(/Xk%s_table(i_k,1),i_v,i_c,i_spin/)) ) exit
+       enddo
+     endif
+     !
      BS_collision%is(3)=1
      BS_collision%os(3)=1
      !
      call scatterBamp(BS_collision)
      !
+     if  (i_s==1.or.i_T_last_with_identity_sym<0) then
 !$omp parallel do default(shared), private(i_g1,i_g2)
-     do i_g1=1,BS_n_g_exch
-       !
-       i_g2=g_rot(sop_inv(i_s),i_g1)
-       !
-       if (divide_by_qpg)      BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g2)/bare_qpg(iq,i_g2)
-       if (.not.divide_by_qpg) BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g2)
-       !
-       if (i_s>nsym/(i_time_rev+1))  BS_T_grp(i_T)%O_x(i_g1,i_T_el)=conjg(BS_T_grp(i_T)%O_x(i_g1,i_T_el))
-       !
-     enddo
+       do i_g1=1,BS_n_g_exch
+         if (divide_by_qpg)      BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
+         if (.not.divide_by_qpg) BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g1)
+       enddo
 !$omp end parallel do
+     else
+       !
+!$omp parallel do default(shared), private(i_g1,i_g2)
+       do i_g1=1,BS_n_g_exch
+         i_g2=g_rot(sop_inv(i_s),i_g1)
+         if (divide_by_qpg)      BS_T_grp(i_T)%O_x(i_g1,i_T_el)=&
+&                                BS_T_grp(i_T)%O_x(i_g2,i_T_last_with_identity_sym)/bare_qpg(iq,i_g2)
+         if (.not.divide_by_qpg) BS_T_grp(i_T)%O_x(i_g1,i_T_el)=&
+&                                BS_T_grp(i_T)%O_x(i_g2,i_T_last_with_identity_sym)
+         if (i_s>nsym/(i_time_rev+1))  BS_T_grp(i_T)%O_x(i_g1,i_T_el)=conjg(BS_T_grp(i_T)%O_x(i_g1,i_T_el))
+       enddo
+!$omp end parallel do
+       !
+     endif
      !
    else
      !
@@ -114,9 +124,5 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
  enddo T_loop
  !
  deallocate(BS_collision%rhotw)
- !
- ! A2A
- !
- call PP_redux_wait( BS_T_grp(i_T)%O_x , COMM=PAR_COM_eh_A2A%COMM )
  !
 end subroutine

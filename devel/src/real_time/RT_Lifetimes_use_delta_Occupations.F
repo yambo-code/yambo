@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -32,9 +32,10 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
 &                         RT_delta_occupations,l_use_updated_reference,l_equilibrium_lifetimes,&
 &                         RT_H_occupations,RT_E_occupations,RT_TIME_status,RT_delta0_occupations,&
 &                         SAVED_lifetime,Life_MEM_steps,REF_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Hole_lifetime,&
-&                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,E_P_Electron_lifetime,&
-&                         G_lesser_reference
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,&
+&                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
+&                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,&
+&                         G_lesser_reference,integrator_step
  !
  implicit none
  !
@@ -45,11 +46,11 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  integer :: ik,ib
  real(SP):: f_sum,f_diff,f_E_occ,f_H_occ,f_E_occ_reference,f_H_occ_reference,df_max
  !
- l_use_updated_reference=.not.l_equilibrium_lifetimes
  !
+ l_use_updated_reference=.not.l_equilibrium_lifetimes
  if(l_use_updated_reference) l_use_updated_reference=(RT_TIME_status(it_now)> 1)
  !
- if (.not.l_eval) return
+ if (.not.l_eval .or. integrator_step>1) return
  !
  if (l_use_updated_reference) then
    !
@@ -87,16 +88,15 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
        !DEBUG>
        !
        if (l_elel_scatt) then
-         E_E_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,1,Life_MEM_steps)/real(ncpu)
-         E_E_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,2,Life_MEM_steps)/real(ncpu)
+         E_E_Hole_lifetime(ib,ik)=    SAVED_lifetime(ib,ik,1,Life_MEM_steps,1)/real(ncpu)
+         E_E_Electron_lifetime(ib,ik)=SAVED_lifetime(ib,ik,2,Life_MEM_steps,1)/real(ncpu)
        endif
        if (l_elph_scatt) then
-         E_P_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,3,Life_MEM_steps)/real(ncpu)
-         E_P_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,4,Life_MEM_steps)/real(ncpu)
-         E_P_Ho_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,5,Life_MEM_steps)/real(ncpu)
-         E_P_El_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,6,Life_MEM_steps)/real(ncpu)
+         E_P_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,3,Life_MEM_steps,1)/real(ncpu)
+         E_P_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,4,Life_MEM_steps,1)/real(ncpu)
+         E_P_Ho_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,5,Life_MEM_steps,1)/real(ncpu)
+         E_P_El_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,6,Life_MEM_steps,1)/real(ncpu)
        endif
-       !
      else
        !
        RT_delta_occupations(ib,ik)=RT_delta0_occupations(ib,ik)

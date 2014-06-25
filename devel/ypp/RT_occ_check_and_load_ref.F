@@ -21,21 +21,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function RT_occupations_check(E,k)
+integer function RT_occ_check_and_load_ref(E,k)
  !
- use pars,           ONLY:SP
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp
+ use units,          ONLY:FS2AUT
  use electrons,      ONLY:levels
  use QP_m,           ONLY:OCC_ctl
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,RT_IO_JPO_steps,l_RT_CCA_Kernel,&
-&                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,E_P_Ho_abs_lifetime,&
-&                         RT_E_occupations
+&                         E_P_Hole_lifetime,E_P_Electron_lifetime,& 
+&                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, &
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_delta0_occupations,&
+&                         G_lesser_reference,RT_E_occupations_reference,RT_H_occupations_reference,&
+&                         NE_time
  use SC,             ONLY:SC_bands,RT_nk
  use IO_m,           ONLY:LOG,NONE
- use com,            ONLY:error
- use YPP,            ONLY:RT_occupations_ref,OCC_T_ref,OCC_deltaT,OCC_T_range
+ use com,            ONLY:error,msg
+ use YPP,            ONLY:OCC_deltaT,OCC_T_range
  !
  implicit none
  !
@@ -44,23 +46,13 @@ integer function RT_occupations_check(E,k)
  !
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(1),imposed_COM=LOG)
  !
- call RT_occupations_repair(E)
- !
- if (.not.allocated(RT_occupations_ref)) then 
-   !
-   allocate(RT_occupations_ref(SC_bands(1):SC_bands(2),RT_nk))
-   !
-   RT_occupations_ref=0.
-   !
- endif
+ if (.not.allocated(RT_delta0_occupations)) call error('Occupations database not found in :'//trim(OCC_ctl(3))//' ')
  !
  if ((l_elph_scatt.and.l_RT_CCA_Kernel).and..not.allocated(E_P_Hole_lifetime)) then
    allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
    allocate(E_P_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
-   allocate(E_P_El_abs_lifetime(SC_bands(1):SC_bands(2),RT_nk))
    allocate(E_P_Ho_abs_lifetime(SC_bands(1):SC_bands(2),RT_nk))
-   E_P_El_abs_lifetime=0._SP ! This is read only after rev. 2694
-   E_P_Ho_abs_lifetime=0._SP 
+   allocate(E_P_El_abs_lifetime(SC_bands(1):SC_bands(2),RT_nk))
  endif
  !
  if (l_elel_scatt.and..not.allocated(E_E_Hole_lifetime)) then
@@ -68,21 +60,7 @@ integer function RT_occupations_check(E,k)
    allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
  endif
  !
- if (OCC_T_ref>=0.) then
-   !
-   call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_ref,imposed_COM=NONE)
-   !
-   call RT_occupations_repair(E)
-   !
-   RT_occupations_ref=RT_E_occupations
-   !
- endif
- !
- if (.not.allocated(RT_E_occupations)) call error('Occupations database not found in :'//trim(OCC_ctl(3))//' ')
- !
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(2))
- !
- call RT_occupations_repair(E)
  !
  if (OCC_deltaT<RT_IO_JPO_steps*RT_step) then
    ! 
@@ -94,6 +72,18 @@ integer function RT_occupations_check(E,k)
    !
  endif
  !
- RT_occupations_check=nint( (OCC_T_range(2)-OCC_T_range(1))/OCC_deltaT )+1
+ RT_occ_check_and_load_ref=nint( (OCC_T_range(2)-OCC_T_range(1))/OCC_deltaT )+1
  !
-end function RT_occupations_check
+ if (RT_occ_check_and_load_ref<0) return
+ if (NE_time<OCC_T_range(2)) then
+   OCC_T_range(2)=NE_time
+   if(OCC_deltaT>NE_time) OCC_deltaT=NE_time
+   RT_occ_check_and_load_ref=nint(OCC_T_range(2)/OCC_deltaT)+1
+ endif
+ !
+ call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
+ call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
+ call msg('s','Time steps     :',RT_occ_check_and_load_ref)
+ !
+ !
+end function RT_occ_check_and_load_ref

@@ -37,21 +37,34 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  ! Work Space
  !
+ logical         :: l_interpolate
  integer         :: it,N_inter_steps,N_intra_steps,it_first,it_0,it_,i1,N_blocks
  real(SP)        :: weight(NE_steps)
  complex(SP)     :: TIME
+ !
  type(ext_field) :: E_dummy
  !
  if (.not.allocated(RT_TIME_status)) then
    allocate(RT_TIME_status(NE_steps))
    call mem_est("RT_TIME_status",(/NE_steps/),(/IP2/))
- endif
- RT_TIME_status=0 ! Interpolate
- !
- if (RT_dynamics_steps(1)<0. .or. it_start>=NE_steps) then
    RT_TIME_status=1
+ endif
+ !
+ l_interpolate=trim(RT_dynamics_KIND)=="DEFAULT" .or. trim(RT_dynamics_KIND)=="FIELD" .or. &
+&              trim(RT_dynamics_KIND)=="EXP"     .or. trim(RT_dynamics_KIND)=="FLAT"
+ "
+ if(.not.l_interpolate) RT_dynamics_KIND="NONE"
+ !
+ if (RT_dynamics_steps(1)<0. .or. it_start>=NE_steps .or. trim(RT_dynamics_KIND)=="NONE") then
+   Life_MEM_steps=1
    return
  endif 
+ !
+ RT_TIME_status=0 ! Interpolate
+ !
+ Life_MEM_steps=nint(RT_dynamics_steps(1)/RT_dynamics_steps(2))
+ if (Life_MEM_steps<3) Life_MEM_steps=3
+ RT_dynamics_steps(1)=RT_dynamics_steps(2)*Life_MEM_steps
  !
  N_inter_steps=nint(RT_dynamics_steps(1)/RT_step)
  N_intra_steps=nint(RT_dynamics_steps(2)/RT_step)
@@ -83,7 +96,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  ! Exponential decay for T>To
  !
- if (RT_dynamics_decay_time>0.) then
+ if (RT_dynamics_decay_time>0. .and. trim(RT_dynamics_KIND)=="EXP") then
    do it=it_0,NE_steps
      TIME=RT_step*(it-it_0)
      weight(it)=weight(it)*exp(-real(TIME)/RT_dynamics_decay_time)

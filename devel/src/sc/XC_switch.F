@@ -32,34 +32,61 @@ subroutine XC_switch()
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
  use magnetic,       ONLY:MAG_landau,MAG_pauli
 #endif
- use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC,SC_SRPA,EXT_NONE,SE_GW_NEQ
+#if defined _RT
+ use real_time,      ONLY:l_NE_simulate_Irredux
+#endif
+ use global_XC,      ONLY:SC_EXX,SC_Hartree,SC_HF,SC_COHSEX,SC_EXXC,SC_SRPA,EXT_NONE,SE_GW_NEQ
  use electrons,      ONLY:n_full_bands,n_met_bands
  use com,            ONLY:error
+ use parser_m,       ONLY:parser
+ !
  implicit none
+ !
  !WorkPars:
  integer, parameter :: KLI_APPRX = 10, SLT_APPRX = 20, CED_APPRX = 30, LEVY_APPRX = 40
  !
- local_V=.FALSE.
+#if defined _RT
+ !
+ call parser('RTIrredx',l_NE_simulate_Irredux)
+ if(l_NE_simulate_Irredux.and.trim(SC_potential)=='HARTREE') SC_potential='IP'
+ !
+#endif
  !
  select case (trim(SC_potential))
+   case('IP')
+     ! This means Hartree and V_xc are frozed: IP=KS-IP
+     l_sc_ip=.true.
+     SC_kind=-1
+     SC_xc_functional=0
    case('HARTREE')
-     l_sc_contains_lda=.true.
-     local_V=.true.
-     SC_kind=0
-     SC_xc_functional=0          
+     ! This means V_xc is frozed
+     l_sc_hartree=.true.
+     SC_kind=SC_Hartree
+     SC_xc_functional=0
    case('HARTREE-FOCK')
      l_sc_hf=.true.
+     local_V=.false.
      SC_kind=SC_HF
      SC_xc_functional=0
+   case('LDA_X')
+     l_sc_contains_lda=.true.
+     SC_kind=XC_EXCHANGE
+     SC_xc_functional=XC_LDA_X
+   case('PZ')
+     l_sc_contains_lda=.true.
+     SC_kind=XC_EXCHANGE_CORRELATION
+     SC_xc_functional=XC_LDA_C_PZ
+   case('default')
+     l_sc_contains_lda=.true.
+     SC_kind=GS_xc_KIND
+     SC_xc_functional=GS_xc_FUNCTIONAL
    case('EXX')
      l_sc_exx=.true.
-     local_V=.true.
      SC_kind=SC_EXX
      SC_xc_functional=0
      if (n_full_bands/=n_met_bands) return
    case('EXXC')
      l_sc_exx=.true.
-     local_V=.true.
      l_sc_contains_lda=.true.
      SC_kind=SC_EXXC
      SC_xc_functional=XC_LDA_C_PZ
@@ -67,29 +94,14 @@ subroutine XC_switch()
    case('SRPA')
      l_sc_exx=.true.
      l_sc_srpa=.true.
-     local_V=.true.
      SC_kind=SC_SRPA
      SC_xc_functional=0
      if (n_full_bands/=n_met_bands) return
    case('COHSEX')
      l_sc_cohsex=.true.
+     local_V=.false.
      SC_kind=SC_COHSEX
      SC_xc_functional=0
-   case('LDA_X')
-     l_sc_contains_lda=.true.
-     local_V=.true.
-     SC_kind=XC_EXCHANGE
-     SC_xc_functional=XC_LDA_X
-   case('PZ')
-     l_sc_contains_lda=.true.
-     local_V=.true.
-     SC_kind=XC_EXCHANGE_CORRELATION
-     SC_xc_functional=XC_LDA_C_PZ
-   case('default')
-     l_sc_contains_lda=.true.
-     local_V=.true.
-     SC_kind=GS_xc_KIND
-     SC_xc_functional=GS_xc_FUNCTIONAL
    case default
      call error("Unknown SC potential! ")
  end select

@@ -36,13 +36,13 @@ integer function variables_SC(ID,local_description,what)
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,local_V,RT_nk
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR,&
 &                         variable_is_found
- use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,              &
+ use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,              &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_IO_G_steps,              &
 &                         RT_IO_JPO_steps,l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,RT_IO_steps_DB,Gr_description,&
 &                         l_RT_uses_E_RIM,N_Gr_descs,RT_dynamics_steps,RT_dynamics_decay_time,&
-&                         RT_dynamics_KIND
+&                         RT_dynamics_KIND,l_NE_simulate_Irredux
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
@@ -283,16 +283,12 @@ integer function variables_SC(ID,local_description,what)
  !
  if(any((/l_J,l_G,l_occupations/))) then
    !
-   VAR_SIZE=10
+   VAR_SIZE=9
    call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=VAR_SIZE,MENU=0) 
    !
    i_desc=i_desc+1
-   call io_elemental(ID,L0=Hfrozen,&
-&    VAR=" [RT] Hartree frozen             :", CHECK=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
-   call io_elemental(ID,L0=XCfrozen,&
-&    VAR=" [RT] XC frozen                  :", CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,L0=l_NE_simulate_Irredux,&
+&    VAR=" [RT] Simulate irredux           :", CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    !
    i_desc=i_desc+1

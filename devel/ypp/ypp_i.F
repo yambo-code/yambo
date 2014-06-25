@@ -164,7 +164,9 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (l_bz_grids) call k_grids(en,k,Xk,q)
  !   =========
  !
- if (l_bzrim) call k_random(Xk,Xen)
+ if (l_bzrim) call k_random
+ !
+ if (l_map_kpts) call k_map_fine_to_coarse(Xk,Xen)
  !
  if (l_bxsf)  call read_bxsf(Xk,Xen)
  !
@@ -200,7 +202,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if(.not.l_flag) l_flag=l_RT_dos.or.l_RT_occ_Bands.or.l_RT_occ_Plot.or.l_RT_occ_Fit
 #endif
  !
- if (l_flag) call electrons_driver(Xk,Xen)
+ if (l_flag) call electrons_driver(Xk,Xen,q)
  !
 #if defined _YPP_ELPH
  !

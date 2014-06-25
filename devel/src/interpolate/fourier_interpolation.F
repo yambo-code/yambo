@@ -60,7 +60,7 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
        enddo
        star(i1,ik)=star(i1,ik)/real(nstar)
     enddo
-  enddO
+  enddo
   !
   do ik=1,Nk
     do iv=1,nvalues

@@ -182,7 +182,7 @@ subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
   integer :: ik,iv
   character(schlen)     :: dump_ch
   real(SP), allocatable :: new_VALUEs(:,:)
-  real(SP) :: ave_err,max_err
+  real(SP) :: ave_err,max_err,rel_ave_err
   !
   allocate(new_VALUEs(nvalues,Nk))
   !
@@ -190,17 +190,20 @@ subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
   !
   max_err=0._SP
   ave_err=0._SP
+  rel_ave_err=0._SP
   !
   do ik=1,Nk
     do iv=1,nvalues
         ave_err=ave_err+abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))
+        if(abs(new_VALUEs(iv,ik))>0._SP) rel_ave_err=rel_ave_err+abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))/abs(new_VALUEs(iv,ik))
         if(abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))>max_err) max_err=abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))
      enddo
   enddo
   !
   ave_err=ave_err/real(nvalues*Nk)
+  rel_ave_err=rel_ave_err/real(nvalues*Nk)
   !
-  write(dump_ch,'(a,f16.8,a,f16.8)') '[Interp] Max error = ',max_err,' average error = ',ave_err
+  write(dump_ch,'(a,3es16.8)') '[Interp err] Max, Avg, Avg_rel = ',max_err,ave_err,rel_ave_err
   call msg('s',dump_ch)
   !
   deallocate (new_VALUEs)

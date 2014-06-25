@@ -53,7 +53,7 @@ module R_lattice
    integer           :: nibz,nbz
    integer,  pointer :: nstar(:)   => null()    ! n° of points in the star
    integer,  pointer :: star(:,:)  => null()    ! ik,ikstar --> is     is sends ik in ikstar
-   integer,  pointer :: sstar(:,:) => null()    ! ik_bz     --> ik,is  is sends ik in ikbz
+   integer,  pointer :: sstar(:,:) => null()    ! ik_bz,2   --> ik,is  is sends ik in ikbz
    integer,  pointer :: s_table(:,:) => null()  ! ik,is     --> ik_bz  revers of sstar
    real(SP), pointer :: pt(:,:)    => null()
    real(SP), pointer :: ptbz(:,:)  => null()

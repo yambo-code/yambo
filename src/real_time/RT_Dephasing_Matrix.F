@@ -32,7 +32,9 @@ subroutine RT_Dephasing_Matrix(E)
  use SC,            ONLY:SC_bands
  use QP_m,          ONLY:QP_nk
  use R_lattice,     ONLY:nkibz
- use real_time,     ONLY:RT_Deph_Matrix,RT_is_dephased,Phase_LifeTime,RAD_LifeTime
+ use real_time,     ONLY:RT_Deph_Matrix,RT_is_dephased,Phase_LifeTime,&
+&                        RAD_LifeTime,l_RT_RWA
+ !
  implicit none
  !
  type(levels), intent(in) :: E
@@ -64,7 +66,7 @@ subroutine RT_Dephasing_Matrix(E)
    allocate(RT_Deph_Matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
    call mem_est("DephMatrix",(/size(RT_Deph_Matrix)/))
    !
-   RT_Deph_Matrix(:,:,:)=(0._SP,0._SP)
+   RT_Deph_Matrix=(0._SP,0._SP)
    !
    RT_is_dephased=.TRUE.
    !
@@ -123,7 +125,7 @@ subroutine RT_Dephasing_Matrix(E)
    !
    deallocate(DephM_r_limits)
    !
- else if (associated(E%W)) then
+ else if (associated(E%W).and. .not. l_RT_RWA) then
    !
    ! QP database 
    !-------------
@@ -133,11 +135,9 @@ subroutine RT_Dephasing_Matrix(E)
    do ib_1=SC_bands(1),SC_bands(2)
      do ib_2=ib_1+1,SC_bands(2)
        !
-       ! Life[eV]=HBAR_eVfs/Life[AUT]*FS2AUT => Life[AUT]=HBAR_eVfs/Life[eV]*FS2AUT => 1/Life[AUT]=Life[eV]/FS2AUT/HBAR_eVfs
-       !
        do ik=1,nkibz
-         RT_Deph_Matrix(ib_1,ib_2,ik)=( (abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))*HA2EV)/HBAR_eVfs/FS2AUT
-         RT_Deph_Matrix(ib_2,ib_1,ik)=( (abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))*HA2EV)/HBAR_eVfs/FS2AUT
+         RT_Deph_Matrix(ib_1,ib_2,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))/2._SP
+         RT_Deph_Matrix(ib_2,ib_1,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))/2._SP
        enddo     
        !
      enddo

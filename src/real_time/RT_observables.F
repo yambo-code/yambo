@@ -25,13 +25,14 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  use pars,           ONLY:SP
  use units,          ONLY:HA2EV,HA2KEL
- use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex,l_elel_scatt,l_elph_scatt
+ use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_hf,l_sc_contains_lda,l_sc_cohsex,&
+&                         l_elel_scatt,l_elph_scatt
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands,RT_nk,RT_Nk_ibz,RT_ibz_coo
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations
  use X_m,            ONLY:P_square
- use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,           &
-&                         l_NE_simulate_IP,RIM_ibz_coo,l_RT_uses_E_RIM,RT_do_IO,   &
+ use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,           &
+&                         RIM_ibz_coo,l_RT_uses_E_RIM,RT_do_IO,   &
 &                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,&
 &                         RT_H_occupations,G_lesser_reference
  use electrons,      ONLY:levels,spin_occ
@@ -89,7 +90,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  E_ion = E_ion - E_kin
  !
- if (.not.l_NE_simulate_IP) then
+ if (.not.l_sc_ip) then
    !
    ! Hartree potential Energy
    !
@@ -101,39 +102,35 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    !
  endif
  !
- if (XCfrozen) then
+ if (l_sc_hartree .or. l_sc_ip) then
    !
-   ! XC0_and_HARTREE0 contains the Hartree part only in case
-   ! XC is not frozen. Here we are in the case XC is frozen,
-   ! so it contais both V_H and V_xc
+   ! XC0_and_HARTREE0 contains V_H and V_xc
    !
    call RT_average_operator(VALUE=Exc,O_MATRIX=XC0_and_HARTREE0,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
    !
    ! If Hartreee is evolving the change in the Hartree energy has been already
    ! stored in E_h, so I remove from here the term rho_0*delta_rho
-   if(.not.l_NE_simulate_IP) Exc=Exc-VALUE_tmp(1)
+   if(l_sc_hartree) Exc=Exc-VALUE_tmp(1)
    !
- else
+ else if(l_sc_contains_lda) then 
+   !        
+   ! Exc Energy from E_xc[rho_n] energy density
    !
-   if(l_sc_contains_lda) then 
-     !        
-     ! Exc Energy from E_xc[rho_n] energy density
-     !
-     call IO_and_Messaging_switch("-report -log -io_in -io_out")
-     call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0)
-     call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
-     !
-     call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
-     !
-   else if (l_sc_hf.or.l_sc_cohsex) then
-     !
-     ! HF or COHSEX energy.
-     ! Davide: Is this correctly defined also in the COHSEX case 
-     !         or should I use the Galitskii Migdal equation ?
-     !
-     call RT_average_operator(VALUE=Exc,O_QP=QP_Vnl_xc,G=G_full,en=en,k=k,nK_mem=k%nibz)
-     !
-   endif
+   call IO_and_Messaging_switch("-report -log -io_in -io_out")
+   call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0)
+   call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
+   !
+   ! This is wrong if the dependence of the potential on the density
+   ! is not linear as pointed out by Andrea. To be fixed
+   call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
+   !
+ else if (l_sc_hf.or.l_sc_cohsex) then
+   !
+   ! HF or COHSEX energy.
+   ! Davide: Is this correctly defined also in the COHSEX case 
+   !         or should I use the Galitskii Migdal equation ?
+   !
+   call RT_average_operator(VALUE=Exc,O_QP=QP_Vnl_xc,G=G_full,en=en,k=k,nK_mem=k%nibz)
    !
  endif
  !
@@ -146,9 +143,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  ! Electrons and holes temperatures
  !
  if (l_elel_scatt.or.l_elph_scatt) then
-   call RT_occupations_FIT_and_lock(en,k,RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations)
-   if (RT_Tfit_occupations(1)>50000/HA2KEL.or.RT_Tfit_occupations(1)<0.) RT_Tfit_occupations(1)=0.
-   if (RT_Tfit_occupations(2)>50000/HA2KEL.or.RT_Tfit_occupations(2)<0.) RT_Tfit_occupations(2)=0.
+   call RT_occupations_FIT(en,k,RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations)
  endif
  !
  ! Number of Holes in the valence band and

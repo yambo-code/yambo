@@ -37,6 +37,7 @@ module real_time
  logical           :: l_NE_dynamics  
  logical           :: l_NE_dynamics_started
  logical           :: l_NE_with_fields
+ logical           :: l_NE_simulate_Irredux
  logical           :: l_RT_probe
  logical           :: l_RT_pump_and_probe
  logical           :: l_Dynamics_is_over  
@@ -58,18 +59,6 @@ module real_time
  logical           :: l_RT_diagonalize
  integer           :: RT_diagonalization_steps
  !
- ! RPA and independent particles
- !
- logical           :: l_NE_simulate_RPA
- logical           :: l_NE_simulate_IP
- logical           :: l_NE_simulate_Irredux
- logical           :: l_NE_simulate_BSE
- logical           :: l_NE_simulate_TDDFT
- !
- ! Frozen parts of self-energy
- !
- logical           :: Hfrozen
- logical           :: XCfrozen 
  !
  ! Time steps and step length...
  !------------------------------
@@ -155,7 +144,6 @@ module real_time
  integer,     allocatable :: RIM_EE_Nk_table(:,:)  
  integer,     allocatable :: RIM_ibz_coo(:,:)
  integer,     allocatable :: RIM_bz_coo(:,:)  
- integer,     allocatable :: RIM_closest_E(:,:)  
  real(SP)                 :: RIM_EE_percent
  !
  ! ELPH kernel...
@@ -213,7 +201,7 @@ module real_time
  !-----------------------
  real(SP),    allocatable :: SAVED_times(:)
  real(SP),    allocatable :: REF_lifetime(:,:,:)
- real(SP),    allocatable :: SAVED_lifetime(:,:,:,:)
+ real(SP),    allocatable :: SAVED_lifetime(:,:,:,:,:)
  !
  ! Ouput Lifetimes, ratio fit and temperatures
  !---------------------------------------------
@@ -266,9 +254,12 @@ module real_time
  !
  logical  :: l_RT_EULER
  logical  :: l_RT_RK2
+ logical  :: l_RT_HEUN
  logical  :: l_RT_EXP
  logical  :: l_RT_INTERPOLATE
  logical  :: l_RT_RWA
+ !
+ integer  :: integrator_step
  !
  ! Integrate exactly the part of the dynamics due to H_o 
  ! as it is done in Comp. Phys. Comm. 123(1999)
@@ -355,19 +346,6 @@ module real_time
      real(SP), optional, intent(inout) :: Time
      integer , optional, intent(in)    :: imposed_COM
    end subroutine OCCUPATIONS_IO_and_interpolate
-   !
-   subroutine RT_apply_RWA(ik,E,Time,dT,MODE,M1,M2,M3)
-     use pars,           ONLY:SP
-     use electrons,      ONLY:levels
-     use SC,             ONLY:SC_bands
-     integer,      intent(in)     :: ik
-     type(levels), intent(in)     :: E
-     real(SP),     intent(in)     :: Time,dT
-     character(*), intent(in)     :: MODE
-     complex(SP),  intent(inout)            :: M1(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
-     complex(SP),  intent(inout), optional  :: M2(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
-     complex(SP),  intent(inout), optional  :: M3(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
-   end subroutine RT_apply_RWA
    !
  end interface
  !
@@ -459,9 +437,10 @@ module real_time
      if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt) then
        allocate(REF_lifetime(SC_bands(1):SC_bands(2),RT_nk,6))
        call mem_est("REF_lifetime",(/size(REF_lifetime)/),(/SP/)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
-       allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
+       allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps,2)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
        call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
        allocate(SAVED_times(Life_MEM_steps)) 
+       REF_lifetime=0._SP
        SAVED_lifetime=0._SP
      endif
      !
@@ -671,12 +650,6 @@ module real_time
      if (what=="J".or.what=="P".or.what=="OCCs") RT_do_IO=mod(NE_i_time-1,RT_IO_JPO_steps)==0
      if (what=="OUT") RT_do_IO=mod(NE_i_time-1,RT_IO_output_steps)==0
      if (what=="G")   RT_do_IO=mod(NE_i_time-1,RT_IO_G_steps)==0
-   end function
-   !
-   logical function FIRST_step(it,TIME)
-     integer   :: it
-     real(SP)  :: TIME
-     FIRST_step=abs(TIME-(it-1)*RT_step)<1.E-6
    end function
    !
    integer function B_mat_index(ib1,ib2)

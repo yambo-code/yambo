@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_FIT_and_lock(E,k,T_fit,Ef_fit,Occupations)
+subroutine RT_occupations_FIT(E,k,T_fit,Ef_fit,Occupations)
  !
  ! Check if both the electrons and the holes are below a given temperature
  ! In case locks the occupations of states which are not expected to change
@@ -29,12 +29,12 @@ subroutine RT_occupations_FIT_and_lock(E,k,T_fit,Ef_fit,Occupations)
  !
  use pars,           ONLY:SP
  use QP_m,           ONLY:QP_table,QP_n_states
- use electrons,      ONLY:levels,spin
+ use electrons,      ONLY:levels,spin,spin_occ
  use R_lattice,      ONLY:bz_samp
  use vec_operate,    ONLY:sort
  use functions,      ONLY:Fermi_fnc_fit
  use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo,RT_nk
- use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM
+ use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,RT_occupations_locked
  !
  implicit none
  !
@@ -46,9 +46,9 @@ subroutine RT_occupations_FIT_and_lock(E,k,T_fit,Ef_fit,Occupations)
  integer,  parameter :: fit_dim=1000
  real(SP), parameter :: tresh=1.E-5
  !
- integer  :: i_RT,i_qp,i_b,i_k,i_k_rim,i_k_Erim,i_k_RT,i_spin,&
+ integer  :: i_RT,i_qp,i_b,i_k,i_k_rim,i_k_Erim,i_k_RT,i_spin,i1,&
 &            nfit,E_sort_index(RT_nstates)
- real(SP) :: err_fit(4), &
+ real(SP) :: err_fit(4),E_first_hole,E_last_electron, &
 &            RT_occ_fit(fit_dim,2),RT_E_fit(fit_dim,2), &
 &            RT_occ(RT_nstates),RT_occ_tmp(RT_nstates),RT_E(RT_nstates)
  !
@@ -75,9 +75,14 @@ subroutine RT_occupations_FIT_and_lock(E,k,T_fit,Ef_fit,Occupations)
      i_RT=i_RT+1
      !
      ! Prepare eps,f(eps) for the report
+     !
      RT_occ(i_RT)=Occupations(i_b ,i_k_RT)
      if(     l_RT_uses_E_RIM) RT_E(i_RT)=E%E_RIM(i_b,i_k_Erim,1)
      if(.not.l_RT_uses_E_RIM) RT_E(i_RT)=E%E(i_b,i_k_Erim,1)
+     !
+     ! DEBUG <
+     ! write(*,*) i_RT,i_k_RT,i_k,i_b,RT_E(i_RT),RT_occ(i_RT)
+     ! DEBUG >
      !
    enddo
    !
@@ -88,7 +93,7 @@ subroutine RT_occupations_FIT_and_lock(E,k,T_fit,Ef_fit,Occupations)
  RT_occ=RT_occ_tmp
  !
  nfit=Fermi_fnc_fit(RT_E,RT_occ,RT_nstates,T_fit,Ef_fit,err_fit,&
-&       RT_occ_fit_out=RT_occ_fit,RT_E_fit_out=RT_E_fit,l_T_max_in=.false.)
+&       RT_occ_fit_out=RT_occ_fit,RT_E_fit_out=RT_E_fit)
  !
  if(err_fit(1)>0.05) then
    T_fit(1) =-T_fit(1)
@@ -99,4 +104,6 @@ subroutine RT_occupations_FIT_and_lock(E,k,T_fit,Ef_fit,Occupations)
    Ef_fit(2)=0._SP
  endif
  !
-end subroutine RT_occupations_FIT_and_lock
+ return
+ !
+end subroutine RT_occupations_FIT

@@ -1,0 +1,319 @@
+!
+! Copyright (C) 2000-2013 D. Sangalli and the YAMBO team 
+!              http://www.yambo-code.org
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine RT_Coulomb_interpolation(E,k)
+ !
+ ! Interpolate the EE_lifetimes using the insight that 
+ ! f(E)=gamma_H(E)/(gamma_H(E)+gamma_E(E)) is the distribution
+ ! at which the out-of equilibrium Fermi gas would converge if 
+ ! the gammas were constant
+ ! (For a more sophisticated implementation check revision 3074)
+ !  
+ use pars,            ONLY:SP,rZero
+ use units,           ONLY:HA2KEL,HA2EV
+ use electrons,       ONLY:levels,spin_occ,spin
+ use R_lattice,       ONLY:bz_samp
+ use vec_operate,     ONLY:sort
+ use functions,       ONLY:Fermi_fnc,Fermi_fnc_fit
+ use QP_m,            ONLY:QP_table,QP_n_states
+ use SC,              ONLY:RT_ibz_coo,RT_Nk_ibz,SC_bands,it_now,RT_occupations,RT_nk
+ use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_do_IO, &
+&                          RIM_closest_E,RIM_ibz_coo,l_RT_uses_E_RIM,        &
+&                          MEM_index,G_MEM_steps,G_lesser,RT_Tfit_lifetimes, &
+&                          RT_Efit_lifetimes,l_lftm_fit_stable,Nfitted_lifetimes
+ !
+ implicit none
+ !
+ type(levels),     intent(in) :: E
+ type(bz_samp),    intent(in) :: k
+ !
+ ! Work Space ...
+ !
+ integer  :: nstates
+ !
+ integer  :: i_k,i_k_rim,i_E_rim,i_k_ref,i_qp,i_spin,i_n,i_n_ref,order, &
+&            ifit,i_RT,i1,i2,i_sorted,i_unsorted,nfit,                  &
+&            RT_table(SC_bands(1):SC_bands(2),k%nibz),i_cycle,          &
+&            E_sort_index(k%nibz*(SC_bands(2)-SC_bands(1)+1)),          &
+&            E_sort_index_m1(k%nibz*(SC_bands(2)-SC_bands(1)+1))
+ !
+ real(SP) :: gamma_E_factor,gamma_H_factor,alpha,beta,k_weight,fac,     &
+&            f_occ,SUM_N_Electrons,SUM_N_Holes,Nel_change,EPS,E_ref(2), &
+&            Energy(2),VALUE,VALUE_tmp(2),dN_ref,x_ref,x_rim,f_minus_x, &
+&            nholes,nelecs
+ !
+ logical  :: l_condition(2)
+ !
+ real(SP) :: T_fit(2),Ef_fit(2),err_fit(4),Hole_coeff(3),Elec_coeff(3), &
+&            deviation( k%nibz*(SC_bands(2)-SC_bands(1)+1) ),           &
+&            RT_occ_infinity( k%nibz*(SC_bands(2)-SC_bands(1)+1) ),     &
+&            RT_occ_sorted(k%nibz*(SC_bands(2)-SC_bands(1)+1)),         &
+&            RT_E(k%nibz*(SC_bands(2)-SC_bands(1)+1)),                  &
+&            Hole_lifetimes(k%nibz*(E%nbf-SC_bands(1)+1)),              &
+&            Electron_lifetimes(k%nibz*(SC_bands(2)-E%nbf)),            &
+&            dN_over_d(SC_bands(1):SC_bands(2),RT_nk),                  &
+&            deltaN_tot(SC_bands(1):SC_bands(2),k%nibz)
+ !
+ if(.not.l_RT_uses_E_RIM) return
+ !
+ nstates=k%nibz*(SC_bands(2)-SC_bands(1)+1)
+ !
+ ! Sort energies
+ !
+ i_RT=0
+ !
+ do i_k=1,k%nibz
+   do i_n=SC_bands(1),SC_bands(2)
+     i_RT=i_RT+1
+     RT_E(i_RT)=E%E(i_n,i_k,1)
+   enddo
+ enddo
+ !
+ call sort(RT_E,indx=E_sort_index,indx_m1=E_sort_index_m1)
+ !
+ ! Step 1
+ ! A: start setting all lifetimes in the group identical
+ !
+ do i_k=1,k%nibz
+   !
+   i_k_ref=RT_ibz_coo(i_k,1)
+   !
+   do i_n=SC_bands(1),SC_bands(2)
+     do i_k_rim=RT_ibz_coo(i_k,1)+1,RT_ibz_coo(i_k,2)
+       !
+       E_E_Electron_lifetime(i_n,i_k_rim)=E_E_Electron_lifetime(i_n,i_k_ref)
+       E_E_Hole_lifetime(i_n,i_k_rim)    =E_E_Hole_lifetime(i_n,i_k_ref)
+       !
+     enddo
+     !
+   enddo
+   !
+ enddo
+ !
+ ! Check the number of carriers
+ !
+ nholes=0._SP
+ nelecs=0._SP
+ do i_k=1,k%nibz
+   do i_n=SC_bands(1),SC_bands(2)
+     VALUE_tmp=(0._SP,0._SP)
+     do i_k_rim=RT_ibz_coo(i_k,1),RT_ibz_coo(i_k,2)
+       i_E_rim=i_k_rim-RT_ibz_coo(i_k,1)+RIM_ibz_coo(i_k,1)
+       Energy(1)=E%E_RIM(i_n,i_E_rim,1)
+       if(Energy(1)<=E%Efermi(1) ) VALUE_tmp(1)=VALUE_tmp(1)+(spin_occ-RT_occupations(i_n,i_k_rim))
+       if(Energy(1)> E%Efermi(1) ) VALUE_tmp(2)=VALUE_tmp(2)+          RT_occupations(i_n,i_k_rim)
+     enddo
+     nholes=nholes+VALUE_tmp(1)*k%weights(i_k)/real(RT_Nk_ibz(i_k))
+     nelecs=nelecs+VALUE_tmp(2)*k%weights(i_k)/real(RT_Nk_ibz(i_k))
+   enddo
+ enddo
+ !
+ if(nholes<1.E-4 .and. nelecs<1.E-4) return
+ ! 
+ ! Step 2: I correct the gamma on the BIG gid imposing the ratio
+ !         obtained fitting the ratio of the gamma on the SMALL grid
+ !         with a Fermi function, but keeping a constant dN
+ !
+ i_RT=0
+ !
+ do i_k=1,k%nibz
+   do i_n=SC_bands(1),SC_bands(2)
+     !
+     i_RT=i_RT+1
+     i_k_rim=RT_ibz_coo(i_k,1)
+     !
+     if(i_n<=E%nbf) RT_occ_infinity(i_RT)=1._SP
+     if(i_n> E%nbf) RT_occ_infinity(i_RT)=0._SP 
+     !
+     if(abs(E_E_Hole_lifetime(i_n,i_k_rim)+E_E_Electron_lifetime(i_n,i_k_rim))>0._SP) then
+       RT_occ_infinity(i_RT)=E_E_Hole_lifetime(i_n,i_k_rim)/&
+       &  (E_E_Hole_lifetime(i_n,i_k_rim)+E_E_Electron_lifetime(i_n,i_k_rim))
+     endif
+     !
+   enddo
+   !
+ enddo
+ !
+ RT_occ_sorted(:)=RT_occ_infinity(E_sort_index(:))*spin_occ
+ !
+ T_fit=RT_Tfit_lifetimes(3:4)
+ Ef_fit=RT_Efit_lifetimes(3:4)
+ !
+ if ( RT_do_IO('OUT') ) then
+   nfit=Fermi_fnc_fit(RT_E,RT_occ_sorted,nstates,T_fit,Ef_fit,err_fit)
+ else
+   nfit=0
+   do ifit=1,2
+     if(T_fit(ifit)> 0._SP) then
+       err_fit(ifit)=0.1
+       nfit=nfit+ifit
+     else
+       err_fit(ifit)=1.0 
+     endif
+   enddo
+ endif
+ !
+ if (nfit==0) return
+ !
+ do ifit=1,2
+   !
+   l_condition(ifit)=err_fit(ifit+2)<0.15
+   if (l_condition(ifit) ) Nfitted_lifetimes(ifit)=Nfitted_lifetimes(ifit)+1
+   if (Nfitted_lifetimes(ifit)>500) l_lftm_fit_stable(ifit)=.true.
+   !
+   if (l_condition(ifit) .or. .not.l_lftm_fit_stable(ifit)) then
+     RT_Tfit_lifetimes(ifit+2)=T_fit(ifit)
+     RT_Efit_lifetimes(ifit+2)=Ef_fit(ifit)
+   else if(RT_Tfit_lifetimes(ifit+2)>0._SP) then
+     T_fit(ifit)=RT_Tfit_lifetimes(ifit+2)
+     Ef_fit(ifit)=RT_Efit_lifetimes(ifit+2)
+     l_condition(ifit)=.true.
+   endif
+   !
+   if(.not.l_condition(ifit)) then
+     Nfitted_lifetimes(ifit)=0
+     RT_Tfit_lifetimes(ifit+2)=-RT_Tfit_lifetimes(ifit+2)
+   endif
+   !
+ enddo
+ !
+ if(nfit==3) then
+   if ( .not.l_condition(1) .and. .not.l_condition(2) ) return
+   if ( .not.l_condition(2) ) nfit=1
+   if ( .not.l_condition(1) ) nfit=2
+ endif
+ if ( nfit==1 .and. .not.l_condition(1) ) return
+ if ( nfit==2 .and. .not.l_condition(2) ) return
+ !
+ deltaN_tot=0._SP
+ !
+ !dN_over_d_ref=0._SP
+ i_RT=0
+ do i_k=1,k%nibz
+   do i_n=SC_bands(1),SC_bands(2)
+     !
+     i_k_ref=RT_ibz_coo(i_k,1)
+     i_RT=i_RT+1
+     !
+     f_minus_x=RT_occupations(i_n,i_k_ref)/spin_occ-RT_occ_infinity(i_RT)
+     dN_ref=-RT_occupations(i_n,i_k_ref)/spin_occ*E_E_Electron_lifetime(i_n,i_k_ref)+&
+     &       (1._SP-RT_occupations(i_n,i_k_ref)/spin_occ)*E_E_Hole_lifetime(i_n,i_k_ref)
+     !
+     if(abs(f_minus_x)==0._SP) f_minus_x=dN_ref/abs(dN_ref)*1.E-9
+     !
+     dN_over_d(i_n,i_k_ref)=abs(dN_ref/f_minus_x)
+     !if(abs(f_minus_x)> 1.E-6_SP) dN_over_d(i_n,i_k_ref)=abs(dN_ref/f_minus_x)
+     !if(abs(f_minus_x)<=1.E-6_SP) dN_over_d(i_n,i_k_ref)=1.E-6
+     write(100,*) i_k,i_n,dN_over_d(i_n,i_k_ref),f_minus_x,dN_ref
+     !dN_over_d_ref=dN_over_d_ref+dN_over_d(i_n,i_k_ref)*k%weights(i_k)
+     !
+   enddo
+ enddo
+ !
+ stop
+ !
+ do i_cycle=1,2
+   do ifit=1,2
+     !
+     if(ifit==1.and.nfit==2) cycle
+     if(ifit==2.and.nfit==1) cycle
+     !
+     i_RT=0
+     do i_k=1,k%nibz
+       !
+       i_k_ref=RT_ibz_coo(i_k,1)
+       k_weight=k%weights(i_k)/real(RT_Nk_ibz(i_k))
+       !
+       do i_n=SC_bands(1),SC_bands(2)
+         !
+         i_RT=i_RT+1
+         !
+         if(i_n<=E%nbf.and.ifit==2) cycle
+         if(i_n> E%nbf.and.ifit==1) cycle
+         !
+         deviation(i_RT)=RT_occ_infinity(i_RT)-Fermi_fnc(E%E(i_n,i_k,1)-Ef_fit(ifit),T_fit(ifit))
+         !
+         x_ref=RT_occ_infinity(i_RT)
+         f_minus_x=RT_occupations(i_n,i_k_ref)/spin_occ-x_ref
+         !
+         ! As a first guess dN_over_d is assumed constant over the grid
+         ! I.E. deltaN(i_k_ref)/(deviation(i_k_ref))=deltaN(i_k_rim)/(f_minus_x(i_k_rim))
+         ! and should be always negative. However to be sure I use abs and write
+         ! the minus explicitely
+         !
+         dN_ref=-RT_occupations(i_n,i_k_ref)/spin_occ*E_E_Electron_lifetime(i_n,i_k_ref)+ &
+         &        (1._SP-RT_occupations(i_n,i_k_ref)/spin_occ)*E_E_Hole_lifetime(i_n,i_k_ref)
+         !
+         if(i_cycle==1) then
+           if(abs(f_minus_x)> 1.E-6_SP) dN_over_d(i_n,i_k_ref)=abs(dN_ref/f_minus_x)
+           if(abs(f_minus_x)<=1.E-6_SP) dN_over_d(i_n,i_k_ref)=1.E-6
+           !dN_over_d_ref=dN_over_d_ref+dN_over_d(i_n,i_k_ref)*k%weights(i_k)
+         endif
+         !
+         !
+         ! Here I impose that the total number of the electron
+         ! scattered by the zone is equal to the total number of
+         ! electrons scattered by i_k_ref
+         !
+         if(i_cycle==2) then
+           if(deltaN_tot(i_n,i_k)/=0._SP) VALUE=real(RT_Nk_ibz(i_k)-1)
+           if(deltaN_tot(i_n,i_k)/=0._SP) VALUE=real(RT_Nk_ibz(i_k)-1)*dN_ref/deltaN_tot(i_n,i_k)
+           ! If value is negative or too small it means that k_ref is not
+           ! a good rapresentative of the zone. I.e. tha majority of the points
+           ! in the zone behaves differently from i_k_ref. In this case
+           ! The total number of electrons is not conserved and I just try
+           ! to redyce the number  ox exchanged electrons
+           if ( VALUE<1.E-2 ) VALUE=1.E-2_SP
+           ! In case delta N tot is close to zero, the zone does not
+           ! exchange electrons, I do not need to correct the value
+           ! dN_over_d
+           if ( VALUE>10._SP ) VALUE=10._SP
+           !
+           i1=RT_ibz_coo(i_k,1)+1
+           i2=RT_ibz_coo(i_k,2)
+           dN_over_d(i_n,i1:i2)=dN_over_d(i_n,i1:i2)*VALUE
+         endif
+         !
+         !
+         do i_k_rim=RT_ibz_coo(i_k,1)+1,RT_ibz_coo(i_k,2)
+           !
+           i_E_rim=i_k_rim-RT_ibz_coo(i_k,1)+RIM_ibz_coo(i_k,1)
+           !
+           x_rim=Fermi_fnc(E%E_RIM(i_n,i_E_rim,1)-Ef_fit(ifit),T_fit(ifit))+deviation(i_RT)
+           if(x_rim<0._SP) x_rim=0.0
+           if(x_rim>1._SP) x_rim=1.0
+           !
+           if(i_cycle==1) then
+             dN_over_d(i_n,i_k_rim)=dN_over_d(i_n,i_k_ref)
+             deltaN_tot(i_n,i_k)=deltaN_tot(i_n,i_k)-dN_over_d(i_n,i_k_rim)*(RT_occupations(i_n,i_k_rim)/spin_occ-x_rim)
+             cycle
+           endif
+           !
+           E_E_Hole_lifetime(i_n,i_k_rim)=    dN_over_d(i_n,i_k_rim)*  x_rim  
+           E_E_Electron_lifetime(i_n,i_k_rim)=dN_over_d(i_n,i_k_rim)*(1._SP-x_rim)
+           !
+         enddo
+       enddo
+     enddo
+   enddo
+ enddo
+ !
+end subroutine RT_Coulomb_interpolation

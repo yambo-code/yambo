@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CA
+! Authors (see AUTHORS file for details): CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_EULEREXP_step(G_new_k,G_old_k,G_ref,U1_k,U2_k,I1_matrix)
+subroutine RT_EULEREXP_step(G_new_k,G_old_k,G_ref_k,U1_k,U2_k,I1_matrix)
  !
  use pars,           ONLY:SP,cZERO
 #if defined _OPENMP
@@ -34,7 +34,7 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,G_ref,U1_k,U2_k,I1_matrix)
  implicit none
  !
  complex(SP), intent(in)  :: G_old_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP), intent(in)  :: G_ref(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP), intent(in)  :: G_ref_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: U1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: U2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: I1_matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
@@ -65,23 +65,25 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,G_ref,U1_k,U2_k,I1_matrix)
  M1_tmp=cZERO
  M2_tmp=cZERO
 #if defined _OPENMP
- call M_by_M_omp(SC_nbands,U1_k,G_ref,M1_tmp)
- call M_by_M_omp(SC_nbands,G_ref,U2_k,M2_tmp)
+ call M_by_M_omp(SC_nbands,U1_k,G_ref_k,M1_tmp)
+ call M_by_M_omp(SC_nbands,G_ref_k,U2_k,M2_tmp)
 #else
- call M_by_M('n','n',SC_nbands,U1_k,G_ref,M1_tmp)
- call M_by_M('n','n',SC_nbands,G_ref,U2_k,M2_tmp)
+ call M_by_M('n','n',SC_nbands,U1_k,G_ref_k,M1_tmp)
+ call M_by_M('n','n',SC_nbands,G_ref_k,U2_k,M2_tmp)
 #endif
  G_new_k=G_new_k+M1_tmp+M2_tmp
  !
  M1_tmp=cZERO
  M2_tmp=cZERO
 #if defined _OPENMP
- call M_by_M_omp(SC_nbands,U1_k,G_ref,M1_tmp)
+ call M_by_M_omp(SC_nbands,U1_k,G_ref_k,M1_tmp)
  call M_by_M_omp(SC_nbands,M1_tmp,U2_k,M2_tmp)
 #else
- call M_by_M('n','n',SC_nbands,U1_k,G_ref,M1_tmp)
+ call M_by_M('n','n',SC_nbands,U1_k,G_ref_k,M1_tmp)
  call M_by_M('n','n',SC_nbands,M1_tmp,U2_k,M2_tmp)
 #endif
  G_new_k=G_new_k+M2_tmp
+ !
+ G_new_k=G_new_k-G_old_k
  !
 end subroutine RT_EULEREXP_step

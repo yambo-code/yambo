@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -34,11 +34,12 @@ subroutine RT_occupations_analyze(k,E)
  use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT,l_RT_occ_FIT,l_RT_occ_Plot
  use com,            ONLY:msg,of_open_close,error
  use IO_m,           ONLY:NONE
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,&
-&                         E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
+ use QP_CTL_m,       ONLY:QP_apply
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,E_P_Hole_lifetime,E_P_Electron_lifetime,&
+&                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, & 
 &                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime,&
-&                         RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM,NE_time,RT_delta0_occupations,&
-&                         RT_E_occupations
+&                         RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM,RT_delta0_occupations,&
+&                         RT_E_occupations_reference
  use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz
  !
  implicit none
@@ -48,50 +49,25 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! Work Space
  !
- type(bz_samp) :: q
  integer               :: ik,ib,i_spin,i_s,i_RT,i_T,n_T_steps,n1
  integer               :: ik_rim,ik_E_rim,ik_RT_rim
- real(SP)              :: io_Time,data_to_plot(10)
+ real(SP)              :: io_Time,data_to_plot(8)
  real(SP), allocatable :: RT_occupations_sum(:,:),RT_occ(:,:),RT_delta0_occ(:,:),RT_gamma(:,:,:),RT_E(:)
  character(schlen)     :: titles(8),specs(8,2)
  logical               :: l_ELPH_lifetimes,l_group_occ
- integer,     external :: RT_occupations_check,RT_k_grid
+ integer,     external :: RT_occ_check_and_load_ref
  !
  call section('*','Real-Time occupations')
  !
- io_TIME=0.
- call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=io_TIME,imposed_COM=NONE)
- if (.not.allocated(RT_E_occupations)) call error('OCCUPATIONS database not found')
+ n_T_steps=RT_occ_check_and_load_ref(E,k)
+ !
+ ! RIM support of carrier dynamics
+ !=================================
+ call RT_check_RIM(k,E)
+ !
+ call QP_apply(SC_bands,E,k,'G',msg_fmt='s')
  !
  call parser('OCCgroup',l_group_occ)
- !
- ! RIM support of carrier dynamics: maps RIM energies in a new array with same ordering of occupations
- !=================================
- !
- if (RT_nk/=k%nibz) then
-   !
-   l_RT_uses_E_RIM=.true.
-   !
-   if (RT_k_grid(E,k,q)/=RT_nk) call error('Wrong RT k-grid, likely your ndb.E_RIM is changed')
-   !
- else
-   !
-   l_RT_uses_E_rim=.false.
-   !
-   allocate(RIM_ibz_coo(k%nibz,2))
-   allocate(RIM_bz_coo(k%nbz,2))
-   allocate(RT_ibz_coo(k%nibz,2))
-   allocate(RT_Nk_ibz(k%nibz))
-   !
-   RT_Nk_ibz=1
-   allocate(RT_all2ibz(k%nibz))
-   do ik=1,k%nibz
-     RIM_ibz_coo(ik,:)=ik
-     RT_ibz_coo(ik,:)=ik
-     RT_all2ibz(ik)=ik
-   enddo
-   !
- endif
  !
  RT_nstates=RT_nk*(SC_bands(2)-SC_bands(1)+1)
  allocate(RT_E(RT_nstates))
@@ -119,18 +95,6 @@ subroutine RT_occupations_analyze(k,E)
    !
  enddo
  !
- n_T_steps=RT_occupations_check(E,k)
- !
- if (n_T_steps<0) return
- if (NE_time<OCC_T_range(2)) then
-   OCC_T_range(2)=NE_time
-   n_T_steps=nint(OCC_T_range(2)/OCC_deltaT)+1
- endif
- !
- call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
- call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
- call msg('s','Time steps     :',n_T_steps)
- !
  l_ELPH_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
  !
  call set_real_printed_length(f_length=10,g_length=10)
@@ -141,23 +105,21 @@ subroutine RT_occupations_analyze(k,E)
  titles(2)='Occ.'
  !
  if (l_elel_scatt.and.l_ELPH_lifetimes) then
-   titles(3:4)=(/'Hole[meV]','El. [meV]'/)
-   titles(5:6)=(/'Habs[meV]','Eabs[meV]'/)
+   titles(3:6)=(/'Hole[meV]','El. [meV]','Hole[meV]','El. [meV]'/)
    titles(7:8)=(/'Hole[meV]','El. [meV]'/)
  else if (l_elel_scatt.and..not.l_ELPH_lifetimes) then
-   titles(3:4 )=(/'Hole[meV]','El. [meV]'/)
- else if (.not.l_elel_scatt.and.l_ELPH_lifetimes) then
    titles(3:4)=(/'Hole[meV]','El. [meV]'/)
-   titles(5:6)=(/'Habs[meV]','Eabs[meV]'/)
+ else if (.not.l_elel_scatt.and.l_ELPH_lifetimes) then
+   titles(3:6)=(/'Hole[meV]','El. [meV]','Hole[meV]','El. [meV]'/)
  endif
  !
- specs(1: 2,1)=(/'         ','         '/)
- specs(3: 6,1)=(/'|--------','--El-Ph--','---------','--------|'/)
- specs(7: 8,1)=(/'|-----El-','El------|'/)
+ specs(1:2,1)=(/'         ','         '/)
+ specs(3:6,1)=(/'|--------','------El-','Ph-------','--------|'/)
+ specs(7:8,1)=(/'|-----El-','El------|'/)
  !
- specs(1: 2,2)=(/'         ','         '/)
- specs(3: 6,2)=(/'(   emis ','sion    )','   (absor','ption)   '/)
- specs(7: 8,2)=(/'         ','         '/)
+ specs(1:2,2)=(/'         ','         '/)
+ specs(3:6,2)=(/'(spontan ','emission)','   (absor','ption)   '/)
+ specs(7:8,2)=(/'         ','         '/)
  !
  ! F(it) for each (ik,ib)
  !
@@ -176,8 +138,6 @@ subroutine RT_occupations_analyze(k,E)
    !
    call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=io_Time)
    !
-   call RT_occupations_repair(E)
-   !
    i_RT=0
    !
    do i_s=1,QP_n_states
@@ -193,18 +153,14 @@ subroutine RT_occupations_analyze(k,E)
      if (ib<SC_bands(1)) cycle
      if (ib>SC_bands(2)) cycle
      !
-     if (l_RT_occ_plot.and.l_group_occ) then
+     if(l_RT_occ_Plot) then
        output_fname='YPP-RT_occupations_k'//trim(intc(ik))//'_b'//trim(intc(ib))
        if (i_T==1) call open_file()
      endif
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
-       !if (l_RT_occ_plot.and. .not.l_group_occ .and. ik_rim>RT_ibz_coo(ik,1)) cycle
-       if (l_RT_occ_plot.and..not.l_group_occ) then
-         output_fname='YPP-RT_occupations_k'//trim(intc(ik_rim))//'_b'//trim(intc(ib))
-         if (i_T==1) call open_file()
-       endif
+       if (l_RT_occ_plot.and. .not.l_group_occ .and. ik_rim>RT_ibz_coo(ik,1)) cycle
        !
        i_RT=i_RT+1
        !
@@ -214,7 +170,7 @@ subroutine RT_occupations_analyze(k,E)
        !===========
        n1=1
        if (l_ELPH_lifetimes) then
-         n1=5
+         n1=7
          RT_gamma(i_RT,i_T,1)=E_P_Hole_lifetime(ib,ik_rim)
          RT_gamma(i_RT,i_T,2)=E_P_Electron_lifetime(ib,ik_rim)
          RT_gamma(i_RT,i_T,3)=E_P_Ho_abs_lifetime(ib,ik_rim)
@@ -223,15 +179,14 @@ subroutine RT_occupations_analyze(k,E)
        !
        if (l_elel_scatt) then
          n1=3
-         if (l_ELPH_lifetimes) n1=7
+         if(l_ELPH_lifetimes) n1=7
          RT_gamma(i_RT,i_T,n1-2)=E_E_Hole_lifetime(ib,ik_rim)
          RT_gamma(i_RT,i_T,n1-1)=E_E_Electron_lifetime(ib,ik_rim)
        endif
        !
        RT_gamma(i_RT,i_T,:)=RT_gamma(i_RT,i_T,:)*HA2EV*1000.
        RT_delta0_occ(i_RT,i_T)=RT_delta0_occupations(ib,ik_rim)
-       !
-       RT_occ(i_RT,i_T)=RT_E_occupations(ib,ik_rim)
+       RT_occ(i_RT,i_T)=RT_E_occupations_reference(ib,ik)+RT_delta0_occ(i_RT,i_T)
        !
        if (.not.l_RT_occ_plot) cycle
        !
@@ -241,7 +196,7 @@ subroutine RT_occupations_analyze(k,E)
        !
        ! Occupations
        !=============
-       RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+RT_E_occupations(ib,ik_rim)*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
+       RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+RT_delta0_occ(i_RT,i_T)*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
        !
        if (ib==SC_bands(1).and.SC_bands(1)>1) RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+ &
 &                                             spin_occ*k%weights(ik)*real(SC_bands(1)-1)/real(RT_Nk_ibz(ik),SP)
@@ -288,10 +243,11 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! f(eps_{ik,ib}), gamma(eps_{ik,ib})
  !
- if(l_RT_occ_Fit) call RT_occupations_FIT(RT_E,RT_occ,RT_gamma,n1-1,n_T_steps)
+ if(l_RT_occ_Fit) call RT_occupations_FIT_and_plot(RT_E,RT_occ,RT_gamma,n1-1,n_T_steps)
  !
  if (allocated(RT_E))               deallocate(RT_E)
  if (allocated(RT_occ))             deallocate(RT_occ)
+ if (allocated(RT_delta0_occ))      deallocate(RT_delta0_occ)
  if (allocated(RT_gamma))           deallocate(RT_gamma)
  if (allocated(RT_occupations_sum)) deallocate(RT_occupations_sum)
  !
@@ -310,16 +266,16 @@ subroutine RT_occupations_analyze(k,E)
      ! Titles
      !========
      if (l_elel_scatt.and.l_ELPH_lifetimes) then
-       call msg('o '//trim(output_fname),'#',specs(: ,1),INDENT=0,USE_TABS=.TRUE.)
-       call msg('o '//trim(output_fname),'#',specs(: ,1),INDENT=0,USE_TABS=.TRUE.)
-       call msg('o '//trim(output_fname),'#',titles(: 8),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(output_fname),'#',specs(:,1),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(output_fname),'#',specs(:,1),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(output_fname),'#',titles(:8),INDENT=0,USE_TABS=.TRUE.)
      else if (l_elel_scatt.and..not.l_ELPH_lifetimes) then
-       call msg('o '//trim(output_fname),'#',titles(: 4),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(output_fname),'#',titles(:4),INDENT=0,USE_TABS=.TRUE.)
      else if (.not.l_elel_scatt.and.l_ELPH_lifetimes) then
        call msg('o '//trim(output_fname),'#',specs(:6,2),INDENT=0,USE_TABS=.TRUE.)
-       call msg('o '//trim(output_fname),'#',titles(: 6),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(output_fname),'#',titles(:8),INDENT=0,USE_TABS=.TRUE.)
      else if (.not.l_elel_scatt.and..not.l_ELPH_lifetimes) then
-       call msg('o '//trim(output_fname),'#',titles(: 2),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(output_fname),'#',titles(:2),INDENT=0,USE_TABS=.TRUE.)
      endif
      call msg('o '//trim(output_fname),'#')
      !

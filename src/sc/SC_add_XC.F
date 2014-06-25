@@ -32,7 +32,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_exx,l_sc_srpa,l_sc_cohsex,l_sc_contains_lda,&
-&                         l_use_collisions
+&                         l_use_collisions,l_sc_hartree
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_t,QP_reset
  use parallel_m,     ONLY:master_cpu
@@ -58,7 +58,11 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  ! Work Space
  !
  integer      :: ib,ik
+ logical      :: l_call_pot_driver
+ !
  type(QP_t)   :: qp_dummy
+ !
+ l_call_pot_driver=l_sc_contains_lda .or. l_sc_hartree
  !
  if (.not.local_V) then
    !
@@ -112,9 +116,9 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    !
    call IO_and_Messaging_switch("-report -log -io_in -io_out")
    !
-   if (l_sc_contains_lda) call XC_potential_driver(E,Xk,SC_kind,SC_xc_functional,1)
-   if (l_sc_contains_lda.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)
-   if (l_sc_contains_lda.and.     (l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
+   if (l_call_pot_driver) call XC_potential_driver(E,Xk,SC_kind,SC_xc_functional,1)
+   if (l_call_pot_driver.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)
+   if (l_call_pot_driver.and.     (l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
    !
    call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
    !

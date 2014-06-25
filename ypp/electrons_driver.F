@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_driver(Xk,Xen)
+subroutine electrons_driver(Xk,Xen,Xq)
  !
  use pars,           ONLY:SP,lchlen
  Use stderr,         ONLY:intc
@@ -62,7 +62,7 @@ subroutine electrons_driver(Xk,Xen)
  !
  implicit none
  !
- type(bz_samp) ::Xk
+ type(bz_samp) ::Xk,Xq
  type(levels)  ::Xen
  !
  ! Work Space
@@ -192,7 +192,7 @@ subroutine electrons_driver(Xk,Xen)
  !
  if(l_bands.or.l_RT_occ_Bands) then
    if ( i_time_rev==1) call error('Bands interpolation does not work with T-rev symmetry')
-   call electrons_bands(Xk,Xen)
+   call electrons_bands(Xk,Xen,Xq)
  endif
  !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)

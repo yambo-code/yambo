@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,deltaT)
+subroutine RT_EULER_step(G_new_k,I1_k,I2_k,deltaT)
  !
  use pars,           ONLY:SP,cI
 #if defined _OPENMP
@@ -34,16 +34,15 @@ subroutine RT_EULER_step(G_new_k,G_old_k,I1_k,I2_k,deltaT)
  implicit none
  !
  real(SP),    intent(in)  :: deltaT
- complex(SP), intent(in)  :: G_old_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(out) :: G_new_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
  ! G(T+dt) = G(T)
  !
- G_new_k=G_old_k
+ G_new_k=0._SP
  !
- ! G(T+dt) = G(T) - i dt *(I1(T) - I2(T))
+ ! G(T+dt) = - i dt *(I1(T) - I2(T))
  !
 #if defined _OPENMP
  call V_by_V_plus_V_omp(SC_nbands, -cI*deltaT, I1_k-I2_k, G_new_k)

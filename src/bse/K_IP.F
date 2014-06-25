@@ -34,8 +34,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use X_m,           ONLY:X_t,X_epsilon,X_drude_term,alpha_dim,eps_2_alpha,&
 &                        DIP_q_dot_iR,X_drude_term,X_alloc,iw_ref
  use BS,            ONLY:BSS_Vnl_included,BS_anti_res,BS_drude_f_eh,&
-&                        BS_K_dim,BSS_n_freqs,BSS_q0,BS_T_grp,BS_K_coupling
- use parallel_m,    ONLY:PAR_BS_nT_grps,PP_redux_wait,PAR_COM_eh_INDEX
+&                        BS_K_dim,BSS_n_freqs,BSS_q0,BS_T_grp,BS_K_coupling,BS_nT_grps
+ use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups
 #if defined _KERR
  use drivers,       ONLY:l_kerr
  use com,           ONLY:warning
@@ -129,16 +129,18 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    BSS_Vnl_included=X_oscillators%Vnl_included
    !
-   if (l_rpa_IP) call live_timing('IP absorption',PAR_BS_nT_grps)
+   if (l_rpa_IP) call live_timing('IP absorption',PAR_BS_nT_col_grps)
    !
-   do i_T_g=1,PAR_BS_nT_grps
+   do i_T_g=1,BS_nT_grps
+     !    
+     if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle
      !    
      do i_T=1,BS_T_grp(i_T_g)%size    
        !    
-       ik  = BS_T_grp(i_T_g)%ik
-       iv  = BS_T_grp(i_T_g)%table(i_T,1)
-       ic  = BS_T_grp(i_T_g)%table(i_T,2)
-       i_sp= BS_T_grp(i_T_g)%table(i_T,3)
+       ik    = BS_T_grp(i_T_g)%table(i_T,1)
+       iv    = BS_T_grp(i_T_g)%table(i_T,2)
+       ic    = BS_T_grp(i_T_g)%table(i_T,3)
+       i_sp  = BS_T_grp(i_T_g)%table(i_T,4)
        !
        local_Z=1.
        if (allocated(BS_T_grp(i_T_g)%Z)) local_Z=BS_T_grp(i_T_g)%Z(i_T)

@@ -291,13 +291,13 @@ module BS
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
-     use parallel_m, ONLY:PAR_BS_T_grps_index,PAR_BS_nT_grps
+     use parallel_m, ONLY:PAR_BS_T_grps_index,PAR_BS_nT_col_grps
      integer :: i_g
      if (allocated(BS_nT_at_k))          deallocate(BS_nT_at_k)
      if (allocated(BS_nT_grps_at_k))     deallocate(BS_nT_grps_at_k)
      if (allocated(PAR_BS_T_grps_index)) deallocate(PAR_BS_T_grps_index)
      call mem_est("BS_nT_at_k PAR_BS_T_grps_index BS_nT_grps_at_k")
-     do i_g=1,PAR_BS_nT_grps
+     do i_g=1,PAR_BS_nT_col_grps
        deallocate(BS_T_grp(i_g)%dipoles_R)
        call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(i_g)))
        if (BS_K_coupling) then

@@ -184,7 +184,8 @@ module parallel_m
  ! ... Transitions
  type(PP_indexes),allocatable,SAVE :: PAR_IND_eh(:)
  type(PP_indexes)            ,SAVE :: PAR_IND_T_groups
- type(PP_indexes)            ,SAVE :: PAR_IND_T
+ type(PP_indexes)            ,SAVE :: PAR_IND_T_all
+ type(PP_indexes)            ,SAVE :: PAR_IND_T_ordered
  !
  ! Specific MPI ID's ...
  !======================
@@ -281,7 +282,7 @@ module parallel_m
  integer,allocatable:: PAR_DIPk_ibz_index(:)
  integer            :: PAR_Xk_nbz
  integer,allocatable:: PAR_Xk_bz_index(:)
- integer            :: PAR_BS_nT_grps 
+ integer            :: PAR_BS_nT_col_grps 
  integer,allocatable:: PAR_BS_T_grps_index(:)
  !
  ! ... linear response & BSK

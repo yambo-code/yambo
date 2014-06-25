@@ -113,13 +113,15 @@ module interfaces
      type(MPI_comm),optional :: COMM_A2A_3
    end subroutine
    !
-   subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE)
+   subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
      use parallel_m, ONLY:PP_indexes,MPI_COMM
      type(PP_indexes)       ::px
      integer                ::uplim(:)
      integer, optional      ::low_range(:)
      type(MPI_COMM),optional::COMM
      logical,       optional::CONSECUTIVE
+     logical,       optional::ORDERED
+     logical,       optional::MASK(:)
    end subroutine
    !
  end interface

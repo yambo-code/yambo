@@ -36,18 +36,17 @@ subroutine K_blocks( )
  !end type BS_block
  !
  use memory_m,     ONLY:mem_est
- use parallel_m,   ONLY:PAR_IND_T,PAR_BS_nT_grps,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
-&                       PAR_COM_eh_INDEX,PAR_Xk_bz_index,PAR_IND_Xk_bz
+ use parallel_m,   ONLY:PAR_IND_T_all,PAR_IND_T_ordered
  use interfaces,   ONLY:PARALLEL_live_message
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
-&                       BS_K_dim,BS_bands
+&                       BS_K_dim
  use com,          ONLY:msg
  !
  implicit none
  !
  ! Work Space
  !
- integer :: i_T,j_T,i_loop,tot_size,ik_mem,n_tot_blocks
+ integer :: i_T,j_T,i_loop,tot_size,n_tot_blocks
  !
  call section('=','CPU-dependent Block structure')
  !
@@ -58,42 +57,27 @@ subroutine K_blocks( )
    endif
    !
    tot_size    =0
-   n_tot_blocks=0
    n_BS_blks   =0
    !
-   do i_T=1,PAR_BS_nT_grps
+   do i_T=1,BS_nT_grps
      !
-     if (.not.PAR_IND_Xk_bz%element_1D( BS_T_grp(i_T)%ik )) cycle
-     !
-     ik_mem=PAR_Xk_bz_index( BS_T_grp(i_T)%ik )
-     !
-     do j_T=1,PAR_BS_nT_grps
+     do j_T=1,BS_nT_grps
        !
-       if (BS_T_grp(i_T)%ik<=BS_T_grp(j_T)%ik) then
-         !
-         n_tot_blocks=n_tot_blocks+1
-         !
-         if (.not.PAR_IND_T%element_2D(ik_mem,j_T)) cycle 
-         !
-         n_BS_blks=n_BS_blks+1
-         !
-         if (i_loop==2) then
-           allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-           tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
-           BS_blk(n_BS_blks)%mode="R"
-           BS_blk(n_BS_blks)%iT_k=i_T
-           BS_blk(n_BS_blks)%iT_p=j_T
-           BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
-           BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
-         endif
-         !
+       if (.not.PAR_IND_T_ordered%element_2D(i_T,j_T)) cycle 
+       !
+       n_BS_blks=n_BS_blks+1
+       !
+       if (i_loop==2) then
+         allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+         tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
+         BS_blk(n_BS_blks)%mode="R"
+         BS_blk(n_BS_blks)%iT_k=i_T
+         BS_blk(n_BS_blks)%iT_p=j_T
+         BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
+         BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
        endif
        !
-       if (BS_K_coupling) then
-         !
-         n_tot_blocks=n_tot_blocks+1
-         !
-         if (.not.PAR_IND_T%element_2D(ik_mem,j_T)) cycle 
+       if (BS_K_coupling.and.PAR_IND_T_all%element_2D(i_T,j_T)) then 
          !
          n_BS_blks=n_BS_blks+1
          !
@@ -114,6 +98,10 @@ subroutine K_blocks( )
    enddo
    !
  enddo
+ !
+ n_tot_blocks=BS_nT_grps*(BS_nT_grps-1)/2+BS_nT_grps
+ !
+ if (BS_K_coupling) n_tot_blocks=n_tot_blocks+BS_nT_grps**2
  !
  call PARALLEL_live_message("BSK blocks",LOADED=n_BS_blks,TOTAL=n_tot_blocks)
  !

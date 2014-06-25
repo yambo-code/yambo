@@ -25,7 +25,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  !
  use pars,          ONLY:IP,SP
  use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_nT_grps_at_k,BS_T_grp_1st_el
- use parallel_m,    ONLY:PAR_IND_eh,PAR_BS_nT_grps,PP_redux_wait,PAR_COM_eh_INDEX,&
+ use parallel_m,    ONLY:PAR_IND_eh,PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,&
 &                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_BS_T_grps_index
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:nXkibz,bz_samp
@@ -60,7 +60,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  !
  BS_T_grp_1st_el=0
  BS_nT_grps_at_k=0
- PAR_BS_nT_grps =0
+ PAR_BS_nT_col_grps =0
  !
  do i_k=1,nXkibz
    do i_t=1,BS_nT_at_k(i_k)
@@ -69,8 +69,8 @@ subroutine PARALLEL_Transitions_grouping(Xk)
      !
      if ( i_t==1 .or. (i_t>1.and..not.PAR_IND_eh(i_k)%element_1D(i_t-1)) ) then
         BS_nT_grps_at_k(i_k)=BS_nT_grps_at_k(i_k)+1
-        PAR_BS_nT_grps = PAR_BS_nT_grps +1
-        BS_T_grp_1st_el(2*nXkibz*PAR_COM_eh_INDEX%CPU_id+PAR_BS_nT_grps)=i_t+sum(BS_nT_at_k(:i_k-1))
+        PAR_BS_nT_col_grps = PAR_BS_nT_col_grps +1
+        BS_T_grp_1st_el(2*nXkibz*PAR_COM_eh_INDEX%CPU_id+PAR_BS_nT_col_grps)=i_t+sum(BS_nT_at_k(:i_k-1))
      endif
      !
    enddo
@@ -102,7 +102,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  !
  PAR_IND_T_groups%element_1D=.FALSE.
  PAR_IND_T_groups%n_of_elements=0
- PAR_BS_nT_grps = 0
+ PAR_BS_nT_col_grps = 0
  PAR_BS_T_grps_index = 0
  !
  do i_k=1,nXkibz
@@ -115,7 +115,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
      !
      if ( i_t==1 .or. (i_t>1.and..not.PAR_IND_eh(i_k)%element_1D(i_t-1)) ) then
        !
-       PAR_BS_nT_grps = PAR_BS_nT_grps + 1
+       PAR_BS_nT_col_grps = PAR_BS_nT_col_grps + 1
        !
        it_ref=i_t+sum(BS_nT_at_k(:i_k-1))
        !
@@ -124,7 +124,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
            PAR_IND_T_groups%element_1D(i_g)=.TRUE.
            PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)=&
 &                                         PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)+1
-           PAR_BS_T_grps_index(i_g)=PAR_BS_nT_grps
+           PAR_BS_T_grps_index(i_g)=PAR_BS_nT_col_grps
          endif
        enddo
        !

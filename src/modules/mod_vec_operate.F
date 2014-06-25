@@ -139,13 +139,6 @@ module vec_operate
      endif
    end subroutine c2a
    !
-   integer function i_bz(i_k,i_s,k) 
-     use R_lattice, ONLY:bz_samp
-     integer       :: i_k,i_s
-     type(bz_samp) :: k
-     i_bz=sum(k%nstar(:i_k-1))+i_s
-   end function
-   !
    subroutine k2bz(v_in,v_out,b_in) 
      !
      ! k is iku 

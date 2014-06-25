@@ -31,7 +31,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_B_mat_index,PAR_nQP,PAR_QP_index,PAR_INDEX_copy,&
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load,&
 &                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index,&
-&                        PAR_BS_T_grps_index,PAR_BS_nT_grps,PAR_Kk_nibz
+&                        PAR_BS_T_grps_index,PAR_BS_nT_col_grps,PAR_Kk_nibz
  use parallel_m,    ONLY:& ! LOGICALS
 &                        l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
 &                        HEAD_QP_cpu,HEAD_k_cpu
@@ -51,8 +51,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q,PAR_IND_INV,PAR_IND_DIAGO,&
 &                        PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
 &                        PAR_IND_B_mat,PAR_IND_Plasma,PAR_IND_DIPk_ibz,PAR_IND_WF_linear,&
-&                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_eh,PAR_IND_T,PAR_IND_WF_b_and_k,&
-&                        PAR_IND_T_groups,PAR_IND_Kk_ibz
+&                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_eh,PAR_IND_T_all,PAR_IND_WF_b_and_k,&
+&                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_IND_T_ordered
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_INV_ID,PAR_IND_DIAGO_ID,&
@@ -139,7 +139,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PP_indexes_reset(PAR_IND_WF_k)
    call PP_indexes_reset(PAR_IND_WF_b_and_k)
    call PP_indexes_reset(PAR_IND_WF_linear)
-   call PP_indexes_reset(PAR_IND_T)
+   call PP_indexes_reset(PAR_IND_T_ordered)
+   call PP_indexes_reset(PAR_IND_T_all)
    !
    if (ENVIRONMENT=="Response_T_space") then
      if (.not.allocated(PAR_IND_eh)) then
@@ -803,7 +804,16 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! Dipoles k-points uses same distribution of K k-points
    !
    call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_DIPk_ibz)
+   call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_Xk_ibz)
+   call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_Xk_bz)
+   PAR_Xk_nibz  =PAR_Kk_nibz
    PAR_DIPk_nibz=PAR_Kk_nibz
+   allocate(PAR_DIPk_ibz_index(Xk%nibz))
+   call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+   allocate(PAR_Xk_ibz_index(Xk%nibz))
+   call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
+   allocate(PAR_Xk_bz_index(Xk%nbz))
+   call distribute_BZk_using_IBZk(PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX)
    !
    ! E/h pairs (k resolved)
    !
@@ -822,26 +832,29 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_Transitions_grouping(Xk)
    !
    call PARALLEL_live_message("Transition Groups (columns)",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_BS_nT_grps,TOTAL=BS_nT_grps)
+&                             LOADED=PAR_BS_nT_col_grps,TOTAL=BS_nT_grps)
    !
- do while(.true.)
- enddo
    ! Now each CPU of the PAR_COM_eh_INDEX has PAR_BS_nT_grps  groups of e/h pairs
    !
    ! The task now is to distribute the transitions:
    !  
-   ! Group@k (among PAR_BS_nT_grps) ->Group'@p (among BS_nT_grps)
+   ! Group@k (among BS_nT_grps) ->Group'@p (among BS_nT_grps)
    !
-   call PARALLEL_index(PAR_IND_T,(/PAR_BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX)
+   call PARALLEL_index(PAR_IND_T_all,    (/BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX,&
+&                      MASK=PAR_IND_T_groups%element_1D)
    !
-   call PARALLEL_live_message("Transition Scatterings",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_IND_T%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),TOTAL=BS_nT_grps*BS_nT_grps,&
+   call PARALLEL_index(PAR_IND_T_ordered,(/BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX,&
+&                      MASK=PAR_IND_T_groups%element_1D,ORDERED=.TRUE.)
+   !
+   call PARALLEL_live_message("Matrix Elements (all)",ENVIRONMENT=ENVIRONMENT,&
+&                             LOADED=PAR_IND_T_all%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),TOTAL=BS_nT_grps*BS_nT_grps,&
 &                             NCPU=PAR_COM_T_INDEX%n_CPU)
    !
-!   call PARALLEL_live_message("Transition Groups",ENVIRONMENT=ENVIRONMENT,&
-!&                             LOADED=PAR_BS_nT_grps,TOTAL=PAR_BS_nT_grps,&
-!&                             NCPU=PAR_COM_eh_INDEX%n_CPU)
-
+   call PARALLEL_live_message("Matrix Elements (ordered)",ENVIRONMENT=ENVIRONMENT,&
+&                             LOADED=PAR_IND_T_ordered%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),&
+&                             TOTAL=BS_nT_grps*(BS_nT_grps-1)/2+BS_nT_grps,&
+&                             NCPU=PAR_COM_T_INDEX%n_CPU)
+   !
 !   if (  ENVIRONMENT=="Response_T_space" ) then
 !     !
 !     ! K-points (BZ) after shifting of Q (BZ)

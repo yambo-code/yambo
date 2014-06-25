@@ -26,18 +26,15 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  ! Out: 
  !
  !   BS_K_dim
- !
- !   PAR_BS_T_grps_index(i_Group_par) = i_Group_global ! with i_Group_par \in PAR_BS_nT_grps and
- !                                                            i_Group_global \in BS_nT_grps
- !
+ !   BS_nT_at_k
  !
  ! Filling (FILL_the_groups=.TRUE.) of Transition groups
  !
  !type BS_T_group
- !  integer                       :: ik         ! ik index
+ !  integer                       :: ik         ! ik index (\in IBZ)
  !  integer                       :: first_cv   ! Position in the cv transitions @ k
  !  integer                       :: size       
- !  complex(SP), allocatable      :: table(:,:) ! (/iv,ic,i_sp/)
+ !  complex(SP), allocatable      :: table(:,:) ! (/is,iv,ic,i_sp/)
  !  complex(SP), allocatable      :: Z(size)
  !  real(SP)   , allocatable      :: E(size)
  !  real(SP)   , allocatable      :: f(size)
@@ -47,16 +44,12 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
  use com,          ONLY:warning,error
- use stderr,       ONLY:intc
- use BS,           ONLY:BS_K_dim,O_v_state,O_c_state,T_group,&
-&                       O_n_v_states,O_n_c_states,BS_eh_en,&
+ use BS,           ONLY:BS_K_dim,T_group,BS_eh_en,BS_K_coupling,&
 &                       BS_bands,BS_nT_at_k,BS_anti_res,&
 &                       BS_not_const_eh_f,BS_drude_f_eh,BS_Blocks_and_Transitions_alloc,&
-&                       BSE_mode,BS_T_grp,BS_K_coupling,BS_nT_grps
- use parallel_m,   ONLY:PAR_BS_nT_grps,PAR_BS_T_grps_index,PAR_IND_Kk_ibz,PAR_IND_eh,&
-&                       PAR_IND_WF_b_and_k,PAR_COM_eh_INDEX,myid
+&                       BSE_mode,BS_T_grp,BS_nT_grps
+ use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_all,PAR_IND_T_ordered,PAR_IND_T_groups
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
- use vec_operate,  ONLY:i_bz
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
  use interfaces,   ONLY:PARALLEL_live_message
@@ -70,9 +63,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !
  ! Work Space
  !
- integer :: Iic(BS_bands(2),n_sp_pol),Iiv(BS_bands(2),n_sp_pol),ikbz,iv,ic,ik,ikp,i_sp,&
-&           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_PAR_nT_grps,i_T_in_the_grp,nT,&
-&           i_PAR_nT_grps_mem,is
+ integer :: ikbz,iv,ic,ik,ikp,i_sp,i_star,&
+&           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp,nT
  real(SP):: E_eh,f_eh
  integer, allocatable :: i_T_at_k(:)
  !
@@ -80,11 +72,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !
  if (FILL_the_groups) then
    !
-   allocate(BS_T_grp(PAR_BS_nT_grps))
-   allocate(PAR_BS_T_grps_index(PAR_BS_nT_grps))
-   call mem_est("PAR_BS_T_grps_index",(/PAR_BS_nT_grps/),(/IP/))
-   do i_g=1,PAR_BS_nT_grps
-     PAR_BS_T_grps_index(i_g)=0
+   allocate(BS_T_grp(BS_nT_grps))
+   do i_g=1,BS_nT_grps
      BS_T_grp(i_g)%size=0
    enddo
    n_loops=2
@@ -104,27 +93,23 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !
  allocate(i_T_at_k(Xk%nibz))
  !
+ call k_sym2sym(Xk,'k')
+ !
  do i_loop=1,n_loops
    !
    i_T_at_k=0
    BS_K_dim=0
    i_T_group_now=0
    i_T_group_last=0
-   i_PAR_nT_grps=0
    !
    do iv=BS_bands(1),Ken%nbm
      do ic=Ken%nbf+1,BS_bands(2)
        !
        do ik=1,Xk%nibz
          !
-         if (FILL_the_groups) then
-           if (.not.PAR_IND_Kk_ibz%element_1D(ik)) cycle
-           if (.not.PAR_IND_eh(ik)%element_1D(i_T_at_k(ik))) cycle
-         endif
-         !
-         do is=1,Xk%nstar(ik)
+         do i_star=1,Xk%nstar(ik)
            !
-           ikbz=i_bz(ik,is,Xk)
+           ikbz=Xk%s_table(ik,Xk%star(ik,i_star))
            ikp =Xk%sstar(qindx_X(iq,ikbz,1),1)
            !
            do i_sp=1,n_sp_pol
@@ -138,22 +123,23 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
                !
                i_T_group_now=T_group(BS_K_dim)
                !
+               if (.not.PAR_IND_T_groups%element_1D(i_T_group_now).and.&
+&                  .not.any( PAR_IND_T_ordered%element_2D(:,i_T_group_now)).and.&
+&                  .not.(BS_K_coupling.and.any( PAR_IND_T_all%element_2D(:,i_T_group_now) ))) cycle
+               !
                if (i_T_group_now/=i_T_group_last) then
                  !
-                 i_PAR_nT_grps=i_PAR_nT_grps+1
                  i_T_group_last=i_T_group_now
                  i_T_in_the_grp=0
                  !
                  if (i_loop==1) then
                    !
-                   PAR_BS_T_grps_index(i_PAR_nT_grps)=i_T_group_now
-                   !
                  else if (i_loop==2) then
                    !
-                   call BS_Blocks_and_Transitions_alloc(Ken,i_PAR_nT_grps)
+                   call BS_Blocks_and_Transitions_alloc(Ken,i_T_group_now)
                    !
-                   BS_T_grp(i_PAR_nT_grps)%ik      =ik
-                   BS_T_grp(i_PAR_nT_grps)%first_cv=BS_K_dim
+                   BS_T_grp(i_T_group_now)%ik      =ik
+                   BS_T_grp(i_T_group_now)%first_cv=BS_K_dim
                    !
                  endif
                  !
@@ -161,24 +147,24 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
                !
                if (i_loop==1) then
                  !
-                 BS_T_grp(i_PAR_nT_grps)%size=BS_T_grp(i_PAR_nT_grps)%size+1
+                 BS_T_grp(i_T_group_now)%size=BS_T_grp(i_T_group_now)%size+1
                  !
                else if (i_loop==2) then
                  !
                  i_T_in_the_grp=i_T_in_the_grp+1
                  !
-                 BS_T_grp(i_PAR_nT_grps)%table(i_T_in_the_grp,:)=(/is,iv,ic,i_sp/)
+                 BS_T_grp(i_T_group_now)%table(i_T_in_the_grp,:)=(/ikbz,iv,ic,i_sp/)
                  !
                  PAR_IND_WF_b_and_k%element_2D(ic, ik)=.TRUE.
                  PAR_IND_WF_b_and_k%element_2D(iv,ikp)=.TRUE.
                  !
-                 BS_T_grp(i_PAR_nT_grps)%E(i_T_in_the_grp)=E_eh
-                 BS_T_grp(i_PAR_nT_grps)%f(i_T_in_the_grp)=f_eh
+                 BS_T_grp(i_T_group_now)%E(i_T_in_the_grp)=E_eh
+                 BS_T_grp(i_T_group_now)%f(i_T_in_the_grp)=f_eh
                  if (associated(Ken%Z)) then
-                   BS_T_grp(i_PAR_nT_grps)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
+                   BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
                  endif
                  if (associated(Ken%W)) then
-                   BS_T_grp(i_PAR_nT_grps)%W(i_T_in_the_grp)=Ken%W(ic,ik,i_sp)-Ken%W(iv,ikp,i_sp)
+                   BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=Ken%W(ic,ik,i_sp)-Ken%W(iv,ikp,i_sp)
                  endif
                  !
                endif

@@ -788,12 +788,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
 &                                        COMM_index_2=PAR_COM_eh_INDEX,&
 &                                        COMM_index_3=PAR_COM_T_INDEX,&
+&                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
 &                                        COMM_A2A_2=PAR_COM_eh_A2A) 
    !
    ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
    !
    call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX(X_type))
    call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX(X_type))
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_k_for_P)
    !
    ! K-points (IBZ)
    !
@@ -805,7 +807,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_DIPk_ibz)
    call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_Xk_ibz)
-   call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_Xk_bz)
    PAR_Xk_nibz  =PAR_Kk_nibz
    PAR_DIPk_nibz=PAR_Kk_nibz
    allocate(PAR_DIPk_ibz_index(Xk%nibz))
@@ -907,7 +908,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             LOADED=PAR_IND_CON_BANDS_X(X_type)%n_of_elements(PAR_COM_CON_INDEX(X_type)%CPU_id+1),&
 &                             TOTAL=n_bands(2)-n_bands(1)+1,&
 &                             NCPU=PAR_COM_CON_INDEX(X_type)%n_CPU)
-   !
    !
    ! Response functions valence bands
    !

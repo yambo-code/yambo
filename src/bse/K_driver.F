@@ -42,8 +42,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
- use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,WF_load
- use wave_func,      ONLY:WF_buffered_IO,WF,WF_buffer
+ use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
 #if defined _SC
@@ -210,20 +209,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !... Blocks build-up
  call K_blocks( )
  !
- ! Wave Functions distribution
- !=============================
- !
- call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.FALSE.)
- !
- if (WF_buffered_IO) then
-   !
-   call WF_load(WF_buffer,0,1,BS_bands,(/1,Xk%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
-   !
- endif
- !
  ! 1. The IP Part (Dipoles included) ...
  ! ======================================
  call K_IP(iq,Ken,Xk,X_oscillators,W_bss)
+ !
+ ! Wave Functions distribution (overwrites the one done in K_IP to calculate the oscillators)
+ !=============================---------------------------------------------------------------
+ call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.TRUE.)
  !
  ! 2. The KERNEL
  ! ================

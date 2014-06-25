@@ -191,7 +191,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  endif
  !
  if (FILL_the_groups) then
-   call PARALLEL_live_message("WF's",LOADED=count(PAR_IND_WF_b_and_k%element_2D),TOTAL=Xk%nibz*(BS_bands(2)-BS_bands(1)+1))
+   call PARALLEL_live_message("WF's (Scattering)",LOADED=count(PAR_IND_WF_b_and_k%element_2D),TOTAL=Xk%nibz*(BS_bands(2)-BS_bands(1)+1))
  endif
  !
  ! REPORT

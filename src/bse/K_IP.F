@@ -31,11 +31,13 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
  use electrons,     ONLY:levels,spin_occ,spin
+ use interfaces,    ONLY:PARALLEL_WF_distribute
  use X_m,           ONLY:X_t,X_epsilon,X_drude_term,alpha_dim,eps_2_alpha,&
 &                        DIP_q_dot_iR,X_drude_term,X_alloc,iw_ref
  use BS,            ONLY:BSS_Vnl_included,BS_anti_res,BS_drude_f_eh,&
 &                        BS_K_dim,BSS_n_freqs,BSS_q0,BS_T_grp,BS_K_coupling,BS_nT_grps
- use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups
+ use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
+&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X
 #if defined _KERR
  use drivers,       ONLY:l_kerr
  use com,           ONLY:warning
@@ -119,6 +121,13 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  !...Drude
  call X_Drude(1,Ken,Xk,W_bss,X_oscillators,drude_GreenF,'c')
+ !
+ ! WF distribution
+ !=================
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,&
+&                            B_index=PAR_IND_CON_BANDS_X(X_oscillators%whoami),&
+&                            Bp_index=PAR_IND_VAL_BANDS_X(X_oscillators%whoami),&
+&                            CLEAN_UP=.TRUE.)
  !
  ! Oscillators I/O & Eps0
  !========================

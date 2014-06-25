@@ -297,7 +297,10 @@ module BS
      if (allocated(BS_nT_grps_at_k))     deallocate(BS_nT_grps_at_k)
      if (allocated(PAR_BS_T_grps_index)) deallocate(PAR_BS_T_grps_index)
      call mem_est("BS_nT_at_k PAR_BS_T_grps_index BS_nT_grps_at_k")
-     do i_g=1,PAR_BS_nT_col_grps
+     do i_g=1,BS_nT_grps
+       !
+       if (BS_T_grp(i_g)%size==0) cycle
+       !
        deallocate(BS_T_grp(i_g)%dipoles_R)
        call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(i_g)))
        if (BS_K_coupling) then
@@ -318,6 +321,7 @@ module BS
          deallocate(BS_T_grp(i_g)%W)
          call mem_est("BS_T_grp_W_N"//trim(intc(i_g)))
        endif
+       !
      enddo
    end subroutine
    !

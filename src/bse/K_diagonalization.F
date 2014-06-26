@@ -52,7 +52,7 @@ subroutine K_diagonalization(iq,W)
  ! Work Space
  !
  type(PP_indexes)     ::px
- integer              ::i1,BS_H_dim,i2
+ integer              ::i1,BS_H_dim
  logical              ::K_is_not_hermitian
  real(SP)             ::gauge_factor,Co
  !
@@ -116,8 +116,9 @@ subroutine K_diagonalization(iq,W)
  !
  ! Diagonalization DB (IN)
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+ !call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
+ !io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+ io_err=-1
  !
  if(io_err<0) then
    !
@@ -150,13 +151,7 @@ subroutine K_diagonalization(iq,W)
      if (BSS_write_eig_2_db) BS_mat=BS_V_right
      !
    else
-     do i1=1,BS_K_dim
-       do i2=1,BS_K_dim
-         write (*,*) i1,i2,BS_mat(i1,i2)
-       enddo 
-     enddo
      call mat_dia_inv(DIAGO,BS_mat,E_real=BS_E_real)
-     stop
      BS_E=BS_E_real
    endif
    call live_timing(steps=1)

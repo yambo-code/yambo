@@ -101,7 +101,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
  endif
  !
- write (*,*) run_Diago
  if (run_Diago)          call K_diagonalization(iq,W_bss)
  !
  if (run_inversion)      call K_inversion(iq,W_bss,Ken,Xk,q)

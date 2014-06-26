@@ -105,6 +105,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  PAR_BS_nT_col_grps = 0
  PAR_BS_T_grps_index = 0
  !
+ !
  do i_k=1,nXkibz
    !
    if (.not.PAR_IND_Kk_ibz%element_1D(i_k)) cycle

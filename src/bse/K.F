@@ -82,7 +82,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP):: Co,H_res_x,H_res_c,H_cpl_x,H_cpl_c,H_x,H_c
  !
  integer    :: i_block,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
-&              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p
+&              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p,H_pos(2)
  !
  ! Kernel
  !
@@ -429,7 +429,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        i_p  =Xk%sstar(i_p_bz,1)
        i_p_s=Xk%sstar(i_p_bz,1)
        !
-       if (i_Tgrp_k==i_Tgrp_p.and.i_Tk>i_Tp) cycle
+       H_pos = (/sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk,sum(BS_T_grp(:I_Tgrp_p-1)%size)+i_Tp/)
+       !
+       if (H_pos(1)>H_pos(2)) cycle
        !
        i_v_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,2)
        i_c_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,3)

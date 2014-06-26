@@ -102,10 +102,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
    i_T_group_now=0
    i_T_group_last=0
    !
-   do iv=BS_bands(1),Ken%nbm
-     do ic=Ken%nbf+1,BS_bands(2)
-       !
-       do ik=1,Xk%nibz
+   do ik=1,Xk%nibz
+     do iv=BS_bands(1),Ken%nbm
+       do ic=Ken%nbf+1,BS_bands(2)
          !
          do i_star=1,Xk%nstar(ik)
            !

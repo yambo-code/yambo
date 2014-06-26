@@ -36,7 +36,7 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
  ! Work Space
  !
  integer :: i_T_el,i_c,i_v,i_spin,i_k_bz,i_k,i_s,i_g1,i_g2,i_p_bz,i_p,&
-&           i_sp,i_T_last_with_identity_sym
+&           i_sp,i_T_last_with_identity_sym,i_T_el_p
  !
  ! Oscillators already done ?
  !
@@ -74,17 +74,18 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
      !
      i_T_last_with_identity_sym=-1
      if (i_s>1) then
-       do i_T_last_with_identity_sym=i_T_el-1,1,-1
-         if (all( BS_T_grp(i_T)%table(i_T_last_with_identity_sym,:)==(/Xk%s_table(i_k,1),i_v,i_c,i_spin/)) ) exit
+       do i_T_el_p=i_T_el-1,1,-1
+         if (all( BS_T_grp(i_T)%table(i_T_el_p,:)==(/Xk%s_table(i_k,1),i_v,i_c,i_spin/)) ) then
+           i_T_last_with_identity_sym=i_T_el_p
+           exit
+         endif
        enddo
      endif
      !
-     BS_collision%is(3)=1
-     BS_collision%os(3)=1
-     !
-     call scatterBamp(BS_collision)
-     !
      if  (i_s==1.or.i_T_last_with_identity_sym<0) then
+       !
+       call scatterBamp(BS_collision)
+       !
 !$omp parallel do default(shared), private(i_g1,i_g2)
        do i_g1=1,BS_n_g_exch
          if (divide_by_qpg)      BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
@@ -92,30 +93,22 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
        enddo
 !$omp end parallel do
      else
-       !
 !$omp parallel do default(shared), private(i_g1,i_g2)
        do i_g1=1,BS_n_g_exch
          i_g2=g_rot(sop_inv(i_s),i_g1)
-         if (divide_by_qpg)      BS_T_grp(i_T)%O_x(i_g1,i_T_el)=&
-&                                BS_T_grp(i_T)%O_x(i_g2,i_T_last_with_identity_sym)/bare_qpg(iq,i_g2)
-         if (.not.divide_by_qpg) BS_T_grp(i_T)%O_x(i_g1,i_T_el)=&
-&                                BS_T_grp(i_T)%O_x(i_g2,i_T_last_with_identity_sym)
-         if (i_s>nsym/(i_time_rev+1))  BS_T_grp(i_T)%O_x(i_g1,i_T_el)=conjg(BS_T_grp(i_T)%O_x(i_g1,i_T_el))
+         BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_T_grp(i_T)%O_x(i_g2,i_T_last_with_identity_sym)
+         if (i_s>nsym/(i_time_rev+1)) BS_T_grp(i_T)%O_x(i_g1,i_T_el)=conjg(BS_T_grp(i_T)%O_x(i_g1,i_T_el))
        enddo
 !$omp end parallel do
-       !
      endif
-     !
    else
      !
      call scatterBamp(BS_collision)
      !
 !$omp parallel do default(shared), private(i_g1)
      do i_g1=1,BS_n_g_exch
-       !
        if (divide_by_qpg)      BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
        if (.not.divide_by_qpg) BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g1)
-       !
      enddo
 !$omp end parallel do
      !

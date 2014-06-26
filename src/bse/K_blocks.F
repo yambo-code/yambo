@@ -35,6 +35,7 @@ subroutine K_blocks( )
  !  complex(SP), allocatable      :: mat(:,:)
  !end type BS_block
  !
+ use pars,         ONLY:cZERO
  use memory_m,     ONLY:mem_est
  use parallel_m,   ONLY:PAR_IND_T_all,PAR_IND_T_ordered
  use interfaces,   ONLY:PARALLEL_live_message
@@ -69,6 +70,7 @@ subroutine K_blocks( )
        !
        if (i_loop==2) then
          allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+         BS_blk(n_BS_blks)%mat=cZERO
          tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
          BS_blk(n_BS_blks)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
          BS_blk(n_BS_blks)%mode="R"
@@ -85,6 +87,7 @@ subroutine K_blocks( )
          if (i_loop==2) then
            allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
            tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
+           BS_blk(n_BS_blks)%mat=cZERO
            BS_blk(n_BS_blks)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
            BS_blk(n_BS_blks)%mode="A"
            BS_blk(n_BS_blks)%iT_k=i_T

@@ -196,6 +196,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  ph_mean_speed=0._SP
  q_mod=0._SP
  q_weight_RT=0._SP
+ q_weight_tmp=0._SP
  !
  if (RIM_n_rand_pts>0) then
    !
@@ -217,9 +218,9 @@ subroutine RT_ELPH_initialize(E,k,q)
    !
    ph_mean_speed=ph_mean_speed/float(i1)
    !
-   call k_ibz2bz(q,'i',.TRUE.)  
-   !
  endif
+ !
+ call k_ibz2bz(q,'i',.TRUE.)  
  !
  RADIUS_sphere=(3.*RL_vol/q%nbz/4./pi)**(1./3.)
  !
@@ -234,12 +235,12 @@ subroutine RT_ELPH_initialize(E,k,q)
      !
      if (ph_E>0.) then
        q_weight_RT(iq,il,1)=1./ph_E/float(q%nbz)
-       q_weight_RT(iq,il,2)=bose_f(ph_E)/ph_E/float(q%nbz)/spin_occ
+       q_weight_RT(iq,il,2)=1./ph_E/float(q%nbz)*bose_f(ph_E)/spin_occ
      endif
      !
      if (RIM_n_rand_pts>0.and.q_mod(iq)<=q0_mod .and. il<=3) then
        q_weight_RT(iq,il,1)=q_weight_tmp(iq,1)/ph_mean_speed(il)
-       q_weight_RT(iq,il,2)=Bose_temp*q_weight_tmp(iq,2)/ph_mean_speed(il)**2/spin_occ
+       q_weight_RT(iq,il,2)=q_weight_tmp(iq,2)/ph_mean_speed(il)**2*Bose_temp/spin_occ
      endif
      !
    enddo

@@ -340,7 +340,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Scattering
  !
- call it(defs,'INTERPmode',    '[RT] Step interpolation mode (DEFAULT / FIELD / EXP / FLAT / NONE)',RT_dynamics_KIND,Verb_level=V_real_time)
+ call it(defs,'INTERPmode',    '[RT] Step interpolation mode (DEFAULT / FIELD / EXP / FLAT / NONE)',&
+&                           RT_dynamics_KIND,Verb_level=V_real_time)
  call it(defs,'INTERPsteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
 &                           RT_dynamics_steps,Verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'INTERPdecay',   '[RT] Exponential decay lifetime of the distribution of groups of lifetimes evaluated',&

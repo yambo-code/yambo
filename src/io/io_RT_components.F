@@ -270,13 +270,6 @@ integer function io_RT_components(what,ID)
    !
    deallocate(TMP_matrix)
    !
-   if (read_is_on(ID)) then
-     do ib=SC_bands(1),SC_bands(2)
-       RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
-       RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
-     enddo
-   endif
-   !
  endif
  !
 #endif
@@ -292,23 +285,15 @@ integer function io_RT_components(what,ID)
    !
    i_spin=1
    !
-   if (ver_is_gt_or_eq(ID,revision=944)) then
-     i_time_range=(/NE_i_time-G_MEM_steps+1,NE_i_time/)
-     if (i_time_range(1)<=0) i_time_range(1)=1
-     do i_time=i_time_range(1),i_time_range(2)
-       call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_ITIME"//trim(intc(i_time)),&
-&           VAR_SZ=(/SC_nbands,SC_nbands,2/))
-       if (write_is_on(ID)) call mat_c2r(dG_lesser(:,:,ik,MEM_index(i_time,G_MEM_steps)),TMP_matrix)
-       call io_bulk(ID,R3=TMP_matrix)
-       if (read_is_on(ID))  call mat_r2c(TMP_matrix,dG_lesser(:,:,ik,MEM_index(i_time,G_MEM_steps)))
-     enddo
-   else
-     call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
+   i_time_range=(/NE_i_time-G_MEM_steps+1,NE_i_time/)
+   if (i_time_range(1)<=0) i_time_range(1)=1
+   do i_time=i_time_range(1),i_time_range(2)
+     call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_ITIME"//trim(intc(i_time)),&
 &         VAR_SZ=(/SC_nbands,SC_nbands,2/))
-     if (write_is_on(ID)) call mat_c2r(dG_lesser(:,:,ik,MEM_index(NE_i_time,G_MEM_steps)),TMP_matrix)
+     if (write_is_on(ID)) call mat_c2r(dG_lesser(:,:,ik,MEM_index(i_time,G_MEM_steps)),TMP_matrix)
      call io_bulk(ID,R3=TMP_matrix)
-     if (read_is_on(ID))  call mat_r2c(TMP_matrix,dG_lesser(:,:,ik,MEM_index(NE_i_time,G_MEM_steps)))
-   endif
+     if (read_is_on(ID))  call mat_r2c(TMP_matrix,dG_lesser(:,:,ik,MEM_index(i_time,G_MEM_steps)))
+   enddo
    !
    if(l_NE_with_fields.and.ik==RT_nk) then
      call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/3,3,2/))
@@ -380,6 +365,13 @@ integer function io_RT_components(what,ID)
      enddo
      !
      deallocate(TMP_matrix)
+     !
+     if (read_is_on(ID)) then
+       do ib=SC_bands(1),SC_bands(2)
+         RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
+         RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
+       enddo
+     endif
      !
    endif
    !

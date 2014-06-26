@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function tddft_alda_r_space(iq,ic,ik,iv,is,mode)
+function TDDFT_ALDA_R_space(iq,ic,ik,iv,is,mode)
  !
  ! Calculates the F_xc scattering 
  !
- ! mode 1
+ ! mode 1 
  !
  !  (ic(1),ik(1),is(1)) --<--:...:--<-- (ic(2),ik(2),is(2))
  !                              :Fxc:
@@ -38,17 +38,19 @@ function tddft_alda_r_space(iq,ic,ik,iv,is,mode)
  !  (iv(1),ik(3),is(3)) -->--:...:-->-- (ic(2),ik(4),is(4))
  !
  use pars,           ONLY:SP,pi
- use com,            ONLY:error
  use FFT_m,          ONLY:fft_size
  use xc_functionals, ONLY:F_xc
  use D_lattice,      ONLY:nsym,i_time_rev
  use wrapper,        ONLY:V_dot_V
- use electrons,      ONLY:n_spinor,n_spin
+#ifdef _OPENMP
+ use wrapper,        ONLY:V_dot_V_omp
+#endif
+ use electrons,      ONLY:n_spinor
  !
  implicit none
  !
  integer     :: iq,ic(2),iv(2),ik(4),is(4),mode
- complex(SP) :: tddft_alda_r_space
+ complex(SP) :: TDDFT_ALDA_R_space
  ! 
  ! Work Space
  !
@@ -57,12 +59,9 @@ function tddft_alda_r_space(iq,ic,ik,iv,is,mode)
  complex(SP) :: WF_symm1(fft_size,n_spinor)
  complex(SP) :: WF_symm2(fft_size,n_spinor)
  !
- if(n_spin>1) call error('TDDFT/ALDA not implemented for n_spin>1')
- !
  ! Simplified procedure when at the Gamma point.
- ! iq==1 => ik(1)=ik(3) is(1)=is(3) ik(2)=ik(4) is(2)=is(4)
  !
- tddft_alda_r_space=cmplx(0.,0.,SP)
+ TDDFT_ALDA_R_space=cmplx(0.,0.,SP)
  !
  call WF_apply_symm((/ic(1),ik(1),is(1),1/),WF_symm1) 
  call WF_apply_symm((/iv(1),ik(3),is(3),1/),WF_symm2)
@@ -75,8 +74,13 @@ function tddft_alda_r_space(iq,ic,ik,iv,is,mode)
  if (mode==1) rhotwr2(:)=F_xc(:)*WF_symm1(:,1)*conjg(WF_symm2(:,1))
  if (mode==2) rhotwr2(:)=F_xc(:)*WF_symm2(:,1)*conjg(WF_symm1(:,1))
  !
- ! Sum
- tddft_alda_r_space=V_dot_V(fft_size,rhotwr1,rhotwr2)
+ ! SUM
+ !=====
+#ifdef _OPENMP
+ TDDFT_ALDA_R_space=V_dot_V_omp(fft_size,rhotwr1,rhotwr2)
+#else
+ TDDFT_ALDA_R_space=V_dot_V(fft_size,rhotwr1,rhotwr2)
+#endif
  !
  ! tddft_alda_r_space'd be 2*cdotc/u*real(fft_size,SP)/DL_vol/Nq 
  ! but it is multiplied by Co
@@ -85,6 +89,6 @@ function tddft_alda_r_space(iq,ic,ik,iv,is,mode)
  !
  ! in K
  !
- tddft_alda_r_space=tddft_alda_r_space*real(fft_size,SP)/4._SP/pi
+ TDDFT_ALDA_R_space=TDDFT_ALDA_R_space*real(fft_size,SP)/4._SP/pi
  !
 end function

@@ -44,6 +44,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use fields,        ONLY:global_gauge
  use KERR,          ONLY:DIP_P_symm,KERR_alloc
 #endif
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  type(levels) ::Ken
@@ -63,6 +66,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  call section('=','Independent Particles absorption') 
  !===================================================
+ !
+#if defined _TIMING
+ call timing('T_space IP',OPR='start')
+#endif
  !
  ! Setups
  !
@@ -99,7 +106,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
  endif
  !
- if (l_bs_fxc) return
+ if (l_bs_fxc) goto 1
  !
  ! Polarizability ?
  !==================
@@ -250,5 +257,11 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    deallocate(X_epsilon,X_drude_term)
    !
  endif
+ !
+1 continue
+ !
+#if defined _TIMING
+ call timing('T_space IP',OPR='stop')
+#endif
  !
 end subroutine

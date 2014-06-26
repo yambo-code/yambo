@@ -111,5 +111,8 @@ subroutine el_density(en,Xk,rho,force_si)
  if (mag_syms)      return
  if (.not.force_si) rho(:)=(1+i_time_rev)*rho(:)
  if (     force_si) rho(:)=   i_time_rev *real(rho(fft_rot_r_inv(:)),SP)+rho(:)
+ write (*,*) 1,PAR_IND_WF_linear%element_2D(:,1)
+ write (*,*) 2,PAR_IND_WF_linear%element_2D(:,2)
+ write (*,*) 3,PAR_IND_WF_linear%element_2D(:,3)
  ! 
 end subroutine

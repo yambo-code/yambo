@@ -25,7 +25,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W>
  !
- use pars,         ONLY:SP,pi,IP
+ use pars,         ONLY:SP,pi,IP,schlen
  use parser_m,     ONLY:parser
  use LOGO,         ONLY:pickup_a_random
  use memory_m,     ONLY:mem_est
@@ -58,9 +58,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use matrix_operate,ONLY:UP_matrix_index
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
+#ifdef _OPENMP
+ use wrapper,       ONLY:Vstar_dot_V_omp,V_dot_V_omp
+#endif
  use wrapper,       ONLY:V_dot_V,Vstar_dot_V,M_by_V
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wave_func,     ONLY:WF
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  !
  use BS,            ONLY:n_BS_blks,BS_blk,BS_T_grp
  !
@@ -83,13 +89,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: i_block,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p,H_pos(2)
+ character(schlen) :: section_title
  !
  ! Kernel
  !
  integer(8) :: n_K_elements(ncpu),tot_n_K_elements,i8nc,i8id
  real(SP)   :: E_eh_range(2),S_eh_range(2)
  complex(SP),allocatable ::BS_W(:,:,:)
- complex(SP),   external ::tddft_alda_r_space
+ complex(SP),   external ::TDDFT_ALDA_R_space
  logical    :: W_is_em1s,W_is_pp
  !
  ! Oscillators
@@ -117,10 +124,29 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call collision_reset(BS_collision)
  !
+#if defined _TIMING
+ call timing('X T_space Kernel',OPR='start')
+#endif
+ !
  ! Titles
  !========
  !
- if (.not.l_bs_fxc) call section('=','Bethe-Salpeter Kernel')
+ if (l_bs_fxc) then
+   section_title="Bethe-Salpeter Kernel -> xc-kernel"
+ else
+   if (BS_K_is_ALDA) then
+     section_title="TDDFT Kernel (Res. COR"
+   else
+     section_title="Bethe-Salpeter Kernel ("
+   endif
+   if (BS_res_K_corr)     section_title=trim(section_title)//" Res. COR"
+   if (BS_res_K_exchange) section_title=trim(section_title)//" Res. EXX"
+   if (BS_cpl_K_corr)     section_title=trim(section_title)//" Cpl. COR"
+   if (BS_cpl_K_exchange) section_title=trim(section_title)//" Cpl. EXX"
+   section_title=trim(section_title)//")"
+ endif
+ !
+ call section('=',trim(section_title))
  !
  ! GPL_EXCLUDE_START
  !
@@ -187,7 +213,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    X%ng=X%ng_db
    !
-   if (ioX_err/=0) return
+   if (ioX_err/=0) goto 1
    !
  endif
  !
@@ -425,9 +451,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        i_p_bz=BS_T_grp(i_Tgrp_p)%table(i_Tp,1)
        !
        i_k  =Xk%sstar(i_k_bz,1)
-       i_k_s=Xk%sstar(i_k_bz,1)
+       i_k_s=Xk%sstar(i_k_bz,2)
        i_p  =Xk%sstar(i_p_bz,1)
-       i_p_s=Xk%sstar(i_p_bz,1)
+       i_p_s=Xk%sstar(i_p_bz,2)
        !
        H_pos = (/sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk,sum(BS_T_grp(:I_Tgrp_p-1)%size)+i_Tp/)
        !
@@ -444,31 +470,50 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        H_x=(0.,0.)
        H_c=(0.,0.)
-       ! 
-       ! :::Exchange:::
        !
        if (BS_blk(i_block)%mode=="R") then
          if (BS_res_K_exchange) then
+           !
+           ! :::EXCHANGE    (resonant):::
+           !
+#ifdef _OPENMP
+           H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp), BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+#else
            H_x=Vstar_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp), BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+#endif
          endif
        else if (BS_blk(i_block)%mode=="A") then
          if (BS_cpl_K_exchange) then
+           !
+           ! :::EXCHANGE    (coupling):::
+           !
+#ifdef _OPENMP
+           H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
+&                          BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+#else
            H_x=V_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
-&                                   BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+&                      BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+#endif
          endif
        endif
        !
-       ! :::ALDA        (resonant):::
-       !
-!       if (BS_K_is_ALDA) H_res_x=H_res_x+&
-!&                        tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
-!&                                              (/iv1,iv2/),(/is1,is2,is1,is2/),1)
-       !
-       ! :::ALDA        (coupling):::
-       !
-!       if (BS_K_is_ALDA) H_cpl_x=H_cpl_x+&
-!&                        tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
-!&                                              (/iv1,iv2/),(/is1,is2,is1,is2/),2)
+       if (BS_K_is_ALDA) then
+         !
+         if (BS_blk(i_block)%mode=="R") then
+           !
+           ! :::ALDA        (resonant):::
+           !
+           H_x=H_x+TDDFT_ALDA_R_space(iq,(/i_c_k,i_c_p/),(/i_k,  i_p,  i_k,  i_p/),&
+&                                        (/i_v_k,i_v_p/),(/i_k_s,i_p_s,i_k_s,i_p_s/),1)
+         else
+           !
+           ! :::ALDA        (coupling):::
+           !
+           H_x=H_x+TDDFT_ALDA_R_space(iq,(/i_c_k,i_c_p/),(/i_k,  i_p,  i_k,  i_p/),&
+&                                        (/i_v_k,i_v_p/),(/i_k_s,i_p_s,i_k_s,i_p_s/),2)
+         endif
+         !
+       endif
        !
        BS_blk(i_block)%mat(i_Tk,i_Tp)=H_x*real(spin_occ)*Co-H_c
        !
@@ -538,5 +583,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Final CLEAN
  !
  call WF_free(WF)
+ !
+1 continue
+ !
+#if defined _TIMING
+ call timing('X T_space Kernel',OPR='stop')
+#endif
  !
 end subroutine

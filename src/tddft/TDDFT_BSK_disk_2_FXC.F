@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
+subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  use pars,          ONLY:SP,pi
  use memory_m,      ONLY:mem_est

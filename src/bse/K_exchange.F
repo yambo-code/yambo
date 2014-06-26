@@ -27,6 +27,9 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
  use BS,             ONLY:BS_T_grp,BS_collision,BS_oscillators_alloc
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  type(bz_samp) :: Xk
@@ -41,6 +44,10 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
  ! Oscillators already done ?
  !
  if (allocated( BS_T_grp(i_T)%O_x )) return
+ !
+#if defined _TIMING
+ call timing('T_space EXX Osc.',OPR='start')
+#endif
  !
  ! Allocate
  !
@@ -117,5 +124,9 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
  enddo T_loop
  !
  deallocate(BS_collision%rhotw)
+ !
+#if defined _TIMING
+ call timing('T_space EXX Osc.',OPR='stop')
+#endif
  !
 end subroutine

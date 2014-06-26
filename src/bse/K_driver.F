@@ -28,7 +28,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use com,            ONLY:msg,warning
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:string_remove
- use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_nbands
+ use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
  use BS,             ONLY:BS_bands,BS_q,&
@@ -42,7 +42,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
- use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
+ use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
 #if defined _SC
@@ -91,7 +91,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  call X_reset(X_tddft)
  call W_reset(W_bss)
  !
- call tddft_do_X_W_typs(-1,X_tddft,Xw)
+ call TDDFT_do_X_W_typs(-1,X_tddft,Xw)
  !
 #if defined _SC || defined _KERR
  !                 =============
@@ -167,7 +167,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
  BS_anti_res=index(BSE_mode,'causal')/=0
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
- BS_K_is_ALDA=l_alda_fxc
+ BS_K_is_ALDA=l_alda_fxc.and.n_spin==1
+ if (n_spin>1.and.l_alda_fxc) call warning('TDDFT/ALDA not implemented for n_spin>1. Switched off')
 #if defined _KERR
  call parser('EvalKerr',l_kerr)
  if(l_kerr) call parser('AnHall',l_anomalous_Hall)
@@ -216,6 +217,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! Wave Functions distribution (overwrites the one done in K_IP to calculate the oscillators)
  !=============================---------------------------------------------------------------
  call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.TRUE.)
+ !
+ call PARALLEL_WF_index( )
  !
  ! 2. The KERNEL
  ! ================

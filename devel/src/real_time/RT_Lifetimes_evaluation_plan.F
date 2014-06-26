@@ -52,7 +52,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  l_interpolate=trim(RT_dynamics_KIND)=="DEFAULT" .or. trim(RT_dynamics_KIND)=="FIELD" .or. &
 &              trim(RT_dynamics_KIND)=="EXP"     .or. trim(RT_dynamics_KIND)=="FLAT"
- "
+ !
  if(.not.l_interpolate) RT_dynamics_KIND="NONE"
  !
  if (RT_dynamics_steps(1)<0. .or. it_start>=NE_steps .or. trim(RT_dynamics_KIND)=="NONE") then

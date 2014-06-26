@@ -191,7 +191,8 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
        !
        ! G(T0+dt) = G(T0) e^{-i\delta\epsilon dt} - i dt *(I1(T) - I2(T)) e^{-i\delta\epsilon (dt')}
        !
-       if(l_RT_RWA) call RT_apply_zero_dyn(ik,E,dT,dTp,G_out(:,:,ik),G_old(:,:,ik))
+       if(     l_RT_RWA) call RT_apply_zero_dyn(ik,E,dT,dTp,G_out(:,:,ik),G_old(:,:,ik))
+       if(.not.l_RT_RWA) G_out(:,:,ik)=G_out(:,:,ik)+G_old(:,:,ik)
        !
        ! Dephasing and carriers relaxation step
        ! G(T0+dt) = G(T0) - i dt * Sigma_relax(T)

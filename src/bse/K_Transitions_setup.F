@@ -52,7 +52,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
- use interfaces,   ONLY:PARALLEL_live_message
  !
  implicit none
  type(levels) :: Ken
@@ -189,10 +188,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
    call warning('Fractional e/h occupations. Causal BSEmode forced.')
    BSE_mode='causal'
    BS_anti_res=.true.
- endif
- !
- if (FILL_the_groups) then
-   call PARALLEL_live_message("WF's (Scattering)",LOADED=count(PAR_IND_WF_b_and_k%element_2D),TOTAL=Xk%nibz*(BS_bands(2)-BS_bands(1)+1))
  endif
  !
  ! REPORT

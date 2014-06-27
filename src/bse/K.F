@@ -503,14 +503,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !
            ! :::ALDA        (resonant):::
            !
-           H_x=H_x+TDDFT_ALDA_R_space(iq,(/i_c_k,i_c_p/),(/i_k,  i_p,  i_k,  i_p/),&
-&                                        (/i_v_k,i_v_p/),(/i_k_s,i_p_s,i_k_s,i_p_s/),1)
+           H_x=H_x+TDDFT_ALDA_R_space((/i_c_k,i_c_p/),(/i_k,  i_p,  i_k,  i_p/),&
+&                                     (/i_v_k,i_v_p/),(/i_k_s,i_p_s,i_k_s,i_p_s/),'RES')
          else
            !
            ! :::ALDA        (coupling):::
            !
-           H_x=H_x+TDDFT_ALDA_R_space(iq,(/i_c_k,i_c_p/),(/i_k,  i_p,  i_k,  i_p/),&
-&                                        (/i_v_k,i_v_p/),(/i_k_s,i_p_s,i_k_s,i_p_s/),2)
+           H_x=H_x+TDDFT_ALDA_R_space((/i_c_k,i_c_p/),(/i_k,  i_p,  i_k,  i_p/),&
+&                                     (/i_v_k,i_v_p/),(/i_k_s,i_p_s,i_k_s,i_p_s/),'CPL')
          endif
          !
        endif

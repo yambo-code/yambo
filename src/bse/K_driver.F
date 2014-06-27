@@ -216,7 +216,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Wave Functions distribution (overwrites the one done in K_IP to calculate the oscillators)
  !=============================---------------------------------------------------------------
- call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.FALSE.)
  !
  call PARALLEL_WF_index( )
  !

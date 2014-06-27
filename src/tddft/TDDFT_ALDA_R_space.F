@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function TDDFT_ALDA_R_space(iq,ic,ik,iv,is,mode)
+function TDDFT_ALDA_R_space(ic,ik,iv,is,mode)
  !
  ! Calculates the F_xc scattering 
  !
@@ -46,10 +46,14 @@ function TDDFT_ALDA_R_space(iq,ic,ik,iv,is,mode)
  use wrapper,        ONLY:V_dot_V_omp
 #endif
  use electrons,      ONLY:n_spinor
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
- integer     :: iq,ic(2),iv(2),ik(4),is(4),mode
+ integer     :: ic(2),iv(2),ik(4),is(4)
+ character(3):: mode
  complex(SP) :: TDDFT_ALDA_R_space
  ! 
  ! Work Space
@@ -58,6 +62,10 @@ function TDDFT_ALDA_R_space(iq,ic,ik,iv,is,mode)
  complex(SP) :: rhotwr2(fft_size)
  complex(SP) :: WF_symm1(fft_size,n_spinor)
  complex(SP) :: WF_symm2(fft_size,n_spinor)
+ !
+#if defined _TIMING
+ call timing('T_space ALDA scatt.',OPR='start')
+#endif
  !
  ! Simplified procedure when at the Gamma point.
  !
@@ -71,8 +79,8 @@ function TDDFT_ALDA_R_space(iq,ic,ik,iv,is,mode)
  call WF_apply_symm((/ic(2),ik(2),is(2),1/),WF_symm1) 
  call WF_apply_symm((/iv(2),ik(4),is(4),1/),WF_symm2)
  !
- if (mode==1) rhotwr2(:)=F_xc(:)*WF_symm1(:,1)*conjg(WF_symm2(:,1))
- if (mode==2) rhotwr2(:)=F_xc(:)*WF_symm2(:,1)*conjg(WF_symm1(:,1))
+ if (mode=="RES") rhotwr2(:)=F_xc(:)*WF_symm1(:,1)*conjg(WF_symm2(:,1))
+ if (mode=="CPL") rhotwr2(:)=F_xc(:)*WF_symm2(:,1)*conjg(WF_symm1(:,1))
  !
  ! SUM
  !=====
@@ -90,5 +98,9 @@ function TDDFT_ALDA_R_space(iq,ic,ik,iv,is,mode)
  ! in K
  !
  TDDFT_ALDA_R_space=TDDFT_ALDA_R_space*real(fft_size,SP)/4._SP/pi
+ !
+#if defined _TIMING
+ call timing('T_space ALDA scatt.',OPR='stop')
+#endif
  !
 end function

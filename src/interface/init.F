@@ -651,7 +651,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_gw0.or.l_life) then
    !
    if (l_elphoton_corr) then
-     call initactivate(1,'GbndRnge GDamping dScStep DysSolver') 
+     call initactivate(1,'FFTGvecs GbndRnge GDamping dScStep DysSolver') 
      if (trim(QP_solver)=="g") then
        call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
      else

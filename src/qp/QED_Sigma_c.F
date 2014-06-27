@@ -24,18 +24,19 @@
 subroutine QED_Sigma_c(E,k,q,qp)
  !
  use pars,                ONLY:SP,pi,cI,cZERO
- use units,               ONLY:SPEED_OF_LIGHT
+ use units,               ONLY:SPEED_OF_LIGHT,HA2EV
  use drivers,             ONLY:l_elel_corr
- use electrons,           ONLY:levels,n_spinor
+ use electrons,           ONLY:levels,n_spinor,spin_occ
  use D_lattice,           ONLY:idt_index,alat,a,Tel
  use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,g_rot,g_vec
- use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_table,QP_G_damp
+ use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_table,QP_G_damp,QP_Sc,QP_dSc_steps
  use vec_operate,         ONLY:v_norm
  use wave_func,           ONLY:WF,WAVEs,wf_x,wf_y,wf_z,WF_derivative_alloc,wf_ng
  use FFT_m,               ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_norm
  use interfaces,          ONLY:WF_load
  use functions,           ONLY:Fermi_fnc,bose_f 
-!
+ use LIVE_t,        ONLY:live_timing
+ !
  implicit none
  !
  type(levels)              ::E
@@ -69,10 +70,23 @@ subroutine QED_Sigma_c(E,k,q,qp)
  allocate(r_cell_cc(3,fft_size))
  allocate(WF_der(fft_size,3),WF_der_g(wf_ng,3),fft_der(fft_size),WF_der_rot(fft_size,3))
  !
+ ir = 0
+ do ir1 = 0, fft_dim(1)-1
+   do ir2 = 0, fft_dim(2)-1
+     do ir3 = 0, fft_dim(3)-1
+       ir = 1 + ir1 + ir2*fft_dim(1) + ir3*fft_dim(1)*fft_dim(2)
+       r_cell_cc(:,ir) = ir1*a(1,:)/fft_dim(1) +&
+&                        ir2*a(2,:)/fft_dim(2) +&
+&                        ir3*a(3,:)/fft_dim(3)
+     end do
+   end do
+ end do
+ !
  call k_ibz2bz(q,'c',.false.)
  !
  ! (i_n,i_k,i_k_s) --- (i_q,i_q_s) ---> (i_m,i_p,i_p_s)
- !
+ ! 
+ call live_timing('Sigma_c',nqbz) 
  !
  Q_loop: do i_q_bz=1,nqbz 
    !
@@ -112,32 +126,26 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        call WF_apply_symm((/i_m, i_p, i_p_s, 1/), WF_p)
        !
-       ir = 0
-       do ir1 = 0, fft_dim(1)-1
-         do ir2 = 0, fft_dim(2)-1
-           do ir3 = 0, fft_dim(3)-1
-             ir = 1 + ir1 + ir2*fft_dim(1) + ir3*fft_dim(1)*fft_dim(2)
-             r_cell_cc(:,ir) = ir1*a(1,:)/fft_dim(1) +&
-&                              ir2*a(2,:)/fft_dim(2) +&
-&                              ir3*a(3,:)/fft_dim(3)
-           end do
-         end do
-       end do
-       !
        !We now evaluate the derivative of (i_m,i_p,i_p_s) in G space
+       !
        WF_der=cZERO
+       !
+       !call eval_gradient(f,f_gradient)
+       !
        do i_c=1,3
          !
          fft_der=cZERO
          WF_der_g(1:wf_ng,i_c)=WF_g%c(1:wf_ng,i_wf_at_p_g)*g_vec(1:wf_ng,i_c)*2.0_SP*pi/alat(i_c)
          !and fft it to real space
-         fft_der(fft_g_table(1:wf_ng,1))=WF_der_g(1:wf_ng,i_c)*fft_norm
+         fft_der(fft_g_table(1:wf_ng,1))=WF_der_g(1:wf_ng,i_c)
 #if defined _FFTW
+ call dfftw_destroy_plan(fftw_plan)
+ fftw_plan = 0
          call fft_3d(fft_der,fft_dim,1,fftw_plan)
 #else
          call fft_3d(fft_der,fft_dim,1)
 #endif
-         WF_der(:,i_cp)=fft_der(:)
+         WF_der(:,i_c)=fft_der(:)
        enddo
        !
        !Now we multiply (i_m,i_p,i_p_s) and its gradient by exp(iG_0r)
@@ -154,27 +162,34 @@ subroutine QED_Sigma_c(E,k,q,qp)
        O=dot_product(WF_p_rot(:,1),WF%c(:,i_wf_at_k))
        !
        P=cZERO
-       do i_c=1,3
-         do i_cp=1,3
+       do i_cp=1,3
+         !
          !\int dr (i_n,i_k,i_k_s)exp(-iG_0r)\nabla_{i_cp}(i_m,i_q,i_q_s)^*
          XHI(i_cp) = dot_product(WF_der_rot(:,i_cp),WF%c(:,i_wf_at_k))
          !
-         P=P + Photon_pol_vec(i_cp,i_c)*(XHI(i_cp)*O - cI*(k_cc(i_cp) - q_cc(i_cp) + &
-&          g_vec(i_p_G0,i_cp)*2*pi/alat(i_cp))*real(conjg(O)*O))*q_cc(i_c)
-!           QP_Sc(i_qp) = QP_Sc(i_qp) + 
+         do i_c=1,3
+           P=P + Photon_pol_vec(i_cp,i_c)*(XHI(i_cp)*O - cI*(k_cc(i_cp) - q_cc(i_cp) + &
+&            g_vec(i_p_G0,i_cp)*2*pi/alat(i_cp))*real(conjg(O)*O))*q_cc(i_c)
            !
          enddo 
        enddo
        !
-       S=S + P*((1._SP-Fermi_fnc(E%E(i_m,i_p,1),Tel))/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_e+cI*QP_G_damp) +&
-&        Fermi_fnc(E%E(i_m,i_q,1),Tel)/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_e+cI*QP_G_damp)) 
+       QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps) + &
+&        P*((spin_occ-E%f(i_m,i_p,1))/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_e+cI*QP_G_damp) +&
+&        E%f(i_m,i_q,1)/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_e+cI*QP_G_damp))/spin_occ /(8._SP*pi**2)
        !
      enddo B_loop
    enddo QP_loop
+   !
+   call live_timing(steps=1)
+   !
  enddo Q_loop
  !
- S=S/(8._SP*pi**2)
+ call live_timing( )
  !
+ do i_qp=1,qp%n_states
+   write (*,*) i_qp,QP_Sc(i_qp,1)*HA2EV
+ enddo
  stop
  !
 end subroutine QED_sigma_c

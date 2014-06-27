@@ -68,7 +68,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  allocate(WF_p(fft_size,n_spinor),WF_p_rot(fft_size,n_spinor)) 
  allocate(r_cell_cc(3,fft_size))
- allocate(WF_der(fft_size,3),WF_der_g(wf_ng,3),fft_der(fft_size),WF_der_rot(fft_size,3))
+ allocate(WF_der(3,fft_size),WF_der_g(wf_ng,3),fft_der(fft_size),WF_der_rot(3,fft_size))
  !
  ir = 0
  do ir1 = 0, fft_dim(1)-1
@@ -130,23 +130,27 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        WF_der=cZERO
        !
-       !call eval_gradient(f,f_gradient)
+       call eval_gradient(WF_p,WF_der)
+!       write(*,*) i_m
+!       do i_c=1,3       
+!         write(*,*) dot_product(WF_der(i_c,:),WF_der(i_c,:))
+!       enddo
        !
-       do i_c=1,3
+!       do i_c=1,3
          !
-         fft_der=cZERO
-         WF_der_g(1:wf_ng,i_c)=WF_g%c(1:wf_ng,i_wf_at_p_g)*g_vec(1:wf_ng,i_c)*2.0_SP*pi/alat(i_c)
+!         fft_der=cZERO
+!         WF_der_g(1:wf_ng,i_c)=WF_g%c(1:wf_ng,i_wf_at_p_g)*g_vec(1:wf_ng,i_c)*2.0_SP*pi/alat(i_c)
          !and fft it to real space
-         fft_der(fft_g_table(1:wf_ng,1))=WF_der_g(1:wf_ng,i_c)
-#if defined _FFTW
- call dfftw_destroy_plan(fftw_plan)
- fftw_plan = 0
-         call fft_3d(fft_der,fft_dim,1,fftw_plan)
-#else
-         call fft_3d(fft_der,fft_dim,1)
-#endif
-         WF_der(:,i_c)=fft_der(:)
-       enddo
+!         fft_der(fft_g_table(1:wf_ng,1))=WF_der_g(1:wf_ng,i_c)
+!#if defined _FFTW
+! call dfftw_destroy_plan(fftw_plan)
+! fftw_plan = 0
+!         call fft_3d(fft_der,fft_dim,1,fftw_plan)
+!#else
+!         call fft_3d(fft_der,fft_dim,1)
+!#endif
+!         WF_der(:,i_c)=fft_der(:)
+!       enddo
        !
        !Now we multiply (i_m,i_p,i_p_s) and its gradient by exp(iG_0r)
        do ir = 1, fft_size
@@ -155,11 +159,17 @@ subroutine QED_Sigma_c(E,k,q,qp)
            sumdot=sumdot + r_cell_cc(i_c,ir)*g_vec(i_p_G0,i_c)*2*pi/alat(i_c)
          enddo
          WF_p_rot(ir,1:n_spinor) = WF_p(ir,1:n_spinor)*exp(cI*sumdot)
-         WF_der_rot(ir,1:3) = WF_der(ir,1:3)*exp(cI*sumdot)
+         WF_der_rot(1:3,ir) = WF_der(1:3,ir)*exp(cI*sumdot)
        enddo
+!       write(*,*) 'dot_p after rotation'
+!       write(*,*) 'rotated wf', dot_product(WF_p_rot(:,1),WF_p_rot(:,1)) 
+!       do i_c=1,3
+!         write(*,*) 'rotated der', dot_product(WF_der_rot(i_c,:),WF_der_rot(i_c,:))
+!       enddo
        !
        !<i_m,i_p,i_p_s|exp(-iG_0r)|i_n,i_k,i_k_s>
        O=dot_product(WF_p_rot(:,1),WF%c(:,i_wf_at_k))
+!       write(*,*) 'O=', O
        !
        P=cZERO
        do i_cp=1,3
@@ -173,6 +183,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
            !
          enddo 
        enddo
+!       write(*,*) 'P=', P
        !
        QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps) + &
 &        P*((spin_occ-E%f(i_m,i_p,1))/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_e+cI*QP_G_damp) +&
@@ -187,6 +198,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  call live_timing( )
  !
+! stop
  do i_qp=1,qp%n_states
    write (*,*) i_qp,QP_Sc(i_qp,1)*HA2EV
  enddo

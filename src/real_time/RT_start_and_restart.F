@@ -389,8 +389,8 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  if (l_elph_scatt.or.l_elel_scatt) then
    !
-   call k_sym2sym(q,'k')
-   call k_sym2sym(k,'k')
+   call k_build_up_BZ_tables(q)
+   call k_build_up_BZ_tables(k)
    !
    N_Gr_descs=5
    !

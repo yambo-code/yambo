@@ -647,7 +647,7 @@ integer function ELPH_databases(k,E,q)
    !
    ! where s_table(k_ibz,is) is a BZ index
    !
-   call k_sym2sym(k,'k')
+   call k_build_up_BZ_tables(k)
    call k_ibz2bz(k,'i',.false.) ! in k_sym2sym there is the k_ibz2bz(k,'d',...) call
    !
    ! To extend s_table to the BZ I simply have that
@@ -658,7 +658,7 @@ integer function ELPH_databases(k,E,q)
      ikibz=k%sstar(i1,1)
      ir   =k%sstar(i1,2)
      do is=1,nsym
-       ikbz_is_table(i1,is)=k%s_table(ikibz,sop_tab(is,ir))
+       ikbz_is_table(i1,is)=k%k_table(ikibz,sop_tab(is,ir))
      enddo
    enddo
    !

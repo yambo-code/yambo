@@ -99,7 +99,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        i_mp = QP_table(i_qp,2)
        i_p  = QP_table(i_qp,3)
        !
-       i_p_bz=k%s_table(i_p,i_p_s)
+       i_p_bz=k%k_table(i_p,i_p_s)
        !
        i_pmq_bz = qindx_C(i_p_bz,iqbz,1)
        i_pmq    = k%sstar(i_pmq_bz,1)

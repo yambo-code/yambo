@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_sym2sym(k,mode)
+subroutine k_build_up_BZ_tables(k)
  !
  ! Output:
  !
  !  s_table such that
  !
- !  R k_ibz = S k_ibz with S=k%s_table(k,R)     if mode='s'
- !  R k_ibz = k_bz    with k_bz=k%s_table(k,R)  if mode='k'
+ !  R k_ibz = S k_ibz with S=k%s_table(k,R)  
+ !  R k_ibz = k_bz    with k_bz=k%k_table(k,R)
  !
  use pars,           ONLY:SP,IP
  use vec_operate,    ONLY:c2a,rlu_v_is_zero
@@ -39,36 +39,45 @@ subroutine k_sym2sym(k,mode)
  !
  implicit none
  type(bz_samp)::k
- character(1) ::mode
  !
  ! Work Space
  !
  integer      ::i1,i2,is1
+ logical      ::s_table_is_ok,k_table_is_ok
  real(SP)     ::v(3)
  !
+ s_table_is_ok=.FALSE.
+ k_table_is_ok=.FALSE.
  if (associated(k%s_table)) then
-   if (size(k%s_table)==k%nibz*nsym.and.k%s_table_mode==mode) then
-     return
-   else
-     deallocate(k%s_table)
-     call mem_est("k_s_table")
-     k%s_table_mode=" "
-   endif
+   if (size(k%s_table)==k%nibz*nsym) s_table_is_ok=.TRUE.
+ endif
+ if (associated(k%k_table)) then
+   if (size(k%k_table)==k%nibz*nsym) k_table_is_ok=.TRUE.
+ endif
+ if (.not.k_table_is_ok.and.associated(k%k_table)) then
+   deallocate(k%k_table)
+   call mem_est("k_k_table")
+ endif
+ if (.not.s_table_is_ok.and.associated(k%s_table)) then
+   deallocate(k%s_table)
+   call mem_est("k_s_table")
  endif
  !
  allocate(k%s_table(k%nibz,nsym))
  call mem_est("k_s_table",(/size(k%s_table)/),(/IP/))
- k%s_table_mode=mode
+ allocate(k%k_table(k%nibz,nsym))
+ call mem_est("k_k_table",(/size(k%k_table)/),(/IP/))
  !
  call k_ibz2bz(k,'a',.false.)
  k%s_table=0
+ k%k_table=0
  do i1=1,k%nibz
    do is1=1,nsym
      call c2a(v_in=matmul(rl_sop(:,:,is1),k%pt(i1,:)),v_out=v,mode='ki2a')
      do i2=1,k%nbz
        if (rlu_v_is_zero(v-k%ptbz(i2,:),zero_=k_rlu_zero)) then
-         if (mode=='s') k%s_table(i1,is1)=k%sstar(i2,2)
-         if (mode=='k') k%s_table(i1,is1)=i2
+         k%s_table(i1,is1)=k%sstar(i2,2)
+         k%k_table(i1,is1)=i2
          exit
        endif
      enddo
@@ -79,4 +88,4 @@ subroutine k_sym2sym(k,mode)
  !
  call k_ibz2bz(k,'d',.false.)
  !
-end subroutine
+end subroutine k_build_up_BZ_tables

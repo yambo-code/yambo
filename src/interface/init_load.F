@@ -79,7 +79,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,RES_tresh
 #endif
  use parallel_m,           ONLY:n_log_CPUs
- use openmp,               ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP
+ use openmp,               ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
  use IO_m,                 ONLY:DBs_IO_control_string
  !
  implicit none
@@ -179,6 +179,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Parallel Setup
  !
 #if defined _OPENMP
+ call it(defs,'K_Threads',       '[OPENMP/BSK] Number of threads for response functions',n_threads_K)
  call it(defs,'X_Threads',       '[OPENMP/X] Number of threads for response functions',n_threads_X)
  call it(defs,'DIP_Threads',     '[OPENMP/X] Number of threads for dipoles',n_threads_DIP)
  call it(defs,'SE_Threads',      '[OPENMP/GW] Number of threads for self-energy',n_threads_SE)

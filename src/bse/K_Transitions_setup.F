@@ -92,7 +92,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !
  allocate(i_T_at_k(Xk%nibz))
  !
- call k_sym2sym(Xk,'k')
+ call k_build_up_BZ_tables(Xk)
  !
  do i_loop=1,n_loops
    !
@@ -107,7 +107,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
          !
          do i_star=1,Xk%nstar(ik)
            !
-           ikbz=Xk%s_table(ik,Xk%star(ik,i_star))
+           ikbz=Xk%k_table(ik,Xk%star(ik,i_star))
            ikp =Xk%sstar(qindx_X(iq,ikbz,1),1)
            !
            do i_sp=1,n_sp_pol

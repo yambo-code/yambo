@@ -131,7 +131,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  eval_G_using_KK=trim(QP_solver)=='g'.and..not.l_GF_from_CA
  if (eval_G_using_KK) l_WRgFsq=.FALSE.
  !
- call k_sym2sym(k,'k')
+ call k_build_up_BZ_tables(k)
  call k_expand(k)
  !
  if (QP_PH_n_G_bands<=0.or.QP_PH_n_G_bands>elph_nb) QP_PH_n_G_bands=elph_nb
@@ -327,7 +327,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !                <(R^-1 k)+q n'|dV_{SCF}/du^{q nu}|(R^-1 k) n>= 
          !                gkkp(ik_bz,nu,n',n)
          !
-         ik_bz_gkkp=k%s_table(ik,sop_inv(iq_s))
+         ik_bz_gkkp=k%k_table(ik,sop_inv(iq_s))
          ! 
          ! gkkp_{I_need}= <k+IRq n'|dV_{SCF}/du^{IRq nu}|k n>=
          !                [<(R^-1 S p)+q n|dV_{SCF}/du^{q nu}|(R^-1 S p) n'>]^*= 
@@ -340,7 +340,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
            ob_gkkp   =ib
            !                                 R^-1                 S
            !                                 -------------------- --
-           ik_bz_gkkp=k%s_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
+           ik_bz_gkkp=k%k_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
          endif
          !
          ! k is in the IBZ and q is the PW_q (=-YAMBO_q)

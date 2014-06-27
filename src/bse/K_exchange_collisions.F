@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
+subroutine K_exchange_collisions(divide_by_qpg,iq,Xk,i_T)
  !
  use BS,             ONLY:BS_n_g_exch
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
- use BS,             ONLY:BS_T_grp,BS_collision,BS_oscillators_alloc
+ use BS,             ONLY:BS_T_grp,K_EXCH_collision,BS_oscillators_alloc
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -53,12 +53,6 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
  !
  call BS_oscillators_alloc(.TRUE.,i_T,.FALSE.,0)
  !
- ! Now the evaluation of the oscillators.
- !
- BS_collision%ngrho=BS_n_g_exch
- !
- allocate(BS_collision%rhotw(BS_n_g_exch))
- !
  T_loop: do i_T_el=1,BS_T_grp(i_T)%size
    !
    i_k_bz=BS_T_grp(i_T)%table(i_T_el,1)
@@ -73,16 +67,16 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
    i_c   =BS_T_grp(i_T)%table(i_T_el,3)
    i_spin=BS_T_grp(i_T)%table(i_T_el,4)
    !
-   BS_collision%is=(/i_c,i_k,i_s,i_spin/)
-   BS_collision%os=(/i_v,i_p,i_sp,i_spin/)
-   BS_collision%qs=(/qindx_X(iq,i_k_bz,2),iq,1/)
+   K_EXCH_collision%is=(/i_c,i_k,i_s,i_spin/)
+   K_EXCH_collision%os=(/i_v,i_p,i_sp,i_spin/)
+   K_EXCH_collision%qs=(/qindx_X(iq,i_k_bz,2),iq,1/)
    !
    if (iq==1) then
      !
      i_T_last_with_identity_sym=-1
      if (i_s>1) then
        do i_T_el_p=i_T_el-1,1,-1
-         if (all( BS_T_grp(i_T)%table(i_T_el_p,:)==(/Xk%s_table(i_k,1),i_v,i_c,i_spin/)) ) then
+         if (all( BS_T_grp(i_T)%table(i_T_el_p,:)==(/Xk%k_table(i_k,1),i_v,i_c,i_spin/)) ) then
            i_T_last_with_identity_sym=i_T_el_p
            exit
          endif
@@ -91,12 +85,12 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
      !
      if  (i_s==1.or.i_T_last_with_identity_sym<0) then
        !
-       call scatterBamp(BS_collision)
+       call scatterBamp(K_EXCH_collision)
        !
 !$omp parallel do default(shared), private(i_g1,i_g2)
        do i_g1=1,BS_n_g_exch
-         if (divide_by_qpg)      BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
-         if (.not.divide_by_qpg) BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g1)
+         if (divide_by_qpg)      BS_T_grp(i_T)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
+         if (.not.divide_by_qpg) BS_T_grp(i_T)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
        enddo
 !$omp end parallel do
      else
@@ -110,12 +104,12 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
      endif
    else
      !
-     call scatterBamp(BS_collision)
+     call scatterBamp(K_EXCH_collision)
      !
 !$omp parallel do default(shared), private(i_g1)
      do i_g1=1,BS_n_g_exch
-       if (divide_by_qpg)      BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
-       if (.not.divide_by_qpg) BS_T_grp(i_T)%O_x(i_g1,i_T_el)=BS_collision%rhotw(i_g1)
+       if (divide_by_qpg)      BS_T_grp(i_T)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
+       if (.not.divide_by_qpg) BS_T_grp(i_T)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
      enddo
 !$omp end parallel do
      !
@@ -123,10 +117,9 @@ subroutine K_exchange(divide_by_qpg,iq,Xk,i_T)
    !
  enddo T_loop
  !
- deallocate(BS_collision%rhotw)
- !
 #if defined _TIMING
  call timing('T_space EXX Osc.',OPR='stop')
 #endif
  !
-end subroutine
+end subroutine K_exchange_collisions
+

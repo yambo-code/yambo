@@ -68,7 +68,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #if defined _ELPH
  use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
 #endif
- use openmp,        ONLY:OPENMP_set_threads,n_threads_X,n_threads_SE,n_threads_RT
+ use openmp,        ONLY:OPENMP_set_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_K
 #if defined _SC
  use SC,            ONLY:SC_bands
  use real_time,     ONLY:B_mat_index
@@ -885,8 +885,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'DIAGO',PAR_COM_DIAGO_INDEX,PAR_COM_DIAGO)
    PAR_IND_DIAGO_ID=PAR_COM_DIAGO_INDEX%CPU_id
    !
-   !
-   call OPENMP_set_threads(n_threads_in=n_threads_X)
+   call OPENMP_set_threads(n_threads_in=n_threads_K)
    !  
  endif
  !

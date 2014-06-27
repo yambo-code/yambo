@@ -64,7 +64,8 @@ module BS
  !
  ! Collision
  !===========
- type(ggwinfo) :: BS_collision
+ type(ggwinfo) :: K_EXCH_collision
+ type(ggwinfo) :: K_CORR_collision
  !
  ! CV transitions space ...
  !=========================
@@ -109,28 +110,22 @@ module BS
    !
    ! Oscillators...
    !
-   ! ... correlation (resonant)
-   !----------------------------
-   integer                       :: N_C_cc_oscillators 
-   integer                       :: N_C_vv_oscillators 
-   integer(SP), allocatable      :: O_c_cc_table(:)
-   integer(SP), allocatable      :: O_c_vv_table(:)
-   complex(SP), allocatable      :: O_cc(:,:)
-   complex(SP), allocatable      :: O_vv(:,:)
-   !
-   ! ... correlation (anti-resonant)
-   !---------------------------------
-   integer                       :: N_C_cv_oscillators = 0
-   integer(SP), allocatable      :: O_c_cv_table(:)
-   complex(SP), allocatable      :: O_cv(:,:)
+   ! ... correlation
+   !------------------
+   integer                       :: N_oscillators 
+   integer(SP), allocatable      :: O_table(:,:,:,:) ! sym,n,n',spin @ k
+   complex(SP), allocatable      :: O(:,:)
    !
  end type BS_block
  !
  integer                    :: n_BS_blks = 0
  type(BS_block), allocatable:: BS_blk(:)
  !
+ ! WF phases
+ !===========
+ complex(SP),allocatable :: WF_phase(:,:,:,:)
+ !
  integer,    allocatable :: O_table(:,:,:,:,:)
- complex(SP),allocatable :: O_phase(:,:,:)
  !
  ! ... first table of possible c/v states
  integer,    allocatable :: O_n_c_states(:,:)
@@ -248,16 +243,31 @@ module BS
        call mem_est("BS_T_group_"//trim(intc(iG))//"_X_oscillators",(/size (BS_T_grp(iG)%O_x)/))
      endif
      !
+     if (CORRELATION) then
+       allocate(BS_blk(iB)%O(O_ng,BS_blk(iB)%N_oscillators))
+       call mem_est("BS_blk_"//trim(intc(iB))//"_O",(/size (BS_blk(iB)%O)/))
+     endif
+     !
    end subroutine
    !
-   subroutine BS_oscillators_free( )
+   subroutine BS_oscillators_free(iG,iB)
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
-     integer :: iG
-     do iG=1,BS_nT_grps
-       if (allocated(BS_T_grp(iG)%O_x)) then
-         deallocate(BS_T_grp(iG)%O_x)
-         call mem_est("BS_T_group_"//trim(intc(iG))//"_X_oscillators")
+     integer :: iG,IB,i_g,i_b
+     do i_g=1,BS_nT_grps
+       if (iG/=0.and.i_g/=iG) cycle
+       if (allocated(BS_T_grp(i_g)%O_x)) then
+         deallocate(BS_T_grp(i_g)%O_x)
+         call mem_est("BS_T_group_"//trim(intc(i_g))//"_X_oscillators")
+       endif
+     enddo
+     do i_b=1,n_BS_blks
+       if (iB/=0.and.i_b/=iB) cycle
+       if (allocated(BS_blk(i_b)%O)) then
+         deallocate(BS_blk(i_b)%O)
+         call mem_est("BS_blk_"//trim(intc(i_b))//"_O")
+         deallocate(BS_blk(i_b)%O_table)
+         call mem_est("BS_blk_"//trim(intc(i_b))//"_O_table")
        endif
      enddo
      !

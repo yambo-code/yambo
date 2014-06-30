@@ -109,7 +109,6 @@ subroutine K_blocks( )
  if (BS_K_coupling) n_tot_blocks=n_tot_blocks+BS_nT_grps**2
  !
  call PARALLEL_live_message("BSK blocks",LOADED=n_BS_blks,TOTAL=n_tot_blocks)
- write (*,*) n_BS_blks
  !
  call mem_est("BSK",(/tot_size/))
  !

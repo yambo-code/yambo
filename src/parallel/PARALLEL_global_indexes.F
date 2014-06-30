@@ -64,7 +64,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use X_m,           ONLY:X_t
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life
  use matrix_operate,ONLY:UP_matrix_index
- use BS,            ONLY:BS_bands,BS_nT_at_k,BS_nT_grps
+ use BS,            ONLY:BS_bands,BS_nT_at_k,BS_nT_grps,BS_K_coupling
 #if defined _ELPH
  use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
 #endif
@@ -841,15 +841,18 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !  
    ! Group@k (among BS_nT_grps) ->Group'@p (among BS_nT_grps)
    !
-   call PARALLEL_index(PAR_IND_T_all,    (/BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX,&
-&                      MASK=PAR_IND_T_groups%element_1D)
+   if (BS_K_coupling) then
+     call PARALLEL_index(PAR_IND_T_all,    (/BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX,&
+&                        MASK=PAR_IND_T_groups%element_1D)
+     !
+     call PARALLEL_live_message("Matrix Elements (all)",ENVIRONMENT=ENVIRONMENT,&
+&                               LOADED=PAR_IND_T_all%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),TOTAL=BS_nT_grps*BS_nT_grps,&
+&                               NCPU=PAR_COM_T_INDEX%n_CPU)
+     !
+   endif
    !
    call PARALLEL_index(PAR_IND_T_ordered,(/BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX,&
 &                      MASK=PAR_IND_T_groups%element_1D,ORDERED=.TRUE.)
-   !
-   call PARALLEL_live_message("Matrix Elements (all)",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_IND_T_all%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),TOTAL=BS_nT_grps*BS_nT_grps,&
-&                             NCPU=PAR_COM_T_INDEX%n_CPU)
    !
    call PARALLEL_live_message("Matrix Elements (ordered)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_T_ordered%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),&

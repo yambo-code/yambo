@@ -37,7 +37,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
  ! 
  ! Work Space
  !
- integer :: nindxs,i1,i2,i3,d2,ic,average_steps,tot_steps,myid_loop,ncpu_loop,local_comm,&
+ integer :: nindxs,i1,i2,i3,i4,d2,ic,average_steps,tot_steps,myid_loop,ncpu_loop,local_comm,&
 &           i_range(2)
  logical :: SERIAL
  integer,allocatable :: i_done(:),lowlim(:)
@@ -144,6 +144,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
    if (present(MASK).or.present(ORDERED)) then
      !
      i3=0
+     i4=0
      !
      do i1=lowlim(1),uplim(1)
        !
@@ -151,7 +152,9 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
          if (.not.MASK(i1)) cycle
        endif
        !
-       px%element_2D(i1,i1)=myid_loop==0
+       i4=i4+1
+       !
+       px%element_2D(i1,i1)= mod(i4+1-myid_loop,ncpu_loop)==1
        !
        do i2=lowlim(2),uplim(2)
          !

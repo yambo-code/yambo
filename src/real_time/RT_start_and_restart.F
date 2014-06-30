@@ -47,16 +47,15 @@ subroutine RT_start_and_restart(E,k,q,X)
  use real_time,      ONLY:ID,NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,Thermal_steps,rho_reference,  &
 &                         it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         RT_P,RT_step,rho_full,l_RT_CCA_Kernel,dG_lesser, &
-&                         l_NE_simulate_Irredux,NE_i_time,&
+&                         RT_P,RT_step,rho_full,l_RT_CCA_Kernel,dG_lesser,l_NE_simulate_Irredux,NE_i_time,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps,&
-&                         l_initial_equilibrium,RT_E_occupations_reference,&
+&                         RT_E_occupations_reference,&
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
-&                         RIM_ibz_coo,RT_eh_en,REF_Lifetime,G_MEM_steps,MEM_index
+&                         RIM_ibz_coo,RT_eh_en,G_MEM_steps,MEM_index
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,it_now,H_nl_sc,RT_ibz_coo,&
 &                         V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
-&                         E_bare,V_xc_sc,rho_n,Ho,SC_nbands
+&                         E_bare,V_xc_sc,rho_n,Ho
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE,IO_and_Messaging_switch
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
@@ -211,7 +210,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    call IO_and_Messaging_switch("+log")
  endif
  !
- ! In all cases where Vxc is frozen (l_NE_simulate_Irredux.or..not.l_sc_is_libDF)
+ ! In all cases where Vxc is frozen (l_NE_simulate_Irredux.or..not.l_sc_is_libDFT)
  !
  !   XC0_and_HARTREE0  contains <mk | Vxc(rho_full) + Vhartree(rho_full) | nk>
  !

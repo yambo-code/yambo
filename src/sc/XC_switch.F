@@ -23,7 +23,8 @@
 !
 subroutine XC_switch()
  !
- use drivers
+ use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_exx,l_sc_hf,l_sc_cohsex,l_sc_is_libDFT,&
+&                         l_sc_srpa,l_oep_kli,l_oep_exact,l_oep_ceda,l_oep_slater
  use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,l_sc_pot_is_local,SC_perturbation,&
 &                         OEP_approx,l_oep_EWeight,l_oep_iterative
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
@@ -35,7 +36,7 @@ subroutine XC_switch()
 #if defined _RT
  use real_time,      ONLY:l_NE_simulate_Irredux
 #endif
- use global_XC,      ONLY:SC_EXX,SC_Hartree,SC_HF,SC_COHSEX,SC_EXXC,SC_SRPA,EXT_NONE,SE_GW_NEQ
+ use global_XC,      ONLY:SC_EXX,SC_Hartree,SC_HF,SC_COHSEX,SC_EXXC,SC_SRPA,EXT_NONE
  use electrons,      ONLY:n_full_bands,n_met_bands
  use com,            ONLY:error
  use parser_m,       ONLY:parser

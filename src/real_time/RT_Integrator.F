@@ -33,7 +33,7 @@ subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
  ! Notice that dG_in is never overwritten 
  ! --------------------------------------
  !
- use pars,           ONLY:SP,schlen,cZERO,cONE
+ use pars,           ONLY:SP,cZERO,cONE
  use SC,             ONLY:SC_bands,RT_nk
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp  

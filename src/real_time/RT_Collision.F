@@ -48,12 +48,11 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_sc_ip,l_sc_is_libDFT,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,l_sc_pot_is_local,it_now,SC_R,&
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,it_now,SC_R,&
 &                         RT_ibz_coo,RT_nk,it_now
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc
- use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,rho_full,l_RT_uses_E_RIM,             &
-&                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,                 & 
-&                         G_lesser_reference,RIM_ibz_coo,                       &
+ use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,rho_full,l_RT_uses_E_RIM,&
+&                         XC0_and_HARTREE0,RIM_ibz_coo,&
 &                         l_NE_dynamics_started,l_RT_RWA,l_NE_simulate_Irredux,l_BGR
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
@@ -171,7 +170,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    ! Non-local XC potentials (like COHSEX)
    !=======================================
-   if (.not.l_sc_pot_is_local.and..not.l_sc_ip) then
+   if (l_sc_hf.or.l_sc_cohsex) then
      ! 
      ! HF/COHSEX
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 

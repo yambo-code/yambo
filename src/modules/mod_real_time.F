@@ -219,7 +219,7 @@ module real_time
  !-----------------------
  real(SP),    allocatable :: SAVED_times(:)
  real(SP),    allocatable :: REF_lifetime(:,:,:)
- real(SP),    allocatable :: SAVED_lifetime(:,:,:,:,:)
+ real(SP),    allocatable :: SAVED_lifetime(:,:,:,:)
  !
  ! Ouput Lifetimes, ratio fit and temperatures
  !---------------------------------------------
@@ -456,7 +456,7 @@ module real_time
      if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt) then
        allocate(REF_lifetime(SC_bands(1):SC_bands(2),RT_nk,6))
        call mem_est("REF_lifetime",(/size(REF_lifetime)/),(/SP/)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
-       allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps,2)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
+       allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
        call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
        allocate(SAVED_times(Life_MEM_steps)) 
        REF_lifetime=0._SP
@@ -702,6 +702,12 @@ module real_time
      if (what=="J".or.what=="P".or.what=="OCCs") RT_do_IO=mod(NE_i_time-1,RT_IO_JPO_steps)==0
      if (what=="OUT") RT_do_IO=mod(NE_i_time-1,RT_IO_output_steps)==0
      if (what=="G")   RT_do_IO=mod(NE_i_time-1,RT_IO_G_steps)==0
+   end function
+   !
+   logical function FIRST_step(it,TIME)
+     integer   :: it
+     real(SP)  :: TIME
+     FIRST_step=abs(TIME-(it-1)*RT_step)<1.E-6
    end function
    !
    integer function B_mat_index(ib1,ib2)

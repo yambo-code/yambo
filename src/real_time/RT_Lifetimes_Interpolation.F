@@ -21,25 +21,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_Interpolation(ib,ik,INDEX_,Life,Time,Life_SAVED,Times_SAVED)
+subroutine RT_Lifetimes_Interpolation(Life,Time,Life_SAVED,Times_SAVED)
  !
  use pars,           ONLY:SP
  use real_time,      ONLY:Life_MEM_steps,I_relax_dyn
  !
  implicit none
  !
- integer   :: ib,ik,INDEX_
  real(SP)  :: Life,Time,Life_SAVED(Life_MEM_steps),Times_SAVED(Life_MEM_steps)
  !
  ! Work Space
  !
  real(SP)  :: M,Q,dT(Life_MEM_steps),dG(Life_MEM_steps),P(Life_MEM_steps),EPS,Life_SUM
- integer   :: POL_order,i_o,ii
+ integer   :: POL_order,i_o
  !
  Life_SUM=sum(abs(Life_SAVED))
- !
- if (INDEX_==1.or.INDEX_==3.or.INDEX_==5) ii=1
- if (INDEX_==2.or.INDEX_==4.or.INDEX_==6) ii=2
  !
  if (Life_MEM_steps==3.or.Life_SUM<1.E-5) then
    dT(2)=Times_SAVED(2)-Times_SAVED(1)
@@ -49,11 +45,6 @@ subroutine RT_Lifetimes_Interpolation(ib,ik,INDEX_,Life,Time,Life_SAVED,Times_SA
    Q=(dT(3)/dT(2)*dG(2)-dG(3))/(dT(3)*(dT(2)-dT(3)))
    M=(dG(3)-Q*(dT(3))**2)/dT(3)
    Life=Life_SAVED(1)+M*(Time-Times_SAVED(1))+Q*(Time-Times_SAVED(1))**2
-   !
-   I_relax_dyn(ib,ik,ii,1)=I_relax_dyn(ib,ik,ii,1)+Life_SAVED(1)
-   I_relax_dyn(ib,ik,ii,2)=I_relax_dyn(ib,ik,ii,2)+M
-   I_relax_dyn(ib,ik,ii,3)=I_relax_dyn(ib,ik,ii,3)+Q
-   !
  else
    POL_order=2
    EPS=0.d0
@@ -61,7 +52,6 @@ subroutine RT_Lifetimes_Interpolation(ib,ik,INDEX_,Life,Time,Life_SAVED,Times_SA
    Life=0.
    do i_o=1,POL_order+1
      Life=Life+(Time-Times_SAVED(1))**(i_o-1)*P(i_o)
-     I_relax_dyn(ib,ik,ii,i_o)=I_relax_dyn(ib,ik,ii,i_o)+P(i_o)
    enddo
  endif
  !

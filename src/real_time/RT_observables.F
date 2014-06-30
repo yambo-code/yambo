@@ -144,7 +144,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  ! Electrons and holes temperatures
  !
  if (l_elel_scatt.or.l_elph_scatt) then
-   call RT_occupations_FIT_and_lock(en,k,RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations)
+   call RT_occupations_FIT(en,k,RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations)
    if (RT_Tfit_occupations(1)>50000/HA2KEL.or.RT_Tfit_occupations(1)<0.) RT_Tfit_occupations(1)=0.
    if (RT_Tfit_occupations(2)>50000/HA2KEL.or.RT_Tfit_occupations(2)<0.) RT_Tfit_occupations(2)=0.
  endif

@@ -27,7 +27,7 @@ subroutine RT_Scattering_step(G_new_k,ik,deltaT)
  use electrons,      ONLY:spin_occ
  use SC,             ONLY:SC_bands
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
- use real_time,      ONLY:Sigma_relax,l_RT_RWA,l_RT_CCA_Kernel,l_RT_EXP,    &
+ use real_time,      ONLY:I_relax_static,l_RT_RWA,l_RT_CCA_Kernel,l_RT_EXP,    &
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, &
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime, &
@@ -44,12 +44,11 @@ subroutine RT_Scattering_step(G_new_k,ik,deltaT)
  !
  ! dG = dG - i dT Sigma
  !====================
- if (.not.allocated(Sigma_relax)) return
+ if (.not.allocated(I_relax_static)) return
  !
- if (.not.l_RT_EXP) G_new_k = G_new_k - cI*deltaT*Sigma_relax(:,:,ik)
+ if (.not.l_RT_EXP) G_new_k = G_new_k - cI*deltaT*I_relax_static(:,:,ik)
  !
  if (     l_RT_EXP) then
-   !
    do ib=SC_bands(1),SC_bands(2)
      GAMMA_h=REF_lifetime(ib,ik,1)+REF_lifetime(ib,ik,3)+REF_lifetime(ib,ik,5)
      GAMMA_e=REF_lifetime(ib,ik,2)+REF_lifetime(ib,ik,4)+REF_lifetime(ib,ik,6)

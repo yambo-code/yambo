@@ -117,38 +117,35 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! The xc-part
  !-------------
- if (.not.XCfrozen) then
+ !
+ ! The DFT-like
+ !-------------
+ if(l_sc_contains_lda.and.SC_xc_functional/=0) then
    !
-   ! The DFT-like
-   !-------------
-   if(l_sc_contains_lda.and.SC_xc_functional/=0) then
-     !
-     ! For V_xc I cannot write
-     !
-     !  V_xc(G) =/= V_xc(rho-rho_0) + V_xc(rho_0)
-     !
-     ! rather
-     !
-     !  V_xc(G) = V_xc(rho) 
-     !
-     ! note that XC0_and_HARTREE0 DOES NOT contains V_xc(rho_0) when V_xc is updated
-     !
-     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1,&
-&                             MUTE="-report -log -io_in -io_out",unMUTE=master_cpu)
-     V_xc_sc=V_xc
-     !
-   endif
+   ! For V_xc I cannot write
    !
-   ! The MB-like
-   !-------------
+   !  V_xc(G) =/= V_xc(rho-rho_0) + V_xc(rho_0)
    !
-   ! The exchange/cohsex term is written as Sigma(G - G_0) + Sigma(G_0)
-   ! NOTICE THAT: this approximation is valid only for linear self-energies 
-   !              in G_lesser as exchange or COHSEX(with W fixed) 
+   ! rather
    !
-   if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_compose(dG_in(:,:,RT_ibz_coo(:,1)),dG_in(:,:,RT_ibz_coo(:,1)))
+   !  V_xc(G) = V_xc(rho) 
+   !
+   ! note that XC0_and_HARTREE0 DOES NOT contains V_xc(rho_0) when V_xc is updated
+   !
+   call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1,&
+&                           MUTE="-report -log -io_in -io_out",unMUTE=master_cpu)
+   V_xc_sc=V_xc
    !
  endif
+ !
+ ! The MB-like
+ !-------------
+ !
+ ! The exchange/cohsex term is written as Sigma(G - G_0) + Sigma(G_0)
+ ! NOTICE THAT: this approximation is valid only for linear self-energies 
+ !              in G_lesser as exchange or COHSEX(with W fixed) 
+ !
+ if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_compose(dG_in(:,:,RT_ibz_coo(:,1)),dG_in(:,:,RT_ibz_coo(:,1)))
  !
  ! Filling the BKE Kernel with the HXC part
  !==========================================

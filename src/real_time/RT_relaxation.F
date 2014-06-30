@@ -76,10 +76,6 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  !
  if (.not.l_NE_dynamics_started .and. .not.l_initial_equilibrium) return
  !
- ! Switch-off e-e
- !==================
- if (TIME_EE_STOP>0.) l_elel_scatt=Time<=TIME_EE_STOP
- !
  I_relax_static=cZERO
  I_relax_dyn=cZERO
  !
@@ -206,32 +202,22 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
      !
      dGAMMA_e=0._SP
      dGAMMA_h=0._SP
-     GAMMA0_e=0._SP
-     GAMMA0_h=0._SP
      if (l_elel_scatt) then
        dGAMMA_h=E_E_Hole_lifetime(ib1,ik)
        dGAMMA_e=E_E_Electron_lifetime(ib1,ik)
-       GAMMA0_h=REF_lifetime(ib1,ik,1)
-       GAMMA0_e=REF_lifetime(ib1,ik,2)
      endif
      if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-       dGAMMA_h=dGAMMA_h+E_P_Hole_lifetime(ib1,ik)+E_P_Ho_abs_lifetime(ib1,ik)
-       dGAMMA_e=dGAMMA_e+E_P_Electron_lifetime(ib1,ik)+E_P_El_abs_lifetime(ib1,ik)
-       GAMMA0_h=GAMMA0_h+REF_lifetime(ib1,ik,3)+REF_lifetime(ib1,ik,5)
-       GAMMA0_e=GAMMA0_e+REF_lifetime(ib1,ik,4)+REF_lifetime(ib1,ik,6)
+       dGAMMA_h=dGAMMA_h+ E_P_Hole_lifetime(ib1,ik)    +E_P_Ho_abs_lifetime(ib1,ik)
+       dGAMMA_e=dGAMMA_e+ E_P_Electron_lifetime(ib1,ik)+E_P_El_abs_lifetime(ib1,ik)
      endif
      !
-     if (Life_MEM_steps==1) then
-       I_relax_dyn(ib1,ik,1,1)= GAMMA0_h*df_k - dGAMMA_h*f_H_k
-       I_relax_dyn(ib1,ik,2,1)= GAMMA0_e*df_k + dGAMMA_e*f_E_k
-     else
-       I_relax_dyn(ib1,ik,1,1)= GAMMA0_h*df_k -I_relax_dyn(ib1,ik,1,1)*f_H_k 
-       I_relax_dyn(ib1,ik,2,1)= GAMMA0_e*df_k +I_relax_dyn(ib1,ik,2,1)*f_E_k 
-       do i_n=2,Life_MEM_steps
-         I_relax_dyn(ib1,ik,1,i_n)= -I_relax_dyn(ib1,ik,1,i_n)*f_H_k 
-         I_relax_dyn(ib1,ik,2,i_n)=  I_relax_dyn(ib1,ik,2,i_n)*f_E_k 
-       enddo
-     endif
+     ! This term could be moved inside RT_apply_zero_dyn.F
+     ! However it's better to keep is together with the rest of the 
+     ! relaxation term
+     !
+     I_relax_static(ib1,ib1,ik)=I_relax_static(ib1,ib1,ik) + sum(REF_lifetime(ib1,ik,:))*df_k
+     !
+     I_relax_static(ib1,ib1,ik)=I_relax_static(ib1,ib1,ik) + ( dGAMMA_e*f_E_k - dGAMMA_h*f_H_k )
      !
    enddo
  enddo
@@ -240,19 +226,18 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
    !
    subroutine Impose_Conservations( )
      !
-     use D_lattice, ONLY:Bose_Temp
-     !
      ! Zero dN/dT & dE/dT & d(DeltaN)/dT
      !===================================
-     if (l_RT_skip_impose) return
+     if(l_RT_skip_impose) return
      !
      if (l_elel_scatt) then
-       call RT_impose_zero_dE_and_dN(Time,E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
+       call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
      endif
      if (l_elph_scatt) then
-       call RT_impose_zero_dE_and_dN(Time,E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
-       if (Bose_Temp>0._SP) call RT_impose_zero_dE_and_dN(Time,E,k,E_P_Ho_abs_lifetime,&
-&                                                         E_P_El_abs_lifetime,'elph2')
+       call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
+       if(Bose_Temp>0._SP) then
+         call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
+       endif
      endif
      !
    end subroutine

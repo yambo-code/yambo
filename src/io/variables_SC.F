@@ -40,9 +40,9 @@ integer function variables_SC(ID,local_description,what)
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_IO_G_steps,              &
 &                         RT_IO_JPO_steps,l_RT_induced_field,G_MEM_steps,&
-&                         l_RT_CCA_Kernel,RT_IO_steps_DB,Gr_description,&
+&                         l_RT_CCA_Kernel,RT_IO_steps_DB,Gr_description,l_RT_skip_impose,&
 &                         l_RT_uses_E_RIM,N_Gr_descs,RT_dynamics_steps,RT_dynamics_decay_time,&
-&                         RT_dynamics_KIND,l_NE_simulate_Irredux
+&                         RT_dynamics_KIND,l_NE_simulate_Irredux,RIM_EE_percent,l_RT_EE_impose_E
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
@@ -289,6 +289,8 @@ integer function variables_SC(ID,local_description,what)
  !
 #endif
  !
+#if defined _RT
+ !
  if(.not.any((/l_J,l_G,l_occupations/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  if(any((/l_J,l_G,l_occupations/))) then
@@ -506,6 +508,8 @@ integer function variables_SC(ID,local_description,what)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    endif
  endif
+ !
+#endif
  !
  variables_SC=io_status(ID)
  n_SC_descriptions=i_desc

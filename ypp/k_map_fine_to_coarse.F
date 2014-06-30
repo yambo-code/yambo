@@ -248,7 +248,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Xk (IBZ->BZ)
  !
- call k_sym2sym(Xk,'k')
+ call k_build_up_BZ_tables(Xk)
  call k_ibz2bz(Xk,'i',.true.)
  !
  ! The -1 is for the reference k that should not be added

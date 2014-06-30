@@ -28,7 +28,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
  !  Euler's method:          yE(t+dt) = y(t) + dt *   f(t,y(t))
  !  Runge-Kutta 2nd order:   yR(t+dt) = y(t) + dt *   f(t+dt/2,yE(t+dt/2))
  !  Heun's method:           yH(t+dt) = y(t) + dt * ( f(t,y(t))+f(t+dt,yE(t+dt)) )/2
- !                                    = ( yE(t+dt) + y(t) + dt * f(t+dt,yE(t+dt)) /2
+ !                                    = ( yE(t+dt) + y(t) + dt * f(t+dt,yE(t+dt)))/2
  !
  ! Notice that G_old is never overwritten 
  ! --------------------------------------
@@ -64,7 +64,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
  call timing('RT integrator',OPR='start')
 #endif
  !
- if(l_RT_EULER) then
+ if (l_RT_EULER) then
    !
    call RT_evolve(G_old,G_new,T_step,T_step)
    !
@@ -105,7 +105,6 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
    integrator_step=2
    !
    if (l_NE_with_fields) call RT_propagate_fields(k,E,G_tmp1,A_new,A_old,Time,T_step)
-   !
    !
    ! Recalculate I1(t+dt) and I2(t+dt) using  G(t+dt) 
    !

@@ -46,21 +46,21 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
 #endif
  use electrons,      ONLY:levels
  use FFT_m,          ONLY:fft_size
- use drivers,        ONLY:l_sc_ip,l_sc_contains_lda,l_sc_hf,l_sc_cohsex
+ use drivers,        ONLY:l_sc_ip,l_sc_is_libDFT,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R,&
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,l_sc_pot_is_local,it_now,SC_R,&
 &                         RT_ibz_coo,RT_nk,it_now
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,rho_full,l_RT_uses_E_RIM,             &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,                 & 
-&                         G_lesser_reference,l_RT_needs_XC0,RIM_ibz_coo,                       &
+&                         G_lesser_reference,RIM_ibz_coo,                       &
 &                         l_NE_dynamics_started,l_RT_RWA,l_NE_simulate_Irredux,l_BGR
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
- use SC,             ONLY:SC_xc_functional,SC_nbands
+ use SC,             ONLY:SC_nbands
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -75,7 +75,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! Work Space
  !
- logical          :: RT_needs_density,Hfrozen
+ logical          :: eval_DENSITY,eval_HARTREE,eval_DFT
  integer          :: i1,ik,ik_RT,ikp_RT,ik_RIM,ib,ibp
  real(SP)         :: delta_rho(fft_size)
  !
@@ -92,10 +92,11 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  ! corresponds to Thermalization where the density must be updated
  ! This part of the code is presently not used so I comment it
  !  
- Hfrozen          = l_sc_ip      .or. l_NE_simulate_Irredux
- RT_needs_density = .not.Hfrozen .or. l_sc_contains_lda .or.l_BGR
+ eval_DFT     = l_sc_is_libDFT            .and..not.l_sc_ip
+ eval_HARTREE = .not.l_NE_simulate_Irredux.and..not.l_sc_ip
+ eval_DENSITY = eval_HARTREE .or. eval_DFT
  !
- if (RT_needs_density) then
+ if (eval_DENSITY) then
    !
    ! Contribution only from the changed occupations about SC_bands(1)
    !
@@ -113,14 +114,14 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! Here I calculate V_hartree(rho-rho_0) => V_hartree_sc
  !
- if (.not.Hfrozen) call V_Hartree(delta_rho,V_hartree_sc)
+ if (eval_HARTREE) call V_Hartree(delta_rho,V_hartree_sc)
  !
  ! The xc-part
  !-------------
  !
  ! The DFT-like
  !-------------
- if(l_sc_contains_lda.and.SC_xc_functional/=0) then
+ if (eval_DFT) then
    !
    ! For V_xc I cannot write
    !
@@ -170,7 +171,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    ! Non-local XC potentials (like COHSEX)
    !=======================================
-   if(.not.local_V) then
+   if (.not.l_sc_pot_is_local.and..not.l_sc_ip) then
      ! 
      ! HF/COHSEX
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
@@ -179,7 +180,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    ! The bare, frozed VHxc 
    !-----------------------
-   if (l_RT_needs_XC0.and.HEAD_k_cpu) then
+   if (HEAD_k_cpu) then
 #if defined _OPENMP
      call V_by_V_plus_V_omp(&
 #else
@@ -191,7 +192,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    ! Local XC potentials 
    !=====================
-   if (.not.l_sc_ip) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF)
+   if (eval_DFT.or.eval_HARTREE) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF)
    !  
    ! Add Ho = T+V_ion
    !==================
@@ -205,8 +206,8 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
 &                       H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
    endif
    !
-   forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) &
-&        Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)=H_nl_sc(ib,ibp,1)
+   forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)=H_nl_sc(ib,ibp,1)
+
    !
  enddo  !---- loop on k-points
  !

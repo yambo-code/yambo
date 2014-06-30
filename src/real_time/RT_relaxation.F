@@ -100,7 +100,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  !
  if (.not.l_initial_equilibrium) then
    l_eval= ( RT_TIME_status(it_now)>0 .and. &
-&            (FIRST_step(it_now,Time) .or. it_now-it_start+1<=Life_MEM_steps ) ).or. &
+&            (FIRST_step( ) .or. it_now-it_start+1<=Life_MEM_steps ) ).or. &
 &          Life_MEM_steps==1
  endif
  !

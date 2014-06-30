@@ -33,7 +33,7 @@ integer function variables_SC(ID,local_description,what)
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,l_sc_diagonal,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,SC_up_W_iters,&
-&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,local_V,RT_nk
+&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,l_sc_pot_is_local,RT_nk
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR,&
 &                         variable_is_found
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,              &
@@ -105,7 +105,7 @@ integer function variables_SC(ID,local_description,what)
  call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=6,MENU=0) 
  !
  i_desc=i_desc+1
- call io_elemental(ID,L0=local_V,&
+ call io_elemental(ID,L0=l_sc_pot_is_local,&
 &     VAR=' The potential is local          :',DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,I0=it_now,DB_I0=it_now,&

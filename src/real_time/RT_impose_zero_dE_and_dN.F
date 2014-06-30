@@ -31,7 +31,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
 &                         RT_E_occupations,RT_H_occupations,REF_lifetime,&
 &                         l_initial_equilibrium,RT_delta0_occupations,&
 &                         l_RT_EE_impose_E,RT_E_occupations_reference,&
-&                         RT_H_occupations_reference,TIME_EE_impose_dN
+&                         RT_H_occupations_reference
  !
  implicit none
  !

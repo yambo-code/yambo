@@ -82,7 +82,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    !
  else
    !
-   if (RT_TIME_status(it_now)==0 .or. (RT_TIME_status(it_now)>0.and..not.FIRST_step(it_now,Time)) ) then
+   if (RT_TIME_status(it_now)==0 .or. (RT_TIME_status(it_now)>0.and..not.FIRST_step( )) ) then
      !==============
      ! INTERPOLATE 
      !=============

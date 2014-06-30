@@ -34,7 +34,7 @@ subroutine RT_driver(E,X,k,q)
  use interfaces,     ONLY:WF_load
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
- use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho,&
+ use SC,             ONLY:SC_potential,SC_bands,it_now,l_sc_pot_is_local,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho,&
 &                         SC_QP_setup
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser, &
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
@@ -156,7 +156,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Collisions
  !
- if((.not.local_V.and..not.l_sc_ip).or.l_elel_scatt.or.(.not.local_V.and.l_BGR)) then
+ if((.not.l_sc_pot_is_local.and..not.l_sc_ip).or.l_elel_scatt.or.(.not.l_sc_pot_is_local.and.l_BGR)) then
    !
    if (io_COLLs) then
      !
@@ -166,7 +166,7 @@ subroutine RT_driver(E,X,k,q)
        !
      else
        !
-       call warning('COLLISIONs database missing')
+       call warning('COLLISIONs database missing. E-E scattering switched off.')
        l_elel_scatt=.FALSE.
        !
      endif

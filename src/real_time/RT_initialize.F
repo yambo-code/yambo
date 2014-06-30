@@ -24,8 +24,8 @@
 subroutine RT_initialize(E,k,q)
  ! 
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_ip,l_sc_hartree,&
-&                         l_sc_contains_lda,l_sc_cohsex
- use SC,             ONLY:local_V,SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
+&                         l_sc_is_libDFT,l_sc_cohsex
+ use SC,             ONLY:l_sc_pot_is_local,SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
@@ -35,7 +35,7 @@ subroutine RT_initialize(E,k,q)
  use real_time,      ONLY:Thermal_steps,RT_step,l_NE_with_fields, &
 &                         l_RT_diagonalize,NE_steps,NE_tot_time,   &
 &                         l_RT_diamagnetic,RT_IO_JPO_steps,RT_IO_time,&
-&                         l_NE_simulate_Irredux,l_RT_needs_XC0,    &
+&                         l_NE_simulate_Irredux,    &
 &                         l_RT_induced_field,l_RT_Heun,                   &
 &                         RT_diagonalization_steps,RT_is_dephased,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,            &
@@ -45,7 +45,7 @@ subroutine RT_initialize(E,k,q)
 &                         RT_dynamics_KIND,l_NE_dynamics,l_RT_skip_impose,I_MEM_steps,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
 &                         RIM_EE_Nk_table,l_RT_EE_impose_E,RIM_EE_percent,RIM_EE_Nk_table,&
-&                         TIME_EE_impose_dN,l_BGR
+&                         l_BGR
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp,qindx_S
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
@@ -75,8 +75,6 @@ subroutine RT_initialize(E,k,q)
  call parser('RTskipImposeN',        l_RT_skip_impose)
  call parser('RTeeImposeE',          l_RT_EE_impose_E)
  call parser('RTpumpEhEn',           l_manual_excitation)
- !
- if (TIME_EE_impose_dN>0.) l_RT_EE_impose_E=.FALSE.
  !
  if (l_RT_skip_impose.and.l_RT_EE_impose_E) then
    l_RT_EE_impose_E=.TRUE.
@@ -113,12 +111,6 @@ subroutine RT_initialize(E,k,q)
  else if (l_RT_INTERPOLATE) then
    Integrator_name = trim(Integrator_name)//" + INTERPOLATE"
  endif
- !
- ! If I am doing a NE loop in all cases I need to evaluate XC or Hartree correspoding to the
- ! starting basis. During the thermalization, instead, the potentials are updated
- ! and only T+V_ion must be stored in Ho.
- !
- l_RT_needs_XC0=Thermal_steps==0
  !
  ! Use NE_tot_time if provided
  !
@@ -351,8 +343,8 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'nr','---Flags (if any)---')
  if (l_sc_ip)             call msg( 'r','Simulate IP                :',l_sc_ip)
- if (l_sc_hartree)        call msg( 'r','Simulate RPA               :',l_sc_hartree)
- if (l_sc_contains_lda)   call msg( 'r','Simulate TD-DFT            :',l_sc_contains_lda)
+ if (l_sc_hartree)        call msg( 'r','Simulate RPA               :',l_sc_hartree.and..not.l_sc_ip)
+ if (l_sc_is_libDFT)   call msg( 'r','Simulate TD-DFT            :',l_sc_is_libDFT)
  if (l_sc_cohsex)         call msg( 'r','Simulate BSE               :',l_sc_cohsex)
  !
  if (l_NE_simulate_Irredux) call msg( 'r','Simulate Irredux                :',l_NE_simulate_Irredux)
@@ -376,7 +368,6 @@ subroutine RT_initialize(E,k,q)
    call msg( 'nr','---Conservation Rules---')
    call msg( 'r','dN (e-p) and N (e-p + e-e)  :',.not.l_RT_skip_impose)
    if (l_elel_scatt) call msg( 'r','Energy (e-e)                :',l_RT_EE_impose_E)
-   if (TIME_EE_impose_dN>0.) call msg( 'r', 'Time for dN (e-e)      [fs]:',TIME_EE_impose_dN/FS2AUT)
  endif
  !
  call msg( 'nr','---RIM---')

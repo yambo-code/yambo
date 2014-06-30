@@ -25,7 +25,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  use pars,           ONLY:SP
  use units,          ONLY:HA2EV,HA2KEL
- use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_hf,l_sc_contains_lda,l_sc_cohsex,&
+ use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_hf,l_sc_is_libDFT,l_sc_cohsex,&
 &                         l_elel_scatt,l_elph_scatt
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands,RT_nk,RT_Nk_ibz,RT_ibz_coo
@@ -114,7 +114,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    ! stored in E_h, so I remove from here the term rho_0*delta_rho
    if(l_sc_hartree) Exc=Exc-VALUE_tmp(1)
    !
- else if(l_sc_contains_lda) then 
+ else if(l_sc_is_libDFT) then 
    !        
    ! Exc Energy from E_xc[rho_n] energy density
    !
@@ -144,9 +144,12 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  ! Electrons and holes temperatures
  !
  if (l_elel_scatt.or.l_elph_scatt) then
+   !
    call RT_occupations_FIT(en,k,RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations)
+   !
    if (RT_Tfit_occupations(1)>50000/HA2KEL.or.RT_Tfit_occupations(1)<0.) RT_Tfit_occupations(1)=0.
    if (RT_Tfit_occupations(2)>50000/HA2KEL.or.RT_Tfit_occupations(2)<0.) RT_Tfit_occupations(2)=0.
+   !
  endif
  !
  ! Number of Holes in the valence band and

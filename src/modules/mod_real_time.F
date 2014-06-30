@@ -43,10 +43,6 @@ module real_time
  logical           :: l_RT_pump_and_probe
  logical           :: l_Dynamics_is_over  
  !
- ! Inital XC (SC or default) are requested
- !
- logical           :: l_RT_needs_XC0
- !
  ! To exclude the Diamagnetic term 
  !
  logical           :: l_RT_diamagnetic
@@ -185,8 +181,6 @@ module real_time
  !
  ! Locks and reference
  !----------------------
- real(SP)                 :: TIME_EE_STOP        = -1.
- real(SP)                 :: TIME_EE_impose_dN   = -1.
  logical                  :: l_RT_skip_impose    = .FALSE.
  logical                  :: l_RT_EE_impose_E    = .FALSE.
  !
@@ -373,10 +367,10 @@ module real_time
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
-     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda,l_elph_scatt,l_elel_scatt,&
+     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_is_libDFT,l_elph_scatt,l_elel_scatt,&
 &                             l_sc_cohsex
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare, &
+     use SC,             ONLY:SC_bands,V_hartree_sc,l_sc_pot_is_local,SC_alloc,E_bare, &
 &                             SC_xc_functional,SC_xc_functional,RT_nk
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
@@ -482,11 +476,9 @@ module real_time
        call mem_est("I_relax_dyn",(/size(I_relax_static)/),(/2*SP/))
      endif
      !
-     if(l_RT_needs_XC0) then
-       allocate(XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
-       call mem_est("XC0_and_HARTREE0",(/size(XC0_and_HARTREE0)/),(/2*SP/))
-       XC0_and_HARTREE0=cZERO
-     endif
+     allocate(XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
+     call mem_est("XC0_and_HARTREE0",(/size(XC0_and_HARTREE0)/),(/2*SP/))
+     XC0_and_HARTREE0=cZERO
      !
      allocate(SC_R(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("SC_R",(/size(SC_R)/),(/2*SP/))
@@ -515,7 +507,7 @@ module real_time
      allocate(rho_reference(fft_size))
      call mem_est("rho_reference",(/fft_size/),(/SP/))
      !
-     if( (l_sc_contains_lda.and.SC_xc_functional/=0.and.SC_bands(1)>1) .or. l_BGR) then
+     if( (l_sc_is_libDFT.and.SC_xc_functional/=0.and.SC_bands(1)>1) .or. l_BGR) then
        allocate(rho_full(fft_size))
        call mem_est("rho_full",(/fft_size/),(/SP/))
      endif
@@ -704,10 +696,8 @@ module real_time
      if (what=="G")   RT_do_IO=mod(NE_i_time-1,RT_IO_G_steps)==0
    end function
    !
-   logical function FIRST_step(it,TIME)
-     integer   :: it
-     real(SP)  :: TIME
-     FIRST_step=abs(TIME-(it-1)*RT_step)<1.E-6
+   logical function FIRST_step( )
+     FIRST_step=integrator_step==1
    end function
    !
    integer function B_mat_index(ib1,ib2)

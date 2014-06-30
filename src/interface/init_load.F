@@ -328,24 +328,24 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit(1))
  call it(defs,'NEsteps',    '[RT] Non-equilibrium Time steps',NE_steps)
  call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit(1))
- call it(defs,'Integrator', '[RT] Integrator. Use keywords space separated  (RK2 | EULER | EXP | RWA | INTERPOLATE) ',&
+ call it(defs,'Integrator', '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
 &                           Integrator_name)
  call it(defs,'IOtime',     '[RT] Time between to consecutive I/O (J,P,OCCs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
  call it(defs,'RTehEny',    '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  !
  ! Correlation
  !
- call it('f',defs,'RTfreezeH',     '[RT] Hartree not updated during RT')
- call it('f',defs,'RTfreezeXC',    '[RT] XC potential/self-energy not updated during RT')
+ call it('f',defs,'RTIrredux',     '[RT] Hartree not updated independently of the value of SC_pot')
  call it(defs,'COHsteps',          '[RT] Number of steps to interpolate the Coherent part of the self-energy',&
 &                                   I_MEM_steps,Verb_level=V_real_time)
  !
  ! Scattering
  !
- call it(defs,'DYNmode',    '[RT] Step distribution mode',RT_dynamics_KIND,Verb_level=V_real_time)
- call it(defs,'DYNsteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
+ call it(defs,'INTERPmode',    '[RT] Step interpolation mode (DEFAULT / FIELD / EXP / FLAT / NONE)',&
+&                           RT_dynamics_KIND,Verb_level=V_real_time)
+ call it(defs,'INTERPsteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
 &                           RT_dynamics_steps,Verb_level=V_real_time,unit=Time_unit(1))
- call it(defs,'DYNdecay',   '[RT] Exponential decay lifetime of the distribution of groups of lifetimes evaluated',&
+ call it(defs,'INTERPdecay',   '[RT] Exponential decay lifetime of the distribution of groups of lifetimes evaluated',&
 &                           RT_dynamics_decay_time,Verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)

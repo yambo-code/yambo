@@ -39,16 +39,16 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  use pars,           ONLY:SP,cI,cZERO,rZERO
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_contains_lda,l_elph_scatt,l_elel_scatt
+ use drivers,        ONLY:l_sc_contains_lda,l_sc_ip,l_elph_scatt,l_elel_scatt
  use com,            ONLY:msg
  use QP_m,           ONLY:QP_nk,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol,spin_occ
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:ID,NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
-&                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
+&                         G_lesser_reference,Thermal_steps,rho_reference,  &
 &                         l_RT_needs_XC0,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         RT_P,RT_step,rho_full,l_RT_CCA_Kernel,dG_lesser, &
-&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,&
+&                         l_NE_simulate_Irredux,NE_i_time,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps,&
 &                         l_initial_equilibrium,RT_E_occupations_reference,&
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
@@ -149,8 +149,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  call io_control(ACTION=OP_RD_CL,COM=REP ,SEC=(/1/),MODE=VERIFY,ID=ID(3)) ! Local potential
  io_V=io_SC_components('V' ,E,ID(3))
  !
- ! 24/01/2014 Davide: RESTART from DB J_and_P does not work
- !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
  io_J_and_P=io_RT_components('J_and_P',ID(4))
@@ -232,7 +230,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    do ik=1,QP_nk
      !
-     if (.not.l_NE_simulate_Irredux.and..not.l_NE_simulate_TDDFT) then
+     if (.not.l_NE_simulate_Irredux.and..not.l_sc_contains_lda) then
        !
        call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF) 
        !
@@ -315,7 +313,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
-   if (it_start>Thermal_steps.and..not.l_NE_simulate_IP) then 
+   if (it_start>Thermal_steps.and..not.l_sc_ip) then 
      call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_reference,SC_bands(1))
    endif
    !

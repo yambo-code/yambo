@@ -27,7 +27,7 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  !
  use pars,           ONLY:SP
  use wrapper,        ONLY:real_V_dot_V
- use drivers,        ONLY:l_sc_contains_lda
+ use drivers,        ONLY:l_sc_contains_lda,l_sc_hartree
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_sp_pol,n_spin,nel
  use parallel_m,     ONLY:master_cpu
@@ -50,7 +50,7 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  E_Hartree=0.
  E_xc_=0.
  !
- if (.not.l_sc_contains_lda.and..not. local_V) return
+ if (.not.l_sc_contains_lda .and. .not.l_sc_hartree .and. .not.local_V) return
  !
  call V_Hartree(rho,V_hartree_sc)                           ! V_Hartree
  call XC_potential_driver(E,k,SC_kind,SC_xc_functional,1,&

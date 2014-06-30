@@ -23,7 +23,8 @@
 !
 subroutine RT_initialize(E,k,q)
  ! 
- use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt
+ use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_ip,l_sc_hartree,&
+&                         l_sc_contains_lda,l_sc_cohsex
  use SC,             ONLY:local_V,SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
@@ -31,11 +32,11 @@ subroutine RT_initialize(E,k,q)
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
  use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded
- use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
-&                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
-&                         l_RT_diamagnetic,RT_IO_JPO_steps,RT_IO_time,l_NE_simulate_BSE,&
-&                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
-&                         l_RT_induced_field,l_NE_simulate_TDDFT,                   &
+ use real_time,      ONLY:Thermal_steps,RT_step,l_NE_with_fields, &
+&                         l_RT_diagonalize,NE_steps,NE_tot_time,   &
+&                         l_RT_diamagnetic,RT_IO_JPO_steps,RT_IO_time,&
+&                         l_NE_simulate_Irredux,l_RT_needs_XC0,    &
+&                         l_RT_induced_field,l_RT_Heun,                   &
 &                         RT_diagonalization_steps,RT_is_dephased,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,Gr_kind,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps, &
@@ -50,6 +51,7 @@ subroutine RT_initialize(E,k,q)
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
  use parser_m,       ONLY:parser
+ !
  implicit none
  !
  type(levels), intent(in) :: E
@@ -69,8 +71,6 @@ subroutine RT_initialize(E,k,q)
  call parser('BGR',                  l_BGR)
  call parser('Diamagnetic',          l_RT_diamagnetic)
  call parser('InducedField' ,        l_RT_induced_field)
- call parser('RTfreezeH',            Hfrozen)
- call parser('RTfreezeXC',           XCfrozen)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
  call parser('RTskipImposeN',        l_RT_skip_impose)
  call parser('RTeeImposeE',          l_RT_EE_impose_E)
@@ -85,14 +85,6 @@ subroutine RT_initialize(E,k,q)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
  !
- l_NE_simulate_RPA     =.not.Hfrozen.and.     XCfrozen
- l_NE_simulate_IP      =     Hfrozen.and.     XCfrozen
- l_NE_simulate_Irredux =     Hfrozen.and..not.XCfrozen
- if (                   .not.Hfrozen.and..not.XCfrozen) then
-   l_NE_simulate_BSE     =.not.local_V
-   l_NE_simulate_TDDFT   =local_V
- endif
- !
  l_RT_diagonalize      =RT_diagonalization_steps>1
  !
  ! Integrator FLAGS
@@ -100,12 +92,21 @@ subroutine RT_initialize(E,k,q)
  !
  l_RT_EULER=index(Integrator_name,'EULER')/=0.or.index(Integrator_name,'euler')/=0
  if (.not.l_RT_EULER) l_RT_RK2=index(Integrator_name,'RK2')/=0.or.index(Integrator_name,'rk2')/=0
+ if (.not.l_RT_EULER.and..not.l_RT_RK2) &
+&  l_RT_HEUN=index(Integrator_name,'HEUN')/=0.or.index(Integrator_name,'heun')/=0
  l_RT_RWA=index(Integrator_name,'RWA')/=0.or.index(Integrator_name,'rwa')/=0
  l_RT_EXP=index(Integrator_name,'EXP')/=0.or.index(Integrator_name,'exp')/=0
  if (.not.l_RT_EXP) l_RT_INTERPOLATE=index(Integrator_name,'INTERPOLATE')/=0.or.index(Integrator_name,'interpolate')/=0
  !
+ Integrator_name=""
  if (l_RT_EULER) Integrator_name = "EULER"
- if (l_RT_RK2) Integrator_name   = "RK2"
+ if (l_RT_RK2)   Integrator_name = "RK2"
+ if (l_RT_HEUN)  Integrator_name = "HEUN"
+ if(trim(Integrator_name)=="") then
+   call warning("Bad integrator. Using default RK2")
+   l_RT_RK2=.true.
+   Integrator_name = "RK2"
+ endif
  if (l_RT_RWA) Integrator_name = trim(Integrator_name)//" + RWA"
  if (l_RT_EXP) then 
    Integrator_name = trim(Integrator_name)//" + EXP"
@@ -296,15 +297,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Memory Depth & Simulation points (Lifetimes)
  !=============================================
- Life_MEM_steps=1
- if (l_elph_scatt.or.l_elel_scatt) then
-   if (RT_dynamics_steps(1)>0.) then
-     Life_MEM_steps=nint(RT_dynamics_steps(1)/RT_dynamics_steps(2))
-     if (Life_MEM_steps<3) Life_MEM_steps=3
-     RT_dynamics_steps(1)=RT_dynamics_steps(2)*Life_MEM_steps
-   endif
-   N_T_samplings=RT_Lifetimes_evaluation_plan( )
- endif
+ if (l_elph_scatt.or.l_elel_scatt) N_T_samplings=RT_Lifetimes_evaluation_plan( )
  !
  ! Gauge
  !=======
@@ -357,9 +350,13 @@ subroutine RT_initialize(E,k,q)
  endif
  !
  call msg( 'nr','---Flags (if any)---')
- if (l_NE_simulate_RPA)   call msg( 'r','Simulate RPA               :',l_NE_simulate_RPA)
- if (l_NE_simulate_BSE)   call msg( 'r','Simulate BSE               :',l_NE_simulate_BSE)
- if (l_NE_simulate_TDDFT) call msg( 'r','Simulate TD-DFT            :',l_NE_simulate_TDDFT)
+ if (l_sc_ip)             call msg( 'r','Simulate IP                :',l_sc_ip)
+ if (l_sc_hartree)        call msg( 'r','Simulate RPA               :',l_sc_hartree)
+ if (l_sc_contains_lda)   call msg( 'r','Simulate TD-DFT            :',l_sc_contains_lda)
+ if (l_sc_cohsex)         call msg( 'r','Simulate BSE               :',l_sc_cohsex)
+ !
+ if (l_NE_simulate_Irredux) call msg( 'r','Simulate Irredux                :',l_NE_simulate_Irredux)
+ !
  if (l_elph_scatt)        call msg( 'r','El-Ph Carrier scattering   :',l_elph_scatt)
  if (l_elel_scatt)        call msg( 'r','El-El Carrier scattering   :',l_elel_scatt)
  if (l_BGR)               call msg( 'r','On-the-fly BGR computed    :',l_BGR)

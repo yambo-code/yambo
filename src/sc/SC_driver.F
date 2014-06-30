@@ -25,7 +25,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_cohsex,l_use_collisions,l_sc_contains_lda,l_eval_collisions
+ use drivers,        ONLY:l_sc_cohsex,l_use_collisions,l_sc_contains_lda,l_eval_collisions,l_sc_hartree
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
@@ -438,7 +438,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
 &            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HA2EV))
-     if (l_sc_contains_lda.and. local_V) dumb_ch=trim(dumb_ch)//'  E_tot(Ha)= '//trim(real2ch(E_total))
+     if (local_V) dumb_ch=trim(dumb_ch)//'  E_tot(Ha)= '//trim(real2ch(E_total))
 #if defined _MAGNETIC
      if(n_sp_pol>1) dumb_ch=trim(dumb_ch)//'  (Mz='//trim(real2ch(Total_magn(3)))//')'
 #endif
@@ -506,13 +506,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    call msg('nr','[SC] Iterations               :',it_now)
    call msg('r' ,'[SC] Accuracy on density      :',rho_convergence)
    call msg('r' ,'[SC]          on energies [ev]:',E_convergence*HA2EV)
-   if (l_sc_contains_lda.and. local_V) then
-     call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]:',E_total*(/1.,2./))
-     call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1.,2./))
-     call msg('rn','[SC] xc Energy               [Ha/Ry]:',E_tot_xc*(/1.,2./))
-   else
-     call msg('r','')
-   endif
+   if (local_V)      call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]:',E_total*(/1.,2./))
+   if(.not.local_V)  call msg('r','')
+   if (l_sc_hartree.or.l_sc_contains_lda) &
+&                         call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1.,2./))
+   if (l_sc_contains_lda) call msg('rn','[SC] xc Energy               [Ha/Ry]:',E_tot_xc*(/1.,2./))
    !
  else
    call msg('r','')

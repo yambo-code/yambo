@@ -41,6 +41,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  ! dF                       X       X
  !
  use pars,           ONLY:SP,cI,cZERO
+ use D_lattice,      ONLY:Bose_Temp
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -52,7 +53,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
 &                         RT_TIME_status,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         REF_lifetime,it_start,RT_E_occupations,RT_H_occupations,FIRST_step,&
 &                         l_initial_equilibrium,l_RT_skip_impose,RT_delta0_occupations,RIM_ibz_coo,&
-&                         I_relax_dyn,TIME_EE_STOP
+&                         I_relax_dyn
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -164,8 +165,10 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
    if (l_elph_scatt) then
      call RT_Lifetimes_merge(E,k,E_P_Hole_lifetime,3)
      call RT_Lifetimes_merge(E,k,E_P_Electron_lifetime,4)
-     call RT_Lifetimes_merge(E,k,E_P_Ho_abs_lifetime,5)
-     call RT_Lifetimes_merge(E,k,E_P_El_abs_lifetime,6)
+     if(Bose_Temp>0._SP) then
+       call RT_Lifetimes_merge(E,k,E_P_Ho_abs_lifetime,5)
+       call RT_Lifetimes_merge(E,k,E_P_El_abs_lifetime,6)
+     endif
    endif
  endif
  !
@@ -182,14 +185,17 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  if (l_elph_scatt) then
    call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Hole_lifetime,3)
    call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Electron_lifetime,4)
-   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Ho_abs_lifetime,5)
-   call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_El_abs_lifetime,6)
+   if(Bose_Temp>0._SP) then
+     call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_Ho_abs_lifetime,5)
+     call RT_Lifetimes_save_and_interp(Time,l_eval,E,k,E_P_El_abs_lifetime,6)
+   endif
  endif
  !
  if (.not.l_eval) call Impose_Conservations( )
  !
  ! Dephasing Matrix & Occupations reference
  !==========================================
+ !
  do ik=1,RT_nk
    do ib1=SC_bands(1),SC_bands(2)
      !
@@ -252,4 +258,3 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
    end subroutine
    !
 end subroutine RT_relaxation
-

@@ -36,6 +36,7 @@ subroutine electrons_bands(Xk,Xen)
  use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation,reset_interpolation
  use QP_CTL_m,       ONLY:QP_apply
 #if defined _YPP_RT
+ use YPP,            ONLY:Nel_fac
  use stderr,         ONLY:real2ch
  use electrons,      ONLY:n_spin
  use units,          ONLY:FS2AUT
@@ -52,15 +53,16 @@ subroutine electrons_bands(Xk,Xen)
  !
  ! Work Space
  !
- type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K,Xq_tmp
+ type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K
  real(SP)              :: real_ctl,v(3),max_dist
  real(SP), allocatable :: distances(:),values(:)
  real(SP), allocatable :: bands_grid(:,:,:),bands_circuit(:,:,:)
 #if defined _YPP_RT
  real(SP), allocatable :: occupations_grid(:,:,:,:),occupations_circuit(:,:,:,:),occupations_tmp(:,:,:)
- real(SP)              :: io_Time,Nel,Nhole,Real_Nhole,Real_Nel
+ real(SP)              :: io_Time,Nel_zero,Nhole_zero,Nel,Nhole,Real_Nhole,Real_Nel,Max_occ
+ logical               :: l_normalize_Nel
  integer               :: i_T,n_T_steps
- integer,     external :: RT_occupations_check,RT_k_grid
+ integer,     external :: RT_occ_check_and_load_ref,RT_k_grid
 #endif
  integer               :: i1,i2,ic,is,ID_interp,ik,ikbz,ib,Nk
  integer,  allocatable :: int_distances(:)
@@ -77,21 +79,20 @@ subroutine electrons_bands(Xk,Xen)
  call bz_samp_reset(USER_K)
  call bz_samp_reset(CIRCUIT_K)
  !
- ! Check if RIM is used
- !
- if(BZ_RIM_tot_Nkpts==0) Nk=Xk%nibz
- !
+ if(l_RT_occ_Bands) then
+   !
 #if defined _YPP_RT
- if(BZ_RIM_tot_Nkpts> 0) then
-   Nk=RT_k_grid(Xen,Xk,Xq_tmp)
-   allocate(Xk%pt_RIM(Nk,3))
-   do ik=1,Xk%nibz
-     Xk%pt_RIM(RT_ibz_coo(ik,1):RT_ibz_coo(ik,2),:)=Xk%ptbz_RIM(RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),:)
-   enddo
- endif
-#else
- if(BZ_RIM_tot_Nkpts> 0) call error("Interpolation and RIM implemented only in the _RT project")
+   n_T_steps=RT_occ_check_and_load_ref(Xen,Xk)
+   call RT_check_RIM(Xk,Xen)
+   Nk=RT_Nk
 #endif
+   !
+ else
+   !
+   if(BZ_RIM_tot_Nkpts> 0) call error("Interpolation and RIM implemented only in the _RT project")
+   Nk=Xk%nibz
+   !
+ endif
  !
  ! Read the kpts from input (extrema from the path)
  ! 
@@ -123,10 +124,12 @@ subroutine electrons_bands(Xk,Xen)
    !
    do ik=1,USER_K%nibz-1
      v=USER_K%pt(ik,:)-USER_K%pt(ik+1,:)
-     call c2a(v_in=v,mode="ki2c")  
+     call c2a(v_in=v,mode="ki2c")
      distances(ik)=v_norm(v)
    enddo
+   !
    max_dist=maxval(distances)
+   !
    !
    do ik=1,USER_K%nibz-1
      int_distances(ik)=maxval((/nint(BANDS_steps*distances(ik)/max_dist),1/))
@@ -173,7 +176,7 @@ subroutine electrons_bands(Xk,Xen)
  allocate(bands_grid(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Nk))
  do is=1,n_sp_pol
 #if defined _YPP_RT
-   if(BZ_RIM_tot_Nkpts> 0) then
+   if(BZ_RIM_tot_Nkpts>0) then
      do ik=1,Xk%nibz
        bands_grid(BANDS_range(1):BANDS_range(2),is,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))= &
 &        Xen%E_RIM(BANDS_range(1):BANDS_range(2),RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),is)
@@ -203,23 +206,18 @@ subroutine electrons_bands(Xk,Xen)
  !
 #if defined _YPP_RT
  !
+ Max_occ=0.
+ !
  ! Occupations interpolation.
  !===========================
  !
  if(l_RT_occ_Bands) then
    !
-   io_TIME=0.
-   call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_TIME,imposed_COM=NONE)
+   if(BZ_RIM_tot_Nkpts==0) call error('Interpolation on band structure presently works only with RIM')
+   !
+   call parser('NormN',l_normalize_Nel)
    !
    if(n_spin>1) call error('Occupations and spin not implemented')
-   !
-   n_T_steps=RT_occupations_check(Xen,Xk)
-   !
-   if (n_T_steps<0) return
-   !
-   call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
-   call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
-   call msg('s','Time steps     :',n_T_steps)
    !
    allocate(occupations_tmp(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Nk))
    if (BANDS_steps> 0) allocate(occupations_circuit(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz,n_T_steps))
@@ -230,7 +228,6 @@ subroutine electrons_bands(Xk,Xen)
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
      !
      call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
-     call RT_occupations_repair(Xen)
      !
      Real_Nhole=0._SP
      Real_Nel=0._SP
@@ -242,6 +239,7 @@ subroutine electrons_bands(Xk,Xen)
 &       sum((RT_delta0_occupations(Xen%nbf+1:BANDS_range(2),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
 &                      Xk%weights(ik)/real(RT_Nk_ibz(ik))
      enddo
+     Max_occ=maxval((/Max_occ,RT_delta0_occupations(:,:)/))
      !
      ! STEP 1: define coefficients for occupations
      !
@@ -264,17 +262,12 @@ subroutine electrons_bands(Xk,Xen)
        Nhole=-sum(occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T))/real(CIRCUIT_k%nibz)
        Nel=   sum(occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T))/real(CIRCUIT_k%nibz)
        !
-       !DEBUG<
-       !write(*,*) '  '
-       !write(*,*) Nhole,Nel,Real_Nhole,Real_Nel
-       !DEBUG>
-       !
-       if(Nhole>0) &
-       occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)=&
-&         occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)/Nhole*Real_Nhole
-       if(Nel>0) &
-       occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)=&
-&         occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)/Nel*Real_Nel
+       if(Nhole>0.and.l_normalize_Nel) &
+&        occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)=&
+&          occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)/Nhole*Real_Nhole
+       if(Nel>0  .and.l_normalize_Nel) &
+&        occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)=&
+&          occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)/Nel*Real_Nel
        !
      endif
      !
@@ -372,6 +365,7 @@ subroutine electrons_bands(Xk,Xen)
    !
    coo_out=coo_in
    !
+   !
    do i_T=1,n_T_steps
      !
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
@@ -395,7 +389,7 @@ subroutine electrons_bands(Xk,Xen)
          !
          values(1)=real(ik,SP)
          values(2)=bands_circuit(ib,1,ik)*HA2EV
-         values(3)=occupations_circuit(ib,1,ik,i_T)
+         values(3)=occupations_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
          call msg('o '//file_name(1),' ',values,INDENT=0,USE_TABS=.true.)
          !
        enddo
@@ -405,7 +399,7 @@ subroutine electrons_bands(Xk,Xen)
      call of_open_close(file_name(1))
      !
    enddo
-   ! 
+   !
    deallocate(occupations_circuit,values,headings)
    !
  endif

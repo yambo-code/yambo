@@ -24,7 +24,7 @@
 subroutine RT_driver(E,X,k,q)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt
+ use drivers,        ONLY:l_use_collisions,l_sc_ip,l_elph_scatt,l_elel_scatt
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use LIVE_t,         ONLY:live_timing 
@@ -36,7 +36,7 @@ subroutine RT_driver(E,X,k,q)
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho,&
 &                         SC_QP_setup
- use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
+ use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser, &
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
 &                         NE_i_time,l_RT_diagonalize,RT_IO_G_steps,l_RT_skip_impose,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
@@ -156,7 +156,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Collisions
  !
- if((.not.local_V.and..not.l_NE_simulate_IP).or.l_elel_scatt.or.(.not.local_V.and.l_BGR)) then
+ if((.not.local_V.and..not.l_sc_ip).or.l_elel_scatt.or.(.not.local_V.and.l_BGR)) then
    !
    if (io_COLLs) then
      !
@@ -215,7 +215,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! IP calculation & not BGR => No need of WFs and Density
  !
- if(l_NE_simulate_IP.and..not.l_BGR) then  
+ if(l_sc_ip.and..not.l_BGR) then  
    !
    call WF_free(WF)
    !
@@ -345,7 +345,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Print some simple observables
    !===============================
-   if (NE_time>0.) then
+   if (NE_time>=0._SP) then
      call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time/FS2AUT)
      call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time/FS2AUT)
    endif

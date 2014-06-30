@@ -28,6 +28,7 @@ integer function io_RT_components(what,ID)
  use pars,           ONLY:SP,lchlen
  use drivers,        ONLY:l_elph_scatt
  use R_lattice,      ONLY:nkibz,nqbz
+ use electrons,      ONLY:spin_occ
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,SC_nbands,RT_nk,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
@@ -37,7 +38,8 @@ integer function io_RT_components(what,ID)
  use fields,         ONLY:i_Probe,i_Pump
  use real_time,      ONLY:RT_IO_JPO_steps,NE_i_time,E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,REF_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_do_IO,RT_delta0_occupations
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_do_IO,RT_delta0_occupations,&
+&                         RT_E_occupations_reference,RT_H_occupations_reference
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
 #endif
@@ -217,7 +219,7 @@ integer function io_RT_components(what,ID)
      !
 #if defined _ELPH  && defined _RT
      !
-     if (ver_is_gt_or_eq(ID,revision=1124).and.allocated(E_P_Hole_lifetime)) then
+     if (allocated(E_P_Hole_lifetime)) then
        !
        call io_bulk(ID,VAR="RT_E_P_Hole_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
        call io_bulk(ID,R2=E_P_Hole_lifetime)
@@ -228,16 +230,14 @@ integer function io_RT_components(what,ID)
        call io_bulk(ID,VAR="RT_E_P_Ho_abs_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
        call io_bulk(ID,R2=E_P_Ho_abs_lifetime)
        !
-       if (ver_is_gt_or_eq(ID,revision=2694)) then
-         call io_bulk(ID,VAR="RT_E_P_El_abs_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-         call io_bulk(ID,R2=E_P_El_abs_lifetime)
-       endif
+       call io_bulk(ID,VAR="RT_E_P_El_abs_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+       call io_bulk(ID,R2=E_P_El_abs_lifetime)
        !
      endif
      !
 #endif
      !
-     if (ver_is_gt_or_eq(ID,revision=1449).and.allocated(E_E_Hole_lifetime)) then
+     if (allocated(E_E_Hole_lifetime)) then
        !
        call io_bulk(ID,VAR="RT_E_E_Hole_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
        call io_bulk(ID,R2=E_E_Hole_lifetime)
@@ -286,23 +286,15 @@ integer function io_RT_components(what,ID)
    !
    i_spin=1
    !
-   if (ver_is_gt_or_eq(ID,revision=944)) then
-     i_time_range=(/NE_i_time-G_MEM_steps+1,NE_i_time/)
-     if (i_time_range(1)<=0) i_time_range(1)=1
-     do i_time=i_time_range(1),i_time_range(2)
-       call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_ITIME"//trim(intc(i_time)),&
-&           VAR_SZ=(/SC_nbands,SC_nbands,2/))
-       if (write_is_on(ID)) call mat_c2r(dG_lesser(:,:,ik,MEM_index(i_time,G_MEM_steps)),TMP_matrix)
-       call io_bulk(ID,R3=TMP_matrix)
-       if (read_is_on(ID))  call mat_r2c(TMP_matrix,dG_lesser(:,:,ik,MEM_index(i_time,G_MEM_steps)))
-     enddo
-   else
-     call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
+   i_time_range=(/NE_i_time-G_MEM_steps+1,NE_i_time/)
+   if (i_time_range(1)<=0) i_time_range(1)=1
+   do i_time=i_time_range(1),i_time_range(2)
+     call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_ITIME"//trim(intc(i_time)),&
 &         VAR_SZ=(/SC_nbands,SC_nbands,2/))
-     if (write_is_on(ID)) call mat_c2r(dG_lesser(:,:,ik,MEM_index(NE_i_time,G_MEM_steps)),TMP_matrix)
+     if (write_is_on(ID)) call mat_c2r(dG_lesser(:,:,ik,MEM_index(i_time,G_MEM_steps)),TMP_matrix)
      call io_bulk(ID,R3=TMP_matrix)
-     if (read_is_on(ID))  call mat_r2c(TMP_matrix,dG_lesser(:,:,ik,MEM_index(NE_i_time,G_MEM_steps)))
-   endif
+     if (read_is_on(ID))  call mat_r2c(TMP_matrix,dG_lesser(:,:,ik,MEM_index(i_time,G_MEM_steps)))
+   enddo
    !
    if(l_NE_with_fields.and.ik==RT_nk) then
      call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/3,3,2/))
@@ -383,6 +375,13 @@ integer function io_RT_components(what,ID)
      enddo
      !
      deallocate(TMP_matrix)
+     !
+     if (read_is_on(ID)) then
+       do ib=SC_bands(1),SC_bands(2)
+         RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
+         RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
+       enddo
+     endif
      !
    endif
    !

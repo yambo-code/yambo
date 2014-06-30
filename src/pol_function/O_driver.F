@@ -151,7 +151,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! OutPut files...
    !
    if(.not.l_rpa_IP) call X_setup_file_names(iq,'inv',trim(FXC_type),'dyson',ig=i_G_shift)
-   if(     l_rpa_IP) call X_setup_file_names(iq,'IP','','',ig=i_G_shift)
+   if(     l_rpa_IP) call X_setup_file_names(iq,'IP-RPA','','',ig=i_G_shift)
    !
    ! ... open ...
    !
@@ -214,7 +214,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    else
      call X_s(iq,X,wv,(/1,wv%n_freqs/))
      !
-     X_epsilon(2,:)=1./(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1.)
+     X_epsilon(2,:)=1./(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
    endif
    !
    call of_open_close(eps_file_name,'oa')

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,Gkkp,l_skip_ABS)
+subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
  !  
  use pars,           ONLY:SP,zero_dfl,rZero
  use electrons,      ONLY:levels,n_full_bands,spin_occ
@@ -32,14 +32,13 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,Gkkp,l_skip_ABS)
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_delta_occupations,l_initial_equilibrium,q_weight_RT,&
 &                         RT_eh_en,RT_scatt_tresh
- use ELPH,           ONLY:ph_freqs_sq
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
  !
  implicit none
  !
  type(levels),  intent(in) :: E
  integer,       intent(in) :: ik,ik_m_q,i_q,i_l
- real(SP),      intent(in) :: N_q
+ real(SP),      intent(in) :: ph_freq,N_q
  complex(SP),   intent(in) :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  logical,       intent(in) :: l_skip_ABS
  !
@@ -47,7 +46,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,Gkkp,l_skip_ABS)
  !
  integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem,ik_rim,&
 &            ip_rim,i1,i2
- real(SP) :: P_ph_abs,P_ph_emit,ph_freq,DELTA_E,DELTA_W,pre_factor,&
+ real(SP) :: P_ph_abs,P_ph_emit,DELTA_E,DELTA_W,pre_factor,&
 &            TMP_Hole_lifetime(2),TMP_Electron_lifetime(2),f_kmq,Hole_f_kmq
  real(SP), external :: RT_G_retarded_convolution
  !
@@ -60,8 +59,6 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,Gkkp,l_skip_ABS)
  !
  ! Kernel kind
  !============= 
- !
- ph_freq=abs(sqrt(ph_freqs_sq(i_q,i_l)))
  !
  do i_n=1,B_dim
    !
@@ -146,7 +143,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,Gkkp,l_skip_ABS)
        E_P_Electron_lifetime(i_n_shift,ik_rim)=E_P_Electron_lifetime(i_n_shift,ik_rim)+&
 &                                              TMP_Electron_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,1)
        !
-       if(abs(N_q)<zero_dfl) cycle
+       if(.not.abs(N_q)>zero_dfl) cycle
        !
        ! Stimulated Emission
        E_P_Hole_lifetime(i_n_shift,ik_rim)=E_P_Hole_lifetime(i_n_shift,ik_rim)+&

@@ -83,12 +83,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,RT_nk,&
 &                     l_Mean_Potential,l_RT_occupations_in_use,SC_up_W_iters,l_SC_diagonal,&
-&                     l_SC_nl_mix
+&                     l_SC_nl_mix,local_V
  use collision,  ONLY:COLLISIONS_cutoff
 #endif
 #if defined _RT || defined _YPP_RT
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,                   &
-&                     RT_diagonalization_steps, l_NE_simulate_RPA,l_Debye_TBose_update,   &
+&                     RT_diagonalization_steps, l_Debye_TBose_update,   &
 &                     SwitchOnTime,l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel,  &
 &                     l_RT_diagonalize,RT_is_dephased,RAD_LifeTime,Phase_LifeTime,        &
 &                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,Imp_factors,                &
@@ -96,7 +96,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,           &
 &                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
-&                     RIM_EE_percent,RT_scatt_tresh
+&                     RIM_EE_percent,RT_scatt_tresh,integrator_step
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,theta_function_iTo_ref,i_Pump,i_Probe
  use plasma,     ONLY:Plasma_redux_percent
 #endif
@@ -293,8 +293,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_elph_corr=.false.
  l_elel_scatt=.false.
  l_elph_scatt=.false.
+ !
  l_sc_run=.false.
+ l_sc_ip=.false.
  l_sc_hf=.false.
+ l_sc_hartree=.false.
  l_sc_cohsex=.false.
  l_sc_exx=.false.
  l_sc_contains_lda=.false.
@@ -500,6 +503,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
  l_NSC_shot  =.FALSE.
+ local_V=.true.
  !
  ! COLLISIONS I/O
  !
@@ -530,13 +534,13 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  RT_step=0.002*FS2AUT
  NE_steps=1
+ integrator_step=1
  Thermal_steps=0
  SwitchOnTime = 1./8.
  Integrator_name='RK2'
  RAD_LifeTime = 0.
  Phase_LifeTime = 0.
  RT_is_dephased=.FALSE.
- l_NE_simulate_RPA=.FALSE.
  RT_diagonalization_steps=-1
  l_RT_diagonalize=.FALSE.
  l_RT_induced_field=.FALSE.

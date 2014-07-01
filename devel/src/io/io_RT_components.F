@@ -26,6 +26,7 @@ integer function io_RT_components(what,ID)
  ! what can be E WF V J_and_P G
  !
  use pars,           ONLY:SP,lchlen
+ use drivers,        ONLY:l_elph_scatt
  use R_lattice,      ONLY:nkibz,nqbz
  use electrons,      ONLY:spin_occ
  use stderr,         ONLY:intc
@@ -40,7 +41,7 @@ integer function io_RT_components(what,ID)
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_do_IO,RT_delta0_occupations,&
 &                         RT_E_occupations_reference,RT_H_occupations_reference
 #if defined _ELPH
- use ELPH,           ONLY:ph_modes
+ use ELPH,           ONLY:ph_modes,elph_branches
 #endif
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,J_and_P_cache_size, &
@@ -202,7 +203,7 @@ integer function io_RT_components(what,ID)
    !
  endif
  !
- if(l_REF .and. ik==0) goto 1
+ if (l_REF .and. ik==0) goto 1
  !
  if ( l_occupations ) then
    !
@@ -323,6 +324,15 @@ integer function io_RT_components(what,ID)
    !====================
    !
    if (io_RT_components/=0) goto 1  
+   !
+   if (l_elph_scatt) then
+     !
+     if (read_is_on(ID)) allocate(q_weight_RT(nqbz,elph_branches(1):elph_branches(2),2))
+     !
+     call io_bulk(ID,VAR="Q_WEIGHT",VAR_SZ=(/nqbz,elph_branches(2)-elph_branches(1)+1,2/))
+     call io_bulk(ID,R3=q_weight_RT(:,:,:))
+     !
+   endif
    !
    if (allocated(REF_lifetime)) then
      !

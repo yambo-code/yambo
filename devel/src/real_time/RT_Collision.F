@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Collision(G_input,A_input,E,k,q,Time)
+subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! The BKE is coded in terms of Ho + V + Sigma
  ! This subroutine construct Ho + V plus the time-diagonal part of Sigma(T=(t1 + t2)/2)
@@ -46,22 +46,20 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
 #endif
  use electrons,      ONLY:levels
  use FFT_m,          ONLY:fft_size
- use drivers,        ONLY:l_sc_ip,l_sc_contains_lda,l_sc_hf,l_sc_cohsex
+ use drivers,        ONLY:l_sc_ip,l_sc_is_libDFT,l_sc_hf,l_sc_cohsex,l_sc_hartree
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R,&
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,it_now,SC_R,&
 &                         RT_ibz_coo,RT_nk,it_now
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc
- use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,full_rho,l_RT_uses_E_RIM,             &
-&                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
-&                         G_lesser_reference,l_RT_needs_XC0,RIM_ibz_coo,                       &
-&                         l_NE_dynamics_started,l_RT_RWA,l_NE_simulate_Irredux
+ use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,rho_full,l_RT_uses_E_RIM,&
+&                         XC0_and_HARTREE0,RIM_ibz_coo,&
+&                         l_NE_dynamics_started,l_RT_RWA,l_NE_simulate_Irredux,l_BGR
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
- use SC,             ONLY:SC_xc_functional,SC_nbands
- use IO_m,           ONLY:IO_and_Messaging_switch
+ use SC,             ONLY:SC_nbands
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -71,63 +69,86 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
- complex(SP),   intent(in)    :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),   intent(in)    :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  type(gauge_field), intent(in):: A_input
  !
  ! Work Space
  !
- logical          :: RT_needs_density,Hfrozen
+ logical          :: eval_DENSITY,eval_HARTREE,eval_DFT
  integer          :: i1,ik,ik_RT,ikp_RT,ik_RIM,ib,ibp
  real(SP)         :: delta_rho(fft_size)
- complex(SP)      :: G_input_full(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
 #if defined _TIMING
  call timing('RT Collision',OPR='start')
 #endif
  !
- G_input_full=G_input+G_lesser_reference
+ ! Contribution from \delta\Sigma_coherent
+ !=========================================
  !
  ! Density (needed by Hartree and local XCs)
  !=========
- !
  ! l_NE_dynamics_started=.FALSE.
  ! corresponds to Thermalization where the density must be updated
  ! This part of the code is presently not used so I comment it
  !  
- Hfrozen          = l_sc_ip      .or. l_NE_simulate_Irredux
- RT_needs_density = .not.Hfrozen .or. l_sc_contains_lda
+ eval_DFT     =  l_sc_is_libDFT            .and..not.l_sc_ip
+ eval_HARTREE = (.not.l_NE_simulate_Irredux.and..not.l_sc_ip).or.l_sc_hartree
+ eval_DENSITY =  eval_HARTREE .or. eval_DFT
  !
- if (RT_needs_density) then
-   call el_density_matrix(G_input(:,:,RT_ibz_coo(:,1)),E,k,delta_rho,SC_bands(1))
-   rho_n=rho_reference+delta_rho
+ if (eval_DENSITY) then
+   !
+   ! Contribution only from the changed occupations about SC_bands(1)
+   !
+   call el_density_matrix(dG_in(:,:,RT_ibz_coo(:,1)),E,k,delta_rho,SC_bands(1))
+   !
+   rho_n=rho_full+delta_rho
+   !
  endif
  !
  ! The Hartree term is written as
- !
+ !------------------
  ! V_hartree(G) = V_hartree(rho-rho_0) + V_hartree(rho_0)
  !
  ! where V_hartree(rho_0) is stored in XC0_and_HARTREE0
  !
- if (.not.Hfrozen) call V_Hartree(delta_rho,V_hartree_sc)
+ ! Here I calculate V_hartree(rho-rho_0) => V_hartree_sc
  !
- if (l_sc_contains_lda) then
+ if (eval_HARTREE) call V_Hartree(delta_rho,V_hartree_sc)
+ !
+ ! The xc-part
+ !-------------
+ !
+ ! The DFT-like
+ !-------------
+ if (eval_DFT) then
    !
-   ! Reconstruct the full density
-   ! Here I should also consider and implementation in terms of delta_rho
-   if (SC_bands(1)>1) rho_n=full_rho+delta_rho
+   ! For V_xc I cannot write
    !
-   call IO_and_Messaging_switch("-report -log -io_in -io_out")
-   call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
-   call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
+   !  V_xc(G) =/= V_xc(rho-rho_0) + V_xc(rho_0)
+   !
+   ! rather
+   !
+   !  V_xc(G) = V_xc(rho) 
+   !
+   ! note that XC0_and_HARTREE0 DOES NOT contains V_xc(rho_0) when V_xc is updated
+   !
+   call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1,&
+&                           MUTE="-report -log -io_in -io_out",unMUTE=master_cpu)
    V_xc_sc=V_xc
    !
  endif
+ !
+ ! The MB-like
+ !-------------
  !
  ! The exchange/cohsex term is written as Sigma(G - G_0) + Sigma(G_0)
  ! NOTICE THAT: this approximation is valid only for linear self-energies 
  !              in G_lesser as exchange or COHSEX(with W fixed) 
  !
- if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_compose(G_input(:,:,RT_ibz_coo(:,1)),G_input(:,:,RT_ibz_coo(:,1)))
+ if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_compose(dG_in(:,:,RT_ibz_coo(:,1)),dG_in(:,:,RT_ibz_coo(:,1)))
+ !
+ ! Filling the BKE Kernel with the HXC part
+ !==========================================
  !
  Ho_plus_Sigma=cZERO
  !
@@ -149,67 +170,50 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
    !
    ! Non-local XC potentials (like COHSEX)
    !=======================================
-   if(.not.local_V) then
+   if (l_sc_hf.or.l_sc_cohsex) then
      ! 
      ! HF/COHSEX
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
      ! 
    endif
    !
-!   ! Adiabatic Switching
-!   !=====================
-!   ! (for all the parts of self-energy different from V_h + V_xc)
-!   ! I have to subtract XC0_and_HARTREE0 that contains <mk|Vxc(rho0) |nk>
-!   !
-!   if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.l_NE_dynamics_started.and.HEAD_k_cpu) then 
-!     !      
-!#if defined _OPENMP
-!     call V_by_V_plus_V_omp(SC_nbands,cONE,-XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
-!&                           H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
-!#else
-!     call V_by_V_plus_V(SC_nbands,cONE,-XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
-!&                       H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
-!#endif
-!     !
-!     H_nl_sc=H_nl_sc*(1._SP+tanh((Time+(RT_step*real(Thermal_steps))/2._SP)/ &
-!&                    (RT_step*real(Thermal_steps))/SwitchOnTime))/2._SP
-!     !
-!   endif
-   !
    ! The bare, frozed VHxc 
-   !=======================
-   if (l_RT_needs_XC0.and.HEAD_k_cpu) then
+   !-----------------------
+   if (HEAD_k_cpu) then
 #if defined _OPENMP
-     call V_by_V_plus_V_omp(SC_nbands,cONE,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
-&                           H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+     call V_by_V_plus_V_omp(&
 #else
-     call V_by_V_plus_V(SC_nbands,cONE,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
-&                       H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+     call V_by_V_plus_V(&
 #endif
+&                 SC_nbands,cONE,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
+&                 H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
    endif
    !
    ! Local XC potentials 
    !=====================
-   if (.not.l_sc_ip) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF)
+   if (eval_DFT.or.eval_HARTREE) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF)
    !  
    ! Add Ho = T+V_ion
    !==================
    if (HEAD_k_cpu) then
 #if defined _OPENMP
-     call V_by_V_plus_V_omp(SC_nbands,cONE,Ho(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),&
-&                           H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+     call V_by_V_plus_V_omp(&
 #else
-     call V_by_V_plus_V(SC_nbands,cONE,Ho(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),&
-&                       H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
+     call V_by_V_plus_V(&
 #endif
+&                       SC_nbands,cONE,Ho(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),&
+&                       H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
    endif
    !
-   forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) &
-&        Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)=H_nl_sc(ib,ibp,1)
+   forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)=H_nl_sc(ib,ibp,1)
+
    !
  enddo  !---- loop on k-points
  !
  call PP_redux_wait(Ho_plus_Sigma(:,:,:,1))
+ !
+ ! External Field and RIM support
+ !================================
  !
  do ik=1,QP_nk 
    !
@@ -266,8 +270,12 @@ subroutine RT_Collision(G_input,A_input,E,k,q,Time)
  call timing('RT Collision',OPR='stop')
 #endif
  !
+ ! BGR
+ !=====
+ if (l_BGR) call RT_BGR(dG_in,E,k)
+ !
  ! Calculate all relaxation terms
- ! ==============================
- call RT_relaxation(G_input,E,k,q,Time,.false.)
+ !================================
+ call RT_relaxation(dG_in,E,k,q,Time,.false.)
  !
 end subroutine RT_Collision

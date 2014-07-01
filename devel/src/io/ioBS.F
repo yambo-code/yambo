@@ -27,9 +27,9 @@ integer function ioBS(iq,X,ID)
  use X_m,           ONLY:X_t
  use R_lattice,     ONLY:nXkibz
  use stderr,        ONLY:intc
- use matrix_operate,ONLY:mat_c2r,mat_r2c,matrix_linear_index
+ use matrix_operate,ONLY:mat_c2r,mat_r2c,UP_matrix_index
  use BS,            ONLY:BS_mat,BS_K_dim,BS_K_coupling,&
-&                        BS_blk_dim,BS_k_and_row_restart,BS_res_mode,BS_blocks,&
+&                        BS_nT_at_k,BS_k_and_row_restart,BS_res_mode,BS_blocks,&
 &                        BS_DB_is_fragmented,&
 &                        BS_cpl_mat,BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
@@ -150,17 +150,17 @@ integer function ioBS(iq,X,ID)
  io_fragmented(ID)=BS_DB_is_fragmented
  call io_fragment(ID,i_fragment=ik12(1),j_fragment=ik12(2))
  !
- allocate(BS_mat_disk(BS_blk_dim(ik12(1)),BS_blk_dim(ik12(2)),2))
+ allocate(BS_mat_disk(BS_nT_at_k(ik12(1)),BS_nT_at_k(ik12(2)),2))
  !
  ! Resonant I/O
  !
  write (ch,'(a,i4.4,a,i4.4)') "BS_RES_KERNEL_BLK_K1_",ik12(1),"_K2_",ik12(2)
- call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/BS_blk_dim(ik12(1)),BS_blk_dim(ik12(2)),2/))
+ call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/BS_nT_at_k(ik12(1)),BS_nT_at_k(ik12(2)),2/))
  if (write_is_on(ID)) call mat_c2r(BS_mat(:,:),BS_mat_disk)
  call io_bulk(ID,R3=BS_mat_disk)
  if (read_is_on(ID)) call mat_r2c(BS_mat_disk,&
-&   BS_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik12(1)),&
-&          BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik12(2))))
+&   BS_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik12(1)),&
+&          BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_nT_at_k(ik12(2))))
  !
  ! Coupling I/O
  !
@@ -169,7 +169,7 @@ integer function ioBS(iq,X,ID)
    load_DB_once_for_all=.not.allocated(BS_cpl_mat)
    !
    write (ch,'(a,i4.4,a,i4.4)') "BS_CPL_KERNEL_BLK_K1_",ik12(1),"_K2_",ik12(2)
-   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/BS_blk_dim(ik12(1)),BS_blk_dim(ik12(2)),2/))
+   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/BS_nT_at_k(ik12(1)),BS_nT_at_k(ik12(2)),2/))
    !
    if (write_is_on(ID)) call mat_c2r(BS_cpl_mat,BS_mat_disk)
    !
@@ -177,18 +177,18 @@ integer function ioBS(iq,X,ID)
    !
    if (read_is_on(ID)) then
      if (.not.load_DB_once_for_all) call mat_r2c(BS_mat_disk,&
-&     BS_cpl_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik12(1)),&
-&            BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik12(2))))
+&     BS_cpl_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik12(1)),&
+&            BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_nT_at_k(ik12(2))))
      if (load_DB_once_for_all)      call mat_r2c(BS_mat_disk,&
-&     BS_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik12(1)),&
-&            BS_K_dim+BS_k_and_row_restart(2)+1:BS_K_dim+BS_k_and_row_restart(2)+BS_blk_dim(ik12(2))))
+&     BS_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik12(1)),&
+&            BS_K_dim+BS_k_and_row_restart(2)+1:BS_K_dim+BS_k_and_row_restart(2)+BS_nT_at_k(ik12(2))))
    endif
    !
  end if
  !
  deallocate(BS_mat_disk)
  !
- call Fragments_Restart(ID,current_fragment=i_fragment,fragments_todo=matrix_linear_index(1,nXkibz))
+ call Fragments_Restart(ID,current_fragment=i_fragment,fragments_todo=UP_matrix_index(1,nXkibz))
  ioBS=io_restart_point(ID)
  !
 1 call io_disconnect(ID)

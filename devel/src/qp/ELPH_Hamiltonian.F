@@ -86,7 +86,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call section('*','Correlation: Electron-Phonon Hamiltonian')
  !
- call k_sym2sym(k,'k')
+ call k_build_up_BZ_tables(k)
  call k_expand(k)
  !
  call parser('Eval_Displacements',l_eval_displacements)
@@ -175,11 +175,11 @@ subroutine ELPH_Hamiltonian(en,k,q)
      !
      ib_gkkp =ib
      ibp_gkkp=ibp
-     ik_bz_gkkp=k%s_table(elph_Ham_ik,sop_inv(iq_s))
+     ik_bz_gkkp=k%k_table(elph_Ham_ik,sop_inv(iq_s))
      if (iq_s>nsym/(i_time_rev+1)) then
        ib_gkkp   =ib
        ibp_gkkp  =ibp
-       ik_bz_gkkp=k%s_table(ok_ibz,sop_tab(sop_inv(iq_s-nsym/2),ok_s))
+       ik_bz_gkkp=k%k_table(ok_ibz,sop_tab(sop_inv(iq_s-nsym/2),ok_s))
      endif
      !
      elph_Mat(iH,iHp)=q_weight*conjg(elph_gkkp(ik_bz_gkkp,il,ibp_gkkp,ib_gkkp))/sqrt(2.*ph_E)

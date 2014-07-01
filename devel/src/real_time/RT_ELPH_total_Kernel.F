@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
+subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !  
  ! In this routine I do not perform a time step. I calculate
  ! the el-ph Kernel at time TIME using an approximate iterative scheme (light but approximated).
@@ -42,8 +42,8 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
  use pars,           ONLY:SP,cZero
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
- use SC,             ONLY:SC_bands,RT_nk
- use real_time,      ONLY:Sigma_relax,elph_gkkp_expanded,l_RT_CCA_Kernel
+ use SC,             ONLY:SC_bands
+ use real_time,      ONLY:I_relax_static,elph_gkkp_expanded,l_RT_CCA_Kernel
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_nibz,PAR_Xk_ibz_index
@@ -55,7 +55,6 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
  type(bz_samp), intent(in) :: k,q
  integer,       intent(in) :: ik
  real(SP),      intent(in) :: TIME
- complex(SP),   intent(in) :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
  ! Work Space ...
  !
@@ -167,7 +166,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME,G_lesser)
    !
    do i_n=SC_bands(1),SC_bands(2)
      do i_np=SC_bands(1),SC_bands(2)
-       Sigma_relax(i_n,i_np,ik)=Sigma_relax(i_n,i_np,ik)+S_mat_sum(i_n-SC_bands(1)+1,i_np-SC_bands(1)+1)
+       I_relax_static(i_n,i_np,ik)=I_relax_static(i_n,i_np,ik)+S_mat_sum(i_n-SC_bands(1)+1,i_np-SC_bands(1)+1)
      enddo 
    enddo
    !

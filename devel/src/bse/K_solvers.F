@@ -23,14 +23,12 @@
 !
 subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
- use pars,           ONLY:SP,schlen
- use memory_m,       ONLY:mem_est
  use com,            ONLY:warning
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use drivers,        ONLY:l_bs_fxc,l_rpa_IP
- use IO_m,           ONLY:io_control,REP,NONE,OP_RD_CL
+ use IO_m,           ONLY:io_control,NONE,OP_RD_CL
  use X_m,            ONLY:X_t,X_epsilon,X_drude_term
  use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs,BSE_mode
 #if defined _SC
@@ -53,20 +51,20 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  call section('*','BSE solver(s)')
  !
- if(.not.l_rpa_IP) then
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
-   ioBS_err=ioBS(iq,X_static,ID)
-   if(ioBS_err/=0) return
- endif
+! if(.not.l_rpa_IP) then
+!   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
+!   ioBS_err=ioBS(iq,X_static,ID)
+!   if(ioBS_err/=0) return
+! endif
  !
  ! GPL_EXCLUDE_START
  !
  ! The TDDFT way 
  !
- if (index(BSS_mode,'t')/=0) then
-   call tddft_BSK_disk_2_FXC(iq,Xk,W_bss,X_static) 
-   l_bs_fxc=.true.
- endif
+! if (index(BSS_mode,'t')/=0) then
+!   call tddft_BSK_disk_2_FXC(iq,Xk,W_bss,X_static) 
+!   l_bs_fxc=.true.
+! endif
  !
  ! GPL_EXCLUDE_END
  !

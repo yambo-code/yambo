@@ -24,7 +24,7 @@
 subroutine RT_Dephasing_Matrix(E)
  !
  use pars,          ONLY:SP
- use units,         ONLY:FS2AUT,HBAR_eVfs,HA2EV
+ use units,         ONLY:FS2AUT
  use com,           ONLY:error,msg
  use memory_m,      ONLY:mem_est
  use electrons,     ONLY:levels

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE)
+subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
  !
  use parallel_m, ONLY:PP_redux_wait,PP_indexes,ncpu,myid,p_prod,mpi_comm_world,&
 &                     MPI_comm,comm_default_value
@@ -32,10 +32,12 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE)
  integer,       optional::low_range(:)
  type(MPI_comm),optional::COMM
  logical       ,optional::CONSECUTIVE
+ logical       ,optional::ORDERED
+ logical       ,optional::MASK(:)
  ! 
  ! Work Space
  !
- integer :: nindxs,i1,i2,i3,d2,ic,average_steps,tot_steps,myid_loop,ncpu_loop,local_comm,&
+ integer :: nindxs,i1,i2,i3,i4,d2,ic,average_steps,tot_steps,myid_loop,ncpu_loop,local_comm,&
 &           i_range(2)
  logical :: SERIAL
  integer,allocatable :: i_done(:),lowlim(:)
@@ -138,14 +140,52 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE)
    allocate(px%element_2D(uplim(1),uplim(2)))
    d2=uplim(2)-lowlim(2)+1
    px%element_2D=.false.
-   do i1=lowlim(1),uplim(1)
-     do i2=lowlim(2),uplim(2)
-       i3=(i1-lowlim(1))*d2+i2-lowlim(2)+1-myid_loop
-       if (mod(i3,ncpu_loop)==1) px%element_2D(i1,i2)=.true.
-       if (ncpu_loop==1) px%element_2D(i1,i2)=.true.
-       if (px%element_2D(i1,i2)) px%n_of_elements(myid_loop+1)=px%n_of_elements(myid_loop+1)+1
+   !
+   if (present(MASK).or.present(ORDERED)) then
+     !
+     i3=0
+     i4=0
+     !
+     do i1=lowlim(1),uplim(1)
+       !
+       if (present(MASK)) then
+         if (.not.MASK(i1)) cycle
+       endif
+       !
+       i4=i4+1
+       !
+       px%element_2D(i1,i1)= mod(i4+1-myid_loop,ncpu_loop)==1
+       !
+       do i2=lowlim(2),uplim(2)
+         !
+         if (present(ORDERED)) then
+           if (ORDERED.and.i1>i2) cycle
+         endif
+         !
+         if  (i1==i2) cycle
+         !
+         i3=i3+1
+         !
+         if (mod(i3+1-myid_loop,ncpu_loop)==1) px%element_2D(i1,i2)=.true.
+         !
+         if (ncpu_loop==1) px%element_2D(i1,i2)=.true.
+         !
+         if (px%element_2D(i1,i2)) px%n_of_elements(myid_loop+1)=px%n_of_elements(myid_loop+1)+1
+         !
+       enddo
+       !
      enddo
-   enddo
+     !
+   else
+     do i1=lowlim(1),uplim(1)
+       do i2=lowlim(2),uplim(2)
+         i3=(i1-lowlim(1))*d2+i2-lowlim(2)+1-myid
+         if (mod(i3,ncpu)==1) px%element_2D(i1,i2)=.true.
+         if (ncpu==1) px%element_2D(i1,i2)=.true.
+         if (px%element_2D(i1,i2)) px%n_of_elements(myid+1)=px%n_of_elements(myid+1)+1
+       enddo
+     enddo
+   endif
    !
  endif
  !

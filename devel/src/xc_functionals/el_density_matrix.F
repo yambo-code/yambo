@@ -34,7 +34,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  use wave_func,     ONLY:WF
  use SC,            ONLY:SC_bands
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
- use matrix_operate,ONLY:matrix_linear_index
+ use matrix_operate,ONLY:UP_matrix_index
  !
  implicit none
  type(bz_samp)::Xk
@@ -67,7 +67,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
      !
      do ib2=ib1,SC_bands(2)
        !
-       if (.not.PAR_IND_B_mat_ordered%element_1D(  matrix_linear_index(ib1-SC_bands(1)+1,ib2-SC_bands(1)+1)-1 )) cycle
+       if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-SC_bands(1)+1,ib2-SC_bands(1)+1)-1 )) cycle
        !      
        ifft1=WF%index(ib1,ik,1)
        ifft2=WF%index(ib2,ik,1)

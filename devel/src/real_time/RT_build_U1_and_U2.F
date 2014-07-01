@@ -23,7 +23,7 @@
 !
 subroutine RT_build_U1_and_U2(ik,U1_k,U2_k,dT)
   !
-  use pars,           ONLY:SP,cZERO,cONE,cI
+  use pars,           ONLY:SP,cI
   use real_time,      ONLY:Ho_plus_Sigma
   use SC,             ONLY:SC_bands,SC_nbands
 #if defined _OPENMP

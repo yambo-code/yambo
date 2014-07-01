@@ -1,0 +1,110 @@
+!
+!        Copyright (C) 2000-2014 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM MG
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine K_stored_in_a_BIG_matrix(iq)
+ !
+ ! Here I fill the kernel (coupling included) in an entire BIG matrix to be
+ ! used for diagonalization and/or invertion
+ !
+ !      | (K_r)     (K_c)    |  
+ !  K = |                    |
+ !      | (-K_c^*)  (-K_r^*) |
+ !
+ ! 
+ use pars,           ONLY:cZERO
+ use memory_m,       ONLY:mem_est
+ use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
+&                         PAR_COM_T_INDEX
+ use BS,             ONLY:BS_mat,BS_K_dim,BS_nT_grps,&
+&                         BS_K_coupling,BS_blk,n_BS_blks,BS_T_grp,BSS_rhoq0
+ implicit none
+ !
+ integer :: iq
+ !
+ ! Work Space
+ !
+ integer :: BS_H_dim,i_c,i_r,H_pos(2),i_Tk,i_Tp,i_B,i_g
+ ! 
+ ! I/O
+ ! 
+ integer           ::ioBS_err,ID,ACTION
+ integer, external ::ioBS
+ !
+ if (allocated(BS_mat)) return
+ !
+ BS_H_dim=BS_K_dim
+ if (BS_K_coupling) BS_H_dim=2*BS_K_dim
+ !
+ !call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
+ !ioBS_err=ioBS(iq,X,ID)
+ !
+ allocate(BS_mat(BS_H_dim,BS_H_dim))
+ call mem_est('BS_mat',(/size(BS_mat)/))
+ allocate(BSS_rhoq0(BS_H_dim))
+ call mem_est('BSS_rhoq0',(/size(BSS_rhoq0)/))
+ BS_mat    = cZERO
+ BSS_rhoq0 = cZERO
+ !
+ do i_g=1,BS_nT_grps
+   if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
+   do i_c=1,BS_T_grp(i_g)%size
+     H_pos(1)=sum(BS_T_grp(:I_g-1)%size)+i_c
+     BSS_rhoq0(H_pos(1))=BS_T_grp(i_g)%dipoles_R(i_c)
+     BS_mat(H_pos(1),H_pos(1))=BS_T_grp(i_g)%E(i_c)/real( PAR_COM_T_INDEX%n_CPU )
+   enddo
+ enddo
+ !
+ do i_B=1,n_BS_blks
+   !
+   i_Tk  =BS_blk(i_B)%iT_k
+   i_Tp  =BS_blk(i_B)%iT_p
+   !
+   do i_r=1,BS_blk(i_B)%size(1)
+     !
+     H_pos(1)=sum(BS_T_grp(:I_Tk-1)%size)+i_r
+     !
+     do i_c=1,BS_blk(i_B)%size(2)
+       !
+       H_pos(2)=sum(BS_T_grp(:I_Tp-1)%size)+i_c
+       !
+       if (H_pos(1)>H_pos(2)) cycle
+       !
+       BS_mat(H_pos(1),H_pos(2))=BS_mat(H_pos(1),H_pos(2))+BS_blk(i_B)%mat(i_r,i_c)
+
+       !
+     enddo
+   enddo
+   !
+ enddo
+ !
+ do i_r=1,BS_K_dim
+   do i_c=1,BS_K_dim
+     if (i_r>i_c) cycle
+     BS_mat(i_c,i_r)=conjg( BS_mat(i_r,i_c) )
+   enddo
+ enddo
+ !
+ call PP_redux_wait(BS_mat)
+ call PP_redux_wait(BSS_rhoq0,COMM=PAR_COM_eh_INDEX%COMM)
+ !
+end subroutine K_stored_in_a_BIG_matrix

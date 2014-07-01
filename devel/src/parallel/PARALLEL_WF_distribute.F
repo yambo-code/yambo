@@ -21,7 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Plasma_index,Bm_index,CLEAN_UP)
+subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
+&                                 QP_index,Plasma_index,Bm_index,CLEAN_UP)
  !
  use parallel_m,      ONLY:PP_indexes,ncpu
  use wave_func,       ONLY:states_to_load
@@ -42,6 +43,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Plasma_index
  !
  type(PP_indexes), optional    :: K_index
  type(PP_indexes), optional    :: B_index
+ type(PP_indexes), optional    :: B_and_K_index
  type(PP_indexes), optional    :: Bp_index
  type(PP_indexes), optional    :: QP_index
  type(PP_indexes), optional    :: Plasma_index
@@ -70,6 +72,10 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Plasma_index
  endif
  if (present(Bp_index)) then 
    NBp=size(Bp_index%element_1D)
+ endif
+ if (present(B_and_K_index)) then 
+   NB=size(B_and_K_index%element_2D,1)
+   NK=size(B_and_K_index%element_2D,2)
  endif
  !
  if (present(CLEAN_UP)) then
@@ -109,6 +115,14 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,QP_index,Plasma_index
        !
      enddo
      !
+   enddo
+ endif
+ !
+ if (present(B_and_K_index)) then
+   do i_k=1,NK
+     do i_b=1,NB
+       states_to_load(i_b,i_k,:)=B_and_K_index%element_2D(i_b,i_k)
+     enddo
    enddo
  endif
  !

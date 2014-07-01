@@ -24,7 +24,7 @@
 subroutine RT_Lifetimes_Interpolation(Life,Time,Life_SAVED,Times_SAVED)
  !
  use pars,           ONLY:SP
- use real_time,      ONLY:Life_MEM_steps,RT_dynamics_KIND
+ use real_time,      ONLY:Life_MEM_steps
  !
  implicit none
  !
@@ -35,14 +35,9 @@ subroutine RT_Lifetimes_Interpolation(Life,Time,Life_SAVED,Times_SAVED)
  real(SP)  :: M,Q,dT(Life_MEM_steps),dG(Life_MEM_steps),P(Life_MEM_steps),EPS,Life_SUM
  integer   :: POL_order,i_o
  !
- if(trim(RT_dynamics_KIND)=="FLAT") then
-   LIFE=Life_SAVED(Life_MEM_steps)
-   return
- endif
- !
  Life_SUM=sum(abs(Life_SAVED))
  !
- if (Life_MEM_steps==3) then
+ if (Life_MEM_steps==3.or.Life_SUM<1.E-5) then
    dT(2)=Times_SAVED(2)-Times_SAVED(1)
    dG(2)=Life_SAVED(2)-Life_SAVED(1)
    dT(3)=Times_SAVED(3)-Times_SAVED(1)
@@ -59,6 +54,5 @@ subroutine RT_Lifetimes_Interpolation(Life,Time,Life_SAVED,Times_SAVED)
      Life=Life+(Time-Times_SAVED(1))**(i_o-1)*P(i_o)
    enddo
  endif
- !
  !
 end subroutine RT_Lifetimes_Interpolation

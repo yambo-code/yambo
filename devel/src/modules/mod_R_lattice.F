@@ -51,18 +51,18 @@ module R_lattice
  real(SP),allocatable :: q_norm(:)
  type bz_samp
    integer           :: nibz,nbz
-   integer,  pointer :: nstar(:)   => null()    ! n° of points in the star
-   integer,  pointer :: star(:,:)  => null()    ! ik,ikstar --> is     is sends ik in ikstar
-   integer,  pointer :: sstar(:,:) => null()    ! ik_bz,2   --> ik,is  is sends ik in ikbz
-   integer,  pointer :: s_table(:,:) => null()  ! ik,is     --> ik_bz  revers of sstar
-   real(SP), pointer :: pt(:,:)    => null()
-   real(SP), pointer :: ptbz(:,:)  => null()
-   real(SP), pointer :: weights(:) => null()
-   real(SP), pointer :: pt_RIM(:,:)=> null()
+   integer,  pointer :: nstar(:)     => null()  ! n° of points in the star
+   integer,  pointer :: star(:,:)    => null()  ! ik,ikstar --> is     is sends ik in ikstar
+   integer,  pointer :: sstar(:,:)   => null()  ! ik_bz     --> ik,is  is sends ik in ikbz
+   integer,  pointer :: s_table(:,:) => null()  ! ik,is     --> sym@k_bz  revers of sstar
+   integer,  pointer :: k_table(:,:) => null()  ! ik,is     --> ik_bz     revers of sstar
+   real(SP), pointer :: pt(:,:)      => null()
+   real(SP), pointer :: ptbz(:,:)    => null()
+   real(SP), pointer :: weights(:)   => null()
+   real(SP), pointer :: pt_RIM(:,:)  => null()
    real(SP), pointer :: ptbz_RIM(:,:)=> null()
    character(6)      :: description
    character(1)      :: units
-   character(1)      :: s_table_mode = " "
  end type bz_samp
  !
  ! Q/K sampling shadow tables
@@ -186,6 +186,7 @@ module R_lattice
      k%description=' '
      !
      if(associated(k%s_table))  deallocate(k%s_table)
+     if(associated(k%k_table))  deallocate(k%k_table)
      if(associated(k%nstar))    deallocate(k%nstar)
      if(associated(k%star))     deallocate(k%star)
      if(associated(k%sstar))    deallocate(k%sstar)
@@ -194,7 +195,7 @@ module R_lattice
      if(associated(k%ptbz_RIM)) deallocate(k%ptbz_RIM)
      if(associated(k%ptbz))     deallocate(k%ptbz)
      if(associated(k%weights))  deallocate(k%weights)
-     nullify(k%nstar,k%star,k%sstar,k%pt,k%ptbz,k%weights,k%s_table)
+     nullify(k%nstar,k%star,k%sstar,k%pt,k%ptbz,k%weights,k%s_table,k%k_table)
      !
    end subroutine bz_samp_reset
    !

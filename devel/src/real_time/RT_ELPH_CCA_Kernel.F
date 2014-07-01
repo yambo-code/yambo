@@ -30,7 +30,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         B_mat_index,l_RT_uses_E_RIM,RIM_ibz_coo,RT_occupations_locked,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
-&                         RT_delta_occupations,l_equilibrium_lifetimes,q_weight_RT,&
+&                         RT_delta_occupations,l_initial_equilibrium,q_weight_RT,&
 &                         RT_eh_en,RT_scatt_tresh
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
  !
@@ -119,7 +119,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
          !
          if ( abs(P_ph_abs)<1.E-7 .and. abs(P_ph_emit)<1.E-7 ) cycle
          !
-         if(l_equilibrium_lifetimes) then
+         if(l_initial_equilibrium) then
            f_kmq      = RT_E_occupations_reference(i_np_shift,ip_rim)/spin_occ
            Hole_f_kmq = RT_H_occupations_reference(i_np_shift,ip_rim)/spin_occ
          else

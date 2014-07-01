@@ -36,7 +36,7 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
  use QP_m,       ONLY:QP_nk
  use electrons,  ONLY:levels,n_sp_pol
  use real_time,  ONLY:RT_diagonalization_steps,Occ_natural_orb,Thermal_steps,rho_reference,&
-&                     full_rho 
+&                     rho_full 
  use wrapper,    ONLY:Vstar_dot_V,M_by_V
  use X_m,        ONLY:X_t
  !
@@ -121,7 +121,7 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
   ! Update the full density and the one between SC_bands(1):SC_bands(2)
   !
   if(allocated(rho_reference)) call el_density_matrix(G_input,Xen,Xk,rho_reference,SC_bands(1))
-  if(allocated(full_rho))      call el_density_matrix(G_input,Xen,Xk,full_rho     ,1          )
+  if(allocated(rho_full))      call el_density_matrix(G_input,Xen,Xk,rho_full     ,1          )
   !
  endif 
  !

@@ -46,14 +46,15 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
 #endif
  use electrons,      ONLY:levels
  use FFT_m,          ONLY:fft_size
- use drivers,        ONLY:l_sc_ip,l_sc_is_libDFT,l_sc_hf,l_sc_cohsex,l_sc_hartree
+ use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,it_now,SC_R,&
 &                         RT_ibz_coo,RT_nk,it_now
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,rho_full,l_RT_uses_E_RIM,&
 &                         XC0_and_HARTREE0,RIM_ibz_coo,&
-&                         l_NE_dynamics_started,l_RT_RWA,l_NE_simulate_Irredux,l_BGR
+&                         l_NE_dynamics_started,l_RT_RWA,l_BGR,&
+&                         eval_DENSITY,eval_HARTREE,eval_DFT
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu
@@ -74,7 +75,6 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! Work Space
  !
- logical          :: eval_DENSITY,eval_HARTREE,eval_DFT
  integer          :: i1,ik,ik_RT,ikp_RT,ik_RIM,ib,ibp
  real(SP)         :: delta_rho(fft_size)
  !
@@ -90,10 +90,6 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  ! l_NE_dynamics_started=.FALSE.
  ! corresponds to Thermalization where the density must be updated
  ! This part of the code is presently not used so I comment it
- !  
- eval_DFT     =  l_sc_is_libDFT            .and..not.l_sc_ip
- eval_HARTREE = (.not.l_NE_simulate_Irredux.and..not.l_sc_ip).or.l_sc_hartree
- eval_DENSITY =  eval_HARTREE .or. eval_DFT
  !
  if (eval_DENSITY) then
    !

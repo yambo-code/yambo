@@ -349,6 +349,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                           RT_dynamics_decay_time,Verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)
+ ! 
+ ! BGR
+ !
+ call it('f',defs,'BGR',     '[RT] Evaluate the Band-Gap Renormalization consistent with the applied potential')
  !
  ! EE scattering
  !

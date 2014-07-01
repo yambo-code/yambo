@@ -43,6 +43,12 @@ module real_time
  logical           :: l_RT_pump_and_probe
  logical           :: l_Dynamics_is_over  
  !
+ ! Evaluation logicals
+ !
+ logical          :: eval_DENSITY
+ logical          :: eval_HARTREE
+ logical          :: eval_DFT
+ !
  ! To exclude the Diamagnetic term 
  !
  logical           :: l_RT_diamagnetic
@@ -507,7 +513,7 @@ module real_time
      allocate(rho_reference(fft_size))
      call mem_est("rho_reference",(/fft_size/),(/SP/))
      !
-     if((l_sc_is_libDFT.or.l_sc_hartree.or.l_sc_cohsex).and.SC_bands(1)>1) then
+     if((l_sc_is_libDFT.or.l_sc_hartree.or.l_sc_cohsex.or.l_sc_hf).and.SC_bands(1)>1) then
        allocate(rho_full(fft_size))
        call mem_est("rho_full",(/fft_size/),(/SP/))
      endif

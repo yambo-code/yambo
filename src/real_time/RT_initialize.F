@@ -44,7 +44,7 @@ subroutine RT_initialize(E,k,q)
 &                         RT_dynamics_KIND,l_NE_dynamics,l_RT_skip_impose,I_MEM_steps,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
 &                         RIM_EE_Nk_table,l_RT_EE_impose_E,RIM_EE_percent,RIM_EE_Nk_table,&
-&                         l_BGR,l_RT_HEUN
+&                         l_BGR,l_RT_HEUN,eval_DENSITY,eval_HARTREE,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
@@ -83,6 +83,10 @@ subroutine RT_initialize(E,k,q)
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
  !
  l_RT_diagonalize      =RT_diagonalization_steps>1
+ !  
+ eval_DFT     =  l_sc_is_libDFT            .and..not.l_sc_ip
+ eval_HARTREE = (.not.l_NE_simulate_Irredux.and..not.l_sc_ip).or.l_sc_hartree
+ eval_DENSITY =  eval_HARTREE .or. eval_DFT
  !
  ! Integrator FLAGS
  !==================
@@ -306,15 +310,17 @@ subroutine RT_initialize(E,k,q)
  !==============================
  !
  if (l_elel_scatt.or.l_sc_cohsex.or.l_sc_hf) then
+   !
    call section('=','Electronic Collisions loading and setup')
+   !
+   if (l_elel_scatt) then
+     call PLASMA_build_up(E,k,q)
+     call PLASMA_parallel_setup(EH_gas)
+   endif
+   !
+   call COLLISIONS_load(.TRUE.)
+   !
  endif
- !
- if (l_elel_scatt) then
-   call PLASMA_build_up(E,k,q)
-   call PLASMA_parallel_setup(EH_gas)
- endif
- !
- call COLLISIONS_load(.TRUE.)
  !
  ! LOG
  ! ===

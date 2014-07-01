@@ -101,13 +101,13 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! TDDFT setup
    !
-   call tddft_do_X_W_typs(iq,X,wv)
+   call TDDFT_do_X_W_typs(iq,X,wv)
    !
    ! ALDA (only once) 
    !
    if (l_alda_fxc.and..not.allocated(FXC)) then
      !
-     call tddft_alda_g_space(Xen,Xk)
+     call TDDFT_ALDA_G_space(Xen,Xk)
      !
    endif
    !

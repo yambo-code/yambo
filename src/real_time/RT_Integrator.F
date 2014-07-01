@@ -21,19 +21,19 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
+subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
  !
  !  This subroutine perform integration using different methods
  !
  !  Euler's method:          yE(t+dt) = y(t) + dt *   f(t,y(t))
  !  Runge-Kutta 2nd order:   yR(t+dt) = y(t) + dt *   f(t+dt/2,yE(t+dt/2))
  !  Heun's method:           yH(t+dt) = y(t) + dt * ( f(t,y(t))+f(t+dt,yE(t+dt)) )/2
- !                                    = ( yE(t+dt) + y(t) + dt * f(t+dt,yE(t+dt)) /2
+ !                                    = ( yE(t+dt) + y(t) + dt * f(t+dt,yE(t+dt)))/2
  !
- ! Notice that G_old is never overwritten 
+ ! Notice that dG_in is never overwritten 
  ! --------------------------------------
  !
- use pars,           ONLY:SP,schlen,cZERO,cONE
+ use pars,           ONLY:SP,cZERO,cONE
  use SC,             ONLY:SC_bands,RT_nk
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp  
@@ -51,22 +51,22 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
  type(bz_samp),        intent(in) :: k,q
  type(levels),         intent(in) :: E
  real(SP),             intent(in) :: T_step,Time
- complex(SP),          intent(in) :: G_old(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
- complex(SP),       intent(inout) :: G_new(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
- type(gauge_field),    intent(in) :: A_old
- type(gauge_field), intent(inout) :: A_new
+ complex(SP),          intent(in) :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),       intent(inout) :: dG_out(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ type(gauge_field),    intent(in) :: A_in
+ type(gauge_field), intent(inout) :: A_out
  !
- complex(SP) :: G_tmp1(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
- complex(SP) :: G_tmp2(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP) :: dG1(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP) :: dG2(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  ! 
  !
 #if defined _TIMING
  call timing('RT integrator',OPR='start')
 #endif
  !
- if(l_RT_EULER) then
+ if (l_RT_EULER) then
    !
-   call RT_evolve(G_old,G_new,T_step,T_step)
+   call RT_evolve(dG_in,dG_out,T_step,T_step)
    !
    integrator_step=1
    !
@@ -74,25 +74,25 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
    !
    ! Evaluate @ dt/2
    !
-   call RT_evolve(G_old,G_tmp1,T_step/2._SP,T_step/2._SP)
+   call RT_evolve(dG_in,dG1,T_step/2._SP,T_step/2._SP)
    !
    integrator_step=2
    !
-   if (l_NE_with_fields) call RT_propagate_fields(k,E,G_tmp1,A_new,A_old,Time,T_step/2._SP)
+   if (l_NE_with_fields) call RT_propagate_fields(k,E,dG1,A_out,A_in,Time,T_step/2._SP)
    !
    ! Recalculate I1(t+dt/2) and I2(t+dt/2) using  G(t+dt/2) 
    !
 #if defined _TIMING
    call timing('RT integrator',OPR='stop')
 #endif
-   call RT_Collision(G_tmp1,A_new,E,k,q,Time+T_step/2._SP)
+   call RT_Collision(dG1,A_out,E,k,q,Time+T_step/2._SP)
 #if defined _TIMING
    call timing('RT integrator',OPR='start')
 #endif
    !
    ! final step @ dt
    !
-   call RT_evolve(G_tmp1,G_new,T_step,T_step/2._SP)
+   call RT_evolve(dG1,dG_out,T_step,T_step/2._SP)
    !
    integrator_step=1
    !
@@ -100,36 +100,35 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
    !
    ! Evaluate @ dt
    !
-   call RT_evolve(G_old,G_tmp1,T_step,T_step)
+   call RT_evolve(dG_in,dG1,T_step,T_step)
    !
    integrator_step=2
    !
-   if (l_NE_with_fields) call RT_propagate_fields(k,E,G_tmp1,A_new,A_old,Time,T_step)
-   !
+   if (l_NE_with_fields) call RT_propagate_fields(k,E,dG1,A_out,A_in,Time,T_step)
    !
    ! Recalculate I1(t+dt) and I2(t+dt) using  G(t+dt) 
    !
 #if defined _TIMING
    call timing('RT integrator',OPR='stop')
 #endif
-   call RT_Collision(G_tmp1,A_new,E,k,q,Time+T_step)
+   call RT_Collision(dG1,A_out,E,k,q,Time+T_step)
 #if defined _TIMING
    call timing('RT integrator',OPR='start')
 #endif
    !
    ! final step @ dt again
    !
-   call RT_evolve(G_tmp1,G_tmp2,T_step,0._SP)
+   call RT_evolve(dG1,dG2,T_step,0._SP)
    !
    integrator_step=1
    !
-   G_new=(G_tmp1+G_tmp2)/2._SP
+   dG_out=(dG1+dG2)/2._SP
    !
-   call RT_update_occ(G_new)
+   call RT_update_occ(dG_out)
    !
  endif
  !
- if (l_NE_with_fields) call RT_propagate_fields(k,E,G_new,A_new,A_old,Time,T_step)
+ if (l_NE_with_fields) call RT_propagate_fields(k,E,dG_out,A_out,A_in,Time,T_step)
  !
 #if defined _TIMING
  call timing('RT integrator',OPR='stop')
@@ -137,17 +136,17 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
  !
  contains
    !
-   subroutine RT_evolve(G_in,G_out,dT,dTp)
+   subroutine RT_evolve(dG_in,dG_out,dT,dTp)
      !
-     ! G_old = G(T0)     --> Time at first iteration in integrator with more than one step
-     ! G_in  = G(T )     --> Effective time, i.e. at the second step of RK2 T=T0+dt/2
-     ! G_out = G(T0+dt)
+     ! dG_in  = dG(T0)     --> Time at first iteration in integrator with more than one step
+     ! dG_in  = dG(T )     --> Effective time, i.e. at the second step of RK2 T=T0+dt/2
+     ! dG_out = dG(T0+dt)
      !
      !  T0+dt = T+dt'
      !
      real(SP),     intent(in) :: dT,dTp
-     complex(SP),  intent(in) :: G_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
-     complex(SP), intent(out) :: G_out(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+     complex(SP),  intent(in) :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+     complex(SP), intent(out) :: dG_out(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
      !
      integer                :: ik,ib
      complex(SP)            :: G_loc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
@@ -164,7 +163,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
      !
      do ik=1,RT_nk
        !
-       G_loc=G_in(:,:,ik)+G_lesser_reference(:,:,ik)
+       G_loc=dG_in(:,:,ik)+G_lesser_reference(:,:,ik)
        !
        if (l_RT_EXP) then
          !
@@ -174,7 +173,7 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
          !
          ! G(T0+dt) = U(dt) G(T0) U(-dt)
          !
-         call RT_EULEREXP_step(G_out(:,:,ik),G_old(:,:,ik),G_lesser_reference(:,:,ik),I1_k,I2_k,I1_matrix)
+         call RT_EULEREXP_step(dG_out(:,:,ik),dG_in(:,:,ik),G_lesser_reference(:,:,ik),I1_k,I2_k,I1_matrix)
          !
        else
          !
@@ -184,24 +183,24 @@ subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,E,k,q,Time)
          !
          ! G(T0+dt) -G(T0)= - i dt *(I1(T) - I2(T))
          !
-         if (.not.l_RT_INTERPOLATE) call RT_EULER_step(G_out(:,:,ik),I1_k,I2_k,dT)
-         !if (l_RT_INTERPOLATE)      call RT_INTERPOLATED_step(G_out(:,:,ik),G_old(:,:,ik),I1_k,I2_k,ik,Time,dT,.TRUE.)
+         if (.not.l_RT_INTERPOLATE) call RT_EULER_step(dG_out(:,:,ik),I1_k,I2_k,dT)
+         !if (l_RT_INTERPOLATE)      call RT_INTERPOLATED_step(G_out(:,:,ik),dG_in(:,:,ik),I1_k,I2_k,ik,Time,dT,.TRUE.)
          !
        endif
        !
        ! G(T0+dt) = G(T0) e^{-i\delta\epsilon dt} - i dt *(I1(T) - I2(T)) e^{-i\delta\epsilon (dt')}
        !
-       if(     l_RT_RWA) call RT_apply_zero_dyn(ik,E,dT,dTp,G_out(:,:,ik),G_old(:,:,ik))
-       if(.not.l_RT_RWA) G_out(:,:,ik)=G_out(:,:,ik)+G_old(:,:,ik)
+       if(     l_RT_RWA) call RT_apply_RWA(ik,E,dT,dTp,dG_out(:,:,ik),dG_in(:,:,ik))
+       if(.not.l_RT_RWA) dG_out(:,:,ik)=dG_out(:,:,ik)+dG_in(:,:,ik)
        !
        ! Dephasing and carriers relaxation step
        ! G(T0+dt) = G(T0) - i dt * Sigma_relax(T)
        !
-       if(l_elel_scatt.or.l_elph_scatt) call RT_Scattering_step(G_out(:,:,ik),ik,dT)
+       if(l_elel_scatt.or.l_elph_scatt) call RT_Scattering_step(dG_out(:,:,ik),ik,dT)
        !
      enddo
      !
-     call RT_update_occ(G_out)
+     call RT_update_occ(dG_out)
      !
    end subroutine RT_evolve
    !

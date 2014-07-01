@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM DS
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,18 +24,16 @@
 subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_elel_scatt,l_elph_scatt
- use units,          ONLY:FS2AUT
+ use drivers,        ONLY:l_elel_scatt
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,it_now,RT_nk,RT_ibz_coo
- use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Plasma_INDEX
- use real_time,      ONLY:RT_TIME_status,SAVED_times,&
+ use SC,             ONLY:SC_bands,it_now,RT_nk
+ use real_time,      ONLY:RT_TIME_status,SAVED_times,FIRST_step,&
 &                         Life_MEM_steps,SAVED_lifetime,RT_dynamics_steps,&
-&                         ADD_to_saved_values,l_equilibrium_lifetimes,&
+&                         ADD_to_saved_values,&
 &                         RT_E_occupations,RT_E_occupations_reference,&
-&                         RT_H_occupations,RT_H_occupations_reference,&
-&                         RT_dynamics_KIND,integrator_step
+&                         RT_H_occupations,RT_H_occupations_reference
+ !
  implicit none
  !
  type(levels),  intent(in)    :: E
@@ -47,49 +45,49 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  !
  ! Work Space
  !
- integer          :: ib,ik,ik_rim
+ integer          :: ib,ik
  !
- if (RT_dynamics_steps(1)<0. .or. trim(RT_dynamics_KIND)=="NONE") return
+ if (RT_dynamics_steps(1)<0.) return
  !
  if (EVAL) then
    !
-   !===========
+   !======
    ! SAVE
-   !===========
-   !
+   !======
    if (l_elel_scatt     .and.SAVE_index==1) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
    if (.not.l_elel_scatt.and.SAVE_index==3) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
    !
    do ib=SC_bands(1),SC_bands(2)
      do ik=1,RT_nk
-       call ADD_to_saved_values(LIFE(ib,ik),SAVED_lifetime(ib,ik,SAVE_index,:,integrator_step),Life_MEM_steps)
+       call ADD_to_saved_values(LIFE(ib,ik),SAVED_lifetime(ib,ik,SAVE_index,:),Life_MEM_steps)
      enddo
    enddo
    !
    ! Store the occupations related to the last saved lifetimes
-   if ((SAVE_index==1.or.(.not.l_elel_scatt.and.SAVE_index==3)).and.integrator_step==1) then
+   !-----------------------------------------------------------
+   if (SAVE_index==1.or.(.not.l_elel_scatt.and.SAVE_index==3)) then
      RT_E_occupations_reference=RT_E_occupations
      RT_H_occupations_reference=RT_H_occupations
    endif
    !
  else
    !
-   if (RT_TIME_status(it_now)==0) then
-     !=============================
+   if (RT_TIME_status(it_now)==0 .or. (RT_TIME_status(it_now)>0.and..not.FIRST_step( )) ) then
+     !==============
      ! INTERPOLATE 
      !=============
      do ib=SC_bands(1),SC_bands(2)
        do ik=1,RT_nk
-         call RT_Lifetimes_Interpolation(LIFE(ib,ik),Time,SAVED_lifetime(ib,ik,SAVE_index,:,integrator_step),SAVED_times)
+         call RT_Lifetimes_Interpolation(ib,ik,SAVE_index,LIFE(ib,ik),Time,SAVED_lifetime(ib,ik,SAVE_index,:),SAVED_times)
        enddo
      enddo
      !
    else if (RT_TIME_status(it_now)<0) then
-     !==================================
+     !===============
      ! KEEP CONSTANT 
-     !=============
+     !===============
      !
-     LIFE=SAVED_lifetime(:,:,SAVE_index,Life_MEM_steps,integrator_step)
+     LIFE=SAVED_lifetime(:,:,SAVE_index,Life_MEM_steps)
      !
    endif
  endif

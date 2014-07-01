@@ -116,19 +116,23 @@ subroutine K_diagonalization(iq,W)
  !
  ! Diagonalization DB (IN)
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+ !call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
+ !io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+ io_err=-1
  !
  if(io_err<0) then
    !
    ! Kernel loading
    !
-   call K_BSload(iq)
+   call K_stored_in_a_BIG_matrix(iq)
    !
    ! eh damping 
    !
-   if (allocated(BS_eh_W)) &
-&     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+(0.,1.)*BS_eh_W(i1)
+   if (allocated(BS_eh_W)) then
+     do i1=1,BS_K_dim
+       BS_mat(i1,i1)=BS_mat(i1,i1)+(0.,1.)*BS_eh_W(i1)
+     enddo
+   endif
    !
  endif
  !
@@ -278,7 +282,9 @@ subroutine K_diagonalization(iq,W)
    !
    ! Note the use of a causal expression here needed to avoid any
    ! distinction between the resonant and antiresonant e/h Green's functions.
+   !
    if (     K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))/gauge_factor
+   !
    if (.not.K_is_not_hermitian) then
      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))/gauge_factor
      if(BS_anti_res) X_epsilon(2,:)=X_epsilon(2,:)+BS_R(i1)*conjg(BS_R(i1))/(W%p(:)+BS_E(i1))/gauge_factor

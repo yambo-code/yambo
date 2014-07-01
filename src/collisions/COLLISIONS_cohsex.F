@@ -87,8 +87,8 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  !
  ! Setup...
  !
- call k_sym2sym(k,'k')
- call k_sym2sym(q,'k')
+ call k_build_up_BZ_tables(k)
+ call k_build_up_BZ_tables(q)
  call k_expand(k)
  !
  ! Dimensions...
@@ -248,7 +248,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
            !==========================
            !
            i_p_s =k%star(i_p,i_p_star)
-           i_p_bz=k%s_table(i_p,i_p_s)
+           i_p_bz=k%k_table(i_p,i_p_s)
            !
            i_pmq_bz = qindx_C(i_p_bz,iqbz,1)
            i_pmq_G0 = qindx_C(i_p_bz,iqbz,2)

@@ -46,8 +46,8 @@ subroutine PLASMA_build_up(E,k,q)
  real(SP), allocatable  :: poles(:)
  integer, external      :: PLASMA_tables_and_dimensions
  !
- call k_sym2sym(q,'k')
- call k_sym2sym(k,'k')
+ call k_build_up_BZ_tables(q)
+ call k_build_up_BZ_tables(k)
  !
  N_poles_bare          = k%nbz*n_sp_pol*(SC_bands(2)-SC_bands(1)+1)**2
  N_plasma_poles_global = N_poles_bare

@@ -25,7 +25,7 @@ subroutine Fragments_Synchronize(ID,db_name,i_fragment,j_fragment)
  !
  use pars,           ONLY:schlen
  use com,            ONLY:core_io_path,more_io_path,msg
- use IO_m,           ONLY:synchronize_db,write_is_on,io_mode,VERIFY 
+ use IO_m,           ONLY:synchronize_db,write_is_on,io_mode,VERIFY,io_file
  use stderr,         ONLY:intc
  use fragments,      ONLY:last_syncronized,fragment_status
  use LIVE_t,         ONLY:hashes_now
@@ -44,7 +44,7 @@ subroutine Fragments_Synchronize(ID,db_name,i_fragment,j_fragment)
  !
  if (i_fragment<0) then
    if (.not.io_mode(ID)==VERIFY) return
-   call msg('s','[FRAGMENTs] Start-Up Synchronization ...')
+   call msg('s','[FRAGMENTs of '//trim((io_file(ID)))//'] Start-Up Synchronization ...')
    call synchronize_db(db_name)
    do i_loop=1,iabs(i_fragment)
      call build_the_filename()

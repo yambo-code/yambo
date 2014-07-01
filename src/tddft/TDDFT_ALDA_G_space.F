@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine tddft_alda_g_space(E,k)
+subroutine TDDFT_ALDA_G_space(E,k)
  !
  use pars,          ONLY:DP,SP
  use memory_m,      ONLY:mem_est

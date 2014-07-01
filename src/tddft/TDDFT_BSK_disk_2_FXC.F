@@ -21,15 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
+subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  use pars,          ONLY:SP,pi
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:nqbz,bz_samp,nXkibz
  use BS,            ONLY:BS_mat,BS_res_K_exchange,BS_n_g_exch,&
-&                        BS_bands,BS_blk_dim,BS_K_dim,BS_k_and_row_restart
- use matrix_operate,ONLY:matrix_linear_index
+&                        BS_bands,BS_nT_at_k,BS_K_dim,BS_k_and_row_restart
+ use matrix_operate,ONLY:UP_matrix_index
  use com,           ONLY:isec
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_redux_wait
@@ -76,7 +76,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  ! Constants & dimensions
  !
  Co=4.*pi/(DL_vol*real(nqbz))
- O_x_dim=maxval(BS_blk_dim)
+ O_x_dim=maxval(BS_nT_at_k)
  !
  ! WF loading
  !
@@ -91,7 +91,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  ! Kernel 2 FXC
  !
  allocate(FXC_K_diagonal(BS_K_dim),FXC(FXC_n_g_corr,FXC_n_g_corr,W%n_freqs))
- O_x_dim=maxval(BS_blk_dim)
+ O_x_dim=maxval(BS_nT_at_k)
  call mem_est("FXC_K_diagonal FXC",(/BS_K_dim,size(FXC)/),(/SP,2*SP/))
  FXC_K_diagonal=0._SP
  FXC=(0._SP,0._SP)
@@ -110,23 +110,23 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  BS_k_and_row_restart=0
  do ik2=1,nXkibz
    !
-   call K_exchange(.true.,iq,ik2,Xk,O2x,O_x_dim)
+   !call K_exchange(.true.,iq,ik2,Xk,O2x,O_x_dim)
    !
    do ik1=ik2,1,-1
      !
-     if (ik1/=ik2) call K_exchange(.true.,iq,ik1,Xk,O1x,O_x_dim)
+     !if (ik1/=ik2) call K_exchange(.true.,iq,ik1,Xk,O1x,O_x_dim)
      if (ik1==ik2) O1x=O2x
      !
-     allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
+     allocate(BS_mat(BS_nT_at_k(ik1),BS_nT_at_k(ik2)))
      !
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
-     call io_control(ACTION=ACTION,COM=NONE,SEC=(/matrix_linear_index(ik1,ik2)/),ID=ID)
+     call io_control(ACTION=ACTION,COM=NONE,SEC=(/UP_matrix_index(ik1,ik2)/),ID=ID)
      ioBS_err=ioBS(iq,X_static,ID)
      !
      if (BS_res_K_exchange) then
-       do icv1=1,BS_blk_dim(ik1)
-         do icv2=1,BS_blk_dim(ik2)
+       do icv1=1,BS_nT_at_k(ik1)
+         do icv2=1,BS_nT_at_k(ik2)
            if (ik1==ik2.and.icv2<icv1) cycle
            !
 #if defined _DOUBLE

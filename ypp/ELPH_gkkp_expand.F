@@ -66,7 +66,7 @@ subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
          ! with Tk + IRq = Sp 
          !                                 R^-1                 S
          !                                 -------------------- --
-         ik_bz_gkkp=k%s_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
+         ik_bz_gkkp=k%k_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
          !
          elph_gkkp_expanded(ik_bz,:,ob,ib)=conjg(elph_gkkp(ik_bz_gkkp,:,ib,ob))
          !
@@ -76,7 +76,7 @@ subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
          !                <(R^-1 T k)+q n'|dV_{SCF}/du^{q nu}|(R^-1 T k) n>= 
          !                gkkp(ik_bz,nu,n',n)
          !
-         ik_bz_gkkp=k%s_table(ik,sop_tab(sop_inv(iq_s),is))
+         ik_bz_gkkp=k%k_table(ik,sop_tab(sop_inv(iq_s),is))
          !
          elph_gkkp_expanded(ik_bz,:,ib,ob)=elph_gkkp(ik_bz_gkkp,:,ib,ob)
          !

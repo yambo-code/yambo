@@ -23,8 +23,9 @@
 !
 subroutine XC_switch()
  !
- use drivers
- use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,local_V,SC_perturbation,&
+ use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_exx,l_sc_hf,l_sc_cohsex,l_sc_is_libDFT,&
+&                         l_sc_srpa,l_oep_kli,l_oep_exact,l_oep_ceda,l_oep_slater
+ use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,l_sc_pot_is_local,SC_perturbation,&
 &                         OEP_approx,l_oep_EWeight,l_oep_iterative
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
 &                         GS_xc_KIND,GS_xc_FUNCTIONAL
@@ -35,7 +36,7 @@ subroutine XC_switch()
 #if defined _RT
  use real_time,      ONLY:l_NE_simulate_Irredux
 #endif
- use global_XC,      ONLY:SC_EXX,SC_Hartree,SC_HF,SC_COHSEX,SC_EXXC,SC_SRPA,EXT_NONE,SE_GW_NEQ
+ use global_XC,      ONLY:SC_EXX,SC_Hartree,SC_HF,SC_COHSEX,SC_EXXC,SC_SRPA,EXT_NONE
  use electrons,      ONLY:n_full_bands,n_met_bands
  use com,            ONLY:error
  use parser_m,       ONLY:parser
@@ -47,7 +48,7 @@ subroutine XC_switch()
  !
 #if defined _RT
  !
- call parser('RTIrredx',l_NE_simulate_Irredux)
+ call parser('RTIrredux',l_NE_simulate_Irredux)
  if(l_NE_simulate_Irredux.and.trim(SC_potential)=='HARTREE') SC_potential='IP'
  !
 #endif
@@ -59,25 +60,25 @@ subroutine XC_switch()
      SC_kind=-1
      SC_xc_functional=0
    case('HARTREE')
-     ! This means V_xc is frozed
+     ! This means V_xc is frozen
      l_sc_hartree=.true.
      SC_kind=SC_Hartree
      SC_xc_functional=0
    case('HARTREE-FOCK')
      l_sc_hf=.true.
-     local_V=.false.
+     l_sc_pot_is_local=.false.
      SC_kind=SC_HF
      SC_xc_functional=0
    case('LDA_X')
-     l_sc_contains_lda=.true.
+     l_sc_is_libDFT=.true.
      SC_kind=XC_EXCHANGE
      SC_xc_functional=XC_LDA_X
    case('PZ')
-     l_sc_contains_lda=.true.
+     l_sc_is_libDFT=.true.
      SC_kind=XC_EXCHANGE_CORRELATION
      SC_xc_functional=XC_LDA_C_PZ
    case('default')
-     l_sc_contains_lda=.true.
+     l_sc_is_libDFT=.true.
      SC_kind=GS_xc_KIND
      SC_xc_functional=GS_xc_FUNCTIONAL
    case('EXX')
@@ -87,7 +88,7 @@ subroutine XC_switch()
      if (n_full_bands/=n_met_bands) return
    case('EXXC')
      l_sc_exx=.true.
-     l_sc_contains_lda=.true.
+     l_sc_is_libDFT=.true.
      SC_kind=SC_EXXC
      SC_xc_functional=XC_LDA_C_PZ
      if (n_full_bands/=n_met_bands) return
@@ -99,7 +100,7 @@ subroutine XC_switch()
      if (n_full_bands/=n_met_bands) return
    case('COHSEX')
      l_sc_cohsex=.true.
-     local_V=.false.
+     l_sc_pot_is_local=.false.
      SC_kind=SC_COHSEX
      SC_xc_functional=0
    case default

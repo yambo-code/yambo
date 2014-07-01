@@ -10,7 +10,7 @@ KERR_objects = mod_KERR.o
 ELPH_objects = mod_ELPH.o
 #endif
 objs = mod_pars.o mod_units.o  mod_stderr.o mod_openmp.o mod_parallel.o \
-       mod_wrapper.o mod_fields.o mod_drivers.o  mod_FFT.o \
+       mod_collision.o mod_wrapper.o mod_fields.o mod_drivers.o  mod_FFT.o \
        mod_LIVE_t.o  mod_logo.o \
        mod_com.o mod_timing.o mod_memory.o  mod_electrons.o mod_R_lattice.o mod_wave_func.o \
        mod_matrix_operate.o mod_D_lattice.o mod_frequency.o \
@@ -20,5 +20,4 @@ objs = mod_pars.o mod_units.o  mod_stderr.o mod_openmp.o mod_parallel.o \
        mod_IO.o $(ELPH_objects) mod_xc_functionals.o mod_global_XC.o \
        mod_X_output.o mod_plasma.o \
        $(SC_objects) $(RT_objects) $(MAGNETIC_objects) \
-       mod_collision.o mod_interfaces.o  \
-       mod_fragments.o SET_logicals.o SET_defaults.o
+       mod_interfaces.o mod_fragments.o SET_logicals.o SET_defaults.o

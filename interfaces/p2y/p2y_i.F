@@ -187,7 +187,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  endif
  !
 #if defined _P2Y_V50
- call msg('s','== DB3 (PsedoPotential) ... ')
+ call msg('s','== DB3 (PseudoPotential) ... ')
  call PP_PWscf_driver(k)
  if(verboseIO) then
    call msg('s','== DB3 (PseudoPotential) ... done ==')

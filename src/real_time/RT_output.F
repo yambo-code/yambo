@@ -26,14 +26,14 @@ subroutine RT_output(what,VALUES,TIME,E)
  use units,          ONLY:HA2EV,HA2KEL
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_cohsex,l_sc_hf
  use SC,             ONLY:SC_description,n_SC_descriptions,it_now
  use fields,         ONLY:A_vecpot,Efield,n_ext_fields
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,l_Debye_TBose_update, &
 &                         RT_do_IO,RT_Tfit_lifetimes,&
-&                         Imp_factors
+&                         Imp_factors,l_BGR,BGR
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -174,9 +174,6 @@ subroutine RT_output(what,VALUES,TIME,E)
  headings(next_file,4:5)=(/"T Hole [K]","T Elec [K]"/)
  next_file=next_file+1
  !
- headings(1:next_file-1,1)="Time[fs]"
- !
- !
  if (open_files.and.(l_elph_scatt.or.l_elel_scatt).and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'N_dN_E_conservation_factors'
  short_file_name(next_file)=trim(append_ch)//'N_dN_E_conservation_factors'
@@ -192,8 +189,20 @@ subroutine RT_output(what,VALUES,TIME,E)
  n_headings(next_file)=n1
  next_file=next_file+1
  !
- headings(1:next_file-1,1)="Time[fs]"
+ if (open_files.and.l_BGR.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'BGR'
+ short_file_name(next_file)=trim(append_ch)//'BGR'
+ n_headings(next_file)=7
+ headings(next_file,2:3)=(/"Dir Gap","Ind Gap"/)
+ headings(next_file,4  )=  "H+XC"  
+ if (l_sc_cohsex) headings(next_file,4)="H+XC+COHSEX"
+ if (l_sc_hf    ) headings(next_file,4)="H+XC+HF"
+ headings(next_file,5:6)=(/"Hartree","XC(DFT)"/)
+ if (l_sc_cohsex) headings(next_file,7)="COHSEX"
+ if (l_sc_hf    ) headings(next_file,7)="  HF  "
+ next_file=next_file+1
  !
+ headings(1:next_file-1,1)="Time[fs]"
  !
  ! ... energy resolved ...
  !
@@ -365,6 +374,11 @@ subroutine RT_output(what,VALUES,TIME,E)
            data_to_dump(11)=data_to_dump(11)+real( Efield(i_fp)%Fluence(it_now))
          endif
        enddo
+     case('BGR')
+       data_to_dump(2:3) = BGR(1:2)*HA2EV
+       data_to_dump(5:7) = BGR(3:5)*HA2EV
+       data_to_dump(4)   = (BGR(3)+BGR(4))*HA2EV
+       if (l_sc_cohsex.or.l_sc_hf) data_to_dump(4)   = (BGR(3)+BGR(4)+BGR(5))*HA2EV
      case('energy')
        data_to_dump(2:6) = VALUES(1:5)
      case('dynamics')

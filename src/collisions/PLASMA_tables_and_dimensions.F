@@ -66,7 +66,7 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
    do i_p_star=1,k%nstar(i_p)
      !
      i_p_s =k%star(i_p,i_p_star)
-     i_p_bz=k%s_table(i_p,i_p_s)
+     i_p_bz=k%k_table(i_p,i_p_s)
      !
      i_pmq_bz = qindx_C(i_p_bz,iabs(iqbz),1)
      i_pmq   = k%sstar(i_pmq_bz,1)

@@ -62,7 +62,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! X%f_xc is setup when using ALDA, so that 
  ! the comparison in ioX can be done safely
  !
- call tddft_do_X_W_typs(-1,X,Xw)
+ call TDDFT_do_X_W_typs(-1,X,Xw)
  ! 
  ! Sectioning
  !
@@ -152,7 +152,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    ! TDDFT setup
    !
-   call tddft_do_X_W_typs(iq,X,Xw)
+   call TDDFT_do_X_W_typs(iq,X,Xw)
    !
    ! ALDA (only once) 
    !
@@ -160,7 +160,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      !
      call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
      !
-     call tddft_alda_g_space(Xen,Xk)
+     call TDDFT_ALDA_G_space(Xen,Xk)
      !
    endif
    !

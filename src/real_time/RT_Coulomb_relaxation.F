@@ -26,11 +26,11 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use pars,            ONLY:SP,rZero,cZero,pi
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
- use SC,              ONLY:RT_ibz_coo,SC_bands,RT_nk_ibz
+ use SC,              ONLY:RT_ibz_coo
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
 &                          RT_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                          RT_H_occupations,RT_E_occupations,RIM_ibz_coo,l_RT_uses_E_RIM,&
-&                          l_equilibrium_lifetimes,RIM_EE_scatt_table,RIM_EE_Nk_table,RT_eh_en,&
+&                          l_initial_equilibrium,RIM_EE_scatt_table,RIM_EE_Nk_table,RT_eh_en,&
 &                          RT_scatt_tresh
  use plasma,          ONLY:EH_gas
  use QP_m,            ONLY:QP_n_states,QP_table
@@ -48,7 +48,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  integer               :: i_qp,i_qp1,i_p,i_p_bz,ik_m_q,i_pmq,i_n,i_m,i_mp,i_np,ik_rim,&
 &                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_q_mem,i_pmq_bz,i1,i2,&
 &                         i_J,i_J_bg,i_J_mem,ik_m_q_rim,N_poles_grouped
- real(SP)              :: pre_factor,P_pl_abs,P_pl_emit,DELTA_E,DELTA_W,TMP_Hole_lifetime,TMP_Electron_lifetime
+ real(SP)              :: pre_factor,P_pl_abs,DELTA_E,DELTA_W,TMP_Hole_lifetime,TMP_Electron_lifetime
  !
  ! Occupations
  !
@@ -99,7 +99,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        i_mp = QP_table(i_qp,2)
        i_p  = QP_table(i_qp,3)
        !
-       i_p_bz=k%s_table(i_p,i_p_s)
+       i_p_bz=k%k_table(i_p,i_p_s)
        !
        i_pmq_bz = qindx_C(i_p_bz,iqbz,1)
        i_pmq    = k%sstar(i_pmq_bz,1)
@@ -207,7 +207,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            Hole_f0_kmq      = RT_H_occupations_reference(i_np,ik_m_q_rim)/spin_occ
            df_kmq           = RT_delta_occupations(i_np,ik_m_q_rim)/spin_occ
            !
-           if(l_equilibrium_lifetimes) then
+           if(l_initial_equilibrium) then
              Hole_occupation     = N0_h_plasma*f0_kmq     
              Electron_occupation = N0_e_plasma*Hole_f0_kmq
            else

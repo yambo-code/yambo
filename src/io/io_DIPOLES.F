@@ -50,6 +50,10 @@ integer function io_DIPOLES(X,Xen,ID)
  character(schlen)    :: VAR_name
  real(SP),allocatable :: DIP_iR_disk(:,:,:)
  !
+#if defined _RT
+ io_DIP=.FALSE.
+#endif
+ !
  if (.not.io_DIP) then
    io_DIPOLES=IO_NOT_ALLOWED
    call io_disconnect(ID,FORCE=.TRUE.)

@@ -56,6 +56,7 @@ module QP_CTL_m
    complex(SP):: Z
    character(schlen):: db
    character(schlen):: short_descr
+   !
  end type
  !
  contains

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
+subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  !
  use pars,          ONLY:SP
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
@@ -34,6 +34,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
  real(SP), optional ::E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
  integer , optional ::Nbf(n_sp_pol)
  integer , optional ::Nbm(n_sp_pol)
+ integer , optional ::I_dir(2)
  ! 
  ! Work Space
  ! 
@@ -49,8 +50,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
  ! 
  real(SP) ::E_g_dir_(1+(n_sp_pol-1)*2,2)
  real(SP) ::E_g_ind_(1+(n_sp_pol-1)*2,2) 
- integer  ::Nbf_(n_sp_pol)
- integer  ::Nbm_(n_sp_pol)
+ integer  ::Nbf_(n_sp_pol),I_dir_(2),I_ind_(2),Nbm_(n_sp_pol)
  !
  if(sum(E%f(:,:,:))<1._SP-filled_tresh) call error('The system contains less than 1 electron')
  !
@@ -112,8 +112,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
    E_g_ind_(1,1)=minval(E_cb_min)-maxval(E_vb_max)
    E_g_ind_(1,2)=minval(E_cb_max)-maxval(E_vb_min)
    ! This should never happen
-   if(E_g_ind_(1,1)<0.and.n_sp_pol==2) &
-&    call warning('Merged spin levels are metallic')
+   if(E_g_ind_(1,1)<0.and.n_sp_pol==2) call warning('Merged spin levels are metallic')
    !
  endif
  !
@@ -140,10 +139,11 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
          if(Nbf_(j_sp_pol)==0) cycle
          E_g_dir_old=E_g_dir_(1,1)
          E_g_dir_(1,1)=min(E_g_dir_(1,1),&
-&                        E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(j_sp_pol),ik,j_sp_pol) )
+&                      E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(j_sp_pol),ik,j_sp_pol) )
          if(E_g_dir_(1,1)<E_g_dir_old) then
            i_sp_ref=i_sp_pol
            j_sp_ref=j_sp_pol
+           I_dir_=(/Nbf_(i_sp_pol),ik/)
          endif
        enddo
      enddo
@@ -171,9 +171,9 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
  if(n_sp_pol==1) E%E_dir_gap(1)=E_g_dir_(1,1)
  if(n_sp_pol==2) E%E_dir_gap(1:2)=E_g_dir_(2:3,1)
  !
- !
  ! From Shadow variables to optional variables
  !
+ if (present(I_dir)) I_dir=I_dir_
  if (present(E_g_dir)) E_g_dir=E_g_dir_
  if (present(E_g_ind)) E_g_ind=E_g_ind_
  if (present(Nbf)) Nbf=Nbf_

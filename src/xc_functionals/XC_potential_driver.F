@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): MG
+! Authors (see AUTHORS file for details): MG AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,28 +21,37 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION)
+subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unMUTE)
  !
  ! Wrapper for calculation of the XC potential. If available libxc,
  ! will be used instead of internal routines
  !
- use pars,          ONLY:SP,DP,RZERO
- use R_lattice,     ONLY:bz_samp
- use electrons,     ONLY:levels
- use com,           ONLY:msg,warning
- use libxc_funcs_m, ONLY: XC_LDA_X, XC_LDA_C_PW
- use xc_functionals,ONLY:XC_EXCHANGE_CORRELATION,xc_string,XC_libxc_driver,&
-&                        XC_NOT_AVAILABLE,XC_FACTOR,current_xc_string,LIBXC_message_done
+ use pars,           ONLY:SP,DP,RZERO,schlen
+ use R_lattice,      ONLY:bz_samp
+ use electrons,      ONLY:levels
+ use com,            ONLY:msg,warning
+ use libxc_funcs_m,  ONLY:XC_LDA_X, XC_LDA_C_PW
+ use xc_functionals, ONLY:XC_EXCHANGE_CORRELATION,xc_string,XC_libxc_driver,&
+&                         XC_NOT_AVAILABLE,XC_FACTOR,current_xc_string,LIBXC_message_done
+ use IO_m,           ONLY:IO_and_Messaging_switch
+ !
  implicit none
- type(levels), intent(in)  ::en
- type(bz_samp), intent(in) ::Xk
- integer, intent(inout)    :: KIND,FUNCTIONAL
- integer, intent(in)       :: ORDER
- real(SP), intent(inout),optional :: EXX_FRACTION
+ !
+ type(levels),  intent(in)       ::en
+ type(bz_samp), intent(in)       ::Xk
+ integer,       intent(inout)    :: KIND,FUNCTIONAL
+ integer,       intent(in)       :: ORDER
+ real(SP),      intent(inout),optional :: EXX_FRACTION
+ character(*),  intent(in),   optional :: MUTE
+ logical,       intent(in),   optional :: unMUTE
  !
  ! Work space
  !
- real(SP) ::local_exx_fraction
+ integer           :: ic
+ real(SP)          :: local_exx_fraction
+ character(schlen) :: local_mute_ch
+ !
+ if (present(MUTE)) call IO_and_Messaging_switch(MUTE)
  !
  local_exx_fraction = RZERO
  if (present(EXX_FRACTION)) local_exx_fraction = EXX_FRACTION
@@ -73,5 +82,17 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION)
    if (present(EXX_FRACTION)) EXX_FRACTION = local_exx_fraction 
    call msg('rsn','[xc] Hybrid functional. EXX fraction: ',EXX_FRACTION)
  end if
+ !
+ if (present(MUTE)) then
+   local_mute_ch=MUTE
+   do ic=1,len_trim(local_mute_ch)
+     if (local_mute_ch(ic:ic)=="-") local_mute_ch(ic:ic)="+"
+   enddo   
+   if (present(unMUTE)) then
+     call IO_and_Messaging_switch(trim(local_mute_ch),CONDITION=unMUTE)
+   else
+     call IO_and_Messaging_switch(MUTE)
+   endif
+ endif
  !
 end subroutine XC_potential_driver

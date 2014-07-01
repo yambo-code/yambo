@@ -33,6 +33,7 @@ subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,NC)
  character(*)          :: WHAT
  character(*),optional :: ENVIRONMENT
  integer,optional      :: LOADED,TOTAL,NC
+ ! Work Space
  character(lchlen)     :: local_message,local_env
  !
  local_message=WHAT

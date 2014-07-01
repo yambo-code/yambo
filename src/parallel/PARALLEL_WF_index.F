@@ -31,6 +31,7 @@ subroutine PARALLEL_WF_index(COMM)
 &                          PP_indexes_reset,myid,PAR_COM_WORLD,MPI_comm,&
 &                          COMM_copy,PAR_COM_density
  use wave_func,       ONLY:states_to_load
+ use parallel_m,      ONLY:PP_redux_wait
  !
  implicit none
  !
@@ -38,8 +39,9 @@ subroutine PARALLEL_WF_index(COMM)
  !
  ! Work Space
  !
- integer          :: ik,ib,NB,NK,NC,ID
- type(PP_indexes) :: WF_linear,WF_linear_no_overlaps
+ integer              :: ik,ib,NB,NK,NC,ID
+ type(PP_indexes)     :: WF_linear,WF_linear_no_overlaps
+ integer, allocatable :: b_filling(:)
  !
  call PP_indexes_reset(PAR_IND_WF_linear)
  call PP_indexes_reset(WF_linear)
@@ -64,7 +66,25 @@ subroutine PARALLEL_WF_index(COMM)
  WF_linear%element_1D=.FALSE.
  PAR_IND_WF_linear%element_2D=.FALSE.
  !
+ allocate(b_filling(NB))
+ !
  do ik=1,NK
+   !
+   ! In some cases there could be holes in the states filling.
+   ! In these cases not all bands and k-points are available and the minimal
+   ! overalapping set can have holes as well. The following lines fill those holes.
+   !
+   do ib=1,NB
+     b_filling(ib)=0
+     if (states_to_load(ib,ik,1)) b_filling(ib)=1
+   enddo
+   !
+   call PP_redux_wait(b_filling,COMM=PAR_COM_density%COMM)
+   !
+   do ib=1,NB
+     if (b_filling(ib)==0.and.PAR_COM_density%CPU_id==0)  states_to_load(ib,ik,1)=.TRUE.
+   enddo
+   !
    do ib=1,NB
      if (states_to_load(ib,ik,1)) then
        WF_linear%element_1D(NK*(ib-1)+ik)=.TRUE.
@@ -72,11 +92,9 @@ subroutine PARALLEL_WF_index(COMM)
    enddo
  enddo
  !
- if (present(COMM)) then
-   call PARALLEL_minimal_index_from_overlaping(WF_linear,WF_linear_no_overlaps,COMM)
- else
-   call PARALLEL_minimal_index_from_overlaping(WF_linear,WF_linear_no_overlaps,PAR_COM_WORLD)
- endif
+ deallocate(b_filling)
+ !
+ call PARALLEL_minimal_index_from_overlaping(WF_linear,WF_linear_no_overlaps,PAR_COM_density)
  !
  do ik=1,NK
    do ib=1,NB

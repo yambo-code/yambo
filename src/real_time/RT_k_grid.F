@@ -40,7 +40,7 @@ integer function RT_k_grid(E,k,q)
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
  use LIVE_t,         ONLY:what_is_running
- use SC,             ONLY:RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,SC_bands
+ use SC,             ONLY:RT_ibz_coo,RT_all2ibz,RT_Nk_ibz
  use electrons,      ONLY:levels,BZ_RIM_nkpt
  use real_time,      ONLY:RIM_bz_coo,RIM_ibz_coo,RIM_EE_scatt_table,&
 &                         RIM_EE_percent,RIM_EE_Nk_table
@@ -55,9 +55,7 @@ integer function RT_k_grid(E,k,q)
  ! Work space
  !
  logical :: l_check(k%nibz,k%nibz)
- integer :: ik,ik_bz,ik_rim,ikp_rim,iE_rim,ik_ref,i_n,i_n_ref,iqbz,ik_m_q,&
-&           ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
- real(SP):: delta_E,delta_E_ref
+ integer :: ik,ik_bz,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
  !
  ! Number of K-points
  !====================

@@ -26,7 +26,7 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_new_k,dG_old_k)
  use pars,           ONLY:SP
  use SC,             ONLY:RT_ibz_coo,SC_bands,RT_all2ibz
  use electrons,      ONLY:levels
- use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM
+ use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,RT_Deph_Matrix
  !
  implicit none
  !
@@ -51,13 +51,15 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_new_k,dG_old_k)
      !
      sumGAMMA=0._SP
      !
+     if (allocated(RT_Deph_Matrix)) sumGAMMA=RT_Deph_Matrix(i_n,i_np,ik_ibz)
+     !
      if (     l_RT_uses_E_RIM) then
        deltaE=E%E_RIM(i_n,ik_RIM,1)-E%E_RIM(i_np,ik_RIM,1)
-       if (associated(E%W)) sumGAMMA=(abs(E%W_RIM(i_n,ik_RIM,1))+abs(E%W_RIM(i_np,ik_RIM,1)))/2._SP
+       !if (allocated(E%W)) sumGAMMA=(abs(E%W_RIM(i_n,ik_RIM,1))+abs(E%W_RIM(i_np,ik_RIM,1)))/2._SP
      endif
      if (.not.l_RT_uses_E_RIM) then
        deltaE=E%E(i_n,ik,1)-E%E(i_np,ik,1)
-       if (associated(E%W)) sumGAMMA=(abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik,1)))/2._SP
+       !if (associated(E%W)) sumGAMMA=(abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik,1)))/2._SP
      endif
      !
      if(dTp>0._SP) then

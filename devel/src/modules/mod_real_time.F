@@ -94,10 +94,10 @@ module real_time
  ! channels. I will see later if this can be somehow extended/duplicated
  ! for the static correlations
  !
- character(schlen) :: RT_dynamics_KIND = "EXP" ! EXP or FIELD
- real(SP) :: RT_dynamics_steps(2)  =-1.*FS2AUT ! (1) is step between groups of 3, (2) is step in the group of 3.
- real(SP) :: RT_dynamics_decay_time=-1.*FS2AUT ! For pulsed-like distribution it dumps the distribution of points
-                                               ! in the long-time regime
+ character(schlen) :: RT_dynamics_KIND = "NONE" ! NONE, FLAT, EXP or FIELD
+ real(SP) :: RT_dynamics_steps(2)  =-1.*FS2AUT  ! (1) is step between groups of 3, (2) is step in the group of 3.
+ real(SP) :: RT_dynamics_decay_time=-1.*FS2AUT  ! For pulsed-like distribution it dumps the distribution of points
+                                                ! in the long-time regime
  integer(2), allocatable :: RT_TIME_status(:)
  !
  ! Kind of e-e interactions (for the CORR and SCATT parts)

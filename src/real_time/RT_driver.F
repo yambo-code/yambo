@@ -46,7 +46,7 @@ subroutine RT_driver(E,X,k,q)
  use plasma,          ONLY:Plasma_free,EH_gas
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
- use com,             ONLY:warning,msg
+ use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
  use collision,       ONLY:HF_collisions,COHSEX_collisions,GW_NEQ_collisions
  use QP_CTL_m,        ONLY:QP_apply
@@ -156,7 +156,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Collisions
  !
- if((.not.l_sc_pot_is_local.and..not.l_sc_ip).or.l_elel_scatt.or.(.not.l_sc_pot_is_local.and.l_BGR)) then
+ if((.not.l_sc_pot_is_local.and..not.l_sc_ip).or.l_elel_scatt) then
    !
    if (io_COLLs) then
      !
@@ -166,8 +166,12 @@ subroutine RT_driver(E,X,k,q)
        !
      else
        !
-       call warning('COLLISIONs database missing. E-E scattering switched off.')
-       l_elel_scatt=.FALSE.
+       if (l_elel_scatt) then
+         call warning('COLLISIONs database missing. E-E scattering switched off.')
+         l_elel_scatt=.FALSE.
+       endif
+       !
+       if (.not.l_sc_pot_is_local) call error('COLLISIONs database missing.')
        !
      endif
      !

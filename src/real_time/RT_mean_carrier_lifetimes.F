@@ -23,7 +23,7 @@
 !
 subroutine RT_mean_carrier_lifetimes(E,k)
  ! 
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP
  use units,          ONLY:HA2KEL
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes,  &
@@ -40,7 +40,6 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  ! Work space
  !
  integer            :: ib,ik
- logical            :: l_local
  real(SP)           :: n_states,pre_factor,sum_lifetimes(2)
  real(SP)           :: EE_occupations(SC_bands(1):SC_bands(2),RT_nk),&
 &                      EP_occupations(SC_bands(1):SC_bands(2),RT_nk),&

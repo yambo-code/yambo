@@ -42,7 +42,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  use pars,           ONLY:SP,cZero
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
- use SC,             ONLY:SC_bands,RT_nk
+ use SC,             ONLY:SC_bands
  use real_time,      ONLY:I_relax_static,elph_gkkp_expanded,l_RT_CCA_Kernel
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f

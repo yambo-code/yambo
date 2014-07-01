@@ -24,7 +24,7 @@
 subroutine RT_Lifetimes_Interpolation(Life,Time,Life_SAVED,Times_SAVED)
  !
  use pars,           ONLY:SP
- use real_time,      ONLY:Life_MEM_steps,I_relax_dyn
+ use real_time,      ONLY:Life_MEM_steps
  !
  implicit none
  !

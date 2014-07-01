@@ -24,8 +24,8 @@
 subroutine RT_initialize(E,k,q)
  ! 
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_ip,l_sc_hartree,&
-&                         l_sc_is_libDFT,l_sc_cohsex
- use SC,             ONLY:l_sc_pot_is_local,SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
+&                         l_sc_is_libDFT,l_sc_cohsex,l_sc_hf
+ use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
@@ -35,8 +35,7 @@ subroutine RT_initialize(E,k,q)
  use real_time,      ONLY:Thermal_steps,RT_step,l_NE_with_fields, &
 &                         l_RT_diagonalize,NE_steps,NE_tot_time,   &
 &                         l_RT_diamagnetic,RT_IO_JPO_steps,RT_IO_time,&
-&                         l_NE_simulate_Irredux,    &
-&                         l_RT_induced_field,l_RT_Heun,                   &
+&                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
 &                         RT_diagonalization_steps,RT_is_dephased,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,Gr_kind,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps, &
@@ -45,9 +44,9 @@ subroutine RT_initialize(E,k,q)
 &                         RT_dynamics_KIND,l_NE_dynamics,l_RT_skip_impose,I_MEM_steps,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
 &                         RIM_EE_Nk_table,l_RT_EE_impose_E,RIM_EE_percent,RIM_EE_Nk_table,&
-&                         l_BGR
+&                         l_BGR,l_RT_HEUN
  use IO_m,           ONLY:io_COLLs
- use R_lattice,      ONLY:bz_samp,qindx_S
+ use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
  use parser_m,       ONLY:parser
@@ -59,7 +58,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,rest,ik,iqbz,IO_steps(3),N_T_samplings
+ integer                  :: i1,rest,ik,IO_steps(3),N_T_samplings
  character(5)             :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_field_is_a_pulse 
@@ -236,7 +235,7 @@ subroutine RT_initialize(E,k,q)
  !
  if ( .not. l_NE_dynamics ) then
    NE_steps=0
-   if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields or thermalization provided')
+   if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields, no thermalization and no manual pumping provided')
  endif
  !
  ! RIM support
@@ -306,7 +305,9 @@ subroutine RT_initialize(E,k,q)
  ! Checking extended COLLISIONS
  !==============================
  !
- call msg('r',' ')
+ if (l_elel_scatt.or.l_sc_cohsex.or.l_sc_hf) then
+   call section('=','Electronic Collisions loading and setup')
+ endif
  !
  if (l_elel_scatt) then
    call PLASMA_build_up(E,k,q)
@@ -344,10 +345,10 @@ subroutine RT_initialize(E,k,q)
  call msg( 'nr','---Flags (if any)---')
  if (l_sc_ip)             call msg( 'r','Simulate IP                :',l_sc_ip)
  if (l_sc_hartree)        call msg( 'r','Simulate RPA               :',l_sc_hartree.and..not.l_sc_ip)
- if (l_sc_is_libDFT)   call msg( 'r','Simulate TD-DFT            :',l_sc_is_libDFT)
+ if (l_sc_is_libDFT)      call msg( 'r','Simulate TD-DFT            :',l_sc_is_libDFT)
  if (l_sc_cohsex)         call msg( 'r','Simulate BSE               :',l_sc_cohsex)
  !
- if (l_NE_simulate_Irredux) call msg( 'r','Simulate Irredux                :',l_NE_simulate_Irredux)
+ if (l_NE_simulate_Irredux) call msg( 'r','Simulate Irredux           :',l_NE_simulate_Irredux)
  !
  if (l_elph_scatt)        call msg( 'r','El-Ph Carrier scattering   :',l_elph_scatt)
  if (l_elel_scatt)        call msg( 'r','El-El Carrier scattering   :',l_elel_scatt)
@@ -364,7 +365,7 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', 'Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000._SP/))
  call msg( 'r', 'Damping (Radiative)[fs/meV]:',(/RAD_LifeTime/FS2AUT,   HBAR_eVfs/RAD_LifeTime*FS2AUT*1000._SP/))
  !
- if (.not.l_RT_skip_impose.or.l_RT_EE_impose_E) then
+ if ((l_elel_scatt.or.l_elph_scatt).and.(.not.l_RT_skip_impose.or.l_RT_EE_impose_E)) then
    call msg( 'nr','---Conservation Rules---')
    call msg( 'r','dN (e-p) and N (e-p + e-e)  :',.not.l_RT_skip_impose)
    if (l_elel_scatt) call msg( 'r','Energy (e-e)                :',l_RT_EE_impose_E)

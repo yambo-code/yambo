@@ -26,7 +26,6 @@ subroutine RT_BGR(G,E,k)
  ! This routine calculates the BGR
  !
  use pars,           ONLY:SP
- use units
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,V_hartree_sc,V_xc_sc,rho_n,&
 &                         RT_ibz_coo,RT_all2ibz

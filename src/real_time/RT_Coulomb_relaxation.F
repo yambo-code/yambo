@@ -26,7 +26,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use pars,            ONLY:SP,rZero,cZero,pi
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
- use SC,              ONLY:RT_ibz_coo,SC_bands,RT_nk_ibz
+ use SC,              ONLY:RT_ibz_coo
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
 &                          RT_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                          RT_H_occupations,RT_E_occupations,RIM_ibz_coo,l_RT_uses_E_RIM,&
@@ -48,7 +48,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  integer               :: i_qp,i_qp1,i_p,i_p_bz,ik_m_q,i_pmq,i_n,i_m,i_mp,i_np,ik_rim,&
 &                         iqbz,i_p_s,i_q,i_q_s,i_qp1_mem,i_q_mem,i_pmq_bz,i1,i2,&
 &                         i_J,i_J_bg,i_J_mem,ik_m_q_rim,N_poles_grouped
- real(SP)              :: pre_factor,P_pl_abs,P_pl_emit,DELTA_E,DELTA_W,TMP_Hole_lifetime,TMP_Electron_lifetime
+ real(SP)              :: pre_factor,P_pl_abs,DELTA_E,DELTA_W,TMP_Hole_lifetime,TMP_Electron_lifetime
  !
  ! Occupations
  !

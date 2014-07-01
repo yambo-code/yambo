@@ -24,18 +24,15 @@
 subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_elel_scatt,l_elph_scatt
- use units,          ONLY:FS2AUT
+ use drivers,        ONLY:l_elel_scatt
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,it_now,RT_nk,RT_ibz_coo
- use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Plasma_INDEX
+ use SC,             ONLY:SC_bands,it_now,RT_nk
  use real_time,      ONLY:RT_TIME_status,SAVED_times,FIRST_step,&
 &                         Life_MEM_steps,SAVED_lifetime,RT_dynamics_steps,&
-&                         ADD_to_saved_values,l_initial_equilibrium,&
+&                         ADD_to_saved_values,&
 &                         RT_E_occupations,RT_E_occupations_reference,&
-&                         RT_H_occupations,RT_H_occupations_reference,&
-&                         I_relax_dyn
+&                         RT_H_occupations,RT_H_occupations_reference
  !
  implicit none
  !
@@ -48,7 +45,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  !
  ! Work Space
  !
- integer          :: ib,ik,ik_rim
+ integer          :: ib,ik
  !
  if (RT_dynamics_steps(1)<0.) return
  !
@@ -63,13 +60,6 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    do ib=SC_bands(1),SC_bands(2)
      do ik=1,RT_nk
        call ADD_to_saved_values(LIFE(ib,ik),SAVED_lifetime(ib,ik,SAVE_index,:),Life_MEM_steps)
-       !
-       if (SAVE_index==1.or.SAVE_index==3.or.SAVE_index==5) then
-         I_relax_dyn(ib,ik,1,1)=I_relax_dyn(ib,ik,1,1)+LIFE(ib,ik)
-       else
-         I_relax_dyn(ib,ik,2,1)=I_relax_dyn(ib,ik,2,1)+LIFE(ib,ik)
-       endif
-       !
      enddo
    enddo
    !

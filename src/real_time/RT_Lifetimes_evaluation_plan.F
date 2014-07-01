@@ -26,7 +26,6 @@ integer function RT_Lifetimes_evaluation_plan( )
  ! Here I define the components of an integer array
  ! RT_GAMMA_T_status(NE_steps)
  !
- use units,          ONLY:FS2AUT
  use pars,           ONLY:IP2,SP
  use fields,         ONLY:Efield,i_Pump,ext_field,Efield_duplicate,small_a
  use memory_m,       ONLY:mem_est

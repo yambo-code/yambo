@@ -35,11 +35,10 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
 &                         RIM_ibz_coo,l_RT_uses_E_RIM,RT_do_IO,   &
 &                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,&
 &                         RT_H_occupations,G_lesser_reference
- use electrons,      ONLY:levels,spin_occ
+ use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional
- use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_Xk_nibz,master_cpu
 #if defined _TIMING
  use timing_m,       ONLY:timing

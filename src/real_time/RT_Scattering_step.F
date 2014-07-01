@@ -27,11 +27,11 @@ subroutine RT_Scattering_step(G_new_k,ik,deltaT)
  use electrons,      ONLY:spin_occ
  use SC,             ONLY:SC_bands
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
- use real_time,      ONLY:I_relax_static,l_RT_RWA,l_RT_CCA_Kernel,l_RT_EXP,    &
+ use real_time,      ONLY:I_relax_static,l_RT_CCA_Kernel,l_RT_EXP,    &
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, &
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime, &
-&                         REF_Lifetime,G_lesser_reference
+&                         G_lesser_reference,REF_lifetime
  !
  implicit none
  !

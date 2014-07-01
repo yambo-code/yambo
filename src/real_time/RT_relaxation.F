@@ -45,15 +45,13 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
- use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz,RT_ibz_coo
+ use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
- use real_time,      ONLY:I_relax_static,G_lesser_reference,RT_is_dephased,l_NE_dynamics_started,RT_Deph_Matrix,&
+ use real_time,      ONLY:I_relax_static,RT_is_dephased,l_NE_dynamics_started,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
-&                         RT_TIME_status,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                         REF_lifetime,it_start,RT_E_occupations,RT_H_occupations,FIRST_step,&
-&                         l_initial_equilibrium,l_RT_skip_impose,RT_delta0_occupations,RIM_ibz_coo,&
-&                         I_relax_dyn
+&                         RT_TIME_status,REF_lifetime,it_start,RT_E_occupations,RT_H_occupations,FIRST_step,&
+&                         l_initial_equilibrium,l_RT_skip_impose,RT_delta0_occupations
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -68,8 +66,8 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  !
  ! Work Space
  !
- integer          :: ib1,ib2,ik,i_n
- real(SP)         :: f_E_k,f_H_k,df_k,dGAMMA_h,dGAMMA_e,GAMMA0_h,GAMMA0_e
+ integer          :: ib1,ib2,ik
+ real(SP)         :: f_E_k,f_H_k,df_k,dGAMMA_h,dGAMMA_e
  logical          :: l_eval
  !
  l_initial_equilibrium=l_flag
@@ -77,7 +75,6 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  if (.not.l_NE_dynamics_started .and. .not.l_initial_equilibrium) return
  !
  I_relax_static=cZERO
- I_relax_dyn=cZERO
  !
  ! Dephasing matrix
  !==================

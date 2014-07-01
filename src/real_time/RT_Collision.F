@@ -46,7 +46,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
 #endif
  use electrons,      ONLY:levels
  use FFT_m,          ONLY:fft_size
- use drivers,        ONLY:l_sc_ip,l_sc_is_libDFT,l_sc_hf,l_sc_cohsex
+ use drivers,        ONLY:l_sc_ip,l_sc_is_libDFT,l_sc_hf,l_sc_cohsex,l_sc_hartree
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,it_now,SC_R,&
 &                         RT_ibz_coo,RT_nk,it_now
@@ -91,9 +91,9 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  ! corresponds to Thermalization where the density must be updated
  ! This part of the code is presently not used so I comment it
  !  
- eval_DFT     = l_sc_is_libDFT            .and..not.l_sc_ip
- eval_HARTREE = .not.l_NE_simulate_Irredux.and..not.l_sc_ip
- eval_DENSITY = eval_HARTREE .or. eval_DFT
+ eval_DFT     =  l_sc_is_libDFT            .and..not.l_sc_ip
+ eval_HARTREE = (.not.l_NE_simulate_Irredux.and..not.l_sc_ip).or.l_sc_hartree
+ eval_DENSITY =  eval_HARTREE .or. eval_DFT
  !
  if (eval_DENSITY) then
    !

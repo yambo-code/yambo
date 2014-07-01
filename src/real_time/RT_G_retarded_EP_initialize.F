@@ -21,13 +21,12 @@
 !
 subroutine RT_G_retarded_EP_initialize(E,k)
  !
- use pars,           ONLY:rZERO,SP,IP4,pi
+ use pars,           ONLY:rZERO,SP,IP4
  use R_lattice,      ONLY:nkibz,nqbz,bz_samp,qindx_S
- use electrons,      ONLY:levels,BZ_RIM_tot_nkpts,BZ_RIM_nkpt,BZ_RIM_table
+ use electrons,      ONLY:levels
  use SC,             ONLY:SC_bands
  use LIVE_t,         ONLY:live_timing
- use real_time,      ONLY:B_mat_index,Gr_ep_matrix,&
-&                         l_RT_uses_E_RIM,Gr_kind
+ use real_time,      ONLY:B_mat_index,Gr_ep_matrix,Gr_kind
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_Xk_nibz,PAR_nQ,PAR_n_B_mat_elements,PAR_IND_Xk_ibz,&
 &                         PAR_Xk_ibz_index,PAR_IND_Q,PAR_B_mat_index,PAR_Q_index
@@ -41,14 +40,11 @@ subroutine RT_G_retarded_EP_initialize(E,k)
  ! Work Space
  !
  real(SP):: GAMMA_,E_center
- integer :: ik,iqbz,i_n,i_np,ik_mem,i_b_mat_mem,iq_mem,ik_m_q,il,is,i_trans(2),kin_scatt(3),&
-&           ik_rim_1,ik_rim_2,i1,i2
- real(SP), allocatable :: Gr_integrand(:)
- real(SP),    external :: Laplace_transform,HyperbolicSecant_FT
+ integer :: ik,iqbz,i_n,i_np,ik_mem,i_b_mat_mem,iq_mem,ik_m_q,il,is
  real(SP):: TRANSITIONS_E((SC_bands(2)-SC_bands(1)+1)*nkibz)
- logical :: eval_it
  integer(IP4)          :: TRANSITIONS_table((SC_bands(2)-SC_bands(1)+1)*nkibz,&
 &                                           (SC_bands(2)-SC_bands(1)+1)*nkibz,3)
+ real(SP),    external :: HyperbolicSecant_FT
  !
  ! Allocation
  !

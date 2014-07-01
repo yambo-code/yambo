@@ -368,7 +368,7 @@ module real_time
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_is_libDFT,l_elph_scatt,l_elel_scatt,&
-&                             l_sc_cohsex
+&                             l_sc_cohsex,l_sc_hartree
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,l_sc_pot_is_local,SC_alloc,E_bare, &
 &                             SC_xc_functional,SC_xc_functional,RT_nk
@@ -507,7 +507,7 @@ module real_time
      allocate(rho_reference(fft_size))
      call mem_est("rho_reference",(/fft_size/),(/SP/))
      !
-     if( (l_sc_is_libDFT.and.SC_xc_functional/=0.and.SC_bands(1)>1) .or. l_BGR) then
+     if((l_sc_is_libDFT.or.l_sc_hartree.or.l_sc_cohsex).and.SC_bands(1)>1) then
        allocate(rho_full(fft_size))
        call mem_est("rho_full",(/fft_size/),(/SP/))
      endif

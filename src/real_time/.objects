@@ -23,5 +23,5 @@ objs = RT_initialize.o RT_k_grid.o RT_start_and_restart.o RT_update.o \
        RT_Lifetimes_evaluation_plan.o RT_Lifetimes_Interpolation.o RT_Lifetimes_Interpolation.o \
        RT_Lifetimes_merge.o RT_Lifetimes_save_and_interp.o \
        RT_Lifetimes_use_delta_Occupations.o \
-       RT_apply_zero_dyn.o RT_impose_zero_dE_and_dN.o $(ELPH_objs) RT_BGR.o
+       RT_apply_RWA.o RT_impose_zero_dE_and_dN.o $(ELPH_objs) RT_BGR.o
 #endif

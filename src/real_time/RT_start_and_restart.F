@@ -198,7 +198,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1))
  rho_reference=rho_n
  !
- if (allocated(rho_full)) then ! rho_full is allocated if l_sc_is_libDFT.and.SC_bands(1)>1
+ if (allocated(rho_full)) then ! rho_full is allocated if (l_sc_is_libDFT.and.SC_bands(1)>1).or.l_sc_hartree
    call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_n,1)
    rho_full=rho_n
  endif

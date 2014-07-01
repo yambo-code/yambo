@@ -29,12 +29,12 @@ subroutine RT_occupations_FIT(E,k,T_fit,Ef_fit,Occupations)
  !
  use pars,           ONLY:SP
  use QP_m,           ONLY:QP_table,QP_n_states
- use electrons,      ONLY:levels,spin,spin_occ
+ use electrons,      ONLY:levels,spin
  use R_lattice,      ONLY:bz_samp
  use vec_operate,    ONLY:sort
  use functions,      ONLY:Fermi_fnc_fit
  use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo,RT_nk
- use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,RT_occupations_locked
+ use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM
  !
  implicit none
  !
@@ -48,8 +48,7 @@ subroutine RT_occupations_FIT(E,k,T_fit,Ef_fit,Occupations)
  !
  integer  :: i_RT,i_qp,i_b,i_k,i_k_rim,i_k_Erim,i_k_RT,i_spin,i1,&
 &            nfit,E_sort_index(RT_nstates)
- real(SP) :: err_fit(4),E_first_hole,E_last_electron, &
-&            RT_occ_fit(fit_dim,2),RT_E_fit(fit_dim,2), &
+ real(SP) :: err_fit(4),RT_occ_fit(fit_dim,2),RT_E_fit(fit_dim,2), &
 &            RT_occ(RT_nstates),RT_occ_tmp(RT_nstates),RT_E(RT_nstates)
  !
  i_RT=0

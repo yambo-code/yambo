@@ -136,17 +136,17 @@ subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
  !
  contains
    !
-   subroutine RT_evolve(G_in,G_out,dT,dTp)
+   subroutine RT_evolve(dG_in,dG_out,dT,dTp)
      !
-     ! dG_in = G(T0)     --> Time at first iteration in integrator with more than one step
-     ! G_in  = G(T )     --> Effective time, i.e. at the second step of RK2 T=T0+dt/2
-     ! G_out = G(T0+dt)
+     ! dG_in  = dG(T0)     --> Time at first iteration in integrator with more than one step
+     ! dG_in  = dG(T )     --> Effective time, i.e. at the second step of RK2 T=T0+dt/2
+     ! dG_out = dG(T0+dt)
      !
      !  T0+dt = T+dt'
      !
      real(SP),     intent(in) :: dT,dTp
-     complex(SP),  intent(in) :: G_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
-     complex(SP), intent(out) :: G_out(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+     complex(SP),  intent(in) :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+     complex(SP), intent(out) :: dG_out(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
      !
      integer                :: ik,ib
      complex(SP)            :: G_loc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
@@ -163,7 +163,7 @@ subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
      !
      do ik=1,RT_nk
        !
-       G_loc=G_in(:,:,ik)+G_lesser_reference(:,:,ik)
+       G_loc=dG_in(:,:,ik)+G_lesser_reference(:,:,ik)
        !
        if (l_RT_EXP) then
          !
@@ -173,7 +173,7 @@ subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
          !
          ! G(T0+dt) = U(dt) G(T0) U(-dt)
          !
-         call RT_EULEREXP_step(G_out(:,:,ik),dG_in(:,:,ik),G_lesser_reference(:,:,ik),I1_k,I2_k,I1_matrix)
+         call RT_EULEREXP_step(dG_out(:,:,ik),dG_in(:,:,ik),G_lesser_reference(:,:,ik),I1_k,I2_k,I1_matrix)
          !
        else
          !
@@ -183,24 +183,24 @@ subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
          !
          ! G(T0+dt) -G(T0)= - i dt *(I1(T) - I2(T))
          !
-         if (.not.l_RT_INTERPOLATE) call RT_EULER_step(G_out(:,:,ik),I1_k,I2_k,dT)
+         if (.not.l_RT_INTERPOLATE) call RT_EULER_step(dG_out(:,:,ik),I1_k,I2_k,dT)
          !if (l_RT_INTERPOLATE)      call RT_INTERPOLATED_step(G_out(:,:,ik),dG_in(:,:,ik),I1_k,I2_k,ik,Time,dT,.TRUE.)
          !
        endif
        !
        ! G(T0+dt) = G(T0) e^{-i\delta\epsilon dt} - i dt *(I1(T) - I2(T)) e^{-i\delta\epsilon (dt')}
        !
-       if(     l_RT_RWA) call RT_apply_zero_dyn(ik,E,dT,dTp,G_out(:,:,ik),dG_in(:,:,ik))
-       if(.not.l_RT_RWA) G_out(:,:,ik)=G_out(:,:,ik)+dG_in(:,:,ik)
+       if(     l_RT_RWA) call RT_apply_RWA(ik,E,dT,dTp,dG_out(:,:,ik),dG_in(:,:,ik))
+       if(.not.l_RT_RWA) dG_out(:,:,ik)=dG_out(:,:,ik)+dG_in(:,:,ik)
        !
        ! Dephasing and carriers relaxation step
        ! G(T0+dt) = G(T0) - i dt * Sigma_relax(T)
        !
-       if(l_elel_scatt.or.l_elph_scatt) call RT_Scattering_step(G_out(:,:,ik),ik,dT)
+       if(l_elel_scatt.or.l_elph_scatt) call RT_Scattering_step(dG_out(:,:,ik),ik,dT)
        !
      enddo
      !
-     call RT_update_occ(G_out)
+     call RT_update_occ(dG_out)
      !
    end subroutine RT_evolve
    !

@@ -31,7 +31,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands,RT_nk,RT_Nk_ibz,RT_ibz_coo
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations
  use X_m,            ONLY:P_square
- use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,           &
+ use real_time,      ONLY:REF_V_hartree_sc,REF_V_xc_sc,RT_average_operator,           &
 &                         RIM_ibz_coo,l_RT_uses_E_RIM,RT_do_IO,   &
 &                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,&
 &                         RT_H_occupations,G_lesser_reference
@@ -89,6 +89,8 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  E_ion = E_ion - E_kin
  !
+ if (l_sc_ip) call RT_average_operator(VALUE=E_h,O_REAL=REF_V_hartree_sc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
+ !
  if (.not.l_sc_ip) then
    !
    ! Hartree potential Energy
@@ -101,17 +103,9 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    !
  endif
  !
- if (l_sc_hartree .or. l_sc_ip) then
+ if (l_sc_hartree) then
    !
-   ! XC0_and_HARTREE0 contains the Hartree part only in case
-   ! XC is not frozen. Here we are in the case XC is frozen,
-   ! so it contais both V_H and V_xc
-   !
-   call RT_average_operator(VALUE=Exc,O_MATRIX=XC0_and_HARTREE0,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
-   !
-   ! If Hartreee is evolving the change in the Hartree energy has been already
-   ! stored in E_h, so I remove from here the term rho_0*delta_rho
-   if(l_sc_hartree) Exc=Exc-VALUE_tmp(1)
+   call RT_average_operator(VALUE=Exc,O_REAL=REF_V_xc_sc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
    !
  else if(l_sc_is_libDFT) then 
    !        

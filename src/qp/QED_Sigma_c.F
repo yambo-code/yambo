@@ -27,15 +27,15 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use units,               ONLY:SPEED_OF_LIGHT,HA2EV
  use drivers,             ONLY:l_elel_corr
  use electrons,           ONLY:levels,n_spinor,spin_occ
- use D_lattice,           ONLY:idt_index,alat,a,Tel
- use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,g_rot,g_vec
+ use D_lattice,           ONLY:idt_index,alat,a,Tel,Bose_Temp
+ use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,g_vec
  use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_table,QP_G_damp,QP_Sc,QP_dSc_steps
  use vec_operate,         ONLY:v_norm
- use wave_func,           ONLY:WF,WAVEs,wf_x,wf_y,wf_z,WF_derivative_alloc,wf_ng
- use FFT_m,               ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_norm
+ use wave_func,           ONLY:WF,WAVEs
+ use FFT_m,               ONLY:fft_size,fft_dim
  use interfaces,          ONLY:WF_load
  use functions,           ONLY:Fermi_fnc,bose_f 
- use LIVE_t,        ONLY:live_timing
+ use LIVE_t,              ONLY:live_timing
  !
  implicit none
  !
@@ -47,10 +47,9 @@ subroutine QED_Sigma_c(E,k,q,qp)
  integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_b,i_k,i_n,i_p_bz,i_p_G0,i_m,i_p_s,i_p,&
 &                            i_c,i_cp,i_wf_at_k,i_wf_at_p,i_k_bz,ir,ir1,ir2,ir3,i_wf_at_k_g,&
                              i_wf_at_p_g
- real(SP)                  ::q_cc(3),k_cc(3),Photon_E,Photon_pol_vec(3,3),sumdot
- complex(SP)               ::XHI(3),O,P,S
- type(WAVES)               ::WF_g
- complex(SP), allocatable  ::WF_p(:,:),WF_p_rot(:,:),WF_der(:,:),WF_der_g(:,:),fft_der(:),WF_der_rot(:,:)
+ real(SP)                  ::q_cc(3),k_cc(3),Photon_E,Photon_pol_vec(3,3),sumdot,bose
+ complex(SP)               ::XHI(3),I_wfk_wfp,Dipole_sum
+ complex(SP), allocatable  ::WF_p(:,:),WF_p_rot(:,:),WF_der(:,:),WF_der_rot(:,:)
  real(SP), allocatable     ::r_cell_cc(:,:)
  !
  if (l_elel_corr) then
@@ -59,16 +58,11 @@ subroutine QED_Sigma_c(E,k,q,qp)
    call section('=','Correlation: Photon-mediated Self-energy')
  endif
  !
- WF_g%b=0
- WF_g%k=0
- WF_g%space=' '
- !
- call WF_load(WF_g,0,1,(/1,QP_n_G_bands(2)/),(/1,k%nibz/),space='G',title='-[Photon-El]Sigma_c/G space')
  call WF_load(WF  ,0,1,(/1,QP_n_G_bands(2)/),(/1,k%nibz/),space='R',title='-[Photon-El]Sigma_c/R space')
  !
  allocate(WF_p(fft_size,n_spinor),WF_p_rot(fft_size,n_spinor)) 
  allocate(r_cell_cc(3,fft_size))
- allocate(WF_der(3,fft_size),WF_der_g(wf_ng,3),fft_der(fft_size),WF_der_rot(3,fft_size))
+ allocate(WF_der(3,fft_size),WF_der_rot(3,fft_size))
  !
  ir = 0
  do ir1 = 0, fft_dim(1)-1
@@ -98,6 +92,12 @@ subroutine QED_Sigma_c(E,k,q,qp)
    call QED_polarization_vectors(q_cc,Photon_pol_vec)
    !
    Photon_E=SPEED_OF_LIGHT*v_norm(q_cc)
+   if (abs(Photon_E)>epsilon(1.)) then
+     if (abs(Photon_E)<=0.1_SP*Bose_Temp) bose=2._SP*Bose_Temp/Photon_E
+     if (abs(Photon_E)> 0.1_SP*Bose_Temp) bose=2._SP/(exp(Photon_E/Bose_Temp)-1._SP)
+   else
+       bose=2._SP*Bose_Temp/epsilon(1.)
+   endif
    !
    QP_loop: do i_qp=1,qp%n_states
      !
@@ -117,40 +117,16 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        i_wf_at_k=WF%index(i_n,i_k,1)
        i_wf_at_p=WF%index(i_m,i_p,1)
-
-       i_wf_at_k_g=WF_g%index(i_n,i_k,1)
-       i_wf_at_p_g=WF_g%index(i_m,i_p,1)
        !
        ! WF%c(i_wf_at_k,:) = wf @ k in r-space -> O
-       ! WF_g%c(i_wf_at_k,:) = wf @ k in G-space - > XHI
        !
        call WF_apply_symm((/i_m, i_p, i_p_s, 1/), WF_p)
        !
-       !We now evaluate the derivative of (i_m,i_p,i_p_s) in G space
+       !We now evaluate the derivative of (i_m,i_p,i_p_s)
        !
        WF_der=cZERO
        !
        call eval_gradient(WF_p,WF_der)
-!       write(*,*) i_m
-!       do i_c=1,3       
-!         write(*,*) dot_product(WF_der(i_c,:),WF_der(i_c,:))
-!       enddo
-       !
-!       do i_c=1,3
-         !
-!         fft_der=cZERO
-!         WF_der_g(1:wf_ng,i_c)=WF_g%c(1:wf_ng,i_wf_at_p_g)*g_vec(1:wf_ng,i_c)*2.0_SP*pi/alat(i_c)
-         !and fft it to real space
-!         fft_der(fft_g_table(1:wf_ng,1))=WF_der_g(1:wf_ng,i_c)
-!#if defined _FFTW
-! call dfftw_destroy_plan(fftw_plan)
-! fftw_plan = 0
-!         call fft_3d(fft_der,fft_dim,1,fftw_plan)
-!#else
-!         call fft_3d(fft_der,fft_dim,1)
-!#endif
-!         WF_der(:,i_c)=fft_der(:)
-!       enddo
        !
        !Now we multiply (i_m,i_p,i_p_s) and its gradient by exp(iG_0r)
        do ir = 1, fft_size
@@ -161,34 +137,31 @@ subroutine QED_Sigma_c(E,k,q,qp)
          WF_p_rot(ir,1:n_spinor) = WF_p(ir,1:n_spinor)*exp(cI*sumdot)
          WF_der_rot(1:3,ir) = WF_der(1:3,ir)*exp(cI*sumdot)
        enddo
-!       write(*,*) 'dot_p after rotation'
-!       write(*,*) 'rotated wf', dot_product(WF_p_rot(:,1),WF_p_rot(:,1)) 
-!       do i_c=1,3
-!         write(*,*) 'rotated der', dot_product(WF_der_rot(i_c,:),WF_der_rot(i_c,:))
-!       enddo
        !
        !<i_m,i_p,i_p_s|exp(-iG_0r)|i_n,i_k,i_k_s>
-       O=dot_product(WF_p_rot(:,1),WF%c(:,i_wf_at_k))
-!       write(*,*) 'O=', O
+       I_wfk_wfp=dot_product(WF_p_rot(:,1),WF%c(:,i_wf_at_k))
        !
-       P=cZERO
+       Dipole_sum=cZERO
        do i_cp=1,3
          !
          !\int dr (i_n,i_k,i_k_s)exp(-iG_0r)\nabla_{i_cp}(i_m,i_q,i_q_s)^*
          XHI(i_cp) = dot_product(WF_der_rot(:,i_cp),WF%c(:,i_wf_at_k))
          !
          do i_c=1,3
-           P=P + Photon_pol_vec(i_cp,i_c)*(XHI(i_cp)*O - cI*(k_cc(i_cp) - q_cc(i_cp) + &
-&            g_vec(i_p_G0,i_cp)*2*pi/alat(i_cp))*real(conjg(O)*O))*q_cc(i_c)
-           !
+           Dipole_sum=Dipole_sum + Photon_pol_vec(i_cp,i_c)*(XHI(i_cp)*I_wfk_wfp - cI*(k_cc(i_cp) - q_cc(i_cp) + &
+&            g_vec(i_p_G0,i_cp)*2._SP*pi/alat(i_cp))*real(conjg(I_wfk_wfp)*I_wfk_wfp))*q_cc(i_c)
+         !
          enddo 
        enddo
-!       write(*,*) 'P=', P
        !
-       QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps) + &
-&        P*((spin_occ-E%f(i_m,i_p,1))/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_e+cI*QP_G_damp) +&
-&        E%f(i_m,i_q,1)/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_e+cI*QP_G_damp))/spin_occ /(8._SP*pi**2)
+       QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps) +&
+&       Dipole_sum*((spin_occ-E%f(i_m,i_p,1) + bose)/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)-Photon_E+cI*QP_G_damp) +&
+&        (E%f(i_m,i_p,1)+bose)/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_E+cI*QP_G_damp))/spin_occ /(8._SP*pi**2)
        !
+!       if(E%f(i_m,i_p,1) /= 0._SP .and. bose_f(Photon_E) /= 0._SP) then
+       write(*,*) E%f(i_m,i_p,1),bose_f(Photon_E), 2._SP/(exp(Photon_E/Bose_Temp)-1._SP)!, E%f(i_m,i_p,1) + bose_f(Photon_e)
+       write(*,*) E%E(i_n,i_k,1),E%E(i_m,i_p,1),Photon_E!, E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_E
+!       endif
      enddo B_loop
    enddo QP_loop
    !
@@ -198,10 +171,10 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  call live_timing( )
  !
-! stop
+stop
+!
  do i_qp=1,qp%n_states
    write (*,*) i_qp,QP_Sc(i_qp,1)*HA2EV
  enddo
- stop
  !
 end subroutine QED_sigma_c

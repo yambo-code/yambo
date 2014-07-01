@@ -33,7 +33,7 @@ subroutine RT_Dephasing_Matrix(E)
  use QP_m,          ONLY:QP_nk
  use R_lattice,     ONLY:nkibz
  use real_time,     ONLY:RT_Deph_Matrix,RT_is_dephased,Phase_LifeTime,&
-&                        RAD_LifeTime,l_RT_RWA
+&                        RAD_LifeTime
  !
  implicit none
  !
@@ -125,7 +125,7 @@ subroutine RT_Dephasing_Matrix(E)
    !
    deallocate(DephM_r_limits)
    !
- else if (associated(E%W).and. .not. l_RT_RWA) then
+ else if (associated(E%W)) then
    !
    ! QP database 
    !-------------

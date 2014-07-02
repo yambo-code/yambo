@@ -61,7 +61,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  type(QP_t)       ::qp_expanded
  !
  !I/O
- integer, external::ioQP
+ integer, external::io_QP
  logical          ::do_IO
  integer          ::ID,io_err
  !
@@ -97,7 +97,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
    if (do_IO) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
-     io_err=ioQP('G',qp,ID) 
+     io_err=io_QP('G',qp,ID) 
    endif
    return
  endif
@@ -271,8 +271,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !=================
  if (do_IO) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
-   if (.not.associated(qp_expanded%E)) io_err=ioQP('QP',qp,ID)
-   if (     associated(qp_expanded%E)) io_err=ioQP('QP',qp_expanded,ID)
+   if (.not.associated(qp_expanded%E)) io_err=io_QP('QP',qp,ID)
+   if (     associated(qp_expanded%E)) io_err=io_QP('QP',qp_expanded,ID)
  endif
  !
  call QP_reset(qp_expanded)

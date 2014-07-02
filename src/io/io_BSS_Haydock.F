@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf)  
+integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf)  
  !
  use pars,          ONLY:SP
  use BS,            ONLY:BS_identifier,BSS_q0
@@ -39,13 +39,13 @@ integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp
  integer  :: it_on_disk
  real(SP) :: V_dummy(BS_H_dim,2), Cf_dummy(it+1,2)
  !
- ioBSS_Haydock=io_connect(desc='Haydock_restart',type=2,ID=ID)
+ io_BSS_Haydock=io_connect(desc='Haydock_restart',type=2,ID=ID)
  !
- if (ioBSS_Haydock<0) goto 1
+ if (io_BSS_Haydock<0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioBSS_Haydock=io_header(ID,XC_KIND="K_E force",GAUGE=.TRUE.,IMPOSE_GAUGE=.TRUE.)
+   io_BSS_Haydock=io_header(ID,XC_KIND="K_E force",GAUGE=.TRUE.,IMPOSE_GAUGE=.TRUE.)
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    call io_elemental(ID,VAR=&
@@ -62,12 +62,12 @@ integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp
    !
    ! ioBSS_Haydock due to the header
    !
-   if (ioBSS_Haydock<0) goto 1
+   if (io_BSS_Haydock<0) goto 1
    !
-   ioBSS_Haydock=io_status(ID)
-   if (ioBSS_Haydock<0) goto 1
+   io_BSS_Haydock=io_status(ID)
+   if (io_BSS_Haydock<0) goto 1
    !
-   ioBSS_Haydock=it_on_disk
+   io_BSS_Haydock=it_on_disk
    !
  endif
  !

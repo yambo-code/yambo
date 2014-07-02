@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioBSS_invert(iq,n_,IO_dim,inv_err,eps,W_disk,ID)
+integer function io_BSS_invert(iq,n_,IO_dim,inv_err,eps,W_disk,ID)
  !
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
@@ -44,16 +44,16 @@ integer function ioBSS_invert(iq,n_,IO_dim,inv_err,eps,W_disk,ID)
  integer     :: ID
  real(SP), allocatable :: W(:,:)
  !
- ioBSS_invert=io_connect(desc='BS_invert_Q'//trim(intc(iq)),type=2,ID=ID)
+ io_BSS_invert=io_connect(desc='BS_invert_Q'//trim(intc(iq)),type=2,ID=ID)
  !
- if (ioBSS_invert/=0) goto 1
+ if (io_BSS_invert/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
    ! As this DB must respect the BS ideentifier I only need to
    ! check the K QP corrections
    !
-   ioBSS_invert=io_header(ID,XC_KIND="K_E force")
+   io_BSS_invert=io_header(ID,XC_KIND="K_E force")
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=11,MENU=0)
    call io_elemental(ID,VAR=&
@@ -80,10 +80,10 @@ integer function ioBSS_invert(iq,n_,IO_dim,inv_err,eps,W_disk,ID)
    !
    ! header return
    !
-   if (ioBSS_invert/=0) goto 1
+   if (io_BSS_invert/=0) goto 1
    !
-   ioBSS_invert=io_status(ID)
-   if (ioBSS_invert/=0) goto 1
+   io_BSS_invert=io_status(ID)
+   if (io_BSS_invert/=0) goto 1
  endif
  !
  if (any((/io_sec(ID,:)==2/))) then

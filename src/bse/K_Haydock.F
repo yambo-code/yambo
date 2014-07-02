@@ -33,9 +33,9 @@ subroutine K_Haydock(iq,W)
  use com,            ONLY:msg,isec
  use BS,             ONLY:BSS_n_descs,BS_K_dim,BS_mat,Haydock_treshold,&
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
-&                         BS_DB_is_fragmented,ioBSS_Haydock,&
+&                         BS_DB_is_fragmented,io_BSS_Haydock,&
 &                         BS_K_Coupling,Haydock_terminator,&
-&                         K_BSmat_by_V,BSE_mode
+&                         K_multiply_by_V,BSE_mode
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use electrons,      ONLY:spin_occ
@@ -84,10 +84,10 @@ subroutine K_Haydock(iq,W)
  !
  if (BS_K_Coupling) then 
    !
-   io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
+   io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
    !
  else
-   io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn)
+   io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn)
    !
  endif
  !
@@ -96,10 +96,10 @@ subroutine K_Haydock(iq,W)
    it_on_disk=io_err 
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
    if (BS_K_Coupling) then 
-     io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
+     io_err=io_BSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
 &                          Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
    else
-     io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
+     io_err=io_BSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
 &            Bf(:it_on_disk+1),Vnm1,Vn)
      call msg('s','[Haydock] Restart DB with accuracy ',reached_treshold)
    end if
@@ -145,7 +145,7 @@ subroutine K_Haydock(iq,W)
      Cf= (0.,0.)
      Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)
      !
-     call K_BSmat_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
+     call K_multiply_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
      Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
      Cf(1) = 0.
      !
@@ -181,7 +181,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1,call_kind='Hay')
+     call K_multiply_by_V(iq,it-it_on_disk,Vn,Vnp1,call_kind='Hay')
      !
      ! A(n) = <Vn|Vn+1>
      !
@@ -229,7 +229,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
+     call K_multiply_by_V(iq,it-it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
      !
      ! B(n+1)= <Vn|F|Vn+1>^(1/2) (that is <Vn|FH|Vn>^(1/2))
      !       = (2*Re(<Vn|Vnp1>))^(1/2) by symmetry, 
@@ -285,11 +285,11 @@ subroutine K_Haydock(iq,W)
    call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
    if (BS_K_Coupling) then
      Bf(1) = Haydock_v0_mod
-     io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
+     io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
 &                          Af(:it),Bf(:it+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1))
      Bf(1) = 0._SP
    else
-     io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),Vnm1,Vn)
+     io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),Vnm1,Vn)
    end if
    !
    if ( (reached_treshold>0.and.reached_treshold<abs(Haydock_treshold)) .or. &

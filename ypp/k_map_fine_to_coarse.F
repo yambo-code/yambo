@@ -62,7 +62,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  integer           :: i_err(MAX_RIM_DBs),nsym_save,nsym_RIM_DB
  integer           :: i_time_rev_save,i_time_rev_DB
  integer           :: i_db,i_db_merge,ik_ref(2)
- integer, external :: ioDB1_selective_scan,io_RIM_E_and_k
+ integer, external :: io_DB1_selective_scan,io_RIM_E_and_k
  real(SP)          :: dl_sop_save(3,3,48)
  !
  !
@@ -85,7 +85,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  i_err=0
  if (n_RIM_DBs>0) then
    do i_db=1,n_RIM_DBs
-     i_err(i_db)=ioDB1_selective_scan(RIM_E(i_db),RIM_k(i_db),trim(RIM_DB1_paths(i_db,1)),'all')
+     i_err(i_db)=io_DB1_selective_scan(RIM_E(i_db),RIM_k(i_db),trim(RIM_DB1_paths(i_db,1)),'all')
      if (i_err(i_db)/=0) call msg("s",'RIM database in '//trim(RIM_DB1_paths(i_db,1))//' NOT FOUND')
      if (i_err(i_db)==0) call msg("s",'RIM database in'//trim(RIM_DB1_paths(i_db,1))//' FOUND')
      !

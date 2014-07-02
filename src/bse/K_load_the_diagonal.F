@@ -21,8 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_BSload_diag(iq)
- !
+subroutine K_load_the_diagonal(iq)
  !
  ! Here I fill the diagonal of K_r:
  !
@@ -35,7 +34,7 @@ subroutine K_BSload_diag(iq)
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:nXkibz
  use matrix_operate, ONLY:UP_matrix_index
- use BS,             ONLY:BS_mat,BS_mat_diagonal,BS_K_dim,BS_nT_at_k,BS_k_and_row_restart,&
+ use BS,             ONLY:BS_mat,BS_mat_diagonal,BS_K_dim,BS_nT_at_k,&
 &                         BS_DB_is_fragmented,BS_K_coupling
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_control,OP_RD,RD,NONE,RD_CL,OP_RD_CL
@@ -50,13 +49,13 @@ subroutine K_BSload_diag(iq)
  ! 
  ! I/O
  ! 
- integer           ::ioBS_err,ID,ACTION
- integer, external ::ioBS
+ integer           ::io_BS_err,ID,ACTION
+ integer, external ::io_BS
  !
  if (allocated(BS_mat_diagonal)) return
  !
  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
- ioBS_err=ioBS(iq,X,ID)
+ io_BS_err=io_BS(iq,X,ID)
  !
  allocate(BS_mat_diagonal(BS_K_dim))
  call mem_est('BS_mat_diagonal',(/2*BS_K_dim/))
@@ -71,14 +70,10 @@ subroutine K_BSload_diag(iq)
  !
  do ik=1,nXkibz
    !
-   BS_k_and_row_restart(:2)=(/ sum(BS_nT_at_k(:ik-1)),sum(BS_nT_at_k(:ik-1)) /)
-   !
    ACTION=RD
    if (ik==nXkibz) ACTION=RD_CL
    !
    if (BS_DB_is_fragmented) then
-     frag_pointer=BS_k_and_row_restart(1)
-     BS_k_and_row_restart=0
      allocate(BS_mat(BS_nT_at_k(ik),BS_nT_at_k(ik)))
      ACTION=OP_RD_CL
    else
@@ -88,10 +83,10 @@ subroutine K_BSload_diag(iq)
    ! BS I/O
    ! 
    call io_control(ACTION=ACTION,COM=NONE,SEC=(/UP_matrix_index(ik,ik)/),ID=ID)
-   ioBS_err=ioBS(iq,X,ID)
+   io_BS_err=io_BS(iq,X,ID)
    !
-   forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik)) &
-&        BS_mat_diagonal(i1+frag_pointer)=BS_mat(i1,i1)
+!   forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik)) &
+!&        BS_mat_diagonal(i1+frag_pointer)=BS_mat(i1,i1)
    !
    if (BS_DB_is_fragmented) deallocate(BS_mat)
    !       
@@ -101,5 +96,5 @@ subroutine K_BSload_diag(iq)
  !
  BS_K_coupling=BS_K_coupling_save
  !
-end subroutine K_BSload_diag
+end subroutine K_load_the_diagonal
  

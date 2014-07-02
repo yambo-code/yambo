@@ -74,7 +74,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  complex(SP), allocatable ::EM1s(:,:)
  type(ggwinfo)            ::isc,iscp
  integer          ::io_err,ID
- integer, external::ioX
+ integer, external::io_X
  character(schlen)::ch
  complex(SP)      ::local_rhotw(X%ng),pre_factor
  !
@@ -109,7 +109,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  ! Plasmon-Pole/Static interaction DB I/O
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err=ioX(X,Xw,ID)
+ io_err=io_X(X,Xw,ID)
  !
 #if defined _TIMING
  call timing('COHSEX/GW Collisions',OPR='start')
@@ -176,7 +176,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
          if (iqbz ==1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,2*iqibz+1/),ID=ID)
          if (iqbz>  1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
        endif
-       io_err=ioX(X,Xw,ID)
+       io_err=io_X(X,Xw,ID)
        !
        call IO_and_Messaging_switch("+fragments_IO_log")
        !

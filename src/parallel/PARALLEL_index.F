@@ -156,6 +156,10 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
        !
        px%element_2D(i1,i1)= mod(i4+1-myid_loop,ncpu_loop)==1
        !
+       if (ncpu_loop==1) px%element_2D(i1,i1)=.TRUE.
+       !
+       if (px%element_2D(i1,i1)) px%n_of_elements(myid_loop+1)=px%n_of_elements(myid_loop+1)+1
+       !
        do i2=lowlim(2),uplim(2)
          !
          if (present(ORDERED)) then

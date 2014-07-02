@@ -72,7 +72,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                   live_timing_steps,iq_range(2)
  type(w_samp)     ::Sc_W(qp%n_states)
  integer          ::io_err,ID,iv4(4)
- integer, external::ioELPH,QP_state_extract
+ integer, external::io_ELPH,QP_state_extract
  character(schlen)::ch
  real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,&
 &                   E_k_plus_q_at_gamma(elph_nb,k%nbz),elph_gkkp_sq,gsqF_damping,E_random_shift
@@ -152,7 +152,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! ELPH DB
  !
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
- io_err=ioELPH(ID,'gkkp')
+ io_err=io_ELPH(ID,'gkkp')
  if (io_err/=0) call error('El-Ph database not found')
  !
  !Sc Energy points
@@ -264,7 +264,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    if (iq_db/=iabs(iq_db_ref)) then
      !
      call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_db+1/),ID=ID)
-     io_err=ioELPH(ID,'gkkp')
+     io_err=io_ELPH(ID,'gkkp')
      if (io_err<0) call error('Missing Q-database')
      !
      if (.not.elph_use_q_grid) then
@@ -481,7 +481,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      else if (iq_loop==iq_range(2)) then
        call io_control(ACTION=WR_CL,COM=REP,SEC=(/iq_loop+1/),ID=ID)
      endif
-     io_err=ioELPH(ID,'gFsq')
+     io_err=io_ELPH(ID,'gFsq')
    enddo
    call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
  endif

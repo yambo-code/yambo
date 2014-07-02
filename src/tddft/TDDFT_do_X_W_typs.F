@@ -34,7 +34,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  use BS,            ONLY:BS_bands,BS_eh_en,BSS_q0,BS_K_dim
  use TDDFT,         ONLY:FXC_type,FXC_K_diagonal,FXC,FXC_n_g_corr,&
 &                        FXC_per_memstps,FXC_n_mem_freqs,FXC_is_causal,&
-&                        FXC_LRC_alpha,FXC_LRC_beta,ioBS_Fxc
+&                        FXC_LRC_alpha,FXC_LRC_beta,io_BS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
  implicit none
  type(X_t)   :: X
@@ -75,7 +75,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  ! Fxc DB
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- ioFxc_err=ioBS_Fxc(iq,wv,ID)
+ ioFxc_err=io_BS_Fxc(iq,wv,ID)
  if (ioFxc_err/=0) then
    FXC_type='rpa'
    l_bs_fxc=.FALSE.

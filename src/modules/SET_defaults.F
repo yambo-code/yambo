@@ -67,7 +67,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
-&                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BS_anti_res
+&                     BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BS_anti_res
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_causal,TDDFT_mode
@@ -443,7 +443,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BS_K_is_ALDA=.FALSE.
  BS_not_const_eh_f=.FALSE.
  Haydock_treshold=-0.02
- BS_columns=0
  BSS_Vnl_included=.FALSE.
  BSS_uses_GreenF=.FALSE.
  !

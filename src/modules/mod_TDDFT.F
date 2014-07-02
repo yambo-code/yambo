@@ -43,7 +43,7 @@ module TDDFT
  !
  interface 
    !
-   integer function ioBS_Fxc(iq,W,ID,X)
+   integer function io_BS_Fxc(iq,W,ID,X)
      use frequency,  ONLY:w_samp
      use X_m,        ONLY:X_t
      integer            ::ID,iq

@@ -29,7 +29,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use parallel_m,          ONLY:ncpu,myid,MPI_close
  use electrons,           ONLY:levels,E_reset,n_spin
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
- use wave_func,           ONLY:wf_ncx,ioWF,wf_nb_io_groups,wf_nb_io
+ use wave_func,           ONLY:wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:wf_splitter
@@ -49,7 +49,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  character(lchlen) :: file_name_
  integer           :: ID,io_err,ik,ib_grp
- integer,     external :: c2y_file_name,ioDB1
+ integer,     external :: c2y_file_name,io_DB1
  real(SP), allocatable :: wf_disk(:,:,:,:)
  !
  ! Presets
@@ -92,7 +92,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call msg('s','== DB1 ...')
  !
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
- io_err=ioDB1(en,k,ID)
+ io_err=io_DB1(en,k,ID)
  !
  if (force_noWFs) then
    call msg('ln','done ==')
@@ -119,7 +119,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
      !
      if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
      if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
-     io_err=ioWF(ID,wf=wf_disk)
+     io_err=io_WF(ID,wf=wf_disk)
      !
    enddo
    !

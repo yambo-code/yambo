@@ -53,7 +53,7 @@ subroutine PP_PWscf_driver(k)
  !
  integer :: ik, ngmax,io_err,ID
  integer :: ibeta,itype
- integer, external :: ioKB_pwscf
+ integer, external :: io_KB_pwscf
  !
  interface
     subroutine fill_basis(basis,struct,ik,ngmax)
@@ -99,7 +99,7 @@ subroutine PP_PWscf_driver(k)
  pp_table(3,:,:)=1                                                              ! pp_spin
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
- io_err=ioKB_pwscf(ID)
+ io_err=io_KB_pwscf(ID)
  !
  do ik=1,k%nibz
    !
@@ -109,7 +109,7 @@ subroutine PP_PWscf_driver(k)
    ! Write pseudovelocity to disk
    !
    call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/ik+1/),ID=ID)
-   io_err=ioKB_pwscf(ID)
+   io_err=io_KB_pwscf(ID)
    !
  end do
  !

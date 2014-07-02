@@ -55,7 +55,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  type(QP_t)        ::qp
  integer           ::i1,io_QP_err,io_G_err,ID_QP,ID_G,i_spin
- integer, external ::ioQP,eval_G_minus_G
+ integer, external ::io_QP,eval_G_minus_G
  !
  ! Driver Logicals
  !=================
@@ -204,11 +204,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !========
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_QP)
-   io_QP_err=ioQP('QP',qp,ID_QP)
+   io_QP_err=io_QP('QP',qp,ID_QP)
    !
    if (io_QP_err==0.and..not.trim(QP_solver)=='g'.and..not.QP_W_partially_done) then
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID_QP)
-     io_QP_err=ioQP('QP',qp,ID_QP)
+     io_QP_err=io_QP('QP',qp,ID_QP)
      call QP_report_and_write(k,qp,en,0)
      call local_free()
      return
@@ -220,7 +220,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    if (trim(QP_solver)=='g') then
      !
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_G)
-     io_G_err=ioQP('G',qp,ID_G)
+     io_G_err=io_QP('G',qp,ID_G)
      !
      if (io_G_err==0.or.io_G_err==IO_NO_BINDING_ERROR) then
        !
@@ -228,7 +228,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        if (use_GreenF_Zoom)       use_GreenF_Zoom=io_G_err==IO_NO_BINDING_ERROR.and..not.use_GreenF_to_eval_QP
        !
        call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID_G)
-       io_G_err=ioQP('G',qp,ID_G)
+       io_G_err=io_QP('G',qp,ID_G)
        !
        if (use_GreenF_to_eval_QP) then
          call QP_Green_Function(qp,en,0) 

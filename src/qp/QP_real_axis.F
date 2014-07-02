@@ -42,7 +42,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use collision,     ONLY:ggwinfo,collision_reset
  use wave_func,     ONLY:WF
  use IO_m,          ONLY:io_control,REP,VERIFY,DUMP,NONE,RD,RD_CL,OP_RD,&
-&                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END,OP_RD_CL,io_X
+&                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END,OP_RD_CL,io_RESPONSE
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,QP_W_partially_done,&
 &                        QP_n_W_freqs_redux 
@@ -78,7 +78,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  complex(SP) :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng)
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
- integer, external   ::ioX,QP_state_extract,ioQP,X_em1,QP_life_transitions
+ integer, external   ::io_X,QP_state_extract,io_QP,X_em1,QP_life_transitions
  logical, external   ::stop_now
  character(schlen)   ::ch,Sc_name
  logical             ::X_is_TR_rotated
@@ -148,7 +148,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! W DB 
  !
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=WID)
- io_err=ioQP('W',qp,WID)
+ io_err=io_QP('W',qp,WID)
  !
  iq_to_start=1
  if (io_err>0) iq_to_start=io_err
@@ -160,7 +160,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      do iqbz=1,q%nbz
        if (iqbz< q%nbz) call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=WID)
        if (iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=WID)
-       io_err=ioQP('W',qp,WID)
+       io_err=io_QP('W',qp,WID)
        !
        ! Xw%p is stored in ioX, not in ioW !
        !
@@ -222,8 +222,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=X_id)
  !
- if (l_life)      i_err=ioX(X,X_life_W(1),X_id)
- if (.not.l_life) i_err=ioX(X,Xw,X_id)
+ if (l_life)      i_err=io_X(X,X_life_W(1),X_id)
+ if (.not.l_life) i_err=io_X(X,Xw,X_id)
  !
  ! WF distributed & load
  !=======================
@@ -287,13 +287,13 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      iq_mem=PAR_Q_index(iqibz)
      X_range=(/1,QP_n_W_freqs_redux/)
      !
-     if (.not.io_X) X_range=(/QP_n_W_freqs_redux*(iq_mem-1)+1,QP_n_W_freqs_redux*(iq_mem-1)+X_life_W(iqibz)%n_freqs/)
+     if (.not.io_RESPONSE) X_range=(/QP_n_W_freqs_redux*(iq_mem-1)+1,QP_n_W_freqs_redux*(iq_mem-1)+X_life_W(iqibz)%n_freqs/)
      !
      call scatterGamp(isc,'c')
      !
      ! I/O
      !
-     if (io_X) then
+     if (io_RESPONSE) then
        !
        if (iqbz==iq_to_start) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=X_id)
        if (q%nbz==1         ) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=X_id)
@@ -301,11 +301,11 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        !
        if (l_life) then
          !
-         io_err=ioX(X,X_life_W(iqibz),X_id)
+         io_err=io_X(X,X_life_W(iqibz),X_id)
          !
        else
          !
-         io_err=ioX(X,Xw,X_id)
+         io_err=io_X(X,Xw,X_id)
          !
          ! Xw%er/dr/n are not known here and are not read from ioX so
          ! I need to redefine them in terms of Xw%p (read from ioX)
@@ -440,7 +440,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        else
          call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2+iqbz/),ID=WID)
        endif
-       io_err=ioQP('W',qp,WID)
+       io_err=io_QP('W',qp,WID)
        !
      endif
      !
@@ -481,7 +481,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    enddo
  endif
  !
- if (io_X) call X_alloc('X')
+ if (io_RESPONSE) call X_alloc('X')
  call WF_free(WF)
  call collision_reset(isc)
  call collision_reset(iscp)

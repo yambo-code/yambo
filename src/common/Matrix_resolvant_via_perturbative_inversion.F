@@ -21,15 +21,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function pert_inversion(iw,N,W,C,f,V)
+integer function Matrix_resolvant_via_perturbative_inversion(iw,N,W,C,f,V)
  !
  ! C<W|1./(V^{-1}-M)|W> = \sum_n C<W| (1-VM)^{-1} V |W> = \sum_n C<W| ( VM )^n V |W>
  !
  use pars,           ONLY:SP
  use matrix_operate, ONLY:mat_dia_inv,USE_LK,INV
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
- use BS,             ONLY:K_BSmat_by_V
+ use BS,             ONLY:K_multiply_by_V
  use com,            ONLY:error
+#if defined _OPENMP
+ use wrapper,        ONLY:Vstar_dot_V_omp
+#endif
  !
  implicit none
  !
@@ -44,10 +47,14 @@ integer function pert_inversion(iw,N,W,C,f,V)
  integer     ::it,i1
  complex(SP) ::A_nm1(N),A_n(N),delta_f,fo
  !
- pert_inversion=0
+ Matrix_resolvant_via_perturbative_inversion=0
  !
  A_nm1(:)=V(:)*W(:)
+#if defined _OPENMP
+ fo=C*Vstar_dot_V_omp(N,W,A_nm1)
+#else
  fo=C*Vstar_dot_V(N,W,A_nm1)
+#endif
  !
  if (abs(f)==0.) f=fo
  !
@@ -57,7 +64,7 @@ integer function pert_inversion(iw,N,W,C,f,V)
  !
  do while (it<=BSS_inv_iter_max) 
    !
-   call K_BSmat_by_V(1,it*iw,A_nm1,A_n,call_kind='Inv')
+   call K_multiply_by_V(1,it*iw,A_nm1,A_n,call_kind='Inv')
    A_n(:)=V(:)*A_n(:)
    delta_f=C*Vstar_dot_V(N,W,A_n)
    !
@@ -74,7 +81,7 @@ integer function pert_inversion(iw,N,W,C,f,V)
    !
  enddo
  !
- pert_inversion=1
+ Matrix_resolvant_via_perturbative_inversion=1
  f=(0.,0.)
  !
 end function

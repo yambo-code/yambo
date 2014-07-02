@@ -38,7 +38,6 @@ subroutine K_blocks( )
  use pars,         ONLY:cZERO
  use memory_m,     ONLY:mem_est
  use parallel_m,   ONLY:PAR_IND_T_all,PAR_IND_T_ordered
- use interfaces,   ONLY:PARALLEL_live_message
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim
  use com,          ONLY:msg
@@ -107,8 +106,6 @@ subroutine K_blocks( )
  n_tot_blocks=BS_nT_grps*(BS_nT_grps-1)/2+BS_nT_grps
  !
  if (BS_K_coupling) n_tot_blocks=n_tot_blocks+BS_nT_grps**2
- !
- call PARALLEL_live_message("BSK blocks",LOADED=n_BS_blks,TOTAL=n_tot_blocks)
  !
  call mem_est("BSK",(/tot_size/))
  !

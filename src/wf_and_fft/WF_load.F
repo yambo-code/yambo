@@ -35,7 +35,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,&
 &                        fftw_plan,fft_g_table,fft_size
  use wave_func,     ONLY:wf_nc_k,wf_igk,WF_buffer,&
-&                        wf_ng,wf_norm_test,wf_ncx,ioWF,&
+&                        wf_ng,wf_norm_test,wf_ncx,io_WF,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free,WAVEs
  use wave_func,     ONLY:states_to_load
@@ -262,7 +262,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
    !
    call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
-   io_err=ioWF(ID,wf_disk)
+   io_err=io_WF(ID,wf_disk)
    !
  endif
  !
@@ -295,7 +295,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
        if (use_direct_access) ACTION_=RD_CL
        call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
        !
-       io_err=ioWF(ID,wf_disk)
+       io_err=io_WF(ID,wf_disk)
        if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle
        if (wf_nb_io*(ib_grp-1)+1>WF%b(2)) cycle
        !

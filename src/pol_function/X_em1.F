@@ -35,7 +35,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP,&
-&                        IO_and_Messaging_switch,io_X
+&                        IO_and_Messaging_switch,io_RESPONSE
  use com,           ONLY:depth
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
@@ -52,7 +52,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  integer           :: iq,Xdb,i_err,iq_to_start,iq_mem,X_range(2),X_n_freqs
  real(SP)          :: minmax_ehe(2)
- integer, external :: ioX
+ integer, external :: io_X
  character(1)      :: sec_mode
  !
  self_detect_E_range=.false.
@@ -89,7 +89,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    endif
  endif
  !
- ! X_n_freqs defines the size of each q-block loaded in memory when io_X=.FALSE.
+ ! X_n_freqs defines the size of each q-block loaded in memory when io_RESPONSE=.FALSE.
  ! Note that in lifetimes calculations it is QP_n_W_freqs_redux=MAX(all q-dependent frequencies)
  !
  X_n_freqs             = Xw%n_freqs
@@ -118,7 +118,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  iq_to_start=X%iq(1)
  if (.not.APPEND_NO_VERIFY) then
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=Xdb)
-   X_em1=ioX(X,Xw,Xdb)
+   X_em1=io_X(X,Xw,Xdb)
    if (X_em1==0) return
    if (X_em1> 0) iq_to_start=X_em1
  endif
@@ -129,8 +129,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
    call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
  endif
- if (io_X)      call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
- if (.not.io_X) call X_alloc('X',(/X%ng,X%ng,X_n_freqs*PAR_nq/))
+ if (io_RESPONSE)      call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+ if (.not.io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,X_n_freqs*PAR_nq/))
  !
  ! WF distribution 
  !=================
@@ -168,7 +168,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    iq_mem=PAR_Q_index(iq)
    X_range               =(/1,Xw%n_freqs/)
-   if (.not.io_X) X_range=(/X_n_freqs*(iq_mem-1)+1,X_n_freqs*(iq_mem-1)+Xw%n_freqs/)
+   if (.not.io_RESPONSE) X_range=(/X_n_freqs*(iq_mem-1)+1,X_n_freqs*(iq_mem-1)+Xw%n_freqs/)
    !
    call X_os(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
    !
@@ -195,13 +195,13 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      !
    endif
    !
-   i_err=ioX(X,Xw,Xdb)
+   i_err=io_X(X,Xw,Xdb)
    !
    ! CLEAN (1)
    ! Frequencies must not be cleaned in the case of lifetimes calculations when the EM1d
    ! database is not written on disk
    !
-   if (.not.io_X.and.l_life) then
+   if (.not.io_RESPONSE.and.l_life) then
      call FREQUENCIES_reset(Xw,"coarse_grid")
    else
      call FREQUENCIES_reset(Xw,"all")
@@ -216,7 +216,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! CLEAN (2)
  !
- if (io_X) call X_alloc('X')
+ if (io_RESPONSE) call X_alloc('X')
  call X_alloc('DIP_q_dot_iR')
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free(WF)
  !

@@ -78,7 +78,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  complex(DP),allocatable ::u(:),rhotw_rs(:),u_rs(:),local_u(:),Vcoh(:),Vcoh_rs(:)
  real(SP),    allocatable ::PPaP(:,:)
  complex(SP), allocatable ::PPaR(:,:),PPaR_ws(:,:)
- integer, external::ioX
+ integer, external::io_X
  !
  ! Resets
  !
@@ -90,7 +90,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  !
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err=ioX(X,Xw,ID)
+ io_err=io_X(X,Xw,ID)
  if (io_err/=0) call error('Incomplete and/or broken static diel. fun. database')
  !
  call X_alloc('X',(/X%ng,X%ng,1/))
@@ -117,7 +117,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
      if (iq==1   ) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID)    !
      if (q%nbz==1) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)            ! I/O 
      if (iq>1    ) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)!
-     io_err=ioX(X,Xw,ID)
+     io_err=io_X(X,Xw,ID)
      !
      forall(i1=1:X%ng,i2=1:X%ng) PPaR(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2) ! Poles and Residuals
      !

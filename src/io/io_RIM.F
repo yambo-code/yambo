@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioRIM(ID)
+integer function io_RIM(ID)
  !
  use pars,           ONLY:SP,schlen
  use memory_m,       ONLY:mem_est
@@ -40,14 +40,14 @@ integer function ioRIM(ID)
  integer             ::RIM_ng_disk,i1
  character(schlen)   ::VAR_name
  !
- ioRIM=io_connect(desc="RIM",type=2,ID=ID)
+ io_RIM=io_connect(desc="RIM",type=2,ID=ID)
  !
- if (ioRIM/=0) goto 1
+ if (io_RIM/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioRIM=io_header(ID,QPTS=.true.,R_LATT=.true.,IMPOSE_SN=.true.)
-   if (ioRIM/=0) goto 1   
+   io_RIM=io_header(ID,QPTS=.true.,R_LATT=.true.,IMPOSE_SN=.true.)
+   if (io_RIM/=0) goto 1   
    !
    RL_vol_disk=RL_vol
    !
@@ -71,8 +71,8 @@ integer function ioRIM(ID)
 &       VAR=' RIM anysotropy factor            :')
    !
    call io_elemental(ID,VAR="",VAR_SZ=0)
-   ioRIM=io_status(ID)
-   if (ioRIM/=0) goto 1
+   io_RIM=io_status(ID)
+   if (io_RIM/=0) goto 1
  endif
  !
  if (any((/io_sec(ID,:)==2/))) then

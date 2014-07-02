@@ -52,13 +52,13 @@ subroutine ELPH_atomic_amplitude(q)
  !I/O
  !
  integer           ::io_err,ID
- integer, external ::ioELPH
+ integer, external ::io_ELPH
  !
  call section("*","== Electron-Phonon Interface: mean atomic amplitudes ==")
  !---------------------------------------------------------------------------
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
- io_err=ioELPH(ID,'no_gkkp')
+ io_err=io_ELPH(ID,'no_gkkp')
  !
  call msg('s',':: Checking database ...')
  if (io_err<0) then
@@ -93,7 +93,7 @@ subroutine ELPH_atomic_amplitude(q)
    ! I/O
    !
    call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
-   io_err=ioELPH(ID,'no_gkkp')  
+   io_err=io_ELPH(ID,'no_gkkp')  
    !
    if (.not.allocated(pol_vector)) then
      call warning('Polarization vectors not found!')

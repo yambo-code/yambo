@@ -59,7 +59,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  ! QP I/O
  !
  integer           ::io_err,ID(max_n_of_dbs)
- integer, external ::ioQP
+ integer, external ::io_QP
  !
  ! Comments extracted from the QP descriptions
  !
@@ -140,11 +140,11 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
        ! GPL_EXCLUDE_START
 #if defined _ELPH
        if (index(trim(dummy_db_name),'.QP')/=0.or.index(trim(dummy_db_name),'.G')/=0) then
-         io_err=ioQP(trim(dummy_db_name) ,qp_from_dbs(n_qp_db),ID(n_qp_db))
+         io_err=io_QP(trim(dummy_db_name) ,qp_from_dbs(n_qp_db),ID(n_qp_db))
        endif
 #else
        ! GPL_EXCLUDE_END
-       if (index(trim(dummy_db_name),'.QP')/=0) io_err=ioQP(trim(dummy_db_name),qp_from_dbs(n_qp_db),ID(n_qp_db))
+       if (index(trim(dummy_db_name),'.QP')/=0) io_err=io_QP(trim(dummy_db_name),qp_from_dbs(n_qp_db),ID(n_qp_db))
        ! GPL_EXCLUDE_START
 #endif
        ! GPL_EXCLUDE_END

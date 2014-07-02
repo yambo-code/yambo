@@ -40,7 +40,7 @@ subroutine QP_DBs_initialize()
  type(QP_t) :: qp
  integer :: i_qp,i_f,i_c,nflines_save,io_QP,ID
  character(schlen) :: comment,DB_file_name(20,2)
- integer, external :: ioQP
+ integer, external :: io_QP
  !
  ! If there are already the DB lines or there's not the input file todo return
  !
@@ -52,7 +52,7 @@ subroutine QP_DBs_initialize()
    !
    call QP_reset(qp)
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2,3/),COM=NONE,MODE=DUMP,ID=ID)
-   io_QP=ioQP("QP",qp,ID)
+   io_QP=io_QP("QP",qp,ID)
    !
    comment="[QPDB] QP correction"
    !
@@ -101,7 +101,7 @@ subroutine QP_DBs_initialize()
            QP_db_what(n_QP_dbs)=DB_file_name(i_qp,1)
            QP_db_name(n_QP_dbs)=DB_file_name(i_qp,2)
            call io_control(ACTION=OP_RD_CL,SEC=(/1,2,3/),COM=NONE,MODE=DUMP,ID=ID)
-           io_QP=ioQP(trim(DB_file_name(i_qp,2)),QP_db(n_QP_dbs),ID)
+           io_QP=io_QP(trim(DB_file_name(i_qp,2)),QP_db(n_QP_dbs),ID)
            if (io_QP/=0) then
              call QP_reset(QP_db(n_QP_dbs))
              n_QP_dbs=n_QP_dbs-1

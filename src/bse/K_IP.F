@@ -35,9 +35,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use X_m,           ONLY:X_t,X_epsilon,X_drude_term,alpha_dim,eps_2_alpha,&
 &                        DIP_q_dot_iR,X_drude_term,X_alloc,iw_ref
  use BS,            ONLY:BSS_Vnl_included,BS_anti_res,BS_drude_f_eh,&
-&                        BS_K_dim,BSS_n_freqs,BSS_q0,BS_T_grp,BS_K_coupling,BS_nT_grps
+&                        BSS_n_freqs,BSS_q0,BS_T_grp,BS_K_coupling,BS_nT_grps
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
-&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X
+&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
+&                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
 #if defined _KERR
  use drivers,       ONLY:l_kerr
  use com,           ONLY:warning
@@ -57,7 +58,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! Work space
  !
- integer           ::ik,iv,ic,i_sp,epsilon_dim,iw,i_T_g,i_T
+ integer           ::ik,iv,ic,i_sp,epsilon_dim,iw,i_T_g,i_T,ik_mem
  real(SP)          ::Co
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),local_Z
 #if defined _KERR
@@ -154,6 +155,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
      do i_T=1,BS_T_grp(i_T_g)%size    
        !    
        ik    = BS_T_grp(i_T_g)%table(i_T,1)
+       ik_mem= PAR_Xk_bz_index(ik)
        iv    = BS_T_grp(i_T_g)%table(i_T,2)
        ic    = BS_T_grp(i_T_g)%table(i_T,3)
        i_sp  = BS_T_grp(i_T_g)%table(i_T,4)
@@ -167,13 +169,13 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        !
 #if defined _KERR
        if (trim(global_gauge)=='length') then
-         BS_T_grp(i_T_g)%dipoles_R(i_T)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))
+         BS_T_grp(i_T_g)%dipoles_R(i_T)=-conjg(DIP_q_dot_iR(ic,iv,ik_mem,i_sp))
        else if (trim(global_gauge)=='velocity') then
-         BS_T_grp(i_T_g)%dipoles_R(i_T)= conjg(DIP_P_symm(1,ic,iv,ik,i_sp))
+         BS_T_grp(i_T_g)%dipoles_R(i_T)= conjg(DIP_P_symm(1,ic,iv,ik_mem,i_sp))
        endif
        BS_T_grp(i_T_g)%dipoles_R(i_T)=BS_T_grp(i_T_g)%dipoles_R(i_T)*sqrt(BS_T_grp(i_T_g)%f(i_T))
 #else
-       BS_T_grp(i_T_g)%dipoles_R(i_T)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))*sqrt(BS_T_grp(i_T_g)%f(i_T))
+       BS_T_grp(i_T_g)%dipoles_R(i_T)=-conjg(DIP_q_dot_iR(ic,iv,ik_mem,i_sp))*sqrt(BS_T_grp(i_T_g)%f(i_T))
 #endif
        !
        ! minus comes from the occupation factor 
@@ -181,15 +183,16 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        if (BS_K_coupling) then
 #if defined _KERR
          if (trim(global_gauge)=='length') then
-           BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_q_dot_iR(ic,iv,ik,i_sp)
+           BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_q_dot_iR(ic,iv,ik_mem,i_sp)
          else if (trim(global_gauge)=='velocity') then
-           BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_P_symm(1,ic,iv,ik,i_sp)
+           BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_P_symm(1,ic,iv,ik_mem,i_sp)
          endif
          BS_T_grp(i_T_g)%dipoles_A(i_T)=BS_T_grp(i_T_g)%dipoles_A(i_T)*sqrt(BS_T_grp(i_T_g)%f(i_T))
 #else
-         BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_q_dot_iR(ic,iv,ik,i_sp)*sqrt(BS_T_grp(i_T_g)%f(i_T))
+         BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_q_dot_iR(ic,iv,ik_mem,i_sp)*sqrt(BS_T_grp(i_T_g)%f(i_T))
 #endif
        endif
+!write (*,'(7i2,3g20.10)') myid,i_T_g,i_T,BS_T_grp(i_T_g)%ik,ik,iv,ic,BS_T_grp(i_T_g)%E(i_T),abs ( BS_T_grp(i_T_g)%dipoles_R(i_T) ),abs(DIP_q_dot_iR(ic,iv,ik_mem,i_sp))
        !    
        X_epsilon(3,:)=X_epsilon(3,:)-BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg( BS_T_grp(i_T_g)%dipoles_R(i_T) )*&
 &                     local_Z/(W_bss%p(:)-BS_T_grp(i_T_g)%E(i_T))
@@ -243,6 +246,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  ! ALL 2 ALL
  !
+ call PP_redux_wait( X_epsilon ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait( X_epsilon ,COMM=PAR_COM_eh_INDEX%COMM )
  !
  if (l_rpa_IP) then

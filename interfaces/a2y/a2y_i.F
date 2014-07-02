@@ -34,7 +34,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use interfaces,          ONLY:PARALLEL_live_message
  use mod_com2y,           ONLY:interface_presets,force_noWFs
- use mod_wf2y,            ONLY:wf_splitter
+ use mod_wf2y,            ONLY:WF_splitter
  use pseudo,              ONLY:PP_free
  !
  implicit none

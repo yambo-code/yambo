@@ -39,7 +39,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,            ONLY:BS_K_dim,BS_bands,BS_q,&
-&                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
+&                        BSS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
 &                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db,&
 &                        BSS_n_descs,BSS_description
  use electrons,     ONLY:levels,n_sp_pol,spin,n_spinor
@@ -90,7 +90,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !... I/0
  !
  integer           ::io_err,ID,io_ID
- integer, external ::ioBSS_diago,ioBS
+ integer, external ::io_BSS_diago,io_BS
  type(X_t)         ::Xbsk
  !
  !... Energies and Residulas
@@ -114,7 +114,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Here I read information from the BS database
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=ioBS(1,Xbsk,io_ID)
+ io_err=io_BS(1,Xbsk,io_ID)
  if (io_err/=0) return
  if (BS_cpl_K_exchange) BS_cpl_mode='x'
  if (BS_cpl_K_corr) BS_cpl_mode='c'
@@ -143,14 +143,14 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Here I read energies and residuum
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,io_ID)
+ io_err=io_BSS_diago(iq,BS_H_dim,BS_E,BS_R,io_ID)
  if (io_err/=0) return
  !
  call section('*','Excitonic Properties')
  !
  if (l_sort) then
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
-   io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+   io_err=io_BSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
    call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E)
    deallocate(BS_R,BS_E)
    call mem_est('BS_R_E')
@@ -159,25 +159,25 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Loading tables and eigenvectors
  !
- allocate(BS_eh_table(BS_H_dim,3+n_sp_pol-1),BS_mat(BS_H_dim,BS_H_dim),&
+ allocate(BSS_eh_table(BS_H_dim,3+n_sp_pol-1),BS_mat(BS_H_dim,BS_H_dim),&
           BS_E_degs(BS_H_dim))
- call mem_est("BS_eh_table",(/(3+n_sp_pol-1)*BS_H_dim/),(/IP/))
+ call mem_est("BSS_eh_table",(/(3+n_sp_pol-1)*BS_H_dim/),(/IP/))
  call mem_est('BS_mat',(/BS_H_dim**2/))
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
- io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+ io_err=io_BSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
  !
  ! Create the anti-resonant part of the eh_table
  !
  !
  if (BS_K_coupling) then
    do neh=BS_K_dim+1,BS_H_dim
-     BS_eh_table(neh,:)=BS_eh_table(neh-BS_K_dim,1)
+     BSS_eh_table(neh,:)=BSS_eh_table(neh-BS_K_dim,1)
      !
      ! invert conduction <-> valence order
      !
-     BS_eh_table(neh,2)=BS_eh_table(neh-BS_K_dim,3)
-     BS_eh_table(neh,3)=BS_eh_table(neh-BS_K_dim,2)
+     BSS_eh_table(neh,2)=BSS_eh_table(neh-BS_K_dim,3)
+     BSS_eh_table(neh,3)=BSS_eh_table(neh-BS_K_dim,2)
    enddo
  endif
  !
@@ -281,8 +281,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !
    deallocate(BS_R,BS_E,lambda_s)
    call mem_est('BS_R_E')
-   deallocate(BS_eh_table,BS_mat,A_weight)
-   call mem_est('BS_eh_table BS_mat A_weight')
+   deallocate(BSS_eh_table,BS_mat,A_weight)
+   call mem_est('BSS_eh_table BS_mat A_weight')
    !
    return
    !
@@ -398,10 +398,10 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
      !
      do neh = 1,BS_H_dim
        !
-       ikbz  = BS_eh_table(neh,1)
-       iv    = BS_eh_table(neh,2)
-       ic    = BS_eh_table(neh,3)
-       i_spin= spin(BS_eh_table(neh,:))
+       ikbz  = BSS_eh_table(neh,1)
+       iv    = BSS_eh_table(neh,2)
+       ic    = BSS_eh_table(neh,3)
+       i_spin= spin(BSS_eh_table(neh,:))
        !
        ikibz = Xk%sstar(ikbz,1)
        is    = Xk%sstar(ikbz,2)
@@ -463,8 +463,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  deallocate(r_cell_cc,rindex)
  deallocate(v2plot,BS_R,BS_E,lambda_s)
  call mem_est('v2plot BS_R_E')
- deallocate(BS_eh_table,BS_mat,wf_vc)
- call mem_est('BS_eh_table BS_mat wf_vc')
+ deallocate(BSS_eh_table,BS_mat,wf_vc)
+ call mem_est('BSS_eh_table BS_mat wf_vc')
  call WF_free(WF)
  !
  contains

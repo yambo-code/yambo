@@ -27,9 +27,9 @@ subroutine K_inversion(iq,W,E,k,q)
  use X_m,            ONLY:X_epsilon,X_drude_term
  use stderr,         ONLY:intc,real2ch
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,&
-&                         BSE_mode,BS_eh_table,BS_eh_E,BSS_inversion_mode,&
-&                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BS_eh_f,&
-&                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z,BS_mat_diagonal
+&                         BSE_mode,BSS_eh_table,BSS_eh_E,BSS_inversion_mode,&
+&                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BSS_eh_f,&
+&                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z,BS_mat_diagonal,BS_mat_free
 #if defined _ELPH
  use BS,             ONLY:BSS_uses_GreenF,BS_bands
 #endif
@@ -42,6 +42,9 @@ subroutine K_inversion(iq,W,E,k,q)
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset,ncpu
  use interfaces,     ONLY:PARALLEL_index
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE,VERIFY,OP_WR_CL
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  type(w_samp) :: W
  integer      :: iq
@@ -61,22 +64,27 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! ... frequencies
  !
- integer, parameter :: max_freqs_full_inv_ratio=1
- integer,  allocatable ::inv_err(:),iw_full(:)
- integer    ::full_inf_freqs,nw,nw_conv,&
-&             min_dist_non_conv_freqs ! Every W%n_freqs/min_dist_non_conv_freqs
-                                      ! I perform a full inversion
+ integer, parameter  :: max_freqs_full_inv_ratio=1
+ integer,allocatable :: inv_err(:),iw_full(:)
+ integer             :: full_inf_freqs,nw,nw_conv,&
+&                       min_dist_non_conv_freqs ! Every W%n_freqs/min_dist_non_conv_freqs
+                                                ! I perform a full inversion
  logical    ::do_it_full,full_inf_freqs_found,FULL,PERTURBATIVE
  !
  ! I/O
  !
- integer           ::i_err,ID,IO_dim
- type(w_samp)      ::W_disk
- integer, external ::ioBSS_invert
- integer, allocatable     ::inv_err_disk(:),disk_freq_table(:)
- complex(SP), allocatable ::eps_disk(:,:)
+ integer           :: i_err,ID,IO_dim
+ type(w_samp)      :: W_disk
+ integer, external :: io_BSS_invert
+ integer,     allocatable :: inv_err_disk(:),disk_freq_table(:)
+ complex(SP), allocatable :: eps_disk(:,:)
+ !
+#if defined _TIMING
+ call timing('Invertion Solver',OPR='start')
+#endif
  !
  ! Sectioning
+ !============
  !
  if (isec(2)/=0) then
    call section('=','Inversion solver')
@@ -90,6 +98,7 @@ subroutine K_inversion(iq,W,E,k,q)
  if (trim(BSE_mode)=="coupling") BS_H_dim=2*BS_K_dim
  !
  ! Full inversion ?
+ !==================
  !
  FULL         = .TRUE.
  PERTURBATIVE = .TRUE.
@@ -99,12 +108,13 @@ subroutine K_inversion(iq,W,E,k,q)
    PERTURBATIVE = index(BSS_inversion_mode,'p')/=0
  endif
  !
- ! I/O
- !
  call W_reset(W_disk)
  !
+ ! I/O of the restart database
+ !=============================
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
- i_err=ioBSS_invert(iq,1,1,(/0/),(/(0._SP,0._SP)/),W_disk,ID)
+ i_err=io_BSS_invert(iq,1,1,(/0/),(/(0._SP,0._SP)/),W_disk,ID)
  !
  ! When the damping range is not uniform then changing
  ! the energy borders
@@ -119,7 +129,7 @@ subroutine K_inversion(iq,W,E,k,q)
    eps_disk=(0._SP,0._SP)
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-   i_err=ioBSS_invert(iq,W_disk%n_freqs,IO_dim,inv_err_disk,eps_disk,W_disk,ID)
+   i_err=io_BSS_invert(iq,W_disk%n_freqs,IO_dim,inv_err_disk,eps_disk,W_disk,ID)
    !
    ! Here I create a new energy array that merges the disk 
    ! and present energies. In addition the corresponding inv_err
@@ -160,19 +170,24 @@ subroutine K_inversion(iq,W,E,k,q)
    X_epsilon=(0.,0.)
  endif
  !
+ ! Kernel Loading 
+ !================
+ !
+ call K_stored_in_a_BIG_matrix(iq)
+ !
  allocate(eps_disk(W%n_freqs,IO_dim))
  eps_disk=(0._SP,0._SP)
  !
  ! I need to remove the occupations from the oscillators strenght
  ! These are now embodied in the Green's function
  !
- BSS_rhoq0(1:BS_K_dim)=BSS_rhoq0(1:BS_K_dim)/sqrt(BS_eh_f(1:BS_K_dim))
- if (trim(BSE_mode)=='coupling'.or.allocated(BS_eh_W)) then
-   BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)=BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)/sqrt(BS_eh_f(1:BS_K_dim))
+ BSS_rhoq0(1:BS_K_dim)=BSS_rhoq0(1:BS_K_dim)/sqrt(BSS_eh_f(1:BS_K_dim))
+ if (trim(BSE_mode)=='coupling'.or.allocated(BSS_eh_W)) then
+   BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)=BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)/sqrt(BSS_eh_f(1:BS_K_dim))
  endif
  !
  ! Initialize the output file 
- !
+ !============================
  of_mode=3
  call K_output_file(iq,-of_mode)
  !
@@ -199,23 +214,21 @@ subroutine K_inversion(iq,W,E,k,q)
  !
 #endif
  !
- if (BSS_uses_RIM) call K_stored_in_a_BIG_matrix(iq)
- !
  call live_timing('Green`s function',BS_K_dim)
  !
  do i1=1,BS_K_dim
    !
-   ik_bz =BS_eh_table(i1,1)
+   ik_bz =BSS_eh_table(i1,1)
    ik_ibz=k%sstar(ik_bz,1)
-   iv    =BS_eh_table(i1,2)
-   ic    =BS_eh_table(i1,3)
-   i_sp  =spin(BS_eh_table(i1,:))
+   iv    =BSS_eh_table(i1,2)
+   ic    =BSS_eh_table(i1,3)
+   i_sp  =spin(BSS_eh_table(i1,:))
    !
    if (.not.BSS_uses_RIM) then
      QP_width=0.
      QP_Z=(1.,0.)
-     if (allocated(BS_eh_W)) QP_width=BS_eh_W(i1)
-     if (allocated(BS_eh_Z)) QP_Z=BS_eh_Z(i1)
+     if (allocated(BSS_eh_W)) QP_width=BSS_eh_W(i1)
+     if (allocated(BSS_eh_Z)) QP_Z=BSS_eh_Z(i1)
      if (associated(E%GreenF)) then
        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"r")
        if (trim(BSE_mode)=='causal') &
@@ -223,11 +236,11 @@ subroutine K_inversion(iq,W,E,k,q)
        if (trim(BSE_mode)=='coupling') &
 &        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"ca")
      else
-       Lo(i1,:,1)=QP_Z*BS_eh_f(i1)/(W%p(:)-BS_eh_E(i1)-(0.,1.)*QP_width)
+       Lo(i1,:,1)=QP_Z*BSS_eh_f(i1)/(W%p(:)-BSS_eh_E(i1)-(0.,1.)*QP_width)
        if (trim(BSE_mode)=='causal') &
-&        Lo(i1,:,2)=-QP_Z*BS_eh_f(i1)/(W%p(:)+BS_eh_E(i1)-(0.,1.)*QP_width)
+&        Lo(i1,:,2)=-QP_Z*BSS_eh_f(i1)/(W%p(:)+BSS_eh_E(i1)-(0.,1.)*QP_width)
        if (trim(BSE_mode)=='coupling') &
-&        Lo(i1+BS_K_dim,:,1)=-QP_Z*BS_eh_f(i1)/(W%p(:)+BS_eh_E(i1)-(0.,1.)*QP_width)
+&        Lo(i1+BS_K_dim,:,1)=-QP_Z*BSS_eh_f(i1)/(W%p(:)+BSS_eh_E(i1)-(0.,1.)*QP_width)
      endif
    else
      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"sr")
@@ -240,7 +253,7 @@ subroutine K_inversion(iq,W,E,k,q)
    X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*Lo(i1,:,1)*Co
    if (trim(BSE_mode)=='causal') X_epsilon(3,:)=X_epsilon(3,:)- &
 &                                conjg(BSS_rhoq0(i1))*BSS_rhoq0(i1)*Lo(i1,:,2)*Co
-   if (trim(BSE_mode)=='coupling'.or.allocated(BS_eh_W)) X_epsilon(3,:)=X_epsilon(3,:)- &
+   if (trim(BSE_mode)=='coupling'.or.allocated(BSS_eh_W)) X_epsilon(3,:)=X_epsilon(3,:)- &
 &                     conjg(BSS_rhoq0(i1+BS_K_dim))*BSS_rhoq0(i1+BS_K_dim)*Lo(i1+BS_K_dim,:,1)*Co
    !
    ! Include the Kernel diagonal as a rigid shift
@@ -284,7 +297,7 @@ subroutine K_inversion(iq,W,E,k,q)
    if(IO_dim==2) eps_disk(:,2)=X_epsilon(4,:)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-   i_err=ioBSS_invert(iq,W%n_freqs,IO_dim,inv_err,eps_disk,W,ID)
+   i_err=io_BSS_invert(iq,W%n_freqs,IO_dim,inv_err,eps_disk,W,ID)
    !
  endif
  !
@@ -362,9 +375,9 @@ subroutine K_inversion(iq,W,E,k,q)
      !
    else
      !
-     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
+     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BSS_eh_E(i1)
      if (trim(BSE_mode)=='coupling') then
-       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(i1-BS_K_dim)
+       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+BSS_eh_E(i1-BS_K_dim)
        forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:) =-BS_mat(i1,:)
      endif
      !
@@ -404,7 +417,7 @@ subroutine K_inversion(iq,W,E,k,q)
  eps_disk(:,1)=X_epsilon(2,:)
  if(IO_dim==2) eps_disk(:,2)=X_epsilon(4,:)
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
- i_err=ioBSS_invert(iq,W%n_freqs,IO_dim,inv_err,eps_disk,W,ID)
+ i_err=io_BSS_invert(iq,W%n_freqs,IO_dim,inv_err,eps_disk,W,ID)
  !
  if(trim(BSE_mode)=="causal") X_epsilon(2,:)=X_epsilon(2,:)+X_epsilon(4,:)
  !
@@ -431,14 +444,12 @@ subroutine K_inversion(iq,W,E,k,q)
  call PP_indexes_reset(px)
  deallocate(iw_full,Lo)
  call mem_est("Lo")
- if( allocated(BS_mat) ) then
-   deallocate(BS_mat)
-   call mem_est("BS_mat")
- endif
- if( allocated(BS_mat_diagonal) ) then
-   deallocate(BS_mat_diagonal)
-   call mem_est("BS_mat_diagonal")
- endif
+ !
+ call BS_mat_free( )
+ !
+#if defined _TIMING
+ call timing('Invertion Solver',OPR='stop')
+#endif
  !
  contains
    !
@@ -448,8 +459,8 @@ subroutine K_inversion(iq,W,E,k,q)
      integer :: i2,i3,tmp_err
      logical :: perform_inv
      !
-     integer, external::pert_inversion
-     integer, external::full_inversion
+     integer, external::Matrix_resolvant_via_perturbative_inversion
+     integer, external::Matrix_resolvant_via_exact_inversion
      !
      tmp_err=0
      !
@@ -469,21 +480,30 @@ subroutine K_inversion(iq,W,E,k,q)
        if (perform_inv) then
          !
          if (do_it_full) then
-           inv_err(i3)=full_inversion(BS_H_dim,BSS_rhoq0,-1.*Co,&
-&                           X_epsilon(2,i3),Lo(:,i3,1),BS_mat)
            !
-           if (trim(BSE_mode)=='causal') &
-&            tmp_err=full_inversion(BS_H_dim,conjg(BSS_rhoq0),-1.*Co,&
-&                         X_epsilon(4,i3),Lo(:,i3,2),conjg(BS_mat))
-         else
-           inv_err(i3)=pert_inversion(i3,BS_H_dim,BSS_rhoq0,-1.*Co,&
-&                         X_epsilon(2,i3),Lo(:,i3,1))
+           inv_err(i3)=Matrix_resolvant_via_exact_inversion(BS_H_dim,BSS_rhoq0,-1.*Co,&
+&                                                           X_epsilon(2,i3),Lo(:,i3,1),BS_mat)
+           !
            if (trim(BSE_mode)=='causal') then
+             tmp_err=Matrix_resolvant_via_exact_inversion(BS_H_dim,conjg(BSS_rhoq0),-1.*Co,&
+&                                                         X_epsilon(4,i3),Lo(:,i3,2),conjg(BS_mat))
+           endif
+           !
+         else
+           !
+           inv_err(i3)=Matrix_resolvant_via_perturbative_inversion(i3,BS_H_dim,BSS_rhoq0,-1.*Co,&
+&                                                                  X_epsilon(2,i3),Lo(:,i3,1))
+           !
+           if (trim(BSE_mode)=='causal') then
+             !
              ! Here instead of using conjg(BS_mat) I use conjg of
              ! everything else, the output included (see after the enddo)
-             tmp_err=pert_inversion(i3,BS_H_dim,BSS_rhoq0,-1.*conjg(Co),&
-&                         X_epsilon(4,i3),conjg(Lo(:,i3,2)))
+             !
+             tmp_err=Matrix_resolvant_via_perturbative_inversion(i3,BS_H_dim,BSS_rhoq0,-1.*conjg(Co),&
+&                                                                X_epsilon(4,i3),conjg(Lo(:,i3,2)))
+             !
            endif      
+           !
          endif
          !
        endif       

@@ -46,8 +46,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  logical           ::run_Haydock,run_Diago,run_inversion
  logical           ::stop_Haydock
- integer           ::ID,ioBS_err
- integer, external ::ioBS
+ integer           ::ID,io_BS_err
+ integer, external ::io_BS
  !
  call section('*','BSE solver(s)')
  !

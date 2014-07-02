@@ -29,8 +29,8 @@ integer function RT_Lifetimes_evaluation_plan( )
  use pars,           ONLY:IP2,SP
  use fields,         ONLY:Efield,i_Pump,ext_field,Efield_duplicate,small_a
  use memory_m,       ONLY:mem_est
- use real_time,      ONLY:RT_TIME_status,NE_steps,RT_dynamics_steps,&
-&                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time,it_start,&
+ use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_interp_steps,&
+&                         RT_step,RT_life_interp_KIND,RT_life_interp_decay_time,it_start,&
 &                         Life_MEM_steps
  !
  implicit none
@@ -50,24 +50,25 @@ integer function RT_Lifetimes_evaluation_plan( )
    RT_TIME_status=1
  endif
  !
- l_interpolate=trim(RT_dynamics_KIND)=="DEFAULT" .or. trim(RT_dynamics_KIND)=="FIELD" .or. &
-&              trim(RT_dynamics_KIND)=="EXP"     .or. trim(RT_dynamics_KIND)=="FLAT"
+ l_interpolate=trim(RT_life_interp_KIND)=="DEFAULT" .or. trim(RT_life_interp_KIND)=="FIELD" .or. &
+&              trim(RT_life_interp_KIND)=="EXP"     .or. trim(RT_life_interp_KIND)=="FLAT"
  !
- if(.not.l_interpolate) RT_dynamics_KIND="NONE"
+ if(.not.l_interpolate) RT_life_interp_KIND="NONE"
  !
- if (RT_dynamics_steps(1)<0. .or. it_start>=NE_steps .or. trim(RT_dynamics_KIND)=="NONE") then
+ if (RT_life_interp_steps(1)<0. .or. it_start>=NE_steps .or. trim(RT_life_interp_KIND)=="NONE") then
+   RT_life_interp_KIND="NONE"
    Life_MEM_steps=1
    return
  endif 
  !
  RT_TIME_status=0 ! Interpolate
  !
- Life_MEM_steps=nint(RT_dynamics_steps(1)/RT_dynamics_steps(2))
+ Life_MEM_steps=nint(RT_life_interp_steps(1)/RT_life_interp_steps(2))
  if (Life_MEM_steps<3) Life_MEM_steps=3
- RT_dynamics_steps(1)=RT_dynamics_steps(2)*Life_MEM_steps
+ RT_life_interp_steps(1)=RT_life_interp_steps(2)*Life_MEM_steps
  !
- N_inter_steps=nint(RT_dynamics_steps(1)/RT_step)
- N_intra_steps=nint(RT_dynamics_steps(2)/RT_step)
+ N_inter_steps=nint(RT_life_interp_steps(1)/RT_step)
+ N_intra_steps=nint(RT_life_interp_steps(2)/RT_step)
  !
  ! RT_TIME_status = -1   KEEP constant 
  !                  >0   EVAL and SAVE
@@ -78,7 +79,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  weight=1._SP
  it_0=1
  !
- if (trim(RT_dynamics_KIND)=="FIELD") then
+ if (trim(RT_life_interp_KIND)=="FIELD") then
    call Efield_duplicate(Efield(i_Pump),E_dummy)
    if (trim(E_dummy%ef_name)=="QSSIN")  E_dummy%ef_name="GAUSS"
    do it=1,NE_steps
@@ -96,16 +97,16 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  ! Exponential decay for T>To
  !
- if (RT_dynamics_decay_time>0. .and. trim(RT_dynamics_KIND)=="EXP") then
+ if (RT_life_interp_decay_time>0. .and. trim(RT_life_interp_KIND)=="EXP") then
    do it=it_0,NE_steps
      TIME=RT_step*(it-it_0)
-     weight(it)=weight(it)*exp(-real(TIME)/RT_dynamics_decay_time)
+     weight(it)=weight(it)*exp(-real(TIME)/RT_life_interp_decay_time)
    enddo
  endif
  !
  if (it_start> 1) then
-   N_inter_steps=nint(real(RT_dynamics_steps(1))/weight(it_start+1)/RT_step)
-   N_intra_steps=nint(real(RT_dynamics_steps(2))/weight(it_start+1)/RT_step)
+   N_inter_steps=nint(real(RT_life_interp_steps(1))/weight(it_start+1)/RT_step)
+   N_intra_steps=nint(real(RT_life_interp_steps(2))/weight(it_start+1)/RT_step)
  endif
  !
  it_first=it_start+1
@@ -139,8 +140,8 @@ integer function RT_Lifetimes_evaluation_plan( )
      call BUILD_up_group(N_inter_steps,N_intra_steps)
    endif
    !
-   N_inter_steps=nint(real(RT_dynamics_steps(1))/weight(it)/RT_step)
-   N_intra_steps=nint(real(RT_dynamics_steps(2))/weight(it)/RT_step)
+   N_inter_steps=nint(real(RT_life_interp_steps(1))/weight(it)/RT_step)
+   N_intra_steps=nint(real(RT_life_interp_steps(2))/weight(it)/RT_step)
    !
    it=it+N_inter_steps
    !

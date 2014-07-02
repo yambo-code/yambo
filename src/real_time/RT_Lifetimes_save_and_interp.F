@@ -29,8 +29,8 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,it_now,RT_nk
  use real_time,      ONLY:RT_TIME_status,SAVED_times,FIRST_step,&
-&                         Life_MEM_steps,SAVED_lifetime,RT_dynamics_steps,&
-&                         ADD_to_saved_values,&
+&                         Life_MEM_steps,SAVED_lifetime,&
+&                         ADD_to_saved_values,RT_life_interp_KIND,&
 &                         RT_E_occupations,RT_E_occupations_reference,&
 &                         RT_H_occupations,RT_H_occupations_reference
  !
@@ -47,7 +47,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  !
  integer          :: ib,ik
  !
- if (RT_dynamics_steps(1)<0.) return
+ if ( trim(RT_life_interp_KIND)=="NONE" ) return
  !
  if (EVAL) then
    !

@@ -41,8 +41,8 @@ integer function variables_SC(ID,local_description,what)
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_IO_G_steps,              &
 &                         RT_IO_JPO_steps,l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,RT_IO_steps_DB,Gr_description,l_RT_skip_impose,&
-&                         l_RT_uses_E_RIM,N_Gr_descs,RT_dynamics_steps,RT_dynamics_decay_time,&
-&                         RT_dynamics_KIND,l_NE_simulate_Irredux,RIM_EE_percent,l_RT_EE_impose_E
+&                         l_RT_uses_E_RIM,N_Gr_descs,RT_life_interp_steps,RT_life_interp_decay_time,&
+&                         RT_life_interp_KIND,l_NE_simulate_Irredux,RIM_EE_percent,l_RT_EE_impose_E
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
@@ -312,16 +312,16 @@ integer function variables_SC(ID,local_description,what)
      if (ver_is_gt_or_eq(ID,revision=3163)) then
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [RT-DYN-dT] Inter/intra grps[fs]:",R1=RT_dynamics_steps,WARN=.true.,OP=(/"==","=="/),&
+&        VAR=" [RT-DYN-dT] Inter/intra grps[fs]:",R1=RT_life_interp_steps,WARN=.true.,OP=(/"==","=="/),&
 &        DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [RT-DYN-dT] Time decay      [fs]:",R0=RT_dynamics_decay_time,WARN=.true.,OP=(/"=="/),&
+&        VAR=" [RT-DYN-dT] Time decay      [fs]:",R0=RT_life_interp_decay_time,WARN=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
        i_desc=i_desc+1
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        call io_elemental(ID,VAR='RT_DYNAMICS_kind',CH0="",VAR_SZ=1,MENU=0)
-       call io_elemental(ID,CH0=RT_dynamics_KIND, &
+       call io_elemental(ID,CH0=RT_life_interp_KIND, &
 &        VAR=" [RT-DYN-dT] Sampling            :",WARN=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc))
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)

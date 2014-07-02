@@ -27,8 +27,8 @@ integer function RT_SET_lifetimes_evaluation_plan( )
  use pars,           ONLY:IP2,SP
  use fields,         ONLY:Efield,i_Pump,ext_field,Efield_duplicate,small_a,l_manual_excitation
  use memory_m,       ONLY:mem_est
- use real_time,      ONLY:RT_GAMMA_T_status,NE_steps,RT_dynamics_steps,Life_MEM_steps,&
-&                         RT_step,RT_dynamics_KIND,RT_dynamics_decay_time,it_start
+ use real_time,      ONLY:RT_GAMMA_T_status,NE_steps,RT_life_interp_steps,Life_MEM_steps,&
+&                         RT_step,RT_life_interp_KIND,RT_life_interp_decay_time,it_start
  use LIVE_t,         ONLY:live_timing
  !
  implicit none
@@ -46,13 +46,13 @@ integer function RT_SET_lifetimes_evaluation_plan( )
  endif
  RT_GAMMA_T_status=0 ! Interpolate
  !
- if (RT_dynamics_steps(1)<0.) then
+ if (RT_life_interp_steps(1)<0.) then
    RT_GAMMA_T_status=1
    return
  endif 
  !
- N_inter_steps=RT_dynamics_steps(1)/RT_step
- N_intra_steps=RT_dynamics_steps(2)/RT_step
+ N_inter_steps=RT_life_interp_steps(1)/RT_step
+ N_intra_steps=RT_life_interp_steps(2)/RT_step
  !
  ! RT_GAMMA_T_status = -1   KEEP constant 
  !                      1   EVAL and SAVE
@@ -64,14 +64,14 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    Nt_each_group=N_inter_steps
  else
    it_last=it_start
-   N_inter_steps=real(RT_dynamics_steps(1))/weight(it_start)/RT_step
-   N_intra_steps=real(RT_dynamics_steps(2))/weight(it_start)/RT_step
+   N_inter_steps=real(RT_life_interp_steps(1))/weight(it_start)/RT_step
+   N_intra_steps=real(RT_life_interp_steps(2))/weight(it_start)/RT_step
    Nt_each_group=N_inter_steps
  endif
  !
  weight=1._SP
  it_0=1
- if (trim(RT_dynamics_KIND)=="FIELD") then
+ if (trim(RT_life_interp_KIND)=="FIELD") then
    call Efield_duplicate(Efield(i_Pump),E_dummy)
    if (trim(E_dummy%ef_name)=="QSSIN")  E_dummy%ef_name="GAUSS"
    do it=1,NE_steps
@@ -86,12 +86,12 @@ integer function RT_SET_lifetimes_evaluation_plan( )
    enddo
  endif
  !
- if (RT_dynamics_decay_time>0.) then
+ if (RT_life_interp_decay_time>0.) then
    do it=it_0,NE_steps
      TIME=RT_step*(it-it_0)
      if(it>1) weight(it)=weight(it-1)
-     if(real(TIME)<RT_dynamics_decay_time) cycle
-     weight(it)=min(1._SP/(real(TIME)/RT_dynamics_decay_time)**0.5_SP,0.05)
+     if(real(TIME)<RT_life_interp_decay_time) cycle
+     weight(it)=min(1._SP/(real(TIME)/RT_life_interp_decay_time)**0.5_SP,0.05)
    enddo
  endif
  !
@@ -122,8 +122,8 @@ integer function RT_SET_lifetimes_evaluation_plan( )
      enddo
    endif
    !
-   N_inter_steps=real(RT_dynamics_steps(1))/weight(it)/RT_step
-   N_intra_steps=real(RT_dynamics_steps(2))/weight(it)/RT_step
+   N_inter_steps=real(RT_life_interp_steps(1))/weight(it)/RT_step
+   N_intra_steps=real(RT_life_interp_steps(2))/weight(it)/RT_step
    !
    Nt_each_group= N_inter_steps
    it_last=it

@@ -167,7 +167,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    endif
    !
    ! The bare, frozed VHxc 
-   !-----------------------
+   !=======================
    if (HEAD_k_cpu) then
 #if defined _OPENMP
      call V_by_V_plus_V_omp(&

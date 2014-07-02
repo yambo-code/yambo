@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
+subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
  !
  !  This subroutine perform integration using different methods
  !
@@ -51,8 +51,8 @@ subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
  type(bz_samp),        intent(in) :: k,q
  type(levels),         intent(in) :: E
  real(SP),             intent(in) :: T_step,Time
- complex(SP),          intent(in) :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
- complex(SP),       intent(inout) :: dG_out(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),          intent(in) :: dG_old(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),       intent(inout) :: dG_new(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  type(gauge_field),    intent(in) :: A_in
  type(gauge_field), intent(inout) :: A_out
  !
@@ -66,7 +66,7 @@ subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
  !
  if (l_RT_EULER) then
    !
-   call RT_evolve(dG_in,dG_out,T_step,T_step)
+   call RT_evolve(dG_old,dG_new,T_step,T_step)
    !
    integrator_step=1
    !
@@ -74,7 +74,7 @@ subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
    !
    ! Evaluate @ dt/2
    !
-   call RT_evolve(dG_in,dG1,T_step/2._SP,T_step/2._SP)
+   call RT_evolve(dG_old,dG1,T_step/2._SP,T_step/2._SP)
    !
    integrator_step=2
    !
@@ -92,7 +92,7 @@ subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
    !
    ! final step @ dt
    !
-   call RT_evolve(dG1,dG_out,T_step,T_step/2._SP)
+   call RT_evolve(dG1,dG_new,T_step,T_step/2._SP)
    !
    integrator_step=1
    !
@@ -100,7 +100,7 @@ subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
    !
    ! Evaluate @ dt
    !
-   call RT_evolve(dG_in,dG1,T_step,T_step)
+   call RT_evolve(dG_old,dG1,T_step,T_step)
    !
    integrator_step=2
    !
@@ -122,13 +122,13 @@ subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
    !
    integrator_step=1
    !
-   dG_out=(dG1+dG2)/2._SP
+   dG_new=(dG1+dG2)/2._SP
    !
-   call RT_update_occ(dG_out)
+   call RT_update_occ(dG_new)
    !
  endif
  !
- if (l_NE_with_fields) call RT_propagate_fields(k,E,dG_out,A_out,A_in,Time,T_step)
+ if (l_NE_with_fields) call RT_propagate_fields(k,E,dG_new,A_out,A_in,Time,T_step)
  !
 #if defined _TIMING
  call timing('RT integrator',OPR='stop')
@@ -173,7 +173,7 @@ subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
          !
          ! G(T0+dt) = U(dt) G(T0) U(-dt)
          !
-         call RT_EULEREXP_step(dG_out(:,:,ik),dG_in(:,:,ik),G_lesser_reference(:,:,ik),I1_k,I2_k,I1_matrix)
+         call RT_EULEREXP_step(dG_out(:,:,ik),dG_old(:,:,ik),G_lesser_reference(:,:,ik),I1_k,I2_k,I1_matrix)
          !
        else
          !
@@ -184,14 +184,14 @@ subroutine RT_Integrator(dG_out,dG_in,A_out,A_in,T_step,E,k,q,Time)
          ! G(T0+dt) -G(T0)= - i dt *(I1(T) - I2(T))
          !
          if (.not.l_RT_INTERPOLATE) call RT_EULER_step(dG_out(:,:,ik),I1_k,I2_k,dT)
-         !if (l_RT_INTERPOLATE)      call RT_INTERPOLATED_step(G_out(:,:,ik),dG_in(:,:,ik),I1_k,I2_k,ik,Time,dT,.TRUE.)
+         !if (l_RT_INTERPOLATE)      call RT_INTERPOLATED_step(G_out(:,:,ik),dG_old(:,:,ik),I1_k,I2_k,ik,Time,dT,.TRUE.)
          !
        endif
        !
        ! G(T0+dt) = G(T0) e^{-i\delta\epsilon dt} - i dt *(I1(T) - I2(T)) e^{-i\delta\epsilon (dt')}
        !
-       if(     l_RT_RWA) call RT_apply_RWA(ik,E,dT,dTp,dG_out(:,:,ik),dG_in(:,:,ik))
-       if(.not.l_RT_RWA) dG_out(:,:,ik)=dG_out(:,:,ik)+dG_in(:,:,ik)
+       if(     l_RT_RWA) call RT_apply_RWA(ik,E,dT,dTp,dG_out(:,:,ik),dG_old(:,:,ik))
+       if(.not.l_RT_RWA) dG_out(:,:,ik)=dG_old(:,:,ik)+dG_in(:,:,ik)
        !
        ! Dephasing and carriers relaxation step
        ! G(T0+dt) = G(T0) - i dt * Sigma_relax(T)

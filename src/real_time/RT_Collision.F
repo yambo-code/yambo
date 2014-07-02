@@ -51,8 +51,8 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,it_now,SC_R,&
 &                         RT_ibz_coo,RT_nk,it_now
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc
- use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,rho_full,l_RT_uses_E_RIM,&
-&                         XC0_and_HARTREE0,RIM_ibz_coo,&
+ use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_RIM,REF_V_xc_sc,&
+&                         XC0_and_HARTREE0,RIM_ibz_coo,rho_reference,&
 &                         l_NE_dynamics_started,l_RT_RWA,l_BGR,&
 &                         eval_DENSITY,eval_HARTREE,eval_DFT
  use fields,         ONLY:gauge_field
@@ -97,17 +97,20 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    call el_density_matrix(dG_in(:,:,RT_ibz_coo(:,1)),E,k,delta_rho,SC_bands(1))
    !
-   rho_n=rho_full+delta_rho
+   rho_n=rho_reference+delta_rho
    !
  endif
  !
- ! The Hartree term is written as
- !------------------
- ! V_hartree(G) = V_hartree(rho-rho_0) + V_hartree(rho_0)
+ ! All the potentials are written in terms of the variations
+ ! * The Hartree term: V_hartree(rho) = V_hartree(rho_reference) + V_hartree(delta_rho)
+ ! * The V_xc    term: V_xc(rho)      = V_xc(rho_reference)      + {V_xc(rho) - V_xc(rho_reference)} 
+ ! * Sigma_xc    term: S_xc(G)        = S_xc(G_reference)        + S_xc(delta_G)
+ !   NOTICE THAT: this approximation is valid only for linear self-energies 
+ !                in G_lesser as exchange or COHSEX(with W fixed) 
  !
- ! where V_hartree(rho_0) is stored in XC0_and_HARTREE0
- !
- ! Here I calculate V_hartree(rho-rho_0) => V_hartree_sc
+ !  V_hartree(rho_reference) is in REF_V_hartree_sc
+ !  V_xc(rho_reference)      is in REF_V_xc_sc
+ !  S_xc(G_reference)        is introduced in the QP corrections to the eigenvalues
  !
  if (eval_HARTREE) call V_Hartree(delta_rho,V_hartree_sc)
  !
@@ -118,29 +121,15 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !-------------
  if (eval_DFT) then
    !
-   ! For V_xc I cannot write
-   !
-   !  V_xc(G) =/= V_xc(rho-rho_0) + V_xc(rho_0)
-   !
-   ! rather
-   !
-   !  V_xc(G) = V_xc(rho) 
-   !
-   ! note that XC0_and_HARTREE0 DOES NOT contains V_xc(rho_0) when V_xc is updated
-   !
    call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1,&
 &                           MUTE="-report -log -io_in -io_out",unMUTE=master_cpu)
-   V_xc_sc=V_xc
+   !
+   V_xc_sc=V_xc-REF_V_xc_sc
    !
  endif
  !
  ! The MB-like
  !-------------
- !
- ! The exchange/cohsex term is written as Sigma(G - G_0) + Sigma(G_0)
- ! NOTICE THAT: this approximation is valid only for linear self-energies 
- !              in G_lesser as exchange or COHSEX(with W fixed) 
- !
  if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_compose(dG_in(:,:,RT_ibz_coo(:,1)),dG_in(:,:,RT_ibz_coo(:,1)))
  !
  ! Filling the BKE Kernel with the HXC part
@@ -174,7 +163,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    endif
    !
    ! The bare, frozed VHxc 
-   !-----------------------
+   !=======================
    if (HEAD_k_cpu) then
 #if defined _OPENMP
      call V_by_V_plus_V_omp(&

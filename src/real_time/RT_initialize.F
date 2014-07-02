@@ -40,8 +40,8 @@ subroutine RT_initialize(E,k,q)
 &                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,Gr_kind,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,RT_IO_output_steps,    &
-&                         l_RT_uses_E_RIM,RIM_bz_coo,RT_dynamics_steps,RT_dynamics_decay_time,&
-&                         RT_dynamics_KIND,l_NE_dynamics,l_RT_skip_impose,I_MEM_steps,Integrator_name,&
+&                         l_RT_uses_E_RIM,RIM_bz_coo,RT_life_interp_steps,RT_life_interp_decay_time,&
+&                         RT_life_interp_KIND,l_NE_dynamics,l_RT_skip_impose,I_MEM_steps,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
 &                         RIM_EE_Nk_table,l_RT_EE_impose_E,RIM_EE_percent,RIM_EE_Nk_table,&
 &                         l_BGR,l_RT_HEUN,eval_DENSITY,eval_HARTREE,eval_DFT
@@ -338,19 +338,19 @@ subroutine RT_initialize(E,k,q)
  if  (l_RT_INTERPOLATE) call msg( 'r', 'Memory steps(COHERENT part):',I_MEM_steps)
  call msg( 'r', 'Thermalization steps       :',Thermal_steps)
  !
- if (RT_dynamics_steps(1)>0.) then
+ if (.not.trim(RT_life_interp_KIND)=="NONE") then
    call msg( 'nr','---Dynamics---')
-   call msg( 'r', 'Sampling                       :',RT_dynamics_KIND)
+   call msg( 'r', 'Sampling                       :',RT_life_interp_KIND)
    call msg( 'r', 'Memory steps (Lifetimes)       :',Life_MEM_steps)
-   call msg( 'r', 'Steps length (inter/intra) [fs]:',RT_dynamics_steps/FS2AUT)
-   if (RT_dynamics_decay_time>0.) call msg( 'r', 'Distribution decay         [fs]:',&
-&                                                RT_dynamics_decay_time/FS2AUT)
+   call msg( 'r', 'Steps length (inter/intra) [fs]:',RT_life_interp_steps/FS2AUT)
+   if (RT_life_interp_decay_time>0.) call msg( 'r', 'Distribution decay         [fs]:',&
+&                                                RT_life_interp_decay_time/FS2AUT)
    call msg( 'r', 'Time points                    :',N_T_samplings*Life_MEM_steps)
  endif
  !
  call msg( 'nr','---Flags (if any)---')
  if (l_sc_ip)             call msg( 'r','Simulate IP                :',l_sc_ip)
- if (l_sc_hartree)        call msg( 'r','Simulate RPA               :',l_sc_hartree.and..not.l_sc_ip)
+ if (l_sc_hartree)        call msg( 'r','Simulate RPA               :',l_sc_hartree)
  if (l_sc_is_libDFT)      call msg( 'r','Simulate TD-DFT            :',l_sc_is_libDFT)
  if (l_sc_cohsex)         call msg( 'r','Simulate BSE               :',l_sc_cohsex)
  !

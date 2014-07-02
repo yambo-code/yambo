@@ -100,10 +100,10 @@ module real_time
  ! channels. I will see later if this can be somehow extended/duplicated
  ! for the static correlations
  !
- character(schlen) :: RT_dynamics_KIND = "EXP" ! EXP or FIELD
- real(SP) :: RT_dynamics_steps(2)  =-1.*FS2AUT ! (1) is step between groups of 3, (2) is step in the group of 3.
- real(SP) :: RT_dynamics_decay_time=-1.*FS2AUT ! For pulsed-like distribution it dumps the distribution of points
-                                               ! in the long-time regime
+ character(schlen) :: RT_life_interp_KIND = "NONE" ! NONE, FLAT, EXP or FIELD
+ real(SP) :: RT_life_interp_steps(2)  =-1.*FS2AUT  ! (1) is step between groups of 3, (2) is step in the group of 3.
+ real(SP) :: RT_life_interp_decay_time=-1.*FS2AUT  ! For pulsed-like distribution it dumps the distribution of points
+                                                ! in the long-time regime
  integer(2), allocatable :: RT_TIME_status(:)
  !
  ! Kind of e-e interactions (for the CORR and SCATT parts)
@@ -266,8 +266,7 @@ module real_time
  ! Density
  !---------
  !
- real(SP),    allocatable :: rho_reference(:)    ! reference density from SC_bands(1):SC_bands(2)
- real(SP),    allocatable :: rho_full(:)         ! reference density from all bands 
+ real(SP),    allocatable :: rho_reference(:)    ! reference density from all bands 
  !
  ! Integrators
  !
@@ -495,13 +494,16 @@ module real_time
      allocate(dG_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,G_MEM_steps))
      call mem_est("dG_lesser",(/size(dG_lesser)/),(/2*SP/))
      !
+     allocate(REF_V_xc_sc(fft_size,n_sp_pol))
+     call mem_est("REF_V_xc_sc",(/fft_size*n_sp_pol/),(/SP/))
+     !
+     allocate(REF_V_hartree_sc(fft_size,n_sp_pol))
+     call mem_est("REF_V_hartree_sc",(/fft_size*n_sp_pol/),(/SP/))
+     !
+     allocate(REF_QP_Vnl_xc(QP_n_states))
+     call mem_est("REF_QP_Vnl_xc",(/size(REF_QP_Vnl_xc)/),(/2*SP/))
+     !
      if (l_BGR) then
-       allocate(REF_QP_Vnl_xc(QP_n_states))
-       call mem_est("REF_QP_Vnl_xc",(/size(REF_QP_Vnl_xc)/),(/2*SP/))
-       allocate(REF_V_xc_sc(fft_size,n_sp_pol))
-       call mem_est("REF_V_xc_sc",(/fft_size*n_sp_pol/),(/SP/))
-       allocate(REF_V_hartree_sc(fft_size,n_sp_pol))
-       call mem_est("REF_V_hartree_sc",(/fft_size*n_sp_pol/),(/SP/))
        allocate(BGR_hartree(SC_bands(2),QP_nk,n_sp_pol))
        call mem_est("BGR_hartree",(/size(BGR_hartree)/),(/SP/))
        allocate(BGR_V_xc(SC_bands(2),QP_nk,n_sp_pol))
@@ -512,11 +514,6 @@ module real_time
      !
      allocate(rho_reference(fft_size))
      call mem_est("rho_reference",(/fft_size/),(/SP/))
-     !
-     if((l_sc_is_libDFT.or.l_sc_hartree.or.l_sc_cohsex.or.l_sc_hf).and.SC_bands(1)>1) then
-       allocate(rho_full(fft_size))
-       call mem_est("rho_full",(/fft_size/),(/SP/))
-     endif
      !
      ! Reference energies
      !
@@ -664,11 +661,6 @@ module real_time
      if(allocated(rho_reference)) then
        deallocate(rho_reference)
        call mem_est("rho_reference")
-     endif
-     !
-     if(allocated(rho_full)) then
-       deallocate(rho_full)
-       call mem_est("rho_full")
      endif
      !
      deallocate(E_bare)

@@ -364,15 +364,18 @@ subroutine RT_driver(E,X,k,q)
    !
    G_lesser(:,:,:,it_mem_p1)=G_lesser_reference+dG_lesser(:,:,:,it_mem_p1)
    !
-   if (it==Thermal_steps) then
-     !
-     ! I freeze the last self-energy + hartree in XC0_and_HARTREE and I work
-     ! only with the differences rho-rho_reference and G_lesser-G_lesser_reference
-     ! 
-     call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
-     XC0_and_HARTREE0=SC_R-Ho
-     !
-   endif
+   !if (it==Thermal_steps) then
+   !  !
+   !  ! I freeze the last self-energy + hartree in XC0_and_HARTREE and I work
+   !  ! only with the differences rho-rho_reference and G_lesser-G_lesser_reference
+   !  ! 
+   !  call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
+   !  XC0_and_HARTREE0=SC_R-Ho
+   !  !
+   !  ! Davide: Thermal steps broken.
+   !  !         Here I should also update REF_V_xc ...
+   !  !
+   !endif
    !
    ! Diagonalization
    ! ===============

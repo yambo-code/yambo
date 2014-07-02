@@ -51,7 +51,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
 &                         RT_TIME_status,REF_lifetime,it_start,RT_E_occupations,RT_H_occupations,FIRST_step,&
-&                         l_initial_equilibrium,l_RT_skip_impose,RT_delta0_occupations
+&                         l_initial_equilibrium,l_RT_skip_impose,RT_delta0_occupations,l_RT_RWA,RT_is_dephased
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -74,11 +74,13 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  !
  if (.not.l_NE_dynamics_started .and. .not.l_initial_equilibrium) return
  !
+ if (.not.RT_is_dephased) return
+ !
  I_relax_static=cZERO
  !
  ! Dephasing matrix
  !==================
- if (RT_is_dephased.and. .not.l_initial_equilibrium) then
+ if (RT_is_dephased.and. .not.l_initial_equilibrium.and. .not.l_RT_RWA) then
    do ik=1,RT_nk
      do ib1=SC_bands(1),SC_bands(2)
        do ib2=SC_bands(1),SC_bands(2)

@@ -49,7 +49,10 @@ subroutine XC_switch()
 #if defined _RT
  !
  call parser('RTIrredux',l_NE_simulate_Irredux)
- if(l_NE_simulate_Irredux.and.trim(SC_potential)=='HARTREE') SC_potential='IP'
+ if(l_NE_simulate_Irredux.and.trim(SC_potential)=='HARTREE') then
+   SC_potential='IP'
+   l_NE_simulate_Irredux=.false.
+ endif
  !
 #endif
  !

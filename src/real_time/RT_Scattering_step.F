@@ -31,7 +31,7 @@ subroutine RT_Scattering_step(G_new_k,ik,deltaT)
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, &
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime, &
-&                         G_lesser_reference,REF_lifetime
+&                         G_lesser_reference,REF_lifetime,l_RT_RWA,RT_is_dephased
  !
  implicit none
  !
@@ -44,11 +44,13 @@ subroutine RT_Scattering_step(G_new_k,ik,deltaT)
  !
  ! dG = dG - i dT Sigma
  !====================
- if (.not.allocated(I_relax_static)) return
+ if(.not.RT_is_dephased) return
  !
- if (.not.l_RT_EXP) G_new_k = G_new_k - cI*deltaT*I_relax_static(:,:,ik)
+ if ( (.not.l_RT_EXP) .or. (.not.l_RT_RWA) ) G_new_k = G_new_k - cI*deltaT*I_relax_static(:,:,ik)
  !
- if (     l_RT_EXP) then
+ if( (.not.l_elel_scatt) .and. (.not.l_elph_scatt) ) return
+ !
+ if (l_RT_EXP.and.l_RT_RWA) then
    !
    do ib=SC_bands(1),SC_bands(2)
      !

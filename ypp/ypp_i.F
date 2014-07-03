@@ -51,7 +51,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  logical           :: l_flag
  integer           :: ID,i_err
- integer, external :: io_DB1,io_QINDX,iogrot
+ integer, external :: io_DB1,io_QINDX,io_GROT
  integer           :: i_err_RIM
  integer, external :: io_RIM_E_and_k
 #if defined _YPP_ELPH
@@ -99,7 +99,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! G operations table and shells
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
- i_err=iogrot(ID) 
+ i_err=io_GROT(ID) 
  if (i_err/=0) then
    call ypp_finalize()
    return

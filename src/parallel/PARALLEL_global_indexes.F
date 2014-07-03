@@ -348,8 +348,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz)
    !
-   PARALLEL_cpu_mat_inversion=CPU_structure(2)%nCPU_inversion
-   PARALLEL_cpu_mat_inversion=CPU_structure(3)%nCPU_inversion
+   if (ENVIRONMENT=="Response_G_space_Finite_Momentum") then
+     !
+     PARALLEL_cpu_mat_inversion=CPU_structure(2)%nCPU_inversion
+     !
+   else if (ENVIRONMENT=="Response_G_space") then
+     !
+     PARALLEL_cpu_mat_inversion=CPU_structure(3)%nCPU_inversion
+     !
+   endif
    !
    ! Inversion
    !

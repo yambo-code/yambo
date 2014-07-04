@@ -192,7 +192,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
          BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_q_dot_iR(ic,iv,ik_mem,i_sp)*sqrt(BS_T_grp(i_T_g)%f(i_T))
 #endif
        endif
-!write (*,'(7i2,3g20.10)') myid,i_T_g,i_T,BS_T_grp(i_T_g)%ik,ik,iv,ic,BS_T_grp(i_T_g)%E(i_T),abs ( BS_T_grp(i_T_g)%dipoles_R(i_T) ),abs(DIP_q_dot_iR(ic,iv,ik_mem,i_sp))
        !    
        X_epsilon(3,:)=X_epsilon(3,:)-BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg( BS_T_grp(i_T_g)%dipoles_R(i_T) )*&
 &                     local_Z/(W_bss%p(:)-BS_T_grp(i_T_g)%E(i_T))
@@ -214,6 +213,11 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    if (l_rpa_IP) call live_timing()
    !
+   ! ALL 2 ALL
+   !
+   call PP_redux_wait( X_epsilon ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( X_epsilon ,COMM=PAR_COM_eh_INDEX%COMM )
+   !
    Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
    !
 #if defined _KERR
@@ -230,6 +234,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #else
    !
    X_epsilon(3,:)=1.+X_epsilon(3,:)*Co/(q_norm(1))**2
+   !
 #endif
    !
    X_drude_term(:)=-BS_drude_f_eh*drude_GreenF(:)
@@ -243,11 +248,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #if defined _KERR
  if (iq==1) call KERR_alloc('DIP_P_symm')
 #endif
- !
- ! ALL 2 ALL
- !
- call PP_redux_wait( X_epsilon ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
- call PP_redux_wait( X_epsilon ,COMM=PAR_COM_eh_INDEX%COMM )
  !
  if (l_rpa_IP) then
    !  

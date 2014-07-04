@@ -77,10 +77,10 @@ module BS
  !=========================
  type BS_T_group
    !
-   integer                       :: ik         ! ik index (BZ)
+   integer                       :: ik         ! ik index (IBZ)
    integer                       :: first_cv   ! Position in the cv transitions @ k
    integer                       :: size       
-   complex(SP), allocatable      :: table(:,:) ! (/is,iv,ic,i_sp/) (i_sp is spin, is is symmetry)
+   integer,     allocatable      :: table(:,:) ! (/ikbz,iv,ic,i_sp/) (i_sp is spin, is is symmetry)
    complex(SP), allocatable      :: dipoles_R(:)
    complex(SP), allocatable      :: dipoles_A(:)
    complex(SP), allocatable      :: Z(:)
@@ -103,8 +103,8 @@ module BS
  ! Blocks ...
  !============
  type BS_block
-   integer                       :: ik         ! ik index (BZ)
-   integer                       :: ip         ! ip index (ik -> ip transition) (BZ)
+   integer                       :: ik         ! ik index (IBZ)
+   integer                       :: ip         ! ip index (ik -> ip transition) (IBZ)
    integer                       :: iT_k       ! Index (among n_BS_T_grps) of the cv transitions @ k
    integer                       :: iT_p       ! Index (among n_BS_T_grps) of the cv transitions @ p
    integer                       :: size(2)    ! rows x columns
@@ -119,7 +119,7 @@ module BS
    ! ... correlation
    !------------------
    integer                       :: N_oscillators 
-   integer(SP), allocatable      :: O_table(:,:,:,:) ! sym,n,n',spin @ k
+   integer,     allocatable      :: O_table(:,:,:,:) ! sym,n,n',spin @ k
    complex(SP), allocatable      :: O(:,:)
    !
  end type BS_block

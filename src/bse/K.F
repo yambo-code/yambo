@@ -517,9 +517,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_W_is_diagonal) then
            !
 !$omp parallel do default(shared), private(i_g1)
-         do i_g1=1,BS_n_g_W
-           O_times_W(i_g1)=Occ(i_g1)*BS_W(i_g1,1,iq_W)
-         enddo
+           do i_g1=1,BS_n_g_W
+             O_times_W(i_g1)=Occ(i_g1)*BS_W(i_g1,1,iq_W)
+           enddo
 !$omp do
            !
          else

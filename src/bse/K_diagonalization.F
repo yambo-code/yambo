@@ -132,7 +132,6 @@ subroutine K_diagonalization(iq,W)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=io_BSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
- io_err=-1
  !
  if(io_err<0) then
    !
@@ -351,7 +350,6 @@ subroutine K_diagonalization(iq,W)
  !
  call BS_mat_free( )
  !
- call mem_est("BS_mat")
  deallocate(BS_R,BS_E)
  call mem_est("BS_R BS_E")
  if (K_is_not_hermitian) then

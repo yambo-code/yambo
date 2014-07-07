@@ -500,16 +500,18 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (PHASE_2==cZERO  ) PHASE_2=1.
          if (PHASE_2==-99._SP) PHASE_2=1.
          !
-!$omp parallel do default(shared), private(i_g1)
+!$omp parallel default(shared), private(i_g1)
+!$omp do
          do i_g1=1,BS_n_g_W
            Occ(i_g1)=BS_blk(i_block)%O(g_rot(i_k_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_W)),iOcc)*PHASE_1
          enddo
+!$omp end do
 !$omp do
-!$omp parallel do default(shared), private(i_g1)
          do i_g1=1,BS_n_g_W
            Ovv(i_g1)=BS_blk(i_block)%O(g_rot(i_k_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_W)),iOvv)*PHASE_2
          enddo
-!$omp do
+!$omp end do
+!$omp end parallel
          !
          if (i_k_s>nsym/(i_time_rev+1)) Ovv=conjg(Ovv)
          if (i_k_s>nsym/(i_time_rev+1)) Occ=conjg(Occ)
@@ -520,7 +522,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            do i_g1=1,BS_n_g_W
              O_times_W(i_g1)=Occ(i_g1)*BS_W(i_g1,1,iq_W)
            enddo
-!$omp do
+!$omp end parallel do
            !
          else
            !

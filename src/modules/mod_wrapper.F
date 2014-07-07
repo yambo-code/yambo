@@ -2,8 +2,8 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CA
-! 
+! Authors (see AUTHORS file for details): CA, AF
+!
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
 ! modify it under the terms of the GNU General Public 
@@ -45,6 +45,10 @@ module wrapper
    module procedure mv_cgemv,mv_sgemv,mv_c,mv_r
  end interface
  !
+ interface M_by_V_omp
+   module procedure mv_cgemv_omp,mv_sgemv_omp,mv_c_omp,mv_r_omp
+ end interface
+ !
  interface V_by_V_plus_V
    module procedure vv_saxpy,vv_caxpy,MM_caxpy
  end interface
@@ -57,11 +61,13 @@ module wrapper
  public :: Vstar_dot_V
  public :: V_dot_V
  public :: real_V_dot_V
+ public :: M_by_V
  !
  public :: V_copy_omp
  public :: Vstar_dot_V_omp
  public :: V_dot_V_omp
  public :: real_V_dot_V_omp
+ public :: M_by_V_omp
  !
  contains
    !
@@ -164,6 +170,60 @@ module wrapper
      call SGEMV(TRANS,msize,msize,1._SP,A,msize,X,1,0._SP,Y,1)
 #endif
    end subroutine mv_r
+   !
+   !=============================
+   ! interface M_by_V_omp
+   !=============================
+   !
+   subroutine mv_sgemv_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+     real(SP), intent(in) :: ALPHA,BETA
+     integer,  intent(in) :: INCX,INCY,LDA,M,N
+     character,intent(in) :: TRANS
+     real(SP), intent(in) :: A(LDA,*),X(*)
+     real(SP), intent(out):: Y(*)
+#if defined _DOUBLE
+     call DGEMV_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+#else
+     call SGEMV_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+#endif
+   end subroutine mv_sgemv_omp
+   !
+   subroutine mv_cgemv_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+     complex(SP), intent(in) :: ALPHA,BETA
+     integer,     intent(in) :: INCX,INCY,LDA,M,N
+     character,   intent(in) :: TRANS
+     complex(SP), intent(in) :: A(LDA,*),X(*)
+     complex(SP), intent(out):: Y(*)
+#if defined _DOUBLE
+     call ZGEMV_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+#else
+     call CGEMV_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+#endif
+   end subroutine mv_cgemv_omp
+   !
+   subroutine mv_c_omp(TRANS,msize,A,X,Y)
+     integer,     intent(in) :: msize
+     complex(SP), intent(in) :: A(msize,*),X(*)
+     complex(SP), intent(out):: Y(*)
+     character,   intent(in) :: TRANS
+#if defined _DOUBLE
+     call ZGEMV_omp(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
+#else
+     call CGEMV_omp(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
+#endif
+   end subroutine mv_c_omp
+   !
+   subroutine mv_r_omp(TRANS,msize,A,X,Y)
+     integer,  intent(in) :: msize
+     real(SP), intent(in) :: A(msize,*),X(*)
+     real(SP), intent(out):: Y(*)
+     character,intent(in) :: TRANS
+#if defined _DOUBLE
+     call DGEMV_omp(TRANS,msize,msize,1._SP,A,msize,X,1,0._SP,Y,1)
+#else
+     call SGEMV_omp(TRANS,msize,msize,1._SP,A,msize,X,1,0._SP,Y,1)
+#endif
+   end subroutine mv_r_omp
    !
    !=========================
    ! interface V_by_V_plus_V 

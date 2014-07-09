@@ -105,7 +105,11 @@ subroutine QED_polarization_vectors(k,pol_sum)
   do j = i, 3
    pol_sum(i,j) = e_1(i)*e_1(j) + e_2(i)*e_2(j)
    pol_sum(j,i) = pol_sum(i,j)
+   !DEBUG
+   !pol_sum(i,j) = 0.
   end do
+  !DEBUG
+  !pol_sum(i,i) = 1.
  end do
  !
  ! end if

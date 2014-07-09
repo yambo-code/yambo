@@ -93,10 +93,12 @@ subroutine QED_Sigma_c(E,k,q,qp)
    !
    Photon_E=SPEED_OF_LIGHT*v_norm(q_cc)
    if (abs(Photon_E)>epsilon(1.)) then
+     q_cc=q_cc/Photon_E
      if (abs(Photon_E)<=0.1_SP*Bose_Temp) bose=2._SP*Bose_Temp/Photon_E
      if (abs(Photon_E)> 0.1_SP*Bose_Temp) bose=2._SP/(exp(Photon_E/Bose_Temp)-1._SP)
    else
-       bose=2._SP*Bose_Temp/epsilon(1.)
+     bose=2._SP*Bose_Temp/epsilon(1.)
+     q_cc=q_cc/epsilon(1.)
    endif
    !
    QP_loop: do i_qp=1,qp%n_states
@@ -154,13 +156,13 @@ subroutine QED_Sigma_c(E,k,q,qp)
          enddo 
        enddo
        !
-       QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps) +&
-&       Dipole_sum*((spin_occ-E%f(i_m,i_p,1) + bose)/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)-Photon_E+cI*QP_G_damp) +&
-&        (E%f(i_m,i_p,1)+bose)/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_E+cI*QP_G_damp))/spin_occ /(8._SP*pi**2)
+       QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps) -&
+&       cI*Dipole_sum*((spin_occ-E%f(i_m,i_p,1) + bose)/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)-Photon_E+cI*QP_G_damp) +&
+&        (E%f(i_m,i_p,1)+bose)/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_E+cI*QP_G_damp))/spin_occ *pi/(2._SP)
        !
 !       if(E%f(i_m,i_p,1) /= 0._SP .and. bose_f(Photon_E) /= 0._SP) then
-       write(*,*) E%f(i_m,i_p,1),bose_f(Photon_E), 2._SP/(exp(Photon_E/Bose_Temp)-1._SP)!, E%f(i_m,i_p,1) + bose_f(Photon_e)
-       write(*,*) E%E(i_n,i_k,1),E%E(i_m,i_p,1),Photon_E!, E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_E
+!       write(*,*) E%f(i_m,i_p,1),bose,Photon_E,I_wfk_wfp!, 2._SP/(exp(Photon_E/Bose_Temp)-1._SP)!, E%f(i_m,i_p,1) + bose_f(Photon_e)
+       write(*,*) i_q_bz, i_qp, i_m, Dipole_sum!E%E(i_n,i_k,1),E%E(i_m,i_p,1),Photon_E!, E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_E
 !       endif
      enddo B_loop
    enddo QP_loop
@@ -171,8 +173,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  call live_timing( )
  !
-stop
-!
  do i_qp=1,qp%n_states
    write (*,*) i_qp,QP_Sc(i_qp,1)*HA2EV
  enddo

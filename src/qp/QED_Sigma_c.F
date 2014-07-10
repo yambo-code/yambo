@@ -49,7 +49,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_k,i_n,i_p_bz,i_p_G0,i_m,i_p_s,i_p,&
 &                            i_c,i_cp,i_wf_at_k,i_wf_at_p,i_k_bz,ir,ir1,ir2,ir3,&
                              i_wf_at_p_g
- real(SP)                  ::q_cc(3),k_cc(3),Photon_E,Photon_pol_vec(3,3),sumdot,bose,t_vec
+ real(SP)                  ::q_cc(3),k_cc(3),p_cc(3),Photon_E,Photon_pol_vec(3,3),sumdot,bose,t_vec
  complex(SP)               ::XHI(3),I_wfk_wfp,Dipole_sum
  complex(SP), allocatable  ::WF_p(:,:),WF_p_rot(:,:),WF_der(:,:),WF_der_rot(:,:)
  real(SP),    allocatable  ::r_cell_cc(:,:)
@@ -97,7 +97,14 @@ subroutine QED_Sigma_c(E,k,q,qp)
    !
    q_cc=q%ptbz(i_q_bz,:)
    !
-   call QED_polarization_vectors(q_cc,Photon_pol_vec)
+!   call QED_polarization_vectors(q_cc,Photon_pol_vec)
+   do i_c=1,3
+     do i_cp=i_c,3
+       Photon_pol_vec(i_c,i_cp)=-q_cc(i_c)*q_cc(i_cp)/v_norm(q_cc)
+       Photon_pol_vec(i_cp,i_c)=Photon_pol_vec(i_c,i_cp)
+     enddo
+     Photon_pol_vec(i_c,i_c)=1._SP-Photon_pol_vec(i_c,i_c)
+   enddo
    !
    Photon_E=SPEED_OF_LIGHT*v_norm(q_cc)
    !
@@ -129,6 +136,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
      !
      i_p_bz = qindx_S(i_k,i_q_bz,1)
      i_p_G0 = qindx_S(i_k,i_q_bz,2)
+     p_cc=q%ptbz(i_p_bz,:)
      !
      i_p  =k%sstar(i_p_bz,1)
      i_p_s=k%sstar(i_p_bz,2)
@@ -170,7 +178,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
          !
          XHI(i_cp) = dot_product(WF_der_rot(:,i_cp),WF%c(:,i_wf_at_k))
          !
-         t_vec=k_cc(i_cp)-q_cc(i_cp)+g_vec(i_p_G0,i_cp)*2._SP*pi/alat(i_cp)
+         t_vec=p_cc(i_cp)+g_vec(i_p_G0,i_cp)*2._SP*pi/alat(i_cp)
          !
          do i_c=1,3
            !

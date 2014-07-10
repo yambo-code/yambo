@@ -194,10 +194,10 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  do ik=1,RT_nk
    do ib1=SC_bands(1),SC_bands(2)
      !
-     f_E_k=RT_E_occupations(ib1,ik)/spin_occ
-     f_H_k=RT_H_occupations(ib1,ik)/spin_occ
+     f_E_k=RT_E_occupations(ib1,ik)
+     f_H_k=RT_H_occupations(ib1,ik)
      !
-     df_k=RT_delta0_occupations(ib1,ik)/spin_occ
+     df_k=RT_delta0_occupations(ib1,ik)
      !
      dGAMMA_e=0._SP
      dGAMMA_h=0._SP

@@ -160,10 +160,14 @@ subroutine RT_output(what,VALUES,TIME,E)
  if (open_files.and.l_elph_scatt.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'mean_EPlifetimes'
  short_file_name(next_file)=trim(append_ch)//'mean_EPlifetimes'
- n_headings(next_file)=7
- headings(next_file,2:3)=(/"Hole  [meV]","Elec  [meV]"/)
- headings(next_file,4:5)=(/"H abs [meV]","E abs [meV]"/)
- headings(next_file,6:7)=(/"T Hole  [K]","T Elec  [K]"/)
+ headings(next_file,2:3)=(/"Ho.(em) [meV]","El.(em) [meV]"/)
+ n1=4
+ if(Bose_Temp>0. ) then
+   headings(next_file,4:5)=(/"Ho.(abs)[meV]","El.(abs)[meV]"/)
+   n1=n1+2
+ endif
+ headings(next_file,n1:n1+1)=(/" T Hole  [K] "," T Elec  [K] "/)
+ n_headings(next_file)=n1+1
  next_file=next_file+1
  !
  if (open_files.and.l_elel_scatt.and..not.file_already_opened(next_file)) &
@@ -404,8 +408,13 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(1:2)=(/Time,E/)
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-2)
      case('mean_EPlifetimes')
-       data_to_dump(2:5) = RT_mean_lifetimes(3:6)*HA2EV*1000.
-       data_to_dump(6:7) = RT_Tfit_lifetimes(1:2)*HA2KEL
+       n1=3
+       data_to_dump(2:3) = RT_mean_lifetimes(3:4)*HA2EV*1000.
+       if(Bose_Temp>0. ) then
+         data_to_dump(4:5)=RT_mean_lifetimes(5:6)*HA2EV*1000.
+         n1=n1+2
+       endif
+       data_to_dump(n1+1:n1+2) = RT_Tfit_lifetimes(1:2)*HA2KEL
      case('mean_EElifetimes')
        data_to_dump(2:3) = RT_mean_lifetimes(1:2)*HA2EV*1000.
        data_to_dump(4:5) = RT_Tfit_lifetimes(3:4)*HA2KEL

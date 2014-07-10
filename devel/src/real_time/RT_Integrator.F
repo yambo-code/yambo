@@ -68,15 +68,11 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
    !
    call RT_evolve(dG_old,dG_new,T_step,T_step)
    !
-   integrator_step=1
-   !
  else if (l_RT_RK2) then
    !
    ! Evaluate @ dt/2
    !
    call RT_evolve(dG_old,dG1,T_step/2._SP,T_step/2._SP)
-   !
-   integrator_step=2
    !
    if (l_NE_with_fields) call RT_propagate_fields(k,E,dG1,A_out,A_in,Time,T_step/2._SP)
    !
@@ -94,15 +90,11 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
    !
    call RT_evolve(dG1,dG_new,T_step,T_step/2._SP)
    !
-   integrator_step=1
-   !
  else if (l_RT_HEUN) then
    !
    ! Evaluate @ dt
    !
    call RT_evolve(dG_old,dG1,T_step,T_step)
-   !
-   integrator_step=2
    !
    if (l_NE_with_fields) call RT_propagate_fields(k,E,dG1,A_out,A_in,Time,T_step)
    !
@@ -120,8 +112,6 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
    !
    call RT_evolve(dG1,dG2,T_step,0._SP)
    !
-   integrator_step=1
-   !
    dG_new=(dG1+dG2)/2._SP
    !
    call RT_update_occ(dG_new)
@@ -133,6 +123,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
 #if defined _TIMING
  call timing('RT integrator',OPR='stop')
 #endif
+ !
+ integrator_step=1
  !
  contains
    !
@@ -191,7 +183,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
        ! G(T0+dt) = G(T0) e^{-i\delta\epsilon dt} - i dt *(I1(T) - I2(T)) e^{-i\delta\epsilon (dt')}
        !
        if(     l_RT_RWA) call RT_apply_RWA(ik,E,dT,dTp,dG_out(:,:,ik),dG_old(:,:,ik))
-       if(.not.l_RT_RWA) dG_out(:,:,ik)=dG_old(:,:,ik)+dG_in(:,:,ik)
+       if(.not.l_RT_RWA) dG_out(:,:,ik)=dG_out(:,:,ik)+dG_old(:,:,ik)
        !
        ! Dephasing and carriers relaxation step
        ! G(T0+dt) = G(T0) - i dt * Sigma_relax(T)
@@ -201,6 +193,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
      enddo
      !
      call RT_update_occ(dG_out)
+     !
+     integrator_step=integrator_step+1
      !
    end subroutine RT_evolve
    !

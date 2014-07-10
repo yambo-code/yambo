@@ -78,7 +78,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
      !=============
      do ib=SC_bands(1),SC_bands(2)
        do ik=1,RT_nk
-         call RT_Lifetimes_Interpolation(ib,ik,SAVE_index,LIFE(ib,ik),Time,SAVED_lifetime(ib,ik,SAVE_index,:),SAVED_times)
+         call RT_Lifetimes_Interpolation(LIFE(ib,ik),Time,SAVED_lifetime(ib,ik,SAVE_index,:),SAVED_times)
        enddo
      enddo
      !

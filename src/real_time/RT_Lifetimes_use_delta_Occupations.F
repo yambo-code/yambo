@@ -50,7 +50,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  !
  if(l_use_updated_reference) l_use_updated_reference=(RT_TIME_status(it_now)> 1)
  !
- if (.not.l_eval .or. integrator_step>1) return
+ if (.not.l_eval) return
  !
  if (l_use_updated_reference) then
    !

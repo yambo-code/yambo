@@ -35,7 +35,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_RT_dos,l_RT_occ_Bands,&
-&                         l_bands,BANDS_range
+&                         l_bands
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -115,7 +115,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  nb_to_load=(/1,Xen%nbm/)
  nkpt_to_load=(/1,Xk%nibz/)
  !
- flag=l_sp_wf
+ flag=any((/l_sp_wf,l_bands,l_RT_occ_Bands/))
  !===
 #if defined _YPP_MAGNETIC
  if (.not.flag) flag=any((/l_angular_momentum,l_position/))
@@ -123,8 +123,6 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #if defined _YPP_SC
  if (.not.flag) flag=l_mean_potential
 #endif
- !
- if (l_bands.or.l_RT_occ_Bands) nb_to_load=BANDS_range
  !
  if (flag) then
    call QP_state_table_setup(Xen)
@@ -192,7 +190,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  if(l_bands.or.l_RT_occ_Bands) then
    if ( i_time_rev==1) call error('Bands interpolation does not work with T-rev symmetry')
-   call electrons_bands(Xk,Xen,Xq)
+   call electrons_bands(Xk,Xen,nb_to_load)
  endif
  !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)

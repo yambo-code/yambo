@@ -327,7 +327,10 @@ integer function io_RT_components(what,ID)
    !
    if (l_elph_scatt) then
      !
-     if (read_is_on(ID)) allocate(q_weight_RT(nqbz,elph_branches(1):elph_branches(2),2))
+     if (read_is_on(ID)) then
+       if(allocated(q_weight_RT)) deallocate(q_weight_RT)
+       allocate(q_weight_RT(nqbz,elph_branches(1):elph_branches(2),2))
+     endif
      !
      call io_bulk(ID,VAR="Q_WEIGHT",VAR_SZ=(/nqbz,elph_branches(2)-elph_branches(1)+1,2/))
      call io_bulk(ID,R3=q_weight_RT(:,:,:))

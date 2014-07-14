@@ -24,8 +24,8 @@
 subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
 &                                    DB_corrected,n_neigh)
  !
- ! Using qp% elements (all must be defined) I QP correct
- ! the en type
+ ! Extend the QP correction from the kpt in qp to the kpt in k
+ ! Requires qp%nk, qp%k, qp%table, qp%n_states, qp%E, qp%E_bare, qp%Z
  !
  ! l_plan_todo_EWZI=( E W Z Interp )
  !

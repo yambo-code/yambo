@@ -1,3 +1,278 @@
+2014-07-11 13:50:08 r3506 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  include/version.inc io/io_RT_components.F qp_ctl/OCCUPATIONS_IO_and_interpolate.F real_time/RT_output.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	- Some more bug-fixes
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2014-07-10 22:43:58 r3501 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  . include/version.inc bse/K.F modules/.objects + + modules/mod_wrapper.F + + real_time/RT_relaxation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fixed spin_occ factor in RT_relaxation
+	- merged with trunk devel
+
+	Patch sent by: Davide
+
+2014-07-10 22:26:13 r3500 Davide Sangalli <davide.sangalli@gmail.com>
+
+	One more bug fixed
+
+2014-07-10 22:05:42 r3499 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  include/version.inc real_time/RT_Integrator.F real_time/RT_Lifetimes_use_delta_Occupations.F
+
+	Bugs:
+	- Fixed two more bugs: one in RT_Integrator and one in RT_Lifetimes_use_delta_Occupations
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2014-07-09 21:29:28 r3497 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Small changes
+
+2014-07-06 19:51:56 r3491 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk-devel. Code compiles
+
+2014-07-01 09:35:45 r3467 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Merged with trunk devel
+
+2014-06-26 16:24:53 r3454 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Some fixes imported from trunk
+
+2014-06-26 15:04:44 r3452 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc modules/mod_interpolate.F real_time/RT_ELPH_initialize.F ypp/RT_occ_check_and_load_ref.F ypp/RT_occupations_analyze.F ypp/electrons_bands.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fixed few inconcistencies
+
+	Patch sent by: Davide
+
+2014-06-24 12:06:20 r3445 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  configure include/version.inc real_time/RT_Integrator.F real_time/RT_apply_zero_dyn.F real_time/RT_EULER_step.F real_time/RT_EULEREXP_step.F config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Simplified RWA approach now works properly also with RK2 and HEUN integrators
+	  Things which could still be improved ...
+	  1 - Integrate the field separately: G_nm(t+dt)=G_nm(t)* exp[i sum_n' (A^n'_{nm}) \int_t^{t+dt} dt' g(t')
+	      with g(t) the time dependet part of the field which we could integrate analytically
+	  2 - Check / Fix the EXP integrator, in particular the RT_Scattering part
+
+	Patch sent by: Davide
+
+2014-06-23 16:29:15 r3444 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc real_time/RT_output.F ypp/electrons_dos_and_charge.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [YPP_RT] RT_output can write a white line in output.
+	           Used by ypp_rt while printing RT_dos for later use with gnuplot (splot)
+
+	Patch sent by: Davide
+
+2014-06-23 15:09:21 r3441 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc modules/SET_defaults.F ypp/.objects ypp/RT_check_RIM.F ypp/RT_occupations_analyze.F ypp/electrons_bands.F ypp/electrons_dos_and_charge.F ypp/k_random.F ypp/ypp_init.F ypp/ypp_init_load.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [YPP_RT] RT_dos plots can be created again also with RIM
+
+	Patch sent by: Davide
+
+2014-06-20 17:29:08 r3440 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc real_time/.objects real_time/RT_DEPHASING_step.F moved real_time/RT_Dephasing_Matrix.F real_time/RT_Integrator.F real_time/RT_Lifetimes_evaluation_plan.F + moved real_time/RT_apply_zero_dyn.F real_time/RT_initialize.F real_time/RT_relaxation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Zero order scattering moved back inside RT_DEPHASING_step which has now been renamed RT_Scattering_step.
+
+	Patch sent by: Davide
+
+2014-06-17 13:49:22 r3438 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc interface/init_load.F modules/mod_real_time.F real_time/RT_DEPHASING_step.F real_time/RT_Integrator.F real_time/RT_Lifetimes_save_and_interp.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_initialize.F real_time/RT_relaxation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [yambo_rt] Heun method in the integration added
+	- [yambo_rt] Also when I'm doing RK2 or HEUL the lifetimes are evaluated at both time steps,
+	             while during interpolation it has two different sets of lifetimes on which interpolate.
+
+	Patch sent by: Davide
+
+2014-06-16 16:12:25 r3436 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  configure include/version.inc real_time/RT_apply_RWA.F real_time/RT_Integrator.F real_time/RT_Collision.F modules/mod_real_time.F config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [yambo_rt] polarization dephasing also inserted in "RWA" together with carriers scattering
+	             due to the equilibrium life-times.
+	             exp integrator written also for the carrriers scattering part
+
+	Patch sent by: Davide
+
+2014-06-12 12:15:17 r3425 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  configure include/version.inc real_time/RT_apply_RWA.F real_time/RT_Integrator.F real_time/RT_Collision.F modules/mod_real_time.F config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [yambo_rt] "RWA" simplified.
+
+	Patch sent by: Davide
+
+2014-06-10 17:35:38 r3423 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  configure include/version.inc real_time/RT_Lifetimes_save_and_interp.F config/configure.ac
+
+	Bugs:
+	- Fixed small bug for DYMmode="none"
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2014-06-10 15:36:44 r3422 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  qp_ctl/OCCUPATIONS_IO_and_interpolate.F common/Fermi_fnc_fit.F pol_function/O_driver.F real_time/RT_mean_carrier_lifetimes.F + real_time/RT_driver.F real_time/RT_Integrator.F real_time/RT_Lifetimes_evaluation_plan.F real_time/RT_Lifetimes_Interpolation.F real_time/RT_observables.F real_time/RT_ELPH_initialize.F real_time/.objects real_time/RT_occupations_FIT_and_lock.F communicate/REPORT_Energies.F io/io_RT_components.F modules/mod_functions.F modules/mod_interpolate.F ypp/ypp_init.F ypp/RT_occupations_FIT.F ypp/ypp_init_load.F ypp/RT_occupations_repair.F ypp/electrons_driver.F ypp/RT_occupations_analyze.F ypp/electrons_bands.F ypp/mod_YPP.F + + ypp/RT_occupations_check.F ypp/electrons_dos_and_charge.F ypp/ypp_i.F ypp/.objects
+
+	Bugs:
+	- real_time/RT_ELPH_initialize.F: q grid on the whole BZ was not defined if no Random q-points where used
+	Additions:
+	-
+	Changes:
+	- qp_ctl/OCCUPATIONS_IO_and_interpolate.F: Also RT_?_occupations_reference and RT_?_occupations
+	                                           are now defined, with ?=E/H
+	- Fermi_fnc_fit: emoved uselss additional option
+	- Removed OCC_T_ref. Reference is alwaus the equilibrium
+	- O driver now plots RPA-IP with also IP. For tests.
+	- ypp/RT_occupations_FIT.F and src/real_time/RT_occupations_FIT_and_lock.F renamed
+	  ypp/RT_occupations_FIT_and_plot.F and src/real_time/RT_occupations_FIT.F
+	- The interpolation of the lifetimes can be: NONE (=no interpolation), FLAT (=keep LFs constant),
+	  and "DEFAULT" or "FIELD" standard interpolation implemented by Andrea
+	- More input options created for electrons_bands and messaging/checks improved
+	- ypp/RT_occupations_repair.F removed
+	- ypp/RT_occupations_check.F renamed ypp/RT_occ_check_and_load_ref.F
+
+	Patch sent by: Davide
+
+2014-06-09 17:57:02 r3421 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc coulomb/.objects interface/init.F interface/init_load.F io/variables_SC.F modules/SET_defaults.F modules/mod_drivers.F modules/mod_global_XC.F modules/mod_real_time.F real_time/RT_Collision.F real_time/RT_driver.F real_time/RT_initialize.F real_time/RT_observables.F real_time/RT_start_and_restart.F sc/SC_Energy.F sc/SC_add_XC.F sc/SC_driver.F sc/XC_switch.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Now everything is controlled by SC_potential and related variables defined in XC_switch
+	  l_NE_simulate_ IP/RPA/TDDFT/BSE and Hfrozen and XCforzen were a copy of l_sc_* variables and
+	  have been removed. Created instead l_sc_ip and l_sc_hartree flags. Still to be tested.
+
+	Patch sent by: Davide
+
+2014-06-09 15:16:26 r3420 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk devel
+
+2014-06-03 11:31:10 r3406 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc qp_ctl/OCCUPATIONS_IO_and_interpolate.F
+
+	Bugs:
+	- Small bug fix for ypp_rt
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2014-05-30 18:36:26 r3404 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Created old_doubles branch
+
 2014-05-25 10:14:32 r3393 Davide Sangalli <davide.sangalli@gmail.com>
 
 	Version 4.0.0

@@ -84,10 +84,6 @@ module real_time
  !
  integer  :: Thermal_steps
  ! 
- ! ... Switch On Time (adiabatic switch on) ...
- !
- real(SP) :: SwitchOnTime
- !
  ! ... NE dynamics ...
  !
  real(SP) :: NE_time ! <- incremented

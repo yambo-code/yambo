@@ -55,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
-&                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_life_interp_steps,RT_life_interp_decay_time,&
+&                        RT_diagonalization_steps,NE_tot_time,RT_life_interp_steps,RT_life_interp_decay_time,&
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_IO_time,RT_scatt_tresh,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
 &                        Gr_kind,two_alpha,RIM_EE_percent
@@ -384,7 +384,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 1 - Thermalization
  !
  call it(defs,'ThermSteps',   '[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
- call it(defs,'SwitchOnTime', '[RT Therm] Adiabatic switch on time ',SwitchOnTime,verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'RTDiagoSteps', '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)
  !
  ! 2 - Induced Field

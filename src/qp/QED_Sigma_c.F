@@ -27,7 +27,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use units,               ONLY:SPEED_OF_LIGHT,HA2EV
  use drivers,             ONLY:l_elel_corr
  use electrons,           ONLY:levels,n_spinor,spin_occ
- use D_lattice,           ONLY:alat,a,Bose_Temp
+ use D_lattice,           ONLY:alat,a,Bose_Temp,DL_vol
  use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,g_vec
  use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_table,QP_G_damp,QP_Sc,QP_dSc_steps
  use vec_operate,         ONLY:v_norm
@@ -49,7 +49,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_k,i_n,i_p_bz,i_p_G0,i_m,i_p_s,i_p,&
 &                            i_c,i_cp,i_wf_at_k,i_wf_at_p,i_k_bz,ir,ir1,ir2,ir3,&
                              i_wf_at_p_g
- real(SP)                  ::q_cc(3),k_cc(3),p_cc(3),Photon_E,Photon_pol_vec(3,3),sumdot,bose,t_vec
+ real(SP)                  ::q_cc(3),p_cc(3),Photon_E,Photon_pol_vec(3,3),sumdot,bose,t_vec
  complex(SP)               ::XHI(3),I_wfk_wfp,Dipole_sum
  complex(SP), allocatable  ::WF_p(:,:),WF_p_rot(:,:),WF_der(:,:),WF_der_rot(:,:)
  real(SP),    allocatable  ::r_cell_cc(:,:)
@@ -115,24 +115,14 @@ subroutine QED_Sigma_c(E,k,q,qp)
    !
    q_cc=q_cc/Photon_E
    bose=2._SP/(exp(Photon_E/Bose_Temp)-1._SP)
-   !if (abs(Photon_E)>epsilon(1.)) then
-   !  q_cc=q_cc/Photon_E
-   !  if (abs(Photon_E)<=0.1_SP*Bose_Temp) bose=2._SP*Bose_Temp/Photon_E
-   !  if (abs(Photon_E)> 0.1_SP*Bose_Temp) bose=2._SP/(exp(Photon_E/Bose_Temp)-1._SP)
-   !else
-   !  bose=2._SP*Bose_Temp/epsilon(1.)
-   !  q_cc=q_cc/epsilon(1.)
-   !endif
-   !
-   !QP_Sc(1,1)=(0.,0.)
    !
    QP_loop: do i_qp=1,qp%n_states
      !
      i_n = QP_table(i_qp,1)
      i_k = QP_table(i_qp,3)
      !
-     i_k_bz=sum(k%nstar(:i_k-1))+1
-     k_cc=q%ptbz(i_k_bz,:)
+!     i_k_bz=sum(k%nstar(:i_k-1))+1
+!     k_cc=q%ptbz(i_k_bz,:)
      !
      i_p_bz = qindx_S(i_k,i_q_bz,1)
      i_p_G0 = qindx_S(i_k,i_q_bz,2)
@@ -167,14 +157,14 @@ subroutine QED_Sigma_c(E,k,q,qp)
          WF_der_rot(1:3,ir) = WF_der(1:3,ir)*exp(cI*sumdot)
        enddo
        !
-       !<i_m,i_p,i_p_s|exp(-iG_0r)|i_n,i_k,i_k_s>
+       ! <i_m,i_p,i_p_s|exp(-iG_0r)|i_n,i_k,i_k_s>
        !
        I_wfk_wfp=dot_product(WF_p_rot(:,1),WF%c(:,i_wf_at_k))
        !
-       Dipole_sum=0.
+       Dipole_sum=0._SP
        do i_cp=1,3
          !
-         !\int dr (i_n,i_k,i_k_s)exp(-iG_0r)\nabla_{i_cp}(i_m,i_q,i_q_s)^*
+         ! \int dr (i_n,i_k,i_k_s)exp(-iG_0r)\nabla_{i_cp}(i_m,i_q,i_q_s)^*
          !
          XHI(i_cp) = dot_product(WF_der_rot(:,i_cp),WF%c(:,i_wf_at_k))
          !
@@ -186,32 +176,20 @@ subroutine QED_Sigma_c(E,k,q,qp)
            !
            Dipole_sum=Dipole_sum - cI*Photon_pol_vec(i_cp,i_c)*t_vec*real(conjg(I_wfk_wfp)*I_wfk_wfp)*q_cc(i_c)
            !
-!           Dipole_sum=Dipole_sum + &
-!&            Photon_pol_vec(i_cp,i_c)*(&
-!&                                      XHI(i_cp)*I_wfk_wfp - cI*(&
-!&                                        k_cc(i_cp)-q_cc(i_cp)+g_vec(i_p_G0,i_cp)*2._SP*pi/alat(i_cp)&
-!&                                                                )*real(conjg(I_wfk_wfp)*I_wfk_wfp)&
-!&                                     )*q_cc(i_c)
-         !
+           !
          enddo 
        enddo
        !
-       QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps) -&
+       QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps) +&
 &        cI*Dipole_sum*(&
 &                       (spin_occ-E%f(i_m,i_p,1) + bose)/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)-Photon_E+cI*QP_G_damp) +&
 &                       (E%f(i_m,i_p,1)+bose)/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_E+cI*QP_G_damp)&
-&                      )/spin_occ *pi/(2._SP)
+&                      )/spin_occ *SPEED_OF_LIGHT**2/(8._SP*DL_vol*nqbz)
        !
-!       if(E%f(i_m,i_p,1) /= 0._SP .and. bose_f(Photon_E) /= 0._SP) then
-!       write(*,*) E%f(i_m,i_p,1),bose,Photon_E,I_wfk_wfp!, 2._SP/(exp(Photon_E/Bose_Temp)-1._SP)!, E%f(i_m,i_p,1) + bose_f(Photon_e)
-!       write(*,*) i_q_bz, i_qp, i_m, Dipole_sum!E%E(i_n,i_k,1),E%E(i_m,i_p,1),Photon_E!, E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_E
-!       endif
      enddo B_loop
    enddo QP_loop
    !
    call live_timing(steps=1)
-   !
-   !write (*,*) v_norm( q%ptbz(i_q_bz,:) ),real(QP_Sc(1,1))*HA2EV
    !
  enddo Q_loop
  !
@@ -220,9 +198,5 @@ subroutine QED_Sigma_c(E,k,q,qp)
  call PP_indexes_reset(px)
  !
  call PP_redux_wait(QP_Sc)
- !
-! do i_qp=1,qp%n_states
-!   write (*,*) i_qp,QP_Sc(i_qp,1)*HA2EV
-! enddo
  !
 end subroutine QED_sigma_c

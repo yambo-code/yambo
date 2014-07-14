@@ -90,8 +90,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !... I/0
  !
  integer           ::io_err,ID,io_ID
- integer, external ::ioBSS_diago,ioBS
- type(X_t)         ::Xbsk
+ integer, external ::ioBSS_diago,ioBS,io_DIPOLES
+ type(X_t)         ::Xbsk,Xdip
  !
  !... Energies and Residulas
  !
@@ -117,6 +117,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_err=ioBS(1,Xbsk,io_ID)
+ !
  if (io_err/=0) return
  if (BS_cpl_K_exchange) BS_cpl_mode='x'
  if (BS_cpl_K_corr) BS_cpl_mode='c'
@@ -174,8 +175,10 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
  !
  if(l_weight_with_dipoles) then
+   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+   io_err=io_DIPOLES(Xdip,Xen,io_ID)
    allocate(q_norm(1),bare_qpg(1,1))
-   call Dipole_driver(Xen,Xk,Xbsk,BSS_q0)
+   call Dipole_driver(Xen,Xk,Xdip,BSS_q0)
    deallocate(q_norm,bare_qpg)
  endif
  !
@@ -295,7 +298,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
        !
      enddo
      !
-     if(l_weight_with_dipoles) A_weight=A_weight/v_norm(A_weight)
+     if(l_weight_with_dipoles.and.norm2(A_weight)>0._SP) A_weight=A_weight/norm2(A_weight)
      !
      call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,A_weight=A_weight,verbose=i_lambda==1)
      !

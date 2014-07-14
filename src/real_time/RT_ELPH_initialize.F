@@ -193,6 +193,8 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  if (l_use_Debye_E) ph_freqs_sq=W_debye**2.
  !
+ ! This checks does not seem to work properly for the restart
+ !
  if (io_REF/=0) then
    !
    ! RIM support

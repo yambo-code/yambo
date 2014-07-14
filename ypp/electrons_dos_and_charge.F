@@ -61,7 +61,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
 #endif
  integer               :: i_E,ik,ik_bz,ib,i_spin,i_T,n_T_steps,ik_rand,i1
  character(schlen)     :: ch_ws,titles(4)
- logical               :: l_3D_plot,l_RIM,l_prt_occ_only
+ logical               :: l_3D_plot,l_RIM,l_prt_occ_only,l_separate_eh
  type(PP_indexes)      :: px
  !
  integer,     external :: RT_occ_check_and_load_ref 
@@ -252,12 +252,22 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
      ! Output file
      !
+     l_separate_eh=.true.
+     !
      do i_E=1,dos_E_steps
        dos_E=dos_E_range(1)+i_E*delta_E
        !
 #if defined _YPP_RT
        if (l_RT_dos .and. l_3D_plot) then
+         !
+         if(dos_E>Xen%E_VBM+dos_broadening .and. dos_E<Xen%E_CBm-dos_broadening) then
+           if(l_separate_eh) call RT_output("space el_dos")
+           l_separate_eh=.false.
+           cycle
+         endif
+         !
          call RT_output("el_dos",VALUEs=(/el_dos(i_E,1)/),E=dos_E*HA2EV,TIME=io_Time/FS2AUT)
+         !
        else
 #endif
          if (n_sp_pol==1) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,1)/),INDENT=-2,USE_TABS=.true.)

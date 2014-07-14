@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CA
+! Authors (see AUTHORS file for details): CA, DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_bands(Xk,Xen)
+subroutine electrons_bands(Xk,Xen,BANDS_range)
  !
  use pars,           ONLY:SP,schlen,DP
  use units,          ONLY:HA2EV
- use YPP,            ONLY:BANDS_steps,coo_in,coo_out,BANDS_range,k_transform,interp_grid, &
+ use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,interp_grid, &
 &                         l_RT_occ_Bands,l_bands
  use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_tot_Nkpts,spin_occ
- use R_lattice,      ONLY:bz_samp,bz_samp_reset
+ use R_lattice,      ONLY:bz_samp,bz_samp_reset,k_the_nearest
  use com,            ONLY:msg,of_open_close,error,warning
  use vec_operate,    ONLY:c2a,v_norm
  use parser_m,       ONLY:parser
@@ -48,8 +48,9 @@ subroutine electrons_bands(Xk,Xen)
  !
  implicit none
  !
- type(bz_samp), intent(inout) ::Xk
- type(levels),  intent(in) ::Xen
+ type(bz_samp), intent(inout) :: Xk
+ type(levels),  intent(in)    :: Xen
+ integer,       intent(in)    :: BANDS_range(2)
  !
  ! Work Space
  !
@@ -64,20 +65,25 @@ subroutine electrons_bands(Xk,Xen)
  integer               :: i_T,n_T_steps
  integer,     external :: RT_occ_check_and_load_ref,RT_k_grid
 #endif
- integer               :: i1,i2,ic,is,ID_interp,ik,ikbz,ib,Nk
+ logical               :: l_g_space_interp,l_nearest_neig_interp
+ integer               :: i1,i2,i_err,ic,is,ID_interp,ik,ikbz,ib,Nk,ik_near_RIM,ik_near_RT,ik_circuit
  integer,  allocatable :: int_distances(:)
  character(schlen)     :: file_name(n_sp_pol)
  character(schlen), allocatable :: headings(:)
  !
- if(any(BANDS_range<=0)) call error("Wrong bands range")
- !
- if(SP/=DP) call warning("To have a smaller error compile in double precision: --enable-dp") 
+ if(any(BANDS_range<=0)) call error(" Wrong bands range")
  !
  !Input file parsing
  !
  real_ctl=0._SP
  call bz_samp_reset(USER_K)
  call bz_samp_reset(CIRCUIT_K)
+ !
+ ! Define the kind of interpolation
+ call parser('NNInterp',l_nearest_neig_interp)
+ l_g_space_interp=.not.l_nearest_neig_interp
+ !
+ if(l_nearest_neig_interp.and.all(interp_grid>0)) call error(" NNInterp implemented only on a circuit")
  !
  if(l_RT_occ_Bands) then
    !
@@ -166,6 +172,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  ! Interpolation: Initial setup
  !
+ !
  call bz_interp_setup(Xk)
  !
  ! Energies interpolation.
@@ -179,7 +186,7 @@ subroutine electrons_bands(Xk,Xen)
    if(BZ_RIM_tot_Nkpts>0) then
      do ik=1,Xk%nibz
        bands_grid(BANDS_range(1):BANDS_range(2),is,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))= &
-&        Xen%E_RIM(BANDS_range(1):BANDS_range(2),RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),is)
+&         Xen%E_RIM(BANDS_range(1):BANDS_range(2),RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),is)
      enddo
    endif
 #endif
@@ -204,6 +211,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  call reset_interpolation(ID_interp)
  !
+ !
 #if defined _YPP_RT
  !
  Max_occ=0.
@@ -220,6 +228,7 @@ subroutine electrons_bands(Xk,Xen)
    if(n_spin>1) call error('Occupations and spin not implemented')
    !
    allocate(occupations_tmp(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Nk))
+   !
    if (BANDS_steps> 0) allocate(occupations_circuit(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz,n_T_steps))
    if(all(interp_grid>0)) allocate(occupations_grid(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz,n_T_steps))
    !
@@ -241,19 +250,32 @@ subroutine electrons_bands(Xk,Xen)
      enddo
      Max_occ=maxval((/Max_occ,RT_delta0_occupations(:,:)/))
      !
-     ! STEP 1: define coefficients for occupations
-     !
-     do is=1,n_sp_pol
-       occupations_tmp(BANDS_range(1):BANDS_range(2),is,1:Nk)=RT_delta0_occupations(BANDS_range(1):BANDS_range(2),1:Nk)
-     enddo
-     call eval_interpolation_coeff(R2D=occupations_tmp,k=Xk,Nk=Nk,ID=ID_interp)
-     !
-     ! STEP 2
-     ! 1: interpolate on the circuit      if (BANDS_steps>0)
-     ! 2: interpolate on the regular grid if (interp_grid>0)
-     !
-     if (BANDS_steps> 0) call bz_interpolation(USER_k=CIRCUIT_k,R2D=occupations_circuit(:,:,:,i_T),ID=ID_interp)
-     if(all(interp_grid>0)) call bz_interpolation(USER_k=INTERP_k,R2D=occupations_grid(:,:,:,i_T),ID=ID_interp)
+     if(l_g_space_interp) then
+       !
+       ! STEP 1: define coefficients for occupations
+       !
+       do is=1,n_sp_pol
+         occupations_tmp(BANDS_range(1):BANDS_range(2),is,1:Nk)=&
+         &   RT_delta0_occupations(BANDS_range(1):BANDS_range(2),1:Nk)
+       enddo
+       call eval_interpolation_coeff(R2D=occupations_tmp,k=Xk,Nk=Nk,ID=ID_interp)
+       !
+       ! STEP 2
+       ! 1: interpolate on the circuit      if (BANDS_steps>0)
+       ! 2: interpolate on the regular grid if (interp_grid>0)
+       !
+       if (BANDS_steps> 0) call bz_interpolation(USER_k=CIRCUIT_k,R2D=occupations_circuit(:,:,:,i_T),ID=ID_interp)
+       if(all(interp_grid>0)) call bz_interpolation(USER_k=INTERP_k,R2D=occupations_grid(:,:,:,i_T),ID=ID_interp)
+       !
+     elseif(l_nearest_neig_interp) then
+       !
+       do ik_circuit=1,CIRCUIT_k%nibz
+         ik_near_RT=k_the_nearest(CIRCUIT_k%pt(ik_circuit,:),Xk%pt_RIM,Nk,ROTATE_k_ref=.TRUE.,i_err=i_err)
+         occupations_circuit(BANDS_range(1):BANDS_range(2),1,ik_circuit,i_T)=&
+         &   RT_delta0_occupations(BANDS_range(1):BANDS_range(2),ik_near_RT)
+       enddo       
+       !
+     endif
      !
      ! Normilize the occupations
      !
@@ -271,7 +293,7 @@ subroutine electrons_bands(Xk,Xen)
        !
      endif
      !
-     call reset_interpolation(ID_interp)
+     if(l_g_space_interp) call reset_interpolation(ID_interp)
      !
    enddo 
    !

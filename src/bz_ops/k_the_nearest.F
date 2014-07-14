@@ -96,12 +96,10 @@ integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,k_symm,i_err)
      if ( iku_v_norm(v)<(k_distance-iku_v_norm(k_iku_zero)) ) then
        k_distance=iku_v_norm(v)
        k_the_nearest=i1
-       k_symm=is
+       if(present(k_symm)) k_symm=is
      endif
      if (k_distance<zero_dfl) then
-       if (present(i_err)) then
-         i_err=0
-       endif
+       if (present(i_err)) i_err=0
        exit
      endif
      !

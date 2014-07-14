@@ -50,7 +50,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  integer, parameter       :: n_output_files=100,max_X_order=9
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
- integer                  :: i_f,i_fp,n_headings(n_output_files),next_file,i_order,i_c,n1
+ integer                  :: i_f,i_fp,i_flu,n_headings(n_output_files),next_file,i_order,i_c,n1
  logical                  :: file_is_todo(n_output_files),open_files,add_space,initialize
  logical,           save  :: SC_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
  character(schlen)        :: headings(n_output_files,11),append_ch
@@ -375,7 +375,8 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(11)=0._SP
        do i_fp=1,n_ext_fields
          if (allocated(Efield(i_fp)%Fluence)) then
-           data_to_dump(11)=data_to_dump(11)+real( Efield(i_fp)%Fluence(it_now))
+           i_flu=min(it_now,Efield(i_fp)%t_final_indx)
+           data_to_dump(11)=data_to_dump(11)+real( Efield(i_fp)%Fluence(i_flu))
          endif
        enddo
      case('BGR')

@@ -56,7 +56,6 @@ module YPP
  ! BANDS
  !
  integer               ::BANDS_steps
- integer               ::BANDS_range(2)
  integer               ::interp_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
  !

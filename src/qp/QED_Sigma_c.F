@@ -49,7 +49,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_k,i_n,i_p_bz,i_p_G0,i_m,i_p_s,i_p,&
 &                            i_c,i_cp,i_wf_at_k,i_wf_at_p,i_k_bz,ir,ir1,ir2,ir3,&
                              i_wf_at_p_g
- real(SP)                  ::q_cc(3),p_cc(3),Photon_E,Photon_pol_vec(3,3),sumdot,bose,t_vec
+ real(SP)                  ::q_cc(3),p_cc(3),Photon_E,Photon_pol_vec(3,3),sumdot,bose,t_vec,k_cc(3)
  complex(SP)               ::XHI(3),I_wfk_wfp,Dipole_sum
  complex(SP), allocatable  ::WF_p(:,:),WF_p_rot(:,:),WF_der(:,:),WF_der_rot(:,:)
  real(SP),    allocatable  ::r_cell_cc(:,:)
@@ -81,12 +81,15 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  call k_ibz2bz(q,'c',.false.)
  !
+ write(*,*) 'stop'
  ! (i_n,i_k,i_k_s) --- (i_q,i_q_s) ---> (i_m,i_p,i_p_s)
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/nqbz/))
  ! 
+ write(*,*) 'stop here'
  call live_timing('Sigma_c',px%n_of_elements(myid+1))
+ write(*,*) 'stop'
  !
  Q_loop: do i_q_bz=1,nqbz 
    !
@@ -113,7 +116,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
      cycle
    endif
    !
-   q_cc=q_cc/Photon_E
+   q_cc=q_cc
    bose=2._SP/(exp(Photon_E/Bose_Temp)-1._SP)
    !
    QP_loop: do i_qp=1,qp%n_states
@@ -121,8 +124,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
      i_n = QP_table(i_qp,1)
      i_k = QP_table(i_qp,3)
      !
-!     i_k_bz=sum(k%nstar(:i_k-1))+1
-!     k_cc=q%ptbz(i_k_bz,:)
+     i_k_bz=sum(k%nstar(:i_k-1))+1
+     k_cc=q%ptbz(i_k_bz,:)
      !
      i_p_bz = qindx_S(i_k,i_q_bz,1)
      i_p_G0 = qindx_S(i_k,i_q_bz,2)
@@ -168,13 +171,13 @@ subroutine QED_Sigma_c(E,k,q,qp)
          !
          XHI(i_cp) = dot_product(WF_der_rot(:,i_cp),WF%c(:,i_wf_at_k))
          !
-         t_vec=p_cc(i_cp)+g_vec(i_p_G0,i_cp)*2._SP*pi/alat(i_cp)
+         t_vec=k_cc(i_cp) - q_cc(i_cp)
          !
          do i_c=1,3
            !
-           Dipole_sum=Dipole_sum +    Photon_pol_vec(i_cp,i_c)*XHI(i_cp)*I_wfk_wfp*q_cc(i_c)
+           Dipole_sum=Dipole_sum +    Photon_pol_vec(i_cp,i_c)*XHI(i_cp)*I_wfk_wfp*q_cc(i_c)/Photon_E
            !
-           Dipole_sum=Dipole_sum - cI*Photon_pol_vec(i_cp,i_c)*t_vec*real(conjg(I_wfk_wfp)*I_wfk_wfp)*q_cc(i_c)
+           Dipole_sum=Dipole_sum - cI*Photon_pol_vec(i_cp,i_c)*t_vec*real(conjg(I_wfk_wfp)*I_wfk_wfp)*q_cc(i_c)/Photon_E
            !
            !
          enddo 

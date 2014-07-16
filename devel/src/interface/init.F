@@ -463,7 +463,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
- if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) then
+ if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life.or.l_sc_run) then
    if (l_eval_collisions) then
 #if defined _SC && ! defined _RT
      call CPU_activate("SE")

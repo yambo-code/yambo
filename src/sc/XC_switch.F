@@ -24,7 +24,7 @@
 subroutine XC_switch()
  !
  use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_exx,l_sc_hf,l_sc_cohsex,l_sc_is_libDFT,&
-&                         l_sc_srpa,l_oep_kli,l_oep_exact,l_oep_ceda,l_oep_slater
+&                         l_sc_srpa,l_oep_kli,l_oep_exact,l_oep_ceda,l_oep_slater,l_sc_magnetic
  use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,l_sc_pot_is_local,SC_perturbation,&
 &                         OEP_approx,l_oep_EWeight,l_oep_iterative
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&

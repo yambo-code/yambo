@@ -66,16 +66,16 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  !I/O and external functions
  !
- integer                      :: ID,io_err(3),ioKB_abinit_err,ioKB_pwscf_err,io_Vnl_err
- integer, external            :: ioKB_abinit,ioKB_pwscf,io_Vnl
+ integer                      :: ID,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
+ integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
  !
  call Dipole_kb_init(Xen,X,io_err,ID)
  !
- ioKB_abinit_err= io_err(1)
- ioKB_pwscf_err = io_err(2)
+ io_KB_abinit_err= io_err(1)
+ io_KB_pwscf_err = io_err(2)
  io_Vnl_err     = io_err(3)
  !
- if(ioKB_abinit_err==0.or.ioKB_pwscf_err==0) then
+ if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
    allocate(kbv(wf_ng,pp_kbv_dim,4),stat=alloc_err)
    call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
  endif
@@ -128,16 +128,16 @@ subroutine Dipole_transverse(Xen,Xk,X)
    ! 
    ! [Vnl,r]
    !
-   if (ioKB_pwscf_err==0) then
+   if (io_KB_pwscf_err==0) then
      if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
      if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
-     ioKB_pwscf_err=ioKB_pwscf(ID)
+     io_KB_pwscf_err=io_KB_pwscf(ID)
    endif
    !
-   if (ioKB_abinit_err==0) then
+   if (io_KB_abinit_err==0) then
      if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
      if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
-     ioKB_abinit_err=ioKB_abinit(ID)
+     io_KB_abinit_err=io_KB_abinit(ID)
    endif
    ! 
    if (Dipole_bands_ordered) then
@@ -151,10 +151,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
    do i_spin=1,n_spin
      ! 
      pp_spin=i_spin
-     if (ioKB_abinit_err==0.and.n_spinor==2) pp_spin=1
-     if (ioKB_pwscf_err ==0.and.n_sp_pol==2) pp_spin=1
-     if (ioKB_abinit_err==0) call Dipole_kb_abinit_comp(ik,pp_spin,Xk,kbv)
-     if (ioKB_pwscf_err ==0) call Dipole_kb_pwscf_comp(ik,pp_spin,Xk,kbv)
+     if (io_KB_abinit_err==0.and.n_spinor==2) pp_spin=1
+     if (io_KB_pwscf_err ==0.and.n_sp_pol==2) pp_spin=1
+     if (io_KB_abinit_err==0) call Dipole_kb_abinit_comp(ik,pp_spin,Xk,kbv)
+     if (io_KB_pwscf_err ==0) call Dipole_kb_pwscf_comp(ik,pp_spin,Xk,kbv)
      !
      E_i_spin=i_spin
      if (n_spinor==2) E_i_spin=1
@@ -242,7 +242,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,WF%c(:,icfft),1,(0._SP,0._SP),rho,1)
          !
-         if (ioKB_abinit_err==0.or.ioKB_pwscf_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
+         if (io_KB_abinit_err==0.or.io_KB_pwscf_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
          if (io_Vnl_err==0) then
            if(n_spinor==1) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,i_spin)*0.5
            if(n_spinor==2.and.i_spin==2) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,1)*0.5
@@ -314,7 +314,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  deallocate(wf_xyz)
  !
- if (ioKB_pwscf_err==0.or.ioKB_abinit_err==0) then
+ if (io_KB_pwscf_err==0.or.io_KB_abinit_err==0) then
    if (allocated(kbv))          deallocate(kbv)
    if (allocated(pp_n_l_comp))  deallocate(pp_n_l_comp)
    if (allocated(pp_table))     deallocate(pp_table)

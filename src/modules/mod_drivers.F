@@ -97,9 +97,11 @@ module drivers
  !
  logical :: l_sc_exx
  logical :: l_sc_srpa
+ logical :: l_sc_ip
+ logical :: l_sc_hartree
  logical :: l_sc_hf
  logical :: l_sc_cohsex
- logical :: l_sc_contains_lda
+ logical :: l_sc_is_libDFT
  !
  ! OEP approximations
  !

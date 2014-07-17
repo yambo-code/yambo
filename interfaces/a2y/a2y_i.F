@@ -30,11 +30,11 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use electrons,           ONLY:levels,E_reset,n_spin
  use D_lattice,           ONLY:n_atoms_species_max
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
- use wave_func,           ONLY:wf_ncx,ioWF,wf_nb_io_groups,wf_nb_io
+ use wave_func,           ONLY:wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use interfaces,          ONLY:PARALLEL_live_message
  use mod_com2y,           ONLY:interface_presets,force_noWFs
- use mod_wf2y,            ONLY:wf_splitter
+ use mod_wf2y,            ONLY:WF_splitter
  use pseudo,              ONLY:PP_free
  !
  implicit none
@@ -51,7 +51,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  character(lchlen) :: KSS_file_name
  integer           :: ID,io_err,ik,ib_grp
- integer,     external :: a2y_KSS_file_name,ioDB1,ioKB_abinit
+ integer,     external :: a2y_KSS_file_name,io_DB1,io_KB_abinit
  real(SP), allocatable :: wf_disk(:,:,:,:)
  !
  ! Presets
@@ -94,7 +94,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call msg('s','Writing main Database ...')
  !
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
- io_err=ioDB1(en,k,ID)
+ io_err=io_DB1(en,k,ID)
  !
  call msg('s','... Database done')
  !
@@ -123,12 +123,12 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
      if (n_atoms_species_max>0.and.ib_grp==1) then
        if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
        if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
-       io_err=ioKB_abinit(ID)
+       io_err=io_KB_abinit(ID)
      endif
      !
      if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
      if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
-     io_err=ioWF(ID,wf=wf_disk)
+     io_err=io_WF(ID,wf=wf_disk)
      !
    enddo
    !

@@ -38,9 +38,10 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use QP_CTL_m,       ONLY:QP_apply
  use LIVE_t,         ONLY:live_timing
 #if defined _YPP_RT
- use YPP,            ONLY:RT_occupations_ref,OCC_T_ref,OCC_T_range,OCC_deltaT
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_output,RT_E_occupations
- use SC,             ONLY:SC_bands,SC_description,n_SC_descriptions
+ use YPP,            ONLY:OCC_T_range,OCC_deltaT
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_output,RT_delta0_occupations,&
+&                         l_RT_uses_E_RIM
+ use SC,             ONLY:SC_bands,SC_description,n_SC_descriptions,RT_ibz_coo
 #endif
  use interfaces,     ONLY:PARALLEL_index
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait
@@ -56,14 +57,14 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  real(SP)              :: el_dos(dos_E_steps,n_sp_pol),dos_E,delta_E,f_occ,dos_norm,el_dos_max
 #if defined _YPP_RT
  real(SP)              :: io_Time
- integer               :: i_fp
+ integer               :: i_fp,ik_RT
 #endif
- integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps,ik_rand,i1
+ integer               :: i_E,ik,ik_bz,ib,i_spin,i_T,n_T_steps,ik_rand,i1
  character(schlen)     :: ch_ws,titles(4)
- logical               :: l_3D_plot,l_RIM,l_prt_occ_only
+ logical               :: l_3D_plot,l_RIM,l_prt_occ_only,l_separate_eh
  type(PP_indexes)      :: px
  !
- integer,     external :: RT_occupations_check 
+ integer,     external :: RT_occ_check_and_load_ref 
  !
  !
  call parser('PrtOccOnly',l_prt_occ_only)
@@ -71,11 +72,28 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  ! E_rim
  !=======
  !
- l_RIM=.FALSE.
- if (BZ_RIM_nbands>0) then
-   l_RIM=.TRUE.
-   call OCCUPATIONS_Extend(Xen,Xen)
+ if(.not.l_RT_dos) then
+   l_RIM=.FALSE.
+   if (BZ_RIM_nbands>0) then
+     l_RIM=.TRUE.
+     call OCCUPATIONS_Extend(Xen,Xen)
+   endif
  endif
+ !
+#if defined _YPP_RT
+ !
+ if(l_RT_dos) then
+   !
+   n_T_steps=RT_occ_check_and_load_ref(Xen,Xk)
+   !
+   ! RIM support of carrier dynamics
+   !=================================
+   call RT_check_RIM(Xk,Xen)
+   l_RIM=l_RT_uses_E_RIM
+   !
+ endif
+ !
+#endif
  !
  ! DOS
  !=====
@@ -85,14 +103,15 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    if(l_dos)    call section('*','Electronic DOS')
    if(l_RT_dos) call section('*','Electr. Time-dependent DOS')
    !
-   l_3D_plot  =.FALSE.
-   n_T_steps=1
+   if(.not.l_RT_dos) then
+     l_3D_plot  =.FALSE.
+     n_T_steps=1
+   endif
    !
 #if defined _YPP_RT
    !
    if (l_RT_dos) then
      !
-     n_T_steps=RT_occupations_check(Xen,Xk)
      l_3D_plot=.not.n_T_steps==1
      !
      if (.not.n_T_steps>0.and..not.l_3D_plot) return
@@ -101,7 +120,6 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
      call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
      call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
-     call msg('s','Time ref   [fs]:',OCC_T_ref/FS2AUT)
      call msg('s','Time steps     :',n_T_steps)
      call msg('s','Energy steps   :',dos_E_steps)
      !
@@ -173,10 +191,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
 #if defined _YPP_RT
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-     if(l_RT_dos) then
-       call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
-       call RT_occupations_repair(Xen)
-     endif
+     if(l_RT_dos) call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
 #endif
      !
      el_dos(:,:)=0.
@@ -191,13 +206,18 @@ subroutine electrons_dos_and_charge(Xk,Xen)
          do i_spin=1,n_sp_pol
            !
            if (l_RIM) then
-             do ik=1,nkbz
-               do i1=1,BZ_RIM_nkpt(ik)
-                 ik_rand=BZ_RIM_table(ik,i1)
+             do ik_bz=1,nkbz
+               ik=Xk%sstar(ik_bz,1)
+               do i1=1,BZ_RIM_nkpt(ik_bz)
+                 ik_rand=BZ_RIM_table(ik_bz,i1)
                  f_occ=spin_occ
                  if(l_prt_occ_only) f_occ=Xen%f_RIM(ib,ik_rand,i_spin)
 #if defined _YPP_RT
-                 if (l_RT_dos) f_occ=(RT_E_occupations(ib,Xk%sstar(ik,1))-RT_occupations_ref(ib,Xk%sstar(ik,1)))
+                 if (l_RT_dos) then
+                   ik_RT=RT_ibz_coo(ik,1)-1+i1
+                   f_occ=RT_delta0_occupations(ib,ik_RT)
+                   !if(ib==2) write(*,*) ik,ik_bz,ik_RT,ik_rand,RT_delta0_occupations(ib,ik_RT)
+                 endif
 #endif
                  el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&
 &                      Fermi_fnc_derivative(Xen%E_RIM(ib,ik_rand,i_spin)-dos_E,dos_broadening)*dos_norm
@@ -208,7 +228,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
                f_occ=spin_occ
                if(l_prt_occ_only) f_occ=Xen%f(ib,ik,i_spin)
 #if defined _YPP_RT
-               if (l_RT_dos) f_occ=(RT_E_occupations(ib,ik)-RT_occupations_ref(ib,ik))
+               if (l_RT_dos) f_occ=RT_delta0_occupations(ib,ik)
 #endif
                el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&
 &                    Fermi_fnc_derivative(Xen%E(ib,ik,i_spin)-dos_E,dos_broadening)*Xk%weights(ik)*dos_norm
@@ -232,12 +252,22 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
      ! Output file
      !
+     l_separate_eh=.true.
+     !
      do i_E=1,dos_E_steps
        dos_E=dos_E_range(1)+i_E*delta_E
-       !       
+       !
 #if defined _YPP_RT
        if (l_RT_dos .and. l_3D_plot) then
+         !
+         if(dos_E>Xen%E_VBM+dos_broadening .and. dos_E<Xen%E_CBm-dos_broadening) then
+           if(l_separate_eh) call RT_output("space el_dos")
+           l_separate_eh=.false.
+           cycle
+         endif
+         !
          call RT_output("el_dos",VALUEs=(/el_dos(i_E,1)/),E=dos_E*HA2EV,TIME=io_Time/FS2AUT)
+         !
        else
 #endif
          if (n_sp_pol==1) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,1)/),INDENT=-2,USE_TABS=.true.)
@@ -247,6 +277,10 @@ subroutine electrons_dos_and_charge(Xk,Xen)
        endif
 #endif
      enddo
+     !
+#if defined _YPP_RT
+     if (l_RT_dos .and. l_3D_plot) call RT_output("space el_dos")
+#endif
      !
      if (n_T_steps> 1) call live_timing(steps=1)
      !

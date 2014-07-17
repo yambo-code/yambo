@@ -78,6 +78,7 @@ module global_XC
  !
  ! SC's
  integer, public, parameter :: &
+   SC_Hartree       = 0,   &  ! Hartree
    SC_EXX           = 301, &  ! OEP-EXX
    SC_HF            = 302, &  ! Hartree-Fock
    SC_COHSEX        = 303, &  ! Coulomb-Hole Screened-eXchange
@@ -199,7 +200,9 @@ module global_XC
      character(lchlen) :: ch
      global_XC_string=' '
      select case (kind)
-       case(0)
+       case(-1)
+         global_XC_string='IP'
+       case(SC_Hartree) !=0
          global_XC_string='Hartree'
        case(1:300)
          global_XC_string=trim(xc_string(xc_functional))

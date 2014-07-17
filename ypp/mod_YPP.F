@@ -56,8 +56,8 @@ module YPP
  ! BANDS
  !
  integer               ::BANDS_steps
- integer               ::BANDS_range(2)
  integer               ::interp_grid(3)  ! Interpolation Grid
+ real(SP)              ::Nel_fac
  !
  ! REAL SPACE PLOT
  !
@@ -137,6 +137,7 @@ module YPP
  integer  :: n_RIM_DBs
  integer  :: BZ_RIM_nkpts
  logical  :: l_bzrim
+ logical  :: l_map_kpts
  real(SP) :: Gamma_radius
  character(lchlen) :: RIM_DB1_paths(MAX_RIM_DBs,1)
  !
@@ -224,7 +225,6 @@ module YPP
  integer  :: X_order
  real(SP) :: t_jump
  real(SP) :: W_RT_induced_step
- real(SP) :: OCC_T_ref      ! Reference time
  real(SP) :: OCC_T_range(2) ! Time range to plot the dos
  real(SP) :: OCC_deltaT     ! Time step to plot the dos
  character(schlen) :: Probe_Keyword
@@ -233,7 +233,6 @@ module YPP
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
  !
- complex(SP),    allocatable :: RT_occupations_ref(:,:)
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)
  !

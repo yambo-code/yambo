@@ -90,7 +90,7 @@ module wave_func
  !
  interface
    !
-   integer function ioWF(ID,wf)
+   integer function io_WF(ID,wf)
      use pars,       ONLY: SP
      integer            :: ID
      real(SP), optional :: wf(:,:,:,:)

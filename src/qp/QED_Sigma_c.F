@@ -100,7 +100,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
    !
    q_cc=q%ptbz(i_q_bz,:)
    !
-!   call QED_polarization_vectors(q_cc,Photon_pol_vec)
    do i_c=1,3
      do i_cp=i_c,3
        Photon_pol_vec(i_c,i_cp)=-q_cc(i_c)*q_cc(i_cp)/v_norm(q_cc)
@@ -121,8 +120,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
    !
    QP_loop: do i_qp=1,qp%n_states
      !
-     i_n = QP_table(i_qp,1)
-     i_k = QP_table(i_qp,3)
+     i_n  = QP_table(i_qp,1)
+     i_k  = QP_table(i_qp,3)
      !
      i_k_bz=sum(k%nstar(:i_k-1))+1
      k_cc=q%ptbz(i_k_bz,:)

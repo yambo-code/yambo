@@ -67,7 +67,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  integer, external :: G_index
  !
  character(lchlen) :: string
- integer :: io_db,io_err,ioQINDX
+ integer :: io_db,io_err,io_QINDX
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,iqs,iks
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3)
  logical :: connected_grids,user_defined_qpts,gamma_point_only,&
@@ -92,7 +92,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  q%description='q'
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=VERIFY,ID=io_db)
- io_err=ioQINDX(Xk,q,io_db)
+ io_err=io_QINDX(Xk,q,io_db)
  if (io_err==0) then
    call k_expand(q)
    call Q_report('iku')
@@ -321,7 +321,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  if (.not.connected_grids) call msg('rsn','[RL indx] X & Total k-grids are not connected')
  !
 1 call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=io_db)
- io_err=ioQINDX(Xk,q,io_db)
+ io_err=io_QINDX(Xk,q,io_db)
  !
  !CLEAN
  !

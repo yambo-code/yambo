@@ -1,264 +1,206 @@
-2014-04-09 10:39:15 r3278 Davide Sangalli <davide.sangalli@gmail.com>
+2014-07-11 13:50:08 r3506 Davide Sangalli <davide.sangalli@gmail.com>
 
 	Version 4.0.0
 
-	*  . config/configure.ac configure include/version.inc interface/init.F interface/init_load.F io/io_RIM_E_and_k.F modules/SET_defaults.F modules/mod_electrons.F modules/mod_real_time.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_ELPH_initialize.F real_time/RT_ELPH_total_Kernel.F real_time/RT_average_operator.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_initialize.F real_time/RT_k_grid.F real_time/RT_observables.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F
+	*  include/version.inc io/io_RT_components.F qp_ctl/OCCUPATIONS_IO_and_interpolate.F real_time/RT_output.F ypp/RT_occupations_analyze.F
 
 	Bugs:
-	-
+	- Some more bug-fixes
 	Additions:
 	-
 	Changes:
-	- Merged with devel-davide:
-	  1) Bug fix Energy with RIM is now correct
-	  2) EE_scatt + RIM, the number of RIM points used is now controlled by the input variable EERimPerc.
-	     Default is 0., i.e. the minimum possible. Old behavior is with 100. (=100%)
-	  3) Also RT_impose uses dGamma*f+Gamma0*df. Calls in RT_relaxation restored before the interpolation
-	  4) RTeeImposeE controls if impose on energy is used for EE scatt
-	  5) The energy type has also the %W_RIM structure. Presently these are all equal to %W on the small grid
-	  6) Other minor bug fix
+	-
 
 	Patch sent by: Davide
 
-2014-04-04 15:47:34 r3272 Davide Sangalli <davide.sangalli@gmail.com>
+2014-07-10 22:43:58 r3501 Davide Sangalli <davide.sangalli@gmail.com>
 
 	Version 4.0.0
 
-	*  . config/Makefile.in config/configure.ac configure include/version.inc coulomb/.objects + io/io_RT_components.F modules/mod_ELPH.F modules/mod_real_time.F real_time/.objects real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_DEPHASING_step.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_ELPH_initialize.F real_time/RT_ELPH_total_Kernel.F real_time/RT_G_retarded_convolution.F real_time/RT_Integrator.F real_time/RT_Lifetimes_Interpolation.F real_time/RT_Lifetimes_equilibrium.F real_time/RT_Lifetimes_merge.F real_time/RT_Lifetimes_save_and_interp.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_initialize.F real_time/RT_k_grid.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_relaxation.F ypp/RT_occupations_analyze.F ypp/electrons_bands.F
+	*  . include/version.inc bse/K.F modules/.objects + + modules/mod_wrapper.F + + real_time/RT_relaxation.F
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- merged with devel-davide
+	- Fixed spin_occ factor in RT_relaxation
+	- merged with trunk devel
 
 	Patch sent by: Davide
 
-2014-03-31 16:15:28 r3256 Davide Sangalli <davide.sangalli@gmail.com>
+2014-07-10 22:26:13 r3500 Davide Sangalli <davide.sangalli@gmail.com>
+
+	One more bug fixed
+
+2014-07-10 22:05:42 r3499 Davide Sangalli <davide.sangalli@gmail.com>
 
 	Version 4.0.0
 
-	*  . config/Makefile.in config/configure.ac config/setup.in configure include/version.inc + lib/libxc/config.h.in lib/libxc/configure sbin/make_makefile.sh.in common/.objects common/HyperbolicSecant_FT.F + interface/init.F interface/init_load.F io/variables_SC.F modules/mod_real_time.F real_time/.objects real_time/RT_Collision.F real_time/RT_Coulomb_relaxation.F real_time/RT_DEPHASING_step.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_ELPH_total_Kernel.F real_time/RT_Integrator.F real_time/RT_Lifetimes_Interpolation.F real_time/RT_Lifetimes_equilibrium.F + real_time/RT_Lifetimes_save_and_interp.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_driver.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_manual_excitation.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_observables.F real_time/RT_output.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F ypp/RT_occupations_analyze.F
+	*  include/version.inc real_time/RT_Integrator.F real_time/RT_Lifetimes_use_delta_Occupations.F
 
 	Bugs:
-	-
+	- Fixed two more bugs: one in RT_Integrator and one in RT_Lifetimes_use_delta_Occupations
 	Additions:
 	-
 	Changes:
-	- Merged with devel davide:
-	  1) Dynamics is in terms of dG<
-	  2) Lifetimes are computed as Gamma0 + dGamma
-	  3) Created spline_fit subroutine for interpolation, which uses the dierckx library in lib/dierckx.
-	     Presently it is not used. Spline does not work for extrapolation
+	-
 
 	Patch sent by: Davide
 
-2014-03-26 14:58:35 r3237 Davide Sangalli <davide.sangalli@gmail.com>
+2014-07-09 21:29:28 r3497 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Small changes
+
+2014-07-06 19:51:56 r3491 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk-devel. Code compiles
+
+2014-07-01 09:35:45 r3467 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Merged with trunk devel
+
+2014-06-26 16:24:53 r3454 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Some fixes imported from trunk
+
+2014-06-26 15:04:44 r3452 Davide Sangalli <davide.sangalli@gmail.com>
 
 	Version 4.0.0
 
-	*  . config/configure.ac configure include/version.inc io/io_RT_components.F modules/mod_SC.F modules/mod_real_time.F qp_ctl/OCCUPATIONS_IO_and_interpolate.F real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_DEPHASING_step.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_Lifetimes_evaluation_plan.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_driver.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_observables.F real_time/RT_output.F real_time/RT_propagate_fields.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F ypp/RT_occupations_check.F ypp/RT_occupations_repair.F ypp/electrons_bands.F ypp/electrons_dos_and_charge.F
+	*  config/configure.ac configure include/version.inc modules/mod_interpolate.F real_time/RT_ELPH_initialize.F ypp/RT_occ_check_and_load_ref.F ypp/RT_occupations_analyze.F ypp/electrons_bands.F
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- merged with devel-davide.
-	  Main change: RT_H_occupations and RT_E_occupations
+	- Fixed few inconcistencies
 
 	Patch sent by: Davide
 
-2014-03-24 11:58:14 r3231 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andrea
-
-2014-02-25 17:35:39 r3201 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andrea
-
-2014-02-25 10:24:53 r3199 Andrea Marini <andrea.marini@cnr.it>
-
-	devel-trunk and devel-andrea merged and synchronized
-
-2014-02-25 10:07:15 r3196 Davide Sangalli <davide.sangalli@gmail.com>
+2014-06-24 12:06:20 r3445 Davide Sangalli <davide.sangalli@gmail.com>
 
 	Version 4.0.0
 
-	*  real_time/RT_ELPH_initialize.F
+	*  configure include/version.inc real_time/RT_Integrator.F real_time/RT_apply_zero_dyn.F real_time/RT_EULER_step.F real_time/RT_EULEREXP_step.F config/configure.ac
 
 	Bugs:
-	- Bug fix in RT_ELPH_initialize fixed again. Likely the commit was lost with the changes in the repo
-
+	-
 	Additions:
 	-
 	Changes:
-	-
+	- Simplified RWA approach now works properly also with RK2 and HEUN integrators
+	  Things which could still be improved ...
+	  1 - Integrate the field separately: G_nm(t+dt)=G_nm(t)* exp[i sum_n' (A^n'_{nm}) \int_t^{t+dt} dt' g(t')
+	      with g(t) the time dependet part of the field which we could integrate analytically
+	  2 - Check / Fix the EXP integrator, in particular the RT_Scattering part
 
 	Patch sent by: Davide
 
-2014-02-25 10:01:02 r3195 Davide Sangalli <davide.sangalli@gmail.com>
+2014-06-23 16:29:15 r3444 Davide Sangalli <davide.sangalli@gmail.com>
 
 	Version 4.0.0
 
-	*  . config/configure.ac configure include/version.inc io/ioKB_abinit.F io/ioKB_pwscf.F io/io_HF_and_locXC.F modules/mod_real_time.F qp/QP_report_and_write.F ypp/electrons_driver.F ypp/excitons_driver.F ypp/ypp_init.F
+	*  config/configure.ac configure include/version.inc real_time/RT_output.F ypp/electrons_dos_and_charge.F
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- Merged with trunk stable. Bug fix imported
+	- [YPP_RT] RT_output can write a white line in output.
+	           Used by ypp_rt while printing RT_dos for later use with gnuplot (splot)
 
 	Patch sent by: Davide
 
-2014-02-20 10:27:22 r3181 Davide Sangalli <davide.sangalli@gmail.com>
+2014-06-23 15:09:21 r3441 Davide Sangalli <davide.sangalli@gmail.com>
 
 	Version 4.0.0
 
-	*  config/configure.ac configure include/version.inc lib/libxc/configure modules/mod_real_time.F real_time/RT_Collision.F real_time/RT_Coulomb_interpolation.F real_time/RT_EULEREXP_step.F real_time/RT_EULER_step.F real_time/RT_Integrator.F real_time/RT_build_I1_and_I2.F real_time/RT_propagate_fields.F ypp/RT_occupations_FIT.F
+	*  config/configure.ac configure include/version.inc modules/SET_defaults.F ypp/.objects ypp/RT_check_RIM.F ypp/RT_occupations_analyze.F ypp/electrons_bands.F ypp/electrons_dos_and_charge.F ypp/k_random.F ypp/ypp_init.F ypp/ypp_init_load.F
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- Patch imported from tmp_repository: RIM in Ho_plus_sigma
+	- [YPP_RT] RT_dos plots can be created again also with RIM
 
 	Patch sent by: Davide
 
-2014-02-07 18:15:02 r3177 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andrea
-
-2014-02-07 17:18:40 r3174 Davide Sangalli <davide.sangalli@gmail.com>
+2014-06-20 17:29:08 r3440 Davide Sangalli <davide.sangalli@gmail.com>
 
 	Version 4.0.0
 
-	*  . config/configure.ac configure include/version.inc real_time/RT_Collision.F real_time/RT_Coulomb_interpolation.F real_time/RT_EULEREXP_step.F real_time/RT_EULER_step.F real_time/RT_GAMMA_save_and_interp.F real_time/RT_Integrator.F real_time/RT_driver.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_observables.F real_time/RT_relaxation.F
+	*  config/configure.ac configure include/version.inc real_time/.objects real_time/RT_DEPHASING_step.F moved real_time/RT_Dephasing_Matrix.F real_time/RT_Integrator.F real_time/RT_Lifetimes_evaluation_plan.F + moved real_time/RT_apply_zero_dyn.F real_time/RT_initialize.F real_time/RT_relaxation.F
 
 	Bugs:
-	- Fixed two bugs intoduced by previous commit
+	-
 	Additions:
 	-
 	Changes:
-	merged with devel davide:
-	- Conditions on G_lessere are imposed during integratio
-	- RT_Coulomb interpolation starts only if the number of Carriers is above 1.E-4
+	- Zero order scattering moved back inside RT_DEPHASING_step which has now been renamed RT_Scattering_step.
 
 	Patch sent by: Davide
 
-2014-02-07 17:01:00 r3172 Davide Sangalli <davide.sangalli@gmail.com>
+2014-06-17 13:49:22 r3438 Davide Sangalli <davide.sangalli@gmail.com>
 
 	Version 4.0.0
 
-	*  . config/configure.ac configure include/version.inc modules/SET_defaults.F modules/mod_interpolate.F modules/mod_real_time.F real_time/RT_Coulomb_interpolation.F real_time/RT_ELPH_initialize.F real_time/RT_driver.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_initialize.F real_time/RT_observables.F real_time/RT_output.F real_time/RT_relaxation.F ypp/electrons_bands.F
+	*  config/configure.ac configure include/version.inc interface/init_load.F modules/mod_real_time.F real_time/RT_DEPHASING_step.F real_time/RT_Integrator.F real_time/RT_Lifetimes_save_and_interp.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_initialize.F real_time/RT_relaxation.F
 
 	Bugs:
-	- Fixed ELPH+RIM GKKP renormalization factor [Andrea]
-	- Work-around for ELPH+RIM GKKP if small grid levels are degenerate while
-	  big grid levels are not [Andrea]
+	-
 	Additions:
 	-
 	Changes:
-	- Factors from RT_impose are written in output [Davide]
-	- RT_impose now imposes:
-	  * Nel and energy for EL-EL
-	  * Nel and dG for EL-PH
+	- [yambo_rt] Heun method in the integration added
+	- [yambo_rt] Also when I'm doing RK2 or HEUL the lifetimes are evaluated at both time steps,
+	             while during interpolation it has two different sets of lifetimes on which interpolate.
 
 	Patch sent by: Davide
 
-2014-02-06 12:37:24 r3167 Davide Sangalli <davide.sangalli@gmail.com>
+2014-06-16 16:12:25 r3436 Davide Sangalli <davide.sangalli@gmail.com>
 
 	Version 4.0.0
 
-	*  . config/configure.ac configure include/version.inc qp/ELPH_gsqF_to_Sigma.F real_time/RT_SET_lifetimes_evaluation_plan.F
+	*  configure include/version.inc real_time/RT_apply_RWA.F real_time/RT_Integrator.F real_time/RT_Collision.F modules/mod_real_time.F config/configure.ac
 
 	Bugs:
-	- Fixed compilation issue
+	-
 	Additions:
 	-
 	Changes:
-	- RT_SET lifetimes two different modes, i.e. FIELD and EXP can be activated together.
-	  The first one (FIELD) is activated only if trim(RT_dynamics_KIND)=="FIELD" and for the time the field is on.
-	  The second one (EXP) is activated if RT_dynamics_decay_time>0
-	  * from t=0 if no field is present
-	  * from t=t0, i.e. after the field is off, when a field is present
+	- [yambo_rt] polarization dephasing also inserted in "RWA" together with carriers scattering
+	             due to the equilibrium life-times.
+	             exp integrator written also for the carrriers scattering part
 
 	Patch sent by: Davide
 
-2014-02-04 10:38:11 r3165 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andrea
-
-2014-02-01 18:15:31 r3162 Davide Sangalli <davide.sangalli@gmail.com>
+2014-06-12 12:15:17 r3425 Davide Sangalli <davide.sangalli@gmail.com>
 
 	Version 4.0.0
 
-	*  config/configure.ac configure include/version.inc real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_Fluence.F real_time/RT_GAMMA_save_and_interp.F real_time/RT_Integrator.F real_time/RT_average_operator.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_observables.F real_time/RT_relaxation.F
+	*  configure include/version.inc real_time/RT_apply_RWA.F real_time/RT_Integrator.F real_time/RT_Collision.F modules/mod_real_time.F config/configure.ac
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- RT_Coulomb_interpolation. Condition on the error is less strict
-	- If RIM is used sums over RT_nk are grouped. This way the error on the final result is smaller
-	  real_time/RT_observables.F, real_time/RT_impose_zero_dE_and_dN.F and src/real_time/RT_ELPH_CCA_Kernel.F
-	  subroutines affected
-	- RT_impose_zero_dE_and_dN changed
+	- [yambo_rt] "RWA" simplified.
 
 	Patch sent by: Davide
 
-2014-01-25 17:27:41 r3152 Davide Sangalli <davide.sangalli@gmail.com>
+2014-06-10 17:35:38 r3423 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.4.0
+	Version 4.0.0
 
-	*  devel/config/configure.ac devel/configure devel/include/version.inc stable/config/configure.ac stable/configure stable/include/version.inc
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- Updating versions in the trunk for the release of the new GPL.
-	  STABLE: 3.4.0 --> 3.4.1  will be the new stable GPL
-	  DEVEL:  3.4.0 --> 4.0.0  will be the new devel GPL
-
-	Patch sent by: Davide
-
-2014-01-25 17:21:53 r3151 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . config/configure.ac configure include/version.inc common/Fermi_fnc_fit.F modules/SET_defaults.F modules/mod_real_time.F real_time/RT_manual_excitation.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_observables.F real_time/RT_occupations_FIT_and_lock.F real_time/RT_start_and_restart.F ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F ypp/electrons_bands.F ypp/electrons_driver.F ypp/mod_YPP.F ypp/ypp_i.F ypp/ypp_init.F ypp/ypp_init_load.F of conflicts:
+	*  configure include/version.inc real_time/RT_Lifetimes_save_and_interp.F config/configure.ac
 
 	Bugs:
-	- Sigma_relax was not allocated when l_elel_scatt=.true. and l_elph_scatt=.false.
-	- ypp_rt: plot of gamma(E) was wrong
-	- ypp_rt: fixed generation of input file for interpolation of f_occ on the band structure
-	- fixed small error in the construction of the EP lifetimes ratio = Gh/(Gh+Ge)
-	Additions:
-	-
-	Changes:
-	- ypp_rt: Now Te(t) an Th(t) are generated
-	-
-	Patch sent by: Davide
-
-2014-01-24 13:25:13 r3147 Andrea Marini <andrea.marini@cnr.it>
-
-	devel-andrea and trunk-devel merged
-
-2014-01-23 16:15:33 r3145 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  modules/mod_LIVE_t.F
-
-	Bugs:
-	- Now the code compiles also with gfortran
-
+	- Fixed small bug for DYMmode="none"
 	Additions:
 	-
 	Changes:
@@ -266,831 +208,506 @@
 
 	Patch sent by: Davide
 
-2014-01-23 12:24:13 r3144 Andrea Marini <andrea.marini@cnr.it>
+2014-06-10 15:36:44 r3422 Davide Sangalli <davide.sangalli@gmail.com>
 
-	trunk-devel and branches-devel-andrea now merged
+	Version 4.0.0
 
-2014-01-20 14:19:09 r3135 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . config/configure.ac configure include/version.inc bz_ops/bz_samp_indexes.F common/Fermi_fnc_fit.F interface/init.F interface/init_load.F io/ioQINDX.F modules/SET_defaults.F modules/mod_real_time.F real_time/RT_Coulomb_interpolation.F
+	*  qp_ctl/OCCUPATIONS_IO_and_interpolate.F common/Fermi_fnc_fit.F pol_function/O_driver.F real_time/RT_mean_carrier_lifetimes.F + real_time/RT_driver.F real_time/RT_Integrator.F real_time/RT_Lifetimes_evaluation_plan.F real_time/RT_Lifetimes_Interpolation.F real_time/RT_observables.F real_time/RT_ELPH_initialize.F real_time/.objects real_time/RT_occupations_FIT_and_lock.F communicate/REPORT_Energies.F io/io_RT_components.F modules/mod_functions.F modules/mod_interpolate.F ypp/ypp_init.F ypp/RT_occupations_FIT.F ypp/ypp_init_load.F ypp/RT_occupations_repair.F ypp/electrons_driver.F ypp/RT_occupations_analyze.F ypp/electrons_bands.F ypp/mod_YPP.F + + ypp/RT_occupations_check.F ypp/electrons_dos_and_charge.F ypp/ypp_i.F ypp/.objects
 
 	Bugs:
-	-
+	- real_time/RT_ELPH_initialize.F: q grid on the whole BZ was not defined if no Random q-points where used
 	Additions:
 	-
 	Changes:
-	* merged with devel-davide:
-	- RT_Coulom_interpolation uses the temperature from the previous step in case
-	  Fermi_fnc_fit fails fitting the EE_lifetimes ratio
-	- BSE scattering table can be computed running the setup
+	- qp_ctl/OCCUPATIONS_IO_and_interpolate.F: Also RT_?_occupations_reference and RT_?_occupations
+	                                           are now defined, with ?=E/H
+	- Fermi_fnc_fit: emoved uselss additional option
+	- Removed OCC_T_ref. Reference is alwaus the equilibrium
+	- O driver now plots RPA-IP with also IP. For tests.
+	- ypp/RT_occupations_FIT.F and src/real_time/RT_occupations_FIT_and_lock.F renamed
+	  ypp/RT_occupations_FIT_and_plot.F and src/real_time/RT_occupations_FIT.F
+	- The interpolation of the lifetimes can be: NONE (=no interpolation), FLAT (=keep LFs constant),
+	  and "DEFAULT" or "FIELD" standard interpolation implemented by Andrea
+	- More input options created for electrons_bands and messaging/checks improved
+	- ypp/RT_occupations_repair.F removed
+	- ypp/RT_occupations_check.F renamed ypp/RT_occ_check_and_load_ref.F
 
 	Patch sent by: Davide
 
-2014-01-17 16:57:21 r3128 Davide Sangalli <davide.sangalli@gmail.com>
+2014-06-09 17:57:02 r3421 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.4.0
+	Version 4.0.0
 
-	*  . config/configure.ac configure include/version.inc bz_ops/k_the_nearest.F collisions/COLLISIONS_cohsex.F common/Fermi_fnc_fit.F common/pol_fit.F interpolate/bz_interp_setup.F interpolate/eval_interpolation_coeff.F io/io_RT_components.F modules/mod_R_lattice.F modules/mod_fields.F modules/mod_interpolate.F modules/mod_real_time.F real_time/RT_Collision.F real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_Ext_fields.F real_time/RT_Fluence.F real_time/RT_Integrator.F real_time/RT_current_AND_polarization.F real_time/RT_databases_IO.F real_time/RT_driver.F real_time/RT_impose_elel_conserves_E_and_N.F real_time/RT_initialize.F real_time/RT_k_grid.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_observables.F real_time/RT_occupations_fit.F real_time/RT_output.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F ypp/electrons_bands.F ypp/electrons_driver.F ypp/k_random.F
+	*  config/configure.ac configure include/version.inc coulomb/.objects interface/init.F interface/init_load.F io/variables_SC.F modules/SET_defaults.F modules/mod_drivers.F modules/mod_global_XC.F modules/mod_real_time.F real_time/RT_Collision.F real_time/RT_driver.F real_time/RT_initialize.F real_time/RT_observables.F real_time/RT_start_and_restart.F sc/SC_Energy.F sc/SC_add_XC.F sc/SC_driver.F sc/XC_switch.F
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	*** BIG COMMIT FROM MERGE WITH MY DEVEL. - [YAMBO_RT - YPP_RT] **
-	    THE CODE COMPILES BUT MORE TESTS ARE NEEDED. I STILL HAVE SMALL BUT
-	    NON NEGLIGIBLE DIFFERENCES BETWEEN THE TRUNK AND MY BRANCH
-
-	* MAIN CHANGES:
-	- RT_Coulomb_interpolation now works properly using as input the results of Fermi_fnc_fit.
-	  Als Fermi_fnc_fit has been improvede because the dynamics with l_elel_scatt + l_elph_scatt
-	  dependes deeply on its ability to fit the ratio between the RT_EE_lifetimes.
-	  Also the interpolation in energy is done after the interpolation in time.
-	- Interpolation of the band structue finally works properly with the RIM.
-	  [RIM] If the points of the RIM/BIG grid are not expanded they are associated
-	  only the point in the IBZ. This is needed for a correct interpolation. The RIM
-	  structure should be improved in view of BSE and other calculations.
-
-	* OTHER CHANGES:
-	- k_the_nearest in case ROTATE_K_REF=.true. gives in output also the symmetry which
-	  points to the rotated k_point
-	- cosmetic changes in COLLISION_cohsex
-	- logical  renamed NE_dynamics      --> l_NE_dynamics_started
-	  new logicals                      --> l_NE_dynamics
-	                                    --> l_manual_excitations (thus l_NE_with_fields=.false. in this case)
-	- New time structure for fields: t_initial, t_initial_indx, t_final, t_final_indx
-	  The latter is computed from RT_fluence
-	- The ration gamma_h/(gamma_h+gamma_e) is fitted on the fly and the output printed.
-	  A negative temperature means a fit with an error above a given treshold.
-	  Also the EE and the EP lifetimes are written in different files
-	- Condition on the occupations: the must remain between 0 and spin_occ
-	- RT_impose_elel_conserves_E_and_N now works separately on the small and the big grid in
-	  case the RIM is used. This because on the small grid we do not need to change the lifetimes.
-	  This is likely to be changed with new Andrea's lifetimes interpolation
+	- Now everything is controlled by SC_potential and related variables defined in XC_switch
+	  l_NE_simulate_ IP/RPA/TDDFT/BSE and Hfrozen and XCforzen were a copy of l_sc_* variables and
+	  have been removed. Created instead l_sc_ip and l_sc_hartree flags. Still to be tested.
 
 	Patch sent by: Davide
 
-2013-12-24 15:25:25 r3106 Andrea Marini <andrea.marini@cnr.it>
+2014-06-09 15:16:26 r3420 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Merged with devel-andrea
+	merged with trunk devel
 
-2013-12-20 12:02:50 r3092 Davide Sangalli <davide.sangalli@gmail.com>
+2014-06-03 11:31:10 r3406 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.4.0
+	Version 4.0.0
 
-	*  io/ioQINDX.F
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- OLD ndb.kindx are re-computed by default
-
-	Patch sent by: Davide
-
-2013-12-20 02:10:59 r3091 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . config/configure.ac configure include/version.inc bz_ops/bz_samp_indexes.F collisions/.objects collisions/COLLISIONS_cohsex.F collisions/COLLISIONS_eval.F collisions/PLASMA_build_up.F collisions/PLASMA_parallel_setup.F collisions/PLASMA_tables_and_dimensions.F collisions/RT_EE_scattering_kinematics.F common/Fermi_fnc_fit.F io/ioQINDX.F modules/SET_defaults.F modules/mod_R_lattice.F modules/mod_SC.F modules/mod_functions.F modules/mod_plasma.F modules/mod_real_time.F parallel/PARALLEL_WF_distribute.F parallel/PARALLEL_live_message.F real_time/.objects real_time/RT_Collision.F real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_driver.F real_time/RT_impose_elel_conserves_E_and_N.F real_time/RT_initialize.F real_time/RT_observables.F real_time/RT_occupations_fit.F real_time/RT_relaxation.F wf_and_fft/WF_alloc.F ypp/RT_occupations_analyze.F ypp/YPP_RT_occupations_fit.F
+	*  config/configure.ac configure include/version.inc qp_ctl/OCCUPATIONS_IO_and_interpolate.F
 
 	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- merged with devel-davide. Main change: fixed collisions, now iGo_pmq is ok and electrons number is conserved
-
-	Patch sent by: Davide
-
-2013-12-12 14:20:16 r3070 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  config/configure.ac configure include/version.inc common/Fermi_fnc_fit.F common/HyperbolicSecant_FT.F modules/mod_pars.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_Fluence.F real_time/RT_G_retarded_convolution.F real_time/RT_driver.F real_time/RT_observables.F real_time/RT_occupations_fit.F real_time/RT_output.F ypp/RT_occupations_analyze.F ypp/YPP_RT_occupations_fit.F
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- Fixed RT_occupations_fit, now a chech is done on the quality of the FIT
-	- Few changes in the output:
-	  * RT_fluence removed from .dynamics file. Now only Etot, Nel and DeltaG are printed
-	  * headers removed from file created by RT_ocupations_analyze [ypp_rt]
-	  * Temperatures are printed only if (l_elel_scatt .or. l_elph_scatt)
-	 - Code cleaning: removed tol0 and tol2 from pars mod
-	- RIM removed from elel_scatt in view of the new implementation based on lifetimes ratio
-
-	Patch sent by: Davide
-
-2013-12-10 18:48:09 r3064 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . config/configure.ac configure include/version.inc collisions/PLASMA_build_up.F io/variables_SC.F real_time/RT_Coulomb_relaxation.F real_time/RT_driver.F ypp/RT_occupations_analyze.F ypp/YPP_RT_occupations_fit.F
-
-	Bugs:
-	- Fixed message (number of poles) in Plamsa_build_up
-	-
-	Additions:
-	-
-	Changes:
-	- Coulomb relaxation with RIM restored to old behaviour which produces
-	  wrong "blocks of occupations" in case only el-el scattering is active and which
-	  competes with el-ph, when also the latter is active, preventing the electrons
-	  from correctly thermalizing
-	- ypp_rt now plots also gamma(E) with f(E) at given T (-o tf)
-	- IO of occupations and gammas is done after evaluating the gammas
-	- (Partially) restored compatibility with old occupations DBs
-
-	Patch sent by: Davide
-
-2013-12-09 17:06:25 r3052 Andrea Marini <andrea.marini@cnr.it>
-
-	Missing file
-
-2013-12-09 15:58:54 r3050 Andrea Marini <andrea.marini@cnr.it>
-
-2013-12-09 13:45:14 r3049 Andrea Marini <andrea.marini@cnr.it>
-
-	Version 3.4.0
-
-	*  configure include/version.inc config/configure.ac qp/XCo_local.F acfdt/acfdt_tot_energy.F parallel/PARALLEL_global_indexes.F interface/init.F real_time/RT_initialize.F real_time/RT_start_and_restart.F real_time/RT_Collision.F real_time/RT_output.F real_time/RT_observables.F sc/SC_add_XC.F sc/SC_Energy.F tddft/tddft_alda_g_space.F io/io_COLLISIONS.F modules/mod_xc_functionals.F modules/mod_plasma.F modules/mod_interfaces.F bse/K.F collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_load.F collisions/Plasma_setup.F + + collisions/.objects collisions/COLLISIONS_eval.F collisions/Plasma_driver.F driver/yambo_driver.F
-
-	Bugs:
-	- Fixed bug introduced by the new XC_potential_driver interface
-
-	Changes:
-	- Created ad-hoc parallel routine for the Plasma and renamed all the Plasma
-	  routines.
-
-	*** SERIAL TESTS PASSED ***
-
-	Patch sent by: Andrea
-
-2013-12-08 19:33:25 r3044 Myrta Gruning <m.gruening@qub.ac.uk>
-
-	Version 3.4.0
-
-	*  . configure include/version.inc p2y/qexml_v4.0.F p2y/p2y_db1.F p2y/mod_p2y.F p2y/mod_pw_data.F int_modules/mod_xc2y.F config/configure.ac lib/libxc/configure io/ioDB1.F modules/mod_global_XC.F modules/mod_xc_functionals.F modules/SET_defaults.F xc_functionals/XC_potential_driver.F xc_functionals/XC_libxc_driver.F qp/XCo_local.F qp/XCo_driver.F
-
-	Bugs:
-	-
-	Additions: Interface for hybrids (B3LYP and PBE0 only) in p2y. In XCo_driver the matrix elements for B3LYP and PBE0 are calculated
-	-
-	Changes:
-	-
-	(Merged devel-myrta diffs into trunk)
-
-2013-12-08 18:59:43 r3042 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  config/Makefile.in config/configure.ac configure include/version.inc
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- e2y compiles
-
-	Patch sent by: Davide
-
-2013-12-08 18:03:59 r3040 Myrta Gruning <m.gruening@qub.ac.uk>
-
-	Version 3.4.0
-
-	*  config/Makefile.in
-
-	Bugs: Error in dependencies for interfaces libs prevented compilation when 'make interfaces' from clean
-	-
-	Additions:
-	-
-	Changes:
-	-
-
-2013-12-06 18:54:48 r3035 Andrea Marini <andrea.marini@cnr.it>
-
-	Bug fixed to pass TD-SEX in serial
-
-2013-12-06 15:41:46 r3033 Andrea Marini <andrea.marini@cnr.it>
-
-	Timing in openmp done using n_threads_now
-
-2013-12-06 14:30:57 r3032 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . config/configure.ac configure driver/ypp.h include/version.inc collisions/COLLISIONS_cohsex.F common/.objects common/FREQUENCIES_coarse_grid.F + interface/init.F interpolate/bz_interp_coeff.F interpolate/bz_interp_setup.F interpolate/bz_interpolation.F interpolate/eval_interpolation_coeff.F interpolate/fourier_interpolation.F io/.objects io/ioE_RIM.F + modules/.objects modules/mod_R_lattice.F modules/mod_SC.F modules/mod_interfaces.F modules/mod_interpolate.F modules/mod_plasma.F modules/mod_real_time.F parallel/PARALLEL_WF_distribute.F parallel/PARALLEL_global_indexes.F qp/Plasma_driver.F qp/Plasma_setup.F real_time/.objects real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_G_retarded_convolution.F real_time/RT_driver.F real_time/RT_impose_N_conservation.F + real_time/RT_initialize.F real_time/RT_k_grid.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_observables.F + real_time/RT_output.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F setup/setup.F ypp/.objects ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F ypp/RT_occupations_check.F + ypp/electrons_bands.F ypp/electrons_dos_and_charge.F ypp/electrons_driver.F ypp/k_random.F ypp/mod_YPP.F ypp/read_bxsf.F ypp/ypp_i.F ypp/ypp_init.F ypp/ypp_init_load.F
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- Merged with devel-davide:
-	  * Plasma is now a type
-	  * RIM dbs contains also kpts (tested only with RT RIM). RIM kpts are saved in the
-	    new elements of the bz_samp struture (%pt_RIM and %ptbz_RIM) as RIM energies are
-	    saved in the levels structure (%E_RIM)
-	  * ypp can interpolate occupations on the band structure also from a RIM run thanks to
-	    the new RIM structure and using Claudio's interplation subroutines (l_RT_bands)
-	  * FIT of the electrons and holes temperatures on the fly
-	  * Parallel global index for real-time are now based on EH_gas (plasma type).
-	    Names still to be improved
-	  * When the RT_rim structure is constructed (function RT_k_grid) a new structure is computed,
-	    RIM_closest_E(i_n,i_k_rim) = i_k which is closest in energy (within the same i_n)
-	  * Output file .dynamics now contains the Temperatures of the fit and the total energy.
-	    The components of the energy are written in the .energy output file
-	  * Mean carrier lifetimes are printed after they are computed.
-	  * RT_impose_N_conservation rewritten although it contains only the the N conservation for the moment
-	  * it_now for restart fixed
-	  * RT_occupations analyze structure improved
-
-	Patch sent by: Davide
-
-2013-12-06 11:58:36 r3026 Andrea Marini <andrea.marini@cnr.it>
-
-	merged with devel-andrea
-
-2013-12-06 09:02:10 r3023 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andrea
-
-2013-12-03 15:53:32 r3015 Andrea Marini <andrea.marini@cnr.it>
-
-	Version updated
-
-2013-12-03 15:53:18 r3014 Andrea Marini <andrea.marini@cnr.it>
-
-	Merge problems fixed. All non-RT tests passed with all possible CPU configurations
-
-2013-12-03 13:47:35 r3013 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andrea@r3012
-
-2013-11-29 17:49:53 r3002 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . configure include/version.inc collisions/COLLISIONS_cohsex.F collisions/COLLISIONS_load.F parallel/PARALLEL_global_indexes.F real_time/RT_Collision.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- Merged with devel-andrea
-
-	Patch sent by: Davide
-
-2013-11-28 17:45:55 r2993 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  configure include/version.inc collisions/COLLISIONS_cohsex.F interface/init_load.F modules/mod_parallel.F parallel/PARALLEL_WF_distribute.F parallel/PARALLEL_global_indexes.F real_time/RT_average_operator.F
-
-	Bugs:
-	- Fixed small bug. Parallelization over collisions seems working
-
-	Additions:
-	-
-	Changes:
-	-
-
-	Patch sent by: Davide
-
-2013-11-28 16:15:39 r2992 Davide Sangalli <davide.sangalli@gmail.com>
-
-	merged with devel-andrea
-
-2013-11-21 11:31:46 r2962 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  config/configure.ac configure include/version.inc
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- confiugre with "--enable-open-mp" option works also with gfortran
-
-	Patch sent by: Davide
-
-2013-11-20 17:15:31 r2958 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  config/configure.ac configure include/version.inc qp/Plasma_driver.F real_time/RT_initialize.F
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- Fixed output of total time and Plasma approximation
-
-	Patch sent by: Davide
-
-2013-11-19 13:43:27 r2954 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . config/configure.ac configure include/version.inc collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_linearize_and_IO.F collisions/COLLISIONS_load.F interface/init.F io/ioKB_abinit.F io/ioKB_pwscf.F real_time/RT_manual_excitation.F wf_and_fft/WF_load.F
-
-	Bugs:
-	- fixed bug with real collisions I/O (HF)
-	Additions:
-	-
-	Changes:
-	- merged with trunk/stable (bug fix for ioKB)
-	- merged with devel-andrea (bug fixes)
-	- RT_manual_excitations reverted to previous version, otherwise yambo did not overcome RT tests
-
-	Patch sent by: Davide
-
-2013-11-15 17:43:58 r2947 Davide Sangalli <davide.sangalli@gmail.com>
-
-	merged with devel-andrea
-
-2013-11-15 15:30:57 r2946 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  config/configure.ac configure include/version.inc collisions/COLLISIONS_load.F qp/Plasma_driver.F wf_and_fft/WF_load.F
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- Bug fixes for parallel runs
-
-	Patch sent by: Davide
-
-2013-11-15 12:37:12 r2941 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  config/configure.ac configure include/version.inc collisions/COLLISIONS_alloc_and_free.F interface/init_load.F
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- Hopefully this time collisions/COLLISIONS_alloc_and_free.F is ok ...
-
-	Patch sent by: Davide
-
-2013-11-15 11:34:57 r2940 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  config/configure.ac configure include/version.inc collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_eval.F modules/mod_interfaces.F parallel/PARALLEL_WF_distribute.F qp/Plasma_driver.F
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- Fixed bug in allocation-deallocation of collisions (COLLISIONS_alloc_and_free.F)
-	- yambo_rt now works in parallel, however the last level (Plasma) is still broken
-	- Plasma structure inside PARALLEL_WF_distribute is ok
-
-	Patch sent by: Davide
-
-2013-11-14 18:03:46 r2931 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  config/configure.ac configure include/version.inc
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- Fixed revision after previous commit
-	- Correct commit.msg file related to the previous commit:
-	  * Plasma structure introducted from my branch. Also started work for parallel
-	    Plasma structure. Still on working ...
-	  * Collisions v3 is now collisions%v3r for l_elel_sattering and
-	                         collisions%v3c for l_elel_sattering
-	  * Changed RT_impose_N_conservation
-	  * Removed several unused variables in ypp and in other subroutines
-	  * improved Hyperbolic_secant implementation
-	  * improved RT_manual_excitations in the RIM case.
-	  * Fixed the RT_io_steps and all related procedures.
-	    Now it=1 | T=0.      |   file=0
-	         .   |  .        |   .
-	        it=n | T=(n-1)*T |  file=(n-1)/RT_io_steps <--> if( (mod(n-1),RT_io_steps)==0 )
-	         .   |  .        |   .
-
-	Patch sent by: Davide
-
-2013-11-14 17:22:11 r2929 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . include/version.inc config/configure.ac configure xc_functionals/XC_libxc_driver.F
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- merged with trunk stable. Bug-fix imported
-	- fixed version numbering in config/configure.ac
-
-	Patch sent by: Davide
-
-2013-11-13 11:34:40 r2919 Andrea Marini <andrea.marini@cnr.it>
-
-	Small bugs in timing stop
-
-2013-11-12 18:02:01 r2918 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andrea@r2917
-
-2013-11-08 12:20:12 r2901 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . include/version.inc config/configure.ac configure xc_functionals/XC_libxc_driver.F
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- merged with trunk stable. Bug-fix imported
-	- fixed version numbering in config/configure.ac
-
-	Patch sent by: Davide
-
-2013-10-31 11:54:51 r2881 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andrea@r2880
-
-2013-10-30 12:46:52 r2868 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  include/version.inc configure parallel/PARALLEL_global_indexes.F wf_and_fft/WF_load.F
-
-	Bugs:
-	- gfortran asks for .eqv. instead of == when comparing two logicals
-	- B_mat_index is defined from SC_bands(1), loop fixed
+	- Small bug fix for ypp_rt
 	Additions:
 	-
 	Changes:
 	-
 	Patch sent by: Davide
 
-2013-10-30 11:12:53 r2865 Andrea Marini <andrea.marini@cnr.it>
+2014-05-30 18:36:26 r3404 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Merged with devel-andrea@2864
+	Created old_doubles branch
 
-2013-10-29 17:14:20 r2854 Andrea Marini <andrea.marini@cnr.it>
+2014-05-25 10:14:32 r3393 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Revision number updated
+	Version 4.0.0
 
-2013-10-29 17:13:48 r2853 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andre@r2849
-
-2013-10-29 12:25:50 r2844 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  modules/SET_defaults.F common/OCCUPATIONS_Fermi.F real_time/RT_manual_excitation.F include/version.inc config/configure.ac configure
-
-	Bugs:
-	- Fixed bug in OCCUPATIONS_Fermi
-	Additions:
-	-
-	Changes:
-	- Input energy for RT_manual_excitations is not changed by yambo
-	- IO_time set by default to 0.5 fs
-
-	Patch sent by: Davide
-
-2013-10-28 12:47:20 r2830 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . config/configure.ac ypp/RT_occupations_check.F ypp/RT_occupations_analyze.F include/version.inc driver/yambo_driver.F driver/yambo.h configure parallel/PARALLEL_global_indexes.F io/io_COLLISIONS.F io/COLLISIONS_load.F io/variables_SC.F modules/SET_defaults.F modules/mod_electrons.F modules/mod_collisions_IO.F modules/mod_real_time.F modules/mod_drivers.F qp/QP_newton.F qp/QP_of.F qp/QP_driver.F qp/QP_descriptions.F qp/COLLISIONS_cohsex.F qp/COLLISIONS_store.F qp/QP_report_and_write.F qp/ELPH_Sigma_c.F qp/COLLISIONS_eval.F qp_ctl/mod_QP_CTL.F setup/QP_external_corrections.F setup/QP_state_table_setup.F interface/init_load.F interface/init.F interface/barriers.F real_time/RT_observables.F real_time/RT_databases_IO.F real_time/RT_initialize.F real_time/RT_start_and_restart.F real_time/RT_driver.F real_time/RT_impose_N_conservation.F real_time/RT_ELPH_initialize.F real_time/RT_ELPH_zeroing.F real_time/RT_manual_excitation.F real_time/RT_relaxation.F common/OCCUPATIONS_Extend.F common/OCCUPATIONS_Fermi.F
+	*  config/configure.ac configure driver/ypp.h include/version.inc io/io_RIM_E_and_k.F_project real_time/RT_k_grid.F ydb/ydb_i.F ypp/.objects + ypp/k_map_fine_to_coarse.F_project ypp/k_random.F ypp/k_random.F_project ypp/mod_YPP.F ypp/ypp_i.F ypp/ypp_init.F ypp/ypp_init_load.F
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- Merged with devel-davide:
-	  1) Energy references are now relative to Valence Band Maximum (VBM) and
-	     Conduction Band minimum (CBm). E_VBM and E_CBm are now part of the levels structure.
-	  2) Logicals and runlevels reorganized:
-	     * yambo_ph/yambo_rt -c [(e)lectrons/(p)honons/(b)oth] controls
-	       l_elel_corr  and l_elph_corr  refer to equilibrium     self-energy
-	     * yambo_rt -s [(e)lectrons/(p)honons/(b)oth] controls
-	       l_elel_scatt and l_elph_scatt refer to out-of-equirium self-energy = Scattering terms
-	  3) "rim_cut" runlevel is now yambo -r
+	- k_random spit in two subroutines:
+	  * k_random: it generates a grid of random kpts
+	  * k_map_fine_to_coarse: it maps the points in the fine grid to the points of the coarse grid
+	- Still working on k_map_fine_to_coarse project (k_map_fine_to_coarse.F_project and io_RIM_E_and_k.F_project)
 
 	Patch sent by: Davide
 
-2013-10-23 16:17:58 r2817 Davide Sangalli <davide.sangalli@gmail.com>
+2014-05-24 15:43:33 r3392 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.4.0
+	Version 4.0.0
 
-	*  config/configure.ac config/Makefile.in configure qp_ctl/QP_apply_global_stretch.F real_time/RT_impose_N_conservation.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_driver.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_Coulomb_relaxation.F real_time/RT_Collision.F common/OCCUPATIONS_Fermi.F include/version.inc
-
-	Bugs:
-	- Fixed a couple of bugs in carrier dynamics with el-el scattering and RIM
-	- e2y now compiles also in the trunk/devel (thanks Conor)
-	Additions:
-	-
-	Changes:
-	- The Fermi level is now always in the middle between the VBM and the CBm, also at T=0
-
-	Patch sent by: Davide
-
-2013-10-22 14:42:53 r2812 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Fixed wrong merge with my branch
-
-2013-10-22 14:26:22 r2811 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . ypp/RT_occupations_repair.F ypp/RT_occupations_analyze.F ypp/electrons_dos_and_charge.F ypp/RT_occupations_FIT.F include/version.inc config/configure.ac configure modules/mod_real_time.F modules/SET_defaults.F common/HyperbolicSecant_FT.F interface/init_load.F interface/init.F real_time/RT_start_and_restart.F real_time/RT_k_grid.F real_time/RT_impose_N_conservation.F real_time/RT_G_retarded_EP_initialize.F real_time/RT_ELPH_initialize.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_ELPH_total_Kernel.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_G_retarded_convolution.F io/io_RT_components.F io/variables_SC.F
+	*  config/configure.ac configure include/version.inc interpolate/bz_interp_coeff.F interpolate/fourier_interpolation.F modules/mod_R_lattice.F real_time/RT_Collision.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_EULEREXP_step.F real_time/RT_Fluence.F real_time/RT_G_retarded_convolution.F real_time/RT_Integrator.F real_time/RT_apply_RWA.F real_time/RT_apply_field.F real_time/RT_average_operator.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_k_grid.F real_time/RT_relaxation.F ypp/electrons_bands.F ypp/k_random.F ypp/k_random.F_project
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- Merged with devel-davide:
-	  * fixed bug in RT_impose_nel_conservation
-	  * fixed restart with RIM
-	  * ypp_rt -t o? works alo without RIM. do with RT still to be fixed
+	- DS inserted among the authours for he subroutines which have signifacantly modified
+	- Created k_random project to finalize the implementation of the RIM with the structure
+	  A) ik_ibz              --> Cloud(ik_ibz)                       points in the IBZ of the fine grid
+	  B) ik_bz=R[ik_ibz,is]  --> Cloud(ik_bz) =R[Cloud(ik_ibz),is]   points in the  BZ of the fine grid
+	  Once constructed the mapping "A" between points in the IBZ of the fine and the coarse grid,
+	  thanks to the option rotate_k_ref in k_the_nearest, the mapping "B" is trivial
 
 	Patch sent by: Davide
 
-2013-10-15 10:41:09 r2786 Davide Sangalli <davide.sangalli@gmail.com>
+2014-05-21 16:19:26 r3384 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.4.0
+	Version 4.0.0
 
-	*  . config/configure.ac ypp/k_random.F ypp/ypp_init_load.F ypp/ypp_init.F ypp/RT_occupations_analyze.F include/version.inc configure real_time/RT_G_retarded_EE_initialize.F real_time/RT_initialize.F real_time/RT_start_and_restart.F real_time/RT_G_retarded_EP_initialize.F io/variables_SC.F modules/mod_real_time.F modules/SET_defaults.F modules/mod_com.F of conflicts:
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- merged with devel-davide:
-	  * cleaned code from Gred DB
-	  * working on ypp_rt with RIM (likely ypp_rt withou RIM is not working now...)
-
-	Patch sent by: Davide
-
-2013-10-11 18:48:03 r2777 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . qp_ctl/QP_apply_global_stretch.F modules/mod_SC.F modules/SET_defaults.F modules/mod_real_time.F common/HyperbolicSecant_FT.F bz_ops/bz_samp_indexes.F interface/init_load.F interface/init.F real_time/RT_start_and_restart.F real_time/RT_G_retarded_EP_initialize.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_G_retarded_convolution.F real_time/RT_manual_excitation.F real_time/RT_ELPH_CCA_Kernel.F io/.objects io/io_G_retarded.F config/configure.ac ypp/RT_G_retarded_frequency.F ypp/mod_YPP.F ypp/.objects ypp/ypp_init_load.F ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F ypp/ypp_init.F ypp/RT_G_retarded.F ypp/RT_occupations_check.F ypp/ypp_i.F include/version.inc driver/ypp.h configure
+	*  config/configure.ac configure include/version.inc real_time/RT_k_grid.F
 
 	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- merged with devel-davide:
-	  * Gret removed fom ypp, now can be decided in input
-	  * fixed Efermi shift for manual_excitations and E%W
-	  * ypp_rt -t of and -t op is now working with RIM (maybe it is not without RIM...)
-
-	Patch sent by: Davide
-
-2013-10-10 14:11:28 r2773 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . configure common/.objects + config/configure.ac ypp/RT_occupations_analyze.F ypp/RT_occupations_FIT.F include/version.inc of conflicts:
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- merged with devel-davide
-
-	Patch sent by: Davide
-
-2013-10-10 14:09:56 r2772 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andrea@2771
-
-2013-10-10 12:04:58 r2769 Davide Sangalli <davide.sangalli@gmail.com>
-
-	fixed small compilation issue
-
-2013-10-10 11:48:43 r2768 Davide Sangalli <davide.sangalli@gmail.com>
-
-	merged with trunk stable
-
-2013-10-09 18:31:59 r2764 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . e2y/e2y_i.F e2y/etsf_data.F e2y/e2y_kb_pp.F e2y/e2y_wf.F e2y/.objects e2y/e2y_db1.F int_modules/mod_xc2y.F include/version.inc driver/e2y.h configure pol_function/Dipole_shifted_grids.F io/ioDB1.F modules/mod_vec_operate.F sbin/make_makefile.sh.in config/configure.ac ypp/ypp_init.F
-
-	Bugs:
-	-
-	Additions:
-	-
-	Changes:
-	- Merged with trunk stable up to rev 2673
-
-	Patch sent by: Davide
-
-2013-10-09 18:23:45 r2763 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andrea@2761
-
-2013-10-07 18:46:55 r2753 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  include/version.inc configure real_time/RT_G_retarded_EP_initialize.F
-
-	Bugs:
-	- Fixed an old bug due to a typo "i_s" instead of "is"
+	- [YPP_RT] small bug in the interpolation of the occupations via electrons_bands
 	Additions:
 	-
 	Changes:
 	-
 	Patch sent by: Davide
 
-2013-09-20 09:22:11 r2736 Davide Sangalli <davide.sangalli@gmail.com>
+2014-05-19 18:04:28 r3380 Davide Sangalli <davide.sangalli@gmail.com>
 
-	removed debug lines I left with the last commit
+	merged with trunk devel
 
-2013-09-19 14:37:13 r2734 Davide Sangalli <davide.sangalli@gmail.com>
+2014-05-19 16:44:25 r3379 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.4.0
+	Version 4.0.0
 
-	*  wf_and_fft/WF_load.F qp/COLLISIONS_cohsex.F ypp/ypp_init.F ypp/k_random.F ypp/ypp_init_load.F include/version.inc configure
-
-	Bugs:
-	- Fixed bug in k_random introduced after merge with trunk stable
-	- "RT-X" renamer "RT_X" because the "-" symbol is not correcty handled by the parser
-	- mem est error fixed in COLLISIONS_cohsex.F
-	Additions:
-	-
-	Changes:
-	- WF_load allocation temporary restored to wf_nb_io to make the code work in linear respone
-	  calculations. To introduce a smaller allocation one should likely change the io_dimensions in ioWF
-
-	Patch sent by: Davide
-
-2013-09-18 17:33:34 r2730 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andrea@2729
-
-2013-09-18 12:10:57 r2728 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  configure interface/init.F include/version.inc
+	*  config/configure.ac configure include/version.inc real_time/RT_observables.F real_time/RT_start_and_restart.F
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- reverted commit r2710 by AndreaM to interface/init.F otherwise
-	  yambo_devel is running by default the em1d runlevel
-	- fixed enable_keep_src flag in yambo/devel
+	- Other small change related to total energy.
+	  The flags which control the energy and the TD run however should be updated.
+	  The present implementation is a mess...
+
+	  Now there are two independent ways of controlling the kind of run:
+	  1) XCfrozen and Hfrozen which controls the flags l_NE_simulate_IP, l_NE_simulate_RPA, l_NE_simulate_IRR
+	  2) The value of l_local, which is defined by the value of potential='default' is controlling the
+	     flags l_NE_simulate_TDDFT and l_NE_simulate_BSE.
+
+	  The net result is that for example a simulation with in the input
+	  * XCfrozen
+	  * potential='HARTREE'
+	  give as a result
+	  l_NE_simulate_TDDFT=.true. which is a non-sense. The are many bad cases ...
+
+	  I think the best thing would be to remove the flags XCfrozen and Hfrozen and
+	  decide everything via the string potential=' *** '.
+	  This is also related to the l_elel_corr runlevel which presently is used almost only by
+	  yambo elph and which instead should be the runlevel which is associated to the potentail=' *** '
+	  variable. The same thing should be done for the scattering term
+
+	  l_elel_corr  --> potential = "IP - HARTREE - default=DFT - COHSEX - ..."
+	  l_elel_scatt --> scatt     = "GW" is the only avalable presently
 
 	Patch sent by: Davide
 
-2013-09-17 11:32:39 r2725 Davide Sangalli <davide.sangalli@gmail.com>
+2014-05-19 12:31:55 r3378 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.4.0
+	Version 4.0.0
 
-	*  . io/ioBSS_invert.F qp/ELPH_Hamiltonian.F lib/libxc/configure ypp/k_random.F ypp/fix_PPs.F include/version.inc configure
+	*  config/configure.ac configure include/version.inc real_time/RT_observables.F sc/V_qp_basis_to_H.F
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- Merged with trunk/stable up to last revision
+	- Definition of energies fixed.
+	  However the COHSEX case I think the expression < Sigma_COHSEX > is not
+	  the correct one. The Galitskii Migdal equation should give the right result.
 
 	Patch sent by: Davide
 
-2013-09-17 11:13:57 r2724 Davide Sangalli <davide.sangalli@gmail.com>
+2014-05-19 11:13:55 r3377 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.4.0
+	Version 4.0.0
 
-	*  . io/ioELPH.F setup/QP_external_corrections.F
+	*  config/configure.ac configure include/version.inc real_time/RT_Collision.F real_time/RT_start_and_restart.F
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- merge with trunk/stable up to rev 2500 completed with the small changes left.
+	- Also Hartree term is directly written in terms of dG <--> delta_rho
 
 	Patch sent by: Davide
 
-2013-09-17 10:50:47 r2723 Davide Sangalli <davide.sangalli@gmail.com>
+2014-05-19 10:19:27 r3376 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.4.0
+	Version 4.0.0
 
-	*  . include/version.inc configure modules/mod_real_time.F modules/SET_defaults.F interface/init.F sc/SC_bare_Hamiltonian.F + ypp/ELPH_databases.F ypp/mod_YPP.F ypp/ypp_init.F ypp/ypp_init_load.F
+	*  config/configure.ac configure include/version.inc real_time/RT_Collision.F real_time/RT_apply_field.F
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- Merged with trunk up to rev2500.  Subroutines excluded from merging:
-	* src/real_time/RT_start_and_restart.F
-	* src/real_time/RT_initialize.F
-	* src/qp/COLLISIONS_IO_eval.F
-	* src/qp/COLLISIONS_IO_cohsex.F
-	* src/qp/COLLISIONS_IO_compose.F
+	- Double Grid (in yambo called E_RIM...) inserted also in the dipoles
+	  DIP_iR(:)=DIP_P(:)*deltaE/deltaE_RIM.
+	  Shouldn't we use this also in the standard BSE ? I should check which of the two
+	  implementations is gauge invariant to decide which is the best one...
 
 	Patch sent by: Davide
 
-2013-09-11 16:00:55 r2710 Andrea Marini <andrea.marini@cnr.it>
+2014-05-18 15:10:20 r3371 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Merged with devel-andrea@2709
+	Version 4.0.0
 
-2013-09-04 12:52:12 r2695 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andrea@2694
-
-2013-09-04 12:45:00 r2693 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . configure common/TEMPERATURE_Debye.F interface/init_load.F real_time/RT_ELPH_initialize.F real_time/RT_driver.F ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F include/version.inc
+	*  config/configure.ac configure include/version.inc real_time/RT_EULEREXP_step.F real_time/RT_Integrator.F real_time/RT_build_U1_and_U2.F
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- merged with devel davide:
-	  TEMPERATURE_Debye improved
-	  Occuations_FIT output restyling
+	- Also EXP integrator is now implemented in a "sensitive way".
+	  Comparison against linear integrator seems to give better descriptio of the coupling with the external field
+	  From now on "RK2 + RWA + EXP" scheme to be preferred
 
 	Patch sent by: Davide
 
-2013-08-31 11:12:12 r2681 Davide Sangalli <davide.sangalli@gmail.com>
+2014-05-12 16:10:25 r3338 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.4.0
+	Version 4.0.0
 
-	*  include/version.inc configure driver/ypp.h ypp/ypp_init.F ypp/ypp_init_load.F ypp/RT_occupations_repair.F ypp/electrons_driver.F ypp/RT_occupations_analyze.F ypp/RT_occupations_FIT.F ypp/mod_YPP.F ypp/RT_occupations_check.F ypp/ypp_i.F
+	*  config/configure.ac configure include/version.inc modules/mod_interpolate.F ypp/electrons_bands.F
 
 	Bugs:
-	- Now RT_occ_repair works aso if the QP range in input is different from
-	  the range defined by SC_bands
-	- Fixed another but in RT_occupations_repair
+	-
 	Additions:
 	-
 	Changes:
-	- RToccFit and RToccPot are now two differet runlevels
-	- cleaning of unused variables
+	- Bands and occupations interpolation is working again
 
 	Patch sent by: Davide
 
-2013-08-30 18:32:31 r2679 Andrea Marini <andrea.marini@cnr.it>
+2014-05-10 19:27:51 r3333 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Wrong merge of RT_observables.F fixed
+	Version 4.0.0
 
-2013-08-30 17:21:38 r2677 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andrea@2676
-
-2013-08-29 14:19:37 r2666 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  io/io_P_and_P2.F real_time/RT_current_AND_polarization.F real_time/RT_start_and_restart.F include/version.inc configure
+	*  config/configure.ac configure include/version.inc real_time/RT_apply_RWA.F
 
 	Bugs:
-	- Now parallel runs and restart in parallel works on my laptop also with "DEBUG" flags
+	- Bug-Fix of the Bug-Fix :-(
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2014-05-10 13:09:55 r3327 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc modules/mod_real_time.F real_time/RT_Collision.F real_time/RT_Integrator.F real_time/RT_apply_RWA.F
+
+	Bugs:
+	- RT_apply_RWA. Fixed another bug introducedd with the new implementation.
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2014-05-10 12:30:30 r3326 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  . config/configure.ac configure include/version.inc real_time/RT_impose_zero_dE_and_dN.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- RT_impose restored for equilibrium LF. Could be needed for metals ...
+
+	Patch sent by: Davide
+
+2014-05-10 10:21:38 r3324 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc real_time/RT_impose_zero_dE_and_dN.F real_time/RT_relaxation.F
+
+	Bugs:
+	- Equilibrium lifetimes must not be imposed. They were in the wrong way
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2014-05-06 15:26:10 r3320 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc qp_ctl/OCCUPATIONS_IO_and_interpolate.F ypp/RT_occupations_analyze.F ypp/RT_occupations_check.F ypp/electrons_dos_and_charge.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [YPP_RT] First fix. The struture should be improved, but at least now it works
+
+	Patch sent by: Davide
+
+2014-05-06 11:35:47 r3318 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk
+
+2014-05-03 11:41:20 r3315 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  configure include/version.inc config/configure.ac real_time/RT_apply_RWA.F real_time/RT_Integrator.F real_time/RT_Collision.F modules/mod_real_time.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- RT_apply_RWA subroutine makes the integrator much slower due to the
+	  call to the imaginary exp function.
+	  In a run with only the elph scatt channel and dyn_step 2.5 fs the code
+	  was spending more time in RT_apply_RWA then in RT_ELPH_CCA_kernel
+	  Implementation has been optimized with a consisten speed up.
+
+	Patch sent by: Davide
+
+2014-04-27 18:50:03 r3310 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  configure include/version.inc config/configure.ac interface/init.F real_time/RT_Lifetimes_evaluation_plan.F real_time/RT_Coulomb_relaxation.F io/io_COLLISIONS.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- io_Collision: l_elel_scatt is written only if V_kind is GW_NEQ,
+	  also erased compatibility with old GW_NEQ databases and HH/COHSEX
+	  databases which had l_elel_scatt logical
+	- RT_eh_en used also for plasma energies in Coulomb relaxation. This gives a consistent
+	  speed up (a factor ~3) on a run on Silicon with RT_eh_en=(-3,4.5) against a common
+	  run. It should be implemented directly in the Plasma construction to reduce
+	  the dimension of the GW_NEQ collisions ...
+
+	Patch sent by: Davide
+
+2014-04-24 11:29:00 r3307 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc real_time/RT_initialize.F
+
+	Bugs:
+	- Flags do not need to be updated any-more but must be defined ...
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2014-04-24 10:26:57 r3306 Davide Sangalli <davide.sangalli@gmail.com>
+
+	small changes
+
+2014-04-23 13:34:00 r3304 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc io/io_RT_components.F modules/mod_real_time.F real_time/RT_Lifetimes_evaluation_plan.F real_time/RT_databases_IO.F real_time/RT_driver.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F
+
+	Bugs:
+	- Restart fixed
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2014-04-23 11:06:47 r3303 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc io/io_RT_components.F io/variables_SC.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [RT] Restart seems ok, although I still have small differences with a common run.
+	       ypp_rt however need to be updated
+
+	Patch sent by: Davide
+
+2014-04-22 09:02:18 r3302 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc real_time/RT_relaxation.F
+
+	Bugs:
+	- Fixed small bug. Yambo_rt was crashing if no scattering and no dephasing were used
+
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2014-04-18 21:39:23 r3301 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  . configure include/version.inc interface/init_load.F modules/SET_defaults.F modules/mod_real_time.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_G_retarded_convolution.F real_time/RT_Lifetimes_Interpolation.F real_time/RT_initialize.F real_time/RT_start_and_restart.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Introduced RT_eh_en: the RT states can be selected by means of an energy window
+	- Restored 2 conditions in the G_retarded_convolution subroutin:
+	  * One is needed to avoid unphysical transition
+	  * One is just used to speed up the calculation as a possible approximation
+	    controlled by the variable RT_scatt_tresh which specify the maximum value of
+	    the energy violation during a scattering process
+	 - Removed Update flag subroutine. Presently it is usless.
+	 - Lifetime interpolation (extrapolation) now always uses constant lifetimes.
+	   It is less precise but much more stable.
+	 - Init to load variables reordered
+
+	Patch sent by: Davide
+
+2014-04-16 15:26:11 r3295 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk devel
+
+2014-04-16 15:01:34 r3290 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  . config/configure.ac include/version.inc coulomb/rim_spherical.F qp/ELPH_gsqF_to_Sigma.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_ELPH_initialize.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_relaxation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- merged with trunk devel
+
+	Patch sent by: Davide
+
+2014-04-11 10:32:43 r3280 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  real_time/RT_driver.F real_time/RT_relaxation.F real_time/RT_Fluence.F real_time/RT_Lifetimes_evaluation_plan.F real_time/RT_average_operator.F real_time/RT_output.F real_time/RT_observables.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- All variables in output expressed in terms of dG_lesser
+
+	Patch sent by: Davide
+
+2014-04-08 18:12:06 r3277 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc interface/init.F interface/init_load.F io/io_RIM_E_and_k.F modules/mod_electrons.F modules/mod_real_time.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_ELPH_total_Kernel.F real_time/RT_initialize.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- TEST: updating life-times on the flight
+
+	Patch sent by: Davide
+
+2014-04-08 15:42:56 r3276 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  configure include/version.inc config/configure.ac real_time/RT_impose_zero_dE_and_dN.F real_time/RT_ELPH_initialize.F
+
+	Bugs:
+	- Two small bug-fix
 	Additions:
 	-
 	Changes:
@@ -1098,154 +715,2243 @@
 
 	Patch sent by: Davide
 
-2013-08-29 13:45:12 r2665 Davide Sangalli <davide.sangalli@gmail.com>
+2014-04-08 09:06:14 r3275 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.4.0
+	Version 4.0.0
 
-	*  include/version.inc configure io/io_DIPOLES.F
-
-	Bugs:
-	- RT restart is now working.
-	Additions:
-	-
-	Changes:
-	-
-	Patch sent by: Davide
-
-2013-08-27 18:12:52 r2661 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . modules/mod_real_time.F real_time/RT_Fluence.F real_time/RT_observables.F real_time/RT_initialize.F include/version.inc configure
+	*  configure include/version.inc config/configure.ac interface/init_load.F interface/init.F real_time/RT_initialize.F real_time/RT_relaxation.F real_time/RT_impose_zero_dE_and_dN.F modules/mod_real_time.F modules/SET_defaults.F
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- code speed-up from devel-davide: RT_fluence computation modified
+	- RIM_EE_percent can be given in input
+	- Impose called before saving lifetimes
 
 	Patch sent by: Davide
 
-2013-08-26 14:26:47 r2653 Davide Sangalli <davide.sangalli@gmail.com>
+2014-04-06 19:00:58 r3274 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.4.0
+	Version 4.0.0
 
-	*  include/version.inc configure parallel/PARALLEL_get_user_structure.F setup/PARALLEL_and_IO_Setup.F modules/mod_parallel.F
+	*  configure include/version.inc config/configure.ac real_time/RT_k_grid.F real_time/RT_initialize.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_average_operator.F real_time/RT_Coulomb_relaxation.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_observables.F modules/mod_real_time.F
 
 	Bugs:
-	- Fixed two errors introduced with the last commit
+	-
+	Additions:
+	-
+	Changes:
+	- RT_k_grid now work properly.
+	  New RIM_EE_percent variable decide how many of the RIM points will be used
+	  in the computation of the EE lifetimes, 0. means as few as possible, 100.
+	  means all the points in the RIM
+	- Fixed computation of total energy with RIM. Previous one was wrong. This is
+	  the reason for the drift observed
+	- RT_impose rewritten in terms of dGamma*f_occ + Gamma0*df_occ to improve precision
+
+	Patch sent by: Davide
+
+2014-04-06 01:05:00 r3273 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc interface/init.F interface/init_load.F modules/mod_real_time.F real_time/RT_Coulomb_relaxation.F real_time/RT_initialize.F real_time/RT_k_grid.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- RIM_EE_percent controls how many points of the rims are actually used (k-q kpt)
+	  to compute the lifetimes for the k kpt. Also the mapping k --> k-q has been
+	  improved
+
+	Patch sent by: Davide
+
+2014-04-04 15:19:53 r3271 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc modules/mod_real_time.F real_time/RT_Lifetimes_merge.F real_time/RT_k_grid.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Code cleaning
+
+	Patch sent by: Davide
+
+2014-04-04 15:12:59 r3270 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/Makefile.in config/configure.ac configure include/version.inc real_time/.objects real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_Lifetimes_merge.F real_time/RT_Lifetimes_save_and_interp.F real_time/RT_mean_carrier_lifetimes.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Code cleanings: removed old RT_Coulomb_interpolation
+
+	Patch sent by: Davide
+
+2014-04-04 14:47:53 r3269 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc coulomb/rim_spherical_bose.F modules/mod_real_time.F real_time/.objects real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_initialize.F real_time/RT_ELPH_total_Kernel.F real_time/RT_Lifetimes_merge.F real_time/RT_initialize.F real_time/RT_k_grid.F
+
+	Bugs:
+	- Fixed few bugs for the NEW version of the EE RIM
+	  Implementation still needs to be improved
+	Additions:
+	-
+	Changes:
+	- Still working on q-->0 integral of EP scattering
+
+	Patch sent by: Davide
+
+2014-04-04 10:59:33 r3268 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Forgotten svn add
+
+2014-04-04 10:47:16 r3267 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc modules/mod_real_time.F qp/ELPH_Sigma_c.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_ELPH_initialize.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_initialize.F real_time/RT_k_grid.F real_time/RT_relaxation.F ypp/RT_occupations_analyze.F ypp/electrons_bands.F
+
+	Bugs:
+	- Implementation of q->0 integral for elph scattering: fixed some bugs
+	Additions:
+	-
+	Changes:
+	- Found a simple way to spin-up consistently ee_scatt+RIM in a Nel conserving way.
+	  Code implemented, to be tested
+
+	Patch sent by: Davide
+
+2014-04-03 16:59:03 r3266 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc coulomb/.objects io/io_RT_components.F modules/mod_ELPH.F modules/mod_real_time.F qp/ELPH_Sigma_c.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_ELPH_initialize.F real_time/RT_ELPH_total_Kernel.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_relaxation.F
+
+	Bugs:
+	-
+	Additions:
+	- Implementation of q-->0 limit of elph_lifetimes,
+	  to be changed the I/O of the weights
+	Changes:
+	- Now IO writes the full lifetimes, not just the variation
+	  [CODES COMPILES, TO BE TESTED]
+
+	Patch sent by: Davide
+
+2014-04-02 15:59:35 r3265 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc interface/init_load.F modules/mod_real_time.F real_time/RT_DEPHASING_step.F real_time/RT_Lifetimes_Interpolation.F real_time/RT_Lifetimes_equilibrium.F real_time/RT_Lifetimes_merge.F real_time/RT_Lifetimes_save_and_interp.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_initialize.F real_time/RT_relaxation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Lifetimes dynamics is based on Gamma_0 and dGamma.
+	  RT_impose could be improved also in thi direction
+
+	Patch sent by: Davide
+
+2014-04-02 09:59:43 r3262 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  configure include/version.inc config/configure.ac real_time/RT_relaxation.F real_time/RT_Integrator.F real_time/RT_Lifetimes_Interpolation.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Constant Lifetimes option created
+	- ypp rt plot_occ with double grid plots only occupations on small grid Kpts
+
+	Patch sent by: Davide
+
+2014-04-01 16:55:05 r3260 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc interface/init_load.F modules/mod_real_time.F real_time/RT_Integrator.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_initialize.F real_time/RT_relaxation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Symmetrization conditions after time integration restored
+	- Option to keep life-times fixed created
+
+	Patch sent by: Davide
+
+2014-04-01 14:04:10 r3259 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  . ChangeLog config/configure.ac configure include/version.inc real_time/RT_G_retarded_convolution.F real_time/RT_Lifetimes_merge.F real_time/RT_relaxation.F
+
+	Bugs:
+	- ypp_rt now compiles
+	Additions:
+	-
+	Changes:
+	- changelog updated
+	- removed energy conditions from Gret_convolution
+
+	Patch sent by: Davide
+
+2014-03-31 15:34:17 r3254 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc real_time/RT_Coulomb_relaxation.F real_time/RT_relaxation.F
+
+	Bugs:
+	- Fixed one more bug. ELPH scattering now works correctly also finite temperature
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2014-03-31 14:54:17 r3253 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc modules/mod_real_time.F real_time/RT_Lifetimes_use_delta_Occupations.F
+
+	Bugs:
+	- REF_lifetime divided by real(ncpu)
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2014-03-31 13:59:42 r3252 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Forgot svn add
+
+2014-03-31 12:11:49 r3251 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc real_time/.objects real_time/RT_Lifetimes_save_and_interp.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F
+
+	Bugs:
+	- Bug fix imported from devel-andrea.
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2014-03-31 11:07:36 r3249 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc common/HyperbolicSecant_FT.F real_time/RT_Coulomb_relaxation.F real_time/RT_Lifetimes_equilibrium.F real_time/RT_start_and_restart.F
+
+	Bugs:
 	- Small bug fix
 	Additions:
 	-
 	Changes:
 	-
-
 	Patch sent by: Davide
 
-2013-08-26 14:24:21 r2652 Andrea Marini <andrea.marini@cnr.it>
+2014-03-31 00:02:45 r3248 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Merged with devel-andrea@2651
+	Version 4.0.0
 
-2013-08-26 08:20:02 r2649 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . ypp/ypp_i.F ypp/ypp_init.F ypp/ypp_init_load.F ypp/RT_occupations_repair.F ypp/electrons_driver.F ypp/RT_occupations_analyze.F ypp/RT_occupations_FIT.F ypp/mod_YPP.F ypp/electrons_dos_and_charge.F include/version.inc configure driver/ypp.h
-
-	Bugs:
-	- Fixed small bug in parallelization
-	Additions:
-	-
-	Changes:
-	- Improved Fermi function FIT subroutine
-	- RT_dos and RT_occupations analysis in ypp reorganized
-
-	Patch sent by: Davide
-
-2013-08-20 15:51:41 r2644 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . configure include/version.inc ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F
-
-	Bugs:
-	- Fixed small bug in ypp/RT_occupations_analyze.F
-	Additions:
-	-
-	Changes:
-	- small improvements in temperature FIT
-
-	Patch sent by: Davide
-
-2013-08-13 13:11:58 r2642 Davide Sangalli <davide.sangalli@gmail.com>
-
-	merged with devel-davide
-
-2013-08-08 16:15:47 r2627 Andrea Marini <andrea.marini@cnr.it>
-
-2013-08-08 16:12:46 r2626 Andrea Marini <andrea.marini@cnr.it>
-
-	Merged with devel-andrea@2625
-
-2013-08-05 10:38:35 r2608 Andrea Marini <andrea.marini@cnr.it>
-
-	Fixed wrong logicals in external QP database I/O
-
-2013-07-19 16:46:26 r2587 Davide Sangalli <davide.sangalli@gmail.com>
-
-	merged with devel-andrea
-
-2013-07-15 18:20:37 r2577 Davide Sangalli <davide.sangalli@gmail.com>
-
-	merged with devel-andrea
-
-2013-07-12 09:26:15 r2567 Davide Sangalli <davide.sangalli@gmail.com>
-
-	Version 3.4.0
-
-	*  . config/configure.ac configure include/version.inc modules/SET_defaults.F qp/XCo_local.F ypp/RT_occupations_analyze.F ypp/RT_occupations_check.F
+	*  config/configure.ac configure include/version.inc interface/init.F interface/init_load.F modules/mod_real_time.F real_time/RT_Collision.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_ELPH_total_Kernel.F real_time/RT_GAMMA_save_and_interp.F real_time/RT_Integrator.F real_time/RT_Lifetimes_Interpolation.F real_time/RT_Lifetimes_save_and_interp.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_driver.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_output.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- Merged with devel-davide: XCo_local computes hermitian part
-	                            changed how ypp_rt -s o uses logicals
+	- The code now computes just the change to the equilibrium lifetimes.
+	  The implementation should be extended to the integrator, with two separate inegrator
+	  for the equilibrium lifetimes and for the delta lifetimes.
+	  Part of the codes comes from Andrea's implementation and I did not change it becouse
+	  I do not fully understand the idea behind it.
+
 	Patch sent by: Davide
 
-2013-07-11 12:06:17 r2548 Davide Sangalli <davide.sangalli@gmail.com>
+2014-03-29 19:02:14 r3247 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.4.0
+	Version 4.0.0
 
-	*  . config/acx_report.m4 config/configure.ac config/report.in configure doc/README.branches_and_trunk driver/driver.c driver/ydb.h include/version.inc modules/mod_parallel.F sc/V_real_space_to_H.F ydb/ydb_i.F ypp/electrons_dos_and_charge.F
+	*  config/Makefile.in config/configure.ac config/report.in config/setup.in configure include/version.inc lib/dierckx lib/dierckx/.objects lib/dierckx/fpbacp.f lib/dierckx/fpbspl.f lib/dierckx/fpchep.f lib/dierckx/fpdisc.f lib/dierckx/fpgivs.f lib/dierckx/fpknot.f lib/dierckx/fpperi.f lib/dierckx/fprati.f lib/dierckx/fprota.f lib/dierckx/percur.f lib/dierckx/splev.f sbin/make_makefile.sh.in common/.objects common/spline_fit.F real_time/RT_Integrator.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_manual_excitation.F
+
+	Bugs:
+	- fixed a small bug inserted in real_time/RT_Lifetimes_use_delta_Occupations.F with the last commit
+	Additions:
+	-
+	Changes:
+	- dierckx libraries added for spline fit.
+	  Works but it is useful just for interpolation not for extrapolation ...
+
+	Patch sent by: Davide
+
+2014-03-28 17:16:22 r3246 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc modules/mod_real_time.F real_time/RT_Coulomb_relaxation.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_relaxation.F
 
 	Bugs:
 	-
 	Additions:
 	-
 	Changes:
-	- merged with devel-andrea
+	- New implementation now correctly describes the coupling with the electromagnetic field.
+	  Pumped electrons are detected with sensitivity up to 1.E-13 also in valence.
+	  However the scattering precision in valence does not seem to be improved.
+	  Thus I tryed to remove the 1._SP-x and 2._SP-x everywhere.
 
 	Patch sent by: Davide
 
-2013-07-10 16:47:30 r2538 Davide Sangalli <davide.sangalli@gmail.com>
+2014-03-28 16:09:16 r3244 Davide Sangalli <davide.sangalli@gmail.com>
 
-	Version 3.4.0
+	Version 4.0.0
 
-	*  common/.objects common/TEMPERATURE_Debye.F io/io_G_retarded.F sc/V_qp_basis_to_H.F sc/V_real_space_to_H.F ypp/RT_G_retarded.F
+	*  config/configure.ac configure include/version.inc real_time/RT_Integrator.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_manual_excitation.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F
 
 	Bugs:
-	- io operators dimension different from variable dimension in io_G_retarded
-	- build only hermetian part in V_qp_basis_to_H.F and V_real_space_to_H.F
-	- A_w_DP set to zero only if allocated
-	- first rought inplementation of TEMPERATURE_Debye.F subroutine inserted
+	-
+	Additions:
+	-
+	Changes:
+	- Fixed few bugs. New implementation seems working
+
+	Patch sent by: Davide
+
+2014-03-28 15:04:50 r3243 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc modules/mod_real_time.F real_time/RT_Collision.F real_time/RT_DEPHASING_step.F real_time/RT_Integrator.F real_time/RT_driver.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_observables.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Time evolution of G_lesser in terms of dG_lesser = G_lesser-G_lesser_reference:
+	  First step: code compiles
+
+	Patch sent by: Davide
+
+2014-03-27 16:23:36 r3241 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  real_time/RT_impose_zero_dE_and_dN.F
+
+	Bugs:
+	- Fixed small bug which was preventing to write Imp_factor in output
 	Additions:
 	-
 	Changes:
 	-
 	Patch sent by: Davide
+
+2014-03-27 11:45:23 r3240 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  . config/configure.ac configure include/version.inc io/variables_SC.F real_time/RT_driver.F real_time/RT_mean_carrier_lifetimes.F
+
+	Bugs:
+	- Temperatures obtained from Lifetimes ratio computed also with the new RIM
+	- variables_SC: check for revision, in my branch, updated. RT_dynamics_step entered in my branch
+	  at revision 3163, later than in the trunk (r3120)
+	- .impose file not created if flag skip_impose is activated
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2014-03-26 12:33:36 r3236 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc real_time/RT_relaxation.F
+
+	Bugs:
+	- Fixed another bug due to wrong merge
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2014-03-26 11:27:56 r3235 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc io/io_RT_components.F modules/mod_SC.F modules/mod_real_time.F qp_ctl/OCCUPATIONS_IO_and_interpolate.F real_time/RT_Collision.F real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_DEPHASING_step.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_Lifetimes_evaluation_plan.F real_time/RT_Lifetimes_use_delta_Occupations.F real_time/RT_apply_field.F real_time/RT_driver.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_observables.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F ypp/RT_occupations_analyze.F ypp/RT_occupations_check.F ypp/RT_occupations_repair.F ypp/electrons_bands.F ypp/electrons_dos_and_charge.F
+
+	Bugs:
+	- Fixed few bugs due to non correct merging
+	- Fixed small bug in real_time/RT_Lifetimes_evaluation_plan.F when N_intra_steps/10==0
+
+	Additions:
+	-
+	Changes:
+	- RT_one_minus_occupations renamed RT_H_occupations, i.e. the number of holes in each state
+	- RT_occupations moved in mod_real_time and renamed RT_E_occupations
+
+	Patch sent by: Davide
+
+2014-03-25 16:36:57 r3233 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  . config/Makefile.in config/Makefile.in_gpl config/acx.m4 config/acx_cpp.m4 config/acx_fortran_flags.m4 config/acx_get_fc_version.m4 config/acx_mpi.m4 config/acx_report.m4 config/configure.ac config/fftw.m4 config/netcdf_f90.m4 configure doc/Sources_old_devel_open_mp_for_BSE_development/bse/K.F doc/Sources_old_devel_open_mp_for_BSE_development/bse/K_BSmat_by_V.F doc/Sources_old_devel_open_mp_for_BSE_development/bse/K_Haydock.F doc/Sources_old_devel_open_mp_for_BSE_development/bse/K_blocks.F doc/Sources_old_devel_open_mp_for_BSE_development/bse/K_build_eh_basis.F doc/Sources_old_devel_open_mp_for_BSE_development/bse/K_diagonalization.F doc/Sources_old_devel_open_mp_for_BSE_development/bse/K_driver.F doc/Sources_old_devel_open_mp_for_BSE_development/bse/K_eps_interpolate.F doc/Sources_old_devel_open_mp_for_BSE_development/bse/K_eval_scattering_amplitudes.F doc/Sources_old_devel_open_mp_for_BSE_development/bse/K_exchange.F doc/Sources_old_devel_open_mp_for_BSE_development/bse/K_filling.F doc/Sources_old_devel_open_mp_for_BSE_development/bse/K_inversion.F doc/Sources_old_devel_open_mp_for_BSE_development/bse/K_output_file.F doc/Sources_old_devel_open_mp_for_BSE_development/bse/K_phases_and_dimensions.F doc/Sources_old_devel_open_mp_for_BSE_development/bse/K_solvers.F doc/Sources_old_devel_open_mp_for_BSE_development/bz_ops/bz_samp_indexes.F doc/Sources_old_devel_open_mp_for_BSE_development/interface/init.F doc/Sources_old_devel_open_mp_for_BSE_development/io/ioQINDX.F doc/Sources_old_devel_open_mp_for_BSE_development/modules/mod_BS.F doc/Sources_old_devel_open_mp_for_BSE_development/modules/mod_R_lattice.F doc/Sources_old_devel_open_mp_for_BSE_development/ypp/ELPH_gkkp_expand.F driver/a2y.h driver/c2y.h driver/codever.h.in driver/driver.c driver/e2y.h driver/editor.h.in driver/p2y.h driver/yambo.h driver/yambo.h_gpl driver/yambo_driver.F driver/ydb.h driver/ypp.h driver/ypp.h_gpl include/version.inc a2y/a2y_KSS_file_name.F a2y/a2y_db1.F a2y/a2y_i.F a2y/a2y_wf.F c2y/c2y_db1.F c2y/c2y_file_name.F c2y/c2y_i.F c2y/c2y_wf.F e2y/e2y_db1.F e2y/e2y_i.F e2y/e2y_kb_pp.F e2y/e2y_wf.F e2y/e2y_wf_components.F e2y/etsf_data.F int_modules/mod_com2y.F int_modules/mod_wf2y.F int_modules/mod_xc2y.F p2y/PP_PWscf_comp.F p2y/PP_PWscf_driver.F p2y/mod_p2y.F p2y/mod_pw_data.F p2y/mod_pw_export.F p2y/p2y_db1.F p2y/p2y_i.F p2y/p2y_wf.F p2y/pw_errore.F lib/libxc/config.h.in lib/libxc/configure sbin/make_makefile.sh.in sbin/make_message.pl.in sbin/objects_debug.sh.in sbin/yambo_versions_update.tcsh acfdt/acfdt_tot_energy.F acfdt/gauss_leg_grid.F bse/K.F bse/K_BSmat_by_V.F bse/K_Haydock.F bse/K_IP.F bse/K_diagonalization.F bse/K_driver.F bse/K_eh_setup.F bse/K_eps_interpolate.F bse/K_exchange.F bse/K_filling.F bse/K_inversion.F bse/K_output_file.F bse/K_scattering.F bse/K_solvers.F bz_ops/bz_samp_indexes.F bz_ops/k_expand.F bz_ops/k_lattice.F bz_ops/k_reduce.F bz_ops/k_sym2sym.F bz_ops/k_the_nearest.F collisions/COLLISIONS_Hartree_Fock.F collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_cohsex.F collisions/COLLISIONS_compose.F collisions/COLLISIONS_eval.F collisions/COLLISIONS_linearize_and_IO.F collisions/COLLISIONS_load.F collisions/PLASMA_build_up.F collisions/PLASMA_parallel_setup.F collisions/PLASMA_tables_and_dimensions.F common/CIntegrate.F common/Convolve.F common/FREQUENCIES_Green_Function.F common/FREQUENCIES_coarse_grid.F common/FREQUENCIES_damping.F common/FREQUENCIES_reset.F common/FREQUENCIES_setup.F common/Fermi_fnc_fit.F common/G_index.F common/G_rot_grid.F common/HyperbolicSecant_FT.F common/Kramers_Kronig.F common/Laplace_transform.F common/OCCUPATIONS_Extend.F common/OCCUPATIONS_Fermi.F common/OCCUPATIONS_Gaps.F common/QP_state_extract.F common/QPartilize.F common/RIntegrate.F common/TEMPERATURE_Debye.F common/crystal_lattice.F common/eval_G_minus_G.F common/full_inversion.F common/pert_inversion.F common/pol_fit.F communicate/REPORT_Energies.F communicate/REPORT_Occupations.F communicate/acknowledge_yambo.F communicate/section.F coulomb/bessel_F2.F coulomb/bessel_F3.F coulomb/bessel_F4.F coulomb/bessel_F5.F coulomb/bessel_F6.F coulomb/bessel_J0.F coulomb/col_driver.F coulomb/cutoff_box.F coulomb/cutoff_cylinder.F coulomb/cutoff_driver.F coulomb/cutoff_sphere.F coulomb/cutoff_test.F coulomb/rim.F coulomb/rim_integrate.F coulomb/rim_spherical.F external_c/c_printing.c interface/DephMatrix_init.F interface/QP_ctl_load.F interface/QP_ctl_switch.F interface/QP_init.F interface/barriers.F interface/init.F interface/init_load.F interface/init_q_pts.F interface/parse_K_list.F interface/stop_now.F interpolate/bz_interpolation.F interpolate/eval_interpolation_coeff.F io/Fragments_Restart.F io/Fragments_Synchronize.F io/IO_and_Messaging_switch.F io/ioBS.F io/ioBSS_Haydock.F io/ioBSS_diago.F io/ioBSS_invert.F io/ioBS_Fxc.F io/ioCOL_CUT.F io/ioDB1.F io/ioDB1_selective_scan.F io/ioELPH.F io/ioGROT.F io/ioKB_abinit.F io/ioKB_pwscf.F io/ioQINDX.F io/ioQP.F io/ioRIM.F io/ioWF.F io/ioX.F io/io_COLLISIONS.F io/io_DIPOLES.F io/io_HF_and_locXC.F io/io_P_and_P2.F io/io_RIM_E_and_k.F io/io_RT_components.F io/io_SC_components.F io/io_Vnl.F io/io_bulk.F io/io_elemental.F io/io_header.F io/load_SC_components.F io/variables_BS.F io/variables_DIPOLES.F io/variables_SC.F io/variables_X.F io/ver_is_gt_or_eq.F modules/SET_defaults.F modules/SET_logicals.F modules/mod_ACFDT.F modules/mod_BS.F modules/mod_D_lattice.F modules/mod_ELPH.F modules/mod_FFT.F modules/mod_IO.F modules/mod_KERR.F modules/mod_LIVE_t.F modules/mod_QP.F modules/mod_R_lattice.F modules/mod_SC.F modules/mod_TDDFT.F modules/mod_X.F modules/mod_X_output.F modules/mod_collision.F modules/mod_com.F modules/mod_drivers.F modules/mod_electrons.F modules/mod_fields.F modules/mod_fragments.F modules/mod_frequency.F modules/mod_functions.F modules/mod_global_XC.F modules/mod_interfaces.F modules/mod_interpolate.F modules/mod_logo.F modules/mod_magnetic.F modules/mod_matrix_operate.F modules/mod_memory.F modules/mod_openmp.F modules/mod_parallel.F modules/mod_pars.F modules/mod_plasma.F modules/mod_pseudo.F modules/mod_real_time.F modules/mod_stderr.F modules/mod_units.F modules/mod_vec_operate.F modules/mod_wave_func.F modules/mod_wrapper.F modules/mod_xc_functionals.F modules/mod_zeros.F parallel/PARALLEL_WF_distribute.F parallel/PARALLEL_WF_index.F parallel/PARALLEL_add_Q_to_K_list.F parallel/PARALLEL_assign_LIN_ALGEBRA_COMMs.F parallel/PARALLEL_assign_chains_and_COMMs.F parallel/PARALLEL_build_up_child_chains.F parallel/PARALLEL_get_user_structure.F parallel/PARALLEL_global_indexes.F parallel/PARALLEL_index.F parallel/PARALLEL_live_message.F parallel/PARALLEL_minimal_index_from_overlaping.F parallel/PARALLEL_structure.F parallel/PARALLEL_wait.F parallel/check_for_a_redundant_IO.F parser/Gclose.F parser/init_convert_i.F parser/init_convert_r.F parser/mod_itm.F parser/mod_parser_m.F parser/parse_character_arrays.F parser/parser_lib.F parser/ps_convert.F pol_function/Dipole_check_shifted_grids.F pol_function/Dipole_dip_dot_field.F pol_function/Dipole_driver.F pol_function/Dipole_kb_Ylm.F pol_function/Dipole_kb_abinit_comp.F pol_function/Dipole_kb_init.F pol_function/Dipole_kb_pwscf_comp.F pol_function/Dipole_kb_sum.F pol_function/Dipole_rotate.F pol_function/Dipole_shifted_grids.F pol_function/Dipole_transverse.F pol_function/O_driver.F pol_function/O_eels.F pol_function/O_select_q_and_G.F pol_function/X_GreenF_remap.F pol_function/X_bare_RIM_GreenF.F pol_function/X_delta_part.F pol_function/X_drude.F pol_function/X_eh_setup.F pol_function/X_em1.F pol_function/X_os.F pol_function/X_pre_setup.F pol_function/X_s.F pol_function/X_simple_GreenF.F qp/ELPH_Hamiltonian.F qp/ELPH_Sigma_c.F qp/ELPH_gsqF_to_Sigma.F qp/ELPH_simmetrize_and_distribute_gsqF.F qp/QP_Green_Function.F qp/QP_W2Sc.F qp/QP_descriptions.F qp/QP_driver.F qp/QP_expand.F qp/QP_life_transitions.F qp/QP_load_SC_xc.F qp/QP_newton.F qp/QP_of.F qp/QP_ppa_EET_terminator.F qp/QP_ppa_cohsex.F qp/QP_real_axis.F qp/QP_report_and_write.F qp/QP_secant.F qp/XCo_Hartree_Fock.F qp/XCo_driver.F qp/XCo_local.F qp/bracket.F qp/secant.F qp_ctl/Load_Green_Functions.F qp_ctl/Nearest_level_interpolation.F qp_ctl/OCCUPATIONS_IO_and_interpolate.F qp_ctl/QP_apply_DB_interpolation.F qp_ctl/QP_apply_global_stretch.F qp_ctl/QP_check_if_corrected.F qp_ctl/QP_fit_DB_values.F qp_ctl/QP_load_DB.F qp_ctl/QP_merge_DBs.F qp_ctl/mod_QP_CTL.F real_time/.objects real_time/RT_Collision.F real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F + real_time/RT_Dephasing_Matrix.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_ELPH_eq_Kernel.F real_time/RT_ELPH_gkkp_remap.F real_time/RT_ELPH_initialize.F real_time/RT_ELPH_out_of_eq_Kernel.F real_time/RT_ELPH_total_Kernel.F real_time/RT_ELPH_zeroing.F real_time/RT_EULEREXP_step.F real_time/RT_EULER_step.F real_time/RT_Ext_fields.F real_time/RT_Field_Commensurable_Frequencies.F real_time/RT_Fluence.F real_time/RT_G_retarded_convolution.F real_time/RT_G_retarded_time.F + real_time/RT_Integrator.F real_time/RT_Lifetimes_Interpolation.F + + + + + real_time/RT_apply_field.F real_time/RT_average_operator.F real_time/RT_build_I1_and_I2.F real_time/RT_build_U1_and_U2.F real_time/RT_current_AND_polarization.F real_time/RT_databases_IO.F real_time/RT_driver.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_initialize.F real_time/RT_k_grid.F real_time/RT_manual_excitation.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_observables.F real_time/RT_occupations_FIT_and_lock.F real_time/RT_output.F real_time/RT_propagate_fields.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F real_time/RT_update.F sc/MAG_A_phase.F sc/MAG_H_pseudo.F sc/MAG_Hamiltonian.F sc/MAG_common_build_A.F sc/MAG_pseudo_nl.F sc/OEP_ApplySigmaCSX.F sc/OEP_ApplySigmaX.F sc/OEP_Hole.F sc/OEP_Weighted_Density.F sc/OEP_app_inversion.F sc/OEP_driver.F sc/OEP_exact_inversion.F sc/OEP_iterative.F sc/SC_Energy.F sc/SC_History.F sc/SC_WF_and_dipole_dimensions.F sc/SC_add_XC.F sc/SC_bare_Hamiltonian.F sc/SC_check_symmetries.F sc/SC_driver.F sc/SC_precondition.F sc/SC_start_and_restart.F sc/V_Hartree.F sc/V_Mean_Potential.F sc/V_qp_basis_to_H.F sc/V_real_space_to_H.F sc/XC_switch.F setup/G_shells_finder.F setup/PARALLEL_and_IO_Setup.F setup/QP_external_corrections.F setup/QP_state_table_setup.F setup/build_spin_sop.F setup/check_periodic_directions.F setup/eval_minus_G.F setup/setup.F surf/Calc_REELS.F surf/Dipole_driver_cut.F surf/Dipole_transverse_cut.F surf/Extract_eps_surf.F surf/Surface_driver.F surf/Write_RAS.F surf/io_DIPOLES_cut.F surf_modules/io_loc.F surf_modules/mod_bulkeps.F surf_modules/mod_convolute.F surf_modules/mod_eels_detector.F surf_modules/mod_eels_kinematics.F surf_modules/mod_model_loss_function.F surf_modules/mod_numerical_integration.F surf_modules/mod_optcut.F surf_modules/mod_ras.F surf_modules/mod_surface_geometry.F surf_modules/ras_presets.F tddft/tddft_BSK_2_FXC.F tddft/tddft_BSK_disk_2_FXC.F tddft/tddft_alda_g_space.F tddft/tddft_alda_r_space.F tddft/tddft_do_X_W_typs.F wf_and_fft/WF_alloc.F wf_and_fft/WF_apply_symm.F wf_and_fft/WF_derivative.F wf_and_fft/WF_free.F wf_and_fft/WF_load.F wf_and_fft/WF_rotate.F wf_and_fft/WF_spatial_invertion.F wf_and_fft/WF_symm.F wf_and_fft/eval_GradOperator.F wf_and_fft/eval_R_minus_R.F wf_and_fft/fft_1d.F wf_and_fft/fft_3d_fftw.F wf_and_fft/fft_3d_sg.F wf_and_fft/fft_setup.F wf_and_fft/scatter_Bamp.F wf_and_fft/scatter_Gamp.F xc_functionals/XC_eval_gga_potential.F xc_functionals/XC_libxc_driver.F xc_functionals/XC_potential_driver.F xc_functionals/el_density.F xc_functionals/el_density_matrix.F xc_functionals/el_magnetization.F xc_functionals/eval_Gradient.F xc_functionals/xc_rpa_kp.F ydb/YDB_module.F ydb/YDB_scan_file.F ydb/io_YDB.F ydb/ydb_i.F ypp/ELPH_atomic_amplitude.F ypp/ELPH_databases.F ypp/ELPH_eliashberg_dos.F ypp/ELPH_excitonic_gkkp.F ypp/ELPH_general_gFsq.F ypp/ELPH_gkkp_expand.F ypp/QP_DBs_initialize.F ypp/QP_DBs_merge.F ypp/QP_DBs_setup.F ypp/RT_1D_Fourier_Transform.F ypp/RT_X_LRR_real_field.F ypp/RT_X_effective.F ypp/RT_X_inversion.F ypp/RT_X_qssin.F ypp/RT_coefficients_Fourier.F ypp/RT_coefficients_Inversion.F ypp/RT_damp_it.F ypp/RT_databases.F ypp/RT_driver.F ypp/RT_initialize.F ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F ypp/RT_occupations_check.F ypp/RT_occupations_repair.F ypp/RT_paths.F ypp/RT_split_Polarization.F ypp/WANNIER_driver.F ypp/build_kpts_map.F ypp/electrons_angular_momentum.F ypp/electrons_bands.F ypp/electrons_dos_and_charge.F ypp/electrons_driver.F ypp/excitons_collinear.F ypp/excitons_driver.F ypp/excitons_non_collinear.F ypp/excitons_sort_and_report.F ypp/fix_PPs.F ypp/fix_SC_DBs.F ypp/fix_WFs_Gshells.F ypp/fix_WFs_and_E.F ypp/fix_symmetries.F ypp/k_grids.F ypp/k_random.F ypp/k_special.F ypp/mod_YPP.F ypp/plot_check_and_launch.F ypp/plot_cube.F ypp/plot_gnuplot.F ypp/plot_xcrysden.F ypp/ras_loc_ypp.F ypp/ras_trans_ypp.F ypp/ras_ypp.F ypp/reels_ypp.F ypp/symmetries_driver.F ypp/ypp_i.F ypp/ypp_init.F ypp/ypp_init_load.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- merged with trunk
+
+	Patch sent by: Davide
+
+2014-02-25 10:23:51 r3198 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk
+
+2014-02-20 10:43:12 r3182 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  config/configure.ac configure include/version.inc modules/mod_real_time.F real_time/RT_Collision.F real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_EULEREXP_step.F real_time/RT_EULER_step.F real_time/RT_Integrator.F real_time/RT_build_I1_and_I2.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_output.F real_time/RT_propagate_fields.F real_time/RT_start_and_restart.F ypp/RT_occupations_FIT.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Patch from tmp_repository. RIM in Ho_plus_sigma [yambo_rt]
+
+	Patch sent by: Davide
+
+2014-02-08 13:52:16 r3178 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  . configure include/version.inc config/configure.ac real_time/RT_initialize.F real_time/RT_relaxation.F real_time/RT_impose_N.F real_time/RT_ELPH_initialize.F real_time/.objects
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with trunk
+	Patch sent by: Davide
+
+2014-02-07 12:02:40 r3170 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  configure include/version.inc config/configure.ac real_time/RT_driver.F real_time/RT_SET_lifetimes_evaluation_plan.F real_time/RT_Coulomb_interpolation.F_project real_time/RT_relaxation.F real_time/RT_Integrator.F real_time/RT_Collision.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_output.F real_time/RT_GAMMA_save_and_interp.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_observables.F real_time/RT_EULER_step.F real_time/RT_Coulomb_interpolation.F real_time/RT_EULEREXP_step.F modules/mod_real_time.F
+
+	Bugs:
+	-
+	Additions:
+	- created RT_Coulomb_interpolation.F_project.
+	  I'm trying to interpolate the lifetimes from the small to the big grid in an "N conserving way".
+	  Indeed the interpolation is based on the insight that the lifetimes should send the occupations
+	  to a Fermi distribution with parameters imposed by the ratio Gamma_H/(Gamma_H+Gamma_E).
+	  However the speed at which the occupations are sent towards this distribution is determined by the
+	  sum Gamma_H+Gamma_E. It is this latter value which determines the change in the number of electrons in
+	  a given state (n,k). Thus a "proper value" (or at list a "proper value of the sum over n,k") would
+	  impose the conservation of the number of the electrons.
+	  However the present implementation does not work properly yet.
+
+	Changes:
+	- Symmatrization of G_lesser is moven inside RT_EULER_step and RT_EULEREXP_step where also
+	  the variable RT_occupations is filled so that it is always available
+	- RT_impose_zero now imposes:
+	  * energy and total number of electrons for el-el scattering
+	  * number of electrons in conduction and of holes in valence (and thus total number of electrons) for el-ph scattering
+	  Also it cannot change the lifetimes more than 10%
+
+	Patch sent by: Davide
+
+2014-02-06 12:57:09 r3169 Davide Sangalli <davide.sangalli@gmail.com>
+
+	fixed incorrect merge
+
+2014-02-06 12:39:02 r3168 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk
+
+2014-02-04 14:19:43 r3166 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 4.0.0
+
+	*  configure include/version.inc config/configure.ac real_time/RT_driver.F real_time/RT_SET_lifetimes_evaluation_plan.F real_time/RT_relaxation.F real_time/RT_output.F real_time/RT_impose_zero_dE_and_dN.F real_time/RT_observables.F real_time/RT_Coulomb_interpolation.F modules/mod_real_time.F modules/SET_defaults.F modules/mod_interpolate.F ypp/electrons_bands.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- pre_factors of RT_impose are written in output to monitor their impact
+	- pre_factors of RT_impose are limited to 0.1, i.e. the lifetimes cannot be changed
+	  globally by more than 10% which is already a high number...
+	- small changes in the fit on the band structure and in the evaluation plan
+
+	Patch sent by: Davide
+
+2014-02-01 18:54:49 r3163 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk/devel
+
+2014-01-25 15:34:22 r3150 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure include/version.inc config/configure.ac real_time/RT_mean_carrier_lifetimes.F real_time/RT_Coulomb_interpolation.F ypp/electrons_bands.F ypp/YPP_RT_occupations_fit.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	- Fixed few errors in ypp_rt output (occupations and gammas of E)
+	Additions:
+	-
+	Changes:
+	-
+
+	Patch sent by: Davide
+
+2014-01-24 18:22:31 r3149 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc modules/SET_defaults.F modules/mod_real_time.F real_time/RT_observables.F real_time/RT_start_and_restart.F ypp/YPP_RT_occupations_fit.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Testing changes to the Fermi_fit subroutines
+
+	Patch sent by: Davide
+
+2014-01-20 14:15:34 r3134 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc bz_ops/bz_samp_indexes.F common/Fermi_fnc_fit.F interface/init.F interface/init_load.F io/ioQINDX.F modules/SET_defaults.F modules/mod_real_time.F real_time/RT_Coulomb_interpolation.F real_time/RT_output.F
+
+	Bugs:
+	- small bug-fi in RT_output
+	Additions:
+	-
+	Changes:
+	- In case Fermi_fnc_fit fails for the EE_lifetimes on the small grid after a number of succefull fit,
+	  the fit temperature of the previous step is use to interpolate the EE_lifetimes on the big grid
+	- Running setup the new option compute BSE sattering an be chosen
+
+	Patch sent by: Davide
+
+2014-01-17 16:02:12 r3127 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  real_time/RT_Coulomb_interpolation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Forgot to commit change in RT_Coulomb_interpolation
+
+	Patch sent by: Davide
+
+2014-01-17 15:56:55 r3126 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc common/Fermi_fnc_fit.F real_time/RT_output.F
+
+	Bugs:
+	- Fixed small bug in the output
+	Additions:
+	-
+	Changes:
+	- Upgrade to the Fermi_fnc_fit subroutine.
+	  Now the ubroutines first uses a standard Gauss-Newton algorithm which is less stable but
+	  does not remains trapped in "local minima". If this does not work (expecally when temperatures
+	  are low and there are few occupations different from zero) a damped version is used
+	  which, starting from a good guess (the fitting temperature from the previous step) is much more
+	  stable.
+
+	Patch sent by: Davide
+
+2014-01-16 17:26:52 r3125 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc common/Fermi_fnc_fit.F modules/mod_real_time.F real_time/RT_Coulomb_interpolation.F real_time/RT_impose_elel_conserves_E_and_N.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_observables.F real_time/RT_occupations_fit.F
+
+	Bugs:
+	- Fixed bug in src/real_time/RT_impose_elel_conseres_E_and_N
+	Additions:
+	-
+	Changes:
+	- Fitting temperature subroutines improved
+
+	Patch sent by: Davide
+
+2014-01-15 18:21:39 r3123 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc common/Fermi_fnc_fit.F real_time/RT_Coulomb_interpolation.F real_time/RT_mean_carrier_lifetimes.F
+
+	Bugs:
+	- Fixed small bug in RT_Coulomb_interpolation.F
+	Additions:
+	-
+	Changes:
+	- Fitting procedure improved from Gauss-Newton to Levenberg-Marquartd inserting a
+	  small dumping factor
+
+	Patch sent by: Davide
+
+2014-01-15 12:57:24 r3122 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc collisions/COLLISIONS_cohsex.F modules/mod_real_time.F real_time/RT_Coulomb_interpolation.F real_time/RT_Integrator.F real_time/RT_driver.F real_time/RT_impose_elel_conserves_E_and_N.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_observables.F real_time/RT_occupations_fit.F real_time/RT_output.F real_time/RT_relaxation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- mean lifetimes are now computed for all states (removed f_occ check), EE and EP are printed in two different files
+	  and finally gamma_h/(gamma_h+gamma_e)*spin_occ is fitted and the resulting temperature is written in the output.
+	- RT_impose_elel_conserves_E_and_N, with RIM, works separately on the SMALL grid (where only the conservation of the
+	  total IP energy need to be imposed) and on the RIM/BIG grid where the conservation of both the number of electrons
+	  and the total energy (IP energy) are imposed.
+	- The interpolation of the lifetimes with RIM is done first in time (on the small grid) and then in energy, from the
+	  small to the big grid. Vicevera was unstable.
+	- Occupations are imposede to stay within 0 and 2 in RT integrator to avoid numerical instabilities...
+	- Convention adopted in the output: positive temperatures mean a good fit, negative temperatures mean the fit
+	  error is above a given treshold
+
+	Patch sent by: Davide
+
+2014-01-10 11:41:01 r3119 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc bz_ops/k_the_nearest.F interpolate/bz_interp_coeff.F interpolate/eval_interpolation_coeff.F interpolate/fourier_interpolation.F modules/mod_R_lattice.F modules/mod_interpolate.F ypp/electrons_bands.F ypp/k_random.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- When the RIM is not expanded the rim points are associated only to the kpts in IBZ
+	- Bands interpolations finally works properly also with the RIM
+
+	Patch sent by: Davide
+
+2014-01-09 17:26:37 r3118 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc interpolate/bz_interp_setup.F modules/mod_R_lattice.F modules/mod_interpolate.F real_time/RT_k_grid.F ypp/electrons_driver.F ypp/k_random.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Working on interpolation with RIM
+
+	Patch sent by: Davide
+
+2014-01-09 15:10:31 r3117 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure include/version.inc config/configure.ac interpolate/bz_interp_setup.F interpolate/bz_interp_coeff.F interpolate/eval_interpolation_coeff.F interpolate/fourier_interpolation.F real_time/RT_Coulomb_interpolation.F io/io_RT_components.F ypp/electrons_bands.F ypp/k_random.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Working on interpolation with RIM
+
+	Patch sent by: Davide
+
+2014-01-08 16:34:42 r3114 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  ypp/k_random.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fixed small bug
+
+	Patch sent by: Davide
+
+2014-01-08 16:20:58 r3113 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc bz_ops/k_the_nearest.F common/Fermi_fnc_fit.F interpolate/bz_interp_setup.F real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_initialize.F real_time/RT_relaxation.F ypp/k_random.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Induce k_random to choose pts in the ibz in case of equal distances.
+	- Small changes in RT_Coulomb_interpolation
+
+	Patch sent by: Davide
+
+2014-01-05 12:38:24 r3111 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/configure.ac configure include/version.inc bz_ops/bz_samp_indexes.F collisions/COLLISIONS_eval.F collisions/PLASMA_tables_and_dimensions.F common/pol_fit.F interface/init.F io/ioQINDX.F io/io_COLLISIONS.F io/io_RIM_E_and_k.F io/io_RT_components.F modules/SET_defaults.F modules/mod_SC.F modules/mod_fields.F modules/mod_real_time.F modules/mod_timing.F parallel/PARALLEL_add_Q_to_K_list.F qp/XCo_Hartree_Fock.F real_time/RT_Collision.F real_time/RT_Coulomb_interpolation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_Ext_fields.F real_time/RT_Fluence.F real_time/RT_current_AND_polarization.F real_time/RT_databases_IO.F real_time/RT_driver.F real_time/RT_initialize.F real_time/RT_manual_excitation.F real_time/RT_observables.F real_time/RT_occupations_fit.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F sc/SC_WF_and_dipole_dimensions.F sc/SC_driver.F ydb/ydb_i.F ypp/YPP_RT_occupations_fit.F ypp/k_random.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with trunk devel
+	- Logicals for dynamics now are:
+	  * l_NE_dynamics= (l_NE_with_fields .or. l_manual_excitations)
+	  * l_NE_dynamics_started is the old NE_dynamics
+	- RT_Coulomb_interpolation now uses both the Fermi fit of the lifetimes ratio and the
+	  w^2 dependene of the lifetimes
+	- Fluence, t_initial and t_final (if field is a pulse) are now inside the mod_fields
+
+	Patch sent by: Davide
+
+2013-12-19 13:01:40 r3089 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc bz_ops/bz_samp_indexes.F collisions/COLLISIONS_cohsex.F collisions/PLASMA_tables_and_dimensions.F io/ioQINDX.F modules/mod_R_lattice.F parallel/PARALLEL_WF_distribute.F parallel/PARALLEL_live_message.F real_time/RT_Collision.F real_time/RT_Coulomb_relaxation.F wf_and_fft/WF_alloc.F
+
+	Bugs:
+	- if bz_samp_indexes recompute the ndb.kindx DB for a change
+	  in BS_scattering or COLL_scattering it uses the same q points
+	  provided with the initial setup  and which may not be the stadard one
+	  for compatibility with elph DBs.
+	  I.e.: if I run el-el + el-ph I want to use the correct kpoints;
+	        also I do not want that a BSE run changes the q-points
+	Additions:
+	-
+	Changes:
+	- qindx_T renamed qindx_C (C=Collisions)
+
+	Patch sent by: Davide
+
+2013-12-17 17:19:27 r3086 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc bz_ops/bz_samp_indexes.F collisions/.objects collisions/COLLISIONS_cohsex.F collisions/PLASMA_tables_and_dimensions.F collisions/RT_EE_scattering_kinematics.F real_time/RT_Coulomb_relaxation.F real_time/RT_impose_elel_conserves_E_and_N.F real_time/RT_observables.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Electrons number is conserved also without RT_impose_elel_conserves_N_and_E
+
+	Patch sent by: Davide
+
+2013-12-17 16:26:26 r3085 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc bz_ops/bz_samp_indexes.F io/ioQINDX.F modules/SET_defaults.F modules/mod_R_lattice.F real_time/RT_observables.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- [YAMBO_RT] Tentative implementation of qindx_T to define iG0 for the scattering
+	             from p(BZ) to pmq(BZ) via q(BZ).
+	             This shoud avoid the call to RT_EE_scattering kinematics and fix
+	             the problem with the consiervation of the number of electrons in the
+	             el-el scattering ...
+
+	Patch sent by: Davide
+
+2013-12-16 11:55:47 r3084 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc collisions/COLLISIONS_cohsex.F collisions/COLLISIONS_eval.F collisions/PLASMA_build_up.F collisions/PLASMA_tables_and_dimensions.F common/Fermi_fnc_fit.F modules/mod_plasma.F modules/mod_real_time.F parallel/PARALLEL_WF_distribute.F real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_driver.F real_time/RT_impose_elel_conserves_E_and_N.F real_time/RT_initialize.F real_time/RT_observables.F real_time/RT_output.F real_time/RT_relaxation.F
+
+	Bugs:
+	- Fixed two minor bugs
+	Additions:
+	-
+	Changes:
+	- Removed procedure with two plasma for el-el scatt + RIM.
+	  New interpolation scheme based on lifetimes ratio is much faster and works better
+	- RT_impose_elel_conserves_E_and_N presently imposes only N conservation on the small grid.
+	  Lifetimes on the RIM are left free.
+	- RT_observables: deltaG replaced by number of holes in valence and number of electrons in conduction
+
+	Patch sent by: Davide
+
+2013-12-13 17:09:15 r3074 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/configure.ac configure include/version.inc collisions/PLASMA_build_up.F common/Fermi_fnc_fit.F common/HyperbolicSecant_FT.F modules/mod_SC.F modules/mod_functions.F modules/mod_pars.F modules/mod_real_time.F real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_Fluence.F real_time/RT_G_retarded_convolution.F real_time/RT_driver.F real_time/RT_k_grid.F real_time/RT_observables.F real_time/RT_occupations_fit.F real_time/RT_output.F real_time/RT_relaxation.F ypp/RT_occupations_analyze.F ypp/YPP_RT_occupations_fit.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with trunk/devel
+	- RT dynamics + RIM now work also with el-el thanks to lifetimes interpolations
+
+	Patch sent by: Davide
+
+2013-12-10 16:01:02 r3062 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc modules/mod_real_time.F real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_driver.F real_time/RT_k_grid.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- RIM closest energy scanned among all the bands
+
+	Patch sent by: Davide
+
+2013-12-10 11:32:28 r3059 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc collisions/PLASMA_build_up.F collisions/PLASMA_parallel_setup.F real_time/RT_initialize.F real_time/RT_relaxation.F
+
+	Bugs:
+	- Fixed few bugs due to non correct merge with trunk
+
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-12-10 10:55:44 r3057 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc ypp/RT_occupations_analyze.F ypp/YPP_RT_occupations_fit.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Also gamma(E) are plotted with f(E) when ypp_rt fit occupations
+
+	Patch sent by: Davide
+
+2013-12-09 17:49:42 r3055 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/Makefile.in config/configure.ac configure driver/yambo_driver.F include/version.inc int_modules/mod_xc2y.F p2y/mod_p2y.F p2y/mod_pw_data.F p2y/p2y_db1.F p2y/qexml_v4.0.F lib/libxc/configure acfdt/acfdt_tot_energy.F bse/K.F collisions/.objects collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_eval.F collisions/COLLISIONS_load.F + + + + interface/init.F io/ioDB1.F io/io_COLLISIONS.F io/io_RT_components.F io/variables_SC.F modules/SET_defaults.F modules/mod_LIVE_t.F modules/mod_global_XC.F modules/mod_interfaces.F modules/mod_openmp.F modules/mod_plasma.F modules/mod_timing.F modules/mod_xc_functionals.F parallel/PARALLEL_global_indexes.F qp/.objects qp/Plasma_driver.F qp/Plasma_setup.F qp/RT_EE_scattering_kinematics.F qp/XCo_driver.F qp/XCo_local.F real_time/RT_Collision.F real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_initialize.F real_time/RT_observables.F real_time/RT_output.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F sc/SC_Energy.F sc/SC_add_XC.F tddft/tddft_alda_g_space.F xc_functionals/XC_libxc_driver.F xc_functionals/XC_potential_driver.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with trunk/devel
+	  I also tryed to keep two Plasma stuctures for the EE_lifetimes interpolation.
+	  To be tested.
+
+	Patch sent by: Davide
+
+2013-12-06 12:01:08 r3027 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk
+
+2013-12-06 10:39:36 r3024 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk
+
+2013-12-05 18:31:40 r3022 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc common/Fermi_fnc_fit.F modules/mod_real_time.F qp/Plasma_driver.F qp/Plasma_setup.F real_time/.objects real_time/RT_Coulomb_interpolation.F real_time/RT_Coulomb_relaxation.F real_time/RT_initialize.F real_time/RT_k_grid.F real_time/RT_relaxation.F setup/setup.F ypp/RT_occupations_analyze.F ypp/YPP_RT_occupations_fit.F ypp/electrons_bands.F
+
+	Bugs:
+	- Fixed small output bug in setup
+	Additions:
+	-
+	Changes:
+	- Lifetimes interpolation based on closest-energy kpt:
+	  created new subroutine and new structure in RT_Coulomb interpolation
+	- Inserted RT_Coulomb_interpolation subroutine I forgot from previous commit
+
+	Patch sent by: Davide
+
+2013-12-04 16:00:47 r3021 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc collisions/COLLISIONS_cohsex.F common/FREQUENCIES_coarse_grid.F qp/Plasma_driver.F qp/Plasma_setup.F real_time/RT_Coulomb_relaxation.F real_time/RT_impose_elel_conserves_E_and_N.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Implementation symmetrized with respect to the m,mp indexes in the Plasma [TEST]
+
+	Patch sent by: Davide
+
+2013-12-04 12:28:34 r3020 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/configure.ac configure include/version.inc collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_cohsex.F collisions/COLLISIONS_compose.F collisions/COLLISIONS_eval.F collisions/COLLISIONS_load.F interface/init.F interface/init_load.F modules/mod_SC.F modules/mod_collision.F modules/mod_parallel.F modules/mod_real_time.F modules/mod_wrapper.F parallel/PARALLEL_WF_distribute.F parallel/PARALLEL_get_user_structure.F parallel/PARALLEL_global_indexes.F qp/Plasma_driver.F qp/QP_ppa_cohsex.F qp/XCo_Hartree_Fock.F real_time/.objects real_time/RT_Collision.F real_time/RT_Coulomb_relaxation.F real_time/RT_EULEREXP_step.F real_time/RT_EULER_step.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_Integrator.F real_time/RT_average_operator.F real_time/RT_build_I1_and_I2.F real_time/RT_current_AND_polarization.F real_time/RT_driver.F real_time/RT_observables.F real_time/RT_output.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F sc/V_qp_basis_to_H.F sc/V_real_space_to_H.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Plasma energies and occupations defined using only the main kpts grid in case l_RT_uses_E_RIM
+	- merged with trunk devel
+
+	Patch sent by: Davide
+
+2013-11-30 18:21:46 r3006 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc collisions/COLLISIONS_cohsex.F modules/.objects modules/mod_interfaces.F modules/mod_plasma.F modules/mod_real_time.F parallel/PARALLEL_WF_distribute.F parallel/PARALLEL_global_indexes.F qp/Plasma_driver.F qp/Plasma_setup.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_driver.F real_time/RT_relaxation.F ypp/electrons_bands.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Plasma is now a type.
+	  Yambo defines a double plasma structure, one to be used on the regular grid and another smaller
+	  plasma used to construct TMP_gamma on the RIM grid. The TMP_gamma are then used to interpolate
+	  the real gamma on the RIM grid
+
+	Patch sent by: Davide
+
+2013-11-28 15:45:05 r2991 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc common/Fermi_fnc_fit.F real_time/RT_driver.F real_time/RT_occupations_fit.F real_time/RT_start_and_restart.F ypp/RT_occupations_check.F ypp/electrons_bands.F
+
+	Bugs:
+	- Restart fixed
+	Additions:
+	-
+	Changes:
+	- Improved algorithm based on the on the fly temperature fit
+	- Improved electrons_bands fit of the occupations
+
+	Patch sent by: Davide
+
+2013-11-27 16:15:16 r2987 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc bz_ops/bz_samp_indexes.F bz_ops/k_expand.F io/io_RIM_E_and_k.F modules/mod_R_lattice.F real_time/RT_initialize.F real_time/RT_k_grid.F ypp/RT_occupations_analyze.F ypp/electrons_bands.F ypp/k_random.F ypp/mod_YPP.F ypp/ypp_init.F ypp/ypp_init_load.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- k_expand.F restored to hold behaviour. Too many subroutines in the code rely in the ordering of the kpt in the BZ.
+	  To overcome this problem for the RIM now bz_samp has two structures: %pt_RIM and %ptbz_RIM
+	- Fotting of energies and occupations is working, to be tested on poduction runs.
+	- ypp_rt simplified. Now that times are ok, RT_nreports has been removed. OCCdT can be used instead
+
+	Patch sent by: Davide
+
+2013-11-26 15:27:51 r2982 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure driver/ypp.h include/version.inc modules/.objects ypp/RT_occupations_analyze.F ypp/electrons_bands.F ypp/electrons_driver.F ypp/mod_YPP.F ypp/ypp_i.F ypp/ypp_init.F ypp/ypp_init_load.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Working on electrons_bands
+
+	Patch sent by: Davide
+
+2013-11-26 00:49:54 r2981 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc bz_ops/k_expand.F interpolate/bz_interp_coeff.F interpolate/bz_interp_setup.F interpolate/bz_interpolation.F interpolate/eval_interpolation_coeff.F interpolate/fourier_interpolation.F modules/mod_R_lattice.F modules/mod_interpolate.F ypp/electrons_bands.F ypp/k_random.F ypp/ypp_i.F
+
+	Bugs:
+	- Fixed errors in k_random. Now pt_RIM are correct
+	Additions:
+	-
+	Changes:
+	- *** SMALL BUT IMPORTANT CHANGE IN k_expand.F ***
+	  Now kpoints in the BZ are sorted with first all the kpts in the IBZ, then all the kpts outside the IBZ.
+	  This is obtained changing the order of the vector k%sstar(i2,:)
+	  It was needed to use the interpolation with the RIM kpts.
+	  Moreover this could overcome the triple structure RT_ibz_coo, RIM_bz_coo, RIM_ibz_coo.
+	  Indeed in this case RIM_bz_coo is sufficient. Still to be checked if this change is consistent
+	  with all other changes in the code.
+
+	- electrons_bands now interpolates on a path starting from the pt_RIM and the E_RIM,
+	  but only if RIM kpts are not expanded. Other case not yet considered...
+
+	Patch sent by: Davide
+
+2013-11-25 15:46:39 r2977 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc interface/init.F io/.objects io/ioE_RIM.F + modules/mod_R_lattice.F ypp/electrons_dos_and_charge.F ypp/k_random.F ypp/read_bxsf.F ypp/ypp_i.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- ioE_RIM renamed io_RIM_E_and_k
+	  Now also RIM kpts are printed in the ndb.RIM_E_and_k database and stored in the bz_samp kind under %pt_RIM
+
+	Patch sent by: Davide
+
+2013-11-22 16:12:19 r2968 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc real_time/.objects real_time/RT_driver.F real_time/RT_impose_N_conservation.F + real_time/RT_output.F real_time/RT_relaxation.F
+
+	Bugs:
+	- Few bug-fix
+	Additions:
+	-
+	Changes:
+	- RT_impose_N_conservation renamed RT_impose_elel_conserves_E_and_N
+
+	Patch sent by: Davide
+
+2013-11-22 14:46:44 r2967 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/configure.ac configure include/version.inc common/.objects + io/io_RT_components.F modules/mod_SC.F modules/mod_real_time.F real_time/.objects real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_G_retarded_convolution.F real_time/RT_driver.F real_time/RT_initialize.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_observables.F real_time/RT_output.F ypp/.objects ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Electrons and Holes fit temperatures are now printed in the dynamics file together with the
+	  total energy, i.e. the the sum of all energy components.
+	  Other components of the energy are printed in another file (still to be fixed)
+	- Fitting temperatures are used to freeze the gamma's
+
+	Patch sent by: Davide
+
+2013-11-21 10:44:45 r2961 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  devel devel/config/configure.ac devel/configure devel/driver/yambo.h devel/include/version.inc devel/collisions/COLLISIONS_Hartree_Fock.F devel/collisions/COLLISIONS_alloc_and_free.F devel/collisions/COLLISIONS_cohsex.F devel/collisions/COLLISIONS_eval.F devel/collisions/COLLISIONS_linearize_and_IO.F devel/collisions/COLLISIONS_load.F devel/interface/init.F devel/interface/init_load.F devel/io/ioKB_abinit.F devel/io/ioKB_pwscf.F devel/io/ioX.F devel/io/io_RT_components.F devel/io/io_SC_components.F devel/io/variables_SC.F devel/modules/SET_defaults.F devel/modules/mod_real_time.F devel/qp/Plasma_driver.F devel/qp_ctl/OCCUPATIONS_IO_and_interpolate.F devel/qp_ctl/mod_QP_CTL.F devel/real_time/RT_Collision.F devel/real_time/RT_Integrator.F devel/real_time/RT_average_operator.F devel/real_time/RT_databases_IO.F devel/real_time/RT_driver.F devel/real_time/RT_initialize.F devel/real_time/RT_output.F devel/real_time/RT_start_and_restart.F devel/real_time/RT_update.F devel/sc/SC_driver.F devel/sc/XC_switch.F devel/wf_and_fft/WF_apply_symm.F devel/wf_and_fft/WF_load.F devel/xc_functionals/el_density_matrix.F devel/ypp/RT_databases.F devel/ypp/RT_occupations_analyze.F devel/ypp/RT_occupations_check.F devel/ypp/k_random.F devel/ypp/symmetries_driver.F devel/ypp/ypp_init_load.F stable stable/config/configure.ac stable/configure stable/driver/e2y.h stable/include/version.inc stable/e2y/.objects stable/e2y/e2y_db1.F stable/e2y/e2y_i.F stable/e2y/e2y_kb_pp.F stable/e2y/e2y_wf.F + stable/e2y/etsf_data.F stable/int_modules/mod_xc2y.F stable/sbin/make_makefile.sh.in stable/interface/QP_init.F stable/io/ioKB_abinit.F stable/io/ioKB_pwscf.F stable/modules/mod_vec_operate.F stable/parser/mod_itm.F stable/pol_function/Dipole_shifted_grids.F stable/qp/COLLISIONS_IO_cohsex.F stable/xc_functionals/XC_libxc_driver.F stable/ypp/ypp_i.F stable/ypp/ypp_init.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- merged with trunk
+
+	Patch sent by: Davide
+
+2013-11-15 17:45:50 r2948 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk/devel @2946; merge with devel-andrea not included
+
+2013-11-14 16:02:56 r2926 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc io/io_RT_components.F qp_ctl/OCCUPATIONS_IO_and_interpolate.F real_time/RT_databases_IO.F real_time/RT_driver.F real_time/RT_initialize.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Now also yambo_rt correctly prints the T=0 occupations and P_and_J
+	  for i_T=1 in the file RT_occupations_0
+	  i_T =1              T=0                  file_0
+	  i_T =1+RT_io_steps  T=(i_T-1)*RT_step    file_1
+
+	  I still found cofusing that RT_step is a real, RT_io_steps is an integer...
+	  would be better. Do be done...
+	  RT_step     --> RT_step_time (consistently with RT_IO_time)
+	  RT_IO_steps --> RT_n_IO_steps
+
+	Patch sent by: Davide
+
+2013-11-14 15:20:08 r2924 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc qp_ctl/OCCUPATIONS_IO_and_interpolate.F real_time/RT_impose_N_conservation.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	- Fixed small bug in RT_impose_N_conservation
+	Additions:
+	-
+	Changes:
+	- Fixed IO time for occupations in ypp_rt.
+	  Now ypp_rt for i_T=1 reads the file occupations_0 at time T=0.
+
+	Patch sent by: Davide
+
+2013-11-14 10:19:25 r2923 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc collisions/COLLISIONS_cohsex.F interface/init.F interface/init_load.F io/io_COLLISIONS.F modules/SET_defaults.F modules/mod_plasma.F real_time/RT_Coulomb_relaxation.F real_time/RT_impose_N_conservation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Plasma percent is controlled in input
+
+	Patch sent by: Davide
+
+2013-11-13 16:21:08 r2922 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc collisions/COLLISIONS_Hartree_Fock.F collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_cohsex.F collisions/COLLISIONS_linearize_and_IO.F collisions/COLLISIONS_load.F io/io_COLLISIONS.F modules/mod_collision.F modules/mod_plasma.F real_time/RT_Coulomb_relaxation.F real_time/RT_G_retarded_convolution.F real_time/RT_impose_N_conservation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- yambo_rt back working after merge with trunk.
+	- collisions v3 and I/O are now of kind for l_GW_NEQ collisions kind
+
+	Patch sent by: Davide
+
+2013-11-13 14:33:50 r2921 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure driver/yambo_driver.F include/version.inc collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_cohsex.F modules/mod_plasma.F real_time/RT_impose_N_conservation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fixing errors due to merging process..
+
+	Patch sent by: Davide
+
+2013-11-13 13:47:05 r2920 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . config/Makefile.in config/configure.ac configure driver/yambo.h driver/yambo_driver.F include/version.inc lib/libxc/configure bse/K_driver.F bz_ops/bz_samp_indexes.F + + + + + communicate/section.F interface/barriers.F interface/init.F interface/init_load.F io/.objects io/COLLISIONS_load.F io/io_COLLISIONS.F io/io_SC_components.F io/variables_SC.F modules/.objects modules/SET_defaults.F modules/SET_logicals.F modules/mod_IO.F modules/mod_SC.F modules/mod_collision.F modules/mod_collisions_IO.F modules/mod_drivers.F modules/mod_global_XC.F modules/mod_interfaces.F modules/mod_parallel.F modules/mod_real_time.F modules/mod_wave_func.F parallel/PARALLEL_WF_distribute.F parallel/PARALLEL_add_Q_to_K_list.F parallel/PARALLEL_global_indexes.F parallel/PARALLEL_live_message.F pol_function/O_driver.F pol_function/X_em1.F pol_function/X_os.F qp/.objects qp/COLLISIONS_cohsex.F qp/COLLISIONS_compose.F qp/COLLISIONS_eval.F qp/COLLISIONS_store.F qp/QP_ppa_cohsex.F qp/RT_Sex_collision.F qp/XCo_Hartree_Fock.F real_time/RT_Collision.F real_time/RT_Coulomb_relaxation.F real_time/RT_Integrator.F real_time/RT_average_operator.F real_time/RT_current_AND_polarization.F real_time/RT_driver.F real_time/RT_initialize.F real_time/RT_output.F real_time/RT_relaxation.F real_time/RT_start_and_restart.F sc/OEP_app_inversion.F sc/OEP_exact_inversion.F sc/SC_Energy.F sc/SC_WF_and_dipole_dimensions.F sc/SC_add_XC.F sc/SC_bare_Hamiltonian.F sc/SC_driver.F sc/SC_start_and_restart.F sc/V_Mean_Potential.F sc/V_qp_basis_to_H.F sc/V_real_space_to_H.F sc/XC_switch.F setup/QP_state_table_setup.F tddft/tddft_alda_g_space.F wf_and_fft/WF_alloc.F wf_and_fft/WF_free.F wf_and_fft/WF_load.F wf_and_fft/WF_rotate.F xc_functionals/XC_libxc_driver.F ypp/RT_X_LRR_real_field.F ypp/RT_X_effective.F ypp/RT_driver.F ypp/RT_initialize.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with trunk. yambo_rt compiles
+
+	Patch sent by: Davide
+
+2013-11-12 15:42:12 r2915 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc common/HyperbolicSecant_FT.F real_time/RT_Coulomb_relaxation.F real_time/RT_impose_N_conservation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Small changes in RT_Coulomb_relaxation and RT_impose_N_conservation
+
+	Patch sent by: Davide
+
+2013-11-11 16:43:02 r2911 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc modules/mod_plasma.F qp/Plasma_driver.F real_time/RT_Coulomb_relaxation.F real_time/RT_G_retarded_convolution.F real_time/RT_impose_N_conservation.F real_time/RT_manual_excitation.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- RT_Coulomb relaxation improved
+	- RIM inserted in RT_Coulomb relaxation. However it destroys the energy conservation of the el-el
+	- RT_impose_N_conservation re-written from scrath. Now can impose both E conservation (IP) and N conservation
+	- RT_manual_excitation improved for the RIM case
+	- Removed energy conditions which violates energy conservation
+
+	Patch sent by: Davide
+
+2013-11-10 19:03:31 r2909 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure driver/driver.c driver/yambo_driver.F include/version.inc interface/init_load.F io/COLLISIONS_load.F io/io_COLLISIONS.F modules/mod_collisions_IO.F modules/mod_drivers.F modules/mod_plasma.F parallel/PARALLEL_global_indexes.F qp/COLLISIONS_cohsex.F qp/COLLISIONS_eval.F qp/Plasma_driver.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_G_retarded_convolution.F real_time/RT_driver.F real_time/RT_start_and_restart.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- El-El scattering: old procedure removed. The plasma procedure is now the default.
+	  New variable introduced "Plasma_redux_percent":
+	  * If it is =0. The plasma procedure is identical to the old procedure.
+	  * If it is 100 (%) all energies are grouped according to degeneracies.
+	  * If it is less than 100 than energy are grouped with a smaller number
+	  * Renamed energy conditions and variables
+
+	Patch sent by: Davide
+
+2013-11-10 12:29:51 r2908 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure driver/yambo_driver.F include/version.inc bse/K.F bse/K_BSload.F bse/K_diagonalization.F bse/K_driver.F bse/K_eh_setup.F bse/K_filling.F bse/K_inversion.F bse/K_output_file.F bse/K_scattering.F common/HyperbolicSecant_FT.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_G_retarded_EP_initialize.F real_time/RT_G_retarded_convolution.F ypp/QP_DBs_initialize.F ypp/build_kpts_map.F ypp/double_k_grid.F ypp/electrons_dos_and_charge.F ypp/electrons_driver.F ypp/excitons_driver.F ypp/fix_PPs.F ypp/fix_WFs_Gshells.F ypp/fix_WFs_and_E.F ypp/fix_symmetries.F ypp/k_grids.F ypp/plot_cube.F ypp/plot_gnuplot.F ypp/read_bxsf.F ypp/ypp_i.F ypp/ypp_init.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Found reason for small differences between plasma gas and standard approach to el-el
+	  (related to energy_condition+numerical error)
+	- removed many unesed variables
+	- restored RT_G_retarded_EP for testing pourposes
+	- Improved Hyperbolic secant subroutine. For E=0 now the subroutines correctly
+	  returns lim_(E->0) instead of NaN
+
+	Patch sent by: Davide
+
+2013-11-08 17:32:02 r2903 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  qp/COLLISIONS_eval.F qp/Plasma_driver.F qp/COLLISIONS_cohsex.F qp/Plasma_setup.F modules/mod_plasma.F interface/init_load.F real_time/RT_Coulomb_relaxation.F include/version.inc config/configure.ac configure
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Working on Plasma gas:
+	 * fixed a small bug
+	 * started to work on the parallel version
+
+	Patch sent by: Davide
+
+2013-11-07 18:09:08 r2897 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  include/version.inc config/configure.ac configure modules/mod_drivers.F modules/mod_plasma.F qp/COLLISIONS_cohsex.F qp/Plasma_setup.F qp/Plasma_driver.F real_time/RT_Coulomb_relaxation.F real_time/RT_driver.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Plasma gas: improving implementation
+
+	Patch sent by: Davide
+
+2013-11-07 16:36:15 r2896 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  include/version.inc configure modules/mod_pars.F modules/mod_drivers.F real_time/RT_G_retarded_convolution.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_Coulomb_relaxation.F qp/COLLISIONS_cohsex.F qp/Plasma_setup.F config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Plasma gas results are **almost** OK
+	  Still small differences with previous approach
+
+	Patch sent by: Davide
+
+2013-11-06 11:48:49 r2893 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure io/io_COLLISIONS.F io/COLLISIONS_load.F qp/Plasma_gas_procedure.save qp/.objects qp/COLLISIONS_eval.F qp/Plasma_driver.F qp/COLLISIONS_cohsex.F qp/Plasma_setup.F real_time/RT_Coulomb_relaxation.F driver/yambo_driver.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Plasma gas procedure moved outside of collisions_eval. It is needed also when collisions are read from disk.
+	  Now yambo_rt with l_plasma_gas flag runs and produce reasonable, but still wrong, results.
+
+	Patch sent by: Davide
+
+2013-11-04 18:10:42 r2888 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure parallel/PARALLEL_global_indexes.F io/io_COLLISIONS.F modules/mod_collisions_IO.F modules/mod_plasma.F qp/Plasma_setup.F qp/COLLISIONS_cohsex.F qp/COLLISIONS_eval.F real_time/RT_Coulomb_relaxation.F include/version.inc config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Working on plasma gas. Now codes compiles and generate collisions
+
+	Patch sent by: Davide
+
+2013-11-04 13:58:22 r2886 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure io/COLLISIONS_load.F io/io_COLLISIONS.F modules/.objects modules/mod_collisions_IO.F modules/mod_collision.F modules/mod_plasma.F modules/mod_drivers.F + qp/COLLISIONS_cohsex.F qp/.objects qp/COLLISIONS_mmp_setup.F qp/COLLISIONS_eval.F real_time/RT_Coulomb_relaxation.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_G_retarded_convolution.F config/configure.ac include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Working on plasma impementation. At leasta now it compiles
+
+	Patch sent by: Davide
+
+2013-11-02 13:10:18 r2885 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure modules/mod_collision.F qp/COLLISIONS_mmp_setup.F real_time/RT_Coulomb_relaxation.F common/FREQUENCIES_coarse_grid.F include/version.inc config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- General structure for plasma gas approximation to the ee scattering created.
+	  Three tables relates (m,mp,pm,iq) to (J,iq) back and fort
+	  Forward procedure structure implemented in COLLISIONS_cohsex      (iQP --> iJ)
+	  Backward procedure struture implemented in RT_Coulomb_relaxation  (iQP <-- iJ)
+	  Code does not compile yet
+
+	Patch sent by: Davide
+
+2013-10-31 16:13:48 r2882 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure io/COLLISIONS_load.F modules/mod_collisions_IO.F modules/mod_collision.F modules/mod_parallel.F qp/COLLISIONS_cohsex.F qp/.objects qp/COLLISIONS_mmp_setup.F qp/COLLISIONS_eval.F common/FREQUENCIES_coarse_grid.F config/configure.ac include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Preparing plasma gas...
+
+	Patch sent by: Davide
+
+2013-10-30 15:21:16 r2871 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk devel
+
+2013-10-28 16:06:59 r2834 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk devel
+
+2013-10-28 12:18:16 r2829 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure interface/init.F interface/barriers.F interface/init_load.F real_time/RT_output.F driver/yambo.h include/version.inc config/configure.ac
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- New flags fixed
+
+	Patch sent by: Davide
+
+2013-10-27 17:42:38 r2828 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  include/version.inc config/configure.ac configure parallel/PARALLEL_global_indexes.F setup/QP_state_table_setup.F setup/QP_external_corrections.F interface/init_load.F interface/init.F interface/barriers.F real_time/RT_databases_IO.F real_time/RT_initialize.F real_time/RT_ELPH_initialize.F real_time/RT_driver.F real_time/RT_observables.F real_time/RT_start_and_restart.F real_time/RT_ELPH_zeroing.F real_time/RT_impose_N_conservation.F real_time/RT_relaxation.F io/io_COLLISIONS.F io/variables_SC.F io/COLLISIONS_load.F qp/COLLISIONS_store.F qp/ELPH_Sigma_c.F qp/QP_descriptions.F qp/QP_newton.F qp/QP_report_and_write.F qp/COLLISIONS_eval.F qp/QP_of.F qp/QP_driver.F qp/COLLISIONS_cohsex.F modules/mod_real_time.F modules/mod_collisions_IO.F modules/SET_defaults.F modules/mod_drivers.F driver/yambo.h driver/yambo_driver.F ypp/RT_occupations_analyze.F ypp/RT_occupations_check.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- RT_impose_N_conservation on the whole RT_nk in view of the extension of the
+	  elel scattering to the RIM grid
+	- RATIONALIZATION OF LOGICALS, STILL TO BE TESTED.
+	  1) Removed Dynamics_kind.
+	  2) l_elel_scatt replaces l_carriers_dynamics
+	  3) l_elel_corr replaces l_el_corr
+	  4) l_ph_corr splitted in (A) l_elph_corr and (B) l_elph_scatt
+	  THUS:
+	  * yambo -c ( (e)lectrons/(p)honons/(b)oth )
+	    l_elel_corr  and l_elph_corr  control the        equilibrium self-energy=correlation
+	  * yambo -s ( (e)lectrons/(p)honons/(b)oth )
+	    l_elel_scatt and l_elph_scatt control the out-of-equilibrium self-energy=scattering
+	- Coulomb interaction runlevel is now controlled via "yambo -r" as "yambo -c" is needed for correlations
+
+	Patch sent by: Davide
+
+2013-10-24 15:44:22 r2823 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure common/OCCUPATIONS_Extend.F real_time/RT_impose_N_conservation.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- CVB and CBm updated correctly aso by OCCUPATIONS_Extended
+
+	Patch sent by: Davide
+
+2013-10-24 13:25:51 r2822 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure modules/mod_real_time.F real_time/RT_start_and_restart.F io/variables_SC.F config/configure.ac include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Gr_descriptor restored
+
+	Patch sent by: Davide
+
+2013-10-24 11:58:05 r2821 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  real_time/RT_manual_excitation.F qp_ctl/mod_QP_CTL.F modules/mod_electrons.F modules/SET_defaults.F common/OCCUPATIONS_Fermi.F config/configure.ac include/version.inc configure
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- E_VBM (Valence Band Maximum) and E_CBm (Conduction Band minimum) are now part of the type levels.
+	  Input energies for manual pump and energy width are now relative to these two numbers
+
+	Patch sent by: Davide
+
+2013-10-23 16:43:11 r2819 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure real_time/RT_impose_N_conservation.F config/configure.ac include/version.inc
+
+	Bugs:
+	- Fixed wrong merge with trunk/devel
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-10-23 16:27:09 r2818 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk devel
+
+2013-10-21 16:37:41 r2803 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure ypp/RT_occupations_analyze.F ypp/electrons_dos_and_charge.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- RT_occupations_analyze works again without RIM
+
+	Patch sent by: Davide
+
+2013-10-21 16:11:00 r2802 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  common/HyperbolicSecant_FT.F modules/SET_defaults.F modules/mod_real_time.F interface/init_load.F interface/init.F real_time/RT_G_retarded_EP_initialize.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_impose_N_conservation.F real_time/RT_G_retarded_convolution.F real_time/RT_ELPH_initialize.F real_time/RT_ELPH_total_Kernel.F config/configure.ac include/version.inc configure
+
+	Bugs:
+	- Fixed a small bug in RT_impose_Nel_conservation
+	Additions:
+	-
+	Changes:
+	- alpha value for Hyperbolic Gret can bi given in input
+
+	Patch sent by: Davide
+
+2013-10-16 17:03:51 r2792 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  real_time/RT_start_and_restart.F real_time/RT_k_grid.F io/variables_SC.F io/io_RT_components.F config/configure.ac include/version.inc configure
+
+	Bugs:
+	- RESTART is now working also with RIM
+	Additions:
+	-
+	Changes:
+	- Gret DB is not present anymore. Removed I/O CHECKs
+
+	Patch sent by: Davide
+
+2013-10-15 18:18:20 r2789 Davide Sangalli <davide.sangalli@gmail.com>
+
+	small bug fix
+
+2013-10-15 17:53:18 r2788 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  ypp/RT_occupations_repair.F ypp/RT_occupations_analyze.F ypp/RT_occupations_FIT.F include/version.inc config/configure.ac configure real_time/RT_ELPH_CCA_Kernel.F real_time/RT_ELPH_total_Kernel.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- RT_ibz_coo,RIM_ibz_coo and RIM_bz_coo ... got it !
+	  RT_E defined in RT_occupations_analize and correctly sorted
+
+	- Few improvments in ELPH kernel
+
+	Patch sent by: Davide
+
+2013-10-14 14:12:19 r2783 Davide Sangalli <davide.sangalli@gmail.com>
+
+	forgot cycle line
+
+2013-10-14 12:57:07 r2782 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure io/variables_SC.F modules/SET_defaults.F modules/mod_real_time.F real_time/RT_start_and_restart.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_initialize.F real_time/RT_G_retarded_EP_initialize.F config/configure.ac ypp/ypp_init_load.F ypp/ypp_init.F ypp/RT_occupations_analyze.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Cleaning more Gret DB code lines
+
+	Patch sent by: Davide
+
+2013-10-13 01:44:50 r2778 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  modules/mod_com.F ypp/k_random.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fixed small bug in k_random
+	- max_open_units number increased
+
+	Patch sent by: Davide
+
+2013-10-11 18:08:08 r2776 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  ypp/RT_occupations_analyze.F ypp/RT_occupations_FIT.F ypp/RT_occupations_check.F include/version.inc config/configure.ac configure qp_ctl/QP_apply_global_stretch.F modules/mod_SC.F
+
+	Bugs:
+	- Fixed E%W when VBM is not =0.0
+	- Fixed old bug in RT_occ_FIT
+	Additions:
+	-
+	Changes:
+	- Ypp_rt -t of and -t op now works with rim
+
+	Patch sent by: Davide
+
+2013-10-11 14:05:06 r2775 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  modules/SET_defaults.F modules/mod_real_time.F bz_ops/bz_samp_indexes.F interface/init.F interface/init_load.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_G_retarded_convolution.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_manual_excitation.F real_time/RT_start_and_restart.F io/.objects io/io_G_retarded.F include/version.inc config/configure.ac configure
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Gr_kind is now decided in input
+	- Removed other subroutined related to the Gret DBs
+	- Fixed few bugs due to wrong merging with the trunk
+	- Now RT_manual_pump takes into account the Fermi level shift.
+
+	Patch sent by: Davide
+
+2013-10-10 14:13:34 r2774 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . driver/ypp.h configure real_time/RT_initialize.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_G_retarded_EP_initialize.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_relaxation.F real_time/RT_G_retarded_convolution.F common/HyperbolicSecant_FT.F io/variables_SC.F config/configure.ac ypp/mod_YPP.F ypp/RT_occupations_FIT.F ypp/ypp_i.F ypp/ypp_init_load.F ypp/.objects ypp/RT_G_retarded_frequency.F ypp/RT_occupations_analyze.F ypp/RT_G_retarded.F ypp/ypp_init.F + include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Removed Grei in ypp and related lines in yambo
+	- Inserted analytic HS
+	- merged with trunk
+
+	Patch sent by: Davide
+
+2013-10-10 10:48:45 r2766 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk devel
+
+2013-09-27 16:01:13 r2746 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Forgot svn add HyperbolicSecant_FT.F
+
+2013-09-27 15:52:14 r2745 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure real_time/RT_Fluence.F real_time/RT_G_retarded_EP_initialize.F common/.objects include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Analytic expression for the Fourier transform of the hyperbolic secant GreenF inserted
+	  with alpha from 1 to 10 (C=Gamma/alpha). Also higher values can be omputed thanks to
+	  the recursion relation.
+
+	Patch sent by: Davide
+
+2013-09-25 10:06:53 r2742 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure real_time/RT_G_retarded_EP_initialize.F real_time/RT_G_retarded_EE_initialize.F real_time/RT_G_retarded_time.F real_time/RT_ELPH_CCA_Kernel.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- New Hyperbolic Secant Green function coded in the old structure for testing purpose
+	- Removed rescaled temperature implementation in ELPH. This will be overcome by the new RIM implementation
+	- Alpha=1 in RT_G_retarded time for better comparison with the new implementation
+
+	Patch sent by: Davide
+
+2013-09-20 09:23:20 r2737 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk devel
+
+2013-09-16 11:06:07 r2719 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . include/version.inc configure modules/mod_real_time.F interface/init.F interface/QP_init.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_ELPH_total_Kernel.F real_time/RT_output.F real_time/RT_G_retarded_EP_initialize.F real_time/RT_relaxation.F xc_functionals/el_density.F parser/mod_itm.F io/variables_SC.F io/io_RT_components.F ypp/ypp_init.F ypp/RT_occupations_analyze.F ypp/ypp_i.F ypp/RT_occupations_FIT.F ypp/RT_occupations_check.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Merged with trunk, however I kept the emission lifetimes separated
+	  in spontaneous emission and stimulated term,
+	  otherwise all my DBs cannot be used anymore.
+
+	Patch sent by: Davide
+
+2013-09-10 10:15:54 r2705 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure ypp/RT_occupations_FIT.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Occupations FIT improved again
+
+	Patch sent by: Davide
+
+2013-09-09 09:26:35 r2703 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  . configure ypp/k_random.F ypp/RT_occupations_analyze.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- small change in occupations analyze
+	- patch from Andrea to k_random
+
+	Patch sent by: Davide
+
+2013-09-04 14:32:00 r2696 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merge with trunk
+
+2013-09-04 10:39:41 r2691 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  include/version.inc configure ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Reorganized RT_occupations_FIT output
+
+	Patch sent by: Davide
+
+2013-09-03 17:00:47 r2689 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  include/version.inc configure common/TEMPERATURE_Debye.F interface/init_load.F real_time/RT_ELPH_initialize.F real_time/RT_driver.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- TEMPERATURE_Debye improved. However it still rely on the changes of the "IP electronic-energy"
+	  which must be tested more in detail.
+
+	Patch sent by: Davide
+
+2013-08-31 11:42:22 r2682 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk
+
+2013-08-29 16:40:01 r2668 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk
+
+2013-08-29 13:15:44 r2664 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk devel
+
+2013-08-27 17:49:03 r2660 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  include/version.inc configure real_time/RT_Fluence.F real_time/RT_initialize.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- New RT_fluence final MAKE-UP
+
+	Patch sent by: Davide
+
+2013-08-27 15:30:12 r2658 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure real_time/RT_Fluence.F real_time/RT_relaxation.F real_time/RT_initialize.F real_time/RT_observables.F modules/mod_real_time.F include/version.inc
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- CODE SPEED UP: RT_fluene now is called just during the initialization
+	  where the fluence is computed for all times
+
+	Patch sent by: Davide
+
+2013-08-26 08:11:27 r2648 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  parallel/PARALLEL_get_user_structure.F setup/PARALLEL_and_IO_Setup.F
+
+	Bugs:
+	- Fixed two small bugs
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-08-25 12:16:42 r2647 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  include/version.inc configure real_time/RT_driver.F ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F ypp/electrons_dos_and_charge.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- RT output only at io time steps
+	- Improved organization of electrons_dos_and_charge
+
+	Patch sent by: Davide
+
+2013-08-24 16:16:54 r2646 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  ypp/RT_occupations_FIT.F ypp/RT_occupations_repair.F include/version.inc configure
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- small changes
+	Patch sent by: Davide
+
+2013-08-21 14:34:22 r2645 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure driver/ypp.h include/version.inc real_time/RT_ELPH_CCA_Kernel.F ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F ypp/electrons_dos_and_charge.F ypp/electrons_driver.F ypp/mod_YPP.F ypp/ypp_i.F ypp/ypp_init.F ypp/ypp_init_load.F
+
+	Bugs:
+	- Fixed bug in RT_ELPH_CCA_Kernel
+	Additions:
+	-
+	Changes:
+	- Improved ypp_rt orgnization
+
+	Patch sent by: Davide
+
+2013-08-14 20:00:07 r2643 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure include/version.inc real_time/RT_ELPH_CCA_Kernel.F real_time/RT_ELPH_total_Kernel.F ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	- Fixed few bugs introduced with the last commit
+	Additions:
+	-
+	Changes:
+	- Fixed problems with phonon bath at T different from zero. [STILL TO BE TESTED]
+
+	Patch sent by: Davide
+
+2013-08-13 12:36:22 r2641 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure include/version.inc modules/mod_functions.F real_time/RT_output.F ypp/.objects ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F ypp/RT_occupations_check.F ypp/RT_occupations_repair.F ypp/electrons_dos_and_charge.F ypp/ypp_init.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Improvements in RT_occupations_FIT
+	- RT_occupations FIT now is called both by RT_occupations_analyse and by electrons_dos_and_charge
+	- electrons_dos_and_charge now uses QP_n_states instead of DOSbands for ypp_rt
+	- RT_occupations_repair temporary resumed. But it just symmetrizes the occupations for degenerate states
+
+	Patch sent by: Davide
+
+2013-08-10 15:18:41 r2640 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  real_time/RT_mean_carrier_lifetimes.F real_time/RT_relaxation.F
+
+	Bugs:
+	- reversed hole and electron stimulated absortion
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-08-10 11:26:00 r2639 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure include/version.inc io/io_RT_components.F modules/mod_real_time.F real_time/RT_ELPH_CCA_Kernel.F real_time/RT_mean_carrier_lifetimes.F real_time/RT_output.F real_time/RT_relaxation.F ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F ypp/RT_occupations_check.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- EP_PH_lifetime decomposed in stimulated emission and stimulated absorption lifetimes
+
+	Patch sent by: Davide
+
+2013-08-09 10:07:20 r2637 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk devel
+
+2013-08-08 10:31:47 r2621 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc ypp/RT_occupations_FIT.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fermi FIT can be done also locking the Fermi level
+
+	Patch sent by: Davide
+
+2013-08-07 15:24:46 r2619 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc real_time/RT_output.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- changes in the output. EH,Exc and Ecorr not reported for IP dynamics
+	  Bose temperature reported in case TBose is updated. [Experimental]
+
+	Patch sent by: Davide
+
+2013-08-07 14:29:38 r2618 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  ypp/RT_occupations_analyze.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Parameter VBM=4 replaced by E%nbf, so that RT_occupations_analyze works properly not only for Silicon
+	- Plots of the occupations include the "spin_occ" parameter
+
+	Patch sent by: Davide
+
+2013-08-07 09:49:52 r2617 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- ypp/RT_occupations_FIT.F inserted also avg_error on the fit
+
+	Patch sent by: Davide
+
+2013-08-07 09:28:46 r2616 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Improved ypp/RT_occupations_FIT.F
+
+	Patch sent by: Davide
+
+2013-08-04 19:47:56 r2606 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc ypp/RT_occupations_FIT.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Fermi FIT improved. Also Efermi taken into account.
+
+	Patch sent by: Davide
+
+2013-08-03 21:17:34 r2605 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc ypp/RT_occupations_analyze.F
+
+	Bugs:
+	- Fixed RT_occ_distibution wrong allocation
+	Additions:
+	-
+	Changes:
+	-
+	Patch sent by: Davide
+
+2013-08-02 18:10:20 r2604 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc modules/mod_functions.F ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- FIT algorithm is now working
+
+	Patch sent by: Davide
+
+2013-08-02 17:05:32 r2603 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc modules/mod_functions.F real_time/RT_Collision.F real_time/RT_driver.F real_time/RT_impose_N_conservation.F real_time/RT_manual_excitation.F real_time/RT_start_and_restart.F ypp/.objects ypp/RT_occupations_FIT.F ypp/RT_occupations_analyze.F ypp/RT_occupations_check.F ypp/RT_occupations_repair.F ypp/electrons_dos_and_charge.F
+
+	Bugs:
+	- workaround for a bug in src/real_time/RT_impose_N_conservation.F which
+	  I did not understand
+	Additions:
+	-
+	Changes:
+	- New Fermi FIT subroutine based on Gauss–Newton algorithm (to be tested),
+	  removed all calls to RT_occupations_repair.
+	- Improved RT_manual_excitation subroutine
+	- Created function Fermi_fnc_T_derivative in mod_functions
+
+	Patch sent by: Davide
+
+2013-07-31 11:50:05 r2599 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc ypp/RT_occupations_analyze.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Total number of holes in valence and electrons in conduction reported.
+	  Presently the last valence band number is a parameter in the code
+
+	Patch sent by: Davide
+
+2013-07-30 22:11:00 r2598 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc common/TEMPERATURE_Debye.F interface/init.F interface/init_load.F modules/SET_defaults.F modules/mod_real_time.F real_time/RT_Collision.F real_time/RT_ELPH_initialize.F real_time/RT_driver.F real_time/RT_initialize.F ypp/RT_occupations_repair.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Changing BoseTemp assuming:
+	  (i)  the change in total energy is dissipated by elph interaction
+	  (ii) the change in temperature can be obtained by the Debye expression of specific heat
+
+	Patch sent by: Davide
+
+2013-07-28 21:09:00 r2594 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc modules/SET_defaults.F ypp/RT_occupations_analyze.F
+	   ypp/RT_occupations_repair.F ypp/mod_YPP.F ypp/ypp_init.F ypp/ypp_init_load.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Distribution_Fit activated also with ypp_rt -s o
+	- Also Distribution_Data are printed
+
+	Patch sent by: Davide
+
+2013-07-24 11:37:35 r2592 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  configure include/version.inc config/configure.ac real_time/RT_manual_excitation.F ypp/ELPH_databases.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- Improved manual excitations and occupations report for convergence tests
+	- ypp_ph prints Qpts and related Syms when expands the GKKPs
+
+	Patch sent by: Davide
+
+2013-07-19 23:27:06 r2589 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc interface/init.F interface/init_load.F modules/mod_real_time.F real_time/RT_Collision.F real_time/RT_manual_excitation.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:
+	- RT_manual_excitations pumps at fixed carrier density
+	- RT_occupations_analyze plots the contribution of a given level to the carrier density.
+
+	Patch sent by: Davide
+
+2013-07-19 16:47:41 r2588 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk devel
+
+2013-07-15 18:23:03 r2578 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk
+
+2013-07-11 16:29:27 r2551 Davide Sangalli <davide.sangalli@gmail.com>
+
+	Version 3.4.0
+
+	*  config/configure.ac configure include/version.inc modules/SET_defaults.F qp/XCo_local.F ypp/RT_occupations_analyze.F ypp/RT_occupations_check.F
+
+	Bugs:
+	- Fixed logicals for ypp_rt -s o
+	Additions:
+	-
+	Changes:
+	- if(l_real_time) XCo_local evaluate only the lower half of QP_Vxc, which is hermitian.
+
+	Patch sent by: Davide
+
+2013-07-11 12:07:38 r2549 Davide Sangalli <davide.sangalli@gmail.com>
+
+	merged with trunk/devel
+
+2013-07-10 18:27:46 r2542 Davide Sangalli <davide.sangalli@gmail.com>
+
+	devel-davide forked following trunk
 
 2013-07-09 12:51:01 r2535 Davide Sangalli <davide.sangalli@gmail.com>
 

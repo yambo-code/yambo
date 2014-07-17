@@ -25,6 +25,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  use YPP
  use pars,           ONLY:pi
+ use interpolate,    ONLY:lpfac
  use units,          ONLY:HA2EV,FS2AUT
  use D_lattice,      ONLY:alat,i_time_rev
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
@@ -63,7 +64,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  ! Work Space
  !
- logical          ::l_QP_init,l_flag
+ logical          ::l_QP_init
  type(initdefs)   ::defs
  integer          ::i1,i2
  character(schlen)::rstr_piece(60) 
@@ -74,6 +75,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  integer          ::io_SC_err,ID
 #endif
 #if defined _YPP_RT
+ logical          ::l_flag
  integer, external::io_RT_components
  integer          ::io_RT_err,ID
 #endif
@@ -117,7 +119,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  ! RT OCCUPATIONS and DOS
  !
- OCC_T_ref=-FS2AUT
  OCC_T_range=0.
  OCC_deltaT=0.
  l_RealTime=.FALSE.
@@ -130,9 +131,12 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  ! BANDS
  !
  BANDS_steps=0
- BANDS_range=(/1,n_bands/)
  l_bands=.false.
+ lpfac=20._SP
  interp_grid = (/-1, -1, -1/)
+#if defined _YPP_RT
+ Nel_fac=1._SP
+#endif
  !
  !
  ! PLOT
@@ -414,7 +418,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
        !
        l_RT_X           =trim(rstr_piece(i1+1))=='X'
        l_RT_dos         =trim(rstr_piece(i1+1))=='d'
-       l_RT_occ_Bands       =trim(rstr_piece(i1+1))=='b'
+       l_RT_occ_Bands   =trim(rstr_piece(i1+1))=='b'
        l_RT_occ_Plot    =trim(rstr_piece(i1+1))=='op'
        l_RT_occ_Fit     =trim(rstr_piece(i1+1))=='of'
        !
@@ -446,8 +450,8 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #if defined _YPP_RT
      if ( trim(rstr_piece(i1)) == 'RealTime') then
        if (l_RT_X)           call initactivate(1,'RT_X')
-       if (l_RT_dos)         call initactivate(1,'RTdos')
-       if (l_RT_occ_Bands)       call initactivate(1,'RToccBnd')
+       if (l_RT_dos)         call initactivate(1,'RTcarrDos')
+       if (l_RT_occ_Bands)   call initactivate(1,'RToccBnd')
        if (l_RT_occ_Plot)    call initactivate(1,'RToccPlot')
        if (l_RT_occ_Fit)     call initactivate(1,'RToccFit')
      endif
@@ -481,8 +485,8 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #if defined _YPP_RT
  l_RealTime         = runlevel_is_on('RealTime')
  l_RT_X             = runlevel_is_on('RT_X')
- l_RT_dos           = runlevel_is_on('RTdos')
- l_RT_occ_Bands         = runlevel_is_on('RToccBnd')
+ l_RT_dos           = runlevel_is_on('RTcarrDos')
+ l_RT_occ_Bands     = runlevel_is_on('RToccBnd')
  l_RT_occ_Plot      = runlevel_is_on('RToccPlot')
  l_RT_occ_Fit       = runlevel_is_on('RToccFit')
  !
@@ -522,9 +526,11 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
    endif
  endif
  !
- if (l_bands) call initactivate(1,"cooIn BKpts BANDS_steps BANDS_range INTERPGrid")
+ if (l_bands) call initactivate(1,"cooIn BKpts BANDS_steps INTERPGrid ShellFac NormN NelFac")
  !	   
  l_bzrim     =runlevel_is_on('bzrim')
+ !
+ l_map_kpts  = runlevel_is_on('kpts_map')
  !
  l_bxsf      =runlevel_is_on('bxsf')
  !
@@ -571,7 +577,9 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (l_bzrim) call initactivate(1,"BZ_RIM_Nk cooOut OutputAlat SkipCheck BZExpand NoWeights GammaRadius")
+ if (l_bzrim)    call initactivate(1,"BZ_RIM_Nk cooOut OutputAlat GammaRadius")
+ !
+ if (l_map_kpts) call initactivate(1,"BZ_RIM_Nk SkipCheck BZExpand NoWeights")
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call QP_ctl_switch('G')
@@ -582,8 +590,9 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
    l_flag=l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_occ_Bands
    if (l_flag) call QP_ctl_switch('G')
    if (l_flag) call initactivate(1,"OCCdT OCCTime OCCTref")
-   if (l_RT_occ_Bands)    call initactivate(1,"cooIn BKpts BANDS_steps BANDS_range")
+   if (l_RT_occ_Bands)    call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
    if (l_RT_occ_Plot) call initactivate(1,"OCCgroup")
+   if (l_RT_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands")
  endif
 #endif
  !
@@ -653,7 +662,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  if (l_QP_DBs_create_and_modify.or.l_QP_DBs_merge) call QP_DBs_initialize()
  !
- l_QP_init=l_plot.and.l_sp_wf
+ l_QP_init=(l_plot.and.l_sp_wf).or.l_bands
 #if defined _YPP_ELPH
  if (.not.l_QP_init) l_QP_init=l_electrons.and.l_eliashberg
 #endif
@@ -665,13 +674,13 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #endif
  !
 #if defined _YPP_RT
- if (.not.l_QP_init) l_QP_init=l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_dos
+ if (.not.l_QP_init) l_QP_init=l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_dos.or.l_RT_occ_bands
  if (l_QP_init) call QP_init(.FALSE.,.TRUE.)
 #else
  if (l_QP_init) call QP_init(.FALSE.,.FALSE.)
 #endif
  !
- if (l_bzrim) then
+ if (l_map_kpts) then
    n_RIM_DBs=parse_character_arrays(RIM_DB1_paths,MAX_RIM_DBs,"RIM_DB1_paths",.TRUE.)
    if (infile_editing) i1=parse_character_arrays(RIM_DB1_paths,n_RIM_DBs,"RIM_DB1_paths",.FALSE.)
  endif

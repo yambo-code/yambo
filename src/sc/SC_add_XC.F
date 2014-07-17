@@ -31,8 +31,8 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  ! _RT works in the LDa basis.
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_sc_exx,l_sc_srpa,l_sc_cohsex,l_sc_contains_lda,&
-&                         l_use_collisions
+ use drivers,        ONLY:l_sc_exx,l_sc_srpa,l_sc_cohsex,l_sc_is_libDFT,&
+&                         l_use_collisions,l_sc_hartree
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_t,QP_reset
  use parallel_m,     ONLY:master_cpu
@@ -40,7 +40,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
  use xc_functionals, ONLY:V_xc,XC_potential_driver
- use SC,             ONLY:V_xc_sc,local_V,SC_kind,SC_xc_functional,SC_cycle_mixing,&
+ use SC,             ONLY:V_xc_sc,l_sc_pot_is_local,SC_kind,SC_xc_functional,SC_cycle_mixing,&
 &                         G_lesser,SC_bands,SC_R,H_rotate,l_oep_iterative
  use FFT_m,          ONLY:fft_size
  use IO_m,           ONLY:IO_and_Messaging_switch
@@ -58,9 +58,13 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  ! Work Space
  !
  integer      :: ib,ik
+ logical      :: l_call_pot_driver
+ !
  type(QP_t)   :: qp_dummy
  !
- if (.not.local_V) then
+ l_call_pot_driver=l_sc_is_libDFT .or. l_sc_hartree
+ !
+ if (.not.l_sc_pot_is_local) then
    !
    ! Hartee-Fock & COHSEX
    !======================
@@ -100,7 +104,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    !
  endif
  !
- if (local_V) then
+ if (l_sc_pot_is_local) then
    !
    if (.not.l_oep_iterative) V_xc_sc=0._SP
    !
@@ -110,13 +114,10 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    !
    ! GPL_EXCLUDE_END
    !
-   call IO_and_Messaging_switch("-report -log -io_in -io_out")
-   !
-   if (l_sc_contains_lda) call XC_potential_driver(E,Xk,SC_kind,SC_xc_functional,1)
-   if (l_sc_contains_lda.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)
-   if (l_sc_contains_lda.and.     (l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
-   !
-   call IO_and_Messaging_switch("+report +log +io_in +io_out",CONDITION=master_cpu)
+   if (l_call_pot_driver) call XC_potential_driver(E,Xk,SC_kind,SC_xc_functional,1,&
+&                                                  MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)
+   if (l_call_pot_driver.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)
+   if (l_call_pot_driver.and.     (l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
    !
    ! Mixing 
    !========

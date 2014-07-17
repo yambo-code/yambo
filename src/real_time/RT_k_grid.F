@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !            http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -40,9 +40,9 @@ integer function RT_k_grid(E,k,q)
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
  use LIVE_t,         ONLY:what_is_running
- use SC,             ONLY:RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,SC_bands
+ use SC,             ONLY:RT_ibz_coo,RT_all2ibz,RT_Nk_ibz
  use electrons,      ONLY:levels,BZ_RIM_nkpt
- use real_time,      ONLY:RIM_bz_coo,RIM_ibz_coo,RIM_closest_E,RIM_EE_scatt_table,&
+ use real_time,      ONLY:RIM_bz_coo,RIM_ibz_coo,RIM_EE_scatt_table,&
 &                         RIM_EE_percent,RIM_EE_Nk_table
  use R_lattice,      ONLY:bz_samp
  !
@@ -55,9 +55,7 @@ integer function RT_k_grid(E,k,q)
  ! Work space
  !
  logical :: l_check(k%nibz,k%nibz)
- integer :: ik,ik_bz,ik_rim,ikp_rim,iE_rim,ik_ref,i_n,i_n_ref,iqbz,ik_m_q,&
-&           ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
- real(SP):: delta_E,delta_E_ref
+ integer :: ik,ik_bz,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
  !
  ! Number of K-points
  !====================
@@ -87,30 +85,6 @@ integer function RT_k_grid(E,k,q)
  do ik=1,k%nibz
    do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      RT_all2ibz(ik_rim)=ik
-   enddo
- enddo
- !
- if (.not.allocated(RIM_closest_E)) allocate(RIM_closest_E(SC_bands(1):SC_bands(2),RT_k_grid))
- !
- do i_n=SC_bands(1),SC_bands(2)
-   forall(ik=1:k%nibz) RIM_closest_E(i_n,RT_ibz_coo(ik,1))=ik
- enddo
- !
- do ik=1,k%nibz
-   do ik_rim=RT_ibz_coo(ik,1)+1,RT_ibz_coo(ik,2)
-     iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
-     do i_n=SC_bands(1),SC_bands(2)
-       !
-       delta_E_ref=100._SP
-       do ik_ref=1,k%nibz
-         delta_E=E%E(i_n,ik_ref,1)-E%E_RIM(i_n,iE_rim,1)
-         if(abs(delta_E)<abs(delta_E_ref)) then
-           delta_E_ref=delta_E
-           RIM_closest_E(i_n,ik_rim)=ik_ref
-         endif
-       enddo
-       !
-     enddo
    enddo
  enddo
  !

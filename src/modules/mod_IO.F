@@ -50,15 +50,15 @@ module IO_m
  ! Global DB I/O control string
  !
  character(lchlen) :: DBs_IO_control_string = "none"
- logical           :: io_DIP   =.FALSE.
- logical           :: io_X     =.TRUE.
- logical           :: io_WF    =.TRUE.
- logical           :: io_HF    =.TRUE.
- logical           :: io_COLLs =.TRUE.
- logical           :: io_J     =.TRUE.
- logical           :: io_OCCs  =.TRUE.
- logical           :: io_GF    =.TRUE.
- logical           :: io_SC    =.TRUE.
+ logical           :: io_DIP     =.TRUE.
+ logical           :: io_RESPONSE=.TRUE.
+ logical           :: io_WF      =.TRUE.
+ logical           :: io_HF      =.TRUE.
+ logical           :: io_COLLs   =.TRUE.
+ logical           :: io_J       =.TRUE.
+ logical           :: io_OCCs    =.TRUE.
+ logical           :: io_GF      =.TRUE.
+ logical           :: io_SC      =.TRUE.
  !
  ! Actions
  !

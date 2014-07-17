@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CA
+! Authors (see AUTHORS file for details): CA, DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_bands(Xk,Xen)
+subroutine electrons_bands(Xk,Xen,BANDS_range)
  !
  use pars,           ONLY:SP,schlen,DP
  use units,          ONLY:HA2EV
- use YPP,            ONLY:BANDS_steps,coo_in,coo_out,BANDS_range,k_transform,interp_grid, &
+ use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,interp_grid, &
 &                         l_RT_occ_Bands,l_bands
  use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_tot_Nkpts,spin_occ
- use R_lattice,      ONLY:bz_samp,bz_samp_reset
+ use R_lattice,      ONLY:bz_samp,bz_samp_reset,k_the_nearest
  use com,            ONLY:msg,of_open_close,error,warning
  use vec_operate,    ONLY:c2a,v_norm
  use parser_m,       ONLY:parser
@@ -36,6 +36,7 @@ subroutine electrons_bands(Xk,Xen)
  use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation,reset_interpolation
  use QP_CTL_m,       ONLY:QP_apply
 #if defined _YPP_RT
+ use YPP,            ONLY:Nel_fac
  use stderr,         ONLY:real2ch
  use electrons,      ONLY:n_spin
  use units,          ONLY:FS2AUT
@@ -47,29 +48,30 @@ subroutine electrons_bands(Xk,Xen)
  !
  implicit none
  !
- type(bz_samp), intent(inout) ::Xk
- type(levels),  intent(in) ::Xen
+ type(bz_samp), intent(inout) :: Xk
+ type(levels),  intent(in)    :: Xen
+ integer,       intent(in)    :: BANDS_range(2)
  !
  ! Work Space
  !
- type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K,Xq_tmp
+ type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K
  real(SP)              :: real_ctl,v(3),max_dist
  real(SP), allocatable :: distances(:),values(:)
  real(SP), allocatable :: bands_grid(:,:,:),bands_circuit(:,:,:)
 #if defined _YPP_RT
  real(SP), allocatable :: occupations_grid(:,:,:,:),occupations_circuit(:,:,:,:),occupations_tmp(:,:,:)
- real(SP)              :: io_Time,Nel,Nhole,Real_Nhole,Real_Nel
+ real(SP)              :: io_Time,Nel_zero,Nhole_zero,Nel,Nhole,Real_Nhole,Real_Nel,Max_occ
+ logical               :: l_normalize_Nel
  integer               :: i_T,n_T_steps
- integer,     external :: RT_occupations_check,RT_k_grid
+ integer,     external :: RT_occ_check_and_load_ref,RT_k_grid
 #endif
- integer               :: i1,i2,ic,is,ID_interp,ik,ikbz,ib,Nk
+ logical               :: l_g_space_interp,l_nearest_neig_interp
+ integer               :: i1,i2,i_err,ic,is,ID_interp,ik,ikbz,ib,Nk,ik_near_RIM,ik_near_RT,ik_circuit
  integer,  allocatable :: int_distances(:)
  character(schlen)     :: file_name(n_sp_pol)
  character(schlen), allocatable :: headings(:)
  !
- if(any(BANDS_range<=0)) call error("Wrong bands range")
- !
- if(SP/=DP) call warning("To have a smaller error compile in double precision: --enable-dp") 
+ if(any(BANDS_range<=0)) call error(" Wrong bands range")
  !
  !Input file parsing
  !
@@ -77,21 +79,26 @@ subroutine electrons_bands(Xk,Xen)
  call bz_samp_reset(USER_K)
  call bz_samp_reset(CIRCUIT_K)
  !
- ! Check if RIM is used
+ ! Define the kind of interpolation
+ call parser('NNInterp',l_nearest_neig_interp)
+ l_g_space_interp=.not.l_nearest_neig_interp
  !
- if(BZ_RIM_tot_Nkpts==0) Nk=Xk%nibz
+ if(l_nearest_neig_interp.and.all(interp_grid>0)) call error(" NNInterp implemented only on a circuit")
  !
+ if(l_RT_occ_Bands) then
+   !
 #if defined _YPP_RT
- if(BZ_RIM_tot_Nkpts> 0) then
-   Nk=RT_k_grid(Xen,Xk,Xq_tmp)
-   allocate(Xk%pt_RIM(Nk,3))
-   do ik=1,Xk%nibz
-     Xk%pt_RIM(RT_ibz_coo(ik,1):RT_ibz_coo(ik,2),:)=Xk%ptbz_RIM(RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),:)
-   enddo
- endif
-#else
- if(BZ_RIM_tot_Nkpts> 0) call error("Interpolation and RIM implemented only in the _RT project")
+   n_T_steps=RT_occ_check_and_load_ref(Xen,Xk)
+   call RT_check_RIM(Xk,Xen)
+   Nk=RT_Nk
 #endif
+   !
+ else
+   !
+   if(BZ_RIM_tot_Nkpts> 0) call error("Interpolation and RIM implemented only in the _RT project")
+   Nk=Xk%nibz
+   !
+ endif
  !
  ! Read the kpts from input (extrema from the path)
  ! 
@@ -123,10 +130,12 @@ subroutine electrons_bands(Xk,Xen)
    !
    do ik=1,USER_K%nibz-1
      v=USER_K%pt(ik,:)-USER_K%pt(ik+1,:)
-     call c2a(v_in=v,mode="ki2c")  
+     call c2a(v_in=v,mode="ki2c")
      distances(ik)=v_norm(v)
    enddo
+   !
    max_dist=maxval(distances)
+   !
    !
    do ik=1,USER_K%nibz-1
      int_distances(ik)=maxval((/nint(BANDS_steps*distances(ik)/max_dist),1/))
@@ -163,6 +172,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  ! Interpolation: Initial setup
  !
+ !
  call bz_interp_setup(Xk)
  !
  ! Energies interpolation.
@@ -173,10 +183,10 @@ subroutine electrons_bands(Xk,Xen)
  allocate(bands_grid(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Nk))
  do is=1,n_sp_pol
 #if defined _YPP_RT
-   if(BZ_RIM_tot_Nkpts> 0) then
+   if(BZ_RIM_tot_Nkpts>0) then
      do ik=1,Xk%nibz
        bands_grid(BANDS_range(1):BANDS_range(2),is,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))= &
-&        Xen%E_RIM(BANDS_range(1):BANDS_range(2),RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),is)
+&         Xen%E_RIM(BANDS_range(1):BANDS_range(2),RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),is)
      enddo
    endif
 #endif
@@ -201,27 +211,24 @@ subroutine electrons_bands(Xk,Xen)
  !
  call reset_interpolation(ID_interp)
  !
+ !
 #if defined _YPP_RT
+ !
+ Max_occ=0.
  !
  ! Occupations interpolation.
  !===========================
  !
  if(l_RT_occ_Bands) then
    !
-   io_TIME=0.
-   call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_TIME,imposed_COM=NONE)
+   if(BZ_RIM_tot_Nkpts==0) call error('Interpolation on band structure presently works only with RIM')
+   !
+   call parser('NormN',l_normalize_Nel)
    !
    if(n_spin>1) call error('Occupations and spin not implemented')
    !
-   n_T_steps=RT_occupations_check(Xen,Xk)
-   !
-   if (n_T_steps<0) return
-   !
-   call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
-   call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
-   call msg('s','Time steps     :',n_T_steps)
-   !
    allocate(occupations_tmp(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Nk))
+   !
    if (BANDS_steps> 0) allocate(occupations_circuit(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz,n_T_steps))
    if(all(interp_grid>0)) allocate(occupations_grid(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz,n_T_steps))
    !
@@ -230,7 +237,6 @@ subroutine electrons_bands(Xk,Xen)
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
      !
      call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
-     call RT_occupations_repair(Xen)
      !
      Real_Nhole=0._SP
      Real_Nel=0._SP
@@ -242,20 +248,34 @@ subroutine electrons_bands(Xk,Xen)
 &       sum((RT_delta0_occupations(Xen%nbf+1:BANDS_range(2),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
 &                      Xk%weights(ik)/real(RT_Nk_ibz(ik))
      enddo
+     Max_occ=maxval((/Max_occ,RT_delta0_occupations(:,:)/))
      !
-     ! STEP 1: define coefficients for occupations
-     !
-     do is=1,n_sp_pol
-       occupations_tmp(BANDS_range(1):BANDS_range(2),is,1:Nk)=RT_delta0_occupations(BANDS_range(1):BANDS_range(2),1:Nk)
-     enddo
-     call eval_interpolation_coeff(R2D=occupations_tmp,k=Xk,Nk=Nk,ID=ID_interp)
-     !
-     ! STEP 2
-     ! 1: interpolate on the circuit      if (BANDS_steps>0)
-     ! 2: interpolate on the regular grid if (interp_grid>0)
-     !
-     if (BANDS_steps> 0) call bz_interpolation(USER_k=CIRCUIT_k,R2D=occupations_circuit(:,:,:,i_T),ID=ID_interp)
-     if(all(interp_grid>0)) call bz_interpolation(USER_k=INTERP_k,R2D=occupations_grid(:,:,:,i_T),ID=ID_interp)
+     if(l_g_space_interp) then
+       !
+       ! STEP 1: define coefficients for occupations
+       !
+       do is=1,n_sp_pol
+         occupations_tmp(BANDS_range(1):BANDS_range(2),is,1:Nk)=&
+         &   RT_delta0_occupations(BANDS_range(1):BANDS_range(2),1:Nk)
+       enddo
+       call eval_interpolation_coeff(R2D=occupations_tmp,k=Xk,Nk=Nk,ID=ID_interp)
+       !
+       ! STEP 2
+       ! 1: interpolate on the circuit      if (BANDS_steps>0)
+       ! 2: interpolate on the regular grid if (interp_grid>0)
+       !
+       if (BANDS_steps> 0) call bz_interpolation(USER_k=CIRCUIT_k,R2D=occupations_circuit(:,:,:,i_T),ID=ID_interp)
+       if(all(interp_grid>0)) call bz_interpolation(USER_k=INTERP_k,R2D=occupations_grid(:,:,:,i_T),ID=ID_interp)
+       !
+     elseif(l_nearest_neig_interp) then
+       !
+       do ik_circuit=1,CIRCUIT_k%nibz
+         ik_near_RT=k_the_nearest(CIRCUIT_k%pt(ik_circuit,:),Xk%pt_RIM,Nk,ROTATE_k_ref=.TRUE.,i_err=i_err)
+         occupations_circuit(BANDS_range(1):BANDS_range(2),1,ik_circuit,i_T)=&
+         &   RT_delta0_occupations(BANDS_range(1):BANDS_range(2),ik_near_RT)
+       enddo       
+       !
+     endif
      !
      ! Normilize the occupations
      !
@@ -264,21 +284,16 @@ subroutine electrons_bands(Xk,Xen)
        Nhole=-sum(occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T))/real(CIRCUIT_k%nibz)
        Nel=   sum(occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T))/real(CIRCUIT_k%nibz)
        !
-       !DEBUG<
-       !write(*,*) '  '
-       !write(*,*) Nhole,Nel,Real_Nhole,Real_Nel
-       !DEBUG>
-       !
-       if(Nhole>0) &
-       occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)=&
-&         occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)/Nhole*Real_Nhole
-       if(Nel>0) &
-       occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)=&
-&         occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)/Nel*Real_Nel
+       if(Nhole>0.and.l_normalize_Nel) &
+&        occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)=&
+&          occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)/Nhole*Real_Nhole
+       if(Nel>0  .and.l_normalize_Nel) &
+&        occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)=&
+&          occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)/Nel*Real_Nel
        !
      endif
      !
-     call reset_interpolation(ID_interp)
+     if(l_g_space_interp) call reset_interpolation(ID_interp)
      !
    enddo 
    !
@@ -372,6 +387,7 @@ subroutine electrons_bands(Xk,Xen)
    !
    coo_out=coo_in
    !
+   !
    do i_T=1,n_T_steps
      !
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
@@ -395,7 +411,7 @@ subroutine electrons_bands(Xk,Xen)
          !
          values(1)=real(ik,SP)
          values(2)=bands_circuit(ib,1,ik)*HA2EV
-         values(3)=occupations_circuit(ib,1,ik,i_T)
+         values(3)=occupations_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
          call msg('o '//file_name(1),' ',values,INDENT=0,USE_TABS=.true.)
          !
        enddo
@@ -405,7 +421,7 @@ subroutine electrons_bands(Xk,Xen)
      call of_open_close(file_name(1))
      !
    enddo
-   ! 
+   !
    deallocate(occupations_circuit,values,headings)
    !
  endif

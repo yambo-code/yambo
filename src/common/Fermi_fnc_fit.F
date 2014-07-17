@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit_out,RT_E_fit_out,l_T_max_in)
+integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit_out,RT_E_fit_out)
  ! 
  ! FIT the occupations:
  ! - first try with a standard Gauss–Newton algorithm
@@ -48,13 +48,11 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  real(SP), intent(out) :: Ef_fit(2)
  real(SP), intent(out) :: err_fit(4)
  !
- logical,  intent(in),  optional :: l_T_max_in
  real(SP), intent(out), optional :: RT_occ_fit_out(1000,2)
  real(SP), intent(out), optional :: RT_E_fit_out(1000,2)
  !
  ! Shadows to optionals
  !
- logical               :: l_T_max
  real(SP)              :: RT_occ_fit(1000,2)
  real(SP)              :: RT_E_fit(1000,2)
  !
@@ -62,7 +60,7 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  !
  integer, parameter    :: max_iter=1000, ntry_max=10, fit_dim=1000
  real(SP)              :: Fit_E_range(2),T_guess(2),Ef_guess(2),  &
-&                         T_now(2),T_save(2),Ef_save(2)
+&                         T_save(2),Ef_save(2)
  !
  logical               :: l_two_temperatures,lfound(2),l_dumping(2)
  !
@@ -74,9 +72,6 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  integer  :: ntry,nfit,nstates_fitted(2),last_occupied,nfound(2)
  !
  if(n_spin>1) call error('Occupations FIT not implemented for n_spin>1')
- !
- l_T_max=.false.
- if(present(l_T_max_in)) l_T_max=l_T_max_in
  !
  l_two_temperatures=.true.
  !
@@ -150,6 +145,10 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
      endif
    endif
    !
+   !DEBUG<
+   !write(100,*) ifit,ntry,T_guess(ifit)*HA2KEL,Ef_guess(ifit)*HA2EV
+   !DEBUG>
+   !
    do i2=1,max_iter
      err_fit(ifit)=0._SP
      err_fit(ifit+2)=0._SP
@@ -196,6 +195,9 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
        Jacob_sq(1,1)=Jacob_sq(1,1)*(1._SP+10.**-real(4-ntry))
        Jacob_sq(2,2)=Jacob_sq(2,2)*(1._SP+10.**-real(4-ntry))
      endif
+     !  Jacob_sq(1,1)=Jacob_sq(1,1)*(1._SP+1.E-3/real(i2))
+     !  Jacob_sq(2,2)=Jacob_sq(2,2)*(1._SP+1.E-3/real(i2))
+     !endif
      !
      Jacob_sq_m1(:,:)=1._SP/(Jacob_sq(1,1)*Jacob_sq(2,2)-Jacob_sq(1,2)*Jacob_sq(2,1))
      Jacob_sq_m1(1,1)= Jacob_sq_m1(1,1)*Jacob_sq(2,2)
@@ -205,6 +207,16 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
      !
      Fit_new=matmul(Jacob_sq_m1,matmul(transpose(Jacob),x))
      !
+     !DEBUG<
+     !write(100,*) i2,Jacob
+     !write(100,*) i2,x
+     !write(100,*) i2,RT_occ
+     !write(100,*) i2,Jacob_sq
+     !write(100,*) Jacob_sq_m1
+     !write(100,*) 'T= ',(T_guess(ifit)+Fit_new(1))*HA2KEL,"Ef= ",(Ef_guess(ifit)-Fit_new(2))*HA2EV
+     !write(100,*) err_fit
+     !DEBUG>
+     !
      if(any(isnan(Fit_new(:)))) exit
      if(any(Fit_new(:)==Fit_new(:)+1._SP)) exit
      !
@@ -213,6 +225,8 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
      !
      if( ( abs(Fit_new(1))<1.E-6.and.abs(Fit_new(2))<1.E-3                                     ) .or.  &
        & ( abs(Fit_new(1))<1.E-5.and.abs(Fit_new(2))<1.E-2.and.i2>70.and.err_fit(ifit+2)<0.05) )  then
+       !write(100,*) 'FIT done'
+       !write(100,*) '  '
        nfound(ifit)=nfound(ifit)+1
        lfound(ifit)=.true.
        l_dumping(ifit)=.false.
@@ -247,14 +261,11 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  if(.not.lfound(1) .and.      lfound(2)) Fermi_fnc_fit=2
  if(     lfound(1) .and.      lfound(2)) Fermi_fnc_fit=3
  !
- T_now=T_fit
- if(l_T_max.and.Fermi_fnc_fit==3) T_now=maxval(T_fit)
- !
  do ifit=1,nfit
    !
    if(lfound(ifit)) then
      do i2=1,fit_dim
-       RT_occ_fit(i2,ifit)=Fermi_fnc(RT_E_fit(i2,ifit)-Ef_fit(ifit),T_now(ifit))*spin_occ
+       RT_occ_fit(i2,ifit)=Fermi_fnc(RT_E_fit(i2,ifit)-Ef_fit(ifit),T_fit(ifit))*spin_occ
      enddo
    endif
    !

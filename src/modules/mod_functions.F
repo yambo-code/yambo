@@ -30,7 +30,7 @@ module functions
  !
  interface
    !
-   integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit_out,RT_E_fit_out,l_T_max_in)
+   integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit_out,RT_E_fit_out)
      !
      use pars, ONLY: SP
      !
@@ -45,7 +45,6 @@ module functions
      real(SP), intent(out) :: Ef_fit(2)
      real(SP), intent(out) :: err_fit(4)
      !
-     logical,  intent(in),  optional :: l_T_max_in
      real(SP), intent(out), optional :: RT_occ_fit_out(1000,2)
      real(SP), intent(out), optional :: RT_E_fit_out(1000,2)
      !

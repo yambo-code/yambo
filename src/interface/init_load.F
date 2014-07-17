@@ -41,7 +41,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
- use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
+ use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
@@ -55,9 +55,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
-&                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_dynamics_steps,RT_dynamics_decay_time,&
+&                        RT_diagonalization_steps,NE_tot_time,RT_life_interp_steps,RT_life_interp_decay_time,&
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_IO_time,RT_scatt_tresh,&
-&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_dynamics_KIND,I_MEM_steps,&
+&                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
 &                        Gr_kind,two_alpha,RIM_EE_percent
  use fields,        ONLY:Efield
  use plasma,        ONLY:Plasma_redux_percent
@@ -79,7 +79,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,RES_tresh
 #endif
  use parallel_m,           ONLY:n_log_CPUs
- use openmp,               ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP
+ use openmp,               ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
  use IO_m,                 ONLY:DBs_IO_control_string
  !
  implicit none
@@ -182,6 +182,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Parallel Setup
  !
 #if defined _OPENMP
+ call it(defs,'K_Threads',       '[OPENMP/BSK] Number of threads for response functions',n_threads_K)
  call it(defs,'X_Threads',       '[OPENMP/X] Number of threads for response functions',n_threads_X)
  call it(defs,'DIP_Threads',     '[OPENMP/X] Number of threads for dipoles',n_threads_DIP)
  call it(defs,'SE_Threads',      '[OPENMP/GW] Number of threads for self-energy',n_threads_SE)
@@ -215,7 +216,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
  !
- ! BSE
+ ! BSE/BSK
  !
  call it(defs,'BSEmod',  '[BSE] resonant/causal/coupling',BSE_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
@@ -330,27 +331,31 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit(1))
  call it(defs,'NEsteps',    '[RT] Non-equilibrium Time steps',NE_steps)
  call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit(1))
- call it(defs,'Integrator', '[RT] Integrator. Use keywords space separated  (RK2 | EULER | EXP | RWA | INTERPOLATE) ',&
+ call it(defs,'Integrator', '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
 &                           Integrator_name)
  call it(defs,'IOtime',     '[RT] Time between to consecutive I/O (J,P,OCCs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
  call it(defs,'RTehEny',    '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  !
  ! Correlation
  !
- call it('f',defs,'RTfreezeH',     '[RT] Hartree not updated during RT')
- call it('f',defs,'RTfreezeXC',    '[RT] XC potential/self-energy not updated during RT')
+ call it('f',defs,'RTIrredux',     '[RT] Hartree not updated independently of the value of SC_potential')
  call it(defs,'COHsteps',          '[RT] Number of steps to interpolate the Coherent part of the self-energy',&
 &                                   I_MEM_steps,Verb_level=V_real_time)
  !
  ! Scattering
  !
- call it(defs,'DYNmode',    '[RT] Step distribution mode',RT_dynamics_KIND,Verb_level=V_real_time)
- call it(defs,'DYNsteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
-&                           RT_dynamics_steps,Verb_level=V_real_time,unit=Time_unit(1))
- call it(defs,'DYNdecay',   '[RT] Exponential decay lifetime of the distribution of groups of lifetimes evaluated',&
-&                           RT_dynamics_decay_time,Verb_level=V_real_time,unit=Time_unit(1))
+ call it(defs,'LifeInterpKIND',    '[RT] Step interpolation mode (DEFAULT / FIELD / EXP / FLAT / NONE)',&
+&                           RT_life_interp_KIND,Verb_level=V_real_time)
+ call it(defs,'LifeInterpSteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
+&                           RT_life_interp_steps,Verb_level=V_real_time,unit=Time_unit(1))
+ call it(defs,'LifeInterpDecayT',   '[RT] Exponential decay lifetime of the distribution of groups of lifetimes evaluated',&
+&                           RT_life_interp_decay_time,Verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)
+ ! 
+ ! BGR
+ !
+ call it('f',defs,'BGR',     '[RT] Evaluate the Band-Gap Renormalization consistent with the applied potential')
  !
  ! EE scattering
  !
@@ -382,7 +387,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 1 - Thermalization
  !
  call it(defs,'ThermSteps',   '[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
- call it(defs,'SwitchOnTime', '[RT Therm] Adiabatic switch on time ',SwitchOnTime,verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'RTDiagoSteps', '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)
  !
  ! 2 - Induced Field
@@ -448,7 +452,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',&
 &        BS_eh_win,verb_level=V_resp)
  call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=V_resp)
- call it(defs,'BSEClmns','[BSK] Kernel Columns',BS_columns,verb_level=V_resp)
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
 &                        E_unit,verb_level=V_resp)
  !
@@ -549,7 +552,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
        if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
        if (i_s==2) possible_fields='(q,k,c,v)' ! X_finite_q
        if (i_s==3) possible_fields='(q,k,c,v)' ! X_all_q
-       if (i_s==4) possible_fields='(q,k,c,v)' ! BSE
+       if (i_s==4) possible_fields='(k,eh,t)'  ! BS
        if (i_s==5) possible_fields='(q,qp,b)'  ! SE
        if (i_s==6) possible_fields='(k,b,q,qp)'! RT
        !

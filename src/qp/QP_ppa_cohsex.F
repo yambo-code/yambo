@@ -40,7 +40,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
-&                        OP_WR_CL,io_X
+&                        OP_WR_CL,io_RESPONSE
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,QP_W_partially_done,PPa_terminator
@@ -75,7 +75,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(ggwinfo)            ::isc,iscp
  integer          ::iv4(4),io_err,ID, timing_steps,qp_ID
- integer, external::ioX,QP_state_extract,ioQP
+ integer, external::io_X,QP_state_extract,io_QP
  logical, external::stop_now
  character(schlen)::ch,Sc_name
  logical          ::X_is_TR_rotated
@@ -99,7 +99,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Restart
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=VERIFY,ID=qp_ID)
- io_err=ioQP('QP',qp,qp_ID)
+ io_err=io_QP('QP',qp,qp_ID)
  !
  if (QP_W_partially_done.and.io_err>0) then
    !
@@ -116,7 +116,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    endif
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/-1/),ID=qp_ID)
-   io_err=ioQP('QP',qp,qp_ID)
+   io_err=io_QP('QP',qp,qp_ID)
    !
    ! Only the master keeps in memory the QP_Sc in order 
    ! to avoid double countings in the final ALL 2 ALL
@@ -197,8 +197,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Plasmon-Pole/Static interaction DB I/O
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err=ioX(X,Xw,ID)
- if (io_err/=0.and.io_X) call error('Incomplete and/or broken PPA/Static diel. fun. database')
+ io_err=io_X(X,Xw,ID)
+ if (io_err/=0.and.io_RESPONSE) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
  ! Test the spatial Inversion
  !   
@@ -208,10 +208,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !------------
  !
  if (l_cohsex.or.l_sc_srpa) then
-   if (io_X) call X_alloc('X',(/X%ng,X%ng,1/))
+   if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,1/))
    allocate(dc(2))
  else
-   if (io_X) call X_alloc('X',(/X%ng,X%ng,2/))
+   if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2/))
    allocate(W_(QP_dSc_steps),dc(QP_dSc_steps),stat=alloc_err)
    call mem_est("GW-E",(/QP_dSc_steps*2/),errors=(/alloc_err/))
    if(PPa_terminator) then
@@ -248,26 +248,26 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      iq_mem=PAR_Q_index(iqibz)
      X_range=(/1,Xw%n_freqs/)
-     if (.not.io_X) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
+     if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
      call scatterGamp(isc,'c')
      !
      ! I/O
      !
-     if (io_X) then
+     if (io_RESPONSE) then
        !
        if (iqbz==iq_to_start) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID)
        if (q%nbz==1         ) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)
        if (iqbz> iq_to_start) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
        !
-       io_err=ioX(X,Xw,ID)
+       io_err=io_X(X,Xw,ID)
        !
      endif
      !
      ! Poles and Residuals
      !
 #if defined _SC
-     if (it_now==it_to_start.or.io_X) then
+     if (it_now==it_to_start.or.io_RESPONSE) then
 #endif
 !$omp parallel do default(shared), private(i1,i2)
        do i1=1,X%ng
@@ -357,13 +357,23 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          sp_dummy = 0.0_SP
          !
+         if (X_is_TR_rotated) then
 !$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
-         do ig1=1,X%ng
-           do ig2=1,X%ng
-             sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,X_range(1))
+           do ig1=1,X%ng
+             do ig2=1,X%ng
+               sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*X_mat(ig1,ig2,X_range(1))
+             enddo
            enddo
-         enddo
 !$omp end parallel do
+         else
+!$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
+           do ig1=1,X%ng
+             do ig2=1,X%ng
+               sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,X_range(1))
+             enddo
+           enddo
+!$omp end parallel do
+         endif
          !
          dc(1) = sp_dummy
          !
@@ -375,7 +385,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if defined _SC
          if (PAR_COM_QP_A2A%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
 #else
-         if (HEAD_QP_cpu) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+         if (HEAD_QP_cpu)              QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
 #endif
          !
          dc=cZERO
@@ -522,7 +532,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  endif
  call mem_est("ISC-GAMP GW-E")
 #if defined _SC
- if (io_X) call X_alloc('X')
+ if (io_RESPONSE) call X_alloc('X')
 #else
  call X_alloc('X')
 #endif

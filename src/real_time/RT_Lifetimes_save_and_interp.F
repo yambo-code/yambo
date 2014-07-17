@@ -24,15 +24,13 @@
 subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_elel_scatt,l_elph_scatt
- use units,          ONLY:FS2AUT
+ use drivers,        ONLY:l_elel_scatt
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,it_now,RT_nk,RT_ibz_coo
- use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Plasma_INDEX
+ use SC,             ONLY:SC_bands,it_now,RT_nk
  use real_time,      ONLY:RT_TIME_status,SAVED_times,FIRST_step,&
-&                         Life_MEM_steps,SAVED_lifetime,RT_dynamics_steps,&
-&                         ADD_to_saved_values,l_equilibrium_lifetimes,&
+&                         Life_MEM_steps,SAVED_lifetime,&
+&                         ADD_to_saved_values,RT_life_interp_KIND,&
 &                         RT_E_occupations,RT_E_occupations_reference,&
 &                         RT_H_occupations,RT_H_occupations_reference
  !
@@ -47,16 +45,15 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
  !
  ! Work Space
  !
- integer          :: ib,ik,ik_rim
+ integer          :: ib,ik
  !
- if (RT_dynamics_steps(1)<0.) return
+ if ( trim(RT_life_interp_KIND)=="NONE" ) return
  !
  if (EVAL) then
    !
-   !===========
+   !======
    ! SAVE
-   !===========
-   !
+   !======
    if (l_elel_scatt     .and.SAVE_index==1) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
    if (.not.l_elel_scatt.and.SAVE_index==3) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
    !
@@ -67,6 +64,7 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    enddo
    !
    ! Store the occupations related to the last saved lifetimes
+   !-----------------------------------------------------------
    if (SAVE_index==1.or.(.not.l_elel_scatt.and.SAVE_index==3)) then
      RT_E_occupations_reference=RT_E_occupations
      RT_H_occupations_reference=RT_H_occupations
@@ -74,8 +72,8 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
    !
  else
    !
-   if (RT_TIME_status(it_now)==0 .or. (RT_TIME_status(it_now)>0.and..not.FIRST_step(it_now,Time)) ) then
-     !=============================
+   if (RT_TIME_status(it_now)==0 .or. (RT_TIME_status(it_now)>0.and..not.FIRST_step( )) ) then
+     !==============
      ! INTERPOLATE 
      !=============
      do ib=SC_bands(1),SC_bands(2)
@@ -85,9 +83,9 @@ subroutine RT_Lifetimes_save_and_interp(Time,EVAL,E,k,LIFE,SAVE_index)
      enddo
      !
    else if (RT_TIME_status(it_now)<0) then
-     !==================================
+     !===============
      ! KEEP CONSTANT 
-     !=============
+     !===============
      !
      LIFE=SAVED_lifetime(:,:,SAVE_index,Life_MEM_steps)
      !

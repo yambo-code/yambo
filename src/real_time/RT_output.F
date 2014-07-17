@@ -26,14 +26,14 @@ subroutine RT_output(what,VALUES,TIME,E)
  use units,          ONLY:HA2EV,HA2KEL
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_cohsex,l_sc_hf
  use SC,             ONLY:SC_description,n_SC_descriptions,it_now
  use fields,         ONLY:A_vecpot,Efield,n_ext_fields
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,l_Debye_TBose_update, &
 &                         RT_do_IO,RT_Tfit_lifetimes,&
-&                         Imp_factors
+&                         Imp_factors,l_BGR,BGR
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -50,14 +50,15 @@ subroutine RT_output(what,VALUES,TIME,E)
  integer, parameter       :: n_output_files=100,max_X_order=9
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
- integer                  :: i_f,i_fp,n_headings(n_output_files),next_file,i_order,i_c
- logical                  :: file_is_todo(n_output_files),open_files,initialize
+ integer                  :: i_f,i_fp,i_flu,n_headings(n_output_files),next_file,i_order,i_c,n1
+ logical                  :: file_is_todo(n_output_files),open_files,add_space,initialize
  logical,           save  :: SC_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
  character(schlen)        :: headings(n_output_files,11),append_ch
  character(2)             :: chart_string(3)
  real(SP)                 :: data_to_dump(11)
  !
  open_files=index(what,'open')>0
+ add_space=index(what,'space')>0
  initialize=index(what,'initialize')>0
  !
  if ( .not.RT_do_IO('OUT').and..not.open_files.and..not.initialize) return      
@@ -112,7 +113,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  short_file_name(next_file)=trim(append_ch)//'energy'
  n_headings(next_file)=6
  headings(next_file,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
- headings(next_file,4:5)=(/"Delta Ha [eV]","Delta Exc[eV]"/)
+ headings(next_file,4:5)=(/"Hartree [eV]","Exc     [eV]"/)
  headings(next_file,6)="E_tot[eV]"
  next_file=next_file+1
  !
@@ -129,7 +130,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  if (l_elel_scatt.or.l_elph_scatt) then 
    headings(next_file,6)="T(hol) [K]" 
    headings(next_file,7)="T(el)  [K]" 
-   if (l_Debye_TBose_update) headings(next_file,7)="T(bose) [K]"
+   if (l_Debye_TBose_update) headings(next_file,8)="T(bose) [K]"
  endif
  next_file=next_file+1
  !
@@ -159,10 +160,14 @@ subroutine RT_output(what,VALUES,TIME,E)
  if (open_files.and.l_elph_scatt.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'mean_EPlifetimes'
  short_file_name(next_file)=trim(append_ch)//'mean_EPlifetimes'
- n_headings(next_file)=7
- headings(next_file,2:3)=(/"Hole  [meV]","Elec  [meV]"/)
- headings(next_file,4:5)=(/"H abs [meV]","E abs [meV]"/)
- headings(next_file,6:7)=(/"T Hole  [K]","T Elec  [K]"/)
+ headings(next_file,2:3)=(/"Ho.(em) [meV]","El.(em) [meV]"/)
+ n1=4
+ if(Bose_Temp>0. ) then
+   headings(next_file,4:5)=(/"Ho.(abs)[meV]","El.(abs)[meV]"/)
+   n1=n1+2
+ endif
+ headings(next_file,n1:n1+1)=(/" T Hole  [K] "," T Elec  [K] "/)
+ n_headings(next_file)=n1+1
  next_file=next_file+1
  !
  if (open_files.and.l_elel_scatt.and..not.file_already_opened(next_file)) &
@@ -173,18 +178,35 @@ subroutine RT_output(what,VALUES,TIME,E)
  headings(next_file,4:5)=(/"T Hole [K]","T Elec [K]"/)
  next_file=next_file+1
  !
- headings(1:next_file-1,1)="Time[fs]"
- !
- !
  if (open_files.and.(l_elph_scatt.or.l_elel_scatt).and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'N_dN_E_conservation_factors'
  short_file_name(next_file)=trim(append_ch)//'N_dN_E_conservation_factors'
- n_headings(next_file)=6
- headings(next_file,2:6)=(/"elph F1","elph F2","elel F1","elel F2","elel F3"/)
+ n1=1
+ if(l_elph_scatt) then
+   n1=n1+2
+   headings(next_file,n1-1:n1)=(/"elph F1","elph F2"/)
+ endif
+ if(l_elel_scatt) then
+   n1=n1+3
+   headings(next_file,n1-2:n1)=(/"elel F1","elel F2","elel F3"/)
+ endif
+ n_headings(next_file)=n1
+ next_file=next_file+1
+ !
+ if (open_files.and.l_BGR.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'BGR'
+ short_file_name(next_file)=trim(append_ch)//'BGR'
+ n_headings(next_file)=7
+ headings(next_file,2:3)=(/"Dir Gap","Ind Gap"/)
+ headings(next_file,4  )=  "H+XC"  
+ if (l_sc_cohsex) headings(next_file,4)="H+XC+COHSEX"
+ if (l_sc_hf    ) headings(next_file,4)="H+XC+HF"
+ headings(next_file,5:6)=(/"Hartree","XC(DFT)"/)
+ if (l_sc_cohsex) headings(next_file,7)="COHSEX"
+ if (l_sc_hf    ) headings(next_file,7)="  HF  "
  next_file=next_file+1
  !
  headings(1:next_file-1,1)="Time[fs]"
- !
  !
  ! ... energy resolved ...
  !
@@ -303,6 +325,13 @@ subroutine RT_output(what,VALUES,TIME,E)
    !
    if (.not.file_is_todo(i_f)) cycle
    !
+   if (add_space) then
+     call of_open_close(file_name(i_f),'oa')
+     call msg('o '//trim(short_file_name(i_f)),' ')
+     call of_open_close(file_name(i_f))
+     cycle
+   endif
+   !
    call of_open_close(file_name(i_f),'oa')
    !
    ! Headers and Descriptions
@@ -346,14 +375,20 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(11)=0._SP
        do i_fp=1,n_ext_fields
          if (allocated(Efield(i_fp)%Fluence)) then
-           data_to_dump(11)=data_to_dump(11)+real( Efield(i_fp)%Fluence(it_now))
+           i_flu=min(it_now,Efield(i_fp)%t_final_indx)
+           data_to_dump(11)=data_to_dump(11)+real( Efield(i_fp)%Fluence(i_flu))
          endif
        enddo
+     case('BGR')
+       data_to_dump(2:3) = BGR(1:2)*HA2EV
+       data_to_dump(5:7) = BGR(3:5)*HA2EV
+       data_to_dump(4)   = (BGR(3)+BGR(4))*HA2EV
+       if (l_sc_cohsex.or.l_sc_hf) data_to_dump(4)   = (BGR(3)+BGR(4)+BGR(5))*HA2EV
      case('energy')
        data_to_dump(2:6) = VALUES(1:5)
      case('dynamics')
        data_to_dump(2:5) = VALUES(1:4)
-       if(l_elel_scatt.or.l_elph_scatt) data_to_dump(5:7) = VALUES(4:6)
+       if(l_elel_scatt.or.l_elph_scatt) data_to_dump(6:7) = VALUES(5:6)
        if(l_Debye_TBose_update) data_to_dump(8) = Bose_Temp*HA2KEL
      case('YPP-eps_along_E','YPP-eps_x','YPP-eps_y','YPP-eps_z','YPP-eels_along_E','YPP-SHG_qssin',&
 &         'YPP-X_probe_order_0_x','YPP-X_probe_order_1_x','YPP-X_probe_order_2_x','YPP-X_probe_order_3_x',&
@@ -374,13 +409,26 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(1:2)=(/Time,E/)
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-2)
      case('mean_EPlifetimes')
-       data_to_dump(2:5) = RT_mean_lifetimes(3:6)*HA2EV*1000.
-       data_to_dump(6:7) = RT_Tfit_lifetimes(1:2)*HA2KEL
+       n1=3
+       data_to_dump(2:3) = RT_mean_lifetimes(3:4)*HA2EV*1000.
+       if(Bose_Temp>0. ) then
+         data_to_dump(4:5)=RT_mean_lifetimes(5:6)*HA2EV*1000.
+         n1=n1+2
+       endif
+       data_to_dump(n1+1:n1+2) = RT_Tfit_lifetimes(1:2)*HA2KEL
      case('mean_EElifetimes')
        data_to_dump(2:3) = RT_mean_lifetimes(1:2)*HA2EV*1000.
        data_to_dump(4:5) = RT_Tfit_lifetimes(3:4)*HA2KEL
      case('N_dN_E_conservation_factors')
-       data_to_dump(2:6)=Imp_factors(1:5)
+       n1=1
+       if(l_elph_scatt) then
+         n1=n1+2
+         data_to_dump(n1-1:n1)=Imp_factors(1:2)
+       endif
+       if(l_elel_scatt) then
+         n1=n1+3
+         data_to_dump(n1-2:n1)=Imp_factors(3:5)
+       endif
        !
    end select
    !

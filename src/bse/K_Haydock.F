@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM MG
+! Authors (see AUTHORS file for details): AM MG DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -25,7 +25,11 @@ subroutine K_Haydock(iq,W)
  !
  use pars,           ONLY:SP,pi,schlen,cI
  use com,            ONLY:error
+#if defined _OPENMP
+ use wrapper,        ONLY:V_by_V_plus_V_omp
+#else
  use wrapper,        ONLY:V_by_V_plus_V
+#endif
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_epsilon,X_drude_term
  use R_lattice,      ONLY:d3k_factor,q_norm
@@ -33,14 +37,17 @@ subroutine K_Haydock(iq,W)
  use com,            ONLY:msg,isec
  use BS,             ONLY:BSS_n_descs,BS_K_dim,BS_mat,Haydock_treshold,&
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
-&                         BS_DB_is_fragmented,ioBSS_Haydock,&
+&                         BS_DB_is_fragmented,io_BSS_Haydock,&
 &                         BS_K_Coupling,Haydock_terminator,&
-&                         K_BSmat_by_V,BSE_mode
+&                         K_multiply_by_V,BSE_mode,BS_mat_free
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use electrons,      ONLY:spin_occ
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  type(w_samp)  ::W
  integer       ::iq
@@ -60,13 +67,22 @@ subroutine K_Haydock(iq,W)
  !
  integer           :: ID,io_err
  !
+#if defined _TIMING
+ call timing('Haydock Solver',OPR='start')
+#endif
+ !
  if (isec(2)/=0) then
    call section('=','Haydock solver')
  else if (isec(2)==0) then
    call section('+','Haydock solver')
  endif
  !
+ ! Kernel loading
+ !================
+ call K_stored_in_a_BIG_matrix(iq)
+ !
  ! Use terminator?
+ !================
  if (.not.Haydock_terminator) call parser('BSHayTer',Haydock_terminator)
  !
  if (BS_K_Coupling) then
@@ -76,18 +92,17 @@ subroutine K_Haydock(iq,W)
    allocate(Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim))
  end if
  !
- !
- !Haydock Coefficients and restart vector on disk
- !
+ ! Haydock Coefficients and restart vector on disk
+ !=================================================
  it_on_disk=0
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
  !
  if (BS_K_Coupling) then 
    !
-   io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
+   io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
    !
  else
-   io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn)
+   io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn)
    !
  endif
  !
@@ -96,10 +111,10 @@ subroutine K_Haydock(iq,W)
    it_on_disk=io_err 
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
    if (BS_K_Coupling) then 
-     io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
+     io_err=io_BSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
 &                          Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
    else
-     io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
+     io_err=io_BSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
 &            Bf(:it_on_disk+1),Vnm1,Vn)
      call msg('s','[Haydock] Restart DB with accuracy ',reached_treshold)
    end if
@@ -107,7 +122,7 @@ subroutine K_Haydock(iq,W)
  endif
  !
  ! Update Descriptions
- !
+ !=====================
  BSS_n_descs=BSS_n_descs+2
  BSS_description(BSS_n_descs-1)=' '
  BSS_description(BSS_n_descs)=' Haydock|Accuracy (requested) [o/o]:'//&
@@ -123,7 +138,6 @@ subroutine K_Haydock(iq,W)
  call msg('r','Accuracy (requested) [o/o]:',Haydock_treshold)
  !
  ! [***] Initialization non Hermitian case
- !
  !
  if (it_on_disk==0) then
    Vn=(0.,0.)
@@ -145,7 +159,7 @@ subroutine K_Haydock(iq,W)
      Cf= (0.,0.)
      Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)
      !
-     call K_BSmat_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
+     call K_multiply_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
      Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
      Cf(1) = 0.
      !
@@ -181,7 +195,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1,call_kind='Hay')
+     call K_multiply_by_V(iq,it-it_on_disk,Vn,Vnp1,call_kind='Hay')
      !
      ! A(n) = <Vn|Vn+1>
      !
@@ -189,8 +203,13 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
      !
+#if defined _OPENMP
+     call V_by_V_plus_V_omp(BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,Vnp1)
+     call V_by_V_plus_V_omp(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,Vnp1)
+#else
      call V_by_V_plus_V(BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,Vnp1)
      call V_by_V_plus_V(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,Vnp1)
+#endif
      !
      ! B(n+1)= <Vn+1|Vn+1>^(1/2)
      !
@@ -219,7 +238,11 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
      !
+#if defined _OPENMP
+     call V_by_V_plus_V_omp(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,Vnp1)
+#else
      call V_by_V_plus_V(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,Vnp1)
+#endif
      !
      ! |Vn-1> = |Vn> 
      ! |Vn>   = |Vn+1> 
@@ -229,7 +252,7 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
+     call K_multiply_by_V(iq,it-it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
      !
      ! B(n+1)= <Vn|F|Vn+1>^(1/2) (that is <Vn|FH|Vn>^(1/2))
      !       = (2*Re(<Vn|Vnp1>))^(1/2) by symmetry, 
@@ -280,16 +303,16 @@ subroutine K_Haydock(iq,W)
      !
    endif
    !
-   !Haydock Coefficients and restart vectors on disk
-   !
+   ! Haydock Coefficients and restart vectors on disk
+   !--------------------------------------------------
    call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
    if (BS_K_Coupling) then
      Bf(1) = Haydock_v0_mod
-     io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
+     io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
 &                          Af(:it),Bf(:it+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1))
      Bf(1) = 0._SP
    else
-     io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),Vnm1,Vn)
+     io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),Vnm1,Vn)
    end if
    !
    if ( (reached_treshold>0.and.reached_treshold<abs(Haydock_treshold)) .or. &
@@ -302,12 +325,17 @@ subroutine K_Haydock(iq,W)
  enddo
  !
  ! CLEAN
+ !=======
+ !
+ call BS_mat_free( )
  !
  deallocate(Vn,Vnm1,Vnp1) 
  if (allocated(BS_mat))  deallocate(BS_mat)
  if (allocated(Cf))      deallocate(Cf)
  !
- call mem_est("BS_mat")
+#if defined _TIMING
+ call timing('Haydock Solver',OPR='stop')
+#endif
  !
  contains
    !

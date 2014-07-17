@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM MG
+! Authors (see AUTHORS file for details): AM MG DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -27,6 +27,7 @@ module real_time
  use pars,       ONLY:DP,SP,schlen,lchlen
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:SE_NONE
+ use electrons,  ONLY:levels
  !
  implicit none
  !
@@ -37,13 +38,16 @@ module real_time
  logical           :: l_NE_dynamics  
  logical           :: l_NE_dynamics_started
  logical           :: l_NE_with_fields
+ logical           :: l_NE_simulate_Irredux
  logical           :: l_RT_probe
  logical           :: l_RT_pump_and_probe
  logical           :: l_Dynamics_is_over  
  !
- ! Inital XC (SC or default) are requested
+ ! Evaluation logicals
  !
- logical           :: l_RT_needs_XC0
+ logical          :: eval_DENSITY
+ logical          :: eval_HARTREE
+ logical          :: eval_DFT
  !
  ! To exclude the Diamagnetic term 
  !
@@ -58,18 +62,6 @@ module real_time
  logical           :: l_RT_diagonalize
  integer           :: RT_diagonalization_steps
  !
- ! RPA and independent particles
- !
- logical           :: l_NE_simulate_RPA
- logical           :: l_NE_simulate_IP
- logical           :: l_NE_simulate_Irredux
- logical           :: l_NE_simulate_BSE
- logical           :: l_NE_simulate_TDDFT
- !
- ! Frozen parts of self-energy
- !
- logical           :: Hfrozen
- logical           :: XCfrozen 
  !
  ! Time steps and step length...
  !------------------------------
@@ -92,10 +84,6 @@ module real_time
  !
  integer  :: Thermal_steps
  ! 
- ! ... Switch On Time (adiabatic switch on) ...
- !
- real(SP) :: SwitchOnTime
- !
  ! ... NE dynamics ...
  !
  real(SP) :: NE_time ! <- incremented
@@ -108,10 +96,10 @@ module real_time
  ! channels. I will see later if this can be somehow extended/duplicated
  ! for the static correlations
  !
- character(schlen) :: RT_dynamics_KIND = "EXP" ! EXP or FIELD
- real(SP) :: RT_dynamics_steps(2)  =-1.*FS2AUT ! (1) is step between groups of 3, (2) is step in the group of 3.
- real(SP) :: RT_dynamics_decay_time=-1.*FS2AUT ! For pulsed-like distribution it dumps the distribution of points
-                                               ! in the long-time regime
+ character(schlen) :: RT_life_interp_KIND = "NONE" ! NONE, FLAT, EXP or FIELD
+ real(SP) :: RT_life_interp_steps(2)  =-1.*FS2AUT  ! (1) is step between groups of 3, (2) is step in the group of 3.
+ real(SP) :: RT_life_interp_decay_time=-1.*FS2AUT  ! For pulsed-like distribution it dumps the distribution of points
+                                                ! in the long-time regime
  integer(2), allocatable :: RT_TIME_status(:)
  !
  ! Kind of e-e interactions (for the CORR and SCATT parts)
@@ -148,6 +136,18 @@ module real_time
  real(SP)    :: RAD_LifeTime
  logical     :: RT_is_dephased
  !
+ ! BGR
+ !----------------------------
+ logical                  :: l_BGR=.false.
+ real(SP),    allocatable :: BGR_hartree(:,:,:)  
+ real(SP),    allocatable :: BGR_V_xc(:,:,:)  
+ real(SP),    allocatable :: BGR_Self_Energy(:,:,:)  
+ real(SP),    allocatable :: REF_V_xc_sc(:,:)  
+ real(SP),    allocatable :: REF_V_hartree_sc(:,:)  
+ real(SP),    allocatable :: REF_QP_Vnl_xc(:)  
+ real(SP)                 :: BGR(5) ! (BGR at the minimum dir/ind gap, H contrib., xc contrib., SE contrib.)
+ type(levels)             :: E_reference
+ !
  ! Relaxation and Dissipation 
  !----------------------------
  logical                  :: l_RT_uses_E_RIM
@@ -155,8 +155,7 @@ module real_time
  integer,     allocatable :: RIM_EE_Nk_table(:,:)  
  integer,     allocatable :: RIM_ibz_coo(:,:)
  integer,     allocatable :: RIM_bz_coo(:,:)  
- integer,     allocatable :: RIM_closest_E(:,:)  
- real(SP)                 :: RIM_EE_percent
+ real(SP)                 :: RIM_EE_percent 
  !
  ! ELPH kernel...
  !----------------
@@ -184,10 +183,13 @@ module real_time
  !
  ! Locks and reference
  !----------------------
- logical                  :: l_RT_skip_impose = .FALSE.
- logical                  :: l_RT_EE_impose_E = .FALSE.
+ logical                  :: l_RT_skip_impose    = .FALSE.
+ logical                  :: l_RT_EE_impose_E    = .FALSE.
+ !
+ ! Locks and reference
+ !----------------------
  logical                  :: l_use_updated_reference
- logical                  :: l_equilibrium_lifetimes
+ logical                  :: l_initial_equilibrium
  real(SP),    allocatable :: RT_E_occupations(:,:) 
  real(SP),    allocatable :: RT_H_occupations(:,:) 
  real(SP),    allocatable :: RT_delta0_occupations(:,:) 
@@ -254,21 +256,24 @@ module real_time
  !------------
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
  complex(SP), allocatable :: I_coh_SAVE(:,:,:,:)
- complex(SP), allocatable :: Sigma_relax(:,:,:)
+ complex(SP), allocatable :: I_relax_static(:,:,:)
+ complex(SP), allocatable :: I_relax_dyn(:,:,:,:)
  !
  ! Density
  !---------
  !
- real(SP),    allocatable :: rho_reference(:)    ! reference density from SC_bands(1):SC_bands(2)
- real(SP),    allocatable :: full_rho(:)         ! density of all bands from 1:SC_bands(2)
+ real(SP),    allocatable :: rho_reference(:)    ! reference density from all bands 
  !
  ! Integrators
  !
  logical  :: l_RT_EULER
  logical  :: l_RT_RK2
+ logical  :: l_RT_HEUN
  logical  :: l_RT_EXP
  logical  :: l_RT_INTERPOLATE
  logical  :: l_RT_RWA
+ !
+ integer  :: integrator_step
  !
  ! Integrate exactly the part of the dynamics due to H_o 
  ! as it is done in Comp. Phys. Comm. 123(1999)
@@ -356,19 +361,6 @@ module real_time
      integer , optional, intent(in)    :: imposed_COM
    end subroutine OCCUPATIONS_IO_and_interpolate
    !
-   subroutine RT_apply_RWA(ik,E,Time,dT,MODE,M1,M2,M3)
-     use pars,           ONLY:SP
-     use electrons,      ONLY:levels
-     use SC,             ONLY:SC_bands
-     integer,      intent(in)     :: ik
-     type(levels), intent(in)     :: E
-     real(SP),     intent(in)     :: Time,dT
-     character(*), intent(in)     :: MODE
-     complex(SP),  intent(inout)            :: M1(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
-     complex(SP),  intent(inout), optional  :: M2(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
-     complex(SP),  intent(inout), optional  :: M3(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
-   end subroutine RT_apply_RWA
-   !
  end interface
  !
  contains
@@ -376,10 +368,10 @@ module real_time
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
-     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda,l_elph_scatt,l_elel_scatt,&
-&                             l_sc_cohsex         
+     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_is_libDFT,l_elph_scatt,l_elel_scatt,&
+&                             l_sc_cohsex,l_sc_hartree
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n, &
+     use SC,             ONLY:SC_bands,V_hartree_sc,l_sc_pot_is_local,SC_alloc,E_bare, &
 &                             SC_xc_functional,SC_xc_functional,RT_nk
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
@@ -462,7 +454,9 @@ module real_time
        allocate(SAVED_lifetime(SC_bands(1):SC_bands(2),RT_nk,6,Life_MEM_steps)) ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
        call mem_est("SAVED_lifetime",(/size(SAVED_lifetime)/),(/SP/))
        allocate(SAVED_times(Life_MEM_steps)) 
+       REF_lifetime=0._SP
        SAVED_lifetime=0._SP
+       SAVED_times=0._SP
      endif
      !
      allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,n_sp_pol))
@@ -473,16 +467,19 @@ module real_time
        call mem_est("I_coh_SAVE",(/size(I_coh_SAVE)/),(/2*SP/))
      endif
      !
-     if(RT_is_dephased.or.l_elph_scatt.or.l_elel_scatt) then
-       allocate(Sigma_relax(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
-       call mem_est("Sigma_relax",(/size(Sigma_relax)/),(/2*SP/))
+     if(RT_is_dephased) then
+       allocate(I_relax_static(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
+       call mem_est("I_relax_static",(/size(I_relax_static)/),(/2*SP/))
      endif
      !
-     if(l_RT_needs_XC0) then
-       allocate(XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
-       call mem_est("XC0_and_HARTREE0",(/size(XC0_and_HARTREE0)/),(/2*SP/))
-       XC0_and_HARTREE0=cZERO
+     if(l_elph_scatt.or.l_elel_scatt) then
+       allocate(I_relax_dyn(SC_bands(1):SC_bands(2),RT_nk,2,Life_MEM_steps))
+       call mem_est("I_relax_dyn",(/size(I_relax_static)/),(/2*SP/))
      endif
+     !
+     allocate(XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
+     call mem_est("XC0_and_HARTREE0",(/size(XC0_and_HARTREE0)/),(/2*SP/))
+     XC0_and_HARTREE0=cZERO
      !
      allocate(SC_R(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("SC_R",(/size(SC_R)/),(/2*SP/))
@@ -493,13 +490,26 @@ module real_time
      allocate(dG_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,G_MEM_steps))
      call mem_est("dG_lesser",(/size(dG_lesser)/),(/2*SP/))
      !
+     allocate(REF_V_xc_sc(fft_size,n_sp_pol))
+     call mem_est("REF_V_xc_sc",(/fft_size*n_sp_pol/),(/SP/))
+     !
+     allocate(REF_V_hartree_sc(fft_size,n_sp_pol))
+     call mem_est("REF_V_hartree_sc",(/fft_size*n_sp_pol/),(/SP/))
+     !
+     allocate(REF_QP_Vnl_xc(QP_n_states))
+     call mem_est("REF_QP_Vnl_xc",(/size(REF_QP_Vnl_xc)/),(/2*SP/))
+     !
+     if (l_BGR) then
+       allocate(BGR_hartree(SC_bands(2),QP_nk,n_sp_pol))
+       call mem_est("BGR_hartree",(/size(BGR_hartree)/),(/SP/))
+       allocate(BGR_V_xc(SC_bands(2),QP_nk,n_sp_pol))
+       call mem_est("BGR_V_xc",(/size(BGR_V_xc)/),(/SP/))
+       allocate(BGR_Self_Energy(SC_bands(2),QP_nk,n_sp_pol))
+       call mem_est("BGR_Self_Energy",(/size(BGR_Self_Energy)/),(/SP/))
+     endif
+     !
      allocate(rho_reference(fft_size))
      call mem_est("rho_reference",(/fft_size/),(/SP/))
-     !
-     if(l_sc_contains_lda.and.SC_xc_functional/=0.and.SC_bands(1)>1) then
-       allocate(full_rho(fft_size))
-       call mem_est("full_rho",(/fft_size/),(/SP/))
-     endif
      !
      ! Reference energies
      !
@@ -517,7 +527,7 @@ module real_time
    subroutine RT_free
      !
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
-     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n,RT_all2ibz,&
+     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,RT_all2ibz,&
 &                             RT_ibz_coo,RT_Nk_ibz
      use memory_m,       ONLY:mem_est
      use QP_m,           ONLY:QP_Vnl_xc
@@ -551,9 +561,14 @@ module real_time
        call mem_est("RT_TIME_status")
      endif
      !
-     if(allocated(Sigma_relax)) then
-       deallocate(Sigma_relax)
-       call mem_est("Sigma_relax")
+     if(allocated(I_relax_static)) then
+       deallocate(I_relax_static)
+       call mem_est("I_relax_static")
+     endif
+     !
+     if(allocated(I_relax_dyn)) then
+       deallocate(I_relax_dyn)
+       call mem_est("I_relax_dyn")
      endif
      !  
      if(allocated(XC0_and_HARTREE0)) then
@@ -584,6 +599,13 @@ module real_time
      if(allocated(SAVED_lifetime)) then
        deallocate(SAVED_lifetime,SAVED_times)
        call mem_est("SAVED_lifetime")
+     endif
+     !
+     if(l_BGR) then
+       deallocate(REF_QP_Vnl_xc,REF_V_xc_sc,REF_V_hartree_sc)
+       call mem_est("REF_QP_Vnl_xc REF_V_xc_sc REF_V_hartree_sc")
+       deallocate(BGR_hartree,BGR_V_xc,BGR_Self_Energy)
+       call mem_est("BGR_hartree BGR_V_xc BGR_Self_Energy")
      endif
      !
      deallocate(RT_H_occupations)
@@ -637,11 +659,6 @@ module real_time
        call mem_est("rho_reference")
      endif
      !
-     if(allocated(full_rho)) then
-       deallocate(full_rho)
-       call mem_est("full_rho")
-     endif
-     !
      deallocate(E_bare)
      call mem_est("E_bare")
      !
@@ -673,10 +690,8 @@ module real_time
      if (what=="G")   RT_do_IO=mod(NE_i_time-1,RT_IO_G_steps)==0
    end function
    !
-   logical function FIRST_step(it,TIME)
-     integer   :: it
-     real(SP)  :: TIME
-     FIRST_step=abs(TIME-(it-1)*RT_step)<1.E-6
+   logical function FIRST_step( )
+     FIRST_step=integrator_step==1
    end function
    !
    integer function B_mat_index(ib1,ib2)

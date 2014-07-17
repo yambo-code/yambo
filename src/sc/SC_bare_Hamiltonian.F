@@ -26,12 +26,15 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:levels,n_sp_pol,spin
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
- use SC,             ONLY:Ho,E_bare,V_xc_sc,V_hartree_sc,rho_n,G_lesser,RT_ibz_coo
+ use SC,             ONLY:Ho,E_bare,V_hartree_sc,rho_n,G_lesser,RT_ibz_coo,V_xc_sc
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp
  use xc_functionals, ONLY:V_xc
+#if defined _RT
+ use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc
+#endif
 #if defined _MAGNETIC
  use drivers,        ONLY:l_sc_magnetic
 #endif
@@ -53,7 +56,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  ! Note that G_lesser here is the non-interacting one (occupations on the diagonal) only
  !
- call el_density_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,Xk,rho_n,1,.false.)
+ call el_density_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,Xk,rho_n,1)
  !
 #else
  !
@@ -120,6 +123,16 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
    call V_qp_basis_to_H(ik,-QP_Vxc,Ho(:,:,ik,:))
    !
  enddo
+ !
+#if defined _RT
+ !
+ ! Save the reference xc and Hartree potentials 
+ !==============================================
+ !
+ REF_V_xc_sc=V_xc
+ REF_V_hartree_sc=V_hartree_sc
+ !
+#endif
  !
  deallocate(QP_Vxc)
  call mem_est("QP_Vxc")

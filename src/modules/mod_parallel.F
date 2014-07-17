@@ -45,7 +45,7 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_bse,l_par_X_G_q0,l_par_X_G_all_q,&
+ logical            :: l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,&
 &                      l_par_X_G_finite_q,l_par_SE,l_par_RT
  !
  ! In a parallel run only the head CPU in the q and b chains can do 
@@ -153,6 +153,7 @@ module parallel_m
  !
  ! ... BZ sampling
  type(PP_indexes),SAVE :: PAR_IND_Q
+ type(PP_indexes),SAVE :: PAR_IND_Kk_ibz
  type(PP_indexes),SAVE :: PAR_IND_Xk_ibz
  type(PP_indexes),SAVE :: PAR_IND_Xk_bz
  type(PP_indexes),SAVE :: PAR_IND_G_k
@@ -177,7 +178,14 @@ module parallel_m
  ! ... WF
  type(PP_indexes),SAVE :: PAR_IND_WF_b
  type(PP_indexes),SAVE :: PAR_IND_WF_k
+ type(PP_indexes),SAVE :: PAR_IND_WF_b_and_k
  type(PP_indexes),SAVE :: PAR_IND_WF_linear
+ !
+ ! ... Transitions
+ type(PP_indexes),allocatable,SAVE :: PAR_IND_eh(:)
+ type(PP_indexes)            ,SAVE :: PAR_IND_T_groups
+ type(PP_indexes)            ,SAVE :: PAR_IND_T_all
+ type(PP_indexes)            ,SAVE :: PAR_IND_T_ordered
  !
  ! Specific MPI ID's ...
  !======================
@@ -201,6 +209,7 @@ module parallel_m
  !
  ! ... BZ
  integer            :: PAR_IND_Q_ID
+ integer            :: PAR_IND_Kk_ibz_ID
  integer            :: PAR_IND_Xk_ibz_ID
  integer            :: PAR_IND_Xk_bz_ID
  integer            :: PAR_IND_G_k_ID
@@ -212,6 +221,9 @@ module parallel_m
  ! ... RT
  integer            :: PAR_IND_B_mat_ID
  integer            :: PAR_IND_Bp_mat_ID
+ !
+ ! ... BSK
+ integer            :: PAR_IND_eh_ID
  !
  ! Specific MPI COMMUNICATORS...
  !==============================
@@ -263,18 +275,26 @@ module parallel_m
  integer,allocatable:: PAR_Bp_mat_index(:,:)
  integer            :: PAR_nQ
  integer,allocatable:: PAR_Q_index(:)
+ integer            :: PAR_Kk_nibz
  integer            :: PAR_Xk_nibz
  integer,allocatable:: PAR_Xk_ibz_index(:)
  integer            :: PAR_DIPk_nibz
  integer,allocatable:: PAR_DIPk_ibz_index(:)
  integer            :: PAR_Xk_nbz
  integer,allocatable:: PAR_Xk_bz_index(:)
+ integer            :: PAR_BS_nT_col_grps 
+ integer,allocatable:: PAR_BS_T_grps_index(:)
  !
  ! ... linear response & BSK
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_q_for_Xo
  type(MPI_comm),SAVE :: PAR_COM_k_for_P
+ !
+ ! ... BSK
+ type(MPI_comm),SAVE :: PAR_COM_eh_A2A
+ type(MPI_comm),SAVE :: PAR_COM_eh_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_T_INDEX
  !
  ! ... density
  type(MPI_comm),SAVE :: PAR_COM_density
@@ -299,7 +319,7 @@ module parallel_m
    character(lchlen) function PARALLEL_message(i_s)
      use pars,   ONLY:lchlen
      use stderr, ONLY:intc
-     use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP
+     use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
      integer :: i_s
      !
      PARALLEL_message=" "
@@ -317,6 +337,7 @@ module parallel_m
        if (n_threads_DIP>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_DIP))//"(threads@DIP)"
        if (n_threads_SE>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SE))//"(threads@SE)"
        if (n_threads_RT>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_RT))//"(threads@RT)"
+       if (n_threads_K>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_K))//"(threads@K)"
      else
        PARALLEL_message=trim(CPU_structure(i_s)%Short_Description)//"(environment)-"//&
 &                       trim(CPU_structure(i_s)%CPU_string)//"(CPUs)-"//&
@@ -332,8 +353,8 @@ module parallel_m
      CPU_structure(2)%Short_Description="X_finite_q"
      CPU_structure(3)%Long_Description="Response_G_space"
      CPU_structure(3)%Short_Description="X_all_q"
-     CPU_structure(4)%Long_Description="BSE"
-     CPU_structure(4)%Short_Description="BSE"
+     CPU_structure(4)%Long_Description="Response_T_space"
+     CPU_structure(4)%Short_Description="BS"
      CPU_structure(5)%Long_Description="Self_Energy"
      CPU_structure(5)%Short_Description="SE"
      CPU_structure(6)%Long_Description="Real_Time"

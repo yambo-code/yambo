@@ -23,32 +23,34 @@
 !
 subroutine RT_initialize(E,k,q)
  ! 
- use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt
- use SC,             ONLY:local_V,SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
+ use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_ip,l_sc_hartree,&
+&                         l_sc_is_libDFT,l_sc_cohsex,l_sc_hf
+ use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
  use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded
- use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
-&                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
-&                         l_RT_diamagnetic,RT_IO_JPO_steps,RT_IO_time,l_NE_simulate_BSE,&
-&                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
-&                         l_RT_induced_field,l_NE_simulate_TDDFT,                   &
+ use real_time,      ONLY:Thermal_steps,RT_step,l_NE_with_fields, &
+&                         l_RT_diagonalize,NE_steps,NE_tot_time,   &
+&                         l_RT_diamagnetic,RT_IO_JPO_steps,RT_IO_time,&
+&                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
 &                         RT_diagonalization_steps,RT_is_dephased,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,            &
 &                         G_MEM_steps,Gr_kind,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,RT_IO_output_steps,    &
-&                         l_RT_uses_E_RIM,RIM_bz_coo,RT_dynamics_steps,RT_dynamics_decay_time,&
-&                         RT_dynamics_KIND,l_NE_dynamics,l_RT_skip_impose,I_MEM_steps,Integrator_name,&
+&                         l_RT_uses_E_RIM,RIM_bz_coo,RT_life_interp_steps,RT_life_interp_decay_time,&
+&                         RT_life_interp_KIND,l_NE_dynamics,l_RT_skip_impose,I_MEM_steps,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
-&                         RIM_EE_Nk_table,l_RT_EE_impose_E,RT_eh_en
+&                         RIM_EE_Nk_table,l_RT_EE_impose_E,RIM_EE_percent,RIM_EE_Nk_table,&
+&                         l_BGR,l_RT_HEUN,eval_DENSITY,eval_HARTREE,eval_DFT
  use IO_m,           ONLY:io_COLLs
- use R_lattice,      ONLY:bz_samp,qindx_S
+ use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
  use parser_m,       ONLY:parser
+ !
  implicit none
  !
  type(levels), intent(in) :: E
@@ -56,7 +58,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,rest,ik,iqbz,IO_steps(3),N_T_samplings
+ integer                  :: i1,rest,ik,IO_steps(3),N_T_samplings
  character(5)             :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_field_is_a_pulse 
@@ -65,50 +67,53 @@ subroutine RT_initialize(E,k,q)
  ! Logicals
  !==========
  !
+ call parser('BGR',                  l_BGR)
  call parser('Diamagnetic',          l_RT_diamagnetic)
  call parser('InducedField' ,        l_RT_induced_field)
- call parser('RTfreezeH',            Hfrozen)
- call parser('RTfreezeXC',           XCfrozen)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
  call parser('RTskipImposeN',        l_RT_skip_impose)
  call parser('RTeeImposeE',          l_RT_EE_impose_E)
  call parser('RTpumpEhEn',           l_manual_excitation)
  !
- l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
- !
- l_NE_simulate_RPA     =.not.Hfrozen.and.     XCfrozen
- l_NE_simulate_IP      =     Hfrozen.and.     XCfrozen
- l_NE_simulate_Irredux =     Hfrozen.and..not.XCfrozen
- if (                   .not.Hfrozen.and..not.XCfrozen) then
-   l_NE_simulate_BSE     =.not.local_V
-   l_NE_simulate_TDDFT   =local_V
+ if (l_RT_skip_impose.and.l_RT_EE_impose_E) then
+   l_RT_EE_impose_E=.TRUE.
+   call warning('IO steps read from the existing databases')
  endif
  !
+ l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
+ !
  l_RT_diagonalize      =RT_diagonalization_steps>1
+ !  
+ eval_DFT     =  l_sc_is_libDFT            .and..not.l_sc_ip
+ eval_HARTREE = (.not.l_NE_simulate_Irredux.and..not.l_sc_ip).or.l_sc_hartree
+ eval_DENSITY =  eval_HARTREE .or. eval_DFT
  !
  ! Integrator FLAGS
  !==================
  !
  l_RT_EULER=index(Integrator_name,'EULER')/=0.or.index(Integrator_name,'euler')/=0
  if (.not.l_RT_EULER) l_RT_RK2=index(Integrator_name,'RK2')/=0.or.index(Integrator_name,'rk2')/=0
+ if (.not.l_RT_EULER.and..not.l_RT_RK2) &
+&  l_RT_HEUN=index(Integrator_name,'HEUN')/=0.or.index(Integrator_name,'heun')/=0
  l_RT_RWA=index(Integrator_name,'RWA')/=0.or.index(Integrator_name,'rwa')/=0
  l_RT_EXP=index(Integrator_name,'EXP')/=0.or.index(Integrator_name,'exp')/=0
  if (.not.l_RT_EXP) l_RT_INTERPOLATE=index(Integrator_name,'INTERPOLATE')/=0.or.index(Integrator_name,'interpolate')/=0
  !
+ Integrator_name=""
  if (l_RT_EULER) Integrator_name = "EULER"
- if (l_RT_RK2) Integrator_name   = "RK2"
+ if (l_RT_RK2)   Integrator_name = "RK2"
+ if (l_RT_HEUN)  Integrator_name = "HEUN"
+ if(trim(Integrator_name)=="") then
+   call warning("Bad integrator. Using default RK2")
+   l_RT_RK2=.true.
+   Integrator_name = "RK2"
+ endif
  if (l_RT_RWA) Integrator_name = trim(Integrator_name)//" + RWA"
  if (l_RT_EXP) then 
    Integrator_name = trim(Integrator_name)//" + EXP"
  else if (l_RT_INTERPOLATE) then
    Integrator_name = trim(Integrator_name)//" + INTERPOLATE"
  endif
- !
- ! If I am doing a NE loop in all cases I need to evaluate XC or Hartree correspoding to the
- ! starting basis. During the thermalization, instead, the potentials are updated
- ! and only T+V_ion must be stored in Ho.
- !
- l_RT_needs_XC0=Thermal_steps==0
  !
  ! Use NE_tot_time if provided
  !
@@ -234,7 +239,7 @@ subroutine RT_initialize(E,k,q)
  !
  if ( .not. l_NE_dynamics ) then
    NE_steps=0
-   if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields or thermalization provided')
+   if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields, no thermalization and no manual pumping provided')
  endif
  !
  ! RIM support
@@ -254,6 +259,7 @@ subroutine RT_initialize(E,k,q)
  else
    RT_nk=k%nibz
    RT_Nk_ibz=1
+   RIM_EE_percent=0.
    allocate(RT_all2ibz(k%nibz))
    if(l_elel_scatt) then
      allocate(RIM_EE_scatt_table(k%nibz,q%nbz))
@@ -286,15 +292,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Memory Depth & Simulation points (Lifetimes)
  !=============================================
- Life_MEM_steps=1
- if (l_elph_scatt.or.l_elel_scatt) then
-   if (RT_dynamics_steps(1)>0.) then
-     Life_MEM_steps=nint(RT_dynamics_steps(1)/RT_dynamics_steps(2))
-     if (Life_MEM_steps<3) Life_MEM_steps=3
-     RT_dynamics_steps(1)=RT_dynamics_steps(2)*Life_MEM_steps
-   endif
-   N_T_samplings=RT_Lifetimes_evaluation_plan( )
- endif
+ if (l_elph_scatt.or.l_elel_scatt) N_T_samplings=RT_Lifetimes_evaluation_plan( )
  !
  ! Gauge
  !=======
@@ -311,14 +309,18 @@ subroutine RT_initialize(E,k,q)
  ! Checking extended COLLISIONS
  !==============================
  !
- call msg('r',' ')
- !
- if (l_elel_scatt) then
-   call PLASMA_build_up(E,k,q)
-   call PLASMA_parallel_setup(EH_gas)
+ if (l_elel_scatt.or.l_sc_cohsex.or.l_sc_hf) then
+   !
+   call section('=','Electronic Collisions loading and setup')
+   !
+   if (l_elel_scatt) then
+     call PLASMA_build_up(E,k,q)
+     call PLASMA_parallel_setup(EH_gas)
+   endif
+   !
+   call COLLISIONS_load(.TRUE.)
+   !
  endif
- !
- call COLLISIONS_load(.TRUE.)
  !
  ! LOG
  ! ===
@@ -336,22 +338,27 @@ subroutine RT_initialize(E,k,q)
  if  (l_RT_INTERPOLATE) call msg( 'r', 'Memory steps(COHERENT part):',I_MEM_steps)
  call msg( 'r', 'Thermalization steps       :',Thermal_steps)
  !
- if (RT_dynamics_steps(1)>0.) then
+ if (.not.trim(RT_life_interp_KIND)=="NONE") then
    call msg( 'nr','---Dynamics---')
-   call msg( 'r', 'Sampling                       :',RT_dynamics_KIND)
+   call msg( 'r', 'Sampling                       :',RT_life_interp_KIND)
    call msg( 'r', 'Memory steps (Lifetimes)       :',Life_MEM_steps)
-   call msg( 'r', 'Steps length (inter/intra) [fs]:',RT_dynamics_steps/FS2AUT)
-   if (RT_dynamics_decay_time>0.) call msg( 'r', 'Distribution decay         [fs]:',&
-&                                                RT_dynamics_decay_time/FS2AUT)
+   call msg( 'r', 'Steps length (inter/intra) [fs]:',RT_life_interp_steps/FS2AUT)
+   if (RT_life_interp_decay_time>0.) call msg( 'r', 'Distribution decay         [fs]:',&
+&                                                RT_life_interp_decay_time/FS2AUT)
    call msg( 'r', 'Time points                    :',N_T_samplings*Life_MEM_steps)
  endif
  !
  call msg( 'nr','---Flags (if any)---')
- if (l_NE_simulate_RPA)   call msg( 'r','Simulate RPA               :',l_NE_simulate_RPA)
- if (l_NE_simulate_BSE)   call msg( 'r','Simulate BSE               :',l_NE_simulate_BSE)
- if (l_NE_simulate_TDDFT) call msg( 'r','Simulate TD-DFT            :',l_NE_simulate_TDDFT)
+ if (l_sc_ip)             call msg( 'r','Simulate IP                :',l_sc_ip)
+ if (l_sc_hartree)        call msg( 'r','Simulate RPA               :',l_sc_hartree)
+ if (l_sc_is_libDFT)      call msg( 'r','Simulate TD-DFT            :',l_sc_is_libDFT)
+ if (l_sc_cohsex)         call msg( 'r','Simulate BSE               :',l_sc_cohsex)
+ !
+ if (l_NE_simulate_Irredux) call msg( 'r','Simulate Irredux           :',l_NE_simulate_Irredux)
+ !
  if (l_elph_scatt)        call msg( 'r','El-Ph Carrier scattering   :',l_elph_scatt)
  if (l_elel_scatt)        call msg( 'r','El-El Carrier scattering   :',l_elel_scatt)
+ if (l_BGR)               call msg( 'r','On-the-fly BGR computed    :',l_BGR)
  !
  call msg( 'nr','---I/O---')
  call                          msg('r', 'T between I/O of J,P,f [fs]:',RT_IO_time(1)/FS2AUT)
@@ -364,11 +371,21 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', 'Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000._SP/))
  call msg( 'r', 'Damping (Radiative)[fs/meV]:',(/RAD_LifeTime/FS2AUT,   HBAR_eVfs/RAD_LifeTime*FS2AUT*1000._SP/))
  !
+ if ((l_elel_scatt.or.l_elph_scatt).and.(.not.l_RT_skip_impose.or.l_RT_EE_impose_E)) then
+   call msg( 'nr','---Conservation Rules---')
+   call msg( 'r','dN (e-p) and N (e-p + e-e)  :',.not.l_RT_skip_impose)
+   if (l_elel_scatt) call msg( 'r','Energy (e-e)                :',l_RT_EE_impose_E)
+ endif
+ !
  call msg( 'nr','---RIM---')
  call msg( 'r', 'Energy RIM support           :',l_RT_uses_E_RIM)
  if (l_RT_uses_E_RIM) then
    call msg( 'r', 'K-points            (TOTAL):',BZ_RIM_tot_nkpts)
    call msg( 'r', '                     (USED):',RT_nk)
+   if (l_elel_scatt) then
+     call msg( 'r', 'Percentual used in e-e[o/o]:',RIM_EE_percent)
+     call msg( 'r', 'Max e-e scattering states  :',maxval(RIM_EE_Nk_table))
+   endif
  endif
  !
  if (l_NE_with_fields) then

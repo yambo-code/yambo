@@ -25,12 +25,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_cohsex,l_use_collisions,l_sc_contains_lda,l_eval_collisions
+ use drivers,        ONLY:l_sc_cohsex,l_use_collisions,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,SC_rho_threshold,it_now,E_convergence, &
-&                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,l_Mean_Potential,&
+&                         rho_convergence,SC_R,V_xc_sc,l_sc_pot_is_local,H_nl_sc,H_rotate,l_Mean_Potential,&
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
 &                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,G_lesser,l_SC_RESTART,&
 &                         l_NSC_shot,l_TF_precond,V_mean,SC_up_W_iters,l_SC_nl_mix,SC_QP_setup,it_to_start
@@ -46,7 +46,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use xc_functionals, ONLY:V_xc,E_xc
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,ncpu
- use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,io_COLLs,io_X,&
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,io_COLLs,io_RESPONSE,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder
  use LIVE_t,         ONLY:live_timing
@@ -264,8 +264,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !            Both WFs and Energies are written ay the end of the loop
    !===========
    !
-   if (     local_V) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))
-   if (.not.local_V) call io_control(ACTION=OP_WR,   COM=NONE,SEC=(/1/),ID=ID(3))
+   if (     l_sc_pot_is_local) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))
+   if (.not.l_sc_pot_is_local) call io_control(ACTION=OP_WR,   COM=NONE,SEC=(/1/),ID=ID(3))
    io_V=io_SC_components('V' ,E,ID(3))
    !
    do ik = 1, QP_nk 
@@ -273,7 +273,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! Build H_nl_sc
      !===============
      !
-     if (local_V) then
+     if (l_sc_pot_is_local) then
        !
        H_nl_sc(:,:,:) = Ho(:,:,ik,:)/real(ncpu)
        call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WFo)
@@ -438,7 +438,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
 &            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HA2EV))
-     if (l_sc_contains_lda.and. local_V) dumb_ch=trim(dumb_ch)//'  E_tot(Ha)= '//trim(real2ch(E_total))
+     if (l_sc_pot_is_local) dumb_ch=trim(dumb_ch)//'  E_tot(Ha)= '//trim(real2ch(E_total))
 #if defined _MAGNETIC
      if(n_sp_pol>1) dumb_ch=trim(dumb_ch)//'  (Mz='//trim(real2ch(Total_magn(3)))//')'
 #endif
@@ -446,7 +446,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if (.not.log_as_a_file.or.it_now==1) then
        call LIVE_message(dumb_ch,"n","","%s")
      else
-       if (local_V) then
+       if (l_sc_pot_is_local) then
          if (.not.log_as_a_file) call LIVE_message(dumb_ch,"r","","%s")
          if (log_as_a_file) call LIVE_message(dumb_ch,"n","","%s")
        else
@@ -506,13 +506,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    call msg('nr','[SC] Iterations               :',it_now)
    call msg('r' ,'[SC] Accuracy on density      :',rho_convergence)
    call msg('r' ,'[SC]          on energies [ev]:',E_convergence*HA2EV)
-   if (l_sc_contains_lda.and. local_V) then
-     call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]:',E_total*(/1.,2./))
-     call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1.,2./))
-     call msg('rn','[SC] xc Energy               [Ha/Ry]:',E_tot_xc*(/1.,2./))
-   else
-     call msg('r','')
-   endif
+   if (l_sc_pot_is_local)      call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]:',E_total*(/1.,2./))
+   if(.not.l_sc_pot_is_local)  call msg('r','')
+   if (l_sc_hartree.or.l_sc_is_libDFT) &
+&                         call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1.,2./))
+   if (l_sc_is_libDFT) call msg('rn','[SC] xc Energy               [Ha/Ry]:',E_tot_xc*(/1.,2./))
    !
  else
    call msg('r','')
@@ -608,7 +606,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call mem_est("H_nl_nm1")
      endif
      !
-     if (.not.io_X) call X_alloc('X')
+     if (.not.io_RESPONSE) call X_alloc('X')
      !
    end subroutine
    !
@@ -621,7 +619,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if (l_SC_cycle) then
        do i_spin=1,n_sp_pol
          V_xc_sc_shift(i_spin )= maxval(E_bare(:n_met_bands,:,i_spin))-maxval(E%E(:n_met_bands,:,i_spin)) 
-         if (local_V) then
+         if (l_sc_pot_is_local) then
            V_xc_sc(:,i_spin)=V_xc_sc(:,i_spin)+V_xc_sc_shift(i_spin)
            call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))
            io_V=io_SC_components('V' ,E,ID(3))

@@ -74,13 +74,14 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
      !
    enddo
    !
- else if (ZONE=="k_bz_q_bz") then
+ else if (ZONE=="k_bz_q_bz".or.ZONE=="k_bz_q_bz_p_bz") then
    !
    do ikbz=1,nkbz
      !
      if (.not.IND_in%element_1D(ikbz)) cycle
      !
-     ik  =k%sstar(ikbz,1)
+     ik=k%sstar(ikbz,1)
+     if (ZONE=="k_bz_q_bz_p_bz") ik=ikbz
      !
      if (.not.IND_k_out%element_1D(ik)) then
        IND_k_out%element_1D(ik)=.TRUE.
@@ -93,6 +94,7 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
        !
        ikpbz=qindx_B(ikbz,iq,1)
        ikp  =k%sstar(ikpbz,1)
+       if (ZONE=="k_bz_q_bz_p_bz") ikp=ikpbz
        !
        if (.not.IND_k_out%element_1D(ikp)) then
          IND_k_out%element_1D(ikp)=.TRUE.

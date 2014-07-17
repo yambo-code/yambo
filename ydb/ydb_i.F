@@ -137,6 +137,7 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  known_runlevels(61)='rtX'
  known_runlevels(62)='Gret'
  known_runlevels(63)='MeanPot'
+ known_runlevels(64)='kpts_map'
  !
  ! INPUT string splitter
  !

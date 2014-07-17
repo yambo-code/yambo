@@ -49,7 +49,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
 &                        iHp,ibp,iq_ibz_db,ik_bz_gkkp,ib_gkkp,ibp_gkkp,iw
  real(SP)             :: ph_E,residual,q_weight
  logical              :: l_eval_Displacements
- integer, external    :: ioELPH
+ integer, external    :: io_ELPH
  integer,     allocatable :: elph_Ham_Table(:,:)
  real   (SP), allocatable :: elph_E(:)
  complex(SP), allocatable :: elph_Mat(:,:)
@@ -86,7 +86,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call section('*','Correlation: Electron-Phonon Hamiltonian')
  !
- call k_sym2sym(k,'k')
+ call k_build_up_BZ_tables(k)
  call k_expand(k)
  !
  call parser('Eval_Displacements',l_eval_displacements)
@@ -132,7 +132,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !=========
  !
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
- io_err=ioELPH(ID,'gkkp')
+ io_err=io_ELPH(ID,'gkkp')
  if (io_err/=0) call error('El-Ph database not found')
  !
  call elph_global_alloc('gkkp')
@@ -159,7 +159,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
      !
      if (iq_ibz/=iq_ibz_db) then
        call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_ibz+1/),ID=ID)
-       io_err=ioELPH(ID,'gkkp')
+       io_err=io_ELPH(ID,'gkkp')
        iq_ibz_db=iq_ibz
        if (iq_ibz==1) pol_vector_gamma=pol_vector
      endif
@@ -175,11 +175,11 @@ subroutine ELPH_Hamiltonian(en,k,q)
      !
      ib_gkkp =ib
      ibp_gkkp=ibp
-     ik_bz_gkkp=k%s_table(elph_Ham_ik,sop_inv(iq_s))
+     ik_bz_gkkp=k%k_table(elph_Ham_ik,sop_inv(iq_s))
      if (iq_s>nsym/(i_time_rev+1)) then
        ib_gkkp   =ib
        ibp_gkkp  =ibp
-       ik_bz_gkkp=k%s_table(ok_ibz,sop_tab(sop_inv(iq_s-nsym/2),ok_s))
+       ik_bz_gkkp=k%k_table(ok_ibz,sop_tab(sop_inv(iq_s-nsym/2),ok_s))
      endif
      !
      elph_Mat(iH,iHp)=q_weight*conjg(elph_gkkp(ik_bz_gkkp,il,ibp_gkkp,ib_gkkp))/sqrt(2.*ph_E)
@@ -421,7 +421,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
          !
          iq_ibz =q%sstar(iq_bz,1)
          call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_ibz+1/),ID=ID)
-         io_err=ioELPH(ID,'gkkp')
+         io_err=io_ELPH(ID,'gkkp')
          !
          do il=elph_branches(1),elph_branches(2)
            !

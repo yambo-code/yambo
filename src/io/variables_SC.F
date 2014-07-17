@@ -33,22 +33,22 @@ integer function variables_SC(ID,local_description,what)
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,l_sc_diagonal,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,SC_up_W_iters,&
-&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,local_V,RT_nk
+&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,l_sc_pot_is_local,RT_nk
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR,&
 &                         variable_is_found
- use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,              &
+ use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,              &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_IO_G_steps,              &
 &                         RT_IO_JPO_steps,l_RT_induced_field,G_MEM_steps,&
-&                         l_RT_CCA_Kernel,RT_IO_steps_DB,Gr_description,&
-&                         l_RT_uses_E_RIM,N_Gr_descs,RT_dynamics_steps,RT_dynamics_decay_time,&
-&                         RT_dynamics_KIND
+&                         l_RT_CCA_Kernel,RT_IO_steps_DB,Gr_description,l_RT_skip_impose,&
+&                         l_RT_uses_E_RIM,N_Gr_descs,RT_life_interp_steps,RT_life_interp_decay_time,&
+&                         RT_life_interp_KIND,l_NE_simulate_Irredux,RIM_EE_percent,l_RT_EE_impose_E
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
 #endif
 #if defined _ELPH
- use ELPH,           ONLY:ph_modes
+ use ELPH,           ONLY:ph_modes,elph_branches
 #endif
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC
  use fields,         ONLY:global_gauge,n_ext_fields,Efield
@@ -105,7 +105,7 @@ integer function variables_SC(ID,local_description,what)
  call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=6,MENU=0) 
  !
  i_desc=i_desc+1
- call io_elemental(ID,L0=local_V,&
+ call io_elemental(ID,L0=l_sc_pot_is_local,&
 &     VAR=' The potential is local          :',DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,I0=it_now,DB_I0=it_now,&
@@ -178,7 +178,10 @@ integer function variables_SC(ID,local_description,what)
  !
 #if defined _ELPH
  !
- call io_elemental(ID,VAR="ELPH_vars",VAR_SZ=4,MENU=0) 
+ VAR_SIZE=4
+ if (ver_is_gt_or_eq(ID,revision=3353)) VAR_SIZE=5
+ call io_elemental(ID,VAR="ELPH_vars",VAR_SZ=VAR_SIZE,MENU=0) 
+ !
  i_desc=i_desc+1
  call io_elemental(ID,L0=l_elph_scatt,&
 &   VAR=" [E-P] Electron-phonon           :", CHECK=.true.,OP=(/"=="/),&
@@ -188,13 +191,20 @@ integer function variables_SC(ID,local_description,what)
 &   VAR=" [E-P] Completed Collision(CCA)  :", CHECK=.true.,OP=(/"=="/),&
 &   DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,&
-&   VAR=" [E-P] Phonon modes              :",I0=ph_modes,CHECK=.true.,OP=(/"=="/),&
-&   DESCRIPTION=local_description(i_desc))
+ if (ver_is_gt_or_eq(ID,revision=3353)) then
+   call io_elemental(ID, &
+&     VAR=" [E-P] Branches                  :",I1=elph_branches,CHECK=.true.,OP=(/"==","=="/),&
+&     DESCRIPTION=local_description(i_desc))
+ else
+   call io_elemental(ID,&
+&     VAR=" [E-P] Phonon modes              :",I0=ph_modes,CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
+ endif
  i_desc=i_desc+1
  call io_elemental(ID, &
 &   VAR=" [E-P] Memory steps              :",I0=G_MEM_steps,CHECK=.true.,OP=(/"=="/),&
 &   DESCRIPTION=local_description(i_desc))
+ !
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
 #endif
@@ -279,20 +289,18 @@ integer function variables_SC(ID,local_description,what)
  !
 #endif
  !
+#if defined _RT
+ !
  if(.not.any((/l_J,l_G,l_occupations/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  if(any((/l_J,l_G,l_occupations/))) then
    !
-   VAR_SIZE=10
+   VAR_SIZE=9
    call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=VAR_SIZE,MENU=0) 
    !
    i_desc=i_desc+1
-   call io_elemental(ID,L0=Hfrozen,&
-&    VAR=" [RT] Hartree frozen             :", CHECK=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
-   call io_elemental(ID,L0=XCfrozen,&
-&    VAR=" [RT] XC frozen                  :", CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,L0=l_NE_simulate_Irredux,&
+&    VAR=" [RT] Simulate irredux           :", CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    !
    i_desc=i_desc+1
@@ -304,16 +312,16 @@ integer function variables_SC(ID,local_description,what)
      if (ver_is_gt_or_eq(ID,revision=3163)) then
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [RT-DYN-dT] Inter/intra grps[fs]:",R1=RT_dynamics_steps,WARN=.true.,OP=(/"==","=="/),&
+&        VAR=" [RT-DYN-dT] Inter/intra grps[fs]:",R1=RT_life_interp_steps,WARN=.true.,OP=(/"==","=="/),&
 &        DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [RT-DYN-dT] Time decay      [fs]:",R0=RT_dynamics_decay_time,WARN=.true.,OP=(/"=="/),&
+&        VAR=" [RT-DYN-dT] Time decay      [fs]:",R0=RT_life_interp_decay_time,WARN=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
        i_desc=i_desc+1
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        call io_elemental(ID,VAR='RT_DYNAMICS_kind',CH0="",VAR_SZ=1,MENU=0)
-       call io_elemental(ID,CH0=RT_dynamics_KIND, &
+       call io_elemental(ID,CH0=RT_life_interp_KIND, &
 &        VAR=" [RT-DYN-dT] Sampling            :",WARN=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc))
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -407,7 +415,9 @@ integer function variables_SC(ID,local_description,what)
    !
    ! RIM
    !======================
-   call io_elemental(ID,VAR="RIM_support",VAR_SZ=2,MENU=0) 
+   VAR_SIZE=2
+   if (ver_is_gt_or_eq(ID,revision=3387)) VAR_SIZE=3
+   call io_elemental(ID,VAR="RIM_support",VAR_SZ=VAR_SIZE,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_uses_E_RIM,&
 &    VAR=' [RIM] Random Energies support   :',  CHECK=.true.,OP=(/"=="/),&
@@ -416,8 +426,31 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,I0=BZ_RIM_tot_nkpts,&
 &    VAR=' [RIM] Random k-point            :',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
+   if (ver_is_gt_or_eq(ID,revision=3387)) then
+     i_desc=i_desc+1
+     call io_elemental(ID,R0=RIM_EE_percent,&
+&      VAR=' [RIM] Used for e-e         [o/o]:',  CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
+   endif
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
+   ! CONSTRAINS
+   !======================
+   if (ver_is_gt_or_eq(ID,revision=3387)) then
+     call io_elemental(ID,VAR="CONSTRAINS",VAR_SZ=VAR_SIZE,MENU=0) 
+     i_desc=i_desc+1
+     call io_elemental(ID,L0=.not.l_RT_skip_impose,&
+&      VAR=' [CONSTRAINS] N (ee+ep) & dN (ep):',  CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc))
+     i_desc=i_desc+1
+     call io_elemental(ID,L0=l_RT_EE_impose_E,&
+&      VAR=' [CONSTRAINS] IP Energy      (ee):',  CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   endif
+   !
+   ! FIELDS
+   !======================
    if (l_NE_with_fields_disk) then
      !
      call io_elemental(ID,VAR="GAUGE_TYPE",CH0="",VAR_SZ=1,MENU=0)
@@ -475,6 +508,8 @@ integer function variables_SC(ID,local_description,what)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    endif
  endif
+ !
+#endif
  !
  variables_SC=io_status(ID)
  n_SC_descriptions=i_desc

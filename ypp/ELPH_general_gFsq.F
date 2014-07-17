@@ -35,7 +35,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
 &                              gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,&
 &                              gsqF_life_f ,elph_use_q_grid,ph_freqs_sq,elph_global_alloc
  use IO_m,                ONLY:io_control,OP_RD,RD,DUMP,RD_CL
- use BS,                  ONLY:BS_mat,BS_K_dim,BS_bands,BS_eh_table
+ use BS,                  ONLY:BS_mat,BS_K_dim,BS_bands,BSS_eh_table
  use QP_m,                ONLY:QP_n_states,QP_table,QP_state,QP_nb,QP_nk,QP_states_simmetrize
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid,PAR_nQ
@@ -71,7 +71,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  !I/O
  !
  integer           ::io_err,ID
- integer, external ::ioELPH
+ integer, external ::io_ELPH
  !
  ! calculate q%weights
  !
@@ -106,7 +106,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  deallocate(QP_table)
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
- io_err=ioELPH(ID,'gFsq')
+ io_err=io_ELPH(ID,'gFsq')
  !
  if (io_err/=0) return
  !
@@ -120,7 +120,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
    else
      call io_control(ACTION=RD,SEC=(/iq+1/),ID=ID)
    endif
-   io_err=ioELPH(ID,'gFsq')
+   io_err=io_ELPH(ID,'gFsq')
  enddo
  !
  ! Energy setup
@@ -250,9 +250,9 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
    !
    do neh = 1,BS_K_dim
      !
-     ikibz = Xk%sstar(BS_eh_table(neh,1),1) 
-     iv    = BS_eh_table(neh,2)
-     ic    = BS_eh_table(neh,3)
+     ikibz = Xk%sstar(BSS_eh_table(neh,1),1) 
+     iv    = BSS_eh_table(neh,2)
+     ic    = BSS_eh_table(neh,3)
      !
      do iqp=1,QP_n_states
        if (QP_table(iqp,1)==ic.and.QP_table(iqp,3)==ikibz) QP_table_map(neh,1)=iqp

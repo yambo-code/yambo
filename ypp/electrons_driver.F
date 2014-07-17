@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_driver(Xk,Xen)
+subroutine electrons_driver(Xk,Xen,Xq)
  !
  use pars,           ONLY:SP,lchlen
  Use stderr,         ONLY:intc
@@ -35,7 +35,7 @@ subroutine electrons_driver(Xk,Xen)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_RT_dos,l_RT_occ_Bands,&
-&                         l_bands,BANDS_range
+&                         l_bands
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -62,7 +62,7 @@ subroutine electrons_driver(Xk,Xen)
  !
  implicit none
  !
- type(bz_samp) ::Xk
+ type(bz_samp) ::Xk,Xq
  type(levels)  ::Xen
  !
  ! Work Space
@@ -115,7 +115,7 @@ subroutine electrons_driver(Xk,Xen)
  nb_to_load=(/1,Xen%nbm/)
  nkpt_to_load=(/1,Xk%nibz/)
  !
- flag=l_sp_wf
+ flag=any((/l_sp_wf,l_bands,l_RT_occ_Bands/))
  !===
 #if defined _YPP_MAGNETIC
  if (.not.flag) flag=any((/l_angular_momentum,l_position/))
@@ -123,8 +123,6 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_SC
  if (.not.flag) flag=l_mean_potential
 #endif
- !
- if (l_bands.or.l_RT_occ_Bands) nb_to_load=BANDS_range
  !
  if (flag) then
    call QP_state_table_setup(Xen)
@@ -192,7 +190,7 @@ subroutine electrons_driver(Xk,Xen)
  !
  if(l_bands.or.l_RT_occ_Bands) then
    if ( i_time_rev==1) call error('Bands interpolation does not work with T-rev symmetry')
-   call electrons_bands(Xk,Xen)
+   call electrons_bands(Xk,Xen,nb_to_load)
  endif
  !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)

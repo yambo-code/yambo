@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !            http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,56 +21,87 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_apply_RWA(ik,E,Time,dT,MODE,M1,M2,M3)
+subroutine RT_apply_RWA(ik,E,dT,dTp,dG_new_k,dG_old_k)
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP
  use SC,             ONLY:RT_ibz_coo,SC_bands,RT_all2ibz
  use electrons,      ONLY:levels
- use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM
+ use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,RT_Deph_Matrix
  !
  implicit none
  !
  integer,      intent(in)     :: ik
  type(levels), intent(in)     :: E
- real(SP),     intent(in)     :: Time,dT
- character(*), intent(in)     :: MODE
+ real(SP),     intent(in)     :: dT,dTp
  !
- complex(SP),  intent(inout)            :: M1(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP),  intent(inout), optional  :: M2(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP),  intent(inout), optional  :: M3(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP),  intent(in)     :: dG_old_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP),  intent(inout)  :: dG_new_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
  ! Work space
  !
  integer  :: i_n,i_np,ik_RIM,ik_ibz
- real(SP) :: deltaE,pre_factor,alpha,alpha1
- complex(SP) :: phase,phase1
- !
- if (MODE=="APPLY" ) pre_factor= 1._SP
- if (MODE=="REMOVE") pre_factor=-1._SP
+ real(SP) :: deltaE,sumGAMMA,alpha,dec_exp
+ complex(SP) :: phase
  !
  ik_ibz=RT_all2ibz(ik)
  ik_RIM=ik-RT_ibz_coo(ik_ibz,1)+RIM_ibz_coo(ik_ibz,1)
  !
  do i_n=SC_bands(1),SC_bands(2)
    do i_np=i_n+1,SC_bands(2)
-     if (     l_RT_uses_E_RIM) deltaE=E%E_RIM(i_n,ik_RIM,1)-E%E_RIM(i_np,ik_RIM,1)
-     if (.not.l_RT_uses_E_RIM) deltaE=E%E(i_n,ik,1)-E%E(i_np,ik,1)
-     alpha=pre_factor*deltaE*Time
-     phase=cmplx(cos(alpha),sin(alpha))
-     M1(i_n,i_np)=M1(i_n,i_np)*      phase
-     M1(i_np,i_n)=M1(i_np,i_n)*conjg(phase)
-     if(present(M2)) then
-       M2(i_n,i_np)=M2(i_n,i_np)*      phase
-       M2(i_np,i_n)=M2(i_np,i_n)*conjg(phase)
+     !
+     sumGAMMA=0._SP
+     !
+     if (allocated(RT_Deph_Matrix)) sumGAMMA=RT_Deph_Matrix(i_n,i_np,ik_ibz)
+     !
+     if (     l_RT_uses_E_RIM) then
+       deltaE=E%E_RIM(i_n,ik_RIM,1)-E%E_RIM(i_np,ik_RIM,1)
+       !if (allocated(E%W)) sumGAMMA=(abs(E%W_RIM(i_n,ik_RIM,1))+abs(E%W_RIM(i_np,ik_RIM,1)))/2._SP
      endif
-     if(present(M3)) then
-       alpha1=pre_factor*deltaE*dT
-       !phase1=1._SP +cI*alpha1 -alpha1**2._SP/2._SP -cI*alpha1**3._SP/6._SP
-       phase1=cmplx(cos(alpha1),sin(alpha1))
-       M3(i_n,i_np)=M3(i_n,i_np)*      phase *phase1
-       M3(i_np,i_n)=M3(i_np,i_n)*conjg(phase *phase1)
+     if (.not.l_RT_uses_E_RIM) then
+       deltaE=E%E(i_n,ik,1)-E%E(i_np,ik,1)
+       !if (associated(E%W)) sumGAMMA=(abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik,1)))/2._SP
      endif
+     !
+     if(dTp>0._SP) then
+       alpha=-deltaE*dTp
+       phase=cmplx(cos(alpha),sin(alpha))
+       dec_exp=exp(-sumGAMMA*dTp)
+       dG_new_k(i_n,i_np)=dG_new_k(i_n,i_np)*      phase *dec_exp
+       dG_new_k(i_np,i_n)=dG_new_k(i_np,i_n)*conjg(phase)*dec_exp
+     endif
+     !
+     if(dT/=dTp) then
+       alpha=-deltaE*dT
+       phase=cmplx(cos(alpha),sin(alpha))
+       dec_exp=exp(-sumGAMMA*dT)
+     endif
+     !
+     dG_new_k(i_n,i_np)=dG_new_k(i_n,i_np)+dG_old_k(i_n,i_np)*      phase *dec_exp
+     dG_new_k(i_np,i_n)=dG_new_k(i_np,i_n)+dG_old_k(i_np,i_n)*conjg(phase)*dec_exp
+     !
    enddo
+   !
+   dG_new_k(i_n,i_n)=dG_new_k(i_n,i_n)+dG_old_k(i_n,i_n)
+   !
+   ! It is higly non satisfactory that 
+   !     Gamma_neq[f_eq] /= Gamma_eq                              (1)
+   ! This explains the need for the special definition
+   !    sumGAMMA=sum(REF_lifetimes(i_n,ik,:))                     (2)
+   ! instead of
+   !    sumGAMMA=abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik,1))/2._SP     (3)
+   ! with i_n=i_np. Notice the 0.5 factor in Eq.(3) so that
+   ! Eq.(2)=Eq.(3) in case Eq.(1) holds
+   ! 
+   ! This difference is due to two reasons, the second one is more relevant:
+   ! (1) For the ee scatt REF_lifetimes are computed with a static approx to
+   !     the out-of-equilibrium GW
+   ! (2) The Gamma_eq are computed in the \eta->0 limit, i.e. no QP approx,
+   !     while the Gamma_neq are computed in the QP approx \eta=Gamma_eq
+   !
+   !sumGAMMA=sum(REF_lifetime(i_n,ik,:))
+   !dec_exp=exp(-sumGAMMA*dT)
+   !dG_new_k(i_n,i_n)=dG_new_k(i_n,i_n)*dec_exp
+   !
  enddo
  !
 end subroutine RT_apply_RWA

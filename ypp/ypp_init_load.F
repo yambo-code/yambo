@@ -28,6 +28,7 @@ subroutine ypp_init_load(defs)
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
+ use interpolate,   ONLY:lpfac
  use YPP
 #if defined _YPP_SURF
  use bulkeps,              ONLY: init_bulk
@@ -82,7 +83,8 @@ subroutine ypp_init_load(defs)
  call QP_ctl_load(defs,3)
  call it('r',defs,'spin',         '[R] Spin')
  call it('r',defs,'magnetization','[R] Magnetization')
- call it('r',defs,'bzrim',     '[R] BZ energy RIM analyzer')
+ call it('r',defs,'bzrim',        '[R] BZ Random kpt generator')
+ call it('r',defs,'kpts_map',     '[R] BZ map fine grid to coarse')
  call it('r',defs,'QPDBs', '[R] Quasi-particle databases')
  call it('r',defs,'QPDB_edit', '[R] Generation/editing')
  call it('r',defs,'QPDB_merge','[R] Mergering')
@@ -95,7 +97,7 @@ subroutine ypp_init_load(defs)
 #if defined _YPP_RT
  call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
  call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
- call it('r',defs,'RTdos',        '[R] Analize time-dependent DOS')
+ call it('r',defs,'RTcarrDos',    '[R] Analize time-dependent DOS')
  call it('r',defs,'RToccBnd',     '[R] Analize time-dependent occupations of Bands')
  call it('r',defs,'RToccPlot',    '[R] Plot time-dependent occupations')
  call it('r',defs,'RToccFit',     '[R] Fit occupations distribution at given time')
@@ -125,7 +127,6 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit(1))
  call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit(1))
- call it(defs,'OCCTref','NEGF Occupations reference time',OCC_T_ref,unit=Time_unit(1))
  call it('f',defs,'OCCgroup','NEGF If RIM is used group occupations')
  !
 #endif
@@ -133,9 +134,14 @@ subroutine ypp_init_load(defs)
  ! BANDS
  !
  call it(defs,'BANDS_steps', 'Number of divisions',BANDS_steps) 
- call it(defs,'BANDS_range', 'Bands Range',BANDS_range) 
  call it(defs,'BKpts','Bands circuit',Kgw_1)
  call it(defs,'INTERPGrid', 'Interpolation Grid',interp_grid)
+ call it(defs,'ShellFac','The bigger it is a higher number of shells is used',lpfac)
+#if defined _YPP_RT
+ call it('f',defs,'NNInterp','Use nearest neigbor interpolation scheme')
+ call it('f',defs,'NormN','Nel on the bands is renormalized to Nel in the IBZ')
+ call it(defs,'NelFac'   ,'Rescale the total number of electrons',Nel_fac)
+#endif
  !
  ! Wannier interface
  !

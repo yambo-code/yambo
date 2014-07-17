@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine eval_gradient(f,f_gradient)
+subroutine eval_Gradient(f,f_gradient)
  !
  ! The gradient of a periodic function f(r):
  ! 
@@ -72,4 +72,4 @@ subroutine eval_gradient(f,f_gradient)
    f_gradient(ic,:) = real(Vr(:),SP)
  enddo
  !
-end subroutine eval_gradient
+end subroutine eval_Gradient

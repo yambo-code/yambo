@@ -1,3 +1,3 @@
-objs =	tddft_BSK_2_FXC.o tddft_BSK_disk_2_FXC.o \
-        tddft_do_X_W_typs.o \
-        tddft_alda_g_space.o tddft_alda_r_space.o
+objs =	TDDFT_BSK_2_FXC.o TDDFT_BSK_disk_2_FXC.o \
+        TDDFT_do_X_W_typs.o \
+        TDDFT_ALDA_G_space.o TDDFT_ALDA_R_space.o

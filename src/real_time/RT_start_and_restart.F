@@ -39,24 +39,23 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  use pars,           ONLY:SP,cI,cZERO,rZERO
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_contains_lda,l_elph_scatt,l_elel_scatt
+ use drivers,        ONLY:l_sc_is_libDFT,l_sc_ip,l_elph_scatt,l_elel_scatt
  use com,            ONLY:msg
  use QP_m,           ONLY:QP_nk,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol,spin_occ
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:ID,NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
-&                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
-&                         l_RT_needs_XC0,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         RT_P,RT_step,full_rho,l_RT_CCA_Kernel,dG_lesser, &
-&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,&
+&                         G_lesser_reference,Thermal_steps,rho_reference,  &
+&                         it_start,l_NE_with_fields,XC0_and_HARTREE0,&
+&                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,l_NE_simulate_Irredux,NE_i_time,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,RT_IO_G_steps,&
-&                         l_equilibrium_lifetimes,RT_E_occupations_reference,&
+&                         RT_E_occupations_reference,&
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
-&                         RIM_ibz_coo,RT_eh_en,REF_Lifetime,G_MEM_steps,MEM_index
+&                         RIM_ibz_coo,RT_eh_en,G_MEM_steps,MEM_index
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,it_now,H_nl_sc,RT_ibz_coo,&
 &                         V_hartree_sc,RT_nk,G_lesser,RT_ibz_coo,&
-&                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional,SC_nbands
+&                         E_bare,V_xc_sc,rho_n,Ho
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE,IO_and_Messaging_switch
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
@@ -64,6 +63,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use parallel_m,     ONLY:PP_redux_wait,master_cpu
  use stderr,         ONLY:real2ch
+ !
  implicit none
  !
  type(levels)      :: E
@@ -73,7 +73,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Work Space
  !
  integer :: ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA,io_REF,&
-&           io_OCCUPATIONS,ID_OCCUPATIONS,it,nt
+&           io_OCCUPATIONS,ID_OCCUPATIONS,nt
  integer, external :: io_SC_components,io_RT_components,RT_Lifetimes_evaluation_plan
  logical :: RESTART
  !
@@ -85,7 +85,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  G_lesser          =cZERO
  dG_lesser         =cZERO
  rho_reference     =rZERO
- if(allocated(full_rho)) full_rho=cZERO
  V_xc_sc           =rZERO
  V_hartree_sc      =rZERO
  H_nl_sc           =cZERO
@@ -139,6 +138,28 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  call SC_bare_Hamiltonian(E,k,k)
  !
+ ! Reference Hartree and XC
+ !==========================
+ XC0_and_HARTREE0=(0._SP,0._SP)
+ !
+ do ik=1,QP_nk
+   !
+   call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF) 
+   !
+   call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF) 
+   !
+ enddo
+ !
+ call PP_redux_wait(XC0_and_HARTREE0)
+ !
+ V_xc_sc=(0._SP)
+ V_hartree_sc=(0._SP)
+ !
+ ! Reference density
+ !====================
+ rho_reference=rho_n
+ !
+ !
  ! Perform a first I/O to check which DBs are present. 
  !=====================================================
  !
@@ -148,8 +169,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  io_WF=io_SC_components('WF',E,ID(2))
  call io_control(ACTION=OP_RD_CL,COM=REP ,SEC=(/1/),MODE=VERIFY,ID=ID(3)) ! Local potential
  io_V=io_SC_components('V' ,E,ID(3))
- !
- ! 24/01/2014 Davide: RESTART from DB J_and_P does not work
  !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
@@ -173,87 +192,8 @@ subroutine RT_start_and_restart(E,k,q,X)
  RESTART = (io_G ==0).and.(io_REF==0)
  if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = RESTART.and.(io_THETA==0)
  !
- if (l_RT_needs_XC0) then
-   !
-   ! Build Hartree and XCo 
-   !=======================
-   !
-   ! Note that 
-   !  1. l_RT_needs_XC0 is .TRUE. only when we are starting a NE loop
-   !  2. V_hartree and rho_full have been already calculated in SC_bare_Hamiltonian
-   !
-   ! The time evolution is done updating only the contribution
-   ! coming from the bands above SC_bands(1) in the density.
-   ! Therefore we calculate:
-   !
-   ! (1) a density containing ALL levels (full_rho)
-   ! (2) a density containing only levels above SC_bands(1) (rho_reference)
-   !
-   ! in RT_Collision 
-   !   V_h/xc[n]=V_h/xc[full_rho]+V_h/xc[rho-rho_reference]
-   !
-   ! When SC_bands(1)=1 full_rho=rho_reference
-   !
-   ! The first term is stored here in XC0_and_HARTREE0
-   !
-   XC0_and_HARTREE0=(0._SP,0._SP)
-   !
-   ! Rho_reference. Note that altough rh_n has been already calculated 
-   ! in sc_bare_Hamiltonian I need to recalculate it here when SC_bands(1)>1
-   ! as it is also used in XC_potential_driver
-   ! 
-   call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_n,SC_bands(1))
-   rho_reference=rho_n
-   !
-   if (allocated(full_rho)) then
-     call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_n,1)
-     full_rho=rho_n
-   endif
-   !
-   ! Calculate V_xc
-   !
-   if(l_sc_contains_lda.and.SC_xc_functional/=0) then
-     call IO_and_Messaging_switch("-report -log")
-     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
-     call IO_and_Messaging_switch("+report",CONDITION=master_cpu)
-     call IO_and_Messaging_switch("+log")
-   endif
-   !
-   ! In all cases where Vxc is frozen and we are not doing BSE
-   !
-   !   XC0_and_HARTREE0  contains <mk | Vxc(rho_full) + Vhartree(rho_full) | nk>
-   !
-   ! in all other cases (IRREDUX and TDDFT)
-   !
-   !   XC0_and_HARTREE0  contains <mk | Vhartree(rho_full) | nk>
-   !
-   ! ****NOTE**** This procedure is restricted to the use of the same Vxc (the one
-   ! corresponding to the GS) in the basis and in the time-evolution. To do a TDDFT
-   ! using a different Vxc in the GS and in the evolution Vxc should be always stored 
-   ! in XC0_and_HARTREE0
-   !
-   do ik=1,QP_nk
-     !
-     if (.not.l_NE_simulate_Irredux.and..not.l_NE_simulate_TDDFT) then
-       !
-       call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF) 
-       !
-     endif
-     !
-     call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF) 
-     !
-   enddo
-   !
-   call PP_redux_wait(XC0_and_HARTREE0)
-   !
-   V_xc_sc=(0._SP)
-   !
-   V_hartree_sc=(0._SP)
-   !if (l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP)
-   !
- endif
- !
  ! Starting point 
+ !================
  !
  if (RESTART) then
    !
@@ -318,8 +258,8 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
-   if (it_start>Thermal_steps.and..not.l_NE_simulate_IP) then 
-     call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_reference,SC_bands(1))
+   if (it_start>Thermal_steps.and..not.l_sc_ip) then 
+     call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_reference,1)
    endif
    !
    ! Last thing to do is to update the planned time sampling time (if needed)
@@ -392,8 +332,8 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  if (l_elph_scatt.or.l_elel_scatt) then
    !
-   call k_sym2sym(q,'k')
-   call k_sym2sym(k,'k')
+   call k_build_up_BZ_tables(q)
+   call k_build_up_BZ_tables(k)
    !
    N_Gr_descs=5
    !

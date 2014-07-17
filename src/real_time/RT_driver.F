@@ -24,7 +24,7 @@
 subroutine RT_driver(E,X,k,q)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt
+ use drivers,        ONLY:l_use_collisions,l_sc_ip,l_elph_scatt,l_elel_scatt
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use LIVE_t,         ONLY:live_timing 
@@ -34,19 +34,19 @@ subroutine RT_driver(E,X,k,q)
  use interfaces,     ONLY:WF_load
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
- use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho,&
+ use SC,             ONLY:SC_potential,SC_bands,it_now,l_sc_pot_is_local,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho,&
 &                         SC_QP_setup
- use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
+ use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser, &
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
 &                         NE_i_time,l_RT_diagonalize,RT_IO_G_steps,l_RT_skip_impose,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,l_NE_dynamics_started,RT_update,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update,&
-&                         dG_lesser,ID
+&                         dG_lesser,ID,l_BGR,l_initial_equilibrium
  use plasma,          ONLY:Plasma_free,EH_gas
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
- use com,             ONLY:error,msg
+ use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
  use collision,       ONLY:HF_collisions,COHSEX_collisions,GW_NEQ_collisions
  use QP_CTL_m,        ONLY:QP_apply
@@ -156,13 +156,24 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Collisions
  !
- if((.not.local_V.and..not.l_NE_simulate_IP).or.l_elel_scatt) then
+ if((.not.l_sc_pot_is_local.and..not.l_sc_ip).or.l_elel_scatt) then
    !
    if (io_COLLs) then
      !
-     if (.not.l_use_collisions) call error('COLLISIONs database missing')
-     !
-     call COLLISIONS_load(.FALSE.)
+     if (l_use_collisions) then
+       !
+       call COLLISIONS_load(.FALSE.)
+       !
+     else
+       !
+       if (l_elel_scatt) then
+         call warning('COLLISIONs database missing. E-E scattering switched off.')
+         l_elel_scatt=.FALSE.
+       endif
+       !
+       if (.not.l_sc_pot_is_local) call error('COLLISIONs database missing.')
+       !
+     endif
      !
    endif
    !
@@ -173,19 +184,22 @@ subroutine RT_driver(E,X,k,q)
  !
  if (it_start==1) then
    !
-   call msg('s','Reference Lifetimes and G_lesser (eval and I/O)...')
+   call msg('s','Reference Lifetimes, GF, Self-Energy ...')
    !
    call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
+   !
+   if (l_BGR) call RT_BGR(dG_lesser(:,:,:,1),E,k)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
    !
    call msg('l','done')
    !
+   l_initial_equilibrium=.FALSE.
+   !
  endif
  !
- ! qindx_X and qindx_S not needed in real-time 
- ! they are used only in dipoles and collisions calculations
+ ! Qindx_X and Qindx_S not needed in real-time they are used only in dipoles and collisions calculations
  !
  if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free()
  !
@@ -203,9 +217,9 @@ subroutine RT_driver(E,X,k,q)
    !
  endif
  !
- ! IP calculation => No need of WFs and Density
+ ! IP calculation & not BGR => No need of WFs and Density
  !
- if(l_NE_simulate_IP) then  
+ if(l_sc_ip.and..not.l_BGR) then  
    !
    call WF_free(WF)
    !
@@ -223,6 +237,7 @@ subroutine RT_driver(E,X,k,q)
  if (l_NE_with_fields) call RT_output(what="open pot occ")
  if (l_elph_scatt) call RT_output('open EPlife')
  if (l_elel_scatt) call RT_output('open EElife')
+ if (l_BGR)        call RT_output('open BGR')
  if ((l_elel_scatt.or.l_elph_scatt).and..not.l_RT_skip_impose) call RT_output('open factors')
  !
  ! Loop on time
@@ -311,6 +326,10 @@ subroutine RT_driver(E,X,k,q)
    !============================================================
    call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
    !
+   ! BGR
+   !=======================================
+   if (l_BGR) call RT_output('BGR',TIME=NE_time/FS2AUT)
+   !
    ! Eval and Print Mean Carrier Lifetimes
    !=======================================
    if (l_elph_scatt.or.l_elel_scatt) then
@@ -330,7 +349,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Print some simple observables
    !===============================
-   if (NE_time>0.) then
+   if (NE_time>=0._SP) then
      call RT_output('ene',real(on_the_fly_operators(1:5 )),TIME=NE_time/FS2AUT)
      call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time/FS2AUT)
    endif
@@ -345,15 +364,18 @@ subroutine RT_driver(E,X,k,q)
    !
    G_lesser(:,:,:,it_mem_p1)=G_lesser_reference+dG_lesser(:,:,:,it_mem_p1)
    !
-   if (it==Thermal_steps) then
-     !
-     ! I freeze the last self-energy + hartree in XC0_and_HARTREE and I work
-     ! only with the differences rho-rho_reference and G_lesser-G_lesser_reference
-     ! 
-     call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
-     XC0_and_HARTREE0=SC_R-Ho
-     !
-   endif
+   !if (it==Thermal_steps) then
+   !  !
+   !  ! I freeze the last self-energy + hartree in XC0_and_HARTREE and I work
+   !  ! only with the differences rho-rho_reference and G_lesser-G_lesser_reference
+   !  ! 
+   !  call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
+   !  XC0_and_HARTREE0=SC_R-Ho
+   !  !
+   !  ! Davide: Thermal steps broken.
+   !  !         Here I should also update REF_V_xc ...
+   !  !
+   !endif
    !
    ! Diagonalization
    ! ===============

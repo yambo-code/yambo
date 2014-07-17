@@ -70,16 +70,16 @@ subroutine cutoff_driver(q)
  ! I/O
  !
  integer ::ID,io_err
- integer, external :: ioCOL_CUT
+ integer, external :: io_COL_CUT
  !
  ! First check if the cutoff written on disk is consistent
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
- io_err=ioCOL_CUT(ID)
+ io_err=io_COL_CUT(ID)
  if (io_err==0) then
    call section('*','Coloumb potential CutOff :'//trim(cut_geometry))
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
-   io_err=ioCOL_CUT(ID)
+   io_err=io_COL_CUT(ID)
    return
  endif
  !
@@ -223,14 +223,14 @@ subroutine cutoff_driver(q)
  ! I/O + Specific geometry calls
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=ioCOL_CUT(ID)
+ io_err=io_COL_CUT(ID)
  if (io_err/=0) then
    if (cut_is_sphere) call cutoff_sphere()
    if (cut_is_box)    call cutoff_box(q,is_cut)
    if (cut_is_cyl)    call cutoff_cylinder(q,is_cut)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   io_err=ioCOL_CUT(ID)
+   io_err=io_COL_CUT(ID)
    !
    ! Test
    !

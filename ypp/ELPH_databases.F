@@ -50,7 +50,7 @@ integer function ELPH_databases(k,E,q)
  !... I/O 
  !
  integer            ::idb,io_err,io_elph_err,ID,nDBs_disk
- integer, external  ::ioELPH 
+ integer, external  ::io_ELPH 
  logical            ::use_ext_ph_freqs,use_ext_ph_modes,abinit_DB
  character(schlen)  ::db_name
  !
@@ -123,6 +123,11 @@ integer function ELPH_databases(k,E,q)
    !
  endif
  !
+ ! Define elph_nk_bz before the ioELPH call to avoid a  io_elph_err<0 here and 
+ ! >0 after elph_nk_bz is defined
+ !
+ elph_nk_bz=k%nbz
+ !
  ! KBZ + SYM table
  !
  allocate(ikbz_is_table(k%nbz,nsym))
@@ -131,7 +136,7 @@ integer function ELPH_databases(k,E,q)
  ! Check if DB is already done
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_elph_err=ioELPH(ID,trim(db_name))
+ io_elph_err=io_ELPH(ID,trim(db_name))
  !
  if (io_elph_err==0) return
  !
@@ -156,7 +161,6 @@ integer function ELPH_databases(k,E,q)
  ! Keep a copy of k-points to be used by _RT to rotate the unperturbed gkkp m.e.
  !
  ph_kpt_bz=k%ptbz
- elph_nk_bz=k%nbz
  !
  ! ... rebuilding of ph q-points table
  !
@@ -214,7 +218,7 @@ integer function ELPH_databases(k,E,q)
        !
        call ELPH_gkkp_expand(iq_bz,iq_s,k)
        !
-       io_elph_err=ioELPH(ID,trim(db_name))
+       io_elph_err=io_ELPH(ID,trim(db_name))
        !
      enddo
      !
@@ -232,7 +236,7 @@ integer function ELPH_databases(k,E,q)
      if (idb==1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/1,iq+1/),ID=ID)
      if (idb/=1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID)
      !
-     io_elph_err=ioELPH(ID,trim(db_name))
+     io_elph_err=io_ELPH(ID,trim(db_name))
      !
    endif
    !
@@ -322,6 +326,7 @@ integer function ELPH_databases(k,E,q)
    !
    ! HEADER 
    !
+   K_DP=0._DP
    read (io_unit(ID)) ph_modes,elph_nk,elph_nb
    read (io_unit(ID)) alat_DP,Q_DP,K_DP(:,:elph_nk) 
    !
@@ -341,12 +346,13 @@ integer function ELPH_databases(k,E,q)
    else
      if (idb_==-1) call msg("l","[PHONON] ...")
      !
-     ! In PW Q/K points are in cartesian coordinates (units of 2 PI /alat_DP)  
+     ! In PW Q/K points are in units of 2 PI/alat_DP
      !
      !  K_pw=K_cc*alat_DP/2/pi
      !  K_yambo=K_cc*alat(:)/2/pi=K_pw*alat(:)/alat_DP
      !
      ph_q_disk(:)=Q_DP(:)/alat_DP*alat(:)
+     !
      forall (i1=1:elph_nk) K_(:,i1)=K_DP(:,i1)/alat_DP*alat(:)
      !
    endif
@@ -417,7 +423,7 @@ integer function ELPH_databases(k,E,q)
    if (use_ext_ph_freqs) then
      open(unit=99,file=trim(ph_freqs_file))
      read(99,*)
-     do i1=1,(idb-1)*(1+ph_modes/6)
+     do i1=1,(idb-1)*(1+ceiling(real(ph_modes)/6.))
        read(99,*) ph_q 
      enddo
      read(99,*) ph_q 
@@ -641,7 +647,7 @@ integer function ELPH_databases(k,E,q)
    !
    ! where s_table(k_ibz,is) is a BZ index
    !
-   call k_sym2sym(k,'k')
+   call k_build_up_BZ_tables(k)
    call k_ibz2bz(k,'i',.false.) ! in k_sym2sym there is the k_ibz2bz(k,'d',...) call
    !
    ! To extend s_table to the BZ I simply have that
@@ -652,7 +658,7 @@ integer function ELPH_databases(k,E,q)
      ikibz=k%sstar(i1,1)
      ir   =k%sstar(i1,2)
      do is=1,nsym
-       ikbz_is_table(i1,is)=k%s_table(ikibz,sop_tab(is,ir))
+       ikbz_is_table(i1,is)=k%k_table(ikibz,sop_tab(is,ir))
      enddo
    enddo
    !

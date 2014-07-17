@@ -211,7 +211,7 @@ subroutine SC_start_and_restart(X,E,Xk)
    !
    ! If exist the non local part of the pseudo then construct kbv
    !
-   call MAG_H_pseudo(Xk)
+   call MAG_H_pseudo(Xk,E)
    !
  endif
  !

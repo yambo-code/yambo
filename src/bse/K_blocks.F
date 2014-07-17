@@ -23,7 +23,7 @@
 !
 subroutine K_blocks( )
  !
- ! Create and Fille the BSK blocks
+ ! Create and Fill the BSK blocks
  !
  !type BS_block
  !  integer                       :: ik         ! ik index

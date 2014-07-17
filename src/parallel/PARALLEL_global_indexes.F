@@ -62,7 +62,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_Kk_ibz_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use X_m,           ONLY:X_t
- use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life
+ use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run
  use matrix_operate,ONLY:UP_matrix_index
  use BS,            ONLY:BS_bands,BS_nT_at_k,BS_nT_grps,BS_K_coupling
 #if defined _ELPH
@@ -742,7 +742,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    if (l_HF_and_locXC)  n_bands=(/1,max(E%nbm,QP_nb)/)
    if (l_gw0.or.l_life) n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
 #if defined _SC
-   if (l_eval_collisions)        n_bands=SC_bands
+   if (l_eval_collisions.or.l_sc_run)  n_bands=SC_bands
 #endif
 #if defined _ELPH
    if (.not.l_eval_collisions)   n_bands=(/1,QP_PH_n_G_bands/)

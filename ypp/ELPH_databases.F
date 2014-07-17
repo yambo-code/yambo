@@ -423,7 +423,7 @@ integer function ELPH_databases(k,E,q)
    if (use_ext_ph_freqs) then
      open(unit=99,file=trim(ph_freqs_file))
      read(99,*)
-     do i1=1,(idb-1)*(1+ph_modes/6)
+     do i1=1,(idb-1)*(1+ceiling(real(ph_modes)/6.))
        read(99,*) ph_q 
      enddo
      read(99,*) ph_q 

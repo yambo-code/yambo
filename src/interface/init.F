@@ -463,7 +463,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
- if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) then
+ if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life.or.l_sc_run) then
    if (l_eval_collisions) then
 #if defined _SC && ! defined _RT
      call CPU_activate("SE")
@@ -484,6 +484,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'RT_Threads')
 #endif
  endif
+#if defined _SC 
+ if (l_sc_run) then
+   call CPU_activate("SE")
+   call initactivate(1,'SE_Threads')
+ endif
+#endif
  !
  if (l_bse) then
    call CPU_activate("BS")
@@ -934,10 +940,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      character(*) :: what 
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
-     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BSE") then
+     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BS") then
        call initactivate(1,what//"_nCPU_invert")
      endif
-     if (what=="BSE") then
+     if (what=="BS") then
        call initactivate(1,what//"_nCPU_diago")
      endif
      !

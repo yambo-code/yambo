@@ -111,7 +111,6 @@ subroutine K_stored_in_a_BIG_matrix(iq)
        if (H_pos(1)>H_pos(2)) cycle
        !
        BS_mat(H_pos(1),H_pos(2))=BS_mat(H_pos(1),H_pos(2))+BS_blk(i_B)%mat(i_r,i_c)
-
        !
      enddo
    enddo

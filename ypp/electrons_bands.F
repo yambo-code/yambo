@@ -26,7 +26,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  use pars,           ONLY:SP,schlen,DP
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,interp_grid, &
-&                         l_RT_occ_Bands,l_bands
+&                         l_RT_occ_Bands,l_RT_life_Bands,l_bands
  use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_tot_Nkpts,spin_occ
  use R_lattice,      ONLY:bz_samp,bz_samp_reset,k_the_nearest
  use com,            ONLY:msg,of_open_close,error,warning
@@ -42,7 +42,8 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  use units,          ONLY:FS2AUT
  use SC,             ONLY:RT_Nk,RT_ibz_coo,RT_Nk_ibz
  use YPP,            ONLY:OCC_T_range,OCC_deltaT
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RIM_ibz_coo,RT_delta0_occupations
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RIM_ibz_coo,RT_delta0_occupations,&
+&                         REF_lifetime
  use IO_m,           ONLY:NONE
 #endif
  !
@@ -59,7 +60,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  real(SP), allocatable :: distances(:),values(:)
  real(SP), allocatable :: bands_grid(:,:,:),bands_circuit(:,:,:)
 #if defined _YPP_RT
- real(SP), allocatable :: occupations_grid(:,:,:,:),occupations_circuit(:,:,:,:),occupations_tmp(:,:,:)
+ real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:)
  real(SP)              :: io_Time,Nel_zero,Nhole_zero,Nel,Nhole,Real_Nhole,Real_Nel,Max_occ
  logical               :: l_normalize_Nel
  integer               :: i_T,n_T_steps
@@ -83,19 +84,21 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  call parser('NNInterp',l_nearest_neig_interp)
  l_g_space_interp=.not.l_nearest_neig_interp
  !
- if(l_nearest_neig_interp.and.all(interp_grid>0)) call error(" NNInterp implemented only on a circuit")
- !
- if(l_RT_occ_Bands) then
+ if(l_RT_occ_Bands.or.l_RT_life_Bands) then
    !
 #if defined _YPP_RT
+   if(all(interp_grid>0).or.BANDS_steps<=0) call error(" Interpolation of occupations/lifetimes only on a band circuit")
+   if(BZ_RIM_tot_Nkpts==0) call error(" Interpolation of occupations/lifetimes presently works only with 'RIM'")
    n_T_steps=RT_occ_check_and_load_ref(Xen,Xk)
    call RT_check_RIM(Xk,Xen)
+   if(l_RT_life_Bands) n_T_steps=1
    Nk=RT_Nk
 #endif
    !
  else
    !
-   if(BZ_RIM_tot_Nkpts> 0) call error("Interpolation and RIM implemented only in the _RT project")
+   if(BZ_RIM_tot_Nkpts> 0) call error(" Interpolation and RIM implemented only in the _RT project")
+   if(l_nearest_neig_interp) call error(" NNInterp implemented only for occupations and lifetimes")
    Nk=Xk%nibz
    !
  endif
@@ -219,77 +222,84 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  ! Occupations interpolation.
  !===========================
  !
- if(l_RT_occ_Bands) then
-   !
-   if(BZ_RIM_tot_Nkpts==0) call error('Interpolation on band structure presently works only with RIM')
+ if(l_RT_occ_Bands.or.l_RT_life_Bands) then
    !
    call parser('NormN',l_normalize_Nel)
    !
    if(n_spin>1) call error('Occupations and spin not implemented')
    !
-   allocate(occupations_tmp(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Nk))
+   allocate(variable_to_fit(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Nk))
    !
-   if (BANDS_steps> 0) allocate(occupations_circuit(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz,n_T_steps))
-   if(all(interp_grid>0)) allocate(occupations_grid(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz,n_T_steps))
+   allocate(fit_on_circuit(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz,n_T_steps))
    !
    do i_T=1,n_T_steps
      !
-     io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-     !
-     call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
-     !
-     Real_Nhole=0._SP
-     Real_Nel=0._SP
-     do ik=1,Xk%nibz
-       Real_Nhole=Real_Nhole-&
-&       sum((RT_delta0_occupations(BANDS_range(1):Xen%nbf,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
-&                      Xk%weights(ik)/real(RT_Nk_ibz(ik))
-       Real_Nel=  Real_Nel+&
-&       sum((RT_delta0_occupations(Xen%nbf+1:BANDS_range(2),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
-&                      Xk%weights(ik)/real(RT_Nk_ibz(ik))
-     enddo
-     Max_occ=maxval((/Max_occ,RT_delta0_occupations(:,:)/))
+     if(l_RT_occ_Bands) then
+       !
+       io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+       !
+       call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
+       !
+       Real_Nhole=0._SP
+       Real_Nel=0._SP
+       do ik=1,Xk%nibz
+         Real_Nhole=Real_Nhole-&
+&         sum((RT_delta0_occupations(BANDS_range(1):Xen%nbf,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
+&                        Xk%weights(ik)/real(RT_Nk_ibz(ik))
+          Real_Nel=  Real_Nel+&
+&         sum((RT_delta0_occupations(Xen%nbf+1:BANDS_range(2),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))))*&
+&                        Xk%weights(ik)/real(RT_Nk_ibz(ik))
+       enddo
+       Max_occ=maxval((/Max_occ,RT_delta0_occupations(:,:)/))
+       !
+     endif
      !
      if(l_g_space_interp) then
        !
-       ! STEP 1: define coefficients for occupations
+       ! STEP 1: define coefficients for occupations/lifetimes
        !
-       do is=1,n_sp_pol
-         occupations_tmp(BANDS_range(1):BANDS_range(2),is,1:Nk)=&
-         &   RT_delta0_occupations(BANDS_range(1):BANDS_range(2),1:Nk)
-       enddo
-       call eval_interpolation_coeff(R2D=occupations_tmp,k=Xk,Nk=Nk,ID=ID_interp)
+       if(l_RT_occ_Bands) then
+         forall(is=1:n_sp_pol,ib=BANDS_range(1):BANDS_range(2),ik=1:Nk) &
+         &  variable_to_fit(ib,is,ik)=RT_delta0_occupations(ib,ik)
+       else if (l_RT_life_Bands) then
+         forall(is=1:n_sp_pol,ib=BANDS_range(1):BANDS_range(2),ik=1:Nk) &
+         &  variable_to_fit(ib,is,ik)=sum(REF_lifetime(ib,ik,:))
+       endif
+       !
+       call eval_interpolation_coeff(R2D=variable_to_fit,k=Xk,Nk=Nk,ID=ID_interp)
        !
        ! STEP 2
        ! 1: interpolate on the circuit      if (BANDS_steps>0)
-       ! 2: interpolate on the regular grid if (interp_grid>0)
        !
-       if (BANDS_steps> 0) call bz_interpolation(USER_k=CIRCUIT_k,R2D=occupations_circuit(:,:,:,i_T),ID=ID_interp)
-       if(all(interp_grid>0)) call bz_interpolation(USER_k=INTERP_k,R2D=occupations_grid(:,:,:,i_T),ID=ID_interp)
+       if (BANDS_steps> 0) call bz_interpolation(USER_k=CIRCUIT_k,R2D=fit_on_circuit(:,:,:,i_T),ID=ID_interp)
        !
      elseif(l_nearest_neig_interp) then
        !
        do ik_circuit=1,CIRCUIT_k%nibz
          ik_near_RT=k_the_nearest(CIRCUIT_k%pt(ik_circuit,:),Xk%pt_RIM,Nk,ROTATE_k_ref=.TRUE.,i_err=i_err)
-         occupations_circuit(BANDS_range(1):BANDS_range(2),1,ik_circuit,i_T)=&
-         &   RT_delta0_occupations(BANDS_range(1):BANDS_range(2),ik_near_RT)
+         if(l_RT_occ_Bands) then
+           forall(is=1:n_sp_pol,ib=BANDS_range(1):BANDS_range(2)) &
+           &  fit_on_circuit(ib,is,ik_circuit,i_T)=RT_delta0_occupations(ib,ik_near_RT)
+         else if (l_RT_life_Bands) then
+           forall(is=1:n_sp_pol,ib=BANDS_range(1):BANDS_range(2)) &
+           &  fit_on_circuit(ib,is,ik_circuit,i_T)=sum(REF_lifetime(ib,ik_near_RT,:))
+         endif
        enddo       
        !
      endif
      !
      ! Normilize the occupations
      !
-     if (BANDS_steps> 0) then
-       !
-       Nhole=-sum(occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T))/real(CIRCUIT_k%nibz)
-       Nel=   sum(occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T))/real(CIRCUIT_k%nibz)
+     if(l_RT_occ_Bands) then
+       Nhole=-sum(fit_on_circuit(BANDS_range(1):Xen%nbf,:,:,i_T))/real(CIRCUIT_k%nibz)
+       Nel=   sum(fit_on_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T))/real(CIRCUIT_k%nibz)
        !
        if(Nhole>0.and.l_normalize_Nel) &
-&        occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)=&
-&          occupations_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)/Nhole*Real_Nhole
+&        fit_on_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)=&
+&          fit_on_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)/Nhole*Real_Nhole
        if(Nel>0  .and.l_normalize_Nel) &
-&        occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)=&
-&          occupations_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)/Nel*Real_Nel
+&        fit_on_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)=&
+&          fit_on_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)/Nel*Real_Nel
        !
      endif
      !
@@ -297,7 +307,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
      !
    enddo 
    !
-   deallocate(occupations_tmp)
+   deallocate(variable_to_fit)
    !
  endif
  !
@@ -378,21 +388,23 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  !
 #if defined _YPP_RT
  !
- if(l_RT_occ_Bands .and. BANDS_steps> 0) then
+ if(l_RT_occ_Bands.or.l_RT_life_Bands) then
    !
    allocate(values(3),headings(3))
    !
    headings(1)="Step"
-   headings(3)=' occ'
+   if(l_RT_occ_Bands)  headings(3)=' occ'
+   if(l_RT_life_Bands) headings(3)='LIFE'
    !
    coo_out=coo_in
-   !
    !
    do i_T=1,n_T_steps
      !
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
      !
-     file_name(1)="YPP-RT_bands_iT"//intc(i_T)
+     if (l_RT_occ_Bands ) file_name(1)="YPP-RT_occ_bands_iT"//intc(i_T)
+     if (l_RT_life_Bands) file_name(1)="YPP-RT_REF_LIFE_bands"
+     !
      call of_open_close(file_name(1),'ot')
      !
      call msg('o '//file_name(1)," "," ",INDENT=0)
@@ -411,7 +423,8 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
          !
          values(1)=real(ik,SP)
          values(2)=bands_circuit(ib,1,ik)*HA2EV
-         values(3)=occupations_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
+         if(l_RT_occ_Bands)  values(3)=fit_on_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
+         if(l_RT_life_Bands) values(3)=fit_on_circuit(ib,1,ik,i_T)*HA2EV*1000.
          call msg('o '//file_name(1),' ',values,INDENT=0,USE_TABS=.true.)
          !
        enddo
@@ -422,7 +435,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
      !
    enddo
    !
-   deallocate(occupations_circuit,values,headings)
+   deallocate(fit_on_circuit,values,headings)
    !
  endif
  !

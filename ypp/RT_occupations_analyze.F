@@ -39,7 +39,7 @@ subroutine RT_occupations_analyze(k,E)
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, & 
 &                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime,&
 &                         RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM,RT_delta0_occupations,&
-&                         RT_E_occupations_reference
+&                         RT_E_occupations_reference,REF_lifetime
  use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz
  !
  implicit none
@@ -171,17 +171,17 @@ subroutine RT_occupations_analyze(k,E)
        n1=1
        if (l_ELPH_lifetimes) then
          n1=7
-         RT_gamma(i_RT,i_T,1)=E_P_Hole_lifetime(ib,ik_rim)
-         RT_gamma(i_RT,i_T,2)=E_P_Electron_lifetime(ib,ik_rim)
-         RT_gamma(i_RT,i_T,3)=E_P_Ho_abs_lifetime(ib,ik_rim)
-         RT_gamma(i_RT,i_T,4)=E_P_El_abs_lifetime(ib,ik_rim)
+         RT_gamma(i_RT,i_T,1)=E_P_Hole_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,3)
+         RT_gamma(i_RT,i_T,2)=E_P_Electron_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,4)
+         RT_gamma(i_RT,i_T,3)=E_P_Ho_abs_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,5)
+         RT_gamma(i_RT,i_T,4)=E_P_El_abs_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,6)
        endif
        !
        if (l_elel_scatt) then
          n1=3
          if(l_ELPH_lifetimes) n1=7
-         RT_gamma(i_RT,i_T,n1-2)=E_E_Hole_lifetime(ib,ik_rim)
-         RT_gamma(i_RT,i_T,n1-1)=E_E_Electron_lifetime(ib,ik_rim)
+         RT_gamma(i_RT,i_T,n1-2)=E_E_Hole_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,1)
+         RT_gamma(i_RT,i_T,n1-1)=E_E_Electron_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,2)
        endif
        !
        RT_gamma(i_RT,i_T,:)=RT_gamma(i_RT,i_T,:)*HA2EV*1000.

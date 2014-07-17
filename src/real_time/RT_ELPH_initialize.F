@@ -45,7 +45,6 @@ subroutine RT_ELPH_initialize(E,k,q)
  use R_lattice,      ONLY:RIM_n_rand_pts
  use parallel_m,     ONLY:PAR_Q_index,PAR_IND_Q,PAR_nQ,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
 &                         PP_redux_wait,PAR_COM_Q_INDEX
- use functions,      ONLY:bose_f
  !
  implicit none
  !

@@ -127,6 +127,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_RT_occ_Fit=.FALSE.
  l_RT_dos=.FALSE.
  l_RT_occ_Bands=.FALSE.
+ l_RT_life_Bands=.FALSE.
  !
  ! BANDS
  !
@@ -418,7 +419,8 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
        !
        l_RT_X           =trim(rstr_piece(i1+1))=='X'
        l_RT_dos         =trim(rstr_piece(i1+1))=='d'
-       l_RT_occ_Bands   =trim(rstr_piece(i1+1))=='b'
+       l_RT_life_Bands  =trim(rstr_piece(i1+1))=='lb'
+       l_RT_occ_Bands   =trim(rstr_piece(i1+1))=='ob'
        l_RT_occ_Plot    =trim(rstr_piece(i1+1))=='op'
        l_RT_occ_Fit     =trim(rstr_piece(i1+1))=='of'
        !
@@ -451,6 +453,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
      if ( trim(rstr_piece(i1)) == 'RealTime') then
        if (l_RT_X)           call initactivate(1,'RT_X')
        if (l_RT_dos)         call initactivate(1,'RTcarrDos')
+       if (l_RT_life_Bands)  call initactivate(1,'RTlifeBnd')
        if (l_RT_occ_Bands)   call initactivate(1,'RToccBnd')
        if (l_RT_occ_Plot)    call initactivate(1,'RToccPlot')
        if (l_RT_occ_Fit)     call initactivate(1,'RToccFit')
@@ -486,6 +489,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_RealTime         = runlevel_is_on('RealTime')
  l_RT_X             = runlevel_is_on('RT_X')
  l_RT_dos           = runlevel_is_on('RTcarrDos')
+ l_RT_life_Bands    = runlevel_is_on('RTlifeBnd')
  l_RT_occ_Bands     = runlevel_is_on('RToccBnd')
  l_RT_occ_Plot      = runlevel_is_on('RToccPlot')
  l_RT_occ_Fit       = runlevel_is_on('RToccFit')
@@ -590,7 +594,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
    l_flag=l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_occ_Bands
    if (l_flag) call QP_ctl_switch('G')
    if (l_flag) call initactivate(1,"OCCdT OCCTime OCCTref")
-   if (l_RT_occ_Bands)    call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
+   if (l_RT_occ_Bands.or.l_RT_life_Bands) call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
    if (l_RT_occ_Plot) call initactivate(1,"OCCgroup")
    if (l_RT_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands")
  endif
@@ -674,7 +678,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #endif
  !
 #if defined _YPP_RT
- if (.not.l_QP_init) l_QP_init=l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_dos.or.l_RT_occ_bands
+ if (.not.l_QP_init) l_QP_init=l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_dos.or.l_RT_occ_bands.or.l_RT_life_Bands
  if (l_QP_init) call QP_init(.FALSE.,.TRUE.)
 #else
  if (l_QP_init) call QP_init(.FALSE.,.FALSE.)

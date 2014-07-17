@@ -138,9 +138,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    QP_DB_kind=SE_COHSEX
    !
- else
+ else 
    !
-   qp%description(2)=' == Real Axis GW =='
+   if (l_elel_corr)     qp%description(2)=' == Real Axis GW =='
+   if (l_elph_corr)     qp%description(2)=' == El-Ph Self-Energy =='
+   if (l_elphoton_corr) qp%description(2)=' == Lamb Shift =='
    !
    ! Here I am not considering the case where ELPH + GW is used.
    ! For this case I need to create a new global KIND.

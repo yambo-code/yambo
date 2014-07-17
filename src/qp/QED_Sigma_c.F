@@ -24,7 +24,7 @@
 subroutine QED_Sigma_c(E,k,q,qp)
  !
  use pars,                ONLY:SP,pi,cI,cZERO
- use units,               ONLY:SPEED_OF_LIGHT,HA2EV
+ use units,               ONLY:SPEED_OF_LIGHT
  use drivers,             ONLY:l_elel_corr
  use electrons,           ONLY:levels,n_spinor,spin_occ
  use D_lattice,           ONLY:alat,a,Bose_Temp,DL_vol
@@ -33,10 +33,12 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use vec_operate,         ONLY:v_norm
  use wave_func,           ONLY:WF
  use FFT_m,               ONLY:fft_size,fft_dim
- use interfaces,          ONLY:WF_load,PARALLEL_index
+ use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
  use functions,           ONLY:Fermi_fnc,bose_f 
  use LIVE_t,              ONLY:live_timing
- use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid
+ use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
+&                              PAR_IND_Q,PAR_COM_QP_A2A,PAR_IND_Q_ID,PAR_IND_QP_ID,&
+&                              PAR_COM_QP_A2A
  !
  implicit none
  !
@@ -48,12 +50,11 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  integer                   ::i_q_bz,i_q,i_q_s,i_qp,i_k,i_n,i_p_bz,i_p_G0,i_m,i_p_s,i_p,&
 &                            i_c,i_cp,i_wf_at_k,i_wf_at_p,i_k_bz,ir,ir1,ir2,ir3,&
-                             i_wf_at_p_g
+                             i_wf_at_p_g,timing_steps
  real(SP)                  ::q_cc(3),p_cc(3),Photon_E,Photon_pol_vec(3,3),sumdot,bose,t_vec,k_cc(3)
  complex(SP)               ::XHI(3),I_wfk_wfp,Dipole_sum
  complex(SP), allocatable  ::WF_p(:,:),WF_p_rot(:,:),WF_der(:,:),WF_der_rot(:,:)
  real(SP),    allocatable  ::r_cell_cc(:,:)
- type(PP_indexes)          ::px
  !
  if (l_elel_corr) then
    call section('+','Correlation: Photon-mediated Self-energy')
@@ -61,11 +62,17 @@ subroutine QED_Sigma_c(E,k,q,qp)
    call section('=','Correlation: Photon-mediated Self-energy')
  endif
  !
+ ! PARALLEL distribution
+ !=======================
+ call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+ !
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+ call PARALLEL_WF_index( )
+ !
  call WF_load(WF  ,0,1,(/1,QP_n_G_bands(2)/),(/1,k%nibz/),space='R',title='-[Photon-El]Sigma_c/R space')
  !
- allocate(WF_p(fft_size,n_spinor),WF_p_rot(fft_size,n_spinor)) 
- allocate(r_cell_cc(3,fft_size))
- allocate(WF_der(3,fft_size),WF_der_rot(3,fft_size))
+ allocate(WF_p(fft_size,n_spinor),WF_p_rot(fft_size,n_spinor),r_cell_cc(3,fft_size),WF_der(3,fft_size),WF_der_rot(3,fft_size))
  !
  ir = 0
  do ir1 = 0, fft_dim(1)-1
@@ -81,19 +88,17 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  call k_ibz2bz(q,'c',.false.)
  !
- write(*,*) 'stop'
  ! (i_n,i_k,i_k_s) --- (i_q,i_q_s) ---> (i_m,i_p,i_p_s)
  !
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/nqbz/))
- ! 
- write(*,*) 'stop here'
- call live_timing('Sigma_c',px%n_of_elements(myid+1))
- write(*,*) 'stop'
+ timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
+&             PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
+&             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
+ !
+ call live_timing('Sigma_c',timing_steps)
  !
  Q_loop: do i_q_bz=1,nqbz 
    !
-   if (.not.px%element_1D(i_q_bz)) cycle
+   if (.not.PAR_IND_Q%element_1D(q%sstar(i_q_bz,1))) cycle
    !
    i_q  =q%sstar(i_q_bz,1)
    i_q_s=q%sstar(i_q_bz,2)
@@ -110,15 +115,14 @@ subroutine QED_Sigma_c(E,k,q,qp)
    !
    Photon_E=SPEED_OF_LIGHT*v_norm(q_cc)
    !
-   if (i_q==1) then
-     call live_timing(steps=1)
-     cycle
-   endif
+   if (i_q==1) cycle
    !
    q_cc=q_cc
    bose=2._SP/(exp(Photon_E/Bose_Temp)-1._SP)
    !
    QP_loop: do i_qp=1,qp%n_states
+     !
+     if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
      !
      i_n  = QP_table(i_qp,1)
      i_k  = QP_table(i_qp,3)
@@ -134,6 +138,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
      i_p_s=k%sstar(i_p_bz,2)
      !
      B_loop: do i_m=QP_n_G_bands(1),QP_n_G_bands(2)
+       !
+       if (.not.PAR_IND_G_b%element_1D(i_m)) cycle
        !
        i_wf_at_k=WF%index(i_n,i_k,1)
        i_wf_at_p=WF%index(i_m,i_p,1)
@@ -188,7 +194,10 @@ subroutine QED_Sigma_c(E,k,q,qp)
 &                       (E%f(i_m,i_p,1)+bose)/(E%E(i_n,i_k,1)-E%E(i_m,i_p,1)+Photon_E+cI*QP_G_damp)&
 &                      )/spin_occ *SPEED_OF_LIGHT**2/(8._SP*DL_vol*nqbz)
        !
+       call live_timing(steps=1)
+       !
      enddo B_loop
+     !
    enddo QP_loop
    !
    call live_timing(steps=1)
@@ -196,8 +205,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
  enddo Q_loop
  !
  call live_timing( )
- !
- call PP_indexes_reset(px)
  !
  call PP_redux_wait(QP_Sc)
  !

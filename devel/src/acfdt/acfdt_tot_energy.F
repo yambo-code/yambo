@@ -61,7 +61,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  type(w_samp)      ::Xw
  integer           ::iqibz,i_err,ID,io_err
- integer, external ::X_em1,ioX
+ integer, external ::X_em1,io_X
  complex(SP), allocatable ::X_s(:,:),tddftk(:,:)
  complex(DP), allocatable ::dX(:)
  !
@@ -202,14 +202,14 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    ! X I/O (section 1)
    !
    call io_control(ACTION=OP_RD,SEC=(/1/),ID=ID)
-   io_err=ioX(X,Xw,ID)
+   io_err=io_X(X,Xw,ID)
    !
    do iqibz=1,q%nibz
      !
      ! X I/O
      !
      call io_control(ACTION=RD_CL_IF_END,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
-     io_err=ioX(X,Xw,ID)
+     io_err=io_X(X,Xw,ID)
      !
      isc%qs(2)=iqibz
      call scatterGamp(isc,'x')

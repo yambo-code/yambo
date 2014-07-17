@@ -29,7 +29,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
 &                              OP_APP,cp_file,cp_directory,Fragmented_IO, &
 &                              io_fragmented,OP_RD_CL,RD_CL,RD
- use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
+ use wave_func,           ONLY:io_WF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
  &                             WF,wf_nb_io_groups
  use electrons,           ONLY:levels,E_reset,n_spin
  use LIVE_t,              ONLY:live_timing
@@ -78,11 +78,11 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  ! External functions
  !
- integer, external :: ioDB1
+ integer, external :: io_DB1
  !
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
- io_err=ioWF(ID)
+ io_err=io_WF(ID)
  Fragmented_IO=io_fragmented(ID)
  !
  core_io_path_save=core_io_path
@@ -119,7 +119,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  call msg('s',':: I/O...')
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
- io_err=ioDB1(E_new,k,ID)
+ io_err=io_DB1(E_new,k,ID)
  call msg('l','done')
  !
  ng_closed=ng_closed_save
@@ -170,7 +170,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      call live_timing('WFs comp. reduction',k_save%nibz)
      !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
-     io_err=ioWF(ID)
+     io_err=io_WF(ID)
      !
      ACTION_=OP_APP_WR_CL
      if(Fragmented_IO) ACTION_=OP_WR_CL
@@ -203,7 +203,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          wf_ncx=wf_ncx_new
          core_io_path=more_io_path
          call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
-         io_err=ioWF(ID,wf=wf_disk)
+         io_err=io_WF(ID,wf=wf_disk)
          !
        enddo
        !
@@ -274,7 +274,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        wf_ncx=wf_ncx_new
        core_io_path=more_io_path
        call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
-       io_err=ioWF(ID,wf=wf_disk)
+       io_err=io_WF(ID,wf=wf_disk)
        !
      enddo
      !
@@ -292,7 +292,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    call msg('s',':: WFs reduction...')
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
-   io_err=ioWF(ID)
+   io_err=io_WF(ID)
    !
    allocate(wf_disk(2,wf_nb_io,wf_ncx_new,n_spin))
    call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
@@ -328,7 +328,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        wf_ncx=wf_ncx_new
        core_io_path=more_io_path
        call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
-       io_err=ioWF(ID,wf=wf_disk)
+       io_err=io_WF(ID,wf=wf_disk)
        !
      enddo
      !
@@ -340,7 +340,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  ! 
  if(Fragmented_IO) then
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
-   io_err=ioWF(ID)
+   io_err=io_WF(ID)
  endif
  !
  core_io_path=core_io_path_save

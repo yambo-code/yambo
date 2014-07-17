@@ -32,7 +32,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
  use com,                 ONLY:msg,write_to_report
  use it_m,                ONLY:it_reset,infile
- use wave_func,           ONLY:ioWF
+ use wave_func,           ONLY:io_WF
  use YPP
  implicit none
  !
@@ -51,7 +51,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  logical           :: l_flag
  integer           :: ID,i_err
- integer, external :: ioDB1,ioQINDX,iogrot
+ integer, external :: io_DB1,io_QINDX,io_GROT
  integer           :: i_err_RIM
  integer, external :: io_RIM_E_and_k
 #if defined _YPP_ELPH
@@ -81,7 +81,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! DB1
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
- iinf=ioDB1(en,k,ID)
+ iinf=io_DB1(en,k,ID)
  if (iinf/=0) then
    call ypp_finalize()
    return
@@ -90,7 +90,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! WF
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=ID)
- iinf=ioWF(ID) 
+ iinf=io_WF(ID) 
  if (iinf/=0) then
    call ypp_finalize()
    return
@@ -99,7 +99,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! G operations table and shells
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
- i_err=iogrot(ID) 
+ i_err=io_GROT(ID) 
  if (i_err/=0) then
    call ypp_finalize()
    return
@@ -129,7 +129,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call section('*','K-point grid')
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
- i_err=ioQINDX(k,q,ID)
+ i_err=io_QINDX(k,q,ID)
  !
  ! Rim energies and kpts
  !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioQINDX(Xk,q,io_db)
+integer function io_QINDX(Xk,q,io_db)
  !
  use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,qp_states_k,nXkibz,qindx_alloc,&
@@ -39,20 +39,20 @@ integer function ioQINDX(Xk,q,io_db)
  !
  integer      :: ioScatt
  !
- ioQINDX=io_connect(desc='kindx',type=1,ID=io_db)
- if (ioQINDX/=0) goto 1
+ io_QINDX=io_connect(desc='kindx',type=1,ID=io_db)
+ if (io_QINDX/=0) goto 1
  !
  if (any((/io_sec(io_db,:)==1/))) then
    !
-   ioQINDX=io_header(io_db,IMPOSE_SN=.true.)
+   io_QINDX=io_header(io_db,IMPOSE_SN=.true.)
    !
    ! In V. 3.0.7 a real parameter (RL_v_comp_norm) has been removed
    ! In revision 3085 the coll indx has been ceated with two new logicals
    ! in the header
    !
-   if (.not.ver_is_gt_or_eq(io_db,(/3,0,8/)))     ioQINDX=-1
-   if (.not.ver_is_gt_or_eq(io_db,revision=3085)) ioQINDX=-1
-   if (ioQINDX/=0) goto 1
+   if (.not.ver_is_gt_or_eq(io_db,(/3,0,8/)))     io_QINDX=-1
+   if (.not.ver_is_gt_or_eq(io_db,revision=3085)) io_QINDX=-1
+   if (io_QINDX/=0) goto 1
    !
    call io_elemental(io_db,VAR="PARS",VAR_SZ=10)
    !
@@ -67,7 +67,7 @@ integer function ioQINDX(Xk,q,io_db)
 &       VAR=" X grid is uniform     :",L0=Xk_grid_is_uniform)
    call io_elemental(io_db,&
 &       VAR=" X grid impose -q      :",L0=Xk_impose_minus_q,CHECK=.true.,OP=(/"=="/))
-   ioQINDX=io_status(io_db)
+   io_QINDX=io_status(io_db)
    !
    call io_elemental(io_db,&
 &       VAR=" BS scattering         :",L0=bse_scattering,CHECK=.true.,OP=(/"=="/))
@@ -79,9 +79,9 @@ integer function ioQINDX(Xk,q,io_db)
    nqbz=q%nbz
    nqibz=q%nibz
    !
-   if (ioQINDX/=0) goto 1
+   if (io_QINDX/=0) goto 1
    if (.not.any((/io_sec(io_db,:)>1/)) ) then
-     if (ioScatt/=0) ioQINDX=ioScatt
+     if (ioScatt/=0) io_QINDX=ioScatt
      goto 1
    endif
    !
@@ -98,7 +98,7 @@ integer function ioQINDX(Xk,q,io_db)
        call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q_pt))
        call io_bulk(io_db,R2=q_pt)
      endif
-     ioQINDX=ioScatt
+     io_QINDX=ioScatt
      goto 1
    endif
  endif

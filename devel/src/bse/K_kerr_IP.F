@@ -31,8 +31,8 @@ subroutine K_kerr_IP(w)
  use X_m,            ONLY:X_epsilon,DIP_q_dot_iR
  use KERR,           ONLY:BSS_rhoq0_kerr,DIP_q_dot_iR_kerr,DIP_P_symm,B_Hall
  use fields,         ONLY:global_gauge
- use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,BS_eh_table,&
-&                         BS_eh_E,BS_eh_W,BS_K_coupling,BS_anti_res
+ use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BSS_eh_f,BSS_eh_table,&
+&                         BSS_eh_E,BSS_eh_W,BS_K_coupling,BS_anti_res
  use electrons,      ONLY:spin_occ,spin
  use R_lattice,      ONLY:d3k_factor,q_norm
  use drivers,        ONLY:l_anomalous_Hall
@@ -47,7 +47,7 @@ subroutine K_kerr_IP(w)
  integer           ::ik,iv,ic,i1,i_sp
  !
  !
- if (BS_K_coupling.or.allocated(BS_eh_W)) then
+ if (BS_K_coupling.or.allocated(BSS_eh_W)) then
    allocate(BSS_rhoq0_kerr(2*BS_K_dim)) 
    call mem_est("BSS_rhoq0_kerr",(/2*BS_K_dim/))
  else
@@ -62,27 +62,27 @@ subroutine K_kerr_IP(w)
  if(l_rpa_IP) call live_timing('Eps0_off',BS_K_dim)
  !
  do i1=1,BS_K_dim
-   ik  =BS_eh_table(i1,1)
-   iv  =BS_eh_table(i1,2)
-   ic  =BS_eh_table(i1,3)
-   i_sp=spin(BS_eh_table(i1,:))
+   ik  =BSS_eh_table(i1,1)
+   iv  =BSS_eh_table(i1,2)
+   ic  =BSS_eh_table(i1,3)
+   i_sp=spin(BSS_eh_table(i1,:))
    !
-   if(trim(global_gauge)=='length') BSS_rhoq0_kerr(i1)=-conjg(DIP_q_dot_iR_kerr(ic,iv,ik,i_sp))*sqrt(BS_eh_f(i1))
-   if(trim(global_gauge)=='velocity') BSS_rhoq0_kerr(i1)= conjg(DIP_P_symm(2,ic,iv,ik,i_sp))*sqrt(BS_eh_f(i1))
+   if(trim(global_gauge)=='length') BSS_rhoq0_kerr(i1)=-conjg(DIP_q_dot_iR_kerr(ic,iv,ik,i_sp))*sqrt(BSS_eh_f(i1))
+   if(trim(global_gauge)=='velocity') BSS_rhoq0_kerr(i1)= conjg(DIP_P_symm(2,ic,iv,ik,i_sp))*sqrt(BSS_eh_f(i1))
    !
    if (BS_K_coupling) then
-     if(trim(global_gauge)=='length') BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_q_dot_iR_kerr(ic,iv,ik,i_sp)*sqrt(BS_eh_f(i1))
-     if(trim(global_gauge)=='velocity') BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_P_symm(2,ic,iv,ik,i_sp)*sqrt(BS_eh_f(i1))
+     if(trim(global_gauge)=='length') BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_q_dot_iR_kerr(ic,iv,ik,i_sp)*sqrt(BSS_eh_f(i1))
+     if(trim(global_gauge)=='velocity') BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_P_symm(2,ic,iv,ik,i_sp)*sqrt(BSS_eh_f(i1))
    endif
    !
-   if (abs(BS_eh_E(i1))<1.E-5) cycle
-   X_epsilon(6,:)=X_epsilon(6,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))/(w(:)-BS_eh_E(i1))
+   if (abs(BSS_eh_E(i1))<1.E-5) cycle
+   X_epsilon(6,:)=X_epsilon(6,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))/(w(:)-BSS_eh_E(i1))
    if (l_anomalous_Hall) then
      if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))
-     if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))/real(BS_eh_E(i1))**2
+     if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))/real(BSS_eh_E(i1))**2
    endif
    if (BS_anti_res) then
-     X_epsilon(6,:)=X_epsilon(6,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0_kerr(i1)/(w(:)+BS_eh_E(i1))
+     X_epsilon(6,:)=X_epsilon(6,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0_kerr(i1)/(w(:)+BSS_eh_E(i1))
    endif
    !
    if(l_rpa_IP) call live_timing(steps=1)

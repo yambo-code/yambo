@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioWF(ID,wf)
+integer function io_WF(ID,wf)
  !
  use pars,             ONLY:SP,schlen
  use electrons,        ONLY:n_bands,n_spin
@@ -62,8 +62,8 @@ integer function ioWF(ID,wf)
      head_io=1
  end select
  !
- ioWF=io_connect(desc="wf",type=0,ID=ID)
- if (ioWF/=0) goto 1
+ io_WF=io_connect(desc="wf",type=0,ID=ID)
+ if (io_WF/=0) goto 1
  !
  ! FORCE Fragmentation when bands are splitted in different blocks
  !
@@ -75,7 +75,7 @@ integer function ioWF(ID,wf)
  ! S/N
  !
  if (head_io==1) then
-   ioWF=io_header(ID,IMPOSE_SN=.true.)
+   io_WF=io_header(ID,IMPOSE_SN=.true.)
    !
    if (ver_is_gt_or_eq(ID,(/3,1,1/))) then
      call io_elemental(ID, VAR="BAND_GROUPS",VAR_SZ=2)
@@ -86,7 +86,7 @@ integer function ioWF(ID,wf)
      call io_elemental(ID,VAR="",VAR_SZ=0)
    endif
    !
-   if (ioWF/=0) goto 1
+   if (io_WF/=0) goto 1
    !
  endif
  !
@@ -140,4 +140,4 @@ integer function ioWF(ID,wf)
  call timing('io_WF',OPR='stop')
 #endif
  !
-end function ioWF
+end function io_WF

@@ -78,7 +78,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  complex(SP)  :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
  real(SP),parameter :: root_acc=0.001/HA2EV
  !
- integer, external  :: ioQP,secant,bracket
+ integer, external  :: io_QP,secant,bracket
  !
  !I need to store on disk the <W> m. elemnts
  !
@@ -223,7 +223,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
        if (iqbz> 1.and.iqbz<q%nbz)  call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=ID)
        if (iqbz> 1.and.iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=ID)
        if (iqbz==1.and.iqbz==q%nbz) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
-       io_err=ioQP('W',qp,ID)
+       io_err=io_QP('W',qp,ID)
        !
        Xw%er=QP_W_er
        Xw%dr=QP_W_dr

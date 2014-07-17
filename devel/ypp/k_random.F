@@ -55,7 +55,7 @@ subroutine k_random
  ! BZ DB1 I/O
  !
  integer           :: ik_ref(2)
- integer, external :: ioDB1_selective_scan
+ integer, external :: io_DB1_selective_scan
  !
  impose_gamma_radius=gamma_radius>0.
  !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioQP(what,qp,ID)
+integer function io_QP(what,qp,ID)
  use pars,           ONLY:SP,schlen
  use D_lattice,      ONLY:alat
  use R_lattice,      ONLY:nqbz
@@ -58,11 +58,11 @@ integer function ioQP(what,qp,ID)
  real(SP),    allocatable ::qp_DATA_disk(:,:,:),QP_W_disk(:,:,:),QP_Sc_disk(:,:)
  !
  if (what=="QP".or.what=="W".or.what=="G") then
-   ioQP=io_connect(desc=what,type=2,ID=ID)
+   io_QP=io_connect(desc=what,type=2,ID=ID)
  else
-   ioQP=io_connect(desc=what,type=-2,ID=ID)
+   io_QP=io_connect(desc=what,type=-2,ID=ID)
  endif
- if (ioQP/=0) goto 1
+ if (io_QP/=0) goto 1
  !
  ! Check the restart point 
  !  
@@ -83,7 +83,7 @@ integer function ioQP(what,qp,ID)
        call io_elemental(ID,DB_I0=QP_DB_kind_disk,I0=QP_DB_kind)
        if(io_mode(ID)==VERIFY) then
           if(QP_DB_kind_disk/=QP_DB_kind) then
-            ioQP=IO_INCOMPATIBLE_VAR
+            io_QP=IO_INCOMPATIBLE_VAR
             return
           endif
        endif
@@ -91,7 +91,7 @@ integer function ioQP(what,qp,ID)
 #if defined _NETCDF_IO
      else if (variable_is_found(ID,"QP_DB_kind")< 0.and.read_is_on(ID)) then
        QP_DB_kind=0
-       ioQP=IO_INCOMPATIBLE_VAR
+       io_QP=IO_INCOMPATIBLE_VAR
        return
      endif
 #endif
@@ -99,7 +99,7 @@ integer function ioQP(what,qp,ID)
    endif
    !
    if (what=="W") then
-     ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,D_LATT=.true.,XC_KIND="Xd",CUTOFF=.true.)
+     io_QP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,D_LATT=.true.,XC_KIND="Xd",CUTOFF=.true.)
    else
      !
      ! QP_DB_kind points to the "type" of self-energy. This is used
@@ -108,18 +108,18 @@ integer function ioQP(what,qp,ID)
      !
      select case (QP_DB_kind)
        case(0,SE_NONE)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,CUTOFF=.true.)
+         io_QP=io_header(ID,T_EL=.true.,D_LATT=.true.,CUTOFF=.true.)
        case(SE_COHSEX)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs",CUTOFF=.true.)
+         io_QP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs",CUTOFF=.true.)
        case(SE_GoWo_PPA,SE_GWo_PPA)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp",CUTOFF=.true.)
+         io_QP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp",CUTOFF=.true.)
        case(SE_GoWo,SE_GWo)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd",CUTOFF=.true.)
+         io_QP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd",CUTOFF=.true.)
        case(SE_POLARON)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=.true.)
+         io_QP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=.true.)
      end select
    endif
-   if (ioQP/=0) goto 1
+   if (io_QP/=0) goto 1
    !
    var_size=4
    if (what/="W")then
@@ -183,7 +183,7 @@ integer function ioQP(what,qp,ID)
      !
    endif
    !
-   ioQP=io_status(ID)
+   io_QP=io_status(ID)
    if (.not.DB_is_OK(ID)) goto 1
    !
  endif
@@ -238,7 +238,7 @@ integer function ioQP(what,qp,ID)
      if (i1==n_descs_disk) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    enddo
    !
-   ioQP=io_status(ID)
+   io_QP=io_status(ID)
    if (.not.DB_is_OK(ID)) goto 1
    !
    ! The table is used to check the requested QP states with the disk ones.
@@ -289,7 +289,7 @@ integer function ioQP(what,qp,ID)
    !
    deallocate(qp_table_disk)
    !
-   ioQP=io_status(ID)
+   io_QP=io_status(ID)
    if (.not.DB_is_OK(ID)) goto 1
    !
  endif
@@ -299,8 +299,8 @@ integer function ioQP(what,qp,ID)
  ! there is a restart point
  !
  if (what=="W".or.what=="QP") then
-   ioQP=io_restart_point(ID)
-   if (ioQP/=0.and.io_netcdf_support(ID)) then
+   io_QP=io_restart_point(ID)
+   if (io_QP/=0.and.io_netcdf_support(ID)) then
      QP_W_partially_done=.true.
      if(qp_n_states_disk/=qp%n_states) QP_W_partially_done=.false.
      goto 1
@@ -401,7 +401,7 @@ integer function ioQP(what,qp,ID)
      !
    endif
    !
-   ioQP=io_status(ID)
+   io_QP=io_status(ID)
    if (.not.DB_is_OK(ID)) goto 1
    !
  endif
@@ -476,7 +476,7 @@ integer function ioQP(what,qp,ID)
    !
    deallocate(qp_W_disk)
    !
-   ioQP=io_status(ID)
+   io_QP=io_status(ID)
    if (.not.DB_is_OK(ID)) goto 1
    !
    call Fragments_Restart(ID,current_fragment=iqbz,fragments_todo=nqbz)

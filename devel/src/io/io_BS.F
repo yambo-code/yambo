@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioBS(iq,X,ID)
+integer function io_BS(iq,X,ID)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use X_m,           ONLY:X_t
@@ -29,7 +29,7 @@ integer function ioBS(iq,X,ID)
  use stderr,        ONLY:intc
  use matrix_operate,ONLY:mat_c2r,mat_r2c,UP_matrix_index
  use BS,            ONLY:BS_mat,BS_K_dim,BS_K_coupling,&
-&                        BS_nT_at_k,BS_k_and_row_restart,BS_res_mode,BS_blocks,&
+&                        BS_nT_at_k,BS_res_mode,&
 &                        BS_DB_is_fragmented,&
 &                        BS_cpl_mat,BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
@@ -44,7 +44,7 @@ integer function ioBS(iq,X,ID)
  !
  ! Work Space
  !
- integer             ::ik12(2),i_fragment,i1
+ integer             ::ik12(2),i_fragment,i1,BS_k_and_row_restart(2)
  character(schlen)   ::ch,db_name
  character(lchlen)   ::local_description(100)
  real(SP),allocatable::BS_mat_disk(:,:,:)
@@ -52,8 +52,8 @@ integer function ioBS(iq,X,ID)
  !
  db_name='BS_Q'//trim(intc(iq))
  !
- ioBS=io_connect(desc=trim(db_name),type=2,ID=ID)
- if (ioBS/=0) goto 1
+ io_BS=io_connect(desc=trim(db_name),type=2,ID=ID)
+ if (io_BS/=0) goto 1
  !
  call Fragments_Restart(ID)
  !
@@ -78,8 +78,8 @@ integer function ioBS(iq,X,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioBS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.)
-   if (ioBS/=0) then
+   io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.)
+   if (io_BS/=0) then
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
      goto 1
    endif
@@ -87,7 +87,7 @@ integer function ioBS(iq,X,ID)
    ! v 3.0.5: Inclusion of %f_xc 
    !
    if (.not.ver_is_gt_or_eq(ID,(/3,0,5/))) then
-     ioBS=-1
+     io_BS=-1
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
      goto 1
    endif
@@ -102,9 +102,9 @@ integer function ioBS(iq,X,ID)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
    !
-   ioBS=variables_BS(ID,local_description,X=X)
+   io_BS=variables_BS(ID,local_description,X=X)
    !
-   if (ioBS/=0) then
+   if (io_BS/=0) then
      !
      ! reset the descriptions...
      !
@@ -134,12 +134,12 @@ integer function ioBS(iq,X,ID)
  ! one written in the RESTART directory
  !
  if (io_restart_point(ID)>0.and.io_mode(ID)==VERIFY) then
-   ioBS=io_restart_point(ID)-1
-   BS_k_and_row_restart=BS_blocks(ioBS)
+   io_BS=io_restart_point(ID)-1
+   !BS_k_and_row_restart=BS_blocks(ioBS)
  endif
  !
  i_fragment=maxval(io_sec(ID,:))
- ik12=BS_blocks(i_fragment)
+ !ik12=BS_blocks(i_fragment)
  if (i_fragment==1) goto 1
  !
  ! Fragmentation
@@ -189,7 +189,7 @@ integer function ioBS(iq,X,ID)
  deallocate(BS_mat_disk)
  !
  call Fragments_Restart(ID,current_fragment=i_fragment,fragments_todo=UP_matrix_index(1,nXkibz))
- ioBS=io_restart_point(ID)
+ io_BS=io_restart_point(ID)
  !
 1 call io_disconnect(ID)
  !

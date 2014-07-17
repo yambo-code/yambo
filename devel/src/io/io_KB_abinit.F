@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioKB_abinit(ID)
+integer function io_KB_abinit(ID)
  !
  use pars,             ONLY:schlen,IP,SP
  use stderr,           ONLY:intc
@@ -47,15 +47,15 @@ integer function ioKB_abinit(ID)
  integer :: ik,i1,i_spin,var_size
  ik=maxval(io_sec(ID,:))-1
  !
- ioKB_abinit=io_connect(desc="kb_pp",type=0,ID=ID)
- if (ioKB_abinit/=0) goto 1
+ io_KB_abinit=io_connect(desc="kb_pp",type=0,ID=ID)
+ if (io_KB_abinit/=0) goto 1
  !
  ! Dimensions
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioKB_abinit=io_header(ID,IMPOSE_SN=.true.)
-   if (ioKB_abinit/=0) goto 1
+   io_KB_abinit=io_header(ID,IMPOSE_SN=.true.)
+   if (io_KB_abinit/=0) goto 1
    !
    var_size=3
    if (ver_is_gt_or_eq(ID,revision=898)) var_size=4
@@ -115,7 +115,7 @@ integer function ioKB_abinit(ID)
    call io_bulk(ID,VAR="ATOM_POS",VAR_SZ=shape(atom_pos))
    call io_bulk(ID,R3=atom_pos)
    !
-   if (ioKB_abinit/=0) goto 1
+   if (io_KB_abinit/=0) goto 1
    !
  endif
  !
@@ -168,4 +168,4 @@ integer function ioKB_abinit(ID)
  !
 1 call io_disconnect(ID=ID)
  !
-end function ioKB_abinit
+end function io_KB_abinit

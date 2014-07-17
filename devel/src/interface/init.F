@@ -48,9 +48,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
- use wave_func,      ONLY:ioWF
+ use wave_func,      ONLY:io_WF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
- use TDDFT,          ONLY:ioBS_Fxc
+ use TDDFT,          ONLY:io_BS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BSS_mode,BSS_q0,&
 &                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
 #if defined  _ELPH 
@@ -91,11 +91,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Work Space
  !
- integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,io_KB_abinit_err,io_KB_pwscf_err,&
-&                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G
- integer, external :: ioX,io_DIPOLES,ioGROT,ioQINDX,ioRIM,&
-&                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_abinit,ioKB_pwscf,&
-&                     ioCOL_CUT
+ integer           :: io_err,io_WF_err,io_X_err(4),io_ID,io_BS_err,io_KB_abinit_err,io_KB_pwscf_err,&
+&                     io_BS_Fxc_err,io_QINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G
+ integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
+&                     io_HF_and_locXC,io_QP,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
+&                     io_COL_CUT
  logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
  !
  integer, external :: io_RIM_E_and_k
@@ -104,8 +104,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: io_SC_components,io_RT_components
 #endif
 #if defined _ELPH 
- integer           :: ioELPH_err
- integer, external :: ioELPH
+ integer           :: io_ELPH_err
+ integer, external :: io_ELPH
 #endif
  !
  type(X_t)        ::Xbsk
@@ -211,13 +211,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! db1
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=io_ID)
- io_err=ioDB1(en,k,io_ID) 
+ io_err=io_DB1(en,k,io_ID) 
  !
  ! wf
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=io_ID)
- ioWF_err=ioWF(io_ID) 
- if (io_err/=0.or.ioWF_err/=0) then
+ io_WF_err=io_WF(io_ID) 
+ if (io_err/=0.or.io_WF_err/=0) then
    init =-1
    return
  else
@@ -238,7 +238,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! gops
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=io_ID)
- io_err=ioGROT(io_ID) 
+ io_err=io_GROT(io_ID) 
  !
  ! Updates RL variables
  !
@@ -248,12 +248,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! kindx
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- ioQINDX_err=ioQINDX(k,q,io_ID) 
- if (ioQINDX_err==0) call initactivate(-1,'IkSigLim IkXLim MinusQ')
+ io_QINDX_err=io_QINDX(k,q,io_ID) 
+ if (io_QINDX_err==0) call initactivate(-1,'IkSigLim IkXLim MinusQ')
  !
  ! If the GOPS/KINDX DBs are not present, reset to setup run
  !
- if ((io_err==-1.or.ioQINDX_err==-1).and.infile_editing) then
+ if ((io_err==-1.or.io_QINDX_err==-1).and.infile_editing) then
    !
    ! switch off all logicals loaded in read_command_line
    call switch_off_runlevel('all',on_name="")
@@ -267,12 +267,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! rim
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioRIM(io_ID) 
+ io_err=io_RIM(io_ID) 
  !
  ! cutoff
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioCOL_CUT(io_ID) 
+ io_err=io_COL_CUT(io_ID) 
  !
  ! E_rim
  !
@@ -287,7 +287,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! QP
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
- io_err=ioQP('QP',qp,io_ID) 
+ io_err=io_QP('QP',qp,io_ID) 
  !
  !In DUMP mode qp%table is dumped as well (to be used in QP_apply).
  !Here, however, qp%table is not needed
@@ -300,12 +300,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Green Functions
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
- io_err=ioQP('G',qp,io_ID) 
+ io_err=io_QP('G',qp,io_ID) 
  !
  ! W
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
- io_err=ioQP('W',qp,io_ID) 
+ io_err=io_QP('W',qp,io_ID) 
  !
  ! ostnts
  !
@@ -317,12 +317,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! PP_PWscf
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_KB_pwscf_err=ioKB_pwscf(io_ID)
+ io_KB_pwscf_err=io_KB_pwscf(io_ID)
  !
  ! kb_pp
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_KB_abinit_err=ioKB_abinit(io_ID)
+ io_KB_abinit_err=io_KB_abinit(io_ID)
  !
  if (io_err/=0) OSTNTS_Vnl_included=(io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
  !
@@ -332,7 +332,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  do i1=1,4 ! Xx Xs Xp Xd
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
-   io_X_err(i1)=ioX(X(i1),Xw(i1),io_ID)
+   io_X_err(i1)=io_X(X(i1),Xw(i1),io_ID)
    if (nqibz>0) X(i1)%iq=(/1,nqibz/)
    if (io_X_err(i1)>0) X(i1)%iq(1)=io_X_err(i1)+1
  enddo
@@ -347,14 +347,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! bs
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- ioBS_err=ioBS(1,Xbsk,io_ID)
+ io_BS_err=io_BS(1,Xbsk,io_ID)
  !
  ! GPL_EXCLUDE_START
  !
  ! bs_fxc
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- ioBS_Fxc_err=ioBS_Fxc(1,Xxcw,io_ID,X=Xbsk)
+ io_BS_Fxc_err=io_BS_Fxc(1,Xxcw,io_ID,X=Xbsk)
  !
  ! GPL_EXCLUDE_END
  !
@@ -362,11 +362,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _ELPH 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- ioELPH_err=ioELPH(io_ID,'gkkp')
+ io_ELPH_err=io_ELPH(io_ID,'gkkp')
  !
- if (ioELPH_err/=0) then
+ if (io_ELPH_err/=0) then
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
-   ioELPH_err=ioELPH(io_ID,'gkkp_expanded')
+   io_ELPH_err=io_ELPH(io_ID,'gkkp_expanded')
  endif
  !
 #endif
@@ -484,6 +484,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'RT_Threads')
 #endif
  endif
+#if defined _SC 
+ if (l_sc_run) then
+   call CPU_activate("SE")
+   call initactivate(1,'SE_Threads')
+ endif
+#endif
  !
  if (l_bse) then
    call CPU_activate("BS")
@@ -754,8 +760,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'RTstep NEsteps NETime LifeInterpKIND LifeInterpSteps LifeInterpDecayT COHsteps DipoleEtresh')
    if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol UseDebyeE UpdtDebyeT ElPhModes')
    if (l_elel_scatt) call initactivate( 1,'PlasmaPerc EERimPerc')
-   call initactivate(1,'ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
-   call initactivate(1,'RTIrredux RTskipImposeN RTeeImposeE Diamagnetic InducedField IOtime')
+   call initactivate(1,'ThermSteps RTDiagoSteps DiskSteps')
+   call initactivate(1,'BGR RTIrredux RTskipImposeN RTeeImposeE Diamagnetic InducedField IOtime')
    call initactivate(1,'RTpumpEhEn RTpumpEhWd RTpumpNel')
    if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
    if (              l_RT_pump_and_probe) call Afield_activate('Pump')
@@ -818,7 +824,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call init_q_pts(.FALSE.)
  !
  ! (b) ... then (re)write the file
- if (l_setup.and.ioQINDX_err/=0.and.infile_editing) call init_q_pts(.TRUE.)
+ if (l_setup.and.io_QINDX_err/=0.and.infile_editing) call init_q_pts(.TRUE.)
  !
  !If qp limits are requested they are added at the end of the input file
  !
@@ -934,10 +940,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      character(*) :: what 
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
-     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BSE") then
+     if ((what=="X_q_0".and..not.l_real_time).or.what=="X_finite_q".or.what=="X_all_q".or.what=="BS") then
        call initactivate(1,what//"_nCPU_invert")
      endif
-     if (what=="BSE") then
+     if (what=="BS") then
        call initactivate(1,what//"_nCPU_diago")
      endif
      !
@@ -1010,9 +1016,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! Only in this case ioELPH_err is defined
          !
-         l_elph_corr=runlevel_is_on('el_ph_corr').and.(ioELPH_err==0.or.l_real_time)
+         l_elph_corr=runlevel_is_on('el_ph_corr').and.(io_ELPH_err==0.or.l_real_time)
          ! GPL_EXCLUDE_START
-         l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.ioELPH_err==0
+         l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.io_ELPH_err==0
          ! GPL_EXCLUDE_END
        else
          l_elph_corr=runlevel_is_on('el_ph_corr')
@@ -1067,7 +1073,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! If optics with BS FXC I need to dump on X(3) the
      ! Fxc specs
      !
-     if (all((/l_bs_fxc,l_optics,l_chi.or.l_bse,ioBS_Fxc_err==0/))) then
+     if (all((/l_bs_fxc,l_optics,l_chi.or.l_bse,io_BS_Fxc_err==0/))) then
        QP_ctl_E(1,:,:)=QP_ctl_E(2,:,:) 
        X(3)%ib= BS_bands
        X(3)%ehe=BS_eh_en
@@ -1116,9 +1122,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if (l_alda_fxc) BS_res_mode='x'     
        !
        if (io_X_err(2)==0) then
-         if (ioBS_err/=0) BS_n_g_W=X(2)%ng
+         if (io_BS_err/=0) BS_n_g_W=X(2)%ng
        else if (io_X_err(4)==0) then
-         if (ioBS_err/=0) BS_n_g_W=X(4)%ng
+         if (io_BS_err/=0) BS_n_g_W=X(4)%ng
          call initactivate(1,'em1d ppa')
        endif
        !

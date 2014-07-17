@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioDB1_selective_scan(E,k,DB1_path,what)
+integer function io_DB1_selective_scan(E,k,DB1_path,what)
  !
  ! Do a selective (only variables specified in what) or a 
  ! global I/O of the DB1 database located in the path
@@ -44,7 +44,7 @@ integer function ioDB1_selective_scan(E,k,DB1_path,what)
  ! WorkSpace
  !
  integer           :: ID,i_io
- integer, external :: ioDB1
+ integer, external :: io_DB1
  character(lchlen) :: core_io_path_save
  !
  ! Saves
@@ -60,13 +60,13 @@ integer function ioDB1_selective_scan(E,k,DB1_path,what)
  ! 
  if (what/='all') then
 #if !defined _NETCDF_IO
-   ioDB1_selective_scan=-1
+   io_DB1_selective_scan=-1
    core_io_path=core_io_path_save
    return
 #endif
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
-   ioDB1_selective_scan =io_connect(desc="db1",type=0,ID=ID)
-   if (ioDB1_selective_scan/=0) then 
+   io_DB1_selective_scan =io_connect(desc="db1",type=0,ID=ID)
+   if (io_DB1_selective_scan/=0) then 
      call io_disconnect(ID=ID)
      return
    endif
@@ -91,7 +91,7 @@ integer function ioDB1_selective_scan(E,k,DB1_path,what)
      ! DB1
      !
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
-     ioDB1_selective_scan=ioDB1(E,k,ID)
+     io_DB1_selective_scan=io_DB1(E,k,ID)
      !
    case ('E') 
      call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%E) )
@@ -115,4 +115,4 @@ integer function ioDB1_selective_scan(E,k,DB1_path,what)
  !
  core_io_path=core_io_path_save
  !
-end function ioDB1_selective_scan
+end function io_DB1_selective_scan

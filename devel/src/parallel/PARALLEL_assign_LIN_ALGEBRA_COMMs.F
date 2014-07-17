@@ -79,7 +79,7 @@ subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,WHAT,COMM_index,COMM_op
  !
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum".and.PAR_COM_Q_INDEX%n_CPU/=1) then
    !
-   COMM_operation%COMM  =0
+   COMM_operation%COMM  =comm_default_value
    COMM_operation%CPU_id=0
    COMM_operation%n_CPU =1
    !

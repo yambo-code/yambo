@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
+subroutine K_multiply_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
  !
  !
  ! Here I read the kernel (coupling included):
@@ -46,7 +46,7 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nXkibz
- use BS,             ONLY:BS_mat,BS_K_dim,BS_nT_at_k,BS_k_and_row_restart,BS_eh_E,&
+ use BS,             ONLY:BS_mat,BS_K_dim,BS_nT_at_k,BSS_eh_E,&
 &                         BS_DB_is_fragmented,BS_K_coupling,&
 &                         BS_cpl_mat,BSS_uses_RIM
  use X_m,            ONLY:X_t
@@ -72,8 +72,8 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
  ! 
  ! I/O
  ! 
- integer           ::ioBS_err,ID,ACTION
- integer, external ::ioBS
+ integer           ::io_BS_err,ID,ACTION
+ integer, external ::io_BS
  logical           ::use_fragments,db_load
  !
  l_Hay= (trim(call_kind)=='Hay')
@@ -88,13 +88,14 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
  endif
  !
  use_fragments=BS_DB_is_fragmented
- db_load= use_fragments.or..not.allocated(BS_mat)
+ db_load= .FALSE.
+!use_fragments.or..not.allocated(BS_mat)
  !
  if (db_load) then
    !
    if (.not.use_fragments) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
-     ioBS_err=ioBS(iq,X,ID)
+     io_BS_err=io_BS(iq,X,ID)
      !
      allocate(BS_mat(BS_K_dim,BS_K_dim))
      if (BS_K_coupling) allocate(BS_cpl_mat(BS_K_dim,BS_K_dim))
@@ -110,14 +111,11 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
    !
    do ik2=1,nXkibz
      do ik1=ik2,1,-1
-       BS_k_and_row_restart(:2)=(/ sum(BS_nT_at_k(:ik1-1)),sum(BS_nT_at_k(:ik2-1)) /)
        !
        ACTION=RD
        if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
        !
        if (use_fragments) then
-         frag_pointer=BS_k_and_row_restart(:2)
-         BS_k_and_row_restart=0
          if (l_Hay) then
            if(.not.Kp%element_1D(UP_matrix_index(ik1,ik2)-1)) cycle
          endif
@@ -131,16 +129,16 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
        ! BS I/O
        ! 
        call io_control(ACTION=ACTION,COM=NONE,SEC=(/UP_matrix_index(ik1,ik2)/),ID=ID)
-       ioBS_err=ioBS(iq,X,ID)
+       io_BS_err=io_BS(iq,X,ID)
        !
        if (ik1==ik2) then
          !
          if(l_Hay) then
-           forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik1)) &
-&              BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(frag_pointer(1)+i1)
-         else if (l_inv .and. BSS_uses_RIM) then
-           forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik1)) &
-&              BS_mat(i1,i1)=cZERO  ! This part was read in K_BSload_diag
+!           forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik1)) &
+!&              BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(frag_pointer(1)+i1)
+!         else if (l_inv .and. BSS_uses_RIM) then
+!           forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik1)) &
+!&              BS_mat(i1,i1)=cZERO  ! This part was read in K_BSload_diag
          endif
          !
          ! On diagonal block simmetrization
@@ -148,14 +146,14 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
          !  Resonant K is hermitian
          !  Coupling K is simmetric
          !
-         do i1=BS_k_and_row_restart(1)+1,BS_k_and_row_restart(1)+BS_nT_at_k(ik1)
-           do i2=1,i1-1
-             BS_mat(i1,i2)=conjg(BS_mat(i2,i1))
-             !
-             if (BS_K_coupling) BS_cpl_mat(i1,i2)=BS_cpl_mat(i2,i1)
-             !
-           enddo
-         enddo
+!         do i1=BS_k_and_row_restart(1)+1,BS_k_and_row_restart(1)+BS_nT_at_k(ik1)
+!           do i2=1,i1-1
+!             BS_mat(i1,i2)=conjg(BS_mat(i2,i1))
+!             !
+!             if (BS_K_coupling) BS_cpl_mat(i1,i2)=BS_cpl_mat(i2,i1)
+!             !
+!           enddo
+!         enddo
          !
          if (use_fragments) then
            ! K_r * Vi
@@ -201,16 +199,16 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
          !  Coupling K is simmetric
          !
          if (.not.use_fragments) then
-           forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik1),&
-&                 i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_nT_at_k(ik2)) &
-&                 BS_mat(i2,i1)=conjg(BS_mat(i1,i2))
-           !
-           if (BS_K_coupling) then
-             forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik1),&
-&                   i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_nT_at_k(ik2)) &
-&                   BS_cpl_mat(i2,i1)=BS_cpl_mat(i1,i2)
-           endif
-           !
+!           forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik1),&
+!&                 i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_nT_at_k(ik2)) &
+!&                 BS_mat(i2,i1)=conjg(BS_mat(i1,i2))
+!           !
+!           if (BS_K_coupling) then
+!             forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik1),&
+!&                   i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_nT_at_k(ik2)) &
+!&                   BS_cpl_mat(i2,i1)=BS_cpl_mat(i1,i2)
+!           endif
+!           !
          else
            !
            call M_by_V('n',BS_nT_at_k(ik1),BS_nT_at_k(ik2),cONE,&

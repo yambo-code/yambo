@@ -56,7 +56,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !I/O
  !
  integer           ::io_err,ID
- integer, external ::ioELPH
+ integer, external ::io_ELPH
  !
  if (l_eliashberg) l_eliashberg=elph_gamma_broad>1.E-8.and.n_met_bands/=n_full_bands
  if (l_dos)        l_dos       =ph_broad>1.E-8
@@ -90,8 +90,8 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  enddo
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
- if (l_dos)        io_err=ioELPH(ID,'no_gkkp')
- if (l_eliashberg) io_err=ioELPH(ID,'gkkp')
+ if (l_dos)        io_err=io_ELPH(ID,'no_gkkp')
+ if (l_eliashberg) io_err=io_ELPH(ID,'gkkp')
  !
  call msg('s',':: Checking database ...')
  if (io_err<0) then
@@ -135,8 +135,8 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    ! I/O
    !
    call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
-   if (l_dos)        io_err=ioELPH(ID,'no_gkkp')
-   if (l_eliashberg) io_err=ioELPH(ID,'gkkp')
+   if (l_dos)        io_err=io_ELPH(ID,'no_gkkp')
+   if (l_eliashberg) io_err=io_ELPH(ID,'gkkp')
    !
    if (.not.elph_use_q_grid.and.l_eliashberg) call setup_k_plus_q_levels(en%Efermi(1))
    !

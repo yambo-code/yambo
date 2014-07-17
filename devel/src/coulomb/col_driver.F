@@ -66,7 +66,7 @@ subroutine col_driver(bare_NG,q)
  !
  logical          :: l_RandQpts
  integer          :: ig,iq,ID,io_err
- integer, external:: ioRIM
+ integer, external:: io_RIM
  !
  ! Messagging...
  !
@@ -109,12 +109,12 @@ subroutine col_driver(bare_NG,q)
    call section('*','Coloumb potential Random Integration (RIM)')
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
-   io_err=ioRIM(ID)
+   io_err=io_RIM(ID)
    !
    if (io_err/=0) then
      call rim()
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-     io_err=ioRIM(ID)
+     io_err=io_RIM(ID)
    endif
    !
    call msg('nr','Summary of Coulomb integrals for non-metallic bands |Q|[au] RIM/Bare:')

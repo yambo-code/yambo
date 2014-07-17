@@ -37,9 +37,9 @@ subroutine QP_DBs_setup(en,k)
  !
  ! Work Space
  !
- integer  :: io_QP,ID,icheck,i1,ib,ik,ic,is
+ integer  :: io_QP_err,ID,icheck,i1,ib,ik,ic,is
  integer  :: k_rng_lines,ikrange(2),ibrange(2)
- integer, external :: ioQP
+ integer, external :: io_QP
  real(SP), allocatable :: QP_r_corrections(:,:)
  logical,  allocatable :: QP_done(:,:,:,:)
  type(QP_t) :: qp
@@ -99,7 +99,7 @@ subroutine QP_DBs_setup(en,k)
  deallocate(QP_done)
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2,3/),COM=REP,ID=ID)
- io_QP=ioQP("QP",qp,ID)
+ io_QP_err=io_QP("QP",qp,ID)
  !
  deallocate(QP_r_corrections,qp%k,qp%table,qp%Z,qp%E_bare,qp%E)
  !

@@ -43,15 +43,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W_is_diagonal,&
-&                       BS_res_K_exchange,BS_n_g_W,O_table,&
+&                       BS_res_K_exchange,BS_n_g_W,&
 &                       O_ng,BS_n_g_exch,BS_identifier,&
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,BSS_q0,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
-&                       BS_oscillators_free,WF_phase
+&                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,RD_CL_IF_END
- use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
+ use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
 #ifdef _OPENMP
  use wrapper,       ONLY:Vstar_dot_V_omp,V_dot_V_omp
@@ -62,8 +62,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- !
- use BS,            ONLY:n_BS_blks,BS_blk,BS_T_grp
  !
  implicit none
  type(levels)  ::Ken 
@@ -98,15 +96,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! I/O
  !
- integer           ::ioX_err,ioBS_Fxc_err,ioBS_err,XID,ID
- integer, external ::ioX,ioBS
+ integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,XID,ID
+ integer, external ::io_X,io_BS
  !
  ! Constants & Setup
  !==================
  !
  Co=4._SP*pi/DL_vol/real(q%nbz,SP)
- ioBS_err    =-1
- ioBS_Fxc_err=-1
+ io_BS_err    =-1
+ io_BS_Fxc_err=-1
  call parser('ALLGexx',l_USE_all_Gexx)
  !
  call collision_reset(K_CORR_collision)
@@ -151,14 +149,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
    !
-   ioBS_Fxc_err=ioBS_Fxc(iq,W_bss,ID,X=X)
+   io_BS_Fxc_err=io_BS_Fxc(iq,W_bss,ID,X=X)
    !
  else
    !
    ! GPL_EXCLUDE_END
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   ioBS_err=ioBS(iq,X,ID)
+   io_BS_err=io_BS(iq,X,ID)
    !
    ! GPL_EXCLUDE_START
    !
@@ -196,16 +194,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    X%ng=BS_n_g_W
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=XID)
-   ioX_err=ioX(X,Xw,XID) 
+   io_X_err=io_X(X,Xw,XID) 
    !
-   if (ioX_err/=0) call warning('BS section skipped. PP/Em1s DB does not fit/exist')
+   if (io_X_err/=0) call warning('BS section skipped. PP/Em1s DB does not fit/exist')
    !
    ! X%ng is set to BS_n_g_W to VERIFY if there are enough bands.
    ! From now on it is used to keep track of the actual sixe of W in the DB
    !
    X%ng=X%ng_db
    !
-   if (ioX_err/=0) goto 1
+   if (io_X_err/=0) goto 1
    !
  endif
  !
@@ -319,7 +317,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (.not.l_td_hf) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
-     ioX_err=ioX(X,Xw,XID)
+     io_X_err=io_X(X,Xw,XID)
    endif
    !
    do iq_W=1,q%nibz
@@ -329,7 +327,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      if (.not.l_td_hf) then
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
-       ioX_err=ioX(X,Xw,XID)
+       io_X_err=io_X(X,Xw,XID)
        !
        forall(i_g2=1:BS_n_g_W) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1.
        do i_g2=1,BS_n_g_W
@@ -521,9 +519,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_W_is_diagonal) then
            !
 !$omp parallel do default(shared), private(i_g1)
-         do i_g1=1,BS_n_g_W
-           O_times_W(i_g1)=Occ(i_g1)*BS_W(i_g1,1,iq_W)
-         enddo
+           do i_g1=1,BS_n_g_W
+             O_times_W(i_g1)=Occ(i_g1)*BS_W(i_g1,1,iq_W)
+           enddo
 !$omp end parallel do
            !
          else

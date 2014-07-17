@@ -45,7 +45,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
-#if defined _SC
+#if defined _RT
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate
  use QP_m,           ONLY:OCC_T_ref
  use IO_m,           ONLY:REP
@@ -76,7 +76,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  iq=BS_q(1)
  !
-#if defined _SC
+#if defined _RT
  !
  ! The NE occupations globally redefine the metallic/full bands. So they must
  !====================

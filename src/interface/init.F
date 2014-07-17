@@ -133,6 +133,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SURF
  what_is_running='YAMBO_SURF'
 #endif
+#if defined _QED
+ what_is_running='YAMBO_QED'
+#endif
  !
  ! CPU structure
  !
@@ -653,6 +656,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_gw0.or.l_life) then
    !
+   if (l_elphoton_corr) then
+     call initactivate(1,'FFTGvecs GbndRnge GDamping dScStep DysSolver') 
+     if (trim(QP_solver)=="g") then
+       call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
+     else
+       call initactivate(1,'GWoIter')
+       if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
+     endif
+   endif
+   !
    if (l_elel_corr) then
      !
      call QP_ctl_switch('X')
@@ -1027,7 +1040,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          ! GPL_EXCLUDE_END
        endif
        l_elel_corr=runlevel_is_on('el_el_corr')
-#else
+#endif
+#if defined  _QED  
+       l_elel_corr    =runlevel_is_on('el_el_corr')
+       l_elphoton_corr=runlevel_is_on('el_photon_corr')
+#endif
+#if !defined  _ELPH  && !defined _QED
        l_elel_corr=l_gw0.or.l_life.or.l_eval_collisions
 #endif
        !
@@ -1107,7 +1125,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_ppa)    call initactivate(1,'em1d')
      if (l_gw0.and..not.l_ppa.and..not.l_cohsex.and..not.&
-&        l_HF_and_locXC.and..not.l_elph_corr)  &
+&        l_HF_and_locXC.and..not.l_elph_corr.and..not.l_elphoton_corr)  &
 &                  call initactivate(1,'em1d')
      if (l_cohsex) call initactivate(1,'em1s')
      if (l_W_eh)   call initactivate(1,'em1s')
@@ -1187,7 +1205,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call X_duplicate(X(4),X(2))
        call W_duplicate(Xw(4),Xw(2))
      endif
-#if !defined _ELPH 
+#if !defined _ELPH  && !defined _QED
      if (l_gw0) l_elel_corr=.true.
 #endif
      !
@@ -1411,7 +1429,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            QP_solver=trim(rstr_piece(i1+1))
            if (trim(QP_solver)/='n'.and.trim(QP_solver)/='s'.and.&
 &              trim(QP_solver)/='g') QP_solver='n'
-#if !defined  _ELPH 
+#if !defined  _ELPH && !defined _QED
            l_elel_corr=.true.
 #endif
            !
@@ -1489,19 +1507,39 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
 #endif
          !
-#if defined  _ELPH 
-         ! ELPH
+#if defined  _ELPH  
+         !
+         ! ELPH 
          !
          if ( trim(rstr_piece(i1)) == 'corrtp' ) then
            if ( trim(rstr_piece(i1+1)) == 'e') l_elel_corr=.true.
            if ( trim(rstr_piece(i1+1)) == 'p') l_elph_corr=.true.
-           if ( trim(rstr_piece(i1+1)) == 'b') then
+           if ( trim(rstr_piece(i1+1)) == 'h') l_elphoton_corr=.true.
+           if ( trim(rstr_piece(i1+1)) == 'a') then
              l_elel_corr=.true.
              l_elph_corr=.true.
+             l_elphoton_corr=.true.
            endif
            if (.not.l_elph_corr.and..not.l_elel_corr) l_elel_corr=.true.
            if (l_elph_corr) call initactivate(1,'el_ph_corr')
            if (l_elel_corr) call initactivate(1,'el_el_corr')
+         endif
+#endif
+         !
+#if defined  _QED
+         !
+         !  QED
+         !
+         if ( trim(rstr_piece(i1)) == 'corrtp' ) then
+           if ( trim(rstr_piece(i1+1)) == 'e') l_elel_corr=.true.
+           if ( trim(rstr_piece(i1+1)) == 'h') l_elphoton_corr=.true.
+           if ( trim(rstr_piece(i1+1)) == 'a') then
+             l_elel_corr=.true.
+             l_elphoton_corr=.true.
+           endif
+           if (.not.l_elphoton_corr.and..not.l_elel_corr) l_elel_corr=.true.
+           if (l_elel_corr)     call initactivate(1,'el_el_corr')
+           if (l_elphoton_corr) call initactivate(1,'el_photon_corr')
          endif
 #endif
          !

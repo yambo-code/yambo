@@ -113,9 +113,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  QP_ctl%db=QP_ctl_db(3)
  !
  if (l_elel_corr) then
-   call section('+','Correlation: Phonon Self-energy')
+   call section('+','Correlation: Phonon-mediated Self-energy')
  else
-   call section('=','Correlation: Phonon Self-energy')
+   call section('=','Correlation: Phonon-mediated Self-energy')
  endif
  !
  ! gFsq coefficients 2 DB ?

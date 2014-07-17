@@ -57,17 +57,17 @@ subroutine MAG_H_pseudo(Xk,Xen)
  integer                 :: alloc_err
  !
  ! I / O
- integer                 :: ID,ioKB_err,io_err(3),ioKB_pwscf_err,ioKB_abinit_err,io_Vnl_err
- integer, external       :: ioKB_abinit,ioKB_pwscf
+ integer                 :: ID,io_KB_err,io_err(3),io_KB_pwscf_err,io_KB_abinit_err,io_Vnl_err
+ integer, external       :: io_KB_abinit,io_KB_pwscf
  !
  !
  call Dipole_kb_init(Xen,X,io_err,ID)
  !
- ioKB_abinit_err= io_err(1)
- ioKB_pwscf_err = io_err(2)
+ io_KB_abinit_err= io_err(1)
+ io_KB_pwscf_err = io_err(2)
  io_Vnl_err     = io_err(3)
  !
- if(ioKB_abinit_err/=0.and.ioKB_pwscf_err/=0) return
+ if(io_KB_abinit_err/=0.and.io_KB_pwscf_err/=0) return
  !
  call fft_setup(0,1,.true.)  ! fft_size
  !
@@ -88,16 +88,16 @@ subroutine MAG_H_pseudo(Xk,Xen)
    !
    call WF_load(WF,0,1,(/1,SC_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
    !
-   if (ioKB_pwscf_err==0) then
+   if (io_KB_pwscf_err==0) then
      if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
      if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
-     ioKB_pwscf_err=ioKB_pwscf(ID)
+     io_KB_pwscf_err=io_KB_pwscf(ID)
    endif
    !
-   if (ioKB_abinit_err==0) then
+   if (io_KB_abinit_err==0) then
      if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
      if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
-     ioKB_abinit_err=ioKB_abinit(ID)
+     io_KB_abinit_err=io_KB_abinit(ID)
    endif
    !
    do i_spin=1,n_spin
@@ -105,10 +105,10 @@ subroutine MAG_H_pseudo(Xk,Xen)
      ! Pseudo(k+G,k+G',i1) = kbv^*(k+G,i1,1) kbv(k+G',i1,1)
      ! i1 runs over atomic_species, atoms_per_specie , l_per_atom, m=-l,-l+1,...,l-1,sl
      pp_spin=i_spin
-     if (ioKB_abinit_err==0.and.n_spinor==2) pp_spin=1
-     if (ioKB_pwscf_err ==0.and.n_sp_pol==2) pp_spin=1
-     if (ioKB_abinit_err==0) call Dipole_kb_abinit_comp(ik,pp_spin,Xk,kbv)
-     if (ioKB_pwscf_err ==0) call Dipole_kb_pwscf_comp(ik,pp_spin,Xk,kbv)
+     if (io_KB_abinit_err==0.and.n_spinor==2) pp_spin=1
+     if (io_KB_pwscf_err ==0.and.n_sp_pol==2) pp_spin=1
+     if (io_KB_abinit_err==0) call Dipole_kb_abinit_comp(ik,pp_spin,Xk,kbv)
+     if (io_KB_pwscf_err ==0) call Dipole_kb_pwscf_comp(ik,pp_spin,Xk,kbv)
      ! 
      call MAG_pseudo_nl(kbv)
      !

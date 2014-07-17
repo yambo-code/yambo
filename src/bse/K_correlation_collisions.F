@@ -74,12 +74,9 @@ subroutine K_correlation_collisions(iB,BLK,Xk,q)
  !
  i_Tgrp_k=BLK%iT_k
  i_Tgrp_p=BLK%iT_p
+ i_k     =BLK%ik
+ i_p     =BLK%ip
  !
- i_k_bz=BS_T_grp(i_Tgrp_k)%table(1,1)
- i_p_bz=BS_T_grp(i_Tgrp_p)%table(1,1)
- i_k  =Xk%sstar(i_k_bz,1)
- i_p  =Xk%sstar(i_p_bz,1)
- ! 
  ! Table allocation
  !------------------
  !

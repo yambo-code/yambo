@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioELPH(ID,what)
+integer function io_ELPH(ID,what)
  !
  use pars,           ONLY:SP,schlen
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
@@ -66,14 +66,14 @@ integer function ioELPH(ID,what)
  if (what=='gkkp_expanded')           db_name='elph_gkkp_expanded'
  if (what=='gFsq')                    db_name='elph_gFsq'
  !
- ioELPH=io_connect(desc=trim(db_name),type=2,ID=ID)
- if (ioELPH/=0) goto 1
+ io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID)
+ if (io_ELPH/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   if (what/='gkkp_expanded') ioELPH=io_header(ID,R_LATT=.true.,KPTS=.true.)
-   if (what=='gkkp_expanded') ioELPH=io_header(ID,R_LATT=.true.,KPTS=.false.,IMPOSE_SN=.FALSE.)
-   if (ioELPH/=0) goto 1
+   if (what/='gkkp_expanded') io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.true.)
+   if (what=='gkkp_expanded') io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.false.,IMPOSE_SN=.FALSE.)
+   if (io_ELPH/=0) goto 1
    !
    VAR_SZ_=4
    if (ver_is_gt_or_eq(ID,(/3,2,1/)    )) VAR_SZ_=5
@@ -115,8 +115,8 @@ integer function ioELPH(ID,what)
      elph_branches  =(/1,ph_modes/)
    endif
    !
-   ioELPH=io_status(ID)
-   if (ioELPH/=0) goto 1
+   io_ELPH=io_status(ID)
+   if (io_ELPH/=0) goto 1
    !
    call io_bulk(ID,VAR="MAX_PH_FREQ",VAR_SZ=(/1/))
    call io_bulk(ID,R0=W_debye)
@@ -157,7 +157,7 @@ integer function ioELPH(ID,what)
  ! If the fragment does not exist (ierr<0) I return an error code
  !
  if (ierr<0.and.read_is_on(ID)) then
-   ioELPH=-1
+   io_ELPH=-1
    goto 1
  endif
  !

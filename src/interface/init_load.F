@@ -41,7 +41,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
- use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
+ use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
@@ -55,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
-&                        RT_diagonalization_steps,SwitchOnTime,NE_tot_time,RT_life_interp_steps,RT_life_interp_decay_time,&
+&                        RT_diagonalization_steps,NE_tot_time,RT_life_interp_steps,RT_life_interp_decay_time,&
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_IO_time,RT_scatt_tresh,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
 &                        Gr_kind,two_alpha,RIM_EE_percent
@@ -349,6 +349,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                           RT_life_interp_decay_time,Verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)
+ ! 
+ ! BGR
+ !
+ call it('f',defs,'BGR',     '[RT] Evaluate the Band-Gap Renormalization consistent with the applied potential')
  !
  ! EE scattering
  !
@@ -380,7 +384,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 1 - Thermalization
  !
  call it(defs,'ThermSteps',   '[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
- call it(defs,'SwitchOnTime', '[RT Therm] Adiabatic switch on time ',SwitchOnTime,verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'RTDiagoSteps', '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)
  !
  ! 2 - Induced Field
@@ -446,7 +449,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',&
 &        BS_eh_win,verb_level=V_resp)
  call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=V_resp)
- call it(defs,'BSEClmns','[BSK] Kernel Columns',BS_columns,verb_level=V_resp)
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
 &                        E_unit,verb_level=V_resp)
  !

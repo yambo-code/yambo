@@ -34,7 +34,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use pseudo,              only : PP_alloc_abinit, PP_free
  use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
  use LIVE_t,              only : live_timing_is_on
- use wave_func,           only : wf_ncx,ioWF,wf_nb_io_groups,wf_nb_io
+ use wave_func,           only : wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
  use IO_m,                only : io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use mod_com2y,           only : interface_presets, force_noWFs
  use mod_wf2y,            only : wf_splitter
@@ -54,7 +54,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  character(lchlen)            :: KSS_filename,WFK_filename
  integer                      :: ID,io_err,ik,icycle, ib_grp
- integer,     external        :: ioDB1, ioKB_abinit
+ integer,     external        :: io_DB1, io_KB_abinit
  real(SP), allocatable        :: wf_disk(:,:,:,:)
  logical                      :: letsf_file, lwrite_PP, force_kbpp
  ! 
@@ -136,7 +136,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    !
    call msg('s',' == Writing DB1 ...')
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-   io_err=ioDB1(en,k,ID)
+   io_err=io_DB1(en,k,ID)
    call msg('ln','done ==')
    call MPI_close
    return
@@ -169,14 +169,14 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
      ! 
      if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
      if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
-     io_err=ioWF(ID,wf=wf_disk)
+     io_err=io_WF(ID,wf=wf_disk)
      !
      if(trim(ETSF_kind)=='KSS') then
        call e2y_kb_pp(ik,ncid) 
        if (n_atoms_species_max>0.and.ib_grp==1) then
          if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
          if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
-         io_err=ioKB_abinit(ID) 
+         io_err=io_KB_abinit(ID) 
        endif
      endif
      !
@@ -193,7 +193,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call msg('s',' == Writing DB1 ...')
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
- io_err=ioDB1(en,k,ID)
+ io_err=io_DB1(en,k,ID)
  call msg('ln','done ==')
  call MPI_close
  !

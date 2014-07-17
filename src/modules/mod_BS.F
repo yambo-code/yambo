@@ -23,8 +23,9 @@
 !
 module BS
  !
- use pars,      ONLY:SP,schlen,lchlen
- use collision, ONLY:ggwinfo
+ use pars,       ONLY:SP,schlen,lchlen
+ use collision,  ONLY:ggwinfo
+ use memory_m,   ONLY:mem_est
  !
  implicit none
  !
@@ -52,6 +53,11 @@ module BS
  integer :: BS_q(2)
  integer :: BS_identifier
  !
+ ! Transition Controls
+ !=====================
+ real(SP):: BS_eh_en(2)
+ real(SP):: BS_eh_win(2)
+ !
  ! Drude occupation
  !------------------
  real(SP):: BS_drude_f_eh
@@ -71,10 +77,10 @@ module BS
  !=========================
  type BS_T_group
    !
-   integer                       :: ik         ! ik index (BZ)
+   integer                       :: ik         ! ik index (IBZ)
    integer                       :: first_cv   ! Position in the cv transitions @ k
    integer                       :: size       
-   complex(SP), allocatable      :: table(:,:) ! (/is,iv,ic,i_sp/) (i_sp is spin, is is symmetry)
+   integer,     allocatable      :: table(:,:) ! (/ikbz,iv,ic,i_sp/) (i_sp is spin, is is symmetry)
    complex(SP), allocatable      :: dipoles_R(:)
    complex(SP), allocatable      :: dipoles_A(:)
    complex(SP), allocatable      :: Z(:)
@@ -97,8 +103,8 @@ module BS
  ! Blocks ...
  !============
  type BS_block
-   integer                       :: ik         ! ik index (BZ)
-   integer                       :: ip         ! ip index (ik -> ip transition) (BZ)
+   integer                       :: ik         ! ik index (IBZ)
+   integer                       :: ip         ! ip index (ik -> ip transition) (IBZ)
    integer                       :: iT_k       ! Index (among n_BS_T_grps) of the cv transitions @ k
    integer                       :: iT_p       ! Index (among n_BS_T_grps) of the cv transitions @ p
    integer                       :: size(2)    ! rows x columns
@@ -113,7 +119,7 @@ module BS
    ! ... correlation
    !------------------
    integer                       :: N_oscillators 
-   integer(SP), allocatable      :: O_table(:,:,:,:) ! sym,n,n',spin @ k
+   integer,     allocatable      :: O_table(:,:,:,:) ! sym,n,n',spin @ k
    complex(SP), allocatable      :: O(:,:)
    !
  end type BS_block
@@ -124,31 +130,6 @@ module BS
  ! WF phases
  !===========
  complex(SP),allocatable :: WF_phase(:,:,:,:)
- !
- integer,    allocatable :: O_table(:,:,:,:,:)
- !
- ! ... first table of possible c/v states
- integer,    allocatable :: O_n_c_states(:,:)
- integer,    allocatable :: O_n_v_states(:,:)
- integer,    allocatable :: O_c_state(:,:,:)
- integer,    allocatable :: O_v_state(:,:,:)
- !
- ! ... then table of possible cv->nm transitions
- integer  :: O_n_scatt
- complex(SP),allocatable :: BS_O(:,:)
- !
- integer :: BS_columns
- integer :: BS_k_and_row_restart(2)
- real(SP):: BS_eh_en(2)
- real(SP):: BS_eh_win(2)
- integer    , allocatable :: BS_eh_table(:,:)
- complex(SP), allocatable :: BS_mat_diagonal(:)
- complex(SP), allocatable :: BS_mat(:,:)
- complex(SP), allocatable :: BS_cpl_mat(:,:)
- real(SP)   , allocatable :: BS_eh_E(:)
- real(SP)   , allocatable :: BS_eh_f(:)
- complex(SP), allocatable :: BS_eh_Z(:)
- real(SP)   , allocatable :: BS_eh_W(:)
  !
  ! Solvers
  !
@@ -169,11 +150,22 @@ module BS
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_uses_partial_diago
- complex(SP),allocatable :: BSS_rhoq0(:)
+ !
+ ! Temporary (LARGE) arrays to be used in solvers ONLY
+ !
+ integer    , allocatable :: BSS_eh_table(:,:)
+ real(SP)   , allocatable :: BSS_eh_E(:)
+ real(SP)   , allocatable :: BSS_eh_f(:)
+ real(SP)   , allocatable :: BSS_eh_W(:)
+ complex(SP), allocatable :: BS_mat_diagonal(:)
+ complex(SP), allocatable :: BS_mat(:,:)
+ complex(SP), allocatable :: BS_cpl_mat(:,:)
+ complex(SP), allocatable :: BSS_rhoq0(:)
+ complex(SP), allocatable :: BSS_eh_Z(:)
  !
  interface 
    !
-   subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
+   subroutine K_multiply_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
      use pars,          ONLY:SP
      integer               ::iq
      integer               ::iter
@@ -190,7 +182,7 @@ module BS
      type(X_t), optional::X
    end function
    !
-   integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf)
+   integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf)
      use pars,          ONLY:SP
      integer             :: ID,it,BS_H_dim
      real(SP)            :: reached_treshold,Bf(it+1),Af(it)
@@ -211,22 +203,6 @@ module BS
        endif
      enddo
      if (I>=BS_T_grp_1st_el(BS_nT_grps-1)) T_group=BS_nT_grps
-   end function
-   !
-   function BS_blocks(I)
-     use R_lattice,      ONLY:nXkibz
-     use matrix_operate, ONLY:UP_matrix_index
-     integer :: BS_blocks(2)
-     integer :: I,ik1,ik2
-     BS_blocks=0
-     do ik1=1,nXkibz
-       do ik2=1,nXkibz
-         if (UP_matrix_index(ik1,ik2)==I) then
-           BS_blocks=(/ik1,ik2/)
-           return
-         endif
-       enddo
-     enddo
    end function
    !
    subroutine BS_oscillators_alloc(EXCHANGE,iG,CORRELATION,iB)
@@ -307,9 +283,58 @@ module BS
      !
    end subroutine
    !
+   subroutine BS_mat_alloc( )
+     use pars,      ONLY:IP,cZERO,rZERO
+     use electrons, ONLY:n_sp_pol
+     integer :: i_g,BS_H_dim
+     logical :: W_is_allocated,Z_is_allocated
+     BS_H_dim=BS_K_dim
+     if (BS_K_coupling) BS_H_dim=2*BS_K_dim
+     allocate(BS_mat(BS_H_dim,BS_H_dim))
+     call mem_est('BS_mat',(/size(BS_mat)/))
+     BS_mat    = cZERO
+     allocate(BSS_rhoq0(BS_H_dim))
+     call mem_est('BSS_rhoq0',(/size(BSS_rhoq0)/))
+     BSS_rhoq0 = cZERO
+     allocate(BSS_eh_table(BS_K_dim,3+n_sp_pol-1),BSS_eh_E(BS_K_dim),BSS_eh_f(BS_K_dim))
+     call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f",&
+&                 (/(3+n_sp_pol-1)*BS_K_dim,BS_K_dim,BS_K_dim/),(/IP,SP,SP/))
+     BSS_eh_table = 0
+     BSS_eh_E     = rZERO
+     BSS_eh_f     = rZERO
+     W_is_allocated=.FALSE.
+     Z_is_allocated=.FALSE.
+     do i_g=1,BS_nT_grps
+       if (.not.W_is_allocated) W_is_allocated=allocated(BS_T_grp(i_g)%W)
+       if (.not.Z_is_allocated) Z_is_allocated=allocated(BS_T_grp(i_g)%Z)
+     enddo
+     if (W_is_allocated) then
+       allocate(BSS_eh_W(BS_K_dim))
+       call mem_est("BSS_eh_W",(/BS_K_dim/),(/SP/))
+       BSS_eh_W = rZERO
+     endif
+     if (Z_is_allocated) then
+       allocate(BSS_eh_Z(BS_K_dim))
+       call mem_est("BSS_eh_Z",(/BS_K_dim/))
+       BSS_eh_Z = cZERO
+     endif
+   end subroutine
+   !
+   subroutine BS_mat_free()
+     if (allocated(BSS_eh_table))      deallocate(BSS_eh_table)
+     if (allocated(BSS_rhoq0))        deallocate(BSS_rhoq0)
+     if (allocated(BSS_eh_E))          deallocate(BSS_eh_E)
+     if (allocated(BSS_eh_W))          deallocate(BSS_eh_W)
+     if (allocated(BSS_eh_f))          deallocate(BSS_eh_f)
+     if (allocated(BSS_eh_Z))          deallocate(BSS_eh_Z)
+     if (allocated(BS_mat))           deallocate(BS_mat)
+     if( allocated(BS_mat_diagonal) ) deallocate(BS_mat_diagonal)
+     call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f BSS_eh_W")
+     call mem_est("BSS_eh_table BSS_eh_Z BS_mat BS_mat_diagonal")
+   end subroutine
+   !
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
-     use memory_m,   ONLY:mem_est
      use parallel_m, ONLY:PAR_BS_T_grps_index,PAR_BS_nT_col_grps
      integer :: i_g
      !
@@ -344,6 +369,7 @@ module BS
        endif
        !
      enddo
+     !
    end subroutine
    !
 end module BS

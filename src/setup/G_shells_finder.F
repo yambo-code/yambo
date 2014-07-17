@@ -51,20 +51,20 @@ subroutine G_shells_finder()
  ! I/O
  !
  integer           :: ID,io_err
- integer, external :: ioGROT
+ integer, external :: io_GROT
  !
  ! I/O (read)
  !============
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_err=ioGROT(ID)
+ io_err=io_GROT(ID)
  !
  if (io_err==0) then
    if(inv_index<0) then
      deallocate(ng_in_shell,E_of_shell,g_rot,minus_G)
      call mem_est("RL_Gshells RL_Eshells")
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-     io_err=ioGROT(ID)
+     io_err=io_GROT(ID)
    endif
    return
  else
@@ -201,6 +201,6 @@ subroutine G_shells_finder()
  !I/O
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
- io_err=ioGROT(ID)
+ io_err=io_GROT(ID)
  !
 end subroutine

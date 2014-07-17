@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioX(X,Xw,ID)
+integer function io_X(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
@@ -35,7 +35,7 @@ integer function ioX(X,Xw,ID)
 &                        read_is_on,write_is_on,io_header,&
 &                        RD_CL,RD_CL_IF_END,io_action,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
-&                        NONE,IO_INCOMPATIBLE_VAR,io_X,IO_NOT_ALLOWED
+&                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED
  use stderr,        ONLY:intc
  use fragments,     ONLY:io_fragment,Fragments_Restart
 #if defined _TIMING
@@ -55,11 +55,11 @@ integer function ioX(X,Xw,ID)
  real(SP),allocatable::X_disk(:,:,:),W_disk(:,:),RL_vecs_disk(:,:)
  !
 #if defined _TIMING
- if (io_X) call timing('io_X',OPR='start')
+ if (io_RESPONSE) call timing('io_X',OPR='start')
 #endif
  !
- if (.not.io_X) then
-   ioX=IO_NOT_ALLOWED
+ if (.not.io_RESPONSE) then
+   io_X=IO_NOT_ALLOWED
    call io_disconnect(ID,FORCE=.TRUE.)
    return
  endif
@@ -74,8 +74,8 @@ integer function ioX(X,Xw,ID)
  if (X%whoami==3) db_desc='em1d'
  if (X%whoami==4) db_desc='pp'
  !
- ioX=io_connect(desc=trim(db_desc),type=2,ID=ID) 
- if (ioX/=0) goto 1
+ io_X=io_connect(desc=trim(db_desc),type=2,ID=ID) 
+ if (io_X/=0) goto 1
  !
  ! Check the restart point
  !
@@ -89,8 +89,8 @@ integer function ioX(X,Xw,ID)
    if (X%whoami==2) local_XC_KIND="Xs"
    if (X%whoami==3) local_XC_KIND="Xd"
    if (X%whoami==4) local_XC_KIND="Xp"
-   ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND=local_XC_KIND,CUTOFF=.true.,GAUGE=.TRUE.)
-   if (ioX/=0) goto 1
+   io_X=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND=local_XC_KIND,CUTOFF=.true.,GAUGE=.TRUE.)
+   if (io_X/=0) goto 1
    !
    ! Global Descriptions
    !=====================
@@ -124,8 +124,8 @@ integer function ioX(X,Xw,ID)
    !
    if (.not.any((/io_sec(ID,:)==2/))) then
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-     ioX=io_status(ID)
-     if (ioX/=0) goto 1
+     io_X=io_status(ID)
+     if (io_X/=0) goto 1
    else
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
@@ -176,11 +176,11 @@ integer function ioX(X,Xw,ID)
    endif
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-   ioX=io_status(ID)
+   io_X=io_status(ID)
    !
    io_com(ID)=io_com_save
    !
-   if (ioX/=0) goto 1
+   if (io_X/=0) goto 1
    !
  endif
  !
@@ -188,8 +188,8 @@ integer function ioX(X,Xw,ID)
  ! Now that the menu is closed I can return with ioX/=0 if
  ! there is a restart point
  !
- ioX=io_restart_point(ID)
- if (ioX/=0) goto 1
+ io_X=io_restart_point(ID)
+ if (io_X/=0) goto 1
  !
  if (any((/io_sec(ID,:)==2*iq+1/))) then
    allocate(X_disk(X%ng_db,X%ng_db,2))
@@ -246,12 +246,12 @@ integer function ioX(X,Xw,ID)
  !
  ! No I/O errors I update ioX at the first q TODO
  !
- ioX=io_restart_point(ID)
+ io_X=io_restart_point(ID)
  !
 1 call io_disconnect(ID)
  !
 #if defined _TIMING
- if (io_X) call timing('io_X',OPR='stop')
+ if (io_RESPONSE) call timing('io_X',OPR='stop')
 #endif
  !
  contains

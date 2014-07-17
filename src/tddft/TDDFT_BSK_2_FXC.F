@@ -26,9 +26,9 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use pars,          ONLY:SP
  use electrons,     ONLY:spin_occ,spin
  use X_m,           ONLY:DIP_q_dot_iR,X_t
- use BS,            ONLY:BS_nT_at_k,BS_eh_table,BS_mat,BS_eh_E,BS_eh_W
+ use BS,            ONLY:BS_nT_at_k,BSS_eh_table,BS_mat,BSS_eh_E,BSS_eh_W
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_K_diagonal,FXC,&
-&                        FXC_is_causal,ioBS_Fxc
+&                        FXC_is_causal,io_BS_Fxc
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
  use D_lattice,     ONLY:DL_vol
@@ -75,24 +75,24 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  call PP_redux_wait()
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- ioFxc_err=ioBS_Fxc(iq,W,ID,X=X_static)
+ ioFxc_err=io_BS_Fxc(iq,W,ID,X=X_static)
  !
  ! Exchange Oscillators Renormalization
  !
  if (iq==1) then
    do i1=blk_pos(1)+1,blk_pos(1)+BS_nT_at_k(ik1)
-     ik=BS_eh_table(i1,1)
-     iv=BS_eh_table(i1,2)
-     ic=BS_eh_table(i1,3)
-     i_sp=spin(BS_eh_table(i1,:))
+     ik=BSS_eh_table(i1,1)
+     iv=BSS_eh_table(i1,2)
+     ic=BSS_eh_table(i1,3)
+     i_sp=spin(BSS_eh_table(i1,:))
      O1x(1,i1-blk_pos(1))=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))/bare_qpg(iq,1)
    enddo
    if (ik1/=ik2) then
      do i1=blk_pos(2)+1,blk_pos(2)+BS_nT_at_k(ik2)
-       ik=BS_eh_table(i1,1)
-       iv=BS_eh_table(i1,2)
-       ic=BS_eh_table(i1,3)
-       i_sp=spin(BS_eh_table(i1,:))
+       ik=BSS_eh_table(i1,1)
+       iv=BSS_eh_table(i1,2)
+       ic=BSS_eh_table(i1,3)
+       i_sp=spin(BSS_eh_table(i1,:))
        O2x(1,i1-blk_pos(2))=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))/bare_qpg(iq,1)
      enddo
    else
@@ -121,14 +121,14 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! BS diagonal + Non interacting energies and widths
  !
- forall(i1=1:BS_nT_at_k(ik1)) blk_Eo(1,i1)=BS_eh_E(blk_pos(1)+i1)+&
+ forall(i1=1:BS_nT_at_k(ik1)) blk_Eo(1,i1)=BSS_eh_E(blk_pos(1)+i1)+&
 &                                          FXC_K_diagonal(blk_pos(1)+i1)
- forall(i2=1:BS_nT_at_k(ik2)) blk_Eo(2,i2)=BS_eh_E(blk_pos(2)+i2)+&
+ forall(i2=1:BS_nT_at_k(ik2)) blk_Eo(2,i2)=BSS_eh_E(blk_pos(2)+i2)+&
 &                                          FXC_K_diagonal(blk_pos(2)+i2)
  !
- if (allocated(BS_eh_W)) then
-   forall(i1=1:BS_nT_at_k(ik1)) blk_Eo(1,i1)=blk_Eo(1,i1)+(0.,1.)*BS_eh_W(blk_pos(1)+i1)
-   forall(i2=1:BS_nT_at_k(ik2)) blk_Eo(1,i2)=blk_Eo(1,i2)+(0.,1.)*BS_eh_W(blk_pos(2)+i2)
+ if (allocated(BSS_eh_W)) then
+   forall(i1=1:BS_nT_at_k(ik1)) blk_Eo(1,i1)=blk_Eo(1,i1)+(0.,1.)*BSS_eh_W(blk_pos(1)+i1)
+   forall(i2=1:BS_nT_at_k(ik2)) blk_Eo(1,i2)=blk_Eo(1,i2)+(0.,1.)*BSS_eh_W(blk_pos(2)+i2)
  endif
  !
  ! Projectors
@@ -196,11 +196,11 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    if (iw==1) then
      if (ioFxc_err==0) then
        call io_control(ACTION=RD_CL,COM=NONE,SEC=(/iw+2/),ID=ID)
-       ioFxc_err=ioBS_Fxc(iq,W,ID,X=X_static)
+       ioFxc_err=io_BS_Fxc(iq,W,ID,X=X_static)
      endif
    else
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/iw+2/),ID=ID)
-     ioFxc_err=ioBS_Fxc(iq,W,ID,X=X_static)
+     ioFxc_err=io_BS_Fxc(iq,W,ID,X=X_static)
    endif
    !
    if (ioFxc_err/=0) FXC=(0._SP,0._SP)
@@ -249,7 +249,7 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    !
    if (iw==1) call io_control(ACTION=OP_WR_CL,COM=COM_MODE,SEC=(/1,2,iw+2/),ID=ID)
    if (iw> 1) call io_control(ACTION=OP_WR_CL,COM=COM_MODE,SEC=(/iw+2/),ID=ID)
-   ioFxc_err=ioBS_Fxc(iq,W,ID,X=X_static)
+   ioFxc_err=io_BS_Fxc(iq,W,ID,X=X_static)
    !
  enddo
  !

@@ -43,6 +43,12 @@ module real_time
  logical           :: l_RT_pump_and_probe
  logical           :: l_Dynamics_is_over  
  !
+ ! Evaluation logicals
+ !
+ logical          :: eval_DENSITY
+ logical          :: eval_HARTREE
+ logical          :: eval_DFT
+ !
  ! To exclude the Diamagnetic term 
  !
  logical           :: l_RT_diamagnetic
@@ -78,10 +84,6 @@ module real_time
  !
  integer  :: Thermal_steps
  ! 
- ! ... Switch On Time (adiabatic switch on) ...
- !
- real(SP) :: SwitchOnTime
- !
  ! ... NE dynamics ...
  !
  real(SP) :: NE_time ! <- incremented

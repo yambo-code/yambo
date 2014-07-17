@@ -348,8 +348,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz)
    !
-   PARALLEL_cpu_mat_inversion=CPU_structure(2)%nCPU_inversion
-   PARALLEL_cpu_mat_inversion=CPU_structure(3)%nCPU_inversion
+   if (ENVIRONMENT=="Response_G_space_Finite_Momentum") then
+     !
+     PARALLEL_cpu_mat_inversion=CPU_structure(2)%nCPU_inversion
+     !
+   else if (ENVIRONMENT=="Response_G_space") then
+     !
+     PARALLEL_cpu_mat_inversion=CPU_structure(3)%nCPU_inversion
+     !
+   endif
    !
    ! Inversion
    !
@@ -790,6 +797,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                                        COMM_index_3=PAR_COM_T_INDEX,&
 &                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
 &                                        COMM_A2A_2=PAR_COM_eh_A2A) 
+   if (PAR_COM_eh_INDEX%n_CPU==1) then
+     call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_eh_A2A)
+   endif
    !
    ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
    !
@@ -800,8 +810,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! K-points (IBZ)
    !
    call PARALLEL_index(PAR_IND_Kk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=.TRUE.)
-   PAR_IND_Kk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id+1
+   PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
+   PAR_IND_Kk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
    PAR_Kk_nibz=PAR_IND_Kk_ibz%n_of_elements(PAR_IND_Kk_ibz_ID+1)
+   !
+   call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,&
+&           LOADED=PAR_IND_Kk_ibz%n_of_elements(PAR_IND_Kk_ibz_ID+1),TOTAL=Xk%nibz,&
+&           NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    ! 
    ! Dipoles k-points uses same distribution of K k-points
    !
@@ -859,6 +874,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             TOTAL=BS_nT_grps*(BS_nT_grps-1)/2+BS_nT_grps,&
 &                             NCPU=PAR_COM_T_INDEX%n_CPU)
    !
+   !write (*,*) PAR_IND_T_groups%element_1D,PAR_COM_T_INDEX%n_CPU
+   !do ib1=1,BS_nT_grps
+   !write (*,*) "T_ordered",myid,PAR_IND_T_ordered%element_2D(ib1,:)
+   !enddo 
+   !do while(.true.)
+   !enddo
 !   if (  ENVIRONMENT=="Response_T_space" ) then
 !     !
 !     ! K-points (BZ) after shifting of Q (BZ)

@@ -28,7 +28,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:nqbz,bz_samp,nXkibz
  use BS,            ONLY:BS_mat,BS_res_K_exchange,BS_n_g_exch,&
-&                        BS_bands,BS_nT_at_k,BS_K_dim,BS_k_and_row_restart
+&                        BS_bands,BS_nT_at_k,BS_K_dim
  use matrix_operate,ONLY:UP_matrix_index
  use com,           ONLY:isec
  use LIVE_t,        ONLY:live_timing
@@ -38,7 +38,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use wave_func,     ONLY:WF
  use X_m,           ONLY:X_t
  use IO_m,          ONLY:io_control,OP_RD,RD,NONE,RD_CL,VERIFY,OP_RD_CL,REP
- use TDDFT,         ONLY:FXC,FXC_n_g_corr,FXC_K_diagonal,ioBS_Fxc
+ use TDDFT,         ONLY:FXC,FXC_n_g_corr,FXC_K_diagonal,io_BS_Fxc
  implicit none
  type(bz_samp) ::Xk
  type(w_samp)  ::W
@@ -58,8 +58,8 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  ! I/O
  !
- integer           ::ioBS_err,ioFxc_err,ID,ACTION
- integer, external ::ioBS
+ integer           ::io_BS_err,ioFxc_err,ID,ACTION
+ integer, external ::io_BS
  !
  if (isec(2)/=0) then
    call section('=','TDDFT `solver`')
@@ -70,7 +70,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  ! Fxc DB
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
- ioFxc_err=ioBS_Fxc(iq,W,ID,X=X_static)
+ ioFxc_err=io_BS_Fxc(iq,W,ID,X=X_static)
  if (ioFxc_err==0) return
  !
  ! Constants & dimensions
@@ -104,10 +104,9 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  call mem_est('BS_mat',(/O_x_dim**2/))
  !
  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
- ioBS_err=ioBS(iq,X_static,ID)
+ io_BS_err=io_BS(iq,X_static,ID)
  !
  call live_timing('Fxc',(nXkibz**2-nXkibz)/2+nXkibz)
- BS_k_and_row_restart=0
  do ik2=1,nXkibz
    !
    !call K_exchange(.true.,iq,ik2,Xk,O2x,O_x_dim)
@@ -122,7 +121,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
      call io_control(ACTION=ACTION,COM=NONE,SEC=(/UP_matrix_index(ik1,ik2)/),ID=ID)
-     ioBS_err=ioBS(iq,X_static,ID)
+     io_BS_err=io_BS(iq,X_static,ID)
      !
      if (BS_res_K_exchange) then
        do icv1=1,BS_nT_at_k(ik1)

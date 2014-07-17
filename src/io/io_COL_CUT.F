@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioCOL_CUT(ID)
+integer function io_COL_CUT(ID)
  !
  use pars,           ONLY:SP
  use wave_func,      ONLY:wf_ng
@@ -39,14 +39,14 @@ integer function ioCOL_CUT(ID)
  real(SP),allocatable::bare_qpg_disk(:,:,:)
  integer             ::CUT_RIM_ng,CUT_RIM_npts,wf_ncx
  !
- ioCOL_CUT=io_connect(desc="cutoff",type=1,ID=ID)
+ io_COL_CUT=io_connect(desc="cutoff",type=1,ID=ID)
  !
- if (ioCOL_CUT/=0) goto 1
+ if (io_COL_CUT/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioCOL_CUT=io_header(ID,QPTS=.true.,R_LATT=.true.,IMPOSE_SN=.true.)
-   if (ioCOL_CUT/=0) goto 1   
+   io_COL_CUT=io_header(ID,QPTS=.true.,R_LATT=.true.,IMPOSE_SN=.true.)
+   if (io_COL_CUT/=0) goto 1   
    !
    call io_elemental(ID,VAR='GEOMETRY',CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,CH0=cut_geometry,&
@@ -81,8 +81,8 @@ integer function ioCOL_CUT(ID)
 &       VAR=' RIM random points               :',CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0)
-   ioCOL_CUT=io_status(ID)
-   if (ioCOL_CUT/=0) goto 1
+   io_COL_CUT=io_status(ID)
+   if (io_COL_CUT/=0) goto 1
  endif
  !
  if (any((/io_sec(ID,:)==2/))) then

@@ -44,7 +44,7 @@ subroutine RT_Scattering_step(G_new_k,ik,deltaT)
  !
  ! dG = dG - i dT Sigma
  !====================
- if(.not.RT_is_dephased) return
+ if (.not.RT_is_dephased) return
  !
  if ( (.not.l_RT_EXP) .or. (.not.l_RT_RWA) ) G_new_k = G_new_k - cI*deltaT*I_relax_static(:,:,ik)
  !
@@ -77,7 +77,9 @@ subroutine RT_Scattering_step(G_new_k,ik,deltaT)
      !
      if(       (GAMMA_h+GAMMA_e)>0._SP  ) f_inf=GAMMA_h/(GAMMA_h+GAMMA_e)*spin_occ
      if(.not. ((GAMMA_h+GAMMA_e)>0._SP) ) f_inf=f0
+     !
      G_new_k(ib,ib)=G_new_k(ib,ib)*exp(-GAMMA_TOT*deltaT)+cI*(f0-f_inf)*(exp(-GAMMA_TOT*deltaT)-1._SP)
+     !
    enddo
    !
  endif

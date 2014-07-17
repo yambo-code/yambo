@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioDB1(E,k,ID)
+integer function io_DB1(E,k,ID)
  !
  use pars,             ONLY:SP,IP,schlen
  use units,            ONLY:HA2EV
@@ -62,8 +62,8 @@ integer function ioDB1(E,k,ID)
  logical           :: l_io_sym_eq
  character(schlen) :: string
  !
- ioDB1 =io_connect(desc="db1",type=0,ID=ID)
- if (ioDB1/=0) goto 1
+ io_DB1 =io_connect(desc="db1",type=0,ID=ID)
+ if (io_DB1/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -228,8 +228,8 @@ integer function ioDB1(E,k,ID)
      !
    endif
    !
-   ioDB1=io_status(ID)
-   if (ioDB1/=0) goto 1
+   io_DB1=io_status(ID)
+   if (io_DB1/=0) goto 1
    !
  endif
  !
@@ -324,4 +324,4 @@ integer function ioDB1(E,k,ID)
  !
 1 call io_disconnect(ID=ID)
  !
-end function ioDB1
+end function io_DB1

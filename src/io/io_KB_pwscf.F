@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioKB_pwscf(ID)
+integer function io_KB_pwscf(ID)
  !
  use pars,             ONLY:SP,IP,schlen
  use electrons,        ONLY:n_spinor
@@ -50,15 +50,15 @@ integer function ioKB_pwscf(ID)
  !
  ik=maxval(io_sec(ID,:))-1
  !
- ioKB_pwscf=io_connect(desc="kb_pp_pwscf",type=0,ID=ID)
- if (ioKB_pwscf/=0) goto 1
+ io_KB_pwscf=io_connect(desc="kb_pp_pwscf",type=0,ID=ID)
+ if (io_KB_pwscf/=0) goto 1
  !
  ! Dimensions
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioKB_pwscf=io_header(ID,IMPOSE_SN=.true.)
-   if (ioKB_pwscf/=0) goto 1
+   io_KB_pwscf=io_header(ID,IMPOSE_SN=.true.)
+   if (io_KB_pwscf/=0) goto 1
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=0)
    !
@@ -105,7 +105,7 @@ integer function ioKB_pwscf(ID)
    call io_bulk(ID,VAR="ATOM_POS",VAR_SZ=shape(atom_pos))
    call io_bulk(ID,R3=atom_pos)
    !
-   if (ioKB_pwscf/=0) goto 1
+   if (io_KB_pwscf/=0) goto 1
    !
  endif
  !
@@ -132,4 +132,4 @@ integer function ioKB_pwscf(ID)
  !
 1 call io_disconnect(ID=ID)
  !
-end function ioKB_pwscf
+end function io_KB_pwscf

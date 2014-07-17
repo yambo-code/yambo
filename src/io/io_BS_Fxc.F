@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioBS_Fxc(iq,FXC_W,ID,X)
+integer function io_BS_Fxc(iq,FXC_W,ID,X)
  !
  use pars,           ONLY:SP,schlen,lchlen
  use units,          ONLY:HA2EV
@@ -57,20 +57,20 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
  !
  db_name='BS_FXC_Q'//trim(intc(iq))//'_W_group_'//trim(intc(w_group))
  !
- ioBS_Fxc=io_connect(desc=trim(db_name),type=2,ID=ID)
+ io_BS_Fxc=io_connect(desc=trim(db_name),type=2,ID=ID)
  !
- if (ioBS_Fxc/=0) goto 1
+ if (io_BS_Fxc/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
    ! As this DB must respect the BS identifier I only need to
    ! check the K QP corrections
    !
-   ioBS_Fxc=io_header(ID,XC_KIND="K_E force",CUTOFF=.true.)
+   io_BS_Fxc=io_header(ID,XC_KIND="K_E force",CUTOFF=.true.)
    !
    ! Exit if header is wrong
    !
-   if (ioBS_Fxc/=0) goto 1
+   if (io_BS_Fxc/=0) goto 1
    !
    call io_elemental(ID,VAR="FXC_parameters",VAR_SZ=11,MENU=0)
    !
@@ -99,19 +99,19 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
    FXC_n_descs=7
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   ioBS_Fxc=io_status(ID)
+   io_BS_Fxc=io_status(ID)
    !
    ! Add BS variables
    !
    local_description(:)=' '
    !
-   if (ioBS_Fxc==0) then
+   if (io_BS_Fxc==0) then
      if (present(X)) then
-       ioBS_Fxc=variables_BS(ID,local_description,X=X) 
+       io_BS_Fxc=variables_BS(ID,local_description,X=X) 
      else
        i1=io_mode(ID)
        io_mode(ID)=DUMP
-       ioBS_Fxc=variables_BS(ID,local_description,X=X_dummy) 
+       io_BS_Fxc=variables_BS(ID,local_description,X=X_dummy) 
        io_mode(ID)=i1
      endif
    endif
@@ -129,7 +129,7 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
    ! were planned to be read, we need to switch the action to RD_CL
    ! to close the unit in io_disconnect
    !
-   if (ioBS_Fxc/=0) then
+   if (io_BS_Fxc/=0) then
       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
       FXC_n_descs=0
       if (.not.close_is_on(ID)) io_action(ID)=RD_CL

@@ -28,7 +28,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
  use units,         ONLY:HA2EV
  use electrons,     ONLY:spin_occ,levels,spin,n_sp_pol
  use stderr,        ONLY:intc
- use BS,            ONLY:BSS_description,BSS_n_descs,BS_eh_table,BS_bands
+ use BS,            ONLY:BSS_description,BSS_n_descs,BSS_eh_table,BS_bands
  use com,           ONLY:msg,of_open_close
  use YPP,           ONLY:deg_energy,lambda,min_weight
  use R_lattice,     ONLY:d3k_factor,q0_def_norm,bz_samp
@@ -138,7 +138,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    !
    K_weight=0.
    do neh = 1,BS_H_dim
-     ikbz  = BS_eh_table(S_indx(neh),1)
+     ikbz  = BSS_eh_table(S_indx(neh),1)
      ikibz = Xk%sstar(ikbz,1)
      K_weight(ikibz)=K_weight(ikibz)+A_weight(neh)
    enddo
@@ -173,10 +173,10 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
      !
      if (A_weight(neh)/maxval(A_weight)<min_weight) cycle
      !
-     ikbz = BS_eh_table(S_indx(neh),1)
-     iv = BS_eh_table(S_indx(neh),2)
-     ic = BS_eh_table(S_indx(neh),3)
-     i_spin= spin(BS_eh_table(S_indx(neh),:))
+     ikbz = BSS_eh_table(S_indx(neh),1)
+     iv = BSS_eh_table(S_indx(neh),2)
+     ic = BSS_eh_table(S_indx(neh),3)
+     i_spin= spin(BSS_eh_table(S_indx(neh),:))
      !
      ikibz = Xk%sstar(ikbz,1)
      is = Xk%sstar(ikbz,2)

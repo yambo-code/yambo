@@ -59,7 +59,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes),q_mod(q%nbz),q0_mod,&
 &                      q_weight_tmp(q%nbz,2),ph_mean_speed(3),ph_E
  complex(SP)         ::gkkp_average
- integer, external   ::ioELPH,io_RT_components
+ integer, external   ::io_ELPH,io_RT_components
  logical             ::l_use_Debye_E
  !
  ! Restart
@@ -74,7 +74,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  if (.not.l_elph_scatt) return
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
- io_err=ioELPH(ID,'gkkp_expanded')
+ io_err=io_ELPH(ID,'gkkp_expanded')
  !
  if (io_err/=0) then
    l_elph_scatt   =.FALSE.
@@ -120,7 +120,7 @@ subroutine RT_ELPH_initialize(E,k,q)
    iq_io=Q_io_map(iq)
    !
    call io_control(ACTION=OP_RD_CL,SEC=(/iq_io+1/),ID=ID)
-   io_err=ioELPH(ID,'gkkp_expanded')
+   io_err=io_ELPH(ID,'gkkp_expanded')
    !
    ph_Esq_local(iq,:)=ph_freqs_sq(iq_io,:)
    !

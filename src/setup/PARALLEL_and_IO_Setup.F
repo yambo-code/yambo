@@ -43,7 +43,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! Work Space
  !
  integer           :: ID,io_err,i_s,n_max_threads
- integer, external :: ioDB1
+ integer, external :: io_DB1
  !
  call section('*','CPU structure, Files & I/O Directories') 
  !
@@ -91,6 +91,6 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r','')
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=REP,ID=ID)
- io_err=ioDB1(en,k,ID)
+ io_err=io_DB1(en,k,ID)
  !
 end subroutine

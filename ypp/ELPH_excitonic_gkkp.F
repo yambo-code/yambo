@@ -25,7 +25,7 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
  !
  use pars,                ONLY:SP,schlen
  use units,               ONLY:HA2EV,HA2FSm1
- use BS,                  ONLY:BS_mat,BS_K_dim,BS_eh_table,BS_nT_at_k
+ use BS,                  ONLY:BS_mat,BS_K_dim,BSS_eh_table,BS_nT_at_k
  use R_lattice,           ONLY:bz_samp
  use YPP,                 ONLY:n_lambda
  use IO_m,                ONLY:io_control,OP_RD,DUMP,RD_CL_IF_END
@@ -48,14 +48,14 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
  complex(SP), allocatable  ::diagonal_xhi(:,:,:)
  real(SP),    allocatable  ::ph_freqs(:)
  real(SP)                  ::gkkp_fs
- integer, external         ::ioELPH
+ integer, external         ::io_ELPH
  type(PP_indexes)          ::px
  character(schlen)         ::ch
  !
  call section("+","Excitonic gkkp factors")
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
- io_err=ioELPH(ID,'gkkp')
+ io_err=io_ELPH(ID,'gkkp')
  if (io_err/=0.or.elph_use_q_grid) return
  !
  allocate(diagonal_xhi(elph_nDBS_used,ph_modes,n_lambda),ph_freqs(ph_modes))
@@ -66,7 +66,7 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
  allocate(BS_nT_at_k(Xk%nibz))
  BS_nT_at_k=0
  do neh1=1,BS_K_dim
-   ik_ibz=Xk%sstar(BS_eh_table(neh1,1),1)
+   ik_ibz=Xk%sstar(BSS_eh_table(neh1,1),1)
    BS_nT_at_k(ik_ibz)= BS_nT_at_k(ik_ibz)+1
  enddo
  !
@@ -77,7 +77,7 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
  do iq=1,elph_nDBS_used
    !
    call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
-   io_err=ioELPH(ID,'gkkp')
+   io_err=io_ELPH(ID,'gkkp')
    !
    if (iq==1) call live_timing('GKKP factors',px%n_of_elements(myid+1))
    if (iq==1) cycle
@@ -96,15 +96,15 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
        !
        do neh1=1,BS_nT_at_k(ik_ibz)
           !
-          ik_bz1= BS_eh_table(ikk+neh1,1)
-          iv1   = BS_eh_table(ikk+neh1,2)
-          ic1   = BS_eh_table(ikk+neh1,3)
+          ik_bz1= BSS_eh_table(ikk+neh1,1)
+          iv1   = BSS_eh_table(ikk+neh1,2)
+          ic1   = BSS_eh_table(ikk+neh1,3)
           !
           do neh2=1,BS_nT_at_k(ik_ibz)
             !
-            ik_bz2= BS_eh_table(ikk+neh2,1)
-            iv2   = BS_eh_table(ikk+neh2,2)
-            ic2   = BS_eh_table(ikk+neh2,3)
+            ik_bz2= BSS_eh_table(ikk+neh2,1)
+            iv2   = BSS_eh_table(ikk+neh2,2)
+            ic2   = BSS_eh_table(ikk+neh2,3)
             !
             if (ik_bz1/=ik_bz2) cycle
             !

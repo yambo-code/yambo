@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
+integer function io_BSS_diago(iq,BS_H_dim,bsE,bsR,ID)
  !
  use pars,          ONLY:SP,schlen,IP
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_write_eig_2_db,&
-&                        BS_eh_table,BS_mat,BS_K_dim
+&                        BSS_eh_table,BS_mat,BS_K_dim
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,write_is_on,read_is_on,ver_is_gt_or_eq
@@ -42,15 +42,15 @@ integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
  !
  write (db_name,'(a,i2.2)') 'BS_diago_Q',iq
  !
- ioBSS_diago=io_connect(desc=trim(db_name),type=2,ID=ID)
- if (ioBSS_diago/=0) goto 1
+ io_BSS_diago=io_connect(desc=trim(db_name),type=2,ID=ID)
+ if (io_BSS_diago/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
    ! As this DB must respect the BS ideentifier I only need to
    ! check the K QP corrections
    !
-   ioBSS_diago=io_header(ID,XC_KIND="K_E force")
+   io_BSS_diago=io_header(ID,XC_KIND="K_E force")
    !
    if (ver_is_gt_or_eq(ID,(/3,0,15/))) then
      call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
@@ -68,10 +68,10 @@ integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
    !
    ! header return
    !
-   if (ioBSS_diago/=0) goto 1
+   if (io_BSS_diago/=0) goto 1
    !
-   ioBSS_diago=io_status(ID)
-   if (ioBSS_diago/=0) goto 1
+   io_BSS_diago=io_status(ID)
+   if (io_BSS_diago/=0) goto 1
  endif
  !
  if (any((/io_sec(ID,:)==2/))) then
@@ -86,14 +86,14 @@ integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
    ! If not switched on skip this section
    !
    if (.not.BSS_write_eig_2_db) then
-     ioBSS_diago=-1
+     io_BSS_diago=-1
      goto 1
    endif
    !
    ! BS_eh_table
    !
    call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_K_dim,3+n_sp_pol-1/))
-   call io_bulk(ID,I2=BS_eh_table(:BS_K_dim,:))
+   call io_bulk(ID,I2=BSS_eh_table(:BS_K_dim,:))
    !
    ! Eigenstates (resonant only matrix)
    !

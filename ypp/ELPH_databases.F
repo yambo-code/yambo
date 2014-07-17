@@ -50,7 +50,7 @@ integer function ELPH_databases(k,E,q)
  !... I/O 
  !
  integer            ::idb,io_err,io_elph_err,ID,nDBs_disk
- integer, external  ::ioELPH 
+ integer, external  ::io_ELPH 
  logical            ::use_ext_ph_freqs,use_ext_ph_modes,abinit_DB
  character(schlen)  ::db_name
  !
@@ -136,7 +136,7 @@ integer function ELPH_databases(k,E,q)
  ! Check if DB is already done
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_elph_err=ioELPH(ID,trim(db_name))
+ io_elph_err=io_ELPH(ID,trim(db_name))
  !
  if (io_elph_err==0) return
  !
@@ -218,7 +218,7 @@ integer function ELPH_databases(k,E,q)
        !
        call ELPH_gkkp_expand(iq_bz,iq_s,k)
        !
-       io_elph_err=ioELPH(ID,trim(db_name))
+       io_elph_err=io_ELPH(ID,trim(db_name))
        !
      enddo
      !
@@ -236,7 +236,7 @@ integer function ELPH_databases(k,E,q)
      if (idb==1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/1,iq+1/),ID=ID)
      if (idb/=1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID)
      !
-     io_elph_err=ioELPH(ID,trim(db_name))
+     io_elph_err=io_ELPH(ID,trim(db_name))
      !
    endif
    !
@@ -423,7 +423,7 @@ integer function ELPH_databases(k,E,q)
    if (use_ext_ph_freqs) then
      open(unit=99,file=trim(ph_freqs_file))
      read(99,*)
-     do i1=1,(idb-1)*(1+ph_modes/6)
+     do i1=1,(idb-1)*(1+ceiling(real(ph_modes)/6.))
        read(99,*) ph_q 
      enddo
      read(99,*) ph_q 

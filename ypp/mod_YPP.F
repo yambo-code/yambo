@@ -57,9 +57,7 @@ module YPP
  !
  integer               ::BANDS_steps
  integer               ::interp_grid(3)  ! Interpolation Grid
-#if defined _YPP_RT
  real(SP)              ::Nel_fac
-#endif
  !
  ! REAL SPACE PLOT
  !

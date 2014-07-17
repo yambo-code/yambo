@@ -39,7 +39,8 @@ subroutine RT_BGR(G,E,k)
  use wave_func,      ONLY:WF
  use real_time,      ONLY:G_lesser_reference,l_initial_equilibrium,REF_V_xc_sc,BGR,&
 &                         REF_V_hartree_sc,REF_QP_Vnl_xc,BGR_Hartree,BGR_V_xc,BGR_Self_Energy,&
-&                         l_RT_uses_E_RIM,RIM_ibz_coo,E_reference
+&                         l_RT_uses_E_RIM,RIM_ibz_coo,E_reference,&
+&                         eval_DENSITY,eval_HARTREE,eval_DFT
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait
@@ -74,35 +75,47 @@ subroutine RT_BGR(G,E,k)
    !
    ! From RT_Collision I get rho_n to calculate the new Hartree and XC potential
    !
-   ! Hartree
+   if (eval_HARTREE) then
+     !
+     ! Hartree
+     !
+     call V_Hartree(rho_n,V_hartree_sc)
+     !
+     V_hartree_sc=V_hartree_sc-REF_V_hartree_sc
+     !
+   endif
    !
-   call V_Hartree(rho_n,V_hartree_sc)
-   !
-   V_hartree_sc=V_hartree_sc-REF_V_hartree_sc
-   !
-   ! V_xc
-   !
-   call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1,&
-  &                         MUTE="-report -log -io_in -io_out",unMUTE=master_cpu)
-   V_xc_sc=V_xc-REF_V_xc_sc
+   if (eval_DFT) then
+     !
+     ! V_xc
+     !
+     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1,&
+&                             MUTE="-report -log -io_in -io_out",unMUTE=master_cpu)
+     V_xc_sc=V_xc-REF_V_xc_sc
+     !
+   endif
    !
    do ik=1,nkibz
      !
      ! Hartree contribution to BGR
      !
-     H=(0._SP,0._SP)
-     call V_real_space_to_H(ik,V_hartree_sc,H,WF)
-     do ib=1,SC_bands(2)
-       BGR_Hartree(ib,ik,1)=H(ib,ib,1)
-     enddo
+     if (eval_HARTREE) then
+       H=(0._SP,0._SP)
+       call V_real_space_to_H(ik,V_hartree_sc,H,WF)
+       do ib=1,SC_bands(2)
+         BGR_Hartree(ib,ik,1)=H(ib,ib,1)
+       enddo
+     endif
      !
      ! XC contribution to BGR
      !
-     H=(0._SP,0._SP)
-     call V_real_space_to_H(ik,V_xc_sc,H,WF)
-     do ib=1,SC_bands(2)
-       BGR_V_xc(ib,ik,1)=H(ib,ib,1)
-     enddo
+     if (eval_DFT) then
+       H=(0._SP,0._SP)
+       call V_real_space_to_H(ik,V_xc_sc,H,WF)
+       do ib=1,SC_bands(2)
+         BGR_V_xc(ib,ik,1)=H(ib,ib,1)
+       enddo
+     endif
      !
    enddo
    !

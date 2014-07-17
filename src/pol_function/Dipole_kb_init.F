@@ -44,15 +44,15 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
  real(SP)                     :: j
  logical                      :: psp_has_so
  integer                      :: is,ia,il,im,l,m,j2p1,im_index,im_max,i_pp,pp_spin
- integer                      :: ioKB_abinit_err,ioKB_pwscf_err,io_Vnl_err
+ integer                      :: io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
  !
- integer, external            :: ioKB_abinit,ioKB_pwscf,io_Vnl
+ integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
  !
  X%Vnl_included=.false.
  !
  io_Vnl_err     =-1
- ioKB_abinit_err=-1
- ioKB_pwscf_err =-1
+ io_KB_abinit_err=-1
+ io_KB_pwscf_err =-1
  !
  pp_kbv_dim=0
  !
@@ -61,18 +61,18 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
  io_Vnl_err=io_Vnl(X,Xen,ID)
  !
  ! Check for the KB pwscf DB 
- if(.not.ioKB_abinit_err==0) then
+ if(.not.io_KB_abinit_err==0) then
    call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-   ioKB_pwscf_err=ioKB_pwscf(ID)
+   io_KB_pwscf_err=io_KB_pwscf(ID)
  endif
  !
  ! Check for the KB abinit DB 
- if(.not.ioKB_pwscf_err==0) then
+ if(.not.io_KB_pwscf_err==0) then
    call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-   ioKB_abinit_err=ioKB_abinit(ID)
+   io_KB_abinit_err=io_KB_abinit(ID)
  endif
  !
- X%Vnl_included= any((/ioKB_abinit_err==0,ioKB_pwscf_err==0,io_Vnl_err==0/))
+ X%Vnl_included= any((/io_KB_abinit_err==0,io_KB_pwscf_err==0,io_Vnl_err==0/))
  !
  ! Here the pp_kbv_dim is evaluated
  ! Also the spin_m_table and the pp_factor table are created
@@ -85,7 +85,7 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
  ! If n_sp_pol=2 pwscf kb factor are written for the average only
  ! If npinor=2   pwscf kb factor are written in spin space with the spin-angle functions
  !
- if (ioKB_pwscf_err==0) then
+ if (io_KB_pwscf_err==0) then
    allocate(spin_m_table(3,pp_n_l_max,maxval(pp_table(2,:,:)+1),n_atomic_species))
    spin_m_table=0
    allocate(pp_factor(2*(pp_n_l_max-1)+1,pp_n_l_max,maxval(pp_table(2,:,:)+1),n_atomic_species,2))
@@ -133,7 +133,7 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
    enddo
  endif
  !
- if (ioKB_abinit_err==0) then
+ if (io_KB_abinit_err==0) then
    !allocate(spin_m_table(3,pp_n_l_max,1,n_atomic_species))
    !spin_m_table=0
    !allocate(pp_factor(2*(pp_n_l_max-1)1,pp_n_l_max,1,n_atomic_species,2))
@@ -158,8 +158,8 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
    enddo
  endif
  !
- io_err(1)=ioKB_abinit_err
- io_err(2)=ioKB_pwscf_err
+ io_err(1)=io_KB_abinit_err
+ io_err(2)=io_KB_pwscf_err
  io_err(3)=io_Vnl_err
  !
  if ( pp_kbv_dim>0 ) call msg('s','[x,Vnl] computed using '//trim(intc(pp_kbv_dim))//' projectors')

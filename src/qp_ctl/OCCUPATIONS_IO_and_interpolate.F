@@ -66,7 +66,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  character(lchlen) :: jobstr_save
  type(levels)      :: RT_db1_E
  type(bz_samp)     :: RT_db1_k
- integer, external :: ioDB1_selective_scan,ioDB1
+ integer, external :: io_DB1_selective_scan,io_DB1
 #if defined _RT
  integer, external :: io_RT_components
 #endif
@@ -139,16 +139,16 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
      call E_reset(RT_db1_E) 
      call bz_samp_reset(RT_db1_k)
      !
-     io_err_E=ioDB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'nk')
+     io_err_E=io_DB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'nk')
      if (io_err_E<0) then
        call error ('DB1 database not found in '//trim(jobstr))
      else
-       io_err_E=ioDB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'nb')
+       io_err_E=io_DB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'nb')
        !
        allocate(RT_db1_E%E(RT_db1_E%nb,RT_db1_k%nibz,n_sp_pol), RT_db1_k%pt(RT_db1_k%nibz,3))
        !
-       io_err_E=ioDB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'E')
-       io_err_E=ioDB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'K')
+       io_err_E=io_DB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'E')
+       io_err_E=io_DB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'K')
      endif
      !
    endif

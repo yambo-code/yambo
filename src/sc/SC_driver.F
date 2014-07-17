@@ -46,7 +46,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use xc_functionals, ONLY:V_xc,E_xc
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,ncpu
- use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,io_COLLs,io_X,&
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,io_COLLs,io_RESPONSE,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder
  use LIVE_t,         ONLY:live_timing
@@ -606,7 +606,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call mem_est("H_nl_nm1")
      endif
      !
-     if (.not.io_X) call X_alloc('X')
+     if (.not.io_RESPONSE) call X_alloc('X')
      !
    end subroutine
    !

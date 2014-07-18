@@ -318,11 +318,19 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          if(master_cpu) forall(ig1=1:X%ng,ig2=1:X%ng) &
 &          eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
        else
-         do ig1=1,X%ng
-           do ig2=1,X%ng
-             dc(1)=dc(1)+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*PPaR(ig1,ig2)
+         if (PPaR_is_TR_rotated) then 
+           do ig1=1,X%ng
+             do ig2=1,X%ng
+               dc(1)=dc(1)+2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*PPaR(ig1,ig2)
+             enddo
            enddo
-         enddo
+         else
+           do ig1=1,X%ng
+             do ig2=1,X%ng
+               dc(1)=dc(1)+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*PPaR(ig1,ig2)
+             enddo
+           enddo
+         endif
          if (master_cpu) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
          dc=cZERO
          !

@@ -37,6 +37,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  !
  ! Work Space
  !
+ logical              :: l_check
  integer              :: i_k,i_t,n_GRP,i_g,it_ref,i_counter
  real(SP),allocatable :: GRP_data(:)
  integer, allocatable :: GRP_index(:)
@@ -72,16 +73,17 @@ subroutine PARALLEL_Transitions_grouping(Xk)
      !
      if (.not.PAR_IND_eh(i_k)%element_1D(i_t)) cycle
      !
-     if ( i_t==1 .or. (i_t>1.and..not.PAR_IND_eh(i_k)%element_1D(i_t-1)) ) then
-       !
-       BS_nT_grps_at_k(i_k)=BS_nT_grps_at_k(i_k)+1
-       PAR_BS_nT_col_grps = PAR_BS_nT_col_grps +1
-       !
-       BS_T_grp_1st_el(i_counter)=i_t+sum(BS_nT_at_k(:i_k-1))
-       !
-       i_counter=i_counter+2*PAR_COM_eh_INDEX%n_CPU*PAR_COM_Xk_ibz_INDEX%n_CPU
-       !
-     endif
+     if ( i_t==1 ) l_check= .false.
+     if ( i_t> 1 ) l_check= PAR_IND_eh(i_k)%element_1D(i_t-1)
+     !
+     if ( l_check ) cycle
+     !
+     BS_nT_grps_at_k(i_k)=BS_nT_grps_at_k(i_k)+1
+     PAR_BS_nT_col_grps = PAR_BS_nT_col_grps +1
+     !
+     BS_T_grp_1st_el(i_counter)=i_t+sum(BS_nT_at_k(:i_k-1))
+     !
+     i_counter=i_counter+2*PAR_COM_eh_INDEX%n_CPU*PAR_COM_Xk_ibz_INDEX%n_CPU
      !
    enddo
  enddo
@@ -124,22 +126,24 @@ subroutine PARALLEL_Transitions_grouping(Xk)
      !
      if (.not.PAR_IND_eh(i_k)%element_1D(i_t)) cycle
      !
-     if ( i_t==1 .or. (i_t>1.and..not.PAR_IND_eh(i_k)%element_1D(i_t-1)) ) then
-       !
-       PAR_BS_nT_col_grps = PAR_BS_nT_col_grps + 1
-       !
-       it_ref=i_t+sum(BS_nT_at_k(:i_k-1))
-       !
-       do i_g=1,BS_nT_grps
-         if (BS_T_grp_1st_el(i_g)==it_ref) then
-           PAR_IND_T_groups%element_1D(i_g)=.TRUE.
-           PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)=&
+     if ( i_t==1 ) l_check= .false.
+     if ( i_t> 1 ) l_check= PAR_IND_eh(i_k)%element_1D(i_t-1)
+     !
+     if ( l_check ) cycle
+     !
+     PAR_BS_nT_col_grps = PAR_BS_nT_col_grps + 1
+     !
+     it_ref=i_t+sum(BS_nT_at_k(:i_k-1))
+     !
+     do i_g=1,BS_nT_grps
+       if (BS_T_grp_1st_el(i_g)==it_ref) then
+         PAR_IND_T_groups%element_1D(i_g)=.TRUE.
+         PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)=&
 &                                         PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)+1
-           PAR_BS_T_grps_index(i_g)=PAR_BS_nT_col_grps
-         endif
-       enddo
-       !
-     endif
+         PAR_BS_T_grps_index(i_g)=PAR_BS_nT_col_grps
+       endif
+     enddo
+     !
    enddo
  enddo
  !

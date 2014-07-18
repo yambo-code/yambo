@@ -102,11 +102,13 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
      !  This freuqency, which in principle should not be included, describes the region
      !  around q=0, which is taken into account by the integral embodied in the q_qeights
      !  Thus I do not cycle
-     !  if ( (iqbz==1 .and. il<=3) ) cycle
+     if ( (iqbz==1 .and. il<=3) ) cycle
+     if ( abs(ph_freq)<3.E-5)     cycle
      !
      ! N+/-
      !
      N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
+     !
      !
      ! Note the m.e. in Gkkp are stored with indexes order exchanged
      !

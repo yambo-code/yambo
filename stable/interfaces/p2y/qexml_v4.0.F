@@ -3274,40 +3274,44 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
   !
   CALL iotk_scan_dat(u, 'PP_LOCAL', vloc)
   !
-  CALL iotk_scan_begin(u, 'PP_NONLOCAL')
-  !
-  intc(1)='.1'
-  intc(2)='.2'
-  intc(3)='.3'
-  intc(4)='.4'
-  intc(5)='.5'
-  intc(6)='.6'
-  intc(7)='.7'
-  intc(8)='.8'
-  intc(9)='.9'
-  !
-  DO ibeta=1,nbeta
-    CALL iotk_scan_dat(u, 'PP_BETA'//intc(ibeta), &
-                           beta_tmp(:,ibeta), attr=attr)
-    CALL iotk_scan_attr(attr, 'size',  mesh_beta(ibeta))
-    CALL iotk_scan_attr(attr, 'angular_momentum',  lbeta(ibeta))
-  ENDDO
-  !
-  CALL iotk_scan_dat(u, 'PP_DIJ', d_tmp , attr=attr)
-  !
-  if(size(d_tmp)>1) then
-    cd_tmp=cmplx(d_tmp,0._SP)
-    call mat_dia_inv(DIAGO,USE_LK,cd_tmp,E_real=d)
-    d_tmp=real(cd_tmp)
-  else
-    d=d_tmp(1,1)
-    d_tmp(1,1)=1._SP
+  if (nbeta>0) then
+    !
+    CALL iotk_scan_begin(u, 'PP_NONLOCAL')
+    !
+    intc(1)='.1'
+    intc(2)='.2'
+    intc(3)='.3'
+    intc(4)='.4'
+    intc(5)='.5'
+    intc(6)='.6'
+    intc(7)='.7'
+    intc(8)='.8'
+    intc(9)='.9'
+    !
+    DO ibeta=1,nbeta
+      CALL iotk_scan_dat(u, 'PP_BETA'//intc(ibeta), &
+                             beta_tmp(:,ibeta), attr=attr)
+      CALL iotk_scan_attr(attr, 'size',  mesh_beta(ibeta))
+      CALL iotk_scan_attr(attr, 'angular_momentum',  lbeta(ibeta))
+    ENDDO
+    !
+    CALL iotk_scan_dat(u, 'PP_DIJ', d_tmp , attr=attr)
+    !
+    if(nbeta>1) then
+      cd_tmp=cmplx(d_tmp,0._SP)
+      call mat_dia_inv(DIAGO,USE_LK,cd_tmp,E_real=d)
+      d_tmp=real(cd_tmp)
+    else
+      d=d_tmp(1,1)
+      d_tmp(1,1)=1._SP
+    endif
+    !
+    lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))
+    forall (i1=1:nmesh) beta(i1,:)=matmul(transpose(d_tmp),beta_tmp(i1,:))
+    !
+    CALL iotk_scan_end(u, 'PP_NONLOCAL')
+    !
   endif
-  !
-  lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))
-  forall (i1=1:nmesh) beta(i1,:)=matmul(transpose(d_tmp),beta_tmp(i1,:))
-  !
-  CALL iotk_scan_end(u, 'PP_NONLOCAL')
   !
   if(psp_has_so) then
     !

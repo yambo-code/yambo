@@ -170,6 +170,7 @@ subroutine ypp_init_load(defs)
  call it('f',defs,'ForceUserPts', ' Do not check the correcteness of the user points') 
  call it('f',defs,'ListPts',      ' List the internal q/k points also in the parser format') 
  call it('f',defs,'ExpandPts',    ' Expand the internal q/k points in the BZ') 
+ call it('f',defs,'DipWeight',    ' Weight the contribution to the exciton WFs with the dipoles') 
  !
  ! WFs
  !

@@ -24,9 +24,10 @@
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  use drivers,        ONLY:l_optics,l_real_time,l_sc_run
+ use LIVE_t,         ONLY:what_is_running
  use interfaces,     ONLY:WF_load
  use pars,           ONLY:SP
- use com,            ONLY:warning,secnm
+ use com,            ONLY:warning,error,secnm
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:grid_path
@@ -101,6 +102,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  io_err(2)=io_P_and_P2(X,Xen,ID)
  !
 #endif
+ !
+ if (index(what_is_running,'YPP')>0 .and. any(io_err/=0)) &
+&  call error(' Error while reading dipoles DB')
  !
  if (any(io_err/=0)) then
    !

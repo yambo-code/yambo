@@ -3288,7 +3288,7 @@ end subroutine
 subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
 &                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
   !
-  use matrix_operate, ONLY:mat_dia_inv,DIAGO
+  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
   use pars,           ONLY:SP
   !
   IMPLICIT NONE

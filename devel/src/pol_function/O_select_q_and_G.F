@@ -28,7 +28,8 @@ integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
  use R_lattice,      ONLY:bz_samp,g_vec,q_norm
  use vec_operate,    ONLY:v_norm,v_is_zero,iku_v_norm
  use stderr,         ONLY:intc
- use com,            ONLY:msg
+ use com,            ONLY:msg,warning
+ !
  implicit none
  !
  integer      ::iq
@@ -74,6 +75,16 @@ integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
  !
  ! If, instead, Q_Shift_Order is given I check that 
  ! q + G are in the correct direction
+ !
+ if (iq==1) then
+   projection=dot_product(q_plus_G_direction,Q_plus_G_pt)-1.
+   if (abs(projection)>1.E-5) then
+     call warning(' Field direction and Q drection are different. q=0 case not computed')
+     O_select_q_and_G=-1
+     return
+   endif
+   Q_plus_G_pt=0._SP
+ endif
  !
  RL_msg(1)='Compatible RL shift of @ Q('//trim(intc(iq))//'):'
  !

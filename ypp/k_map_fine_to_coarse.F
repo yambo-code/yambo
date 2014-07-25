@@ -289,7 +289,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
        BZ_RIM_nkpt(ik_near)=BZ_RIM_nkpt(ik_near)+1
        if (allocated(BZ_RIM_table)) BZ_RIM_table(ik_near,BZ_RIM_nkpt(ik_near))=RIM_k(i_db_merge)%sstar(i1,1)
      else
-       ik_near =Xk%s_table( k_the_nearest(RIM_k(i_db_merge)%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is_near) , 1)
+       ik_near =Xk%k_table( k_the_nearest(RIM_k(i_db_merge)%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is_near) , 1)
        BZ_RIM_nkpt(ik_near)=BZ_RIM_nkpt(ik_near)+1
        if (allocated(BZ_SYM_table)) BZ_SYM_table(ik_near,BZ_RIM_nkpt(ik_near))=is_near
        if (allocated(BZ_RIM_table)) BZ_RIM_table(ik_near,BZ_RIM_nkpt(ik_near))=i1+1

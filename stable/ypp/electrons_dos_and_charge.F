@@ -23,10 +23,12 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  !
  use units,          ONLY:HA2EV,FS2AUT
  use pars,           ONLY:SP,schlen
- Use stderr,         ONLY:intc
+ use stderr,         ONLY:intc
+ use wave_func,      ONLY:WF_load,WF_free,wf,wf_state
  use R_lattice,      ONLY:bz_samp,nkibz,nkbz
  use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:levels,spin,n_sp_pol,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,spin_occ
+ use electrons,      ONLY:levels,spin,n_sp_pol,n_spinor,n_spin,spin_occ, &
+&                         BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands
  use FFT_m,          ONLY:fft_size
  use YPP,            ONLY:l_density,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,plot_title,l_dos,dos_broadening,dos_bands,&
@@ -51,8 +53,9 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  ! Work Space
  !
  real(SP), allocatable :: el_den(:)
- real(SP)              :: el_dos(dos_E_steps,n_sp_pol),dos_E,delta_E,f_occ,io_Time,dos_norm,el_dos_max
- integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps,i_fp,io_ID,io_err,ik_rand,i1
+ real(SP)              :: el_dos(dos_E_steps,n_spin),dos_E,delta_E,f_occ,io_Time,dos_norm,&
+&                         el_dos_max,WF_fac(dos_bands(1):dos_bands(2),nkibz,n_spinor)
+ integer               :: i_E,ik,ib,i_spin,i_spinor,i_T,n_T_steps,i_fp,io_ID,io_err,ik_rand,i1
  character(schlen)     :: ch_ws,titles(4)
  logical               :: l_TIME_plot,l_3D_plot,l_RIM,l_prt_occ_only
  type(PP_indexes)      :: px
@@ -89,6 +92,23 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    l_TIME_plot=.FALSE.
    l_3D_plot  =.FALSE.
    n_T_steps=1
+   !
+   if(n_spinor==2) then
+     !
+     call live_timing('DOS-spinor-factor',nkibz*(dos_bands(2)-dos_bands(1)+1),SERIAL=.true.)
+     do ik=1,nkibz
+       call WF_load(0,1,dos_bands,(/ik,ik/),title='-Projected DOS',impose_free_and_alloc=.TRUE.)
+       do ib=dos_bands(1),dos_bands(2)
+         do i_spinor=1,n_spinor
+           WF_fac(ib,ik,i_spinor)=dot_product(wf(:, wf_state(ib,ik,i_spinor) ),wf(:, wf_state(ib,ik,i_spinor) ))
+         enddo
+         call live_timing(steps=1)
+       enddo
+       call WF_free()
+     enddo
+     call live_timing()
+     !
+   endif
    !
 #if defined _YPP_RT
    !
@@ -134,7 +154,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
        call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
      enddo
 #endif
-     if (n_sp_pol==1) then
+     if (n_spin==1) then
        titles(1)='E[eV]'
        titles(2)='DOS'
        call msg('o dos','#',titles(:2),INDENT=0,USE_TABS=.true.)    
@@ -213,8 +233,15 @@ subroutine electrons_dos_and_charge(Xk,Xen)
 #if defined _YPP_RT
                if (l_TIME_plot) f_occ=(RT_occupations(ib,ik)-RT_occupations_ref(ib,ik))
 #endif
-               el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*&
-&                    Fermi_fnc_derivative(Xen%E(ib,ik,i_spin)-dos_E,dos_broadening)*Xk%weights(ik)*dos_norm
+               if(n_spinor==2) then
+                 do i_spinor=1,n_spinor
+                   el_dos(i_E,i_spinor)=el_dos(i_E,i_spinor)+f_occ*WF_fac(ib,ik,i_spinor)*dos_norm*&
+&                        Fermi_fnc_derivative(Xen%E(ib,ik,i_spin)-dos_E,dos_broadening)*Xk%weights(ik)
+                 enddo
+               else
+                 el_dos(i_E,i_spin)=el_dos(i_E,i_spin)+f_occ*Xk%weights(ik)*dos_norm*&
+&                      Fermi_fnc_derivative(Xen%E(ib,ik,i_spin)-dos_E,dos_broadening)
+               endif
              enddo
            endif
            !
@@ -241,8 +268,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
 #endif
          if (.not.l_3D_plot) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,1)/),INDENT=-2,USE_TABS=.true.)
        else
-         if (n_sp_pol==1) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,1)/),INDENT=-2,USE_TABS=.true.)
-         if (n_sp_pol==2) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,:),el_dos(i_E,1)+el_dos(i_E,2)/),INDENT=-2,USE_TABS=.true.)
+         if (n_spin==1) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,1)/),INDENT=-2,USE_TABS=.true.)
+         if (n_spin==2) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,:),el_dos(i_E,1)+el_dos(i_E,2)/),INDENT=-2,USE_TABS=.true.)
        endif
      enddo
      !

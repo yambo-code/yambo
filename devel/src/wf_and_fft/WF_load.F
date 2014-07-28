@@ -245,7 +245,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  endif
 #endif
  !
- if (WF%space=='R') call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
+ if (WF%space=='R'.and..not.(QUIET_alloc.or.QUIET_free)) call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !
  ! Bug-fix (noticed by AF) fixed by AM 26/8/2013
  !

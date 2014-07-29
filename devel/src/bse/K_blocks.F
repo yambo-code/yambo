@@ -81,7 +81,7 @@ subroutine K_blocks( )
        !
        if (BS_K_coupling) then
          !
-         if (PAR_IND_T_all%element_2D(i_T,j_T)) cycle
+         if (.not.PAR_IND_T_all%element_2D(i_T,j_T)) cycle
          !
          n_BS_blks=n_BS_blks+1
          !

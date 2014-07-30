@@ -58,10 +58,12 @@ module memory_m
      !
      integer :: i1,i2,local_kind
      logical :: loading,stdout_report
-     real(SP):: mem_moved
+     real(SP):: mem_moved,mem_element_size_change(max_mem_elements)
      real(SP),parameter :: mem_tresh=0.01  ! ( in Gb. CAREFUL! mem_tresh must be >0)
      character(lchlen)  ::ch(2)
      character(schlen)  ::input_name(10),action
+     !
+     mem_element_size_change=0._SP
      !
      loading=present(elements_size)
      !
@@ -87,6 +89,7 @@ module memory_m
          local_kind=preset_kind
          if (present(elements_kind)) local_kind=elements_kind(i1)
          mem_element_size(i2)=mem_element_size(i2)+real(elements_size(i1))*real(local_kind)/Gigabyte
+         mem_element_size_change(i2)=mem_element_size_change(i2)+real(elements_size(i1))*real(local_kind)/Gigabyte
          if (present(errors)) then
            if (errors(i1)/=0) then
              write (ch(1),'(3a,f10.5,a)') 'Mem All. failed. Element ',trim(mem_element(i2)),&
@@ -94,8 +97,8 @@ module memory_m
              call error(trim(ch(1)))
            endif
          endif
-         mem_sum=mem_sum+mem_element_size(i2)
-         mem_moved=mem_moved+mem_element_size(i2)
+         mem_sum=mem_sum+mem_element_size_change(i2)
+         mem_moved=mem_moved+mem_element_size_change(i2)
          write (ch(2),'(3a)') trim(ch(1))," ",trim(mem_element(i2))
          ch(1)=ch(2)
        enddo

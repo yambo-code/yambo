@@ -42,7 +42,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
  ! Work Space
  !
- integer :: D(3,2),I_range(2),J,size_
+ integer :: D(3,2),I_range(2),J,mem_size(4),size_
  logical :: l_HF,l_COHSEX,l_GW_NEQ,l_v3,l_v1,l_table,l_all,l_alloc,&
 &           l_clean,l_collision,l_distribute
  !
@@ -139,15 +139,18 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    subroutine local_alloc_and_free(COLL,N)
      integer                  :: N
      type(COLLISIONS_element) :: COLL(N)
+     mem_size=0
      do J=I_range(1),I_range(2)
        if (l_alloc.and.(l_v3.or.l_all)) then
          if(l_GW_NEQ) then
            allocate(COLL(J)%v3r(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
            COLL(J)%v3r=rZERO
+           mem_size(1)=mem_size(1)+size(COLL(J)%v3r)
          endif
          if(l_COHSEX.or.l_HF) then
            allocate(COLL(J)%v3c(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
            COLL(J)%v3c=cZERO
+           mem_size(2)=mem_size(2)+size(COLL(J)%v3c)
          endif
          COLL(J)%D=D
        endif
@@ -158,6 +161,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
        if (l_alloc.and.(l_v1.or.l_all)) then
          allocate(COLL(J)%v(COLL(J)%N))
          COLL(J)%v=cZERO
+         mem_size(3)=mem_size(3)+size(COLL(J)%v)
        endif
        if (l_clean.and.(l_v1.or.l_all)) then
          if (associated(COLL(J)%v)) deallocate(COLL(J)%v)
@@ -166,31 +170,31 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
          allocate(COLL(J)%table(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
          COLL(J)%table=0
          COLL(J)%D=D
+         mem_size(4)=mem_size(4)+size(COLL(J)%table)
        endif
        if (l_clean.and.(l_table.or.l_all)) then
          if (associated(COLL(J)%table)) deallocate(COLL(J)%table)
        endif
      enddo
-     if (l_alloc.and.(l_v1.or.l_all)) then
-       call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v1",(/size(COLL(1)%v)*(I_range(2)-I_range(1)+1)/))
+     !
+     if (l_alloc) then
+       if(l_v3.or.l_all) then
+         if(l_GW_NEQ        ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r",  (/mem_size(1)/))
+         if(l_COHSEX.or.l_HF) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c",  (/mem_size(2)/))
+       endif
+       if (l_v1.or.l_all)     call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v1",   (/mem_size(3)/))
+       if (l_table.or.l_all)  call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_table",(/mem_size(4)/),(/LP/))
      endif
-     if (l_alloc.and.(l_v3.or.l_all)) then
-       if(l_GW_NEQ        ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r",(/size(COLL(1)%v3r)*(I_range(2)-I_range(1)+1)/))
-       if(l_COHSEX.or.l_HF) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c",(/size(COLL(1)%v3c)*(I_range(2)-I_range(1)+1)/))
+     !
+     if (l_clean) then
+       if(l_v3.or.l_all) then
+         if(l_GW_NEQ        ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r")
+         if(l_COHSEX.or.l_HF) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c")
+       endif
+       if(l_v1.or.l_all)      call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v1")
+       if(l_table.or.l_all)   call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_table")
      endif
-     if (l_alloc.and.(l_table.or.l_all)) then
-       call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_table",(/size(COLL(1)%table)*(I_range(2)-I_range(1)+1)/),(/LP/))
-     endif
-     if (l_clean.and.(l_v1.or.l_all)) then
-       call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v1")
-     endif
-     if (l_clean.and.(l_v3.or.l_all)) then
-       if(l_GW_NEQ        ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r")
-       if(l_COHSEX.or.l_HF) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c")
-     endif
-     if (l_clean.and.(l_table.or.l_all)) then
-       call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_table")
-     endif
+     !
    end subroutine
    !
 end subroutine

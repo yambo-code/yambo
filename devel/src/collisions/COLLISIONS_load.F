@@ -152,9 +152,6 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        enddo
      endif
      !
-     if (V_kind==SC_HF)     call COLLISIONS_alloc_and_free("HF","v1 table","clean",i_qp_mem)
-     if (V_kind==SC_COHSEX) call COLLISIONS_alloc_and_free("COHSEX","v1 table","clean",i_qp_mem)
-     !
      call live_timing(steps=1)
      !
    end do

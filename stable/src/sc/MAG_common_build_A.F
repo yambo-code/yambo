@@ -75,9 +75,9 @@ subroutine MAG_common_build_A(build)
  !
  ! MAG field components
  !=====================
- Bx=SPEED_OF_LIGHT*MAG_B*sin(MAG_theta)*cos(MAG_psi)
- By=SPEED_OF_LIGHT*MAG_B*sin(MAG_theta)*sin(MAG_psi)
- Bz=SPEED_OF_LIGHT*MAG_B*cos(MAG_theta)
+ Bx=MAG_B*sin(MAG_theta)*cos(MAG_psi)
+ By=MAG_B*sin(MAG_theta)*sin(MAG_psi)
+ Bz=MAG_B*cos(MAG_theta)
  !
  if(allocated(x)) call free_cc()
  call load_cc(.false.,.true.)

@@ -31,7 +31,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  use electrons,      ONLY:levels,n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR
+ use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR,Dipole_bands_ordered
  use vec_operate,    ONLY:v_norm
  !
  implicit none
@@ -43,7 +43,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
  ! Work Space
  !
- integer                   :: ik,ik_bz,ic,iv,is,i_spin,ik_mem,ik_bz_mem,i_star
+ integer                   :: ik,ik_bz,ic,iv,is,i_spin,ik_mem,ik_bz_mem,i_star,iv_max,ic_min
  real(SP)                  :: field_dir_rot(3)
  complex(SP)               :: dipole(3)
  !
@@ -59,14 +59,26 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
  ! Calculate the q-dependent oscillators
  !
- call X_alloc('DIP_q_dot_iR',(/X%ib(2),Xen%nbm,PAR_Xk_nbz/))
+ if (Dipole_bands_ordered) then
+   iv_max=Xen%nbm
+   ic_min=Xen%nbf+1
+ else
+   iv_max=X%ib(2)
+   ic_min=X%ib(1)
+ endif
+ !
+ if (Dipole_bands_ordered) then
+   call X_alloc('DIP_q_dot_iR',(/X%ib(2),Xen%nbm,PAR_Xk_nbz/))
+ else
+   call X_alloc('DIP_q_dot_iR',(/X%ib(2),X%ib(2),PAR_Xk_nbz/))
+ endif
  DIP_q_dot_iR = (0.0_SP,0.0_SP)
  !
  do ik=1,Xk%nibz
    !
-   do iv = X%ib(1), Xen%nbm
+   do iv=X%ib(1),iv_max 
      !
-     do ic = Xen%nbf+1, X%ib(2)
+     do ic=ic_min,X%ib(2)
        !
        do i_spin=1,n_sp_pol
          !

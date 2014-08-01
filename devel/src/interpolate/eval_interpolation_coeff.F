@@ -31,8 +31,7 @@ subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,Nk,ID)
   use electrons,   ONLY:levels,n_sp_pol
   use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells,get_ID
 #if defined _RT
-  use real_time,   ONLY:RIM_ibz_coo
-  use SC,          ONLY:RT_ibz_coo
+  use real_time,   ONLY:RIM_ibz_coo,RT_ibz_coo
 #endif
   !
   implicit none

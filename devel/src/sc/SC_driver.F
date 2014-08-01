@@ -32,7 +32,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,SC_rho_threshold,it_now,E_convergence, &
 &                         rho_convergence,SC_R,V_xc_sc,l_sc_pot_is_local,H_nl_sc,H_rotate,l_Mean_Potential,&
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
-&                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,G_lesser,l_SC_RESTART,&
+&                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,l_SC_RESTART,&
 &                         l_NSC_shot,l_TF_precond,V_mean,SC_up_W_iters,l_SC_nl_mix,SC_QP_setup,it_to_start
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
@@ -554,9 +554,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      if(l_use_collisions) then
        !
-       allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk,2))
-       call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
-       !
        allocate(QP_Vnl_xc(QP_n_states))
        call mem_est("QP_Vnl_xc",(/size(QP_Vnl_xc)/),(/2*SP/))
        !
@@ -589,9 +586,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      endif
      !
      if(l_use_collisions) then
-       !
-       deallocate(G_lesser)
-       call mem_est("G_lesser")
        !
        if (allocated(QP_Vnl_xc)) deallocate(QP_Vnl_xc)
        call mem_est("QP_Vnl_xc")

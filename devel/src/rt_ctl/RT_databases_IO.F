@@ -24,15 +24,12 @@
 subroutine RT_databases_IO(E,it)
  !
  use drivers,        ONLY:l_elph_scatt
- use real_time,      ONLY:ID,l_NE_dynamics_started,NE_i_time,it_start,&
-&                         OCCUPATIONS_IO_and_interpolate,RT_do_IO,l_NE_dynamics
- use SC,             ONLY:RT_nk
+ use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,RT_do_IO,ID,it_start
+ use real_time,      ONLY:l_NE_dynamics_started,NE_i_time,l_NE_dynamics,RT_nk
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL,io_GF,io_OCCs,io_J
  use electrons,      ONLY:levels
-#if defined _ELPH
  use parallel_m,     ONLY:PP_redux_wait
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel
-#endif
  !
  implicit none
  !
@@ -73,7 +70,7 @@ subroutine RT_databases_IO(E,it)
  !
  ! Occupations
  !
- if (io_OCCs.and.RT_do_IO('OCCs')) call OCCUPATIONS_IO_and_interpolate(E,'G')
+ if (io_OCCs.and.RT_do_IO('OCCs')) call RT_OCC_LIFE_and_REF_IO(E,'G')
  !
  ! Write every RT_IO_G_steps
  !
@@ -93,17 +90,14 @@ subroutine RT_databases_IO(E,it)
    call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
-#if defined _ELPH
    if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
      call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(7))
      io_THETA=io_RT_components('THETA',ID(7))
    endif
-#endif
    !
    do ik = 1, RT_nk 
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
-#if defined _ELPH
      if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
        !
        ! The I/O of the THETA matrix is tricky when the run is parallel.
@@ -120,7 +114,6 @@ subroutine RT_databases_IO(E,it)
        call RT_ELPH_zeroing()
        !
      endif
-#endif
    enddo
    !
  endif

@@ -31,9 +31,9 @@ subroutine RT_output(what,VALUES,TIME,E)
  use fields,         ONLY:A_vecpot,Efield,n_ext_fields
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
+ use rt_ctl,         ONLY:RT_do_IO,RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,l_Debye_TBose_update, &
-&                         RT_do_IO,RT_Tfit_lifetimes,&
-&                         Imp_factors,l_BGR,BGR
+&                         RT_Tfit_lifetimes,Imp_factors,l_BGR,BGR
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -52,7 +52,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
  integer                  :: i_f,i_fp,i_flu,n_headings(n_output_files),next_file,i_order,i_c,n1
  logical                  :: file_is_todo(n_output_files),open_files,add_space,initialize
- logical,           save  :: SC_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
+ logical,           save  :: RT_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
  character(schlen)        :: headings(n_output_files,11),append_ch
  character(2)             :: chart_string(3)
  real(SP)                 :: data_to_dump(11)
@@ -290,6 +290,26 @@ subroutine RT_output(what,VALUES,TIME,E)
  headings(next_file,3  )='DOS'
  next_file=next_file+1
  !
+ do i_f=1,3
+   if (open_files.and..not.file_already_opened(next_file)) &
+&     file_name(next_file)=trim(append_ch)//'trans_abs'//trim(intc(i_f))
+   short_file_name(next_file)=trim(append_ch)//'trans_abs'//trim(intc(i_f))
+   n_headings(next_file)=3
+   headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
+   headings(next_file,3  )='Eps'
+   next_file=next_file+1
+ enddo
+ !
+ do i_f=1,3
+   if (open_files.and..not.file_already_opened(next_file)) &
+&     file_name(next_file)=trim(append_ch)//'trans_reflec'//trim(intc(i_f))
+   short_file_name(next_file)=trim(append_ch)//'trans_reflec'//trim(intc(i_f))
+   n_headings(next_file)=3
+   headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
+   headings(next_file,3  )='Reflectance'
+   next_file=next_file+1
+ enddo
+ !
  ! Check which files to write
  !----------------------------
  !
@@ -306,7 +326,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  !
  if (open_files) then
    !
-   SC_descriptions_dumped=.FALSE.
+   RT_descriptions_dumped=.FALSE.
    !
    do i_f=1,n_output_files
      if (.not.file_is_todo(i_f)) cycle
@@ -337,14 +357,17 @@ subroutine RT_output(what,VALUES,TIME,E)
    ! Headers and Descriptions
    !---------------------------
    !
-   if (.not.SC_descriptions_dumped(i_f)) then
+   if (.not.RT_descriptions_dumped(i_f)) then
      do i_fp=1,n_SC_descriptions
        call msg('o '//trim(short_file_name(i_f)),'#',trim(SC_description(i_fp)),INDENT=0)
+     enddo
+     do i_fp=1,n_RT_descriptions
+       call msg('o '//trim(short_file_name(i_f)),'#',trim(RT_description(i_fp)),INDENT=0)
      enddo
      call msg('o '//trim(short_file_name(i_f)),'#')
      call msg('o '//trim(short_file_name(i_f)),'#',headings(i_f,1:n_headings(i_f)),INDENT=0,USE_TABS=.TRUE.)
      call msg('o '//trim(short_file_name(i_f)),'#')
-     SC_descriptions_dumped(i_f)=.TRUE.
+     RT_descriptions_dumped(i_f)=.TRUE.
    endif
    !
    ! Values
@@ -405,7 +428,8 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-Polarization_W')
        if(.not.present(VALUES)) cycle
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
-     case('YPP-X_effective','YPP-el_dos')
+     case('YPP-X_effective','YPP-el_dos','YPP-trans_abs1','YPP-trans_abs2','YPP-trans_abs3',&
+&                                        'YPP-trans_reflec1','YPP-trans_reflec2','YPP-trans_reflec3')
        data_to_dump(1:2)=(/Time,E/)
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-2)
      case('mean_EPlifetimes')

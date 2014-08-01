@@ -40,10 +40,10 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  use stderr,         ONLY:real2ch
  use electrons,      ONLY:n_spin
  use units,          ONLY:FS2AUT
- use SC,             ONLY:RT_Nk,RT_ibz_coo,RT_Nk_ibz
  use YPP,            ONLY:OCC_T_range,OCC_deltaT
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RIM_ibz_coo,RT_delta0_occupations,&
-&                         REF_lifetime
+ use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO
+ use real_time,      ONLY:RIM_ibz_coo,RT_delta0_occupations,REF_lifetime,&
+&                         RT_Nk,RT_ibz_coo,RT_Nk_ibz,rt
  use IO_m,           ONLY:NONE
 #endif
  !
@@ -69,6 +69,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  logical               :: l_g_space_interp,l_nearest_neig_interp
  integer               :: i1,i2,i_err,ic,is,ID_interp,ik,ikbz,ib,Nk,ik_near_RIM,ik_near_RT,ik_circuit
  integer,  allocatable :: int_distances(:)
+ character(3)          :: message
  character(schlen)     :: file_name(n_sp_pol)
  character(schlen), allocatable :: headings(:)
  !
@@ -91,6 +92,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    if(BZ_RIM_tot_Nkpts==0) call error(" Interpolation of occupations/lifetimes presently works only with 'RIM'")
    n_T_steps=RT_occ_check_and_load_ref(Xen,Xk)
    call RT_check_RIM(Xk,Xen)
+   call RT_alloc_def_or_free(rt,Xen,Xk,1)
    if(l_RT_life_Bands) n_T_steps=1
    Nk=RT_Nk
 #endif
@@ -238,7 +240,9 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
        !
        io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
        !
-       call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
+       call RT_OCC_LIFE_and_REF_IO(Xen,'G',k=Xk,Time=io_Time)
+       !
+       call RT_alloc_def_or_free(rt,Xen,Xk,2)
        !
        Real_Nhole=0._SP
        Real_Nel=0._SP
@@ -275,16 +279,13 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
        !
      elseif(l_nearest_neig_interp) then
        !
-       do ik_circuit=1,CIRCUIT_k%nibz
-         ik_near_RT=k_the_nearest(CIRCUIT_k%pt(ik_circuit,:),Xk%pt_RIM,Nk,ROTATE_k_ref=.TRUE.,i_err=i_err)
-         if(l_RT_occ_Bands) then
-           forall(is=1:n_sp_pol,ib=BANDS_range(1):BANDS_range(2)) &
-           &  fit_on_circuit(ib,is,ik_circuit,i_T)=RT_delta0_occupations(ib,ik_near_RT)
-         else if (l_RT_life_Bands) then
-           forall(is=1:n_sp_pol,ib=BANDS_range(1):BANDS_range(2)) &
-           &  fit_on_circuit(ib,is,ik_circuit,i_T)=sum(REF_lifetime(ib,ik_near_RT,:))
-         endif
-       enddo       
+       message='RT '
+       if(i_T==1) message='RT0'
+       !
+       if(l_RT_occ_Bands)  call Nearest_kpt_interpolation(rt%nk,CIRCUIT_k%nibz,rt%nb,rt%nstates,1,1,&
+&                                         rt%table,rt%k,CIRCUIT_k%pt,rt%df,fit_on_circuit(:,:,:,i_T),message)
+       if(l_RT_life_Bands) call Nearest_kpt_interpolation(rt%nk,CIRCUIT_k%nibz,rt%nb,rt%nstates,1,1,&
+&                                         rt%table,rt%k,CIRCUIT_k%pt,rt%W0,fit_on_circuit(:,:,:,i_T),message)
        !
      endif
      !
@@ -306,6 +307,8 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
      if(l_g_space_interp) call reset_interpolation(ID_interp)
      !
    enddo 
+   !
+   call RT_alloc_def_or_free(rt,Xen,Xk,3)
    !
    deallocate(variable_to_fit)
    !

@@ -26,14 +26,14 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:levels,n_sp_pol,spin
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
- use SC,             ONLY:Ho,E_bare,V_hartree_sc,rho_n,G_lesser,RT_ibz_coo,V_xc_sc
+ use SC,             ONLY:Ho,E_bare,V_hartree_sc,rho_n,V_xc_sc
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp
  use xc_functionals, ONLY:V_xc
 #if defined _RT
- use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc
+ use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,G_lesser,RT_ibz_coo
 #endif
 #if defined _MAGNETIC
  use drivers,        ONLY:l_sc_magnetic

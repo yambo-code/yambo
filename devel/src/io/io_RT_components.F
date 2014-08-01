@@ -30,25 +30,22 @@ integer function io_RT_components(what,ID)
  use R_lattice,      ONLY:nkibz,nqbz
  use electrons,      ONLY:spin_occ
  use stderr,         ONLY:intc
- use SC,             ONLY:SC_bands,SC_nbands,RT_nk,&
+ use SC,             ONLY:SC_bands,SC_nbands,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,IO_NO_DATABASE,&
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found
  use fields,         ONLY:i_Probe,i_Pump
- use real_time,      ONLY:RT_IO_JPO_steps,NE_i_time,E_P_Hole_lifetime,E_P_Electron_lifetime,&
+ use real_time,      ONLY:NE_i_time,E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,REF_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_do_IO,RT_delta0_occupations,&
-&                         RT_E_occupations_reference,RT_H_occupations_reference
-#if defined _ELPH
- use ELPH,           ONLY:ph_modes,elph_branches
-#endif
-#if defined _RT
- use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,J_and_P_cache_size, &
-&                         dG_lesser,l_NE_dynamics_started,RT_ind_J,J_and_P_cache,&
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_delta0_occupations,&
+&                         RT_E_occupations_reference,RT_H_occupations_reference,&
+&                         l_NE_with_fields,NE_steps,RT_P,RT_nk, &
+&                         dG_lesser,l_NE_dynamics_started,RT_ind_J,&
 &                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight_RT
+ use ELPH,           ONLY:ph_modes,elph_branches
+ use rt_ctl,         ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_IO
  use fields,         ONLY:A_vecpot
-#endif                                
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use fragments,      ONLY:io_fragment
 #if defined _TIMING
@@ -61,7 +58,7 @@ integer function io_RT_components(what,ID)
  !
  ! Work Space
  !
- integer, external     :: variables_SC
+ integer, external     :: variables_SC,variables_RT
  character(lchlen)     :: local_description(100),db_name
  !
  real(SP), allocatable :: TMP_matrix(:,:,:)
@@ -164,7 +161,9 @@ integer function io_RT_components(what,ID)
    if (io_RT_components/=0) goto 1
    !
    io_RT_components=variables_SC(ID,local_description,what)
-   !=======================================================
+   if (io_RT_components/=0) goto 1
+   !
+   io_RT_components=variables_RT(ID,local_description,what)
    if (io_RT_components/=0) goto 1
    !
    if (l_G.or.l_occupations.or.l_THETA) then

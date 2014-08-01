@@ -26,12 +26,11 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use pars,            ONLY:SP,rZero,cZero,pi
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
- use SC,              ONLY:RT_ibz_coo
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
 &                          RT_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                          RT_H_occupations,RT_E_occupations,RIM_ibz_coo,l_RT_uses_E_RIM,&
 &                          l_initial_equilibrium,RIM_EE_scatt_table,RIM_EE_Nk_table,RT_eh_en,&
-&                          RT_scatt_tresh
+&                          RT_scatt_tresh,RT_ibz_coo
  use plasma,          ONLY:EH_gas
  use QP_m,            ONLY:QP_n_states,QP_table
  use collision,       ONLY:GW_NEQ_collisions
@@ -200,6 +199,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            !
            P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,RT_scatt_tresh,'EE')/&
 &                     real(RIM_EE_Nk_table(ik_rim,ik_m_q))
+           !
            !
            if(abs(P_pl_abs)<1.E-7) cycle
            !

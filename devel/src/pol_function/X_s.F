@@ -185,7 +185,7 @@ subroutine X_s(iq,X,Xw,W_range)
 !$omp parallel do default(shared), private(i1,i2)
    do i2=1,X%ng
      do i1=1,X%ng
-        X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
+       X_mat(i1,i2,iw_mat)=X_mat(i1,i2,iw_mat)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
      enddo
    enddo
 !$omp end parallel do

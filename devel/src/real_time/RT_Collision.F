@@ -48,19 +48,17 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,it_now,SC_R,&
-&                         RT_ibz_coo,RT_nk,it_now
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,it_now,SC_R,SC_nbands
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_RIM,REF_V_xc_sc,&
 &                         XC0_and_HARTREE0,RIM_ibz_coo,rho_reference,&
 &                         l_NE_dynamics_started,l_RT_RWA,l_BGR,&
-&                         eval_DENSITY,eval_HARTREE,eval_DFT
+&                         eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_nk
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
- use SC,             ONLY:SC_nbands
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif

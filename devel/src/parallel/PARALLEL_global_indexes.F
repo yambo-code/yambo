@@ -70,8 +70,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #endif
  use openmp,        ONLY:OPENMP_set_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_K
 #if defined _SC
- use SC,            ONLY:SC_bands
- use real_time,     ONLY:B_mat_index
+ use SC,            ONLY:SC_bands,B_mat_index
 #endif
  use electrons,     ONLY:levels
  use stderr,        ONLY:intc
@@ -206,7 +205,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call COMM_reset(PAR_COM_eh_A2A)
    call COMM_reset(PAR_COM_T_INDEX)
    !
+#if !defined _YPP_RT
    call IO_and_Messaging_switch("RESET")
+#endif
    !
    call OPENMP_set_threads( )
    !
@@ -423,6 +424,24 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,&
 &           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz,&
 &           NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
+   !
+#endif
+#if defined _YPP_RT
+   !
+   ! K-points (BZ)
+   !
+   call PARALLEL_index(PAR_IND_Xk_bz,(/Xk%nbz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=.TRUE.)
+   PAR_IND_Xk_bz_ID=PAR_COM_Xk_bz_INDEX%CPU_id
+   PAR_Xk_nbz=PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1)
+   !
+   call PARALLEL_live_message("K(bz)",ENVIRONMENT=ENVIRONMENT,&
+&                             LOADED=PAR_IND_Xk_bz%n_of_elements(PAR_COM_Xk_bz_INDEX%CPU_id+1),TOTAL=Xk%nbz,&
+&                             NCPU=PAR_COM_Xk_bz_INDEX%n_CPU)
+   allocate(PAR_Xk_bz_index(Xk%nbz))
+   call Build_up_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_index,PAR_Xk_nbz)
+   !
+#endif
+#if defined _SC
    !.........................................................................
    ! Wave Functions (derived from PAR_COM_Xk_ibz_INDEX and PAR_COM_G_b_INDEX)
    !.........................................................................
@@ -485,6 +504,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
        endif
      enddo
    enddo
+   !
+#endif
+   !
+#if defined _SC && !defined _YPP_RT
    !.........................................................................
    ! WFs & QPs
    !.........................................................................

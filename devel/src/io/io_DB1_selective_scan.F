@@ -30,8 +30,8 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
  use pars,             ONLY:lchlen
  use memory_m,         ONLY:mem_est
  use electrons,        ONLY:levels,E_reset
- use D_lattice,        ONLY:dl_sop,n_atoms_species,Z_species,atom_pos
- use R_lattice,        ONLY:g_vec,bz_samp,bz_samp_reset
+ use D_lattice,        ONLY:dl_sop,n_atoms_species,Z_species,atom_pos,nsym,alat
+ use R_lattice,        ONLY:g_vec,rl_sop,bz_samp,bz_samp_reset,nXkbz
  use wave_func,        ONLY:wf_nc_k,wf_igk
  use com,              ONLY:core_io_path
  use IO_m,             ONLY:io_control,OP_RD_CL,NONE,DUMP,io_connect,io_disconnect,&
@@ -43,7 +43,7 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
  !
  ! WorkSpace
  !
- integer           :: ID,i_io
+ integer           :: ID,i_io,i_err,i1,i2,is
  integer, external :: io_DB1
  character(lchlen) :: core_io_path_save
  !
@@ -80,7 +80,7 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
      call E_reset(E)
      !
      if (allocated(g_vec)) then
-       deallocate(g_vec,dl_sop,wf_nc_k,wf_igk)
+       deallocate(g_vec,dl_sop,rl_sop,wf_nc_k,wf_igk)
        call mem_est("g_vec dl_sop wf_nc_k wf_igk")
      endif
      if (allocated(n_atoms_species)) then
@@ -112,6 +112,11 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
  end select
  !
  if (what/='all') call io_disconnect(ID=ID)
+ !
+ if (what=='all') then
+   allocate(rl_sop(3,3,nsym))
+   forall (i1=1:3,i2=1:3,is=1:nsym) rl_sop(i1,i2,is)=dl_sop(i1,i2,is)*alat(i1)/alat(i2) 
+ endif
  !
  core_io_path=core_io_path_save
  !

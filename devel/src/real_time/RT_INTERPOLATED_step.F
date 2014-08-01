@@ -25,7 +25,9 @@ subroutine RT_INTERPOLATED_step(G_new_k,G_old_k,I1_k,I2_k,ik,Time,deltaT)
  !
  use pars,           ONLY:SP,cI,cZERO
  use SC,             ONLY:SC_bands,it_now
- use real_time,      ONLY:I_MEM_steps,RT_step,it_start,MEM_index,I_coh_SAVE
+ use rt_ctl,         ONLY:it_start
+ use real_time,      ONLY:I_MEM_steps,RT_step,MEM_index,I_coh_SAVE
+ !
  implicit none
  !
  integer,     intent(in)  :: ik

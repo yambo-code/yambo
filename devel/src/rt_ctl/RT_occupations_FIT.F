@@ -33,8 +33,8 @@ subroutine RT_occupations_FIT(E,k,T_fit,Ef_fit,Occupations)
  use R_lattice,      ONLY:bz_samp
  use vec_operate,    ONLY:sort
  use functions,      ONLY:Fermi_fnc_fit
- use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo,RT_nk
- use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM
+ use SC,             ONLY:SC_bands
+ use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,RT_nk,RT_nstates,RT_ibz_coo
  !
  implicit none
  !

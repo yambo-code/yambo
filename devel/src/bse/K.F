@@ -50,7 +50,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
-&                       RD,RD_CL,RD_CL_IF_END
+&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
 #ifdef _OPENMP
@@ -553,6 +553,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call live_timing(steps=1)
    !
  enddo
+ !
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+ io_BS_err=io_BS(iq,X,ID)
  !
  call live_timing( )
  !

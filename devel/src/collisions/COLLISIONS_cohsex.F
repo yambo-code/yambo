@@ -31,7 +31,6 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  use electrons,     ONLY:levels,spin_occ,spin
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:error
- use real_time,     ONLY:B_mat_index
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_Plasma_index,PAR_QP_index,&
 &                        PAR_IND_Q,PAR_nPlasma,PAR_Q_index,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_IND_Plasma,&
@@ -51,7 +50,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  use R_lattice,     ONLY:qindx_S,qindx_C,bz_samp
  use D_lattice,     ONLY:DL_vol
  use wrapper,       ONLY:M_by_V
- use SC,            ONLY:SC_bands
+ use SC,            ONLY:SC_bands,B_mat_index
  use fragments,     ONLY:fragment_status
  !
  implicit none

@@ -34,13 +34,13 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
  ! --------------------------------------
  !
  use pars,           ONLY:SP,cZERO,cONE
- use SC,             ONLY:SC_bands,RT_nk
+ use SC,             ONLY:SC_bands
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp  
  use real_time,      ONLY:l_RT_EULER,l_RT_RK2,l_RT_EXP,l_RT_INTERPOLATE,l_RT_RWA, &
 &                         l_NE_with_fields,G_lesser_reference,RT_E_occupations,   &
 &                         RT_H_occupations,RT_delta0_occupations,l_RT_HEUN,       &
-&                         integrator_step
+&                         integrator_step,RT_nk
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:levels,spin_occ
 #if defined _TIMING

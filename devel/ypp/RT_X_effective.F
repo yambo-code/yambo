@@ -33,10 +33,12 @@ subroutine RT_X_effective(en)
  use IO_m,           ONLY:NONE,LOG
  use fields,         ONLY:Efield,i_Probe,ext_field,Efield_duplicate,field_frequency,&
 &                         i_Pump,EtoT,Divide_by_Field
- use real_time,      ONLY:NE_steps,RT_output,RT_step,RT_P
+ use rt_ctl,         ONLY:RT_output
+ use real_time,      ONLY:NE_steps,RT_step,RT_P
  use vec_operate,    ONLY:sort
  use LIVE_t,         ONLY:live_timing
  use stderr,         ONLY:intc,real2ch
+ !
  implicit none
  !
  type(levels)  :: en

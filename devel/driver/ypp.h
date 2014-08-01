@@ -79,7 +79,7 @@
   {"kpts_map","m","BZ map fine grid to coarse",0,0,0,0,0}, 
   {"fixsyms", "n","Remove symmetries not consistent with an external perturbation",0,0,0,0,0}, 
 #if defined _YPP_RT
-  {"RealTime","t","Real Time [(X)response,(d)os,(lb)LifeBands,(ob)OccBands,(op)OccPlot,(of)OccFit]",0,0,1,0,0}, 
+  {"RealTime","t","Real Time [(X)response,Trans-(a)bs,(d)os,(lb)LifeBands,(ob)OccBands,(op)OccPlot,(of)OccFit]",0,0,1,0,0}, 
 #endif
 #if defined _YPP_ELPH
   {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 

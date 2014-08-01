@@ -76,8 +76,8 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT
  logical          ::l_flag
- integer, external::io_RT_components
- integer          ::io_RT_err,ID
+ integer, external::io_RT_components,io_KB_pwscf
+ integer          ::io_RT_err,io_KB_pwscf_err,ID
 #endif
  integer, external::parse_character_arrays
  !
@@ -123,6 +123,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  OCC_deltaT=0.
  l_RealTime=.FALSE.
  l_RT_X=.FALSE.
+ l_RT_abs=.FALSE.
  l_RT_occ_Plot=.FALSE.
  l_RT_occ_Fit=.FALSE.
  l_RT_dos=.FALSE.
@@ -299,6 +300,9 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  ! 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
  io_RT_err=io_RT_components('G' ,ID)
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_KB_pwscf_err=io_KB_pwscf(ID)
  ! 
  if (io_RT_err==0) then
    !
@@ -418,6 +422,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
      if ( trim(rstr_piece(i1)) == 'RealTime') then
        !
        l_RT_X           =trim(rstr_piece(i1+1))=='X'
+       l_RT_abs         =trim(rstr_piece(i1+1))=='a'
        l_RT_dos         =trim(rstr_piece(i1+1))=='d'
        l_RT_life_Bands  =trim(rstr_piece(i1+1))=='lb'
        l_RT_occ_Bands   =trim(rstr_piece(i1+1))=='ob'
@@ -452,6 +457,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #if defined _YPP_RT
      if ( trim(rstr_piece(i1)) == 'RealTime') then
        if (l_RT_X)           call initactivate(1,'RT_X')
+       if (l_RT_abs)         call initactivate(1,'RTabs')
        if (l_RT_dos)         call initactivate(1,'RTcarrDos')
        if (l_RT_life_Bands)  call initactivate(1,'RTlifeBnd')
        if (l_RT_occ_Bands)   call initactivate(1,'RToccBnd')
@@ -488,6 +494,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #if defined _YPP_RT
  l_RealTime         = runlevel_is_on('RealTime')
  l_RT_X             = runlevel_is_on('RT_X')
+ l_RT_abs           = runlevel_is_on('RTabs')
  l_RT_dos           = runlevel_is_on('RTcarrDos')
  l_RT_life_Bands    = runlevel_is_on('RTlifeBnd')
  l_RT_occ_Bands     = runlevel_is_on('RToccBnd')
@@ -591,12 +598,13 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  endif
 #if defined _YPP_RT
  if (l_RealTime) then
-   l_flag=l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_occ_Bands
+   l_flag=l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_occ_Bands.or.l_RT_abs
    if (l_flag) call QP_ctl_switch('G')
    if (l_flag) call initactivate(1,"OCCdT OCCTime OCCTref")
    if (l_RT_occ_Bands.or.l_RT_life_Bands) call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
    if (l_RT_occ_Plot) call initactivate(1,"OCCgroup")
-   if (l_RT_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands")
+   if (l_RT_abs) call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity")
+   if (l_RT_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad")
  endif
 #endif
  !
@@ -681,7 +689,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #endif
  !
 #if defined _YPP_RT
- if (.not.l_QP_init) l_QP_init=l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_dos.or.l_RT_occ_bands.or.l_RT_life_Bands
+ if (.not.l_QP_init) l_QP_init=l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_dos.or.l_RT_occ_bands.or.l_RT_life_Bands.or.l_RT_abs
  if (l_QP_init) call QP_init(.FALSE.,.TRUE.)
 #else
  if (l_QP_init) call QP_init(.FALSE.,.FALSE.)

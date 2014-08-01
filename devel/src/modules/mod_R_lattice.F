@@ -122,11 +122,12 @@ module R_lattice
  !
  interface
    !
-   integer function k_the_nearest(k_ref,k,n_k,ROTATE_k_ref,k_symm,i_err)
+   integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
      use pars, ONLY: SP
      integer :: n_k
      real(SP):: k_ref(3)
      real(SP):: k(n_k,3)
+     real(SP),optional :: k_dist(n_k)
      logical, optional :: ROTATE_k_ref
      integer, optional :: k_symm
      integer, optional :: i_err

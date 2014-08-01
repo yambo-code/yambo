@@ -191,7 +191,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! GPL_EXCLUDE_END
  !
- if (l_excitons) call excitons_driver(k,Xk,en,Xen,q)
+ if (l_excitons.or.l_RT_abs) call excitons_driver(k,Xk,en,Xen,q)
  !   ===========
  !
  l_flag=l_electrons

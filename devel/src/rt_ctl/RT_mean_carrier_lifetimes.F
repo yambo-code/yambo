@@ -25,11 +25,12 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  ! 
  use pars,           ONLY:SP
  use units,          ONLY:HA2KEL
+ use rt_ctl,         ONLY:RT_IO_output_steps
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes,  &
 &                         E_P_Ho_abs_lifetime,RT_Tfit_lifetimes,RT_Efit_lifetimes,    &
-&                         NE_i_time,RT_IO_output_steps,REF_Lifetime
- use SC,             ONLY:SC_bands,RT_all2ibz,RT_Nk_ibz,RT_nk
+&                         NE_i_time,REF_Lifetime,RT_all2ibz,RT_Nk_ibz,RT_nk
+ use SC,             ONLY:SC_bands
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin_occ
  implicit none

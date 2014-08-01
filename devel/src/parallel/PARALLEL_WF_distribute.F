@@ -30,8 +30,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  use R_lattice,       ONLY:nkibz
  use QP_m,            ONLY:QP_n_states,QP_table
 #if defined _SC
- use SC,              ONLY:SC_bands
- use real_time,       ONLY:B_mat_index
+ use SC,              ONLY:SC_bands,B_mat_index
 #endif
 #if defined _RT
  use parallel_m,      ONLY:PAR_IND_Q,PAR_Q_index

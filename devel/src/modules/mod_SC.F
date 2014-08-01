@@ -96,27 +96,6 @@ module SC
  !
  integer :: WF_G_max,WF_Go_indx
  !
- ! G_lesser ( = density matrix) to use extended collisions
- !
- complex(SP), allocatable :: G_lesser(:,:,:,:) ! Band, Band, K, Time
- !
- ! Table pointing to the position of the uniform grid points in the
- ! G_lesser structure
- !
- integer,     allocatable :: RT_ibz_coo(:,:)
- integer,     allocatable :: RT_all2ibz(:)  
- integer,     allocatable :: RT_Nk_ibz(:)  
- !
- ! Real-Time occupations
- !
- logical                  :: l_RT_occupations_in_use
- !
- ! K-points: In case I want to use the G_lesser to define the occupations
- ! of a post-run I need to keep here the number of k-points 
- !
- integer                 :: RT_nk
- integer                 :: RT_nstates
- !
  interface
    !
    subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional,&
@@ -136,6 +115,13 @@ module SC
  end interface  
  !
  contains
+   !
+   integer function B_mat_index(ib1,ib2)
+     integer :: ib1,ib2
+     !
+     B_mat_index=(ib1-SC_bands(1))*(SC_bands(2)-SC_bands(1)+1)+ib2-SC_bands(1)+1
+     !
+   end function
    !
    subroutine SC_QP_setup(E)
      use R_lattice,      ONLY:nkibz

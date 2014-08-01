@@ -25,10 +25,12 @@ subroutine RT_Fluence(i_field)
  !
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,FS2AUT
- use real_time,      ONLY:RT_step,NE_steps,RT_IO_output_steps
+ use rt_ctl,         ONLY:RT_IO_output_steps
+ use real_time,      ONLY:RT_step,NE_steps
  use fields,         ONLY:Efield,small_a,theta_function
  !
  implicit none
+ !
  integer      :: i_field
  ! 
  ! Work Space

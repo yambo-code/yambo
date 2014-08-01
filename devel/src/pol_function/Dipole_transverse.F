@@ -48,7 +48,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use fields,              ONLY:global_gauge
 #endif
 #if defined _SC
- use real_time,           ONLY:B_mat_index
+ use SC,                  ONLY:B_mat_index
 #endif
  !
  implicit none

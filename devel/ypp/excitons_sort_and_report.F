@@ -34,7 +34,6 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
  use R_lattice,     ONLY:d3k_factor,q0_def_norm,bz_samp
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,atom_pos,Z_species
  use vec_operate,   ONLY:sort
- use QP_CTL_m,      ONLY:QP_apply
  !
  implicit none 
  !
@@ -110,10 +109,6 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    ! Sort the weights
    !
    call sort(arrin=A_weight,indx=S_indx)
-   !
-   ! Apply quasi-particle correction if presents
-   ! 
-   call QP_apply(BS_bands,E,Xk,'G',msg_fmt='s')
    !
    ! report on file the weights and the amplitude
    ! of the excitonic state...

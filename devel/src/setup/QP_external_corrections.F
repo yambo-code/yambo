@@ -28,8 +28,8 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  use electrons,     ONLY:levels,n_bands
  use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_apply
-#if defined _SC
- use real_time,     ONLY:OCCUPATIONS_IO_and_interpolate
+#if defined _RT
+ use rt_ctl,        ONLY:RT_OCC_LIFE_and_REF_IO
  use IO_m,          ONLY:REP
  use QP_m,          ONLY:OCC_T_ref
 #endif
@@ -67,7 +67,7 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  if (apply_QP)  call QP_apply(X(3)%ib,Xen,Xk,"X",msg_fmt='s')
 #if defined _RT
  if (apply_QP)  apply_QP=.not.l_real_time
- if (apply_QP)  call OCCUPATIONS_IO_and_interpolate(Xen,'X',Xk,Time=OCC_T_ref,imposed_COM=REP)
+ if (apply_QP)  call RT_OCC_LIFE_and_REF_IO(Xen,'X',Xk,Time=OCC_T_ref,imposed_COM=REP)
 #endif
  !
  ! - Static X -
@@ -76,7 +76,7 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  if (apply_QP)  call QP_apply(X(2)%ib,Xen,Xk,"X",msg_fmt='s')
 #if defined _RT
  if (apply_QP)  apply_QP=.not.l_real_time
- if (apply_QP)  call OCCUPATIONS_IO_and_interpolate(Xen,'X',Xk,Time=OCC_T_ref,imposed_COM=REP)
+ if (apply_QP)  call RT_OCC_LIFE_and_REF_IO(Xen,'X',Xk,Time=OCC_T_ref,imposed_COM=REP)
 #endif
  !
  ! - Plasmon Pole X -
@@ -85,7 +85,7 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  if (apply_QP)  call QP_apply(X(4)%ib,Xen,Xk,"X",msg_fmt='s')
 #if defined _RT
  if (apply_QP)  apply_QP=.not.l_real_time
- if (apply_QP)  call OCCUPATIONS_IO_and_interpolate(Xen,'X',Xk,Time=OCC_T_ref,imposed_COM=REP)
+ if (apply_QP)  call RT_OCC_LIFE_and_REF_IO(Xen,'X',Xk,Time=OCC_T_ref,imposed_COM=REP)
 #endif
  !
  ! - Green's Function (not the one used in the BSE) -
@@ -93,7 +93,7 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  if (l_gw0)     call QP_apply((/1,n_bands/),en,k,"G",msg_fmt='s')
 #if defined _RT
  if (apply_QP)  apply_QP=.not.l_real_time
- if (apply_QP)  call OCCUPATIONS_IO_and_interpolate(en,'G',k,Time=OCC_T_ref,imposed_COM=REP)
+ if (apply_QP)  call RT_OCC_LIFE_and_REF_IO(en,'G',k,Time=OCC_T_ref,imposed_COM=REP)
 #endif
  !
 #if defined _ELPH

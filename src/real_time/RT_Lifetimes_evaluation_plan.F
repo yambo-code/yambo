@@ -29,8 +29,9 @@ integer function RT_Lifetimes_evaluation_plan( )
  use pars,           ONLY:IP2,SP
  use fields,         ONLY:Efield,i_Pump,ext_field,Efield_duplicate,small_a
  use memory_m,       ONLY:mem_est
+ use rt_ctl,         ONLY:it_start
  use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_interp_steps,&
-&                         RT_step,RT_life_interp_KIND,RT_life_interp_decay_time,it_start,&
+&                         RT_step,RT_life_interp_KIND,RT_life_interp_decay_time,&
 &                         Life_MEM_steps
  !
  implicit none

@@ -25,26 +25,27 @@ subroutine RT_initialize(E,k,q)
  ! 
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_ip,l_sc_hartree,&
 &                         l_sc_is_libDFT,l_sc_cohsex,l_sc_hf
- use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
+ use SC,             ONLY:SC_bands
  use pars,           ONLY:SP,pi
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
  use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded
+ use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_steps_DB, &
+&                         RT_IO_G_steps,RT_IO_output_steps
  use real_time,      ONLY:Thermal_steps,RT_step,l_NE_with_fields, &
 &                         l_RT_diagonalize,NE_steps,NE_tot_time,   &
-&                         l_RT_diamagnetic,RT_IO_JPO_steps,RT_IO_time,&
-&                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
+&                         l_RT_diamagnetic,l_NE_simulate_Irredux,l_RT_induced_field,                   &
 &                         RT_diagonalization_steps,RT_is_dephased,RAD_LifeTime,       &
-&                         Phase_LifeTime,NE_MEM_treshold,RT_IO_steps_DB,            &
-&                         G_MEM_steps,Gr_kind,RIM_ibz_coo,RT_IO_JPO_steps,RT_IO_G_steps, &
-&                         l_RT_CCA_Kernel,Life_MEM_steps,RT_IO_output_steps,    &
+&                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,RIM_ibz_coo, &
+&                         l_RT_CCA_Kernel,Life_MEM_steps,    &
 &                         l_RT_uses_E_RIM,RIM_bz_coo,RT_life_interp_steps,RT_life_interp_decay_time,&
 &                         RT_life_interp_KIND,l_NE_dynamics,l_RT_skip_impose,I_MEM_steps,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
 &                         RIM_EE_Nk_table,l_RT_EE_impose_E,RIM_EE_percent,RIM_EE_Nk_table,&
-&                         l_BGR,l_RT_HEUN,eval_DENSITY,eval_HARTREE,eval_DFT
+&                         l_BGR,l_RT_HEUN,eval_DENSITY,eval_HARTREE,eval_DFT,&
+&                         RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
@@ -275,8 +276,6 @@ subroutine RT_initialize(E,k,q)
  endif
  RT_nstates=RT_nk*(SC_bands(2)-SC_bands(1)+1)
  !
-#if defined _ELPH
- !
  ! Electron-phonon
  ! ===============
  !
@@ -287,8 +286,6 @@ subroutine RT_initialize(E,k,q)
    call RT_ELPH_initialize(E,k,q)
    !
  endif
- !
-#endif
  !
  ! Memory Depth & Simulation points (Lifetimes)
  !=============================================

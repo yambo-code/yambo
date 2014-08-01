@@ -48,6 +48,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #endif
 #if defined _YPP_RT
  use YPP,            ONLY:l_RT_occ_Plot,l_RT_occ_Fit
+ use real_time,      ONLY:RT_nk
 #endif
 #if defined _YPP_ELPH
  use YPP,            ONLY:elph_residual_treshold

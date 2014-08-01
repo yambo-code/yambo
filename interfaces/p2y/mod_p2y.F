@@ -175,7 +175,7 @@ contains
    use wave_func,             ONLY : wf_ncx 
    use com,                   ONLY : msg, error
    use LIVE_t,                ONLY : live_timing_is_on
-   use units,                 ONLY : HA2eV
+   use units,                 ONLY : HA2KEL
    type(levels),     intent(out)  :: en     ! Energies
    type(bz_samp),    intent(out)  :: k      ! K/Q points
    !
@@ -268,13 +268,7 @@ contains
 &                               degauss_units=degauss_units_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_occ','IOTK error',ABS(ierr))  
    !
-   if (lgauss_) then
-     if(trim(degauss_units_)=='Hartree') input_GS_Tel=degauss_
-     if(trim(degauss_units_)=='Rydberg') input_GS_Tel=degauss_/2._SP
-     if(trim(degauss_units_)=='eV')      input_GS_Tel=degauss_/HA2eV
-     ! If I used the cold smearing method in pwscf the temperature is reduced
-     if(ngauss_==-1) input_GS_Tel=input_GS_Tel/3._SP
-   endif
+   if (lgauss_) input_GS_Tel=300._SP/HA2KEL
    !
 #endif
    !

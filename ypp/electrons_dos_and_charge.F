@@ -41,9 +41,10 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use LIVE_t,         ONLY:live_timing
 #if defined _YPP_RT
  use YPP,            ONLY:OCC_T_range,OCC_deltaT
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_output,RT_delta0_occupations,&
-&                         l_RT_uses_E_RIM
- use SC,             ONLY:SC_bands,SC_description,n_SC_descriptions,RT_ibz_coo
+ use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,RT_output
+ use real_time,      ONLY:RT_delta0_occupations,&
+&                         l_RT_uses_E_RIM,RT_ibz_coo
+ use SC,             ONLY:SC_bands,SC_description,n_SC_descriptions
 #endif
  use interfaces,     ONLY:PARALLEL_index,WF_load
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait
@@ -213,7 +214,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
 #if defined _YPP_RT
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-     if(l_RT_dos) call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
+     if(l_RT_dos) call RT_OCC_LIFE_and_REF_IO(Xen,'G',k=Xk,Time=io_Time)
 #endif
      !
      el_dos(:,:)=0.

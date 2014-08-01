@@ -25,8 +25,8 @@ subroutine RT_check_RIM(Xk,Xen)
  !
  use electrons,        ONLY:levels,BZ_RIM_tot_Nkpts
  use R_lattice,        ONLY:bz_samp
- use real_time,        ONLY:RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM
- use sc,               ONLY:RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_Nk
+ use real_time,        ONLY:RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM,&
+&                           RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_Nk
  use com,              ONLY:error
  !
  implicit none
@@ -36,7 +36,7 @@ subroutine RT_check_RIM(Xk,Xen)
  !
  type(bz_samp) :: Xq
  !
- integer           :: Nk,ik,N_T_steps
+ integer           :: Nk,ik
  integer, external :: RT_k_grid
  !
  ! Check if RIM is used: the value BZ_RIM_tot_Nkpts is obtained from variables_SC.F

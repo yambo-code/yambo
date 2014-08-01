@@ -23,7 +23,7 @@
 !
 subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
- use pars,           ONLY:LP,cZERO,rZero
+ use pars,           ONLY:SP,LP,cZERO,rZero
  use memory_m,       ONLY:mem_est
  use QP_m,           ONLY:QP_n_states
  use SC,             ONLY:SC_bands

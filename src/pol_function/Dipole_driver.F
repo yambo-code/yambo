@@ -76,6 +76,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
 #endif
  !
+#if defined _YPP_RT
+ !
+ Dipole_bands_ordered=.false.
+ !
+#endif
+ !
  Dipole_uses_shifted_grids=trim(grid_path)/='none'
  !
  ! Check first if ostnts DB is already done
@@ -103,8 +109,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
 #endif
  !
- if (index(what_is_running,'YPP')>0 .and. any(io_err/=0)) &
-&  call error(' Error while reading dipoles DB')
+! if (index(what_is_running,'YPP')>0 .and. any(io_err/=0)) &
+!&  call error(' Error while reading dipoles DB')
  !
  if (any(io_err/=0)) then
    !

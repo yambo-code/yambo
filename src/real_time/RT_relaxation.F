@@ -45,13 +45,15 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
- use SC,             ONLY:SC_bands,it_now,RT_nk,RT_all2ibz
+ use SC,             ONLY:SC_bands,it_now
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
+ use rt_ctl,         ONLY:it_start
  use real_time,      ONLY:I_relax_static,RT_is_dephased,l_NE_dynamics_started,RT_Deph_Matrix,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
-&                         RT_TIME_status,REF_lifetime,it_start,RT_E_occupations,RT_H_occupations,FIRST_step,&
-&                         l_initial_equilibrium,l_RT_skip_impose,RT_delta0_occupations,l_RT_RWA,RT_is_dephased
+&                         RT_TIME_status,REF_lifetime,RT_E_occupations,RT_H_occupations,FIRST_step,&
+&                         l_initial_equilibrium,l_RT_skip_impose,RT_delta0_occupations,l_RT_RWA,RT_is_dephased,&
+&                         RT_nk,RT_all2ibz
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif

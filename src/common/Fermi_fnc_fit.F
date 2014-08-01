@@ -29,9 +29,10 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  !   increasing damping. This is the Levenberg-Marquartd algorithm
  !
  use pars,           ONLY:SP,lchlen
- use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo
+ use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_table,QP_n_states
  use R_lattice,      ONLY:bz_samp
+ use real_time,      ONLY:RT_nk,RT_ibz_coo
  use electrons,      ONLY:levels,spin,spin_occ,n_spin
  use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative,Fermi_fnc_T_derivative
  use com,            ONLY:msg,of_open_close,error

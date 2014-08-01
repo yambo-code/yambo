@@ -50,9 +50,9 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
 TARGETS  = all yambo interfaces ypp ydb
 UTILS    = changelog
 CLEANS   = clean clean_all
-PROJECTS = yambo_ph yambo_sc yambo_rt yambo_kerr yambo_surf\
-           ypp_rt ypp_ph ypp_sc ypp_surf
-BROKEN   = yambo_magnetic ypp_magnetic  
+PROJECTS = yambo_ph yambo_sc yambo_rt yambo_magnetic \
+           ypp_ph ypp_sc ypp_rt ypp_magnetic  
+BROKEN   = yambo_kerr yambo_surf ypp_surf
 DEBUG    = 
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
 INTERFCS = a2y p2y e2y c2y
@@ -68,7 +68,9 @@ PJ_SURFLIBS  = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_ctl surf \
                setup interface tddft pol_function qp acfdt bse
 
 PJ_SCLIBS    = $(MAIN_LIBS) collisions sc
-PJ_RTLIBS    = $(MAIN_LIBS) collisions sc real_time
+
+PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops rt_ctl qp_ctl setup interface \
+               interpolate tddft pol_function qp acfdt bse collisions sc real_time
 #
 # Interfaces
 #
@@ -79,7 +81,7 @@ E2YLIBS      = external_c parallel modules parser communicate common io bz_ops
 #
 YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface interpolate pol_function bse
 YPPSCLIBS    = $(YPPLIBS) sc
-YPPRTLIBS    = $(YPPLIBS) sc real_time
+YPPRTLIBS    = $(BASIC_LIBS) coulomb bz_ops rt_ctl qp_ctl setup interface interpolate pol_function bse sc real_time
 YPPSURFLIBS  = $(BASIC_LIBS) surf_modules bz_ops qp_ctl setup interface interpolate surf pol_function bse
 YDBLIBS      = $(BASIC_LIBS) 
 

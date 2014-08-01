@@ -23,7 +23,7 @@
 !
 module real_time
  !
- use SC,         ONLY:G_lesser,SC_R
+ use SC,         ONLY:SC_R
  use pars,       ONLY:DP,SP,schlen,lchlen
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:SE_NONE
@@ -135,6 +135,23 @@ module real_time
  real(SP)    :: Phase_LifeTime
  real(SP)    :: RAD_LifeTime
  logical     :: RT_is_dephased
+ !
+ ! Table pointing to the position of the uniform grid points in the
+ ! G_lesser structure
+ !
+ integer,     allocatable :: RT_ibz_coo(:,:)
+ integer,     allocatable :: RT_all2ibz(:)  
+ integer,     allocatable :: RT_Nk_ibz(:)  
+ !
+ ! Real-Time occupations
+ !
+ logical                  :: l_RT_occupations_in_use
+ !
+ ! K-points: In case I want to use the G_lesser to define the occupations
+ ! of a post-run I need to keep here the number of k-points 
+ !
+ integer                 :: RT_nk
+ integer                 :: RT_nstates
  !
  ! BGR
  !----------------------------
@@ -249,6 +266,7 @@ module real_time
  ! GFs
  !-----
  !
+ complex(SP), allocatable :: G_lesser(:,:,:,:)          ! Band, Band, K, Time
  complex(SP), allocatable :: G_lesser_reference(:,:,:)
  complex(SP), allocatable :: dG_lesser(:,:,:,:)
  !
@@ -289,32 +307,29 @@ module real_time
  !
  real(SP),    allocatable :: Occ_natural_orb(:,:) 
  !
- ! Databases input/output
+ type RT_t
+   !
+   character(schlen)  :: description
+   integer,    pointer:: table(:,:) => null()
+   real(SP)   ,pointer:: k(:,:)     => null()
+   real(SP)   ,pointer:: E0(:)      => null()
+   real(SP)   ,pointer:: f0(:)      => null()
+   real(SP)   ,pointer:: W0(:)      => null()
+   real(SP)   ,pointer:: df(:)      => null()
+   real(SP)   ,pointer:: dE(:)      => null()
+   real(SP)   ,pointer:: dW(:)      => null()
+   real(SP)   ,pointer:: W(:)       => null()
+   integer  :: nk
+   integer  :: nb(2)
+   integer  :: nstates
+   !
+ end type RT_t
  !
- integer,  parameter      :: J_and_P_cache_size=18
- !
- integer                  :: ID(8)
- integer                  :: it_start           = 1   ! restart point
- integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
-                                                      ! the last evaluated point
- integer                  :: RT_IO_JPO_steps    = -1
- integer                  :: RT_IO_output_steps = -1
- integer                  :: RT_IO_G_steps      = -1
- integer                  :: RT_IO_steps_DB     = -1
- real(SP)                 :: RT_IO_time(3)      = -1.*FS2AUT ! Three values for J,P,OCC - OUPUT - GF's
- real(SP), allocatable    :: J_and_P_cache(:,:)
+ type(RT_t)  :: rt
  !
  ! Interface
  !
  interface
-   !
-   subroutine RT_output(what,VALUEs,TIME,E)
-     use pars,       ONLY:SP
-     character(*),       intent(in) :: what
-     real(SP), optional, intent(in) :: VALUEs(:) 
-     real(SP), optional, intent(in) :: TIME
-     real(SP), optional, intent(in) :: E
-   end subroutine
    !
    subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,RIM,nK_mem)
      use pars,       ONLY:SP
@@ -350,17 +365,6 @@ module real_time
      logical,        optional, intent(in) :: up_Gref,up_DIP,an_QP
    end subroutine RT_update
    !
-   subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
-     use pars,       ONLY:SP
-     use electrons,  ONLY:levels
-     use R_lattice,  ONLY:bz_samp
-     type(levels),       intent(in)    :: E
-     character(1)                      :: what ! G,X,K
-     type(bz_samp),optional,intent(in) :: k
-     real(SP), optional, intent(inout) :: Time
-     integer , optional, intent(in)    :: imposed_COM
-   end subroutine OCCUPATIONS_IO_and_interpolate
-   !
  end interface
  !
  contains
@@ -372,7 +376,7 @@ module real_time
 &                             l_sc_cohsex,l_sc_hartree
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,l_sc_pot_is_local,SC_alloc,E_bare, &
-&                             SC_xc_functional,SC_xc_functional,RT_nk
+&                             SC_xc_functional,SC_xc_functional
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -387,11 +391,6 @@ module real_time
        allocate(QP_Vnl_xc(QP_n_states))
        call mem_est("QP_Vnl_xc",(/QP_n_states/))
        QP_Vnl_xc=cZERO
-     endif
-     !
-     if(l_NE_dynamics) then
-       allocate(J_and_P_cache(J_and_P_cache_size,RT_IO_JPO_steps))
-       call mem_est('Current_Cache',(/size(J_and_P_cache)/),(/SP/))
      endif
      !
      allocate(E_xc(fft_size))
@@ -523,12 +522,11 @@ module real_time
      endif
      !
    end subroutine RT_alloc
-   
+   !   
    subroutine RT_free
      !
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
-     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,RT_all2ibz,&
-&                             RT_ibz_coo,RT_Nk_ibz
+     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare
      use memory_m,       ONLY:mem_est
      use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
@@ -667,11 +665,6 @@ module real_time
        call mem_est("Occ_natural")
      endif
      !
-     if(l_NE_dynamics) then
-       deallocate(J_and_P_cache)
-       call mem_est('Current_Cache')
-     endif
-     !
      if(allocated(RT_Deph_Matrix)) then
        deallocate(RT_Deph_Matrix)
        call mem_est("DephMatrix")
@@ -683,23 +676,8 @@ module real_time
      !
    end subroutine RT_free
    !
-   logical function RT_do_IO(what)
-     character(*) :: what
-     if (what=="J".or.what=="P".or.what=="OCCs") RT_do_IO=mod(NE_i_time-1,RT_IO_JPO_steps)==0
-     if (what=="OUT") RT_do_IO=mod(NE_i_time-1,RT_IO_output_steps)==0
-     if (what=="G")   RT_do_IO=mod(NE_i_time-1,RT_IO_G_steps)==0
-   end function
-   !
    logical function FIRST_step( )
      FIRST_step=integrator_step==1
-   end function
-   !
-   integer function B_mat_index(ib1,ib2)
-     use SC, ONLY:SC_bands
-     integer :: ib1,ib2
-     !
-     B_mat_index=(ib1-SC_bands(1))*(SC_bands(2)-SC_bands(1)+1)+ib2-SC_bands(1)+1
-     !
    end function
    !
    integer function MEM_index(it,Nt)

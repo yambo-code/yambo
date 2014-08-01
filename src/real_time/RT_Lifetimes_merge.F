@@ -26,9 +26,9 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,RT_nk
+ use SC,             ONLY:SC_bands
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Plasma_INDEX
- use real_time,      ONLY:REF_lifetime,l_initial_equilibrium
+ use real_time,      ONLY:REF_lifetime,l_initial_equilibrium,RT_nk
  !
  implicit none
  !

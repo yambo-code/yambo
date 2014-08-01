@@ -30,8 +30,10 @@ subroutine RT_initialize(dump_and_write)
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HA2EV
  use stderr,         ONLY:real2ch
- use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P
+ use rt_ctl,         ONLY:RT_output
+ use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_P
  use fields,         ONLY:Efield,i_Probe
+ !
  implicit none
  !
  logical, optional  :: dump_and_write

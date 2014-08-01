@@ -33,9 +33,11 @@ subroutine RT_X_LRR_real_field(en)
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use memory_m,       ONLY:mem_est
- use real_time,      ONLY:RT_step,RT_output,RT_P,NE_steps
+ use rt_ctl,         ONLY:RT_output
+ use real_time,      ONLY:RT_step,RT_P,NE_steps
  use fields,         ONLY:Efield,small_a,i_Probe
  use parser_m,       ONLY:parser
+ !
  implicit none
  !
  type(levels)  :: en

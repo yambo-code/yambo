@@ -26,7 +26,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use electrons,      ONLY:spin_occ
  use pars,           ONLY:SP
- use SC,             ONLY:SC_bands,RT_nk,it_now
+ use SC,             ONLY:SC_bands,it_now
  use parallel_m,     ONLY:ncpu
  use real_time,      ONLY:RT_occupations_locked,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         RT_delta_occupations,l_use_updated_reference,l_initial_equilibrium,&
@@ -35,7 +35,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,&
-&                         G_lesser_reference,integrator_step
+&                         G_lesser_reference,integrator_step,RT_nk
  !
  implicit none
  !

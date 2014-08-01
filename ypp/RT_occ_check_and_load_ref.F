@@ -28,13 +28,14 @@ integer function RT_occ_check_and_load_ref(E,k)
  use units,          ONLY:FS2AUT
  use electrons,      ONLY:levels
  use QP_m,           ONLY:OCC_ctl
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,RT_IO_JPO_steps,l_RT_CCA_Kernel,&
+ use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,RT_IO_JPO_steps
+ use real_time,      ONLY:RT_step,l_RT_CCA_Kernel,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,& 
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, &
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_delta0_occupations,&
 &                         G_lesser_reference,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                         NE_time
- use SC,             ONLY:SC_bands,RT_nk
+&                         NE_time,RT_nk
+ use SC,             ONLY:SC_bands
  use IO_m,           ONLY:LOG,NONE
  use com,            ONLY:error,msg
  use YPP,            ONLY:OCC_deltaT,OCC_T_range
@@ -44,7 +45,7 @@ integer function RT_occ_check_and_load_ref(E,k)
  type(bz_samp)      :: k
  type(levels)       :: E
  !
- call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(1),imposed_COM=LOG)
+ call RT_OCC_LIFE_and_REF_IO(E,'G',k=k,Time=OCC_T_range(1),imposed_COM=LOG)
  !
  if (.not.allocated(RT_delta0_occupations)) call error('Occupations database not found in :'//trim(OCC_ctl(3))//' ')
  !
@@ -60,7 +61,7 @@ integer function RT_occ_check_and_load_ref(E,k)
    allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
  endif
  !
- call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(2))
+ call RT_OCC_LIFE_and_REF_IO(E,'G',k=k,Time=OCC_T_range(2))
  !
  if (OCC_deltaT<RT_IO_JPO_steps*RT_step) then
    ! 

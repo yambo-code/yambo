@@ -24,9 +24,9 @@
 subroutine RT_apply_RWA(ik,E,dT,dTp,dG_new_k,dG_old_k)
  !
  use pars,           ONLY:SP
- use SC,             ONLY:RT_ibz_coo,SC_bands,RT_all2ibz
+ use SC,             ONLY:SC_bands
  use electrons,      ONLY:levels
- use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,RT_Deph_Matrix
+ use real_time,      ONLY:RT_ibz_coo,RIM_ibz_coo,l_RT_uses_E_RIM,RT_Deph_Matrix,RT_all2ibz
  !
  implicit none
  !

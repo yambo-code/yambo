@@ -32,10 +32,10 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
- use SC,             ONLY:SC_bands,RT_nk
+ use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
  use real_time,      ONLY:l_RT_diamagnetic,l_NE_dynamics,l_NE_dynamics_started,&
-&                         RT_ind_J,RT_average_operator,RT_P
+&                         RT_ind_J,RT_average_operator,RT_P,RT_nk
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P
  use parallel_m,     ONLY:PAR_Xk_nibz

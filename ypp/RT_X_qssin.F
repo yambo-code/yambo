@@ -28,9 +28,11 @@ subroutine RT_X_qssin
  use pars,           ONLY:SP,DP,pi,schlen
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1
  use memory_m,       ONLY:mem_est
- use real_time,      ONLY:NE_steps,RT_step,RT_output
+ use rt_ctl,         ONLY:RT_output
+ use real_time,      ONLY:NE_steps,RT_step
  use fields,         ONLY:Efield,small_a,i_probe
  use LIVE_t,         ONLY:live_timing
+ !
  implicit none
  !
  ! Work Space

@@ -24,8 +24,8 @@
 subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,RIM,nK_mem)
  !
  use pars,           ONLY:SP,cI
- use SC,             ONLY:SC_bands,SC_nbands,RT_Nk_ibz,RT_nk,RT_ibz_coo
- use real_time,      ONLY:RIM_ibz_coo
+ use SC,             ONLY:SC_bands,SC_nbands
+ use real_time,      ONLY:RIM_ibz_coo,RT_Nk_ibz,RT_nk,RT_ibz_coo
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_n_states
  use electrons,      ONLY:n_sp_pol,levels

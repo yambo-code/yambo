@@ -33,7 +33,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  use electrons,     ONLY:n_sp_pol,spin
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp,k_the_nearest
+ use R_lattice,     ONLY:bz_samp
  use vec_operate,   ONLY:sort
  use QP_m,          ONLY:QP_t,QP_ctl_applied
  !
@@ -46,9 +46,9 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  !
  ! Work Space
  !
- integer  :: i1,i2,i_spin,ikbz,order(qp%nk),k_near(n_neigh),nk_interpolated,&
-&            nk_exact,i_err,ik_ref,ib_ref
- real(SP) :: idist(qp%nk),odist(qp%nk),k_dist(n_neigh)
+ real(SP), allocatable :: Vali(:,:),Valo(:,:,:,:)
+ integer  :: i1,ik,iband,i_spin,ikbz,order(qp%nk),k_near(n_neigh),nk_interpolated,&
+&            nk_exact,i_err,ik_ref,ib_ref,N_val_to_int
  !
  logical, external :: QP_check_if_corrected
  !
@@ -71,83 +71,47 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
    ! Nearest K-point interpolation
    !===============================
    !
-   do i1=1,k%nibz
-     !
-     k_near=0
-     k_dist=1.E5
-     idist=1.E5
-     !
-     do i2=1,qp%nk
-       do ikbz=1+sum(k%nstar(:i1-1)),sum(k%nstar(:i1))
-         idist(i2)=min(idist(i2),kmin_distance(qp%k(i2,:),k%ptbz(ikbz,:)))
-       enddo
-     enddo
-     !
-     if (qp%nk>1) then
-       call sort(idist,odist,order)
-       k_near(:min(qp%nk,n_neigh))=order(:min(qp%nk,n_neigh))
-       k_dist(:min(qp%nk,n_neigh))=odist(:min(qp%nk,n_neigh))
-     else
-       k_near(1)=1
-       k_dist(1)=idist(1)
-     endif
-     !
-     ! Transfer OR interpolate
-     !
-     ! First I check if there is an exact correposndance
-     ! between k%pt and qp%k. This exists when i_err==0
-     !
-     k_near(1)=k_the_nearest(k%pt(i1,:),qp%k,qp%nk,ROTATE_k_ref=.TRUE.,i_err=i_err)
-     if (i_err==0.and.n_neigh==1) then
-       call qp_transfer(k_near(1),i1,1)
-       nk_exact=nk_exact+1
-     else if (l_plan_todo_EWZI(4)) then
-       call qp_transfer(k_near,i1,n_neigh)
-       nk_interpolated=nk_interpolated+1
-     endif
-     !
-   enddo
+   call QP_transfer('init')
    !
-   call msg('sr','[QP] Kpts covered exactly  [o/o]:',real(nk_exact)/real(k%nibz)*100._SP)
-   if (l_plan_todo_EWZI(4).and.nk_interpolated>0) then
-     call msg('r','[Interpolate] Nighbours         :',n_neigh)
-     call msg('r','[Interpolate] Kpts covered [o/o]:',real(nk_interpolated)/real(k%nibz)*100._SP)
-   endif
+   call Nearest_kpt_interpolation(qp%nk,k%nibz,band_range,qp%n_states,N_val_to_int,n_neigh,&
+   &                              qp%table,qp%k,k%pt,Vali,Valo,'QP ')
+   !
+   call QP_transfer('appl')
    !
  else if (l_plan_todo_EWZI(5)) then
    !
    ! Nearest Level interpolation
    !===============================
    !
-   do i1=1,k%nibz
-     do i2=band_range(1),band_range(2)
+   do ik=1,k%nibz
+     do iband=band_range(1),band_range(2)
        do i_spin=1,n_sp_pol
          !
-         call Nearest_level_interpolation(En%Eo(i2,i1,i_spin)-minval(En%Eo(:,:,:)),&
+         call Nearest_level_interpolation(En%Eo(iband,ik,i_spin)-minval(En%Eo(:,:,:)),&
 &                                         qp%E_bare(:),qp%n_states,1,ib_ref,ik_ref,.TRUE.)
          !
          if (l_plan_todo_EWZI(1)) then
-           if (QP_check_if_corrected((/i2,i2/),(/i1,i1/),(/i_spin,i_spin/),en,'E')) cycle
-           en%E(i2,i1,i_spin)=en%Eo(i2,i1,i_spin)+qp%E(ib_ref)-qp%E_bare(ib_ref)
-           DB_corrected(i2,i1,i_spin)=1
+           if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
+           en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+qp%E(ib_ref)-qp%E_bare(ib_ref)
+           DB_corrected(iband,ik,i_spin)=1
          endif
          !
          if (l_plan_todo_EWZI(2)) then
-           if (QP_check_if_corrected((/i2,i2/),(/i1,i1/),(/i_spin,i_spin/),en,'W')) cycle
+           if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
            if (real(qp%E(ib_ref))>0..and.aimag(qp%E(ib_ref))>0) then
              if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
-             en%W(i2,i1,i_spin)=-aimag(qp%E(ib_ref))
+             en%W(iband,ik,i_spin)=-aimag(qp%E(ib_ref))
              wrong_width_sign_warn=.true.
            else
-             en%W(i2,i1,i_spin)=aimag(qp%E(ib_ref))
+             en%W(iband,ik,i_spin)=aimag(qp%E(ib_ref))
            endif
-           DB_corrected(i2,i1,i_spin)=1
+           DB_corrected(iband,ik,i_spin)=1
          endif
          !
          if (l_plan_todo_EWZI(3)) then
-           if (QP_check_if_corrected((/i2,i2/),(/i1,i1/),(/i_spin,i_spin/),en,'E')) cycle
-           en%Z(i2,i1,i_spin)=qp%Z(ib_ref)
-           DB_corrected(i2,i1,i_spin)=1
+           if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
+           en%Z(iband,ik,i_spin)=qp%Z(ib_ref)
+           DB_corrected(iband,i1,i_spin)=1
          endif
          !
        enddo
@@ -166,115 +130,82 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  !
  contains
    !
-   subroutine qp_transfer(ikqp,ik,n_neigh_)
-     integer :: n_neigh_,ikqp(n_neigh_),ik
+   subroutine QP_transfer(action_kind)
      !
-     ! Work Space
+     character(4) :: action_kind
      !
-     real(SP)   :: Dl(band_range(2),n_sp_pol),Wl(band_range(2),n_sp_pol)
-     complex(SP):: Zl(band_range(2),n_sp_pol)
-     integer    :: i3,i4,bqp
-     !
-     Dl=0.
-     Wl=0.
-     Zl=(0.,0.)
-     !
-     do i4=1,n_neigh_
-       do i3=1,qp%n_states
-         if (qp%table(i3,3)/=ikqp(i4)) cycle
-         bqp=qp%table(i3,1)
+     select case(action_kind)
+       !
+       case('init')
          !
-         i_spin=spin(qp%table(i3,:))
+         N_val_to_int=0
+         if(l_plan_todo_EWZI(1)) N_val_to_int=N_val_to_int+1
+         if(l_plan_todo_EWZI(2)) N_val_to_int=N_val_to_int+1
+         if(l_plan_todo_EWZI(3)) N_val_to_int=N_val_to_int+2
          !
-         if (bqp<band_range(1).or.bqp>band_range(2)) cycle
+         allocate(Vali(qp%n_states,N_val_to_int))
+         allocate(Valo(band_range(1):band_range(2),k%nibz,n_sp_pol,N_val_to_int))
+         Valo=0._SP
          !
-         if (l_plan_todo_EWZI(1)) Dl(bqp,i_spin)=Dl(bqp,i_spin)+real(qp%E(i3)-qp%E_bare(i3))
-         !
-         if (l_plan_todo_EWZI(2))then
-           if (real(qp%E(i3))>0..and.aimag(qp%E(i3))>0) then
-             if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
-             Wl(bqp,i_spin)=Wl(bqp,i_spin)-aimag(qp%E(i3))
-             wrong_width_sign_warn=.true.
-           else
-             Wl(bqp,i_spin)=Wl(bqp,i_spin)+aimag(qp%E(i3))
-           endif
+         i1=0
+         if(l_plan_todo_EWZI(1)) then
+           i1=i1+1
+           Vali(:,i1)=real(qp%E(:)-qp%E_bare(:))
+         endif
+         if(l_plan_todo_EWZI(2)) then
+           i1=i1+1
+           Vali(:,i1)=aimag(qp%E(:))
+         endif
+         if(l_plan_todo_EWZI(3)) then
+           i1=i1+2
+           Vali(:,i1-1)= real(qp%Z(:))
+           Vali(:,i1  )=aimag(qp%Z(:))
          endif
          !
-         if (l_plan_todo_EWZI(3)) Zl(bqp,i_spin)=Zl(bqp,i_spin)+qp%Z(i3)
-       enddo
-     enddo
-     do i3=band_range(1),band_range(2)
-       if (l_plan_todo_EWZI(1)) then
+       case('appl')
          !
-         if (any(Dl(i3,:)==0._SP)) cycle
-         do i_spin=1,n_sp_pol
-           !
-           if (QP_check_if_corrected((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
-           !
-           en%E(i3,ik,i_spin)=en%Eo(i3,ik,i_spin)+Dl(i3,i_spin)/real(n_neigh_)
-           !
+         do ik=1,k%nibz
+           do iband=band_range(1),band_range(2)
+             !
+             i1=0
+             if(l_plan_todo_EWZI(1)) then
+               i1=i1+1
+               do i_spin=1,n_sp_pol
+                 if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
+                 en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+Valo(iband,ik,i_spin,i1)
+               enddo
+               DB_corrected(iband,ik,i_spin)=1
+             endif
+             if(l_plan_todo_EWZI(2)) then
+               i1=i1+1
+               do i_spin=1,n_sp_pol
+                 if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
+                 if (Valo(iband,ik,i_spin,i1-1)>0. .and. Valo(iband,ik,i_spin,i1)>0) then
+                   if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
+                   en%W(iband,ik,i_spin)=-Valo(iband,ik,i_spin,i1)
+                   wrong_width_sign_warn=.true.
+                 else
+                   en%W(iband,ik,i_spin)=Valo(iband,ik,i_spin,i1)
+                 endif
+               enddo
+               DB_corrected(iband,ik,i_spin)=1
+             endif
+             if(l_plan_todo_EWZI(3)) then
+               i1=i1+2
+               do i_spin=1,n_sp_pol
+                 if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle
+                 en%Z(iband,ik,i_spin)=cmplx(Valo(iband,ik,i_spin,i1-1),Valo(iband,ik,i_spin,i1))
+               enddo
+               DB_corrected(iband,ik,i_spin)=1
+             endif
+             !
+           enddo
          enddo
          !
-         DB_corrected(i3,ik,:)=1
+         deallocate(Vali,Valo)
          !
-       endif
-     enddo
-     do i3=band_range(1),band_range(2)
-       if (l_plan_todo_EWZI(2)) then
-         !
-         do i_spin=1,n_sp_pol
-           !
-           if (QP_check_if_corrected((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
-           !
-           en%W(i3,ik,i_spin)=Wl(i3,i_spin)/real(n_neigh_)
-           !
-         enddo
-         !
-         DB_corrected(i3,ik,:)=1
-         !
-       endif
-     enddo
-     do i3=band_range(1),band_range(2)
-       if (l_plan_todo_EWZI(3)) then
-         !
-         do i_spin=1,n_sp_pol
-           !
-           if (QP_check_if_corrected((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle
-           !
-           en%Z(i3,ik,i_spin)=Zl(i3,i_spin)/real(n_neigh_)
-           !
-         enddo
-         !
-         DB_corrected(i3,ik,:)=1
-         !
-       endif
-     enddo
+     end select
      !
    end subroutine
-   !
-   real(SP) function kmin_distance(k,p) ! k/p are iku
-     use pars
-     use vec_operate,  ONLY:iku_v_norm,c2a
-     use R_lattice,    ONLY:b
-     implicit none
-     real(SP) :: k(3),p(3) 
-     !
-     ! Work Space
-     !
-     integer :: i1,i2,i3
-     integer,parameter :: ni=2
-     real(SP) :: di(3),da(3)
-     di=k-p
-     call c2a(b,di,da,'ki2a')
-     kmin_distance=iku_v_norm(di)
-     do i1=-ni,ni
-       do i2=-ni,ni
-         do i3=-ni,ni
-           call c2a(b,da(:)-(/i1,i2,i3/),di,'ka2c')
-           kmin_distance=min(kmin_distance,iku_v_norm(di))
-         enddo
-       enddo
-     enddo
-   end function
    !
 end subroutine

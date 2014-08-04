@@ -50,7 +50,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
-&                     filled_tresh, l_spin_orbit,n_spin_den,        &
+&                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn
  use parallel_m, ONLY:master_cpu,ncpu,CPU_str_reset
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
@@ -81,8 +81,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND, GS_exx_FRACTION 
 #if defined _SC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
-&                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,RT_nk,&
-&                     l_Mean_Potential,l_RT_occupations_in_use,SC_up_W_iters,l_SC_diagonal,&
+&                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
+&                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
 &                     l_SC_nl_mix,l_sc_pot_is_local
  use collision,  ONLY:COLLISIONS_cutoff
 #endif
@@ -96,7 +96,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,           &
 &                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
-&                     RIM_EE_percent,RT_scatt_tresh,integrator_step
+&                     RIM_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,l_RT_occupations_in_use
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,theta_function_iTo_ref,i_Pump,i_Probe
  use plasma,     ONLY:Plasma_redux_percent
 #endif
@@ -314,6 +314,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_spin_orbit       = .false.
  BZ_RIM_nbands=0
  BZ_RIM_tot_nkpts=0
+ BZ_ASSOCIATED_nkpts=0
  filled_tresh=0.00001
  !
  ! Magnetization
@@ -497,7 +498,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  compatible_SC_DB=.FALSE.
  found_SC_DB=.FALSE.
  l_Mean_Potential=.FALSE.
- l_RT_occupations_in_use=.FALSE.
  COLLISIONS_cutoff=0.001
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
@@ -519,6 +519,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
    call Efield_reset(Efield(i1))
  enddo
  theta_function_iTo_ref=-2
+ !
+ l_RT_occupations_in_use=.FALSE.
  !
  ! RT dynamics 
  !

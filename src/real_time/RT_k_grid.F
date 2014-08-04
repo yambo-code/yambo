@@ -40,10 +40,10 @@ integer function RT_k_grid(E,k,q)
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
  use LIVE_t,         ONLY:what_is_running
- use SC,             ONLY:RT_ibz_coo,RT_all2ibz,RT_Nk_ibz
  use electrons,      ONLY:levels,BZ_RIM_nkpt
  use real_time,      ONLY:RIM_bz_coo,RIM_ibz_coo,RIM_EE_scatt_table,&
-&                         RIM_EE_percent,RIM_EE_Nk_table
+&                         RIM_EE_percent,RIM_EE_Nk_table,RT_ibz_coo,&
+&                         RT_all2ibz,RT_Nk_ibz
  use R_lattice,      ONLY:bz_samp
  !
  implicit none

@@ -58,7 +58,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  type(bz_samp):: Xk
  complex(SP)  :: Wd
  integer      :: iq
- logical      :: FILL_the_groups
+ logical      :: FILL_the_groups,l_check
  !
  ! Work Space
  !
@@ -127,9 +127,12 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
                  !
                endif
                !
-               if (.not.PAR_IND_T_groups%element_1D(i_T_group_now).and.&
-&                  .not.any( PAR_IND_T_ordered%element_2D(:,i_T_group_now)).and.&
-&                  .not.(BS_K_coupling.and.any( PAR_IND_T_all%element_2D(:,i_T_group_now) ))) cycle
+               l_check=PAR_IND_T_groups%element_1D(i_T_group_now).or.&
+&                      any( PAR_IND_T_ordered%element_2D(:,i_T_group_now))
+               !
+               if(BS_k_coupling) l_check=l_check .or. any( PAR_IND_T_all%element_2D(:,i_T_group_now) )
+               !
+               if ( .not. l_check ) cycle
                !
                if (i_T_group_now/=i_T_group_last) then
                  !

@@ -27,8 +27,7 @@ subroutine RT_BGR(G,E,k)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
- use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,V_hartree_sc,V_xc_sc,rho_n,&
-&                         RT_ibz_coo,RT_all2ibz
+ use SC,             ONLY:SC_bands,V_hartree_sc,V_xc_sc,rho_n
  use R_lattice,      ONLY:nkibz,bz_samp
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -39,8 +38,8 @@ subroutine RT_BGR(G,E,k)
  use wave_func,      ONLY:WF
  use real_time,      ONLY:G_lesser_reference,l_initial_equilibrium,REF_V_xc_sc,BGR,&
 &                         REF_V_hartree_sc,REF_QP_Vnl_xc,BGR_Hartree,BGR_V_xc,BGR_Self_Energy,&
-&                         l_RT_uses_E_RIM,RIM_ibz_coo,E_reference,&
-&                         eval_DENSITY,eval_HARTREE,eval_DFT
+&                         l_RT_uses_E_RIM,RIM_ibz_coo,E_reference,RT_nk,RT_ibz_coo,&
+&                         eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_all2ibz
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait

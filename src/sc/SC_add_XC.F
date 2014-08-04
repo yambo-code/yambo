@@ -41,7 +41,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use X_m,            ONLY:X_t
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use SC,             ONLY:V_xc_sc,l_sc_pot_is_local,SC_kind,SC_xc_functional,SC_cycle_mixing,&
-&                         G_lesser,SC_bands,SC_R,H_rotate,l_oep_iterative
+&                         SC_bands,SC_R,H_rotate,l_oep_iterative
  use FFT_m,          ONLY:fft_size
  use IO_m,           ONLY:IO_and_Messaging_switch
  !
@@ -59,6 +59,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  integer      :: ib,ik
  logical      :: l_call_pot_driver
+ complex(SP)  :: G_collisions(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk,2)
  !
  type(QP_t)   :: qp_dummy
  !
@@ -71,18 +72,18 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    !
    if(l_use_collisions) then
      !     
-     G_lesser=(0.,0.)
-     forall(ib=1:SC_bands(2),ik=1:E%nk) G_lesser(ib,ib,ik,1)=(0._SP,1._SP)*E%f(ib,ik,1)
-     forall(ib=1:SC_bands(2),ik=1:E%nk) G_lesser(ib,ib,ik,2)=(0._SP,1._SP)*(E%f(ib,ik,1)-1.)
+     G_collisions=(0.,0.)
+     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_collisions(ib,ib,ik,1)=(0._SP,1._SP)*E%f(ib,ik,1)
+     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_collisions(ib,ib,ik,2)=(0._SP,1._SP)*(E%f(ib,ik,1)-1.)
      !
-     ! Now I build the G_lesser rotating the non interaction one
-     ! G_lesser(ib,ib,ik)=(0.,1)*en%f(ib,ik)
+     ! Now I build the G_collisions rotating the non interaction one
+     ! G_collisions(ib,ib,ik)=(0.,1)*en%f(ib,ik)
      !  
      do ik=1,E%nk
-       call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik,1),SC_bands(2),-1)
-       call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik,2),SC_bands(2),-1)
+       call H_rotate(SC_R(:,:,ik,1),G_collisions(:,:,ik,1),SC_bands(2),-1)
+       call H_rotate(SC_R(:,:,ik,1),G_collisions(:,:,ik,2),SC_bands(2),-1)
      enddo
-     call COLLISIONS_compose(G_lesser(:,:,:,1),G_lesser(:,:,:,2))
+     call COLLISIONS_compose(G_collisions(:,:,:,1),G_collisions(:,:,:,2))
      !    ==========
    else
      !

@@ -36,13 +36,14 @@ subroutine RT_driver(E,X,k,q)
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,SC_bands,it_now,l_sc_pot_is_local,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho,&
 &                         SC_QP_setup
+ use rt_ctl,         ONLY:RT_output,RT_alloc_ctl,RT_free_ctl,RT_IO_G_steps,ID,it_start
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser, &
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
-&                         NE_i_time,l_RT_diagonalize,RT_IO_G_steps,l_RT_skip_impose,&
+&                         NE_i_time,l_RT_diagonalize,l_RT_skip_impose,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
-&                         it_start,RT_output,NE_time,l_NE_dynamics_started,RT_update,&
+&                         NE_time,l_NE_dynamics_started,RT_update,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update,&
-&                         dG_lesser,ID,l_BGR,l_initial_equilibrium
+&                         dG_lesser,l_BGR,l_initial_equilibrium
  use plasma,          ONLY:Plasma_free,EH_gas
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO
  use memory_m,        ONLY:mem_est
@@ -147,6 +148,7 @@ subroutine RT_driver(E,X,k,q)
  ! Core allocations
  !
  call RT_alloc(E)
+ call RT_alloc_ctl()
  !
  ! Restart from a previous RT run or from a SC calculation
  ! 
@@ -208,6 +210,7 @@ subroutine RT_driver(E,X,k,q)
  if (it_start>=Thermal_steps+NE_steps) then
    !      
    call RT_free()
+   call RT_free_ctl()
    !
    call WF_free(WF)
    !
@@ -306,8 +309,6 @@ subroutine RT_driver(E,X,k,q)
    !=========================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,it_mem),on_the_fly_operators)
    !
-#if defined _ELPH
-   !
    ! Update Bose Temp and Phonons distribution
    !===========================================
    if (l_Debye_TBose_update) then
@@ -319,8 +320,6 @@ subroutine RT_driver(E,X,k,q)
        E_previous=E_now
      endif
    endif
-   !
-#endif
    !
    ! Calculate Collisions and fill SC_R, Ho_plus_Sigma, H_nl_sc
    !============================================================
@@ -411,6 +410,7 @@ subroutine RT_driver(E,X,k,q)
  ! Finalize
  !-----------
  call RT_free()
+ call RT_free_ctl()
  !
  call WF_free(WF)
  call Plasma_free(EH_gas)

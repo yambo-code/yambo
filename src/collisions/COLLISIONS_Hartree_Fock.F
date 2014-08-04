@@ -38,12 +38,11 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
 &                        HF_collisions,nHF_collisions
  use QP_m,          ONLY:QP_ng_Sx,QP_table,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
- use SC,            ONLY:SC_bands
+ use SC,            ONLY:SC_bands,B_mat_index
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
  use fragments,     ONLY:fragment_status
- use real_time,     ONLY:B_mat_index
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:WF_load
  use wrapper,       ONLY:V_dot_V

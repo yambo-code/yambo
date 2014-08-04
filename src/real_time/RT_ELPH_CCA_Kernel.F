@@ -25,13 +25,13 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
  !  
  use pars,           ONLY:SP,zero_dfl,rZero
  use electrons,      ONLY:levels,n_full_bands,spin_occ
- use SC,             ONLY:SC_bands,RT_ibz_coo,RT_Nk_ibz
+ use SC,             ONLY:SC_bands,B_mat_index
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         B_mat_index,l_RT_uses_E_RIM,RIM_ibz_coo,RT_occupations_locked,&
+&                         l_RT_uses_E_RIM,RIM_ibz_coo,RT_occupations_locked,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_delta_occupations,l_initial_equilibrium,q_weight_RT,&
-&                         RT_eh_en,RT_scatt_tresh
+&                         RT_eh_en,RT_scatt_tresh,RT_ibz_coo,RT_Nk_ibz
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
  !
  implicit none

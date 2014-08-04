@@ -146,6 +146,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
  endif
  if (half_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
+
  !
  ! Mem est of Xo_residual (to be done here and not in the omp parallel)
  !------------------------
@@ -157,10 +158,20 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 !$omp parallel default(shared), &
 !$omp &        private( i_cg, Drude_pole,GreenF,n_poles, i_bg, Xo_residual, &
 !$omp &                 ikbz,iv,ic,i_spin,ik,is,ikpbz,ikp,isp, eh_occ, ik_bz_mem, &
-!$omp &                 rhotw_save, isave, ig1,ig2, iw ), &
-!$omp &        firstprivate( isc )
+!$omp &                 rhotw_save, isave, ig1,ig2, iw, isc )
  !
  call OPENMP_update(master_thread) 
+
+ !
+ ! Here I prepare the scattering module
+ ! The nullify statements seem to be needed to properly initialize isc
+ ! in the omp section. Not sure this is a bug of the intel openmp. AF
+ !
+ nullify(isc%gamp)
+ nullify(isc%rhotw)
+ !
+ call collision_reset(isc)
+
  !
  ! Timing
  !========
@@ -174,12 +185,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #else
  call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_X)
 #endif
- !
- ! Here I prepare the scattering module
- !                    =================
- ! Note the collision_reset destrois the bw_plan
- !
- call collision_reset(isc)
  !
  ! MAIN LOOP
  !===========

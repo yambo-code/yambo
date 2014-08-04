@@ -33,7 +33,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  use com,                 ONLY:msg,of_open_close,error,warning
  use vec_operate,         ONLY:v_norm,c2a,k2bz,v_is_zero
  use YPP,                 ONLY:BZ_RIM_nkpts,RIM_DB1_paths,K_transform,MAX_RIM_DBs,n_RIM_DBs
- use electrons,           ONLY:levels,default_nel,n_bands,&
+ use electrons,           ONLY:levels,default_nel,n_bands,BZ_ASSOCIATED_nkpts,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
 &                              BZ_RIM_tot_nkpts,n_sp_pol,BZ_RIM_max_filling,&
 &                              BZ_RIM_ipol_weight,E_reset,RIM_is_symmetry_expanded
@@ -49,7 +49,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  real(SP)     ::rand_k(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
 &               gap(2),tmp_zero(3)
- integer      ::i1,ik_near,is_near,i2,RIM_nk,ik_bz,ik_RIM
+ integer      ::i1,ik_near,ik_near_ibz,is_near,i2,RIM_nk,ik_bz,ik_RIM
  logical           :: No_Weight,l_skip_check
  integer,  allocatable :: BZ_SYM_table(:,:)
  real(SP), allocatable :: rand_E(:,:,:)
@@ -229,6 +229,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  RIM_nk=RIM_k(i_db_merge)%nibz
  BZ_RIM_tot_nkpts=RIM_k(i_db_merge)%nibz+Xk%nbz-1
+ BZ_ASSOCIATED_nkpts=Xk%nbz
  !
  if (RIM_is_symmetry_expanded) then
    !
@@ -289,7 +290,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
        BZ_RIM_nkpt(ik_near)=BZ_RIM_nkpt(ik_near)+1
        if (allocated(BZ_RIM_table)) BZ_RIM_table(ik_near,BZ_RIM_nkpt(ik_near))=RIM_k(i_db_merge)%sstar(i1,1)
      else
-       ik_near =Xk%s_table( k_the_nearest(RIM_k(i_db_merge)%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is_near) , 1)
+       ik_near_ibz = k_the_nearest(RIM_k(i_db_merge)%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is_near)
+       ik_near     = Xk%k_table(ik_near_ibz,1)
        BZ_RIM_nkpt(ik_near)=BZ_RIM_nkpt(ik_near)+1
        if (allocated(BZ_SYM_table)) BZ_SYM_table(ik_near,BZ_RIM_nkpt(ik_near))=is_near
        if (allocated(BZ_RIM_table)) BZ_RIM_table(ik_near,BZ_RIM_nkpt(ik_near))=i1+1

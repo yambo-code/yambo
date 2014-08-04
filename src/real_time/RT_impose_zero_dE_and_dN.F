@@ -26,12 +26,12 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,RT_nk,RT_ibz_coo,RT_Nk_ibz
+ use SC,             ONLY:SC_bands
  use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,Imp_factors, &
 &                         RT_E_occupations,RT_H_occupations,REF_lifetime,&
 &                         l_initial_equilibrium,RT_delta0_occupations,&
 &                         l_RT_EE_impose_E,RT_E_occupations_reference,&
-&                         RT_H_occupations_reference
+&                         RT_H_occupations_reference,RT_nk,RT_ibz_coo,RT_Nk_ibz
  !
  implicit none
  !

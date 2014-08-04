@@ -34,7 +34,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
-&                         plot_title,l_dos,l_RT_dos,l_RT_occ_Bands,&
+&                         plot_title,l_dos,l_RT_dos,l_RT_occ_Bands,l_RT_life_Bands,&
 &                         l_bands
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
@@ -48,6 +48,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #endif
 #if defined _YPP_RT
  use YPP,            ONLY:l_RT_occ_Plot,l_RT_occ_Fit
+ use real_time,      ONLY:RT_nk
 #endif
 #if defined _YPP_ELPH
  use YPP,            ONLY:elph_residual_treshold
@@ -103,7 +104,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  if (.not.flag) flag=l_mean_potential
 #endif
 #if defined _YPP_RT 
- if (.not.flag) flag=any((/l_RT_dos,l_RT_occ_Bands,l_RT_occ_Plot,l_RT_occ_Fit/))
+ if (.not.flag) flag=any((/l_RT_dos,l_RT_life_Bands,l_RT_occ_Bands,l_RT_occ_Plot,l_RT_occ_Fit/))
 #endif
  !
  if (.not.flag) return
@@ -115,7 +116,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  nb_to_load=(/1,Xen%nbm/)
  nkpt_to_load=(/1,Xk%nibz/)
  !
- flag=any((/l_sp_wf,l_bands,l_RT_occ_Bands/))
+ flag=any((/l_sp_wf,l_bands,l_RT_occ_Bands,l_RT_life_Bands/))
  !===
 #if defined _YPP_MAGNETIC
  if (.not.flag) flag=any((/l_angular_momentum,l_position/))
@@ -188,7 +189,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! BANDS interpolation
  !======================
  !
- if(l_bands.or.l_RT_occ_Bands) then
+ if(l_bands.or.l_RT_occ_Bands.or.l_RT_life_Bands) then
    if ( i_time_rev==1) call error('Bands interpolation does not work with T-rev symmetry')
    call electrons_bands(Xk,Xen,nb_to_load)
  endif

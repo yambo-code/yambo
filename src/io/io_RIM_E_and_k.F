@@ -26,7 +26,7 @@ integer function io_RIM_E_and_k(E,Xk,ID)
  use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_max_filling,&
 &                         BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol,BZ_RIM_ipol_weight,&
-&                         RIM_is_symmetry_expanded
+&                         RIM_is_symmetry_expanded,BZ_ASSOCIATED_nkpts
  use R_lattice,      ONLY:nXkbz,bz_samp
  use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
@@ -41,13 +41,20 @@ integer function io_RIM_E_and_k(E,Xk,ID)
  if (io_RIM_E_and_k/=0) goto 1
  !
  io_RIM_E_and_k=io_header(ID)
- if (ver_is_gt_or_eq(ID,revision=2740)) then
+ if (ver_is_gt_or_eq(ID,revision=3560)) then
+   call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=1)
+ else if (ver_is_gt_or_eq(ID,revision=2740)) then
    call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=1)
  else
    call io_elemental(ID,VAR="PARS",VAR_SZ=3,MENU=1)
  endif
  call io_elemental(ID,I0=BZ_RIM_nbands,    VAR=' Bands                           :')
  call io_elemental(ID,I0=BZ_RIM_tot_nkpts, VAR=' BZ RIM k-points                 :')
+ if (ver_is_gt_or_eq(ID,revision=3560)) then
+   call io_elemental(ID,I0=BZ_ASSOCIATED_nkpts, VAR=' BZ ASSOCIATED k-points          :')
+ else
+   BZ_ASSOCIATED_nkpts=nXkbz
+ endif
  call io_elemental(ID,I0=BZ_RIM_max_filling,VAR=' BZ Blocks max filling           :')
  if (ver_is_gt_or_eq(ID,revision=2740)) then
    call io_elemental(ID,L0=RIM_is_symmetry_expanded,VAR=' Points expanded in the BZ       :')
@@ -59,7 +66,7 @@ integer function io_RIM_E_and_k(E,Xk,ID)
    allocate(E%W_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
    allocate(E%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
    if (.not.RIM_is_symmetry_expanded) allocate(Xk%ptbz_RIM(BZ_RIM_tot_nkpts,3))
-   allocate(BZ_RIM_nkpt(nXkbz),BZ_RIM_table(nXkbz,BZ_RIM_max_filling))
+   allocate(BZ_RIM_nkpt(BZ_ASSOCIATED_nkpts),BZ_RIM_table(BZ_ASSOCIATED_nkpts,BZ_RIM_max_filling))
    allocate(BZ_RIM_ipol_weight(BZ_RIM_max_filling))
    call mem_est("E_RIM W_RIM f_RIM k_RIM BZ_RIM_nkpt BZ_RIM_table",&
 &               (/size(E%E_RIM),size(E%W_RIM),size(E%f_RIM),size(Xk%ptbz_RIM),size(BZ_RIM_nkpt),&

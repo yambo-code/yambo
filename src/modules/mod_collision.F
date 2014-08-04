@@ -34,7 +34,7 @@ module collision
  type ggwinfo
    !
    !  is(3)=(ib,ik,is,isp) --<--:--<-- os(3)=(ob,ok,os,osp)
-   !                             :
+   !                            :
    !                           /:\ iqs=(ig0,iq,is)
    !                            :
    !  iq_is = bz(ik_is-ok_os)+Go

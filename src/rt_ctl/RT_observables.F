@@ -28,11 +28,12 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_hf,l_sc_is_libDFT,l_sc_cohsex,&
 &                         l_elel_scatt,l_elph_scatt
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:V_hartree_sc,Ho,SC_bands,RT_nk,RT_Nk_ibz,RT_ibz_coo
- use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations
  use X_m,            ONLY:P_square
- use real_time,      ONLY:XC0_and_HARTREE0,REF_V_xc_sc,RT_average_operator,           &
-&                         RIM_ibz_coo,l_RT_uses_E_RIM,RT_do_IO,   &
+ use SC,             ONLY:V_hartree_sc,Ho,SC_bands
+ use rt_ctl,         ONLY:RT_do_IO
+ use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations,RT_nk,RT_Nk_ibz,RT_ibz_coo,&
+&                         XC0_and_HARTREE0,REF_V_xc_sc,RT_average_operator,           &
+&                         RIM_ibz_coo,l_RT_uses_E_RIM,   &
 &                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,&
 &                         RT_H_occupations,G_lesser_reference
  use electrons,      ONLY:levels

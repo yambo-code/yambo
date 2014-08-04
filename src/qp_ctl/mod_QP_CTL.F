@@ -107,8 +107,8 @@ module QP_CTL_m
      use global_XC,     ONLY:setup_global_XC,MORE_SCISSOR,MORE_SCIS_AND_STRE,MORE_STRETCH,&
 &                            K_kind,K_xc_functional,MORE_NONE,G_kind,G_xc_functional,&
 &                            X_kind,X_xc_functional,QP_DB_kind,SE_NONE
-#if defined _SC
-     use SC,            ONLY:l_RT_occupations_in_use
+#if defined _RT
+     use real_time,     ONLY:l_RT_occupations_in_use
 #endif
      use interfaces,    ONLY:OCCUPATIONS_Gaps
      integer       ::band_range(2)
@@ -311,9 +311,9 @@ module QP_CTL_m
        !
        if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
        !
-#if defined _SC
+#if defined _RT
        if (.not.l_RT_occupations_in_use) call OCCUPATIONS_Fermi(en,k,1)
-#endif      
+#endif
 #if !defined _SC
        call OCCUPATIONS_Fermi(en,k,1)
 #endif      

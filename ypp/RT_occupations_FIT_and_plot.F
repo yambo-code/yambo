@@ -28,7 +28,7 @@ subroutine RT_occupations_FIT_and_plot(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  use units,          ONLY:HA2EV,HA2KEL,FS2AUT
  use pars,           ONLY:SP,schlen
  use YPP,            ONLY:OCC_T_range,OCC_deltaT
- use SC,             ONLY:SC_bands,RT_nk,RT_nstates,RT_ibz_coo
+ use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_table,QP_n_states
  use D_lattice,      ONLY:Bose_Temp
  use electrons,      ONLY:levels,spin,spin_occ,filled_tresh
@@ -36,6 +36,7 @@ subroutine RT_occupations_FIT_and_plot(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative,Fermi_fnc_fit
  use com,            ONLY:msg,of_open_close,error
  use stderr,         ONLY:intc,real2ch
+ use real_time,      ONLY:RT_nk,RT_nstates,RT_ibz_coo
  !
  implicit none
  !

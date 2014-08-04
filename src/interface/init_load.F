@@ -54,9 +54,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use collision,     ONLY:COLLISIONS_cutoff
 #endif
 #if defined _RT
+ use rt_ctl,        ONLY:RT_IO_time
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,NE_tot_time,RT_life_interp_steps,RT_life_interp_decay_time,&
-&                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_IO_time,RT_scatt_tresh,&
+&                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_scatt_tresh,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
 &                        Gr_kind,two_alpha,RIM_EE_percent
  use fields,        ONLY:Efield

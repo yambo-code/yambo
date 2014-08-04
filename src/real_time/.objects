@@ -1,27 +1,15 @@
-ELPH_objects =
-#if defined _ELPH 
-ELPH_objects = RT_ELPH_initialize.o RT_ELPH_Kernel.o 
-#endif
-objs = 
-ELPH_objs =
-#if defined _ELPH
 ELPH_objs =  RT_ELPH_zeroing.o RT_ELPH_gkkp_remap.o RT_ELPH_initialize.o \
              RT_ELPH_eq_Kernel.o RT_ELPH_CCA_Kernel.o RT_ELPH_out_of_eq_Kernel.o \
-             RT_ELPH_total_Kernel.o RT_occupations_FIT.o
-#endif
-#if defined _RT
+             RT_ELPH_total_Kernel.o
+
 objs = RT_initialize.o RT_k_grid.o RT_start_and_restart.o RT_update.o \
        RT_manual_excitation.o RT_driver.o RT_apply_field.o RT_Collision.o RT_Integrator.o \
        RT_build_I1_and_I2.o RT_build_U1_and_U2.o RT_EULEREXP_step.o RT_EULER_step.o RT_INTERPOLATED_step.o RT_Scattering_step.o \
-       RT_observables.o RT_output.o RT_propagate_fields.o \
-       RT_current_AND_polarization.o RT_mean_carrier_lifetimes.o \
-       RT_average_operator.o RT_databases_IO.o RT_Ext_fields.o \
-       RT_Field_Commensurable_Frequencies.o \
+       RT_propagate_fields.o RT_current_AND_polarization.o \
+       RT_Ext_fields.o RT_Field_Commensurable_Frequencies.o \
        RT_G_retarded_time.o  RT_G_retarded_convolution.o RT_Dephasing_Matrix.o RT_relaxation.o \
-       RT_Fluence.o \
-       RT_Coulomb_relaxation.o \
+       RT_Fluence.o RT_Coulomb_relaxation.o \
        RT_Lifetimes_evaluation_plan.o RT_Lifetimes_Interpolation.o RT_Lifetimes_Interpolation.o \
        RT_Lifetimes_merge.o RT_Lifetimes_save_and_interp.o \
        RT_Lifetimes_use_delta_Occupations.o \
        RT_apply_RWA.o RT_impose_zero_dE_and_dN.o $(ELPH_objs) RT_BGR.o
-#endif

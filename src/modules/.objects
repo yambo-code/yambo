@@ -1,6 +1,10 @@
 #if defined _SC
 SC_objects       = mod_SC.o
-RT_objects       = mod_real_time.o
+#endif
+#if defined _RT
+RT_objects       = mod_real_time.o mod_RT_CTL.o
+#endif
+#if defined _MAGNETIC
 MAGNETIC_objects = mod_magnetic.o
 #endif
 #if defined _KERR 

@@ -97,8 +97,10 @@ subroutine ypp_init_load(defs)
 #if defined _YPP_RT
  call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
  call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
+ call it('r',defs,'RTabs',        '[R] Transient absorption')
  call it('r',defs,'RTcarrDos',    '[R] Analize time-dependent DOS')
- call it('r',defs,'RToccBnd',     '[R] Analize time-dependent occupations of Bands')
+ call it('r',defs,'RToccBnd',     '[R] Analize time-dependent occupations fitted on Bands')
+ call it('r',defs,'RTlifeBnd',    '[R] Analize REF lifetimes fitted on Bands')
  call it('r',defs,'RToccPlot',    '[R] Plot time-dependent occupations')
  call it('r',defs,'RToccFit',     '[R] Fit occupations distribution at given time')
 #endif
@@ -128,6 +130,11 @@ subroutine ypp_init_load(defs)
  call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit(1))
  call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit(1))
  call it('f',defs,'OCCgroup','NEGF If RIM is used group occupations')
+ !
+ ! TRANSIENT ABSORPTION
+ !
+ call it('f',defs,'Transmission','Compute the transient transmissions')
+ call it('f',defs,'Reflectivity','Compute the transient absorption')
  !
 #endif
  !
@@ -169,6 +176,7 @@ subroutine ypp_init_load(defs)
  call it('f',defs,'ForceUserPts', ' Do not check the correcteness of the user points') 
  call it('f',defs,'ListPts',      ' List the internal q/k points also in the parser format') 
  call it('f',defs,'ExpandPts',    ' Expand the internal q/k points in the BZ') 
+ call it('f',defs,'DipWeight',    ' Weight the contribution to the exciton WFs with the dipoles') 
  !
  ! WFs
  !

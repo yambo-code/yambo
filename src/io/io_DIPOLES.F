@@ -24,6 +24,7 @@
 integer function io_DIPOLES(X,Xen,ID)
  !
  use pars,          ONLY:SP,schlen
+ use drivers,       ONLY:l_real_time,l_eval_collisions
  use X_m,           ONLY:X_t,DIP_iR,X_alloc,Dipole_bands_ordered
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:nXkibz
@@ -51,7 +52,7 @@ integer function io_DIPOLES(X,Xen,ID)
  real(SP),allocatable :: DIP_iR_disk(:,:,:)
  !
 #if defined _RT
- io_DIP=.FALSE.
+ if(l_real_time.or.l_eval_collisions) io_DIP=.FALSE.
 #endif
  !
  if (.not.io_DIP) then

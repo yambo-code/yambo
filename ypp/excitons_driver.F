@@ -25,20 +25,23 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:BO2ANG
+ use parser_m,      ONLY:parser
  use stderr,        ONLY:intc
  use FFT_m,         ONLY:fft_dim
  use D_lattice,     ONLY:a,alat
  use wave_func,     ONLY:WF,WF_symm,wf_ng
- use R_lattice,     ONLY:nXkibz,bz_samp
- use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
+ use R_lattice,     ONLY:nXkibz,bz_samp,q_norm,bare_qpg
+ use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_RT_abs,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
 &                        excitons_sort_and_report,l_amplitude,l_free_hole,&
 &                        output_fname,use_xcrysden,use_gnuplot,use_cube,plot_dim
 #if defined _YPP_ELPH
  use YPP,           ONLY:l_eliashberg,l_gkkp
 #endif
+ use interfaces,    ONLY:PARALLEL_global_indexes
+ use QP_CTL_m,      ONLY:QP_apply
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
- use BS,            ONLY:BS_K_dim,BS_bands,BS_q,&
+ use BS,            ONLY:BS_K_dim,BS_bands,BS_q,BSS_q0,&
 &                        BSS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
 &                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db,&
 &                        BSS_n_descs,BSS_description
@@ -46,13 +49,14 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index,WF_load
  use com,           ONLY:msg,error,warning,of_open_close
- use X_m,           ONLY:X_t
+ use X_m,           ONLY:X_t,DIP_q_dot_iR
  use memory_m,      ONLY:mem_est
  use LIVE_t,        ONLY:live_timing
  use vec_operate,   ONLY:c2a
  use wrapper,       ONLY:V_dot_V
  !
  implicit none
+ !
  type(bz_samp) ::Xk,k,q
  type(levels)  ::Xen,en
  !
@@ -90,8 +94,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !... I/0
  !
  integer           ::io_err,ID,io_ID
- integer, external ::io_BSS_diago,io_BS
- type(X_t)         ::Xbsk
+ integer, external ::io_BSS_diago,io_BS,io_DIPOLES
+ type(X_t)         ::Xbsk,Xdip
  !
  !... Energies and Residulas
  !
@@ -109,16 +113,26 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  !... Variables needed to the report of eigenvectors
  !
+ logical          :: l_weight_with_dipoles
+ complex(SP)      :: dip_factor,Wd
  real(SP), allocatable ::A_weight(:)
  !
  ! Here I read information from the BS database
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_err=io_BS(1,Xbsk,io_ID)
+ !
  if (io_err/=0) return
+ !
+ ! Apply quasi-particle correction if presents
+ ! 
+ call QP_apply(BS_bands,Xen,Xk,'G',msg_fmt='s')
+ !
  if (BS_cpl_K_exchange) BS_cpl_mode='x'
  if (BS_cpl_K_corr) BS_cpl_mode='c'
  if (BS_cpl_K_exchange.and.BS_cpl_K_corr) BS_cpl_mode='xc'
+ !
+ call parser('DipWeight',l_weight_with_dipoles)
  !
  BS_H_dim=BS_K_dim
  if (BS_K_coupling) BS_H_dim=2*BS_K_dim
@@ -127,7 +141,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  n_lambda = get_lambda()
  !
- if (.not.any((/l_sort,(l_exc_wf.and.n_lambda>0),(l_amplitude.and.n_lambda>0),l_spin&
+ if (.not.any((/l_sort,(l_exc_wf.and.n_lambda>0),(l_amplitude.and.n_lambda>0),l_spin,l_RT_abs &
 #if defined _YPP_ELPH
 &              ,l_eliashberg,l_gkkp/))) return
 #else
@@ -167,8 +181,19 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
  io_err=io_BSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
  !
- ! Create the anti-resonant part of the eh_table
+ if(l_weight_with_dipoles) then
+   !call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+   !io_err=io_DIPOLES(Xdip,Xen,io_ID)
+   !allocate(q_norm(1),bare_qpg(1,1))
+   !Wd=(0._SP,0._SP)
+   !call K_Transitions_setup(1,Xen,Xk,Wd,.false.)
+   !call PARALLEL_global_indexes(Xen,Xk,q,"Response_T_space",X=Xdip)
+   !call Dipole_driver(Xen,Xk,Xdip,BSS_q0)
+   !deallocate(q_norm,bare_qpg)
+ endif
  !
+ !
+ ! Create the anti-resonant part of the eh_table
  !
  if (BS_K_coupling) then
    do neh=BS_K_dim+1,BS_H_dim
@@ -191,7 +216,9 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Excitonic Eliashberg function 
  !================================
+ !
  !GPL_EXCLUDE_START
+ !
 #if defined _YPP_ELPH
  if (l_eliashberg.or.l_gkkp) then
    allocate (lambda_s(n_lambda)) 
@@ -201,6 +228,16 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    return
  endif
 #endif
+ !
+#if defined _YPP_RT
+ !
+ if(l_RT_abs) then
+   call RT_transient_absorption(Xbsk,Xen,Xk,q,BS_H_dim,BS_E,BS_R)
+   return
+ endif
+ !
+#endif
+ !
  !GPL_EXCLUDE_END
  !
  ! Exciton's spin (collinear case)
@@ -267,11 +304,23 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &                                     trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
      do neh = 1,BS_H_dim
        !
+       dip_factor=1._SP
+       !
+       if(l_weight_with_dipoles) then
+         ikbz  = BSS_eh_table(neh,1)
+         iv    = BSS_eh_table(neh,2)
+         ic    = BSS_eh_table(neh,3)
+         i_spin= spin(BSS_eh_table(neh,:))
+         dip_factor=-conjg(DIP_q_dot_iR(ic,iv,ikbz,i_spin))
+       endif
+       !
        do i_l=BS_E_degs(lambda),BS_E_degs(lambda)+n_lambda_deg-1
-         A_weight(neh)=A_weight(neh)+BS_mat(neh,i_l)*conjg(BS_mat(neh,i_l))
+         A_weight(neh)=A_weight(neh)+(BS_mat(neh,i_l)*dip_factor)*conjg(BS_mat(neh,i_l)*dip_factor)
        enddo
        !
      enddo
+     !
+     if(l_weight_with_dipoles.and.norm2(A_weight)>0._SP) A_weight=A_weight/norm2(A_weight)
      !
      call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,A_weight=A_weight,verbose=i_lambda==1)
      !

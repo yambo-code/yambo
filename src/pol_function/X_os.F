@@ -163,12 +163,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  call OPENMP_update(master_thread) 
 
  !
- ! Here I prepare the scattering module
- ! The nullify statements seem to be needed to properly initialize isc
- ! in the omp section. Not sure this is a bug of the intel openmp. AF
- !
- nullify(isc%gamp)
- nullify(isc%rhotw)
+ ! prepare the scattering module
  !
  call collision_reset(isc)
 

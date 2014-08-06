@@ -46,6 +46,7 @@ lmpi        = @MPILIBS@
 lopenmp     = @OPENMPLIBS@
 lnetcdf     = @NCLIBS@
 llibxc      = -lxc
+lfftqe      = @FFTQELIBS@
 iotk_dir    = @iotk_dir@
 etsf_dir    = @etsf_dir@
 lfftw	    = @FFTW_LIBS@

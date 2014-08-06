@@ -21,14 +21,28 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_structure()
+subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
  !
- use parallel_m,  ONLY:ncpu,myid,n_MPI,INTER_CHAIN,n_chains,INTRA_CHAIN
+ use parallel_m,  ONLY:ncpu,myid,n_MPI,INTER_CHAIN,n_chains,INTRA_CHAIN,&
+&                      MAX_N_OF_CHAINS,PARALLEL_n_structures_active,&
+&                      PARALLEL_CPU_role,PARALLEL_CPU_used
+ use com,         ONLY:error
  implicit none
+ !
+ character(*), optional :: ENVIRONMENT
+ integer,      optional :: n_elements 
+ character(*), optional :: ROLE(:)
  !
  ! Work Space 
  !
  integer     ::i_err,ID(ncpu+1),i_cpu,ID_save(ncpu+1),i_chain,n_groups
+ integer     ::tmp_comm_inter,tmp_comm_intra
+ integer     ::ir,i
+ logical     ::chain_activate(MAX_N_OF_CHAINS)
+ integer, allocatable :: role_cpu(:)
+
+ integer     ::buff(ncpu),inter_roles(ncpu),intra_roles(ncpu)
+ !
 #if defined _MPI
  include 'mpif.h'
 #endif
@@ -41,6 +55,54 @@ subroutine PARALLEL_structure()
 #if defined _MPI
  !
  if (ncpu==1) return
+ !
+ ! define which chains have to be activated
+ !
+#if defined _BLUEGENE
+ !
+ chain_activate(:) = .false.
+ !
+ if ( present(ENVIRONMENT) ) then
+   !
+   if (.not. present(n_elements) .or..not. present(ROLE) ) &
+      call error(' Missing args in call: n_elements or ROLE')
+   !
+   call PARALLEL_get_user_structure(ENVIRONMENT)
+   !
+   allocate(role_cpu(size(ROLE)))
+   !
+   do ir = 1, n_elements
+     !
+     role_cpu(ir)=1
+     do i = 1, PARALLEL_n_structures_active
+       if ( trim(PARALLEL_CPU_role(i)) == trim(ROLE(ir)) ) role_cpu(ir)=PARALLEL_CPU_used(i)
+     enddo
+     !
+   enddo
+   !
+   if ( any(role_cpu(1:n_elements)==0) ) call error(' Invalid 0-value for role_size')
+   !
+   do ir = 1, n_elements
+     !
+     i_chain=nint(log(real(ncpu))/log(2.)) -nint(log(real(product(role_cpu(1:ir))))/log(2.))
+     chain_activate(i_chain) = .true.
+     !
+   enddo
+   ! this is always required in PARALLEL_assign_chains_and_COMMs
+   chain_activate(n_chains) = .true.
+   !
+   deallocate(role_cpu)
+   !
+ endif
+ !
+#else
+ chain_activate(:) = .true.
+ !
+ if (present(ENVIRONMENT)) return
+#endif
+
+ !
+ ! init
  !
  ID=0
  ID_save=0
@@ -85,18 +147,36 @@ subroutine PARALLEL_structure()
    !
  enddo
  !
- ! Communicators
+ ! INTRA Communicators
+ !
+ tmp_comm_intra = mpi_comm_world
  !
  do i_chain=1,n_chains
    !
-   call MPI_COMM_SPLIT(mpi_comm_world,INTRA_CHAIN(i_chain)%my_CHAIN,myid,INTRA_CHAIN(i_chain)%COMM,i_err)
+   if ( .not. chain_activate(i_chain) ) cycle
+   !
+   call MPI_COMM_SPLIT(tmp_comm_intra,INTRA_CHAIN(i_chain)%my_CHAIN,myid,INTRA_CHAIN(i_chain)%COMM,i_err)
+   tmp_comm_intra = INTRA_CHAIN(i_chain)%COMM
+   !
    call MPI_COMM_RANK(INTRA_CHAIN(i_chain)%COMM,INTRA_CHAIN(i_chain)%CPU_id,i_err)
    !
    INTER_CHAIN(i_chain)%my_CHAIN=INTRA_CHAIN(i_chain)%my_CHAIN
    INTER_CHAIN(i_chain)%n_CPU=2**(i_chain)
    INTER_CHAIN(i_chain)%chain_order=i_chain
    !
-   call MPI_COMM_SPLIT(mpi_comm_world,INTRA_CHAIN(i_chain)%CPU_id,myid,INTER_CHAIN(i_chain)%COMM,i_err)
+ enddo
+ !
+ ! INTER Communicators
+ !
+ tmp_comm_inter = mpi_comm_world
+ !
+ do i_chain=n_chains,1,-1
+   !
+   if ( .not. chain_activate(i_chain) ) cycle
+   !
+   call MPI_COMM_SPLIT(tmp_comm_inter,INTRA_CHAIN(i_chain)%CPU_id,myid,INTER_CHAIN(i_chain)%COMM,i_err)
+   tmp_comm_inter = INTER_CHAIN(i_chain)%COMM
+   !
    call MPI_COMM_RANK(INTER_CHAIN(i_chain)%COMM,INTER_CHAIN(i_chain)%CPU_id,i_err)
    !
  enddo

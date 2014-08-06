@@ -138,7 +138,8 @@ module memory_m
        mem_sum  =0._SP
      endif
      !
-     stdout_report=master_cpu.and.mem_moved>mem_tresh.and..not.infile_editing
+!     stdout_report=master_cpu.and.mem_moved>mem_tresh.and..not.infile_editing
+     stdout_report=mem_moved>mem_tresh.and..not.infile_editing
      if (stdout_report.and.present(quiet)) stdout_report=.not.quiet
      if (.not.stdout_report) return
      !

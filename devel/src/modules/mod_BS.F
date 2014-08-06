@@ -70,8 +70,8 @@ module BS
  !
  ! Collision
  !===========
- type(ggwinfo) :: K_EXCH_collision
- type(ggwinfo) :: K_CORR_collision
+ type(ggwinfo), save :: K_EXCH_collision
+ type(ggwinfo), save :: K_CORR_collision
  !
  ! CV transitions space ...
  !=========================

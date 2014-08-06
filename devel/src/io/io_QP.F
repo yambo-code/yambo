@@ -30,8 +30,8 @@ integer function io_QP(what,qp,ID)
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,QP_G_dr,QP_Sc_steps,&
 &                         QP_n_G_bands,QP_n_states,QP_W,QP_G_er,&
-&                         QP_n_W_freqs,QP_W_dr,QP_W_er,QP_W_partially_done,GW_en_comp,&
-&                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold,QP_Sc,PPa_terminator
+&                         QP_n_W_freqs,QP_W_dr,QP_W_er,QP_W_partially_done,GW_terminator_E,&
+&                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold,QP_Sc,l_GW_terminator
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,io_restart_point,&
@@ -146,18 +146,18 @@ integer function io_QP(what,qp,ID)
 &                        VAR=' GW SC iterations       :',CHECK=.true.,OP=(/"=="/))
      !
      if (ver_is_gt_or_eq(ID,revision=1255)) &
-&      call io_elemental(ID,L0=PPa_terminator,&
+&      call io_elemental(ID,L0=l_GW_terminator,&
 &                        VAR=' Self-energy terminator :',CHECK=.true.,OP=(/"=="/))
      if (ver_is_gt_or_eq(ID,revision=1339)) &
-        call io_elemental(ID,R0=GW_en_comp,&
+        call io_elemental(ID,R0=GW_terminator_E,&
 &                        VAR=' Terminator pole        :',CHECK=.true.,OP=(/"=="/))
      Terminator_msg=ver_is_gt_or_eq(ID,revision=1255)
    endif
    !    
    if (ver_is_gt_or_eq(ID,(/3,2,5/)).and.what/="W".and..not.Terminator_msg) then
-     call io_elemental(ID,L0=PPa_terminator,&
+     call io_elemental(ID,L0=l_GW_terminator,&
 &       VAR=' Self-energy terminator :',CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,R0=GW_en_comp,&
+     call io_elemental(ID,R0=GW_terminator_E,&
 &       VAR=' Terminator pole        :',CHECK=.true.,OP=(/"=="/))
    endif
    !    
@@ -167,8 +167,8 @@ integer function io_QP(what,qp,ID)
    !
    if (index(what,".G")/=0.or.what=="G") then
      !
-     ! Tough the GF's parameters are already stored in the QP_descriptions
-     ! I need then on-fly to, eventually, rebuild the Green's function
+     ! Though the GF's parameters are already stored in the QP_descriptions
+     ! I need them on-the-fly to, eventually, rebuild the Green's function
      !
      var_size=6
      if (ver_is_gt_or_eq(ID,revision=530))  var_size=7

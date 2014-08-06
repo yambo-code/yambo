@@ -56,6 +56,7 @@ subroutine fft_3d(c,n,fft_sign)
  ! Work Space
  !
  integer     :: i1,ln(3),ipos
+ integer     :: i_sign
  real(DP), allocatable :: zi(:,:,:,:,:)
  integer     :: i, j, k
  !
@@ -77,6 +78,11 @@ subroutine fft_3d(c,n,fft_sign)
  allocate(zi(2,ln(1),ln(2),ln(3),2))
  ipos=1
  !
+ ! allow for fft_sign to be larger than 1
+ i_sign=0
+ if (fft_sign > 0 ) i_sign=+1
+ if (fft_sign < 0 ) i_sign=-1
+ !
 #if defined _OPENMP
  !
 !$omp parallel do default(shared), private(i,j,k)
@@ -89,8 +95,9 @@ subroutine fft_3d(c,n,fft_sign)
    enddo
  enddo
 !$omp end parallel do
+ 
  !
- call fft(n(1),n(2),n(3),ln(1),ln(2),ln(3),zi,fft_sign,ipos)
+ call fft(n(1),n(2),n(3),ln(1),ln(2),ln(3),zi,i_sign,ipos)
  !
 !$omp parallel do default(shared), private(i,j,k)
  do k = 1, n(3)
@@ -106,7 +113,7 @@ subroutine fft_3d(c,n,fft_sign)
  !
  zi(1,:n(1),:n(2),:n(3),ipos)=real(c(:,:,:))
  zi(2,:n(1),:n(2),:n(3),ipos)=aimag(c(:,:,:))
- call fft(n(1),n(2),n(3),ln(1),ln(2),ln(3),zi,fft_sign,ipos)
+ call fft(n(1),n(2),n(3),ln(1),ln(2),ln(3),zi,i_sign,ipos)
  c(:,:,:)=cmplx(zi(1,:n(1),:n(2),:n(3),ipos),zi(2,:n(1),:n(2),:n(3),ipos),DP)
 #endif
  !

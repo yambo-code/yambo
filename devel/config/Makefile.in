@@ -33,6 +33,7 @@ debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
 do_local    = @compile_local@
+do_fftqe    = @compile_fftqe@
 do_p2y      = @compile_p2y@
 do_e2y      = @compile_e2y@
 shell       = @SHELL@
@@ -46,7 +47,7 @@ includedir  = @srcdir_path@/include
 CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
   	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
 	   src/external_c/.objects Makefile driver/version.h \
-       sbin/objects_debug.sh driver/editor.h 
+           sbin/objects_debug.sh driver/editor.h 
 TARGETS  = all yambo interfaces ypp ydb
 UTILS    = changelog
 CLEANS   = clean clean_all
@@ -59,7 +60,7 @@ INTERFCS = a2y p2y e2y c2y
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS     = external_c modules parallel xc_functionals parser communicate common io wf_and_fft 
+BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate common io wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
                interpolate tddft pol_function qp acfdt bse
@@ -98,6 +99,8 @@ libs:
 	@if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
 	DIR2GO="lib" ; $(mklib); fi
 	@if test "$(do_local)" = yes ; then LIBS2DO="local" ; \
+	DIR2GO="lib" ; $(mklib); fi
+	@if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
 	DIR2GO="lib" ; $(mklib); fi
 yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)

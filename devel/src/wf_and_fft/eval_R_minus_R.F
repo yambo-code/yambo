@@ -85,10 +85,9 @@ subroutine eval_R_minus_R()
      integer :: jj
      !
      if (direx=='d') &     ! DIRECT MAPPING
-&     ii = 1 + modx(V(1),fft_dim(1))   +&
+&      ii = 1 + modx(V(1),fft_dim(1))   +&
 &      modx(V(2),fft_dim(2))*fft_dim(1) +&
 &      modx(V(3),fft_dim(3))*fft_dim(1)*fft_dim(2)
-     !
      if (direx=='r') then  ! REVERSE MAPPING
        V(1) = mod(ii-1,fft_dim(1))
        jj   = (ii-1)/fft_dim(1)

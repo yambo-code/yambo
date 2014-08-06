@@ -55,8 +55,9 @@ MODULE timing_m
    LOGICAL                     :: alloc 
  END TYPE clock_list
  !
- TYPE(clock_list), SAVE         :: internal_list     ! internal use clock
- TYPE(clock_list), SAVE         :: global_list       ! global use clock
+ TYPE(clock_list), TARGET, SAVE :: internal_list     ! internal use clock
+ TYPE(clock_list), TARGET, SAVE :: global_list       ! global use clock
+ !
  LOGICAL                        :: alloc = .FALSE.   ! global alloc flag
  !   
  ! end of declarations
@@ -79,13 +80,16 @@ MODULE timing_m
    !
    ! Subroutines
    !   
-   SUBROUTINE timing(name,opr)
+   SUBROUTINE timing(name,opr,list)
      IMPLICIT NONE
      CHARACTER(*),           INTENT(in)    :: name
      CHARACTER(*), OPTIONAL, INTENT(in)    :: opr
+     TYPE(clock_list),  OPTIONAL, TARGET   :: list
+     !
      CHARACTER(5)                          :: opr_
      LOGICAL                               :: found
      INTEGER                               :: index
+     TYPE(clock_list), POINTER  :: listp
      !
      if (.not.master_thread) return
      !
@@ -93,39 +97,49 @@ MODULE timing_m
      opr_ = " "
      IF ( PRESENT(opr) ) opr_ = TRIM(opr)
      !
-     CALL clock_find(global_list,name,found,index)
+     IF ( PRESENT( list ) ) THEN
+         listp => list
+     ELSE
+         listp => global_list
+     ENDIF
+     ! 
+     CALL clock_find(listp,name,found,index)
+
      !
      ! clock NOT found
      !
      IF ( .NOT. found ) THEN
+       !
        IF ( .NOT. PRESENT(opr) .OR. TRIM(opr_) == "start" .OR. TRIM(opr_) == "START") THEN
          opr_ = "start"
-         CALL clock_allocate(TRIM(name), global_list%nclock, global_list%clock(index))
+         CALL clock_allocate(TRIM(name), listp%nclock, listp%clock(index))
        ELSE 
          CALL error('timing: Clock NOT found for operation '//TRIM(opr_)//' in '&
                      //TRIM(name))
        ENDIF
+       !
      ELSE
-     !
-     ! clock found
-     !
-     IF ( global_list%clock(index)%running )  THEN
-       IF ( PRESENT(opr) .AND. TRIM(opr_) /= "stop" .AND. TRIM(opr_) /= "STOP" )  &
-         CALL error('timing: Operation '//TRIM(opr_)//' NOT allowed in '&
-                     //TRIM(name))
+       !
+       ! clock found
+       !
+       IF ( listp%clock(index)%running )  THEN
+         IF ( PRESENT(opr) .AND. TRIM(opr_) /= "stop" .AND. TRIM(opr_) /= "STOP" )  &
+           CALL error('timing: Operation '//TRIM(opr_)//' NOT allowed in '&
+                       //TRIM(name))
          opr_ = "stop"
        ELSE
-         IF ( .NOT. PRESENT(opr) )  opr_ = "start"
+          IF ( .NOT. PRESENT(opr) )  opr_ = "start"
        ENDIF
+       !
      ENDIF
      ! 
      ! case selection
      ! 
      SELECT CASE ( TRIM(opr_) )  
        CASE("start","START") 
-         CALL clock_start( global_list%clock(index) ) 
+         CALL clock_start( listp%clock(index) ) 
        CASE("stop","STOP")
-         CALL clock_stop( global_list%clock(index) ) 
+         CALL clock_stop( listp%clock(index) ) 
        CASE DEFAULT
          CALL error('timing:  Invalid operation '//TRIM(opr_))
      END SELECT

@@ -118,11 +118,20 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
        offt=WF%index(ic,ik,1)
        SigmaXC = dot_product(WF%c(:,offt),W_x(ik,iv,:)) !<ic|Sigma_xc|iv>
        !
-       rho_tw_rs(:) = conjg(WF%c(:,ifft))*WF%c(:,offt)
+       !rho_tw_rs(:) = conjg(WF%c(:,ifft))*WF%c(:,offt)
+       rho_tw_rs(:) = WF%c(:,ifft)*conjg(WF%c(:,offt))
+       !
+       ! r -> G transform; 
+       ! In order to be compliant with FFTQE -1 should be used in calls to FFT
+       ! This implies that the above conjg of rho_tw_rs has been reversed, and
+       ! that rho_tw_rs will be used as conjugaed in the following.
+       !
 #if defined _FFTW
-   call fft_3d(rho_tw_rs(:),fft_dim,+1,fftw_plan)
+       !call fft_3d(rho_tw_rs(:),fft_dim,+1,fftw_plan)
+       call fft_3d(rho_tw_rs(:),fft_dim,-1,fftw_plan)
 #else
-   call fft_3d(rho_tw_rs(:),fft_dim,+1)
+       !call fft_3d(rho_tw_rs(:),fft_dim,+1)
+       call fft_3d(rho_tw_rs(:),fft_dim,-1)
 #endif
        rhotw_sum    = (0.,0.)
        rhotw_sum_TR = (0.,0.)
@@ -134,9 +143,11 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
          !
          rho_tw_rs(fft_g_table(g_rot(1,1),1)) = (0.,0.)
          if (l_is_TR) then
-            rhotw_sum_TR(:X%ng)=rhotw_sum_TR(:X%ng)+rho_tw_rs(fft_g_table(g_rot(is,:X%ng),1))
-          else
-           rhotw_sum(:X%ng)=rhotw_sum(:X%ng)+conjg(rho_tw_rs(fft_g_table(g_rot(is,:X%ng),1)))
+           !rhotw_sum_TR(:X%ng)=rhotw_sum_TR(:X%ng)+rho_tw_rs(fft_g_table(g_rot(is,:X%ng),1))
+           rhotw_sum_TR(:X%ng)=rhotw_sum_TR(:X%ng)+conjg(rho_tw_rs(fft_g_table(g_rot(is,:X%ng),1)))
+         else
+           !rhotw_sum(:X%ng)=rhotw_sum(:X%ng)+conjg(rho_tw_rs(fft_g_table(g_rot(is,:X%ng),1)))
+           rhotw_sum(:X%ng)=rhotw_sum(:X%ng)+rho_tw_rs(fft_g_table(g_rot(is,:X%ng),1))
          endif
          !
        end do

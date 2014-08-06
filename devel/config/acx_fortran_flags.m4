@@ -39,24 +39,28 @@ i?86*linux*)
     SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     UFFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
+    OMPFLAGS="-mp"
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
     ;;
   *ifc*)
-    SYSFLAGS="-O3 -w -tpp7"
-    UFFLAGS="-O0 -w -tpp7"
+    SYSFLAGS="-g -O3 -w -tpp7"
+    UFFLAGS="-g -O0 -w -tpp7"
     FCMFLAG=""
+    OMPFLAGS="-openmp"
     ;;
   *g95*)
-    SYSFLAGS="-O3 -fbackslash -fno-second-underscore -mtune=pentium4"
-    UFFLAGS="-O0 -fbackslash -fno-second-underscore"
+    SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore -mtune=pentium4"
+    UFFLAGS="-g -O0 -fbackslash -fno-second-underscore"
     FCMFLAG=""
+    OMPFLAGS=""
     ;;
   *gfortran*)
-    SYSFLAGS="-O3 -mtune=native"
-    UFFLAGS="-O0 -mtune=native"
+    SYSFLAGS="-g -O3 -mtune=native"
+    UFFLAGS="-g -O0 -mtune=native"
     FCMFLAG=""
+    OMPFLAGS="-fopenmp"
     ;;
   *ifort*)
     CPU_FLAG=""
@@ -71,30 +75,34 @@ i?86*linux*)
        CPU_FLAG="-tpp7"
        ;;
     esac
-    SYSFLAGS="-assume bscc -O3 -ip $CPU_FLAG"
-    UFFLAGS="-assume bscc -O0 $CPU_FLAG"
+    SYSFLAGS="-assume bscc -g -O3 -ip $CPU_FLAG"
+    UFFLAGS="-assume bscc -g -O0 $CPU_FLAG"
     FCMFLAG="-nofor_main"
+    OMPFLAGS="-openmp"
   ;;
   *pathf9*)
-    SYSFLAGS="-O2 -fno-second-underscore"
-    UFFLAGS="-O0 -fno-second-underscore"
+    SYSFLAGS="-g -O2 -fno-second-underscore"
+    UFFLAGS="-g -O0 -fno-second-underscore"
     FCMFLAG=""
+    OMPFLAGS=""
     ;;
   *)
     SYSFLAGS="-O"
     UFFLAGS="-O0"
+    OMPFLAGS="-openmp"
   esac
  ;;
 *86*apple* )
   case "${FC}" in
   *gfortran*)
-    SYSFLAGS="-O3 -mtune=native"
-    UFFLAGS="-O0 -mtune=native"
+    SYSFLAGS="-g -O3 -mtune=native"
+    UFFLAGS="-g -O0 -mtune=native"
     FCMFLAG=""
+    OMPFLAGS="-fopenmp"
     ;;
   *g95*)
-    SYSFLAGS="-O3 -fno-second-underscore -mtune=pentium4"
-    UFFLAGS="-O0 -fno-second-underscore"
+    SYSFLAGS="-g -O3 -fno-second-underscore -mtune=pentium4"
+    UFFLAGS="-g -O0 -fno-second-underscore"
     FCMFLAG=""
     ;;
   *ifort*)
@@ -107,38 +115,43 @@ i?86*linux*)
        CPU_FLAG="-mtune=pentium4"
        ;;
     esac
-    SYSFLAGS="-assume bscc -O3 -ip ${CPU_FLAG}"
-    UFFLAGS="-assume bscc -O0 ${CPU_FLAG}"
+    SYSFLAGS="-assume bscc -g -O3 -ip ${CPU_FLAG}"
+    UFFLAGS="-assume bscc -g -O0 ${CPU_FLAG}"
     FCMFLAG="-nofor_main"
+    OMPFLAGS="-openmp"
     ;;
   *)
     SYSFLAGS="-O"
     UFFLAGS="-O0"
+    OMPFLAGS="-openmp"
   esac
   ;;
 ia64*linux* )
   case "${FC}" in
   *gfortran*)
-    SYSFLAGS="-O3 -mtune=native"
-    UFFLAGS="-O0 -mtune=native"
+    SYSFLAGS="-g -O3 -mtune=native"
+    UFFLAGS="-g -O0 -mtune=native"
     FCMFLAG=""
+    OMPFLAGS="-fopenmp"
     ;;
   *g95*)
-    SYSFLAGS="-O3 -fbackslash -fno-second-underscore"
-    UFFLAGS="-O0 -fbackslash -fno-second-underscore"
+    SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore"
+    UFFLAGS="-g -O0 -fbackslash -fno-second-underscore"
     FCMFLAG=""
     ;;
   *pgf9* | *ftn* )
     SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     UFFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
+    OMPFLAGS="-mp"
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
     ;;
   *ifc*)
-    SYSFLAGS="-O3 -w"
-    UFFLAGS="-O0 -w"
+    SYSFLAGS="-g -O3 -w"
+    UFFLAGS="-g -O0 -w"
+    OMPFLAGS="-openmp"
     ;;
   *ifort*)
     CPU_FLAG=""
@@ -150,9 +163,10 @@ ia64*linux* )
        CPU_FLAG=""
        ;;
     esac
-    SYSFLAGS="-assume bscc -O3 -ip ${CPU_FLAG}"
-    UFFLAGS="-assume bscc -O0 ${CPU_FLAG}"
+    SYSFLAGS="-assume bscc -g -O3 -ip ${CPU_FLAG}"
+    UFFLAGS="-assume bscc -g -O0 ${CPU_FLAG}"
     FCMFLAG="-nofor_main"
+    OMPFLAGS="-openmp"
     ;;
   *openf9*)
     SYSFLAGS="-O2 -fno-second-underscore"
@@ -163,35 +177,40 @@ ia64*linux* )
     SYSFLAGS="-O2 -fno-second-underscore"
     UFFLAGS="-O0 -fno-second-underscore"
     FCMFLAG=""
+    OMPFLAGS=""
     ;;
   *)
     SYSFLAGS="-O"
     UFFLAGS="-O0"
+    OMPFLAGS="-openmp"
   esac
   ;;
 *x86*64* )
   case "${FC}" in
   *gfortran*)
-    SYSFLAGS="-O3 -mtune=native"
-    UFFLAGS="-O0 -mtune=native"
+    SYSFLAGS="-g -O3 -mtune=native"
+    UFFLAGS="-g -O0 -mtune=native"
     FCMFLAG=""
+    OMPFLAGS="-fopenmp"
     ;;
   *g95*)
-    SYSFLAGS="-O3 -fbackslash -fno-second-underscore"
-    UFFLAGS="-O0 -fbackslash -fno-second-underscore"
+    SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore"
+    UFFLAGS="-g -O0 -fbackslash -fno-second-underscore"
     FCMFLAG=""
     ;;
   *pgf9* | *ftn* )
     SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     UFFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
+    OMPFLAGS="-mp"
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
     ;;
   *ifc*)
-    SYSFLAGS="-O3 -w -tpp2"
-    UFFLAGS="-O0 -w -tpp2"
+    SYSFLAGS="-g -O3 -w -tpp2"
+    UFFLAGS="-g -O0 -w -tpp2"
+    OMPFLAGS="-openmp"
     ;;
   *ifort*)
     CPU_FLAG=""
@@ -206,9 +225,10 @@ ia64*linux* )
        CPU_FLAG="-tpp7"
        ;;
     esac
-    SYSFLAGS="-assume bscc -O3 -ip ${CPU_FLAG}"
-    UFFLAGS="-assume bscc -O0 ${CPU_FLAG}"
+    SYSFLAGS="-assume bscc -g -O3 -ip ${CPU_FLAG}"
+    UFFLAGS="-assume bscc -g -O0 ${CPU_FLAG}"
     FCMFLAG="-nofor_main"
+    OMPFLAGS="-openmp"
     ;;
   *openf9*)
     SYSFLAGS="-O2 -fno-second-underscore"
@@ -219,6 +239,7 @@ ia64*linux* )
     SYSFLAGS="-O2 -fno-second-underscore"
     UFFLAGS="-O0 -fno-second-underscore"
     FCMFLAG=""
+    OMPFLAGS=""
     ;;
   *)
     SYSFLAGS="-O"
@@ -234,11 +255,13 @@ powerpc64*linux* )
   CFLAGS="-q64 -O2"
   SYSFLAGS="-q64 -O2 -qnoescape -qnostrict -qarch=ppc970 -qtune=ppc970"
   UFFLAGS="-q64 -O0"
+  OMPFLAGS=""
   ;;
 powerpc-ibm* )
   CFLAGS="-O -q64"
   SYSFLAGS="-O3 -q64 -qstrict -qarch=auto -qtune=auto -qmaxmem=-1"
   UFFLAGS="-q64"
+  OMPFLAGS="-qthreaded"
   ;;
 mips-sgi-irix*)
   SYSFLAGS="-O3 -r10000 -mips4"
@@ -254,6 +277,8 @@ if test -z "${FCFLAGS}"; then
 else
  AC_MSG_RESULT([(User-defined) $FCFLAGS])
 fi
+AC_MSG_CHECKING([for specific Open-MP flags])
+AC_MSG_RESULT([$OMPFLAGS])
 #
 AC_MSG_CHECKING([for specific $CC flags])
 AC_MSG_RESULT([$CFLAGS])
@@ -272,5 +297,6 @@ AC_SUBST(FCFLAGS)
 AC_SUBST(FCUFLAGS)
 AC_SUBST(UFFLAGS)
 AC_SUBST(FCMFLAG)
+AC_SUBST(OMPFLAGS)
 ])
 #

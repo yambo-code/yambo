@@ -109,7 +109,11 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
 #if defined _FFTW
          call fft_3d(wf_DP,fft_dim,1,fftw_plan)
 #else
-         call fft_3d(wf_DP,fft_dim,1)
+         !call fft_3d(wf_DP,fft_dim,1)
+         !
+         ! here we use +2 in order to exploit the wfc cutoff 
+         ! when using FFTQE
+         call fft_3d(wf_DP,fft_dim,2)
 #endif
          if(i1==1) wf_x(:,ifft)=wf_DP(:)
          if(i1==2) wf_y(:,ifft)=wf_DP(:)

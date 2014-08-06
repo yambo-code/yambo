@@ -31,7 +31,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,Chi_mode,&
 &                      eval_alpha,Vnl_commutator_warning,Dipole_uses_shifted_grids,&
-&                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold
+&                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,&
+&                      X_terminator,X_en_comp
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,QP_n_states,&
@@ -39,8 +40,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
 &                     COHSEX_use_empties,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,On_Mass_Shell_approx,&
-&                     Vnlxc_kind,Vxc_kind,l_extended_output,OCC_ctl,OCC_T_ref,PPa_terminator,&
-&                     GW_en_comp
+&                     Vnlxc_kind,Vxc_kind,l_extended_output,OCC_ctl,OCC_T_ref,l_GW_terminator,&
+&                     GW_terminator_E
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp
@@ -374,6 +375,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  q_plus_G_direction=0.
  Q_Shift_Order=1
  n_X_descs=0
+ X_terminator=.FALSE.
+ X_en_comp=2._SP
  !
  !QPm
  !
@@ -401,8 +404,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Vnlxc_kind='HF'
  Vxc_kind='LDA'
  l_extended_output=.FALSE.
- PPa_terminator=.FALSE.
- GW_en_comp=-1._SP
+ l_GW_terminator=.FALSE.
+ GW_terminator_E=1.5_SP
  !
  ! QP_ctl control
  !

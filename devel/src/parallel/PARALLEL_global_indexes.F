@@ -60,7 +60,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID,&
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,&
 &                        PAR_IND_Kk_ibz_ID
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
+ use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message,&
+&                        PARALLEL_structure
  use X_m,           ONLY:X_t
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run
  use matrix_operate,ONLY:UP_matrix_index
@@ -277,6 +278,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !===========================================================================================
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space") then
    !=========================================================================================
+   !
+   CALL PARALLEL_structure(ENVIRONMENT,4,ROLE=(/"q","k","c","v"/))
    !
    call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"q","k","c","v"/),&
 &                                        COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_Xk_bz_INDEX,&
@@ -654,6 +657,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !==============================
  if (ENVIRONMENT=="Self_Energy") then
    !=================================
+   !
+   CALL PARALLEL_structure(ENVIRONMENT,3,ROLE=(/"q ","qp","b "/))
    !
    call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"q ","qp","b "/),&
 &                                        COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_QP_INDEX,&

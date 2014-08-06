@@ -72,6 +72,8 @@ module X_m
  logical :: half_X_mat_only
  logical :: self_detect_E_range
  logical :: use_X_RIM
+ real(SP):: X_en_comp
+ logical :: X_terminator
  !
  ! I/O parameters
  !

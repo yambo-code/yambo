@@ -74,7 +74,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  n_max_threads=maxval((/n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP/))
  !
  call msg('r', '* THREADS    (max):',n_max_threads)
- call msg('r', '* TOTAL TASKS(max):',n_max_threads*ncpu)
+ call msg('r', '* THREADS TOT(max):',n_max_threads*ncpu)
  call msg('r', '* I/O NODES       :',n_nodes)
  call msg('rn','* Fragmented I/O  :',Fragmented_IO)
  call msg('r','CORE databases in   ',trim(core_io_path))

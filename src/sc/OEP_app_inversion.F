@@ -135,22 +135,38 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
          isc%os = (/iv2,ik,is,1/)
          isc%qs = (/1,1,1/)
          call scatterBamp(isc)
-         rhotw_ds(:)=conjg(WF%c(fft_rot_r(is,:),ifft))*WF%c(fft_rot_r(is,:),offt)/EWeight
+         !
+         !rhotw_ds(:)=conjg(WF%c(fft_rot_r(is,:),ifft))*WF%c(fft_rot_r(is,:),offt)/EWeight
+         rhotw_ds(:)=WF%c(fft_rot_r(is,:),ifft)*conjg(WF%c(fft_rot_r(is,:),offt))/EWeight
+         !
          rhotw_ds =rhotw_ds/(rho*real(fft_size,SP)) 
          rhotw_rs = (0._SP,0._SP)
+         !
+         ! r -> G transform; 
+         ! In order to be compliant with FFTQE -1 should be used in calls to FFT
+         ! This implies that the above conjg of rhotw_ds has been reversed, and
+         ! that rhotw_ds will be used as conjugaed in the following.
+         !
 #if defined _FFTW
          fftw_plan = 0
-         call fft_3d(rhotw_ds,fft_dim,+1,fftw_plan)
+         !call fft_3d(rhotw_ds,fft_dim,+1,fftw_plan)
+         call fft_3d(rhotw_ds,fft_dim,-1,fftw_plan)
 #else
-         call fft_3d(rhotw_ds,fft_dim,+1)
+         !call fft_3d(rhotw_ds,fft_dim,+1)
+         call fft_3d(rhotw_ds,fft_dim,-1)
 #endif
          rhotw_rs(1:QP_ng_Sx) = rhotw_ds(fft_g_table(1:QP_ng_Sx,1))
+         !forall(ig1=2:QP_ng_Sx,ig2=2:QP_ng_Sx) rhotw_prd(ig1,ig2) = rhotw_prd(ig1,ig2) + &
+         !  & Prefactor*E%f(iv1,ik,1)*conjg(rhotw_rs(ig1))*isc%rhotw(ig2)
          forall(ig1=2:QP_ng_Sx,ig2=2:QP_ng_Sx) rhotw_prd(ig1,ig2) = rhotw_prd(ig1,ig2) + &
-           & Prefactor*E%f(iv1,ik,1)*conjg(rhotw_rs(ig1))*isc%rhotw(ig2)
+           & Prefactor*E%f(iv1,ik,1)*rhotw_rs(ig1)*isc%rhotw(ig2)
+         !
          if (l_is_TR) then
-           rhotw_sum_TR(1:QP_ng_Sx-1)=rhotw_sum_TR(1:QP_ng_Sx-1)+rhotw_rs(2:QP_ng_Sx)
+           !rhotw_sum_TR(1:QP_ng_Sx-1)=rhotw_sum_TR(1:QP_ng_Sx-1)+rhotw_rs(2:QP_ng_Sx)
+           rhotw_sum_TR(1:QP_ng_Sx-1)=rhotw_sum_TR(1:QP_ng_Sx-1)+conjg(rhotw_rs(2:QP_ng_Sx))
          else
-           rhotw_sum(1:QP_ng_Sx-1)=rhotw_sum(1:QP_ng_Sx-1)+conjg(rhotw_rs(2:QP_ng_Sx))
+           !rhotw_sum(1:QP_ng_Sx-1)=rhotw_sum(1:QP_ng_Sx-1)+conjg(rhotw_rs(2:QP_ng_Sx))
+           rhotw_sum(1:QP_ng_Sx-1)=rhotw_sum(1:QP_ng_Sx-1)+rhotw_rs(2:QP_ng_Sx)
          end if         
        end do
        rho_xc(:) =  rho_xc(:) + Prefactor*E%f(iv1,ik,1)*& 

@@ -40,12 +40,12 @@ module wave_func
  !
  ! Buffered WFs
  !
- type (WAVEs) :: WF_buffer
- logical      :: WF_buffered_IO
+ type (WAVEs), save :: WF_buffer
+ logical            :: WF_buffered_IO
  !
  ! Actual WFs
  !
- type (WAVEs) :: WF
+ type (WAVEs), save :: WF
  !
  ! Real components ?
  !

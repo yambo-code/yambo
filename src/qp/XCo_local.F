@@ -62,8 +62,8 @@ subroutine XCo_local(E,Xk)
  ! Spin support (collinear and not collinear)
  !
  real(SP)    :: mod_mag,magn_versor(fft_size,3),vxc_plus(fft_size),vxc_minus(fft_size)
- complex(SP) :: V_xc_mat(fft_size,n_spin,n_spin)
  logical     :: l_call_the_driver
+ complex(SP), allocatable :: V_xc_mat(:,:,:)
  !
  ! Allocation 
  !
@@ -159,6 +159,8 @@ subroutine XCo_local(E,Xk)
  !
  if (n_spin==2) then
    !
+   allocate(V_xc_mat(fft_size,n_spin,n_spin))
+   !
    V_xc_mat=(0._SP,0._SP)
    !
    ! V_xc_mat ( 1 , 1 ) = up up
@@ -197,11 +199,20 @@ subroutine XCo_local(E,Xk)
    !
    do i1=1,QP_n_states
      !
-     if (.not.PAR_IND_QP%element_1D(i1)) cycle
+     !if (.not.PAR_IND_QP%element_1D(i1)) cycle
      !
      ib =QP_table(i1,1)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
+     !
+     if (l_real_time) then
+#if defined _RT
+       if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+       if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
+#endif
+     else
+       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+     endif
      !
      if (n_spinor==1) then
        !
@@ -238,6 +249,8 @@ subroutine XCo_local(E,Xk)
      endif
      !
    enddo
+   !
+   deallocate(V_xc_mat)
    !
  endif
  !

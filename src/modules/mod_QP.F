@@ -48,7 +48,7 @@ module QP_m
  logical           :: QP_W_partially_done
  logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties
- logical           :: PPa_terminator
+ logical           :: l_GW_terminator=.FALSE.
  logical           :: On_Mass_Shell_approx
  logical           :: l_QP_Expand
  logical           :: use_GreenF_to_eval_QP
@@ -63,7 +63,8 @@ module QP_m
  real(SP)          :: QP_G_er(2)
  real(SP)          :: QP_G_dr(2)
  real(SP)          :: QP_cg_percent
- real(SP)          :: GW_en_comp
+ character(schlen) :: GW_terminator_Kind="none"
+ real(SP)          :: GW_terminator_E
  real(SP)   ,allocatable:: QP_G_amplitude_integral(:)
  real(SP)   ,allocatable:: QP_G_info(:,:,:)
  real(SP)   ,allocatable:: QP_G_zoom_er(:,:)
@@ -187,7 +188,7 @@ module QP_m
      forall(i1=1:QP_n_states) Eo_sorted(i1)=en%E(QP_table(i1,1),QP_table(i1,3),1)
      !
      call sort(Eo_sorted,indx=Eo_sorted_index)
-     call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
+     call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001_SP/HA2EV)
      !
      if (present(state_is_2do)) then
        state_is_2do=.TRUE.

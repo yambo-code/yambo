@@ -28,19 +28,19 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
  ! (03/05/12: LDA OK, GGA OK => EXTENSIVE TESTS NEEDED) 
  ! (21/11/13: for HYB_GGA the GGA part calculated => TO TEST) 
  !
- use pars,          ONLY:SP,DP,PI,RZERO
- use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:DL_vol, alat
- use com,           ONLY:msg,warning,error
+ use pars,           ONLY:SP,DP,PI,RZERO
+ use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:DL_vol, alat
+ use com,            ONLY:msg,warning,error
 #if defined _RT
- use SC,            ONLY:rho_n
+ use SC,             ONLY:rho_n
 #endif
- use electrons,     ONLY:levels,n_spin,n_spinor
- use FFT_m,         ONLY:fft_size
+ use electrons,      ONLY:levels,n_spin,n_spinor
+ use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:real_V_dot_V
- use xc_functionals,ONLY:E_xc,F_xc,V_xc,magn,&
-&                        xc_string,XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
- use xc_f90_lib_m   ,  ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
+ use xc_functionals, ONLY:E_xc,F_xc,V_xc,magn,&
+&                         xc_string,XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
+ use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk
@@ -49,9 +49,9 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
  !
  ! Work Space
  !
- integer      :: i1,i2,is,ic,is1,is2,ixc,ifft
- real(SP)  :: mod_magn
- real(SP) ::local_exx_fraction 
+ integer  :: i1,i2,is,ic,is1,is2,ixc,ifft
+ real(SP) :: mod_magn
+ real(SP) :: local_exx_fraction 
  !
  ! XC routines arrays
  !

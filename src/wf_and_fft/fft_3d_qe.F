@@ -1,8 +1,6 @@
 !
-!        Copyright (C) 2000-2014 the YAMBO team
+! Copyright (C) 2000-2013 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
-!
-! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -22,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !=====================================================================
-! Driver to 3D FFT: FFTW, Goedecker
+! Driver to 3D FFT from the QE suite of codes.
 !
 ! fft_sign = +1  : G-space to R-space, output = \sum_G f(G)exp(+iG*R) (FW)
 ! fft_sign = -1  : R-space to G-space, output = \int_R f(R)exp(-iG*R) (BW)
@@ -43,46 +41,74 @@
 !
 !=====================================================================
 !
-subroutine fft_3d(c,n,fft_sign,fftw_plan)
+subroutine fft_3d(c,n,fft_sign)
  !
- use pars,          ONLY:DP
- use openmp,        ONLY:n_threads_now
+ use pars,           ONLY:DP
+ use com,            ONLY:error
+ use fft_interfaces, ONLY:fwfft,invfft
+ use fft_scalar,     ONLY:cfft3d
+ use fft_base,       ONLY:dffts
 #if defined _TIMING
- use timing_m,      ONLY:timing
+ use timing_m,       ONLY:timing
 #endif
  implicit none
  integer     :: fft_sign,n(3)
- integer(8)  :: fftw_plan
-#if defined _OPENMP
- integer     :: iret
-#endif
- complex(DP) :: c(n(1),n(2),n(3))
+ complex(DP) :: c(n(1)*n(2)*n(3))
  ! 
  ! Work Space
  !
- integer             :: i_sign
- integer , parameter :: FFTW_ESTIMATE=64
- 
+ !
 #if defined _TIMING
  call timing('FFT',OPR='start')
 #endif
-
- if (fftw_plan==0) then
-   if (fft_sign>0) i_sign=+1
-   if (fft_sign<0) i_sign=-1
-#if defined _OPENMP
-   call dfftw_init_threads(iret)
-   call dfftw_plan_with_nthreads(n_threads_now)
-#endif
-!$omp single
-   call dfftw_plan_dft_3d(fftw_plan,n(1),n(2),n(3),c,c,i_sign,FFTW_ESTIMATE)
-!$omp end single
+ !
+ ! init and cheks
+ !
+ if ( .not.associated(dffts%nsp) ) then
+   !call fft_desc_init(n,dffts)
+   call error(' [FFT] dffts not initialized')
+ else
+   if (n(1)/=dffts%nr1.or.n(2)/=dffts%nr2.or.n(3)/=dffts%nr3) &
+     call error(' [FFT] Invalid fft dimensions') 
+ endif
+ if ( fft_sign==0.or.fft_sign<-2.or.fft_sign>2 ) &
+     call error(' [FFT] Invalid fft sign')
+ !
+ ! actual calls
+ !
+#if !defined _USE_3D_FFT
+ !
+ if (fft_sign==-1) then
+   ! "R->G,  sign=-1, FW,  smooth"
+   call fwfft( "Smooth", c, dffts )
+ endif
+ if (fft_sign==-2) then
+   ! "R->G, sign=-2, FW,  wave"
+   call fwfft( "Wave", c, dffts )
+ endif
+ if (fft_sign==1) then
+   ! "G->R, sign=1, INV,  smooth"
+   call invfft( "Smooth", c, dffts )
+ endif
+ if (fft_sign==2) then
+   ! "G->R, sign=2, INV,  wave"
+   call invfft( "Wave", c, dffts )
  endif
  !
- call dfftw_execute_dft(fftw_plan,c,c)
+#else
+ !
+ if (fft_sign < 0 ) then
+   call cfft3d( c, dffts%nr1, dffts%nr2, dffts%nr3, dffts%nr1x, dffts%nr2x, dffts%nr3x, -1 )
+ endif
+ if (fft_sign > 0 ) then
+   call cfft3d( c, dffts%nr1, dffts%nr2, dffts%nr3, dffts%nr1x, dffts%nr2x, dffts%nr3x, +1 )
+ endif
+ !
+#endif
  !
 #if defined _TIMING
  call timing('FFT',OPR='stop')
 #endif
  !
 end subroutine
+

@@ -21,11 +21,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.0 r.3581 , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.0 r.3594 , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="0"
-SREVISION="3581"
+SREVISION="3594"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -39,7 +39,7 @@ m4_include([config/acx.m4])
 m4_include([config/acx_gmake.m4])
 m4_include([config/netcdf_f90.m4])
 m4_include([config/libxc.m4])
-m4_include([config/fftw.m4])
+m4_include([config/fft.m4])
 m4_include([config/slk.m4])
 m4_include([config/acx_report.m4])
 m4_include([config/acx_get_fc_version.m4])
@@ -59,6 +59,14 @@ AC_FUNC_REALLOC
 AC_FUNC_SETVBUF_REVERSED
 AC_FUNC_STAT
 AC_PROG_MAKE_SET
+
+# ============================================================================
+# check size of pointers to int - needed to decide the size of integer
+# arrays in fortran holding C pointers for FFTW
+ACX_POINTER_SIZE
+SIZEOF_INT_P=$ac_pointersize
+AC_SUBST(SIZEOF_INT_P)
+# 
 
 # ============================================================================
 # Checks for programs.
@@ -197,17 +205,16 @@ if test x"$enable_openmpi" = "xyes"; then
 fi
 # ============================================================================
 #
-# OpenMP
+# Time Profiling (mod_timing)
 #
-AC_ARG_ENABLE(open-mp, AC_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
-if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
-openmp_cpp=" "
-OPENMPLIBS=" "
-if test x"$enable_open_mp" = "xyes"; then 
- OPENMPLIBS="-openmp -lpthread"; 
- openmp_cpp="-D_OPENMP"
+AC_ARG_ENABLE(time-profile, AC_HELP_STRING([--enable-time-profile],
+              [Extended timing profile of specific sections]))
+if test x"$enable_time_profile" = "x"; then enable_time_profile="no"; fi
+time_profile_cpp=" "
+if test x"$enable_time_profile" = "xyes"; then 
+ time_profile_cpp="-D_TIMING"
 fi
-AC_SUBST(OPENMPLIBS)
+AC_SUBST(time_profile_cpp)
 # ============================================================================
 #
 # Time Profiling (mod_timing)
@@ -281,10 +288,27 @@ ACX_FCSETUP()
 #
 acx_save_fcflags="$FCFLAGS"
 FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
+
+# ============================================================================
+#
+# OpenMP
+#
+AC_ARG_ENABLE(open-mp, AC_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
+if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
+openmp_cpp=" "
+OPENMPLIBS=" "
+if test x"$enable_open_mp" = "xyes"; then 
+ OPENMPLIBS="$OMPFLAGS"; 
+ openmp_cpp="-D_OPENMP"
+fi
+AC_SUBST(OPENMPLIBS)
+# ============================================================================
+
 #
 # Underscore options in subroutine naming
 #
 ACX_EXTUS
+AC_F77_WRAPPERS
 #
 # Free Form sepcific options
 #
@@ -416,7 +440,7 @@ fi
 # ============================================================================
 # FFT 
 AC_LANG_PUSH(Fortran)
-AC_HAVE_FFTW
+AC_HAVE_FFT
 # ============================================================================
 # SCALAPACK/BLACS
 SLK_SETUP

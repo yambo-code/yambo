@@ -60,10 +60,12 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
  !
  do i_c=1,len_trim(CPU_string_)
    if (CPU_string_(i_c:i_c)==".") CPU_string_(i_c:i_c)=" "
+   if (CPU_string_(i_c:i_c)==",") CPU_string_(i_c:i_c)=" "
  enddo
  !
  do i_c=1,len_trim(ROLE_string_)
    if (ROLE_string_(i_c:i_c)==".") ROLE_string_(i_c:i_c)=" "
+   if (ROLE_string_(i_c:i_c)==",") ROLE_string_(i_c:i_c)=" "
  enddo
  !
  call string_split(CPU_string_,c_strings,n_non_empty_strings=CPU_structure(i_selected)%N_chains)

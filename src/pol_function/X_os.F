@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, AF
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -34,16 +34,17 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_Xk_bz_index,PAR_COM_q_for_Xo
+ use parallel_m,    ONLY:PP_redux_wait,PAR_Xk_bz_index,PAR_COM_q_for_Xo,HEAD_QP_cpu
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,n_threads_DIP
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
  use electrons,     ONLY:levels,spin_occ
- use R_lattice,     ONLY:g_rot,qindx_X,bz_samp
+ use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t,X_poles,DIP_q_dot_iR,current_iq,X_poles_tab,&
-&                        self_detect_E_range,half_X_mat_only,use_X_RIM
+&                        self_detect_E_range,half_X_mat_only,use_X_RIM,&
+&                        X_terminator,X_en_comp
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -63,12 +64,13 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! Work Space
  !
  integer                 :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
-&                           isp,iv,ic,iw,isave(4),n_poles,i_cg,i_bg
+&                           isp,iv,ic,iw,isave(4),n_poles,i_cg,i_bg,alloc_err
  logical                 :: force_bare_X_G,Drude_pole
  real(SP)                :: minmax_ehe(2),eh_occ
  type(ggwinfo)           :: isc
  complex(SP)             :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
  complex(SP),allocatable :: rhotw_save(:),Xo_residual(:,:)
+ complex(SP),allocatable :: eet_factor(:,:)
  integer,    external    :: X_eh_setup
  complex(SP),external    :: X_simple_GreenF
  !
@@ -124,6 +126,15 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
  endif 
  !
+ ! X Terminator
+ !==============
+ if (X_terminator) then
+   !
+   allocate(eet_factor(X%ng,X%ng),stat=alloc_err)
+   call mem_est("EET_factor",(/size(eet_factor)/),(/2*SP/),errors=(/alloc_err/))
+   !
+ endif
+ !
  ! GPL_EXCLUDE_START
  !
 #if defined _ELPH
@@ -151,21 +162,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! Mem est of Xo_residual (to be done here and not in the omp parallel)
  !------------------------
  call mem_est("Xo_WS",(/X%ng**2 *n_threads_X/))
- !
- ! OpenMP setup
- !==============
- !
-!$omp parallel default(shared), &
-!$omp &        private( i_cg, Drude_pole,GreenF,n_poles, i_bg, Xo_residual, &
-!$omp &                 ikbz,iv,ic,i_spin,ik,is,ikpbz,ikp,isp, eh_occ, ik_bz_mem, &
-!$omp &                 rhotw_save, isave, ig1,ig2, iw, isc )
- !
- call OPENMP_update(master_thread) 
-
- !
- ! prepare the scattering module
- !
- call collision_reset(isc)
 
  !
  ! Timing
@@ -180,6 +176,23 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #else
  call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_X)
 #endif
+
+ !
+ ! OpenMP setup
+ !==============
+ !
+!$omp parallel default(shared), &
+!$omp &        private( isc, i_cg, Drude_pole,GreenF,n_poles, i_bg, Xo_residual, &
+!$omp &                 ikbz,iv,ic,i_spin,ik,is,ikpbz,ikp,isp, eh_occ, ik_bz_mem, &
+!$omp &                 rhotw_save, isave, ig1,ig2, iw)
+ !
+ call OPENMP_update(master_thread) 
+
+ !
+ ! prepare the scattering module
+ !
+ call collision_reset(isc,INIT_ONLY=.true.)
+
  !
  ! MAIN LOOP
  !===========
@@ -264,6 +277,18 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
        call scatterBamp(isc)
      endif
      !
+     if (X_terminator) then
+       !
+       if ( HEAD_QP_cpu ) then
+         do ig1=1,X%ng
+           do ig2=1,X%ng
+               eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
+           enddo
+         enddo
+       endif
+       ! 
+     endif
+     !
      ! Filling the upper triangular part of the residual here ! 
      !-------------^^^^^---------------------------------------
      do ig2=1,X%ng
@@ -276,6 +301,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      !
      if (.not.force_bare_X_G.and..not.Drude_pole) then
        GreenF(iw) = X_simple_GreenF(Xw%p(iw),coarse_grid_Pt(i_cg),X%ordering)
+! XXX
+                   !-X_simple_GreenF(Xw%p(iw),coarse_grid_Pt2(i_cg),X%ordering)
      endif
      !
 !$omp critical
@@ -303,9 +330,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  deallocate(isc%rhotw)
  deallocate(Xo_residual)
  !
- call live_timing()
- !
 !$omp end parallel
+ !
+ call live_timing()
  !
  call OPENMP_update(master_thread) 
  !

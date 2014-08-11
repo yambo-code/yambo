@@ -34,7 +34,7 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
  !
  ! Work Space
  !
- integer          ::i_s,i_selected,i_c,N_
+ integer          ::i_s,i_selected,i_c
  logical          ::q_found,k_found
  character(schlen)::c_strings(10),r_strings(10),CPU_string_,ROLE_string_
  !
@@ -82,6 +82,8 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
    if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="c" ) cycle
    if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="b" ) cycle
    if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="qp") cycle
+   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="eh") cycle
+   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="t") cycle
    !
    PARALLEL_n_structures_active=PARALLEL_n_structures_active+1
    !
@@ -121,25 +123,6 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
    PARALLEL_CPU_used(PARALLEL_n_structures_active)=1
    PARALLEL_CPU_role(PARALLEL_n_structures_active)="k"
  endif
- !
- ! In the case where I field has the form "N.M.1" the latest "1" can lead Yambo
- ! to assign in the wrong way the CPU's. For this reason I remove all additional
- ! fields
- !
- N_=PARALLEL_n_structures_active
- !
- do i_c=PARALLEL_n_structures_active,1,-1
-   !
-   if (CPU_structure(i_selected)%CPU(i_c)==1) then
-     N_=N_-1
-     CPU_structure(i_selected)%ROLE(i_c)=" "
-   endif
-   !
-   if (CPU_structure(i_selected)%CPU(i_c)>1) exit
-   !
- enddo
- !
- PARALLEL_n_structures_active=N_
  !
  if (ncpu==1) PARALLEL_n_structures_active=0
  !

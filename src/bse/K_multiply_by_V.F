@@ -87,7 +87,8 @@ subroutine K_multiply_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
    if (present(iter_par)) alpha = iter_par*cONE
  endif
  !
- use_fragments=BS_DB_is_fragmented
+ use_fragments=.FALSE.
+!BS_DB_is_fragmented
  db_load= .FALSE.
 !use_fragments.or..not.allocated(BS_mat)
  !

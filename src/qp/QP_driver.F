@@ -26,7 +26,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
- use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel
+ use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
@@ -48,7 +48,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
- use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
+ use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON,SE_GW_EL_PHOTON
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q

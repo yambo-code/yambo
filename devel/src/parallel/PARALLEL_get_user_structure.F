@@ -82,6 +82,8 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT)
    if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="c" ) cycle
    if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="b" ) cycle
    if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="qp") cycle
+   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="eh") cycle
+   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="t") cycle
    !
    PARALLEL_n_structures_active=PARALLEL_n_structures_active+1
    !

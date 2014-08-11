@@ -44,7 +44,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t,X_poles,DIP_q_dot_iR,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM,&
-&                        X_terminator,X_en_comp
+&                        X_terminator
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -301,8 +301,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      !
      if (.not.force_bare_X_G.and..not.Drude_pole) then
        GreenF(iw) = X_simple_GreenF(Xw%p(iw),coarse_grid_Pt(i_cg),X%ordering)
-! XXX
-                   !-X_simple_GreenF(Xw%p(iw),coarse_grid_Pt2(i_cg),X%ordering)
      endif
      !
 !$omp critical

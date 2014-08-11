@@ -120,7 +120,7 @@ subroutine barriers()
  endif
  !
  if (gw0_raxis) then
-   on_runlevels='gw0 em1d el_el_corr el_ph_corr HF_and_locXC'
+   on_runlevels='gw0 em1d el_el_corr el_ph_corr el_photon_corr HF_and_locXC'
    ! GPL_INCLUDE_START 
    !on_runlevels='gw0 em1d el_el_corr HF_and_locXC'
    ! GPL_INCLUDE_END 

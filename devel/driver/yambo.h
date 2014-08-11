@@ -70,8 +70,11 @@
   {"negf",   "q","Real-time dynamic [opt=(p)robe,(pp)ump & probe]",0,0,1,0,0}, 
   {"scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/(b)oth]",0,0,1,0,0},
 #endif
+#if defined _QED
+  {"corrtp", "c","Correlation [opt=(e)lectrons/p(h)otons/(a)ll]",0,0,1,0,0},
+#endif
 #if defined _ELPH && !defined _RT
-  {"corrtp", "c","Correlation [opt=(e)lectrons/(p)honons/(b)oth]",0,0,1,0,0},
+  {"corrtp", "c","Correlation [opt=(e)lectrons/(p)honons/(a)ll]",0,0,1,0,0},
   {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0,0},    
 #endif
 #if defined _SC | defined _MAGNETIC | defined _RT

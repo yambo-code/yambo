@@ -25,7 +25,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_ppa,l_elel_corr,l_elph_corr,l_cohsex
+ use drivers,       ONLY:l_ppa,l_elel_corr,l_elph_corr,l_cohsex,l_elphoton_corr
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,&
@@ -70,7 +70,9 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    !
    if (l_elel_corr) then
      if (l_ppa.or.l_cohsex) then
+       !
        call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
+       !
      else
        !
        call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,iter)
@@ -80,9 +82,15 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      QP_Sc=cmplx(0.,0.,SP)
    endif
    !
+# if defined _QED 
+   !
+   if (l_elphoton_corr) call QED_Sigma_c(en,k,q,qp)
+   !
+#endif
+   !
 # if defined _ELPH 
    !
-   if (l_elph_corr)    call ELPH_Sigma_c(en,k,q,qp)
+   if (l_elph_corr)     call ELPH_Sigma_c(en,k,q,qp)
    !
 #endif
    !

@@ -52,7 +52,7 @@ typedef struct
 /* 
  Yambo/Ypp driver flag
 */
-#if defined _yambo  || _ELPH || _SC  || _RT || _DISTRIBUTED 
+#if defined _yambo  || _ELPH || _SC  || _RT || _DISTRIBUTED || _QED
  #define _YAMBO_MAIN
 #endif
 #if defined _MAGNETIC || _KERR || _SURF

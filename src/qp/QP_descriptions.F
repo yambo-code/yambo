@@ -32,7 +32,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &                        COHSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver,&
 &                        use_GreenF_to_eval_QP,GF_is_causal,QP_G_Zoom_treshold
  use stderr,        ONLY:string_pack,gen_fmt
- use drivers,       ONLY:l_life,l_ppa,l_elph_corr,l_elel_corr,l_cohsex
+ use drivers,       ONLY:l_life,l_ppa,l_elph_corr,l_elel_corr,l_cohsex,l_elphoton_corr
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_RIM_tot_nkpts
@@ -83,54 +83,57 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &          string_pack('(a,',gen_fmt( r_v=(/QP_dSc_delta*HA2EV /) ),')'))) &
 &          ' dS/dw step         [ev]:',QP_dSc_delta*HA2EV
    endif
- endif
+ endif 
  !
- qp%n_descs=qp%n_descs+1
- write (qp%description(qp%n_descs),trim(&
-&      string_pack('(a,',gen_fmt( (/X%ng /) ),')'))) &
-&      ' X G`s            [used]:',X%ng
- qp%n_descs=qp%n_descs+1
- write (qp%description(qp%n_descs),trim(&
-&      string_pack('(a,',gen_fmt( (/X%ng_db /) ),')'))) &
-&      ' X G`s            [disk]:',X%ng_db
- qp%n_descs=qp%n_descs+1
- write (qp%description(qp%n_descs),trim(&
-&      string_pack('(a,2(',gen_fmt( X%ib  ),',1x))'))) &
-&      ' X bands                :',X%ib
- qp%n_descs=qp%n_descs+1
- write (qp%description(qp%n_descs),trim(&
-&      string_pack('(a,',gen_fmt( r_v=(/X%cg_percentual /) ),')'))) &
-&      ' X poles           [o/o]:',X%cg_percentual
- qp%n_descs=qp%n_descs+1
- write (qp%description(qp%n_descs),trim(&
-&     string_pack('(a,2(',gen_fmt( r_v=X%ehe*HA2EV ),',1x))'))) &
-&     ' X e/h E range      [ev]:',X%ehe*HA2EV
- !
- if (ver_is_gt_or_eq(-1,(/3,0,5/))) then
-   qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),'(2a)') ' X xc-Kernel            :',trim(X%f_xc)
- endif
- !
- if (.not.l_ppa.and..not.l_cohsex) then
+ if (l_elel_corr) then
+   !
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
-&        string_pack('(a,2(',gen_fmt( r_v = Xw%dr*HA2EV ),',1x))')))&
-&        ' X damping range    [ev]:',Xw%dr*HA2EV
-   if (.not.l_life) then
+&        string_pack('(a,',gen_fmt( (/X%ng /) ),')'))) &
+&        ' X G`s            [used]:',X%ng
+   qp%n_descs=qp%n_descs+1
+   write (qp%description(qp%n_descs),trim(&
+&        string_pack('(a,',gen_fmt( (/X%ng_db /) ),')'))) &
+&        ' X G`s            [disk]:',X%ng_db
+   qp%n_descs=qp%n_descs+1
+   write (qp%description(qp%n_descs),trim(&
+&        string_pack('(a,2(',gen_fmt( X%ib  ),',1x))'))) &
+&        ' X bands                :',X%ib
+   qp%n_descs=qp%n_descs+1
+   write (qp%description(qp%n_descs),trim(&
+&        string_pack('(a,',gen_fmt( r_v=(/X%cg_percentual /) ),')'))) &
+&        ' X poles           [o/o]:',X%cg_percentual
+   qp%n_descs=qp%n_descs+1
+   write (qp%description(qp%n_descs),trim(&
+&       string_pack('(a,2(',gen_fmt( r_v=X%ehe*HA2EV ),',1x))'))) &
+&       ' X e/h E range      [ev]:',X%ehe*HA2EV
+   !
+   if (ver_is_gt_or_eq(-1,(/3,0,5/))) then
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),'(2a)') ' X xc-Kernel            :',trim(X%f_xc)
+   endif
+   !
+   if (.not.l_ppa.and..not.l_cohsex) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
-&          string_pack('(a,(',gen_fmt( i_v=(/Xw%n_freqs/) ),',1x))'))) &
-&          ' X Steps                :',Xw%n_freqs
+&          string_pack('(a,2(',gen_fmt( r_v = Xw%dr*HA2EV ),',1x))')))&
+&          ' X damping range    [ev]:',Xw%dr*HA2EV
+     if (.not.l_life) then
+       qp%n_descs=qp%n_descs+1
+       write (qp%description(qp%n_descs),trim(&
+&            string_pack('(a,(',gen_fmt( i_v=(/Xw%n_freqs/) ),',1x))'))) &
+&            ' X Steps                :',Xw%n_freqs
+     endif
    endif
- endif
- if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
-   qp%n_descs=qp%n_descs+1
-                  qp%description(qp%n_descs)=' X BZ energy RIM        : no'
-   if (use_X_RIM) qp%description(qp%n_descs)=' X BZ energy RIM        : yes'
-   qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&        string_pack('(a,',gen_fmt( (/BZ_RIM_tot_nkpts/) ),')'))) &
-&        ' X BZ RIM points        :',BZ_RIM_tot_nkpts
+   if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
+     qp%n_descs=qp%n_descs+1
+                    qp%description(qp%n_descs)=' X BZ energy RIM        : no'
+     if (use_X_RIM) qp%description(qp%n_descs)=' X BZ energy RIM        : yes'
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&          string_pack('(a,',gen_fmt( (/BZ_RIM_tot_nkpts/) ),')'))) &
+&          ' X BZ RIM points        :',BZ_RIM_tot_nkpts
+   endif
  endif
  !
  if (l_life) then
@@ -157,6 +160,13 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &       string_pack('(a,',gen_fmt( (/QP_ng_Sx /) ),')'))) &
 &       ' Sx RL components       :',QP_ng_Sx
  endif
+ !
+#if defined _QED 
+ if (l_elphoton_corr) then
+   qp%n_descs=qp%n_descs+1
+   qp%description(qp%n_descs)=' El-Photon correlation  : yes'
+ endif
+#endif
  !
 #if defined _ELPH 
  !

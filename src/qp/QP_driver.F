@@ -26,7 +26,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
- use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel
+ use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
@@ -48,7 +48,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
- use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
+ use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON,SE_GW_EL_PHOTON
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
@@ -83,8 +83,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !==============================================================
  if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_elel_corr.and..not.l_life) return
  !
- if (.not.l_elel_corr.and..not.l_elph_corr) then
-   call warning('Both e-p and e-e correlation switched off')
+ if (.not.l_elel_corr.and..not.l_elph_corr.and..not.l_elphoton_corr) then
+   call warning('e-p, e-e and e-photon correlation switched off')
    return
  endif
  !
@@ -121,6 +121,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  qp%n_descs=2
  if (l_ppa) then
    qp%description(2)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HA2EV))
+   !
    QP_DB_kind=SE_GoWo_PPA
    !
    ! GPL_EXCLUDE_START
@@ -136,20 +137,25 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    GWo_iterations=0
    !
    qp%description(2)=' == COHSEX GW =='
+   !
    QP_DB_kind=SE_COHSEX
    !
  else
    !
-   qp%description(2)=' == Real Axis GW =='
+   if (l_elel_corr)     qp%description(2)=' == Real Axis GW =='
+   if (l_elph_corr)     qp%description(2)=' == El-Ph Self-Energy =='
+   if (l_elphoton_corr) qp%description(2)=' == Lamb Shift =='
    !
    ! Here I am not considering the case where ELPH + GW is used.
    ! For this case I need to create a new global KIND.
    !
    QP_DB_kind=SE_GoWo
    !
-   ! GPL_EXCLUDE_START
-   !
    if (l_elph_corr) QP_DB_kind=SE_POLARON 
+   !
+   if (l_elphoton_corr) QP_DB_kind=SE_GW_EL_PHOTON
+   !
+   ! GPL_EXCLUDE_START
    !
    if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA
    !

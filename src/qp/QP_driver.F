@@ -26,7 +26,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
- use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr
+ use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
@@ -39,15 +39,16 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_W_partially_done,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
-&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,PPA_terminator,l_QP_Expand,QP_G_info
+&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,&
+&                        l_GW_terminator,GW_terminator_Kind,l_QP_Expand,QP_G_info
 #if defined _ELPH
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
-#if defined _QED
- use QED
+#if defined _ELPH
+ use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
- use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON,SE_GW_EL_PHOTON
+ use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
@@ -65,9 +66,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  call parser('NewtDchk',   QP_dSc_test)
  call parser('OnMassShell',On_Mass_Shell_approx)
- call parser('QPExpand',   l_QP_Expand)
+ call parser('QPExpand'   ,l_QP_Expand)
  call parser('UseEbands',  COHSEX_use_empties)
- call parser('GWTerm',     PPA_terminator)
  ! GPL_EXCLUDE_START
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
  use_GreenF_Zoom=QP_G_Zoom_treshold>0.
@@ -75,6 +75,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  call parser('ExtendOut',  l_extended_output)
  !
  if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
+ !
+ l_GW_terminator=GW_terminator_Kind/='none'
  !
  ! S_x/Vxc are always need if not l_life or el. correlations is
  ! skipped
@@ -138,7 +140,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    QP_DB_kind=SE_COHSEX
    !
- else 
+ else
    !
    if (l_elel_corr)     qp%description(2)=' == Real Axis GW =='
    if (l_elph_corr)     qp%description(2)=' == El-Ph Self-Energy =='
@@ -183,7 +185,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    if (X%ng_db==0) X%ng_db=X%ng
  endif
  !
- if (l_ppa.and.PPa_terminator) X%ng=eval_G_minus_G(X%ng,0)
+ if (l_ppa.and.l_GW_terminator) X%ng=eval_G_minus_G(X%ng,0)
  !
  ! Local Allocations
  !===================

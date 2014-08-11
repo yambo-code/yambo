@@ -43,7 +43,7 @@ module FFT_m
      !
      !  Calculate a function similar to MOD:
      !  modx(i,j) = mod (i,j) i>=0
-     !          = mod ( mod(i,j)+j , j) i<0
+     !            = mod ( mod(i,j)+j , j) i<0
      !  Thus 
      !   modx(3,2)=1 
      !   modx(-1,2)=1.

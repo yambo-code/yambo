@@ -75,6 +75,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _OPENMP
  use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K
 #endif
+ use interfaces,     ONLY:PARALLEL_structure
  !
  implicit none
  !
@@ -630,6 +631,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'ShiftedPath')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
+   call initactivate(1,'XTermKind'//'Xs')
+   call initactivate(1,'XTermEn'//'Xs')
  endif
  !
  ! GW (PPA & COHSEX) 
@@ -637,10 +640,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
-   if (l_ppa) call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
-&                      'EhEngy','LongDr','PPAPnt'/))
-   if (l_cohsex) call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk',&
-&                         'EhEngy','LongDr'/))
+   if (l_ppa) then
+     call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
+&                           'EhEngy','LongDr','PPAPnt'/))
+     call initactivate(1,'XTermKind'//'Xp')
+     call initactivate(1,'XTermEn'//'Xp')
+   endif
+   if (l_cohsex) then
+     call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','EhEngy','LongDr'/))
+     call initactivate(1,'XTermKind'//'Xs')
+     call initactivate(1,'XTermEn'//'Xs')
+   endif
  endif
  !
  ! ACFDT
@@ -680,7 +690,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                      'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                      'DrudeW','EhEngy','LongDr'/)) 
        !
-       if (.not.l_cohsex) call initactivate(1,'GWTerm GwEnComp DysSolver')
+       if (.not.l_cohsex) call initactivate(1,'GTermKind GTermEn DysSolver')
        if (     l_cohsex) call initactivate(1,'UseEbands')
        if (trim(QP_solver)=="g") then
          call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 

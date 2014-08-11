@@ -113,6 +113,12 @@ module interfaces
      type(MPI_comm),optional :: COMM_A2A_3
    end subroutine
    !
+   subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
+     character(*), optional :: ENVIRONMENT
+     integer,      optional :: n_elements
+     character(*), optional :: ROLE(:)
+   end subroutine
+   !
    subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
      use parallel_m, ONLY:PP_indexes,MPI_COMM
      type(PP_indexes)       ::px

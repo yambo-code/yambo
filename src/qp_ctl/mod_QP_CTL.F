@@ -347,6 +347,7 @@ module QP_CTL_m
        call OCCUPATIONS_Extend(Fermi_en,en)
        !
        nullify(Fermi_en%E)
+       !
      endif
      !
      ! CLEAN

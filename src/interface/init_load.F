@@ -29,10 +29,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
- use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold
+ use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
+&                        X_en_comp
  use fields,        ONLY:global_gauge,grid_path
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
-&                        QP_n_G_bands,QP_ng_Sx,GW_en_comp,&
+&                        QP_n_G_bands,QP_ng_Sx,GW_terminator_E,GW_terminator_Kind,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
 &                        SC_E_threshold,QP_dSc_delta,QP_G_Zoom_treshold,OCC_T_ref
  use LIVE_t,        ONLY:nhash
@@ -202,11 +203,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
  call it(defs,'dScStep',  '[GW] Energy step to evalute Z factors',QP_dSc_delta,E_unit)
  call it(defs,'DysSolver','[GW] Dyson Equation solver (`n`,`s`,`g`)',QP_solver,protect=.FALSE.)
- call it(defs,'GEnSteps',   '[GW] G_gw energy steps',QP_Sc_steps)
- call it(defs,'GEnRnge',    '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
- call it('f',defs,'GWTerm',   '[GW] Use a terminator for the self-energy',verb_level=V_qp)
- call it(defs,'GwEnComp',   '[GW] If <= 0 use 0-order EET; > 0 the Bruneval-Gonze terminator', &
-&                        GW_en_comp,E_unit,verb_level=V_qp)
+ call it(defs,'GEnSteps', '[GW] G_gw energy steps',QP_Sc_steps)
+ call it(defs,'GEnRnge',  '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
+ call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze,"BRS" Berger-Reining-Sottile)', &
+&                          GW_terminator_Kind)
+ call it(defs,'GTermEn',  '[GW] GW terminator energy (only for kind="BG")',GW_terminator_E,E_unit,verb_level=V_qp)
  call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
  !
@@ -216,6 +217,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
+ call it('f',defs,'XTerm ',   '[X] Use a terminator for the response',verb_level=V_resp)
+ call it(defs,'XEnComp',     '[X] If > 0 the Bruneval-Gonze terminator', &
+&                             X_en_comp,E_unit,verb_level=V_resp)
  !
  ! BSE/BSK
  !
@@ -225,7 +229,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  !
- ! GPL_INCLUDE_START
+ !GPL_INCLUDE_START
  !
  !call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX',BSK_mode,protect=.FALSE.)
  !

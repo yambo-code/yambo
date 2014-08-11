@@ -36,7 +36,7 @@ module OPENMP
  integer     :: n_threads_RT  = 0  
  integer     :: n_threads_DIP = 0  
  integer     :: n_threads_K   = 0  
- integer     :: n_threads_now = 1
+ integer     :: n_threads_now = 0
  logical     :: master_thread = .TRUE.
  !
 #if defined _OPENMP
@@ -112,4 +112,4 @@ module OPENMP
      !
    end subroutine
    !
-end module openmp
+end module OPENMP

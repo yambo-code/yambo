@@ -54,7 +54,7 @@ AC_LANG_CASE([C], [
         AC_SUBST(MPIF77)
 ],
 [Fortran], [
-        AC_CHECK_PROGS(PFC, mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)
+        AC_CHECK_PROGS(PFC, mpiifort mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)
         FC="$PFC"
         acx_mpi_save_FC="$PFC"
 ])

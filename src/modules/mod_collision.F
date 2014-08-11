@@ -67,7 +67,7 @@ module collision
    integer               :: kind=0
    integer               :: D(3,2)=0 ! Dimension (v3)
    integer               :: N        ! Linear Dimension
-   integer(LP), pointer  :: table(:,:,:) => null()
+   integer(LP), pointer  :: table(:,:,:)  => null()
    complex(SP), pointer  :: v(:)          => null()
    complex(SP), pointer  :: v3c(:,:,:)    => null()
    real(SP)   , pointer  :: v3r(:,:,:)    => null()
@@ -79,14 +79,20 @@ module collision
  type(COLLISIONS_element), allocatable :: HF_collisions(:)
  integer :: nCOHSEX_collisions=0
  type(COLLISIONS_element), allocatable :: COHSEX_collisions(:)
- type(COLLISIONS_element), allocatable :: IO_collision
+ !type(COLLISIONS_element), allocatable :: IO_collision
  !
  contains
    !
-   subroutine collision_reset(ggw)
+   subroutine collision_reset(ggw,INIT_ONLY)
      type(ggwinfo)::ggw
-     if(associated(ggw%gamp))  deallocate(ggw%gamp)
-     if(associated(ggw%rhotw)) deallocate(ggw%rhotw)
+     logical,optional::INIT_ONLY
+     logical::init_only_=.false.
+     !
+     if(present(INIT_ONLY)) init_only_=INIT_ONLY
+     if(.not.init_only_) then
+       if(associated(ggw%gamp))  deallocate(ggw%gamp)
+       if(associated(ggw%rhotw)) deallocate(ggw%rhotw)
+     endif
      nullify(ggw%gamp,ggw%rhotw)
    end subroutine
    !

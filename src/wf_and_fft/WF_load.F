@@ -331,10 +331,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
            WF%c(:,WF%N)=wf_DP(:)
            cycle
          endif
+         !
 #if defined _FFTW
          call fft_3d(wf_DP,fft_dim,+1,fftw_plan)
 #else
-         call fft_3d(wf_DP,fft_dim,+1)
+         !call fft_3d(wf_DP,fft_dim,+1)
+         !
+         ! here we explot (+2 instead of +1) the wfc cutoff when using FFTQE
+         call fft_3d(wf_DP,fft_dim,+2)
 #endif
          WF%c(:,WF%N)=wf_DP(:)*fft_norm
          !
@@ -342,6 +346,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      enddo
    enddo
  enddo
+
  !
  ! CLEAN
  !

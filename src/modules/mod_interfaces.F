@@ -130,6 +130,22 @@ module interfaces
      logical,       optional::MASK(:)
    end subroutine
    !
+   subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
+     use pars,          ONLY:SP
+     use BS,            ONLY:Haydock_vector
+     integer               ::iter
+     type(Haydock_vector)  ::Vi(:),Vo(:)
+     real(SP),optional     ::iter_par
+     character(3),optional ::call_kind
+   end subroutine
+   !
+   subroutine K_dot_product(dot,V,W)
+     use pars,          ONLY:SP
+     use BS,            ONLY:Haydock_vector
+     complex(SP)           ::dot
+     type(Haydock_vector)  ::V(:),W(:)
+   end subroutine
+   !
  end interface
  !
 end module

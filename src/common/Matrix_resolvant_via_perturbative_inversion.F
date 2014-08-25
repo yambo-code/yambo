@@ -25,11 +25,12 @@ integer function Matrix_resolvant_via_perturbative_inversion(iw,N,W,C,f,V)
  !
  ! C<W|1./(V^{-1}-M)|W> = \sum_n C<W| (1-VM)^{-1} V |W> = \sum_n C<W| ( VM )^n V |W>
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cONE
  use matrix_operate, ONLY:mat_dia_inv,USE_LK,INV
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
- use BS,             ONLY:K_multiply_by_V
+ use BS,             ONLY:BS_K_coupling,BS_mat,BS_K_dim,BS_cpl_mat
  use com,            ONLY:error
+ use wrapper,        ONLY:M_by_V
 #if defined _OPENMP
  use wrapper,        ONLY:Vstar_dot_V_omp
 #endif
@@ -64,9 +65,24 @@ integer function Matrix_resolvant_via_perturbative_inversion(iw,N,W,C,f,V)
  !
  do while (it<=BSS_inv_iter_max) 
    !
-   call K_multiply_by_V(1,it*iw,A_nm1,A_n,call_kind='Inv')
+   call M_by_V('n',BS_K_dim,BS_mat,A_nm1,A_n)
+   if (BS_K_coupling) then
+   !
+     call M_by_V('n',BS_K_dim,BS_K_dim,cONE, BS_cpl_mat,&
+&                 BS_K_dim,A_nm1(BS_K_dim+1:),1,cONE,A_n,1)
+     call M_by_V('n',BS_K_dim,BS_K_dim,cONE,conjg(BS_cpl_mat),&
+&               BS_K_dim,A_nm1,1,cONE,A_n(BS_K_dim+1:),1)
+     call M_by_V('n',BS_K_dim,BS_K_dim,cONE,conjg(BS_mat),&
+&               BS_K_dim,A_nm1(BS_K_dim+1:),1,cONE,A_n(BS_K_dim+1:),1)
+   end if
+   !    
+   !
    A_n(:)=V(:)*A_n(:)
+#if defined _OPENMP
+   delta_f=C*Vstar_dot_V_omp(N,W,A_n)
+#else
    delta_f=C*Vstar_dot_V(N,W,A_n)
+#endif
    !
    f=f+delta_f
    !

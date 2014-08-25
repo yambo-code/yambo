@@ -311,7 +311,7 @@ module parallel_m
  end interface PP_redux_wait
  !
  interface pp_bcast
-   module procedure c1bcast,c2bcast
+   module procedure c0bcast,c1bcast,c2bcast
  end interface pp_bcast
  !
  contains
@@ -887,16 +887,45 @@ module parallel_m
 #endif
    end subroutine
    !
-   subroutine c1bcast(array,node)
-     complex(SP):: array(:)
+   subroutine c0bcast(cval,node,COMM)
+     complex(SP):: cval
      integer, intent(in) :: node
+     integer, optional :: COMM
 #if defined _MPI
+     integer::LOCAL_COMM  ! Work Space  
      if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
      !
      local_type=MPI_COMPLEX
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
      !
-     call mpi_bcast(array(1),size(array),local_type, node, mpi_comm_world, i_err)
+     call mpi_bcast(cval,1,local_type,node,LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
+   subroutine c1bcast(array,node,COMM)
+     complex(SP):: array(:)
+     integer, intent(in) :: node
+     integer, optional :: COMM
+#if defined _MPI
+     integer::LOCAL_COMM  ! Work Space  
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     !
+     local_type=MPI_COMPLEX
+     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_bcast(array(1),size(array),local_type, node,LOCAL_COMM, i_err)
 #endif
    end subroutine
    !

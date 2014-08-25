@@ -55,8 +55,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
  !
  ! XC routines arrays
  !
- real(SP) :: spin_rho_SP(fft_size,n_spin),rspts(fft_size),rho(fft_size)
- real(DP) :: spin_rho_DP(n_spin,fft_size)
+ real(SP) :: spin_rho_SP(fft_size,n_spin),rho(fft_size)
+ real(DP) :: spin_rho_DP(n_spin,fft_size),rspts(fft_size)
  real(SP),allocatable:: drho(:,:,:)
  real(DP),allocatable:: sigma(:,:)
  !

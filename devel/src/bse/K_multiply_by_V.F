@@ -48,7 +48,7 @@ subroutine K_multiply_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
  use R_lattice,      ONLY:nXkibz
  use BS,             ONLY:BS_mat,BS_K_dim,BS_nT_at_k,BSS_eh_E,&
 &                         BS_DB_is_fragmented,BS_K_coupling,&
-&                         BS_cpl_mat,BSS_uses_RIM
+&                         BS_cpl_mat!,BSS_uses_RIM
  use X_m,            ONLY:X_t
  use matrix_operate, ONLY:UP_matrix_index
  use IO_m,           ONLY:io_control,OP_RD,RD,NONE,RD_CL,OP_RD_CL

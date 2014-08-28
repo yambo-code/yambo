@@ -88,10 +88,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use collision,  ONLY:COLLISIONS_cutoff
 #endif
 #if defined _RT || defined _YPP_RT
- use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,                   &
-&                     RT_diagonalization_steps, l_Debye_TBose_update,   &
+ use real_time,  ONLY:RT_step,NE_steps, Integrator_name,                   &
+&                     l_Debye_TBose_update,   &
 &                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel,  &
-&                     l_RT_diagonalize,RT_is_dephased,RAD_LifeTime,Phase_LifeTime,        &
+&                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,        &
 &                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,Imp_factors,                &
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_en,           &
 &                     Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,           &
@@ -539,13 +539,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RT_step=0.002*FS2AUT
  NE_steps=1
  integrator_step=1
- Thermal_steps=0
  Integrator_name='RK2'
  RAD_LifeTime = 0.
  Phase_LifeTime = 0.
  RT_is_dephased=.FALSE.
- RT_diagonalization_steps=-1
- l_RT_diagonalize=.FALSE.
  l_RT_induced_field=.FALSE.
  NE_tot_time= 5*RAD_LifeTime
  NE_MEM_treshold=0.

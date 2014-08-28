@@ -83,19 +83,19 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_new_k,dG_old_k)
    !
    dG_new_k(i_n,i_n)=dG_new_k(i_n,i_n)+dG_old_k(i_n,i_n)
    !
-   ! It is higly non satisfactory that 
+   ! It is higly non satisfactory that
    !     Gamma_neq[f_eq] /= Gamma_eq                              (1)
    ! This explains the need for the special definition
-   !    sumGAMMA=sum(REF_lifetimes(i_n,ik,:))                     (2)
+   !    sumGAMMA=abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik,1))/2._SP     (2)
    ! instead of
-   !    sumGAMMA=abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik,1))/2._SP     (3)
+   !    sumGAMMA=sum(REF_lifetimes(i_n,ik,:))                     (3)
    ! with i_n=i_np. Notice the 0.5 factor in Eq.(3) so that
    ! Eq.(2)=Eq.(3) in case Eq.(1) holds
    ! 
-   ! This difference is due to two reasons, the second one is more relevant:
-   ! (1) For the ee scatt REF_lifetimes are computed with a static approx to
+   ! This difference is due to two reasons:
+   ! (a) For the ee scatt REF_lifetimes are computed with a static approx to
    !     the out-of-equilibrium GW
-   ! (2) The Gamma_eq are computed in the \eta->0 limit, i.e. no QP approx,
+   ! (b) The Gamma_eq are computed in the \eta->0 limit, i.e. no QP approx,
    !     while the Gamma_neq are computed in the QP approx \eta=Gamma_eq
    !
    !sumGAMMA=sum(REF_lifetime(i_n,ik,:))

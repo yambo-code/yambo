@@ -26,7 +26,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_cohsex,l_use_collisions,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree
- use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
+ use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,SC_rho_threshold,it_now,E_convergence, &
@@ -276,7 +276,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if (l_sc_pot_is_local) then
        !
        H_nl_sc(:,:,:) = Ho(:,:,ik,:)/real(ncpu)
-       call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WFo)
+       if(n_spinor==1) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WFo,'def')
+       if(n_spinor==2) then
+         call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo,'def')
+         call V_real_space_to_H(ik,V_xc_sc,H_nl_sc,WFo,'xc ')
+       endif
        !
      else
        !
@@ -320,7 +324,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        ! Add V_Hartree
        !
-       call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo)
+       call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo,'def')
        !
      endif
      !

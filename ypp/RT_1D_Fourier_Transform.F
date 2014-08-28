@@ -86,7 +86,7 @@ subroutine RT_1D_Fourier_Transform(mode,title,freqs,fw,nw,ft,nt,dt,T0,USE_FFT,I_
      if (l_live_timing) call live_timing('FT'//title//':',nw)
      do i_w = 1, nw
        do i_t = 1, nt
-         Time_reached = i_t*dt       
+         Time_reached = (i_t-1)*dt
          fw(i_w) = fw(i_w)+ft(i_t)*exp(cI*I_sign*freqs(i_w)*Time_reached)
        enddo
        if (l_live_timing) call live_timing(steps=1)
@@ -109,7 +109,7 @@ subroutine RT_1D_Fourier_Transform(mode,title,freqs,fw,nw,ft,nt,dt,T0,USE_FFT,I_
    !
    if (l_live_timing) call live_timing('FT'//title//':',nt)
    do i_t = 1, nt
-     Time_reached = i_t*dt       
+     Time_reached = (i_t-1)*dt       
      do i_w = 1, nw
        ft(i_t) = ft(i_t)+fw(i_w)*(freqs(2)-freqs(1))*exp(-cI*freqs(i_w)*Time_reached)
      enddo

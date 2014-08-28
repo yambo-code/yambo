@@ -36,7 +36,6 @@ module real_time
  ! NE dynamics
  !
  logical           :: l_NE_dynamics  
- logical           :: l_NE_dynamics_started
  logical           :: l_NE_with_fields
  logical           :: l_NE_simulate_Irredux
  logical           :: l_RT_probe
@@ -56,40 +55,16 @@ module real_time
  ! To include the induced field in the coupling and current
  !
  logical           :: l_RT_induced_field
- ! 
- ! Diagonalization (QP analysis)
- !
- logical           :: l_RT_diagonalize
- integer           :: RT_diagonalization_steps
- !
- !
- ! Time steps and step length...
- !------------------------------
- ! 
- !   Thermal_steps   NE_steps
- ! --------------- 0 ---------------------------- (end)
- !                 ^   ^
- !                 |   |
- !                 Thermal_steps+1
- !                     |__ ef1/2_i_time
- ! 
- ! NE_time is negative during the Thermal steps. When NE_time is positive
- ! l_NE_dynamics_started=.TRUE.
  !
  ! ... core step length ...
  !
  real(SP) :: RT_step
- ! 
- ! ... thermalization ...
- !
- integer  :: Thermal_steps
  ! 
  ! ... NE dynamics ...
  !
  real(SP) :: NE_time ! <- incremented
  real(SP) :: NE_tot_time ! Total (fixed)
  integer  :: NE_i_time ! = (NE_time-1)/RT_step
- integer  :: RT_dynamics_jumps 
  integer  :: NE_steps
  !
  ! Here I control the way the time evolution is sampled for the e-p and e-e
@@ -303,10 +278,6 @@ module real_time
  !
  complex(SP), allocatable :: XC0_and_HARTREE0(:,:,:,:)
  !
- ! Occupation natural orbitals
- !
- real(SP),    allocatable :: Occ_natural_orb(:,:) 
- !
  type RT_t
    !
    character(schlen)  :: description
@@ -516,11 +487,6 @@ module real_time
      call mem_est("E_bare",(/size(E_bare)/))
      E_bare=en%E(:SC_bands(2),:,:)
      !
-     if(l_RT_diagonalize) then
-       allocate(Occ_natural_orb(1:SC_bands(2),QP_nk))
-       call mem_est("Occ_natural",(/size(Occ_natural_orb)/))
-     endif
-     !
    end subroutine RT_alloc
    !   
    subroutine RT_free
@@ -659,11 +625,6 @@ module real_time
      !
      deallocate(E_bare)
      call mem_est("E_bare")
-     !
-     if(l_RT_diagonalize) then
-       deallocate(Occ_natural_orb)
-       call mem_est("Occ_natural")
-     endif
      !
      if(allocated(RT_Deph_Matrix)) then
        deallocate(RT_Deph_Matrix)

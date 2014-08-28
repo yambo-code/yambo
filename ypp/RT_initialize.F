@@ -25,13 +25,13 @@ subroutine RT_initialize(dump_and_write)
  !
  use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
 &                         W_RT_induced_step,RED_steps,l_force_min_damp,&
-&                         N_pumps,l_skip_pol_and_curr_IO
+&                         N_pumps,l_skip_pol_and_curr_IO,J_steps,J_time_step
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HA2EV
  use stderr,         ONLY:real2ch
- use rt_ctl,         ONLY:RT_output
- use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_P
+ use rt_ctl,         ONLY:RT_output,RT_IO_JPO_steps
+ use real_time,      ONLY:RT_step,RT_ind_J,RT_P
  use fields,         ONLY:Efield,i_Probe
  !
  implicit none
@@ -48,22 +48,24 @@ subroutine RT_initialize(dump_and_write)
  !  Reduced Time range
  !====================
  !
- i_t_start=int(X_rt%time_range(1)/RT_step)+1
- i_t_end  =int(X_rt%time_range(2)/RT_step)
+ J_time_step=RT_step*RT_IO_JPO_steps
  !
- i_t_field_range= (/int(Efield(i_Probe)%t_initial/RT_step)+1,NE_steps/)
+ i_t_start=int(X_rt%time_range(1)/J_time_step)+1
+ i_t_end  =int(X_rt%time_range(2)/J_time_step)
+ !
+ i_t_field_range= (/int(Efield(i_Probe)%t_initial/J_time_step)+1,J_steps/)
  !
  if (N_pumps>0.and.trim(Efield(i_Probe)%ef_name)=='DELTA') i_t_start=i_t_field_range(1)
  !
  if (i_t_start<=0.or.i_t_start> i_t_field_range(2)) i_t_start=i_t_field_range(1)
  if (i_t_end<=0  .or.i_t_end>   i_t_field_range(2)) i_t_end  =i_t_field_range(2)
  !
- X_rt%time_range=(/i_t_start-1,i_t_end/)*RT_step
+ X_rt%time_range=(/i_t_start-1,i_t_end-1/)*J_time_step
  !
  RED_steps=i_t_end-i_t_start+1
- W_RT_induced_step=2.*pi/(real(RED_steps,SP)*RT_step)  ! Frequency step in real-time dynamics
+ W_RT_induced_step=2.*pi/(real(RED_steps-1,SP)*J_time_step)  ! Frequency step in real-time dynamics
  !
- call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_step/FS2AUT)
+ call msg('s','[RT] Time range [fs]:',(/real(i_t_start-1),real(i_t_end-1)/)*J_time_step/FS2AUT)
  !
  if (present(dump_and_write)) then
    if (.not.dump_and_write) return
@@ -79,8 +81,8 @@ subroutine RT_initialize(dump_and_write)
    ! Force the minimal damping to make finite the Fourier Transform
    !
    if(l_force_min_damp) then
-     call RT_damp_it("LORENTZIAN",W_RT_induced_step,RT_J_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
-     call RT_damp_it("LORENTZIAN",W_RT_induced_step,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,6)
+     call RT_damp_it("LORENTZIAN",W_RT_induced_step,RT_J_t(i_t_start:i_t_end,:),RED_steps,J_time_step,3)
+     call RT_damp_it("LORENTZIAN",W_RT_induced_step,RT_P_t(i_t_start:i_t_end,:),RED_steps,J_time_step,6)
    endif
    !
  else
@@ -91,8 +93,8 @@ subroutine RT_initialize(dump_and_write)
    !
    call msg('s','[RT] Optimal damping factor: '//trim(real2ch(W_RT_induced_step*HA2EV))//' eV')
    !
-   call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_J_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
-   call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,6)
+   call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_J_t(i_t_start:i_t_end,:),RED_steps,J_time_step,3)
+   call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,J_time_step,6)
    !
  endif
  !
@@ -103,11 +105,11 @@ subroutine RT_initialize(dump_and_write)
  call RT_output(what="initialize")
  call RT_output(what="open cur pol")
  !
- do i_t=1,NE_steps
+ do i_t=1,J_steps
    RT_ind_J    =RT_J_t(i_t,:)
    RT_P        =RT_P_t(i_t,1:3)
-   call RT_output('pol',TIME=(i_t-1)*RT_step/FS2AUT)
-   if (allocated(RT_J_t)) call RT_output('cur',TIME=(i_t-1)*RT_step/FS2AUT)
+   call RT_output('pol',TIME=(i_t-1)*J_time_step/FS2AUT)
+   if (allocated(RT_J_t)) call RT_output('cur',TIME=(i_t-1)*J_time_step/FS2AUT)
  enddo
  !
 end subroutine

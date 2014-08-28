@@ -27,14 +27,13 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  use YPP,            ONLY:l_RT_X_inversion,l_skip_pol_and_curr_IO
  use units,          ONLY:HA2EV,FS2AUT
  use rt_ctl,         ONLY:RT_output
- use real_time,      ONLY:RT_step,RT_P,RAD_LifeTime,Phase_LifeTime
+ use real_time,      ONLY:RT_P,RAD_LifeTime,Phase_LifeTime
  use stderr,         ONLY:intc
  use LIVE_t,         ONLY:live_timing
  !
  ! Fourier
  !
- use real_time,      ONLY:NE_steps
- use YPP,            ONLY:X_rt
+ use YPP,            ONLY:X_rt,J_steps,J_time_step
  !
  implicit none
  !
@@ -71,7 +70,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
    !
    do i_t=1,nt
      !
-     T_i = (i_t-1)*RT_step
+     T_i = (i_t-1)*J_time_step
      P_num(i_n,i_t,:)=X(i_n,:)*exp(cI*W(i_n)*T_i)+conjg(X(i_n,:))*exp(-cI*W(i_n)*T_i)
      if (W(i_n)<1.E-5) P_num(i_n,i_t,:)=real(X(i_n,:))
      !
@@ -79,7 +78,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
        do i_c=1,3
          RT_P(i_c) = P(i_t,i_c)-sum( P_num(:i_n,i_t,i_c) )
        enddo
-       call RT_output(trim(p_file_name),time=(i_t-1)*rt_step/FS2AUT)
+       call RT_output(trim(p_file_name),time=(i_t-1)*J_time_step/FS2AUT)
      endif
      !
      if (what=="subtract") P(i_t,:)=P(i_t,:)-P_num(i_n,i_t,:)
@@ -98,7 +97,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  !========================
  !
  T_o=5.*max(RAD_LifeTime,Phase_LifeTime)
- iT_o=int(T_o/RT_step)+1
+ iT_o=int(T_o/J_time_step)+1
  !
  allocate(P_DP(nt,3),P_W(X_rt%energy_steps),freqs(X_rt%energy_steps))
  !
@@ -118,13 +117,13 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
        if (i_n/=0) P_DP(i_t,i_c)=P(i_t,i_c)-sum(P_num(:i_n,i_t,i_c))
      enddo
    enddo
-   call RT_damp_it("LORENTZIAN",F_damp,P_DP,nt,RT_step,3)
+   call RT_damp_it("LORENTZIAN",F_damp,P_DP,nt,J_time_step,3)
    !
    if (i_n==0) FT_title="P(t)"
    if (i_n/=0) FT_title="P(t)-Sum[P_harm^(n<"//trim(intc(i_n))//"])"
    !
-   call RT_1D_Fourier_Transform('T2W'," "//trim(FT_title),freqs,P_W,X_rt%energy_steps,P_DP(iT_o:,1),NE_steps-iT_o+1,&
-&                               RT_step,iT_o*RT_step,.FALSE.,1)
+   call RT_1D_Fourier_Transform('T2W'," "//trim(FT_title),freqs,P_W,X_rt%energy_steps,P_DP(iT_o:,1),J_steps-iT_o+1,&
+&                               J_time_step,(iT_o-1)*J_time_step,.FALSE.,1)
    !
    do i_w=1,X_rt%energy_steps
      !

@@ -34,10 +34,10 @@ subroutine RT_initialize(E,k,q)
  use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded
  use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_steps_DB, &
 &                         RT_IO_G_steps,RT_IO_output_steps
- use real_time,      ONLY:Thermal_steps,RT_step,l_NE_with_fields, &
-&                         l_RT_diagonalize,NE_steps,NE_tot_time,   &
+ use real_time,      ONLY:RT_step,l_NE_with_fields, &
+&                         NE_steps,NE_tot_time,   &
 &                         l_RT_diamagnetic,l_NE_simulate_Irredux,l_RT_induced_field,                   &
-&                         RT_diagonalization_steps,RT_is_dephased,RAD_LifeTime,       &
+&                         RT_is_dephased,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,RIM_ibz_coo, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,    &
 &                         l_RT_uses_E_RIM,RIM_bz_coo,RT_life_interp_steps,RT_life_interp_decay_time,&
@@ -83,8 +83,6 @@ subroutine RT_initialize(E,k,q)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
  !
- l_RT_diagonalize      =RT_diagonalization_steps>1
- !  
  eval_DFT     =  l_sc_is_libDFT            .and..not.l_sc_ip
  eval_HARTREE = (.not.l_NE_simulate_Irredux.and..not.l_sc_ip).or.l_sc_hartree
  eval_DENSITY =  eval_HARTREE .or. eval_DFT
@@ -128,16 +126,12 @@ subroutine RT_initialize(E,k,q)
    !
    if (RT_IO_time(i1)>0) IO_steps(i1) =nint(RT_IO_time(i1)/RT_step)
    !
-   if(IO_steps(i1)>0.and.mod(Thermal_steps+NE_steps-1,IO_steps(i1))/=0) then
+   if(IO_steps(i1)>0.and.mod(NE_steps-1,IO_steps(i1))/=0) then
      !
      if (i1>1) cycle
      !
-     rest=mod(Thermal_steps+NE_steps-1,IO_steps(i1))
-     if(NE_steps/=0) then
-       NE_steps = NE_steps+IO_steps(i1)-rest
-     elseif (NE_steps==0.and.Thermal_steps/=0) then
-       Thermal_steps = Thermal_steps+IO_steps(i1)-rest
-     endif
+     rest=mod(NE_steps-1,IO_steps(i1))
+     NE_steps = NE_steps+IO_steps(i1)-rest
      !
      ! Set automatically RT_IO_time and RT_IO_steps 
      !
@@ -148,7 +142,7 @@ subroutine RT_initialize(E,k,q)
      !
      if (i1>1) cycle
      !
-     rest=mod(Thermal_steps+NE_steps-1,IO_steps(i1))
+     rest=mod(NE_steps-1,IO_steps(i1))
      if(rest/=0) NE_steps = NE_steps+IO_steps(i1)-rest
      !
      if (RT_IO_steps_DB>0.and.IO_steps(i1)/=RT_IO_steps_DB) then
@@ -238,16 +232,11 @@ subroutine RT_initialize(E,k,q)
  !====================================
  call RT_Field_Commensurable_Frequencies()
  !
- if ( .not. l_NE_dynamics ) then
-   NE_steps=0
-   if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields, no thermalization and no manual pumping provided')
- endif
+ if ( .not. l_NE_dynamics ) call warning('Skipping simulation. No Ext fields and no manual pumping provided')
  !
  ! RIM support
  !=============
  l_RT_uses_E_RIM=BZ_RIM_tot_nkpts>0.and.BZ_RIM_nbands>=SC_bands(2).and..not.RIM_is_symmetry_expanded
- !
- if (l_RT_diagonalize.and.l_RT_uses_E_RIM) l_RT_diagonalize=.FALSE.
  !
  ! Number of K-points
  !====================
@@ -326,14 +315,13 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'r','---General---')
  call msg( 'r', 'Integrator                 :',trim(Integrator_name))
- call msg( 'r', 'Simulation time        [fs]:',(/-real(Thermal_steps),real(NE_steps-1)/)*RT_step/FS2AUT)
+ call msg( 'r', 'Simulation time        [fs]:',real(NE_steps-1)*RT_step/FS2AUT)
  call msg( 'r', 'Step length            [fs]:',RT_step/FS2AUT)
  call msg( 'r', 'NE Steps                   :',NE_steps)
  call msg( 'r', 'NE time                [fs]:',(NE_steps-1)*RT_step/FS2AUT)
  call msg( 'r', 'Memory depth(G)        [fs]:',T_memory/FS2AUT)
  call msg( 'r', 'Memory steps(G)            :',G_MEM_steps)
  if  (l_RT_INTERPOLATE) call msg( 'r', 'Memory steps(COHERENT part):',I_MEM_steps)
- call msg( 'r', 'Thermalization steps       :',Thermal_steps)
  !
  if (.not.trim(RT_life_interp_KIND)=="NONE") then
    call msg( 'nr','---Dynamics---')

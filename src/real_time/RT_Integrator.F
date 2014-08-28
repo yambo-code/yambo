@@ -130,7 +130,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
    !
    subroutine RT_evolve(dG_in,dG_out,dT,dTp)
      !
-     ! dG_in  = dG(T0)     --> Time at first iteration in integrator with more than one step
+     ! dG_old = dG(T0)     --> Time at first iteration in integrator with more than one step
      ! dG_in  = dG(T )     --> Effective time, i.e. at the second step of RK2 T=T0+dt/2
      ! dG_out = dG(T0+dt)
      !
@@ -181,14 +181,15 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
        endif
        !
        ! G(T0+dt) = G(T0) e^{-i\delta\epsilon dt} - i dt *(I1(T) - I2(T)) e^{-i\delta\epsilon (dt')}
+       ! if(l_RT_RWA) dephasing is integrated analitically in RT_apply_RWA
        !
        if(     l_RT_RWA) call RT_apply_RWA(ik,E,dT,dTp,dG_out(:,:,ik),dG_old(:,:,ik))
-       if(.not.l_RT_RWA) dG_out(:,:,ik)=dG_out(:,:,ik)+dG_old(:,:,ik)
+       if(.not.l_RT_RWA) call RT_Dephasing_step(dG_out(:,:,ik),dG_in(:,:,ik),ik,dT)
        !
-       ! Dephasing and carriers relaxation step
+       ! Carriers relaxation step
        ! G(T0+dt) = G(T0) - i dt * Sigma_relax(T)
        !
-       if(l_elel_scatt.or.l_elph_scatt) call RT_Scattering_step(dG_out(:,:,ik),ik,dT)
+       call RT_Scattering_step(dG_out(:,:,ik),ik,dT)
        !
      enddo
      !

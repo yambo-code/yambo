@@ -34,14 +34,14 @@ subroutine RT_driver(E,X,k,q)
  use interfaces,     ONLY:WF_load
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
- use SC,             ONLY:SC_potential,SC_bands,it_now,l_sc_pot_is_local,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho,&
+ use SC,             ONLY:SC_potential,SC_bands,it_now,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,Ho,&
 &                         SC_QP_setup
  use rt_ctl,         ONLY:RT_output,RT_alloc_ctl,RT_free_ctl,RT_IO_G_steps,ID,it_start
- use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser, &
+ use real_time,      ONLY:NE_steps,RT_step,G_lesser, &
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
-&                         NE_i_time,l_RT_diagonalize,l_RT_skip_impose,&
-&                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
-&                         NE_time,l_NE_dynamics_started,RT_update,&
+&                         NE_i_time,l_RT_skip_impose,&
+&                         G_lesser_reference,rho_reference, &
+&                         NE_time,RT_update,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update,&
 &                         dG_lesser,l_BGR,l_initial_equilibrium
  use plasma,          ONLY:Plasma_free,EH_gas
@@ -56,9 +56,6 @@ subroutine RT_driver(E,X,k,q)
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  !
  implicit none
- !
- ! if l_RT_diagonalize=.true.  "en"  will contains new energies and occupations
- ! otherwise it will not be used
  !
  ! Notice that E is never changed!
  !
@@ -207,7 +204,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! Calculation already done
  !
- if (it_start>=Thermal_steps+NE_steps) then
+ if (it_start>=NE_steps) then
    !      
    call RT_free()
    call RT_free_ctl()
@@ -251,50 +248,28 @@ subroutine RT_driver(E,X,k,q)
  !
  it=it_start-1
  !
+ ! Start-Up & Timing
+ !===================
+ call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
+ !
  do while (.not.l_Dynamics_is_over)
    !
    it    =it+1
-   it_now=it   ! used in RESTART
+   it_now=it
    !
    ! Steps & times ...
    !===================
    ! 
-   !   Thermal_steps   NE_steps
-   ! --------------- 0 ---------------------------- t
-   ! ^               ^                            ^
-   ! |               |                            NE_i_time=NE_steps
-   ! it=1            |    
-   !                 it=Thermal_steps+1          
-   ! NE_i_time<0     NE_i_time=1
-   !
-   ! 1 .... Thermal_steps (Thermal period) => NE_time=-Thermal_steps*RT_step ... -RT_step
-   ! it = Thermal_steps+1                  => NE_time =0 (NE_i_time = 1)
-   !
-   ! at  it = Thermal_steps+1    NE_dynamics=.TRUE.
-   !
-   NE_i_time  =it-Thermal_steps
+   NE_i_time  =it
    NE_time    =(NE_i_time-1)*RT_step
    it_mem     =MEM_index(NE_i_time,G_MEM_steps)
    it_mem_p1  =MEM_index(NE_i_time+1,G_MEM_steps)
-   !
-   l_NE_dynamics_started=NE_i_time>=1
-   !
-   ! Start-Up & Timing
-   !===================
-   if(it==it_start.or.it==Thermal_steps+1) then
-     !
-     if (.not.l_NE_dynamics_started) call live_timing('[RT] Thermalization :',Thermal_steps-it_start+1,SERIAL=.true.)
-     if (     l_NE_dynamics_started) call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
-     !
-   endif
    !
    ! Keep a copy of A_vecpot before starting the collisions
    ! ======================================================
    A_vecpot_previous=A_vecpot
    !
-   ! End dynamics ?
-   !===============
-   if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.
+   l_Dynamics_is_over=(it==NE_steps)
    !
    if (stop_now(.FALSE.)) then
      NE_steps=((NE_i_time-1)/RT_IO_G_steps)*RT_IO_G_steps+1
@@ -321,7 +296,7 @@ subroutine RT_driver(E,X,k,q)
      endif
    endif
    !
-   ! Calculate Collisions and fill SC_R, Ho_plus_Sigma, H_nl_sc
+   ! Calculate Collisions and fill Ho_plus_Sigma, H_nl_sc
    !============================================================
    call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
    !
@@ -362,50 +337,14 @@ subroutine RT_driver(E,X,k,q)
    call RT_Integrator(dG_lesser(:,:,:,it_mem_p1),dG_lesser(:,:,:,it_mem),A_vecpot,A_vecpot_previous,RT_step,E,k,q,NE_time)
    !
    G_lesser(:,:,:,it_mem_p1)=G_lesser_reference+dG_lesser(:,:,:,it_mem_p1)
-   !
-   !if (it==Thermal_steps) then
-   !  !
-   !  ! I freeze the last self-energy + hartree in XC0_and_HARTREE and I work
-   !  ! only with the differences rho-rho_reference and G_lesser-G_lesser_reference
-   !  ! 
-   !  call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
-   !  XC0_and_HARTREE0=SC_R-Ho
-   !  !
-   !  ! Davide: Thermal steps broken.
-   !  !         Here I should also update REF_V_xc ...
-   !  !
-   !endif
-   !
-   ! Diagonalization
-   ! ===============
-   if (it==Thermal_steps.or. (mod(it,RT_diagonalization_steps)==0.and.RT_diagonalization_steps>0) ) then
-     !
-     do ik=1,E%nk
-       call mat_dia_inv(DIAGO,SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),E_real=E%E(:SC_bands(2),ik,1))
-     enddo
-     !
-     ! Updating
-     !===========
-     !
-     ! At the end of the thermalization update the reference G_lesser and dipoles
-     if (it==Thermal_steps) call RT_update(G_lesser_reference,SC_R,it,E,k,X(1),up_Gref=.true.,up_DIP=.true.)
-     !
-     ! Analize quasi-particles
-     if (l_RT_diagonalize) call RT_update(G_lesser(:,:,:,it_mem),SC_R,it,E,k,X(1),an_QP=.true.)
-     !
-   endif
-   !
+   !	
    ! Timing
    !========
    call live_timing(steps=1)
    !
-   if (it==Thermal_steps) call live_timing()
-   !
  enddo
  !
- if(NE_steps/=0) call live_timing
- !
- if (l_RT_diagonalize) call SC_History(-1,E)
+ call live_timing()
  !
  ! Finalize
  !-----------

@@ -28,13 +28,14 @@
 subroutine RT_X_LRR_real_field(en)
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,W_RT_induced_step, &
-&                         i_t_start,i_t_end,RED_steps,l_force_min_damp
+&                         i_t_start,i_t_end,RED_steps,l_force_min_damp,&
+&                         J_steps,J_time_step
  use pars,           ONLY:SP,DP,pi,cI
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use memory_m,       ONLY:mem_est
- use rt_ctl,         ONLY:RT_output
- use real_time,      ONLY:RT_step,RT_P,NE_steps
+ use rt_ctl,         ONLY:RT_output,RT_IO_JPO_steps
+ use real_time,      ONLY:RT_P
  use fields,         ONLY:Efield,small_a,i_Probe
  use parser_m,       ONLY:parser
  !
@@ -65,8 +66,10 @@ subroutine RT_X_LRR_real_field(en)
    ! I want to print only the positive frequencies
    ! i_w > energy_steps/2 correspond to the negative ones
    !
-   X_rt%energy_steps=RED_steps/2._SP
-   X_rt%energy_range=(/0._SP,W_RT_induced_step*RED_steps/2._SP/)
+   X_rt%energy_steps=(RED_steps+1)/2
+   X_rt%energy_range=(/0._SP,W_RT_induced_step*real(RED_steps-1,SP)/2._SP/)
+   !
+   if(mod(RED_steps,2)==0) X_rt%energy_range=X_rt%energy_range+W_RT_induced_step/2._SP
    !
    allocate(EELS(RED_steps,2),EPS(RED_steps,2),X_irrep(RED_steps,6),E_w(RED_steps))
    !
@@ -88,7 +91,7 @@ subroutine RT_X_LRR_real_field(en)
  ! Fourier Transform 
  !====================
  !
- W_step=(X_rt%energy_range(2) - X_rt%energy_range(1))/X_rt%energy_steps
+ W_step=(X_rt%energy_range(2) - X_rt%energy_range(1))/(X_rt%energy_steps-1)
  !
  allocate(freqs(X_rt%energy_steps))
  freqs=(0._SP,0._SP)
@@ -106,7 +109,7 @@ subroutine RT_X_LRR_real_field(en)
    if(trim(X_rt%damp) == "NONE".and.l_force_min_damp) Field_freq=freqs(i_w)-(0._SP,1._SP)*W_RT_induced_step
    !
    E_w(i_w)=Efield(i_Probe)%amplitude*small_a(Field_freq,Efield(i_Probe),iE_err)
-   E_w(i_w)=E_w(i_w)*exp(cI*freqs(i_w)*i_t_start*RT_step)  
+   E_w(i_w)=E_w(i_w)*exp(cI*freqs(i_w)*(i_t_start-1)*J_time_step)  
    !
    if (iE_err==-2) exit
    !
@@ -115,21 +118,21 @@ subroutine RT_X_LRR_real_field(en)
  E_from_FT=iE_err==-2
  if (E_from_FT) then
    !
-   allocate(E_t(NE_steps))
-   do i_t=1,NE_steps
-     Field_time=cmplx((i_t-1)*RT_step,0._SP)
+   allocate(E_t(J_steps))
+   do i_t=1,J_steps
+     Field_time=cmplx((i_t-1)*J_time_step,0._SP)
      E_t(i_t)=Efield(i_Probe)%amplitude*small_a(Field_time,Efield(i_Probe),1)
    enddo
    !
    if(trim(X_rt%damp) == "NONE".and.l_force_min_damp) then
-     call RT_damp_it("LORENTZIAN",W_RT_induced_step,E_t(i_t_start:i_t_end),RED_steps,RT_step,1)
+     call RT_damp_it("LORENTZIAN",W_RT_induced_step,E_t(i_t_start:i_t_end),RED_steps,J_time_step,1)
    else
-     call RT_damp_it(X_rt%damp,X_rt%damp_factor,E_t(i_t_start:i_t_end),RED_steps,RT_step,1)
+     call RT_damp_it(X_rt%damp,X_rt%damp_factor,E_t(i_t_start:i_t_end),RED_steps,J_time_step,1)
    endif
    !
    call RT_1D_Fourier_Transform('T2W',' (E field)',freqs,E_w(:),X_rt%energy_steps,&
-&                               E_t(i_t_start:i_t_end),RED_steps,RT_step,&
-&                               i_t_start*RT_step,USE_FFT,1)
+&                               E_t(i_t_start:i_t_end),RED_steps,J_time_step,&
+&                               (i_t_start-1)*J_time_step,USE_FFT,1)
    deallocate(E_t)
    !
  endif
@@ -139,7 +142,7 @@ subroutine RT_X_LRR_real_field(en)
    ! Remove the asymptotic limit of RT_P_t
    !
    do i_c=1,3
-     RT_P_t(:,i_c)= RT_P_t(:,i_c)-RT_P_t(NE_steps,i_c)
+     RT_P_t(:,i_c)= RT_P_t(:,i_c)-RT_P_t(J_steps,i_c)
    enddo
    !
  endif
@@ -153,8 +156,8 @@ subroutine RT_X_LRR_real_field(en)
    ! Polarization
    !
    call RT_1D_Fourier_Transform('T2W',FT_title,freqs,X_irrep(:,i_c),X_rt%energy_steps,&
-&                               RT_P_t(i_t_start:i_t_end,i_c),RED_steps,RT_step,&
-&                               i_t_start*RT_step,USE_FFT,1)
+&                               RT_P_t(i_t_start:i_t_end,i_c),RED_steps,J_time_step,&
+&                               (i_t_start-1)*J_time_step,USE_FFT,1)
    !
  enddo
  !
@@ -180,10 +183,8 @@ subroutine RT_X_LRR_real_field(en)
    EELS(i_w,:)=1._DP/EPS(i_w,:)
    !
    W_reached = real(freqs(i_w))
-   call RT_output('eps_along_E',VALUEs=(/ aimag(EPS(i_w,1)),real(EPS(i_w,1)),&
-&                          aimag(EPS(i_w,2)),real(EPS(i_w,2))/),E=W_reached*HA2EV)
-   call RT_output('eels_along_E',VALUEs=(/-aimag(EELS(i_w,1)),real(EELS(i_w,1)),&
-&                         -aimag(EELS(i_w,2)),real(EELS(i_w,2))/),E=W_reached*HA2EV)
+   call RT_output('eps_along_E',VALUEs=(/ aimag(EPS(i_w,1)),real(EPS(i_w,1))/),E=W_reached*HA2EV)
+   call RT_output('eels_along_E',VALUEs=(/-aimag(EELS(i_w,1)),real(EELS(i_w,1))/),E=W_reached*HA2EV)
    !
  enddo
  !

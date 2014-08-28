@@ -25,7 +25,7 @@ subroutine RT_databases_IO(E,it)
  !
  use drivers,        ONLY:l_elph_scatt
  use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,RT_do_IO,ID,it_start
- use real_time,      ONLY:l_NE_dynamics_started,NE_i_time,l_NE_dynamics,RT_nk
+ use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL,io_GF,io_OCCs,io_J
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:PP_redux_wait
@@ -52,7 +52,7 @@ subroutine RT_databases_IO(E,it)
  !
  ! Polarization and current are automaticaly written every RT_IO_JPO_steps
  !
- if(l_NE_dynamics.and.l_NE_dynamics_started.and.RT_do_IO('J')) then
+ if(l_NE_dynamics.and.RT_do_IO('J')) then
    !
    ! Remember that negative time = adiabatic switching
    ! no need to store current

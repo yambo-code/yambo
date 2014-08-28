@@ -26,7 +26,7 @@ subroutine RT_X_effective(en)
  use pars,           ONLY:SP,lchlen,pi,schlen
  use YPP,            ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_databases,RT_initialize,&
 &                         max_n_of_paths,Use_FFT,X_rt,N_pumps,N_probe_frequencies,X_order,&
-&                         l_RT_X_inversion,l_skip_pol_and_curr_IO
+&                         l_RT_X_inversion,l_skip_pol_and_curr_IO,J_steps,J_time_step
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1,FS2AUT
  use electrons,      ONLY:levels
  use com,            ONLY:jobstr,msg,error
@@ -34,7 +34,7 @@ subroutine RT_X_effective(en)
  use fields,         ONLY:Efield,i_Probe,ext_field,Efield_duplicate,field_frequency,&
 &                         i_Pump,EtoT,Divide_by_Field
  use rt_ctl,         ONLY:RT_output
- use real_time,      ONLY:NE_steps,RT_step,RT_P
+ use real_time,      ONLY:RT_P
  use vec_operate,    ONLY:sort
  use LIVE_t,         ONLY:live_timing
  use stderr,         ONLY:intc,real2ch
@@ -83,10 +83,10 @@ subroutine RT_X_effective(en)
  !
  N_probe_frequencies=max(N_probes,N_probe_frequencies) 
  !
- allocate(RT_P_probe(NE_steps,N_probes,3),RT_P_pump(NE_steps,3),X_effective(0:X_order,N_probe_frequencies,3))
+ allocate(RT_P_probe(J_steps,N_probes,3),RT_P_pump(J_steps,3),X_effective(0:X_order,N_probe_frequencies,3))
  allocate(Susceptibility(0:X_order,N_probe_frequencies,3),Susc_err(0:X_order,N_probe_frequencies,3), &
 &         X_eff_err(0:X_order,N_probe_frequencies,3))
- if (dump_dP) allocate(RT_P_save(NE_steps,N_probes,3))
+ if (dump_dP) allocate(RT_P_save(J_steps,N_probes,3))
  allocate(Probe_Frequency(N_probe_frequencies),Harmonic_Frequency(0:X_order,N_probe_frequencies))
  !
  X_effective=(0._SP,0._SP)
@@ -149,11 +149,11 @@ subroutine RT_X_effective(en)
    !
    call RT_output("open P_minus")
    !
-   call live_timing('P(t)-P_pump(t):',NE_steps)
+   call live_timing('P(t)-P_pump(t):',J_steps)
    !
-   do i_t=1,NE_steps
+   do i_t=1,J_steps
      RT_P=RT_P_probe(i_t,1,1:3)
-     call RT_output('P_minus',TIME=(i_t-1)*RT_step/FS2AUT)
+     call RT_output('P_minus',TIME=(i_t-1)*J_time_step/FS2AUT)
      call live_timing(steps=1)
    enddo
    !
@@ -281,7 +281,7 @@ subroutine RT_X_effective(en)
  !
  ! Time Range
  !
- if (X_rt%time_range(2)<0.) X_rt%time_range(2)= NE_steps*RT_step
+ if (X_rt%time_range(2)<0.) X_rt%time_range(2)= J_steps*J_time_step
  N_periods=int( (X_rt%time_range(2) - X_rt%time_range(1))/EtoT(E=Efield_Probe%W_step) )
  X_rt%time_range(1)= X_rt%time_range(2)-N_periods*EtoT(E=Efield_Probe%W_step)
  !
@@ -316,11 +316,11 @@ subroutine RT_X_effective(en)
        i_conv=i_conv+1
        !
        do i_c=1,3
-         call RT_coefficients_Fourier(NE_steps,RT_P_probe(:,i_p,i_c),1,(/Harmonic_Frequency(i_order,i_f)/),&
+         call RT_coefficients_Fourier(J_steps,RT_P_probe(:,i_p,i_c),1,(/Harmonic_Frequency(i_order,i_f)/),&
 &                                     running_X(i_order,i_c),runn_err(i_order,i_c),Efield_Probe%W_step)
        enddo
        !
-       call RT_split_Polarization(i_order+1,NE_steps,Harmonic_Frequency(0:i_order,i_f),&
+       call RT_split_Polarization(i_order+1,J_steps,Harmonic_Frequency(0:i_order,i_f),&
 &                                 running_X(:i_order,:),RT_P_probe(:,i_p,:),"subtract")
        !
        X_effective(i_order,i_f,:)=X_effective(i_order,i_f,:)+running_X(i_order,:)
@@ -341,7 +341,7 @@ subroutine RT_X_effective(en)
  !
  if (dump_dP) then
    !
-   call RT_split_Polarization(X_order+1,NE_steps,Harmonic_Frequency(0:,1),X_effective(0:,1,:),RT_P_save(:,1,:),"dump")
+   call RT_split_Polarization(X_order+1,J_steps,Harmonic_Frequency(0:,1),X_effective(0:,1,:),RT_P_save(:,1,:),"dump")
    !
  endif
  !

@@ -353,7 +353,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                           RT_life_interp_KIND,Verb_level=V_real_time)
  call it(defs,'LifeInterpSteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
 &                           RT_life_interp_steps,Verb_level=V_real_time,unit=Time_unit(1))
- call it(defs,'LifeInterpDecayT',   '[RT] Exponential decay lifetime of the distribution of groups of lifetimes evaluated',&
+ call it(defs,'LifeInterpT',       '[RT] Exponential decay lifetime of the distribution of groups of lifetimes evaluated',&
 &                           RT_life_interp_decay_time,Verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)

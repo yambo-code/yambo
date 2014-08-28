@@ -25,10 +25,12 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
  !
  ! Set up the mask and communicators for the Haydock part.  
  !
- use parallel_m,  ONLY:myid,mpi_comm_world,PAR_IND_T_groups
  use BS,          ONLY:BS_nT_grps,n_BS_blks,BS_blk,&
 &                      Haydock_parallel_mask,Haydock_parallel_group_comm,&
 &                      Haydock_parallel_col_comm    
+#if defined _MPI
+ use parallel_m,  ONLY:myid,mpi_comm_world,PAR_IND_T_groups
+#endif
  implicit none
  character(*),       intent(in) :: what     
  !
@@ -46,10 +48,6 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
      !
      if (.not.allocated(Haydock_parallel_mask)) &
 &         allocate(Haydock_parallel_mask(BS_nT_grps))
-     if (.not.allocated( Haydock_parallel_group_comm)) &
-&         allocate( Haydock_parallel_group_comm(BS_nT_grps))
-     if (.not.allocated(Haydock_parallel_col_comm)) &
-&         allocate(Haydock_parallel_col_comm(BS_nT_grps))
      !
      ! This mask tells which vectors have to be stored on each processor
      !
@@ -63,6 +61,12 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
      !
      ! Communicators along each groups (this will be row of the _full_ matrix)
      ! Needed in distributed M|V> and <V|W> (redux) and |Vn> initialization (bcast)
+     !
+#if defined _MPI
+     if (.not.allocated( Haydock_parallel_group_comm)) &
+          &allocate( Haydock_parallel_group_comm(BS_nT_grps))
+     if (.not.allocated(Haydock_parallel_col_comm)) &
+          &allocate(Haydock_parallel_col_comm(BS_nT_grps))
      !
      local_undefined = BS_nT_grps*(1 + myid) + 1
      do i_g=1,BS_nT_grps
@@ -106,9 +110,11 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
 #endif
        !
      end do
+#endif
      !
      case('reset')
        if (allocated(Haydock_parallel_mask)) deallocate(Haydock_parallel_mask)
+#if defined _MPI
        if (allocated(Haydock_parallel_group_comm)) then
        !
 #if defined _MPI
@@ -126,6 +132,7 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
          !
          deallocate(Haydock_parallel_col_comm)
        end if
+#endif
        !
    end select
    !

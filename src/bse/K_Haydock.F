@@ -49,8 +49,6 @@ subroutine K_Haydock(iq,W)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 !
- use parallel_m, ONLY:MPI_COMM_WORLD
-!
 #endif
  !
  use parallel_m, ONLY:PAR_IND_T_groups,PP_bcast
@@ -216,7 +214,9 @@ subroutine K_Haydock(iq,W)
    enddo
    do i_g = 2,BS_nT_grps
      if (.not.Haydock_parallel_mask(i_g)) cycle
+#if defined _MPI
      call PP_bcast(Vn(i_g)%fragment,0,COMM=Haydock_parallel_group_comm(i_g))
+#endif    
    end do
    !
    call K_dot_product(v0_mod_,Vn,Vn) 

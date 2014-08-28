@@ -25,7 +25,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! This routine returns <iR> and <P^2>.
  !
- use pars,                ONLY:SP,pi
+ use pars,                ONLY:SP,pi,schlen
  use drivers,             ONLY:l_real_time
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
@@ -58,6 +58,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! Work Space
  !
+ character(schlen)            :: live_t_string
+ logical                      :: l_eval_DIP_P,l_eval_DIP_P2
  integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min,i_spin,E_i_spin,pp_spin,&
 &                                alloc_err,wf_dim,n_LT_steps,ik_mem,ig
  complex(SP), allocatable     :: wf_xyz(:,:),kbv(:,:,:)
@@ -104,16 +106,27 @@ subroutine Dipole_transverse(Xen,Xk,X)
  wf_dim=3
  !
  if (n_LT_steps>0) then
+   !
+   live_t_string='Dipole (T):'
+   l_eval_DIP_P =.false.
+   l_eval_DIP_P2=.false.
+   !
 #if defined _SC
-   if (allocated(DIP_P)) then
-     call live_timing('P and P^2 (T):',n_LT_steps)
+   l_eval_DIP_P =allocated(DIP_P)
+   l_eval_DIP_P2=allocated(DIP_P)
+   if(l_eval_DIP_P) then
+     live_t_string='P and P^2 (T):'
      wf_dim=4
-   else
-     call live_timing('Dipole (T):',n_LT_steps)
    endif
-#else
-   call live_timing('Dipole (T):',n_LT_steps)
 #endif
+   !
+#if defined _KERR
+   l_eval_DIP_P=trim(global_gauge)=='velocity'
+   if(l_eval_DIP_P) live_t_string='P (T):'
+#endif
+   !
+   call live_timing(trim(live_t_string),n_LT_steps)
+   !
  endif
  !
  call PP_redux_wait(COMM=PAR_COM_q_for_Xo%COMM)
@@ -252,20 +265,16 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! <P>
          !=====
          ! P_vc=rho(:3)
-#if defined _SC
-         if (allocated(DIP_P)) then
-           DIP_P(:,ic,iv,ik_mem,i_spin)=DIP_P(:,ic,iv,ik_mem,i_spin)+rho(:3)
-         endif
-#endif        
-#if defined _KERR
-         if(trim(global_gauge)=='velocity') then
+         !
+#if defined _SC || defined _KERR
+         if (l_eval_DIP_P) then
            if (n_spinor==2) then
              DIP_P(:,ic,iv,ik,1)=DIP_P(:,ic,iv,ik,1)+rho(:3)
            else
              DIP_P(:,ic,iv,ik,i_spin)=rho(:3)
            endif
          endif
-#endif        
+#endif
          !
          !======
          ! <iR>
@@ -289,7 +298,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !======
          ! <P^2>
          !======
-         if (allocated(DIP_P)) then
+         if (l_eval_DIP_P2) then
            if( n_spinor == 2 ) then
              P_square(ic,iv,ik_mem,1)= P_square(ic,iv,ik_mem,1)+rho(4)
            else
@@ -334,14 +343,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
    ! 
    do i_spin=1,n_sp_pol
      call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
-#if defined _SC
-     if (allocated(DIP_P)) then
-       call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
-       call PP_redux_wait(P_square(:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
-     endif
-#endif
-#if defined _KERR
-     if(trim(global_gauge)=='velocity') call pp_redux_wait(DIP_P(:,:,:,ik,i_spin))
+#if defined _SC || defined _KERR
+     if (l_eval_DIP_P ) call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
+     if (l_eval_DIP_P2) call PP_redux_wait(P_square(:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
 #endif
    enddo
    !
@@ -355,12 +359,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
      do iv=X%ib(1),X%ib(2)
        do ic=iv+1,X%ib(2)
          DIP_iR(:,ic,iv,ik_mem,:)=-conjg(DIP_iR(:,iv,ic,ik_mem,:))
-#if defined _RT
-         DIP_P(:,ic,iv,ik_mem,:) = conjg(DIP_P(:,iv,ic,ik_mem,:))
-         P_square(ic,iv,ik_mem,:)= conjg(P_square(iv,ic,ik_mem,:))
-#endif        
-#if defined _KERR
-         if(trim(global_gauge)=="velocity") DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
+#if defined _SC || defined _KERR
+         if (l_eval_DIP_P ) DIP_P(:,ic,iv,ik_mem,:) = conjg(DIP_P(:,iv,ic,ik_mem,:))
+         if (l_eval_DIP_P2) P_square(ic,iv,ik_mem,:)= conjg(P_square(iv,ic,ik_mem,:))
 #endif        
        enddo
      enddo

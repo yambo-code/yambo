@@ -165,7 +165,8 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,RIM,nK_me
      endif
      !
      if(present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk)
-     if(present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk,WF)
+     ! Waring: for nspinor=2 the Vxc countribution could be wrong
+     if(present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk,WF,'def')
      !
    end subroutine make_Hk_matrix
    !

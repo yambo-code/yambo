@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -41,7 +41,7 @@ subroutine XCo_local(E,Xk)
  use parallel_m,    ONLY:PAR_IND_QP,PP_redux_wait,PAR_IND_WF_linear 
 #if defined _RT
  use parallel_m,    ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k 
- use matrix_operate,ONLY:UP_matrix_index
+ use matrix_operate,ONLY:UP_matrix_index,matrix_index
  use SC,            ONLY:SC_bands
 #endif
 #if defined _SC
@@ -56,12 +56,11 @@ subroutine XCo_local(E,Xk)
  !
  ! Work Space
  !
- integer     ::i1,ifft,iwf,iwfp,iwf_sp1,iwfp_sp1,iwf_sp2,iwfp_sp2,ib,ibp,ik,i_sp
+ integer     ::i1,nb,ifft,iwf,iwfp,iwf_sp1,iwfp_sp1,iwf_sp2,iwfp_sp2,ib,ibp,ik,i_sp
  complex(SP) ::c_ws(fft_size,n_spin)
  !
  ! Spin support (collinear and not collinear)
  !
- real(SP)    :: mod_mag,magn_versor(fft_size,3),vxc_plus(fft_size),vxc_minus(fft_size)
  logical     :: l_call_the_driver
  complex(SP), allocatable :: V_xc_mat(:,:,:)
  !
@@ -157,45 +156,15 @@ subroutine XCo_local(E,Xk)
    !
  endif
  !
+#if defined _RT
+ nb=SC_bands(2)-SC_bands(1)+1
+#endif
+ !
  if (n_spin==2) then
    !
    allocate(V_xc_mat(fft_size,n_spin,n_spin))
    !
-   V_xc_mat=(0._SP,0._SP)
-   !
-   ! V_xc_mat ( 1 , 1 ) = up up
-   ! V_xc_mat ( 1 , 2 ) = up dn
-   ! V_xc_mat ( 2 , 1 ) = dn up
-   ! V_xc_mat ( 2 , 2 ) = dn dn
-   !
-   ! Magnetization, V_xc + and -
-   !
-   if (n_spinor==1) then
-     !
-     V_xc_mat(:,1,1)= V_xc(:,1)
-     V_xc_mat(:,2,2)= V_xc(:,2)
-     !
-   else if (n_spinor==2) then
-     !
-     magn_versor=0.
-     do ifft=1,fft_size
-       mod_mag=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
-       if(mod_mag==0) magn_versor(ifft,:)=0.
-       if(mod_mag/=0) magn_versor(ifft,:)=magn(ifft,:)/mod_mag
-     enddo
-     !
-     ! Vxc^+=(Vxc_up+Vxc_down)/2
-     ! Vxc^+=(Vxc_up-Vxc_down)/2
-     vxc_plus(:) =(V_xc(:,1)+V_xc(:,2))/2._SP
-     vxc_minus(:)=(V_xc(:,1)-V_xc(:,2))/2._SP
-     !
-     V_xc_mat(:,1,1)= (vxc_plus(:)+vxc_minus(:)*magn_versor(:,3))
-     V_xc_mat(:,2,2)= (vxc_plus(:)-vxc_minus(:)*magn_versor(:,3))
-     !
-     V_xc_mat(:,1,2)= vxc_minus(:)*(magn_versor(:,1)-(0.,1.)*magn_versor(:,2))
-     V_xc_mat(:,2,1)= vxc_minus(:)*(magn_versor(:,1)+(0.,1.)*magn_versor(:,2))
-     !
-   endif
+   call Build_V_xc_mat(V_xc,V_xc_mat)
    !
    do i1=1,QP_n_states
      !
@@ -208,7 +177,7 @@ subroutine XCo_local(E,Xk)
      if (l_real_time) then
 #if defined _RT
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-       if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_linear_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
+       if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1,nb)-1)) cycle
 #endif
      else
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle

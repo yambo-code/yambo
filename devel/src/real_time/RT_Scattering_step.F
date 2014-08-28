@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM,DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -43,45 +43,47 @@ subroutine RT_Scattering_step(G_new_k,ik,deltaT)
  integer  :: ib
  !
  ! dG = dG - i dT Sigma
- !====================
- if (.not.RT_is_dephased) return
- !
- if ( (.not.l_RT_EXP) .or. (.not.l_RT_RWA) ) G_new_k = G_new_k - cI*deltaT*I_relax_static(:,:,ik)
- !
+ !=======================
  if( (.not.l_elel_scatt) .and. (.not.l_elph_scatt) ) return
  !
- if (l_RT_EXP.and.l_RT_RWA) then
-   !
-   do ib=SC_bands(1),SC_bands(2)
-     !
-     GAMMA_h=REF_lifetime(ib,ik,1)+REF_lifetime(ib,ik,3)+REF_lifetime(ib,ik,5)
-     GAMMA_e=REF_lifetime(ib,ik,2)+REF_lifetime(ib,ik,4)+REF_lifetime(ib,ik,6)
-     dGAMMA_e=0._SP
-     dGAMMA_h=0._SP
-     !
-     if (l_elel_scatt) then
-       dGAMMA_h=dGAMMA_h+E_E_Hole_lifetime(ib,ik)
-       dGAMMA_e=dGAMMA_e+E_E_Electron_lifetime(ib,ik)
-     endif
-     !
-     if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-       dGAMMA_h=dGAMMA_h+E_P_Hole_lifetime(ib,ik)    +E_P_Ho_abs_lifetime(ib,ik)
-       dGAMMA_e=dGAMMA_e+E_P_Electron_lifetime(ib,ik)+E_P_El_abs_lifetime(ib,ik)
-     endif
-     !
-     GAMMA_e=GAMMA_e+dGAMMA_e
-     GAMMA_h=GAMMA_h+dGAMMA_h
-     GAMMA_TOT=GAMMA_e+GAMMA_h+dGAMMA_e+dGAMMA_h
-     !
-     f0=aimag(G_lesser_reference(ib,ib,ik))
-     !
-     if(       (GAMMA_h+GAMMA_e)>0._SP  ) f_inf=GAMMA_h/(GAMMA_h+GAMMA_e)*spin_occ
-     if(.not. ((GAMMA_h+GAMMA_e)>0._SP) ) f_inf=f0
-     !
-     G_new_k(ib,ib)=G_new_k(ib,ib)*exp(-GAMMA_TOT*deltaT)+cI*(f0-f_inf)*(exp(-GAMMA_TOT*deltaT)-1._SP)
-     !
-   enddo
-   !
- endif
+ !if (.not. (l_RT_EXP.and.l_RT_RWA) ) then
+ !
+ forall(ib=SC_bands(1):SC_bands(2))  G_new_k(ib,ib) = G_new_k(ib,ib) - cI*deltaT*I_relax_static(ib,ib,ik)
+ !
+ !endif
+ !
+ !if (l_RT_EXP.and.l_RT_RWA) then
+ !  !
+ !  do ib=SC_bands(1),SC_bands(2)
+ !    !
+ !    GAMMA_h=REF_lifetime(ib,ik,1)+REF_lifetime(ib,ik,3)+REF_lifetime(ib,ik,5)
+ !    GAMMA_e=REF_lifetime(ib,ik,2)+REF_lifetime(ib,ik,4)+REF_lifetime(ib,ik,6)
+ !    dGAMMA_e=0._SP
+ !    dGAMMA_h=0._SP
+ !    !
+ !    if (l_elel_scatt) then
+ !      dGAMMA_h=dGAMMA_h+E_E_Hole_lifetime(ib,ik)
+ !      dGAMMA_e=dGAMMA_e+E_E_Electron_lifetime(ib,ik)
+ !    endif
+ !    !
+ !    if (l_RT_CCA_Kernel.and.l_elph_scatt) then
+ !      dGAMMA_h=dGAMMA_h+E_P_Hole_lifetime(ib,ik)    +E_P_Ho_abs_lifetime(ib,ik)
+ !      dGAMMA_e=dGAMMA_e+E_P_Electron_lifetime(ib,ik)+E_P_El_abs_lifetime(ib,ik)
+ !    endif
+ !    !
+ !    GAMMA_e=GAMMA_e+dGAMMA_e
+ !    GAMMA_h=GAMMA_h+dGAMMA_h
+ !    GAMMA_TOT=GAMMA_e+GAMMA_h+dGAMMA_e+dGAMMA_h
+ !    !
+ !    f0=aimag(G_lesser_reference(ib,ib,ik))
+ !    !
+ !    if(       (GAMMA_h+GAMMA_e)>0._SP  ) f_inf=GAMMA_h/(GAMMA_h+GAMMA_e)*spin_occ
+ !    if(.not. ((GAMMA_h+GAMMA_e)>0._SP) ) f_inf=f0
+ !    !
+ !    G_new_k(ib,ib)=G_new_k(ib,ib)*exp(-GAMMA_TOT*deltaT)+cI*(f0-f_inf)*(exp(-GAMMA_TOT*deltaT)-1._SP)
+ !    !
+ !  enddo
+ !  !
+ !endif
  !
 end subroutine RT_Scattering_step

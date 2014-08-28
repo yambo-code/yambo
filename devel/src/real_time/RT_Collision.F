@@ -34,25 +34,20 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  ! Note that TDLDA\equiv A=0 &  \Sigma=V_xc
  ! Note that TDH\equiv B=0
  !
- ! Note that G_lesser_reference and rho_reference are zero during
- ! the thermalization
- !
- ! This subroutine also fills SC_R with the full Hamiltonian if this is allocated
- !
  use pars,           ONLY:SP,cONE,cZERO
  use wrapper,        ONLY:V_by_V_plus_V
 #if defined _OPENMP
  use wrapper,        ONLY:V_by_V_plus_V_omp
 #endif
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,n_spinor
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,it_now,SC_R,SC_nbands
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,it_now,SC_nbands
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_RIM,REF_V_xc_sc,&
 &                         XC0_and_HARTREE0,RIM_ibz_coo,rho_reference,&
-&                         l_NE_dynamics_started,l_RT_RWA,l_BGR,&
+&                         l_RT_RWA,l_BGR,&
 &                         eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_nk
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
@@ -85,9 +80,6 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! Density (needed by Hartree and local XCs)
  !=========
- ! l_NE_dynamics_started=.FALSE.
- ! corresponds to Thermalization where the density must be updated
- ! This part of the code is presently not used so I comment it
  !
  if (eval_DENSITY) then
    !
@@ -174,7 +166,11 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    ! Local XC potentials 
    !=====================
-   if (eval_DFT.or.eval_HARTREE) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF)
+   if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+   if (n_spinor==2) then
+     if(eval_HARTREE) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WF,'def')
+     if(eval_DFT)     call V_real_space_to_H(ik,V_xc_sc     ,H_nl_sc,WF,'xc ')
+   endif
    !  
    ! Add Ho = T+V_ion
    !==================
@@ -212,7 +208,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
      !
      ! And the gauge field
      !=====================
-     if (l_NE_with_fields.and.l_NE_dynamics_started) call RT_apply_field(ik,ik_RIM,E,H_nl_sc,A_input)
+     if (l_NE_with_fields) call RT_apply_field(ik,ik_RIM,E,H_nl_sc,A_input)
      !
      forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) &
 &           Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp,1)
@@ -238,16 +234,6 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  ! All2All
  !=========
  call PP_redux_wait(Ho_plus_Sigma(:,:,:,1))
- !
- ! Rotation Matrix
- !=================
- if(allocated(SC_R)) then
-   SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),:,:) = &
-&      Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_ibz_coo(:,1),:)
-   do i1=1,SC_bands(1)-1
-     SC_R(i1,i1,:,:)=cONE
-   enddo
- endif
  !
 #if defined _TIMING
  call timing('RT Collision',OPR='stop')

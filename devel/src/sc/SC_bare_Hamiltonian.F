@@ -115,7 +115,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
    ! ... then remove Vh[rho_0] 
    !===========================
    !
-   call V_real_space_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),WF)
+   call V_real_space_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),WF,'def')
    !
    ! ... then remove Vxc[rho_0] also
    !=================================

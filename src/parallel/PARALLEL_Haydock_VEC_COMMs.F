@@ -26,8 +26,8 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
  ! Set up the mask and communicators for the Haydock part.  
  !
  use BS,          ONLY:BS_nT_grps,n_BS_blks,BS_blk,&
-      &           Haydock_parallel_mask,  Haydock_parallel_group_comm,&
-      &           Haydock_parallel_col_comm    
+&                      Haydock_parallel_mask,Haydock_parallel_group_comm,&
+&                      Haydock_parallel_col_comm    
 #if defined _MPI
  use parallel_m,  ONLY:myid,mpi_comm_world,PAR_IND_T_groups
 #endif
@@ -37,13 +37,17 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
  ! Work Space
  !
  integer :: i_b,iT_k,iT_p,i_g,i_err,dummy,iloc(1)
- integer :: local_color, local_key, local_undefined
+ integer :: local_color, local_key, local_undefined\
+ !
+#if defined _MPI
+ include 'mpif.h'
+#endif
  !
  select case (what)
    case('assign')
      !
      if (.not.allocated(Haydock_parallel_mask)) &
-          &allocate(Haydock_parallel_mask(BS_nT_grps))
+&         allocate(Haydock_parallel_mask(BS_nT_grps))
      !
      ! This mask tells which vectors have to be stored on each processor
      !
@@ -74,7 +78,10 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
          local_color = local_undefined
          local_undefined = local_undefined + 1  
        endif
+       !
+#if defined _MPI
        call MPI_COMM_SPLIT(mpi_comm_world,local_color,local_key,Haydock_parallel_group_comm(i_g),i_err)
+#endif
        !
      end do
      !
@@ -97,7 +104,11 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
          local_key   = 0
          local_undefined = local_undefined + 1
        endif
+       !
+#if defined _MPI
        call MPI_COMM_SPLIT(mpi_comm_world,local_color,local_key,Haydock_parallel_col_comm(i_g),i_err)
+#endif
+       !
      end do
 #endif
      !
@@ -105,16 +116,24 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
        if (allocated(Haydock_parallel_mask)) deallocate(Haydock_parallel_mask)
 #if defined _MPI
        if (allocated(Haydock_parallel_group_comm)) then
+       !
+#if defined _MPI
          call MPI_Comm_free(Haydock_parallel_group_comm)
+#endif
+         !
          deallocate(Haydock_parallel_group_comm)
        end if
        !
        if (allocated(Haydock_parallel_col_comm)) then
+         !  
+#if defined _MPI
          call MPI_Comm_free(Haydock_parallel_col_comm)
+#endif
+         !
          deallocate(Haydock_parallel_col_comm)
        end if
 #endif
        !
    end select
-     !
+   !
 end subroutine PARALLEL_Haydock_VEC_COMMs

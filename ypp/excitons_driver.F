@@ -87,7 +87,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !... Dummy arguments 
  !
  integer      :: iq,i1,i2,i_l,i_spin
- real(SP)     :: k_dot_r,r_hole_rlu(3)
+ real(SP)     :: k_dot_r,r_hole_rlu(3),norm_
  !
  type(PP_indexes) ::px
  !
@@ -320,7 +320,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
        !
      enddo
      !
-     if(l_weight_with_dipoles.and.norm2(A_weight)>0._SP) A_weight=A_weight/norm2(A_weight)
+     norm_ = sqrt(dot_product(A_weight,A_weight))
+     if(l_weight_with_dipoles.and.norm_>0._SP) A_weight=A_weight/norm_
      !
      call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,A_weight=A_weight,verbose=i_lambda==1)
      !

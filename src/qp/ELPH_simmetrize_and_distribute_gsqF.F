@@ -28,9 +28,9 @@ subroutine ELPH_simmetrize_and_distribute_gsqF(en)
  use QP_m,          ONLY:QP_states_simmetrize
  use parallel_m,    ONLY:PAR_COM_Q_A2A,PAR_COM_G_b_INDEX,&
 &                        PAR_COM_Q_A2A,PP_redux_wait,&
-&                        PAR_Q_index,PAR_IND_Q
+&                        PAR_Q_index,PAR_IND_Q,PAR_nQ
  use ELPH,          ONLY:gsqF_energy_steps,gsqF_ca_corr,gsqF_fan,gsqF_life_f,gsqF_life_bose,&
-&                        gsqF_dw,eval_G_using_KK,elph_nDBs_used,elph_branches
+&                        gsqF_dw,eval_G_using_KK,elph_branches
  !
  implicit none
  type(levels)  ::en
@@ -41,7 +41,7 @@ subroutine ELPH_simmetrize_and_distribute_gsqF(en)
  !
  ! Degenerate bands average
  !
- do iq_loop=1,elph_nDBs_used
+ do iq_loop=1,PAR_nQ
    !
    if (.not.PAR_IND_Q%element_1D(iq_loop)) cycle
    iq_mem=PAR_Q_index(iq_loop)

@@ -24,12 +24,11 @@
 subroutine RT_X_qssin
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,i_t_start,i_t_end,&
-&                         W_RT_induced_step,RED_steps
+&                         W_RT_induced_step,RED_steps,J_steps,J_time_step
  use pars,           ONLY:SP,DP,pi,schlen
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1
  use memory_m,       ONLY:mem_est
- use rt_ctl,         ONLY:RT_output
- use real_time,      ONLY:NE_steps,RT_step
+ use rt_ctl,         ONLY:RT_output,RT_IO_JPO_steps
  use fields,         ONLY:Efield,small_a,i_probe
  use LIVE_t,         ONLY:live_timing
  !
@@ -61,9 +60,9 @@ subroutine RT_X_qssin
  X_rt%energy_steps= (X_rt%energy_range(2))/W_step  ! and I define the number of freq step
  X_rt%energy_steps= 2*X_rt%energy_steps            ! as a consequence
  !
- allocate(E_t(NE_steps))
- do i_t=1,NE_steps
-   Field_time=cmplx((i_t-1)*RT_step,0._SP)
+ allocate(E_t(J_steps))
+ do i_t=1,J_steps
+   Field_time=cmplx((i_t-1)*J_time_step,0._SP)
    E_t(i_t)=Efield(i_probe)%amplitude*small_a(Field_time,Efield(i_probe),1)
  enddo
  allocate(freqs(X_rt%energy_steps))
@@ -79,8 +78,8 @@ subroutine RT_X_qssin
    freqs(i_w)=cmplx(Efield(i_probe)%frequency(1)-((i_w-1)*W_step+X_rt%energy_range(1)),0._SP)
  enddo
  call RT_1D_Fourier_Transform('T2W',' (E_m field)',freqs,E_m(:),X_rt%energy_steps,&
-&                             E_t(i_t_start:i_t_end),RED_steps,RT_step,&
-&                             i_t_start*RT_step,Use_FFT,1)
+&                             E_t(i_t_start:i_t_end),RED_steps,J_time_step,&
+&                             (i_t_start-1)*J_time_step,Use_FFT,1)
  !
  E_p=(0._DP,0._DP) ! E(Wo+W), where Wo is the field frequency   
  freqs=(0._SP,0._SP)
@@ -88,8 +87,8 @@ subroutine RT_X_qssin
    freqs(i_w)=cmplx(Efield(i_probe)%frequency(1)+(i_w-1)*W_step+X_rt%energy_range(1),0._SP)
  enddo
  call RT_1D_Fourier_Transform('T2W',' (E_p field)',freqs,E_p(:),X_rt%energy_steps,&
-&                             E_t(i_t_start:i_t_end),RED_steps,RT_step,&
-&                             i_t_start*RT_step,Use_FFT,1)
+&                             E_t(i_t_start:i_t_end),RED_steps,J_time_step,&
+&                             (i_t_start-1)*J_time_step,Use_FFT,1)
  !
  ! Field: Convolution
  !
@@ -119,8 +118,8 @@ subroutine RT_X_qssin
    if (i_c==3) FT_title=' (Z axis)'
    !
    call RT_1D_Fourier_Transform('T2W',FT_title,outfreqs,X_irrep(:,i_c),nfreqs,&
-&                               RT_P_t(i_t_start:i_t_end,i_c),RED_steps,RT_step,&
-&                               i_t_start*RT_step,Use_FFT,1)
+&                               RT_P_t(i_t_start:i_t_end,i_c),RED_steps,J_time_step,&
+&                               (i_t_start-1)*J_time_step,Use_FFT,1)
    !
  enddo
  !

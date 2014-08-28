@@ -71,7 +71,6 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
  call parser('Reflectivity',l_TR_reflec)
  !
  Xbsk%ib=SC_bands
- Xbsk%ib=SC_bands
  !Xbsk%ng=wf_ng
  Xbsk%whoami=5
  allocate(q_norm(1),bare_qpg(1,1))

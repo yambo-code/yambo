@@ -31,7 +31,7 @@ integer function variables_RT(ID,local_description,what)
  use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_G_steps,RT_IO_steps_DB, &
 &                         RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_nk,RT_nstates,l_NE_with_fields,RT_step,NE_steps,NE_time,              &
-&                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
+&                         Integrator_name, &
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,              &
 &                         l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_skip_impose,&
@@ -48,9 +48,12 @@ integer function variables_RT(ID,local_description,what)
  character(lchlen)  ::local_description(100)
  character(*)       ::what
  !
- integer               :: i1,i_desc,i_dummy
- logical               :: l_J,l_G,l_occupations,l_NE_with_fields_disk,l_MP
+ integer               :: i1,i_desc,i_dummy,RT_diagonalization_steps
+ logical               :: l_J,l_G,l_occupations,l_NE_with_fields_disk,l_MP,l_RT_diagonalize
  character(lchlen)     :: ch
+ !
+ RT_diagonalization_steps=0
+ l_RT_diagonalize=.false.
  !
  l_J           = what=="J_and_P"
  l_G           = what=="G"
@@ -107,7 +110,7 @@ integer function variables_RT(ID,local_description,what)
  !
  if(any((/l_J,l_G,l_occupations/))) then
    !
-   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=9,MENU=0) 
+   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=8,MENU=0) 
    !
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_NE_simulate_Irredux,&
@@ -145,9 +148,6 @@ integer function variables_RT(ID,local_description,what)
 &    VAR=" [RT] NE time       (reached)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID, &
-&    VAR=" [RT] Thermalization steps       :",I0=Thermal_steps,CHECK=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !

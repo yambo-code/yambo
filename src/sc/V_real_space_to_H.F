@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine V_real_space_to_H(ik,V,H,WF)
+subroutine V_real_space_to_H(ik,V,H,WF,V_kind)
  !
- use electrons,      ONLY:n_sp_pol,spin
+ use electrons,      ONLY:n_sp_pol,n_spin,n_spinor,spin
  use pars,           ONLY:SP
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
@@ -40,18 +40,22 @@ subroutine V_real_space_to_H(ik,V,H,WF)
  implicit none
  !
  integer     :: ik,i_spin
- real(SP)    :: V(fft_size,n_sp_pol)
+ real(SP)    :: V(fft_size,n_spin)
+ complex(SP) :: V_mat(fft_size,n_spin,n_spin)
  complex(SP) :: H(QP_nb,QP_nb,n_sp_pol)
+ character(3):: V_kind
  type(WAVEs) :: WF
  !
  ! Work Space
  !
  integer    :: i1,ib,ibp,ifft,ifftp
- complex(SP):: c_ws(fft_size)
+ complex(SP):: c_ws(fft_size,n_spin)
  !
 #if defined _RT
  if (.not.PAR_IND_WF_k%element_1D(ik)) return
 #endif
+ !
+ if(V_kind=="xc ") call Build_V_xc_mat(V,V_mat)
  !
  ! Fill ...
  !
@@ -74,11 +78,50 @@ subroutine V_real_space_to_H(ik,V,H,WF)
    !
    ! <ifft|V|ifftp>
    !
-   ifft   =WF%index(ib,ik,i_spin)
-   ifftp  =WF%index(ibp,ik,i_spin)
-   c_ws(:)=V(:,i_spin)*WF%c(:,ifftp)
-   !
-   H(ib,ibp,i_spin) = H(ib,ibp,i_spin)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:))
+   if (n_spinor==1) then
+     !
+     ifft   =WF%index(ib,ik,i_spin)
+     ifftp  =WF%index(ibp,ik,i_spin)
+     c_ws(:,1)=V(:,i_spin)*WF%c(:,ifftp)
+     !
+     H(ib,ibp,i_spin) = H(ib,ibp,i_spin)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,1))
+     !
+   elseif (n_spinor==2) then
+     !
+     if (V_kind=='def') then
+       !
+       ifft   =WF%index(ib,ik,1)
+       ifftp  =WF%index(ibp,ik,1)
+       c_ws(:,1)=V(:,1)*WF%c(:,ifftp)
+       H(ib,ibp,1) = H(ib,ibp,1)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,1))
+       ifft   =WF%index(ib,ik,2)
+       ifftp  =WF%index(ibp,ik,2)
+       c_ws(:,2)=V(:,2)*WF%c(:,ifftp)
+       H(ib,ibp,1) = H(ib,ibp,1)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,2))
+       !
+     elseif(V_kind=='xc ') then
+       !
+       ifft   =WF%index(ib,ik,1)
+       !
+       ifftp  =WF%index(ibp,ik,1)
+       c_ws(:,1)=V_mat(:,1,1)*WF%c(:,ifftp)
+       ifftp  =WF%index(ibp,ik,2)
+       c_ws(:,2)=V_mat(:,1,2)*WF%c(:,ifftp)
+       H(ib,ibp,1) = H(ib,ibp,1)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,1))+&
+&                                Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,2))
+       !
+       ifft   =WF%index(ib,ik,2)
+       !
+       ifftp  =WF%index(ibp,ik,1)
+       c_ws(:,1)=V_mat(:,2,1)*WF%c(:,ifftp)
+       ifftp  =WF%index(ibp,ik,2)
+       c_ws(:,2)=V_mat(:,2,2)*WF%c(:,ifftp)
+       H(ib,ibp,1) = H(ib,ibp,1)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,1))+&
+&                                Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,2))
+       !
+     endif
+     !
+   endif
    !
  enddo
  !

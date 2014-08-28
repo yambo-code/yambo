@@ -25,15 +25,15 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
  !
  use pars,           ONLY:SP,pi
  use YPP,            ONLY:N_probes,X_order,N_probe_frequencies,X_rt,i_t_start,&
-&                         i_t_end,N_pumps
+&                         i_t_end,N_pumps,J_time_step,J_steps
  use fields,         ONLY:EtoT,Efield,Divide_by_Field,i_Probe
- use real_time,      ONLY:NE_steps,RT_step,RT_P
+ use real_time,      ONLY:RT_P
  use units,          ONLY:FS2AUT
  use com,            ONLY:msg
  use LIVE_t,         ONLY:live_timing
  implicit none
  !
- real(SP)      :: RT_P_probe(NE_steps,N_probes,3),Harmonic_Frequency(0:X_order,N_probe_frequencies)
+ real(SP)      :: RT_P_probe(J_steps,N_probes,3),Harmonic_Frequency(0:X_order,N_probe_frequencies)
  complex(SP)   :: Susceptibility(0:X_order,N_probe_frequencies),X_effective(0:X_order,N_probe_frequencies,3)
  !
  ! Work Space
@@ -100,7 +100,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
        !
        X_w(:)=Harmonic_Frequency(0:,1)
        !
-       call RT_split_Polarization(X_order+1,NE_steps,X_w,X_effective(:,i_p,:),RT_P_probe(:,i_p,:),"dump")
+       call RT_split_Polarization(X_order+1,J_steps,X_w,X_effective(:,i_p,:),RT_P_probe(:,i_p,:),"dump")
        !
      enddo
      !
@@ -114,7 +114,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
    !
    T_period=T_range(1,0)
    !
-   call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_step/FS2AUT)
+   call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*J_time_step/FS2AUT)
    !
    do i_c = 1,3
      !
@@ -156,13 +156,13 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
      !
      X_rt%time_range(2)  = X_rt%time_range(1)+ T_range
      !
-     if (X_rt%time_range(2)> NE_steps*RT_step) then
-       X_rt%time_range(2)  = NE_steps*RT_step
+     if (X_rt%time_range(2)> J_steps*J_time_step) then
+       X_rt%time_range(2)  = J_steps*J_time_step
        X_rt%time_range(1)  = X_rt%time_range(2)-T_range
      endif 
      !
-     i_t_start=int(X_rt%time_range(1)/RT_step)+1
-     i_t_end  =int(X_rt%time_range(2)/RT_step)
+     i_t_start=int(X_rt%time_range(1)/J_time_step)+1
+     i_t_end  =int(X_rt%time_range(2)/J_time_step)
      !
    end function 
    !

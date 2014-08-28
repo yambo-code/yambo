@@ -56,8 +56,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use rt_ctl,        ONLY:RT_IO_time
- use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
-&                        RT_diagonalization_steps,NE_tot_time,RT_life_interp_steps,RT_life_interp_decay_time,&
+ use real_time,     ONLY:RT_step, NE_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
+&                        NE_tot_time,RT_life_interp_steps,RT_life_interp_decay_time,&
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_scatt_tresh,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
 &                        Gr_kind,two_alpha,RIM_EE_percent
@@ -389,17 +389,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! OLD / EXPERIMENTAL
  !
- ! 1 - Thermalization
- !
- call it(defs,'ThermSteps',   '[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
- call it(defs,'RTDiagoSteps', '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)
- !
- ! 2 - Induced Field
+ ! 1 - Induced Field
  !
  call it('f',defs,'Diamagnetic', '[RT] Include the diamagnetic term in current and coupling',verb_level=V_real_time)
  call it('f',defs,'InducedField','[RT] Include induced field in coupling and current',verb_level=V_real_time)
  !
- ! 3 - Other
+ ! 2 - Other
  !
  call it(defs,'RTAveDeph',    '[RT] Dephasing for all elements not included in RTDePhMatrix', &
 &                             RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit(1))

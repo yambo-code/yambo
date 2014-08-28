@@ -41,7 +41,7 @@ integer function io_RT_components(what,ID)
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_delta0_occupations,&
 &                         RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         l_NE_with_fields,NE_steps,RT_P,RT_nk, &
-&                         dG_lesser,l_NE_dynamics_started,RT_ind_J,&
+&                         dG_lesser,RT_ind_J,&
 &                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight_RT
  use ELPH,           ONLY:ph_modes,elph_branches
  use rt_ctl,         ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_IO
@@ -112,7 +112,7 @@ integer function io_RT_components(what,ID)
  !
  if (l_G.or.l_THETA) then
    !
-   if(.not.RT_do_IO('G').and.l_NE_dynamics_started.and.write_is_on(ID)) then
+   if(.not.RT_do_IO('G').and.write_is_on(ID)) then
      io_RT_components=0
      call io_reset(ID)
      goto 2

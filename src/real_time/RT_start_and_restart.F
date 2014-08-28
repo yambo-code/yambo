@@ -46,7 +46,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use R_lattice,      ONLY:bz_samp
  use rt_ctl,         ONLY:ID,RT_IO_G_steps,it_start
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
-&                         G_lesser_reference,Thermal_steps,rho_reference,  &
+&                         G_lesser_reference,rho_reference,  &
 &                         l_NE_with_fields,XC0_and_HARTREE0,RT_ibz_coo,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,l_NE_simulate_Irredux,NE_i_time,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,&
@@ -143,9 +143,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  do ik=1,QP_nk
    !
-   call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF) 
+   call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF,'def') 
    !
-   call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF) 
+   call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF,'xc ') 
    !
  enddo
  !
@@ -240,7 +240,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
    !
-   if(it_now<NE_steps+Thermal_steps) then
+   if(it_now<NE_steps) then
      call msg('snr','[RT] Number of steps done    [o/o]:',real(it_now)/real(NE_steps)*100._SP)
    endif
    !
@@ -257,7 +257,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
-   if (it_start>Thermal_steps.and..not.l_sc_ip) then 
+   if (.not.l_sc_ip) then 
      call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_reference,1)
    endif
    !
@@ -281,7 +281,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    RT_delta0_occupations(ib,:)=aimag(dG_lesser(ib,ib,:,1))
  enddo
  !
- if (l_NE_dynamics) NE_i_time=it_start-Thermal_steps
+ if (l_NE_dynamics) NE_i_time=it_start
  !
  if (l_NE_with_fields) then
    call RT_Ext_fields(A_vecpot,(it_start-1)*RT_step)

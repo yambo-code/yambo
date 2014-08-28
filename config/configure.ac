@@ -303,12 +303,15 @@ if test x"$enable_open_mp" = "xyes"; then
 fi
 AC_SUBST(OPENMPLIBS)
 # ============================================================================
-
 #
 # Underscore options in subroutine naming
 #
 ACX_EXTUS
-AC_F77_WRAPPERS
+#
+# Commented by AM on August 28 because it was imposing an F77 different from the FC
+# leading to linking conflicts
+#
+#AC_F77_WRAPPERS
 #
 # Free Form sepcific options
 #

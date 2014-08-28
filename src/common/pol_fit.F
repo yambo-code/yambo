@@ -34,8 +34,8 @@ subroutine pol_fit(N,X,Y,order,Tt,EPS,t_zero)
  ! 
  ! Work Space
  !
- integer  :: NDEG
- real(SP) :: W(N),R(N),IERR,wk(3*N+3*order+3)
+ integer  :: NDEG,IERR
+ real(SP) :: W(N),R(N),wk(3*N+3*order+3)
  !
  W(:)=1./sum(Y(:)**2.)
  !

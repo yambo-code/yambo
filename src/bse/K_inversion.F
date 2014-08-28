@@ -175,6 +175,27 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  call K_stored_in_a_BIG_matrix(iq)
  !
+ if (PERTURBATIVE) then
+   if (BSS_uses_RIM) then
+     !
+     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=(0.,0.)
+     if (trim(BSE_mode)=='coupling') then
+       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=(0.,0.)
+       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:) =-BS_mat(i1,:)
+     endif
+     !
+   else
+     !
+     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BSS_eh_E(i1)
+     if (trim(BSE_mode)=='coupling') then
+       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+BSS_eh_E(i1-BS_K_dim)
+       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:) =-BS_mat(i1,:)
+     endif
+     !
+   endif
+ end if
+ !
+ !
  allocate(eps_disk(W%n_freqs,IO_dim))
  eps_disk=(0._SP,0._SP)
  !

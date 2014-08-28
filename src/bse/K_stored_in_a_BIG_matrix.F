@@ -53,7 +53,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  if (allocated(BS_mat)) return
  !
  !call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
- !ioBS_err=ioBS(iq,X,ID)
+ !ioBS_err=ioBS(iq,X,ID)o
  !
  ! ALLOCATION
  !============

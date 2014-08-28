@@ -73,6 +73,18 @@ module BS
  type(ggwinfo), save :: K_EXCH_collision
  type(ggwinfo), save :: K_CORR_collision
  !
+ ! Haydock
+ !========== 
+ type Haydock_vector
+   !
+   complex(SP), allocatable :: fragment(:)
+   !
+ end type Haydock_vector
+ !
+ logical, allocatable :: Haydock_parallel_mask(:)
+ integer, allocatable :: Haydock_parallel_group_comm(:)
+ integer, allocatable :: Haydock_parallel_col_comm(:)
+ !
  ! CV transitions space ...
  !=========================
  type BS_T_group
@@ -164,15 +176,6 @@ module BS
  complex(SP), allocatable :: BSS_eh_Z(:)
  !
  interface 
-   !
-   subroutine K_multiply_by_V(iq,iter,Vi,Vo,iter_par,call_kind)
-     use pars,          ONLY:SP
-     integer               ::iq
-     integer               ::iter
-     complex(SP)           ::Vi(:),Vo(:)
-     real(SP),optional     ::iter_par
-     character(3),optional ::call_kind
-   end subroutine
    !
    integer function variables_BS(ID,local_description,X)
      use pars,       ONLY:lchlen
@@ -371,5 +374,51 @@ module BS
      enddo
      !
    end subroutine
+   !
+   subroutine BS_Blocks_symmetrize_K()
+   !
+   integer :: i_B,i_Tk,i_Tp,i_r,i_c
+   !
+   do i_B=1,n_BS_blks
+     !
+     i_Tk  =BS_blk(i_B)%iT_k
+     i_Tp  =BS_blk(i_B)%iT_p
+     !
+     if (.not.(i_Tk.eq.i_Tp)) cycle
+     forall(i_r=1:BS_blk(i_B)%size(1),i_c=1:BS_blk(i_B)%size(2),i_r.lt.i_c)&
+              &BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
+   end do
+   !
+   end subroutine BS_Blocks_symmetrize_K
+   !
+   subroutine BS_HAYVEC_alloc(V)
+     type(Haydock_vector) :: V(:)
+     ! ws:
+     integer :: i_g!, mem_sum  
+     !
+     do i_g=1,BS_nT_grps
+       if (.not.Haydock_parallel_mask(i_g)) cycle
+       allocate(V(i_g)%fragment(BS_T_grp(i_g)%size))
+     !mem_sum = mem_sum + BS_T_grp(i_g)%size
+     enddo
+     !mem_sum = mem_sum
+     !call mem_est("Haydock_VEC_frags",(/mem_sum/),(/SP/))
+     !
+   end subroutine BS_HAYVEC_alloc
+   !
+   subroutine BS_HAYVEC_free(V)
+     use stderr,     ONLY:intc 
+     type(Haydock_vector) :: V(:)
+     ! ws:
+     integer :: i_g
+     !
+     do i_g=1,BS_nT_grps
+       if (allocated(V(i_g)%fragment)) then
+         deallocate(V(i_g)%fragment)
+         !call mem_est("Haydock_VEC_frag"//trim(intc(i_g)))
+       end if
+     end do
+     !
+   end subroutine BS_HAYVEC_free
    !
 end module BS

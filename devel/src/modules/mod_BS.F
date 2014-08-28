@@ -394,15 +394,12 @@ module BS
    subroutine BS_HAYVEC_alloc(V)
      type(Haydock_vector) :: V(:)
      ! ws:
-     integer :: i_g!, mem_sum  
+     integer :: i_g
      !
      do i_g=1,BS_nT_grps
        if (.not.Haydock_parallel_mask(i_g)) cycle
        allocate(V(i_g)%fragment(BS_T_grp(i_g)%size))
-     !mem_sum = mem_sum + BS_T_grp(i_g)%size
      enddo
-     !mem_sum = mem_sum
-     !call mem_est("Haydock_VEC_frags",(/mem_sum/),(/SP/))
      !
    end subroutine BS_HAYVEC_alloc
    !
@@ -415,7 +412,7 @@ module BS
      do i_g=1,BS_nT_grps
        if (allocated(V(i_g)%fragment)) then
          deallocate(V(i_g)%fragment)
-         !call mem_est("Haydock_VEC_frag"//trim(intc(i_g)))
+         !
        end if
      end do
      !

@@ -94,9 +94,11 @@ subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
         &          Vo(i_Tk)%fragment(:) = Vo(i_Tk)%fragment(:) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:)
  end do
  !
+#if defined _MPI
  do i_g=1,BS_nT_grps
    if (.not.Haydock_parallel_mask(i_g)) cycle 
    call PP_redux_wait(Vo(i_g)%fragment,COMM=Haydock_parallel_group_comm(i_g))
  end do
+#endif
  !  
 end subroutine

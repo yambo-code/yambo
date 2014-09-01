@@ -31,13 +31,13 @@ integer function io_X(X,Xw,ID)
  use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_description
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
-&                        io_elemental,io_status,io_bulk,io_restart_point,&
+&                        io_elemental,io_status,io_bulk,&
 &                        read_is_on,write_is_on,io_header,&
 &                        RD_CL,RD_CL_IF_END,io_action,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED
  use stderr,        ONLY:intc
- use fragments,     ONLY:io_fragment,Fragments_Restart
+ use fragments,     ONLY:io_fragment,fragment_exists
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -76,10 +76,6 @@ integer function io_X(X,Xw,ID)
  !
  io_X=io_connect(desc=trim(db_desc),type=2,ID=ID) 
  if (io_X/=0) goto 1
- !
- ! Check the restart point
- !
- call Fragments_Restart(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -148,6 +144,7 @@ integer function io_X(X,Xw,ID)
  !  type(X_t)    ::X(4)  x s d p
  !
  if (any((/io_sec(ID,:)==2*iq/))) then
+   !
    sec_size=6
    !
    if (X%whoami==4) sec_size=1
@@ -184,14 +181,8 @@ integer function io_X(X,Xw,ID)
    !
  endif
  !
- ! Sections 1 & 2 are used in VERIFY mode. 
- ! Now that the menu is closed I can return with ioX/=0 if
- ! there is a restart point
- !
- io_X=io_restart_point(ID)
- if (io_X/=0) goto 1
- !
  if (any((/io_sec(ID,:)==2*iq+1/))) then
+   !
    allocate(X_disk(X%ng_db,X%ng_db,2))
    !
    write (ch,'(a,i3.3)') "FREQ_sec_iq",iq
@@ -240,13 +231,13 @@ integer function io_X(X,Xw,ID)
    enddo
    !
    deallocate(X_disk)
+   !
  endif
  !
- call Fragments_Restart(ID,current_fragment=iq,fragments_todo=nqibz)
+ ! Sections 1 & 2 are used in VERIFY mode. 
+ ! Now that the menu is closed I can return with io_X/=0 if there is a restart point
  !
- ! No I/O errors I update ioX at the first q TODO
- !
- io_X=io_restart_point(ID)
+ if (fragment_exists(ID)) io_X=iq
  !
 1 call io_disconnect(ID)
  !

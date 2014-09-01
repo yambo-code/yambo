@@ -37,7 +37,7 @@ integer function io_BS(iq,X,ID)
 &                        read_is_on,write_is_on,io_header,io_mode,&
 &                        VERIFY,io_fragmented,Fragmented_IO,&
 &                        ver_is_gt_or_eq
- use fragments,     ONLY:io_fragment,Fragments_Restart
+ use fragments,     ONLY:io_fragment
  implicit none
  type(X_t):: X 
  integer  :: iq,ID
@@ -54,8 +54,6 @@ integer function io_BS(iq,X,ID)
  !
  io_BS=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (io_BS/=0) goto 1
- !
- call Fragments_Restart(ID)
  !
  ! If the DB size > 1.9Gb  I automatically switch on the fragmentation.
  ! To do so both dbs_fragment (overall fragmentation) and 
@@ -188,7 +186,7 @@ integer function io_BS(iq,X,ID)
  !
  deallocate(BS_mat_disk)
  !
- call Fragments_Restart(ID,current_fragment=i_fragment,fragments_todo=UP_matrix_index(1,nXkibz))
+ !call Fragments_Restart(ID,current_fragment=i_fragment,fragments_todo=UP_matrix_index(1,nXkibz))
  io_BS=io_restart_point(ID)
  !
 1 call io_disconnect(ID)

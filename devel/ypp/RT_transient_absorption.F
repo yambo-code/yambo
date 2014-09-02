@@ -76,7 +76,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
  allocate(q_norm(1),bare_qpg(1,1))
  !call SC_QP_setup(Xen)
  !
- call PARALLEL_global_indexes(Xen,Xk,Xq," ",        RESET=.TRUE.,X=Xbsk)
+ call PARALLEL_global_indexes(Xen,Xk,Xq," ",        RESET=.TRUE. ,X=Xbsk)
  call PARALLEL_global_indexes(Xen,Xk,Xq,"Real_Time",RESET=.FALSE.,X=Xbsk)
  !
  io_DIP=.FALSE.
@@ -201,26 +201,26 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
      output(1)=aimag(X_epsilon(2,i_freq))/aimag(X_epsilon(1,i_freq))
      output(2)=aimag(X_epsilon(2,i_freq))
      output(3)=aimag(X_epsilon(1,i_freq))
-     call RT_output("trans_abs1",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-     call RT_output("trans_abs2",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-     if(i_T==1) call RT_output("trans_abs3",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+     call RT_output("trans_eps_rel",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+     call RT_output("trans_eps_abs",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+     if(i_T==1) call RT_output("trans_eps_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
      if(l_TR_reflec) then
        output(3)=X_reflectance(1,i_freq)*conjg(X_reflectance(1,i_freq))
        !output(2)=X_reflectance(2,i_freq)*conjg(X_reflectance(2,i_freq))-output(3)
        output(2)=X_reflectance(2,i_freq)*conjg(X_reflectance(1,i_freq))+X_reflectance(1,i_freq)*conjg(X_reflectance(2,i_freq))
        output(1)=output(2)/output(3)
-       call RT_output("trans_reflec1",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-       call RT_output("trans_reflec2",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-       if(i_T==1) call RT_output("trans_reflec3",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+       call RT_output("trans_refl_rel",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+       call RT_output("trans_refl_abs",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+       if(i_T==1) call RT_output("trans_refl_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
      endif
      ! I need to check some factor
      !if(l_TR_transm) then
      !  output(3)=1-X_reflectance(1,i_freq)*conjg(X_reflectance(1,i_freq))-aimag(X_epsilon(1,i_freq))
      !  output(2)=1-X_reflectance(1,i_freq)*conjg(X_reflectance(1,i_freq))-aimag(X_epsilon(1,i_freq)+X_epsilon(2,i_freq))
      !  output(1)=output(2)/output(3)
-     !  call RT_output("trans_reflec1",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-     !  call RT_output("trans_reflec2",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-     !  call RT_output("trans_reflec3",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+     !  call RT_output("trans_transm_rel",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+     !  call RT_output("trans_transm_abs",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+     !  call RT_output("trans_transm_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
      !endif
    enddo
    !

@@ -78,7 +78,7 @@ subroutine grid_generator(USER_k,units,grid_dim)
   !
   USER_k%units='i'
   !
-  Call k_reduce(USER_k)
+  call k_reduce(USER_k,.TRUE.)
   call msg('s',' Interpolation nibz : ',USER_k%nibz)
   call k_expand(USER_k)
   call msg('s',' Interpolation nbz  : ',USER_k%nbz)

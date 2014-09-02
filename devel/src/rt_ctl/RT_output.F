@@ -292,8 +292,8 @@ subroutine RT_output(what,VALUES,TIME,E)
  !
  do i_f=1,3
    if (open_files.and..not.file_already_opened(next_file)) &
-&     file_name(next_file)=trim(append_ch)//'trans_abs'//trim(intc(i_f))
-   short_file_name(next_file)=trim(append_ch)//'trans_abs'//trim(intc(i_f))
+&     file_name(next_file)=trim(append_ch)//'trans_eps'//trim(intc(i_f))
+   short_file_name(next_file)=trim(append_ch)//'trans_eps'//trim(intc(i_f))
    n_headings(next_file)=3
    headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
    headings(next_file,3  )='Eps'
@@ -302,8 +302,8 @@ subroutine RT_output(what,VALUES,TIME,E)
  !
  do i_f=1,3
    if (open_files.and..not.file_already_opened(next_file)) &
-&     file_name(next_file)=trim(append_ch)//'trans_reflec'//trim(intc(i_f))
-   short_file_name(next_file)=trim(append_ch)//'trans_reflec'//trim(intc(i_f))
+&     file_name(next_file)=trim(append_ch)//'trans_refl'//trim(intc(i_f))
+   short_file_name(next_file)=trim(append_ch)//'trans_refl'//trim(intc(i_f))
    n_headings(next_file)=3
    headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
    headings(next_file,3  )='Reflectance'
@@ -428,8 +428,8 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-Polarization_W')
        if(.not.present(VALUES)) cycle
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
-     case('YPP-X_effective','YPP-el_dos','YPP-trans_abs1','YPP-trans_abs2','YPP-trans_abs3',&
-&                                        'YPP-trans_reflec1','YPP-trans_reflec2','YPP-trans_reflec3')
+     case('YPP-X_effective','YPP-el_dos','YPP-trans_eps_rel' ,'YPP-trans_eps_abs' ,'YPP-trans_eps_eq',&
+&                                        'YPP-trans_refl_rel','YPP-trans_refl_abs','YPP-trans_refl_eq')
        data_to_dump(1:2)=(/Time,E/)
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-2)
      case('mean_EPlifetimes')

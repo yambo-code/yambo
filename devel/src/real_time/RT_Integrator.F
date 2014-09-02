@@ -163,7 +163,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
          !
          call RT_build_U1_and_U2(ik,I1_k,I2_k,dT)
          !
-         ! G(T0+dt) = U(dt) G(T0) U(-dt)
+         ! G(T0+dt) = U(T;dt) G(T0) U(T;-dt)
          !
          call RT_EULEREXP_step(dG_out(:,:,ik),dG_old(:,:,ik),G_lesser_reference(:,:,ik),I1_k,I2_k,I1_matrix)
          !

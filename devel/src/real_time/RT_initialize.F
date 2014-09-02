@@ -114,6 +114,8 @@ subroutine RT_initialize(E,k,q)
    Integrator_name = trim(Integrator_name)//" + INTERPOLATE"
  endif
  !
+ if(l_RT_INTERPOLATE) call error(' INTERPOLATION of coherent part: status unknonw')
+ !
  ! Use NE_tot_time if provided
  !
  if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step)+1)

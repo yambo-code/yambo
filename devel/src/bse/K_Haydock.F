@@ -168,7 +168,8 @@ subroutine K_Haydock(iq,W)
  ! Initialization of Haydock vectors and tridiagonal matrix elements
  !
  if (it_on_disk==0) then
-   do i_g=1,BS_nT_grps,Haydock_parallel_mask(i_g)
+   do i_g=1,BS_nT_grps
+     if (.not.Haydock_parallel_mask(i_g)) cycle
      Vn(i_g)%fragment  = cZERO
      Vnm1(i_g)%fragment= cZERO
      Vnp1(i_g)%fragment= cZERO
@@ -209,7 +210,8 @@ subroutine K_Haydock(iq,W)
    !
    ! it=1:|Vm>=|q->0>/(<q->0|q->0>)^(1/2)
    !
-   do i_g=1,BS_nT_grps,PAR_IND_T_groups%element_1D(i_g)
+   do i_g=1,BS_nT_grps
+     if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
      Vn(i_g)%fragment =BS_T_grp(i_g)%dipoles_R 
    enddo
    do i_g = 2,BS_nT_grps
@@ -223,7 +225,8 @@ subroutine K_Haydock(iq,W)
    Haydock_v0_mod=sqrt(real(v0_mod_,SP))
    !
    if (it_on_disk==0) then
-     do i_g=1,BS_nT_grps,Haydock_parallel_mask(i_g)
+     do i_g=1,BS_nT_grps
+       if (.not.Haydock_parallel_mask(i_g)) cycle
        Vn(i_g)%fragment  = Vn(i_g)%fragment/Haydock_v0_mod
      enddo
    endif
@@ -272,7 +275,8 @@ subroutine K_Haydock(iq,W)
      !
      !|Vm-1> = |Vm>
      !
-     do i_g=1,BS_nT_grps,Haydock_parallel_mask(i_g) 
+     do i_g=1,BS_nT_grps
+       if (.not.Haydock_parallel_mask(i_g)) cycle 
        Vnm1(i_g)%fragment  =Vn(i_g)%fragment
      enddo
      !
@@ -283,7 +287,8 @@ subroutine K_Haydock(iq,W)
      !   forall(i1=1:BS_T_grp(i_g)%size) Vn(i_g)%fragment(i1)=Vnp1(i_g)%fragment(i1)/Bf(it+1)
      ! end do
      !
-     do i_g=1,BS_nT_grps,Haydock_parallel_mask(i_g) 
+     do i_g=1,BS_nT_grps
+       if (.not.Haydock_parallel_mask(i_g)) cycle
        Vn(i_g)%fragment  =Vnp1(i_g)%fragment/Bf(it+1)
      enddo
      !

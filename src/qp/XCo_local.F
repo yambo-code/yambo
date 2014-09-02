@@ -168,8 +168,6 @@ subroutine XCo_local(E,Xk)
    !
    do i1=1,QP_n_states
      !
-     !if (.not.PAR_IND_QP%element_1D(i1)) cycle
-     !
      ib =QP_table(i1,1)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
@@ -177,7 +175,7 @@ subroutine XCo_local(E,Xk)
      if (l_real_time) then
 #if defined _RT
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-       !if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1,nb))) cycle
+       if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
 #endif
      else
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle

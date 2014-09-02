@@ -84,6 +84,4 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,G_ref_k,U1_k,U2_k,I1_matrix)
 #endif
  G_new_k=G_new_k+M2_tmp
  !
- G_new_k=G_new_k-G_old_k
- !
 end subroutine RT_EULEREXP_step

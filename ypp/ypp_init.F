@@ -47,6 +47,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
 #endif
 #if defined _YPP_RT 
+ use rt_ctl,         ONLY:RT_IO_JPO_steps
  use real_time,      ONLY:RT_step,NE_steps
  use fields,         ONLY:Efield,i_Probe
 #endif
@@ -77,7 +78,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #if defined _YPP_RT
  logical          ::l_flag
  integer, external::io_RT_components,io_KB_pwscf
- integer          ::io_RT_err,io_KB_pwscf_err,ID
+ integer          ::io_RT_G_err,io_RT_J_err,io_KB_pwscf_err,ID
 #endif
  integer, external::parse_character_arrays
  !
@@ -297,15 +298,19 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #endif
  !
 #if defined _YPP_RT
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! GF
+ io_RT_G_err=io_RT_components('G' ,ID)
  ! 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
- io_RT_err=io_RT_components('G' ,ID)
+ io_RT_J_err=io_RT_components('J_and_P' ,ID)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_KB_pwscf_err=io_KB_pwscf(ID)
  ! 
- if (io_RT_err==0) then
+ if (io_RT_G_err==0) then
    !
+   if (io_RT_J_err==0) J_steps=(NE_steps-1)/RT_IO_JPO_steps+1
    X_rt%energy_range=(/0._SP,pi/RT_step/)
    X_rt%time_range=(/Efield(i_Probe)%t_initial,NE_steps*RT_step/)
    X_rt%damp_factor=2.*pi/(RT_step*real(NE_steps)-Efield(i_Probe)%t_initial)

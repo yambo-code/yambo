@@ -59,12 +59,18 @@ integer function variables_SC(ID,local_description,what)
  CHECK_=.TRUE.
  if (l_NSC_shot) CHECK_=.FALSE.
  !
+ !
+ ! ATOMS_STRING
+ !
  call io_elemental(ID,VAR='ATOMS_STRING',CH0="",VAR_SZ=1,MENU=0)
  i_desc=i_desc+1
  call io_elemental(ID,CH0=atoms_string,&
 &     VAR=' Unit cell atoms                 :',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ !
+ !
+ ! XC_FUNCTIONAL
  !
  call io_elemental(ID,VAR='XC_FUNCTIONAL',CH0="",VAR_SZ=1,MENU=0)
  i_desc=i_desc+1
@@ -73,6 +79,9 @@ integer function variables_SC(ID,local_description,what)
 &     DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
+ !
+ ! XC_GLOBALS
+ !
  call io_elemental(ID,VAR="XC_GLOBALS",VAR_SZ=3,MENU=0)
  call io_elemental(ID,I0=SC_perturbation,DB_I0=SC_perturbation_disk)
  call io_elemental(ID,I0=SC_kind,DB_I0=SC_kind_disk)
@@ -80,6 +89,9 @@ integer function variables_SC(ID,local_description,what)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  io_status_save=io_status(ID)
+ !
+ !
+ ! LOCAL_ITER_BANDS_MIX
  !
  call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=6,MENU=0) 
  !

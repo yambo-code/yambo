@@ -26,7 +26,8 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_new_k,dG_old_k)
  use pars,           ONLY:SP
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:levels
- use real_time,      ONLY:RT_ibz_coo,RIM_ibz_coo,l_RT_uses_E_RIM,RT_Deph_Matrix,RT_all2ibz
+ use real_time,      ONLY:RT_ibz_coo,RIM_ibz_coo,l_RT_uses_E_RIM, &
+&                         RT_Deph_Matrix,RT_all2ibz,l_RT_EXP
  !
  implicit none
  !
@@ -70,6 +71,8 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_new_k,dG_old_k)
        dG_new_k(i_np,i_n)=dG_new_k(i_np,i_n)*conjg(phase)*dec_exp
      endif
      !
+     if (l_RT_EXP) cycle
+     !
      if(dT/=dTp) then
        alpha=-deltaE*dT
        phase=cmplx(cos(alpha),sin(alpha))
@@ -81,7 +84,7 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_new_k,dG_old_k)
      !
    enddo
    !
-   dG_new_k(i_n,i_n)=dG_new_k(i_n,i_n)+dG_old_k(i_n,i_n)
+   if(.not.l_RT_exp) dG_new_k(i_n,i_n)=dG_new_k(i_n,i_n)+dG_old_k(i_n,i_n)
    !
    ! It is higly non satisfactory that
    !     Gamma_neq[f_eq] /= Gamma_eq                              (1)

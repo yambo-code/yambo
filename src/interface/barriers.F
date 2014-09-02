@@ -164,11 +164,11 @@ subroutine barriers()
  !=============
  if (n_spin>1) then
    on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
+   on_runlevels=trim(on_runlevels)//' negf collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt'
    ! GPL_INCLUDE_START SC_IGNORE
    !on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0'
    ! GPL_INCLUDE_END SC_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
-   if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
  endif 
  !
  ! MORE

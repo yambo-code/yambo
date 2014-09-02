@@ -39,10 +39,6 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
  integer :: i_b,iT_k,iT_p,i_g,i_err,dummy,iloc(1)
  integer :: local_color, local_key, local_undefined\
  !
-#if defined _MPI
- include 'mpif.h'
-#endif
- !
  select case (what)
    case('assign')
      !

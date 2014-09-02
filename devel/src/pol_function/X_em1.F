@@ -50,10 +50,11 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer           :: iq,Xdb,i_err,iq_to_start,iq_mem,X_range(2),X_n_freqs
- real(SP)          :: minmax_ehe(2)
- integer, external :: io_X
- character(1)      :: sec_mode
+ integer              :: iq,Xdb,i_err,iq_mem,X_range(2),X_n_freqs
+ real(SP)             :: minmax_ehe(2)
+ integer, external    :: io_X
+ character(1)         :: sec_mode
+ logical, allocatable :: io_X_done(:)
  !
  self_detect_E_range=.false.
  !
@@ -115,13 +116,15 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Prepare the IO ( and check if q has been already done)
  !
- iq_to_start=X%iq(1)
- if (.not.APPEND_NO_VERIFY) then
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=Xdb)
+ allocate(io_X_done(X%iq(2)))
+ io_X_done=.FALSE.
+ !
+ do iq=X%iq(1),X%iq(2)
+   if (iq==1) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=VERIFY,ID=Xdb)
+   if (iq> 1) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq,2*iq+1/),MODE=VERIFY,ID=Xdb)
    X_em1=io_X(X,Xw,Xdb)
-   if (X_em1==0) return
-   if (X_em1> 0) iq_to_start=X_em1
- endif
+   if (X_em1==iq) io_X_done(iq)=.TRUE.
+ enddo
  !
  ! Parallel distribution
  !=======================
@@ -148,7 +151,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    endif
  endif
  !
- do iq=iq_to_start,X%iq(2)
+ do iq=X%iq(1),X%iq(2)
    !
    ! TDDFT setup
    !
@@ -164,6 +167,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      !
    endif
    !
+   if (     io_X_done(iq)) cycle
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
    iq_mem=PAR_Q_index(iq)
@@ -180,7 +184,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    !
-   if ( (iq==iq_to_start.and..not.l_life) .or. (iq==1.and.l_life) ) then
+   if ( (iq==X%iq(1).and..not.l_life) .or. (iq==1.and.l_life) ) then
      !
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=Xdb) 
      !
@@ -219,5 +223,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  if (io_RESPONSE) call X_alloc('X')
  call X_alloc('DIP_q_dot_iR')
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free(WF)
+ deallocate(io_X_done)
  !
 end function

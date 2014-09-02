@@ -39,7 +39,7 @@ integer function io_QP(what,qp,ID)
 &                         db_alat,variable_is_found,IO_INCOMPATIBLE_VAR,IO_NO_BINDING_ERROR
  use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_COHSEX,SE_NONE,&
 &                         SE_POLARON
- use fragments,      ONLY:io_fragment,Fragments_Restart
+ use fragments,      ONLY:io_fragment
  !
  implicit none
  type(QP_t)  ::qp
@@ -63,10 +63,6 @@ integer function io_QP(what,qp,ID)
    io_QP=io_connect(desc=what,type=-2,ID=ID)
  endif
  if (io_QP/=0) goto 1
- !
- ! Check the restart point 
- !  
- if (what=="W".or.what=="QP") call Fragments_Restart(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    ! 
@@ -431,7 +427,7 @@ integer function io_QP(what,qp,ID)
    !
    deallocate(QP_Sc_disk)
    !
-   call Fragments_Restart(ID,current_fragment=restart_point,fragments_todo=nqbz*qp%n_states)
+   !call Fragments_Restart(ID,current_fragment=restart_point,fragments_todo=nqbz*qp%n_states)
    !
  endif
  !
@@ -479,7 +475,7 @@ integer function io_QP(what,qp,ID)
    io_QP=io_status(ID)
    if (.not.DB_is_OK(ID)) goto 1
    !
-   call Fragments_Restart(ID,current_fragment=iqbz,fragments_todo=nqbz)
+   !call Fragments_Restart(ID,current_fragment=iqbz,fragments_todo=nqbz)
    !
  endif
  !

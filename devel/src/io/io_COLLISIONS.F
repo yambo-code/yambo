@@ -84,7 +84,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  ! Check the restart point
  !
- call Fragments_Restart(ID,fragments_todo=QP_n_states)
+ !call Fragments_Restart(ID,fragments_todo=QP_n_states)
  !
  if (any(io_sec(ID,:)==1)) then
    !
@@ -229,7 +229,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
 1 continue
  !
- if(io_COLLISIONS==0) io_COLLISIONS=io_restart_point(ID)
+ if (io_COLLISIONS==0) io_COLLISIONS=io_restart_point(ID)
  !
  call io_disconnect(ID=ID)
  !

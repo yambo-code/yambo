@@ -118,9 +118,8 @@ subroutine RT_databases(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  if (nint(NE_time/RT_step)+1/=NE_steps) then
    call warning(" Interrupted DB found. Time steps reduced.")
    NE_steps=NE_time/RT_step+1
+   J_steps=(NE_steps-1)/RT_IO_JPO_steps+1
  endif
- !
- J_steps=(NE_steps-1)/RT_IO_JPO_steps+1
  !
  if (.not.allocated(RT_J_t)) then
    allocate(RT_J_t(J_steps,3),RT_P_t(J_steps,6))

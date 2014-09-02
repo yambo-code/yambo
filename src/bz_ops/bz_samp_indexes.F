@@ -150,7 +150,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
    enddo
    if (.not.allocated(q_pt)) then
-     call k_reduce(q)
+     call k_reduce(q,.TRUE.)
      deallocate(q%ptbz)
    else
      q%nibz=nqibz

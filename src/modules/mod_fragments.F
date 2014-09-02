@@ -23,8 +23,8 @@
 !
 module fragments
  ! 
- use pars,   ONLY:schlen
- use IO_m,   ONLY:close_is_on,io_connect,ver_is_gt_or_eq,io_resetable,io_file,&
+ use pars,   ONLY:schlen,lchlen
+ use IO_m,   ONLY:close_is_on,io_connect,io_resetable,io_file,&
 &                 io_sec,io_extension,io_action,io_fragmented,read_is_on,write_is_on,&
 &                 OP_RD_CL,OP_WR_CL,io_type,io_disconnect,io_netcdf_support,io_folder
  use stderr, ONLY:intc,write_fragments_IO_log,logfile
@@ -57,26 +57,30 @@ module fragments
  !
  contains
    !
-   logical function fragment_exists(ID,i_fragment,j_fragment)
-    !
-    use com,       ONLY:get_name,file_exists
-    implicit none
-    integer                :: ID
-    integer                :: i_fragment
-    integer,optional       :: j_fragment
-    !
-    ! Work Space
-    !
-    character(schlen) :: fragment_filename
-    ! 
-    fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(intc(i_fragment))
-    if (present(j_fragment)) fragment_filename=trim(io_extension(ID)) &
-&      //"_fragments_"//trim(intc(i_fragment))//"_"//trim(intc(j_fragment))
-    fragment_filename=get_name(fragment_filename,type=io_type(ID),&
-&      CORE_IO=.TRUE.,MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
-    !
-    fragment_exists=file_exists(trim(fragment_filename))
-    !
+   logical function fragment_exists(ID)
+     !
+     use com,       ONLY:file_exists,all_locations,num_of_alternative_locations
+     !
+     implicit none
+     !
+     integer                :: ID
+     !
+     ! Work Space
+     !
+     character(lchlen) :: fragment_filenames(num_of_alternative_locations)
+     integer           :: i_f
+     !
+     fragment_filenames=all_locations(trim(io_extension(ID)),trim(io_folder(ID)),io_netcdf_support(ID))
+     !
+     fragment_exists=.FALSE.
+     !
+     do i_f=1,num_of_alternative_locations
+       if (file_exists(trim(fragment_filenames(i_f)))) then
+         fragment_exists=.TRUE.
+         return
+       endif
+     enddo
+     !
    end function
    !
    subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
@@ -123,36 +127,16 @@ module fragments
      !
      io_file(ID)=' '
      !
-     if (write_is_on(ID).or.ver_is_gt_or_eq(ID,revision=518)) then
-       !
-       fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(intc(i_frag))
-       if (present(j_fragment)) then
-         fragment_filename=trim(io_extension(ID)) &
-&                          //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))
-       endif
-       ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID)
-       !
-       if (ncpu>1.and.write_fragments_IO_log.and.index(logfile,"stderr")==0) then
-         if (write_is_on(ID)) call PARALLEL_live_message("Writing "//trim(fragment_filename))
-         if (read_is_on(ID) ) call PARALLEL_live_message("Reading "//trim(fragment_filename))
-       endif
-       !
-     else
-       write (subfolder,'(2a,i5.5)') trim(io_extension(ID)),'_',i_frag
-       if (present(j_fragment)) then
-         write (subfolder,'(2a,i5.5,a,i5.5)') &
-&                         trim(io_extension(ID)),'_',i_frag,'_',j_fragment
-       endif
-       !
-       ! Note that the fragment DB keeps the same type of the DB core (io_type(ID))
-       !
-       ierr_=io_connect('fragment',subfolder=subfolder,type=io_type(ID),ID=ID)
-       !
-       if (ncpu>1.and.index(logfile,"stderr")==0) then
-         if (write_is_on(ID)) call PARALLEL_live_message("Writing "//trim(fragment_filename))
-         if (read_is_on(ID) ) call PARALLEL_live_message("Reading "//trim(fragment_filename))
-       endif
-       !
+     fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(intc(i_frag))
+     if (present(j_fragment)) then
+       fragment_filename=trim(io_extension(ID)) &
+&                        //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))
+     endif
+     ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID)
+     !
+     if (ncpu>1.and.write_fragments_IO_log.and.index(logfile,"stderr")==0) then
+       if (write_is_on(ID)) call PARALLEL_live_message("Writing "//trim(fragment_filename))
+       if (read_is_on(ID) ) call PARALLEL_live_message("Reading "//trim(fragment_filename))
      endif
      !
      if (present(ierr)) ierr=ierr_

@@ -358,11 +358,15 @@ integer function ELPH_databases(k,E,q)
    endif
    !
    if (idb_<0) then
+     !
      iq_check=0
+     !
      do i1=1,nqibz
        if (v_is_zero(ph_q_disk(:)+q%pt(i1,:),zero_=k_iku_zero)) iq_check=i1
      enddo
+     !
      if (iq_check==0) elph_use_q_grid=.false.
+     !
      ELPH_databases_io=iq_check
      !
      ! When elph_use_q_grid = .false. idb_ is the q-pt counter

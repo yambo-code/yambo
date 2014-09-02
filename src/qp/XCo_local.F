@@ -177,7 +177,7 @@ subroutine XCo_local(E,Xk)
      if (l_real_time) then
 #if defined _RT
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-       if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1,nb))) cycle
+       !if (.not.PAR_IND_B_mat_ordered%element_1D( matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1,nb))) cycle
 #endif
      else
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle

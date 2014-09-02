@@ -85,6 +85,7 @@ subroutine el_magnetization(en,Xk)
      cv(:,3)=cv(:,3)+Xk%weights(i2)*(&
 &            en%f(i1,i2,1)*conjg(WF%c(:,ifft_up))*WF%c(:,ifft_up)&
 &           -en%f(i1,i2,n_sp_pol)*conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_dn) )
+     !
    enddo
  enddo
  !

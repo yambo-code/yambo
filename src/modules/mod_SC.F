@@ -82,6 +82,7 @@ module SC
  real(SP),    allocatable :: V_xc_sc(:,:)
  real(SP),    allocatable :: V_hartree_sc(:,:)
  real(SP),    allocatable :: rho_n(:)
+ real(SP),    allocatable :: magn_n(:,:)
  !
  ! Kinetic Energy and Ionic potential energy
  !
@@ -175,6 +176,9 @@ module SC
      call mem_est("rho",(/fft_size/),(/SP/))
      !
      if(n_spin>1) then
+       allocate(magn_n(fft_size,3))
+       call mem_est("magn",(/fft_size*3/),(/SP/))
+       !
        allocate(magn(fft_size,3))
        call mem_est("magn",(/fft_size*3/),(/SP/))
      endif
@@ -224,6 +228,11 @@ module SC
      if(allocated(rho_n)) then
        deallocate(rho_n)
        call mem_est("rho")
+     endif
+     !
+     if(allocated(magn_n)) then
+       deallocate(magn_n)
+       call mem_est("magn")
      endif
      !
      if(allocated(magn)) then

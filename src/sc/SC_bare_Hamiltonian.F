@@ -57,10 +57,12 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  ! Note that G_lesser here is the non-interacting one (occupations on the diagonal) only
  !
  call el_density_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,Xk,rho_n,1)
+ !call el_magnetization_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,Xk,magn_n,1)
  !
 #else
  !
  call el_density(E,Xk,rho_n,.false.)
+ !call el_magnetization(E,Xk,magn_n)
  V_xc_sc=V_xc 
  !
 #endif

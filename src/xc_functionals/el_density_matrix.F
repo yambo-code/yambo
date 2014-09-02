@@ -27,7 +27,8 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  ! lesser Green function)
  !
  use pars,          ONLY:SP
- use electrons,     ONLY:levels
+ use com,           ONLY:error
+ use electrons,     ONLY:levels,n_spinor
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym,i_time_rev
  use FFT_m,         ONLY:fft_size,fft_rot_r
@@ -37,6 +38,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  use matrix_operate,ONLY:UP_matrix_index
  !
  implicit none
+ !
  type(bz_samp)::Xk
  complex(SP), intent(in), optional :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),Xk%nibz)
  integer,     intent(in) :: lowest_band
@@ -55,10 +57,16 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  do ik=1,Xk%nibz
    !
    do ib1=lowest_band,SC_bands(1)-1
+     !
      if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
      ifft1=WF%index(ib1,ik,1)
      f_occ=en%f(ib1,ik,1)
      rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,ifft1))**2.)
+     if(n_spinor>1) then
+       ifft1=WF%index(ib1,ik,2)
+       rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,ifft1))**2.)
+     endif
+     !
    enddo
    !
    if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
@@ -68,17 +76,19 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
      do ib2=ib1,SC_bands(2)
        !
        if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-SC_bands(1)+1,ib2-SC_bands(1)+1)-1 )) cycle
-       !      
+       !
+       if (ib1==ib2) f_occ=-(0._SP,1._SP)*G_lesser(ib1,ib2,ik)
+       if (ib1/=ib2) f_occ=-(0._SP,2._SP)*G_lesser(ib1,ib2,ik)
+       !
        ifft1=WF%index(ib1,ik,1)
        ifft2=WF%index(ib2,ik,1)
-       !
-       if (ib1==ib2) then
-         f_occ=-(0._SP,1._SP)*G_lesser(ib1,ib2,ik)
-       else
-         f_occ=-(0._SP,2._SP)*G_lesser(ib1,ib2,ik)
-       endif
-       !
        rho_no_sym(:)=rho_no_sym(:)+Xk%weights(ik)*real(f_occ*WF%c(:,ifft1)*conjg(WF%c(:,ifft2)))
+       !
+       if(n_spinor>1) then
+         ifft1=WF%index(ib1,ik,2)
+         ifft2=WF%index(ib2,ik,2)
+         rho_no_sym(:)=rho_no_sym(:)+Xk%weights(ik)*real(f_occ*WF%c(:,ifft1)*conjg(WF%c(:,ifft2)))
+       endif
        !
      enddo
    enddo

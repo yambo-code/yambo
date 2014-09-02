@@ -33,7 +33,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
  use D_lattice,      ONLY:DL_vol, alat
  use com,            ONLY:msg,warning,error
 #if defined _RT
- use SC,             ONLY:rho_n
+ use SC,             ONLY:rho_n,magn_n
 #endif
  use electrons,      ONLY:levels,n_spin,n_spinor
  use FFT_m,          ONLY:fft_size
@@ -99,16 +99,16 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
  !==========================
  !
 #if defined _RT
- do i1=1,n_spin
-   spin_rho_SP(:,i1)=rho_n(:)
- enddo
+ rho=rho_n
+ magn=0._SP
+ !if(n_spin> 1) magn=magn_n
 #else
- !
  call el_density(en,Xk,rho,.false.)
+ if(n_spin> 1) call el_magnetization(en,Xk)
+#endif
  !
  if(n_spin==1) spin_rho_SP(:,1)=rho(:)
  if(n_spin> 1) then
-   call el_magnetization(en,Xk)
    if (n_spinor==1) then
      do ifft=1,fft_size
        spin_rho_SP(ifft,1)=0.5*(rho(ifft)+magn(ifft,3))
@@ -122,7 +122,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
      enddo
    endif
  endif
-#endif
  !
  forall(i1=1:fft_size,i2=1:n_spin)  spin_rho_DP(i2,i1)=spin_rho_SP(i1,i2)*real(fft_size,DP)/real(DL_vol,DP)
  !

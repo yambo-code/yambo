@@ -155,8 +155,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_END
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   io_BS_err=io_BS(iq,X,ID)
+   !call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
+   !io_BS_err=io_BS(iq,X,ID)
    !
    ! GPL_EXCLUDE_START
    !
@@ -196,14 +196,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=XID)
    io_X_err=io_X(X,Xw,XID) 
    !
-   if (io_X_err/=0) call warning('BS section skipped. PP/Em1s DB does not fit/exist')
+   if (io_X_err<0) call warning('BS section skipped. PP/Em1s DB does not fit/exist')
    !
    ! X%ng is set to BS_n_g_W to VERIFY if there are enough bands.
    ! From now on it is used to keep track of the actual sixe of W in the DB
    !
    X%ng=X%ng_db
    !
-   if (io_X_err/=0) goto 1
+   if (io_X_err<0) goto 1
    !
  endif
  !

@@ -397,7 +397,7 @@ subroutine k_grids(en,k,Xk,q)
      call define_zeros(vector_=K_grid%ptbz,zero_=k_rlu_zero,RLU=.TRUE.)
      !
      call msg("s","Reducing & Expanding the "//trim(intc(K_grid%nbz))//" k-points ...")
-     call k_reduce(K_grid)
+     call k_reduce(K_grid,.true.)
      call k_expand(K_grid)
      !
      call msg("l","done")

@@ -80,7 +80,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  ! Previous Fragments are syncronized (copied in the MORE_IO)
  !
- call Fragments_Synchronize(ID,db_name,i_fragment=-QP_n_states)
+ !call Fragments_Synchronize(ID,db_name,i_fragment=-QP_n_states)
  !
  ! Check the restart point
  !
@@ -223,13 +223,13 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    !
    ! Fragments are syncronized (copied in the CORE_IO)
    !
-   call Fragments_Synchronize(ID,db_name,i_fragment=i_qp)
+   !call Fragments_Synchronize(ID,db_name,i_fragment=i_qp)
    !
  endif
  !
 1 continue
  !
- if (io_COLLISIONS==0) io_COLLISIONS=io_restart_point(ID)
+ !if (io_COLLISIONS==0) io_COLLISIONS=io_restart_point(ID)
  !
  call io_disconnect(ID=ID)
  !

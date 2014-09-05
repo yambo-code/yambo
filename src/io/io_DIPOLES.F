@@ -52,7 +52,7 @@ integer function io_DIPOLES(X,Xen,ID)
  real(SP),allocatable :: DIP_iR_disk(:,:,:)
  !
 #if defined _RT
- if(l_real_time.or.l_eval_collisions) io_DIP=.FALSE.
+ if (l_real_time.or.l_eval_collisions) io_DIP=.FALSE.
 #endif
  !
  if (.not.io_DIP) then

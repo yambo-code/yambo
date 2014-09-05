@@ -24,7 +24,7 @@
 subroutine barriers()
  !
  use drivers
- use pars,       ONLY:schlen
+ use pars,       ONLY:lchlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv
  use BS,         ONLY:BSS_mode
  use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor
@@ -37,7 +37,7 @@ subroutine barriers()
  logical :: metallic_system, newton,secant,green,bss_tddft,&
             TR_or_SI,gw0_raxis,alda_r_space,bss_diago,&
 &           bss_haydock,gw0_ppa,gw0_cohsex,gw0_el_ph,alda_g_space,bss_inv
- character(schlen) :: always_runlevels,on_runlevels
+ character(lchlen) :: always_runlevels,on_runlevels
  !
  ! ...
  !

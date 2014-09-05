@@ -36,7 +36,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,io_com,io_file,io_netcdf_support,&
-&                  io_code_version,io_serial_number,io_code_revision
+&                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR
  implicit none
  integer               :: ID
  integer,parameter     :: MAX_DB_ELEMENTS=100
@@ -439,19 +439,19 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      i_verify=0
      do i1=1,size(iv1)
        if (OP(i1)=="==") then 
-         if (iv1(i1)/=iv2(i1)) i_verify=-1
+         if (iv1(i1)/=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
        endif
        if (OP(i1)=="<") then 
-         if (iv1(i1)>=iv2(i1)) i_verify=-1
+         if (iv1(i1)>=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
        endif
        if (OP(i1)=="<=") then 
-         if (iv1(i1)>iv2(i1)) i_verify=-1
+         if (iv1(i1)>iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
        endif
        if (OP(i1)==">") then 
-         if (iv1(i1)<=iv2(i1)) i_verify=-1
+         if (iv1(i1)<=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
        endif
        if (OP(i1)==">=") then 
-         if (iv1(i1)<iv2(i1)) i_verify=-1
+         if (iv1(i1)<iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
        endif
        if (i_verify/=0) return
      enddo
@@ -473,19 +473,19 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      !
      do i1=1,size(rv1)
        if (OP(i1)=="==") then 
-         if (abs(rv1(i1)-rv2(i1))>eq_accuracy) r_verify=-1
+         if (abs(rv1(i1)-rv2(i1))>eq_accuracy) r_verify=IO_INCOMPATIBLE_VAR
        endif
        if (OP(i1)=="<") then 
-         if (rv1(i1)>=rv2(i1)) r_verify=-1
+         if (rv1(i1)>=rv2(i1)) r_verify=IO_INCOMPATIBLE_VAR
        endif
        if (OP(i1)=="<=") then 
-         if (rv1(i1)>rv2(i1)) r_verify=-1
+         if (rv1(i1)>rv2(i1)) r_verify=IO_INCOMPATIBLE_VAR
        endif
        if (OP(i1)==">") then 
-         if (rv1(i1)<=rv2(i1)) r_verify=-1
+         if (rv1(i1)<=rv2(i1)) r_verify=IO_INCOMPATIBLE_VAR
        endif
        if (OP(i1)==">=") then 
-         if (rv1(i1)<rv2(i1)) r_verify=-1
+         if (rv1(i1)<rv2(i1)) r_verify=IO_INCOMPATIBLE_VAR
        endif
        if (r_verify/=0) return
      enddo

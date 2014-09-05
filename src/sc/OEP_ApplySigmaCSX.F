@@ -91,7 +91,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=io_X(X,Xw,ID)
- if (io_err/=0) call error('Incomplete and/or broken static diel. fun. database')
+ if (io_err<0) call error('Incomplete and/or broken static diel. fun. database')
  !
  call X_alloc('X',(/X%ng,X%ng,1/))
  allocate(PPaR_ws(X%ng,X%ng),PPaR(X%ng,X%ng),stat=alloc_err)

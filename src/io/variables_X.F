@@ -126,7 +126,7 @@ integer function variables_X(ID,local_description,X)
  !
  if (ver_is_gt_or_eq(ID,(/3,0,1/))) then
    call io_elemental(ID,&
-&       VAR=" BZ energy Random IM    :",L0=use_X_RIM,WARN=.true.,OP=(/"=="/),&
+&       VAR=" BZ energy RIM          :",L0=use_X_RIM,WARN=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
    i_local_desc=i_local_desc+1
    call io_elemental(ID,&

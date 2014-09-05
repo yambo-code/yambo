@@ -201,7 +201,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=io_X(X,Xw,ID)
- if (io_err/=0.and.io_RESPONSE) call error('Incomplete and/or broken PPA/Static diel. fun. database')
+ if (io_err<0.and.io_RESPONSE) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
  ! Test the spatial Inversion
  !   

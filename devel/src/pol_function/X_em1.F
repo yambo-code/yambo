@@ -126,6 +126,14 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (X_em1==iq) io_X_done(iq)=.TRUE.
  enddo
  !
+ ! All q databases done
+ !
+ if (all(io_X_done)) then
+   deallocate(io_X_done)
+   call FREQUENCIES_reset(Xw,"all")
+   return
+ endif
+ !
  ! Parallel distribution
  !=======================
  if (.not.(l_life.and.X%iq(1)>1)) then

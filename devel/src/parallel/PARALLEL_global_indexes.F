@@ -31,7 +31,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_B_mat_index,PAR_nQP,PAR_QP_index,PAR_INDEX_copy,&
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load,&
 &                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index,&
-&                        PAR_BS_T_grps_index,PAR_BS_nT_col_grps,PAR_Kk_nibz
+&                        PAR_BS_T_grps_index,PAR_BS_nT_col_grps,PAR_Kk_nibz,PP_redux_wait
  use parallel_m,    ONLY:& ! LOGICALS
 &                        l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
 &                        HEAD_QP_cpu,HEAD_k_cpu
@@ -90,7 +90,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  ! Work Space
  !
- integer              :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2
+ integer              :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2,B_error(2)
  logical              :: reset_all
  character(10)        :: WHAT,WHATp
  !
@@ -831,9 +831,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
    !
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_k_for_P)
    call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX(X_type))
    call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX(X_type))
-   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_k_for_P)
    !
    ! K-points (IBZ)
    !
@@ -902,29 +902,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             TOTAL=BS_nT_grps*(BS_nT_grps-1)/2+BS_nT_grps,&
 &                             NCPU=PAR_COM_T_INDEX%n_CPU)
    !
-   !write (*,*) PAR_IND_T_groups%element_1D,PAR_COM_T_INDEX%n_CPU
-   !do ib1=1,BS_nT_grps
-   !write (*,*) "T_ordered",myid,PAR_IND_T_ordered%element_2D(ib1,:)
-   !enddo 
-   !do while(.true.)
-   !enddo
-!   if (  ENVIRONMENT=="Response_T_space" ) then
-!     !
-!     ! K-points (BZ) after shifting of Q (BZ)
-!     !
-!     WHATp="k_bz_q_bz_p_bz" 
-!     !
-!     call PARALLEL_add_Q_to_K_list(trim(WHATp),PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_Kp_bz,PAR_IND_Kp_bz_ID,&
-!&                                  PAR_IND_Q,PAR_COM_Xk_bz_INDEX,iq_range,Xk,q)
-!     PAR_Kp_nbz=PAR_IND_Kp_bz%n_of_elements(PAR_IND_Kp_bz_ID+1)
-!     !
-!     call fill_IBZk_using_BZk(PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_COM_Xk_bz_INDEX)
-!     call fill_IBZk_using_BZk(PAR_IND_Xk_ibz,PAR_IND_Kp_bz,PAR_COM_Xk_bz_INDEX)
-!     !
-!     call PARALLEL_live_message("P(bz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Kp_nbz,TOTAL=Xk%nbz)
-!     !
-!   else
-   !
    ! Inversion
    !
    PARALLEL_cpu_mat_inversion=CPU_structure(4)%nCPU_inversion
@@ -959,6 +936,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             LOADED=PAR_IND_CON_BANDS_X(X_type)%n_of_elements(PAR_COM_CON_INDEX(X_type)%CPU_id+1),&
 &                             TOTAL=n_bands(2)-n_bands(1)+1,&
 &                             NCPU=PAR_COM_CON_INDEX(X_type)%n_CPU)
+   B_error(1)=0
+   if (PAR_IND_CON_BANDS_X(X_type)%n_of_elements(PAR_COM_CON_INDEX(X_type)%CPU_id+1)==0) B_error(1)=1
    !
    ! Response functions valence bands
    !
@@ -973,6 +952,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             LOADED=PAR_IND_VAL_BANDS_X(X_type)%n_of_elements(PAR_COM_VAL_INDEX(X_type)%CPU_id+1),&
 &                             TOTAL=n_bands(2)-n_bands(1)+1,&
 &                             NCPU=PAR_COM_VAL_INDEX(X_type)%n_CPU)
+   !
+   B_error(2)=0
+   if (PAR_IND_VAL_BANDS_X(X_type)%n_of_elements(PAR_COM_VAL_INDEX(X_type)%CPU_id+1)==0) B_error(2)=1
+   !
+   call PP_redux_wait(B_error)
+   !
+   if (any(B_error>0)) call error("Too many CPU's assigned to conduction and/or valence bands")
    !
  endif
  !

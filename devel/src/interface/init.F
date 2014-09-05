@@ -1210,7 +1210,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! When running BSE from input file l_bse is FALSE in before_infile_write_setup.
      ! In any case I have to overwrite X(2) with PP X(4) only if em1s=F
      !
-     if (l_bse.and.io_X_err(2)/=0.and.io_X_err(4)==0.and..not.l_em1s) then
+     if (l_bse.and.io_X_err(2)<0.and.io_X_err(4)==0.and..not.l_em1s) then
        call X_duplicate(X(4),X(2))
        call W_duplicate(Xw(4),Xw(2))
      endif

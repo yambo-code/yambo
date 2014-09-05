@@ -25,7 +25,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Non interacting Xo
  !
- use drivers,       ONLY:l_life
+ use drivers,       ONLY:l_life,l_em1s
  use IO_m,          ONLY:io_RESPONSE
  use pars,          ONLY:SP
  use wrapper,       ONLY:V_by_V_plus_V
@@ -34,7 +34,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_Xk_bz_index,PAR_COM_q_for_Xo,HEAD_QP_cpu
+ use parallel_m,    ONLY:PP_redux_wait,PAR_Xk_bz_index,PAR_COM_q_for_Xo,HEAD_QP_cpu,PAR_COM_Q_INDEX
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,n_threads_DIP
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load
@@ -45,6 +45,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use X_m,           ONLY:X_t,X_poles,DIP_q_dot_iR,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM,&
 &                        X_terminator
+ use IO_m,          ONLY:IO_and_Messaging_switch
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -87,10 +88,21 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !  Optical strengths
  !=====================
  if (iq==1) then
+   !
+   ! When the screened interaction is computed only the CPU assigned to q=1 enter here.
+   ! By default, in PARALLEL_global_indexes, only the head of these cpu's is allowed to do I/O.
+   ! But this means that only a fraction of the dipoles is actually written on disk.
+   ! To make all dipoles I/O possible I temporarely swicth on the IO for all q=1 cpu's.
+   !
+   if (l_em1s) call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+   !
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
    call Dipole_driver(Xen, Xk, X, X%q0)
    call X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
    call OPENMP_set_threads(n_threads_in=n_threads_X)
+   !
+   if (l_em1s) call IO_and_Messaging_switch("+io_out",PAR_COM_Q_INDEX%my_CHAIN==1)
+   !
  endif
  !
  ! WF load

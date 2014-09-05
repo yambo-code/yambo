@@ -33,7 +33,7 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  use QP_m,           ONLY:QP_table,QP_n_states
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:RT_nk,RT_ibz_coo
- use electrons,      ONLY:levels,spin,spin_occ,n_spin
+ use electrons,      ONLY:levels,spin,spin_occ,n_sp_pol
  use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative,Fermi_fnc_T_derivative
  use com,            ONLY:msg,of_open_close,error
  use stderr,         ONLY:intc,real2ch
@@ -72,7 +72,7 @@ integer function Fermi_fnc_fit(RT_E,RT_occ,nstates,T_fit,Ef_fit,err_fit,RT_occ_f
  integer  :: ifit,i_s,i_RT,ik,ik_rim,ib,i1,i2
  integer  :: ntry,nfit,nstates_fitted(2),last_occupied,nfound(2)
  !
- if(n_spin>1) call error('Occupations FIT not implemented for n_spin>1')
+ if (n_sp_pol>1) call error('Occupations FIT not implemented for n_sp_pol>1')
  !
  l_two_temperatures=.true.
  !

@@ -135,7 +135,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  else
    call live_timing("COHSEX collisions (e-e correlation)",PAR_nQP*PAR_nQ*PAR_n_Bp_mat_elements)
  endif
- if (io_err/=0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
+ if (io_err<0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
  QP_loop: do i_qp1=1,QP_n_states
    !

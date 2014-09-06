@@ -428,10 +428,13 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-Polarization_W')
        if(.not.present(VALUES)) cycle
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
-     case('YPP-X_effective','YPP-el_dos','YPP-trans_eps_rel' ,'YPP-trans_eps_abs' ,'YPP-trans_eps_eq',&
-&                                        'YPP-trans_refl_rel','YPP-trans_refl_abs','YPP-trans_refl_eq')
+     case('YPP-X_effective','YPP-el_dos')
        data_to_dump(1:2)=(/Time,E/)
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-2)
+     case('YPP-trans_eps_rel' ,'YPP-trans_eps_abs' ,'YPP-trans_eps_eq',&
+&         'YPP-trans_refl_rel','YPP-trans_refl_abs','YPP-trans_refl_eq')
+       data_to_dump(1:2)=(/Time,E/)
+       data_to_dump(3:n_headings(i_f)) = VALUES(1)
      case('mean_EPlifetimes')
        n1=3
        data_to_dump(2:3) = RT_mean_lifetimes(3:4)*HA2EV*1000.

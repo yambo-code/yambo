@@ -100,8 +100,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
  call FREQUENCIES_setup(W_bss)
  !
  call RT_output(what="initialize")
- call RT_output("open trans_abs1 trans_abs2 trans_abs3")
- if(l_TR_reflec) call RT_output("open trans_reflec1 trans_reflec2 trans_reflec3")
+ call RT_output("open trans_eps_rel trans_eps_abs trans_eps_eq")
+ if (l_TR_reflec) call RT_output("open trans_refl_rel trans_refl_abs trans_refl_eq")
  !if(l_TR_transm) call RT_output("open trans_transm1 trans_transm2 trans_transm3")
  !
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q0_def_norm**2
@@ -138,7 +138,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
      f_cv=Xen%f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
      !
      delta_f_cv=delta_f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ- &
-     &          Xen%f(i_v,i_kibz,i_spin)*          delta_f(i_c,i_kibz,i_spin) /spin_occ/spin_occ
+&               Xen%f(i_v,i_kibz,i_spin)*          delta_f(i_c,i_kibz,i_spin) /spin_occ/spin_occ
      !
      change_factor=0._SP
      if(f_cv>0) change_factor=0.5*delta_f_cv/f_cv

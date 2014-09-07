@@ -106,8 +106,6 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
  !
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q0_def_norm**2
  !
- if (n_T_steps> 1) call live_timing('Transient Absorption',n_T_steps,SERIAL=.true.)
- !
  do i_T=1,n_T_steps
    !
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
@@ -117,9 +115,12 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
    call RT_alloc_def_or_free(rt,Xen,Xk,2)
    !
    message='RT '
-   if(i_T==1) message='RT0'
+   !
+   if (i_T==1) message='RT0'
    !
    call Nearest_kpt_interpolation(rt%nk,Xk%nibz,rt%nb,rt%nstates,1,1,rt%table,rt%k,Xk%pt,rt%df,delta_f,message)
+   !
+   if (i_T==1.and.n_T_steps> 1) call live_timing('Transient Absorption',n_T_steps,SERIAL=.true.)
    !
    X_epsilon=(0._SP,0._SP)
    !
@@ -148,7 +149,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
      !
    enddo
    !
-   ! Now sum the contributions due to new transitions assuming the IP stuation
+   ! Now sum the contributions due to new transitions assuming the IP situation
+   !
    do i_kbz=1,Xk%nbz
      i_kibz=Xk%sstar(i_kbz,1)
      i_kmem= PAR_Xk_bz_index(i_kbz)

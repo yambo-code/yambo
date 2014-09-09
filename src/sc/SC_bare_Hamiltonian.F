@@ -96,8 +96,6 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  call V_Hartree(rho_n,V_hartree_sc)
  !
- V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
- ! 
  do ik=1,QP_nk
    !
    ! Add bare energies ... 

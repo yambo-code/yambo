@@ -134,7 +134,7 @@ integer function io_SC_components(what,E_sc,ID)
    call io_bulk(ID,VAR="V_xc_sc",VAR_SZ=(/SC_fft_size,n_spin/))
    call io_bulk(ID,R2=V_xc_sc)
    !
-   call io_bulk(ID,VAR="V_hartree",VAR_SZ=(/SC_fft_size,n_sp_pol/))
+   call io_bulk(ID,VAR="V_hartree",VAR_SZ=(/SC_fft_size,n_spin/))
    call io_bulk(ID,R2=V_hartree_sc)
    !
  endif

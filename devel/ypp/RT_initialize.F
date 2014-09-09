@@ -31,7 +31,7 @@ subroutine RT_initialize(dump_and_write)
  use units,          ONLY:FS2AUT,HA2EV
  use stderr,         ONLY:real2ch
  use rt_ctl,         ONLY:RT_output,RT_IO_JPO_steps
- use real_time,      ONLY:RT_step,RT_ind_J,RT_P
+ use real_time,      ONLY:RT_step,RT_ind_J,RT_P,NE_steps
  use fields,         ONLY:Efield,i_Probe
  !
  implicit none

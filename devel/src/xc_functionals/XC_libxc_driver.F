@@ -100,7 +100,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
  !
 #if defined _RT
  rho=rho_n
- magn=0._SP
+ if(n_spin> 1) magn=0._SP
  !if(n_spin> 1) magn=magn_n
 #else
  call el_density(en,Xk,rho,.false.)

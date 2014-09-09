@@ -28,7 +28,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,RIM,nK_me
  use real_time,      ONLY:RIM_ibz_coo,RT_Nk_ibz,RT_nk,RT_ibz_coo
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_n_states
- use electrons,      ONLY:n_sp_pol,levels
+ use electrons,      ONLY:n_sp_pol,n_spin,levels
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:WF
 #if defined _OPENMP
@@ -50,7 +50,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,RIM,nK_me
  complex(SP),  intent(out) :: VALUE
  complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
- real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
+ real(SP),        optional, intent(in) :: O_REAL(fft_size,n_spin)
  logical,         optional, intent(in) :: TRANS,RIM
  type(levels),    optional, intent(in) :: en
  !

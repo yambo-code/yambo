@@ -162,7 +162,7 @@ subroutine barriers()
  !
  ! SPIN
  !=============
- if (n_spin>1) then
+ if (n_spin>2) then
    on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scpot'
    on_runlevels=trim(on_runlevels)//' negf collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt'
    ! GPL_INCLUDE_START SC_IGNORE

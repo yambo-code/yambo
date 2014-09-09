@@ -200,8 +200,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
 #endif
    !
-   V_hartree_sc(:,n_sp_pol)= V_hartree_sc(:,1)
-   !
    V_xc_nm1 = V_xc_sc
    rho_nm1  = rho_n
    !
@@ -256,7 +254,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      endif
      !
      call V_Hartree(rho_n,V_hartree_sc)
-     V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
      !
    endif
    !

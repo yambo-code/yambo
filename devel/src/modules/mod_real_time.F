@@ -307,7 +307,7 @@ module real_time
      use SC,         ONLY:SC_bands
      use R_lattice,  ONLY:bz_samp 
      use QP_m,       ONLY:QP_nk,QP_table,QP_n_states
-     use electrons,  ONLY:n_sp_pol,levels
+     use electrons,  ONLY:n_spin,n_sp_pol,levels
      use FFT_m,      ONLY:fft_size
      type(bz_samp), intent(in) :: k
      complex(SP),   intent(in) :: G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
@@ -316,7 +316,7 @@ module real_time
      complex(SP),  intent(out) :: VALUE
      complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
      complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
-     real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
+     real(SP),        optional, intent(in) :: O_REAL(fft_size,n_spin)
      logical,         optional, intent(in) :: TRANS,RIM
    end subroutine RT_average_operator
    !
@@ -460,11 +460,11 @@ module real_time
      allocate(dG_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,G_MEM_steps))
      call mem_est("dG_lesser",(/size(dG_lesser)/),(/2*SP/))
      !
-     allocate(REF_V_xc_sc(fft_size,n_sp_pol))
-     call mem_est("REF_V_xc_sc",(/fft_size*n_sp_pol/),(/SP/))
+     allocate(REF_V_xc_sc(fft_size,n_spin))
+     call mem_est("REF_V_xc_sc",(/fft_size*n_spin/),(/SP/))
      !
-     allocate(REF_V_hartree_sc(fft_size,n_sp_pol))
-     call mem_est("REF_V_hartree_sc",(/fft_size*n_sp_pol/),(/SP/))
+     allocate(REF_V_hartree_sc(fft_size,n_spin))
+     call mem_est("REF_V_hartree_sc",(/fft_size*n_spin/),(/SP/))
      !
      allocate(REF_QP_Vnl_xc(QP_n_states))
      call mem_est("REF_QP_Vnl_xc",(/size(REF_QP_Vnl_xc)/),(/2*SP/))

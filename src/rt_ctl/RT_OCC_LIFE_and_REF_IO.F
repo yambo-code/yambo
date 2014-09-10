@@ -23,6 +23,7 @@
 !                  
 subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
  !
+ use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use units,          ONLY:BO2ANG,FS2AUT,HA2EV
  use pars,           ONLY:SP,lchlen
  use parser_m,       ONLY:parser
@@ -69,7 +70,6 @@ subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
  !
  ! Real-Time occupations
  !=======================
- !
  !
  ! (a) Write
  !
@@ -138,15 +138,17 @@ subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
  ! REFERENCE I/O
  !===============
  !  
- if (.not.allocated(REF_lifetime)) then
+ if (.not.allocated(REF_lifetime).and.(l_elel_scatt.or.l_elph_scatt)) then
    allocate(REF_lifetime(SC_bands(1):SC_bands(2),RT_nk,6))
    call mem_est("REF_lifetime",(/size(REF_lifetime)/),(/SP/))
+ endif
+ if (.not.allocated(G_lesser_reference)) then
    allocate(G_lesser_reference(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
    call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
    allocate(RT_E_occupations_reference(SC_bands(1):SC_bands(2),RT_nk))
    allocate(RT_H_occupations_reference(SC_bands(1):SC_bands(2),RT_nk))
    call mem_est("RT_E_occ_ref RT_H_occ_ref",&
-   &  (/size(RT_E_occupations_reference),size(RT_H_occupations_reference)/),(/SP,SP/))
+&               (/size(RT_E_occupations_reference),size(RT_H_occupations_reference)/),(/SP,SP/))
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID(6))
    io_err_occ=io_RT_components('REF',ID(6))
  endif

@@ -86,5 +86,4 @@ integer function RT_occ_check_and_load_ref(E,k)
  call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
  call msg('s','Time steps     :',RT_occ_check_and_load_ref)
  !
- !
 end function RT_occ_check_and_load_ref

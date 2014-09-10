@@ -49,8 +49,6 @@ subroutine RT_alloc_def_or_free(RT_obj,En,kgrid,action_kind)
  integer  :: i_RT,i_b,i_k,i_k_RIM,i_k_RT,i_spin
  real(SP) :: Hole_lifetime,Elec_lifetime,f_occ
  !
- 
- !
  select case(action_kind)
    case(1)
      !
@@ -74,7 +72,7 @@ subroutine RT_alloc_def_or_free(RT_obj,En,kgrid,action_kind)
      !
      do i_k=1,kgrid%nibz
        if(     l_RT_uses_E_RIM) RT_obj%k(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=&
-       &                          kgrid%ptbz_RIM(RIM_ibz_coo(i_k,1):RIM_ibz_coo(i_k,2),:)
+&                                       kgrid%ptbz_RIM(RIM_ibz_coo(i_k,1):RIM_ibz_coo(i_k,2),:)
        if(.not.l_RT_uses_E_RIM) RT_obj%k(i_k,:)=kgrid%pt(i_k,:)
      enddo
      !
@@ -99,7 +97,6 @@ subroutine RT_alloc_def_or_free(RT_obj,En,kgrid,action_kind)
          !RT_obj%W0(i_RT)=En%W(i_b,i_k,i_spin)  this is not the case because of the difference equilibrium / initial equilibrium
        endif
        RT_obj%W0(i_RT)=sum(REF_lifetime(i_b,i_k_RT,:))
-       !
        !
      enddo
      !
@@ -142,8 +139,10 @@ subroutine RT_alloc_def_or_free(RT_obj,En,kgrid,action_kind)
        !
        RT_obj%dW(i_RT)=  Hole_lifetime+Elec_lifetime
        !
-       Hole_lifetime=Hole_lifetime+REF_lifetime(i_b,i_k_RT,1)+REF_lifetime(i_b,i_k_RT,3)+REF_lifetime(i_b,i_k_RT,5)
-       Elec_lifetime=Elec_lifetime+REF_lifetime(i_b,i_k_RT,2)+REF_lifetime(i_b,i_k_RT,4)+REF_lifetime(i_b,i_k_RT,6)
+       if(l_elel_scatt.or.l_elph_scatt) then
+         Hole_lifetime=Hole_lifetime+REF_lifetime(i_b,i_k_RT,1)+REF_lifetime(i_b,i_k_RT,3)+REF_lifetime(i_b,i_k_RT,5)
+         Elec_lifetime=Elec_lifetime+REF_lifetime(i_b,i_k_RT,2)+REF_lifetime(i_b,i_k_RT,4)+REF_lifetime(i_b,i_k_RT,6)
+       endif
        f_occ=(RT_obj%f0(i_RT)+RT_obj%df(i_RT))/spin_occ
        !
        if(f_occ>0.) then

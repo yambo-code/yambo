@@ -68,7 +68,7 @@ subroutine RT_variables_load(Xen,Xk,n_T_steps)
  !
  NE_i_time=0
  n_T_steps=RT_occ_check_and_load_ref(RT_db1_E,RT_db1_k)
- call RT_check_RIM(RT_db1_k,RT_db1_E)
+ call RT_check_RIM(RT_db1_k,RT_db1_E) 
  call RT_alloc_def_or_free(rt,RT_db1_E,RT_db1_k,1)
  !
  ! Reset symmetries and nqbz

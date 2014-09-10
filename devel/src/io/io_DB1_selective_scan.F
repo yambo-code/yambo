@@ -113,7 +113,7 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
  !
  if (what/='all') call io_disconnect(ID=ID)
  !
- if (what=='all') then
+ if (what=='all'.and.io_DB1_selective_scan>=0) then
    allocate(rl_sop(3,3,nsym))
    forall (i1=1:3,i2=1:3,is=1:nsym) rl_sop(i1,i2,is)=dl_sop(i1,i2,is)*alat(i1)/alat(i2) 
  endif

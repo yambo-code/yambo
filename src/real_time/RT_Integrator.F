@@ -136,12 +136,12 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
      !
      !  T0+dt = T+dt'
      !
-     real(SP),     intent(in) :: dT,dTp
-     complex(SP),  intent(in) :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
-     complex(SP), intent(out) :: dG_out(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+     real(SP),       intent(in) :: dT,dTp
+     complex(SP),    intent(in) :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+     complex(SP),   intent(out) :: dG_out(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
      !
      integer                :: ik,ib
-     complex(SP)            :: G_loc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+     complex(SP)            :: G_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
      complex(SP)            :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
      complex(SP)            :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
      complex(SP)            :: I1_matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
@@ -155,11 +155,9 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
      !
      do ik=1,RT_nk
        !
-       G_loc=dG_in(:,:,ik)+G_lesser_reference(:,:,ik)
-       !
        if (l_RT_EXP) then
          !
-         ! U(t) = exp ( Ho_plus_Sigma * t)
+         ! U(T;dt) = exp ( Ho_plus_Sigma(T) * dt)
          !
          call RT_build_U1_and_U2(ik,I1_k,I2_k,dT)
          !
@@ -171,7 +169,9 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
          !
          ! I1(t) = Ho_plus_Sigma*G ;  I2(t) = G*Ho_plus_Sigma
          !
-         call RT_build_I1_and_I2(G_loc,ik,I1_k,I2_k)
+         G_tmp=dG_in(:,:,ik)+G_lesser_reference(:,:,ik)
+         !
+         call RT_build_I1_and_I2(G_tmp,ik,I1_k,I2_k)
          !
          ! G(T0+dt) -G(T0)= - i dt *(I1(T) - I2(T))
          !
@@ -184,7 +184,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
        ! if(l_RT_RWA) dephasing is integrated analitically in RT_apply_RWA
        !
        if(     l_RT_RWA) call RT_apply_RWA(ik,E,dT,dTp,dG_out(:,:,ik),dG_old(:,:,ik))
-       if(.not.l_RT_RWA) call RT_Dephasing_step(dG_out(:,:,ik),dG_in(:,:,ik),ik,dT)
+       if(.not.l_RT_RWA) call RT_Dephasing_step(dG_out(:,:,ik),dG_old(:,:,ik),ik,dT)
        !
        ! Carriers relaxation step
        ! G(T0+dt) = G(T0) - i dt * Sigma_relax(T)

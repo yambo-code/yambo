@@ -63,15 +63,22 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_new_k,dG_old_k)
        !if (associated(E%W)) sumGAMMA=(abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik,1)))/2._SP
      endif
      !
-     if(dTp>0._SP) then
+     if (l_RT_exp) then
+       alpha=-deltaE*dT
+       phase=cmplx(cos(alpha),sin(alpha))
+       dec_exp=exp(-sumGAMMA*dT)
+     else if(dTp>0._SP) then
        alpha=-deltaE*dTp
        phase=cmplx(cos(alpha),sin(alpha))
        dec_exp=exp(-sumGAMMA*dTp)
+     endif
+     !
+     if (l_RT_exp.or.dTp>0._SP) then
        dG_new_k(i_n,i_np)=dG_new_k(i_n,i_np)*      phase *dec_exp
        dG_new_k(i_np,i_n)=dG_new_k(i_np,i_n)*conjg(phase)*dec_exp
      endif
      !
-     if (l_RT_EXP) cycle
+     if(l_RT_exp) cycle
      !
      if(dT/=dTp) then
        alpha=-deltaE*dT

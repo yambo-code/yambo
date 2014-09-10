@@ -27,6 +27,7 @@ subroutine V_Hartree(rho,vhr)
   !  sum_G 4pi*rho(G)/|G|**2.  with G!=0, for G=0 vhr(0)=0 
   !
  use pars,          ONLY: pi,SP,DP
+ use electrons,     ONLY: n_spin
  use R_lattice,     ONLY: bare_qpg
  use D_lattice,     ONLY: DL_vol
  use fft_m,         ONLY: fft_size,fft_dim,fftw_plan,fft_g_table
@@ -34,7 +35,7 @@ subroutine V_Hartree(rho,vhr)
  !
  implicit none
  real(SP) :: rho(fft_size)
- real(SP) :: vhr(fft_size)
+ real(SP) :: vhr(fft_size,n_spin)
  !
  ! Work Space
  !
@@ -68,6 +69,7 @@ subroutine V_Hartree(rho,vhr)
  call fft_3d(vhtmp,fft_dim,1)
 #endif
  !
- vhr = real(vhtmp,SP)
+ vhr(:,1) = real(vhtmp,SP)
+ if(n_spin==2) vhr(:,2)=vhr(:,1)
  !
 end subroutine V_hartree

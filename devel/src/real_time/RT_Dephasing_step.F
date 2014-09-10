@@ -25,7 +25,7 @@ subroutine RT_Dephasing_step(G_new_k,G_old_k,ik,deltaT)
  !
  use pars,           ONLY:SP,cI
  use SC,             ONLY:SC_bands
- use real_time,      ONLY:RT_is_dephased,RT_Deph_Matrix,RT_all2ibz
+ use real_time,      ONLY:RT_is_dephased,RT_Deph_Matrix,RT_all2ibz,l_RT_exp
  !
  implicit none
  !
@@ -41,16 +41,32 @@ subroutine RT_Dephasing_step(G_new_k,G_old_k,ik,deltaT)
  !======================
  if (.not.RT_is_dephased) return
  !
- do ib1=SC_bands(1),SC_bands(2)
-   do ib2=ib1+1,SC_bands(2)
-     !
-     G_new_k(ib1,ib2) = G_new_k(ib1,ib2) + (1._SP - deltaT*RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))) * G_old_k(ib1,ib2)
-     G_new_k(ib2,ib1) = G_new_k(ib2,ib1) + (1._SP - deltaT*RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))) * G_old_k(ib1,ib2)
+ if(l_RT_exp) then
+   !
+   do ib1=SC_bands(1),SC_bands(2)
+     do ib2=ib1+1,SC_bands(2)
+       !
+       G_new_k(ib1,ib2) = G_new_k(ib1,ib2)*exp(-RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))*deltaT)
+       G_new_k(ib2,ib1) = G_new_k(ib2,ib1)*exp(-RT_Deph_Matrix(ib2,ib1,RT_all2ibz(ik))*deltaT)
+       !
+     enddo
      !
    enddo
    !
-   G_new_k(ib1,ib1) = G_new_k(ib1,ib1) + G_old_k(ib1,ib1)
+ else
    !
- enddo
+   do ib1=SC_bands(1),SC_bands(2)
+     do ib2=ib1+1,SC_bands(2)
+       !
+       G_new_k(ib1,ib2) = ( G_new_k(ib1,ib2) + G_old_k(ib1,ib2) ) * (1._SP - deltaT*RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))) 
+       G_new_k(ib2,ib1) = ( G_new_k(ib2,ib1) + G_old_k(ib2,ib1) ) * (1._SP - deltaT*RT_Deph_Matrix(ib2,ib1,RT_all2ibz(ik)))
+       !
+     enddo
+     !
+     G_new_k(ib1,ib1) = G_new_k(ib1,ib1) + G_old_k(ib1,ib1)
+     !
+   enddo
+   !
+ endif
  !
 end subroutine RT_Dephasing_step

@@ -80,7 +80,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
  !
  ! Dephasing matrix
  !==================
- if (RT_is_dephased.and. .not.l_initial_equilibrium) then
+ if (.not.l_initial_equilibrium) then
    do ik=1,RT_nk
      do ib1=SC_bands(1),SC_bands(2)
        I_relax_static(ib1,ib1,ik)=-cI*RT_Deph_Matrix(ib1,ib1,RT_all2ibz(ik))*dG_in(ib1,ib1,ik)

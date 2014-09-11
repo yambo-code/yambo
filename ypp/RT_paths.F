@@ -68,7 +68,7 @@ subroutine RT_paths(en)
  !
  i_f=1
  do while (i_f<=nf)
-   if (file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_GreenF').and.&
+   if (file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_G').and.&
 &      index(trim(Probe_path(i_f)),trim(Probe_Keyword))>0  ) then
      N_probes =N_probes+1
      i_f=i_f+1

@@ -185,7 +185,6 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    endif
    !
    forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)=H_nl_sc(ib,ibp,1)
-
    !
  enddo  !---- loop on k-points
  !
@@ -202,6 +201,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    endif
    !
    do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+     !
      ik_RIM=ik_RT-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
      !
      H_nl_sc=cZERO

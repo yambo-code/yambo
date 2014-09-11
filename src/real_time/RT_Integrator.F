@@ -167,26 +167,41 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
          !
        else
          !
-         ! I1(t) = Ho_plus_Sigma*G ;  I2(t) = G*Ho_plus_Sigma
+         ! I1(t) = Ho_plus_Sigma*G   
+         ! I2(t) = G*Ho_plus_Sigma
          !
          G_tmp=dG_in(:,:,ik)+G_lesser_reference(:,:,ik)
          !
          call RT_build_I1_and_I2(G_tmp,ik,I1_k,I2_k)
          !
-         ! G(T0+dt) -G(T0)= - i dt *(I1(T) - I2(T))
+         ! dG_out = G(T0+dt) -G(T0)= - i dt *(I1(T) - I2(T))
          !
-         if (.not.l_RT_INTERPOLATE) call RT_EULER_step(dG_out(:,:,ik),I1_k,I2_k,dT)
-         !if (l_RT_INTERPOLATE)      call RT_INTERPOLATED_step(G_out(:,:,ik),dG_old(:,:,ik),I1_k,I2_k,ik,Time,dT,.TRUE.)
+         !if (l_RT_INTERPOLATE)  then
+         !  call RT_INTERPOLATED_step(G_out(:,:,ik),dG_old(:,:,ik),I1_k,I2_k,ik,Time,dT,.TRUE.)
+         !else
+           call RT_EULER_step(dG_out(:,:,ik),I1_k,I2_k,dT)
+         !endif
          !
        endif
        !
-       ! G(T0+dt) = G(T0) e^{-i\delta\epsilon dt} - i dt *(I1(T) - I2(T)) e^{-i\delta\epsilon (dt')}
-       ! if(l_RT_RWA) dephasing is integrated analitically in RT_apply_RWA
+       ! Note that the input of RT_Dephasing_step/RT_apply_RWA is the only (I1_k G-I2_k G) contribution
        !
-       if(     l_RT_RWA) call RT_apply_RWA(ik,E,dT,dTp,dG_out(:,:,ik),dG_old(:,:,ik))
-       if(.not.l_RT_RWA) call RT_Dephasing_step(dG_out(:,:,ik),dG_old(:,:,ik),ik,dT)
+       if(l_RT_RWA) then
+         !
+         ! G(T0+dt) = G(T0) e^{-i\delta\epsilon dt} - i dt *(I1(T) - I2(T)) e^{-i\delta\epsilon (dt')}
+         !
+         ! Dephasing is integrated analitically in this case.
+         !
+         call RT_apply_RWA(ik,E,dT,dTp,dG_out(:,:,ik),dG_old(:,:,ik))
+         !
+       else
+         !
+         call RT_Dephasing_step(dG_out(:,:,ik),dG_old(:,:,ik),ik,dT)
+         !
+       endif
        !
-       ! Carriers relaxation step
+       ! Carriers relaxation step:
+       !
        ! G(T0+dt) = G(T0) - i dt * Sigma_relax(T)
        !
        call RT_Scattering_step(dG_out(:,:,ik),ik,dT)

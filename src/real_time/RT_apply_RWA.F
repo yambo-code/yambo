@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_apply_RWA(ik,E,dT,dTp,dG_new_k,dG_old_k)
+subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
  !
  use pars,           ONLY:SP
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:levels
  use real_time,      ONLY:RT_ibz_coo,RIM_ibz_coo,l_RT_uses_E_RIM, &
-&                         RT_Deph_Matrix,RT_all2ibz,l_RT_EXP
+&                         RT_Deph_Matrix,RT_all2ibz,l_RT_EXP,RT_is_dephased
  !
  implicit none
  !
@@ -35,8 +35,8 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_new_k,dG_old_k)
  type(levels), intent(in)     :: E
  real(SP),     intent(in)     :: dT,dTp
  !
- complex(SP),  intent(in)     :: dG_old_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP),  intent(inout)  :: dG_new_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP),  intent(in)     :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP),  intent(inout)  :: dG_out(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
  ! Work space
  !
@@ -52,46 +52,51 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_new_k,dG_old_k)
      !
      sumGAMMA=0._SP
      !
-     if (allocated(RT_Deph_Matrix)) sumGAMMA=RT_Deph_Matrix(i_n,i_np,ik_ibz)
+     if (RT_is_dephased) sumGAMMA=RT_Deph_Matrix(i_n,i_np,ik_ibz)
      !
      if (     l_RT_uses_E_RIM) then
        deltaE=E%E_RIM(i_n,ik_RIM,1)-E%E_RIM(i_np,ik_RIM,1)
-       !if (allocated(E%W)) sumGAMMA=(abs(E%W_RIM(i_n,ik_RIM,1))+abs(E%W_RIM(i_np,ik_RIM,1)))/2._SP
-     endif
-     if (.not.l_RT_uses_E_RIM) then
+     else
        deltaE=E%E(i_n,ik,1)-E%E(i_np,ik,1)
-       !if (associated(E%W)) sumGAMMA=(abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik,1)))/2._SP
      endif
      !
-     if (l_RT_exp) then
+     if (l_RT_EXP) then
+       !
        alpha=-deltaE*dT
        phase=cmplx(cos(alpha),sin(alpha))
        dec_exp=exp(-sumGAMMA*dT)
+       !
      else if(dTp>0._SP) then
+       !
        alpha=-deltaE*dTp
        phase=cmplx(cos(alpha),sin(alpha))
        dec_exp=exp(-sumGAMMA*dTp)
+       !
      endif
      !
-     if (l_RT_exp.or.dTp>0._SP) then
-       dG_new_k(i_n,i_np)=dG_new_k(i_n,i_np)*      phase *dec_exp
-       dG_new_k(i_np,i_n)=dG_new_k(i_np,i_n)*conjg(phase)*dec_exp
+     if (l_RT_EXP.or.dTp>0._SP) then
+       !
+       dG_out(i_n,i_np)=dG_out(i_n,i_np)*      phase *dec_exp
+       dG_out(i_np,i_n)=dG_out(i_np,i_n)*conjg(phase)*dec_exp
+       !
      endif
      !
-     if(l_RT_exp) cycle
+     if(l_RT_EXP) cycle
      !
-     if(dT/=dTp) then
+     if (dT/=dTp) then
+       !
        alpha=-deltaE*dT
        phase=cmplx(cos(alpha),sin(alpha))
        dec_exp=exp(-sumGAMMA*dT)
+       !
      endif
      !
-     dG_new_k(i_n,i_np)=dG_new_k(i_n,i_np)+dG_old_k(i_n,i_np)*      phase *dec_exp
-     dG_new_k(i_np,i_n)=dG_new_k(i_np,i_n)+dG_old_k(i_np,i_n)*conjg(phase)*dec_exp
+     dG_out(i_n,i_np)=dG_out(i_n,i_np)+dG_in(i_n,i_np)*      phase *dec_exp
+     dG_out(i_np,i_n)=dG_out(i_np,i_n)+dG_in(i_np,i_n)*conjg(phase)*dec_exp
      !
    enddo
    !
-   if(.not.l_RT_exp) dG_new_k(i_n,i_n)=dG_new_k(i_n,i_n)+dG_old_k(i_n,i_n)
+   if (.not.l_RT_EXP) dG_out(i_n,i_n)=dG_out(i_n,i_n)+dG_in(i_n,i_n)
    !
    ! It is higly non satisfactory that
    !     Gamma_neq[f_eq] /= Gamma_eq                              (1)
@@ -110,7 +115,7 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_new_k,dG_old_k)
    !
    !sumGAMMA=sum(REF_lifetime(i_n,ik,:))
    !dec_exp=exp(-sumGAMMA*dT)
-   !dG_new_k(i_n,i_n)=dG_new_k(i_n,i_n)*dec_exp
+   !dG_out(i_n,i_n)=dG_out(i_n,i_n)*dec_exp
    !
  enddo
  !

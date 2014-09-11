@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_EULER_step(G_new_k,I1_k,I2_k,deltaT)
+subroutine RT_EULER_step(dG,I1_k,I2_k,deltaT)
  !
  use pars,           ONLY:SP,cI
 #if defined _OPENMP
@@ -36,18 +36,18 @@ subroutine RT_EULER_step(G_new_k,I1_k,I2_k,deltaT)
  real(SP),    intent(in)  :: deltaT
  complex(SP), intent(in)  :: I1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: I2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP), intent(out) :: G_new_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP), intent(out) :: dG(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
  ! dG(T+dt) = 0.
  !
- G_new_k=0._SP
+ dG=0._SP
  !
  ! dG(T+dt) = - i dt *(I1(T) - I2(T))
  !
 #if defined _OPENMP
- call V_by_V_plus_V_omp(SC_nbands, -cI*deltaT, I1_k-I2_k, G_new_k)
+ call V_by_V_plus_V_omp(SC_nbands, -cI*deltaT, I1_k-I2_k, dG)
 #else
- call V_by_V_plus_V(SC_nbands, -cI*deltaT, I1_k-I2_k, G_new_k)
+ call V_by_V_plus_V(SC_nbands, -cI*deltaT, I1_k-I2_k, dG)
 #endif
  !
 end subroutine RT_EULER_step

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_EULEREXP_step(G_new_k,G_old_k,G_ref_k,U1_k,U2_k,I1_matrix)
+subroutine RT_EULEREXP_step(dG_out,dG_in,G_ref_k,U1_k,U2_k,I1_matrix)
  !
  use pars,           ONLY:SP,cZERO
 #if defined _OPENMP
@@ -33,12 +33,12 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,G_ref_k,U1_k,U2_k,I1_matrix)
  !
  implicit none
  !
- complex(SP), intent(in)  :: G_old_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP), intent(in)  :: dG_in(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: G_ref_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: U1_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: U2_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP), intent(in)  :: I1_matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP), intent(out) :: G_new_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP), intent(out) :: dG_out(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
  complex(SP) :: M1_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)) 
  complex(SP) :: M2_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)) 
@@ -52,14 +52,14 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,G_ref_k,U1_k,U2_k,I1_matrix)
  U1p1_k=U1_k+I1_matrix
  U2p1_k=U2_k+I1_matrix
  !
- G_new_k=cZERO
+ dG_out=cZERO
  M1_tmp=cZERO
 #if defined _OPENMP
- call M_by_M_omp(SC_nbands,U1p1_k,G_old_k,M1_tmp)
- call M_by_M_omp(SC_nbands,M1_tmp,U2p1_k,G_new_k)
+ call M_by_M_omp(SC_nbands,U1p1_k,dG_in,M1_tmp)
+ call M_by_M_omp(SC_nbands,M1_tmp,U2p1_k,dG_out)
 #else
- call M_by_M('n','n',SC_nbands,U1p1_k,G_old_k,M1_tmp)
- call M_by_M('n','n',SC_nbands,M1_tmp,U2p1_k,G_new_k)
+ call M_by_M('n','n',SC_nbands,U1p1_k,dG_in,M1_tmp)
+ call M_by_M('n','n',SC_nbands,M1_tmp,U2p1_k,dG_out)
 #endif
  !
  M1_tmp=cZERO
@@ -71,7 +71,7 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,G_ref_k,U1_k,U2_k,I1_matrix)
  call M_by_M('n','n',SC_nbands,U1_k,G_ref_k,M1_tmp)
  call M_by_M('n','n',SC_nbands,G_ref_k,U2_k,M2_tmp)
 #endif
- G_new_k=G_new_k+M1_tmp+M2_tmp
+ dG_out=dG_out+M1_tmp+M2_tmp
  !
  M1_tmp=cZERO
  M2_tmp=cZERO
@@ -82,6 +82,6 @@ subroutine RT_EULEREXP_step(G_new_k,G_old_k,G_ref_k,U1_k,U2_k,I1_matrix)
  call M_by_M('n','n',SC_nbands,U1_k,G_ref_k,M1_tmp)
  call M_by_M('n','n',SC_nbands,M1_tmp,U2_k,M2_tmp)
 #endif
- G_new_k=G_new_k+M2_tmp
+ dG_out=dG_out+M2_tmp
  !
 end subroutine RT_EULEREXP_step

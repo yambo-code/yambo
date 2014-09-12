@@ -26,7 +26,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use pars,           ONLY:SP,pi
  use X_m,            ONLY:X_epsilon,X_drude_term
  use stderr,         ONLY:intc,real2ch
- use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,&
+ use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_H_dim,&
 &                         BSE_mode,BSS_eh_table,BSS_eh_E,BSS_inversion_mode,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BSS_eh_f,&
 &                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z,BS_mat_diagonal,BS_mat_free
@@ -57,7 +57,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  type(PP_indexes) ::px
  type(w_samp)     ::W_shifted
- integer          ::i1,i2,ik_bz,iv,ic,iw,of_mode,i_sp,ik_ibz,BS_H_dim
+ integer          ::i1,i2,ik_bz,iv,ic,iw,of_mode,i_sp,ik_ibz
  logical, external::stop_now
  complex(SP)      ::Co,QP_Z,QP_width
  complex(SP), allocatable  ::Lo(:,:,:)
@@ -94,8 +94,6 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  IO_dim=1
  if (trim(BSE_mode)=="causal")   IO_dim=2
- BS_H_dim=BS_K_dim
- if (trim(BSE_mode)=="coupling") BS_H_dim=2*BS_K_dim
  !
  ! Full inversion ?
  !==================
@@ -512,7 +510,7 @@ subroutine K_inversion(iq,W,E,k,q)
            !
          else
            !
-           inv_err(i3)=Matrix_resolvant_via_perturbative_inversion(i3,BS_H_dim,BSS_rhoq0,-1.*Co,&
+           inv_err(i3)=Matrix_resolvant_via_perturbative_inversion(BS_H_dim,BSS_rhoq0,-1.*Co,&
 &                                                                  X_epsilon(2,i3),Lo(:,i3,1))
            !
            if (trim(BSE_mode)=='causal') then
@@ -520,7 +518,7 @@ subroutine K_inversion(iq,W,E,k,q)
              ! Here instead of using conjg(BS_mat) I use conjg of
              ! everything else, the output included (see after the enddo)
              !
-             tmp_err=Matrix_resolvant_via_perturbative_inversion(i3,BS_H_dim,BSS_rhoq0,-1.*conjg(Co),&
+             tmp_err=Matrix_resolvant_via_perturbative_inversion(BS_H_dim,BSS_rhoq0,-1.*conjg(Co),&
 &                                                                X_epsilon(4,i3),conjg(Lo(:,i3,2)))
              !
            endif      

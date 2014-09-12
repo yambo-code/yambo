@@ -308,7 +308,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_KB_pwscf_err=io_KB_pwscf(ID)
  ! 
- if (io_RT_G_err==0) then
+ if (io_RT_G_err==0.or.io_RT_J_err==0) then
    !
    if (io_RT_J_err==0) J_steps=(NE_steps-1)/RT_IO_JPO_steps+1
    X_rt%energy_range=(/0._SP,pi/RT_step/)

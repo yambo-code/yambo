@@ -50,7 +50,7 @@ subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
    !
  endif
  !
- if(l_RT_EXP) then
+ if (l_RT_EXP) then
    !
    ! dG = dG - i dT Sigma
    !======================

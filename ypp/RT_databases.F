@@ -23,7 +23,7 @@
 !
 subroutine RT_databases(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
- use YPP,            ONLY:RT_J_t,RT_P_t,J_steps
+ use YPP,            ONLY:RT_J_t,RT_P_t,J_steps,Probe_path
  use pars,           ONLY:DP,SP,schlen
  use R_lattice,      ONLY:nkibz
  use com,            ONLY:warning

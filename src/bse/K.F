@@ -452,7 +452,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            H_x=Vstar_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp), BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
 #endif
          endif
-       else if (BS_blk(i_block)%mode=="A") then
+       else 
          if (BS_cpl_K_exchange) then
            !
            ! :::EXCHANGE    (coupling):::

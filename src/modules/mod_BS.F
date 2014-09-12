@@ -49,6 +49,7 @@ module BS
  ! Dimensions
  !=============
  integer :: BS_K_dim
+ integer :: BS_H_dim
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier
@@ -289,7 +290,7 @@ module BS
    subroutine BS_mat_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
-     integer :: i_g,BS_H_dim
+     integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
      BS_H_dim=BS_K_dim
      if (BS_K_coupling) BS_H_dim=2*BS_K_dim

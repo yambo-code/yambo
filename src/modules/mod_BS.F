@@ -95,6 +95,10 @@ module BS
    integer,     allocatable      :: table(:,:) ! (/ikbz,iv,ic,i_sp/) (i_sp is spin, is is symmetry)
    complex(SP), allocatable      :: dipoles_R(:)
    complex(SP), allocatable      :: dipoles_A(:)
+#if defined _KERR
+   complex(SP), allocatable      :: dipoles_R_kerr(:)
+   complex(SP), allocatable      :: dipoles_A_kerr(:)
+#endif
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: f(:)
@@ -255,6 +259,9 @@ module BS
    subroutine BS_Blocks_and_Transitions_alloc(E,iT)
      !
      use pars,       ONLY:IP
+#if defined _KERR
+     use drivers,    ONLY:l_kerr
+#endif
      use stderr,     ONLY:intc
      use memory_m,   ONLY:mem_est
      use electrons,     ONLY:levels
@@ -269,6 +276,16 @@ module BS
        allocate(BS_T_grp(iT)%dipoles_A(nT))
        call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(iT)),(/nT/))
      endif
+#if defined _KERR
+     if(l_kerr) then
+       allocate(BS_T_grp(iT)%dipoles_R_kerr(nT))
+       call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(iT)),(/nT/))
+       if (BS_K_coupling) then
+         allocate(BS_T_grp(iT)%dipoles_A_kerr(nT))
+         call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(iT)),(/nT/))
+       endif
+     endif
+#endif
      allocate(BS_T_grp(iT)%table(nT,4))
      call mem_est("BS_T_grp_table_N"//trim(intc(iT)),(/nT/),(/IP/))
      allocate(BS_T_grp(iT)%E(nT))
@@ -338,6 +355,9 @@ module BS
    !
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
+#if defined _KERR
+     use drivers,    ONLY:l_kerr
+#endif
      use parallel_m, ONLY:PAR_BS_T_grps_index,PAR_BS_nT_col_grps
      integer :: i_g
      !
@@ -356,6 +376,16 @@ module BS
          deallocate(BS_T_grp(i_g)%dipoles_A)
          call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(i_g)))
        endif
+#if defined _KERR
+       if(l_kerr) then
+         deallocate(BS_T_grp(i_g)%dipoles_R_kerr)
+         call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(i_g)))
+         if (BS_K_coupling) then
+           deallocate(BS_T_grp(i_g)%dipoles_A_kerr)
+           call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(i_g)))
+         endif
+       endif
+#endif
        deallocate(BS_T_grp(i_g)%table)
        call mem_est("BS_T_grp_table_N"//trim(intc(i_g)))
        deallocate(BS_T_grp(i_g)%E)

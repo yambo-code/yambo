@@ -89,7 +89,6 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    !
 #if defined _YPP_RT
    if(all(interp_grid>0).or.BANDS_steps<=0) call error(" Interpolation of occupations/lifetimes only on a band circuit")
-   if(BZ_RIM_tot_Nkpts==0) call error(" Interpolation of occupations/lifetimes presently works only with 'RIM'")
    n_T_steps=RT_occ_check_and_load_ref(Xen,Xk)
    call RT_check_RIM(Xk,Xen)
    call RT_alloc_def_or_free(rt,Xen,Xk,1)

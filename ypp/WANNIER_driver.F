@@ -40,8 +40,8 @@ subroutine WANNIER_driver(k,E)
  !
  ! Work Space
  !
- integer              :: i1,nk_w,k_table(nkbz),ik,io_QP_err,ID,i_qp
- integer,    external :: io_QP
+ integer              :: i1,nk_w,k_table(nkbz),ik,io_QP_and_GF_err,ID,i_qp
+ integer,    external :: io_QP_and_GF
  real(SP)             :: k_w(3)
  type(QP_t)           :: qp
  character(lchlen)    :: nnkp_file,eig_file
@@ -70,7 +70,7 @@ subroutine WANNIER_driver(k,E)
  !
  call QP_reset(qp)
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2,3/),COM=LOG,MODE=DUMP,ID=ID)
- io_QP_err=io_QP("QP",qp,ID)
+ io_QP_and_GF_err=io_QP_and_GF("QP",qp,ID)
  !
  eig_file=trim(seed_name)//".eig"
  open(unit=10,file=trim(eig_file),form='formatted')

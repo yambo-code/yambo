@@ -598,13 +598,13 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  if (l_map_kpts) call initactivate(1,"BZ_RIM_Nk SkipCheck BZExpand NoWeights")
  !
  if (l_electrons) then
-   if (l_dos.or.l_bands) call QP_ctl_switch('G')
+   if (l_dos.or.l_bands) call init_QP_ctl_switch('G')
    if (l_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands")
  endif
 #if defined _YPP_RT
  if (l_RealTime) then
    l_flag=l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_occ_Bands.or.l_RT_abs
-   if (l_flag) call QP_ctl_switch('G')
+   if (l_flag) call init_QP_ctl_switch('G')
    if (l_flag) call initactivate(1,"OCCdT OCCTime OCCTref")
    if (l_RT_occ_Bands.or.l_RT_life_Bands) call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
    if (l_RT_occ_Plot) call initactivate(1,"OCCgroup")
@@ -630,7 +630,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  if (l_excitons) then
    call initactivate(1,"States")
    if (l_amplitude) then
-     call QP_ctl_switch('G')
+     call init_QP_ctl_switch('G')
      call initactivate(1,"DipWeight")
    endif
    if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step MinWeight")

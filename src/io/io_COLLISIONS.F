@@ -28,13 +28,12 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,io_restart_point,&
-&                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on
+&                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,Plasma_redux_percent
  use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing
- use fragments,     ONLY:io_fragment,Fragments_Restart,Fragments_Synchronize
  use X_m,           ONLY:n_X_descs,X_description
  use stderr,        ONLY:intc
  use drivers,       ONLY:l_elel_scatt
@@ -77,10 +76,6 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    io_COLLISIONS=IO_OUTDATED_DB
    goto 1
  endif
- !
- ! Previous Fragments are syncronized (copied in the MORE_IO)
- !
- !call Fragments_Synchronize(ID,db_name,i_fragment=-QP_n_states)
  !
  ! Check the restart point
  !
@@ -220,10 +215,6 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    endif
    !
    deallocate(COLLISIONS_v_disk)
-   !
-   ! Fragments are syncronized (copied in the CORE_IO)
-   !
-   !call Fragments_Synchronize(ID,db_name,i_fragment=i_qp)
    !
  endif
  !

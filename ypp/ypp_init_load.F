@@ -80,7 +80,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'loc',     '[R] State localizer')
  call it('r',defs,'trans',   '[R] Transition analyzer')
 #endif
- call QP_ctl_load(defs,3)
+ call init_QP_ctl_load(defs,3)
  call it('r',defs,'spin',         '[R] Spin')
  call it('r',defs,'magnetization','[R] Magnetization')
  call it('r',defs,'bzrim',        '[R] BZ Random kpt generator')

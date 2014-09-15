@@ -94,6 +94,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
            if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
            en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+qp%E(ib_ref)-qp%E_bare(ib_ref)
            DB_corrected(iband,ik,i_spin)=1
+           en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+1
          endif
          !
          if (l_plan_todo_EWZI(2)) then
@@ -106,12 +107,14 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
              en%W(iband,ik,i_spin)=aimag(qp%E(ib_ref))
            endif
            DB_corrected(iband,ik,i_spin)=1
+           en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+2
          endif
          !
          if (l_plan_todo_EWZI(3)) then
-           if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
+           if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle
            en%Z(iband,ik,i_spin)=qp%Z(ib_ref)
            DB_corrected(iband,i1,i_spin)=1
+           en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+4
          endif
          !
        enddo
@@ -173,8 +176,9 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
                do i_spin=1,n_sp_pol
                  if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
                  en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+Valo(iband,ik,i_spin,i1)
+                 DB_corrected(iband,ik,i_spin)=1
+                 en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+1
                enddo
-               DB_corrected(iband,ik,i_spin)=1
              endif
              if(l_plan_todo_EWZI(2)) then
                i1=i1+1
@@ -187,16 +191,18 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
                  else
                    en%W(iband,ik,i_spin)=Valo(iband,ik,i_spin,i1)
                  endif
+                 DB_corrected(iband,ik,i_spin)=1
+                 en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+2
                enddo
-               DB_corrected(iband,ik,i_spin)=1
              endif
              if(l_plan_todo_EWZI(3)) then
                i1=i1+2
                do i_spin=1,n_sp_pol
                  if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle
                  en%Z(iband,ik,i_spin)=cmplx(Valo(iband,ik,i_spin,i1-1),Valo(iband,ik,i_spin,i1))
+                 DB_corrected(iband,ik,i_spin)=1
+                 en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+4
                enddo
-               DB_corrected(iband,ik,i_spin)=1
              endif
              !
            enddo

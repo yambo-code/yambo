@@ -59,7 +59,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  ! QP I/O
  !
  integer           ::io_err,ID(max_n_of_dbs)
- integer, external ::io_QP
+ integer, external ::io_QP_and_GF
  !
  ! Comments extracted from the QP descriptions
  !
@@ -137,17 +137,13 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
        !
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=DUMP,ID=ID(n_qp_db))
        !
-       ! GPL_EXCLUDE_START
 #if defined _ELPH
        if (index(trim(dummy_db_name),'.QP')/=0.or.index(trim(dummy_db_name),'.G')/=0) then
-         io_err=io_QP(trim(dummy_db_name) ,qp_from_dbs(n_qp_db),ID(n_qp_db))
+         io_err=io_QP_and_GF(trim(dummy_db_name) ,qp_from_dbs(n_qp_db),ID(n_qp_db))
        endif
 #else
-       ! GPL_EXCLUDE_END
-       if (index(trim(dummy_db_name),'.QP')/=0) io_err=io_QP(trim(dummy_db_name),qp_from_dbs(n_qp_db),ID(n_qp_db))
-       ! GPL_EXCLUDE_START
+       if (index(trim(dummy_db_name),'.QP')/=0) io_err=io_QP_and_GF(trim(dummy_db_name),qp_from_dbs(n_qp_db),ID(n_qp_db))
 #endif
-       ! GPL_EXCLUDE_END
        !
        if (io_err/=0) n_qp_db=n_qp_db-1
        !
@@ -313,6 +309,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  ! Interpolation & Transfer
  !
  if (QP_ctl_from_DB(1)%interp_neigh<=0) QP_ctl_from_DB(:)%interp_neigh=1
+ !
  call QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,DB_corrected,QP_ctl_from_DB%interp_neigh)
  !
  ! FIT

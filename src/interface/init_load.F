@@ -429,9 +429,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! QP ctl 
  !
- call QP_ctl_load(defs,1)
- call QP_ctl_load(defs,2)
- call QP_ctl_load(defs,3)
+ call init_QP_ctl_load(defs,1)
+ call init_QP_ctl_load(defs,2)
+ call init_QP_ctl_load(defs,3)
  !
  ! GPL_EXCLUDE_START
  !

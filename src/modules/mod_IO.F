@@ -112,6 +112,9 @@ module IO_m
  character(schlen)          :: io_extension(max_io_units)
  integer                    :: io_type(max_io_units)
  !
+ ! Fragments
+ integer, allocatable       :: Fragment_status(:)
+ !
  ! Save variables (to try different DB locations at the same time)
  !
  integer, private :: io_unit_save
@@ -164,9 +167,14 @@ module IO_m
      integer,optional :: version(3),revision
    end function
    !
-   subroutine IO_and_Messaging_switch(what,CONDITION)
+   subroutine io_and_Messaging_switch(what,CONDITION)
      character(*)      :: what
      logical, optional :: CONDITION
+   end subroutine
+   !
+   subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
+     integer           :: ID
+     integer, optional :: i_fragment,j_fragment,ierr
    end subroutine
    !
  end interface
@@ -726,6 +734,32 @@ module IO_m
      if (nf90_inq_varid(io_unit(ID),var_name,var_ID)==nf90_NoErr) variable_is_found=1  
      if (nf90_inq_varid(io_unit(ID),var_name,var_ID)/=nf90_NoErr) variable_is_found=0  
 #endif
+   end function
+   !
+   logical function fragment_exists(ID)
+     !
+     use com,       ONLY:file_exists,all_locations,num_of_alternative_locations
+     !
+     implicit none
+     !
+     integer                :: ID
+     !
+     ! Work Space
+     !
+     character(lchlen) :: fragment_filenames(num_of_alternative_locations)
+     integer           :: i_f
+     !
+     fragment_filenames=all_locations(trim(io_extension(ID)),trim(io_folder(ID)),io_netcdf_support(ID))
+     !
+     fragment_exists=.FALSE.
+     !
+     do i_f=1,num_of_alternative_locations
+       if (file_exists(trim(fragment_filenames(i_f)))) then
+         fragment_exists=.TRUE.
+         return
+       endif
+     enddo
+     !
    end function
    !
 end module IO_m

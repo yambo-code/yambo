@@ -225,7 +225,7 @@ module BS
      !
      if (CORRELATION) then
        allocate(BS_blk(iB)%O(O_ng,BS_blk(iB)%N_oscillators))
-       call mem_est("BS_blk_"//trim(intc(iB))//"_O",(/size (BS_blk(iB)%O)/))
+       call mem_est("BS_blk_"//trim(intc(iB))//"_Oscillators",(/size (BS_blk(iB)%O)/))
      endif
      !
    end subroutine

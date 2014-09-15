@@ -50,7 +50,9 @@ subroutine FREQUENCIES_reset(Xw,what)
  !
  if (what=="coarse_grid".or.what=="all") then
    if (allocated(ordered_grid_index)) deallocate(ordered_grid_index)
-   deallocate(X_poles_tab,bare_grid_N,coarse_grid_Pt,coarse_grid_index)
+   if (allocated(X_poles_tab)) then
+     deallocate(X_poles_tab,bare_grid_N,coarse_grid_Pt,coarse_grid_index)
+   endif
    call mem_est("X_poles_tab RGi BGn CGp CGi")      
  endif
  !

@@ -27,7 +27,7 @@ integer function io_ELPH(ID,what)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,RD_CL,RD_CL_IF_END,io_action,&
-&                         io_mode,DUMP,ver_is_gt_or_eq
+&                         io_mode,DUMP,ver_is_gt_or_eq,io_fragment
  use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,elph_gkkp,&
 &                         QP_PH_n_G_bands,W_debye,elph_DW,elph_nDBs,&
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,ph_kpt_bz,elph_nDBs_used,&
@@ -41,7 +41,6 @@ integer function io_ELPH(ID,what)
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
  use matrix_operate, ONLY:mat_c2r,mat_r2c
- use fragments,      ONLY:io_fragment
  use parallel_m,     ONLY:PAR_Q_index
 #if defined _TIMING
  use timing_m,       ONLY:timing

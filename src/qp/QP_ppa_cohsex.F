@@ -36,14 +36,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_run,l_sc_srpa
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_IND_Q_ID,PAR_IND_QP_ID,&
-&                        PAR_COM_QP_A2A,PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu,myid
+&                        PAR_COM_QP_A2A,PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
-&                        OP_WR_CL,io_RESPONSE
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
+&                        io_RESPONSE
+ use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
-&                        COHSEX_use_empties,QP_W_partially_done,l_GW_terminator
+&                        COHSEX_use_empties,l_GW_terminator
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
@@ -74,9 +74,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2)
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(ggwinfo)            ::isc,iscp
- integer          ::iv4(4),io_err,ID, timing_steps,qp_ID
- integer, external::io_X,QP_state_extract,io_QP
- logical, external::stop_now
+ integer          ::iv4(4),io_err,ID, timing_steps
+ integer, external::io_X,QP_state_extract
  character(schlen)::ch,Sc_name
  logical          ::X_is_TR_rotated
  complex(SP)      ::local_rhotw(X%ng),pre_factor,sp_dummy,ctmp
@@ -97,35 +96,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  if ((l_sc_srpa.or.l_cohsex  ).and.(.not.COHSEX_use_empties)) then
    QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
- endif
- !
- ! Restart
- !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=VERIFY,ID=qp_ID)
- io_err=io_QP('QP',qp,qp_ID)
- !
- if (QP_W_partially_done.and.io_err>0) then
-   !
-   ! Assuming i_qp_to_start=QP_n_states I get ...
-   !
-   iq_to_start   = io_err/QP_n_states
-   i_qp_to_start = io_err-(iq_to_start-1)*QP_n_states
-   !
-   ! If i_qp_to_start/QP_n_states I get ...
-   !
-   if (i_qp_to_start/=QP_n_states) then
-     iq_to_start   = iq_to_start+1
-     i_qp_to_start = io_err-(iq_to_start-1)*QP_n_states
-   endif
-   !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/-1/),ID=qp_ID)
-   io_err=io_QP('QP',qp,qp_ID)
-   !
-   ! Only the master keeps in memory the QP_Sc in order 
-   ! to avoid double countings in the final ALL 2 ALL
-   !
-   !if(.not.master_cpu) QP_Sc=cZERO
-   !
  endif
  !
  ! Section
@@ -534,25 +504,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        enddo
        !
      endif
-     !
-#if !defined _SC
-     !
-     ! ALL 2 ALL of QP_Sc
-     !
-     !call PP_redux_wait(QP_Sc,COMM=PAR_COM_QP_A2A%COMM)
-     !if(.not.master_cpu) QP_Sc=cZERO
-     !
-!     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,- (i_qp+QP_n_states*(iqbz-1 ))/),ID=qp_ID)
-!     io_err=ioQP('QP',qp,qp_ID)
-     !
-     ! In parallel runs only few cpus have access to the DB. Therefore, as QP_W_partially_done
-     ! is defined  in ioQP I need to redefine it here for the CPUs not involved in the I/O
-     !
-!     QP_W_partially_done=.true.
-!     if (i_qp==QP_n_states.and.iqbz==q%nbz) QP_W_partially_done=.false.
-     !
-     !if (stop_now(.FALSE.)) exit Q_loop
-#endif
      !
    enddo QP_loop
    !

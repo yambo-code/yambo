@@ -27,7 +27,6 @@ subroutine SET_logicals()
  use drivers,    ONLY:l_eval_collisions
  use parallel_m, ONLY:IO_write_default,master_cpu,myid,master_cpu,myid,INTER_CHAIN,n_log_CPUs,ncpu
  use com,        ONLY:write_to_of,write_to_report
- use fragments,  ONLY:Parallel_Fragments
  use IO_m,       ONLY:IO_write,IO_read,Fragmented_IO,Fragmented_IO_save,IO_write_not_fragmented_DB,&
 &                     DBs_IO_control_string,io_DIP,io_RESPONSE,io_HF,io_COLLs,io_WF,io_GF,io_J,io_OCCs,io_SC
  use stderr,     ONLY:write_to_log,write_fragments_IO_log,string_split
@@ -57,7 +56,6 @@ subroutine SET_logicals()
  IO_read                   =.TRUE.
  Fragmented_IO             =Fragmented_IO_save
  live_timing_is_on         =write_to_log
- Parallel_Fragments        =.TRUE.
  IO_write_not_fragmented_DB=master_cpu
  !
  call string_split(DBs_IO_control_string,ch_piece)

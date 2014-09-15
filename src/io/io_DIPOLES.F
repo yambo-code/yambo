@@ -32,8 +32,7 @@ integer function io_DIPOLES(X,Xen,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_fragmented,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
 &                        RD_CL_IF_END,RD_CL,io_action,&
-&                        IO_NOT_ALLOWED,io_DIP
- use fragments,     ONLY:io_fragment
+&                        IO_NOT_ALLOWED,io_DIP,io_fragment
  use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_nibz
 #if defined _TIMING
  use timing_m,      ONLY:timing

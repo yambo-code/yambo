@@ -96,7 +96,7 @@ subroutine RT_alloc_def_or_free(RT_obj,En,kgrid,action_kind)
          RT_obj%f0(i_RT)=En%f(i_b,i_k,i_spin)
          !RT_obj%W0(i_RT)=En%W(i_b,i_k,i_spin)  this is not the case because of the difference equilibrium / initial equilibrium
        endif
-       RT_obj%W0(i_RT)=sum(REF_lifetime(i_b,i_k_RT,:))
+       if(allocated(REF_lifetime)) RT_obj%W0(i_RT)=sum(REF_lifetime(i_b,i_k_RT,:))
        !
      enddo
      !

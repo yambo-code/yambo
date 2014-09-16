@@ -441,6 +441,7 @@ subroutine K_inversion(iq,W,E,k,q)
  if(trim(BSE_mode)=="causal") X_epsilon(2,:)=X_epsilon(2,:)+X_epsilon(4,:)
  !
  ! Try a polinomial interpolation on the null values
+ !===================================================
  !
  call K_eps_interpolate(W%n_freqs,real(W%p),inv_err)
  call PP_redux_wait()

@@ -27,8 +27,8 @@ integer function io_QP_and_GF(what,qp,ID)
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_t,QP_nk,QP_nb,QP_G_dr,&
-&                         QP_n_states,QP_G_er,GW_terminator_E,&
-&                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold,l_GW_terminator
+&                         QP_n_states,QP_G_er,&
+&                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,ver_is_gt_or_eq,DB_is_OK,&
@@ -44,7 +44,7 @@ integer function io_QP_and_GF(what,qp,ID)
  ! Work Space
  !
  integer              ::i1,i2,i_found,restart_point,&
-&                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,var_size,&
+&                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,&
 &                       QP_DB_kind_disk 
  character(schlen)    ::ch
  character(2)         ::OP(1)
@@ -105,13 +105,7 @@ integer function io_QP_and_GF(what,qp,ID)
  !
  if (io_QP_and_GF/=0) goto 1
  !
- var_size=4
- if (ver_is_gt_or_eq(ID,(/3,0,1/)))     var_size=5 
- if (ver_is_gt_or_eq(ID,revision=1255)) var_size=6 
- if (ver_is_gt_or_eq(ID,revision=1339)) var_size=7 
- !
- var_size=9 
- call io_elemental(ID,VAR="PARS",VAR_SZ=var_size,MENU=0)
+ call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
  !
  call io_elemental(ID,I0=qp%nb,DB_I0=QP_nb_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,I0=qp%nk,DB_I0=QP_nk_disk,CHECK=.true.,OP=(/"<="/))
@@ -119,18 +113,7 @@ integer function io_QP_and_GF(what,qp,ID)
 &                  VAR=' QP tot states          :',CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,I0=GWo_iterations,&
 &                  VAR=' GW SC iterations       :',CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,L0=l_GW_terminator,&
-&                  VAR=' Self-energy terminator :',CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,R0=GW_terminator_E,&
-&                  VAR=' Terminator pole        :',CHECK=.true.,OP=(/"=="/))
- !
- call io_elemental(ID,L0=l_GW_terminator,&
-&                  VAR=' Self-energy terminator :',CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,R0=GW_terminator_E,&
-&                  VAR=' Terminator pole        :',CHECK=.true.,OP=(/"=="/))
- !    
  call io_elemental(ID,I0=qp%n_descs,DB_I0=n_descs_disk,CHECK=.true.,OP=(/"<="/))
- !
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  if (index(what,".G")/=0.or.what=="G") then
@@ -158,15 +141,7 @@ integer function io_QP_and_GF(what,qp,ID)
      write (ch,'(a,i5.5)') 'DESC_strings_',i1
      call io_elemental(ID,VAR=trim(ch),CH0="",VAR_SZ=1,MENU=0)
      !
-     ! if db.W I don't check the lines
-     !
-     ! - GW solver       
-     ! - dS/dw steps
-     ! - dS/dw step
-     ! - Sx RL components
-     ! - QP
-     !
-     ! In any case the QP lines are skipped. The QP_state check is
+     ! The QP lines are skipped. The QP_state check is
      ! used instead. Also the GW SC iterations are skipped, as
      ! they are written before.
      !

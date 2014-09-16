@@ -147,9 +147,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (l_bs_fxc) then
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
+   !call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
    !
-   io_BS_Fxc_err=io_BS_Fxc(iq,W_bss,ID,X=X)
+   !io_BS_Fxc_err=io_BS_Fxc(iq,W_bss,ID,X=X)
    !
  else
    !
@@ -553,6 +553,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call live_timing(steps=1)
    !
  enddo
+ !
+ ! BS DB description section I/O
+ !===============================
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)

@@ -292,6 +292,17 @@ subroutine K_output_file(iq,mode)
        output_data(4)=-real(X_epsilon(6,iw)/( (X_epsilon(3,iw)-1.0_SP)*sqrt(X_epsilon(3,iw)) ) /DEG2RAD)
        output_data(5)=-aimag(X_epsilon(6,iw)/( (X_epsilon(3,iw)-1.0_SP)*sqrt(X_epsilon(3,iw)) ) /DEG2RAD)
        !
+       if( (real(X_epsilon(2,iw))==1._SP .or. real(X_epsilon(2,iw))==0._SP ) &
+&           .and. aimag(X_epsilon(2,iw))==0._SP ) then
+         output_data(2)=0._SP
+         output_data(3)=0._SP
+       endif
+       if( (real(X_epsilon(3,iw))==1._SP .or. real(X_epsilon(3,iw))==0._SP ) &
+&           .and. aimag(X_epsilon(3,iw))==0._SP ) then
+         output_data(4)=0._SP
+         output_data(5)=0._SP
+       endif         
+       !
        n_output_data=5
        if (mode==1) n_output_data=7
        if (mode==1) then

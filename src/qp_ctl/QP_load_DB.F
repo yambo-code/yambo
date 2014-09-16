@@ -25,7 +25,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
 &                           DB_corrected,GFs_From_DB)
  !
  use drivers,       ONLY:l_chi,l_bss
- use pars,          ONLY:SP,schlen,lchlen
+ use pars,          ONLY:SP,schlen,lchlen,rZero,cZero
  use stderr,        ONLY:string_split,string_pack
  use QP_m,          ONLY:QP_t,QP_reset
  use memory_m,      ONLY:mem_est
@@ -251,12 +251,14 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
      i1=i1+1
      allocate(en%W(en%nb,en%nk,n_sp_pol))
      call mem_est("E-W",(/size(en%W)/),(/SP/))
+     en%W=rZero
    endif
    if (l_plan_todo_EWZI(3)) then
      qp_msg(i1:i1)="Z"
      i1=i1+1
      allocate(en%Z(en%nb,en%nk,n_sp_pol))
      call mem_est("E-Z",(/size(en%Z)/))
+     en%Z=1._SP
    endif
    if (GFs_from_DB) then
      qp_msg(i1:i1)="G"

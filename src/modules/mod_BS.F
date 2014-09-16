@@ -294,6 +294,8 @@ module BS
      logical :: W_is_allocated,Z_is_allocated
      BS_H_dim=BS_K_dim
      if (BS_K_coupling) BS_H_dim=2*BS_K_dim
+     allocate(BS_mat_diagonal(BS_H_dim))
+     call mem_est('BS_mat_diagonal',(/size(BS_mat_diagonal)/))
      allocate(BS_mat(BS_H_dim,BS_H_dim))
      call mem_est('BS_mat',(/size(BS_mat)/))
      BS_mat    = cZERO

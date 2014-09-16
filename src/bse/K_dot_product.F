@@ -22,37 +22,48 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_dot_product(dot,V,W)
-  !
-  ! Dot product between distributed vectors 
-  !
-  use pars,           ONLY:SP,cZERO
-  use BS,             ONLY:BS_blk,n_BS_blks,Haydock_vector,BS_nT_grps,&
-       &              Haydock_parallel_group_comm,Haydock_parallel_col_comm 
-  use parallel_m, ONLY:PP_bcast,PP_redux_wait
-  implicit none
-  complex(SP), intent(out)            :: dot
-  type(Haydock_vector), intent(in) :: V(:),W(:) 
-  ! ws:
-  integer       :: i_b,i_Tk,i_Tp,i_g     
-  complex(SP)   :: dot_
-  !
-  dot_ = cZERO
-  do i_b=1,n_BS_blks
-    i_Tk  =BS_blk(i_b)%iT_k
-    i_Tp  =BS_blk(i_b)%iT_p
-    if (i_Tk.ne.1) cycle
-    dot_ = dot_ + dot_product(V(i_Tp)%fragment,W(i_Tp)%fragment)
-  end do
+ !
+ ! Dot product between distributed vectors 
+ !
+ use pars,           ONLY:SP,cZERO
+ use BS,             ONLY:BS_blk,n_BS_blks,Haydock_vector,BS_nT_grps,&
+&                         Haydock_parallel_group_comm,Haydock_parallel_col_comm 
+ use parallel_m, ONLY:PP_bcast,PP_redux_wait
+ !
+ implicit none
+ !
+ complex(SP),          intent(out):: dot
+ type(Haydock_vector), intent(in) :: V(:),W(:) 
+ !
+ ! Workspace
+ !
+ integer       :: i_b,i_Tk,i_Tp,i_g     
+ complex(SP)   :: dot_
+ !
+ dot_ = cZERO
+ !
+ do i_b=1,n_BS_blks
+   i_Tk  =BS_blk(i_b)%iT_k
+   i_Tp  =BS_blk(i_b)%iT_p
+   if (i_Tk.ne.1) cycle
+   dot_ = dot_ + dot_product(V(i_Tp)%fragment,W(i_Tp)%fragment)
+ end do
+ !
 #if defined MPI_
-  ! Reduce all (sum) on first row
-  call PP_redux_wait(dot_,COMM=Haydock_parallel_group_comm(1))
-  ! BCast on all other procs along 'the columns'
-  do i_g = 2,BS_nT_grps
-    call PP_bcast(dot_,0,COMM=Haydock_parallel_col_comm(i_g))
-  end do
+ !
+ ! Reduce all (sum) on first row
+ !
+ call PP_redux_wait(dot_,COMM=Haydock_parallel_group_comm(1))
+ !
+ ! BCast on all other procs along 'the columns'
+ !
+ do i_g = 2,BS_nT_grps
+   call PP_bcast(dot_,0,COMM=Haydock_parallel_col_comm(i_g))
+ end do
+ !
 #endif
-  !
-  dot = dot_
-  !
+ !
+ dot = dot_
+ !
 end subroutine K_dot_product
 

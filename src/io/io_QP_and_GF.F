@@ -106,7 +106,6 @@ integer function io_QP_and_GF(what,qp,ID)
  if (io_QP_and_GF/=0) goto 1
  !
  call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
- !
  call io_elemental(ID,I0=qp%nb,DB_I0=QP_nb_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,I0=qp%nk,DB_I0=QP_nk_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,I0=qp%n_states,DB_I0=QP_n_states_disk,&

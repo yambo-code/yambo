@@ -62,10 +62,6 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  nk_interpolated=0
  nk_exact=0
  !
- if (.not.l_plan_todo_EWZI(4).and..not.l_plan_todo_EWZI(5)) then
-  l_plan_todo_EWZI(4)=.TRUE.
- endif
- !
  if (l_plan_todo_EWZI(4)) then
    !
    ! Nearest K-point interpolation

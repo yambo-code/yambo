@@ -36,7 +36,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
 &                         PAR_COM_T_INDEX,PAR_COM_Xk_ibz_INDEX
  use BS,             ONLY:BS_mat,BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,&
 &                         BSS_rhoq0,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BS_mat_alloc,&
-&                         BS_H_dim
+&                         BS_H_dim,BS_mat_diagonal
  implicit none
  !
  integer      :: iq
@@ -126,6 +126,8 @@ subroutine K_stored_in_a_BIG_matrix(iq)
          BS_mat(H_pos(1),H_pos(2))=BS_mat(H_pos(1),H_pos(2))+&
 &                                  BS_blk(i_B)%mat(i_r,i_c)*sqrt(BS_T_grp(i_Tk)%f(i_r))*sqrt(BS_T_grp(i_Tp)%f(i_c))
        endif
+       !
+       if (H_pos(1)==H_pos(2)) BS_mat_diagonal(H_pos(1))=BS_blk(i_B)%mat(i_r,i_c)
        !
      enddo
    enddo

@@ -24,6 +24,7 @@
 subroutine K_inversion(iq,W,E,k,q) 
  !
  use pars,           ONLY:SP,pi
+ use units
  use X_m,            ONLY:X_epsilon,X_drude_term
  use stderr,         ONLY:intc,real2ch
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_H_dim,&
@@ -64,7 +65,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! ... frequencies
  !
- integer, parameter  :: max_freqs_full_inv_ratio=1
+ integer, parameter  :: max_freqs_full_inv_ratio=10
  integer,allocatable :: inv_err(:),iw_full(:)
  integer             :: full_inf_freqs,nw,nw_conv,&
 &                       min_dist_non_conv_freqs ! Every W%n_freqs/min_dist_non_conv_freqs
@@ -173,25 +174,23 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  call K_stored_in_a_BIG_matrix(iq)
  !
- if (PERTURBATIVE) then
-   if (BSS_uses_RIM) then
-     !
-     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=(0.,0.)
-     if (trim(BSE_mode)=='coupling') then
-       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=(0.,0.)
-       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:) =-BS_mat(i1,:)
-     endif
-     !
-   else
-     !
-     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BSS_eh_E(i1)
-     if (trim(BSE_mode)=='coupling') then
-       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+BSS_eh_E(i1-BS_K_dim)
-       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:) =-BS_mat(i1,:)
-     endif
-     !
+ if (BSS_uses_RIM) then
+   !
+   forall(i1=1:BS_K_dim) BS_mat(i1,i1)=(0.,0.)
+   if (trim(BSE_mode)=='coupling') then
+     forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=(0.,0.)
+     forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:) =-BS_mat(i1,:)
    endif
- end if
+   !
+ else
+   !
+   forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BSS_eh_E(i1)
+   if (trim(BSE_mode)=='coupling') then
+     forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+BSS_eh_E(i1-BS_K_dim)
+     forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:) =-BS_mat(i1,:)
+   endif
+   !
+ endif
  !
  !
  allocate(eps_disk(W%n_freqs,IO_dim))
@@ -245,40 +244,63 @@ subroutine K_inversion(iq,W,E,k,q)
    i_sp  =spin(BSS_eh_table(i1,:))
    !
    if (.not.BSS_uses_RIM) then
+     !
      QP_width=0.
      QP_Z=(1.,0.)
+     !
      if (allocated(BSS_eh_W)) QP_width=BSS_eh_W(i1)
+     !
      if (allocated(BSS_eh_Z)) QP_Z=BSS_eh_Z(i1)
+     !
      if (associated(E%GreenF)) then
+       !
+       ! No RIM but GFs
+       !================
        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"r")
-       if (trim(BSE_mode)=='causal') &
-&        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"ca")
-       if (trim(BSE_mode)=='coupling') &
-&        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"ca")
+       !
+       if (trim(BSE_mode)=='causal') then
+         call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"ca")
+       else if (trim(BSE_mode)=='coupling') then
+         call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"ca")
+       endif
+       !
      else
+       !
+       ! No RIM No GFs
+       !===============
        Lo(i1,:,1)=QP_Z*BSS_eh_f(i1)/(W%p(:)-BSS_eh_E(i1)-(0.,1.)*QP_width)
-       if (trim(BSE_mode)=='causal') &
-&        Lo(i1,:,2)=-QP_Z*BSS_eh_f(i1)/(W%p(:)+BSS_eh_E(i1)-(0.,1.)*QP_width)
-       if (trim(BSE_mode)=='coupling') &
-&        Lo(i1+BS_K_dim,:,1)=-QP_Z*BSS_eh_f(i1)/(W%p(:)+BSS_eh_E(i1)-(0.,1.)*QP_width)
+       if (trim(BSE_mode)=='causal') then
+         Lo(i1,:,2)=-QP_Z*BSS_eh_f(i1)/(W%p(:)+BSS_eh_E(i1)-(0.,1.)*QP_width)
+       else if (trim(BSE_mode)=='coupling') then
+         Lo(i1+BS_K_dim,:,1)=-QP_Z*BSS_eh_f(i1)/(W%p(:)+BSS_eh_E(i1)-(0.,1.)*QP_width)
+       endif
+       !
      endif
+     !
    else
+     !
+     ! Energy RIM 
+     !============
      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"sr")
-     if (trim(BSE_mode)=='causal') &
-&      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"sa")
-     if (trim(BSE_mode)=='coupling') &
-&      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"sa")
+     !
+     if (trim(BSE_mode)=='causal') then
+       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"sa")
+     else if (trim(BSE_mode)=='coupling') then
+       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"sa")
+     endif
+     !
    endif
    !
    X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*Lo(i1,:,1)*Co
-   if (trim(BSE_mode)=='causal') X_epsilon(3,:)=X_epsilon(3,:)- &
-&                                conjg(BSS_rhoq0(i1))*BSS_rhoq0(i1)*Lo(i1,:,2)*Co
-   if (trim(BSE_mode)=='coupling'.or.allocated(BSS_eh_W)) X_epsilon(3,:)=X_epsilon(3,:)- &
-&                     conjg(BSS_rhoq0(i1+BS_K_dim))*BSS_rhoq0(i1+BS_K_dim)*Lo(i1+BS_K_dim,:,1)*Co
    !
-   ! Include the Kernel diagonal as a rigid shift
-   !==============================================
+   if (trim(BSE_mode)=='causal') then
+     X_epsilon(3,:)=X_epsilon(3,:)-conjg(BSS_rhoq0(i1))*BSS_rhoq0(i1)*Lo(i1,:,2)*Co
+   else if (trim(BSE_mode)=='coupling') then
+     X_epsilon(3,:)=X_epsilon(3,:)-conjg(BSS_rhoq0(i1+BS_K_dim))*BSS_rhoq0(i1+BS_K_dim)*Lo(i1+BS_K_dim,:,1)*Co
+   endif
    !
+   ! When the RIM is used the Kernel diagonal is included as a rigid shift
+   !=======================================================================
    if (BSS_uses_RIM) then
      forall(iw=1:W%n_freqs) W_shifted%p(iw)=W%p(iw)-BS_mat_diagonal(i1)
      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,1),"sr")
@@ -286,8 +308,9 @@ subroutine K_inversion(iq,W,E,k,q)
        forall(iw=1:W%n_freqs) W_shifted%p(iw)=W%p(iw)+conjg(BS_mat_diagonal(i1))
        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,2),"sa")
      endif
-     if (trim(BSE_mode)=='coupling') &
-&      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1+BS_K_dim,:,1),"sa")
+     if (trim(BSE_mode)=='coupling') then
+       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1+BS_K_dim,:,1),"sa")
+     endif
    endif
    !
    call live_timing(steps=1)
@@ -314,7 +337,7 @@ subroutine K_inversion(iq,W,E,k,q)
    call PP_redux_wait(X_epsilon)
    !
    eps_disk(:,1)=X_epsilon(2,:)
-   if(IO_dim==2) eps_disk(:,2)=X_epsilon(4,:)
+   if (IO_dim==2) eps_disk(:,2)=X_epsilon(4,:)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
    i_err=io_BSS_invert(iq,W%n_freqs,IO_dim,inv_err,eps_disk,W,ID)
@@ -377,31 +400,6 @@ subroutine K_inversion(iq,W,E,k,q)
    call msg('rs','[BSE INV] Non converged frequencies :',full_inf_freqs)
    !
    X_epsilon(2:4,:)=X_epsilon(2:4,:)/real(ncpu,SP)
-   !
-   ! Kernel loading
-   !
-   call K_stored_in_a_BIG_matrix(iq)
-   !  
-   ! I need to remove the -1 in the coupling part due to the change of sign
-   ! of the occupations. This -1 is now embodied in the Green's function
-   !
-   if (BSS_uses_RIM) then
-     !
-     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=(0.,0.)
-     if (trim(BSE_mode)=='coupling') then
-       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=(0.,0.)
-       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:) =-BS_mat(i1,:)
-     endif
-     !
-   else
-     !
-     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BSS_eh_E(i1)
-     if (trim(BSE_mode)=='coupling') then
-       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+BSS_eh_E(i1-BS_K_dim)
-       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:) =-BS_mat(i1,:)
-     endif
-     !
-   endif
    !
    ! Then loop on the groups performing full inversion
    !

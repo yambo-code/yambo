@@ -149,13 +149,6 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
          !
          if (E%Eo(ib,ik,i_spin)> 1.E-5) iref=0
          if (E%Eo(ib,ik,i_spin)<=1.E-5) iref=n_of_coeff
-         !if (what=="W") then
-         !  if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=QP_ctl_add(i_sp)%W_E_ref(1)-E%Efermi(1+i_spin)
-         !  if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=QP_ctl_add(i_sp)%W_E_ref(2)-E%Efermi(1+i_spin)
-         !else
-           if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=E%E_CBm
-           if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=E%E_VBM
-         !endif
          !
          if (what=='Z') then
            !
@@ -174,6 +167,18 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
          !
          delta=M_factors_free(iref+1)
          !
+         ! Free factors are given from input file. In the case of W the user-defined reference
+         ! energy is given with respect to the CBM/VBM. The position of the VBM and CBN must be consistent with their
+         ! actual position in the energy levels.
+         !
+         if (what=="W") then
+           if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=QP_ctl_add(i_sp)%W_E_ref(1)+E%E_CBm
+           if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=QP_ctl_add(i_sp)%W_E_ref(2)+E%E_VBM
+         else
+           if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=E%E_CBm
+           if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=E%E_VBM
+         endif
+         !
          do i3=1,n_of_coeff-1
            M_factor_local=M_factors_free(iref+1+i3)
            if (what=='E') M_factor_local=M_factor_local-1.
@@ -181,6 +186,10 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
            if (what=='W'.and.E%Eo(ib,ik,i_spin)>rref.and.E%Eo(ib,ik,i_spin)<=1.E-5) cycle
            delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i3
          enddo
+         !
+         if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=E%E_CBm
+         if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=E%E_VBM
+         !
          if (DB_corrected(ib,ik,i_spin)/=1.or.apply_anyway) then
            delta=delta+M_factors_base(iref+1)
            do i3=1,n_of_coeff-1

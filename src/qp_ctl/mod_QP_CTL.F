@@ -95,6 +95,13 @@ module QP_CTL_m
      ! 2 : BSK (object = "K")
      ! 3 : G (object = "G")
      !
+     ! Note about linewidths sign. Both at zero and finite temperature the sign follows the
+     ! T-orderd convention (W>0 E<0, W<0 E>0). At finite temperature this is the consequence of
+     ! the Wick rotation done to bring the theory on the real-axis.
+     !
+     ! This convention about sign is imposed (when reading DB's made at finite Temperature)
+     ! in QP_apply_global_stretch and  QP_apply_DB_interpolation
+     !
      use memory_m,      ONLY:mem_est
      use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
 &                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref

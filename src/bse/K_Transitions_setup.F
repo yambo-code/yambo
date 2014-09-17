@@ -167,6 +167,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
                    BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
                  endif
                  if (associated(Ken%W)) then
+                   !
+                   ! Note that W is negative as the linewidth is positive(negative) above(below) the Fermi level.
+                   !
                    BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=Ken%W(ic,ik,i_sp)-Ken%W(iv,ikp,i_sp)
                  endif
                  !

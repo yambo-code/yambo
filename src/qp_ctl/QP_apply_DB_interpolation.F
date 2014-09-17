@@ -29,6 +29,11 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  !
  ! l_plan_todo_EWZI=( E W Z Interp )
  !
+ ! Note that as output of this routine W is positive(negative) above(below) the Fermi level. 
+ ! This is true both at zero and finite temperature. Indeed also at finite temperature
+ ! when the theory is causal the GF must be rotated to the real-energy axis.
+ !
+ !
  use pars,          ONLY:SP
  use electrons,     ONLY:n_sp_pol,spin
  use com,           ONLY:msg,warning
@@ -95,7 +100,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
          !
          if (l_plan_todo_EWZI(2)) then
            if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
-           if (real(qp%E(ib_ref))>0..and.aimag(qp%E(ib_ref))>0) then
+           if (real(qp%E_bare(ib_ref))>0..and.aimag(qp%E(ib_ref))>0) then
              if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
              en%W(iband,ik,i_spin)=-aimag(qp%E(ib_ref))
              wrong_width_sign_warn=.true.
@@ -180,7 +185,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
                i1=i1+1
                do i_spin=1,n_sp_pol
                  if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
-                 if (Valo(iband,ik,i_spin,i1-1)>0. .and. Valo(iband,ik,i_spin,i1)>0) then
+                 if (en%Eo(iband,ik,i_spin)>0. .and. Valo(iband,ik,i_spin,i1)>0) then
                    if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
                    en%W(iband,ik,i_spin)=-Valo(iband,ik,i_spin,i1)
                    wrong_width_sign_warn=.true.

@@ -195,8 +195,9 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        !    
        X_epsilon(3,:)=X_epsilon(3,:)-BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg( BS_T_grp(i_T_g)%dipoles_R(i_T) )*&
 &                     local_Z/(W_bss%p(:)-BS_T_grp(i_T_g)%E(i_T))
+    
        !
-       if (BS_anti_res) then
+       if (BS_anti_res.or.BS_K_coupling) then
          !
          ! Note the plus in "+BSS_rhoq0" coming from the BS_eh_f change of sign
          !

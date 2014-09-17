@@ -201,7 +201,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  BSS_rhoq0(1:BS_K_dim)=BSS_rhoq0(1:BS_K_dim)/sqrt(BSS_eh_f(1:BS_K_dim))
  !
- if (trim(BSE_mode)=='coupling'.or.allocated(BSS_eh_W)) then
+ if (trim(BSE_mode)=='coupling') then
    BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)=BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)/sqrt(BSS_eh_f(1:BS_K_dim))
  endif
  !
@@ -282,11 +282,14 @@ subroutine K_inversion(iq,W,E,k,q)
      ! Energy RIM 
      !============
      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"sr")
+     Lo(i1,:,1)=Lo(i1,:,1)*BSS_eh_f(i1)
      !
      if (trim(BSE_mode)=='causal') then
        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"sa")
+       Lo(i1,:,2)=Lo(i1,:,2)*BSS_eh_f(i1)
      else if (trim(BSE_mode)=='coupling') then
        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"sa")
+       Lo(i1+BS_K_dim,:,1)=Lo(i1+BS_K_dim,:,2)*BSS_eh_f(i1)
      endif
      !
    endif
@@ -304,12 +307,15 @@ subroutine K_inversion(iq,W,E,k,q)
    if (BSS_uses_RIM) then
      forall(iw=1:W%n_freqs) W_shifted%p(iw)=W%p(iw)-BS_mat_diagonal(i1)
      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,1),"sr")
+     Lo(i1,:,1)=Lo(i1,:,1)*BSS_eh_f(i1)
      if (trim(BSE_mode)=='causal') then
        forall(iw=1:W%n_freqs) W_shifted%p(iw)=W%p(iw)+conjg(BS_mat_diagonal(i1))
        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,2),"sa")
+       Lo(i1,:,2)=Lo(i1,:,2)*BSS_eh_f(i1)
      endif
      if (trim(BSE_mode)=='coupling') then
        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1+BS_K_dim,:,1),"sa")
+       Lo(i1+BS_K_dim,:,1)=Lo(i1+BS_K_dim,:,2)*BSS_eh_f(i1)
      endif
    endif
    !

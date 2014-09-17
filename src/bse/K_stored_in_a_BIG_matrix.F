@@ -127,7 +127,9 @@ subroutine K_stored_in_a_BIG_matrix(iq)
 &                                  BS_blk(i_B)%mat(i_r,i_c)*sqrt(BS_T_grp(i_Tk)%f(i_r))*sqrt(BS_T_grp(i_Tp)%f(i_c))
        endif
        !
-       if (H_pos(1)==H_pos(2)) BS_mat_diagonal(H_pos(1))=BS_blk(i_B)%mat(i_r,i_c)
+       if (H_pos(1)==H_pos(2)) then
+         BS_mat_diagonal(H_pos(1))=BS_blk(i_B)%mat(i_r,i_c)*sqrt(BS_T_grp(i_Tk)%f(i_r))*sqrt(BS_T_grp(i_Tp)%f(i_c))
+       endif
        !
      enddo
    enddo

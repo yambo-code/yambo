@@ -168,12 +168,12 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
          delta=M_factors_free(iref+1)
          !
          ! Free factors are given from input file. In the case of W the user-defined reference
-         ! energy is given with respect to the CBM/VBM. The position of the VBM and CBN must be consistent with their
+         ! energy is given with respect to the CBM/VBM. The position of the VBM and CBM must be consistent with their
          ! actual position in the energy levels.
          !
          if (what=="W") then
-           if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=QP_ctl_add(i_sp)%W_E_ref(1)+E%E_CBm
-           if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=QP_ctl_add(i_sp)%W_E_ref(2)+E%E_VBM
+           if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=QP_ctl_add(i_sp)%W_E_ref(1)
+           if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=QP_ctl_add(i_sp)%W_E_ref(2)
          else
            if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=E%E_CBm
            if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=E%E_VBM

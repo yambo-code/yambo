@@ -126,10 +126,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    endif
    DIP_iR=(0._SP,0._SP)
    !
-#if defined _SC
+#if defined _SC || defined _KERR
    call X_alloc('DIP_P'   ,(/3,X%ib(2),X%ib(2),PAR_DIPk_nibz/))
-   call X_alloc('P_square',(/X%ib(2),X%ib(2),PAR_DIPk_nibz/))
    DIP_P=(0._SP,0._SP)
+#endif
+#if defined _SC
+   call X_alloc('P_square',(/X%ib(2),X%ib(2),PAR_DIPk_nibz/))
    P_square=(0._SP,0._SP)
 #endif
    !   

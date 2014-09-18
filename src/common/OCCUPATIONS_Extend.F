@@ -72,10 +72,10 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  !
  ! If Xe and E have not the same metallic character 
  ! find a range for the Efermi that keeps the
- ! to grids with the same character
+ ! two grids with the same character
  !
- Ef_test=Xe%Efermi(2)+Ef_step
- do while(Ef_test<Xe%Efermi(3))
+ Ef_test=Xe%E_VBM+Ef_step
+ do while(Ef_test<Xe%E_CBm)
    call f_build(Ef_test)
    call OCCUPATIONS_Gaps(E)
    if (E%nbf==Xe%nbf.and.E%nbm==Xe%nbm) then
@@ -88,10 +88,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  E%E=E%E-E%Efermi(1)
  E%E_VBM =E%E_VBM-E%Efermi(1)
  E%E_CBm =E%E_CBm-E%Efermi(1)
- if (associated(Xe%E_RIM)) then
-   E%E_RIM =E%E_RIM -E%Efermi(1)
-   Xe%E_RIM=Xe%E_RIM-E%Efermi(1)
- endif
+ if (associated(Xe%E_RIM)) E%E_RIM =E%E_RIM -E%Efermi(1)
  !
  if (E%nbf/=Xe%nbf.or.E%nbm/=Xe%nbm) then
    call warning('Global and response function energy levels have different metallic character')

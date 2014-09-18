@@ -225,7 +225,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! GPL_EXCLUDE_START 
          !
 #if defined _SC
-         if (allocated(DIP_P)) then
+         if (l_eval_DIP_P2) then
            wf_xyz(:wf_ng,4) = WF%c(1:wf_ng,ivfft) *  & 
 &                            ( (Xk%pt(ik,1) + g_vec(:wf_ng,1))**2 * (2.0_SP*pi/alat(1))**2  &
 &                            + (Xk%pt(ik,2) + g_vec(:wf_ng,2))**2 * (2.0_SP*pi/alat(2))**2  &

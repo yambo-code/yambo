@@ -168,11 +168,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        !   iq . <c|r|v> = - conjg( iq . <v | r |c> )
        !
 #if defined _KERR
-       if (trim(global_gauge)=='length') then
-         BS_T_grp(i_T_g)%dipoles_R(i_T)=-conjg(DIP_q_dot_iR(ic,iv,ik_mem,i_sp))
-       else if (trim(global_gauge)=='velocity') then
-         BS_T_grp(i_T_g)%dipoles_R(i_T)= conjg(DIP_P_symm(1,ic,iv,ik_mem,i_sp))
-       endif
+       if (trim(global_gauge)=='length')   BS_T_grp(i_T_g)%dipoles_R(i_T)=-conjg(DIP_q_dot_iR(ic,iv,ik_mem,i_sp))
+       if (trim(global_gauge)=='velocity') BS_T_grp(i_T_g)%dipoles_R(i_T)= conjg(DIP_P_symm(1,ic,iv,ik_mem,i_sp))
        BS_T_grp(i_T_g)%dipoles_R(i_T)=BS_T_grp(i_T_g)%dipoles_R(i_T)*sqrt(BS_T_grp(i_T_g)%f(i_T))
 #else
        BS_T_grp(i_T_g)%dipoles_R(i_T)=-conjg(DIP_q_dot_iR(ic,iv,ik_mem,i_sp))*sqrt(BS_T_grp(i_T_g)%f(i_T))
@@ -182,11 +179,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        !
        if (BS_K_coupling) then
 #if defined _KERR
-         if (trim(global_gauge)=='length') then
-           BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_q_dot_iR(ic,iv,ik_mem,i_sp)
-         else if (trim(global_gauge)=='velocity') then
-           BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_P_symm(1,ic,iv,ik_mem,i_sp)
-         endif
+         if (trim(global_gauge)=='length')   BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_q_dot_iR(ic,iv,ik_mem,i_sp)
+         if (trim(global_gauge)=='velocity') BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_P_symm(1,ic,iv,ik_mem,i_sp)
          BS_T_grp(i_T_g)%dipoles_A(i_T)=BS_T_grp(i_T_g)%dipoles_A(i_T)*sqrt(BS_T_grp(i_T_g)%f(i_T))
 #else
          BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_q_dot_iR(ic,iv,ik_mem,i_sp)*sqrt(BS_T_grp(i_T_g)%f(i_T))

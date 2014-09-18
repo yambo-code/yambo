@@ -85,6 +85,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    call warning("Not a valid gauge in input. Switching to lenght gauge")
    global_gauge="length"
  endif
+ !
 #endif
  !
  ! If using ALDA enough bands must be loaded to be able to calculate the density
@@ -194,7 +195,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  call K_Transitions_setup(iq,Ken,Xk,X_oscillators%Wd,.TRUE.)
  !
  !... Blocks build-up
- call K_blocks( )
+ if (.not.l_rpa_IP) call K_blocks( )
  !
  ! 1. The IP Part (Dipoles included) ...
  ! ======================================

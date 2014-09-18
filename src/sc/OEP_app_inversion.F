@@ -118,7 +118,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  rhotw_prd = (0._SP,0._SP)
  do ik = 1, nkibz
    do iv1 = 1, E%nbf
-     if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+ E%Efermi(1) 
+     if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+ E%E_Fermi 
      do iv2 = 1, iv1!E%nbf
        if (l_oep_kli.and.(iv2.ne.iv1)) cycle
        ifft=WF%index(iv1,ik,1)

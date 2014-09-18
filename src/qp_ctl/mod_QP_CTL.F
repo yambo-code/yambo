@@ -349,7 +349,7 @@ module QP_CTL_m
        ! Instead the en%E are out-of-date and are not shifted in OCCUPATIONS_Extend.
        ! This line is to prevent that CBm and VMB are not the same as en%E
        !
-       en%E(:,:,:)=en%E(:,:,:)-Fermi_en%Efermi(1)
+       en%E(:,:,:)=en%E(:,:,:)-Fermi_en%E_Fermi
        !
        call OCCUPATIONS_Extend(Fermi_en,en)
        !
@@ -366,7 +366,7 @@ module QP_CTL_m
      !
      ! Reporting
      !
-     call msg('r', '[QP] Fermi level variation [ev]:',en%Efermi(1)*HA2EV)
+     call msg('r', '[QP] Fermi level variation [ev]:',en%E_Fermi*HA2EV)
      call msg('r', '[QP] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
      if (en%nbf==en%nbm) then
        if (n_sp_pol==1) then

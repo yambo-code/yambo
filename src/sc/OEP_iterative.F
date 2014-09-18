@@ -117,9 +117,9 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
              DeltaEps = DeltaEps + conjg(WF%c(ir,offt))*WF%c(ir,ifft)*V_nm1(ir)-&
 &             U(ik,iv2,ir)*conjg(WF%c(ir,ifft))
            end do
-           if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+ E%Efermi(1) 
+           if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+ E%E_Fermi 
            if ((l_oep_EWeight).and.(iv2.gt.E%nbf)) &
-           &EWeight = EWeight*((E%E(iv2,ik,1)-E%E(iv1,ik,1))/(E%E(iv2,ik,1)+ E%Efermi(1)))    
+           &EWeight = EWeight*((E%E(iv2,ik,1)-E%E(iv1,ik,1))/(E%E(iv2,ik,1)+ E%E_Fermi))    
            V_resp(:) = V_resp(:) + E%f(iv1,ik,1)*k%weights(ik)*real((DeltaEps)*&
                 &conjg(WF%c(:,ifft))*WF%c(:,offt))/EWeight
          end do

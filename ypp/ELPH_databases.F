@@ -524,7 +524,7 @@ integer function ELPH_databases(k,E,q)
        ! To allign correctly the E(k+q) energies I use the shift between
        ! the ABSOLUTE YAMBO energy levels at k and the GS ones.
        !
-       GS_E_k_shift=real(Ek(1)/2._DP)-(E%E(1,k%sstar(k2k_tab(ik),1),1)+E%Efermi(1))
+       GS_E_k_shift=real(Ek(1)/2._DP)-(E%E(1,k%sstar(k2k_tab(ik),1),1)+E%E_Fermi)
        !
        E_k_plus_q(:,k2k_tab(ik),1)=real(Ek_p_q(:elph_nb)/2._DP)-GS_E_k_shift
        !

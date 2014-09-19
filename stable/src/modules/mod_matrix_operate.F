@@ -21,6 +21,8 @@
 !
 module matrix_operate
  !
+ use pars, ONLY:SP
+ !
  implicit none
  !
  integer, parameter :: USE_LK=1
@@ -47,7 +49,7 @@ module matrix_operate
  contains
    !
    complex(SP) function trace(M)
-     use pars, ONLY:SP,cZERO
+     use pars, ONLY:cZERO
      implicit none
      complex(SP), intent(in) :: M(:,:)
      !
@@ -64,7 +66,6 @@ module matrix_operate
    end function trace   
    !
    function hermitian(M)
-     use pars, ONLY:SP
      implicit none
      complex(SP), intent(in) :: M(:,:)
      complex(SP) :: hermitian(size(M(:,1)),size(M(1,:)))
@@ -77,7 +78,6 @@ module matrix_operate
      !
      ! Copy mr in mc using m_order indexes for mc
      !
-     use pars, ONLY:SP
      real(SP)    :: mr(:,:,:)
      complex(SP) :: mc(:,:)
      integer     :: m_order(:)
@@ -98,7 +98,6 @@ module matrix_operate
      !
      ! Copy mr in mc 
      !
-     use pars, ONLY:SP
      real(SP)    :: mr(:,:,:)
      complex(SP) :: mc(:,:)
      integer     :: i1,i2,mr_shp(3),mc_shp(2) ! Work Space
@@ -118,7 +117,6 @@ module matrix_operate
      !
      ! Copy mc in mr
      !
-     use pars, ONLY:SP
      real(SP)    :: mr(:,:,:)
      complex(SP) :: mc(:,:)
      integer     :: i1,i2,mr_shp(3),mc_shp(2) ! Work Space
@@ -137,7 +135,6 @@ module matrix_operate
      !
      ! Analitic inverse of a real 3x3 matrix
      !
-     use pars, ONLY:SP
      use com,  ONLY:error,warning
      real(SP)          :: m(3,3)
      real(SP),optional :: m_inv(3,3)
@@ -163,7 +160,6 @@ module matrix_operate
      !
      ! Analitic inverse of a complex 3x3 matrix
      !
-     use pars, ONLY:SP
      use com,  ONLY:error,warning
      complex(SP)          :: m(3,3)
      complex(SP),optional :: m_inv(3,3)
@@ -186,7 +182,6 @@ module matrix_operate
    end subroutine
    !
    function m3det(m)
-     use pars, ONLY:SP
      real(SP) :: m(3,3),m3det
      m3det = m(1,1)*( m(2,2)*m(3,3) - m(2,3)*m(3,2) )   &
 &           -m(1,2)*( m(2,1)*m(3,3) - m(2,3)*m(3,1) ) + &
@@ -194,7 +189,6 @@ module matrix_operate
    end function
    !
    function m3det_c(m)
-     use pars, ONLY:SP
      complex(SP) :: m(3,3),m3det_c
      m3det_c = m(1,1)*( m(2,2)*m(3,3) - m(2,3)*m(3,2) )   &
 &             -m(1,2)*( m(2,1)*m(3,3) - m(2,3)*m(3,1) ) + &
@@ -205,7 +199,6 @@ module matrix_operate
 &                         E_real,E_cmpl,SVD_digits,fill)
      !
      use wrapper,     ONLY:M_by_M
-     use pars,        ONLY:SP
      use parallel_m,  ONLY:PP_redux_wait,ncpu,myid
 #if defined _DISTRIBUTED
      use stderr,      ONLY:intc

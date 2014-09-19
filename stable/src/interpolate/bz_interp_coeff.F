@@ -47,7 +47,7 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues)
   real(DP),    allocatable :: rho(:)
   complex(SP), allocatable :: h_mat(:,:),delta(:,:)
   complex(DP), allocatable :: star_1(:,:),star_2(:,:)
-  real(DP)  :: R2_min,R2,roughness_func
+  real(DP)  :: R2_min,R2
   real(DP), parameter :: twopi=2._SP*pi
   real(SP)  :: v(3),star_vec(3,nsym)
   integer   :: ik,ik2,iv,i1,i2,nstar,nkm1,info,ikn,ikibz,nkpt
@@ -149,11 +149,9 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues)
   !
   call k_compare(Xk,VALUEs,engre,nshells,nvalues)
   !
-end subroutine bz_interp_coeff
-
+  contains
+  !
 pure real(DP) function roughness_func(R2,R2_min)
-  use pars,           ONLY:DP
-  implicit none
   real(DP),  intent(in) :: R2,R2_min
   real(DP),  parameter  :: C1=0.75_DP,C2=0.75_DP
   !
@@ -168,7 +166,6 @@ subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues)
   use interpolate,    ONLY:lattice_vectors
   use com,            ONLY:warning,msg
   !
-  implicit none
   type(bz_samp), intent(in) :: Xk
   integer,       intent(in) :: nvalues,nshells
   real(SP),      intent(in) :: VALUEs(nvalues,Xk%nibz)
@@ -201,4 +198,8 @@ subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues)
   call msg('s',dump_ch)
   !
   deallocate (new_VALUEs)
+  !
 end subroutine k_compare
+  !
+end subroutine bz_interp_coeff
+

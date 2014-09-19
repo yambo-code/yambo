@@ -169,7 +169,7 @@ module fields
          if (order> 0 ) local_a=0._SP
          if (order==-1) local_a=1._SP
        case('GAUSS')
-         if (order==0 ) local_a= sigma*sqrt(pi/2._SP)* ( erf( (real(T_or_W,SP)-T_0)/(sigma*sqrt(2._SP)) )+1._SP )
+         !if (order==0 ) local_a= sigma*sqrt(pi/2._SP)* ( erf( (real(T_or_W,SP)-T_0)/(sigma*sqrt(2._SP)) )+1._SP )
          if (order==1 ) local_a= exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
          if (order==2 ) local_a=-exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )*(T_or_W-T_0)/sigma**2
          if (order==-1) order=-2
@@ -292,8 +292,8 @@ module fields
          T_0=10._SP*sigma
          W_0=Field%frequency(1)
          T = 2._SP*pi/W_0
-         E_w= sqrt(pi/2._SP)*Field%amplitude*sigma*exp(-cI*W_0*T_0)*&
-              &(erf((T-T_0)/sqrt(2._SP)/sigma)+erf(T_0/sqrt(2._SP)/sigma))
+!         E_w= sqrt(pi/2._SP)*Field%amplitude*sigma*exp(-cI*W_0*T_0)*&
+!              &(erf((T-T_0)/sqrt(2._SP)/sigma)+erf(T_0/sqrt(2._SP)/sigma))
          Divide_by_Field = (2._SP*cI/E_w)**order
          if (order==0) Divide_by_Field =  (4._SP,0._SP)/(E_w*conjg(E_w))
        end select

@@ -43,7 +43,7 @@ subroutine K_dot_product(dot,V,W)
     if (i_Tk.ne.1) cycle
     dot_ = dot_ + dot_product(V(i_Tp)%fragment,W(i_Tp)%fragment)
   end do
-#if defined MPI_
+#if defined _MPI
   ! Reduce all (sum) on first row
   call PP_redux_wait(dot_,COMM=Haydock_parallel_group_comm(1))
   ! BCast on all other procs along 'the columns'

@@ -26,7 +26,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  use pars,          ONLY:SP,schlen,lchlen
  use units,         ONLY:HA2EV,HA2KEL
- use fields,        ONLY:global_gauge 
+ use X_m,           ONLY:global_gauge 
  use drivers,       ONLY:list_dbs
  use LOGO,          ONLY:code_version,code_revision
  use com,           ONLY:msg,warning

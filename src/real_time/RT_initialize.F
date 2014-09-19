@@ -31,6 +31,7 @@ subroutine RT_initialize(E,k,q)
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
+ use X_m,            ONLY:global_gauge
  use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded
  use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_steps_DB, &
 &                         RT_IO_G_steps,RT_IO_output_steps
@@ -48,7 +49,7 @@ subroutine RT_initialize(E,k,q)
 &                         RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
- use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
+ use fields,         ONLY:Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
  use parser_m,       ONLY:parser
  !

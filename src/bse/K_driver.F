@@ -49,7 +49,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
 #if defined _SC || defined _KERR
- use fields,         ONLY:global_gauge
+ use X_m,            ONLY:global_gauge
 #endif
  implicit none
  type(levels)  ::Xen,Ken

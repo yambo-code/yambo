@@ -26,8 +26,7 @@ module X_output
  use pars,    ONLY:schlen,SP
  use stderr,  ONLY:intc
  use com,     ONLY:msg
- use X_m,     ONLY:alpha_dim
- use fields,  ONLY:global_gauge
+ use X_m,     ONLY:alpha_dim,global_gauge
 #if defined _KERR
  use drivers,   ONLY:l_kerr
 #endif

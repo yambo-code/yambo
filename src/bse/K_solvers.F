@@ -32,7 +32,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use X_m,            ONLY:X_t,X_epsilon,X_drude_term
  use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs,BSE_mode
 #if defined _SC
- use fields,         ONLY:global_gauge
+ use X_m,            ONLY:global_gauge
 #endif
  !
  implicit none

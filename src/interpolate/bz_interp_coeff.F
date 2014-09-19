@@ -30,8 +30,8 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
   !
   use pars,           ONLY:SP,DP,pi,cI,IP,cZERO,cONE
   use interpolate,    ONLY:nshells,lattice_vectors,make_star,metric,int_sop
-  use D_lattice,      ONLY:nsym,dl_sop,a
-  use R_lattice,      ONLY:bz_samp,b
+  use D_lattice,      ONLY:nsym
+  use R_lattice,      ONLY:bz_samp
   use memory_m,       ONLY:mem_est
   use vec_operate,    ONLY:c2a
   use com,            ONLY:error
@@ -50,10 +50,10 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
   real(DP),    allocatable :: rho(:)
   complex(SP), allocatable :: h_mat(:,:),delta(:,:)
   complex(DP), allocatable :: star_1(:,:),star_2(:,:)
-  real(DP)  :: R2_min,R2,roughness_func
+  real(DP)  :: R2_min,R2
   real(DP), parameter :: twopi=2._SP*pi
   real(SP)  :: v(3),star_vec(3,nsym)
-  integer   :: ik,ik2,iv,i1,i2,nstar,Nkm1,info,ikn,ikibz
+  integer   :: ik,ik2,iv,i1,i2,nstar,Nkm1,info,ikn
   integer, allocatable :: ipiv(:)
   !
   Nkm1=Nk-1           ! number of k-points minus 1 in the BZ
@@ -152,59 +152,59 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
   !
   call k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
   !
-end subroutine bz_interp_coeff
-
-pure real(DP) function roughness_func(R2,R2_min)
-  use pars,           ONLY:DP
-  implicit none
-  real(DP),  intent(in) :: R2,R2_min
-  real(DP),  parameter  :: C1=0.75_DP,C2=0.75_DP
-  !
-  roughness_func=(1._DP-C1*R2/R2_min)**2 + C2*(R2/R2_min)**3
-  !
-end function roughness_func
-
-subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
-  use units,          ONLY:HA2EV
-  use pars,           ONLY:SP,DP,schlen
-  use R_lattice,      ONLY:bz_samp
-  use interpolate,    ONLY:lattice_vectors
-  use com,            ONLY:warning,msg
-  !
-  implicit none
-  type(bz_samp), intent(in) :: Xk
-  integer,       intent(in) :: nvalues,nshells,Nk
-  real(SP),      intent(in) :: VALUEs(nvalues,Nk)
-  complex(DP),   intent(in) :: engre(nshells,nvalues)
-  !
-  ! Work Space
-  !
-  integer :: ik,iv
-  character(schlen)     :: dump_ch
-  real(SP), allocatable :: new_VALUEs(:,:)
-  real(SP) :: ave_err,max_err,rel_ave_err
-  !
-  allocate(new_VALUEs(nvalues,Nk))
-  !
-  call fourier_interpolation(Xk,new_VALUEs,engre,nvalues,Nk)
-  !
-  max_err=0._SP
-  ave_err=0._SP
-  rel_ave_err=0._SP
-  !
-  do ik=1,Nk
-    do iv=1,nvalues
+ contains
+   !
+   pure real(DP) function roughness_func(R2,R2_min)
+    real(DP),  intent(in) :: R2,R2_min
+    real(DP),  parameter  :: C1=0.75_DP,C2=0.75_DP
+    !
+    roughness_func=(1._DP-C1*R2/R2_min)**2 + C2*(R2/R2_min)**3
+    !
+   end function roughness_func
+   !
+   subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
+    use units,          ONLY:HA2EV
+    use pars,           ONLY:SP,schlen
+    use R_lattice,      ONLY:bz_samp
+    use com,            ONLY:warning,msg
+    !
+    type(bz_samp), intent(in) :: Xk
+    integer,       intent(in) :: nvalues,nshells,Nk
+    real(SP),      intent(in) :: VALUEs(nvalues,Nk)
+    complex(DP),   intent(in) :: engre(nshells,nvalues)
+    !
+    ! Work Space
+    !
+    integer :: ik,iv
+    character(schlen)     :: dump_ch
+    real(SP), allocatable :: new_VALUEs(:,:)
+    real(SP) :: ave_err,max_err,rel_ave_err
+    !
+    allocate(new_VALUEs(nvalues,Nk))
+    !
+    call fourier_interpolation(Xk,new_VALUEs,engre,nvalues,Nk)
+    !
+    max_err=0._SP
+    ave_err=0._SP
+    rel_ave_err=0._SP
+    !
+    do ik=1,Nk
+      do iv=1,nvalues
         ave_err=ave_err+abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))
         if(abs(new_VALUEs(iv,ik))>0._SP) rel_ave_err=rel_ave_err+abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))/abs(new_VALUEs(iv,ik))
         if(abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))>max_err) max_err=abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))
-     enddo
-  enddo
-  !
-  ave_err=ave_err/real(nvalues*Nk)
-  rel_ave_err=rel_ave_err/real(nvalues*Nk)
-  !
-  write(dump_ch,'(a,3es16.8)') '[Interp err] Max, Avg, Avg_rel = ',max_err,ave_err,rel_ave_err
-  call msg('s',dump_ch)
-  !
-  deallocate (new_VALUEs)
-end subroutine k_compare
+      enddo
+    enddo
+    !
+    ave_err=ave_err/real(nvalues*Nk)
+    rel_ave_err=rel_ave_err/real(nvalues*Nk)
+    !
+    write(dump_ch,'(a,3es16.8)') '[Interp err] Max, Avg, Avg_rel = ',max_err,ave_err,rel_ave_err
+    call msg('s',dump_ch)
+    !
+    deallocate (new_VALUEs)
+    !
+   end subroutine k_compare 
+   !
+   !
+end subroutine bz_interp_coeff

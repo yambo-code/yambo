@@ -28,9 +28,8 @@ subroutine K_kerr_IP(w)
  use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use drivers,        ONLY:l_rpa_IP
- use X_m,            ONLY:X_epsilon,DIP_q_dot_iR
+ use X_m,            ONLY:X_epsilon,DIP_q_dot_iR,global_gauge
  use KERR,           ONLY:BSS_rhoq0_kerr,DIP_q_dot_iR_kerr,DIP_P_symm,B_Hall
- use fields,         ONLY:global_gauge
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BS_T_grp,BSS_eh_f,BSS_eh_table,&
 &                         BSS_eh_E,BSS_eh_W,BS_K_coupling,BS_anti_res,BS_nT_grps
  use electrons,      ONLY:spin_occ,spin

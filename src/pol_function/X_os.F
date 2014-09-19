@@ -49,7 +49,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
- use fields,        ONLY:global_gauge
+ use X_m,           ONLY:global_gauge
 #endif
 #if defined _TIMING
  use timing_m,      ONLY:timing

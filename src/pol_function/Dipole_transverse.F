@@ -45,7 +45,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use wrapper,             ONLY:M_by_V
  use com,                 ONLY:error,msg
 #if defined _KERR
- use fields,              ONLY:global_gauge
+ use X_m,                 ONLY:global_gauge
 #endif
 #if defined _SC
  use SC,                  ONLY:B_mat_index

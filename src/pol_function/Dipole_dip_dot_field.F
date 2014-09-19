@@ -36,8 +36,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
 #if defined _KERR
  use drivers,        ONLY:l_kerr
  use KERR,           ONLY:DIP_q_dot_iR_kerr,KERR_alloc,KERR_alloc,Dip_P_symm
- use fields,         ONLY:global_gauge
- use X_m,            ONLY:DIP_P
+ use X_m,            ONLY:DIP_P,global_gauge
 #endif
  !
  implicit none

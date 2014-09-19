@@ -269,9 +269,7 @@ subroutine K_Haydock(iq,W)
      !
      call K_dot_product(v0_mod_,Vnp1,Vnp1) 
      Bf(it+1)=sqrt(real(v0_mod_,SP))
-#if !defined _BLUEGENE
-     if( isnan(Bf(it+1)) ) call error('Bf=NaN likely because some eigenvalue of BSE is negative.')
-#endif
+     if( Bf(it+1)==(Bf(it+1)+1._SP) ) call error('Bf=NaN likely because some eigenvalue of the BSE is negative.')
      !
      !|Vm-1> = |Vm>
      !

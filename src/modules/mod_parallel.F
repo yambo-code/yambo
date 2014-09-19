@@ -23,7 +23,7 @@
 !
 module parallel_m
  !
- use pars,       ONLY:SP,DP,schlen
+ use pars,       ONLY:SP,DP,schlen,lchlen
  !
  implicit none
  !
@@ -317,7 +317,6 @@ module parallel_m
  contains
    !
    character(lchlen) function PARALLEL_message(i_s)
-     use pars,   ONLY:lchlen
      use stderr, ONLY:intc
      use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
      integer :: i_s
@@ -592,7 +591,6 @@ module parallel_m
    end subroutine
    !
    subroutine ch0share(chval,COMM)
-     use pars,      ONLY:lchlen
      character(lchlen) :: chval
      integer, optional :: COMM
 #if defined _MPI

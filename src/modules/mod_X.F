@@ -34,6 +34,10 @@ module X_m
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  logical                  :: eval_alpha
  !
+ ! Main Gauge
+ !
+ character(schlen)        :: global_gauge
+ !
  ! Large Q-vector support 
  !
  real(SP)                 :: q_plus_G_direction(3)

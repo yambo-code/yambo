@@ -46,7 +46,7 @@ subroutine K_diagonalization(iq,W)
  use wrapper,        ONLY:Vstar_dot_V_omp,V_dot_V_omp
 #endif
 #if defined _SC
- use fields,         ONLY:global_gauge
+ use X_m,            ONLY:global_gauge
 #endif
 #if defined _TIMING
  use timing_m,       ONLY:timing

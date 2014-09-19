@@ -27,10 +27,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use LIVE_t,         ONLY:what_is_running
  use interfaces,     ONLY:WF_load
  use pars,           ONLY:SP
- use com,            ONLY:warning,error,secnm
+ use com,            ONLY:warning,error,secnm,grid_path
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use fields,         ONLY:grid_path
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
 &                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,RD_CL_IF_END

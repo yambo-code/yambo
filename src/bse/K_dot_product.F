@@ -49,7 +49,7 @@ subroutine K_dot_product(dot,V,W)
    dot_ = dot_ + dot_product(V(i_Tp)%fragment,W(i_Tp)%fragment)
  end do
  !
-#if defined MPI_
+#if defined _MPI
  !
  ! Reduce all (sum) on first row
  !

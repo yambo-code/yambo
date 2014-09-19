@@ -38,7 +38,8 @@ integer function variables_RT(ID,local_description,what)
 &                         l_RT_uses_E_RIM,N_Gr_descs,RT_life_interp_steps,RT_life_interp_decay_time,&
 &                         RT_life_interp_KIND,l_NE_simulate_Irredux,RIM_EE_percent,l_RT_EE_impose_E
  use ELPH,           ONLY:ph_modes,elph_branches
- use fields,         ONLY:global_gauge,n_ext_fields,Efield
+ use X_m,            ONLY:global_gauge
+ use fields,         ONLY:n_ext_fields,Efield
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR,&
 &                         variable_is_found
  !

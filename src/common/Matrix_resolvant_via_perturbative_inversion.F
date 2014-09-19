@@ -28,9 +28,11 @@ integer function Matrix_resolvant_via_perturbative_inversion(N,W,C,f,V)
  use pars,           ONLY:SP
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
  use BS,             ONLY:BS_mat
- use wrapper,        ONLY:M_by_V
+ use parallel_m
 #if defined _OPENMP
- use wrapper,        ONLY:Vstar_dot_V_omp
+ use wrapper,        ONLY:Vstar_dot_V_omp,M_by_V_omp
+#else
+ use wrapper,        ONLY:Vstar_dot_V,M_by_V
 #endif
  !
  implicit none
@@ -49,6 +51,7 @@ integer function Matrix_resolvant_via_perturbative_inversion(N,W,C,f,V)
  Matrix_resolvant_via_perturbative_inversion=0
  !
  A_nm1(:)=V(:)*W(:)
+ !
 #if defined _OPENMP
  fo=C*Vstar_dot_V_omp(N,W,A_nm1)
 #else
@@ -63,7 +66,11 @@ integer function Matrix_resolvant_via_perturbative_inversion(N,W,C,f,V)
  !
  do while (it<=BSS_inv_iter_max) 
    !
+#if defined _OPENMP
+   call M_by_V_omp('n',N,BS_mat,A_nm1,A_n)
+#else
    call M_by_V('n',N,BS_mat,A_nm1,A_n)
+#endif
    !
    A_n(:)=V(:)*A_n(:)
 #if defined _OPENMP

@@ -27,12 +27,13 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
  use functions,     ONLY:bose_f
  use units,         ONLY:HA2EV
  use LIVE_t,        ONLY:live_timing
+ use R_lattice,     ONLY:nqbz
  use ELPH,          ONLY:gsqF_energy_steps,gsqF_energy_steps,gsqF_ca_corr,gsqF_fan,gsqF_life_f,&
-&                        gsqF_life_bose,gsqF_dw,elph_branches,&
-&                        elph_use_q_grid,ph_freqs_sq,QP_DW,QP_OMS_Fan
+&                        gsqF_life_bose,gsqF_dw,elph_branches,elph_nDBs_used,&
+&                        elph_use_q_grid,ph_freqs_sq,QP_DW,QP_OMS_Fan,elph_use_q_grid
  use QP_m,          ONLY:QP_solver,QP_Sc_steps,QP_Sc_steps,QP_n_states,QP_Sc,On_Mass_Shell_approx,&
 &                        QP_table
- use parallel_m,    ONLY:PAR_nQP,PAR_nQ,PAR_IND_QP,PAR_Q_index,PAR_IND_Q,PP_redux_wait
+ use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_Q_index,PAR_IND_Q,PP_redux_wait,PAR_COM_G_b_INDEX
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp,W_reset
@@ -46,13 +47,16 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
  !
  ! Work Space
  !
- integer            ::i_qp,iw,il,iq_loop,iq_mem,ib,ik
+ integer            ::i_qp,iw,il,iq_loop,iq_mem,ib,ik,nq
  type(w_samp)       ::Sc_local_W
  complex(DP)        ::DP_FAN(gsqF_energy_steps),DP_DW
  complex(SP)        ::coefficient,Sc_local(gsqF_energy_steps)
  real(SP)           ::ph_freq
  !
  call ELPH_simmetrize_and_distribute_gsqF(en)
+ !
+ nq=nqbz
+ if (.not.elph_use_q_grid) nq=elph_nDBs_used
  !
  if (trim(QP_solver)=='n') call live_timing('El-Ph Sc   [sum]',PAR_nQ*PAR_nQP)
  if (trim(QP_solver)=='g') call live_timing('El-Ph Sc[sum+KK]',PAR_nQ*PAR_nQP+PAR_nQP)
@@ -92,7 +96,7 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
    DP_FAN=cmplx(0.,0.,DP)
    DP_DW =cmplx(0.,0.,DP)
    !
-   do iq_loop=1,PAR_nQ
+   do iq_loop=1,nq
      !
      if (.not.PAR_IND_Q%element_1D(iq_loop)) cycle
      iq_mem=PAR_Q_index(iq_loop)
@@ -107,11 +111,11 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
          ! QP lifetimes/Green's function
          !-------------------------------
          if (l_GF_from_CA.and.trim(QP_solver)=='g') then
-           DP_FAN(iw)=DP_FAN(iw)+gsqF_fan(i_qp,iq_mem,il,iw)*(bose_f(ph_freq)+1.)/2.+&
-&                                gsqF_ca_corr(i_qp,iq_mem,il,iw)
+           DP_FAN(iw)=DP_FAN(iw)+(gsqF_fan(i_qp,iq_mem,il,iw)*(bose_f(ph_freq)+1.)/2.+&
+&                                 gsqF_ca_corr(i_qp,iq_mem,il,iw))/real( PAR_COM_G_b_INDEX%n_CPU)
          else
            DP_FAN(iw)=DP_FAN(iw)+coefficient*(gsqF_life_bose(i_qp,iq_mem,il,iw)*(bose_f(ph_freq)/2+1.)/2.+&
-&                                gsqF_life_f(i_qp,iq_mem,il,iw))
+&                                             gsqF_life_f(i_qp,iq_mem,il,iw))/real( PAR_COM_G_b_INDEX%n_CPU)
          endif
          !
          if ( trim(QP_solver)=='n' )  then
@@ -121,8 +125,8 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
            ! QP energies: FAN+correction
            !-----------------------------
            ! 
-           DP_FAN(iw)=DP_FAN(iw)+gsqF_fan(i_qp,iq_mem,il,iw)*(bose_f(ph_freq)+1.)/2.+&
-&                                gsqF_ca_corr(i_qp,iq_mem,il,iw)
+           DP_FAN(iw)=DP_FAN(iw)+(gsqF_fan(i_qp,iq_mem,il,iw)*(bose_f(ph_freq)+1.)/2.+&
+&                                 gsqF_ca_corr(i_qp,iq_mem,il,iw))/real( PAR_COM_G_b_INDEX%n_CPU)
            !
          endif
          !
@@ -133,7 +137,7 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
        ! QP energies : DW
        !------------------
        !
-       DP_DW=DP_DW+gsqF_dw(i_qp,iq_mem,il)*(bose_f(ph_freq)+1.)/2.
+       DP_DW=DP_DW+gsqF_dw(i_qp,iq_mem,il)*(bose_f(ph_freq)+1.)/2./real( PAR_COM_G_b_INDEX%n_CPU)
        ! 
      enddo
      !

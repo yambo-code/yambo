@@ -24,7 +24,6 @@
 subroutine K_inversion(iq,W,E,k,q) 
  !
  use pars,           ONLY:SP,pi
- use units
  use X_m,            ONLY:X_epsilon,X_drude_term
  use stderr,         ONLY:intc,real2ch
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_H_dim,&
@@ -323,7 +322,6 @@ subroutine K_inversion(iq,W,E,k,q)
    !
  enddo
  X_epsilon(3,:)=(1.+X_epsilon(3,:))/real(ncpu,SP)
- call live_timing()
  !
  ! Perturbative Invertion
  !========================
@@ -439,7 +437,9 @@ subroutine K_inversion(iq,W,E,k,q)
  ! I/O [after full inversion]
  !
  eps_disk(:,1)=X_epsilon(2,:)
- if(IO_dim==2) eps_disk(:,2)=X_epsilon(4,:)
+ !
+ if (IO_dim==2) eps_disk(:,2)=X_epsilon(4,:)
+ !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
  i_err=io_BSS_invert(iq,W%n_freqs,IO_dim,inv_err,eps_disk,W,ID)
  !
@@ -491,13 +491,9 @@ subroutine K_inversion(iq,W,E,k,q)
      !
      do i2=1,iw_2do
        !
-       if(.not.do_it_full) then
-         !
-         if (.not.px%element_1D(i2)) cycle
-         !
-       endif
-       !
        i3=i2+iw_2start-1
+       !
+       if (.not.px%element_1D(i3)) cycle
        !
        if (     do_it_full) perform_inv= inv_err(i3)/= 0
        if (.not.do_it_full) perform_inv= inv_err(i3)==-1

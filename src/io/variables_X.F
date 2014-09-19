@@ -130,7 +130,7 @@ integer function variables_X(ID,local_description,X)
 &     DESCRIPTION=local_description(i_local_desc))
    i_local_desc=i_local_desc+1
    call io_elemental(ID,&
-&       VAR=" BZ energy RIM points   :",I0=X_RIM_nkpts,CHECK=.true.,OP=(/"=="/),&
+&       VAR=" BZ energy RIM points   :",I0=X_RIM_nkpts,WARN=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  endif
  !

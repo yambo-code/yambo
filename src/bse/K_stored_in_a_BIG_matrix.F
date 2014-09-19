@@ -175,6 +175,8 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  ! ... while the oscillators vector and all other similar vectors are distributed ONLY among k-points
  ! and eh transitions.
  !
+ call PP_redux_wait(BS_mat_diagonal,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait(BS_mat_diagonal,COMM=PAR_COM_eh_INDEX%COMM)
  call PP_redux_wait(BSS_rhoq0,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_rhoq0,COMM=PAR_COM_eh_INDEX%COMM)
  call PP_redux_wait(BSS_eh_E,COMM=PAR_COM_Xk_ibz_INDEX%COMM )

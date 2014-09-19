@@ -42,7 +42,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #if defined _KERR
  use drivers,       ONLY:l_kerr
  use com,           ONLY:warning
- use fields,        ONLY:global_gauge
+ use X_m,           ONLY:global_gauge
  use KERR,          ONLY:DIP_P_symm,KERR_alloc
 #endif
 #if defined _TIMING

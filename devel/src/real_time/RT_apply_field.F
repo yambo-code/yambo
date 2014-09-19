@@ -31,8 +31,7 @@ subroutine RT_apply_field(ik,ik_RIM,En,H_nl_sc,A_input)
  use real_time,      ONLY:l_RT_diamagnetic,l_RT_uses_E_RIM
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:n_sp_pol
- use fields,         ONLY:global_gauge
- use X_m,            ONLY:DIP_iR,DIP_P,Dipole_Energy_treshold
+ use X_m,            ONLY:DIP_iR,DIP_P,Dipole_Energy_treshold,global_gauge
  use SC,             ONLY:SC_bands
  use parallel_m,     ONLY:PAR_Xk_ibz_index
  !

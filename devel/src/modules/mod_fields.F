@@ -28,16 +28,6 @@ module fields
  !
  implicit none
  !
- ! Main Gauge
- !
- character(schlen) :: global_gauge
- !
- ! Path for the shifted grids
- !
- character(lchlen) :: grid_path
- !
- ! GPL_EXCLUDE_START
- !
  logical           :: l_manual_excitation
  !
  ! Electric Field(s)
@@ -262,6 +252,7 @@ module fields
    end subroutine
    !
    complex(SP) function Rabi_Factor(Field,P,R)
+     use X_m,       ONLY:global_gauge
      !
      ! Rabi=2 * \mu.E
      !

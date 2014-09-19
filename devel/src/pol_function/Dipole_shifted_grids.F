@@ -28,7 +28,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
  !  i q.<nk|r|mk> =  \sum_i=1,3 q(i) <u_n(k+q0(i))|u_mk>/q0(i)
  !
  use pars,                ONLY: SP,lchlen
- use com,                 ONLY: warning, core_io_path, error
+ use com,                 ONLY: warning, core_io_path, error, grid_path
  use stderr,              ONLY: intc
  use LIVE_t,              ONLY: live_timing
  use electrons,           ONLY: levels,n_spin,  n_spinor,n_sp_pol
@@ -41,7 +41,6 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
 #if defined _OPENMP
  use wrapper,             ONLY: Vstar_dot_V_omp
 #endif
- use fields,              ONLY: grid_path 
  use memory_m,            ONLY: mem_est
  use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx
 #if defined _SC           

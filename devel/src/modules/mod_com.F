@@ -34,6 +34,10 @@ module com
  character(lchlen)  :: com_path
  character(lchlen)  :: repfile
  !
+ ! Path for the shifted grids
+ !
+ character(lchlen) :: grid_path
+ !
  character(3)      :: terminator(4)
  !
  ! JOB strings

@@ -97,28 +97,18 @@ subroutine cutoff_driver(q)
  !
  ! Cutoffed directions
  !
- is_cut=.false.
- is_cut(1)=index(str_piece(2),'x')/=0
- !
- ! Box
- !
- if (cut_is_box.or..not.is_cut(1)) is_cut(2)=index(str_piece(2),'y')/=0
- if (cut_is_box.or.(.not.is_cut(1).and..not.is_cut(2))) &
-&   is_cut(3)=index(str_piece(2),'z')/=0
- !
- ! Sphere
+ is_cut(1)=index(str_piece(2),'x')/=0.or.index(str_piece(2),'X')/=0
+ is_cut(2)=index(str_piece(2),'y')/=0.or.index(str_piece(2),'Y')/=0
+ is_cut(3)=index(str_piece(2),'z')/=0.or.index(str_piece(2),'Z')/=0
  !
  if (cut_is_sphere) is_cut=.true.
- !
- ! Cylinder
- !
- if (cut_is_cyl.or..not.is_cut(1)) is_cut(2)=index(str_piece(2),'y')/=0
- if (cut_is_cyl.or.(.not.is_cut(1).and..not.is_cut(2))) &
-&   is_cut(3)=index(str_piece(2),'z')/=0
  !
  if (.not.cut_is_box) box_length=0.
  if (.not.cut_is_sphere.and..not.cut_is_cyl) cyl_ph_radius=0.
  if (.not.cut_is_cyl) cyl_length=0.
+ if (.not.is_cut(1)) box_length(1)=0.
+ if (.not.is_cut(2)) box_length(2)=0.
+ if (.not.is_cut(3)) box_length(3)=0.
  !
  ! Return conditions
  !

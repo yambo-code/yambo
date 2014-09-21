@@ -41,7 +41,7 @@ subroutine QP_DBs_merge(en,k)
 &           i_err,i_sp,i1,ID
  real(SP):: k_qp(3),W_to_add,dE_to_add
  character(schlen) :: new_descriptions(max_qp_descs)
- integer, external :: io_QP
+ integer, external :: io_QP_and_GF
  !
  call section("=",'QP databases mergering')
  !=========================================
@@ -135,7 +135,7 @@ subroutine QP_DBs_merge(en,k)
  call msg('s','I/O...')
  !=====================
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
- i_err=io_QP('QP',QP_db(i_qp_ref),ID)
+ i_err=io_QP_and_GF('QP',QP_db(i_qp_ref),ID)
  call msg('l','done')
  !
 end subroutine

@@ -21,14 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine IO_and_Messaging_switch(what,CONDITION)
+subroutine io_and_Messaging_switch(what,CONDITION)
  !
  use pars,           ONLY:schlen
  use IO_m,           ONLY:IO_write,IO_read,Fragmented_IO_save,Fragmented_IO
  use com,            ONLY:write_to_report,write_to_of
  use parallel_m,     ONLY:IO_write_default,myid,master_cpu
  use stderr,         ONLY:string_split,write_to_log
- use fragments,      ONLY:Parallel_Fragments,last_syncronized
  use LIVE_t,         ONLY:live_timing_is_on
  use stderr,         ONLY:write_fragments_IO_log
  implicit none
@@ -83,16 +82,6 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
      if (trim(ch_piece(ich))=="+io_in" ) IO_read=local_TRUE
      if (trim(ch_piece(ich))=="+io_out") IO_write=local_TRUE
      !
-     if (trim(ch_piece(ich))=="+all_write_fragments") then
-       Parallel_Fragments=local_TRUE
-       IO_write          =local_TRUE
-       last_syncronized  =0
-     endif
-     if (trim(ch_piece(ich))=="-all_write_fragments") then
-       Parallel_Fragments=local_FALSE
-       IO_write          =IO_write_default(myid+1)
-     endif
-     !
      if (trim(ch_piece(ich))=="+DB_is_fragmented") Fragmented_IO=local_TRUE
      if (trim(ch_piece(ich))=="-DB_is_fragmented") Fragmented_IO=Fragmented_IO_save
      !
@@ -102,4 +91,4 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
    enddo
  endif
  !
-end subroutine IO_and_Messaging_switch
+end subroutine io_and_Messaging_switch

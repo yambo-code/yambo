@@ -98,7 +98,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  allocate(E_bare(SC_bands(2),nkibz,n_sp_pol))
  call mem_est("E_bare ",(/size(E_bare)/))
  E_bare=E%E(:SC_bands(2),:,:)
- E_bare_Ef=E%Efermi(1)
+ E_bare_Ef=E%E_Fermi
  !
  ! Perform a first I/O to check which DBs are present. In this VERIFY call
  !=====================

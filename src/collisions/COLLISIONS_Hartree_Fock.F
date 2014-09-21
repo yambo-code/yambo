@@ -26,7 +26,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi,cZERO
- use IO_m,          ONLY:io_COLLs
+ use IO_m,          ONLY:io_COLLs,fragment_status
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels,spin_occ,spin
@@ -42,7 +42,6 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- use fragments,     ONLY:fragment_status
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:WF_load
  use wrapper,       ONLY:V_dot_V

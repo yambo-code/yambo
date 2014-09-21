@@ -41,11 +41,11 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  !
  integer, parameter :: n_dl_pts=24 ! NO EVEN NUMBERS HERE !
  real(SP),parameter :: plot_factor=1.2
- character(schlen)  :: ch,of_name(3)
+ character(schlen)  :: ch,of_name(4)
  real(SP):: pl_xy_pt(n_dl_pts**2,3),v_xy(n_dl_pts**2,2),&
 &           pl_yz_pt(n_dl_pts**2,3),v_yz(n_dl_pts**2,2),&
 &           pl_xz_pt(n_dl_pts**2,3),v_xz(n_dl_pts**2,2),&
-&           dummy(3)
+&           dummy(3),max_val
  integer :: iqibz,iqbz,ig,ir1,ir2,ip,ig_r,is
  type(PP_indexes) ::px
  !
@@ -122,7 +122,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
        !
        iqibz = q%sstar(iqbz,1)
        is    = q%sstar(iqbz,2)
-       ig_r=g_rot( sop_inv(is), ig )
+       ig_r  = g_rot( sop_inv(is), ig )
        !
        dummy(1)=dot_product( (q%ptbz(iqbz,:)+g_vec(ig,:))*2.*pi/alat(:), pl_xy_pt(ip,:))
        dummy(2)=dot_product( (q%ptbz(iqbz,:)+g_vec(ig,:))*2.*pi/alat(:), pl_yz_pt(ip,:))
@@ -149,13 +149,13 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  call PP_redux_wait(v_xz(:,2))
  !
  call live_timing()
- call k_ibz2bz(q,'d',.false.)
  !
  ! Output Files
  !
  of_name(1)='xy_plane'
  of_name(2)='yz_plane'
  of_name(3)='xz_plane'
+ of_name(4)='RL_components'
  call of_open_close(of_name(1),'ot')
  call msg('o xy','#')
  call msg('o xy','#',(/'X [au]','Y [au]','V_Dlat','V_Rlat'/),INDENT=0,USE_TABS=.true.)
@@ -168,6 +168,10 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  call msg('o xz','#')
  call msg('o xz','#',(/'X [au]','Z [au]','V_Dlat','V_Rlat'/),INDENT=0,USE_TABS=.true.)
  call msg('o xz','#')
+ call of_open_close(of_name(4),'ot')
+ call msg('o RL_','#')
+ call msg('o RL_','#',(/'|q+G| [au]','V_o [au]','V_c [au]'/),INDENT=0,USE_TABS=.true.)
+ call msg('o RL_','#')
  !
  do ip=1,n_dl_pts**2
    call msg('o xy','',(/pl_xy_pt(ip,1),pl_xy_pt(ip,2),v_xy(ip,:)/),INDENT=-2,USE_TABS=.true.)
@@ -175,9 +179,36 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
    call msg('o yz','',(/pl_yz_pt(ip,2),pl_yz_pt(ip,3),v_yz(ip,:)/),INDENT=-2,USE_TABS=.true.)
  enddo
  !
+ max_val=0.
+ !
+ do iqbz=1,q%nbz
+   do ig=1,wf_ng
+     !
+     iqibz = q%sstar(iqbz,1)
+     is    = q%sstar(iqbz,2)
+     ig_r  = g_rot( sop_inv(is), ig )
+     !
+     dummy(1)=v_norm( (q%ptbz(iqbz,:)+g_vec(ig,:))*2.*pi/alat(:) )
+     dummy(2)=0.
+     if (iqbz/=1.or.ig/=1) dummy(2)=4.*pi/dummy(1)**2.
+     dummy(3)=4.*pi/bare_qpg(iqibz,ig_r)**2.
+     !
+     if (dummy(2)>max_val) max_val=dummy(2)
+     !
+     if (dummy(2)<max_val/100) cycle
+     !
+     call msg('o RL_','',dummy,INDENT=-2,USE_TABS=.true.)
+     !
+   enddo
+   !
+ enddo
+ !
  call of_open_close(of_name(1))
  call of_open_close(of_name(2))
  call of_open_close(of_name(3))
+ call of_open_close(of_name(4))
+ !
+ call k_ibz2bz(q,'d',.false.)
  !
  contains
    !

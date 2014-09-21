@@ -27,7 +27,7 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
  ! Here I apply the strecth for both QP_ctl_from_DB (respecting the 
  ! qp_done array) and QP_ctl_add (everywhere)
  !
- use pars,          ONLY:SP,lchlen
+ use pars,          ONLY:SP,lchlen,rZero
  use units,         ONLY:HA2EV,HBAR_eVfs
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
@@ -43,7 +43,7 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
  ! Work Space
  !
  integer  ::ib,ik,i_sp,n_of_coeff,i_spin
- real(SP) ::Eoc,Eov,M_factors_base(6),M_factors_free(6)
+ real(SP) ::M_factors_base(6),M_factors_free(6)
  character(lchlen) ::ch
  logical           ::QP_check_if_corrected,do_E,do_W,do_Z
  !
@@ -71,7 +71,7 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
      if (.not.associated(E%W)) then
        allocate(E%W(E%nb,E%nk,n_sp_pol))
        call mem_est("E-W",(/size(E%W)/),(/SP/))
-       E%W=0.
+       E%W=rZERO
      endif
    endif
    if (QP_ctl_from_DB(i_sp)%Z/=(1.,0.).or.QP_ctl_add(i_sp)%Z/=(1.,0.)) then
@@ -82,7 +82,7 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
      if (.not.associated(E%Z)) then
        allocate(E%Z(E%nb,E%nk,n_sp_pol))
        call mem_est("E-Z",(/size(E%Z)/))
-       E%Z=1.
+       E%Z=1._SP
      endif
    endif
    if (.not.any((/do_E,do_W,do_Z/))) return
@@ -96,17 +96,6 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
      call mem_est("E-Eo",(/size(E%Eo)/),(/SP/))
      E%Eo=E%E
    endif
-   !
-   ! Band edges
-   !
-   Eov=-1.
-   Eoc=1.E5
-   do ib=1,E%nb
-     do ik=1,E%nk
-       if (E%Eo(ib,ik,i_sp)<=1.E-5) Eov=max(Eov,E%Eo(ib,ik,i_sp))
-       if (E%Eo(ib,ik,i_sp)>1.E-5)  Eoc=min(Eoc,E%Eo(ib,ik,i_sp))
-     enddo
-   enddo
    !
    i_spin=i_sp
    if (do_E) then
@@ -160,13 +149,6 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
          !
          if (E%Eo(ib,ik,i_spin)> 1.E-5) iref=0
          if (E%Eo(ib,ik,i_spin)<=1.E-5) iref=n_of_coeff
-         if (what=="W") then
-           if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=QP_ctl_add(i_sp)%W_E_ref(1)-E%Efermi(1+i_spin)
-           if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=QP_ctl_add(i_sp)%W_E_ref(2)-E%Efermi(1+i_spin)
-         else
-           if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=Eoc
-           if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=Eov
-         endif
          !
          if (what=='Z') then
            !
@@ -185,6 +167,18 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
          !
          delta=M_factors_free(iref+1)
          !
+         ! Free factors are given from input file. In the case of W the user-defined reference
+         ! energy is given with respect to the CBM/VBM. The position of the VBM and CBM must be consistent with their
+         ! actual position in the energy levels.
+         !
+         if (what=="W") then
+           if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=QP_ctl_add(i_sp)%W_E_ref(1)
+           if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=QP_ctl_add(i_sp)%W_E_ref(2)
+         else
+           if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=E%E_CBm
+           if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=E%E_VBM
+         endif
+         !
          do i3=1,n_of_coeff-1
            M_factor_local=M_factors_free(iref+1+i3)
            if (what=='E') M_factor_local=M_factor_local-1.
@@ -192,6 +186,10 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
            if (what=='W'.and.E%Eo(ib,ik,i_spin)>rref.and.E%Eo(ib,ik,i_spin)<=1.E-5) cycle
            delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i3
          enddo
+         !
+         if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=E%E_CBm
+         if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=E%E_VBM
+         !
          if (DB_corrected(ib,ik,i_spin)/=1.or.apply_anyway) then
            delta=delta+M_factors_base(iref+1)
            do i3=1,n_of_coeff-1

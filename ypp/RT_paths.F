@@ -47,6 +47,8 @@ subroutine RT_paths(en)
  !
  N_pumps =0
  !
+ ! Get the list of ALL folders in the current I/O directory (defult is .)
+ !
  call ifolder_list(cstr(trim(core_io_path)),folder_list,nf)
  !
  call string_split(folder_list(:nf),Probe_path)
@@ -66,20 +68,32 @@ subroutine RT_paths(en)
  !
  Pump_path="none"
  !
+ ! Define the probes and pump on the basis of the existence of (n)db.RT_G or (n)db.RT_J_and_P.
+ ! Use the Pump_Keyword unless it is not "none". The Probe, instead, is defined also 
+ ! when Probe_Keyword=none by using the provided jobstr.
+ !
  i_f=1
  do while (i_f<=nf)
-   if (file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_GreenF').and.&
-&      index(trim(Probe_path(i_f)),trim(Probe_Keyword))>0  ) then
-     N_probes =N_probes+1
-     i_f=i_f+1
-   else
-     if ( index(trim(Probe_path(i_f)),trim(Pump_Keyword))>0 ) then
+   !
+   if (file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_G').or.&
+&      file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_J_and_P').or.&
+&      file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/db.RT_G').or.&
+&      file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/db.RT_J_and_P')) then
+     !
+     if(index(trim(Probe_path(i_f)),trim(Probe_Keyword))>0.or.&
+&       (trim(Probe_Keyword)=="none".and.index(trim(Probe_path(i_f)),trim(jobstr))>0)) then
+       N_probes =N_probes+1
+       i_f=i_f+1
+     else if ( index(trim(Probe_path(i_f)),trim(Pump_Keyword))>0 ) then
        Pump_path=Probe_path(i_f)
        N_pumps=1
      endif
-     forall (i_fp=i_f+1:nf) Probe_path(i_fp-1)=Probe_path(i_fp)
-     nf=nf-1
+     !
    endif
+   !
+   forall (i_fp=i_f+1:nf) Probe_path(i_fp-1)=Probe_path(i_fp)
+   nf=nf-1
+   !
  enddo
  !
  jobstr_save=jobstr

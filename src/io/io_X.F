@@ -35,9 +35,9 @@ integer function io_X(X,Xw,ID)
 &                        read_is_on,write_is_on,io_header,&
 &                        RD_CL,RD_CL_IF_END,io_action,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
-&                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED
+&                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED,&
+&                        io_fragment,fragment_exists
  use stderr,        ONLY:intc
- use fragments,     ONLY:io_fragment,fragment_exists
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif

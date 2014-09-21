@@ -21,43 +21,34 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DephMatrix_init()
+subroutine init_QP_ctl_switch(what)
  !
- ! Dephasing Matrix -> input file
- !
- use drivers,        ONLY: infile_editing
- use it_m,           ONLY: nflines,flines,infile
- use parser_m,       ONLY: parser  
+ use it_m,       ONLY:initactivate
+ use electrons,  ONLY:n_sp_pol
  implicit none
  !
- ! 
+ character(1)::what
+ !
  ! Work Space
  !
- integer :: i1,nflines_save
- logical :: l_lines_in_input
- character(17) :: comment
+ call initactivate(1,what//'fnQPdb '//what//'fnQP_N '//what//'fnFdb')
+ if (n_sp_pol==1) then
+   call initactivate(1,what//'fnQP_E '//what//'fnQP_Z')   
+   call initactivate(1,what//'fnQP_Wv_E '//what//'fnQP_Wv ')
+   call initactivate(1,what//'fnQP_Wc_E '//what//'fnQP_Wc ')
+ else
+   call initactivate(1,what//'fnQP_up_E '//what//'fnQP_up_Z')   
+   call initactivate(1,what//'fnQP_up_Wv_E '//what//'fnQP_up_Wv ')
+   call initactivate(1,what//'fnQP_up_Wc_E '//what//'fnQP_up_Wc ')
+   call initactivate(1,what//'fnQP_dn_E '//what//'fnQP_dn_Z')   
+   call initactivate(1,what//'fnQP_dn_Wv_E '//what//'fnQP_dn_Wv ')
+   call initactivate(1,what//'fnQP_dn_Wc_E '//what//'fnQP_dn_Wc ')
+ endif
  !
- call parser('DephMatrix',l_lines_in_input)
+ ! GPL_EXCLUDE_START
+ ! 
+ call initactivate(1,'OCCTime')
  !
- !If there are already the QP lines or there's not the input file todo return
- !
- if (l_lines_in_input.and..not.infile_editing) return 
- !
- comment="[RT] Dephasing Matrix"
- !
- nflines_save=nflines
- write (flines(nflines+1),'(a,t30,a)') '%DephMatrix',&
-&      '# '//trim(comment)//' (bnd1 | bnd2 | kpt | dephasing(fs) |)'
- write (flines(nflines+2),'(3(i3,a),1(f4.1,a))') 1,'|',1,'|',1,'|',-1.,'|'
- flines(nflines+3)='%'
- nflines=nflines+3
- !
- ! Write to input file
- !
- open(unit=12,file=trim(infile),position='append')
- do i1=nflines_save+1,nflines
-   write (12,'(a)') trim(flines(i1))
- enddo 
- close(12)
+ ! GPL_EXCLUDE_END
  !
 end subroutine

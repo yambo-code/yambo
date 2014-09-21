@@ -21,30 +21,43 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine parse_K_list(k,variable)
+subroutine init_DephMatrix()
  !
- use pars,           ONLY:SP
- use R_lattice,      ONLY:bz_samp
- use parser_m,       ONLY:parser
+ ! Dephasing Matrix -> input file
  !
+ use drivers,        ONLY: infile_editing
+ use it_m,           ONLY: nflines,flines,infile
+ use parser_m,       ONLY: parser  
  implicit none
- type(bz_samp)::k
- character(*) ::variable
  !
+ ! 
  ! Work Space
  !
- real(SP)     ::real_ctl
+ integer :: i1,nflines_save
+ logical :: l_lines_in_input
+ character(17) :: comment
  !
- real_ctl=0.
- k%nibz=1
- K_loop: do while(real_ctl/=999.)
-   if (associated(k%pt)) deallocate(k%pt)
-   allocate(k%pt(k%nibz,3))
-   k%pt(k%nibz,:)=(/0.,0.,999./)
-   call parser('QptCoord',k%pt)
-   real_ctl=k%pt(k%nibz,3)
-   if (real_ctl/=999.) k%nibz=k%nibz+1
- enddo K_loop
- k%nibz=k%nibz-1
+ call parser('DephMatrix',l_lines_in_input)
+ !
+ !If there are already the QP lines or there's not the input file todo return
+ !
+ if (l_lines_in_input.and..not.infile_editing) return 
+ !
+ comment="[RT] Dephasing Matrix"
+ !
+ nflines_save=nflines
+ write (flines(nflines+1),'(a,t30,a)') '%DephMatrix',&
+&      '# '//trim(comment)//' (bnd1 | bnd2 | kpt | dephasing(fs) |)'
+ write (flines(nflines+2),'(3(i3,a),1(f4.1,a))') 1,'|',1,'|',1,'|',-1.,'|'
+ flines(nflines+3)='%'
+ nflines=nflines+3
+ !
+ ! Write to input file
+ !
+ open(unit=12,file=trim(infile),position='append')
+ do i1=nflines_save+1,nflines
+   write (12,'(a)') trim(flines(i1))
+ enddo 
+ close(12)
  !
 end subroutine

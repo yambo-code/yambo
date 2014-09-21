@@ -23,7 +23,7 @@
 !
 logical function QP_check_if_corrected(band_range,k_range,spin_range,en,what)
  !
- ! E,W and Z corrections are identified with speficif integers
+ ! E,W and Z corrections are identified with specfic integers
  !
  ! E is 1
  ! W is 2

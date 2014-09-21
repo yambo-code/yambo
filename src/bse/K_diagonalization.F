@@ -30,7 +30,7 @@ subroutine K_diagonalization(iq,W)
  use wrapper,        ONLY:M_by_M,Vstar_dot_V,V_dot_V
  use X_m,            ONLY:X_epsilon,X_drude_term
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_anti_res,BS_mat_free
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_anti_res,BS_mat_free,BS_H_dim
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,INV
@@ -58,7 +58,7 @@ subroutine K_diagonalization(iq,W)
  ! Work Space
  !
  type(PP_indexes)     ::px
- integer              ::i1,BS_H_dim
+ integer              ::i1
  logical              ::K_is_not_hermitian
  real(SP)             ::gauge_factor,Co
  !
@@ -102,31 +102,6 @@ subroutine K_diagonalization(iq,W)
  !
  if (.not.BSS_write_eig_2_db) call parser('WRbsWF',BSS_write_eig_2_db)
  !
- ! Allocation & Par Procs
- !========================
- !
- K_is_not_hermitian=BS_K_coupling.or.allocated(BSS_eh_W)
- !
- BS_H_dim=BS_K_dim
- if (BS_K_coupling) BS_H_dim=2*BS_K_dim
- !
- allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
- call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
- !
- if (K_is_not_hermitian) then
-   allocate(BS_V_left(BS_H_dim,BS_H_dim),BS_V_right(BS_H_dim,BS_H_dim))
-   call mem_est("BS_V_left BS_V_right",(/BS_H_dim,size(BS_V_left),size(BS_V_right)/))
-   allocate(BS_R_left(BS_H_dim),BS_R_right(BS_H_dim),BS_overlap(BS_H_dim,BS_H_dim))
-   call mem_est("BS_R_left BS_R_right BS_overlap",(/BS_H_dim,BS_H_dim,size(BS_overlap)/))
-   BS_overlap=(0.,0.)
- else
-   allocate(BS_E_real(BS_H_dim))
-   call mem_est("BS_E_real",(/BS_H_dim/),(/SP/))
- endif
- !
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/BS_H_dim/))
- !
  ! Diagonalization DB (IN)
  !========================
  !
@@ -147,6 +122,28 @@ subroutine K_diagonalization(iq,W)
      enddo
    endif
    !
+ endif
+ !
+ ! Allocation & Par Procs
+ !========================
+ !
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/BS_H_dim/))
+ !
+ K_is_not_hermitian=BS_K_coupling.or.allocated(BSS_eh_W)
+ !
+ allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
+ call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
+ !
+ if (K_is_not_hermitian) then
+   allocate(BS_V_left(BS_H_dim,BS_H_dim),BS_V_right(BS_H_dim,BS_H_dim))
+   call mem_est("BS_V_left BS_V_right",(/BS_H_dim,size(BS_V_left),size(BS_V_right)/))
+   allocate(BS_R_left(BS_H_dim),BS_R_right(BS_H_dim),BS_overlap(BS_H_dim,BS_H_dim))
+   call mem_est("BS_R_left BS_R_right BS_overlap",(/BS_H_dim,BS_H_dim,size(BS_overlap)/))
+   BS_overlap=(0.,0.)
+ else
+   allocate(BS_E_real(BS_H_dim))
+   call mem_est("BS_E_real",(/BS_H_dim/),(/SP/))
  endif
  !
  ! Initialize the output file 
@@ -319,8 +316,11 @@ subroutine K_diagonalization(iq,W)
    if (     K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))/gauge_factor
    !
    if (.not.K_is_not_hermitian) then
+     !
      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))/gauge_factor
+     !
      if(BS_anti_res) X_epsilon(2,:)=X_epsilon(2,:)+BS_R(i1)*conjg(BS_R(i1))/(W%p(:)+BS_E(i1))/gauge_factor
+     !
    endif
    !
    call live_timing(steps=1)

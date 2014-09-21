@@ -30,7 +30,8 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&
 &                        COHSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver,&
-&                        use_GreenF_to_eval_QP,GF_is_causal,QP_G_Zoom_treshold
+&                        use_GreenF_to_eval_QP,GF_is_causal,QP_G_Zoom_treshold,&
+&                        GW_terminator_E,l_GW_terminator,GW_terminator_Kind
  use stderr,        ONLY:string_pack,gen_fmt
  use drivers,       ONLY:l_life,l_ppa,l_elph_corr,l_elel_corr,l_cohsex,l_elphoton_corr
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
@@ -155,10 +156,25 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &         ' Sc/G damping       [ev]:',QP_G_damp*HA2EV
    endif
    !
+   if (l_GW_terminator) then
+     qp%n_descs=qp%n_descs+1
+     qp%description(qp%n_descs)=' Sc bands terminator    : yes'
+     qp%n_descs=qp%n_descs+1
+     qp%description(qp%n_descs)=' Sc terminator kind     :'//trim(GW_terminator_Kind)    
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&           string_pack('(a,',gen_fmt( r_v=(/GW_terminator_E*HA2EV /) ),')'))) &
+&           ' Sc Terminator pole     :',GW_terminator_E*HA2EV
+   else
+     qp%n_descs=qp%n_descs+1
+     qp%description(qp%n_descs)=' Sc bands terminator    : no'
+   endif
+   !
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
 &       string_pack('(a,',gen_fmt( (/QP_ng_Sx /) ),')'))) &
 &       ' Sx RL components       :',QP_ng_Sx
+   !
  endif
  !
 #if defined _QED 

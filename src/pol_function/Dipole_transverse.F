@@ -269,9 +269,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #if defined _SC || defined _KERR
          if (l_eval_DIP_P) then
            if (n_spinor==2) then
-             DIP_P(:,ic,iv,ik,1)=DIP_P(:,ic,iv,ik,1)+rho(:3)
+             DIP_P(:,ic,iv,ik_mem,1)=DIP_P(:,ic,iv,ik_mem,1)+rho(:3)
            else
-             DIP_P(:,ic,iv,ik,i_spin)=rho(:3)
+             DIP_P(:,ic,iv,ik_mem,i_spin)=rho(:3)
            endif
          endif
 #endif

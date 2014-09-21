@@ -29,8 +29,7 @@ integer function io_QINDX(Xk,q,io_db)
 &                         Xk_impose_minus_q
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,read_is_on,io_header,&
-&                         ver_is_gt_or_eq,io_fragmented,io_extension
- use fragments,      ONLY:io_fragment
+&                         ver_is_gt_or_eq,io_fragmented,io_extension,io_fragment
  implicit none
  type(bz_samp)::q,Xk
  integer      ::io_db

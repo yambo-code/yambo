@@ -39,7 +39,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        PAR_IND_Q_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
                          PAR_COM_Q_A2A,PAR_COM_Q_index
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch
+ use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,io_and_Messaging_switch
  use QP_ctl_m,      ONLY:QP_ctl_t,reset_QP_ctl
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
@@ -470,7 +470,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  if (l_WRgFsq) then
    call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_index%COMM)
-   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
+   call io_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    do iq_loop=iq_range(1),iq_range(2)
      iq_mem=PAR_Q_index(iq_loop)
      if (iq_loop==iq_range(1)) then
@@ -483,7 +483,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      endif
      io_err=io_ELPH(ID,'gFsq')
    enddo
-   call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
+   call io_and_Messaging_switch("+io_out",CONDITION=master_cpu)
  endif
  !
  ! CLEAN

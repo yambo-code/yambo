@@ -43,7 +43,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use SC,             ONLY:V_xc_sc,l_sc_pot_is_local,SC_kind,SC_xc_functional,SC_cycle_mixing,&
 &                         SC_bands,SC_R,H_rotate,l_oep_iterative
  use FFT_m,          ONLY:fft_size
- use IO_m,           ONLY:IO_and_Messaging_switch
+ use IO_m,           ONLY:io_and_Messaging_switch
  !
  implicit none
  !
@@ -91,15 +91,15 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      !
      ! Stop all messagging
      !
-     call IO_and_Messaging_switch("-report -io_in -io_out")
+     call io_and_Messaging_switch("-report -io_in -io_out")
      !
      call XCo_driver(E,k,k,q)
      !
-     call IO_and_Messaging_switch("+io_in")
+     call io_and_Messaging_switch("+io_in")
      !
      if (l_sc_cohsex) call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
-     call IO_and_Messaging_switch("+report +io_out",CONDITION=master_cpu)
+     call io_and_Messaging_switch("+report +io_out",CONDITION=master_cpu)
      !
    endif
    !

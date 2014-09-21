@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Scattering_step(G_new_k,ik,deltaT)
+subroutine RT_Scattering_step(dG,ik,deltaT)
  !
  use pars,           ONLY:SP,cI
  use electrons,      ONLY:spin_occ
@@ -35,7 +35,7 @@ subroutine RT_Scattering_step(G_new_k,ik,deltaT)
  !
  implicit none
  !
- complex(SP), intent(out) :: G_new_k(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ complex(SP), intent(out) :: dG(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  integer,     intent(in)  :: ik
  real(SP),    intent(in)  :: deltaT
  !
@@ -48,7 +48,7 @@ subroutine RT_Scattering_step(G_new_k,ik,deltaT)
  !
  !if (.not. (l_RT_EXP.and.l_RT_RWA) ) then
  !
- forall(ib=SC_bands(1):SC_bands(2))  G_new_k(ib,ib) = G_new_k(ib,ib) - cI*deltaT*I_relax_static(ib,ib,ik)
+ forall(ib=SC_bands(1):SC_bands(2))  dG(ib,ib) = dG(ib,ib) - cI*deltaT*I_relax_static(ib,ib,ik)
  !
  !endif
  !
@@ -80,7 +80,7 @@ subroutine RT_Scattering_step(G_new_k,ik,deltaT)
  !    if(       (GAMMA_h+GAMMA_e)>0._SP  ) f_inf=GAMMA_h/(GAMMA_h+GAMMA_e)*spin_occ
  !    if(.not. ((GAMMA_h+GAMMA_e)>0._SP) ) f_inf=f0
  !    !
- !    G_new_k(ib,ib)=G_new_k(ib,ib)*exp(-GAMMA_TOT*deltaT)+cI*(f0-f_inf)*(exp(-GAMMA_TOT*deltaT)-1._SP)
+ !    dG(ib,ib)=dG(ib,ib)*exp(-GAMMA_TOT*deltaT)+cI*(f0-f_inf)*(exp(-GAMMA_TOT*deltaT)-1._SP)
  !    !
  !  enddo
  !  !

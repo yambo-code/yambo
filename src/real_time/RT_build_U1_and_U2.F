@@ -45,7 +45,7 @@ subroutine RT_build_U1_and_U2(ik,U1_k,U2_k,dT)
   ! Taylor expansion
   !
   ! U(t) = exp(H * t) = 1 + (Ht) + (Ht)^2/2! + (Ht)^3/3! + (Ht)^4/4! + O(Ht^5)
-  !                     however the 1 is stored in another matix
+  !                     however the 1 is stored in another matrix
   !
   idT =-cI*dT
   U1_k=+idT*Ho_plus_Sigma(:,:,ik,1)

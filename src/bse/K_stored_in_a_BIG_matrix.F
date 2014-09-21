@@ -34,8 +34,9 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  use electrons,      ONLY:n_sp_pol
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                         PAR_COM_T_INDEX,PAR_COM_Xk_ibz_INDEX
- use BS,             ONLY:BS_mat,BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,&
-&                         BSS_rhoq0,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BS_mat_alloc
+ use BS,             ONLY:BS_mat,BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,&
+&                         BSS_rhoq0,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BS_mat_alloc,&
+&                         BS_H_dim,BS_mat_diagonal
  implicit none
  !
  integer      :: iq
@@ -78,8 +79,6 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      !
      H_pos(1)=sum(BS_T_grp(:I_g-1)%size)+i_c
      !
-     BSS_rhoq0(H_pos(1))=BS_T_grp(i_g)%dipoles_R(i_c)
-     !
      if (n_sp_pol==2) BSS_eh_table(H_pos(1),:)=(/i_k_bz,i_v,i_cond,i_spin/)
      if (n_sp_pol==1) BSS_eh_table(H_pos(1),:)=(/i_k_bz,i_v,i_cond/)
      !
@@ -88,7 +87,13 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos(1))=BS_T_grp(i_g)%Z(i_c)
      if (allocated(BS_T_grp(i_g)%W)) BSS_eh_W(H_pos(1))=BS_T_grp(i_g)%W(i_c)
      !
+     BSS_rhoq0(H_pos(1))=BS_T_grp(i_g)%dipoles_R(i_c)
      BS_mat(H_pos(1),H_pos(1))=BS_T_grp(i_g)%E(i_c)/real( PAR_COM_T_INDEX%n_CPU )
+     !
+     if (BS_K_coupling) then
+       H_pos(1)=H_pos(1)+BS_K_dim
+       BSS_rhoq0(H_pos(1))=BS_T_grp(i_g)%dipoles_A(i_c)
+     endif
      !
    enddo
  enddo
@@ -108,15 +113,30 @@ subroutine K_stored_in_a_BIG_matrix(iq)
        !
        H_pos(2)=sum(BS_T_grp(:I_Tp-1)%size)+i_c
        !
-       if (H_pos(1)>H_pos(2)) cycle
+       if (BS_blk(i_B)%mode=="A") then
+         !
+         H_pos(2)=H_pos(2)+BS_K_dim
+         !
+         BS_mat(H_pos(1),H_pos(2))=BS_blk(i_B)%mat(i_r,i_c)*sqrt(BS_T_grp(i_Tk)%f(i_r))*sqrt(BS_T_grp(i_Tp)%f(i_c))
+         !
+       else
+         !
+         if (H_pos(1)>H_pos(2)) cycle
+         !
+         BS_mat(H_pos(1),H_pos(2))=BS_mat(H_pos(1),H_pos(2))+&
+&                                  BS_blk(i_B)%mat(i_r,i_c)*sqrt(BS_T_grp(i_Tk)%f(i_r))*sqrt(BS_T_grp(i_Tp)%f(i_c))
+       endif
        !
-       BS_mat(H_pos(1),H_pos(2))=BS_mat(H_pos(1),H_pos(2))+&
-&         BS_blk(i_B)%mat(i_r,i_c)*sqrt(BS_T_grp(i_Tk)%f(i_r))*sqrt(BS_T_grp(i_Tp)%f(i_c))
+       if (H_pos(1)==H_pos(2)) then
+         BS_mat_diagonal(H_pos(1))=BS_blk(i_B)%mat(i_r,i_c)*sqrt(BS_T_grp(i_Tk)%f(i_r))*sqrt(BS_T_grp(i_Tp)%f(i_c))
+       endif
        !
      enddo
    enddo
    !
  enddo
+ !
+ ! Resonant part is Hermitian
  !
  do i_r=1,BS_K_dim
    do i_c=1,BS_K_dim
@@ -124,6 +144,24 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      BS_mat(i_c,i_r)=conjg( BS_mat(i_r,i_c) )
    enddo
  enddo
+ !
+ ! Filling the anti-resonant and anti-coupling parts
+ !
+ if (BS_K_coupling) then
+   !
+   ! If Coupling the half lower part of K must be filled
+   !
+   ! Anti-resonant
+   !
+   forall(i_r=BS_K_dim+1:BS_H_dim,i_c=BS_K_dim+1:BS_H_dim) &
+&       BS_mat(i_r,i_c)=-conjg(BS_mat(i_r-BS_K_dim,i_c-BS_K_dim))
+   ! 
+   ! Anti-coupling
+   !
+   forall(i_r=BS_K_dim+1:BS_H_dim,i_c=1:BS_K_dim) &
+&       BS_mat(i_r,i_c)=-conjg(BS_mat(i_r-BS_K_dim,i_c+BS_K_dim))
+   !
+ endif
  !
  ! ALL 2 ALL
  !===========
@@ -137,6 +175,8 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  ! ... while the oscillators vector and all other similar vectors are distributed ONLY among k-points
  ! and eh transitions.
  !
+ call PP_redux_wait(BS_mat_diagonal,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait(BS_mat_diagonal,COMM=PAR_COM_eh_INDEX%COMM)
  call PP_redux_wait(BSS_rhoq0,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_rhoq0,COMM=PAR_COM_eh_INDEX%COMM)
  call PP_redux_wait(BSS_eh_E,COMM=PAR_COM_Xk_ibz_INDEX%COMM )

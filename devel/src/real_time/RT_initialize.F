@@ -92,11 +92,16 @@ subroutine RT_initialize(E,k,q)
  !==================
  !
  l_RT_EULER=index(Integrator_name,'EULER')/=0.or.index(Integrator_name,'euler')/=0
+ !
  if (.not.l_RT_EULER) l_RT_RK2=index(Integrator_name,'RK2')/=0.or.index(Integrator_name,'rk2')/=0
- if (.not.l_RT_EULER.and..not.l_RT_RK2) &
-&  l_RT_HEUN=index(Integrator_name,'HEUN')/=0.or.index(Integrator_name,'heun')/=0
+ !
+ if (.not.l_RT_EULER.and..not.l_RT_RK2) l_RT_HEUN=index(Integrator_name,'HEUN')/=0.or.&
+&                                                 index(Integrator_name,'heun')/=0
+ !
  l_RT_RWA=index(Integrator_name,'RWA')/=0.or.index(Integrator_name,'rwa')/=0
+ !
  l_RT_EXP=index(Integrator_name,'EXP')/=0.or.index(Integrator_name,'exp')/=0
+ !
  if (.not.l_RT_EXP) l_RT_INTERPOLATE=index(Integrator_name,'INTERPOLATE')/=0.or.index(Integrator_name,'interpolate')/=0
  !
  Integrator_name=""

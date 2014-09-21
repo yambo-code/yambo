@@ -21,35 +21,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_ctl_switch(what)
+subroutine init_parse_K_list(k,variable)
  !
- use it_m,       ONLY:initactivate
- use electrons,  ONLY:n_sp_pol
+ use pars,           ONLY:SP
+ use R_lattice,      ONLY:bz_samp
+ use parser_m,       ONLY:parser
+ !
  implicit none
- !
- character(1)::what
+ type(bz_samp)::k
+ character(*) ::variable
  !
  ! Work Space
  !
- call initactivate(1,what//'fnQPdb '//what//'fnQP_N '//what//'fnFdb')
- if (n_sp_pol==1) then
-   call initactivate(1,what//'fnQP_E '//what//'fnQP_Z')   
-   call initactivate(1,what//'fnQP_Wv_E '//what//'fnQP_Wv ')
-   call initactivate(1,what//'fnQP_Wc_E '//what//'fnQP_Wc ')
- else
-   call initactivate(1,what//'fnQP_up_E '//what//'fnQP_up_Z')   
-   call initactivate(1,what//'fnQP_up_Wv_E '//what//'fnQP_up_Wv ')
-   call initactivate(1,what//'fnQP_up_Wc_E '//what//'fnQP_up_Wc ')
-   call initactivate(1,what//'fnQP_dn_E '//what//'fnQP_dn_Z')   
-   call initactivate(1,what//'fnQP_dn_Wv_E '//what//'fnQP_dn_Wv ')
-   call initactivate(1,what//'fnQP_dn_Wc_E '//what//'fnQP_dn_Wc ')
- endif
+ real(SP)     ::real_ctl
  !
- ! GPL_EXCLUDE_START
- ! 
- call initactivate(1,'OCCTime')
- !
- ! GPL_EXCLUDE_END
- !
+ real_ctl=0.
+ k%nibz=1
+ K_loop: do while(real_ctl/=999.)
+   if (associated(k%pt)) deallocate(k%pt)
+   allocate(k%pt(k%nibz,3))
+   k%pt(k%nibz,:)=(/0.,0.,999./)
+   call parser('QptCoord',k%pt)
+   real_ctl=k%pt(k%nibz,3)
+   if (real_ctl/=999.) k%nibz=k%nibz+1
+ enddo K_loop
+ k%nibz=k%nibz-1
  !
 end subroutine

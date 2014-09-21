@@ -33,13 +33,12 @@ integer function io_SC_components(what,E_sc,ID)
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,close_is_on,&
-&                         manage_RD_WR_CL_IF_END,variable_is_found,io_SC,IO_NOT_ALLOWED,io_unit,IO_write
+&                         manage_RD_WR_CL_IF_END,variable_is_found,io_SC,IO_NOT_ALLOWED,io_unit,&
+&                         IO_write,io_fragment
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol,n_spin
- use fragments,      ONLY:io_fragment
- use parallel_m
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif

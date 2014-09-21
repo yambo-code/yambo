@@ -49,6 +49,7 @@ module BS
  ! Dimensions
  !=============
  integer :: BS_K_dim
+ integer :: BS_H_dim
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier
@@ -228,7 +229,7 @@ module BS
      !
      if (CORRELATION) then
        allocate(BS_blk(iB)%O(O_ng,BS_blk(iB)%N_oscillators))
-       call mem_est("BS_blk_"//trim(intc(iB))//"_O",(/size (BS_blk(iB)%O)/))
+       call mem_est("BS_blk_"//trim(intc(iB))//"_Oscillators",(/size (BS_blk(iB)%O)/))
      endif
      !
    end subroutine
@@ -306,10 +307,13 @@ module BS
    subroutine BS_mat_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
-     integer :: i_g,BS_H_dim
+     integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
      BS_H_dim=BS_K_dim
      if (BS_K_coupling) BS_H_dim=2*BS_K_dim
+     allocate(BS_mat_diagonal(BS_H_dim))
+     BS_mat_diagonal = cZERO
+     call mem_est('BS_mat_diagonal',(/size(BS_mat_diagonal)/))
      allocate(BS_mat(BS_H_dim,BS_H_dim))
      call mem_est('BS_mat',(/size(BS_mat)/))
      BS_mat    = cZERO

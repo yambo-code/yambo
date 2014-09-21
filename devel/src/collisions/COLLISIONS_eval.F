@@ -40,8 +40,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use plasma,        ONLY:EH_gas
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
- use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
- use fragments,     ONLY:fragment_status
+ use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs,fragment_status
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,io_COLLISIONS
  use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_Xk_ibz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
  use X_m,           ONLY:X_t

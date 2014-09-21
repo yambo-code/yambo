@@ -88,9 +88,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  !
  if (E%Nbm+1 > E%nb) call error(' Too few states. Include more states in the DFT run.')
  !
- ! E%Efermi(1) = Fermi Level
- ! E%Efermi(2) = VB max (with resepect to Efermi(1) )
- ! E%Efermi(3) = CB min (with resepect to Efermi(1) )
+ ! VBM/CBM
  !
  E_vb_min=-100._SP
  E_vb_max=-100._SP
@@ -104,7 +102,9 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
    E_cb_min(i_sp_pol)=minval(E%E(Nbf_(i_sp_pol)+1,:,i_sp_pol))
    E_cb_max(i_sp_pol)=minval(E%E(Nbf_(i_sp_pol)+1,:,i_sp_pol))
  enddo
- E%Efermi(2:)=E%Efermi(1)+(/maxval(E_vb_max),minval(E_cb_min)/)
+ !
+ E%E_VBM=maxval(E_vb_max)
+ E%E_CBm=minval(E_cb_min)
  !
  ! [1] Indirect Gaps (min/max)
  !

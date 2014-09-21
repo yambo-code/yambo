@@ -187,7 +187,7 @@ subroutine RT_occupations_FIT_and_plot(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  endif
  !
  output_fname(1)='YPP-RT_Temperatures'
- output_fname(2)='YPP-RT_Efermi'
+ output_fname(2)='YPP-RT_E_Fermi'
  !
  call of_open_close(trim(output_fname(1)),'ot')
  call of_open_close(trim(output_fname(2)),'ot')

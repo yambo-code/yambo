@@ -68,7 +68,7 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  !
  ! Fermi level contribution to E_total
  !
- E_total=(E%Efermi(1)+E_bare_Ef)*nel
+ E_total=(E%E_Fermi+E_bare_Ef)*nel
  !
  do i_spin=1,n_sp_pol
    do ik=1,k%nibz

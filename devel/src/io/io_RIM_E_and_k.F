@@ -58,6 +58,8 @@ integer function io_RIM_E_and_k(E,Xk,ID)
  call io_elemental(ID,I0=BZ_RIM_max_filling,VAR=' BZ Blocks max filling           :')
  if (ver_is_gt_or_eq(ID,revision=2740)) then
    call io_elemental(ID,L0=RIM_is_symmetry_expanded,VAR=' Points expanded in the BZ       :')
+ else
+   RIM_is_symmetry_expanded=.TRUE.
  endif
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !

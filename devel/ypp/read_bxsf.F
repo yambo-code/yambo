@@ -272,7 +272,7 @@ subroutine read_bxsf(Xk,Xen)
  call section('*','Create & write BZ_RIM')
  !
  allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
- Xen%E_RIM(:,:RIM_k%nbz,1)=ene(:,:RIM_k%nbz)/HA2EV+Xen%Efermi(1)
+ Xen%E_RIM(:,:RIM_k%nbz,1)=ene(:,:RIM_k%nbz)/HA2EV+Xen%E_Fermi
  ! align last (partly) filled band at gamma.
  nearest_to_g=k_the_nearest(RIM_k%ptbz(1,:),Xk%ptbz(:,:),Xk%nbz) 
  if(sum((RIM_k%ptbz(1,:)-Xk%ptbz(nearest_to_g,:))**2).gt. epsilon(1._SP)) then

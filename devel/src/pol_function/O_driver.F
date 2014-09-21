@@ -151,7 +151,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! OutPut files...
    !
    if(.not.l_rpa_IP) call X_setup_file_names(iq,'inv',trim(FXC_type),'dyson',ig=i_G_shift)
-   if(     l_rpa_IP) call X_setup_file_names(iq,'IP-RPA','','',ig=i_G_shift)
+   if(     l_rpa_IP) call X_setup_file_names(iq,'ip','','',ig=i_G_shift)
    !
    ! ... open ...
    !

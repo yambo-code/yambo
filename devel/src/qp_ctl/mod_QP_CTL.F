@@ -95,6 +95,13 @@ module QP_CTL_m
      ! 2 : BSK (object = "K")
      ! 3 : G (object = "G")
      !
+     ! Note about linewidths sign. Both at zero and finite temperature the sign follows the
+     ! T-orderd convention (W>0 E<0, W<0 E>0). At finite temperature this is the consequence of
+     ! the Wick rotation done to bring the theory on the real-axis.
+     !
+     ! This convention about sign is imposed (when reading DB's made at finite Temperature)
+     ! in QP_apply_global_stretch and  QP_apply_DB_interpolation
+     !
      use memory_m,      ONLY:mem_est
      use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
 &                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
@@ -245,7 +252,7 @@ module QP_CTL_m
          QP_ctl_input_or_impose(i_spin)%W(1:3)=(/QP_ctl_Wc(Eid,1,i_spin)/HA2EV,&
 &                                                QP_ctl_Wc(Eid,2,i_spin),QP_ctl_Wc(Eid,3,i_spin)*HA2EV/)
          QP_ctl_input_or_impose(i_spin)%W_E_ref(:)=(/QP_ctl_Wc_E_ref(Eid,i_spin)+en%E_CBm,&
-&                                                             QP_ctl_Wv_E_ref(Eid,i_spin)+en%E_VBM/)
+&                                                    QP_ctl_Wv_E_ref(Eid,i_spin)+en%E_VBM/)
          QP_ctl_input_or_impose(i_spin)%W(4:6)=(/QP_ctl_Wv(Eid,1,i_spin)/HA2EV,&
 &                                                QP_ctl_Wv(Eid,2,i_spin),QP_ctl_Wv(Eid,3,i_spin)*HA2EV/)
          QP_ctl_input_or_impose(i_spin)%Z=QP_ctl_Z(Eid,i_spin)
@@ -342,7 +349,7 @@ module QP_CTL_m
        ! Instead the en%E are out-of-date and are not shifted in OCCUPATIONS_Extend.
        ! This line is to prevent that CBm and VMB are not the same as en%E
        !
-       en%E(:,:,:)=en%E(:,:,:)-Fermi_en%Efermi(1)
+       en%E(:,:,:)=en%E(:,:,:)-Fermi_en%E_Fermi
        !
        call OCCUPATIONS_Extend(Fermi_en,en)
        !
@@ -359,7 +366,7 @@ module QP_CTL_m
      !
      ! Reporting
      !
-     call msg('r', '[QP] Fermi level variation [ev]:',en%Efermi(1)*HA2EV)
+     call msg('r', '[QP] Fermi level variation [ev]:',en%E_Fermi*HA2EV)
      call msg('r', '[QP] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
      if (en%nbf==en%nbm) then
        if (n_sp_pol==1) then

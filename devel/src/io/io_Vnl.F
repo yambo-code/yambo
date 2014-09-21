@@ -30,9 +30,9 @@ integer function io_Vnl(X,Xen,ID)
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_status,io_bulk,&
-&                        read_is_on,write_is_on,io_header,io_fragmented,io_extension
+&                        read_is_on,write_is_on,io_header,io_fragmented,io_extension,&
+&                        io_fragment
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
- use fragments,     ONLY:io_fragment
  use com,           ONLY:warning
  use memory_m,      ONLY:mem_est
  !

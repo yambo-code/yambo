@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine init_q_pts(l_WRITE)
+subroutine init_q_points(l_WRITE)
  !
  use pars,        ONLY:SP
  use memory_m,    ONLY:mem_est
@@ -53,7 +53,7 @@ subroutine init_q_pts(l_WRITE)
    nflines=nflines+1
  else
    call bz_samp_reset(q)
-   call parse_K_list(q,'QptCoord')
+   call init_parse_K_list(q,'QptCoord')
    nqibz=q%nibz
    if (nqibz>0)  then
      allocate(q_pt(nqibz,3))

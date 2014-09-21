@@ -38,7 +38,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
-&                       RIM_anisotropy,minus_G
+&                       RIM_anisotropy,minus_G,bare_qpg
  use com,          ONLY:warning,error
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
@@ -147,9 +147,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (l_bs_fxc) then
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
+   !call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
    !
-   io_BS_Fxc_err=io_BS_Fxc(iq,W_bss,ID,X=X)
+   !io_BS_Fxc_err=io_BS_Fxc(iq,W_bss,ID,X=X)
    !
  else
    !
@@ -447,22 +447,42 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            ! :::EXCHANGE    (resonant):::
            !=============================
 #ifdef _OPENMP
-           H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp), BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+           if (l_col_cut) then
+             H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp), &
+&                                             BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+           else
+             H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp), BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+           endif
 #else
-           H_x=Vstar_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp), BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+             if (l_col_cut) then
+               H_x=Vstar_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp),&
+&                                               BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+             else
+               H_x=Vstar_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp), BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+             endif
 #endif
          endif
-       else if (BS_blk(i_block)%mode=="A") then
+       else 
          if (BS_cpl_K_exchange) then
            !
            ! :::EXCHANGE    (coupling):::
            !=============================
 #ifdef _OPENMP
-           H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
-&                          BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+           if (l_col_cut) then
+             H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
+&                            BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+           else
+             H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
+&                            BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+           endif
 #else
-           H_x=V_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
-&                      BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+           if (l_col_cut) then
+             H_x=V_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
+&                        BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+           else
+             H_x=V_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
+&                        BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
+           endif
 #endif
          endif
        endif
@@ -553,6 +573,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call live_timing(steps=1)
    !
  enddo
+ !
+ ! BS DB description section I/O
+ !===============================
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)

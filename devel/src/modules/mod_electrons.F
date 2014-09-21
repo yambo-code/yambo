@@ -65,7 +65,7 @@ module electrons
    integer         :: bf
    integer         :: kf
    integer         :: sf
-   real(SP)        :: Efermi(3)
+   real(SP)        :: E_Fermi
    real(SP)        :: E_dir_gap(2) ! 1-2 refers to spin polarizations
    real(SP)        :: E_ind_gap(2)
    real(SP)        :: E_VBM        ! Valence    Band Maximum
@@ -124,7 +124,7 @@ module electrons
        Eo%bf=Ei%bf
        Eo%kf=Ei%kf
        Eo%sf=Ei%sf
-       Eo%Efermi=Ei%Efermi
+       Eo%E_Fermi=Ei%E_Fermi
        Eo%E_VBM=Ei%E_VBM
        Eo%E_CBm=Ei%E_CBm
        Eo%E_dir_gap=Ei%E_dir_gap
@@ -180,7 +180,7 @@ module electrons
      use memory_m, ONLY:mem_est
      type(levels)::E
      E%E_dir_gap=0.
-     E%Efermi=0.
+     E%E_Fermi=0.
      E%E_VBM=0.
      E%E_CBm=0.
      E%nb=0

@@ -179,7 +179,7 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
    enddo
    !
    call OCCUPATIONS_Fermi(Xen,k,0)
-   Xen%E(:SC_bands(2),:,:)=Xen%E(:SC_bands(2),:,:)-Xen%Efermi(1)
+   Xen%E(:SC_bands(2),:,:)=Xen%E(:SC_bands(2),:,:)-Xen%E_Fermi(1)
    !
    if(it==Thermal_steps) then
      call msg('r',' ')

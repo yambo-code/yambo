@@ -29,6 +29,11 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  !
  ! l_plan_todo_EWZI=( E W Z Interp )
  !
+ ! Note that as output of this routine W is positive(negative) above(below) the Fermi level. 
+ ! This is true both at zero and finite temperature. Indeed also at finite temperature
+ ! when the theory is causal the GF must be rotated to the real-energy axis.
+ !
+ !
  use pars,          ONLY:SP
  use electrons,     ONLY:n_sp_pol,spin
  use com,           ONLY:msg,warning
@@ -62,10 +67,6 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  nk_interpolated=0
  nk_exact=0
  !
- if (.not.l_plan_todo_EWZI(4).and..not.l_plan_todo_EWZI(5)) then
-  l_plan_todo_EWZI(4)=.TRUE.
- endif
- !
  if (l_plan_todo_EWZI(4)) then
    !
    ! Nearest K-point interpolation
@@ -94,11 +95,12 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
            if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
            en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+qp%E(ib_ref)-qp%E_bare(ib_ref)
            DB_corrected(iband,ik,i_spin)=1
+           en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+1
          endif
          !
          if (l_plan_todo_EWZI(2)) then
            if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
-           if (real(qp%E(ib_ref))>0..and.aimag(qp%E(ib_ref))>0) then
+           if (real(qp%E_bare(ib_ref))>0..and.aimag(qp%E(ib_ref))>0) then
              if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
              en%W(iband,ik,i_spin)=-aimag(qp%E(ib_ref))
              wrong_width_sign_warn=.true.
@@ -106,12 +108,14 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
              en%W(iband,ik,i_spin)=aimag(qp%E(ib_ref))
            endif
            DB_corrected(iband,ik,i_spin)=1
+           en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+2
          endif
          !
          if (l_plan_todo_EWZI(3)) then
-           if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
+           if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle
            en%Z(iband,ik,i_spin)=qp%Z(ib_ref)
            DB_corrected(iband,i1,i_spin)=1
+           en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+4
          endif
          !
        enddo
@@ -173,30 +177,33 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
                do i_spin=1,n_sp_pol
                  if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
                  en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+Valo(iband,ik,i_spin,i1)
+                 DB_corrected(iband,ik,i_spin)=1
+                 en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+1
                enddo
-               DB_corrected(iband,ik,i_spin)=1
              endif
              if(l_plan_todo_EWZI(2)) then
                i1=i1+1
                do i_spin=1,n_sp_pol
                  if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
-                 if (Valo(iband,ik,i_spin,i1-1)>0. .and. Valo(iband,ik,i_spin,i1)>0) then
+                 if (en%Eo(iband,ik,i_spin)>0. .and. Valo(iband,ik,i_spin,i1)>0) then
                    if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
                    en%W(iband,ik,i_spin)=-Valo(iband,ik,i_spin,i1)
                    wrong_width_sign_warn=.true.
                  else
                    en%W(iband,ik,i_spin)=Valo(iband,ik,i_spin,i1)
                  endif
+                 DB_corrected(iband,ik,i_spin)=1
+                 en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+2
                enddo
-               DB_corrected(iband,ik,i_spin)=1
              endif
              if(l_plan_todo_EWZI(3)) then
                i1=i1+2
                do i_spin=1,n_sp_pol
                  if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle
                  en%Z(iband,ik,i_spin)=cmplx(Valo(iband,ik,i_spin,i1-1),Valo(iband,ik,i_spin,i1))
+                 DB_corrected(iband,ik,i_spin)=1
+                 en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+4
                enddo
-               DB_corrected(iband,ik,i_spin)=1
              endif
              !
            enddo

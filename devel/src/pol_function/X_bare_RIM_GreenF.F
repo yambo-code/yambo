@@ -152,7 +152,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
      ! 
      ik_rand=BZ_RIM_table(ikbz,i1) 
      !
-     pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ik_rand,i_spin)+(0.,1.)*W_
+     pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ik_rand,i_spin)-(0.,1.)*W_
      !
      s_ffac=Z_*Xen%f_RIM(iv,ik_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))*&
 &           BZ_RIM_ipol_weight(i1)/real(BZ_RIM_nkpt(ikbz))

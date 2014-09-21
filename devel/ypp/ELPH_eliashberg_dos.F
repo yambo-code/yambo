@@ -73,7 +73,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !-----------------------------------------------------------------------
  !
  Ef_diff=0.
- if (elph_Ef/=0.) Ef_diff=en%Efermi(1)-elph_Ef
+ if (elph_Ef/=0.) Ef_diff=en%E_Fermi-elph_Ef
  !
  ! DOS @ Ef
  !
@@ -138,7 +138,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    if (l_dos)        io_err=io_ELPH(ID,'no_gkkp')
    if (l_eliashberg) io_err=io_ELPH(ID,'gkkp')
    !
-   if (.not.elph_use_q_grid.and.l_eliashberg) call setup_k_plus_q_levels(en%Efermi(1))
+   if (.not.elph_use_q_grid.and.l_eliashberg) call setup_k_plus_q_levels(en%E_Fermi)
    !
    ! Q weight
    !

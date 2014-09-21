@@ -30,8 +30,7 @@ integer function io_P_and_P2(X,Xen,ID)
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_fragmented,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
-&                        IO_NOT_ALLOWED,io_DIP
- use fragments,     ONLY:io_fragment
+&                        IO_NOT_ALLOWED,io_DIP,io_fragment
  use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_IND_Xk_ibz
  !
  implicit none

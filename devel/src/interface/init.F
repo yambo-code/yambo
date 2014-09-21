@@ -95,7 +95,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer           :: io_err,io_WF_err,io_X_err(4),io_ID,io_BS_err,io_KB_abinit_err,io_KB_pwscf_err,&
 &                     io_BS_Fxc_err,io_QINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
-&                     io_HF_and_locXC,io_QP,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
+&                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
 &                     io_COL_CUT
  logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
  !
@@ -181,7 +181,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
  if (CLOSE_Gs) then
    call call_init_load('Close_G_vectors')
-   call barriers( )
+   call init_barriers( )
    call logicalson
    return
  endif
@@ -291,7 +291,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! QP
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
- io_err=io_QP('QP',qp,io_ID) 
+ io_err=io_QP_and_GF('QP',qp,io_ID) 
  !
  !In DUMP mode qp%table is dumped as well (to be used in QP_apply).
  !Here, however, qp%table is not needed
@@ -304,12 +304,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Green Functions
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
- io_err=io_QP('G',qp,io_ID) 
+ io_err=io_QP_and_GF('G',qp,io_ID) 
  !
  ! W
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
- io_err=io_QP('W',qp,io_ID) 
+ io_err=io_QP_and_GF('W',qp,io_ID) 
  !
  ! ostnts
  !
@@ -555,7 +555,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                  'DrudeW','EhEngy','LongDr'/))
    !
    !
-   call QP_ctl_switch('X')
+   call init_QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath Qdirection QShiftOrder')
    !
 #if defined _SC
@@ -586,7 +586,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_optics.and.l_bse) then
    !
-   call QP_ctl_switch('K')
+   call init_QP_ctl_switch('K')
    !
    call initactivate(1,'ShiftedPath')
 #if defined _SC || defined _KERR
@@ -627,7 +627,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Static screen 
  !
  if (l_em1s) then
-   call QP_ctl_switch('X')
+   call init_QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
@@ -638,7 +638,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! GW (PPA & COHSEX) 
  !
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
-   call QP_ctl_switch('X')
+   call init_QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
    if (l_ppa) then
      call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
@@ -656,7 +656,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! ACFDT
  !
  if (l_acfdt) then
-   call QP_ctl_switch('X')
+   call init_QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
    call initactivate(1,'EXXRLvcs AC_n_LAM AC_n_FR AC_E_Rng')
    call X_activate('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
@@ -678,8 +678,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    if (l_elel_corr) then
      !
-     call QP_ctl_switch('X')
-     call QP_ctl_switch('G')
+     call init_QP_ctl_switch('X')
+     call init_QP_ctl_switch('G')
      call initactivate(1,'BoseCut ShiftedPath')
      !
      if (l_gw0) then
@@ -711,7 +711,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
 #if defined  _ELPH 
    !
-   call QP_ctl_switch('G')
+   call init_QP_ctl_switch('G')
    !
    if (l_elph_corr) then
      call initactivate(1,'DysSolver')
@@ -777,7 +777,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT
  !
  if (l_real_time) then
-   call QP_ctl_switch('G')
+   call init_QP_ctl_switch('G')
    call initactivate(-1,'SCmixing')
    call initactivate(1,'Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep NEsteps NETime LifeInterpKIND LifeInterpSteps LifeInterpT COHsteps DipoleEtresh')
@@ -843,10 +843,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! To handle externally defined Q-points I use the init_q_pts
  !
  ! (a) first check if input file contains already a list of Q-points...
- call init_q_pts(.FALSE.)
+ call init_q_points(.FALSE.)
  !
  ! (b) ... then (re)write the file
- if (l_setup.and.io_QINDX_err/=0.and.infile_editing) call init_q_pts(.TRUE.)
+ if (l_setup.and.io_QINDX_err/=0.and.infile_editing) call init_q_points(.TRUE.)
  !
  !If qp limits are requested they are added at the end of the input file
  !
@@ -892,7 +892,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
  !
 #if defined _RT
- if(infile_verbosity==V_real_time.and.l_real_time) call DephMatrix_init()
+ if(infile_verbosity==V_real_time.and.l_real_time) call init_DephMatrix()
 #endif
  !
  if (infile_editing) return
@@ -1061,7 +1061,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! Check if this runlevel is allowed in the 
        ! present configuration
        !
-       if (i1==1) call barriers( )
+       if (i1==1) call init_barriers( )
        !
      enddo
      !

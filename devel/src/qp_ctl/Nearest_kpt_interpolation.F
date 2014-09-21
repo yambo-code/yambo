@@ -23,7 +23,7 @@
 !                  
 subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pti,k_pto,Vali,Valo,call_kind)
  !
- ! Interpotlation with nearest neighbor method but averaging up to n_neigh neighbors
+ ! Interpolation with nearest neighbor method but averaging up to n_neigh neighbors
  ! The input values are known on the k_pti kgrid and there can be N_int quantities to
  ! be interpolated. The quantities to be interpolated are on a vector which is mapped to the 
  ! kpts, bands and spin indexes by the table.

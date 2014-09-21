@@ -308,7 +308,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_KB_pwscf_err=io_KB_pwscf(ID)
  ! 
- if (io_RT_G_err==0) then
+ if (io_RT_G_err==0.or.io_RT_J_err==0) then
    !
    if (io_RT_J_err==0) J_steps=(NE_steps-1)/RT_IO_JPO_steps+1
    X_rt%energy_range=(/0._SP,pi/RT_step/)
@@ -598,13 +598,13 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  if (l_map_kpts) call initactivate(1,"BZ_RIM_Nk SkipCheck BZExpand NoWeights")
  !
  if (l_electrons) then
-   if (l_dos.or.l_bands) call QP_ctl_switch('G')
+   if (l_dos.or.l_bands) call init_QP_ctl_switch('G')
    if (l_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands")
  endif
 #if defined _YPP_RT
  if (l_RealTime) then
    l_flag=l_RT_dos.or.l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_occ_Bands.or.l_RT_abs
-   if (l_flag) call QP_ctl_switch('G')
+   if (l_flag) call init_QP_ctl_switch('G')
    if (l_flag) call initactivate(1,"OCCdT OCCTime OCCTref")
    if (l_RT_occ_Bands.or.l_RT_life_Bands) call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
    if (l_RT_occ_Plot) call initactivate(1,"OCCgroup")
@@ -630,7 +630,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  if (l_excitons) then
    call initactivate(1,"States")
    if (l_amplitude) then
-     call QP_ctl_switch('G')
+     call init_QP_ctl_switch('G')
      call initactivate(1,"DipWeight")
    endif
    if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step MinWeight")
@@ -644,7 +644,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
 #if defined _YPP_ELPH
  if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF PHmodeF GkkpExpand")
- if (l_phonons.and.l_eliashberg)   call initactivate(1,"EEfermi EfGbroad")
+ if (l_phonons.and.l_eliashberg)   call initactivate(1,"EE_Fermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif
  !

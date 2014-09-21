@@ -25,11 +25,11 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  ! Mode = 0 
  !  Update the Fermi energy
- !  Output : E%Efermi(1)
+ !  Output : E%E_fermi
  !
  ! Mode = 1 -> Mode 0 +
  !  Define E%f and reports variations in Ef/nbf/nbm
- !  Output : E%Efermi(2:) E%nbf,E%nbm
+ !  Output : E%nbf,E%nbm
  !  E%E are shifted 
  !
  ! Mode > 1 -> Mode 1 +
@@ -150,8 +150,8 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    do i1=i_Ef(1),i_Ef(2),1
      call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
      if ( abs(n_of_el_from_zero(1)) < nel_diff_zero) then
-       if( (E%nk*E%nb*n_sp_pol)> i1 ) E%Efermi(1)=E_sorted(i1)
-       if( (E%nk*E%nb*n_sp_pol)==i1 ) E%Efermi(1)= E_sorted(i1)
+       if( (E%nk*E%nb*n_sp_pol)> i1 ) E%E_Fermi= E_sorted(i1)
+       if( (E%nk*E%nb*n_sp_pol)==i1 ) E%E_Fermi= E_sorted(i1)
        Fermi_is_converged=.true.
        exit
      endif
@@ -167,20 +167,20 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    call ef2nel(Tel,Ef(1),n_of_el_from_zero(1))
    call ef2nel(Tel,Ef(2),n_of_el_from_zero(2))
    !
-   E%Efermi(1)=Ef(1)
-   if (n_of_el_from_zero(2)<-n_of_el_from_zero(1)) E%Efermi(1)=Ef(2)
+   E%E_Fermi=Ef(1)
+   if (n_of_el_from_zero(2)<-n_of_el_from_zero(1)) E%E_Fermi=Ef(2)
    !
    i_trials(2)=1
    do while (i_trials(2)<=100)
-     call ef2nel(Tel,E%Efermi(1),n_of_el_from_zero(1))
-     if (n_of_el_from_zero(1)<-nel_diff_zero) Ef(1)=E%Efermi(1)
-     if (n_of_el_from_zero(1)> nel_diff_zero) Ef(2)=E%Efermi(1)
+     call ef2nel(Tel,E%E_Fermi,n_of_el_from_zero(1))
+     if (n_of_el_from_zero(1)<-nel_diff_zero) Ef(1)=E%E_Fermi
+     if (n_of_el_from_zero(1)> nel_diff_zero) Ef(2)=E%E_Fermi
      if (abs(n_of_el_from_zero(1))<=nel_diff_zero) then
        Fermi_is_converged=.true.
        exit
      endif
      if (abs(Ef(1)-Ef(2))<1.E-8) exit
-     E%Efermi(1)=(Ef(1)+Ef(2))/2.
+     E%E_Fermi=(Ef(1)+Ef(2))/2.
      i_trials(2)=i_trials(2)+1
    enddo
    !
@@ -209,26 +209,26 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    ik=index( index_E_sorted(i1) , 2)
    is=index( index_E_sorted(i1) , 3)
    !
-   E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-E%Efermi(1),Tel)
+   E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-E%E_Fermi,Tel)
    !
-   if (abs(E%E(ib,ik,is)-E%Efermi(1))<Efdist) then
+   if (abs(E%E(ib,ik,is)-E%E_Fermi)<Efdist) then
      if ( E%f(ib,ik,is) < filled_tresh ) cycle
      if ( E%f(ib,ik,is)  ==   spin_occ ) cycle
      E%bf=ib
      E%kf=ik
      E%sf=is
-     Efdist=abs(E%E(ib,ik,is)-E%Efermi(1))
+     Efdist=abs(E%E(ib,ik,is)-E%E_Fermi)
    endif
    !
  enddo
  !
- E%E(:,:,:)=E%E(:,:,:)-E%Efermi(1)
+ E%E(:,:,:)=E%E(:,:,:)-E%E_Fermi
  !
  ! If %E_RIM is associated I simply extend the %E occupations to %E_RIM
  !
  if (BZ_RIM_nbands>0.and.associated(E%E_RIM)) then
    ! 
-   E%E_RIM(:,:,:)=E%E_RIM(:,:,:)-E%Efermi(1)
+   E%E_RIM(:,:,:)=E%E_RIM(:,:,:)-E%E_Fermi
    do ik=1,BZ_RIM_tot_nkpts
      do ib=1,BZ_RIM_nbands
        do is=1,n_sp_pol
@@ -245,16 +245,13 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  if (E%nbf==0 ) call error(' Input temperature is too high. Set a lower temperature in the input')
  !
- E%E_VBM=maxval(E%E(E%nbf  ,:,:))
- E%E_CBm=minval(E%E(E%nbm+1,:,:))
- !
  ! Mode = 1. Define E%f and exits
  !
  if (mode==1) return
  !
  ! Complete Report
  !
- call msg('r',  'Fermi Level        [ev]: ',E%Efermi(1)*HA2EV)
+ call msg('r',  'Fermi Level        [ev]: ',E%E_Fermi*HA2EV)
  call msg('r',  'VBM / CBm          [ev]: ',(/E%E_VBM,E%E_CBm/)*HA2EV)
  call msg('r',  'Electronic Temp. [ev K]: ',(/Tel*HA2EV,Tel*HA2KEL/))
  call msg('r',  'Bosonic    Temp. [ev K]: ',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))

@@ -21,23 +21,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function Matrix_resolvant_via_perturbative_inversion(iw,N,W,C,f,V)
+integer function Matrix_resolvant_via_perturbative_inversion(N,W,C,f,V)
  !
  ! C<W|1./(V^{-1}-M)|W> = \sum_n C<W| (1-VM)^{-1} V |W> = \sum_n C<W| ( VM )^n V |W>
  !
- use pars,           ONLY:SP,cONE
- use matrix_operate, ONLY:mat_dia_inv,USE_LK,INV
+ use pars,           ONLY:SP
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
- use BS,             ONLY:BS_K_coupling,BS_mat,BS_K_dim,BS_cpl_mat
- use com,            ONLY:error
- use wrapper,        ONLY:M_by_V
+ use BS,             ONLY:BS_mat
+ use parallel_m
 #if defined _OPENMP
- use wrapper,        ONLY:Vstar_dot_V_omp
+ use wrapper,        ONLY:Vstar_dot_V_omp,M_by_V_omp
+#else
+ use wrapper,        ONLY:Vstar_dot_V,M_by_V
 #endif
  !
  implicit none
  !
- integer      ::iw,N
+ integer      ::N
  complex(SP)  ::W(N),C,f
  complex(SP)  ::V(N)
  !
@@ -51,6 +51,7 @@ integer function Matrix_resolvant_via_perturbative_inversion(iw,N,W,C,f,V)
  Matrix_resolvant_via_perturbative_inversion=0
  !
  A_nm1(:)=V(:)*W(:)
+ !
 #if defined _OPENMP
  fo=C*Vstar_dot_V_omp(N,W,A_nm1)
 #else
@@ -65,17 +66,11 @@ integer function Matrix_resolvant_via_perturbative_inversion(iw,N,W,C,f,V)
  !
  do while (it<=BSS_inv_iter_max) 
    !
-   call M_by_V('n',BS_K_dim,BS_mat,A_nm1,A_n)
-   if (BS_K_coupling) then
-   !
-     call M_by_V('n',BS_K_dim,BS_K_dim,cONE, BS_cpl_mat,&
-&                 BS_K_dim,A_nm1(BS_K_dim+1:),1,cONE,A_n,1)
-     call M_by_V('n',BS_K_dim,BS_K_dim,cONE,conjg(BS_cpl_mat),&
-&               BS_K_dim,A_nm1,1,cONE,A_n(BS_K_dim+1:),1)
-     call M_by_V('n',BS_K_dim,BS_K_dim,cONE,conjg(BS_mat),&
-&               BS_K_dim,A_nm1(BS_K_dim+1:),1,cONE,A_n(BS_K_dim+1:),1)
-   end if
-   !    
+#if defined _OPENMP
+   call M_by_V_omp('n',N,BS_mat,A_nm1,A_n)
+#else
+   call M_by_V('n',N,BS_mat,A_nm1,A_n)
+#endif
    !
    A_n(:)=V(:)*A_n(:)
 #if defined _OPENMP

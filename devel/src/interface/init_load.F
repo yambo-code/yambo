@@ -290,7 +290,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! CUTOFF
  !
- call it(defs,'CUTGeo',   '[CUT] Coulomb Cutoff geometry: box/cylinder/sphere',cut_geometry)
+ call it(defs,'CUTGeo',   '[CUT] Coulomb Cutoff geometry: box/cylinder/sphere X/Y/Z/XY..',cut_geometry)
  call it(defs,'CUTBox',   '[CUT] [au] Box sides',box_length)
  call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius)
  call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length)
@@ -429,9 +429,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! QP ctl 
  !
- call QP_ctl_load(defs,1)
- call QP_ctl_load(defs,2)
- call QP_ctl_load(defs,3)
+ call init_QP_ctl_load(defs,1)
+ call init_QP_ctl_load(defs,2)
+ call init_QP_ctl_load(defs,3)
  !
  ! GPL_EXCLUDE_START
  !

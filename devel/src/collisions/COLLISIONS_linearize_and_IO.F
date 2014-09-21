@@ -26,7 +26,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  use pars,            ONLY:SP
  use QP_m,            ONLY:QP_n_states
  use collision,       ONLY:COLLISIONS_element,COLLISIONS_cutoff
- use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL,IO_and_Messaging_switch,io_COLLs
+ use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL,io_and_Messaging_switch,io_COLLs
  use drivers,         ONLY:l_elel_scatt
  use interfaces,      ONLY:io_COLLISIONS
  use parallel_m,      ONLY:PAR_QP_index,myid
@@ -82,13 +82,13 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  !
  if (.not.IO_colls) return
  !
- call IO_and_Messaging_switch("+DB_is_fragmented")
+ call io_and_Messaging_switch("+DB_is_fragmented")
  !
  if (i_qp==1) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
  if (i_qp/=1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/2,3/),ID=ID)
  io_err=io_COLLISIONS(i_qp,ID,COLL=COLL(1))
  !
- if (i_qp==QP_n_states) call IO_and_Messaging_switch("-DB_is_fragmented")
+ if (i_qp==QP_n_states) call io_and_Messaging_switch("-DB_is_fragmented")
  !
  call COLLISIONS_alloc_and_free(what,"v1","clean",1)
  !

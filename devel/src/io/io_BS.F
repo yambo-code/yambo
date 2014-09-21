@@ -36,8 +36,7 @@ integer function io_BS(iq,X,ID)
 &                        io_elemental,io_bulk,io_restart_point,&
 &                        read_is_on,write_is_on,io_header,io_mode,&
 &                        VERIFY,io_fragmented,Fragmented_IO,&
-&                        ver_is_gt_or_eq
- use fragments,     ONLY:io_fragment
+&                        ver_is_gt_or_eq,io_fragment
  implicit none
  type(X_t):: X 
  integer  :: iq,ID
@@ -186,7 +185,6 @@ integer function io_BS(iq,X,ID)
  !
  deallocate(BS_mat_disk)
  !
- !call Fragments_Restart(ID,current_fragment=i_fragment,fragments_todo=UP_matrix_index(1,nXkibz))
  io_BS=io_restart_point(ID)
  !
 1 call io_disconnect(ID)

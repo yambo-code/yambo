@@ -170,7 +170,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  call msg('o xz','#')
  call of_open_close(of_name(4),'ot')
  call msg('o RL_','#')
- call msg('o RL_','#',(/'|q+G| [au]','V_o [au]','V_c [au]'/),INDENT=0,USE_TABS=.true.)
+ call msg('o RL_','#',(/'|q+G| [au]',' V_o  [au]',' V_c  [au]'/),INDENT=0,USE_TABS=.true.)
  call msg('o RL_','#')
  !
  do ip=1,n_dl_pts**2

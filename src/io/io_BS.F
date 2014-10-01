@@ -28,28 +28,35 @@ integer function io_BS(iq,X,ID)
  use R_lattice,     ONLY:nXkibz
  use stderr,        ONLY:intc
  use matrix_operate,ONLY:mat_c2r,mat_r2c,UP_matrix_index
+ use parallel_m,    ONLY:myid
  use BS,            ONLY:BS_mat,BS_K_dim,BS_K_coupling,&
 &                        BS_nT_at_k,BS_res_mode,&
-&                        BS_DB_is_fragmented,&
+&                        BS_DB_is_fragmented,BS_blk,n_BS_blks,&
 &                        BS_cpl_mat,BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_bulk,io_restart_point,&
 &                        read_is_on,write_is_on,io_header,io_mode,&
 &                        VERIFY,io_fragmented,Fragmented_IO,&
-&                        ver_is_gt_or_eq,io_fragment
+&                        io_fragment,IO_NOT_ALLOWED,io_BS_K,RD_CL,io_action,RD_CL_IF_END
  implicit none
  type(X_t):: X 
  integer  :: iq,ID
  !
  ! Work Space
  !
- integer             ::ik12(2),i_fragment,i1,BS_k_and_row_restart(2)
+ integer             ::ik12(2),i_block,i1,BS_k_and_row_restart(2)
  character(schlen)   ::ch,db_name
  character(lchlen)   ::local_description(100)
  real(SP),allocatable::BS_mat_disk(:,:,:)
  logical             ::db_is_large,load_DB_once_for_all
  !
- db_name='BS_Q'//trim(intc(iq))
+ if (.not.io_BS_K) then
+   io_BS_K=IO_NOT_ALLOWED
+   call io_disconnect(ID,FORCE=.TRUE.)
+   return
+ endif
+ !
+ db_name='BS_Q'//trim(intc(iq))//'_CPU_'//trim(intc(myid))
  !
  io_BS=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (io_BS/=0) goto 1
@@ -75,29 +82,19 @@ integer function io_BS(iq,X,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.)
+   if (io_mode(ID)==VERIFY.or.write_is_on(ID)) then
+     io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
+&                    PARALLEL_STRUCTURE="Response_T_space",CUTOFF=.true.)
+   else
+     io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.)
+   endif
+   !
    if (io_BS/=0) then
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
      goto 1
    endif
    !
-   ! v 3.0.5: Inclusion of %f_xc 
-   !
-   if (.not.ver_is_gt_or_eq(ID,(/3,0,5/))) then
-     io_BS=-1
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-     goto 1
-   endif
-   !
    BS_DB_is_fragmented=io_fragmented(ID)
-   !
-   ! MODE
-   !
-   if (.not.ver_is_gt_or_eq(ID,(/3,0,12/))) then
-     call io_elemental(ID,VAR="MODE",VAR_SZ=1,CH0="",MENU=0)
-     call io_elemental(ID,CH0=BS_res_mode)
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   endif
    !
    io_BS=variables_BS(ID,local_description,X=X)
    !
@@ -123,21 +120,11 @@ integer function io_BS(iq,X,ID)
    !
  endif
  !
- ! Section 1 is used in VERIFY mode.
- ! Now that the menu is closed I can return with ioBS/=0 if
- ! there is a restart point
+ i_block=maxval(io_sec(ID,:))-1
  !
- ! Cerfull. As io_restart is the restart point it is +1 of the
- ! one written in the RESTART directory
+ if (i_block==0) goto 1
  !
- if (io_restart_point(ID)>0.and.io_mode(ID)==VERIFY) then
-   io_BS=io_restart_point(ID)-1
-   !BS_k_and_row_restart=BS_blocks(ioBS)
- endif
- !
- i_fragment=maxval(io_sec(ID,:))
- !ik12=BS_blocks(i_fragment)
- if (i_fragment==1) goto 1
+ if (io_action(ID)==RD_CL_IF_END.and.i_block==n_BS_blks) io_action(ID)=RD_CL
  !
  ! Fragmentation
  !
@@ -145,47 +132,22 @@ integer function io_BS(iq,X,ID)
  ! io_fragmented is not defined and must be overwritten with BS_DB_is_fragmented
  !
  io_fragmented(ID)=BS_DB_is_fragmented
- call io_fragment(ID,i_fragment=ik12(1),j_fragment=ik12(2))
+ call io_fragment(ID,i_fragment=i_block)
  !
- allocate(BS_mat_disk(BS_nT_at_k(ik12(1)),BS_nT_at_k(ik12(2)),2))
+ allocate(BS_mat_disk(BS_blk(i_block)%size(1),BS_blk(i_block)%size(2),2))
  !
- ! Resonant I/O
+ if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT_BLOCK_"//trim(intc(i_block))
+ if (BS_blk(i_block)%mode=="A") ch="BSE_ANTIRESONANT_BLOCK_"//trim(intc(i_block))
  !
- write (ch,'(a,i4.4,a,i4.4)') "BS_RES_KERNEL_BLK_K1_",ik12(1),"_K2_",ik12(2)
- call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/BS_nT_at_k(ik12(1)),BS_nT_at_k(ik12(2)),2/))
- if (write_is_on(ID)) call mat_c2r(BS_mat(:,:),BS_mat_disk)
+ call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/BS_blk(i_block)%size(1),BS_blk(i_block)%size(2),2/))
+ !
+ if (write_is_on(ID)) call mat_c2r(BS_blk(i_block)%mat,BS_mat_disk)
+ !
  call io_bulk(ID,R3=BS_mat_disk)
- if (read_is_on(ID)) call mat_r2c(BS_mat_disk,&
-&   BS_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik12(1)),&
-&          BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_nT_at_k(ik12(2))))
  !
- ! Coupling I/O
- !
- if (BS_K_coupling) then
-   !
-   load_DB_once_for_all=.not.allocated(BS_cpl_mat)
-   !
-   write (ch,'(a,i4.4,a,i4.4)') "BS_CPL_KERNEL_BLK_K1_",ik12(1),"_K2_",ik12(2)
-   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/BS_nT_at_k(ik12(1)),BS_nT_at_k(ik12(2)),2/))
-   !
-   if (write_is_on(ID)) call mat_c2r(BS_cpl_mat,BS_mat_disk)
-   !
-   call io_bulk(ID,R3=BS_mat_disk)
-   !
-   if (read_is_on(ID)) then
-     if (.not.load_DB_once_for_all) call mat_r2c(BS_mat_disk,&
-&     BS_cpl_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik12(1)),&
-&            BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_nT_at_k(ik12(2))))
-     if (load_DB_once_for_all)      call mat_r2c(BS_mat_disk,&
-&     BS_mat(BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_nT_at_k(ik12(1)),&
-&            BS_K_dim+BS_k_and_row_restart(2)+1:BS_K_dim+BS_k_and_row_restart(2)+BS_nT_at_k(ik12(2))))
-   endif
-   !
- end if
+ if (read_is_on(ID)) call mat_r2c(BS_mat_disk,BS_blk(i_block)%mat)
  !
  deallocate(BS_mat_disk)
- !
- io_BS=io_restart_point(ID)
  !
 1 call io_disconnect(ID)
  !

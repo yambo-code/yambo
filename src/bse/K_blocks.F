@@ -35,7 +35,7 @@ subroutine K_blocks( )
  !  complex(SP), allocatable      :: mat(:,:)
  !end type BS_block
  !
- use pars,         ONLY:cZERO,IP
+ use pars,         ONLY:cZERO
  use memory_m,     ONLY:mem_est
  use parallel_m,   ONLY:PAR_IND_T_all,PAR_IND_T_ordered,PP_redux_wait
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&

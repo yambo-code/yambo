@@ -346,13 +346,13 @@ module BS
    !
    subroutine BS_mat_free()
      if (allocated(BSS_eh_table))      deallocate(BSS_eh_table)
-     if (allocated(BSS_rhoq0))        deallocate(BSS_rhoq0)
+     if (allocated(BSS_rhoq0))         deallocate(BSS_rhoq0)
      if (allocated(BSS_eh_E))          deallocate(BSS_eh_E)
      if (allocated(BSS_eh_W))          deallocate(BSS_eh_W)
      if (allocated(BSS_eh_f))          deallocate(BSS_eh_f)
      if (allocated(BSS_eh_Z))          deallocate(BSS_eh_Z)
-     if (allocated(BS_mat))           deallocate(BS_mat)
-     if( allocated(BS_mat_diagonal) ) deallocate(BS_mat_diagonal)
+     if (allocated(BS_mat))            deallocate(BS_mat)
+     if( allocated(BS_mat_diagonal) )  deallocate(BS_mat_diagonal)
      call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f BSS_eh_W")
      call mem_est("BSS_eh_table BSS_eh_Z BS_mat BS_mat_diagonal")
    end subroutine

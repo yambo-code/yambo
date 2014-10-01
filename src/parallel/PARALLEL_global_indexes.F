@@ -909,6 +909,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'DIAGO',PAR_COM_DIAGO_INDEX,PAR_COM_DIAGO)
    PAR_IND_DIAGO_ID=PAR_COM_DIAGO_INDEX%CPU_id
    !
+   ! I/O privileges
+   !
+   call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+   !
    call OPENMP_set_threads(n_threads_in=n_threads_K)
    !  
  endif

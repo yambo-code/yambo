@@ -46,15 +46,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  integer :: i_c,i_r,H_pos(2),i_Tk,i_Tp,i_B,i_g,&
 &           i_k_bz,i_v,i_cond,i_spin
  ! 
- ! I/O
- ! 
- integer           ::io_BS_err,ID,ACTION
- integer, external ::io_BS
- !
  if (allocated(BS_mat)) return
- !
- !call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
- !ioBS_err=ioBS(iq,X,ID)o
  !
  ! ALLOCATION
  !============

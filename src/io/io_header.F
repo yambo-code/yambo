@@ -22,17 +22,18 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,&
-&                          CUTOFF,GAUGE,IMPOSE_GAUGE)
+&                          CUTOFF,GAUGE,IMPOSE_GAUGE,PARALLEL_STRUCTURE)
  !
  use pars,          ONLY:SP,schlen,lchlen
- use units,         ONLY:HA2EV,HA2KEL
+ use units,         ONLY:HA2KEL
  use X_m,           ONLY:global_gauge 
  use drivers,       ONLY:list_dbs
  use LOGO,          ONLY:code_version,code_revision
- use com,           ONLY:msg,warning
+ use com,           ONLY:warning
  use stderr,        ONLY:string_split
  use D_lattice,     ONLY:Tel,a,alat,input_Tel_is_negative,Bose_Temp
  use electrons,     ONLY:n_sp_pol,n_spinor
+ use parallel_m,    ONLY:CPU_structure
  use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt,cut_description
  use wave_func,     ONLY:wf_ng
  use vec_operate,   ONLY:v_is_zero
@@ -48,11 +49,11 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  implicit none
  integer               :: ID
  logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE
- character(*),optional :: XC_KIND
+ character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
  !
  ! Work Space
  !
- integer             :: i1,nqibz_disk,nkibz_disk,R_LATT_vec(4),&
+ integer             :: i1,nqibz_disk,nkibz_disk,R_LATT_vec(4),p_structure,&
 &                       R_LATT_vec_disk(4),MODE,MENU,SPIN_vec_disk(2),VAR_SZ
  real(SP),allocatable:: l_pt(:,:)
  real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),&
@@ -237,6 +238,28 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
      io_header=io_status(ID)
      if (io_header/=0) goto 1
    endif
+ endif
+ !
+ if (present(PARALLEL_STRUCTURE)) then
+   ! 
+   if (trim(PARALLEL_STRUCTURE)=="Response_G_space_Zero_Momentum") p_structure=1
+   if (trim(PARALLEL_STRUCTURE)=="Response_G_space_Finite_Momentum") p_structure=2
+   if (trim(PARALLEL_STRUCTURE)=="Response_G_space") p_structure=3
+   if (trim(PARALLEL_STRUCTURE)=="Response_T_space") p_structure=4
+   if (trim(PARALLEL_STRUCTURE)=="Self_Energy") p_structure=5
+   if (trim(PARALLEL_STRUCTURE)=="Real_Time") p_structure=6
+   !
+   call io_elemental(ID,VAR="PARALLEL_CPUs",CH0='',VAR_SZ=1,MENU=MENU)
+   call io_elemental(ID,CH0=CPU_structure(p_structure)%CPU_string,&
+&                    VAR=' Prallel CPUs                     :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   io_header=io_status(ID)
+   call io_elemental(ID,VAR="PARALLEL_ROLES",CH0='',VAR_SZ=1,MENU=MENU)
+   call io_elemental(ID,CH0=CPU_structure(p_structure)%ROLE_string,&
+&                    VAR=' Prallel Roles                    :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   io_header=io_status(ID)
+   if (io_header/=0) goto 1
  endif
  !
  ! Things that can be dumped

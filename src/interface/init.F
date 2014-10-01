@@ -93,7 +93,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  integer           :: io_err,io_WF_err,io_X_err(4),io_ID,io_BS_err,io_KB_abinit_err,io_KB_pwscf_err,&
-&                     io_BS_Fxc_err,io_QINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G
+&                     io_BS_Fxc_err,io_QINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G,iq
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
 &                     io_COL_CUT
@@ -334,12 +334,28 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call X_var_setup
  !
- do i1=1,4 ! Xx Xs Xp Xd
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
-   io_X_err(i1)=io_X(X(i1),Xw(i1),io_ID)
-   if (nqibz>0) X(i1)%iq=(/1,nqibz/)
-   if (io_X_err(i1)>0) X(i1)%iq(1)=io_X_err(i1)+1
- enddo
+ ! When no setup has been done nqibz=0
+ !
+ if (nqibz>0) then
+   !
+   do i1=1,4 ! Xx Xs Xp Xd
+    !
+    X(i1)%iq=(/1,nqibz/)
+    !
+    do iq=X(i1)%iq(1),X(i1)%iq(2)
+      !
+      if (iq==1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=io_ID)
+      if (iq> 1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2*iq,2*iq+1/),MODE=DUMP,ID=io_ID)
+      !
+      io_X_err(i1)=io_X(X(iq),Xw(i1),io_ID)
+      !
+      if (io_X_err(i1)==iq) X(i1)%iq(1)=iq+1
+      !
+    enddo
+    !
+   enddo
+   !
+ endif
  !
  ! The GLOBAL vcalue of %Vnl_included is decided on the basis of the contents
  ! of db.OSTENTS OR on the presence of the KB_PP. This means that if the

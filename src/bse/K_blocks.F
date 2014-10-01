@@ -35,18 +35,19 @@ subroutine K_blocks( )
  !  complex(SP), allocatable      :: mat(:,:)
  !end type BS_block
  !
- use pars,         ONLY:cZERO
+ use pars,         ONLY:cZERO,IP
  use memory_m,     ONLY:mem_est
- use parallel_m,   ONLY:PAR_IND_T_all,PAR_IND_T_ordered
+ use parallel_m,   ONLY:PAR_IND_T_all,PAR_IND_T_ordered,PP_redux_wait
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
-&                       BS_K_dim
+&                       BS_K_dim,BS_Block_size
  use com,          ONLY:msg
+ use interfaces,   ONLY:PARALLEL_live_message
  !
  implicit none
  !
  ! Work Space
  !
- integer :: i_T,j_T,i_loop,tot_size,n_tot_blocks
+ integer    :: i_T,j_T,i_loop,tot_size,N_Ts_todo,N_Ts_total(1)
  !
  call section('=','CPU-dependent Block structure')
  !
@@ -56,6 +57,8 @@ subroutine K_blocks( )
      allocate(BS_blk(n_BS_blks))
    endif
    !
+   N_Ts_total  =0
+   N_Ts_todo   =0
    tot_size    =0
    n_BS_blks   =0
    !
@@ -77,6 +80,9 @@ subroutine K_blocks( )
          BS_blk(n_BS_blks)%iT_p=j_T
          BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
          BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
+         !
+         N_Ts_todo=N_Ts_todo+BS_Block_size(n_BS_blks)
+         !
        endif
        !
        if (BS_K_coupling) then
@@ -95,9 +101,13 @@ subroutine K_blocks( )
            BS_blk(n_BS_blks)%iT_p=j_T
            BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
            BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
+           !
+           N_Ts_todo=N_Ts_todo+BS_Block_size(n_BS_blks)
+           !
          endif
          !
        endif
+       !
        !
      enddo
      !
@@ -105,14 +115,16 @@ subroutine K_blocks( )
    !
  enddo
  !
- n_tot_blocks=BS_nT_grps*(BS_nT_grps-1)/2+BS_nT_grps
- !
- if (BS_K_coupling) n_tot_blocks=n_tot_blocks+BS_nT_grps**2
- !
  call mem_est("BSK",(/tot_size/))
  !
  ! REPORT
  !
  call msg('rsn','[BSK] Size   (total)',BS_K_dim)
+ !
+ N_Ts_total=N_Ts_todo
+ !
+ call PP_redux_wait((/N_Ts_total/))
+ !
+ call PARALLEL_live_message("Kernel matrix elements (renormalized)",ENVIRONMENT="Response_T_space",LOADED=N_Ts_todo,TOTAL=N_Ts_total(1))
  !
 end subroutine

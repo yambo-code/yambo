@@ -130,7 +130,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
                l_check=PAR_IND_T_groups%element_1D(i_T_group_now).or.&
 &                      any( PAR_IND_T_ordered%element_2D(:,i_T_group_now))
                !
-               if(BS_k_coupling) l_check=l_check .or. any( PAR_IND_T_all%element_2D(:,i_T_group_now) )
+               if (BS_k_coupling) l_check=l_check .or. any( PAR_IND_T_all%element_2D(:,i_T_group_now) )
                !
                if ( .not. l_check ) cycle
                !

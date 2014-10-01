@@ -23,7 +23,7 @@
 !
 module BS
  !
- use pars,       ONLY:SP,schlen,lchlen
+ use pars,       ONLY:IP,SP,schlen,lchlen
  use collision,  ONLY:ggwinfo
  use memory_m,   ONLY:mem_est
  !
@@ -409,20 +409,31 @@ module BS
      !
    end subroutine
    !
+   function BS_Block_size(i_block)
+     integer     :: i_block
+     integer(IP) :: BS_Block_size
+     !
+     BS_Block_size=BS_blk(i_block)%size(1)*BS_blk(i_block)%size(2)/BS_K_dim
+     !
+     if (BS_blk(i_block)%iT_k==BS_blk(i_block)%iT_p.and.BS_blk(i_block)%mode=="R") then
+       BS_Block_size=( (BS_blk(i_block)%size(1)**2-BS_blk(i_block)%size(1))/2+&
+&                       BS_blk(i_block)%size(1) )/BS_K_dim
+     endif
+     !
+   end function BS_Block_size
+   !
    subroutine BS_Blocks_symmetrize_K()
-   !
-   integer :: i_B,i_Tk,i_Tp,i_r,i_c
-   !
-   do i_B=1,n_BS_blks
+     integer :: i_B,i_Tk,i_Tp,i_r,i_c
+     do i_B=1,n_BS_blks
+       !
+       i_Tk  =BS_blk(i_B)%iT_k
+       i_Tp  =BS_blk(i_B)%iT_p
+       !
+       if (.not.(i_Tk.eq.i_Tp)) cycle
+       forall(i_r=1:BS_blk(i_B)%size(1),&
+&             i_c=1:BS_blk(i_B)%size(2),i_r.lt.i_c) BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
+     enddo
      !
-     i_Tk  =BS_blk(i_B)%iT_k
-     i_Tp  =BS_blk(i_B)%iT_p
-     !
-     if (.not.(i_Tk.eq.i_Tp)) cycle
-     forall(i_r=1:BS_blk(i_B)%size(1),i_c=1:BS_blk(i_B)%size(2),i_r.lt.i_c)&
-              &BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
-   end do
-   !
    end subroutine BS_Blocks_symmetrize_K
    !
    subroutine BS_HAYVEC_alloc(V)
@@ -434,7 +445,6 @@ module BS
        if (.not.Haydock_parallel_mask(i_g)) cycle
        allocate(V(i_g)%fragment(BS_T_grp(i_g)%size))
      enddo
-     !
    end subroutine BS_HAYVEC_alloc
    !
    subroutine BS_HAYVEC_free(V)
@@ -449,7 +459,6 @@ module BS
          !
        end if
      end do
-     !
    end subroutine BS_HAYVEC_free
    !
 end module BS

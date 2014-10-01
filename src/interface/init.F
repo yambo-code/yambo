@@ -339,20 +339,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (nqibz>0) then
    !
    do i1=1,4 ! Xx Xs Xp Xd
-    !
-    X(i1)%iq=(/1,nqibz/)
-    !
-    do iq=X(i1)%iq(1),X(i1)%iq(2)
-      !
-      if (iq==1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=io_ID)
-      if (iq> 1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2*iq,2*iq+1/),MODE=DUMP,ID=io_ID)
-      !
-      io_X_err(i1)=io_X(X(iq),Xw(i1),io_ID)
-      !
-      if (io_X_err(i1)==iq) X(i1)%iq(1)=iq+1
-      !
-    enddo
-    !
+     !
+     X(i1)%iq=(/1,nqibz/)
+     !
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
+     !
+     io_X_err(i1)=io_X(X(i1),Xw(i1),io_ID)
+     !
    enddo
    !
  endif

@@ -51,7 +51,7 @@ integer function io_BS(iq,X,ID)
  logical             ::db_is_large,load_DB_once_for_all
  !
  if (.not.io_BS_K) then
-   io_BS_K=IO_NOT_ALLOWED
+   io_BS=IO_NOT_ALLOWED
    call io_disconnect(ID,FORCE=.TRUE.)
    return
  endif

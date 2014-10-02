@@ -177,7 +177,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    do ik=1,Xk%nibz
      !
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
-     if (.not.PAR_COM_k_for_P%my_CHAIN==1.or.PAR_COM_k_for_P%n_CPU==ncpu) cycle
+     if (.not. (PAR_COM_k_for_P%CPU_id==0.or.PAR_COM_k_for_P%n_CPU==ncpu) ) cycle
      ! 
      call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1+ik/),ID=ID)
      io_err(1)=io_DIPOLES(X,Xen,ID)

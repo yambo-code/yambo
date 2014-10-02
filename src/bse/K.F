@@ -166,10 +166,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        call io_control(ACTION=RD_CL_IF_END,COM=REP,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
        io_BS_err=io_BS(iq,X,ID)
      enddo
-     !
-     return
-     !
    endif
+   !
+   if (io_BS_err==0) return
    !
    ! GPL_EXCLUDE_START
    !

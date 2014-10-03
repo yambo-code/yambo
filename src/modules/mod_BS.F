@@ -410,14 +410,18 @@ module BS
    end subroutine
    !
    function BS_Block_size(i_block)
-     integer     :: i_block
-     integer(IP) :: BS_Block_size
+     use parallel_m, ONLY  : ncpu
+     integer              :: i_block
+     integer(IP)          :: BS_Block_size
+     integer(IP)          :: pre_factor
      !
-     BS_Block_size=BS_blk(i_block)%size(1)*BS_blk(i_block)%size(2)/BS_K_dim
+     pre_factor=BS_K_dim/ncpu
+     !
+     BS_Block_size=BS_blk(i_block)%size(1)*BS_blk(i_block)%size(2)/pre_factor
      !
      if (BS_blk(i_block)%iT_k==BS_blk(i_block)%iT_p.and.BS_blk(i_block)%mode=="R") then
        BS_Block_size=( (BS_blk(i_block)%size(1)**2-BS_blk(i_block)%size(1))/2+&
-&                       BS_blk(i_block)%size(1) )/BS_K_dim
+&                       BS_blk(i_block)%size(1) )/pre_factor
      endif
      !
    end function BS_Block_size

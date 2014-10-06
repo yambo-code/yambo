@@ -426,9 +426,12 @@ subroutine K_inversion(iq,W,E,k,q)
      endif
      !
      if (.not.px%element_1D(i1)) cycle
+     !
      iw=iw_full(i1)
+     !
      call perform_inversion(iw,1)
      call live_timing(steps=1)
+     !
    enddo
    call live_timing()
    call PP_redux_wait(inv_err,imode=2)
@@ -517,7 +520,10 @@ subroutine K_inversion(iq,W,E,k,q)
        !
        i3=i2+iw_2start-1
        !
-       if (.not.px%element_1D(i3)) cycle
+       ! The parallel loop is controlled in the manin body loop 
+       ! when a full inversion is performed
+       !
+       if (.not.do_it_full.and..not.px%element_1D(i3)) cycle
        !
        if (     do_it_full) perform_inv= inv_err(i3)/= 0
        if (.not.do_it_full) perform_inv= inv_err(i3)==-1

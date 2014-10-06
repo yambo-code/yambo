@@ -71,7 +71,8 @@ subroutine SET_logicals()
    if (any((/"J","j"/)==trim(ch_piece(i_ch)))) io_J=.FALSE.
    if (any((/"OCCs","occs","OCCS"/)==trim(ch_piece(i_ch)))) io_OCCs=.FALSE.
    if (any((/"SC","sc"/)==trim(ch_piece(i_ch)))) io_SC=.FALSE.
-   if (any((/"BS","bs","k","K"/)==trim(ch_piece(i_ch)))) io_BS_K=.FALSE.
+   if (any((/"k","K"/)==trim(ch_piece(i_ch)))) io_BS_K=.FALSE.
+   if (any((/"BS","bs"/)==trim(ch_piece(i_ch)))) io_BS_K=.FALSE.
  enddo
  !
  if (l_eval_collisions) io_RESPONSE=.TRUE.

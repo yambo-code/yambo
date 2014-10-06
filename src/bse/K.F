@@ -47,7 +47,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       O_ng,BS_n_g_exch,BS_identifier,&
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,BSS_q0,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
-&                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,x
+&                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP
@@ -85,7 +85,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  complex(SP),allocatable ::BS_W(:,:,:)
  complex(SP),   external ::TDDFT_ALDA_R_space
- logical                 :: W_is_em1s,W_is_pp
+ logical                 ::W_is_em1s,W_is_pp
  !
  ! Oscillators
  !

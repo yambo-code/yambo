@@ -31,12 +31,12 @@ subroutine RT_X_LRR_real_field(en)
 &                         i_t_start,i_t_end,RED_steps,l_force_min_damp,&
 &                         J_steps,J_time_step
  use pars,           ONLY:SP,DP,pi,cI
- use units,          ONLY:HA2EV
+ use units,          ONLY:HA2EV,FS2AUT
  use electrons,      ONLY:levels
  use memory_m,       ONLY:mem_est
  use rt_ctl,         ONLY:RT_output,RT_IO_JPO_steps
- use real_time,      ONLY:RT_P
- use fields,         ONLY:Efield,small_a,i_Probe
+ use real_time,      ONLY:l_RT_induced_field
+ use fields,         ONLY:Efield,small_a,i_Probe,theta_function
  use parser_m,       ONLY:parser
  !
  implicit none
@@ -50,8 +50,8 @@ subroutine RT_X_LRR_real_field(en)
  logical      :: E_from_FT,l_rm_asympt_limit
  real(SP)     :: W_step,W_reached
  complex(SP), allocatable :: EELS(:,:),EPS(:,:),freqs(:)
- complex(SP)  :: Field_time,Field_freq
- complex(DP), allocatable :: X_irrep(:,:),E_w(:),E_t(:)
+ complex(SP)  :: Field_time,Field_freq,E_W_SP
+ complex(DP), allocatable :: alpha(:,:),E_w(:),E_t(:)
  !
  call section("=",'Optics')
  !=========================
@@ -71,21 +71,21 @@ subroutine RT_X_LRR_real_field(en)
    !
    if(mod(RED_steps,2)==0) X_rt%energy_range=X_rt%energy_range+W_RT_induced_step/2._SP
    !
-   allocate(EELS(RED_steps,2),EPS(RED_steps,2),X_irrep(RED_steps,6),E_w(RED_steps))
+   allocate(EELS(RED_steps,2),EPS(RED_steps,2),alpha(RED_steps,6),E_w(RED_steps))
    !
  else
    !
-   allocate(EELS(X_rt%energy_steps,2),EPS(X_rt%energy_steps,2),X_irrep(X_rt%energy_steps,6)) 
+   allocate(EELS(X_rt%energy_steps,2),EPS(X_rt%energy_steps,2),alpha(X_rt%energy_steps,6)) 
    allocate(E_w(X_rt%energy_steps))
    !
  endif
  !
- call mem_est("EELS EPS X_irrep",(/size(EELS),size(EPS),size(X_irrep)/),(/2*SP,2*SP,2*DP/))
+ call mem_est("EELS EPS alpha",(/size(EELS),size(EPS),size(alpha)/),(/2*SP,2*SP,2*DP/))
  call mem_est("E_w",(/size(E_w)/),(/2*DP/))
  !
- EELS   =(0._DP,0._DP)
- EPS    =(0._DP,0._DP)
- X_irrep=(0._DP,0._DP)
+ EELS   =(0._SP,0._SP)
+ EPS    =(0._SP,0._SP)
+ alpha  =(0._DP,0._DP)
  E_w    =(0._DP,0._DP)
  !
  ! Fourier Transform 
@@ -120,8 +120,10 @@ subroutine RT_X_LRR_real_field(en)
    !
    allocate(E_t(J_steps))
    do i_t=1,J_steps
-     Field_time=cmplx((i_t-1)*J_time_step,0._SP)
-     E_t(i_t)=Efield(i_Probe)%amplitude*small_a(Field_time,Efield(i_Probe),1)
+     Field_time=cmplx((i_t-1)*J_time_step-Efield(i_Probe)%t_initial,0._SP)
+     E_t(i_t)=Efield(i_Probe)%amplitude* &
+&                         (small_a(Field_time,Efield(i_Probe),1)*theta_function(real(Field_time),J_time_step,0)+&
+&                          small_a(Field_time,Efield(i_Probe),0)*theta_function(real(Field_time),J_time_step,1))
    enddo
    !
    if(trim(X_rt%damp) == "NONE".and.l_force_min_damp) then
@@ -155,40 +157,48 @@ subroutine RT_X_LRR_real_field(en)
    !
    ! Polarization
    !
-   call RT_1D_Fourier_Transform('T2W',FT_title,freqs,X_irrep(:,i_c),X_rt%energy_steps,&
+   call RT_1D_Fourier_Transform('T2W',FT_title,freqs,alpha(:,i_c),X_rt%energy_steps,&
 &                               RT_P_t(i_t_start:i_t_end,i_c),RED_steps,J_time_step,&
 &                               (i_t_start-1)*J_time_step,USE_FFT,1)
    !
  enddo
  !
- ! P(w,ic)=E_ext(w,ic) \tilde X(w,ic)=|E_ext(w)| E_versor(ic) \tilde X(w,ic)
+ ! a) If the induced field is     computed: E_input=E_ext
+ ! b) If the induced field is NOT computed: E_input=E_tot
  !
- ! Now I want to calculate
+ ! a) P(w,ic) = E_ext(w,ic') alpha_RID(w,ic',ic) = |E_ext(w)| E_versor(ic') alpha_RID(w,ic,ic')
+ ! b) P(w,ic) = E_tot(w,ic') alpha_IRR(w,ic',ic) = |E_tot(w)| E_versor(ic') alpha_IRR(w,ic,ic')
+ ! 
+ ! a) alpha_RID(w,ic,ic') = ( P(w,ic),E_versor(ic') )/|E_ext(w)| 
+ ! b) alpha_IRR(w,ic,ic') = ( P(w,ic),E_versor(ic') )/|E_tot(w)|
  !
- ! EPS(w) = 1-4 pi dot_product ( \tilde X(w,:) , E_versor(:) ) = 
- !          1-4 pi \sum_ic \tilde P(w,ic)/|E_ext(w)| 
+ ! Then I use 
+ ! a) EPS_{ic,ic'}(w) = (1-4 pi alpha_IRR(w,ic))^{-1}
+ ! b) EPS_{ic,ic'}(w) =  1+4 pi alpha_RID(w,ic)
  !
  ! to calculate EELS I use
  !
  ! EPS=1./EELS
  !
- EPS=1._DP
- !
  call RT_output(what="initialize")
- call RT_output(what="open eps_along_E eels_along_E")
+ call RT_output(what="open E_frequency eps_along_E eels_along_E")
  do i_w = 1, X_rt%energy_steps
    !
-   EPS(i_w,1) = EPS(i_w,1)-4._SP*pi*dot_product(Efield(i_Probe)%versor(:),X_irrep(i_w,:3))/E_w(i_w)
+   if(     l_RT_induced_field) EPS(i_w,1) = 1._SP/(1._SP-4._SP*pi*dot_product(Efield(i_Probe)%versor(:),alpha(i_w,:3))/E_w(i_w))
+   if(.not.l_RT_induced_field) EPS(i_w,1) =        1._SP+4._SP*pi*dot_product(Efield(i_Probe)%versor(:),alpha(i_w,:3))/E_w(i_w)
    !
-   EELS(i_w,:)=1._DP/EPS(i_w,:)
+   EELS(i_w,:)=1._SP/EPS(i_w,:)
    !
    W_reached = real(freqs(i_w))
-   call RT_output('eps_along_E',VALUEs=(/ aimag(EPS(i_w,1)),real(EPS(i_w,1))/),E=W_reached*HA2EV)
+   E_w_SP=E_w(i_w)
+   call RT_output('E_frequency' ,VALUEs=(/ aimag(  E_w_SP   ),real(  E_w_SP   )/),E=W_reached*HA2EV)
+   call RT_output('eps_along_E' ,VALUEs=(/ aimag(EPS(i_w,1) ),real(EPS(i_w,1) )/),E=W_reached*HA2EV)
    call RT_output('eels_along_E',VALUEs=(/-aimag(EELS(i_w,1)),real(EELS(i_w,1))/),E=W_reached*HA2EV)
    !
  enddo
+ call RT_output(what="close E_frequency eps_along_E eels_along_E")
  !
- deallocate(EELS,EPS,X_irrep,E_w)
- call mem_est("EELS EPS X_irrep E_w")
+ deallocate(EELS,EPS,alpha,E_w)
+ call mem_est("EELS EPS alpha E_w")
  !
 end subroutine

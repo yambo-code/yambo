@@ -56,7 +56,7 @@ subroutine RT_propagate_fields(k,E,G_new,A_new,A_old,T,T_step)
  use electrons,      ONLY:levels
  use SC,             ONLY:SC_bands
  use real_time,      ONLY:RT_ind_J,l_RT_induced_field,RT_nk
- use fields,         ONLY:gauge_field
+ use fields,         ONLY:gauge_field,A_ind,A_ind_previous,A_ext
  !
  implicit none
  !
@@ -67,36 +67,41 @@ subroutine RT_propagate_fields(k,E,G_new,A_new,A_old,T,T_step)
  type(gauge_field),    intent(in) :: A_old
  type(gauge_field), intent(inout) :: A_new
  !
- ! WorkSpace
  !
- type(gauge_field) :: A_ext
+ ! External field
  !
- if (l_RT_induced_field) then 
+ call RT_Ext_fields(A_ext,T+T_step)
+ !
+ if (l_RT_induced_field) then
    !
-   ! External current
+   ! Induced current j(t) from A(t)
    !
-   call RT_Ext_fields(A_ext,T+T_step)
-   !
-   ! Induced current
-   !
-   call RT_current_AND_polarization(k,E,G_new,A_ext)
+   !call RT_current_AND_polarization(k,E,G_new,A_old)
    !
    ! Integrate the eq. for the vector potential
    !
-   ! d^2 A / d t^2 = 4 pi * c * J(t)  = A"_ext(t) + 4 pi * c * J_induced(t)
-   !
-   A_new%vecpot_acc =  A_ext%vecpot_acc + RT_ind_J*4._SP*pi*SPEED_OF_LIGHT
+   ! d^2 A_ind / d t^2 = 4 pi * c * J_ind(t)
    !
    ! A''(t+dt)  = 4 pi * j(t) * c 
    ! A'(t + dt) = A'(t) + A''(t) * dt
    ! A(t + dt)  = A(t)  + A'(t)  * dt + A''(t) * dt^2/2
    !
-   A_new%vecpot_vel =  A_old%vecpot_vel + (A_new%vecpot_acc+A_old%vecpot_acc)*T_step/2._SP
-   A_new%vecpot     =  A_old%vecpot     + A_new%vecpot_vel*T_step
+   A_ind%vecpot_acc =  real(RT_ind_J)*4._SP*pi*SPEED_OF_LIGHT
+   !
+   A_ind%vecpot_vel =  A_ind_previous%vecpot_vel + (A_ind%vecpot_acc+A_ind_previous%vecpot_acc)*T_step/2._SP
+   !
+   A_ind%vecpot     =  A_ind_previous%vecpot     + (A_ind%vecpot_vel+A_ind_previous%vecpot_vel)*T_step/2._SP + &
+   &                                             + (A_ind%vecpot_acc+A_ind_previous%vecpot_acc)*T_step**2._SP/4._SP
+   !
+   A_ind_previous  =A_ind
+   !
+   A_new%vecpot    =A_ext%vecpot    +A_ind%vecpot
+   A_new%vecpot_vel=A_ext%vecpot_vel+A_ind%vecpot_vel
+   A_new%vecpot_acc=A_ext%vecpot_acc+A_ind%vecpot_acc
    !
  else
    !
-   call RT_Ext_fields(A_new,T+T_step)
+   A_new=A_ext
    !
  endif
  !

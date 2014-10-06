@@ -38,22 +38,16 @@ subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
  integer  :: ib1,ib2
  !
  ! Note that dG_in is ONLY the coherent part of the equation. It must be added
- ! to dG_out. This is done here or in RT_apply_RWA
+ ! to dG_out if we are not using the EXP integrator. This is done here or in RT_apply_RWA
  !
- ! dG = dG - i dT Sigma
- !======================
- if (.not.RT_is_dephased) then
-   !
-   dG_out(:,:)=dG_out(:,:)+dG_in(:,:)
-   !
-   return
-   !
- endif
+ if (.not.l_RT_EXP) dG_out(:,:)=dG_out(:,:)+dG_in(:,:)
+ !
+ if (.not.RT_is_dephased) return
  !
  if (l_RT_EXP) then
    !
-   ! dG = dG - i dT Sigma
-   !======================
+   ! dG = dG * exp( -dT i*Sigma)
+   !=============================
    !
    do ib1=SC_bands(1),SC_bands(2)
      do ib2=ib1+1,SC_bands(2)
@@ -67,18 +61,16 @@ subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
    !
  else
    !
-   ! dG = dG - i dT Sigma
-   !======================
+   ! dG = dG * (1 - dT i*Sigma)
+   !============================
    !
    do ib1=SC_bands(1),SC_bands(2)
      do ib2=ib1+1,SC_bands(2)
        !
-       dG_out(ib1,ib2) = ( dG_out(ib1,ib2) + dG_in(ib1,ib2) ) * (1._SP - deltaT*RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))) 
-       dG_out(ib2,ib1) = ( dG_out(ib2,ib1) + dG_in(ib2,ib1) ) * (1._SP - deltaT*RT_Deph_Matrix(ib2,ib1,RT_all2ibz(ik)))
+       dG_out(ib1,ib2) = dG_out(ib1,ib2) * (1._SP - deltaT*RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))) 
+       dG_out(ib2,ib1) = dG_out(ib2,ib1) * (1._SP - deltaT*RT_Deph_Matrix(ib2,ib1,RT_all2ibz(ik)))
        !
      enddo
-     !
-     dG_out(ib1,ib1) = dG_out(ib1,ib1) + dG_in(ib1,ib1)
      !
    enddo
    !

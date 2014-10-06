@@ -21,11 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
+subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  use pars,            ONLY:SP,pi
- use units,           ONLY:FS2AUT,HA2EV
+ use units,           ONLY:FS2AUT,HA2EV,SPEED_OF_LIGHT
  use R_lattice,       ONLY:bz_samp,q0_def_norm,d3k_factor,q_norm,bare_qpg
+ use D_lattice,       ONLY:alat
  use electrons,       ONLY:levels,n_sp_pol,spin,spin_occ
  use LIVE_t,          ONLY:live_timing
  use X_m,             ONLY:X_t,DIP_q_dot_iR
@@ -35,7 +36,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
  use IO_m,            ONLY:io_DIP
  use YPP,             ONLY:OCC_T_range,OCC_deltaT,X_rt
  use X_m,             ONLY:X_epsilon
- use BS,              ONLY:BSS_eh_table
+ use BS,              ONLY:BSS_eh_table,BS_mat
  use frequency,       ONLY:w_samp
  use interfaces,      ONLY:PARALLEL_global_indexes
  use parallel_m,      ONLY:PAR_Xk_bz_index
@@ -48,18 +49,20 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
  type(levels)      :: Xen
  type(bz_samp)     :: Xk,Xq
  integer           :: BS_H_dim
- complex(SP)       :: BS_E(BS_H_dim),BS_R(BS_H_dim),IP_E,IP_R,Wd
+ complex(SP)       :: BS_E(BS_H_dim),BS_R0(BS_H_dim)
  !
  ! Work space
  !
  type(W_samp)      :: W_bss
  !
- integer              :: n_T_steps,i_T,neh,i_v,i_c,i_kbz,i_kibz,i_kmem,i_spin,i_freq
+ integer              :: n_T_steps,i_T,neh,i_v,i_c,i_kbz,i_kibz,i_kmem,i_spin,i_freq,i_l
  character(3)         :: message
  real(SP)             :: io_Time,Co,change_factor,f_cv,delta_f_cv,output(3)
- logical              :: l_TR_transm,l_TR_reflec
+ complex(SP)          :: BS_R1,IP_E,IP_R,Wd
+ logical              :: l_TR_transm,l_TR_reflec,l_include_IP
  !
  real(SP),allocatable    :: delta_f(:,:,:)
+ real(SP),allocatable    :: X_absorption_coeff(:,:)
  complex(SP),allocatable :: X_reflectance(:,:)
  !
  call RT_variables_load(Xen,Xk,n_T_steps)
@@ -69,6 +72,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
  !
  call parser('Transmission',l_TR_transm)
  call parser('Reflectivity',l_TR_reflec)
+ call parser('IncludeIP'   ,l_include_IP)
  !
  Xbsk%ib=SC_bands
  !Xbsk%ng=wf_ng
@@ -86,7 +90,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
  !
  allocate(delta_f(rt%nb(1):rt%nb(2),Xk%nibz,n_sp_pol))
  allocate(X_epsilon(2,X_rt%energy_steps))
- if(l_TR_transm.or.l_TR_reflec) allocate(X_reflectance(2,X_rt%energy_steps))
+ if(l_TR_reflec) allocate(X_reflectance(2,X_rt%energy_steps))
+ if(l_TR_transm) allocate(X_absorption_coeff(2,X_rt%energy_steps))
  !
  W_bss%er(1)=X_rt%energy_range(1)
  W_bss%er(2)=X_rt%energy_range(2)
@@ -100,9 +105,9 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
  call FREQUENCIES_setup(W_bss)
  !
  call RT_output(what="initialize")
- call RT_output("open trans_eps_rel trans_eps_abs trans_eps_eq")
- if (l_TR_reflec) call RT_output("open trans_refl_rel trans_refl_abs trans_refl_eq")
- !if(l_TR_transm) call RT_output("open trans_transm1 trans_transm2 trans_transm3")
+ call RT_output("open trans_eps_rel trans_eps_abs eps_eq")
+ if (l_TR_reflec) call RT_output("open trans_refl_rel trans_refl_abs refl_eq")
+ if (l_TR_transm) call RT_output("open trans_transm_rel trans_transm_abs transm_eq")
  !
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q0_def_norm**2
  !
@@ -126,104 +131,135 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
    !
    ! Compute the contribution due to exissting transitions
    !
-   do neh = 1,BS_H_dim
+   !BS_R0=(0._SP,0._SP)
+   !
+   do i_l=1,BS_H_dim
      !
-     i_kbz   = BSS_eh_table(neh,1)
-     i_kibz  = Xk%sstar(i_kbz,1)
-     i_v     = BSS_eh_table(neh,2)
-     i_c     = BSS_eh_table(neh,3)
-     i_spin  = spin(BSS_eh_table(neh,:))
+     BS_R1=(0._SP,0._SP)
      !
-     if(i_v<rt%nb(1) .or. i_c>rt%nb(2) ) cycle
+     do neh = 1,BS_H_dim
+       !
+       i_kbz   = BSS_eh_table(neh,1)
+       i_kibz  = Xk%sstar(i_kbz,1)
+       i_v     = BSS_eh_table(neh,2)
+       i_c     = BSS_eh_table(neh,3)
+       i_spin  = spin(BSS_eh_table(neh,:))
+       !
+       i_kmem= PAR_Xk_bz_index(i_kbz)
+       !
+       if(i_v<rt%nb(1) .or. i_c>rt%nb(2) ) cycle
+       !
+       f_cv=Xen%f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
+       !
+       delta_f_cv=delta_f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ- &
+&                 Xen%f(i_v,i_kibz,i_spin)*          delta_f(i_c,i_kibz,i_spin) /spin_occ/spin_occ
+       !
+       BS_R1=BS_R1-DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin)*BS_mat(neh,i_l)*delta_f_cv/sqrt(f_cv)
+       !BS_R0(i_l)=BS_R0(i_l)-DIP_q_dot_iR(i_c,i_v,i_kibz,i_spin)*BS_mat(neh,i_l)*sqrt(f_cv)
+       !
+     enddo 
      !
-     f_cv=Xen%f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
-     !
-     delta_f_cv=delta_f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ- &
-&               Xen%f(i_v,i_kibz,i_spin)*          delta_f(i_c,i_kibz,i_spin) /spin_occ/spin_occ
-     !
-     change_factor=0._SP
-     if(f_cv>0) change_factor=0.5*delta_f_cv/f_cv
-     !
-     X_epsilon(1,:)=X_epsilon(1,:)-                 BS_R(neh)*conjg(BS_R(neh))/(W_bss%p(:)-BS_E(neh))
-     X_epsilon(2,:)=X_epsilon(2,:)-2.*change_factor*BS_R(neh)*conjg(BS_R(neh))/(W_bss%p(:)-BS_E(neh))
+     X_epsilon(1,:)=X_epsilon(1,:)-      BS_R0(i_l)*conjg(BS_R0(i_l))       /(W_bss%p(:)-BS_E(i_l))
+     X_epsilon(2,:)=X_epsilon(2,:)-0.5*(BS_R1*conjg(BS_R0(i_l))+conjg(BS_R1)*BS_R0(i_l))/(W_bss%p(:)-BS_E(i_l))
      !
    enddo
    !
    ! Now sum the contributions due to new transitions assuming the IP situation
    !
-   do i_kbz=1,Xk%nbz
-     i_kibz=Xk%sstar(i_kbz,1)
-     i_kmem= PAR_Xk_bz_index(i_kbz)
-     do i_spin=1,n_sp_pol
-       !
-       ! First valence
-       do i_v=rt%nb(1),Xen%nbf
-         do i_c=rt%nb(1),Xen%nbf
-           !
-           if(i_v==i_c) cycle
-           !
-           f_cv=-Xen%f(i_v,i_kibz,i_spin)*delta_f(i_c,i_kibz,i_spin)/spin_occ/spin_occ
-           IP_R=-conjg(DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin))*sqrt(f_cv)
-           IP_E=Xen%E(i_c,i_kibz,i_spin)-Xen%E(i_v,i_kibz,i_spin)
-           X_epsilon(2,:)=X_epsilon(2,:)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
-           X_epsilon(2,:)=X_epsilon(2,:)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)
-           !
+   if(l_include_IP) then
+     do i_kbz=1,Xk%nbz
+       i_kibz=Xk%sstar(i_kbz,1)
+       i_kmem= PAR_Xk_bz_index(i_kbz)
+       do i_spin=1,n_sp_pol
+         !
+         ! First valence
+         do i_v=rt%nb(1),Xen%nbf
+           do i_c=rt%nb(1),Xen%nbf
+             !
+             if(i_v==i_c) cycle
+             !
+             f_cv=-Xen%f(i_v,i_kibz,i_spin)*delta_f(i_c,i_kibz,i_spin)/spin_occ/spin_occ
+             IP_R=-conjg(DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin))*sqrt(f_cv)
+             IP_E=Xen%E(i_c,i_kibz,i_spin)-Xen%E(i_v,i_kibz,i_spin)
+             X_epsilon(2,:)=X_epsilon(2,:)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
+             X_epsilon(2,:)=X_epsilon(2,:)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)
+             !
+           enddo
          enddo
-       enddo
-       !
-       ! Then conduction
-       do i_v=Xen%nbf+1,rt%nb(2)
-         do i_c=Xen%nbf+1,rt%nb(2)
-           !
-           if(i_v==i_c) cycle
-           !
-           f_cv= delta_f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
-           IP_R=-conjg(DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin))*sqrt(f_cv)
-           IP_E=Xen%E(i_c,i_kibz,i_spin)-Xen%E(i_v,i_kibz,i_spin)
-           X_epsilon(2,:)=X_epsilon(2,:)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
-           X_epsilon(2,:)=X_epsilon(2,:)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)
-           !
+         !
+         ! Then conduction
+         do i_v=Xen%nbf+1,rt%nb(2)
+           do i_c=Xen%nbf+1,rt%nb(2)
+             !
+             if(i_v==i_c) cycle
+             !
+             f_cv= delta_f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
+             IP_R=-conjg(DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin))*sqrt(f_cv)
+             IP_E=Xen%E(i_c,i_kibz,i_spin)-Xen%E(i_v,i_kibz,i_spin)
+             X_epsilon(2,:)=X_epsilon(2,:)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
+             X_epsilon(2,:)=X_epsilon(2,:)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)
+             !
+           enddo
          enddo
+         !
        enddo
-       !
      enddo
-   enddo
+   endif
    !
    X_epsilon(1,:)=1.+X_epsilon(1,:)*Co
    X_epsilon(2,:)=   X_epsilon(2,:)*Co
    !
-   if(l_TR_reflec.or.l_TR_transm) then
-     X_reflectance(1,:)=(sqrt(X_epsilon(1,:))-1)/(sqrt(X_epsilon(1,:))+1)
-     !X_reflectance(2,:)=(sqrt(X_epsilon(1,:)+X_epsilon(2,:))-1)/(sqrt((X_epsilon(1,:)+X_epsilon(2,:)))+1)
-     X_reflectance(2,:)=0.5_SP*X_epsilon(2,:)*(1._SP/(X_epsilon(1,:)+sqrt(X_epsilon(2,:))) - &
-&            (sqrt(X_epsilon(1,:))-1)/(sqrt(X_epsilon(1,:))+1)**2._SP/sqrt(X_epsilon(1,:)) )
+   if(l_TR_reflec) then
+     ! Reflectance is assumed for a 3D system
+     ! r=(sqrt(eps)-1)/(sqrt(eps)+1)
+     X_reflectance(1,:)=(sqrt(X_epsilon(1,:))-1._SP)/(sqrt(X_epsilon(1,:))+1._SP)
+!     X_reflectance(2,:)=(sqrt(X_epsilon(1,:)+X_epsilon(2,:))-1)/(sqrt((X_epsilon(1,:)+X_epsilon(2,:)))+1)
+!     X_reflectance(2,:)=0.5_SP*X_epsilon(2,:)*(1._SP/(X_epsilon(1,:)+sqrt(X_epsilon(2,:))) - &
+!&            (sqrt(X_epsilon(1,:))-1)/(sqrt(X_epsilon(1,:))+1)**2._SP/sqrt(X_epsilon(1,:)) )
+     X_reflectance(2,:)=X_epsilon(2,:)/(sqrt(X_epsilon(1,:))+1._SP)**2._SP/sqrt(X_epsilon(1,:)) 
+   endif
+   !
+   if(l_TR_transm) then
+     ! 3D systems
+     ! alpha= 2/c aimag(sqrt(eps))
+     !X_absorption_coeff(1,:)=1._SP-exp(-real(W_bss%p(:))/SPEED_OF_LIGHT*aimag(sqrt(X_epsilon(1,:)))*thickness)
+     !X_absorption_coeff(2,:)=
+     ! MAU Nano-letters: 2D systems
+     X_absorption_coeff(1,:)=real(W_bss%p(:))/SPEED_OF_LIGHT*aimag(X_epsilon(1,:))*alat(3)
+     X_absorption_coeff(2,:)=real(W_bss%p(:))/SPEED_OF_LIGHT*aimag(X_epsilon(2,:))*alat(3)
    endif
    !
    do i_freq=1,W_bss%n_freqs
-     output(1)=aimag(X_epsilon(2,i_freq))/aimag(X_epsilon(1,i_freq))
-     output(2)=aimag(X_epsilon(2,i_freq))
      output(3)=aimag(X_epsilon(1,i_freq))
+     output(2)=aimag(X_epsilon(2,i_freq))
+     output(1)=output(2)/output(3)
      call RT_output("trans_eps_rel",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
      call RT_output("trans_eps_abs",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-     if(i_T==1) call RT_output("trans_eps_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+     if(i_T==1) call RT_output("eps_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
      if(l_TR_reflec) then
+       !  R=|r|^2
        output(3)=X_reflectance(1,i_freq)*conjg(X_reflectance(1,i_freq))
        !output(2)=X_reflectance(2,i_freq)*conjg(X_reflectance(2,i_freq))-output(3)
        output(2)=X_reflectance(2,i_freq)*conjg(X_reflectance(1,i_freq))+X_reflectance(1,i_freq)*conjg(X_reflectance(2,i_freq))
        output(1)=output(2)/output(3)
        call RT_output("trans_refl_rel",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
        call RT_output("trans_refl_abs",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-       if(i_T==1) call RT_output("trans_refl_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+       if(i_T==1) call RT_output("refl_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
      endif
      ! I need to check some factor
-     !if(l_TR_transm) then
-     !  output(3)=1-X_reflectance(1,i_freq)*conjg(X_reflectance(1,i_freq))-aimag(X_epsilon(1,i_freq))
-     !  output(2)=1-X_reflectance(1,i_freq)*conjg(X_reflectance(1,i_freq))-aimag(X_epsilon(1,i_freq)+X_epsilon(2,i_freq))
-     !  output(1)=output(2)/output(3)
-     !  call RT_output("trans_transm_rel",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-     !  call RT_output("trans_transm_abs",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-     !  call RT_output("trans_transm_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-     !endif
+     if(l_TR_transm) then
+       ! 3D systems
+       !output(3)=1._SP-X_reflectance(1,i_freq)*conjg(X_reflectance(1,i_freq))-X_absorption_coeff(1,i_freq)
+       !output(2)=-X_reflectance(1,i_freq)*conjg(X_reflectance(2,i_freq))-conjg(X_reflectance(1,i_freq))*X_reflectance(2,i_freq) &
+       !         -X_absorption_coeff(2,i_freq)
+       ! 2D systems (reflectance is assumed to be zero)
+       output(3)=1._SP-X_absorption_coeff(1,i_freq)
+       output(2)=-X_absorption_coeff(2,i_freq)
+       output(1)=output(2)/output(3)
+       call RT_output("trans_transm_rel",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+       call RT_output("trans_transm_abs",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+       if(i_T==1) call RT_output("transm_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+     endif
    enddo
    !
    call RT_output("space trans")
@@ -241,4 +277,3 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R)
  return
  !
 end subroutine RT_transient_absorption
-

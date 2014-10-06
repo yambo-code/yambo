@@ -62,7 +62,7 @@ subroutine RT_Fluence(i_field)
  Fluence=0._SP
  last_it_evaluated=0
  !
- do it=Efield(i_field)%t_initial_indx,NE_steps
+ do it=Efield(i_field)%t_initial_indx,NE_steps,RT_IO_output_steps
    !
    T(it)=it*RT_step
    !
@@ -88,10 +88,10 @@ subroutine RT_Fluence(i_field)
    !
    if (it>10*Efield(i_field)%damping/RT_step) cycle
    !
-   if (mod(it,RT_IO_output_steps)/=0) cycle
+   !if (mod(it,RT_IO_output_steps)/=0) cycle
    !
    Fluence(it)=RIntegrate(I(:it),T(:it),it)
-   !
+   ! 
    if (last_it_evaluated>0 ) Fluence(last_it_evaluated+1:it-1)= Fluence(last_it_evaluated)
    !
    last_it_evaluated=it
@@ -102,15 +102,13 @@ subroutine RT_Fluence(i_field)
    !
  enddo
  !
- if(it>NE_steps) it=NE_steps
- !
- Efield(i_field)%t_final_indx=it
+ Efield(i_field)%t_final_indx=last_it_evaluated
  Efield(i_field)%t_final=(Efield(i_field)%t_final_indx-1)*RT_step
  !
  allocate(Efield(i_field)%Fluence( Efield(i_field)%t_final_indx ) )
  Efield(i_field)%Fluence(:Efield(i_field)%t_final_indx)=&
 &                Fluence(:Efield(i_field)%t_final_indx)
  !
- if(it<NE_steps) Fluence(it+1:)=Fluence(it)
+ if(it<=NE_steps) Fluence(it:)=Fluence(it-1)
  !
 end subroutine RT_Fluence

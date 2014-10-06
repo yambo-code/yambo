@@ -35,9 +35,9 @@ module fields
  type ext_field
    character(schlen) :: ef_name
    real(SP) :: t_initial
-   integer  :: t_initial_indx  ! time index of extern field switch on  (input variable)
+   integer  :: t_initial_indx    ! time index of extern field switch on  (input variable)
    real(SP) :: t_final
-   integer  :: t_final_indx    ! time index of extern field switch off (computed in RT_Fluence)
+   integer  :: t_final_indx      ! time index of extern field switch off (computed in RT_Fluence)
    integer  :: n_frequencies
    real(SP) :: frequency(2)
    real(SP) :: damping
@@ -53,10 +53,6 @@ module fields
  integer             :: i_Pump
  type(ext_field)     :: Efield(n_ext_fields)
  !
- ! ... switch on time of external field
- !
- integer  :: theta_function_iTo_ref
- !
  ! Vector potential
  ! 
  type gauge_field
@@ -67,6 +63,9 @@ module fields
  !
  type(gauge_field) :: A_vecpot
  type(gauge_field) :: A_vecpot_previous
+ type(gauge_field) :: A_ext
+ type(gauge_field) :: A_ind
+ type(gauge_field) :: A_ind_previous
  !
  contains
    !
@@ -203,20 +202,28 @@ module fields
      real(SP):: T,step
      !
      theta_function=0._SP
-     iT=floor(T/step)
      !
-     if (iT==theta_function_iTo_ref) then
+     iT=nint(T/step)
+     !
+     if (iT==-1) then
+       if (order==0) theta_function= 0._SP
+       if (order==1) theta_function= 0._SP
        if (order==2) theta_function= 1._SP/step**2.
      endif
      !
-     if (iT==theta_function_iTo_ref+1) then
+     if (iT== 0) then
+       if (order==0) theta_function= 0.5_SP
        if (order==1) theta_function= 1._SP/step
+       if (order==2) theta_function= 0._SP
+     endif
+     !
+     if (iT==+1) then
+       if (order==0) theta_function= 1._SP
+       if (order==1) theta_function= 0._SP
        if (order==2) theta_function=-1._SP/step**2.
      endif
      !
-     if (iT>=theta_function_iTo_ref+2) then
-       if (order==0) theta_function= 1._SP
-     endif
+     if (iT>+1 .and. order==0) theta_function= 1._SP
      !
    end function
    !
@@ -237,9 +244,10 @@ module fields
    end subroutine
    !
    subroutine Efield_reset(E)
+     use real_time,  ONLY:RT_step
      type(ext_field) :: E
-     E%t_initial    =0._SP
-     E%t_initial_indx=0
+     E%t_initial    =RT_step
+     E%t_initial_indx=2
      E%t_final      =0._SP
      E%t_final_indx =0
      E%frequency    =0._SP
@@ -249,6 +257,13 @@ module fields
      E%damping      =0._SP
      E%ef_name      ='none'
      E%versor       =(/1._SP,0._SP,0._SP/)
+   end subroutine
+   !
+   subroutine A_vecpot_reset(A)
+     type(gauge_field) A
+     A%vecpot_acc=0._SP
+     A%vecpot_vel=0._SP
+     A%vecpot    =0._SP
    end subroutine
    !
    complex(SP) function Rabi_Factor(Field,P,R)

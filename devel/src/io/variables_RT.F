@@ -32,7 +32,7 @@ integer function variables_RT(ID,local_description,what)
 &                         RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_nk,RT_nstates,l_NE_with_fields,RT_step,NE_steps,NE_time,              &
 &                         Integrator_name, &
-&                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,              &
+&                         RAD_LifeTime,Phase_LifeTime,              &
 &                         l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_skip_impose,&
 &                         l_RT_uses_E_RIM,N_Gr_descs,RT_life_interp_steps,RT_life_interp_decay_time,&
@@ -50,7 +50,7 @@ integer function variables_RT(ID,local_description,what)
  character(*)       ::what
  !
  integer               :: i1,i_desc,i_dummy,RT_diagonalization_steps
- logical               :: l_J,l_G,l_occupations,l_NE_with_fields_disk,l_MP,l_RT_diagonalize
+ logical               :: l_J,l_G,l_occupations,l_NE_with_fields_disk,l_MP,l_RT_diagonalize,l_RT_diamagnetic
  character(lchlen)     :: ch
  !
  RT_diagonalization_steps=0
@@ -207,7 +207,7 @@ integer function variables_RT(ID,local_description,what)
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_diamagnetic,&
-&    VAR=' [RT] Diamagnetic term           :',  CHECK=.true.,OP=(/"=="/),&
+&    VAR=' [RT] Diamagnetic term           :',  CHECK=.false.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_induced_field,&

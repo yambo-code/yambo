@@ -37,7 +37,7 @@ subroutine RT_initialize(E,k,q)
 &                         RT_IO_G_steps,RT_IO_output_steps
  use real_time,      ONLY:RT_step,l_NE_with_fields, &
 &                         NE_steps,NE_tot_time,   &
-&                         l_RT_diamagnetic,l_NE_simulate_Irredux,l_RT_induced_field,                   &
+&                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
 &                         RT_is_dephased,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,RIM_ibz_coo, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,    &
@@ -50,7 +50,7 @@ subroutine RT_initialize(E,k,q)
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
-&                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
+&                         i_Pump,i_Probe,EtoT,Efield_strength
  use parser_m,       ONLY:parser
  !
  implicit none
@@ -70,7 +70,6 @@ subroutine RT_initialize(E,k,q)
  !==========
  !
  call parser('BGR',                  l_BGR)
- call parser('Diamagnetic',          l_RT_diamagnetic)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
  call parser('RTskipImposeN',        l_RT_skip_impose)
@@ -121,6 +120,11 @@ subroutine RT_initialize(E,k,q)
  endif
  !
  if(l_RT_INTERPOLATE) call error(' INTERPOLATION of coherent part: status unknonw')
+ !
+ if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
+   call warning(" Not a valid gauge in input. Switching to length gauge")
+   global_gauge="length"
+ endif
  !
  ! Use NE_tot_time if provided
  !
@@ -215,7 +219,11 @@ subroutine RT_initialize(E,k,q)
      Efield(i1)%versor   =normalize_v(Efield(i1)%versor)
      Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
      !
-     Efield(i1)%t_initial_indx=int(Efield(i1)%t_initial/RT_step)+1
+     Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
+     if(Efield(i1)%t_initial_indx< RT_IO_JPO_steps+1 ) then
+       call warning(' Field cannot start before dT(J) . Setting T0=dT(J)')
+       Efield(i1)%t_initial_indx=RT_IO_JPO_steps+1
+     endif
      Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
      call SC_check_symmetries(Efield(i1)%versor)
@@ -227,7 +235,7 @@ subroutine RT_initialize(E,k,q)
        call RT_Fluence(i1)
      else
        Efield(i1)%t_final_indx=NE_steps
-       Efield(i1)%t_final=RT_step
+       Efield(i1)%t_final=RT_step*NE_steps
      endif
      !
    endif
@@ -288,17 +296,6 @@ subroutine RT_initialize(E,k,q)
  !=============================================
  if (l_elph_scatt.or.l_elel_scatt) N_T_samplings=RT_Lifetimes_evaluation_plan( )
  !
- ! Gauge
- !=======
- !
- ! If the gauge is length I need E(t) whose definition includes a delta(t). 
- ! The numerical definition of delta(t) in mod_fields depends on the 
- ! definition of a refence time theta_function_iTo_ref. Using a small time step
- ! or an A(t) that is zero at the start-up of the field 
- ! this parameter does not make any difference. However in the case of a DELTA field
- ! a correct definition is needed to obtain the same result in both gauges.
- ! 
- if (trim(global_gauge) == 'length' ) theta_function_iTo_ref=0
  !
  ! Checking extended COLLISIONS
  !==============================

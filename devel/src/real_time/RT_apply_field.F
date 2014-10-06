@@ -28,7 +28,7 @@ subroutine RT_apply_field(ik,ik_RIM,En,H_nl_sc,A_input)
  use pars,           ONLY:SP,cI
  use electrons,      ONLY:levels
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:l_RT_diamagnetic,l_RT_uses_E_RIM
+ use real_time,      ONLY:l_RT_uses_E_RIM
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:n_sp_pol
  use X_m,            ONLY:DIP_iR,DIP_P,Dipole_Energy_treshold,global_gauge
@@ -44,7 +44,7 @@ subroutine RT_apply_field(ik,ik_RIM,En,H_nl_sc,A_input)
  ! Work Space
  !
  integer     :: i1,i2,is
- complex(SP) :: A_dot_P,E_dot_r,A_vec_pot(3),E_vec_pot(3),DIP(3),deltaE,deltaE_RIM
+ complex(SP) :: A_dot_J,E_dot_P,A_vec_pot(3),E_vec_pot(3),POL(3),CURR(3),deltaE,deltaE_RIM
  !
  if(trim(global_gauge)=='velocity') then
    !
@@ -58,7 +58,9 @@ subroutine RT_apply_field(ik,ik_RIM,En,H_nl_sc,A_input)
    ! and the intraband optical matrix elements have been set to zero
    !
    do i1=SC_bands(1),SC_bands(2)
-     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(sum(A_vec_pot(1:3)*DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),1)),SP)
+     CURR(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),1)+A_vec_pot(1:3)/2._SP
+     A_dot_J=sum(A_vec_pot(1:3)*CURR(1:3)) 
+     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(A_dot_J,SP)
    enddo
    !
    do i1=SC_bands(1),SC_bands(2)
@@ -66,18 +68,16 @@ subroutine RT_apply_field(ik,ik_RIM,En,H_nl_sc,A_input)
        !
        ! Note that (P)_cv = DIP_P (:,iv,ic,:,:)
        !     
-       A_dot_P=-sum(A_vec_pot(1:3)*DIP_P(1:3,i2,i1,PAR_Xk_ibz_index(ik),1))
-       H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)+A_dot_P
-       H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)+conjg(A_dot_P)
+       CURR(:)=-DIP_P(1:3,i1,i2,PAR_Xk_ibz_index(ik),1) ! the off-diagonal diamagnetic term is zero
+       A_dot_J=sum(A_vec_pot(1:3)*CURR(1:3)) 
+       H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)-      A_dot_J
+       H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)-conjg(A_dot_J)
        !
      enddo
    enddo
    !
-   if(l_RT_diamagnetic) then
-     forall(i1=SC_bands(1):SC_bands(2),is=1:n_sp_pol) 
-       H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+0.5_SP*sum(A_vec_pot(1:3)**2)
-     end forall
-   endif
+   ! Correction to the pseudo should be included here ... <nk|V(r,r')[exp(iA*(r-r'))-1]|n'k>
+
    !
  else  
    !
@@ -89,7 +89,9 @@ subroutine RT_apply_field(ik,ik_RIM,En,H_nl_sc,A_input)
    ! Intraband terms
    !
    do i1=SC_bands(1),SC_bands(2)
-     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)+real(cI*sum(E_vec_pot(1:3)*DIP_iR(1:3,i1,i1,PAR_Xk_ibz_index(ik),1)),SP)
+     POL(:)=cI*DIP_iR(:,i1,i1,PAR_Xk_ibz_index(ik),1)
+     E_dot_P=sum(E_vec_pot(1:3)*POL(1:3))
+     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(E_dot_P,SP)
    enddo
    !
    do i1=SC_bands(1),SC_bands(2)
@@ -97,15 +99,15 @@ subroutine RT_apply_field(ik,ik_RIM,En,H_nl_sc,A_input)
        !
        ! Note that (iR)_cv = DIP_iR (:,iv,ic,:,:)
        !
-       DIP(:)=DIP_iR(:,i2,i1,PAR_Xk_ibz_index(ik),1)
+       POL(:)=cI*DIP_iR(:,i2,i1,PAR_Xk_ibz_index(ik),1)
        if(l_RT_uses_E_RIM) then
          deltaE=En%E(i1,ik,1)-En%E(i2,ik,1)
          deltaE_RIM=En%E_RIM(i1,ik_RIM,1)-En%E_RIM(i2,ik_RIM,1)
-         if(abs(deltaE)>Dipole_Energy_treshold .and. abs(deltaE_RIM)>Dipole_Energy_treshold) DIP(:)=DIP(:)*deltaE/deltaE_RIM
+         if(abs(deltaE)>Dipole_Energy_treshold .and. abs(deltaE_RIM)>Dipole_Energy_treshold) POL(:)=POL(:)*deltaE/deltaE_RIM
        endif
-       E_dot_r=cI*sum(E_vec_pot(1:3)*DIP(1:3))
-       H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)+      E_dot_r
-       H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)+conjg(E_dot_r)
+       E_dot_P=sum(E_vec_pot(1:3)*POL(1:3))
+       H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)-      E_dot_P
+       H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)-conjg(E_dot_P)
        !
      enddo
    enddo

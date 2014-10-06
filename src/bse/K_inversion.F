@@ -29,7 +29,8 @@ subroutine K_inversion(iq,W,E,k,q)
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_H_dim,&
 &                         BSE_mode,BSS_eh_table,BSS_eh_E,BSS_inversion_mode,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BSS_eh_f,&
-&                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z,BS_mat_diagonal,BS_mat_free
+&                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z,BS_mat_diagonal,&
+&                         BS_mat_free,BSS_inversion_PERT_FULL_ratio
 #if defined _ELPH
  use BS,             ONLY:BSS_uses_GreenF,BS_bands
 #endif
@@ -64,12 +65,11 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! ... frequencies
  !
- integer, parameter  :: max_freqs_full_inv_ratio=2
  integer,allocatable :: inv_err(:),iw_full(:)
  integer             :: full_inf_freqs,nw,nw_conv,&
 &                       min_dist_non_conv_freqs ! Every W%n_freqs/min_dist_non_conv_freqs
                                                 ! I perform a full inversion
- logical    ::do_it_full,full_inf_freqs_found,FULL,PERTURBATIVE,FULL_no_skip
+ logical    ::do_it_full,full_inf_freqs_found,FULL,PERTURBATIVE
  !
  ! I/O
  !
@@ -98,13 +98,11 @@ subroutine K_inversion(iq,W,E,k,q)
  ! Full inversion ?
  !==================
  !
- FULL_no_skip = .FALSE.
  FULL         = .TRUE.
  PERTURBATIVE = .TRUE.
  !
  if (trim(BSS_inversion_mode)/="i") then
-   FULL_no_skip = index(BSS_inversion_mode,'F')/=0
-   FULL         = index(BSS_inversion_mode,'f')/=0.or.index(BSS_inversion_mode,'F')/=0
+   FULL         = index(BSS_inversion_mode,'f')/=0
    PERTURBATIVE = index(BSS_inversion_mode,'p')/=0
  endif
  !
@@ -346,7 +344,7 @@ subroutine K_inversion(iq,W,E,k,q)
    call PP_redux_wait(X_epsilon)
    !
    eps_disk(:,1)=X_epsilon(2,:)
-   if (IO_dim==2) eps_disk(:,2)=X_epsilon(4,:)
+   if (trim(BSE_mode)=="causal") eps_disk(:,2)=X_epsilon(4,:)
    !
    if (master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
@@ -403,9 +401,7 @@ subroutine K_inversion(iq,W,E,k,q)
      min_dist_non_conv_freqs=min_dist_non_conv_freqs-1
      if (min_dist_non_conv_freqs==0) full_inf_freqs_found=.TRUE.
      !
-     if (.not.FULL_no_skip) then
-       if (full_inf_freqs>=W%n_freqs/max_freqs_full_inv_ratio) full_inf_freqs_found=.TRUE.
-     endif
+     if (full_inf_freqs>=nint(real(W%n_freqs)/BSS_inversion_PERT_FULL_ratio)) full_inf_freqs_found=.TRUE.
      !
    enddo
  endif
@@ -445,15 +441,13 @@ subroutine K_inversion(iq,W,E,k,q)
  enddo
  call msg('rs','[BSE INV] Converged frequencies [o/o]:',real(nw_conv)/real(W%n_freqs)*100._SP)
  !
- if(trim(BSE_mode)=="causal") X_epsilon(2,:)=X_epsilon(2,:)+X_epsilon(4,:)
- !
  if (nw_conv>0) then
    !
    ! I/O [after full inversion]
    !
    eps_disk(:,1)=X_epsilon(2,:)
    !
-   if (IO_dim==2) eps_disk(:,2)=X_epsilon(4,:)
+   if (trim(BSE_mode)=="causal") eps_disk(:,2)=X_epsilon(4,:)
    !
    if (master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
@@ -463,7 +457,15 @@ subroutine K_inversion(iq,W,E,k,q)
    ! Try a polinomial interpolation on the null values
    !===================================================
    !
-   call K_eps_interpolate(W%n_freqs,real(W%p),inv_err)
+   call K_eps_interpolate(W%n_freqs,real(W%p),inv_err,2)
+   !
+   if(trim(BSE_mode)=="causal") then
+     !
+     call K_eps_interpolate(W%n_freqs,real(W%p),inv_err,4)
+     !
+     X_epsilon(2,:)=X_epsilon(2,:)+X_epsilon(4,:)
+     !
+   endif
    !
  else
    !

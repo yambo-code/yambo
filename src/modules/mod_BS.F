@@ -161,6 +161,7 @@ module BS
  real(SP) :: BSS_q0(3)
  real(SP) :: Haydock_treshold
  real(SP) :: Haydock_v0_mod
+ real(SP) :: BSS_inversion_PERT_FULL_ratio = 1.
  logical  :: BSS_write_eig_2_db
  logical  :: Haydock_terminator
  logical  :: BSS_uses_RIM

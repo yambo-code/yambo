@@ -160,10 +160,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    io_BS_err=io_BS(iq,X,ID)
    !
    if (io_BS_err==0.and.l_bss) then
-     call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID)
+     call io_control(ACTION=OP_RD,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
      io_BS_err=io_BS(iq,X,ID)
      do i_block=1,n_BS_blks
-       call io_control(ACTION=RD_CL_IF_END,COM=REP,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
+       call io_control(ACTION=RD_CL_IF_END,COM=NONE,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
        io_BS_err=io_BS(iq,X,ID)
      enddo
    endif

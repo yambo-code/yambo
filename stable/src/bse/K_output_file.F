@@ -22,7 +22,7 @@
 subroutine K_output_file(iq,mode)
  !
  use pars,      ONLY:pi,SP
- use units,     ONLY:HA2EV
+ use units,     ONLY:HA2EV,SPEED_OF_LIGHT
  use BS,        ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
 &                    BSS_n_descs,BSE_mode,BS_K_is_ALDA,BSS_n_freqs,BSS_q0
  use X_m,       ONLY:X_epsilon,eval_alpha,eps_2_alpha,O_eels
@@ -34,7 +34,7 @@ subroutine K_output_file(iq,mode)
  use pars,      ONLY:cI
  use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,hbar_SI
  use drivers,   ONLY:l_kerr,l_anomalous_Hall
- use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name
+ use X_output,  ONLY:fara_file_name,moke_file_name,off_file_name,beta_file_name
  use KERR,      ONLY:B_Hall
 #endif
  !
@@ -47,7 +47,11 @@ subroutine K_output_file(iq,mode)
  character(2)      :: title_mode
  integer           :: iw,n_output_data
  real(SP)          :: output_data(7)
- complex(SP)       :: eels(3,BSS_n_freqs),alpha(3,BSS_n_freqs),beta(3,BSS_n_freqs)
+ complex(SP)       :: eels(3,BSS_n_freqs),alpha(3,BSS_n_freqs)
+#if defined _KERR
+ real(SP)          :: w_over_c
+ complex(SP)       :: beta(3,BSS_n_freqs)
+#endif
  logical           :: eval_eels
  !
  ! File Names 
@@ -89,6 +93,7 @@ subroutine K_output_file(iq,mode)
    call of_open_close(off_file_name,title_mode)
    if (eval_alpha) call of_open_close(beta_file_name,title_mode)
    call of_open_close(moke_file_name,title_mode)
+   call of_open_close(fara_file_name,title_mode)
  endif
 #endif
  !
@@ -169,10 +174,16 @@ subroutine K_output_file(iq,mode)
      if (mode/=1.and.mode/=4) call msg("o moke",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (mode==4) call msg("o moke",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
      !
+     call msg('o fara','#','MCD delta alpha is equal to -4 time aimag Faraday',INDENT=0,USE_TABS=.true.)
+     call X_setup_headers('fara')
+     if (mode==1) call msg("o fara",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+     if (mode/=1.and.mode/=4) call msg("o fara",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (mode==4) call msg("o fara",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+     !
    endif
 #endif
    !
-   call msg("o eps eel alpha off beta moke",'#')
+   call msg("o eps eel alpha off beta moke fara",'#')
    !
    ! ABSORPTION
    !------------
@@ -297,6 +308,27 @@ subroutine K_output_file(iq,mode)
        call msg('o moke','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
      enddo
      !
+     ! Faraday parameters
+     !
+     do iw=1,BSS_n_freqs 
+       output_data(1)= real(X_epsilon(1,iw))*HA2EV
+       w_over_c= 2*pi*real(X_epsilon(1,iw))/SPEED_OF_LIGHT
+       output_data(2)=-aimag( cI*X_epsilon(5,iw)/sqrt(X_epsilon(2,iw)) ) * 2*w_over_c /DEG2RAD
+       output_data(3)=-real ( cI*X_epsilon(5,iw)/sqrt(X_epsilon(2,iw)) ) * 2*w_over_c /DEG2RAD
+       output_data(4)=-aimag( cI*X_epsilon(6,iw)/sqrt(X_epsilon(3,iw)) ) * 2*w_over_c /DEG2RAD
+       output_data(5)=-real ( cI*X_epsilon(6,iw)/sqrt(X_epsilon(3,iw)) ) * 2*w_over_c /DEG2RAD
+       !
+       n_output_data=5
+       if (mode==1) n_output_data=7
+       if (mode==1) then
+         output_data(6)=-aimag(X_epsilon(7,iw)/sqrt(X_epsilon(4,iw)) ) * 2*w_over_c /DEG2RAD
+         output_data(7)=-real (X_epsilon(7,iw)/sqrt(X_epsilon(4,iw)) ) * 2*w_over_c /DEG2RAD
+       endif
+       if (mode==4) n_output_data=3
+       if (mode==4) output_data(2:3)=output_data(4:5)
+       call msg('o fara','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+     enddo
+     !
    endif
    !
 #endif
@@ -312,6 +344,7 @@ subroutine K_output_file(iq,mode)
    call of_open_close(off_file_name)
    call of_open_close(beta_file_name)
    call of_open_close(moke_file_name)
+   call of_open_close(fara_file_name)
  endif
 #endif
  !

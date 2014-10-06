@@ -41,6 +41,9 @@ subroutine SC_start_and_restart(X,E,Xk)
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:WF_load,WF_free
+#if defined _MAGNETIC
+ use magnetic,       ONLY:MAG_B
+#endif
  !
  implicit none
  type(bz_samp)::Xk
@@ -195,7 +198,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
 #if defined _MAGNETIC
  !
- if (l_sc_magnetic) then
+ if (l_sc_magnetic .and. abs(MAG_B)>1.E-5) then
    !
    ! MAG_Hamiltonian
    !=================
@@ -207,7 +210,7 @@ subroutine SC_start_and_restart(X,E,Xk)
    call MAG_Hamiltonian(.FALSE.)
    !
    ! If exist the non local part of the pseudo then construct kbv
-   call MAG_H_pseudo(Xk)
+   call MAG_H_pseudo(Xk,E)
    !
  endif
  !

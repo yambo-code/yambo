@@ -21,44 +21,14 @@
 !
 subroutine MAG_Hamiltonian(initial_check_only)
  !
- ! ANDREA 3/7/09
- ! 
- ! STILL TODO: 
- !
- !  1. add spin density check in SC cycle (including mixing)
- !  2. Save el_spin_density in SC DBs
- !  3. Check if SC works in metals (not obvious)
- !
  ! WARNING: you need to put you system at the corner of the supercell <---
  !
- ! This subroutine evaluate the magnetic Hamiltonian in the space of 
- ! KS wave-functions.
- ! MAG_B and MAG_radius are given in input
- ! Landau magnetism, possible only for isolated or 1D systems
+ ! This subroutine evaluate the magnetic Hamiltonian in the space of KS wave-functions.
+ ! * Landau magnetism, possible only for isolated, 1D systems (and 2D systems if B belong to the 3D surface)
+ ! * Pauli magnetism, for every system, everywhere, except when Landau is on;
  ! If MAG_radius == 0 then Bz=MAG_B everywhere
- ! If MAG_radius /= 0 then we have the field inside a circle in each supercell.
- ! Pauli magnetism, for every system, everywhere, except when Landau is on;
- ! Then we have magnetic field in the same region of the supercell.
- !
- ! The field due to a single supercell is supposed to be:
- ! *******************************************************************************************
- !                               [  MAG_B    r<=MAG_radius
- !    Bx=0   ,   By=0    ,  Bz = {                                ====> A; B=rot(A)
- !                               [   0       r> MAG_radius  
- !
- ! With three possible gauges for the vector potential
- ! *****************************************************
- ! Gauge 0 --> Symmetric gauge
- !      [ -0.5*MAG_B y                                     [ 0.5*MAG_B x
- ! Ax = {                                             Ay = {                                          A_z=0
- !      [ -0.5*MAG_B (MAG_radius**2)*y/(x**2+y**2)         [ 0.5*MAG_B (MAG_radius**2)*x/(x**2+y**2)
- !
- ! Gauge 1 --> Asymmetric gauge (active only if MAG_radiu==0)
- ! Ax = -MAG_B y        Ay=  0              Az=0    
- ! Gauge 1 --> Asymmetric gauge (active only if MAG_radiu==0)
- ! Ax =  0              Ay=  MAG_B x        Az=0    
- ! *******************************************************************************************
- !
+ ! If MAG_radius /= 0 then we have the field inside a cilinder in each supercell (for AB effect).
+ ! For the details on the construction of the magnetic potential see: MAG_common_build_A.F subroutine
  !
  use pars,           ONLY:SP,pi
  use parser_m,       ONLY:parser
@@ -67,7 +37,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
  use memory_m,       ONLY:mem_est
  use com,            ONLY:warning,error
  use FFT_m,          ONLY:fft_size
- use D_lattice,      ONLY:a
+ use D_lattice,      ONLY:a,nsym
  use R_lattice,      ONLY:nkibz
  use magnetic,       ONLY:MAG_radius,MAG_B,MAG_hamiltonian_type,MAG_landau,MAG_pauli, &
 &                         MAG_gauge,A_magn_x,A_magn_y,A_magn_z,        &
@@ -127,10 +97,14 @@ subroutine MAG_Hamiltonian(initial_check_only)
        call warning('Pauli magnetism switched off (spin unpolarized system).')
      endif
      if(MAG_landau) MAG_hamiltonian_type='landau'
-!     if(.not.MAG_landau) call error('You need a spin polarized system')
+     if(.not.MAG_landau) call warning('No magnetic effect included in the Hamiltonian')
    endif
-   if(MAG_pauli .and. MAG_theta/=0.) &
-     call warning('The B field is not along z => the spins are assumed to be aligned to B. Please check.')
+   if(MAG_pauli .and. MAG_theta/=0.) then
+     if(nsym==1) &
+&     call warning('The B field is not along z => the spins are assumed to be aligned to B. Please check.')
+     if(nsym>1) &
+&     call error('The B field is not along z and Pauli coupling is on. Remove all symetries for that.')
+   endif
    ! Impose the symmetric gauge
    ! Impose flux to follow the a(3,:) direction 
    if(MAG_radius/=0) then

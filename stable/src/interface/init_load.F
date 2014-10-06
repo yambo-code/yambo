@@ -22,10 +22,10 @@
 subroutine init_load(defs,en,q,k,X,Xw)
  !
  use pars,          ONLY:schlen
- use electrons,     ONLY:levels,nel,filled_tresh
+ use electrons,     ONLY:levels,nel,filled_tresh,eval_magn
  use frequency,     ONLY:w_samp
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
-&                        Time_unit,I_unit,Angle_unit,&
+&                        Time_unit,I_unit,Angle_unit,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold
  use fields,        ONLY:global_gauge,grid_path
@@ -41,7 +41,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
-&                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode
+&                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
+&                        BSS_inv_iter_max
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -86,7 +87,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !===============
  ! GPL RUNLEVELS
  !===============
- call it('r',defs,'setup',   '[R INI] Initialization') 
+ call it('r',defs,'setup',   '[R INI] Initialization')
  call it('r',defs,'optics',  '[R OPT] Optics')
  call it('r',defs,'chi',     '[R CHI] Dyson equation for Chi.')
  call it('r',defs,'chik',    '[R CHI] Kernel for Chi')
@@ -148,6 +149,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt)
  call it(defs,'Nelectro','Electrons number',nel,verb_level=V_general)
+ call it('f',defs,'EvalMagn','Evaluate the magnetization',verb_level=V_general)
  call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)
  call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_general)
  call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
@@ -204,6 +206,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'BSSmod',  '[BSS] (h)aydock/(d)iagonalization/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
+ call it(defs,'BSSInvItMax','[BSS] Max number of iterations for perturbative inversion ',&
+&                                                                    BSS_inv_iter_max,verb_level=V_resp)
  call it(defs,'BLongDir','[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange','[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange','[BSS] Damping range',BSS_dr,E_unit)

@@ -19,23 +19,32 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf)  
+integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)  
  !
  use pars,          ONLY:SP
  use BS,            ONLY:BS_identifier,BSS_q0
  use IO_m,          ONLY:io_connect,io_disconnect,io_elemental,&
 &                        io_bulk,io_status,io_sec,io_header,&
 &                        read_is_on,write_is_on
+#if defined _KERR
+ use drivers,        ONLY:l_kerr
+#endif
+ !
  implicit none
  integer             :: ID,it,BS_H_dim
  real(SP)            :: reached_treshold,Bf(it+1),Af(it)
  complex(SP)         :: Vnm1(BS_H_dim),Vn(BS_H_dim)
- complex(SP),optional:: Cf(it+1),Vnp1(BS_H_dim)
+ complex(SP),optional:: Cf(it+1), Vnp1(BS_H_dim)
+ complex(SP),optional:: Cf_kerr(it+1)
  !
  ! Work Space
  !
  integer  :: it_on_disk
- real(SP) :: V_dummy(BS_H_dim,2), Cf_dummy(it+1,2)
+#if defined _KERR
+ real(SP) :: Cf_dummy_kerr(it+1,2)
+#endif
+ real(SP) :: Cf_dummy(it+1,2)
+ real(SP) :: V_dummy(BS_H_dim,2)
  !
  ioBSS_Haydock=io_connect(desc='Haydock_restart',type=2,ID=ID)
  !
@@ -102,7 +111,16 @@ integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp
      call io_bulk(ID,'C_factors',VAR_SZ=(/it+1,2/))
      call io_bulk(ID,R2=Cf_dummy)
      if (read_is_on(ID)) Cf(:)=Cf_dummy(:,1)+(0._SP,1._SP)*Cf_dummy(:,2)
-    endif
+   endif
+#if defined _KERR
+   if(present(Cf_kerr).and.l_kerr) then
+     if (write_is_on(ID)) Cf_dummy_kerr(:,1)=real(Cf_kerr)
+     if (write_is_on(ID)) Cf_dummy_kerr(:,2)=aimag(Cf_kerr)
+     call io_bulk(ID,'C_factors_kerr',VAR_SZ=(/it+1,2/))
+     call io_bulk(ID,R2=Cf_dummy_kerr)
+     if (read_is_on(ID)) Cf_kerr(:)=Cf_dummy_kerr(:,1)+(0._SP,1._SP)*Cf_dummy_kerr(:,2)
+   endif
+#endif
    !
    ! Vnp1 - optional
    !

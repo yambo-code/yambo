@@ -19,14 +19,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MAG_H_pseudo(Xk)
+subroutine MAG_H_pseudo(Xk,Xen)
  !
  use pars,          ONLY:SP
- use electrons,     ONLY:n_spin,n_spinor
+ use X_m,           ONLY:X_t
+ use electrons,     ONLY:n_spin,n_spinor,n_sp_pol,levels
  use wrapper,       ONLY:V_dot_V
- use wave_func,     ONLY:wf,wf_ng,WF_load,WF_free,wf_state,wf_n_states
+ use wave_func,     ONLY:wf,WF_load,WF_free,wf_state,wf_n_states,wf_ng
  use FFT_m,         ONLY:fft_size
- use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table
+ use pseudo,        ONLY:pp_kbv_dim
  use R_lattice,     ONLY:bz_samp
  use timing,        ONLY:live_timing
  use SC,            ONLY:SC_bands,Ho
@@ -38,8 +39,11 @@ subroutine MAG_H_pseudo(Xk)
  implicit none
  !
  type(bz_samp) :: Xk
+ type(levels)  :: Xen
  !
  ! Work Space
+ !
+ type(X_t)     :: X
  !
  complex(SP),allocatable :: kbv(:,:,:),kbv_ks_space(:,:)
  complex(SP)             :: H_pseudo(SC_bands(2),SC_bands(2))
@@ -50,33 +54,21 @@ subroutine MAG_H_pseudo(Xk)
  integer                 :: alloc_err
  !
  ! I / O
- integer                 :: ID,ioKB_err,io_err
- integer, external       :: ioKB_PP
+ integer                 :: ID,io_KB_abinit_err,io_KB_pwscf_err,io_err(3)
+ integer, external       :: ioKB_abinit,ioKB_pwscf
  !
+ call Dipole_kb_init(Xen,X,io_err,ID)
  !
- ! Check for the KB PP DB 
- call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
- ioKB_err=ioKB_PP(ID)
+ io_KB_abinit_err= io_err(1)
+ io_KB_pwscf_err = io_err(2)
+ !io_Vnl_err     = io_err(3)
  !
- if(ioKB_err/=0) return
- !
- pp_kbv_dim=0
-   do is = 1,n_atomic_species
-     do ia = 1,n_atoms_species(is)
-       do i_pp = 1, pp_n_l_times_proj_max
-         il = pp_table(1,is,i_pp)
-         pp_spin = pp_table(3,is,i_pp)
-         if(pp_spin>1) cycle
-         do im = 1,2*(il-1)+1
-           pp_kbv_dim=pp_kbv_dim+1
-         enddo
-       enddo
-     enddo
-   enddo
+ if(io_KB_abinit_err/=0.and.io_KB_pwscf_err/=0) return
  !
  call fft_setup(0,1,.true.)  ! fft_size
  !
  allocate(kbv(wf_ng,pp_kbv_dim,4),stat=alloc_err)
+ !
  call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
  !
  allocate(new_pp(fft_size,pp_kbv_dim),old_pp(fft_size,pp_kbv_dim))
@@ -93,17 +85,27 @@ subroutine MAG_H_pseudo(Xk)
    !
    call WF_load(0,1,(/1,SC_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
    !
-   if (ik< Xk%nibz) call io_control(ACTION=RD   ,SEC=(/ik+1/),ID=ID)
-   if (ik==Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
-   io_err=ioKB_PP(ID)
+   if (io_KB_pwscf_err==0) then
+     if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
+     if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
+     io_KB_pwscf_err=ioKB_pwscf(ID)
+   endif
+   !
+   if (io_KB_abinit_err==0) then
+     if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
+     if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
+     io_KB_abinit_err=ioKB_abinit(ID)
+   endif
    !
    do i_spin=1,n_spin
      !  
      ! Pseudo(k+G,k+G',i1) = kbv^*(k+G,i1,1) kbv(k+G',i1,1)
      ! i1 runs over atomic_species, atoms_per_specie , l_per_atom, m=-l,-l+1,...,l-1,sl
      pp_spin=i_spin
-     if(n_spinor==2) pp_spin=1
-     call Dipole_kb_pp_comp(ik,pp_spin,Xk,kbv)
+     if (io_KB_abinit_err==0.and.n_spinor==2) pp_spin=1
+     if (io_KB_pwscf_err ==0.and.n_sp_pol==2) pp_spin=1
+     if (io_KB_abinit_err==0) call Dipole_kb_abinit_comp(ik,pp_spin,Xk,kbv)
+     if (io_KB_pwscf_err ==0) call Dipole_kb_pwscf_comp(ik,pp_spin,Xk,kbv)
      ! 
      call MAG_pseudo_nl(kbv)
      !

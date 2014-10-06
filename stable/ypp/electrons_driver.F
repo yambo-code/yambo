@@ -26,11 +26,11 @@ subroutine electrons_driver(Xk,Xen)
  use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state
  use FFT_m,          ONLY:fft_size,fft_dim
  use R_lattice,      ONLY:bz_samp,nkibz
- use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
+ use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol,Total_magn
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
-&                         plot_title,l_dos,l_angular_momentum,&
+&                         plot_title,l_dos,l_angular_momentum,l_current,&
 &                         l_position,l_bands,BANDS_range
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
@@ -63,6 +63,9 @@ subroutine electrons_driver(Xk,Xen)
  integer               :: ID,io_V
  integer, external     :: io_SC_components
 #endif
+#if defined _YPP_MAGNETIC
+ logical               :: success
+#endif
  !
 #if defined _YPP_ELPH
  !
@@ -81,7 +84,7 @@ subroutine electrons_driver(Xk,Xen)
  flag=any((/l_mag,l_density,l_sp_wf,l_dos,l_bands/))
  !===
 #if defined _YPP_MAGNETIC
- if (.not.flag) flag=any((/l_angular_momentum,l_position/))
+ if (.not.flag) flag=any((/l_angular_momentum,l_position,l_current/))
 #endif
 #if defined _YPP_SC
  if (.not.flag) flag=l_mean_potential
@@ -128,7 +131,7 @@ subroutine electrons_driver(Xk,Xen)
  flag=.not.l_dos
  !===
 #if defined _YPP_MAGNETIC
- if (flag) flag=.not.any((/l_angular_momentum,l_position/))
+ if (flag) flag=.not.any((/l_angular_momentum,l_position,l_current/))
 #endif
 #if defined _YPP_SC
  if (flag) flag=.not.l_mean_potential
@@ -389,6 +392,8 @@ subroutine electrons_driver(Xk,Xen)
    !
    call el_magnetization(Xen,Xk)
    !
+   call msg('s','Total magnetization (x,y,z) [Bohr_magneton] :',real(Total_magn(:),SP))
+   !
    v2plot=magn(:,mag_i_dir)
    !
    if (use_cube) output_fname='mag_'//trim(mag_dir)//'_'//trim(intc(plot_dim))//'d.cube'
@@ -451,9 +456,22 @@ subroutine electrons_driver(Xk,Xen)
    !
  endif
  !
+ !
  ! GPL_EXCLUDE_START
  !
-#if defined _YPP_MAGNETIC
+#if defined _YPP_MAGNETIC 
+ !
+ ! Current
+ !=========
+ !
+ if (l_current) then
+   call fft_setup(0,1,.true.)
+   call electrons_current(Xk,Xen,success)
+   if (success) then
+     call plot_check_and_launch(.false.)
+     call of_open_close(trim(output_fname))
+   endif
+ endif
  !
  ! Angular momentum 
  !==================

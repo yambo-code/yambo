@@ -34,6 +34,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #if defined _DISTRIBUTED
  use BS,             ONLY:ioBS_DISTRIBUTED
 #endif
+#if defined _KERR
+ use drivers,        ONLY:l_kerr
+#endif
 #if defined _SC
  use fields,         ONLY:global_gauge
 #endif
@@ -98,7 +101,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  if (run_Haydock) then
    !
    stop_Haydock = (BS_not_const_eh_f.and.BSE_mode=='coupling')
-   if (stop_Haydock) call warning('Fractional occupations and coupling still unsupported (Haydock)')
+#if defined _KERR
+   if(l_kerr) stop_Haydock = BS_not_const_eh_f
+#endif
+   if (stop_Haydock) call warning('Fractional occupations and coupling/kerr still unsupported (Haydock)')
    !
    if(.not.stop_Haydock) then
      call K_output_file(iq,-1)

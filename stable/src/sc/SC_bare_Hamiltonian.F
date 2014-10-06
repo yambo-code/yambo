@@ -35,6 +35,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  use xc_functionals, ONLY:V_xc
 #if defined _MAGNETIC
  use drivers,        ONLY:l_sc_magnetic
+ use magnetic,       ONLY:MAG_B
 #endif
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
@@ -80,7 +81,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  ! If we are using yambo_magnetic now Ho already
  ! contains H_magnetic
  !
- if(.not.l_sc_magnetic) Ho=(0._SP,0._SP)
+ if(.not.l_sc_magnetic.or. abs(MAG_B)<1.E-5) Ho=(0._SP,0._SP)
  !
 #else
  !

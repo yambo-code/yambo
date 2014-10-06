@@ -205,6 +205,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  call collision_reset(isc)
  isc%ngrho=X%ng
  allocate(isc%rhotw(X%ng))
+ n_poles=0
  !
  ! MAIN LOOP
  !===========
@@ -216,14 +217,14 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    !
    isave=0
    do i1 = 1,cg_npts
-     n_poles = sum(bg_npts(1:i1-1))
+     if(i1>1) n_poles = sum(bg_npts(1:i1-1))
      if (.not.px%element_1D(i1)) cycle
      if (iwmax==1) XoR=(0.,0.)
      if (cg_pt(i1)==0.) then
        GreenF=drude_GreenF/real(bg_npts(i1))
      else
        if (.not.force_bare_X_G) GreenF(1) = X_simple_GreenF(Xw%p(1),cg_pt(i1),X%ordering)
-       if (force_bare_X_G) call X_bare_RIM_GreenF(iq,X_poles_tab(i1,:),Xw,Xen,Xk,GreenF,X%ordering)
+       if (force_bare_X_G) call X_bare_RIM_GreenF(iq,X_poles_tab(n_poles+1,:),Xw,Xen,Xk,GreenF,X%ordering)
      endif
 loop_bg: do i2 = 1,bg_npts(i1)
        n_poles = n_poles+1
@@ -301,11 +302,11 @@ loop_bg: do i2 = 1,bg_npts(i1)
    case(2:)
    !
    do i1=1,cg_npts
-     n_poles=sum(bg_npts(1:i1-1))
+     if(i1>1) n_poles=sum(bg_npts(1:i1-1))
      if (.not.px%element_1D(i1)) cycle
      if (iwmax==1) XoR=(0.,0.)
      if (.not.force_bare_X_G) GreenF(1)=X_simple_GreenF(Xw%p(1),cg_pt(i1),X%ordering)
-     if (force_bare_X_G) call X_bare_RIM_GreenF(iq,X_poles_tab(i1,:),Xw,Xen,Xk,GreenF,X%ordering)
+     if (force_bare_X_G) call X_bare_RIM_GreenF(iq,X_poles_tab(n_poles+1,:),Xw,Xen,Xk,GreenF,X%ordering)
      do i2=1,bg_npts(i1)
        n_poles=n_poles+1
        ikbz   = X_poles_tab(n_poles,1)

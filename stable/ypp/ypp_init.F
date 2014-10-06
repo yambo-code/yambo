@@ -118,11 +118,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  p_dir      ='1'
  mag_dir    ='X'
  p_format   ='g'
-#if !defined _YPP_RT
- wf_ng=ng_vec
- ! Notice that ng_vec can be larger than maxval(wf_igk) 
- ! and this can cause some problem in ypp. TO BE CHECKED
-#endif
  l_exc_wf   =.false.
  l_density  =.false.
  V_value    ='RE'
@@ -225,16 +220,16 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_START
  !
-#if defined _YPP_RT
- !
- t_jump=0.
- !
  !REMOVE SYMMETRIES
  !
  E_field=0._SP
  B_field=0._SP
  B_theta=0._SP
  B_psi=0._SP
+ !
+#if defined _YPP_RT
+ !
+ t_jump=0.
  !
  !ANALIZE RESPONSE
  !
@@ -249,10 +244,11 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
 #endif
  !
- ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
+ ! CURRENT, ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
  !
 #if defined _YPP_MAGNETIC
  !
+ l_current=.false.
  l_angular_momentum=.false.
  l_position=.false.
  !
@@ -445,12 +441,17 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_RT_X             = runlevel_is_on('rtX')
 #endif
 #if defined _YPP_MAGNETIC
+ l_current          = runlevel_is_on('current')
+ if (l_current) call initactivate(1,'electrons')
  l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
  l_position         = runlevel_is_on('position').and.runlevel_is_on('electrons')
 #endif
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
  l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
+#if defined _YPP_MAGNETIC
+&             runlevel_is_on('current'), &
+#endif
 #if defined _YPP_SC
 &             runlevel_is_on('MeanPot'), &
 #endif
@@ -498,6 +499,8 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  endif
 #endif
  !
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
+ !
  ! GPL_EXCLUDE_END
  !
  if (l_fix_syms.and.n_spinor==2.and.i_time_rev==0) call initactivate(1,"ExpandSymm")
@@ -540,7 +543,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
 #if defined _YPP_MAGNETIC
  if (l_angular_momentum.or.l_position) call initactivate(1,"FFTGvecs")
- if (l_current) call initactivate(1,'PhaseTrick')
+ if (l_current) call initactivate(1,"PhaseTrick FFTGvecs Nelectro ElecTemp Tau El_Field")
 #endif
  !
  if (l_plot) then

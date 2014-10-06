@@ -61,6 +61,7 @@
   {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(e)lias]",0,0,1,0,0}, 
 #endif
 #if defined _YPP_MAGNETIC 
+  {"current",  "j","Current",0,0,0,0,0}, 
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(m)ag]",0,0,1,0,0}, 
   {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands,angu(l)ar,(p)osition]",0,0,1,0,0}, 
 #endif
@@ -74,7 +75,7 @@
 #endif
   {"freehole","f","Free hole position [excitons plot]",0,0,0,0,0}, 
   {"bzrim",   "r","BZ energy RIM analyzer",0,0,0,0,0}, 
-  {"fixsyms", "n","Remove symmetries not consistent with an external perturbation",0,0,0,0,0}, 
+  {"fixsyms", "n","Remove symmetries not consistent with an external perturbation",0,0,0,0,0},
 #if defined _YPP_RT
   {"rtX",     "t","Real-Time Response function post-processing",0,0,0,0,0}, 
   {"CCA",     "c","Retarded GFs",0,0,0,0,0}, 

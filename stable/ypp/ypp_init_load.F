@@ -30,6 +30,11 @@ subroutine ypp_init_load(defs)
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
  use YPP
+#if defined _YPP_MAGNETIC
+ use electrons,            ONLY: nel,Boltz_Efield,Boltz_tau
+ use D_lattice,            ONLY: Tel
+ use it_m,                 ONLY: T_unit
+#endif
 #if defined _YPP_SURF
  use bulkeps,              ONLY: init_bulk
  use convolute,            ONLY: init_convolute
@@ -48,11 +53,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'Q_grid',    '[R] Q-grid analysis') 
  call it('r',defs,'dos',       '[R] DOS')
  !
- ! GPL_EXCLUDE_START
- !
  call it('r',defs,'Shifted_Grid','[R] Shifted grids') 
- !
- ! GPL_EXCLUDE_END
  !
  call it('r',defs,'High_Symm', '[R] High_Symmetry points and paths') 
  call it('r',defs,'excitons',  '[R] Excitons')
@@ -70,6 +71,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'gkkp',         '[R] Electron-Phonon databases')
 #endif
 #if defined _YPP_MAGNETIC
+ call it('r',defs,'current',      '[R] Current')
  call it('r',defs,'angular_m',    '[R] Canonical angular momentum')
  call it('r',defs,'position',     '[R] Average <r^n>, n given in the input')
 #endif
@@ -173,7 +175,15 @@ subroutine ypp_init_load(defs)
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
  !
 #if defined _YPP_MAGNETIC
+ !
+ ! CURRENT from the old Boltzmann project
+ !
+ call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit)
+ call it(defs,'Nelectro','Electrons number',nel)
+ call it(defs,'Tau','Electronic scattering-free time',Boltz_tau,unit=Time_unit)
+ call it(defs,'El_Field','Electric field',Boltz_Efield,unit=Efield_unit)
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')
+ !
 #endif
  !
  ! PLOT

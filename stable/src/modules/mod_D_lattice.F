@@ -21,7 +21,7 @@
 !
 module D_lattice
  !
- use pars,      ONLY:SP,lchlen
+ use pars,      ONLY:LP,SP,lchlen
  implicit none
  !
  ! Non periodic directions
@@ -43,10 +43,10 @@ module D_lattice
  integer :: i_space_inv ! =1 yes SI,  =0 no SI
  integer :: inv_index   ! Index of the symmetry corresponding to -I (independently 
                         ! on the value of i_time_rev and i_space_inv
- integer :: idt_index   ! Indentity I  index
- logical :: mag_syms
- real(SP),allocatable :: dl_sop(:,:,:)
+ logical :: mag_syms    ! If .true. the T-rev symmetries are not the spatial symmetries multiplied by -1
+ real(SP),allocatable    :: dl_sop(:,:,:)
  complex(SP),allocatable :: spin_sop(:,:,:)
+ integer :: idt_index   ! Indentity I  index
  integer, allocatable :: sop_tab(:,:)
  integer, allocatable :: sop_inv(:)
  !

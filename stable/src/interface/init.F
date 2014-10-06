@@ -119,6 +119,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! What is running ?
  !
+ !
  what_is_running='YAMBO'
 #if defined _ELPH 
  what_is_running='YAMBO_PH'
@@ -553,11 +554,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! Special case: the BSE_Fxc kernel has been constructed
    !               Thus I move to g-space to solve the Dyson equation
-   !
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGexx ALLGexx')
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk')
    !
-   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode')
+   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSSInvItMax')
    if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
    !
@@ -1010,8 +1010,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_bss)    call initactivate(1,'bsk')
      if (l_bs_fxc) BSS_mode="t"
      if (l_bse) then
-       !
-       if (l_alda_fxc) BS_res_mode='x'     
        !
        if (io_X_err(2)==0) then
          if (ioBS_err/=0) BS_n_g_W=X(2)%ng

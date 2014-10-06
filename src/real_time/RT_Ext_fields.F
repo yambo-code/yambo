@@ -32,8 +32,8 @@ subroutine RT_Ext_fields(A,time)
  ! the function a(t) and theta(t) are defined in mod_fields. From [1] the first and
  ! second order  derivatives are easily defined:
  !
- !   A'(t)=-c Eo ( a'(t) theta(t-to)+ a(0) delta(t-to)) [2]
- !   A"(t)=-c Eo ( a"(t) theta(t-to)+ a'(0) delta(t-to) - a"(0) sign(t)) [3]
+ !   A'(t)=-c Eo ( a'(t) theta(t-to)+ a(t) delta(t-to)) [2]
+ !   A"(t)=-c Eo ( a"(t) theta(t-to)+ a'(t) delta(t-to) - a"(t) sign(t)) [3]
  !
  ! Using [1-3] yambo :
  !
@@ -63,7 +63,7 @@ subroutine RT_Ext_fields(A,time)
  !
  do i_f=1,n_ext_fields
    !
-   if(Efield(i_f)%ef_name=="none" .or. Efield(i_f)%t_initial_indx>NE_i_time .or. NE_i_time<1) cycle
+   if(Efield(i_f)%ef_name=="none" .or. Efield(i_f)%t_initial_indx>(NE_i_time+2) .or. NE_i_time<1) cycle
    !
    E_times_c=Efield(i_f)%amplitude*Efield(i_f)%versor(:)*SPEED_OF_LIGHT
    !

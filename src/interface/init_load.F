@@ -391,7 +391,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! 1 - Induced Field
  !
- call it('f',defs,'Diamagnetic', '[RT] Include the diamagnetic term in current and coupling',verb_level=V_real_time)
  call it('f',defs,'InducedField','[RT] Include induced field in coupling and current',verb_level=V_real_time)
  !
  ! 2 - Other

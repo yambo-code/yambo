@@ -582,7 +582,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !             
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
-   call initactivate(1,"TmRngeRt TmJumps DampMode DampFactor SkipJP_IO FrMinDamp RmAsymLim UseFFT")
+   call initactivate(1,"TmRngeRt TmJumps DampMode DampFactor SkipJP_IO FrMinDamp RmAsymLim UseFFT CheckPaths")
  endif
  !
 #endif
@@ -608,7 +608,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
    if (l_flag) call initactivate(1,"OCCdT OCCTime OCCTref")
    if (l_RT_occ_Bands.or.l_RT_life_Bands) call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
    if (l_RT_occ_Plot) call initactivate(1,"OCCgroup")
-   if (l_RT_abs) call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity")
+   if (l_RT_abs) call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP")
    if (l_RT_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad")
  endif
 #endif

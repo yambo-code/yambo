@@ -28,7 +28,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use com,            ONLY:msg,of_open_close
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_cohsex,l_sc_hf
  use SC,             ONLY:SC_description,n_SC_descriptions,it_now
- use fields,         ONLY:A_vecpot,Efield,n_ext_fields
+ use fields,         ONLY:A_vecpot,A_ind,A_ext,Efield,n_ext_fields
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use rt_ctl,         ONLY:RT_do_IO,RT_description,n_RT_descriptions
@@ -99,8 +99,28 @@ subroutine RT_output(what,VALUES,TIME,E)
  next_file=next_file+1
  !
  if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'vector_potential'
- short_file_name(next_file)=trim(append_ch)//'vector_potential'
+&   file_name(next_file)=trim(append_ch)//'total_potential'
+ short_file_name(next_file)=trim(append_ch)//'total_potential'
+ n_headings(next_file)=11
+ headings(next_file,2:4 )=(/"A_x","A_y","A_z"/)
+ headings(next_file,5:7 )=(/"A'_x","A'_y","A'_z"/)
+ headings(next_file,8:10)=(/"A''_x","A''_y","A''_z"/)
+ headings(next_file,11)="Fluence[kJ/cm^2]"
+ next_file=next_file+1
+ !
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'external_potential'
+ short_file_name(next_file)=trim(append_ch)//'external_potential'
+ n_headings(next_file)=11
+ headings(next_file,2:4 )=(/"A_x","A_y","A_z"/)
+ headings(next_file,5:7 )=(/"A'_x","A'_y","A'_z"/)
+ headings(next_file,8:10)=(/"A''_x","A''_y","A''_z"/)
+ headings(next_file,11)="Fluence[kJ/cm^2]"
+ next_file=next_file+1
+ !
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'induced_potential'
+ short_file_name(next_file)=trim(append_ch)//'induced_potential'
  n_headings(next_file)=11
  headings(next_file,2:4 )=(/"A_x","A_y","A_z"/)
  headings(next_file,5:7 )=(/"A'_x","A'_y","A'_z"/)
@@ -246,6 +266,14 @@ subroutine RT_output(what,VALUES,TIME,E)
  headings(next_file,2:3)=(/'X/Im','X/Re'/)
  next_file=next_file+1
  !
+ if (open_files.and..not.file_already_opened(next_file)) &
+&   file_name(next_file)=trim(append_ch)//'E_frequency'
+ short_file_name(next_file)=trim(append_ch)//'E_frequency'
+ n_headings(next_file)=3
+ headings(next_file,2:3)=(/'E(w)/Im','E(w)/Re'/)
+ headings(next_file,1)="E [eV]"
+ next_file=next_file+1
+ !
  do i_order=0,max_X_order,1
    !
    do i_c=1,3
@@ -293,7 +321,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  do i_f=1,3
    if (i_f==1) extension_ch='trans_eps_rel'
    if (i_f==2) extension_ch='trans_eps_abs'
-   if (i_f==3) extension_ch='trans_eps_eq'
+   if (i_f==3) extension_ch='eps_eq'
    if (open_files.and..not.file_already_opened(next_file)) then
      file_name(next_file)=trim(append_ch)//trim(extension_ch)
    endif
@@ -307,7 +335,21 @@ subroutine RT_output(what,VALUES,TIME,E)
  do i_f=1,3
    if (i_f==1) extension_ch='trans_refl_rel'
    if (i_f==2) extension_ch='trans_refl_abs'
-   if (i_f==3) extension_ch='trans_refl_eq'
+   if (i_f==3) extension_ch='refl_eq'
+   if (open_files.and..not.file_already_opened(next_file)) then
+     file_name(next_file)=trim(append_ch)//trim(extension_ch)
+   endif
+   short_file_name(next_file)=trim(append_ch)//trim(extension_ch)
+   n_headings(next_file)=3
+   headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
+   headings(next_file,3  )='Reflectance'
+   next_file=next_file+1
+ enddo
+ !
+ do i_f=1,3
+   if (i_f==1) extension_ch='trans_transm_rel'
+   if (i_f==2) extension_ch='trans_transm_abs'
+   if (i_f==3) extension_ch='transm_eq'
    if (open_files.and..not.file_already_opened(next_file)) then
      file_name(next_file)=trim(append_ch)//trim(extension_ch)
    endif
@@ -399,17 +441,27 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-dP_order_5','YPP-dP_order_6','YPP-dP_order_7','YPP-dP_order_8','YPP-dP_order_9',&
 &         'YPP-P_minus_P_pump')
        data_to_dump(2:4) =real(RT_P)
-     case('vector_potential')
+     case('total_potential')
        data_to_dump(2:4) =real(A_vecpot%vecpot(:))
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
        data_to_dump(11)=0._SP
-       do i_fp=1,n_ext_fields
-         if (allocated(Efield(i_fp)%Fluence)) then
-           i_flu=min(it_now,Efield(i_fp)%t_final_indx)
-           data_to_dump(11)=data_to_dump(11)+real( Efield(i_fp)%Fluence(i_flu))
-         endif
-       enddo
+       !do i_fp=1,n_ext_fields
+       !  if (allocated(Efield(i_fp)%Fluence)) then
+       !    i_flu=min(it_now,Efield(i_fp)%t_final_indx)
+       !   data_to_dump(11)=data_to_dump(11)+real( Efield(i_fp)%Fluence(i_flu))
+       !  endif
+       !enddo
+     case('external_potential')
+       data_to_dump(2:4) =real(A_ext%vecpot(:))
+       data_to_dump(5:7) =real(A_ext%vecpot_vel(:))
+       data_to_dump(8:10)=real(A_ext%vecpot_acc(:))
+       data_to_dump(11)=0._SP
+     case('induced_potential')
+       data_to_dump(2:4) =real(A_ind%vecpot(:))
+       data_to_dump(5:7) =real(A_ind%vecpot_vel(:))
+       data_to_dump(8:10)=real(A_ind%vecpot_acc(:))
+       data_to_dump(11)=0._SP
      case('BGR')
        data_to_dump(2:3) = BGR(1:2)*HA2EV
        data_to_dump(5:7) = BGR(3:5)*HA2EV
@@ -421,7 +473,7 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(2:5) = VALUES(1:4)
        if(l_elel_scatt.or.l_elph_scatt) data_to_dump(6:7) = VALUES(5:6)
        if(l_Debye_TBose_update) data_to_dump(8) = Bose_Temp*HA2KEL
-     case('YPP-eps_along_E','YPP-eps_x','YPP-eps_y','YPP-eps_z','YPP-eels_along_E','YPP-SHG_qssin',&
+     case('YPP-eps_along_E','YPP-eps_x','YPP-eps_y','YPP-eps_z','YPP-eels_along_E','YPP-E_frequency','YPP-SHG_qssin',&
 &         'YPP-X_probe_order_0_x','YPP-X_probe_order_1_x','YPP-X_probe_order_2_x','YPP-X_probe_order_3_x',&
 &         'YPP-X_probe_order_4_x','YPP-X_probe_order_5_x','YPP-X_probe_order_6_x','YPP-X_probe_order_7_x',&
 &         'YPP-X_probe_order_8_x','YPP-X_probe_order_9_x',&
@@ -439,8 +491,9 @@ subroutine RT_output(what,VALUES,TIME,E)
      case('YPP-X_effective','YPP-el_dos')
        data_to_dump(1:2)=(/Time,E/)
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-2)
-     case('YPP-trans_eps_rel' ,'YPP-trans_eps_abs' ,'YPP-trans_eps_eq',&
-&         'YPP-trans_refl_rel','YPP-trans_refl_abs','YPP-trans_refl_eq')
+     case('YPP-trans_eps_rel' ,'YPP-trans_eps_abs' ,'YPP-eps_eq',&
+&         'YPP-trans_refl_rel','YPP-trans_refl_abs','YPP-refl_eq',&
+&         'YPP-trans_transm_rel','YPP-trans_transm_abs','YPP-transm_eq')
        data_to_dump(1:2)=(/Time,E/)
        data_to_dump(3:n_headings(i_f)) = VALUES(1)
      case('mean_EPlifetimes')

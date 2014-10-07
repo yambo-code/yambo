@@ -27,8 +27,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use drivers,        ONLY:l_bs_fxc,l_rpa_IP
- use IO_m,           ONLY:io_control,NONE,OP_RD_CL
+ use drivers,        ONLY:l_bs_fxc
  use X_m,            ONLY:X_t,X_epsilon,X_drude_term
  use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs,BSE_mode
 #if defined _SC
@@ -46,16 +45,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  logical           ::run_Haydock,run_Diago,run_inversion
  logical           ::stop_Haydock
- integer           ::ID,io_BS_err
- integer, external ::io_BS
  !
  call section('*','BSE solver(s)')
- !
-! if(.not.l_rpa_IP) then
-!   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
-!   ioBS_err=ioBS(iq,X_static,ID)
-!   if(ioBS_err/=0) return
-! endif
  !
  ! GPL_EXCLUDE_START
  !

@@ -302,13 +302,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! Q-points (IBZ in LLR, BZ for BS)
    !
-   if (ENVIRONMENT=="Response_G_space_Finite_Momentum") then
-     WHAT="ibz"
-     iq_range=(/max(X%iq(1),2),X%iq(2)/)
-   else if ( ENVIRONMENT=="Response_G_space") then
-     WHAT="ibz"
-     iq_range=(/1,nqibz/)
-   endif
+   WHAT="ibz"
+   iq_range=(/1,nqibz/)
+   if (ENVIRONMENT=="Response_G_space_Finite_Momentum") iq_range=(/max(X%iq(1),2),X%iq(2)/)
    !
    ! K-points 
    !
@@ -322,7 +318,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    allocate(PAR_Xk_bz_index(Xk%nbz))
    call Build_up_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_index,PAR_Xk_nbz)
    !
-   ! Q-points (IBZ in G_space, in BZ T_space)
+   ! Q-points 
    !
    call PARALLEL_index(PAR_IND_Q,(/iq_range(2)/),low_range=(/iq_range(1)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.)
    PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
@@ -875,8 +871,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    call PARALLEL_Transitions_grouping(Xk)
    !
-   call PARALLEL_live_message("Transition Groups (columns)",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_BS_nT_col_grps,TOTAL=BS_nT_grps)
+   call PARALLEL_live_message("(e/h) Groups",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_BS_nT_col_grps,TOTAL=BS_nT_grps)
    !
    ! Now each CPU of the PAR_COM_eh_INDEX has PAR_BS_nT_grps  groups of e/h pairs
    !
@@ -888,7 +883,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      call PARALLEL_index(PAR_IND_T_all,    (/BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX,&
 &                        MASK=PAR_IND_T_groups%element_1D)
      !
-     call PARALLEL_live_message("Matrix Elements (all)",ENVIRONMENT=ENVIRONMENT,&
+     call PARALLEL_live_message("(e/h)->(e/h)' Transitions (all)",ENVIRONMENT=ENVIRONMENT,&
 &                               LOADED=PAR_IND_T_all%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),TOTAL=BS_nT_grps*BS_nT_grps,&
 &                               NCPU=PAR_COM_T_INDEX%n_CPU)
      !
@@ -897,7 +892,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_index(PAR_IND_T_ordered,(/BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX,&
 &                      MASK=PAR_IND_T_groups%element_1D,ORDERED=.TRUE.)
    !
-   call PARALLEL_live_message("Matrix Elements (ordered)",ENVIRONMENT=ENVIRONMENT,&
+   call PARALLEL_live_message("(e/h)->(e/h)' Transitions (ordered)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_T_ordered%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),&
 &                             TOTAL=BS_nT_grps*(BS_nT_grps-1)/2+BS_nT_grps,&
 &                             NCPU=PAR_COM_T_INDEX%n_CPU)
@@ -913,6 +908,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    PARALLEL_cpu_mat_diagonalization=CPU_structure(4)%nCPU_diagonalization
    call PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,'DIAGO',PAR_COM_DIAGO_INDEX,PAR_COM_DIAGO)
    PAR_IND_DIAGO_ID=PAR_COM_DIAGO_INDEX%CPU_id
+   !
+   ! I/O privileges
+   !
+   call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_K)
    !  

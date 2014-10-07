@@ -25,11 +25,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W>
  !
- use pars,         ONLY:SP,pi,schlen,cZERO
+ use pars,         ONLY:SP,pi,schlen,cZERO,IP
  use parser_m,     ONLY:parser
  use LOGO,         ONLY:pickup_a_random
  use memory_m,     ONLY:mem_est
- use drivers,      ONLY:l_bs_fxc,l_col_cut,l_td_hf
+ use drivers,      ONLY:l_bs_fxc,l_col_cut,l_td_hf,l_bss
  use frequency,    ONLY:w_samp
  use electrons,    ONLY:levels,spin_occ,spin
  use FFT_m,        ONLY:fft_size
@@ -39,18 +39,18 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
 &                       RIM_anisotropy,minus_G,bare_qpg
- use com,          ONLY:warning,error
+ use com,          ONLY:warning,error,msg
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W_is_diagonal,&
-&                       BS_res_K_exchange,BS_n_g_W,&
+&                       BS_res_K_exchange,BS_n_g_W,BS_Block_size,&
 &                       O_ng,BS_n_g_exch,BS_identifier,&
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,BSS_q0,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
-&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL
+&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
 #ifdef _OPENMP
@@ -78,13 +78,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: i_block,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p,H_pos(2),i_k_s_m1,&
-&              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s
- integer    :: iOcv,iOvc,i_g2,i_g3,alloc_err,bands_to_load(2),iOvv,iOcc
+&              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,alloc_err,&
+&              bands_to_load(2),iOvv,iOcc
+ integer(IP):: N_Ts_total
  complex(SP):: Co,H_x,H_c,PHASE_1,PHASE_2
  !
  complex(SP),allocatable ::BS_W(:,:,:)
  complex(SP),   external ::TDDFT_ALDA_R_space
- logical                 :: W_is_em1s,W_is_pp
+ logical                 ::W_is_em1s,W_is_pp
  !
  ! Oscillators
  !
@@ -155,8 +156,19 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_END
    !
-   !call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   !io_BS_err=io_BS(iq,X,ID)
+   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
+   io_BS_err=io_BS(iq,X,ID)
+   !
+   if (io_BS_err==0.and.l_bss) then
+     call io_control(ACTION=OP_RD,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+     io_BS_err=io_BS(iq,X,ID)
+     do i_block=1,n_BS_blks
+       call io_control(ACTION=RD_CL_IF_END,COM=NONE,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
+       io_BS_err=io_BS(iq,X,ID)
+     enddo
+   endif
+   !
+   if (io_BS_err==0) return
    !
    ! GPL_EXCLUDE_START
    !
@@ -164,20 +176,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! GPL_EXCLUDE_END
  !
-! if (ioBS_Fxc_err==0.or.ioBS_err==0) then
-!   if (BS_res_K_corr) then
-!     deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
-!     call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
-!   endif
-!   return
-! endif
  !
  ! Exchange
  !==========
  !
  load_O_X=BS_res_K_exchange.or.l_bs_fxc
  !
- !if (load_O_X) call msg('r','[BSE] Exchange components :',BS_n_g_exch)
+ if (load_O_X) call msg('r','[BSE] Exchange components :',BS_n_g_exch)
  !
  ! PP/Epsm1S DBs
  !
@@ -364,6 +369,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !===============
  BS_identifier=pickup_a_random(10000._SP)
  !
+ ! BS DB description section I/O
+ !===============================
+ !
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+ io_BS_err=io_BS(iq,X,ID)
+ !
  call section('=','Kernel loop')
  !==============================
  !
@@ -382,9 +393,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !  allocate(BS_mat_diagonal(BS_K_dim))
  !  call mem_est('BS_mat_diagonal',(/size(BS_mat_diagonal)/))
  !endif
+ ! Timing
+ !========
+ N_Ts_total=0
  !
- if (.not.l_bs_fxc) call live_timing('Kernel',n_BS_blks)
- if (l_bs_fxc) call live_timing('Kernel->Fxc',n_BS_blks)
+ do i_block=1,n_BS_blks
+   N_Ts_total=N_Ts_total+BS_Block_size(i_block)
+ enddo
+ !
+ if (.not.l_bs_fxc) call live_timing('Kernel',n_Ts_total)
+ if (l_bs_fxc) call live_timing('Kernel->Fxc',n_Ts_total)
  !
  do i_block=1,n_BS_blks
    !
@@ -570,15 +588,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call BS_oscillators_free(0,i_block)
    !
-   call live_timing(steps=1)
+   call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
+   io_BS_err=io_BS(iq,X,ID)
+   !
+   call live_timing(steps=BS_Block_size(i_block))
    !
  enddo
- !
- ! BS DB description section I/O
- !===============================
- !
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
- io_BS_err=io_BS(iq,X,ID)
  !
  call live_timing( )
  !

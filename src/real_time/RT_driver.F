@@ -328,7 +328,11 @@ subroutine RT_driver(E,X,k,q)
      call RT_output('dyn',real(on_the_fly_operators(5:10)),TIME=NE_time/FS2AUT)
    endif
    call RT_output('cur pol',TIME=NE_time/FS2AUT)
-   if (l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
+   if (l_NE_with_fields) then
+     call RT_output('total_potential',TIME=NE_time/FS2AUT) 
+     call RT_output('external_potential',TIME=NE_time/FS2AUT) 
+     call RT_output('induced_potential',TIME=NE_time/FS2AUT) 
+   endif
    !
    ! Integration
    !=============

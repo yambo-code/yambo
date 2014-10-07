@@ -97,7 +97,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  !========================
  !
  T_o=5.*max(RAD_LifeTime,Phase_LifeTime)
- iT_o=int(T_o/J_time_step)+1
+ iT_o=nint(T_o/J_time_step)+1
  !
  allocate(P_DP(nt,3),P_W(X_rt%energy_steps),freqs(X_rt%energy_steps))
  !

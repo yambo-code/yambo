@@ -48,10 +48,6 @@ module real_time
  logical          :: eval_HARTREE
  logical          :: eval_DFT
  !
- ! To exclude the Diamagnetic term 
- !
- logical           :: l_RT_diamagnetic
- !
  ! To include the induced field in the coupling and current
  !
  logical           :: l_RT_induced_field

@@ -73,9 +73,9 @@
   {"freehole","f","Free hole position [excitons plot]",0,0,0,0,0}, 
   {"bzrim",   "r","BZ Random kpts generator",0,0,0,0,0}, 
   {"kpts_map","m","BZ map fine grid to coarse",0,0,0,0,0}, 
+  {"fixsyms", "n","Remove symmetries not consistent with an external perturbation",0,0,0,0,0}, 
 #if defined _YPP_RT
   {"RealTime","t","Real Time [(X)response,Trans-(a)bs,(d)os,(lb)LifeBands,(ob)OccBands,(op)OccPlot,(of)OccFit]",0,0,1,0,0}, 
-  {"fixsyms", "n","Remove symmetries not consistent with an external perturbation",0,0,0,0,0}, 
 #endif
 #if defined _YPP_ELPH && ! defined _YPP_RT
   {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 

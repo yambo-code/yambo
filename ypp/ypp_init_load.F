@@ -134,7 +134,8 @@ subroutine ypp_init_load(defs)
  ! TRANSIENT ABSORPTION
  !
  call it('f',defs,'Transmission','Compute the transient transmissions')
- call it('f',defs,'Reflectivity','Compute the transient absorption')
+ call it('f',defs,'Reflectivity','Compute the transient reflectivity')
+ call it('f',defs,'IncludeIP'   ,'Include the v-v and c-c contribution at IP level')
  !
 #endif
  !
@@ -310,6 +311,7 @@ subroutine ypp_init_load(defs)
  call it('f',defs,'SkipJP_IO','Do not write P(t) and J(t)')
  call it('f',defs,'RmAsymLim','Remove Asymptotic limit from P or J',verb_level=V_real_time) 
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
+ call it('f',defs,'CheckPaths','Check inside all the paths present in the current folder',verb_level=V_real_time)
  !
 #endif
  !

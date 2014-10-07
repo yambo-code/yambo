@@ -50,10 +50,11 @@ subroutine RT_initialize(dump_and_write)
  !
  J_time_step=RT_step*RT_IO_JPO_steps
  !
- i_t_start=int(X_rt%time_range(1)/J_time_step)+1
- i_t_end  =int(X_rt%time_range(2)/J_time_step)
+ ! I always start one T_step before
+ i_t_start=nint(X_rt%time_range(1)/J_time_step)
+ i_t_end  =nint(X_rt%time_range(2)/J_time_step)+1
  !
- i_t_field_range= (/int(Efield(i_Probe)%t_initial/J_time_step)+1,J_steps/)
+ i_t_field_range= (/nint(Efield(i_Probe)%t_initial/J_time_step),J_steps/)
  !
  if (N_pumps>0.and.trim(Efield(i_Probe)%ef_name)=='DELTA') i_t_start=i_t_field_range(1)
  !

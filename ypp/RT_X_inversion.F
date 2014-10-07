@@ -161,8 +161,8 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
        X_rt%time_range(1)  = X_rt%time_range(2)-T_range
      endif 
      !
-     i_t_start=int(X_rt%time_range(1)/J_time_step)+1
-     i_t_end  =int(X_rt%time_range(2)/J_time_step)
+     i_t_start=nint(X_rt%time_range(1)/J_time_step)+1
+     i_t_end  =nint(X_rt%time_range(2)/J_time_step)
      !
    end function 
    !

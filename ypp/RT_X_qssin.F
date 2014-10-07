@@ -29,7 +29,7 @@ subroutine RT_X_qssin
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1
  use memory_m,       ONLY:mem_est
  use rt_ctl,         ONLY:RT_output,RT_IO_JPO_steps
- use fields,         ONLY:Efield,small_a,i_probe
+ use fields,         ONLY:Efield,small_a,i_probe,theta_function
  use LIVE_t,         ONLY:live_timing
  !
  implicit none
@@ -62,8 +62,10 @@ subroutine RT_X_qssin
  !
  allocate(E_t(J_steps))
  do i_t=1,J_steps
-   Field_time=cmplx((i_t-1)*J_time_step,0._SP)
-   E_t(i_t)=Efield(i_probe)%amplitude*small_a(Field_time,Efield(i_probe),1)
+   Field_time=cmplx((i_t-1)*J_time_step-Efield(i_Probe)%t_initial,0._SP)
+   E_t(i_t)=Efield(i_Probe)%amplitude* &
+&            (small_a(Field_time,Efield(i_Probe),1)*theta_function(real(Field_time),J_time_step,0)+&
+&             small_a(Field_time,Efield(i_Probe),0)*theta_function(real(Field_time),J_time_step,1))
  enddo
  allocate(freqs(X_rt%energy_steps))
  allocate(E_m(X_rt%energy_steps),E_p(X_rt%energy_steps))

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function RIM_grid_consistency_check(k,E,k_RIM,E_RIM)
+integer function k_RIM_grid_consistency_check(k,E,k_RIM,E_RIM)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
@@ -37,7 +37,7 @@ integer function RIM_grid_consistency_check(k,E,k_RIM,E_RIM)
  integer :: ik,ik_RIM,nb,nk
  real(SP):: shifts(2)
  !
- RIM_grid_consistency_check=-1
+ k_RIM_grid_consistency_check=-1
  !
  nb=min(E%nb,E_RIM%nb)
  !
@@ -57,10 +57,16 @@ integer function RIM_grid_consistency_check(k,E,k_RIM,E_RIM)
  enddo ik_loop
  !
  if (abs(shifts(1)-shifts(2))>0.01*shifts(1)) then
-   RIM_grid_consistency_check=-1
+   k_RIM_grid_consistency_check=-1
  else
-   RIM_grid_consistency_check=ik_RIM
-   E_RIM%E(:,:,:)=E_RIM%E(:,:,:)+(shifts(1)+shifts(2))/2.
+   !
+   k_RIM_grid_consistency_check=ik_RIM
+   !
+   ! Here I add E_Fermi as OCCUPATIONS_Fermi in ypp has been
+   ! called without the RIM loaded so the Fermi level has not been applied to E_RIM.
+   !
+   E_RIM%E(:,:,:)=E_RIM%E(:,:,:)+(shifts(1)+shifts(2))/2.+E%E_Fermi
+   !
  endif
  !
 end function

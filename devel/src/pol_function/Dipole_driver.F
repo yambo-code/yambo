@@ -34,7 +34,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,RD_CL_IF_END
  use wave_func,      ONLY:wf_ng,WF
- use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,master_cpu
+ use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,master_cpu,PAR_COM_k_for_P,ncpu
 #if defined _SC      
  use X_m,            ONLY:P_square
 #endif
@@ -177,6 +177,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    do ik=1,Xk%nibz
      !
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
+     if (.not. (PAR_COM_k_for_P%CPU_id==0.or.PAR_COM_k_for_P%n_CPU==ncpu) ) cycle
      ! 
      call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1+ik/),ID=ID)
      io_err(1)=io_DIPOLES(X,Xen,ID)

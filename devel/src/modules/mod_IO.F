@@ -59,6 +59,7 @@ module IO_m
  logical           :: io_OCCs    =.TRUE.
  logical           :: io_GF      =.TRUE.
  logical           :: io_SC      =.TRUE.
+ logical           :: io_BS_K    =.TRUE.
  !
  ! Actions
  !
@@ -156,10 +157,11 @@ module IO_m
      !
    end subroutine
    !
-   integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,IMPOSE_GAUGE)
+   integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,&
+&                             IMPOSE_GAUGE,PARALLEL_STRUCTURE)
      integer               :: ID
      logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE
-     character(*),optional :: XC_KIND
+     character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
    end function
    !
    logical function ver_is_gt_or_eq(ID,version,revision)

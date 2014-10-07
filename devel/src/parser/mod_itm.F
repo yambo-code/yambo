@@ -1037,7 +1037,7 @@ module it_m
      do i1=1,n_verbose_Fvars
       if (it_verbose_Flevel(i1)==0) cycle
       if (trim(it_verbose_Fvars(i1))==trim(var_name))then
-        if(fstatus(ivar)>0.and.&
+        if (fstatus(ivar)>0.and.&
 &           infile_verbosity/=V_all.and.&
 &          infile_verbosity/=it_verbose_Flevel(i1)) return
        endif

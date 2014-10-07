@@ -202,11 +202,33 @@ module electrons
      nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected,E%GreenF,E%GreenF_W)
      call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
      !
+     call E_RIM_components_reset(E,.FALSE.)
+     !
+   end subroutine
+   !
+   subroutine E_RIM_components_reset(E,FULL_RESET)
+     !
+     use memory_m, ONLY:mem_est
+     !
+     type(levels)::E
+     logical     ::FULL_RESET
+     !
      if(associated(E%E_RIM))      deallocate(E%E_RIM)
      if(associated(E%W_RIM))      deallocate(E%W_RIM)
      if(associated(E%f_RIM))      deallocate(E%f_RIM)
+     !
      nullify(E%E_RIM,E%W_RIM,E%f_RIM)
      call mem_est("E_RIM W_RIM f_RIM")
+     !
+     if (.not.FULL_RESET) return
+     !
+     BZ_RIM_tot_nkpts=0
+     BZ_ASSOCIATED_nkpts=0
+     BZ_RIM_nbands=0
+     !
+     if(allocated(BZ_RIM_nkpt))        deallocate(BZ_RIM_nkpt)
+     if(allocated(BZ_RIM_table))       deallocate(BZ_RIM_table)
+     if(allocated(BZ_RIM_ipol_weight)) deallocate(BZ_RIM_ipol_weight)
      !
    end subroutine
    !

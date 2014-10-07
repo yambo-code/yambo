@@ -23,16 +23,15 @@
 !
 subroutine k_map_fine_to_coarse(Xk,Xen)
  !
- use pars,                ONLY:SP,DP,lchlen,schlen
+ use pars,                ONLY:SP
  use units,               ONLY:HA2EV
  use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
- use stderr,              ONLY:set_real_printed_length,intc
+ use stderr,              ONLY:intc
  use R_lattice,           ONLY:bz_samp,nkibz,k_the_nearest,bz_samp_reset,rl_sop
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
- use com,                 ONLY:msg,of_open_close,error,warning
- use vec_operate,         ONLY:v_norm,c2a,k2bz,v_is_zero
- use YPP,                 ONLY:BZ_RIM_nkpts,RIM_DB1_paths,K_transform,MAX_RIM_DBs,n_RIM_DBs
+ use com,                 ONLY:msg,error,warning
+ use YPP,                 ONLY:BZ_RIM_nkpts,RIM_DB1_paths,MAX_RIM_DBs,n_RIM_DBs
  use electrons,           ONLY:levels,default_nel,n_bands,BZ_ASSOCIATED_nkpts,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
 &                              BZ_RIM_tot_nkpts,n_sp_pol,BZ_RIM_max_filling,&
@@ -50,7 +49,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  real(SP)     ::rand_k(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
 &               gap(2),tmp_zero(3)
  integer      ::i1,ik_near,ik_near_ibz,is_near,i2,RIM_nk,ik_bz,ik_RIM
- logical           :: No_Weight,l_skip_check
+ logical      ::No_Weight,l_skip_check,l_flag
  integer,  allocatable :: BZ_SYM_table(:,:)
  real(SP), allocatable :: rand_E(:,:,:)
  !
@@ -62,10 +61,12 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  integer           :: i_err(MAX_RIM_DBs),nsym_save,nsym_RIM_DB
  integer           :: i_time_rev_save,i_time_rev_DB
  integer           :: i_db,i_db_merge,ik_ref(2)
- integer, external :: io_DB1_selective_scan,io_RIM_E_and_k
  real(SP)          :: dl_sop_save(3,3,48)
  !
+ ! Functions
  !
+ integer, external :: RIM_grid_consistency_check
+ integer, external :: io_DB1_selective_scan,io_RIM_E_and_k
  !
  if (n_RIM_DBs==0) then
    call msg("s",'RIM: no database secified. Nothing to do.')
@@ -131,7 +132,9 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  call parser('NoWeights',No_Weight)
  call parser('SkipCheck',l_skip_check)
- call parser('BZExpand',RIM_is_symmetry_expanded)
+ call parser('noBZExpand',l_flag)
+ !
+ RIM_is_symmetry_expanded=.not.l_flag
  !
  call section('*','BZ RIM DB(s)')
  !
@@ -206,23 +209,14 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  ! k-points
  !
  call section('+','Internal consistency check ...')
- ik_ref=0
- i1_loop: do i1=1,Xen%nk
-   do i2=1,RIM_E(i_db_merge)%nk
-     if (v_is_zero(RIM_k(i_db_merge)%pt(i2,:)-Xk%pt(i1,:))) then
-       ik_ref=(/i1,i2/)
-       exit  i1_loop
-     endif
-   enddo
- enddo i1_loop
+ ik_ref(2)=RIM_grid_consistency_check(Xk,Xen,RIM_k(i_db_merge),RIM_E(i_db_merge))
  !
- if (ik_ref(1)> 0) then
-   call msg('l','passed') 
-   RIM_E(i_db_merge)%E(:,:,:)=RIM_E(i_db_merge)%E(:,:,:)+Xen%E(Xen%nbm,ik_ref(1),1)-RIM_E(i_db_merge)%E(Xen%nbm,ik_ref(2),1)
+ if (ik_ref(2)>0) then
+   call msg('l','passed @ RIM k-point #'//trim(intc(ik_ref(2)))) 
  else 
    call msg('l','failed') 
-   if (     l_skip_check) call warning("Internal check failed. A X grid k-point was not found among the RIM list")
-   if (.not.l_skip_check) call error("Internal check failed. A X grid k-point was not found among the RIM list")
+   if (     l_skip_check) call warning("Internal check failed. A consistent X grid k-point was not found among the RIM list")
+   if (.not.l_skip_check) call error("Internal check failed. A consistent X grid k-point was not found among the RIM list")
  endif
  !
  BZ_RIM_nbands=RIM_E(i_db_merge)%nb
@@ -312,10 +306,9 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  BZ_RIM_ipol_weight = 1.0_SP
  !
  allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
+ allocate(Xk%pt_RIM(BZ_RIM_tot_nkpts,3))
  !
  if (RIM_is_symmetry_expanded) then
-   !
-   allocate(Xk%pt_RIM(BZ_RIM_tot_nkpts,3))
    !
    Xen%E_RIM(:,:,:)=RIM_E(i_db_merge)%E(:,:,:)
    Xk%pt_RIM(:,:)  =RIM_k(i_db_merge)%pt(:,:)
@@ -332,8 +325,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    ! rotated point out of the ibz. I started the implementation in the
    ! k_random.F_project which is now inside my repository
    ! 
-   allocate(Xk%ptbz_RIM(BZ_RIM_tot_nkpts,3))
-   !
    call live_timing('RIM re-ordering and distribution',Xk%nbz,SERIAL=.true.)
    !                ===============
    i1=0
@@ -342,10 +333,10 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
        i1=i1+1
        if (ik_RIM==1) then
          Xen%E_RIM(:,i1,:)=Xen%E(:BZ_RIM_nbands,BZ_RIM_table(ik_bz,1),:)
-         Xk%ptbz_RIM(i1,:)=Xk%ptbz(ik_bz,:)
+         Xk%pt_RIM(i1,:)=Xk%ptbz(ik_bz,:)
        else
          Xen%E_RIM(:,i1,:)=RIM_E(i_db_merge)%E(:,BZ_RIM_table(ik_bz,ik_RIM)-1,:)
-         Xk%ptbz_RIM(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_RIM) ),RIM_k(i_db_merge)%pt(BZ_RIM_table(ik_bz,ik_RIM)-1,:))
+         Xk%pt_RIM(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_RIM) ),RIM_k(i_db_merge)%pt(BZ_RIM_table(ik_bz,ik_RIM)-1,:))
        endif
        BZ_RIM_table(ik_bz,ik_RIM)=ik_RIM+sum(BZ_RIM_nkpt(:ik_bz-1))
      enddo
@@ -365,7 +356,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  deallocate(BZ_RIM_nkpt,BZ_RIM_table,Xen%E_RIM,BZ_RIM_ipol_weight)
  if(allocated(BZ_SYM_table)) deallocate(BZ_SYM_table)
- if(associated(Xk%ptbz_RIM)) deallocate(Xk%ptbz_RIM)
  if(associated(Xk%pt_RIM))   deallocate(Xk%pt_RIM)
  call k_ibz2bz(Xk,'d',.false.) 
  call k_ibz2bz(RIM_k(i_db_merge),'d',.false.) 

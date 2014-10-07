@@ -46,15 +46,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  integer :: i_c,i_r,H_pos(2),i_Tk,i_Tp,i_B,i_g,&
 &           i_k_bz,i_v,i_cond,i_spin
  ! 
- ! I/O
- ! 
- integer           ::io_BS_err,ID,ACTION
- integer, external ::io_BS
- !
  if (allocated(BS_mat)) return
- !
- !call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
- !ioBS_err=ioBS(iq,X,ID)o
  !
  ! ALLOCATION
  !============
@@ -171,12 +163,11 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  ! BS_mat lives in the enitre world...
  !
  call PP_redux_wait(BS_mat)
+ call PP_redux_wait(BS_mat_diagonal)
  !
  ! ... while the oscillators vector and all other similar vectors are distributed ONLY among k-points
  ! and eh transitions.
  !
- call PP_redux_wait(BS_mat_diagonal,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
- call PP_redux_wait(BS_mat_diagonal,COMM=PAR_COM_eh_INDEX%COMM)
  call PP_redux_wait(BSS_rhoq0,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_rhoq0,COMM=PAR_COM_eh_INDEX%COMM)
  call PP_redux_wait(BSS_eh_E,COMM=PAR_COM_Xk_ibz_INDEX%COMM )

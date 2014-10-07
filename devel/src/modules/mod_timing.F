@@ -405,6 +405,7 @@ MODULE timing_m
      use pars,    ONLY:lchlen
      use com,     ONLY:msg
      use stderr,  ONLY:real2ch
+     use LIVE_t,  ONLY:LIVE_message
      IMPLICIT NONE
      REAL(SP) :: total_time
      character(lchlen)::ch
@@ -419,6 +420,7 @@ MODULE timing_m
      !
      ch='            [Time-Profile]: '//trim(real2ch(internal_list%clock(1)%total_time))//'s'
      call msg('rn',ch(:100))
+     if (ncpu>1) call LIVE_message(message=ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
      !
    END SUBROUTINE timing_upto_now    
    !

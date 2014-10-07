@@ -72,7 +72,7 @@ subroutine RT_alloc_def_or_free(RT_obj,En,kgrid,action_kind)
      !
      do i_k=1,kgrid%nibz
        if(     l_RT_uses_E_RIM) RT_obj%k(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=&
-&                                       kgrid%ptbz_RIM(RIM_ibz_coo(i_k,1):RIM_ibz_coo(i_k,2),:)
+&                                       kgrid%pt_RIM(RIM_ibz_coo(i_k,1):RIM_ibz_coo(i_k,2),:)
        if(.not.l_RT_uses_E_RIM) RT_obj%k(i_k,:)=kgrid%pt(i_k,:)
      enddo
      !

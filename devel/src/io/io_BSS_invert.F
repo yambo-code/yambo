@@ -28,7 +28,7 @@ integer function io_BSS_invert(iq,n_,IO_dim,inv_err,eps,W_disk,ID)
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_uses_RIM,BSS_dr,&
-&                        BSS_damp_reference,BSE_mode
+&                        BSS_damp_reference,BSE_mode,BSS_inversion_PERT_FULL_ratio
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,read_is_on,write_is_on
@@ -55,7 +55,7 @@ integer function io_BSS_invert(iq,n_,IO_dim,inv_err,eps,W_disk,ID)
    !
    io_BSS_invert=io_header(ID,XC_KIND="K_E force")
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=11,MENU=0)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=12,MENU=0)
    call io_elemental(ID,VAR=&
 &       " BSK Identifier                  :",I0=BS_identifier,CHECK=.TRUE.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
@@ -64,6 +64,8 @@ integer function io_BSS_invert(iq,n_,IO_dim,inv_err,eps,W_disk,ID)
 &       " Using energy RIM                :",L0=BSS_uses_RIM,CHECK=.TRUE.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
 &       " Number of frequencies           :",I0=W_disk%n_freqs)
+   call io_elemental(ID,VAR=&
+&       " Perturbative to full ration     :",R0=BSS_inversion_PERT_FULL_ratio)
    call io_elemental(ID,UNIT=HA2EV,VAR=&
 &       " Energy range                [ev]:",R1=W_disk%er)
    call io_elemental(ID,UNIT=HA2EV,VAR=&

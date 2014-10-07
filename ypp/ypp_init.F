@@ -595,7 +595,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  if (l_bzrim)    call initactivate(1,"BZ_RIM_Nk cooOut OutputAlat GammaRadius")
  !
- if (l_map_kpts) call initactivate(1,"BZ_RIM_Nk SkipCheck BZExpand NoWeights")
+ if (l_map_kpts) call initactivate(1,"BZ_RIM_Nk SkipCheck noBZExpand NoWeights")
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call init_QP_ctl_switch('G')

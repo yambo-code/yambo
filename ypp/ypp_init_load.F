@@ -260,7 +260,7 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
  call it('f',defs,'SkipCheck' , 'Skip internal consistency check on k-point grids')
- call it('f',defs,'BZExpand' , 'Expand the RIM k-points in the whole BZ by using the symmetries')
+ call it('f',defs,'noBZExpand' , 'Keep the RIM k-points in the IBZ without using the symmetries')
  !
  ! Wannier bands
  !

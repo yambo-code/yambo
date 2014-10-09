@@ -171,8 +171,8 @@ module real_time
  !
  ! Locks and reference
  !----------------------
- logical                  :: l_RT_skip_impose    = .FALSE.
- logical                  :: l_RT_EE_impose_E    = .FALSE.
+ logical                  :: l_RT_impose_N_dN    = .TRUE.
+ logical                  :: l_RT_EE_impose_E    = .TRUE.
  !
  ! Locks and reference
  !----------------------

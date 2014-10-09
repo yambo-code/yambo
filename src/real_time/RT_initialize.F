@@ -42,7 +42,7 @@ subroutine RT_initialize(E,k,q)
 &                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,RIM_ibz_coo, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,    &
 &                         l_RT_uses_E_RIM,RIM_bz_coo,RT_life_interp_steps,RT_life_interp_decay_time,&
-&                         RT_life_interp_KIND,l_NE_dynamics,l_RT_skip_impose,I_MEM_steps,Integrator_name,&
+&                         RT_life_interp_KIND,l_NE_dynamics,l_RT_impose_N_dN,I_MEM_steps,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
 &                         RIM_EE_Nk_table,l_RT_EE_impose_E,RIM_EE_percent,RIM_EE_Nk_table,&
 &                         l_BGR,l_RT_HEUN,eval_DENSITY,eval_HARTREE,eval_DFT,&
@@ -63,7 +63,7 @@ subroutine RT_initialize(E,k,q)
  integer                  :: i1,rest,ik,IO_steps(3),N_T_samplings
  character(5)             :: MSG_ch
  real(SP)                 :: T_memory
- logical                  :: l_Full_RT_T_evolution,l_field_is_a_pulse 
+ logical                  :: l_Full_RT_T_evolution,l_field_is_a_pulse,l_skip_it
  integer,         external:: RT_k_grid,RT_Lifetimes_evaluation_plan
  !
  ! Logicals
@@ -72,14 +72,13 @@ subroutine RT_initialize(E,k,q)
  call parser('BGR',                  l_BGR)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
- call parser('RTskipImposeN',        l_RT_skip_impose)
- call parser('RTeeImposeE',          l_RT_EE_impose_E)
- call parser('RTpumpEhEn',           l_manual_excitation)
+ call parser('RTskipImposeN',        l_skip_it)
+ if (l_skip_it) l_RT_impose_N_dN=.FALSE.
  !
- if (l_RT_skip_impose.and.l_RT_EE_impose_E) then
-   l_RT_EE_impose_E=.TRUE.
-   call warning('IO steps read from the existing databases')
- endif
+ call parser('RTskipImposeE',        l_skip_it)
+ if (l_skip_it) l_RT_EE_impose_E=.FALSE.
+ !
+ call parser('RTpumpEhEn',           l_manual_excitation)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
  !
@@ -361,9 +360,9 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', 'Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000._SP/))
  call msg( 'r', 'Damping (Radiative)[fs/meV]:',(/RAD_LifeTime/FS2AUT,   HBAR_eVfs/RAD_LifeTime*FS2AUT*1000._SP/))
  !
- if ((l_elel_scatt.or.l_elph_scatt).and.(.not.l_RT_skip_impose.or.l_RT_EE_impose_E)) then
+ if ((l_elel_scatt.or.l_elph_scatt).and.(.not.l_RT_impose_N_dN.or.l_RT_EE_impose_E)) then
    call msg( 'nr','---Conservation Rules---')
-   call msg( 'r','dN (e-p) and N (e-p + e-e)  :',.not.l_RT_skip_impose)
+   call msg( 'r','dN (e-p) and N (e-p + e-e)  :',.not.l_RT_impose_N_dN)
    if (l_elel_scatt) call msg( 'r','Energy (e-e)                :',l_RT_EE_impose_E)
  endif
  !

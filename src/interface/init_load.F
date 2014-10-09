@@ -369,7 +369,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'PlasmaPerc', '[RT] Plasma approx (0-100): % of eh pair considered',Plasma_redux_percent,Verb_level=V_real_time)
  call it(defs,'EERimPerc',  '[RT] EE RIM (0-100): % of the RIM points used in EE scatt',RIM_EE_percent,Verb_level=V_real_time)
- call it('f',defs,'RTeeImposeE',   '[RT] Conservation of E imposed by hand on-the-fly for EE scatt')
+ call it('f',defs,'RTskipImposeE',   '[RT] Conservation of E (e-e channel) imposed by hand on-the-fly')
  !
  ! ELPH
  !

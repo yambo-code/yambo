@@ -52,7 +52,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
 &                         RT_TIME_status,REF_lifetime,RT_E_occupations,RT_H_occupations,FIRST_step,&
-&                         l_initial_equilibrium,l_RT_skip_impose,RT_delta0_occupations,l_RT_RWA,RT_is_dephased,&
+&                         l_initial_equilibrium,l_RT_impose_N_dN,RT_delta0_occupations,l_RT_RWA,RT_is_dephased,&
 &                         RT_nk,RT_all2ibz
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -225,7 +225,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
      !
      ! Zero dN/dT & dE/dT & d(DeltaN)/dT
      !===================================
-     if(l_RT_skip_impose) return
+     if (.not.l_RT_impose_N_dN) return
      !
      if (l_elel_scatt) then
        call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 

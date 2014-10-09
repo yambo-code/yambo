@@ -34,7 +34,7 @@ integer function variables_RT(ID,local_description,what)
 &                         Integrator_name, &
 &                         RAD_LifeTime,Phase_LifeTime,              &
 &                         l_RT_induced_field,G_MEM_steps,&
-&                         l_RT_CCA_Kernel,Gr_description,l_RT_skip_impose,&
+&                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN,&
 &                         l_RT_uses_E_RIM,N_Gr_descs,RT_life_interp_steps,RT_life_interp_decay_time,&
 &                         RT_life_interp_KIND,l_NE_simulate_Irredux,RIM_EE_percent,l_RT_EE_impose_E
  use ELPH,           ONLY:ph_modes,elph_branches
@@ -249,7 +249,7 @@ integer function variables_RT(ID,local_description,what)
    !======================
    call io_elemental(ID,VAR="CONSTRAINS",VAR_SZ=3,MENU=0) 
    i_desc=i_desc+1
-   call io_elemental(ID,L0=.not.l_RT_skip_impose,&
+   call io_elemental(ID,L0=l_RT_impose_N_dN,&
 &      VAR=' [CONSTRAINS] N (ee+ep) & dN (ep):',  CHECK=.true.,OP=(/"=="/),&
 &      DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1

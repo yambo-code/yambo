@@ -136,6 +136,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
      ! I can, therefore, write/read and/or VERIFIY the values
      !
      do i_desc=1,iabs(n_X_descs)
+       !
        call io_elemental(ID,VAR='X_descriptions_'//trim(intc(i_desc)),CH0="",VAR_SZ=1,MENU=0)
        call io_elemental(ID,DB_CH0=X_string,CH0=X_description(i_desc),VAR='',CHECK=n_X_descs>0,OP=(/"=="/))
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -153,8 +154,8 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
      !
    endif
    !
-   call io_elemental(ID,I0=RIM_ng,VAR=' RIM RL components               :',WARN=.true.)
-   call io_elemental(ID,I0=RIM_n_rand_pts,VAR=' RIM random points               :',WARN=.true.)
+   call io_elemental(ID,I0=RIM_ng,VAR=        ' RIM RL components      :',WARN=.true.)
+   call io_elemental(ID,I0=RIM_n_rand_pts,VAR=' RIM random points      :',WARN=.true.)
    call io_elemental(ID,VAR="",VAR_SZ=0)
    !
    io_COLLISIONS=io_status(ID)

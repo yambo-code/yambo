@@ -71,18 +71,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Work Space
  !
  integer                  ::i_qp,i1,i2,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
-&                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2)
+&                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),iv4(4),io_err,ID,timing_steps
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(ggwinfo)            ::isc,iscp
- integer          ::iv4(4),io_err,ID, timing_steps
- integer, external::io_X,QP_state_extract
  character(schlen)::ch,Sc_name
  logical          ::X_is_TR_rotated
- complex(SP)      ::local_rhotw(X%ng),pre_factor,sp_dummy,ctmp
- real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq
- real(SP)         ::eet_cutoff1(n_sp_pol)
- real(SP)         ::PPA_E
- complex(SP)      ::PPA_R
+ real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
+ complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,sp_dummy,ctmp
+ !
+ integer, external::io_X,QP_state_extract
  !
  ! Reset
  !
@@ -249,7 +246,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              if (real(X_mat(i1,i2,X_range(1))/X_mat(i1,i2,X_range(2)))<=1._SP) then
                X_mat(i1,i2,X_range(2))=X%ppaE
              else
-               X_mat(i1,i2,X_range(2))=real( sqrt(X_mat(i1,i2,X_range(1))/X_mat(i1,i2,X_range(2))-1) )
+               X_mat(i1,i2,X_range(2))=sqrt(X_mat(i1,i2,X_range(1))/X_mat(i1,i2,X_range(2))-1)
              endif
            else
              X_mat(i1,i2,X_range(1))=X_mat(i1,i2,X_range(1))*isc%gamp(i1,i2)
@@ -428,14 +425,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            do ig1=1,X%ng
              do ig2=1,X%ng
                !
-               !PPA_E=X%ppaE/real(X_mat(ig1,ig2,2))
-               !PPA_R=-X_mat(ig1,ig2,1)/2.*PPA_E*isc%gamp(ig1,ig2)
+               PPA_E=X%ppaE/X_mat(ig1,ig2,2)
+               PPA_R=-X_mat(ig1,ig2,1)/2.*PPA_E*isc%gamp(ig1,ig2)
                !
-               ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*&
-&                     X_mat(ig1,ig2,X_range(1))/2.*X%ppaE/real(X_mat(ig1,ig2,X_range(2)))*isc%gamp(ig1,ig2)*&
-&                     ( (spin_occ-f_kmq)/(conjg(W_(i4))-E_kmq-X%ppaE/real(X_mat(ig1,ig2,X_range(2))))+&
-&                     f_kmq/(conjg(W_(i4))-E_kmq+X%ppaE/real(X_mat(ig1,ig2,X_range(2)))))
+               ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
+&                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i4)-E_kmq-PPA_E)+&
+&                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i4))-E_kmq+PPA_E))
+               !
                sp_dummy=sp_dummy+ctmp
+               !
              enddo
            enddo
 !$omp end parallel do

@@ -33,6 +33,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #if defined _SC
  use X_m,            ONLY:global_gauge
 #endif
+ use parallel_m,     ONLY:master_cpu
+ use IO_m,           ONLY:io_and_Messaging_switch
  !
  implicit none
  type(levels) ::Ken
@@ -73,6 +75,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #else
  run_inversion      =index(BSS_mode,'i')/=0
 #endif
+ !
+ ! I/O. All read. Only master writes.
+ !
+ call io_and_Messaging_switch("+io_out",CONDITION=master_cpu)
  !
  if (run_Haydock.and.associated(Ken%W)) then
    call warning('K with QP widths not supported in the Haydock solver')

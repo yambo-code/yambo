@@ -65,7 +65,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Functions
  !
- integer, external :: RIM_grid_consistency_check
+ integer, external :: k_RIM_grid_consistency_check
  integer, external :: io_DB1_selective_scan,io_RIM_E_and_k
  !
  if (n_RIM_DBs==0) then
@@ -209,7 +209,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  ! k-points
  !
  call section('+','Internal consistency check ...')
- ik_ref(2)=RIM_grid_consistency_check(Xk,Xen,RIM_k(i_db_merge),RIM_E(i_db_merge))
+ ik_ref(2)=k_RIM_grid_consistency_check(Xk,Xen,RIM_k(i_db_merge),RIM_E(i_db_merge))
  !
  if (ik_ref(2)>0) then
    call msg('l','passed @ RIM k-point #'//trim(intc(ik_ref(2)))) 

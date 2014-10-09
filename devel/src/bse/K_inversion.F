@@ -40,7 +40,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use R_lattice,      ONLY:d3k_factor,q_norm,bz_samp
  use com,            ONLY:isec,msg,warning
  use LIVE_t,         ONLY:live_timing
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset,ncpu,master_cpu
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset,ncpu
  use interfaces,     ONLY:PARALLEL_index
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE,VERIFY,OP_WR_CL
 #if defined _TIMING
@@ -346,10 +346,8 @@ subroutine K_inversion(iq,W,E,k,q)
    eps_disk(:,1)=X_epsilon(2,:)
    if (trim(BSE_mode)=="causal") eps_disk(:,2)=X_epsilon(4,:)
    !
-   if (master_cpu) then
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-     i_err=io_BSS_invert(iq,W%n_freqs,IO_dim,inv_err,eps_disk,W,ID)
-   endif
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+   i_err=io_BSS_invert(iq,W%n_freqs,IO_dim,inv_err,eps_disk,W,ID)
    !
  endif
  !
@@ -452,10 +450,8 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    if (trim(BSE_mode)=="causal") eps_disk(:,2)=X_epsilon(4,:)
    !
-   if (master_cpu) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-     i_err=io_BSS_invert(iq,W%n_freqs,IO_dim,inv_err,eps_disk,W,ID)
-   endif
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+   i_err=io_BSS_invert(iq,W%n_freqs,IO_dim,inv_err,eps_disk,W,ID)
    !
    ! Try a polinomial interpolation on the null values
    !===================================================

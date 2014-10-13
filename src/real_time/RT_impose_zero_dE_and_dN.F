@@ -70,7 +70,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  if (trim(Scatt_kind)=="elph2") iref=5
  !
  if(l_initial_equilibrium) then
-   REF_lifetime(:,:,iref)=  0._SP
+   REF_lifetime(:,:,iref)  =0._SP 
    REF_lifetime(:,:,iref+1)=0._SP
  endif
  !
@@ -115,16 +115,16 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
        if (ib<=E%nbf) then
          !
          dN_dT_h_v=dN_dT_h_v+   Hole_fac*k_weight
-         dE_dT_h_v=dN_dT_h_v+En*Hole_fac*k_weight
+         dE_dT_h_v=dE_dT_h_v+En*Hole_fac*k_weight
          dN_dT_e_v=dN_dT_e_v+   Elec_fac*k_weight
-         dE_dT_e_v=dN_dT_e_v+En*Elec_fac*k_weight
+         dE_dT_e_v=dE_dT_e_v+En*Elec_fac*k_weight
          !
        else
          !
          dN_dT_h_c=dN_dT_h_c+   Hole_fac*k_weight
-         dE_dT_h_c=dN_dT_h_c+En*Hole_fac*k_weight
+         dE_dT_h_c=dE_dT_h_c+En*Hole_fac*k_weight
          dN_dT_e_c=dN_dT_e_c+   Elec_fac*k_weight
-         dE_dT_e_c=dN_dT_e_c+En*Elec_fac*k_weight
+         dE_dT_e_c=dE_dT_e_c+En*Elec_fac*k_weight
          !
        endif
        !
@@ -132,7 +132,6 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      !
    enddo
  enddo
- !
  ! Compute the pre-factors
  !=========================
  !

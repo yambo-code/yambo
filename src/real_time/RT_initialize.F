@@ -44,7 +44,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_RT_uses_E_RIM,RIM_bz_coo,RT_life_interp_steps,RT_life_interp_decay_time,&
 &                         RT_life_interp_KIND,l_NE_dynamics,l_RT_impose_N_dN,I_MEM_steps,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
-&                         RIM_EE_Nk_table,l_RT_EE_impose_E,RIM_EE_percent,RIM_EE_Nk_table,&
+&                         RIM_EE_Nk_table,l_RT_impose_E,RIM_EE_percent,RIM_EE_Nk_table,&
 &                         l_BGR,l_RT_HEUN,eval_DENSITY,eval_HARTREE,eval_DFT,&
 &                         RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
  use IO_m,           ONLY:io_COLLs
@@ -76,7 +76,7 @@ subroutine RT_initialize(E,k,q)
  if (l_skip_it) l_RT_impose_N_dN=.FALSE.
  !
  call parser('RTskipImposeE',        l_skip_it)
- if (l_skip_it) l_RT_EE_impose_E=.FALSE.
+ if (l_skip_it) l_RT_impose_E=.FALSE.
  !
  call parser('RTpumpEhEn',           l_manual_excitation)
  !
@@ -360,10 +360,10 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', 'Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000._SP/))
  call msg( 'r', 'Damping (Radiative)[fs/meV]:',(/RAD_LifeTime/FS2AUT,   HBAR_eVfs/RAD_LifeTime*FS2AUT*1000._SP/))
  !
- if ((l_elel_scatt.or.l_elph_scatt).and.(.not.l_RT_impose_N_dN.or.l_RT_EE_impose_E)) then
+ if ((l_elel_scatt.or.l_elph_scatt).and.(.not.l_RT_impose_N_dN.or.l_RT_impose_E)) then
    call msg( 'nr','---Conservation Rules---')
    call msg( 'r','dN (e-p) and N (e-p + e-e)  :',.not.l_RT_impose_N_dN)
-   if (l_elel_scatt) call msg( 'r','Energy (e-e)                :',l_RT_EE_impose_E)
+   if (l_elel_scatt) call msg( 'r','Energy (e-e)                :',l_RT_impose_E)
  endif
  !
  call msg( 'nr','---RIM---')

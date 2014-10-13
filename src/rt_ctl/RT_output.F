@@ -33,7 +33,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use rt_ctl,         ONLY:RT_do_IO,RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,l_Debye_TBose_update, &
-&                         RT_Tfit_lifetimes,Imp_factors,l_BGR,BGR
+&                         RT_Tfit_lifetimes,EE_prefactor,EP_prefactor,EP_abs_prefactor,l_BGR,BGR
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -203,12 +203,16 @@ subroutine RT_output(what,VALUES,TIME,E)
  short_file_name(next_file)=trim(append_ch)//'N_dN_E_conservation_factors'
  n1=1
  if(l_elph_scatt) then
-   n1=n1+2
-   headings(next_file,n1-1:n1)=(/"elph F1","elph F2"/)
+   headings(next_file,2:3)=(/"e-p val","e-p cond"/)
+   n1=3
+   if(Bose_Temp>0._SP) then
+     headings(next_file,4:5)=(/"e-p (abs) val","e-p (abs) cond"/) 
+     n1=5
+   endif
  endif
  if(l_elel_scatt) then
-   n1=n1+3
-   headings(next_file,n1-2:n1)=(/"elel F1","elel F2","elel F3"/)
+   headings(next_file,n1+1:n1+2)=(/"e-e val","e-e con"/)
+   n1=n1+2
  endif
  n_headings(next_file)=n1
  next_file=next_file+1
@@ -510,12 +514,16 @@ subroutine RT_output(what,VALUES,TIME,E)
      case('N_dN_E_conservation_factors')
        n1=1
        if(l_elph_scatt) then
-         n1=n1+2
-         data_to_dump(n1-1:n1)=Imp_factors(1:2)
+         data_to_dump(2:3)  =EP_prefactor
+         n1=3
+         if(Bose_Temp>0._SP) then
+           data_to_dump(4:5)=EP_abs_prefactor
+           n1=5
+         endif
        endif
        if(l_elel_scatt) then
-         n1=n1+3
-         data_to_dump(n1-2:n1)=Imp_factors(3:5)
+         data_to_dump(n1+1:n1+2)=EE_prefactor
+         n1=n1+2
        endif
        !
    end select

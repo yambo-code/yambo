@@ -53,7 +53,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
 &                         RT_TIME_status,REF_lifetime,RT_E_occupations,RT_H_occupations,FIRST_step,&
 &                         l_initial_equilibrium,RT_delta0_occupations,l_RT_RWA,RT_is_dephased,&
-&                         RT_nk,RT_all2ibz
+&                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -212,9 +212,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
      ! However it's better to keep is together with the rest of the 
      ! relaxation term
      !
-     I_relax_static(ib1,ib1,ik)=I_relax_static(ib1,ib1,ik) + sum(REF_lifetime(ib1,ik,:))*df_k
-     !
-     I_relax_static(ib1,ib1,ik)=I_relax_static(ib1,ib1,ik) + ( dGAMMA_e*f_E_k - dGAMMA_h*f_H_k )
+     I_relax_static(ib1,ib1,ik)=I_relax_static(ib1,ib1,ik) + sum(REF_lifetime(ib1,ik,:))*df_k + ( dGAMMA_e*f_E_k - dGAMMA_h*f_H_k )
      !
    enddo
  enddo
@@ -223,6 +221,10 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
    !
    subroutine Impose_Conservations( )
      !
+     EE_prefactor    =0._SP
+     EP_prefactor    =0._SP
+     EP_abs_prefactor=0._SP
+     !
      ! Zero dN/dT & dE/dT & d(DeltaN)/dT
      !===================================
      if (l_elel_scatt) then
@@ -230,9 +232,11 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_flag)
      endif
      if (l_elph_scatt) then
        call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
+       !
        if(Bose_Temp>0._SP) then
          call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
        endif
+       !
      endif
      !
    end subroutine

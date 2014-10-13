@@ -172,7 +172,7 @@ module real_time
  ! Locks and reference
  !----------------------
  logical                  :: l_RT_impose_N_dN    = .TRUE.
- logical                  :: l_RT_EE_impose_E    = .TRUE.
+ logical                  :: l_RT_impose_E    = .TRUE.
  !
  ! Locks and reference
  !----------------------
@@ -212,7 +212,10 @@ module real_time
  real(SP)                 :: RT_mean_lifetimes(6)
  real(SP)                 :: RT_Tfit_lifetimes(4)
  real(SP)                 :: RT_Efit_lifetimes(4)
- real(SP)                 :: Imp_factors(5)
+ !
+ real(SP)                 :: EE_prefactor(2)      ! 1=valence, 2=conduction
+ real(SP)                 :: EP_prefactor(2)
+ real(SP)                 :: EP_abs_prefactor(2) 
  !
  ! Occupations fit
  !-----------------

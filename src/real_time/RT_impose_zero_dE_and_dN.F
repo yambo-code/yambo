@@ -27,10 +27,10 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands
- use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,Imp_factors, &
+ use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
 &                         RT_E_occupations,RT_H_occupations,REF_lifetime,&
 &                         l_initial_equilibrium,RT_delta0_occupations,&
-&                         l_RT_EE_impose_E,RT_E_occupations_reference,&
+&                         l_RT_impose_E,RT_E_occupations_reference,&
 &                         RT_H_occupations_reference,RT_nk,RT_ibz_coo,RT_Nk_ibz,&
 &                         l_RT_impose_N_dN
  !
@@ -46,17 +46,15 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  real(SP), parameter :: cut_off=0.1_SP  ! 1 = 100%
  !
- integer      :: i1,ib,ik,ik_rim,iE_rim,indx,iref
- real(SP)     :: f_E,f_H,df,k_weight,En,Hole_fac,Elec_fac,prefactor(2),DEN,Nv,Nc,dNv,dNc,Ev,Ec,dEv,dEc,&
-&                SUM_N_Holes(2),SUM_E_Holes(2),SUM_N_Electrons(2),SUM_E_Electrons(2),TMP_VALUE(4)
- !
- real(SP)     :: dN_dT_h_v,dN_dT_h_c,dN_dT_e_v,dN_dT_e_c
- real(SP)     :: dE_dT_h_v,dE_dT_h_c,dE_dT_e_v,dE_dT_e_c
+ integer      :: i1,ib,ik,ik_rim,iE_rim,iref
+ real(SP)     :: f_E,f_H,df,k_weight,En,Hole_fac,Elec_fac,prefactor(2),&
+&                dN_dT_h_v,dN_dT_h_c,dN_dT_e_v,dN_dT_e_c,dE_dT_h_v,dE_dT_h_c,dE_dT_e_v,dE_dT_e_c,&
+&                dN_v,dN_c,dE_v,dE_c,dN_e,dN_h,dE_e,dE_h,prefactor_to_use,GAMMA_h,GAMMA_e
  !
  logical      :: l_energy,l_n_electrons,l_n_carriers
  !
  if(index(Scatt_kind,'elel')/=0) then
-   l_energy      =l_RT_EE_impose_E
+   l_energy      =l_RT_impose_E
    l_n_electrons =l_RT_impose_N_dN
    l_n_carriers  =.false.
  endif
@@ -76,11 +74,8 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    REF_lifetime(:,:,iref+1)=0._SP
  endif
  !
- SUM_N_Holes   =0._SP
- SUM_N_Electrons=0._SP
- SUM_E_Holes   =0._SP
- SUM_E_Electrons=0._SP
- prefactor=0._SP
+ ! Calculate partial contributions of dN/dT and dE/dT
+ !====================================================
  !
  dN_dT_h_v=0._SP
  dE_dT_h_v=0._SP
@@ -138,103 +133,87 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    enddo
  enddo
  !
- call compute_prefactors()
+ ! Compute the pre-factors
+ !=========================
  !
- if(trim(Scatt_kind)=="elel" ) Imp_factors(3:5)=0._SP
- if(trim(Scatt_kind)=="elph1") Imp_factors(1:2)=0._SP
+ dE_v=dE_dT_e_v+dE_dT_h_v
+ dE_c=dE_dT_e_c+dE_dT_h_c
+ dN_v=dN_dT_e_v+dN_dT_h_v
+ dN_c=dN_dT_e_c+dN_dT_h_c
+ dE_e=dE_dT_e_v+dE_dT_e_c
+ dE_h=dE_dT_h_v+dE_dT_h_c
+ dN_e=dN_dT_e_v+dN_dT_e_c
+ dN_h=dN_dT_h_v+dN_dT_h_c
  !
- do i1=1,3
+ prefactor=0._SP
+ !
+ ! Electrons number and Energy
+ !
+ if (l_energy.and.l_n_electrons.and..not.l_n_carriers) then
+   prefactor(1)=( dE_c*(dN_e-dN_h)-dN_c*(dE_e-dE_h) )/(dE_c*dN_v-dE_v*dN_c)
+   prefactor(2)=( dN_v*(dE_e-dE_h)-dE_v*(dN_e-dN_h) )/(dE_c*dN_v-dE_v*dN_c)
+ endif
+ !
+ ! Electrons and carriers number
+ !
+ if (l_n_carriers.and.l_n_electrons.and..not.l_energy) then
+   prefactor(1)= (dN_dT_e_v-dN_dT_h_v)/dN_v
+   prefactor(2)= (dN_dT_e_c-dN_dT_h_c)/dN_c
+ endif
+ !
+ ! Electrons number only
+ !
+ if(.not.l_energy.and..not.l_n_carriers.and.l_n_electrons) then
+   prefactor(1)=(dN_e-dN_h)/(dN_e+dN_h)
+   prefactor(2)=prefactor(1)
+ endif
+ !
+ ! Pre-factors transfer to internal variables and application
+ ! to the lifetimes
+ !============================================================
+ !
+ do i1=1,2
+   !
    if( isnan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._SP ) then
-     if (trim(Scatt_kind)=="elel") Imp_factors(3:5)=prefactor(1:3)
-     if(trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
-     if(l_initial_equilibrium) then
-       REF_lifetime(:,:,iref)=Hole_lifetime
-       REF_lifetime(:,:,iref+1)=Electron_lifetime
-     endif
-     return
+     !
+     prefactor(i1)=0._SP
+     !
    endif
-   if( abs(prefactor(i1))>cut_off ) prefactor(i1)=prefactor(i1)/abs(prefactor(i1))*cut_off
+   !
+   if ( abs(prefactor(i1))>cut_off ) prefactor(i1)=prefactor(i1)/abs(prefactor(i1))*cut_off
+   !
  enddo
  !
  do ib=SC_bands(1),SC_bands(2)
    do ik=1,k%nibz
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
-       call apply_prefactors()
+       prefactor_to_use=prefactor(1)
+       if (ib>E%nbf) prefactor_to_use=prefactor(2)
+       !
+       GAMMA_h=Hole_lifetime(ib,ik_rim)    +REF_lifetime(ib,ik_rim,iref)
+       GAMMA_e=Electron_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,iref+1)
+       !
+       GAMMA_h=GAMMA_h*(1._SP+prefactor_to_use)
+       GAMMA_e=GAMMA_e*(1._SP-prefactor_to_use)
+       !
+       if (l_initial_equilibrium) then
+         REF_lifetime(ib,ik_rim,iref  )= GAMMA_h
+         REF_lifetime(ib,ik_rim,iref+1)= GAMMA_e
+       else
+         Hole_lifetime(ib,ik_rim)    =GAMMA_h-REF_lifetime(ib,ik_rim,iref)
+         Electron_lifetime(ib,ik_rim)=GAMMA_e-REF_lifetime(ib,ik_rim,iref+1)
+       endif
        !
      enddo
    enddo
  enddo
  !
- if (trim(Scatt_kind)=="elel")  Imp_factors(3:5)=prefactor(1:3)
- if (trim(Scatt_kind)=="elph1") Imp_factors(1:2)=prefactor(1:2)
+ ! Save values for RT_output
+ !===========================
  !
- if(l_initial_equilibrium) then
-   REF_lifetime(:,:,iref)=Hole_lifetime
-   REF_lifetime(:,:,iref+1)=Electron_lifetime
- endif
+ if(trim(Scatt_kind)=="elel" ) EE_prefactor    =prefactor
+ if(trim(Scatt_kind)=="elph1") EP_prefactor    =prefactor
+ if(trim(Scatt_kind)=="elph2") EP_abs_prefactor=prefactor
  !
- contains
-   !
-   subroutine compute_prefactors()
-     !
-     prefactor=0._SP
-     !
-     Nv=SUM_N_Holes(1)+SUM_N_Electrons(1)
-     Nc=SUM_N_Holes(2)+SUM_N_Electrons(2)
-     dNv=SUM_N_Electrons(1)-SUM_N_Holes(1)
-     dNc=SUM_N_Electrons(2)-SUM_N_Holes(2)
-     !
-     Ev=SUM_E_Holes(1)+SUM_E_Electrons(1)
-     Ec=SUM_E_Holes(2)+SUM_E_Electrons(2)
-     dEv=SUM_E_Electrons(1)-SUM_E_Holes(1)
-     dEc=SUM_E_Electrons(2)-SUM_E_Holes(2)
-     !
-     ! Electrons, carriers and Energy
-     if(l_energy.and.l_n_electrons.and.l_n_carriers) then
-       DEN= Nc*dNv*Ev -Nv*dNc*Ec -Nc*dEv*Nv +Nv*dEc*Nc
-       prefactor(2)=2*(  dNv*dNc*Ev - dEv*dNc*Nv )/DEN
-       prefactor(1)=2*(  dNv*dNc*Ec - dNv*dEc*Nc )/DEN
-     endif
-     ! Electrons number and Energy
-     if(l_energy.and.l_n_electrons.and..not.l_n_carriers) then
-       DEN=Nc*Ev-Nv*Ec
-       prefactor(1)=( -(dEv+dEc)*Nc +(dNv+dNc)*Ec )/DEN
-       prefactor(2)=( -(dEv+dEc)*Nv +(dNv+dNc)*Ev )/DEN
-     endif
-     ! Electrons number and carrires number
-     if(l_n_carriers.and.l_n_electrons.and..not.l_energy) then
-       prefactor(1)=-dNv/Nv
-       prefactor(2)= dNc/Nc
-     endif
-     ! Electrons number only
-     if(.not.l_energy.and..not.l_n_carriers.and.l_n_electrons) &
-     &  prefactor(1)=(dNv+dNc)/(Nv+Nc)
-     !
-   end subroutine compute_prefactors
-   !
-   subroutine apply_prefactors()
-     !
-     if ((l_energy.or.l_n_carriers).and.l_n_electrons) then
-       if (ib<=E%nbf) then
-         Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP+prefactor(1))+&
-&                                     REF_lifetime(ib,ik_rim,iref+1)*prefactor(1)
-         Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)    *(1._SP-prefactor(1))-&
-&                                     REF_lifetime(ib,ik_rim,iref  )*prefactor(1)
-       else
-         Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(2))-&
-&                                     REF_lifetime(ib,ik_rim,iref+1)*prefactor(2)
-         Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)    *(1._SP+prefactor(2))+&
-&                                     REF_lifetime(ib,ik_rim,iref  )*prefactor(2)
-       endif
-     else
-       Electron_lifetime(ib,ik_rim)=Electron_lifetime(ib,ik_rim)*(1._SP-prefactor(1))  -&
-&                                   REF_lifetime(ib,ik_rim,iref+1)*prefactor(1)
-       Hole_lifetime(ib,ik_rim)    =Hole_lifetime(ib,ik_rim)    *(1._SP+prefactor(1))  +&
-&                                   REF_lifetime(ib,ik_rim,iref  )*prefactor(1)
-     endif
-     !
-   end subroutine apply_prefactors
-   !
-   !
 end subroutine RT_impose_zero_dE_and_dN

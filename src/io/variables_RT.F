@@ -36,7 +36,7 @@ integer function variables_RT(ID,local_description,what)
 &                         l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN,&
 &                         l_RT_uses_E_RIM,N_Gr_descs,RT_life_interp_steps,RT_life_interp_decay_time,&
-&                         RT_life_interp_KIND,l_NE_simulate_Irredux,RIM_EE_percent,l_RT_EE_impose_E
+&                         RT_life_interp_KIND,l_NE_simulate_Irredux,RIM_EE_percent,l_RT_impose_E
  use ELPH,           ONLY:ph_modes,elph_branches
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
@@ -253,7 +253,7 @@ integer function variables_RT(ID,local_description,what)
 &      VAR=' [CONSTRAINS] N (ee+ep) & dN (ep):',  CHECK=.true.,OP=(/"=="/),&
 &      DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,L0=l_RT_EE_impose_E,&
+   call io_elemental(ID,L0=l_RT_impose_E,&
 &      VAR=' [CONSTRAINS] IP Energy      (ee):',  CHECK=.true.,OP=(/"=="/),&
 &      DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)

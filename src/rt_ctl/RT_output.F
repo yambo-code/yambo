@@ -203,10 +203,10 @@ subroutine RT_output(what,VALUES,TIME,E)
  short_file_name(next_file)=trim(append_ch)//'N_dN_E_conservation_factors'
  n1=1
  if(l_elph_scatt) then
-   headings(next_file,2:3)=(/"e-p val","e-p cond"/)
+   headings(next_file,2:3)=(/"e-p val","e-p con"/)
    n1=3
    if(Bose_Temp>0._SP) then
-     headings(next_file,4:5)=(/"e-p (abs) val","e-p (abs) cond"/) 
+     headings(next_file,4:5)=(/"e-p (abs) val","e-p (abs) con"/) 
      n1=5
    endif
  endif

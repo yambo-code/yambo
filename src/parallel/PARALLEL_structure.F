@@ -64,8 +64,7 @@ subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
  !
  if ( present(ENVIRONMENT) ) then
    !
-   if (.not. present(n_elements) .or..not. present(ROLE) ) &
-      call error(' Missing args in call: n_elements or ROLE')
+   if (.not. present(n_elements) .or..not. present(ROLE) ) call error(' Missing args in call: n_elements or ROLE')
    !
    call PARALLEL_get_user_structure(ENVIRONMENT)
    !
@@ -88,7 +87,9 @@ subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
      chain_activate(i_chain) = .true.
      !
    enddo
+   !
    ! this is always required in PARALLEL_assign_chains_and_COMMs
+   !
    chain_activate(n_chains) = .true.
    !
    deallocate(role_cpu)

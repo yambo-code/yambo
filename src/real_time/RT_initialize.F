@@ -362,7 +362,7 @@ subroutine RT_initialize(E,k,q)
  !
  if ((l_elel_scatt.or.l_elph_scatt).and.(.not.l_RT_impose_N_dN.or.l_RT_impose_E)) then
    call msg( 'nr','---Conservation Rules---')
-   call msg( 'r','dN (e-p) and N (e-p + e-e)  :',.not.l_RT_impose_N_dN)
+   call msg( 'r',                  'dN (e-p) and N (e-p + e-e)  :',l_RT_impose_N_dN)
    if (l_elel_scatt) call msg( 'r','Energy (e-e)                :',l_RT_impose_E)
  endif
  !

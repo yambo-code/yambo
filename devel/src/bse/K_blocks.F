@@ -125,6 +125,7 @@ subroutine K_blocks( )
  !
  call PP_redux_wait((/N_Ts_total/))
  !
- call PARALLEL_live_message("Kernel matrix elements (renormalized)",ENVIRONMENT="Response_T_space",LOADED=N_Ts_todo,TOTAL=N_Ts_total(1))
+ call PARALLEL_live_message("Kernel matrix elements (renormalized)",ENVIRONMENT="Response_T_space",&
+&                           LOADED=N_Ts_todo,TOTAL=N_Ts_total(1))
  !
 end subroutine

@@ -203,7 +203,7 @@ module fields
      !
      theta_function=0._SP
      !
-     iT=nint(T/step)
+     iT=nint((T-1.E-5)/step)
      !
      if (iT==-1) then
        if (order==0) theta_function= 0._SP

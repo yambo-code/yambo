@@ -115,6 +115,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,RIM,nK_me
      VALUE_tmp=VALUE_tmp-cI*Vstar_dot_V(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
 &                                             G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))
 #endif
+     !
    enddo
    !
    VALUE=VALUE+VALUE_tmp*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))

@@ -227,10 +227,12 @@ subroutine RT_initialize(E,k,q)
      !
      call SC_check_symmetries(Efield(i1)%versor)
      !
-     l_field_is_a_pulse= (Efield(i1)%ef_name=='DELTA') .or. (Efield(i1)%ef_name=='QSSIN') &
-&                   .or. (Efield(i1)%ef_name=='GAUSS')
+     l_field_is_a_pulse= (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS')
      !
-     if ( l_field_is_a_pulse ) then
+     if ( Efield(i1)%ef_name=='DELTA' ) then
+       Efield(i1)%t_final_indx=Efield(i1)%t_initial_indx+2
+       Efield(i1)%t_final=RT_step*(Efield(i1)%t_final_indx-1)       
+     else if ( l_field_is_a_pulse ) then
        call RT_Fluence(i1)
      else
        Efield(i1)%t_final_indx=NE_steps

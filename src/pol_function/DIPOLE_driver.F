@@ -47,12 +47,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Work Space
  !
- integer                   :: ic,iv,is,ik
- logical                   :: use_trans_gauge,l_evaluating_em1s
+ integer           :: ic,iv,is,ik
+ logical           :: use_trans_gauge,l_evaluating_em1s
  !
- !I/O
+ ! I/O
  !
- integer :: ID,io_err(2)
+ integer           :: ID,io_err(2)
  integer, external :: io_DIPOLES
 #if defined _SC 
  integer, external :: io_P_and_P2
@@ -136,7 +136,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !   
    ! WF load 
    !
-   call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',force_WFo=.true.)
+   ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
+   ! there will be other WF_load calls using the present WF distribution. 
+   !
+   call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
+&               force_WFo=.true.,keep_states_to_load=.TRUE.)
    !
    use_trans_gauge = .true.
    !

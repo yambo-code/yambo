@@ -22,7 +22,8 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
-&                  spins_to_load,space,title,impose_free_and_alloc,force_WFo)
+&                  spins_to_load,space,title,impose_free_and_alloc,&
+&                  force_WFo,keep_states_to_load)
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
@@ -37,8 +38,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  use wave_func,     ONLY:wf_nc_k,wf_igk,WF_buffer,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
-&                        QUIET_free,WAVEs
- use wave_func,     ONLY:states_to_load
+&                        QUIET_free,WAVEs,states_to_load
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
 &                        io_fragmented, io_netcdf_support, RD_CL,DUMP,io_and_Messaging_switch
 #if defined _SC
@@ -57,6 +57,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  character(*),optional :: title
  logical     ,optional :: impose_free_and_alloc
  logical     ,optional :: force_WFo
+ logical     ,optional :: keep_states_to_load
  !
  ! Work Space
  !
@@ -66,7 +67,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
- logical          ::loaded_bounds_ok,use_direct_access,free_and_alloc,buffer_is_ok
+ logical          ::loaded_bounds_ok,use_direct_access,free_and_alloc,buffer_is_ok,clean_up_states
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
@@ -125,6 +126,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      if (.not.buffer_is_ok) call WF_free(WF_buffer)
      !
    endif
+   !
  endif
  !
  !
@@ -182,8 +184,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  WF%spin=s_to_load
  WF%space=wf_space_here
  !
- ! Is WF must not be loaded %state must be set to .FALSE. before returning.
- ! This happens, for example, when in a group od cpus some of them do not 
+ ! If the cpu has no WF to load %state must be set to .FALSE. before returning.
+ ! This is needed, for example, when in a group od cpus some of them do not 
  ! read the DB
  !
  if (allocated(states_to_load)) then
@@ -335,9 +337,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 #if defined _FFTW
          call fft_3d(wf_DP,fft_dim,+1,fftw_plan)
 #else
-         !call fft_3d(wf_DP,fft_dim,+1)
          !
-         ! here we explot (+2 instead of +1) the wfc cutoff when using FFTQE
+         ! Here we explot (+2 instead of +1) the wfc cutoff when using FFTQE
+         !
          call fft_3d(wf_DP,fft_dim,+2)
 #endif
          WF%c(:,WF%N)=wf_DP(:)*fft_norm
@@ -346,7 +348,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      enddo
    enddo
  enddo
-
  !
  ! CLEAN
  !
@@ -358,9 +359,20 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  deallocate(wf_DP)
  call mem_est("wf_DP")
  !
+ ! The states_to_load is a temporary array that points to the states to be loaded
+ ! here. It is defined in PARALLEL_WF_distribute and, therefore, only by calling 
+ ! WF_load after a PARALLEL_WF_distribute OR by using the buffered components 
+ ! the states_to_load are used.
+ !
+ ! With the next lines I assume that whatever next call of WF_load will 
+ ! occur AFTER a PARALLEL_WF_distribute. But this is not true when I call
+ ! WF_load with the same distribution of states but different spaces ("G" or "R").
+ ! 
+ ! This is the reason of the KEEP_STATES_TO_LOAD logical
+ !
  if(allocated(states_to_load)) then
    !
-   if(associated(WF%state)) nullify(WF%state)
+   if (associated(WF%state)) nullify(WF%state)
    !
    allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
    !
@@ -369,7 +381,12 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    !
    ! When using the buffer the states_to_load must not be cleaned
    !
-   if (.not.associated(WF_buffer%c)) deallocate(states_to_load)
+   clean_up_states=.not.associated(WF_buffer%c)
+   if (present(keep_states_to_load)) then
+     clean_up_states=.not.keep_states_to_load
+   endif
+   !
+   if (clean_up_states) deallocate(states_to_load)
    !
  endif
  !

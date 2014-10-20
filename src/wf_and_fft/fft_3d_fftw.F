@@ -62,11 +62,11 @@ subroutine fft_3d(c,n,fft_sign,fftw_plan)
  !
  integer             :: i_sign
  integer , parameter :: FFTW_ESTIMATE=64
- 
+ !
 #if defined _TIMING
  call timing('FFT',OPR='start')
 #endif
-
+ !
  if (fftw_plan==0) then
    if (fft_sign>0) i_sign=+1
    if (fft_sign<0) i_sign=-1

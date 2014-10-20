@@ -1,14 +1,14 @@
 #if defined _SC
-SC_objects = Dipole_rotate.o
+SC_objects = DIPOLE_rotate.o
 #endif
 #if defined _ELPH
 ELPH_objects = X_GreenF_remap.o
 #endif
 objs = O_driver.o O_eels.o \
-       Dipole_driver.o Dipole_dip_dot_field.o \
-       Dipole_kb_abinit_comp.o Dipole_kb_sum.o Dipole_kb_Ylm.o \
-       Dipole_kb_pwscf_comp.o Dipole_kb_init.o \
-       Dipole_transverse.o Dipole_shifted_grids.o Dipole_check_shifted_grids.o  \
+       DIPOLE_driver.o DIPOLE_dip_dot_field.o \
+       DIPOLE_kb_abinit_comp.o DIPOLE_kb_sum.o DIPOLE_kb_Ylm.o \
+       DIPOLE_kb_pwscf_comp.o DIPOLE_kb_init.o \
+       DIPOLE_transverse.o DIPOLE_shifted_grids.o DIPOLE_check_shifted_grids.o  \
        X_drude.o  X_pre_setup.o X_simple_GreenF.o X_eh_setup.o X_em1.o X_os.o X_s.o \
        $(ELPH_objects) $(SC_objects) \
        X_delta_part.o X_bare_RIM_GreenF.o O_select_q_and_G.o

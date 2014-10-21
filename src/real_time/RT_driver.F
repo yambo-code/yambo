@@ -119,7 +119,7 @@ subroutine RT_driver(E,X,k,q)
  ! the optical collisions that are done in G-space and would
  ! force the reloading of the WFs
  !
- call Dipole_driver(E,k,X(1),X(1)%q0)
+ call DIPOLE_driver(E,k,X(1),X(1)%q0)
  !
  ! IO 
  !====

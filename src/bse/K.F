@@ -216,7 +216,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !======================
  if (l_bs_fxc) then
    !  
-   if (iq==1) call Dipole_driver(Ken,Xk,X,BSS_q0)
+   if (iq==1) call DIPOLE_driver(Ken,Xk,X,BSS_q0)
    !
    ! Allocation
    !-----------

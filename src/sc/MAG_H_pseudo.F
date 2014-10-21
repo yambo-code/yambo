@@ -61,7 +61,7 @@ subroutine MAG_H_pseudo(Xk,Xen)
  integer, external       :: io_KB_abinit,io_KB_pwscf
  !
  !
- call Dipole_kb_init(Xen,X,io_err,ID)
+ call DIPOLE_kb_init(Xen,X,io_err,ID)
  !
  io_KB_abinit_err= io_err(1)
  io_KB_pwscf_err = io_err(2)
@@ -107,8 +107,8 @@ subroutine MAG_H_pseudo(Xk,Xen)
      pp_spin=i_spin
      if (io_KB_abinit_err==0.and.n_spinor==2) pp_spin=1
      if (io_KB_pwscf_err ==0.and.n_sp_pol==2) pp_spin=1
-     if (io_KB_abinit_err==0) call Dipole_kb_abinit_comp(ik,pp_spin,Xk,kbv)
-     if (io_KB_pwscf_err ==0) call Dipole_kb_pwscf_comp(ik,pp_spin,Xk,kbv)
+     if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,pp_spin,Xk,kbv)
+     if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,pp_spin,Xk,kbv)
      ! 
      call MAG_pseudo_nl(kbv)
      !

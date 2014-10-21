@@ -84,7 +84,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  call PARALLEL_global_indexes(Xen,Xk,Xq,"Real_Time",RESET=.FALSE.,X=Xbsk)
  !
  io_DIP=.FALSE.
- call Dipole_driver(Xen,Xk,Xbsk,Xbsk%q0)
+ call DIPOLE_driver(Xen,Xk,Xbsk,Xbsk%q0)
  !
  deallocate(q_norm,bare_qpg)
  !

@@ -152,7 +152,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
      ! Use shifted grids, supporting fallback to transverse gauge
      !
-     call Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
+     call DIPOLE_shifted_grids(Xen,Xk,X,use_trans_gauge)
      !
      if (use_trans_gauge) call warning('Reverting to transverse gauge')
      if (use_trans_gauge) Dipole_uses_shifted_grids=.FALSE.
@@ -163,7 +163,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! GPL_EXCLUDE_END 
    !
-   if (use_trans_gauge) call Dipole_transverse(Xen,Xk,X)
+   if (use_trans_gauge) call DIPOLE_transverse(Xen,Xk,X)
    !
    ! Free any loaded WFs
    !
@@ -206,7 +206,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    Vnl_commutator_warning=.TRUE.
  endif
  !
- call Dipole_dip_dot_field(Xen,Xk,X,field_dir)
+ call DIPOLE_dip_dot_field(Xen,Xk,X,field_dir)
  !
  ! Clean up
  !

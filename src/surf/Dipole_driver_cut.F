@@ -112,7 +112,7 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
    !
    if(trim(grid_path)/='none') call warning('Cutoff with shifted grids not supported! Reverting to transverse gauge')
    !
-   call Dipole_transverse_cut(Xen,Xk,X)
+   call DIPOLE_transverse_cut(Xen,Xk,X)
    !
    ! Free any loaded WFs
    !

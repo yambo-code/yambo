@@ -485,9 +485,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call CPU_activate("RT")
      call initactivate(1,'RT_Threads')
 #endif
-   else
+   else 
+#if defined _SC && ! defined _RT
      call CPU_activate("SE")
      call initactivate(1,'SE_Threads')
+#endif
    endif
  endif
  !
@@ -497,7 +499,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'RT_Threads')
 #endif
  endif
-#if defined _SC 
+#if defined _SC && ! defined _RT
  if (l_sc_run) then
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')

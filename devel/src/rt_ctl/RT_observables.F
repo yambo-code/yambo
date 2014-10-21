@@ -56,8 +56,8 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  integer     :: ib,ik,ik_rim,iE_rim
  real(SP)    :: Energy
- complex(SP) :: G_full(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
- complex(SP) :: E_tot,E_kin,E_ion,E_h,Trace_Gf,Exc,N_holes,N_elecs,VALUE_tmp(2)
+ complex(SP) :: G_full(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk),&
+&               E_tot,E_kin,E_ion,E_h,Trace_Gf,Exc,N_holes,N_elecs,VALUE_tmp(2)
  !
  if ( .not.RT_do_IO('OUT') ) return      
  !
@@ -154,7 +154,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    do ib=SC_bands(1),SC_bands(2)
      VALUE_tmp=(0._SP,0._SP)
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       if(l_RT_uses_E_RIM) then
+       if (l_RT_uses_E_RIM) then
          iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
          Energy=en%E_RIM(ib,iE_rim,1)
        else

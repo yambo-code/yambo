@@ -91,7 +91,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     l_Debye_TBose_update,                                               &
 &                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel,               &
 &                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,                         &
-&                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,Imp_factors,                &
+&                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,EE_prefactor,EP_prefactor,EP_abs_prefactor,&
 &                     l_RT_probe,l_RT_pump_and_probe,RT_eh_en,                            &
 &                     Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,           &
 &                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
@@ -573,8 +573,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  RT_Efit_lifetimes=0.
  RT_Tfit_occupations=0.
  RT_Efit_occupations=0.
- !
- Imp_factors=0._SP
+ EE_prefactor=0._SP
+ EP_prefactor=0._SP
+ EP_abs_prefactor=0._SP
  !
 #endif
  !

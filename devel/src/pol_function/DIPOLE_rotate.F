@@ -64,7 +64,7 @@ subroutine Dipole_rotate(SC_R,Xen,Xk,X)
      DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1)=transpose(DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1))
    enddo
    !
-   call Dipole_dip_dot_field(Xen,Xk,X,X%q0)
+   call DIPOLE_dip_dot_field(Xen,Xk,X,X%q0)
    !
    do id=1,3
 #if defined _SC

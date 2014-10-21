@@ -71,7 +71,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  integer                      :: ID,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
  integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
  !
- call Dipole_kb_init(Xen,X,io_err,ID)
+ call DIPOLE_kb_init(Xen,X,io_err,ID)
  !
  io_KB_abinit_err= io_err(1)
  io_KB_pwscf_err = io_err(2)
@@ -166,8 +166,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
      pp_spin=i_spin
      if (io_KB_abinit_err==0.and.n_spinor==2) pp_spin=1
      if (io_KB_pwscf_err ==0.and.n_sp_pol==2) pp_spin=1
-     if (io_KB_abinit_err==0) call Dipole_kb_abinit_comp(ik,pp_spin,Xk,kbv)
-     if (io_KB_pwscf_err ==0) call Dipole_kb_pwscf_comp(ik,pp_spin,Xk,kbv)
+     if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,pp_spin,Xk,kbv)
+     if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,pp_spin,Xk,kbv)
      !
      E_i_spin=i_spin
      if (n_spinor==2) E_i_spin=1
@@ -255,7 +255,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,WF%c(:,icfft),1,(0._SP,0._SP),rho,1)
          !
-         if (io_KB_abinit_err==0.or.io_KB_pwscf_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
+         if (io_KB_abinit_err==0.or.io_KB_pwscf_err==0) call DIPOLE_kb_sum(ivfft,icfft,rho(:3),kbv)
          if (io_Vnl_err==0) then
            if(n_spinor==1) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,i_spin)*0.5
            if(n_spinor==2.and.i_spin==2) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,1)*0.5

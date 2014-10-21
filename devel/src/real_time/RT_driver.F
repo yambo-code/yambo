@@ -39,7 +39,7 @@ subroutine RT_driver(E,X,k,q)
  use rt_ctl,         ONLY:RT_output,RT_alloc_ctl,RT_free_ctl,RT_IO_G_steps,ID,it_start
  use real_time,      ONLY:NE_steps,RT_step,G_lesser, &
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
-&                         NE_i_time,l_RT_skip_impose,&
+&                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
 &                         G_lesser_reference,rho_reference, &
 &                         NE_time,RT_update,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update,&
@@ -119,7 +119,7 @@ subroutine RT_driver(E,X,k,q)
  ! the optical collisions that are done in G-space and would
  ! force the reloading of the WFs
  !
- call Dipole_driver(E,k,X(1),X(1)%q0)
+ call DIPOLE_driver(E,k,X(1),X(1)%q0)
  !
  ! IO 
  !====
@@ -238,7 +238,7 @@ subroutine RT_driver(E,X,k,q)
  if (l_elph_scatt) call RT_output('open EPlife')
  if (l_elel_scatt) call RT_output('open EElife')
  if (l_BGR)        call RT_output('open BGR')
- if ((l_elel_scatt.or.l_elph_scatt).and..not.l_RT_skip_impose) call RT_output('open factors')
+ if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open factors')
  !
  ! Loop on time
  !==============
@@ -310,7 +310,7 @@ subroutine RT_driver(E,X,k,q)
      call RT_mean_carrier_lifetimes(E,k)
      if(l_elph_scatt) call RT_output('EPlife',TIME=NE_time/FS2AUT)
      if(l_elel_scatt) call RT_output('EElife',TIME=NE_time/FS2AUT)
-     if((l_elel_scatt.or.l_elph_scatt).and..not.l_RT_skip_impose) call RT_output('factors',TIME=NE_time/FS2AUT)
+     if((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('factors',TIME=NE_time/FS2AUT)
    endif
    !
    ! Write DBs

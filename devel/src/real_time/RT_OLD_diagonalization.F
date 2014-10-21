@@ -155,7 +155,7 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
  !
  ! Update Dipoles
  !
- if(present(up_DIP)) call Dipole_rotate(SC_R,Xen,Xk,X)
+ if(present(up_DIP)) call DIPOLE_rotate(SC_R,Xen,Xk,X)
  !
  ! Anlize quasi-particles
  ! 

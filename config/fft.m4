@@ -82,6 +82,7 @@ if test -d "$with_fftw" ; then
       AC_MSG_RESULT(FFTW3_OMP)
     else 
       FFT_DESCRIPTION="External Fast Fourier transform";
+      AC_MSG_RESULT(FFTW (no Ver.3) )
     fi
     LDFLAGS="$FFTW_PATH";
   else
@@ -141,7 +142,7 @@ if test "$use_internal_fftw" = "yes" ; then
   FFTW_LIBS="";
   HAVE_FFTW=yes
   compile_fftqe=yes
-  AC_MSG_RESULT(FFTW2)
+  AC_MSG_RESULT(Internal FFTW2 (FFTQE))
 fi
 if test "$HAVE_FFTW" = "yes" ; then HAVE_FFT=yes ; fi
 

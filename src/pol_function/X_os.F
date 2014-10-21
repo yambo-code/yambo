@@ -97,7 +97,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    if (l_em1s) call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
-   call Dipole_driver(Xen, Xk, X, X%q0)
+   call DIPOLE_driver(Xen, Xk, X, X%q0)
    call X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
    call OPENMP_set_threads(n_threads_in=n_threads_X)
    !

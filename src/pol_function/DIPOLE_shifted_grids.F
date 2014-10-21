@@ -108,7 +108,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
  ! Determine grid displacement
  !
  ifail = 0
- call Dipole_check_shifted_grids( Xk_shift, Xk, ifail, num_shifted_grid)
+ call DIPOLE_check_shifted_grids( Xk_shift, Xk, ifail, num_shifted_grid)
  if(ifail>0) then
    call warning('Error in new grids. Switch to transverse.')
    call DB1_reset()

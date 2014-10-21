@@ -142,7 +142,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
  if (iq==1) then
    !
-   call Dipole_driver(Ken,Xk,X_oscillators,BSS_q0)
+   call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0)
    !
    BSS_Vnl_included=X_oscillators%Vnl_included
    !

@@ -56,7 +56,7 @@ integer function k_RIM_grid_consistency_check(k,E,k_RIM,E_RIM)
    enddo
  enddo ik_loop
  !
- if (abs(shifts(1)-shifts(2))>0.01*shifts(1)) then
+ if (abs(shifts(1)-shifts(2))>0.01*abs(shifts(1))) then
    k_RIM_grid_consistency_check=-1
  else
    !

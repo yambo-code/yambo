@@ -26,6 +26,7 @@ subroutine init_barriers()
  use drivers
  use pars,       ONLY:lchlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv
+ use R_lattice,  ONLY:Xk_grid_is_uniform
  use BS,         ONLY:BSS_mode
  use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor
  use QP_m,       ONLY:QP_solver
@@ -159,6 +160,13 @@ subroutine init_barriers()
  !
  ! ENVIROMENTS
  !=============
+ !
+ ! Non Uniform grids
+ !===================
+ if (.not.Xk_grid_is_uniform) then
+   on_runlevels='optics chi'
+   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
+ endif 
  !
  ! SPIN
  !=============

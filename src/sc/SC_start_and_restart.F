@@ -193,8 +193,8 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! the optical collisions that are done in G-space and would
  ! force the reloading of the WFs
  !
- if (l_sc_exx.and.l_SC_cycle) call Dipole_driver(E, Xk, X(1), X(1)%q0)
- if (SC_up_W_iters>0)         call Dipole_driver(E, Xk, X(2), X(2)%q0)
+ if (l_sc_exx.and.l_SC_cycle) call DIPOLE_driver(E, Xk, X(1), X(1)%q0)
+ if (SC_up_W_iters>0)         call DIPOLE_driver(E, Xk, X(2), X(2)%q0)
  !
 #if defined _MAGNETIC
  !

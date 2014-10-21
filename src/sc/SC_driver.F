@@ -387,7 +387,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        ! Update dipoles
        !
-       call Dipole_rotate(SC_R,E,Xk,X(2))
+       call DIPOLE_rotate(SC_R,E,Xk,X(2))
        !
        ! Recalcolate Xo and X  
        !

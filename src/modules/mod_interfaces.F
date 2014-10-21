@@ -35,7 +35,8 @@ module interfaces
    end function
    !
    subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&
-&                     spins_to_load,space,title,impose_free_and_alloc,force_WFo)
+&                     spins_to_load,space,title,impose_free_and_alloc,&
+&                     force_WFo,keep_states_to_load)
      use wave_func,       ONLY:WAVEs
      integer :: iG_max,iGo_max,bands_to_load(2),kpts_to_load(2)
      type(WAVEs)           :: WF
@@ -44,6 +45,7 @@ module interfaces
      character(*),optional :: title
      logical     ,optional :: impose_free_and_alloc
      logical     ,optional :: force_WFo
+     logical     ,optional :: keep_states_to_load
    end subroutine
    !
    subroutine PARALLEL_WF_index(COMM)

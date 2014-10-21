@@ -99,7 +99,7 @@ subroutine k_random
    if(No_Weight) then
      write (dump,'(3f12.7)') rand_k(k_counter+1,:)
    else
-     write (dump,'(4f12.7)') rand_k(k_counter+1,:),1._SP/real(BZ_RIM_nkpts)     
+     write (dump,'(3f12.7,3x,i2)') rand_k(k_counter+1,:),1
    endif
    call msg('o random',"",trim(dump),USE_TABS=.true.)
    !

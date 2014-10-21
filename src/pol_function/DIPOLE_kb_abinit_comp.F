@@ -60,7 +60,7 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
    call c2a(b,g_vec(ig,:),G_cc,'ki2c')
    KpG_norm=v_norm(KpG_cc)
    if(KpG_norm<1.E-5) cycle
-   call Dipole_kb_Ylm(Ylm,dYlm,Ygrad,pp_n_l_max,KpG_cc)
+   call DIPOLE_kb_Ylm(Ylm,dYlm,Ygrad,pp_n_l_max,KpG_cc)
    i1=0
    do is = 1,n_atomic_species
      do ia = 1,n_atoms_species(is)

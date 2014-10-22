@@ -58,13 +58,13 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  ! Work Space
  ! 
  real(SP), allocatable :: el_den(:)
- real(SP)              :: el_dos(dos_E_steps,n_sp_pol),dos_E,delta_E,f_occ,dos_norm,&
+ real(SP)              :: el_dos(dos_E_steps,n_spin),dos_E,delta_E,f_occ,dos_norm,&
 &                         el_dos_max,WF_fac(dos_bands(1):dos_bands(2),nkibz,n_spinor)
 #if defined _YPP_RT
  real(SP)              :: io_Time
  integer               :: i_fp,ik_RT
 #endif
- integer               :: i_E,ik,ik_bz,ib,i_wf,i_spin,i_spinor,i_T,n_T_steps,ik_rand,i1
+ integer               :: i_E,ik,ik_bz,ib,i_wf,i_spin,i_spinor,i_T,n_T_steps,ik_rand,i1,dos_spin
  character(schlen)     :: ch_ws,titles(4)
  logical               :: l_3D_plot,l_RIM,l_prt_occ_only,l_separate_eh
  type(PP_indexes)      :: px
@@ -109,11 +109,14 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    if(l_RT_dos) call section('*','Electr. Time-dependent DOS')
    !
    if(.not.l_RT_dos) then
+     dos_spin=n_spin
      l_3D_plot  =.FALSE.
      n_T_steps=1
+   else
+     dos_spin=n_sp_pol     
    endif
    !
-   if(n_spinor==2) then
+   if(n_spinor==2.and..not.l_RT_dos) then
      !
      call live_timing('DOS-spinor-factor',nkibz*(dos_bands(2)-dos_bands(1)+1),SERIAL=.true.)
      do ik=1,nkibz
@@ -128,7 +131,6 @@ subroutine electrons_dos_and_charge(Xk,Xen)
        call WF_free()
      enddo
      call live_timing()
-     !
    endif
    !
 #if defined _YPP_RT
@@ -178,7 +180,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
        enddo
      endif
 #endif
-     if (n_spin==1) then
+     if (dos_spin==1) then
        titles(1)='E[eV]'
        titles(2)='DOS'
        call msg('o dos','#',titles(:2),INDENT=0,USE_TABS=.true.)    
@@ -252,7 +254,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
 #if defined _YPP_RT
                if (l_RT_dos) f_occ=RT_delta0_occupations(ib,ik)
 #endif
-               if(n_spinor==2) then
+               if(n_spinor==2.and..not.l_RT_dos) then
                  do i_spinor=1,n_spinor
                    el_dos(i_E,i_spinor)=el_dos(i_E,i_spinor)+f_occ*WF_fac(ib,ik,i_spinor)*dos_norm*&
 &                        Fermi_fnc_derivative(Xen%E(ib,ik,i_spin)-dos_E,dos_broadening)*Xk%weights(ik)
@@ -299,8 +301,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
          !
        else
 #endif
-         if (n_spin==1) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,1)/),INDENT=-2,USE_TABS=.true.)
-         if (n_spin==2) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,:),  &
+         if (dos_spin==1) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,1)/),INDENT=-2,USE_TABS=.true.)
+         if (dos_spin==2) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,:),  &
 &                                             el_dos(i_E,1)+el_dos(i_E,2)/),INDENT=-2,USE_TABS=.true.)
 #if defined _YPP_RT
        endif

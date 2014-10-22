@@ -192,7 +192,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
          do is1 = 1,n_spin
            vdrho(:,:) = 0._SP 
            do is2 = 1,n_spin
-             is = min(is2*(is1+1)/2,is1*(is2+1)/2)
+             is = max(is2*(is1+1)/2,is1*(is2+1)/2)
              forall(ic=1:3,i1=1:fft_size) vdrho(ic,i1) = vdrho(ic,i1) + &
                   & 2._SP*real(vsigma(is,i1),SP)*drho(ic,is2,i1)
            end do

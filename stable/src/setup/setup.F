@@ -93,7 +93,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call msg('r',dumb_ch1)
  dumb_ch1='A2 ='//trim(real2ch(a(2,1)/alat(1)))//' '//trim(real2ch(a(2,2)/alat(2)))//' '//&
 &                 trim(real2ch(a(2,3)/alat(3)))//'     '//&
-&                 trim(real2ch(a(2,1)))//' '//trim(real2ch(a(2,2)))//' '//trim(real2ch(a(3,3)))
+&                 trim(real2ch(a(2,1)))//' '//trim(real2ch(a(2,2)))//' '//trim(real2ch(a(2,3)))
  call msg('r',dumb_ch1)
  dumb_ch1='A3 ='//trim(real2ch(a(3,1)/alat(1)))//' '//trim(real2ch(a(3,2)/alat(2)))//' '//&
 &                 trim(real2ch(a(3,3)/alat(3)))//'     '//&

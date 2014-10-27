@@ -227,6 +227,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=================================
  !
  i_err=k_lattice(k,Xk,1,.TRUE.)
+ !
  if (i_err /= 0 ) then
    call warning('Trying to expand the k-grid')
    call msg('r','')
@@ -237,7 +238,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
      if (i1==i2) i_err=k_lattice(k,Xk,i1,.TRUE.)
      i1=i1+1
    enddo
+   !
    if (i_err/=0) call error('Impossible to determine the K-grid lattice')
+   !
  endif
  !
  if (BZ_RIM_nbands>0.and.associated(en%E_RIM)) then

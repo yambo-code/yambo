@@ -219,7 +219,11 @@ subroutine RT_initialize(E,k,q)
      Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
      !
      Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
-     if(Efield(i1)%t_initial_indx< RT_IO_JPO_steps+1 ) then
+     if ( mod(Efield(i1)%t_initial_indx-1,RT_IO_JPO_steps)/=0 ) then
+       call warning(' Field must start at a T-step where the current is written. Correcting T0')
+       Efield(i1)%t_initial_indx=Efield(i1)%t_initial_indx-mod(Efield(i1)%t_initial_indx-1,RT_IO_JPO_steps)
+     endif
+     if (Efield(i1)%t_initial_indx< RT_IO_JPO_steps+1 ) then
        call warning(' Field cannot start before dT(J) . Setting T0=dT(J)')
        Efield(i1)%t_initial_indx=RT_IO_JPO_steps+1
      endif

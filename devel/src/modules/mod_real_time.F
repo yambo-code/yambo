@@ -301,10 +301,10 @@ module real_time
  !
  interface
    !
-   subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,RIM,nK_mem)
+   subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_MATRIX,G,k,en,TRANS,RIM,nK_mem)
      use pars,       ONLY:SP
      use SC,         ONLY:SC_bands
-     use R_lattice,  ONLY:bz_samp 
+     use R_lattice,  ONLY:bz_samp
      use QP_m,       ONLY:QP_nk,QP_table,QP_n_states
      use electrons,  ONLY:n_spin,n_sp_pol,levels
      use FFT_m,      ONLY:fft_size
@@ -312,11 +312,14 @@ module real_time
      complex(SP),   intent(in) :: G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
      type(levels),  intent(in) :: en
      integer,       intent(in) :: nK_mem
-     complex(SP),  intent(out) :: VALUE
+     complex(SP),     optional,intent(out) :: O_VALUE,V_VALUE(3)
+     complex(SP),     optional, intent(in) :: V_MATRIX(3,SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
+     complex(SP),     optional, intent(in) :: PV_MATRIX(3,SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
      complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
      complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
      real(SP),        optional, intent(in) :: O_REAL(fft_size,n_spin)
-     logical,         optional, intent(in) :: TRANS,RIM
+     logical,         optional, intent(in) :: TRANS
+     character(6),    optional, intent(in) :: RIM
    end subroutine RT_average_operator
    !
    subroutine RT_update(G_input,SC_R,it,E,k,X,up_Gref,up_DIP,an_QP)

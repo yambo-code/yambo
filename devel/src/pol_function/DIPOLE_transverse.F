@@ -63,7 +63,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min,i_spin,E_i_spin,pp_spin,&
 &                                alloc_err,wf_dim,n_LT_steps,ik_mem,ig
  complex(SP), allocatable     :: wf_xyz(:,:),kbv(:,:,:)
- complex(SP)                  :: rho(4)
+ complex(SP)                  :: rho(4),tmp(3)
  real(SP)                     :: Ev_m_Ec
  !
  !I/O and external functions
@@ -358,11 +358,23 @@ subroutine Dipole_transverse(Xen,Xk,X)
    if (.not.Dipole_bands_ordered) then
      do iv=X%ib(1),X%ib(2)
        do ic=iv+1,X%ib(2)
-         DIP_iR(:,ic,iv,ik_mem,:)=-conjg(DIP_iR(:,iv,ic,ik_mem,:))
+         do i_spin=1,n_sp_pol
+           tmp=( DIP_iR(:,ic,iv,ik_mem,i_spin)-conjg(DIP_iR(:,iv,ic,ik_mem,i_spin)) )/2._SP
+           DIP_iR(:,ic,iv,ik_mem,i_spin) =       tmp
+           DIP_iR(:,iv,ic,ik_mem,i_spin) =-conjg(tmp)
 #if defined _SC || defined _KERR
-         if (l_eval_DIP_P ) DIP_P(:,ic,iv,ik_mem,:) = conjg(DIP_P(:,iv,ic,ik_mem,:))
-         if (l_eval_DIP_P2) P_square(ic,iv,ik_mem,:)= conjg(P_square(iv,ic,ik_mem,:))
-#endif        
+           if (l_eval_DIP_P ) then
+             tmp=( DIP_P(:,ic,iv,ik_mem,i_spin) + conjg(DIP_P(:,iv,ic,ik_mem,i_spin)) )/2._SP
+             DIP_P(:,ic,iv,ik_mem,i_spin) =       tmp
+             DIP_P(:,iv,ic,ik_mem,i_spin) = conjg(tmp)
+           endif
+           if (l_eval_DIP_P2) then
+             tmp(1)=( P_square(ic,iv,ik_mem,i_spin) + conjg(P_square(iv,ic,ik_mem,i_spin)) )/2._SP 
+             P_square(ic,iv,ik_mem,i_spin) =       tmp(1)
+             P_square(iv,ic,ik_mem,i_spin) = conjg(tmp(1))
+           endif
+#endif
+         enddo
        enddo
      enddo
    endif

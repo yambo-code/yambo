@@ -29,8 +29,9 @@ integer function k_RIM_grid_consistency_check(k,E,k_RIM,E_RIM)
  use vec_operate,    ONLY:v_is_zero
  implicit none
  !
- type(bz_samp), intent(in) :: k,k_RIM
- type(levels),  intent(in) :: E,E_RIM
+ type(bz_samp), intent(in)    :: k,k_RIM
+ type(levels),  intent(in)    :: E
+ type(levels),  intent(inout) :: E_RIM
  !
  ! Work Space
  !
@@ -56,7 +57,7 @@ integer function k_RIM_grid_consistency_check(k,E,k_RIM,E_RIM)
    enddo
  enddo ik_loop
  !
- if (abs(shifts(1)-shifts(2))>0.01*abs(shifts(1))) then
+ if (abs(shifts(1)-shifts(2))>max(0.01*abs(shifts(1)),1.E-5)) then
    k_RIM_grid_consistency_check=-1
  else
    !

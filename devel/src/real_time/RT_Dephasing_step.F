@@ -40,7 +40,7 @@ subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
  ! Note that dG_in is ONLY the coherent part of the equation. It must be added
  ! to dG_out if we are not using the EXP integrator. This is done here or in RT_apply_RWA
  !
- if (.not.l_RT_EXP) dG_out(:,:)=dG_out(:,:)+dG_in(:,:)
+ dG_out(:,:)=dG_out(:,:)+dG_in(:,:)
  !
  if (.not.RT_is_dephased) return
  !

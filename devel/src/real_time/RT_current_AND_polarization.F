@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM CA
+! Authors (see AUTHORS file for details): AM CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -34,7 +34,9 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
- use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_average_operator,RT_P,RT_nk,RT_step,NE_i_time
+ use rt_ctl,         ONLY:RT_do_IO
+ use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_average_operator,RT_P,RT_nk,RT_step,NE_i_time !,&
+!&                        l_RT_RK2,l_RT_HEUN
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P,global_gauge
  use parallel_m,     ONLY:PAR_Xk_nibz
@@ -48,27 +50,30 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  ! Work Space
  !
  integer       :: id
- complex       :: RT_P_tmp(3),RT_ind_J_tmp(3)
+ complex       :: RT_P_tmp(3),RT_ind_J_prev(3)
  !
  if ( .not. l_NE_dynamics ) return
  !
- RT_ind_J_tmp=RT_ind_J
- !
- do id=1,3
-   !
-   call RT_average_operator(VALUE=RT_ind_J(id),O_MATRIX=-DIP_P(id,:,:,:,:),&
-&                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
-   call RT_average_operator(VALUE=RT_P_tmp(id),O_MATRIX=cI*DIP_iR(id,:,:,:,:),&
-&                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
-   !
- enddo
- !
- ! Velocity gauge I mut use the correct definition of the J operator
+ ! B': Polarization: store the density at the previous time-step
+ !RT_ind_J_prev=RT_ind_J
+ ! 
+ ! A : Current
+ call RT_average_operator(V_VALUE=RT_ind_J, V_MATRIX=-DIP_P,&
+&                         G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ !     Velocity gauge I mut use the correct definition of the J operator
  if(trim(global_gauge)=='velocity') RT_ind_J(:)=RT_ind_J(:)+A_input%vecpot(:)*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
- !
  RT_ind_J=RT_ind_J/DL_vol
+ !
+ ! B : Polarization
+ call RT_average_operator(V_VALUE=RT_P_tmp, V_MATRIX=cI*DIP_iR,&
+&                         G=G_input,k=k,en=E,TRANS=.TRUE.,RIM='DIPOLE',nK_mem=PAR_Xk_nibz)
  RT_P_tmp=RT_P_tmp/DL_vol
- !RT_P=RT_P+(RT_ind_J+RT_ind_J_tmp)*RT_step/2._SP
- RT_P=RT_P_tmp
+ RT_P    =RT_P_tmp
+ !
+ ! B': Polarization as an integral of the density
+ !RT_P_tmp=(RT_ind_J_tmp+RT_ind_J_prev)*RT_step/2._SP
+ !if(l_RT_RK2.or.l_RT_HEUN) RT_P_tmp=RT_P_tmp/2._SP
+ !RT_P=RT_P+RT_P_tmp
+ !
  !
 end subroutine RT_current_AND_polarization

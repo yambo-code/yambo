@@ -84,4 +84,6 @@ subroutine RT_EULEREXP_step(dG_out,dG_in,G_ref_k,U1_k,U2_k,I1_matrix)
 #endif
  dG_out=dG_out+M2_tmp
  !
+ dG_out=dG_out-dG_in
+ !
 end subroutine RT_EULEREXP_step

@@ -284,8 +284,8 @@ subroutine RT_start_and_restart(E,k,q,X)
  if (l_NE_dynamics) NE_i_time=it_start
  !
  if (l_NE_with_fields) then
-   call RT_Ext_fields(A_vecpot,(it_start-1)*RT_step)
    A_vecpot_previous =A_vecpot
+   call RT_propagate_fields(k,E,A_vecpot,A_vecpot_previous,(it_start-1)*RT_step,RT_step)
  endif
  !
  call msg('r','')

@@ -26,8 +26,9 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
  use pars,           ONLY:SP
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:levels
- use real_time,      ONLY:RT_ibz_coo,RIM_ibz_coo,l_RT_uses_E_RIM, &
+ use real_time,      ONLY:RT_ibz_coo,RIM_ibz_coo,l_RT_uses_E_RIM,NE_i_Time, &
 &                         RT_Deph_Matrix,RT_all2ibz,l_RT_EXP,RT_is_dephased
+ !use fields,         ONLY:Efield,i_Probe
  !
  implicit none
  !
@@ -81,7 +82,10 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
        !
      endif
      !
-     if(l_RT_EXP) cycle
+     if(l_RT_EXP) then
+       dG_out(i_n,i_np)=dG_out(i_n,i_np)+dG_in(i_n,i_np)
+       cycle
+     endif
      !
      if (dT/=dTp) then
        !
@@ -96,7 +100,7 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
      !
    enddo
    !
-   if (.not.l_RT_EXP) dG_out(i_n,i_n)=dG_out(i_n,i_n)+dG_in(i_n,i_n)
+   dG_out(i_n,i_n)=dG_out(i_n,i_n)+dG_in(i_n,i_n)
    !
    ! It is higly non satisfactory that
    !     Gamma_neq[f_eq] /= Gamma_eq                              (1)

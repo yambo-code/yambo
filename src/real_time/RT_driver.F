@@ -278,7 +278,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Current and Polarization
    !==========================
-   call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,it_mem),A_vecpot)
+   call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,it_mem),A_vecpot_previous)
    !
    ! Now calculate Energetics, current and other observables
    !=========================================================
@@ -296,9 +296,11 @@ subroutine RT_driver(E,X,k,q)
      endif
    endif
    !
+   if (l_NE_with_fields) call RT_propagate_fields(k,E,A_vecpot,A_vecpot_previous,NE_time,RT_step)
+   !
    ! Calculate Collisions and fill Ho_plus_Sigma, H_nl_sc
    !============================================================
-   call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot_previous,E,k,q,NE_time)
+   call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot,E,k,q,NE_time)
    !
    ! BGR
    !=======================================

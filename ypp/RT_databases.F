@@ -32,7 +32,7 @@ subroutine RT_databases(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
  use rt_ctl,         ONLY:RT_IO_JPO_steps,J_and_P_cache,J_and_P_cache_size,RT_IO_JPO_steps
- use real_time,      ONLY:NE_steps,NE_i_time,RT_ind_J,RT_P,NE_time,RT_step,&
+ use real_time,      ONLY:NE_steps,NE_i_time,RT_ind_J,RT_P,RT_step,&
 &                         G_lesser,G_lesser_reference
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
  !
@@ -44,9 +44,11 @@ subroutine RT_databases(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  ! Work Space
  !
- integer            :: io_J_and_P,ID,i_f,io_G,COM_here,ik,file_number
+ integer            :: io_J_and_P,ID,i_f,io_G,COM_here,ik,file_number,NE_steps_save
  integer, external  :: io_RT_components
  character(schlen)  :: mesg_
+ !
+ NE_steps_save=NE_steps
  !
  COM_here=LOG
  if (present(COM_)) COM_here=COM_
@@ -115,12 +117,6 @@ subroutine RT_databases(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  ! I/O of Current and Vector Potential
  !=====================================
  !
- if (nint(NE_time/RT_step)+1/=NE_steps) then
-   call warning(" Interrupted DB found. Time steps reduced.")
-   NE_steps=NE_time/RT_step+1
-   J_steps=(NE_steps-1)/RT_IO_JPO_steps+1
- endif
- !
  if (.not.allocated(RT_J_t)) then
    allocate(RT_J_t(J_steps,3),RT_P_t(J_steps,6))
    call mem_est("RT_P_t",(/size(RT_J_t)/),(/2*SP/))
@@ -132,6 +128,7 @@ subroutine RT_databases(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  RT_J_t        =(0._DP,0._DP)
  RT_P_t        =(0._DP,0._DP)
  !
+ NE_steps=NE_steps_save
  !
  call live_timing('I/O'//trim(mesg_)//':',J_steps)
  !
@@ -140,7 +137,7 @@ subroutine RT_databases(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    if(mod(NE_i_Time-1,RT_IO_JPO_steps)/=0) cycle
    !
    file_number=(NE_i_Time-1)/RT_IO_JPO_steps+1
-   !      
+   !
    call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/file_number/),ID=ID) 
    io_J_and_P=io_RT_components('J_and_P',ID)
    !

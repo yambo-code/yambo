@@ -240,8 +240,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (it_now==it_to_start.or.io_RESPONSE) then
 #endif
 !$omp parallel do default(shared), private(i1,i2)
-       do i1=1,X%ng
-         do i2=1,X%ng
+       do i2=1,X%ng
+         do i1=1,X%ng
            if (l_ppa) then
              if (real(X_mat(i1,i2,X_range(1))/X_mat(i1,i2,X_range(2)))<=1._SP) then
                X_mat(i1,i2,X_range(2))=X%ppaE
@@ -327,8 +327,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if ( HEAD_QP_cpu ) then
 !$omp parallel do default(shared), private(ig1,ig2)
-            do ig1=1,X%ng
-              do ig2=1,X%ng
+            do ig2=1,X%ng
+              do ig1=1,X%ng
                 eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
               enddo
             enddo
@@ -340,16 +340,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if (X_is_TR_rotated) then
 !$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
-           do ig1=1,X%ng
-             do ig2=1,X%ng
+           do ig2=1,X%ng
+             do ig1=1,X%ng
                sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*X_mat(ig1,ig2,X_range(1))
              enddo
            enddo
 !$omp end parallel do
          else
 !$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
-           do ig1=1,X%ng
-             do ig2=1,X%ng
+           do ig2=1,X%ng
+             do ig1=1,X%ng
                sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,X_range(1))
              enddo
            enddo
@@ -399,8 +399,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          if(l_GW_terminator) then
 #if defined _OPENMP
 !$omp parallel do default(shared), private(ig1,ig2)
-           do ig1=1,X%ng
-             do ig2=1,X%ng
+           do ig2=1,X%ng
+             do ig1=1,X%ng
                  eet_factor(ig1,ig2)=eet_factor(ig1,ig2)-isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))
              enddo
            enddo
@@ -421,12 +421,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
            sp_dummy = 0.0_SP
            !
-!$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
-           do ig1=1,X%ng
-             do ig2=1,X%ng
+!$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:sp_dummy)
+           do ig2=1,X%ng
+             do ig1=1,X%ng
                !
                PPA_E=X%ppaE/X_mat(ig1,ig2,2)
-               PPA_R=-X_mat(ig1,ig2,1)/2.*PPA_E*isc%gamp(ig1,ig2)
+               PPA_R=-X_mat(ig1,ig2,1)/2._SP*PPA_E*isc%gamp(ig1,ig2)
                !
                ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i4)-E_kmq-PPA_E)+&
@@ -483,11 +483,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          sp_dummy=0.0_SP
          !
 !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:sp_dummy)
-         do ig1=1,X%ng
-           do ig2=1,X%ng
+         do ig2=1,X%ng
+           do ig1=1,X%ng
              !
              PPA_E=X%ppaE/real(X_mat(ig1,ig2,X_range(2)))
-             PPA_R=-X_mat(ig1,ig2,X_range(1))/2.*PPA_E*isc%gamp(ig1,ig2)
+             PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
              !
              sp_dummy=sp_dummy +4._SP/spin_occ*pi*PPA_R*eet_factor(ig1,ig2)* &
 &                         QP_ppa_EET_terminator(W_(i4),E,isc%is,PPA_E,ig1,ig2,isc%qs(2),&

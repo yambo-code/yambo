@@ -122,7 +122,7 @@ module fields
      !
      freq=E_field%frequency(1)
      sigma=E_field%damping
-     T_0=3._SP*sigma
+     T_0=pi/freq*(real(nint(freq/pi*3._SP*sigma),SP))
      local_a=(0._SP,0._SP)
      !
      select case( trim(E_field%ef_name) )

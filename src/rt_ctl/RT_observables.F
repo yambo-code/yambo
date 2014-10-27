@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM CA
+! Authors (see AUTHORS file for details): AM CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -57,7 +57,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  integer     :: ib,ik,ik_rim,iE_rim
  real(SP)    :: Energy
  complex(SP) :: G_full(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk),&
-&               E_tot,E_kin,E_ion,E_h,Trace_Gf,Exc,N_holes,N_elecs,VALUE_tmp(2)
+&               E_tot,E_kin,E_ion,E_h,Exc,N_holes,N_elecs,N_err,VALUE_tmp(2)
  !
  if ( .not.RT_do_IO('OUT') ) return      
  !
@@ -72,32 +72,32 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  E_ion    =(0._SP,0._SP)
  E_h      =(0._SP,0._SP)
  Exc      =(0._SP,0._SP)
- Trace_Gf =(0._SP,0._SP)
  N_holes  =(0._SP,0._SP)
  N_elecs  =(0._SP,0._SP)
+ N_err    =(0._SP,0._SP)
  !
  ! Non-interaction kinetc energy
  !
  ! E_Kin = - i Tr { P^2 G^<}/2  
  !
- call RT_average_operator(VALUE=E_kin,O_MATRIX=P_square,G=dG_lesser,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(O_VALUE=E_kin,O_MATRIX=P_square,G=dG_lesser,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
  E_kin=E_kin/2.
  !  
  ! E_ion = - i Tr {Ho G^<} - Ekin
  !
- call RT_average_operator(VALUE=E_ion,O_MATRIX=Ho,G=dG_lesser,en=en,k=k,RIM=l_RT_uses_E_RIM,nK_mem=k%nibz)
+ call RT_average_operator(O_VALUE=E_ion,O_MATRIX=Ho,G=dG_lesser,en=en,k=k,RIM='ENERGY',nK_mem=k%nibz)
  !
  E_ion = E_ion - E_kin
  !
- if (l_sc_ip) call RT_average_operator(VALUE=E_h,O_MATRIX=XC0_and_HARTREE0,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
+ if (l_sc_ip) call RT_average_operator(O_VALUE=E_h,O_MATRIX=XC0_and_HARTREE0,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
  !
  if (.not.l_sc_ip) then
    !
    ! Hartree potential Energy
    !
-   call RT_average_operator(VALUE=VALUE_tmp(1),O_REAL=V_hartree_sc,G=G_lesser_reference,en=en,k=k,nK_mem=k%nibz)
-   call RT_average_operator(VALUE=VALUE_tmp(2),O_REAL=V_hartree_sc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
+   call RT_average_operator(O_VALUE=VALUE_tmp(1),O_REAL=V_hartree_sc,G=G_lesser_reference,en=en,k=k,nK_mem=k%nibz)
+   call RT_average_operator(O_VALUE=VALUE_tmp(2),O_REAL=V_hartree_sc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
    !
    ! delta E_H ~ rho_0*delta_rho + 0.5*delta_rho**2
    E_h=VALUE_tmp(1)+VALUE_tmp(2)/2._SP
@@ -106,7 +106,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  if (l_sc_hartree) then
    !
-   call RT_average_operator(VALUE=Exc,O_REAL=REF_V_xc_sc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
+   call RT_average_operator(O_VALUE=Exc,O_REAL=REF_V_xc_sc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
    !
  else if(l_sc_is_libDFT) then 
    !        
@@ -117,7 +117,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    !
    ! This is wrong if the dependence of the potential on the density
    ! is not linear as pointed out by Andrea. To be fixed
-   call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
+   call RT_average_operator(O_VALUE=Exc,O_REAL=E_xc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
    !
  else if (l_sc_hf.or.l_sc_cohsex) then
    !
@@ -125,15 +125,12 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    ! Davide: Is this correctly defined also in the COHSEX case 
    !         or should I use the Galitskii Migdal equation ?
    !
-   call RT_average_operator(VALUE=Exc,O_QP=QP_Vnl_xc,G=G_full,en=en,k=k,nK_mem=k%nibz)
+   call RT_average_operator(O_VALUE=Exc,O_QP=QP_Vnl_xc,G=G_full,en=en,k=k,nK_mem=k%nibz)
    !
  endif
  !
  E_tot = E_ion + E_kin + E_h + Exc
  !
- ! Change in the total number of electrons
- !
- call RT_average_operator(VALUE=Trace_Gf,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
  !
  ! Electrons and holes temperatures
  !
@@ -167,12 +164,13 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
      N_elecs=N_elecs+VALUE_tmp(2)*k%weights(ik)/real(RT_Nk_ibz(ik))
    enddo
  enddo
+ N_err=N_elecs-N_holes
  !
  ! Transfer the shadow variables
  !
  on_the_fly_operators(1:4)=(/E_kin,E_ion,E_h,Exc/)*HA2EV
  on_the_fly_operators(5)=E_tot*HA2EV
- on_the_fly_operators(6:8)=(/Trace_Gf,N_holes,N_elecs/)
+ on_the_fly_operators(6:8)=(/N_err,N_holes,N_elecs/)
  on_the_fly_operators(9:10)=cmplx(RT_Tfit_occupations(:),0._SP)*HA2KEL
  !
 #if defined _TIMING

@@ -127,11 +127,13 @@ subroutine RT_X_LRR_real_field(en)
    enddo
    !
    if(trim(X_rt%damp) == "NONE".and.l_force_min_damp) then
-     call RT_damp_it("LORENTZIAN",W_RT_induced_step,E_t(i_t_start:i_t_end),RED_steps,J_time_step,1)
+     call RT_damp_it("LORENTZIAN",W_RT_induced_step,E_t(i_t_start-1:i_t_end),RED_steps+1,J_time_step,1)
    else
-     call RT_damp_it(X_rt%damp,X_rt%damp_factor,E_t(i_t_start:i_t_end),RED_steps,J_time_step,1)
+     call RT_damp_it(X_rt%damp,X_rt%damp_factor,E_t(i_t_start-1:i_t_end),RED_steps+1,J_time_step,1)
    endif
    !
+   ! For the field I do the FFT starting always 1 time step before to correctly describe the
+   ! theta and the delta function.
    call RT_1D_Fourier_Transform('T2W',' (E field)',freqs,E_w(:),X_rt%energy_steps,&
 &                               E_t(i_t_start:i_t_end),RED_steps,J_time_step,&
 &                               (i_t_start-1)*J_time_step,USE_FFT,1)

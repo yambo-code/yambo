@@ -278,11 +278,6 @@ module YPP
      integer, optional  :: BS_E_degs(:)
    end subroutine
    !
-   subroutine  RT_initialize(dump_and_write)
-     implicit none
-     logical, optional  :: dump_and_write
-   end subroutine
-   !
    subroutine  RT_databases(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
      use electrons,     ONLY:levels
      implicit none

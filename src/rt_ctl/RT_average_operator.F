@@ -21,15 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,RIM,nK_mem)
+subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_MATRIX,G,k,en,TRANS,RIM,nK_mem)
  !
  use pars,           ONLY:SP,cI
  use SC,             ONLY:SC_bands,SC_nbands
- use real_time,      ONLY:RIM_ibz_coo,RT_Nk_ibz,RT_nk,RT_ibz_coo
+ use real_time,      ONLY:RIM_ibz_coo,RT_Nk_ibz,RT_nk,RT_ibz_coo,l_RT_uses_E_RIM
+ use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_n_states
  use electrons,      ONLY:n_sp_pol,n_spin,levels
  use FFT_m,          ONLY:fft_size
+ use X_m,            ONLY:Dipole_Energy_treshold
  use wave_func,      ONLY:WF
 #if defined _OPENMP
  use wrapper,        ONLY:Vstar_dot_V_omp
@@ -45,53 +47,47 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,RIM,nK_me
  implicit none
  !
  type(bz_samp), intent(in) :: k
+ type(levels),  intent(in) :: en
  complex(SP),   intent(in) :: G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  integer,       intent(in) :: nK_mem
- complex(SP),  intent(out) :: VALUE
+ complex(SP),     optional,intent(out) :: O_VALUE,V_VALUE(3)
+ complex(SP),     optional, intent(in) :: PV_MATRIX(3,SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
+ complex(SP),     optional, intent(in) :: V_MATRIX(3,SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
  real(SP),        optional, intent(in) :: O_REAL(fft_size,n_spin)
- logical,         optional, intent(in) :: TRANS,RIM
- type(levels),    optional, intent(in) :: en
+ logical,         optional, intent(in) :: TRANS
+ character(6),    optional, intent(in) :: RIM
  !
  ! Work Space
  !
- integer     :: i1,ik,SC_bands2,ik_ibz,iE_rim
- complex(SP) :: Hk(SC_bands(2),SC_bands(2),n_sp_pol),VALUE_tmp
- logical     :: l_rim_local
+ integer     :: ib,ibp,ik,SC_bands2,ik_ibz,iE_rim,D1,i_dir
+ real(SP)    :: deltaE,deltaE_RIM
+ complex(SP) :: Hk(3,SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),n_sp_pol),VALUE_tmp(3), &
+&               Hk_tmp(SC_bands(2),SC_bands(2),n_sp_pol),                                    &
+&               Hk_vec_tmp(3,SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),n_sp_pol)
+ logical     :: l_rim_energy,l_rim_dipole
  !
 #if defined _TIMING
  call timing('RT average Op',OPR='start')
 #endif
  !
- l_rim_local=.false.
- if(present(RIM)) l_rim_local=RIM
+ l_rim_energy=.false.
+ l_rim_dipole=.false.
+ if(present(RIM).and.l_RT_uses_E_RIM) then
+   if(trim(RIM)=='ENERGY') l_rim_energy=.true.
+   if(trim(RIM)=='DIPOLE') l_rim_dipole=.true.
+ endif
+ !
+ D1=0
+ if(present(O_MATRIX).or.present(O_real).or.present(O_QP)) D1=1
+ if(present(V_MATRIX).or.present(PV_MATRIX))               D1=3
+ !
+ if(D1==0) call error('RT_average_operatore: not a valid call')
  !
  SC_bands2=SC_nbands**2
- VALUE=(0._SP,0._SP)
- !
- ! If not operator are present the subroutine returns the trace of the Green Function
- ! 
- if(.not.present(O_MATRIX).and..not.present(O_REAL).and..not.present(O_QP)) then
-   !
-   ! Total number of electrons
-   !
-   !do i1=1,SC_bands(1)-1
-   !  VALUE=VALUE+sum(en%f(i1,:,1)*k%weights(:))
-   !enddo
-   do i1=SC_bands(1),SC_bands(2)
-     do ik_ibz=1,k%nibz
-       VALUE_tmp=(0._SP,0._SP)
-       do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
-         VALUE_tmp=VALUE_tmp-cI*G(i1,i1,ik)
-       enddo
-       VALUE=VALUE+VALUE_tmp*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
-     enddo
-   enddo
-   !
-   goto 1
-   !
- endif 
+ if(D1==1) O_VALUE=(0._SP,0._SP)
+ if(D1==3) V_VALUE=(0._SP,0._SP)
  !
  do ik_ibz=1,k%nibz
    ! 
@@ -99,75 +95,162 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,RIM,nK_me
      if (.not.PAR_IND_Xk_ibz%element_1D(ik_ibz)) cycle   
    endif
    !
-   if(.not.l_rim_local) call make_Hk_matrix(ik_ibz,1)
-   !
+   Hk=(0._SP,0._SP)
    VALUE_tmp=(0._SP,0._SP)
    !
-   do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
+   call make_Hk_matrix(ik_ibz)
+   !
+   do i_dir=1,D1
      !
-     iE_rim=ik-RT_ibz_coo(ik_ibz,1)+RIM_ibz_coo(ik_ibz,1)
-     if(l_rim_local) call make_Hk_matrix(ik_ibz,iE_rim)
-     !
+     do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
+       !
+       if(l_rim_energy) then
+         iE_rim=ik-RT_ibz_coo(ik_ibz,1)+RIM_ibz_coo(ik_ibz,1)
+         do ib=SC_bands(1),SC_bands(2)
+           Hk(1,ib,ib,:)=Hk_tmp(ib,ib,:)-en%E(ib,ik_ibz,:)+en%E_RIM(ib,iE_rim,:)
+           do ibp=ib+1,SC_bands(2)
+             Hk(1,ib,ibp,:)=Hk_tmp(ib,ibp,:)
+             Hk(1,ibp,ib,:)=Hk_tmp(ibp,ib,:)
+           enddo
+         enddo
+       else if(l_rim_dipole) then
+         iE_rim=ik-RT_ibz_coo(ik_ibz,1)+RIM_ibz_coo(ik_ibz,1)
+         do ib=SC_bands(1),SC_bands(2)
+           Hk(i_dir,ib,ib,:)=Hk_vec_tmp(i_dir,ib,ib,:)
+           do ibp=ib+1,SC_bands(2)
+             deltaE    =en%E(ib,ik_ibz,1)    -en%E(ibp,ik_ibz,1)
+             deltaE_RIM=en%E_RIM(ib,iE_rim,1)-en%E_RIM(ibp,iE_rim,1)
+             if(abs(deltaE)>Dipole_Energy_treshold .and. abs(deltaE_RIM)>Dipole_Energy_treshold) then
+               Hk(i_dir,ib,ibp,:)=Hk_vec_tmp(i_dir,ib,ibp,:)*deltaE/deltaE_RIM
+               Hk(i_dir,ibp,ib,:)=Hk_vec_tmp(i_dir,ibp,ib,:)*deltaE/deltaE_RIM
+             else
+               Hk(i_dir,ibp,ib,:)=Hk_vec_tmp(i_dir,ibp,ib,:)
+             endif
+           enddo
+         enddo
+       else
+         if(D1==1) Hk(1,:,:,:)    =Hk_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),:)
+         if(D1==3) Hk(i_dir,:,:,:)=Hk_vec_tmp(i_dir,:,:,:)
+       endif 
+       !
 #if defined _OPENMP
-     VALUE_tmp=VALUE_tmp-cI*Vstar_dot_V_omp(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
-&                                             G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))
+         VALUE_tmp(i_dir)=VALUE_tmp(i_dir)-cI*Vstar_dot_V_omp(SC_bands2,Hk(i_dir,:,:,1),G(:,:,ik))
 #else
-     VALUE_tmp=VALUE_tmp-cI*Vstar_dot_V(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
-&                                             G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))
+         VALUE_tmp(i_dir)=VALUE_tmp(i_dir)-cI*Vstar_dot_V(SC_bands2,Hk(i_dir,:,:,1),G(:,:,ik))
 #endif
+       !
+     enddo
+     !
+     if(D1==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_dir)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+     if(D1==3) V_VALUE(i_dir)=V_VALUE(i_dir)+VALUE_tmp(i_dir)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
      !
    enddo
-   !
-   VALUE=VALUE+VALUE_tmp*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
    !
  enddo
  !
  if (present(O_QP).or.present(O_REAL).or.k%nibz/=nK_mem) then
    !
-   call PP_redux_wait(VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   if(D1==1) call PP_redux_wait(O_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   if(D1==3) call PP_redux_wait(V_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    !
    ! When the PAR_COM_Xk_ibz_INDEX%COMM is not defined then the job can be
    ! overdone. This occurs for a 1.M.P.N CPU structure
    !
-   if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) VALUE=VALUE/PAR_COM_Plasma_INDEX%n_CPU
+   if (PAR_COM_Xk_ibz_INDEX%n_CPU==1.and.D1==1) O_VALUE=O_VALUE/PAR_COM_Plasma_INDEX%n_CPU
+   if (PAR_COM_Xk_ibz_INDEX%n_CPU==1.and.D1==3) V_VALUE=V_VALUE/PAR_COM_Plasma_INDEX%n_CPU
    !
  endif
- !
-1 continue
  !
 #if defined _TIMING
  call timing('RT average Op',OPR='stop')
 #endif
  !
+ !
  contains 
    !
-   subroutine make_Hk_matrix(ik,iE_rim)
+   subroutine make_Hk_matrix(ik)
+     !
+     use D_lattice,      ONLY:dl_sop,sop_inv
+     use matrix_operate, ONLY:m3det
+     !
      implicit none
-     integer, intent(in) :: ik,iE_rim
-     integer :: i1,ik_mem,ib,ibp
+     !
+     integer, intent(in) :: ik
+     !
+     integer     :: i_spin,ik_mem,i_star,is
+     real(SP)    :: R_s(3,3)
+     complex(SP) :: V3(3)
+     logical     :: l_transpose
      !
      ik_mem=ik
      if (k%nibz/=nK_mem) ik_mem=PAR_Xk_ibz_index(ik)
      !
-     Hk=(0._SP,0._SP)
+     l_transpose=.false.
+     if(present(TRANS)) l_transpose=TRANS
      !
-     if (present(O_MATRIX)) then
+     !
+     ! A: Average of a scalar
+     !========================
+     if (D1==1) then
+       !
+       Hk_tmp=(0._SP,0._SP)
+       !
+       if (present(O_MATRIX)) then
+         do ib=SC_bands(1),SC_bands(2)
+           do ibp=SC_bands(1),SC_bands(2)
+             if (     l_transpose) Hk_tmp(ibp,ib,:)=O_MATRIX(ib,ibp,ik_mem,:) 
+             if (.not.l_transpose) Hk_tmp(ib,ibp,:)=O_MATRIX(ib,ibp,ik_mem,:) 
+           enddo
+         enddo
+       endif
+       !
+       if(present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk_tmp)
+       ! Waring: for nspinor=2 the Vxc countribution could be wrong
+       if(present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk_tmp,WF,'def')
+       !
+     endif
+     !
+     ! B: Average of a vector
+     !========================
+     if (D1==3) then
+       !
+       Hk_vec_tmp=(0._SP,0._SP)
+       !
        do ib=SC_bands(1),SC_bands(2)
          do ibp=SC_bands(1),SC_bands(2)
-           do i1=1,n_sp_pol
-             if (     present(TRANS)) Hk(ibp,ib,i1)=O_MATRIX(ib,ibp,ik_mem,i1) 
-             if (.not.present(TRANS)) Hk(ib,ibp,i1)=O_MATRIX(ib,ibp,ik_mem,i1) 
+           do i_spin=1,n_sp_pol
              !
-             if (l_rim_local.and.ib==ibp) Hk(ib,ib,i1)=Hk(ib,ib,i1) &
-&                                           -en%E(ib,ik,i1)+en%E_RIM(ib,iE_rim,i1)
+             V3=(0._SP,0._SP)
+             !
+             do i_star=1,k%nstar(ik)
+                !
+                is = sop_inv(k%star(ik,i_star))
+                !
+                ! This procedure is correct for polar-vectors
+                if (present( V_MATRIX)) then
+                  R_s= dl_sop(:,:,is)
+                  !if ( is<= nsym/(i_time_rev+1) ) R_s= dl_sop(:,:,is)
+                  !if ( is > nsym/(i_time_rev+1) ) R_s=-dl_sop(:,:,is)
+                  V3(:)=V3(:)+matmul(R_s, V_MATRIX(:,ib,ibp,ik_mem,i_spin))
+                endif
+                !
+                ! This procedure is correct for axial-vectors
+                if (present(PV_MATRIX)) then
+                  R_s=dl_sop(:,:,is)*m3det(dl_sop(:,:,is))
+                  !if( is>  nsym/(1+i_time_rev) ) R_s=-R_s
+                  V3(:)=V3(:)+matmul(R_s,PV_MATRIX(:,ib,ibp,ik_mem,i_spin))
+                endif
+                !
+             enddo
+             !
+             if (     l_transpose) Hk_vec_tmp(:,ibp,ib ,i_spin)=V3(:)/real(k%nstar(ik),SP)
+             if (.not.l_transpose) Hk_vec_tmp(:,ib ,ibp,i_spin)=V3(:)/real(k%nstar(ik),SP)
+             !
            enddo
          enddo
        enddo
+       !
      endif
-     !
-     if(present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk)
-     ! Waring: for nspinor=2 the Vxc countribution could be wrong
-     if(present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk,WF,'def')
      !
    end subroutine make_Hk_matrix
    !

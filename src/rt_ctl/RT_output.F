@@ -360,7 +360,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    short_file_name(next_file)=trim(append_ch)//trim(extension_ch)
    n_headings(next_file)=3
    headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
-   headings(next_file,3  )='Reflectance'
+   headings(next_file,3  )='Transmission'
    next_file=next_file+1
  enddo
  !

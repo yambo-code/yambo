@@ -189,8 +189,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
          E_xc = E_xc + tmp_exc    
        case(1)
          call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_vxc(1,1), vsigma(1,1))
-         ! vsigma(2)=vsigma_{updw}+vsigma_{dwup}=2.*vsigma_{updw}
-         if(n_spin==2) vsigma(2,:)=vsigma(2,:)/2.
+         ! In the presence of spin vsigma(2,:)=vsigma_updw(2,:)+vsigma_dwup(2,:)=2.*vsigma_updw(2,:)
+         if(n_spin==2) vsigma(2,:)=vsigma(2,:)/2._SP
          do is1 = 1,n_spin
            vdrho(:,:) = 0._SP 
            do is2 = 1,n_spin

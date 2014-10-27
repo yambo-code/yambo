@@ -24,7 +24,7 @@
 subroutine RT_X_effective(en)
  !
  use pars,           ONLY:SP,lchlen,pi,schlen
- use YPP,            ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_databases,RT_initialize,&
+ use YPP,            ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_databases,&
 &                         max_n_of_paths,Use_FFT,X_rt,N_pumps,N_probe_frequencies,X_order,&
 &                         l_RT_X_inversion,l_skip_pol_and_curr_IO,J_steps,J_time_step
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1,FS2AUT
@@ -234,7 +234,9 @@ subroutine RT_X_effective(en)
    !
    RT_P_t(:,1:3)=RT_P_probe(:,1,:)
    !
-   call RT_initialize(dump_and_write=.TRUE.)
+   call RT_initialize()
+   !
+   call RT_dump_and_write_JP()
    !
    call RT_X_LRR_real_field(en)
    !
@@ -248,7 +250,7 @@ subroutine RT_X_effective(en)
  !
  if ( l_RT_X_inversion ) then
    !
-   call RT_initialize(dump_and_write=.FALSE.)
+   call RT_initialize()
    !
    call RT_X_inversion(RT_P_probe,Susceptibility,Harmonic_Frequency,X_effective)
    !
@@ -290,7 +292,7 @@ subroutine RT_X_effective(en)
  !
  ! Fix the Time range. Do not write the polarization
  !
- call RT_initialize(dump_and_write=.FALSE.)
+ call RT_initialize()
  !
  if (one_P_many_W) call msg('s','[RT] Energy step[eV]:',Efield_Probe%W_step*HA2EV)
  !

@@ -24,7 +24,7 @@
 subroutine RT_driver(en,k)
  !
  use YPP,            ONLY:Use_FFT,RT_P_t,RT_J_t,N_probe_frequencies,&
-&                         N_probes,N_pumps,RT_initialize,RT_databases,X_order,&
+&                         N_probes,N_pumps,RT_databases,X_order,&
 &                         l_RT_X_inversion,l_skip_pol_and_curr_IO,l_force_min_damp,&
 &                         Probe_path,Pump_path,N_probes
  use pars,           ONLY:lchlen
@@ -66,6 +66,8 @@ subroutine RT_driver(en,k)
  !
  if ( .not.any((/l_RT_LRR_real_field,l_RT_SHG_qssin,l_RT_X_effective/)) ) return
  !
+ call RT_initialize()
+ !
  if ( any((/l_RT_LRR_real_field,l_RT_SHG_qssin/)) ) then
    !
    ! Database
@@ -91,7 +93,7 @@ subroutine RT_driver(en,k)
    !
    !  Initialization 
    !
-   if ( l_RT_LRR_real_field.or. l_RT_SHG_qssin) call RT_initialize(dump_and_write=.TRUE.)
+   if ( l_RT_LRR_real_field.or. l_RT_SHG_qssin) call RT_dump_and_write_JP()
    !
    if ( l_RT_LRR_real_field ) then
      !

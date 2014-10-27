@@ -26,7 +26,7 @@ subroutine REPORT_Occupations(E)
  use pars,          ONLY:SP,lchlen
  use units,         ONLY:HA2EV
  use com,           ONLY:msg,warning
- use electrons,     ONLY:levels,n_sp_pol,nel
+ use electrons,     ONLY:levels,n_sp_pol,nel,spin_occ
  use interfaces,    ONLY:OCCUPATIONS_Gaps
  !
  implicit none
@@ -120,7 +120,7 @@ subroutine REPORT_Occupations(E)
    N_met=0
    f_met=0
    do i_sp_pol=1,n_sp_pol
-     f_met=f_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk*(Nbm(i_sp_pol)-Nbf(i_sp_pol)))
+     f_met=f_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/sum(spin_occ*real(E%nk*(Nbm(:)-Nbf(:))))
      N_met=N_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk)
    enddo
    call msg('r','N of el / N of met el: ',       (/nel,N_met/))

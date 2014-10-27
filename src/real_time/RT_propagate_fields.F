@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM CA
+! Authors (see AUTHORS file for details): AM CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_propagate_fields(k,E,G_new,A_new,A_old,T,T_step)
+subroutine RT_propagate_fields(k,E,A_new,A_old,T,T_step)
  !
  ! The external and total fields in Yambo are defined and organized as follow:
  !
@@ -55,28 +55,25 @@ subroutine RT_propagate_fields(k,E,G_new,A_new,A_old,T,T_step)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use SC,             ONLY:SC_bands
- use real_time,      ONLY:RT_ind_J,l_RT_induced_field,RT_nk
+ use real_time,      ONLY:RT_ind_J,l_RT_induced_field,RT_nk,integrator_step,l_RT_EULER
  use fields,         ONLY:gauge_field,A_ind,A_ind_previous,A_ext
  !
  implicit none
  !
  type(bz_samp),        intent(in) :: k
  type(levels),         intent(in) :: E
- complex(SP),          intent(in) :: G_new(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  real(SP),             intent(in) :: T,T_step
  type(gauge_field),    intent(in) :: A_old
- type(gauge_field), intent(inout) :: A_new
+ type(gauge_field),   intent(out) :: A_new
  !
  !
  ! External field
  !
- call RT_Ext_fields(A_ext,T+T_step)
+ call RT_Ext_fields(A_ext,T)
  !
  if (l_RT_induced_field) then
    !
    ! Induced current j(t) from A(t)
-   !
-   !call RT_current_AND_polarization(k,E,G_new,A_old)
    !
    ! Integrate the eq. for the vector potential
    !
@@ -91,9 +88,9 @@ subroutine RT_propagate_fields(k,E,G_new,A_new,A_old,T,T_step)
    A_ind%vecpot_vel =  A_ind_previous%vecpot_vel + (A_ind%vecpot_acc+A_ind_previous%vecpot_acc)*T_step/2._SP
    !
    A_ind%vecpot     =  A_ind_previous%vecpot     + (A_ind%vecpot_vel+A_ind_previous%vecpot_vel)*T_step/2._SP + &
-   &                                             + (A_ind%vecpot_acc+A_ind_previous%vecpot_acc)*T_step**2._SP/4._SP
+   &                                               (A_ind%vecpot_acc+A_ind_previous%vecpot_acc)*T_step**2._SP/4._SP
    !
-   A_ind_previous  =A_ind
+   if(integrator_step==1) A_ind_previous  =A_ind
    !
    A_new%vecpot    =A_ext%vecpot    +A_ind%vecpot
    A_new%vecpot_vel=A_ext%vecpot_vel+A_ind%vecpot_vel

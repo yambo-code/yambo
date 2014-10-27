@@ -164,7 +164,7 @@ subroutine init_barriers()
  ! Non Uniform grids
  !===================
  if (.not.Xk_grid_is_uniform) then
-   on_runlevels='optics chi'
+   on_runlevels='optics chi gw0 el_ph_corr'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
  endif 
  !

@@ -8,7 +8,7 @@ SC_objects =
 SC_objects = QP_load_SC_xc.o
 #endif
 #if defined _QED
-SC_objects = QED_Sigma_c.o QED_polarization_vectors.o
+SC_objects = QED_Sigma_c.o
 #endif
 objs = QP_driver.o QP_newton.o QP_ppa_cohsex.o QP_ppa_EET_terminator.o \
        QP_secant.o QP_real_axis.o QP_W2Sc.o QP_life_transitions.o secant.o bracket.o \

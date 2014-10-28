@@ -24,7 +24,7 @@
 subroutine QP_of(qp,en,QPdb_read_err)
  !
  use pars,      ONLY:SP,lchlen,schlen
- use units,     ONLY:HA2EV,HBAR_eVfs
+ use units,     ONLY:HA2EV,HBAR_eVfs,HA2GHZ
  use drivers,   ONLY:l_life,l_elph_corr
  use com,       ONLY:msg,of_open_close
  use electrons, ONLY:levels,spin,n_sp_pol
@@ -46,7 +46,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
  !
  !o.qp titles
  !
- integer, parameter:: tpar=23
+ integer, parameter:: tpar=24
  integer       :: ntitles,titles_order(tpar)
  real(SP)      :: values(tpar)
  character(schlen) :: titles(tpar)
@@ -74,9 +74,15 @@ subroutine QP_of(qp,en,QPdb_read_err)
  titles(21) = 'E_75%(low)' ! 21
  titles(22) = 'E_75%(high)' ! 22
  titles(23) = 'Integral' ! 23
+ titles(24) = 'Sc(Eo) (Mhz)' ! 24
  !
+#if defined _QED
+ ntitles=6
+ titles_order(:ntitles)=(/9,10,4,8,2,24/)
+#else
  ntitles=5
  titles_order(:ntitles)=(/9,10,4,8,2/)
+#endif
  if (.not.report_Sc)   then
    ntitles=6
    titles_order(4:6)=(/5,8,6/)
@@ -160,6 +166,9 @@ subroutine QP_of(qp,en,QPdb_read_err)
      if (allocated(QP_G_amplitude_integral)) then
        values(23)=QP_G_amplitude_integral(i1)
      endif
+#if defined _QED
+     values(24)=real(QP_Sc(i1,1))*HA2GHZ*1000._SP
+#endif
      if (allocated(QP_G_info)) then
        values(17:18)=QP_G_info(i1,1,:)*HA2EV
        values(19:20)=QP_G_info(i1,2,:)*HA2EV

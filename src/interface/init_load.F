@@ -35,7 +35,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,GW_terminator_E,GW_terminator_Kind,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
-&                        SC_E_threshold,QP_dSc_delta,QP_G_Zoom_treshold,OCC_T_ref
+&                        SC_E_threshold,QP_dSc_delta,QP_G_Zoom_treshold,OCC_T_ref,QP_QED_ng
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
@@ -199,6 +199,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
  call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx,G_unit)
+#if defined _QED
+ call it(defs,'QEDRLvcs', '[QED] Vector-Potential G-vectors components',QP_QED_ng,G_unit)
+#endif
  call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)

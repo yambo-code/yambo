@@ -31,7 +31,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&
 &                        COHSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver,&
 &                        use_GreenF_to_eval_QP,GF_is_causal,QP_G_Zoom_treshold,&
-&                        GW_terminator_E,l_GW_terminator,GW_terminator_Kind
+&                        GW_terminator_E,l_GW_terminator,GW_terminator_Kind,QP_QED_ng
  use stderr,        ONLY:string_pack,gen_fmt
  use drivers,       ONLY:l_life,l_ppa,l_elph_corr,l_elel_corr,l_cohsex,l_elphoton_corr
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
@@ -181,6 +181,10 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  if (l_elphoton_corr) then
    qp%n_descs=qp%n_descs+1
    qp%description(qp%n_descs)=' El-Photon correlation  : yes'
+   qp%n_descs=qp%n_descs+1
+   write (qp%description(qp%n_descs),trim(&
+&       string_pack('(a,',gen_fmt( (/QP_QED_ng /) ),')'))) &
+&       ' QED RL components      :',QP_QED_ng
  endif
 #endif
  !

@@ -336,6 +336,16 @@ subroutine RT_output(what,VALUES,TIME,E)
    next_file=next_file+1
  enddo
  !
+ extension_ch='trans_residual'
+ if (open_files.and..not.file_already_opened(next_file)) then
+   file_name(next_file)=trim(append_ch)//trim(extension_ch)
+ endif
+ short_file_name(next_file)=trim(append_ch)//trim(extension_ch)
+ n_headings(next_file)=3
+ headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
+ headings(next_file,3  )='Residual'
+ next_file=next_file+1
+ !
  do i_f=1,3
    if (i_f==1) extension_ch='trans_refl_rel'
    if (i_f==2) extension_ch='trans_refl_abs'
@@ -497,7 +507,8 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-2)
      case('YPP-trans_eps_rel' ,'YPP-trans_eps_abs' ,'YPP-eps_eq',&
 &         'YPP-trans_refl_rel','YPP-trans_refl_abs','YPP-refl_eq',&
-&         'YPP-trans_transm_rel','YPP-trans_transm_abs','YPP-transm_eq')
+&         'YPP-trans_transm_rel','YPP-trans_transm_abs','YPP-transm_eq',&
+&         'YPP-trans_residual')
        data_to_dump(1:2)=(/Time,E/)
        data_to_dump(3:n_headings(i_f)) = VALUES(1)
      case('mean_EPlifetimes')

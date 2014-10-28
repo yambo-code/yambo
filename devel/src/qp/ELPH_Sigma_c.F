@@ -226,7 +226,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  else
    nq_to_sum=elph_nDBs_used
    allocate(q_weight(nq_to_sum))
-   call rim_spherical(nq_to_sum,ph_qpt,q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),2,.TRUE.)
+   call rim_spherical(nq_to_sum,ph_qpt(:nq_to_sum,:),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),2,.TRUE.)
  endif
  !
  ! Timing steps

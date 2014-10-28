@@ -23,7 +23,12 @@
 !
 subroutine init_q_points(l_WRITE)
  !
- use pars,        ONLY:SP
+ ! This routine:
+ !
+ ! 1. reads the q-points from the input file
+ ! 2. reads the q-points from the e-p DB's 
+ !
+ use pars,        ONLY:SP,schlen,DP
  use memory_m,    ONLY:mem_est
  use it_m,        ONLY:nflines,flines,infile,infile_verbosity,V_kpt,V_all
  use R_lattice,   ONLY:nqibz,q_pt,bz_samp,bz_samp_reset
@@ -36,6 +41,7 @@ subroutine init_q_points(l_WRITE)
  !
  integer       :: i1,nflines_save
  type(bz_samp) :: q
+ real(DP)      :: q_pt_db(3)
  !
  if (l_WRITE.and. (infile_verbosity==V_kpt.or.infile_verbosity==V_all)) then
    nflines_save=nflines
@@ -51,6 +57,19 @@ subroutine init_q_points(l_WRITE)
    endif
    flines(nflines+1)='%'
    nflines=nflines+1
+ else if (get_e_p_q_point(1,q_pt_db)==0) then
+   do i1=1,2
+     nqibz=0
+     do while(get_e_p_q_point(nqibz+1,q_pt_db)==0) 
+       nqibz=nqibz+1
+       if (i1==2) q_pt(nqibz,:)=-q_pt_db
+     enddo
+     if (i1==1) then
+       allocate(q_pt(nqibz,3))
+       call mem_est("q_pt",(/nqibz*3/),(/SP/))  
+     endif
+   enddo
+   return
  else
    call bz_samp_reset(q)
    call init_parse_K_list(q,'QptCoord')
@@ -72,4 +91,31 @@ subroutine init_q_points(l_WRITE)
  enddo 
  close(12)
  !
+ contains 
+   !
+   integer function get_e_p_q_point(i_q,q_in)
+     !
+     use IO_m,        ONLY:io_control,io_connect,io_unit,OP_RD_CL,&
+&                          io_netcdf_support,io_disconnect
+     !
+     integer :: i_q
+     real(DP):: q_in(3)
+     !
+     integer           :: io_err,ID
+     character(schlen) :: db_name
+     real(DP)          :: alat
+     !
+     call io_control(ACTION=OP_RD_CL,ID=ID)
+     io_netcdf_support(ID)=.FALSE.
+     write (db_name,'(a,i6.6)') 's.dbph_',iabs(i_q)
+     io_err=io_connect(desc=trim(db_name),type=-2,ID=ID)
+     get_e_p_q_point=io_err
+     if (io_err==0) then
+       read (io_unit(ID)) 
+       read (io_unit(ID)) alat,q_in
+     endif
+     call io_disconnect(ID)
+     !
+   end function
+   !
 end subroutine

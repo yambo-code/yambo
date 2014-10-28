@@ -76,6 +76,10 @@ module QP_m
  integer,    allocatable:: QP_solver_state(:)
  integer,    allocatable:: QP_table(:,:)
  logical,    allocatable:: QP_state(:,:)
+ ! 
+ ! QED
+ !
+ integer           :: QP_QED_ng = 1
  !
  ! Logicals used for reporting
  !

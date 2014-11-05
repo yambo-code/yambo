@@ -65,7 +65,8 @@ subroutine SET_logicals()
  do i_ch=1,10
    if (any((/"DIP","dip"/)==trim(ch_piece(i_ch)))) io_DIP=.FALSE.
    if (any((/"X","x"/)==trim(ch_piece(i_ch)))) io_RESPONSE=.FALSE.
-   if (any((/"W","w"/)==trim(ch_piece(i_ch)))) io_SCREEN=.FALSE.
+   io_SCREEN=.FALSE.
+   !if (any((/"W","w"/)==trim(ch_piece(i_ch)))) io_SCREEN=.FALSE.
    if (any((/"HF","hf"/)==trim(ch_piece(i_ch)))) io_HF=.FALSE.
    if (any((/"WF","wf"/)==trim(ch_piece(i_ch)))) io_WF=.FALSE.
    if (any((/"COLLS","COLLs","colls"/)==trim(ch_piece(i_ch)))) io_COLLs=.FALSE.

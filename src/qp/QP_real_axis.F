@@ -36,15 +36,15 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
-&                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_IND_Q_ID,PAR_IND_QP_ID,&
-&                        PAR_COM_QP_A2A,n_WF_bands_to_load,PAR_Q_index,PAR_COM_Q_A2A,myid
+&                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_QP_index,myid,&
+&                        PAR_COM_QP_A2A,n_WF_bands_to_load,PAR_Q_index,PAR_COM_Q_A2A,PAR_nQ,PAR_nQP
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
  use collision,     ONLY:ggwinfo,collision_reset
  use wave_func,     ONLY:WF
  use IO_m,          ONLY:io_control,REP,VERIFY,DUMP,NONE,RD,RD_CL,OP_RD,&
 &                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END,OP_RD_CL,io_RESPONSE,io_SCREEN
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
-&                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,QP_W_partially_done,&
+&                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,&
 &                        QP_n_W_freqs_redux 
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use functions,     ONLY:e2et,h2ht,bose_decay
@@ -74,7 +74,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  type(ggwinfo)    ::scattering_main,scattering_prime
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
  integer          ::i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,iq_to_start,iqs,&
-&                   iv4(4),io_err,X_id,WID,timing_steps,iq_mem,X_range(2),i_qp
+&                   iv4(4),io_err,X_id,WID,timing_steps,iq_mem,X_range(2),i_qp,i_qp_mem
  complex(SP)      :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng)
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
@@ -102,14 +102,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  call k_expand(k)
  !
- ! ALLOCATION (W/Sc)
- !==================
- if (.not.l_life) then
-   QP_n_W_freqs=Xw%n_freqs
-   QP_n_W_freqs_redux=Xw%n_freqs
-   allocate(QP_W(QP_n_states,QP_n_G_bands(2),QP_n_W_freqs),stat=i_err)
-   call mem_est("QP_W",(/size(QP_W)/),errors=(/i_err/))
- endif
+ ! ALLOCATION (\Sigma Energy)
+ !===========================
  !
  ! Sc Energy points (1 type each QP state !)
  !-------------------------------------------
@@ -150,48 +144,59 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  enddo
  call msg('r','')
  !
- ! W DB (I/O)
- !============
- iq_to_start= 1
- io_err     =-1
- if (io_SCREEN) then
-   call io_control(ACTION=OP_RD,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=WID)
-   io_err=io_QP_and_GF('W',qp,WID)
-   if (io_err>0) iq_to_start=io_err
- endif
- !
- ! W => Sc after succesfull I/O
- !==============================
- !
- if (io_err==0) then
+ if (.not.l_life) then
    !
-   if (QP_solver=="n".or.QP_solver=="g") then
-     QP_Sc=cmplx(0.,0.,SP)
-     call live_timing(trim(Sc_name)//'W0',q%nbz)
-     do iqbz=1,q%nbz
-       if (iqbz< q%nbz) call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=WID)
-       if (iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=WID)
-       io_err=io_QP_and_GF('W',qp,WID)
-       !
-       ! Xw%p is stored in ioX, not in ioW !
-       !
-       Xw%er=QP_W_er
-       Xw%dr=QP_W_dr
-       Xw%n_freqs=QP_n_W_freqs
-       call FREQUENCIES_setup(Xw)
-       ! 
-       call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
-       call live_timing(steps=1)
-     enddo
-     deallocate(QP_W)
-     call mem_est("QP_W")
-     call live_timing()
-     !
-     return
-     !
+   ! W DB (I/O)
+   !============
+   iq_to_start= 1
+   io_err     =-1
+   if (io_SCREEN) then
+     call io_control(ACTION=OP_RD,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=WID)
+     io_err=io_QP_and_GF('W',qp,WID)
+     if (io_err>0) iq_to_start=io_err
    endif
    !
-   if (QP_solver=="s") return
+   ! W => Sc after succesfull I/O
+   !==============================
+   !
+   if (io_err==0) then
+     !
+     ! ALLOCATION (W)
+     !==================
+     QP_n_W_freqs=Xw%n_freqs
+     QP_n_W_freqs_redux=Xw%n_freqs
+     allocate(QP_W(QP_n_states,QP_n_G_bands(2),QP_n_W_freqs),stat=i_err)
+     call mem_est("QP_W",(/size(QP_W)/),errors=(/i_err/))
+     !
+     if (QP_solver=="n".or.QP_solver=="g") then
+       QP_Sc=cmplx(0.,0.,SP)
+       call live_timing(trim(Sc_name)//'W0',q%nbz)
+       do iqbz=1,q%nbz
+         if (iqbz< q%nbz) call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=WID)
+         if (iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=WID)
+         io_err=io_QP_and_GF('W',qp,WID)
+         !
+         ! Xw%p is stored in ioX, not in ioW !
+         !
+         Xw%er=QP_W_er
+         Xw%dr=QP_W_dr
+         Xw%n_freqs=QP_n_W_freqs
+         call FREQUENCIES_setup(Xw)
+         ! 
+         call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
+         call live_timing(steps=1)
+       enddo
+       deallocate(QP_W)
+       call mem_est("QP_W")
+       call live_timing()
+       !
+       return
+       !
+     endif
+     !
+     if (QP_solver=="s") return
+     !
+   endif
    !
  endif
  !
@@ -264,6 +269,15 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  call WF_load(WF,X%ng,maxval(qindx_S(:,:,2)),(/QP_n_G_bands(1),n_WF_bands_to_load/),(/1,k%nibz/),title='-Sc')
  !
+ ! W
+ !
+ if (.not.l_life) then
+   QP_n_W_freqs=Xw%n_freqs
+   QP_n_W_freqs_redux=Xw%n_freqs
+   allocate(QP_W(PAR_nQP,QP_n_G_bands(2),QP_n_W_freqs),stat=i_err)
+   call mem_est("QP_W",(/size(QP_W)/),errors=(/i_err/))
+ endif
+ !
  ! Test the spatial Inversion
  !
  call WF_spatial_invertion(en,Xk)
@@ -284,9 +298,15 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  call PP_redux_wait()
  !
- timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
-&             PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
-&             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
+ ! ... Timing...
+ !--------------
+ timing_steps=0
+ do iqbz=iq_to_start,q%nbz
+   if (.not.PAR_IND_Q%element_1D( q%sstar(iqbz,1) )) cycle
+   timing_steps=timing_steps+1
+ enddo
+ !
+ timing_steps=timing_steps*PAR_nQP*count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
  !
  call live_timing(trim(Sc_name)//'W0',timing_steps)
  !
@@ -355,7 +375,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      enddo
    endif
    !
-   do i_qp=1,QP_n_states
+   qp_loop: do i_qp=1,QP_n_states
+     !
+     i_qp_mem=PAR_QP_index(i_qp)
      !
      scattering_main%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
      scattering_main%os(2:)=(/k%sstar(qindx_S(scattering_main%is(2),iqbz,1),:),spin(QP_table(i_qp,:))/)
@@ -364,7 +386,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      scattering_main%qs(1)=qindx_S(QP_table(i_qp,3),iqbz,2)
      scattering_prime%qs=scattering_main%qs
      !
-     do ib=QP_n_G_bands(1),QP_n_G_bands(2)
+     bands_loop: do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
        scattering_main%os(1)=ib
        i_or=IOR(e2et((/scattering_main%is(:2),scattering_main%is(4)/),(/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fe),&
@@ -373,9 +395,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        !
        ! The Parallel cycle has to be here in order to have a proper accumulation of QP_n_W_freqs
        !
-       if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+       if (.not.PAR_IND_QP%element_1D(i_qp)) cycle qp_loop
        !
-       if (.not.PAR_IND_G_b%element_1D(ib)) cycle
+       if (.not.PAR_IND_G_b%element_1D(ib))  cycle bands_loop
        !
        scattering_prime%os=scattering_main%os
        call live_timing(steps=1)
@@ -426,34 +448,33 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
            enddo
            !
 #if defined _OPENMP
-           QP_W(i_qp,ib,i2)=-4._SP/spin_occ*Vstar_dot_V_omp(X%ng,scattering_prime%rhotw,lrhotw)
+           QP_W(i_qp_mem,ib,i2)=-4._SP/spin_occ*Vstar_dot_V_omp(X%ng,scattering_prime%rhotw,lrhotw)
 #else
-           QP_W(i_qp,ib,i2)=-4._SP/spin_occ*Vstar_dot_V(X%ng,scattering_prime%rhotw,lrhotw)
+           QP_W(i_qp_mem,ib,i2)=-4._SP/spin_occ*Vstar_dot_V(X%ng,scattering_prime%rhotw,lrhotw)
 #endif
            !
          enddo
          !
        endif
        !
-     enddo
-   enddo
+     enddo bands_loop
+   enddo qp_loop
    !
-   ! To be written in W
-   !
-   if (.not.l_life.and.io_SCREEN) then
-     !
-     call PP_redux_wait(QP_W,COMM=PAR_COM_Q_A2A%COMM)
+   if (.not.l_life) then
      !
      QP_W_er=Xw%er
      QP_W_dr=Xw%dr
      QP_n_W_freqs=Xw%n_freqs
      !
-     ! Only if I am doing secant solver of Dyson I store on disk
-     ! the W m.e. 
-     !
      if (trim(QP_solver)=='n'.or.trim(QP_solver)=='g') then
+       !
+       ! W(w) => \Sigma(w) via KK
+       !
        call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
-     else
+       !
+     endif
+     !
+     if (io_SCREEN) then
        !
        if (iqbz==1) then
          call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=WID)
@@ -463,9 +484,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        io_err=io_QP_and_GF('W',qp,WID)
        !
      endif
-     !
-     QP_W_partially_done=.true.
-     if (iqbz==q%nbz) QP_W_partially_done=.false.
      !
      if (stop_now(.FALSE.)) exit 
      !
@@ -485,7 +503,11 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    deallocate(life_W_table)
    call mem_est("life_W_table")
    call PP_redux_wait(qp%E)
- else if (io_SCREEN) then
+ else
+   call PP_redux_wait(QP_Sc)
+ endif
+ !
+ if (io_SCREEN) then
    if (trim(QP_solver)=='n'.or.trim(QP_solver)=='g') then
      deallocate(QP_W)
      call mem_est("QP_W")

@@ -161,7 +161,7 @@ integer function io_X(X,Xw,ID)
    ch="FREQ_PARS_sec_iq"//trim(intc(iq))
    !
    io_com_save=io_com(ID)
-   if (io_sec(ID,1)/=1) io_com(ID)=NONE
+   if (io_sec(ID,1)/=1.and.trim(db_desc)/="em1d") io_com(ID)=NONE
    !
    if (io_sec(ID,1)==1) call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=0)
    if (io_sec(ID,1)/=1) call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=1)

@@ -32,7 +32,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
 &                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
- use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,RD_CL_IF_END
+ use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,RD_CL_IF_END,&
+&                         io_and_Messaging_switch
  use wave_func,      ONLY:wf_ng,WF
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,master_cpu,PAR_COM_k_for_P,ncpu
 #if defined _SC      
@@ -108,10 +109,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
 #endif
  !
-! if (index(what_is_running,'YPP')>0 .and. any(io_err/=0)) &
-!&  call error(' Error while reading dipoles DB')
- !
  if (any(io_err/=0)) then
+   !
+   ! I/O privilegies: temporarly switch it on
+   !
+   call io_and_Messaging_switch("+io_out")
    !
    ! OptGrad allocation...
    !
@@ -194,6 +196,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #endif
    !
  end if
+ !
+ ! I/O privilegies: RESTORE to previous values
+ !
+ call io_and_Messaging_switch("RESTORE")
  !
 #if defined _RT  
  if (l_real_time.and..not.l_evaluating_em1s) return

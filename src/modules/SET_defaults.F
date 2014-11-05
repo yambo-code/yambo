@@ -37,7 +37,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     QP_W_er,QP_W_dr,QP_cg_percent,QP_n_states,&
 &                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
-&                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
+&                     GWo_SC_done,GWo_iterations,&
 &                     COHSEX_use_empties,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,OCC_ctl,OCC_T_ref,l_GW_terminator,&
 &                     GW_terminator_E
@@ -391,7 +391,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  QP_dSc_delta=0.1/HA2EV
  QP_W_er=0.
  QP_W_dr=0.1/HA2EV
- QP_W_partially_done=.false.
  QP_G_er=(/-10._SP/HA2EV,10._SP/HA2EV/)
  QP_G_dr=0.1/HA2EV
  QP_cg_percent=100.

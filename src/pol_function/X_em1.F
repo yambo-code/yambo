@@ -119,6 +119,8 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  allocate(io_X_done(X%iq(2)))
  io_X_done=.FALSE.
  !
+ if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=.TRUE.
+ !
  do iq=X%iq(1),X%iq(2)
    if (iq==1) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=VERIFY,ID=Xdb)
    if (iq> 1) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq,2*iq+1/),MODE=VERIFY,ID=Xdb)
@@ -157,6 +159,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
      !
    endif
+   !
  endif
  !
  do iq=X%iq(1),X%iq(2)

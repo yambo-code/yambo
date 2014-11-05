@@ -29,7 +29,7 @@ subroutine io_and_Messaging_switch(what,CONDITION)
  use parallel_m,     ONLY:IO_write_default,myid,master_cpu
  use stderr,         ONLY:string_split,write_to_log
  use LIVE_t,         ONLY:live_timing_is_on
- use stderr,         ONLY:write_fragments_IO_log
+ use stderr,         ONLY:write_fragments_IO_log,write_to_log_default
  implicit none
  !
  character(*)      :: what
@@ -51,12 +51,20 @@ subroutine io_and_Messaging_switch(what,CONDITION)
  endif
  !
  if (len_trim(what)>0) then
+   !
    call string_split(what,ch_piece)
+   !
    do ich=1,10
      !
      ! Complete Reset
      !
-     if (trim(ch_piece(ich))=="RESET") call SET_logicals()
+     if (trim(ch_piece(ich))=="RESET") then
+       IO_read           =.TRUE.
+       IO_write          =IO_write_default(myid+1)
+       write_to_of       =master_cpu
+       write_to_report   =master_cpu
+       live_timing_is_on =write_to_log_default
+     endif
      !
      ! Messages
      !

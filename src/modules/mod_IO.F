@@ -60,6 +60,7 @@ module IO_m
  logical           :: io_GF      =.TRUE.
  logical           :: io_SC      =.TRUE.
  logical           :: io_BS_K    =.TRUE.
+ logical           :: io_SCREEN  =.TRUE.
  !
  ! Actions
  !

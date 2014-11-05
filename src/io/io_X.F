@@ -36,7 +36,8 @@ integer function io_X(X,Xw,ID)
 &                        RD_CL,RD_CL_IF_END,io_action,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED,&
-&                        io_fragment,fragment_exists
+&                        io_fragment,fragment_exists,IO_OUTDATED_DB,io_fragmented,&
+&                        IO_NO_DATABASE
  use stderr,        ONLY:intc
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -64,6 +65,15 @@ integer function io_X(X,Xw,ID)
    return
  endif
  !
+ if (.not.ver_is_gt_or_eq(ID,revision=308)) then
+   io_X=IO_OUTDATED_DB
+   call io_disconnect(ID,FORCE=.TRUE.)
+#if defined _TIMING
+   if (io_RESPONSE) call timing('io_X',OPR='stop')
+#endif
+   return
+ endif
+ !
  ! I assume that he RL ordering used to build X is not different
  ! from the one in DB1
  !
@@ -76,6 +86,10 @@ integer function io_X(X,Xw,ID)
  !
  io_X=io_connect(desc=trim(db_desc),type=2,ID=ID) 
  if (io_X/=0) goto 1
+ !
+ ! The fragmented is needed here as it is used to find the (eventual) restart point.
+ ! --------------
+ io_fragmented(ID)=.true.
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -96,25 +110,21 @@ integer function io_X(X,Xw,ID)
    ! When the SN is different and I am importing this DB 
    ! from a different calculation I check the RL vectors
    !
-   if (ver_is_gt_or_eq(ID,(/3,0,6/))) then
-     !
-     allocate(RL_vecs_disk(X%ng_db,3))
-     !
-     if (write_is_on(ID)) RL_vecs_disk(:,:)=g_vec(:X%ng_db,:)
-     !
-     call io_bulk(ID,VAR='X_RL_vecs',VAR_SZ=shape(RL_vecs_disk))
-     call io_bulk(ID,R2=RL_vecs_disk)
-     !
-     if (io_serial_number(ID)/=serial_number.and.read_is_on(ID).and.&
-&        allocated(g_vec)) then
-       if (.not.allocated(X_RLcomp_ig)) allocate(X_RLcomp_ig(X%ng))
-       i_err = X_RLcomp_table() 
-       if ( i_err < 0 ) io_status(ID) = IO_INCOMPATIBLE_VAR
-       if ( i_err > 0 ) different_db_RL_order=.true.
-     endif
-     deallocate(RL_vecs_disk)
-     !
+   allocate(RL_vecs_disk(X%ng_db,3))
+   !
+   if (write_is_on(ID)) RL_vecs_disk(:,:)=g_vec(:X%ng_db,:)
+   !
+   call io_bulk(ID,VAR='X_RL_vecs',VAR_SZ=shape(RL_vecs_disk))
+   call io_bulk(ID,R2=RL_vecs_disk)
+   !
+   if (io_serial_number(ID)/=serial_number.and.read_is_on(ID).and.&
+&      allocated(g_vec)) then
+     if (.not.allocated(X_RLcomp_ig)) allocate(X_RLcomp_ig(X%ng))
+     i_err = X_RLcomp_table() 
+     if ( i_err < 0 ) io_status(ID) = IO_INCOMPATIBLE_VAR
+     if ( i_err > 0 ) different_db_RL_order=.true.
    endif
+   deallocate(RL_vecs_disk)
    !
    ! Close & Menu lower line
    !
@@ -148,8 +158,7 @@ integer function io_X(X,Xw,ID)
    sec_size=6
    !
    if (X%whoami==4) sec_size=1
-   write (ch,'(a,i3.3)') "FREQ_PARS_sec_iq",iq
-   if (ver_is_gt_or_eq(ID,revision=308)) ch="FREQ_PARS_sec_iq"//trim(intc(iq))
+   ch="FREQ_PARS_sec_iq"//trim(intc(iq))
    !
    io_com_save=io_com(ID)
    if (io_sec(ID,1)/=1) io_com(ID)=NONE
@@ -185,8 +194,7 @@ integer function io_X(X,Xw,ID)
    !
    allocate(X_disk(X%ng_db,X%ng_db,2))
    !
-   write (ch,'(a,i3.3)') "FREQ_sec_iq",iq
-   if (ver_is_gt_or_eq(ID,revision=308)) ch="FREQ_sec_iq"//trim(intc(iq))
+   ch="FREQ_sec_iq"//trim(intc(iq))
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/Xw%n_freqs,2/))
    allocate(W_disk(Xw%n_freqs,2))
    !
@@ -209,8 +217,7 @@ integer function io_X(X,Xw,ID)
    !
    deallocate(W_disk)
    !
-   write (ch,'(a,i3.3)') "X_Q_",iq
-   if (ver_is_gt_or_eq(ID,revision=308)) ch="X_Q_"//trim(intc(iq))
+   ch="X_Q_"//trim(intc(iq))
    !
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/X%ng_db,X%ng_db,2,Xw%n_freqs/))
    !
@@ -237,6 +244,7 @@ integer function io_X(X,Xw,ID)
  ! Sections 1 & 2 are used in VERIFY mode. 
  ! Now that the menu is closed I can return with io_X/=0 if there is a restart point
  !
+ io_X=IO_NO_DATABASE
  if (fragment_exists(ID)) io_X=iq
  !
 1 call io_disconnect(ID)

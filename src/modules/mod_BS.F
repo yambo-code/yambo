@@ -39,7 +39,6 @@ module BS
  logical :: BS_cpl_K_exchange
  logical :: BS_cpl_K_corr
  logical :: BS_K_is_ALDA
- logical :: BS_DB_is_fragmented
  logical :: BS_not_const_eh_f
  character(schlen) :: BSE_mode
  character(schlen) :: BSK_mode
@@ -53,6 +52,11 @@ module BS
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier
+ !
+ ! Live Timing
+ !=============
+ integer     :: BS_LiveTiming_prefactor = 1
+ integer(IP) :: BS_LiveTiming_steps     = 0
  !
  ! Transition Controls
  !=====================
@@ -414,15 +418,12 @@ module BS
      use parallel_m, ONLY  : ncpu
      integer              :: i_block
      integer(IP)          :: BS_Block_size
-     integer(IP)          :: pre_factor
      !
-     pre_factor=BS_K_dim/ncpu
-     !
-     BS_Block_size=BS_blk(i_block)%size(1)*BS_blk(i_block)%size(2)/pre_factor
+     BS_Block_size=BS_blk(i_block)%size(1)*BS_blk(i_block)%size(2)/BS_LiveTiming_prefactor
      !
      if (BS_blk(i_block)%iT_k==BS_blk(i_block)%iT_p.and.BS_blk(i_block)%mode=="R") then
        BS_Block_size=( (BS_blk(i_block)%size(1)**2-BS_blk(i_block)%size(1))/2+&
-&                       BS_blk(i_block)%size(1) )/pre_factor
+&                       BS_blk(i_block)%size(1) )/BS_LiveTiming_prefactor
      endif
      !
    end function BS_Block_size
@@ -461,7 +462,6 @@ module BS
      do i_g=1,BS_nT_grps
        if (allocated(V(i_g)%fragment)) then
          deallocate(V(i_g)%fragment)
-         !
        end if
      end do
    end subroutine BS_HAYVEC_free

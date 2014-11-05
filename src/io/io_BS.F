@@ -25,14 +25,12 @@ integer function io_BS(iq,X,ID)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use X_m,           ONLY:X_t
- use R_lattice,     ONLY:nXkibz
  use stderr,        ONLY:intc
- use matrix_operate,ONLY:mat_c2r,mat_r2c,UP_matrix_index
+ use matrix_operate,ONLY:mat_c2r,mat_r2c
  use parallel_m,    ONLY:myid
- use BS,            ONLY:BS_mat,BS_K_dim,BS_K_coupling,&
-&                        BS_nT_at_k,BS_res_mode,&
-&                        BS_DB_is_fragmented,BS_blk,n_BS_blks,&
-&                        BS_cpl_mat,BSS_description,BSS_n_descs,variables_BS
+ use BS,            ONLY:BS_mat,&
+&                        BS_blk,n_BS_blks,&
+&                        BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_bulk,io_restart_point,&
 &                        read_is_on,write_is_on,io_header,io_mode,&
@@ -61,24 +59,9 @@ integer function io_BS(iq,X,ID)
  io_BS=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (io_BS/=0) goto 1
  !
- ! If the DB size > 1.9Gb  I automatically switch on the fragmentation.
- ! To do so both dbs_fragment (overall fragmentation) and 
- ! io_fragmented(ID) (fragmentation for this DB) must be set true.
- ! This is because io_fragmented(ID) is defined in reading but not
- ! in writing where it keep the default (dbs_fragment) value.
- !
- ! Update [27/6/07]: NETCDF performance increase drammatically
- ! when using fragmentation. So I lowered the treshold to enable 
- ! fragmentation to matrices >= 6000x6000
- !
- if (write_is_on(ID)) then
-   db_is_large=BS_K_dim>6000
-   if (BS_K_coupling) db_is_large=BS_K_dim>3000
-   if (db_is_large) then
-     Fragmented_IO=.true.
-     io_fragmented(ID)=.true.
-   endif
- endif
+ ! The fragmented is needed here as it is used to find the (eventual) restart point.
+ ! --------------
+ io_fragmented(ID)=.true.
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -93,8 +76,6 @@ integer function io_BS(iq,X,ID)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
      goto 1
    endif
-   !
-   BS_DB_is_fragmented=io_fragmented(ID)
    !
    io_BS=variables_BS(ID,local_description,X=X)
    !
@@ -126,12 +107,6 @@ integer function io_BS(iq,X,ID)
  !
  if (io_action(ID)==RD_CL_IF_END.and.i_block==n_BS_blks) io_action(ID)=RD_CL
  !
- ! Fragmentation
- !
- ! io_fragmented is read in the header. While accessing the fragments
- ! io_fragmented is not defined and must be overwritten with BS_DB_is_fragmented
- !
- io_fragmented(ID)=BS_DB_is_fragmented
  call io_fragment(ID,i_fragment=i_block)
  !
  allocate(BS_mat_disk(BS_blk(i_block)%size(1),BS_blk(i_block)%size(2),2))

@@ -57,8 +57,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  integer              :: n_T_steps,i_T,neh,i_v,i_c,i_kbz,i_kibz,i_kmem,i_spin,i_freq,i_l
  character(3)         :: message
- real(SP)             :: io_Time,Co,change_factor,f_cv,delta_f_cv,output(3)
- complex(SP)          :: BS_R1,IP_E,IP_R,Wd
+ real(SP)             :: io_Time,Co,change_factor,f_cv,delta_f_cv,output(3),BS_R_tmp
+ complex(SP)          :: IP_E,IP_R,Wd,BS_R1(BS_H_dim)
  logical              :: l_TR_transm,l_TR_reflec,l_include_IP
  !
  real(SP),allocatable    :: delta_f(:,:,:)
@@ -105,11 +105,12 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  call FREQUENCIES_setup(W_bss)
  !
  call RT_output(what="initialize")
- call RT_output("open trans_eps_rel trans_eps_abs eps_eq")
+ call RT_output("open trans_eps_rel trans_eps_abs eps_eq trans_residual")
  if (l_TR_reflec) call RT_output("open trans_refl_rel trans_refl_abs refl_eq")
  if (l_TR_transm) call RT_output("open trans_transm_rel trans_transm_abs transm_eq")
  !
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q0_def_norm**2
+ BS_R1=(0._SP,0._SP)
  !
  do i_T=1,n_T_steps
    !
@@ -132,10 +133,9 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    ! Compute the contribution due to exissting transitions
    !
    !BS_R0=(0._SP,0._SP)
+   BS_R1=(0._SP,0._SP)
    !
    do i_l=1,BS_H_dim
-     !
-     BS_R1=(0._SP,0._SP)
      !
      do neh = 1,BS_H_dim
        !
@@ -154,13 +154,18 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        delta_f_cv=delta_f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ- &
 &                 Xen%f(i_v,i_kibz,i_spin)*          delta_f(i_c,i_kibz,i_spin) /spin_occ/spin_occ
        !
-       BS_R1=BS_R1-DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin)*BS_mat(neh,i_l)*delta_f_cv/sqrt(f_cv)
+       BS_R1(i_l)=BS_R1(i_l)-DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin)*BS_mat(neh,i_l)*delta_f_cv/sqrt(f_cv)
        !BS_R0(i_l)=BS_R0(i_l)-DIP_q_dot_iR(i_c,i_v,i_kibz,i_spin)*BS_mat(neh,i_l)*sqrt(f_cv)
        !
      enddo 
      !
      X_epsilon(1,:)=X_epsilon(1,:)-      BS_R0(i_l)*conjg(BS_R0(i_l))       /(W_bss%p(:)-BS_E(i_l))
-     X_epsilon(2,:)=X_epsilon(2,:)-0.5*(BS_R1*conjg(BS_R0(i_l))+conjg(BS_R1)*BS_R0(i_l))/(W_bss%p(:)-BS_E(i_l))
+     X_epsilon(2,:)=X_epsilon(2,:)-0.5*(BS_R1(i_l)*conjg(BS_R0(i_l))+conjg(BS_R1(i_l))*BS_R0(i_l))/(W_bss%p(:)-BS_E(i_l))
+     !
+     BS_R_tmp=-0.5*real((BS_R1(i_l)*conjg(BS_R0(i_l))+conjg(BS_R1(i_l))*BS_R0(i_l)))
+     !
+     if( X_rt%energy_range(1)<real(BS_E(i_l)) .and. real(BS_E(i_l))<X_rt%energy_range(2) ) &
+&      call RT_output("trans_residual",    VALUEs=(/BS_R_tmp/),E=real(BS_E(i_l))*HA2EV,TIME=io_Time/FS2AUT)
      !
    enddo
    !
@@ -256,21 +261,24 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        output(3)=1._SP-X_absorption_coeff(1,i_freq)
        output(2)=-X_absorption_coeff(2,i_freq)
        output(1)=output(2)/output(3)
-       call RT_output("trans_transm_rel",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-       call RT_output("trans_transm_abs",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+       call RT_output("trans_transm_rel",    VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+       call RT_output("trans_transm_abs",    VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
        if(i_T==1) call RT_output("transm_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
      endif
    enddo
    !
    call RT_output("space trans")
    !
-   call live_timing(steps=1)   
+   call live_timing(steps=1)
    !
  enddo
  !
  call RT_alloc_def_or_free(rt,Xen,Xk,3)
  !
  deallocate(delta_f)
+ deallocate(X_epsilon)
+ if(allocated(X_reflectance))       deallocate(X_reflectance)
+ if(allocated(X_absorption_coeff))  deallocate(X_absorption_coeff)
  !
  call live_timing()
  !

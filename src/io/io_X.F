@@ -65,15 +65,6 @@ integer function io_X(X,Xw,ID)
    return
  endif
  !
- if (.not.ver_is_gt_or_eq(ID,revision=308)) then
-   io_X=IO_OUTDATED_DB
-   call io_disconnect(ID,FORCE=.TRUE.)
-#if defined _TIMING
-   if (io_RESPONSE) call timing('io_X',OPR='stop')
-#endif
-   return
- endif
- !
  ! I assume that he RL ordering used to build X is not different
  ! from the one in DB1
  !
@@ -101,6 +92,14 @@ integer function io_X(X,Xw,ID)
    if (X%whoami==4) local_XC_KIND="Xp"
    io_X=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND=local_XC_KIND,CUTOFF=.true.,GAUGE=.TRUE.)
    if (io_X/=0) goto 1
+   !
+   if (.not.ver_is_gt_or_eq(ID,revision=308)) then
+     io_X=IO_OUTDATED_DB
+#if defined _TIMING
+     if (io_RESPONSE) call timing('io_X',OPR='stop')
+#endif
+     goto 1
+   endif
    !
    ! Global Descriptions
    !=====================

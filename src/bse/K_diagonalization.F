@@ -122,6 +122,11 @@ subroutine K_diagonalization(iq,W)
      enddo
    endif
    !
+ else
+   !
+   BS_H_dim=BS_K_dim
+   if (BS_K_coupling) BS_H_dim=2*BS_K_dim
+   !
  endif
  !
  ! Allocation & Par Procs
@@ -299,6 +304,7 @@ subroutine K_diagonalization(iq,W)
  X_epsilon(2,:)=(0.,0.)
  X_epsilon(3,:)=X_epsilon(3,:)/real(ncpu,SP)
  !
+ write (*,*) BS_H_dim,BS_K_dim
  call live_timing('BSK     epsilon',px%n_of_elements(myid+1))
  do i1=1,BS_H_dim
    if (.not.px%element_1D(i1)) cycle

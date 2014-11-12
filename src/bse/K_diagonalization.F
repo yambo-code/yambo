@@ -33,13 +33,13 @@ subroutine K_diagonalization(iq,W)
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_anti_res,BS_mat_free,BS_H_dim
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
- use matrix_operate, ONLY:mat_dia_inv,DIAGO,INV
+ use matrix_operate, ONLY:DIAGO,INV
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:d3k_factor,q_norm
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,ncpu,myid,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index
+ use interfaces,     ONLY:PARALLEL_index,MATRIX_driver
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
 #ifdef _OPENMP
@@ -163,14 +163,19 @@ subroutine K_diagonalization(iq,W)
    !
    call live_timing('BSK diagonalize',1)
    if (K_is_not_hermitian) then
-     call mat_dia_inv(DIAGO,BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
+     !
+     call MATRIX_driver(DIAGO,BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
      !
      if (BSS_write_eig_2_db) BS_mat=BS_V_right
      !
    else
-     call mat_dia_inv(DIAGO,BS_mat,E_real=BS_E_real)
+     !
+     call MATRIX_driver(DIAGO,BS_mat,E_real=BS_E_real)
+     !
      BS_E=BS_E_real
+     !
    endif
+   !
    call live_timing(steps=1)
    call live_timing
    !
@@ -237,7 +242,7 @@ subroutine K_diagonalization(iq,W)
      !
      call M_by_M('c','n',BS_H_dim,BS_V_left,BS_V_right,BS_overlap)
      !
-     call mat_dia_inv(INV,BS_overlap)
+     call MATRIX_driver(INV,BS_overlap)
      call live_timing(steps=1)
      call live_timing()
      !
@@ -304,7 +309,6 @@ subroutine K_diagonalization(iq,W)
  X_epsilon(2,:)=(0.,0.)
  X_epsilon(3,:)=X_epsilon(3,:)/real(ncpu,SP)
  !
- write (*,*) BS_H_dim,BS_K_dim
  call live_timing('BSK     epsilon',px%n_of_elements(myid+1))
  do i1=1,BS_H_dim
    if (.not.px%element_1D(i1)) cycle

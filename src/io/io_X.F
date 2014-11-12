@@ -90,7 +90,8 @@ integer function io_X(X,Xw,ID)
    if (X%whoami==2) local_XC_KIND="Xs"
    if (X%whoami==3) local_XC_KIND="Xd"
    if (X%whoami==4) local_XC_KIND="Xp"
-   io_X=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND=local_XC_KIND,CUTOFF=.true.,GAUGE=.TRUE.)
+   io_X=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND=local_XC_KIND,&
+&                    CUTOFF=.true.,GAUGE=.TRUE.,USE_SYSTEM_FRAGMENTATION=.FALSE.)
    if (io_X/=0) goto 1
    !
    if (.not.ver_is_gt_or_eq(ID,revision=308)) then

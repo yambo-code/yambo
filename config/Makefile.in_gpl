@@ -53,14 +53,14 @@ INTERFCS = a2y p2y e2y
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate common io wf_and_fft 
+BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate linear_algebra common io wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
                tddft pol_function qp bse
 #
 # Interfaces
 #
-2YLIBS       = external_c modules parallel parser communicate common io bz_ops 
+2YLIBS       = external_c modules parallel parser communicate linear_algebra common io bz_ops 
 #
 # YPP
 #

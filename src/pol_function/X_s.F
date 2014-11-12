@@ -31,10 +31,10 @@ subroutine X_s(iq,X,Xw,W_range)
 &                        PP_indexes,PP_indexes_reset,PAR_IND_INV_ID,PAR_COM_q_for_Xo
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
+ use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message,MATRIX_driver
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_mat,X_fxc
- use matrix_operate,ONLY:mat_dia_inv,INV,USE_SVD
+ use matrix_operate,ONLY:INV,USE_SVD
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_n_mem_freqs,&
 &                        FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,io_BS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE
@@ -175,7 +175,7 @@ subroutine X_s(iq,X,Xw,W_range)
      tddftk(i1,i1)=tddftk(i1,i1)+1.
    enddo
    !
-   call mat_dia_inv(INV,tddftk)
+   call MATRIX_driver(INV,tddftk)
    !
    ! X(g,gp)=Sum_gpp[tddftk]^-1_(g,gpp)*Xo(gpp,gp)
    !

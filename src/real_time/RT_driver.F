@@ -31,7 +31,7 @@ subroutine RT_driver(E,X,k,q)
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,X_alloc
  use wave_func,      ONLY:WF
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,MATRIX_driver 
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,SC_bands,it_now,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,Ho,&
@@ -45,7 +45,7 @@ subroutine RT_driver(E,X,k,q)
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update,&
 &                         dG_lesser,l_BGR,l_initial_equilibrium
  use plasma,          ONLY:Plasma_free,EH_gas
- use matrix_operate,  ONLY:mat_dia_inv,DIAGO
+ use matrix_operate,  ONLY:DIAGO
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_vecpot,A_vecpot_previous

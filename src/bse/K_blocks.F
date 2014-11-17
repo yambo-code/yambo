@@ -39,7 +39,8 @@ subroutine K_blocks( )
  use memory_m,     ONLY:mem_est
  use parallel_m,   ONLY:PAR_IND_T_all,PAR_IND_T_ordered,PP_redux_wait
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
-&                       BS_K_dim,BS_Block_size
+&                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_Block_size,&
+&                       BS_LiveTiming_prefactor
  use com,          ONLY:msg
  use interfaces,   ONLY:PARALLEL_live_message
  !
@@ -47,9 +48,10 @@ subroutine K_blocks( )
  !
  ! Work Space
  !
- integer    :: i_T,j_T,i_loop,tot_size,N_Ts_todo,N_Ts_total(1)
+ integer    :: i_T,j_T,i_loop,tot_size,N_Ts_total(1),i_block,block_size
  !
  call section('=','CPU-dependent Block structure')
+ !                 =============================
  !
  do i_loop=1,2
    !
@@ -58,7 +60,6 @@ subroutine K_blocks( )
    endif
    !
    N_Ts_total  =0
-   N_Ts_todo   =0
    tot_size    =0
    n_BS_blks   =0
    !
@@ -80,9 +81,6 @@ subroutine K_blocks( )
          BS_blk(n_BS_blks)%iT_p=j_T
          BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
          BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
-         !
-         N_Ts_todo=N_Ts_todo+BS_Block_size(n_BS_blks)
-         !
        endif
        !
        if (BS_K_coupling) then
@@ -101,9 +99,6 @@ subroutine K_blocks( )
            BS_blk(n_BS_blks)%iT_p=j_T
            BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
            BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
-           !
-           N_Ts_todo=N_Ts_todo+BS_Block_size(n_BS_blks)
-           !
          endif
          !
        endif
@@ -115,17 +110,30 @@ subroutine K_blocks( )
    !
  enddo
  !
+ ! Memory message
+ !================
+ !
  call mem_est("BSK",(/tot_size/))
  !
- ! REPORT
+ ! Live Timing Blocks
+ !====================
  !
- call msg('rsn','[BSK] Size   (total)',BS_K_dim)
+ BS_LiveTiming_prefactor=minval( BS_blk(:)%size(1) )
  !
- N_Ts_total=N_Ts_todo
+ do i_block=1,n_BS_blks
+   BS_LiveTiming_steps=BS_LiveTiming_steps+BS_Block_size(i_block)
+ enddo
+ !
+ N_Ts_total=BS_LiveTiming_steps
  !
  call PP_redux_wait((/N_Ts_total/))
  !
+ ! REPORT
+ !========
+ !
+ call msg('rsn','[BSK] Size   (total)',BS_K_dim)
+ !
  call PARALLEL_live_message("Kernel matrix elements (renormalized)",ENVIRONMENT="Response_T_space",&
-&                           LOADED=N_Ts_todo,TOTAL=N_Ts_total(1))
+&                           LOADED=BS_LiveTiming_steps,TOTAL=N_Ts_total(1))
  !
 end subroutine

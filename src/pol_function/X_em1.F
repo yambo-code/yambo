@@ -98,17 +98,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  call X_pre_setup(Xen,X)
  !
- ! In the next lines Yambo will VERIFY the em1d database
- ! to check if this iq has been alrady done. 
- ! When self_detect_E_range=.TRUE. however the Xw%er setup is
- ! done only in X_os and the VERIFY fails. This is why the procedure
- ! must be repeated here:
- !
- if (self_detect_E_range) then
-   call X_eh_setup(-X%iq(1),X,Xen,Xk,minmax_ehe)
-   Xw%er=minmax_ehe
- endif
- !
  ! Build frequency range only if Xw%p was not already allocated
  ! like in LifeTimes calculations or when self_detect_E_range=.TRUE. (real axis GW)
  !
@@ -119,7 +108,21 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  allocate(io_X_done(X%iq(2)))
  io_X_done=.FALSE.
  !
+ if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=.TRUE.
+ !
  do iq=X%iq(1),X%iq(2)
+   !
+   ! In the next lines Yambo will VERIFY the em1d database
+   ! to check if this iq has been alrady done. 
+   ! When self_detect_E_range=.TRUE. however the Xw%er setup is
+   ! done only in X_os and the VERIFY fails. This is why the procedure
+   ! must be repeated here:
+   !
+   if (self_detect_E_range) then
+     call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
+     Xw%er=minmax_ehe
+   endif
+   !
    if (iq==1) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=VERIFY,ID=Xdb)
    if (iq> 1) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq,2*iq+1/),MODE=VERIFY,ID=Xdb)
    X_em1=io_X(X,Xw,Xdb)
@@ -157,6 +160,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
      !
    endif
+   !
  endif
  !
  do iq=X%iq(1),X%iq(2)

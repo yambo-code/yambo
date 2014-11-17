@@ -32,11 +32,10 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
 &                        QP_solver_state,QP_n_W_freqs,QP_solver,QP_table
  use drivers,       ONLY:Finite_Tel
  use frequency,     ONLY:w_samp
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
- use interfaces,    ONLY:PARALLEL_index
  use functions,     ONLY:bose_f,bose_decay
  use electrons,     ONLY:levels,spin_occ,spin
  use R_lattice,     ONLY:qindx_S,bz_samp
+ use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_QP_index
  !
  implicit none
  type(bz_samp)::k
@@ -46,8 +45,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  !
  ! WorkSpace
  !
- integer         :: i1,i2,ib,is(2),os(3)
- type(PP_indexes):: px
+ integer         :: i_qp,i_w,ib,is(2),os(3),i_qp_mem
  real(SP)        :: tsign
  complex(SP)     :: QP_W_here(QP_n_W_freqs)
  complex(SP), allocatable :: dSc(:)
@@ -55,53 +53,54 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  tsign=-1.
  if (Finite_Tel) tsign=1.
  !
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/QP_n_G_bands(2)/),low_range=(/QP_n_G_bands(1)/))
- !
- do i1=1,QP_n_states
+ do i_qp=1,QP_n_states
+   !
+   if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+   !
+   i_qp_mem=PAR_QP_index(i_qp)
    !
    if (allocated(QP_solver_state)) then
-     if(QP_solver_state(i1)<=0) cycle
+     if(QP_solver_state(i_qp)<=0) cycle
    endif
    !
-   allocate(dSc(Sc_W(i1)%n_freqs))
+   allocate(dSc(Sc_W(i_qp)%n_freqs))
    !
    dSc=(0._SP,0._SP)
    !
-   is=(/QP_table(i1,1),QP_table(i1,3)/)   ! (nk) QP
-   os(2)=k%sstar(qindx_S(is(2),iqbz,1),1) ! (nk) intermediate state
-   os(3)=spin(QP_table(i1,:))
+   is=(/QP_table(i_qp,1),QP_table(i_qp,3)/)   ! (nk) QP
+   os(2)=k%sstar(qindx_S(is(2),iqbz,1),1)     ! (nk) intermediate state
+   os(3)=spin(QP_table(i_qp,:))
    !
    do ib=QP_n_G_bands(1),QP_n_G_bands(2)
-     if (.not.px%element_1D(ib)) cycle
+     !
+     if (.not.PAR_IND_G_b%element_1D(ib)) cycle
      !
      os(1)=ib
      !
      ! 1st term: (spin_occ-f_os+fbose)
      !
-     forall(i2=1:Xw%n_freqs) QP_W_here(i2)=QP_W(i1,ib,i2)*&
-&                         (spin_occ-E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i2))))*&
-&                         bose_decay(real(Xw%p(i2)))
+     forall(i_w=1:Xw%n_freqs) QP_W_here(i_w)=QP_W(i_qp_mem,ib,i_w)*&
+&                        (spin_occ-E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i_w))))*&
+&                         bose_decay(real(Xw%p(i_w)))
      !
      call Kramers_Kronig(QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,&
-&            real(Sc_W(i1)%p(:))-cmplx(0.,tsign,SP)*aimag(Sc_W(i1)%p(:)),&
-&            Sc_W(i1)%n_freqs,&
+&            real(Sc_W(i_qp)%p(:))-cmplx(0.,tsign,SP)*aimag(Sc_W(i_qp)%p(:)),&
+&            Sc_W(i_qp)%n_freqs,&
 &            E%E(os(1),os(2),os(3))+tsign*cmplx(0.,QP_G_damp,SP))
      !
      ! 2nd term: (f_os+fbose)
      !
-     forall(i2=1:Xw%n_freqs) QP_W_here(i2)=QP_W(i1,ib,i2)*&
-&                         (E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i2))))*&
-&                         bose_decay(real(Xw%p(i2)))
+     forall(i_w=1:Xw%n_freqs) QP_W_here(i_w)=QP_W(i_qp_mem,ib,i_w)*&
+&                         (E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i_w))))*&
+&                         bose_decay(real(Xw%p(i_w)))
      !
      call Kramers_Kronig(-QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,&
-&            -real(Sc_W(i1)%p(:))+cmplx(0.,1.,SP)*aimag(Sc_W(i1)%p(:)),Sc_W(i1)%n_freqs,&
+&            -real(Sc_W(i_qp)%p(:))+cmplx(0.,1.,SP)*aimag(Sc_W(i_qp)%p(:)),Sc_W(i_qp)%n_freqs,&
 &            -E%E(os(1),os(2),os(3))-cmplx(0.,QP_G_damp,SP))
      !
    enddo
    !
-   call PP_redux_wait(dSc)
-   forall(i2=1:Sc_W(i1)%n_freqs) QP_Sc(i1,i2)=QP_Sc(i1,i2)+dSc(i2)
+   forall(i_w=1:Sc_W(i_qp)%n_freqs) QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+dSc(i_w)
    !
    deallocate(dSc)
    !

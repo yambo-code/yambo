@@ -32,7 +32,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index,WF_load
+ use interfaces,     ONLY:PARALLEL_index,WF_load,MATRIX_driver 
  use R_lattice,      ONLY:bz_samp,bare_qpg,nqibz
  use electrons,      ONLY:levels,nel
  use D_lattice,      ONLY:DL_vol
@@ -40,7 +40,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use X_m,            ONLY:X_t,X_alloc,X_mat
  use QP_m,           ONLY:QP_nb,QP_nk,QP_n_states,QP_table,QP_state,QP_Vnl_xc,QP_Vxc
  use collision,      ONLY:ggwinfo,collision_reset
- use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK
+ use matrix_operate, ONLY:INV,USE_LK
  use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
 &                         XC_LDA_X,XC_CORRELATION,XC_potential_driver
@@ -224,7 +224,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
            tddftk(:,i1)=-X_mat(:,i1,iw)*4.*pi*lambda(il)/bare_qpg(iqibz,i1)**2.
            tddftk(i1,i1)=tddftk(i1,i1)+1.
          enddo
-         call mat_dia_inv(INV,tddftk,lib_in=USE_LK)
+         call MATRIX_driver(INV,tddftk,lib_in=USE_LK)
          X_s=matmul(tddftk,X_mat(:,:,iw))
          forall(i1=1:X%ng) dX(i1)=(X_s(i1,i1)-X_mat(i1,i1,iw))*4.*pi*isc%gamp(i1,1)
          ACFDT_Ec=ACFDT_Ec-q%nstar(iqibz)*lambda_weight(il)*freq_weight(iw)*sum(dX)

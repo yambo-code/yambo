@@ -31,7 +31,8 @@ subroutine QP_of(qp,en,QPdb_read_err)
  use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Vnl_xc,QP_table,&
 &                    QP_solver,QP_n_states,l_extended_output,Vxc_kind,&
 &                    QP_Sc_steps,use_GreenF_to_eval_QP,Vnlxc_kind,&
-&                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,QP_states_simmetrize ,QP_G_info
+&                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,&
+&                    QP_states_simmetrize,QP_G_info
  use stderr,    ONLY:set_real_printed_length
  implicit none
  type(QP_t)   ::qp
@@ -74,7 +75,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
  titles(21) = 'E_75%(low)' ! 21
  titles(22) = 'E_75%(high)' ! 22
  titles(23) = 'Integral' ! 23
- titles(24) = 'Sc(Eo) (Mhz)' ! 24
+ titles(24) = 'Sc(Eo)(Mhz)' ! 24
  !
 #if defined _QED
  ntitles=6

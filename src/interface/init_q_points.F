@@ -95,6 +95,7 @@ subroutine init_q_points(l_WRITE)
    !
    integer function get_e_p_q_point(i_q,q_in)
      !
+     use D_lattice,   ONLY:alat
      use IO_m,        ONLY:io_control,io_connect,io_unit,OP_RD_CL,&
 &                          io_netcdf_support,io_disconnect
      !
@@ -103,7 +104,7 @@ subroutine init_q_points(l_WRITE)
      !
      integer           :: io_err,ID
      character(schlen) :: db_name
-     real(DP)          :: alat
+     real(DP)          :: alat_DP
      !
      call io_control(ACTION=OP_RD_CL,ID=ID)
      io_netcdf_support(ID)=.FALSE.
@@ -112,7 +113,8 @@ subroutine init_q_points(l_WRITE)
      get_e_p_q_point=io_err
      if (io_err==0) then
        read (io_unit(ID)) 
-       read (io_unit(ID)) alat,q_in
+       read (io_unit(ID)) alat_DP,q_in
+       q_in=q_in/alat_DP*alat(:)
      endif
      call io_disconnect(ID)
      !

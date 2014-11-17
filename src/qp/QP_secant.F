@@ -58,7 +58,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  use parallel_m,    ONLY:PP_redux_wait
  use QP_m,          ONLY:QP_t,QP_Vxc,QP_Vnl_xc,QP_Sc,QP_n_W_freqs,QP_W,QP_n_states,&
 &                        QP_solver_state,QP_dSc_steps,QP_dSc,&
-&                        QP_W_dr,QP_W_er,QP_dSc_delta,QP_W_partially_done
+&                        QP_W_dr,QP_W_er,QP_dSc_delta
  use IO_m,          ONLY:io_control,NONE,RD,RD_CL,OP_RD,OP_RD_CL
  use stderr,        ONLY:intc
  use com,           ONLY:warning
@@ -83,8 +83,6 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  !I need to store on disk the <W> m. elemnts
  !
  call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0)
- !
- if (QP_W_partially_done) return
  !
  !I prepare the Sc energy type
  !

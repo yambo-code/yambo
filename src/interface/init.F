@@ -486,7 +486,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,'RT_Threads')
 #endif
    else 
-#if  defined _RT
+#if !defined _RT
      call CPU_activate("SE")
      call initactivate(1,'SE_Threads')
 #endif
@@ -678,7 +678,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_gw0.or.l_life) then
    !
    if (l_elphoton_corr) then
-     call initactivate(1,'FFTGvecs GbndRnge GDamping dScStep DysSolver') 
+     call initactivate(1,'FFTGvecs QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
      if (trim(QP_solver)=="g") then
        call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
      else

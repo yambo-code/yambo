@@ -27,6 +27,24 @@ module interfaces
  !
  interface
    !
+   subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_digits,fill)
+     !
+     use matrix_operate, ONLY:blacs_t
+     use pars,           ONLY:SP
+     !
+     integer                :: idriver
+     complex(SP)            :: M(:,:)
+     complex(SP),  optional :: V_left(:,:)
+     complex(SP),  optional :: V_right(:,:)
+     complex(SP),  optional :: E_cmpl(:)
+     type(blacs_t),optional :: blt
+     real(SP),     optional :: E_real(:)
+     integer,      optional :: lib_in
+     integer,      optional :: fill
+     integer,      optional :: SVD_digits 
+     !
+   end subroutine
+   !
    integer function io_COLLISIONS(i_qp,ID,COLL)
      use collision,  ONLY:COLLISIONS_element
      integer, intent(inout)             ::ID

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function Matrix_resolvant_via_perturbative_inversion(N,W,C,f,V)
+integer function MATRIX_resolvant_via_perturbative_inversion(N,W,C,f,V)
  !
  ! C<W|1./(V^{-1}-M)|W> = \sum_n C<W| (1-VM)^{-1} V |W> = \sum_n C<W| ( VM )^n V |W>
  !
@@ -48,7 +48,7 @@ integer function Matrix_resolvant_via_perturbative_inversion(N,W,C,f,V)
  integer     ::it,i1
  complex(SP) ::A_nm1(N),A_n(N),delta_f,fo
  !
- Matrix_resolvant_via_perturbative_inversion=0
+ MATRIX_resolvant_via_perturbative_inversion=0
  !
  A_nm1(:)=V(:)*W(:)
  !
@@ -92,7 +92,7 @@ integer function Matrix_resolvant_via_perturbative_inversion(N,W,C,f,V)
    !
  enddo
  !
- Matrix_resolvant_via_perturbative_inversion=1
+ MATRIX_resolvant_via_perturbative_inversion=1
  f=(0.,0.)
  !
 end function

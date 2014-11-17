@@ -29,8 +29,8 @@ subroutine SET_logicals()
  use com,        ONLY:write_to_of,write_to_report
  use IO_m,       ONLY:IO_write,IO_read,Fragmented_IO,Fragmented_IO_save,IO_write_not_fragmented_DB,&
 &                     DBs_IO_control_string,io_DIP,io_RESPONSE,io_HF,io_COLLs,io_WF,io_GF,io_J,io_OCCs,&
-&                     io_SC,io_BS_K
- use stderr,     ONLY:write_to_log,write_fragments_IO_log,string_split
+&                     io_SC,io_BS_K,io_SCREEN
+ use stderr,     ONLY:write_to_log,write_fragments_IO_log,string_split,write_to_log_default
  use LIVE_t,     ONLY:live_timing_is_on
  implicit none
  !
@@ -49,6 +49,7 @@ subroutine SET_logicals()
    if (i_chain> 0) write_to_log=INTER_CHAIN(i_chain)%CPU_id==0
  endif
  !
+ write_to_log_default      =write_to_log
  write_fragments_IO_log    =write_to_log
  IO_write_default(myid+1)  =master_cpu
  IO_write                  =IO_write_default(myid+1)
@@ -64,6 +65,8 @@ subroutine SET_logicals()
  do i_ch=1,10
    if (any((/"DIP","dip"/)==trim(ch_piece(i_ch)))) io_DIP=.FALSE.
    if (any((/"X","x"/)==trim(ch_piece(i_ch)))) io_RESPONSE=.FALSE.
+   io_SCREEN=.FALSE.
+   !if (any((/"W","w"/)==trim(ch_piece(i_ch)))) io_SCREEN=.FALSE.
    if (any((/"HF","hf"/)==trim(ch_piece(i_ch)))) io_HF=.FALSE.
    if (any((/"WF","wf"/)==trim(ch_piece(i_ch)))) io_WF=.FALSE.
    if (any((/"COLLS","COLLs","colls"/)==trim(ch_piece(i_ch)))) io_COLLs=.FALSE.

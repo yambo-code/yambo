@@ -91,6 +91,13 @@ module parallel_m
    integer              :: nCPU_inversion       =0
  end type CPU_stru
  !
+ !      if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
+ !      if (i_s==2) possible_fields='(q,k,c,v)' ! X_finite_q
+ !      if (i_s==3) possible_fields='(q,k,c,v)' ! X_all_q
+ !      if (i_s==4) possible_fields='(k,eh,t)'  ! BS
+ !      if (i_s==5) possible_fields='(q,qp,b)'  ! SE
+ !      if (i_s==6) possible_fields='(k,b,q,qp)'! RT
+ !
  integer,parameter   :: n_CPU_str_max=20
  type(CPU_stru),SAVE :: CPU_structure(n_CPU_str_max)
  !

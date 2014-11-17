@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CA
+! Authors (see AUTHORS file for details): CA AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -27,9 +27,8 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  use QP_m,            ONLY:QP_n_states
  use collision,       ONLY:COLLISIONS_element,COLLISIONS_cutoff
  use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL,io_and_Messaging_switch,io_COLLs
- use drivers,         ONLY:l_elel_scatt
  use interfaces,      ONLY:io_COLLISIONS
- use parallel_m,      ONLY:PAR_QP_index,myid
+ use parallel_m,      ONLY:PAR_QP_index
  !
  implicit none                                              
  !
@@ -40,44 +39,58 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  ! Work Space
  !
  integer   :: ic,i1,i2,i3,i_cycle,io_err,ID,i_ref
- logical   :: local_condition,l_COHSEX,l_GW_NEQ,l_HF
+ logical   :: store_it,l_COHSEX,l_GW_NEQ,l_HF
  real(SP)  :: COLLISIONS_max
  !
  l_HF     =index(what,"HF")>0
  l_COHSEX =index(what,"COHSEX")>0
  l_GW_NEQ =index(what,"GW_NEQ")>0
  !
- ! Reduction of tiny elements of tmp_sx.
- !
  i_ref=1
  if (.not.io_COLLs) i_ref=PAR_QP_index(i_qp)
  !
+ ! Reference value for the reduction of the tiny elements of COHSEX/HF collision
+ ! integrals.
+ !
  if(l_COHSEX.or.l_HF) COLLISIONS_max=maxval(abs(COLL(1)%v3c(:,:,:)))        
  if(l_GW_NEQ        ) COLLISIONS_max=maxval(abs(COLL(1)%v3r(:,:,:)))        
+ !
  COLL(i_ref)%table(:,:,:)=0
  !
  do i_cycle=1,2
+   !
    ic=0
+   !
    do i1=COLL(i_ref)%D(1,1),COLL(i_ref)%D(1,2)
      do i2=COLL(i_ref)%D(2,1),COLL(i_ref)%D(2,2)
        do i3=COLL(i_ref)%D(3,1),COLL(i_ref)%D(3,2)
-         if(l_COHSEX.or.l_HF) local_condition=abs(COLL(1)%v3c(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.&
-&                        COLLISIONS_cutoff<0.0.or.l_elel_scatt
-         if(l_GW_NEQ) local_condition=abs(COLL(1)%v3r(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.&
-&                        COLLISIONS_cutoff<0.0.or.l_elel_scatt
-         if (local_condition) then
+         !
+         ! In the COHSEX/HF case a cutoff can be applied
+         !
+         if (l_COHSEX.or.l_HF) store_it=abs(COLL(1)%v3c(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.&
+&                                       COLLISIONS_cutoff<0.0
+         !
+         if (l_GW_NEQ) store_it=.TRUE.
+         !
+         if (store_it) then
            ic=ic+1
            if (i_cycle==2) then
+             !
              COLL(i_ref)%table(i1,i2,i3)=1
-             if(l_COHSEX.or.l_HF) COLL(i_ref)%v(ic)=COLL(1)%v3c(i1,i2,i3) 
-             if(l_GW_NEQ) COLL(i_ref)%v(ic)=cmplx(COLL(1)%v3r(i1,i2,i3),0._SP)
+             if (l_COHSEX.or.l_HF) COLL(i_ref)%v(ic)=COLL(1)%v3c(i1,i2,i3) 
+             if (l_GW_NEQ)         COLL(i_ref)%v(ic)=cmplx(COLL(1)%v3r(i1,i2,i3),0._SP)
+             !
            endif
          endif
+         !
        enddo
      enddo
    enddo
+   !
    COLL(i_ref)%N=ic
+   !
    if (i_cycle==1) call COLLISIONS_alloc_and_free(what,"v1","alloc",i_ref)
+   !
  enddo
  !
  if (.not.IO_colls) return

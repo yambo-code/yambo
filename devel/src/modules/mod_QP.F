@@ -45,7 +45,6 @@ module QP_m
  integer           :: QP_n_G_bands(2)
  integer           :: GWo_iterations
  logical           :: QP_dSc_test
- logical           :: QP_W_partially_done
  logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties
  logical           :: l_GW_terminator=.FALSE.

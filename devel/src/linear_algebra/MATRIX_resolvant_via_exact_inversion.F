@@ -21,12 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function Matrix_resolvant_via_exact_inversion(N,W,C,f,V,M)
+integer function MATRIX_resolvant_via_exact_inversion(N,W,C,f,V,M)
  !
  ! C<W|1./(V^{-1}-M)|W>
  !
  use pars,           ONLY:SP
- use matrix_operate, ONLY:mat_dia_inv,INV
+ use interfaces,     ONLY:MATRIX_driver
+ use matrix_operate, ONLY:INV
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
  !
  implicit none
@@ -41,7 +42,7 @@ integer function Matrix_resolvant_via_exact_inversion(N,W,C,f,V,M)
  integer     ::i1,i2
  complex(SP) ::A_n(N)
  !
- Matrix_resolvant_via_exact_inversion=0
+ MATRIX_resolvant_via_exact_inversion=0
  !
  allocate(wk(N,N))
  wk=(0.,0.)
@@ -52,7 +53,7 @@ integer function Matrix_resolvant_via_exact_inversion(N,W,C,f,V,M)
      wk(i1,i2)=wk(i1,i2)-M(i1,i2)
    enddo
  enddo
- call mat_dia_inv(INV,wk)
+ call MATRIX_driver(INV,wk)
  call M_by_V('n',N,wk,W,A_n)
  f=C*Vstar_dot_V(N,W,A_n)
  !

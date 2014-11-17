@@ -29,7 +29,7 @@ subroutine io_and_Messaging_switch(what,CONDITION)
  use parallel_m,     ONLY:IO_write_default,myid,master_cpu
  use stderr,         ONLY:string_split,write_to_log
  use LIVE_t,         ONLY:live_timing_is_on
- use stderr,         ONLY:write_fragments_IO_log
+ use stderr,         ONLY:write_fragments_IO_log,write_to_log_default
  implicit none
  !
  character(*)      :: what
@@ -41,6 +41,8 @@ subroutine io_and_Messaging_switch(what,CONDITION)
  character(schlen)::ch_piece(10)
  logical          ::local_TRUE,local_FALSE,local_master
  !
+ logical,    SAVE ::IO_read_now,IO_write_now,write_to_of_now,write_to_report_now,live_timing_is_on_now
+ !
  local_TRUE  =.TRUE.
  local_FALSE =.FALSE.
  local_master=master_cpu
@@ -51,12 +53,30 @@ subroutine io_and_Messaging_switch(what,CONDITION)
  endif
  !
  if (len_trim(what)>0) then
+   !
    call string_split(what,ch_piece)
+   !
    do ich=1,10
+     !
+     ! Restore 
+     !
+     if (trim(ch_piece(ich))=="RESTORE") then
+       IO_read           =IO_read_now
+       IO_write          =IO_write_now
+       write_to_of       =write_to_of_now
+       write_to_report   =write_to_report_now
+       live_timing_is_on =live_timing_is_on_now
+     endif
      !
      ! Complete Reset
      !
-     if (trim(ch_piece(ich))=="RESET") call SET_logicals()
+     if (trim(ch_piece(ich))=="RESET") then
+       IO_read           =.TRUE.
+       IO_write          =IO_write_default(myid+1)
+       write_to_of       =master_cpu
+       write_to_report   =master_cpu
+       live_timing_is_on =write_to_log_default
+     endif
      !
      ! Messages
      !
@@ -90,5 +110,11 @@ subroutine io_and_Messaging_switch(what,CONDITION)
      !
    enddo
  endif
+ !
+ IO_read_now           =IO_read
+ IO_write_now          =IO_write
+ write_to_of_now       =write_to_of
+ write_to_report_now   =write_to_report
+ live_timing_is_on_now =live_timing_is_on
  !
 end subroutine io_and_Messaging_switch

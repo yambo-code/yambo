@@ -31,7 +31,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_B_mat_index,PAR_nQP,PAR_QP_index,PAR_INDEX_copy,&
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load,&
 &                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index,&
-&                        PAR_BS_T_grps_index,PAR_BS_nT_col_grps,PAR_Kk_nibz,PP_redux_wait
+&                        PAR_BS_T_grps_index,PAR_BS_nT_col_grps,PAR_Kk_nibz,MAX_N_OF_CHAINS
  use parallel_m,    ONLY:& ! LOGICALS
 &                        l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
 &                        HEAD_QP_cpu,HEAD_k_cpu
@@ -75,9 +75,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #endif
  use electrons,     ONLY:levels
  use stderr,        ONLY:intc
- use com,           ONLY:error
+ use com,           ONLY:error,warning
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
- use IO_m,          ONLY:io_and_Messaging_switch,io_COLLs
+ use IO_m,          ONLY:io_and_Messaging_switch,io_COLLs,io_RESPONSE
  use QP_m,          ONLY:QP_n_states,QP_nb,QP_table,QP_n_G_bands
  use wave_func,     ONLY:states_to_load
  implicit none
@@ -90,8 +90,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  ! Work Space
  !
- integer              :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2,B_error(2)
- logical              :: reset_all
+ integer              :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2,i_field
+ logical              :: reset_all,l_found
  character(10)        :: WHAT,WHATp
  !
  ! Resets...
@@ -218,7 +218,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    if (RESET) return
  endif
  !
- call PARALLEL_get_user_structure(ENVIRONMENT)
+ call PARALLEL_get_user_structure(ENVIRONMENT,.TRUE.)
  !
  PAR_COM_WORLD%COMM  =mpi_comm_world
  PAR_COM_WORLD%CPU_id=myid
@@ -390,6 +390,27 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    endif
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
+   !
+   if (ENVIRONMENT=="Response_G_space") then
+     !
+     ! io_RESPONSE check
+     !
+     ! No X I/O is possible ONLY when the number of cpu's associated with the "q" field
+     ! in the response function string is the same of the SE/RT/SC...string
+     !  
+     if (.not.io_RESPONSE) then
+       !
+       i_field=3
+       call PARALLEL_get_user_structure("Self_Energy",.FALSE.)
+       !
+       if (CPU_structure(5)%CPU(1)>1) i_field=5
+       !
+       if (CPU_structure(3)%CPU(1)/=CPU_structure(i_field)%CPU(1)) io_RESPONSE=.TRUE.
+       !
+       if (io_RESPONSE) call warning('Response function I/O forced. Different CPU for the "q" field in X and SE')
+       !
+     endif
+   endif
    !
  endif
  !
@@ -941,8 +962,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             LOADED=PAR_IND_CON_BANDS_X(X_type)%n_of_elements(PAR_COM_CON_INDEX(X_type)%CPU_id+1),&
 &                             TOTAL=n_bands(2)-n_bands(1)+1,&
 &                             NCPU=PAR_COM_CON_INDEX(X_type)%n_CPU)
-   B_error(1)=0
-   if (PAR_IND_CON_BANDS_X(X_type)%n_of_elements(PAR_COM_CON_INDEX(X_type)%CPU_id+1)==0) B_error(1)=1
    !
    ! Response functions valence bands
    !
@@ -957,13 +976,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                             LOADED=PAR_IND_VAL_BANDS_X(X_type)%n_of_elements(PAR_COM_VAL_INDEX(X_type)%CPU_id+1),&
 &                             TOTAL=n_bands(2)-n_bands(1)+1,&
 &                             NCPU=PAR_COM_VAL_INDEX(X_type)%n_CPU)
-   !
-   B_error(2)=0
-   if (PAR_IND_VAL_BANDS_X(X_type)%n_of_elements(PAR_COM_VAL_INDEX(X_type)%CPU_id+1)==0) B_error(2)=1
-   !
-   call PP_redux_wait(B_error)
-   !
-   if (any(B_error>0)) call error("Too many CPU's assigned to conduction and/or valence bands")
    !
  endif
  !

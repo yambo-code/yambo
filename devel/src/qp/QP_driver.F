@@ -37,7 +37,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
 &                        QP_Vnl_xc,QP_n_states,QP_nb,QP_G_zoom_er,QP_G_Zoom_treshold,&
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,&
-&                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_W_partially_done,&
+&                        QP_Sc_steps,QP_G_er,QP_G_dr,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
 &                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,&
 &                        l_GW_terminator,GW_terminator_Kind,l_QP_Expand,QP_G_info
@@ -214,7 +214,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_QP)
    io_QP_and_GF_err=io_QP_and_GF('QP',qp,ID_QP)
    !
-   if (io_QP_and_GF_err==0.and..not.trim(QP_solver)=='g'.and..not.QP_W_partially_done) then
+   if (io_QP_and_GF_err==0.and..not.trim(QP_solver)=='g') then
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID_QP)
      io_QP_and_GF_err=io_QP_and_GF('QP',qp,ID_QP)
      call QP_report_and_write(k,qp,en,0)
@@ -282,23 +282,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !--------
    call QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    !
-   ! When the W q-loop is not completed done the S_c cannot be
-   ! calculated on-fly 
-   !
-   if (QP_W_partially_done) then
-     call local_free()
-     return
-   endif
  endif
  !
- ! SECANT
- !--------
  if (trim(QP_solver)=='s') then
+   !
+   ! SECANT
+   !--------
    call QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
-   if (QP_W_partially_done) then
-     call local_free()
-     return
-   endif
+   !
  endif
  !
  ! GREEN`s FUNCTIONS

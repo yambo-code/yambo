@@ -44,7 +44,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use X_m,          ONLY:X_alloc,X_t,X_mat
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_n_g_W,BS_Block_size,&
-&                       O_ng,BS_n_g_exch,BS_identifier,&
+&                       O_ng,BS_n_g_exch,BS_identifier,BS_LiveTiming_steps,&
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,BSS_q0,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp
@@ -80,7 +80,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p,H_pos(2),i_k_s_m1,&
 &              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,alloc_err,&
 &              bands_to_load(2),iOvv,iOcc
- integer(IP):: N_Ts_total
  complex(SP):: Co,H_x,H_c,PHASE_1,PHASE_2
  !
  complex(SP),allocatable ::BS_W(:,:,:)
@@ -395,14 +394,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !endif
  ! Timing
  !========
- N_Ts_total=0
  !
- do i_block=1,n_BS_blks
-   N_Ts_total=N_Ts_total+BS_Block_size(i_block)
- enddo
- !
- if (.not.l_bs_fxc) call live_timing('Kernel',n_Ts_total)
- if (l_bs_fxc) call live_timing('Kernel->Fxc',n_Ts_total)
+ if (.not.l_bs_fxc) call live_timing('Kernel',BS_LiveTiming_steps)
+ if (l_bs_fxc) call live_timing('Kernel->Fxc',BS_LiveTiming_steps)
  !
  do i_block=1,n_BS_blks
    !

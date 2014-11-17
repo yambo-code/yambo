@@ -36,10 +36,10 @@ subroutine K_Haydock(iq,W)
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
  use BS,             ONLY:BSS_n_descs,Haydock_treshold,BSS_description,& 
-      & BS_DB_is_fragmented,io_BSS_Haydock, BS_K_Coupling,&
-      & Haydock_terminator, BSE_mode,Haydock_v0_mod,BS_Blocks_symmetrize_K,&
-      & BS_HAYVEC_free,BS_HAYVEC_alloc, BS_T_grp,BS_nT_grps,&
-      &Haydock_vector,BS_BLK, N_BS_BLKS, Haydock_parallel_mask,Haydock_parallel_group_comm
+&                         io_BSS_Haydock, BS_K_Coupling,&
+&                         Haydock_terminator, BSE_mode,Haydock_v0_mod,BS_Blocks_symmetrize_K,&
+&                         BS_HAYVEC_free,BS_HAYVEC_alloc, BS_T_grp,BS_nT_grps,&
+&                         Haydock_vector,BS_BLK, N_BS_BLKS, Haydock_parallel_mask,Haydock_parallel_group_comm
  use interfaces,     ONLY:K_multiply_by_V,K_dot_product
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
@@ -160,9 +160,6 @@ subroutine K_Haydock(iq,W)
  BSS_n_descs=BSS_n_descs+1
  BSS_description(BSS_n_descs)='        |Iteration            [o/o]: 0'
  !
- call msg('r','Use Database fragments    :',BS_DB_is_fragmented)
- if (BS_DB_is_fragmented) call msg('s','[Haydock] Use Database&
-      & fragments')
  call msg('r','Accuracy (requested) [o/o]:',Haydock_treshold)
  !
  ! Initialization of Haydock vectors and tridiagonal matrix elements

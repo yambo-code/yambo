@@ -26,7 +26,8 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period,use_LRR)
  use pars,            ONLY:SP,cI
  use YPP,             ONLY:i_t_start,X_order
  use real_time,       ONLY:RT_step,NE_steps
- use matrix_operate,  ONLY:mat_dia_inv,INV
+ use interfaces,      ONLY:MATRIX_driver
+ use matrix_operate,  ONLY:INV
  implicit none
  !
  integer,     intent(in)   :: NW,NX
@@ -77,7 +78,7 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period,use_LRR)
    end do
  endif
  !
- call mat_dia_inv(INV,M)
+ call MATRIX_driver(INV,M)
  !
  X = (0._SP,0._SP)
  X_here = (0._SP,0._SP)

@@ -3288,7 +3288,8 @@ end subroutine
 subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
 &                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
   !
-  use matrix_operate, ONLY:mat_dia_inv,DIAGO
+  use interfaces,     ONLY:MATRIX_driver
+  use matrix_operate, ONLY:DIAGO
   use pars,           ONLY:SP
   !
   IMPLICIT NONE
@@ -3358,7 +3359,7 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
     !
     if(nbeta>1) then
       cd_tmp=cmplx(d_tmp,0._SP)
-      call mat_dia_inv(DIAGO,cd_tmp,E_real=d)
+      call MATRIX_driver(DIAGO,cd_tmp,E_real=d)
       d_tmp=real(cd_tmp)
     else
       d=d_tmp(1,1)

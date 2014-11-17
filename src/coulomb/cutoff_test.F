@@ -235,9 +235,9 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
 &           (is_cut(3).and.abs(r(3))<cyl_length.and.abs(r(1))**2+abs(r(2))**2<cyl_ph_radius**2) ) &
 &       V_in_cyl=1./v_norm(r)
      else
-       if ( (is_cut(1).and.sqrt(abs(r(2))**2+abs(r(3))**2)<cyl_ph_radius**2).or.&
-&           (is_cut(2).and.sqrt(abs(r(1))**2+abs(r(3))**2)<cyl_ph_radius**2).or.&
-&           (is_cut(3).and.sqrt(abs(r(1))**2+abs(r(2))**2)<cyl_ph_radius**2)) V_in_cyl=1./v_norm(r)
+       if ( (is_cut(1).and.abs(r(2))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
+&           (is_cut(2).and.abs(r(1))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
+&           (is_cut(3).and.abs(r(1))**2+abs(r(2))**2<cyl_ph_radius**2)) V_in_cyl=1./v_norm(r)
      endif
    end function
  !

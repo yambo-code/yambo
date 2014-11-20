@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
-#include <util.h>
+#include "util.h"
 
 
 #define FALSE 0

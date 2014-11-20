@@ -133,7 +133,7 @@ ec_pot_high(pz_consts_type *X, int order, int i, FLOAT *rs,
 
 /* the functional */
 void 
-XC(lda_c_pz_func)(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
+XC(lda_c_pz_func)(const XC(func_type) *p, XC(lda_work_t) *r)
 {
   int func;
   FLOAT ecp, vcp, fcp, kcp;
@@ -209,7 +209,7 @@ const XC(func_info_type) XC(func_info_lda_c_pz) = {
   XC_FAMILY_LDA,
   "Perdew and Zunger, Phys. Rev. B 23, 5048 (1981)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-32, 0.0, 0.0, 1e-32,
   NULL,     /* init */
   NULL,     /* end  */
   work_lda, /* lda  */
@@ -223,7 +223,7 @@ const XC(func_info_type) XC(func_info_lda_c_pz_mod) = {
   "Perdew and Zunger, Phys. Rev. B 23, 5048 (1981)\n"
   "Modified to improve the matching between the low- and high-rs parts",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-32, 0.0, 0.0, 1e-32,
   NULL,     /* init */
   NULL,     /* end  */
   work_lda, /* lda  */
@@ -238,7 +238,7 @@ const XC(func_info_type) XC(func_info_lda_c_ob_pz) = {
   "G Ortiz and P Ballone, Phys. Rev. B 56, 9970(E) (1997)\n"
   "Perdew and Zunger, Phys. Rev. B 23, 5048 (1981)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-32, 0.0, 0.0, 1e-32,
   NULL,     /* init */
   NULL,     /* end  */
   work_lda, /* lda  */

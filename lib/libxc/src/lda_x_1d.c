@@ -29,32 +29,24 @@ typedef struct{
 } lda_x_1d_params;
 
 static void 
-lda_x_1d_init(void *p_)
+lda_x_1d_init(XC(func_type) *p)
 {
-  XC(lda_type) *p = (XC(lda_type) *)p_;
-
   assert(p->params == NULL);
   p->params = malloc(sizeof(lda_x_1d_params));
 
   /* default value is soft-Coulomb with beta=1.0 */
-  XC(lda_x_1d_set_params_)(p, 1, 1.0);
+  XC(lda_x_1d_set_params)(p, 1, 1.0);
 }
 
 
 void 
 XC(lda_x_1d_set_params)(XC(func_type) *p, int interaction, FLOAT bb)
 {
-  assert(p != NULL && p->lda != NULL);
-  XC(lda_x_1d_set_params_)(p->lda, interaction, bb);
-}
+  lda_x_1d_params *params;
 
+  assert(p != NULL && p->params != NULL);
+  params = (lda_x_1d_params *)(p->params);
 
-void 
-XC(lda_x_1d_set_params_)(XC(lda_type) *p, int interaction, FLOAT bb)
-{
-  lda_x_1d_params *params = (lda_x_1d_params *)(p->params);
-
-  assert(params != NULL);
   assert(interaction == 0 || interaction == 1);
 
   params->interaction = interaction;
@@ -68,9 +60,9 @@ static inline FLOAT FT_inter(FLOAT x, int interaction)
 
   if(interaction == 0){
     FLOAT x2 = x*x;
-    return expint(x2)*exp(x2);
+    return expint_e1(x2)*exp(x2);
   }else
-    return 2.0*bessk0(x); 
+    return 2.0*bessel_K0(x); 
 }
 
 
@@ -95,7 +87,7 @@ static void func2(FLOAT *x, int n, void *ex)
 
 
 static inline void
-func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
+func(const XC(func_type) *p, XC(lda_work_t) *r)
 {
   static int spin_sign[2] = {+1, -1};
   static int spin_fact[2] = { 2,  1};
@@ -168,7 +160,7 @@ const XC(func_info_type) XC(func_info_lda_x_1d) = {
   XC_FAMILY_LDA,
   "N. Helbig, J. I. Fuks, M. Casula, M. J. Verstraete, M. A. L. Marques, I. V. Tokatly and A. Rubio, Phys. Rev. A 83, 032503 (2011)",
   XC_FLAGS_1D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-32, 0.0, 0.0, 1e-32,
   lda_x_1d_init,    /* init */
   NULL,             /* end  */
   work_lda,         /* lda  */

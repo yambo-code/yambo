@@ -40,44 +40,26 @@ static FLOAT prm_q = 3.9274; /* 2.258 */
 
 /* Initialization */
 static void
-lda_c_2d_prm_init(void *p_)
+lda_c_2d_prm_init(XC(func_type) *p)
 {
-  XC(lda_type) *p = (XC(lda_type) *)p_;
   lda_c_prm_params *params;
 
-  assert(p->params == NULL);
+  assert(p != NULL && p->params == NULL);
 
   p->params = malloc(sizeof(lda_c_prm_params));
   params = (lda_c_prm_params *) (p->params);
 
-  params->N = 2.0; /* Random value. This should be set by the caller */
-}
-
-
-static void 
-lda_c_2d_prm_end(void *p_)
-{
-  XC(lda_type) *p = (XC(lda_type) *)p_;
-
-  assert(p->params != NULL);
-  free(p->params);
-  p->params = NULL;
+  params->N = 2.0; /* Random values. This should be set by the caller */
+  params->c = 0.0;
 }
 
 
 void 
 XC(lda_c_2d_prm_set_params)(XC(func_type) *p, FLOAT N)
 {
-  assert(p != NULL && p->lda != NULL);
-  XC(lda_c_2d_prm_set_params_)(p->lda, N);
-}
-
-void 
-XC(lda_c_2d_prm_set_params_)(XC(lda_type) *p, FLOAT N)
-{
   lda_c_prm_params *params;
 
-  assert(p->params != NULL);
+  assert(p != NULL && p->params != NULL);
   params = (lda_c_prm_params *) (p->params);
 
   if(N <= 1){
@@ -91,7 +73,7 @@ XC(lda_c_2d_prm_set_params_)(XC(lda_type) *p, FLOAT N)
 
 
 static inline void 
-func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
+func(const XC(func_type) *p, XC(lda_work_t) *r)
 {
   lda_c_prm_params *params;
 
@@ -103,41 +85,39 @@ func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
 
   assert(params->N > 1.0);
   
-  sqpi = SQRT(M_PI);
-
-  beta = prm_q/(sqpi*r->rs[1]); /* Eq. (4) */
+  beta = prm_q/(M_SQRTPI*r->rs[1]); /* Eq. (4) */
   c    = params->c;
 
-  phi = beta/(beta + sqpi/2.0);
+  phi = beta/(beta + M_SQRTPI/2.0);
     
   t3  = phi - 1.0; /* original version has (phi-1)^2 */
   t2  = M_PI/(2.0*prm_q*prm_q);
     
-  t1  = sqpi*beta*t3/(2.0*SQRT(2.0 + c));
+  t1  = M_SQRTPI*beta*t3/(2.0*SQRT(2.0 + c));
   t1 += phi*(phi - 1.0)/(2.0 + c);
-  t1 += sqpi*phi*phi/(4.0*beta*POW(2.0 + c, 1.5));
-  t1 += sqpi*beta*(phi - 1.0)/SQRT(1.0 + c);
+  t1 += M_SQRTPI*phi*phi/(4.0*beta*POW(2.0 + c, 1.5));
+  t1 += M_SQRTPI*beta*(phi - 1.0)/SQRT(1.0 + c);
   t1 += phi/(1.0 + c);
   t1 *= t2;
     
   r->zk = t1;
   if(r->order < 1) return;
 
-  dt1dbeta  = sqpi*t3/(2.0*SQRT(2.0 + c));
-  dt1dbeta -= sqpi*phi*phi/(4.0*beta*beta*POW(2.0 + c, 1.5));
-  dt1dbeta += sqpi*(phi - 1.0)/SQRT(1.0 + c);
+  dt1dbeta  = M_SQRTPI*t3/(2.0*SQRT(2.0 + c));
+  dt1dbeta -= M_SQRTPI*phi*phi/(4.0*beta*beta*POW(2.0 + c, 1.5));
+  dt1dbeta += M_SQRTPI*(phi - 1.0)/SQRT(1.0 + c);
   dt1dbeta *= t2;
 
   dt3dphi   = 1.0;
-  dt1dphi   = sqpi*beta/(2.0*SQRT(2.0 + c))*dt3dphi;
+  dt1dphi   = M_SQRTPI*beta/(2.0*SQRT(2.0 + c))*dt3dphi;
   dt1dphi  += (2.0*phi - 1.0)/(2.0 + c);
-  dt1dphi  += sqpi*2.0*phi/(4.0*beta*POW(2.0 + c, 1.5));
-  dt1dphi  += sqpi*beta/SQRT(1.0 + c);
+  dt1dphi  += M_SQRTPI*2.0*phi/(4.0*beta*POW(2.0 + c, 1.5));
+  dt1dphi  += M_SQRTPI*beta/SQRT(1.0 + c);
   dt1dphi  += 1.0/(1.0 + c);
   dt1dphi  *= t2;
 
-  dbetadrs  = -prm_q/(sqpi*r->rs[2]);
-  dphidrs   = sqpi/(2.0*(beta + sqpi/2.0)*(beta + sqpi/2.0));
+  dbetadrs  = -prm_q/(M_SQRTPI*r->rs[2]);
+  dphidrs   = M_SQRTPI/(2.0*(beta + M_SQRTPI/2.0)*(beta + M_SQRTPI/2.0));
   dphidrs  *= dbetadrs;
 
   r->dedrs = dt1dbeta*dbetadrs + dt1dphi*dphidrs;
@@ -156,8 +136,8 @@ const XC(func_info_type) XC(func_info_lda_c_2d_prm) = {
   XC_FAMILY_LDA,
   "S Pittalis, E Rasanen, and MAL Marques, Phys. Rev. B 78, 195322 (2008)",
   XC_FLAGS_2D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-32, 0.0, 0.0, 1e-32,
   lda_c_2d_prm_init,
-  lda_c_2d_prm_end,
+  NULL,
   work_lda
 };

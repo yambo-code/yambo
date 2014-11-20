@@ -32,7 +32,7 @@ static FLOAT teter_bp[4] = {0.000000000000000,  0.2673612973836267, 0.2052004607
 
 /* the functional */
 static inline void 
-func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
+func(const XC(func_type) *p, XC(lda_work_t) *r)
 {
   FLOAT mrs0, mrs1, mrs2, mrs3, mrs4;
   FLOAT aa[4], bb[4];
@@ -159,7 +159,7 @@ const XC(func_info_type) XC(func_info_lda_xc_teter93) = {
   XC_FAMILY_LDA,
   "S Goedecker, M Teter, J Hutter, PRB 54, 1703 (1996)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-32, 0.0, 0.0, 1e-32,
   NULL,     /* init */
   NULL,     /* end  */
   work_lda, /* lda  */

@@ -21,6 +21,8 @@
 #include <assert.h>
 #include "util.h"
 
+/* WARNING: These functionals should be checked!!! */
+
 #define XC_GGA_XC_TH_FL        196 /* Tozer and Handy v. FL  */
 #define XC_GGA_XC_TH_FC        197 /* Tozer and Handy v. FC  */
 #define XC_GGA_XC_TH_FCFO      198 /* Tozer and Handy v. FCFO */
@@ -115,9 +117,8 @@ static FLOAT omega_TH4[] =
 
 
 static void 
-gga_xc_th_init(void *p_)
+gga_xc_th_init(XC(func_type) *p)
 {
-  XC(gga_type) *p = (XC(gga_type) *)p_;
   gga_xc_th_params *params;
 
   assert(p->params == NULL);
@@ -183,7 +184,7 @@ gga_xc_th_init(void *p_)
 
   case XC_GGA_XC_TH4:
     p->func = 7;
-    params->n = n_TH3;
+    params->n = n_TH4;
     params->a = a_TH3;
     params->b = b_TH3;
     params->c = c_TH3;
@@ -198,64 +199,60 @@ gga_xc_th_init(void *p_)
 }
 
 static inline void 
-func(const XC(gga_type) *p, int order, FLOAT rs, FLOAT zeta, FLOAT xt, FLOAT *xs,
-     FLOAT *f, FLOAT *dfdrs, FLOAT *dfdz, FLOAT *dfdxt, FLOAT *dfdxs,
-     FLOAT *d2fdrs2, FLOAT *d2fdrsz, FLOAT *d2fdrsxt, FLOAT *d2fdrsxs, FLOAT *d2fdz2, 
-     FLOAT *d2fdzxt, FLOAT *d2fdzxs, FLOAT *d2fdxt2, FLOAT *d2fdxtxs, FLOAT *d2fdxs2)
+func(const XC(func_type) *p, XC(gga_work_c_t) *r)
 {
   gga_xc_th_params *params;
   int ii;
-  FLOAT dens, opz, omz, XX[2], YY;
+  FLOAT opz, omz, XX[2], YY;
   FLOAT ddens, dXXdxs[2], dXXdz[2], dYYdxt;
   FLOAT d2dens, d2XXdxs2[2], d2XXdzxs[2], d2YYdxt2;
 
   assert(p->params != NULL);
   params = (gga_xc_th_params *) p->params;
 
-  dens  = 3.0/(4.0*M_PI*rs*rs*rs);
-  opz   = 1.0 + zeta;
-  omz   = 1.0 - zeta;
-  XX[0] = 0.5*xs[0]*opz;
-  XX[1] = 0.5*xs[1]*omz;
-  YY    = 2.0*(XX[0] + XX[1]) - xt*xt;
+  opz   = 1.0 + r->zeta;
+  omz   = 1.0 - r->zeta;
+  XX[0] = 0.5*r->xs[0]*opz;
+  XX[1] = 0.5*r->xs[1]*omz;
+  YY    = 2.0*(XX[0] + XX[1]) - r->xt*r->xt;
 
-  *f = 0.0;
+  r->f = 0.0;
 
-  if(order >= 1){
-    ddens     = -3.0*dens/rs;
+  if(r->order >= 1){
+    ddens     = -3.0*r->dens/r->rs;
     dXXdxs[0] =  0.5*opz;
     dXXdxs[1] =  0.5*omz;
-    dXXdz[0]  =  0.5*xs[0];
-    dXXdz[1]  = -0.5*xs[1];
-    dYYdxt    = -2.0*xt;
+    dXXdz[0]  =  0.5*r->xs[0];
+    dXXdz[1]  = -0.5*r->xs[1];
+    dYYdxt    = -2.0*r->xt;
 
-    *dfdrs = *dfdz = *dfdxt = dfdxs[0] = dfdxs[1] = 0.0;
+    r->dfdrs = r->dfdz = r->dfdxt = r->dfdxs[0] = r->dfdxs[1] = 0.0;
   }
 
-  if(order >= 2){
-    d2dens      = -4.0*ddens/rs;
+  if(r->order >= 2){
+    d2dens      = -4.0*ddens/r->rs;
     d2XXdzxs[0] =  0.5;
     d2XXdzxs[1] = -0.5;
     d2YYdxt2    = -2.0;
 
-    *d2fdrs2 = *d2fdrsz = *d2fdrsxt = d2fdrsxs[0] = d2fdrsxs[1] = 0.0;
-    *d2fdz2 = *d2fdzxt = d2fdzxs[0] = d2fdzxs[1] = 0.0;
-    *d2fdxt2 = d2fdxtxs[0] = d2fdxtxs[1] = 0.0;
-    d2fdxs2[0] = d2fdxs2[1] = d2fdxs2[2] = 0.0;
+    r->d2fdrs2 = r->d2fdrsz = r->d2fdrsxt = r->d2fdrsxs[0] = r->d2fdrsxs[1] = 0.0;
+    r->d2fdz2 = r->d2fdzxt = r->d2fdzxs[0] = r->d2fdzxs[1] = 0.0;
+    r->d2fdxt2 = r->d2fdxtxs[0] = r->d2fdxtxs[1] = 0.0;
+    r->d2fdxs2[0] = r->d2fdxs2[1] = r->d2fdxs2[2] = 0.0;
   }
 
   for(ii=0; ii<params->n; ii++){
-    FLOAT fz[2], Rid, Ri, Si, Xi, Yi, XXC[2];
+    FLOAT fz[2], Rid, Ri, Si, Xi, Yi;
     FLOAT dfz[2], dRidrs, dRidz, dSidz, dXidz, dXidxs[2], dYidz, dYidxs[2], dYidxt;
     FLOAT d2fz[2], d2Ridrs2, d2Ridrsz, d2Ridz2, d2Sidz2, d2Xidz2, d2Xidxs2[2], d2Xidzxs[2], d2Yidxt2, d2Yidxs2[2], d2Yidzxs[2];
 
     fz[0] = POW(opz, params->a[ii]);
     fz[1] = POW(omz, params->a[ii]);
-    Rid   = POW(dens/2.0, params->a[ii]);
+    Rid   = POW(r->dens/2.0, params->a[ii]);
     Ri    = Rid*(fz[0] + fz[1]);
 
     /* b = 0 || 1 */
-    Si = (params->b[ii] == 0) ? 1.0 : zeta*zeta;
+    Si = (params->b[ii] == 0) ? 1.0 : r->zeta*r->zeta;
 
     /* c = 0 || 1 || 2 */
     switch(params->c[ii]){
@@ -274,9 +271,9 @@ func(const XC(gga_type) *p, int order, FLOAT rs, FLOAT zeta, FLOAT xt, FLOAT *xs
     Yi = (params->d[ii] == 0) ? 1.0 : YY;
 
     /* the parametrization in the paper is for the energy per volume */
-    *f += params->omega[ii]*Ri*Si*Xi*Yi/dens;
+    r->f += params->omega[ii]*Ri*Si*Xi*Yi/r->dens;
 
-    if(order < 1) continue;
+    if(r->order < 1) continue;
 
     if(params->a[ii] == 1.0){
       dfz[0] =  1.0;
@@ -285,11 +282,11 @@ func(const XC(gga_type) *p, int order, FLOAT rs, FLOAT zeta, FLOAT xt, FLOAT *xs
       dfz[0] = (ABS(opz) < p->info->min_zeta) ? 0.0 :  params->a[ii]*fz[0]/opz;
       dfz[1] = (ABS(omz) < p->info->min_zeta) ? 0.0 : -params->a[ii]*fz[1]/omz;
     }
-    dRidrs   = params->a[ii]*Ri*ddens/dens;
+    dRidrs   = params->a[ii]*Ri*ddens/r->dens;
     dRidz    = Rid*(dfz[0] + dfz[1]);
     
     /* b = 0 || 1 */
-    dSidz    = (params->b[ii] == 0) ? 0.0 : 2.0*zeta;
+    dSidz    = (params->b[ii] == 0) ? 0.0 : 2.0*r->zeta;
 
     /* c = 0 || 1 || 2 */
     switch(params->c[ii]){
@@ -318,13 +315,13 @@ func(const XC(gga_type) *p, int order, FLOAT rs, FLOAT zeta, FLOAT xt, FLOAT *xs
       dYidxs[1] = 2.0*dXXdxs[1];
     }
 
-    *dfdrs   += params->omega[ii]*(dRidrs - Ri*ddens/dens)*Si*Xi*Yi/dens;
-    *dfdz    += params->omega[ii]*(dRidz*Si*Xi*Yi + Ri*dSidz*Xi*Yi + Ri*Si*dXidz*Yi + Ri*Si*Xi*dYidz)/dens;
-    *dfdxt   += params->omega[ii]*Ri*Si*Xi*dYidxt/dens;
-    dfdxs[0] += params->omega[ii]*Ri*Si*(dXidxs[0]*Yi + Xi*dYidxs[0])/dens;
-    dfdxs[1] += params->omega[ii]*Ri*Si*(dXidxs[1]*Yi + Xi*dYidxs[1])/dens;
+    r->dfdrs    += params->omega[ii]*(dRidrs - Ri*ddens/r->dens)*Si*Xi*Yi/r->dens;
+    r->dfdz     += params->omega[ii]*(dRidz*Si*Xi*Yi + Ri*dSidz*Xi*Yi + Ri*Si*dXidz*Yi + Ri*Si*Xi*dYidz)/r->dens;
+    r->dfdxt    += params->omega[ii]*Ri*Si*Xi*dYidxt/r->dens;
+    r->dfdxs[0] += params->omega[ii]*Ri*Si*(dXidxs[0]*Yi + Xi*dYidxs[0])/r->dens;
+    r->dfdxs[1] += params->omega[ii]*Ri*Si*(dXidxs[1]*Yi + Xi*dYidxs[1])/r->dens;
 
-    if(order < 2) continue;
+    if(r->order < 2) continue;
 
     if(params->a[ii] == 1.0){
       d2fz[0] = d2fz[1] = 0.0;
@@ -332,8 +329,8 @@ func(const XC(gga_type) *p, int order, FLOAT rs, FLOAT zeta, FLOAT xt, FLOAT *xs
       d2fz[0] = (ABS(opz) < p->info->min_zeta) ? 0.0 :  (params->a[ii] - 1.0)*dfz[0]/opz;
       d2fz[1] = (ABS(omz) < p->info->min_zeta) ? 0.0 : -(params->a[ii] - 1.0)*dfz[1]/omz;
     }
-    d2Ridrs2  = params->a[ii]/dens*(dRidrs*ddens + Ri*(d2dens - ddens*ddens/dens));
-    d2Ridrsz  = params->a[ii]*Rid*(ddens/dens)*(dfz[0] + dfz[1]);
+    d2Ridrs2  = params->a[ii]/r->dens*(dRidrs*ddens + Ri*(d2dens - ddens*ddens/r->dens));
+    d2Ridrsz  = params->a[ii]*Rid*(ddens/r->dens)*(dfz[0] + dfz[1]);
     d2Ridz2   = Rid*(d2fz[0] + d2fz[1]);
     
     /* b = 0 || 1 */
@@ -373,29 +370,29 @@ func(const XC(gga_type) *p, int order, FLOAT rs, FLOAT zeta, FLOAT xt, FLOAT *xs
       d2Yidzxs[1] = 2.0*d2XXdzxs[1];
     }
 
-    *d2fdrs2    +=  params->omega[ii]*(d2Ridrs2 - 2.0*dRidrs*ddens/dens - Ri*(d2dens - 2.0*ddens*ddens/dens)/dens)*Si*Xi*Yi/dens;
-    *d2fdrsz    +=  params->omega[ii]*
-      (- (dRidz*Si*Xi*Yi + Ri*dSidz*Xi*Yi + Ri*Si*dXidz*Yi + Ri*Si*Xi*dYidz)*ddens/dens
-       + (d2Ridrsz*Si*Xi*Yi + dRidrs*dSidz*Xi*Yi + dRidrs*Si*dXidz*Yi + dRidrs*Si*Xi*dYidz))/dens;
-    *d2fdrsxt   +=  params->omega[ii]*(dRidrs - Ri*ddens/dens)*Si*Xi*dYidxt/dens;;
-    d2fdrsxs[0] +=  params->omega[ii]*(dRidrs - Ri*ddens/dens)*Si*(dXidxs[0]*Yi + Xi*dYidxs[0])/dens;
-    d2fdrsxs[1] +=  params->omega[ii]*(dRidrs - Ri*ddens/dens)*Si*(dXidxs[1]*Yi + Xi*dYidxs[1])/dens;;
-    *d2fdz2     +=  params->omega[ii]*
+    r->d2fdrs2     +=  params->omega[ii]*(d2Ridrs2 - 2.0*dRidrs*ddens/r->dens - Ri*(d2dens - 2.0*ddens*ddens/r->dens)/r->dens)*Si*Xi*Yi/r->dens;
+    r->d2fdrsz     +=  params->omega[ii]*
+      (- (dRidz*Si*Xi*Yi + Ri*dSidz*Xi*Yi + Ri*Si*dXidz*Yi + Ri*Si*Xi*dYidz)*ddens/r->dens
+       + (d2Ridrsz*Si*Xi*Yi + dRidrs*dSidz*Xi*Yi + dRidrs*Si*dXidz*Yi + dRidrs*Si*Xi*dYidz))/r->dens;
+    r->d2fdrsxt    +=  params->omega[ii]*(dRidrs - Ri*ddens/r->dens)*Si*Xi*dYidxt/r->dens;;
+    r->d2fdrsxs[0] +=  params->omega[ii]*(dRidrs - Ri*ddens/r->dens)*Si*(dXidxs[0]*Yi + Xi*dYidxs[0])/r->dens;
+    r->d2fdrsxs[1] +=  params->omega[ii]*(dRidrs - Ri*ddens/r->dens)*Si*(dXidxs[1]*Yi + Xi*dYidxs[1])/r->dens;
+    r->d2fdz2      +=  params->omega[ii]*
       (2.0*(dRidz*dSidz*Xi*Yi + dRidz*Si*dXidz*Yi + dRidz*Si*Xi*dYidz + Ri*dSidz*dXidz*Yi + Ri*dSidz*Xi*dYidz + Ri*Si*dXidz*dYidz) +
-       d2Ridz2*Si*Xi*Yi + Ri*d2Sidz2*Xi*Yi + Ri*Si*d2Xidz2*Yi)/dens;
-    *d2fdzxt    +=  params->omega[ii]*(dRidz*Si*Xi*dYidxt + Ri*dSidz*Xi*dYidxt + Ri*Si*dXidz*dYidxt)/dens;
-    d2fdzxs[0]  +=  params->omega[ii]*
+       d2Ridz2*Si*Xi*Yi + Ri*d2Sidz2*Xi*Yi + Ri*Si*d2Xidz2*Yi)/r->dens;
+    r->d2fdzxt     +=  params->omega[ii]*(dRidz*Si*Xi*dYidxt + Ri*dSidz*Xi*dYidxt + Ri*Si*dXidz*dYidxt)/r->dens;
+    r->d2fdzxs[0]  +=  params->omega[ii]*
       ((dRidz*Si + Ri*dSidz)*(dXidxs[0]*Yi + Xi*dYidxs[0]) + 
-       Ri*Si*(d2Xidzxs[0]*Yi + dXidz*dYidxs[0] + dXidxs[0]*dYidz + Xi*d2Yidzxs[0]))/dens;
-    d2fdzxs[1]  +=  params->omega[ii]*
+       Ri*Si*(d2Xidzxs[0]*Yi + dXidz*dYidxs[0] + dXidxs[0]*dYidz + Xi*d2Yidzxs[0]))/r->dens;
+    r->d2fdzxs[1]  +=  params->omega[ii]*
       ((dRidz*Si + Ri*dSidz)*(dXidxs[1]*Yi + Xi*dYidxs[1]) + 
-       Ri*Si*(d2Xidzxs[1]*Yi + dXidz*dYidxs[1] + dXidxs[1]*dYidz + Xi*d2Yidzxs[1]))/dens;
-    *d2fdxt2    +=  params->omega[ii]*Ri*Si*Xi*d2Yidxt2/dens;
-    d2fdxtxs[0] +=  params->omega[ii]*Ri*Si*dXidxs[0]*dYidxt/dens;
-    d2fdxtxs[1] +=  params->omega[ii]*Ri*Si*dXidxs[1]*dYidxt/dens;
-    d2fdxs2[0]  +=  params->omega[ii]*Ri*Si*(d2Xidxs2[0]*Yi + 2.0*dXidxs[0]*dYidxs[0])/dens;
-    d2fdxs2[1]  +=  0.0;
-    d2fdxs2[2]  +=  params->omega[ii]*Ri*Si*(d2Xidxs2[1]*Yi + 2.0*dXidxs[1]*dYidxs[1])/dens;;
+       Ri*Si*(d2Xidzxs[1]*Yi + dXidz*dYidxs[1] + dXidxs[1]*dYidz + Xi*d2Yidzxs[1]))/r->dens;
+    r->d2fdxt2     +=  params->omega[ii]*Ri*Si*Xi*d2Yidxt2/r->dens;
+    r->d2fdxtxs[0] +=  params->omega[ii]*Ri*Si*dXidxs[0]*dYidxt/r->dens;
+    r->d2fdxtxs[1] +=  params->omega[ii]*Ri*Si*dXidxs[1]*dYidxt/r->dens;
+    r->d2fdxs2[0]  +=  params->omega[ii]*Ri*Si*(d2Xidxs2[0]*Yi + 2.0*dXidxs[0]*dYidxs[0])/r->dens;
+    r->d2fdxs2[1]  +=  0.0;
+    r->d2fdxs2[2]  +=  params->omega[ii]*Ri*Si*(d2Xidxs2[1]*Yi + 2.0*dXidxs[1]*dYidxs[1])/r->dens;
 
   }
 }
@@ -409,7 +406,7 @@ const XC(func_info_type) XC(func_info_gga_xc_th_fl) = {
   XC_FAMILY_GGA,
   "DJ Tozer, NC Handy, amd WH Green, Chem. Phys. Lett. 273, 183-194 (1997)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_xc_th_init, 
   NULL, NULL,
   work_gga_c
@@ -422,7 +419,7 @@ const XC(func_info_type) XC(func_info_gga_xc_th_fc) = {
   XC_FAMILY_GGA,
   "DJ Tozer, NC Handy, amd WH Green, Chem. Phys. Lett. 273, 183-194 (1997)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_xc_th_init, 
   NULL, NULL,
   work_gga_c
@@ -435,7 +432,7 @@ const XC(func_info_type) XC(func_info_gga_xc_th_fcfo) = {
   XC_FAMILY_GGA,
   "DJ Tozer, NC Handy, amd WH Green, Chem. Phys. Lett. 273, 183-194 (1997)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_xc_th_init, 
   NULL, NULL,
   work_gga_c
@@ -448,7 +445,7 @@ const XC(func_info_type) XC(func_info_gga_xc_th_fco) = {
   XC_FAMILY_GGA,
   "DJ Tozer, NC Handy, amd WH Green, Chem. Phys. Lett. 273, 183-194 (1997)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_xc_th_init, 
   NULL, NULL,
   work_gga_c
@@ -461,7 +458,7 @@ const XC(func_info_type) XC(func_info_gga_xc_th1) = {
   XC_FAMILY_GGA,
   "DJ Tozer and NC Handy, J. Chem. Phys. 108, 2545 (1998)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_xc_th_init, 
   NULL, NULL,
   work_gga_c
@@ -474,7 +471,7 @@ const XC(func_info_type) XC(func_info_gga_xc_th2) = {
   XC_FAMILY_GGA,
   "DJ Tozer and NC Handy, J. Phys. Chem. A 102, 3162 (1998)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_xc_th_init, 
   NULL, NULL,
   work_gga_c
@@ -487,7 +484,7 @@ const XC(func_info_type) XC(func_info_gga_xc_th3) = {
   XC_FAMILY_GGA,
   "DJ Tozer and NC Handy, Mol. Phys. 94, 707 (1998)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_xc_th_init, 
   NULL, NULL,
   work_gga_c
@@ -500,7 +497,7 @@ const XC(func_info_type) XC(func_info_gga_xc_th4) = {
   XC_FAMILY_GGA,
   "DJ Tozer and NC Handy, Mol. Phys. 94, 707 (1998)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_xc_th_init, 
   NULL, NULL,
   work_gga_c

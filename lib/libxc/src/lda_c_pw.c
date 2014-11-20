@@ -28,7 +28,7 @@
    J.P. Perdew & Y. Wang
    Ortiz & Ballone
 
-Note that the PW modified, corresponds to the version of PW used in the 
+Note that the PW modified corresponds to the version of PW used in the 
 original PBE routine. This amounts to adding some more digits in some of
 the constants of PW.
 ************************************************************************/
@@ -39,10 +39,8 @@ the constants of PW.
 #define XC_LDA_C_PW_RPA 25   /* Perdew & Wang fit of the RPA */
 
 static void 
-lda_c_pw_init(void *p_)
+lda_c_pw_init(XC(func_type) *p)
 {
-  XC(lda_type) *p = (XC(lda_type) *)p_;
-
   switch(p->info->number){
   case XC_LDA_C_PW:       p->func = 0;  break;
   case XC_LDA_C_PW_MOD:   p->func = 1;  break;
@@ -56,7 +54,7 @@ lda_c_pw_init(void *p_)
 
 
 /* Function g defined by Eq. 10 of the original paper,
-   and it's derivative with respect to rs, Eq. A5 */
+   and its derivative with respect to rs, Eq. A5 */
 static void g(int func, int order, int k, FLOAT *rs, 
 	      FLOAT *f, FLOAT *dfdrs, FLOAT *d2fdrs2, FLOAT *d3fdrs3)
 {
@@ -148,7 +146,7 @@ static void g(int func, int order, int k, FLOAT *rs,
 
 /* the functional */
 void 
-XC(lda_c_pw_func)(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
+XC(lda_c_pw_func)(const XC(func_type) *p, XC(lda_work_t) *r)
 {
   static FLOAT fz20[4] = {
     1.709921,                           /* PW */
@@ -245,7 +243,7 @@ const XC(func_info_type) XC(func_info_lda_c_pw) = {
   XC_FAMILY_LDA,
   "JP Perdew and Y Wang, Phys. Rev. B 45, 13244 (1992)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-25, 0.0, 0.0, 1e-32,
   lda_c_pw_init, /* init */
   NULL,     /* end  */
   work_lda, /* lda  */
@@ -260,7 +258,7 @@ const XC(func_info_type) XC(func_info_lda_c_pw_mod) = {
   "Added extra digits to some constants as in the PBE routine\n"
   "http://dft.rutgers.edu/pubs/PBE.asc",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-26, 0.0, 0.0, 1e-32,
   lda_c_pw_init, /* init */
   NULL,     /* end  */
   work_lda, /* lda  */
@@ -275,7 +273,7 @@ const XC(func_info_type) XC(func_info_lda_c_ob_pw) = {
   "G Ortiz and P Ballone, Phys. Rev. B 56, 9970(E) (1997)\n"
   "JP Perdew and Y Wang, Phys. Rev. B 45, 13244 (1992)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-26, 0.0, 0.0, 1e-32,
   lda_c_pw_init, /* init */
   NULL,     /* end  */
   work_lda, /* lda  */
@@ -288,7 +286,7 @@ const XC(func_info_type) XC(func_info_lda_c_pw_rpa) = {
   XC_FAMILY_LDA,
   "JP Perdew and Y Wang, Phys. Rev. B 45, 13244 (1992)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-27, 0.0, 0.0, 1e-32,
   lda_c_pw_init, /* init */
   NULL,     /* end  */
   work_lda, /* lda  */

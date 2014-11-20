@@ -23,10 +23,10 @@
 
 /************************************************************************
  Correlation energy per particle and potentials for a homogeneous electron
- gas in 2D, as parametrized by Attacalite et al.
+ gas in 2D, as parametrized by Attaccalite et al.
 ************************************************************************/
 
-#define XC_LDA_C_2D_AMGB  15   /* Attacalite et al             */
+#define XC_LDA_C_2D_AMGB  15   /* Attaccalite et al             */
 
 
 /* parameters necessary to the calculation */
@@ -43,7 +43,7 @@ static FLOAT beta = 1.3386, ax = 0.0;
 
 /* Initialization */
 static void
-lda_c_2d_amgb_init(void *p)
+lda_c_2d_amgb_init(XC(func_type) *p)
 {
   int i;
   
@@ -98,7 +98,7 @@ malpha(int order, int i, FLOAT *rs,
 
 
 static void
-func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
+func(const XC(func_type) *p, XC(lda_work_t) *r)
 {
   FLOAT ecp, vcp, fcp, kcp;
   FLOAT ecf, vcf, fcf, kcf;
@@ -195,10 +195,10 @@ const XC(func_info_type) XC(func_info_lda_c_2d_amgb) = {
   XC_CORRELATION,
   "AMGB (for 2D systems)",
   XC_FAMILY_LDA,
-  "C Attacalite et al, Phys. Rev. Lett. 88, 256601 (2002)\n"
-  "C Attacalite, PhD thesis",
+  "C Attaccalite et al, Phys. Rev. Lett. 88, 256601 (2002)\n"
+  "C Attaccalite, PhD thesis",
   XC_FLAGS_2D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-9, 0.0, 0.0, 1e-32,
   lda_c_2d_amgb_init,
   NULL,
   work_lda

@@ -31,16 +31,14 @@
 #endif
 
 static void 
-work_mgga_x(const void *p_, int np,
+work_mgga_x(const XC(func_type) *p, int np,
 	    const FLOAT *rho, const FLOAT *sigma, const FLOAT *lapl, const FLOAT *tau,
 	    FLOAT *zk, FLOAT *vrho, FLOAT *vsigma, FLOAT *vlapl, FLOAT *vtau,
 	    FLOAT *v2rho2, FLOAT *v2sigma2, FLOAT *v2lapl2, FLOAT *v2tau2,
 	    FLOAT *v2rhosigma, FLOAT *v2rholapl, FLOAT *v2rhotau, 
 	    FLOAT *v2sigmalapl, FLOAT *v2sigmatau, FLOAT *v2lapltau)
 {
-  const XC(mgga_type) *p = (const XC(mgga_type) *) p_;
-
-  XC(work_mgga_x_params) r;
+  XC(mgga_work_x_t) r;
   FLOAT sfact, sfact2, dens, x_factor_c;
   int is, ip;
   int has_tail;
@@ -86,6 +84,7 @@ work_mgga_x(const void *p_, int np,
     for(is=0; is<p->nspin; is++){
       FLOAT lrho, rho1D, rho2pD_D, lsigma, gdm, lnr2, ltau;
       int js = (is == 0) ? 0 : 2;
+      int ls = (is == 0) ? 0 : 3;
       int ks = (is == 0) ? 0 : 5;
 
       if((!has_tail && (rho[is] < p->info->min_dens || tau[is] < p->info->min_tau)) || (rho[is] == 0.0)) continue;
@@ -129,15 +128,15 @@ work_mgga_x(const void *p_, int np,
 
 	v2tau2[js]    = -x_factor_c*r.d2fdt2/(sfact*rho1D*rho2pD_D);
 
-	v2rholapl[js] = -x_factor_c*rho1D/(3.0*sfact*rho2pD_D)*
-	  (4.0*r.dfdu - 4.0*r.x*r.d2fdxu - 5.0*r.u*r.d2fdtu - 5.0*(r.dfdu + r.u*r.d2fdu2));
+	v2rholapl[ls] = -x_factor_c*rho1D/(3.0*sfact*rho2pD_D)*
+	  (4.0*r.dfdu - 4.0*r.x*r.d2fdxu - 5.0*r.t*r.d2fdtu - 5.0*(r.dfdu + r.u*r.d2fdu2));
 
-	v2rhotau[js]  = -x_factor_c*rho1D/(3.0*sfact*rho2pD_D)*
+	v2rhotau[ls]  = -x_factor_c*rho1D/(3.0*sfact*rho2pD_D)*
 	  (4.0*r.dfdt - 4.0*r.x*r.d2fdxt - 5.0*r.u*r.d2fdtu - 5.0*(r.dfdt + r.t*r.d2fdt2));
 
-	v2lapltau[js] = -x_factor_c*r.d2fdtu/(rho1D*rho2pD_D);
+	v2lapltau[ls] = -x_factor_c*r.d2fdtu/(rho1D*rho2pD_D);
 
-	if(gdm>p->info->min_grad){
+	if(gdm > p->info->min_grad){
 	  v2sigma2[ks]    =  -x_factor_c*(rho1D*lrho)/(4.0*sfact2*sfact*lsigma*lsigma)*
 	    (r.d2fdx2*r.x*r.x - r.dfdx*r.x);
 

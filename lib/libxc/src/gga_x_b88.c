@@ -34,38 +34,36 @@ typedef struct{
 
 
 static void 
-gga_x_b88_init(void *p_)
+gga_x_b88_init(XC(func_type) *p)
 {
-  XC(gga_type) *p = (XC(gga_type) *)p_;
-
-  assert(p->params == NULL);
+  assert(p!=NULL && p->params == NULL);
   p->params = malloc(sizeof(gga_x_b88_params));
 
   /* value of beta in standard Becke 88 functional */
   switch(p->info->number){
   case XC_GGA_X_B88:
     p->func = 0; 
-    XC(gga_x_b88_set_params_)(p, 0.0042, 6.0);
+    XC(gga_x_b88_set_params)(p, 0.0042, 6.0);
     break;
   case XC_GGA_X_OPTB88_VDW:
     p->func = 1; 
-    XC(gga_x_b88_set_params_)(p, 0.00336865923905927, 6.98131700797731);
+    XC(gga_x_b88_set_params)(p, 0.00336865923905927, 6.98131700797731);
     break;
   case XC_GGA_K_LLP:
     p->func = 2;
-    XC(gga_x_b88_set_params_)(p, X_FACTOR_C*0.0044188, 0.0253/(X_FACTOR_C*0.0044188));
+    XC(gga_x_b88_set_params)(p, X_FACTOR_C*0.0044188, 0.0253/(X_FACTOR_C*0.0044188));
     break;
   case XC_GGA_K_FR_B88:
     p->func = 3;
-    XC(gga_x_b88_set_params_)(p, X_FACTOR_C*0.004596, 0.02774/(X_FACTOR_C*0.004596));
+    XC(gga_x_b88_set_params)(p, X_FACTOR_C*0.004596, 0.02774/(X_FACTOR_C*0.004596));
     break;
   case XC_GGA_X_MB88:
     p->func = 4;
-    XC(gga_x_b88_set_params_)(p, 0.0011, 6.0);
+    XC(gga_x_b88_set_params)(p, 0.0011, 6.0);
     break;
   case XC_GGA_K_THAKKAR:
     p->func = 5;
-    XC(gga_x_b88_set_params_)(p, X_FACTOR_C*0.0055, 0.0253/(X_FACTOR_C*0.0055));
+    XC(gga_x_b88_set_params)(p, X_FACTOR_C*0.0055, 0.0253/(X_FACTOR_C*0.0055));
     break;
   default:
     fprintf(stderr, "Internal error in gga_x_b88\n");
@@ -74,31 +72,12 @@ gga_x_b88_init(void *p_)
 }
 
 
-static void 
-gga_x_b88_end(void *p_)
-{
-  XC(gga_type) *p = (XC(gga_type) *)p_;
-
-  assert(p->params != NULL);
-  free(p->params);
-  p->params = NULL;
-}
-
-
 void 
 XC(gga_x_b88_set_params)(XC(func_type) *p, FLOAT beta, FLOAT gamma)
 {
-  assert(p != NULL && p->gga != NULL);
-  XC(gga_x_b88_set_params_)(p->gga, beta, gamma);
-}
-
-
-void 
-XC(gga_x_b88_set_params_)(XC(gga_type) *p, FLOAT beta, FLOAT gamma)
-{
   gga_x_b88_params *params;
 
-  assert(p->params != NULL);
+  assert(p != NULL && p->params != NULL);
   params = (gga_x_b88_params *) (p->params);
 
   params->beta  = beta;
@@ -106,9 +85,9 @@ XC(gga_x_b88_set_params_)(XC(gga_type) *p, FLOAT beta, FLOAT gamma)
 }
 
 
-static inline void 
-func(const XC(gga_type) *p, int order, FLOAT x, 
-     FLOAT *f, FLOAT *dfdx, FLOAT *d2fdx2)
+void 
+XC(gga_x_b88_enhance)(const XC(func_type) *p, int order, FLOAT x, 
+		      FLOAT *f, FLOAT *dfdx, FLOAT *d2fdx2)
 {
   FLOAT f1, f2, df1, df2, d2f1, d2f2, dd;
   FLOAT beta, gamma;
@@ -147,6 +126,7 @@ func(const XC(gga_type) *p, int order, FLOAT x,
     *d2fdx2 += 0.072*4.0*CBRT(4.0)*dd*dd*dd;
 }
 
+#define func XC(gga_x_b88_enhance)
 #include "work_gga_x.c"
 
 const XC(func_info_type) XC(func_info_gga_x_b88) = {
@@ -156,9 +136,9 @@ const XC(func_info_type) XC(func_info_gga_x_b88) = {
   XC_FAMILY_GGA,
   "AD Becke, Phys. Rev. A 38, 3098 (1988)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_x_b88_init, 
-  gga_x_b88_end, 
+  NULL, 
   NULL,
   work_gga_x
 };
@@ -170,9 +150,9 @@ const XC(func_info_type) XC(func_info_gga_x_optb88_vdw) = {
   XC_FAMILY_GGA,
   "J Klimes, DR Bowler, and A Michaelides, J. Phys.: Condens. Matter 22, 022201 (2010)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_x_b88_init,
-  gga_x_b88_end, 
+  NULL, 
   NULL,
   work_gga_x
 };
@@ -184,9 +164,9 @@ const XC(func_info_type) XC(func_info_gga_x_mb88) = {
   XC_FAMILY_GGA,
   "V Tognetti and C Adamo, J. Phys. Chem. A 113, 14415-14419 (2009)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_x_b88_init, 
-  gga_x_b88_end, 
+  NULL, 
   NULL,
   work_gga_x
 };
@@ -201,9 +181,9 @@ const XC(func_info_type) XC(func_info_gga_k_llp) = {
   XC_FAMILY_GGA,
   "H Lee, C Lee, and RG Parr, Phys. Rev. A 44, 768 (1991)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_x_b88_init,
-  gga_x_b88_end,
+  NULL,
   NULL,
   work_gga_k
 };
@@ -215,9 +195,9 @@ const XC(func_info_type) XC(func_info_gga_k_fr_b88) = {
   XC_FAMILY_GGA,
   "P Fuentealba and O Reyes, Chem. Phys. Lett. 232, 31-34 (1995)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_x_b88_init,
-  gga_x_b88_end,
+  NULL,
   NULL,
   work_gga_k
 };
@@ -229,9 +209,9 @@ const XC(func_info_type) XC(func_info_gga_k_thakkar) = {
   XC_FAMILY_GGA,
   "AJ Thakkar, Phys. Rev. A 46, 6920-6924 (1992)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_x_b88_init,
-  gga_x_b88_end,
+  NULL,
   NULL,
   work_gga_k
 };

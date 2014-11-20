@@ -29,10 +29,8 @@ typedef struct{
 } gga_x_pw86_params;
 
 static void 
-gga_x_pw86_init(void *p_)
+gga_x_pw86_init(XC(func_type) *p)
 {
-  XC(gga_type) *p = (XC(gga_type) *)p_;
-
   switch(p->info->number){
   case XC_GGA_X_RPW86:      p->func = 1; break;
   case XC_GGA_K_FR_PW86:    p->func = 2; break;
@@ -41,7 +39,7 @@ gga_x_pw86_init(void *p_)
 }
 
 static inline void
-func(const XC(gga_type) *p, int order, FLOAT x, 
+func(const XC(func_type) *p, int order, FLOAT x, 
      FLOAT *f, FLOAT *dfdx, FLOAT *d2fdx2)
 {
   static const gga_x_pw86_params par[3] = {
@@ -83,7 +81,7 @@ const XC(func_info_type) XC(func_info_gga_x_pw86) = {
   XC_FAMILY_GGA,
   "JP Perdew and Y Wang, Phys. Rev. B 33, 8800 (1986)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_x_pw86_init, NULL, NULL,
   work_gga_x
 };
@@ -93,9 +91,9 @@ const XC(func_info_type) XC(func_info_gga_x_rpw86) = {
   XC_EXCHANGE,
   "Refitted Perdew & Wang 86",
   XC_FAMILY_GGA,
-  "ED Murray, K Lee and DC Langreth, J. Chem. Theory Comput. 5, 2754–2762 (2009)",
+  "ED Murray, K Lee and DC Langreth, J. Chem. Theory Comput. 5, 2754-2762 (2009)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_x_pw86_init, NULL, NULL,
   work_gga_x
 };
@@ -110,7 +108,7 @@ const XC(func_info_type) XC(func_info_gga_k_fr_pw86) = {
   XC_FAMILY_GGA,
   "P Fuentealba and O Reyes, Chem. Phys. Lett. 232, 31-34 (1995)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_x_pw86_init, NULL, NULL,
   work_gga_k
 };

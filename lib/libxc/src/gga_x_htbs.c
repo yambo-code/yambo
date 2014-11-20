@@ -37,11 +37,9 @@ static FLOAT s1 = 0.6, s2 = 2.6;
 static FLOAT cc[6];
 
 static void 
-gga_x_htbs_init(void *p_)
+gga_x_htbs_init(XC(func_type) *p)
 {
   FLOAT s12, s22, s1_s2, aux;
-
-  XC(gga_type) *p = (XC(gga_type) *)p_;
 
   p->n_func_aux  = 2;
   p->func_aux    = (XC(func_type) **) malloc(2*sizeof(XC(func_type) *));
@@ -68,7 +66,7 @@ gga_x_htbs_init(void *p_)
 
 
 void XC(gga_x_htbs_enhance)
-  (const XC(gga_type) *p, int order, FLOAT x, 
+  (const XC(func_type) *p, int order, FLOAT x, 
    FLOAT *f, FLOAT *dfdx, FLOAT *d2fdx2)
 {
   FLOAT s, g, dg, d2g, a, da, d2a, b, db, d2b;
@@ -76,9 +74,9 @@ void XC(gga_x_htbs_enhance)
   s  = X2S*x;
   
   if(s > s1)
-    XC(gga_x_rpbe_enhance)(p->func_aux[0]->gga, order, x, &a, &da, &d2a);
+    XC(gga_x_rpbe_enhance)(p->func_aux[0], order, x, &a, &da, &d2a);
   if(s < s2)
-    XC(gga_x_wc_enhance)  (p->func_aux[1]->gga, order, x, &b, &db, &d2b);
+    XC(gga_x_wc_enhance)  (p->func_aux[1], order, x, &b, &db, &d2b);
 
   if(s < s1)
     *f = b;
@@ -128,7 +126,7 @@ const XC(func_info_type) XC(func_info_gga_x_htbs) = {
   XC_FAMILY_GGA,
   "P Haas, F Tran, P Blaha, and K Schwarz, Phys. Rev. B 83, 205117 (2011)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_x_htbs_init, 
   NULL, NULL,
   work_gga_x

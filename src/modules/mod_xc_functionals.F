@@ -4,7 +4,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, MG
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -118,7 +118,7 @@ module xc_functionals
      !
      use xc_f90_types_m
      use xc_f90_lib_m, ONLY:xc_f90_func_init,xc_f90_info_family,&
-          xc_f90_info_kind,xc_f90_info_flags,xc_f90_hyb_gga_exx_coef
+          xc_f90_info_kind,xc_f90_info_flags,xc_f90_hyb_exx_coef
      implicit none
      integer, intent(in) :: fun, nsp
      type(xc_fnctl_t), intent(out) :: f(2)
@@ -136,7 +136,7 @@ module xc_functionals
        f(ixc)%id=fun
        Xfrac = 0.
        if (f(ixc)%family==XC_FAMILY_HYB_GGA)&
-       &call xc_f90_hyb_gga_exx_coef(p,Xfrac)
+       &call xc_f90_hyb_exx_coef(p,Xfrac)
        f(ixc)%exx_fraction=real(Xfrac,SP)
        f(ixc)%spin_channels=nsp
        f(ixc)%flags=xc_f90_info_flags(info)

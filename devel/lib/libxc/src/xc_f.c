@@ -27,8 +27,16 @@
 #include "xc.h"
 #include "string_f.h"
 
-/* info */
 
+/* version */
+void XC_FC_FUNC(f90_version, F90_VERSION)
+     (int *major, int *minor)
+{
+  XC(version)(major, minor);
+}
+
+
+/* info */
 CC_FORTRAN_INT XC_FC_FUNC(f90_info_number, F90_INFO_NUMBER)
      (void **info)
 {
@@ -56,14 +64,16 @@ CC_FORTRAN_INT  XC_FC_FUNC(f90_info_family, F90_INFO_FAMILY)
   return (CC_FORTRAN_INT) ((XC(func_info_type) *)(*info))->family;
 }
 
+
 CC_FORTRAN_INT  XC_FC_FUNC(f90_info_flags, F90_INFO_FLAGS)
      (void **info)
 {
   return (CC_FORTRAN_INT) ((XC(func_info_type) *)(*info))->flags;
 }
 
+
 void XC_FC_FUNC(f90_info_refs, F90_INFO_REFS)
-  (void **info, CC_FORTRAN_INT *number, char **s, STR_F_TYPE ref_f STR_ARG1)
+     (void **info, CC_FORTRAN_INT *number, char **s, STR_F_TYPE ref_f STR_ARG1)
 {
   char *c, ref[256]; /* hopefully no ref is longer than 256 characters ;) */
   XC(func_info_type) *func_p = (XC(func_info_type) *)(*info);
@@ -86,12 +96,46 @@ void XC_FC_FUNC(f90_info_refs, F90_INFO_REFS)
   fflush(stdout);
 }
 
+
+void XC_FC_FUNC(f90_functional_get_name, F90_FUNCTIONAL_GET_NAME)
+     (CC_FORTRAN_INT *func_number, STR_F_TYPE func_string STR_ARG1)
+{
+  char *name;
+
+  name = XC(functional_get_name)(*func_number);
+  if ( name == NULL )
+  {
+    name = (char *) malloc(256);
+    sprintf(name, "unknown\0");
+  }
+
+  TO_F_STR1(name, func_string);
+  free(name);
+}
+
+
+CC_FORTRAN_INT  XC_FC_FUNC(f90_functional_get_number, F90_FUNCTIONAL_GET_NUMBER)
+     (STR_F_TYPE func_string STR_ARG1)
+{
+  char *name;
+  int ret;
+
+  TO_C_STR1(func_string, name);
+
+  ret = XC(functional_get_number)(name);
+  free(name);
+
+  return (CC_FORTRAN_INT) ret;
+}
+
+
 /* functionals */
 CC_FORTRAN_INT  XC_FC_FUNC(f90_family_from_id, F90_FAMILY_FROM_ID)
   (CC_FORTRAN_INT  *functional)
 {
   return (CC_FORTRAN_INT) XC(family_from_id)((int) (*functional), NULL, NULL);
 }
+
 
 /* Standard initialization */
 void XC_FC_FUNC(f90_func_init, F90_FUNC_INIT)
@@ -105,6 +149,7 @@ void XC_FC_FUNC(f90_func_init, F90_FUNC_INIT)
   *p    = (void *) func_p;
   *info = (void *)(func_p->info);
 }
+
 
 void XC_FC_FUNC(f90_func_end, F90_FUNC_END)
      (void **p)
@@ -124,12 +169,14 @@ void XC_FC_FUNC(f90_lda, F90_LDA)
   XC(lda)((XC(func_type) *)(*p), *np, rho, zk, vrho, v2rho2, v3rho3);
 }
 
+
 void XC_FC_FUNC(f90_lda_exc, F90_LDA_EXC)
      (void **p, CC_FORTRAN_INT *np, FLOAT *rho,
       FLOAT *zk)
 {
   XC(lda)((XC(func_type) *)(*p), *np, rho, zk, NULL, NULL, NULL);
 }
+
 
 void XC_FC_FUNC(f90_lda_exc_vxc, F90_LDA_EXC_VXC)
      (void **p, CC_FORTRAN_INT *np, FLOAT *rho, 
@@ -138,6 +185,7 @@ void XC_FC_FUNC(f90_lda_exc_vxc, F90_LDA_EXC_VXC)
   XC(lda)((XC(func_type) *)(*p), *np, rho, zk, vrho, NULL, NULL);
 }
 
+
 void XC_FC_FUNC(f90_lda_vxc, F90_LDA_VXC)
      (void **p, CC_FORTRAN_INT *np, FLOAT *rho, 
       FLOAT *vrho)
@@ -145,12 +193,14 @@ void XC_FC_FUNC(f90_lda_vxc, F90_LDA_VXC)
   XC(lda)((XC(func_type) *)(*p), *np, rho, NULL, vrho, NULL, NULL);
 }
 
+
 void XC_FC_FUNC(f90_lda_fxc, F90_LDA_FXC)
      (void **p, CC_FORTRAN_INT *np, FLOAT *rho,
       FLOAT *v2rho2)
 {
   XC(lda)((XC(func_type) *)(*p), *np, rho, NULL, NULL, v2rho2, NULL);
 }
+
 
 void XC_FC_FUNC(f90_lda_kxc, F90_LDA_KXC)
      (void **p, CC_FORTRAN_INT *np, FLOAT *rho,
@@ -178,9 +228,9 @@ void XC_FC_FUNC(f90_lda_c_xalpha_set_par, F90_LDA_C_XALPHA_SET_PAR)
 
 /* relativistic option of LDA_X */
 void XC_FC_FUNC(f90_lda_x_set_par, F90_LDA_X_SET_PAR)
-  (void **p, CC_FORTRAN_INT *relativistic)
+  (void **p, FLOAT *alpha, CC_FORTRAN_INT *relativistic, FLOAT *omega)
 {
-  XC(lda_x_set_params)((XC(func_type) *)(*p), *relativistic);
+  XC(lda_x_set_params)((XC(func_type) *)(*p), *alpha, *relativistic, *omega);
 }
 
 /* parameter of CSC */
@@ -246,22 +296,44 @@ void XC_FC_FUNC(f90_gga_lb_set_par, F90_GGA_LB_SET_PAR)
 void XC_FC_FUNC(f90_gga_lb_modified, F90_GGA_LB_MODIFIED)
      (void **p, CC_FORTRAN_INT *np, FLOAT *rho, FLOAT *sigma, FLOAT *r, FLOAT *vrho)
 {
-  const XC(gga_type) *gga = ((XC(func_type) *)(*p))->gga;
-  assert(gga != NULL);
-
-  XC(gga_lb_modified)(gga, *np, rho, sigma, *r, vrho);
+  XC(gga_lb_modified)((XC(func_type) *)(*p), *np, rho, sigma, *r, vrho);
 }
 
+void XC_FC_FUNC(f90_gga_x_wpbeh_set_par, F90_GGA_X_WPBEH_SET_PAR)
+  (void **p, FLOAT *omega)
+{
+  XC(gga_x_wpbeh_set_params)((XC(func_type) *)(*p), *omega);
+}
 
-void XC_FC_FUNC(f90_hyb_gga_exx_coef, F90_HYB_GGA_EXX_COEF)
+void XC_FC_FUNC(f90_gga_x_hjs_set_par, F90_GGA_X_HJS_SET_PAR)
+  (void **p, FLOAT *omega)
+{
+  XC(gga_x_hjs_set_params)((XC(func_type) *)(*p), *omega);
+}
+
+void XC_FC_FUNC(f90_hyb_exx_coef, F90_HYB_EXX_COEF)
    (void **p, FLOAT *coef)
 {
-   const XC(gga_type) *gga = ((XC(func_type) *)(*p))->gga;
-   assert(gga != NULL);
-
-   *coef = XC(hyb_gga_exx_coef)(gga);
+  *coef = XC(hyb_exx_coef)((XC(func_type) *)(*p));
 }
 
+void XC_FC_FUNC(f90_hyb_cam_coef, F90_HYB_CAM_COEF)
+  (void **p, FLOAT *omega, FLOAT *alpha, FLOAT *beta)
+{
+  XC(hyb_cam_coef)((XC(func_type) *)(*p), omega, alpha, beta);
+}
+
+void XC_FC_FUNC(f90_hyb_gga_xc_hse_set_par, F90_HYB_GGA_XC_HSE_SET_PAR)
+  (void **p, FLOAT *beta, FLOAT *omega)
+{
+  XC(hyb_gga_xc_hse_set_params)((XC(func_type) *)(*p), *beta, *omega);
+}
+
+void XC_FC_FUNC(f90_hyb_gga_xc_pbeh_set_par, F90_HYB_GGA_XC_PBEH_SET_PAR)
+  (void **p, FLOAT *alpha)
+{
+  XC(hyb_gga_xc_pbeh_set_params)((XC(func_type) *)(*p), *alpha);
+}
 
 /* meta-GGAs */
 

@@ -16,6 +16,7 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 
@@ -25,12 +26,12 @@
  LDA parametrization of Vosko, Wilk & Nusair
 ************************************************************************/
 
-#define XC_LDA_C_VWN      7   /* Vosko, Wilk, & Nussair       */
+#define XC_LDA_C_VWN      7   /* Vosko, Wilk, & Nussair (5)   */
 #define XC_LDA_C_VWN_RPA  8   /* Vosko, Wilk, & Nussair (RPA) */
-
-typedef struct{
-  int spin_interpolation; /* 0: VWN; 1: HL */
-} lda_c_vwn_params;
+#define XC_LDA_C_VWN_1   28   /* Vosko, Wilk, & Nussair (1)   */
+#define XC_LDA_C_VWN_2   29   /* Vosko, Wilk, & Nussair (2)   */
+#define XC_LDA_C_VWN_3   30   /* Vosko, Wilk, & Nussair (3)   */
+#define XC_LDA_C_VWN_4   31   /* Vosko, Wilk, & Nussair (4)   */
 
 /* some constants         e_c^P      e_c^F      alpha_c */
 typedef struct {
@@ -65,6 +66,12 @@ static vwn_consts_type vwn_consts[2] = {
   }
 };
 
+typedef struct{
+  int spin_interpolation;     /* 0: VWN; 1: HL */
+  vwn_consts_type *X1, *X2;
+} lda_c_vwn_params;
+
+
 /* initialization */
 static void
 init_vwn_constants(vwn_consts_type *X)
@@ -79,37 +86,51 @@ init_vwn_constants(vwn_consts_type *X)
 }
 
 static void
-lda_c_vwn_init(void *p_)
+lda_c_vwn_init(XC(func_type) *p)
 {
-  XC(lda_type) *p = (XC(lda_type) *)p_;
   lda_c_vwn_params *params;
-  int func;
 
   assert(p->params == NULL);
 
   p->params = malloc(sizeof(lda_c_vwn_params));
   params = (lda_c_vwn_params *) (p->params);
 
-  params->spin_interpolation = 0;
+  init_vwn_constants(&vwn_consts[0]);
+  init_vwn_constants(&vwn_consts[1]);
 
-  func = p->info->number - XC_LDA_C_VWN;
-  assert(func==0 || func==1);
-
-  init_vwn_constants(&vwn_consts[func]);
+  switch(p->info->number){
+  case XC_LDA_C_VWN:
+    params->X1 = params->X2 = &vwn_consts[0];
+    params->spin_interpolation = 0;
+    break;
+  case XC_LDA_C_VWN_1:
+    params->X1 = params->X2 = &vwn_consts[0];
+    params->spin_interpolation = 1;
+    break;
+  case XC_LDA_C_VWN_2:
+  case XC_LDA_C_VWN_3:
+  case XC_LDA_C_VWN_4:
+    params->X1 = &vwn_consts[0];
+    params->X2 = &vwn_consts[1];
+    params->spin_interpolation = 0;
+    break;
+  case XC_LDA_C_VWN_RPA:
+    params->X1 = params->X2 = &vwn_consts[1];
+    params->spin_interpolation = 1;
+    break;
+  default:
+    fprintf(stderr, "Internal error in lda_vwn\n");
+    exit(1);
+    break;
+  }  
 }
 
 
 void XC(lda_c_vwn_set_params)(XC(func_type) *p, int spin_interpolation)
 {
-  assert(p != NULL && p->lda != NULL);
-  XC(lda_c_vwn_set_params_)(p->lda, spin_interpolation);
-}
-
-void XC(lda_c_vwn_set_params_)(XC(lda_type) *p, int spin_interpolation)
-{
   lda_c_vwn_params *params;
 
-  assert(p->params != NULL);
+  assert(p != NULL && p->params != NULL);
   params = (lda_c_vwn_params *) (p->params);
 
   params->spin_interpolation = spin_interpolation;
@@ -175,31 +196,26 @@ ec_i(vwn_consts_type *X, int order, int i, FLOAT x,
 
 /* the functional */
 static inline void 
-func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
+func(const XC(func_type) *p, XC(lda_work_t) *r)
 {
-  int func;
-  vwn_consts_type *X;
   lda_c_vwn_params *params;
 
-  FLOAT ec1, ec2, ec3, vc1, vc2, vc3, fc1, fc2, fc3, kc1, kc2, kc3;
+  FLOAT ec1, ec2, ec3, ec4, ec5, vc1, vc2, vc3, vc4, vc5, fc1, fc2, fc3, fc4, fc5, kc1, kc2, kc3, kc4, kc5;
   FLOAT z3, z4, t1, dt1, d2t1, d3t1, t2, dt2, d2t2, d3t2, fz, dfz, d2fz, d3fz;
-
-  func = p->info->number - XC_LDA_C_VWN;
-  assert(func==0 || func==1);
+  FLOAT DMC, DRPA, dDMC, dDRPA, d2DMC, d2DRPA, d3DMC, d3DRPA, aux, daux, d2aux, d3aux;
 
   assert(p->params != NULL);
   params = (lda_c_vwn_params *) (p->params);
 
-  X = &vwn_consts[func];
-
-  ec_i(X, r->order, 0, r->rs[0], &ec1, &vc1, &fc1, &kc1);
+  ec_i(params->X1, r->order, 0, r->rs[0], &ec1, &vc1, &fc1, &kc1);
   
   if(p->nspin==XC_UNPOLARIZED)
     r->zk = ec1;
   else{
-    ec_i(X, r->order, 1, r->rs[0], &ec2, &vc2, &fc2, &kc2);
-    ec_i(X, r->order, 2, r->rs[0], &ec3, &vc3, &fc3, &kc3);
-    
+    ec_i(params->X1, r->order, 1, r->rs[0], &ec2, &vc2, &fc2, &kc2);
+    ec_i(params->X2, r->order, 2, r->rs[0], &ec3, &vc3, &fc3, &kc3);
+
+    DMC = ec2 - ec1;
     fz  = FZETA(r->zeta);
 
     if(params->spin_interpolation == 1){
@@ -208,11 +224,27 @@ func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
     }else{
       z3  = POW(r->zeta, 3);
       z4  = z3*r->zeta;
-      t1  = (fz/X->fpp)*(1.0 - z4);
+      t1  = (fz/params->X1->fpp)*(1.0 - z4);
       t2  = fz*z4;
     }
 
-    r->zk =  ec1 +  ec3*t1 + (ec2 -  ec1)*t2;
+    if(p->info->number == XC_LDA_C_VWN_2 || p->info->number == XC_LDA_C_VWN_3){
+      ec_i(&vwn_consts[1], r->order, 0, r->rs[0], &ec4, &vc4, &fc4, &kc4);
+      ec_i(&vwn_consts[1], r->order, 1, r->rs[0], &ec5, &vc5, &fc5, &kc5);
+    }
+
+    if(p->info->number == XC_LDA_C_VWN_2){
+      DRPA  = ec5 - ec4;
+      r->zk = ec1 + ec3*t1 + DRPA*(t2 - fz) + DMC*fz;
+
+    }else if(p->info->number == XC_LDA_C_VWN_3){
+      DRPA  = ec5 - ec4;
+      aux   = DMC*ec3/DRPA;
+
+      r->zk = ec1 + aux*t1 + DMC*t2;
+
+    }else
+      r->zk =  ec1 +  ec3*t1 + DMC*t2;
   }
 
   if(r->order < 1) return;
@@ -220,6 +252,7 @@ func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
   if(p->nspin == XC_UNPOLARIZED)
     r->dedrs = vc1;
   else{
+    dDMC = vc2 - vc1;
     dfz  = DFZETA(r->zeta);
 
     if(params->spin_interpolation == 1){
@@ -227,12 +260,27 @@ func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
       dt2 = dfz;
     }else{
       dt1  = dfz*(1.0 - z4) - 4.0*fz*z3;
-      dt1 /= X->fpp;
+      dt1 /= params->X1->fpp;
       dt2  = dfz*z4 + 4.0*fz*z3;
     }
 
-    r->dedrs = vc1 + vc3* t1 + (vc2 - vc1)* t2;
-    r->dedz  =       ec3*dt1 + (ec2 - ec1)*dt2;
+    if(p->info->number == XC_LDA_C_VWN_2){
+      dDRPA  = vc5 - vc4;
+
+      r->dedrs = vc1 + vc3* t1 + dDRPA*( t2 -  fz) + dDMC* fz;
+      r->dedz  =       ec3*dt1 +  DRPA*(dt2 - dfz) +  DMC*dfz;
+
+    }else if(p->info->number == XC_LDA_C_VWN_3){
+      dDRPA = vc5 - vc4;
+      daux  = (DMC*DRPA*vc3 + ec3*DRPA*dDMC - ec3*DMC*dDRPA)/(DRPA*DRPA);
+
+      r->dedrs = vc1 + daux* t1 + dDMC*t2;
+      r->dedz  =        aux*dt1 + DMC*dt2;
+
+    }else{
+      r->dedrs = vc1 + vc3* t1 + dDMC* t2;
+      r->dedz  =       ec3*dt1 +  DMC*dt2;
+    }
   }
 
   if(r->order < 2) return;
@@ -240,6 +288,7 @@ func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
   if(p->nspin == XC_UNPOLARIZED)
     r->d2edrs2 = fc1;
   else{
+    d2DMC = fc2 - fc1;
     d2fz  = D2FZETA(r->zeta);
 
     if(params->spin_interpolation == 1){
@@ -247,13 +296,31 @@ func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
       d2t2 = d2fz;
     }else{
       d2t1  = d2fz*(1.0 - z4) - 8.0*dfz*z3 - 4.0*3.0*fz*r->zeta*r->zeta;
-      d2t1 /= X->fpp;
+      d2t1 /= params->X1->fpp;
       d2t2  = d2fz*z4 + 8.0*dfz*z3 + 4.0*3.0*fz*r->zeta*r->zeta;
     }
 
-    r->d2edrs2 = fc1 + fc3*  t1 + (fc2 - fc1)*  t2;
-    r->d2edrsz =       vc3* dt1 + (vc2 - vc1)* dt2;
-    r->d2edz2  =       ec3*d2t1 + (ec2 - ec1)*d2t2;
+    if(p->info->number == XC_LDA_C_VWN_2){
+      d2DRPA = fc5 - fc4;
+
+      r->d2edrs2 = fc1 + fc3*  t1 + d2DRPA*(  t2 -   fz) + d2DMC*  fz;
+      r->d2edrsz =       vc3* dt1 +  dDRPA*( dt2 -  dfz) +  dDMC* dfz;
+      r->d2edz2  =       ec3*d2t1 +   DRPA*(d2t2 - d2fz) +   DMC*d2fz;
+     
+    }else if(p->info->number == XC_LDA_C_VWN_3){
+      d2DRPA = fc5 - fc4;
+      d2aux  = (2.0*ec3*DMC*dDRPA*dDRPA + DRPA*DRPA*(2.0*vc3*dDMC + DMC*fc3 + ec3*d2DMC) -
+		DRPA*(2.0*dDRPA*(DMC*vc3 + ec3*dDMC) + ec3*DMC*d2DRPA))/(DRPA*DRPA*DRPA);
+
+      r->d2edrs2 = fc1 + d2aux*  t1 + d2DMC*  t2;
+      r->d2edrsz =        daux* dt1 +  dDMC* dt2;
+      r->d2edz2  =         aux*d2t1 +   DMC*d2t2;
+
+    }else{
+      r->d2edrs2 = fc1 + fc3*  t1 + d2DMC*  t2;
+      r->d2edrsz =       vc3* dt1 +  dDMC* dt2;
+      r->d2edz2  =       ec3*d2t1 +   DMC*d2t2;
+    }
   }
   
   if(r->order < 3) return;
@@ -261,6 +328,7 @@ func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
   if(p->nspin == XC_UNPOLARIZED)
     r->d3edrs3 = kc1;
   else{
+    d3DMC = kc2 - kc1;
     d3fz  = D3FZETA(r->zeta);
 
     if(params->spin_interpolation == 1){
@@ -268,14 +336,38 @@ func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
       d3t2 = d3fz;
     }else{
       d3t1  = d3fz*(1.0 - z4) - 12.0*d2fz*z3 - 36.0*dfz*r->zeta*r->zeta - 24.0*fz*r->zeta;
-      d3t1 /= X->fpp;
+      d3t1 /= params->X1->fpp;
       d3t2  = d3fz*z4 + 12.0*d2fz*z3 + 36.0*dfz*r->zeta*r->zeta + 24.0*fz*r->zeta;
     }
 
-    r->d3edrs3  = kc1 + kc3*  t1 + (kc2 - kc1)*  t2;
-    r->d3edrs2z =       fc3* dt1 + (fc2 - fc1)* dt2;
-    r->d3edrsz2 =       vc3*d2t1 + (vc2 - vc1)*d2t2;
-    r->d3edz3   =       ec3*d3t1 + (ec2 - ec1)*d3t2;
+    if(p->info->number == XC_LDA_C_VWN_2){
+      d3DRPA = kc5 - kc4;
+
+      r->d3edrs3  = kc1 + kc3*  t1 + d3DRPA*(  t2 -   fz) + d3DMC*  fz;
+      r->d3edrs2z =       fc3* dt1 + d2DRPA*( dt2 -  dfz) + d2DMC* dfz;
+      r->d3edrsz2 =       vc3*d2t1 +  dDRPA*(d2t2 - d2fz) +  dDMC*d2fz;
+      r->d3edz3   =       ec3*d3t1 +   DRPA*(d3t2 - d3fz) +   DMC*d3fz;
+
+    }else if(p->info->number == XC_LDA_C_VWN_3){
+      d3DRPA = kc5 - kc4;
+      d3aux  = (-6.0*ec3*DMC*dDRPA*dDRPA*dDRPA + 
+		6.0*DRPA*dDRPA*(dDRPA*(DMC*vc3 + ec3*dDMC) + ec3*DMC*d2DRPA) +
+		DRPA*DRPA*DRPA*(3.0*dDMC*fc3 + 3.0*vc3*d2DMC + DMC*kc3 + ec3*d3DMC)
+		-DRPA*DRPA*(3.0*dDRPA*(2.0*vc3*dDMC + DMC*fc3 + ec3*d2DMC) +
+			    3.0*d2DRPA*(DMC*vc3 + ec3*dDMC) +
+			    ec3*DMC*d3DRPA))/(DRPA*DRPA*DRPA*DRPA);
+
+      r->d3edrs3  = kc1 + d3aux*  t1 + d3DMC*  t2;
+      r->d3edrs2z =       d2aux* dt1 + d2DMC* dt2;
+      r->d3edrsz2 =        daux*d2t1 +  dDMC*d2t2;
+      r->d3edz3   =         aux*d3t1 +   DMC*d3t2;
+
+    }else{
+      r->d3edrs3  = kc1 + kc3*  t1 + d3DMC*  t2;
+      r->d3edrs2z =       fc3* dt1 + d2DMC* dt2;
+      r->d3edrsz2 =       vc3*d2t1 +  dDMC*d2t2;
+      r->d3edz3   =       ec3*d3t1 +   DMC*d3t2;
+    }
   }
   
 }
@@ -285,11 +377,63 @@ func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
 const XC(func_info_type) XC(func_info_lda_c_vwn) = {
   XC_LDA_C_VWN,
   XC_CORRELATION,
-  "Vosko, Wilk & Nusair",
+  "Vosko, Wilk & Nusair (VWN5)",
   XC_FAMILY_LDA,
   "SH Vosko, L Wilk, and M Nusair, Can. J. Phys. 58, 1200 (1980)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-32, 0.0, 0.0, 1e-32,
+  lda_c_vwn_init,
+  NULL,
+  work_lda
+};
+
+const XC(func_info_type) XC(func_info_lda_c_vwn_1) = {
+  XC_LDA_C_VWN_1,
+  XC_CORRELATION,
+  "Vosko, Wilk & Nusair (VWN1)",
+  XC_FAMILY_LDA,
+  "SH Vosko, L Wilk, and M Nusair, Can. J. Phys. 58, 1200 (1980)",
+  XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
+  1e-32, 0.0, 0.0, 1e-32,
+  lda_c_vwn_init,
+  NULL,
+  work_lda
+};
+
+const XC(func_info_type) XC(func_info_lda_c_vwn_2) = {
+  XC_LDA_C_VWN_2,
+  XC_CORRELATION,
+  "Vosko, Wilk & Nusair (VWN2)",
+  XC_FAMILY_LDA,
+  "SH Vosko, L Wilk, and M Nusair, Can. J. Phys. 58, 1200 (1980)",
+  XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
+  1e-32, 0.0, 0.0, 1e-32,
+  lda_c_vwn_init,
+  NULL,
+  work_lda
+};
+
+const XC(func_info_type) XC(func_info_lda_c_vwn_3) = {
+  XC_LDA_C_VWN_3,
+  XC_CORRELATION,
+  "Vosko, Wilk & Nusair (VWN3)",
+  XC_FAMILY_LDA,
+  "SH Vosko, L Wilk, and M Nusair, Can. J. Phys. 58, 1200 (1980)",
+  XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
+  1e-32, 0.0, 0.0, 1e-32,
+  lda_c_vwn_init,
+  NULL,
+  work_lda
+};
+
+const XC(func_info_type) XC(func_info_lda_c_vwn_4) = {
+  XC_LDA_C_VWN_4,
+  XC_CORRELATION,
+  "Vosko, Wilk & Nusair (VWN4)",
+  XC_FAMILY_LDA,
+  "SH Vosko, L Wilk, and M Nusair, Can. J. Phys. 58, 1200 (1980)",
+  XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
+  1e-32, 0.0, 0.0, 1e-32,
   lda_c_vwn_init,
   NULL,
   work_lda
@@ -298,11 +442,11 @@ const XC(func_info_type) XC(func_info_lda_c_vwn) = {
 const XC(func_info_type) XC(func_info_lda_c_vwn_rpa) = {
   XC_LDA_C_VWN_RPA,
   XC_CORRELATION,
-  "Vosko, Wilk & Nusair (parametrization of the RPA energy)",
+  "Vosko, Wilk & Nusair (VWN5_RPA)",
   XC_FAMILY_LDA,
   "SH Vosko, L Wilk, and M Nusair, Can. J. Phys. 58, 1200 (1980)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-32, 0.0, 0.0, 1e-32,
   lda_c_vwn_init,
   NULL,
   work_lda 

@@ -29,10 +29,8 @@
 #define XC_LDA_C_ML2    23   /* Modified LSD (version 2) of Proynov and Salahub */
 
 static void 
-lda_c_ml1_init(void *p_)
+lda_c_ml1_init(XC(func_type) *p)
 {
-  XC(lda_type) *p = (XC(lda_type) *)p_;
-
   switch(p->info->number){
   case XC_LDA_C_ML2:
     p->func = 1; break;
@@ -44,7 +42,7 @@ lda_c_ml1_init(void *p_)
 
 /* the functional */
 static inline void 
-func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
+func(const XC(func_type) *p, XC(lda_work_t) *r)
 {
   static FLOAT fc[2] = {0.2026, 0.266}, q[2] = {0.084, 0.5}, C = 6.187335;
   static FLOAT b[6] = {2.763169, 1.757515, 1.741397, 0.568985, 1.572202, 1.885389};
@@ -96,7 +94,7 @@ const XC(func_info_type) XC(func_info_lda_c_ml1) = {
   XC_FAMILY_LDA,
   "EI Proynov and D Salahub, Phys. Rev. B 49, 7874 (1994)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-32, 0.0, 0.0, 1e-32,
   lda_c_ml1_init,
   NULL,
   work_lda,
@@ -109,7 +107,7 @@ const XC(func_info_type) XC(func_info_lda_c_ml2) = {
   XC_FAMILY_LDA,
   "EI Proynov and D Salahub, Phys. Rev. B 49, 7874 (1994)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-32, 0.0, 0.0, 1e-32,
   lda_c_ml1_init,
   NULL,
   work_lda,

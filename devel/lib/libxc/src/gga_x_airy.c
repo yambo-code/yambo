@@ -25,10 +25,8 @@
 #define XC_GGA_X_LAG   193 /* Local Airy Gas */
 
 static void 
-gga_x_airy_init(void *p_)
+gga_x_airy_init(XC(func_type) *p)
 {
-  XC(gga_type) *p = (XC(gga_type) *)p_;
-
   switch(p->info->number){
   case XC_GGA_X_AIRY:       p->func = 0;  break;
   case XC_GGA_X_LAG:        p->func = 1;  break;
@@ -40,7 +38,7 @@ gga_x_airy_init(void *p_)
 
 
 static inline void 
-func(const XC(gga_type) *p, int order, FLOAT x, 
+func(const XC(func_type) *p, int order, FLOAT x, 
      FLOAT *f, FLOAT *dfdx, FLOAT *d2fdx2)
 {
   static FLOAT 
@@ -123,7 +121,7 @@ const XC(func_info_type) XC(func_info_gga_x_airy) = {
   XC_FAMILY_GGA,
   "LA Constantin, A Ruzsinszky, and JP Perdew, Phys. Rev. B 80, 035125 (2009)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_x_airy_init,
   NULL, NULL,
   work_gga_x
@@ -136,7 +134,7 @@ const XC(func_info_type) XC(func_info_gga_x_lag) = {
   XC_FAMILY_GGA,
   "L Vitos, B Johansson, J Kollar, and HL Skriver, Phys. Rev. B 62, 10046-10050 (2000)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_x_airy_init,
   NULL, NULL,
   work_gga_x

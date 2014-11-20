@@ -16,175 +16,156 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/************************************************************************
-  This file is to be included in meta GGA exchange functionals. As often these
-  functionals are written as a function of s = |grad n|/n^(4/3) and tau, this
-  routine performs the necessary conversions between a functional of s and tau
-  and of rho.
-************************************************************************/
-
-static void
-work_mgga_c_init(void *p_)
-{
-  XC(mgga_type) *p = (XC(mgga_type) *)p_;
-
-  p->n_func_aux  = 1;
-  p->func_aux    = (XC(func_type) **) malloc(sizeof(XC(func_type) *)*p->n_func_aux);
-  p->func_aux[0] = (XC(func_type) *)  malloc(sizeof(XC(func_type)));
-
-  XC(func_init)(p->func_aux[0], XC_LDA_C_PW, XC_POLARIZED);
-}
-
-
 static void 
-work_mgga_c(const void *p_, int np, const FLOAT *rho, const FLOAT *sigma, const FLOAT *lapl, const FLOAT *tau,
+work_mgga_c(const XC(func_type) *p, int np, const FLOAT *rho, const FLOAT *sigma, const FLOAT *lapl, const FLOAT *tau,
 	    FLOAT *zk, FLOAT *vrho, FLOAT *vsigma, FLOAT *vlapl, FLOAT *vtau,
 	    FLOAT *v2rho2, FLOAT *v2sigma2, FLOAT *v2lapl2, FLOAT *v2tau2,
 	    FLOAT *v2rhosigma, FLOAT *v2rholapl, FLOAT *v2rhotau, 
 	    FLOAT *v2sigmalapl, FLOAT *v2sigmatau, FLOAT *v2lapltau)
 {
-  const XC(mgga_type) *p = (const XC(mgga_type) *) p_;
+  XC(mgga_work_c_t) r;
+  FLOAT min_grad2 = p->info->min_grad*p->info->min_grad;
+  int ip;
 
-  FLOAT sfact, sfact2, dens;
-  FLOAT ds[2], sigmas[2], x[2], t[2], u[2], f_LDA[2], vrho_LDA[2];
-  int ip, is, order;
+  r.order = -1;
+  if(zk     != NULL) r.order = 0;
+  if(vrho   != NULL) r.order = 1;
+  if(v2rho2 != NULL) r.order = 2;
 
-  order = -1;
-  if(zk     != NULL) order = 0;
-  if(vrho   != NULL) order = 1;
-  if(v2rho2 != NULL) order = 2;
-  if(order < 0) return;
-
-  sfact = (p->nspin == XC_POLARIZED) ? 1.0 : 2.0;
-  sfact2 = sfact*sfact;
+  if(r.order < 0) return;
 
   for(ip = 0; ip < np; ip++){
-    dens = (p->nspin == XC_UNPOLARIZED) ? rho[0] : rho[0] + rho[1];
-    if(dens < p->info->min_dens) goto end_ip_loop;
+    FLOAT rho13[3], drs, dxt;
+    FLOAT ndzdn[2], dxsdn[2];
+    FLOAT dxtds, dxsds[2];
+    FLOAT dusdn[2], dusdlapl[2], dtsdn[2], dtsdtau[2];
 
-    if(p->nspin == XC_UNPOLARIZED)
-      ds[1] = rho[0]/2.0;
+    XC(rho2dzeta)(p->nspin, rho, &(r.dens), &(r.zeta));
 
-    for(is=0; is<p->nspin; is++){
-      FLOAT gdm, rho13;
-      FLOAT f, ltau, lnr2, dfdx, dfdt, dfdu, d2fdx2, d2fdxt, d2fdt2;
-      int js = (is == 0) ? 0 : 2;
+    if(r.dens < p->info->min_dens) goto end_ip_loop;
 
-      ds[is] = rho[is]/sfact;
+    r.rs = RS(r.dens);
+    rho13[2] = CBRT(r.dens);
 
-      if(rho[is] < p->info->min_dens) continue;
+    if(p->nspin == XC_UNPOLARIZED){
+      r.ds[0]  = r.dens/2.0;
+      r.ds[1]  = r.ds[0];
 
-      sigmas[is] = max(p->info->min_grad*p->info->min_grad, sigma[js]/sfact2);
-      gdm        = SQRT(sigmas[is]);
-  
-      rho13  = CBRT(ds[is]);
-      x [is] = gdm/(ds[is]*rho13);
-    
-      ltau   = max(tau[is]/sfact, p->info->min_tau);
-      t [is] = ltau/(ds[is]*rho13*rho13);  /* tau/rho^(5/3) */
+      rho13[0] = rho13[2]/M_CBRT2;
+      rho13[1] = rho13[0];
 
-      lnr2   = max(p->info->min_tau, lapl[is]/sfact);
-      u [is] = lnr2/(ds[is]*rho13*rho13);  /* lapl/rho^(5/3) */
+      /* we already know that dens > min_dens */
+      r.sigmat = max(min_grad2, sigma[0]);
+      r.xt     = SQRT(r.sigmat)/(r.dens*rho13[2]);
 
-      dfdx  = d2fdx2 = 0.0;
-      dfdt = dfdu = 0.0;
+      r.sigmas[0] = r.sigmat/4.0;
+      r.sigmas[1] = r.sigmas[0];
+      r.sigmas[2] = r.sigmas[0];
 
-      func_c_parallel(p, x[is], t[is], u[is], order, 
-		      &f, &dfdx, &dfdt, &dfdu, &d2fdx2, &d2fdxt, &d2fdt2);
+      r.xs[0]  = M_CBRT2*r.xt;
+      r.xs[1]  = r.xs[0];
 
-      { /* get parallel spin LDA energy */
-	FLOAT tmp_rho[2], tmp_vrho[2];
+      r.us[0]  = lapl[0]/(2.0*r.ds[0]*rho13[0]*rho13[0]); /* lapl/rho^(5/3) */
+      r.us[1]  = r.us[0];
 
-	tmp_rho[0] = ds[is];
-	tmp_rho[1] = 0.0;
+      r.ts[0]  = tau[0]/(2.0*r.ds[0]*rho13[0]*rho13[0]);  /* tau/rho^(5/3) */
+      r.ts[1]  = r.ts[0];
+    }else{
+      r.ds[0]  = max(p->info->min_dens, rho[0]);
+      r.ds[1]  = max(p->info->min_dens, rho[1]);
 
-	switch (order){
-	case 0:
-	  XC(lda_exc)(p->func_aux[0], 1, tmp_rho, &(f_LDA[is]));
-	  break;
-	case 1:
-	  XC(lda_exc_vxc)(p->func_aux[0], 1, tmp_rho, &(f_LDA[is]), tmp_vrho);
-	  vrho_LDA[is] = tmp_vrho[0];
-	  break;
-	case 2: /* to be implemented */
-	  break; 
-	}
-      }
-
-      if(zk != NULL)
-	*zk += sfact*ds[is]*f_LDA[is]*f;
- 
-      if(vrho != NULL){
-	vrho[is]   = vrho_LDA[is]*f - f_LDA[is]*
-	  (4.0*dfdx*x[is] + 5.0*(dfdt*t[is] + dfdu*u[is]))/3.0;
-	vtau[is]   = f_LDA[is]*dfdt/(rho13*rho13);
-	vlapl[is]  = f_LDA[is]*dfdu/(rho13*rho13);
-	
-	vsigma[js] = ds[is]*f_LDA[is]*dfdx*x[is]/(2.0*sfact*sigmas[is]);
-      }
-
-      if(v2rho2 != NULL){
-	/* Missing terms here */
-	exit(1);
-      }
-    }
-    /* *zk /= dens; return; */  /* DEBUG */
-
-    /* We are now missing the opposite-spin part */
-    {
-      FLOAT f_LDA_opp, vrho_LDA_opp[2];
-      FLOAT f, dfdx, dfdt, dfdu, d2fdx2, d2fdxt, d2fdt2;
-      FLOAT xt, tt, uu;
-
-      switch (order){
-      case 0:
-	XC(lda_exc)(p->func_aux[0], 1, ds, &f_LDA_opp);
-	break;
-      case 1:
-	XC(lda_exc_vxc)(p->func_aux[0], 1, ds, &f_LDA_opp, vrho_LDA_opp);
-	break;
-      case 2: /* to be implemented */
-	break; 
-      }
+      rho13[0] = CBRT(r.ds[0]);
+      rho13[1] = CBRT(r.ds[1]);
       
-      if(p->nspin == XC_POLARIZED){
-	xt = tt = uu = 0.0;
-	for(is=0; is<p->nspin; is++)
-	  if(rho[is] > p->info->min_dens){
-	    xt += x[is]*x[is];
-	    tt += t[is];
-	    uu += u[is];
-	  }
-	xt = SQRT(xt);
-      }else{
-	xt = M_SQRT2*x[0];
-	tt =      2.0 *t[0];
-	uu =      2.0 *u[0];
-      }
+      r.sigmat = max(min_grad2, sigma[0] + 2.0*sigma[1] + sigma[2]);
+      r.xt     = SQRT(r.sigmat)/(r.dens*rho13[2]);
+      
+      r.sigmas[0] = max(min_grad2, sigma[0]);
+      r.sigmas[1] = max(min_grad2, sigma[1]);
+      r.sigmas[2] = max(min_grad2, sigma[2]);
 
-      dfdt = dfdu = 0.0;
-      func_c_opposite(p, xt, tt, uu, order, &f, &dfdx, &dfdt, &dfdu, &d2fdx2, &d2fdxt, &d2fdt2);
+      r.xs[0] = SQRT(r.sigmas[0])/(r.ds[0]*rho13[0]);
+      r.xs[1] = SQRT(r.sigmas[2])/(r.ds[1]*rho13[1]);
 
-      if(zk != NULL)
-	*zk += dens*f_LDA_opp*f;
- 
-      if(vrho != NULL){
-	for(is=0; is<p->nspin; is++){
-	  int js = (is == 0) ? 0 : 2;
-	  
-	  if(rho[is] < p->info->min_dens) continue;
-	  
-	  vrho[is]   += vrho_LDA_opp[is]*f - dens*f_LDA_opp*
-	    (4.0*dfdx*x[is]*x[is]/xt + 5.0*(dfdt*t[is] + dfdu*u[is]))/(3.0*ds[is]);
-	  vtau[is]   += f_LDA_opp*dfdt*dens/POW(ds[is], 5.0/3.0);
-	  vlapl[is]  += f_LDA_opp*dfdu*dens/POW(ds[is], 5.0/3.0);
-	  vsigma[js] += dens*f_LDA_opp*dfdx*x[is]*x[is]/(2.0*xt*sfact*sigmas[is]);
-	}
-      }
+      r.us[0]   = lapl[0]/(r.ds[0]*rho13[0]*rho13[0]);
+      r.us[1]   = lapl[1]/(r.ds[1]*rho13[1]*rho13[1]);
+
+      r.ts[0]   = tau[0]/(r.ds[0]*rho13[0]*rho13[0]);
+      r.ts[1]   = tau[1]/(r.ds[1]*rho13[1]*rho13[1]);
+    }
+  
+    func(p, &r);
+
+    if(zk != NULL && (p->info->flags & XC_FLAGS_HAVE_EXC))
+      *zk = r.f;
+
+    if(r.order < 1) goto end_ip_loop;
+    
+    /* setup auxiliary variables */
+    drs   =     -r.rs/(3.0*r.dens);
+    dxt   = -4.0*r.xt/(3.0*r.dens);
+    dxtds = r.xt/(2.0*r.sigmat);
+
+    if(p->nspin == XC_POLARIZED){
+      ndzdn[1]    = -(r.zeta + 1.0);
+      ndzdn[0]    = -(r.zeta - 1.0);
+
+      dxsdn[1]    = -4.0*r.xs[1]/(3.0*r.ds[1]);
+      dxsdn[0]    = -4.0*r.xs[0]/(3.0*r.ds[0]);
+
+      dxsds[1]    = r.xs[1]/(2.0*r.sigmas[2]);
+      dxsds[0]    = r.xs[0]/(2.0*r.sigmas[0]);
+
+      dusdn[1]    = -5.0*r.us[1]/(3.0*r.ds[1]);
+      dusdn[0]    = -5.0*r.us[0]/(3.0*r.ds[0]);
+
+      dusdlapl[1] = 1.0/(r.ds[1]*rho13[1]*rho13[1]);
+      dusdlapl[0] = 1.0/(r.ds[0]*rho13[0]*rho13[0]);
+
+      dtsdn[1]    = -5.0*r.ts[1]/(3.0*r.ds[1]);
+      dtsdn[0]    = -5.0*r.ts[0]/(3.0*r.ds[0]);
+
+      dtsdtau[1]  = dusdlapl[1];
+      dtsdtau[0]  = dusdlapl[0];
+    }else{
+      dxsdn[0]    = M_CBRT2*dxt;
+      dxsds[0]    = M_CBRT2*dxtds;
+
+      dusdn[0]    = -5.0*r.us[0]/(6.0*r.ds[0]);
+      dusdlapl[0] = 1.0/(2.0*r.ds[0]*rho13[0]*rho13[0]);
+      
+      dtsdn[0]    = -5.0*r.ts[0]/(6.0*r.ds[0]);
+      dtsdtau[0]  = dusdlapl[0];
     }
 
-    if(zk != NULL)
-      *zk /= dens; /* we want energy per particle */
+    if(vrho != NULL && (p->info->flags & XC_FLAGS_HAVE_VXC)){
+      vrho[0]   = r.f + r.dens*(r.dfdrs*drs + r.dfdxt*dxt);
+      vsigma[0] = r.dens*r.dfdxt*dxtds;
+
+      if(p->nspin == XC_POLARIZED){
+	vrho[1]   = vrho[0] + r.dfdz*ndzdn[1] + r.dens*(r.dfdxs[1]*dxsdn[1] + r.dfdus[1]*dusdn[1] + r.dfdts[1]*dtsdn[1]);
+	vrho[0]   = vrho[0] + r.dfdz*ndzdn[0] + r.dens*(r.dfdxs[0]*dxsdn[0] + r.dfdus[0]*dusdn[0] + r.dfdts[0]*dtsdn[0]);
+
+	vsigma[2] = vsigma[0] + r.dens*r.dfdxs[1]*dxsds[1];
+	vsigma[1] = 2.0*vsigma[0];
+	vsigma[0] = vsigma[0] + r.dens*r.dfdxs[0]*dxsds[0];
+
+	vlapl[1]  = r.dens*r.dfdus[1]*dusdlapl[1];
+	vlapl[0]  = r.dens*r.dfdus[0]*dusdlapl[0];
+
+	vtau[1]   = r.dens*r.dfdts[1]*dtsdtau[1];
+	vtau[0]   = r.dens*r.dfdts[0]*dtsdtau[0];
+	
+      }else{
+	 /* factor of 2 comes from sum over sigma */
+	vrho[0]   += 2.0*r.dens*(r.dfdxs[0]*dxsdn[0] + r.dfdus[0]*dusdn[0] + r.dfdts[0]*dtsdn[0]);
+	vsigma[0] += 2.0*r.dens*r.dfdxs[0]*dxsds[0];
+	vlapl[0]   = 2.0*r.dens*r.dfdus[0]*dusdlapl[0];
+	vtau[0]    = 2.0*r.dens*r.dfdts[0]*dtsdtau[0];
+      }
+    }
+    
+    if(r.order < 2) goto end_ip_loop;
 
   end_ip_loop:
     /* increment pointers */

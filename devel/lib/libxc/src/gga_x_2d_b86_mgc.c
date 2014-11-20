@@ -23,7 +23,7 @@
 #define XC_GGA_X_2D_B86_MGC      124 /* Becke 86 MGC for 2D systems */
 
 static inline void
-func(const XC(gga_type) *p, int order, FLOAT x, 
+func(const XC(func_type) *p, int order, FLOAT x, 
      FLOAT *f, FLOAT *dfdx, FLOAT *d2fdx2)
 {
   static const FLOAT beta=0.003317, gam=0.008323;
@@ -63,7 +63,7 @@ const XC(func_info_type) XC(func_info_gga_x_2d_b86_mgc) = {
   "S Pittalis, E Rasanen, JG Vilhena, and MAL Marques, Phys. Rev. A 79, 012503 (2009)\n"
   "AD Becke, J. Chem. Phys 85, 7184 (1986)",
   XC_FLAGS_2D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   NULL, NULL, NULL,
   work_gga_x
 };

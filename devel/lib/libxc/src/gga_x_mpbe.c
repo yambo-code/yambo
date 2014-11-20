@@ -23,7 +23,7 @@
 #define XC_GGA_X_MPBE         122 /* Adamo & Barone modification to PBE             */
 
 static inline void 
-func(const XC(gga_type) *p, int order, FLOAT x, 
+func(const XC(func_type) *p, int order, FLOAT x, 
      FLOAT *f, FLOAT *dfdx, FLOAT *d2fdx2)
 {
   static FLOAT a = 0.157;
@@ -60,7 +60,7 @@ const XC(func_info_type) XC(func_info_gga_x_mpbe) = {
   XC_FAMILY_GGA,
   "C Adamo and V Barone, J. Chem. Phys. 116, 5933 (2002)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   NULL, NULL, NULL,
   work_gga_x
 };

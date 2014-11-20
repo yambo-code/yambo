@@ -69,7 +69,7 @@ hl_f(int func, int order, int i, FLOAT rs, FLOAT *zk, FLOAT *drs, FLOAT *d2rs, F
 
 
 void 
-XC(lda_c_hl_func)(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
+XC(lda_c_hl_func)(const XC(func_type) *p, XC(lda_work_t) *r)
 {
   int func;
   FLOAT ecp, vcp, fcp, kcp;
@@ -139,7 +139,7 @@ const XC(func_info_type) XC(func_info_lda_c_hl) = {
   /* can someone get me this paper, so I can find all coefficients? */
   "L Hedin and BI Lundqvist, J. Phys. C 4, 2064 (1971)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-16, 0.0, 0.0, 1e-32,
   NULL,     /* init */
   NULL,     /* end  */
   work_lda, /* lda  */
@@ -152,7 +152,7 @@ const XC(func_info_type) XC(func_info_lda_c_gl) = {
   XC_FAMILY_LDA,
   "O Gunnarsson and BI Lundqvist, PRB 13, 4274 (1976)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-12, 0.0, 0.0, 1e-32,
   NULL,     /* init */
   NULL,     /* end  */
   work_lda, /* lda  */
@@ -165,7 +165,7 @@ const XC(func_info_type) XC(func_info_lda_c_vbh) = {
   XC_FAMILY_LDA,
   "U von Barth and L Hedin, J. Phys. C: Solid State Phys. 5, 1629 (1972)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC | XC_FLAGS_HAVE_KXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-14, 0.0, 0.0, 1e-32,
   NULL,     /* init */
   NULL,     /* end  */
   work_lda, /* lda  */

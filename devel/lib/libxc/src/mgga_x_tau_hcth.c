@@ -61,7 +61,7 @@ eq_29(int order, FLOAT x, FLOAT *ux, FLOAT *duxdx)
 }
 
 static void 
-func(const XC(mgga_type) *pt, XC(work_mgga_x_params) *r)
+func(const XC(func_type) *pt, XC(mgga_work_x_t) *r)
 {
   const FLOAT cx_local [4] = {1.10734, -1.0534, 6.3491, -2.5531};
   const FLOAT cx_nlocal[4] = {0.00110, -0.3041, 6.9543, -0.7235};
@@ -69,8 +69,8 @@ func(const XC(mgga_type) *pt, XC(work_mgga_x_params) *r)
   FLOAT ux, ux2, gxl, gxnl, fx;
   FLOAT duxdx, dgxldu, dgxnldu, dfxdt;
 
-  eq_29(r->order, r->x, &ux, &duxdx);
-  eq_22(r->order, r->t, &fx, &dfxdt);
+  eq_29(r->order,     r->x, &ux, &duxdx);
+  eq_22(r->order, 2.0*r->t, &fx, &dfxdt);
 
   ux2  = ux*ux;
   gxl  = cx_local [0] + ux*(cx_local [1] + cx_local [2]*ux + cx_local [3]*ux2);
@@ -84,7 +84,7 @@ func(const XC(mgga_type) *pt, XC(work_mgga_x_params) *r)
   dgxnldu = cx_nlocal[1] + 2.0*cx_nlocal[2]*ux + 3.0*cx_nlocal[3]*ux2;
 
   r->dfdx = (dgxldu + dgxnldu*fx)*duxdx;
-  r->dfdt = gxnl*dfxdt;
+  r->dfdt = 2.0*gxnl*dfxdt;
 }
 
 #include "work_mgga_x.c"

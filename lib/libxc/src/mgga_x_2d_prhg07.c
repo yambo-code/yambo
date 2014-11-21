@@ -109,25 +109,25 @@ FLOAT XC(mgga_x_2d_prhg_get_y)(FLOAT C)
 }
 
 static void 
-func(const XC(mgga_type) *p, XC(work_mgga_x_params) *r)
+func(const XC(func_type) *p, XC(mgga_work_x_t) *r)
 {
   FLOAT y;
   FLOAT v_PRHG, C;
 
   assert(p != NULL);
   
-  C = 0.25*(r->u - 2.0*r->t + 0.5*r->x*r->x);
+  C = 0.25*(r->u - 4.0*r->t + 0.5*r->x*r->x);
   
   y = XC(mgga_x_2d_prhg_get_y)(C);
   
-  v_PRHG = M_PI*bessi0(y/2.0);
+  v_PRHG = M_PI*bessel_I0(y/2.0);
   v_PRHG /= X_FACTOR_2D_C;
 
   if (p->info->number == XC_MGGA_X_2D_PRHG07) {
     r->dfdrs = v_PRHG*(1.0 / 3.0); // This factor is here in order to get the correct potential through work_mgga_x.c
     r->f = v_PRHG / 2.0;
   }else if (p->info->number == XC_MGGA_X_2D_PRHG07_PRP10) {
-    r->dfdrs = (v_PRHG - ((2.0*M_SQRT2)/(3.0*M_PI))*SQRT(max(r->t - 0.25*r->x*r->x,0.0))/X_FACTOR_2D_C)*(1.0 / 3.0);
+    r->dfdrs = (v_PRHG - ((2.0*M_SQRT2)/(3.0*M_PI))*SQRT(max(2.0*r->t - 0.25*r->x*r->x, 0.0))/X_FACTOR_2D_C)*(1.0 / 3.0);
     r->f = r->dfdrs * (3.0 / 2.0);
   }
 
@@ -141,7 +141,7 @@ func(const XC(mgga_type) *p, XC(work_mgga_x_params) *r)
 const XC(func_info_type) XC(func_info_mgga_x_2d_prhg07) = {
   XC_MGGA_X_2D_PRHG07,
   XC_EXCHANGE,
-  "Pittalis-Rasanen-Helbig-Gross 2010",
+  "Pittalis-Rasanen-Helbig-Gross 2007",
   XC_FAMILY_MGGA,
   "S. Pittalis, E. Rasanen, N. Helbig, and E. K. U. Gross, Phys. Rev. B 76, 235314 (2007)",
   XC_FLAGS_2D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC,

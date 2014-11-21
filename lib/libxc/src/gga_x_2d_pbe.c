@@ -23,7 +23,7 @@
 #define XC_GGA_X_2D_PBE          129 /* Perdew, Burke & Ernzerhof exchange in 2D          */
 
 static inline void 
-func(const XC(gga_type) *p, int order, FLOAT x, 
+func(const XC(func_type) *p, int order, FLOAT x, 
      FLOAT *f, FLOAT *dfdx, FLOAT *d2fdx2)
 {
   //FILE *fin;
@@ -75,7 +75,7 @@ const XC(func_info_type) XC(func_info_gga_x_2d_pbe) = {
   "JP Perdew, K Burke, and M Ernzerhof, Phys. Rev. Lett. 77, 3865 (1996)\n"
   "JP Perdew, K Burke, and M Ernzerhof, Phys. Rev. Lett. 78, 1396(E) (1997)",
   XC_FLAGS_2D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   NULL, NULL, NULL,
   work_gga_x
 };

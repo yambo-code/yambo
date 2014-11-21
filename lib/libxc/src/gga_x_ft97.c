@@ -24,7 +24,7 @@
 #define XC_GGA_X_FT97_B       115 /* Filatov & Thiel 97 (version B) */
 
 static inline void
-func(const XC(gga_type) *p, int order, FLOAT x, FLOAT sigma, 
+func(const XC(func_type) *p, int order, FLOAT x, FLOAT sigma, 
      FLOAT *f, FLOAT *dfdx,
      FLOAT *vsigma, FLOAT *d2fdx2, FLOAT *v2sigma2, FLOAT *v2sigmax)
 {
@@ -94,7 +94,7 @@ const XC(func_info_type) XC(func_info_gga_x_ft97_a) = {
   XC_FAMILY_GGA,
   "M Filatov and W Thiel, Mol. Phys 91, 847 (1997)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   NULL, NULL, NULL, 
   work_gga_x
 };
@@ -106,7 +106,7 @@ const XC(func_info_type) XC(func_info_gga_x_ft97_b) = {
   XC_FAMILY_GGA,
   "M Filatov and W Thiel, Mol. Phys 91, 847 (1997)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   NULL, NULL, NULL, 
   work_gga_x
 };

@@ -36,6 +36,7 @@ do_local    = @compile_local@
 do_fftqe    = @compile_fftqe@
 do_p2y      = @compile_p2y@
 do_e2y      = @compile_e2y@
+do_libxc    = @compile_libxc@
 shell       = @SHELL@
 make        = @MAKE@
 package_bugreport = @PACKAGE_BUGREPORT@
@@ -45,7 +46,7 @@ bindir      = @bindir@
 libdir      = @srcdir_path@/lib
 includedir  = @srcdir_path@/include
 CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
-  	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
+	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
 	   src/external_c/.objects Makefile driver/version.h \
            sbin/objects_debug.sh driver/editor.h 
 TARGETS  = all yambo interfaces ypp ydb
@@ -92,7 +93,8 @@ changelog:
 	svn log | perl sbin/svn2cl.pl > ChangeLog
 all: $(TARGETS) $(PROJECTS) $(DEBUG)
 libs:
-	@$(mklibxc)
+	@if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
+	DIR2GO="lib" ; $(mklibxc) fi
 	@LIBS2DO="slatec";  DIR2GO="lib" ; $(mklib)
 	@if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
 	DIR2GO="lib" ; $(mklib); fi
@@ -207,7 +209,7 @@ define mklibxc
   echo ">>>[Installing libxc]<<<" ; \
   make -s install ; \
   cd ../../; \
-  fi 
+  fi
 endef
 define mklib
  for ldir in $$LIBS2DO; do \

@@ -26,10 +26,8 @@
 #define XC_GGA_C_SOGGA11_X     159 /* To be used with hyb_gga_x_SOGGA11-X  */
 
 static void 
-gga_c_sogga11_init(void *p_)
+gga_c_sogga11_init(XC(func_type) *p)
 {
-  XC(gga_type) *p = (XC(gga_type) *)p_;
-
   p->n_func_aux  = 1;
   p->func_aux    = (XC(func_type) **) malloc(1*sizeof(XC(func_type) *));
   p->func_aux[0] = (XC(func_type) *)  malloc(  sizeof(XC(func_type)));
@@ -47,10 +45,7 @@ gga_c_sogga11_init(void *p_)
 
 
 static inline void 
-func(const XC(gga_type) *p, int order, FLOAT rs, FLOAT zeta, FLOAT xt, FLOAT *xs,
-     FLOAT *f, FLOAT *dfdrs, FLOAT *dfdz, FLOAT *dfdxt, FLOAT *dfdxs,
-     FLOAT *d2fdrs2, FLOAT *d2fdrsz, FLOAT *d2fdrsxt, FLOAT *d2fdrsxs, FLOAT *d2fdz2, 
-     FLOAT *d2fdzxt, FLOAT *d2fdzxs, FLOAT *d2fdxt2, FLOAT *d2fdxtxs, FLOAT *d2fdxs2)
+func(const XC(func_type) *p, XC(gga_work_c_t) *r)
 {
   static FLOAT beta = 15.75592*0.004235; /* the usual value of 0.066726 */
   const FLOAT aa[][6] = {
@@ -69,24 +64,24 @@ func(const XC(gga_type) *p, int order, FLOAT rs, FLOAT zeta, FLOAT xt, FLOAT *xs
   FLOAT dfdy, d2fdy2;
   FLOAT den0, den1, t0, dt0, d2t0, t1, dt1, d2t1, f0, df0, d2f0, f1, df1, d2f1;
 
-  XC(lda_rs_zeta) pw;
+  XC(lda_work_t) pw;
   FLOAT alpha, auxp, auxm;
 
-  pw.order = order;
-  pw.rs[0] = SQRT(rs);
-  pw.rs[1] = rs;
-  pw.rs[2] = rs*rs;
-  pw.zeta  = zeta;
+  pw.order = r->order;
+  pw.rs[0] = SQRT(r->rs);
+  pw.rs[1] = r->rs;
+  pw.rs[2] = r->rs*r->rs;
+  pw.zeta  = r->zeta;
 
-  XC(lda_c_pw_func)(p->func_aux[0]->lda, &pw);
+  XC(lda_c_pw_func)(p->func_aux[0], &pw);
 
   alpha = beta/(16.0*M_CBRT2*M_CBRT2);
 
-  auxp = CBRT(1.0 + zeta);
-  auxm = CBRT(1.0 - zeta);
+  auxp = CBRT(1.0 + r->zeta);
+  auxm = CBRT(1.0 - r->zeta);
 
   phi  = 0.5*(auxp*auxp + auxm*auxm);
-  y    = -alpha*phi*xt*xt/(rs*pw.zk);
+  y    = -alpha*phi*r->xt*r->xt/(r->rs*pw.zk);
 
   den0 = -1.0/(1.0 + y);
   f0   = 1.0 + den0;
@@ -95,9 +90,9 @@ func(const XC(gga_type) *p, int order, FLOAT rs, FLOAT zeta, FLOAT xt, FLOAT *xs
 
   t0  = aa[p->func][0] + f0*(aa[p->func][1] + f0*(aa[p->func][2] + f0*(aa[p->func][3] + f0*(aa[p->func][4] + f0*aa[p->func][5]))));
   t1  = bb[p->func][0] + f1*(bb[p->func][1] + f1*(bb[p->func][2] + f1*(bb[p->func][3] + f1*(bb[p->func][4] + f1*bb[p->func][5]))));
-  *f = pw.zk*(t0 + t1);
+  r->f = pw.zk*(t0 + t1);
 
-  if(order < 1) return;
+  if(r->order < 1) return;
 
   dphidz = 0.0;
   if(auxp > p->info->min_zeta) dphidz += 1/auxp;
@@ -105,9 +100,9 @@ func(const XC(gga_type) *p, int order, FLOAT rs, FLOAT zeta, FLOAT xt, FLOAT *xs
   dphidz *= 1.0/3.0;
 
   /* partial derivatives */
-  pyprs  = -y/rs;
+  pyprs  = -y/r->rs;
   pypzk  = -y/pw.zk;
-  pypxt  = -2.0*alpha*phi*xt/(rs*pw.zk);
+  pypxt  = -2.0*alpha*phi*r->xt/(r->rs*pw.zk);
   pypphi =  y/phi;
   
   /* full derivatives */
@@ -123,27 +118,27 @@ func(const XC(gga_type) *p, int order, FLOAT rs, FLOAT zeta, FLOAT xt, FLOAT *xs
 
   dfdy = dt0*df0 + dt1*df1;
 
-  *dfdrs   = pw.dedrs*(t0 + t1) + pw.zk*dfdy*dydrs;
-  *dfdz    = pw.dedz *(t0 + t1) + pw.zk*dfdy*dydz;
-  *dfdxt   = pw.zk*dfdy*dydxt;
-  dfdxs[0] = 0.0;
-  dfdxs[1] = 0.0;
+  r->dfdrs    = pw.dedrs*(t0 + t1) + pw.zk*dfdy*dydrs;
+  r->dfdz     = pw.dedz *(t0 + t1) + pw.zk*dfdy*dydz;
+  r->dfdxt    = pw.zk*dfdy*dydxt;
+  r->dfdxs[0] = 0.0;
+  r->dfdxs[1] = 0.0;
 
-  if(order < 2) return;
+  if(r->order < 2) return;
   
   d2phidz2 = 0.0;
-  if(auxp > p->info->min_zeta) d2phidz2 += 1.0/((1.0 + zeta)*auxp);
-  if(auxm > p->info->min_zeta) d2phidz2 += 1.0/((1.0 - zeta)*auxm);
+  if(auxp > p->info->min_zeta) d2phidz2 += 1.0/((1.0 + r->zeta)*auxp);
+  if(auxm > p->info->min_zeta) d2phidz2 += 1.0/((1.0 - r->zeta)*auxm);
   d2phidz2 *= -1.0/9.0;
 
-  p2yprs2   = -2.0*pyprs/rs;
-  p2yprszk  = -pypzk/rs;
-  p2yprsxt  = -pypxt/rs;
-  p2yprsphi = -pypphi/rs;
+  p2yprs2   = -2.0*pyprs/r->rs;
+  p2yprszk  = -pypzk/r->rs;
+  p2yprsxt  = -pypxt/r->rs;
+  p2yprsphi = -pypphi/r->rs;
   p2ypzk2   = -2.0*pypzk/pw.zk;
   p2ypzkxt  = -pypxt/pw.zk;
   p2ypzkphi = -pypphi/pw.zk;
-  p2ypxt2   = -2.0*alpha*phi/(rs*pw.zk);
+  p2ypxt2   = -2.0*alpha*phi/(r->rs*pw.zk);
   p2ypxtphi =  pypxt/phi;
 
   d2ydrs2   = p2yprs2 + 2.0*p2yprszk*pw.dedrs + pypzk*pw.d2edrs2 + p2ypzk2*pw.dedrs*pw.dedrs;
@@ -161,22 +156,22 @@ func(const XC(gga_type) *p, int order, FLOAT rs, FLOAT zeta, FLOAT xt, FLOAT *xs
 
   d2fdy2 = d2t0*df0*df0 + dt0*d2f0 + d2t1*df1*df1 + dt1*d2f1;
 
-  *d2fdrs2    = pw.d2edrs2*(t0 + t1) + 2.0*pw.dedrs*dfdy*dydrs + pw.zk*(d2fdy2*dydrs*dydrs + dfdy*d2ydrs2);
-  *d2fdrsz    = pw.d2edrsz*(t0 + t1) + dfdy*(pw.dedrs*dydz + pw.dedz*dydrs)
+  r->d2fdrs2     = pw.d2edrs2*(t0 + t1) + 2.0*pw.dedrs*dfdy*dydrs + pw.zk*(d2fdy2*dydrs*dydrs + dfdy*d2ydrs2);
+  r->d2fdrsz     = pw.d2edrsz*(t0 + t1) + dfdy*(pw.dedrs*dydz + pw.dedz*dydrs)
     + pw.zk*(d2fdy2*dydrs*dydz + dfdy*d2ydrsz);
-  *d2fdrsxt   = pw.dedrs*dfdy*dydxt + pw.zk*(d2fdy2*dydrs*dydxt + dfdy*d2ydrsxt);
-  d2fdrsxs[0] = 0.0;
-  d2fdrsxs[1] = 0.0;
-  *d2fdz2     = pw.d2edz2*(t0 + t1) + 2.0*pw.dedz*dfdy*dydz + pw.zk*(d2fdy2*dydz*dydz + dfdy*d2ydz2);
-  *d2fdzxt    = pw.dedz*dfdy*dydxt + pw.zk*(d2fdy2*dydz*dydxt + dfdy*d2ydxtz);
-  d2fdzxs[0]  = 0.0;
-  d2fdzxs[1]  = 0.0;
-  *d2fdxt2    = pw.zk*(d2fdy2*dydxt*dydxt + dfdy*d2ydxt2);
-  d2fdxtxs[0] = 0.0;
-  d2fdxtxs[1] = 0.0;
-  d2fdxs2[0]  = 0.0;
-  d2fdxs2[1]  = 0.0;
-  d2fdxs2[2]  = 0.0;
+  r->d2fdrsxt    = pw.dedrs*dfdy*dydxt + pw.zk*(d2fdy2*dydrs*dydxt + dfdy*d2ydrsxt);
+  r->d2fdrsxs[0] = 0.0;
+  r->d2fdrsxs[1] = 0.0;
+  r->d2fdz2      = pw.d2edz2*(t0 + t1) + 2.0*pw.dedz*dfdy*dydz + pw.zk*(d2fdy2*dydz*dydz + dfdy*d2ydz2);
+  r->d2fdzxt     = pw.dedz*dfdy*dydxt + pw.zk*(d2fdy2*dydz*dydxt + dfdy*d2ydxtz);
+  r->d2fdzxs[0]  = 0.0;
+  r->d2fdzxs[1]  = 0.0;
+  r->d2fdxt2     = pw.zk*(d2fdy2*dydxt*dydxt + dfdy*d2ydxt2);
+  r->d2fdxtxs[0] = 0.0;
+  r->d2fdxtxs[1] = 0.0;
+  r->d2fdxs2[0]  = 0.0;
+  r->d2fdxs2[1]  = 0.0;
+  r->d2fdxs2[2]  = 0.0;
 }
 
 #include "work_gga_c.c"
@@ -189,7 +184,7 @@ const XC(func_info_type) XC(func_info_gga_c_sogga11) = {
   "R Peverati, Y Zhao, and DG Truhlar, J. Phys. Chem. Lett. 2, 1911-1997 (2011)\n"
   "http://comp.chem.umn.edu/mfm/index.html",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-27, 1e-32, 0.0, 1e-32,
   gga_c_sogga11_init,
   NULL, NULL,
   work_gga_c,
@@ -203,7 +198,7 @@ const XC(func_info_type) XC(func_info_gga_c_sogga11_x) = {
   "R Peverati and DG Truhlar, J. Chem. Phys. 135, 191102 (2011)\n"
   "http://comp.chem.umn.edu/mfm/index.html",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-26, 1e-32, 0.0, 1e-32,
   gga_c_sogga11_init, 
   NULL, NULL,
   work_gga_c

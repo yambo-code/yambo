@@ -41,7 +41,7 @@ HDF5_str=" "
 if test "$hdf5" = "yes" ; then HDF5_str="X"; fi
 
 LIBXC_str=" "
-if test "$libxc" = "yes" ; then LIBXC_str="X"; fi
+if test "$acx_libxc_ok" = "yes" ; then LIBXC_str="X"; fi
 
 NETCDF_LF_str=" "
 if test "$enable_netcdf_LFS" = "yes" &&  test "$netcdf" = "yes" ; then NETCDF_LF_str="X"; fi

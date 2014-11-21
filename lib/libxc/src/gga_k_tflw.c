@@ -45,32 +45,24 @@ typedef struct{
 
 
 static void 
-gga_k_tflw_init(void *p_)
+gga_k_tflw_init(XC(func_type) *p)
 {
-  XC(gga_type) *p = (XC(gga_type) *)p_;
 
   assert(p->params == NULL);
   p->params = malloc(sizeof(gga_k_tflw_params));
 
   /* This automatically sets gamma and lambda depending on the functional chosen.
      We put by default N = 1.0 */
-  XC(gga_k_tflw_set_params_)(p, -1.0, -1.0, 1.0);
-}
-
-void 
-XC(gga_k_tflw_set_params)(XC(func_type) *p, FLOAT gamma, FLOAT lambda, FLOAT N)
-{
-  assert(p != NULL && p->gga != NULL);
-  XC(gga_k_tflw_set_params_)(p->gga, gamma, lambda, N);
+  XC(gga_k_tflw_set_params)(p, -1.0, -1.0, 1.0);
 }
 
 /* for automatically assigning lambda and gamma set them to -1 */
 void 
-XC(gga_k_tflw_set_params_)(XC(gga_type) *p, FLOAT gamma, FLOAT lambda, FLOAT N)
+XC(gga_k_tflw_set_params)(XC(func_type) *p, FLOAT gamma, FLOAT lambda, FLOAT N)
 {
   gga_k_tflw_params *params;
 
-  assert(p->params != NULL);
+  assert(p != NULL && p->params != NULL);
   params = (gga_k_tflw_params *) (p->params);
 
   params->gamma = 1.0;
@@ -126,7 +118,7 @@ XC(gga_k_tflw_set_params_)(XC(gga_type) *p, FLOAT gamma, FLOAT lambda, FLOAT N)
 
 
 static inline void 
-func(const XC(gga_type) *p, int order, FLOAT x, 
+func(const XC(func_type) *p, int order, FLOAT x, 
      FLOAT *f, FLOAT *dfdx, FLOAT *d2fdx2)
 {
   FLOAT lambda, gamma;
@@ -158,7 +150,7 @@ const XC(func_info_type) XC(func_info_gga_k_vw) = {
   XC_FAMILY_GGA,
   "CF von Weiszaecker, Z. Phys. 96, 431 (1935)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_k_tflw_init, 
   NULL, NULL,
   work_gga_k
@@ -172,7 +164,7 @@ const XC(func_info_type) XC(func_info_gga_k_ge2) = {
   "AS Kompaneets and ES Pavlovskii, Zh. Eksp. Teor. Fiz. 31, 427 (1956) [Sov. Phys. JETP 4, 328 (1957)]"
   "DA Kirznits, Zh. Eksp. Teor. Fiz. 32, 115 (1957) [Sov. Phys. JETP 5, 64 (1957)]",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_k_tflw_init,
   NULL, NULL,
   work_gga_k
@@ -183,9 +175,9 @@ const XC(func_info_type) XC(func_info_gga_k_golden) = {
   XC_KINETIC,
   "TF-lambda-vW form by Golden (l = 13/45)",
   XC_FAMILY_GGA,
-  "S Golden, Phys. Rev. 105, 604–615 (1957)",
+  "S Golden, Phys. Rev. 105, 604-615 (1957)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_k_tflw_init,
   NULL, NULL,
   work_gga_k
@@ -198,7 +190,7 @@ const XC(func_info_type) XC(func_info_gga_k_yt65) = {
   XC_FAMILY_GGA,
   "K. Yonei and Y. Tomishima, J. Phys. Soc. Jpn. 20, 1051-1057 (1965)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_k_tflw_init,
   NULL, NULL,
   work_gga_k
@@ -211,7 +203,7 @@ const XC(func_info_type) XC(func_info_gga_k_baltin) = {
   XC_FAMILY_GGA,
   "R Baltin, Z. Naturforsch. 27, 1176 (1972)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_k_tflw_init,
   NULL, NULL,
   work_gga_k
@@ -222,9 +214,9 @@ const XC(func_info_type) XC(func_info_gga_k_lieb) = {
   XC_KINETIC,
   "TF-lambda-vW form by Lieb (l = 0.185909191)",
   XC_FAMILY_GGA,
-  "EH Lieb, Rev. Mod. Phys. 53, 603–641 (1981)",
+  "EH Lieb, Rev. Mod. Phys. 53, 603-641 (1981)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_k_tflw_init,
   NULL, NULL,
   work_gga_k
@@ -237,7 +229,7 @@ const XC(func_info_type) XC(func_info_gga_k_absr1) = {
   XC_FAMILY_GGA,
   "PK Acharya, LJ Bartolotti, SB Sears, and RG Parr, Proc. Natl. Acad. Sci. USA 77 6978-6982 (1980)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_k_tflw_init,
   NULL, NULL,
   work_gga_k
@@ -250,7 +242,7 @@ const XC(func_info_type) XC(func_info_gga_k_absr2) = {
   XC_FAMILY_GGA,
   "PK Acharya, LJ Bartolotti, SB Sears, and RG Parr, Proc. Natl. Acad. Sci. USA 77 6978-6982 (1980)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_k_tflw_init,
   NULL, NULL,
   work_gga_k
@@ -263,7 +255,7 @@ const XC(func_info_type) XC(func_info_gga_k_gr) = {
   XC_FAMILY_GGA,
   "JL Gázquez and J Robles, J. Chem. Phys. 76, 1467 (1982)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_k_tflw_init,
   NULL, NULL,
   work_gga_k
@@ -276,7 +268,7 @@ const XC(func_info_type) XC(func_info_gga_k_ludena) = {
   XC_FAMILY_GGA,
   "EV Ludeña, in Cond. Matt. Theor. Vol 1, ed. by FB Malik (Plenum, New York, 1986), p. 183",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_k_tflw_init,
   NULL, NULL,
   work_gga_k
@@ -289,7 +281,7 @@ const XC(func_info_type) XC(func_info_gga_k_gp85) = {
   XC_FAMILY_GGA,
   "SK Ghosh and RG Parr, J. Chem. Phys. 82, 3307 (1985)",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   gga_k_tflw_init,
   NULL, NULL,
   work_gga_k

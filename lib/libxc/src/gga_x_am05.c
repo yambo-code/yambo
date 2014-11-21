@@ -16,7 +16,7 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <config.h>
+#include "../config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,7 +26,7 @@
 #define XC_GGA_X_AM05         120 /* Armiento & Mattsson 05 exchange                */
 
 static inline void 
-func(const XC(gga_type) *p, int order, FLOAT x, 
+func(const XC(func_type) *p, int order, FLOAT x, 
      FLOAT *f, FLOAT *dfdx, FLOAT *d2fdx2)
 {
   const FLOAT am05_c      = 0.7168;
@@ -115,7 +115,7 @@ const XC(func_info_type) XC(func_info_gga_x_am05) = {
   "R Armiento and AE Mattsson, Phys. Rev. B 72, 085108 (2005)\n"
   "AE Mattsson, R Armiento, J Paier, G Kresse, JM Wills, and TR Mattsson, J. Chem. Phys. 128, 084714 (2008).",
   XC_FLAGS_3D | XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, MIN_GRAD, 0.0, MIN_ZETA,
+  1e-32, 1e-32, 0.0, 1e-32,
   NULL, NULL, NULL,
   work_gga_x
 };

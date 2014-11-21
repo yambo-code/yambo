@@ -4,6 +4,7 @@
 #  define LOG   logf
 #  define ASINH asinhf
 #  define ABS   fabsf
+#  define EXP   expf
 #ifdef HAVE_SQRTF
 #  define SQRT  sqrtf
 #else
@@ -27,6 +28,7 @@
 #  define LOG   log
 #  define ASINH asinh
 #  define ABS   fabs
+#  define EXP   exp
 #  define SQRT  sqrt
 #  define XC(x) xc_ ## x
 #  define XC_U(X) XC_ ## X

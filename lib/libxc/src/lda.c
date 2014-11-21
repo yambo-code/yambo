@@ -27,12 +27,9 @@
 
 /* initialization */
 int 
-XC(lda_init)(XC(func_type) *p, const XC(func_info_type) *info, int nspin)
+XC(lda_init)(XC(func_type) *func, const XC(func_info_type) *info, int nspin)
 {
-  XC(lda_type) *func;
-
-  assert(p != NULL && p->lda != NULL);
-  func = p->lda;
+  assert(func != NULL);
 
   /* initialize structure */
   func->info   = info;
@@ -59,12 +56,9 @@ XC(lda_init)(XC(func_type) *p, const XC(func_info_type) *info, int nspin)
 
 /* termination */
 void 
-XC(lda_end)(XC(func_type) *p)
+XC(lda_end)(XC(func_type) *func)
 {
-  XC(lda_type) *func;
-
-  assert(p != NULL && p->lda != NULL);
-  func = p->lda;
+  assert(func != NULL);
 
   if(func->info->end != NULL)
     func->info->end(func);
@@ -79,13 +73,10 @@ XC(lda_end)(XC(func_type) *p)
 
 /* get the lda functional */
 void 
-XC(lda)(const XC(func_type) *p, int np, const FLOAT *rho, 
+XC(lda)(const XC(func_type) *func, int np, const FLOAT *rho, 
 	FLOAT *zk, FLOAT *vrho, FLOAT *v2rho2, FLOAT *v3rho3)
 {
-  XC(lda_type) *func;
-
-  assert(p != NULL && p->lda != NULL);
-  func = p->lda;
+  assert(func != NULL);
 
   /* sanity check */
   if(zk != NULL && !(func->info->flags & XC_FLAGS_HAVE_EXC)){
@@ -173,13 +164,11 @@ XC(lda_kxc)(const XC(func_type) *p, int np, const FLOAT *rho, FLOAT *v3rho3)
 
 /* get the xc kernel through finite differences */
 void 
-XC(lda_fxc_fd)(const XC(func_type) *p, int np, const FLOAT *rho, FLOAT *v2rho2)
+XC(lda_fxc_fd)(const XC(func_type) *func, int np, const FLOAT *rho, FLOAT *v2rho2)
 {
-  XC(lda_type) *func;
   int i, ip;
 
-  assert(p != NULL && p->lda != NULL);
-  func = p->lda;
+  assert(func != NULL);
 
   for(ip=0; ip<np; ip++){
     for(i=0; i<func->nspin; i++){
@@ -191,10 +180,10 @@ XC(lda_fxc_fd)(const XC(func_type) *p, int np, const FLOAT *rho, FLOAT *v2rho2)
       
       rho2[i] = rho[i] + DELTA_RHO;
       rho2[j] = (func->nspin == XC_POLARIZED) ? rho[j] : 0.0;
-      XC(lda_vxc)(p, 1, rho2, vc1);
+      XC(lda_vxc)(func, 1, rho2, vc1);
       
       if(rho[i]<2.0*DELTA_RHO){ /* we have to use a forward difference */
-	XC(lda_vxc)(p, 1, rho, vc2);
+	XC(lda_vxc)(func, 1, rho, vc2);
 	
 	v2rho2[js] = (vc1[i] - vc2[i])/(DELTA_RHO);
 	if(func->nspin == XC_POLARIZED && i==0)
@@ -202,7 +191,7 @@ XC(lda_fxc_fd)(const XC(func_type) *p, int np, const FLOAT *rho, FLOAT *v2rho2)
 	
       }else{                    /* centered difference (more precise)  */
 	rho2[i] = rho[i] - DELTA_RHO;
-	XC(lda_vxc)(p, 1, rho2, vc2);
+	XC(lda_vxc)(func, 1, rho2, vc2);
       
 	v2rho2[js] = (vc1[i] - vc2[i])/(2.0*DELTA_RHO);
 	if(func->nspin == XC_POLARIZED && i==0)
@@ -217,27 +206,25 @@ XC(lda_fxc_fd)(const XC(func_type) *p, int np, const FLOAT *rho, FLOAT *v2rho2)
 
 
 void
-XC(lda_kxc_fd)(const XC(func_type) *p, int np, const FLOAT *rho, FLOAT *v3rho3)
+XC(lda_kxc_fd)(const XC(func_type) *func, int np, const FLOAT *rho, FLOAT *v3rho3)
 {
   /* Kxc, this is a third order tensor with respect to the densities */
-  XC(lda_type) *func;
   int ip, i, j, n;
 
-  assert(p != NULL && p->lda != NULL);
-  func = p->lda;
+  assert(func != NULL);
 
   for(ip=0; ip<np; ip++){
     for(i=0; i<func->nspin; i++){
       FLOAT rho2[2], vc1[2], vc2[2], vc3[2];
 
       for(n=0; n<func->nspin; n++) rho2[n] = rho[n];
-      XC(lda_vxc)(p, 1, rho, vc2);
+      XC(lda_vxc)(func, 1, rho, vc2);
 
       rho2[i] += DELTA_RHO;
-      XC(lda_vxc)(p, 1, rho2, vc1);
+      XC(lda_vxc)(func, 1, rho2, vc1);
 	
       rho2[i] -= 2.0*DELTA_RHO;
-      XC(lda_vxc)(p, 1, rho2, vc3);    
+      XC(lda_vxc)(func, 1, rho2, vc3);    
     
       for(j=0; j<func->nspin; j++)
 	v3rho3[i*func->nspin + j] = (vc1[j] - 2.0*vc2[j] + vc3[j])/(DELTA_RHO*DELTA_RHO);

@@ -31,38 +31,22 @@ typedef struct{
 } lda_c_1d_csc_params;
 
 static void 
-lda_c_1d_csc_init(void *p_)
+lda_c_1d_csc_init(XC(func_type) *p)
 {
-  XC(lda_type) *p = (XC(lda_type) *)p_;
-
-  assert(p->params == NULL);
+  assert(p != NULL && p->params == NULL);
   p->params = malloc(sizeof(lda_c_1d_csc_params));
 
   /* default value is soft-Coulomb with beta=1.0 */
-  XC(lda_c_1d_csc_set_params_)(p, 1, 1.0);
-}
-
-static void 
-lda_c_1d_csc_end(void *p_)
-{
-  XC(lda_type) *p = (XC(lda_type) *)p_;
-
-  assert(p->params != NULL);
-  free(p->params);
-  p->params = NULL;
+  XC(lda_c_1d_csc_set_params)(p, 1, 1.0);
 }
 
 void 
 XC(lda_c_1d_csc_set_params)(XC(func_type) *p, int interaction, FLOAT bb)
 {
-  assert(p != NULL && p->lda != NULL);
-  XC(lda_c_1d_csc_set_params_)(p->lda, interaction, bb);
-}
+  lda_c_1d_csc_params *params;
 
-void 
-XC(lda_c_1d_csc_set_params_)(XC(lda_type) *p, int interaction, FLOAT bb)
-{
-  lda_c_1d_csc_params *params = (lda_c_1d_csc_params *)(p->params);
+  assert(p != NULL && p->params != NULL);
+  params = (lda_c_1d_csc_params *)(p->params);
 
   assert(params != NULL);
 
@@ -106,7 +90,7 @@ typedef struct {
 
 
 static void
-csc_func(lda_csc_param_t *pp, XC(lda_rs_zeta) *r, FLOAT *func, FLOAT *dfunc, FLOAT *d2func)
+csc_func(lda_csc_param_t *pp, XC(lda_work_t) *r, FLOAT *func, FLOAT *dfunc, FLOAT *d2func)
 {
   FLOAT rs_n1, rs_n2, rs_m, arg, larg, den, aux, num;
   FLOAT darg, dnum, dden, daux;
@@ -148,7 +132,7 @@ csc_func(lda_csc_param_t *pp, XC(lda_rs_zeta) *r, FLOAT *func, FLOAT *dfunc, FLO
 }
 
 static inline void
-func(const XC(lda_type) *p, XC(lda_rs_zeta) *r)
+func(const XC(func_type) *p, XC(lda_work_t) *r)
 {
   lda_csc_param_t pp[2][9] = {
     { /* paramagnetic */
@@ -224,8 +208,10 @@ const XC(func_info_type) XC(func_info_lda_c_1d_csc) = {
   XC_FAMILY_LDA,
   "M Casula, S Sorella, and G Senatore, Phys. Rev. B 74, 245427 (2006)",
   XC_FLAGS_1D |  XC_FLAGS_HAVE_EXC | XC_FLAGS_HAVE_VXC | XC_FLAGS_HAVE_FXC,
-  MIN_DENS, 0.0, 0.0, 0.0,
+  1e-32, 0.0, 0.0, 1e-32,
   lda_c_1d_csc_init,    /* init */
-  lda_c_1d_csc_end,     /* end  */
+  NULL,                 /* end  */
   work_lda,             /* lda  */
+  NULL,
+  NULL
 };

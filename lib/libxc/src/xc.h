@@ -23,7 +23,6 @@
 extern "C" {
 #endif
 
-#include "xc_version.h"
 #include "xc_config.h"
   
 #define XC_UNPOLARIZED          1

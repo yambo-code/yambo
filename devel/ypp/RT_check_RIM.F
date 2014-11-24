@@ -76,7 +76,7 @@ subroutine RT_check_RIM(Xk,Xen)
  !
  allocate(Xk%pt_RIM(Nk,3))
  do ik=1,Xk%nibz
-   Xk%pt_RIM(RT_ibz_coo(ik,1):RT_ibz_coo(ik,2),:)=Xk%pt_RIM(RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),:)
+   Xk%pt_RIM(RT_ibz_coo(ik,1):RT_ibz_coo(ik,2),:)=Xk%ptbz_RIM(RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),:)
  enddo
  !
 end subroutine RT_check_RIM

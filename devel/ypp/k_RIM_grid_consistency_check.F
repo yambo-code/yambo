@@ -35,7 +35,7 @@ integer function k_RIM_grid_consistency_check(k,E,k_RIM,E_RIM)
  !
  ! Work Space
  !
- integer :: ik,ik_RIM,nb,nk
+ integer :: ik,ik_RIM,nb
  real(SP):: shifts(2)
  !
  k_RIM_grid_consistency_check=-1

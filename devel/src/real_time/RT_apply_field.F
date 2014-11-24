@@ -103,7 +103,8 @@ subroutine RT_apply_field(ik,ik_RIM,En,H_nl_sc,A_input)
        if(l_RT_uses_E_RIM) then
          deltaE=En%E(i1,ik,1)-En%E(i2,ik,1)
          deltaE_RIM=En%E_RIM(i1,ik_RIM,1)-En%E_RIM(i2,ik_RIM,1)
-         if(abs(deltaE)>Dipole_Energy_treshold .and. abs(deltaE_RIM)>Dipole_Energy_treshold) POL(:)=POL(:)*deltaE/deltaE_RIM
+         if(abs(deltaE)>Dipole_Energy_treshold .and. abs(deltaE_RIM)>Dipole_Energy_treshold) &
+&          POL(:)=POL(:)*deltaE/deltaE_RIM
        endif
        E_dot_P=sum(E_vec_pot(1:3)*POL(1:3))
        H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)-      E_dot_P

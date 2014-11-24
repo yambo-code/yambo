@@ -257,9 +257,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
-   if (.not.l_sc_ip) then 
-     call el_density_matrix(G_lesser_reference(:,:,RT_ibz_coo(:,1)),E,k,rho_reference,1)
-   endif
+   if (.not.l_sc_ip) call el_density_matrix(G_lesser_reference,E,k,rho_reference,1)
    !
    ! Last thing to do is to update the planned time sampling time (if needed)
    !

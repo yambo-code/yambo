@@ -105,7 +105,6 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  call FREQUENCIES_setup(W_bss)
  !
  call RT_output(what="initialize")
- call RT_output("open trans_eps_rel trans_eps_abs eps_eq")
  call RT_output("open trans_eps_rel trans_eps_abs eps_eq trans_residual")
  if (l_TR_reflec) call RT_output("open trans_refl_rel trans_refl_abs refl_eq")
  if (l_TR_transm) call RT_output("open trans_transm_rel trans_transm_abs transm_eq")

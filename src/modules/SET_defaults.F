@@ -87,8 +87,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use collision,  ONLY:COLLISIONS_cutoff
 #endif
 #if defined _RT || defined _YPP_RT
- use real_time,  ONLY:RT_step,NE_steps, Integrator_name,                                  &
-&                     l_Debye_TBose_update,                                               &
+ use rt_ctl,     ONLY:RT_IO_time
+ use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,                                  &
+&                     l_Debye_TBose_update,RT_life_interp_KIND,RT_life_interp_steps,      &
 &                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel,               &
 &                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,                         &
 &                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,EE_prefactor,EP_prefactor,EP_abs_prefactor,&
@@ -539,15 +540,16 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_RT_probe=.FALSE.
  l_RT_pump_and_probe=.FALSE.
  !
- RT_step=0.002*FS2AUT
+ RT_step=0.010*FS2AUT
  NE_steps=1
+ NE_time=0._SP
+ NE_tot_time= 1000._SP*FS2AUT
  integrator_step=1
  Integrator_name='RK2'
  RAD_LifeTime = 0.
  Phase_LifeTime = 0.
  RT_is_dephased=.FALSE.
  l_RT_induced_field=.FALSE.
- NE_tot_time= 5*RAD_LifeTime
  NE_MEM_treshold=0.
  G_MEM_steps=2   ! By default only G_lesser@t and @t+1
  RT_nk=0
@@ -558,6 +560,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Eh_pumped_Nel=1.
  Plasma_redux_percent=100._SP
  RIM_EE_percent=0._SP
+ !
+ ! Scattering
+ !
+ RT_life_interp_KIND="FLAT"
+ RT_life_interp_steps(1)=4.*FS2AUT
+ RT_life_interp_steps(2)=1.*FS2AUT
  !
  ! G_retarded
  !
@@ -575,6 +583,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  EE_prefactor=0._SP
  EP_prefactor=0._SP
  EP_abs_prefactor=0._SP
+ !
+ ! RT_ctl
+ !
+ RT_IO_time(1)=2._SP*FS2AUT
+ RT_IO_time(2)=5._SP*FS2AUT
+ RT_IO_time(3)=1._SP*FS2AUT
  !
 #endif
  !

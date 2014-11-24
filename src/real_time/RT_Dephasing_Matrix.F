@@ -136,8 +136,8 @@ subroutine RT_Dephasing_Matrix(E)
      do ib_2=ib_1+1,SC_bands(2)
        !
        do ik=1,nkibz
-         RT_Deph_Matrix(ib_1,ib_2,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))/2._SP
-         RT_Deph_Matrix(ib_2,ib_1,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))/2._SP
+         RT_Deph_Matrix(ib_1,ib_2,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))
+         RT_Deph_Matrix(ib_2,ib_1,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))
        enddo     
        !
      enddo

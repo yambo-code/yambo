@@ -55,9 +55,9 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  type(W_samp)      :: W_bss
  !
- integer              :: n_T_steps,i_T,neh,i_v,i_c,i_kbz,i_kibz,i_kmem,i_spin,i_freq,i_l
+ integer              :: n_T_steps,i_T,neh,i_v,i_c,i_kbz,i_kibz,i_kmem,i_spin,i_freq,i_l,i_vp,i_cp
  character(3)         :: message
- real(SP)             :: io_Time,Co,change_factor,f_cv,delta_f_cv,output(3),BS_R_tmp
+ real(SP)             :: io_Time,Co,change_factor,f_cv,f_vpv,f_ccp,delta_f_cv,output(3),BS_R_tmp
  complex(SP)          :: IP_E,IP_R,Wd,BS_R1(BS_H_dim)
  logical              :: l_TR_transm,l_TR_reflec,l_include_IP
  !
@@ -99,18 +99,18 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  W_bss%n_freqs=X_rt%energy_steps
  W_bss%per_memstps=100._SP
  !
- W_bss%dr(1)=X_rt%damp_factor
- W_bss%dr(2)=X_rt%damp_factor
+ W_bss%dr(1)=2._SP*X_rt%damp_factor
+ W_bss%dr(2)=2._SP*X_rt%damp_factor
  !
  call FREQUENCIES_setup(W_bss)
  !
  call RT_output(what="initialize")
+ call RT_output("open trans_eps_rel trans_eps_abs eps_eq")
  call RT_output("open trans_eps_rel trans_eps_abs eps_eq trans_residual")
  if (l_TR_reflec) call RT_output("open trans_refl_rel trans_refl_abs refl_eq")
  if (l_TR_transm) call RT_output("open trans_transm_rel trans_transm_abs transm_eq")
  !
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q0_def_norm**2
- BS_R1=(0._SP,0._SP)
  !
  do i_T=1,n_T_steps
    !
@@ -132,7 +132,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    !
    ! Compute the contribution due to exissting transitions
    !
-   !BS_R0=(0._SP,0._SP)
+   BS_R0=(0._SP,0._SP)
    BS_R1=(0._SP,0._SP)
    !
    do i_l=1,BS_H_dim
@@ -149,18 +149,23 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        !
        if(i_v<rt%nb(1) .or. i_c>rt%nb(2) ) cycle
        !
-       f_cv=Xen%f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
+       !f_cv=Xen%f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
+       !delta_f_cv=delta_f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ- &
+       !&          Xen%f(i_v,i_kibz,i_spin)*          delta_f(i_c,i_kibz,i_spin) /spin_occ/spin_occ
        !
-       delta_f_cv=delta_f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ- &
-&                 Xen%f(i_v,i_kibz,i_spin)*          delta_f(i_c,i_kibz,i_spin) /spin_occ/spin_occ
+       f_cv=      (  Xen%f(i_v,i_kibz,i_spin)-  Xen%f(i_c,i_kibz,i_spin))/spin_occ
+       delta_f_cv=(delta_f(i_v,i_kibz,i_spin)-delta_f(i_c,i_kibz,i_spin))/spin_occ
        !
+       BS_R0(i_l)=BS_R0(i_l)-DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin)*BS_mat(neh,i_l)*sqrt(f_cv)
        BS_R1(i_l)=BS_R1(i_l)-DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin)*BS_mat(neh,i_l)*delta_f_cv/sqrt(f_cv)
-       !BS_R0(i_l)=BS_R0(i_l)-DIP_q_dot_iR(i_c,i_v,i_kibz,i_spin)*BS_mat(neh,i_l)*sqrt(f_cv)
        !
      enddo 
      !
-     X_epsilon(1,:)=X_epsilon(1,:)-      BS_R0(i_l)*conjg(BS_R0(i_l))       /(W_bss%p(:)-BS_E(i_l))
+     X_epsilon(1,:)=X_epsilon(1,:)-     BS_R0(i_l)*conjg(BS_R0(i_l))       /(W_bss%p(:)-BS_E(i_l))
      X_epsilon(2,:)=X_epsilon(2,:)-0.5*(BS_R1(i_l)*conjg(BS_R0(i_l))+conjg(BS_R1(i_l))*BS_R0(i_l))/(W_bss%p(:)-BS_E(i_l))
+     !
+     X_epsilon(1,:)=X_epsilon(1,:)+     BS_R0(i_l)*conjg(BS_R0(i_l))       /(W_bss%p(:)+BS_E(i_l))
+     X_epsilon(2,:)=X_epsilon(2,:)+0.5*(BS_R1(i_l)*conjg(BS_R0(i_l))+conjg(BS_R1(i_l))*BS_R0(i_l))/(W_bss%p(:)+BS_E(i_l))
      !
      BS_R_tmp=-0.5*real((BS_R1(i_l)*conjg(BS_R0(i_l))+conjg(BS_R1(i_l))*BS_R0(i_l)))
      !
@@ -179,13 +184,14 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
          !
          ! First valence
          do i_v=rt%nb(1),Xen%nbf
-           do i_c=rt%nb(1),Xen%nbf
+           do i_vp=rt%nb(1),Xen%nbf
              !
-             if(i_v==i_c) cycle
+             if(i_v==i_vp) cycle
              !
-             f_cv=-Xen%f(i_v,i_kibz,i_spin)*delta_f(i_c,i_kibz,i_spin)/spin_occ/spin_occ
-             IP_R=-conjg(DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin))*sqrt(f_cv)
-             IP_E=Xen%E(i_c,i_kibz,i_spin)-Xen%E(i_v,i_kibz,i_spin)
+             f_vpv=-Xen%f(i_v,i_kibz,i_spin)*delta_f(i_vp,i_kibz,i_spin)/spin_occ/spin_occ
+             IP_R=-conjg(DIP_q_dot_iR(i_vp,i_v,i_kmem,i_spin))*sqrt(f_vpv)
+             IP_E=Xen%E(i_vp,i_kibz,i_spin)-Xen%E(i_v,i_kibz,i_spin)
+             ! Photo-induced absorption and stimulated emission in v-v'
              X_epsilon(2,:)=X_epsilon(2,:)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
              X_epsilon(2,:)=X_epsilon(2,:)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)
              !
@@ -193,14 +199,14 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
          enddo
          !
          ! Then conduction
-         do i_v=Xen%nbf+1,rt%nb(2)
+         do i_cp=Xen%nbf+1,rt%nb(2)
            do i_c=Xen%nbf+1,rt%nb(2)
              !
-             if(i_v==i_c) cycle
+             if(i_c==i_cp) cycle
              !
-             f_cv= delta_f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
-             IP_R=-conjg(DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin))*sqrt(f_cv)
-             IP_E=Xen%E(i_c,i_kibz,i_spin)-Xen%E(i_v,i_kibz,i_spin)
+             f_ccp= delta_f(i_cp,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
+             IP_R=-conjg(DIP_q_dot_iR(i_c,i_cp,i_kmem,i_spin))*sqrt(f_ccp)
+             IP_E=Xen%E(i_c,i_kibz,i_spin)-Xen%E(i_cp,i_kibz,i_spin)
              X_epsilon(2,:)=X_epsilon(2,:)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
              X_epsilon(2,:)=X_epsilon(2,:)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)
              !
@@ -211,16 +217,14 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
      enddo
    endif
    !
-   X_epsilon(1,:)=1.+X_epsilon(1,:)*Co
-   X_epsilon(2,:)=   X_epsilon(2,:)*Co
+   X_epsilon(1,:)=1._SP+X_epsilon(1,:)*Co
+   X_epsilon(2,:)=      X_epsilon(2,:)*Co
    !
    if(l_TR_reflec) then
      ! Reflectance is assumed for a 3D system
      ! r=(sqrt(eps)-1)/(sqrt(eps)+1)
      X_reflectance(1,:)=(sqrt(X_epsilon(1,:))-1._SP)/(sqrt(X_epsilon(1,:))+1._SP)
-!     X_reflectance(2,:)=(sqrt(X_epsilon(1,:)+X_epsilon(2,:))-1)/(sqrt((X_epsilon(1,:)+X_epsilon(2,:)))+1)
-!     X_reflectance(2,:)=0.5_SP*X_epsilon(2,:)*(1._SP/(X_epsilon(1,:)+sqrt(X_epsilon(2,:))) - &
-!&            (sqrt(X_epsilon(1,:))-1)/(sqrt(X_epsilon(1,:))+1)**2._SP/sqrt(X_epsilon(1,:)) )
+     ! der r/der eps = 1/(sqrt(eps)+1)**2/ sqrt(eps)
      X_reflectance(2,:)=X_epsilon(2,:)/(sqrt(X_epsilon(1,:))+1._SP)**2._SP/sqrt(X_epsilon(1,:)) 
    endif
    !

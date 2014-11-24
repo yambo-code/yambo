@@ -85,7 +85,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    ! Contribution only from the changed occupations about SC_bands(1)
    !
-   call el_density_matrix(dG_in(:,:,RT_ibz_coo(:,1)),E,k,delta_rho,SC_bands(1))
+   call el_density_matrix(dG_in,E,k,delta_rho,SC_bands(1))
    !
    rho_n=rho_reference+delta_rho
    !
@@ -94,9 +94,9 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  ! All the potentials are written in terms of the variations
  ! * The Hartree term: V_hartree(rho) = V_hartree(rho_reference) + V_hartree(delta_rho)
  ! * The V_xc    term: V_xc(rho)      = V_xc(rho_reference)      + {V_xc(rho) - V_xc(rho_reference)} 
- ! * Sigma_xc    term: S_xc(G)        = S_xc(G_reference)        + S_xc(delta_G)
- !   NOTICE THAT: this approximation is valid only for linear self-energies 
- !                in G_lesser as exchange or COHSEX(with W fixed) 
+ ! * Sigma_xc    term: S_xc(G)        ~ S_xc(G_reference)        + S_xc(delta_G)
+ !   For Sigma_xc this is in general an approximation. It is exact only for self-energies 
+ !                linear in G_lesser as exchange and COHSEX[W_eq] 
  !
  !  V_hartree(rho_reference) is in REF_V_hartree_sc
  !  V_xc(rho_reference)      is in REF_V_xc_sc
@@ -118,13 +118,8 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
  endif
  !
- ! The MB-like
- !-------------
- if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_compose(dG_in(:,:,RT_ibz_coo(:,1)),dG_in(:,:,RT_ibz_coo(:,1)))
- !
  ! Filling the BKE Kernel with the HXC part
  !==========================================
- !
  Ho_plus_Sigma=cZERO
  !
  ! In the following loop there are operations spread among bands that 
@@ -132,73 +127,82 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  ! Some operations, instead, must be carried on only by the head CPU in this group
  ! identified by PAR_COM_Xk_ibz_A2A%CPU_id==0
  !
+ ! The bare Hamiltonian
+ !=========================
+ if (.not.l_RT_RWA) then
+   !
+   do ik=1,QP_nk 
+     !
+     if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_k_cpu  .or. .not.HEAD_QP_cpu) cycle
+     !
+     ! DAVIDE: This is the old procedure, which I've replaced with a new one
+     ! Ho     = T+V_ion
+     ! H_bare = VHxc[\rho_eq] 
+     !forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2),ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) &
+     !& Ho_plus_sigma(ib,ibp,ik_RT,1)=Ho(ib,ibp,ik,1)+XC0_and_HARTREE0(ib,ibp,ik,1)
+     !
+     do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       ik_RIM=ik_RT-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+       do ib=SC_bands(1),SC_bands(2)
+         if(     l_RT_uses_E_RIM) Ho_plus_sigma(ib,ib,ik_RT,1)=E%E_RIM(ib,ik_RIM,1)
+         if(.not.l_RT_uses_E_RIM) Ho_plus_sigma(ib,ib,ik_RT,1)=E%E(ib,ik,1)
+       enddo
+     enddo
+     !
+   enddo
+   !
+ endif
+ !
+ !
+ ! The MB self-energy (compute QP_Vnl_xc)
+ !========================================
+ if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_compose(dG_in,dG_in)
+ !
+ ! HXC part 
+ !===========
  do ik=1,QP_nk 
    !
    if (.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu) cycle
    !
-   ik_RT =RT_ibz_coo(ik,1)
-   ikp_RT=RT_ibz_coo(ik,2)
-   !
    H_nl_sc=cZERO
-   !
-   ! Here I fill H_nl_sc with...
    !
    ! Non-local XC potentials (like COHSEX)
    !=======================================
-   if (l_sc_hf.or.l_sc_cohsex) then
-     ! 
-     ! HF/COHSEX
-     call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
-     ! 
-   endif
+   if (l_sc_hf.or.l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
    !
-   ! The bare, frozed VHxc 
-   !=======================
-   if (HEAD_k_cpu) then
-#if defined _OPENMP
-     call V_by_V_plus_V_omp(&
-#else
-     call V_by_V_plus_V(&
-#endif
-&                 SC_nbands,cONE,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1), &
-&                 H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
-   endif
-   !
-   ! Local XC potentials 
-   !=====================
+   ! Hartree and local XC potentials 
+   !=================================
    if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
    if (n_spinor==2) then
      if(eval_HARTREE) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WF,'def')
      if(eval_DFT)     call V_real_space_to_H(ik,V_xc_sc     ,H_nl_sc,WF,'xc ')
    endif
-   !  
-   ! Add Ho = T+V_ion
-   !==================
-   if (HEAD_k_cpu) then
+   !
+   ! With all the previous calls we filled H_nl_sc,
+   ! now we sum up the result in Ho_plus_sigma
+   !
+   do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+   if (l_RT_RWA) then
+     Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1)=&
+&      H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
+   else
 #if defined _OPENMP
-     call V_by_V_plus_V_omp(&
+       call V_by_V_plus_V_omp(&
 #else
-     call V_by_V_plus_V(&
+       call V_by_V_plus_V(&
 #endif
-&                       SC_nbands,cONE,Ho(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),&
-&                       H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1))
-   endif
+&                       SC_nbands,cONE,H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1),&
+&                       Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1))
+     endif
+   enddo
    !
-   forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ibp,ik_RT:ikp_RT,1)=H_nl_sc(ib,ibp,1)
-   !
- enddo  !---- loop on k-points
+ enddo
  !
- call PP_redux_wait(Ho_plus_Sigma(:,:,:,1))
- !
- ! External Field and RIM support
- !================================
- !
+ ! The External Field
+ !====================
  do ik=1,QP_nk 
    !
-   if (.not.(PAR_IND_WF_k%element_1D(ik).and.HEAD_k_cpu)) then
-     Ho_plus_Sigma(:,:,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2),:)=(0._SP,0._SP)
-     cycle
-   endif
+   if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_k_cpu) cycle
    !
    do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      !
@@ -206,30 +210,16 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
      !
      H_nl_sc=cZERO
      !
-     ! And the gauge field
-     !=====================
+     ! The gauge field
+     !=================
      if (l_NE_with_fields) call RT_apply_field(ik,ik_RIM,E,H_nl_sc,A_input)
      !
      forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) &
 &           Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp,1)
      !
-     if (l_RT_RWA) then
-       !
-       ! Apply the RWA
-       !===============
-       forall(ib=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)-E%E(ib,ik,1)
-       !
-     else if (l_RT_uses_E_RIM) then
-       !
-       ! RIM support
-       !============
-       forall(ib=SC_bands(1):SC_bands(2)) Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)-&
-&                                         E%E(ib,ik,1)+E%E_RIM(ib,ik_RIM,1)
-     endif
-     !
    enddo
    !  
- enddo  !---- loop on k-points
+ enddo
  !
  ! All2All
  !=========

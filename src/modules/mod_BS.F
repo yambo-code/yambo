@@ -229,12 +229,12 @@ module BS
      !
      if (EXCHANGE) then
        allocate(BS_T_grp(iG)%O_x(BS_n_g_exch,BS_T_grp(iG)%size))
-       call mem_est("BS_T_group_"//trim(intc(iG))//"_X_oscillators",(/size (BS_T_grp(iG)%O_x)/))
+       call mem_est("BS_T_group_X_oscillators",(/size (BS_T_grp(iG)%O_x)/))
      endif
      !
      if (CORRELATION) then
        allocate(BS_blk(iB)%O(O_ng,BS_blk(iB)%N_oscillators))
-       call mem_est("BS_blk_"//trim(intc(iB))//"_Oscillators",(/size (BS_blk(iB)%O)/))
+       call mem_est("BS_blk_Oscillators",(/size (BS_blk(iB)%O)/))
      endif
      !
    end subroutine
@@ -247,7 +247,7 @@ module BS
        if (iG/=0.and.i_g/=iG) cycle
        if (allocated(BS_T_grp(i_g)%O_x)) then
          deallocate(BS_T_grp(i_g)%O_x)
-         call mem_est("BS_T_group_"//trim(intc(i_g))//"_X_oscillators")
+         call mem_est("BS_T_group_X_oscillators")
        endif
      enddo
      do i_b=1,n_BS_blks

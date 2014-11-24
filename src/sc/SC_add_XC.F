@@ -23,9 +23,6 @@
 !
 subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
- ! This routine is common between _SC and _RT. It provides the XC part of 
- ! the hamiltonian 
- !
  ! The definition of the XC part is the same in the two approches. The only
  ! difference is that in _XC the operator is written in the SC basis, while
  ! _RT works in the LDa basis.
@@ -74,7 +71,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      !     
      G_collisions=(0.,0.)
      forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_collisions(ib,ib,ik,1)=(0._SP,1._SP)*E%f(ib,ik,1)
-     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_collisions(ib,ib,ik,2)=(0._SP,1._SP)*(E%f(ib,ik,1)-1.)
+     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_collisions(ib,ib,ik,2)=(0._SP,1._SP)*(E%f(ib,ik,1)-1._SP)
      !
      ! Now I build the G_collisions rotating the non interaction one
      ! G_collisions(ib,ib,ik)=(0.,1)*en%f(ib,ik)

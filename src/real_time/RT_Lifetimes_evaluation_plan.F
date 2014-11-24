@@ -31,8 +31,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  use memory_m,       ONLY:mem_est
  use rt_ctl,         ONLY:it_start
  use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_interp_steps,&
-&                         RT_step,RT_life_interp_KIND,RT_life_interp_decay_time,&
-&                         Life_MEM_steps
+&                         RT_step,RT_life_interp_KIND,Life_MEM_steps
  !
  implicit none
  !
@@ -52,7 +51,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  endif
  !
  l_interpolate=trim(RT_life_interp_KIND)=="DEFAULT" .or. trim(RT_life_interp_KIND)=="FIELD" .or. &
-&              trim(RT_life_interp_KIND)=="EXP"     .or. trim(RT_life_interp_KIND)=="FLAT"
+&              trim(RT_life_interp_KIND)=="FLAT"
  !
  if(.not.l_interpolate) RT_life_interp_KIND="NONE"
  !
@@ -93,15 +92,6 @@ integer function RT_Lifetimes_evaluation_plan( )
        weight(it+1:)=weight(it)
        exit
      endif
-   enddo
- endif
- !
- ! Exponential decay for T>To
- !
- if (RT_life_interp_decay_time>0. .and. trim(RT_life_interp_KIND)=="EXP") then
-   do it=it_0,NE_steps
-     TIME=RT_step*(it-it_0)
-     weight(it)=weight(it)*exp(-real(TIME)/RT_life_interp_decay_time)
    enddo
  endif
  !

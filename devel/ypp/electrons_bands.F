@@ -38,7 +38,6 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
 #if defined _YPP_RT
  use YPP,            ONLY:Nel_fac
  use stderr,         ONLY:real2ch
- use electrons,      ONLY:n_spin
  use units,          ONLY:FS2AUT
  use YPP,            ONLY:OCC_T_range,OCC_deltaT
  use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO
@@ -227,7 +226,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    !
    call parser('NormN',l_normalize_Nel)
    !
-   if(n_spin>1) call error('Occupations and spin not implemented')
+   if(n_sp_pol>1) call error('Occupations for spin polarized systems not implemented')
    !
    allocate(variable_to_fit(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Nk))
    !

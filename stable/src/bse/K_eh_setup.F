@@ -86,19 +86,12 @@ subroutine K_eh_setup(iq,Ken,Xk,Wd)
            !
            ! Same ordering procedure of the Xo case (see X_eh_setup.F)
            !
-           f_eh=Ken%f(iv,ikp,i_sp)*(spin_occ-Ken%f(ic,ik,i_sp))
-           if (abs(f_eh)<epsilon(1._SP)) cycle
-           !
-           ! Additional (?) condition for spin-resolved calculations
-           !
-           if (n_spin==2.and. &
-&              (Ken%f(iv,ikp,i_sp)<=filled_tresh.or.&
-&               abs(spin_occ-Ken%f(ic,ik,i_sp))<=filled_tresh) ) cycle
+           !f_eh=Ken%f(iv,ikp,i_sp)*(spin_occ-Ken%f(ic,ik,i_sp))
+           f_eh=(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik,i_sp))/spin_occ
+           if (abs(f_eh)<epsilon(1._SP) .or. f_eh<0._SP) cycle
            !
            ! A 5% fractional occupation swiches on the particular
            ! treatment of finite temp. BSE 
-           !
-           f_eh=f_eh/spin_occ/spin_occ
            !
            if (abs(E_eh)<1.E-5) then
              BS_drude_f_eh=f_eh

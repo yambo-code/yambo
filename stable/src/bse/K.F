@@ -49,7 +49,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
 &                       BS_IO_index,BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0,BSS_uses_RIM,&
-&                       O_n_scatt,BS_O,BS_cpl_K_corr
+&                       O_n_scatt,BS_O,BS_cpl_K_corr,BS_eh_f
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
@@ -580,7 +580,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          if (iBSE1==iBSE2) H_res_c=real(H_res_c)
          !
-         BS_mat(icv1,icv2)=H_res_x*real(spin_occ)*Co-H_res_c
+         BS_mat(icv1,icv2)=sqrt(BS_eh_f(iBSE1))*(H_res_x*real(spin_occ)*Co-H_res_c)*sqrt(BS_eh_f(iBSE2))
          !
          if (BSS_uses_RIM.and.iBSE1==iBSE2) BS_mat_diagonal(iBSE1)=BS_mat(icv1,icv2)
          !

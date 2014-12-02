@@ -133,17 +133,20 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
    ! SHADOWS
    ! =======
-   n_shadows=4
-   shadow(:4)=(/qp%E_bare(iqp)*HA2EV,real(qp%E(iqp))*HA2EV,&
-                real(qp%E(iqp)-qp%E_bare(iqp))*HA2EV,real(qp%Z(iqp))/)
+   n_shadows=5
+   shadow(:5)=(/qp%E_bare(iqp)*HA2EV,real(qp%E(iqp))*HA2EV,&
+&               real(qp%E(iqp)-qp%E_bare(iqp))*HA2EV,&
+&               real(qp%Z(iqp)),aimag(qp%Z(iqp))/)
    shadow_string(1)=' Eo='
    shadow_fmt(1)   ='(a,f6.2)'
    shadow_string(2)=' E='
    shadow_fmt(2)   ='(a,f6.2)'
    shadow_string(3)=' E-Eo='
    shadow_fmt(3)   ='(a,f6.2)'
-   shadow_string(4)=' Z='
+   shadow_string(4)=' Re(Z)='
    shadow_fmt(4)   ='(a,f4.2)'
+   shadow_string(5)=' Im(Z)='
+   shadow_fmt(5)   ='(a,f4.2)'
    !
    if (report_Vnlxc) then
      n_shadows=n_shadows+1
@@ -195,17 +198,19 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      ! SHADOWS
      ! =======
      !
-     n_shadows=4
-     shadow(:2)=(/qp%E_bare(iqp)*HA2EV,real(qp%Z(iqp))/)
-     shadow(3)=aimag(qp%E(iqp))*HA2EV/1.E-3
-     shadow(4)=0.
+     n_shadows=5
+     shadow(:3)=(/qp%E_bare(iqp)*HA2EV,real(qp%Z(iqp)),aimag(qp%Z(iqp))/)
+     shadow(4)=aimag(qp%E(iqp))*HA2EV/1.E-3
+     shadow(5)=0.
      !
-     if (abs(shadow(3))>0.) shadow(4)=HBAR_eVfs/abs(aimag(qp%E(iqp)))/HA2EV
+     if (abs(shadow(4))>0.) shadow(5)=HBAR_eVfs/abs(aimag(qp%E(iqp)))/HA2EV
      !
-     shadow_string(2)=' Z='
+     shadow_string(2)=' Re(Z)='
      shadow_fmt(2)   ='(a,f4.2)'
-     shadow_string(3)=' Gm='
-     shadow_string(4)=' Gf='
+     shadow_string(3)=' Im(Z)='
+     shadow_fmt(3)   ='(a,f4.2)'
+     shadow_string(4)=' Gm='
+     shadow_string(5)=' Gf='
    endif
    !
    ! Write to Report File

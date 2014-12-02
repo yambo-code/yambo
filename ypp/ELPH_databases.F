@@ -518,6 +518,7 @@ integer function ELPH_databases(k,E,q)
      if (idb==1) read (io_unit(ID)) grad_at_gamma(k2k_tab(ik),:,:,:,:)
      !
      if (.not.abinit_DB) then
+       !
        read (io_unit(ID)) Ek(:elph_nb)
        read (io_unit(ID)) Ek_p_q(:elph_nb)
        !

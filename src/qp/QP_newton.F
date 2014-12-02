@@ -99,6 +99,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      if(.not.l_cohsex) then
        !     
        QP_dSc(i1,1)=(0._SP,0._SP)
+       !     
        if (.not.On_Mass_Shell_approx) then
          do i2=1,QP_dSc_steps-1
            QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
@@ -106,9 +107,11 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
        endif
        !
        do i2=1,QP_dSc_steps-1
+         !
          Z(i2)=1._SP/(1._SP-QP_dSc(i1,i2))
          !
          Eqp(i2)=qp%E_bare(i1)+Z(i2)*QP_Sc(i1,1)
+         !
          if (l_elel_corr) Eqp(i2)=Eqp(i2)+Z(i2)*(QP_Vnl_xc(i1)-QP_Vxc(i1))
          !
        enddo

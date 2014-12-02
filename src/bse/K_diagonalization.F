@@ -329,7 +329,7 @@ subroutine K_diagonalization(iq,W)
      !
      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))/gauge_factor
      !
-     if(BS_anti_res) X_epsilon(2,:)=X_epsilon(2,:)+BS_R(i1)*conjg(BS_R(i1))/(W%p(:)+BS_E(i1))/gauge_factor
+     if (BS_anti_res) X_epsilon(2,:)=X_epsilon(2,:)+BS_R(i1)*conjg(BS_R(i1))/(W%p(:)+BS_E(i1))/gauge_factor
      !
    endif
    !

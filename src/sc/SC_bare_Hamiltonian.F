@@ -56,8 +56,8 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  ! Note that G_lesser here is the non-interacting one (occupations on the diagonal) only
  !
- call el_density_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,Xk,rho_n,1)
- !call el_magnetization_matrix(G_lesser(:,:,RT_ibz_coo(:,1),1),E,Xk,magn_n,1)
+ call el_density_matrix(G_lesser,E,Xk,rho_n,1)
+ !call el_magnetization_matrix(G_lesser,E,Xk,magn_n,1)
  !
 #else
  !

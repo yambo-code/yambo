@@ -34,40 +34,47 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  use FFT_m,         ONLY:fft_size,fft_rot_r
  use wave_func,     ONLY:WF
  use SC,            ONLY:SC_bands
+ use real_time,     ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
  use matrix_operate,ONLY:UP_matrix_index
  !
  implicit none
  !
  type(bz_samp)::Xk
- complex(SP), intent(in), optional :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),Xk%nibz)
+ complex(SP), intent(in), optional :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  integer,     intent(in) :: lowest_band
  type(levels) ::en       
  real(SP)     ::rho(fft_size)
  !
  ! Work Space 
  !
- integer     :: ib1,ib2,ik,ifft1,rho_syms,ifft2,ir
+ integer     :: ib1,ib2,ik,ik_RT,i_wf1,rho_syms,i_wf2,ir
  real(SP)    :: rho_no_sym(fft_size)
  complex(SP) :: f_occ
  !
  rho=0._SP
  rho_no_sym=0._SP
  !
- do ik=1,Xk%nibz
+ if(lowest_band<SC_bands(1)-1) then
    !
-   do ib1=lowest_band,SC_bands(1)-1
-     !
-     if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
-     ifft1=WF%index(ib1,ik,1)
-     f_occ=en%f(ib1,ik,1)
-     rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,ifft1))**2.)
-     if(n_spinor>1) then
-       ifft1=WF%index(ib1,ik,2)
-       rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,ifft1))**2.)
-     endif
-     !
+   do ik=1,Xk%nibz
+     do ib1=lowest_band,SC_bands(1)-1
+       !
+        if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
+       i_wf1=WF%index(ib1,ik,1)
+       f_occ=en%f(ib1,ik,1)
+       rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,i_wf1))**2.)
+       if(n_spinor>1) then
+         i_wf1=WF%index(ib1,ik,2)
+         rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,i_wf1))**2.)
+       endif
+       !
+     enddo
    enddo
+   !
+ endif
+ !
+ do ik=1,Xk%nibz
    !
    if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
    !      
@@ -77,17 +84,21 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
        !
        if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-SC_bands(1)+1,ib2-SC_bands(1)+1)-1 )) cycle
        !
-       if (ib1==ib2) f_occ=-(0._SP,1._SP)*G_lesser(ib1,ib2,ik)
-       if (ib1/=ib2) f_occ=-(0._SP,2._SP)*G_lesser(ib1,ib2,ik)
+       f_occ=0._SP
+       do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+         if (ib1==ib2) f_occ=f_occ-(0._SP,1._SP)*G_lesser(ib1,ib2,ik_RT)
+         if (ib1/=ib2) f_occ=f_occ-(0._SP,2._SP)*G_lesser(ib1,ib2,ik_RT)
+       enddo
+       f_occ=f_occ/real(RT_Nk_ibz(ik),SP)
        !
-       ifft1=WF%index(ib1,ik,1)
-       ifft2=WF%index(ib2,ik,1)
-       rho_no_sym(:)=rho_no_sym(:)+Xk%weights(ik)*real(f_occ*WF%c(:,ifft1)*conjg(WF%c(:,ifft2)))
+       i_wf1=WF%index(ib1,ik,1)
+       i_wf2=WF%index(ib2,ik,1)
+       rho_no_sym(:)=rho_no_sym(:)+Xk%weights(ik)*real(f_occ*WF%c(:,i_wf1)*conjg(WF%c(:,i_wf2)))
        !
        if(n_spinor>1) then
-         ifft1=WF%index(ib1,ik,2)
-         ifft2=WF%index(ib2,ik,2)
-         rho_no_sym(:)=rho_no_sym(:)+Xk%weights(ik)*real(f_occ*WF%c(:,ifft1)*conjg(WF%c(:,ifft2)))
+         i_wf1=WF%index(ib1,ik,2)
+         i_wf2=WF%index(ib2,ik,2)
+         rho_no_sym(:)=rho_no_sym(:)+Xk%weights(ik)*real(f_occ*WF%c(:,i_wf1)*conjg(WF%c(:,i_wf2)))
        endif
        !
      enddo
@@ -97,7 +108,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  !
  call PP_redux_wait(rho_no_sym)
  !
- ! Simmetrization
+ ! Symmetrization
  !
  rho_syms=nsym/(i_time_rev+1)
  !

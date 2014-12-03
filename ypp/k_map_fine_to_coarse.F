@@ -306,9 +306,10 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  BZ_RIM_ipol_weight = 1.0_SP
  !
  allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
- allocate(Xk%pt_RIM(BZ_RIM_tot_nkpts,3))
  !
  if (RIM_is_symmetry_expanded) then
+   !
+   allocate(Xk%pt_RIM(BZ_RIM_tot_nkpts,3))
    !
    Xen%E_RIM(:,:,:)=RIM_E(i_db_merge)%E(:,:,:)
    Xk%pt_RIM(:,:)  =RIM_k(i_db_merge)%pt(:,:)
@@ -324,7 +325,9 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    ! One should rotate the cloud from the ibz and associate it to the
    ! rotated point out of the ibz. I started the implementation in the
    ! k_random.F_project which is now inside my repository
-   ! 
+   !
+   allocate(Xk%ptbz_RIM(BZ_RIM_tot_nkpts,3))
+   !
    call live_timing('RIM re-ordering and distribution',Xk%nbz,SERIAL=.true.)
    !                ===============
    i1=0
@@ -333,10 +336,10 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
        i1=i1+1
        if (ik_RIM==1) then
          Xen%E_RIM(:,i1,:)=Xen%E(:BZ_RIM_nbands,BZ_RIM_table(ik_bz,1),:)
-         Xk%pt_RIM(i1,:)=Xk%ptbz(ik_bz,:)
+         Xk%ptbz_RIM(i1,:)=Xk%ptbz(ik_bz,:)
        else
          Xen%E_RIM(:,i1,:)=RIM_E(i_db_merge)%E(:,BZ_RIM_table(ik_bz,ik_RIM)-1,:)
-         Xk%pt_RIM(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_RIM) ),RIM_k(i_db_merge)%pt(BZ_RIM_table(ik_bz,ik_RIM)-1,:))
+         Xk%ptbz_RIM(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_RIM) ),RIM_k(i_db_merge)%pt(BZ_RIM_table(ik_bz,ik_RIM)-1,:))
        endif
        BZ_RIM_table(ik_bz,ik_RIM)=ik_RIM+sum(BZ_RIM_nkpt(:ik_bz-1))
      enddo
@@ -356,6 +359,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  deallocate(BZ_RIM_nkpt,BZ_RIM_table,Xen%E_RIM,BZ_RIM_ipol_weight)
  if(allocated(BZ_SYM_table)) deallocate(BZ_SYM_table)
+ if(associated(Xk%ptbz_RIM)) deallocate(Xk%ptbz_RIM)
  if(associated(Xk%pt_RIM))   deallocate(Xk%pt_RIM)
  call k_ibz2bz(Xk,'d',.false.) 
  call k_ibz2bz(RIM_k(i_db_merge),'d',.false.) 

@@ -336,7 +336,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    next_file=next_file+1
  enddo
  !
- extension_ch='trans_residual'
+ extension_ch='residual'
  if (open_files.and..not.file_already_opened(next_file)) then
    file_name(next_file)=trim(append_ch)//trim(extension_ch)
  endif
@@ -356,7 +356,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    short_file_name(next_file)=trim(append_ch)//trim(extension_ch)
    n_headings(next_file)=3
    headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
-   headings(next_file,3  )='Reflectance'
+   headings(next_file,3  )='Reflectivity'
    next_file=next_file+1
  enddo
  !
@@ -410,6 +410,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    if (.not.file_is_todo(i_f)) cycle
    !
    if (add_space) then
+     if(.not.file_already_opened(i_f)) cycle
      call of_open_close(file_name(i_f),'oa')
      call msg('o '//trim(short_file_name(i_f)),' ')
      call of_open_close(file_name(i_f))

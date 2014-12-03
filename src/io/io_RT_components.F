@@ -215,8 +215,6 @@ integer function io_RT_components(what,ID)
      call io_bulk(ID,VAR="RT_occupations_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=RT_delta0_occupations)
      !
-#if defined _ELPH  && defined _RT
-     !
      if (allocated(E_P_Hole_lifetime)) then
        !
        call io_bulk(ID,VAR="RT_E_P_Hole_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
@@ -233,8 +231,6 @@ integer function io_RT_components(what,ID)
        !
      endif
      !
-#endif
-     !
      if (allocated(E_E_Hole_lifetime)) then
        !
        call io_bulk(ID,VAR="RT_E_E_Hole_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
@@ -248,8 +244,6 @@ integer function io_RT_components(what,ID)
    endif
    !
  endif
- !
-#if defined _ELPH  && defined _RT
  !
  if ( l_THETA ) then
    !
@@ -270,8 +264,6 @@ integer function io_RT_components(what,ID)
    deallocate(TMP_matrix)
    !
  endif
- !
-#endif
  !
  if ( l_G ) then
    !
@@ -343,8 +335,6 @@ integer function io_RT_components(what,ID)
      call io_bulk(ID,VAR="RT_E_E_REF_Electron_lifetime",VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=REF_lifetime(:,:,2))
      !
-#if defined _ELPH  && defined _RT
-     !
      call io_bulk(ID,VAR="RT_E_P_REF_Hole_lifetime",VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=REF_lifetime(:,:,3))
      !
@@ -356,8 +346,6 @@ integer function io_RT_components(what,ID)
      !
      call io_bulk(ID,VAR="RT_E_P_REF_El_abs_lifetime",VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
      call io_bulk(ID,R2=REF_lifetime(:,:,6))
-     !
-#endif
      !
    endif
    !

@@ -23,7 +23,7 @@
 !
 integer function variables_RT(ID,local_description,what)
  !
- use pars,           ONLY:lchlen
+ use pars,           ONLY:lchlen,SP
  use units,          ONLY:FS2AUT,AU2KWCMm2,HA2EV
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr
  use electrons,      ONLY:BZ_RIM_tot_nkpts
@@ -35,7 +35,7 @@ integer function variables_RT(ID,local_description,what)
 &                         RAD_LifeTime,Phase_LifeTime,              &
 &                         l_RT_induced_field,G_MEM_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN,&
-&                         l_RT_uses_E_RIM,N_Gr_descs,RT_life_interp_steps,RT_life_interp_decay_time,&
+&                         l_RT_uses_E_RIM,N_Gr_descs,RT_life_interp_steps,&
 &                         RT_life_interp_KIND,l_NE_simulate_Irredux,RIM_EE_percent,l_RT_impose_E
  use ELPH,           ONLY:ph_modes,elph_branches
  use X_m,            ONLY:global_gauge
@@ -51,10 +51,12 @@ integer function variables_RT(ID,local_description,what)
  !
  integer               :: i1,i_desc,i_dummy,RT_diagonalization_steps
  logical               :: l_J,l_G,l_occupations,l_NE_with_fields_disk,l_MP,l_RT_diagonalize,l_RT_diamagnetic
+ real(SP)              :: RT_life_interp_decay_time
  character(lchlen)     :: ch
  !
  RT_diagonalization_steps=0
  l_RT_diagonalize=.false.
+ RT_life_interp_decay_time=0._SP
  !
  l_J           = what=="J_and_P"
  l_G           = what=="G"

@@ -25,10 +25,8 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
  use pars,           ONLY:SP,LP,cZERO,rZero
  use memory_m,       ONLY:mem_est
- use QP_m,           ONLY:QP_n_states
  use SC,             ONLY:SC_bands
  use plasma,         ONLY:N_plasma_poles_global
- use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:nqbz,nkibz
  use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ,PAR_nQP
  use global_XC,      ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ

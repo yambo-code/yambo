@@ -304,7 +304,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      ! Filling the upper triangular part of the residual here ! 
      !-------------^^^^^---------------------------------------
      do ig2=1,X%ng
-       call V_by_V_plus_V(ig2,eh_occ*isc%rhotw(ig2),conjg(isc%rhotw(:ig2)),Xo_residual(:ig2,ig2))
+       call V_by_V_plus_V(ig2,isc%rhotw(ig2),conjg(isc%rhotw(:ig2)),Xo_residual(:ig2,ig2))
      enddo
      !
    enddo loop_bare_grid
@@ -314,6 +314,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      if (.not.force_bare_X_G.and..not.Drude_pole) then
        GreenF(iw) = X_simple_GreenF(Xw%p(iw),coarse_grid_Pt(i_cg),X%ordering)
      endif
+     GreenF(iw)=eh_occ*GreenF(iw)
      !
 !$omp critical
      do ig2=1,X%ng

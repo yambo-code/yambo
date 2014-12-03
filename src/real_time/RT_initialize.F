@@ -41,7 +41,7 @@ subroutine RT_initialize(E,k,q)
 &                         RT_is_dephased,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,RIM_ibz_coo, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,    &
-&                         l_RT_uses_E_RIM,RIM_bz_coo,RT_life_interp_steps,RT_life_interp_decay_time,&
+&                         l_RT_uses_E_RIM,RIM_bz_coo,RT_life_interp_steps,&
 &                         RT_life_interp_KIND,l_NE_dynamics,l_RT_impose_N_dN,I_MEM_steps,Integrator_name,&
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
 &                         RIM_EE_Nk_table,l_RT_impose_E,RIM_EE_percent,RIM_EE_Nk_table,&
@@ -338,8 +338,6 @@ subroutine RT_initialize(E,k,q)
    call msg( 'r', 'Sampling                       :',RT_life_interp_KIND)
    call msg( 'r', 'Memory steps (Lifetimes)       :',Life_MEM_steps)
    call msg( 'r', 'Steps length (inter/intra) [fs]:',RT_life_interp_steps/FS2AUT)
-   if (RT_life_interp_decay_time>0.) call msg( 'r', 'Distribution decay         [fs]:',&
-&                                                RT_life_interp_decay_time/FS2AUT)
    call msg( 'r', 'Time points                    :',N_T_samplings*Life_MEM_steps)
  endif
  !

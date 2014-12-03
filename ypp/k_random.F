@@ -28,7 +28,6 @@ subroutine k_random
  use stderr,              ONLY:set_real_printed_length,intc
  use R_lattice,           ONLY:bz_samp,bz_samp_reset
  use parser_m,            ONLY:parser
- use D_lattice,           ONLY:input_GS_Tel,i_time_rev
  use com,                 ONLY:msg,of_open_close,error,warning
  use vec_operate,         ONLY:v_norm,c2a,k2bz,v_is_zero
  use YPP,                 ONLY:BZ_RIM_nkpts,gamma_radius,K_transform
@@ -40,11 +39,10 @@ subroutine k_random
  ! Work Space
  !
  real(SP)     ::rand_k(BZ_RIM_nkpts+1,3)
- integer      ::i1,ik_near,is_near,ik_bz,ik_RIM
+ integer      ::i1
  character(lchlen) :: k_rand_fname
  character(schlen) :: dump
  logical           :: No_Weight
- integer,  allocatable :: BZ_SYM_table(:,:)
  !
  ! Random Generator
  !
@@ -54,7 +52,6 @@ subroutine k_random
  !
  ! BZ DB1 I/O
  !
- integer           :: ik_ref(2)
  integer, external :: io_DB1_selective_scan
  !
  impose_gamma_radius=gamma_radius>0.

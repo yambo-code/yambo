@@ -58,7 +58,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  use rt_ctl,        ONLY:RT_IO_time
  use real_time,     ONLY:RT_step, NE_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
-&                        NE_tot_time,RT_life_interp_steps,RT_life_interp_decay_time,&
+&                        NE_tot_time,RT_life_interp_steps,&
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_scatt_tresh,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
 &                        Gr_kind,two_alpha,RIM_EE_percent
@@ -333,15 +333,14 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic secant (HS)',Gr_kind,Verb_level=V_real_time)
- call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1))
- call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit(1))
+ call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
+ call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
  !
  ! Dynamics
  !
- call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly')
- call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit(1))
- call it(defs,'NEsteps',    '[RT] Non-equilibrium Time steps',NE_steps)
- call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit(1))
+ call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly',Verb_level=V_real_time)
+ call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit(3))
+ call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit(2))
  call it(defs,'Integrator', '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
 &                           Integrator_name)
  call it(defs,'IOtime',     '[RT] Time between to consecutive I/O (J,P,OCCs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
@@ -349,24 +348,24 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Correlation
  !
- call it('f',defs,'RTIrredux',     '[RT] Hartree not updated independently of the value of SC_potential')
+ call it('f',defs,'RTIrredux',     '[RT] Hartree not updated independently of the value of SC_potential',     &
+&                                   Verb_level=V_real_time)
  call it(defs,'COHsteps',          '[RT] Number of steps to interpolate the Coherent part of the self-energy',&
 &                                   I_MEM_steps,Verb_level=V_real_time)
  !
  ! Scattering
  !
- call it(defs,'LifeInterpKIND',    '[RT] Step interpolation mode (DEFAULT / FIELD / EXP / FLAT / NONE)',&
-&                           RT_life_interp_KIND,Verb_level=V_real_time)
+ call it(defs,'LifeInterpKIND',    '[RT] Step interpolation mode (DEFAULT / FIELD / FLAT / NONE)',&
+&                           RT_life_interp_KIND)
  call it(defs,'LifeInterpSteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
-&                           RT_life_interp_steps,Verb_level=V_real_time,unit=Time_unit(1))
- call it(defs,'LifeInterpT',       '[RT] Exponential decay lifetime of the distribution of groups of lifetimes evaluated',&
-&                           RT_life_interp_decay_time,Verb_level=V_real_time,unit=Time_unit(1))
+&                           RT_life_interp_steps,unit=Time_unit(1))
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)
  ! 
  ! BGR
  !
- call it('f',defs,'BGR',     '[RT] Evaluate the Band-Gap Renormalization consistent with the applied potential')
+ call it('f',defs,'BGR',     '[RT] Evaluate the Band-Gap Renormalization consistent with the applied potential',&
+&                            verb_level=V_real_time)
  !
  ! EE scattering
  !
@@ -376,10 +375,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! ELPH
  !
- call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_treshold)
- call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes')
- call it('f',defs,'UpdtDebyeT','[RT] Update Bose Temp assuming phonons are always at equilibrium')
- call it('f',defs,'RT_T_evol',   '[RT] Use a complete Time evolution instead of the CCA')
+ call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_treshold,verb_level=V_real_time)
+ call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes',verb_level=V_real_time)
+ call it('f',defs,'UpdtDebyeT','[RT] Update Bose Temp assuming phonons are always at equilibrium',verb_level=V_real_time)
+ call it('f',defs,'RT_T_evol',   '[RT] Use a complete Time evolution instead of the CCA',verb_level=V_real_time)
  !
  ! External fields or Manual pump
  !
@@ -531,7 +530,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &    Efield(i_field)%frequency,unit=E_unit)
      call it(defs,trim(name)//'_FrStep',          '[RT '//trim(name)//'] Frequency step',&
-&    Efield(i_field)%W_step,unit=E_unit)
+&    Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &    Efield(i_field)%intensity,unit=I_unit)
      call it(defs,trim(name)//'_Damp',             '[RT '//trim(name)//'] Damping',&
@@ -541,7 +540,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
 &    Efield(i_field)%versor,verb_level=0)
      call it(defs,trim(name)//'_Tstart',        '[RT '//trim(name)//'] Initial Time',&
-&    Efield(i_field)%t_initial,unit=Time_unit(1),verb_level=V_real_time)
+&    Efield(i_field)%t_initial,unit=Time_unit(1))
    end subroutine
    !
 #endif

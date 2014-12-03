@@ -28,7 +28,7 @@ integer function io_X(X,Xw,ID)
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:nqibz,g_vec
  use matrix_operate,ONLY:mat_c2r,mat_r2c,mat_r2c_ordered
- use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_description
+ use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_description,X_alloc
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
 &                        io_elemental,io_status,io_bulk,&
@@ -218,6 +218,8 @@ integer function io_X(X,Xw,ID)
    deallocate(W_disk)
    !
    ch="X_Q_"//trim(intc(iq))
+   !
+   if(.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng_db,X%ng_db,Xw%n_freqs/))
    !
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/X%ng_db,X%ng_db,2,Xw%n_freqs/))
    !

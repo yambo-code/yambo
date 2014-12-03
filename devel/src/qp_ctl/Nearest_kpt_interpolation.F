@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pti,k_pto,Vali,Valo,call_kind)
+subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pti,k_pto,wki,wko,Vali,Valo,call_kind,l_riscale)
  !
  ! Interpolation with nearest neighbor method but averaging up to n_neigh neighbors
  ! The input values are known on the k_pti kgrid and there can be N_int quantities to
@@ -39,18 +39,18 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  !
  integer,            intent(in) :: Nki,Nko,Nb(2),Nstates,table(Nstates,4)
  integer,            intent(in) :: N_int,n_neigh
- real(SP),           intent(in) :: k_pti(Nki,3)
- real(SP),           intent(out):: k_pto(Nko,3)
+ real(SP),           intent(in) :: k_pti(Nki,3),k_pto(Nko,3),wki(Nki),wko(Nko)
  real(SP),           intent(in) :: Vali(Nstates,N_int)
  real(SP),           intent(out):: Valo(Nb(1):Nb(2),Nko,n_sp_pol,N_int)
  character(3),       intent(in) :: call_kind
+ logical,            intent(in) :: l_riscale
  !
  ! Work Space
  !
  logical  :: write_message
- real(SP) :: idist(Nki),odist(Nki),k_dist(n_neigh)
+ real(SP) :: idist(Nki),odist(Nki),k_dist(n_neigh),toti(N_int),toto(N_int)
  integer  :: order(Nki),ik_near(n_neigh)
- integer  :: iko,iki,i_err,nk_exact,nk_interpolated
+ integer  :: iko,iki,i_err,nk_exact,nk_interpolated,i_state,i_val
  !
  write_message=.true.
  !
@@ -95,6 +95,21 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
    !
  enddo
  !
+ if(l_riscale) then
+   toti=0._SP
+   do i_state=1,Nstates
+     iki=table(i_state,2)
+     toti(:)=toti(:)+abs(Vali(i_state,:))*wki(iki)
+   enddo
+   toto=0._SP
+   do i_val=1,N_int
+     do iko=1,Nko
+       toto(i_val)=toto(i_val)+sum(abs(Valo(:,iko,:,i_val)))*wko(iko)
+     enddo
+     Valo(:,:,:,i_val)=Valo(:,:,:,i_val)*toti(i_val)/toto(i_val)
+   enddo
+ endif
+ !
  if(write_message) then
    call msg('sr','['//trim(call_kind)//'] Kpts covered exactly  [o/o]:',real(nk_exact)/real(Nko)*100._SP)
    if (nk_interpolated>0) then
@@ -111,7 +126,7 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
      !
      ! Work Space
      !
-     integer     :: i_neigh,i_state,i_band,i_spin,i_val
+     integer     :: i_neigh,i_band,i_spin
      !
      do i_spin=1,n_sp_pol
        do i_val=1,N_int

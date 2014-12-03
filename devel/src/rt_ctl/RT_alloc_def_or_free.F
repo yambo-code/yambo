@@ -35,7 +35,7 @@ subroutine RT_alloc_def_or_free(RT_obj,En,kgrid,action_kind)
  use real_time,      ONLY:RT_t,REF_lifetime,E_E_Hole_lifetime,E_E_Electron_lifetime,   &
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Ho_abs_lifetime, &
 &                         E_P_El_abs_lifetime,l_RT_uses_E_rim,RT_ibz_coo,RIM_ibz_coo,  &
-&                         RT_nk,RT_nstates,RT_all2ibz,RT_delta0_occupations
+&                         RT_nk,RT_nstates,RT_all2ibz,RT_delta0_occupations,RT_Nk_ibz
  !
  implicit none
  !
@@ -55,6 +55,7 @@ subroutine RT_alloc_def_or_free(RT_obj,En,kgrid,action_kind)
      ! Allocate and define
      !
      if(.not.associated(RT_obj%k))      allocate(RT_obj%k(RT_nk,3))
+     if(.not.associated(RT_obj%wk))     allocate(RT_obj%wk(RT_nk))
      if(.not.associated(RT_obj%table))  allocate(RT_obj%table(RT_nstates,4))   ! ib,ik_RT,ik,i_spin
      !
      RT_obj%nk=RT_nk
@@ -71,9 +72,14 @@ subroutine RT_alloc_def_or_free(RT_obj,En,kgrid,action_kind)
      RT_obj%W0=0.
      !
      do i_k=1,kgrid%nibz
-       if(     l_RT_uses_E_RIM) RT_obj%k(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=&
-&                                       kgrid%ptbz_RIM(RIM_ibz_coo(i_k,1):RIM_ibz_coo(i_k,2),:)
-       if(.not.l_RT_uses_E_RIM) RT_obj%k(i_k,:)=kgrid%pt(i_k,:)
+       if(     l_RT_uses_E_RIM) then
+         RT_obj%k(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)= kgrid%ptbz_RIM(RIM_ibz_coo(i_k,1):RIM_ibz_coo(i_k,2),:)
+         RT_obj%wk(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2)) = kgrid%weights(i_k)/real(RT_Nk_ibz(i_k),SP)        
+       endif
+       if(.not.l_RT_uses_E_RIM) then
+         RT_obj%k(i_k,:)= kgrid%pt(i_k,:)
+         RT_obj%wk(i_k) = kgrid%weights(i_k)
+       endif
      enddo
      !
      call build_RT_table()

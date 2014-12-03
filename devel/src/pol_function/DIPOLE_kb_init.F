@@ -86,6 +86,7 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
  ! If npinor=2   pwscf kb factor are written in spin space with the spin-angle functions
  !
  if (io_KB_pwscf_err==0) then
+   !
    allocate(spin_m_table(3,pp_n_l_max,maxval(pp_table(2,:,:)+1),n_atomic_species))
    spin_m_table=0
    allocate(pp_factor(2*(pp_n_l_max-1)+1,pp_n_l_max,maxval(pp_table(2,:,:)+1),n_atomic_species,2))

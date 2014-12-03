@@ -51,7 +51,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 #if defined _SC || defined _KERR
  use X_m,            ONLY:global_gauge
 #endif
+#if defined _RT
+ use drivers,        ONLY:l_rt_bse
+ use com,            ONLY:error
+#endif
+ !
  implicit none
+ !
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
  type(X_t)     ::X_static_pp
@@ -60,11 +66,15 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! Work Space
  !
  type(X_t)   :: X_tddft,X_oscillators
- integer     :: iq,bands_to_correct(2),Max_G_m_G
+ integer     :: iq,bands_to_correct(2),Max_G_m_G,n_T_steps
  integer, external :: eval_G_minus_G
  !
  call section('*','Response Functions in Transition space')
  !=========================================================
+ !
+#if defined _RT 
+ if(l_rt_bse .and. index(BSS_mode,'t')/=0) call error('RT_BSE and BSE via f_xc not compatible')
+#endif
  !
  ! Tranferred momentum. Only Gamma now
  !=====================================

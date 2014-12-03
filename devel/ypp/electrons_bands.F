@@ -39,8 +39,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  use YPP,            ONLY:Nel_fac
  use stderr,         ONLY:real2ch
  use units,          ONLY:FS2AUT
- use YPP,            ONLY:OCC_T_range,OCC_deltaT
- use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO
+ use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,OCC_T_range,OCC_deltaT
  use real_time,      ONLY:RIM_ibz_coo,RT_delta0_occupations,REF_lifetime,&
 &                         RT_Nk,RT_ibz_coo,RT_Nk_ibz,rt
  use IO_m,           ONLY:NONE
@@ -146,6 +145,9 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    CIRCUIT_K%nibz=sum(int_distances)+1
    !
    allocate(CIRCUIT_K%pt(CIRCUIT_K%nibz,3))
+   allocate(CIRCUIT_K%weights(CIRCUIT_K%nibz))
+   !
+   CIRCUIT_K%weights=1._SP/real(CIRCUIT_K%nibz,SP)
    !
    ic=1
    do ik=1,USER_K%nibz-1
@@ -280,10 +282,10 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
        message='RT '
        if(i_T==1) message='RT0'
        !
-       if(l_RT_occ_Bands)  call Nearest_kpt_interpolation(rt%nk,CIRCUIT_k%nibz,rt%nb,rt%nstates,1,1,&
-&                                         rt%table,rt%k,CIRCUIT_k%pt,rt%df,fit_on_circuit(:,:,:,i_T),message)
-       if(l_RT_life_Bands) call Nearest_kpt_interpolation(rt%nk,CIRCUIT_k%nibz,rt%nb,rt%nstates,1,1,&
-&                                         rt%table,rt%k,CIRCUIT_k%pt,rt%W0,fit_on_circuit(:,:,:,i_T),message)
+       if(l_RT_occ_Bands)  call Nearest_kpt_interpolation(rt%nk,CIRCUIT_k%nibz,rt%nb,rt%nstates,1,1,rt%table,rt%k, &
+&                            CIRCUIT_k%pt,rt%wk,CIRCUIT_k%weights,rt%df,fit_on_circuit(:,:,:,i_T),message,l_normalize_Nel)
+       if(l_RT_life_Bands) call Nearest_kpt_interpolation(rt%nk,CIRCUIT_k%nibz,rt%nb,rt%nstates,1,1,rt%table,rt%k, &
+&                            CIRCUIT_k%pt,rt%wk,CIRCUIT_k%weights,rt%W0,fit_on_circuit(:,:,:,i_T),message,.false.)
        !
      endif
      !
@@ -293,12 +295,14 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
        Nhole=-sum(fit_on_circuit(BANDS_range(1):Xen%nbf,:,:,i_T))/real(CIRCUIT_k%nibz)
        Nel=   sum(fit_on_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T))/real(CIRCUIT_k%nibz)
        !
-       if(Nhole>0.and.l_normalize_Nel) &
-&        fit_on_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)=&
-&          fit_on_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)/Nhole*Real_Nhole
-       if(Nel>0  .and.l_normalize_Nel) &
-&        fit_on_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)=&
-&          fit_on_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)/Nel*Real_Nel
+       if(.not.l_nearest_neig_interp) then
+         if(Nhole>0.and.l_normalize_Nel) &
+&          fit_on_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)=&
+&            fit_on_circuit(BANDS_range(1):Xen%nbf,:,:,i_T)/Nhole*Real_Nhole
+         if(Nel>0  .and.l_normalize_Nel) &
+&          fit_on_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)=&
+&            fit_on_circuit(Xen%nbf+1:BANDS_range(2),:,:,i_T)/Nel*Real_Nel
+       endif
        !
      endif
      !

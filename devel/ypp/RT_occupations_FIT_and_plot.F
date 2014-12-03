@@ -27,7 +27,7 @@ subroutine RT_occupations_FIT_and_plot(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  !
  use units,          ONLY:HA2EV,HA2KEL,FS2AUT
  use pars,           ONLY:SP,schlen
- use YPP,            ONLY:OCC_T_range,OCC_deltaT
+ use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_table,QP_n_states
  use D_lattice,      ONLY:Bose_Temp

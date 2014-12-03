@@ -612,6 +612,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
    call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
    !
+#if defined _RT
+   call initactivate(1,'RT_BSE UpScr RT_BSE_time')
+#endif
+   !
  endif                    
  !
  ! BSE solver
@@ -791,8 +795,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call init_QP_ctl_switch('G')
    call initactivate(-1,'SCmixing')
    call initactivate(1,'Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
-   call initactivate(1,'RTstep NEsteps NETime LifeInterpKIND LifeInterpSteps LifeInterpT COHsteps DipoleEtresh')
-   if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol UseDebyeE UpdtDebyeT ElPhModes')
+   call initactivate(1,'RTstep NEsteps NETime COHsteps DipoleEtresh')
+   if (l_elel_scatt .or. l_elph_scatt) call initactivate(1,'LifeInterpKIND LifeInterpSteps LifeInterpT')
+   if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes')
+   !if (l_elph_corr) call initactivate(1,'UseDebyeE UpdtDebyeT')
    if (l_elel_scatt) call initactivate( 1,'PlasmaPerc EERimPerc')
    call initactivate(1,'BGR RTIrredux RTskipImposeN RTeeImposeE InducedField IOtime')
    call initactivate(1,'RTpumpEhEn RTpumpEhWd RTpumpNel')

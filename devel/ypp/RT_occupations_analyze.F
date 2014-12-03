@@ -31,11 +31,11 @@ subroutine RT_occupations_analyze(k,E)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,spin_occ
  use QP_m,           ONLY:QP_table,QP_n_states
- use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT,l_RT_occ_FIT,l_RT_occ_Plot
+ use YPP,            ONLY:output_fname,l_RT_occ_FIT,l_RT_occ_Plot
  use com,            ONLY:msg,of_open_close,error
  use IO_m,           ONLY:NONE
  use QP_CTL_m,       ONLY:QP_apply
- use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO
+ use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,OCC_T_range,OCC_deltaT
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, & 
 &                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime,&

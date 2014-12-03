@@ -81,6 +81,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,alloc_err,&
 &              bands_to_load(2),iOvv,iOcc
  complex(SP):: Co,H_x,H_c,PHASE_1,PHASE_2
+ real(SP)   :: sqrt_f_itk,sqrt_f_itp
  !
  complex(SP),allocatable ::BS_W(:,:,:)
  complex(SP),   external ::TDDFT_ALDA_R_space
@@ -420,31 +421,37 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      !
+     sqrt_f_itk=sqrt(BS_T_grp(i_Tgrp_k)%f(i_Tk))
+     !
+     i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1)
+     i_v_k   = BS_T_grp(i_Tgrp_k)%table(i_Tk,2)
+     i_c_k   = BS_T_grp(i_Tgrp_k)%table(i_Tk,3)
+     i_k_spin= BS_T_grp(i_Tgrp_k)%table(i_Tk,4)
+     !
+     i_k  = Xk%sstar(i_k_bz,1)
+     i_k_s= Xk%sstar(i_k_bz,2)
+     !
+     i_k_s_m1 = sop_inv(i_k_s)
+     !
+     H_pos(1) = sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk
+     !
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        !
-       i_k_bz=BS_T_grp(i_Tgrp_k)%table(i_Tk,1)
-       i_p_bz=BS_T_grp(i_Tgrp_p)%table(i_Tp,1)
+       sqrt_f_itp=sqrt(BS_T_grp(i_Tgrp_p)%f(i_Tp))
        !
-       i_k  =Xk%sstar(i_k_bz,1)
-       i_k_s=Xk%sstar(i_k_bz,2)
+       i_p_bz  = BS_T_grp(i_Tgrp_p)%table(i_Tp,1)
+       i_v_p   = BS_T_grp(i_Tgrp_p)%table(i_Tp,2)
+       i_c_p   = BS_T_grp(i_Tgrp_p)%table(i_Tp,3)
+       i_p_spin= BS_T_grp(i_Tgrp_p)%table(i_Tp,4)
+       !
        i_p  =Xk%sstar(i_p_bz,1)
        i_p_s=Xk%sstar(i_p_bz,2)
        !
-       i_k_s_m1 = sop_inv(i_k_s)
        i_k_p_s  = sop_tab(i_k_s_m1,i_p_s)
        !
-       H_pos = (/sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk,sum(BS_T_grp(:I_Tgrp_p-1)%size)+i_Tp/)
+       H_pos(2) = sum(BS_T_grp(:I_Tgrp_p-1)%size)+i_Tp
        !
        if (H_pos(1)>H_pos(2)) cycle
-       !
-       i_v_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,2)
-       i_c_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,3)
-       !
-       i_v_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,2)
-       i_c_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,3)
-       !
-       i_k_spin=BS_T_grp(i_Tgrp_k)%table(i_Tk,4)
-       i_p_spin=BS_T_grp(i_Tgrp_p)%table(i_Tp,4)
        !
        ig_W   =qindx_B(i_k_bz,i_p_bz,2)
        iq_W   =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,1)
@@ -572,7 +579,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
        endif
        !
-       BS_blk(i_block)%mat(i_Tk,i_Tp)=H_x*real(spin_occ)*Co-H_c
+       BS_blk(i_block)%mat(i_Tk,i_Tp)=sqrt_f_itk*(H_x*real(spin_occ)*Co-H_c)*sqrt_f_itp
        !
        if (H_pos(1)==H_pos(2)) BS_blk(i_block)%mat(i_Tk,i_Tp)=real( BS_blk(i_block)%mat(i_Tk,i_Tp) )
        !

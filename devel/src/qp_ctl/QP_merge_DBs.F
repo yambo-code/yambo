@@ -75,7 +75,7 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp,plan_EWZ)
  !
  l_QP_db=associated(qp2merge(1)%E)
  !
- allocate(qp%k(qp%nk,3),qp%table(qp%n_states,3+n_sp_pol-1))
+ allocate(qp%k(qp%nk,3),qp%wk(qp%nk),qp%table(qp%n_states,3+n_sp_pol-1))
  !
  if (l_QP_db) then
    allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_bare(qp%n_states))
@@ -109,6 +109,7 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp,plan_EWZ)
            qp%GreenF_W(i1,:)=qp2merge(i_db)%GreenF_W(i2,:)
          endif
          qp%k(qp%table(i1,3),:)=qp2merge(i_db)%k( qp2merge(i_db)%table(i2,3),:)
+         qp%wk(qp%table(i1,3) )=qp2merge(i_db)%wk( qp2merge(i_db)%table(i2,3) )
        endif
      enddo
    enddo

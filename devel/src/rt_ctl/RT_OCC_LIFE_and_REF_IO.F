@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM DS
+! Authors (see AUTHORS file for details): DS AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -32,13 +32,13 @@ subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
 &                         RT_E_occupations,RT_H_occupations,G_MEM_steps,REF_lifetime,&
 &                         G_lesser_reference,RT_delta0_occupations,E_P_Hole_lifetime,&
 &                         E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_nk,l_RT_occupations_in_use,&
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_nk,&
 &                         RT_E_occupations_reference,RT_H_occupations_reference
  use SC,             ONLY:SC_bands
  use IO_m,           ONLY:io_control,NONE,OP_WR_CL,OP_RD,RD_CL,OP_RD_CL,DUMP,variable_is_found
  use electrons,      ONLY:levels,n_sp_pol,n_met_bands,&
 &                         n_full_bands,nel,E_reset,spin_occ
- use com,            ONLY:jobstr,msg,file_exists,warning,error
+ use com,            ONLY:jobstr,msg,file_exists,error
  use QP_m,           ONLY:OCC_ctl
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:bz_samp,nXkibz,bz_samp_reset
@@ -68,22 +68,8 @@ subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
  character(lchlen) :: jobstr_save
  integer, external :: io_RT_components
  !
- ! Real-Time occupations
- !=======================
- !
- ! (a) Write
- !
- if (.not.present(Time)) then
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
-   io_err_occ=io_RT_components('occupations',ID(6))
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(6))
-   io_err_occ=io_RT_components('occupations',ID(6))
-   !
-   return
-   !
- endif
- !
- ! (b) Load
+ ! Real-Time occupations load
+ !============================
  !
  jobstr_save=jobstr
  if (what=="X") jobstr=trim(OCC_ctl(1))
@@ -103,17 +89,7 @@ subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
  call io_control(ACTION=OP_RD,COM=COM_,SEC=(/1/),MODE=DUMP,ID=ID(6))
  io_err_occ=io_RT_components('occupations',ID(6))
  !
- if (io_err_occ<0) then
-#if !defined _YPP_RT 
-   call warning ('Occupations database not found in folder: '//trim(jobstr))
-#endif
-   jobstr=jobstr_save
-   return
- else
-#if !defined _YPP_RT 
-   call msg('s','Occupations database read from folder: '//trim(jobstr))
-#endif
- endif
+ if (io_err_occ<0) call error ('Occupations database not found in folder: '//trim(jobstr))
  !
  ! OCCUPATIONS I/O (II)
  !======================

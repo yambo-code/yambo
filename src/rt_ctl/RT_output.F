@@ -323,16 +323,21 @@ subroutine RT_output(what,VALUES,TIME,E)
  next_file=next_file+1
  !
  do i_f=1,3
-   if (i_f==1) extension_ch='trans_eps_rel'
-   if (i_f==2) extension_ch='trans_eps_abs'
+   if (i_f==1) extension_ch='trans_eps_real'
+   if (i_f==2) extension_ch='trans_eps_imag'
    if (i_f==3) extension_ch='eps_eq'
    if (open_files.and..not.file_already_opened(next_file)) then
      file_name(next_file)=trim(append_ch)//trim(extension_ch)
    endif
    short_file_name(next_file)=trim(append_ch)//trim(extension_ch)
    n_headings(next_file)=3
-   headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
-   headings(next_file,3  )='Eps'
+   if(i_f<3) then
+     headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
+     headings(next_file,3  )='Eps'
+   else
+     headings(next_file,1)='E [eV]'
+     headings(next_file,2:3)=(/'Im [e]','Re [e]'/)
+   endif
    next_file=next_file+1
  enddo
  !
@@ -354,9 +359,15 @@ subroutine RT_output(what,VALUES,TIME,E)
      file_name(next_file)=trim(append_ch)//trim(extension_ch)
    endif
    short_file_name(next_file)=trim(append_ch)//trim(extension_ch)
-   n_headings(next_file)=3
-   headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
-   headings(next_file,3  )='Reflectivity'
+   if(i_f<3) then
+     n_headings(next_file)=3
+     headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
+     headings(next_file,3  )='Reflectivity'
+   else
+     n_headings(next_file)=2
+     headings(next_file,1)='E [eV]'
+     headings(next_file,2)='Reflectivity'
+   endif
    next_file=next_file+1
  enddo
  !
@@ -368,10 +379,16 @@ subroutine RT_output(what,VALUES,TIME,E)
      file_name(next_file)=trim(append_ch)//trim(extension_ch)
    endif
    short_file_name(next_file)=trim(append_ch)//trim(extension_ch)
-   n_headings(next_file)=3
-   headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
-   headings(next_file,3  )='Transmission'
-   next_file=next_file+1
+   if(i_f<3) then
+     n_headings(next_file)=3
+     headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
+     headings(next_file,3  )='Transmission'
+   else
+     n_headings(next_file)=2
+     headings(next_file,1)='E [eV]'
+     headings(next_file,2)='Transmission'
+   endif
+  next_file=next_file+1
  enddo
  !
  ! Check which files to write
@@ -445,8 +462,9 @@ subroutine RT_output(what,VALUES,TIME,E)
    !
    ! Values
    !--------
-   if (present(TIME)) data_to_dump(1)=TIME
-   if (present(E))    data_to_dump(1)=E
+   if (present(TIME).and..not.present(E)) data_to_dump(1)=TIME
+   if (present(E).and..not.present(TIME))    data_to_dump(1)=E
+   if (present(TIME)  .and.   present(E)) data_to_dump(1:2)=(/TIME,E/)
    !
    select case (trim(short_file_name(i_f)))
      case('current','YPP-current')
@@ -504,24 +522,24 @@ subroutine RT_output(what,VALUES,TIME,E)
        if(.not.present(VALUES)) cycle
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
      case('YPP-X_effective','YPP-el_dos')
-       data_to_dump(1:2)=(/Time,E/)
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-2)
-     case('YPP-trans_eps_rel' ,'YPP-trans_eps_abs' ,'YPP-eps_eq',&
-&         'YPP-trans_refl_rel','YPP-trans_refl_abs','YPP-refl_eq',&
-&         'YPP-trans_transm_rel','YPP-trans_transm_abs','YPP-transm_eq',&
+     case('YPP-eps_eq','YPP-refl_eq','YPP-transm_eq')
+       data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
+     case('YPP-trans_eps_real' ,'YPP-trans_eps_imag',&
+&         'YPP-trans_refl_rel','YPP-trans_refl_abs',&
+&         'YPP-trans_transm_rel','YPP-trans_transm_abs',&
 &         'YPP-trans_residual')
-       data_to_dump(1:2)=(/Time,E/)
-       data_to_dump(3:n_headings(i_f)) = VALUES(1)
+       data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-2)
      case('mean_EPlifetimes')
        n1=3
-       data_to_dump(2:3) = RT_mean_lifetimes(3:4)*HA2EV*1000.
+       data_to_dump(2:3) = RT_mean_lifetimes(3:4)*HA2EV*1000._SP
        if(Bose_Temp>0. ) then
-         data_to_dump(4:5)=RT_mean_lifetimes(5:6)*HA2EV*1000.
+         data_to_dump(4:5)=RT_mean_lifetimes(5:6)*HA2EV*1000._SP
          n1=n1+2
        endif
        data_to_dump(n1+1:n1+2) = RT_Tfit_lifetimes(1:2)*HA2KEL
      case('mean_EElifetimes')
-       data_to_dump(2:3) = RT_mean_lifetimes(1:2)*HA2EV*1000.
+       data_to_dump(2:3) = RT_mean_lifetimes(1:2)*HA2EV*1000._SP
        data_to_dump(4:5) = RT_Tfit_lifetimes(3:4)*HA2KEL
      case('N_dN_E_conservation_factors')
        n1=1

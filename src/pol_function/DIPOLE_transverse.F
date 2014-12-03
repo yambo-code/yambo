@@ -202,7 +202,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          endif
          !
          ivfft=WF%index(iv,ik,i_spin)
-         if (ivfft==0) call error(" Error in parallel wf distribution")
+         if (ivfft==0) call error(" Error in parallel wf distribution (Dipole iv)")
          !
          ! wf_xyz = -i grad fdo(iv,ik)
          !
@@ -236,7 +236,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! GPL_EXCLUDE_END 
          !
          icfft=WF%index(ic,ik,i_spin)
-         if (icfft==0) call error("Error distribution wave-function")
+         if (icfft==0) call error(" Error in parallel wf distribution (Dipole ic)")
          !
          ! WARNING: 
          ! ========

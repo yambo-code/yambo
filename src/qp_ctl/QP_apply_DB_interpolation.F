@@ -75,7 +75,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
    call QP_transfer('init')
    !
    call Nearest_kpt_interpolation(qp%nk,k%nibz,band_range,qp%n_states,N_val_to_int,n_neigh,&
-   &                              qp%table,qp%k,k%pt,Vali,Valo,'QP ')
+   &                              qp%table,qp%k,k%pt,qp%wk,k%weights,Vali,Valo,'QP ',.false.)
    !
    call QP_transfer('appl')
    !

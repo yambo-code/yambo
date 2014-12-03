@@ -23,7 +23,7 @@
 !
 subroutine setup(en,Xen,Ken,k,Xk)
  !
- use drivers,        ONLY:l_sc_run
+ use drivers,        ONLY:l_sc_run,l_rt_bse
  use pars,           ONLY:SP,pi,schlen
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,n_sp_pol,&
 &                         BZ_RIM_nbands,RIM_is_symmetry_expanded,BZ_RIM_tot_nkpts
@@ -314,6 +314,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
    en%nbm =nbf_m_SAVE(2)
  endif
  !
+#if defined _RT
+ call OCCUPATIONS_out_of_equilibrium(Xk,Xen,en,Ken)
+#endif
+ !
  n_met_bands =en%nbm
  n_full_bands=en%nbf
  !
@@ -325,7 +329,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Once the occupations have been evaluated I dump Xen in Ken
  !
- call E_duplicate(Xen,Ken)
+ if(.not.l_rt_bse) call E_duplicate(Xen,Ken)
  !
 #if defined _SC
  K_kind=X_kind

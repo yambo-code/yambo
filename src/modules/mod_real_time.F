@@ -113,10 +113,6 @@ module real_time
  integer,     allocatable :: RT_all2ibz(:)  
  integer,     allocatable :: RT_Nk_ibz(:)  
  !
- ! Real-Time occupations
- !
- logical                  :: l_RT_occupations_in_use
- !
  ! K-points: In case I want to use the G_lesser to define the occupations
  ! of a post-run I need to keep here the number of k-points 
  !
@@ -276,11 +272,16 @@ module real_time
  !
  complex(SP), allocatable :: XC0_and_HARTREE0(:,:,:,:)
  !
+ ! TD-ABS and RT-BSE
+ !
+ real(SP) :: RT_BSE_time
+ !
  type RT_t
    !
    character(schlen)  :: description
    integer,    pointer:: table(:,:) => null()
    real(SP)   ,pointer:: k(:,:)     => null()
+   real(SP)   ,pointer:: wk(:)      => null()
    real(SP)   ,pointer:: E0(:)      => null()
    real(SP)   ,pointer:: f0(:)      => null()
    real(SP)   ,pointer:: W0(:)      => null()

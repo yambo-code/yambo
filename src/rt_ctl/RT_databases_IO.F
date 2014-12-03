@@ -24,7 +24,7 @@
 subroutine RT_databases_IO(E,it)
  !
  use drivers,        ONLY:l_elph_scatt
- use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,RT_do_IO,ID,it_start
+ use rt_ctl,         ONLY:RT_do_IO,ID,it_start
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL,io_GF,io_OCCs,io_J
  use electrons,      ONLY:levels
@@ -39,7 +39,7 @@ subroutine RT_databases_IO(E,it)
  !
  ! Work Space
  !
- integer :: ik,io_G,io_J_and_P,COM_,io_THETA
+ integer :: ik,io_G,io_J_and_P,io_occ,COM_,io_THETA
  !
  ! When the simulation has been restarted the first step (it==it_start)
  ! corresponds to the latest of the previous simulation. Therefore
@@ -54,13 +54,6 @@ subroutine RT_databases_IO(E,it)
  !
  if(l_NE_dynamics.and.RT_do_IO('J')) then
    !
-   ! Remember that negative time = adiabatic switching
-   ! no need to store current
-   !
-   io_J_and_P=0 
-   !
-   ! Write current and polarization on disk
-   !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
    io_J_and_P=io_RT_components('J_and_P',ID(4))
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
@@ -70,7 +63,14 @@ subroutine RT_databases_IO(E,it)
  !
  ! Occupations
  !
- if (io_OCCs.and.RT_do_IO('OCCs')) call RT_OCC_LIFE_and_REF_IO(E,'G')
+ if (io_OCCs.and.RT_do_IO('OCCs')) then
+   !
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
+   io_occ=io_RT_components('occupations',ID(6))
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(6))
+   io_occ=io_RT_components('occupations',ID(6))
+   !
+ endif
  !
  ! Write every RT_IO_G_steps
  !

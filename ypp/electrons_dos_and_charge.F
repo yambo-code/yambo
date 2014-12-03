@@ -40,8 +40,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use QP_CTL_m,       ONLY:QP_apply
  use LIVE_t,         ONLY:live_timing
 #if defined _YPP_RT
- use YPP,            ONLY:OCC_T_range,OCC_deltaT
- use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,RT_output
+ use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,RT_output,OCC_T_range,OCC_deltaT
  use real_time,      ONLY:RT_delta0_occupations,&
 &                         l_RT_uses_E_RIM,RT_ibz_coo
  use SC,             ONLY:SC_bands,SC_description,n_SC_descriptions

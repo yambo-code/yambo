@@ -40,6 +40,7 @@ module drivers
  !
  logical :: l_real_time 
  logical :: l_sc_run
+ logical :: l_rt_bse
  logical :: l_sc_magnetic
  logical :: l_eval_collisions
  logical :: l_use_collisions

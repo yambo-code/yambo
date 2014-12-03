@@ -286,15 +286,15 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Update Bose Temp and Phonons distribution
    !===========================================
-   if (l_Debye_TBose_update) then
-     if (it==it_start) E_previous=real(on_the_fly_operators(5))
-     if (abs(nint(NE_time/FS2AUT)-(NE_time/FS2AUT))< RT_step/FS2AUT .and. &
-&            nint(NE_time/FS2AUT)-(NE_time/FS2AUT) > 0. ) then
-       E_now=real(on_the_fly_operators(5))
-       call TEMPERATURE_Debye(E_previous-E_now)
-       E_previous=E_now
-     endif
-   endif
+   !if (l_Debye_TBose_update) then
+   !  if (it==it_start) E_previous=real(on_the_fly_operators(5))
+   !  if (abs(nint(NE_time/FS2AUT)-(NE_time/FS2AUT))< RT_step/FS2AUT .and. &
+   !  &       nint(NE_time/FS2AUT)-(NE_time/FS2AUT) > 0. ) then
+   !    E_now=real(on_the_fly_operators(5))
+   !    call TEMPERATURE_Debye(E_previous-E_now)
+   !    E_previous=E_now
+   !  endif
+   !endif
    !
    if (l_NE_with_fields) call RT_propagate_fields(k,E,A_vecpot,A_vecpot_previous,NE_time,RT_step)
    !

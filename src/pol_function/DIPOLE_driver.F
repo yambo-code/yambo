@@ -23,7 +23,7 @@
 !
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
- use drivers,        ONLY:l_optics,l_real_time,l_sc_run
+ use drivers,        ONLY:l_optics,l_real_time,l_sc_run,l_rt_bse
  use LIVE_t,         ONLY:what_is_running
  use interfaces,     ONLY:WF_load
  use pars,           ONLY:SP

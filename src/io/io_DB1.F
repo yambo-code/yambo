@@ -47,9 +47,6 @@ integer function io_DB1(E,k,ID)
 #if defined _SC
  use SC,               ONLY:SC_bands
 #endif
-#if defined _RT || defined _YPP_RT
- use IO_m,             ONLY:variable_is_found
-#endif
  !
  implicit none
  !
@@ -59,7 +56,6 @@ integer function io_DB1(E,k,ID)
  !
  ! Work Space
  !
- logical           :: l_io_sym_eq
  character(schlen) :: string
  !
  io_DB1 =io_connect(desc="db1",type=0,ID=ID)
@@ -287,13 +283,6 @@ integer function io_DB1(E,k,ID)
  !
  call io_bulk(ID, VAR="SYMMETRY", VAR_SZ=shape(dl_sop) )
  call io_bulk(ID, R3=dl_sop)
- !
-#if defined _RT || defined _YPP_RT
- !
- if (write_is_on(ID)) l_io_sym_eq=.TRUE.
- if (read_is_on(ID) ) l_io_sym_eq=variable_is_found(ID,"N_SYMMETRIES")==1
- !
-#endif
  !
  ! G-vectors
  !

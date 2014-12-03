@@ -213,12 +213,13 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      T_is_ok=.TRUE.
      !
      E_eh=Ken%E(ic,ik,i_sp)-Ken%E(iv,ikp,i_sp)
-     f_eh=Ken%f(iv,ikp,i_sp)*(spin_occ-Ken%f(ic,ik,i_sp))/spin_occ/spin_occ
+     !f_eh=Ken%f(iv,ikp,i_sp)*(spin_occ-Ken%f(ic,ik,i_sp))/spin_occ/spin_occ
+     f_eh=(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik,i_sp))/spin_occ
      !
      ! A 5% fractional occupation swiches on the particular
      ! treatment of finite temp. BSE 
      !
-     if ( abs(f_eh-1.)> filled_tresh) BS_not_const_eh_f=.TRUE.
+     if ( abs(abs(f_eh)-1._SP)> filled_tresh) BS_not_const_eh_f=.TRUE.
      !
      if (abs(E_eh)<1.E-5) then
        if(all((/ic==Ken%bf,iv==Ken%bf,ik==Ken%kf,i_sp==Ken%sf,&
@@ -228,7 +229,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      !
      ! Same ordering procedure of the Xo case (see X_eh_setup.F)
      !
-     if (abs(f_eh)*spin_occ*spin_occ<epsilon(1._SP)) T_is_ok=.FALSE.
+     if (abs(f_eh)*spin_occ*spin_occ<epsilon(1._SP) .or. f_eh<0._SP ) T_is_ok=.FALSE.
      !
      ! Additional (?) condition for spin-resolved calculations
      !

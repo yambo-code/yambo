@@ -102,6 +102,7 @@ module QP_CTL_m
      ! This convention about sign is imposed (when reading DB's made at finite Temperature)
      ! in QP_apply_global_stretch and  QP_apply_DB_interpolation
      !
+     use drivers,       ONLY:l_rt_bse,l_sc_run
      use memory_m,      ONLY:mem_est
      use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
 &                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
@@ -114,10 +115,8 @@ module QP_CTL_m
      use global_XC,     ONLY:setup_global_XC,MORE_SCISSOR,MORE_SCIS_AND_STRE,MORE_STRETCH,&
 &                            K_kind,K_xc_functional,MORE_NONE,G_kind,G_xc_functional,&
 &                            X_kind,X_xc_functional,QP_DB_kind,SE_NONE
-#if defined _RT
-     use real_time,     ONLY:l_RT_occupations_in_use
-#endif
      use interfaces,    ONLY:OCCUPATIONS_Gaps
+     !
      integer       ::band_range(2)
      type(levels)  ::en
      type(bz_samp) ::k
@@ -318,12 +317,7 @@ module QP_CTL_m
        !
        if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
        !
-#if defined _RT
-       if (.not.l_RT_occupations_in_use) call OCCUPATIONS_Fermi(en,k,1)
-#endif
-#if !defined _SC
-       call OCCUPATIONS_Fermi(en,k,1)
-#endif      
+       if (.not.l_rt_bse .and. .not. l_sc_run) call OCCUPATIONS_Fermi(en,k,1)
        !
        if (input_Tel_is_negative) then
          en%nbf=nbf_m_SAVE(1)

@@ -97,7 +97,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     Eh_pumped_pair_energy,Eh_pumped_pair_width,Eh_pumped_Nel,           &
 &                     l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,              &
 &                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
-&                     RIM_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,l_RT_occupations_in_use
+&                     RIM_EE_percent,RT_scatt_tresh,integrator_step,RT_nk
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,i_Pump,i_Probe,A_vecpot_reset,     &
 &                     A_vecpot,A_vecpot_previous,A_ind,A_ind_previous,A_ext
  use plasma,     ONLY:Plasma_redux_percent
@@ -296,6 +296,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_elel_scatt=.false.
  l_elph_scatt=.false.
  !
+ l_rt_bse=.false.
  l_sc_run=.false.
  l_sc_ip=.false.
  l_sc_hf=.false.
@@ -527,8 +528,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  call A_vecpot_reset(A_ext)
  call A_vecpot_reset(A_ind)
  call A_vecpot_reset(A_ind_previous)
- !
- l_RT_occupations_in_use=.FALSE.
  !
  ! RT dynamics 
  !

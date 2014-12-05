@@ -39,7 +39,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use BS,              ONLY:BSS_eh_table,BS_mat
  use frequency,       ONLY:w_samp
  use interfaces,      ONLY:PARALLEL_global_indexes
- use parallel_m,      ONLY:PAR_Xk_bz_index
+ use parallel_m,      ONLY:PAR_DIPk_ibz_index,PAR_Xk_bz_index,PAR_DIPk_nibz,PAR_Xk_nbz,&
+&                          PAR_IND_DIPk_ibz,PAR_IND_Xk_bz
  use SC,              ONLY:SC_bands,SC_QP_setup
  use parser_m,        ONLY:parser
  !
@@ -77,13 +78,23 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  call parser('IncludeIP'   ,l_include_IP)
  !
  Xbsk%ib=SC_bands
- !Xbsk%ng=wf_ng
- Xbsk%whoami=5
  allocate(q_norm(1),bare_qpg(1,1))
- !call SC_QP_setup(Xen)
  !
- call PARALLEL_global_indexes(Xen,Xk,Xq," ",        RESET=.TRUE. ,X=Xbsk)
- call PARALLEL_global_indexes(Xen,Xk,Xq,"Real_Time",RESET=.FALSE.,X=Xbsk)
+ PAR_Xk_nbz   =Xk%nbz
+ allocate(PAR_Xk_bz_index(Xk%nbz))
+ allocate(PAR_IND_Xk_bz%element_1D(Xk%nbz))
+ do i_kbz=1,Xk%nbz
+   PAR_Xk_bz_index(i_kbz)=i_kbz
+   PAR_IND_Xk_bz%element_1D(i_kbz)=.true.
+ enddo
+ !
+ PAR_DIPk_nibz=Xk%nibz
+ allocate(PAR_DIPk_ibz_index(Xk%nibz))
+ allocate(PAR_IND_DIPk_ibz%element_1D(Xk%nibz))
+ do i_kibz=1,Xk%nibz
+   PAR_DIPk_ibz_index(i_kibz)=i_kibz
+   PAR_IND_DIPk_ibz%element_1D(i_kibz)=.true.
+ enddo
  !
  io_DIP=.FALSE.
  call DIPOLE_driver(Xen,Xk,Xbsk,Xbsk%q0)
@@ -91,6 +102,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  deallocate(q_norm,bare_qpg)
  !
  allocate(delta_f(rt%nb(1):rt%nb(2),Xk%nibz,n_sp_pol))
+ delta_f=0._SP
+ !
  allocate(X_epsilon(2,X_rt%energy_steps))
  if(l_TR_reflec) allocate(X_reflectance(2,X_rt%energy_steps))
  if(l_TR_transm) allocate(X_absorption_coeff(2,X_rt%energy_steps))
@@ -149,8 +162,6 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        i_c     = BSS_eh_table(neh,3)
        i_spin  = spin(BSS_eh_table(neh,:))
        !
-       i_kmem= PAR_Xk_bz_index(i_kbz)
-       !
        if(i_v<rt%nb(1) .or. i_c>rt%nb(2) ) cycle
        !
        !f_cv=Xen%f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
@@ -160,8 +171,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        f_cv=      (  Xen%f(i_v,i_kibz,i_spin)-  Xen%f(i_c,i_kibz,i_spin))/spin_occ
        delta_f_cv=(delta_f(i_v,i_kibz,i_spin)-delta_f(i_c,i_kibz,i_spin))/spin_occ
        !
-       BS_R0(i_l)=BS_R0(i_l)-DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin)*BS_mat(neh,i_l)*sqrt(f_cv)
-       BS_R1(i_l)=BS_R1(i_l)-DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin)*BS_mat(neh,i_l)*delta_f_cv/sqrt(f_cv)
+       BS_R0(i_l)=BS_R0(i_l)-DIP_q_dot_iR(i_c,i_v,i_kbz,i_spin)*BS_mat(neh,i_l)*sqrt(f_cv)
+       BS_R1(i_l)=BS_R1(i_l)-DIP_q_dot_iR(i_c,i_v,i_kbz,i_spin)*BS_mat(neh,i_l)*delta_f_cv/sqrt(f_cv)
        !
      enddo 
      !
@@ -183,7 +194,6 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    if(l_include_IP) then
      do i_kbz=1,Xk%nbz
        i_kibz=Xk%sstar(i_kbz,1)
-       i_kmem= PAR_Xk_bz_index(i_kbz)
        do i_spin=1,n_sp_pol
          !
          ! First valence
@@ -193,7 +203,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
              if(i_v==i_vp) cycle
              !
              f_vpv=-Xen%f(i_v,i_kibz,i_spin)*delta_f(i_vp,i_kibz,i_spin)/spin_occ/spin_occ
-             IP_R=-conjg(DIP_q_dot_iR(i_vp,i_v,i_kmem,i_spin))*sqrt(f_vpv)
+             IP_R=-conjg(DIP_q_dot_iR(i_vp,i_v,i_kbz,i_spin))*sqrt(f_vpv)
              IP_E=Xen%E(i_vp,i_kibz,i_spin)-Xen%E(i_v,i_kibz,i_spin)
              ! Photo-induced absorption and stimulated emission in v-v'
              X_epsilon(2,:)=X_epsilon(2,:)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
@@ -209,7 +219,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
              if(i_c==i_cp) cycle
              !
              f_ccp= delta_f(i_cp,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
-             IP_R=-conjg(DIP_q_dot_iR(i_c,i_cp,i_kmem,i_spin))*sqrt(f_ccp)
+             IP_R=-conjg(DIP_q_dot_iR(i_c,i_cp,i_kbz,i_spin))*sqrt(f_ccp)
              IP_E=Xen%E(i_c,i_kibz,i_spin)-Xen%E(i_cp,i_kibz,i_spin)
              X_epsilon(2,:)=X_epsilon(2,:)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
              X_epsilon(2,:)=X_epsilon(2,:)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)

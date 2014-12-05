@@ -106,12 +106,12 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
      do iko=1,Nko
        toto(i_val)=toto(i_val)+sum(abs(Valo(:,iko,:,i_val)))*wko(iko)
      enddo
-     Valo(:,:,:,i_val)=Valo(:,:,:,i_val)*toti(i_val)/toto(i_val)
+     if(abs(toto(i_val))>0._SP) Valo(:,:,:,i_val)=Valo(:,:,:,i_val)*toti(i_val)/toto(i_val)
    enddo
  endif
  !
  if(write_message) then
-   call msg('sr','['//trim(call_kind)//'] Kpts covered exactly  [o/o]:',real(nk_exact)/real(Nko)*100._SP)
+   call msg('nrs','['//trim(call_kind)//'] Kpts covered exactly  [o/o]:',real(nk_exact)/real(Nko)*100._SP)
    if (nk_interpolated>0) then
      call msg('sr','[Interpolate] Nighbours         :',n_neigh)
      call msg('sr','[Interpolate] Kpts covered [o/o]:',real(nk_interpolated)/real(Nko)*100._SP)

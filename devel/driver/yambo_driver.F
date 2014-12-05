@@ -142,10 +142,10 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  call section('*','') 
  !
- ! RESPONSE FUNCTIONS  QP CORRECTIONS (FROM INPUT FILE)
+ ! RESPONSE FUNCTIONS QP CORRECTIONS (FROM INPUT FILE)
  !======================================================
  !
- call QP_external_corrections(Xen,en,Xk,k,X)
+ call External_corrections(en,Xen,Ken,Xk,k,X)
  !
  ! OPTICS
  !========
@@ -189,7 +189,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! EXTENDED COLLISIONS (HF & COHSEX)
  !===================================
-#if defined _SC 
+#if defined _SC
  if (l_eval_collisions) call COLLISIONS_eval(en,X,k,xk,q,Xw(:2))
 #endif
  !
@@ -245,7 +245,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    ! SC
    !====
    !
-#if defined _SC  && !defined _RT
+#if defined _SC
    if (.not.l_real_time) call SC_driver(X(:2),Xw(:2),Xk,en,k,q)
 #endif
    !

@@ -35,7 +35,7 @@ integer function RT_occ_check_and_load_ref(E,k)
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, &
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_delta0_occupations,&
 &                         G_lesser_reference,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                         NE_time,RT_nk,RT_BSE_time
+&                         NE_time,RT_nk,RT_PP_time
  use SC,             ONLY:SC_bands
  use IO_m,           ONLY:LOG,NONE
  use com,            ONLY:error,msg
@@ -50,7 +50,7 @@ integer function RT_occ_check_and_load_ref(E,k)
 #if defined _YPP_RT
  loading_time=OCC_T_range(1)
 #else
- loading_time=RT_BSE_time
+ loading_time=RT_PP_time
 #endif
  !
  call RT_OCC_LIFE_and_REF_IO(E,'G',k=k,Time=loading_time,imposed_COM=LOG)
@@ -72,13 +72,13 @@ integer function RT_occ_check_and_load_ref(E,k)
 #if defined _YPP_RT
  loading_time=OCC_T_range(2)
 #else
- loading_time=RT_BSE_time
+ loading_time=RT_PP_time
 #endif
  !
- call RT_OCC_LIFE_and_REF_IO(E,'G',k=k,Time=RT_BSE_time)
+ call RT_OCC_LIFE_and_REF_IO(E,'G',k=k,Time=RT_PP_time)
  !
 #if !defined _YPP_RT
- RT_BSE_time=nint(RT_BSE_time/RT_IO_JPO_steps/RT_step)*RT_IO_JPO_steps*RT_step
+ RT_PP_time=nint(RT_PP_time/RT_IO_JPO_steps/RT_step)*RT_IO_JPO_steps*RT_step
  RT_occ_check_and_load_ref=1
 #else
  !

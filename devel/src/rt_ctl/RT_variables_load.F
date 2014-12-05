@@ -34,6 +34,7 @@ subroutine RT_variables_load(Xen,Xk,RT_db1_E,RT_db1_k,n_T_steps)
  use IO_m,            ONLY:io_control,OP_RD_CL,NONE,DUMP
  use memory_m,        ONLY:mem_est
  use QP_m,            ONLY:QP_nk
+ use wave_func,       ONLY:wf_ng
  !
  implicit none
  !
@@ -46,13 +47,21 @@ subroutine RT_variables_load(Xen,Xk,RT_db1_E,RT_db1_k,n_T_steps)
  type(levels)      :: Xen_tmp
  type(bz_samp)     :: RT_db1_q,Xk_tmp,Xq_tmp
  !
- integer           :: io_err,ID
+ integer           :: io_err,ID,nqbz_save,nqibz_save,nkbz_save,nkibz_save,wf_ng_save
  character(lchlen) :: core_io_path_save
  !
  integer, external :: io_DB1_selective_scan,io_RIM_E_and_k,io_QINDX
  integer, external :: RT_occ_check_and_load_ref,RT_k_grid
  !
  if(allocated(BZ_RIM_table)) call error("RIM DBs already present. This is not compatible with Transient abs")
+ !
+ nqbz_save =nqbz
+ nqibz_save=nqibz
+ !
+ nkbz_save =nkbz
+ nkibz_save=nkibz
+ !
+ wf_ng_save=wf_ng
  !
  !write(*,*) 'New DB',nXkbz,nXkibz,nkbz,nkibz,nqbz,nqibz,QP_nk
  io_err=io_DB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'all')
@@ -99,11 +108,13 @@ subroutine RT_variables_load(Xen,Xk,RT_db1_E,RT_db1_k,n_T_steps)
  io_err=io_QINDX(Xk_tmp,Xq_tmp,ID)
  call k_expand(Xk_tmp)
  !
- nqbz =Xq_tmp%nbz
- nqibz=Xq_tmp%nibz
+ nqbz =nqbz_save
+ nqibz=nqibz_save
  !
- nkbz =Xk_tmp%nbz
- nkibz=Xk_tmp%nibz
+ nkbz =nkbz_save
+ nkibz=nkibz_save
+ !
+ wf_ng=wf_ng_save
  !
  !write(*,*) 'OLD DB2',nXkbz,nXkibz,nkbz,nkibz,nqbz,nqibz,QP_nk
  !

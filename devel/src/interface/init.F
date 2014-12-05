@@ -556,6 +556,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_alda_fxc) call initactivate(1,'FxcGRLc')
    if (l_lrc_fxc)  call initactivate(1,'LRC_alpha LRC_beta')
    !
+#if defined _RT
+   call initactivate(1,'RT_CHI RT_PP_time')
+#endif
+   !
  endif
  !
  ! Optics(not bse) nor GW (no PP)
@@ -570,7 +574,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'ShiftedPath Qdirection QShiftOrder')
    !
 #if defined _SC
-   call initactivate(1,'Gauge OCCTime')
+   call initactivate(1,'Gauge')
 #endif
    !
  endif
@@ -613,7 +617,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
    !
 #if defined _RT
-   call initactivate(1,'RT_BSE UpScr RT_BSE_time')
+   call initactivate(1,'RT_BSE RT_PP_time')
 #endif
    !
  endif                    
@@ -648,6 +652,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                  'LongDr','DrudeW'/))
    call initactivate(1,'XTermKind'//'Xs')
    call initactivate(1,'XTermEn'//'Xs')
+#if defined _RT
+   call initactivate(1,'RT_UpScr RT_PP_time')
+#endif
  endif
  !
  ! GW (PPA & COHSEX) 
@@ -665,6 +672,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','EhEngy','LongDr'/))
      call initactivate(1,'XTermKind'//'Xs')
      call initactivate(1,'XTermEn'//'Xs')
+#if defined _RT
+   call initactivate(1,'RT_COHSEX RT_PP_time')
+#endif
    endif
  endif
  !
@@ -1071,9 +1081,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_elel_corr    =runlevel_is_on('el_el_corr')
        l_elphoton_corr=runlevel_is_on('el_photon_corr')
 #endif
-#if !defined  _ELPH  && !defined _QED
+! Davide: warning, yambo_elph and yambo_qed may be broken
+!#if !defined  _ELPH  && !defined _QED
        l_elel_corr=l_gw0.or.l_life.or.l_eval_collisions
-#endif
+!#endif
        !
        ! Check if this runlevel is allowed in the 
        ! present configuration

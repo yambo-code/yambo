@@ -23,7 +23,7 @@
 !
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
- use drivers,        ONLY:l_optics,l_real_time,l_sc_run,l_rt_bse
+ use drivers,        ONLY:l_optics,l_real_time,l_sc_run
  use LIVE_t,         ONLY:what_is_running
  use interfaces,     ONLY:WF_load
  use pars,           ONLY:SP
@@ -104,8 +104,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
 #if defined _SC 
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err(2)=io_P_and_P2(X,Xen,ID)
+ if(l_sc_run .or. l_real_time) then
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
+   io_err(2)=io_P_and_P2(X,Xen,ID)
+ endif
  !
 #endif
  !
@@ -127,13 +129,19 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    endif
    DIP_iR=(0._SP,0._SP)
    !
-#if defined _SC || defined _KERR
-   call X_alloc('DIP_P'   ,(/3,X%ib(2),X%ib(2),PAR_DIPk_nibz/))
-   DIP_P=(0._SP,0._SP)
+#if defined _KERR
+   if (trim(global_gauge)=='velocity') then
+     call X_alloc('DIP_P'   ,(/3,X%ib(2),X%ib(2),PAR_DIPk_nibz/))
+     DIP_P=(0._SP,0._SP)
+   endif
 #endif
 #if defined _SC
-   call X_alloc('P_square',(/X%ib(2),X%ib(2),PAR_DIPk_nibz/))
-   P_square=(0._SP,0._SP)
+   if (l_sc_run.or.l_real_time) then
+     call X_alloc('DIP_P'   ,(/3,X%ib(2),X%ib(2),PAR_DIPk_nibz/))
+     call X_alloc('P_square',(/X%ib(2),X%ib(2),PAR_DIPk_nibz/))
+     DIP_P=(0._SP,0._SP)
+     P_square=(0._SP,0._SP)
+   endif
 #endif
    !   
    ! WF load 
@@ -175,15 +183,19 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
      io_err(1)=io_DIPOLES(X,Xen,ID)
 #if defined _SC 
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-     io_err(2)=io_P_and_P2(X,Xen,ID)
+     if(l_sc_run .or. l_real_time) then
+       call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+       io_err(2)=io_P_and_P2(X,Xen,ID)
+     endif
 #endif
    endif
    !
    do ik=1,Xk%nibz
      !
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
+#if !defined _YPP_RT
      if (.not. (PAR_COM_k_for_P%CPU_id==0.or.PAR_COM_k_for_P%n_CPU==ncpu) ) cycle
+#endif
      ! 
      call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1+ik/),ID=ID)
      io_err(1)=io_DIPOLES(X,Xen,ID)
@@ -191,8 +203,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    enddo
    !
 #if defined _SC 
-   call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
-   io_err(2)=io_P_and_P2(X,Xen,ID)
+   if(l_sc_run .or. l_real_time) then
+     call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
+     io_err(2)=io_P_and_P2(X,Xen,ID)
+   endif
 #endif
    !
  end if
@@ -201,8 +215,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  call io_and_Messaging_switch("RESTORE")
  !
-#if defined _RT  
- if (l_real_time.and..not.l_evaluating_em1s) return
+#if defined _SC
+ if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) return
 #endif
  !
  ! Warn about missing [Vnl,r] commutator
@@ -217,7 +231,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Clean up
  !
  call X_alloc('DIP_iR') 
-#if defined _RT  
+#if defined _SC
  call X_alloc('DIP_P') 
  call X_alloc('P_square') 
 #endif

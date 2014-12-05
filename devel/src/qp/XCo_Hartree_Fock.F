@@ -26,7 +26,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi
- use drivers,       ONLY:l_sc_run,l_sc_exx,l_gw0,l_cohsex
+ use drivers,       ONLY:l_sc_run,l_sc_exx,l_gw0,l_cohsex,l_real_time
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
@@ -87,26 +87,26 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  enddo
  call msg('r','')
  !
-#if !defined _SC
- !
- ! WF distributed & load
- !=======================
- !
- call PARALLEL_global_indexes(E,k,q,"Self_Energy")
- !
- call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
- call PARALLEL_WF_index()
- !
- if ((l_gw0.or.l_cohsex).and.WF_buffered_IO) then
+if(.not.l_sc_run .and. .not.l_real_time) then
    !
-   call WF_load(WF_buffer,0,1,(/1,n_WF_bands_to_load/),(/1,k%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
+   ! WF distributed & load
+   !=======================
    !
- endif
- !
- call WF_load(WF,QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
- !
-#endif
+   call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+   !
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+   call PARALLEL_WF_index()
+   !
+   if ((l_gw0.or.l_cohsex).and.WF_buffered_IO) then
+     !
+     call WF_load(WF_buffer,0,1,(/1,n_WF_bands_to_load/),(/1,k%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
+     !
+   endif
+   !
+   call WF_load(WF,QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
+   !
+endif
  !
 #if defined _TIMING
  call timing('HF',OPR='start')

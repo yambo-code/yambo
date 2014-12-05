@@ -52,6 +52,7 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  integer           ::i_qp,ib,ik,ibp,ikp,i_s
  character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt
+ logical           ::l_local
  !
  ! IO
  !
@@ -63,11 +64,11 @@ subroutine XCo_driver(E,k,Xk,q)
  sec_mode_and_message(1)='*'
  sec_mode_and_message(2)='Bare local and non-local Exchange-Correlation'
  if (l_acfdt)   sec_mode_and_message(1)='p'
- if (.not.l_sc_run &
+ l_local=.true.
 #if defined _SC
-&    .and.WF_kind/=SC_HF &
+ l_local=.not.l_sc_run.and.WF_kind/=SC_HF 
 #endif
-&   ) call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
+ if(l_local) call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
  !
  ! QP states setup
  !
@@ -87,7 +88,7 @@ subroutine XCo_driver(E,k,Xk,q)
  QP_Vxc=(0.,0.)
  !
 #if defined _SC
- if (WF_kind==SC_HF) return
+ if (l_sc_run .and. WF_kind==SC_HF) return
 #endif
  !
  ! Main DB I/O

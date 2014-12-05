@@ -48,6 +48,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use X_m,                 ONLY:global_gauge
 #endif
 #if defined _SC
+ use drivers,             ONLY:l_sc_run
  use SC,                  ONLY:B_mat_index
 #endif
  !
@@ -94,6 +95,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  if (associated(Xen%Eo)) call msg('rns','[X] Using Kohn-Sham energies for the dipoles ')
  !
+#if !defined _YPP_RT
  if (Dipole_bands_ordered) then
    n_LT_steps=PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*&
 &             PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(PAR_IND_CON_BANDS_X_ID(X%whoami)+1)*&
@@ -102,6 +104,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
    n_LT_steps=PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*&
 &             PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1)*n_spin
  endif
+#else
+ n_LT_steps=Xk%nibz*(X%ib(2)-X%ib(1)+1)**2._SP*n_spin
+#endif
  !
  wf_dim=3
  !
@@ -112,8 +117,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
    l_eval_DIP_P2=.false.
    !
 #if defined _SC
-   l_eval_DIP_P =allocated(DIP_P)
-   l_eval_DIP_P2=allocated(DIP_P)
+   l_eval_DIP_P =l_sc_run.or.l_real_time
+   l_eval_DIP_P2=l_sc_run.or.l_real_time
    if(l_eval_DIP_P) then
      live_t_string='P and P^2 (T):'
      wf_dim=4
@@ -129,7 +134,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
    !
  endif
  !
+#if !defined _YPP_RT
  call PP_redux_wait(COMM=PAR_COM_q_for_Xo%COMM)
+#endif
  !
  allocate(wf_xyz(wf_ng,wf_dim))
  !
@@ -153,11 +160,13 @@ subroutine Dipole_transverse(Xen,Xk,X)
      io_KB_abinit_err=io_KB_abinit(ID)
    endif
    ! 
+#if !defined _YPP_RT
    if (Dipole_bands_ordered) then
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
    else
      if (.not.PAR_IND_WF_k%element_1D(ik)) cycle 
    endif
+#endif
    !
    ik_mem=PAR_DIPk_ibz_index(ik)
    ! 
@@ -183,7 +192,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          if (Dipole_bands_ordered) then
            if (.not.PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)) cycle 
          else
-#if defined _SC
+#if defined _SC && !defined _YPP_RT
            if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ic,iv))) cycle
 #endif
          endif
@@ -342,8 +351,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
    ik_mem=PAR_DIPk_ibz_index(ik)
    ! 
    do i_spin=1,n_sp_pol
+#if !defined _YPP_RT
      call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
-#if defined _SC || defined _KERR
+#endif
+#if defined _SC || defined _KERR || !defined _YPP_RT
      if (l_eval_DIP_P ) call PP_redux_wait(DIP_P(:,:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
      if (l_eval_DIP_P2) call PP_redux_wait(P_square(:,:,ik_mem,i_spin),COMM=PAR_COM_k_for_P%COMM)
 #endif

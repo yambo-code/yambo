@@ -174,6 +174,7 @@ subroutine RT_alloc_def_or_free(RT_obj,En,kgrid,action_kind)
      if(associated(RT_obj%dW))      deallocate(RT_obj%dW)
      if(associated(RT_obj%W))       deallocate(RT_obj%W)
      if(associated(RT_obj%k))       deallocate(RT_obj%k)
+     if(associated(RT_obj%wk))      deallocate(RT_obj%wk)
      if(associated(RT_obj%table))   deallocate(RT_obj%table)
      !
  end select

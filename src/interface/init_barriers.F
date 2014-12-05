@@ -75,10 +75,6 @@ subroutine init_barriers()
  ! RUNLEVELS
  !===========
  !
-#if defined _RT
- call switch_off_runlevel('gw0',on_name=' ')
-#endif
- !
  ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_real_time) then

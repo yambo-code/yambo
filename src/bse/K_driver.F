@@ -52,8 +52,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use X_m,            ONLY:global_gauge
 #endif
 #if defined _RT
- use drivers,        ONLY:l_rt_bse
+ use drivers,        ONLY:l_rt_occ_in_use
  use com,            ONLY:error
+ use parser_m,       ONLY:parser
 #endif
  !
  implicit none
@@ -73,7 +74,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !=========================================================
  !
 #if defined _RT 
- if(l_rt_bse .and. index(BSS_mode,'t')/=0) call error('RT_BSE and BSE via f_xc not compatible')
+ if(l_rt_occ_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
 #endif
  !
  ! Tranferred momentum. Only Gamma now
@@ -100,12 +101,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! If using ALDA enough bands must be loaded to be able to calculate the density
  !          ================================
- bands_to_correct=BS_bands
- if (l_alda_fxc) bands_to_correct=(/1,BS_bands(2)/)
+ !bands_to_correct=BS_bands
  !
- ! ... and the QP corrections
- !             ==============
- call QP_apply(bands_to_correct,Ken,Xk,"K",msg_fmt='s')
+ !if (l_alda_fxc) then 
+ !  !
+ !  bands_to_correct=(/1,BS_bands(2)/)
+ !  !
+ !  ! ... and the QP corrections
+ !  !             ==============
+ !  call QP_apply(bands_to_correct,Ken,Xk,"K",msg_fmt='s')
+ !  !
+ !endif
  !
  ! GPL_EXCLUDE_START
  !

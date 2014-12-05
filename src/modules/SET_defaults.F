@@ -296,7 +296,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_elel_scatt=.false.
  l_elph_scatt=.false.
  !
- l_rt_bse=.false.
+ l_rt_occ_in_use=.false.
  l_sc_run=.false.
  l_sc_ip=.false.
  l_sc_hf=.false.

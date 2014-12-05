@@ -274,7 +274,7 @@ module real_time
  !
  ! TD-ABS and RT-BSE
  !
- real(SP) :: RT_BSE_time
+ real(SP) :: RT_PP_time
  !
  type RT_t
    !
@@ -511,11 +511,15 @@ module real_time
      deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz)
      if(allocated(RIM_EE_scatt_table)) deallocate(RIM_EE_scatt_table)
      !
-     deallocate(E_xc)
-     call mem_est('Exc')
+     if(allocated(E_xc)) then
+       deallocate(E_xc)
+       call mem_est('Exc')
+     endif
      !
-     deallocate(Ho_plus_Sigma)
-     call mem_est("Ho_plus_Sigma")
+     if(allocated(Ho_plus_sigma)) then
+       deallocate(Ho_plus_Sigma)
+       call mem_est("Ho_plus_Sigma")
+     endif
      !
      if (l_RT_INTERPOLATE) then
        deallocate(I_coh_SAVE)

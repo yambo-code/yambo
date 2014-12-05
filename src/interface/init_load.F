@@ -61,7 +61,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        NE_tot_time,RT_life_interp_steps,&
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_scatt_tresh,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
-&                        Gr_kind,two_alpha,RIM_EE_percent,RT_BSE_time
+&                        Gr_kind,two_alpha,RIM_EE_percent,RT_PP_time
  use fields,        ONLY:Efield
  use plasma,        ONLY:Plasma_redux_percent
 #endif
@@ -235,9 +235,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
 #if defined _RT
  !
- call it('f',defs,'RT_BSE' ,  '[RT-BSE] load RT occupations for BSE calculation')
- call it('f',defs,'UpScr'  ,  '[RT-BSE] Update also the screening in the BSE run')
- call it(defs,'RT_BSE_time',  '[RT-BSE] choose the time for occupations loading',RT_BSE_time,unit=Time_unit(1))
+ call it('f',defs,'RT_COHSEX',  '[RT-CHX] load RT occupations for COHSEX calculation')
+ call it('f',defs,'RT_BSE'   ,  '[RT-BSE] load RT occupations for BSE calculation')
+ call it('f',defs,'RT_UpScr' ,  '[RT-BSE] Update also the screening in the BSE run')
+ call it(defs,'RT_PP_time'   ,  '[RT-PP]  Choose the time for occupations loading',RT_PP_time,unit=Time_unit(1))
  !
 #endif
  !

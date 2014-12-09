@@ -105,11 +105,10 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
    ! It is higly non satisfactory that
    !     Gamma_neq[f_eq] /= Gamma_eq                              (1)
    ! This explains the need for the special definition
-   !    sumGAMMA=abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik,1))/2._SP     (2)
+   !    sumGAMMA=abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik,1))           (2)
    ! instead of
    !    sumGAMMA=sum(REF_lifetimes(i_n,ik,:))                     (3)
-   ! with i_n=i_np. Notice the 0.5 factor in Eq.(3) so that
-   ! Eq.(2)=Eq.(3) in case Eq.(1) holds
+   ! with i_n=i_np.
    ! 
    ! This difference is due to two reasons:
    ! (a) For the ee scatt REF_lifetimes are computed with a static approx to

@@ -113,10 +113,6 @@ module real_time
  integer,     allocatable :: RT_all2ibz(:)  
  integer,     allocatable :: RT_Nk_ibz(:)  
  !
- ! Real-Time occupations
- !
- logical                  :: l_RT_occupations_in_use
- !
  ! K-points: In case I want to use the G_lesser to define the occupations
  ! of a post-run I need to keep here the number of k-points 
  !
@@ -276,11 +272,16 @@ module real_time
  !
  complex(SP), allocatable :: XC0_and_HARTREE0(:,:,:,:)
  !
+ ! TD-ABS and RT-BSE
+ !
+ real(SP) :: RT_PP_time
+ !
  type RT_t
    !
    character(schlen)  :: description
    integer,    pointer:: table(:,:) => null()
    real(SP)   ,pointer:: k(:,:)     => null()
+   real(SP)   ,pointer:: wk(:)      => null()
    real(SP)   ,pointer:: E0(:)      => null()
    real(SP)   ,pointer:: f0(:)      => null()
    real(SP)   ,pointer:: W0(:)      => null()
@@ -510,11 +511,15 @@ module real_time
      deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz)
      if(allocated(RIM_EE_scatt_table)) deallocate(RIM_EE_scatt_table)
      !
-     deallocate(E_xc)
-     call mem_est('Exc')
+     if(allocated(E_xc)) then
+       deallocate(E_xc)
+       call mem_est('Exc')
+     endif
      !
-     deallocate(Ho_plus_Sigma)
-     call mem_est("Ho_plus_Sigma")
+     if(allocated(Ho_plus_sigma)) then
+       deallocate(Ho_plus_Sigma)
+       call mem_est("Ho_plus_Sigma")
+     endif
      !
      if (l_RT_INTERPOLATE) then
        deallocate(I_coh_SAVE)

@@ -75,7 +75,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(ggwinfo)            ::isc,iscp
  character(schlen)::ch,Sc_name
- logical          ::X_is_TR_rotated
+ logical          ::X_is_TR_rotated,l_X_alloc
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,sp_dummy,ctmp
  !
@@ -135,9 +135,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! WF distributed & load
  !=======================
  !
-#if !defined _SC
+if( .not.l_sc_run ) then
  call PARALLEL_global_indexes(E,k,q,"Self_Energy")
-#endif
+endif
  !
  ! Redefine iq_to_start to be CPU-dependent
  !
@@ -148,17 +148,17 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    endif
  enddo
  !
-#if !defined _SC
- call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
- call PARALLEL_WF_index( )
-#endif
- call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,n_WF_bands_to_load/),(/1,k%nibz/),&
+ if( .not.l_sc_run ) then
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+   call PARALLEL_WF_index( )
+ endif
+
+ ch='-GW'
 #if defined _SC
-&             title='-SC')
-#else
-&             title='-GW')
+ if(l_sc_run) ch='-SC'
 #endif
+ call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,n_WF_bands_to_load/),(/1,k%nibz/),title=trim(ch))
  !
 #if defined _TIMING
  call timing('GW(ppa)',OPR='start')
@@ -199,12 +199,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &             PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
 &             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
  !
+ if (l_ppa)    ch=trim(Sc_name)//'W0 PPA'
+ if (l_cohsex) ch=trim(Sc_name)//'W0 COHSEX'
 #if defined _SC
-   call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),timing_steps) 
-#else
-   if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',timing_steps)
-   if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',timing_steps)
+ if (l_sc_run) ch=trim(Sc_name)//'@it'//trim(intc(it_now))
 #endif
+ call live_timing(trim(ch),timing_steps)
  !
  Q_loop: do iqbz=iq_to_start,q%nbz 
    !
@@ -237,7 +237,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Poles and Residuals
      !
 #if defined _SC
-     if (it_now==it_to_start.or.io_RESPONSE) then
+     if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
 !$omp parallel do default(shared), private(i1,i2)
        do i2=1,X%ng
@@ -364,9 +364,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          ! it is needed for a different purpose. This is why I use PAR_COM_QP_A2A%CPU_id in this case.
          !
 #if defined _SC
-         if (PAR_COM_QP_A2A%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
-#else
-         if (HEAD_QP_cpu)              QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+         if (l_sc_run) then
+           if (PAR_COM_QP_A2A%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+         else
+#endif
+           if (HEAD_QP_cpu)              QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+#if defined _SC
+         endif
 #endif
          !
          dc=cZERO
@@ -520,11 +524,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    endif
  endif
  call mem_est("ISC-GAMP GW-E")
+ l_X_alloc=.true.
 #if defined _SC
- if (io_RESPONSE) call X_alloc('X')
-#else
- call X_alloc('X')
+ l_X_alloc=l_sc_run.and.io_RESPONSE
 #endif
+ if(l_X_alloc) call X_alloc('X')
  !
 #if defined _TIMING
  call timing('GW(ppa)',OPR='stop')
@@ -540,9 +544,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call timing('GW(REDUX)',OPR='stop')
 #endif
  !
-#if !defined _SC
- call WF_free(WF)
-#endif
+ if(.not.l_sc_run) call WF_free(WF)
  !
  call collision_reset(isc)
  call collision_reset(iscp)

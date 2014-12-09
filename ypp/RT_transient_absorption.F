@@ -25,21 +25,22 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  use pars,            ONLY:SP,pi
  use units,           ONLY:FS2AUT,HA2EV,SPEED_OF_LIGHT
- use R_lattice,       ONLY:bz_samp,q0_def_norm,d3k_factor,q_norm,bare_qpg
+ use R_lattice,       ONLY:bz_samp,q0_def_norm,d3k_factor,q_norm,bare_qpg,nkibz
  use D_lattice,       ONLY:alat
  use electrons,       ONLY:levels,n_sp_pol,spin,spin_occ
  use LIVE_t,          ONLY:live_timing
  use X_m,             ONLY:X_t,DIP_q_dot_iR
- use rt_ctl,          ONLY:RT_OCC_LIFE_and_REF_IO,RT_output
+ use rt_ctl,          ONLY:RT_OCC_LIFE_and_REF_IO,RT_output,OCC_T_range,OCC_deltaT,delta_f
  use real_time,       ONLY:rt
  use wave_func,       ONLY:wf_ng,wf_norm_test
  use IO_m,            ONLY:io_DIP
- use YPP,             ONLY:OCC_T_range,OCC_deltaT,X_rt
+ use YPP,             ONLY:X_rt
  use X_m,             ONLY:X_epsilon
  use BS,              ONLY:BSS_eh_table,BS_mat
  use frequency,       ONLY:w_samp
  use interfaces,      ONLY:PARALLEL_global_indexes
- use parallel_m,      ONLY:PAR_Xk_bz_index
+ use parallel_m,      ONLY:PAR_DIPk_ibz_index,PAR_Xk_bz_index,PAR_DIPk_nibz,PAR_Xk_nbz,&
+&                          PAR_IND_DIPk_ibz,PAR_IND_Xk_bz
  use SC,              ONLY:SC_bands,SC_QP_setup
  use parser_m,        ONLY:parser
  !
@@ -55,17 +56,19 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  type(W_samp)      :: W_bss
  !
- integer              :: n_T_steps,i_T,neh,i_v,i_c,i_kbz,i_kibz,i_kmem,i_spin,i_freq,i_l,i_vp,i_cp
+ type(levels)      :: RT_db1_E
+ type(bz_samp)     :: RT_db1_k
+ !
+ integer              :: n_T_steps,i_T,neh,i_v,i_c,i_kbz,i_kibz,i_kmem,i_spin,i_freq,i_l,i_vp,i_cp,nkibz_save
  character(3)         :: message
- real(SP)             :: io_Time,Co,change_factor,f_cv,f_vpv,f_ccp,delta_f_cv,output(3),BS_R_tmp
+ real(SP)             :: io_Time,Co,change_factor,f_cv,f_vpv,f_ccp,delta_f_cv,output(4),BS_R_tmp
  complex(SP)          :: IP_E,IP_R,Wd,BS_R1(BS_H_dim)
  logical              :: l_TR_transm,l_TR_reflec,l_include_IP
  !
- real(SP),allocatable    :: delta_f(:,:,:)
  real(SP),allocatable    :: X_absorption_coeff(:,:)
  complex(SP),allocatable :: X_reflectance(:,:)
  !
- call RT_variables_load(Xen,Xk,n_T_steps)
+ call RT_variables_load(Xen,Xk,RT_db1_E,RT_db1_k,n_T_steps)
  !
  ! I need to compute the dipoles, however they rely on the parallel structure
  ! I would need a structure defined for ypp 
@@ -75,13 +78,23 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  call parser('IncludeIP'   ,l_include_IP)
  !
  Xbsk%ib=SC_bands
- !Xbsk%ng=wf_ng
- Xbsk%whoami=5
  allocate(q_norm(1),bare_qpg(1,1))
- !call SC_QP_setup(Xen)
  !
- call PARALLEL_global_indexes(Xen,Xk,Xq," ",        RESET=.TRUE. ,X=Xbsk)
- call PARALLEL_global_indexes(Xen,Xk,Xq,"Real_Time",RESET=.FALSE.,X=Xbsk)
+ PAR_Xk_nbz   =Xk%nbz
+ allocate(PAR_Xk_bz_index(Xk%nbz))
+ allocate(PAR_IND_Xk_bz%element_1D(Xk%nbz))
+ do i_kbz=1,Xk%nbz
+   PAR_Xk_bz_index(i_kbz)=i_kbz
+   PAR_IND_Xk_bz%element_1D(i_kbz)=.true.
+ enddo
+ !
+ PAR_DIPk_nibz=Xk%nibz
+ allocate(PAR_DIPk_ibz_index(Xk%nibz))
+ allocate(PAR_IND_DIPk_ibz%element_1D(Xk%nibz))
+ do i_kibz=1,Xk%nibz
+   PAR_DIPk_ibz_index(i_kibz)=i_kibz
+   PAR_IND_DIPk_ibz%element_1D(i_kibz)=.true.
+ enddo
  !
  io_DIP=.FALSE.
  call DIPOLE_driver(Xen,Xk,Xbsk,Xbsk%q0)
@@ -89,6 +102,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  deallocate(q_norm,bare_qpg)
  !
  allocate(delta_f(rt%nb(1):rt%nb(2),Xk%nibz,n_sp_pol))
+ delta_f=0._SP
+ !
  allocate(X_epsilon(2,X_rt%energy_steps))
  if(l_TR_reflec) allocate(X_reflectance(2,X_rt%energy_steps))
  if(l_TR_transm) allocate(X_absorption_coeff(2,X_rt%energy_steps))
@@ -105,7 +120,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  call FREQUENCIES_setup(W_bss)
  !
  call RT_output(what="initialize")
- call RT_output("open trans_eps_rel trans_eps_abs eps_eq trans_residual")
+ call RT_output("open trans_eps_real trans_eps_imag eps_eq trans_residual")
  if (l_TR_reflec) call RT_output("open trans_refl_rel trans_refl_abs refl_eq")
  if (l_TR_transm) call RT_output("open trans_transm_rel trans_transm_abs transm_eq")
  !
@@ -115,15 +130,18 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    !
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
-   call RT_OCC_LIFE_and_REF_IO(Xen,'G',k=Xk,Time=io_Time)
+   nkibz_save=nkibz
+   call RT_OCC_LIFE_and_REF_IO(RT_db1_E,'G',k=RT_db1_k,Time=io_Time)
+   nkibz=nkibz_save
    !
-   call RT_alloc_def_or_free(rt,Xen,Xk,2)
+   call RT_alloc_def_or_free(rt,RT_db1_E,RT_db1_k,2)
    !
    message='RT '
    !
    if (i_T==1) message='RT0'
    !
-   call Nearest_kpt_interpolation(rt%nk,Xk%nibz,rt%nb,rt%nstates,1,1,rt%table,rt%k,Xk%pt,rt%df,delta_f,message)
+   call Nearest_kpt_interpolation(rt%nk,Xk%nibz,rt%nb,rt%nstates,1,1,rt%table,&
+&                                 rt%k,Xk%pt,rt%wk,Xk%weights,rt%df,delta_f,message,.true.)
    !
    if (i_T==1.and.n_T_steps> 1) call live_timing('Transient Absorption',n_T_steps,SERIAL=.true.)
    !
@@ -144,8 +162,6 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        i_c     = BSS_eh_table(neh,3)
        i_spin  = spin(BSS_eh_table(neh,:))
        !
-       i_kmem= PAR_Xk_bz_index(i_kbz)
-       !
        if(i_v<rt%nb(1) .or. i_c>rt%nb(2) ) cycle
        !
        !f_cv=Xen%f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
@@ -155,8 +171,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        f_cv=      (  Xen%f(i_v,i_kibz,i_spin)-  Xen%f(i_c,i_kibz,i_spin))/spin_occ
        delta_f_cv=(delta_f(i_v,i_kibz,i_spin)-delta_f(i_c,i_kibz,i_spin))/spin_occ
        !
-       BS_R0(i_l)=BS_R0(i_l)-DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin)*BS_mat(neh,i_l)*sqrt(f_cv)
-       BS_R1(i_l)=BS_R1(i_l)-DIP_q_dot_iR(i_c,i_v,i_kmem,i_spin)*BS_mat(neh,i_l)*delta_f_cv/sqrt(f_cv)
+       BS_R0(i_l)=BS_R0(i_l)-DIP_q_dot_iR(i_c,i_v,i_kbz,i_spin)*BS_mat(neh,i_l)*sqrt(f_cv)
+       BS_R1(i_l)=BS_R1(i_l)-DIP_q_dot_iR(i_c,i_v,i_kbz,i_spin)*BS_mat(neh,i_l)*delta_f_cv/sqrt(f_cv)
        !
      enddo 
      !
@@ -178,7 +194,6 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    if(l_include_IP) then
      do i_kbz=1,Xk%nbz
        i_kibz=Xk%sstar(i_kbz,1)
-       i_kmem= PAR_Xk_bz_index(i_kbz)
        do i_spin=1,n_sp_pol
          !
          ! First valence
@@ -188,7 +203,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
              if(i_v==i_vp) cycle
              !
              f_vpv=-Xen%f(i_v,i_kibz,i_spin)*delta_f(i_vp,i_kibz,i_spin)/spin_occ/spin_occ
-             IP_R=-conjg(DIP_q_dot_iR(i_vp,i_v,i_kmem,i_spin))*sqrt(f_vpv)
+             IP_R=-conjg(DIP_q_dot_iR(i_vp,i_v,i_kbz,i_spin))*sqrt(f_vpv)
              IP_E=Xen%E(i_vp,i_kibz,i_spin)-Xen%E(i_v,i_kibz,i_spin)
              ! Photo-induced absorption and stimulated emission in v-v'
              X_epsilon(2,:)=X_epsilon(2,:)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
@@ -204,7 +219,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
              if(i_c==i_cp) cycle
              !
              f_ccp= delta_f(i_cp,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
-             IP_R=-conjg(DIP_q_dot_iR(i_c,i_cp,i_kmem,i_spin))*sqrt(f_ccp)
+             IP_R=-conjg(DIP_q_dot_iR(i_c,i_cp,i_kbz,i_spin))*sqrt(f_ccp)
              IP_E=Xen%E(i_c,i_kibz,i_spin)-Xen%E(i_cp,i_kibz,i_spin)
              X_epsilon(2,:)=X_epsilon(2,:)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
              X_epsilon(2,:)=X_epsilon(2,:)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)
@@ -238,12 +253,13 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    endif
    !
    do i_freq=1,W_bss%n_freqs
+     output(4)=real(X_epsilon(1,i_freq))
      output(3)=aimag(X_epsilon(1,i_freq))
      output(2)=aimag(X_epsilon(2,i_freq))
-     output(1)=output(2)/output(3)
-     call RT_output("trans_eps_rel",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-     call RT_output("trans_eps_abs",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-     if(i_T==1) call RT_output("eps_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+     output(1)=real(X_epsilon(2,i_freq))
+     call RT_output("trans_eps_real",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+     call RT_output("trans_eps_imag",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+     if(i_T==1) call RT_output("eps_eq",VALUEs=(/output(3:4)/),E=real(W_bss%p(i_freq))*HA2EV)
      if(l_TR_reflec) then
        !  R=|r|^2
        output(3)=X_reflectance(1,i_freq)*conjg(X_reflectance(1,i_freq))
@@ -252,7 +268,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        output(1)=output(2)/output(3)
        call RT_output("trans_refl_rel",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
        call RT_output("trans_refl_abs",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
-       if(i_T==1) call RT_output("refl_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=io_Time/FS2AUT)
+       if(i_T==1) call RT_output("refl_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV)
      endif
      ! I need to check some factor
      if(l_TR_transm) then
@@ -276,7 +292,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    !
  enddo
  !
- call RT_alloc_def_or_free(rt,Xen,Xk,3)
+ call RT_alloc_def_or_free(rt,RT_db1_E,RT_db1_k,3)
  !
  deallocate(delta_f)
  deallocate(X_epsilon)

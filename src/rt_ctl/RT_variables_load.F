@@ -21,28 +21,33 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_variables_load(Xen,Xk,n_T_steps)
+subroutine RT_variables_load(Xen,Xk,RT_db1_E,RT_db1_k,n_T_steps)
  !
  use pars,            ONLY:lchlen
  use real_time,       ONLY:rt,NE_i_time
- use R_lattice,       ONLY:bz_samp,nqbz,nkbz
+ use R_lattice,       ONLY:bz_samp,nqbz,nqibz,nkbz,nkibz,nXkbz,nXkibz,&
+&                          bz_samp_duplicate,bz_samp_reset
  use com,             ONLY:core_io_path
- use electrons,       ONLY:levels,BZ_RIM_table
+ use electrons,       ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,BZ_RIM_ipol_weight,BZ_RIM_nbands,&
+&                          E_duplicate,E_reset
  use com,             ONLY:jobstr,error
  use IO_m,            ONLY:io_control,OP_RD_CL,NONE,DUMP
+ use memory_m,        ONLY:mem_est
+ use QP_m,            ONLY:QP_nk
+ use wave_func,       ONLY:wf_ng
  !
  implicit none
  !
- type(levels)      :: Xen
- type(bz_samp)     :: Xk
+ type(levels)      :: Xen,RT_db1_E
+ type(bz_samp)     :: Xk,RT_db1_k
  integer           :: n_T_steps
  !
  ! Work space
  !
- type(levels)      :: RT_db1_E,Xen_tmp
- type(bz_samp)     :: RT_db1_k,RT_db1_q,Xk_tmp,Xq_tmp
+ type(levels)      :: Xen_tmp
+ type(bz_samp)     :: RT_db1_q,Xk_tmp,Xq_tmp
  !
- integer           :: io_err,ID
+ integer           :: io_err,ID,nqbz_save,nqibz_save,nkbz_save,nkibz_save,wf_ng_save
  character(lchlen) :: core_io_path_save
  !
  integer, external :: io_DB1_selective_scan,io_RIM_E_and_k,io_QINDX
@@ -50,6 +55,15 @@ subroutine RT_variables_load(Xen,Xk,n_T_steps)
  !
  if(allocated(BZ_RIM_table)) call error("RIM DBs already present. This is not compatible with Transient abs")
  !
+ nqbz_save =nqbz
+ nqibz_save=nqibz
+ !
+ nkbz_save =nkbz
+ nkibz_save=nkibz
+ !
+ wf_ng_save=wf_ng
+ !
+ !write(*,*) 'New DB',nXkbz,nXkibz,nkbz,nkibz,nqbz,nqibz,QP_nk
  io_err=io_DB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'all')
  if (io_err<0) call error ('DB1 database not found in '//trim(jobstr))
  call k_expand(RT_db1_k)
@@ -64,6 +78,8 @@ subroutine RT_variables_load(Xen,Xk,n_T_steps)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=ID)
  io_err=io_QINDX(RT_db1_k,RT_db1_q,ID)
  call k_expand(RT_db1_q)
+ !
+ nqibz=RT_db1_q%nibz
  nqbz=RT_db1_q%nbz
  !
  NE_i_time=0
@@ -71,13 +87,35 @@ subroutine RT_variables_load(Xen,Xk,n_T_steps)
  call RT_check_RIM(RT_db1_k,RT_db1_E) 
  call RT_alloc_def_or_free(rt,RT_db1_E,RT_db1_k,1)
  !
- ! Reset symmetries and nqbz
+ BZ_RIM_nbands=0
+ if(allocated(BZ_RIM_table)) then
+   deallocate(BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_ipol_weight)
+   call mem_est("BZ_RIM_nkpt BZ_RIM_table")
+ endif
+ !
+ !
+ ! Reset symmetries and nqbz, nkbz
  core_io_path=core_io_path_save
+ call E_reset(Xen_tmp)
+ call bz_samp_reset(Xk_tmp)
+ call E_duplicate(Xen,Xen_tmp)
+ call bz_samp_duplicate(Xk,Xk_tmp)
+ !
+ !write(*,*) 'OLD DB',nXkbz,nXkibz,nkbz,nkibz,nqbz,nqibz,QP_nk
  io_err=io_DB1_selective_scan(Xen_tmp,Xk_tmp,trim(core_io_path),'all')
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=ID)
  io_err=io_QINDX(Xk_tmp,Xq_tmp,ID)
- nqbz=Xq_tmp%nbz
- nkbz=Xk%nbz
+ call k_expand(Xk_tmp)
+ !
+ nqbz =nqbz_save
+ nqibz=nqibz_save
+ !
+ nkbz =nkbz_save
+ nkibz=nkibz_save
+ !
+ wf_ng=wf_ng_save
+ !
+ !write(*,*) 'OLD DB2',nXkbz,nXkibz,nkbz,nkibz,nqbz,nqibz,QP_nk
  !
 end subroutine RT_variables_load

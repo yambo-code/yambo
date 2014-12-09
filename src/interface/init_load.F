@@ -61,7 +61,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        NE_tot_time,RT_life_interp_steps,&
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_scatt_tresh,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
-&                        Gr_kind,two_alpha,RIM_EE_percent
+&                        Gr_kind,two_alpha,RIM_EE_percent,RT_PP_time
  use fields,        ONLY:Efield
  use plasma,        ONLY:Plasma_redux_percent
 #endif
@@ -233,6 +233,15 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  !
+#if defined _RT
+ !
+ call it('f',defs,'RT_COHSEX',  '[RT-CHX] load RT occupations for COHSEX calculation')
+ call it('f',defs,'RT_BSE'   ,  '[RT-BSE] load RT occupations for BSE calculation')
+ call it('f',defs,'RT_UpScr' ,  '[RT-BSE] Update also the screening in the BSE run')
+ call it(defs,'RT_PP_time'   ,  '[RT-PP]  Choose the time for occupations loading',RT_PP_time,unit=Time_unit(1))
+ !
+#endif
+ !
  !GPL_INCLUDE_START
  !
  !call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX',BSK_mode,protect=.FALSE.)
@@ -376,8 +385,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! ELPH
  !
  call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_treshold,verb_level=V_real_time)
- call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes',verb_level=V_real_time)
- call it('f',defs,'UpdtDebyeT','[RT] Update Bose Temp assuming phonons are always at equilibrium',verb_level=V_real_time)
+ !call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes',verb_level=V_real_time)
+ !call it('f',defs,'UpdtDebyeT','[RT] Update Bose Temp assuming phonons are always at equilibrium',verb_level=V_real_time)
  call it('f',defs,'RT_T_evol',   '[RT] Use a complete Time evolution instead of the CCA',verb_level=V_real_time)
  !
  ! External fields or Manual pump

@@ -228,8 +228,6 @@ module YPP
  integer  :: J_steps
  real(SP) :: t_jump
  real(SP) :: W_RT_induced_step
- real(SP) :: OCC_T_range(2) ! Time range to plot the dos
- real(SP) :: OCC_deltaT     ! Time step to plot the dos
  real(SP) :: J_time_step
  character(schlen) :: Probe_Keyword
  character(schlen) :: Pump_Keyword

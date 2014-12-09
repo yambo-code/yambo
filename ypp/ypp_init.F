@@ -47,7 +47,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
 #endif
 #if defined _YPP_RT 
- use rt_ctl,         ONLY:RT_IO_JPO_steps
+ use rt_ctl,         ONLY:RT_IO_JPO_steps,OCC_T_range,OCC_deltaT
  use real_time,      ONLY:RT_step,NE_steps
  use fields,         ONLY:Efield,i_Probe
 #endif
@@ -73,12 +73,12 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #if defined _YPP_SC
  type(levels)     ::E_dummy
  integer, external::io_SC_components
- integer          ::io_SC_err,ID
+ integer          ::io_SC_err
 #endif
 #if defined _YPP_RT
  logical          ::l_flag
- integer, external::io_RT_components,io_KB_pwscf
- integer          ::io_RT_G_err,io_RT_J_err,io_KB_pwscf_err,ID
+ integer, external::io_RT_components,io_KB_pwscf,io_kb_abinit
+ integer          ::io_RT_G_err,io_RT_J_err,io_KB_pwscf_err,io_kb_abinit_err,ID
 #endif
  integer, external::parse_character_arrays
  !
@@ -118,10 +118,14 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  dos_E_range=(/1.,-1./)/HA2EV
  dos_E_steps=500
  !
+ !
  ! RT OCCUPATIONS and DOS
  !
+#if defined _YPP_RT
  OCC_T_range=0.
  OCC_deltaT=0.
+#endif
+ !
  l_RealTime=.FALSE.
  l_RT_X=.FALSE.
  l_RT_abs=.FALSE.
@@ -130,6 +134,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  l_RT_dos=.FALSE.
  l_RT_occ_Bands=.FALSE.
  l_RT_life_Bands=.FALSE.
+ !
  !
  ! BANDS
  !
@@ -286,6 +291,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  ! DATABASES 
  !===========
  !
+ !
 #if defined _YPP_SC
  ! 
  call E_reset(E_dummy) 
@@ -308,6 +314,9 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_KB_pwscf_err=io_KB_pwscf(ID)
  ! 
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_KB_abinit_err=io_KB_abinit(ID)
+ !
 #endif
  !
  ! Defaults->Defs + Initialization

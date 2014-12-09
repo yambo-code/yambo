@@ -31,12 +31,15 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use D_lattice,     ONLY:a,alat
  use wave_func,     ONLY:WF,WF_symm,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp,q_norm,bare_qpg
- use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_RT_abs,ncell,lambda,r_hole,&
+ use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
 &                        excitons_sort_and_report,l_amplitude,l_free_hole,&
 &                        output_fname,use_xcrysden,use_gnuplot,use_cube,plot_dim
 #if defined _YPP_ELPH
  use YPP,           ONLY:l_eliashberg,l_gkkp
+#endif
+#if defined _YPP_RT
+ use YPP,           ONLY:l_RT_abs
 #endif
  use interfaces,    ONLY:PARALLEL_global_indexes
  use QP_CTL_m,      ONLY:QP_apply
@@ -113,7 +116,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  !... Variables needed to the report of eigenvectors
  !
- logical          :: l_weight_with_dipoles
+ logical          :: l_weight_with_dipoles,l_flag
  complex(SP)      :: dip_factor,Wd
  real(SP), allocatable ::A_weight(:)
  !
@@ -141,12 +144,14 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  n_lambda = get_lambda()
  !
- if (.not.any((/l_sort,(l_exc_wf.and.n_lambda>0),(l_amplitude.and.n_lambda>0),l_spin,l_RT_abs &
+ l_flag=l_sort .or. (l_exc_wf.and.n_lambda>0) .or. (l_amplitude.and.n_lambda>0) .or. l_spin
 #if defined _YPP_ELPH
-&              ,l_eliashberg,l_gkkp/))) return
-#else
-&                           /))) return
+ l_flag=l_flag .or. l_eliashberg .or. l_gkkp
 #endif
+#if defined _YPP_RT
+ l_flag=l_flag .or. l_rt_abs
+#endif
+ if(.not.l_flag) return
  !
  ! Allocation of energies and residuum, then also eigenvector
  !
@@ -231,7 +236,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
 #if defined _YPP_RT
  !
- if(l_RT_abs) then
+ if(l_rt_abs) then
    call RT_transient_absorption(Xbsk,Xen,Xk,q,BS_H_dim,BS_E,BS_R)
    return
  endif

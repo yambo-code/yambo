@@ -23,29 +23,37 @@
 !
 integer function RT_occ_check_and_load_ref(E,k)
  !
+ use pars,           ONLY:SP
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:FS2AUT
  use electrons,      ONLY:levels
  use QP_m,           ONLY:OCC_ctl
- use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,RT_IO_JPO_steps
+ use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,RT_IO_JPO_steps,OCC_deltaT,OCC_T_range
  use real_time,      ONLY:RT_step,l_RT_CCA_Kernel,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,& 
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, &
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_delta0_occupations,&
 &                         G_lesser_reference,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                         NE_time,RT_nk
+&                         NE_time,RT_nk,RT_PP_time
  use SC,             ONLY:SC_bands
  use IO_m,           ONLY:LOG,NONE
  use com,            ONLY:error,msg
- use YPP,            ONLY:OCC_deltaT,OCC_T_range
  !
  implicit none
  !
  type(bz_samp)      :: k
  type(levels)       :: E
  !
- call RT_OCC_LIFE_and_REF_IO(E,'G',k=k,Time=OCC_T_range(1),imposed_COM=LOG)
+ real(SP)           :: loading_time
+ !
+#if defined _YPP_RT
+ loading_time=OCC_T_range(1)
+#else
+ loading_time=RT_PP_time
+#endif
+ !
+ call RT_OCC_LIFE_and_REF_IO(E,'G',k=k,Time=loading_time,imposed_COM=LOG)
  !
  if (.not.allocated(RT_delta0_occupations)) call error('Occupations database not found in :'//trim(OCC_ctl(3))//' ')
  !
@@ -61,7 +69,18 @@ integer function RT_occ_check_and_load_ref(E,k)
    allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
  endif
  !
- call RT_OCC_LIFE_and_REF_IO(E,'G',k=k,Time=OCC_T_range(2))
+#if defined _YPP_RT
+ loading_time=OCC_T_range(2)
+#else
+ loading_time=RT_PP_time
+#endif
+ !
+ call RT_OCC_LIFE_and_REF_IO(E,'G',k=k,Time=RT_PP_time)
+ !
+#if !defined _YPP_RT
+ RT_PP_time=nint(RT_PP_time/RT_IO_JPO_steps/RT_step)*RT_IO_JPO_steps*RT_step
+ RT_occ_check_and_load_ref=1
+#else
  !
  if (OCC_deltaT<RT_IO_JPO_steps*RT_step) then
    ! 
@@ -85,5 +104,6 @@ integer function RT_occ_check_and_load_ref(E,k)
  call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
  call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
  call msg('s','Time steps     :',RT_occ_check_and_load_ref)
+#endif
  !
 end function RT_occ_check_and_load_ref

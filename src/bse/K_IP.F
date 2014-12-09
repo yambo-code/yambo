@@ -155,10 +155,11 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
      do i_T=1,BS_T_grp(i_T_g)%size    
        !    
        ik    = BS_T_grp(i_T_g)%table(i_T,1)
-       ik_mem= PAR_Xk_bz_index(ik)
        iv    = BS_T_grp(i_T_g)%table(i_T,2)
        ic    = BS_T_grp(i_T_g)%table(i_T,3)
        i_sp  = BS_T_grp(i_T_g)%table(i_T,4)
+       !
+       ik_mem= PAR_Xk_bz_index(ik)
        !
        local_Z=1.
        if (allocated(BS_T_grp(i_T_g)%Z)) local_Z=BS_T_grp(i_T_g)%Z(i_T)

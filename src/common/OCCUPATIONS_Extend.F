@@ -42,7 +42,9 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  use D_lattice,  ONLY:Tel
  use functions,  ONLY:Fermi_fnc
  use interfaces, ONLY:OCCUPATIONS_Gaps
+ !
  implicit none
+ !
  type(levels)::Xe,E
  !
  !Work Space

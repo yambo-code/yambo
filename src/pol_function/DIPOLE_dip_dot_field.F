@@ -137,7 +137,9 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
          ! Here I use PAR_COM_Xk_bz_INDEX as it connects two CPUS belonging to different
          ! k_bz points but with the same k_ibz. Those two CPUS belong to the q communicator
          !
+#if !defined _YPP_RT
          if (l_par_X_G_all_q) call PP_redux_wait(dipole,COMM=PAR_COM_Xk_bz_INDEX%COMM)
+#endif
          !
          do i_star=1,Xk%nstar(ik)
            !

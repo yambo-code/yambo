@@ -264,13 +264,22 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
      !
    endif
    !
-   if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
+   ! Davide: after QP corrections are applied the occupations are computed again
+   !         We avoid this procedure if we are using RT occupations, we are doing 
+   !         as sc_run (included rt_runs). This maybe a problem if we use QP corrections
+   !         in these cases ...
    !
-   if (.not.l_rt_occ_in_use .and. .not. l_sc_run) call OCCUPATIONS_Fermi(en,k,1)
-   !
-   if (input_Tel_is_negative) then
-     en%nbf=nbf_m_SAVE(1)
-     en%nbm=nbf_m_SAVE(2)
+   if (.not.l_rt_occ_in_use .and. .not. l_sc_run) then
+     !
+     if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
+     !
+     call OCCUPATIONS_Fermi(en,k,1)
+     !
+     if (input_Tel_is_negative) then
+       en%nbf=nbf_m_SAVE(1)
+       en%nbm=nbf_m_SAVE(2)
+     endif
+     !
    endif
    !
  endif

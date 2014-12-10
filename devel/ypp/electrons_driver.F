@@ -47,6 +47,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use R_lattice,      ONLY:qindx_S
 #endif
 #if defined _YPP_RT
+ use drivers,        ONLY:l_rt_occ_in_use
  use YPP,            ONLY:l_RT_occ_Plot,l_RT_occ_Fit
  use real_time,      ONLY:RT_nk
 #endif
@@ -104,7 +105,10 @@ subroutine electrons_driver(Xk,Xen,Xq)
  if (.not.flag) flag=l_mean_potential
 #endif
 #if defined _YPP_RT 
- if (.not.flag) flag=any((/l_RT_dos,l_RT_life_Bands,l_RT_occ_Bands,l_RT_occ_Plot,l_RT_occ_Fit/))
+ if (.not.flag) then
+   flag=any((/l_RT_dos,l_RT_life_Bands,l_RT_occ_Bands,l_RT_occ_Plot,l_RT_occ_Fit/))
+   l_rt_occ_in_use=flag
+ endif
 #endif
  !
  if (.not.flag) return

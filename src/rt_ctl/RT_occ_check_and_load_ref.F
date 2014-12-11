@@ -28,7 +28,6 @@ integer function RT_occ_check_and_load_ref(E,k)
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:FS2AUT
  use electrons,      ONLY:levels
- use QP_m,           ONLY:OCC_ctl
  use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,RT_IO_JPO_steps,OCC_deltaT,OCC_T_range
  use real_time,      ONLY:RT_step,l_RT_CCA_Kernel,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,& 
@@ -55,7 +54,7 @@ integer function RT_occ_check_and_load_ref(E,k)
  !
  call RT_OCC_LIFE_and_REF_IO(E,'G',k=k,Time=loading_time,imposed_COM=LOG)
  !
- if (.not.allocated(RT_delta0_occupations)) call error('Occupations database not found in :'//trim(OCC_ctl(3))//' ')
+ if (.not.allocated(RT_delta0_occupations)) call error(' Occupations database not found')
  !
  if ((l_elph_scatt.and.l_RT_CCA_Kernel).and..not.allocated(E_P_Hole_lifetime)) then
    allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))

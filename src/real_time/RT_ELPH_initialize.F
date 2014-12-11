@@ -27,7 +27,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use units,          ONLY:HA2EV
  use real_time,      ONLY:q_weight_RT,elph_gkkp_expanded,THETA_matrix,&
 &                         THETA_matrix_index,Q_io_map,K_io_map,&
-&                         l_RT_CCA_Kernel,l_Debye_TBose_update
+&                         l_RT_CCA_Kernel
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt
  use vec_operate,    ONLY:v_norm
@@ -83,7 +83,6 @@ subroutine RT_ELPH_initialize(E,k,q)
  endif
  !
  call parser('UseDebyeE'   , l_use_Debye_E)
- call parser('UpdtDebyeT', l_Debye_TBose_update)
  !
  ! Q/K grid remapping
  !====================

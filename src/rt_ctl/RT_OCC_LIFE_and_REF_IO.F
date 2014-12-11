@@ -39,7 +39,6 @@ subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
  use electrons,      ONLY:levels,n_sp_pol,n_met_bands,&
 &                         n_full_bands,nel,E_reset,spin_occ
  use com,            ONLY:jobstr,msg,file_exists,error
- use QP_m,           ONLY:OCC_ctl
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:bz_samp,nXkibz,bz_samp_reset
  use D_lattice,      ONLY:DL_vol,input_Tel_is_negative
@@ -72,9 +71,6 @@ subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
  !============================
  !
  jobstr_save=jobstr
- if (what=="X") jobstr=trim(OCC_ctl(1))
- if (what=="K") jobstr=trim(OCC_ctl(2))
- if (what=="G") jobstr=trim(OCC_ctl(3))
  call parser(what//'fnFdb',is_def)
  if (.not.is_def) jobstr=jobstr_save
  !  

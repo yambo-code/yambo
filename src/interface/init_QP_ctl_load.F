@@ -36,7 +36,7 @@ subroutine init_QP_ctl_load(defs,i_type)
 #endif
  use it_m,          ONLY:it,initmode,initdefs,V_qp,V_real_time,E_unit
  use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_Wv,&
-&                        QP_ctl_Wc,QP_ctl_Z,OCC_ctl,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
+&                        QP_ctl_Wc,QP_ctl_Z,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
  !
  implicit none
  integer, intent(in) :: i_type
@@ -123,10 +123,4 @@ subroutine init_QP_ctl_load(defs,i_type)
 &        '[EXTQP '//trim(description_ch(i_type))//'] Rescale dipole by LDA/QP energy',verb_level=V_qp)
 #endif
 !
-#if defined _SC  && !defined _YPP_RT
- call it(defs,prefix(i_type)//'fnFdb',&
-&        '[EXTQP '//trim(description_ch(i_type))//'] Occupations database directory',&
-&        OCC_ctl(i_type),verb_level=V_real_time)
-#endif
- !
 end subroutine

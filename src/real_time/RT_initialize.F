@@ -351,7 +351,7 @@ subroutine RT_initialize(E,k,q)
  !
  if (l_elph_scatt)        call msg( 'r','El-Ph Carrier scattering   :',l_elph_scatt)
  if (l_elel_scatt)        call msg( 'r','El-El Carrier scattering   :',l_elel_scatt)
- if (l_BGR)               call msg( 'r','On-the-fly BGR computed    :',l_BGR)
+ if (l_BGR)               call msg( 'r','On-the-fly BGR added       :',l_BGR)
  !
  call msg( 'nr','---I/O---')
  call                          msg('r', 'T between I/O of J,P,f [fs]:',RT_IO_time(1)/FS2AUT)

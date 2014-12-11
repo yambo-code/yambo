@@ -43,7 +43,7 @@ subroutine RT_driver(E,X,k,q)
 &                         G_lesser_reference,rho_reference, &
 &                         NE_time,RT_update,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update,&
-&                         dG_lesser,l_BGR,l_initial_equilibrium
+&                         dG_lesser,l_initial_equilibrium
  use plasma,          ONLY:Plasma_free,EH_gas
  use matrix_operate,  ONLY:DIAGO
  use memory_m,        ONLY:mem_est
@@ -187,7 +187,7 @@ subroutine RT_driver(E,X,k,q)
    !
    call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
    !
-   if (l_BGR) call RT_BGR(dG_lesser(:,:,:,1),E,k)
+   call RT_BGR(dG_lesser(:,:,:,1),E,k)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
@@ -219,7 +219,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! IP calculation & not BGR => No need of WFs and Density
  !
- if(l_sc_ip.and..not.l_BGR) then  
+ if(l_sc_ip) then  
    !
    call WF_free(WF)
    !
@@ -234,10 +234,10 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_output(what="initialize")
  call RT_output(what="open dyn ene cur pol")
+ call RT_output('open BGR')
  if (l_NE_with_fields) call RT_output(what="open pot occ")
  if (l_elph_scatt) call RT_output('open EPlife')
  if (l_elel_scatt) call RT_output('open EElife')
- if (l_BGR)        call RT_output('open BGR')
  if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open factors')
  !
  ! Loop on time
@@ -304,7 +304,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! BGR
    !=======================================
-   if (l_BGR) call RT_output('BGR',TIME=NE_time/FS2AUT)
+   call RT_output('BGR',TIME=NE_time/FS2AUT)
    !
    ! Eval and Print Mean Carrier Lifetimes
    !=======================================

@@ -33,7 +33,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use rt_ctl,         ONLY:RT_do_IO,RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,l_Debye_TBose_update, &
-&                         RT_Tfit_lifetimes,EE_prefactor,EP_prefactor,EP_abs_prefactor,l_BGR,BGR
+&                         RT_Tfit_lifetimes,EE_prefactor,EP_prefactor,EP_abs_prefactor,BGR
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -217,7 +217,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  n_headings(next_file)=n1
  next_file=next_file+1
  !
- if (open_files.and.l_BGR.and..not.file_already_opened(next_file)) &
+ if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'BGR'
  short_file_name(next_file)=trim(append_ch)//'BGR'
  n_headings(next_file)=7

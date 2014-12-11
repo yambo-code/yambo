@@ -279,16 +279,16 @@ module real_time
  type RT_t
    !
    character(schlen)  :: description
-   integer,    pointer:: table(:,:) => null()
-   real(SP)   ,pointer:: k(:,:)     => null()
-   real(SP)   ,pointer:: wk(:)      => null()
-   real(SP)   ,pointer:: E0(:)      => null()
-   real(SP)   ,pointer:: f0(:)      => null()
-   real(SP)   ,pointer:: W0(:)      => null()
-   real(SP)   ,pointer:: df(:)      => null()
-   real(SP)   ,pointer:: dE(:)      => null()
-   real(SP)   ,pointer:: dW(:)      => null()
-   real(SP)   ,pointer:: W(:)       => null()
+   integer,    pointer:: table(:,:)      => null() ! ib,ik_RT,ik,i_spin
+   real(SP)   ,pointer:: kpt(:,:)        => null()
+   real(SP)   ,pointer:: k_weight(:)     => null()
+   real(SP)   ,pointer:: E_bare(:)       => null() ! equilibrium energy, i.e. the QP energy
+   real(SP)   ,pointer:: f_bare(:)       => null() ! equilibrium occupations
+   real(SP)   ,pointer:: GAMMA_bare(:)   => null() ! "initial equilibrium" lifetimes. In the code the "initial equilibrium"
+   real(SP)   ,pointer:: delta_f(:)      => null() ! change in the occupations
+   real(SP)   ,pointer:: delta_E(:)      => null() ! change in E (BGR)
+   real(SP)   ,pointer:: delta_GAMMA(:)  => null() ! change with respect to the "initial equilibrium" lifetimes
+   real(SP)   ,pointer:: NEQ_Lifetime(:) => null() ! time dependent lifetime defined as for Silicon
    integer  :: nk
    integer  :: nb(2)
    integer  :: nstates
@@ -471,14 +471,12 @@ module real_time
      allocate(REF_QP_Vnl_xc(QP_n_states))
      call mem_est("REF_QP_Vnl_xc",(/size(REF_QP_Vnl_xc)/),(/2*SP/))
      !
-     if (l_BGR) then
-       allocate(BGR_hartree(SC_bands(2),QP_nk,n_sp_pol))
-       call mem_est("BGR_hartree",(/size(BGR_hartree)/),(/SP/))
-       allocate(BGR_V_xc(SC_bands(2),QP_nk,n_sp_pol))
-       call mem_est("BGR_V_xc",(/size(BGR_V_xc)/),(/SP/))
-       allocate(BGR_Self_Energy(SC_bands(2),QP_nk,n_sp_pol))
-       call mem_est("BGR_Self_Energy",(/size(BGR_Self_Energy)/),(/SP/))
-     endif
+     allocate(BGR_hartree(SC_bands(2),QP_nk,n_sp_pol))
+     call mem_est("BGR_hartree",(/size(BGR_hartree)/),(/SP/))
+      allocate(BGR_V_xc(SC_bands(2),QP_nk,n_sp_pol))
+     call mem_est("BGR_V_xc",(/size(BGR_V_xc)/),(/SP/))
+     allocate(BGR_Self_Energy(SC_bands(2),QP_nk,n_sp_pol))
+     call mem_est("BGR_Self_Energy",(/size(BGR_Self_Energy)/),(/SP/))
      !
      allocate(rho_reference(fft_size))
      call mem_est("rho_reference",(/fft_size/),(/SP/))
@@ -571,12 +569,10 @@ module real_time
        call mem_est("SAVED_lifetime")
      endif
      !
-     if(l_BGR) then
-       deallocate(REF_QP_Vnl_xc,REF_V_xc_sc,REF_V_hartree_sc)
-       call mem_est("REF_QP_Vnl_xc REF_V_xc_sc REF_V_hartree_sc")
-       deallocate(BGR_hartree,BGR_V_xc,BGR_Self_Energy)
-       call mem_est("BGR_hartree BGR_V_xc BGR_Self_Energy")
-     endif
+     deallocate(REF_QP_Vnl_xc,REF_V_xc_sc,REF_V_hartree_sc)
+     call mem_est("REF_QP_Vnl_xc REF_V_xc_sc REF_V_hartree_sc")
+     deallocate(BGR_hartree,BGR_V_xc,BGR_Self_Energy)
+     call mem_est("BGR_hartree BGR_V_xc BGR_Self_Energy")
      !
      deallocate(RT_H_occupations)
      call mem_est("RT_H_occupations")

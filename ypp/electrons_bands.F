@@ -89,7 +89,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    if(all(interp_grid>0).or.BANDS_steps<=0) call error(" Interpolation of occupations/lifetimes only on a band circuit")
    n_T_steps=RT_occ_check_and_load_ref(Xen,Xk)
    call RT_check_RIM(Xk,Xen)
-   call RT_alloc_def_or_free(rt,Xen,Xk,1)
+   call RT_carriers_object(rt,Xen,Xk,'allocate')
    if(l_RT_life_Bands) n_T_steps=1
    Nk=RT_Nk
 #endif
@@ -242,7 +242,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
        !
        call RT_OCC_LIFE_and_REF_IO(Xen,'G',k=Xk,Time=io_Time)
        !
-       call RT_alloc_def_or_free(rt,Xen,Xk,2)
+       call RT_carriers_object(rt,Xen,Xk,'fill')
        !
        Real_Nhole=0._SP
        Real_Nel=0._SP
@@ -282,10 +282,10 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
        message='RT '
        if(i_T==1) message='RT0'
        !
-       if(l_RT_occ_Bands)  call Nearest_kpt_interpolation(rt%nk,CIRCUIT_k%nibz,rt%nb,rt%nstates,1,1,rt%table,rt%k, &
-&                            CIRCUIT_k%pt,rt%wk,CIRCUIT_k%weights,rt%df,fit_on_circuit(:,:,:,i_T),message,l_normalize_Nel)
-       if(l_RT_life_Bands) call Nearest_kpt_interpolation(rt%nk,CIRCUIT_k%nibz,rt%nb,rt%nstates,1,1,rt%table,rt%k, &
-&                            CIRCUIT_k%pt,rt%wk,CIRCUIT_k%weights,rt%W0,fit_on_circuit(:,:,:,i_T),message,.false.)
+       if(l_RT_occ_Bands)  call Nearest_kpt_interpolation(rt%nk,CIRCUIT_k%nibz,rt%nb,rt%nstates,1,1,rt%table,rt%kpt, &
+&                            CIRCUIT_k%pt,rt%k_weight,CIRCUIT_k%weights,rt%delta_f,fit_on_circuit(:,:,:,i_T),message,l_normalize_Nel)
+       if(l_RT_life_Bands) call Nearest_kpt_interpolation(rt%nk,CIRCUIT_k%nibz,rt%nb,rt%nstates,1,1,rt%table,rt%kpt, &
+&                            CIRCUIT_k%pt,rt%k_weight,CIRCUIT_k%weights,rt%GAMMA_bare,fit_on_circuit(:,:,:,i_T),message,.false.)
        !
      endif
      !
@@ -310,7 +310,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
      !
    enddo 
    !
-   call RT_alloc_def_or_free(rt,Xen,Xk,3)
+   call RT_carriers_object(rt,Xen,Xk,'free')
    !
    deallocate(variable_to_fit)
    !

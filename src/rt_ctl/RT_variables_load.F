@@ -63,7 +63,6 @@ subroutine RT_variables_load(Xen,Xk,RT_db1_E,RT_db1_k,n_T_steps)
  !
  wf_ng_save=wf_ng
  !
- !write(*,*) 'New DB',nXkbz,nXkibz,nkbz,nkibz,nqbz,nqibz,QP_nk
  io_err=io_DB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'all')
  if (io_err<0) call error ('DB1 database not found in '//trim(jobstr))
  call k_expand(RT_db1_k)
@@ -85,7 +84,7 @@ subroutine RT_variables_load(Xen,Xk,RT_db1_E,RT_db1_k,n_T_steps)
  NE_i_time=0
  n_T_steps=RT_occ_check_and_load_ref(RT_db1_E,RT_db1_k)
  call RT_check_RIM(RT_db1_k,RT_db1_E) 
- call RT_alloc_def_or_free(rt,RT_db1_E,RT_db1_k,1)
+ call RT_carriers_object(rt,RT_db1_E,RT_db1_k,'allocate')
  !
  BZ_RIM_nbands=0
  if(allocated(BZ_RIM_table)) then
@@ -93,15 +92,14 @@ subroutine RT_variables_load(Xen,Xk,RT_db1_E,RT_db1_k,n_T_steps)
    call mem_est("BZ_RIM_nkpt BZ_RIM_table")
  endif
  !
- !
  ! Reset symmetries and nqbz, nkbz
+ !
  core_io_path=core_io_path_save
  call E_reset(Xen_tmp)
  call bz_samp_reset(Xk_tmp)
  call E_duplicate(Xen,Xen_tmp)
  call bz_samp_duplicate(Xk,Xk_tmp)
  !
- !write(*,*) 'OLD DB',nXkbz,nXkibz,nkbz,nkibz,nqbz,nqibz,QP_nk
  io_err=io_DB1_selective_scan(Xen_tmp,Xk_tmp,trim(core_io_path),'all')
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=ID)
@@ -115,7 +113,5 @@ subroutine RT_variables_load(Xen,Xk,RT_db1_E,RT_db1_k,n_T_steps)
  nkibz=nkibz_save
  !
  wf_ng=wf_ng_save
- !
- !write(*,*) 'OLD DB2',nXkbz,nXkibz,nkbz,nkibz,nqbz,nqibz,QP_nk
  !
 end subroutine RT_variables_load

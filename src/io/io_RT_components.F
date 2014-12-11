@@ -62,13 +62,14 @@ integer function io_RT_components(what,ID)
  !
  real(SP), allocatable :: TMP_matrix(:,:,:)
  integer               :: ik,ib,i_spin,i1,file_number,i_time,i_time_range(2)
- logical               :: l_V,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_T_EL,l_THETA,l_REF
+ logical               :: l_V,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_T_EL,l_THETA,l_REF,l_carriers
  real(SP)              :: A_vecpot_disk(3,3,2)
  !
 #if defined _TIMING
  call timing('io_RT_components',OPR='start')
 #endif
  !
+ l_carriers   =what=="carriers"
  l_occupations=what=="occupations"
  l_THETA      =what=="THETA"
  l_J_and_P    =what=="J_and_P"

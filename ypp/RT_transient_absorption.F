@@ -134,14 +134,14 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    call RT_OCC_LIFE_and_REF_IO(RT_db1_E,'G',k=RT_db1_k,Time=io_Time)
    nkibz=nkibz_save
    !
-   call RT_alloc_def_or_free(rt,RT_db1_E,RT_db1_k,2)
+   call RT_carriers_object(rt,RT_db1_E,RT_db1_k,'fill')
    !
    message='RT '
    !
    if (i_T==1) message='RT0'
    !
    call Nearest_kpt_interpolation(rt%nk,Xk%nibz,rt%nb,rt%nstates,1,1,rt%table,&
-&                                 rt%k,Xk%pt,rt%wk,Xk%weights,rt%df,delta_f,message,.true.)
+&                                 rt%kpt,Xk%pt,rt%k_weight,Xk%weights,rt%delta_f,delta_f,message,.true.)
    !
    if (i_T==1.and.n_T_steps> 1) call live_timing('Transient Absorption',n_T_steps,SERIAL=.true.)
    !
@@ -292,7 +292,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    !
  enddo
  !
- call RT_alloc_def_or_free(rt,RT_db1_E,RT_db1_k,3)
+ call RT_carriers_object(rt,RT_db1_E,RT_db1_k,'free')
  !
  deallocate(delta_f)
  deallocate(X_epsilon)

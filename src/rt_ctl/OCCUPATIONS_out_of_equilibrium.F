@@ -26,18 +26,18 @@ subroutine OCCUPATIONS_out_of_equilibrium(bands_limit,En,Xk,call_kind)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_corr
  use units,          ONLY:FS2AUT
- use electrons,      ONLY:levels,n_sp_pol,E_duplicate
+ use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp,nkibz
- use real_time,      ONLY:RT_PP_time,rt,RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz
+ use real_time,      ONLY:RT_PP_time,RT_carriers,RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz
  use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,delta_f
- use parser_m,       ONLY:parser
  use com,            ONLY:msg
+ use interfaces,     ONLY:RT_carriers_object
  !
  implicit none
  !
  integer      :: bands_limit(2)
  type(levels) :: En
- type(bz_samp):: XK
+ type(bz_samp):: Xk
  character(3) :: call_kind
  !
  ! Work space
@@ -58,16 +58,16 @@ subroutine OCCUPATIONS_out_of_equilibrium(bands_limit,En,Xk,call_kind)
  !
  ! Now load the occupations, the lifetimes, etc at the correct time
  call RT_OCC_LIFE_and_REF_IO(RT_db1_E,'G',k=RT_db1_k,Time=RT_PP_time)
- call RT_carriers_object(rt,RT_db1_E,RT_db1_k,'fill')
+ call RT_carriers_object(RT_carriers,WHAT='fill')
  !
  nkibz      =nkibz_save
  l_elel_corr=l_elel_corr_save
  !
  ! Fit them on the grid for absorption
  ! For the moment only the delta_f variable is considered for the occupations
- allocate(delta_f(rt%nb(1):rt%nb(2),Xk%nibz,n_sp_pol))
- call Nearest_kpt_interpolation(rt%nk,Xk%nibz,rt%nb,rt%nstates,1,1,rt%table, &
-&                               rt%kpt,Xk%pt,rt%k_weight,Xk%weights,rt%delta_f,delta_f,call_kind,.true.)
+ allocate(delta_f(RT_carriers%nb(1):RT_carriers%nb(2),Xk%nibz,n_sp_pol))
+ call Nearest_kpt_interpolation(RT_carriers%nk,Xk%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                               RT_carriers%kpt,Xk%pt,RT_carriers%k_weight,Xk%weights,RT_carriers%delta_f,delta_f,call_kind,.true.)
  !
  Max_change=maxval(abs(delta_f))
  N_carriers=0._SP
@@ -75,15 +75,15 @@ subroutine OCCUPATIONS_out_of_equilibrium(bands_limit,En,Xk,call_kind)
    N_carriers=N_carriers+sum(abs(delta_f(:,ik,:)))*Xk%weights(ik)/2._SP
  enddo
  !
- bnd(1)=max(Bands_limit(1),rt%nb(1))
- bnd(2)=min(Bands_limit(2),rt%nb(2))
+ bnd(1)=max(Bands_limit(1),RT_carriers%nb(1))
+ bnd(2)=min(Bands_limit(2),RT_carriers%nb(2))
  !
- En%nbm=max(rt%nb(2)  ,En%nbm)
- En%nbf=min(rt%nb(1)-1,En%nbf)
+ En%nbm=max(RT_carriers%nb(2)  ,En%nbm)
+ En%nbf=min(RT_carriers%nb(1)-1,En%nbf)
  En%f( bnd(1):bnd(2),:,:)=En%f(bnd(1):bnd(2),:,:)+delta_f(bnd(1):bnd(2),:,:)
  !
  deallocate(delta_f)
- call RT_carriers_object(rt,RT_db1_E,RT_db1_k,'free')
+ call RT_carriers_object(RT_carriers,WHAT='free')
  if(allocated(RIM_ibz_coo)) deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz)
  !
  call msg('nrs','[RT] Updated occupations using f(t) from NEQ run at time [fs]: ',RT_PP_time/FS2AUT)

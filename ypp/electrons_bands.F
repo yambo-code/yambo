@@ -41,7 +41,8 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  use units,          ONLY:FS2AUT
  use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,OCC_T_range,OCC_deltaT
  use real_time,      ONLY:RIM_ibz_coo,RT_delta0_occupations,REF_lifetime,&
-&                         RT_Nk,RT_ibz_coo,RT_Nk_ibz,rt
+&                         RT_Nk,RT_ibz_coo,RT_Nk_ibz,RT_carriers
+ use interfaces,     ONLY:RT_carriers_object
  use IO_m,           ONLY:NONE
 #endif
  !
@@ -89,7 +90,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    if(all(interp_grid>0).or.BANDS_steps<=0) call error(" Interpolation of occupations/lifetimes only on a band circuit")
    n_T_steps=RT_occ_check_and_load_ref(Xen,Xk)
    call RT_check_RIM(Xk,Xen)
-   call RT_carriers_object(rt,Xen,Xk,'allocate')
+   call RT_carriers_object(RT_carriers,Xen,Xk,WHAT='allocate')
    if(l_RT_life_Bands) n_T_steps=1
    Nk=RT_Nk
 #endif
@@ -242,7 +243,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
        !
        call RT_OCC_LIFE_and_REF_IO(Xen,'G',k=Xk,Time=io_Time)
        !
-       call RT_carriers_object(rt,Xen,Xk,'fill')
+       call RT_carriers_object(RT_carriers,WHAT='fill')
        !
        Real_Nhole=0._SP
        Real_Nel=0._SP
@@ -282,10 +283,10 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
        message='RT '
        if(i_T==1) message='RT0'
        !
-       if(l_RT_occ_Bands)  call Nearest_kpt_interpolation(rt%nk,CIRCUIT_k%nibz,rt%nb,rt%nstates,1,1,rt%table,rt%kpt, &
-&                            CIRCUIT_k%pt,rt%k_weight,CIRCUIT_k%weights,rt%delta_f,fit_on_circuit(:,:,:,i_T),message,l_normalize_Nel)
-       if(l_RT_life_Bands) call Nearest_kpt_interpolation(rt%nk,CIRCUIT_k%nibz,rt%nb,rt%nstates,1,1,rt%table,rt%kpt, &
-&                            CIRCUIT_k%pt,rt%k_weight,CIRCUIT_k%weights,rt%GAMMA_bare,fit_on_circuit(:,:,:,i_T),message,.false.)
+       if(l_RT_occ_Bands)  call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
+&                            CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,RT_carriers%delta_f,fit_on_circuit(:,:,:,i_T),message,l_normalize_Nel)
+       if(l_RT_life_Bands) call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
+&                            CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,RT_carriers%GAMMA_bare,fit_on_circuit(:,:,:,i_T),message,.false.)
        !
      endif
      !
@@ -310,7 +311,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
      !
    enddo 
    !
-   call RT_carriers_object(rt,Xen,Xk,'free')
+   call RT_carriers_object(RT_carriers,WHAT='free')
    !
    deallocate(variable_to_fit)
    !

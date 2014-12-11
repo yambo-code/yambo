@@ -31,14 +31,14 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use LIVE_t,          ONLY:live_timing
  use X_m,             ONLY:X_t,DIP_q_dot_iR
  use rt_ctl,          ONLY:RT_OCC_LIFE_and_REF_IO,RT_output,OCC_T_range,OCC_deltaT,delta_f
- use real_time,       ONLY:rt
+ use real_time,       ONLY:RT_carriers
  use wave_func,       ONLY:wf_ng,wf_norm_test
  use IO_m,            ONLY:io_DIP
  use YPP,             ONLY:X_rt
  use X_m,             ONLY:X_epsilon
  use BS,              ONLY:BSS_eh_table,BS_mat
  use frequency,       ONLY:w_samp
- use interfaces,      ONLY:PARALLEL_global_indexes
+ use interfaces,      ONLY:PARALLEL_global_indexes,RT_carriers_object
  use parallel_m,      ONLY:PAR_DIPk_ibz_index,PAR_Xk_bz_index,PAR_DIPk_nibz,PAR_Xk_nbz,&
 &                          PAR_IND_DIPk_ibz,PAR_IND_Xk_bz
  use SC,              ONLY:SC_bands,SC_QP_setup
@@ -101,7 +101,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  deallocate(q_norm,bare_qpg)
  !
- allocate(delta_f(rt%nb(1):rt%nb(2),Xk%nibz,n_sp_pol))
+ allocate(delta_f(RT_carriers%nb(1):RT_carriers%nb(2),Xk%nibz,n_sp_pol))
  delta_f=0._SP
  !
  allocate(X_epsilon(2,X_rt%energy_steps))
@@ -134,14 +134,14 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    call RT_OCC_LIFE_and_REF_IO(RT_db1_E,'G',k=RT_db1_k,Time=io_Time)
    nkibz=nkibz_save
    !
-   call RT_carriers_object(rt,RT_db1_E,RT_db1_k,'fill')
+   call RT_carriers_object(RT_carriers,WHAT='fill')
    !
    message='RT '
    !
    if (i_T==1) message='RT0'
    !
-   call Nearest_kpt_interpolation(rt%nk,Xk%nibz,rt%nb,rt%nstates,1,1,rt%table,&
-&                                 rt%kpt,Xk%pt,rt%k_weight,Xk%weights,rt%delta_f,delta_f,message,.true.)
+   call Nearest_kpt_interpolation(RT_carriers%nk,Xk%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table,&
+&                                 RT_carriers%kpt,Xk%pt,RT_carriers%k_weight,Xk%weights,RT_carriers%delta_f,delta_f,message,.true.)
    !
    if (i_T==1.and.n_T_steps> 1) call live_timing('Transient Absorption',n_T_steps,SERIAL=.true.)
    !
@@ -162,7 +162,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        i_c     = BSS_eh_table(neh,3)
        i_spin  = spin(BSS_eh_table(neh,:))
        !
-       if(i_v<rt%nb(1) .or. i_c>rt%nb(2) ) cycle
+       if(i_v<RT_carriers%nb(1) .or. i_c>RT_carriers%nb(2) ) cycle
        !
        !f_cv=Xen%f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
        !delta_f_cv=delta_f(i_v,i_kibz,i_spin)*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ- &
@@ -197,8 +197,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        do i_spin=1,n_sp_pol
          !
          ! First valence
-         do i_v=rt%nb(1),Xen%nbf
-           do i_vp=rt%nb(1),Xen%nbf
+         do i_v=RT_carriers%nb(1),Xen%nbf
+           do i_vp=RT_carriers%nb(1),Xen%nbf
              !
              if(i_v==i_vp) cycle
              !
@@ -213,8 +213,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
          enddo
          !
          ! Then conduction
-         do i_cp=Xen%nbf+1,rt%nb(2)
-           do i_c=Xen%nbf+1,rt%nb(2)
+         do i_cp=Xen%nbf+1,RT_carriers%nb(2)
+           do i_c=Xen%nbf+1,RT_carriers%nb(2)
              !
              if(i_c==i_cp) cycle
              !
@@ -292,7 +292,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    !
  enddo
  !
- call RT_carriers_object(rt,RT_db1_E,RT_db1_k,'free')
+ call RT_carriers_object(RT_carriers,WHAT='free')
  !
  deallocate(delta_f)
  deallocate(X_epsilon)

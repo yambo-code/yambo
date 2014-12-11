@@ -31,21 +31,20 @@ subroutine RT_driver(E,X,k,q)
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,X_alloc
  use wave_func,      ONLY:WF
- use interfaces,     ONLY:WF_load,MATRIX_driver 
+ use interfaces,     ONLY:WF_load,RT_carriers_object
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
- use SC,             ONLY:SC_potential,SC_bands,it_now,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,Ho,&
+ use SC,             ONLY:SC_potential,SC_bands,it_now,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,&
 &                         SC_QP_setup
  use rt_ctl,         ONLY:RT_output,RT_alloc_ctl,RT_free_ctl,RT_IO_G_steps,ID,it_start
  use real_time,      ONLY:NE_steps,RT_step,G_lesser, &
-&                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
+&                         l_NE_with_fields,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
 &                         G_lesser_reference,rho_reference, &
-&                         NE_time,RT_update,&
-&                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update,&
+&                         NE_time,RT_carriers,&
+&                         l_Dynamics_is_over,MEM_index,G_MEM_steps,&
 &                         dG_lesser,l_initial_equilibrium
  use plasma,          ONLY:Plasma_free,EH_gas
- use matrix_operate,  ONLY:DIAGO
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
@@ -66,8 +65,7 @@ subroutine RT_driver(E,X,k,q)
  ! 
  ! Work Space
  !
- integer           :: it,ik,ib,it_mem,it_mem_p1,io_REF
- real(SP)          :: E_previous,E_now
+ integer           :: it,ib,it_mem,it_mem_p1,io_REF
  complex(SP)       :: on_the_fly_operators(10)
  !
  integer, external :: io_RT_components
@@ -197,6 +195,11 @@ subroutine RT_driver(E,X,k,q)
    l_initial_equilibrium=.FALSE.
    !
  endif
+ !
+ ! Initial allocation and basic definitions of the RT_carriers object
+ !====================================================================
+ !
+ call RT_carriers_object(RT_carriers,E,K,WHAT='allocate')
  !
  ! Qindx_X and Qindx_S not needed in real-time they are used only in dipoles and collisions calculations
  !
@@ -359,6 +362,8 @@ subroutine RT_driver(E,X,k,q)
  !
  call WF_free(WF)
  call Plasma_free(EH_gas)
+ !
+ call RT_carriers_object(RT_carriers,WHAT='free')
  !
  if (allocated(HF_collisions))     call COLLISIONS_alloc_and_free("HF","v1 table","clean",0)
  if (allocated(COHSEX_collisions)) call COLLISIONS_alloc_and_free("COHSEX","v1 table","clean",0)

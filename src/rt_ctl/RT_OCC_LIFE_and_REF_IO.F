@@ -24,29 +24,20 @@
 subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
  !
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
- use units,          ONLY:BO2ANG,FS2AUT,HA2EV
  use pars,           ONLY:SP,lchlen
  use parser_m,       ONLY:parser
- use rt_ctl,         ONLY:ID,RT_IO_JPO_steps,RT_IO_steps_DB
- use real_time,      ONLY:G_lesser,NE_i_time,RT_step,MEM_index,&
-&                         RT_E_occupations,RT_H_occupations,G_MEM_steps,REF_lifetime,&
-&                         G_lesser_reference,RT_delta0_occupations,E_P_Hole_lifetime,&
-&                         E_P_Electron_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_nk,&
+ use rt_ctl,         ONLY:ID,RT_IO_JPO_steps
+ use real_time,      ONLY:G_lesser,NE_i_time,RT_step,&
+&                         RT_E_occupations,RT_H_occupations,REF_lifetime,&
+&                         G_lesser_reference,RT_delta0_occupations,RT_nk,&
 &                         RT_E_occupations_reference,RT_H_occupations_reference
  use SC,             ONLY:SC_bands
- use IO_m,           ONLY:io_control,NONE,OP_WR_CL,OP_RD,RD_CL,OP_RD_CL,DUMP,variable_is_found
- use electrons,      ONLY:levels,n_sp_pol,n_met_bands,&
-&                         n_full_bands,nel,E_reset,spin_occ
- use com,            ONLY:jobstr,msg,file_exists,error
+ use IO_m,           ONLY:io_control,NONE,OP_RD,RD_CL,OP_RD_CL,DUMP
+ use electrons,      ONLY:levels,spin_occ
+ use com,            ONLY:jobstr,error
  use QP_m,           ONLY:OCC_ctl
  use memory_m,       ONLY:mem_est
- use R_lattice,      ONLY:bz_samp,nXkibz,bz_samp_reset
- use D_lattice,      ONLY:DL_vol,input_Tel_is_negative
- use LIVE_t,         ONLY:what_is_running
- use stderr,         ONLY:intc
- use vec_operate,    ONLY:sort
- use interfaces,     ONLY:OCCUPATIONS_Gaps
+ use R_lattice,      ONLY:bz_samp
  !
  implicit none
  !
@@ -58,13 +49,12 @@ subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
  !
  ! Work Space
  !
- integer           :: ik,ib,i1
- real(SP)          :: PE_nel
+ integer           :: ik,ib
  logical           :: is_def
  !
  ! I/O
  !
- integer           :: io_err_occ,io_err_E,COM_,file_number
+ integer           :: COM_,io_err_occ
  character(lchlen) :: jobstr_save
  integer, external :: io_RT_components
  !
@@ -87,7 +77,7 @@ subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
  !====================
  !
  call io_control(ACTION=OP_RD,COM=COM_,SEC=(/1/),MODE=DUMP,ID=ID(6))
- io_err_occ=io_RT_components('occupations',ID(6))
+ io_err_occ=io_RT_components('carriers',ID(6))
  !
  if (io_err_occ<0) call error ('Occupations database not found in folder: '//trim(jobstr))
  !
@@ -105,10 +95,10 @@ subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
  endif
  !
  call io_control(ACTION=RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID(6))
- io_err_occ=io_RT_components('occupations',ID(6))
+ io_err_occ=io_RT_components('carriers',ID(6))
  if(NE_i_time>0) then
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID(6))
-   io_err_occ=io_RT_components('occupations',ID(6))
+   io_err_occ=io_RT_components('carriers',ID(6))
  endif
  ! 
  ! REFERENCE I/O

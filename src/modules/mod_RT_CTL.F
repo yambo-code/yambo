@@ -105,7 +105,7 @@ module rt_ctl
      use real_time, ONLY:NE_i_time
      character(*) :: what
      !
-     if (what=="J".or.what=="P".or.what=="OCCs") RT_do_IO=mod(NE_i_time-1,RT_IO_JPO_steps)==0
+     if (what=="J".or.what=="P".or.what=="CARRIERS") RT_do_IO=mod(NE_i_time-1,RT_IO_JPO_steps)==0
      if (what=="OUT") RT_do_IO=mod(NE_i_time-1,RT_IO_output_steps)==0
      if (what=="G")   RT_do_IO=mod(NE_i_time-1,RT_IO_G_steps)==0
      !

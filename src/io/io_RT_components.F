@@ -41,12 +41,13 @@ integer function io_RT_components(what,ID)
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_delta0_occupations,&
 &                         RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         l_NE_with_fields,NE_steps,RT_P,RT_nk, &
-&                         dG_lesser,RT_ind_J,&
+&                         dG_lesser,RT_ind_J,RT_carriers,&
 &                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight_RT
  use ELPH,           ONLY:ph_modes,elph_branches
  use rt_ctl,         ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_IO
  use fields,         ONLY:A_ext
  use matrix_operate, ONLY:mat_c2r,mat_r2c
+ use interfaces,     ONLY:RT_carriers_object
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -62,7 +63,7 @@ integer function io_RT_components(what,ID)
  !
  real(SP), allocatable :: TMP_matrix(:,:,:)
  integer               :: ik,ib,i_spin,i1,file_number,i_time,i_time_range(2)
- logical               :: l_V,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_T_EL,l_THETA,l_REF,l_carriers
+ logical               :: l_V,l_IMPOSE_SN,CHECK_,l_G,l_J_and_P,l_T_EL,l_THETA,l_REF,l_carriers
  real(SP)              :: A_vecpot_disk(3,3,2)
  !
 #if defined _TIMING
@@ -70,14 +71,13 @@ integer function io_RT_components(what,ID)
 #endif
  !
  l_carriers   =what=="carriers"
- l_occupations=what=="occupations"
  l_THETA      =what=="THETA"
  l_J_and_P    =what=="J_and_P"
  l_G          =what=="G"
  l_REF        =what=="REF"
  !
  db_name=what
- if (l_REF) db_name="reference_G_and_occupations"
+ if (l_REF) db_name="reference_components"
  !
  ! When the db.scV is used for single non-SC shot the number
  ! of bands and SC_mixing can be not respected. 
@@ -90,13 +90,13 @@ integer function io_RT_components(what,ID)
  !
  ! Write only every RT_io_steps
  !
- if (l_J_and_P.or.l_occupations) then
+ if (l_J_and_P.or.l_carriers) then
    if (io_sec(ID,1)==1) then 
      io_RT_components=io_connect(desc="RT_"//trim(db_name),type=2,ID=ID)
    else
      if (RT_do_IO('J')) then
        if (l_J_and_P)     io_RT_components=io_connect(desc="RT_"//trim(db_name)//"_Time_"//trim(intc(file_number)),type=2,ID=ID)
-       if (l_occupations) then
+       if (l_carriers) then
          io_RT_components=io_connect(desc="RT_"//trim(db_name)//"_Time_"//trim(intc(file_number)),type=2,ID=ID)
          if (read_is_on(ID).and.io_RT_components==IO_NO_DATABASE) then
            io_RT_components=io_connect(desc="RT_"//trim(db_name),type=2,ID=ID)
@@ -138,7 +138,7 @@ integer function io_RT_components(what,ID)
  if (any((/io_sec(ID,:)==1/))) then
    !
    l_IMPOSE_SN=.not.l_V
-   if (l_occupations) l_IMPOSE_SN=.FALSE.
+   if (l_carriers) l_IMPOSE_SN=.FALSE.
    l_T_EL=.false.
 #if defined _ELPH
    l_T_EL=.true.
@@ -152,7 +152,7 @@ integer function io_RT_components(what,ID)
      endif
    endif
    !
-   if (l_occupations) then
+   if (l_carriers) then
      if (write_is_on(ID).or.(read_is_on(ID).and.variable_is_found(ID,"TEMPERATURES")/=0) ) then
        io_RT_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL)
      endif
@@ -166,7 +166,7 @@ integer function io_RT_components(what,ID)
    io_RT_components=variables_RT(ID,local_description,what)
    if (io_RT_components/=0) goto 1
    !
-   if (l_G.or.l_occupations.or.l_THETA) then
+   if (l_G.or.l_carriers.or.l_THETA) then
      call io_elemental(ID,VAR="Probe_and_Pump_index",VAR_SZ=2,MENU=0) 
      call io_elemental(ID,I0=i_Probe)
      call io_elemental(ID,I0=i_Pump)
@@ -178,12 +178,29 @@ integer function io_RT_components(what,ID)
      call io_bulk(ID,R1=q_weight_RT(:,1,1))
    endif
    !
+   ! Here I dump all RELEVANT RT_carriers% components that make the RT_carriers databases
+   ! independent
+   !
+   if (l_carriers) then
+     call io_elemental(ID,VAR="RT_carriers_dimensions",VAR_SZ=4,MENU=0) 
+     call io_elemental(ID,I0=RT_carriers%nk)
+     call io_elemental(ID,I1=RT_carriers%nb)
+     call io_elemental(ID,I0=RT_carriers%nstates)
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     call io_bulk(ID,VAR="RT_kpt",VAR_SZ=(/RT_nk,3/))
+     call io_bulk(ID,R2=RT_carriers%kpt)
+     call io_bulk(ID,VAR="RT_k_weight",VAR_SZ=(/RT_nk/))
+     call io_bulk(ID,R1=RT_carriers%k_weight)
+     call io_bulk(ID,VAR="RT_table",VAR_SZ=(/RT_carriers%nstates,4/))
+     call io_bulk(ID,I2=RT_carriers%table)
+   endif
+   !
    io_RT_components=io_status(ID)
    if (io_RT_components/=0) goto 1
    !
  endif
  ! 
- if(l_J_and_P.or.l_occupations) then
+ if(l_J_and_P.or.l_carriers) then
    call manage_RD_WR_CL_IF_END(ID,ik,NE_steps)
  else if (l_G) then
    call manage_RD_WR_CL_IF_END(ID,ik,RT_nk)
@@ -204,7 +221,7 @@ integer function io_RT_components(what,ID)
  !
  if (l_REF .and. ik==0) goto 1
  !
- if ( l_occupations ) then
+ if ( l_carriers ) then
    !
    ! lesser Green Function diagonal
    !===============================
@@ -241,6 +258,8 @@ integer function io_RT_components(what,ID)
        call io_bulk(ID,R2=E_E_Electron_lifetime)
        !
      endif
+     !
+     call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="input_output")
      !
    endif
    !

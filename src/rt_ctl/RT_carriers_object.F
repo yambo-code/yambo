@@ -21,30 +21,32 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_carriers_object(RT,En,kgrid,WHAT)
+subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  !
  ! This subroutine contains the RT objects, included the RT table
  ! In the future the RT code can be based on those, at least partially
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
- use memory_m,       ONLY:mem_est
  use electrons,      ONLY:n_sp_pol,spin_occ,levels
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands
  use real_time,      ONLY:RT_t,REF_lifetime,E_E_Hole_lifetime,E_E_Electron_lifetime,   &
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Ho_abs_lifetime, &
 &                         E_P_El_abs_lifetime,l_RT_uses_E_rim,RT_ibz_coo,RIM_ibz_coo,  &
-&                         RT_nk,RT_nstates,RT_all2ibz,RT_delta0_occupations,RT_Nk_ibz
+&                         RT_nk,RT_nstates,RT_all2ibz,RT_delta0_occupations,RT_Nk_ibz,&
+&                         BGR_Hartree,BGR_V_xc,BGR_Self_Energy
+ use IO_m,           ONLY:io_bulk
  !
  implicit none
  !
  ! WHAT=1 allocate and define, 2 deallocate
  !
  type(RT_t),    intent(inout):: RT
- type(levels),  intent(in)   :: En
- type(bz_samp), intent(in)   :: kgrid
- character(*),  intent(in)   :: WHAT
+ type(levels),  intent(in)   ,optional :: E
+ type(bz_samp), intent(in)   ,optional :: K
+ integer,       intent(in)   ,optional :: DB_id
+ character(*),  intent(in)   ,optional :: WHAT
  !
  integer  :: i_RT,i_b,i_k,i_k_RIM,i_k_RT,i_spin
  real(SP) :: Hole_lifetime,Elec_lifetime,f_occ
@@ -71,14 +73,14 @@ subroutine RT_carriers_object(RT,En,kgrid,WHAT)
      RT%f_bare=0.
      RT%GAMMA_bare=0.
      !
-     do i_k=1,kgrid%nibz
+     do i_k=1,K%nibz
        if(     l_RT_uses_E_RIM) then
-         RT%kpt(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)= kgrid%ptbz_RIM(RIM_ibz_coo(i_k,1):RIM_ibz_coo(i_k,2),:)
-         RT%k_weight(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2)) = kgrid%weights(i_k)/real(RT_Nk_ibz(i_k),SP)        
+         RT%kpt(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)= K%ptbz_RIM(RIM_ibz_coo(i_k,1):RIM_ibz_coo(i_k,2),:)
+         RT%k_weight(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2)) = K%weights(i_k)/real(RT_Nk_ibz(i_k),SP)        
        endif
        if(.not.l_RT_uses_E_RIM) then
-         RT%kpt(i_k,:)= kgrid%pt(i_k,:)
-         RT%k_weight(i_k) = kgrid%weights(i_k)
+         RT%kpt(i_k,:)= K%pt(i_k,:)
+         RT%k_weight(i_k) = K%weights(i_k)
        endif
      enddo
      !
@@ -94,11 +96,11 @@ subroutine RT_carriers_object(RT,En,kgrid,WHAT)
        i_k_RIM=i_k_RT+RIM_ibz_coo(i_k,1)-RT_ibz_coo(i_k,1)
        !
        if(l_RT_uses_E_RIM) then
-         RT%E_bare(i_RT)=En%E_RIM(i_b,i_k_RIM,i_spin)
-         RT%f_bare(i_RT)=En%f_RIM(i_b,i_k_RIM,i_spin)
+         RT%E_bare(i_RT)=E%E_RIM(i_b,i_k_RIM,i_spin)
+         RT%f_bare(i_RT)=E%f_RIM(i_b,i_k_RIM,i_spin)
        else
-         RT%E_bare(i_RT)=En%E(i_b,i_k,i_spin)
-         RT%f_bare(i_RT)=En%f(i_b,i_k,i_spin)
+         RT%E_bare(i_RT)=E%E(i_b,i_k,i_spin)
+         RT%f_bare(i_RT)=E%f(i_b,i_k,i_spin)
        endif
        if(allocated(REF_lifetime)) RT%GAMMA_bare(i_RT)=sum(REF_lifetime(i_b,i_k_RT,:))
        !
@@ -130,6 +132,8 @@ subroutine RT_carriers_object(RT,En,kgrid,WHAT)
        !
        RT%delta_f(i_RT)=RT_delta0_occupations(i_b,i_k_RT)
        !
+       RT%delta_E(i_RT)=BGR_Hartree(i_b,i_k,1)+BGR_V_xc(i_b,i_k,1)+BGR_Self_Energy(i_b,i_k,1)
+       !
        if(l_elel_scatt) then
          Hole_lifetime=E_E_Hole_lifetime(i_b,i_k_RT)
          Elec_lifetime=E_E_Electron_lifetime(i_b,i_k_RT)
@@ -156,6 +160,23 @@ subroutine RT_carriers_object(RT,En,kgrid,WHAT)
        !
      enddo
      !
+   case('input_output')
+     !
+     call io_bulk(DB_id,VAR="RT_carriers_E_bare",VAR_SZ=(/RT%nstates/))
+     call io_bulk(DB_id,R1=RT%E_bare)
+     call io_bulk(DB_id,VAR="RT_carriers_f_bare",VAR_SZ=(/RT%nstates/))
+     call io_bulk(DB_id,R1=RT%f_bare)
+     call io_bulk(DB_id,VAR="RT_carriers_GAMMA_bare",VAR_SZ=(/RT%nstates/))
+     call io_bulk(DB_id,R1=RT%GAMMA_bare)
+     call io_bulk(DB_id,VAR="RT_carriers_delta_E",VAR_SZ=(/RT%nstates/))
+     call io_bulk(DB_id,R1=RT%delta_E)
+     call io_bulk(DB_id,VAR="RT_carriers_delta_f",VAR_SZ=(/RT%nstates/))
+     call io_bulk(DB_id,R1=RT%delta_f)
+     call io_bulk(DB_id,VAR="RT_carriers_delta_GAMMA",VAR_SZ=(/RT%nstates/))
+     call io_bulk(DB_id,R1=RT%delta_GAMMA)
+     call io_bulk(DB_id,VAR="RT_NEQ_Lifetime",VAR_SZ=(/RT%nstates/))
+     call io_bulk(DB_id,R1=RT%NEQ_Lifetime)
+     !
    case('free')
      !
      ! Free
@@ -163,16 +184,16 @@ subroutine RT_carriers_object(RT,En,kgrid,WHAT)
      RT%nk=0
      RT%nb=0
      RT%nstates=0
-     if(associated(RT%E_bare))      deallocate(RT%E_bare)
-     if(associated(RT%f_bare))      deallocate(RT%f_bare)
-     if(associated(RT%GAMMA_bare))      deallocate(RT%GAMMA_bare)
+     if(associated(RT%E_bare))       deallocate(RT%E_bare)
+     if(associated(RT%f_bare))       deallocate(RT%f_bare)
+     if(associated(RT%GAMMA_bare))   deallocate(RT%GAMMA_bare)
      if(associated(RT%delta_E))      deallocate(RT%delta_E)
      if(associated(RT%delta_f))      deallocate(RT%delta_f)
-     if(associated(RT%delta_GAMMA))      deallocate(RT%delta_GAMMA)
-     if(associated(RT%NEQ_Lifetime))       deallocate(RT%NEQ_Lifetime)
-     if(associated(RT%kpt))       deallocate(RT%kpt)
-     if(associated(RT%k_weight))      deallocate(RT%k_weight)
-     if(associated(RT%table))   deallocate(RT%table)
+     if(associated(RT%delta_GAMMA))  deallocate(RT%delta_GAMMA)
+     if(associated(RT%NEQ_Lifetime)) deallocate(RT%NEQ_Lifetime)
+     if(associated(RT%kpt))          deallocate(RT%kpt)
+     if(associated(RT%k_weight))     deallocate(RT%k_weight)
+     if(associated(RT%table))        deallocate(RT%table)
      !
  end select
  !

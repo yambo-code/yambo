@@ -57,7 +57,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use rt_ctl,        ONLY:RT_IO_time
- use real_time,     ONLY:RT_step, NE_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
+ use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        NE_tot_time,RT_life_interp_steps,&
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_scatt_tresh,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
@@ -327,7 +327,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! I/O
  !
- call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,OCCs,WF,W,SC,BS)',&
+ call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,WF,W,SC,BS)',&
 &                         DBs_IO_control_string,verb_level=V_io)
  !
  ! GPL_EXCLUDE_END
@@ -352,7 +352,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'NETime',     '[RT] Simulation Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit(2))
  call it(defs,'Integrator', '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA" "INTERPOLATE") ',&
 &                           Integrator_name)
- call it(defs,'IOtime',     '[RT] Time between to consecutive I/O (J,P,OCCs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
+ call it(defs,'IOtime',     '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',RT_IO_time,unit=Time_unit(1))
  call it(defs,'RTehEny',    '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  !
  ! Correlation

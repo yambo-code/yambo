@@ -56,7 +56,7 @@ module IO_m
  logical           :: io_HF      =.TRUE.
  logical           :: io_COLLs   =.TRUE.
  logical           :: io_J       =.TRUE.
- logical           :: io_OCCs    =.TRUE.
+ logical           :: io_CARRIERs    =.TRUE.
  logical           :: io_GF      =.TRUE.
  logical           :: io_SC      =.TRUE.
  logical           :: io_BS_K    =.TRUE.

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DS
+! Authors (see AUTHORS file for details): DS AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -24,8 +24,8 @@
 subroutine RT_variables_load(Xen,Xk,RT_db1_E,RT_db1_k,n_T_steps)
  !
  use pars,            ONLY:lchlen
- use real_time,       ONLY:rt,NE_i_time
- use R_lattice,       ONLY:bz_samp,nqbz,nqibz,nkbz,nkibz,nXkbz,nXkibz,&
+ use real_time,       ONLY:RT_carriers,NE_i_time
+ use R_lattice,       ONLY:bz_samp,nqbz,nqibz,nkbz,nkibz,&
 &                          bz_samp_duplicate,bz_samp_reset
  use com,             ONLY:core_io_path
  use electrons,       ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,BZ_RIM_ipol_weight,BZ_RIM_nbands,&
@@ -33,8 +33,8 @@ subroutine RT_variables_load(Xen,Xk,RT_db1_E,RT_db1_k,n_T_steps)
  use com,             ONLY:jobstr,error
  use IO_m,            ONLY:io_control,OP_RD_CL,NONE,DUMP
  use memory_m,        ONLY:mem_est
- use QP_m,            ONLY:QP_nk
  use wave_func,       ONLY:wf_ng
+ use interfaces,      ONLY:RT_carriers_object
  !
  implicit none
  !
@@ -51,7 +51,7 @@ subroutine RT_variables_load(Xen,Xk,RT_db1_E,RT_db1_k,n_T_steps)
  character(lchlen) :: core_io_path_save
  !
  integer, external :: io_DB1_selective_scan,io_RIM_E_and_k,io_QINDX
- integer, external :: RT_occ_check_and_load_ref,RT_k_grid
+ integer, external :: RT_occ_check_and_load_ref
  !
  if(allocated(BZ_RIM_table)) call error("RIM DBs already present. This is not compatible with Transient abs")
  !
@@ -84,7 +84,7 @@ subroutine RT_variables_load(Xen,Xk,RT_db1_E,RT_db1_k,n_T_steps)
  NE_i_time=0
  n_T_steps=RT_occ_check_and_load_ref(RT_db1_E,RT_db1_k)
  call RT_check_RIM(RT_db1_k,RT_db1_E) 
- call RT_carriers_object(rt,RT_db1_E,RT_db1_k,'allocate')
+ call RT_carriers_object(RT_carriers,RT_db1_E,RT_db1_k,WHAT='allocate')
  !
  BZ_RIM_nbands=0
  if(allocated(BZ_RIM_table)) then

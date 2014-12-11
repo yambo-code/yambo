@@ -295,7 +295,7 @@ module real_time
    !
  end type RT_t
  !
- type(RT_t)  :: rt
+ type(RT_t)  :: RT_carriers
  !
  ! Interface
  !

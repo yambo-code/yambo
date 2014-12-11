@@ -26,10 +26,11 @@ subroutine RT_databases_IO(E,it)
  use drivers,        ONLY:l_elph_scatt
  use rt_ctl,         ONLY:RT_do_IO,ID,it_start
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk
- use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL,io_GF,io_OCCs,io_J
+ use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL,io_GF,io_CARRIERs,io_J
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:PP_redux_wait
- use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel
+ use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers
+ use interfaces,     ONLY:RT_carriers_object
  !
  implicit none
  !
@@ -39,14 +40,13 @@ subroutine RT_databases_IO(E,it)
  !
  ! Work Space
  !
- integer :: ik,io_G,io_J_and_P,io_occ,COM_,io_THETA
+ integer :: ik,io_G,io_J_and_P,io_carr,COM_,io_THETA
  !
  ! When the simulation has been restarted the first step (it==it_start)
  ! corresponds to the latest of the previous simulation. Therefore
  ! databases must not be written
  !
  if (it==it_start.and.it_start>1) return
- !
  !
  if (.not.RT_do_IO('J').and..not.RT_do_IO('G')) return
  !
@@ -63,12 +63,14 @@ subroutine RT_databases_IO(E,it)
  !
  ! Occupations
  !
- if (io_OCCs.and.RT_do_IO('OCCs')) then
+ if (io_CARRIERs.and.RT_do_IO('CARRIERS')) then
+   !
+   call RT_carriers_object(RT_carriers,WHAT='fill')
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
-   io_occ=io_RT_components('occupations',ID(6))
+   io_carr=io_RT_components('carriers',ID(6))
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(6))
-   io_occ=io_RT_components('occupations',ID(6))
+   io_carr=io_RT_components('carriers',ID(6))
    !
  endif
  !

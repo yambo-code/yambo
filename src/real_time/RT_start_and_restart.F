@@ -39,7 +39,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  use pars,           ONLY:SP,cI,cZERO,rZERO
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_is_libDFT,l_sc_ip,l_elph_scatt,l_elel_scatt
+ use drivers,        ONLY:l_sc_ip,l_elph_scatt,l_elel_scatt
  use com,            ONLY:msg
  use QP_m,           ONLY:QP_nk,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol,spin_occ
@@ -48,19 +48,19 @@ subroutine RT_start_and_restart(E,k,q,X)
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,  &
 &                         l_NE_with_fields,XC0_and_HARTREE0,RT_ibz_coo,&
-&                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,l_NE_simulate_Irredux,NE_i_time,&
+&                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
 &                         RIM_ibz_coo,RT_eh_en,G_MEM_steps,MEM_index
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,Ho,it_now
- use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE,io_and_Messaging_switch
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc,XC_potential_driver
- use parallel_m,     ONLY:PP_redux_wait,master_cpu
+ use parallel_m,     ONLY:PP_redux_wait
  use stderr,         ONLY:real2ch
  !
  implicit none
@@ -206,7 +206,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    io_G=io_RT_components('G',ID(5))
    !
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
-   io_OCCUPATIONS=io_RT_components('occupations',ID_OCCUPATIONS)
+   io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
    !
    if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(7))
@@ -219,7 +219,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    it_now=NE_i_time
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
-   io_OCCUPATIONS=io_RT_components('occupations',ID_OCCUPATIONS)
+   io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
    !
    do ik=1,RT_nk
      !

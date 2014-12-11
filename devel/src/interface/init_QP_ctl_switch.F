@@ -45,10 +45,4 @@ subroutine init_QP_ctl_switch(what)
    call initactivate(1,what//'fnQP_dn_Wc_E '//what//'fnQP_dn_Wc ')
  endif
  !
- ! GPL_EXCLUDE_START
- ! 
- call initactivate(1,'OCCTime')
- !
- ! GPL_EXCLUDE_END
- !
 end subroutine

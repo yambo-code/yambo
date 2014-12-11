@@ -42,7 +42,7 @@ subroutine RT_driver(E,X,k,q)
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
 &                         G_lesser_reference,rho_reference, &
 &                         NE_time,RT_update,&
-&                         l_Dynamics_is_over,MEM_index,G_MEM_steps,l_Debye_TBose_update,&
+&                         l_Dynamics_is_over,MEM_index,G_MEM_steps,&
 &                         dG_lesser,l_BGR,l_initial_equilibrium
  use plasma,          ONLY:Plasma_free,EH_gas
  use matrix_operate,  ONLY:DIAGO
@@ -283,18 +283,6 @@ subroutine RT_driver(E,X,k,q)
    ! Now calculate Energetics, current and other observables
    !=========================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,it_mem),on_the_fly_operators)
-   !
-   ! Update Bose Temp and Phonons distribution
-   !===========================================
-   !if (l_Debye_TBose_update) then
-   !  if (it==it_start) E_previous=real(on_the_fly_operators(5))
-   !  if (abs(nint(NE_time/FS2AUT)-(NE_time/FS2AUT))< RT_step/FS2AUT .and. &
-   !  &       nint(NE_time/FS2AUT)-(NE_time/FS2AUT) > 0. ) then
-   !    E_now=real(on_the_fly_operators(5))
-   !    call TEMPERATURE_Debye(E_previous-E_now)
-   !    E_previous=E_now
-   !  endif
-   !endif
    !
    if (l_NE_with_fields) call RT_propagate_fields(k,E,A_vecpot,A_vecpot_previous,NE_time,RT_step)
    !

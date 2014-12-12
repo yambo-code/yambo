@@ -21,7 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pti,k_pto,wki,wko,Vali,Valo,call_kind,l_riscale)
+subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pti,k_pto,wki,wko,&
+&                                    Vali,Valo,call_kind,l_rescale)
  !
  ! Interpolation with nearest neighbor method but averaging up to n_neigh neighbors
  ! The input values are known on the k_pti kgrid and there can be N_int quantities to
@@ -43,7 +44,7 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  real(SP),           intent(in) :: Vali(Nstates,N_int)
  real(SP),           intent(out):: Valo(Nb(1):Nb(2),Nko,n_sp_pol,N_int)
  character(3),       intent(in) :: call_kind
- logical,            intent(in) :: l_riscale
+ logical,            intent(in) :: l_rescale
  !
  ! Work Space
  !
@@ -95,7 +96,7 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
    !
  enddo
  !
- if(l_riscale) then
+ if(l_rescale) then
    toti=0._SP
    do i_state=1,Nstates
      iki=table(i_state,2)

@@ -47,10 +47,10 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  !
  ! Work Space
  !
- integer,parameter::n_pieces=20,max_n_of_dbs=10
- character(schlen)::ch,db_piece(n_pieces)
- type(QP_t)       ::qp_from_dbs(max_n_of_dbs)
- character(lchlen)::qp_msg,qp_db_name,dummy_db_name
+ integer,parameter:: n_pieces=20,max_n_of_dbs=10
+ character(schlen):: ch,db_piece(n_pieces)
+ type(QP_t)       :: qp_from_dbs(max_n_of_dbs)
+ character(lchlen):: qp_msg,qp_db_name,dummy_db_name
  integer          :: i1,i_sp,n_qp_db,i2
  logical          :: l_plan_todo_EWZI(5),& ! = ( E W Z INTERPOLATION/k INTERPOLATION/E )
 &                    QPs_DB,GFs_DB,DB_plan_todo_EWZ(max_n_of_dbs,3)
@@ -137,6 +137,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
        !
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=DUMP,ID=ID(n_qp_db))
        !
+       if (index(trim(dummy_db_name),'.RT_carriers')/=0) return
 #if defined _ELPH
        if (index(trim(dummy_db_name),'.QP')/=0.or.index(trim(dummy_db_name),'.G')/=0) then
          io_err=io_QP_and_GF(trim(dummy_db_name) ,qp_from_dbs(n_qp_db),ID(n_qp_db))

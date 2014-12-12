@@ -341,6 +341,37 @@ module real_time
  !
  contains
    !
+   subroutine RT_obj_alloc(RT)
+     type(RT_t)::RT
+     if(.not.associated(RT%kpt))          allocate(RT%kpt(RT%nk,3))
+     if(.not.associated(RT%k_weight))     allocate(RT%k_weight(RT%nk))
+     if(.not.associated(RT%table))        allocate(RT%table(RT%nstates,4))
+     if(.not.associated(RT%E_bare))       allocate(RT%E_bare(RT%nstates)) 
+     if(.not.associated(RT%f_bare))       allocate(RT%f_bare(RT%nstates))
+     if(.not.associated(RT%GAMMA_bare))   allocate(RT%GAMMA_bare(RT%nstates))
+     if(.not.associated(RT%delta_E))      allocate(RT%delta_E(RT%nstates))   
+     if(.not.associated(RT%delta_f))      allocate(RT%delta_f(RT%nstates))  
+     if(.not.associated(RT%delta_GAMMA))  allocate(RT%delta_GAMMA(RT%nstates)) 
+     if(.not.associated(RT%NEQ_Lifetime)) allocate(RT%NEQ_Lifetime(RT%nstates)) 
+   end subroutine
+   !
+   subroutine RT_obj_free(RT)
+     type(RT_t)::RT
+     RT%nk=0
+     RT%nb=0
+     RT%nstates=0
+     if(associated(RT%E_bare))       deallocate(RT%E_bare)
+     if(associated(RT%f_bare))       deallocate(RT%f_bare)
+     if(associated(RT%GAMMA_bare))   deallocate(RT%GAMMA_bare)
+     if(associated(RT%delta_E))      deallocate(RT%delta_E)
+     if(associated(RT%delta_f))      deallocate(RT%delta_f)
+     if(associated(RT%delta_GAMMA))  deallocate(RT%delta_GAMMA)
+     if(associated(RT%NEQ_Lifetime)) deallocate(RT%NEQ_Lifetime)
+     if(associated(RT%kpt))          deallocate(RT%kpt)
+     if(associated(RT%k_weight))     deallocate(RT%k_weight)
+     if(associated(RT%table))        deallocate(RT%table)
+   end subroutine
+   !
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,LP,schlen,cZERO

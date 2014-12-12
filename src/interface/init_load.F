@@ -235,10 +235,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
 #if defined _RT
  !
- call it('f',defs,'RT_COHSEX',  '[RT-CHX] load RT occupations for COHSEX calculation')
- call it('f',defs,'RT_BSE'   ,  '[RT-BSE] load RT occupations for BSE calculation')
- call it('f',defs,'RT_UpScr' ,  '[RT-BSE] Update also the screening in the BSE run')
- call it(defs,'RT_PP_time'   ,  '[RT-PP]  Choose the time for occupations loading',RT_PP_time,unit=Time_unit(1))
+ call it('f',defs,'RT_UpScr' ,  '[RT] Use the real-time carrier components to recalculate the screened interaction')
  !
 #endif
  !

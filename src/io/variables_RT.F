@@ -50,7 +50,7 @@ integer function variables_RT(ID,local_description,what)
  character(*)       ::what
  !
  integer               :: i1,i_desc,i_dummy,RT_diagonalization_steps
- logical               :: l_J,l_G,l_occupations,l_NE_with_fields_disk,l_MP,l_RT_diagonalize,l_RT_diamagnetic
+ logical               :: l_J,l_G,l_carriers,l_NE_with_fields_disk,l_MP,l_RT_diagonalize,l_RT_diamagnetic
  real(SP)              :: RT_life_interp_decay_time
  character(lchlen)     :: ch
  !
@@ -60,7 +60,7 @@ integer function variables_RT(ID,local_description,what)
  !
  l_J           = what=="J_and_P"
  l_G           = what=="G"
- l_occupations = what=="occupations"
+ l_carriers    = what=="carriers"
  !
  i_desc=0
  local_description=' '
@@ -113,9 +113,9 @@ integer function variables_RT(ID,local_description,what)
 &  DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- if(.not.any((/l_J,l_G,l_occupations/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+ if(.not.any((/l_J,l_G,l_carriers/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
- if(any((/l_J,l_G,l_occupations/))) then
+ if(any((/l_J,l_G,l_carriers/))) then
    !
    !
    ! RT_DYNAMICS
@@ -184,7 +184,7 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,I0=RT_diagonalization_steps,&
 &    VAR=' [RT] Diagonalization steps      :',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
-   if (l_J.or.l_occupations) then
+   if (l_J.or.l_carriers) then
      i_desc=i_desc+1
      call io_elemental(ID,DB_I0=RT_IO_steps_DB,I0=RT_IO_JPO_steps,&
 &      VAR=' [RT] IO steps                   :',CHECK=.true.,OP=(/"=="/),&

@@ -1,0 +1,186 @@
+!
+!        Copyright (C) 2000-2014 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine RT_apply(bands,E,K,what,COM_)
+ !
+ use drivers,        ONLY:l_elel_corr
+ use pars,           ONLY:schlen,SP
+ use stderr,         ONLY:string_split,real2ch
+ use electrons,      ONLY:levels,n_sp_pol
+ use R_lattice,      ONLY:bz_samp,nkibz
+ use QP_m,           ONLY:QP_ctl_db
+ use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control
+ use units,          ONLY:FS2AUT,PS2AUT,HA2EV
+ use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free
+ use rt_ctl,         ONLY:RT_IO_JPO_steps
+ use com,            ONLY:error,msg
+ !
+ implicit none
+ !
+ integer      :: bands(2)
+ type(levels) :: E
+ type(bz_samp):: K
+ character(*) :: what ! X,K,G
+ logical      :: COM_
+ !
+ ! Work space
+ !
+ integer               :: I_id,i1,io_err,ID,i2,nb(2),ik,nkibz_save
+ real(SP)              :: Time,df_Max,dE_Max,N_carriers
+ integer,parameter     :: n_pieces=10
+ integer, external     :: io_RT_components
+ character(schlen)     :: db_piece(n_pieces),db_name,T_unit
+ logical               :: l_E,l_f,COM_done,l_elel_corr_save
+ real(SP), allocatable :: r_dummy(:,:,:)
+ ! 
+ ! Kind
+ !====== 
+ !
+ COM_done=.FALSE.
+ ! 
+ if (what=="X")  I_id=1
+ if (what=="K")  I_id=2
+ if (what=="G")  I_id=3
+ !
+ l_E=.FALSE.
+ l_f=.FALSE.
+ !
+ ! First check the DB file & Time
+ !================================
+ !
+ call string_split(QP_ctl_db(I_id),db_piece)
+ !
+ T_unit='fs'
+ !
+ do i1=1,n_pieces
+   if (trim(db_piece(i1))=="<") then
+     db_name=db_piece(i1+1)
+     if (len_trim(db_name)==0) return
+     do i2=1,i1-1
+       if (trim(db_piece(i2))=="E") l_E=.TRUE.
+       if (trim(db_piece(i2))=="f") l_f=.TRUE.
+     enddo
+   endif
+   if (trim(db_piece(i1))=="@") then
+     read (db_piece(i1+1),*) Time
+     if (i1+2<=n_pieces) read (db_piece(i1+2),*) T_unit
+   endif
+ enddo
+ !
+ Time=Time*FS2AUT
+ if (trim(T_unit)=='ps') then
+   Time=Time*PS2AUT
+ endif
+ !
+ l_elel_corr_save=l_elel_corr
+ nkibz_save      =nkibz
+ ! 
+ ! CARRIERS I/O (I)
+ !====================
+ ! 
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) 
+ io_err=io_RT_components(trim(db_name),ID)
+ !
+ if (io_err<0) call error ('Occupations database '//trim(db_name)//' not found')
+ !
+ ! CARRIERS I/O (II)
+ !======================
+ ! 
+ ! NE_time=(NE_i_time-1)*RT_step but I/O only when NE_i_time= N * RT_IO_steps
+ !
+ NE_i_time= (Time+RT_step)/RT_step
+ NE_i_time= NE_i_time-mod(NE_i_time-1,RT_IO_JPO_steps)
+ !
+ if(NE_i_time>0) then
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID)
+   io_err=io_RT_components(trim(db_name),ID)
+ endif
+ !
+ ! Interpolation
+ !===============
+ !
+ nb(1)=max(bands(1),RT_carriers%nb(1))
+ nb(2)=min(bands(2),RT_carriers%nb(2))
+ !
+ if (l_f) then
+   !
+   allocate(r_dummy(RT_carriers%nb(1):RT_carriers%nb(2),K%nibz,n_sp_pol))
+   call Nearest_kpt_interpolation(RT_carriers%nk,K%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                 RT_carriers%kpt,K%pt,RT_carriers%k_weight,K%weights,RT_carriers%delta_f,r_dummy,&
+&                                 ' '//what//' ',.TRUE.)
+   !
+   df_Max=maxval(abs(r_dummy))
+   N_carriers=0._SP
+   do ik=1,K%nibz
+     N_carriers=N_carriers+sum(abs(r_dummy(:,ik,:)))*K%weights(ik)/2._SP
+   enddo
+   !
+   E%nbm=max(RT_carriers%nb(2)  ,E%nbm)
+   E%nbf=min(RT_carriers%nb(1)-1,E%nbf)
+   E%f( nb(1):nb(2),:,:)=E%f(nb(1):nb(2),:,:)+r_dummy(nb(1):nb(2),:,:)
+   !
+   deallocate(r_dummy)
+   !
+ endif
+ !
+ if (l_E) then
+   !
+   allocate(r_dummy(RT_carriers%nb(1):RT_carriers%nb(2),K%nibz,n_sp_pol))
+   call Nearest_kpt_interpolation(RT_carriers%nk,K%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                 RT_carriers%kpt,K%pt,RT_carriers%k_weight,K%weights,RT_carriers%delta_E,r_dummy,&
+&                                 ' '//what//' ',.TRUE.)
+   !
+   dE_Max=maxval(abs(r_dummy))
+   !
+   E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+r_dummy(nb(1):nb(2),:,:)
+   !
+   deallocate(r_dummy)
+   !
+ endif
+ !
+ call RT_obj_free(RT_carriers)
+ !
+ nkibz      =nkibz_save
+ l_elel_corr=l_elel_corr_save
+ !
+ if (COM_) then
+   !
+   call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(Time/FS2AUT))//' fs')
+   !
+   call msg('nr','Updated Carrier components')
+   call msg('rn','==========================')
+   call msg('r','[RT] Reference Time                                      [fs]: ',Time/FS2AUT)
+   call msg('r',  '[RT] Bands range                                             : ', (/nb(1),nb(2)/)) 
+   if (l_f) call msg('r',  '[RT] Max change in occupations / N of carriers per cell      : ',&
+&                          (/df_Max,N_carriers/)) 
+   if (l_E) call msg('r',  '[RT] Max change in energt levels                         [ev]: ',&
+&                          dE_Max*HA2EV) 
+   call msg('rn',  '[RT] N full bands, N metallic bands                          : ', (/E%nbf,E%nbm/)) 
+   !
+   call REPORT_OCCUPATIONS(E)
+   !
+   COM_=.TRUE.
+   !
+ endif
+ !
+end subroutine

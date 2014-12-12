@@ -47,11 +47,12 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !
  ! Work Space
  !
- logical           :: l_apply_QP_corrections, l_apply_RT_corrections, l_rt_up_scr, &
-&                     l_rt_cohsex, l_rt_chi, l_rt_bse, l_dynamical
- integer           :: X_kind,QP_bands(2)
+ logical       ::l_apply_QP_corrections,l_apply_RT_corrections,l_rt_up_scr,l_dynamical,COM_done
+ integer       ::X_kind,QP_bands(2)
  !
  call section('*','External corrections')
+ !
+ COM_done=.FALSE.
  !
  ! 1) Screening
  ! ==============
@@ -72,11 +73,10 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  if (l_apply_QP_corrections) call QP_apply(X(X_kind)%ib,Xen,Xk,"X",msg_fmt='s')
 #if defined _RT
  call parser('RT_UpScr',l_rt_up_scr)
- call parser('RT_CHI'  ,l_rt_chi)
  l_apply_RT_corrections=l_apply_QP_corrections.and.        &
 &    (     (l_rt_up_scr.and.l_em1s.and..not.l_real_time)   &
-&      .or.(l_rt_chi.and.(l_optics.and.l_chi) )          )
- if (l_apply_RT_corrections) call RT_apply(X(X_kind)%ib,Xen,Xk,"CHI")
+&      .or.(l_optics.and.l_chi)          )
+ if (l_apply_RT_corrections) call RT_apply(X(X_kind)%ib,Xen,Xk,"X",.not.COM_done)
 #endif
  !
  ! 2) BSE
@@ -84,9 +84,8 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  l_apply_QP_corrections=(l_optics.and.l_bse.and..not.l_ppa).or.l_bss
  if (l_apply_QP_corrections) call QP_apply(BS_bands,Ken,Xk,"K",msg_fmt='s')
 #if defined _RT
- call parser('RT_BSE',l_rt_bse)
- l_apply_RT_corrections=l_apply_QP_corrections.and.l_rt_bse.and..not.l_real_time
- if (l_apply_RT_corrections) call RT_apply(BS_bands,Ken,Xk,"BSE")
+ l_apply_RT_corrections=l_apply_QP_corrections.and..not.l_real_time
+ if (l_apply_RT_corrections) call RT_apply(BS_bands,Ken,Xk,"K",.not.COM_done)
 #endif
  !
  ! 3) Green's Function used to compute QP corrections
@@ -98,11 +97,10 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  if (l_gw0.and.l_elph_corr) call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt='s')
 #endif
 #if defined _RT
- call parser('RT_COHSEX',l_rt_cohsex)
- l_apply_RT_corrections=(l_cohsex.and.l_rt_cohsex)
- if (l_apply_RT_corrections) call RT_apply(QP_bands,en,Xk,"QP ")
+ l_apply_RT_corrections=l_cohsex
+ if (l_apply_RT_corrections) call RT_apply(QP_bands,en,Xk,"G",.not.COM_done)
 #endif
  !
- l_rt_occ_in_use=l_rt_bse .or. l_rt_cohsex .or. l_rt_up_scr
+ !l_rt_carriers_in_use=
  !
 end subroutine

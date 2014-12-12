@@ -83,7 +83,8 @@ E2YLIBS      = external_c parallel modules parser communicate linear_algebra com
 #
 YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface interpolate pol_function bse
 YPPSCLIBS    = $(YPPLIBS) sc
-YPPRTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface interpolate pol_function bse sc real_time
+YPPRTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
+               interpolate pol_function bse sc real_time
 YPPSURFLIBS  = $(BASIC_LIBS) surf_modules bz_ops qp_control setup interface interpolate surf pol_function bse
 YDBLIBS      = $(BASIC_LIBS) 
 
@@ -275,4 +276,4 @@ define conf_clean
  rm -f config.status config.log
  rm -fr autom4te.cache
  echo "[CLEAN] Autoconf files ... done" 
-endeqp_control
+endef

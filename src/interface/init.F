@@ -556,10 +556,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_alda_fxc) call initactivate(1,'FxcGRLc')
    if (l_lrc_fxc)  call initactivate(1,'LRC_alpha LRC_beta')
    !
-#if defined _RT
-   call initactivate(1,'RT_CHI RT_PP_time')
-#endif
-   !
  endif
  !
  ! Optics(not bse) nor GW (no PP)
@@ -653,7 +649,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'XTermKind'//'Xs')
    call initactivate(1,'XTermEn'//'Xs')
 #if defined _RT
-   call initactivate(1,'RT_UpScr RT_PP_time')
+   call initactivate(1,'RT_UpScr')
 #endif
  endif
  !
@@ -673,7 +669,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,'XTermKind'//'Xs')
      call initactivate(1,'XTermEn'//'Xs')
 #if defined _RT
-     call initactivate(1,'RT_COHSEX RT_PP_time')
+     call initactivate(1,'RT_UpScr')
 #endif
    endif
  endif

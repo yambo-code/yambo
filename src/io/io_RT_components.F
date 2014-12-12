@@ -23,9 +23,9 @@
 !
 integer function io_RT_components(what,ID)
  !
- ! what can be E WF V J_and_P G
+ ! What can be E WF V J_and_P G
  !
- use pars,           ONLY:SP,lchlen
+ use pars,           ONLY:SP,lchlen,schlen
  use drivers,        ONLY:l_elph_scatt
  use R_lattice,      ONLY:nkibz,nqbz
  use electrons,      ONLY:spin_occ
@@ -41,7 +41,7 @@ integer function io_RT_components(what,ID)
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_delta0_occupations,&
 &                         RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         l_NE_with_fields,NE_steps,RT_P,RT_nk, &
-&                         dG_lesser,RT_ind_J,RT_carriers,&
+&                         dG_lesser,RT_ind_J,RT_carriers,RT_obj_alloc,&
 &                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight_RT
  use ELPH,           ONLY:ph_modes,elph_branches
  use rt_ctl,         ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_IO
@@ -59,10 +59,11 @@ integer function io_RT_components(what,ID)
  ! Work Space
  !
  integer, external     :: variables_SC,variables_RT
- character(lchlen)     :: local_description(100),db_name
+ character(lchlen)     :: local_description(100),db_name,db_prefix
+ character(schlen)     :: local_what
  !
  real(SP), allocatable :: TMP_matrix(:,:,:)
- integer               :: ik,ib,i_spin,i1,file_number,i_time,i_time_range(2)
+ integer               :: ik,ib,i_spin,i1,file_number,i_time,i_time_range(2),db_type
  logical               :: l_V,l_IMPOSE_SN,CHECK_,l_G,l_J_and_P,l_T_EL,l_THETA,l_REF,l_carriers
  real(SP)              :: A_vecpot_disk(3,3,2)
  !
@@ -76,7 +77,15 @@ integer function io_RT_components(what,ID)
  l_G          =what=="G"
  l_REF        =what=="REF"
  !
- db_name=what
+ db_name="RT_"//trim(what)
+ local_what=what
+ db_type=2
+ if (.not.any((/l_carriers,l_THETA,l_J_and_P,l_G,l_REF/))) then
+   db_name=trim(what)
+   local_what='carriers'
+   l_carriers=.TRUE.
+   db_type=-2
+ endif
  if (l_REF) db_name="reference_components"
  !
  ! When the db.scV is used for single non-SC shot the number
@@ -92,14 +101,14 @@ integer function io_RT_components(what,ID)
  !
  if (l_J_and_P.or.l_carriers) then
    if (io_sec(ID,1)==1) then 
-     io_RT_components=io_connect(desc="RT_"//trim(db_name),type=2,ID=ID)
+     io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
    else
      if (RT_do_IO('J')) then
-       if (l_J_and_P)     io_RT_components=io_connect(desc="RT_"//trim(db_name)//"_Time_"//trim(intc(file_number)),type=2,ID=ID)
+       if (l_J_and_P)     io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(intc(file_number)),type=db_type,ID=ID)
        if (l_carriers) then
-         io_RT_components=io_connect(desc="RT_"//trim(db_name)//"_Time_"//trim(intc(file_number)),type=2,ID=ID)
+         io_RT_components=io_connect(desc=trim(db_name)//"_Time_"//trim(intc(file_number)),type=db_type,ID=ID)
          if (read_is_on(ID).and.io_RT_components==IO_NO_DATABASE) then
-           io_RT_components=io_connect(desc="RT_"//trim(db_name),type=2,ID=ID)
+           io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
          endif
        endif
      else
@@ -117,19 +126,22 @@ integer function io_RT_components(what,ID)
      call io_reset(ID)
      goto 2
    endif
+   !
  endif
  !
  if (l_G) then
+   !
    if (.not.ver_is_gt_or_eq(ID,revision=944).or.G_MEM_steps==2.or.io_sec(ID,1)==1) then
-     io_RT_components=io_connect(desc="RT_"//trim(db_name),type=2,ID=ID)
+     io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
    else
-     io_RT_components=io_connect(desc="RT_"//trim(db_name)//"_"//trim(intc(file_number)),type=2,ID=ID)
+     io_RT_components=io_connect(desc=trim(db_name)//"_"//trim(intc(file_number)),type=db_type,ID=ID)
    endif
+   !
  endif
  !
- if (l_THETA) io_RT_components=io_connect(desc="RT_THETA",type=2,ID=ID)
+ if (l_THETA) io_RT_components=io_connect(desc="RT_THETA",type=db_type,ID=ID)
  !
- if (l_REF.and.io_sec(ID,1)==1) io_RT_components=io_connect(desc="RT_"//trim(db_name),type=2,ID=ID)
+ if (l_REF.and.io_sec(ID,1)==1) io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
  !
  if (io_RT_components/=0) goto 1
  !
@@ -160,10 +172,10 @@ integer function io_RT_components(what,ID)
    !
    if (io_RT_components/=0) goto 1
    !
-   io_RT_components=variables_SC(ID,local_description,what)
+   io_RT_components=variables_SC(ID,local_description,trim(local_what))
    if (io_RT_components/=0) goto 1
    !
-   io_RT_components=variables_RT(ID,local_description,what)
+   io_RT_components=variables_RT(ID,local_description,trim(local_what))
    if (io_RT_components/=0) goto 1
    !
    if (l_G.or.l_carriers.or.l_THETA) then
@@ -187,9 +199,12 @@ integer function io_RT_components(what,ID)
      call io_elemental(ID,I1=RT_carriers%nb)
      call io_elemental(ID,I0=RT_carriers%nstates)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     call io_bulk(ID,VAR="RT_kpt",VAR_SZ=(/RT_nk,3/))
+     !
+     if (read_is_on(ID)) call RT_obj_alloc(RT_carriers)
+     !
+     call io_bulk(ID,VAR="RT_kpt",VAR_SZ=(/RT_carriers%nk,3/))
      call io_bulk(ID,R2=RT_carriers%kpt)
-     call io_bulk(ID,VAR="RT_k_weight",VAR_SZ=(/RT_nk/))
+     call io_bulk(ID,VAR="RT_k_weight",VAR_SZ=(/RT_carriers%nk/))
      call io_bulk(ID,R1=RT_carriers%k_weight)
      call io_bulk(ID,VAR="RT_table",VAR_SZ=(/RT_carriers%nstates,4/))
      call io_bulk(ID,I2=RT_carriers%table)
@@ -230,8 +245,12 @@ integer function io_RT_components(what,ID)
    !
    if (io_sec(ID,1)>1) then
      !
-     call io_bulk(ID,VAR="RT_occupations_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-     call io_bulk(ID,R2=RT_delta0_occupations)
+     call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="input_output")
+     !
+     if (allocated(RT_delta0_occupations)) then
+       call io_bulk(ID,VAR="RT_occupations_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+       call io_bulk(ID,R2=RT_delta0_occupations)
+     endif
      !
      if (allocated(E_P_Hole_lifetime)) then
        !
@@ -258,8 +277,6 @@ integer function io_RT_components(what,ID)
        call io_bulk(ID,R2=E_E_Electron_lifetime)
        !
      endif
-     !
-     call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="input_output")
      !
    endif
    !

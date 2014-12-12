@@ -1,4 +1,4 @@
 objs = RT_output.o RT_OCC_LIFE_and_REF_IO.o RT_databases_IO.o RT_variables_load.o \
        RT_observables.o RT_mean_carrier_lifetimes.o RT_average_operator.o RT_occupations_FIT.o \
        RT_carriers_object.o RT_occ_check_and_load_ref.o RT_k_grid.o RT_check_RIM.o \
-       OCCUPATIONS_out_of_equilibrium.o
+       RT_apply.o

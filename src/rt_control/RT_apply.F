@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_out_of_equilibrium(bands_limit,En,Xk,call_kind)
+subroutine RT_apply(bands_limit,En,Xk,call_kind)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_corr

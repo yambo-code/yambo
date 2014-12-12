@@ -76,9 +76,8 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  l_apply_RT_corrections=l_apply_QP_corrections.and.        &
 &    (     (l_rt_up_scr.and.l_em1s.and..not.l_real_time)   &
 &      .or.(l_rt_chi.and.(l_optics.and.l_chi) )          )
- if (l_apply_RT_corrections) call OCCUPATIONS_out_of_equilibrium(X(X_kind)%ib,Xen,Xk,"CHI")
+ if (l_apply_RT_corrections) call RT_apply(X(X_kind)%ib,Xen,Xk,"CHI")
 #endif
- !
  !
  ! 2) BSE
  ! ========
@@ -87,10 +86,8 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
 #if defined _RT
  call parser('RT_BSE',l_rt_bse)
  l_apply_RT_corrections=l_apply_QP_corrections.and.l_rt_bse.and..not.l_real_time
- if (l_apply_RT_corrections) call OCCUPATIONS_out_of_equilibrium(BS_bands,Ken,Xk,"BSE")
+ if (l_apply_RT_corrections) call RT_apply(BS_bands,Ken,Xk,"BSE")
 #endif
- !
- !
  !
  ! 3) Green's Function used to compute QP corrections
  ! ====================================================
@@ -103,7 +100,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
 #if defined _RT
  call parser('RT_COHSEX',l_rt_cohsex)
  l_apply_RT_corrections=(l_cohsex.and.l_rt_cohsex)
- if (l_apply_RT_corrections) call OCCUPATIONS_out_of_equilibrium(QP_bands,en,Xk,"QP ")
+ if (l_apply_RT_corrections) call RT_apply(QP_bands,en,Xk,"QP ")
 #endif
  !
  l_rt_occ_in_use=l_rt_bse .or. l_rt_cohsex .or. l_rt_up_scr

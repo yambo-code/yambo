@@ -39,7 +39,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     GWo_SC_done,GWo_iterations,&
 &                     COHSEX_use_empties,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,On_Mass_Shell_approx,&
-&                     Vnlxc_kind,Vxc_kind,l_extended_output,OCC_ctl,OCC_T_ref,l_GW_terminator,&
+&                     Vnlxc_kind,Vxc_kind,l_extended_output,l_GW_terminator,&
 &                     GW_terminator_E
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
@@ -89,7 +89,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #if defined _RT || defined _YPP_RT
  use rt_ctl,     ONLY:RT_IO_time
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,                                  &
-&                     l_Debye_TBose_update,RT_life_interp_KIND,RT_life_interp_steps,      &
+&                     RT_life_interp_KIND,RT_life_interp_steps,      &
 &                     l_RT_induced_field,Gr_kind,two_alpha,l_RT_CCA_Kernel,               &
 &                     RT_is_dephased,RAD_LifeTime,Phase_LifeTime,                         &
 &                     NE_tot_time,G_MEM_steps,NE_MEM_treshold,EE_prefactor,EP_prefactor,EP_abs_prefactor,&
@@ -417,11 +417,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  forall (i1=1:3,i2=1:2) QP_ctl_Wv(i1,:,i2)=0.
  forall (i1=1:3,i2=1:2) QP_ctl_Z(i1,i2)=(1.,0.)
  !
- ! Occupations control
- !
- OCC_ctl="none"
- OCC_T_ref=0.
- !
  ! BS/BSS
  !
  BS_n_g_W=1
@@ -532,7 +527,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! RT dynamics 
  !
  l_RT_CCA_Kernel=.FALSE.
- l_Debye_TBose_update=.FALSE.
  !
  ! RT current 
  !

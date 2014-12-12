@@ -35,7 +35,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,GW_terminator_E,GW_terminator_Kind,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
-&                        SC_E_threshold,QP_dSc_delta,QP_G_Zoom_treshold,OCC_T_ref,QP_QED_ng
+&                        SC_E_threshold,QP_dSc_delta,QP_G_Zoom_treshold,QP_QED_ng
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
@@ -386,7 +386,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_treshold,verb_level=V_real_time)
  !call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes',verb_level=V_real_time)
- !call it('f',defs,'UpdtDebyeT','[RT] Update Bose Temp assuming phonons are always at equilibrium',verb_level=V_real_time)
  call it('f',defs,'RT_T_evol',   '[RT] Use a complete Time evolution instead of the CCA',verb_level=V_real_time)
  !
  ! External fields or Manual pump
@@ -447,10 +446,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call init_QP_ctl_load(defs,3)
  !
  ! GPL_EXCLUDE_START
- !
- ! Occupations (NEGF) loader
- !
- call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_ref,verb_level=V_real_time,unit=Time_unit(1))
  !
  ! F_xc
  !

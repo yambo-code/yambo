@@ -63,15 +63,15 @@ INTERFCS = a2y p2y e2y c2y
 #
 BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate linear_algebra common io stop_and_restart wf_and_fft 
 
-MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
+MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface \
                interpolate tddft pol_function qp acfdt bse
 
-PJ_SURFLIBS  = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_ctl surf \
+PJ_SURFLIBS  = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_control surf \
                setup interface tddft pol_function qp acfdt bse
 
 PJ_SCLIBS    = $(MAIN_LIBS) collisions sc
 
-PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops rt_ctl qp_ctl setup interface \
+PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
                interpolate tddft pol_function qp acfdt bse collisions sc real_time
 #
 # Interfaces
@@ -81,10 +81,10 @@ E2YLIBS      = external_c parallel modules parser communicate linear_algebra com
 #
 # YPP
 #
-YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface interpolate pol_function bse
+YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface interpolate pol_function bse
 YPPSCLIBS    = $(YPPLIBS) sc
-YPPRTLIBS    = $(BASIC_LIBS) coulomb bz_ops rt_ctl qp_ctl setup interface interpolate pol_function bse sc real_time
-YPPSURFLIBS  = $(BASIC_LIBS) surf_modules bz_ops qp_ctl setup interface interpolate surf pol_function bse
+YPPRTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface interpolate pol_function bse sc real_time
+YPPSURFLIBS  = $(BASIC_LIBS) surf_modules bz_ops qp_control setup interface interpolate surf pol_function bse
 YDBLIBS      = $(BASIC_LIBS) 
 
 nothing: 
@@ -275,4 +275,4 @@ define conf_clean
  rm -f config.status config.log
  rm -fr autom4te.cache
  echo "[CLEAN] Autoconf files ... done" 
-endef
+endeqp_control

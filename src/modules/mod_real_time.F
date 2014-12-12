@@ -144,7 +144,6 @@ module real_time
  !----------------
  !
  logical     :: l_RT_CCA_Kernel
- logical     :: l_Debye_TBose_update
  !
  ! Manual pump
  !

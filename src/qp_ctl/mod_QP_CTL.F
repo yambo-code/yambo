@@ -24,7 +24,6 @@
 module QP_CTL_m
  !
  use pars,  ONLY:SP,schlen
- use units, ONLY:HA2EV
  !
  implicit none
  !

@@ -49,6 +49,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! This convention about sign is imposed (when reading DB's made at finite Temperature)
  ! in QP_apply_global_stretch and  QP_apply_DB_interpolation
  !
+ use units,         ONLY:HA2EV
  use pars,          ONLY:SP,schlen,IP
  use drivers,       ONLY:l_rt_occ_in_use,l_sc_run
  use memory_m,      ONLY:mem_est
@@ -65,6 +66,8 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
 &                            X_kind,X_xc_functional,QP_DB_kind,SE_NONE
  use interfaces,    ONLY:OCCUPATIONS_Gaps
  use QP_CTL_m,      ONLY:QP_ctl_t,reset_QP_ctl
+ !
+ implicit none
  !
  integer       ::band_range(2)
  type(levels)  ::en

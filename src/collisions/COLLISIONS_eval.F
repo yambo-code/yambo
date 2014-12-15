@@ -32,7 +32,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use QP_m,          ONLY:QP_nb,QP_n_states,QP_n_G_bands,QP_state
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:SC_HF,SC_COHSEX,WF_kind,WF_xc_functional
- use SC,            ONLY:SC_bands,SC_potential
+ use SC,            ONLY:SC_bands
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
  use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,nGW_NEQ_collisions,&
 &                        HF_collisions,COHSEX_collisions,GW_NEQ_collisions,nCOHSEX_collisions

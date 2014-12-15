@@ -26,6 +26,7 @@ subroutine RT_apply(bands,E,K,what,COM_)
  use drivers,        ONLY:l_elel_corr
  use pars,           ONLY:schlen,SP
  use stderr,         ONLY:string_split,real2ch
+ use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_ctl_db
@@ -50,7 +51,7 @@ subroutine RT_apply(bands,E,K,what,COM_)
  integer,parameter     :: n_pieces=10
  integer, external     :: io_RT_components
  character(schlen)     :: db_piece(n_pieces),db_name,T_unit
- logical               :: l_E,l_f,COM_done,l_elel_corr_save
+ logical               :: l_E,l_f,COM_done,l_elel_corr_save,is_def
  real(SP), allocatable :: r_dummy(:,:,:)
  ! 
  ! Kind
@@ -61,6 +62,10 @@ subroutine RT_apply(bands,E,K,what,COM_)
  if (what=="X")  I_id=1
  if (what=="K")  I_id=2
  if (what=="G")  I_id=3
+ !
+ call parser(what//'fnQPdb',is_def)
+ !
+ if (.not.is_def) return
  !
  l_E=.FALSE.
  l_f=.FALSE.
@@ -108,7 +113,7 @@ subroutine RT_apply(bands,E,K,what,COM_)
  ! 
  ! NE_time=(NE_i_time-1)*RT_step but I/O only when NE_i_time= N * RT_IO_steps
  !
- NE_i_time= (Time+RT_step)/RT_step
+ NE_i_time= nint(Time/RT_step)+1
  NE_i_time= NE_i_time-mod(NE_i_time-1,RT_IO_JPO_steps)
  !
  if(NE_i_time>0) then

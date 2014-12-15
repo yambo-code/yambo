@@ -307,6 +307,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! BGR
    !=======================================
+   call RT_BGR(dG_lesser(:,:,:,it_mem),E,k)
    call RT_output('BGR',TIME=NE_time/FS2AUT)
    !
    ! Eval and Print Mean Carrier Lifetimes

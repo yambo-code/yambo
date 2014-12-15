@@ -39,7 +39,7 @@ subroutine RT_BGR(G,E,k)
  use real_time,      ONLY:G_lesser_reference,l_initial_equilibrium,REF_V_xc_sc,BGR,&
 &                         REF_V_hartree_sc,REF_QP_Vnl_xc,BGR_Hartree,BGR_V_xc,BGR_Self_Energy,&
 &                         l_RT_uses_E_RIM,RIM_ibz_coo,E_reference,RT_nk,RT_ibz_coo,&
-&                         eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_all2ibz,l_BGR
+&                         eval_HARTREE,eval_DFT,RT_ibz_coo,RT_all2ibz,l_BGR
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait
@@ -140,7 +140,7 @@ subroutine RT_BGR(G,E,k)
        G_cohsex(ib,ib,ik)=(0._SP,1._SP)*(E%f(ib,ik,1)-1.)
        !
        if (ib>=SC_bands(1).and..not.l_initial_equilibrium) then
-         do ibp=1,SC_bands(2)
+         do ibp=SC_bands(1),SC_bands(2)
            !
            G_hf(ib,ibp,ik)    =G(ib,ibp,ik_ref)+G_lesser_reference(ib,ibp,ik_ref)
            !
@@ -177,9 +177,7 @@ subroutine RT_BGR(G,E,k)
    !
  endif
  !
- if (l_initial_equilibrium) then
-   !
- else
+ if (.not.l_initial_equilibrium) then
    !
    if (l_BGR) then
      !
@@ -192,10 +190,10 @@ subroutine RT_BGR(G,E,k)
        !
        do ib=SC_bands(1),SC_bands(2)
          !
-         deltaE=BGR_Hartree(ib,ik_ibz,1)+BGR_V_xc(ib,ik,1)+BGR_Self_Energy(ib,ik_ibz,1)
+         deltaE=BGR_Hartree(ib,ik_ibz,1)+BGR_V_xc(ib,ik_ibz,1)+BGR_Self_Energy(ib,ik_ibz,1)
          !
          if (     l_RT_uses_E_RIM) E%E_RIM(ib,ik_RIM,1)=E_reference%E_RIM(ib,ik_RIM,1)+deltaE
-         if (.not.l_RT_uses_E_RIM) E%E(ib,ik,1)=E_reference%E(ib,ik,1)+deltaE
+         if (.not.l_RT_uses_E_RIM) E%E(ib,ik_ibz,1)=E_reference%E(ib,ik_ibz,1)+deltaE
          !
        enddo
        !

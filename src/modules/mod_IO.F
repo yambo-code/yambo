@@ -171,7 +171,7 @@ module IO_m
      integer,optional :: version(3),revision
    end function
    !
-   subroutine io_and_Messaging_switch(what,CONDITION)
+   subroutine IO_and_Messaging_switch(what,CONDITION)
      character(*)      :: what
      logical, optional :: CONDITION
    end subroutine

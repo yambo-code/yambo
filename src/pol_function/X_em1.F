@@ -35,7 +35,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP,&
-&                        io_and_Messaging_switch,io_RESPONSE
+&                        IO_and_Messaging_switch,io_RESPONSE
  use com,           ONLY:depth
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
@@ -196,7 +196,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
-   call io_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
+   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    !
    if ( (iq==X%iq(1).and..not.l_life) .or. (iq==1.and.l_life) ) then
      !

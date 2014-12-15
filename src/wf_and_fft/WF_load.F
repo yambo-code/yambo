@@ -40,7 +40,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free,WAVEs,states_to_load
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
-&                        io_fragmented, io_netcdf_support, RD_CL,DUMP,io_and_Messaging_switch
+&                        io_fragmented, io_netcdf_support, RD_CL,DUMP,IO_and_Messaging_switch
 #if defined _SC
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
@@ -170,7 +170,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      free_and_alloc=impose_free_and_alloc
      if (free_and_alloc) QUIET_alloc=.FALSE.
    endif
-   if (QUIET_alloc) call io_and_Messaging_switch("-report -log")
+   if (QUIET_alloc) call IO_and_Messaging_switch("-report -log")
  endif
  !
  ! First WF_free then fft_setup.
@@ -415,7 +415,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 #endif
  !
  if (.not.wf_norm_test) then
-   if (QUIET_alloc) call io_and_Messaging_switch("+report +log ")
+   if (QUIET_alloc) call IO_and_Messaging_switch("+report +log ")
    return
  endif
  !
@@ -443,7 +443,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  wf_norm_test=.false.
  call msg('rn','[WF loader] Normalization (few states)  min/max  :',(/mndp,mxdp/))
  !
- if (QUIET_alloc) call io_and_Messaging_switch("+report +log ")
+ if (QUIET_alloc) call IO_and_Messaging_switch("+report +log ")
  !
  contains
    !

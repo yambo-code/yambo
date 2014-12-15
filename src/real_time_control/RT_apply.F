@@ -23,7 +23,7 @@
 !
 subroutine RT_apply(bands,E,K,what,COM_)
  !
- use drivers,        ONLY:l_elel_corr
+ use drivers,        ONLY:l_elel_corr,l_rt_carriers_in_use
  use pars,           ONLY:schlen,SP
  use stderr,         ONLY:string_split,real2ch
  use parser_m,       ONLY:parser
@@ -107,6 +107,8 @@ subroutine RT_apply(bands,E,K,what,COM_)
  io_err=io_RT_components(trim(db_name),ID)
  !
  if (io_err<0) call error ('Occupations database '//trim(db_name)//' not found')
+ !
+ if (io_err==0) l_rt_carriers_in_use=.TRUE.
  !
  ! CARRIERS I/O (II)
  !======================

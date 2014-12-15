@@ -45,7 +45,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use X_m,           ONLY:X_t,X_poles,DIP_q_dot_iR,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM,&
 &                        X_terminator
- use IO_m,          ONLY:io_and_Messaging_switch
+ use IO_m,          ONLY:IO_and_Messaging_switch
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -94,14 +94,14 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    ! But this means that only a fraction of the dipoles is actually written on disk.
    ! To make all dipoles I/O possible I temporarely swicth on the IO for all q=1 cpu's.
    !
-   if (l_em1s) call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+   if (l_em1s) call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
    call DIPOLE_driver(Xen, Xk, X, X%q0)
    call X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
    call OPENMP_set_threads(n_threads_in=n_threads_X)
    !
-   if (l_em1s) call io_and_Messaging_switch("+io_out",PAR_COM_Q_INDEX%my_CHAIN==1)
+   if (l_em1s) call IO_and_Messaging_switch("+io_out",PAR_COM_Q_INDEX%my_CHAIN==1)
    !
  endif
  !

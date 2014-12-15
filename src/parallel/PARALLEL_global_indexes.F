@@ -77,7 +77,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use stderr,        ONLY:intc
  use com,           ONLY:error,warning
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
- use IO_m,          ONLY:io_and_Messaging_switch,io_COLLs,io_RESPONSE
+ use IO_m,          ONLY:IO_and_Messaging_switch,io_COLLs,io_RESPONSE
  use QP_m,          ONLY:QP_n_states,QP_nb,QP_table,QP_n_G_bands
  use wave_func,     ONLY:states_to_load
  implicit none
@@ -263,10 +263,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! I/O privileges
    !
    if (PARALLEL_n_structures_active>1) then
-     call io_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1.or.&
+     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1.or.&
 &                                                     PAR_COM_Xk_ibz_INDEX%n_CPU==ncpu)
    else
-     call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+     call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
@@ -364,9 +364,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! I/O privileges
    !
    if (PARALLEL_n_structures_active>1) then
-     call io_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_Q_INDEX%my_CHAIN==1)
+     call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_Q_INDEX%my_CHAIN==1)
    else
-     call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+     call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif
    !
    ! To define proper indexes to calculate the dipoles I need to build up
@@ -644,9 +644,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! and then resetted in RT_driver
    !
    if (l_eval_collisions) then
-     call io_and_Messaging_switch("+io_out",CONDITION=HEAD_QP_cpu)
+     call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_QP_cpu)
    else
-     call io_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1.or.&
+     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1.or.&
 &                                                     PAR_COM_Xk_ibz_INDEX%n_CPU==ncpu)
    endif
    !
@@ -816,13 +816,15 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    if (PARALLEL_n_structures_active>1) then
      if (l_eval_collisions.and.io_COLLs) then
-       call io_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_index%CPU_id==0)
+       call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_index%CPU_id==0)
      else 
-       call io_and_Messaging_switch("+io_out",CONDITION=master_cpu)
+       call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
      endif
    else
-     call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+     call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif
+   !
+   call IO_and_Messaging_switch("+output",CONDITION=master_cpu)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_SE)
    !
@@ -930,7 +932,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! I/O privileges
    !
-   call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+   call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+   !
+   call IO_and_Messaging_switch("+output",CONDITION=master_cpu)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_K)
    !  

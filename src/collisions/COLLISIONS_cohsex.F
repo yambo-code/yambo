@@ -42,7 +42,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  use timing_m,      ONLY:timing
 #endif
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,io_and_Messaging_switch,io_COLLs,&
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch,io_COLLs,&
 &                        fragment_status
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_n_states,QP_table
  use X_m,           ONLY:X_alloc,X_mat,X_t
@@ -164,7 +164,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
        !
        call scatterGamp(isc,'c')
        !
-       call io_and_Messaging_switch("-fragments_IO_log")
+       call IO_and_Messaging_switch("-fragments_IO_log")
        !
        ! I/O
        !
@@ -176,7 +176,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
        endif
        io_err=io_X(X,Xw,ID)
        !
-       call io_and_Messaging_switch("+fragments_IO_log")
+       call IO_and_Messaging_switch("+fragments_IO_log")
        !
        ! Poles and Residuals
        !

@@ -47,7 +47,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !
  ! Work Space
  !
- logical       ::l_apply_QP_corrections,l_apply_RT_corrections,l_rt_up_scr,l_dynamical,COM_done
+ logical       ::l_apply_QP_corrections,l_apply_RT_corrections,l_dynamical,COM_done
  integer       ::X_kind,QP_bands(2)
  !
  call section('*','External corrections')
@@ -72,9 +72,8 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  if( l_dynamical .and. .not.l_ppa ) X_kind=4
  if (l_apply_QP_corrections) call QP_apply(X(X_kind)%ib,Xen,Xk,"X",msg_fmt='s')
 #if defined _RT
- call parser('RT_UpScr',l_rt_up_scr)
  l_apply_RT_corrections=l_apply_QP_corrections.and.        &
-&    (     (l_rt_up_scr.and.l_em1s.and..not.l_real_time)   &
+&    (     (l_em1s.and..not.l_real_time)   &
 &      .or.(l_optics.and.l_chi)          )
  if (l_apply_RT_corrections) call RT_apply(X(X_kind)%ib,Xen,Xk,"X",.not.COM_done)
 #endif
@@ -100,7 +99,5 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  l_apply_RT_corrections=l_cohsex
  if (l_apply_RT_corrections) call RT_apply(QP_bands,en,Xk,"G",.not.COM_done)
 #endif
- !
- !l_rt_carriers_in_use=
  !
 end subroutine

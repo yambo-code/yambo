@@ -52,7 +52,7 @@ subroutine RT_driver(E,X,k,q)
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k
- use IO_m,            ONLY:io_and_Messaging_switch,io_COLLs
+ use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  !
  implicit none
  !
@@ -124,7 +124,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! In dipole_driver the IO is k-dictated. Here I want only the master to write
  !
- call io_and_Messaging_switch("RESET")
+ call IO_and_Messaging_switch("RESET")
  !
  ! WFs loading
  !=============
@@ -322,9 +322,9 @@ subroutine RT_driver(E,X,k,q)
    ! Write DBs
    !===========
    call set_real_printed_length()
-   call io_and_Messaging_switch("-fragments_IO_log")
+   call IO_and_Messaging_switch("-fragments_IO_log")
    call RT_databases_IO(E,it)
-   call io_and_Messaging_switch("+fragments_IO_log")
+   call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
    !
    ! Print some simple observables

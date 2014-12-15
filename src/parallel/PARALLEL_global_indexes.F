@@ -824,6 +824,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif
    !
+   call IO_and_Messaging_switch("+output",CONDITION=master_cpu)
+   !
    call OPENMP_set_threads(n_threads_in=n_threads_SE)
    !
  endif
@@ -931,6 +933,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! I/O privileges
    !
    call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+   !
+   call IO_and_Messaging_switch("+output",CONDITION=master_cpu)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_K)
    !  

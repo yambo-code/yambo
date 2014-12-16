@@ -101,7 +101,7 @@ subroutine RT_BGR(G,E,k)
      if (eval_HARTREE) then
        H=(0._SP,0._SP)
        call V_real_space_to_H(ik,V_hartree_sc,H,WF,'def')
-       do ib=1,SC_bands(2)
+       do ib=SC_bands(1),SC_bands(2)
          BGR_Hartree(ib,ik,1)=H(ib,ib,1)
        enddo
      endif
@@ -111,7 +111,7 @@ subroutine RT_BGR(G,E,k)
      if (eval_DFT) then
        H=(0._SP,0._SP)
        call V_real_space_to_H(ik,V_xc_sc,H,WF,'xc ')
-       do ib=1,SC_bands(2)
+       do ib=SC_bands(1),SC_bands(2)
          BGR_V_xc(ib,ik,1)=H(ib,ib,1)
        enddo
      endif
@@ -134,12 +134,12 @@ subroutine RT_BGR(G,E,k)
      !
      ik_ref=RT_ibz_coo(ik,1)
      !
-     do ib=1,SC_bands(2)
+     do ib=SC_bands(1),SC_bands(2)
        !
        G_hf(ib,ib,ik)    =(0._SP,1._SP)*E%f(ib,ik,1)
        G_cohsex(ib,ib,ik)=(0._SP,1._SP)*(E%f(ib,ik,1)-1.)
        !
-       if (ib>=SC_bands(1).and..not.l_initial_equilibrium) then
+       if (.not.l_initial_equilibrium) then
          do ibp=SC_bands(1),SC_bands(2)
            !
            G_hf(ib,ibp,ik)    =G(ib,ibp,ik_ref)+G_lesser_reference(ib,ibp,ik_ref)

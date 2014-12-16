@@ -79,24 +79,24 @@ fi
 case $target in
   yambo*)
    llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec \$(llocal) \$(ldierckx) \$(lfftw) -lm $llmpi"
+   llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec -llocal \$(ldierckx) \$(lfftw) -lm $llmpi"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfftw) -lm $llmpi"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs -liotk  \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
+   llibs="-lint_modules $llibs -liotk  \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfftw) -lm $llmpi"
    linclude="$linclude -I\$(iotk_dir)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs -letsf_io \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
+   llibs="-lint_modules $llibs -letsf_io \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) -llocal \$(lfftw) -lm $llmpi"
    linclude="$linclude -I\$(etsf_dir)"
     ;;
   ypp*)
-   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
+   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfftw) -lm $llmpi"
     ;;
   ydb*)
-   llibs="$llibs \$(lfftqe) \$(llapack) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal)"
+   llibs="$llibs \$(lfftqe) \$(llapack) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal"
     ;;
 esac
 

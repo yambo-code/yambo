@@ -233,12 +233,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  !
-#if defined _RT
- !
- call it('f',defs,'RT_UpScr' ,  '[RT] Use the real-time carrier components to recalculate the screened interaction')
- !
-#endif
- !
  !GPL_INCLUDE_START
  !
  !call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX',BSK_mode,protect=.FALSE.)

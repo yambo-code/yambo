@@ -501,11 +501,11 @@ module real_time
      allocate(REF_QP_Vnl_xc(QP_n_states))
      call mem_est("REF_QP_Vnl_xc",(/size(REF_QP_Vnl_xc)/),(/2*SP/))
      !
-     allocate(BGR_hartree(SC_bands(2),QP_nk,n_sp_pol))
+     allocate(BGR_hartree(SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("BGR_hartree",(/size(BGR_hartree)/),(/SP/))
-      allocate(BGR_V_xc(SC_bands(2),QP_nk,n_sp_pol))
+      allocate(BGR_V_xc(SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("BGR_V_xc",(/size(BGR_V_xc)/),(/SP/))
-     allocate(BGR_Self_Energy(SC_bands(2),QP_nk,n_sp_pol))
+     allocate(BGR_Self_Energy(SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("BGR_Self_Energy",(/size(BGR_Self_Energy)/),(/SP/))
      !
      allocate(rho_reference(fft_size))

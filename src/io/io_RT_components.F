@@ -28,7 +28,7 @@ integer function io_RT_components(what,ID)
  use pars,           ONLY:SP,lchlen,schlen
  use drivers,        ONLY:l_elph_scatt
  use R_lattice,      ONLY:nkibz,nqbz
- use electrons,      ONLY:spin_occ
+ use electrons,      ONLY:spin_occ,n_sp_pol
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,SC_nbands,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
@@ -42,7 +42,8 @@ integer function io_RT_components(what,ID)
 &                         RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         l_NE_with_fields,NE_steps,RT_P,RT_nk, &
 &                         dG_lesser,RT_ind_J,RT_carriers,RT_obj_alloc,&
-&                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight_RT
+&                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight_RT,&
+&                         BGR_hartree,BGR_V_xc,BGR_Self_Energy
  use ELPH,           ONLY:ph_modes,elph_branches
  use rt_ctl,         ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_IO
  use fields,         ONLY:A_ext
@@ -250,6 +251,19 @@ integer function io_RT_components(what,ID)
      if (allocated(RT_delta0_occupations)) then
        call io_bulk(ID,VAR="RT_occupations_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
        call io_bulk(ID,R2=RT_delta0_occupations)
+     endif
+     !
+     if (allocated(BGR_hartree)) then
+       !
+       call io_bulk(ID,VAR="RT_BGR_hartree"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,nkibz,n_sp_pol/))
+       call io_bulk(ID,R3=BGR_hartree)
+       !
+       call io_bulk(ID,VAR="RT_BGR_V_xc"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,nkibz,n_sp_pol/))
+       call io_bulk(ID,R3=BGR_V_xc)
+       !
+       call io_bulk(ID,VAR="RT_BGR_Self_Energy"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,nkibz,n_sp_pol/))
+       call io_bulk(ID,R3=BGR_Self_Energy)
+       !
      endif
      !
      if (allocated(E_P_Hole_lifetime)) then

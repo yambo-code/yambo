@@ -641,9 +641,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                  'LongDr','DrudeW'/))
    call initactivate(1,'XTermKind'//'Xs')
    call initactivate(1,'XTermEn'//'Xs')
-#if defined _RT
-   call initactivate(1,'RT_UpScr')
-#endif
  endif
  !
  ! GW (PPA & COHSEX) 
@@ -661,9 +658,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','EhEngy','LongDr'/))
      call initactivate(1,'XTermKind'//'Xs')
      call initactivate(1,'XTermEn'//'Xs')
-#if defined _RT
-     call initactivate(1,'RT_UpScr')
-#endif
    endif
  endif
  !

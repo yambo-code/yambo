@@ -188,7 +188,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #else
  call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_X)
 #endif
-
  !
  ! OpenMP setup
  !==============
@@ -199,12 +198,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 !$omp &                 rhotw_save, isave, ig1,ig2, iw)
  !
  call OPENMP_update(master_thread) 
-
  !
  ! prepare the scattering module
  !
  call collision_reset(isc,INIT_ONLY=.true.)
-
  !
  ! MAIN LOOP
  !===========

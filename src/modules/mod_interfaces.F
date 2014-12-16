@@ -27,6 +27,8 @@ module interfaces
  !
  interface
    !
+#if defined _RT
+   !
    subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      use real_time,  ONLY:RT_t
      use R_lattice,  ONLY:bz_samp
@@ -37,6 +39,8 @@ module interfaces
      integer,       intent(in), optional :: DB_id
      character(*),  intent(in), optional :: WHAT
    end subroutine RT_carriers_object
+   !
+#endif
    !
    subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_digits,fill)
      !

@@ -61,7 +61,7 @@ module rt_ctl
      real(SP), optional, intent(in) :: E
    end subroutine
    !
-   subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
+   subroutine RT_carriers_IO(E,what,k,Time,imposed_COM)
      use pars,       ONLY:SP
      use electrons,  ONLY:levels
      use R_lattice,  ONLY:bz_samp
@@ -70,7 +70,7 @@ module rt_ctl
      type(bz_samp),optional,intent(in) :: k
      real(SP), optional, intent(inout) :: Time
      integer , optional, intent(in)    :: imposed_COM
-   end subroutine RT_OCC_LIFE_and_REF_IO
+   end subroutine RT_carriers_IO
    !
  end interface
  !

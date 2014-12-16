@@ -39,7 +39,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  use YPP,            ONLY:Nel_fac
  use stderr,         ONLY:real2ch
  use units,          ONLY:FS2AUT
- use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,OCC_T_range,OCC_deltaT
+ use rt_ctl,         ONLY:RT_carriers_IO,OCC_T_range,OCC_deltaT
  use real_time,      ONLY:RIM_ibz_coo,RT_delta0_occupations,REF_lifetime,&
 &                         RT_Nk,RT_ibz_coo,RT_Nk_ibz,RT_carriers
  use interfaces,     ONLY:RT_carriers_object
@@ -63,7 +63,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  real(SP)              :: io_Time,Nel_zero,Nhole_zero,Nel,Nhole,Real_Nhole,Real_Nel,Max_occ
  logical               :: l_normalize_Nel
  integer               :: i_T,n_T_steps
- integer,     external :: RT_occ_check_and_load_ref,RT_k_grid
+ integer,     external :: RT_carriers_IO_setup,RT_k_grid
 #endif
  logical               :: l_g_space_interp,l_nearest_neig_interp
  integer               :: i1,i2,i_err,ic,is,ID_interp,ik,ikbz,ib,Nk,ik_near_RIM,ik_near_RT,ik_circuit
@@ -88,7 +88,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    !
 #if defined _YPP_RT
    if(all(interp_grid>0).or.BANDS_steps<=0) call error(" Interpolation of occupations/lifetimes only on a band circuit")
-   n_T_steps=RT_occ_check_and_load_ref(Xen,Xk)
+   n_T_steps=RT_carriers_IO_setup(Xen,Xk)
    call RT_check_RIM(Xk,Xen)
    call RT_carriers_object(RT_carriers,Xen,Xk,WHAT='allocate')
    if(l_RT_life_Bands) n_T_steps=1
@@ -241,7 +241,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
        !
        io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
        !
-       call RT_OCC_LIFE_and_REF_IO(Xen,'G',k=Xk,Time=io_Time)
+       call RT_carriers_IO(Xen,'G',k=Xk,Time=io_Time)
        !
        call RT_carriers_object(RT_carriers,WHAT='fill')
        !

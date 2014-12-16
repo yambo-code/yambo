@@ -123,7 +123,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Here I read information from the BS database
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_BS(1,Xbsk,io_ID)
+ io_err=io_BS(1,Xbsk,io_ID) 
+ !
+ ! X type. Also used in PARALLEL setup
+ !
+ Xbsk%whoami=2
  !
  if (io_err/=0) return
  !
@@ -149,7 +153,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  l_flag=l_flag .or. l_eliashberg .or. l_gkkp
 #endif
 #if defined _YPP_RT
- l_flag=l_flag .or. l_rt_abs
+ l_flag=l_flag .or. l_RT_abs
 #endif
  if(.not.l_flag) return
  !
@@ -236,7 +240,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
 #if defined _YPP_RT
  !
- if(l_rt_abs) then
+ if(l_RT_abs) then
    call RT_transient_absorption(Xbsk,Xen,Xk,q,BS_H_dim,BS_E,BS_R)
    return
  endif

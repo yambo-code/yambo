@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function RT_occ_check_and_load_ref(E,k)
+integer function RT_carriers_IO_setup(E,k)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:FS2AUT
  use electrons,      ONLY:levels
- use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,RT_IO_JPO_steps,OCC_deltaT,OCC_T_range
+ use rt_ctl,         ONLY:RT_carriers_IO,RT_IO_JPO_steps,OCC_deltaT,OCC_T_range
  use real_time,      ONLY:RT_step,l_RT_CCA_Kernel,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,& 
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, &
@@ -46,15 +46,9 @@ integer function RT_occ_check_and_load_ref(E,k)
  !
  real(SP)           :: loading_time
  !
-#if defined _YPP_RT
- loading_time=OCC_T_range(1)
-#else
- loading_time=RT_PP_time
-#endif
+! call RT_carriers_IO(E,'G',k=k,Time=OCC_T_range(1),imposed_COM=LOG)
  !
- call RT_OCC_LIFE_and_REF_IO(E,'G',k=k,Time=loading_time,imposed_COM=LOG)
- !
- if (.not.allocated(RT_delta0_occupations)) call error('Occupations database not found')
+! if (.not.allocated(RT_delta0_occupations)) call error('Occupations database not found')
  !
  if ((l_elph_scatt.and.l_RT_CCA_Kernel).and..not.allocated(E_P_Hole_lifetime)) then
    allocate(E_P_Hole_lifetime(SC_bands(1):SC_bands(2),RT_nk))
@@ -68,18 +62,7 @@ integer function RT_occ_check_and_load_ref(E,k)
    allocate(E_E_Electron_lifetime(SC_bands(1):SC_bands(2),RT_nk))
  endif
  !
-#if defined _YPP_RT
- loading_time=OCC_T_range(2)
-#else
- loading_time=RT_PP_time
-#endif
- !
- call RT_OCC_LIFE_and_REF_IO(E,'G',k=k,Time=RT_PP_time)
- !
-#if !defined _YPP_RT
- RT_PP_time=nint(RT_PP_time/RT_IO_JPO_steps/RT_step)*RT_IO_JPO_steps*RT_step
- RT_occ_check_and_load_ref=1
-#else
+ !call RT_carriers_IO(E,'G',k=k,Time=OCC_T_range(2))
  !
  if (OCC_deltaT<RT_IO_JPO_steps*RT_step) then
    ! 
@@ -91,18 +74,18 @@ integer function RT_occ_check_and_load_ref(E,k)
    !
  endif
  !
- RT_occ_check_and_load_ref=nint( (OCC_T_range(2)-OCC_T_range(1))/OCC_deltaT )+1
+ RT_carriers_IO_setup=nint( (OCC_T_range(2)-OCC_T_range(1))/OCC_deltaT )+1
  !
- if (RT_occ_check_and_load_ref<0) return
+ if (RT_carriers_IO_setup<0) return
+ !
  if (NE_time<OCC_T_range(2)) then
    OCC_T_range(2)=NE_time
    if(OCC_deltaT>NE_time) OCC_deltaT=NE_time
-   RT_occ_check_and_load_ref=nint(OCC_T_range(2)/OCC_deltaT)+1
+   RT_carriers_IO_setup=nint(OCC_T_range(2)/OCC_deltaT)+1
  endif
  !
  call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
  call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
- call msg('s','Time steps     :',RT_occ_check_and_load_ref)
-#endif
+ call msg('s','Time steps     :',RT_carriers_IO_setup)
  !
-end function RT_occ_check_and_load_ref
+end function RT_carriers_IO_setup

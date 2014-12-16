@@ -87,7 +87,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  if (run_Haydock) then
    !
-   stop_Haydock = (BS_not_const_eh_f.and.BSE_mode=='coupling')
+   stop_Haydock = (BS_not_const_eh_f.and.index(BSE_mode,'coupling')>0)
    if (stop_Haydock) call warning('Fractional occupations and coupling still unsupported (Haydock)')
    !
    if(.not.stop_Haydock) then

@@ -161,7 +161,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Logicals (Drivers)
  !====================
- if (l_rpa_IP.and.trim(BSE_mode)=='coupling') BSE_mode='causal'
+ if (l_rpa_IP.and.index(BSE_mode,'coupling')>0) BSE_mode='causal'
  !
  BS_res_K_corr=index(BS_res_mode,'c')/=0
  BS_res_K_exchange=index(BS_res_mode,'x')/=0

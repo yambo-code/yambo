@@ -40,7 +40,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use QP_CTL_m,       ONLY:QP_apply
  use LIVE_t,         ONLY:live_timing
 #if defined _YPP_RT
- use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,RT_output,OCC_T_range,OCC_deltaT
+ use rt_ctl,         ONLY:RT_carriers_IO,RT_output,OCC_T_range,OCC_deltaT
  use real_time,      ONLY:RT_delta0_occupations,&
 &                         l_RT_uses_E_RIM,RT_ibz_coo
  use SC,             ONLY:SC_bands,SC_description,n_SC_descriptions
@@ -68,7 +68,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  logical               :: l_3D_plot,l_RIM,l_prt_occ_only,l_separate_eh
  type(PP_indexes)      :: px
  !
- integer,     external :: RT_occ_check_and_load_ref 
+ integer,     external :: RT_carriers_IO_setup 
  !
  !
  call parser('PrtOccOnly',l_prt_occ_only)
@@ -88,7 +88,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  !
  if(l_RT_dos) then
    !
-   n_T_steps=RT_occ_check_and_load_ref(Xen,Xk)
+   n_T_steps=RT_carriers_IO_setup(Xen,Xk)
    !
    ! RIM support of carrier dynamics
    !=================================
@@ -215,7 +215,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
 #if defined _YPP_RT
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-     if(l_RT_dos) call RT_OCC_LIFE_and_REF_IO(Xen,'G',k=Xk,Time=io_Time)
+     if(l_RT_dos) call RT_carriers_IO(Xen,'G',k=Xk,Time=io_Time)
 #endif
      !
      el_dos(:,:)=0.

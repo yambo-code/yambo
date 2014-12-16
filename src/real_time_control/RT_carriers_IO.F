@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
+subroutine RT_carriers_IO(E,what,k,Time,imposed_COM)
  !
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use pars,           ONLY:SP,lchlen
@@ -75,7 +75,7 @@ subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
  call io_control(ACTION=OP_RD,COM=COM_,SEC=(/1/),MODE=DUMP,ID=ID(6))
  io_err_occ=io_RT_components('carriers',ID(6))
  !
- if (io_err_occ<0) call error ('Occupations database not found in folder: '//trim(jobstr))
+ if (io_err_occ<0) call error ('Carriers database not found in folder: '//trim(jobstr))
  !
  ! OCCUPATIONS I/O (II)
  !======================
@@ -128,4 +128,4 @@ subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
  !
  jobstr=jobstr_save
  !
-end subroutine RT_OCC_LIFE_and_REF_IO
+end subroutine RT_carriers_IO

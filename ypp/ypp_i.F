@@ -78,6 +78,11 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  write_to_report=.FALSE.
  !
+ ! PARALLEL and I/O Setup 
+ !=======================
+ !
+ call PARALLEL_and_IO_Setup(en,k)
+ !
  ! DB1
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)

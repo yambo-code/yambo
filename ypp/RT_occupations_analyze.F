@@ -35,7 +35,7 @@ subroutine RT_occupations_analyze(k,E)
  use com,            ONLY:msg,of_open_close,error
  use IO_m,           ONLY:NONE
  use QP_CTL_m,       ONLY:QP_apply
- use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,OCC_T_range,OCC_deltaT
+ use rt_ctl,         ONLY:RT_carriers_IO,OCC_T_range,OCC_deltaT
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, & 
 &                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime,&
@@ -57,11 +57,11 @@ subroutine RT_occupations_analyze(k,E)
  real(SP), allocatable :: RT_occupations_sum(:,:),RT_H_occ(:,:),RT_E_occ(:,:),RT_delta0_occ(:,:),RT_gamma(:,:,:),RT_E(:)
  character(schlen)     :: titles(9),specs(9,2)
  logical               :: l_ELPH_lifetimes,l_group_occ
- integer,     external :: RT_occ_check_and_load_ref
+ integer,     external :: RT_carriers_IO_setup
  !
  call section('*','Real-Time occupations')
  !
- n_T_steps=RT_occ_check_and_load_ref(E,k)
+ n_T_steps=RT_carriers_IO_setup(E,k)
  !
  ! RIM support of carrier dynamics
  !=================================
@@ -149,7 +149,7 @@ subroutine RT_occupations_analyze(k,E)
    !
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
-   call RT_OCC_LIFE_and_REF_IO(E,'G',k=k,Time=io_Time)
+   call RT_carriers_IO(E,'G',k=k,Time=io_Time)
    !
    i_RT=0
    !

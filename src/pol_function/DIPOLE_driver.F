@@ -89,7 +89,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  X%ngostnts=wf_ng
  !
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_err(1)=io_DIPOLES(X,Xen,ID)
+ io_err(1)=io_DIPOLES(X,Xen,ID) 
  !
  do ik=1,Xk%nibz
    !
@@ -193,9 +193,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    do ik=1,Xk%nibz
      !
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
-#if !defined _YPP_RT
      if (.not. (PAR_COM_k_for_P%CPU_id==0.or.PAR_COM_k_for_P%n_CPU==ncpu) ) cycle
-#endif
      ! 
      call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1+ik/),ID=ID)
      io_err(1)=io_DIPOLES(X,Xen,ID)

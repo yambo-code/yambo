@@ -1208,11 +1208,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if (l_bs_fxc)                   BS_res_mode='c'
        if (l_td_hf)                    BS_res_mode='xcd'
        if (l_W_eh)                     BS_res_mode='xc'
-       if (trim(BSE_mode)=="coupling") BS_cpl_mode=trim(BS_res_mode)
+       if (index(BSE_mode,'coupling')>0) BS_cpl_mode=trim(BS_res_mode)
        !
        if(l_W_eh) then
          call parser('WehDiag',l_W_eh_diag)
-         call parser('WehCpl' ,l_W_eh_cpl)
+         l_W_eh_cpl=trim(BSE_mode)=='xc_coupling'
          if (l_W_eh_diag)              BS_res_mode=trim(string_add(BS_res_mode,'d'))
          if (.not.l_W_eh_cpl)          BS_cpl_mode=trim(string_remove(BS_cpl_mode,'c'))
        endif

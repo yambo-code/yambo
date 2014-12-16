@@ -117,7 +117,7 @@ subroutine REPORT_Occupations(E)
      if(any(Nbf==Nbm)) call warning('System is an half-metal')
    endif
    !
-   call msg('r')
+   call msg('r',' ')
    !
    N_met=0
    f_met=0

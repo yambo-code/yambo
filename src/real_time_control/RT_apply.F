@@ -21,11 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_apply(bands,E,K,what,COM_)
+subroutine RT_apply(bands,E,K,what,COM_,Time_)
  !
  use drivers,        ONLY:l_elel_corr,l_rt_carriers_in_use
  use pars,           ONLY:schlen,SP
  use stderr,         ONLY:string_split,real2ch
+ use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -43,6 +44,7 @@ subroutine RT_apply(bands,E,K,what,COM_)
  type(bz_samp):: K
  character(*) :: what ! X,K,G
  logical      :: COM_
+ real(SP)     :: Time_
  !
  ! Work space
  !
@@ -67,8 +69,15 @@ subroutine RT_apply(bands,E,K,what,COM_)
  !
  if (.not.is_def) return
  !
- l_E=.FALSE.
- l_f=.FALSE.
+ l_E=.TRUE.
+ l_f=.TRUE.
+ !
+ if (Time_<0.) then
+   !
+   l_E=.FALSE.
+   l_f=.FALSE.
+   !
+ endif
  !
  ! First check the DB file & Time
  !================================
@@ -92,9 +101,13 @@ subroutine RT_apply(bands,E,K,what,COM_)
    endif
  enddo
  !
- Time=Time*FS2AUT
- if (trim(T_unit)=='ps') then
-   Time=Time*PS2AUT
+ if (Time_<0.) then
+   Time=Time*FS2AUT
+   if (trim(T_unit)=='ps') then
+     Time=Time*PS2AUT
+   endif
+ else
+   Time=Time_
  endif
  !
  l_elel_corr_save=l_elel_corr
@@ -144,7 +157,12 @@ subroutine RT_apply(bands,E,K,what,COM_)
    !
    E%nbm=max(RT_carriers%nb(2)  ,E%nbm)
    E%nbf=min(RT_carriers%nb(1)-1,E%nbf)
-   E%f( nb(1):nb(2),:,:)=E%f(nb(1):nb(2),:,:)+r_dummy(nb(1):nb(2),:,:)
+   !
+   allocate(E%fo(E%nb,E%nk,n_sp_pol))
+   call mem_est("E-fo",(/size(E%fo)/),(/SP/))
+   !
+   E%fo( nb(1):nb(2),:,:)=E%f(nb(1):nb(2),:,:)
+   E%f ( nb(1):nb(2),:,:)=E%f(nb(1):nb(2),:,:)+r_dummy(nb(1):nb(2),:,:)
    !
    deallocate(r_dummy)
    !
@@ -158,6 +176,11 @@ subroutine RT_apply(bands,E,K,what,COM_)
 &                                 ' '//what//' ',.TRUE.)
    !
    dE_Max=maxval(abs(r_dummy))
+   !
+   allocate(E%Eo(E%nb,E%nk,n_sp_pol))
+   call mem_est("E-Eo",(/size(E%fo)/),(/SP/))
+   !
+   E%Eo( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)
    !
    E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+r_dummy(nb(1):nb(2),:,:)
    !

@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_paths(en)
+subroutine RT_IO_J_and_P_paths(en)
  !
  use pars,           ONLY:lchlen
- use YPP,            ONLY:Probe_Keyword,Pump_Keyword,max_n_of_paths,Pump_path,Probe_path,RT_databases,&
+ use YPP,            ONLY:Probe_Keyword,Pump_Keyword,max_n_of_paths,Pump_path,Probe_path,RT_IO_J_and_P,&
 &                         N_pumps,N_probes,N_probe_frequencies
  use com,            ONLY:core_io_path,jobstr,file_exists,msg,error,warning
  use IO_m,           ONLY:NONE
@@ -118,7 +118,7 @@ subroutine RT_paths(en)
    !
    do i_f=1,N_probes
      jobstr=trim(Probe_path(i_f))
-     call RT_databases(IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
+     call RT_IO_J_and_P(IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
      N_probe_frequencies= Efield(i_Probe)%n_frequencies
    enddo
    !
@@ -131,7 +131,7 @@ subroutine RT_paths(en)
    !
    if (N_pumps==1) then
      jobstr=trim(Pump_path)
-     call RT_databases(IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
+     call RT_IO_J_and_P(IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
      if (.not.IO_error) then
        N_pump_frequencies= Efield(i_Pump)%n_frequencies
        if (N_pump_frequencies>1) call error('Pumps with multiple frequencies still not supported')
@@ -155,7 +155,7 @@ subroutine RT_paths(en)
  !
  if (N_probes==0.and.N_pumps==0) then
    !
-   call RT_databases(IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
+   call RT_IO_J_and_P(IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
    !
    ! I can use ANTIRES/RES probes with multiple frequencies only by using
    ! ProbeKey in the input file. This is because of the procedures defined in X_effective/X_inversion.

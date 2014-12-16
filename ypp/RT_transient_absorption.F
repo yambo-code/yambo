@@ -56,7 +56,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  real(SP)             :: io_Time,Co,f_cv,f_vpv,f_ccp,delta_f_cv,output(4),BS_R_tmp
  complex(SP)          :: IP_E,IP_R,BS_R1(BS_H_dim)
  logical              :: l_TR_transm,l_TR_reflec,l_include_IP
- integer,    external :: RT_carriers_IO_setup
+ integer,    external :: RT_IO_carriers_setup
  !
  real(SP),allocatable    :: X_absorption_coeff(:,:)
  complex(SP),allocatable :: X_reflectance(:,:)
@@ -65,7 +65,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  call RT_apply(Xbsk%ib,Xen,Xk,"G",.FALSE.,0._SP)
  !
- n_T_steps=RT_carriers_IO_setup(Xen,Xk) 
+ n_T_steps=RT_IO_carriers_setup(Xen,Xk) 
  !
  ! I need to compute the dipoles, however they rely on the parallel structure
  ! I would need a structure defined for ypp 

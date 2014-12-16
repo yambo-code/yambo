@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function RT_carriers_IO_setup(E,k)
+integer function RT_IO_carriers_setup(E,k)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:FS2AUT
  use electrons,      ONLY:levels
- use YPP,            ONLY:RT_carriers_IO
+ use YPP,            ONLY:RT_IO_carriers
  use rt_ctl,         ONLY:RT_IO_JPO_steps,OCC_deltaT,OCC_T_range
  use real_time,      ONLY:RT_step,l_RT_CCA_Kernel,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,& 
@@ -75,18 +75,18 @@ integer function RT_carriers_IO_setup(E,k)
    !
  endif
  !
- RT_carriers_IO_setup=nint( (OCC_T_range(2)-OCC_T_range(1))/OCC_deltaT )+1
+ RT_IO_carriers_setup=nint( (OCC_T_range(2)-OCC_T_range(1))/OCC_deltaT )+1
  !
- if (RT_carriers_IO_setup<0) return
+ if (RT_IO_carriers_setup<0) return
  !
  if (NE_time<OCC_T_range(2)) then
    OCC_T_range(2)=NE_time
    if(OCC_deltaT>NE_time) OCC_deltaT=NE_time
-   RT_carriers_IO_setup=nint(OCC_T_range(2)/OCC_deltaT)+1
+   RT_IO_carriers_setup=nint(OCC_T_range(2)/OCC_deltaT)+1
  endif
  !
  call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
  call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
- call msg('s','Time steps     :',RT_carriers_IO_setup)
+ call msg('s','Time steps     :',RT_IO_carriers_setup)
  !
-end function RT_carriers_IO_setup
+end function RT_IO_carriers_setup

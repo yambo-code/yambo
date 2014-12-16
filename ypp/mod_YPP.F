@@ -276,7 +276,7 @@ module YPP
      integer, optional  :: BS_E_degs(:)
    end subroutine
    !
-   subroutine  RT_databases(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
+   subroutine  RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
      use electrons,     ONLY:levels
      implicit none
      logical, optional  :: IO_error,first_sec_only,G_lesser_only
@@ -284,7 +284,7 @@ module YPP
      character(*), optional  :: mesg
    end subroutine
    !
-   subroutine RT_carriers_IO(E,what,k,Time,imposed_COM)
+   subroutine RT_IO_carriers(E,what,k,Time,imposed_COM)
      use pars,       ONLY:SP
      use electrons,  ONLY:levels
      use R_lattice,  ONLY:bz_samp
@@ -293,7 +293,7 @@ module YPP
      type(bz_samp),optional,intent(in) :: k
      real(SP), optional, intent(inout) :: Time
      integer , optional, intent(in)    :: imposed_COM
-   end subroutine RT_carriers_IO
+   end subroutine RT_IO_carriers
    !
  end interface
  !

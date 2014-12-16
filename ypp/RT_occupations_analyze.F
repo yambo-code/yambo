@@ -31,7 +31,7 @@ subroutine RT_occupations_analyze(k,E)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,spin_occ
  use QP_m,           ONLY:QP_table,QP_n_states
- use YPP,            ONLY:output_fname,l_RT_occ_FIT,l_RT_occ_Plot,RT_carriers_IO 
+ use YPP,            ONLY:output_fname,l_RT_occ_FIT,l_RT_occ_Plot,RT_IO_carriers 
  use com,            ONLY:msg,of_open_close,error
  use IO_m,           ONLY:NONE
  use QP_CTL_m,       ONLY:QP_apply
@@ -57,15 +57,15 @@ subroutine RT_occupations_analyze(k,E)
  real(SP), allocatable :: RT_occupations_sum(:,:),RT_H_occ(:,:),RT_E_occ(:,:),RT_delta0_occ(:,:),RT_gamma(:,:,:),RT_E(:)
  character(schlen)     :: titles(9),specs(9,2)
  logical               :: l_ELPH_lifetimes,l_group_occ
- integer,     external :: RT_carriers_IO_setup
+ integer,     external :: RT_IO_carriers_setup
  !
  call section('*','Real-Time occupations')
  !
- n_T_steps=RT_carriers_IO_setup(E,k)
+ n_T_steps=RT_IO_carriers_setup(E,k)
  !
  ! RIM support of carrier dynamics
  !=================================
- call RT_check_RIM(k,E)
+ call RT_IO_check_RIM(k,E)
  !
  call QP_apply(SC_bands,E,k,'G',msg_fmt='s')
  !
@@ -149,7 +149,7 @@ subroutine RT_occupations_analyze(k,E)
    !
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
-   call RT_carriers_IO(E,'G',k=k,Time=io_Time)
+   call RT_IO_carriers(E,'G',k=k,Time=io_Time)
    !
    i_RT=0
    !

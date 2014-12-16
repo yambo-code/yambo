@@ -28,7 +28,8 @@ integer function RT_carriers_IO_setup(E,k)
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:FS2AUT
  use electrons,      ONLY:levels
- use rt_ctl,         ONLY:RT_carriers_IO,RT_IO_JPO_steps,OCC_deltaT,OCC_T_range
+ use YPP,            ONLY:RT_carriers_IO
+ use rt_ctl,         ONLY:RT_IO_JPO_steps,OCC_deltaT,OCC_T_range
  use real_time,      ONLY:RT_step,l_RT_CCA_Kernel,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,& 
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, &

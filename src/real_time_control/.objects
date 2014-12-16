@@ -1,4 +1,3 @@
-objs = RT_output.o RT_carriers_IO.o RT_databases_IO.o \
+objs = RT_output.o RT_databases_IO.o \
        RT_observables.o RT_mean_carrier_lifetimes.o RT_average_operator.o RT_occupations_FIT.o \
-       RT_carriers_object.o RT_k_grid.o RT_check_RIM.o \
-       RT_apply.o
+       RT_carriers_object.o RT_k_grid.o RT_apply.o

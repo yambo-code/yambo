@@ -26,7 +26,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  use pars,           ONLY:SP,schlen,DP
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,interp_grid, &
-&                         l_RT_occ_Bands,l_RT_life_Bands,l_bands
+&                         l_RT_occ_Bands,l_RT_life_Bands,l_bands,RT_carriers_IO 
  use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_tot_Nkpts,spin_occ
  use R_lattice,      ONLY:bz_samp,bz_samp_reset,k_the_nearest
  use com,            ONLY:msg,of_open_close,error,warning
@@ -39,7 +39,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  use YPP,            ONLY:Nel_fac
  use stderr,         ONLY:real2ch
  use units,          ONLY:FS2AUT
- use rt_ctl,         ONLY:RT_carriers_IO,OCC_T_range,OCC_deltaT
+ use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT
  use real_time,      ONLY:RIM_ibz_coo,RT_delta0_occupations,REF_lifetime,&
 &                         RT_Nk,RT_ibz_coo,RT_Nk_ibz,RT_carriers
  use interfaces,     ONLY:RT_carriers_object

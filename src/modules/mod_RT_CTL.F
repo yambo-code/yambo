@@ -61,6 +61,21 @@ module rt_ctl
      real(SP), optional, intent(in) :: E
    end subroutine
    !
+   subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
+    use pars,           ONLY:SP
+    use electrons,      ONLY:levels
+    use R_lattice,      ONLY:bz_samp
+    implicit none
+    integer      :: bands(2)
+    type(levels) :: E
+    type(bz_samp):: K
+    character(*),optional :: what ! X,K,G
+    logical ,    optional :: VERBOSE
+    integer ,    optional :: IO_COM
+    real(SP),    optional :: Time
+    logical ,    optional :: keep_RT_carriers
+   end subroutine
+   !
  end interface
  !
  contains

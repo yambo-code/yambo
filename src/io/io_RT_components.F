@@ -239,8 +239,8 @@ integer function io_RT_components(what,ID)
  !
  if ( l_carriers ) then
    !
-   ! lesser Green Function diagonal
-   !===============================
+   ! Carrier components
+   !====================
    !
    if (io_RT_components/=0) goto 1  
    !

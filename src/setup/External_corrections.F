@@ -28,11 +28,10 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  use X_m,           ONLY:X_t
  use electrons,     ONLY:levels,n_bands
  use R_lattice,     ONLY:bz_samp
- use pars,          ONLY:SP
  use BS,            ONLY:BS_bands
  use QP_CTL_m,      ONLY:QP_apply
 #if defined _RT
- use parser_m,      ONLY:parser
+ use RT_CTL,        ONLY:RT_apply
 #endif
 #if defined _ELPH
  use ELPH,          ONLY:E_k_p_q,elph_nb
@@ -49,12 +48,12 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !
  ! Work Space
  !
- logical       ::l_apply_QP_corrections,l_apply_RT_corrections,l_dynamical,COM_done
+ logical       ::l_apply_QP_corrections,l_apply_RT_corrections,l_dynamical,VERBOSE
  integer       ::X_kind,QP_bands(2)
  !
  call section('*','External corrections')
  !
- COM_done=.FALSE.
+ VERBOSE=.TRUE.
  !
  ! 1) Screening
  ! ==============
@@ -77,7 +76,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  l_apply_RT_corrections=l_apply_QP_corrections.and.        &
 &    (     (l_em1s.and..not.l_real_time)   &
 &      .or.(l_optics.and.l_chi)          )
- if (l_apply_RT_corrections) call RT_apply(X(X_kind)%ib,Xen,Xk,"X",.not.COM_done,-1._SP)
+ if (l_apply_RT_corrections) call RT_apply(X(X_kind)%ib,Xen,Xk,what="X",VERBOSE=VERBOSE)
 #endif
  !
  ! 2) BSE
@@ -86,7 +85,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  if (l_apply_QP_corrections) call QP_apply(BS_bands,Ken,Xk,"K",msg_fmt='s')
 #if defined _RT
  l_apply_RT_corrections=l_apply_QP_corrections.and..not.l_real_time
- if (l_apply_RT_corrections) call RT_apply(BS_bands,Ken,Xk,"K",.not.COM_done,-1._SP)
+ if (l_apply_RT_corrections) call RT_apply(BS_bands,Ken,Xk,what="K",VERBOSE=VERBOSE)
 #endif
  !
  ! 3) Green's Function used to compute QP corrections
@@ -99,7 +98,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
 #endif
 #if defined _RT
  l_apply_RT_corrections=l_cohsex
- if (l_apply_RT_corrections) call RT_apply(QP_bands,en,Xk,"G",.not.COM_done,-1._SP)
+ if (l_apply_RT_corrections) call RT_apply(QP_bands,en,Xk,what="G",VERBOSE=VERBOSE)
 #endif
  !
 end subroutine

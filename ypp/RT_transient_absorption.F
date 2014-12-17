@@ -25,12 +25,12 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  use pars,            ONLY:SP,pi
  use units,           ONLY:FS2AUT,HA2EV,SPEED_OF_LIGHT
- use R_lattice,       ONLY:bz_samp,q0_def_norm,d3k_factor,q_norm,bare_qpg,nkibz
+ use R_lattice,       ONLY:bz_samp,q0_def_norm,d3k_factor,q_norm,bare_qpg
  use D_lattice,       ONLY:alat
  use electrons,       ONLY:levels,n_sp_pol,spin,spin_occ
  use LIVE_t,          ONLY:live_timing
  use X_m,             ONLY:X_t,DIP_q_dot_iR
- use rt_ctl,          ONLY:RT_output,OCC_T_range,OCC_deltaT
+ use rt_ctl,          ONLY:RT_output,OCC_T_range,OCC_deltaT,RT_apply
  use IO_m,            ONLY:io_DIP
  use YPP,             ONLY:X_rt
  use X_m,             ONLY:X_epsilon
@@ -56,16 +56,17 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  real(SP)             :: io_Time,Co,f_cv,f_vpv,f_ccp,delta_f_cv,output(4),BS_R_tmp
  complex(SP)          :: IP_E,IP_R,BS_R1(BS_H_dim)
  logical              :: l_TR_transm,l_TR_reflec,l_include_IP
- integer,    external :: RT_IO_carriers_setup
  !
  real(SP),allocatable    :: X_absorption_coeff(:,:)
  complex(SP),allocatable :: X_reflectance(:,:)
  !
- ! Pre-setup of carrier components and Time steps
+ ! Pre-setup of carrier components and Time evolution parameters
  !
- call RT_apply(Xbsk%ib,Xen,Xk,"G",.FALSE.,0._SP)
+ call RT_apply(Xbsk%ib,Xen,Xk)
  !
- n_T_steps=RT_IO_carriers_setup(Xen,Xk) 
+ ! Setup of Time-range & Report
+ !
+ call RT_IO_carriers_setup(Xen,Xk,"TIME_RANGE REPORT",n_T_steps) 
  !
  ! I need to compute the dipoles, however they rely on the parallel structure
  ! I would need a structure defined for ypp 
@@ -111,7 +112,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    !
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
-   call RT_apply(Xbsk%ib,Xen,Xk,"G",.FALSE.,io_Time)
+   call RT_apply(Xbsk%ib,Xen,Xk,TIME=io_Time)
    !
    if (i_T==1.) call live_timing('Transient Absorption',n_T_steps,SERIAL=.true.)
    !

@@ -23,16 +23,15 @@
 !
 subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
- use YPP,            ONLY:RT_J_t,RT_P_t,J_steps,Probe_path
+ use YPP,            ONLY:RT_J_t,RT_P_t,J_steps
  use pars,           ONLY:DP,SP,schlen
  use R_lattice,      ONLY:nkibz
- use com,            ONLY:warning
  use memory_m,       ONLY:mem_est
  use SC,             ONLY:SC_bands
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
  use rt_ctl,         ONLY:RT_IO_JPO_steps,J_and_P_cache,J_and_P_cache_size,RT_IO_JPO_steps
- use real_time,      ONLY:NE_steps,NE_i_time,RT_ind_J,RT_P,RT_step,&
+ use real_time,      ONLY:NE_steps,NE_i_time,RT_ind_J,RT_P,&
 &                         G_lesser,G_lesser_reference
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
  !
@@ -134,7 +133,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  do NE_i_time=1,NE_steps
    !
-   if(mod(NE_i_Time-1,RT_IO_JPO_steps)/=0) cycle
+   if (mod(NE_i_Time-1,RT_IO_JPO_steps)/=0) cycle
    !
    file_number=(NE_i_Time-1)/RT_IO_JPO_steps+1
    !

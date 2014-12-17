@@ -284,13 +284,8 @@ module YPP
      character(*), optional  :: mesg
    end subroutine
    !
-   subroutine RT_IO_carriers(E,what,k,Time,imposed_COM)
+   subroutine RT_IO_carriers(Time,imposed_COM)
      use pars,       ONLY:SP
-     use electrons,  ONLY:levels
-     use R_lattice,  ONLY:bz_samp
-     type(levels),       intent(in)    :: E
-     character(1)                      :: what ! G,X,K
-     type(bz_samp),optional,intent(in) :: k
      real(SP), optional, intent(inout) :: Time
      integer , optional, intent(in)    :: imposed_COM
    end subroutine RT_IO_carriers

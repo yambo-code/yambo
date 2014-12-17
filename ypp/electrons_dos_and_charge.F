@@ -69,9 +69,6 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  logical               :: l_3D_plot,l_RIM,l_prt_occ_only,l_separate_eh
  type(PP_indexes)      :: px
  !
- integer,     external :: RT_IO_carriers_setup 
- !
- !
  call parser('PrtOccOnly',l_prt_occ_only)
  !
  ! E_rim
@@ -89,11 +86,11 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  !
  if(l_RT_dos) then
    !
-   n_T_steps=RT_IO_carriers_setup(Xen,Xk)
+   !n_T_steps=RT_IO_carriers_setup(Xen,Xk)
    !
    ! RIM support of carrier dynamics
    !=================================
-   call RT_IO_check_RIM(Xk,Xen)
+   !call RT_IO_check_RIM(Xk,Xen)
    l_RIM=l_RT_uses_E_RIM
    !
  endif
@@ -216,7 +213,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
 #if defined _YPP_RT
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-     if(l_RT_dos) call RT_IO_carriers(Xen,'G',k=Xk,Time=io_Time)
+     !if(l_RT_dos) call RT_IO_carriers(Xen,'G',k=Xk,Time=io_Time)
 #endif
      !
      el_dos(:,:)=0.

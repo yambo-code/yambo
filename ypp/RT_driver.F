@@ -21,12 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_driver(en,k)
+subroutine RT_driver(en,k,q)
  !
  use YPP,            ONLY:Use_FFT,RT_P_t,RT_J_t,N_probe_frequencies,&
 &                         N_probes,N_pumps,RT_IO_J_and_P,X_order,&
 &                         l_RT_X_inversion,l_skip_pol_and_curr_IO,l_force_min_damp,&
-&                         Probe_path,Pump_path,N_probes
+&                         Probe_path,Pump_path,N_probes,l_RT_occ_Fit,l_RT_occ_Plot
  use pars,           ONLY:lchlen
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
@@ -37,7 +37,7 @@ subroutine RT_driver(en,k)
  implicit none
  !
  type(levels)  :: en
- type(bz_samp) :: k
+ type(bz_samp) :: k,q
  !
  ! Work Space
  !
@@ -46,6 +46,18 @@ subroutine RT_driver(en,k)
  logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
  !
  call section("*",'RT Post Processing')
+ !
+ ! Real-Time occupations
+ !=======================
+ !
+ if (l_RT_occ_Plot.or.l_RT_occ_Fit) then
+   call QP_state_table_setup(en)
+   call RT_occupations_analyze(k,en)
+   return
+ endif
+ !
+ ! Response Functions
+ !====================
  !
  call RT_IO_J_and_P_paths( )
  !

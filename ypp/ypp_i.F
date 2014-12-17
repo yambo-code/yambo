@@ -188,7 +188,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
 #if defined _YPP_RT
  !
- if (l_RT_X) call RT_driver(en,k)
+ if (l_RT_X.or.l_RT_occ_Plot.or.l_RT_occ_Fit) call RT_driver(en,k)
  !   ======
  !
 #endif
@@ -203,7 +203,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  l_flag=l_flag.and.(.not.l_eliashberg)
 #endif
 #if defined _YPP_RT
- l_flag=l_flag.or.l_RT_dos.or.l_RT_life_Bands.or.l_RT_occ_Bands.or.l_RT_occ_Plot.or.l_RT_occ_Fit
+ l_flag=l_flag.or.l_RT_dos.or.l_RT_life_Bands.or.l_RT_occ_Bands
 #endif
  !
  if (l_flag) call electrons_driver(Xk,Xen,q)

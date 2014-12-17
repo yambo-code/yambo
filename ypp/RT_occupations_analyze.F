@@ -31,17 +31,17 @@ subroutine RT_occupations_analyze(k,E)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,spin_occ
  use QP_m,           ONLY:QP_table,QP_n_states
- use YPP,            ONLY:output_fname,l_RT_occ_FIT,l_RT_occ_Plot,RT_IO_carriers 
- use com,            ONLY:msg,of_open_close,error
- use IO_m,           ONLY:NONE
+ use YPP,            ONLY:output_fname,l_RT_occ_Plot,RT_IO_carriers,l_RT_occ_Fit
+ use com,            ONLY:msg,of_open_close
+ use IO_m,           ONLY:REP
  use QP_CTL_m,       ONLY:QP_apply
- use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT
+ use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT,RT_apply
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, & 
 &                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime,&
-&                         RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM,RT_delta0_occupations,&
+&                         RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM,&
 &                         RT_E_occupations_reference,RT_H_occupations_reference,REF_lifetime,&
-&                         RT_nk,RT_nstates,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz
+&                         RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_carriers,RT_delta0_occupations
  use SC,             ONLY:SC_bands
  !
  implicit none
@@ -52,20 +52,22 @@ subroutine RT_occupations_analyze(k,E)
  ! Work Space
  !
  integer               :: ik,ib,i_spin,i_gamma,i_s,i_RT,i_T,n_T_steps,n1,n_output
- integer               :: ik_rim,ik_E_rim,ik_RT_rim
+ integer               :: ik_rim,ik_E_rim,ik_RT_rim,RT_nstates
  real(SP)              :: io_Time,data_to_plot(9)
  real(SP), allocatable :: RT_occupations_sum(:,:),RT_H_occ(:,:),RT_E_occ(:,:),RT_delta0_occ(:,:),RT_gamma(:,:,:),RT_E(:)
  character(schlen)     :: titles(9),specs(9,2)
  logical               :: l_ELPH_lifetimes,l_group_occ
- integer,     external :: RT_IO_carriers_setup
  !
- call section('*','Real-Time occupations')
+ call section('+','Real-Time occupations')
  !
- n_T_steps=RT_IO_carriers_setup(E,k)
+ ! Pre-setup of carrier components and Time evolution parameters
  !
- ! RIM support of carrier dynamics
+ call RT_apply(SC_bands,E,k,IO_COM=REP,keep_RT_carriers=.TRUE.)
+ !
+ call RT_IO_carriers_setup(E,k,"LIFETIMES TIME_RANGE REPORT DOUBLE_GRID OCCUPATIONS",n_T_steps)
+ !
+ ! Additional QP corrections
  !=================================
- call RT_IO_check_RIM(k,E)
  !
  call QP_apply(SC_bands,E,k,'G',msg_fmt='s')
  !
@@ -103,6 +105,7 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! SET titles
  ! 
+ n_output=2
  titles(1)='T[fs]'
  titles(2)='Occ.'
  !
@@ -139,8 +142,8 @@ subroutine RT_occupations_analyze(k,E)
    RT_occupations_sum=0._SP
  endif
  !
- allocate(RT_H_occ(RT_nstates,n_T_steps),RT_E_occ(RT_nstates,n_T_steps),RT_delta0_occ(RT_nstates,n_T_steps))
- allocate(RT_gamma(RT_nstates,n_T_steps,7))
+ allocate(RT_H_occ(RT_carriers%nstates,n_T_steps),RT_E_occ(RT_carriers%nstates,n_T_steps),&
+&         RT_delta0_occ(RT_carriers%nstates,n_T_steps),RT_gamma(RT_carriers%nstates,n_T_steps,7))
  RT_E_occ  =0._SP
  RT_H_occ  =0._SP
  RT_gamma=0._SP
@@ -149,7 +152,7 @@ subroutine RT_occupations_analyze(k,E)
    !
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
-   call RT_IO_carriers(E,'G',k=k,Time=io_Time)
+   call RT_IO_carriers(TIME=io_Time)
    !
    i_RT=0
    !
@@ -202,28 +205,32 @@ subroutine RT_occupations_analyze(k,E)
          RT_gamma(i_RT,i_T,n1  )=E_E_Electron_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,2)
        endif
        !
-       n1=n1+1
-       if( (ib<=E%nbf .and. abs(RT_H_occ(i_RT,i_T))>0._SP) .or. (ib> E%nbf .and. abs(RT_E_occ(i_RT,i_T))>0._SP) ) then
-         do i_gamma=1,n1-1,2
-           RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma+1)*RT_E_occ(i_RT,i_T) &
-           &                                          -RT_gamma(i_RT,i_T,i_gamma)  *RT_H_occ(i_RT,i_T)
-         enddo
-         if(ib<=E%nbf) RT_gamma(i_RT,i_T,n1)=-RT_gamma(i_RT,i_T,n1)/RT_H_occ(i_RT,i_T)
-         if(ib> E%nbf) RT_gamma(i_RT,i_T,n1)= RT_gamma(i_RT,i_T,n1)/RT_E_occ(i_RT,i_T)
-       else
-         do i_gamma=1,n1-1,2
-           if(ib<=E%nbf) RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma)  
-           if(ib> E%nbf) RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma+1)
-         enddo
+       if (l_ELPH_lifetimes.or.l_elel_scatt) then
+         n1=n1+1
+         if( (ib<=E%nbf .and. abs(RT_H_occ(i_RT,i_T))>0._SP) .or. (ib> E%nbf .and. abs(RT_E_occ(i_RT,i_T))>0._SP) ) then
+           do i_gamma=1,n1-1,2
+             RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma+1)*RT_E_occ(i_RT,i_T) &
+&                                                       -RT_gamma(i_RT,i_T,i_gamma)  *RT_H_occ(i_RT,i_T)
+           enddo
+           if(ib<=E%nbf) RT_gamma(i_RT,i_T,n1)=-RT_gamma(i_RT,i_T,n1)/RT_H_occ(i_RT,i_T)
+           if(ib> E%nbf) RT_gamma(i_RT,i_T,n1)= RT_gamma(i_RT,i_T,n1)/RT_E_occ(i_RT,i_T)
+         else
+           do i_gamma=1,n1-1,2
+             if(ib<=E%nbf) RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma)  
+             if(ib> E%nbf) RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma+1)
+           enddo
+         endif
+         !
+         RT_gamma(i_RT,i_T,:)=RT_gamma(i_RT,i_T,:)*HA2EV*1000._SP
+         !
        endif
-       !
-       RT_gamma(i_RT,i_T,:)=RT_gamma(i_RT,i_T,:)*HA2EV*1000._SP
        !
        if (.not.l_RT_occ_plot) cycle
        !
-       data_to_plot(3:9)=data_to_plot(3:9)+RT_gamma(i_RT,i_T,1:7)
-       !
-       if(ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) data_to_plot(3:)=data_to_plot(3:)/real(RT_NK_ibz(ik),SP)
+       if (n1>0) then
+         data_to_plot(3:2+n1)=data_to_plot(3:2+n1)+RT_gamma(i_RT,i_T,1:n1-1)
+         if (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) data_to_plot(3:)=data_to_plot(3:)/real(RT_NK_ibz(ik),SP)
+       endif
        !
        ! Occupations
        !=============
@@ -279,7 +286,6 @@ subroutine RT_occupations_analyze(k,E)
  if (allocated(RT_E))               deallocate(RT_E)
  if (allocated(RT_E_occ))           deallocate(RT_E_occ)
  if (allocated(RT_H_occ))           deallocate(RT_H_occ)
- if (allocated(RT_delta0_occ))      deallocate(RT_delta0_occ)
  if (allocated(RT_gamma))           deallocate(RT_gamma)
  if (allocated(RT_occupations_sum)) deallocate(RT_occupations_sum)
  !
@@ -297,8 +303,11 @@ subroutine RT_occupations_analyze(k,E)
      !
      ! Titles
      !========
-     call msg('o '//trim(output_fname),'#',specs(:n_output,1),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(output_fname),'#',specs(:n_output,2),INDENT=0,USE_TABS=.TRUE.)
+     if (l_elel_scatt.or.l_ELPH_lifetimes) then
+       call msg('o '//trim(output_fname),'#',specs(:n_output,1),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(output_fname),'#',specs(:n_output,2),INDENT=0,USE_TABS=.TRUE.)
+     endif
+     !
      call msg('o '//trim(output_fname),'#',titles(:n_output),INDENT=0,USE_TABS=.TRUE.)
      call msg('o '//trim(output_fname),'#')
      !

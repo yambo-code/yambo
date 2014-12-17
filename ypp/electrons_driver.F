@@ -48,8 +48,6 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #endif
 #if defined _YPP_RT
  use drivers,        ONLY:l_rt_carriers_in_use
- use YPP,            ONLY:l_RT_occ_Plot,l_RT_occ_Fit
- use real_time,      ONLY:RT_nk
 #endif
 #if defined _YPP_ELPH
  use YPP,            ONLY:elph_residual_treshold
@@ -106,7 +104,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #endif
 #if defined _YPP_RT 
  if (.not.flag) then
-   flag=any((/l_RT_dos,l_RT_life_Bands,l_RT_occ_Bands,l_RT_occ_Plot,l_RT_occ_Fit/))
+   flag=any((/l_RT_dos,l_RT_life_Bands,l_RT_occ_Bands/))
    l_rt_carriers_in_use=flag
  endif
 #endif
@@ -480,15 +478,6 @@ subroutine electrons_driver(Xk,Xen,Xq)
  endif
  !
  ! GPL_EXCLUDE_START
- !
-#if defined _YPP_RT
- !
- ! Real-Time occupations
- !=======================
- !
- if (l_RT_occ_Plot.or.l_RT_occ_Fit) call RT_occupations_analyze(Xk,Xen)
- !
-#endif
  !
 #if defined _YPP_MAGNETIC
  !

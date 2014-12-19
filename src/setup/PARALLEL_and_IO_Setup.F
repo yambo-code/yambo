@@ -45,9 +45,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  integer           :: ID,io_err,i_s,n_max_threads
  integer, external :: io_DB1
  !
-#if !defined _YPP_RT
  call section('*','CPU structure, Files & I/O Directories') 
-#endif
  !
  ! Buffered I/O ?
  !

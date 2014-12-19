@@ -38,7 +38,7 @@ integer function io_RT_components(what,ID)
  use fields,         ONLY:i_Probe,i_Pump
  use real_time,      ONLY:NE_i_time,E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,REF_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_delta0_occupations,&
+&                         E_E_Hole_lifetime,E_E_Electron_lifetime,&
 &                         RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         l_NE_with_fields,NE_steps,RT_P,RT_nk, &
 &                         dG_lesser,RT_ind_J,RT_carriers,RT_obj_alloc,&
@@ -248,49 +248,7 @@ integer function io_RT_components(what,ID)
      !
      call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="input_output")
      !
-     if (allocated(RT_delta0_occupations)) then
-       call io_bulk(ID,VAR="RT_occupations_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-       call io_bulk(ID,R2=RT_delta0_occupations)
-     endif
-     !
-     if (allocated(BGR_hartree)) then
-       !
-       call io_bulk(ID,VAR="RT_BGR_hartree"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,nkibz,n_sp_pol/))
-       call io_bulk(ID,R3=BGR_hartree)
-       !
-       call io_bulk(ID,VAR="RT_BGR_V_xc"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,nkibz,n_sp_pol/))
-       call io_bulk(ID,R3=BGR_V_xc)
-       !
-       call io_bulk(ID,VAR="RT_BGR_Self_Energy"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,nkibz,n_sp_pol/))
-       call io_bulk(ID,R3=BGR_Self_Energy)
-       !
-     endif
-     !
-     if (allocated(E_P_Hole_lifetime)) then
-       !
-       call io_bulk(ID,VAR="RT_E_P_Hole_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-       call io_bulk(ID,R2=E_P_Hole_lifetime)
-       !
-       call io_bulk(ID,VAR="RT_E_P_Electron_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-       call io_bulk(ID,R2=E_P_Electron_lifetime)
-       !
-       call io_bulk(ID,VAR="RT_E_P_Ho_abs_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-       call io_bulk(ID,R2=E_P_Ho_abs_lifetime)
-       !
-       call io_bulk(ID,VAR="RT_E_P_El_abs_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-       call io_bulk(ID,R2=E_P_El_abs_lifetime)
-       !
-     endif
-     !
-     if (allocated(E_E_Hole_lifetime)) then
-       !
-       call io_bulk(ID,VAR="RT_E_E_Hole_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-       call io_bulk(ID,R2=E_E_Hole_lifetime)
-       !
-       call io_bulk(ID,VAR="RT_E_E_Electron_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
-       call io_bulk(ID,R2=E_E_Electron_lifetime)
-       !
-     endif
+     if (read_is_on(ID)) call RT_carriers_object(RT_carriers,WHAT="dump")
      !
    endif
    !

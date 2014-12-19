@@ -24,6 +24,7 @@
 subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
+ use debug,      ONLY:dbg
  use pars,       ONLY:SP,schlen
  use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
@@ -135,6 +136,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! Stack Size 
  !
  call remove_stack_limit()
+ !
+ ! Debug
+ !
+ call dbg('reset')
  !
  ! Clocks
  !

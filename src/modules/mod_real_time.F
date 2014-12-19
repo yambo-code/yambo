@@ -277,20 +277,40 @@ module real_time
  !
  type RT_t
    !
+   ! Sizes and definitions
+   !
+   integer  :: nk
+   integer  :: nb(2)
+   integer  :: nstates
    character(schlen)  :: description
    integer,    pointer:: table(:,:)      => null() ! ib,ik_RT,ik,i_spin
    real(SP)   ,pointer:: kpt(:,:)        => null()
    real(SP)   ,pointer:: k_weight(:)     => null()
+   !
+   ! Energies
+   !
    real(SP)   ,pointer:: E_bare(:)       => null() ! equilibrium energy, i.e. the QP energy
-   real(SP)   ,pointer:: f_bare(:)       => null() ! equilibrium occupations
-   real(SP)   ,pointer:: GAMMA_bare(:)   => null() ! "initial equilibrium" lifetimes. In the code the "initial equilibrium"
-   real(SP)   ,pointer:: delta_f(:)      => null() ! change in the occupations
    real(SP)   ,pointer:: delta_E(:)      => null() ! change in E (BGR)
-   real(SP)   ,pointer:: delta_GAMMA(:)  => null() ! change with respect to the "initial equilibrium" lifetimes
+   real(SP)   ,pointer:: dE_Hartree(:)   => null()
+   real(SP)   ,pointer:: dE_V_xc(:)        => null()
+   real(SP)   ,pointer:: dE_Self_Energy(:) => null()
+   !
+   ! Occupations
+   !
+   real(SP)   ,pointer:: f_bare(:)       => null() ! equilibrium occupations
+   real(SP)   ,pointer:: delta_f(:)      => null() ! change in the occupations
+   !
+   ! Lifetimes
+   !
+   real(SP)   ,pointer:: GAMMA_bare(:)   => null() ! "initial equilibrium" lifetimes. In the code the "initial equilibrium"
    real(SP)   ,pointer:: NEQ_Lifetime(:) => null() ! time dependent lifetime defined as for Silicon
-   integer  :: nk
-   integer  :: nb(2)
-   integer  :: nstates
+   real(SP)   ,pointer:: delta_GAMMA(:)  => null() ! change with respect to the "initial equilibrium" lifetimes
+   real(SP)   ,pointer:: dGAMMA_E_P_Hole(:)     => null() 
+   real(SP)   ,pointer:: dGAMMA_E_P_Electron(:) => null() 
+   real(SP)   ,pointer:: dGAMMA_E_P_Ho_abs(:)   => null() 
+   real(SP)   ,pointer:: dGAMMA_E_P_El_abs(:)   => null() 
+   real(SP)   ,pointer:: dGAMMA_E_E_Hole(:)     => null() 
+   real(SP)   ,pointer:: dGAMMA_E_E_Electron(:) => null() 
    !
  end type RT_t
  !
@@ -348,11 +368,26 @@ module real_time
      if(.not.associated(RT%table))        allocate(RT%table(RT%nstates,4))
      if(.not.associated(RT%E_bare))       allocate(RT%E_bare(RT%nstates)) 
      if(.not.associated(RT%f_bare))       allocate(RT%f_bare(RT%nstates))
-     if(.not.associated(RT%GAMMA_bare))   allocate(RT%GAMMA_bare(RT%nstates))
+     if(.not.associated(RT%dE_Hartree))     allocate(RT%dE_Hartree(RT%nstates))
+     if(.not.associated(RT%dE_V_xc))        allocate(RT%dE_V_xc(RT%nstates))
+     if(.not.associated(RT%dE_Self_Energy)) allocate(RT%dE_Self_Energy(RT%nstates))
+     if (allocated( E_E_Hole_lifetime )) then
+       if(.not.associated(RT%dGAMMA_E_E_Hole))     allocate(RT%dGAMMA_E_E_Hole(RT%nstates))
+       if(.not.associated(RT%dGAMMA_E_E_Electron)) allocate(RT%dGAMMA_E_E_Electron(RT%nstates))
+     endif
+     if (allocated( E_P_Hole_lifetime )) then
+       if(.not.associated(RT%dGAMMA_E_P_Hole))     allocate(RT%dGAMMA_E_P_Hole(RT%nstates))
+       if(.not.associated(RT%dGAMMA_E_P_Electron)) allocate(RT%dGAMMA_E_P_Electron(RT%nstates))
+       if(.not.associated(RT%dGAMMA_E_P_Ho_abs))   allocate(RT%dGAMMA_E_P_Ho_abs(RT%nstates))
+       if(.not.associated(RT%dGAMMA_E_P_El_abs))   allocate(RT%dGAMMA_E_P_El_abs(RT%nstates))
+     endif
+     if (allocated( E_P_Hole_lifetime ).or. allocated( E_E_Hole_lifetime )) then
+       if(.not.associated(RT%GAMMA_bare))   allocate(RT%GAMMA_bare(RT%nstates))
+       if(.not.associated(RT%delta_GAMMA))  allocate(RT%delta_GAMMA(RT%nstates)) 
+       if(.not.associated(RT%NEQ_Lifetime)) allocate(RT%NEQ_Lifetime(RT%nstates)) 
+     endif
      if(.not.associated(RT%delta_E))      allocate(RT%delta_E(RT%nstates))   
      if(.not.associated(RT%delta_f))      allocate(RT%delta_f(RT%nstates))  
-     if(.not.associated(RT%delta_GAMMA))  allocate(RT%delta_GAMMA(RT%nstates)) 
-     if(.not.associated(RT%NEQ_Lifetime)) allocate(RT%NEQ_Lifetime(RT%nstates)) 
    end subroutine
    !
    subroutine RT_obj_free(RT)
@@ -360,6 +395,15 @@ module real_time
      RT%nk=0
      RT%nb=0
      RT%nstates=0
+     if(associated(RT%dE_Hartree))     deallocate(RT%dE_Hartree)
+     if(associated(RT%dE_V_xc))        deallocate(RT%dE_V_xc)
+     if(associated(RT%dE_Self_Energy)) deallocate(RT%dE_Self_Energy)
+     if(associated(RT%dGAMMA_E_E_Hole))     deallocate(RT%dGAMMA_E_E_Hole)
+     if(associated(RT%dGAMMA_E_E_Electron)) deallocate(RT%dGAMMA_E_E_Electron)
+     if(associated(RT%dGAMMA_E_P_Hole))     deallocate(RT%dGAMMA_E_P_Hole)
+     if(associated(RT%dGAMMA_E_P_Electron)) deallocate(RT%dGAMMA_E_P_Electron)
+     if(associated(RT%dGAMMA_E_P_Ho_abs))   deallocate(RT%dGAMMA_E_P_Ho_abs)
+     if(associated(RT%dGAMMA_E_P_El_abs))   deallocate(RT%dGAMMA_E_P_El_abs)
      if(associated(RT%E_bare))       deallocate(RT%E_bare)
      if(associated(RT%f_bare))       deallocate(RT%f_bare)
      if(associated(RT%GAMMA_bare))   deallocate(RT%GAMMA_bare)

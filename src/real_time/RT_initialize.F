@@ -30,13 +30,14 @@ subroutine RT_initialize(E,k,q)
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
+ use interfaces,     ONLY:RT_carriers_object
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded
  use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_steps_DB, &
 &                         RT_IO_G_steps,RT_IO_output_steps
  use real_time,      ONLY:RT_step,l_NE_with_fields, &
-&                         NE_steps,NE_tot_time,   &
+&                         NE_steps,NE_tot_time,RT_carriers,   &
 &                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
 &                         RT_is_dephased,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,RIM_ibz_coo, &
@@ -301,7 +302,6 @@ subroutine RT_initialize(E,k,q)
  !=============================================
  if (l_elph_scatt.or.l_elel_scatt) N_T_samplings=RT_Lifetimes_evaluation_plan( )
  !
- !
  ! Checking extended COLLISIONS
  !==============================
  !
@@ -317,6 +317,11 @@ subroutine RT_initialize(E,k,q)
    call COLLISIONS_load(.TRUE.)
    !
  endif
+ !
+ ! Initial allocation and basic definitions of the RT_carriers object
+ !====================================================================
+ !
+ call RT_carriers_object(RT_carriers,E,k,WHAT='allocate')
  !
  ! LOG
  ! ===

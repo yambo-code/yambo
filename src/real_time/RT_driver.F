@@ -196,11 +196,6 @@ subroutine RT_driver(E,X,k,q)
    !
  endif
  !
- ! Initial allocation and basic definitions of the RT_carriers object
- !====================================================================
- !
- call RT_carriers_object(RT_carriers,E,K,WHAT='allocate')
- !
  ! Qindx_X and Qindx_S not needed in real-time they are used only in dipoles and collisions calculations
  !
  if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free()
@@ -215,6 +210,8 @@ subroutine RT_driver(E,X,k,q)
    call WF_free(WF)
    !
    call X_alloc("P_square")
+   !
+   call RT_carriers_object(RT_carriers,WHAT='free')
    !
    return
    !

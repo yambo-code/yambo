@@ -120,7 +120,6 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
  !==========
  !
  l_Time=0.
- !
  if (present(Time)) then
    l_Time=Time
  endif
@@ -138,7 +137,7 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
  endif
  io_err=io_RT_components(trim(db_name),ID)
  !
- if (io_err<0) call error ('Occupations database '//trim(db_name)//' not found')
+ if (io_err<0) call error ('Carriers database '//trim(db_name)//' not found')
  !
  if (io_err==0) l_rt_carriers_in_use=.TRUE.
  !
@@ -213,6 +212,7 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
  l_elel_corr=l_elel_corr_save
  !
  if (present(COM_done)) then
+   !
    if (.not.COM_done) then
      !
      call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(l_Time/FS2AUT))//' fs')
@@ -232,6 +232,7 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
      COM_done=.TRUE.
      !
    endif
+   !
  endif
  !
 end subroutine

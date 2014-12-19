@@ -31,9 +31,9 @@ subroutine RT_occupations_analyze(k,E)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,spin_occ
  use QP_m,           ONLY:QP_table,QP_n_states
- use YPP,            ONLY:output_fname,l_RT_occ_Plot,RT_IO_carriers,l_RT_occ_Fit,RT_IO_time_range_setup
+ use YPP,            ONLY:output_fname,l_RT_occ_Plot,RT_IO_carriers,l_RT_occ_Fit
  use com,            ONLY:msg,of_open_close
- use IO_m,           ONLY:LOG
+ use IO_m,           ONLY:REP
  use QP_CTL_m,       ONLY:QP_apply
  use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT,RT_apply
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
@@ -62,42 +62,42 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !
- call RT_apply(SC_bands,E,k,IO_COM=LOG,keep_RT_carriers=.TRUE.)
+ call RT_apply(SC_bands,E,k,IO_COM=REP,keep_RT_carriers=.TRUE.)
  !
- call  RT_IO_time_range_setup(n_T_steps)
+ call RT_IO_carriers_setup(E,k,"LIFETIMES TIME_RANGE REPORT DOUBLE_GRID OCCUPATIONS",n_T_steps)
  !
  ! Additional QP corrections
  !=================================
  !
  call QP_apply(SC_bands,E,k,'G',msg_fmt='s')
  !
- !call parser('OCCgroup',l_group_occ)
+ call parser('OCCgroup',l_group_occ)
  !
- !RT_nstates=RT_nk*(SC_bands(2)-SC_bands(1)+1)
- !allocate(RT_E(RT_nstates))
+ RT_nstates=RT_nk*(SC_bands(2)-SC_bands(1)+1)
+ allocate(RT_E(RT_nstates))
  !
  ! Dump RIM energies in E
  !
- !i_RT=0
- !do i_s=1,QP_n_states
- !  !
- !  ib    =QP_table(i_s,1)
- !  ik    =QP_table(i_s,3)
- !  i_spin=spin(QP_table(i_s,:))
- !  !
- !  if (ib<SC_bands(1)) cycle
- !  if (ib>SC_bands(2)) cycle
- !  !
- !  do ik_rim=1,RIM_ibz_coo(ik,2)-RIM_ibz_coo(ik,1)+1
- !    ik_RT_rim=RT_ibz_coo(ik,1)+ik_rim-1
- !    ik_E_rim =RIM_ibz_coo(ik,1)+ik_rim-1
- !    if (ik_RT_rim>RT_nk) cycle
- !    i_RT=i_RT+1
- !    if(     l_RT_uses_E_RIM) RT_E(i_RT)=E%E_RIM(ib,ik_E_rim,1)
- !    if(.not.l_RT_uses_E_RIM) RT_E(i_RT)=E%E(ib,ik_E_rim,1)
- !  enddo
- !  !
- !enddo
+ i_RT=0
+ do i_s=1,QP_n_states
+   !
+   ib    =QP_table(i_s,1)
+   ik    =QP_table(i_s,3)
+   i_spin=spin(QP_table(i_s,:))
+   !
+   if (ib<SC_bands(1)) cycle
+   if (ib>SC_bands(2)) cycle
+   !
+   do ik_rim=1,RIM_ibz_coo(ik,2)-RIM_ibz_coo(ik,1)+1
+     ik_RT_rim=RT_ibz_coo(ik,1)+ik_rim-1
+     ik_E_rim =RIM_ibz_coo(ik,1)+ik_rim-1
+     if (ik_RT_rim>RT_nk) cycle
+     i_RT=i_RT+1
+     if(     l_RT_uses_E_RIM) RT_E(i_RT)=E%E_RIM(ib,ik_E_rim,1)
+     if(.not.l_RT_uses_E_RIM) RT_E(i_RT)=E%E(ib,ik_E_rim,1)
+   enddo
+   !
+ enddo
  !
  l_ELPH_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
  !
@@ -137,23 +137,22 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! F(it) for each (ik,ib)
  !
- !if(l_RT_occ_Plot) then
- !  allocate(RT_occupations_sum(3,n_T_steps)) 
- !  RT_occupations_sum=0._SP
- !endif
+ if(l_RT_occ_Plot) then
+   allocate(RT_occupations_sum(3,n_T_steps)) 
+   RT_occupations_sum=0._SP
+ endif
  !
- !allocate(RT_H_occ(RT_carriers%nstates,n_T_steps),RT_E_occ(RT_carriers%nstates,n_T_steps),&
-!&         RT_delta0_occ(RT_carriers%nstates,n_T_steps),RT_gamma(RT_carriers%nstates,n_T_steps,7))
- !RT_E_occ  =0._SP
- !RT_H_occ  =0._SP
- !RT_gamma=0._SP
+ allocate(RT_H_occ(RT_carriers%nstates,n_T_steps),RT_E_occ(RT_carriers%nstates,n_T_steps),&
+&         RT_delta0_occ(RT_carriers%nstates,n_T_steps),RT_gamma(RT_carriers%nstates,n_T_steps,7))
+ RT_E_occ  =0._SP
+ RT_H_occ  =0._SP
+ RT_gamma=0._SP
  !
  do i_T=1,n_T_steps
    !
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
-   call RT_apply(SC_bands,E,k,Time=io_Time,keep_RT_carriers=.TRUE.)
-   !call RT_IO_carriers(TIME=io_Time)
+   call RT_IO_carriers(TIME=io_Time)
    !
    i_RT=0
    !
@@ -175,90 +174,89 @@ subroutine RT_occupations_analyze(k,E)
        if (i_T==1) call open_file()
      endif
      !
-     !do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     !  !
-     !  if (l_RT_occ_plot.and. .not.l_group_occ .and. ik_rim>RT_ibz_coo(ik,1)) cycle
-     !  !
-     !  i_RT=i_RT+1
-     !  !
-     !  if (.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,1).and.l_group_occ)) data_to_plot(2:)=0._SP
-     !  !
-     !  ! Occupations
-     !  !============
-     !  RT_delta0_occ(i_RT,i_T)=RT_delta0_occupations(ib,ik_rim)
-     !  RT_E_occ(i_RT,i_T)=RT_E_occupations_reference(ib,ik)+RT_delta0_occ(i_RT,i_T)
-     !  RT_H_occ(i_RT,i_T)=RT_H_occupations_reference(ib,ik)-RT_delta0_occ(i_RT,i_T)
-     !  !
-     !  ! Lifetimes
-     !  !===========
-     !  n1=0
-     !  if (l_ELPH_lifetimes) then
-     !    n1=4
-     !    RT_gamma(i_RT,i_T,1)=E_P_Hole_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,3)
-     !    RT_gamma(i_RT,i_T,2)=E_P_Electron_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,4)
-     !    RT_gamma(i_RT,i_T,3)=E_P_Ho_abs_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,5)
-     !    RT_gamma(i_RT,i_T,4)=E_P_El_abs_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,6)
-     !  endif
-     !  !
-     !  if (l_elel_scatt) then
-     !    n1=n1+2
-     !    RT_gamma(i_RT,i_T,n1-1)=E_E_Hole_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,1)
-     !    RT_gamma(i_RT,i_T,n1  )=E_E_Electron_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,2)
-     !  endif
-     !  !
-     !  if (l_ELPH_lifetimes.or.l_elel_scatt) then
-     !    n1=n1+1
-     !    if( (ib<=E%nbf .and. abs(RT_H_occ(i_RT,i_T))>0._SP) .or. (ib> E%nbf .and. abs(RT_E_occ(i_RT,i_T))>0._SP) ) then
-     !      do i_gamma=1,n1-1,2
-     !        RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma+1)*RT_E_occ(i_RT,i_T) &
-!&                                                       -RT_gamma(i_RT,i_T,i_gamma)  *RT_H_occ(i_RT,i_T)
-     !      enddo
-     !      if(ib<=E%nbf) RT_gamma(i_RT,i_T,n1)=-RT_gamma(i_RT,i_T,n1)/RT_H_occ(i_RT,i_T)
-     !      if(ib> E%nbf) RT_gamma(i_RT,i_T,n1)= RT_gamma(i_RT,i_T,n1)/RT_E_occ(i_RT,i_T)
-     !    else
-     !      do i_gamma=1,n1-1,2
-     !        if(ib<=E%nbf) RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma)  
-     !        if(ib> E%nbf) RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma+1)
-     !      enddo
-     !    endif
-     !    !
-     !    RT_gamma(i_RT,i_T,:)=RT_gamma(i_RT,i_T,:)*HA2EV*1000._SP
-     !    !
-     !  endif
-     !  !
-     !  if (.not.l_RT_occ_plot) cycle
-     !  !
-     !  if (n1>0) then
-     !    data_to_plot(3:2+n1)=data_to_plot(3:2+n1)+RT_gamma(i_RT,i_T,1:n1-1)
-     !    if (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) data_to_plot(3:)=data_to_plot(3:)/real(RT_NK_ibz(ik),SP)
-     !  endif
-     !  !
-     !  ! Occupations
-     !  !=============
-     !  RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+RT_delta0_occ(i_RT,i_T)*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
-     !  !
-     !  if (ib==SC_bands(1).and.SC_bands(1)>1) RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+ &
-!&                                             spin_occ*k%weights(ik)*real(SC_bands(1)-1)/real(RT_Nk_ibz(ik),SP)
+     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
-     !  data_to_plot(1)=io_TIME/FS2AUT
-     !  data_to_plot(2)=data_to_plot(2)+ RT_delta0_occupations(ib,ik_rim) *k%weights(ik)
-     !  !
-     !  if(.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) ) then
-     !    data_to_plot(2)=data_to_plot(2)/real(RT_Nk_ibz(ik),SP)
-     !    if (ib<=E%nbf) RT_occupations_sum(1,i_T)=RT_occupations_sum(1,i_T)+data_to_plot(2)
-     !    if (ib> E%nbf) RT_occupations_sum(2,i_T)=RT_occupations_sum(2,i_T)+data_to_plot(2)
-     !  endif
-     !  !
-     !  if(.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) ) then
-     !    call msg('o '//trim(output_fname),'',data_to_plot(:n1+2),INDENT=-2,USE_TABS=.true.)
-     !    if (i_T==n_T_steps) call of_open_close(trim(output_fname))
-     !  endif
-     !  !
-     !enddo
+       if (l_RT_occ_plot.and. .not.l_group_occ .and. ik_rim>RT_ibz_coo(ik,1)) cycle
+       !
+       i_RT=i_RT+1
+       !
+       if (.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,1).and.l_group_occ)) data_to_plot(2:)=0._SP
+       !
+       ! Occupations
+       !============
+       RT_delta0_occ(i_RT,i_T)=RT_delta0_occupations(ib,ik_rim)
+       RT_E_occ(i_RT,i_T)=RT_E_occupations_reference(ib,ik)+RT_delta0_occ(i_RT,i_T)
+       RT_H_occ(i_RT,i_T)=RT_H_occupations_reference(ib,ik)-RT_delta0_occ(i_RT,i_T)
+       !
+       ! Lifetimes
+       !===========
+       n1=0
+       if (l_ELPH_lifetimes) then
+         n1=4
+         RT_gamma(i_RT,i_T,1)=E_P_Hole_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,3)
+         RT_gamma(i_RT,i_T,2)=E_P_Electron_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,4)
+         RT_gamma(i_RT,i_T,3)=E_P_Ho_abs_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,5)
+         RT_gamma(i_RT,i_T,4)=E_P_El_abs_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,6)
+       endif
+       !
+       if (l_elel_scatt) then
+         n1=n1+2
+         RT_gamma(i_RT,i_T,n1-1)=E_E_Hole_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,1)
+         RT_gamma(i_RT,i_T,n1  )=E_E_Electron_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,2)
+       endif
+       !
+       if (l_ELPH_lifetimes.or.l_elel_scatt) then
+         n1=n1+1
+         if( (ib<=E%nbf .and. abs(RT_H_occ(i_RT,i_T))>0._SP) .or. (ib> E%nbf .and. abs(RT_E_occ(i_RT,i_T))>0._SP) ) then
+           do i_gamma=1,n1-1,2
+             RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma+1)*RT_E_occ(i_RT,i_T) &
+&                                                       -RT_gamma(i_RT,i_T,i_gamma)  *RT_H_occ(i_RT,i_T)
+           enddo
+           if(ib<=E%nbf) RT_gamma(i_RT,i_T,n1)=-RT_gamma(i_RT,i_T,n1)/RT_H_occ(i_RT,i_T)
+           if(ib> E%nbf) RT_gamma(i_RT,i_T,n1)= RT_gamma(i_RT,i_T,n1)/RT_E_occ(i_RT,i_T)
+         else
+           do i_gamma=1,n1-1,2
+             if(ib<=E%nbf) RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma)  
+             if(ib> E%nbf) RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma+1)
+           enddo
+         endif
+         !
+         RT_gamma(i_RT,i_T,:)=RT_gamma(i_RT,i_T,:)*HA2EV*1000._SP
+         !
+       endif
+       !
+       if (.not.l_RT_occ_plot) cycle
+       !
+       if (n1>0) then
+         data_to_plot(3:2+n1)=data_to_plot(3:2+n1)+RT_gamma(i_RT,i_T,1:n1-1)
+         if (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) data_to_plot(3:)=data_to_plot(3:)/real(RT_NK_ibz(ik),SP)
+       endif
+       !
+       ! Occupations
+       !=============
+       RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+RT_delta0_occ(i_RT,i_T)*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
+       !
+       if (ib==SC_bands(1).and.SC_bands(1)>1) RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+ &
+&                                             spin_occ*k%weights(ik)*real(SC_bands(1)-1)/real(RT_Nk_ibz(ik),SP)
+       !
+       data_to_plot(1)=io_TIME/FS2AUT
+       data_to_plot(2)=data_to_plot(2)+ RT_delta0_occupations(ib,ik_rim) *k%weights(ik)
+       !
+       if(.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) ) then
+         data_to_plot(2)=data_to_plot(2)/real(RT_Nk_ibz(ik),SP)
+         if (ib<=E%nbf) RT_occupations_sum(1,i_T)=RT_occupations_sum(1,i_T)+data_to_plot(2)
+         if (ib> E%nbf) RT_occupations_sum(2,i_T)=RT_occupations_sum(2,i_T)+data_to_plot(2)
+       endif
+       !
+       if(.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) ) then
+         call msg('o '//trim(output_fname),'',data_to_plot(:n1+2),INDENT=-2,USE_TABS=.true.)
+         if (i_T==n_T_steps) call of_open_close(trim(output_fname))
+       endif
+       !
+     enddo
    enddo
  enddo
  !
- stop
  if (l_RT_occ_plot) then
    !
    ! Sum_{ib,ik} f_{ik,ib}(it)

@@ -23,6 +23,7 @@
 !
 module real_time
  !
+ use drivers,    ONLY:l_elel_scatt,l_elph_scatt
  use SC,         ONLY:SC_R
  use pars,       ONLY:DP,SP,schlen,lchlen
  use units,      ONLY:FS2AUT
@@ -371,17 +372,17 @@ module real_time
      if(.not.associated(RT%dE_Hartree))     allocate(RT%dE_Hartree(RT%nstates))
      if(.not.associated(RT%dE_V_xc))        allocate(RT%dE_V_xc(RT%nstates))
      if(.not.associated(RT%dE_Self_Energy)) allocate(RT%dE_Self_Energy(RT%nstates))
-     if (allocated( E_E_Hole_lifetime )) then
+     if (l_elel_scatt) then
        if(.not.associated(RT%dGAMMA_E_E_Hole))     allocate(RT%dGAMMA_E_E_Hole(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_E_Electron)) allocate(RT%dGAMMA_E_E_Electron(RT%nstates))
      endif
-     if (allocated( E_P_Hole_lifetime )) then
+     if (l_elph_scatt) then
        if(.not.associated(RT%dGAMMA_E_P_Hole))     allocate(RT%dGAMMA_E_P_Hole(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_P_Electron)) allocate(RT%dGAMMA_E_P_Electron(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_P_Ho_abs))   allocate(RT%dGAMMA_E_P_Ho_abs(RT%nstates))
        if(.not.associated(RT%dGAMMA_E_P_El_abs))   allocate(RT%dGAMMA_E_P_El_abs(RT%nstates))
      endif
-     if (allocated( E_P_Hole_lifetime ).or. allocated( E_E_Hole_lifetime )) then
+     if (l_elel_scatt.or.l_elph_scatt) then
        if(.not.associated(RT%GAMMA_bare))   allocate(RT%GAMMA_bare(RT%nstates))
        if(.not.associated(RT%delta_GAMMA))  allocate(RT%delta_GAMMA(RT%nstates)) 
        if(.not.associated(RT%NEQ_Lifetime)) allocate(RT%NEQ_Lifetime(RT%nstates)) 

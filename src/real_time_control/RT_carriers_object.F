@@ -145,8 +145,10 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
            E_E_Hole_lifetime(i_b,i_k_RT)=RT%dGAMMA_E_E_Hole(i_RT)
            E_E_Electron_lifetime(i_b,i_k_RT)=RT%dGAMMA_E_E_Electron(i_RT)
          endif
-         Hole_lifetime=E_E_Hole_lifetime(i_b,i_k_RT)
-         Elec_lifetime=E_E_Electron_lifetime(i_b,i_k_RT)
+         if (allocated(E_E_Hole_lifetime)) then
+           Hole_lifetime=E_E_Hole_lifetime(i_b,i_k_RT)
+           Elec_lifetime=E_E_Electron_lifetime(i_b,i_k_RT)
+         endif
        endif
        !
        if(l_elph_scatt) then
@@ -161,8 +163,10 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
            E_P_Ho_abs_lifetime(i_b,i_k_RT)=RT%dGAMMA_E_P_Ho_abs(i_RT) 
            E_P_El_abs_lifetime(i_b,i_k_RT)=RT%dGAMMA_E_P_El_abs(i_RT) 
          endif
-         Hole_lifetime=Hole_lifetime+E_P_Hole_lifetime(i_b,i_k_RT)    +E_P_Ho_abs_lifetime(i_b,i_k_RT)
-         Elec_lifetime=Elec_lifetime+E_P_Electron_lifetime(i_b,i_k_RT)+E_P_El_abs_lifetime(i_b,i_k_RT)
+         if (allocated(E_P_Hole_lifetime)) then
+           Hole_lifetime=Hole_lifetime+E_P_Hole_lifetime(i_b,i_k_RT)    +E_P_Ho_abs_lifetime(i_b,i_k_RT)
+           Elec_lifetime=Elec_lifetime+E_P_Electron_lifetime(i_b,i_k_RT)+E_P_El_abs_lifetime(i_b,i_k_RT)
+         endif
        endif
        !
        if (what=="fill") then
@@ -203,21 +207,19 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      call io_bulk(DB_id,R1=RT%dE_Self_Energy)
      call io_bulk(DB_id,VAR="RT_carriers_delta_f",VAR_SZ=(/RT%nstates/))
      call io_bulk(DB_id,R1=RT%delta_f)
-     if (associated(RT%delta_GAMMA)) then
+     if (l_elel_scatt.or.l_elph_scatt) then
        call io_bulk(DB_id,VAR="RT_carriers_delta_GAMMA",VAR_SZ=(/RT%nstates/))
        call io_bulk(DB_id,R1=RT%delta_GAMMA)
-     endif
-     if (associated(RT%NEQ_Lifetime)) then
        call io_bulk(DB_id,VAR="RT_NEQ_Lifetime",VAR_SZ=(/RT%nstates/))
        call io_bulk(DB_id,R1=RT%NEQ_Lifetime)
      endif
-     if (associated(RT%dGAMMA_E_E_Hole)) then
+     if (l_elel_scatt) then
        call io_bulk(DB_id,VAR="RT_dGAMMA_E_E_Hole",VAR_SZ=(/RT%nstates/))
        call io_bulk(DB_id,R1=RT%dGAMMA_E_E_Hole)
        call io_bulk(DB_id,VAR="RT_dGAMMA_E_E_Electron",VAR_SZ=(/RT%nstates/))
        call io_bulk(DB_id,R1=RT%dGAMMA_E_E_Electron)
      endif
-     if (associated(RT%dGAMMA_E_P_Hole)) then
+     if (l_elph_scatt) then
        call io_bulk(DB_id,VAR="RT_dGAMMA_E_P_Hole",VAR_SZ=(/RT%nstates/))
        call io_bulk(DB_id,R1=RT%dGAMMA_E_P_Hole)
        call io_bulk(DB_id,VAR="RT_dGAMMA_E_P_Electron",VAR_SZ=(/RT%nstates/))

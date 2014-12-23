@@ -36,30 +36,30 @@ subroutine RT_occupations_FIT_and_plot(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
  use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative,Fermi_fnc_fit
  use com,            ONLY:msg,of_open_close,error
  use stderr,         ONLY:intc,real2ch
- use real_time,      ONLY:RT_nk,RT_nstates,RT_ibz_coo
+ use real_time,      ONLY:RT_nk,RT_ibz_coo,RT_carriers
  !
  implicit none
  !
  integer               :: n_T_steps,ngamma
- real(SP)              :: RT_E(RT_nstates)
- real(SP)              :: RT_occ(RT_nstates,n_T_steps)
- real(SP)              :: RT_gamma(RT_nstates,n_T_steps,8)
+ real(SP)              :: RT_E(RT_carriers%nstates)
+ real(SP)              :: RT_occ(RT_carriers%nstates,n_T_steps)
+ real(SP)              :: RT_gamma(RT_carriers%nstates,n_T_steps,8)
  !
  integer, parameter    :: max_iter=10000,fit_dim=1000,nmax_file_report=16
  real(SP)              :: RT_occ_fit(fit_dim,n_T_steps,2),RT_E_fit(fit_dim,2)
- real(SP)              :: RT_gamma_ratio(RT_nstates,n_T_steps,2)
+ real(SP)              :: RT_gamma_ratio(RT_carriers%nstates,n_T_steps,2)
  !
  ! Work Space
  !
  real(SP)              :: io_Time
- real(SP)              :: TMP_vec(RT_nstates),data_fit(7,2)
+ real(SP)              :: TMP_vec(RT_carriers%nstates),data_fit(7,2)
  real(SP)              :: err_fit(n_T_steps,4),err_fit_gamma(n_T_steps,4)
  real(SP)              :: T_fit(n_T_steps,2),T_fit_gamma(n_T_steps,4)
  real(SP)              :: Ef_fit(n_T_steps,2),Ef_fit_gamma(n_T_steps,4)
  ! 
  integer  :: ifit,i_s,i_RT,ik,ik_rim,ib,i1,i_T,i2,n1,n2,i_spin,igamma
  integer  :: nfound(3),nfound_gamma(5)
- integer  :: E_sort_index(RT_nstates)
+ integer  :: E_sort_index(RT_carriers%nstates)
  !
  character(10)     ::titles(n_T_steps+4),data_ch(n_T_steps+4,5,2),columns(n_T_steps+4)
  character(schlen) ::output_fname(max(2,ngamma+1)),gamma_fname(ngamma),GRP_string
@@ -95,7 +95,7 @@ subroutine RT_occupations_FIT_and_plot(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    !
    ! Occupations FIT
    !
-   nfound(3)=Fermi_fnc_fit(RT_E,RT_occ(:,i1),RT_nstates,T_fit(i1,:),Ef_fit(i1,:),err_fit(i1,:),&
+   nfound(3)=Fermi_fnc_fit(RT_E,RT_occ(:,i1),RT_carriers%nstates,T_fit(i1,:),Ef_fit(i1,:),err_fit(i1,:),&
 &                            RT_occ_fit_out=RT_occ_fit(:,i1,:),RT_E_fit_out=RT_E_fit)
    !
    if(nfound(3)==1) nfound(1)  =nfound(1)+1
@@ -113,7 +113,7 @@ subroutine RT_occupations_FIT_and_plot(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    !
    RT_gamma_ratio=RT_gamma_ratio*spin_occ
    !
-   nfound_gamma(5)=Fermi_fnc_fit(RT_E,RT_gamma_ratio(:,i1,1),RT_nstates,T_fit_gamma(i1,1:2),Ef_fit_gamma(i1,1:2),&
+   nfound_gamma(5)=Fermi_fnc_fit(RT_E,RT_gamma_ratio(:,i1,1),RT_carriers%nstates,T_fit_gamma(i1,1:2),Ef_fit_gamma(i1,1:2),&
 &                                err_fit_gamma(i1,:))
    !
    if(nfound_gamma(5)==1) nfound_gamma(1)  =nfound_gamma(1)+1
@@ -124,7 +124,7 @@ subroutine RT_occupations_FIT_and_plot(RT_E,RT_occ,RT_gamma,ngamma,n_T_steps)
    !
    RT_gamma_ratio(:,i1,2)=RT_gamma(:,i1,7)/( RT_gamma(:,i1,5)+RT_gamma(:,i1,8) )
    !
-   nfound_gamma(5)=Fermi_fnc_fit(RT_E,RT_gamma_ratio(:,i1,2),RT_nstates,T_fit_gamma(i1,3:4),Ef_fit_gamma(i1,3:4),&
+   nfound_gamma(5)=Fermi_fnc_fit(RT_E,RT_gamma_ratio(:,i1,2),RT_carriers%nstates,T_fit_gamma(i1,3:4),Ef_fit_gamma(i1,3:4),&
 &                          err_fit_gamma(i1,:))
    !
    if(nfound_gamma(5)==1) nfound_gamma(3)  =nfound_gamma(3)+1

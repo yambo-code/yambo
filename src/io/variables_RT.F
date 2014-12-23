@@ -30,7 +30,7 @@ integer function variables_RT(ID,local_description,what)
  use stderr,         ONLY:intc
  use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_G_steps,RT_IO_steps_DB, &
 &                         RT_description,n_RT_descriptions
- use real_time,      ONLY:RT_nk,RT_nstates,l_NE_with_fields,RT_step,NE_steps,NE_time,              &
+ use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,NE_steps,NE_time,              &
 &                         Integrator_name, &
 &                         RAD_LifeTime,Phase_LifeTime,              &
 &                         l_RT_induced_field,G_MEM_steps,&
@@ -67,16 +67,12 @@ integer function variables_RT(ID,local_description,what)
  !
  ! RT_vars
  !
- call io_elemental(ID,VAR="RT_vars",VAR_SZ=2,MENU=0) 
+ call io_elemental(ID,VAR="RT_vars",VAR_SZ=1,MENU=0) 
  i_desc=i_desc+1
  call io_elemental(ID,I0=RT_nk,&
 &     VAR=' Number of RT-K points           :',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
- call io_elemental(ID,I0=RT_nstates,&
-&     VAR=' Number of RT states             :',CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
- !
  !
  ! ELPH_vars
  !

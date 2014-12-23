@@ -47,7 +47,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
 &                         RIM_EE_Nk_table,l_RT_impose_E,RIM_EE_percent,RIM_EE_Nk_table,&
 &                         l_BGR,l_RT_HEUN,eval_DENSITY,eval_HARTREE,eval_DFT,&
-&                         RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
+&                         RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
@@ -285,7 +285,6 @@ subroutine RT_initialize(E,k,q)
      RT_all2ibz(ik)=ik
    enddo
  endif
- RT_nstates=RT_nk*(SC_bands(2)-SC_bands(1)+1)
  !
  ! Electron-phonon
  ! ===============

@@ -26,22 +26,16 @@ subroutine RT_occupations_analyze(k,E)
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use units,          ONLY:FS2AUT,SP,HA2EV
  use pars,           ONLY:schlen
- use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,set_real_printed_length
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels,spin,spin_occ
+ use electrons,      ONLY:levels,spin,n_sp_pol
  use QP_m,           ONLY:QP_table,QP_n_states
- use YPP,            ONLY:output_fname,l_RT_occ_Plot,RT_IO_carriers,l_RT_occ_Fit,RT_IO_time_range_setup
+ use YPP,            ONLY:output_fname,l_RT_occ_Plot,l_RT_occ_Fit,RT_IO_time_range_setup
  use com,            ONLY:msg,of_open_close
  use IO_m,           ONLY:LOG
  use QP_CTL_m,       ONLY:QP_apply
  use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT,RT_apply
- use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
-&                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime, & 
-&                         l_RT_CCA_Kernel,E_E_Hole_lifetime,E_E_Electron_lifetime,&
-&                         RIM_ibz_coo,RIM_bz_coo,l_RT_uses_E_RIM,&
-&                         RT_E_occupations_reference,RT_H_occupations_reference,REF_lifetime,&
-&                         RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_carriers,RT_delta0_occupations
+ use real_time,      ONLY:l_RT_CCA_Kernel,RT_carriers
  use SC,             ONLY:SC_bands
  !
  implicit none
@@ -51,12 +45,12 @@ subroutine RT_occupations_analyze(k,E)
  !
  ! Work Space
  !
- integer               :: ik,ib,i_spin,i_gamma,i_s,i_RT,i_T,n_T_steps,n1,n_output
- integer               :: ik_rim,ik_E_rim,ik_RT_rim,RT_nstates
+ integer               :: ik,ib,i_spin,i_s,i_RT,i_T,n_T_steps,n_gamma,n_output
  real(SP)              :: io_Time,data_to_plot(9)
- real(SP), allocatable :: RT_occupations_sum(:,:),RT_H_occ(:,:),RT_E_occ(:,:),RT_delta0_occ(:,:),RT_gamma(:,:,:),RT_E(:)
  character(schlen)     :: titles(9),specs(9,2)
- logical               :: l_ELPH_lifetimes,l_group_occ
+ logical               :: l_ELPH_lifetimes
+ real(SP), allocatable :: RT_E_occ(:,:,:),RT_gamma(:,:,:,:),RT_df(:,:,:),RT_f_bare(:,:,:),&
+&                         RT_NEQ_Lifetime(:,:,:),RT_gamma_bare(:,:,:)
  !
  call section('+','Real-Time occupations')
  !
@@ -70,34 +64,6 @@ subroutine RT_occupations_analyze(k,E)
  !=================================
  !
  call QP_apply(SC_bands,E,k,'G',msg_fmt='s')
- !
- !call parser('OCCgroup',l_group_occ)
- !
- !RT_nstates=RT_nk*(SC_bands(2)-SC_bands(1)+1)
- !allocate(RT_E(RT_nstates))
- !
- ! Dump RIM energies in E
- !
- !i_RT=0
- !do i_s=1,QP_n_states
- !  !
- !  ib    =QP_table(i_s,1)
- !  ik    =QP_table(i_s,3)
- !  i_spin=spin(QP_table(i_s,:))
- !  !
- !  if (ib<SC_bands(1)) cycle
- !  if (ib>SC_bands(2)) cycle
- !  !
- !  do ik_rim=1,RIM_ibz_coo(ik,2)-RIM_ibz_coo(ik,1)+1
- !    ik_RT_rim=RT_ibz_coo(ik,1)+ik_rim-1
- !    ik_E_rim =RIM_ibz_coo(ik,1)+ik_rim-1
- !    if (ik_RT_rim>RT_nk) cycle
- !    i_RT=i_RT+1
- !    if(     l_RT_uses_E_RIM) RT_E(i_RT)=E%E_RIM(ib,ik_E_rim,1)
- !    if(.not.l_RT_uses_E_RIM) RT_E(i_RT)=E%E(ib,ik_E_rim,1)
- !  enddo
- !  !
- !enddo
  !
  l_ELPH_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
  !
@@ -135,163 +101,193 @@ subroutine RT_occupations_analyze(k,E)
    specs(3:7,2)=(/'   (emis ','sion)    ','   (absor','ption)   ','         '/)
  endif
  !
- ! F(it) for each (ik,ib)
+ ! Shadow variables:
  !
- !if(l_RT_occ_Plot) then
- !  allocate(RT_occupations_sum(3,n_T_steps)) 
- !  RT_occupations_sum=0._SP
- !endif
- !
- !allocate(RT_H_occ(RT_carriers%nstates,n_T_steps),RT_E_occ(RT_carriers%nstates,n_T_steps),&
-!&         RT_delta0_occ(RT_carriers%nstates,n_T_steps),RT_gamma(RT_carriers%nstates,n_T_steps,7))
- !RT_E_occ  =0._SP
- !RT_H_occ  =0._SP
- !RT_gamma=0._SP
+ if (l_RT_occ_Fit) then
+   allocate(RT_E_occ(RT_carriers%nstates,n_T_steps,1),RT_gamma(RT_carriers%nstates,n_T_steps,6,1))
+   RT_E_occ  =0._SP
+ endif
+ if (l_RT_occ_Plot) then
+   allocate(RT_gamma(RT_carriers%nb(1):RT_carriers%nb(2),K%nibz,n_sp_pol,6))
+   allocate(RT_df(RT_carriers%nb(1):RT_carriers%nb(2),K%nibz,n_sp_pol))
+   allocate(RT_f_bare(RT_carriers%nb(1):RT_carriers%nb(2),K%nibz,n_sp_pol))
+   allocate(RT_NEQ_Lifetime(RT_carriers%nb(1):RT_carriers%nb(2),K%nibz,n_sp_pol)) 
+   allocate(RT_gamma_bare(RT_carriers%nb(1):RT_carriers%nb(2),K%nibz,n_sp_pol)) 
+   RT_gamma=0._SP
+   RT_gamma_bare=0._SP
+   RT_df=0._SP
+   RT_f_bare=0._SP
+   RT_NEQ_Lifetime=0._SP
+ endif
+ RT_gamma=0._SP
  !
  do i_T=1,n_T_steps
    !
    io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
    !
    call RT_apply(SC_bands,E,k,Time=io_Time,keep_RT_carriers=.TRUE.)
-   !call RT_IO_carriers(TIME=io_Time)
    !
-   i_RT=0
+   if (l_RT_occ_Fit) then
+     !
+     ! Fill the large arrays to be used for the fitting procedure.
+     !
+     do i_RT=1,RT_carriers%nstates
+       !
+       ! Occupations
+       !============
+       RT_E_occ(i_RT,i_T,1)=         RT_carriers%f_bare(i_RT)+RT_carriers%delta_f(i_RT)
+       !
+       ! Lifetimes
+       !===========
+       n_gamma=0
+       if (l_ELPH_lifetimes) then
+         n_gamma=4
+         RT_gamma(i_RT,i_T,1,1)=RT_carriers%dGAMMA_E_P_Hole(i_RT)+RT_carriers%GAMMA_bare(i_RT,3)
+         RT_gamma(i_RT,i_T,2,1)=RT_carriers%dGAMMA_E_P_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,4)
+         RT_gamma(i_RT,i_T,3,1)=RT_carriers%dGAMMA_E_P_Ho_abs(i_RT)+RT_carriers%GAMMA_bare(i_RT,5)
+         RT_gamma(i_RT,i_T,4,1)=RT_carriers%dGAMMA_E_P_El_abs(i_RT)+RT_carriers%GAMMA_bare(i_RT,6)
+       endif
+       !
+       if (l_elel_scatt) then
+         n_gamma=n_gamma+2
+         RT_gamma(i_RT,i_T,n_gamma-1,1)=RT_carriers%dGAMMA_E_E_Hole(i_RT)+RT_carriers%GAMMA_bare(i_RT,1)
+         RT_gamma(i_RT,i_T,n_gamma  ,1)=RT_carriers%dGAMMA_E_E_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,2)
+       endif
+       !
+     enddo
+     !
+   endif
    !
-   do i_s=1,QP_n_states
+   ! Interpolate and fill the shadow variables defined on the small k-grid
+   !
+   if (l_RT_occ_Plot) then
      !
-     ! n   =QP_table(i_s,1)
-     ! k   =QP_table(i_s,3)
-     ! sp  =QP_table(i_s,4)
+     !real(SP)   ,pointer:: f_bare(:)       => null() ! equilibrium occupations
+     !real(SP)   ,pointer:: delta_f(:)      => null() ! change in the occupations
+     !real(SP)   ,pointer:: GAMMA_bare(:)   => null() ! "initial equilibrium" lifetimes. In the code the "initial equilibrium"
+     !real(SP)   ,pointer:: NEQ_Lifetime(:) => null() ! time dependent lifetime defined as for Silicon
+     !real(SP)   ,pointer:: delta_GAMMA(:)  => null() ! change with respect to the "initial equilibrium" lifetimes
+     !real(SP)   ,pointer:: dGAMMA_E_P_Hole(:)     => null() 
+     !real(SP)   ,pointer:: dGAMMA_E_P_Electron(:) => null() 
+     !real(SP)   ,pointer:: dGAMMA_E_P_Ho_abs(:)   => null() 
+     !real(SP)   ,pointer:: dGAMMA_E_P_El_abs(:)   => null() 
+     !real(SP)   ,pointer:: dGAMMA_E_E_Hole(:)     => null() 
+     !real(SP)   ,pointer:: dGAMMA_E_E_Electron(:) => null() 
      !
-     ib    =QP_table(i_s,1)
-     ik    =QP_table(i_s,3)
-     i_spin=spin(QP_table(i_s,:))
-     !
-     if (ib<SC_bands(1)) cycle
-     if (ib>SC_bands(2)) cycle
-     !
-     if(l_RT_occ_Plot) then
-       output_fname='YPP-RT_occupations_k'//trim(intc(ik))//'_b'//trim(intc(ib))
-       if (i_T==1) call open_file()
+     call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                   RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,RT_carriers%delta_f,RT_df,&
+&                                   ' ',.TRUE.)
+     call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                   RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,RT_carriers%f_bare,RT_f_bare,&
+&                                   ' ',.TRUE.)
+     n_gamma=0
+     if (l_ELPH_lifetimes) then
+       n_gamma=4
+       call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
+&                                     RT_carriers%dGAMMA_E_P_Hole,RT_gamma(:,:,:,3),' ',.TRUE.)
+       call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
+&                                     RT_carriers%dGAMMA_E_P_Electron,RT_gamma(:,:,:,4),' ',.TRUE.)
+       call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
+&                                     RT_carriers%dGAMMA_E_P_Ho_abs,RT_gamma(:,:,:,5),' ',.TRUE.)
+       call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
+&                                     RT_carriers%dGAMMA_E_P_El_abs,RT_gamma(:,:,:,6),' ',.TRUE.)
+     endif
+     if (l_elel_scatt) then
+       n_gamma=n_gamma+2
+       call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
+&                                     RT_carriers%dGAMMA_E_E_Hole,RT_gamma(:,:,:,n_gamma-1),' ',.TRUE.)
+       call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
+&                                     RT_carriers%dGAMMA_E_E_Electron,RT_gamma(:,:,:,n_gamma),' ',.TRUE.)
+     endif
+     if (l_ELPH_lifetimes.or.l_elel_scatt) then
+       call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
+&                                     RT_carriers%NEQ_Lifetime,RT_NEQ_Lifetime(:,:,:),' ',.TRUE.)
+       call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
+&                                     RT_carriers%GAMMA_bare,RT_gamma_bare(:,:,:),' ',.TRUE.)
      endif
      !
-     !do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     !  !
-     !  if (l_RT_occ_plot.and. .not.l_group_occ .and. ik_rim>RT_ibz_coo(ik,1)) cycle
-     !  !
-     !  i_RT=i_RT+1
-     !  !
-     !  if (.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,1).and.l_group_occ)) data_to_plot(2:)=0._SP
-     !  !
-     !  ! Occupations
-     !  !============
-     !  RT_delta0_occ(i_RT,i_T)=RT_delta0_occupations(ib,ik_rim)
-     !  RT_E_occ(i_RT,i_T)=RT_E_occupations_reference(ib,ik)+RT_delta0_occ(i_RT,i_T)
-     !  RT_H_occ(i_RT,i_T)=RT_H_occupations_reference(ib,ik)-RT_delta0_occ(i_RT,i_T)
-     !  !
-     !  ! Lifetimes
-     !  !===========
-     !  n1=0
-     !  if (l_ELPH_lifetimes) then
-     !    n1=4
-     !    RT_gamma(i_RT,i_T,1)=E_P_Hole_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,3)
-     !    RT_gamma(i_RT,i_T,2)=E_P_Electron_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,4)
-     !    RT_gamma(i_RT,i_T,3)=E_P_Ho_abs_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,5)
-     !    RT_gamma(i_RT,i_T,4)=E_P_El_abs_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,6)
-     !  endif
-     !  !
-     !  if (l_elel_scatt) then
-     !    n1=n1+2
-     !    RT_gamma(i_RT,i_T,n1-1)=E_E_Hole_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,1)
-     !    RT_gamma(i_RT,i_T,n1  )=E_E_Electron_lifetime(ib,ik_rim)+REF_lifetime(ib,ik_rim,2)
-     !  endif
-     !  !
-     !  if (l_ELPH_lifetimes.or.l_elel_scatt) then
-     !    n1=n1+1
-     !    if( (ib<=E%nbf .and. abs(RT_H_occ(i_RT,i_T))>0._SP) .or. (ib> E%nbf .and. abs(RT_E_occ(i_RT,i_T))>0._SP) ) then
-     !      do i_gamma=1,n1-1,2
-     !        RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma+1)*RT_E_occ(i_RT,i_T) &
-!&                                                       -RT_gamma(i_RT,i_T,i_gamma)  *RT_H_occ(i_RT,i_T)
-     !      enddo
-     !      if(ib<=E%nbf) RT_gamma(i_RT,i_T,n1)=-RT_gamma(i_RT,i_T,n1)/RT_H_occ(i_RT,i_T)
-     !      if(ib> E%nbf) RT_gamma(i_RT,i_T,n1)= RT_gamma(i_RT,i_T,n1)/RT_E_occ(i_RT,i_T)
-     !    else
-     !      do i_gamma=1,n1-1,2
-     !        if(ib<=E%nbf) RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma)  
-     !        if(ib> E%nbf) RT_gamma(i_RT,i_T,n1)=RT_gamma(i_RT,i_T,n1)+RT_gamma(i_RT,i_T,i_gamma+1)
-     !      enddo
-     !    endif
-     !    !
-     !    RT_gamma(i_RT,i_T,:)=RT_gamma(i_RT,i_T,:)*HA2EV*1000._SP
-     !    !
-     !  endif
-     !  !
-     !  if (.not.l_RT_occ_plot) cycle
-     !  !
-     !  if (n1>0) then
-     !    data_to_plot(3:2+n1)=data_to_plot(3:2+n1)+RT_gamma(i_RT,i_T,1:n1-1)
-     !    if (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) data_to_plot(3:)=data_to_plot(3:)/real(RT_NK_ibz(ik),SP)
-     !  endif
-     !  !
-     !  ! Occupations
-     !  !=============
-     !  RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+RT_delta0_occ(i_RT,i_T)*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
-     !  !
-     !  if (ib==SC_bands(1).and.SC_bands(1)>1) RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+ &
-!&                                             spin_occ*k%weights(ik)*real(SC_bands(1)-1)/real(RT_Nk_ibz(ik),SP)
+     do i_s=1,QP_n_states
        !
-     !  data_to_plot(1)=io_TIME/FS2AUT
-     !  data_to_plot(2)=data_to_plot(2)+ RT_delta0_occupations(ib,ik_rim) *k%weights(ik)
-     !  !
-     !  if(.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) ) then
-     !    data_to_plot(2)=data_to_plot(2)/real(RT_Nk_ibz(ik),SP)
-     !    if (ib<=E%nbf) RT_occupations_sum(1,i_T)=RT_occupations_sum(1,i_T)+data_to_plot(2)
-     !    if (ib> E%nbf) RT_occupations_sum(2,i_T)=RT_occupations_sum(2,i_T)+data_to_plot(2)
-     !  endif
-     !  !
-     !  if(.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) ) then
-     !    call msg('o '//trim(output_fname),'',data_to_plot(:n1+2),INDENT=-2,USE_TABS=.true.)
-     !    if (i_T==n_T_steps) call of_open_close(trim(output_fname))
-     !  endif
-     !  !
-     !enddo
-   enddo
+       ib    =QP_table(i_s,1)
+       ik    =QP_table(i_s,3)
+       i_spin=spin(QP_table(i_s,:))
+       !
+       if (ib<SC_bands(1)) cycle
+       if (ib>SC_bands(2)) cycle
+       !
+       if (l_RT_occ_Plot) then
+         output_fname='YPP-RT_occupations_k'//trim(intc(ik))//'_b'//trim(intc(ib))
+         if (i_T==1) call open_file()
+       endif
+       !
+       !  RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+RT_delta0_occ(i_RT,i_T)*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
+       !  !
+       !  if (ib==SC_bands(1).and.SC_bands(1)>1) RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+ &
+       !                                         spin_occ*k%weights(ik)*real(SC_bands(1)-1)/real(RT_Nk_ibz(ik),SP)
+       !
+       data_to_plot(1)=io_TIME/FS2AUT
+       data_to_plot(2)=RT_df(ib,ik,i_spin)
+       !
+       if (n_gamma>0) then
+         data_to_plot(2+1:2+n_gamma)=(RT_gamma_bare(ib,ik,i_spin)+RT_gamma(ib,ik,i_spin,:n_gamma))*HA2EV*1000._SP
+         data_to_plot(2+n_gamma+1)  =RT_NEQ_lifetime(ib,ik,i_spin)*HA2EV*1000._SP
+       endif
+       !
+       !if(.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) ) then
+       !  data_to_plot(2)=data_to_plot(2)/real(RT_Nk_ibz(ik),SP)
+       !  if (ib<=E%nbf) RT_occupations_sum(1,i_T)=RT_occupations_sum(1,i_T)+data_to_plot(2)
+       !  if (ib> E%nbf) RT_occupations_sum(2,i_T)=RT_occupations_sum(2,i_T)+data_to_plot(2)
+       !endif
+       !
+       call msg('o '//trim(output_fname),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)
+       if (i_T==n_T_steps) call of_open_close(trim(output_fname))
+       !
+     enddo
+   endif
+   !
  enddo
  !
- stop
- if (l_RT_occ_plot) then
-   !
-   ! Sum_{ib,ik} f_{ik,ib}(it)
-   !
-   output_fname='YPP-RT_occupations_ALL'
-   call of_open_close(trim(output_fname),'ot')
-   titles(1)='T[fs]'
-   titles(2)='Elec.'
-   titles(3)='Holes'
-   titles(4)='Tot. Occ. [OMEGA^-1]'
-   call msg('o '//trim(output_fname),'#')
-   call msg('o '//trim(output_fname),'#',titles(:4),INDENT=0,USE_TABS=.TRUE.)
-   call msg('o '//trim(output_fname),'#')
-   !
-   do i_T=1,n_T_steps
-     io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-     data_to_plot(:4)=(/io_TIME/FS2AUT,RT_occupations_sum(:,i_T)/)  !/(DL_vol*BO2ANG**3*1.E-24)/)
-     call msg('o '//trim(output_fname),'',data_to_plot(:4),INDENT=-2,USE_TABS=.true.)
-   enddo
-   call of_open_close(trim(output_fname))
- endif
+! if (l_RT_occ_plot) then
+!   !
+!   ! Sum_{ib,ik} f_{ik,ib}(it)
+!   !
+!   output_fname='YPP-RT_occupations_ALL'
+!   call of_open_close(trim(output_fname),'ot')
+!   titles(1)='T[fs]'
+!   titles(2)='Elec.'
+!   titles(3)='Holes'
+!   titles(4)='Tot. Occ. [OMEGA^-1]'
+!   call msg('o '//trim(output_fname),'#')
+!   call msg('o '//trim(output_fname),'#',titles(:4),INDENT=0,USE_TABS=.TRUE.)
+!   call msg('o '//trim(output_fname),'#')
+!   !
+!   do i_T=1,n_T_steps
+!     io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+!     data_to_plot(:4)=(/io_TIME/FS2AUT,RT_occupations_sum(:,i_T)/)  !/(DL_vol*BO2ANG**3*1.E-24)/)
+!     call msg('o '//trim(output_fname),'',data_to_plot(:4),INDENT=-2,USE_TABS=.true.)
+!   enddo
+!   call of_open_close(trim(output_fname))
+! endif
  !
- ! f(eps_{ik,ib}), gamma(eps_{ik,ib})
+ ! Occupations Fit 
+ !=================
  !
- if(l_RT_occ_Fit) call RT_occupations_FIT_and_plot(RT_E,RT_E_occ,RT_gamma(:,:,n1-1),n1-1,n_T_steps)
+ if (l_RT_occ_Fit) call RT_occupations_FIT_and_plot(RT_carriers%E_bare,RT_E_occ,RT_gamma,n_gamma,n_T_steps)
  !
- if (allocated(RT_E))               deallocate(RT_E)
- if (allocated(RT_E_occ))           deallocate(RT_E_occ)
- if (allocated(RT_H_occ))           deallocate(RT_H_occ)
- if (allocated(RT_gamma))           deallocate(RT_gamma)
- if (allocated(RT_occupations_sum)) deallocate(RT_occupations_sum)
+ ! CLEAN-UP
+ !==========
  !
- if(.not.l_RT_uses_E_rim) deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_Nk_ibz)
+ deallocate(RT_gamma)
+ if (l_RT_occ_Fit)  deallocate(RT_E_occ)
+ if (l_RT_occ_Plot) deallocate(RT_df,RT_f_bare,RT_gamma_bare,RT_NEQ_Lifetime)
  !
  call set_real_printed_length()
  !

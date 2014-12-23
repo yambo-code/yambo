@@ -22,13 +22,13 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
 subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pti,k_pto,wki,wko,&
-&                                    Vali,Valo,call_kind,l_rescale)
+&                                    Vali,Valo,what,l_rescale)
  !
  ! Interpolation with nearest neighbor method but averaging up to n_neigh neighbors
  ! The input values are known on the k_pti kgrid and there can be N_int quantities to
  ! be interpolated. The quantities to be interpolated are on a vector which is mapped to the 
  ! kpts, bands and spin indexes by the table.
- ! kall_kind is used just for the message
+ ! what is used just for the message
  !
  use pars,           ONLY:SP
  use com,            ONLY:msg
@@ -43,7 +43,7 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  real(SP),           intent(in) :: k_pti(Nki,3),k_pto(Nko,3),wki(Nki),wko(Nko)
  real(SP),           intent(in) :: Vali(Nstates,N_int)
  real(SP),           intent(out):: Valo(Nb(1):Nb(2),Nko,n_sp_pol,N_int)
- character(3),       intent(in) :: call_kind
+ character(3),       intent(in) :: what
  logical,            intent(in) :: l_rescale
  !
  ! Work Space
@@ -56,7 +56,7 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  write_message=.true.
  !
 #if defined _YPP_RT
- write_message=(call_kind=="RT0")
+ write_message=(what=="RT0")
 #endif
  !
  nk_exact=0
@@ -112,7 +112,7 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  endif
  !
  if(write_message) then
-   call msg('nrs','['//trim(call_kind)//'] Kpts covered exactly  [o/o]:',real(nk_exact)/real(Nko)*100._SP)
+   call msg('nrs','['//trim(what)//'] Kpts covered exactly  [o/o]:',real(nk_exact)/real(Nko)*100._SP)
    if (nk_interpolated>0) then
      call msg('sr','[Interpolate] Nighbours         :',n_neigh)
      call msg('sr','[Interpolate] Kpts covered [o/o]:',real(nk_interpolated)/real(Nko)*100._SP)

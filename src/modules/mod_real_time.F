@@ -118,7 +118,6 @@ module real_time
  ! of a post-run I need to keep here the number of k-points 
  !
  integer                 :: RT_nk
- integer                 :: RT_nstates
  !
  ! BGR
  !----------------------------
@@ -303,7 +302,8 @@ module real_time
    !
    ! Lifetimes
    !
-   real(SP)   ,pointer:: GAMMA_bare(:)   => null() ! "initial equilibrium" lifetimes. In the code the "initial equilibrium"
+   real(SP)   ,pointer:: GAMMA_bare(:,:) => null() ! "initial equilibrium" lifetimes. In the code the "initial equilibrium"
+                                                   ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
    real(SP)   ,pointer:: NEQ_Lifetime(:) => null() ! time dependent lifetime defined as for Silicon
    real(SP)   ,pointer:: delta_GAMMA(:)  => null() ! change with respect to the "initial equilibrium" lifetimes
    real(SP)   ,pointer:: dGAMMA_E_P_Hole(:)     => null() 
@@ -383,7 +383,7 @@ module real_time
        if(.not.associated(RT%dGAMMA_E_P_El_abs))   allocate(RT%dGAMMA_E_P_El_abs(RT%nstates))
      endif
      if (l_elel_scatt.or.l_elph_scatt) then
-       if(.not.associated(RT%GAMMA_bare))   allocate(RT%GAMMA_bare(RT%nstates))
+       if(.not.associated(RT%GAMMA_bare))   allocate(RT%GAMMA_bare(RT%nstates,6))
        if(.not.associated(RT%delta_GAMMA))  allocate(RT%delta_GAMMA(RT%nstates)) 
        if(.not.associated(RT%NEQ_Lifetime)) allocate(RT%NEQ_Lifetime(RT%nstates)) 
      endif

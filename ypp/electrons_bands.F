@@ -26,7 +26,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,interp_grid, &
-&                         l_RT_occ_Bands,l_RT_life_Bands,l_bands,RT_IO_carriers 
+&                         l_RT_occ_Bands,l_RT_life_Bands,l_bands
  use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_tot_Nkpts
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use com,            ONLY:msg,of_open_close,error
@@ -62,7 +62,6 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  real(SP)              :: io_Time,Nel,Nhole,Real_Nhole,Real_Nel,Max_occ
  logical               :: l_normalize_Nel
  integer               :: i_T,n_T_steps
- integer,     external :: RT_IO_carriers_setup
 #endif
  logical               :: l_g_space_interp,l_nearest_neig_interp
  integer               :: i1,i2,ic,is,ID_interp,ik,ikbz,ib,Nk
@@ -87,7 +86,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    !
 #if defined _YPP_RT
    if(all(interp_grid>0).or.BANDS_steps<=0) call error(" Interpolation of occupations/lifetimes only on a band circuit")
-   n_T_steps=RT_IO_carriers_setup(Xen,Xk)
+   !n_T_steps=RT_IO_carriers_setup(Xen,Xk)
    !call RT_IO_check_RIM(Xk,Xen)
    !call RT_carriers_object(RT_carriers,Xen,Xk,WHAT='allocate')
    if(l_RT_life_Bands) n_T_steps=1

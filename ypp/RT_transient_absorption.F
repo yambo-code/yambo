@@ -66,7 +66,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  ! Setup of Time-range & Report
  !
- call RT_IO_carriers_setup(Xen,Xk,"TIME_RANGE REPORT",n_T_steps) 
+ !call RT_IO_carriers_setup(Xen,Xk,"TIME_RANGE REPORT",n_T_steps) 
  !
  ! I need to compute the dipoles, however they rely on the parallel structure
  ! I would need a structure defined for ypp 

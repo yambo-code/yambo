@@ -45,7 +45,7 @@ subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
  implicit none
  !
  integer                ::iter
- type(Haydock_vector)            ::Vi(:),Vo(:)
+ type(Haydock_vector)   ::Vi(:),Vo(:)
  real(SP),optional      ::iter_par
  character(3) ,optional ::call_kind
  !
@@ -66,15 +66,11 @@ subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
  ! Messaging
  !
  if (l_inv) call error('K_multiply_by_V: Inv temporary disabled.') 
- if (BS_K_coupling) call error('K_multiply_by_V: Coupling + Haydock temporary disabled') 
  if (BSS_uses_RIM)  call error('K_multiply_by_V: BSS with RIM temporary disabled')
  if( (.not.l_inv) .and. (.not.l_Hay) ) call error('K_multiply_by_V: not a valid call.')
  !
- ! THIS WOULD BE NEEDED WITH COUPLING (commented for the moment)
- !if (l_Hay) then
- !  alpha=cONE
- !  if (present(iter_par)) alpha = iter_par*cONE 
- !endif
+ alpha=cONE
+ if (present(iter_par)) alpha = iter_par*cONE 
  !
  forall(i_g=1:BS_nT_grps,Haydock_parallel_mask(i_g)) Vo(i_g)%fragment = cZERO
  !
@@ -83,15 +79,32 @@ subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
    i_Tk  =BS_blk(i_B)%iT_k
    i_Tp  =BS_blk(i_B)%iT_p
    !
-   call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-        &                  BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment,1,cONE,&
-        &                  Vo(i_Tk)%fragment,1)
-   if (i_Tk.ne.i_Tp) &!off-diagonal symmetrization
-        &         call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-        &                     BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment,1,cONE,&
-        &                     Vo(i_Tp)%fragment,1)
-   if (i_Tk.eq.i_Tp)& !add the energy diffs on the diagonal 
-        &          Vo(i_Tk)%fragment(:) = Vo(i_Tk)%fragment(:) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:)
+   if (BS_blk(i_B)%mode == "R") then
+     !
+     ! Resonant part 
+     !
+     call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
+          &                  BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:),1,cONE,&
+          &                  Vo(i_Tk)%fragment(:),1)
+     if (i_Tk.ne.i_Tp) &!off-diagonal symmetrization
+          &         call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
+          &                     BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:),1,cONE,&
+          &                     Vo(i_Tp)%fragment(:),1)
+     if (i_Tk.eq.i_Tp)& !add the energy diffs on the diagonal 
+          &          Vo(i_Tk)%fragment(:) = Vo(i_Tk)%fragment(:) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:)
+   else
+     !
+     ! Coupling part
+     !
+     call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),alpha,&
+          &                  BS_blk(i_B)%mat,BS_blk(i_B)%size(1),conjg(Vi(i_Tp)%fragment(:)),1,cONE,&
+          &                  Vo(i_Tk)%fragment(:),1)
+     if (i_Tk.ne.i_Tp) &!off-diagonal symmetrization
+          &         call M_by_V('t',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),alpha,&
+          &                     BS_blk(i_B)%mat,BS_blk(i_B)%size(1),conjg(Vi(i_Tk)%fragment(:)),1,cONE,&
+          &                     Vo(i_Tp)%fragment(:),1)
+   end if
+   !
  end do
  !
 #if defined _MPI

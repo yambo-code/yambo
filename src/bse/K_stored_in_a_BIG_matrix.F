@@ -36,7 +36,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
 &                         PAR_COM_T_INDEX,PAR_COM_Xk_ibz_INDEX
  use BS,             ONLY:BS_mat,BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,&
 &                         BSS_rhoq0,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BS_mat_alloc,&
-&                         BS_H_dim,BS_mat_diagonal
+&                         BS_H_dim,BS_mat_diagonal,BS_Blocks_symmetrize_K
  implicit none
  !
  integer      :: iq
@@ -51,6 +51,7 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  ! ALLOCATION
  !============
  !
+ call BS_Blocks_symmetrize_K()
  call BS_mat_alloc( )
  !
  ! FILLING...

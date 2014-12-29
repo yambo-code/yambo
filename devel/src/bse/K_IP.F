@@ -192,7 +192,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 &                     local_Z/(W_bss%p(:)-BS_T_grp(i_T_g)%E(i_T))
     
        !
-       if (BS_anti_res.or.BS_K_coupling) then
+       if (BS_anti_res) then!.or.BS_K_coupling) then
          !
          ! Note the plus in "+BSS_rhoq0" coming from the BS_eh_f change of sign
          !

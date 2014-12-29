@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2014 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, MG
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -435,17 +435,25 @@ module BS
        i_Tk  =BS_blk(i_B)%iT_k
        i_Tp  =BS_blk(i_B)%iT_p
        !
+       ! Resonant part (mode ==R) is hermitian
+       ! Coupling part (mode ==A) is symmetric
+       !
        if (.not.(i_Tk.eq.i_Tp)) cycle
-       forall(i_r=1:BS_blk(i_B)%size(1),&
+       if (BS_blk(i_B)%mode=="R") then
+         forall(i_r=1:BS_blk(i_B)%size(1),&
 &             i_c=1:BS_blk(i_B)%size(2),i_r.lt.i_c) BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
-     enddo
+       else
+         forall(i_r=1:BS_blk(i_B)%size(1),&
+&             i_c=1:BS_blk(i_B)%size(2),i_r.lt.i_c) BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
+       end if
+     end do
      !
    end subroutine BS_Blocks_symmetrize_K
    !
    subroutine BS_HAYVEC_alloc(V)
      type(Haydock_vector) :: V(:)
      ! ws:
-     integer :: i_g
+     integer :: i_g, dim
      !
      do i_g=1,BS_nT_grps
        if (.not.Haydock_parallel_mask(i_g)) cycle

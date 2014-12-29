@@ -60,7 +60,7 @@ subroutine K_Haydock(iq,W)
  !
  integer            ::it,it_on_disk,i1,ierr,i_g,I_TP,I_TK,I_B
  integer, parameter ::Max_iterations=1000
- type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:)
+ type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:)
  complex(SP),allocatable :: Cf(:)
  real(SP)           ::reached_treshold, Bf(Max_iterations)&
 &,                    Af(Max_iterations)
@@ -85,28 +85,22 @@ subroutine K_Haydock(iq,W)
    call section('+','Haydock solver')
  endif
  !
- !
  call BS_Blocks_symmetrize_K()
  !
- ! I disable some of the features for the moment
- !
- if (BS_K_coupling) call error('K_Haydock: Coupling + Haydock&
-      & temporary disabled') 
- !
  ! Use terminator?
- !================
- if (.not.Haydock_terminator) call parser('BSHayTer'&
-      &,Haydock_terminator)
+ if (.not.Haydock_terminator) call parser('BSHayTer',Haydock_terminator)
  !
-  if (BS_K_Coupling) then
-!   allocate(Cf(Max_iterations+1))
-!   allocate(Vm(BS_K_dim),Vmm1(BS_K_dim),Vmp1(BS_K_dim))
-  else
-    allocate(Vn(BS_nT_grps),Vnp1(BS_nT_grps),Vnm1(BS_nT_grps))
-    call BS_HAYVEC_alloc(Vn)
-    call BS_HAYVEC_alloc(Vnm1)
-    call BS_HAYVEC_alloc(Vnp1)
-  end if
+ ! Allocate Haydock vectors:
+ if (BS_K_Coupling) then
+   allocate(Cf(Max_iterations+1))
+   allocate(V0(BS_nT_grps))
+   call BS_HAYVEC_alloc(V0)
+ end if
+ !
+ allocate(Vn(BS_nT_grps),Vnp1(BS_nT_grps),Vnm1(BS_nT_grps))
+ call BS_HAYVEC_alloc(Vn)
+ call BS_HAYVEC_alloc(Vnm1)
+ call BS_HAYVEC_alloc(Vnp1)
   !
   !
   ! Haydock Coefficients and restart vector on disk
@@ -125,8 +119,6 @@ subroutine K_Haydock(iq,W)
    !
  !endif
  !
- !
- ! I disable some of the features for the moment
  !
  if (io_err>0) call error('K_Haydock: restart of Haydock temporary&
       & disabled') 
@@ -176,47 +168,51 @@ subroutine K_Haydock(iq,W)
    Bf= 0.
  end if
  !
- ! [***] Initialization non Hermitian case
- ! 
- if (BS_K_Coupling) then
+ do i_g=1,BS_nT_grps
+   if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
+   Vn(i_g)%fragment(:) =BS_T_grp(i_g)%dipoles_R(:)
+ enddo
+ do i_g = 2,BS_nT_grps
+   if (.not.Haydock_parallel_mask(i_g)) cycle
+#if defined _MPI
+   call PP_bcast(Vn(i_g)%fragment(:),0,COMM=Haydock_parallel_group_comm(i_g))
+#endif    
+ end do
+ !
+ if (BS_K_Coupling) then ! [***] Initialization non Hermitian case
    !
    ! Before starting iterate one needs
    !
    ! | Vm > =     |q->0>/(<q->0| F (H |q->0>))
    ! | Vmp1 > = H |Vm>
    !
-   ! ItParity = (-1._SP)**it_on_disk
-   ! if (it_on_disk==0) then
-   !   Cf= (0.,0.)
-   !   Vm(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)
-   !   !
-   !   call K_multiply_by_V(iq,it_on_disk,Vm,Vmp1,iter_par=ItParity
-   !   ,call_kind='Hay')
-   !   Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vm,Vmp1)))
-   !   Cf(1) = 0.
-   !   !
-   !   Vmp1(:) = Vmp1(:)/Haydock_v0_mod
-   !   Vm(:)   = Vm(:)/Haydock_v0_mod
-   !   !
-   ! else
+   ItParity = (-1._SP)**it_on_disk
+   if (it_on_disk==0) then
+      Cf= (0.,0.)
+      !
+      call K_multiply_by_V(it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
+      do i_g=1,BS_nT_grps
+        if (.not.Haydock_parallel_mask(i_g)) cycle
+        !
+      enddo
+      call K_dot_product(v0_mod_,Vn,Vnp1)
+      Haydock_v0_mod=sqrt(2._SP*real(v0_mod_,SP))
+      Cf(1) =  Haydock_v0_mod
+      do i_g=1,BS_nT_grps
+        if (.not.Haydock_parallel_mask(i_g)) cycle
+        !
+        V0(i_g)%fragment   = Vn(i_g)%fragment ! This vector is needed to determine the Cf element at each iteration
+        Vn(i_g)%fragment   = Vn(i_g)%fragment/Haydock_v0_mod
+        Vnp1(i_g)%fragment = Vnp1(i_g)%fragment/Haydock_v0_mod
+      enddo
+   else
    !   Haydock_v0_mod = Bf(1)
    !   Bf(1) = 0._SP
-   ! endif     
+   endif
    !
  else ! [***] Initialization Hermitian case
    !
    ! it=1:|Vm>=|q->0>/(<q->0|q->0>)^(1/2)
-   !
-   do i_g=1,BS_nT_grps
-     if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     Vn(i_g)%fragment =BS_T_grp(i_g)%dipoles_R 
-   enddo
-   do i_g = 2,BS_nT_grps
-     if (.not.Haydock_parallel_mask(i_g)) cycle
-#if defined _MPI
-     call PP_bcast(Vn(i_g)%fragment,0,COMM=Haydock_parallel_group_comm(i_g))
-#endif    
-   end do
    !
    call K_dot_product(v0_mod_,Vn,Vn) 
    Haydock_v0_mod=sqrt(real(v0_mod_,SP))
@@ -277,70 +273,78 @@ subroutine K_Haydock(iq,W)
      !
      !|Vm> =|Vm+1> / B(n+1)
      !
-     ! do i_g=1,BS_nT_grps
-     !   if (.not.Haydock_parallel_mask(i_g)) cycle
-     !   forall(i1=1:BS_T_grp(i_g)%size) Vn(i_g)%fragment(i1)=Vnp1(i_g)%fragment(i1)/Bf(it+1)
-     ! end do
-     !
      do i_g=1,BS_nT_grps
        if (.not.Haydock_parallel_mask(i_g)) cycle
        Vn(i_g)%fragment  =Vnp1(i_g)%fragment/Bf(it+1)
      enddo
      !
-     ! Non-Hermitian case: 
+     ! [***] Non-Hermitian case: 
      !
    else 
      !
      ! A(n) = <Vm+1|F|Vm+1> (that is <Vm|HFH|Vm>), 
      !      =  0   by symmetry 
      !
-     !ItParity=(-1._SP)**it
-     !Af(it)=0._SP
+     ItParity=(-1._SP)**it
+     Af(it)=0._SP
      !
-     !|Vm+1> = |Vm+1> - A(n)|Vm> - B(n)|Vm-1>
+     !|Vm+1> = |Vm+1> - B(n)|Vm-1> (as Am is zero by symmetry)
      !
+     do i_g = 1,BS_nT_grps
+       if (.not.Haydock_parallel_mask(i_g)) cycle
 #if defined _OPENMP
-     !call V_by_V_plus_V_omp(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vmm1,Vmp1)
+       call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
 #else
-     !call V_by_V_plus_V(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vmm1,Vmp1)
+       call V_by_V_plus_V(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
 #endif
+     end do
      !
      ! |Vm-1> = |Vm> 
      ! |Vm>   = |Vm+1> 
      !
-     !Vmm1=Vm
-     !Vm  =Vmp1
+     do i_g=1,BS_nT_grps
+       if (.not.Haydock_parallel_mask(i_g)) cycle
+       Vnm1(i_g)%fragment = Vn(i_g)%fragment
+       Vn(i_g)%fragment   = Vnp1(i_g)%fragment
+     enddo
      !
      !|Vm+1> = H |Vm>
      !
-     !call K_multiply_by_V(iq,it-it_on_disk,Vm,Vmp1,iter_par=ItParity,call_kind='Hay')
+     call K_multiply_by_V(it-it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
      !
      ! B(n+1)= <Vm|F|Vm+1>^(1/2) (that is <Vm|FH|Vm>^(1/2))
      !       = (2*Re(<Vm|Vmp1>))^(1/2) by symmetry, 
      !          where the dot_product is just on eh pair space 
      !
-     !Bf(it+1)=sqrt(2._SP*real(dot_product(Vm,Vmp1)))
+     call K_dot_product(v0_mod_,Vn,Vnp1) 
+     Bf(it+1)=sqrt(2._SP*real(v0_mod_,SP))
+     if( Bf(it+1)==(Bf(it+1)+1._SP) ) call error('Bf=NaN likely because some eigenvalue of the BSE is negative.')
+     !
 #if !defined _BLUEGENE
      !if( isnan(Bf(it+1)) ) call error(' Bf=NaN likely because some eigenvalue of BSE is negative.')
 #endif
      !
      !|Vm> =|Vm+1> / B(n+1)
      !
-     !forall(i1=1:BS_K_dim) Vm(i1)=Vm(i1)/Bf(it+1)
-     !forall(i1=1:BS_K_dim) Vmp1(i1)=Vmp1(i1)/Bf(it+1)
+     do i_g=1,BS_nT_grps
+       if (.not.Haydock_parallel_mask(i_g)) cycle
+       Vnp1(i_g)%fragment  =Vnp1(i_g)%fragment/Bf(it+1)
+       Vn(i_g)%fragment    =Vn(i_g)%fragment/Bf(it+1)
+     enddo
      !
      ! Using symmetry arguments
      ! Cf=(1-ItParity)Re(<rhoq0|Vm>) + i*(1+ItParity)Im(<rhoq0|Vm>) 
      ! with all product evaluated just in the eh pairs subspace 
      !
-     !Cf(it+1)= ((1._SP-ItParity)*real(dot_product(BSS_rhoq0(:BS_K_dim),Vm)))/Haydock_v0_mod
+     call K_dot_product(v0_mod_,V0,Vn) 
+     Cf(it+1)= ((1._SP-ItParity)*real(v0_mod_,SP))/Haydock_v0_mod
      !
    endif
    !
    if (it>2) then
      !
      if (BS_K_Coupling) then 
-     !  call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,Cf(:it),1)
+       call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,Cf(:it),1)
      else
        call build_L_and_check_convergence(Af(:it),Bf(:it+1),it)
      end if
@@ -393,7 +397,11 @@ subroutine K_Haydock(iq,W)
  call BS_HAYVEC_free(Vnm1)
  deallocate(Vn,Vnp1,Vnm1)
  !
- if (allocated(Cf))      deallocate(Cf)
+ if (BS_K_Coupling)  then
+   call BS_HAYVEC_free(V0)
+   if (allocated(V0)) deallocate(V0)
+   if (allocated(Cf)) deallocate(Cf)
+ end if
  !
 #if defined _TIMING
  call timing('Haydock Solver',OPR='stop')

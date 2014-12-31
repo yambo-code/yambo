@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unMUTE)
+subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unMUTE,EXX_SCREENING)
  !
  ! Wrapper for calculation of the XC potential. If available libxc,
  ! will be used instead of internal routines
@@ -41,20 +41,21 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unM
  type(bz_samp), intent(in)       ::Xk
  integer,       intent(inout)    :: KIND,FUNCTIONAL
  integer,       intent(in)       :: ORDER
- real(SP),      intent(inout),optional :: EXX_FRACTION
+ real(SP),      intent(inout),optional :: EXX_FRACTION, EXX_SCREENING
  character(*),  intent(in),   optional :: MUTE
  logical,       intent(in),   optional :: unMUTE
  !
  ! Work space
  !
  integer           :: ic
- real(SP)          :: local_exx_fraction
+ real(SP)          :: local_exx_fraction, local_exx_screening
  character(schlen) :: local_mute_ch
  !
  if (present(MUTE)) call io_and_Messaging_switch(MUTE)
  !
  local_exx_fraction = RZERO
  if (present(EXX_FRACTION)) local_exx_fraction = EXX_FRACTION
+ if (present(EXX_SCREENING)) local_exx_screening = EXX_SCREENING
  !
  ! COM
  !
@@ -77,11 +78,17 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unM
    LIBXC_message_done=.TRUE.
  endif
  !
- call XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION=local_exx_fraction)
+ call XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION=local_exx_fraction,&
+&                     EXX_SCREENING=local_exx_screening)
  if (local_exx_fraction.gt.RZERO) then
    if (present(EXX_FRACTION)) EXX_FRACTION = local_exx_fraction 
    call msg('rsn','[xc] Hybrid functional. EXX fraction: ',EXX_FRACTION)
- end if
+ endif
+ !
+ if (local_exx_screening.gt.RZERO) then
+   if (present(EXX_FRACTION)) EXX_SCREENING = local_exx_screening 
+   call msg('rsn','[xc] Hybrid functional. EXX screening: ',EXX_SCREENING)
+ endif
  !
  if (present(MUTE)) then
    local_mute_ch=MUTE

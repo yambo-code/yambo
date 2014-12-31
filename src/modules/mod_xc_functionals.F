@@ -33,7 +33,7 @@ module xc_functionals
  !
  integer     , public :: GS_xc_KIND
  integer     , public :: GS_xc_FUNCTIONAL
- real(SP), public :: GS_exx_FRACTION
+ real(SP), public :: GS_exx_FRACTION, GS_exx_SCREENING
  real(SP), public, allocatable:: magn(:,:)
  real(SP), public, allocatable:: V_xc(:,:)
  real(SP), public, allocatable:: E_xc(:)
@@ -51,6 +51,7 @@ module xc_functionals
    integer         :: spin_channels     
    integer         :: flags
    real(SP) :: exx_fraction
+   real(SP) :: exx_screening
    character(lchlen) :: name
    type(xc_f90_pointer_t) :: conf
    type(xc_f90_pointer_t) :: info
@@ -65,7 +66,7 @@ module xc_functionals
  character(*), parameter, dimension(3) :: XC_KIND_DESCR = (/'(X) ','(C) ','(XC)'/)
  !
  interface
-   subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unMUTE)
+   subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unMUTE,EXX_SCREENING)
       use pars,          ONLY:SP,DP,RZERO
       use R_lattice,     ONLY:bz_samp
       use electrons,     ONLY:levels
@@ -76,12 +77,12 @@ module xc_functionals
       type(bz_samp), intent(in)       :: Xk
       integer,       intent(inout)    :: KIND,FUNCTIONAL
       integer,       intent(in)       :: ORDER
-      real(SP),      intent(inout),optional :: EXX_FRACTION
+      real(SP),      intent(inout),optional :: EXX_FRACTION,EXX_SCREENING
       character(*),  intent(in),   optional :: MUTE
       logical,       intent(in),   optional :: unMUTE
     end subroutine XC_potential_driver
     !
-    subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
+    subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
       use pars,          ONLY:SP
       use R_lattice,     ONLY:bz_samp
       use electrons,     ONLY:levels
@@ -89,7 +90,7 @@ module xc_functionals
       type(levels) ::en
       type(bz_samp)::Xk
       integer      ::FUNCTIONAL,ORDER
-      real(SP), optional :: EXX_FRACTION
+      real(SP), optional :: EXX_FRACTION,EXX_SCREENING
     end subroutine XC_libxc_driver
     !
  end interface
@@ -123,7 +124,6 @@ module xc_functionals
      integer, intent(in) :: fun, nsp
      type(xc_fnctl_t), intent(out) :: f(2)
      integer :: ixc
-     real(xc_f90_kind) :: Xfrac
      type(xc_f90_pointer_t) :: p,info 
      !
      do ixc=1,2
@@ -134,10 +134,6 @@ module xc_functionals
        f(ixc)%family=xc_f90_info_family(info)
        f(ixc)%kind=xc_f90_info_kind(info)
        f(ixc)%id=fun
-       Xfrac = 0.
-       if (f(ixc)%family==XC_FAMILY_HYB_GGA)&
-       &call xc_f90_hyb_exx_coef(p,Xfrac)
-       f(ixc)%exx_fraction=real(Xfrac,SP)
        f(ixc)%spin_channels=nsp
        f(ixc)%flags=xc_f90_info_flags(info)
        f(ixc)%conf=p
@@ -146,6 +142,34 @@ module xc_functionals
      !
    end subroutine xc_setup_fnctl
    !
+   subroutine xc_setup_hyb(f,exx_frac,exx_screen)
+     !
+     use xc_f90_types_m
+     use xc_f90_lib_m, ONLY:xc_f90_hyb_gga_xc_hse_set_par,&
+&                           xc_f90_hyb_gga_xc_pbeh_set_par,&
+&                           XC_HYB_GGA_XC_HSE06,XC_HYB_GGA_XC_PBEH,&
+&                           XC_HYB_GGA_XC_B3LYP
+     implicit none
+     type(xc_fnctl_t), intent(inout) :: f(2)
+     real(SP), intent(in) :: exx_frac, exx_screen 
+     integer :: ixc
+     real(xc_f90_kind) :: exx_frac_, exx_screen_
+     type(xc_f90_pointer_t) :: p,info
+     !
+     exx_frac_   = exx_frac
+     exx_screen_ = exx_screen
+     do ixc=1,2
+       if (f(ixc)%family.ne.XC_FAMILY_HYB_GGA) return
+       f(ixc)%exx_fraction=exx_frac
+       f(ixc)%exx_screening=exx_screen
+       if (XC_libxcID(f(ixc)%id,ixc)==XC_HYB_GGA_XC_HSE06) &
+&        call xc_f90_hyb_gga_xc_hse_set_par(f(ixc)%conf,exx_frac_,exx_screen_)
+       if ((XC_libxcID(f(ixc)%id,ixc)==XC_HYB_GGA_XC_PBEH).or.&
+&          (XC_libxcID(f(ixc)%id,ixc)==XC_HYB_GGA_XC_B3LYP)) &
+&        call xc_f90_hyb_gga_xc_pbeh_set_par(f(ixc)%conf,exx_frac_)
+     enddo    
+   end subroutine xc_setup_hyb
+   
    character(lchlen) function xc_string(functional)
      !     
      integer        :: functional

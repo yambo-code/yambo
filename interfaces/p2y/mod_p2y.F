@@ -717,7 +717,7 @@ contains
  !
  subroutine get_xc
    use com,        ONLY : warning,error
-   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION
+   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING      
    use mod_xc2y, ONLY: XC_yamboID,  XC_yamboID2kind
    implicit none
 #if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
@@ -727,8 +727,12 @@ contains
    GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
 #endif
 #if defined _P2Y_V50
-   call qexml_read_exx(exx_fraction=pw_exx_fraction, exx_is_active=pw_exx_is_active,ierr=ierr)
-   if (pw_exx_is_active) GS_exx_FRACTION = pw_exx_fraction
+   call qexml_read_exx(exx_fraction=pw_exx_fraction, screening_parameter=pw_screening_parameter,& 
+& 			exx_is_active=pw_exx_is_active,ierr=ierr)
+   if (pw_exx_is_active) then 
+	GS_exx_FRACTION = pw_exx_fraction
+	GS_exx_SCREENING= pw_screening_parameter
+   endif
 #endif
  end subroutine get_xc
  !

@@ -32,10 +32,10 @@ subroutine XCo_driver(E,k,Xk,q)
  use R_lattice,     ONLY:bz_samp
  use parallel_m,    ONLY:PP_redux_wait
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind 
+ use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind,XCo_Hartree_Fock 
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:WF
- use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
+ use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction,WF_exx_screening
 #if defined _SC
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,SC_SRPA
 #endif
@@ -47,6 +47,11 @@ subroutine XCo_driver(E,k,Xk,q)
  ! WorkSpace
  !
  type(levels) ::E_dummy
+ !
+ ! Screened Hybrids
+ !
+ logical   :: l_screen_hyb
+ complex(SP),allocatable:: QP_Vnl_sex(:)
  !
  ! Reporting
  !
@@ -74,6 +79,10 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  call QP_state_table_setup(E)
  !
+ ! Logicals setup
+ !
+ l_screen_hyb=(WF_exx_screening.gt.rZERO) 
+ !
  ! Allocation
  !
  if (.not.allocated(QP_Vnl_xc)) then
@@ -84,8 +93,13 @@ subroutine XCo_driver(E,k,Xk,q)
    allocate(QP_Vxc(QP_n_states))
    call mem_est("QP_Vxc",(/QP_n_states/))
  endif
+ if (.not.allocated(QP_Vnl_sex).and.l_screen_hyb) then
+   allocate(QP_Vnl_sex(QP_n_states))
+   call mem_est("QP_Vnl_sex",(/QP_n_states/))
+ endif
  QP_Vnl_xc=(0.,0.)
  QP_Vxc=(0.,0.)
+ if (l_screen_hyb) QP_Vnl_sex=(0.,0.)
  !
 #if defined _SC
  if (l_sc_run .and. WF_kind==SC_HF) return
@@ -104,6 +118,12 @@ subroutine XCo_driver(E,k,Xk,q)
    return
    !
  else
+   !
+   if (l_screen_hyb) then                          ! 
+     call XCo_Hartree_Fock(E,k,xk,q,mode='hyb')    ! For screened hybrids calculate the 
+     QP_Vnl_sex=QP_Vnl_xc                          ! model nonlocal screened exchange part
+     QP_Vnl_xc=(0.,0.)                             !  
+   end if
    !
    call XCo_Hartree_Fock(E,k,xk,q)
    !
@@ -134,8 +154,13 @@ subroutine XCo_driver(E,k,Xk,q)
    if( WF_kind/= SC_COHSEX ) call XCo_local(E,Xk)
 #else
    call XCo_local(E,Xk)
-   QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...
-#endif
+   if (.not.l_screen_hyb) then
+     QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...
+   else
+     QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_sex 
+     deallocate(QP_Vnl_sex)
+   endif
+# endif
    !
  endif
  !

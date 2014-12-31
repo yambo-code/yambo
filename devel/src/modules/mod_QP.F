@@ -144,6 +144,22 @@ module QP_m
  complex(SP)             :: QP_ctl_Z(3,2)
  logical                 :: QP_ctl_applied
  !
+ ! interface
+ !
+ interface
+   subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
+      use pars,          ONLY:SP,schlen,DP,pi
+      use electrons,     ONLY:levels,spin_occ,spin
+      use R_lattice,     ONLY:qindx_S,bz_samp
+     !
+     implicit none
+     type(levels) ::E       
+     type(bz_samp)::k,Xk,q
+     character(*),optional ::mode
+   end subroutine XCo_Hartree_Fock
+   !
+ end interface
+ !
  contains
    !
    subroutine QP_reset(qp)

@@ -31,7 +31,7 @@ module mod_xc2y
  !
  implicit none
  !
- integer, parameter :: N_Abinit_XC = 28,N_PW_X = 10, N_PW_C = 13, N_PW_GX = 17, N_PW_GC = 13 
+ integer, parameter :: N_Abinit_XC = 28,N_PW_X = 10, N_PW_C = 13, N_PW_GX = 18, N_PW_GC = 13 
  !
  !  Map for ABINIT/ETSF_IO
  !
@@ -74,7 +74,7 @@ module mod_xc2y
 &    'OBW ', 'GL  ' , 'B3LP', 'KZK ' /)
  character(len=7),parameter,dimension(N_PW_GX) :: PW_GX=& 
 & (/ 'NOGX ', 'B88  ', 'BLYP ', 'GGX  ', 'PW91 ', 'PBX  ', 'PBE  ', 'RPB  ', 'HCTH ', 'OPTX ',&
-&    'META ', 'PB0X ', 'PBE0 ', 'B3LP ', 'B3LYP', 'PSX  ', 'WCX  '/)
+&    'META ', 'PB0X ', 'PBE0 ', 'B3LP ', 'B3LYP', 'PSX  ', 'WCX  ', 'HSE  '/)
  character(len=7),parameter,dimension(N_PW_GC) :: PW_GC=&
 & (/ 'NOGC ', 'P86  ', 'GGC  ', 'PW91 ', 'BLYP ', 'PBC  ', 'PBE  ','PBE0 ','HCTH ', 'META ','B3LP ', 'B3LYP', 'PSC  '/)
  ! 
@@ -88,7 +88,7 @@ module mod_xc2y
  integer,parameter,dimension(N_PW_GX) :: PWGX2LIBXC=&
 & (/ NOXC, XC_GGA_X_B88, XC_GGA_X_B88, XC_GGA_X_PW91, XC_GGA_X_PW91, XC_GGA_X_PBE, XC_GGA_X_PBE, XC_GGA_X_PBE_R,&
 &    XC_GGA_XC_HCTH_93, XC_GGA_X_OPTX, XC_MGGA_X_TPSS, XC_HYB_GGA_XC_PBEH, XC_HYB_GGA_XC_PBEH, &
-&    XC_HYB_GGA_XC_B3LYP, XC_HYB_GGA_XC_B3LYP, XC_GGA_X_PBE_SOL, XC_GGA_X_WC/)
+&    XC_HYB_GGA_XC_B3LYP, XC_HYB_GGA_XC_B3LYP, XC_GGA_X_PBE_SOL, XC_GGA_X_WC, XC_HYB_GGA_XC_HSE06/)
  integer,parameter,dimension(N_PW_GC) :: PWGC2LIBXC=&
 & (/ NOXC, XC_GGA_C_P86, XC_GGA_C_PW91, XC_GGA_C_PW91, XC_GGA_C_LYP, XC_GGA_C_PBE, XC_GGA_C_PBE, NOXC,&
 &    NOXC, XC_MGGA_C_TPSS, NOXC, NOXC, XC_GGA_C_PBE_SOL/)
@@ -171,7 +171,8 @@ module mod_xc2y
      ID=yamboID/XC_FACTOR
      lcheck = (ID==XC_GGA_XC_HCTH_93).or.&
              &(ID==XC_HYB_GGA_XC_PBEH).or.&
-             &(ID==XC_HYB_GGA_XC_B3LYP)
+             &(ID==XC_HYB_GGA_XC_B3LYP).or.&
+	     &(ID==XC_HYB_GGA_XC_HSE06)
      XC_ComponentsAreSeparate=.not.lcheck
    end function XC_ComponentsAreSeparate
    !

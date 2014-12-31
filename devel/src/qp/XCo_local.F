@@ -33,7 +33,7 @@ subroutine XCo_local(E,Xk)
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:WF
  use xc_functionals,ONLY:V_xc,xc_string,XC_potential_driver,magn,XC_potential_driver
- use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_exx_fraction
+ use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_exx_fraction,WF_exx_screening
  use wrapper,       ONLY:Vstar_dot_V
 #if defined _OPENMP
  use wrapper,       ONLY:Vstar_dot_V_omp
@@ -86,7 +86,8 @@ subroutine XCo_local(E,Xk)
    l_call_the_driver=.FALSE.
 #endif
    if (l_call_the_driver) then
-     call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,exx_fraction=WF_exx_fraction)
+     call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,&
+&         exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
    endif
    !
 #if defined _SC

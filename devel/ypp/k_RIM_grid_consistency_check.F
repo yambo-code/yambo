@@ -57,17 +57,12 @@ integer function k_RIM_grid_consistency_check(k,E,k_RIM,E_RIM)
    enddo
  enddo ik_loop
  !
- if (abs(shifts(1)-shifts(2))>max(0.01*abs(shifts(1)),1.E-5)) then
-   k_RIM_grid_consistency_check=-1
- else
-   !
-   k_RIM_grid_consistency_check=ik_RIM
-   !
-   ! Here I add E_Fermi as OCCUPATIONS_Fermi in ypp has been
-   ! called without the RIM loaded so the Fermi level has not been applied to E_RIM.
-   !
-   E_RIM%E(:,:,:)=E_RIM%E(:,:,:)+(shifts(1)+shifts(2))/2.+E%E_Fermi
-   !
- endif
+ if (abs(shifts(1)-shifts(2))>max(0.01*abs(shifts(1)),1.E-5) .or. ik_RIM==E_RIM%nk+1 ) return
+ !
+ k_RIM_grid_consistency_check=ik_RIM
+ !
+ ! Here I add E_Fermi as OCCUPATIONS_Fermi in ypp has been
+ ! called without the RIM loaded so the Fermi level has not been applied to E_RIM.
+ E_RIM%E(:,:,:)=E_RIM%E(:,:,:)+(shifts(1)+shifts(2))/2.+E%E_Fermi
  !
 end function

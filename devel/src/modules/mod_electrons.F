@@ -77,6 +77,7 @@ module electrons
    real(SP),   pointer :: E(:,:,:)         => null()
    real(SP),   pointer :: Eo(:,:,:)        => null()
    real(SP),   pointer :: f(:,:,:)         => null()
+   real(SP),   pointer :: fo(:,:,:)        => null()
    real(SP),   pointer :: W(:,:,:)         => null()
    complex(SP),pointer :: Z(:,:,:)         => null()
    !
@@ -141,6 +142,11 @@ module electrons
          call mem_est("E-Eo",(/size(Eo%E)/),(/SP/))
          Eo%Eo=Ei%Eo
        endif
+       if (associated(Ei%fo)) then
+         allocate(Eo%fo(Eo%nb,Eo%nk,n_sp_pol))
+         call mem_est("E-Eo",(/size(Eo%E)/),(/SP/))
+         Eo%fo=Ei%fo
+       endif
        if (associated(Ei%W)) then
          allocate(Eo%W(Eo%nb,Eo%nk,n_sp_pol))
          call mem_est("E-W",(/size(Eo%W)/),(/SP/))
@@ -196,10 +202,11 @@ module electrons
      if(associated(E%Z))              deallocate(E%Z)
      if(associated(E%W))              deallocate(E%W)
      if(associated(E%f))              deallocate(E%f)
+     if(associated(E%fo))             deallocate(E%fo)
      if(associated(E%QP_corrected))   deallocate(E%QP_corrected)
      if(associated(E%GreenF))         deallocate(E%GreenF)
      if(associated(E%GreenF_W))       deallocate(E%GreenF_W)
-     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected,E%GreenF,E%GreenF_W)
+     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%fo,E%QP_corrected,E%GreenF,E%GreenF_W)
      call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
      !
      call E_RIM_components_reset(E,.FALSE.)

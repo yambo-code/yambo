@@ -317,7 +317,10 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  call QP_reset(qp)
  call E_Reset(Fermi_en)
  !
- if (.not.QP_ctl_applied) return
+ if (.not.QP_ctl_applied) then
+   call msg('r', '[QP] No correction applied')
+   return
+ endif
  !
  ! Reporting
  !

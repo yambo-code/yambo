@@ -78,8 +78,10 @@ subroutine OCCUPATIONS_out_of_equilibrium(bands_limit,En,Xk,call_kind)
  bnd(1)=max(Bands_limit(1),rt%nb(1))
  bnd(2)=min(Bands_limit(2),rt%nb(2))
  !
+ allocate(En%fo(En%nb,En%nk,n_sp_pol))
  En%nbm=max(rt%nb(2)  ,En%nbm)
  En%nbf=min(rt%nb(1)-1,En%nbf)
+ En%fo =En%f
  En%f( bnd(1):bnd(2),:,:)=En%f(bnd(1):bnd(2),:,:)+delta_f(bnd(1):bnd(2),:,:)
  !
  deallocate(delta_f)

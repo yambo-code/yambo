@@ -80,9 +80,9 @@ subroutine QP_DBs_initialize()
      ! QP databases
      !
      nflines=nflines+1
-     write (flines(nflines),'(a,t30,a)') '%Actions_and_names','# [QPDB] QP databases and Actions (format is what|DB|)'
+     write (flines(nflines),'(a,t30,a)') '%Actions_and_names','# [QPDB] QP databases and Actions (format is "what"|"DB"|)'
      nflines=nflines+1
-     flines(nflines)=" E | none |"
+     flines(nflines)=' "E" | "none" |'
      nflines=nflines+1
      flines(nflines)='%'
    else

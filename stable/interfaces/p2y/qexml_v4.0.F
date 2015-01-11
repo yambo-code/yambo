@@ -2210,7 +2210,7 @@ CONTAINS
       INTEGER,                    INTENT(OUT) :: ierr
       !
       CHARACTER(256) :: dft_
-      LOGICAL        :: lda_plus_u_
+      LOGICAL        :: lda_plus_u_, lfound
       INTEGER        :: Hubbard_lmax_, nsp_
       INTEGER,    ALLOCATABLE :: Hubbard_l_(:)
       REAL(dbl),  ALLOCATABLE :: Hubbard_U_(:)
@@ -2225,8 +2225,9 @@ CONTAINS
       CALL iotk_scan_dat( iunit, "DFT", dft_, IERR=ierr )
       IF ( ierr/=0 ) RETURN
       !
-      CALL iotk_scan_dat( iunit, "LDA_PLUS_U_CALCULATION", lda_plus_u_, IERR=ierr )
+      CALL iotk_scan_dat( iunit, "LDA_PLUS_U_CALCULATION", lda_plus_u_, FOUND=lfound, IERR=ierr )
       IF ( ierr/=0 ) RETURN
+      IF ( .NOT. lfound ) lda_plus_u_=.FALSE.
       !
       IF ( lda_plus_u_ ) THEN
          !

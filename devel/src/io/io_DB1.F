@@ -190,7 +190,7 @@ integer function io_DB1(E,k,ID)
        call io_elemental(ID,R0=GS_exx_FRACTION,   CHECK=.true.,OP=(/"=="/),&
             &                      VAR=' Exact exchange fraction in XC   :')
    endif
-   if (ver_is_gt_or_eq(ID,revision=3042)) then
+   if (ver_is_gt_or_eq(ID,revision=3997)) then
        call io_elemental(ID, VAR="EXX_SCREENING",VAR_SZ=1,MENU=0)
        call io_elemental(ID,R0=GS_exx_SCREENING,   CHECK=.true.,OP=(/"=="/),&
             &                      VAR=' Exact exchange screening in XC  :')

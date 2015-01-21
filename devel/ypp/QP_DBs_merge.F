@@ -112,7 +112,7 @@ subroutine QP_DBs_merge(en,k)
          else
            Z_local=Z_input
          endif
-         QP_db(i_qp_ref)%E(i_s)=QP_db(i_qp_ref)%E(i_s)+dE_to_add+cI*W_to_add+Z_local*(COHSEX_eq-dE_Neq)
+         QP_db(i_qp_ref)%E(i_s)=QP_db(i_qp_ref)%E(i_s)+dE_to_add+cI*W_to_add+Z_local*(dE_Neq-COHSEX_eq)
          cycle db_loop
        endif
      enddo

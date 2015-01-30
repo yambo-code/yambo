@@ -24,31 +24,28 @@
 ! This routine has been adapted by A. Ferretti from 
 ! Modules/recvec_subs.f90 (Quantum-ESPRESSO distribution)
 !
-integer function fft_setmap(iv,fft_dim)
+integer function fft_setmap(iv,dffts)
  !
- use fft_base,       ONLY:dffts
+ USE fft_types, ONLY: fft_dlay_descriptor
  implicit none
  !
  integer :: iv(3)
- integer :: fft_dim(3)
+ type(fft_dlay_descriptor) :: dffts
  !
  integer :: n1,n2,n3,nl
  character(10) :: subname="fft_setmap"
+
  !
  ! set nl and nls with the correct fft correspondence
  !
-
- if (fft_dim(1)/=dffts%nr1.or.fft_dim(2)/=dffts%nr2.or.fft_dim(3)/=dffts%nr3) &
-&     call errore(subname,' [FFT] Invalid fft dimensions',10)
-
  n1 = iv(1) +1
- IF (n1<1) n1 = n1 + dffts%nr1
+ if (n1<1) n1 = n1 + dffts%nr1
 
  n2 = iv(2) +1
- IF (n2<1) n2 = n2 + dffts%nr2
+ if (n2<1) n2 = n2 + dffts%nr2
 
  n3 = iv(3)+1
- IF (n3<1) n3 = n3 + dffts%nr3
+ if (n3<1) n3 = n3 + dffts%nr3
 
  if (n1<1 .or. n2<1 .or. n3<1) &
      call errore(subname,' [FFT] invalid negative n1, n2, n3 ',10)

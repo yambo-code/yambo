@@ -34,6 +34,9 @@ do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
 do_local    = @compile_local@
 do_fftqe    = @compile_fftqe@
+do_iotk     = @compile_iotk@
+do_netcdf   = @compile_netcdf@
+do_etsf     = @compile_etsf@
 do_p2y      = @compile_p2y@
 do_e2y      = @compile_e2y@
 do_libxc    = @compile_libxc@
@@ -104,6 +107,12 @@ libs:
 	DIR2GO="lib" ; $(mklib); fi
 	@if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
 	DIR2GO="lib" ; $(mklib); fi
+	@if test "$(do_iotk)" = yes ; then LIBS2DO="iotk" ; \
+	DIR2GO="lib" ; $(mklib_ext); fi
+	@if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf" ; \
+	DIR2GO="lib" ; $(mklib_ext); fi
+	@if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
+	DIR2GO="lib" ; $(mklib_ext); fi
 yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
@@ -171,15 +180,23 @@ ydb: libs
 clean: clean_fast
 clean_fast: 
 	@$(lib_xc_clean)
+	@$(lib_ext_clean)
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(xclean)
 clean_all: 
 	@$(lib_xc_distclean)
+	@$(lib_ext_distclean)
 	@$(objects_clean)
+	@$(lib_mod_dist_clean)
 	@$(lib_mod_netcdf_clean)
 	@$(conf_clean)
 	@$(xclean)
+clean_extlibs:
+	@if test -e ./lib/archive/keep-extlibs-stamp ; then rm ./lib/archive/keep-extlibs-stamp ; fi 
+	@$(lib_ext_clean)
+	@$(lib_ext_distclean)
+	
 
 # Functions
 define make_message
@@ -220,6 +237,14 @@ define mklib
   cd $$DIR2GO/$$ldir ; $(make) VPATH=$$DIR2GO/$$ldir || exit "$$?" ; cd ../../; fi \
  done
 endef
+define mklib_ext
+ for ldir in $$LIBS2DO; do \
+  if test ! -f "$(libdir)/lib$$ldir.a" ; then \
+  echo " " ; \
+  echo ">>>[Making $$ldir]<<<" ; \
+  cd $$DIR2GO/$$ldir ; cp Makefile.loc Makefile ; $(make) || exit "$$?" ; cd ../../; fi \
+ done
+endef
 define mkx
  LLIBS="";for exe in $$XLIBS; do LLIBS="$$LLIBS -l$$exe" ; done ; \
  for exe in $$X2DO; do \
@@ -234,7 +259,10 @@ endef
 define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
         -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' \) \
-        -type f -print | grep -v '\.\/Makefile' | xargs rm -f
+        -type f -print | grep -v '\.\/Makefile' | \
+        grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
+        grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \
+        grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | xargs rm -f
  echo "[CLEAN] Objects ... done"
  echo "[CLEAN] Broken files ... done"
  echo "[CLEAN] Makefiles ... done"
@@ -252,9 +280,28 @@ define lib_xc_distclean
  rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/ lib/libxc/autom4te.cache/
  echo "[CLEAN] LibXC ... done" 
 endef
+define lib_ext_clean
+ cd $(libdir)/iotk; make -s -f Makefile.loc clean > /dev/null ; cd ../..
+ cd $(libdir)/netcdf; make -s -f Makefile.loc clean > /dev/null ; cd ../..
+ cd $(libdir)/etsf_io; make -s -f Makefile.loc clean > /dev/null ; cd ../..
+ echo "[CLEAN] Libs EXT ... done" 
+endef
+define lib_ext_distclean
+ cd $(libdir)/archive; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ @cd $(libdir)/install; ( if test -r make_iotk.inc ; then rm -f make_iotk.inc ; fi) ; cd ../..
+ cd $(libdir)/iotk; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ cd $(libdir)/netcdf; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ cd $(libdir)/etsf_io; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ echo "[CLEAN] Libs EXT ... done" 
+endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.mod' \) -type f -print | \
        grep -v netcdf | grep -v xc_ | grep -v iotk | grep -v typesize | grep -v libxc | xargs rm -f 
+ echo "[CLEAN] Libraries ... done" 
+ echo "[CLEAN] Modules ... done" 
+endef
+define lib_mod_distclean
+ find . \( -name '*.a' -o -name '*.mod' \) -type f -print | xargs rm -f 
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
 endef
@@ -268,6 +315,7 @@ endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
  for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
+ cd $(bindir) ; rm -f etsf_io ncgen ncdump iotk iotk.x ; cd ..
  echo "[CLEAN] Targets ... done" 
 endef
 define conf_clean

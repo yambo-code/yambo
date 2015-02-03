@@ -222,8 +222,10 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  BZ_RIM_nbands=RIM_E(i_db_merge)%nb
  !
  RIM_nk=RIM_k(i_db_merge)%nibz
- BZ_RIM_tot_nkpts=RIM_k(i_db_merge)%nibz+Xk%nbz-1
+ BZ_RIM_tot_nkpts=RIM_k(i_db_merge)%nibz+Xk%nbz
  BZ_ASSOCIATED_nkpts=Xk%nbz
+ !
+ if(ik_ref(2)>0) BZ_RIM_tot_nkpts=BZ_RIM_tot_nkpts-1
  !
  if (RIM_is_symmetry_expanded) then
    !

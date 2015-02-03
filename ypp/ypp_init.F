@@ -580,6 +580,8 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
  !
 #if defined _YPP_RT
+ !
+ if(l_QP_DBs_merge) call initactivate(1,"Z_input")
  !             
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")

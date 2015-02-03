@@ -26,7 +26,7 @@ subroutine K_dot_product(dot,V,W)
  ! Dot product between distributed vectors 
  !
  use pars,           ONLY:SP,cZERO
- use BS,             ONLY:BS_blk,n_BS_blks,Haydock_vector,BS_nT_grps,&
+ use BS,             ONLY:BS_blk,n_BS_blks,Haydock_vector,BS_nT_grps,BS_K_Coupling,&
 &                         Haydock_parallel_group_comm,Haydock_parallel_col_comm 
  use parallel_m, ONLY:PP_bcast,PP_redux_wait
  !
@@ -37,12 +37,18 @@ subroutine K_dot_product(dot,V,W)
  !
  ! Workspace
  !
- integer       :: i_b,i_Tk,i_Tp,i_g     
+ integer       :: i_b,i_Tk,i_Tp,i_g
  complex(SP)   :: dot_
  !
  dot_ = cZERO
+ ! 
+ ! NOTE FOR DEVELOPERS:
+ ! Anti-block contains the same vector components as the corrisponding 
+ ! res-block. Sum on all blocks will give twice the value in the case
+ ! with coupling.
  !
  do i_b=1,n_BS_blks
+   if (BS_blk(i_B)%mode == "A") cycle 
    i_Tk  =BS_blk(i_b)%iT_k
    i_Tp  =BS_blk(i_b)%iT_p
    if (i_Tk.ne.1) cycle

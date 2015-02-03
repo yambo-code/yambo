@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
+subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ! After libxc is distributed together with Yambo (rev 1180)  
  ! this routine evaluates the xc functional in yambo 
@@ -39,14 +39,14 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
  use electrons,      ONLY:levels,n_spin,n_spinor
  use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:real_V_dot_V
- use xc_functionals, ONLY:E_xc,F_xc,V_xc,magn,&
+ use xc_functionals, ONLY:E_xc,F_xc,V_xc,magn,xc_setup_hyb,&
 &                         xc_string,XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk
  integer      ::FUNCTIONAL,ORDER
- real(SP), optional :: EXX_FRACTION
+ real(SP), optional :: EXX_FRACTION, EXX_SCREENING
  !
  ! Work Space
  !
@@ -84,13 +84,12 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION)
  !
  local_exx_fraction = RZERO
  if (present(EXX_FRACTION).and.fnctl(1)%family==XC_FAMILY_HYB_GGA) then 
-   if (abs(EXX_FRACTION - fnctl(1)%exx_fraction).gt.RZERO) then
-     call msg('rns','[xc] EXX fraction read from disk: ',EXX_FRACTION)
-     call msg('rns','[xc] EXX fraction in LIBXC: ',fnctl(1)%exx_fraction)
-     call error(' EXX fraction read from disk differs from LIBXC value')
-   else
+   call xc_setup_hyb(fnctl,EXX_FRACTION,EXX_SCREENING)
+!   if (abs(EXX_FRACTION - fnctl(1)%exx_fraction).gt.RZERO) then
+!     call msg('rns','[xc] EXX fraction read from disk: ',EXX_FRACTION)
+!   else
+!   end if
      local_exx_fraction = fnctl(1)%exx_fraction
-   end if
  end if
  !
  EvaluateDGradient = any((fnctl(:)%family==XC_FAMILY_GGA).or.any(fnctl(:)%family==XC_FAMILY_HYB_GGA))

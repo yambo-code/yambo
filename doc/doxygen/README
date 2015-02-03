@@ -1,0 +1,153 @@
+Rules and guidelines for doxygen usage with yambo
+
+Version 1.0 10/01/2015 C. Hogan 
+This document outlines  the procedures and rules for properly documenting the yambo code using Doxygen.
+
+An updated version of this document can be found at doc/doxygen/README
+
+1. Setup
+-----------------
+The main Doxygen website is described at
+http://www.stack.nl/~dimitri/doxygen/index.html
+including links to the source/binaries, and installation guidelines.
+Optional, but recommended, software to install:
+doxywizard
+latex/dvips/gs/bibtex
+mathjax
+dot/graphviz
+dia
+You might also need to have a local apache server running.
+
+2. Configuration
+----------------
+Either generate a new config file with
+doxygen -g doc/doxygen/Doxygen_config.NAME  
+where NAME is your developer initials (see AUTHORS file), or using doxywizard, save/export to that filename;
+or (recommended) copy the doc/doxygen/Doxygen_config.CH file to doc/doxygen/Doxygen_config.NAME 
+and modify as you wish.
+If you add new functionalities of interest to everyone (e.g. HTML headers, ALIASES), 
+please update them across ALL config files, or list them in doc/doxygen/Doxygen_config.NEW
+Some tags of particular interest:
+OUTPUT_DIRECTORY FULL_PATH_NAMES ALIASES OPTIMIZE_FOR_FORTRAN EXTENSION_MAPPING 
+EXTRACT_ALL CASE_SENSE_NAMES CITE_BIB_FILES FILE_PATTERNS RECURSIVE EXCLUDE 
+IMAGE_PATH SOURCE_BROWSER USE_MATHJAX DIA_PATH HAVE_DOT CALL_GRAPH
+
+
+3. Run
+------
+Run doxygen with
+doxygen doc/doxygen/Doxygen_config.NAME
+and browse the output at
+doc/doxygen/html/index.html
+
+A sample working output is shown in doc/doxygen/sample_output
+
+4. Get familiar with the documentation
+--------------------------------------
+Before making any changes, I recommend reading at least the initial sections of the manual
+http://www.stack.nl/~dimitri/doxygen/manual/docblocks.html
+A working example can be found at
+doc/doxygen/000_doxygen_example.F
+(see first entry in the Files tab in the generated HTML)
+and an example for call and callergraphing has been done for X_os.F
+
+5. Basic usage
+--------------
+The Doxygen comment block should come after the GPL header and before the module/subroutine/function line:
+!
+!> @brief
+!> @tagname
+subroutine ... ()
+
+For Fortran code, use the @tag (at) convention.
+
+Required tags for all modules, subroutines, and functions:
+@brief
+@author
+@details
+@param
+Important local variables should be defined inline by appending a comment, e.g:
+integer ngmax !< The max number of G vectors
+
+Optional tags:
+@note
+@warning
+@todo
+@bug
+@see
+@date
+@cite
+@callgraph
+@callergraph
+and feel free to use others (http://www.stack.nl/~dimitri/doxygen/manual/commands.html).
+
+Do not use explicit @fn tags or else duplication will occur with EXTRACT_ALL = yes
+Do not overuse callgraph/callergraph tags, otherwise doc generation wil be very slow.
+
+todo, bug, bibliography list will appear collected in the "Related pages" tab.
+
+6. Tag conventions
+------------------
+All tags should begin with !> @tagname. Use !! for continuation lines.
+Routines in the code that should be "stable" require more details than devel routines.
+
+@brief 
+A one sentence description of the subroutine
+!> @brief Computes the Kramers-Kronig transform
+
+@author
+The main author of the routine should appear here.
+Any significant changes to the routine should be noted by author + date in a list (note the hyphen):
+!> @author Andrea Marini
+!> @author Mr. Ed
+!> - 01/01/2000 Changed something
+!> - 02/01/2000 Changed something else
+
+@date
+Probably not necessary, thanks to subversion logging. Could be used to log minor changes.
+
+@details
+All significant routines should have a detailed description, containing discussion of the algorithm, background,
+references, latex formulae.  See Markup example in 000_doxygen_example.F (Exact format to be discussed)
+!> @brief Computes the Kramers-Kronig transform
+!> @details Uses the blah-blah method of KK including
+!! a test for empty arrays. The exact integral is
+!! \f$ \sum_{i=0}^\infty f(i) = [\log(i)]^{\sin(i)} \f$
+!! See @cite Marini2009 for details
+
+Citations (bibtex format) should be added to the doc/references.bib file.
+
+@param
+All arguments to a subroutine should be declared and explained in this way.
+!> @brief Identify input XML filename and open it
+!> @param instr String length
+!> @param inf String containing the _optional_ filename
+subroutine pw_init(instr,inf)
+
+Note that variables etc can be declared *inside* the code, inline following a !< 
+character(lchlen) :: index_filename  !< The name of the index file
+
+@note
+Highlights information that a user of the subroutine should be aware of, e.g.
+!> @note Arrays must be initialized to zero before calling
+
+@warning
+Stronger than a @note, used to warn how to avoid a bug
+
+@todo
+Use if additional functionality has to be added to a subroutine
+
+@bug
+Highlight known or difficult bugs associated with the routine.
+
+7. Usage of HTML output
+-----------------------
+
+Do NOT add the complete contents of the doc/doxygen directory to the repository, as it can be very large.
+Instead, generate locally; snapshots of the HTML can be uploaded to the new web page.
+NB: Take care not to post on the open web any unreleased source code!
+Set
+SOURCE_BROWSER         = NO
+VERBATIM_HEADERS       = NO
+to strip out all the headers and source code.
+

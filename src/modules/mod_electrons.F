@@ -144,8 +144,8 @@ module electrons
        endif
        if (associated(Ei%fo)) then
          allocate(Eo%fo(Eo%nb,Eo%nk,n_sp_pol))
-         call mem_est("E-fo",(/size(Eo%fo)/),(/SP/))
-         Eo%fo=Ei%Eo
+         call mem_est("E-Eo",(/size(Eo%E)/),(/SP/))
+         Eo%fo=Ei%fo
        endif
        if (associated(Ei%W)) then
          allocate(Eo%W(Eo%nb,Eo%nk,n_sp_pol))
@@ -206,8 +206,8 @@ module electrons
      if(associated(E%QP_corrected))   deallocate(E%QP_corrected)
      if(associated(E%GreenF))         deallocate(E%GreenF)
      if(associated(E%GreenF_W))       deallocate(E%GreenF_W)
-     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected,E%GreenF,E%GreenF_W,E%fo)
-     call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W E-fo")
+     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%fo,E%QP_corrected,E%GreenF,E%GreenF_W)
+     call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
      !
      call E_RIM_components_reset(E,.FALSE.)
      !

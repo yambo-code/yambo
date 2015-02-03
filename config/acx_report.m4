@@ -36,6 +36,8 @@ if test "$mpibuild" = "yes" ; then MPI_str="X"; fi
 
 NETCDF_str=" "
 if test "$netcdf" = "yes" ; then NETCDF_str="X"; fi
+NETCDF_loc_str=" "
+if test "$compile_netcdf" = "yes" ; then NETCDF_loc_str="X"; fi
 
 HDF5_str=" "
 if test "$hdf5" = "yes" ; then HDF5_str="X"; fi
@@ -57,6 +59,11 @@ if test "$enable_open_mp" = "yes" ; then OPENMP_str="X"; fi
 
 ETSF_str=" "
 if test "$compile_e2y" = "yes" ; then ETSF_str="X"; fi
+ETSF_loc_str=" "
+if test "$compile_etsf" = "yes" ; then ETSF_loc_str="X"; fi
+
+IOTK_loc_str=" "
+if test "$compile_iotk" = "yes" ; then IOTK_loc_str="X"; fi
 
 LAPACK_str=" "
 if test "$compile_lapack" = "yes" ; then LAPACK_str="X"; fi
@@ -85,9 +92,12 @@ AC_SUBST(Red_str)
 AC_SUBST(MPI_str)
 AC_SUBST(HDF5_str)
 AC_SUBST(NETCDF_str)
+AC_SUBST(NETCDF_loc_str)
 AC_SUBST(LIBXC_str)
 AC_SUBST(NETCDF_LF_str)
+AC_SUBST(IOTK_loc_str)
 AC_SUBST(ETSF_str)
+AC_SUBST(ETSF_loc_str)
 AC_SUBST(PW_str)
 AC_SUBST(BLAS_str)
 AC_SUBST(LAPACK_str)

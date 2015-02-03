@@ -21,11 +21,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.0 r.3977 , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.0 r.4010 , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="0"
-SREVISION="3977"
+SREVISION="4010"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -40,6 +40,8 @@ m4_include([config/acx_gmake.m4])
 m4_include([config/netcdf_f90.m4])
 m4_include([config/libxc.m4])
 m4_include([config/fft.m4])
+m4_include([config/iotk.m4])
+m4_include([config/etsf_io.m4])
 m4_include([config/slk.m4])
 m4_include([config/acx_report.m4])
 m4_include([config/acx_get_fc_version.m4])
@@ -115,6 +117,15 @@ if test x"$enable_keep_src" = "x";    then enable_keep_src="no" ; fi
 if test x"$enable_keep_src" = "xyes"; then enable_keep_src="yes"; fi
 AC_SUBST(enable_keep_src)
 # ============================================================================
+# KEEP EXT LIBS
+AC_ARG_ENABLE(keep-extlibs, AC_HELP_STRING([--enable-keep-extlibs], [Keep downloaded packages as tar.gz . Default is no.]))
+dp_cpp=""
+if test x"$enable_keep_extlibs" = "xno";  then 
+   if test -e ./lib/archive/keep-extlibs-stamp ; then rm ./lib/archive/keep-extlibs-stamp ; fi
+fi
+if test x"$enable_keep_extlibs" = "xyes"; then enable_keep_extlibs="yes"; touch ./lib/archive/keep-extlibs-stamp ; fi
+AC_SUBST(enable_keep_extlibs)
+# ============================================================================
 # DP
 AC_ARG_ENABLE(dp, AC_HELP_STRING([--enable-dp], [Double-precision build. Default is no.]))
 dp_cpp=""
@@ -122,27 +133,6 @@ if test x"$enable_dp" = "x"; then enable_dp="no"; fi
 if test x"$enable_dp" = "xyes"; then dp_cpp="-D_DOUBLE"; fi
 AC_SUBST(enable_dp)
 AC_SUBST(dp_cpp)
-# ============================================================================
-# check for IOTK library 
-#
-AC_ARG_WITH(iotk, AC_HELP_STRING([--with-iotk=<path>],
- [Path of the IOTK library directory]))
-compile_p2y="no"
-iotk_dir=""
-if ! test "$with_iotk" = "" ; then
- AC_MSG_CHECKING([$with_iotk IOTK library])
- if test -r $with_iotk/src/libiotk.a ; then
-  compile_p2y="yes"
-  iotk_dir="$with_iotk/src"
-  AC_MSG_RESULT([yes])
-  cp "$with_iotk/src/libiotk.a" lib/
- else
-  AC_MSG_RESULT([no])
- fi
-fi
-AC_SUBST(compile_p2y)
-AC_SUBST(iotk_dir)
-
 # ============================================================================
 # check for p2y versions
 #
@@ -445,38 +435,14 @@ AC_HAVE_FFT
 # SCALAPACK/BLACS
 SLK_SETUP
 # ============================================================================
+# IOTK library 
+AC_HAVE_IOTK
+# ============================================================================
 # NETCDF 
 KH_PATH_NETCDF_F90
 # ============================================================================
 # ETSF_IO
-AC_ARG_WITH(etsf_io_include, AC_HELP_STRING([--with-etsf-io-include=<path>],
-   [Path of the ETSF_IO include directory]))
-AC_ARG_WITH(etsf_io_lib, AC_HELP_STRING([--with-etsf-io-lib=<path>],
-   [Path of the ETSF_IO lib directory]))
-compile_e2y="no"
-etsf_dir=""
-if test -d "$with_etsf_io_include" && test -d "$with_etsf_io_lib" ; then
-  if test "$netcdf" = "yes"; then
-    AC_MSG_CHECKING([for ETSF_IO in $with_etsf_io_lib and $with_etsf_io_include])
-    if test -r $with_etsf_io_lib/libetsf_io.a ; then
-      compile_e2y="yes"
-      etsf_dir="$with_etsf_io_lib"
-      for file in `find $with_etsf_io_include \( -name '*etsf_io*' -o -name '*typesizes*' \) `; do
-        cp $file include/ 
-      done
-      for file in `find $with_etsf_io_lib -name '*etsf_io*.a'`; do
-        cp $file lib/ 
-      done
-      AC_MSG_RESULT([yes])
-    else
-      AC_MSG_RESULT([no])
-    fi
-    AC_SUBST(compile_e2y)
-    AC_SUBST(etsf_dir)
-  else
-    AC_MSG_WARN([ETSF_IO requires NETCDF. ETSF_IO support removed.])
-  fi
-fi
+AC_HAVE_ETSF_IO
 # ============================================================================
 # LIBXC
 ACX_LIBXC

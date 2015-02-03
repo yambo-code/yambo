@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine XCo_Hartree_Fock(E,k,Xk,q)
+subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  ! Hartree-Fock
  !
@@ -49,10 +49,12 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
 #if defined _OPENMP
  use wrapper,       ONLY:V_dot_V_omp
 #endif
+ use global_XC,     ONLY:WF_exx_screening
  !
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
+ character(*),optional ::mode
  !
  !Work Space
  !
@@ -120,6 +122,7 @@ endif
  iscp%ngrho=QP_ng_Sx
  !
  call scatterGamp(isc,'x')
+ if (present(mode).and.mode=='hyb') call scatter_ModScr(isc,WF_exx_screening)
  !
  ch='EXS'
 #if defined _SC
@@ -132,7 +135,7 @@ endif
 ! else  
 !   call live_timing(trim(ch),px%n_of_elements(myid+1)*QP_n_states)
 ! endif
- !
+!
  n_lt_bands=count( PAR_IND_G_b%element_1D(:Sx_upper_band) )
  if (n_lt_bands>0) call live_timing(trim(ch),PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
 &                                   PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands)
@@ -157,7 +160,10 @@ endif
      if (.not.PAR_IND_Q%element_1D(q%sstar(iq,1))) cycle
      !
      isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
-     if (isc%qs(2)/=isc%iqref) call scatterGamp(isc,'x')
+     if (isc%qs(2)/=isc%iqref) then 
+       call scatterGamp(isc,'x')
+       if (present(mode).and.mode=='hyb') call scatter_ModScr(isc,WF_exx_screening)
+     endif
      !
      !  (n,k,sp_n).     
      !              |

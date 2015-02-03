@@ -173,6 +173,10 @@ module YPP
  real(SP)          :: qdir(3)
  integer           :: idir
  !
+ ! RT, merge QP DBs
+ !
+ real(SP) :: Z_input
+ !
  ! SC
  !
  logical  :: l_mean_potential

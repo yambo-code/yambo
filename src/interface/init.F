@@ -600,7 +600,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if(l_kerr) call initactivate(1,'EvalKerr AnHall')
 #endif
    !
-   call initactivate(1,'DrudeWBS')
+   call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPath')
    call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
    call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')

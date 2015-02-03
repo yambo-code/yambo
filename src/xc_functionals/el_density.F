@@ -60,13 +60,14 @@ subroutine el_density(en,Xk,rho,force_si)
  !
  ! Work Space 
  !
- integer :: ib,ik,i_spin,ifft,rho_syms,ir
+ integer :: ib,ik,i_spin_wf,i_spin_E,ifft,rho_syms,ir
  real(SP):: rho_no_sym(fft_size),f_occ
  logical :: warn_done
  !
  rho=0._SP
  rho_no_sym=0._SP
  warn_done=.false.
+ i_spin_E=1
  !
  bands_loop: do ib=1,en%nbm
    !
@@ -74,13 +75,14 @@ subroutine el_density(en,Xk,rho,force_si)
      !
      if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
      !
-     do i_spin=1,n_spin
+     do i_spin_wf=1,n_spin
        !
-       if (size(WF%index,3)<i_spin) cycle
+       if (size(WF%index,3)<i_spin_wf) cycle
        if (size(WF%index,1)<ib) cycle
        if (size(WF%index,2)<ik) cycle
        !
-       ifft=WF%index(ib,ik,i_spin)
+       ifft=WF%index(ib,ik,i_spin_wf)
+       if (n_sp_pol==2) i_spin_E=i_spin_wf
        !
        if (ifft==0) then
          if (.not.warn_done) call warning('Not enough states to calculate rho')
@@ -88,8 +90,8 @@ subroutine el_density(en,Xk,rho,force_si)
          cycle
        endif
        !
-       f_occ=en%f(ib,ik,1)
-       if (n_sp_pol==2) f_occ=en%f(ib,ik,i_spin)
+       if (.not.associated(en%fo)) f_occ=en%f(ib,ik,i_spin_E)
+       if (     associated(en%fo)) f_occ=en%fo(ib,ik,i_spin_E)
        rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(ik)*abs(WF%c(:,ifft))**2.
        !
      enddo

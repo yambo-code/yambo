@@ -100,6 +100,8 @@ subroutine ypp_init_load(defs)
  ! GPL_EXCLUDE_START 
  !
 #if defined _YPP_RT
+ call it(defs,'Z_input','input renormalization',Z_input)
+ !
  call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
  call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
  call it('r',defs,'RTabs',        '[R] Transient absorption')

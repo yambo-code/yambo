@@ -13,9 +13,13 @@ or http://www.gnu.org/copyleft/gpl.txt .
 /* fortran-to-C naming convention, for functions with and without
    underscores in the name (some compilers treat them differently) */ 
 
-#undef F77_FUNC
-#undef F77_FUNC_
-
 #undef FC_FUNC
 #undef FC_FUNC_
+
+#if defined FC_FUNC
+#  define F77_FUNC FC_FUNC
+#endif
+#if defined FC_FUNC_
+#  define F77_FUNC_ FC_FUNC_
+#endif
 

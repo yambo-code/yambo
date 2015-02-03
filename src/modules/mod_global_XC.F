@@ -58,7 +58,7 @@ module global_XC
  ! ... integers ...
  !
  integer     , public :: WF_kind,WF_xc_functional,WF_perturbation
- real(SP)    , public :: WF_exx_FRACTION
+ real(SP)    , public :: WF_exx_FRACTION, WF_exx_SCREENING
  !
  character(lchlen) , public :: loaded_WF_xc_string  
  !
@@ -120,18 +120,19 @@ module global_XC
    !
  contains
    !
-   subroutine  setup_global_XC(what,kind,se_more,xc_functional,perturbation,exx_fraction)
+   subroutine  setup_global_XC(what,kind,se_more,xc_functional,perturbation,exx_fraction,exx_screening)
      character(*)           :: what          
      integer                :: kind          
      integer,      optional :: se_more       
      integer,      optional :: xc_functional 
      integer,      optional :: perturbation 
      real(SP),     optional :: exx_fraction
+     real(SP),     optional :: exx_screening
      !
      ! Work Space
      !
      integer :: local_se_more,local_xc_functional,local_perturbation
-     real(SP):: local_exx_fraction
+     real(SP):: local_exx_fraction, local_exx_screening
      !
      local_se_more=MORE_NONE
      local_xc_functional=0
@@ -141,6 +142,7 @@ module global_XC
      if (present(xc_functional)) local_xc_functional=xc_functional
      if (present(perturbation)) local_perturbation=perturbation
      if (present(exx_fraction)) local_exx_fraction=exx_fraction
+     if (present(exx_screening)) local_exx_screening=exx_screening
      !
      if (what=='E'.or.what=='preset'.or.what=='G') then
        G_kind=kind
@@ -170,6 +172,7 @@ module global_XC
        WF_kind=kind
        WF_xc_functional=local_xc_functional
        WF_exx_FRACTION =local_exx_fraction
+       WF_exx_SCREENING =local_exx_screening
        !
        ! loaded_WF_xc_string represents the xc kind of the WF that are loaded trough wf_load.
        ! G/X/K/Dipole_WF_xc_string, instead, may be overwritten by the value written in the databases.

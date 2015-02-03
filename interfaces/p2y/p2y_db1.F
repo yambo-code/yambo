@@ -26,7 +26,7 @@ subroutine p2y_db1(en,k)
  use P2Y
  use com,                   ONLY : msg,warning
  use mod_com2y,             ONLY : print_interface_dimensions
- use xc_functionals,        ONLY : xc_string,GS_xc_FUNCTIONAL,GS_exx_FRACTION
+ use xc_functionals,        ONLY : xc_string,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
  use R_lattice,             ONLY : ng_vec,g_vec
  use wave_func,             ONLY : wf_ng, wf_nc_k, wf_ncx, wf_igk
  use mod_com2y,             ONLY : force_noWFs
@@ -74,6 +74,7 @@ subroutine p2y_db1(en,k)
  call get_xc
  call msg('s','XC functional...'//xc_string(GS_xc_FUNCTIONAL))
  call msg('s','EXX fraction...',GS_exx_FRACTION)
+ call msg('s','EXX screening...',GS_exx_SCREENING)
  !
  !---------------------------------------------------------------------*
  !    Read k-point mesh                                                *

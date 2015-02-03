@@ -23,7 +23,7 @@
 !
 subroutine QP_DBs_merge(en,k)
  !
- use YPP,           ONLY:n_QP_dbs,QP_db,QP_db_what,QP_db_name
+ use YPP,           ONLY:n_QP_dbs,QP_db,QP_db_what,QP_db_name,Z_input
  use pars,          ONLY:SP,cI,schlen
  use stderr,        ONLY:intc
  use com,           ONLY:msg
@@ -39,7 +39,7 @@ subroutine QP_DBs_merge(en,k)
  !
  integer :: i_qp,i_d,i_qp_ref,nk_max,nb_to_merge,i_s,i_b,i_k,i_k_near,&
 &           i_err,i_sp,i1,ID
- real(SP):: k_qp(3),W_to_add,dE_to_add
+ real(SP):: k_qp(3),W_to_add,dE_to_add,COHSEX_eq,dE_Neq,Z_local
  character(schlen) :: new_descriptions(max_qp_descs)
  integer, external :: io_QP_and_GF
  !
@@ -95,10 +95,24 @@ subroutine QP_DBs_merge(en,k)
      do i_sp=1,QP_db(i_qp)%n_states
        if (QP_db(i_qp)%table(i_sp,3)==i_k_near.and.QP_db(i_qp)%table(i_sp,1)==i_b) then
          W_to_add=aimag(QP_db(i_qp)%E(i_sp))
-         dE_to_add=real(QP_db(i_qp)%E(i_sp)-QP_db(i_qp)%E_bare(i_sp))
+         dE_to_add= real(QP_db(i_qp)%E(i_sp)-QP_db(i_qp)%E_bare(i_sp))
+         COHSEX_eq= real(QP_db(i_qp)%E(i_sp)-QP_db(i_qp)%E_bare(i_sp))
+         dE_Neq   = real(QP_db(i_qp)%E(i_sp)-QP_db(i_qp)%E_bare(i_sp))
          if (index(trim(QP_db_what(i_qp)),"W")==0) W_to_add =0.
          if (index(trim(QP_db_what(i_qp)),"E")==0) dE_to_add=0.
-         QP_db(i_qp_ref)%E(i_s)=QP_db(i_qp_ref)%E(i_s)+dE_to_add+cI*W_to_add
+         if (index(trim(QP_db_what(i_qp)),"C")==0) COHSEX_eq=0.
+         if (index(trim(QP_db_what(i_qp)),"N")==0) dE_Neq=0.
+         if (Z_input<=0.) then
+           if(index(trim(QP_db_what(i_qp)),"Z")==0) then
+             Z_local=real(QP_db(i_qp_ref)%E(i_sp)-QP_db(i_qp_ref)%E_bare(i_sp))/ &
+  &                  real(QP_db(1)%E(i_sp)-QP_db(1)%E_bare(i_sp))
+           else
+             Z_local=QP_db(i_qp_ref)%Z(i_sp)
+           endif
+         else
+           Z_local=Z_input
+         endif
+         QP_db(i_qp_ref)%E(i_s)=QP_db(i_qp_ref)%E(i_s)+dE_to_add+cI*W_to_add+Z_local*(dE_Neq-COHSEX_eq)
          cycle db_loop
        endif
      enddo

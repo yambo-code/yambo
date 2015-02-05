@@ -14,7 +14,7 @@
 # [@OPENMP_str@] OpenMP 
 # [@OPENMPI_str@] OpenMPI
 # [@BGQ_str@] BGQ
-# [@PW_str@] PW (@PW_VER@) support
+# [@PW_str@] QE (@PW_VER@) support
 # [@ETSF_str@] ETSF I/O support
 # [@SLK_str@] SCALAPACK
 # [@LIBXC_str@] external LibXC

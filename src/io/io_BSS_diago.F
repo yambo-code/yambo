@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_diago(iq,BS_H_dim,bsE,bsR,ID)
+integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsR,bsR_kerr)
  !
  use pars,          ONLY:SP,schlen,IP
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_write_eig_2_db,&
@@ -32,7 +32,8 @@ integer function io_BSS_diago(iq,BS_H_dim,bsE,bsR,ID)
  use electrons,     ONLY:n_sp_pol
  implicit none
  integer     :: iq,ID,BS_H_dim
- real(SP)    :: bsE(2,BS_H_dim),bsR(2,BS_H_dim)
+ real(SP)    :: bsE(BS_H_dim,2),bsR(BS_H_dim,2)
+ real(SP),optional :: bsR_kerr(BS_H_dim,2)
  !
  ! Work Space
  !
@@ -75,10 +76,14 @@ integer function io_BSS_diago(iq,BS_H_dim,bsE,bsR,ID)
  endif
  !
  if (any((/io_sec(ID,:)==2/))) then
-   call io_bulk(ID,'BS_Energies',VAR_SZ=(/2,BS_H_dim/))
+   call io_bulk(ID,'BS_Energies',VAR_SZ=(/BS_H_dim,2/))
    call io_bulk(ID,R2=bsE)
-   call io_bulk(ID,'BS_Residuals',VAR_SZ=(/2,BS_H_dim/))
+   call io_bulk(ID,'BS_Residuals',VAR_SZ=(/BS_H_dim,2/))
    call io_bulk(ID,R2=bsR)
+   if(present(bsR_kerr)) then
+     call io_bulk(ID,'BS_KERR_Residuals',VAR_SZ=(/BS_H_dim,2/))
+     call io_bulk(ID,R2=bsR_kerr)
+   endif
  endif
  !
  if (any((/io_sec(ID,:)==3/))) then

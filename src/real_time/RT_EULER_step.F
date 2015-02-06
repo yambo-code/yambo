@@ -24,11 +24,7 @@
 subroutine RT_EULER_step(dG,I1_k,I2_k,deltaT)
  !
  use pars,           ONLY:SP,cI
-#if defined _OPENMP
- use wrapper,        ONLY:V_by_V_plus_V_omp
-#else
- use wrapper,        ONLY:V_by_V_plus_V
-#endif
+ use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use SC,             ONLY:SC_bands,SC_nbands
  !
  implicit none
@@ -44,10 +40,6 @@ subroutine RT_EULER_step(dG,I1_k,I2_k,deltaT)
  !
  ! dG(T+dt) = - i dt *(I1(T) - I2(T))
  !
-#if defined _OPENMP
  call V_by_V_plus_V_omp(SC_nbands, -cI*deltaT, I1_k-I2_k, dG)
-#else
- call V_by_V_plus_V(SC_nbands, -cI*deltaT, I1_k-I2_k, dG)
-#endif
  !
 end subroutine RT_EULER_step

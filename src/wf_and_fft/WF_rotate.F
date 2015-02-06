@@ -32,10 +32,7 @@ subroutine WF_rotate(ik,WFo,wf_size)
  !
  ! Extended only to collinear case
  !
- use wrapper,        ONLY:V_by_V_plus_V
-#if defined _OPENMP
- use wrapper,        ONLY:V_by_V_plus_V_omp
-#endif
+ use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use electrons,      ONLY:n_sp_pol
  use pars,           ONLY:SP
  use wave_func,      ONLY:WAVEs,WF
@@ -60,11 +57,7 @@ subroutine WF_rotate(ik,WFo,wf_size)
        !
        if (ifft==0.or.ifftp==0) cycle
        !
-#if defined _OPENMP
        call V_by_V_plus_V_omp(wf_size,SC_R(ibp,ib,ik,i_spin),WFo%c(:,ifftp),WS_wf(:,ib))
-#else
-       call V_by_V_plus_V(wf_size,SC_R(ibp,ib,ik,i_spin),WFo%c(:,ifftp),WS_wf(:,ib))
-#endif
        !
      end do
    end do

@@ -34,10 +34,7 @@ subroutine XCo_local(E,Xk)
  use wave_func,     ONLY:WF
  use xc_functionals,ONLY:V_xc,xc_string,XC_potential_driver,magn,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_exx_fraction,WF_exx_screening
- use wrapper,       ONLY:Vstar_dot_V
-#if defined _OPENMP
- use wrapper,       ONLY:Vstar_dot_V_omp
-#endif
+ use wrapper_omp,   ONLY:Vstar_dot_V_omp
  use parallel_m,    ONLY:PAR_IND_QP,PP_redux_wait,PAR_IND_WF_linear 
 #if defined _RT
  use parallel_m,    ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k 
@@ -143,11 +140,7 @@ subroutine XCo_local(E,Xk)
      enddo
 !$omp end parallel do
      !
-#if defined _OPENMP
      QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,iwf),c_ws(:,1))
-#else
-     QP_Vxc(i1)=Vstar_dot_V(fft_size,WF%c(:,iwf),c_ws(:,1))
-#endif
      !
    enddo
    !
@@ -190,11 +183,7 @@ subroutine XCo_local(E,Xk)
        !
        c_ws(:,1)=V_xc_mat(:,i_sp,i_sp)*WF%c(:,iwfp)
        !
-#if defined _OPENMP
        QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,iwf),c_ws(:,1))
-#else
-       QP_Vxc(i1)=Vstar_dot_V(fft_size,WF%c(:,iwf),c_ws(:,1))
-#endif
        !
      else
        !
@@ -206,13 +195,8 @@ subroutine XCo_local(E,Xk)
        c_ws(:,1)=V_xc_mat(:,1,1)*WF%c(:,iwfp_sp1)+V_xc_mat(:,1,2)*WF%c(:,iwfp_sp2)
        c_ws(:,2)=V_xc_mat(:,2,1)*WF%c(:,iwfp_sp1)+V_xc_mat(:,2,2)*WF%c(:,iwfp_sp2)
        !
-#if defined _OPENMP
        QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,iwf_sp1),c_ws(:,1))+&
 &                 Vstar_dot_V_omp(fft_size,WF%c(:,iwf_sp2),c_ws(:,2))
-#else
-       QP_Vxc(i1)=Vstar_dot_V(fft_size,WF%c(:,iwf_sp1),c_ws(:,1))+&
-&                 Vstar_dot_V(fft_size,WF%c(:,iwf_sp2),c_ws(:,2))
-#endif
        !
      endif
      !

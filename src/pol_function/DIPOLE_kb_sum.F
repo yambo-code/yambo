@@ -28,10 +28,7 @@
 subroutine Dipole_kb_sum(ivfft,icfft,rho,kbv)
  !
  use pars,          ONLY:SP,DP
- use wrapper,       ONLY:Vstar_dot_V,V_dot_V,V_by_V_plus_V
-#ifdef _OPENMP
- use wrapper,       ONLY:Vstar_dot_V_omp,V_dot_V_omp,V_by_V_plus_V_omp
-#endif
+ use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp,V_by_V_plus_V_omp
  use wave_func,     ONLY:WF,wf_ng
  use pseudo,        ONLY:pp_kbv_dim
  implicit none
@@ -48,32 +45,18 @@ subroutine Dipole_kb_sum(ivfft,icfft,rho,kbv)
  !
  do i1=1,pp_kbv_dim
    !
-#ifdef _OPENMP
    Cv=V_dot_V_omp(wf_ng,WF%c(:,ivfft),kbv(:,i1,1))
    Cc=V_dot_V_omp(wf_ng,WF%c(:,icfft),kbv(:,i1,1))
-#else
-   Cv=V_dot_V(wf_ng,WF%c(:,ivfft),kbv(:,i1,1))
-   Cc=V_dot_V(wf_ng,WF%c(:,icfft),kbv(:,i1,1))
-#endif
    !
    if (Cc==(0.,0.)) cycle
    do i2=1,3
-#ifdef _OPENMP
      call V_by_V_plus_V_omp(wf_ng,Cc,conjg(kbv(:,i1,1+i2)),Kc(:,i2))
      call V_by_V_plus_V_omp(wf_ng,conjg(Cv),kbv(:,i1,1+i2),Kv(:,i2))
-#else
-     call V_by_V_plus_V(wf_ng,Cc,conjg(kbv(:,i1,1+i2)),Kc(:,i2))
-     call V_by_V_plus_V(wf_ng,conjg(Cv),kbv(:,i1,1+i2),Kv(:,i2))
-#endif
    enddo
  enddo
  !
  do i1=1,3
-#ifdef _OPENMP
    drho(i1)=Vstar_dot_V_omp(wf_ng,WF%c(:,ivfft),Kc(:,i1))+V_dot_V_omp(wf_ng,WF%c(:,icfft),Kv(:,i1))
-#else
-   drho(i1)=Vstar_dot_V(wf_ng,WF%c(:,ivfft),Kc(:,i1))+V_dot_V(wf_ng,WF%c(:,icfft),Kv(:,i1))
-#endif
  enddo
  !
  rho=rho+drho

@@ -26,11 +26,8 @@ subroutine RT_build_U1_and_U2(ik,U1_k,U2_k,dT)
   use pars,           ONLY:SP,cI
   use real_time,      ONLY:Ho_plus_Sigma
   use SC,             ONLY:SC_bands,SC_nbands
-#if defined _OPENMP
- use wrapper,         ONLY:M_by_M_omp
-#else
- use wrapper,         ONLY:M_by_M
-#endif
+  use wrapper_omp,    ONLY:M_by_M_omp
+  !
   implicit none
   !
   integer,     intent(in)  :: ik
@@ -51,38 +48,22 @@ subroutine RT_build_U1_and_U2(ik,U1_k,U2_k,dT)
   U1_k=+idT*Ho_plus_Sigma(:,:,ik,1)
   U2_k=-idT*Ho_plus_Sigma(:,:,ik,1)
   !
-#if defined _OPENMP
-  call M_by_M_omp(SC_nbands,Ho_plus_Sigma(:,:,ik,1),Ho_plus_Sigma(:,:,ik,1),M1_tmp)
-#else
-  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),Ho_plus_Sigma(:,:,ik,1),M1_tmp)
-#endif
+  call M_by_M_omp('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),Ho_plus_Sigma(:,:,ik,1),M1_tmp)
   !
   U1_k=U1_k+idT**2*M1_tmp/2._SP
   U2_k=U2_k+idT**2*M1_tmp/2._SP
   !
-#if defined _OPENMP
-  call M_by_M_omp(SC_nbands,Ho_plus_Sigma(:,:,ik,1),M1_tmp,M2_tmp)
-#else
-  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M1_tmp,M2_tmp)
-#endif
+  call M_by_M_omp('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M1_tmp,M2_tmp)
   !
   U1_k=U1_k+idT**3*M2_tmp/6._SP
   U2_k=U2_k-idT**3*M2_tmp/6._SP
   !
-#if defined _OPENMP
-  call M_by_M_omp(SC_nbands,Ho_plus_Sigma(:,:,ik,1),M2_tmp,M1_tmp)
-#else
-  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M2_tmp,M1_tmp)
-#endif
+  call M_by_M_omp('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M2_tmp,M1_tmp)
   !
   U1_k=U1_k+idT**4*M1_tmp/24._SP
   U2_k=U2_k+idT**4*M1_tmp/24._SP
   !
-#if defined _OPENMP
-  call M_by_M_omp(SC_nbands,Ho_plus_Sigma(:,:,ik,1),M1_tmp,M2_tmp)
-#else
-  call M_by_M('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M1_tmp,M2_tmp)
-#endif
+  call M_by_M_omp('n','n',SC_nbands,Ho_plus_Sigma(:,:,ik,1),M1_tmp,M2_tmp)
   !
   U1_k=U1_k+idT**5*M2_tmp/120._SP
   U2_k=U2_k-idT**5*M2_tmp/120._SP

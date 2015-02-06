@@ -45,10 +45,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 #endif
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
- use wrapper,       ONLY:V_dot_V
-#if defined _OPENMP
- use wrapper,       ONLY:V_dot_V_omp
-#endif
+ use wrapper_omp,   ONLY:V_dot_V_omp
  use global_XC,     ONLY:WF_exx_screening
  !
  implicit none
@@ -197,22 +194,13 @@ endif
        iscp%rhotw=isc%rhotw
        if (isc%is(1)/=iscp%is(1)) call scatterBamp(iscp)
        !
-#if defined _OPENMP
-       !
 !$omp parallel do default(shared), private(ig)
        do ig = 1, isc%ngrho
-         local_rhotw(ig) = -4./spin_occ*pi*isc%rhotw(ig)*conjg(iscp%rhotw(ig))*E%f(jb,isc%os(2),isc%os(4))
+         local_rhotw(ig) = -4._SP/spin_occ*pi*isc%rhotw(ig)*conjg(iscp%rhotw(ig))*E%f(jb,isc%os(2),isc%os(4))
        enddo
 !$omp end parallel do
        !
        DP_Sx=V_dot_V_omp(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
-#else
-       !
-       local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(jb,isc%os(2),isc%os(4))
-       !
-       DP_Sx=V_dot_V(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
-       !
-#endif
        !
        QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)+DP_Sx
        !

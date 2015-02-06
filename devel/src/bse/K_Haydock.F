@@ -25,11 +25,7 @@ subroutine K_Haydock(iq,W)
  !
  use pars,           ONLY:SP,pi,schlen,cI,cZERO,cONE
  use com,            ONLY:error
-#if defined _OPENMP
- use wrapper,        ONLY:V_by_V_plus_V_omp
-#else
- use wrapper,        ONLY:V_by_V_plus_V
-#endif
+ use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_epsilon,X_drude_term
  use R_lattice,      ONLY:d3k_factor,q_norm
@@ -46,13 +42,19 @@ subroutine K_Haydock(iq,W)
  use electrons,      ONLY:spin_occ
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
+ use parallel_m,     ONLY:PAR_IND_T_groups,PP_bcast
+#if defined _KERR
+ use KERR,           ONLY:BSS_rhoq0_kerr,B_Hall
+ use drivers,        ONLY:l_kerr,l_anomalous_Hall
+ use fields,         ONLY:global_gauge
+ use X_m,            ONLY:iw_ref
+#endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
-!
 #endif
  !
- use parallel_m, ONLY:PAR_IND_T_groups,PP_bcast
  implicit none
+ !
  type(w_samp)  ::W
  integer       ::iq
  !
@@ -62,11 +64,15 @@ subroutine K_Haydock(iq,W)
  integer, parameter ::Max_iterations=1000
  type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:)
  complex(SP),allocatable :: Cf(:)
+#if defined _KERR
+ complex(SP),allocatable :: Cf_kerr(:)
+#endif
  real(SP)           ::reached_treshold, Bf(Max_iterations)&
 &,                    Af(Max_iterations)
  real(SP)           ::ItParity
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
+ logical            ::use_cpl_scheme
  logical, external  ::stop_now
  !
  ! I/O
@@ -90,9 +96,18 @@ subroutine K_Haydock(iq,W)
  ! Use terminator?
  if (.not.Haydock_terminator) call parser('BSHayTer',Haydock_terminator)
  !
+ ! Which approach
+ use_cpl_scheme=BS_K_Coupling
+#if defined _KERR
+ use_cpl_scheme=BS_K_Coupling.or.l_kerr
+#endif
+ !
  ! Allocate Haydock vectors:
- if (BS_K_Coupling) then
+ if (use_cpl_scheme) then
    allocate(Cf(Max_iterations+1))
+#if defined _KERR
+   if(l_kerr) allocate(Cf_kerr(Max_iterations+1))
+#endif
    allocate(V0(BS_nT_grps))
    call BS_HAYVEC_alloc(V0)
  end if
@@ -108,15 +123,21 @@ subroutine K_Haydock(iq,W)
  it_on_disk=0
  ! call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
  ! !
- ! if (BS_K_Coupling) then 
- !   !
+ ! if (use_cpl_scheme) then 
+ !  !
+#if defined _KERR
+ !  if(l_kerr) then
+ !    io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),  &
+ !    &                   Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1),Cf_kerr=Cf_kerr(1))
+ !  else
+#endif
  !   io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1)&
  !        &,Vmm1,Vm,Vnp1=Vmp1,Cf=Cf(1))   
- !   !
+#if defined _KERR
+ !  endif
+#endif
  ! else
- !   io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1)&
- !        &,Vmm1,Vm)
-   !
+ !   io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vmm1,Vm)
  !endif
  !
  !
@@ -127,15 +148,22 @@ subroutine K_Haydock(iq,W)
 !    !
 !    it_on_disk=io_err 
 !    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
-!    if (BS_K_Coupling) then 
-!      io_err=io_BSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold
- !      ,Af(:it_on_disk), &                          Bf(:it_on_disk
- !      +1),Vmm1,Vm,Vnp1=Vmp1,Cf=Cf(:it_on_disk+1))
+!    if (use_cpl_scheme) then 
+#if defined _KERR
+!     if(l_kerr) then
+!       io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),Bf(:it_on_disk+1),&
+!       &                    Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1),Cf_kerr=Cf_kerr(:it_on_disk+1))
+!     else
+#endif
+!       io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
+!       &                   Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
+#if defined _KERR
+!     endif
+#endif
 !    else
-!      io_err=io_BSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold
- !      ,Af(:it_on_disk), &            Bf(:it_on_disk+1),Vmm1,Vm)
-!      call msg('s','[Haydock] Restart DB with accuracy '
- !      ,reached_treshold)
+!      io_err=io_BSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
+!      &      Bf(:it_on_disk+1),Vmm1,Vm)
+!      call msg('s','[Haydock] Restart DB with accuracy ',reached_treshold)
 !    end if
 !    !
 !  endif
@@ -179,7 +207,7 @@ subroutine K_Haydock(iq,W)
 #endif    
  end do
  !
- if (BS_K_Coupling) then ! [***] Initialization non Hermitian case
+ if (use_cpl_scheme) then ! [***] Initialization non Hermitian case
    !
    ! Before starting iterate one needs
    !
@@ -189,6 +217,9 @@ subroutine K_Haydock(iq,W)
    ItParity = (-1._SP)**it_on_disk
    if (it_on_disk==0) then
       Cf= (0.,0.)
+#if defined _KERR
+      if(l_kerr) Cf_kerr= (0.,0.)
+#endif
       !
       call K_multiply_by_V(it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
       do i_g=1,BS_nT_grps
@@ -198,6 +229,9 @@ subroutine K_Haydock(iq,W)
       call K_dot_product(v0_mod_,Vn,Vnp1)
       Haydock_v0_mod=sqrt(2._SP*real(v0_mod_,SP))
       Cf(1) =  Haydock_v0_mod
+#if defined _KERR
+      if(l_kerr) Cf_kerr(1)= 2._SP*cI*aimag(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn))/Haydock_v0_mod**2._SP
+#endif
       do i_g=1,BS_nT_grps
         if (.not.Haydock_parallel_mask(i_g)) cycle
         !
@@ -234,7 +268,7 @@ subroutine K_Haydock(iq,W)
    !
    ! Hermitian case: 
    !
-   if (.not.BS_K_Coupling) then
+   if (.not.use_cpl_scheme) then
      !
      !|Vm+1> = H |Vm>
      !
@@ -249,13 +283,8 @@ subroutine K_Haydock(iq,W)
      !
      do i_g = 1,BS_nT_grps
        if (.not.Haydock_parallel_mask(i_g)) cycle
-#if defined _OPENMP
        call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
        call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
-#else
-       call V_by_V_plus_V(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
-       call V_by_V_plus_V(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
-#endif
      end do
      !
      ! B(n+1)= <Vm+1|Vm+1>^(1/2)
@@ -292,11 +321,7 @@ subroutine K_Haydock(iq,W)
      !
      do i_g = 1,BS_nT_grps
        if (.not.Haydock_parallel_mask(i_g)) cycle
-#if defined _OPENMP
        call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
-#else
-       call V_by_V_plus_V(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
-#endif
      end do
      !
      ! |Vm-1> = |Vm> 
@@ -338,16 +363,23 @@ subroutine K_Haydock(iq,W)
      !
      call K_dot_product(v0_mod_,V0,Vn) 
      Cf(it+1)= ((1._SP-ItParity)*real(v0_mod_,SP))/Haydock_v0_mod
+#if defined _KERR
+     if(l_kerr) Cf_kerr(it+1)= &
+&             ((1._SP+ItParity)*cI*aimag(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn)))/Haydock_v0_mod
+#endif
      !
    endif
    !
    if (it>2) then
      !
-     if (BS_K_Coupling) then 
+     if (use_cpl_scheme) then 
        call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,Cf(:it),1)
      else
        call build_L_and_check_convergence(Af(:it),Bf(:it+1),it)
      end if
+#if defined _KERR
+     if(l_kerr) call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,Cf_kerr(:it),2)
+#endif
      !
      BSS_description(BSS_n_descs-1)='        |Accuracy (reached)   [o/o]:'//&
 &                                    trim(real2ch(reached_treshold))
@@ -370,16 +402,25 @@ subroutine K_Haydock(iq,W)
    !
    ! Haydock Coefficients and restart vectors on disk
    !--------------------------------------------------
-   ! call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
-!    if (BS_K_Coupling) then
-!      Bf(1) = Haydock_v0_mod
+   !call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
+!   if (use_cpl_scheme) then
+!     Bf(1) = Haydock_v0_mod
+#if defined _KERR
+!     if(l_kerr) then
+!       io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
+!       &                    Af(:it),Bf(:it+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
+!     else 
+#endif
 !      io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
 ! &                          Af(:it),Bf(:it+1),Vmm1,Vm,Vnp1=Vmp1,Cf=Cf(:it+1))
-!      Bf(1) = 0._SP
-!    else
-!      io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),Vmm1,Vm)
-!    end if
-!    !
+#if defined _KERR
+!     endif
+#endif
+!     Bf(1) = 0._SP
+!   else
+!     io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),Vmm1,Vm)
+!   end if
+!   !
    if ( (reached_treshold>0.and.reached_treshold<abs(Haydock_treshold)) .or. &
 &       stop_now(.FALSE.)) then
      call msg('r','Accuracy (reached)   [o/o]:',reached_treshold)
@@ -397,10 +438,13 @@ subroutine K_Haydock(iq,W)
  call BS_HAYVEC_free(Vnm1)
  deallocate(Vn,Vnp1,Vnm1)
  !
- if (BS_K_Coupling)  then
+ if (use_cpl_scheme)  then
    call BS_HAYVEC_free(V0)
    if (allocated(V0)) deallocate(V0)
    if (allocated(Cf)) deallocate(Cf)
+#if defined _KERR
+   if (allocated(Cf_kerr)) deallocate(Cf_kerr)
+#endif
  end if
  !
 #if defined _TIMING
@@ -420,6 +464,10 @@ subroutine K_Haydock(iq,W)
      !
      integer     :: i1,iw,i_eps(2)
      real(SP)    :: Co
+#if defined _KERR
+     real(SP)    :: factor_jj
+     real(SP)    :: gauge_factor
+#endif
      complex(SP) :: X_o(4,it), YbyX(2)
      complex(SP),allocatable :: X_i(:,:)
      !
@@ -436,8 +484,8 @@ subroutine K_Haydock(iq,W)
      X_t =(0._SP,0._SP)
      UseTerminator = .false.  
      !
-     causal  = (trim(BSE_mode)=='causal'.and..not.BS_K_Coupling)
-     coupling= BS_K_Coupling
+     causal  = (trim(BSE_mode)=='causal'.and..not.use_cpl_scheme)
+     coupling= use_cpl_scheme
      !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
      if (coupling) allocate(X_i(2,it))
@@ -505,6 +553,29 @@ subroutine K_Haydock(iq,W)
        endif
        X_epsilon(1,iw)=W%p(iw)
        !
+#if defined _KERR
+       !
+       if(trim(global_gauge)=='length')   factor_jj=0._SP
+       if(trim(global_gauge)=='velocity') factor_jj=X_epsilon(3,iw_ref)
+       !
+       if(l_anomalous_Hall) B_Hall(2)=B_Hall(2)*Co
+       !
+       gauge_factor=1._SP
+       if(trim(global_gauge)=='velocity')  gauge_factor=(real(W%p(iw))**2+epsilon(1.))/q_norm(1)**2
+       X_epsilon(i_eps(:),iw)=1._SP-(X_o(:2,1)-factor_jj)*Co/gauge_factor*Haydock_v0_mod**2._SP
+       if (causal) X_epsilon(i_eps(:),iw)=X_epsilon(i_eps(:),iw)+X_o(3:4,1)*Co/gauge_factor*Haydock_v0_mod**2._SP
+       if (i_eps(1)==2) then
+         X_epsilon(2,iw)=X_epsilon(2,iw)+X_drude_term(iw)*Co/gauge_factor
+         X_epsilon(4,iw)=X_epsilon(4,iw)+X_drude_term(iw)*Co/gauge_factor
+       endif
+       if (i_eps(1)==5) X_epsilon(i_eps(:),iw)=1._SP-X_epsilon(i_eps(:),iw)
+       !
+       ! I add the term describing the Anomalous Hall effect which is
+       ! missing in the length gauge (this should be zero for systems with a gap)
+       if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(5,iw)=X_epsilon(5,iw)+B_Hall(2)/W%p(iw)
+       !
+#else
+       !
        X_epsilon(i_eps(:),iw)=1._SP-X_o(:2,1)*Co*Haydock_v0_mod**2._SP
        if (causal) X_epsilon(i_eps(:),iw)=X_epsilon(i_eps(:),iw)+X_o(3:4,1)*Co*Haydock_v0_mod**2._SP
        if (i_eps(1)==2) then
@@ -512,6 +583,7 @@ subroutine K_Haydock(iq,W)
          X_epsilon(4,iw)=X_epsilon(4,iw)+X_drude_term(iw)*Co
        endif
        if (i_eps(1)==5) X_epsilon(i_eps(:),iw)=1._SP-X_epsilon(i_eps(:),iw)
+#endif
        !
        if (Haydock_treshold>0._SP) reached_treshold=max(reached_treshold,&
 &         abs(X_epsilon(i_eps(1),iw)-X_epsilon(i_eps(2),iw))/abs(X_epsilon(2,iw)))
@@ -520,7 +592,7 @@ subroutine K_Haydock(iq,W)
        !
      enddo
      !
-     if (BS_K_Coupling) deallocate(X_i)
+     if (use_cpl_scheme) deallocate(X_i)
    end subroutine
    !
    function terminator(x,c1,c2,which)

@@ -41,10 +41,7 @@ function TDDFT_ALDA_R_space(ic,ik,iv,is,mode)
  use FFT_m,          ONLY:fft_size
  use xc_functionals, ONLY:F_xc
  use D_lattice,      ONLY:nsym,i_time_rev
- use wrapper,        ONLY:V_dot_V
-#ifdef _OPENMP
- use wrapper,        ONLY:V_dot_V_omp
-#endif
+ use wrapper_omp,    ONLY:V_dot_V_omp
  use electrons,      ONLY:n_spinor
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -84,11 +81,7 @@ function TDDFT_ALDA_R_space(ic,ik,iv,is,mode)
  !
  ! SUM
  !=====
-#ifdef _OPENMP
  TDDFT_ALDA_R_space=V_dot_V_omp(fft_size,rhotwr1,rhotwr2)
-#else
- TDDFT_ALDA_R_space=V_dot_V(fft_size,rhotwr1,rhotwr2)
-#endif
  !
  ! tddft_alda_r_space'd be 2*cdotc/u*real(fft_size,SP)/DL_vol/Nq 
  ! but it is multiplied by Co

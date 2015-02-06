@@ -26,14 +26,9 @@ integer function MATRIX_resolvant_via_perturbative_inversion(N,W,C,f,V)
  ! C<W|1./(V^{-1}-M)|W> = \sum_n C<W| (1-VM)^{-1} V |W> = \sum_n C<W| ( VM )^n V |W>
  !
  use pars,           ONLY:SP
- use wrapper,        ONLY:Vstar_dot_V,M_by_V
+ use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp
  use BS,             ONLY:BS_mat
  use parallel_m
-#if defined _OPENMP
- use wrapper,        ONLY:Vstar_dot_V_omp,M_by_V_omp
-#else
- use wrapper,        ONLY:Vstar_dot_V,M_by_V
-#endif
  !
  implicit none
  !
@@ -52,11 +47,7 @@ integer function MATRIX_resolvant_via_perturbative_inversion(N,W,C,f,V)
  !
  A_nm1(:)=V(:)*W(:)
  !
-#if defined _OPENMP
  fo=C*Vstar_dot_V_omp(N,W,A_nm1)
-#else
- fo=C*Vstar_dot_V(N,W,A_nm1)
-#endif
  !
  if (abs(f)==0.) f=fo
  !
@@ -66,18 +57,10 @@ integer function MATRIX_resolvant_via_perturbative_inversion(N,W,C,f,V)
  !
  do while (it<=BSS_inv_iter_max) 
    !
-#if defined _OPENMP
    call M_by_V_omp('n',N,BS_mat,A_nm1,A_n)
-#else
-   call M_by_V('n',N,BS_mat,A_nm1,A_n)
-#endif
    !
    A_n(:)=V(:)*A_n(:)
-#if defined _OPENMP
    delta_f=C*Vstar_dot_V_omp(N,W,A_n)
-#else
-   delta_f=C*Vstar_dot_V(N,W,A_n)
-#endif
    !
    f=f+delta_f
    !

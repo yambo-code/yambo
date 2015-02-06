@@ -26,7 +26,7 @@ subroutine OCCUPATIONS_out_of_equilibrium(bands_limit,En,Xk,call_kind)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_corr
  use units,          ONLY:FS2AUT
- use electrons,      ONLY:levels,n_sp_pol,E_duplicate
+ use electrons,      ONLY:levels,n_sp_pol,E_duplicate,BZ_RIM_nbands
  use R_lattice,      ONLY:bz_samp,nkibz
  use real_time,      ONLY:RT_PP_time,rt,RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz
  use rt_ctl,         ONLY:RT_OCC_LIFE_and_REF_IO,delta_f
@@ -45,9 +45,11 @@ subroutine OCCUPATIONS_out_of_equilibrium(bands_limit,En,Xk,call_kind)
  type(levels)      :: RT_db1_E
  type(bz_samp)     :: RT_db1_k
  !
+ real(SP), allocatable ::RIM_weights(:)
  real(SP)     :: N_carriers,Max_change
+ real(SP)     :: N_carriers_RIM,Max_change_RIM
  !
- integer      :: n_T_steps,nkibz_save,ik,i1,bnd(2)
+ integer      :: n_T_steps,nkibz_save,ik,i1,bnd(2),N_kpt_RIM
  logical      :: l_elel_corr_save
  !
  l_elel_corr_save=l_elel_corr
@@ -85,13 +87,42 @@ subroutine OCCUPATIONS_out_of_equilibrium(bands_limit,En,Xk,call_kind)
  En%f( bnd(1):bnd(2),:,:)=En%f(bnd(1):bnd(2),:,:)+delta_f(bnd(1):bnd(2),:,:)
  !
  deallocate(delta_f)
- call RT_alloc_def_or_free(rt,RT_db1_E,RT_db1_k,3)
- if(allocated(RIM_ibz_coo)) deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz)
  !
  call msg('nrs','[RT] Updated occupations using f(t) from NEQ run at time [fs]: ',RT_PP_time/FS2AUT)
  call msg('r',  '[RT] N of bands updated                                      : ', (/bnd(1),bnd(2)/)) 
  call msg('r',  '[RT] Max change in occupations / N of carriers per cell      : ', (/Max_change,N_carriers/)) 
  call msg('r',  '[RT] N full bands, N metallic bands                          : ', (/En%nbf,En%nbm/)) 
+ !
+ if(BZ_RIM_nbands/=0) then
+   ! Fit them on the grid for absorption
+   ! For the moment only the delta_f variable is considered for the occupations
+   N_kpt_RIM=size(Xk%pt_RIM(:,3))
+   allocate(delta_f(rt%nb(1):rt%nb(2),N_kpt_RIM,n_sp_pol))
+   allocate(RIM_weights(N_kpt_RIM))
+   !
+   RIM_weights(:)=1._SP/real(N_kpt_RIM,SP)
+   !
+   call Nearest_kpt_interpolation(rt%nk,N_kpt_RIM,rt%nb,rt%nstates,1,1,rt%table, &
+&                                 rt%k,Xk%pt_RIM,rt%wk,RIM_weights,rt%df,delta_f,call_kind,.true.)
+   !
+   Max_change_RIM=maxval(abs(delta_f))
+   N_carriers_RIM=sum(abs(delta_f(:,:,:)))/2._SP/real(N_kpt_RIM,SP)
+   !
+   !allocate(En%fo_RIM(En%nb,En%nk,n_sp_pol))
+   !En%nbm=max(rt%nb(2)  ,En%nbm)
+   !En%nbf=min(rt%nb(1)-1,En%nbf)
+   !En%fo_RIM =En%f_RIM
+   En%f_RIM( bnd(1):bnd(2),:,:)=En%f_RIM(bnd(1):bnd(2),:,:)+delta_f(bnd(1):bnd(2),:,:)
+   !
+   deallocate(delta_f)
+   deallocate(RIM_weights)
+   !
+   call msg('r',  '[RT] Max change in RIM occupations / N of carriers per cell  : ', (/Max_change_RIM,N_carriers_RIM/)) 
+   !
+ endif
+ !
+ call RT_alloc_def_or_free(rt,RT_db1_E,RT_db1_k,3)
+ if(allocated(RIM_ibz_coo)) deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_Nk_ibz,RT_all2ibz)
  !
  call REPORT_OCCUPATIONS(En)
  !

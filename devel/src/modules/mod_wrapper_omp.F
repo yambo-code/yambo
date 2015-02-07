@@ -286,10 +286,10 @@ module wrapper_omp
      !
 #elif defined _DOUBLE
      complex(SP)::zdotc
-     Vstar_dot_V=ZDOTC(N,CX,1,CY,1)
+     Vstar_dot_V_omp=ZDOTC(N,CX,1,CY,1)
 #else
      complex(SP)::cdotc
-     Vstar_dot_V=CDOTC(N,CX,1,CY,1)
+     Vstar_dot_V_omp=CDOTC(N,CX,1,CY,1)
 #endif
      !
    end function Vstar_dot_V_omp   
@@ -337,10 +337,10 @@ module wrapper_omp
      !
 #elif defined _DOUBLE
      complex(SP)::zdotu
-     V_dot_V=ZDOTU(N,CX,1,CY,1)
+     V_dot_V_omp=ZDOTU(N,CX,1,CY,1)
 #else
      complex(SP)::cdotu
-     V_dot_V=CDOTU(N,CX,1,CY,1)
+     V_dot_V_omp=CDOTU(N,CX,1,CY,1)
 #endif
      !
    end function V_dot_V_omp

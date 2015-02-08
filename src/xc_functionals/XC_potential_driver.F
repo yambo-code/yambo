@@ -54,6 +54,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unM
  if (present(MUTE)) call io_and_Messaging_switch(MUTE)
  !
  local_exx_fraction = RZERO
+ local_exx_screening= RZERO
  if (present(EXX_FRACTION)) local_exx_fraction = EXX_FRACTION
  if (present(EXX_SCREENING)) local_exx_screening = EXX_SCREENING
  !

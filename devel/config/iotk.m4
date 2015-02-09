@@ -23,12 +23,12 @@
 #
 AC_DEFUN([AC_HAVE_IOTK],[
 
-AC_ARG_WITH(iotk, AC_HELP_STRING([--with-iotk=<yes/no>],
-            [Whether to use the IOTK library]),[],[with_iotk="yes"])
+AC_ARG_ENABLE(iotk, AC_HELP_STRING([--enable-iotk],
+            [Activate the IOTK support]),[],[enable_iotk="yes"])
 AC_ARG_WITH(iotk_path, AC_HELP_STRING([--with-iotk-path=<path>],
-            [Path of the IOTK library]),[],[])
-AC_ARG_WITH(iotk_include, AC_HELP_STRING([--with-iotk-include=<path>],
-            [Inlcude path for the IOTK library]),[],[])
+            [Path of the IOTK lib directory]),[],[])
+AC_ARG_WITH(iotk_includedir, AC_HELP_STRING([--with-iotk-includedir=<path>],
+            [Path of the IOTK include directory]),[],[])
 
 
 compile_p2y="no"
@@ -36,7 +36,7 @@ compile_iotk="no"
 iotk_idir=" "
 IOTK_LIBS=" "
 
-if test "x$with_iotk" = "xyes" ; then
+if test "x$enable_iotk" = "xyes" ; then
   #
   if ! test "x$with_iotk_path" = "x" ; then
     AC_MSG_CHECKING([for IOTK in $with_iotk_path])
@@ -44,8 +44,8 @@ if test "x$with_iotk" = "xyes" ; then
     if test -r $with_iotk_path/src/libiotk.a ; then
       compile_p2y="yes"
       compile_iotk="no"
-      if ! test "x$with_iotk_include" = "x" ; then
-         iotk_idir="-I$with_iotk_include"
+      if ! test "x$with_iotk_includedir" = "x" ; then
+         iotk_idir="-I$with_iotk_includedir"
       else
          iotk_idir="-I$with_iotk_path/src"
       fi
@@ -58,12 +58,8 @@ if test "x$with_iotk" = "xyes" ; then
     fi
   else
     # internal iotk
-    compile_iotk="yes"
-  fi
-  #
-  # internal iotk
-  if test "x$compile_iotk" = "xyes" ; then
     AC_MSG_CHECKING([for IOTK library])
+    compile_iotk="yes"
     compile_p2y="yes"
     iotk_idir=" "
     IOTK_LIBS="-liotk"

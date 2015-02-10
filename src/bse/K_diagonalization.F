@@ -42,6 +42,9 @@ subroutine K_diagonalization(iq,W)
  use interfaces,     ONLY:PARALLEL_index,MATRIX_driver
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _SC
  use X_m,            ONLY:global_gauge
 #endif
@@ -53,6 +56,9 @@ subroutine K_diagonalization(iq,W)
  use BS,             ONLY:BSS_n_freqs
  use X_m,            ONLY:global_gauge
 #endif
+ !
+ ! GPL_EXCLUDE_END
+ !
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -77,9 +83,14 @@ subroutine K_diagonalization(iq,W)
  !
  complex(SP), allocatable ::BS_E(:)
  complex(SP), allocatable ::BS_R(:) 
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _KERR
  complex(SP), allocatable ::BS_R_kerr(:) 
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Resonant K
  !
@@ -92,9 +103,15 @@ subroutine K_diagonalization(iq,W)
  complex(SP), allocatable ::BS_V_right(:,:)
  complex(SP), allocatable ::BS_R_left(:)
  complex(SP), allocatable ::BS_R_right(:)
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _KERR
  complex(SP), allocatable ::BS_R_right_kerr(:)
 #endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  !
  ! I/O
  !
@@ -155,6 +172,9 @@ subroutine K_diagonalization(iq,W)
  !
  allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
  call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _KERR
  if(l_kerr) then
    allocate(BS_R_kerr(BS_H_dim))
@@ -162,17 +182,25 @@ subroutine K_diagonalization(iq,W)
  endif
 #endif
  !
+ ! GPL_EXCLUDE_END
+ !
  if (K_is_not_hermitian) then
    allocate(BS_V_left(BS_H_dim,BS_H_dim),BS_V_right(BS_H_dim,BS_H_dim))
    call mem_est("BS_V_left BS_V_right",(/BS_H_dim,size(BS_V_left),size(BS_V_right)/))
    allocate(BS_R_left(BS_H_dim),BS_R_right(BS_H_dim),BS_overlap(BS_H_dim,BS_H_dim))
    call mem_est("BS_R_left BS_R_right BS_overlap",(/BS_H_dim,BS_H_dim,size(BS_overlap)/))
+   !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _KERR
    if(l_kerr) then
      allocate(BS_R_right_kerr(BS_H_dim))
      call mem_est("BS_R_right_kerr",(/BS_H_dim/))
   endif
 #endif
+   !
+   ! GPL_EXCLUDE_END
+   !
    BS_overlap=(0.,0.)
  else
    allocate(BS_E_real(BS_H_dim))
@@ -236,6 +264,8 @@ subroutine K_diagonalization(iq,W)
      call PP_redux_wait(BS_R_right)
      call live_timing
      !
+     ! GPL_EXCLUDE_START
+     !
 #if defined _KERR
      if(l_kerr) then
        call live_timing(' KERR residuals',px%n_of_elements(myid+1))
@@ -252,6 +282,8 @@ subroutine K_diagonalization(iq,W)
        call live_timing
      endif
 #endif
+     !
+     ! GPL_EXCLUDE_END
      !
      ! [2] BS_R(i)= <i_K|j><j|q0> 
      !            = conjg( BS_V_left(k,i))*BSS_rhoq0(k)*R_k
@@ -300,9 +332,15 @@ subroutine K_diagonalization(iq,W)
      !
      do i1=1,BS_H_dim
        BS_R(i1)=BS_R_left(i1)*BS_R_right(i1)
+       !
+       ! GPL_EXCLUDE_START
+       !
 #if defined _KERR
        if(l_kerr) BS_R_kerr(i1)=BS_R_left(i1)*BS_R_right_kerr(i1)
 #endif
+       !
+       ! GPL_EXCLUDE_END
+       !
      enddo
      !
    else
@@ -327,6 +365,8 @@ subroutine K_diagonalization(iq,W)
      !
      call PP_redux_wait(BS_R)
      !
+     ! GPL_EXCLUDE_START
+     !
 #if defined _KERR
      if(l_kerr) then
        call live_timing(' KERR residuals',px%n_of_elements(myid+1))
@@ -345,6 +385,8 @@ subroutine K_diagonalization(iq,W)
      endif
 #endif
      !
+     ! GPL_EXCLUDE_END
+     !
    endif
  endif
  !
@@ -357,6 +399,9 @@ subroutine K_diagonalization(iq,W)
  X_epsilon(1,:)=(0.,0.)
  X_epsilon(2,:)=(0.,0.)
  X_epsilon(3,:)=X_epsilon(3,:)/real(ncpu,SP)
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _KERR
  if(l_kerr) then
    X_epsilon(5,:)=(0.,0.)
@@ -366,11 +411,16 @@ subroutine K_diagonalization(iq,W)
  endif
 #endif
  !
+ ! GPL_EXCLUDE_END
+ !
  call live_timing('BSK     epsilon',px%n_of_elements(myid+1))
  do i1=1,BS_H_dim
    if (.not.px%element_1D(i1)) cycle
    !
    gauge_factor=1._SP
+   !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _SC  || defined _KERR
    if (trim(global_gauge)=='velocity') gauge_factor=BS_E(i1)
    if (     K_is_not_hermitian) gauge_factor=     gauge_factor **2._SP
@@ -384,6 +434,8 @@ subroutine K_diagonalization(iq,W)
    gauge_factor=1._SP
 #endif
    !
+   ! GPL_EXCLUDE_END
+   !
    ! Note the use of a causal expression here needed to avoid any
    ! distinction between the resonant and antiresonant e/h Green's functions.
    !
@@ -392,6 +444,8 @@ subroutine K_diagonalization(iq,W)
      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))/gauge_factor
      if(BS_anti_res) X_epsilon(2,:)=X_epsilon(2,:)+BS_R(i1)*conjg(BS_R(i1))/(W%p(:)+BS_E(i1))/gauge_factor
    endif
+   !
+   ! GPL_EXCLUDE_START
    !
 #if defined _KERR
    if(l_kerr) then
@@ -403,6 +457,8 @@ subroutine K_diagonalization(iq,W)
    endif
 #endif
    !
+   ! GPL_EXCLUDE_END
+   !
    call live_timing(steps=1)
  enddo
  call live_timing
@@ -412,6 +468,8 @@ subroutine K_diagonalization(iq,W)
 #endif
  !
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2
+ !
+ ! GPL_EXCLUDE_START
  !
 #if defined _KERR
  !
@@ -435,8 +493,16 @@ subroutine K_diagonalization(iq,W)
  if (trim(global_gauge)=='length'.and.l_anomalous_Hall) X_epsilon(5,:)=X_epsilon(5,:)+B_Hall(2)/W%p(:)
  !
 #else
+ !
+ ! GPL_EXCLUDE_END
+ !
  X_epsilon(2,:)=1.+(X_epsilon(2,:)+X_drude_term(:))*Co
+ !
+ ! GPL_EXCLUDE_START
+ !
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  X_epsilon(1,:)=W%p(:)
  !
@@ -447,17 +513,29 @@ subroutine K_diagonalization(iq,W)
  ! Diagonalization DB (OUT)
  !==========================
  if (io_err/=0) then
+   !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _KERR
    if(l_kerr) then
      call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
      io_err=io_BSS_diago(iq,ID,BS_H_dim,(/real(BS_E),aimag(BS_E)/),(/real(BS_R),aimag(BS_R)/),(/real(BS_R_kerr),aimag(BS_R_kerr)/))
    else
 #endif
+   !
+   ! GPL_EXCLUDE_END
+   !
      call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
      io_err=io_BSS_diago(iq,ID,BS_H_dim,(/real(BS_E),aimag(BS_E)/),(/real(BS_R),aimag(BS_R)/))
+   !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _KERR
    endif
 #endif
+   !
+   ! GPL_EXCLUDE_END
+   !
  endif
  !
  ! CLEAN
@@ -467,21 +545,33 @@ subroutine K_diagonalization(iq,W)
  !
  deallocate(BS_R,BS_E)
  call mem_est("BS_R BS_E")
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _KERR
  if(l_kerr) then
    deallocate(BS_R_kerr)
    call mem_est("BS_R_kerr")
  endif
 #endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  if (K_is_not_hermitian) then
    deallocate(BS_V_left,BS_V_right,BS_R_left,BS_R_right)
    call mem_est("BS_V_left BS_V_right BS_R_left BS_R_right")
+   !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _KERR
    if(l_kerr) then
      deallocate(BS_R_right_kerr)
      call mem_est("BS_R_right_kerr")
    endif
 #endif
+   !
+   ! GPL_EXCLUDE_END
+   !
  else
    deallocate(BS_E_real)
    call mem_est("BS_E_real")

@@ -24,11 +24,7 @@
 subroutine RT_EULEREXP_step(dG_out,dG_in,G_ref_k,U1_k,U2_k,I1_matrix)
  !
  use pars,           ONLY:SP,cZERO
-#if defined _OPENMP
- use wrapper,        ONLY:M_by_M_omp
-#else
- use wrapper,        ONLY:M_by_M
-#endif
+ use wrapper_omp,    ONLY:M_by_M_omp
  use SC,             ONLY:SC_bands,SC_nbands
  !
  implicit none
@@ -54,34 +50,19 @@ subroutine RT_EULEREXP_step(dG_out,dG_in,G_ref_k,U1_k,U2_k,I1_matrix)
  !
  dG_out=cZERO
  M1_tmp=cZERO
-#if defined _OPENMP
- call M_by_M_omp(SC_nbands,U1p1_k,dG_in,M1_tmp)
- call M_by_M_omp(SC_nbands,M1_tmp,U2p1_k,dG_out)
-#else
- call M_by_M('n','n',SC_nbands,U1p1_k,dG_in,M1_tmp)
- call M_by_M('n','n',SC_nbands,M1_tmp,U2p1_k,dG_out)
-#endif
+ call M_by_M_omp('n','n',SC_nbands,U1p1_k,dG_in,M1_tmp)
+ call M_by_M_omp('n','n',SC_nbands,M1_tmp,U2p1_k,dG_out)
  !
  M1_tmp=cZERO
  M2_tmp=cZERO
-#if defined _OPENMP
- call M_by_M_omp(SC_nbands,U1_k,G_ref_k,M1_tmp)
- call M_by_M_omp(SC_nbands,G_ref_k,U2_k,M2_tmp)
-#else
- call M_by_M('n','n',SC_nbands,U1_k,G_ref_k,M1_tmp)
- call M_by_M('n','n',SC_nbands,G_ref_k,U2_k,M2_tmp)
-#endif
+ call M_by_M_omp('n','n',SC_nbands,U1_k,G_ref_k,M1_tmp)
+ call M_by_M_omp('n','n',SC_nbands,G_ref_k,U2_k,M2_tmp)
  dG_out=dG_out+M1_tmp+M2_tmp
  !
  M1_tmp=cZERO
  M2_tmp=cZERO
-#if defined _OPENMP
- call M_by_M_omp(SC_nbands,U1_k,G_ref_k,M1_tmp)
- call M_by_M_omp(SC_nbands,M1_tmp,U2_k,M2_tmp)
-#else
- call M_by_M('n','n',SC_nbands,U1_k,G_ref_k,M1_tmp)
- call M_by_M('n','n',SC_nbands,M1_tmp,U2_k,M2_tmp)
-#endif
+ call M_by_M_omp('n','n',SC_nbands,U1_k,G_ref_k,M1_tmp)
+ call M_by_M_omp('n','n',SC_nbands,M1_tmp,U2_k,M2_tmp)
  dG_out=dG_out+M2_tmp
  !
  dG_out=dG_out-dG_in

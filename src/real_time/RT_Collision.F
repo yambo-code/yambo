@@ -35,10 +35,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  ! Note that TDH\equiv B=0
  !
  use pars,           ONLY:SP,cONE,cZERO
- use wrapper,        ONLY:V_by_V_plus_V
-#if defined _OPENMP
- use wrapper,        ONLY:V_by_V_plus_V_omp
-#endif
+ use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use electrons,      ONLY:levels,n_spinor
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
@@ -183,13 +180,8 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
      Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1)=&
 &      H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
    else
-#if defined _OPENMP
-       call V_by_V_plus_V_omp(&
-#else
-       call V_by_V_plus_V(&
-#endif
-&                       SC_nbands,cONE,H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1),&
-&                       Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1))
+       call V_by_V_plus_V_omp(SC_nbands,cONE,H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1),&
+&                         Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1))
      endif
    enddo
    !

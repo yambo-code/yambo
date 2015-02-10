@@ -23,13 +23,13 @@
 #
 AC_DEFUN([AC_HAVE_ETSF_IO],[
 
-AC_ARG_WITH(etsf_io, AC_HELP_STRING([--with-etsf-io=<yes/no>],
-   [Path of the ETSF_IO library]),[],[with_etsf_io="no"])
+AC_ARG_ENABLE(etsf_io, AC_HELP_STRING([--enable-etsf-io],
+   [Activate the ETSF_IO support]),[],[enable_etsf_io="no"])
 AC_ARG_WITH(etsf_io_path, AC_HELP_STRING([--with-etsf-io-path=<path>],
    [Path of the ETSF_IO directory]))
-AC_ARG_WITH(etsf_io_lib, AC_HELP_STRING([--with-etsf-io-lib=<lib>],
+AC_ARG_WITH(etsf_io_libdir, AC_HELP_STRING([--with-etsf-io-libdir=<path>],
    [Path of the ETSF_IO lib directory]))
-AC_ARG_WITH(etsf_io_include, AC_HELP_STRING([--with-etsf-io-include=<path>],
+AC_ARG_WITH(etsf_io_includedir, AC_HELP_STRING([--with-etsf-io-includedir=<path>],
    [Path of the ETSF_IO include directory]))
 
 compile_e2y="no"
@@ -38,14 +38,14 @@ etsf_libdir=" "
 etsf_idir=" "
 ETSF_LIBS=" "
 
-if ! test "x$with_etsf_io_path" = "x" ;    then with_etsf_io=yes ; fi
-if test -d "$with_etsf_io_include" && test -d "$with_etsf_io_lib" ; then
-        with_etsf_io=yes 
+if ! test "x$with_etsf_io_path" = "x" ;    then enable_etsf_io=yes ; fi
+if test -d "$with_etsf_io_includedir" && test -d "$with_etsf_io_libdir" ; then
+        enable_etsf_io=yes 
 fi
 #
 # main search
 #
-if test "x$with_etsf_io" = "xyes" ; then
+if test "x$enable_etsf_io" = "xyes" ; then
   #
   if ! test "x$with_etsf_io_path" = "x" ; then
     AC_MSG_CHECKING([for ETSF_IO in $with_etsf_io_path])
@@ -68,21 +68,21 @@ if test "x$with_etsf_io" = "xyes" ; then
     #else
     #  compile_etsf="yes"
     fi
-  elif test -d "$with_etsf_io_include" && test -d "$with_etsf_io_lib" ; then
+  elif test -d "$with_etsf_io_includedir" && test -d "$with_etsf_io_libdir" ; then
     # check for external lib (second option)
-    AC_MSG_CHECKING([for ETSF_IO in $with_etsf_io_lib])
+    AC_MSG_CHECKING([for ETSF_IO in $with_etsf_io_libdir])
     if test "$netcdf" = "yes"; then
-       if test -r $with_etsf_io_lib/libetsf_io.a ; then
+       if test -r $with_etsf_io_libdir/libetsf_io.a ; then
           #
           compile_e2y="yes"
           compile_etsf=no
-          etsf_idir="-I$with_etsf_io_lib"
+          etsf_idir="-I$with_etsf_io_libdir"
           ETSF_LIBS="-letsf_io"
           #
-          for file in `find $with_etsf_io_include \( -name '*etsf_io*' \) `; do
+          for file in `find $with_etsf_io_includedir \( -name '*etsf_io*' \) `; do
              cp $file include/
           done
-          for file in `find $with_etsf_io_lib -name '*etsf_io*.a'`; do
+          for file in `find $with_etsf_io_libdir -name '*etsf_io*.a'`; do
              cp $file lib/
           done
           #

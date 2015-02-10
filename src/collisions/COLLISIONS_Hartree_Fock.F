@@ -44,10 +44,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
 #endif
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:WF_load
- use wrapper,       ONLY:V_dot_V
-#if defined _OPENMP
- use wrapper,       ONLY:V_dot_V_omp
-#endif
+ use wrapper_omp,   ONLY:V_dot_V_omp
  !
  implicit none
  type(levels)             ::E       
@@ -158,8 +155,6 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
            iscp%rhotw=isc%rhotw
          endif
          !
-#if defined _OPENMP
-         !
 !$omp parallel do default(shared), private(ig)
          do ig = 1, isc%ngrho
            local_rhotw(ig) = -4./spin_occ*pi*isc%rhotw(ig)*conjg(iscp%rhotw(ig))
@@ -167,13 +162,6 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
 !$omp end parallel do
          !
          DP_Sx=V_dot_V_omp(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
-#else
-         !
-         local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)
-         !
-         DP_Sx=V_dot_V(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
-         !
-#endif
          !
          HF_collisions(1)%v3c(jb,jb2,ik_minus_q)=HF_collisions(1)%v3c(jb,jb2,ik_minus_q)+DP_Sx
          !

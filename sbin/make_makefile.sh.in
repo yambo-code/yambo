@@ -86,11 +86,11 @@ case $target in
     ;;
   p2y*)
    llibs="-lint_modules $llibs -liotk  \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfftw) -lm $llmpi"
-   linclude="$linclude -I\$(iotk_dir)"
+   linclude="$linclude \$(iotk_idir)"
     ;;
   e2y)
    llibs="-lint_modules $llibs -letsf_io \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) -llocal \$(lfftw) -lm $llmpi"
-   linclude="$linclude -I\$(etsf_dir)"
+   linclude="$linclude \$(etsf_idir)"
     ;;
   ypp*)
    llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfftw) -lm $llmpi"

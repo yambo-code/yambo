@@ -53,10 +53,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
-#ifdef _OPENMP
- use wrapper,       ONLY:Vstar_dot_V_omp,V_dot_V_omp
-#endif
- use wrapper,       ONLY:V_dot_V,Vstar_dot_V,M_by_V
+ use wrapper_omp,   ONLY:V_dot_V_omp,Vstar_dot_V_omp,M_by_V_omp
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wave_func,     ONLY:WF
 #if defined _TIMING
@@ -465,44 +462,25 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !
            ! :::EXCHANGE    (resonant):::
            !=============================
-#ifdef _OPENMP
            if (l_col_cut) then
-             H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp), &
+             H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp),&
 &                                             BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
            else
              H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp), BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
            endif
-#else
-             if (l_col_cut) then
-               H_x=Vstar_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp),&
-&                                               BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
-             else
-               H_x=Vstar_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp), BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
-             endif
-#endif
          endif
        else 
          if (BS_cpl_K_exchange) then
            !
            ! :::EXCHANGE    (coupling):::
            !=============================
-#ifdef _OPENMP
            if (l_col_cut) then
              H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
-&                            BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
-           else
-             H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
-&                            BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
-           endif
-#else
-           if (l_col_cut) then
-             H_x=V_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
 &                        BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
            else
-             H_x=V_dot_V(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
+             H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
 &                        BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk))
            endif
-#endif
          endif
        endif
        !
@@ -567,15 +545,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !
            if (iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
            !
-           call M_by_V('T',BS_n_g_W,BS_W(:,:,iq_W),Occ(:),O_times_W)
+           call M_by_V_omp('T',BS_n_g_W,BS_W(:,:,iq_W),Occ(:),O_times_W)
            !
          endif
          !
-#if defined _OPENMP
          H_c=Vstar_dot_V_omp(BS_n_g_W,Ovv,O_times_W)*4._SP*pi
-#else
-         H_c=Vstar_dot_V(BS_n_g_W,Ovv,O_times_W)*4._SP*pi
-#endif
          !
        endif
        !

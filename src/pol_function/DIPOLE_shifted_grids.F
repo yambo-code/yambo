@@ -37,10 +37,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
  use interfaces,          ONLY: PARALLEL_index,WF_load
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: X_t,DIP_iR 
- use wrapper,             ONLY: Vstar_dot_V
-#if defined _OPENMP
- use wrapper,             ONLY: Vstar_dot_V_omp
-#endif
+ use wrapper_omp,         ONLY: Vstar_dot_V_omp
  use memory_m,            ONLY: mem_est
  use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx
 #if defined _SC           
@@ -177,13 +174,8 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
            !
            ! DIP_iR_or_P = < v,k+q | c,k >/q
            !
-#ifdef _OPENMP
            rho(i_spin) = Vstar_dot_V_omp(wf_ng_eff,WF%c(1:wf_ng_eff,ivfft), &
 &                                        wf_local(1:wf_ng_eff,icfft)) /q0_shift_norm
-#else
-           rho(i_spin) = Vstar_dot_V(wf_ng_eff,WF%c(1:wf_ng_eff,ivfft), &
-&                                        wf_local(1:wf_ng_eff,icfft)) /q0_shift_norm
-#endif
            !
          enddo    ! spin loop
          !

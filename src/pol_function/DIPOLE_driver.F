@@ -39,6 +39,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _SC      
  use X_m,            ONLY:P_square
 #endif
+#if defined _KERR
+ use X_m,            ONLY:global_gauge
+#endif
+ !
  implicit none
  !
  type(bz_samp), intent(inout) :: Xk

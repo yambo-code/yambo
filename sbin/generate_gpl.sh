@@ -1,5 +1,7 @@
 TARGET_DIR=/home/sangalli/Data/Lavoro/Codici/yambo/the_wole_project/branches/gpl/devel
 TRUNK_DIR=/home/sangalli/Data/Lavoro/Codici/yambo/the_wole_project/trunk/devel
+cd $TRUNK_DIR
+make clean_all
 rm -r $TARGET_DIR/*
 cp -r $TRUNK_DIR/* $TARGET_DIR/
 cd $TARGET_DIR

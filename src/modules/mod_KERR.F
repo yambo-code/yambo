@@ -69,6 +69,9 @@ module KERR
      endif
    end subroutine
    !
+   !
+   ! GPL_EXCLUDE_START
+   !
    subroutine BS_mat_KERR_alloc( )
      !
      use pars,       ONLY:cZERO
@@ -79,5 +82,7 @@ module KERR
      call mem_est('BSS_rhoq0_kerr',(/size(BSS_rhoq0_kerr)/))
      BSS_rhoq0_kerr = cZERO
    end subroutine
+   !
+   ! GPL_EXCLUDE_END
    !
 end module

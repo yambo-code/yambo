@@ -95,6 +95,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  if (associated(Xen%Eo)) call msg('rns','[X] Using Kohn-Sham energies for the dipoles ')
  !
+ ! GPL_EXCLUDE_START
+ !
 #if !defined _YPP_RT
  if (Dipole_bands_ordered) then
    n_LT_steps=PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*&
@@ -105,8 +107,17 @@ subroutine Dipole_transverse(Xen,Xk,X)
 &             PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1)*n_spin
  endif
 #else
+ !
+ ! GPL_EXCLUDE_END
+ !
  n_LT_steps=Xk%nibz*(X%ib(2)-X%ib(1)+1)**2._SP*n_spin
+ !
+ ! GPL_EXCLUDE_START
+ !
 #endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  !
  wf_dim=3
  !

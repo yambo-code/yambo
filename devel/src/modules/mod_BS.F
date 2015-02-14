@@ -100,10 +100,16 @@ module BS
    integer,     allocatable      :: table(:,:) ! (/ikbz,iv,ic,i_sp/) (i_sp is spin, is is symmetry)
    complex(SP), allocatable      :: dipoles_R(:)
    complex(SP), allocatable      :: dipoles_A(:)
+   !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _KERR
    complex(SP), allocatable      :: dipoles_R_kerr(:)
    complex(SP), allocatable      :: dipoles_A_kerr(:)
 #endif
+   !
+   ! GPL_EXCLUDE_END
+   !
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: f(:)
@@ -320,6 +326,7 @@ module BS
    subroutine BS_mat_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
+     use memory_m,  ONLY:mem_est
      integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
      BS_H_dim=BS_K_dim
@@ -358,6 +365,7 @@ module BS
    end subroutine
    !
    subroutine BS_mat_free()
+     use memory_m,   ONLY:mem_est
      if (allocated(BSS_eh_table))      deallocate(BSS_eh_table)
      if (allocated(BSS_rhoq0))         deallocate(BSS_rhoq0)
      if (allocated(BSS_eh_E))          deallocate(BSS_eh_E)
@@ -372,6 +380,7 @@ module BS
    !
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
+     use memory_m,   ONLY:mem_est
 #if defined _KERR
      use drivers,    ONLY:l_kerr
 #endif

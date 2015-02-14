@@ -74,10 +74,15 @@ subroutine K_diagonalization(iq,W)
  integer              ::i1
  logical              ::K_is_not_hermitian
  real(SP)             ::gauge_factor,Co
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _KERR
  integer              ::iw
  real(SP)             ::factor_jj
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Residuals & Energies
  !
@@ -463,9 +468,14 @@ subroutine K_diagonalization(iq,W)
  enddo
  call live_timing
  call PP_redux_wait(X_epsilon)
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _KERR
  call PP_redux_wait(B_Hall)
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2
  !

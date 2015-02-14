@@ -69,4 +69,15 @@ module KERR
      endif
    end subroutine
    !
+   subroutine BS_mat_KERR_alloc( )
+     !
+     use pars,       ONLY:cZERO
+     use memory_m,   ONLY:mem_est
+     use BS,         ONLY:BS_H_dim,BS_K_dim
+     !
+     allocate(BSS_rhoq0_kerr(BS_H_dim))
+     call mem_est('BSS_rhoq0_kerr',(/size(BSS_rhoq0_kerr)/))
+     BSS_rhoq0_kerr = cZERO
+   end subroutine
+   !
 end module

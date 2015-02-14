@@ -37,6 +37,17 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  use BS,             ONLY:BS_mat,BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,&
 &                         BSS_rhoq0,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BS_mat_alloc,&
 &                         BS_H_dim,BS_mat_diagonal,BS_Blocks_symmetrize_K
+ !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _KERR
+ use KERR,           ONLY:BSS_rhoq0_kerr,BS_mat_kerr_alloc
+#endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+
+ !
  implicit none
  !
  integer      :: iq
@@ -53,6 +64,15 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  !
  call BS_Blocks_symmetrize_K()
  call BS_mat_alloc( )
+ !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _KERR
+ call BS_mat_kerr_alloc( )
+#endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  !
  ! FILLING...
  !============
@@ -83,11 +103,27 @@ subroutine K_stored_in_a_BIG_matrix(iq)
      BSS_rhoq0(H_pos(1))=BS_T_grp(i_g)%dipoles_R(i_c)
      BS_mat(H_pos(1),H_pos(1))=BS_T_grp(i_g)%E(i_c)/real( PAR_COM_T_INDEX%n_CPU )
      !
+     ! GPL_EXCLUDE_START
+     !
+#if defined _KERR
+     BSS_rhoq0_kerr(H_pos(1))=BS_T_grp(i_g)%dipoles_R_kerr(i_c)
+#endif
+     !
+     ! GPL_EXCLUDE_END
+     !
      if (BS_K_coupling) then
        H_pos(1)=H_pos(1)+BS_K_dim
        BSS_rhoq0(H_pos(1))=BS_T_grp(i_g)%dipoles_A(i_c)
+       !
+       ! GPL_EXCLUDE_START
+       !
+#if defined _KERR
+       BSS_rhoq0_kerr(H_pos(1))=BS_T_grp(i_g)%dipoles_A_kerr(i_c)
+#endif
+       !
+       ! GPL_EXCLUDE_END
+       !
      endif
-     !
    enddo
  enddo
  !
@@ -169,6 +205,16 @@ subroutine K_stored_in_a_BIG_matrix(iq)
  !
  call PP_redux_wait(BSS_rhoq0,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_rhoq0,COMM=PAR_COM_eh_INDEX%COMM)
+ !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _KERR
+ call PP_redux_wait(BSS_rhoq0_kerr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait(BSS_rhoq0_kerr,COMM=PAR_COM_eh_INDEX%COMM)
+#endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  call PP_redux_wait(BSS_eh_E,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_eh_E,COMM=PAR_COM_eh_INDEX%COMM)
  call PP_redux_wait(BSS_eh_f,COMM=PAR_COM_Xk_ibz_INDEX%COMM )

@@ -28,7 +28,18 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
  use IO_m,          ONLY:io_connect,io_disconnect,io_elemental,&
 &                        io_bulk,io_status,io_sec,io_header,&
 &                        read_is_on,write_is_on
+ !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _KERR
+ use drivers,       ONLY:l_kerr
+#endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ !
  implicit none
+ !
  integer             :: ID,it,BS_H_dim
  real(SP)            :: reached_treshold,Bf(it+1),Af(it)
  complex(SP)         :: Vnm1(BS_H_dim),Vn(BS_H_dim)
@@ -39,9 +50,14 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
  !
  integer  :: it_on_disk
  real(SP) :: V_dummy(BS_H_dim,2), Cf_dummy(it+1,2)
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _KERR
  real(SP) :: Cf_dummy_kerr(it+1,2)
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  io_BSS_Haydock=io_connect(desc='Haydock_restart',type=2,ID=ID)
  !
@@ -109,6 +125,9 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
      call io_bulk(ID,R2=Cf_dummy)
      if (read_is_on(ID)) Cf(:)=Cf_dummy(:,1)+(0._SP,1._SP)*Cf_dummy(:,2)
    endif
+   !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _KERR
    if(present(Cf_kerr).and.l_kerr) then
      if (write_is_on(ID)) Cf_dummy_kerr(:,1)=real(Cf_kerr)
@@ -119,17 +138,20 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
    endif
 #endif
    !
+   ! GPL_EXCLUDE_END
+   !
+   !
    ! Vnp1 - optional
    !
-    if (present(Vnp1)) then
-      if (write_is_on(ID)) V_dummy(:,1)=real(Vnp1)
-      if (write_is_on(ID)) V_dummy(:,2)=aimag(Vnp1) 
-      call io_bulk(ID,'Vnp1',VAR_SZ=(/BS_H_dim,2/))
-      call io_bulk(ID,R2=V_dummy)
-      if (read_is_on(ID)) Vnp1(:)=V_dummy(:,1)+(0._SP,1._SP)*V_dummy(:,2)
-    endif
-    !
-  end if
+   if (present(Vnp1)) then
+     if (write_is_on(ID)) V_dummy(:,1)=real(Vnp1)
+     if (write_is_on(ID)) V_dummy(:,2)=aimag(Vnp1) 
+     call io_bulk(ID,'Vnp1',VAR_SZ=(/BS_H_dim,2/))
+     call io_bulk(ID,R2=V_dummy)
+     if (read_is_on(ID)) Vnp1(:)=V_dummy(:,1)+(0._SP,1._SP)*V_dummy(:,2)
+   endif
+   !
+ end if
  !
 1 call io_disconnect(ID=ID)
  !

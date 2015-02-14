@@ -75,7 +75,6 @@ module interfaces
      use X_m,           ONLY:X_t
      use electrons,     ONLY:levels
      use R_lattice,     ONLY:bz_samp
-     use plasma,        ONLY:plasma_gas
      implicit none
      type(levels)             ::E
      type(bz_samp)            ::Xk,q

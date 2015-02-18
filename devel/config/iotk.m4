@@ -26,9 +26,9 @@ AC_DEFUN([AC_HAVE_IOTK],[
 AC_ARG_ENABLE(iotk, AC_HELP_STRING([--enable-iotk],
             [Activate the IOTK support]),[],[enable_iotk="yes"])
 AC_ARG_WITH(iotk_path, AC_HELP_STRING([--with-iotk-path=<path>],
-            [Path of the IOTK lib directory]),[],[])
+            [Path to the IOTK install directory]),[],[])
 AC_ARG_WITH(iotk_includedir, AC_HELP_STRING([--with-iotk-includedir=<path>],
-            [Path of the IOTK include directory]),[],[])
+            [Path to the IOTK include directory]),[],[])
 
 
 compile_p2y="no"

@@ -809,10 +809,12 @@ enable_open_mp
 with_blas
 with_lapack
 with_mpi
-with_fftw
-with_fftw_lib
-with_essl_fft_lib
-with_internal_fft
+with_fft_path
+with_fft_libdir
+with_fft_includedir
+with_fft_libs
+enable_internal_fftw
+enable_internal_fftsg
 enable_3d_fft
 with_fftfac
 with_blacs
@@ -824,7 +826,6 @@ enable_netcdf
 with_netcdf_path
 with_netcdf_includedir
 with_netcdf_libdir
-with_netcdf_link
 enable_netcdf_LFS
 enable_netcdf_hdf5
 enable_etsf_io
@@ -832,7 +833,7 @@ with_etsf_io_path
 with_etsf_io_libdir
 with_etsf_io_includedir
 with_libxc_path
-with_libxc_include
+with_libxc_include_dir
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1475,6 +1476,8 @@ Optional Features:
   --enable-options-check  Enable the command line options check in driver.c.
                           Default is yes.
   --enable-open-mp        Enable OpenMP support
+  --enable-internal-fftw  Use internal FFTW library
+  --enable-internal-fftsg Use internal Goedecker FFT library
   --enable-3d-fft         Use 3D FFT
   --enable-iotk           Activate the IOTK support
   --enable-netcdf         Activate the NetCDF support
@@ -1486,43 +1489,41 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-editor=<exe>     User-defined editor
-  --with-p2y=<mode>       Interface mode in PW 2 YAMBO : <export> <3.1>
+  --with-p2y-version=<flags>
+                          Version number for PW 2 YAMBO : <export> <3.1>
                           <3.1.1> <3.2> <4.0> <5.0>
-  --with-f90ext=<ext>     Use .<ext> Fortran 90 extension
+  --with-f90ext=<flags>   Use .<flags> Fortran 90 extension
   --with-blas=<lib>       Use BLAS library <lib>
   --with-lapack=<lib>     Use LAPACK library <lib>
   --with-mpi=<lib>        Use MPI library <lib>
-  --with-fftw=<path>      Path of the FFTW library directory
-  --with-fftw-lib=<lib>   FFTW library name
-  --with-essl-fft-lib=<lib>
-                          ESSL-FFT library name
-  --with-internal-fft=<lib>
-                          Use internal FFT library
-  --with-sgfftfac=<fac>   Change default Goedecker FFT cache factor
+  --with-fft-path=<path>  Path to the FFTW install directory
+  --with-fft-libdir=<path>
+                          Path to the FFTW lib directory
+  --with-fft-includedir=<path>
+                          Path to the FFT include directory
+  --with-fft-libs=<libs>  Link to FFT libraries
+  --with-fftsg-fac=<val>  Change default Goedecker FFT cache factor
   --with-blacs=<lib>      Use BLACS library <lib>
   --with-scalapack=<lib>  Use SCALAPACK library <lib>
-  --with-iotk-path=<path> Path of the IOTK lib directory
+  --with-iotk-path=<path> Path to the IOTK install directory
   --with-iotk-includedir=<path>
-                          Path of the IOTK include directory
+                          Path to the IOTK include directory
   --with-netcdf-path=<path>
-                          Path of the NetCDF library
+                          Path to the NetCDF install directory
   --with-netcdf-includedir=<path>
-                          Path of the NetCDF include directory
+                          Path to the NetCDF include directory
   --with-netcdf-libdir=<path>
-                          Path of the NetCDF lib directory
-  --with-netcdf-link=<flags>
-                          Specific libs needed by NetCDF or NetCDF/HDF5
+                          Path to the NetCDF lib directory
   --with-etsf-io-path=<path>
-                          Path of the ETSF_IO directory
+                          Path to the ETSF_IO install directory
   --with-etsf-io-libdir=<path>
-                          Path of the ETSF_IO lib directory
+                          Path to the ETSF_IO lib directory
   --with-etsf-io-includedir=<path>
-                          Path of the ETSF_IO include directory
+                          Path to the ETSF_IO include directory
   --with-libxc-path=<path>
-                          Path to directory where libxc was installed.
-  --with-libxc-include=<path>
-                          Path to directory where libxc Fortran headers were
-                          installed.
+                          Path to libxc install directory
+  --with-libxc-includedir=<path>
+                          Path to the libxc include directory
 
 Some influential environment variables:
   CC          C compiler command
@@ -9860,68 +9861,109 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 
-# Check whether --with-fftw was given.
-if test "${with_fftw+set}" = set; then :
-  withval=$with_fftw;
+#AC_ARG_WITH(fftw,AC_HELP_STRING([--with-fftw=<path>],
+#            [Path of the FFTW library directory]),[],[])
+#AC_ARG_WITH(fftw_lib,AC_HELP_STRING([--with-fftw-lib=<lib>],
+#            [FFTW library name]),[],[])
+#AC_ARG_WITH(essl_fft_lib,AC_HELP_STRING([--with-essl-fft-lib=<lib>],
+#            [ESSL-FFT library name]),[],[])
+
+
+# Check whether --with-fft_path was given.
+if test "${with_fft_path+set}" = set; then :
+  withval=$with_fft_path;
 fi
 
 
-# Check whether --with-fftw_lib was given.
-if test "${with_fftw_lib+set}" = set; then :
-  withval=$with_fftw_lib;
+# Check whether --with-fft_libdir was given.
+if test "${with_fft_libdir+set}" = set; then :
+  withval=$with_fft_libdir;
 fi
 
 
-# Check whether --with-essl_fft_lib was given.
-if test "${with_essl_fft_lib+set}" = set; then :
-  withval=$with_essl_fft_lib;
+# Check whether --with-fft_includedir was given.
+if test "${with_fft_includedir+set}" = set; then :
+  withval=$with_fft_includedir;
 fi
 
 
-# Check whether --with-internal_fft was given.
-if test "${with_internal_fft+set}" = set; then :
-  withval=$with_internal_fft;
+# Check whether --with-fft_libs was given.
+if test "${with_fft_libs+set}" = set; then :
+  withval=$with_fft_libs;
+fi
+
+#
+# Check whether --enable-internal_fftw was given.
+if test "${enable_internal_fftw+set}" = set; then :
+  enableval=$enable_internal_fftw;
+fi
+
+# Check whether --enable-internal_fftsg was given.
+if test "${enable_internal_fftsg+set}" = set; then :
+  enableval=$enable_internal_fftsg;
+else
+  enable_internal_fftsg=yes
 fi
 
 # Check whether --enable-3d_fft was given.
 if test "${enable_3d_fft+set}" = set; then :
-  enableval=$enable_3d_fft; FFT3D_CPP="-D_USE_3D_FFT"
+  enableval=$enable_3d_fft;
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT" >&5
-$as_echo_n "checking for FFT... " >&6; }
+
+if ! test x"$enable_3d_fft" = "xno" ; then FFT3D_CPP="-D_USE_3D_FFT" ; fi
 #
 HAVE_FFT="no"
-
-#
-# FFTW3
-#
-FFTW_PATH=""
-case $with_fftw in
-  no )
-    FFTW_LIBS=""
-    ;;
-  "" | * )
-    FFTW_PATH="-L$with_fftw"
-    ;;
-esac
 save_ldflags="$LDFLAGS"
 
-case $with_fftw_lib in
-  no | "" )
-    if test x"$enable_open_mp" = "xyes"; then
-        EXTERNAL_FFTW="-lfftw3 -lfftw3_omp"
-    else
-        EXTERNAL_FFTW="-lfftw3"
-    fi
-  ;;
-  *)
-    EXTERNAL_FFTW="$with_fftw_lib";
-  ;;
-esac
+#
+# first identifies lib and include dirs
+#
+libdir=
+includedir=
+#
+if test -d "$with_fft_path/lib" && test -d "$with_fft_path/include" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT in $with_fft_path" >&5
+$as_echo_n "checking for FFT in $with_fft_path... " >&6; }
+   libdir=$with_fft_path/lib
+   includedir=$with_fft_path/include
+elif  test -d "$with_fft_includedir" && test -d "$with_fft_libdir" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT in $with_fft_libdir" >&5
+$as_echo_n "checking for FFT in $with_fft_libdir... " >&6; }
+   libdir=$with_fft_libdir
+   includedir=$with_fft_includedir
+else
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT" >&5
+$as_echo_n "checking for FFT... " >&6; }
+fi
 
-if test -d "$with_fftw" ; then
-  for FFTW_LIBS in "$EXTERNAL_FFTW" ; do
+#
+# check for FFTW/ESSL: init
+#
+
+if ! test x"$with_fft_libs" = "x" ; then
+   EXTERNAL_LIB=$with_fft_libs
+else
+   EXTERNAL_LIB=
+fi
+
+#
+# check for FFTW
+#
+if test -d "$libdir" && test -d "$includedir" ; then
+   #
+   if test x"$enable_open_mp" = "xyes"; then
+       EXTERNAL_LIB="-lfftw3 -lfftw3_omp"
+   else
+       EXTERNAL_LIB="-lfftw3"
+   fi
+   #
+fi
+#
+if ! test x"$EXTERNAL_LIB" = "x" ; then
+
+  for FFTW_LIBS in "$EXTERNAL_LIB" ; do
+    if ! test x"$libdir" = "x" ; then FFTW_PATH="-L$libdir" ; fi
     if test "$FFTW_LIBS"; then :
   LIBS="${FFTW_PATH} ${FFTW_LIBS}"
 fi
@@ -9952,31 +9994,34 @@ $as_echo "FFTW3" >&6; }
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: FFTW3_OMP" >&5
 $as_echo "FFTW3_OMP" >&6; }
     else
-      FFT_DESCRIPTION="External Fast Fourier transform";
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: FFTW (no Ver.3) " >&5
-$as_echo "FFTW (no Ver.3) " >&6; }
+      desc=Other
+      if ! test -z "`echo $FFTW_LIBS | grep -i mkl`" ; then desc="MKL" ; fi
+      FFT_DESCRIPTION="FFTW ($desc) Fast Fourier transform";
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: FFTW ($desc) " >&5
+$as_echo "FFTW ($desc) " >&6; }
     fi
-    LDFLAGS="$FFTW_PATH";
+    LDFLAGS="$FFTW_PATH";    ## ??
   else
     FFT_CPP="";
     FFTW_LIBS="";
     LDFLAGS="$save_ldflags";
   fi
+  if test x"$HAVE_FFTW" = "xyes" ; then HAVE_FFT=yes ; fi
 else
- HAVE_FFTW="no";
-fi
-if test "$HAVE_FFTW" = "yes" ; then
-   HAVE_FFT=yes
-else
-   HAVE_FFT=no
+  HAVE_FFTW=no
+  HAVE_FFT=no
 fi
 
 
 #
-# ESSL FFT
+# check for ESSL FFT
 #
-if test -d "$essl_fft_lib" ; then
-    #AC_SEARCH_LIBS(dcft, essl, have_essl_fft=1 fft_libs="$essl_fft_lib")
+if test -d "$libdir" && test -d "$includedir" ; then
+   EXTERNAL_LIB="-lessl"
+fi
+#
+if ! test x"$EXTERNAL_LIB" = "x" && ! test "$HAVE_FFT" = "yes" ; then
+    #
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dcft in -lessl" >&5
 $as_echo_n "checking for dcft in -lessl... " >&6; }
 if ${ac_cv_lib_essl_dcft+:} false; then :
@@ -10001,12 +10046,12 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_essl_dcft" >&5
 $as_echo "$ac_cv_lib_essl_dcft" >&6; }
 if test "x$ac_cv_lib_essl_dcft" = xyes; then :
-  have_essl_fft=1; fft_libs="$essl_fft_lib"
+  HAVE_ESSL=yes; fft_libs="$essl_fft_lib"
 else
-  have_essl_fft=0
+  HAVE_ESSL=no
 fi
 
-    if test "$have_essl_fft" = "1" ; then
+    if test "$HAVE_ESSL" = "yes" ; then
        FFT_CPP="-D_FFTQE $FFT3D_CPP -D_ESSL"
        FFT_DESCRIPTION="ESSL Fast Fourier transform (FFTQE)";
        HAVE_FFT=yes
@@ -10020,19 +10065,17 @@ fi
 #
 # INTERNAL FFT
 #
-case $with_internal_fft in
-  fftw )
-    use_internal_fftw=yes
-    compile_fftqe=yes
-    ;;
-  fftsg )
-    use_internal_fftsg=yes
-    ;;
-#  "" | * )
-#    use_internal_fftsg=yes
-#    ;;
-esac
-
+if ! test x"$HAVE_FFT" = "xyes" ; then
+   #
+   if test x"$enable_internal_fftw" = "xyes" ; then
+      use_internal_fftw=yes
+      use_internal_fftsg=no
+      compile_fftqe=yes
+   else
+      use_internal_fftsg=yes
+      compile_fftqe=no
+   fi
+fi
 
 #
 # INTERNAL FFTW2
@@ -10049,31 +10092,32 @@ fi
 if test "$HAVE_FFTW" = "yes" ; then HAVE_FFT=yes ; fi
 
 
-
 #
 # INTERNAL GOEDECKER FFT
 #
-if test "$HAVE_FFT" = "no" -o "$use_internal_fftsg" = "yes" ; then
-# SG FFT NCACHE
+if test "$use_internal_fftsg" = "yes" ; then
+  # SG FFT NCACHE
 
 # Check whether --with-fftfac was given.
 if test "${with_fftfac+set}" = set; then :
   withval=$with_fftfac;
 fi
 
- fft_cfactor="0"
- case "${host}" in
-  powerpc-ibm*)
-  fft_cfactor="16"
-  ;;
- esac
- if ! test x"$with_fftfac" = "x"; then
-  fft_cfactor="$with_fftfac"
- fi
- FFT_DESCRIPTION="Goedecker Fast Fourier transform with $fft_cfactor cache"
- FFT_CPP="-D_FFTSG"
- HAVE_FFTSG=yes
- { $as_echo "$as_me:${as_lineno-$LINENO}: result: FFTSG" >&5
+  fft_cfactor="0"
+  case "${host}" in
+    powerpc-ibm*)
+    fft_cfactor="16"
+    ;;
+  esac
+  #
+  if ! test x"$with_fftfac" = "x"; then
+    fft_cfactor="$with_fftfac"
+  fi
+  #
+  FFT_DESCRIPTION="Goedecker Fast Fourier transform with $fft_cfactor cache"
+  FFT_CPP="-D_FFTSG"
+  HAVE_FFTSG=yes
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: FFTSG" >&5
 $as_echo "FFTSG" >&6; }
 
 fi
@@ -10082,7 +10126,7 @@ if test "$HAVE_FFTSG" = "yes" ; then HAVE_FFT=yes ; fi
 #
 # finalize
 #
-if test "$compile_fftqe" = "yes" ; then
+if test x"$compile_fftqe" = "xyes" ; then
     FFTQELIBS="-lfftqe"
     ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
@@ -10146,6 +10190,7 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
     ac_config_files="$ac_config_files lib/fftqe/fftqe_defs.h:lib/fftqe/fftqe_defs.h.in"
 
+    #
 fi
 
 
@@ -10370,11 +10415,8 @@ if test "${with_netcdf_libdir+set}" = set; then :
   withval=$with_netcdf_libdir;
 fi
 
-
-# Check whether --with-netcdf_link was given.
-if test "${with_netcdf_link+set}" = set; then :
-  withval=$with_netcdf_link;
-fi
+#AC_ARG_WITH(netcdf_libs,AC_HELP_STRING([--with-netcdf-link=<flags>],
+#                                  [Link to libraries needed by NetCDF or NetCDF/HDF5]))
 
 #
 # LARGE DATABASES SUPPORT
@@ -10394,13 +10436,6 @@ fi
 
 #
 
-NETCDF_LINKS=""
-case $with_netcdf_link in
-        yes | "") ;;
-        -* | */* | *.a | *.so | *.so.* | *.o) NETCDF_LINKS="$with_netcdf_link" ;;
-        *) NETCDF_LINKS="-l$with_netcdf_link" ;;
-esac
-
 #
 netcdf="no"
 dnetcdf=""
@@ -10408,6 +10443,14 @@ NCFLAGS=""
 NCLIBS=""
 IFLAG=""
 compile_netcdf="no"
+NETCDF_FLAGS=""
+#
+#case $with_netcdf_link in
+#        yes | "") ;;
+#        -* | */* | *.a | *.so | *.so.* | *.o) NETCDF_FLAGS="$with_netcdf_link" ;;
+#        *) NETCDF_FLAGS="-l$with_netcdf_link" ;;
+#esac
+
 
 #
 # if any of these groups of options are set, it means we want to link with NetCDF.
@@ -10553,7 +10596,7 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
     #
     if test -d "$with_netcdf_includedir" ; then FCFLAGS="$IFLAG$with_netcdf_includedir" ; fi
     #
-    for ldflag in "$HDF5_FLAGS -lsz" "$HDF5_FLAGS -lz" "$HDF5_FLAGS $NETCDF_LINKS"; do
+    for ldflag in "$HDF5_FLAGS -lsz" "$HDF5_FLAGS -lz" "$HDF5_FLAGS $NETCDF_FLAGS"; do
       LIBS="$ldflag"
       cat > conftest.$ac_ext <<_ACEOF
       program main
@@ -10577,8 +10620,8 @@ rm -f core conftest.err conftest.$ac_objext \
      if test "x$hdf5" = xyes; then
        dnetcdf="${dnetcdf} -D_HDF5_IO"
        #
-       # redefine NETCDF_LINKS only if it was not given from input
-       if test x"$NETCDF_LINKS" != x"" ; then NETCDF_LINKS="$ldflag" ; fi
+       # redefine NETCDF_FLAGS only if it was not given from input
+       if test x"$NETCDF_FLAGS" = "x" ; then NETCDF_FLAGS="$ldflag" ; fi
        #
        for file in `find $with_netcdf_includedir \( -name '*hdf5*'\) `; do
          cp $file include/
@@ -10610,8 +10653,8 @@ if test "x$netcdf" = xyes; then
       NCLIBS="${NCLIBS} `$with_netcdf_includedir/../bin/nf-config --libs`"
     fi
   fi
-  if test  x"$NETCDF_LINKS" != x"" ; then
-    NCLIBS="${NETCDF_LINKS}"
+  if test  x"$NETCDF_FLAGS" != x"" ; then
+    NCLIBS="${NETCDF_FLAGS}"
   fi
 fi
 
@@ -10764,9 +10807,9 @@ if test "${with_libxc_path+set}" = set; then :
 fi
 
 
-# Check whether --with-libxc-include was given.
-if test "${with_libxc_include+set}" = set; then :
-  withval=$with_libxc_include;
+# Check whether --with-libxc-include-dir was given.
+if test "${with_libxc_include_dir+set}" = set; then :
+  withval=$with_libxc_include_dir;
 fi
 
 
@@ -10776,9 +10819,9 @@ if test -d "$with_libxc_path"; then
     "") ;;
     *)  libxc_include_path="$with_libxc_path/include" ;;
   esac
-  case $with_libxc_include in
+  case $with_libxc_includedir in
     "") ;;
-    *)  libxc_include_path="$with_libxc_include" ;;
+    *)  libxc_include_path="$with_libxc_includedir" ;;
   esac
 FCFLAGS_LIBXC="$ax_cv_f90_modflag$libxc_include_path"
 acx_libxc_save_LIBS="$LIBS"

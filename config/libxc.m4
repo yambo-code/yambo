@@ -23,8 +23,8 @@ compile_libxc=yes
 
 dnl Check if the library was given in the command line
 dnl if not, use environment variables or defaults
-AC_ARG_WITH(libxc-path, [AS_HELP_STRING([--with-libxc-path=<path>], [Path to directory where libxc was installed.])])
-AC_ARG_WITH(libxc-include, [AS_HELP_STRING([--with-libxc-include=<path>], [Path to directory where libxc Fortran headers were installed.])])
+AC_ARG_WITH(libxc-path, [AS_HELP_STRING([--with-libxc-path=<path>], [Path to libxc install directory])])
+AC_ARG_WITH(libxc-include-dir, [AS_HELP_STRING([--with-libxc-includedir=<path>], [Path to the libxc include directory])])
 
 if test -d "$with_libxc_path"; then
 # Set FCFLAGS_LIBXC 
@@ -32,9 +32,9 @@ if test -d "$with_libxc_path"; then
     "") ;;		  
     *)  libxc_include_path="$with_libxc_path/include" ;;
   esac
-  case $with_libxc_include in
+  case $with_libxc_includedir in
     "") ;;
-    *)  libxc_include_path="$with_libxc_include" ;;
+    *)  libxc_include_path="$with_libxc_includedir" ;;
   esac
 FCFLAGS_LIBXC="$ax_cv_f90_modflag$libxc_include_path"
 dnl Backup LIBS and FCFLAGS

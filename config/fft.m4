@@ -22,49 +22,79 @@
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 AC_DEFUN([AC_HAVE_FFT],[
-AC_ARG_WITH(fftw,AC_HELP_STRING([--with-fftw=<path>],
-            [Path of the FFTW library directory]),[],[])
-AC_ARG_WITH(fftw_lib,AC_HELP_STRING([--with-fftw-lib=<lib>],
-            [FFTW library name]),[],[])
-AC_ARG_WITH(essl_fft_lib,AC_HELP_STRING([--with-essl-fft-lib=<lib>],
-            [ESSL-FFT library name]),[],[])
-AC_ARG_WITH(internal_fft,AC_HELP_STRING([--with-internal-fft=<lib>],
-            [Use internal FFT library]),[],[])
-AC_ARG_ENABLE(3d_fft,AC_HELP_STRING([--enable-3d-fft],[Use 3D FFT]),
-            [FFT3D_CPP="-D_USE_3D_FFT"])
-AC_MSG_CHECKING([for FFT])
+
+#AC_ARG_WITH(fftw,AC_HELP_STRING([--with-fftw=<path>],
+#            [Path of the FFTW library directory]),[],[])
+#AC_ARG_WITH(fftw_lib,AC_HELP_STRING([--with-fftw-lib=<lib>],
+#            [FFTW library name]),[],[])
+#AC_ARG_WITH(essl_fft_lib,AC_HELP_STRING([--with-essl-fft-lib=<lib>],
+#            [ESSL-FFT library name]),[],[])
+
+AC_ARG_WITH(fft_path,AC_HELP_STRING([--with-fft-path=<path>],
+            [Path to the FFTW install directory]),[],[])
+AC_ARG_WITH(fft_libdir,AC_HELP_STRING([--with-fft-libdir=<path>],
+            [Path to the FFTW lib directory]),[],[])
+AC_ARG_WITH(fft_includedir,AC_HELP_STRING([--with-fft-includedir=<path>],
+            [Path to the FFT include directory]),[],[])
+AC_ARG_WITH(fft_libs,AC_HELP_STRING([--with-fft-libs=<libs>],
+            [Link to FFT libraries]),[],[])
+#
+AC_ARG_ENABLE(internal_fftw,AC_HELP_STRING([--enable-internal-fftw],
+            [Use internal FFTW library]),[],[])
+AC_ARG_ENABLE(internal_fftsg,AC_HELP_STRING([--enable-internal-fftsg],
+            [Use internal Goedecker FFT library]),[],[enable_internal_fftsg=yes])
+AC_ARG_ENABLE(3d_fft,AC_HELP_STRING([--enable-3d-fft],[Use 3D FFT]),[],[])
+
+if ! test x"$enable_3d_fft" = "xno" ; then FFT3D_CPP="-D_USE_3D_FFT" ; fi
 #
 HAVE_FFT="no"
-
-#
-# FFTW3
-#
-FFTW_PATH=""
-case $with_fftw in
-  no )
-    FFTW_LIBS=""
-    ;;
-  "" | * ) 
-    FFTW_PATH="-L$with_fftw"
-    ;;
-esac
 save_ldflags="$LDFLAGS"
 
-case $with_fftw_lib in
-  no | "" )
-    if test x"$enable_open_mp" = "xyes"; then
-        EXTERNAL_FFTW="-lfftw3 -lfftw3_omp"
-    else
-        EXTERNAL_FFTW="-lfftw3"
-    fi
-  ;;
-  *)
-    EXTERNAL_FFTW="$with_fftw_lib";
-  ;;
-esac
+#
+# first identifies lib and include dirs
+#
+libdir=
+includedir=
+#
+if test -d "$with_fft_path/lib" && test -d "$with_fft_path/include" ; then
+   AC_MSG_CHECKING([for FFT in $with_fft_path])
+   libdir=$with_fft_path/lib
+   includedir=$with_fft_path/include
+elif  test -d "$with_fft_includedir" && test -d "$with_fft_libdir" ; then
+   AC_MSG_CHECKING([for FFT in $with_fft_libdir])
+   libdir=$with_fft_libdir
+   includedir=$with_fft_includedir
+else
+   AC_MSG_CHECKING([for FFT])
+fi
 
-if test -d "$with_fftw" ; then
-  for FFTW_LIBS in "$EXTERNAL_FFTW" ; do      
+#
+# check for FFTW/ESSL: init
+#
+
+if ! test x"$with_fft_libs" = "x" ; then
+   EXTERNAL_LIB=$with_fft_libs
+else
+   EXTERNAL_LIB=
+fi
+
+#
+# check for FFTW
+#
+if test -d "$libdir" && test -d "$includedir" ; then
+   #
+   if test x"$enable_open_mp" = "xyes"; then
+       EXTERNAL_LIB="-lfftw3 -lfftw3_omp"
+   else
+       EXTERNAL_LIB="-lfftw3"
+   fi
+   #
+fi
+#
+if ! test x"$EXTERNAL_LIB" = "x" ; then
+
+  for FFTW_LIBS in "$EXTERNAL_LIB" ; do      
+    if ! test x"$libdir" = "x" ; then FFTW_PATH="-L$libdir" ; fi
     AS_IF([test "$FFTW_LIBS"], [LIBS="${FFTW_PATH} ${FFTW_LIBS}"])
     AC_LINK_IFELSE([AC_LANG_CALL([], [dfftw_destroy_plan(1)])],
     [HAVE_FFTW="yes";],[HAVE_FFTW="no";])
@@ -81,32 +111,35 @@ if test -d "$with_fftw" ; then
       FFT_DESCRIPTION="FFTW_OMP (v3) Fast Fourier transform";
       AC_MSG_RESULT(FFTW3_OMP)
     else 
-      FFT_DESCRIPTION="External Fast Fourier transform";
-      AC_MSG_RESULT(FFTW (no Ver.3) )
+      desc=Other
+      if ! test -z "`echo $FFTW_LIBS | grep -i mkl`" ; then desc="MKL" ; fi  
+      FFT_DESCRIPTION="FFTW ($desc) Fast Fourier transform";
+      AC_MSG_RESULT(FFTW ($desc) )
     fi
-    LDFLAGS="$FFTW_PATH";
+    LDFLAGS="$FFTW_PATH";    ## ??
   else
     FFT_CPP=""; 
     FFTW_LIBS="";
     LDFLAGS="$save_ldflags";
   fi
+  if test x"$HAVE_FFTW" = "xyes" ; then HAVE_FFT=yes ; fi
 else
- HAVE_FFTW="no";
-fi
-if test "$HAVE_FFTW" = "yes" ; then 
-   HAVE_FFT=yes 
-else
-   HAVE_FFT=no
+  HAVE_FFTW=no
+  HAVE_FFT=no
 fi
 
 
 #
-# ESSL FFT
+# check for ESSL FFT
 #
-if test -d "$essl_fft_lib" ; then
-    #AC_SEARCH_LIBS(dcft, essl, have_essl_fft=1 fft_libs="$essl_fft_lib")
-    AC_CHECK_LIB(essl, dcft, [have_essl_fft=1; fft_libs="$essl_fft_lib"], [have_essl_fft=0])
-    if test "$have_essl_fft" = "1" ; then
+if test -d "$libdir" && test -d "$includedir" ; then
+   EXTERNAL_LIB="-lessl"
+fi
+#
+if ! test x"$EXTERNAL_LIB" = "x" && ! test "$HAVE_FFT" = "yes" ; then
+    # 
+    AC_CHECK_LIB(essl, dcft, [HAVE_ESSL=yes; fft_libs="$essl_fft_lib"], [HAVE_ESSL=no])
+    if test "$HAVE_ESSL" = "yes" ; then
        FFT_CPP="-D_FFTQE $FFT3D_CPP -D_ESSL"
        FFT_DESCRIPTION="ESSL Fast Fourier transform (FFTQE)";
        HAVE_FFT=yes
@@ -119,19 +152,17 @@ fi
 #
 # INTERNAL FFT
 #
-case $with_internal_fft in
-  fftw )
-    use_internal_fftw=yes
-    compile_fftqe=yes
-    ;;
-  fftsg )
-    use_internal_fftsg=yes
-    ;;
-#  "" | * ) 
-#    use_internal_fftsg=yes
-#    ;;
-esac
-
+if ! test x"$HAVE_FFT" = "xyes" ; then
+   #
+   if test x"$enable_internal_fftw" = "xyes" ; then
+      use_internal_fftw=yes
+      use_internal_fftsg=no
+      compile_fftqe=yes
+   else
+      use_internal_fftsg=yes
+      compile_fftqe=no
+   fi
+fi
 
 #
 # INTERNAL FFTW2
@@ -147,40 +178,42 @@ fi
 if test "$HAVE_FFTW" = "yes" ; then HAVE_FFT=yes ; fi
 
 
-
 #
 # INTERNAL GOEDECKER FFT
 #
-if test "$HAVE_FFT" = "no" -o "$use_internal_fftsg" = "yes" ; then
-# SG FFT NCACHE 
- AC_ARG_WITH(fftfac, AC_HELP_STRING([--with-sgfftfac=<fac>],
-                     [Change default Goedecker FFT cache factor]))
- fft_cfactor="0"
- case "${host}" in
-  powerpc-ibm*)
-  fft_cfactor="16"
-  ;;
- esac
- if ! test x"$with_fftfac" = "x"; then
-  fft_cfactor="$with_fftfac"
- fi
- FFT_DESCRIPTION="Goedecker Fast Fourier transform with $fft_cfactor cache"
- FFT_CPP="-D_FFTSG"
- HAVE_FFTSG=yes
- AC_MSG_RESULT(FFTSG)
- AC_SUBST(fft_cfactor)
+if test "$use_internal_fftsg" = "yes" ; then
+  # SG FFT NCACHE 
+  AC_ARG_WITH(fftfac, AC_HELP_STRING([--with-fftsg-fac=<val>],
+                      [Change default Goedecker FFT cache factor]))
+  fft_cfactor="0"
+  case "${host}" in
+    powerpc-ibm*)
+    fft_cfactor="16"
+    ;;
+  esac
+  #
+  if ! test x"$with_fftfac" = "x"; then
+    fft_cfactor="$with_fftfac"
+  fi
+  #
+  FFT_DESCRIPTION="Goedecker Fast Fourier transform with $fft_cfactor cache"
+  FFT_CPP="-D_FFTSG"
+  HAVE_FFTSG=yes
+  AC_MSG_RESULT(FFTSG)
+  AC_SUBST(fft_cfactor)
 fi
 if test "$HAVE_FFTSG" = "yes" ; then HAVE_FFT=yes ; fi
 
 #
 # finalize
 #
-if test "$compile_fftqe" = "yes" ; then 
+if test x"$compile_fftqe" = "xyes" ; then 
     FFTQELIBS="-lfftqe" 
     AC_F77_WRAPPERS
     AC_DEFINE(_FFTQE)
     AC_CONFIG_HEADERS([lib/fftqe/c_defs.h:lib/fftqe/c_defs.h.in])
     AC_CONFIG_FILES([lib/fftqe/fftqe_defs.h:lib/fftqe/fftqe_defs.h.in])
+    #
 fi
 
 AC_SUBST(FFTW_LIBS)

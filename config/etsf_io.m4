@@ -26,11 +26,11 @@ AC_DEFUN([AC_HAVE_ETSF_IO],[
 AC_ARG_ENABLE(etsf_io, AC_HELP_STRING([--enable-etsf-io],
    [Activate the ETSF_IO support]),[],[enable_etsf_io="no"])
 AC_ARG_WITH(etsf_io_path, AC_HELP_STRING([--with-etsf-io-path=<path>],
-   [Path of the ETSF_IO directory]))
+   [Path to the ETSF_IO install directory]))
 AC_ARG_WITH(etsf_io_libdir, AC_HELP_STRING([--with-etsf-io-libdir=<path>],
-   [Path of the ETSF_IO lib directory]))
+   [Path to the ETSF_IO lib directory]))
 AC_ARG_WITH(etsf_io_includedir, AC_HELP_STRING([--with-etsf-io-includedir=<path>],
-   [Path of the ETSF_IO include directory]))
+   [Path to the ETSF_IO include directory]))
 
 compile_e2y="no"
 compile_etsf="no"

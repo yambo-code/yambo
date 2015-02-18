@@ -49,8 +49,7 @@ subroutine K_Haydock(iq,W)
 #if defined _KERR
  use KERR,           ONLY:BSS_rhoq0_kerr,B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
- use fields,         ONLY:global_gauge
- use X_m,            ONLY:iw_ref
+ use X_m,            ONLY:iw_ref,global_gauge
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -74,6 +73,7 @@ subroutine K_Haydock(iq,W)
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
+ type(Haydock_vector),allocatable :: V0_kerr(:)
  complex(SP),allocatable :: Cf_kerr(:)
 #endif
  !
@@ -121,6 +121,22 @@ subroutine K_Haydock(iq,W)
  !
  !
  ! Allocate Haydock vectors:
+ !
+ allocate(V0(BS_nT_grps))
+ call BS_HAYVEC_alloc(V0)
+ !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _KERR
+ if(l_kerr) then
+   allocate(V0_kerr(BS_nT_grps))
+   call BS_HAYVEC_alloc(V0_kerr)
+ endif
+#endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ !
  if (use_cpl_scheme) then
    allocate(Cf(Max_iterations+1))
    !
@@ -132,8 +148,6 @@ subroutine K_Haydock(iq,W)
    !
    ! GPL_EXCLUDE_END
    !
-   allocate(V0(BS_nT_grps))
-   call BS_HAYVEC_alloc(V0)
  end if
  !
  allocate(Vn(BS_nT_grps),Vnp1(BS_nT_grps),Vnm1(BS_nT_grps))
@@ -238,6 +252,17 @@ subroutine K_Haydock(iq,W)
      Vn(i_g)%fragment  = cZERO
      Vnm1(i_g)%fragment= cZERO
      Vnp1(i_g)%fragment= cZERO
+     !
+     V0(i_g)%fragment  = cZERO
+     !
+     ! GPL_EXCLUDE_START
+     !
+#if defined _KERR
+     if(l_kerr) V0_kerr(i_g)%fragment  = cZERO
+#endif
+     !
+     ! GPL_EXCLUDE_END
+     !
    enddo
    !
    Af= 0.
@@ -246,13 +271,31 @@ subroutine K_Haydock(iq,W)
  !
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-   Vn(i_g)%fragment(:) =BS_T_grp(i_g)%dipoles_R(:)
+   V0(i_g)%fragment(:) =BS_T_grp(i_g)%dipoles_R(:)
+   !
+   ! GPL_EXCLUDE_START
+   !
+#if defined _KERR
+   if(l_kerr) V0_kerr(i_g)%fragment  =BS_T_grp(i_g)%dipoles_R_kerr(:)
+#endif
+   !
+   ! GPL_EXCLUDE_END
+   !
  enddo
  do i_g = 2,BS_nT_grps
    if (.not.Haydock_parallel_mask(i_g)) cycle
 #if defined _MPI
-   call PP_bcast(Vn(i_g)%fragment(:),0,COMM=Haydock_parallel_group_comm(i_g))
+   call PP_bcast(V0(i_g)%fragment(:),0,COMM=Haydock_parallel_group_comm(i_g))
 #endif    
+   !
+   ! GPL_EXCLUDE_START
+   !
+#if defined _KERR && defined _MPI
+   if(l_kerr) call PP_bcast(V0_kerr(i_g)%fragment(:),0,COMM=Haydock_parallel_group_comm(i_g))
+#endif
+   !
+   ! GPL_EXCLUDE_END
+   !
  end do
  !
  if (use_cpl_scheme) then ! [***] Initialization non Hermitian case
@@ -274,19 +317,22 @@ subroutine K_Haydock(iq,W)
       !
       ! GPL_EXCLUDE_END
       !
-      call K_multiply_by_V(it_on_disk,Vn,Vnp1,iter_par=ItParity,call_kind='Hay')
+      call K_multiply_by_V(it_on_disk,V0,Vnp1,iter_par=ItParity,call_kind='Hay')
       do i_g=1,BS_nT_grps
         if (.not.Haydock_parallel_mask(i_g)) cycle
         !
       enddo
-      call K_dot_product(v0_mod_,Vn,Vnp1)
-      Haydock_v0_mod=sqrt(2._SP*real(v0_mod_,SP))
-      Cf(1) =  Haydock_v0_mod
+      call K_dot_product(v0_mod_,V0,Vnp1)
+      Haydock_v0_mod=sqrt(2._SP*real(v0_mod_))
+      Cf(1) =  0._SP
       !
       ! GPL_EXCLUDE_START
       !
 #if defined _KERR
-      if(l_kerr) Cf_kerr(1)= 2._SP*cI*aimag(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn))/Haydock_v0_mod**2._SP
+      if(l_kerr) then
+        call K_dot_product(v0_mod_,V0_kerr,Vnp1)
+        Cf_kerr(1)= 2._SP*cI*aimag(v0_mod_)/Haydock_v0_mod**2._SP
+      endif
 #endif
       !
       ! GPL_EXCLUDE_END
@@ -294,8 +340,7 @@ subroutine K_Haydock(iq,W)
       do i_g=1,BS_nT_grps
         if (.not.Haydock_parallel_mask(i_g)) cycle
         !
-        V0(i_g)%fragment   = Vn(i_g)%fragment ! This vector is needed to determine the Cf element at each iteration
-        Vn(i_g)%fragment   = Vn(i_g)%fragment/Haydock_v0_mod
+        Vn(i_g)%fragment   = V0(i_g)%fragment/Haydock_v0_mod
         Vnp1(i_g)%fragment = Vnp1(i_g)%fragment/Haydock_v0_mod
       enddo
    else
@@ -307,13 +352,13 @@ subroutine K_Haydock(iq,W)
    !
    ! it=1:|Vm>=|q->0>/(<q->0|q->0>)^(1/2)
    !
-   call K_dot_product(v0_mod_,Vn,Vn) 
+   call K_dot_product(v0_mod_,V0,V0) 
    Haydock_v0_mod=sqrt(real(v0_mod_,SP))
    !
    if (it_on_disk==0) then
      do i_g=1,BS_nT_grps
        if (.not.Haydock_parallel_mask(i_g)) cycle
-       Vn(i_g)%fragment  = Vn(i_g)%fragment/Haydock_v0_mod
+       Vn(i_g)%fragment  = V0(i_g)%fragment/Haydock_v0_mod
      enddo
    endif
    !
@@ -426,8 +471,10 @@ subroutine K_Haydock(iq,W)
      ! GPL_EXCLUDE_START
      !
 #if defined _KERR
-     if(l_kerr) Cf_kerr(it+1)= &
-&             ((1._SP+ItParity)*cI*aimag(dot_product(BSS_rhoq0_kerr(:BS_K_dim),Vn)))/Haydock_v0_mod
+     if(l_kerr) then
+       call K_dot_product(v0_mod_,V0_kerr,Vn) 
+       Cf_kerr(it+1)=((1._SP+ItParity)*cI*aimag(v0_mod_))/Haydock_v0_mod
+     endif
 #endif
      !
      ! GPL_EXCLUDE_END

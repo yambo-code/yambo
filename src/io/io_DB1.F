@@ -182,18 +182,18 @@ integer function io_DB1(E,k,ID)
      call io_elemental(ID,I0=n_atomic_species,CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' No. of atom species             :')
    endif
-     !
-     ! Hybrids stuff
-     !	
+   !
+   ! Hybrids stuff
+   !	
    if (ver_is_gt_or_eq(ID,revision=2962)) then
        call io_elemental(ID, VAR="EXX_FRACTION",VAR_SZ=1,MENU=0)
        call io_elemental(ID,R0=GS_exx_FRACTION,   CHECK=.true.,OP=(/"=="/),&
-            &                      VAR=' Exact exchange fraction in XC   :')
+&                                  VAR=' Exact exchange fraction in XC   :')
    endif
    if (ver_is_gt_or_eq(ID,revision=3997)) then
        call io_elemental(ID, VAR="EXX_SCREENING",VAR_SZ=1,MENU=0)
        call io_elemental(ID,R0=GS_exx_SCREENING,   CHECK=.true.,OP=(/"=="/),&
-            &                      VAR=' Exact exchange screening in XC  :')
+&                                  VAR=' Exact exchange screening in XC  :')
    endif
    if (ver_is_gt_or_eq(ID,revision=1240).and.ver_is_gt_or_eq(ID,(/3,2,5/))) then
      call io_elemental(ID, VAR="mag_syms",VAR_SZ=1,MENU=0)

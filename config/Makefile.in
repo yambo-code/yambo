@@ -48,8 +48,8 @@ bindir      = @bindir@
 libdir      = @srcdir_path@/lib
 includedir  = @srcdir_path@/include
 CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
-	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
-	   src/external_c/.objects Makefile driver/version.h \
+           sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
+           src/external_c/.objects Makefile driver/version.h \
            sbin/objects_debug.sh driver/editor.h lib/local/.objects
 TARGETS  = all yambo interfaces ypp ydb
 UTILS    = changelog
@@ -66,7 +66,7 @@ INTERFCS = a2y p2y e2y c2y
 BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate linear_algebra common io stop_and_restart wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface \
-               interpolate tddft pol_function qp acfdt bse
+               tddft pol_function qp acfdt bse
 
 PJ_SURFLIBS  = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_control surf \
                setup interface tddft pol_function qp acfdt bse

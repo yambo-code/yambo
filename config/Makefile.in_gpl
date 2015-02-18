@@ -28,13 +28,18 @@ netcdf      = @dnetcdf@
 scalapack   = @dscalapack@
 precision   = @dp_cpp@
 fft         = @FFT_CPP@
-xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @openmpi_cpp@
+xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @openmpi_cpp@ @time_profile_cpp@
 debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
 do_local    = @compile_local@
+do_fftqe    = @compile_fftqe@
+do_iotk     = @compile_iotk@
+do_netcdf   = @compile_netcdf@
+do_etsf     = @compile_etsf@
 do_p2y      = @compile_p2y@
 do_e2y      = @compile_e2y@
+do_libxc    = @compile_libxc@
 shell       = @SHELL@
 make        = @MAKE@
 package_bugreport = @PACKAGE_BUGREPORT@
@@ -44,23 +49,24 @@ bindir      = @bindir@
 libdir      = @srcdir_path@/lib
 includedir  = @srcdir_path@/include
 CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
-  	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
-	   src/external_c/.objects Makefile driver/version.h \
-       sbin/objects_debug.sh driver/editor.h 
+           sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
+           src/external_c/.objects Makefile driver/version.h \
+           sbin/objects_debug.sh driver/editor.h 
 TARGETS  = all yambo interfaces ypp 
 CLEANS   = clean clean_all
 INTERFCS = a2y p2y e2y 
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate linear_algebra common io wf_and_fft 
+BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate linear_algebra common io stop_and_restart wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
                tddft pol_function qp bse
 #
 # Interfaces
 #
-2YLIBS       = external_c modules parallel parser communicate linear_algebra common io bz_ops 
+2YLIBS       = external_c modules parallel parser communicate linear_algebra common io stop_and_restart bz_ops 
+E2YLIBS      = external_c parallel modules parser communicate linear_algebra common io stop_and_restart bz_ops 
 #
 # YPP
 #

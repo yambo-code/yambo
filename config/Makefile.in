@@ -314,7 +314,7 @@ endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
  for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
- cd $(bindir) ; rm -f etsf_io ncgen ncdump iotk iotk.x ; cd ..
+ cd $(bindir) ; rm -f etsf_io  ncgen ncgen3 nc-config nccopy ncdump  iotk iotk.x ; cd ..
  echo "[CLEAN] Targets ... done" 
 endef
 define conf_clean

@@ -21,11 +21,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.0 r.4066 , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.0 r.4067 , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="0"
-SREVISION="4066"
+SREVISION="4067"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -136,8 +136,8 @@ AC_SUBST(dp_cpp)
 # ============================================================================
 # check for p2y versions
 #
-AC_ARG_WITH(p2y, AC_HELP_STRING([--with-p2y=<mode>],
- [Interface mode in PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0> <5.0>]))
+AC_ARG_WITH(p2y, AC_HELP_STRING([--with-p2y-version=<flags>],
+ [Version number for PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0> <5.0>]))
 
 PW_VER="5.0"
 PW_CPP="_P2Y_V50"
@@ -256,8 +256,8 @@ AC_LANG_PUSH(Fortran)
 #
 # F90 extension
 #
-AC_ARG_WITH(f90ext, AC_HELP_STRING([--with-f90ext=<ext>],
-[Use .<ext> Fortran 90 extension]))
+AC_ARG_WITH(f90ext, AC_HELP_STRING([--with-f90ext=<flags>],
+[Use .<flags> Fortran 90 extension]))
 if ! test -z "$with_f90ext"; then F90SUFFIX=".$with_f90ext"; fi
 case $F90SUFFIX in
  .f90)

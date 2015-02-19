@@ -29,13 +29,14 @@ AC_DEFUN([KH_PATH_NETCDF_F90],[
 AC_ARG_ENABLE(netcdf, AC_HELP_STRING([--enable-netcdf],
             [Activate the NetCDF support]),[],[enable_netcdf="yes"])
 AC_ARG_WITH(netcdf_path, AC_HELP_STRING([--with-netcdf-path=<path>],
-            [Path of the NetCDF library]),[],[])
+            [Path to the NetCDF install directory]),[],[])
 AC_ARG_WITH(netcdf_includedir,AC_HELP_STRING([--with-netcdf-includedir=<path>],
-                                  [Path of the NetCDF include directory]))
+                                  [Path to the NetCDF include directory]))
 AC_ARG_WITH(netcdf_libdir,AC_HELP_STRING([--with-netcdf-libdir=<path>],
-                                  [Path of the NetCDF lib directory]))
-AC_ARG_WITH(netcdf_link,AC_HELP_STRING([--with-netcdf-link=<flags>],
-                                  [Specific libs needed by NetCDF or NetCDF/HDF5]))
+                                  [Path to the NetCDF lib directory]))
+#AC_ARG_WITH(netcdf_libs,AC_HELP_STRING([--with-netcdf-link=<flags>],
+#                                  [Link to libraries needed by NetCDF or NetCDF/HDF5]))
+
 #
 # LARGE DATABASES SUPPORT
 #
@@ -48,13 +49,6 @@ AC_ARG_ENABLE(netcdf_hdf5,AC_HELP_STRING([--enable-netcdf-hdf5],
                                   [Activate the HDF5 support. Default is no.]))
 #
 
-NETCDF_LINKS=""
-case $with_netcdf_link in
-        yes | "") ;;
-        -* | */* | *.a | *.so | *.so.* | *.o) NETCDF_LINKS="$with_netcdf_link" ;;
-        *) NETCDF_LINKS="-l$with_netcdf_link" ;;
-esac
-
 #
 netcdf="no"
 dnetcdf=""
@@ -62,6 +56,14 @@ NCFLAGS=""
 NCLIBS=""
 IFLAG=""
 compile_netcdf="no"
+NETCDF_FLAGS=""
+#
+#case $with_netcdf_link in
+#        yes | "") ;;
+#        -* | */* | *.a | *.so | *.so.* | *.o) NETCDF_FLAGS="$with_netcdf_link" ;;
+#        *) NETCDF_FLAGS="-l$with_netcdf_link" ;;
+#esac
+
 
 #
 # if any of these groups of options are set, it means we want to link with NetCDF.
@@ -179,7 +181,7 @@ if test "x$netcdf" = xyes; then
     #
     if test -d "$with_netcdf_includedir" ; then FCFLAGS="$IFLAG$with_netcdf_includedir" ; fi
     #
-    for ldflag in "$HDF5_FLAGS -lsz" "$HDF5_FLAGS -lz" "$HDF5_FLAGS $NETCDF_LINKS"; do
+    for ldflag in "$HDF5_FLAGS -lsz" "$HDF5_FLAGS -lz" "$HDF5_FLAGS $NETCDF_FLAGS"; do
       LIBS="$ldflag"
       AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
        use hdf5
@@ -193,8 +195,8 @@ if test "x$netcdf" = xyes; then
      if test "x$hdf5" = xyes; then
        dnetcdf="${dnetcdf} -D_HDF5_IO"
        #
-       # redefine NETCDF_LINKS only if it was not given from input
-       if test x"$NETCDF_LINKS" != x"" ; then NETCDF_LINKS="$ldflag" ; fi
+       # redefine NETCDF_FLAGS only if it was not given from input
+       if test x"$NETCDF_FLAGS" = "x" ; then NETCDF_FLAGS="$ldflag" ; fi
        #
        for file in `find $with_netcdf_includedir \( -name '*hdf5*'\) `; do
          cp $file include/ 
@@ -224,8 +226,8 @@ if test "x$netcdf" = xyes; then
       NCLIBS="${NCLIBS} `$with_netcdf_includedir/../bin/nf-config --libs`"
     fi
   fi
-  if test  x"$NETCDF_LINKS" != x"" ; then
-    NCLIBS="${NETCDF_LINKS}"
+  if test  x"$NETCDF_FLAGS" != x"" ; then
+    NCLIBS="${NETCDF_FLAGS}"
   fi
 fi
 

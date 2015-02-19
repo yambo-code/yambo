@@ -93,34 +93,36 @@ fi
 #
 if ! test x"$EXTERNAL_LIB" = "x" ; then
 
-  for FFTW_LIBS in "$EXTERNAL_LIB" ; do      
-    if ! test x"$libdir" = "x" ; then FFTW_PATH="-L$libdir" ; fi
-    AS_IF([test "$FFTW_LIBS"], [LIBS="${FFTW_PATH} ${FFTW_LIBS}"])
+  for try_libs in "$EXTERNAL_LIB" ; do      
+    save_libs=$LIBS
+    if ! test x"$libdir" = "x" ; then FFT_PATH="-L$libdir" ; fi
+    AS_IF([test "$try_libs"], [LIBS="${FFT_PATH} ${try_libs}"])
     AC_LINK_IFELSE([AC_LANG_CALL([], [dfftw_destroy_plan(1)])],
-    [HAVE_FFTW="yes";],[HAVE_FFTW="no";])
+       [HAVE_FFTW="yes";],[HAVE_FFTW="no";])
+    LIBS=$save_libs
     if test "$HAVE_FFTW" = "yes" ; then
       break;
     fi
   done
   if test "$HAVE_FFTW" = "yes" ; then
     FFT_CPP="-D_FFTW"
-    if test "$FFTW_LIBS" = "-lfftw3" ; then
+    if test "$try_libs" = "-lfftw3" ; then
       FFT_DESCRIPTION="FFTW (v3) Fast Fourier transform";
       AC_MSG_RESULT(FFTW3)
-    elif test "$FFTW_LIBS" = "-lfftw3 -lfftw3_omp" ; then
+    elif test "$try_libs" = "-lfftw3 -lfftw3_omp" ; then
       FFT_DESCRIPTION="FFTW_OMP (v3) Fast Fourier transform";
       AC_MSG_RESULT(FFTW3_OMP)
     else 
       desc=Other
-      if ! test -z "`echo $FFTW_LIBS | grep -i mkl`" ; then desc="MKL" ; fi  
+      if ! test -z "`echo $try_libs | grep -i mkl`" ; then desc="MKL" ; fi  
       FFT_DESCRIPTION="FFTW ($desc) Fast Fourier transform";
       AC_MSG_RESULT(FFTW ($desc) )
     fi
-    LDFLAGS="$FFTW_PATH";    ## ??
+    FFT_LIBS="${FFT_PATH} ${try_libs}"
   else
-    FFT_CPP=""; 
-    FFTW_LIBS="";
-    LDFLAGS="$save_ldflags";
+    FFT_CPP="" 
+    FFT_LIBS=""
+    LDFLAGS="$save_ldflags"
   fi
   if test x"$HAVE_FFTW" = "xyes" ; then HAVE_FFT=yes ; fi
 else
@@ -133,19 +135,34 @@ fi
 # check for ESSL FFT
 #
 if test -d "$libdir" && test -d "$includedir" ; then
-   EXTERNAL_LIB="-lessl"
+   EXTERNAL_LIB="-L$libdir -lessl"
 fi
 #
 if ! test x"$EXTERNAL_LIB" = "x" && ! test "$HAVE_FFT" = "yes" ; then
-    # 
-    AC_CHECK_LIB(essl, dcft, [HAVE_ESSL=yes; fft_libs="$essl_fft_lib"], [HAVE_ESSL=no])
-    if test "$HAVE_ESSL" = "yes" ; then
-       FFT_CPP="-D_FFTQE $FFT3D_CPP -D_ESSL"
-       FFT_DESCRIPTION="ESSL Fast Fourier transform (FFTQE)";
-       HAVE_FFT=yes
-       compile_fftqe=yes
-       AC_MSG_RESULT(ESSL FFT)
-    fi
+  AC_MSG_RESULT(FFTW no)
+  # 
+  if ! test x"$libdir" = "x" ; then FFT_PATH="-L$libdir" ; fi
+  #
+  save_ldflags=$LDFLAGS
+  save_libs=$LIBS
+  LIBS="$FFT_PATH $EXTERNAL_LIB"
+  #
+  AC_MSG_CHECKING([for dcft in $LIBS])
+  AC_TRY_LINK_FUNC(dcft, [HAVE_ESSL=yes], [HAVE_ESSL=no])
+  AC_MSG_RESULT($HAVE_ESSL)
+  #
+  LIBS=$save_libs
+  LDFLAGS=$save_ldflags
+  #
+  if test "$HAVE_ESSL" = "yes" ; then
+    AC_MSG_CHECKING([for FFT])
+    FFT_CPP="-D_FFTQE $FFT3D_CPP -D_ESSL"
+    FFT_DESCRIPTION="ESSL Fast Fourier transform (FFTQE)";
+    FFT_LIBS="${FFT_PATH} $EXTERNAL_LIB"
+    HAVE_FFT=yes
+    compile_fftqe=yes
+    AC_MSG_RESULT(ESSL FFT)
+  fi
 fi
 
 
@@ -154,6 +171,7 @@ fi
 #
 if ! test x"$HAVE_FFT" = "xyes" ; then
    #
+   AC_MSG_CHECKING([for FFT])
    if test x"$enable_internal_fftw" = "xyes" ; then
       use_internal_fftw=yes
       use_internal_fftsg=no
@@ -170,7 +188,7 @@ fi
 if test "$use_internal_fftw" = "yes" ; then
   FFT_CPP="-D_FFTQE $FFT3D_CPP -D_FFTW2"
   FFT_DESCRIPTION="Internal FFTW2 Fast Fourier transform (FFTQE)";
-  FFTW_LIBS="";
+  FFT_LIBS="";
   HAVE_FFTW=yes
   compile_fftqe=yes
   AC_MSG_RESULT(Internal FFTW2 (FFTQE))
@@ -198,6 +216,7 @@ if test "$use_internal_fftsg" = "yes" ; then
   #
   FFT_DESCRIPTION="Goedecker Fast Fourier transform with $fft_cfactor cache"
   FFT_CPP="-D_FFTSG"
+  FFT_LIBS=""
   HAVE_FFTSG=yes
   AC_MSG_RESULT(FFTSG)
   AC_SUBST(fft_cfactor)
@@ -216,7 +235,7 @@ if test x"$compile_fftqe" = "xyes" ; then
     #
 fi
 
-AC_SUBST(FFTW_LIBS)
+AC_SUBST(FFT_LIBS)
 AC_SUBST(FFT_CPP)
 AC_SUBST(FFT_DESCRIPTION)
 AC_SUBST(compile_fftqe)

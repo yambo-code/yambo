@@ -694,17 +694,20 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call initactivate(1,'GbndRnge') 
        if (.not.l_cohsex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
        if (.not.l_cohsex) call initactivate(1,'dScStep') 
-       if (.not.l_ppa.and..not.l_cohsex) call X_activate('Xd',(/'BndsRn','NGsBlk',&
-&                      'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
-&                      'DrudeW','EhEngy','LongDr'/)) 
-       !
-       if (.not.l_cohsex) call initactivate(1,'GTermKind GTermEn DysSolver')
-       if (     l_cohsex) call initactivate(1,'UseEbands')
-       if (trim(QP_solver)=="g") then
-         call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
-       else
-         call initactivate(1,'GWoIter')
-         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
+       if (.not.l_elphoton_corr) then
+         if (.not.l_ppa.and..not.l_cohsex) &
+&          call X_activate('Xd',(/'BndsRn','NGsBlk',&
+&                          'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
+&                          'DrudeW','EhEngy','LongDr'/)) 
+         !
+         if (.not.l_cohsex) call initactivate(1,'GTermKind GTermEn DysSolver')
+         if (     l_cohsex) call initactivate(1,'UseEbands')
+         if (trim(QP_solver)=="g") then
+           call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
+         else
+           call initactivate(1,'GWoIter')
+           if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
+         endif
        endif
        !
      endif
@@ -1064,10 +1067,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_elel_corr    =runlevel_is_on('el_el_corr')
        l_elphoton_corr=runlevel_is_on('el_photon_corr')
 #endif
-! Davide: warning, yambo_elph and yambo_qed may be broken
-!#if !defined  _ELPH  && !defined _QED
+       ! GPL_EXCLUDE_START
+#if !defined  _ELPH  && !defined _QED
        l_elel_corr=l_gw0.or.l_life.or.l_eval_collisions
-!#endif
+#endif
+       ! GPL_EXCLUDE_END
        !
        ! Check if this runlevel is allowed in the 
        ! present configuration

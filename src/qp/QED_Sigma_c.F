@@ -55,7 +55,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
 &                            i_c,i_cp,i_wf_at_k,i_wf_at_p,i_k_bz,ir,ir1,ir2,ir3,&
                              i_wf_at_p_g,timing_steps,i_g
  real(SP)                  ::q_photon(3),q_cc(3),p_cc(3),Photon_E,trans_matrix(3,3),sumdot,bose,t_vec(3),k_cc(3),E_diff
- complex(SP)               ::XHI_p(3),XHI_k(3),I_wfk_wfp,Dipole_sum,P_i_cp,P_i_c
+ complex(SP)               ::XHI_p(3),XHI_k(3),I_wfk_wfp,Dipole_sum,P_i_cp,P_i_c,Sc_dummy
  complex(SP), allocatable  ::WF_p(:,:),WF_p_rot(:,:),WF_der_p(:,:),WF_der_k(:,:),WF_der_p_rot(:,:)
  real(SP),    allocatable  ::r_cell_cc(:,:),q_weight(:)
  !
@@ -106,8 +106,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  call k_ibz2bz(q,'c',.false.)
  !
- ! (i_n,i_k,i_k_s) --- (i_q,i_q_s) ---> (i_m,i_p,i_p_s)
- !
  timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
 &             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )*&
 &             PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)
@@ -116,10 +114,10 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  Q_loop: do i_q_bz=1,nqbz 
    !
-   if (.not.PAR_IND_Q%element_1D(q%sstar(i_q_bz,1))) cycle
-   !
    i_q  =q%sstar(i_q_bz,1)
    i_q_s=q%sstar(i_q_bz,2)
+   !
+   if (.not.PAR_IND_Q%element_1D(i_q)) cycle
    !
    q_cc=q%ptbz(i_q_bz,:)
    !
@@ -149,8 +147,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        E_diff=E%E(i_n,i_k,1)-E%E(i_m,i_p,1)
        !
-       if (E_diff<1.E-5) then
-         if( q%sstar(i_q_bz,2) == 1) call live_timing(steps=1)
+       if (abs(E_diff)<1.E-5.or.i_q==1) then
+         if( i_q_s == 1) call live_timing(steps=1)
          cycle
        endif
        !
@@ -166,6 +164,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        WF_der_p=cZERO
        WF_der_k=cZERO
+       Sc_dummy=cZERO
        !
        call eval_Gradient(WF_p,WF_der_p)
        call eval_Gradient(WF%c(:,i_wf_at_k),WF_der_k)
@@ -239,11 +238,13 @@ subroutine QED_Sigma_c(E,k,q,qp)
            enddo 
          enddo
          !
-         QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+Dipole_sum/(E_diff-Photon_E)*pi/2._SP
+         Sc_dummy=Sc_dummy+Dipole_sum/(E_diff-Photon_E)*pi/2._SP
          !
        enddo G_loop
        !
-       if( q%sstar(i_q_bz,2) == 1) call live_timing(steps=1)
+       QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+Sc_dummy
+       !
+       if ( i_q_s == 1) call live_timing(steps=1)
        !
      enddo B_loop
      !

@@ -73,7 +73,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
        !
        call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
        !
-     else
+     else 
        !
        call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,iter)
        !

@@ -72,7 +72,7 @@ module KERR
    !
    ! GPL_EXCLUDE_START
    !
-   subroutine BS_mat_KERR_alloc( )
+   subroutine BS_mat_kerr_alloc( )
      !
      use pars,       ONLY:cZERO
      use memory_m,   ONLY:mem_est

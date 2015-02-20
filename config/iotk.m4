@@ -27,37 +27,66 @@ AC_ARG_ENABLE(iotk, AC_HELP_STRING([--enable-iotk],
             [Activate the IOTK support]),[],[enable_iotk="yes"])
 AC_ARG_WITH(iotk_path, AC_HELP_STRING([--with-iotk-path=<path>],
             [Path to the IOTK install directory]),[],[])
+AC_ARG_WITH(iotk_libdir, AC_HELP_STRING([--with-iotk-libdir=<path>],
+            [Path to the IOTK lib directory]))
 AC_ARG_WITH(iotk_includedir, AC_HELP_STRING([--with-iotk-includedir=<path>],
             [Path to the IOTK include directory]),[],[])
-
+AC_ARG_WITH(iotk_libs, AC_HELP_STRING([--with-iotk-libs=<libs>],
+            [Use the IOTK library in <libs>]),[],[])
 
 compile_p2y="no"
 compile_iotk="no"
 iotk_idir=" "
 IOTK_LIBS=" "
 
+if test -d "$with_iotk_path"  ;  then enable_iotk=yes ; fi
+if test -d "$with_iotk_libdir" ; then enable_iotk=yes ; fi
+if test -d "$with_iotk_libs" ;   then enable_iotk=yes ; fi
+
 if test "x$enable_iotk" = "xyes" ; then
   #
-  if ! test "x$with_iotk_path" = "x" ; then
-    AC_MSG_CHECKING([for IOTK in $with_iotk_path])
-    # external iotk
-    if test -r $with_iotk_path/src/libiotk.a ; then
+  if test -d "$with_iotk_path" || test -d "$with_iotk_libdir" ; then
+    #
+    # external IOTK
+    #
+    if test -d "$with_iotk_path" ;   then AC_MSG_CHECKING([for IOTK in $with_iotk_path]) ; fi
+    if test -d "$with_iotk_libdir" ; then AC_MSG_CHECKING([for IOTK in $with_iotk_libdir]) ; fi
+    #
+    if test -d "$with_iotk_path" ; then
+        try_libdir=$with_iotk_path/src
+        try_incdir=$with_iotk_path/src
+    fi
+    if test -d "$with_iotk_libdir"  ;    then try_libdir=$with_iotk_libdir ; fi
+    if test -d "$with_iotk_includedir" ; then try_incdir=$with_iotk_includedir ; fi
+    #
+    if test -z "$try_libdir" ; then AC_MSG_ERROR([No lib-dir specified]) ; fi
+    if test -z "$try_incdir" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
+    #
+    # 
+    if test -r $try_libdir/libiotk.a ; then
       compile_p2y="yes"
       compile_iotk="no"
-      if ! test "x$with_iotk_includedir" = "x" ; then
-         iotk_idir="-I$with_iotk_includedir"
-      else
-         iotk_idir="-I$with_iotk_path/src"
-      fi
-      #
+      iotk_idir="-I$try_incdir"
       IOTK_LIBS="-liotk"
-      cp "$with_iotk_path/src/libiotk.a" lib/
+      cp "$try_libdir/libiotk.a" lib/
       AC_MSG_RESULT([yes])
     else
       AC_MSG_RESULT([no])
     fi
+  elif test x"$with_iotk_libs" != "x" && test -d "$with_iotk_includedir" ; then
+    #
+    # directly provided lib
+    #
+    AC_MSG_CHECKING([for IOTK Library using $with_iotk_libs])
+    compile_p2y="yes"
+    compile_iotk="no"
+    iotk_idir="-I$with_iotk_includedir"
+    IOTK_LIBS="$with_iotk_libs"
+    AC_MSG_RESULT(yes)
   else
-    # internal iotk
+    #
+    # internal IOTK
+    #
     AC_MSG_CHECKING([for IOTK library])
     compile_iotk="yes"
     compile_p2y="yes"

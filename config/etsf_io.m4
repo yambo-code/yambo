@@ -31,6 +31,8 @@ AC_ARG_WITH(etsf_io_libdir, AC_HELP_STRING([--with-etsf-io-libdir=<path>],
    [Path to the ETSF_IO lib directory]))
 AC_ARG_WITH(etsf_io_includedir, AC_HELP_STRING([--with-etsf-io-includedir=<path>],
    [Path to the ETSF_IO include directory]))
+AC_ARG_WITH(etsf_io_libs, AC_HELP_STRING([--with-etsf-io-libs=<libs>],
+   [Use the ETSF_IO libraries in <libs>]))
 
 compile_e2y="no"
 compile_etsf="no"
@@ -38,71 +40,67 @@ etsf_libdir=" "
 etsf_idir=" "
 ETSF_LIBS=" "
 
-if ! test "x$with_etsf_io_path" = "x" ;    then enable_etsf_io=yes ; fi
-if test -d "$with_etsf_io_includedir" && test -d "$with_etsf_io_libdir" ; then
-        enable_etsf_io=yes 
-fi
+if test -d "$with_etsf_io_path"  ;  then enable_etsf_io=yes ; fi
+if test -d "$with_etsf_io_libdir" ; then enable_etsf_io=yes ; fi
+if test -d "$with_etsf_io_libs" ;   then enable_etsf_io=yes ; fi
+#
+if test x"$netcdf" != "xyes" ; then enable_etsf_io=no ; fi
 #
 # main search
 #
 if test "x$enable_etsf_io" = "xyes" ; then
   #
-  if ! test "x$with_etsf_io_path" = "x" ; then
-    AC_MSG_CHECKING([for ETSF_IO in $with_etsf_io_path])
-    # check for external lib
+  if test -d "$with_etsf_io_path" || test -d "$with_etsf_io_libdir" ; then
     #
-    if test -r $with_etsf_io_path/lib/libetsf_io.a ; then
+    # external ETSF_IO
+    #
+    if test -d "$with_etsf_io_path" ;   then AC_MSG_CHECKING([for ETSF_IO in $with_etsf_io_path]) ; fi
+    if test -d "$with_etsf_io_libdir" ; then AC_MSG_CHECKING([for ETSF_IO in $with_etsf_io_libdir]) ; fi
+    #
+    if test -d "$with_etsf_io_path" ; then
+        try_libdir=$with_etsf_io_path/lib
+        try_incdir=$with_etsf_io_path/include
+    fi
+    if test -d "$with_etsf_io_libdir"     ; then try_libdir=$with_etsf_io_libdir ; fi
+    if test -d "$with_etsf_io_includedir" ; then try_incdir=$with_etsf_io_includedir ; fi
+    #
+    if test -z "$try_libdir" ; then AC_MSG_ERROR([No lib-dir specified]) ; fi
+    if test -z "$try_incdir" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
+    #
+    #
+    if test -r $try_libdir/libetsf_io.a ; then
       compile_e2y="yes"
       compile_etsf="no"
-      etsf_idir="-I$with_etsf_path/include"
+      etsf_idir="-I$try_incdir"
       ETSF_LIBS="-letsf_io"
       #
-      for file in `find $with_etsf_io_path/include \( -name '*etsf_io*' -o -name '*typesizes*' \) `; do
+      for file in `find $try_incdir \( -name '*etsf_io*' -o -name '*typesizes*' \) `; do
          cp $file include/
       done
-      for file in `find $with_etsf_io_path/lib -name '*etsf_io*.a'`; do
+      for file in `find $try_libdir -name '*etsf_io*.a'`; do
          cp $file lib/
       done
       #
       AC_MSG_RESULT([yes])
-    #else
-    #  compile_etsf="yes"
-    fi
-  elif test -d "$with_etsf_io_includedir" && test -d "$with_etsf_io_libdir" ; then
-    # check for external lib (second option)
-    AC_MSG_CHECKING([for ETSF_IO in $with_etsf_io_libdir])
-    if test "$netcdf" = "yes"; then
-       if test -r $with_etsf_io_libdir/libetsf_io.a ; then
-          #
-          compile_e2y="yes"
-          compile_etsf=no
-          etsf_idir="-I$with_etsf_io_libdir"
-          ETSF_LIBS="-letsf_io"
-          #
-          for file in `find $with_etsf_io_includedir \( -name '*etsf_io*' \) `; do
-             cp $file include/
-          done
-          for file in `find $with_etsf_io_libdir -name '*etsf_io*.a'`; do
-             cp $file lib/
-          done
-          #
-          AC_MSG_RESULT([yes])
-       else
-          AC_MSG_RESULT([no])
-       fi
     else
       AC_MSG_RESULT([no])
-      AC_MSG_WARN([ETSF_IO requires NETCDF. ETSF_IO support removed.])
     fi
+  elif test x"$with_etsf_io_libs" != "x" && test -d "$with_etsf_io_includedir" ; then
+    #
+    # directly provided lib
+    #
+    AC_MSG_CHECKING([for ETSF_IO Library using $with_etsf_io_libs])
+    compile_etsf="no"
+    compile_e2y="yes"
+    etsf_idir="-I$with_etsf_io_includedir"
+    ETSF_LIBS="$with_etsf_io_libs"
+    AC_MSG_RESULT(yes)
   else
+    #
+    # internal ETSF_IO
+    #
     AC_MSG_CHECKING([for ETSF_IO Library])
-    # internal etsf_io
     compile_etsf="yes"
-  fi
-
-  #
-  # internal etsf_io
-  if test "x$compile_etsf" = "xyes" ; then
     compile_e2y="yes"
     etsf_idir=" "
     ETSF_LIBS="-letsf_io"

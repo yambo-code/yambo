@@ -29,13 +29,13 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
  use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range
  use frequency,     ONLY:w_samp
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index,&
-&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
+&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX,myid
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP,&
-&                        IO_and_Messaging_switch,io_RESPONSE
+&                        IO_and_Messaging_switch,io_RESPONSE,NONE
  use com,           ONLY:depth
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
@@ -50,11 +50,10 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,iq_mem,X_range(2),X_n_freqs
+ integer              :: iq,Xdb,i_err,iq_mem,X_range(2),X_n_freqs,io_X_done(nqibz)
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X
  character(1)         :: sec_mode
- logical, allocatable :: io_X_done(:)
  !
  self_detect_E_range=.false.
  !
@@ -62,6 +61,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! X%f_xc is setup when using ALDA, so that 
  ! the comparison in ioX can be done safely
+!,iq,io_X_done(iq)
  !
  call TDDFT_do_X_W_typs(-1,X,Xw)
  ! 
@@ -103,17 +103,15 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  call FREQUENCIES_setup(Xw)
  !
- ! Prepare the IO ( and check if q has been already done)
+ ! Prepare the IO (and check if q has been already done)
  !
- allocate(io_X_done(X%iq(2)))
- io_X_done=.FALSE.
- !
- if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=.TRUE.
+ io_X_done=-1
+ if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
  !
  do iq=X%iq(1),X%iq(2)
    !
    ! In the next lines Yambo will VERIFY the em1d database
-   ! to check if this iq has been alrady done. 
+   ! to check if this iq has been already done. 
    ! When self_detect_E_range=.TRUE. however the Xw%er setup is
    ! done only in X_os and the VERIFY fails. This is why the procedure
    ! must be repeated here:
@@ -123,17 +121,21 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      Xw%er=minmax_ehe
    endif
    !
-   if (iq==1) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=VERIFY,ID=Xdb)
-   if (iq> 1) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq,2*iq+1/),MODE=VERIFY,ID=Xdb)
-   X_em1=io_X(X,Xw,Xdb)
-   if (X_em1==iq) io_X_done(iq)=.TRUE.
+   if (iq==1) then
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=Xdb)
+   else
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=Xdb)
+   endif
+   !
+   io_X_done(iq)=io_X(X,Xw,Xdb)
+   !
  enddo
  !
  ! All q databases done
  !
- if (all(io_X_done)) then
-   deallocate(io_X_done)
+ if (all(io_X_done(X%iq(1):X%iq(2))>0)) then
    call FREQUENCIES_reset(Xw,"all")
+   if (X%iq(1)==X%iq(2)) X_em1=X%iq(1)
    return
  endif
  !
@@ -181,7 +183,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      !
    endif
    !
-   if (     io_X_done(iq)) cycle
+   if (     io_X_done(iq)>0) cycle
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
    iq_mem=PAR_Q_index(iq)
@@ -237,6 +239,5 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  if (io_RESPONSE) call X_alloc('X')
  call X_alloc('DIP_q_dot_iR')
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free(WF)
- deallocate(io_X_done)
  !
 end function

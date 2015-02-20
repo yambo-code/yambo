@@ -36,8 +36,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
-&                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_QP_index,myid,&
-&                        PAR_COM_QP_A2A,n_WF_bands_to_load,PAR_Q_index,PAR_COM_Q_A2A,PAR_nQ,PAR_nQP
+&                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_QP_index,&
+&                        PAR_COM_QP_A2A,n_WF_bands_to_load,PAR_Q_index,PAR_nQ,PAR_nQP
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
  use collision,     ONLY:ggwinfo,collision_reset
  use wave_func,     ONLY:WF
@@ -232,7 +232,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    do iqibz=1,q%nibz
      X%iq=iqibz
      i_err=X_em1(Xen,Xk,q,X,X_life_W(iqibz),iqibz>1)
-     if (i_err==0) exit
    enddo
    !
  endif
@@ -305,7 +304,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  timing_steps=timing_steps*PAR_nQP*count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
  !
- call live_timing(trim(Sc_name)//'W0',timing_steps)
+ if (.not.l_life) call live_timing(trim(Sc_name)//'W0',timing_steps)
+ if (l_life)      call live_timing('Lifetimes',timing_steps)
  !
  do iqbz=iq_to_start,q%nbz
    !
@@ -383,20 +383,39 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      scattering_main%qs(1)=qindx_S(QP_table(i_qp,3),iqbz,2)
      scattering_prime%qs=scattering_main%qs
      !
+     if (.not.PAR_IND_QP%element_1D(i_qp)) then
+       !
+       ! Bug spotted by AM (Feb 2015). The QP_n_W_freqs was erronously accumulated
+       ! in the loop when the code was run in parallel. These lines are a short work-around
+       ! that should be replaced by a full parallelization also of the frequencies tabulation
+       !
+       if (l_life) then
+         do ib=QP_n_G_bands(1),QP_n_G_bands(2)
+           scattering_main%os(1)=ib
+           i_or=IOR(e2et((/scattering_main%is(:2),scattering_main%is(4)/),(/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fe),&
+&                   h2ht((/scattering_main%is(:2),scattering_main%is(4)/),(/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fh))
+           QP_n_W_freqs=QP_n_W_freqs+i_or
+         enddo
+       endif
+       cycle qp_loop
+     endif
+     !
      bands_loop: do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
        scattering_main%os(1)=ib
-       i_or=IOR(e2et((/scattering_main%is(:2),scattering_main%is(4)/),(/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fe),&
-&               h2ht((/scattering_main%is(:2),scattering_main%is(4)/),(/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fh))
-       if (l_life) QP_n_W_freqs=QP_n_W_freqs+i_or
+       !
+       if (l_life) then
+         i_or=IOR(e2et((/scattering_main%is(:2),scattering_main%is(4)/),(/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fe),&
+&                 h2ht((/scattering_main%is(:2),scattering_main%is(4)/),(/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fh))
+         QP_n_W_freqs=QP_n_W_freqs+i_or
+       endif
        !
        ! The Parallel cycle has to be here in order to have a proper accumulation of QP_n_W_freqs
-       !
-       if (.not.PAR_IND_QP%element_1D(i_qp)) cycle qp_loop
        !
        if (.not.PAR_IND_G_b%element_1D(ib))  cycle bands_loop
        !
        scattering_prime%os=scattering_main%os
+       !
        call live_timing(steps=1)
        !
        if (l_life.and.i_or==0) cycle
@@ -423,7 +442,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          ! calculated
          ! 
          qp%E(i_qp)=qp%E(i_qp)-(0.,2.)*pi*(life_Fe+life_Fh)*bose_decay( real(X_life_W(iqibz)%p(i2)) )*&
-&                 Vstar_dot_V_omp(X%ng,scattering_prime%rhotw,lrhotw)
+&                   Vstar_dot_V_omp(X%ng,scattering_prime%rhotw,lrhotw)
          !
        else ! .not.l_life
          !

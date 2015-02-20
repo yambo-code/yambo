@@ -219,7 +219,7 @@ integer function io_X(X,Xw,ID)
    !
    ch="X_Q_"//trim(intc(iq))
    !
-   if(.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng_db,X%ng_db,Xw%n_freqs/))
+   if (.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng_db,X%ng_db,Xw%n_freqs/))
    !
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/X%ng_db,X%ng_db,2,Xw%n_freqs/))
    !

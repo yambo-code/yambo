@@ -31,7 +31,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_B_mat_index,PAR_nQP,PAR_QP_index,PAR_INDEX_copy,&
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load,&
 &                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index,&
-&                        PAR_BS_T_grps_index,PAR_BS_nT_col_grps,PAR_Kk_nibz,MAX_N_OF_CHAINS
+&                        PAR_BS_T_grps_index,PAR_BS_nT_col_grps,PAR_Kk_nibz
  use parallel_m,    ONLY:& ! LOGICALS
 &                        l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
 &                        HEAD_QP_cpu,HEAD_k_cpu
@@ -91,7 +91,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! Work Space
  !
  integer              :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2,i_field
- logical              :: reset_all,l_found
+ logical              :: reset_all
  character(10)        :: WHAT,WHATp
  !
  ! Resets...
@@ -364,7 +364,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! I/O privileges
    !
    if (PARALLEL_n_structures_active>1) then
-     call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_Q_INDEX%my_CHAIN==1)
+     call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    else
      call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif

@@ -46,9 +46,10 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  local_TRUE  =.TRUE.
  local_FALSE =.FALSE.
  local_master=master_cpu
+ !
  if (present(CONDITION)) then
-   local_TRUE =CONDITION
-   local_FALSE=CONDITION
+   local_TRUE  =CONDITION
+   local_FALSE =CONDITION
    local_master=CONDITION
  endif
  !

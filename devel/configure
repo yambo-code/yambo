@@ -806,8 +806,8 @@ enable_msgs_comps
 enable_options_check
 with_f90ext
 enable_open_mp
-with_blas
-with_lapack
+with_blas_libs
+with_lapack_libs
 with_mpi
 with_fft_path
 with_fft_libdir
@@ -817,23 +817,27 @@ enable_internal_fftw
 enable_internal_fftsg
 enable_3d_fft
 with_fftfac
-with_blacs
-with_scalapack
+with_blacs_libs
+with_scalapack_libs
 enable_iotk
 with_iotk_path
+with_iotk_libdir
 with_iotk_includedir
+with_iotk_libs
 enable_netcdf
 with_netcdf_path
 with_netcdf_includedir
 with_netcdf_libdir
+with_hdf5_libs
 enable_netcdf_LFS
 enable_netcdf_hdf5
 enable_etsf_io
 with_etsf_io_path
 with_etsf_io_libdir
 with_etsf_io_includedir
+with_etsf_io_libs
 with_libxc_path
-with_libxc_include_dir
+with_libxc_includedir
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1493,8 +1497,9 @@ Optional Packages:
                           Version number for PW 2 YAMBO : <export> <3.1>
                           <3.1.1> <3.2> <4.0> <5.0>
   --with-f90ext=<flags>   Use .<flags> Fortran 90 extension
-  --with-blas=<lib>       Use BLAS library <lib>
-  --with-lapack=<lib>     Use LAPACK library <lib>
+  --with-blas-libs=<libs> Use BLAS libraries <libs>
+  --with-lapack-libs=<libs>
+                          Use LAPACK libraries <libs>
   --with-mpi=<lib>        Use MPI library <lib>
   --with-fft-path=<path>  Path to the FFTW install directory
   --with-fft-libdir=<path>
@@ -1503,23 +1508,31 @@ Optional Packages:
                           Path to the FFT include directory
   --with-fft-libs=<libs>  Link to FFT libraries
   --with-fftsg-fac=<val>  Change default Goedecker FFT cache factor
-  --with-blacs=<lib>      Use BLACS library <lib>
-  --with-scalapack=<lib>  Use SCALAPACK library <lib>
+  --with-blacs-libs=<libs>
+                          Use BLACS libraries <libs>
+  --with-scalapack-libs=<libs>
+                          Use SCALAPACK libraries <libs>
   --with-iotk-path=<path> Path to the IOTK install directory
+  --with-iotk-libdir=<path>
+                          Path to the IOTK lib directory
   --with-iotk-includedir=<path>
                           Path to the IOTK include directory
+  --with-iotk-libs=<libs> Use the IOTK library in <libs>
   --with-netcdf-path=<path>
                           Path to the NetCDF install directory
   --with-netcdf-includedir=<path>
                           Path to the NetCDF include directory
   --with-netcdf-libdir=<path>
                           Path to the NetCDF lib directory
+  --with-hdf5-libs=<libs> Link with HDF5 library <libs>
   --with-etsf-io-path=<path>
                           Path to the ETSF_IO install directory
   --with-etsf-io-libdir=<path>
                           Path to the ETSF_IO lib directory
   --with-etsf-io-includedir=<path>
                           Path to the ETSF_IO include directory
+  --with-etsf-io-libs=<libs>
+                          Use the ETSF_IO libraries in <libs>
   --with-libxc-path=<path>
                           Path to libxc install directory
   --with-libxc-includedir=<path>
@@ -7911,7 +7924,7 @@ compile_blas="no"
 compile_lapack="no"
 BLAS_LIBS=" "
 LAPACK_LIBS=" "
-if test "$with_blas" = "" || test "$with_lapack" = "" ; then
+if test "$with_blas_libs" = "" || test "$with_lapack_libs" = "" ; then
  compile_blas="yes"
  compile_lapack="yes"
 else
@@ -8272,16 +8285,16 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 acx_blas_ok=no
 
 
-# Check whether --with-blas was given.
-if test "${with_blas+set}" = set; then :
-  withval=$with_blas;
+# Check whether --with-blas_libs was given.
+if test "${with_blas_libs+set}" = set; then :
+  withval=$with_blas_libs;
 fi
 
-case $with_blas in
+case $with_blas_libs in
         yes | "") ;;
         no) acx_blas_ok=disable ;;
-        -* | */* | *.a | *.so | *.so.* | *.o) BLAS_LIBS="$with_blas" ;;
-        *) BLAS_LIBS="-l$with_blas" ;;
+        -* | */* | *.a | *.so | *.so.* | *.o) BLAS_LIBS="$with_blas_libs" ;;
+        *) BLAS_LIBS="-l$with_blas_libs" ;;
 esac
 
 # Set fortran linker names of BLAS functions to check for.
@@ -9122,16 +9135,16 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 acx_lapack_ok=no
 
 
-# Check whether --with-lapack was given.
-if test "${with_lapack+set}" = set; then :
-  withval=$with_lapack;
+# Check whether --with-lapack_libs was given.
+if test "${with_lapack_libs+set}" = set; then :
+  withval=$with_lapack_libs;
 fi
 
-case $with_lapack in
+case $with_lapack_libs in
         yes | "") ;;
         no) acx_lapack_ok=disable ;;
-        -* | */* | *.a | *.so | *.so.* | *.o) LAPACK_LIBS="$with_lapack" ;;
-        *) LAPACK_LIBS="-l$with_lapack" ;;
+        -* | */* | *.a | *.so | *.so.* | *.o) LAPACK_LIBS="$with_lapack_libs" ;;
+        *) LAPACK_LIBS="-l$with_lapack_libs" ;;
 esac
 
 # Set fortran linker name of LAPACK function to check for.
@@ -10211,15 +10224,15 @@ fi
 
 
 
-# Check whether --with-blacs was given.
-if test "${with_blacs+set}" = set; then :
-  withval=$with_blacs;
+# Check whether --with-blacs_libs was given.
+if test "${with_blacs_libs+set}" = set; then :
+  withval=$with_blacs_libs;
 fi
 
 
-# Check whether --with-scalapack was given.
-if test "${with_scalapack+set}" = set; then :
-  withval=$with_scalapack;
+# Check whether --with-scalapack_libs was given.
+if test "${with_scalapack_libs+set}" = set; then :
+  withval=$with_scalapack_libs;
 fi
 
 
@@ -10229,28 +10242,28 @@ acx_blacs_ok="no"
 acx_scalapack_ok="no"
 enable_scalapack="no"
 
-case $with_blacs in
+case $with_blacs_libs in
         yes | "") ;;
         no) acx_blacs_ok=disable ;;
-        -* | */* | *.a | *.so | *.so.* | *.o) BLACS_LIBS="$with_blacs" ;;
-        *) BLACS_LIBS="-l$with_blacs" ;;
+        -* | */* | *.a | *.so | *.so.* | *.o) BLACS_LIBS="$with_blacs_libs" ;;
+        *) BLACS_LIBS="-l$with_blacs_libs" ;;
 esac
 
-case $with_scalapack in
+case $with_scalapack_libs in
         yes | "") ;;
         no) acx_scalapack_ok=disable ;;
-        -* | */* | *.a | *.so | *.so.* | *.o) SCALAPACK_LIBS="$with_scalapack" ;;
-        *) SCALAPACK_LIBS="-l$with_scalapack" ;;
+        -* | */* | *.a | *.so | *.so.* | *.o) SCALAPACK_LIBS="$with_scalapack_libs" ;;
+        *) SCALAPACK_LIBS="-l$with_scalapack_libs" ;;
 esac
 
 # Set fortran linker names of BLACS/SCALAPACK functions to check for.
 blacs_routine="blacs_set"
 scalapack_routine="pcheev"
 
-if test "$mpibuild"  = "yes" && ! test "$with_blacs" = "no" && ! test "$with_scalapack" = "no"; then
+if test "$mpibuild"  = "yes" && ! test "$with_blacs_libs" = "no" && ! test "$with_scalapack_libs" = "no"; then
 
 acx_blacs_save_LIBS="$BLACS_LIBS"
-LIBS="$LIBS $FLIBS"
+LIBS="$LIBS $FLIBS $LAPACK_LIBS $BLAS_LIBS"
 # First, check BLACS_LIBS environment variable
 if test "x$BLACS_LIBS" != x; then
         save_LIBS="$LIBS"; LIBS="$BLACS_LIBS $LIBS"
@@ -10332,11 +10345,22 @@ if test "${with_iotk_path+set}" = set; then :
 fi
 
 
+# Check whether --with-iotk_libdir was given.
+if test "${with_iotk_libdir+set}" = set; then :
+  withval=$with_iotk_libdir;
+fi
+
+
 # Check whether --with-iotk_includedir was given.
 if test "${with_iotk_includedir+set}" = set; then :
   withval=$with_iotk_includedir;
 fi
 
+
+# Check whether --with-iotk_libs was given.
+if test "${with_iotk_libs+set}" = set; then :
+  withval=$with_iotk_libs;
+fi
 
 
 compile_p2y="no"
@@ -10344,31 +10368,60 @@ compile_iotk="no"
 iotk_idir=" "
 IOTK_LIBS=" "
 
+if test -d "$with_iotk_path"  ;  then enable_iotk=yes ; fi
+if test -d "$with_iotk_libdir" ; then enable_iotk=yes ; fi
+if test -d "$with_iotk_libs" ;   then enable_iotk=yes ; fi
+
 if test "x$enable_iotk" = "xyes" ; then
   #
-  if ! test "x$with_iotk_path" = "x" ; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for IOTK in $with_iotk_path" >&5
-$as_echo_n "checking for IOTK in $with_iotk_path... " >&6; }
-    # external iotk
-    if test -r $with_iotk_path/src/libiotk.a ; then
+  if test -d "$with_iotk_path" || test -d "$with_iotk_libdir" ; then
+    #
+    # external IOTK
+    #
+    if test -d "$with_iotk_path" ;   then { $as_echo "$as_me:${as_lineno-$LINENO}: checking for IOTK in $with_iotk_path" >&5
+$as_echo_n "checking for IOTK in $with_iotk_path... " >&6; } ; fi
+    if test -d "$with_iotk_libdir" ; then { $as_echo "$as_me:${as_lineno-$LINENO}: checking for IOTK in $with_iotk_libdir" >&5
+$as_echo_n "checking for IOTK in $with_iotk_libdir... " >&6; } ; fi
+    #
+    if test -d "$with_iotk_path" ; then
+        try_libdir=$with_iotk_path/src
+        try_incdir=$with_iotk_path/src
+    fi
+    if test -d "$with_iotk_libdir"  ;    then try_libdir=$with_iotk_libdir ; fi
+    if test -d "$with_iotk_includedir" ; then try_incdir=$with_iotk_includedir ; fi
+    #
+    if test -z "$try_libdir" ; then as_fn_error $? "No lib-dir specified" "$LINENO" 5 ; fi
+    if test -z "$try_incdir" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
+    #
+    #
+    if test -r $try_libdir/libiotk.a ; then
       compile_p2y="yes"
       compile_iotk="no"
-      if ! test "x$with_iotk_includedir" = "x" ; then
-         iotk_idir="-I$with_iotk_includedir"
-      else
-         iotk_idir="-I$with_iotk_path/src"
-      fi
-      #
+      iotk_idir="-I$try_incdir"
       IOTK_LIBS="-liotk"
-      cp "$with_iotk_path/src/libiotk.a" lib/
+      cp "$try_libdir/libiotk.a" lib/
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
     else
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
     fi
+  elif test x"$with_iotk_libs" != "x" && test -d "$with_iotk_includedir" ; then
+    #
+    # directly provided lib
+    #
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for IOTK Library using $with_iotk_libs" >&5
+$as_echo_n "checking for IOTK Library using $with_iotk_libs... " >&6; }
+    compile_p2y="yes"
+    compile_iotk="no"
+    iotk_idir="-I$with_iotk_includedir"
+    IOTK_LIBS="$with_iotk_libs"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
   else
-    # internal iotk
+    #
+    # internal IOTK
+    #
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for IOTK library" >&5
 $as_echo_n "checking for IOTK library... " >&6; }
     compile_iotk="yes"
@@ -10422,8 +10475,14 @@ if test "${with_netcdf_libdir+set}" = set; then :
   withval=$with_netcdf_libdir;
 fi
 
-#AC_ARG_WITH(netcdf_libs,AC_HELP_STRING([--with-netcdf-link=<flags>],
+#AC_ARG_WITH(netcdf_link,AC_HELP_STRING([--with-netcdf-link=<flags>],
 #                                  [Link to libraries needed by NetCDF or NetCDF/HDF5]))
+
+# Check whether --with-hdf5_libs was given.
+if test "${with_hdf5_libs+set}" = set; then :
+  withval=$with_hdf5_libs;
+fi
+
 
 #
 # LARGE DATABASES SUPPORT
@@ -10480,12 +10539,6 @@ $as_echo_n "checking for NetCDF in $with_netcdf_libdir... " >&6; } ; fi
     if test -d "$with_netcdf_path" ;   then { $as_echo "$as_me:${as_lineno-$LINENO}: checking for NetCDF in $with_netcdf_path" >&5
 $as_echo_n "checking for NetCDF in $with_netcdf_path... " >&6; } ; fi
     #
-    ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-    #
     if test -d "$with_netcdf_path" ; then
         try_libdir=$with_netcdf_path/lib
         try_incdir=$with_netcdf_path/include
@@ -10495,6 +10548,12 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
     #
     if test -z "$try_libdir" ; then as_fn_error $? "No lib-dir specified" "$LINENO" 5 ; fi
     if test -z "$try_incdir" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
+    #
+    ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
     #
     save_fcflags="$FCFLAGS"
     #
@@ -10602,6 +10661,7 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
     #
     if test -d "$try_libdir" ; then tmp="-L$try_libdir" ; fi
     HDF5_FLAGS="$tmp -lnetcdf -lhdf5_fortran -lhdf5_hl -lhdf5"
+    if ! test x"$with_hdf5_libs" = "x" ; then HDF5_FLAGS="$with_hdf5_libs" ; fi
     #
     if test -d "$try_incdir" ; then FCFLAGS="$IFLAG$try_incdir" ; fi
     #
@@ -10704,85 +10764,85 @@ if test "${with_etsf_io_includedir+set}" = set; then :
 fi
 
 
+# Check whether --with-etsf_io_libs was given.
+if test "${with_etsf_io_libs+set}" = set; then :
+  withval=$with_etsf_io_libs;
+fi
+
+
 compile_e2y="no"
 compile_etsf="no"
 etsf_libdir=" "
 etsf_idir=" "
 ETSF_LIBS=" "
 
-if ! test "x$with_etsf_io_path" = "x" ;    then enable_etsf_io=yes ; fi
-if test -d "$with_etsf_io_includedir" && test -d "$with_etsf_io_libdir" ; then
-        enable_etsf_io=yes
-fi
+if test -d "$with_etsf_io_path"  ;  then enable_etsf_io=yes ; fi
+if test -d "$with_etsf_io_libdir" ; then enable_etsf_io=yes ; fi
+#
+if test x"$netcdf" != "xyes" ; then enable_etsf_io=no ; fi
 #
 # main search
 #
 if test "x$enable_etsf_io" = "xyes" ; then
   #
-  if ! test "x$with_etsf_io_path" = "x" ; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ETSF_IO in $with_etsf_io_path" >&5
-$as_echo_n "checking for ETSF_IO in $with_etsf_io_path... " >&6; }
-    # check for external lib
+  if test -d "$with_etsf_io_path" || test -d "$with_etsf_io_libdir" ; then
     #
-    if test -r $with_etsf_io_path/lib/libetsf_io.a ; then
+    # external ETSF_IO
+    #
+    if test -d "$with_etsf_io_path" ;   then { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ETSF_IO in $with_etsf_io_path" >&5
+$as_echo_n "checking for ETSF_IO in $with_etsf_io_path... " >&6; } ; fi
+    if test -d "$with_etsf_io_libdir" ; then { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ETSF_IO in $with_etsf_io_libdir" >&5
+$as_echo_n "checking for ETSF_IO in $with_etsf_io_libdir... " >&6; } ; fi
+    #
+    if test -d "$with_etsf_io_path" ; then
+        try_libdir=$with_etsf_io_path/lib
+        try_incdir=$with_etsf_io_path/include
+    fi
+    if test -d "$with_etsf_io_libdir"     ; then try_libdir=$with_etsf_io_libdir ; fi
+    if test -d "$with_etsf_io_includedir" ; then try_incdir=$with_etsf_io_includedir ; fi
+    #
+    if test -z "$try_libdir" ; then as_fn_error $? "No lib-dir specified" "$LINENO" 5 ; fi
+    if test -z "$try_incdir" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
+    #
+    #
+    if test -r $try_libdir/libetsf_io.a ; then
       compile_e2y="yes"
       compile_etsf="no"
-      etsf_idir="-I$with_etsf_path/include"
+      etsf_idir="-I$try_incdir"
       ETSF_LIBS="-letsf_io"
       #
-      for file in `find $with_etsf_io_path/include \( -name '*etsf_io*' -o -name '*typesizes*' \) `; do
+      for file in `find $try_incdir \( -name '*etsf_io*' -o -name '*typesizes*' \) `; do
          cp $file include/
       done
-      for file in `find $with_etsf_io_path/lib -name '*etsf_io*.a'`; do
+      for file in `find $try_libdir -name '*etsf_io*.a'`; do
          cp $file lib/
       done
       #
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-    #else
-    #  compile_etsf="yes"
-    fi
-  elif test -d "$with_etsf_io_includedir" && test -d "$with_etsf_io_libdir" ; then
-    # check for external lib (second option)
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ETSF_IO in $with_etsf_io_libdir" >&5
-$as_echo_n "checking for ETSF_IO in $with_etsf_io_libdir... " >&6; }
-    if test "$netcdf" = "yes"; then
-       if test -r $with_etsf_io_libdir/libetsf_io.a ; then
-          #
-          compile_e2y="yes"
-          compile_etsf=no
-          etsf_idir="-I$with_etsf_io_libdir"
-          ETSF_LIBS="-letsf_io"
-          #
-          for file in `find $with_etsf_io_includedir \( -name '*etsf_io*' \) `; do
-             cp $file include/
-          done
-          for file in `find $with_etsf_io_libdir -name '*etsf_io*.a'`; do
-             cp $file lib/
-          done
-          #
-          { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-       else
-          { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-       fi
     else
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ETSF_IO requires NETCDF. ETSF_IO support removed." >&5
-$as_echo "$as_me: WARNING: ETSF_IO requires NETCDF. ETSF_IO support removed." >&2;}
     fi
+  elif test x"$with_etsf_io_libs" != "x" && test -d "$with_etsf_io_includedir" ; then
+    #
+    # directly provided lib
+    #
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ETSF_IO Library using $with_etsf_io_libs" >&5
+$as_echo_n "checking for ETSF_IO Library using $with_etsf_io_libs... " >&6; }
+    compile_etsf="no"
+    compile_e2y="yes"
+    etsf_idir="-I$with_etsf_io_includedir"
+    ETSF_LIBS="$with_etsf_io_libs"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
   else
+    #
+    # internal ETSF_IO
+    #
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ETSF_IO Library" >&5
 $as_echo_n "checking for ETSF_IO Library... " >&6; }
-    # internal etsf_io
     compile_etsf="yes"
-  fi
-
-  #
-  # internal etsf_io
-  if test "x$compile_etsf" = "xyes" ; then
     compile_e2y="yes"
     etsf_idir=" "
     ETSF_LIBS="-letsf_io"
@@ -10810,15 +10870,15 @@ acx_libxc_ok=no
 compile_libxc=yes
 
 
-# Check whether --with-libxc-path was given.
+# Check whether --with-libxc_path was given.
 if test "${with_libxc_path+set}" = set; then :
   withval=$with_libxc_path;
 fi
 
 
-# Check whether --with-libxc-include-dir was given.
-if test "${with_libxc_include_dir+set}" = set; then :
-  withval=$with_libxc_include_dir;
+# Check whether --with-libxc_includedir was given.
+if test "${with_libxc_includedir+set}" = set; then :
+  withval=$with_libxc_includedir;
 fi
 
 

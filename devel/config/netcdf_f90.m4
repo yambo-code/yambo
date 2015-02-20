@@ -34,8 +34,10 @@ AC_ARG_WITH(netcdf_includedir,AC_HELP_STRING([--with-netcdf-includedir=<path>],
                                   [Path to the NetCDF include directory]))
 AC_ARG_WITH(netcdf_libdir,AC_HELP_STRING([--with-netcdf-libdir=<path>],
                                   [Path to the NetCDF lib directory]))
-#AC_ARG_WITH(netcdf_libs,AC_HELP_STRING([--with-netcdf-link=<flags>],
+#AC_ARG_WITH(netcdf_link,AC_HELP_STRING([--with-netcdf-link=<flags>],
 #                                  [Link to libraries needed by NetCDF or NetCDF/HDF5]))
+AC_ARG_WITH(hdf5_libs,AC_HELP_STRING([--with-hdf5-libs=<libs>],
+                                  [Link with HDF5 library <libs>]))
 
 #
 # LARGE DATABASES SUPPORT
@@ -84,8 +86,6 @@ if test "x$enable_netcdf" = "xyes" ; then
     if test -d "$with_netcdf_libdir" ; then AC_MSG_CHECKING([for NetCDF in $with_netcdf_libdir]) ; fi
     if test -d "$with_netcdf_path" ;   then AC_MSG_CHECKING([for NetCDF in $with_netcdf_path]) ; fi
     #
-    AC_LANG([Fortran])
-    #
     if test -d "$with_netcdf_path" ; then 
         try_libdir=$with_netcdf_path/lib
         try_incdir=$with_netcdf_path/include
@@ -95,6 +95,8 @@ if test "x$enable_netcdf" = "xyes" ; then
     #
     if test -z "$try_libdir" ; then AC_MSG_ERROR([No lib-dir specified]) ; fi
     if test -z "$try_incdir" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
+    #
+    AC_LANG([Fortran])
     #
     save_fcflags="$FCFLAGS"
     #
@@ -182,6 +184,7 @@ if test "x$netcdf" = xyes; then
     #
     if test -d "$try_libdir" ; then tmp="-L$try_libdir" ; fi
     HDF5_FLAGS="$tmp -lnetcdf -lhdf5_fortran -lhdf5_hl -lhdf5"
+    if ! test x"$with_hdf5_libs" = "x" ; then HDF5_FLAGS="$with_hdf5_libs" ; fi
     #
     if test -d "$try_incdir" ; then FCFLAGS="$IFLAG$try_incdir" ; fi
     #

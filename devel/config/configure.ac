@@ -341,7 +341,7 @@ compile_blas="no"
 compile_lapack="no"
 BLAS_LIBS=" "
 LAPACK_LIBS=" "
-if test "$with_blas" = "" || test "$with_lapack" = "" ; then
+if test "$with_blas_libs" = "" || test "$with_lapack_libs" = "" ; then
  compile_blas="yes"
  compile_lapack="yes"
 else

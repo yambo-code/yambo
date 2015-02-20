@@ -85,11 +85,11 @@ case $target in
    llibs="-lint_modules $llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfft) -lm $llmpi"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs -liotk  \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfft) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(liotk) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfft) -lm $llmpi"
    linclude="$linclude \$(iotk_idir)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs -letsf_io \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfft) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(letsf) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfft) -lm $llmpi"
    linclude="$linclude \$(etsf_idir)"
     ;;
   ypp*)

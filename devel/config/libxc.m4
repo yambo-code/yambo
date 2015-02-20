@@ -23,8 +23,8 @@ compile_libxc=yes
 
 dnl Check if the library was given in the command line
 dnl if not, use environment variables or defaults
-AC_ARG_WITH(libxc-path, [AS_HELP_STRING([--with-libxc-path=<path>], [Path to libxc install directory])])
-AC_ARG_WITH(libxc-include-dir, [AS_HELP_STRING([--with-libxc-includedir=<path>], [Path to the libxc include directory])])
+AC_ARG_WITH(libxc_path, [AS_HELP_STRING([--with-libxc-path=<path>], [Path to libxc install directory])])
+AC_ARG_WITH(libxc_includedir, [AS_HELP_STRING([--with-libxc-includedir=<path>], [Path to the libxc include directory])])
 
 if test -d "$with_libxc_path"; then
 # Set FCFLAGS_LIBXC 

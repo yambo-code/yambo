@@ -3292,6 +3292,7 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
   use interfaces,     ONLY:MATRIX_driver
   use matrix_operate, ONLY:DIAGO
   use pars,           ONLY:SP
+  use stderr,         ONLY:intc
   !
   IMPLICIT NONE
   CHARACTER(LEN=*), INTENT(IN) :: psfile
@@ -3306,7 +3307,6 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
   complex(SP) :: cd_tmp(nbeta,nbeta)
   !
   character(50) :: dummy
-  character(2)  :: intc(9)
   logical       :: ldummy
   INTEGER :: idummy,ibeta,idummy2,i1
   INTEGER        :: i, iostat, u, ierr, ierr_
@@ -3339,18 +3339,8 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
     !
     CALL iotk_scan_begin(u, 'PP_NONLOCAL')
     !
-    intc(1)='.1'
-    intc(2)='.2'
-    intc(3)='.3'
-    intc(4)='.4'
-    intc(5)='.5'
-    intc(6)='.6'
-    intc(7)='.7'
-    intc(8)='.8'
-    intc(9)='.9'
-    !
     DO ibeta=1,nbeta
-      CALL iotk_scan_dat(u, 'PP_BETA'//intc(ibeta), &
+      CALL iotk_scan_dat(u, 'PP_BETA.'//intc(ibeta), &
                              beta_tmp(:,ibeta), attr=attr)
       CALL iotk_scan_attr(attr, 'size',  mesh_beta(ibeta))
       CALL iotk_scan_attr(attr, 'angular_momentum',  lbeta(ibeta))
@@ -3379,7 +3369,7 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
     CALL iotk_scan_begin(u, 'PP_SPIN_ORB')
     !
     DO ibeta = 1,nbeta
-      CALL iotk_scan_empty(u, 'PP_RELBETA'//intc(ibeta),attr=attr)
+      CALL iotk_scan_empty(u, 'PP_RELBETA.'//intc(ibeta),attr=attr)
       CALL iotk_scan_attr(attr, 'jjj',   jbeta(ibeta))
     ENDDO
     jbeta=matmul(transpose(d_tmp)**2,jbeta)

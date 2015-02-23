@@ -4,10 +4,10 @@
 #
 AC_DEFUN([SLK_SETUP],[
 
-AC_ARG_WITH(blacs,
-        [AC_HELP_STRING([--with-blacs=<lib>], [Use BLACS library <lib>])])
-AC_ARG_WITH(scalapack,
-        [AC_HELP_STRING([--with-scalapack=<lib>], [Use SCALAPACK library <lib>])])
+AC_ARG_WITH(blacs_libs,
+        [AC_HELP_STRING([--with-blacs-libs=<libs>], [Use BLACS libraries <libs>],[32])])
+AC_ARG_WITH(scalapack_libs,
+        [AC_HELP_STRING([--with-scalapack-libs=<libs>], [Use SCALAPACK libraries <libs>],[32])])
 
 SCALAPACK_LIBS=""
 BLACS_LIBS=""
@@ -15,28 +15,28 @@ acx_blacs_ok="no"
 acx_scalapack_ok="no"
 enable_scalapack="no"
 
-case $with_blacs in
+case $with_blacs_libs in
         yes | "") ;;
         no) acx_blacs_ok=disable ;;
-        -* | */* | *.a | *.so | *.so.* | *.o) BLACS_LIBS="$with_blacs" ;;
-        *) BLACS_LIBS="-l$with_blacs" ;;
+        -* | */* | *.a | *.so | *.so.* | *.o) BLACS_LIBS="$with_blacs_libs" ;;
+        *) BLACS_LIBS="-l$with_blacs_libs" ;;
 esac
 
-case $with_scalapack in
+case $with_scalapack_libs in
         yes | "") ;;
         no) acx_scalapack_ok=disable ;;
-        -* | */* | *.a | *.so | *.so.* | *.o) SCALAPACK_LIBS="$with_scalapack" ;;
-        *) SCALAPACK_LIBS="-l$with_scalapack" ;;
+        -* | */* | *.a | *.so | *.so.* | *.o) SCALAPACK_LIBS="$with_scalapack_libs" ;;
+        *) SCALAPACK_LIBS="-l$with_scalapack_libs" ;;
 esac
 
 # Set fortran linker names of BLACS/SCALAPACK functions to check for.
 blacs_routine="blacs_set"
 scalapack_routine="pcheev"
 
-if test "$mpibuild"  = "yes" && ! test "$with_blacs" = "no" && ! test "$with_scalapack" = "no"; then
+if test "$mpibuild"  = "yes" && ! test "$with_blacs_libs" = "no" && ! test "$with_scalapack_libs" = "no"; then
 
 acx_blacs_save_LIBS="$BLACS_LIBS"
-LIBS="$LIBS $FLIBS"
+LIBS="$LIBS $FLIBS $LAPACK_LIBS $BLAS_LIBS"
 # First, check BLACS_LIBS environment variable
 if test "x$BLACS_LIBS" != x; then
         save_LIBS="$LIBS"; LIBS="$BLACS_LIBS $LIBS"

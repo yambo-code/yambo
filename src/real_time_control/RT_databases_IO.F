@@ -23,7 +23,7 @@
 !                  
 subroutine RT_databases_IO(E,it)
  !
- use drivers,        ONLY:l_elph_scatt
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use rt_ctl,         ONLY:RT_do_IO,ID,it_start
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL,io_GF,io_CARRIERs,io_J
@@ -63,7 +63,7 @@ subroutine RT_databases_IO(E,it)
  !
  ! Occupations
  !
- if (io_CARRIERs.and.RT_do_IO('CARRIERS')) then
+ if ((l_elel_scatt.or.l_elph_scatt).and.io_CARRIERs.and.RT_do_IO('CARRIERS')) then
    !
    call RT_carriers_object(RT_carriers,WHAT='fill')
    !

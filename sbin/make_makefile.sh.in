@@ -76,27 +76,33 @@ linclude="-I\$(includedir)"
 if [ @F90_MODULE_FLAG@ != "-I" ]; then
 lf90include="$lf90include $linclude"
 fi
+llibinclude="\$(netcdf_idir)"
+#
 case $target in
   yambo*)
    llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec \$(llocal) \$(ldierckx) \$(lfft) -lm $llmpi"
+   linclude="$linclude \$(netcdf_idir)"
     ;;
   a2y|elk2y|c2y)
    llibs="-lint_modules $llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfft) -lm $llmpi"
+   linclude="$linclude \$(netcdf_idir)"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs -liotk  \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(iotk_idir)"
+   llibs="-lint_modules $llibs \$(liotk) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfft) -lm $llmpi"
+   linclude="$linclude \$(iotk_idir) \$(netcdf_idir)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs -letsf_io \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(etsf_idir)"
+   llibs="-lint_modules $llibs \$(letsf) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfft) -lm $llmpi"
+   linclude="$linclude \$(etsf_idir) \$(netcdf_idir)"
     ;;
   ypp*)
    llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfft) -lm $llmpi"
+   linclude="$linclude \$(netcdf_idir)"
     ;;
   ydb*)
    llibs="$llibs \$(lfftqe) \$(llapack) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal"
+   linclude="$linclude \$(netcdf_idir)"
     ;;
 esac
 
@@ -106,7 +112,8 @@ echo "fcflags=$fcflags" >> $cdir/Makefile
 echo "fcuflags=$fcuflags" >> $cdir/Makefile
 echo "llibs=$llibs" >> $cdir/Makefile
 echo "linclude=$linclude" >> $cdir/Makefile
-echo "lf90include=$lf90include" >> $cdir/Makefile
+echo "llibinclude=$llibinclude" >> $cdir/Makefile
+echo "lf90include=$lf90include $llibinclude" >> $cdir/Makefile
 echo "mfiles=find . -name '*.mod'" >> $cdir/Makefile
 echo "target=$target" >> $cdir/Makefile
 echo "dmpi=$dmpi" >> $cdir/Makefile

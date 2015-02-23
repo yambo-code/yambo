@@ -21,11 +21,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.0 r.4076 , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.0 r.4081 , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="0"
-SREVISION="4076"
+SREVISION="4081"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -35,14 +35,14 @@ AC_CONFIG_SRCDIR([driver/driver.c])
 m4_include([config/acx_lapack.m4])
 m4_include([config/acx_mpi.m4])
 m4_include([config/acx_blas.m4])
-m4_include([config/acx.m4])
+m4_include([config/acx_misc.m4])
 m4_include([config/acx_gmake.m4])
 m4_include([config/netcdf_f90.m4])
 m4_include([config/libxc.m4])
 m4_include([config/fft.m4])
 m4_include([config/iotk.m4])
 m4_include([config/etsf_io.m4])
-m4_include([config/slk.m4])
+m4_include([config/scalapack.m4])
 m4_include([config/acx_report.m4])
 m4_include([config/acx_get_fc_version.m4])
 m4_include([config/acx_cpp.m4])
@@ -79,7 +79,7 @@ hostname=`uname -n`
 AC_SUBST(hostname)
 # ============================================================================
 # EDITOR
-AC_ARG_WITH(editor, AC_HELP_STRING([--with-editor=<exe>],[User-defined editor])) 
+AC_ARG_WITH(editor, AC_HELP_STRING([--with-editor=<exe>],[User-defined editor],[32])) 
 AC_CHECK_PROGS(editor,[$with_editor vim vi pico],["none"])
 AC_SUBST(editor)
 
@@ -137,7 +137,7 @@ AC_SUBST(dp_cpp)
 # check for p2y versions
 #
 AC_ARG_WITH(p2y, AC_HELP_STRING([--with-p2y-version=<flags>],
- [Version number for PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0> <5.0>]))
+ [Version number for PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0> <5.0>],[32]))
 
 PW_VER="5.0"
 PW_CPP="_P2Y_V50"
@@ -257,7 +257,7 @@ AC_LANG_PUSH(Fortran)
 # F90 extension
 #
 AC_ARG_WITH(f90ext, AC_HELP_STRING([--with-f90ext=<flags>],
-[Use .<flags> Fortran 90 extension]))
+           [Use .<flags> Fortran 90 extension],[32]))
 if ! test -z "$with_f90ext"; then F90SUFFIX=".$with_f90ext"; fi
 case $F90SUFFIX in
  .f90)
@@ -341,7 +341,7 @@ compile_blas="no"
 compile_lapack="no"
 BLAS_LIBS=" "
 LAPACK_LIBS=" "
-if test "$with_blas" = "" || test "$with_lapack" = "" ; then
+if test "$with_blas_libs" = "" || test "$with_lapack_libs" = "" ; then
  compile_blas="yes"
  compile_lapack="yes"
 else
@@ -376,7 +376,7 @@ AC_SUBST(DLARAN)
 # ============================================================================
 # MPI
 mpibuild="yes" 
-AC_ARG_WITH(mpi, AC_HELP_STRING([--with-mpi=<lib>],[Use MPI library <lib>]))
+AC_ARG_WITH(mpi, AC_HELP_STRING([--with-mpi=<lib>],[Use MPI library <lib>],[32]))
 case $with_mpi in
   yes | "") ;;
   no ) 
@@ -439,7 +439,7 @@ SLK_SETUP
 AC_HAVE_IOTK
 # ============================================================================
 # NETCDF 
-KH_PATH_NETCDF_F90
+AC_HAVE_NETCDF_F90
 # ============================================================================
 # ETSF_IO
 AC_HAVE_ETSF_IO

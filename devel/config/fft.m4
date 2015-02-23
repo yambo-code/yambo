@@ -23,27 +23,23 @@
 #
 AC_DEFUN([AC_HAVE_FFT],[
 
-#AC_ARG_WITH(fftw,AC_HELP_STRING([--with-fftw=<path>],
-#            [Path of the FFTW library directory]),[],[])
-#AC_ARG_WITH(fftw_lib,AC_HELP_STRING([--with-fftw-lib=<lib>],
-#            [FFTW library name]),[],[])
-#AC_ARG_WITH(essl_fft_lib,AC_HELP_STRING([--with-essl-fft-lib=<lib>],
-#            [ESSL-FFT library name]),[],[])
-
 AC_ARG_WITH(fft_path,AC_HELP_STRING([--with-fft-path=<path>],
-            [Path to the FFTW install directory]),[],[])
+            [Path to the FFTW install directory],[32]),[],[])
 AC_ARG_WITH(fft_libdir,AC_HELP_STRING([--with-fft-libdir=<path>],
-            [Path to the FFTW lib directory]),[],[])
+            [Path to the FFTW lib directory],[32]),[],[])
 AC_ARG_WITH(fft_includedir,AC_HELP_STRING([--with-fft-includedir=<path>],
-            [Path to the FFT include directory]),[],[])
+            [Path to the FFT include directory],[32]),[],[])
 AC_ARG_WITH(fft_libs,AC_HELP_STRING([--with-fft-libs=<libs>],
-            [Link to FFT libraries]),[],[])
+            [Link to FFT libraries],[32]),[],[])
 #
 AC_ARG_ENABLE(internal_fftw,AC_HELP_STRING([--enable-internal-fftw],
             [Use internal FFTW library]),[],[])
 AC_ARG_ENABLE(internal_fftsg,AC_HELP_STRING([--enable-internal-fftsg],
             [Use internal Goedecker FFT library]),[],[enable_internal_fftsg=yes])
 AC_ARG_ENABLE(3d_fft,AC_HELP_STRING([--enable-3d-fft],[Use 3D FFT]),[],[])
+#
+AC_ARG_WITH(fftsg_fac, AC_HELP_STRING([--with-fftsg-fac=<val>],
+            [Change default Goedecker FFT cache factor],[32]))
 
 if ! test x"$enable_3d_fft" = "xno" ; then FFT3D_CPP="-D_USE_3D_FFT" ; fi
 #
@@ -201,8 +197,6 @@ if test "$HAVE_FFTW" = "yes" ; then HAVE_FFT=yes ; fi
 #
 if test "$use_internal_fftsg" = "yes" ; then
   # SG FFT NCACHE 
-  AC_ARG_WITH(fftfac, AC_HELP_STRING([--with-fftsg-fac=<val>],
-                      [Change default Goedecker FFT cache factor]))
   fft_cfactor="0"
   case "${host}" in
     powerpc-ibm*)
@@ -210,8 +204,8 @@ if test "$use_internal_fftsg" = "yes" ; then
     ;;
   esac
   #
-  if ! test x"$with_fftfac" = "x"; then
-    fft_cfactor="$with_fftfac"
+  if ! test x"$with_fftsg_fac" = "x"; then
+    fft_cfactor="$with_fftsg_fac"
   fi
   #
   FFT_DESCRIPTION="Goedecker Fast Fourier transform with $fft_cfactor cache"

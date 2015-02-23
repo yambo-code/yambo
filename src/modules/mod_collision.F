@@ -79,7 +79,6 @@ module collision
  type(COLLISIONS_element), allocatable :: HF_collisions(:)
  integer :: nCOHSEX_collisions=0
  type(COLLISIONS_element), allocatable :: COHSEX_collisions(:)
- !type(COLLISIONS_element), allocatable :: IO_collision
  !
  contains
    !

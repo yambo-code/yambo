@@ -18,8 +18,8 @@
 # [@ETSF_str@] ETSF I/O support
 # [@SLK_str@] SCALAPACK
 # [@LIBXC_str@] external LibXC
+# [@BLAS_str@@LAPACK_str@] Built-in BLAS/LAPACK
 # [@NETCDF_str@@HDF5_str@@NETCDF_LF_str@] NETCDF/HDF5/Large Files 
-# [@BLAS_str@@LAPACK_str@@LOCAL_str@] Built-in BLAS/LAPACK/LOCAL
 # [@IOTK_loc_str@@NETCDF_loc_str@@ETSF_loc_str@] Built-in IOTK/NETCDF/ETSF_IO
 #
 # [ CPP ] @C_AS_CPP@ @C_AS_CPP_FLAGS@ @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @openmpi_cpp@ @time_profile_cpp@

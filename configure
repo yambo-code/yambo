@@ -629,7 +629,6 @@ BGQ_str
 OPENMPI_str
 OPENMP_str
 SLK_str
-LOCAL_str
 LAPACK_str
 BLAS_str
 PW_str
@@ -11175,9 +11174,6 @@ if test "$compile_lapack" = "yes" ; then LAPACK_str="X"; fi
 BLAS_str=" "
 if test "$compile_blas" = "yes" ; then BLAS_str="X"; fi
 
-LOCAL_str=" "
-if test "$compile_local" = "yes" ; then LOCAL_str="X"; fi
-
 SLK_str=" "
 if test "$enable_scalapack" = "yes" ; then SLK_str="X"; fi
 
@@ -11188,7 +11184,6 @@ OPENMPI_str=" "
 if test "$enable_openmpi" = "yes" ; then OPENMPI_str="X"; fi
 
 if test "$exec_prefix" = "NONE" ; then exec_prefix="$srcdir_path"; fi
-
 
 
 

@@ -5,9 +5,9 @@
 AC_DEFUN([SLK_SETUP],[
 
 AC_ARG_WITH(blacs_libs,
-        [AC_HELP_STRING([--with-blacs-libs=<libs>], [Use BLACS libraries <libs>])])
+        [AC_HELP_STRING([--with-blacs-libs=<libs>], [Use BLACS libraries <libs>],[32])])
 AC_ARG_WITH(scalapack_libs,
-        [AC_HELP_STRING([--with-scalapack-libs=<libs>], [Use SCALAPACK libraries <libs>])])
+        [AC_HELP_STRING([--with-scalapack-libs=<libs>], [Use SCALAPACK libraries <libs>],[32])])
 
 SCALAPACK_LIBS=""
 BLACS_LIBS=""

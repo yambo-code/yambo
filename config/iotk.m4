@@ -25,14 +25,14 @@ AC_DEFUN([AC_HAVE_IOTK],[
 
 AC_ARG_ENABLE(iotk, AC_HELP_STRING([--enable-iotk],
             [Activate the IOTK support]),[],[enable_iotk="yes"])
-AC_ARG_WITH(iotk_path, AC_HELP_STRING([--with-iotk-path=<path>],
-            [Path to the IOTK install directory]),[],[])
-AC_ARG_WITH(iotk_libdir, AC_HELP_STRING([--with-iotk-libdir=<path>],
-            [Path to the IOTK lib directory]))
-AC_ARG_WITH(iotk_includedir, AC_HELP_STRING([--with-iotk-includedir=<path>],
-            [Path to the IOTK include directory]),[],[])
 AC_ARG_WITH(iotk_libs, AC_HELP_STRING([--with-iotk-libs=<libs>],
-            [Use the IOTK library in <libs>]),[],[])
+            [Use the IOTK library in <libs>],[32]),[],[])
+AC_ARG_WITH(iotk_path, AC_HELP_STRING([--with-iotk-path=<path>],
+            [Path to the IOTK install directory],[32]),[],[])
+AC_ARG_WITH(iotk_libdir, AC_HELP_STRING([--with-iotk-libdir=<path>],
+            [Path to the IOTK lib directory],[32]))
+AC_ARG_WITH(iotk_includedir, AC_HELP_STRING([--with-iotk-includedir=<path>],
+            [Path to the IOTK include directory],[32]),[],[])
 
 compile_p2y="no"
 compile_iotk="no"
@@ -42,6 +42,11 @@ IOTK_LIBS=" "
 if test -d "$with_iotk_path"  ;  then enable_iotk=yes ; fi
 if test -d "$with_iotk_libdir" ; then enable_iotk=yes ; fi
 if test -d "$with_iotk_libs" ;   then enable_iotk=yes ; fi
+#
+# F90 module flag
+#
+IFLAG=$ax_cv_f90_modflag
+if test -z "$IFLAG" ; then IFLAG="-I" ; fi
 
 if test "x$enable_iotk" = "xyes" ; then
   #
@@ -66,7 +71,7 @@ if test "x$enable_iotk" = "xyes" ; then
     if test -r $try_libdir/libiotk.a ; then
       compile_p2y="yes"
       compile_iotk="no"
-      iotk_idir="-I$try_incdir"
+      iotk_idir="$IFLAG$try_incdir"
       IOTK_LIBS="-liotk"
       cp "$try_libdir/libiotk.a" lib/
       AC_MSG_RESULT([yes])
@@ -80,7 +85,7 @@ if test "x$enable_iotk" = "xyes" ; then
     AC_MSG_CHECKING([for IOTK Library using $with_iotk_libs])
     compile_p2y="yes"
     compile_iotk="no"
-    iotk_idir="-I$with_iotk_includedir"
+    iotk_idir="$IFLAG$with_iotk_includedir"
     IOTK_LIBS="$with_iotk_libs"
     AC_MSG_RESULT(yes)
   else

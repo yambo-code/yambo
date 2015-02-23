@@ -8,7 +8,7 @@ AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
 acx_blas_ok=no
 
 AC_ARG_WITH(blas_libs,
-        [AC_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>])])
+        [AC_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>],[32])])
 case $with_blas_libs in
         yes | "") ;;
         no) acx_blas_ok=disable ;;

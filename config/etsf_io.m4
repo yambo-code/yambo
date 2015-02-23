@@ -25,14 +25,14 @@ AC_DEFUN([AC_HAVE_ETSF_IO],[
 
 AC_ARG_ENABLE(etsf_io, AC_HELP_STRING([--enable-etsf-io],
    [Activate the ETSF_IO support]),[],[enable_etsf_io="no"])
-AC_ARG_WITH(etsf_io_path, AC_HELP_STRING([--with-etsf-io-path=<path>],
-   [Path to the ETSF_IO install directory]))
-AC_ARG_WITH(etsf_io_libdir, AC_HELP_STRING([--with-etsf-io-libdir=<path>],
-   [Path to the ETSF_IO lib directory]))
-AC_ARG_WITH(etsf_io_includedir, AC_HELP_STRING([--with-etsf-io-includedir=<path>],
-   [Path to the ETSF_IO include directory]))
 AC_ARG_WITH(etsf_io_libs, AC_HELP_STRING([--with-etsf-io-libs=<libs>],
-   [Use the ETSF_IO libraries in <libs>]))
+   [Use the ETSF_IO libraries in <libs>],[32]))
+AC_ARG_WITH(etsf_io_path, AC_HELP_STRING([--with-etsf-io-path=<path>],
+   [Path to the ETSF_IO install directory],[32]))
+AC_ARG_WITH(etsf_io_libdir, AC_HELP_STRING([--with-etsf-io-libdir=<path>],
+   [Path to the ETSF_IO lib directory],[32]))
+AC_ARG_WITH(etsf_io_includedir, AC_HELP_STRING([--with-etsf-io-includedir=<path>],
+   [Path to the ETSF_IO include directory],[32]))
 
 compile_e2y="no"
 compile_etsf="no"
@@ -45,6 +45,12 @@ if test -d "$with_etsf_io_libdir" ; then enable_etsf_io=yes ; fi
 if test -d "$with_etsf_io_libs" ;   then enable_etsf_io=yes ; fi
 #
 if test x"$netcdf" != "xyes" ; then enable_etsf_io=no ; fi
+#
+# F90 module flag
+#
+IFLAG=$ax_cv_f90_modflag
+if test -z "$IFLAG" ; then IFLAG="-I" ; fi
+
 #
 # main search
 #
@@ -71,7 +77,7 @@ if test "x$enable_etsf_io" = "xyes" ; then
     if test -r $try_libdir/libetsf_io.a ; then
       compile_e2y="yes"
       compile_etsf="no"
-      etsf_idir="-I$try_incdir"
+      etsf_idir="$IFLAG$try_incdir"
       ETSF_LIBS="-letsf_io"
       #
       for file in `find $try_incdir \( -name '*etsf_io*' -o -name '*typesizes*' \) `; do
@@ -92,7 +98,7 @@ if test "x$enable_etsf_io" = "xyes" ; then
     AC_MSG_CHECKING([for ETSF_IO Library using $with_etsf_io_libs])
     compile_etsf="no"
     compile_e2y="yes"
-    etsf_idir="-I$with_etsf_io_includedir"
+    etsf_idir="$IFLAG$with_etsf_io_includedir"
     ETSF_LIBS="$with_etsf_io_libs"
     AC_MSG_RESULT(yes)
   else

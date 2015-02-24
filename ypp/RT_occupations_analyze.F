@@ -73,7 +73,7 @@ subroutine RT_occupations_analyze(k,E)
  ! 
  n_output=2
  titles(1)='T[fs]'
- titles(2)='Occ.'
+ titles(2)='Delta Occ.'
  !
  if (l_elel_scatt.and.l_ELPH_lifetimes) then
    n_output=9
@@ -180,7 +180,9 @@ subroutine RT_occupations_analyze(k,E)
      call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                   RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,RT_carriers%f_bare,RT_f_bare,&
 &                                   ' ',.TRUE.)
+     !
      n_gamma=0
+     !
      if (l_ELPH_lifetimes) then
        n_gamma=4
        call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
@@ -196,6 +198,7 @@ subroutine RT_occupations_analyze(k,E)
 &                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
 &                                     RT_carriers%dGAMMA_E_P_El_abs,RT_gamma(:,:,:,6),' ',.TRUE.)
      endif
+     !
      if (l_elel_scatt) then
        n_gamma=n_gamma+2
        call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
@@ -205,6 +208,7 @@ subroutine RT_occupations_analyze(k,E)
 &                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
 &                                     RT_carriers%dGAMMA_E_E_Electron,RT_gamma(:,:,:,n_gamma),' ',.TRUE.)
      endif
+     !
      if (l_ELPH_lifetimes.or.l_elel_scatt) then
        call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
@@ -228,11 +232,6 @@ subroutine RT_occupations_analyze(k,E)
          if (i_T==1) call open_file()
        endif
        !
-       !  RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+RT_delta0_occ(i_RT,i_T)*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
-       !  !
-       !  if (ib==SC_bands(1).and.SC_bands(1)>1) RT_occupations_sum(3,i_T)=RT_occupations_sum(3,i_T)+ &
-       !                                         spin_occ*k%weights(ik)*real(SC_bands(1)-1)/real(RT_Nk_ibz(ik),SP)
-       !
        data_to_plot(1)=io_TIME/FS2AUT
        data_to_plot(2)=RT_df(ib,ik,i_spin)
        !
@@ -241,13 +240,8 @@ subroutine RT_occupations_analyze(k,E)
          data_to_plot(2+n_gamma+1)  =RT_NEQ_lifetime(ib,ik,i_spin)*HA2EV*1000._SP
        endif
        !
-       !if(.not.l_group_occ .or. (ik_rim==RT_ibz_coo(ik,2).and.l_group_occ) ) then
-       !  data_to_plot(2)=data_to_plot(2)/real(RT_Nk_ibz(ik),SP)
-       !  if (ib<=E%nbf) RT_occupations_sum(1,i_T)=RT_occupations_sum(1,i_T)+data_to_plot(2)
-       !  if (ib> E%nbf) RT_occupations_sum(2,i_T)=RT_occupations_sum(2,i_T)+data_to_plot(2)
-       !endif
-       !
        call msg('o '//trim(output_fname),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)
+       !
        if (i_T==n_T_steps) call of_open_close(trim(output_fname))
        !
      enddo

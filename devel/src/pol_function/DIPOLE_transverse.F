@@ -98,6 +98,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! GPL_EXCLUDE_START
  !
 #if !defined _YPP_RT
+ !
+ ! GPL_EXCLUDE_END
+ !
  if (Dipole_bands_ordered) then
    n_LT_steps=PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*&
 &             PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(PAR_IND_CON_BANDS_X_ID(X%whoami)+1)*&
@@ -106,14 +109,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
    n_LT_steps=PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*&
 &             PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1)*n_spin
  endif
-#else
- !
- ! GPL_EXCLUDE_END
- !
- n_LT_steps=Xk%nibz*(X%ib(2)-X%ib(1)+1)**2._SP*n_spin
  !
  ! GPL_EXCLUDE_START
  !
+#else
+ n_LT_steps=Xk%nibz*(X%ib(2)-X%ib(1)+1)**2._SP*n_spin
 #endif
  !
  ! GPL_EXCLUDE_END

@@ -61,7 +61,6 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! X%f_xc is setup when using ALDA, so that 
  ! the comparison in ioX can be done safely
-!,iq,io_X_done(iq)
  !
  call TDDFT_do_X_W_typs(-1,X,Xw)
  ! 
@@ -106,37 +105,42 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! Prepare the IO (and check if q has been already done)
  !
  io_X_done=-1
+ !
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
  !
- do iq=X%iq(1),X%iq(2)
+ if (io_RESPONSE) then
    !
-   ! In the next lines Yambo will VERIFY the em1d database
-   ! to check if this iq has been already done. 
-   ! When self_detect_E_range=.TRUE. however the Xw%er setup is
-   ! done only in X_os and the VERIFY fails. This is why the procedure
-   ! must be repeated here:
+   do iq=X%iq(1),X%iq(2)
+     !
+     ! In the next lines Yambo will VERIFY the em1d database
+     ! to check if this iq has been already done. 
+     ! When self_detect_E_range=.TRUE. however the Xw%er setup is
+     ! done only in X_os and the VERIFY fails. This is why the procedure
+     ! must be repeated here:
+     !
+     if (self_detect_E_range) then
+       call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
+       Xw%er=minmax_ehe
+     endif
+     !
+     if (iq==1) then
+       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=Xdb)
+     else
+       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=Xdb)
+     endif
+     !
+     io_X_done(iq)=io_X(X,Xw,Xdb)
+     !
+   enddo
    !
-   if (self_detect_E_range) then
-     call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
-     Xw%er=minmax_ehe
+   ! All q databases done
+   !
+   if (all(io_X_done(X%iq(1):X%iq(2))>0)) then
+     call FREQUENCIES_reset(Xw,"all")
+     if (X%iq(1)==X%iq(2)) X_em1=X%iq(1)
+     return
    endif
    !
-   if (iq==1) then
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=Xdb)
-   else
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=Xdb)
-   endif
-   !
-   io_X_done(iq)=io_X(X,Xw,Xdb)
-   !
- enddo
- !
- ! All q databases done
- !
- if (all(io_X_done(X%iq(1):X%iq(2))>0)) then
-   call FREQUENCIES_reset(Xw,"all")
-   if (X%iq(1)==X%iq(2)) X_em1=X%iq(1)
-   return
  endif
  !
  ! Parallel distribution

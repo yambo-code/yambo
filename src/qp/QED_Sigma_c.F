@@ -147,7 +147,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
        !
        E_diff=E%E(i_n,i_k,1)-E%E(i_m,i_p,1)
        !
-       if (abs(E_diff)<1.E-5.or.i_q==1) then
+       if (abs(E_diff)<1.E-5) then
          if( i_q_s == 1) call live_timing(steps=1)
          cycle
        endif
@@ -170,6 +170,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
        call eval_Gradient(WF%c(:,i_wf_at_k),WF_der_k)
        !
        G_loop: do i_g=1,QP_QED_ng
+         !
+         if (i_g==1.and.i_q==1) cycle
          !
          q_photon(:) = q_cc(:) + g_vec(i_g,:)*2._SP*pi/alat(:)
          !

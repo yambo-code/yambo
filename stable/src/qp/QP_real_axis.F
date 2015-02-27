@@ -345,7 +345,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      enddo
    enddo
    !
-   call PP_redux_wait
    call PP_redux_wait(QP_W)
    !
    ! To be written in W

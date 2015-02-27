@@ -1,0 +1,191 @@
+
+#
+# In the following some examples and (minimal) documentation about
+# how to use the configure flags is given
+#
+
+========= Blas & Lapack ===========
+
+# MKL path available
+  --with-blas-libs="-lmkl_intel_lp64  -lmkl_sequential -lmkl_core" 
+  --with-lapack-libs="-lmkl_intel_lp64  -lmkl_sequential -lmkl_core" 
+
+# MKL path explicitly given
+  --with-blas-libs="-L/opt/intel/lib/intel64  -lmkl_intel_lp64  -lmkl_sequential -lmkl_core" 
+  --with-lapack-libs="-L/opt/intel/lib/intel64  -lmkl_intel_lp64  -lmkl_sequential -lmkl_core" 
+
+# NOTE: --with-blas-libs and --with-lapack-libs  must be both provided in order to
+#       avoid the compilation of internal libraries (constraint to be removed)
+
+
+========= Scalapack & Blacs ===========
+
+# system compiled
+
+  --with-scalapack-libs="-L/opt/scalapack/2.0.1-openmpi-intel/lib -lscalapack"
+  --with-blacs-libs="-L/opt/blacs/1.1-openmpi-intel/lib -lblacs"
+
+# -L<dir> can be avoided if already in the ld_library_path var (eg if the related modules are loaded)
+#
+  --with-scalapack-libs="-lscalapack"
+  --with-blacs-libs="-lblacs"
+
+
+========= iotk ===========
+
+# internal version (nothing else)
+  --enable-iotk    (or nothing, since it is on by default)
+
+.OR.
+
+# path to an installed version of the library
+# incdir and libdir can be redefined
+  --with-iotk-path="/home/ferretti/espresso-5.0.2/S3DE/iotk"
+
+# for fine tuning (eg if the structure of the iotk install directory is
+# non standard). This is usually not required.
+
+[ --with-iotk-libdir="/home/ferretti/espresso-5.0.2/S3DE/iotk/src"
+  --with-iotk-includedir="/home/ferretti/espresso-5.0.2/S3DE/iotk/src"  ]
+
+.OR. 
+
+# direct list of flags to be used to link 
+# (being iotk a f90 library, the include dir has also to ben provided)
+
+--with-iotk-libs="-L/home/ferretti/espresso-5.0.2/S3DE/iotk/src -liotk"
+--with-iotk-includedir="/home/ferretti/espresso-5.0.2/S3DE/iotk/src"
+
+# wheneven a --with-iotk-XXX flag is provided, --enable-iotk is turned true,
+# so in most cases it is not really required
+
+
+========= etsf-io ===========
+
+# as for iotk
+# internal version (nothing else)
+  --enable-etsf-io    (default is "no")
+
+.OR.
+
+# path to an installed version of the library
+# incdir and libdir can be redefined
+  --with-etsf-io-path="/opt/etsf-io/1.0.4-intel"
+[ --with-etsf-io-libdir="/opt/etsf-io/1.0.4-intel/lib"
+  --with-etsf-io-includedir="/opt/etsf-io/1.0.4-intel/include"  ]
+
+.OR.
+
+# direct list of flags to be used to link 
+# (being iotk a f90 library, the include dir has also to ben provided)
+
+  --with-etsf-io-libs="-L/opt/etsf-io/1.0.4-intel/lib -letsf_io"
+  --with-etsf-io-includedir="/opt/etsf-io/1.0.4-intel/include"
+
+# wheneven a --with-etsf-io-XXX flag is provided, --enable-etsf-io is turned true,
+
+
+
+========= FFT ===========
+
+# internal FFT Goedeger
+ --enable-internal-fftsg
+
+.OR.
+
+# internal FFTW [v2.0]
+
+.OR.
+
+# use extenral libraries
+# their type, (FFTW, MKL-FFTW, ESSL) will be automatically detected
+
+  --with-fft-path="/opt/fftw/3.3.0-intel/"
+[ --with-fft-libdir="/opt/fftw/3.3.0-intel/lib"
+  --with-fft-includedir="/opt/fftw/3.3.0-intel/include" ] 
+
+# as above, libdir and includedir are used to overwrite some defaults
+# set on the basis of --with-fft-path. Usually there is no need to set them
+
+.OR.
+
+# direct link
+  --with-fft-libs="-L/opt/fftw/3.3.0-intel/lib/ -lfftw"
+  --with-fft-includedir="/opt/fftw/3.3.0-intel/include"
+
+# as an example:
+# MKL FFTW3, MKL path given
+
+  --with-fft-libs="-mkl" 
+
+
+========= NetCDF + HDF5 ===========
+
+# internal netCDF 4 (compiled without HDF5, ie compatible with v3)
+#
+ --enable-netcdf     
+
+# true by default; not compatible with any external hdf5 lib
+# (this last missing feature can be fixed, but needs testing)
+
+.OR.
+
+# path to an installed version of the libraries
+# incdir and libdir can be redefined
+
+  --with-netcdf-path="/opt/netcdf/3.6.3-intel"
+[ --with-netcdf-libdir="/opt/netcdf/3.6.3-intel/lib"
+  --with-netcdf-includedir="/opt/netcdf/3.6.3-intel/include"  ]
+
+# if HDF5 is required, see below
+
+.OR.
+
+# direct link
+  --with-netcdf-libs="-L/opt/netcdf/3.6.3-intel/lib -lnetcdff -lnetcdf"
+  --with-netcdf-includedir="/opt/netcdf/3.6.3-intel/include"
+
+# note that if the LIB path is present in LD_LIBRARY_PATH and the same
+# is true for the includedir (present in the INCLUDE env var)
+# a simplified version of the instruction can be:
+
+  --with-netcdf-libs="-lnetcdff -lnetcdf"
+
+=====
+
+# In case HDF5 is needed (eg because the external netcdf lib requires it)
+# the same options can be used.
+# NO INTERNAL HDF5 exist, so the library must be linked externally
+
+# path to an installed version of the libraries
+# incdir and libdir can be redefined
+
+  --with-hdf5-path="/opt/hdf5/1.8.13-intel"
+[ --with-netcdf-libdir="/opt/hdf5/1.8.13-intel/lib"
+  --with-netcdf-includedir="/opt/hdf5/1.8.13-intel/include"  ]
+
+# since HDF5 requires zlib and sometimes the curl lib, 
+# the paths of these libraries must be available through LD_LIBRARY_PATH 
+
+.OR.
+
+# direct link
+  --with-hdf5-libs="-L/opt/hdf5/1.8.13-intel/lib/ -lhdf5 -lhdf5_fortran -L/opt/zlib/1.2.8-intel/lib -lz"
+  --with-hdf5-includedir="/opt/hdf5/1.8.13-intel/include"
+
+# note that if the LIB path is present in LD_LIBRARY_PATH and the same
+# is true for the includedir (present in the INCLUDE env var)
+# a simplified version of the instruction can be:
+
+  --with-hdf5-libs="-lhdf5 -lhdf5_fortran -lz" 
+
+====
+
+# Large File Support can be switched on using the following
+  --enable-netcdf-LFS
+
+# combined netcdf/hdf5 support (useful for large files)
+# can be used by setting
+
+  --enable-netcdf-hdf5
+

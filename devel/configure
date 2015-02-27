@@ -810,10 +810,10 @@ enable_open_mp
 with_blas_libs
 with_lapack_libs
 with_mpi
+with_fft_libs
 with_fft_path
 with_fft_libdir
 with_fft_includedir
-with_fft_libs
 enable_internal_fftw
 enable_internal_fftsg
 enable_3d_fft
@@ -1504,10 +1504,10 @@ Optional Packages:
   --with-blas-libs=<libs>       Use BLAS libraries <libs>
   --with-lapack-libs=<libs>     Use LAPACK libraries <libs>
   --with-mpi=<lib>              Use MPI library <lib>
+  --with-fft-libs=<libs>        Link to FFT libraries
   --with-fft-path=<path>        Path to the FFTW install directory
   --with-fft-libdir=<path>      Path to the FFTW lib directory
   --with-fft-includedir=<path>  Path to the FFT include directory
-  --with-fft-libs=<libs>        Link to FFT libraries
   --with-fftsg-fac=<val>        Change default Goedecker FFT cache factor
   --with-blacs-libs=<libs>      Use BLACS libraries <libs>
   --with-scalapack-libs=<libs>  Use SCALAPACK libraries <libs>
@@ -6322,7 +6322,8 @@ i?86*linux*)
     CPU_FLAG=""
     case "${FCVERSION}" in
       *11* | *12* | *13* |*14* | *15* )
-       CPU_FLAG="-xHost"
+       #CPU_FLAG="-xHost"
+       CPU_FLAG=" "
        ;;
       *10*)
        CPU_FLAG="-xW"
@@ -6472,7 +6473,8 @@ ia64*linux* )
     CPU_FLAG=""
     case "${FCVERSION}" in
       *11* | *12* | *13* |*14* |*15* )
-       CPU_FLAG="-xHost"
+       #CPU_FLAG="-xHost"
+       CPU_FLAG=" "
        ;;
       *10*)
        CPU_FLAG="-xW"
@@ -9870,6 +9872,12 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 
+# Check whether --with-fft_libs was given.
+if test "${with_fft_libs+set}" = set; then :
+  withval=$with_fft_libs;
+fi
+
+
 # Check whether --with-fft_path was given.
 if test "${with_fft_path+set}" = set; then :
   withval=$with_fft_path;
@@ -9885,12 +9893,6 @@ fi
 # Check whether --with-fft_includedir was given.
 if test "${with_fft_includedir+set}" = set; then :
   withval=$with_fft_includedir;
-fi
-
-
-# Check whether --with-fft_libs was given.
-if test "${with_fft_libs+set}" = set; then :
-  withval=$with_fft_libs;
 fi
 
 #
@@ -9923,42 +9925,56 @@ if ! test x"$enable_3d_fft" = "xno" ; then FFT3D_CPP="-D_USE_3D_FFT" ; fi
 #
 HAVE_FFT="no"
 save_ldflags="$LDFLAGS"
+EXTERNAL_LIB=
+
+#
+# F90 module flag
+#
+IFLAG=$ax_cv_f90_modflag
+if test -z "$IFLAG" ; then IFLAG="-I" ; fi
 
 #
 # first identifies lib and include dirs
 #
-libdir=
-includedir=
+try_libdir=
+try_incdir=
 #
-if test -d "$with_fft_path/lib" && test -d "$with_fft_path/include" ; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT in $with_fft_path" >&5
-$as_echo_n "checking for FFT in $with_fft_path... " >&6; }
-   libdir=$with_fft_path/lib
-   includedir=$with_fft_path/include
-elif  test -d "$with_fft_includedir" && test -d "$with_fft_libdir" ; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT in $with_fft_libdir" >&5
-$as_echo_n "checking for FFT in $with_fft_libdir... " >&6; }
-   libdir=$with_fft_libdir
-   includedir=$with_fft_includedir
+if test -d "$with_fft_path" || test -d "$with_fft_libdir" ; then
+  #
+  # external FFT
+  #
+  if test -d "$with_fft_path" ;   then { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT in $with_fft_path" >&5
+$as_echo_n "checking for FFT in $with_fft_path... " >&6; } ; fi
+  if test -d "$with_fft_libdir" ; then { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT in $with_fft_libdir" >&5
+$as_echo_n "checking for FFT in $with_fft_libdir... " >&6; } ; fi
+  #
+  if test -d "$with_fft_path" ; then
+    try_libdir=$with_fft_path/lib
+    try_incdir=$with_fft_path/include
+  fi
+  if test -d "$with_fft_libdir"     ; then try_libdir=$with_fft_libdir ; fi
+  if test -d "$with_fft_includedir" ; then try_incdir=$with_fft_includedir ; fi
+  #
+  if test -z "$try_libdir" ; then as_fn_error $? "No lib-dir specified" "$LINENO" 5 ; fi
+  if test -z "$try_incdir" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
+  #
+elif test x"$with_fft_libs" != "x" ; then
+  #
+  # directly provided lib
+  #
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT Library using $with_fft_libs" >&5
+$as_echo_n "checking for FFT Library using $with_fft_libs... " >&6; }
+  EXTERNAL_LIB=$with_fft_libs
+  #
 else
-   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT" >&5
 $as_echo_n "checking for FFT... " >&6; }
-fi
-
-#
-# check for FFTW/ESSL: init
-#
-
-if ! test x"$with_fft_libs" = "x" ; then
-   EXTERNAL_LIB=$with_fft_libs
-else
-   EXTERNAL_LIB=
 fi
 
 #
 # check for FFTW
 #
-if test -d "$libdir" && test -d "$includedir" ; then
+if test -d "$try_libdir" && test -d "$try_incdir" ; then
    #
    if test x"$enable_open_mp" = "xyes"; then
        EXTERNAL_LIB="-lfftw3 -lfftw3_omp"
@@ -9972,7 +9988,10 @@ if ! test x"$EXTERNAL_LIB" = "x" ; then
 
   for try_libs in "$EXTERNAL_LIB" ; do
     save_libs=$LIBS
-    if ! test x"$libdir" = "x" ; then FFT_PATH="-L$libdir" ; fi
+    save_fcflags=$FCFLAGS
+    if test x"$try_libdir" != "x" ; then FFT_PATH="-L$try_libdir" ; fi
+    if test x"$try_incdir" != "x" ; then FCFLAGS="$FCFLAGS $IFLAG$try_incdir" ; fi
+    #
     if test "$try_libs"; then :
   LIBS="${FFT_PATH} ${try_libs}"
 fi
@@ -9989,6 +10008,7 @@ fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
     LIBS=$save_libs
+    FCFLAGS=$save_fcflags
     if test "$HAVE_FFTW" = "yes" ; then
       break;
     fi
@@ -10026,19 +10046,21 @@ fi
 #
 # check for ESSL FFT
 #
-if test -d "$libdir" && test -d "$includedir" ; then
-   EXTERNAL_LIB="-L$libdir -lessl"
+if test -d "$try_libdir" && test -d "$try_incdir" ; then
+   EXTERNAL_LIB="-L$try_libdir -lessl"
 fi
 #
 if ! test x"$EXTERNAL_LIB" = "x" && ! test "$HAVE_FFT" = "yes" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: FFTW no" >&5
 $as_echo "FFTW no" >&6; }
   #
-  if ! test x"$libdir" = "x" ; then FFT_PATH="-L$libdir" ; fi
+  if ! test x"$try_libdir" = "x" ; then FFT_PATH="-L$try_libdir" ; fi
   #
-  save_ldflags=$LDFLAGS
   save_libs=$LIBS
+  save_ldflags=$LDFLAGS
+  save_fcflags=$FCFLAGS
   LIBS="$FFT_PATH $EXTERNAL_LIB"
+  if test x"$try_incdir" != "x" ; then FCFLAGS="$FCFLAGS $IFLAG$try_incdir" ; fi
   #
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dcft in $LIBS" >&5
 $as_echo_n "checking for dcft in $LIBS... " >&6; }
@@ -10059,6 +10081,7 @@ $as_echo "$HAVE_ESSL" >&6; }
   #
   LIBS=$save_libs
   LDFLAGS=$save_ldflags
+  FCFLAGS=$save_fcflags
   #
   if test "$HAVE_ESSL" = "yes" ; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT" >&5
@@ -10359,7 +10382,7 @@ IOTK_LIBS=" "
 
 if test -d "$with_iotk_path"  ;  then enable_iotk=yes ; fi
 if test -d "$with_iotk_libdir" ; then enable_iotk=yes ; fi
-if test -d "$with_iotk_libs" ;   then enable_iotk=yes ; fi
+if test  x"$with_iotk_libs" != "x" ;  then enable_iotk=yes ; fi
 #
 # F90 module flag
 #
@@ -10400,7 +10423,7 @@ $as_echo "yes" >&6; }
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
     fi
-  elif test x"$with_iotk_libs" != "x" && test -d "$with_iotk_includedir" ; then
+  elif test x"$with_iotk_libs" != "x" ; then
     #
     # directly provided lib
     #
@@ -10408,7 +10431,7 @@ $as_echo "no" >&6; }
 $as_echo_n "checking for IOTK Library using $with_iotk_libs... " >&6; }
     compile_p2y="yes"
     compile_iotk="no"
-    iotk_idir="$IFLAG$with_iotk_includedir"
+    if test -d "$with_iotk_includedir" ; then iotk_idir="$IFLAG$with_iotk_includedir" ; fi
     IOTK_LIBS="$with_iotk_libs"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -10525,6 +10548,7 @@ NCLIBS=""
 IFLAG=""
 compile_netcdf="no"
 NETCDF_FLAGS=""
+enable_hdf5=""
 
 
 #
@@ -10532,13 +10556,15 @@ NETCDF_FLAGS=""
 #
 if test -d "$with_netcdf_libdir" ; then enable_netcdf=yes ; fi
 if test -d "$with_netcdf_path"   ; then enable_netcdf=yes ; fi
-if test x"$with_netcdf_libs" != "x"  ; then enable_netcdf=yes ; fi
+if test x"$with_netcdf_libs"  != "x"    ; then enable_netcdf=yes ; fi
 #
-if test -d "$with_hdf5_libdir"   ; then enable_netcdf_hdf5=yes ; fi
-if test -d "$with_hdf5_path"     ; then enable_netcdf_hdf5=yes ; fi
-if test  x"$with_hdf5_libs" != "x"   ; then enable_netcdf_hdf5=yes ; fi
+if test -d "$with_hdf5_libdir"   ; then enable_hdf5=yes ; fi
+if test -d "$with_hdf5_path"     ; then enable_hdf5=yes ; fi
+if test  x"$with_hdf5_libs"   != "x"    ; then enable_hdf5=yes ; fi
 #
-if test x"$enable_netcdf" != "xyes" ; then enable_netcdf_hdf5=no ; fi
+if test x"$enable_netcdf_hdf5" = "xyes" ; then
+   enable_netcdf=yes ;  enable_hdf5=yes
+fi
 #
 # F90 module flag
 #
@@ -10608,23 +10634,21 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
       dnetcdf="-D_NETCDF_IO"
-      if test x"$enable_netcdf_LFS" = "xyes"; then dnetcdf="-D_NETCDF_IO -D_64BIT_OFFSET"; fi
     fi
     if test "x$netcdf" = xno; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
     fi
     #
-  elif test x"$with_netcdf_libs" != "x" && test -d "$with_netcdf_includedir" ; then
+  elif test x"$with_netcdf_libs" != "x" ; then
     #
     # directly provided lib
     #
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for NetCDF Library using $with_netcdf_libs" >&5
 $as_echo_n "checking for NetCDF Library using $with_netcdf_libs... " >&6; }
     compile_netcdf="no"
-    netcdf_idir="$IFLAG$with_netcdf_includedir"
+    if test -d "$with_netcdf_includedir" ; then netcdf_idir="$IFLAG$with_netcdf_includedir" ; fi
     dnetcdf="-D_NETCDF_IO"
-    if test x"$enable_netcdf_LFS" = "xyes"; then dnetcdf="-D_NETCDF_IO -D_64BIT_OFFSET"; fi
     netcdf=yes
     NCLIBS="$with_netcdf_libs"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
@@ -10638,9 +10662,7 @@ $as_echo "yes" >&6; }
 $as_echo_n "checking for NetCDF library... " >&6; }
     # internal netcdf
     compile_netcdf="yes"
-    if test "x$enable_bluegene" = "xyes" ; then
-        NCFLAGS=-DIBMR2Fortran
-    fi
+    if test "x$enable_bluegene" = "xyes" ; then NCFLAGS=-DIBMR2Fortran ; fi
     #
     # the following may change if we use a different version
     # of the netcdf lib
@@ -10654,6 +10676,11 @@ $as_echo_n "checking for NetCDF library... " >&6; }
 $as_echo "Internal" >&6; }
     #
   fi
+  #
+  # Large File Support
+  #
+  if test x"$enable_netcdf_LFS" = "xyes"; then dnetcdf="$dnetcdf -D_64BIT_OFFSET"; fi
+  #
 else
  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for NetCDF library" >&5
 $as_echo_n "checking for NetCDF library... " >&6; }
@@ -10665,12 +10692,12 @@ fi
 # HDF5 support
 #
 hdf5="no"
-if test "x$netcdf" = xyes; then
+if test "x$netcdf" = "xyes"; then
   #
-  if test x"$enable_netcdf_hdf5" = "xyes"; then
+  if test x"$enable_hdf5" = "xyes"; then
     #
     if test x"$compile_netcdf" = "xyes" ; then
-       as_fn_error $? "HDFT5 support and Internal NetCDF not compatible" "$LINENO" 5
+       as_fn_error $? "HDF5 support and Internal NetCDF not compatible" "$LINENO" 5
     fi
     #
     if   test -d "$with_hdf5_libdir" ; then { $as_echo "$as_me:${as_lineno-$LINENO}: checking for HDF5 in $with_hdf5_libdir" >&5
@@ -10701,17 +10728,14 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
     try_hdf5_flags="-lhdf5_fortran -lhdf5_hl -lhdf5"
     #
     if test -d "$try_libdir" ; then try_hdf5_flags="-L$try_libdir $try_hdf5_flags" ; fi
+    if test x"$with_hdf5_libs" != "x" ; then HDF5_FLAGS="$with_hdf5_libs" ; fi
     #
-    if test x"$with_hdf5_libs" != "x" ; then :
-      HDF5_FLAGS="$NCLIBS $with_hdf5_libs"
-    else
-      HDF5_FLAGS="$NCLIBS $try_hdf5_flags"
-    fi
+    HDF5_FLAGS="$NCLIBS $try_hdf5_flags"
     #
     if test -d "$try_incdir" ; then FCFLAGS="$netcdf_idir $IFLAG$try_incdir" ; fi
     #
-    for ldflag in "$HDF5_FLAGS" "$HDF5_FLAGS -lsz" "$HDF5_FLAGS -lz" "$HDF5_FLAGS -lcurl -lsz" "$HDF5_FLAGS -lcurl -lz"; do
-      LIBS="$ldflag"
+    for ldflag in " "  "-lsz" "-lz" "-lcurl -lsz" "-lcurl -lz" ; do
+      LIBS="$HDF5_FLAGS $ldflag"
       cat > conftest.$ac_ext <<_ACEOF
       program main
 
@@ -10732,7 +10756,6 @@ fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
       if test "x$hdf5" = xyes; then
-        dnetcdf="${dnetcdf} -D_HDF5_IO"
         NCLIBS="$ldflag"
         netcdf_idir="$netcdf_idir $FCFLAGS"
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
@@ -10747,6 +10770,13 @@ $as_echo "yes" >&6; }
     if test "x$hdf5" = xno; then { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; } ; fi
   fi
+fi
+
+#
+# NETCDF-HDF5 IO
+#
+if test x"$netcdf" = "xyes" && test x"hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
+    dnetcdf="${dnetcdf} -D_HDF5_IO"
 fi
 
 
@@ -10801,7 +10831,7 @@ ETSF_LIBS=" "
 
 if test -d "$with_etsf_io_path"  ;  then enable_etsf_io=yes ; fi
 if test -d "$with_etsf_io_libdir" ; then enable_etsf_io=yes ; fi
-if test -d "$with_etsf_io_libs" ;   then enable_etsf_io=yes ; fi
+if test x"$with_etsf_io_libs" != "x" ;   then enable_etsf_io=yes ; fi
 #
 if test x"$netcdf" != "xyes" ; then enable_etsf_io=no ; fi
 #
@@ -10854,7 +10884,7 @@ $as_echo "yes" >&6; }
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
     fi
-  elif test x"$with_etsf_io_libs" != "x" && test -d "$with_etsf_io_includedir" ; then
+  elif test x"$with_etsf_io_libs" != "x" ; then
     #
     # directly provided lib
     #
@@ -10862,7 +10892,7 @@ $as_echo "no" >&6; }
 $as_echo_n "checking for ETSF_IO Library using $with_etsf_io_libs... " >&6; }
     compile_etsf="no"
     compile_e2y="yes"
-    etsf_idir="$IFLAG$with_etsf_io_includedir"
+    if test -d "$with_etsf_io_includedir" ; then etsf_idir="$IFLAG$with_etsf_io_includedir" ; fi
     ETSF_LIBS="$with_etsf_io_libs"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }

@@ -35,7 +35,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  use functions,     ONLY:bose_f,bose_decay
  use electrons,     ONLY:levels,spin_occ,spin
  use R_lattice,     ONLY:qindx_S,bz_samp
- use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_QP_index
+ use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,myid
  !
  implicit none
  type(bz_samp)::k
@@ -45,7 +45,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  !
  ! WorkSpace
  !
- integer         :: i_qp,i_w,ib,is(2),os(3),i_qp_mem
+ integer         :: i_qp,i_w,ib,is(2),os(3),i_qp_mem,i_q_mem,i_b_mem
  real(SP)        :: tsign
  complex(SP)     :: QP_W_here(QP_n_W_freqs)
  complex(SP), allocatable :: dSc(:)
@@ -53,11 +53,9 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  tsign=-1.
  if (Finite_Tel) tsign=1.
  !
+ i_q_mem=PAR_Q_bz_index(iqbz)
+ !
  do i_qp=1,QP_n_states
-   !
-   if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
-   !
-   i_qp_mem=PAR_QP_index(i_qp)
    !
    if (allocated(QP_solver_state)) then
      if(QP_solver_state(i_qp)<=0) cycle
@@ -71,15 +69,21 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
    os(2)=k%sstar(qindx_S(is(2),iqbz,1),1)     ! (nk) intermediate state
    os(3)=spin(QP_table(i_qp,:))
    !
+   if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+   !
+   i_qp_mem=PAR_QP_index(i_qp)
+   !
    do ib=QP_n_G_bands(1),QP_n_G_bands(2)
      !
      if (.not.PAR_IND_G_b%element_1D(ib)) cycle
+     !
+     i_b_mem=PAR_G_bands_index(ib)
      !
      os(1)=ib
      !
      ! 1st term: (spin_occ-f_os+fbose)
      !
-     forall(i_w=1:Xw%n_freqs) QP_W_here(i_w)=QP_W(i_qp_mem,ib,i_w)*&
+     forall(i_w=1:Xw%n_freqs) QP_W_here(i_w)=QP_W(i_qp_mem,i_q_mem,i_b_mem,i_w)*&
 &                        (spin_occ-E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i_w))))*&
 &                         bose_decay(real(Xw%p(i_w)))
      !
@@ -90,7 +94,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
      !
      ! 2nd term: (f_os+fbose)
      !
-     forall(i_w=1:Xw%n_freqs) QP_W_here(i_w)=QP_W(i_qp_mem,ib,i_w)*&
+     forall(i_w=1:Xw%n_freqs) QP_W_here(i_w)=QP_W(i_qp_mem,i_q_mem,i_b_mem,i_w)*&
 &                         (E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i_w))))*&
 &                         bose_decay(real(Xw%p(i_w)))
      !

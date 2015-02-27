@@ -57,8 +57,6 @@ module QP_m
  real(SP)          :: QP_G_Zoom_treshold
  real(SP)          :: QP_G_damp
  real(SP)          :: QP_dSc_delta
- real(SP)          :: QP_W_er(2)
- real(SP)          :: QP_W_dr(2)
  real(SP)          :: QP_G_er(2)
  real(SP)          :: QP_G_dr(2)
  real(SP)          :: QP_cg_percent
@@ -67,8 +65,10 @@ module QP_m
  real(SP)   ,allocatable:: QP_G_amplitude_integral(:)
  real(SP)   ,allocatable:: QP_G_info(:,:,:)
  real(SP)   ,allocatable:: QP_G_zoom_er(:,:)
+ real(SP)   ,allocatable:: QP_W_er(:,:)
+ real(SP)   ,allocatable:: QP_W_dr(:,:)
  complex(SP),allocatable:: QP_dSc(:,:)
- complex(SP),allocatable:: QP_W(:,:,:)
+ complex(SP),allocatable:: QP_W(:,:,:,:)
  complex(SP),allocatable:: QP_Vnl_xc(:)
  complex(SP),allocatable:: QP_Sc(:,:)
  complex(SP),allocatable:: QP_Vxc(:)

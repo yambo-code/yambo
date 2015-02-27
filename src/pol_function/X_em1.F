@@ -27,7 +27,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  use pars,          ONLY:SP
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
- use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range
+ use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -120,6 +120,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      !
      if (self_detect_E_range) then
        call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
+       deallocate(X_poles)
        Xw%er=minmax_ehe
      endif
      !

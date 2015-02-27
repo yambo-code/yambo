@@ -36,8 +36,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
-&                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_QP_index,&
-&                        PAR_COM_QP_A2A,n_WF_bands_to_load,PAR_Q_index,PAR_nQ,PAR_nQP
+&                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
+&                        PAR_COM_QP_A2A,n_WF_bands_to_load,PAR_Q_index,PAR_nQ,PAR_nQP,&
+&                        PAR_nG_bands,PAR_nQ_bz,myid
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
  use collision,     ONLY:ggwinfo,collision_reset
  use wave_func,     ONLY:WF
@@ -70,13 +71,12 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  type(ggwinfo)    ::scattering_main,scattering_prime
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
- integer          ::i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,iq_to_start,iqs,&
-&                   iv4(4),io_err,X_id,WID,timing_steps,iq_mem,X_range(2),i_qp,i_qp_mem
+ integer          ::i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,i_q_to_start,iqs,&
+&                   iv4(4),io_err,X_id,WID,timing_steps,i_q_mem,X_range(2),i_qp,i_qp_mem,i_q_W_mem,i_b_mem
  complex(SP)      :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng)
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
  integer, external   ::io_X,QP_state_extract,io_QP_and_GF,X_em1,QP_life_transitions
- logical, external   ::stop_now
  character(schlen)   ::ch,Sc_name
  logical             ::X_is_TR_rotated
  !
@@ -99,8 +99,12 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  call k_expand(k)
  !
- ! ALLOCATION (\Sigma Energy)
- !===========================
+ ! ALLOCATION 
+ !============
+ !
+ ! W energy and damping ranges
+ !-----------------------------
+ allocate(QP_W_er(q%nbz,2),QP_W_dr(q%nbz,2))
  !
  ! Sc Energy points (1 type each QP state !)
  !-------------------------------------------
@@ -145,12 +149,12 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    !
    ! W DB (I/O)
    !============
-   iq_to_start= 1
+   i_q_to_start= 1
    io_err     =-1
    if (io_SCREEN) then
      call io_control(ACTION=OP_RD,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=WID)
      io_err=io_QP_and_GF('W',qp,WID)
-     if (io_err>0) iq_to_start=io_err
+     if (io_err>0) i_q_to_start=io_err
    endif
    !
    ! W => Sc after succesfull I/O
@@ -162,7 +166,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      !==================
      QP_n_W_freqs=Xw%n_freqs
      QP_n_W_freqs_redux=Xw%n_freqs
-     allocate(QP_W(QP_n_states,QP_n_G_bands(2),QP_n_W_freqs),stat=i_err)
+     allocate(QP_W(QP_n_states,1,QP_n_G_bands(2),QP_n_W_freqs),stat=i_err)
      call mem_est("QP_W",(/size(QP_W)/),errors=(/i_err/))
      !
      if (QP_solver=="n".or.QP_solver=="g") then
@@ -175,8 +179,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          !
          ! Xw%p is stored in ioX, not in ioW !
          !
-         Xw%er=QP_W_er
-         Xw%dr=QP_W_dr
+         Xw%er=QP_W_er(iqbz,:)
+         Xw%dr=QP_W_dr(iqbz,:)
          Xw%n_freqs=QP_n_W_freqs
          call FREQUENCIES_setup(Xw)
          ! 
@@ -252,11 +256,11 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
  call PARALLEL_WF_index( )
  !
- ! Redefine iq_to_start to be CPU-dependent
+ ! Redefine i_q_to_start to be CPU-dependent
  !
  do iqbz=1,q%nbz 
    if (PAR_IND_Q%element_1D(q%sstar(iqbz,1))) then
-     iq_to_start=iqbz
+     i_q_to_start=iqbz
      exit
    endif
  enddo
@@ -270,8 +274,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  if (.not.l_life) then
    QP_n_W_freqs=Xw%n_freqs
    QP_n_W_freqs_redux=Xw%n_freqs
-   allocate(QP_W(PAR_nQP,QP_n_G_bands(2),QP_n_W_freqs),stat=i_err)
+   allocate(QP_W(PAR_nQP,PAR_nQ_bz,PAR_nG_bands,QP_n_W_freqs),stat=i_err)
    call mem_est("QP_W",(/size(QP_W)/),errors=(/i_err/))
+   QP_W=(0.,0.)
  endif
  !
  ! Test the spatial Inversion
@@ -297,7 +302,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! ... Timing...
  !--------------
  timing_steps=0
- do iqbz=iq_to_start,q%nbz
+ do iqbz=i_q_to_start,q%nbz
    if (.not.PAR_IND_Q%element_1D( q%sstar(iqbz,1) )) cycle
    timing_steps=timing_steps+1
  enddo
@@ -307,22 +312,24 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  if (.not.l_life) call live_timing(trim(Sc_name)//'W0',timing_steps)
  if (l_life)      call live_timing('Lifetimes',timing_steps)
  !
- do iqbz=iq_to_start,q%nbz
+ do iqbz=i_q_to_start,q%nbz
    !
-   if (.not.l_life) QP_W=(0.,0.)
+   if (.not.l_life.and.io_SCREEN) QP_W=(0.,0.)
    !
    scattering_main%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=scattering_main%qs(2)
    iqs  =scattering_main%qs(3)
    !
+   i_q_W_mem=PAR_Q_bz_index(iqbz)
+   !
    if (.not.PAR_IND_Q%element_1D(iqibz)) cycle
    !
    if (iqibz/=scattering_main%iqref) then
      !
-     iq_mem=PAR_Q_index(iqibz)
+     i_q_mem=PAR_Q_index(iqibz)
      X_range=(/1,QP_n_W_freqs_redux/)
      !
-     if (.not.io_RESPONSE) X_range=(/QP_n_W_freqs_redux*(iq_mem-1)+1,QP_n_W_freqs_redux*(iq_mem-1)+X_life_W(iqibz)%n_freqs/)
+     if (.not.io_RESPONSE) X_range=(/QP_n_W_freqs_redux*(i_q_mem-1)+1,QP_n_W_freqs_redux*(i_q_mem-1)+X_life_W(iqibz)%n_freqs/)
      !
      call scatterGamp(scattering_main,'c')
      !
@@ -330,9 +337,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      !
      if (io_RESPONSE) then
        !
-       if (iqbz==iq_to_start) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=X_id)
-       if (q%nbz==1         ) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=X_id)
-       if (iqbz> iq_to_start) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=X_id)
+       if (iqbz ==i_q_to_start) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=X_id)
+       if (q%nbz==1           ) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=X_id)
+       if (iqbz > i_q_to_start) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=X_id)
        !
        if (l_life) then
          !
@@ -404,6 +411,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        !
        scattering_main%os(1)=ib
        !
+       i_b_mem=PAR_G_bands_index(ib)
+       !
        if (l_life) then
          i_or=IOR(e2et((/scattering_main%is(:2),scattering_main%is(4)/),(/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fe),&
 &                 h2ht((/scattering_main%is(:2),scattering_main%is(4)/),(/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fh))
@@ -455,7 +464,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
            enddo
 !$omp end do
            !
-           QP_W(i_qp_mem,ib,i2)=-4._SP/spin_occ*Vstar_dot_V(X%ng,scattering_prime%rhotw,lrhotw)
+           QP_W(i_qp_mem,i_q_W_mem,i_b_mem,i2)=-4._SP/spin_occ*Vstar_dot_V(X%ng,scattering_prime%rhotw,lrhotw)
            !
          enddo
 !$omp end parallel
@@ -467,8 +476,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    !
    if (.not.l_life) then
      !
-     QP_W_er=Xw%er
-     QP_W_dr=Xw%dr
+     QP_W_er(iqbz,:)=Xw%er
+     QP_W_dr(iqbz,:)=Xw%dr
      QP_n_W_freqs=Xw%n_freqs
      !
      if (trim(QP_solver)=='n'.or.trim(QP_solver)=='g') then
@@ -489,8 +498,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        io_err=io_QP_and_GF('W',qp,WID)
        !
      endif
-     !
-     if (stop_now(.FALSE.)) exit 
      !
    endif
    !

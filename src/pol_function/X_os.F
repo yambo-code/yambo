@@ -171,12 +171,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
  endif
  if (half_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
-
  !
  ! Mem est of Xo_residual (to be done here and not in the omp parallel)
  !------------------------
  call mem_est("Xo_WS",(/X%ng**2 *n_threads_X/))
-
  !
  ! Timing
  !========

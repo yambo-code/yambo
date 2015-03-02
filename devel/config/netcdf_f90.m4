@@ -232,7 +232,7 @@ if test "x$netcdf" = "xyes"; then
          call h5open_f(cmode)]),
          [hdf5=yes], [hdf5=no])
       if test "x$hdf5" = xyes; then
-        NCLIBS="$ldflag"
+        NCLIBS="$NCLIBS $LIBS"
         netcdf_idir="$netcdf_idir $FCFLAGS"
         AC_MSG_RESULT([yes])
         #

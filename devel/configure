@@ -10712,7 +10712,7 @@ $as_echo_n "checking for HDF5 using $with_hdf5_libs... " >&6; }
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
+    #
     save_libs="$LIBS"
     save_fcflags="$FCFLAGS"
     #
@@ -10728,7 +10728,7 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
     try_hdf5_flags="-lhdf5_fortran -lhdf5_hl -lhdf5"
     #
     if test -d "$try_libdir" ; then try_hdf5_flags="-L$try_libdir $try_hdf5_flags" ; fi
-    if test x"$with_hdf5_libs" != "x" ; then HDF5_FLAGS="$with_hdf5_libs" ; fi
+    if test x"$with_hdf5_libs" != "x" ; then try_hdf5_flags="$with_hdf5_libs" ; fi
     #
     HDF5_FLAGS="$NCLIBS $try_hdf5_flags"
     #

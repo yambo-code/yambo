@@ -42,7 +42,7 @@ ETSF_LIBS=" "
 
 if test -d "$with_etsf_io_path"  ;  then enable_etsf_io=yes ; fi
 if test -d "$with_etsf_io_libdir" ; then enable_etsf_io=yes ; fi
-if test -d "$with_etsf_io_libs" ;   then enable_etsf_io=yes ; fi
+if test x"$with_etsf_io_libs" != "x" ;   then enable_etsf_io=yes ; fi
 #
 if test x"$netcdf" != "xyes" ; then enable_etsf_io=no ; fi
 #
@@ -91,14 +91,14 @@ if test "x$enable_etsf_io" = "xyes" ; then
     else
       AC_MSG_RESULT([no])
     fi
-  elif test x"$with_etsf_io_libs" != "x" && test -d "$with_etsf_io_includedir" ; then
+  elif test x"$with_etsf_io_libs" != "x" ; then
     #
     # directly provided lib
     #
     AC_MSG_CHECKING([for ETSF_IO Library using $with_etsf_io_libs])
     compile_etsf="no"
     compile_e2y="yes"
-    etsf_idir="$IFLAG$with_etsf_io_includedir"
+    if test -d "$with_etsf_io_includedir" ; then etsf_idir="$IFLAG$with_etsf_io_includedir" ; fi
     ETSF_LIBS="$with_etsf_io_libs"
     AC_MSG_RESULT(yes)
   else

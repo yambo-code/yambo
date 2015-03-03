@@ -66,7 +66,8 @@ i?86*linux*)
     CPU_FLAG=""
     case "${FCVERSION}" in
       *11* | *12* | *13* |*14* | *15* )
-       CPU_FLAG="-xHost"
+       #CPU_FLAG="-xHost"
+       CPU_FLAG=" "
        ;;
       *10*)
        CPU_FLAG="-xW"
@@ -216,7 +217,8 @@ ia64*linux* )
     CPU_FLAG=""
     case "${FCVERSION}" in
       *11* | *12* | *13* |*14* |*15* )
-       CPU_FLAG="-xHost"
+       #CPU_FLAG="-xHost"
+       CPU_FLAG=" "
        ;;
       *10*)
        CPU_FLAG="-xW"

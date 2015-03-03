@@ -100,16 +100,10 @@ module BS
    integer,     allocatable      :: table(:,:) ! (/ikbz,iv,ic,i_sp/) (i_sp is spin, is is symmetry)
    complex(SP), allocatable      :: dipoles_R(:)
    complex(SP), allocatable      :: dipoles_A(:)
-   !
-   ! GPL_EXCLUDE_START
-   !
 #if defined _KERR
    complex(SP), allocatable      :: dipoles_R_kerr(:)
    complex(SP), allocatable      :: dipoles_A_kerr(:)
 #endif
-   !
-   ! GPL_EXCLUDE_END
-   !
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: f(:)
@@ -229,6 +223,10 @@ module BS
          return
        endif
      enddo
+     if (BS_nT_grps==1) then
+       T_group=1
+       return
+     endif
      if (I>=BS_T_grp_1st_el(BS_nT_grps-1)) T_group=BS_nT_grps
    end function
    !

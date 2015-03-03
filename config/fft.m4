@@ -23,14 +23,14 @@
 #
 AC_DEFUN([AC_HAVE_FFT],[
 
+AC_ARG_WITH(fft_libs,AC_HELP_STRING([--with-fft-libs=<libs>],
+            [Link to FFT libraries],[32]),[],[])
 AC_ARG_WITH(fft_path,AC_HELP_STRING([--with-fft-path=<path>],
             [Path to the FFTW install directory],[32]),[],[])
 AC_ARG_WITH(fft_libdir,AC_HELP_STRING([--with-fft-libdir=<path>],
             [Path to the FFTW lib directory],[32]),[],[])
 AC_ARG_WITH(fft_includedir,AC_HELP_STRING([--with-fft-includedir=<path>],
             [Path to the FFT include directory],[32]),[],[])
-AC_ARG_WITH(fft_libs,AC_HELP_STRING([--with-fft-libs=<libs>],
-            [Link to FFT libraries],[32]),[],[])
 #
 AC_ARG_ENABLE(internal_fftw,AC_HELP_STRING([--enable-internal-fftw],
             [Use internal FFTW library]),[],[])
@@ -45,39 +45,52 @@ if ! test x"$enable_3d_fft" = "xno" ; then FFT3D_CPP="-D_USE_3D_FFT" ; fi
 #
 HAVE_FFT="no"
 save_ldflags="$LDFLAGS"
+EXTERNAL_LIB=
+
+#
+# F90 module flag
+#
+IFLAG=$ax_cv_f90_modflag
+if test -z "$IFLAG" ; then IFLAG="-I" ; fi
 
 #
 # first identifies lib and include dirs
 #
-libdir=
-includedir=
+try_libdir=
+try_incdir=
 #
-if test -d "$with_fft_path/lib" && test -d "$with_fft_path/include" ; then
-   AC_MSG_CHECKING([for FFT in $with_fft_path])
-   libdir=$with_fft_path/lib
-   includedir=$with_fft_path/include
-elif  test -d "$with_fft_includedir" && test -d "$with_fft_libdir" ; then
-   AC_MSG_CHECKING([for FFT in $with_fft_libdir])
-   libdir=$with_fft_libdir
-   includedir=$with_fft_includedir
+if test -d "$with_fft_path" || test -d "$with_fft_libdir" ; then
+  #
+  # external FFT
+  #
+  if test -d "$with_fft_path" ;   then AC_MSG_CHECKING([for FFT in $with_fft_path]) ; fi
+  if test -d "$with_fft_libdir" ; then AC_MSG_CHECKING([for FFT in $with_fft_libdir]) ; fi
+  #
+  if test -d "$with_fft_path" ; then
+    try_libdir=$with_fft_path/lib
+    try_incdir=$with_fft_path/include
+  fi
+  if test -d "$with_fft_libdir"     ; then try_libdir=$with_fft_libdir ; fi
+  if test -d "$with_fft_includedir" ; then try_incdir=$with_fft_includedir ; fi
+  #
+  if test -z "$try_libdir" ; then AC_MSG_ERROR([No lib-dir specified]) ; fi
+  if test -z "$try_incdir" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
+  #
+elif test x"$with_fft_libs" != "x" ; then
+  #
+  # directly provided lib
+  #
+  AC_MSG_CHECKING([for FFT Library using $with_fft_libs])
+  EXTERNAL_LIB=$with_fft_libs
+  #
 else
-   AC_MSG_CHECKING([for FFT])
-fi
-
-#
-# check for FFTW/ESSL: init
-#
-
-if ! test x"$with_fft_libs" = "x" ; then
-   EXTERNAL_LIB=$with_fft_libs
-else
-   EXTERNAL_LIB=
+  AC_MSG_CHECKING([for FFT])
 fi
 
 #
 # check for FFTW
 #
-if test -d "$libdir" && test -d "$includedir" ; then
+if test -d "$try_libdir" && test -d "$try_incdir" ; then
    #
    if test x"$enable_open_mp" = "xyes"; then
        EXTERNAL_LIB="-lfftw3 -lfftw3_omp"
@@ -91,11 +104,15 @@ if ! test x"$EXTERNAL_LIB" = "x" ; then
 
   for try_libs in "$EXTERNAL_LIB" ; do      
     save_libs=$LIBS
-    if ! test x"$libdir" = "x" ; then FFT_PATH="-L$libdir" ; fi
+    save_fcflags=$FCFLAGS
+    if test x"$try_libdir" != "x" ; then FFT_PATH="-L$try_libdir" ; fi
+    if test x"$try_incdir" != "x" ; then FCFLAGS="$FCFLAGS $IFLAG$try_incdir" ; fi
+    #
     AS_IF([test "$try_libs"], [LIBS="${FFT_PATH} ${try_libs}"])
     AC_LINK_IFELSE([AC_LANG_CALL([], [dfftw_destroy_plan(1)])],
        [HAVE_FFTW="yes";],[HAVE_FFTW="no";])
     LIBS=$save_libs
+    FCFLAGS=$save_fcflags
     if test "$HAVE_FFTW" = "yes" ; then
       break;
     fi
@@ -130,18 +147,20 @@ fi
 #
 # check for ESSL FFT
 #
-if test -d "$libdir" && test -d "$includedir" ; then
-   EXTERNAL_LIB="-L$libdir -lessl"
+if test -d "$try_libdir" && test -d "$try_incdir" ; then
+   EXTERNAL_LIB="-L$try_libdir -lessl"
 fi
 #
 if ! test x"$EXTERNAL_LIB" = "x" && ! test "$HAVE_FFT" = "yes" ; then
   AC_MSG_RESULT(FFTW no)
   # 
-  if ! test x"$libdir" = "x" ; then FFT_PATH="-L$libdir" ; fi
+  if ! test x"$try_libdir" = "x" ; then FFT_PATH="-L$try_libdir" ; fi
   #
-  save_ldflags=$LDFLAGS
   save_libs=$LIBS
+  save_ldflags=$LDFLAGS
+  save_fcflags=$FCFLAGS
   LIBS="$FFT_PATH $EXTERNAL_LIB"
+  if test x"$try_incdir" != "x" ; then FCFLAGS="$FCFLAGS $IFLAG$try_incdir" ; fi
   #
   AC_MSG_CHECKING([for dcft in $LIBS])
   AC_TRY_LINK_FUNC(dcft, [HAVE_ESSL=yes], [HAVE_ESSL=no])
@@ -149,6 +168,7 @@ if ! test x"$EXTERNAL_LIB" = "x" && ! test "$HAVE_FFT" = "yes" ; then
   #
   LIBS=$save_libs
   LDFLAGS=$save_ldflags
+  FCFLAGS=$save_fcflags
   #
   if test "$HAVE_ESSL" = "yes" ; then
     AC_MSG_CHECKING([for FFT])

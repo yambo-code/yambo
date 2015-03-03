@@ -41,7 +41,7 @@ IOTK_LIBS=" "
 
 if test -d "$with_iotk_path"  ;  then enable_iotk=yes ; fi
 if test -d "$with_iotk_libdir" ; then enable_iotk=yes ; fi
-if test -d "$with_iotk_libs" ;   then enable_iotk=yes ; fi
+if test  x"$with_iotk_libs" != "x" ;  then enable_iotk=yes ; fi
 #
 # F90 module flag
 #
@@ -78,14 +78,14 @@ if test "x$enable_iotk" = "xyes" ; then
     else
       AC_MSG_RESULT([no])
     fi
-  elif test x"$with_iotk_libs" != "x" && test -d "$with_iotk_includedir" ; then
+  elif test x"$with_iotk_libs" != "x" ; then
     #
     # directly provided lib
     #
     AC_MSG_CHECKING([for IOTK Library using $with_iotk_libs])
     compile_p2y="yes"
     compile_iotk="no"
-    iotk_idir="$IFLAG$with_iotk_includedir"
+    if test -d "$with_iotk_includedir" ; then iotk_idir="$IFLAG$with_iotk_includedir" ; fi
     IOTK_LIBS="$with_iotk_libs"
     AC_MSG_RESULT(yes)
   else

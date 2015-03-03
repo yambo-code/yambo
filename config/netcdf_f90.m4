@@ -64,6 +64,7 @@ NCLIBS=""
 IFLAG=""
 compile_netcdf="no"
 NETCDF_FLAGS=""
+enable_hdf5=""
 
 
 #
@@ -71,13 +72,15 @@ NETCDF_FLAGS=""
 #
 if test -d "$with_netcdf_libdir" ; then enable_netcdf=yes ; fi
 if test -d "$with_netcdf_path"   ; then enable_netcdf=yes ; fi
-if test x"$with_netcdf_libs" != "x"  ; then enable_netcdf=yes ; fi
+if test x"$with_netcdf_libs"  != "x"    ; then enable_netcdf=yes ; fi
 #
-if test -d "$with_hdf5_libdir"   ; then enable_netcdf_hdf5=yes ; fi
-if test -d "$with_hdf5_path"     ; then enable_netcdf_hdf5=yes ; fi
-if test  x"$with_hdf5_libs" != "x"   ; then enable_netcdf_hdf5=yes ; fi
+if test -d "$with_hdf5_libdir"   ; then enable_hdf5=yes ; fi
+if test -d "$with_hdf5_path"     ; then enable_hdf5=yes ; fi
+if test  x"$with_hdf5_libs"   != "x"    ; then enable_hdf5=yes ; fi
 #
-if test x"$enable_netcdf" != "xyes" ; then enable_netcdf_hdf5=no ; fi
+if test x"$enable_netcdf_hdf5" = "xyes" ; then 
+   enable_netcdf=yes ;  enable_hdf5=yes 
+fi
 #
 # F90 module flag
 #
@@ -131,21 +134,19 @@ if test "x$enable_netcdf" = "xyes" ; then
     if test "x$netcdf" = xyes; then
       AC_MSG_RESULT([yes])
       dnetcdf="-D_NETCDF_IO"
-      if test x"$enable_netcdf_LFS" = "xyes"; then dnetcdf="-D_NETCDF_IO -D_64BIT_OFFSET"; fi
     fi
     if test "x$netcdf" = xno; then
       AC_MSG_RESULT([no])
     fi
     #
-  elif test x"$with_netcdf_libs" != "x" && test -d "$with_netcdf_includedir" ; then
+  elif test x"$with_netcdf_libs" != "x" ; then
     #
     # directly provided lib
     #
     AC_MSG_CHECKING([for NetCDF Library using $with_netcdf_libs])
     compile_netcdf="no"
-    netcdf_idir="$IFLAG$with_netcdf_includedir"
+    if test -d "$with_netcdf_includedir" ; then netcdf_idir="$IFLAG$with_netcdf_includedir" ; fi
     dnetcdf="-D_NETCDF_IO"
-    if test x"$enable_netcdf_LFS" = "xyes"; then dnetcdf="-D_NETCDF_IO -D_64BIT_OFFSET"; fi
     netcdf=yes
     NCLIBS="$with_netcdf_libs"
     AC_MSG_RESULT(yes)
@@ -157,9 +158,7 @@ if test "x$enable_netcdf" = "xyes" ; then
     AC_MSG_CHECKING([for NetCDF library])
     # internal netcdf
     compile_netcdf="yes"
-    if test "x$enable_bluegene" = "xyes" ; then 
-        NCFLAGS=-DIBMR2Fortran
-    fi
+    if test "x$enable_bluegene" = "xyes" ; then NCFLAGS=-DIBMR2Fortran ; fi
     # 
     # the following may change if we use a different version
     # of the netcdf lib
@@ -172,6 +171,11 @@ if test "x$enable_netcdf" = "xyes" ; then
     AC_MSG_RESULT(Internal)
     #
   fi
+  #
+  # Large File Support
+  #
+  if test x"$enable_netcdf_LFS" = "xyes"; then dnetcdf="$dnetcdf -D_64BIT_OFFSET"; fi
+  #
 else
  AC_MSG_CHECKING([for NetCDF library])
  AC_MSG_RESULT([no])
@@ -181,12 +185,12 @@ fi
 # HDF5 support
 #
 hdf5="no"
-if test "x$netcdf" = xyes; then  
+if test "x$netcdf" = "xyes"; then  
   #
-  if test x"$enable_netcdf_hdf5" = "xyes"; then
+  if test x"$enable_hdf5" = "xyes"; then
     #
     if test x"$compile_netcdf" = "xyes" ; then 
-       AC_MSG_ERROR([HDFT5 support and Internal NetCDF not compatible])
+       AC_MSG_ERROR([HDF5 support and Internal NetCDF not compatible])
     fi
     #
     if   test -d "$with_hdf5_libdir" ; then AC_MSG_CHECKING([for HDF5 in $with_hdf5_libdir]) 
@@ -216,8 +220,8 @@ if test "x$netcdf" = xyes; then
     #
     if test -d "$try_incdir" ; then FCFLAGS="$netcdf_idir $IFLAG$try_incdir" ; fi
     #
-    for ldflag in "$HDF5_FLAGS" "$HDF5_FLAGS -lsz" "$HDF5_FLAGS -lz" ; do
-      LIBS="$ldflag"
+    for ldflag in " "  "-lsz" "-lz" "-lcurl -lsz" "-lcurl -lz" ; do
+      LIBS="$HDF5_FLAGS $ldflag"
       AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
          use hdf5
          use netcdf
@@ -228,8 +232,7 @@ if test "x$netcdf" = xyes; then
          call h5open_f(cmode)]),
          [hdf5=yes], [hdf5=no])
       if test "x$hdf5" = xyes; then
-        dnetcdf="${dnetcdf} -D_HDF5_IO"
-        NCLIBS="$ldflag"
+        NCLIBS="$NCLIBS $LIBS"
         netcdf_idir="$netcdf_idir $FCFLAGS"
         AC_MSG_RESULT([yes])
         #
@@ -241,6 +244,13 @@ if test "x$netcdf" = xyes; then
     #
     if test "x$hdf5" = xno; then AC_MSG_RESULT([no]) ; fi
   fi
+fi
+
+#
+# NETCDF-HDF5 IO
+#
+if test x"$netcdf" = "xyes" && test x"hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
+    dnetcdf="${dnetcdf} -D_HDF5_IO"
 fi
 
 AC_SUBST(NCLIBS)

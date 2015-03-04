@@ -69,7 +69,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  integer                 :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
 &                           isp,iv,ic,iw,isave(4),n_poles,i_cg,i_bg,alloc_err
  logical                 :: force_bare_X_G,Drude_pole
- real(SP)                :: minmax_ehe(2),eh_occ
+ real(SP)                :: minmax_ehe(2,PAR_COM_q_for_Xo%n_CPU),eh_occ
  type(ggwinfo)           :: isc
  complex(SP)             :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
  complex(SP),allocatable :: rhotw_save(:),Xo_residual(:,:)
@@ -127,10 +127,16 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual)
    if (force_bare_X_G)      call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP)
    !
-   n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
+   minmax_ehe=0._SP
+   !
+   n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_q_for_Xo%CPU_id+1))
    deallocate(X_poles)
    !
-   if (self_detect_E_range) Xw%er=minmax_ehe
+   if (self_detect_E_range) then
+     call PP_redux_wait(minmax_ehe,COMM=PAR_COM_q_for_Xo%COMM)
+     Xw%er(1)=minval(minmax_ehe(1,:))
+     Xw%er(2)=maxval(minmax_ehe(2,:))
+   endif
    !
    ! This call is needed as Xw%p is deallocated inside
    ! the q-loop of X_em1. But only when the EM1D is written or when it is not but we are not  doing
@@ -335,8 +341,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !-------------------------
  !
  if (iq==1) deallocate(rhotw_save)
- deallocate(isc%rhotw)
- deallocate(Xo_residual)
+ deallocate(isc%rhotw,Xo_residual)
  !
 !$omp end parallel
  !

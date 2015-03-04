@@ -35,7 +35,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  use functions,     ONLY:bose_f,bose_decay
  use electrons,     ONLY:levels,spin_occ,spin
  use R_lattice,     ONLY:qindx_S,bz_samp
- use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,myid
+ use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index
  !
  implicit none
  type(bz_samp)::k
@@ -61,10 +61,6 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
      if(QP_solver_state(i_qp)<=0) cycle
    endif
    !
-   allocate(dSc(Sc_W(i_qp)%n_freqs))
-   !
-   dSc=(0._SP,0._SP)
-   !
    is=(/QP_table(i_qp,1),QP_table(i_qp,3)/)   ! (nk) QP
    os(2)=k%sstar(qindx_S(is(2),iqbz,1),1)     ! (nk) intermediate state
    os(3)=spin(QP_table(i_qp,:))
@@ -72,6 +68,10 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
    if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
    !
    i_qp_mem=PAR_QP_index(i_qp)
+   !
+   allocate(dSc(Sc_W(i_qp)%n_freqs))
+   !
+   dSc=(0._SP,0._SP)
    !
    do ib=QP_n_G_bands(1),QP_n_G_bands(2)
      !

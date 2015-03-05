@@ -30,20 +30,17 @@ subroutine G_rot_grid(is,call_kind)
  use zeros,        ONLY:G_iku_zero
  use vec_operate,  ONLY:v_is_zero
  !
+ implicit none
+ !
  integer               :: is
  character(*)          :: call_kind
  !
  ! Work space
  ! 
- integer               :: ig,igp,ng,ng1,i2
- logical               :: inversion
- logical               :: extend_grid
- logical               :: set_table
- logical               :: reflection
- real(SP)              :: g_rot_tmp(3) 
- real(SP)              :: identity(3,3)
- real(SP)              :: rl_sop_square(3,3)
- real(SP)              :: rl_sop_local(3,3)
+ integer               :: ig,igp,ng,ng1,i2,i3
+ logical               :: inversion,extend_grid,set_table,reflection
+ real(SP)              :: g_rot_tmp(3),identity(3,3),rl_sop_square(3,3),rl_sop_local(3,3)
+ !
  real(SP),allocatable  :: g_vec_tmp(:,:)
  logical, allocatable  :: g_rot_found(:)
  !

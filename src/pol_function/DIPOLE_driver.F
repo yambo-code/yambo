@@ -95,14 +95,18 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_err(1)=io_DIPOLES(X,Xen,ID) 
  !
- do ik=1,Xk%nibz
+ if (io_err(1)==0) then
    !
-   if (.not.PAR_IND_DIPk_ibz%element_1D(ik).or.io_err(1)<0) cycle 
+   do ik=1,Xk%nibz
+     !
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
+     !
+     call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+ik/),ID=ID)
+     io_err(1)=io_DIPOLES(X,Xen,ID)
+     !
+   enddo
    !
-   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+ik/),ID=ID)
-   io_err(1)=io_DIPOLES(X,Xen,ID)
-   !
- enddo
+ endif
  !
  io_err(2)=0
  !

@@ -24,6 +24,7 @@
 module mod_com2y
  ! 
  use pars,          ONLY:SP,PI,lchlen,schlen,DP
+ !
  implicit none
  !
  logical :: use_SI_instead_of_TR
@@ -41,6 +42,9 @@ module mod_com2y
    subroutine interface_presets(in_string)
      !
      use stderr,     ONLY:string_split
+     !
+     implicit none
+     !
      character(*)   :: in_string
      !
      character(schlen)::str_piece(100)
@@ -72,6 +76,8 @@ module mod_com2y
      use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,mag_syms,inv_index,&
 &                        atoms_spatial_invertion,i_space_inv,alat
      use R_lattice, ONLY:b,rl_sop
+     !
+     implicit none
      !
      integer :: nsym_
      integer :: int_sop(3,3,nsym_) ! Symmetries in RLU
@@ -234,7 +240,9 @@ module mod_com2y
      use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng,real_wavefunctions
      use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL,xc_string
      use vec_operate,           ONLY : v_is_zero
+     !
      implicit none
+     !
      type(levels),     intent(in)   :: en     ! Energies
      type(bz_samp),    intent(in)   :: k      ! K/Q points
      ! 

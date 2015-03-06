@@ -214,7 +214,7 @@ if test "x$netcdf" = "xyes"; then
     try_hdf5_flags="-lhdf5_fortran -lhdf5_hl -lhdf5"
     #
     if test -d "$try_libdir" ; then try_hdf5_flags="-L$try_libdir $try_hdf5_flags" ; fi
-    if test x"$with_hdf5_libs" != "x" ; then HDF5_FLAGS="$with_hdf5_libs" ; fi
+    if test x"$with_hdf5_libs" != "x" ; then try_hdf5_flagsS="$with_hdf5_libs" ; fi
     #
     HDF5_FLAGS="$NCLIBS $try_hdf5_flags"
     #

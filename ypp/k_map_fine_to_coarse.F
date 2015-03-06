@@ -87,8 +87,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  if (n_RIM_DBs>0) then
    do i_db=1,n_RIM_DBs
      i_err(i_db)=io_DB1_selective_scan(RIM_E(i_db),RIM_k(i_db),trim(RIM_DB1_paths(i_db,1)),'all')
-     if (i_err(i_db)/=0) call msg("s",'RIM database in '//trim(RIM_DB1_paths(i_db,1))//' NOT FOUND')
-     if (i_err(i_db)==0) call msg("s",'RIM database in'//trim(RIM_DB1_paths(i_db,1))//' FOUND')
+     if (i_err(i_db)/=0) call msg("s",'RIM database NOT FOUND @'//trim(RIM_DB1_paths(i_db,1)))
+     if (i_err(i_db)==0) call msg("s",'RIM database FOUND @'//trim(RIM_DB1_paths(i_db,1)))
      !
      ! DB1 checks
      !
@@ -337,7 +337,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
      do ik_RIM=1,BZ_RIM_nkpt(ik_bz)
        i1=i1+1
        if (ik_RIM==1) then
-         Xen%E_RIM(:,i1,:)=Xen%E(:BZ_RIM_nbands,BZ_RIM_table(ik_bz,1),:)
+         Xen%E_RIM(:,i1,:)=Xen%E(:BZ_RIM_nbands,BZ_RIM_table(ik_bz,1),:)+Xen%E_fermi
          Xk%ptbz_RIM(i1,:)=Xk%ptbz(ik_bz,:)
        else
          Xen%E_RIM(:,i1,:)=RIM_E(i_db_merge)%E(:,BZ_RIM_table(ik_bz,ik_RIM)-1,:)

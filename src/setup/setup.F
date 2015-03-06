@@ -137,7 +137,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=============================
  call msg('r','DL (S)ymmetries [cc]')
  !
- ! spin symmetries
+ ! Spin symmetries
+ !
  call build_spin_sop()
  !
  allocate(rl_sop(3,3,nsym))

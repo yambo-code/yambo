@@ -73,7 +73,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #if defined _YPP_SC
  type(levels)     ::E_dummy
  integer, external::io_SC_components
- integer          ::io_SC_err
+ integer          ::io_SC_err,ID
 #endif
 #if defined _YPP_RT
  logical          ::l_flag

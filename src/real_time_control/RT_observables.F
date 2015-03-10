@@ -100,6 +100,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    call RT_average_operator(O_VALUE=VALUE_tmp(2),O_REAL=V_hartree_sc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
    !
    ! delta E_H ~ rho_0*delta_rho + 0.5*delta_rho**2
+   !
    E_h=VALUE_tmp(1)+VALUE_tmp(2)/2._SP
    !
  endif
@@ -130,7 +131,6 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  endif
  !
  E_tot = E_ion + E_kin + E_h + Exc
- !
  !
  ! Electrons and holes temperatures
  !

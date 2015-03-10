@@ -61,7 +61,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
  !
  ! Work Space
  !
- integer     :: ib,ibp,ik,SC_bands2,ik_ibz,iE_rim,D1,i_dir
+ integer     :: ib,ibp,ik,SC_bands2,ik_ibz,iE_rim,OUTPUT_dim,i_dir
  real(SP)    :: deltaE,deltaE_RIM
  complex(SP) :: Hk(3,SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),n_sp_pol),VALUE_tmp(3), &
 &               Hk_tmp(SC_bands(2),SC_bands(2),n_sp_pol),                                    &
@@ -79,15 +79,15 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
    if(trim(RIM)=='DIPOLE') l_rim_dipole=.true.
  endif
  !
- D1=0
- if(present(O_MATRIX).or.present(O_real).or.present(O_QP)) D1=1
- if(present(V_MATRIX).or.present(PV_MATRIX))               D1=3
+ OUTPUT_dim=0
+ if(present(O_MATRIX).or.present(O_real).or.present(O_QP)) OUTPUT_dim=1
+ if(present(V_MATRIX).or.present(PV_MATRIX))               OUTPUT_dim=3
  !
- if(D1==0) call error('RT_average_operatore: not a valid call')
+ if(OUTPUT_dim==0) call error('RT_average_operatore: not a valid call')
  !
  SC_bands2=SC_nbands**2
- if(D1==1) O_VALUE=(0._SP,0._SP)
- if(D1==3) V_VALUE=(0._SP,0._SP)
+ if(OUTPUT_dim==1) O_VALUE=(0._SP,0._SP)
+ if(OUTPUT_dim==3) V_VALUE=(0._SP,0._SP)
  !
  do ik_ibz=1,k%nibz
    ! 
@@ -100,7 +100,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
    !
    call make_Hk_matrix(ik_ibz)
    !
-   do i_dir=1,D1
+   do i_dir=1,OUTPUT_dim
      !
      do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
        !
@@ -129,8 +129,8 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
            enddo
          enddo
        else
-         if(D1==1) Hk(1,:,:,:)    =Hk_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),:)
-         if(D1==3) Hk(i_dir,:,:,:)=Hk_vec_tmp(i_dir,:,:,:)
+         if(OUTPUT_dim==1) Hk(1,:,:,:)    =Hk_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),:)
+         if(OUTPUT_dim==3) Hk(i_dir,:,:,:)=Hk_vec_tmp(i_dir,:,:,:)
        endif 
        !
 #if defined _OPENMP
@@ -141,8 +141,9 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
        !
      enddo
      !
-     if(D1==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_dir)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
-     if(D1==3) V_VALUE(i_dir)=V_VALUE(i_dir)+VALUE_tmp(i_dir)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+     !
+     if(OUTPUT_dim==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_dir)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+     if(OUTPUT_dim==3) V_VALUE(i_dir)=V_VALUE(i_dir)+VALUE_tmp(i_dir)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
      !
    enddo
    !
@@ -150,16 +151,25 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
  !
  if (present(O_QP).or.present(O_REAL).or.k%nibz/=nK_mem) then
    !
-   if(D1==1) call PP_redux_wait(O_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-   if(D1==3) call PP_redux_wait(V_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   if(OUTPUT_dim==1) call PP_redux_wait(O_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   if(OUTPUT_dim==3) call PP_redux_wait(V_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    !
    ! When the PAR_COM_Xk_ibz_INDEX%COMM is not defined then the job can be
-   ! overdone. This occurs for a 1.M.P.N CPU structure
+   ! overdone. This occurs for a 1.M.P.N CPU structure. 
    !
-   if (PAR_COM_Xk_ibz_INDEX%n_CPU==1.and.D1==1) O_VALUE=O_VALUE/PAR_COM_Plasma_INDEX%n_CPU
-   if (PAR_COM_Xk_ibz_INDEX%n_CPU==1.and.D1==3) V_VALUE=V_VALUE/PAR_COM_Plasma_INDEX%n_CPU
+   ! AM March 10 2015. However in the  QP case the
+   ! PAR_COM_Plasma_INDEX is the 'qp' one and it already distributes the QP components
+   !
+   if (.not.present(O_QP)) then
+     !
+     if (PAR_COM_Xk_ibz_INDEX%n_CPU==1.and.OUTPUT_dim==1) O_VALUE=O_VALUE/PAR_COM_Plasma_INDEX%n_CPU
+     if (PAR_COM_Xk_ibz_INDEX%n_CPU==1.and.OUTPUT_dim==3) V_VALUE=V_VALUE/PAR_COM_Plasma_INDEX%n_CPU
+     !
+   endif
    !
  endif
+ !
+ if (OUTPUT_dim==1) write (*,*) PAR_COM_Plasma_INDEX%n_CPU,OUTPUT_dim,O_VALUE
  !
 #if defined _TIMING
  call timing('RT average Op',OPR='stop')
@@ -191,7 +201,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
      !
      ! A: Average of a scalar
      !========================
-     if (D1==1) then
+     if (OUTPUT_dim==1) then
        !
        Hk_tmp=(0._SP,0._SP)
        !
@@ -212,7 +222,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
      !
      ! B: Average of a vector
      !========================
-     if (D1==3) then
+     if (OUTPUT_dim==3) then
        !
        Hk_vec_tmp=(0._SP,0._SP)
        !

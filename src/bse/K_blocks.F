@@ -67,25 +67,25 @@ subroutine K_blocks( )
      !
      do j_T=1,BS_nT_grps
        !
-       if (.not.PAR_IND_T_ordered%element_2D(i_T,j_T)) cycle 
-       !
-       n_BS_blks=n_BS_blks+1
-       !
-       if (i_loop==2) then
-         allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-         BS_blk(n_BS_blks)%mat=cZERO
-         tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
-         BS_blk(n_BS_blks)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
-         BS_blk(n_BS_blks)%mode="R"
-         BS_blk(n_BS_blks)%iT_k=i_T
-         BS_blk(n_BS_blks)%iT_p=j_T
-         BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
-         BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
+       if (PAR_IND_T_ordered%element_2D(i_T,j_T)) then 
+         !
+         n_BS_blks=n_BS_blks+1
+         !
+         if (i_loop==2) then
+           allocate(BS_blk(n_BS_blks)%mat(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+           BS_blk(n_BS_blks)%mat=cZERO
+           tot_size=tot_size+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
+           BS_blk(n_BS_blks)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
+           BS_blk(n_BS_blks)%mode="R"
+           BS_blk(n_BS_blks)%iT_k=i_T
+           BS_blk(n_BS_blks)%iT_p=j_T
+           BS_blk(n_BS_blks)%ik=BS_T_grp(i_T)%ik
+           BS_blk(n_BS_blks)%ip=BS_T_grp(j_T)%ik
+         endif
+         !
        endif
        !
-       if (BS_K_coupling) then
-         !
-         if (.not.PAR_IND_T_all%element_2D(i_T,j_T)) cycle
+       if (BS_K_coupling.and.PAR_IND_T_all%element_2D(i_T,j_T)) then
          !
          n_BS_blks=n_BS_blks+1
          !
@@ -102,7 +102,6 @@ subroutine K_blocks( )
          endif
          !
        endif
-       !
        !
      enddo
      !
@@ -134,6 +133,6 @@ subroutine K_blocks( )
  call msg('rsn','[BSK] Size   (total)',BS_K_dim)
  !
  call PARALLEL_live_message("Kernel matrix elements (renormalized)",ENVIRONMENT="Response_T_space",&
-&                           LOADED=BS_LiveTiming_steps,TOTAL=N_Ts_total(1))
+&                                                                   LOADED=BS_LiveTiming_steps,TOTAL=N_Ts_total(1))
  !
 end subroutine

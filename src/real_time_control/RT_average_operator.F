@@ -39,7 +39,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
  use wrapper,        ONLY:Vstar_dot_V
 #endif
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,&
-&                         PAR_COM_Xk_ibz_INDEX,PAR_COM_Plasma_INDEX,PAR_COM_QP_A2A
+&                         PAR_COM_Xk_ibz_INDEX,PAR_COM_QP_INDEX
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -155,7 +155,10 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
  !
  ! At the moment the two options do not appear at the same time for a given observable.
  !
- if (present(O_QP)) call PP_redux_wait(O_VALUE,COMM=PAR_COM_QP_A2A%COMM)
+ ! Note that both kind of parallelizations are redundant (they involve groups of CPU's and not
+ ! single CPU's). Therefore I use the _INDEX communicators and not the _A2A
+ !
+ if (present(O_QP)) call PP_redux_wait(O_VALUE,COMM=PAR_COM_QP_INDEX%COMM)
  !
  if (k%nibz/=nK_mem) then
    !
@@ -164,11 +167,9 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
    !
  endif
  !
- !
 #if defined _TIMING
  call timing('RT average Op',OPR='stop')
 #endif
- !
  !
  contains 
    !

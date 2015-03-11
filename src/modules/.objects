@@ -1,7 +1,6 @@
 #if defined _SC
 SC_objects       = mod_plasma.o mod_SC.o
 #endif
-RT_objects       = mod_real_time.o 
 #if defined _RT
 RT_objects       = mod_real_time.o mod_fields.o mod_RT_CTL.o 
 #endif

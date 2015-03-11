@@ -1,11 +1,190 @@
-TARGET_DIR="write here the path to the yamb trunk"
-TRUNK_DIR="write here the path to the yambo branch/gpl"
-cd $TRUNK_DIR
-make clean_all
-rm -r $TARGET_DIR/*
-cp -r $TRUNK_DIR/* $TARGET_DIR/
-cd $TARGET_DIR
- ./sbin/yamboo_new.pl -p="KERR SURF YPP_SURF ELPH YPP_ELPH FFTW FFTSG OPENMP MPI"
- chmod +x delete.batch 
-./delete.batch
-svn status | grep -v libxc
+#! /bin/sh
+#
+
+if [ $# = 0 ] ; then
+ echo $0 "WHAT[gpl,openmp,spin,auger,elph,ypp_elph,sc,distro] OPTIONS[xxdiff,zip,tar]"
+ exit 0
+fi
+WHAT="GPL"
+ACTION="none"
+
+if [ $# = 1 ] ; then  WHAT=$1 ; fi
+if [ $# = 2 ] ; then  WHAT=$1 ; fi
+if [ $# = 2 ] ; then  ACTION=$2 ; fi
+
+cd /
+BASE="/home/marini/Yambo/yambo/"
+
+if [ $WHAT = "openmp" ] ; then 
+ WD="$BASE/branches/gpl+open-mp/"
+ PJ="GPL openmp" 
+fi
+if [ $WHAT = "gpl" ] ; then 
+ WD="$BASE/branches/gpl/"
+ PJ="GPL" 
+fi
+if [ $WHAT = "spin" ] ; then 
+ WD="$BASE/branches/gpl+spin/"
+ PJ="SPIN" 
+fi
+if [ $WHAT = "auger" ] ; then 
+ WD="$BASE/branches/gpl+auger/"
+ PJ="AUGER" 
+fi
+if [ $WHAT = "sc" ] ; then 
+ WD="$BASE/branches/gpl+sc/"
+ PJ="SC" 
+fi
+if [ $WHAT = "distro" ] ; then 
+ WD="$BASE/branches/gpl+distributed/"
+ PJ="DISTRIBUTED" 
+fi
+if [ $WHAT = "elph" ] ; then 
+ WD="$BASE/branches/gpl/"
+ PJ="ELPH" 
+fi
+if [ $WHAT = "kerr" ] ; then 
+ WD="$BASE/branches/gpl/"
+ PJ="KERR" 
+fi
+if [ $WHAT = "surf" ] ; then 
+ WD="$BASE/branches/gpl/"
+ PJ="SURF" 
+fi
+if [ $WHAT = "ypp_elph" ] ; then 
+ WD="$BASE/branches/gpl/"
+ PJ="YPP_ELPH" 
+fi
+if [ $ACTION = "tar" ] ; then
+ BASE=`find /home/marini -maxdepth 2 -type d | grep GPL | grep yambo-`
+ WD="$BASE"
+fi
+
+echo 
+echo  "BASE   : $BASE"
+echo  "ACTION : $ACTION"
+echo  "WHAT   : $WHAT"
+echo  "REF    : $WD"
+#sleep 3s
+
+mkdir -p ~/Yambo/WorkSpace
+cd ~/Yambo/WorkSpace
+
+if [ $ACTION = "none" ] ; then
+ rm -fr *
+ if [ $WHAT = "openmp" ] ; then 
+   cp -R $BASE/branches/devel-open-mp/*  ../WorkSpace
+   cp $BASE/branches/devel-open-mp/sbin/yamboo.pl ./sbin
+ else
+   cp -R $BASE/trunk/*  ../WorkSpace
+   cp $BASE/trunk/sbin/yamboo.pl ./sbin
+ fi
+ find . -name .objects_gpl | grep -v svn | gawk '{print "cpp -P " $0 " > A ; mv A " $0 }' > CPP.batch
+ chmod u+x CPP.batch
+# ./CPP.batch
+ rm -f CPP.batch 
+ ./sbin/yamboo.pl -p=$PJ
+ chmod u+x delete.batch
+ ./delete.batch
+ rm -f delete.batch 
+ find . -name svn | xargs rm -fr
+ diff -r . $WD | \
+   grep "Only in" | \
+   grep -v branches | \
+   grep -v svn | \
+   grep -v sbin | \
+   grep -v yamboo | \
+   grep -v merge_with_GPL | \
+   grep -v commit.msg | \
+   grep -v ChangeLog | \
+   grep -v ONLY | \
+   grep -v Write | \
+   gawk '{gsub(": ","/",$0) ;na=split($0,a);print a[3]}'  > ONLY_in_trunk
+ diff -r . $WD | \
+   grep "Only in" | \
+   grep -v branches | \
+   grep -v svn | \
+   grep -v sbin | \
+   grep -v yamboo | \
+   grep -v merge_with_GPL | \
+   grep -v commit.msg | \
+   grep -v ChangeLog | \
+   grep -v Write | \
+   grep -v ONLY | \
+   gawk '{gsub(": ","/",$0) ;na=split($0,a);print "svn add " a[3]}'  > svn_add_in_branch.batch
+ diff -r . $WD | \
+   grep "Only in" | \
+   grep branches | \
+   grep -v svn | \
+   grep -v sbin | \
+   grep -v yamboo | \
+   grep -v merge_with_GPL | \
+   grep -v commit.msg | \
+   grep -v ChangeLog | \
+   grep -v Write | \
+   grep -v ONLY | \
+   gawk '{gsub(": ","/",$0) ;na=split($0,a);print a[3]}'  > ONLY_in_branch
+ diff -r . $WD | \
+   grep "Only in" | \
+   grep branches | \
+   grep -v svn | \
+   grep -v sbin | \
+   grep -v yamboo | \
+   grep -v merge_with_GPL | \
+   grep -v commit.msg | \
+   grep -v ChangeLog | \
+   grep -v Write | \
+   grep -v ONLY | \
+   gawk '{gsub(": ","/",$0) ;na=split($0,a);print " svn delete --force " a[3]}'  > svndelete_in_branch.batch
+ chmod u+x  *.batch
+ diff -r . $WD | grep "diff -r" | grep -v svn > DIFF
+ cat DIFF | gawk '{na=split($0,a); gsub("\\./","",a[3]) ;print a[3]}' > FILE_LIST
+ echo 
+ echo "===ONLY_in_trunk files in 1 sec==="
+ echo 
+ sleep 1s
+ cat ONLY_in_trunk
+ echo 
+ echo "===ONLY_in_branch files in 1 sec==="
+ echo 
+ sleep 1s
+ cat ONLY_in_branch
+ echo
+ echo "===DIFF files in 1 sec==="
+ echo
+ sleep 1s
+ cat FILE_LIST
+fi
+
+if [ $ACTION = "tar" ] ; then
+ rm -fr *
+ cd $BASE
+ STRNG=`./configure --help | grep adapt`
+ VERSION=`echo $STRNG | awk '{na=split($0,a); print a[4]}'`
+ STRNG=`svn info | grep Revision`
+ REVISION=`echo $STRNG | awk '{na=split($0,a); print a[2]}'`
+ SRC_NAME="yambo-"${VERSION}"-rev."${REVISION}
+ cd ~/Yambo/WorkSpace
+ cp -R $BASE $SRC_NAME
+ find . -name '.svn' | xargs rm -fr
+ tar cvf ${SRC_NAME}.tar $SRC_NAME
+ gzip  ${SRC_NAME}.tar
+fi
+
+if [ $ACTION = "xxdiff" ] ; then
+ FILES=`cat DIFF | gawk '{na=split($0,a);print a[3]}' `
+ for file in $FILES; do xxdiff $file $WD/$file ; done
+fi
+
+if [ $ACTION = "zip" ] ; then
+ cat FILE_LIST | zip -@ files_to_update.zip 
+ cat ONLY_in_trunk | zip -@ files_to_update.zip 
+ FILES=`cat ONLY_in_trunk`
+ for file in $FILES; do
+  if test -d $file; then
+   find $file | grep -v 'svn' | zip -@ files_to_update.zip
+  fi
+ done
+fi
+
+

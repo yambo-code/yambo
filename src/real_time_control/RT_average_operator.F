@@ -38,8 +38,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
 #else
  use wrapper,        ONLY:Vstar_dot_V
 #endif
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,&
-&                         PAR_COM_Xk_ibz_INDEX,PAR_COM_QP_INDEX
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -150,20 +149,31 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
  !
  ! All 2 All. 
  !============
- ! AM March 11 2015. The All 2 All here distribute the values in two cases. One is when
- ! the QP states are distributed and the second is when the k-points are distributed.
+ ! AM March 11 2015. 
  !
- ! At the moment the two options do not appear at the same time for a given observable.
+ ! The parallel distribution is tricky as the k%nibz/=nK_mem case is the only explicit.
+ ! All other parallelizations are inside V_qp_basis_to_H and V_real_space_to_H.
  !
- ! Note that both kind of parallelizations are redundant (they involve groups of CPU's and not
- ! single CPU's). Therefore I use the _INDEX communicators and not the _A2A
+ ! Note that the all2all here is possible because the parallel structure is
  !
- if (present(O_QP)) call PP_redux_wait(O_VALUE,COMM=PAR_COM_QP_INDEX%COMM)
+ !   "k.b" -> QP (k,n,n')  
+ !   "q"   -> q 
+ !   "qp"  -> Bp_mat (m,m')
+ !
+ ! and inside the above routines there is a HEAD_QP_cpu that does not duplicate the calls. 
+ !
+ ! NOTE, however, that the all2all procedure are not at all general and must be changed if the
+ ! input array is distributed in another way.
  !
  if (k%nibz/=nK_mem) then
    !
    if (OUTPUT_dim==1) call PP_redux_wait(O_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    if (OUTPUT_dim==3) call PP_redux_wait(V_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   !
+ else if (.not.present(O_MATRIX)) then
+   !
+   if (OUTPUT_dim==1) call PP_redux_wait(O_VALUE)
+   if (OUTPUT_dim==3) call PP_redux_wait(V_VALUE)
    !
  endif
  !

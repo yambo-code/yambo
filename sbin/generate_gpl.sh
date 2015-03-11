@@ -1,10 +1,5 @@
 #! /bin/sh
 #
-
-if [ $# = 0 ] ; then
- echo $0 "WHAT[gpl,openmp,spin,auger,elph,ypp_elph,sc,distro] OPTIONS[xxdiff,zip,tar]"
- exit 0
-fi
 WHAT="GPL"
 ACTION="none"
 
@@ -13,10 +8,10 @@ if [ $# = 2 ] ; then  WHAT=$1 ; fi
 if [ $# = 2 ] ; then  ACTION=$2 ; fi
 
 cd /
-BASE="/home/marini/Yambo/yambo/"
+BASE=$PWD
 
 if [ $WHAT = "openmp" ] ; then 
- WD="$BASE/branches/gpl+open-mp/"
+ vn D="$BASE/branches/gpl+open-mp/"
  PJ="GPL openmp" 
 fi
 if [ $WHAT = "gpl" ] ; then 
@@ -79,11 +74,10 @@ if [ $ACTION = "none" ] ; then
    cp -R $BASE/trunk/*  ../WorkSpace
    cp $BASE/trunk/sbin/yamboo.pl ./sbin
  fi
- find . -name .objects_gpl | grep -v svn | gawk '{print "cpp -P " $0 " > A ; mv A " $0 }' > CPP.batch
- chmod u+x CPP.batch
-# ./CPP.batch
+ #find . -name .objects_gpl | grep -v svn | gawk '{print "cpp -P " $0 " > A ; mv A " $0 }' > CPP.batch
+ #chmod u+x CPP.batch
  rm -f CPP.batch 
- ./sbin/yamboo.pl -p=$PJ
+ ./sbin/yamboo.pl -p="KERR SURF YPP_SURF ELPH YPP_ELPH FFTW FFTSG OPENMP MPI"
  chmod u+x delete.batch
  ./delete.batch
  rm -f delete.batch 

@@ -39,7 +39,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
  use wrapper,        ONLY:Vstar_dot_V
 #endif
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,&
-&                         PAR_COM_Xk_ibz_INDEX,PAR_COM_Plasma_INDEX
+&                         PAR_COM_Xk_ibz_INDEX,PAR_COM_Plasma_INDEX,PAR_COM_QP_A2A
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -141,7 +141,6 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
        !
      enddo
      !
-     !
      if(OUTPUT_dim==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_dir)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
      if(OUTPUT_dim==3) V_VALUE(i_dir)=V_VALUE(i_dir)+VALUE_tmp(i_dir)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
      !
@@ -149,27 +148,22 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
    !
  enddo
  !
- if (present(O_QP).or.present(O_REAL).or.k%nibz/=nK_mem) then
+ ! All 2 All. 
+ !============
+ ! AM March 11 2015. The All 2 All here distribute the values in two cases. One is when
+ ! the QP states are distributed and the second is when the k-points are distributed.
+ !
+ ! At the moment the two options do not appear at the same time for a given observable.
+ !
+ if (present(O_QP)) call PP_redux_wait(O_VALUE,COMM=PAR_COM_QP_A2A%COMM)
+ !
+ if (k%nibz/=nK_mem) then
    !
-   if(OUTPUT_dim==1) call PP_redux_wait(O_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-   if(OUTPUT_dim==3) call PP_redux_wait(V_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-   !
-   ! When the PAR_COM_Xk_ibz_INDEX%COMM is not defined then the job can be
-   ! overdone. This occurs for a 1.M.P.N CPU structure. 
-   !
-   ! AM March 10 2015. However in the  QP case the
-   ! PAR_COM_Plasma_INDEX is the 'qp' one and it already distributes the QP components
-   !
-   if (.not.present(O_QP)) then
-     !
-     if (PAR_COM_Xk_ibz_INDEX%n_CPU==1.and.OUTPUT_dim==1) O_VALUE=O_VALUE/PAR_COM_Plasma_INDEX%n_CPU
-     if (PAR_COM_Xk_ibz_INDEX%n_CPU==1.and.OUTPUT_dim==3) V_VALUE=V_VALUE/PAR_COM_Plasma_INDEX%n_CPU
-     !
-   endif
+   if (OUTPUT_dim==1) call PP_redux_wait(O_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   if (OUTPUT_dim==3) call PP_redux_wait(V_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    !
  endif
  !
- if (OUTPUT_dim==1) write (*,*) PAR_COM_Plasma_INDEX%n_CPU,OUTPUT_dim,O_VALUE
  !
 #if defined _TIMING
  call timing('RT average Op',OPR='stop')

@@ -1032,15 +1032,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        ! GPL_EXCLUDE_END
        ! 
+#if defined _RT
+       l_elel_scatt =runlevel_is_on('el_el_scatt')
+       l_elph_scatt=runlevel_is_on('el_ph_scatt')
+#endif
 #if defined _SC 
        l_sc_run=runlevel_is_on('scpot')
        l_real_time=runlevel_is_on('negf')
        l_sc_magnetic=runlevel_is_on('magnetic')
        l_eval_collisions=runlevel_is_on('collisions')
-#endif
-#if defined _RT
-       l_elel_scatt =runlevel_is_on('el_el_scatt')
-       l_elph_scatt=runlevel_is_on('el_ph_scatt')
+       if (.not.l_real_time.and.trim(SC_potential)=="IP") SC_potential="default"
 #endif
 #if defined  _SURF
        lreels=runlevel_is_on('reels')
@@ -1512,6 +1513,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              SC_potential='HARTREE'
            else if ( trim(rstr_piece(i1+1)) == 'd') then
              SC_potential='default'
+           else if ( trim(rstr_piece(i1+1)) == 'ip') then
+             SC_potential='IP'
            endif
          endif
 #endif

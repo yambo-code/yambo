@@ -27,7 +27,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  use electrons,      ONLY:spin_occ
  use pars,           ONLY:SP
  use SC,             ONLY:SC_bands,it_now
- use parallel_m,     ONLY:ncpu
+ use parallel_m,     ONLY:ncpu,PAR_COM_Plasma_INDEX
  use real_time,      ONLY:RT_occupations_locked,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         RT_delta_occupations,l_use_updated_reference,l_initial_equilibrium,&
 &                         RT_H_occupations,RT_E_occupations,RT_TIME_status,RT_delta0_occupations,&
@@ -48,7 +48,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  !
  l_use_updated_reference=.not.l_initial_equilibrium
  !
- if(l_use_updated_reference) l_use_updated_reference=(RT_TIME_status(it_now)> 1)
+ if (l_use_updated_reference) l_use_updated_reference=(RT_TIME_status(it_now)> 1)
  !
  if (.not.l_eval) return
  !
@@ -87,15 +87,18 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
        !if( RT_occupations_locked(ib,ik) ) write(*,*) 'state= ',ib,ik,' locked'
        !DEBUG>
        !
+       ! March 2015. AndreaM. The npcu fraction here is because the Lifetimes go trough
+       ! an ALL2ALL later. BUT the e-p lifetimes use only ncpu/PAR_COM_Plasma_INDEX%n_CPU CPU's.
+       !
        if (l_elel_scatt) then
          E_E_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,1,Life_MEM_steps)/real(ncpu)
          E_E_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,2,Life_MEM_steps)/real(ncpu)
        endif
        if (l_elph_scatt) then
-         E_P_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,3,Life_MEM_steps)/real(ncpu)
-         E_P_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,4,Life_MEM_steps)/real(ncpu)
-         E_P_Ho_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,5,Life_MEM_steps)/real(ncpu)
-         E_P_El_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,6,Life_MEM_steps)/real(ncpu)
+         E_P_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,3,Life_MEM_steps)/real(ncpu)*real(PAR_COM_Plasma_INDEX%n_CPU)
+         E_P_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,4,Life_MEM_steps)/real(ncpu)*real(PAR_COM_Plasma_INDEX%n_CPU)
+         E_P_Ho_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,5,Life_MEM_steps)/real(ncpu)*real(PAR_COM_Plasma_INDEX%n_CPU)
+         E_P_El_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,6,Life_MEM_steps)/real(ncpu)*real(PAR_COM_Plasma_INDEX%n_CPU)
        endif
        !
      else

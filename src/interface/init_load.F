@@ -61,7 +61,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        NE_tot_time,RT_life_interp_steps,&
 &                        RT_ave_dephasing,RT_eh_en,Eh_pumped_pair_energy,RT_scatt_tresh,&
 &                        Eh_pumped_pair_width,Eh_pumped_Nel,NE_MEM_treshold,RT_life_interp_KIND,I_MEM_steps,&
-&                        Gr_kind,two_alpha,RIM_EE_percent,RT_PP_time
+&                        Gr_kind,two_alpha,RIM_EE_percent
  use fields,        ONLY:Efield
  use plasma,        ONLY:Plasma_redux_percent
 #endif
@@ -253,8 +253,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BLongDir',  '[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange',  '[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange',  '[BSS] Damping range',BSS_dr,E_unit)
- call it(defs,'BSHayTrs',  '[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',&
-&              Haydock_treshold,verb_level=V_resp)
+ call it(defs,'BSHayTrs',  '[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',Haydock_treshold,verb_level=V_resp)
  call it(defs,'BEnSteps',  '[BSS] Energy steps',BSS_n_freqs)
  call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',X(2)%Wd,E_unit,verb_level=V_resp)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
@@ -505,7 +504,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'Gauge',     '[Xd,RT] Gauge type (length|velocity)',global_gauge,verb_level=V_real_time)
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
- call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
+ call it(defs,'Potential', '[SC] SC Potential [hf,cohsex,exx,exxc,srpa,hartree,def,ip (only RT)]',SC_potential,protect=.FALSE.)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')

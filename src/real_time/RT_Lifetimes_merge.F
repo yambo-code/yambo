@@ -45,8 +45,11 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  ! ALL 2 ALL
  !
  do ik=1,RT_nk
+   !
    if (SAVE_index>2) LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
+   !
    call PP_redux_wait(LIFE(:,ik))
+   !
  enddo
  !
  if (l_initial_equilibrium) REF_lifetime(:,:,SAVE_index)=LIFE

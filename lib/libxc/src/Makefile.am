@@ -36,14 +36,13 @@ libxc_la_FUNC_SOURCES = \
 	gga_x_dk87.c gga_x_ft97.c gga_x_wc.c gga_x_am05.c gga_x_bayesian.c gga_x_kt.c gga_x_htbs.c \
 	gga_c_pbe.c gga_c_lyp.c gga_c_p86.c gga_c_pw91.c gga_c_am05.c gga_c_lm.c gga_c_wl.c gga_c_wi.c \
 	gga_x_lb.c gga_xc_b97.c gga_xc_edf1.c gga_xc_1w.c gga_c_optc.c gga_c_tca.c gga_x_bpccac.c \
-	gga_x_sogga11.c gga_c_sogga11.c gga_xc_th.c gga_x_wpbeh.c gga_x_hjs.c gga_x_ityh.c gga_x_sfat.c \
-	gga_x_ak13.c \
-	gga_x_ssb_sw.c gga_c_ft97.c gga_c_op.c gga_x_n12.c gga_x_lv_rpw86.c \
+	gga_x_sogga11.c gga_c_sogga11.c gga_xc_th.c gga_x_wpbeh.c gga_x_hjs.c gga_x_ityh.c \
+	gga_x_ssb_sw.c gga_c_ft97.c gga_c_op.c gga_x_n12.c  \
 	gga_x_2d_b86.c gga_x_2d_b86_mgc.c gga_x_2d_b88.c gga_x_2d_pbe.c \
-	gga_k_tflw.c gga_k_pearson.c gga_k_ol1.c gga_k_ol2.c gga_k_dk.c gga_k_meyer.c \
+	gga_k_tflw.c gga_k_pearson.c gga_k_ol1.c gga_k_ol2.c gga_k_dk.c \
 	gga_x_vmt.c gga_xc_oblyp_d.c \
 	hyb_gga_xc_b3lyp.c hyb_gga_xc_o3lyp.c hyb_gga_xc_pbeh.c hyb_gga_xc_b1wc.c \
-	hyb_gga_xc_b97.c hyb_gga_xc_hse.c hyb_gga_xc_cam_b3lyp.c hyb_gga_xc_camy_blyp.c \
+	hyb_gga_xc_b97.c hyb_gga_xc_hse.c hyb_gga_xc_cam_b3lyp.c  \
 	mgga.c \
 	mgga_x_lta.c mgga_x_tpss.c mgga_x_br89.c mgga_x_gvt4.c mgga_x_m06l.c mgga_x_tau_hcth.c \
 	mgga_x_2d_prhg07.c mgga_x_pkzb.c mgga_x_m05.c mgga_x_m08.c mgga_x_ms.c mgga_x_mn12.c mgga_x_mk00.c \
@@ -54,26 +53,20 @@ libxc_la_FUNC_SINGLE_SOURCES = $(libxc_la_FUNC_SOURCES:.c=_s.c)
 
 libxc_la_SOURCES = $(libxc_la_FUNC_SOURCES)
 
+if COMPILE_FORTRAN
+  libxc_la_SOURCES += xc_f.c libxc_funcs.f90 libxc.f90
+endif
 if COMPILE_SINGLE
   nodist_libxc_la_SOURCES = $(libxc_la_FUNC_SINGLE_SOURCES)
-endif
-
 if COMPILE_FORTRAN
-  lib_LTLIBRARIES += libxcf90.la
-
-  libxcf90_la_SOURCES = xc_f.c libxc_funcs.f90 libxc.f90
-if COMPILE_SINGLE
-    nodist_libxcf90_la_SOURCES = xc_f_s.c libxc_s.f90
+    nodist_libxc_la_SOURCES += xc_f_s.c libxc_s.f90
+endif
 endif
 
-  # libtool stuff
-  libxcf90_la_LDFLAGS = -version-info $(XC_LT_VERSION)
-
-  # this is a hack to go around buggy libtool/automake versions
-  libxcf90_la_LIBTOOLFLAGS = --tag=F77
-endif
-
+# libtool stuff
+libxc_la_LDFLAGS = -version-info 0:9:0
 # this is a hack to go around buggy libtool/automake versions
+libxc_la_LIBTOOLFLAGS = --tag=F77
 LTFCCOMPILE = $(LIBTOOL) --mode=compile --tag=F77 $(FC) $(AM_FCFLAGS) $(FCFLAGS)
 FCLINK = $(LIBTOOL) --mode=link --tag=F77 $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
          $(AM_LDFLAGS) $(LDFLAGS) -o $@
@@ -85,7 +78,7 @@ noinst_HEADERS = \
 	work_gga_x.c work_gga_c.c \
 	work_mgga_x.c work_mgga_c.c \
 	libxc_master.F90
-include_HEADERS = xc.h xc_config.h xc_unconfig.h
+include_HEADERS = xc.h xc_config.h
 nodist_include_HEADERS = xc_funcs.h
 
 if COMPILE_SINGLE
@@ -136,30 +129,18 @@ CLEANFILES = *~ *.bak *.mod *.il *.d *.pc* ifc* funcs_*.c funcs.h \
 xc_funcs.h libxc_funcs.f90 funcs_lda.c funcs_gga.c funcs_hyb_gga.c funcs_mgga.c funcs_hyb_mgga.c funcs_key.c: get_funcs.pl
 	$(srcdir)/get_funcs.pl $(srcdir) $(top_builddir)
 
-LTPREF = $(subst xc_f.lo,,$(firstword $(am_libxcf90_la_OBJECTS)))
-# Surprisingly, libtool/automake do not seem to provide a macro or variable for what the object names will be,
-# so we have to extract it ourselves. LTPREF=libxcf90_la-, or blank for older libtool/automake versions.
-# Produces these warnings on some systems. Does not seem to matter.
-#src/Makefile.am:140: subst xc_f.lo,,$(firstword $(am_libxcf90_la_OBJECTS: non-POSIX variable name
-#src/Makefile.am:140: (probably a GNU make extension)
+$(LIBFUNCMOD):
+	$(MAKE) libxc_funcs.o
 
-$(LIBFUNCMOD) : $(LTPREF)libxc_funcs.lo
-
-libxc.f90 : libxc_master.F90
+libxc.f90 $(XCLIBMODS): libxc_master.F90 libxc_funcs.o
 	@FCCPP@ @CPPFLAGS@ $(AM_CPPFLAGS) $(srcdir)/libxc_master.F90 > $(top_builddir)/src/libxc.f90
 	@if [ "@F90_ACCEPTS_LINE_NUMBERS@" = "no" ]; then \
 		grep -v "^#" $(top_builddir)/src/libxc.f90 > $(top_builddir)/src/libxc.f91; \
 		mv -f $(top_builddir)/src/libxc.f91 $(top_builddir)/src/libxc.f90; \
 	fi
-libxc_s.f90 : libxc_master.F90
+libxc_s.f90 $(XCLIBMODS_S): libxc_master.F90 libxc_funcs.o
 	@FCCPP@ -D SINGLE_PRECISION=1 @CPPFLAGS@ $(AM_CPPFLAGS) $(srcdir)/libxc_master.F90 > $(top_builddir)/src/libxc_s.f90
 	@if [ "@F90_ACCEPTS_LINE_NUMBERS@" = "no" ]; then \
 		grep -v "^#" $(top_builddir)/src/libxc_s.f90 > $(top_builddir)/src/libxc_s.f91; \
 		mv -f $(top_builddir)/src/libxc_s.f91 $(top_builddir)/src/libxc_s.f90; \
 	fi
-
-$(LTPREF)libxc.lo   $(LTPREF)libxc.o   : $(LIBFUNCMOD)
-$(LTPREF)libxc_s.lo $(LTPREF)libxc_s.o : $(LIBFUNCMOD)
-
-$(XCLIBMODS)   : $(LTPREF)libxc.lo
-$(XCLIBMODS_S) : $(LTPREF)libxc_s.lo

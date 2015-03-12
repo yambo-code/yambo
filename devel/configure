@@ -11134,20 +11134,18 @@ if test x"$acx_libxc_ok" = xno; then
   LIBS_LIBXC="-lxc"
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: Compatible external LibXC not found/specified. Internal used." >&5
 $as_echo "Compatible external LibXC not found/specified. Internal used." >&6; }
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking the configuration of the LIBXC internal library" >&5
-$as_echo_n "checking the configuration of the LIBXC internal library... " >&6; }
-  cd lib/libxc
-  if test -f Makefile; then
-  have_configured="yes"
-  else
-  ./configure FCCPP="cpp -E -P -ansi" FC=$FC CC=$CC --prefix=$PWD/../../ >&/dev/null
-  if test -f Makefile; then have_configured="yes";fi
-  fi
-  cd ../../
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_configured" >&5
-$as_echo "$have_configured" >&6; }
-
-  if test "x$have_configured" != xyes; then as_fn_error $? "can't configure LIBXC " "$LINENO" 5; fi
+#  AC_MSG_CHECKING([the configuration of the LIBXC internal library])
+#  cd lib/libxc
+#  if test -f Makefile; then
+#  have_configured="yes"
+#  else
+#  ./configure FCCPP="cpp -E -P -ansi" FC=$FC CC=$CC --prefix=$PWD/../../ >&/dev/null
+#  if test -f Makefile; then have_configured="yes";fi
+#  fi
+#  cd ../../
+#  AC_MSG_RESULT($have_configured)
+#
+#  if test "x$have_configured" != xyes; then AC_MSG_ERROR([can't configure LIBXC ]); fi
 fi
 
 

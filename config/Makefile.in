@@ -94,7 +94,7 @@ nothing:
 	@$(make_message)
 changelog:
 	svn log | perl sbin/svn2cl.pl > ChangeLog
-all: $(TARGETS) $(PROJECTS) $(DEBUG)
+all: $(PROJECTS) $(TARGETS) $(DEBUG)
 libs:
 	@if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; $(mklibxc) fi

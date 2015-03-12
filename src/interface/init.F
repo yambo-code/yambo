@@ -1153,7 +1153,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &        l_HF_and_locXC.and..not.l_elph_corr.and..not.l_elphoton_corr)  &
 &                  call initactivate(1,'em1d')
      if (l_cohsex) call initactivate(1,'em1s')
-     if (l_W_eh)   call initactivate(1,'em1s')
      if (l_bsk)    call initactivate(1,'optics')
      if (l_bsk)    call initactivate(1,'bse')
      if (l_bss)    call initactivate(1,'optics')

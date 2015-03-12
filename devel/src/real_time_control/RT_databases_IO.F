@@ -24,13 +24,12 @@
 subroutine RT_databases_IO(E,it)
  !
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
- use rt_ctl,         ONLY:RT_do_IO,ID,it_start
+ use rt_ctl,         ONLY:RT_do_IO,ID,it_start,RT_carriers_object
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL,io_GF,io_CARRIERs,io_J
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:PP_redux_wait
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers
- use interfaces,     ONLY:RT_carriers_object
  !
  implicit none
  !

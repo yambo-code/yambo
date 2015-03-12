@@ -32,7 +32,6 @@ xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @
 debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
-do_local    = @compile_local@
 do_fftqe    = @compile_fftqe@
 do_iotk     = @compile_iotk@
 do_netcdf   = @compile_netcdf@
@@ -51,8 +50,9 @@ includedir  = @srcdir_path@/include
 CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
-           sbin/objects_debug.sh driver/editor.h 
-TARGETS  = all yambo interfaces ypp 
+           sbin/objects_debug.sh driver/editor.h lib/local/.objects
+TARGETS  = all yambo interfaces ypp
+UTILS    = changelog
 CLEANS   = clean clean_all
 INTERFCS = a2y p2y e2y 
 #
@@ -60,7 +60,7 @@ INTERFCS = a2y p2y e2y
 #
 BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate linear_algebra common io stop_and_restart wf_and_fft 
 
-MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
+MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface \
                tddft pol_function qp bse
 #
 # Interfaces
@@ -70,13 +70,13 @@ E2YLIBS      = external_c parallel modules parser communicate linear_algebra com
 #
 # YPP
 #
-YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface interpolate pol_function bse
+YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface interpolate pol_function bse
 #
 # PROJECTS
 #
 PROJECTS = yambo_surf ypp_surf yambo_kerr yambo_ph ypp_ph
-PJ_SURFLIBS   = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_ctl surf setup interface tddft pol_function qp bse
-YPPSURFLIBS   = $(BASIC_LIBS) surf_modules bz_ops qp_ctl setup interface interpolate surf pol_function bse
+PJ_SURFLIBS   = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_control surf setup interface tddft pol_function qp bse
+YPPSURFLIBS   = $(BASIC_LIBS) surf_modules bz_ops qp_control setup interface interpolate surf pol_function bse
 EXE      = $(TARGETS) $(PROJECTS)
 #
 nothing: 
@@ -91,8 +91,14 @@ libs:
 	DIR2GO="lib" ; $(mklib); fi
 	@if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
 	DIR2GO="lib" ; $(mklib); fi
-	@if test "$(do_local)" = yes ; then LIBS2DO="local" ; \
+	LIBS2DO="local" ; DIR2GO="lib" ; $(mklib) ; \
 	DIR2GO="lib" ; $(mklib); fi
+	@if test "$(do_iotk)" = yes ; then LIBS2DO="iotk" ; \
+	DIR2GO="lib" ; $(mklib_ext); fi
+	@if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf" ; \
+	DIR2GO="lib" ; $(mklib_ext); fi
+	@if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
+	DIR2GO="lib" ; $(mklib_ext); fi
 yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
@@ -118,7 +124,7 @@ interfaces: libs
 	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
 	XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
-	XLIBS="$(2YLIBS)" ; $(mkx) ; fi
+	XLIBS="$(E2YLIBS)" ; $(mkx) ; fi
 ypp: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
@@ -126,16 +132,23 @@ ypp: libs
 clean: clean_fast
 clean_fast: 
 	@$(lib_xc_clean)
+	@$(lib_ext_clean)
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(xclean)
 clean_all: 
 	@$(lib_xc_distclean)
+	@$(lib_ext_distclean)
 	@$(objects_clean)
+	@$(lib_mod_distclean)
 	@$(lib_mod_netcdf_clean)
 	@$(conf_clean)
 	@$(xclean)
-
+clean_extlibs:
+	@if test -e ./lib/archive/keep-extlibs-stamp ; then rm ./lib/archive/keep-extlibs-stamp ; fi 
+	@$(lib_ext_clean)
+	@$(lib_ext_distclean)
+	
 # Functions
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ targets;echo;\
@@ -173,6 +186,14 @@ define mklib
   cd $$DIR2GO/$$ldir ; $(make) VPATH=$$DIR2GO/$$ldir || exit "$$?" ; cd ../../; fi \
  done
 endef
+define mklib_ext
+ for ldir in $$LIBS2DO; do \
+  if test ! -f "$(libdir)/lib$$ldir.a" ; then \
+  echo " " ; \
+  echo ">>>[Making $$ldir]<<<" ; \
+  cd $$DIR2GO/$$ldir ; cp Makefile.loc Makefile ; $(make) || exit "$$?" ; cd ../../; fi \
+ done
+endef
 define mkx
  LLIBS="";for exe in $$XLIBS; do LLIBS="$$LLIBS -l$$exe" ; done ; \
  for exe in $$X2DO; do \
@@ -187,7 +208,10 @@ endef
 define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
         -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' \) \
-        -type f -print | grep -v '\.\/Makefile' | xargs rm -f
+        -type f -print | grep -v '\.\/Makefile' | \
+        grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
+        grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \
+        grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | xargs rm -f
  echo "[CLEAN] Objects ... done"
  echo "[CLEAN] Broken files ... done"
  echo "[CLEAN] Makefiles ... done"
@@ -197,18 +221,37 @@ define objects_clean
  fi
 endef
 define lib_xc_clean
- cd $(libdir)/libxc; make -s clean; cd ../..
+ @cd $(libdir)/libxc; make -s clean; cd ../..
  echo "[CLEAN] LibXC ... done" 
 endef
 define lib_xc_distclean
- cd $(libdir)/libxc; make -s distclean; cd ../..
- rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/ lib/libxc/autom4te.cache/
+ @cd $(libdir)/libxc; make -s distclean; cd ../..
+ @rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/ lib/libxc/autom4te.cache/
  echo "[CLEAN] LibXC ... done" 
+endef
+define lib_ext_clean
+ @cd $(libdir)/iotk; make -s -f Makefile.loc clean > /dev/null ; cd ../..
+ @cd $(libdir)/netcdf; make -s -f Makefile.loc clean > /dev/null ; cd ../..
+ @cd $(libdir)/etsf_io; make -s -f Makefile.loc clean > /dev/null ; cd ../..
+ echo "[CLEAN] Libs EXT ... done" 
+endef
+define lib_ext_distclean
+ @cd $(libdir)/archive; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ @cd $(libdir)/install; ( if test -r make_iotk.inc ; then rm -f make_iotk.inc ; fi) ; cd ../..
+ @cd $(libdir)/iotk; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ @cd $(libdir)/netcdf; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ @cd $(libdir)/etsf_io; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ echo "[CLEAN] Libs EXT ... done" 
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.mod' \) -type f -print | \
        grep -v netcdf | grep -v xc_ | grep -v iotk | grep -v typesize | grep -v libxc | xargs rm -f 
  echo "[CLEAN] Libraries ... done" 
+ echo "[CLEAN] Modules ... done" 
+endef
+define lib_mod_distclean
+ find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | xargs rm -f 
+ echo "[CLEAN] Libraries  ... done" 
  echo "[CLEAN] Modules ... done" 
 endef
 define lib_mod_netcdf_clean
@@ -221,6 +264,7 @@ endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
  for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
+ cd $(bindir) ; rm -f etsf_io  ncgen ncgen3 nc-config nccopy ncdump  iotk iotk.x ; cd ..
  echo "[CLEAN] Targets ... done" 
 endef
 define conf_clean

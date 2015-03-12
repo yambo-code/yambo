@@ -58,9 +58,9 @@ subroutine fft_3d(c,n,fft_sign)
  ! Work Space
  !
  !
-#if defined _TIMING
- call timing('FFT',OPR='start')
-#endif
+!#if defined _TIMING
+! call timing('FFT',OPR='start')
+!#endif
  !
  ! init and cheks
  !
@@ -106,9 +106,9 @@ subroutine fft_3d(c,n,fft_sign)
  !
 #endif
  !
-#if defined _TIMING
- call timing('FFT',OPR='stop')
-#endif
+!#if defined _TIMING
+! call timing('FFT',OPR='stop')
+!#endif
  !
 end subroutine
 

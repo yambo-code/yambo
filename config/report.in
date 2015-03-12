@@ -1,26 +1,37 @@
-
 #
 # [VER] @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@
+# 
+# - GENERAL CONFIGURATIONS -
 # 
 # [SYS] @build_os@@@build_cpu@
 # [SRC] @srcdir_path@
 # [BIN] @exec_prefix@/bin
-# [FFT] @FFT_DESCRIPTION@
-#
 # [@DP_str@] Double precision
 # [@Red_str@] Redundant compilation  
-# [@MPI_str@] MPI 
 # [@TIME_profile_str@] Run-Time timing profile 
+# 
+# - PARALLEL SUPPORT -
+#
+# [@MPI_str@] MPI 
 # [@OPENMP_str@] OpenMP 
 # [@OPENMPI_str@] OpenMPI
-# [@BGQ_str@] BGQ
+# [@BGQ_str@] Blue-Gene specific procedures
+# 
+# - INTERFACES -
+#
 # [@PW_str@] QE (@PW_VER@) support
 # [@ETSF_str@] ETSF I/O support
-# [@SLK_str@] SCALAPACK
-# [@LIBXC_str@] external LibXC
-# [@BLAS_str@@LAPACK_str@] Built-in BLAS/LAPACK
+#
+# - LIBRARIES -
+#
+# [FFT] @FFT_DESCRIPTION@
+# [ @SLK_str@ ] SCALAPACK
 # [@NETCDF_str@@HDF5_str@@NETCDF_LF_str@] NETCDF/HDF5/Large Files 
-# [@IOTK_loc_str@@NETCDF_loc_str@@ETSF_loc_str@] Built-in IOTK/NETCDF/ETSF_IO
+# [ @LIBXC_str@ ] LibXC (external)
+# [@BLAS_str@@LAPACK_str@ ] BLAS/LAPACK (built-in)
+# [@IOTK_loc_str@@NETCDF_loc_str@@ETSF_loc_str@] Built-in IOTK/NETCDF/ETSF_IO (built-in)
+#
+# - COMPILERS, MAKE and EDITOR -
 #
 # [ CPP ] @C_AS_CPP@ @C_AS_CPP_FLAGS@ @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @openmpi_cpp@ @time_profile_cpp@
 # [  C  ] @CC@ @CFLAGS@

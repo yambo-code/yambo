@@ -25,59 +25,60 @@ AC_DEFUN([ACX_REPORT],
 [
 srcdir_path=$PWD
 
-DP_str=" "
+DP_str="-"
 if test "$enable_dp" = "yes" ; then DP_str="X"; fi
 
-Red_str=" "
+Red_str="-"
 if test "$enable_debug" = "yes" ; then Red_str="X"; fi
 
-MPI_str=" "
+MPI_str="-"
 if test "$mpibuild" = "yes" ; then MPI_str="X"; fi
 
-NETCDF_str=" "
+NETCDF_str="-"
 if test "$netcdf" = "yes" ; then NETCDF_str="X"; fi
-NETCDF_loc_str=" "
+NETCDF_loc_str="-"
 if test "$compile_netcdf" = "yes" ; then NETCDF_loc_str="X"; fi
 
-HDF5_str=" "
+HDF5_str="-"
 if test "$hdf5" = "yes" ; then HDF5_str="X"; fi
 
-LIBXC_str=" "
+LIBXC_str="-"
 if test "$acx_libxc_ok" = "yes" ; then LIBXC_str="X"; fi
 
-NETCDF_LF_str=" "
+NETCDF_LF_str="-"
 if test "$enable_netcdf_LFS" = "yes" &&  test "$netcdf" = "yes" ; then NETCDF_LF_str="X"; fi
 
-TIME_profile_str=" "
+TIME_profile_str="-"
 if test "$enable_time_profile" = "yes" ; then TIME_profile_str="X"; fi
 
-PW_str=" "
+PW_str="-"
 if test "$compile_p2y" = "yes" ; then PW_str="X"; fi
 
-OPENMP_str=" "
+OPENMP_str="-"
 if test "$enable_open_mp" = "yes" ; then OPENMP_str="X"; fi
 
-ETSF_str=" "
+ETSF_str="-"
 if test "$compile_e2y" = "yes" ; then ETSF_str="X"; fi
-ETSF_loc_str=" "
+
+ETSF_loc_str="-"
 if test "$compile_etsf" = "yes" ; then ETSF_loc_str="X"; fi
 
-IOTK_loc_str=" "
+IOTK_loc_str="-"
 if test "$compile_iotk" = "yes" ; then IOTK_loc_str="X"; fi
 
-LAPACK_str=" "
+LAPACK_str="-"
 if test "$compile_lapack" = "yes" ; then LAPACK_str="X"; fi
 
-BLAS_str=" "
+BLAS_str="-"
 if test "$compile_blas" = "yes" ; then BLAS_str="X"; fi
 
-SLK_str=" "
+SLK_str="-"
 if test "$enable_scalapack" = "yes" ; then SLK_str="X"; fi
 
-BGQ_str=" "
+BGQ_str="-"
 if test "$enable_bluegene" = "yes" ; then BGQ_str="X"; fi
 
-OPENMPI_str=" "
+OPENMPI_str="-"
 if test "$enable_openmpi" = "yes" ; then OPENMPI_str="X"; fi
 
 if test "$exec_prefix" = "NONE" ; then exec_prefix="$srcdir_path"; fi

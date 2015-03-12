@@ -148,18 +148,18 @@ if test x"$acx_libxc_ok" = xno; then
   have_configured="no"
   LIBS_LIBXC="-lxc"
   AC_MSG_RESULT([Compatible external LibXC not found/specified. Internal used.])
-  AC_MSG_CHECKING([the configuration of the LIBXC internal library])
-  cd lib/libxc
-  if test -f Makefile; then 
-  have_configured="yes"
-  else
-  ./configure FCCPP="cpp -E -P -ansi" FC=$FC CC=$CC --prefix=$PWD/../../ >&/dev/null
-  if test -f Makefile; then have_configured="yes";fi
-  fi
-  cd ../../
-  AC_MSG_RESULT($have_configured)
-  
-  if test "x$have_configured" != xyes; then AC_MSG_ERROR([can't configure LIBXC ]); fi
+#  AC_MSG_CHECKING([the configuration of the LIBXC internal library])
+#  cd lib/libxc
+#  if test -f Makefile; then 
+#  have_configured="yes"
+#  else
+#  ./configure FCCPP="cpp -E -P -ansi" FC=$FC CC=$CC --prefix=$PWD/../../ >&/dev/null
+#  if test -f Makefile; then have_configured="yes";fi
+#  fi
+#  cd ../../
+#  AC_MSG_RESULT($have_configured)
+#  
+#  if test "x$have_configured" != xyes; then AC_MSG_ERROR([can't configure LIBXC ]); fi
 fi 
 
 AC_SUBST(FCFLAGS_LIBXC)

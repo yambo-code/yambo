@@ -58,9 +58,9 @@ subroutine scatterBamp(isc)
  integer     :: qs,iGo
  integer     :: ig, ir
  !
-#if defined _TIMING
- call timing("scatter_Bamp","start")
-#endif
+!#if defined _TIMING
+! call timing("scatter_Bamp","start")
+!#endif
  !
  allocate(rho_tw_rs(fft_size))
  allocate(WF_symm_i(fft_size,n_spinor))
@@ -194,8 +194,8 @@ subroutine scatterBamp(isc)
  deallocate(WF_symm_o)
  deallocate(rho_tw_rs)
  !
-#if defined _TIMING
- call timing("scatter_Bamp","stop")
-#endif
+!#if defined _TIMING
+! call timing("scatter_Bamp","stop")
+!#endif
  !
 end subroutine

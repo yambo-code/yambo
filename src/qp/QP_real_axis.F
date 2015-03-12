@@ -399,8 +399,10 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        if (l_life) then
          do ib=QP_n_G_bands(1),QP_n_G_bands(2)
            scattering_main%os(1)=ib
-           i_or=IOR(e2et((/scattering_main%is(:2),scattering_main%is(4)/),(/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fe),&
-&                   h2ht((/scattering_main%is(:2),scattering_main%is(4)/),(/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fh))
+           i_or=IOR(e2et((/scattering_main%is(:2),scattering_main%is(4)/),            &
+&                        (/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fe),&
+&                   h2ht((/scattering_main%is(:2),scattering_main%is(4)/),            &
+&                        (/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fh))
            QP_n_W_freqs=QP_n_W_freqs+i_or
          enddo
        endif
@@ -414,8 +416,10 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        i_b_mem=PAR_G_bands_index(ib)
        !
        if (l_life) then
-         i_or=IOR(e2et((/scattering_main%is(:2),scattering_main%is(4)/),(/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fe),&
-&                 h2ht((/scattering_main%is(:2),scattering_main%is(4)/),(/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fh))
+         i_or=IOR(e2et((/scattering_main%is(:2),scattering_main%is(4)/),            &
+&                      (/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fe),&
+&                 h2ht((/scattering_main%is(:2),scattering_main%is(4)/),            &
+&                      (/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fh))
          QP_n_W_freqs=QP_n_W_freqs+i_or
        endif
        !

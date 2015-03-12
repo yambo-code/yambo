@@ -30,12 +30,11 @@ subroutine RT_initialize(E,k,q)
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
- use interfaces,     ONLY:RT_carriers_object
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded
  use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_steps_DB, &
-&                         RT_IO_G_steps,RT_IO_output_steps
+&                         RT_IO_G_steps,RT_IO_output_steps,RT_carriers_object
  use real_time,      ONLY:RT_step,l_NE_with_fields, &
 &                         NE_steps,NE_tot_time,RT_carriers,   &
 &                         l_NE_simulate_Irredux,l_RT_induced_field,                   &

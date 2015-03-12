@@ -31,12 +31,12 @@ subroutine RT_driver(E,X,k,q)
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,X_alloc
  use wave_func,      ONLY:WF
- use interfaces,     ONLY:WF_load,RT_carriers_object
+ use interfaces,     ONLY:WF_load
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use SC,             ONLY:SC_potential,SC_bands,it_now,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,&
 &                         SC_QP_setup
- use rt_ctl,         ONLY:RT_output,RT_alloc_ctl,RT_free_ctl,RT_IO_G_steps,ID,it_start
+ use rt_ctl,         ONLY:RT_output,RT_alloc_ctl,RT_free_ctl,RT_IO_G_steps,ID,it_start,RT_carriers_object
  use real_time,      ONLY:NE_steps,RT_step,G_lesser, &
 &                         l_NE_with_fields,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&

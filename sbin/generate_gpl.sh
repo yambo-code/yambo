@@ -1,7 +1,7 @@
 #! /bin/sh
 #
-if [ $# = 0 ] ; then
- echo $0 "OPTIONS[update,diff,zip,tar]"
+if [ $1 = "-h" ] ; then
+ echo $0 "OPTIONS[diff,zip,tar]"
  exit 0
 fi
 
@@ -47,7 +47,10 @@ if [ $ACTION = "update" ] ; then
    grep -v svn | \
    grep -v sbin | \
    grep -v yamboo | \
-   grep -v merge_with_GPL | \
+   grep -v README.branches_and_trunk | \
+   grep -v OpenMp | \
+   grep -v doxygen | \
+   grep -v README.configure_libs_install | \
    grep -v commit.msg | \
    grep -v ChangeLog | \
    grep -v ONLY | \
@@ -59,7 +62,10 @@ if [ $ACTION = "update" ] ; then
    grep -v svn | \
    grep -v sbin | \
    grep -v yamboo | \
-   grep -v merge_with_GPL | \
+   grep -v README.branches_and_trunk | \
+   grep -v OpenMp | \
+   grep -v doxygen | \
+   grep -v README.configure_libs_install | \
    grep -v commit.msg | \
    grep -v ChangeLog | \
    grep -v Write | \
@@ -71,7 +77,10 @@ if [ $ACTION = "update" ] ; then
    grep -v svn | \
    grep -v sbin | \
    grep -v yamboo | \
-   grep -v merge_with_GPL | \
+   grep -v README.branches_and_trunk | \
+   grep -v OpenMp | \
+   grep -v doxygen | \
+   grep -v README.configure_libs_install | \
    grep -v commit.msg | \
    grep -v ChangeLog | \
    grep -v Write | \
@@ -83,7 +92,10 @@ if [ $ACTION = "update" ] ; then
    grep -v svn | \
    grep -v sbin | \
    grep -v yamboo | \
-   grep -v merge_with_GPL | \
+   grep -v README.branches_and_trunk | \
+   grep -v OpenMp | \
+   grep -v doxygen | \
+   grep -v README.configure_libs_install | \
    grep -v commit.msg | \
    grep -v ChangeLog | \
    grep -v Write | \
@@ -124,6 +136,7 @@ if [ $ACTION = "tar" ] ; then
  gzip  ${SRC_NAME}.tar
 fi
 
+echo $WD
 if [ $ACTION = "diff" ] ; then
  FILES=`cat DIFF | gawk '{na=split($0,a);print a[3]}' `
  for file in $FILES; do meld $file $WD/$file ; done

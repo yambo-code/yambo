@@ -187,7 +187,7 @@ clean_all:
 	@$(lib_xc_distclean)
 	@$(lib_ext_distclean)
 	@$(objects_clean)
-	@$(lib_mod_dist_clean)
+	@$(lib_mod_distclean)
 	@$(lib_mod_netcdf_clean)
 	@$(conf_clean)
 	@$(xclean)
@@ -196,7 +196,6 @@ clean_extlibs:
 	@$(lib_ext_clean)
 	@$(lib_ext_distclean)
 	
-
 # Functions
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ targets;echo;\
@@ -271,26 +270,26 @@ define objects_clean
  fi
 endef
 define lib_xc_clean
- cd $(libdir)/libxc; make -s clean; cd ../..
+ @cd $(libdir)/libxc; make -s clean; cd ../..
  echo "[CLEAN] LibXC ... done" 
 endef
 define lib_xc_distclean
- cd $(libdir)/libxc; make -s distclean; cd ../..
- rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/ lib/libxc/autom4te.cache/
+ @cd $(libdir)/libxc; make -s distclean; cd ../..
+ @rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/ lib/libxc/autom4te.cache/
  echo "[CLEAN] LibXC ... done" 
 endef
 define lib_ext_clean
- cd $(libdir)/iotk; make -s -f Makefile.loc clean > /dev/null ; cd ../..
- cd $(libdir)/netcdf; make -s -f Makefile.loc clean > /dev/null ; cd ../..
- cd $(libdir)/etsf_io; make -s -f Makefile.loc clean > /dev/null ; cd ../..
+ @cd $(libdir)/iotk; make -s -f Makefile.loc clean > /dev/null ; cd ../..
+ @cd $(libdir)/netcdf; make -s -f Makefile.loc clean > /dev/null ; cd ../..
+ @cd $(libdir)/etsf_io; make -s -f Makefile.loc clean > /dev/null ; cd ../..
  echo "[CLEAN] Libs EXT ... done" 
 endef
 define lib_ext_distclean
- cd $(libdir)/archive; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ @cd $(libdir)/archive; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
  @cd $(libdir)/install; ( if test -r make_iotk.inc ; then rm -f make_iotk.inc ; fi) ; cd ../..
- cd $(libdir)/iotk; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
- cd $(libdir)/netcdf; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
- cd $(libdir)/etsf_io; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ @cd $(libdir)/iotk; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ @cd $(libdir)/netcdf; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ @cd $(libdir)/etsf_io; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
  echo "[CLEAN] Libs EXT ... done" 
 endef
 define lib_mod_clean
@@ -300,8 +299,8 @@ define lib_mod_clean
  echo "[CLEAN] Modules ... done" 
 endef
 define lib_mod_distclean
- find . \( -name '*.a' -o -name '*.mod' \) -type f -print | xargs rm -f 
- echo "[CLEAN] Libraries ... done" 
+ find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | xargs rm -f 
+ echo "[CLEAN] Libraries  ... done" 
  echo "[CLEAN] Modules ... done" 
 endef
 define lib_mod_netcdf_clean

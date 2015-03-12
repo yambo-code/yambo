@@ -69,8 +69,9 @@ subroutine V_real_space_to_H(ik,V,H,WF,V_kind)
    !
    if (ib>ibp) cycle
    !
+   if (.not.HEAD_QP_cpu) cycle
 #if defined _SC && !defined _RT
-   if (.not.(PAR_IND_QP%element_1D(i1).and.HEAD_QP_cpu)) cycle
+   if (.not.PAR_IND_QP%element_1D(i1)) cycle
 #endif
 #if defined _RT
    if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle

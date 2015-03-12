@@ -160,6 +160,7 @@ module parallel_m
  !
  ! ... BZ sampling
  type(PP_indexes),SAVE :: PAR_IND_Q
+ type(PP_indexes),SAVE :: PAR_IND_Q_bz
  type(PP_indexes),SAVE :: PAR_IND_Kk_ibz
  type(PP_indexes),SAVE :: PAR_IND_Xk_ibz
  type(PP_indexes),SAVE :: PAR_IND_Xk_bz
@@ -282,6 +283,8 @@ module parallel_m
  integer,allocatable:: PAR_Bp_mat_index(:,:)
  integer            :: PAR_nQ
  integer,allocatable:: PAR_Q_index(:)
+ integer            :: PAR_nQ_bz
+ integer,allocatable:: PAR_Q_bz_index(:)
  integer            :: PAR_Kk_nibz
  integer            :: PAR_Xk_nibz
  integer,allocatable:: PAR_Xk_ibz_index(:)
@@ -291,6 +294,8 @@ module parallel_m
  integer,allocatable:: PAR_Xk_bz_index(:)
  integer            :: PAR_BS_nT_col_grps 
  integer,allocatable:: PAR_BS_T_grps_index(:)
+ integer            :: PAR_nG_bands 
+ integer,allocatable:: PAR_G_bands_index(:)
  !
  ! ... linear response & BSK
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)

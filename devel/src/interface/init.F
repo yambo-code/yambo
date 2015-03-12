@@ -549,15 +549,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_alda_fxc) call initactivate(1,'FxcGRLc')
    if (l_lrc_fxc)  call initactivate(1,'LRC_alpha LRC_beta')
    !
-#if defined _RT
-   call initactivate(1,'RT_CHI RT_PP_time')
-#endif
-   !
  endif
  !
  ! Optics(not bse) nor GW (no PP)
  !
- if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
+ if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_life.and..not.l_ppa.and..not.l_gw0)) then
    call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
@@ -645,9 +641,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                  'LongDr','DrudeW'/))
    call initactivate(1,'XTermKind'//'Xs')
    call initactivate(1,'XTermEn'//'Xs')
-#if defined _RT
-   call initactivate(1,'RT_UpScr RT_PP_time')
-#endif
  endif
  !
  ! GW (PPA & COHSEX) 
@@ -665,9 +658,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','EhEngy','LongDr'/))
      call initactivate(1,'XTermKind'//'Xs')
      call initactivate(1,'XTermEn'//'Xs')
-#if defined _RT
-     call initactivate(1,'RT_COHSEX RT_PP_time')
-#endif
    endif
  endif
  !
@@ -704,17 +694,20 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call initactivate(1,'GbndRnge') 
        if (.not.l_cohsex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
        if (.not.l_cohsex) call initactivate(1,'dScStep') 
-       if (.not.l_ppa.and..not.l_cohsex) call X_activate('Xd',(/'BndsRn','NGsBlk',&
-&                      'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
-&                      'DrudeW','EhEngy','LongDr'/)) 
-       !
-       if (.not.l_cohsex) call initactivate(1,'GTermKind GTermEn DysSolver')
-       if (     l_cohsex) call initactivate(1,'UseEbands')
-       if (trim(QP_solver)=="g") then
-         call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
-       else
-         call initactivate(1,'GWoIter')
-         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
+       if (.not.l_elphoton_corr) then
+         if (.not.l_ppa.and..not.l_cohsex) &
+&          call X_activate('Xd',(/'BndsRn','NGsBlk',&
+&                          'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
+&                          'DrudeW','EhEngy','LongDr'/)) 
+         !
+         if (.not.l_cohsex) call initactivate(1,'GTermKind GTermEn DysSolver')
+         if (     l_cohsex) call initactivate(1,'UseEbands')
+         if (trim(QP_solver)=="g") then
+           call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
+         else
+           call initactivate(1,'GWoIter')
+           if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
+         endif
        endif
        !
      endif
@@ -1039,15 +1032,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        ! GPL_EXCLUDE_END
        ! 
+#if defined _RT
+       l_elel_scatt =runlevel_is_on('el_el_scatt')
+       l_elph_scatt=runlevel_is_on('el_ph_scatt')
+#endif
 #if defined _SC 
        l_sc_run=runlevel_is_on('scpot')
        l_real_time=runlevel_is_on('negf')
        l_sc_magnetic=runlevel_is_on('magnetic')
        l_eval_collisions=runlevel_is_on('collisions')
-#endif
-#if defined _RT
-       l_elel_scatt =runlevel_is_on('el_el_scatt')
-       l_elph_scatt=runlevel_is_on('el_ph_scatt')
+       if (.not.l_real_time.and.trim(SC_potential)=="IP") SC_potential="default"
 #endif
 #if defined  _SURF
        lreels=runlevel_is_on('reels')
@@ -1074,10 +1068,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_elel_corr    =runlevel_is_on('el_el_corr')
        l_elphoton_corr=runlevel_is_on('el_photon_corr')
 #endif
-! Davide: warning, yambo_elph and yambo_qed may be broken
-!#if !defined  _ELPH  && !defined _QED
+       ! GPL_EXCLUDE_START
+#if !defined  _ELPH  && !defined _QED
        l_elel_corr=l_gw0.or.l_life.or.l_eval_collisions
-!#endif
+#endif
+       ! GPL_EXCLUDE_END
        !
        ! Check if this runlevel is allowed in the 
        ! present configuration
@@ -1158,7 +1153,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &        l_HF_and_locXC.and..not.l_elph_corr.and..not.l_elphoton_corr)  &
 &                  call initactivate(1,'em1d')
      if (l_cohsex) call initactivate(1,'em1s')
-     if (l_W_eh)   call initactivate(1,'em1s')
      if (l_bsk)    call initactivate(1,'optics')
      if (l_bsk)    call initactivate(1,'bse')
      if (l_bss)    call initactivate(1,'optics')
@@ -1218,11 +1212,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if (l_bs_fxc)                   BS_res_mode='c'
        if (l_td_hf)                    BS_res_mode='xcd'
        if (l_W_eh)                     BS_res_mode='xc'
-       if (trim(BSE_mode)=="coupling") BS_cpl_mode=trim(BS_res_mode)
+       if (index(BSE_mode,'coupling')>0) BS_cpl_mode=trim(BS_res_mode)
        !
        if(l_W_eh) then
          call parser('WehDiag',l_W_eh_diag)
-         call parser('WehCpl' ,l_W_eh_cpl)
+         l_W_eh_cpl=trim(BSE_mode)=='xc_coupling'
          if (l_W_eh_diag)              BS_res_mode=trim(string_add(BS_res_mode,'d'))
          if (.not.l_W_eh_cpl)          BS_cpl_mode=trim(string_remove(BS_cpl_mode,'c'))
        endif
@@ -1518,6 +1512,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              SC_potential='HARTREE'
            else if ( trim(rstr_piece(i1+1)) == 'd') then
              SC_potential='default'
+           else if ( trim(rstr_piece(i1+1)) == 'ip') then
+             SC_potential='IP'
            endif
          endif
 #endif

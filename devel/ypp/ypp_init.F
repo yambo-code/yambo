@@ -73,7 +73,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #if defined _YPP_SC
  type(levels)     ::E_dummy
  integer, external::io_SC_components
- integer          ::io_SC_err
+ integer          ::io_SC_err,ID
 #endif
 #if defined _YPP_RT
  logical          ::l_flag
@@ -697,7 +697,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #endif
  !
 #if defined _YPP_RT
- if (.not.l_QP_init) l_QP_init=l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_dos.or.l_RT_occ_bands.or.l_RT_life_Bands.or.l_RT_abs
+ if (.not.l_QP_init) l_QP_init=l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_dos.or.l_RT_occ_bands.or.l_RT_life_Bands
  if (l_QP_init) call QP_init(.FALSE.,.TRUE.)
 #else
  if (l_QP_init) call QP_init(.FALSE.,.FALSE.)

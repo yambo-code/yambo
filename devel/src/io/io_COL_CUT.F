@@ -51,6 +51,8 @@ integer function io_COL_CUT(ID)
    call io_elemental(ID,VAR='GEOMETRY',CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,CH0=cut_geometry,&
 &       VAR=' CutOff Geometry                 :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
    call io_elemental(ID,VAR='DESCRIPTION',CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,CH0=cut_description,&
 &       VAR=' Coulomb cutoff potential        :',CHECK=.true.,OP=(/"=="/))

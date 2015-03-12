@@ -30,13 +30,14 @@ subroutine RT_initialize(E,k,q)
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
+ use interfaces,     ONLY:RT_carriers_object
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded
  use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_steps_DB, &
 &                         RT_IO_G_steps,RT_IO_output_steps
  use real_time,      ONLY:RT_step,l_NE_with_fields, &
-&                         NE_steps,NE_tot_time,   &
+&                         NE_steps,NE_tot_time,RT_carriers,   &
 &                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
 &                         RT_is_dephased,RAD_LifeTime,       &
 &                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,RIM_ibz_coo, &
@@ -46,7 +47,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
 &                         RIM_EE_Nk_table,l_RT_impose_E,RIM_EE_percent,RIM_EE_Nk_table,&
 &                         l_BGR,l_RT_HEUN,eval_DENSITY,eval_HARTREE,eval_DFT,&
-&                         RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz,RT_nstates
+&                         RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,l_manual_excitation, &
@@ -129,9 +130,9 @@ subroutine RT_initialize(E,k,q)
  !
  if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step)+1)
  !
- ! Set a number of steps. i1=1(J,P,OCCs)  i1=2(GF) i1=3(output).
+ ! Set a number of steps. i1=1(J,P,CARRIERs)  i1=2(GF) i1=3(output).
  ! Negative value forces the step to be set automatically
- !==============================================================
+ !==================================================================
  !
  do i1=1,3
    !
@@ -284,7 +285,6 @@ subroutine RT_initialize(E,k,q)
      RT_all2ibz(ik)=ik
    enddo
  endif
- RT_nstates=RT_nk*(SC_bands(2)-SC_bands(1)+1)
  !
  ! Electron-phonon
  ! ===============
@@ -301,7 +301,6 @@ subroutine RT_initialize(E,k,q)
  !=============================================
  if (l_elph_scatt.or.l_elel_scatt) N_T_samplings=RT_Lifetimes_evaluation_plan( )
  !
- !
  ! Checking extended COLLISIONS
  !==============================
  !
@@ -317,6 +316,11 @@ subroutine RT_initialize(E,k,q)
    call COLLISIONS_load(.TRUE.)
    !
  endif
+ !
+ ! Initial allocation and basic definitions of the RT_carriers object
+ !====================================================================
+ !
+ call RT_carriers_object(RT_carriers,E,k,WHAT='allocate')
  !
  ! LOG
  ! ===
@@ -351,7 +355,7 @@ subroutine RT_initialize(E,k,q)
  !
  if (l_elph_scatt)        call msg( 'r','El-Ph Carrier scattering   :',l_elph_scatt)
  if (l_elel_scatt)        call msg( 'r','El-El Carrier scattering   :',l_elel_scatt)
- if (l_BGR)               call msg( 'r','On-the-fly BGR computed    :',l_BGR)
+ if (l_BGR)               call msg( 'r','On-the-fly BGR added       :',l_BGR)
  !
  call msg( 'nr','---I/O---')
  call                          msg('r', 'T between I/O of J,P,f [fs]:',RT_IO_time(1)/FS2AUT)

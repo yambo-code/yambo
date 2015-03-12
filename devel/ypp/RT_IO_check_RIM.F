@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_check_RIM(Xk,Xen)
+subroutine RT_IO_check_RIM(Xk,Xen)
  !
  use electrons,        ONLY:levels,BZ_RIM_tot_Nkpts
  use R_lattice,        ONLY:bz_samp
@@ -79,4 +79,4 @@ subroutine RT_check_RIM(Xk,Xen)
    Xk%pt_RIM(RT_ibz_coo(ik,1):RT_ibz_coo(ik,2),:)=Xk%ptbz_RIM(RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),:)
  enddo
  !
-end subroutine RT_check_RIM
+end subroutine RT_IO_check_RIM

@@ -47,7 +47,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use X_m,           ONLY:X_t,X_poles,DIP_q_dot_iR,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM,&
 &                        X_terminator
- use IO_m,          ONLY:io_and_Messaging_switch
+ use IO_m,          ONLY:IO_and_Messaging_switch
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -69,7 +69,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  integer                 :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
 &                           isp,iv,ic,iw,isave(4),n_poles,i_cg,i_bg,alloc_err
  logical                 :: force_bare_X_G,Drude_pole
- real(SP)                :: minmax_ehe(2),eh_occ
+ real(SP)                :: minmax_ehe(2,PAR_COM_q_for_Xo%n_CPU),eh_occ
  type(ggwinfo)           :: isc
  complex(SP)             :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
  complex(SP),allocatable :: rhotw_save(:),Xo_residual(:,:)
@@ -96,14 +96,14 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    ! But this means that only a fraction of the dipoles is actually written on disk.
    ! To make all dipoles I/O possible I temporarely swicth on the IO for all q=1 cpu's.
    !
-   if (l_em1s) call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+   if (l_em1s) call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
    call DIPOLE_driver(Xen, Xk, X, X%q0)
    call X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
    call OPENMP_set_threads(n_threads_in=n_threads_X)
    !
-   if (l_em1s) call io_and_Messaging_switch("+io_out",PAR_COM_Q_INDEX%my_CHAIN==1)
+   if (l_em1s) call IO_and_Messaging_switch("+io_out",PAR_COM_Q_INDEX%my_CHAIN==1)
    !
  endif
  !
@@ -127,10 +127,16 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual)
    if (force_bare_X_G)      call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP)
    !
-   n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
+   minmax_ehe=0._SP
+   !
+   n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_q_for_Xo%CPU_id+1))
    deallocate(X_poles)
    !
-   if (self_detect_E_range) Xw%er=minmax_ehe
+   if (self_detect_E_range) then
+     call PP_redux_wait(minmax_ehe,COMM=PAR_COM_q_for_Xo%COMM)
+     Xw%er(1)=minval(minmax_ehe(1,:))
+     Xw%er(2)=maxval(minmax_ehe(2,:))
+   endif
    !
    ! This call is needed as Xw%p is deallocated inside
    ! the q-loop of X_em1. But only when the EM1D is written or when it is not but we are not  doing
@@ -171,12 +177,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
  endif
  if (half_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
-
  !
  ! Mem est of Xo_residual (to be done here and not in the omp parallel)
  !------------------------
  call mem_est("Xo_WS",(/X%ng**2 *n_threads_X/))
-
  !
  ! Timing
  !========
@@ -190,7 +194,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 #else
  call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_X)
 #endif
-
  !
  ! OpenMP setup
  !==============
@@ -201,12 +204,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
 !$omp &                 rhotw_save, isave, ig1,ig2, iw)
  !
  call OPENMP_update(master_thread) 
-
  !
  ! prepare the scattering module
  !
  call collision_reset(isc,INIT_ONLY=.true.)
-
  !
  ! MAIN LOOP
  !===========
@@ -340,8 +341,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !-------------------------
  !
  if (iq==1) deallocate(rhotw_save)
- deallocate(isc%rhotw)
- deallocate(Xo_residual)
+ deallocate(isc%rhotw,Xo_residual)
  !
 !$omp end parallel
  !

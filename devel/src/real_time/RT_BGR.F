@@ -39,7 +39,7 @@ subroutine RT_BGR(G,E,k)
  use real_time,      ONLY:G_lesser_reference,l_initial_equilibrium,REF_V_xc_sc,BGR,&
 &                         REF_V_hartree_sc,REF_QP_Vnl_xc,BGR_Hartree,BGR_V_xc,BGR_Self_Energy,&
 &                         l_RT_uses_E_RIM,RIM_ibz_coo,E_reference,RT_nk,RT_ibz_coo,&
-&                         eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_all2ibz
+&                         eval_HARTREE,eval_DFT,RT_ibz_coo,RT_all2ibz,l_BGR
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait
@@ -101,7 +101,7 @@ subroutine RT_BGR(G,E,k)
      if (eval_HARTREE) then
        H=(0._SP,0._SP)
        call V_real_space_to_H(ik,V_hartree_sc,H,WF,'def')
-       do ib=1,SC_bands(2)
+       do ib=SC_bands(1),SC_bands(2)
          BGR_Hartree(ib,ik,1)=H(ib,ib,1)
        enddo
      endif
@@ -111,7 +111,7 @@ subroutine RT_BGR(G,E,k)
      if (eval_DFT) then
        H=(0._SP,0._SP)
        call V_real_space_to_H(ik,V_xc_sc,H,WF,'xc ')
-       do ib=1,SC_bands(2)
+       do ib=SC_bands(1),SC_bands(2)
          BGR_V_xc(ib,ik,1)=H(ib,ib,1)
        enddo
      endif
@@ -134,12 +134,21 @@ subroutine RT_BGR(G,E,k)
      !
      ik_ref=RT_ibz_coo(ik,1)
      !
-     do ib=1,SC_bands(2)
+     do ib=SC_bands(1),SC_bands(2)
+       !
        G_hf(ib,ib,ik)    =(0._SP,1._SP)*E%f(ib,ik,1)
        G_cohsex(ib,ib,ik)=(0._SP,1._SP)*(E%f(ib,ik,1)-1.)
-       if (ib>=SC_bands(1).and..not.l_initial_equilibrium) then
-         G_hf(ib,ib,ik)    =G(ib,ib,ik_ref)+G_lesser_reference(ib,ib,ik_ref)
-         G_cohsex(ib,ib,ik)=G(ib,ib,ik_ref)+G_lesser_reference(ib,ib,ik_ref)- (0._SP,1._SP)
+       !
+       if (.not.l_initial_equilibrium) then
+         do ibp=SC_bands(1),SC_bands(2)
+           !
+           G_hf(ib,ibp,ik)    =G(ib,ibp,ik_ref)+G_lesser_reference(ib,ibp,ik_ref)
+           !
+           G_cohsex(ib,ibp,ik)=G(ib,ibp,ik_ref)+G_lesser_reference(ib,ibp,ik_ref)
+           !
+           if (ib==ibp) G_cohsex(ib,ibp,ik)=G_cohsex(ib,ibp,ik)-(0._SP,1._SP)
+           !
+         enddo
        endif
      enddo
    enddo
@@ -153,6 +162,7 @@ subroutine RT_BGR(G,E,k)
    else
      !
      do i_qp=1,QP_n_states
+       !
        ib =QP_table(i_qp,1)
        ibp=QP_table(i_qp,2)
        ik =QP_table(i_qp,3)
@@ -169,23 +179,27 @@ subroutine RT_BGR(G,E,k)
  !
  if (.not.l_initial_equilibrium) then
    !
-   ! Corrections of the Energy Levels
-   !
-   do ik=1,RT_nk
+   if (l_BGR) then
      !
-     ik_ibz=RT_all2ibz(ik)
-     ik_RIM=ik-RT_ibz_coo(ik_ibz,1)+RIM_ibz_coo(ik_ibz,1)
+     ! Corrections of the Energy Levels
      !
-     do ib=SC_bands(1),SC_bands(2)
+     do ik=1,RT_nk
        !
-       deltaE=BGR_Hartree(ib,ik_ibz,1)+BGR_V_xc(ib,ik,1)+BGR_Self_Energy(ib,ik_ibz,1)
+       ik_ibz=RT_all2ibz(ik)
+       ik_RIM=ik-RT_ibz_coo(ik_ibz,1)+RIM_ibz_coo(ik_ibz,1)
        !
-       if (     l_RT_uses_E_RIM) E%E_RIM(ib,ik_RIM,1)=E_reference%E_RIM(ib,ik_RIM,1)+deltaE
-       if (.not.l_RT_uses_E_RIM) E%E(ib,ik,1)=E_reference%E(ib,ik,1)+deltaE
+       do ib=SC_bands(1),SC_bands(2)
+         !
+         deltaE=BGR_Hartree(ib,ik_ibz,1)+BGR_V_xc(ib,ik_ibz,1)+BGR_Self_Energy(ib,ik_ibz,1)
+         !
+         if (     l_RT_uses_E_RIM) E%E_RIM(ib,ik_RIM,1)=E_reference%E_RIM(ib,ik_RIM,1)+deltaE
+         if (.not.l_RT_uses_E_RIM) E%E(ib,ik_ibz,1)=E_reference%E(ib,ik_ibz,1)+deltaE
+         !
+       enddo
        !
      enddo
      !
-   enddo
+   endif
    !
    ! Evaluation of the contribution to the minimal gap
    !

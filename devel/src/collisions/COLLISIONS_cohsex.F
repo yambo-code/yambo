@@ -32,7 +32,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:error
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,PAR_Plasma_index,PAR_QP_index,&
-&                        PAR_IND_Q,PAR_nPlasma,PAR_Q_index,&
+&                        PAR_IND_Q,PAR_Q_index,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_IND_Plasma,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
@@ -42,7 +42,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  use timing_m,      ONLY:timing
 #endif
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,io_and_Messaging_switch,io_COLLs,&
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch,io_COLLs,&
 &                        fragment_status
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_n_states,QP_table
  use X_m,           ONLY:X_alloc,X_mat,X_t
@@ -69,7 +69,6 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
 &                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_sp,i_kmq_G0,&
 &                           i_m,i_p,i_p_bz,i_p_s,i_p_sp,i_p_star,n_bands,&
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp1_mem
- real(SP)                 ::E_center
  complex(SP), allocatable ::EM1s(:,:)
  type(ggwinfo)            ::isc,iscp
  integer          ::io_err,ID
@@ -165,7 +164,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
        !
        call scatterGamp(isc,'c')
        !
-       call io_and_Messaging_switch("-fragments_IO_log")
+       call IO_and_Messaging_switch("-fragments_IO_log")
        !
        ! I/O
        !
@@ -177,7 +176,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
        endif
        io_err=io_X(X,Xw,ID)
        !
-       call io_and_Messaging_switch("+fragments_IO_log")
+       call IO_and_Messaging_switch("+fragments_IO_log")
        !
        ! Poles and Residuals
        !

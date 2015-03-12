@@ -32,7 +32,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  use drivers,       ONLY:l_ppa,l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
-&                        l_gw0,l_elel_corr,l_life,l_acfdt
+&                        l_gw0,l_elel_corr,l_life,l_acfdt,l_elphoton_corr
  use X_m,           ONLY:X_t
  use parallel_m,    ONLY:myid,ncpu,MPI_close
  use it_m,          ONLY:it_reset,infile
@@ -178,7 +178,8 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Dynamical 
  !-----------
  !
- l_dyn_em1= (.not.l_ppa.and..not.l_cohsex) .and. ((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr))
+ l_dyn_em1= (.not.l_ppa.and..not.l_cohsex.and..not.l_elphoton_corr).and. &
+&           ((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr))
  !
  if (l_dyn_em1)    i_err=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
  !
@@ -253,7 +254,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    !==========
    !
 #if defined _RT
-   if (     l_real_time) call RT_driver(Xen,X(:2),Xk,q)
+   if (     l_real_time) call RT_driver(en,X(:2),k,q)
 #endif
    !
  endif

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_and_Messaging_switch(what,CONDITION)
+subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  use pars,           ONLY:schlen
  use IO_m,           ONLY:IO_write,IO_read,Fragmented_IO_save,Fragmented_IO
@@ -46,9 +46,10 @@ subroutine io_and_Messaging_switch(what,CONDITION)
  local_TRUE  =.TRUE.
  local_FALSE =.FALSE.
  local_master=master_cpu
+ !
  if (present(CONDITION)) then
-   local_TRUE =CONDITION
-   local_FALSE=CONDITION
+   local_TRUE  =CONDITION
+   local_FALSE =CONDITION
    local_master=CONDITION
  endif
  !
@@ -117,4 +118,4 @@ subroutine io_and_Messaging_switch(what,CONDITION)
  write_to_report_now   =write_to_report
  live_timing_is_on_now =live_timing_is_on
  !
-end subroutine io_and_Messaging_switch
+end subroutine IO_and_Messaging_switch

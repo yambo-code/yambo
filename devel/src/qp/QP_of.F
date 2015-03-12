@@ -101,14 +101,15 @@ subroutine QP_of(qp,en,QPdb_read_err)
  endif
  !
  if (l_extended_output) then
-   ntitles=13
-   titles_order(:ntitles)=(/9,10,4,5,8,1,11,2,3,7,6,12,13/)
+   !
+   ntitles=14
+   titles_order(:ntitles)=(/9,10,4,5,8,1,11,2,3,7,15,16,12,13/)
    !
    ! When QP components are read from DB some of the variabels are not available
    !
    if (QPdb_read_err==0) then
-     ntitles=10
-     titles_order(:ntitles)=(/9,10,4,5,8,1,11,6,12,13/)
+     ntitles=11
+     titles_order(:ntitles)=(/9,10,4,5,8,1,11,15,16,12,13/)
    endif
    !
  endif

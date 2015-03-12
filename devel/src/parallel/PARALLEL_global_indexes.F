@@ -31,7 +31,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_B_mat_index,PAR_nQP,PAR_QP_index,PAR_INDEX_copy,&
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load,&
 &                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index,&
-&                        PAR_BS_T_grps_index,PAR_BS_nT_col_grps,PAR_Kk_nibz,MAX_N_OF_CHAINS
+&                        PAR_BS_T_grps_index,PAR_BS_nT_col_grps,PAR_Kk_nibz,PAR_nG_bands,PAR_G_bands_index,&
+&                        PAR_Q_bz_index,PAR_nQ_bz
  use parallel_m,    ONLY:& ! LOGICALS
 &                        l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
 &                        HEAD_QP_cpu,HEAD_k_cpu
@@ -52,7 +53,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
 &                        PAR_IND_B_mat,PAR_IND_Plasma,PAR_IND_DIPk_ibz,PAR_IND_WF_linear,&
 &                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_eh,PAR_IND_T_all,PAR_IND_WF_b_and_k,&
-&                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_IND_T_ordered
+&                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_IND_T_ordered,PAR_IND_Q_bz
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_INV_ID,PAR_IND_DIAGO_ID,&
@@ -77,7 +78,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use stderr,        ONLY:intc
  use com,           ONLY:error,warning
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
- use IO_m,          ONLY:io_and_Messaging_switch,io_COLLs,io_RESPONSE
+ use IO_m,          ONLY:IO_and_Messaging_switch,io_COLLs,io_RESPONSE
  use QP_m,          ONLY:QP_n_states,QP_nb,QP_table,QP_n_G_bands
  use wave_func,     ONLY:states_to_load
  implicit none
@@ -91,7 +92,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! Work Space
  !
  integer              :: i_k,i_k_bz,X_type,iq_range(2),i_qp,n_bands(2),ib1,ib2,i_field
- logical              :: reset_all,l_found
+ logical              :: reset_all
  character(10)        :: WHAT,WHATp
  !
  ! Resets...
@@ -122,6 +123,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PP_indexes_reset(PAR_IND_INV)
    call PP_indexes_reset(PAR_IND_DIAGO)
    call PP_indexes_reset(PAR_IND_Q)
+   call PP_indexes_reset(PAR_IND_Q_bz)
    call PP_indexes_reset(PAR_IND_T_groups)
    call PP_indexes_reset(PAR_IND_Kk_ibz)
    call PP_indexes_reset(PAR_IND_Xk_ibz)
@@ -154,8 +156,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    if (allocated(PAR_B_mat_index))    deallocate(PAR_B_mat_index)
    if (allocated(PAR_Bp_mat_index))   deallocate(PAR_Bp_mat_index)
    if (allocated(PAR_QP_index))       deallocate(PAR_QP_index)
+   if (allocated(PAR_G_bands_index))  deallocate(PAR_G_bands_index)
    if (allocated(PAR_Plasma_index))   deallocate(PAR_Plasma_index)
    if (allocated(PAR_Q_index))        deallocate(PAR_Q_index)
+   if (allocated(PAR_Q_bz_index))     deallocate(PAR_Q_bz_index)
    if (allocated(PAR_Xk_ibz_index))   deallocate(PAR_Xk_ibz_index)
    if (allocated(PAR_Xk_bz_index))    deallocate(PAR_Xk_bz_index)
    if (allocated(states_to_load))     deallocate(states_to_load)
@@ -240,7 +244,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! ... indexes
    !
    allocate(PAR_Xk_bz_index(Xk%nbz))
-   call distribute_BZk_using_IBZk(PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX)
+   call distribute_BZk_using_IBZk(PAR_COM_Xk_ibz_INDEX,Xk,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
+&                                                         PAR_IND_Xk_bz, PAR_IND_Xk_bz_ID,&
+&                                                         PAR_Xk_bz_index,PAR_Xk_nbz)
    allocate(PAR_Xk_ibz_index(Xk%nibz))
    call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    !
@@ -263,10 +269,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! I/O privileges
    !
    if (PARALLEL_n_structures_active>1) then
-     call io_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1.or.&
+     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1.or.&
 &                                                     PAR_COM_Xk_ibz_INDEX%n_CPU==ncpu)
    else
-     call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+     call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
@@ -364,9 +370,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! I/O privileges
    !
    if (PARALLEL_n_structures_active>1) then
-     call io_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_Q_INDEX%my_CHAIN==1)
+     call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    else
-     call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+     call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif
    !
    ! To define proper indexes to calculate the dipoles I need to build up
@@ -445,8 +451,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz,&
 &           NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    !
-#endif
-#if defined _SC
    !.........................................................................
    ! Wave Functions (derived from PAR_COM_Xk_ibz_INDEX and PAR_COM_G_b_INDEX)
    !.........................................................................
@@ -510,9 +514,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      enddo
    enddo
    !
-#endif
-   !
-#if defined _SC
    !.........................................................................
    ! WFs & QPs
    !.........................................................................
@@ -644,9 +645,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! and then resetted in RT_driver
    !
    if (l_eval_collisions) then
-     call io_and_Messaging_switch("+io_out",CONDITION=HEAD_QP_cpu)
+     call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_QP_cpu)
    else
-     call io_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1.or.&
+     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1.or.&
 &                                                     PAR_COM_Xk_ibz_INDEX%n_CPU==ncpu)
    endif
    !
@@ -716,6 +717,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    allocate(PAR_Q_index(iq_range(2))) 
    call Build_up_index(PAR_IND_Q,iq_range(2),PAR_Q_index,PAR_nQ)
+   !
+   if (trim(WHAT)=="ibz") then
+     allocate(PAR_Q_bz_index(nqbz))
+     call distribute_BZk_using_IBZk(PAR_COM_Q_INDEX,q,PAR_IND_Q   , PAR_IND_Q_ID,&
+&                                                     PAR_IND_Q_bz, PAR_IND_Q_ID,&
+&                                                     PAR_Q_bz_index,PAR_nQ_bz)
+     call Build_up_index(PAR_IND_Q_bz,nqbz,PAR_Q_bz_index,PAR_nQ_bz)
+   endif
    !
 #if defined _SC
    !
@@ -792,6 +801,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_index(PAR_IND_G_b,(/n_bands(2)/),low_range=(/n_bands(1)/),&
 &                      COMM=PAR_COM_G_b_INDEX,CONSECUTIVE=.TRUE.)
    PAR_IND_G_b_ID=PAR_COM_G_b_INDEX%CPU_id
+   PAR_nG_bands=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1)
+   allocate(PAR_G_bands_index(n_bands(2)))
+   call Build_up_index(PAR_IND_G_b,n_bands(2),PAR_G_bands_index,PAR_nG_bands)
    !
    call PARALLEL_live_message("G bands",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
@@ -816,12 +828,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    if (PARALLEL_n_structures_active>1) then
      if (l_eval_collisions.and.io_COLLs) then
-       call io_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_index%CPU_id==0)
+       call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_index%CPU_id==0)
      else 
-       call io_and_Messaging_switch("+io_out",CONDITION=master_cpu)
+       call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
      endif
    else
-     call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+     call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif
    !
    call IO_and_Messaging_switch("+output",CONDITION=master_cpu)
@@ -874,7 +886,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    allocate(PAR_Xk_ibz_index(Xk%nibz))
    call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    allocate(PAR_Xk_bz_index(Xk%nbz))
-   call distribute_BZk_using_IBZk(PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX)
+   call distribute_BZk_using_IBZk(PAR_COM_Xk_ibz_INDEX,Xk,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
+&                                                         PAR_IND_Xk_bz, PAR_IND_Xk_bz_ID,&
+&                                                         PAR_Xk_bz_index,PAR_Xk_nbz)
    !
    ! E/h pairs (k resolved)
    !
@@ -932,7 +946,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! I/O privileges
    !
-   call io_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+   call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    !
    call IO_and_Messaging_switch("+output",CONDITION=master_cpu)
    !
@@ -1071,46 +1085,46 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      !
    end subroutine
    !
-   subroutine distribute_BZk_using_IBZk(IND_ibz,IND_bz,BZ_ID,BZ_index,COMM)
+   subroutine distribute_BZk_using_IBZk(COMM,K,IND_ibz,IBZ_id,IND_bz,BZ_id,BZ_index,PAR_n_bz)
      !
      type(MPI_comm)   :: COMM
      type(PP_indexes) :: IND_ibz,IND_bz
-     integer          :: BZ_ID,BZ_index(Xk%nbz)
+     type(bz_samp)    :: K
+     integer          :: IBZ_id,BZ_id,BZ_index(K%nbz),PAR_n_bz
      !
      ! Work Space
-     integer :: i_p
+     integer :: i_bz,i_ibz,i_p
      !
      ! K-points in the BZ 
      !
-     allocate(IND_bz%element_1D(Xk%nbz))
+     allocate(IND_bz%element_1D(K%nbz))
      IND_bz%element_1D=.FALSE.
      !
      allocate(IND_bz%n_of_elements(COMM%n_CPU))
-     IND_bz%element_1D=.FALSE.
      ! 
      BZ_index=0
      !
-     BZ_ID=PAR_IND_Xk_ibz_ID
+     BZ_id=IBZ_id
      !
      i_p=0
      !
-     do i_k_bz=1,Xk%nbz
+     do i_bz=1,K%nbz
        !
-       i_k=Xk%sstar(i_k_bz,1)
+       i_ibz=K%sstar(i_bz,1)
        !
-       if (IND_ibz%element_1D(i_k)) then
+       if (IND_ibz%element_1D(i_ibz)) then
          i_p=i_p+1
-         IND_bz%element_1D(i_k_bz)=.TRUE.
-         BZ_index(i_k_bz)=i_p
+         IND_bz%element_1D(i_bz)=.TRUE.
+         BZ_index(i_bz)=i_p
        else
-         IND_bz%element_1D(i_k_bz)=.FALSE.
+         IND_bz%element_1D(i_bz)=.FALSE.
        endif
        !
      enddo
      !
-     PAR_Xk_nbz=i_p
+     PAR_n_bz=i_p
      !
-     IND_bz%n_of_elements(BZ_ID+1)=PAR_Xk_nbz
+     IND_bz%n_of_elements(BZ_ID+1)=PAR_n_bz
      !
    end subroutine
    !

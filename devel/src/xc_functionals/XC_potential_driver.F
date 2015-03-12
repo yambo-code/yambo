@@ -33,7 +33,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unM
  use libxc_funcs_m,  ONLY:XC_LDA_X, XC_LDA_C_PW
  use xc_functionals, ONLY:XC_EXCHANGE_CORRELATION,xc_string,XC_libxc_driver,&
 &                         XC_NOT_AVAILABLE,XC_FACTOR,current_xc_string,LIBXC_message_done
- use IO_m,           ONLY:io_and_Messaging_switch
+ use IO_m,           ONLY:IO_and_Messaging_switch
  !
  implicit none
  !
@@ -51,7 +51,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unM
  real(SP)          :: local_exx_fraction, local_exx_screening
  character(schlen) :: local_mute_ch
  !
- if (present(MUTE)) call io_and_Messaging_switch(MUTE)
+ if (present(MUTE)) call IO_and_Messaging_switch(MUTE)
  !
  local_exx_fraction = RZERO
  local_exx_screening= RZERO
@@ -97,9 +97,9 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unM
      if (local_mute_ch(ic:ic)=="-") local_mute_ch(ic:ic)="+"
    enddo   
    if (present(unMUTE)) then
-     call io_and_Messaging_switch(trim(local_mute_ch),CONDITION=unMUTE)
+     call IO_and_Messaging_switch(trim(local_mute_ch),CONDITION=unMUTE)
    else
-     call io_and_Messaging_switch(MUTE)
+     call IO_and_Messaging_switch(MUTE)
    endif
  endif
  !

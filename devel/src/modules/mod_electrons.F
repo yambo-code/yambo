@@ -139,7 +139,7 @@ module electrons
        Eo%E(:,:,:)=Ei%E(:,:,:)
        if (associated(Ei%Eo)) then
          allocate(Eo%Eo(Eo%nb,Eo%nk,n_sp_pol))
-         call mem_est("E-Eo",(/size(Eo%E)/),(/SP/))
+         call mem_est("E-Eo",(/size(Eo%Eo)/),(/SP/))
          Eo%Eo=Ei%Eo
        endif
        if (associated(Ei%fo)) then

@@ -109,22 +109,26 @@ subroutine REPORT_Occupations(E)
  ! [3] Report if the system is treated as a metal
  !
  if (.not.all(Nbf==Nbm)) then
+   !
    if(n_sp_pol==1) call warning('Metallic system')
+   !
    if(n_sp_pol==2) then
      if(all(Nbf/=Nbm)) call warning('Metallic system')
      if(any(Nbf==Nbm)) call warning('System is an half-metal')
    endif
- endif
- !
- if (.not.all(Nbf==Nbm)) then
+   !
+   call msg('r',' ')
+   !
    N_met=0
    f_met=0
    do i_sp_pol=1,n_sp_pol
      f_met=f_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/sum(spin_occ*real(E%nk*(Nbm(:)-Nbf(:))))
      N_met=N_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk)
    enddo
+   !
    call msg('r','N of el / N of met el: ',       (/nel,N_met/))
    call msg('r','Average metallic occ.:            ',(/f_met/))
+   !
  endif
  !
 end subroutine

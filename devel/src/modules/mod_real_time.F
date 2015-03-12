@@ -23,6 +23,7 @@
 !
 module real_time
  !
+ use drivers,    ONLY:l_elel_scatt,l_elph_scatt
  use SC,         ONLY:SC_R
  use pars,       ONLY:DP,SP,schlen,lchlen
  use units,      ONLY:FS2AUT
@@ -117,7 +118,6 @@ module real_time
  ! of a post-run I need to keep here the number of k-points 
  !
  integer                 :: RT_nk
- integer                 :: RT_nstates
  !
  ! BGR
  !----------------------------
@@ -277,24 +277,45 @@ module real_time
  !
  type RT_t
    !
-   character(schlen)  :: description
-   integer,    pointer:: table(:,:) => null()
-   real(SP)   ,pointer:: k(:,:)     => null()
-   real(SP)   ,pointer:: wk(:)      => null()
-   real(SP)   ,pointer:: E0(:)      => null()
-   real(SP)   ,pointer:: f0(:)      => null()
-   real(SP)   ,pointer:: W0(:)      => null()
-   real(SP)   ,pointer:: df(:)      => null()
-   real(SP)   ,pointer:: dE(:)      => null()
-   real(SP)   ,pointer:: dW(:)      => null()
-   real(SP)   ,pointer:: W(:)       => null()
+   ! Sizes and definitions
+   !
    integer  :: nk
    integer  :: nb(2)
    integer  :: nstates
+   character(schlen)  :: description
+   integer,    pointer:: table(:,:)      => null() ! ib,ik_RT,ik,i_spin
+   real(SP)   ,pointer:: kpt(:,:)        => null()
+   real(SP)   ,pointer:: k_weight(:)     => null()
+   !
+   ! Energies
+   !
+   real(SP)   ,pointer:: E_bare(:)       => null() ! equilibrium energy, i.e. the QP energy
+   real(SP)   ,pointer:: delta_E(:)      => null() ! change in E (BGR)
+   real(SP)   ,pointer:: dE_Hartree(:)   => null()
+   real(SP)   ,pointer:: dE_V_xc(:)        => null()
+   real(SP)   ,pointer:: dE_Self_Energy(:) => null()
+   !
+   ! Occupations
+   !
+   real(SP)   ,pointer:: f_bare(:)       => null() ! equilibrium occupations
+   real(SP)   ,pointer:: delta_f(:)      => null() ! change in the occupations
+   !
+   ! Lifetimes
+   !
+   real(SP)   ,pointer:: GAMMA_bare(:,:) => null() ! "initial equilibrium" lifetimes. In the code the "initial equilibrium"
+                                                   ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
+   real(SP)   ,pointer:: NEQ_Lifetime(:) => null() ! time dependent lifetime defined as for Silicon
+   real(SP)   ,pointer:: delta_GAMMA(:)  => null() ! change with respect to the "initial equilibrium" lifetimes
+   real(SP)   ,pointer:: dGAMMA_E_P_Hole(:)     => null() 
+   real(SP)   ,pointer:: dGAMMA_E_P_Electron(:) => null() 
+   real(SP)   ,pointer:: dGAMMA_E_P_Ho_abs(:)   => null() 
+   real(SP)   ,pointer:: dGAMMA_E_P_El_abs(:)   => null() 
+   real(SP)   ,pointer:: dGAMMA_E_E_Hole(:)     => null() 
+   real(SP)   ,pointer:: dGAMMA_E_E_Electron(:) => null() 
    !
  end type RT_t
  !
- type(RT_t)  :: rt
+ type(RT_t)  :: RT_carriers
  !
  ! Interface
  !
@@ -340,6 +361,61 @@ module real_time
  end interface
  !
  contains
+   !
+   subroutine RT_obj_alloc(RT)
+     type(RT_t)::RT
+     if(.not.associated(RT%kpt))          allocate(RT%kpt(RT%nk,3))
+     if(.not.associated(RT%k_weight))     allocate(RT%k_weight(RT%nk))
+     if(.not.associated(RT%table))        allocate(RT%table(RT%nstates,4))
+     if(.not.associated(RT%E_bare))       allocate(RT%E_bare(RT%nstates)) 
+     if(.not.associated(RT%f_bare))       allocate(RT%f_bare(RT%nstates))
+     if(.not.associated(RT%dE_Hartree))     allocate(RT%dE_Hartree(RT%nstates))
+     if(.not.associated(RT%dE_V_xc))        allocate(RT%dE_V_xc(RT%nstates))
+     if(.not.associated(RT%dE_Self_Energy)) allocate(RT%dE_Self_Energy(RT%nstates))
+     if (l_elel_scatt) then
+       if(.not.associated(RT%dGAMMA_E_E_Hole))     allocate(RT%dGAMMA_E_E_Hole(RT%nstates))
+       if(.not.associated(RT%dGAMMA_E_E_Electron)) allocate(RT%dGAMMA_E_E_Electron(RT%nstates))
+     endif
+     if (l_elph_scatt) then
+       if(.not.associated(RT%dGAMMA_E_P_Hole))     allocate(RT%dGAMMA_E_P_Hole(RT%nstates))
+       if(.not.associated(RT%dGAMMA_E_P_Electron)) allocate(RT%dGAMMA_E_P_Electron(RT%nstates))
+       if(.not.associated(RT%dGAMMA_E_P_Ho_abs))   allocate(RT%dGAMMA_E_P_Ho_abs(RT%nstates))
+       if(.not.associated(RT%dGAMMA_E_P_El_abs))   allocate(RT%dGAMMA_E_P_El_abs(RT%nstates))
+     endif
+     if (l_elel_scatt.or.l_elph_scatt) then
+       if(.not.associated(RT%GAMMA_bare))   allocate(RT%GAMMA_bare(RT%nstates,6))
+       if(.not.associated(RT%delta_GAMMA))  allocate(RT%delta_GAMMA(RT%nstates)) 
+       if(.not.associated(RT%NEQ_Lifetime)) allocate(RT%NEQ_Lifetime(RT%nstates)) 
+     endif
+     if(.not.associated(RT%delta_E))      allocate(RT%delta_E(RT%nstates))   
+     if(.not.associated(RT%delta_f))      allocate(RT%delta_f(RT%nstates))  
+   end subroutine
+   !
+   subroutine RT_obj_free(RT)
+     type(RT_t)::RT
+     RT%nk=0
+     RT%nb=0
+     RT%nstates=0
+     if(associated(RT%dE_Hartree))     deallocate(RT%dE_Hartree)
+     if(associated(RT%dE_V_xc))        deallocate(RT%dE_V_xc)
+     if(associated(RT%dE_Self_Energy)) deallocate(RT%dE_Self_Energy)
+     if(associated(RT%dGAMMA_E_E_Hole))     deallocate(RT%dGAMMA_E_E_Hole)
+     if(associated(RT%dGAMMA_E_E_Electron)) deallocate(RT%dGAMMA_E_E_Electron)
+     if(associated(RT%dGAMMA_E_P_Hole))     deallocate(RT%dGAMMA_E_P_Hole)
+     if(associated(RT%dGAMMA_E_P_Electron)) deallocate(RT%dGAMMA_E_P_Electron)
+     if(associated(RT%dGAMMA_E_P_Ho_abs))   deallocate(RT%dGAMMA_E_P_Ho_abs)
+     if(associated(RT%dGAMMA_E_P_El_abs))   deallocate(RT%dGAMMA_E_P_El_abs)
+     if(associated(RT%E_bare))       deallocate(RT%E_bare)
+     if(associated(RT%f_bare))       deallocate(RT%f_bare)
+     if(associated(RT%GAMMA_bare))   deallocate(RT%GAMMA_bare)
+     if(associated(RT%delta_E))      deallocate(RT%delta_E)
+     if(associated(RT%delta_f))      deallocate(RT%delta_f)
+     if(associated(RT%delta_GAMMA))  deallocate(RT%delta_GAMMA)
+     if(associated(RT%NEQ_Lifetime)) deallocate(RT%NEQ_Lifetime)
+     if(associated(RT%kpt))          deallocate(RT%kpt)
+     if(associated(RT%k_weight))     deallocate(RT%k_weight)
+     if(associated(RT%table))        deallocate(RT%table)
+   end subroutine
    !
    subroutine RT_alloc(en)
      !
@@ -470,14 +546,12 @@ module real_time
      allocate(REF_QP_Vnl_xc(QP_n_states))
      call mem_est("REF_QP_Vnl_xc",(/size(REF_QP_Vnl_xc)/),(/2*SP/))
      !
-     if (l_BGR) then
-       allocate(BGR_hartree(SC_bands(2),QP_nk,n_sp_pol))
-       call mem_est("BGR_hartree",(/size(BGR_hartree)/),(/SP/))
-       allocate(BGR_V_xc(SC_bands(2),QP_nk,n_sp_pol))
-       call mem_est("BGR_V_xc",(/size(BGR_V_xc)/),(/SP/))
-       allocate(BGR_Self_Energy(SC_bands(2),QP_nk,n_sp_pol))
-       call mem_est("BGR_Self_Energy",(/size(BGR_Self_Energy)/),(/SP/))
-     endif
+     allocate(BGR_hartree(SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
+     call mem_est("BGR_hartree",(/size(BGR_hartree)/),(/SP/))
+      allocate(BGR_V_xc(SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
+     call mem_est("BGR_V_xc",(/size(BGR_V_xc)/),(/SP/))
+     allocate(BGR_Self_Energy(SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
+     call mem_est("BGR_Self_Energy",(/size(BGR_Self_Energy)/),(/SP/))
      !
      allocate(rho_reference(fft_size))
      call mem_est("rho_reference",(/fft_size/),(/SP/))
@@ -570,12 +644,10 @@ module real_time
        call mem_est("SAVED_lifetime")
      endif
      !
-     if(l_BGR) then
-       deallocate(REF_QP_Vnl_xc,REF_V_xc_sc,REF_V_hartree_sc)
-       call mem_est("REF_QP_Vnl_xc REF_V_xc_sc REF_V_hartree_sc")
-       deallocate(BGR_hartree,BGR_V_xc,BGR_Self_Energy)
-       call mem_est("BGR_hartree BGR_V_xc BGR_Self_Energy")
-     endif
+     deallocate(REF_QP_Vnl_xc,REF_V_xc_sc,REF_V_hartree_sc)
+     call mem_est("REF_QP_Vnl_xc REF_V_xc_sc REF_V_hartree_sc")
+     deallocate(BGR_hartree,BGR_V_xc,BGR_Self_Energy)
+     call mem_est("BGR_hartree BGR_V_xc BGR_Self_Energy")
      !
      deallocate(RT_H_occupations)
      call mem_est("RT_H_occupations")

@@ -33,9 +33,12 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
  use FFT_m,          ONLY:fft_size
  use X_m,            ONLY:Dipole_Energy_treshold
  use wave_func,      ONLY:WF
- use wrapper_omp,    ONLY:Vstar_dot_V_omp
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,&
-&                         PAR_COM_Xk_ibz_INDEX,PAR_COM_Plasma_INDEX
+#if defined _OPENMP
+ use wrapper,        ONLY:Vstar_dot_V_omp
+#else
+ use wrapper,        ONLY:Vstar_dot_V
+#endif
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -57,7 +60,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
  !
  ! Work Space
  !
- integer     :: ib,ibp,ik,SC_bands2,ik_ibz,iE_rim,D1,i_dir
+ integer     :: ib,ibp,ik,SC_bands2,ik_ibz,iE_rim,OUTPUT_dim,i_dir
  real(SP)    :: deltaE,deltaE_RIM
  complex(SP) :: Hk(3,SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),n_sp_pol),VALUE_tmp(3), &
 &               Hk_tmp(SC_bands(2),SC_bands(2),n_sp_pol),                                    &
@@ -75,15 +78,15 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
    if(trim(RIM)=='DIPOLE') l_rim_dipole=.true.
  endif
  !
- D1=0
- if(present(O_MATRIX).or.present(O_real).or.present(O_QP)) D1=1
- if(present(V_MATRIX).or.present(PV_MATRIX))               D1=3
+ OUTPUT_dim=0
+ if(present(O_MATRIX).or.present(O_real).or.present(O_QP)) OUTPUT_dim=1
+ if(present(V_MATRIX).or.present(PV_MATRIX))               OUTPUT_dim=3
  !
- if(D1==0) call error('RT_average_operatore: not a valid call')
+ if(OUTPUT_dim==0) call error('RT_average_operatore: not a valid call')
  !
  SC_bands2=SC_nbands**2
- if(D1==1) O_VALUE=(0._SP,0._SP)
- if(D1==3) V_VALUE=(0._SP,0._SP)
+ if(OUTPUT_dim==1) O_VALUE=(0._SP,0._SP)
+ if(OUTPUT_dim==3) V_VALUE=(0._SP,0._SP)
  !
  do ik_ibz=1,k%nibz
    ! 
@@ -96,7 +99,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
    !
    call make_Hk_matrix(ik_ibz)
    !
-   do i_dir=1,D1
+   do i_dir=1,OUTPUT_dim
      !
      do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
        !
@@ -125,38 +128,58 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
            enddo
          enddo
        else
-         if(D1==1) Hk(1,:,:,:)    =Hk_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),:)
-         if(D1==3) Hk(i_dir,:,:,:)=Hk_vec_tmp(i_dir,:,:,:)
+         if(OUTPUT_dim==1) Hk(1,:,:,:)    =Hk_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),:)
+         if(OUTPUT_dim==3) Hk(i_dir,:,:,:)=Hk_vec_tmp(i_dir,:,:,:)
        endif 
        !
-       VALUE_tmp(i_dir)=VALUE_tmp(i_dir)-cI*Vstar_dot_V_omp(SC_bands2,Hk(i_dir,:,:,1),G(:,:,ik))
+#if defined _OPENMP
+         VALUE_tmp(i_dir)=VALUE_tmp(i_dir)-cI*Vstar_dot_V_omp(SC_bands2,Hk(i_dir,:,:,1),G(:,:,ik))
+#else
+         VALUE_tmp(i_dir)=VALUE_tmp(i_dir)-cI*Vstar_dot_V(SC_bands2,Hk(i_dir,:,:,1),G(:,:,ik))
+#endif
        !
      enddo
      !
-     if(D1==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_dir)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
-     if(D1==3) V_VALUE(i_dir)=V_VALUE(i_dir)+VALUE_tmp(i_dir)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+     if(OUTPUT_dim==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_dir)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+     if(OUTPUT_dim==3) V_VALUE(i_dir)=V_VALUE(i_dir)+VALUE_tmp(i_dir)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
      !
    enddo
    !
  enddo
  !
- if (present(O_QP).or.present(O_REAL).or.k%nibz/=nK_mem) then
+ ! All 2 All. 
+ !============
+ ! AM March 11 2015. 
+ !
+ ! The parallel distribution is tricky as the k%nibz/=nK_mem case is the only explicit.
+ ! All other parallelizations are inside V_qp_basis_to_H and V_real_space_to_H.
+ !
+ ! Note that the all2all here is possible because the parallel structure is
+ !
+ !   "k.b" -> QP (k,n,n')  
+ !   "q"   -> q 
+ !   "qp"  -> Bp_mat (m,m')
+ !
+ ! and inside the above routines there is a HEAD_QP_cpu that does not duplicate the calls. 
+ !
+ ! NOTE, however, that the all2all procedure are not at all general and must be changed if the
+ ! input array is distributed in another way.
+ !
+ if (k%nibz/=nK_mem) then
    !
-   if(D1==1) call PP_redux_wait(O_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-   if(D1==3) call PP_redux_wait(V_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   if (OUTPUT_dim==1) call PP_redux_wait(O_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   if (OUTPUT_dim==3) call PP_redux_wait(V_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    !
-   ! When the PAR_COM_Xk_ibz_INDEX%COMM is not defined then the job can be
-   ! overdone. This occurs for a 1.M.P.N CPU structure
+ else if (.not.present(O_MATRIX)) then
    !
-   if (PAR_COM_Xk_ibz_INDEX%n_CPU==1.and.D1==1) O_VALUE=O_VALUE/PAR_COM_Plasma_INDEX%n_CPU
-   if (PAR_COM_Xk_ibz_INDEX%n_CPU==1.and.D1==3) V_VALUE=V_VALUE/PAR_COM_Plasma_INDEX%n_CPU
+   if (OUTPUT_dim==1) call PP_redux_wait(O_VALUE)
+   if (OUTPUT_dim==3) call PP_redux_wait(V_VALUE)
    !
  endif
  !
 #if defined _TIMING
  call timing('RT average Op',OPR='stop')
 #endif
- !
  !
  contains 
    !
@@ -183,7 +206,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
      !
      ! A: Average of a scalar
      !========================
-     if (D1==1) then
+     if (OUTPUT_dim==1) then
        !
        Hk_tmp=(0._SP,0._SP)
        !
@@ -204,7 +227,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
      !
      ! B: Average of a vector
      !========================
-     if (D1==3) then
+     if (OUTPUT_dim==3) then
        !
        Hk_vec_tmp=(0._SP,0._SP)
        !

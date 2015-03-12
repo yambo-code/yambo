@@ -61,16 +61,20 @@ module rt_ctl
      real(SP), optional, intent(in) :: E
    end subroutine
    !
-   subroutine RT_OCC_LIFE_and_REF_IO(E,what,k,Time,imposed_COM)
-     use pars,       ONLY:SP
-     use electrons,  ONLY:levels
-     use R_lattice,  ONLY:bz_samp
-     type(levels),       intent(in)    :: E
-     character(1)                      :: what ! G,X,K
-     type(bz_samp),optional,intent(in) :: k
-     real(SP), optional, intent(inout) :: Time
-     integer , optional, intent(in)    :: imposed_COM
-   end subroutine RT_OCC_LIFE_and_REF_IO
+   subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
+    use pars,           ONLY:SP
+    use electrons,      ONLY:levels
+    use R_lattice,      ONLY:bz_samp
+    implicit none
+    integer      :: bands(2)
+    type(levels) :: E
+    type(bz_samp):: K
+    character(*),optional :: what ! X,K,G
+    logical ,    optional :: VERBOSE
+    integer ,    optional :: IO_COM
+    real(SP),    optional :: Time
+    logical ,    optional :: keep_RT_carriers
+   end subroutine
    !
  end interface
  !
@@ -105,7 +109,7 @@ module rt_ctl
      use real_time, ONLY:NE_i_time
      character(*) :: what
      !
-     if (what=="J".or.what=="P".or.what=="OCCs") RT_do_IO=mod(NE_i_time-1,RT_IO_JPO_steps)==0
+     if (what=="J".or.what=="P".or.what=="CARRIERS") RT_do_IO=mod(NE_i_time-1,RT_IO_JPO_steps)==0
      if (what=="OUT") RT_do_IO=mod(NE_i_time-1,RT_IO_output_steps)==0
      if (what=="G")   RT_do_IO=mod(NE_i_time-1,RT_IO_G_steps)==0
      !

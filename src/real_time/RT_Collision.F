@@ -40,12 +40,11 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,it_now,SC_nbands
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,SC_nbands
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_RIM,REF_V_xc_sc,&
-&                         XC0_and_HARTREE0,RIM_ibz_coo,rho_reference,&
-&                         l_RT_RWA,l_BGR,&
-&                         eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_nk
+&                         RIM_ibz_coo,rho_reference,&
+&                         l_RT_RWA,eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_nk
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu
@@ -65,7 +64,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! Work Space
  !
- integer          :: i1,ik,ik_RT,ikp_RT,ik_RIM,ib,ibp
+ integer          :: ik,ik_RT,ik_RIM,ib,ibp
  real(SP)         :: delta_rho(fft_size)
  !
 #if defined _TIMING
@@ -135,8 +134,6 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
      ! DAVIDE: This is the old procedure, which I've replaced with a new one
      ! Ho     = T+V_ion
      ! H_bare = VHxc[\rho_eq] 
-     !forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2),ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) &
-     !& Ho_plus_sigma(ib,ibp,ik_RT,1)=Ho(ib,ibp,ik,1)+XC0_and_HARTREE0(ib,ibp,ik,1)
      !
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        ik_RIM=ik_RT-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
@@ -220,10 +217,6 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
 #if defined _TIMING
  call timing('RT Collision',OPR='stop')
 #endif
- !
- ! BGR
- !=====
- if (l_BGR) call RT_BGR(dG_in,E,k)
  !
  ! Calculate all relaxation terms
  !================================

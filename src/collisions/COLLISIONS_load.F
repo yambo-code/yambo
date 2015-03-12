@@ -35,7 +35,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use collision,       ONLY:V_kind,GW_NEQ_collisions,COHSEX_collisions,HF_collisions
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP
  use parallel_m,      ONLY:PAR_nQP,PAR_QP_index,PAR_IND_QP,PAR_IND_Plasma,PAR_IND_Q,&
-&                          PAR_nQ,PAR_Q_index,PAR_nPlasma,PAR_Plasma_index
+&                          PAR_nQ,PAR_Q_index,PAR_Plasma_index
  use interfaces,      ONLY:io_COLLISIONS
  !
  implicit none

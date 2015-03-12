@@ -49,9 +49,9 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! This convention about sign is imposed (when reading DB's made at finite Temperature)
  ! in QP_apply_global_stretch and  QP_apply_DB_interpolation
  !
- use units,         ONLY:HA2EV
  use pars,          ONLY:SP,schlen,IP
- use drivers,       ONLY:l_rt_occ_in_use,l_sc_run
+ use drivers,       ONLY:l_rt_carriers_in_use,l_sc_run
+ use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
 &                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
@@ -267,22 +267,13 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
      !
    endif
    !
-   ! Davide: after QP corrections are applied the occupations are computed again
-   !         We avoid this procedure if we are using RT occupations, we are doing 
-   !         as sc_run (included rt_runs). This maybe a problem if we use QP corrections
-   !         in these cases ...
+   if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
    !
-   if (.not.l_rt_occ_in_use .and. .not. l_sc_run) then
-     !
-     if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
-     !
-     call OCCUPATIONS_Fermi(en,k,1)
-     !
-     if (input_Tel_is_negative) then
-       en%nbf=nbf_m_SAVE(1)
-       en%nbm=nbf_m_SAVE(2)
-     endif
-     !
+   if (.not.l_rt_carriers_in_use .and. .not. l_sc_run) call OCCUPATIONS_Fermi(en,k,1)
+   !
+   if (input_Tel_is_negative) then
+     en%nbf=nbf_m_SAVE(1)
+     en%nbm=nbf_m_SAVE(2)
    endif
    !
  endif
@@ -317,10 +308,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  call QP_reset(qp)
  call E_Reset(Fermi_en)
  !
- if (.not.QP_ctl_applied) then
-   call msg('r', '[QP] No correction applied')
-   return
- endif
+ if (.not.QP_ctl_applied) return
  !
  ! Reporting
  !

@@ -176,7 +176,7 @@ subroutine K_inversion(iq,W,E,k,q)
  if (BSS_uses_RIM) then
    !
    forall(i1=1:BS_K_dim) BS_mat(i1,i1)=(0.,0.)
-   if (trim(BSE_mode)=='coupling') then
+   if (index(BSE_mode,'coupling')>0) then
      forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=(0.,0.)
      forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:) =-BS_mat(i1,:)
    endif
@@ -184,7 +184,7 @@ subroutine K_inversion(iq,W,E,k,q)
  else
    !
    forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BSS_eh_E(i1)
-   if (trim(BSE_mode)=='coupling') then
+   if (index(BSE_mode,'coupling')>0) then
      forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+BSS_eh_E(i1-BS_K_dim)
      forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:) =-BS_mat(i1,:)
    endif
@@ -200,7 +200,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  BSS_rhoq0(1:BS_K_dim)=BSS_rhoq0(1:BS_K_dim)/sqrt(BSS_eh_f(1:BS_K_dim))
  !
- if (trim(BSE_mode)=='coupling') then
+ if (index(BSE_mode,'coupling')>0) then
    BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)=BSS_rhoq0(BS_K_dim+1:2*BS_K_dim)/sqrt(BSS_eh_f(1:BS_K_dim))
  endif
  !
@@ -259,7 +259,7 @@ subroutine K_inversion(iq,W,E,k,q)
        !
        if (trim(BSE_mode)=='causal') then
          call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"ca")
-       else if (trim(BSE_mode)=='coupling') then
+       else if (index(BSE_mode,'coupling')>0) then
          call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"ca")
        endif
        !
@@ -270,7 +270,7 @@ subroutine K_inversion(iq,W,E,k,q)
        Lo(i1,:,1)=QP_Z*BSS_eh_f(i1)/(W%p(:)-BSS_eh_E(i1)-(0.,1.)*QP_width)
        if (trim(BSE_mode)=='causal') then
          Lo(i1,:,2)=-QP_Z*BSS_eh_f(i1)/(W%p(:)+BSS_eh_E(i1)-(0.,1.)*QP_width)
-       else if (trim(BSE_mode)=='coupling') then
+       else if (index(BSE_mode,'coupling')>0) then
          Lo(i1+BS_K_dim,:,1)=-QP_Z*BSS_eh_f(i1)/(W%p(:)+BSS_eh_E(i1)-(0.,1.)*QP_width)
        endif
        !
@@ -286,7 +286,7 @@ subroutine K_inversion(iq,W,E,k,q)
      if (trim(BSE_mode)=='causal') then
        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"sa")
        Lo(i1,:,2)=Lo(i1,:,2)*BSS_eh_f(i1)
-     else if (trim(BSE_mode)=='coupling') then
+     else if (index(BSE_mode,'coupling')>0) then
        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"sa")
        Lo(i1+BS_K_dim,:,1)=Lo(i1+BS_K_dim,:,2)*BSS_eh_f(i1)
      endif
@@ -297,7 +297,7 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    if (trim(BSE_mode)=='causal') then
      X_epsilon(3,:)=X_epsilon(3,:)-conjg(BSS_rhoq0(i1))*BSS_rhoq0(i1)*Lo(i1,:,2)*Co
-   else if (trim(BSE_mode)=='coupling') then
+   else if (index(BSE_mode,'coupling')>0) then
      X_epsilon(3,:)=X_epsilon(3,:)-conjg(BSS_rhoq0(i1+BS_K_dim))*BSS_rhoq0(i1+BS_K_dim)*Lo(i1+BS_K_dim,:,1)*Co
    endif
    !
@@ -312,7 +312,7 @@ subroutine K_inversion(iq,W,E,k,q)
        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,2),"sa")
        Lo(i1,:,2)=Lo(i1,:,2)*BSS_eh_f(i1)
      endif
-     if (trim(BSE_mode)=='coupling') then
+     if (index(BSE_mode,'coupling')>0) then
        call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1+BS_K_dim,:,1),"sa")
        Lo(i1+BS_K_dim,:,1)=Lo(i1+BS_K_dim,:,2)*BSS_eh_f(i1)
      endif

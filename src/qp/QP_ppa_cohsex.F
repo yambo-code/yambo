@@ -153,7 +153,7 @@ endif
    call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
    call PARALLEL_WF_index( )
  endif
-
+ !
  ch='-GW'
 #if defined _SC
  if(l_sc_run) ch='-SC'

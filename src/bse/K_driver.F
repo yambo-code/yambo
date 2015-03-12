@@ -52,7 +52,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use X_m,            ONLY:global_gauge
 #endif
 #if defined _RT
- use drivers,        ONLY:l_rt_occ_in_use
+ use drivers,        ONLY:l_rt_carriers_in_use
  use com,            ONLY:error
  use parser_m,       ONLY:parser
 #endif
@@ -74,7 +74,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !=========================================================
  !
 #if defined _RT 
- if(l_rt_occ_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
+ if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
 #endif
  !
  ! Tranferred momentum. Only Gamma now
@@ -161,7 +161,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Logicals (Drivers)
  !====================
- if (l_rpa_IP.and.trim(BSE_mode)=='coupling') BSE_mode='causal'
+ if (l_rpa_IP.and.index(BSE_mode,'coupling')>0) BSE_mode='causal'
  !
  BS_res_K_corr=index(BS_res_mode,'c')/=0
  BS_res_K_exchange=index(BS_res_mode,'x')/=0

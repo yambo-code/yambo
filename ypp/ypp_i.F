@@ -114,6 +114,11 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    return
  endif
  !
+ ! PARALLEL and I/O Setup 
+ !=======================
+ !
+ call PARALLEL_and_IO_Setup(en,k)
+ !
  call section('*','Y(ambo) P(ost)/(re) P(rocessor)')
  !
  call section('*','Core DB')
@@ -135,7 +140,6 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
  i_err_RIM=io_RIM_E_and_k(en,Xk,ID) 
- !
  ! 
  ! Allocate and fill the k_pt/q_pt array for the DBs header
  !
@@ -184,7 +188,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
 #if defined _YPP_RT
  !
- if (l_RT_X) call RT_driver(en,k)
+ if (l_RT_X.or.l_RT_occ_Plot.or.l_RT_occ_Fit) call RT_driver(en,k)
  !   ======
  !
 #endif
@@ -199,7 +203,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  l_flag=l_flag.and.(.not.l_eliashberg)
 #endif
 #if defined _YPP_RT
- l_flag=l_flag.or.l_RT_dos.or.l_RT_life_Bands.or.l_RT_occ_Bands.or.l_RT_occ_Plot.or.l_RT_occ_Fit
+ l_flag=l_flag.or.l_RT_dos.or.l_RT_life_Bands.or.l_RT_occ_Bands
 #endif
  !
  if (l_flag) call electrons_driver(Xk,Xen,q)

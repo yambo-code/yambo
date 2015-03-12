@@ -31,21 +31,20 @@ subroutine RT_driver(E,X,k,q)
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,X_alloc
  use wave_func,      ONLY:WF
- use interfaces,     ONLY:WF_load,MATRIX_driver 
+ use interfaces,     ONLY:WF_load,RT_carriers_object
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
- use SC,             ONLY:SC_potential,SC_bands,it_now,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,Ho,&
+ use SC,             ONLY:SC_potential,SC_bands,it_now,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,&
 &                         SC_QP_setup
  use rt_ctl,         ONLY:RT_output,RT_alloc_ctl,RT_free_ctl,RT_IO_G_steps,ID,it_start
  use real_time,      ONLY:NE_steps,RT_step,G_lesser, &
-&                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
+&                         l_NE_with_fields,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
 &                         G_lesser_reference,rho_reference, &
-&                         NE_time,RT_update,&
+&                         NE_time,RT_carriers,&
 &                         l_Dynamics_is_over,MEM_index,G_MEM_steps,&
-&                         dG_lesser,l_BGR,l_initial_equilibrium
+&                         dG_lesser,l_initial_equilibrium
  use plasma,          ONLY:Plasma_free,EH_gas
- use matrix_operate,  ONLY:DIAGO
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
@@ -53,7 +52,7 @@ subroutine RT_driver(E,X,k,q)
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k
- use IO_m,            ONLY:io_and_Messaging_switch,io_COLLs
+ use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  !
  implicit none
  !
@@ -66,8 +65,7 @@ subroutine RT_driver(E,X,k,q)
  ! 
  ! Work Space
  !
- integer           :: it,ik,ib,it_mem,it_mem_p1,io_REF
- real(SP)          :: E_previous,E_now
+ integer           :: it,ib,it_mem,it_mem_p1,io_REF
  complex(SP)       :: on_the_fly_operators(10)
  !
  integer, external :: io_RT_components
@@ -126,7 +124,7 @@ subroutine RT_driver(E,X,k,q)
  !
  ! In dipole_driver the IO is k-dictated. Here I want only the master to write
  !
- call io_and_Messaging_switch("RESET")
+ call IO_and_Messaging_switch("RESET")
  !
  ! WFs loading
  !=============
@@ -187,7 +185,7 @@ subroutine RT_driver(E,X,k,q)
    !
    call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
    !
-   if (l_BGR) call RT_BGR(dG_lesser(:,:,:,1),E,k)
+   call RT_BGR(dG_lesser(:,:,:,1),E,k)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
@@ -213,13 +211,15 @@ subroutine RT_driver(E,X,k,q)
    !
    call X_alloc("P_square")
    !
+   call RT_carriers_object(RT_carriers,WHAT='free')
+   !
    return
    !
  endif
  !
  ! IP calculation & not BGR => No need of WFs and Density
  !
- if(l_sc_ip.and..not.l_BGR) then  
+ if(l_sc_ip) then  
    !
    call WF_free(WF)
    !
@@ -234,10 +234,10 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_output(what="initialize")
  call RT_output(what="open dyn ene cur pol")
+ call RT_output('open BGR')
  if (l_NE_with_fields) call RT_output(what="open pot occ")
  if (l_elph_scatt) call RT_output('open EPlife')
  if (l_elel_scatt) call RT_output('open EElife')
- if (l_BGR)        call RT_output('open BGR')
  if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open factors')
  !
  ! Loop on time
@@ -284,6 +284,18 @@ subroutine RT_driver(E,X,k,q)
    !=========================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,it_mem),on_the_fly_operators)
    !
+   ! Update Bose Temp and Phonons distribution
+   !===========================================
+   !if (l_Debye_TBose_update) then
+   !  if (it==it_start) E_previous=real(on_the_fly_operators(5))
+   !  if (abs(nint(NE_time/FS2AUT)-(NE_time/FS2AUT))< RT_step/FS2AUT .and. &
+   !  &       nint(NE_time/FS2AUT)-(NE_time/FS2AUT) > 0. ) then
+   !    E_now=real(on_the_fly_operators(5))
+   !    call TEMPERATURE_Debye(E_previous-E_now)
+   !    E_previous=E_now
+   !  endif
+   !endif
+   !
    if (l_NE_with_fields) call RT_propagate_fields(k,E,A_vecpot,A_vecpot_previous,NE_time,RT_step)
    !
    ! Calculate Collisions and fill Ho_plus_Sigma, H_nl_sc
@@ -292,7 +304,8 @@ subroutine RT_driver(E,X,k,q)
    !
    ! BGR
    !=======================================
-   if (l_BGR) call RT_output('BGR',TIME=NE_time/FS2AUT)
+   call RT_BGR(dG_lesser(:,:,:,it_mem),E,k)
+   call RT_output('BGR',TIME=NE_time/FS2AUT)
    !
    ! Eval and Print Mean Carrier Lifetimes
    !=======================================
@@ -306,9 +319,9 @@ subroutine RT_driver(E,X,k,q)
    ! Write DBs
    !===========
    call set_real_printed_length()
-   call io_and_Messaging_switch("-fragments_IO_log")
+   call IO_and_Messaging_switch("-fragments_IO_log")
    call RT_databases_IO(E,it)
-   call io_and_Messaging_switch("+fragments_IO_log")
+   call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
    !
    ! Print some simple observables
@@ -347,6 +360,8 @@ subroutine RT_driver(E,X,k,q)
  !
  call WF_free(WF)
  call Plasma_free(EH_gas)
+ !
+ call RT_carriers_object(RT_carriers,WHAT='free')
  !
  if (allocated(HF_collisions))     call COLLISIONS_alloc_and_free("HF","v1 table","clean",0)
  if (allocated(COHSEX_collisions)) call COLLISIONS_alloc_and_free("COHSEX","v1 table","clean",0)

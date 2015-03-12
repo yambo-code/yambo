@@ -34,7 +34,7 @@ integer function ELPH_databases(k,E,q)
  use D_lattice,           ONLY:nsym,n_atoms
  use parser_m,            ONLY:parser
  use YPP,                 ONLY:ph_freqs_file,l_gkkp_expand,ph_modes_file
- use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY,io_and_Messaging_switch
+ use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
  use LIVE_t,              ONLY:live_timing
  implicit none
  type(bz_samp) ::k,q
@@ -176,7 +176,7 @@ integer function ELPH_databases(k,E,q)
  !
  ! Force DB fragmentation
  !
- call io_and_Messaging_switch("+DB_is_fragmented")
+ call IO_and_Messaging_switch("+DB_is_fragmented")
  !
  ! With the external ph_freqs_file I can overwrite the 
  ! phonon frequencies read from the s.dbph* files. In this way I can, for example, 
@@ -255,7 +255,7 @@ integer function ELPH_databases(k,E,q)
  !
  deallocate(grad_at_gamma)
  !
- call io_and_Messaging_switch("-DB_is_fragmented")
+ call IO_and_Messaging_switch("-DB_is_fragmented")
  !
  contains
    !
@@ -518,6 +518,7 @@ integer function ELPH_databases(k,E,q)
      if (idb==1) read (io_unit(ID)) grad_at_gamma(k2k_tab(ik),:,:,:,:)
      !
      if (.not.abinit_DB) then
+       !
        read (io_unit(ID)) Ek(:elph_nb)
        read (io_unit(ID)) Ek_p_q(:elph_nb)
        !

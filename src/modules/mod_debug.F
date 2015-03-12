@@ -21,37 +21,48 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
+module debug
  !
- use pars,           ONLY:SP
- use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands
- use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Plasma_INDEX
- use real_time,      ONLY:REF_lifetime,l_initial_equilibrium,RT_nk
+ use pars,    ONLY:schlen
+ use com,     ONLY:msg
+ use stderr,  ONLY:intc
  !
  implicit none
  !
- type(levels),  intent(in)    :: E
- type(bz_samp), intent(in)    :: k
- integer,       intent(in)    :: SAVE_index
- real(SP),      intent(inout) :: LIFE(SC_bands(1):SC_bands(2),RT_nk)
+ integer, parameter:: n_debugs_max=100
+ character(schlen) :: debug_name(n_debugs_max) 
+ integer           :: debug_point(n_debugs_max)
  !
- ! Work Space
- !
- integer          :: ik
- !
- !===========
- ! ALL 2 ALL
- !
- do ik=1,RT_nk
+ contains
    !
-   if (SAVE_index>2) LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_Plasma_INDEX%n_CPU)
+   subroutine dbg(name)
+     !
+     character(*) :: name
+     integer      :: id
+     !
+     if (name=="reset") then
+       debug_name=" "
+       debug_point=0
+     endif
+     !
+     do id=1,n_debugs_max
+       if (name==trim(debug_name(id))) then
+         debug_point(id)=debug_point(id)+1
+         call msg('nln',name//" "//intc(debug_point(id)))
+         return
+       endif
+     enddo
+     !
+     do id=1,n_debugs_max
+       if (len_trim(debug_name(id))==0) then
+         debug_name(id)=name
+         debug_point(id)=debug_point(id)+1
+         call msg('nln',name//" "//intc(debug_point(id)))
+         return
+       endif
+       !
+     enddo
+     !
+   end subroutine
    !
-   call PP_redux_wait(LIFE(:,ik))
-   !
- enddo
- !
- if (l_initial_equilibrium) REF_lifetime(:,:,SAVE_index)=LIFE
- !
-end subroutine RT_Lifetimes_merge
+end module 

@@ -34,7 +34,7 @@ subroutine RT_occupations_FIT(E,k,T_fit,Ef_fit,Occupations)
  use vec_operate,    ONLY:sort
  use functions,      ONLY:Fermi_fnc_fit
  use SC,             ONLY:SC_bands
- use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,RT_nk,RT_nstates,RT_ibz_coo
+ use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,RT_nk,RT_ibz_coo,RT_carriers
  !
  implicit none
  !
@@ -47,9 +47,9 @@ subroutine RT_occupations_FIT(E,k,T_fit,Ef_fit,Occupations)
  real(SP), parameter :: tresh=1.E-5
  !
  integer  :: i_RT,i_qp,i_b,i_k,i_k_rim,i_k_Erim,i_k_RT,i_spin,i1,&
-&            nfit,E_sort_index(RT_nstates)
+&            nfit,E_sort_index(RT_carriers%nstates)
  real(SP) :: err_fit(4),RT_occ_fit(fit_dim,2),RT_E_fit(fit_dim,2), &
-&            RT_occ(RT_nstates),RT_occ_tmp(RT_nstates),RT_E(RT_nstates)
+&            RT_occ(RT_carriers%nstates),RT_occ_tmp(RT_carriers%nstates),RT_E(RT_carriers%nstates)
  !
  i_RT=0
  do i_qp=1,QP_n_states
@@ -91,7 +91,7 @@ subroutine RT_occupations_FIT(E,k,T_fit,Ef_fit,Occupations)
  RT_occ_tmp(:)=RT_occ(E_sort_index(:))
  RT_occ=RT_occ_tmp
  !
- nfit=Fermi_fnc_fit(RT_E,RT_occ,RT_nstates,T_fit,Ef_fit,err_fit,&
+ nfit=Fermi_fnc_fit(RT_E,RT_occ,RT_carriers%nstates,T_fit,Ef_fit,err_fit,&
 &       RT_occ_fit_out=RT_occ_fit,RT_E_fit_out=RT_E_fit)
  !
  if(err_fit(1)>0.05) then

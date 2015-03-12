@@ -63,6 +63,7 @@ integer function k_RIM_grid_consistency_check(k,E,k_RIM,E_RIM)
  !
  ! Here I add E_Fermi as OCCUPATIONS_Fermi in ypp has been
  ! called without the RIM loaded so the Fermi level has not been applied to E_RIM.
+ !
  E_RIM%E(:,:,:)=E_RIM%E(:,:,:)+(shifts(1)+shifts(2))/2.+E%E_Fermi
  !
 end function

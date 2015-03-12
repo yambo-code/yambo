@@ -33,7 +33,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
 &                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,RD_CL_IF_END,&
-&                         io_and_Messaging_switch
+&                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng,WF
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,master_cpu,PAR_COM_k_for_P,ncpu
 #if defined _SC      
@@ -93,16 +93,20 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  X%ngostnts=wf_ng
  !
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_err(1)=io_DIPOLES(X,Xen,ID)
+ io_err(1)=io_DIPOLES(X,Xen,ID) 
  !
- do ik=1,Xk%nibz
+ if (io_err(1)==0) then
    !
-   if (.not.PAR_IND_DIPk_ibz%element_1D(ik).or.io_err(1)<0) cycle 
+   do ik=1,Xk%nibz
+     !
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
+     !
+     call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+ik/),ID=ID)
+     io_err(1)=io_DIPOLES(X,Xen,ID)
+     !
+   enddo
    !
-   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+ik/),ID=ID)
-   io_err(1)=io_DIPOLES(X,Xen,ID)
-   !
- enddo
+ endif
  !
  io_err(2)=0
  !
@@ -119,7 +123,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! I/O privilegies: temporarly switch it on
    !
-   call io_and_Messaging_switch("+io_out")
+   call IO_and_Messaging_switch("+io_out")
    !
    ! OptGrad allocation...
    !
@@ -197,9 +201,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    do ik=1,Xk%nibz
      !
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
-#if !defined _YPP_RT
      if (.not. (PAR_COM_k_for_P%CPU_id==0.or.PAR_COM_k_for_P%n_CPU==ncpu) ) cycle
-#endif
      ! 
      call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/1+ik/),ID=ID)
      io_err(1)=io_DIPOLES(X,Xen,ID)
@@ -217,7 +219,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! I/O privilegies: RESTORE to previous values
  !
- call io_and_Messaging_switch("RESTORE")
+ call IO_and_Messaging_switch("RESTORE")
  !
 #if defined _SC
  if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) return

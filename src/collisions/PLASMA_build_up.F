@@ -27,7 +27,6 @@ subroutine PLASMA_build_up(E,k,q)
  use stderr,        ONLY:intc
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:n_atoms
  use SC,            ONLY:SC_bands
  use electrons,     ONLY:levels,n_sp_pol
  use plasma,        ONLY:Plasma_alloc,Plasma_redux_percent,N_plasma_poles_global,EH_gas

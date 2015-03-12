@@ -28,7 +28,7 @@ subroutine SET_logicals()
  use parallel_m, ONLY:IO_write_default,master_cpu,myid,master_cpu,myid,INTER_CHAIN,n_log_CPUs,ncpu
  use com,        ONLY:write_to_of,write_to_report
  use IO_m,       ONLY:IO_write,IO_read,Fragmented_IO,Fragmented_IO_save,IO_write_not_fragmented_DB,&
-&                     DBs_IO_control_string,io_DIP,io_RESPONSE,io_HF,io_COLLs,io_WF,io_GF,io_J,io_OCCs,&
+&                     DBs_IO_control_string,io_DIP,io_RESPONSE,io_HF,io_COLLs,io_WF,io_GF,io_J,io_CARRIERs,&
 &                     io_SC,io_BS_K,io_SCREEN
  use stderr,     ONLY:write_to_log,write_fragments_IO_log,string_split,write_to_log_default
  use LIVE_t,     ONLY:live_timing_is_on
@@ -72,7 +72,7 @@ subroutine SET_logicals()
    if (any((/"COLLS","COLLs","colls"/)==trim(ch_piece(i_ch)))) io_COLLs=.FALSE.
    if (any((/"GF","gf"/)==trim(ch_piece(i_ch)))) io_GF=.FALSE.
    if (any((/"J","j"/)==trim(ch_piece(i_ch)))) io_J=.FALSE.
-   if (any((/"OCCs","occs","OCCS"/)==trim(ch_piece(i_ch)))) io_OCCs=.FALSE.
+   if (any((/"CARRIERs","carriers","CARRIERS"/)==trim(ch_piece(i_ch)))) io_CARRIERs=.FALSE.
    if (any((/"SC","sc"/)==trim(ch_piece(i_ch)))) io_SC=.FALSE.
    if (any((/"k","K"/)==trim(ch_piece(i_ch)))) io_BS_K=.FALSE.
    if (any((/"BS","bs"/)==trim(ch_piece(i_ch)))) io_BS_K=.FALSE.

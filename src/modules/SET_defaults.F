@@ -24,6 +24,7 @@
 subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
+ use debug,      ONLY:dbg
  use pars,       ONLY:SP,schlen
  use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
@@ -136,6 +137,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call remove_stack_limit()
  !
+ ! Debug
+ !
+ call dbg('reset')
+ !
  ! Clocks
  !
 #if defined _TIMING
@@ -212,7 +217,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  !Timing
  !
- log_line_to_dump=.false.
+ log_line_to_dump=.FALSE.
  log_line=' '
  nhash=40
  !
@@ -222,7 +227,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  !D_lattice
  !
- input_Tel_is_negative=.false.
+ input_Tel_is_negative=.FALSE.
  non_periodic_directions='none'
  lattice='Unknown'
  Bose_Temp=-1./HA2EV
@@ -232,9 +237,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  n_g_shells=0
  nqibz=0
  ng_closed=0
- coll_scattering=.false.
- bse_scattering=.false.
- Xk_grid_is_uniform=.true.
+ coll_scattering=.FALSE.
+ bse_scattering=.FALSE.
+ Xk_grid_is_uniform=.TRUE.
  q0_def_norm=1.E-5
  !
  ! RIM
@@ -255,7 +260,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  n_atomic_species=0
  i_space_inv=-1
  inv_index=0
- mag_syms=.false.
+ mag_syms=.FALSE.
  !
  ! Pseudo
  !
@@ -264,49 +269,49 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  !drivers
  !
- list_dbs=.false.
- infile_editing=.false.
- l_setup=.false.
- l_rim=.false.
- l_col_cut=.false.
- l_optics=.false.
- l_HF_and_locXC=.false.
- l_em1d=.false.
- l_em1s=.false.
- l_ppa=.false.
- l_cohsex=.false.
- l_gw0=.false.
- l_chi=.false.
- l_bse=.false.
- l_bsk=.false.
- l_bss=.false.
- l_rpa_IP=.false.
- l_td_hartree=.false.
- l_tddft=.false.
- l_alda_fxc=.false.
- l_lrc_fxc=.false.
- l_bs_fxc=.false.
- l_td_hf=.false.
- l_W_eh=.false.
- l_W_eh_diag=.false.
- l_W_eh_cpl=.false.
- l_acfdt=.false.
- l_elel_corr=.false.
- l_elph_corr=.false.
- l_elel_scatt=.false.
- l_elph_scatt=.false.
+ list_dbs=.FALSE.
+ infile_editing=.FALSE.
+ l_setup=.FALSE.
+ l_rim=.FALSE.
+ l_col_cut=.FALSE.
+ l_optics=.FALSE.
+ l_HF_and_locXC=.FALSE.
+ l_em1d=.FALSE.
+ l_em1s=.FALSE.
+ l_ppa=.FALSE.
+ l_cohsex=.FALSE.
+ l_gw0=.FALSE.
+ l_chi=.FALSE.
+ l_bse=.FALSE.
+ l_bsk=.FALSE.
+ l_bss=.FALSE.
+ l_rpa_IP=.FALSE.
+ l_td_hartree=.FALSE.
+ l_tddft=.FALSE.
+ l_alda_fxc=.FALSE.
+ l_lrc_fxc=.FALSE.
+ l_bs_fxc=.FALSE.
+ l_td_hf=.FALSE.
+ l_W_eh=.FALSE.
+ l_W_eh_diag=.FALSE.
+ l_W_eh_cpl=.FALSE.
+ l_acfdt=.FALSE.
+ l_elel_corr=.FALSE.
+ l_elph_corr=.FALSE.
+ l_elel_scatt=.FALSE.
+ l_elph_scatt=.FALSE.
  !
- l_rt_occ_in_use=.false.
- l_sc_run=.false.
- l_sc_ip=.false.
- l_sc_hf=.false.
- l_sc_hartree=.false.
- l_sc_cohsex=.false.
- l_sc_exx=.false.
- l_sc_is_libDFT=.false.
- l_sc_magnetic=.false.
- l_eval_collisions=.false.
- l_elph_Hamiltonian=.false.
+ l_rt_carriers_in_use=.FALSE.
+ l_sc_run=.FALSE.
+ l_sc_ip=.FALSE.
+ l_sc_hf=.FALSE.
+ l_sc_hartree=.FALSE.
+ l_sc_cohsex=.FALSE.
+ l_sc_exx=.FALSE.
+ l_sc_is_libDFT=.FALSE.
+ l_sc_magnetic=.FALSE.
+ l_eval_collisions=.FALSE.
+ l_elph_Hamiltonian=.FALSE.
  !
  !electrons
  !
@@ -314,7 +319,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  n_sp_pol=1
  n_spinor=1
  n_spin_den=1
- l_spin_orbit       = .false.
+ l_spin_orbit       = .FALSE.
  BZ_RIM_nbands=0
  BZ_RIM_tot_nkpts=0
  BZ_ASSOCIATED_nkpts=0
@@ -322,7 +327,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Magnetization
  !
- eval_magn=.false.
+ eval_magn=.FALSE.
  !
  !memory
  !
@@ -338,7 +343,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  WF_buffer%space=' '
  WF_buffered_IO=.FALSE.
  wf_ng=0
- wf_norm_test=.true.
+ wf_norm_test=.TRUE.
  wf_nb_io=0
  wf_nb_io_groups=1
  !
@@ -362,12 +367,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Chi_mode=' '
  current_iq=0
  X_RIM_nkpts=0
- self_detect_E_range=.false.
- half_X_mat_only=.false.
- Dipole_bands_ordered=.true.
+ self_detect_E_range=.FALSE.
+ half_X_mat_only=.FALSE.
+ Dipole_bands_ordered=.TRUE.
  Dipole_Energy_treshold=1.E-5_SP/HA2EV
- Dipole_uses_shifted_grids=.false.
- use_X_RIM=.false.
+ Dipole_uses_shifted_grids=.FALSE.
+ use_X_RIM=.FALSE.
  eps_2_alpha=1._SP
  alpha_dim='adim'
  global_gauge='length'
@@ -387,7 +392,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  QP_G_Zoom_treshold=0.
  QP_Sc_steps=100
  QP_n_W_freqs=100
- QP_dSc_test=.false.
+ QP_dSc_test=.FALSE.
  QP_solver=' '
  QP_G_damp=0.1/HA2EV
  QP_dSc_delta=0.1/HA2EV
@@ -397,9 +402,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  QP_G_dr=0.1/HA2EV
  QP_cg_percent=100.
  GWo_iterations=0
- GWo_SC_done=.false.
- COHSEX_use_empties=.false.
- On_Mass_Shell_approx=.false.
+ GWo_SC_done=.FALSE.
+ COHSEX_use_empties=.FALSE.
+ On_Mass_Shell_approx=.FALSE.
  SC_E_threshold=0.01/HA2EV
  SC_band_mixing=100.
  Vnlxc_kind='HF'
@@ -456,7 +461,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  FXC_LRC_alpha=0.
  FXC_LRC_beta=0.
  FXC_SVD_digits=0
- FXC_is_causal=.false.
+ FXC_is_causal=.FALSE.
  !
  ! ACFDT
  !
@@ -479,7 +484,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  elph_nb=0
  elph_branches=0
  gsqF_energy_steps=2
- eval_G_using_KK=.false.
+ eval_G_using_KK=.FALSE.
  elph_Ham_bands=0
  elph_Ham_ik=1
  RES_tresh=0.01
@@ -502,7 +507,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
  l_NSC_shot  =.FALSE.
- l_sc_pot_is_local=.true.
+ l_sc_pot_is_local=.TRUE.
  !
  ! COLLISIONS I/O
  !
@@ -568,7 +573,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! FITs
  !
- l_lftm_fit_stable=.false.
+ l_lftm_fit_stable=.FALSE.
  Nfitted_lifetimes=0
  RT_Tfit_lifetimes=0.
  RT_Efit_lifetimes=0.
@@ -598,7 +603,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  MAG_gauge='SYMM'
  MAG_psi=0.
  MAG_theta=0.
- phase_trick=.false.
+ phase_trick=.FALSE.
  !
 #endif
  !

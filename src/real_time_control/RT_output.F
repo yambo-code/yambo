@@ -27,13 +27,13 @@ subroutine RT_output(what,VALUES,TIME,E)
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_cohsex,l_sc_hf
- use SC,             ONLY:SC_description,n_SC_descriptions,it_now
- use fields,         ONLY:A_vecpot,A_ind,A_ext,Efield,n_ext_fields
+ use SC,             ONLY:SC_description,n_SC_descriptions
+ use fields,         ONLY:A_vecpot,A_ind,A_ext
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc
  use rt_ctl,         ONLY:RT_do_IO,RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes, &
-&                         RT_Tfit_lifetimes,EE_prefactor,EP_prefactor,EP_abs_prefactor,l_BGR,BGR
+&                         RT_Tfit_lifetimes,EE_prefactor,EP_prefactor,EP_abs_prefactor,BGR
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -50,7 +50,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  integer, parameter       :: n_output_files=100,max_X_order=9
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
- integer                  :: i_f,i_fp,i_flu,n_headings(n_output_files),next_file,i_order,i_c,n1
+ integer                  :: i_f,i_fp,n_headings(n_output_files),next_file,i_order,i_c,n1
  logical                  :: file_is_todo(n_output_files),open_files,add_space,initialize
  logical,           save  :: RT_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
  character(schlen)        :: headings(n_output_files,11),append_ch,extension_ch
@@ -142,6 +142,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  short_file_name(next_file)=trim(append_ch)//'dynamics'
  n_headings(next_file)=5
  if (l_elel_scatt.or.l_elph_scatt) n_headings(next_file)=n_headings(next_file)+2
+ !if (l_Debye_TBose_update) n_headings(next_file)=n_headings(next_file)+1
  headings(next_file,2)="Total E[eV]"
  headings(next_file,3)="delta N" 
  headings(next_file,4)="N(Holes)"
@@ -149,6 +150,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  if (l_elel_scatt.or.l_elph_scatt) then 
    headings(next_file,6)="T(hol) [K]" 
    headings(next_file,7)="T(el)  [K]" 
+   !if (l_Debye_TBose_update) headings(next_file,8)="T(bose) [K]"
  endif
  next_file=next_file+1
  !
@@ -215,10 +217,10 @@ subroutine RT_output(what,VALUES,TIME,E)
  n_headings(next_file)=n1
  next_file=next_file+1
  !
- if (open_files.and.l_BGR.and..not.file_already_opened(next_file)) &
+ if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'BGR'
  short_file_name(next_file)=trim(append_ch)//'BGR'
- n_headings(next_file)=7
+ n_headings(next_file)=6
  headings(next_file,2:3)=(/"Dir Gap","Ind Gap"/)
  headings(next_file,4  )=  "H+XC"  
  if (l_sc_cohsex) headings(next_file,4)="H+XC+COHSEX"
@@ -226,6 +228,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  headings(next_file,5:6)=(/"Hartree","XC(DFT)"/)
  if (l_sc_cohsex) headings(next_file,7)="COHSEX"
  if (l_sc_hf    ) headings(next_file,7)="  HF  "
+ if (l_sc_cohsex.or.l_sc_hf)  n_headings(next_file)=7
  next_file=next_file+1
  !
  headings(1:next_file-1,1)="Time[fs]"
@@ -477,12 +480,6 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
        data_to_dump(11)=0._SP
-       !do i_fp=1,n_ext_fields
-       !  if (allocated(Efield(i_fp)%Fluence)) then
-       !    i_flu=min(it_now,Efield(i_fp)%t_final_indx)
-       !   data_to_dump(11)=data_to_dump(11)+real( Efield(i_fp)%Fluence(i_flu))
-       !  endif
-       !enddo
      case('external_potential')
        data_to_dump(2:4) =real(A_ext%vecpot(:))
        data_to_dump(5:7) =real(A_ext%vecpot_vel(:))
@@ -503,6 +500,7 @@ subroutine RT_output(what,VALUES,TIME,E)
      case('dynamics')
        data_to_dump(2:5) = VALUES(1:4)
        if(l_elel_scatt.or.l_elph_scatt) data_to_dump(6:7) = VALUES(5:6)
+       !if(l_Debye_TBose_update) data_to_dump(8) = Bose_Temp*HA2KEL
      case('YPP-eps_along_E','YPP-eps_x','YPP-eps_y','YPP-eps_z','YPP-eels_along_E','YPP-E_frequency','YPP-SHG_qssin',&
 &         'YPP-X_probe_order_0_x','YPP-X_probe_order_1_x','YPP-X_probe_order_2_x','YPP-X_probe_order_3_x',&
 &         'YPP-X_probe_order_4_x','YPP-X_probe_order_5_x','YPP-X_probe_order_6_x','YPP-X_probe_order_7_x',&

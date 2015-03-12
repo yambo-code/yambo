@@ -83,9 +83,9 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  X%ordering='c'
  !
  ! 2:
- call io_and_Messaging_switch("-report") 
+ call IO_and_Messaging_switch("-report") 
  call X_os(X_mat,1,E,k,Xw,X)
- call io_and_Messaging_switch("+report")
+ call IO_and_Messaging_switch("+report")
  ! 3:
  allocate(Xo_inverse(X%ng-1,X%ng-1))
  Xo_inverse(:X%ng-1,:X%ng-1) =  X_mat(2:X%ng,2:X%ng,1) 

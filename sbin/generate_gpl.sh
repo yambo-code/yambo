@@ -1,59 +1,24 @@
 #! /bin/sh
 #
+if [ $# = 0 ] ; then
+ echo $0 "OPTIONS[update,diff,zip,tar]"
+ exit 0
+fi
+
 WHAT="GPL"
-ACTION="none"
-
-if [ $# = 1 ] ; then  WHAT=$1 ; fi
-if [ $# = 2 ] ; then  WHAT=$1 ; fi
-if [ $# = 2 ] ; then  ACTION=$2 ; fi
-
-cd /
+ACTION="update"
+if [ $# = 1 ] ; then  ACTION=$1 ; fi
 BASE=$PWD
+PJ="KERR SURF YPP_SURF ELPH YPP_ELPH FFTW FFTSG OPENMP MPI" 
+WD="$PWD/../gpl/devel/"
+if [ ! -f '$WD/include/version.inc' ] ; then
+  WD="$PWD/../../branches/gpl/devel/"
+fi
 
-if [ $WHAT = "openmp" ] ; then 
- vn D="$BASE/branches/gpl+open-mp/"
- PJ="GPL openmp" 
-fi
-if [ $WHAT = "gpl" ] ; then 
- WD="$BASE/branches/gpl/"
- PJ="GPL" 
-fi
-if [ $WHAT = "spin" ] ; then 
- WD="$BASE/branches/gpl+spin/"
- PJ="SPIN" 
-fi
-if [ $WHAT = "auger" ] ; then 
- WD="$BASE/branches/gpl+auger/"
- PJ="AUGER" 
-fi
-if [ $WHAT = "sc" ] ; then 
- WD="$BASE/branches/gpl+sc/"
- PJ="SC" 
-fi
-if [ $WHAT = "distro" ] ; then 
- WD="$BASE/branches/gpl+distributed/"
- PJ="DISTRIBUTED" 
-fi
-if [ $WHAT = "elph" ] ; then 
- WD="$BASE/branches/gpl/"
- PJ="ELPH" 
-fi
-if [ $WHAT = "kerr" ] ; then 
- WD="$BASE/branches/gpl/"
- PJ="KERR" 
-fi
-if [ $WHAT = "surf" ] ; then 
- WD="$BASE/branches/gpl/"
- PJ="SURF" 
-fi
-if [ $WHAT = "ypp_elph" ] ; then 
- WD="$BASE/branches/gpl/"
- PJ="YPP_ELPH" 
-fi
-if [ $ACTION = "tar" ] ; then
- BASE=`find /home/marini -maxdepth 2 -type d | grep GPL | grep yambo-`
- WD="$BASE"
-fi
+#if [ $ACTION = "tar" ] ; then
+# BASE=`find /home/marini -maxdepth 2 -type d | grep GPL | grep yambo-`
+# WD="$BASE"
+#fi
 
 echo 
 echo  "BASE   : $BASE"
@@ -62,21 +27,15 @@ echo  "WHAT   : $WHAT"
 echo  "REF    : $WD"
 #sleep 3s
 
-mkdir -p ~/Yambo/WorkSpace
-cd ~/Yambo/WorkSpace
+mkdir -p /tmp/Yambo
+cd /tmp/Yambo
 
-if [ $ACTION = "none" ] ; then
+if [ $ACTION = "update" ] ; then
  rm -fr *
- if [ $WHAT = "openmp" ] ; then 
-   cp -R $BASE/branches/devel-open-mp/*  ../WorkSpace
-   cp $BASE/branches/devel-open-mp/sbin/yamboo.pl ./sbin
- else
-   cp -R $BASE/trunk/*  ../WorkSpace
-   cp $BASE/trunk/sbin/yamboo.pl ./sbin
- fi
+ cp -R $BASE/*  .
  #find . -name .objects_gpl | grep -v svn | gawk '{print "cpp -P " $0 " > A ; mv A " $0 }' > CPP.batch
  #chmod u+x CPP.batch
- rm -f CPP.batch 
+ #rm -f CPP.batch 
  ./sbin/yamboo.pl -p="KERR SURF YPP_SURF ELPH YPP_ELPH FFTW FFTSG OPENMP MPI"
  chmod u+x delete.batch
  ./delete.batch
@@ -165,9 +124,9 @@ if [ $ACTION = "tar" ] ; then
  gzip  ${SRC_NAME}.tar
 fi
 
-if [ $ACTION = "xxdiff" ] ; then
+if [ $ACTION = "diff" ] ; then
  FILES=`cat DIFF | gawk '{na=split($0,a);print a[3]}' `
- for file in $FILES; do xxdiff $file $WD/$file ; done
+ for file in $FILES; do meld $file $WD/$file ; done
 fi
 
 if [ $ACTION = "zip" ] ; then

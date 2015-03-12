@@ -45,10 +45,10 @@ integer function io_RT_components(what,ID)
 &                         G_lesser_reference,MEM_index,G_MEM_steps,THETA_matrix,q_weight_RT,&
 &                         BGR_hartree,BGR_V_xc,BGR_Self_Energy
  use ELPH,           ONLY:ph_modes,elph_branches
- use rt_ctl,         ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_IO
+ use rt_ctl,         ONLY:J_and_P_cache_size,J_and_P_cache,RT_IO_JPO_steps,RT_do_IO,&
+&                         RT_carriers_object
  use fields,         ONLY:A_ext
  use matrix_operate, ONLY:mat_c2r,mat_r2c
- use interfaces,     ONLY:RT_carriers_object
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif

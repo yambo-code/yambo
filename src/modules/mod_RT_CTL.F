@@ -76,6 +76,17 @@ module rt_ctl
     logical ,    optional :: keep_RT_carriers
    end subroutine
    !
+   subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
+     use real_time,  ONLY:RT_t
+     use R_lattice,  ONLY:bz_samp
+     use electrons,  ONLY:levels
+     type(RT_t),    intent(in)           :: RT
+     type(bz_samp), intent(in), optional :: K
+     type(levels),  intent(in), optional :: E
+     integer,       intent(in), optional :: DB_id
+     character(*),  intent(in), optional :: WHAT
+   end subroutine RT_carriers_object
+   !
  end interface
  !
  contains

@@ -50,9 +50,8 @@ $manual_preprocess_files = " ";
 $exclude_files = "yamboo.pl yamboo_new.pl";
 $exclude_dirs = "lib sbin bin doc";
 @core_projects = ('yambo','ypp','p2y','a2y','f2y','e2y');
-# First row are the new GPL released projects
-@user_projects = ('ELPH', 'YPP_ELPH', 'KERR', 'SURF', 'YPP_SURF',
-                  'DEBUG', 'MAGNETIC','DISTRIBUTED','SC','RT','YPP_RT','YPP_SC','YPP_MAGNETIC');
+@user_projects = ('ELPH', 'YPP_ELPH', 'KERR', 'SURF', 'YPP_SURF', 
+                  'QED','MAGNETIC','SC','RT','YPP_RT','YPP_SC','YPP_MAGNETIC');
 #
 # ============= END OF USER DEFINED FLAGS  ==============
 #

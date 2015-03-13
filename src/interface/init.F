@@ -476,20 +476,24 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
+#endif
+ !
  if ( (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions) ) then
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')
  endif
  !
  if (l_eval_collisions) then
-#if defined _SC && ! defined _RT
+#if defined _SC && ! defined _RT && defined _MPI
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')
-#else
+#else if defined _MPI
    call CPU_activate("RT")
    call initactivate(1,'RT_Threads')
 #endif
  endif
+ !
+#if defined _MPI
  !
  if (l_real_time) then
    call CPU_activate("RT")
@@ -674,6 +678,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_gw0.or.l_life) then
    !
+#if defined _QED
    if (l_elphoton_corr) then
      call initactivate(1,'FFTGvecs QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
      if (trim(QP_solver)=="g") then
@@ -683,6 +688,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
      endif
    endif
+#endif
    !
    if (l_elel_corr) then
      !
@@ -1068,11 +1074,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_elel_corr    =runlevel_is_on('el_el_corr')
        l_elphoton_corr=runlevel_is_on('el_photon_corr')
 #endif
-       ! GPL_EXCLUDE_START
-#if !defined  _ELPH  && !defined _QED
-       l_elel_corr=l_gw0.or.l_life.or.l_eval_collisions
-#endif
-       ! GPL_EXCLUDE_END
+       !
+       ! In some cases l_elel_corr is switched on by default
+       !
+       if (.not.l_elel_corr) then
+         l_elel_corr=(l_gw0.or.l_life.or.l_eval_collisions).and.(.not.l_elph_corr.and..not.l_elphoton_corr)
+       endif
        !
        ! Check if this runlevel is allowed in the 
        ! present configuration

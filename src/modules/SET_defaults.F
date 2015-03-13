@@ -396,8 +396,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  QP_solver=' '
  QP_G_damp=0.1/HA2EV
  QP_dSc_delta=0.1/HA2EV
- QP_W_er=0.
- QP_W_dr=0.1/HA2EV
  QP_G_er=(/-10._SP/HA2EV,10._SP/HA2EV/)
  QP_G_dr=0.1/HA2EV
  QP_cg_percent=100.

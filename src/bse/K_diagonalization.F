@@ -143,6 +143,12 @@ subroutine K_diagonalization(iq,W)
  ! Diagonalization DB (IN)
  !========================
  !
+ BS_H_dim=BS_K_dim
+ if (BS_K_coupling) BS_H_dim=2*BS_K_dim
+ !
+ allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
+ call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=io_BSS_diago(iq,ID,BS_H_dim,(/real(BS_E),aimag(BS_E)/),(/real(BS_R),aimag(BS_R)/))
  !
@@ -160,11 +166,6 @@ subroutine K_diagonalization(iq,W)
      enddo
    endif
    !
- else
-   !
-   BS_H_dim=BS_K_dim
-   if (BS_K_coupling) BS_H_dim=2*BS_K_dim
-   !
  endif
  !
  ! Allocation & Par Procs
@@ -174,9 +175,6 @@ subroutine K_diagonalization(iq,W)
  call PARALLEL_index(px,(/BS_H_dim/))
  !
  K_is_not_hermitian=BS_K_coupling.or.allocated(BSS_eh_W)
- !
- allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
- call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
  !
  ! GPL_EXCLUDE_START
  !

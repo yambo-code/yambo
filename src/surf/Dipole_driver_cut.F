@@ -42,9 +42,6 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
  use ras_module,              ONLY : transloc, lras
 #endif
   use vec_operate,    ONLY:v_norm
-#if defined _DISTRIBUTED
- use WF_distribute,  ONLY:WF_states_setup
-#endif
  implicit none
  type(bz_samp),  intent(in)       :: Xk
  type(levels),   intent(in)       :: Xen
@@ -73,26 +70,6 @@ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
  io_err = io_DIPOLES_cut(X, Xen, io_db)
 
  if (io_err.ne.0) then
-   !
-#if defined _DISTRIBUTED
-   !
-   if(trim(grid_path)=='none'.and.Dipole_bands_ordered) then
-     !
-     ! Valence bands are loaded by all processors
-     !
-     call WF_states_setup(k_to_load=(/1,Xk%nibz/),b_to_load=(/1,Xen%nbm/),par_loop=.FALSE.)
-     !
-     ! Parallelization on conductions bands and k-points
-     !
-     call WF_states_setup(k_to_load=(/1,Xk%nibz/),b_to_load=(/Xen%nbf+1,X%ib(2)/))
-     !
-     ! Report
-     !
-     call WF_states_setup(b_to_load=(/1,X%ib(2)/),report=.true.)
-     !
-   endif
-   !
-#endif
    !
    ! WF loading (needed in both cases)
    !

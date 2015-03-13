@@ -69,11 +69,7 @@
  ! Set up the parallel environment
  !
  call pp_indexes_reset(px)
-#if defined _DISTRIBUTED
- call PARALLEL_index(px,(/Xk%nibz,X%ib(2)/),(/1,ic_min/))
-#else
  call PARALLEL_index(px,(/Xk%nibz,iv_max/),(/1,X%ib(1)/))
-#endif
  call live_timing('Dipole, cut (T):',px%n_of_elements(myid+1)*n_spin)
  call pp_redux_wait
  !
@@ -89,19 +85,11 @@
      do i_spin   = 1, n_spin
        E_i_spin=i_spin
        if (n_spinor==2) E_i_spin=1
-#if defined _DISTRIBUTED
-       do ic=ic_min,X%ib(2)
-         !
-         if(.not.px%element_2D(ik,ic)) cycle
-         !
-         do iv=X%ib(1),iv_max
-#else
        do iv=X%ib(1),iv_max
          !
          if (.not.px%element_2D(ik,iv)) cycle
          !
          do ic=ic_min,X%ib(2)
-#endif
            !
            rho(:)=(0._SP,0._SP)
            !
@@ -113,11 +101,6 @@
 
            ivfft=WF%index(iv,ik,i_spin)
            icfft=WF%index(ic,ik,i_spin)
-#if defined _DISTRIBUTED
-         if(ivfft==0) call error(" Error in parallel wf distribution iv")
-         if(icfft==0) call error(" Error in parallel wf distribution ic")
-#endif
-
            call PScut(PS, WF%c(:,ivfft), WF%c(:,icfft), kg = kg )
 !          call PScut_slow(PS, wf(:,ivfft), wf(:,icfft), kg )
 

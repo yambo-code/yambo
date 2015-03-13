@@ -48,19 +48,9 @@ subroutine fft_3d(c,n,fft_sign)
  use fft_interfaces, ONLY:fwfft,invfft
  use fft_scalar,     ONLY:cfft3d
  use fft_base,       ONLY:dffts
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
  implicit none
  integer     :: fft_sign,n(3)
  complex(DP) :: c(n(1)*n(2)*n(3))
- ! 
- ! Work Space
- !
- !
-!#if defined _TIMING
-! call timing('FFT',OPR='start')
-!#endif
  !
  ! init and cheks
  !
@@ -105,10 +95,6 @@ subroutine fft_3d(c,n,fft_sign)
  endif
  !
 #endif
- !
-!#if defined _TIMING
-! call timing('FFT',OPR='stop')
-!#endif
  !
 end subroutine
 

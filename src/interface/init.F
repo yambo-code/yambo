@@ -476,12 +476,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
-#endif
- !
  if ( (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions) ) then
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')
  endif
+ !
+#endif
  !
  if (l_eval_collisions) then
 #if defined _SC && ! defined _RT && defined _MPI

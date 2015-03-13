@@ -47,9 +47,6 @@ subroutine fft_3d(c,n,fft_sign,fftw_plan)
  !
  use pars,          ONLY:DP
  use openmp,        ONLY:n_threads_now
-#if defined _TIMING
- use timing_m,      ONLY:timing
-#endif
  implicit none
  integer     :: fft_sign,n(3)
  integer(8)  :: fftw_plan
@@ -62,10 +59,6 @@ subroutine fft_3d(c,n,fft_sign,fftw_plan)
  !
  integer             :: i_sign
  integer , parameter :: FFTW_ESTIMATE=64
- !
-!#if defined _TIMING
-! call timing('FFT',OPR='start')
-!#endif
  !
  if (fftw_plan==0) then
    if (fft_sign>0) i_sign=+1
@@ -80,9 +73,5 @@ subroutine fft_3d(c,n,fft_sign,fftw_plan)
  endif
  !
  call dfftw_execute_dft(fftw_plan,c,c)
- !
-!#if defined _TIMING
-! call timing('FFT',OPR='stop')
-!#endif
  !
 end subroutine

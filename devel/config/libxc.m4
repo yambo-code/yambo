@@ -99,6 +99,15 @@ testprog_21="AC_LANG_PROGRAM([],[
   integer :: i
   i = XC_GGA_X_LV_RPW86])"
 
+testprog_203="AC_LANG_PROGRAM([],[
+  use xc_f90_lib_m
+  use xc_f90_types_m
+  implicit none
+  type(xc_f90_pointer_t) :: conf
+  real(8) :: alpha
+  real(8) :: gamma
+  call xc_f90_hyb_gga_xc_hse_set_par(conf,alpha,gamma)])"
+
 testprog_20="AC_LANG_PROGRAM([],[
   use xc_f90_lib_m
   implicit none
@@ -124,10 +133,11 @@ dnl Get libxc version
 if test x"$acx_libxc_ok" = xyes; then
 AC_LINK_IFELSE($testprog_11, [acx_libxc_version=110, acx_libxc_ok=no], [])
 AC_LINK_IFELSE($testprog_12, [acx_libxc_version=120], [])
-AC_LINK_IFELSE($testprog_20, [acx_libxc_version=200, acx_libxc_ok=yes], [])
+AC_LINK_IFELSE($testprog_20, [acx_libxc_version=200], [])
+AC_LINK_IFELSE($testprog_203, [acx_libxc_version=203, acx_libxc_ok=yes], [])
 AC_LINK_IFELSE($testprog_21, [acx_libxc_version=210], [])
 AC_DEFINE_UNQUOTED([LIBXC_VERSION],[$acx_libxc_version],[Defined the LIBXC version.])
-AC_MSG_RESULT([Found external LibXC version=$acx_libxc_version (should be >= 200)])			
+AC_MSG_RESULT([Found external LibXC version=$acx_libxc_version (should be >= 203)])			
 fi
 
 dnl Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:

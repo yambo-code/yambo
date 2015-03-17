@@ -35,12 +35,13 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use SC,            ONLY:SC_bands
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
  use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,nGW_NEQ_collisions,&
-&                        HF_collisions,COHSEX_collisions,GW_NEQ_collisions,nCOHSEX_collisions
+&                        HF_collisions,COHSEX_collisions,GW_NEQ_collisions,&
+&                        nCOHSEX_collisions,COLLISIONS_IO_status
  use X_m,           ONLY:X_t
  use plasma,        ONLY:EH_gas
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
- use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs,fragment_status
+ use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,io_COLLISIONS
  use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_Xk_ibz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
  use X_m,           ONLY:X_t
@@ -53,7 +54,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! WorkSpace
  !
- integer       :: ID,i_kind,NC
+ integer       :: ID,i_kind,NC,IO_err
  !
  call section('*','Extended collisions')
  !=======================================
@@ -80,8 +81,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  NC=PAR_nQP
  if (io_COLLs) then
    NC=1
-   allocate(fragment_status(QP_n_states))
-   call mem_est("fragment_status",(/QP_n_states/),(/IP/))
+   allocate(COLLISIONS_IO_status(QP_n_states))
+   call mem_est("COLLISIONS_IO_status",(/QP_n_states/),(/IP/))
  endif
  !
  ! PARALLEL Setup
@@ -105,11 +106,17 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call section('+','Hartree-Fock')
    !================================
    !
-   V_kind=SC_HF
-   fragment_status=-1
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+   IO_err=-1
    !
-   if (io_COLLISIONS(0,ID)/=0) then
+   if (io_COLLs) then
+     COLLISIONS_IO_status=-1
+     V_kind=SC_HF
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+     IO_err=io_COLLISIONS(0,ID)
+     if (any(COLLISIONS_IO_status/=1)) IO_err=-1
+   endif
+   !
+   if (IO_err/=0) then
      !
      if (io_COLLs) then
        call COLLISIONS_alloc_and_free("HF","collision","alloc",1)
@@ -121,6 +128,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      endif
      !
      call COLLISIONS_Hartree_Fock(E,k,q,NC,HF_collisions)
+     !
+     ! HF clean
+     !----------
+     if (io_COLLs) call COLLISIONS_alloc_and_free("HF","v3 table","clean",1)
      !
    endif
    !
@@ -140,26 +151,32 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      V_kind=SE_GW_NEQ
    endif
    !
-   fragment_status=-1
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-   !
-   if (io_COLLISIONS(0,ID)/=0) then
+   ! PARALLEL Setup (e-e scattering)
+   !=================================
+   if (l_elel_scatt.and.i_kind==2) then
      !
-     ! PARALLEL Setup (e-e scattering)
-     !=================================
-     if (l_elel_scatt.and.i_kind==2) then
-       !
-       call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
-       call PARALLEL_global_indexes(E,k,q,"Real_Time")
-       !
-       call PLASMA_build_up(E,k,q)
-       call PLASMA_parallel_setup(EH_gas)
-       !
-       call PARALLEL_WF_distribute(QP_index=PAR_IND_QP,CLEAN_UP=.FALSE.)
-       call PARALLEL_WF_distribute(Plasma_index=PAR_IND_Plasma)
-       call PARALLEL_WF_index( )
-       !
-     endif
+     call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+     call PARALLEL_global_indexes(E,k,q,"Real_Time")
+     !
+     call PLASMA_build_up(E,k,q)
+     call PLASMA_parallel_setup(EH_gas)
+     !
+     call PARALLEL_WF_distribute(QP_index=PAR_IND_QP,CLEAN_UP=.FALSE.)
+     call PARALLEL_WF_distribute(Plasma_index=PAR_IND_Plasma)
+     call PARALLEL_WF_index( )
+     !
+   endif
+   !
+   IO_err=-1
+   !
+   if (io_COLLs) then
+     COLLISIONS_IO_status=-1
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+     IO_err=io_COLLISIONS(0,ID)
+     if (any(COLLISIONS_IO_status/=1)) IO_err=-1
+   endif
+   !
+   if (IO_err/=0) then 
      !
      if (i_kind==1) then
        if (io_COLLs) then
@@ -187,6 +204,13 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      call WF_free(WF)
      !
+     ! COHSEX clean
+     !--------------
+     if (io_COLLs) then
+       if (l_cohsex)       call COLLISIONS_alloc_and_free("COHSEX","v3 table","clean",1)
+       if (l_elel_scatt)   call COLLISIONS_alloc_and_free("GW_NEQ","v3 table","clean",1)
+     endif
+     !
    endif
    !
  enddo
@@ -195,11 +219,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !=======
  !
  if (io_COLLs) then
-   if (allocated(fragment_status)) deallocate(fragment_status)
-   call mem_est("fragment_status")
-   if (l_HF_and_locXC) call COLLISIONS_alloc_and_free("HF","v3 table","clean",1)
-   if (l_cohsex)       call COLLISIONS_alloc_and_free("COHSEX","v3 table","clean",1)
-   if (l_elel_scatt)   call COLLISIONS_alloc_and_free("GW_NEQ","v3 table","clean",1)
+   if (allocated(COLLISIONS_IO_status)) deallocate(COLLISIONS_IO_status)
+   call mem_est("COLLISIONS_IO_status")
  else
    if (l_HF_and_locXC) call COLLISIONS_alloc_and_free("HF","v3","clean",1)
    if (l_cohsex)       call COLLISIONS_alloc_and_free("COHSEX","v3","clean",1)

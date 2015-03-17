@@ -36,7 +36,7 @@ integer function io_X(X,Xw,ID)
 &                        RD_CL,RD_CL_IF_END,io_action,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED,&
-&                        io_fragment,fragment_exists,IO_OUTDATED_DB,io_fragmented,&
+&                        io_fragment,IO_OUTDATED_DB,io_fragmented,&
 &                        IO_NO_DATABASE
  use stderr,        ONLY:intc
 #if defined _TIMING
@@ -49,7 +49,7 @@ integer function io_X(X,Xw,ID)
  !
  !Work Space
  !
- integer             ::sec_size,i1,iq,i_err,io_com_save
+ integer             ::sec_size,i1,iq,i_err,io_com_save,io_err
  logical             ::different_db_RL_order
  character (schlen)  ::ch,db_desc
  character (2)       ::local_XC_KIND
@@ -149,7 +149,7 @@ integer function io_X(X,Xw,ID)
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_fragment=iq)
+ call io_fragment(ID,i_fragment=iq,ierr=io_err)
  !
  !  type(X_t)    ::X(4)  x s d p
  !
@@ -247,7 +247,7 @@ integer function io_X(X,Xw,ID)
  ! Now that the menu is closed I can return with io_X/=0 if there is a restart point
  !
  io_X=IO_NO_DATABASE
- if (fragment_exists(ID)) io_X=iq
+ if (io_err==0) io_X=iq
  !
 1 call io_disconnect(ID)
  !

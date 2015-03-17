@@ -32,7 +32,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,SC_rho_threshold,it_now,E_convergence, &
 &                         rho_convergence,SC_R,V_xc_sc,l_sc_pot_is_local,H_nl_sc,H_rotate,l_Mean_Potential,&
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
-&                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,l_SC_RESTART,&
+&                         WF_G_max,WF_Go_indx,l_SC_RESTART,&
 &                         l_NSC_shot,l_TF_precond,V_mean,SC_up_W_iters,l_SC_nl_mix,SC_QP_setup,it_to_start
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
@@ -40,11 +40,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use interfaces,     ONLY:MATRIX_driver
  use matrix_operate, ONLY:DIAGO
  use interfaces,     ONLY:PARALLEL_global_indexes,WF_load,PARALLEL_WF_distribute,PARALLEL_WF_index
- use com,            ONLY:msg,warning
+ use com,            ONLY:msg,warning,error
  use X_m,            ONLY:X_t,current_iq,X_alloc
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:intc,real2ch,log_as_a_file
- use xc_functionals, ONLY:V_xc,E_xc
+ use xc_functionals, ONLY:E_xc
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,ncpu
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,io_COLLs,io_RESPONSE,&
@@ -91,10 +91,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! SC_bands(1)
  !=============
  !
- if (SC_bands(1)/=1) then
-   SC_bands(1)=1
-   call warning('Lower bound of band indexes forced to be 1')
- endif
+ if (SC_bands(1)/=1) call error('Lower bound of band indexes forced to be 1')
  !
  call SC_QP_setup(E)
  !

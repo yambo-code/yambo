@@ -36,14 +36,14 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_IND_Plasma,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
-&                        COLLISIONS_element,nGW_NEQ_collisions,nCOHSEX_collisions
+&                        COLLISIONS_element,nGW_NEQ_collisions,nCOHSEX_collisions,&
+&                        COLLISIONS_IO_status
  use plasma,        ONLY:EH_gas
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch,io_COLLs,&
-&                        fragment_status
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch,io_COLLs
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_n_states,QP_table
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load
@@ -71,7 +71,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_qp1_mem
  complex(SP), allocatable ::EM1s(:,:)
  type(ggwinfo)            ::isc,iscp
- integer          ::io_err,ID
+ integer          ::io_err,ID,PAR_nQP_
  integer, external::io_X
  character(schlen)::ch
  complex(SP)      ::local_rhotw(X%ng),pre_factor
@@ -129,10 +129,14 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
+ PAR_nQP_=PAR_nQP
+ if (allocated(COLLISIONS_IO_status)) then
+   PAR_nQP_=count(COLLISIONS_IO_status==-1)
+ endif
  if (V_kind==2) then
-   call live_timing("GW collisions (e-e scattering)",PAR_nQP*PAR_nQ)
+   call live_timing("GW collisions (e-e scattering)",PAR_nQP_*PAR_nQ)
  else
-   call live_timing("COHSEX collisions (e-e correlation)",PAR_nQP*PAR_nQ*PAR_n_Bp_mat_elements)
+   call live_timing("COHSEX collisions (e-e correlation)",PAR_nQP_*PAR_nQ*PAR_n_Bp_mat_elements)
  endif
  if (io_err<0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
@@ -143,10 +147,7 @@ subroutine COLLISIONS_cohsex(X,Xk,E,k,q,Xw,V_kind,COLL,NC)
    i_qp1_mem=PAR_QP_index(i_qp1)
    !
    if (io_COLLs) then
-     if (fragment_status(i_qp1)/=-1) then
-       call live_timing(steps=PAR_nQ*PAR_n_Bp_mat_elements)
-       cycle
-     endif
+     if (COLLISIONS_IO_status(i_qp1)/=-1) cycle
    endif
    !
    if (V_kind==1)              COLL(1)%v3c=cZERO

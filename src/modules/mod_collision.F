@@ -62,6 +62,10 @@ module collision
  !
  logical :: COLLISIONS_parallel_SC_structure=.FALSE.
  !
+ ! Fragments
+ !
+ integer, allocatable       :: COLLISIONS_IO_status(:)
+ !
  type COLLISIONS_element
    character(schlen)     :: name="none"
    integer               :: kind=0

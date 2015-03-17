@@ -26,7 +26,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi,cZERO
- use IO_m,          ONLY:io_COLLs,fragment_status
+ use IO_m,          ONLY:io_COLLs
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels,spin_occ,spin
@@ -35,7 +35,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
-&                        HF_collisions,nHF_collisions
+&                        HF_collisions,nHF_collisions,COLLISIONS_IO_status
  use QP_m,          ONLY:QP_ng_Sx,QP_table,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
  use SC,            ONLY:SC_bands,B_mat_index
@@ -53,7 +53,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
  !Work Space
  !
  type(ggwinfo)           ::isc,iscp
- integer                 ::iq,ib,ibp,jb,ik,i_qp,jb2,ik_minus_q,ig,i_qp_mem
+ integer                 ::iq,ib,ibp,jb,ik,i_qp,jb2,ik_minus_q,ig,i_qp_mem,PAR_nQP_
  complex(DP)             ::DP_Sx
  complex(SP),allocatable ::local_rhotw(:)
  character(schlen)       ::ch
@@ -88,7 +88,11 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
  !
  call scatterGamp(isc,'x')
  !
- call live_timing("HF collisions",PAR_nQP*PAR_nQ*PAR_n_Bp_mat_elements)
+ PAR_nQP_=PAR_nQP
+ if (allocated(COLLISIONS_IO_status)) then
+   PAR_nQP_=count(COLLISIONS_IO_status==-1)
+ endif
+ call live_timing("HF collisions",PAR_nQP_*PAR_nQ*PAR_n_Bp_mat_elements)
  !
  do i_qp=1,QP_n_states
    !
@@ -97,10 +101,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
    i_qp_mem=PAR_QP_index(i_qp)
    !
    if (io_COLLs) then
-     if (fragment_status(i_qp)/=-1) then
-       call live_timing(steps=PAR_nQ*PAR_n_Bp_mat_elements)
-       cycle
-     endif
+     if (COLLISIONS_IO_status(i_qp)/=-1) cycle
    endif
    !
    ib =QP_table(i_qp,1)

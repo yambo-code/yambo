@@ -30,11 +30,11 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  ! the properties of the DB that have been read previously 
  ! (like io_nectdf_support or io_code_version/revision).
  !
- use pars,   ONLY:schlen,lchlen
- use IO_m,   ONLY:close_is_on,io_connect,io_resetable,io_file,&
-&                 io_sec,io_extension,io_action,io_fragmented,read_is_on,write_is_on,&
-&                 OP_RD_CL,OP_WR_CL,io_type,io_disconnect,io_netcdf_support,io_folder
- use stderr, ONLY:intc,write_fragments_IO_log,logfile
+ use pars,       ONLY:schlen,lchlen
+ use IO_m,       ONLY:close_is_on,io_connect,io_resetable,io_file,&
+&                     io_sec,io_extension,io_action,io_fragmented,read_is_on,write_is_on,&
+&                     OP_RD_CL,OP_WR_CL,io_type,io_disconnect,io_netcdf_support,io_folder
+ use stderr,     ONLY:intc,write_fragments_IO_log,logfile
  use interfaces, ONLY:PARALLEL_live_message
  use parallel_m, ONLY:ncpu
  !

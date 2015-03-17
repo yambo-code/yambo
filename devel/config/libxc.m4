@@ -38,6 +38,7 @@ if test -d "$with_libxc_path"; then
     "") ;;
     *)  libxc_include_path="$with_libxc_includedir" ;;
   esac
+#
 FCFLAGS_LIBXC="$ax_cv_f90_modflag$libxc_include_path"
 dnl Backup LIBS and FCFLAGS
 acx_libxc_save_LIBS="$LIBS"

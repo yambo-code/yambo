@@ -330,7 +330,7 @@ module parallel_m
    !
    character(lchlen) function PARALLEL_message(i_s)
      use stderr, ONLY:intc
-     use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
+     use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads
      integer :: i_s
      !
      PARALLEL_message=" "
@@ -344,6 +344,7 @@ module parallel_m
      !
      if (i_s==0) then
        PARALLEL_message=trim(intc(ncpu))//"(CPU)"
+       if (n_threads>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads))//"(threads)"
        if (n_threads_X>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_X))//"(threads@X)"
        if (n_threads_DIP>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_DIP))//"(threads@DIP)"
        if (n_threads_SE>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SE))//"(threads@SE)"

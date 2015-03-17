@@ -218,7 +218,7 @@ if test "x$netcdf" = "xyes"; then
     #
     HDF5_FLAGS="$NCLIBS $try_hdf5_flags"
     #
-    if test -d "$try_incdir" ; then FCFLAGS="$netcdf_idir $IFLAG$try_incdir" ; fi
+    if test -d "$try_incdir" ; then FCFLAGS="$netcdf_idir $IFLAG$try_incdir $save_fcflags" ; fi
     #
     for ldflag in " "  "-lsz" "-lz" "-lcurl -lsz" "-lcurl -lz" ; do
       LIBS="$HDF5_FLAGS $ldflag"

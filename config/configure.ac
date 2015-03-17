@@ -427,6 +427,7 @@ if test "$mpibuild" = "yes"; then
  AC_SUBST(PCCFLAGS)
  AC_SUBST(mpibuild)
 fi
+
 # ============================================================================
 # FFT 
 AC_LANG_PUSH(Fortran)

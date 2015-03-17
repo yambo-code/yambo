@@ -65,7 +65,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
      RT%E_bare=0.
      RT%f_bare=0.
-     RT%GAMMA_bare=0.
+     if (allocated(REF_lifetime)) RT%GAMMA_bare=0.
      !
      do i_k=1,K%nibz
        if(     l_RT_uses_E_RIM) then
@@ -111,8 +111,6 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        i_k    =RT%table(i_RT,2)
        i_k_RT =RT%table(i_RT,3)
        i_spin =RT%table(i_RT,4)
-       !
-       i_k_RIM=i_k_RT+RIM_ibz_coo(i_k,1)-RT_ibz_coo(i_k,1)
        !
        ! Occupations
        !

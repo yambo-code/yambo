@@ -48,6 +48,7 @@ subroutine RT_occupations_analyze(k,E)
  integer               :: ik,ib,i_spin,i_s,i_RT,i_T,n_T_steps,n_gamma,n_output
  real(SP)              :: io_Time,data_to_plot(9)
  character(schlen)     :: titles(9),specs(9,2)
+ character(3)          :: ch3_dummy
  logical               :: l_ELPH_lifetimes
  real(SP), allocatable :: RT_E_occ(:,:,:),RT_gamma(:,:,:,:),RT_df(:,:,:),RT_f_bare(:,:,:),&
 &                         RT_NEQ_Lifetime(:,:,:),RT_gamma_bare(:,:,:)
@@ -120,6 +121,7 @@ subroutine RT_occupations_analyze(k,E)
    RT_NEQ_Lifetime=0._SP
  endif
  RT_gamma=0._SP
+ ch3_dummy=" "
  !
  do i_T=1,n_T_steps
    !
@@ -176,10 +178,10 @@ subroutine RT_occupations_analyze(k,E)
      !
      call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                   RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,RT_carriers%delta_f,RT_df,&
-&                                   ' ',.TRUE.)
+&                                   ch3_dummy,.TRUE.)
      call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                   RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,RT_carriers%f_bare,RT_f_bare,&
-&                                   ' ',.TRUE.)
+&                                   ch3_dummy,.TRUE.)
      !
      n_gamma=0
      !
@@ -187,35 +189,35 @@ subroutine RT_occupations_analyze(k,E)
        n_gamma=4
        call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
-&                                     RT_carriers%dGAMMA_E_P_Hole,RT_gamma(:,:,:,3),' ',.TRUE.)
+&                                     RT_carriers%dGAMMA_E_P_Hole,RT_gamma(:,:,:,3),ch3_dummy,.TRUE.)
        call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
-&                                     RT_carriers%dGAMMA_E_P_Electron,RT_gamma(:,:,:,4),' ',.TRUE.)
+&                                     RT_carriers%dGAMMA_E_P_Electron,RT_gamma(:,:,:,4),ch3_dummy,.TRUE.)
        call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
-&                                     RT_carriers%dGAMMA_E_P_Ho_abs,RT_gamma(:,:,:,5),' ',.TRUE.)
+&                                     RT_carriers%dGAMMA_E_P_Ho_abs,RT_gamma(:,:,:,5),ch3_dummy,.TRUE.)
        call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
-&                                     RT_carriers%dGAMMA_E_P_El_abs,RT_gamma(:,:,:,6),' ',.TRUE.)
+&                                     RT_carriers%dGAMMA_E_P_El_abs,RT_gamma(:,:,:,6),ch3_dummy,.TRUE.)
      endif
      !
      if (l_elel_scatt) then
        n_gamma=n_gamma+2
        call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
-&                                     RT_carriers%dGAMMA_E_E_Hole,RT_gamma(:,:,:,n_gamma-1),' ',.TRUE.)
+&                                     RT_carriers%dGAMMA_E_E_Hole,RT_gamma(:,:,:,n_gamma-1),ch3_dummy,.TRUE.)
        call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
-&                                     RT_carriers%dGAMMA_E_E_Electron,RT_gamma(:,:,:,n_gamma),' ',.TRUE.)
+&                                     RT_carriers%dGAMMA_E_E_Electron,RT_gamma(:,:,:,n_gamma),ch3_dummy,.TRUE.)
      endif
      !
      if (l_ELPH_lifetimes.or.l_elel_scatt) then
        call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
-&                                     RT_carriers%NEQ_Lifetime,RT_NEQ_Lifetime(:,:,:),' ',.TRUE.)
+&                                     RT_carriers%NEQ_Lifetime,RT_NEQ_Lifetime(:,:,:),ch3_dummy,.TRUE.)
        call Nearest_kpt_interpolation(RT_carriers%nk,k%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                     RT_carriers%kpt,k%pt,RT_carriers%k_weight,k%weights,&
-&                                     RT_carriers%GAMMA_bare,RT_gamma_bare(:,:,:),' ',.TRUE.)
+&                                     RT_carriers%GAMMA_bare,RT_gamma_bare(:,:,:),ch3_dummy,.TRUE.)
      endif
      !
      do i_s=1,QP_n_states

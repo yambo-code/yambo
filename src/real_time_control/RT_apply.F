@@ -55,10 +55,13 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
  integer,parameter     :: n_pieces=10
  integer, external     :: io_RT_components
  character(schlen)     :: db_piece(n_pieces),db_name,T_unit
+ character(3)          :: what_
  logical               :: l_E,l_f,l_elel_corr_save,is_def
  real(SP), allocatable :: r_dummy(:,:,:)
  !
  if (present(what)) then
+   !
+   what_=' '//trim(what)//' '
    ! 
    ! Kind
    !====== 
@@ -102,6 +105,8 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
    endif
    !
  else
+   !
+   what_=' '
    !
    l_E=.TRUE.
    l_f=.TRUE.
@@ -165,7 +170,7 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
    allocate(r_dummy(RT_carriers%nb(1):RT_carriers%nb(2),K%nibz,n_sp_pol))
    call Nearest_kpt_interpolation(RT_carriers%nk,K%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                 RT_carriers%kpt,K%pt,RT_carriers%k_weight,K%weights,RT_carriers%delta_f,r_dummy,&
-&                                 ' '//what//' ',.TRUE.)
+&                                 what_,.TRUE.)
    !
    df_Max=maxval(abs(r_dummy))
    N_carriers=0._SP
@@ -191,7 +196,7 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
    allocate(r_dummy(RT_carriers%nb(1):RT_carriers%nb(2),K%nibz,n_sp_pol))
    call Nearest_kpt_interpolation(RT_carriers%nk,K%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                 RT_carriers%kpt,K%pt,RT_carriers%k_weight,K%weights,RT_carriers%delta_E,r_dummy,&
-&                                 ' '//what//' ',.TRUE.)
+&                                 what_,.TRUE.)
    !
    dE_Max=maxval(abs(r_dummy))
    !

@@ -437,7 +437,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !Variables(read from DB files) -> local cache
  !
  !Note that here ('load_defaults') is the latest chance to change
- !a predefined var verbosity and to force its appearnce
+ !a predefined var verbosity and to force its appearance
  !in the input file.
  !
  call call_init_load('load_defaults')

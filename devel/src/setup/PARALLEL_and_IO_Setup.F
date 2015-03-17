@@ -71,7 +71,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
    !
  endif
  !
- n_max_threads=maxval((/n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP/))
+ n_max_threads=maxval((/n_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP/))
  !
  call msg('r', '* THREADS    (max):',n_max_threads)
  call msg('r', '* THREADS TOT(max):',n_max_threads*ncpu)

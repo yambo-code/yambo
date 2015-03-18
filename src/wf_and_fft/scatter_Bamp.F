@@ -41,9 +41,6 @@ subroutine scatterBamp(isc)
  use D_lattice,      ONLY:idt_index
  use R_lattice,      ONLY:g_rot
  use FFT_m,          ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -57,10 +54,6 @@ subroutine scatterBamp(isc)
  !
  integer     :: qs,iGo
  integer     :: ig, ir
- !
-!#if defined _TIMING
-! call timing("scatter_Bamp","start")
-!#endif
  !
  allocate(rho_tw_rs(fft_size))
  allocate(WF_symm_i(fft_size,n_spinor))
@@ -193,9 +186,5 @@ subroutine scatterBamp(isc)
  deallocate(WF_symm_i)
  deallocate(WF_symm_o)
  deallocate(rho_tw_rs)
- !
-!#if defined _TIMING
-! call timing("scatter_Bamp","stop")
-!#endif
  !
 end subroutine

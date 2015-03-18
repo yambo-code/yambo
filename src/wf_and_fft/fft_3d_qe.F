@@ -51,6 +51,7 @@ subroutine fft_3d(c,n,fft_sign)
  implicit none
  integer     :: fft_sign,n(3)
  complex(DP) :: c(n(1)*n(2)*n(3))
+ 
  !
  ! init and cheks
  !

@@ -32,7 +32,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load,&
 &                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index,&
 &                        PAR_BS_T_grps_index,PAR_BS_nT_col_grps,PAR_Kk_nibz,PAR_nG_bands,PAR_G_bands_index,&
-&                        PAR_Q_bz_index,PAR_nQ_bz
+&                        PAR_Q_bz_index,PAR_nQ_bz,PAR_nRL,PAR_RL_index
  use parallel_m,    ONLY:& ! LOGICALS
 &                        l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
 &                        HEAD_QP_cpu,HEAD_k_cpu
@@ -53,18 +53,18 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
 &                        PAR_IND_B_mat,PAR_IND_Plasma,PAR_IND_DIPk_ibz,PAR_IND_WF_linear,&
 &                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_eh,PAR_IND_T_all,PAR_IND_WF_b_and_k,&
-&                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_IND_T_ordered,PAR_IND_Q_bz
+&                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_IND_T_ordered,PAR_IND_Q_bz,PAR_IND_RL
  use parallel_m,    ONLY:& ! ID's
 &                        PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_INV_ID,PAR_IND_DIAGO_ID,&
 &                        PAR_IND_QP_ID,PAR_IND_G_b_ID,myid,PAR_IND_Plasma_ID,&
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID,&
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,&
-&                        PAR_IND_Kk_ibz_ID
+&                        PAR_IND_Kk_ibz_ID,PAR_IND_RL_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message,&
 &                        PARALLEL_structure
  use X_m,           ONLY:X_t
- use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run,l_real_time
+ use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run,l_real_time,l_elphoton_corr
  use matrix_operate,ONLY:UP_matrix_index
  use BS,            ONLY:BS_bands,BS_nT_at_k,BS_nT_grps,BS_K_coupling
 #if defined _ELPH
@@ -79,7 +79,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use com,           ONLY:error,warning
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
  use IO_m,          ONLY:IO_and_Messaging_switch,io_COLLs,io_RESPONSE
- use QP_m,          ONLY:QP_n_states,QP_nb,QP_table,QP_n_G_bands
+ use QP_m,          ONLY:QP_n_states,QP_nb,QP_table,QP_n_G_bands,QP_QED_ng
  use wave_func,     ONLY:states_to_load
  implicit none
  !
@@ -143,6 +143,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PP_indexes_reset(PAR_IND_WF_linear)
    call PP_indexes_reset(PAR_IND_T_ordered)
    call PP_indexes_reset(PAR_IND_T_all)
+   call PP_indexes_reset(PAR_IND_RL)
    !
    if (ENVIRONMENT=="Response_T_space") then
      if (.not.allocated(PAR_IND_eh)) then
@@ -165,6 +166,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    if (allocated(states_to_load))     deallocate(states_to_load)
    if (allocated(PAR_DIPk_ibz_index)) deallocate(PAR_DIPk_ibz_index)
    if (allocated(PAR_BS_T_grps_index))deallocate(PAR_BS_T_grps_index)
+   if (allocated(PAR_RL_index))       deallocate(PAR_RL_index)
    !
    PAR_IND_Q_ID=0
    PAR_IND_Xk_ibz_ID=0
@@ -181,6 +183,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    PAR_IND_WF_k_ID=0
    PAR_IND_B_mat_ID=0
    PAR_IND_Bp_mat_ID=0
+   PAR_IND_RL_ID=0
    !
    call COMM_reset(PAR_COM_VAL_INDEX(X_type))
    call COMM_reset(PAR_COM_CON_INDEX(X_type))
@@ -583,6 +586,22 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !   "k.b" -> QP (k,n,n')  
    !   "q"   -> q 
    !   "qp"  -> Bp_mat (m,m')
+   !
+   ! e-photon correlation 
+   !======================
+   !
+   ! n,k-q   n,k
+   ! --<--.-<--
+   !      | m
+   !      |
+   !     \|/ q,G,\alpha
+   !      |
+   !      
+   ! "RT"="k.b.q.qp" 
+   !  
+   !   "k.b" -> QP (k,n,m)  
+   !   "q"   -> q (BZ)
+   !   "qp"  -> G
    !  
    !.........................................................................
    !   "k.b" -> QP (k,n,n')  
@@ -640,6 +659,17 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
 &                             TOTAL=(SC_bands(2)-SC_bands(1)+1)**2,NCPU=PAR_COM_Plasma_INDEX%n_CPU)
+   !
+   !.........................................................................
+   !   "qp"  -> RL vectors
+   !.........................................................................
+   !
+   if (l_elphoton_corr) then
+     call PARALLEL_index(PAR_IND_RL,(/QP_QED_ng/),COMM=PAR_COM_Plasma_INDEX,CONSECUTIVE=.TRUE.)
+     PAR_IND_RL_ID=PAR_COM_Plasma_INDEX%CPU_id
+     allocate(PAR_RL_index(QP_QED_ng))
+     call Build_up_index(PAR_IND_RL,QP_QED_ng,PAR_RL_index,PAR_nRL)
+   endif
    !
    ! When the collisons are note evaluated the I/O is dictated by Response_G_space_Zero_Momentum
    ! and then resetted in RT_driver
@@ -770,20 +800,20 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    ! n,k
    ! --<--.
-   !      | m
+   !      | 
    !      |
    !      |
-   !     \|/ k-q
+   !     \|/ m,k-q
    !      |
    !      |
-   !      | m'
+   !      | 
    !      .-->-- n',k
    !      
-   ! "RT"="k.b.q.qp" 
+   ! "SC"="q.qp.b" 
    !  
-   !   "k.b" -> QP (k,n,n')  
    !   "q"   -> q 
-   !   "b"   -> Bp_mat (m,m')
+   !   "qp"  -> QP (k,n,n')  
+   !   "b"   -> m and PAR_IND_Bp_mat (this second is for the COLLISIONS case)
    !
    if (l_HF_and_locXC)  n_bands=(/1,max(E%nbm,QP_nb)/)
    if (l_gw0.or.l_life) n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)

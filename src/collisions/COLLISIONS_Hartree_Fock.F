@@ -117,14 +117,14 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
      if (isc%qs(2)/=isc%iqref) call scatterGamp(isc,'x')
      !
      !  (n,k,sp_n).     
+     !              | m
+     !              | (p,r,sp_m)
      !              |
-     !              | (m,p,r,sp_m)
-     !              |
-     !              |
-     !  (m,k,sp_m).     
+     !              | m'
+     !  (n',k,sp_m).     
      !
      ! n   =QP_table(i_qp,1)
-     ! m   =QP_table(i_qp,2)
+     ! n'  =QP_table(i_qp,2)
      ! k   =QP_table(i_qp,3)
      !
      isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)

@@ -487,7 +487,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC && ! defined _RT && defined _MPI
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')
-#else if defined _MPI
+#endif
+#if !defined _SC && defined _RT && defined _MPI
    call CPU_activate("RT")
    call initactivate(1,'RT_Threads')
 #endif
@@ -787,7 +788,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(-1,'GbndRnge UseEbands BandMix SCUpWIter') 
    call initactivate(-1,'SCIter SCEtresh SCRhoTresh TF_precondition')
    !
-   call initactivate( 1,'Potential PlasmaPerc FFTGvecs Gauge SCBands EXXCut')
+   call initactivate( 1,'FFTGvecs Gauge SCBands')
+   !
+   if (l_elel_scatt)     call initactivate(1,'PlasmaPerc')
+   if (l_elel_corr)      call initactivate(1,'EXXCut')
+   if (l_elphoton_corr)  call initactivate(1,'QEDRLvcs') 
    !
  endif
 #endif
@@ -1150,6 +1155,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_cohsex      =.FALSE.
        l_em1s        =.FALSE.
        l_HF_and_locXC=.FALSE.
+     endif
+     !
+     if (l_eval_collisions) then
+       if (l_cohsex) call initactivate(1,'HF_and_locXC')
      endif
      !
 #endif
@@ -1553,24 +1562,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              l_elph_corr=.true.
              l_elphoton_corr=.true.
            endif
-           if (.not.l_elph_corr.and..not.l_elel_corr) l_elel_corr=.true.
-           if (l_elph_corr) call initactivate(1,'el_ph_corr')
-           if (l_elel_corr) call initactivate(1,'el_el_corr')
-         endif
-#endif
-         !
-#if defined  _QED
-         !
-         !  QED
-         !
-         if ( trim(rstr_piece(i1)) == 'corrtp' ) then
-           if ( trim(rstr_piece(i1+1)) == 'e') l_elel_corr=.true.
-           if ( trim(rstr_piece(i1+1)) == 'h') l_elphoton_corr=.true.
-           if ( trim(rstr_piece(i1+1)) == 'a') then
-             l_elel_corr=.true.
-             l_elphoton_corr=.true.
-           endif
-           if (.not.l_elphoton_corr.and..not.l_elel_corr) l_elel_corr=.true.
+           if (.not.l_elph_corr.and..not.l_elel_corr.and..not.l_elphoton_corr) l_elel_corr=.true.
+           if (l_elph_corr)     call initactivate(1,'el_ph_corr')
            if (l_elel_corr)     call initactivate(1,'el_el_corr')
            if (l_elphoton_corr) call initactivate(1,'el_photon_corr')
          endif
@@ -1585,7 +1578,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
          if ( trim(rstr_piece(i1)) == 'collisions' ) then
            if (i3==2.and..not.runlevel_is_on('el_el_scatt').and..not.runlevel_is_on('cohsex').and.&
-&              .not.runlevel_is_on('HF_and_locXC')) call initactivate(1,'HF_and_locXC')
+&              .not.runlevel_is_on('el_photon_corr')) call initactivate(1,'HF_and_locXC')
          endif
          !
          if ( trim(rstr_piece(i1)) == 'scattp' ) then

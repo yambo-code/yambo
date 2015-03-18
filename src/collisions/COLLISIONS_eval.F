@@ -24,6 +24,9 @@
 subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_elel_scatt,l_use_collisions
+#if defined _QED
+ use drivers,       ONLY:l_elphoton_corr
+#endif
  use com,           ONLY:error
  use pars,          ONLY:IP
  use electrons,     ONLY:levels
@@ -87,7 +90,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! PARALLEL Setup
  !================
- if (l_HF_and_locXC) then
+ if (l_HF_and_locXC.or.l_elphoton_corr) then
 #if defined _SC && defined _RT
    call PARALLEL_global_indexes(E,k,q,"Real_Time")
    call PARALLEL_WF_distribute(K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
@@ -215,6 +218,46 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
  enddo
  !
+#if defined _QED
+ !
+ if (l_elphoton_corr) then
+   !
+   call section('+','Electron-Photon (QED)')
+   !========================================
+   !
+   IO_err=-1
+   !
+!   if (io_COLLs) then
+!     COLLISIONS_IO_status=-1
+!     V_kind=SC_HF
+!     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+!     IO_err=io_COLLISIONS(0,ID)
+!     if (any(COLLISIONS_IO_status/=1)) IO_err=-1
+!   endif
+   !
+   if (IO_err/=0) then
+     !
+     if (io_COLLs) then
+       call COLLISIONS_alloc_and_free("GW_QED","collision","alloc",1)
+       call COLLISIONS_alloc_and_free("GW_QED","v3 table","alloc",1)
+     else
+       call COLLISIONS_alloc_and_free("GW_QED","collision","alloc",0)
+       call COLLISIONS_alloc_and_free("GW_QED","v3","alloc",1)
+       call COLLISIONS_alloc_and_free("GW_QED","table","alloc",0)
+     endif
+     !
+     call COLLISIONS_QED_gw(E,k,q)
+     !
+     ! HF clean
+     !----------
+     if (io_COLLs) call COLLISIONS_alloc_and_free("GW_QED","v3 table","clean",1)
+     !
+   endif
+   !
+ endif
+ !
+#endif
+ !
  ! CLEAN
  !=======
  !
@@ -222,8 +265,11 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    if (allocated(COLLISIONS_IO_status)) deallocate(COLLISIONS_IO_status)
    call mem_est("COLLISIONS_IO_status")
  else
-   if (l_HF_and_locXC) call COLLISIONS_alloc_and_free("HF","v3","clean",1)
-   if (l_cohsex)       call COLLISIONS_alloc_and_free("COHSEX","v3","clean",1)
+   if (l_HF_and_locXC)  call COLLISIONS_alloc_and_free("HF","v3","clean",1)
+   if (l_cohsex)        call COLLISIONS_alloc_and_free("COHSEX","v3","clean",1)
+#if defined _QED
+   if (l_elphoton_corr) call COLLISIONS_alloc_and_free("GW_QED","v3","clean",1)
+#endif
  endif
  !
 end subroutine

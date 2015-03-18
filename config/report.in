@@ -29,7 +29,7 @@
 # [@NETCDF_str@@HDF5_str@@NETCDF_LF_str@] NETCDF/HDF5/Large Files 
 # [ @LIBXC_str@ ] LibXC (external)
 # [@BLAS_str@@LAPACK_str@ ] BLAS/LAPACK (built-in)
-# [@IOTK_loc_str@@NETCDF_loc_str@@ETSF_loc_str@] Built-in IOTK/NETCDF/ETSF_IO (built-in)
+# [@IOTK_loc_str@@NETCDF_loc_str@@ETSF_loc_str@] IOTK/NETCDF/ETSF_IO (built-in)
 #
 # - COMPILERS, MAKE and EDITOR -
 #

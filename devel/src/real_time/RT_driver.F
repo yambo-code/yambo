@@ -65,7 +65,7 @@ subroutine RT_driver(E,X,k,q)
  ! 
  ! Work Space
  !
- integer           :: it,ib,it_mem,it_mem_p1,io_REF
+ integer           :: it,it_mem,it_mem_p1,io_REF
  complex(SP)       :: on_the_fly_operators(10)
  !
  integer, external :: io_RT_components

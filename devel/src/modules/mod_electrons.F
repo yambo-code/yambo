@@ -113,7 +113,7 @@ module electrons
      use memory_m,  ONLY:mem_est
      type(levels):: Ei,Eo
      !
-     integer :: QP_corrected_bounds(2)
+     integer :: BOUNDS(2)
      logical :: naive
      !
      naive=Eo%nk==0
@@ -134,33 +134,39 @@ module electrons
      call mem_est("E-E E-f",(/size(Eo%E),size(Eo%f)/),(/SP,SP/))
      Eo%E=0.
      Eo%f=0.
+     !
+     ! This line is beacause in _RT calculations the actual first size of %Eo may differ
+     ! from %nb as it is limited by SC_bands
+     !
+     BOUNDS(1)=size(Ei%Eo,1)
+     !
      if (naive) then
        Eo%f(:,:,:)=Ei%f(:,:,:)
        Eo%E(:,:,:)=Ei%E(:,:,:)
        if (associated(Ei%Eo)) then
-         allocate(Eo%Eo(Eo%nb,Eo%nk,n_sp_pol))
+         allocate(Eo%Eo(BOUNDS(1),Eo%nk,n_sp_pol))
          call mem_est("E-Eo",(/size(Eo%Eo)/),(/SP/))
-         Eo%Eo=Ei%Eo
+         Eo%Eo(:BOUNDS(1),:,:)=Ei%Eo(:BOUNDS(1),:,:)
        endif
        if (associated(Ei%fo)) then
-         allocate(Eo%fo(Eo%nb,Eo%nk,n_sp_pol))
-         call mem_est("E-Eo",(/size(Eo%E)/),(/SP/))
-         Eo%fo=Ei%fo
+         allocate(Eo%fo(BOUNDS(1),Eo%nk,n_sp_pol))
+         call mem_est("E-fo",(/size(Eo%fo)/),(/SP/))
+         Eo%fo(:BOUNDS(1),:,:)=Ei%fo(:BOUNDS(1),:,:)
        endif
        if (associated(Ei%W)) then
-         allocate(Eo%W(Eo%nb,Eo%nk,n_sp_pol))
+         allocate(Eo%W(BOUNDS(1),Eo%nk,n_sp_pol))
          call mem_est("E-W",(/size(Eo%W)/),(/SP/))
-         Eo%W=Ei%W
+         Eo%W(:BOUNDS(1),:,:)=Ei%W(:BOUNDS(1),:,:)
        endif
        if (associated(Ei%Z)) then
-         allocate(Eo%Z(Eo%nb,Eo%nk,n_sp_pol))
+         allocate(Eo%Z(BOUNDS(1),Eo%nk,n_sp_pol))
          call mem_est("E-Z",(/size(Eo%Z)/))
-         Eo%Z=Ei%Z
+         Eo%Z(:BOUNDS(1),:,:)=Ei%Z(:BOUNDS(1),:,:)
        endif
        if (associated(Ei%QP_corrected)) then
-         QP_corrected_bounds(1)=size(Ei%QP_corrected,1)
-         QP_corrected_bounds(2)=size(Ei%QP_corrected,2)
-         allocate(Eo%QP_corrected(QP_corrected_bounds(1),QP_corrected_bounds(2),n_sp_pol))
+         BOUNDS(1)=size(Ei%QP_corrected,1)
+         BOUNDS(2)=size(Ei%QP_corrected,2)
+         allocate(Eo%QP_corrected(BOUNDS(1),BOUNDS(2),n_sp_pol))
          call mem_est("E-QP_corrected",(/size(Eo%QP_corrected)/),(/IP/))
          Eo%QP_corrected=Ei%QP_corrected
        endif

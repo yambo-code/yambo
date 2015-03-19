@@ -36,7 +36,7 @@ if [ $ACTION = "update" ] ; then
  #find . -name .objects_gpl | grep -v svn | gawk '{print "cpp -P " $0 " > A ; mv A " $0 }' > CPP.batch
  #chmod u+x CPP.batch
  #rm -f CPP.batch 
- ./sbin/yamboo.pl -p="KERR SURF YPP_SURF ELPH YPP_ELPH FFTW FFTSG OPENMP MPI"
+ ./sbin/yamboo.pl -p="KERR SURF YPP_SURF ELPH YPP_ELPH"
  chmod u+x delete.batch
  ./delete.batch
  rm -f delete.batch 

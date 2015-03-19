@@ -32,7 +32,7 @@ subroutine RT_BGR(G,E,k)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- use electrons,      ONLY:levels,n_sp_pol,E_duplicate
+ use electrons,      ONLY:levels,n_sp_pol,E_duplicate,E_reset
  use parallel_m,     ONLY:master_cpu
  use QP_m,           ONLY:QP_Vnl_xc,QP_table,QP_n_states
  use wave_func,      ONLY:WF
@@ -67,6 +67,7 @@ subroutine RT_BGR(G,E,k)
  BGR_Self_Energy=0.
  !
  if (l_initial_equilibrium) then
+   call E_reset(E_reference)
    call E_duplicate(E,E_reference)
  endif
  !

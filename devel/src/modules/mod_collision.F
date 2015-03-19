@@ -62,6 +62,10 @@ module collision
  !
  logical :: COLLISIONS_parallel_SC_structure=.FALSE.
  !
+ ! Fragments
+ !
+ integer, allocatable       :: COLLISIONS_IO_status(:)
+ !
  type COLLISIONS_element
    character(schlen)     :: name="none"
    integer               :: kind=0
@@ -79,6 +83,8 @@ module collision
  type(COLLISIONS_element), allocatable :: HF_collisions(:)
  integer :: nCOHSEX_collisions=0
  type(COLLISIONS_element), allocatable :: COHSEX_collisions(:)
+ integer :: nGW_QED_collisions=0
+ type(COLLISIONS_element), allocatable :: GW_QED_collisions(:)
  !
  contains
    !

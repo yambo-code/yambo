@@ -137,8 +137,8 @@ yambo_surf: libs
 	@LIBS2DO="$(PJ_SURFLIBS)";ADF="-D_SURF"; $(mksrc)
 	@X2DO="yambo_surf"; XPATH="driver";XLIBS="$(PJ_SURFLIBS)";ADF="-D_SURF";$(mkx)
 yambo_qed: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_QED"; $(mksrc)
-	@X2DO="yambo_qed"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_QED";$(mkx)
+	@LIBS2DO="$(PJ_RTLIBS)";ADF="-D_QED -D_SC -D_RT -D_ELPH"; $(mksrc)
+	@X2DO="yambo_qed"; XPATH="driver";XLIBS="$(PJ_RTLIBS)";ADF="-D_QED -D_SC -D_RT -D_ELPH";$(mkx)
 ypp_ph: libs
 	@LIBS2DO="$(YPPLIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
@@ -178,7 +178,6 @@ ydb: libs
 #
 clean: clean_fast
 clean_fast: 
-	@$(lib_ext_clean)
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(xclean)

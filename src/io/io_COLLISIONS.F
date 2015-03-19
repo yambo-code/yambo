@@ -25,15 +25,17 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element
+ use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLLISIONS_IO_status
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,io_restart_point,&
-&                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment
+&                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
+&                        VERIFY,io_extension,io_raw_extension
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ
  use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,Plasma_redux_percent
  use SC,            ONLY:SC_bands,SC_X_size,SC_X_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,SC_band_mixing
+ use parallel_m,    ONLY:PAR_IND_QP
  use X_m,           ONLY:n_X_descs,X_description
  use stderr,        ONLY:intc
  use drivers,       ONLY:l_elel_scatt
@@ -51,7 +53,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  !
  character(schlen)     :: db_name
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
- integer               :: V_kind_disk,i_desc,VAR_size
+ integer               :: V_kind_disk,i_desc,VAR_size,i_qp_loop,io_err
  character(lchlen)     :: V_kind_string,X_string
  character(schlen)     :: desc
  !
@@ -76,10 +78,6 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    io_COLLISIONS=IO_OUTDATED_DB
    goto 1
  endif
- !
- ! Check the restart point
- !
- !call Fragments_Restart(ID,fragments_todo=QP_n_states)
  !
  if (any(io_sec(ID,:)==1)) then
    !
@@ -163,6 +161,25 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    !
  endif
  !
+ ! Check the restart point
+ !
+ if (io_MODE(ID)==VERIFY.and.allocated(COLLISIONS_IO_status)) then
+   !
+   COLLISIONS_IO_status=1
+   do i_qp_loop=1,QP_n_states
+     if (.not.PAR_IND_QP%element_1D(i_qp_loop)) cycle
+     io_extension(ID)=io_raw_extension(ID)
+     call io_fragment(ID,i_fragment=i_qp_loop,ierr=io_err)
+     if (io_err==0) then
+       COLLISIONS_IO_status(i_qp_loop)=1
+     else
+       COLLISIONS_IO_status(i_qp_loop)=-1
+       exit
+     endif
+   enddo
+   !
+ endif
+ !
  if (any(io_sec(ID,:)==2)) then     
    !
    ! QP-based fragmentation
@@ -220,8 +237,6 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  endif
  !
 1 continue
- !
- !if (io_COLLISIONS==0) io_COLLISIONS=io_restart_point(ID)
  !
  call io_disconnect(ID=ID)
  !

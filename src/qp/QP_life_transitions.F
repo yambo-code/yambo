@@ -95,14 +95,20 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
      call error('One or more Q-point virtual transitions are null. Change QP states')
    endif
    !
-   allocate(X_freqs(q%nibz,maxval(n_of_transitions)))
-   X_freqs=0.
+   if (i1==1) then
+     allocate(X_freqs(q%nibz,maxval(n_of_transitions)))
+     X_freqs=0.
+   endif
+   !
  enddo
  QP_n_G_bands=(/ob_min,ob_max/)
  !
  QP_life_transitions=maxval(n_of_transitions)
  !
- if (iqibz_in<0) return
+ if (iqibz_in<0) then
+   deallocate(X_freqs)
+   return
+ endif
  !
  ! Here I reduce the frequencies
  !
@@ -121,7 +127,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  !
  ! Clean
  !
- deallocate(bare_grid_N,coarse_grid_Pt,ordered_grid_index)
+ deallocate(bare_grid_N,coarse_grid_Pt,ordered_grid_index,X_freqs)
  call mem_est("BGn CGp RGi")
  !
 end function

@@ -189,6 +189,9 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_WF_b_and_k
  type(PP_indexes),SAVE :: PAR_IND_WF_linear
  !
+ ! ... RL vectors
+ type(PP_indexes),SAVE :: PAR_IND_RL
+ !
  ! ... Transitions
  type(PP_indexes),allocatable,SAVE :: PAR_IND_eh(:)
  type(PP_indexes)            ,SAVE :: PAR_IND_T_groups
@@ -233,6 +236,9 @@ module parallel_m
  ! ... BSK
  integer            :: PAR_IND_eh_ID
  !
+ ! ... RL
+ integer            :: PAR_IND_RL_ID
+ !
  ! Specific MPI COMMUNICATORS...
  !==============================
  !
@@ -246,7 +252,8 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_DIAGO
  !
  ! ... RL vectors
- type(MPI_comm),SAVE :: PAR_COM_RL_vectors_INDEX
+ integer            :: PAR_nRL
+ integer,allocatable:: PAR_RL_index(:)
  !
  ! ... QP
  type(MPI_comm),SAVE :: PAR_COM_QP_INDEX

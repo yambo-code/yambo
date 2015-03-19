@@ -32,6 +32,10 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use global_XC,      ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
  use collision,      ONLY:COLLISIONS_element,HF_collisions,COHSEX_collisions,GW_NEQ_collisions,&
 &                         nHF_collisions,nCOHSEX_collisions,nGW_NEQ_collisions
+#if defined _QED
+ use QP_m,           ONLY:QP_QED_ng
+ use collision,      ONLY:GW_QED_collisions,nGW_QED_collisions
+#endif
  !
  implicit none
  !
@@ -42,7 +46,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
  integer :: D(3,2),I_range(2),J,mem_size(4),size_
  logical :: l_HF,l_COHSEX,l_GW_NEQ,l_v3,l_v1,l_table,l_all,l_alloc,&
-&           l_clean,l_collision,l_distribute
+&           l_clean,l_collision,l_distribute,l_GW_QED
  !
  if (I==0) I_range=(/1,PAR_nQP/)
  if (I==0) size_=PAR_nQP
@@ -54,6 +58,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  l_HF     =index(what,"HF")>0
  l_COHSEX =index(what,"COHSEX")>0
  l_GW_NEQ =index(what,"GW_NEQ")>0
+ l_GW_QED =index(what,"GW_QED")>0
  !
  ! Elements
  !
@@ -68,6 +73,30 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  l_alloc     =index(actions,"alloc")>0
  l_clean     =index(actions,"clean")>0
  l_distribute=index(actions,"distribute")>0
+ !
+#if defined _QED
+ !
+ if (l_GW_QED) then
+   D(1,:)=(/1,PAR_nQ/)
+   D(2,:)=(/1,QP_QED_ng/)
+   D(2,:)=(/1,3/)
+   if (l_collision.and.l_alloc) then
+     allocate(GW_QED_collisions(size_))
+     nGW_QED_collisions=size_
+     !GW_QED_collisions(:)%kind=SC_HF
+     GW_QED_collisions(:)%name="GW_QED"
+   endif
+   call local_alloc_and_free(GW_QED_collisions,nGW_QED_collisions)
+   if (l_collision.and.l_clean) then
+     if (allocated(HF_collisions)) then
+       call local_alloc_and_free(GW_QED_collisions,nGW_QED_collisions)
+       deallocate(GW_QED_collisions)
+     endif
+     nGW_QED_collisions=0
+   endif
+ endif
+ !
+#endif
  !
  if (l_HF) then
    D(1,:)=SC_bands

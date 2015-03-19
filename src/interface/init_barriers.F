@@ -78,13 +78,13 @@ subroutine init_barriers()
  ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_real_time) then
-   on_runlevels='scpot HF_and_locXC cohsex em1s negf collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt'
+   on_runlevels='scpot HF_and_locXC cohsex em1s negf collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt el_photon_corr'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  !
  if (l_eval_collisions) then
-   on_runlevels='scpot HF_and_locXC cohsex em1s collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt'
+   on_runlevels='scpot HF_and_locXC cohsex em1s collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt el_photon_corr'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
@@ -119,7 +119,7 @@ subroutine init_barriers()
  if (gw0_raxis) then
    on_runlevels='gw0 em1d el_el_corr el_ph_corr el_photon_corr HF_and_locXC'
    ! GPL_INCLUDE_START 
-   !on_runlevels='gw0 em1d el_el_corr HF_and_locXC'
+   !on_runlevels='gw0 em1d el_el_corr el_ph_corr HF_and_locXC'
    ! GPL_INCLUDE_END 
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
@@ -127,9 +127,6 @@ subroutine init_barriers()
  !
  if (gw0_ppa) then
    on_runlevels='gw0 ppa em1d el_el_corr el_ph_corr HF_and_locXC'
-   ! GPL_INCLUDE_START SC_IGNORE
-   !on_runlevels='gw0 ppa em1d HF_and_locXC'
-   ! GPL_INCLUDE_END SC_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif

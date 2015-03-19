@@ -114,9 +114,6 @@ module IO_m
  character(schlen)          :: io_extension(max_io_units)
  integer                    :: io_type(max_io_units)
  !
- ! Fragments
- integer, allocatable       :: Fragment_status(:)
- !
  ! Save variables (to try different DB locations at the same time)
  !
  integer, private :: io_unit_save

@@ -39,7 +39,9 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  ! Ygrad(1,i) = \partial(theta)/\partial(k_i) i=1,3
  ! Ygrad(2,i) = \partial(phi)/\partial(k_i) i=1,3
  !
- use pars, ONLY:SP,pi
+ use pars, ONLY:SP,pi,cI,cZERO
+ use com,  ONLY:error
+ !
  implicit none
  integer     :: lang
  complex(SP) :: Ylm(lang,2*(lang-1)+1),dYlm(2,lang,2*(lang-1)+1)
@@ -50,38 +52,40 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  real(SP)    :: costh,sinth,cosphi,sinphi,ch,kmod,kxymod
  complex(SP) :: eiphi
  !
- Ylm(:,:)=(0.,0.)
- dYlm(:,:,:)=(0.,0.)
- Ygrad(:,:)=0.
+ if (lang>3) call error('Ylm with l>3 not coded')
+ !
+ Ylm(:,:)   =cZERO
+ dYlm(:,:,:)=cZERO
+ Ygrad(:,:) =0._SP
  !
  kmod=sqrt(dot_product(k,k))
  kxymod=sqrt(k(1)**2.+k(2)**2.)
- costh=1.
- sinth=0.
+ costh=1._SP
+ sinth=0._SP
  if (kmod.gt.1.E-5) then
   costh=k(3)/kmod
   sinth=kxymod/kmod
  endif
- cosphi=1.
- sinphi=0.
- if (kxymod.gt.1.E-5) then
+ cosphi=1._SP
+ sinphi=0._SP
+ if (kxymod.gt.1.E-5_SP) then
   cosphi=k(1)/kxymod
   sinphi=k(2)/kxymod
  endif
  eiphi=cmplx(cosphi,sinphi)
  !
- if (kxymod.gt.1.E-5) then
-   Ygrad(1,1:2)= k(3)/kmod**2. * (k(1:2)/kxymod)
-   Ygrad(1,3)=-kxymod/kmod**2.
+ if (kxymod.gt.1.E-5_SP) then
+   Ygrad(1,1:2)= k(3)/kmod**2._SP * (k(1:2)/kxymod)
+   Ygrad(1,3)=-kxymod/kmod**2._SP
  else
-   Ygrad(1,1:2)= k(3)/kmod**2.
-   Ygrad(1,3)= 0.
+   Ygrad(1,1:2)= k(3)/kmod**2._SP
+   Ygrad(1,3)= 0._SP
  endif
  !
- if (kxymod.gt.1.E-5) then
-   Ygrad(2,1)=-k(2)/kxymod**2.
-   Ygrad(2,2)= k(1)/kxymod**2.
-   Ygrad(2,3)= 0.
+ if (kxymod.gt.1.E-5_SP) then
+   Ygrad(2,1)=-k(2)/kxymod**2._SP
+   Ygrad(2,2)= k(1)/kxymod**2._SP
+   Ygrad(2,3)= 0._SP
  endif
  !
  Ylm(lindx(0),mindx(0,0))=1./sqrt(4.*pi)
@@ -89,35 +93,35 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  if (lang.eq.1) return
  !
  ch=sqrt(3./(4.*pi))
- Ylm(lindx(1),mindx(1,0))=ch*costh
+ Ylm(   lindx(1),mindx(1,0))= ch*costh
  dYlm(1,lindx(1),mindx(1,0))=-ch*sinth
- dYlm(2,lindx(1),mindx(1,0))=(0.,0.)
+ dYlm(2,lindx(1),mindx(1,0))= cZERO
  ch=sqrt(3./(8.*pi))
- Ylm(lindx(1),mindx(1,1))=-ch*sinth*eiphi
+ Ylm(   lindx(1),mindx(1,1))=-ch*sinth*eiphi
  dYlm(1,lindx(1),mindx(1,1))=-ch*costh*eiphi
- dYlm(2,lindx(1),mindx(1,1))=-(0.,1.)*ch*sinth*eiphi
+ dYlm(2,lindx(1),mindx(1,1))=-ch*sinth*eiphi*cI
  ! M < 0
- Ylm(lindx(1),mindx(1,-1))=-conjg(Ylm(lindx(1),mindx(1,1)))
+ Ylm(   lindx(1),mindx(1,-1))=-conjg(Ylm(   lindx(1),mindx(1,1)))
  dYlm(:,lindx(1),mindx(1,-1))=-conjg(dYlm(:,lindx(1),mindx(1,1)))
  if (lang.eq.2) return
  !
  ch=sqrt(5./(16.*pi))
- Ylm(lindx(2),mindx(2,0))=ch*(3.*costh**2.-1)
- dYlm(1,lindx(2),mindx(2,0))=-6.*ch*costh*sinth
- dYlm(2,lindx(2),mindx(2,0))=(0.,0.)
+ Ylm(   lindx(2),mindx(2,0))= ch*(3._SP*costh**2._SP-1._SP)
+ dYlm(1,lindx(2),mindx(2,0))=-ch*costh*sinth*6._SP
+ dYlm(2,lindx(2),mindx(2,0))= cZERO
  ch=sqrt(15./(8.*pi))
- Ylm(lindx(2),mindx(2,1))=-ch*sinth*costh*eiphi
+ Ylm(   lindx(2),mindx(2,1))=-ch*sinth*costh          *eiphi
  dYlm(1,lindx(2),mindx(2,1))=-ch*(costh**2.-sinth**2.)*eiphi
- dYlm(2,lindx(2),mindx(2,1))=-(0.,1.)*ch*sinth*costh*eiphi
+ dYlm(2,lindx(2),mindx(2,1))=-ch*sinth*costh          *eiphi*cI
  ch=sqrt(15./(32.*pi))
- Ylm(lindx(2),mindx(2,2))=ch*sinth**2.*eiphi**2.
- dYlm(1,lindx(2),mindx(2,2))=ch*2.*costh*sinth*eiphi**2.
- dYlm(2,lindx(2),mindx(2,2))=(0.,2.)*ch*sinth**2.*eiphi**2.
+ Ylm(   lindx(2),mindx(2,2))= ch*      sinth**2._SP*eiphi**2._SP
+ dYlm(1,lindx(2),mindx(2,2))= ch*2._SP*costh*sinth *eiphi**2._SP
+ dYlm(2,lindx(2),mindx(2,2))= ch*2._SP*sinth**2._SP*eiphi**2._SP*cI
  ! M < 0
- Ylm(lindx(2),mindx(2,-2))=conjg(Ylm(lindx(2),mindx(2,2)))
- dYlm(:,lindx(2),mindx(2,-2))=conjg(dYlm(:,lindx(2),mindx(2,2)))
- Ylm(lindx(2),mindx(2,-1))=-conjg(Ylm(lindx(2),mindx(2,1)))
+ Ylm(   lindx(2),mindx(2,-1))=-conjg(Ylm(   lindx(2),mindx(2,1)))
  dYlm(:,lindx(2),mindx(2,-1))=-conjg(dYlm(:,lindx(2),mindx(2,1)))
+ Ylm(   lindx(2),mindx(2,-2))= conjg(Ylm(   lindx(2),mindx(2,2)))
+ dYlm(:,lindx(2),mindx(2,-2))= conjg(dYlm(:,lindx(2),mindx(2,2)))
  if (lang.eq.3) return
  !
  contains

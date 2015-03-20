@@ -41,9 +41,9 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,SC_nbands
- use QP_m,           ONLY:QP_nk,QP_Vnl_xc
+ use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_RIM,REF_V_xc_sc,&
-&                         RIM_ibz_coo,rho_reference,&
+&                         RIM_ibz_coo,rho_reference,RT_Vnl_xc,&
 &                         l_RT_RWA,eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_nk
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
@@ -131,9 +131,8 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
      !
      if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_k_cpu  .or. .not.HEAD_QP_cpu) cycle
      !
-     ! DAVIDE: This is the old procedure, which I've replaced with a new one
-     ! Ho     = T+V_ion
-     ! H_bare = VHxc[\rho_eq] 
+     ! DAVIDE:
+     ! Ho+Sigma[eq]= E^{QP} 
      !
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        ik_RIM=ik_RT-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
@@ -147,8 +146,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
  endif
  !
- !
- ! The MB self-energy (compute QP_Vnl_xc)
+ ! The MB self-energy (compute RT_Vnl_xc)
  !========================================
  if (l_sc_hf.or.l_sc_cohsex) call COLLISIONS_compose(dG_in,dG_in)
  !
@@ -160,10 +158,6 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    H_nl_sc=cZERO
    !
-   ! Non-local XC potentials (like COHSEX)
-   !=======================================
-   if (l_sc_hf.or.l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
-   !
    ! Hartree and local XC potentials 
    !=================================
    if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
@@ -172,15 +166,19 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
      if(eval_DFT)     call V_real_space_to_H(ik,V_xc_sc     ,H_nl_sc,WF,'xc ')
    endif
    !
-   ! With all the previous calls we filled H_nl_sc,
-   ! now we sum up the result in Ho_plus_sigma
-   !
    do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-   if (l_RT_RWA) then
-     Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1)=&
-&      H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
-   else
+     if (l_RT_RWA) then
+       Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1)=&
+&        H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
+     else
        call V_by_V_plus_V_omp(SC_nbands,cONE,H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1),&
+&                         Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1))
+     endif
+     !
+     ! Non-local XC potentials (like COHSEX)
+     !=======================================
+     if(l_sc_hf.or.l_sc_cohsex) then
+       call V_by_V_plus_V_omp(SC_nbands,cONE,RT_Vnl_xc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT),&
 &                         Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1))
      endif
    enddo
@@ -212,7 +210,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! All2All
  !=========
- call PP_redux_wait(Ho_plus_Sigma(:,:,:,1))
+ call PP_redux_wait(Ho_plus_Sigma)
  !
 #if defined _TIMING
  call timing('RT Collision',OPR='stop')

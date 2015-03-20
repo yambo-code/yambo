@@ -34,12 +34,12 @@ subroutine RT_BGR(G,E,k)
 #endif
  use electrons,      ONLY:levels,n_sp_pol,E_duplicate,E_reset
  use parallel_m,     ONLY:master_cpu
- use QP_m,           ONLY:QP_Vnl_xc,QP_table,QP_n_states
+ use QP_m,           ONLY:QP_table,QP_n_states
  use wave_func,      ONLY:WF
  use real_time,      ONLY:G_lesser_reference,l_initial_equilibrium,REF_V_xc_sc,BGR,&
 &                         REF_V_hartree_sc,REF_QP_Vnl_xc,BGR_Hartree,BGR_V_xc,BGR_Self_Energy,&
 &                         l_RT_uses_E_RIM,RIM_ibz_coo,E_reference,RT_nk,RT_ibz_coo,&
-&                         eval_HARTREE,eval_DFT,RT_ibz_coo,RT_all2ibz,l_BGR
+&                         eval_HARTREE,eval_DFT,RT_ibz_coo,RT_all2ibz,l_BGR,RT_Vnl_xc
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait
@@ -56,7 +56,7 @@ subroutine RT_BGR(G,E,k)
  complex(SP)  :: G_hf(SC_bands(2),SC_bands(2),nkibz),G_cohsex(SC_bands(2),SC_bands(2),nkibz),&
 &                H(SC_bands(2),SC_bands(2),n_sp_pol)
  real(SP)     :: deltaE
- integer      :: ib,ik,ik_ref,i_qp,ibp,I_dir(2),ik_ibz,ik_RIM
+ integer      :: ib,ik,ik_ref,ik_RT,i_qp,ibp,I_dir(2),ik_ibz,ik_RIM
  !
 #if defined _TIMING
  call timing('RT BGR',OPR='start')
@@ -158,7 +158,17 @@ subroutine RT_BGR(G,E,k)
    !
    if (l_initial_equilibrium) then
      !
-     REF_QP_Vnl_xc=QP_Vnl_xc
+     do i_qp=1,QP_n_states
+       !
+       ib =QP_table(i_qp,1)
+       ibp=QP_table(i_qp,2)
+       ik =QP_table(i_qp,3)
+       !
+       ik_RT=RT_ibz_coo(ik,1)
+       !
+       REF_QP_Vnl_xc(i_qp)=RT_Vnl_xc(ib,ibp,ik_RT)
+       !
+     enddo
      !
    else
      !
@@ -168,9 +178,11 @@ subroutine RT_BGR(G,E,k)
        ibp=QP_table(i_qp,2)
        ik =QP_table(i_qp,3)
        !
+       ik_RT=RT_ibz_coo(ik,1)
+       !
        if (ib/=ibp) cycle
        !
-       BGR_Self_Energy(ib,ik,1)=real(QP_Vnl_xc(i_qp)-REF_QP_Vnl_xc(i_qp))
+       BGR_Self_Energy(ib,ik,1)=real(RT_Vnl_xc(ib,ib,ik_RT)-REF_QP_Vnl_xc(i_qp))
        !
      enddo
      !

@@ -71,18 +71,19 @@ module collision
    integer               :: kind=0
    integer               :: D(3,2)=0 ! Dimension (v3)
    integer               :: N        ! Linear Dimension
-   integer(LP), pointer  :: table(:,:,:)  => null()
-   complex(SP), pointer  :: v(:)          => null()
-   complex(SP), pointer  :: v3c(:,:,:)    => null()
-   real(SP)   , pointer  :: v3r(:,:,:)    => null()
+   integer(LP), pointer  :: table(:,:,:)    => null()
+   complex(SP), pointer  :: v_SEX(:)        => null()  ! SEX or HF collisions
+   complex(SP), pointer  :: v3_SEX(:,:,:)   => null()
+   real(SP)   , pointer  :: v_GW(:)         => null()  ! GW NEQ collisions
+   real(SP)   , pointer  :: v3_GW(:,:,:)    => null()
  end type
  !
  integer :: nGW_NEQ_collisions=0
  type(COLLISIONS_element), allocatable :: GW_NEQ_collisions(:)
- integer :: nHF_collisions=0
- type(COLLISIONS_element), allocatable :: HF_collisions(:)
- integer :: nCOHSEX_collisions=0
- type(COLLISIONS_element), allocatable :: COHSEX_collisions(:)
+ integer :: nFock_collisions=0
+ type(COLLISIONS_element), allocatable :: Fock_collisions(:)
+ integer :: nSEX_collisions=0
+ type(COLLISIONS_element), allocatable :: SEX_collisions(:)
  integer :: nGW_QED_collisions=0
  type(COLLISIONS_element), allocatable :: GW_QED_collisions(:)
  !

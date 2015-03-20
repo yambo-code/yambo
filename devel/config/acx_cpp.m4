@@ -96,7 +96,7 @@ AC_MSG_RESULT([$acx_C_ok])
 #
 acx_F90_ok=yes
 AC_MSG_CHECKING([if precompiler works on F90 source])
-cat << EOF_ > conftest.F
+cat > conftest.F << EOF_
  program conftest
  character (1) :: a
  a="a"
@@ -108,7 +108,7 @@ EOF_
 
 if ! test -s conftest.er1 || test -n "`grep successful conftest.er1`"  ; then 
  eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX} 
- eval $FC $FCFLAGS -c conftest.${F90SUFFIX} 2> conftest.er2
+ eval $FC $FCFLAGS -c conftest.${F90SUFFIX} 2> conftest.er2 >&5
  if test -s conftest.er2 ; then 
   if ! test -n "`grep successful conftest.er2`"  ; then 
    acx_F90_ok=no ; 

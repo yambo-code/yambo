@@ -209,18 +209,18 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
    if(V_kind==SE_GW_NEQ) then
      ! Real collisions
      call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL%N/))
-     call io_bulk(ID,R1=COLL%v_GW)
+     call io_bulk(ID,R1=COLL%v_r)
    else
      ! Complex collisions
      allocate(COLLISIONS_v_disk(COLL%N,2))
      call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL%N,2/))
      if(write_is_on(ID)) then
-       COLLISIONS_v_disk(:,1) =real(COLL%v_SEX(1:COLL%N))
-       COLLISIONS_v_disk(:,2)=aimag(COLL%v_SEX(1:COLL%N))
+       COLLISIONS_v_disk(:,1) =real(COLL%v_c(1:COLL%N))
+       COLLISIONS_v_disk(:,2)=aimag(COLL%v_c(1:COLL%N))
        call io_bulk(ID,R2=COLLISIONS_v_disk)
      else
        call io_bulk(ID,R2=COLLISIONS_v_disk)
-       COLL%v_SEX(1:COLL%N)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
+       COLL%v_c(1:COLL%N)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
      endif
      deallocate(COLLISIONS_v_disk)
    endif

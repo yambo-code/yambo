@@ -45,7 +45,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  ! Work Space
  !
  integer :: D(3,2),I_range(2),J,mem_size(4),size_
- logical :: l_HF,l_SEX,l_GW_NEQ,l_v3,l_v1,l_table,l_all,l_alloc,&
+ logical :: l_Fock,l_SEX,l_GW_NEQ,l_v3,l_v1,l_table,l_all,l_alloc,&
 &           l_clean,l_collision,l_distribute,l_GW_QED
  !
  if (I==0) I_range=(/1,PAR_nQP/)
@@ -55,7 +55,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
  ! What
  !
- l_HF     =index(what,"HF")>0
+ l_Fock   =index(what,"Fock")>0
  l_SEX    =index(what,"SEX")>0
  l_GW_NEQ =index(what,"GW_NEQ")>0
  l_GW_QED =index(what,"GW_QED")>0
@@ -98,7 +98,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
 #endif
  !
- if (l_HF) then
+ if (l_Fock) then
    D(1,:)=SC_bands
    D(2,:)=SC_bands
    D(3,:)=(/1,nkibz/)
@@ -170,36 +170,36 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      do J=I_range(1),I_range(2)
        if (l_alloc.and.(l_v3.or.l_all)) then
          if(l_GW_NEQ) then
-           allocate(COLL(J)%v3_GW(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
-           COLL(J)%v3_GW=rZERO
-           mem_size(1)=mem_size(1)+size(COLL(J)%v3_GW)
+           allocate(COLL(J)%v3_r(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
+           COLL(J)%v3_r=rZERO
+           mem_size(1)=mem_size(1)+size(COLL(J)%v3_r)
          endif
-         if(l_SEX.or.l_HF) then
-           allocate(COLL(J)%v3_SEX(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
-           COLL(J)%v3_SEX=cZERO
-           mem_size(2)=mem_size(2)+size(COLL(J)%v3_SEX)
+         if(l_SEX.or.l_Fock) then
+           allocate(COLL(J)%v3_c(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
+           COLL(J)%v3_c=cZERO
+           mem_size(2)=mem_size(2)+size(COLL(J)%v3_c)
          endif
          COLL(J)%D=D
        endif
        if (l_clean.and.(l_v3.or.l_all)) then
-         if (l_GW_NEQ     .and.associated(COLL(J)%v3_GW))  deallocate(COLL(J)%v3_GW)
-         if (l_SEX.or.l_HF.and.associated(COLL(J)%v3_SEX)) deallocate(COLL(J)%v3_SEX)
+         if (l_GW_NEQ     .and.associated(COLL(J)%v3_r))  deallocate(COLL(J)%v3_r)
+         if (l_SEX.or.l_Fock.and.associated(COLL(J)%v3_c)) deallocate(COLL(J)%v3_c)
        endif
        if (l_alloc.and.(l_v1.or.l_all)) then
          if(l_GW_NEQ) then
-           allocate(COLL(J)%v_GW(COLL(J)%N))
-           COLL(J)%v_GW=rZERO
-           mem_size(3)=mem_size(3)+size(COLL(J)%v_GW)
+           allocate(COLL(J)%v_r(COLL(J)%N))
+           COLL(J)%v_r=rZERO
+           mem_size(3)=mem_size(3)+size(COLL(J)%v_r)
          endif
-         if(l_SEX.or.l_HF) then
-           allocate(COLL(J)%v_SEX(COLL(J)%N))
-           COLL(J)%v_SEX=cZERO
-           mem_size(3)=mem_size(3)+size(COLL(J)%v_SEX)
+         if(l_SEX.or.l_Fock) then
+           allocate(COLL(J)%v_c(COLL(J)%N))
+           COLL(J)%v_c=cZERO
+           mem_size(3)=mem_size(3)+size(COLL(J)%v_c)
          endif
        endif
        if (l_clean.and.(l_v1.or.l_all)) then
-         if (associated(COLL(J)%v_SEX)) deallocate(COLL(J)%v_SEX)
-         if (associated(COLL(J)%v_GW )) deallocate(COLL(J)%v_GW )
+         if (associated(COLL(J)%v_c)) deallocate(COLL(J)%v_c)
+         if (associated(COLL(J)%v_r )) deallocate(COLL(J)%v_r )
        endif
        if (l_alloc.and.(l_table.or.l_all)) then
          allocate(COLL(J)%table(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
@@ -215,7 +215,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      if (l_alloc) then
        if(l_v3.or.l_all) then
          if(l_GW_NEQ     ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r",  (/mem_size(1)/))
-         if(l_SEX.or.l_HF) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c",  (/mem_size(2)/))
+         if(l_SEX.or.l_Fock) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c",  (/mem_size(2)/))
        endif
        if (l_v1.or.l_all)     call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v1",   (/mem_size(3)/))
        if (l_table.or.l_all)  call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_table",(/mem_size(4)/),(/LP/))
@@ -224,7 +224,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      if (l_clean) then
        if(l_v3.or.l_all) then
          if(l_GW_NEQ     ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r")
-         if(l_SEX.or.l_HF) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c")
+         if(l_SEX.or.l_Fock) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c")
        endif
        if(l_v1.or.l_all)      call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v1")
        if(l_table.or.l_all)   call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_table")

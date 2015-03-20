@@ -126,7 +126,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        call COLLISIONS_alloc_and_free("SEX","v1 table","alloc",i_qp_mem)
      endif
      if (V_kind==SE_GW_NEQ) then
-       if(.not.associated(GW_NEQ_collisions(1)%v_GW)) then
+       if(.not.associated(GW_NEQ_collisions(1)%v_r)) then
          io_err(iv)=io_COLLISIONS(i_qp,ID,GW_NEQ_collisions(1))
          call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","alloc",1)
        endif
@@ -150,7 +150,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
            ic=ic+1
            if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
            i_J_mem  =PAR_Plasma_index(i_J)
-           GW_NEQ_collisions(i_qp_mem)%v3_GW(i_J_mem,1,i_q_mem)=GW_NEQ_collisions(1)%v_GW(ic)
+           GW_NEQ_collisions(i_qp_mem)%v3_r(i_J_mem,1,i_q_mem)=GW_NEQ_collisions(1)%v_r(ic)
          enddo
        enddo
      endif

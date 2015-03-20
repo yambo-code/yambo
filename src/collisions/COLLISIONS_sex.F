@@ -146,7 +146,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
    i_k     = QP_table(i_qp,3)
    i_sp    = spin(QP_table(i_qp,:))
    !
-   SEX_collisions(1)%v3_SEX=cZERO
+   SEX_collisions(1)%v3_c=cZERO
    !
    do iqbz=1,q%nbz
      !
@@ -245,7 +245,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
          enddo
 !$omp end parallel do
          !
-         SEX_collisions(1)%v3_SEX(i_np,i_mp,i_kmq)=SEX_collisions(1)%v3_SEX(i_np,i_mp,i_kmq)-4._SP/spin_occ*pi*pre_factor
+         SEX_collisions(1)%v3_c(i_np,i_mp,i_kmq)=SEX_collisions(1)%v3_c(i_np,i_mp,i_kmq)-4._SP/spin_occ*pi*pre_factor
          !
          call live_timing(steps=1)
          !
@@ -256,10 +256,10 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
    enddo ! loop on iqbz
    !
    if (COLLISIONS_parallel_SC_structure) then
-     call PP_redux_wait(SEX_collisions(1)%v3_SEX,COMM=PAR_COM_QP_A2A%COMM)
-     call PP_redux_wait(SEX_collisions(1)%v3_SEX,COMM=PAR_COM_Q_index%COMM)
+     call PP_redux_wait(SEX_collisions(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
+     call PP_redux_wait(SEX_collisions(1)%v3_c,COMM=PAR_COM_Q_index%COMM)
    else
-     call PP_redux_wait(SEX_collisions(1)%v3_SEX,COMM=PAR_COM_G_b_A2A%COMM)
+     call PP_redux_wait(SEX_collisions(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
    endif
    !
    call COLLISIONS_linearize_and_IO("SEX",i_qp,SEX_collisions,nSEX_collisions)

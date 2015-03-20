@@ -241,6 +241,7 @@ module real_time
  ! COLLISIONS
  !------------
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
+ complex(SP), allocatable :: RT_Vnl_xc(:,:,:)
  complex(SP), allocatable :: I_coh_SAVE(:,:,:,:)
  complex(SP), allocatable :: I_relax_static(:,:,:)
  complex(SP), allocatable :: I_relax_dyn(:,:,:,:)
@@ -435,11 +436,11 @@ module real_time
      !
      call SC_alloc(en)
      !
-     if (l_HF_and_locXC.or.l_sc_hf.or.l_sc_cohsex) then
-       allocate(QP_Vnl_xc(QP_n_states))
-       call mem_est("QP_Vnl_xc",(/QP_n_states/))
-       QP_Vnl_xc=cZERO
-     endif
+     !if (l_HF_and_locXC.or.l_sc_hf.or.l_sc_cohsex) then
+     !  allocate(QP_Vnl_xc(QP_n_states))
+     !  call mem_est("QP_Vnl_xc",(/QP_n_states/))
+     !  QP_Vnl_xc=cZERO
+     !endif
      !
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))
@@ -508,6 +509,12 @@ module real_time
      !
      allocate(Ho_plus_Sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,n_sp_pol))
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
+     !
+     if(l_sc_hf.or.l_sc_cohsex) then
+       allocate(RT_Vnl_xc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
+       call mem_est("RT_Vnl_xc",(/size(RT_Vnl_xc)/),(/2*SP/))
+       RT_Vnl_xc=(0._SP,0._SP)
+     endif
      !
      if (l_RT_INTERPOLATE) then
        allocate(I_coh_SAVE(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,I_MEM_steps))
@@ -587,6 +594,11 @@ module real_time
      if(allocated(E_xc)) then
        deallocate(E_xc)
        call mem_est('Exc')
+     endif
+     !
+     if(allocated(RT_Vnl_xc)) then
+       deallocate(RT_Vnl_xc)
+       call mem_est("RT_Vnl_xc")
      endif
      !
      if(allocated(Ho_plus_sigma)) then

@@ -191,7 +191,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! EXTENDED COLLISIONS (HF & COHSEX)
  !===================================
 #if defined _SC
- if (l_eval_collisions) call COLLISIONS_eval(en,X,k,xk,q,Xw(:2))
+ if (l_eval_collisions) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2))
 #endif
  !
  ! SELF-ENERGIES

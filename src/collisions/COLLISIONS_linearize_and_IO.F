@@ -39,11 +39,11 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  ! Work Space
  !
  integer   :: ic,i1,i2,i3,i_cycle,io_err,ID,i_ref
- logical   :: store_it,l_COHSEX,l_GW_NEQ,l_HF
+ logical   :: store_it,l_SEX,l_GW_NEQ,l_HF
  real(SP)  :: COLLISIONS_max
  !
- l_HF     =index(what,"HF")>0
- l_COHSEX =index(what,"COHSEX")>0
+ l_HF     =index(what,"Fock")>0
+ l_SEX    =index(what,"SEX")>0
  l_GW_NEQ =index(what,"GW_NEQ")>0
  !
  i_ref=1
@@ -52,8 +52,8 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  ! Reference value for the reduction of the tiny elements of COHSEX/HF collision
  ! integrals.
  !
- if(l_COHSEX.or.l_HF) COLLISIONS_max=maxval(abs(COLL(1)%v3c(:,:,:)))        
- if(l_GW_NEQ        ) COLLISIONS_max=maxval(abs(COLL(1)%v3r(:,:,:)))        
+ if(l_SEX.or.l_HF) COLLISIONS_max=maxval(abs(COLL(1)%v3_SEX(:,:,:)))        
+ if(l_GW_NEQ     ) COLLISIONS_max=maxval(abs(COLL(1)%v3_GW(:,:,:)))     
  !
  COLL(i_ref)%table(:,:,:)=0
  !
@@ -61,24 +61,23 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
    !
    ic=0
    !
-   do i1=COLL(i_ref)%D(1,1),COLL(i_ref)%D(1,2)
+   do i3=COLL(i_ref)%D(3,1),COLL(i_ref)%D(3,2)
      do i2=COLL(i_ref)%D(2,1),COLL(i_ref)%D(2,2)
-       do i3=COLL(i_ref)%D(3,1),COLL(i_ref)%D(3,2)
+       do i1=COLL(i_ref)%D(1,1),COLL(i_ref)%D(1,2)
          !
          ! In the COHSEX/HF case a cutoff can be applied
          !
-         if (l_COHSEX.or.l_HF) store_it=abs(COLL(1)%v3c(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.&
-&                                       COLLISIONS_cutoff<0.0
+         if (l_SEX.or.l_HF) store_it=abs(COLL(1)%v3_SEX(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0
          !
-         if (l_GW_NEQ) store_it=.TRUE.
+         if (l_GW_NEQ)      store_it=.TRUE.
          !
          if (store_it) then
            ic=ic+1
            if (i_cycle==2) then
              !
              COLL(i_ref)%table(i1,i2,i3)=1
-             if (l_COHSEX.or.l_HF) COLL(i_ref)%v(ic)=COLL(1)%v3c(i1,i2,i3) 
-             if (l_GW_NEQ)         COLL(i_ref)%v(ic)=cmplx(COLL(1)%v3r(i1,i2,i3),0._SP)
+             if (l_SEX.or.l_HF) COLL(i_ref)%v_SEX(ic)  =COLL(1)%v3_SEX(i1,i2,i3)
+             if (l_GW_NEQ)      COLL(i_ref)%v_GW(ic)   =COLL(1)%v3_GW(i1,i2,i3)
              !
            endif
          endif

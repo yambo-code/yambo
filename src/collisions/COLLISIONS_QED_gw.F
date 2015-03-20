@@ -35,7 +35,7 @@ subroutine COLLISIONS_QED_gw(E,k,q)
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
-&                        HF_collisions,nHF_collisions,COLLISIONS_IO_status
+&                        Fock_collisions,nFock_collisions,COLLISIONS_IO_status
  use QP_m,          ONLY:QP_ng_Sx,QP_table,QP_n_states,QP_QED_ng
  use R_lattice,     ONLY:qindx_S,bz_samp
  use SC,            ONLY:SC_bands,B_mat_index

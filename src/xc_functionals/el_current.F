@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine el_density(en,Xk,rho,force_si)
+subroutine el_current(E,k,J)
  !
  !Electronic density.
  !
@@ -32,9 +32,9 @@ subroutine el_density(en,Xk,rho,force_si)
  !where S_k is a symm. op. in the star of k, S is a generic symm. op.
  !and R_k is the rank of the small group at k.
  !
- !Using (1) the density is calculated in two steps
+ !Using (1) the current is calculated in two steps
  !
- ! rho(r) = 1/nkibz \sum_{ n k S_k } f_{n k} |wf_{n k}(S_k^-1 r)|^2=
+ ! J(r,:) = 1/nkibz \sum_{ n k S_k } f_{n k} |wf_{n k}(S_k^-1 r)|^2=
  !        = 1/nkibz \sum_{S} \sum_{n k} f_{n k}/R_k |wf_{n k}(S^-1 r)|^2 =
  !        = 1/nsym \sum_{S} ( \sum_{n k} f_{n k} w_k |wf_{n k}(S^-1 r)|^2 )
  !
@@ -53,10 +53,9 @@ subroutine el_density(en,Xk,rho,force_si)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
  !
  implicit none
- type(bz_samp)::Xk
- type(levels) ::en       
- real(SP)     ::rho(fft_size)
- logical,     intent(in) :: force_si
+ type(bz_samp)::k
+ type(levels) ::E
+ real(SP)     ::J(fft_size,3)
  !
  ! Work Space 
  !
@@ -64,54 +63,55 @@ subroutine el_density(en,Xk,rho,force_si)
  real(SP):: rho_no_sym(fft_size),f_occ
  logical :: warn_done
  !
- rho=0._SP
- rho_no_sym=0._SP
- warn_done=.false.
- i_spin_E=1
- !
- bands_loop: do ib=1,en%nbm
-   !
-   do ik=1,Xk%nibz
-     !
-     if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-     !
-     do i_spin_wf=1,n_spin
-       !
-       if (size(WF%index,3)<i_spin_wf) cycle
-       if (size(WF%index,1)<ib) cycle
-       if (size(WF%index,2)<ik) cycle
-       !
-       ifft=WF%index(ib,ik,i_spin_wf)
-       if (n_sp_pol==2) i_spin_E=i_spin_wf
-       !
-       if (ifft==0) then
-         if (.not.warn_done) call warning('Not enough states to calculate rho')
-         warn_done=.true.
-         cycle
-       endif
-       !
-       if (.not.associated(en%fo)) f_occ=en%f(ib,ik,i_spin_E)
-       if (     associated(en%fo)) f_occ=en%fo(ib,ik,i_spin_E)
-       rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(ik)*abs(WF%c(:,ifft))**2.
-       !
-     enddo
-   enddo
- enddo bands_loop
- !
- call PP_redux_wait(rho_no_sym,COMM=PAR_COM_density%COMM)
- !
- ! Simmetrization
- !
- rho_syms=nsym/(i_time_rev+1)
- !
- if (mag_syms) rho_syms=nsym 
- !
- do ir=1,rho_syms
-   rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(ir,:)),SP)/real(nsym,SP)
- enddo
- !
- if (mag_syms)      return
- if (.not.force_si) rho(:)=(1+i_time_rev)*rho(:)
- if (     force_si) rho(:)=   i_time_rev *real(rho(fft_rot_r_inv(:)),SP)+rho(:)
- ! 
+ stop
+! J=0._SP
+! rho_no_sym=0._SP
+! warn_done=.false.
+! i_spin_E=1
+! !
+! bands_loop: do ib=1,en%nbm
+!   !
+!   do ik=1,Xk%nibz
+!     !
+!     if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+!     !
+!     do i_spin_wf=1,n_spin
+!       !
+!       if (size(WF%index,3)<i_spin_wf) cycle
+!       if (size(WF%index,1)<ib) cycle
+!       if (size(WF%index,2)<ik) cycle
+!       !
+!       ifft=WF%index(ib,ik,i_spin_wf)
+!       if (n_sp_pol==2) i_spin_E=i_spin_wf
+!       !
+!       if (ifft==0) then
+!         if (.not.warn_done) call warning('Not enough states to calculate rho')
+!         warn_done=.true.
+!         cycle
+!       endif
+!       !
+!       if (.not.associated(en%fo)) f_occ=en%f(ib,ik,i_spin_E)
+!       if (     associated(en%fo)) f_occ=en%fo(ib,ik,i_spin_E)
+!       rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(ik)*abs(WF%c(:,ifft))**2.
+!       !
+!     enddo
+!   enddo
+! enddo bands_loop
+! !
+! call PP_redux_wait(rho_no_sym,COMM=PAR_COM_density%COMM)
+! !
+! ! Simmetrization
+! !
+! rho_syms=nsym/(i_time_rev+1)
+! !
+! if (mag_syms) rho_syms=nsym 
+! !
+! do ir=1,rho_syms
+!   rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(ir,:)),SP)/real(nsym,SP)
+! enddo
+! !
+! if (mag_syms)      return
+! if (.not.force_si) rho(:)=(1+i_time_rev)*rho(:)
+! if (     force_si) rho(:)=   i_time_rev *real(rho(fft_rot_r_inv(:)),SP)+rho(:)
+! ! 
 end subroutine

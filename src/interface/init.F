@@ -1551,9 +1551,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
 #endif
          !
-#if defined  _ELPH  
+#if defined  _ELPH || defined _QED
          !
-         ! ELPH 
+         ! ELPH/QED
          !
          if ( trim(rstr_piece(i1)) == 'corrtp' ) then
            if ( trim(rstr_piece(i1+1)) == 'e') l_elel_corr=.true.

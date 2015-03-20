@@ -35,7 +35,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_RT_dos,l_RT_occ_Bands,l_RT_life_Bands,&
-&                         l_bands
+&                         l_bands,l_current
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -67,7 +67,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  ! Work Space
  !
- real(SP), allocatable :: el_den(:)
+ real(SP), allocatable :: el_den(:),el_cur(:,:)
  integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_wfp,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
  logical               :: flag
  character(lchlen)     :: ch_ws(2)
@@ -94,7 +94,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
 #endif
  !
- flag=any((/l_mag,l_density,l_sp_wf,l_dos,l_bands/))
+ flag=any((/l_mag,l_density,l_sp_wf,l_dos,l_bands,l_current/))
  !===
 #if defined _YPP_MAGNETIC
  if (.not.flag) flag=any((/l_angular_momentum,l_position/))
@@ -282,6 +282,9 @@ subroutine electrons_driver(Xk,Xen,Xq)
  endif
  !
 #endif
+ !
+ ! WAVEFUNCTIONS (and Mean Potential)
+ !====================================
  !
  ik_ref=-1
  ch_ws(2)='sp_wf'
@@ -491,19 +494,51 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
 #endif
  !
+ ! CURRENT
+ !=========
+ !
+ if (l_current) then
+   !
+   call section('*','Current Plot')
+   !
+   allocate(el_cur(fft_size,3))
+   !
+   call el_current(Xen,Xk,el_cur)
+   v2plot=(el_cur(:,1)+el_cur(:,2)+el_cur(:,3))/3.
+   !
+   ch_ws(1)='current_'//trim(intc(plot_dim))
+   if (use_cube) output_fname=trim(ch_ws(1))//'d.cube'
+   if (use_xcrysden) output_fname=trim(ch_ws(1))//'d.xsf'
+   if (use_gnuplot)  output_fname=trim(ch_ws(1))//'d'
+   !
+   if (use_cube) then 
+     call of_open_close(trim(output_fname),'o')
+   else
+     call of_open_close(trim(output_fname),'ot')
+     call msg('o den',"#")
+   endif
+   !
+   plot_title='density'
+   call plot_check_and_launch(.false.)
+   !
+   call of_open_close(trim(output_fname))
+   !
+ endif
+ !
  ! GPL_EXCLUDE_END
  !
 1 continue
  call WF_free(WF)
- if (allocated(v2plot))   deallocate(v2plot)
- if (allocated(QP_table)) deallocate(QP_table,QP_state)
- if (allocated(magn))     deallocate(magn)
- if (allocated(el_den))   deallocate(el_den)
+ if (allocated(v2plot))     deallocate(v2plot)
+ if (allocated(QP_table))   deallocate(QP_table,QP_state)
+ if (allocated(magn))       deallocate(magn)
+ if (allocated(el_den))     deallocate(el_den)
+ if (allocated(el_cur))     deallocate(el_cur)
 #if defined _YPP_SC 
- if (allocated(V_mean))   deallocate(V_mean)
+ if (allocated(V_mean))     deallocate(V_mean)
 #endif
 #if defined _YPP_ELPH 
- if (allocated(v2plot_c)) deallocate(v2plot_c)
+ if (allocated(v2plot_c))   deallocate(v2plot_c)
 #endif
  plot_title=' '
  !

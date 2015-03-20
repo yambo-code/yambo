@@ -57,13 +57,13 @@
   {"MeanPot",  "v","Mean Potential",0,0,0,0,0}, 
 #endif
 #if defined _YPP_ELPH  
-  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(e)lias]",0,0,1,0,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,(e)lias]",0,0,1,0,0}, 
 #endif
 #if defined _YPP_MAGNETIC 
-  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands,angu(l)ar,(p)osition]",0,0,1,0,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,angu(l)ar,(p)osition]",0,0,1,0,0}, 
 #endif
 #if ! defined  _YPP_ELPH && ! defined _YPP_MAGNETIC 
-  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands]",0,0,1,0,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent]",0,0,1,0,0}, 
 #endif
 #if defined _YPP_ELPH  && ! defined _YPP_RT
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave,(e)lias,(g)kkp]",0,0,1,0,0}, 

@@ -25,18 +25,16 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
  use pars,           ONLY:LP,cZERO,rZERO
  use memory_m,       ONLY:mem_est
-#if defined _RT
  use SC,             ONLY:SC_bands
  use plasma,         ONLY:N_plasma_poles_global
-#endif
  use R_lattice,      ONLY:nqbz,nkibz
  use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ,PAR_nQP
  use global_XC,      ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ,SE_GW_EL_PHOTON
  use collision,      ONLY:COLLISIONS_element,HF_collisions,COHSEX_collisions,GW_NEQ_collisions,&
 &                         nHF_collisions,nCOHSEX_collisions,nGW_NEQ_collisions
 #if defined _QED
- use collision,      ONLY:GW_QED_collisions,nGW_QED_collisions,COLLISIONS_parallel_SE_structure
- use QP_m,           ONLY:QP_QED_ng,QP_n_G_bands
+ use collision,      ONLY:GW_QED_collisions,nGW_QED_collisions
+ use QP_m,           ONLY:QP_QED_ng
  use parallel_m,     ONLY:PAR_nRL,PAR_nG_bands
 #endif
  !
@@ -80,25 +78,14 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
 #if defined _QED
  !
  if (l_GW_QED) then
-   if (COLLISIONS_parallel_SE_structure) then
-     if (l_distribute) then
-       D(1,:)=(/1,PAR_nQ/)
-       D(2,:)=(/1,PAR_nG_bands/)
-     else
-       D(1,:)=(/1,nqbz/)
-       D(2,:)=(/1,QP_n_G_bands(2)/)
-     endif
-     D(3,:)=(/1,3*QP_QED_ng/)
-   else  
-     if (l_distribute) then
-       D(1,:)=(/1,PAR_nQ/)
-       D(2,:)=(/1,PAR_nRL/)
-     else
-       D(1,:)=(/1,nqbz/)
-       D(2,:)=(/1,QP_QED_ng/)
-     endif
-     D(3,:)=(/1,3/)
+    if (l_distribute) then
+     D(1,:)=(/1,PAR_nQ/)
+     D(2,:)=(/1,PAR_nRL/)
+   else
+     D(1,:)=(/1,nqbz/)
+     D(2,:)=(/1,QP_QED_ng/)
    endif
+   D(3,:)=(/1,3/)
    if (l_collision.and.l_alloc) then
      allocate(GW_QED_collisions(size_))
      nGW_QED_collisions=size_
@@ -116,8 +103,6 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  endif
  !
 #endif
- !
-#if !defined _QED
  !
  if (l_HF) then
    D(1,:)=SC_bands
@@ -181,8 +166,6 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      nGW_NEQ_collisions=0
    endif
  endif
- !
-#endif
  !
  contains
    !

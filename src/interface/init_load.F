@@ -125,8 +125,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
 #if defined _SC 
  call it('r',defs,'scpot',      '[R] Self-Consistent potentials') 
-#endif
-#if defined _SC  || defined _QED
  call it('r',defs,'collisions', '[R] Eval the extended Collisions')
 #endif
 #if defined _RT

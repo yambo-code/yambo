@@ -36,9 +36,7 @@ subroutine COLLISIONS_QED_gw(E,k,q)
 &                        COLLISIONS_IO_status,GW_QED_collisions
  use QP_m,          ONLY:QP_table,QP_n_states,QP_QED_ng,QP_n_G_bands,QP_nb
  use R_lattice,     ONLY:qindx_S,bz_samp
-#if defined _SC
  use SC,            ONLY:SC_bands
-#endif
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -71,19 +69,11 @@ subroutine COLLISIONS_QED_gw(E,k,q)
  !
  if (WF_buffered_IO) then
    !
-#if defined _SC
    call WF_load(WF_buffer,0,1,SC_bands,(/1,k%nibz/),space='B',title='-BUFFER')
-#else
-   call WF_load(WF_buffer,0,1,(/1,QP_n_G_bands(2)/),(/1,k%nibz/),space='B',title='-BUFFER')
-#endif
    !
  endif
  !
-#if defined _SC
  call WF_load(WF,QP_QED_ng,maxval(qindx_S(:,:,2)),SC_bands,(/1,k%nibz/),space='R',title='-QED Collisions')
-#else
- call WF_load(WF,QP_QED_ng,maxval(qindx_S(:,:,2)),(/1,max(QP_nb,QP_n_G_bands(2))/),(/1,k%nibz/),space='R',title='-QED Collisions')
-#endif
  !
 #if defined _TIMING
  call timing('QED GW Collisions',OPR='start')
@@ -120,7 +110,6 @@ subroutine COLLISIONS_QED_gw(E,k,q)
      !
      p_cc=k%ptbz(qindx_S(QP_table(i_qp,3),i_q_bz,1),:)
      !
-#if defined _RT
      !
      ! n',k-q   n,k
      ! --<--.-<--
@@ -159,55 +148,6 @@ subroutine COLLISIONS_QED_gw(E,k,q)
        enddo
        !
      enddo
-     !
-#else
-     B_loop: do i_m=QP_n_G_bands(1),QP_n_G_bands(2)
-       !
-       if (.not.PAR_IND_G_b%element_1D(i_m)) cycle B_loop
-       !
-       i_m_mem=PAR_G_bands_index(i_m)
-       !
-       ! m,k-q   n,k
-       ! --<--.-<--
-       !      | 
-       !      |
-       !     \|/ q,G,\alpha
-       !      |
-       !      
-       ! n   =QP_table(i_qp,1)
-       ! k   =QP_table(i_qp,3)
-       !
-       isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
-       isc%os=(/i_m,k%sstar(qindx_S(isc%is(2),i_q_bz,1),:),spin(QP_table(i_qp,:))/)
-       isc%qs=(/qindx_S(QP_table(i_qp,3),i_q_bz,2),q%sstar(i_q_bz,1),q%sstar(i_q_bz,2)/)
-       !
-       isc_grad%is=isc%is
-       isc_grad%os=isc%os
-       isc_grad%qs=isc%qs
-       !
-       call scatterBamp(isc)
-       call scatterBamp_using_the_gradient(isc_grad)
-       !
-       do i_g=1,QP_QED_ng
-         !
-         do i_c=1,3
-           !
-           i_g_mem=QP_QED_ng*(i_c-1)+ig
-           !
-           if (io_COLLs) then
-!             GW_QED_collisions(1)%v3c(i_q_bz,i_m,i_g_mem)=-cI*(p_cc(i_c)*isc%rhotw(i_g)+isc_grad%rhotw(i_g_mem))
-           else
-             !GW_QED_collisions(i_qp_mem)%v3c(i_q_mem,i_m_mem,i_g_mem)=1.
-!-cI*(p_cc(i_c)*isc%rhotw(i_g)+isc_grad%rhotw(i_g_mem))
-           endif
-           !
-         enddo
-         !
-       enddo
-       !
-     enddo B_loop
-     !
-#endif
      !
      call live_timing(steps=1)
      !

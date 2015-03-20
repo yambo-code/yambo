@@ -170,11 +170,9 @@ subroutine QP_state_table_setup(en)
  !
  ! Note (2) : a non zero mixing is allowed only in a SC/RT calculation
  !
-#if defined _SC
  if (l_sc_run.or.l_real_time.or.l_eval_collisions) then
    !
-   SC_bands_mixed=0.
-   SC_bands_mixed=1.
+   SC_bands_mixed=1
    !
 #if !defined _ELPH
    if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0.
@@ -191,9 +189,6 @@ subroutine QP_state_table_setup(en)
  else
    bands_mixed=1
  endif
-#else
- bands_mixed=1
-#endif
  !
  ! GPL_EXCLUDE_END SC_IGNORE
  ! GPL_INCLUDE_START SC_IGNORE

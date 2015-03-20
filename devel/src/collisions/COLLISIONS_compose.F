@@ -99,10 +99,10 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
 #if defined _RT
              if(l_real_time) then
                RT_Vnl_xc(i_n,i_m,i_k_RT)=RT_Vnl_xc(i_n,i_m,i_k_RT) &
-                                              -cI*Fock_collisions(i_qp_mem)%v_SEX(ic1)*G_hf_input(ib,ibp,i_kmq)
+                                              -cI*Fock_collisions(i_qp_mem)%v_c(ic1)*G_hf_input(ib,ibp,i_kmq)
              else
 #endif
-               QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*Fock_collisions(i_qp_mem)%v_SEX(ic1)*G_hf_input(ib,ibp,i_kmq)
+               QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*Fock_collisions(i_qp_mem)%v_c(ic1)*G_hf_input(ib,ibp,i_kmq)
 #if defined _RT
              endif
 #endif
@@ -114,10 +114,10 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
 #if defined _RT
              if(l_real_time) then
                RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2))=RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2)) &
-                                              -cI*SEX_collisions(i_qp_mem)%v_SEX(ic2)*G_xc_input(ib,ibp,i_kmq)
+                                              -cI*SEX_collisions(i_qp_mem)%v_c(ic2)*G_xc_input(ib,ibp,i_kmq)
              else
 #endif
-               QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*SEX_collisions(i_qp_mem)%v_SEX(ic2)*G_xc_input(ib,ibp,i_kmq)
+               QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*SEX_collisions(i_qp_mem)%v_c(ic2)*G_xc_input(ib,ibp,i_kmq)
 #if defined _RT
              endif
 #endif

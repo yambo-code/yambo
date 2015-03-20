@@ -143,7 +143,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
    !
    if (io_COLLs) then
      if (COLLISIONS_IO_status(i_qp1)/=-1) cycle
-     GW_NEQ_collisions(1)%v3_GW=rZERO
+     GW_NEQ_collisions(1)%v3_r=rZERO
    endif
    !
    do iqbz=1,q%nbz 
@@ -279,13 +279,13 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
          !
          if (io_COLLs) then
            !
-           GW_NEQ_collisions(1)%v3_GW(i_J,1,iqbz)=&
-           &  GW_NEQ_collisions(1)%v3_GW(i_J,1,iqbz)+abs(pre_factor)**2._SP
+           GW_NEQ_collisions(1)%v3_r(i_J,1,iqbz)=&
+           &  GW_NEQ_collisions(1)%v3_r(i_J,1,iqbz)+abs(pre_factor)**2._SP
            !
          else
            !
-           GW_NEQ_collisions(i_qp1_mem)%v3_GW(i_J_mem,1,i_q_mem)=&
-           &  GW_NEQ_collisions(i_qp1_mem)%v3_GW(i_J_mem,1,i_q_mem)+abs(pre_factor)**2._SP
+           GW_NEQ_collisions(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)=&
+           &  GW_NEQ_collisions(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)+abs(pre_factor)**2._SP
            !
          endif
          !
@@ -299,10 +299,10 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
    !
    if (io_COLLs) then
      if (COLLISIONS_parallel_SC_structure) then
-       call PP_redux_wait(GW_NEQ_collisions(1)%v3_GW,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(GW_NEQ_collisions(1)%v3_GW,COMM=PAR_COM_Q_index%COMM)
+       call PP_redux_wait(GW_NEQ_collisions(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
+       call PP_redux_wait(GW_NEQ_collisions(1)%v3_r,COMM=PAR_COM_Q_index%COMM)
      else
-       call PP_redux_wait(GW_NEQ_collisions(1)%v3_GW,COMM=PAR_COM_G_b_A2A%COMM)
+       call PP_redux_wait(GW_NEQ_collisions(1)%v3_r,COMM=PAR_COM_G_b_A2A%COMM)
      endif
    endif
    !

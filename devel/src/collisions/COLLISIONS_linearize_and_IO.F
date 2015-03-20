@@ -52,8 +52,8 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
  ! Reference value for the reduction of the tiny elements of COHSEX/HF collision
  ! integrals.
  !
- if(l_SEX.or.l_HF) COLLISIONS_max=maxval(abs(COLL(1)%v3_SEX(:,:,:)))        
- if(l_GW_NEQ     ) COLLISIONS_max=maxval(abs(COLL(1)%v3_GW(:,:,:)))     
+ if(l_SEX.or.l_HF) COLLISIONS_max=maxval(abs(COLL(1)%v3_c(:,:,:)))        
+ if(l_GW_NEQ     ) COLLISIONS_max=maxval(abs(COLL(1)%v3_r(:,:,:)))     
  !
  COLL(i_ref)%table(:,:,:)=0
  !
@@ -67,7 +67,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
          !
          ! In the COHSEX/HF case a cutoff can be applied
          !
-         if (l_SEX.or.l_HF) store_it=abs(COLL(1)%v3_SEX(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0
+         if (l_SEX.or.l_HF) store_it=abs(COLL(1)%v3_c(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0
          !
          if (l_GW_NEQ)      store_it=.TRUE.
          !
@@ -76,8 +76,8 @@ subroutine COLLISIONS_linearize_and_IO(what,i_qp,COLL,N)
            if (i_cycle==2) then
              !
              COLL(i_ref)%table(i1,i2,i3)=1
-             if (l_SEX.or.l_HF) COLL(i_ref)%v_SEX(ic)  =COLL(1)%v3_SEX(i1,i2,i3)
-             if (l_GW_NEQ)      COLL(i_ref)%v_GW(ic)   =COLL(1)%v3_GW(i1,i2,i3)
+             if (l_SEX.or.l_HF) COLL(i_ref)%v_c(ic)  =COLL(1)%v3_c(i1,i2,i3)
+             if (l_GW_NEQ)      COLL(i_ref)%v_r(ic)   =COLL(1)%v3_r(i1,i2,i3)
              !
            endif
          endif

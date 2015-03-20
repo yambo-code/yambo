@@ -40,7 +40,7 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  ! Ygrad(2,i) = \partial(phi)/\partial(k_i) i=1,3
  !
  use pars, ONLY:SP,pi,cI,cZERO
- use com,  ONLY:error
+ use com,  ONLY:warning
  !
  implicit none
  integer     :: lang
@@ -52,7 +52,7 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  real(SP)    :: costh,sinth,cosphi,sinphi,ch,kmod,kxymod
  complex(SP) :: eiphi
  !
- if (lang>3) call error('Ylm with l>3 not coded')
+ if (lang>4) call warning('Ylm with l>3 not coded. Projectors set to zero.')
  !
  Ylm(:,:)   =cZERO
  dYlm(:,:,:)=cZERO
@@ -123,6 +123,31 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  Ylm(   lindx(2),mindx(2,-2))= conjg(Ylm(   lindx(2),mindx(2,2)))
  dYlm(:,lindx(2),mindx(2,-2))= conjg(dYlm(:,lindx(2),mindx(2,2)))
  if (lang.eq.3) return
+ !
+ ch=sqrt(  7./(16.*pi))
+ Ylm(   lindx(3),mindx(3,0))= ch*(5._SP*costh**3._SP-3._SP*costh)
+ dYlm(1,lindx(3),mindx(3,0))=-ch*sinth*(15._SP*costh**2._SP-3._SP)
+ dYlm(2,lindx(3),mindx(3,0))= cZERO
+ ch=sqrt( 21./(64.*pi))
+ Ylm(   lindx(3),mindx(3,1))=-ch*sinth*( 5._SP*costh**2._SP -1._SP      )*eiphi
+ dYlm(1,lindx(3),mindx(3,1))=-ch      *(15._SP*costh**3._SP-11._SP*costh)*eiphi
+ dYlm(2,lindx(3),mindx(3,1))=-ch*sinth*( 5._SP*costh**2._SP -1._SP      )*eiphi*cI
+ ch=sqrt(105./(32.*pi))
+ Ylm(   lindx(3),mindx(3,2))= ch*sinth**2._SP*costh*eiphi**2._SP
+ dYlm(1,lindx(3),mindx(3,2))= ch*(2._SP*sinth*costh**2._SP-sinth**3._SP)*eiphi**2._SP
+ dYlm(2,lindx(3),mindx(3,2))= ch* 2._SP*sinth**2._SP*costh              *eiphi**2._SP*cI
+ ch=sqrt( 35./(64.*pi))
+ Ylm(   lindx(3),mindx(3,3))=-ch*sinth**3._SP            *eiphi**3._SP
+ dYlm(1,lindx(3),mindx(3,3))=-ch*3._SP*sinth**2._SP*costh*eiphi**3._SP
+ dYlm(2,lindx(3),mindx(3,3))=-ch*3._SP*sinth**3._SP      *eiphi**3._SP*cI
+ ! M < 0
+ Ylm(   lindx(3),mindx(3,-1))=-conjg(Ylm(   lindx(3),mindx(3,1)))
+ dYlm(:,lindx(3),mindx(3,-1))=-conjg(dYlm(:,lindx(3),mindx(3,1)))
+ Ylm(   lindx(3),mindx(3,-2))= conjg(Ylm(   lindx(3),mindx(3,2)))
+ dYlm(:,lindx(3),mindx(3,-2))= conjg(dYlm(:,lindx(3),mindx(3,2)))
+ Ylm(   lindx(3),mindx(3,-3))=-conjg(Ylm(   lindx(3),mindx(3,3)))
+ dYlm(:,lindx(3),mindx(3,-3))=-conjg(dYlm(:,lindx(3),mindx(3,3)))
+ if (lang.eq.4) return
  !
  contains
    !

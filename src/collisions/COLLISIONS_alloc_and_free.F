@@ -25,16 +25,19 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
  use pars,           ONLY:LP,cZERO,rZERO
  use memory_m,       ONLY:mem_est
+#if defined _RT
  use SC,             ONLY:SC_bands
  use plasma,         ONLY:N_plasma_poles_global
+#endif
  use R_lattice,      ONLY:nqbz,nkibz
  use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ,PAR_nQP
- use global_XC,      ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
+ use global_XC,      ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ,SE_GW_EL_PHOTON
  use collision,      ONLY:COLLISIONS_element,HF_collisions,COHSEX_collisions,GW_NEQ_collisions,&
 &                         nHF_collisions,nCOHSEX_collisions,nGW_NEQ_collisions
 #if defined _QED
- use QP_m,           ONLY:QP_QED_ng
- use collision,      ONLY:GW_QED_collisions,nGW_QED_collisions
+ use collision,      ONLY:GW_QED_collisions,nGW_QED_collisions,COLLISIONS_parallel_SE_structure
+ use QP_m,           ONLY:QP_QED_ng,QP_n_G_bands
+ use parallel_m,     ONLY:PAR_nRL,PAR_nG_bands
 #endif
  !
  implicit none
@@ -77,18 +80,34 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
 #if defined _QED
  !
  if (l_GW_QED) then
-   D(1,:)=(/1,PAR_nQ/)
-   D(2,:)=(/1,QP_QED_ng/)
-   D(2,:)=(/1,3/)
+   if (COLLISIONS_parallel_SE_structure) then
+     if (l_distribute) then
+       D(1,:)=(/1,PAR_nQ/)
+       D(2,:)=(/1,PAR_nG_bands/)
+     else
+       D(1,:)=(/1,nqbz/)
+       D(2,:)=(/1,QP_n_G_bands(2)/)
+     endif
+     D(3,:)=(/1,3*QP_QED_ng/)
+   else  
+     if (l_distribute) then
+       D(1,:)=(/1,PAR_nQ/)
+       D(2,:)=(/1,PAR_nRL/)
+     else
+       D(1,:)=(/1,nqbz/)
+       D(2,:)=(/1,QP_QED_ng/)
+     endif
+     D(3,:)=(/1,3/)
+   endif
    if (l_collision.and.l_alloc) then
      allocate(GW_QED_collisions(size_))
      nGW_QED_collisions=size_
-     !GW_QED_collisions(:)%kind=SC_HF
+     GW_QED_collisions(:)%kind=SE_GW_EL_PHOTON
      GW_QED_collisions(:)%name="GW_QED"
    endif
    call local_alloc_and_free(GW_QED_collisions,nGW_QED_collisions)
    if (l_collision.and.l_clean) then
-     if (allocated(HF_collisions)) then
+     if (allocated(GW_QED_collisions)) then
        call local_alloc_and_free(GW_QED_collisions,nGW_QED_collisions)
        deallocate(GW_QED_collisions)
      endif
@@ -97,6 +116,8 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  endif
  !
 #endif
+ !
+#if !defined _QED
  !
  if (l_HF) then
    D(1,:)=SC_bands
@@ -161,6 +182,8 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    endif
  endif
  !
+#endif
+ !
  contains
    !
    subroutine local_alloc_and_free(COLL,N)
@@ -174,7 +197,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
            COLL(J)%v3r=rZERO
            mem_size(1)=mem_size(1)+size(COLL(J)%v3r)
          endif
-         if(l_COHSEX.or.l_HF) then
+         if(l_COHSEX.or.l_HF.or.l_GW_QED) then
            allocate(COLL(J)%v3c(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
            COLL(J)%v3c=cZERO
            mem_size(2)=mem_size(2)+size(COLL(J)%v3c)
@@ -206,8 +229,8 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      !
      if (l_alloc) then
        if(l_v3.or.l_all) then
-         if(l_GW_NEQ        ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r",  (/mem_size(1)/))
-         if(l_COHSEX.or.l_HF) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c",  (/mem_size(2)/))
+         if(l_GW_NEQ                    ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r",  (/mem_size(1)/))
+         if(l_COHSEX.or.l_HF.or.l_GW_QED) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c",  (/mem_size(2)/))
        endif
        if (l_v1.or.l_all)     call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v1",   (/mem_size(3)/))
        if (l_table.or.l_all)  call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_table",(/mem_size(4)/),(/LP/))
@@ -215,8 +238,8 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      !
      if (l_clean) then
        if(l_v3.or.l_all) then
-         if(l_GW_NEQ        ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r")
-         if(l_COHSEX.or.l_HF) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c")
+         if(l_GW_NEQ                    ) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3r")
+         if(l_COHSEX.or.l_HF.or.l_GW_QED) call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v3c")
        endif
        if(l_v1.or.l_all)      call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_v1")
        if(l_table.or.l_all)   call mem_est("COLLISIONS_"//trim(COLL(1)%name)//"_table")

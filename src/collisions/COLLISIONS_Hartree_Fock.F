@@ -31,8 +31,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
  use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels,spin_occ,spin
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,&
-&                        PAR_IND_Q,PAR_QP_index,&
-&                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
+&                        PAR_IND_Q,PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
 &                        HF_collisions,nHF_collisions,COLLISIONS_IO_status
@@ -53,7 +52,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
  !Work Space
  !
  type(ggwinfo)           ::isc,iscp
- integer                 ::iq,ib,ibp,jb,ik,i_qp,jb2,ik_minus_q,ig,i_qp_mem,PAR_nQP_
+ integer                 ::iq,ib,ibp,jb,ik,i_qp,jb2,ik_minus_q,ig,PAR_nQP_
  complex(DP)             ::DP_Sx
  complex(SP),allocatable ::local_rhotw(:)
  character(schlen)       ::ch
@@ -98,8 +97,6 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
    !
    if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
    !
-   i_qp_mem=PAR_QP_index(i_qp)
-   !
    if (io_COLLs) then
      if (COLLISIONS_IO_status(i_qp)/=-1) cycle
    endif
@@ -124,7 +121,7 @@ subroutine COLLISIONS_Hartree_Fock(E,k,q)
      !  (n',k,sp_m).     
      !
      ! n   =QP_table(i_qp,1)
-     ! n'  =QP_table(i_qp,2)
+     ! n'   =QP_table(i_qp,2)
      ! k   =QP_table(i_qp,3)
      !
      isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)

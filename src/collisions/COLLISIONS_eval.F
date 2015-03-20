@@ -23,10 +23,7 @@
 !
 subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
- use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_elel_scatt,l_use_collisions
-#if defined _QED
- use drivers,       ONLY:l_elphoton_corr
-#endif
+ use drivers,       ONLY:l_HF_and_locXC,l_cohsex,l_elel_scatt,l_use_collisions,l_elphoton_corr
  use com,           ONLY:error
  use pars,          ONLY:IP
  use electrons,     ONLY:levels
@@ -34,19 +31,23 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use D_lattice,     ONLY:i_time_rev
  use QP_m,          ONLY:QP_nb,QP_n_states,QP_n_G_bands,QP_state
  use wave_func,     ONLY:WF
- use global_XC,     ONLY:SC_HF,SC_COHSEX,WF_kind,WF_xc_functional
+ use global_XC,     ONLY:SC_HF,SC_COHSEX,WF_kind,WF_xc_functional,SC_HF,SC_COHSEX,SE_GW_NEQ,SE_GW_EL_PHOTON
+#if defined _SC
  use SC,            ONLY:SC_bands
- use global_XC,     ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
+#endif
  use collision,     ONLY:COLLISIONS_parallel_SC_structure,V_kind,nGW_NEQ_collisions,&
 &                        HF_collisions,COHSEX_collisions,GW_NEQ_collisions,&
-&                        nCOHSEX_collisions,COLLISIONS_IO_status
+&                        nCOHSEX_collisions,COLLISIONS_IO_status,COLLISIONS_parallel_SE_structure
  use X_m,           ONLY:X_t
+#if defined _RT
  use plasma,        ONLY:EH_gas
+#endif
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,io_COLLISIONS
- use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_Xk_ibz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
+ use parallel_m,    ONLY:PAR_nQ,PAR_nQP,PAR_IND_QP,PAR_IND_Xk_ibz,PAR_IND_G_k,PAR_IND_Bp_mat,&
+&                        PAR_IND_Plasma,PAR_IND_G_b
  use X_m,           ONLY:X_t
  !
  implicit none
@@ -71,12 +72,40 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! When storing all collisions on file I need all SC bands
  !
  if(allocated(QP_state)) deallocate(QP_state)
+#if defined _SC
  QP_nb=SC_bands(2)
+#endif
  call QP_state_table_setup(E)
+ !
+#if defined _SC
  !
  ! Check for the Time Reversal Symmetry
  !
  if (i_time_rev==1) call error(" COLLISIONS not compatible with Time Reversal Symmetry! ")
+ !
+#endif
+ !
+ ! PARALLEL Setup
+ !================
+ if (l_HF_and_locXC.or.l_elphoton_corr) then
+#if defined _SC && defined _RT 
+   call PARALLEL_global_indexes(E,k,q,"Real_Time")
+   call PARALLEL_WF_distribute(K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
+#endif
+#if defined _SC && !defined _RT && !defined _QED
+   call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
+   COLLISIONS_parallel_SC_structure=.TRUE.
+#endif
+#if !defined _SC && !defined _RT && defined _QED
+   call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+   COLLISIONS_parallel_SE_structure=.TRUE.
+   io_COLLs=.FALSE.
+#endif
+   call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+   call PARALLEL_WF_index( )
+ endif
  !
  ! No DB => EVAL
  !===============
@@ -88,21 +117,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call mem_est("COLLISIONS_IO_status",(/QP_n_states/),(/IP/))
  endif
  !
- ! PARALLEL Setup
- !================
- if (l_HF_and_locXC.or.l_elphoton_corr) then
-#if defined _SC && defined _RT
-   call PARALLEL_global_indexes(E,k,q,"Real_Time")
-   call PARALLEL_WF_distribute(K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
-#endif
-#if defined _SC && !defined _RT
-   call PARALLEL_global_indexes(E,k,q,"Self_Energy")
-   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
-   COLLISIONS_parallel_SC_structure=.TRUE.
-#endif
-   call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
-   call PARALLEL_WF_index( )
- endif
+#if defined _SC
  !
  if (l_HF_and_locXC) then
    !
@@ -218,6 +233,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
  enddo
  !
+#endif
+ !
 #if defined _QED
  !
  if (l_elphoton_corr) then
@@ -229,7 +246,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
 !   if (io_COLLs) then
 !     COLLISIONS_IO_status=-1
-!     V_kind=SC_HF
+!     V_kind=SE_GW_EL_PHOTON
 !     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
 !     IO_err=io_COLLISIONS(0,ID)
 !     if (any(COLLISIONS_IO_status/=1)) IO_err=-1
@@ -242,8 +259,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        call COLLISIONS_alloc_and_free("GW_QED","v3 table","alloc",1)
      else
        call COLLISIONS_alloc_and_free("GW_QED","collision","alloc",0)
-       call COLLISIONS_alloc_and_free("GW_QED","v3","alloc",1)
-       call COLLISIONS_alloc_and_free("GW_QED","table","alloc",0)
+       call COLLISIONS_alloc_and_free("GW_QED","v3","alloc distribute",0)
      endif
      !
      call COLLISIONS_QED_gw(E,k,q)

@@ -2,7 +2,10 @@ FFT_more =
 #if defined _RT
 FFT_more = fft_1d.o fft_singleton.o
 #endif
-
+QED_more =
+#if defined _QED
+QED_more = scatter_Bamp_using_the_gradient.o
+#endif
 FFT_object = fft_3d_qe.o fft_desc_init.o
 #if defined _FFTW
 FFT_object = fft_3d_fftw.o
@@ -10,7 +13,6 @@ FFT_object = fft_3d_fftw.o
 #if defined _FFTSG
 FFT_object = fft_3d_sg.o sgfft.o 
 #endif
-
 WF_rot_object =
 #if defined _SC
 WF_rot_object = WF_rotate.o
@@ -18,7 +20,7 @@ WF_rot_object = WF_rotate.o
 #if defined _MAGNETIC
 WF_der_objects = WF_derivative.o
 #endif
-objs = fft_setup.o $(FFT_object) $(FFT_more) \
+objs = fft_setup.o $(FFT_object) $(FFT_more) $(QED_more) \
        WF_free.o WF_alloc.o \
        scatter_Bamp.o scatter_Gamp.o WF_spatial_invertion.o \
        WF_load.o WF_symm.o WF_apply_symm.o $(WF_rot_object) \

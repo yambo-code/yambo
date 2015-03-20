@@ -30,13 +30,19 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use LIVE_t,          ONLY:live_timing
  use QP_m,            ONLY:QP_n_states
  use R_lattice,       ONLY:nqbz
+#if defined _RT
  use plasma,          ONLY:N_plasma_poles_global
+#endif
  use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
  use collision,       ONLY:V_kind,GW_NEQ_collisions,COHSEX_collisions,HF_collisions
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP
  use parallel_m,      ONLY:PAR_nQP,PAR_QP_index,PAR_IND_QP,PAR_IND_Plasma,PAR_IND_Q,&
 &                          PAR_nQ,PAR_Q_index,PAR_Plasma_index
  use interfaces,      ONLY:io_COLLISIONS
+#if defined _QED
+ use drivers,         ONLY:l_elphoton_corr
+ use global_XC,       ONLY:SE_GW_EL_PHOTON
+#endif
  !
  implicit none
  !
@@ -72,6 +78,13 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  if(l_elel_scatt) then
    n_V_kinds          =n_V_kinds+1
    V_kinds(n_V_kinds) =SE_GW_NEQ
+ endif
+#endif
+ !
+#if defined _QED
+ if(l_elphoton_corr) then
+   n_V_kinds          =n_V_kinds+1
+   V_kinds(n_V_kinds) =SE_GW_EL_PHOTON
  endif
 #endif
  !
@@ -138,6 +151,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      if (V_kind==SC_COHSEX) io_err(iv)=io_COLLISIONS(i_qp,ID,COHSEX_collisions(i_qp_mem))
      if (V_kind==SE_GW_NEQ) io_err(iv)=io_COLLISIONS(i_qp,ID,GW_NEQ_collisions(1))
      !
+#if defined _RT
      if (V_kind==SE_GW_NEQ) then
        ic=0
        do i_J=1,N_plasma_poles_global
@@ -151,6 +165,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
          enddo
        enddo
      endif
+#endif
      !
      call live_timing(steps=1)
      !

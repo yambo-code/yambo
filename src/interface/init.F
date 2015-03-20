@@ -88,7 +88,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(w_samp) ::Xw(4)
  integer         ::lnstr
  character(lnstr)::instr
- logical         ::CLOSE_Gs,FINALIZE
+ logical         ::CLOSE_Gs,FINALIZE,QP_field
  !
  ! Work Space
  !
@@ -779,6 +779,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
 #endif
  !
+ ! QED specific
+ !
+#if defined _QED
+ if (l_eval_collisions.and.l_elphoton_corr) then
+   call initactivate(1,'FFTGvecs QEDRLvcs GbndRnge') 
+ endif
+#endif
+ !
 #if defined _SC
  !
  ! REAL-TIME specific
@@ -874,7 +882,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !If qp limits are requested they are added at the end of the input file
  !
- if ( any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_eval_collisions ) then
+ QP_field=any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_eval_collisions
+ !
+#if defined _QED
+ if (.not.QP_field) QP_field=l_elphoton_corr
+#endif
+ !
+ if (QP_field) then
    !
    ! The QP_state can be read from ioxxvxc in DUMP mode or from the input file.
    ! The DB value is used when a new input file is created or when the previous input file
@@ -1051,8 +1065,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_sc_run=runlevel_is_on('scpot')
        l_real_time=runlevel_is_on('negf')
        l_sc_magnetic=runlevel_is_on('magnetic')
-       l_eval_collisions=runlevel_is_on('collisions')
        if (.not.l_real_time.and.trim(SC_potential)=="IP") SC_potential="default"
+#endif
+#if defined _SC || defined _QED
+       l_eval_collisions=runlevel_is_on('collisions')
 #endif
 #if defined  _SURF
        lreels=runlevel_is_on('reels')
@@ -1089,7 +1105,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! Check if this runlevel is allowed in the 
        ! present configuration
        !
-       if (i1==1) call init_barriers( )
+       !if (i1==1) call init_barriers( )
        !
      enddo
      !
@@ -1549,7 +1565,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
 #endif
          !
-#if defined  _ELPH  
+#if defined  _ELPH  || defined _QED
          !
          ! ELPH 
          !

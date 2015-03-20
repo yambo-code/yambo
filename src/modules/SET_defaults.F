@@ -24,7 +24,9 @@
 subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
+ ! GPL_EXCLUDE_START
  use debug,      ONLY:dbg
+ ! GPL_EXCLUDE_END
  use pars,       ONLY:SP,schlen
  use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
@@ -137,9 +139,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call remove_stack_limit()
  !
+ ! GPL_EXCLUDE_START
  ! Debug
  !
  call dbg('reset')
+ ! GPL_EXCLUDE_END
  !
  ! Clocks
  !

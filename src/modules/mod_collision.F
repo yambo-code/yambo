@@ -61,6 +61,7 @@ module collision
  real(SP)                 :: COLLISIONS_max
  !
  logical :: COLLISIONS_parallel_SC_structure=.FALSE.
+ logical :: COLLISIONS_parallel_SE_structure=.FALSE.
  !
  ! Fragments
  !

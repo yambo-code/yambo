@@ -78,8 +78,10 @@
   {"corrtp", "c","Correlation [opt=(e)lectrons/(p)honons/(a)ll]",0,0,1,0,0},
   {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0,0},    
 #endif
-#if defined _SC | defined _MAGNETIC | defined _RT
+#if defined _SC | defined _MAGNETIC | defined _RT | defined _QED
   {"collisions", "e","Evaluate Collisions",0,0,0,0,0}, 
+#endif
+#if defined _SC | defined _MAGNETIC | defined _RT
   {"scpot",  "v","Self-Consistent Potential",0,0,1,0,0}, 
   {"DESC",   " ","opt=(hf),(c)ohsex,(exx),(exxc),(srpa),(h)artree,(d)ef,(ip)",0,0,0,0,0},
 #endif

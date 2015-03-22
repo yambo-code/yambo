@@ -41,6 +41,7 @@ subroutine XCo_driver(E,k,Xk,q)
 #endif
  !
  implicit none
+ !
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
  !
@@ -55,7 +56,7 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  ! Reporting
  !
- integer           ::i_qp,ib,ik,ibp,ikp,i_s
+ integer           ::i_qp,ib,ik,ibp,ikp,i_sp
  character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt
  logical           ::l_local
  !
@@ -173,6 +174,12 @@ subroutine XCo_driver(E,k,Xk,q)
    !
    subroutine XCo_report_and_IO()
      !
+     use drivers,       ONLY:l_gw0
+     use com,           ONLY:msg,of_open_close
+     !
+     real(SP)          :: output(4)
+     character(schlen) :: of_name(n_sp_pol)
+     !
 #if defined _SC
      if (WF_kind < 100) then
        Vxc_kind='LDA'
@@ -197,6 +204,21 @@ subroutine XCo_driver(E,k,Xk,q)
      Vxc_kind='DFT'
 #endif
      !
+     if(.not.l_gw0) then
+       if(n_sp_pol==2) then
+         of_name(1)='HFup'
+         of_name(2)='HFdw'
+       else
+         of_name(1)='HF'
+       endif
+       !
+       do i_sp=1,n_sp_pol
+         call of_open_close(of_name(i_sp),'ot')
+         call msg('o '//trim(of_name(i_sp)),'#',' HF corrections to be plotted',INDENT=0)
+         call msg('o '//trim(of_name(i_sp)),'#','  E_LDA       E_HF       S_x        V_xc',INDENT=0)
+       enddo
+     endif
+     !
      call E_reset(E_dummy)
      call E_duplicate(E,E_dummy)
      !
@@ -208,10 +230,10 @@ subroutine XCo_driver(E,k,Xk,q)
        ib =QP_table(i_qp,1)
        ibp=QP_table(i_qp,2)
        ikp=QP_table(i_qp,3)
-       i_s=spin(QP_table(i_qp,:))
+       i_sp=spin(QP_table(i_qp,:))
        !
        if (ib==ibp) then
-         E_dummy%E(ib,ikp,i_s)=E%E(ib,ikp,i_s)+QP_Vnl_xc(i_qp)-QP_Vxc(i_qp)
+         E_dummy%E(ib,ikp,i_sp)=E%E(ib,ikp,i_sp)+QP_Vnl_xc(i_qp)-QP_Vxc(i_qp)
        endif
        !
        if (ikp/=ik) then
@@ -221,8 +243,8 @@ subroutine XCo_driver(E,k,Xk,q)
        !
        ch_spin=' '
        !
-       if (n_sp_pol==2.and.i_s==1) ch_spin='(up)'
-       if (n_sp_pol==2.and.i_s==2) ch_spin='(dn)'
+       if (n_sp_pol==2.and.i_sp==1) ch_spin='(up)'
+       if (n_sp_pol==2.and.i_sp==2) ch_spin='(dn)'
        ! 
        nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|'//trim(Vnlxc_kind)//'|'//trim(intc(ibp))&
 &         //trim(ch_spin)//'> ='
@@ -239,7 +261,22 @@ subroutine XCo_driver(E,k,Xk,q)
        if (i_qp/=QP_n_states) call msg('r',trim(ch))
        if (i_qp==QP_n_states) call msg('rn',trim(ch))
        !
+       if(.not.l_gw0) then
+         i_sp=spin(QP_table(i_qp,:))
+         output(1)=E%E(ib,ik,i_sp)*HA2EV
+         output(2)=output(1)-( QP_Vxc(i_qp)-QP_Vnl_xc(i_qp) )*HA2EV
+         output(3)=QP_Vnl_xc(i_qp)*HA2EV
+         output(4)=QP_Vxc(i_qp)   *HA2EV
+         call msg('o '//trim(of_name(i_sp)),'',output,INDENT=-2,USE_TABS=.true.)
+       endif
+       !
      enddo
+     !
+     if(.not.l_gw0) then
+       do i_sp=1,n_sp_pol
+         call of_open_close(of_name(i_sp))
+       enddo
+     endif
      !
      ! I/O
      !

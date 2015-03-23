@@ -23,19 +23,22 @@
 !
 subroutine scatterBamp_using_the_gradient(isc,which)
  !
- ! rhotw(G)=<ib ik_is i_sp| e^[I(RsG-G0).r] \grad | ob ok_os o_sp>   
+ ! It computs
+ !
+ ! rhotw(G)=<ib ik_is i_sp| e^[I(RsG-G0).r] (\grad | ob ok_os o_sp>   )
+ !
+ ! or
+ !
+ ! rhotw(G)=(\grad <ib ik_is i_sp|) e^[I(RsG-G0).r] \grad | ob ok_os o_sp>   
  !
  !  is(3)=(ib,ik,is,i_sp) --<--:--<-- os(3)=(ob,ok,os,o_sp)
  !                             :
  !                            /:\ iqs=(ig0,iq,qs)
  !                             :
  !
- !                     \:/
- ! REMEMBER that     ->-:->-  =  conjg [-<-:-<-]
- !                                        /:\
  !  iq_is = ik_is-ok_os-Go
  !
- use pars,           ONLY:DP,SP,cZERO,cONE
+ use pars,           ONLY:DP,SP
  use electrons,      ONLY:n_spinor
  use collision,      ONLY:ggwinfo
  use D_lattice,      ONLY:idt_index
@@ -52,7 +55,6 @@ subroutine scatterBamp_using_the_gradient(isc,which)
  complex(DP), allocatable :: rho_tw_rs(:)
  complex(SP), allocatable :: WF_symm_i(:,:)
  complex(SP), allocatable :: WF_symm_o(:,:)
- complex(SP), allocatable :: WF_der_i(:,:)
  complex(SP), allocatable :: WF_der(:,:)
  !
  integer     :: qs,iGo

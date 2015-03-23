@@ -35,7 +35,7 @@ configure-stamp: uncompress-stamp
 	           cp ../../install/make_iotk.inc ../make.sys ; \
 	        fi ; \
 	        if test -e ../../install/iotk_specials.h ; then \
-	           cp ../../install/iotk_specials.h ../iotk/include ; \
+	           cp ../../install/iotk_specials.h ../$(PACKAGE)/include ; \
 	        fi ) ; \
 	fi
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \

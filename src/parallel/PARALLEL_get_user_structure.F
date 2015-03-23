@@ -27,6 +27,7 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  use parallel_m,   ONLY:CPU_structure,n_CPU_str_max,PARALLEL_CPU_role,PARALLEL_CPU_used,&
 &                       PARALLEL_n_structures_active,ncpu
  use stderr,       ONLY:string_split
+ use com,          ONLY:error
  !
  implicit none
  !
@@ -35,7 +36,7 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  !
  ! Work Space
  !
- integer          ::i_s,i_selected,i_c,n_structures
+ integer          ::i_s,i_selected,i_c,n_structures,n_eh,n_t
  logical          ::q_found,k_found
  character(schlen)::c_strings(10),r_strings(10),CPU_string_,ROLE_string_
  !
@@ -73,6 +74,8 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  call string_split(ROLE_string_,r_strings)
  !
  n_structures=0
+ n_eh=1
+ n_t=1
  !
  do i_c=1,CPU_structure(i_selected)%N_chains
    !
@@ -83,8 +86,14 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
    if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="c" ) cycle
    if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="b" ) cycle
    if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="qp") cycle
-   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="eh") cycle
-   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="t") cycle
+   if (trim(CPU_structure(i_selected)%ROLE(i_c))=="eh") then
+     n_eh=CPU_structure(i_selected)%CPU(i_c)
+     if (CPU_structure(i_selected)%CPU(i_c)==1) cycle
+   endif
+   if (trim(CPU_structure(i_selected)%ROLE(i_c))=="t") then
+     n_t=CPU_structure(i_selected)%CPU(i_c)
+     if (CPU_structure(i_selected)%CPU(i_c)==1) cycle
+   endif
    !
    n_structures=n_structures+1
    !
@@ -97,6 +106,8 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
    PARALLEL_CPU_used(n_structures)=2**(log(real(PARALLEL_CPU_used(n_structures)))/log(2.))
    !
  enddo
+ !
+ if (n_eh<n_t) call error('"eh" CPU`s cannot be smaller than "t" CPU`s.')
  !
  if (ncpu==1) then
    CPU_structure(i_selected)%nCPU_diagonalization=1

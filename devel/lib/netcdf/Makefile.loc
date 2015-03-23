@@ -37,7 +37,8 @@ configure-stamp: uncompress-stamp
 	      CC="$(cc)" \
 	      CXX="$(cc)" \
 	      FC="$(f90)" \
-              CPPFLAGS=$(netcdf_aux) \
+	      CPP="$(cpp)" \
+              CPPFLAGS="$(cppflags) $(netcdf_aux)" \
 	      F90="$(f90)" \
 	      F77="$(f77)" \
 	      INSTALL_DIR="$(INSTALL_DIR)" ); \

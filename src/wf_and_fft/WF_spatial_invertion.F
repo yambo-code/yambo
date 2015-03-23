@@ -36,6 +36,7 @@ subroutine WF_spatial_invertion(en,Xk)
  use com,           ONLY:msg
  use D_lattice,     ONLY:i_time_rev,i_space_inv,mag_syms
  use R_lattice,     ONLY:bz_samp
+ use interfaces,    ONLY:el_density_and_current
  implicit none
  !
  type(levels) ::en
@@ -67,8 +68,8 @@ subroutine WF_spatial_invertion(en,Xk)
  else
    !
    allocate(rho_si(fft_size),rho_nsi(fft_size),cv(fft_size))
-   call el_density(en,Xk,rho_si,.true.)
-   call el_density(en,Xk,rho_nsi,.false.)
+   call el_density_and_current(en,Xk,rho=rho_si,force_spatial_inversion=.true.)
+   call el_density_and_current(en,Xk,rho=rho_nsi)
    !
    cv=(0.,0.)
    mv(1:2)=0.0_SP

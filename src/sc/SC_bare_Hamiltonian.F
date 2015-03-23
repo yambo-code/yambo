@@ -32,6 +32,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp
  use xc_functionals, ONLY:V_xc
+ use interfaces,     ONLY:el_density_and_current
 #if defined _RT
  use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,G_lesser,RT_ibz_coo
 #endif
@@ -61,7 +62,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
 #else
  !
- call el_density(E,Xk,rho_n,.false.)
+ call el_density_and_current(E,Xk,rho=rho_n)
  !call el_magnetization(E,Xk,magn_n)
  V_xc_sc=V_xc 
  !

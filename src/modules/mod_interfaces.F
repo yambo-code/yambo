@@ -27,6 +27,20 @@ module interfaces
  !
  interface
    !
+   subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
+     use pars,           ONLY:SP
+     use electrons,      ONLY:levels
+     use R_lattice,      ONLY:bz_samp
+     use FFT_m,          ONLY:fft_size
+     implicit none
+     type(bz_samp)::k
+     type(levels) ::E       
+     real(SP), optional             ::rho(fft_size)
+     real(SP), optional             ::J(fft_size,3)
+     logical,  optional, intent(in) ::force_spatial_inversion
+     !
+   end subroutine
+   !
    subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_digits,fill)
      !
      use matrix_operate, ONLY:blacs_t

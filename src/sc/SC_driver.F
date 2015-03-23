@@ -37,7 +37,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
- use interfaces,     ONLY:MATRIX_driver
+ use interfaces,     ONLY:MATRIX_driver,el_density_and_current
  use matrix_operate, ONLY:DIAGO
  use interfaces,     ONLY:PARALLEL_global_indexes,WF_load,PARALLEL_WF_distribute,PARALLEL_WF_index
  use com,            ONLY:msg,warning,error
@@ -187,7 +187,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    ! ... rho_n and V_hartree_sc
    !
-   call el_density(E,k,rho_n,.false.)
+   call el_density_and_current(E,k,rho=rho_n)
    call V_Hartree(rho_n,V_hartree_sc)
    !
 #if defined _MAGNETIC
@@ -376,7 +376,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      rho_nm1 = rho_n 
      !
-     call el_density(E,k,rho_n,.false.)
+     call el_density_and_current(E,k,rho=rho_n)
      !
      ! Update dipoles and recalcolate the dielectric constant
      ! ======================================================

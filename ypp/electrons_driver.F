@@ -58,7 +58,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #if defined _YPP_MAGNETIC
  use YPP,            ONLY:l_angular_momentum,l_position
 #endif
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,el_density_and_current,PARALLEL_WF_index,PARALLEL_global_indexes,PARALLEL_WF_distribute
  !
  implicit none
  !
@@ -158,6 +158,11 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #endif
  !
  if(flag) then
+   !
+   call PARALLEL_global_indexes(Xen,Xk,Xq," ",RESET=.TRUE.)
+   call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_index( )
+   !
    call WF_load(WF,wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
    nr=fft_dim
    allocate(v2plot(fft_size))
@@ -503,7 +508,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
    !
    allocate(el_cur(fft_size,3))
    !
-   call el_current(Xen,Xk,el_cur)
+   call el_density_and_current(Xen,Xk,J=el_cur)
    v2plot=(el_cur(:,1)+el_cur(:,2)+el_cur(:,3))/3.
    !
    ch_ws(1)='current_'//trim(intc(plot_dim))

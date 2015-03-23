@@ -23,6 +23,9 @@
 #
 AC_DEFUN([ACX_CPP],
 [
+AC_ARG_VAR(FCCPP,Fortran preprocessor)
+if test -z "$FCCPP" ; then FCCPP="cpp -E -P -ansi"; fi
+#
 case "${CPP}" in
  *icc* )
    if test -z "$CPPFLAGS"; then CPPFLAGS="-ansi"; fi
@@ -132,4 +135,5 @@ C_AS_CPP_FLAGS=$CPPFLAGS
 CPPFLAGS=""
 AC_SUBST(C_AS_CPP)
 AC_SUBST(C_AS_CPP_FLAGS)
+AC_SUBST(FCCPP)
 ])

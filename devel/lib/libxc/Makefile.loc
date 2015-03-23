@@ -33,12 +33,9 @@ configure-stamp: uncompress-stamp
 	        --prefix=$(INSTALL_DIR) \
 	        CC="$(cc)" \
 	        FC="$(f90)" \
-		FCCPP="$(cpp) $(cppflags)" ); \
+		FCCPP="$(fccpp)" ); \
 	fi
 	touch configure-stamp
-	        #FCCPP="cpp -E -P -ansi" \
-		#CPP="$(cpp)" \
-		#CPPFLAGS="$(cppflags)" \
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \

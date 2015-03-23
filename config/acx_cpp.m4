@@ -101,9 +101,9 @@ cat > conftest.F << EOF_
  character (1) :: a
  a="a"
  write (*,'('//a//')') 'hello'
- ! Replace "S" with "\" and find the max length of
  end program
 EOF_
+# ! Replace "S" with "\" and find the max length of
 (eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX}) 2> conftest.er1
 
 if ! test -s conftest.er1 || test -n "`grep successful conftest.er1`"  ; then 

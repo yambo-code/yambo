@@ -43,11 +43,11 @@ EOF
   else
     echo "configure: failed program was:" >&AC_FD_CC
     cat pointertest.c >&AC_FD_CC
-    rm -f pointertest*
+    rm -rf pointertest*
     AC_MSG_ERROR(failed to compile c program to find the size of a pointer)
   fi
   ac_pointersize=`./pointertest.x`;
-  rm -f pointertest*
+  rm -rf pointertest*
   AC_DEFINE_UNQUOTED(POINTER_SIZE, ${ac_pointersize}, [The size of a C pointer])
   AC_MSG_RESULT([${ac_pointersize} bytes])
 fi

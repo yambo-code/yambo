@@ -511,6 +511,8 @@ subroutine electrons_driver(Xk,Xen,Xq)
    call el_density_and_current(Xen,Xk,J=el_cur)
    v2plot=(el_cur(:,1)+el_cur(:,2)+el_cur(:,3))/3.
    !
+   l_norm_to_one=.false.
+   !
    ch_ws(1)='current_'//trim(intc(plot_dim))
    if (use_cube) output_fname=trim(ch_ws(1))//'d.cube'
    if (use_xcrysden) output_fname=trim(ch_ws(1))//'d.xsf'
@@ -523,7 +525,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
      call msg('o den',"#")
    endif
    !
-   plot_title='density'
+   plot_title='current'
    call plot_check_and_launch(.false.)
    !
    call of_open_close(trim(output_fname))

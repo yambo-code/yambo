@@ -80,7 +80,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
  !
 #if defined _QED
  ntitles=5
- titles_order(:ntitles)=(/9,10,25,24/)
+ titles_order(:ntitles)=(/9,10,4,25,24/)
 #else
  ntitles=5
  titles_order(:ntitles)=(/9,10,4,8,2/)
@@ -171,7 +171,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
      endif
 #if defined _QED
      values(24)=real(QP_Sc(i1,1))*HA2GHZ*1000._SP
-     values(25)=real(QP_Sc(i1,1))*1000._SP
+     values(25)=real(QP_Sc(i1,1))*1000._SP*HA2EV
 #endif
      if (allocated(QP_G_info)) then
        values(17:18)=QP_G_info(i1,1,:)*HA2EV

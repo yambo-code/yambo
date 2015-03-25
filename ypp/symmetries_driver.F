@@ -105,7 +105,7 @@ subroutine symmetries_driver(E,Xk)
  !
  allocate(kpoints_map(2,Xk%nibz))
  !
- call build_kpts_map(Xk,Xk_save,kpoints_map,action_kind)
+ call k_build_map(Xk,Xk_save,kpoints_map,action_kind)
  !
  ! Energies and Wave-functions
  call fix_WFs_and_E(E,Xk,Xk_save,kpoints_map,old_nsym,S_contains_TR,action_kind)

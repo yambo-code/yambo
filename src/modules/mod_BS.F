@@ -198,8 +198,8 @@ module BS
    integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsR,bsR_kerr)
      use pars,          ONLY:SP
      integer             :: iq,ID,BS_H_dim
-     real(SP)            :: bsE(BS_H_dim,2),bsR(BS_H_dim,2)
-     real(SP),optional   :: bsR_kerr(BS_H_dim,2)
+     complex(SP)         :: bsE(BS_H_dim),bsR(BS_H_dim)
+     complex(SP),optional:: bsR_kerr(BS_H_dim)
    end function
    !
    integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)

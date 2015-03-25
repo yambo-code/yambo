@@ -150,7 +150,7 @@ subroutine K_diagonalization(iq,W)
  call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_BSS_diago(iq,ID,BS_H_dim,(/real(BS_E),aimag(BS_E)/),(/real(BS_R),aimag(BS_R)/))
+ io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R)
  !
  if(io_err<0) then
    !
@@ -527,14 +527,14 @@ subroutine K_diagonalization(iq,W)
 #if defined _KERR
    if(l_kerr) then
      call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-     io_err=io_BSS_diago(iq,ID,BS_H_dim,(/real(BS_E),aimag(BS_E)/),(/real(BS_R),aimag(BS_R)/),(/real(BS_R_kerr),aimag(BS_R_kerr)/))
+     io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R,bsR_kerr=BS_R_kerr)
    else
 #endif
    !
    ! GPL_EXCLUDE_END
    !
-     call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-     io_err=io_BSS_diago(iq,ID,BS_H_dim,(/real(BS_E),aimag(BS_E)/),(/real(BS_R),aimag(BS_R)/))
+   call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
+   io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R)
    !
    ! GPL_EXCLUDE_START
    !

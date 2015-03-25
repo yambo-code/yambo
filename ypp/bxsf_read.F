@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine read_bxsf(Xk,Xen)
+subroutine bxsf_read(Xk,Xen)
  !
  use pars,                ONLY:SP,lchlen
  use units,               ONLY:pi,HA2EV,BO2ANG

@@ -632,6 +632,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
    if (l_sp_wf) call initactivate(1,"ResTresh")  
 #endif
    if (l_mag)   call initactivate(1,"MagDir") 
+   if (l_current) call initactivate(1,'CurrentDir')
  endif
  !
  if (l_excitons) then

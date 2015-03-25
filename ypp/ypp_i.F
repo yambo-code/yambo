@@ -172,7 +172,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (l_map_kpts) call k_map_fine_to_coarse(Xk,Xen)
  !
- if (l_bxsf)  call read_bxsf(Xk,Xen)
+ if (l_bxsf)  call bxsf_read(Xk,Xen)
  !
  if (l_QP_DBs_create_and_modify)  call QP_DBs_setup(en,k)
  !

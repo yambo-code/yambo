@@ -812,7 +812,7 @@ enable_debug
 enable_keep_src
 enable_keep_extlibs
 enable_dp
-with_p2y
+with_p2y_version
 enable_bluegene
 enable_openmpi
 enable_time_profile
@@ -6482,36 +6482,36 @@ if test x"$enable_dp" = "xyes"; then dp_cpp="-D_DOUBLE"; fi
 # check for p2y versions
 #
 
-# Check whether --with-p2y was given.
-if test "${with_p2y+set}" = set; then
-  withval=$with_p2y;
+# Check whether --with-p2y_version was given.
+if test "${with_p2y_version+set}" = set; then
+  withval=$with_p2y_version;
 fi
 
 
 PW_VER="5.0"
 PW_CPP="_P2Y_V50"
 if test "$compile_p2y" = "yes"; then
- if test "$with_p2y" = "export"; then
+ if test "$with_p2y_version" = "export"; then
   PW_VER="export"
   PW_CPP="_P2Y_EXPORT"
  fi
- if test "$with_p2y" = "3.1"; then
+ if test "$with_p2y_version" = "3.1"; then
   PW_VER="3.1"
   PW_CPP="_P2Y_V31"
  fi
- if test "$with_p2y" = "3.1.1"; then
+ if test "$with_p2y_version" = "3.1.1"; then
   PW_VER="3.1.1"
   PW_CPP="_P2Y_V311"
  fi
- if test "$with_p2y" = "3.2"; then
+ if test "$with_p2y_version" = "3.2"; then
   PW_VER="3.2"
   PW_CPP="_P2Y_V32"
  fi
- if test "$with_p2y" = "4.0"; then
+ if test "$with_p2y_version" = "4.0"; then
   PW_VER="4.0"
   PW_CPP="_P2Y_V40"
  fi
- if test "$with_p2y" = "5.0"; then
+ if test "$with_p2y_version" = "5.0"; then
   PW_VER="5.0"
   PW_CPP="_P2Y_V50"
  fi

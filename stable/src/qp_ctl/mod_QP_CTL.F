@@ -94,7 +94,7 @@ module QP_CTL_m
      use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
 &                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db
      use com,           ONLY:msg,depth
-     use electrons,     ONLY:levels,E_reset,n_sp_pol,&
+     use electrons,     ONLY:levels,E_reset,E_duplicate,n_sp_pol,&
 &                            BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,BZ_RIM_tot_nkpts
      use D_lattice,     ONLY:input_Tel_is_negative
      use R_lattice,     ONLY:bz_samp,nXkibz
@@ -269,38 +269,40 @@ module QP_CTL_m
      !
      call QP_apply_global_stretch(band_range,en,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected,.FALSE.)
      !
+     ! Extend the QP corrections to the RIM energies
+     !
+     if (associated(en%E_RIM)) then
+       !
+       allocate(RIM_k_done(BZ_RIM_tot_nkpts))
+       RIM_k_done=0
+       !
+       do ik_bz=1,k%nbz
+         !
+         ik_ibz=k%sstar(ik_bz,1)
+         !
+         do i1=1,BZ_RIM_nkpt(ik_bz)
+           ik_r=BZ_RIM_table(ik_bz,i1)
+           !
+           if (RIM_k_done(ik_r)==1) cycle
+           !
+           forall (ib=1:BZ_RIM_nbands,i_spin=1:n_sp_pol) &
+&                                        en%E_RIM(ib,ik_r,i_spin)=en%E_RIM(ib,ik_r,i_spin)+&
+&                                        en%E(ib,ik_ibz,i_spin)-en%Eo(ib,ik_ibz,i_spin)
+           RIM_k_done(ik_r)=1
+         enddo
+         !
+       enddo
+       !
+       deallocate(RIM_k_done)
+       !
+     endif
+     !
      ! Fermi Level Updates
      !=====================
      !
      ! X/K -> Fermi Level Update
      !
      if ((Eid<3.and.associated(en%Eo)).and..not.associated(en%GreenF)) then
-       !
-       if (associated(en%E_RIM)) then
-         !
-         allocate(RIM_k_done(BZ_RIM_tot_nkpts))
-         RIM_k_done=0
-         !
-         do ik_bz=1,k%nbz
-           !
-           ik_ibz=k%sstar(ik_bz,1)
-           !
-           do i1=1,BZ_RIM_nkpt(ik_bz)
-             ik_r=BZ_RIM_table(ik_bz,i1)
-             !
-             if (RIM_k_done(ik_r)==1) cycle
-             !
-             forall (ib=1:BZ_RIM_nbands,i_spin=1:n_sp_pol) &
-&                                        en%E_RIM(ib,ik_r,i_spin)=en%E_RIM(ib,ik_r,i_spin)+&
-&                                        en%E(ib,ik_ibz,i_spin)-en%Eo(ib,ik_ibz,i_spin)
-             RIM_k_done(ik_r)=1
-           enddo
-           !
-         enddo
-         !
-         deallocate(RIM_k_done)
-         !
-       endif
        !
        if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
        !
@@ -323,13 +325,16 @@ module QP_CTL_m
      !
      if ((Eid==3.and.associated(en%Eo)).and..not.associated(en%GreenF)) then
        !
-       Fermi_en%nb=en%nb
-       Fermi_en%nk=nXkibz
-       !
-       allocate(Fermi_en%E(Fermi_en%nb,Fermi_en%nk,n_sp_pol))
-       Fermi_en%E(:,:,:)=en%E(:,:nXkibz,:)
+       call E_duplicate(en,Fermi_en)
        !
        call OCCUPATIONS_Fermi(Fermi_en,k,1)
+       !
+       ! In OCCUPATIONS_Fermi the Fermi_en the %E and CBm and VMB are coherent. 
+       ! Instead the en%E are out-of-date and are not shifted in OCCUPATIONS_Extend.
+       ! This line is to prevent that CBm and VMB are not the same as en%E
+       !
+       en%E(:,:,:)=en%E(:,:,:)-Fermi_en%EFermi(1)
+       !
        call OCCUPATIONS_Extend(Fermi_en,en)
        !
        nullify(Fermi_en%E)

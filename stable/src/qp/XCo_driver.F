@@ -21,7 +21,7 @@
 !
 subroutine XCo_driver(E,k,Xk,q)
  !
- use pars,          ONLY: SP
+ use pars,          ONLY:SP
  use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time,l_gw0
  use pars,          ONLY:schlen
  use com,           ONLY:msg,of_open_close

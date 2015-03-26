@@ -34,6 +34,8 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR,Dipole_bands_ordered
  use vec_operate,    ONLY:v_norm
 #if defined _KERR
+ use pars,           ONLY:pi
+ use vec_operate,    ONLY:rot_v_xy_plane
  use drivers,        ONLY:l_kerr
  use KERR,           ONLY:DIP_q_dot_iR_kerr,KERR_alloc,KERR_alloc,Dip_P_symm
  use X_m,            ONLY:DIP_P,global_gauge
@@ -66,18 +68,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
 #if defined _KERR
  if(trim(global_gauge)=='velocity') field_dir=field_dir/q0_def_norm
- if(l_kerr) then ! if field=(0,1,0) dipole=(1,0,0) OK  p_x=\aplha_xy E_y
-   if(field_dir(2).ne.0) then
-     dipole_dir(1)=-1.
-     dipole_dir(2)=-dipole_dir(1)*(field_dir(1)/field_dir(2))
-     dipole_dir(3)= 0.
-   else
-     dipole_dir(3)= 0.
-     dipole_dir(2)= 1.
-     dipole_dir(1)=-dipole_dir(2)*(field_dir(2)/field_dir(1))
-   endif
-   dipole_dir=dipole_dir*v_norm(field_dir)/v_norm(dipole_dir)
- endif
+ if(l_kerr) call rot_v_xy_plane(-pi/2._SP,field_dir,dipole_dir)
 #endif
  !
  q_norm(1)=q0_def_norm

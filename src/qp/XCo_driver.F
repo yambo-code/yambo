@@ -23,7 +23,7 @@
 !
 subroutine XCo_driver(E,k,Xk,q)
  !
- use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time
+ use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time,l_gw0
  use pars,          ONLY:schlen,RZERO,SP
  use com,           ONLY:msg
  use units,         ONLY:HA2EV
@@ -32,7 +32,9 @@ subroutine XCo_driver(E,k,Xk,q)
  use R_lattice,     ONLY:bz_samp
  use parallel_m,    ONLY:PP_redux_wait
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind,XCo_Hartree_Fock 
+ use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind,&
+&                        XCo_Hartree_Fock,QP_t,QP_nb,QP_nk,QP_reset,&
+&                        report_Vnlxc,report_Sc,report_dSc
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction,WF_exx_screening
@@ -50,7 +52,7 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  ! Screened Hybrids
  !
- logical   :: l_screen_hyb
+ logical                :: l_screen_hyb
  complex(SP),allocatable:: QP_Vnl_sex(:)
  !
  ! Reporting
@@ -58,6 +60,7 @@ subroutine XCo_driver(E,k,Xk,q)
  integer           ::i_qp,ib,ik,ibp,ikp,i_s
  character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt
  logical           ::l_local
+ type(QP_t)        ::qp
  !
  ! IO
  !
@@ -197,8 +200,20 @@ subroutine XCo_driver(E,k,Xk,q)
      Vxc_kind='DFT'
 #endif
      !
+     call QP_reset(qp)
      call E_reset(E_dummy)
      call E_duplicate(E,E_dummy)
+     !
+     qp%nk=QP_nk
+     qp%nb=QP_nb
+     qp%n_states=QP_n_states
+     qp%n_descs=0
+     !
+     report_Sc=.FALSE.
+     report_Vnlxc=.TRUE.
+     report_dSc=.FALSE.
+     !
+     allocate(qp%E(qp%n_states),qp%E_bare(qp%n_states))
      !
      ik=QP_table(1,3)
      call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
@@ -212,6 +227,8 @@ subroutine XCo_driver(E,k,Xk,q)
        !
        if (ib==ibp) then
          E_dummy%E(ib,ikp,i_s)=E%E(ib,ikp,i_s)+QP_Vnl_xc(i_qp)-QP_Vxc(i_qp)
+         qp%E(i_qp)           =E_dummy%E(ib,ikp,i_s)
+         qp%E_bare(i_qp)      =E%E(ib,ikp,i_s)
        endif
        !
        if (ikp/=ik) then
@@ -252,11 +269,20 @@ subroutine XCo_driver(E,k,Xk,q)
      !
      call section('+',trim(Vnlxc_kind)//' occupations report')
      call REPORT_Occupations(E_dummy)
-     call E_reset(E_dummy)
+     !
+     ! Output 
+     !
+     if (.not.l_gw0.and..not.l_real_time) call QP_of(qp,E,-1,'hf')
      !
      ! MPI barrier
      !
      call PP_redux_wait
+     !
+     ! Clean up
+     !
+     deallocate(qp%E,qp%E_bare)
+     call E_reset(E_dummy)
+     call QP_reset(qp)
      !
    end subroutine
    !

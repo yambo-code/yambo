@@ -1,14 +1,14 @@
 QED_objs = 
+SC_objs =
+RT_objs =
 #if defined _QED
 QED_objs=COLLISIONS_QED_gw.o
 #endif
-objs = 
-#if defined _SC 
-objs = PLASMA_parallel_setup.o \
+#if defined _SC
+SC_objs = PLASMA_parallel_setup.o \
        PLASMA_build_up.o PLASMA_tables_and_dimensions.o \
        COLLISIONS_alloc_and_free.o COLLISIONS_load.o \
        COLLISIONS_eval.o   COLLISIONS_linearize_and_IO.o \
-       COLLISIONS_compose.o COLLISIONS_cohsex.o COLLISIONS_Hartree_Fock.o \
-       $(QED_objs)
+       COLLISIONS_compose.o COLLISIONS_NEQ_GW_static.o COLLISIONS_sex.o COLLISIONS_Fock.o
 #endif
-
+objs= $(SC_objs) $(QED_objs)

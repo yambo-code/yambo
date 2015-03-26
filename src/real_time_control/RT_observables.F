@@ -35,9 +35,8 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
 &                         XC0_and_HARTREE0,REF_V_xc_sc,RT_average_operator,           &
 &                         RIM_ibz_coo,l_RT_uses_E_RIM,   &
 &                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,&
-&                         RT_H_occupations,G_lesser_reference
+&                         RT_H_occupations,G_lesser_reference,RT_Vnl_xc
  use electrons,      ONLY:levels
- use QP_m,           ONLY:QP_Vnl_xc
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use parallel_m,     ONLY:PAR_Xk_nibz,master_cpu
@@ -57,7 +56,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  integer     :: ib,ik,ik_rim,iE_rim
  real(SP)    :: Energy
  complex(SP) :: G_full(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk),&
-&               E_tot,E_kin,E_ion,E_h,Exc,N_holes,N_elecs,N_err,VALUE_tmp(2)
+&               dE_tot,dE_kin,dE_ion,dE_h,dE_xc,N_holes,N_elecs,N_err,VALUE_tmp(2),E_xc_ref
  !
  if ( .not.RT_do_IO('OUT') ) return      
  !
@@ -67,30 +66,30 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  call timing('RT observables',OPR='start')
 #endif
  !
- E_tot    =(0._SP,0._SP)
- E_kin    =(0._SP,0._SP)
- E_ion    =(0._SP,0._SP)
- E_h      =(0._SP,0._SP)
- Exc      =(0._SP,0._SP)
+ dE_tot    =(0._SP,0._SP)
+ dE_kin    =(0._SP,0._SP)
+ dE_ion    =(0._SP,0._SP)
+ dE_h      =(0._SP,0._SP)
+ dE_xc     =(0._SP,0._SP)
  N_holes  =(0._SP,0._SP)
  N_elecs  =(0._SP,0._SP)
  N_err    =(0._SP,0._SP)
  !
  ! Non-interaction kinetc energy
  !
- ! E_Kin = - i Tr { P^2 G^<}/2  
+ ! dE_Kin = - i Tr { P^2 dG^<}/2  
  !
- call RT_average_operator(O_VALUE=E_kin,O_MATRIX=P_square,G=dG_lesser,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(O_VALUE=dE_kin,O_MATRIX=P_square,G=dG_lesser,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
- E_kin=E_kin/2.
+ dE_kin=dE_kin/2.
  !  
- ! E_ion = - i Tr {Ho G^<} - Ekin
+ ! dE_ion = - i Tr {Ho dG^<} - dEkin
  !
- call RT_average_operator(O_VALUE=E_ion,O_MATRIX=Ho,G=dG_lesser,en=en,k=k,RIM='ENERGY',nK_mem=k%nibz)
+ call RT_average_operator(O_VALUE=dE_ion,O_MATRIX=Ho,G=dG_lesser,en=en,k=k,RIM='ENERGY',nK_mem=k%nibz)
  !
- E_ion = E_ion - E_kin
+ dE_ion = dE_ion - dE_kin
  !
- if (l_sc_ip) call RT_average_operator(O_VALUE=E_h,O_MATRIX=XC0_and_HARTREE0,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
+ if (l_sc_ip) call RT_average_operator(O_VALUE=dE_h,O_MATRIX=XC0_and_HARTREE0,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
  !
  if (.not.l_sc_ip) then
    !
@@ -101,25 +100,25 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    !
    ! delta E_H ~ rho_0*delta_rho + 0.5*delta_rho**2
    !
-   E_h=VALUE_tmp(1)+VALUE_tmp(2)/2._SP
+   dE_h=VALUE_tmp(1)+VALUE_tmp(2)/2._SP
    !
  endif
  !
  if (l_sc_hartree) then
    !
-   call RT_average_operator(O_VALUE=Exc,O_REAL=REF_V_xc_sc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
+   call RT_average_operator(O_VALUE=dE_xc,O_REAL=REF_V_xc_sc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
    !
  else if(l_sc_is_libDFT) then 
    !        
-   ! Exc Energy from E_xc[rho_n] energy density
+   ! Exc Energy from dE_xc[rho_n] energy density
    !
    call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0,&
 &                           MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)
    !
-   ! This is wrong if the dependence of the potential on the density
-   ! is not linear as pointed out by Andrea. To be fixed
+   call RT_average_operator(O_VALUE=E_xc_ref,O_REAL=E_xc,G=G_lesser_reference,en=en,k=k,nK_mem=k%nibz)
+   call RT_average_operator(O_VALUE=dE_xc,   O_REAL=E_xc,G=G_full,en=en,k=k,nK_mem=k%nibz)
    !
-   call RT_average_operator(O_VALUE=Exc,O_REAL=E_xc,G=dG_lesser,en=en,k=k,nK_mem=k%nibz)
+   dE_xc=dE_xc-E_xc_ref
    !
  else if (l_sc_hf.or.l_sc_cohsex) then
    !
@@ -127,11 +126,16 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    ! Davide: Is this correctly defined also in the COHSEX case 
    !         or should I use the Galitskii Migdal equation ?
    !
-   call RT_average_operator(O_VALUE=Exc,O_QP=QP_Vnl_xc,G=G_full,en=en,k=k,nK_mem=k%nibz)
+   call RT_average_operator(O_VALUE=E_xc_ref,O_MATRIX_limited=RT_Vnl_xc(:,:,RT_ibz_coo(:,1),:),&
+&                           G=G_lesser_reference,en=en,k=k,nK_mem=k%nibz)
+   call RT_average_operator(O_VALUE=dE_xc,   O_MATRIX_limited=RT_Vnl_xc(:,:,RT_ibz_coo(:,1),:),&
+&                           G=G_full,en=en,k=k,nK_mem=k%nibz)
+   !
+   dE_xc=dE_xc-E_xc_ref
    !
  endif
  !
- E_tot = E_ion + E_kin + E_h + Exc
+ dE_tot = dE_ion + dE_kin + dE_h + dE_xc
  !
  ! Electrons and holes temperatures
  !
@@ -169,8 +173,8 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !
  ! Transfer the shadow variables
  !
- on_the_fly_operators(1:4)=(/E_kin,E_ion,E_h,Exc/)*HA2EV
- on_the_fly_operators(5)=E_tot*HA2EV
+ on_the_fly_operators(1:4)=(/dE_kin,dE_ion,dE_h,dE_xc/)*HA2EV
+ on_the_fly_operators(5)=dE_tot*HA2EV
  on_the_fly_operators(6:8)=(/N_err,N_holes,N_elecs/)
  on_the_fly_operators(9:10)=cmplx(RT_Tfit_occupations(:),0._SP)*HA2KEL
  !

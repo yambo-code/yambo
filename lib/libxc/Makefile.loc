@@ -31,9 +31,9 @@ configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	        ./configure \
 	        --prefix=$(INSTALL_DIR) \
-	        FCCPP="cpp -E -P -ansi" \
+	        CC="$(cc)" \
 	        FC="$(f90)" \
-	        CC="$(cc)" ); \
+		FCCPP="$(fccpp)" ); \
 	fi
 	touch configure-stamp
 	
@@ -63,3 +63,5 @@ clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
 	@- rm -rf uncompress-stamp
 	@- rm -rf $(INSTALL_DIR)
+	
+

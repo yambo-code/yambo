@@ -4,22 +4,20 @@
 # compilation rules
 
 .SUFFIXES :
-.SUFFIXES : .o .c .f .f90 .F90
+.SUFFIXES : .o .c .F @F90SUFFIX@
 
-.f90.o:
-	@rm -f $*.F90 $*.F
-	cp $*.f90 $*.F
-	(eval $(CPP) $(CPPFLAGS) $(dopts) $*.F > $*.F90 ) > /dev/null
-	(eval $(F90) $(F90FLAGS) -c $*.F90 ) > /dev/null
-	@echo -n $* " "
-	@rm -f $*.F90 $*.F
+.F.o:
+	@rm -f $*@F90SUFFIX@
+	(eval $(CPP) $(CPPFLAGS) $(dopts) $*.F > $*@F90SUFFIX@ ) > /dev/null
+	(eval $(F90) $(F90FLAGS) -c $*@F90SUFFIX@ ) > /dev/null
+	@rm -f $*@F90SUFFIX@
 
-.f.o:
-	$(F77) $(FFLAGS) -c $<
-
-.c.o:
-	$(CC) $(CFLAGS) -c $<
-
+#.f.o:
+#	$(F77) $(FFLAGS) -c $<
+#
+#.c.o:
+#	$(CC) $(CFLAGS) -c $<
+#
 # -----------------------------
 # compiler definitions
 
@@ -37,6 +35,7 @@ LD               = @F90@
 LDFLAGS          = @PF90FLAGS@ @FCMFLAG@ @OPENMPLIBS@ $(IFLAGS)
 AR               = @AR@
 ARFLAGS          = @AR_FLAGS@
+RANLIB           = echo
 #RANLIB           = @ranlib@
 
 

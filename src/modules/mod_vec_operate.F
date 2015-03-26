@@ -89,6 +89,26 @@ module vec_operate
      if (     present(zero_)) rlu_v_is_zero=v_is_zero(u,zero_)
    end function rlu_v_is_zero
    !
+   subroutine rot_v_xy_plane(t,v_in,v_out)
+     !
+     ! Rotates v_in of theta in the xy plane
+     !
+     real(SP)          :: v_in(3),t
+     real(SP), optional:: v_out(3)
+     !
+     real(SP)          :: M(3,3),v_loc(3)
+     !
+     !     ( cos(t) -sin(t)  0 )
+     ! M = ( sin(t)  cos(t)  0 )
+     !     (   0       0     1 )
+     !
+     M=reshape((/cos(t),-sin(t),0.,sin(t),cos(t),0.,0.,0.,1./),(/3,3/))
+     v_loc=matmul(M,v_in)
+     if (     present(v_out)) v_out=v_loc
+     if (.not.present(v_out)) v_in =v_loc
+     !
+   end subroutine rot_v_xy_plane
+   !
    subroutine c2a(b_in,v_in,v_out,mode)
      !
      ! mode = 'k/rc2a' 'k/ra2c' (cc  <-> rlu)

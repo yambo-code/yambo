@@ -32,15 +32,11 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use R_lattice,       ONLY:nqbz
  use plasma,          ONLY:N_plasma_poles_global
  use global_XC,       ONLY:SC_HF,SC_COHSEX,SE_GW_NEQ
- use collision,       ONLY:V_kind,GW_NEQ_collisions,COHSEX_collisions,HF_collisions
+ use collision,       ONLY:V_kind,GW_NEQ_collisions,SEX_collisions,Fock_collisions
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP
  use parallel_m,      ONLY:PAR_nQP,PAR_QP_index,PAR_IND_QP,PAR_IND_Plasma,PAR_IND_Q,&
 &                          PAR_nQ,PAR_Q_index,PAR_Plasma_index
  use interfaces,      ONLY:io_COLLISIONS
-#if defined _QED
- use drivers,         ONLY:l_elphoton_corr
- use global_XC,       ONLY:SE_GW_EL_PHOTON
-#endif
  !
  implicit none
  !
@@ -79,13 +75,6 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  endif
 #endif
  !
-#if defined _QED
- if(l_elphoton_corr) then
-   n_V_kinds          =n_V_kinds+1
-   V_kinds(n_V_kinds) =SE_GW_EL_PHOTON
- endif
-#endif
- !
  if (n_V_kinds==0) return
  !
  ! Check only if the DB exist and are readable
@@ -115,8 +104,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    !
    V_kind=V_kinds(iv)
    !
-   if (V_kind==SC_HF)     call COLLISIONS_alloc_and_free("HF","collision","alloc",0)
-   if (V_kind==SC_COHSEX) call COLLISIONS_alloc_and_free("COHSEX","collision","alloc",0)
+   if (V_kind==SC_HF)     call COLLISIONS_alloc_and_free("Fock","collision","alloc",0)
+   if (V_kind==SC_COHSEX) call COLLISIONS_alloc_and_free("SEX","collision","alloc",0)
    if (V_kind==SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","collision","alloc",0)
    if (V_kind==SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","v3","alloc distribute",0)
    !
@@ -129,15 +118,15 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      call io_control(ACTION=OP_RD,SEC=(/1,2/),ID=ID)
      !
      if (V_kind==SC_HF) then
-       io_err(iv)=io_COLLISIONS(i_qp,ID,HF_collisions(i_qp_mem))
-       call COLLISIONS_alloc_and_free("HF","v1 table","alloc",i_qp_mem)
+       io_err(iv)=io_COLLISIONS(i_qp,ID,Fock_collisions(i_qp_mem))
+       call COLLISIONS_alloc_and_free("Fock","v1 table","alloc",i_qp_mem)
      endif
      if (V_kind==SC_COHSEX) then
-       io_err(iv)=io_COLLISIONS(i_qp,ID,COHSEX_collisions(i_qp_mem))
-       call COLLISIONS_alloc_and_free("COHSEX","v1 table","alloc",i_qp_mem)
+       io_err(iv)=io_COLLISIONS(i_qp,ID,SEX_collisions(i_qp_mem))
+       call COLLISIONS_alloc_and_free("SEX","v1 table","alloc",i_qp_mem)
      endif
      if (V_kind==SE_GW_NEQ) then
-       if(.not.associated(GW_NEQ_collisions(1)%v)) then
+       if(.not.associated(GW_NEQ_collisions(1)%v_r)) then
          io_err(iv)=io_COLLISIONS(i_qp,ID,GW_NEQ_collisions(1))
          call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","alloc",1)
        endif
@@ -145,20 +134,23 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      call io_control(ACTION=RD_CL,SEC=(/3/),ID=ID)
      !
-     if (V_kind==SC_HF)     io_err(iv)=io_COLLISIONS(i_qp,ID,HF_collisions(i_qp_mem))
-     if (V_kind==SC_COHSEX) io_err(iv)=io_COLLISIONS(i_qp,ID,COHSEX_collisions(i_qp_mem))
+     if (V_kind==SC_HF)     io_err(iv)=io_COLLISIONS(i_qp,ID,Fock_collisions(i_qp_mem))
+     if (V_kind==SC_COHSEX) io_err(iv)=io_COLLISIONS(i_qp,ID,SEX_collisions(i_qp_mem))
      if (V_kind==SE_GW_NEQ) io_err(iv)=io_COLLISIONS(i_qp,ID,GW_NEQ_collisions(1))
      !
      if (V_kind==SE_GW_NEQ) then
        ic=0
-       do i_J=1,N_plasma_poles_global
-         do iqbz=1,nqbz
+       do iqbz=1,nqbz
+         i_q_mem=PAR_Q_index(iqbz)
+         if (.not.PAR_IND_Q%element_1D(iqbz)) then
+           ic=ic+1
+           cycle
+         endif
+         do i_J=1,N_plasma_poles_global
            ic=ic+1
            if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
-           if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
            i_J_mem  =PAR_Plasma_index(i_J)
-           i_q_mem=PAR_Q_index(iqbz)
-           GW_NEQ_collisions(i_qp_mem)%v3r(i_J_mem,1,i_q_mem)=real(GW_NEQ_collisions(1)%v(ic))
+           GW_NEQ_collisions(i_qp_mem)%v3_r(i_J_mem,1,i_q_mem)=GW_NEQ_collisions(1)%v_r(ic)
          enddo
        enddo
      endif

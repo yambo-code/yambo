@@ -54,7 +54,6 @@ subroutine RT_initialize()
  J_time_step= RT_step*real(RT_IO_JPO_steps,SP)
  Total_time = real(J_steps-1,SP)*J_time_step
  !
- !if ( X_rt%energy_range(2)>pi/J_time_step) X_rt%energy_range(2)=pi/J_time_step
  X_rt%time_range=(/Efield(i_Probe)%t_initial,Total_time/)
  !
  i_t_start=nint(X_rt%time_range(1)/J_time_step)+1

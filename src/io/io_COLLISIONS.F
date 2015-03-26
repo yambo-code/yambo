@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM CA
+! Authors (see AUTHORS file for details): AM CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -62,7 +62,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
 #endif
  !
  if(V_kind==SC_HF) then
-   db_name                   = "COLLISIONS_HF"
+   db_name                   = "COLLISIONS_FOCK"
  elseif(V_kind==SC_COHSEX) then
    db_name                   = "COLLISIONS_COHSEX"
  elseif(V_kind==SE_GW_NEQ) then
@@ -206,33 +206,24 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
 &                                COLL%D(2,1):COLL%D(2,2),&
 &                                COLL%D(3,1):COLL%D(3,2)))
    !
-   if(     V_kind==SE_GW_NEQ) allocate(COLLISIONS_v_disk(COLL%N,1))      
-   if(.not.V_kind==SE_GW_NEQ) allocate(COLLISIONS_v_disk(COLL%N,2))      
-   !
    if(V_kind==SE_GW_NEQ) then
      ! Real collisions
      call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL%N/))
-     if(write_is_on(ID)) then
-       COLLISIONS_v_disk(:,1) =real(COLL%v(1:COLL%N))
-       call io_bulk(ID,R1=COLLISIONS_v_disk(:,1))
-     else
-       call io_bulk(ID,R1=COLLISIONS_v_disk(:,1))
-       COLL%v(1:COLL%N)=CMPLX(COLLISIONS_v_disk(:,1),0._SP)
-     endif
+     call io_bulk(ID,R1=COLL%v_r)
    else
      ! Complex collisions
+     allocate(COLLISIONS_v_disk(COLL%N,2))
      call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL%N,2/))
      if(write_is_on(ID)) then
-       COLLISIONS_v_disk(:,1) =real(COLL%v(1:COLL%N))
-       COLLISIONS_v_disk(:,2)=aimag(COLL%v(1:COLL%N))
+       COLLISIONS_v_disk(:,1) =real(COLL%v_c(1:COLL%N))
+       COLLISIONS_v_disk(:,2)=aimag(COLL%v_c(1:COLL%N))
        call io_bulk(ID,R2=COLLISIONS_v_disk)
      else
        call io_bulk(ID,R2=COLLISIONS_v_disk)
-       COLL%v(1:COLL%N)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
+       COLL%v_c(1:COLL%N)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
      endif
+     deallocate(COLLISIONS_v_disk)
    endif
-   !
-   deallocate(COLLISIONS_v_disk)
    !
  endif
  !

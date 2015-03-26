@@ -169,7 +169,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
          !
        endif
        !
-       pre_factor=(4._SP*pi)**2._SP*GW_NEQ_collisions(i_qp1_mem)%v3r(i_J_mem,1,i_q_mem)
+       pre_factor=(4._SP*pi)**2._SP*GW_NEQ_collisions(i_qp1_mem)%v3_r(i_J_mem,1,i_q_mem)
        !
        do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
          !

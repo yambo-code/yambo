@@ -37,7 +37,7 @@ subroutine RT_driver(E,X,k,q)
  use SC,             ONLY:SC_potential,SC_bands,it_now,l_sc_pot_is_local,WF_G_max,WF_Go_indx,rho_n,&
 &                         SC_QP_setup
  use rt_ctl,         ONLY:RT_output,RT_alloc_ctl,RT_free_ctl,RT_IO_G_steps,ID,it_start,RT_carriers_object
- use real_time,      ONLY:NE_steps,RT_step,G_lesser, &
+ use real_time,      ONLY:NE_steps,RT_step,G_lesser,&
 &                         l_NE_with_fields,RT_alloc,RT_free,&
 &                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,&
 &                         G_lesser_reference,rho_reference, &
@@ -48,7 +48,7 @@ subroutine RT_driver(E,X,k,q)
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
- use collision,       ONLY:HF_collisions,COHSEX_collisions,GW_NEQ_collisions
+ use collision,       ONLY:Fock_collisions,SEX_collisions,GW_NEQ_collisions
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k
@@ -363,8 +363,8 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_carriers_object(RT_carriers,WHAT='free')
  !
- if (allocated(HF_collisions))     call COLLISIONS_alloc_and_free("HF","v1 table","clean",0)
- if (allocated(COHSEX_collisions)) call COLLISIONS_alloc_and_free("COHSEX","v1 table","clean",0)
+ if (allocated(Fock_collisions))   call COLLISIONS_alloc_and_free("Fock","v1 table","clean",0)
+ if (allocated(SEX_collisions))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
  if (allocated(GW_NEQ_collisions)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
  !
  call set_real_printed_length()

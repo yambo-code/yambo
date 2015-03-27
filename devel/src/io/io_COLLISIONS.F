@@ -62,7 +62,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
 #endif
  !
  if(V_kind==SC_HF) then
-   db_name                   = "COLLISIONS_HF"
+   db_name                   = "COLLISIONS_FOCK"
  elseif(V_kind==SC_COHSEX) then
    db_name                   = "COLLISIONS_COHSEX"
  elseif(V_kind==SE_GW_NEQ) then

@@ -24,9 +24,11 @@
 subroutine electrons_driver(Xk,Xen,Xq)
  !
  use pars,           ONLY:SP,lchlen
+ use units,          ONLY:AU2nAmpere
  Use stderr,         ONLY:intc
  use wave_func,      ONLY:WF,wf_ng
  use FFT_m,          ONLY:fft_size,fft_dim
+ use vec_operate,    ONLY:v_norm
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:i_time_rev
  use com,            ONLY:error
@@ -35,7 +37,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_RT_dos,l_RT_occ_Bands,l_RT_life_Bands,&
-&                         l_bands
+&                         l_bands,l_current,current_dir
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -58,7 +60,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #if defined _YPP_MAGNETIC
  use YPP,            ONLY:l_angular_momentum,l_position
 #endif
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,el_density_and_current,PARALLEL_WF_index,PARALLEL_global_indexes,PARALLEL_WF_distribute
  !
  implicit none
  !
@@ -67,7 +69,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  ! Work Space
  !
- real(SP), allocatable :: el_den(:)
+ real(SP), allocatable :: el_den(:),el_cur(:,:)
  integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_wfp,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
  logical               :: flag
  character(lchlen)     :: ch_ws(2)
@@ -94,7 +96,10 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
 #endif
  !
- flag=any((/l_mag,l_density,l_sp_wf,l_dos,l_bands/))
+ ! Doing something?
+ !==================
+ !
+ flag=any((/l_mag,l_density,l_sp_wf,l_dos,l_bands,l_current/))
  !===
 #if defined _YPP_MAGNETIC
  if (.not.flag) flag=any((/l_angular_momentum,l_position/))
@@ -113,7 +118,8 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  call plot_check_and_launch(.true.)
  !
- ! Loading  Wf 
+ ! QP indexes loading
+ !====================
  !
  nb_to_load=(/1,Xen%nbm/)
  nkpt_to_load=(/1,Xk%nibz/)
@@ -128,9 +134,11 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #endif
  !
  if (flag) then
+   !
    call QP_state_table_setup(Xen)
    nb_to_load   =(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
    nkpt_to_load =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)
+   !
 #if defined _YPP_ELPH
    l_polaronic_wf=.FALSE.
    db_name=trim(jobstr)//'/TOP_RESIDUAL_b'//trim(intc(QP_table(1,1)))//'_k'//trim(intc(QP_table(1,3)))
@@ -143,7 +151,11 @@ subroutine electrons_driver(Xk,Xen,Xq)
      nkpt_to_load  =(/1,nkibz/)
    endif
 #endif
+   !
  endif
+ !
+ ! WFs
+ !=====
  !
  flag=.not.l_dos
  !===
@@ -158,6 +170,11 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #endif
  !
  if(flag) then
+   !
+   call PARALLEL_global_indexes(Xen,Xk,Xq," ",RESET=.TRUE.)
+   call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_index( )
+   !
    call WF_load(WF,wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
    nr=fft_dim
    allocate(v2plot(fft_size))
@@ -196,8 +213,11 @@ subroutine electrons_driver(Xk,Xen,Xq)
    call electrons_bands(Xk,Xen,nb_to_load)
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
  !==============================================================================
+ !
 #if defined _YPP_ELPH
  if (l_polaronic_wf) then
    !
@@ -282,6 +302,11 @@ subroutine electrons_driver(Xk,Xen,Xq)
  endif
  !
 #endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! WAVEFUNCTIONS (and Mean Potential)
+ !====================================
  !
  ik_ref=-1
  ch_ws(2)='sp_wf'
@@ -491,19 +516,57 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
 #endif
  !
+ ! CURRENT
+ !=========
+ !
+ if (l_current) then
+   !
+   call section('*','Current Plot')
+   !
+   allocate(el_cur(fft_size,3))
+   !
+   call el_density_and_current(Xen,Xk,J=el_cur)
+   v2plot=(el_cur(:,1)*current_dir(1)+el_cur(:,2)*current_dir(2)+&
+&          el_cur(:,3)*current_dir(3))*AU2nAmpere/v_norm(current_dir)
+   !
+   call msg("s",'Current integrals (x,y,z) [nAmpere]:',&
+&               (/Sum(el_cur(:,1)),Sum(el_cur(:,2)),Sum(el_cur(:,3))/)*AU2nAmpere)
+   !
+   l_norm_to_one=.false.
+   !
+   ch_ws(1)='current_'//trim(intc(plot_dim))
+   if (use_cube) output_fname=trim(ch_ws(1))//'d.cube'
+   if (use_xcrysden) output_fname=trim(ch_ws(1))//'d.xsf'
+   if (use_gnuplot)  output_fname=trim(ch_ws(1))//'d'
+   !
+   if (use_cube) then 
+     call of_open_close(trim(output_fname),'o')
+   else
+     call of_open_close(trim(output_fname),'ot')
+     call msg('o den',"#")
+   endif
+   !
+   plot_title='current'
+   call plot_check_and_launch(.false.)
+   !
+   call of_open_close(trim(output_fname))
+   !
+ endif
+ !
  ! GPL_EXCLUDE_END
  !
 1 continue
  call WF_free(WF)
- if (allocated(v2plot))   deallocate(v2plot)
- if (allocated(QP_table)) deallocate(QP_table,QP_state)
- if (allocated(magn))     deallocate(magn)
- if (allocated(el_den))   deallocate(el_den)
+ if (allocated(v2plot))     deallocate(v2plot)
+ if (allocated(QP_table))   deallocate(QP_table,QP_state)
+ if (allocated(magn))       deallocate(magn)
+ if (allocated(el_den))     deallocate(el_den)
+ if (allocated(el_cur))     deallocate(el_cur)
 #if defined _YPP_SC 
- if (allocated(V_mean))   deallocate(V_mean)
+ if (allocated(V_mean))     deallocate(V_mean)
 #endif
 #if defined _YPP_ELPH 
- if (allocated(v2plot_c)) deallocate(v2plot_c)
+ if (allocated(v2plot_c))   deallocate(v2plot_c)
 #endif
  plot_title=' '
  !

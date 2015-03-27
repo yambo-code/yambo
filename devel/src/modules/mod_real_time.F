@@ -127,7 +127,7 @@ module real_time
  real(SP),    allocatable :: BGR_Self_Energy(:,:,:)  
  real(SP),    allocatable :: REF_V_xc_sc(:,:)  
  real(SP),    allocatable :: REF_V_hartree_sc(:,:)  
- real(SP),    allocatable :: REF_QP_Vnl_xc(:)  
+ real(SP),    allocatable :: REF_Vnl_xc(:)  
  real(SP)                 :: BGR(5) ! (BGR at the minimum dir/ind gap, H contrib., xc contrib., SE contrib.)
  type(levels)             :: E_reference
  !
@@ -241,7 +241,7 @@ module real_time
  ! COLLISIONS
  !------------
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
- complex(SP), allocatable :: RT_Vnl_xc(:,:,:)
+ complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
  complex(SP), allocatable :: I_coh_SAVE(:,:,:,:)
  complex(SP), allocatable :: I_relax_static(:,:,:)
  complex(SP), allocatable :: I_relax_dyn(:,:,:,:)
@@ -322,7 +322,8 @@ module real_time
  !
  interface
    !
-   subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_MATRIX,G,k,en,TRANS,RIM,nK_mem)
+   subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_limited,&
+&                                 V_MATRIX,PV_MATRIX,G,k,en,TRANS,RIM,nK_mem)
      use pars,       ONLY:SP
      use SC,         ONLY:SC_bands
      use R_lattice,  ONLY:bz_samp
@@ -337,6 +338,8 @@ module real_time
      complex(SP),     optional, intent(in) :: V_MATRIX(3,SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
      complex(SP),     optional, intent(in) :: PV_MATRIX(3,SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
      complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
+     complex(SP),     optional, intent(in) :: O_MATRIX_limited(SC_bands(1):SC_bands(2),&
+&                                                              SC_bands(1):SC_bands(2),nK_mem,n_sp_pol)
      complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
      real(SP),        optional, intent(in) :: O_REAL(fft_size,n_spin)
      logical,         optional, intent(in) :: TRANS
@@ -511,7 +514,7 @@ module real_time
      call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
      !
      if(l_sc_hf.or.l_sc_cohsex) then
-       allocate(RT_Vnl_xc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk))
+       allocate(RT_Vnl_xc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk,n_sp_pol))
        call mem_est("RT_Vnl_xc",(/size(RT_Vnl_xc)/),(/2*SP/))
        RT_Vnl_xc=(0._SP,0._SP)
      endif
@@ -550,8 +553,8 @@ module real_time
      allocate(REF_V_hartree_sc(fft_size,n_spin))
      call mem_est("REF_V_hartree_sc",(/fft_size*n_spin/),(/SP/))
      !
-     allocate(REF_QP_Vnl_xc(QP_n_states))
-     call mem_est("REF_QP_Vnl_xc",(/size(REF_QP_Vnl_xc)/),(/2*SP/))
+     allocate(REF_Vnl_xc(QP_n_states))
+     call mem_est("REF_Vnl_xc",(/size(REF_Vnl_xc)/),(/2*SP/))
      !
      allocate(BGR_hartree(SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("BGR_hartree",(/size(BGR_hartree)/),(/SP/))
@@ -580,13 +583,6 @@ module real_time
      use xc_functionals, ONLY:E_xc
      !
      call SC_free()
-     !
-     if (l_HF_and_locXC) then
-       !
-       deallocate(QP_Vnl_xc)
-       call mem_est("QP_Vnl_xc")
-       !
-     endif
      !
      deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz)
      if(allocated(RIM_EE_scatt_table)) deallocate(RIM_EE_scatt_table)
@@ -656,8 +652,8 @@ module real_time
        call mem_est("SAVED_lifetime")
      endif
      !
-     deallocate(REF_QP_Vnl_xc,REF_V_xc_sc,REF_V_hartree_sc)
-     call mem_est("REF_QP_Vnl_xc REF_V_xc_sc REF_V_hartree_sc")
+     deallocate(REF_Vnl_xc,REF_V_xc_sc,REF_V_hartree_sc)
+     call mem_est("REF_Vnl_xc REF_V_xc_sc REF_V_hartree_sc")
      deallocate(BGR_hartree,BGR_V_xc,BGR_Self_Energy)
      call mem_est("BGR_hartree BGR_V_xc BGR_Self_Energy")
      !

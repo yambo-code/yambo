@@ -84,6 +84,7 @@ module YPP
  integer               ::plot_dim
  real(SP), allocatable ::v2plot(:)
  real(SP), allocatable ::v2plot2D(:,:)
+ real(SP)              ::current_dir(3)=(/1.,1.,1./)
  !
  ! Exc/SP Properties
  !

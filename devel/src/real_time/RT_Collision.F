@@ -168,18 +168,19 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      if (l_RT_RWA) then
-       Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1)=&
-&        H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
+       Ho_plus_sigma(SC_bands(1):SC_bands(2),&
+&                    SC_bands(1):SC_bands(2),ik_RT,1)=H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1)
      else
-       call V_by_V_plus_V_omp(SC_nbands,cONE,H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1),&
-&                         Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1))
+       call V_by_V_plus_V_omp(SC_nbands,&
+&                             cONE,H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1),&
+&                             Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1))
      endif
      !
      ! Non-local XC potentials (like COHSEX)
      !=======================================
      if(l_sc_hf.or.l_sc_cohsex) then
-       call V_by_V_plus_V_omp(SC_nbands,cONE,RT_Vnl_xc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT),&
-&                         Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1))
+       call V_by_V_plus_V_omp(SC_nbands,cONE,RT_Vnl_xc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1),&
+&                             Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1))
      endif
    enddo
    !

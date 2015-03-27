@@ -30,6 +30,7 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
  use QP_m,             ONLY:QP_table,QP_nk,QP_nb,QP_n_states,QP_Sc,QP_Vnl_xc
  use SC,               ONLY:SC_bands
  use collision,        ONLY:Fock_collisions,SEX_collisions,nFock_collisions,nSEX_collisions
+ use electrons,        ONLY:spin,n_sp_pol
  use parallel_m,       ONLY:PAR_QP_index,PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
 #if defined _RT
  use real_time,        ONLY:RT_nk,RT_ibz_coo,RIM_bz_coo,RT_Nk_ibz,RT_Vnl_xc,&
@@ -48,7 +49,7 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
  !
  ! Work Space
  !
- integer           :: i_qp,ib,ibp,i_k,i_kmq,ic1,ic2,i_qp_mem,nstates
+ integer           :: i_qp,ib,ibp,i_k,i_kmq,ic1,ic2,i_qp_mem,nstates,i_spin
 #if defined _RT
  integer           :: i_n,i_m,i_k_RT
 #endif
@@ -88,6 +89,7 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
    ic1=1
    ic2=1
    !
+   i_spin=spin(QP_table(i_qp,:))
    !
    do i_kmq=1,QP_nk
      !
@@ -98,8 +100,8 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
            if (Fock_collisions(i_qp_mem)%table(ib,ibp,i_kmq)/=0) then
 #if defined _RT
              if(l_real_time) then
-               RT_Vnl_xc(i_n,i_m,i_k_RT)=RT_Vnl_xc(i_n,i_m,i_k_RT) &
-                                              -cI*Fock_collisions(i_qp_mem)%v_c(ic1)*G_hf_input(ib,ibp,i_kmq)
+               RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin) &
+&                                               -cI*Fock_collisions(i_qp_mem)%v_c(ic1)*G_hf_input(ib,ibp,i_kmq)
              else
 #endif
                QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*Fock_collisions(i_qp_mem)%v_c(ic1)*G_hf_input(ib,ibp,i_kmq)
@@ -113,8 +115,8 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
            if (SEX_collisions(i_qp_mem)%table(ib,ibp,i_kmq)/=0) then
 #if defined _RT
              if(l_real_time) then
-               RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2))=RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2)) &
-                                              -cI*SEX_collisions(i_qp_mem)%v_c(ic2)*G_xc_input(ib,ibp,i_kmq)
+               RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin) &
+                                                -cI*SEX_collisions(i_qp_mem)%v_c(ic2)*G_xc_input(ib,ibp,i_kmq)
              else
 #endif
                QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*SEX_collisions(i_qp_mem)%v_c(ic2)*G_xc_input(ib,ibp,i_kmq)
@@ -130,8 +132,17 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
    enddo
    !
 #if defined _RT
-   RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2))=RT_Vnl_xc(i_n,i_m,i_k_RT)
-   if(i_n<i_m) RT_Vnl_xc(i_m,i_n,:)=conjg(RT_Vnl_xc(i_n,i_m,:))
+   !
+   ! I expand now on all the RT grid
+   !
+   do i_spin=1,n_sp_pol
+     !
+     RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)
+     !
+     if (i_n<i_m) RT_Vnl_xc(i_m,i_n,:,i_spin)=conjg(RT_Vnl_xc(i_n,i_m,:,i_spin))
+     !
+   enddo
+   !
 #endif
    !
  enddo

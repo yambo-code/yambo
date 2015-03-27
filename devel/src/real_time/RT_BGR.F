@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_BGR(G,E,k)
+subroutine RT_BGR(dG,E,k)
  !
  ! This routine calculates the BGR
  !
@@ -32,12 +32,12 @@ subroutine RT_BGR(G,E,k)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- use electrons,      ONLY:levels,n_sp_pol,E_duplicate,E_reset
+ use electrons,      ONLY:levels,n_sp_pol,E_duplicate,E_reset,spin
  use parallel_m,     ONLY:master_cpu
  use QP_m,           ONLY:QP_table,QP_n_states
  use wave_func,      ONLY:WF
  use real_time,      ONLY:G_lesser_reference,l_initial_equilibrium,REF_V_xc_sc,BGR,&
-&                         REF_V_hartree_sc,REF_QP_Vnl_xc,BGR_Hartree,BGR_V_xc,BGR_Self_Energy,&
+&                         REF_V_hartree_sc,REF_Vnl_xc,BGR_Hartree,BGR_V_xc,BGR_Self_Energy,&
 &                         l_RT_uses_E_RIM,RIM_ibz_coo,E_reference,RT_nk,RT_ibz_coo,&
 &                         eval_HARTREE,eval_DFT,RT_ibz_coo,RT_all2ibz,l_BGR,RT_Vnl_xc
  use xc_functionals, ONLY:V_xc,XC_potential_driver
@@ -49,14 +49,14 @@ subroutine RT_BGR(G,E,k)
  !
  type(levels),  intent(inout) :: E
  type(bz_samp), intent(in)    :: k
- complex(SP),   intent(in)    :: G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
+ complex(SP),   intent(in)    :: dG(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),RT_nk)
  !
  ! Work Space
  !
  complex(SP)  :: G_hf(SC_bands(2),SC_bands(2),nkibz),G_cohsex(SC_bands(2),SC_bands(2),nkibz),&
 &                H(SC_bands(2),SC_bands(2),n_sp_pol)
  real(SP)     :: deltaE
- integer      :: ib,ik,ik_ref,ik_RT,i_qp,ibp,I_dir(2),ik_ibz,ik_RIM
+ integer      :: ib,ik,ik_ref,ik_RT,i_qp,ibp,I_dir(2),ik_ibz,ik_RIM,i_sp
  !
 #if defined _TIMING
  call timing('RT BGR',OPR='start')
@@ -143,9 +143,9 @@ subroutine RT_BGR(G,E,k)
        if (.not.l_initial_equilibrium) then
          do ibp=SC_bands(1),SC_bands(2)
            !
-           G_hf(ib,ibp,ik)    =G(ib,ibp,ik_ref)+G_lesser_reference(ib,ibp,ik_ref)
+           G_hf(ib,ibp,ik)    =dG(ib,ibp,ik_ref)+G_lesser_reference(ib,ibp,ik_ref)
            !
-           G_cohsex(ib,ibp,ik)=G(ib,ibp,ik_ref)+G_lesser_reference(ib,ibp,ik_ref)
+           G_cohsex(ib,ibp,ik)=dG(ib,ibp,ik_ref)+G_lesser_reference(ib,ibp,ik_ref)
            !
            if (ib==ibp) G_cohsex(ib,ibp,ik)=G_cohsex(ib,ibp,ik)-(0._SP,1._SP)
            !
@@ -156,37 +156,23 @@ subroutine RT_BGR(G,E,k)
    !
    call COLLISIONS_compose(G_hf,G_cohsex)
    !
-   if (l_initial_equilibrium) then
+   do i_qp=1,QP_n_states
      !
-     do i_qp=1,QP_n_states
-       !
-       ib =QP_table(i_qp,1)
-       ibp=QP_table(i_qp,2)
-       ik =QP_table(i_qp,3)
-       !
-       ik_RT=RT_ibz_coo(ik,1)
-       !
-       REF_QP_Vnl_xc(i_qp)=RT_Vnl_xc(ib,ibp,ik_RT)
-       !
-     enddo
+     ib  =QP_table(i_qp,1)
+     ibp =QP_table(i_qp,2)
+     ik  =QP_table(i_qp,3)
+     i_sp=spin(QP_table(i_qp,:))
      !
-   else
+     ik_RT=RT_ibz_coo(ik,1)
      !
-     do i_qp=1,QP_n_states
-       !
-       ib =QP_table(i_qp,1)
-       ibp=QP_table(i_qp,2)
-       ik =QP_table(i_qp,3)
-       !
-       ik_RT=RT_ibz_coo(ik,1)
-       !
+     if (l_initial_equilibrium) then
+       REF_Vnl_xc(i_qp)=RT_Vnl_xc(ib,ibp,ik_RT,i_sp)
+     else
        if (ib/=ibp) cycle
-       !
-       BGR_Self_Energy(ib,ik,1)=real(RT_Vnl_xc(ib,ib,ik_RT)-REF_QP_Vnl_xc(i_qp))
-       !
-     enddo
+       BGR_Self_Energy(ib,ik,1)=real(RT_Vnl_xc(ib,ib,ik_RT,i_sp)-REF_Vnl_xc(i_qp))
+     endif
      !
-   endif
+   enddo
    !
  endif
  !

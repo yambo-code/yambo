@@ -32,7 +32,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index,WF_load,MATRIX_driver 
+ use interfaces,     ONLY:PARALLEL_index,WF_load,MATRIX_driver,el_density_and_current
  use R_lattice,      ONLY:bz_samp,bare_qpg,nqibz
  use electrons,      ONLY:levels,nel
  use D_lattice,      ONLY:DL_vol
@@ -96,7 +96,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  call WF_load(WF,0,1,(/1,Xen%nbm/),(/1,Xk%nibz/),title='-Density')
  !
  allocate(E_xc(fft_size),rho(fft_size))
- call el_density(Xen,Xk,rho,.false.)
+ call el_density_and_current(Xen,Xk,rho=rho)
  !
  KIND_=XC_EXCHANGE_CORRELATION
  FUNCTIONAL_=XC_LDA_C_KP

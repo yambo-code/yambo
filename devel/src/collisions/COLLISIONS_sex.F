@@ -237,6 +237,8 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
            isc%rhotw=iscp%rhotw
          endif
          !
+         pre_factor=cZERO
+         !
 !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor)
          do ig1=1,X%ng
            do ig2=1,X%ng

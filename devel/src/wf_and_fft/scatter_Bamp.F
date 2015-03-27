@@ -59,20 +59,17 @@ subroutine scatterBamp(isc)
  allocate(WF_symm_i(fft_size,n_spinor))
  allocate(WF_symm_o(fft_size,n_spinor))
  !
- ! <ib ik_is i_sp| 
+ ! |ib ik_is i_sp>
  call WF_apply_symm(isc%is,WF_symm_i)
  !
  ! | ob ok_os o_sp>   
  call WF_apply_symm(isc%os,WF_symm_o)
-
-
  !
  ! \tilde{\rho} in Real Space
  !
 #if defined _FFTQE && !defined _USE_3D_FFT
  ! 
- ! add one extra conjg since FFTQE cannot account
- ! for the conjg in one go
+ ! add one extra conjg since FFTQE cannot account for the conjg in one go
  ! 
  !$omp parallel default(shared), private(ir)
  !$omp do
@@ -92,7 +89,7 @@ subroutine scatterBamp(isc)
  !
 #else
 !
-#  if defined _OPENMP
+#if defined _OPENMP
  !$omp parallel default(shared), private(ir)
  !$omp do
  do ir = 1, fft_size
@@ -108,16 +105,15 @@ subroutine scatterBamp(isc)
  !$omp end do
  endif
  !$omp end parallel
-#  else
+#else
  rho_tw_rs(:)=conjg(WF_symm_i(:,1))*WF_symm_o(:,1)
  if (n_spinor==2) rho_tw_rs(:)=rho_tw_rs(:)+conjg(WF_symm_i(:,2))*WF_symm_o(:,2)
-#  endif
-
 #endif
-
-!
-! perform the actual FFT
-!
+ !
+#endif
+ !
+ ! perform the actual FFT
+ !
 #if defined _FFTW
  call fft_3d(rho_tw_rs,fft_dim,+1,fftw_plan)
 #elif defined _FFTSG || (defined _USE_3D_FFT && defined _FFTQE)

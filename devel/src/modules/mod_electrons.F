@@ -23,7 +23,7 @@
 !
 module electrons
  !
- use pars
+ use pars,  ONLY:SP,IP
  implicit none
  !
  real(SP) :: nel

@@ -93,7 +93,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
    ! Plot the Green Functions
    !
-   call QP_of(qp,en,QPdb_read_err)
+   call QP_of(qp,en,QPdb_read_err,'qp')
    !
    if (do_IO) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
@@ -285,7 +285,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  ! Output File
  !==============
  !
- call QP_of(qp,en,QPdb_read_err)
+ call QP_of(qp,en,QPdb_read_err,'qp')
  !
 end subroutine
 

@@ -154,6 +154,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  p_format   ='g'
  l_exc_wf   =.false.
  l_density  =.false.
+ l_current  =.false.
  V_value    ='RE'
  l_mag=.false.
  l_sp_wf=.false.
@@ -407,6 +408,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
      endif
      if ( trim(rstr_piece(i1)) == 'electrons') then
        !
+       l_current        =trim(rstr_piece(i1+1))=='c'
        l_density        =trim(rstr_piece(i1+1))=='d'
        l_dos            =trim(rstr_piece(i1+1))=='s'
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
@@ -451,6 +453,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
        if (l_angular_momentum) call initactivate(1,'angular_m')
        if (l_position)         call initactivate(1,'position')
 #endif
+       if (l_current)        call initactivate(1,'current')
        if (l_density)        call initactivate(1,'density')
        if (l_sort)           infile_editing=.false.
      endif
@@ -518,12 +521,13 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #if defined _YPP_SC
 &             runlevel_is_on('MeanPot'), &
 #endif
-&             runlevel_is_on('density')/))
+&             runlevel_is_on('density'),runlevel_is_on('current')/))
  l_free_hole=runlevel_is_on('freehole')
  l_amplitude=runlevel_is_on('amplitude')
  l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
  l_sp_wf    =runlevel_is_on('wavefunction').and.runlevel_is_on('electrons')
  l_density  =runlevel_is_on('density').and.runlevel_is_on('electrons')
+ l_current  =runlevel_is_on('current').and.runlevel_is_on('electrons')
  l_mag      =runlevel_is_on('magnetization')
  l_wannier  =runlevel_is_on('wannier')
  l_spin     =runlevel_is_on('spin')
@@ -628,6 +632,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
    if (l_sp_wf) call initactivate(1,"ResTresh")  
 #endif
    if (l_mag)   call initactivate(1,"MagDir") 
+   if (l_current) call initactivate(1,'CurrentDir')
  endif
  !
  if (l_excitons) then

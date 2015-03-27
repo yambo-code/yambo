@@ -21,7 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_MATRIX,G,k,en,TRANS,RIM,nK_mem)
+subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_limited,&
+&                              V_MATRIX,PV_MATRIX,G,k,en,TRANS,RIM,nK_mem)
  !
  use pars,           ONLY:SP,cI
  use SC,             ONLY:SC_bands,SC_nbands
@@ -53,6 +54,8 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
  complex(SP),     optional, intent(in) :: PV_MATRIX(3,SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
  complex(SP),     optional, intent(in) :: V_MATRIX(3,SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),nK_mem,n_sp_pol)
+ complex(SP),     optional, intent(in) :: O_MATRIX_limited(SC_bands(1):SC_bands(2),&
+&                                                          SC_bands(1):SC_bands(2),nK_mem,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
  real(SP),        optional, intent(in) :: O_REAL(fft_size,n_spin)
  logical,         optional, intent(in) :: TRANS
@@ -79,20 +82,23 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
  endif
  !
  OUTPUT_dim=0
- if(present(O_MATRIX).or.present(O_real).or.present(O_QP)) OUTPUT_dim=1
- if(present(V_MATRIX).or.present(PV_MATRIX))               OUTPUT_dim=3
+ if(present(O_MATRIX).or.present(O_real).or.&
+&   present(O_QP).or.present(O_MATRIX_limited)) OUTPUT_dim=1
  !
- if(OUTPUT_dim==0) call error('RT_average_operatore: not a valid call')
+ if(present(V_MATRIX).or.present(PV_MATRIX))    OUTPUT_dim=3
+ !
+ if (OUTPUT_dim==0) call error('RT_average_operator: not a valid call')
  !
  SC_bands2=SC_nbands**2
- if(OUTPUT_dim==1) O_VALUE=(0._SP,0._SP)
- if(OUTPUT_dim==3) V_VALUE=(0._SP,0._SP)
+ if (OUTPUT_dim==1) O_VALUE=(0._SP,0._SP)
+ if (OUTPUT_dim==3) V_VALUE=(0._SP,0._SP)
  !
  do ik_ibz=1,k%nibz
    ! 
-   if (k%nibz/=nK_mem) then
-     if (.not.PAR_IND_Xk_ibz%element_1D(ik_ibz)) cycle   
-   endif
+   !if (k%nibz/=nK_mem) then
+   !  if (.not.PAR_IND_Xk_ibz%element_1D(ik_ibz)) cycle   
+   !endif
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik_ibz)) cycle   
    !
    Hk=(0._SP,0._SP)
    VALUE_tmp=(0._SP,0._SP)
@@ -133,9 +139,9 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
        endif 
        !
 #if defined _OPENMP
-         VALUE_tmp(i_dir)=VALUE_tmp(i_dir)-cI*Vstar_dot_V_omp(SC_bands2,Hk(i_dir,:,:,1),G(:,:,ik))
+       VALUE_tmp(i_dir)=VALUE_tmp(i_dir)-cI*Vstar_dot_V_omp(SC_bands2,Hk(i_dir,:,:,1),G(:,:,ik))
 #else
-         VALUE_tmp(i_dir)=VALUE_tmp(i_dir)-cI*Vstar_dot_V(SC_bands2,Hk(i_dir,:,:,1),G(:,:,ik))
+       VALUE_tmp(i_dir)=VALUE_tmp(i_dir)-cI*Vstar_dot_V(SC_bands2,Hk(i_dir,:,:,1),G(:,:,ik))
 #endif
        !
      enddo
@@ -156,7 +162,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
  !
  ! Note that the all2all here is possible because the parallel structure is
  !
- !   "k.b" -> QP (k,n,n')  
+ !   "k.b" -> QP (k,n,n') and PAR_IND_WF_k+PAR_IND_B_mat_ordered
  !   "q"   -> q 
  !   "qp"  -> Bp_mat (m,m')
  !
@@ -165,16 +171,12 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
  ! NOTE, however, that the all2all procedure are not at all general and must be changed if the
  ! input array is distributed in another way.
  !
- if (k%nibz/=nK_mem) then
-   !
-   if (OUTPUT_dim==1) call PP_redux_wait(O_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-   if (OUTPUT_dim==3) call PP_redux_wait(V_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-   !
- else if (.not.present(O_MATRIX)) then
-   !
+ if (present(O_QP).or.present(O_REAL)) then
    if (OUTPUT_dim==1) call PP_redux_wait(O_VALUE)
    if (OUTPUT_dim==3) call PP_redux_wait(V_VALUE)
-   !
+ else
+   if (OUTPUT_dim==1) call PP_redux_wait(O_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   if (OUTPUT_dim==3) call PP_redux_wait(V_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  endif
  !
 #if defined _TIMING
@@ -203,25 +205,33 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
      l_transpose=.false.
      if(present(TRANS)) l_transpose=TRANS
      !
-     !
      ! A: Average of a scalar
      !========================
      if (OUTPUT_dim==1) then
        !
        Hk_tmp=(0._SP,0._SP)
        !
-       if (present(O_MATRIX)) then
+       if (present(O_MATRIX).or.present(O_MATRIX_limited)) then
          do ib=SC_bands(1),SC_bands(2)
            do ibp=SC_bands(1),SC_bands(2)
-             if (     l_transpose) Hk_tmp(ibp,ib,:)=O_MATRIX(ib,ibp,ik_mem,:) 
-             if (.not.l_transpose) Hk_tmp(ib,ibp,:)=O_MATRIX(ib,ibp,ik_mem,:) 
+             !
+             if (present(O_MATRIX) )then
+               if (     l_transpose) Hk_tmp(ibp,ib,:)=O_MATRIX(ib,ibp,ik_mem,:) 
+               if (.not.l_transpose) Hk_tmp(ib,ibp,:)=O_MATRIX(ib,ibp,ik_mem,:) 
+             else
+               if (     l_transpose) Hk_tmp(ibp,ib,:)=O_MATRIX_limited(ib,ibp,ik_mem,:) 
+               if (.not.l_transpose) Hk_tmp(ib,ibp,:)=O_MATRIX_limited(ib,ibp,ik_mem,:) 
+             endif
+             !
            enddo
          enddo
        endif
        !
-       if(present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk_tmp)
-       ! Waring: for nspinor=2 the Vxc countribution could be wrong
-       if(present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk_tmp,WF,'def')
+       if (present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk_tmp)
+       !
+       ! Warning: for nspinor=2 the Vxc countribution could be wrong
+       !
+       if (present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk_tmp,WF,'def')
        !
      endif
      !
@@ -233,6 +243,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
        !
        do ib=SC_bands(1),SC_bands(2)
          do ibp=SC_bands(1),SC_bands(2)
+           !
            do i_spin=1,n_sp_pol
              !
              V3=(0._SP,0._SP)
@@ -242,17 +253,16 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,V_MATRIX,PV_
                 is = sop_inv(k%star(ik,i_star))
                 !
                 ! This procedure is correct for polar-vectors
+                !
                 if (present( V_MATRIX)) then
                   R_s= dl_sop(:,:,is)
-                  !if ( is<= nsym/(i_time_rev+1) ) R_s= dl_sop(:,:,is)
-                  !if ( is > nsym/(i_time_rev+1) ) R_s=-dl_sop(:,:,is)
                   V3(:)=V3(:)+matmul(R_s, V_MATRIX(:,ib,ibp,ik_mem,i_spin))
                 endif
                 !
                 ! This procedure is correct for axial-vectors
+                !
                 if (present(PV_MATRIX)) then
                   R_s=dl_sop(:,:,is)*m3det(dl_sop(:,:,is))
-                  !if( is>  nsym/(1+i_time_rev) ) R_s=-R_s
                   V3(:)=V3(:)+matmul(R_s,PV_MATRIX(:,ib,ibp,ik_mem,i_spin))
                 endif
                 !

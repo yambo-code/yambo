@@ -88,7 +88,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(w_samp) ::Xw(4)
  integer         ::lnstr
  character(lnstr)::instr
- logical         ::CLOSE_Gs,FINALIZE
+ logical         ::CLOSE_Gs,FINALIZE,QP_field
  !
  ! Work Space
  !
@@ -874,7 +874,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !If qp limits are requested they are added at the end of the input file
  !
- if ( any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_eval_collisions ) then
+ QP_field=any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_eval_collisions
+ !
+ if (QP_field) then
    !
    ! The QP_state can be read from ioxxvxc in DUMP mode or from the input file.
    ! The DB value is used when a new input file is created or when the previous input file
@@ -1549,9 +1551,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
 #endif
          !
-#if defined  _ELPH  
+#if defined  _ELPH || defined _QED
          !
-         ! ELPH 
+         ! ELPH/QED
          !
          if ( trim(rstr_piece(i1)) == 'corrtp' ) then
            if ( trim(rstr_piece(i1+1)) == 'e') l_elel_corr=.true.

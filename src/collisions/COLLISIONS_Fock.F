@@ -142,7 +142,6 @@ subroutine COLLISIONS_Fock(E,k,q)
      ! k   =QP_table(i_qp,3)
      !
      i_k_s   = 1
-     !i_kbz  = i_k
      !
      i_kmq_bz =qindx_S(i_k,iqbz,1)
      i_kmq_G0 =qindx_S(i_k,iqbz,2)
@@ -179,7 +178,10 @@ subroutine COLLISIONS_Fock(E,k,q)
            isc%rhotw=iscp%rhotw
          endif
          !
+         pre_factor=cZERO
+         !
          ! Remember isc%gamp=iscp%gamp
+         !
 !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor)
          do ig1=1,N_g_vecs
            pre_factor=pre_factor+isc%rhotw(ig1)*isc%gamp(ig1,1)*conjg(iscp%rhotw(ig1))

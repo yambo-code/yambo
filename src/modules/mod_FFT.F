@@ -39,6 +39,7 @@ module FFT_m
  integer(8)  :: fftw_plan !(FW) +1 sign: G-space to R-space & oscillators
                           !(BW) -1 sign: R-space to G-space
  contains
+   !
    integer function modx(i,j)
      !
      !  Calculate a function similar to MOD:

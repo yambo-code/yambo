@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine build_kpts_map(k,k_save,kpoints_map,action_kind)
+subroutine k_build_map(k,k_save,kpoints_map,action_kind)
  !
  use pars,                ONLY:SP
  use zeros,               ONLY:k_rlu_zero

@@ -46,7 +46,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
 &                         l_RT_uses_E_RIM,RT_ibz_coo
  use SC,             ONLY:SC_bands,SC_description,n_SC_descriptions
 #endif
- use interfaces,     ONLY:PARALLEL_index,WF_load
+ use interfaces,     ONLY:PARALLEL_index,WF_load,el_density_and_current
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait
  use parser_m,       ONLY:parser
  !
@@ -333,7 +333,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
    allocate(el_den(fft_size))
    !
-   call el_density(Xen,Xk,el_den,.FALSE.) 
+   call el_density_and_current(Xen,Xk,rho=el_den) 
    v2plot=el_den
    !
    ch_ws='density_'//trim(intc(plot_dim))

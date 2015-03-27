@@ -33,7 +33,8 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &                        use_GreenF_to_eval_QP,GF_is_causal,QP_G_Zoom_treshold,&
 &                        GW_terminator_E,l_GW_terminator,GW_terminator_Kind,QP_QED_ng
  use stderr,        ONLY:string_pack,gen_fmt
- use drivers,       ONLY:l_life,l_ppa,l_elph_corr,l_elel_corr,l_cohsex,l_elphoton_corr
+ use drivers,       ONLY:l_life,l_ppa,l_elph_corr,l_elel_corr,l_cohsex,&
+&                        l_elphoton_corr,l_HF_and_locXC
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_RIM_tot_nkpts
@@ -142,7 +143,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    write (qp%description(qp%n_descs),trim(&
 &        string_pack('(a,',gen_fmt( r_v=(/QP_cg_percent /) ),')'))) &
 &        ' Transitions       [o/o]:',QP_cg_percent
- else
+ else 
    if ( (.not.l_cohsex) .or. (l_cohsex.and.COHSEX_use_empties) ) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
@@ -170,10 +171,12 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      qp%description(qp%n_descs)=' Sc bands terminator    : no'
    endif
    !
-   qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&       string_pack('(a,',gen_fmt( (/QP_ng_Sx /) ),')'))) &
-&       ' Sx RL components       :',QP_ng_Sx
+   if (l_HF_and_locXC) then
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&         string_pack('(a,',gen_fmt( (/QP_ng_Sx /) ),')'))) &
+&         ' Sx RL components       :',QP_ng_Sx
+   endif
    !
  endif
  !

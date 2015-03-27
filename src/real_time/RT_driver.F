@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_driver(En,X,k,q)
+subroutine RT_driver(E,X,k,q)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_use_collisions,l_sc_ip,l_elph_scatt,l_elel_scatt
@@ -58,7 +58,7 @@ subroutine RT_driver(En,X,k,q)
  !
  ! Notice that E is never changed!
  !
- type(levels)      :: En
+ type(levels)      :: E
  type(bz_samp)     :: k,q
  type(X_t)         :: X(2)
  logical, external :: stop_now
@@ -100,13 +100,13 @@ subroutine RT_driver(En,X,k,q)
  ! This is also called in SC_alloc (from RT_alloc) but I need it also here
  ! for PARALLEL_global_indexes
  !
- call SC_QP_setup(En)
+ call SC_QP_setup(E)
  !
  ! Parallel Setups
  !=================
  !
- call PARALLEL_global_indexes(En,k,q," ",RESET=.TRUE.,X=X(1))
- call PARALLEL_global_indexes(En,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
+ call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
+ call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
  call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_index( )
  !
@@ -117,7 +117,7 @@ subroutine RT_driver(En,X,k,q)
  ! the optical collisions that are done in G-space and would
  ! force the reloading of the WFs
  !
- call DIPOLE_driver(En,k,X(1),X(1)%q0)
+ call DIPOLE_driver(E,k,X(1),X(1)%q0)
  !
  ! IO 
  !====
@@ -134,22 +134,22 @@ subroutine RT_driver(En,X,k,q)
  ! QP-corrections 
  !================
  !
- call QP_apply(SC_bands,En,k,"G",msg_fmt='s')
+ call QP_apply(SC_bands,E,k,"G",msg_fmt='s')
  !
  ! Core initialization
  !
- call RT_initialize(En,k,q)
+ call RT_initialize(E,k,q)
  !
  ! Core allocations
  !
- call RT_alloc(En)
+ call RT_alloc(E)
  call RT_alloc_ctl()
  !
  ! Restart from a previous RT run or from a SC calculation
  ! 
  call section('=','Start and Restart')
  !
- call RT_start_and_restart(En,k,q,X)
+ call RT_start_and_restart(E,k,q,X)
  !
  ! Collisions
  !
@@ -172,8 +172,6 @@ subroutine RT_driver(En,X,k,q)
        !
      endif
      !
-     !call COLLISIONS_compute_RIM_q_factor(k,q)
-     !
    endif
    !
  endif
@@ -185,9 +183,9 @@ subroutine RT_driver(En,X,k,q)
    !
    call msg('s','Reference Lifetimes, GF, Self-Energy ...')
    !
-   call RT_relaxation(dG_lesser(:,:,:,1),En,k,q,0.,.true.)
+   call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0.,.true.)
    !
-   call RT_BGR(dG_lesser(:,:,:,1),En,k)
+   call RT_BGR(dG_lesser(:,:,:,1),E,k)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
@@ -280,11 +278,11 @@ subroutine RT_driver(En,X,k,q)
    !
    ! Current and Polarization
    !==========================
-   call RT_current_AND_polarization(k,En,dG_lesser(:,:,:,it_mem),A_vecpot_previous)
+   call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,it_mem),A_vecpot_previous)
    !
    ! Now calculate Energetics, current and other observables
    !=========================================================
-   call RT_Observables(En,k,dG_lesser(:,:,:,it_mem),on_the_fly_operators)
+   call RT_Observables(E,k,dG_lesser(:,:,:,it_mem),on_the_fly_operators)
    !
    ! Update Bose Temp and Phonons distribution
    !===========================================
@@ -298,21 +296,21 @@ subroutine RT_driver(En,X,k,q)
    !  endif
    !endif
    !
-   if (l_NE_with_fields) call RT_propagate_fields(k,En,A_vecpot,A_vecpot_previous,NE_time,RT_step)
+   if (l_NE_with_fields) call RT_propagate_fields(k,E,A_vecpot,A_vecpot_previous,NE_time,RT_step)
    !
    ! Calculate Collisions and fill Ho_plus_Sigma, H_nl_sc
    !============================================================
-   call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot,En,k,q,NE_time)
+   call RT_Collision(dG_lesser(:,:,:,it_mem),A_vecpot,E,k,q,NE_time)
    !
    ! BGR
    !=======================================
-   call RT_BGR(dG_lesser(:,:,:,it_mem),En,k)
+   call RT_BGR(dG_lesser(:,:,:,it_mem),E,k)
    call RT_output('BGR',TIME=NE_time/FS2AUT)
    !
    ! Eval and Print Mean Carrier Lifetimes
    !=======================================
    if (l_elph_scatt.or.l_elel_scatt) then
-     call RT_mean_carrier_lifetimes(En,k)
+     call RT_mean_carrier_lifetimes(E,k)
      if(l_elph_scatt) call RT_output('EPlife',TIME=NE_time/FS2AUT)
      if(l_elel_scatt) call RT_output('EElife',TIME=NE_time/FS2AUT)
      if((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('factors',TIME=NE_time/FS2AUT)
@@ -322,7 +320,7 @@ subroutine RT_driver(En,X,k,q)
    !===========
    call set_real_printed_length()
    call IO_and_Messaging_switch("-fragments_IO_log")
-   call RT_databases_IO(En,it)
+   call RT_databases_IO(E,it)
    call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)  
    !
@@ -343,7 +341,7 @@ subroutine RT_driver(En,X,k,q)
    !=============
    ! T -> T+dT step 
    !
-   call RT_Integrator(dG_lesser(:,:,:,it_mem_p1),dG_lesser(:,:,:,it_mem),A_vecpot,A_vecpot_previous,RT_step,En,k,q,NE_time)
+   call RT_Integrator(dG_lesser(:,:,:,it_mem_p1),dG_lesser(:,:,:,it_mem),A_vecpot,A_vecpot_previous,RT_step,E,k,q,NE_time)
    !
    G_lesser(:,:,:,it_mem_p1)=G_lesser_reference+dG_lesser(:,:,:,it_mem_p1)
    !	

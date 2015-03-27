@@ -23,8 +23,8 @@
 !
 subroutine eval_GradOperator()
  !
- ! On the fft grid the gradient of a periodic function f(r)
- ! acts as
+ ! On the fft grid the gradient of a periodic function f(r) acts as
+ !
  ! \nabla_r n(r_m) = \sum_{n} C_{m,n}  n(r_n)
  !
  ! where C_{m,n} is a 3-vector found as

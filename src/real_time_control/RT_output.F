@@ -132,9 +132,9 @@ subroutine RT_output(what,VALUES,TIME,E)
 &   file_name(next_file)=trim(append_ch)//'energy'
  short_file_name(next_file)=trim(append_ch)//'energy'
  n_headings(next_file)=6
- headings(next_file,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
- headings(next_file,4:5)=(/"Hartree [eV]","Exc     [eV]"/)
- headings(next_file,6)="E_tot[eV]"
+ headings(next_file,2:3)=(/"dE_kin[eV]","dE_ion[eV]"/)
+ headings(next_file,4:5)=(/"dHartree [eV]","dExc     [eV]"/)
+ headings(next_file,6)="dE_tot[eV]"
  next_file=next_file+1
  !
  if (open_files.and..not.file_already_opened(next_file)) &
@@ -143,10 +143,10 @@ subroutine RT_output(what,VALUES,TIME,E)
  n_headings(next_file)=5
  if (l_elel_scatt.or.l_elph_scatt) n_headings(next_file)=n_headings(next_file)+2
  !if (l_Debye_TBose_update) n_headings(next_file)=n_headings(next_file)+1
- headings(next_file,2)="Total E[eV]"
- headings(next_file,3)="delta N" 
- headings(next_file,4)="N(Holes)"
- headings(next_file,5)="N(Elecs)"
+ headings(next_file,2)="dE_tot[eV]"
+ headings(next_file,3)="dN" 
+ headings(next_file,4)="dN(Holes)"
+ headings(next_file,5)="dN(Elecs)"
  if (l_elel_scatt.or.l_elph_scatt) then 
    headings(next_file,6)="T(hol) [K]" 
    headings(next_file,7)="T(el)  [K]" 

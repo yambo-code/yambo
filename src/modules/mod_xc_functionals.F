@@ -66,33 +66,34 @@ module xc_functionals
  character(*), parameter, dimension(3) :: XC_KIND_DESCR = (/'(X) ','(C) ','(XC)'/)
  !
  interface
+   !
    subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unMUTE,EXX_SCREENING)
-      use pars,          ONLY:SP,DP,RZERO
-      use R_lattice,     ONLY:bz_samp
-      use electrons,     ONLY:levels
-      use com,           ONLY:msg,warning
-      use libxc_funcs_m, ONLY: XC_LDA_X, XC_LDA_C_PW
-      implicit none
-      type(levels),  intent(in)       :: en
-      type(bz_samp), intent(in)       :: Xk
-      integer,       intent(inout)    :: KIND,FUNCTIONAL
-      integer,       intent(in)       :: ORDER
-      real(SP),      intent(inout),optional :: EXX_FRACTION,EXX_SCREENING
-      character(*),  intent(in),   optional :: MUTE
-      logical,       intent(in),   optional :: unMUTE
-    end subroutine XC_potential_driver
-    !
-    subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
-      use pars,          ONLY:SP
-      use R_lattice,     ONLY:bz_samp
-      use electrons,     ONLY:levels
-      implicit none
-      type(levels) ::en
-      type(bz_samp)::Xk
-      integer      ::FUNCTIONAL,ORDER
-      real(SP), optional :: EXX_FRACTION,EXX_SCREENING
-    end subroutine XC_libxc_driver
-    !
+     use pars,          ONLY:SP,DP,RZERO
+     use R_lattice,     ONLY:bz_samp
+     use electrons,     ONLY:levels
+     use com,           ONLY:msg,warning
+     use libxc_funcs_m, ONLY: XC_LDA_X, XC_LDA_C_PW
+     implicit none
+     type(levels),  intent(in)       :: en
+     type(bz_samp), intent(in)       :: Xk
+     integer,       intent(inout)    :: KIND,FUNCTIONAL
+     integer,       intent(in)       :: ORDER
+     real(SP),      intent(inout),optional :: EXX_FRACTION,EXX_SCREENING
+     character(*),  intent(in),   optional :: MUTE
+     logical,       intent(in),   optional :: unMUTE
+   end subroutine XC_potential_driver
+   !
+   subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
+     use pars,          ONLY:SP
+     use R_lattice,     ONLY:bz_samp
+     use electrons,     ONLY:levels
+     implicit none
+     type(levels) ::en
+     type(bz_samp)::Xk
+     integer      ::FUNCTIONAL,ORDER
+     real(SP), optional :: EXX_FRACTION,EXX_SCREENING
+   end subroutine XC_libxc_driver
+   !
  end interface
  !
  contains

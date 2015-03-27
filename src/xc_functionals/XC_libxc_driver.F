@@ -42,6 +42,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use xc_functionals, ONLY:E_xc,F_xc,V_xc,magn,xc_setup_hyb,&
 &                         xc_string,XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
+ use interfaces,     ONLY:el_density_and_current
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk
@@ -105,7 +106,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    !if(n_spin> 1) magn=magn_n
  else
 #endif
-   call el_density(en,Xk,rho,.false.)
+   call el_density_and_current(en,Xk,rho=rho)
    if(n_spin> 1) call el_magnetization(en,Xk)
 #if defined _RT
  endif

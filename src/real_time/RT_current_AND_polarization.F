@@ -28,15 +28,13 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  ! j(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
  ! p(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) r \psi_j(k)
  !
- use pars,           ONLY:SP,cI,pi
- use units,          ONLY:SPEED_OF_LIGHT,FS2AUT
+ use pars,           ONLY:SP,cI
+ use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
- use rt_ctl,         ONLY:RT_do_IO
- use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_average_operator,RT_P,RT_nk,RT_step,NE_i_time !,&
-!&                        l_RT_RK2,l_RT_HEUN
+ use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_average_operator,RT_P,RT_nk
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P,global_gauge
  use parallel_m,     ONLY:PAR_Xk_nibz
@@ -49,31 +47,39 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! Work Space
  !
- integer       :: id
- complex       :: RT_P_tmp(3),RT_ind_J_prev(3)
+ complex       :: RT_P_tmp(3)
  !
  if ( .not. l_NE_dynamics ) return
  !
+ ! The different approaches are listed below
+ !
  ! B': Polarization: store the density at the previous time-step
+ !
  !RT_ind_J_prev=RT_ind_J
  ! 
  ! A : Current
+ !
  call RT_average_operator(V_VALUE=RT_ind_J, V_MATRIX=-DIP_P,&
 &                         G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ !
  !     Velocity gauge I mut use the correct definition of the J operator
+ !
  if(trim(global_gauge)=='velocity') RT_ind_J(:)=RT_ind_J(:)+A_input%vecpot(:)*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
+ !
  RT_ind_J=RT_ind_J/DL_vol
  !
  ! B : Polarization
+ !
  call RT_average_operator(V_VALUE=RT_P_tmp, V_MATRIX=cI*DIP_iR,&
 &                         G=G_input,k=k,en=E,TRANS=.TRUE.,RIM='DIPOLE',nK_mem=PAR_Xk_nibz)
- RT_P_tmp=RT_P_tmp/DL_vol
- RT_P    =RT_P_tmp
+ RT_P    =RT_P_tmp/DL_vol
  !
  ! B': Polarization as an integral of the density
- !RT_P_tmp=(RT_ind_J_tmp+RT_ind_J_prev)*RT_step/2._SP
- !if(l_RT_RK2.or.l_RT_HEUN) RT_P_tmp=RT_P_tmp/2._SP
- !RT_P=RT_P+RT_P_tmp
  !
+ !RT_P_tmp=(RT_ind_J_tmp+RT_ind_J_prev)*RT_step/2._SP
+ !
+ !if(l_RT_RK2.or.l_RT_HEUN) RT_P_tmp=RT_P_tmp/2._SP
+ !
+ !RT_P=RT_P+RT_P_tmp
  !
 end subroutine RT_current_AND_polarization

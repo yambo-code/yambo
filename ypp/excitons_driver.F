@@ -96,7 +96,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  !... I/0
  !
- integer           ::io_err,ID,io_ID
+ integer           ::io_err,io_ID
  integer, external ::io_BS,io_DIPOLES
  type(X_t)         ::Xbsk,Xdip
  !
@@ -166,14 +166,14 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Here I read energies and residuum
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_BSS_diago(iq,ID,BS_H_dim,(/real(BS_E),aimag(BS_E)/),(/real(BS_R),aimag(BS_R)/))
+ io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R)
  if (io_err/=0) return
  !
  call section('*','Excitonic Properties')
  !
  if (l_sort) then
-   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
-   io_err=io_BSS_diago(iq,ID,BS_H_dim,(/real(BS_E),aimag(BS_E)/),(/real(BS_R),aimag(BS_R)/))
+   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=io_ID)
+   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R)
    call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E)
    deallocate(BS_R,BS_E)
    call mem_est('BS_R_E')
@@ -187,8 +187,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  call mem_est("BSS_eh_table",(/(3+n_sp_pol-1)*BS_H_dim/),(/IP/))
  call mem_est('BS_mat',(/BS_H_dim**2/))
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
- io_err=io_BSS_diago(iq,ID,BS_H_dim,(/real(BS_E),aimag(BS_E)/),(/real(BS_R),aimag(BS_R)/))
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=io_ID)
+ io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R)
  !
  if(l_weight_with_dipoles) then
    !call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)

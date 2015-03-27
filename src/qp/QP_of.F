@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_of(qp,en,QPdb_read_err)
+subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  use pars,      ONLY:SP,lchlen,schlen
  use units,     ONLY:HA2EV,HBAR_eVfs,HA2GHZ
@@ -38,6 +38,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
  type(QP_t)   ::qp
  type(levels) ::en
  integer      ::QPdb_read_err
+ character(2) ::what
  !
  ! Work Space
  !
@@ -47,7 +48,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
  !
  !o.qp titles
  !
- integer, parameter:: tpar=24
+ integer, parameter:: tpar=26
  integer       :: ntitles,titles_order(tpar)
  real(SP)      :: values(tpar)
  character(schlen) :: titles(tpar)
@@ -75,11 +76,13 @@ subroutine QP_of(qp,en,QPdb_read_err)
  titles(21) = 'E_75%(low)' ! 21
  titles(22) = 'E_75%(high)' ! 22
  titles(23) = 'Integral' ! 23
- titles(24) = 'Sc(Eo)(Mhz)' ! 24
+ titles(24) = 'E-Eo(Mhz)' ! 24
+ titles(25) = 'E-Eo(meV)' ! 25
+ titles(26) = 'Ehf' ! 26
  !
 #if defined _QED
- ntitles=6
- titles_order(:ntitles)=(/9,10,4,8,2,24/)
+ ntitles=5
+ titles_order(:ntitles)=(/9,10,4,25,24/)
 #else
  ntitles=5
  titles_order(:ntitles)=(/9,10,4,8,2/)
@@ -98,6 +101,10 @@ subroutine QP_of(qp,en,QPdb_read_err)
  if (l_life) then
    ntitles=5
    titles_order(:ntitles)=(/9,10,4,12,13/)
+ endif
+ if (what=='hf') then
+   ntitles=6
+   titles_order(:ntitles)=(/9,10,4,26,1,11/)
  endif
  !
  if (l_extended_output) then
@@ -120,24 +127,28 @@ subroutine QP_of(qp,en,QPdb_read_err)
  endif
  !
  if ( trim(QP_solver)=='n'.or.trim(QP_solver)=='s'.or.l_life.or.&
-&    (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP)             ) then
+&    (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP).or.&
+&    what=='hf') then
    !
-   file_name='qp'
+   file_name=what
    call of_open_close(file_name,'ot')
-   if (trim(QP_solver)=='n') call msg('o qp','# GW [Newton Solver]')
-   if (trim(QP_solver)=='s') call msg('o qp','# GW [Secant method Solver]')
-   if (trim(QP_solver)=='g') call msg('o qp','# GW [Green`s Function Solver]')
+   if (trim(QP_solver)=='n') call msg('o '//what,'# GW [Newton Solver]')
+   if (trim(QP_solver)=='s') call msg('o '//what,'# GW [Secant method Solver]')
+   if (trim(QP_solver)=='g') call msg('o '//what,'# GW [Green`s Function Solver]')
+   if (what==          'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
    !
-   call msg('o qp','#')
+   if (what=="qp") call msg('o '//what,'#')
    do i1=2,qp%n_descs
-     call msg('o qp','# ',trim(qp%description(i1)),INDENT=0)
+     call msg('o '//what,'# ',trim(qp%description(i1)),INDENT=0)
    enddo
    !
-   call msg('o qp','#')
-   call msg('o qp','#',titles(titles_order(:ntitles)),INDENT=0,USE_TABS=.TRUE.)
-   call msg('o qp','#')
+   call msg('o '//what,'#')
+   call msg('o '//what,'#',titles(titles_order(:ntitles)),INDENT=0,USE_TABS=.TRUE.)
+   call msg('o '//what,'#')
    !
-   qp%k=0.
+   if (what=="qp") then
+     qp%k=0.
+   endif
    !
    do i1=1,QP_n_states
      !
@@ -146,41 +157,53 @@ subroutine QP_of(qp,en,QPdb_read_err)
      qp_k  =QP_table(i1,3)
      qp_isp=spin(QP_table(i1,:))
      !
-     if (.not.l_life) then
-       if (report_Sc) values(2)=real(QP_Sc(i1,1))*HA2EV
-       if (report_dSc) then
-         values(7:8)=(/real(QP_dSc(i1,1)),real((qp%E(i1)-qp%E_bare(i1))*HA2EV)/) 
-         values(3  )=real(QP_Sc(i1,1)+QP_dSc(i1,1)*(qp%E(i1)-qp%E_bare(i1)))*HA2EV
-       else
-         values(8)=real(qp%E(i1)-qp%E_bare(i1))*HA2EV
+     if (what=="qp") then
+       !
+       if (.not.l_life) then
+           if (report_Sc) values(2)=real(QP_Sc(i1,1))*HA2EV
+           if (report_dSc) then
+             values(7:8)=(/real(QP_dSc(i1,1)),real((qp%E(i1)-qp%E_bare(i1))*HA2EV)/) 
+             values(3  )=real(QP_Sc(i1,1)+QP_dSc(i1,1)*(qp%E(i1)-qp%E_bare(i1)))*HA2EV
+           else
+             values(8)=real(qp%E(i1)-qp%E_bare(i1))*HA2EV
+           endif
+         if (report_Vnlxc) then
+           values(1)=real(QP_Vxc(i1))*HA2EV
+           values(11)=real(QP_Vnl_xc(i1))*HA2EV
+         endif
        endif
-       if (report_Vnlxc) then
-         values(1)=real(QP_Vxc(i1))*HA2EV
-         values(11)=real(QP_Vnl_xc(i1))*HA2EV
+       !
+       values(4:6)  =(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV),real(qp%Z(i1))/)
+       values(9:10) =(/real(qp_k),real(qp_b)/)
+       values(12:13)=(/aimag(qp%E(i1)*HA2EV/1.E-3),HBAR_eVfs/aimag(qp%E(i1))/HA2EV/)
+       values(15:16)=(/real(qp%Z(i1)),aimag(qp%Z(i1))/)
+       !
+       if (allocated(QP_G_amplitude_integral)) then
+         values(23)=QP_G_amplitude_integral(i1)
        endif
-     endif
-     !
-     values(4:6)  =(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV),real(qp%Z(i1))/)
-     values(9:10) =(/real(qp_k),real(qp_b)/)
-     values(12:13)=(/aimag(qp%E(i1)*HA2EV/1.E-3),HBAR_eVfs/aimag(qp%E(i1))/HA2EV/)
-     values(15:16)=(/real(qp%Z(i1)),aimag(qp%Z(i1))/)
-     !
-     if (allocated(QP_G_amplitude_integral)) then
-       values(23)=QP_G_amplitude_integral(i1)
-     endif
 #if defined _QED
-     values(24)=real(QP_Sc(i1,1))*HA2GHZ*1000._SP
+       values(24)=real(QP_Sc(i1,1))*HA2GHZ*1000._SP
+       values(25)=real(QP_Sc(i1,1))*1000._SP*HA2EV
 #endif
-     if (allocated(QP_G_info)) then
-       values(17:18)=QP_G_info(i1,1,:)*HA2EV
-       values(19:20)=QP_G_info(i1,2,:)*HA2EV
-       values(21:22)=QP_G_info(i1,3,:)*HA2EV
+        if (allocated(QP_G_info)) then
+         values(17:18)=QP_G_info(i1,1,:)*HA2EV
+         values(19:20)=QP_G_info(i1,2,:)*HA2EV
+         values(21:22)=QP_G_info(i1,3,:)*HA2EV
+       endif
+       !
+     else if (what=="hf") then
+       values(4:5)  =(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV)/)
+       values(8)=real(qp%E(i1)-qp%E_bare(i1))*HA2EV
+       values(9:10) =(/real(qp_k),real(qp_b)/)
+       values(1)=real(QP_Vxc(i1))*HA2EV
+       values(11)=real(QP_Vnl_xc(i1))*HA2EV
+       values(26)=values(5)
      endif
      !
      if (qp_isp==1) values(14)= 1.
      if (qp_isp==2) values(14)=-1.
      if (aimag(qp%E(i1))==0.) values(12:13)=0.
-     call msg('o qp','',values(titles_order(:ntitles)),INDENT=-2,USE_TABS=.TRUE.)
+     call msg('o '//what,'',values(titles_order(:ntitles)),INDENT=-2,USE_TABS=.TRUE.)
      !
    enddo
    !

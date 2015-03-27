@@ -25,26 +25,23 @@ subroutine COLLISIONS_QED_gw(E,k,q)
  !
  ! Hartree-Fock
  !
- use pars,          ONLY:SP,schlen,DP,pi,cZERO
+ use pars,          ONLY:SP,schlen,pi,cI
  use IO_m,          ONLY:io_COLLs
- use com,           ONLY:msg
+ use com,           ONLY:msg,error
  use LIVE_t,        ONLY:live_timing
- use electrons,     ONLY:levels,spin_occ,spin
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_QP,&
-&                        PAR_IND_Q,PAR_QP_index,&
-&                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
-&                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
- use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
-&                        Fock_collisions,nFock_collisions,COLLISIONS_IO_status
- use QP_m,          ONLY:QP_ng_Sx,QP_table,QP_n_states,QP_QED_ng
+ use electrons,     ONLY:levels,spin,n_spinor
+ use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q,PAR_Q_index,PAR_RL_index,&
+&                        PAR_nQP,PAR_nQ,PAR_QP_index,PAR_G_bands_index,PAR_IND_G_b
+ use collision,     ONLY:ggwinfo,collision_reset,nGW_QED_collisions,&
+&                        COLLISIONS_IO_status,GW_QED_collisions
+ use QP_m,          ONLY:QP_table,QP_n_states,QP_QED_ng,QP_n_G_bands,QP_nb
  use R_lattice,     ONLY:qindx_S,bz_samp
- use SC,            ONLY:SC_bands,B_mat_index
+ use SC,            ONLY:SC_bands
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:WF_load
- use wrapper_omp,   ONLY:V_dot_V_omp
  !
  implicit none
  type(levels)             ::E       
@@ -52,16 +49,19 @@ subroutine COLLISIONS_QED_gw(E,k,q)
  !
  !Work Space
  !
- type(ggwinfo)           ::isc,iscp
- integer                 ::iq,ib,ibp,jb,ik,i_qp,jb2,ik_minus_q,ig,i_qp_mem,PAR_nQP_
- complex(DP)             ::DP_Sx
- complex(SP),allocatable ::local_rhotw(:)
+ type(ggwinfo)           ::isc,isc_grad
+ integer                 ::i_qp,ig,PAR_nQP_,i_q_bz,i_q,i_q_mem,i_g,i_g_mem,i_c,i_qp_mem,i_m,i_m_mem
+ real(SP)                ::p_cc(3)
  character(schlen)       ::ch
+ !
+ if (n_spinor==2) call error('QED collisions not implemented in the spinorial case')
  !
  ! Resets & basis setup
  !
- !call collision_reset(isc)
- !call collision_reset(iscp) 
+ call collision_reset(isc)
+ call collision_reset(isc_grad) 
+ !
+ call k_ibz2bz(k,'c',.TRUE.)
  !
  ! COLLISIONS 
  !
@@ -73,124 +73,96 @@ subroutine COLLISIONS_QED_gw(E,k,q)
    !
  endif
  !
- call WF_load(WF,QP_QED_ng,1,SC_bands,(/1,k%nibz/),space='R',title='-QED Collisions')
+ call WF_load(WF,QP_QED_ng,maxval(qindx_S(:,:,2)),SC_bands,(/1,k%nibz/),space='R',title='-QED Collisions')
  !
 #if defined _TIMING
  call timing('QED GW Collisions',OPR='start')
 #endif
  !
- ! allocation again
+ ! Allocation again
  !
-! allocate(isc%gamp(QP_ng_Sx,1),isc%rhotw(QP_ng_Sx),iscp%rhotw(QP_ng_Sx),local_rhotw(QP_ng_Sx))
-! isc%qs    =1
-! isc%ngrho =QP_ng_Sx
-! iscp%ngrho=QP_ng_Sx
-! !
-! call scatterGamp(isc,'x')
-! !
-! PAR_nQP_=PAR_nQP
-! if (allocated(COLLISIONS_IO_status)) then
-!   PAR_nQP_=count(COLLISIONS_IO_status==-1)
-! endif
-! call live_timing("HF collisions",PAR_nQP_*PAR_nQ*PAR_n_Bp_mat_elements)
-! !
-! do i_qp=1,QP_n_states
-!   !
-!   if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
-!   !
-!   i_qp_mem=PAR_QP_index(i_qp)
-!   !
-!   if (io_COLLs) then
-!     if (COLLISIONS_IO_status(i_qp)/=-1) cycle
-!   endif
-!   !
-!   ib =QP_table(i_qp,1)
-!   ibp=QP_table(i_qp,2)
-!   !
-!   HF_collisions(1)%v3c=cZERO
-!   !
-!   do iq=1,q%nbz
-!     !
-!     if (.not.PAR_IND_Q%element_1D(iq)) cycle
-!     !
-!     isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
-!     if (isc%qs(2)/=isc%iqref) call scatterGamp(isc,'x')
-!     !
-!     !  (n,k,sp_n).     
-!     !              |
-!     !              | (m,p,r,sp_m)
-!     !              |
-!     !              |
-!     !  (m,k,sp_m).     
-!     !
-!     ! n   =QP_table(i_qp,1)
-!     ! m   =QP_table(i_qp,2)
-!     ! k   =QP_table(i_qp,3)
-!     !
-!     isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
-!     isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),spin(QP_table(i_qp,:))/)
-!     iscp%is=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
-!     !
-!     isc%qs(1)=qindx_S(QP_table(i_qp,3),iq,2)
-!     iscp%qs=isc%qs
-!     !
-!     ik_minus_q=isc%os(2)
-!     !
-!     do jb=SC_bands(1),SC_bands(2)
-!       !
-!       isc%os(1)=jb
-!       iscp%os=isc%os
-!       !
-!       call scatterBamp(isc)
-!       !
-!       ! COLLISIONS(n,n',qp_n_states) = \sum_{G,q} ( rho(m,n,G,q,k) x rho*(m',n',G,q,k) /|q+G|^2 )
-!       !
-!       do jb2=SC_bands(1),SC_bands(2)
-!         !
-!         if ( .not. PAR_IND_Bp_mat%element_1D( B_mat_index(jb,jb2) ) ) cycle
-!         !      
-!         iscp%os(1)=jb2
-!         if (any(isc%is/=iscp%is).or.any(isc%os/=iscp%os)) then
-!           call scatterBamp(iscp)
-!         else
-!           iscp%rhotw=isc%rhotw
-!         endif
-!         !
-!!$omp parallel do default(shared), private(ig)
-!         do ig = 1, isc%ngrho
-!           local_rhotw(ig) = -4./spin_occ*pi*isc%rhotw(ig)*conjg(iscp%rhotw(ig))
-!         enddo
-!!$omp end parallel do
-!         !
-!         DP_Sx=V_dot_V_omp(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
-!         !
-!         HF_collisions(1)%v3c(jb,jb2,ik_minus_q)=HF_collisions(1)%v3c(jb,jb2,ik_minus_q)+DP_Sx
-!         !
-!         call live_timing(steps=1)
-!         !
-!       enddo
-!       !
-!     enddo
-!     !
-!   enddo
-!   !
-!   if (COLLISIONS_parallel_SC_structure) then
-!     call PP_redux_wait(HF_collisions(1)%v3c,COMM=PAR_COM_QP_A2A%COMM)
-!     call PP_redux_wait(HF_collisions(1)%v3c,COMM=PAR_COM_Q_index%COMM)
-!   else
-!     call PP_redux_wait(HF_collisions(1)%v3c,COMM=PAR_COM_G_b_A2A%COMM)
-!   endif
-!   !
-!   call COLLISIONS_linearize_and_IO("HF",i_qp,HF_collisions,nHF_collisions)
-!   !
-! enddo
+ allocate(isc%rhotw(QP_QED_ng),isc_grad%rhotw(3*QP_QED_ng))
+ isc%ngrho =QP_QED_ng
+ isc_grad%ngrho=QP_QED_ng
  !
-! call live_timing()
+ PAR_nQP_=PAR_nQP
+ if (allocated(COLLISIONS_IO_status)) then
+   PAR_nQP_=count(COLLISIONS_IO_status==-1)
+ endif
  !
-! deallocate(isc%gamp,isc%rhotw,iscp%rhotw,local_rhotw)
+ call live_timing("QED GW collisions",PAR_nQP_*PAR_nQ)
  !
-! call collision_reset(isc)
-! call collision_reset(iscp) 
+ QP_loop: do i_qp=1,QP_n_states
+   !
+   if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+   !
+   if (io_COLLs) then
+     if (COLLISIONS_IO_status(i_qp)/=-1) cycle
+   endif
+   !
+   i_qp_mem=PAR_QP_index(i_qp)
+   !
+   Q_loop: do i_q_bz=1,q%nbz 
+     !
+     if (.not.PAR_IND_Q%element_1D(i_q_bz)) cycle
+     !
+     i_q_mem=PAR_Q_index(i_q_bz)
+     !
+     p_cc=k%ptbz(qindx_S(QP_table(i_qp,3),i_q_bz,1),:)
+     !
+     !
+     ! n',k-q   n,k
+     ! --<--.-<--
+     !      | 
+     !      |
+     !     \|/ q,G,\alpha
+     !      |
+     !      
+     ! n   =QP_table(i_qp,1)
+     ! n'  =QP_table(i_qp,2)
+     ! k   =QP_table(i_qp,3)
+     !
+     isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
+     isc%os=(/QP_table(i_qp,2),k%sstar(qindx_S(isc%is(2),i_q_bz,1),:),spin(QP_table(i_qp,:))/)
+     isc%qs=(/qindx_S(QP_table(i_qp,3),i_q_bz,2),q%sstar(i_q_bz,1),q%sstar(i_q_bz,2)/)
+     !
+     isc_grad%is=isc%is
+     isc_grad%os=isc%os
+     isc_grad%qs=isc%qs
+     !
+     call scatterBamp(isc)
+     call scatterBamp_using_the_gradient(isc_grad)
+     !
+     do i_g=1,QP_QED_ng
+       !
+       i_g_mem=PAR_RL_index(i_g)
+       !
+       do i_c=1,3
+         !
+         if (io_COLLs) then
+           GW_QED_collisions(1)%v3_c(i_q_bz,i_g,i_c)=-cI*(p_cc(i_c)*isc%rhotw(i_g)+isc_grad%rhotw(QP_QED_ng*(i_c-1)+ig))
+         else
+           GW_QED_collisions(i_qp_mem)%v3_c(i_q_mem,i_g_mem,i_c)=-cI*(p_cc(i_c)*isc%rhotw(i_g)+isc_grad%rhotw(QP_QED_ng*(i_c-1)+ig))
+         endif
+         !
+       enddo
+       !
+     enddo
+     !
+     call live_timing(steps=1)
+     !
+   enddo Q_loop
+   !
+   !if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_QED",i_qp,GW_QED_collisions,nGW_QED_collisions)
+   !
+ enddo QP_loop
+ !
+ call live_timing()
+ !
+ deallocate(isc%rhotw,isc_grad%rhotw)
+ !
+ call collision_reset(isc)
+ call collision_reset(isc_grad) 
  !
 #if defined _TIMING
  call timing('QED GW Collisions',OPR='stop')

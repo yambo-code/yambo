@@ -467,8 +467,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
        !
        k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2.*pi
        !
-       WF1_ir=WF_symm(rindex(ir),(/iv,ikibz,is,i_spin/))
-       WF2_ir=WF_symm(rindex(ir),(/ic,ikibz,is,i_spin/))
+       WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikibz,is,i_spin/))
+       WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))
        !
        wf_vc(neh) = conjg(WF1_ir(1))*WF2_ir(1)
        if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF1_ir(2))*WF2_ir(2)

@@ -35,6 +35,8 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
 #if defined _QED
  use QP_m,           ONLY:QP_QED_ng
  use collision,      ONLY:GW_QED_collisions,nGW_QED_collisions
+ use parallel_m,     ONLY:PAR_nRL
+ use global_XC,      ONLY:SE_GW_EL_PHOTON
 #endif
  !
  implicit none

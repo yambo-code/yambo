@@ -140,9 +140,9 @@ subroutine COLLISIONS_QED_gw(E,k,q)
        do i_c=1,3
          !
          if (io_COLLs) then
-           GW_QED_collisions(1)%v3c(i_q_bz,i_g,i_c)=-cI*(p_cc(i_c)*isc%rhotw(i_g)+isc_grad%rhotw(QP_QED_ng*(i_c-1)+ig))
+           GW_QED_collisions(1)%v3_c(i_q_bz,i_g,i_c)=-cI*(p_cc(i_c)*isc%rhotw(i_g)+isc_grad%rhotw(QP_QED_ng*(i_c-1)+ig))
          else
-           GW_QED_collisions(i_qp_mem)%v3c(i_q_mem,i_g_mem,i_c)=-cI*(p_cc(i_c)*isc%rhotw(i_g)+isc_grad%rhotw(QP_QED_ng*(i_c-1)+ig))
+           GW_QED_collisions(i_qp_mem)%v3_c(i_q_mem,i_g_mem,i_c)=-cI*(p_cc(i_c)*isc%rhotw(i_g)+isc_grad%rhotw(QP_QED_ng*(i_c-1)+ig))
          endif
          !
        enddo

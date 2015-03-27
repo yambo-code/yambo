@@ -199,7 +199,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    endif
    delta_E=(dos_E_range(2)-dos_E_range(1))/dos_E_steps
    !
-   dos_norm=1./DL_vol/spin_occ
+   dos_norm=1./DL_vol
    if (l_RIM) dos_norm=dos_norm/real(sum(BZ_RIM_nkpt))
    !
    ! Parallel setup and live_timing

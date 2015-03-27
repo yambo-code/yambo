@@ -21,11 +21,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 4.0.0 r.4237 , yambo@yambo-code.org)
+AC_INIT(Yambo, 4.0.0 r.4239 , yambo@yambo-code.org)
 SVERSION="4"
 SPATCHLEVEL="0"
 SSUBLEVEL="0"
-SREVISION="4237"
+SREVISION="4239"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -136,33 +136,33 @@ AC_SUBST(dp_cpp)
 # ============================================================================
 # check for p2y versions
 #
-AC_ARG_WITH(p2y, AC_HELP_STRING([--with-p2y-version=<flags>],
+AC_ARG_WITH(p2y_version, AC_HELP_STRING([--with-p2y-version=<flags>],
  [Version number for PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0> <5.0>],[32]))
 
 PW_VER="5.0"
 PW_CPP="_P2Y_V50"
 if test "$compile_p2y" = "yes"; then
- if test "$with_p2y" = "export"; then
+ if test "$with_p2y_version" = "export"; then
   PW_VER="export"
   PW_CPP="_P2Y_EXPORT"
  fi
- if test "$with_p2y" = "3.1"; then
+ if test "$with_p2y_version" = "3.1"; then
   PW_VER="3.1"
   PW_CPP="_P2Y_V31"
  fi
- if test "$with_p2y" = "3.1.1"; then
+ if test "$with_p2y_version" = "3.1.1"; then
   PW_VER="3.1.1"
   PW_CPP="_P2Y_V311"
  fi
- if test "$with_p2y" = "3.2"; then
+ if test "$with_p2y_version" = "3.2"; then
   PW_VER="3.2"
   PW_CPP="_P2Y_V32"
  fi
- if test "$with_p2y" = "4.0"; then
+ if test "$with_p2y_version" = "4.0"; then
   PW_VER="4.0"
   PW_CPP="_P2Y_V40"
  fi
- if test "$with_p2y" = "5.0"; then
+ if test "$with_p2y_version" = "5.0"; then
   PW_VER="5.0"
   PW_CPP="_P2Y_V50"
  fi

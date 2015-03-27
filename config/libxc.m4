@@ -23,23 +23,24 @@ compile_libxc=yes
 
 dnl Check if the library was given in the command line
 dnl if not, use environment variables or defaults
+AC_ARG_WITH(libxc_libs, [AS_HELP_STRING([--with-libxc-libs=<libs>], 
+            [Use libxc libraries <libs>],[32])])
 AC_ARG_WITH(libxc_path, [AS_HELP_STRING([--with-libxc-path=<path>], 
             [Path to libxc install directory],[32])])
+AC_ARG_WITH(libxc_libdir, [AS_HELP_STRING([--with-libxc-libdir=<path>], 
+            [Path to the libxc lib directory],[32])])
 AC_ARG_WITH(libxc_includedir, [AS_HELP_STRING([--with-libxc-includedir=<path>], 
             [Path to the libxc include directory],[32])])
 
 if test -d "$with_libxc_path"; then
-# Set FCFLAGS_LIBXC 
-  case $with_libxc_path in
-    "") ;;		  
-    *)  libxc_include_path="$with_libxc_path/include" ;;
-  esac
-  case $with_libxc_includedir in
-    "") ;;
-    *)  libxc_include_path="$with_libxc_includedir" ;;
-  esac
-#
-FCFLAGS_LIBXC="$ax_cv_f90_modflag$libxc_include_path"
+   libxc_incdir="$with_libxc_path/include"
+   libxc_libdir="$with_libxc_path/lib"
+fi
+if test -d "$with_libxc_includedir"; then libxc_incdir="$with_libxc_includedir" ; fi
+if test -d "$with_libxc_libdir";     then libxc_libdir="$with_libxc_libdir" ; fi
+
+FCFLAGS_LIBXC="$ax_cv_f90_modflag$libxc_incdir"
+
 dnl Backup LIBS and FCFLAGS
 acx_libxc_save_LIBS="$LIBS"
 acx_libxc_save_FCFLAGS="$FCFLAGS"
@@ -64,30 +65,37 @@ if test ! -z "$LIBS_LIBXC"; then
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
+# set from --with-libxc-libs flag
+if test x"$acx_libxc_ok" = xno && test ! -z "$with_libxc_libs" ; then
+  LIBS_LIBXC="$with_libxc_libs"
+  LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
+  AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
+fi
+
 # static linkage, separate Fortran interface
 if test x"$acx_libxc_ok" = xno; then
-  LIBS_LIBXC="$with_libxc_path/lib/libxcf90.a $with_libxc_path/lib/libxc.a"
+  LIBS_LIBXC="$libxc_libdir/libxcf90.a $libxc_libdir/libxc.a"
   LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # dynamic linkage, separate Fortran interface
 if test x"$acx_libxc_ok" = xno; then
-  LIBS_LIBXC="-L$with_libxc_path/lib -lxcf90 -lxc"
+  LIBS_LIBXC="-L$libxc_libdir -lxcf90 -lxc"
   LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # static linkage, combined Fortran interface (libxc pre-r10730)
 if test x"$acx_libxc_ok" = xno; then
-  LIBS_LIBXC="$with_libxc_path/lib/libxc.a"
+  LIBS_LIBXC="$libxc_libdir/libxc.a"
   LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # dynamic linkage, combined Fortran interface (libxc pre-r10730)
 if test x"$acx_libxc_ok" = xno; then
-  LIBS_LIBXC="-L$with_libxc_path/lib -lxc"
+  LIBS_LIBXC="-L$libxc_libdir -lxc"
   LIBS="$LIBS_LIBXC $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
@@ -145,32 +153,17 @@ dnl Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x"$acx_libxc_ok" = xyes; then
   compile_libxc=no
   #	 
-  for file in `find $libxc_include_path \( -name 'libxc*mod' -o -name 'xc_*mod' \)`;do	
+  for file in `find $libxc_incdir \( -name 'libxc*mod' -o -name 'xc_*mod' \)`;do	
     cp $file include/ 
   done
   AC_MSG_RESULT([                  ... Compatible external LibXC ($FCFLAGS_LIBXC $LIBS_LIBXC)])
   AC_DEFINE(HAVE_LIBXC, 1, [Defined if you have the LIBXC library.])
-#else
-#  AC_MSG_ERROR([Could not find required libxc library ( >= v 1.0.0).])
-fi
 fi
 
 if test x"$acx_libxc_ok" = xno; then
   have_configured="no"
   LIBS_LIBXC="-lxc"
   AC_MSG_RESULT([Compatible external LibXC not found/specified. Internal used.])
-#  AC_MSG_CHECKING([the configuration of the LIBXC internal library])
-#  cd lib/libxc
-#  if test -f Makefile; then 
-#  have_configured="yes"
-#  else
-#  ./configure FCCPP="cpp -E -P -ansi" FC=$FC CC=$CC --prefix=$PWD/../../ >&/dev/null
-#  if test -f Makefile; then have_configured="yes";fi
-#  fi
-#  cd ../../
-#  AC_MSG_RESULT($have_configured)
-#  
-#  if test "x$have_configured" != xyes; then AC_MSG_ERROR([can't configure LIBXC ]); fi
 fi 
 
 AC_SUBST(FCFLAGS_LIBXC)
@@ -179,3 +172,4 @@ AC_SUBST(compile_libxc)
 FCFLAGS="$acx_libxc_save_FCFLAGS"
 LIBS="$acx_libxc_save_LIBS"
 ])dnl ACX_LIBXC
+

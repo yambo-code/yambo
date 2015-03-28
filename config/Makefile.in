@@ -103,7 +103,7 @@ libs:
 	DIR2GO="lib" ; $(mklib); fi
 	@if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
 	DIR2GO="lib" ; $(mklib); fi
-	LIBS2DO="local" ; DIR2GO="lib" ; $(mklib)
+	@LIBS2DO="local" ; DIR2GO="lib" ; $(mklib)
 	@if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
 	DIR2GO="lib" ; $(mklib); fi
 	@if test "$(do_iotk)" = yes ; then LIBS2DO="iotk" ; \

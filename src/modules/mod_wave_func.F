@@ -126,7 +126,7 @@ module wave_func
    !
    subroutine WF_derivative_alloc(cart_direction)
      use memory_m, ONLY : mem_est
-     use FFT_m,    ONLY : fft_size,fftw_plan,fft_dim
+     use FFT_m,    ONLY : fft_size
      logical  :: cart_direction(3)
      !
      if(cart_direction(1)) then

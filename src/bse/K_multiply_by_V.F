@@ -37,7 +37,7 @@ subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
  use pars,           ONLY:SP,cONE,cZERO
  use com,            ONLY:error
  use parallel_m,     ONLY:PP_redux_wait
- use BS,             ONLY:BS_nT_grps,BS_K_coupling,Haydock_vector, &
+ use BS,             ONLY:BS_nT_grps,Haydock_vector, &
 &                         BSS_uses_RIM,BS_blk,n_BS_blks, BS_T_grp,&
 &                         Haydock_parallel_mask,Haydock_parallel_group_comm
  use wrapper,        ONLY:M_by_V
@@ -52,13 +52,9 @@ subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
  ! Work Space
  !
  logical         ::l_inv,l_Hay
- integer         ::i_B,i_Tk,i_Tp,i_g,i_c,i_V,p1,p2
+ integer         ::i_B,i_Tk,i_Tp,i_g
  complex(SP)     ::alpha
  ! 
- ! I/O
- ! 
- integer           ::io_BS_err,ID,ACTION
- integer, external ::io_BS
  !
  l_Hay= (trim(call_kind)=='Hay')
  l_inv= (trim(call_kind)=='Inv')

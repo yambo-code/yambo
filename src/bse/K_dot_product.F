@@ -26,7 +26,7 @@ subroutine K_dot_product(dot,V,W)
  ! Dot product between distributed vectors 
  !
  use pars,           ONLY:SP,cZERO
- use BS,             ONLY:BS_blk,n_BS_blks,Haydock_vector,BS_nT_grps,BS_K_Coupling,&
+ use BS,             ONLY:BS_blk,n_BS_blks,Haydock_vector,BS_nT_grps,&
 &                         Haydock_parallel_group_comm,Haydock_parallel_col_comm 
  use parallel_m, ONLY:PP_bcast,PP_redux_wait
  !

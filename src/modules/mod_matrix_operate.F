@@ -106,7 +106,7 @@ module matrix_operate
    !
    subroutine mat_transpose(M) 
      complex(SP) :: M(:,:)
-     integer     :: D,i1,i2
+     integer     :: D,i1
      complex, allocatable :: V(:)
      D=size(M,1)
 !$omp parallel default(shared), private(V,i1)

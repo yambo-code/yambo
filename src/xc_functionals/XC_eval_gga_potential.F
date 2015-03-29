@@ -29,10 +29,13 @@ subroutine XC_eval_gga_potential(vxc_tot,v_rho,v_drho)
   ! 2. vxc_tot(r) = v_rho(r) + Gv_drho(r)   
   ! 
   use pars,          ONLY:SP,DP,cI,PI
-  use R_lattice,     ONLY:g_vec,nkbz,RL_vol
+  use R_lattice,     ONLY:g_vec
   use D_lattice,     ONLY:alat
   use wave_func,     ONLY:wf_ng
-  use FFT_m,         ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
+  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
+#if defined _FFTW
+  use FFT_m,         ONLY:fftw_plan
+#endif
   implicit none
   !
   real(SP),intent(inout) :: vxc_tot(fft_size)

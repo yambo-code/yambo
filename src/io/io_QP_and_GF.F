@@ -26,8 +26,7 @@ integer function io_QP_and_GF(what,qp,ID)
  use D_lattice,      ONLY:alat
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:n_sp_pol
- use QP_m,           ONLY:QP_t,QP_nk,QP_nb,QP_G_dr,&
-&                         QP_n_states,QP_G_er,&
+ use QP_m,           ONLY:QP_t,QP_G_dr,QP_G_er,&
 &                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
@@ -43,11 +42,10 @@ integer function io_QP_and_GF(what,qp,ID)
  !
  ! Work Space
  !
- integer              ::i1,i2,i_found,restart_point,&
+ integer              ::i1,i2,i_found,&
 &                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,&
 &                       QP_DB_kind_disk 
  character(schlen)    ::ch
- character(2)         ::OP(1)
  integer ,    allocatable ::qp_table_disk(:,:)
  real(SP),    allocatable ::qp_DATA_disk(:,:,:)
  !

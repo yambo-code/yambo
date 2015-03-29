@@ -24,7 +24,6 @@
 integer function io_DIPOLES(X,Xen,ID)
  !
  use pars,          ONLY:SP,schlen
- use drivers,       ONLY:l_real_time,l_eval_collisions
  use X_m,           ONLY:X_t,DIP_iR,X_alloc,Dipole_bands_ordered
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:nXkibz
@@ -34,6 +33,9 @@ integer function io_DIPOLES(X,Xen,ID)
 &                        RD_CL_IF_END,RD_CL,io_action,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
  use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_nibz
+#if defined _RT
+ use drivers,       ONLY:l_real_time,l_eval_collisions
+#endif
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif

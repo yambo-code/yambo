@@ -382,7 +382,7 @@ module BS
 #if defined _KERR
      use drivers,    ONLY:l_kerr
 #endif
-     use parallel_m, ONLY:PAR_BS_T_grps_index,PAR_BS_nT_col_grps
+     use parallel_m, ONLY:PAR_BS_T_grps_index
      integer :: i_g
      !
      if (allocated(BS_nT_at_k))          deallocate(BS_nT_at_k)
@@ -430,7 +430,6 @@ module BS
    end subroutine
    !
    function BS_Block_size(i_block)
-     use parallel_m, ONLY  : ncpu
      integer              :: i_block
      integer(IP)          :: BS_Block_size
      !
@@ -468,7 +467,7 @@ module BS
    subroutine BS_HAYVEC_alloc(V)
      type(Haydock_vector) :: V(:)
      ! ws:
-     integer :: i_g, dim
+     integer :: i_g
      !
      do i_g=1,BS_nT_grps
        if (.not.Haydock_parallel_mask(i_g)) cycle

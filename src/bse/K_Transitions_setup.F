@@ -63,7 +63,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  ! Work Space
  !
  integer :: ikbz,iv,ic,ik,ikp,i_sp,i_star,&
-&           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp,nT
+&           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp
  real(SP):: E_eh,f_eh
  integer, allocatable :: i_T_at_k(:)
  !

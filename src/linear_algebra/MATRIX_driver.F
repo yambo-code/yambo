@@ -44,18 +44,16 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
  !Work Spaces ...
  !
  real(SP):: SV_min
- integer :: M_size,i1,i2,lib_in_use,Ncpu_in_use,myID_in_use
+ integer :: M_size,i1,lib_in_use,Ncpu_in_use,myID_in_use
  !
  ! ...serial invertion
  !
  integer       :: ifail,lwork
- type(blacs_t) :: iblt
  integer, allocatable     :: ipvt(:)
  complex(SP), allocatable :: work(:)
  !
  ! ...additionals for serial diago
  !
- integer :: rwork
  real(SP), allocatable :: rwk(:)
  !
  ! ...SVD
@@ -63,17 +61,22 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
  real(SP),    allocatable :: SV(:),r_WK(:)
  complex(SP), allocatable :: U(:,:),VH(:,:)
  !
+#if defined _SCALAPACK
+ !
  ! ...parallel inversion
  !
  complex(SP), allocatable :: lM(:,:) 
  integer                  :: i, j, i_loc, j_loc, liwork
+ type(blacs_t)            :: iblt
  !
  ! ...parallel diagonalization
  !
  complex(SP), allocatable :: lV(:,:)
  integer,     allocatable :: iwork(:)
- integer      :: numroc, indxl2g
+ integer      :: numroc, indxl2g,rwork
  character(1) :: top=' '
+ !
+#endif
  !
  ! M dimensions and initialization
  !

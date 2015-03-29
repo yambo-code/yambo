@@ -58,10 +58,9 @@ subroutine K_correlation_collisions(iB,BLK,Xk,q)
  !
  ! Work Space
  !
- complex(SP) :: phase
  integer     :: i_k_s,i_p_s,i_k_bz,i_p_bz,i_p,i_k,i_Tk,i_Tp,&
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp,i_p_sp,i_s_collision,&
-                i_Tgrp_k,i_Tgrp_p,i_s_k_p,i_s_star,H_pos(2),table,i_cycle
+                i_Tgrp_k,i_Tgrp_p,i_s_k_p,i_s_star,H_pos(2),i_cycle
  logical     :: l_eval_collision
  !
  if (.not.BS_res_K_corr) return 

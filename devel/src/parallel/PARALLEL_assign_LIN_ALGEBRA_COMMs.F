@@ -23,9 +23,9 @@
 !
 subroutine PARALLEL_assign_LIN_ALGEBRA_COMMs(ENVIRONMENT,WHAT,COMM_index,COMM_operation)
  !
- use parallel_m,    ONLY:MPI_comm,PARALLEL_n_structures_active,PARALLEL_CPU_role,&
+ use parallel_m,    ONLY:MPI_comm,&
 &                        PARALLEL_cpu_mat_inversion,PARALLEL_cpu_mat_diagonalization,&
-&                        INTER_CHAIN,INTRA_CHAIN,CHILD_CHAIN,ncpu,myid,mpi_comm_world,&
+&                        INTER_CHAIN,INTRA_CHAIN,ncpu,myid,mpi_comm_world,&
 &                        COMM_copy,n_chains,PAR_COM_Q_A2A,PAR_COM_Q_INDEX,comm_default_value
  !
  implicit none

@@ -431,7 +431,6 @@ MODULE timing_m
      TYPE(clock_list),       INTENT(in) :: list
      CHARACTER(*),           INTENT(in) :: main_name
      TYPE(clock)                        :: tmp_clock
-     CHARACTER(20)                      :: form
      INTEGER                            :: i
      !
      IF ( .NOT. list%alloc ) CALL error('timing_overview:  list not allocated')

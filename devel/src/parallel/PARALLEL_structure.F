@@ -23,9 +23,10 @@
 !
 subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
  !
- use parallel_m,  ONLY:ncpu,myid,n_MPI,INTER_CHAIN,n_chains,INTRA_CHAIN,&
-&                      MAX_N_OF_CHAINS,PARALLEL_n_structures_active,&
-&                      PARALLEL_CPU_role,PARALLEL_CPU_used
+ use parallel_m,  ONLY:ncpu,myid,n_MPI,INTER_CHAIN,n_chains,INTRA_CHAIN,MAX_N_OF_CHAINS
+#if defined _BLUEGENE
+ use parallel_m,  ONLY:PARALLEL_CPU_role,PARALLEL_CPU_used,PARALLEL_n_structures_active
+#endif
  use com,         ONLY:error
  implicit none
  !
@@ -37,11 +38,10 @@ subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
  !
  integer     ::i_err,ID(ncpu+1),i_cpu,ID_save(ncpu+1),i_chain,n_groups
  integer     ::tmp_comm_inter,tmp_comm_intra
- integer     ::ir,i
  logical     ::chain_activate(MAX_N_OF_CHAINS)
+#if defined _BLUEGENE
  integer, allocatable :: role_cpu(:)
-
- integer     ::buff(ncpu),inter_roles(ncpu),intra_roles(ncpu)
+#endif
  !
 #if defined _MPI
  include 'mpif.h'

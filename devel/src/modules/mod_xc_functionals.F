@@ -155,7 +155,6 @@ module xc_functionals
      real(SP), intent(in) :: exx_frac, exx_screen 
      integer :: ixc
      real(xc_f90_kind) :: exx_frac_, exx_screen_
-     type(xc_f90_pointer_t) :: p,info
      !
      exx_frac_   = exx_frac
      exx_screen_ = exx_screen

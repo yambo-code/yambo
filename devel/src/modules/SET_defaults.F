@@ -37,7 +37,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                      X_terminator,X_en_comp,global_gauge
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
-&                     QP_W_er,QP_W_dr,QP_cg_percent,QP_n_states,&
+&                     QP_cg_percent,QP_n_states,&
 &                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     GWo_SC_done,GWo_iterations,&
@@ -55,7 +55,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn
- use parallel_m, ONLY:master_cpu,ncpu,CPU_str_reset
+ use parallel_m, ONLY:ncpu,CPU_str_reset
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,jobstr,com_path,alt_jobstr,repfile,n_alt_jobstr,&
 &                     n_max_jobstr,grid_path
@@ -65,7 +65,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,&
-&                     Fragmented_IO,Fragmented_IO_save 
+&                     Fragmented_IO_save 
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&

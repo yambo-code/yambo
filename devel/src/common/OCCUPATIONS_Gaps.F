@@ -50,7 +50,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  ! 
  real(SP) ::E_g_dir_(1+(n_sp_pol-1)*2,2)
  real(SP) ::E_g_ind_(1+(n_sp_pol-1)*2,2) 
- integer  ::Nbf_(n_sp_pol),I_dir_(2),I_ind_(2),Nbm_(n_sp_pol)
+ integer  ::Nbf_(n_sp_pol),I_dir_(2),Nbm_(n_sp_pol)
  !
  if(sum(E%f(:,:,:))<1._SP-filled_tresh) call error('The system contains less than 1 electron')
  !

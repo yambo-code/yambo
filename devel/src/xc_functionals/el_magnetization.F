@@ -33,13 +33,12 @@ subroutine el_magnetization(en,Xk)
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
- use D_lattice,      ONLY:nsym,DL_vol,dl_sop,i_time_rev,inv_index
+ use D_lattice,      ONLY:nsym,dl_sop,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:magn
  !
  use electrons,      ONLY:Total_magn
- use D_lattice,      ONLY:DL_vol
  use matrix_operate, ONLY:m3det
  !
  implicit none

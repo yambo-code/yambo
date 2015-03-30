@@ -1,4 +1,4 @@
-#if defined _SC
+#if defined _SC || defined _QED
 SC_objects       = mod_plasma.o mod_SC.o
 #endif
 #if defined _RT

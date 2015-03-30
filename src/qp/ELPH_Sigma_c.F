@@ -469,8 +469,18 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  enddo
  !
  if (l_WRgFsq) then
+   !
+   ! AndreaM, March 2015.
+   !
+   ! In the iq_loop loop the q=1 is read by ALL cpu's. This is in order
+   ! to get the DW elements written only for q=0. This means that all cpu's has the ph_freqs_sq(1,:)
+   ! 
+   ph_freqs_sq(1,:)=ph_freqs_sq(1,:)/real(PAR_COM_Q_index%n_CPU)
+   !
    call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_index%COMM)
+   !
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
+   !
    do iq_loop=iq_range(1),iq_range(2)
      iq_mem=PAR_Q_index(iq_loop)
      if (iq_loop==iq_range(1)) then
@@ -483,7 +493,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      endif
      io_err=io_ELPH(ID,'gFsq')
    enddo
+   !
    call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
+   !
  endif
  !
  ! CLEAN

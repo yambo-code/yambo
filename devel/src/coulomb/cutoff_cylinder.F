@@ -41,7 +41,7 @@ subroutine cutoff_cylinder(q,is_cut)
  !
  integer       ::iq,ig,iort1,iort2,ipar,neval,ier,last,key,lenw,&
 &                lenw2,limit,leniw,maxp1
- real(SP)      ::cyl_ph_radius2,cyl_cut2,c1,c2,Vd,abserr,epsabs,z
+ real(SP)      ::cyl_ph_radius2,cyl_cut2,c1,c2,Vd,abserr,epsabs
  complex(SP)   ::V_cut(q%nibz,wf_ng)
  logical       ::infcyl
 #if defined _DOUBLE

@@ -32,9 +32,9 @@ integer function io_KB_abinit(ID)
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_abinit
  use memory_m,         ONLY:mem_est
- use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_mode, io_fragment, &
+ use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_fragment, &
 &                           io_elemental,io_bulk,io_header,io_fragmented,&
-&                           read_is_on,write_is_on,ver_is_gt_or_eq,io_extension
+&                           read_is_on,write_is_on,ver_is_gt_or_eq
  use electrons,        ONLY:n_sp_pol
  implicit none
  integer,       intent(in) :: ID

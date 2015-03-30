@@ -40,7 +40,10 @@ subroutine scatterBamp(isc)
  use collision,      ONLY:ggwinfo
  use D_lattice,      ONLY:idt_index
  use R_lattice,      ONLY:g_rot
- use FFT_m,          ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
+ use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table
+#if defined _FFTW
+ use FFT_m,          ONLY:fftw_plan
+#endif
  !
  implicit none
  !
@@ -53,7 +56,9 @@ subroutine scatterBamp(isc)
  complex(SP), allocatable :: WF_symm_o(:,:)
  !
  integer     :: qs,iGo
+#if defined _FFTQE && !defined _USE_3D_FFT || defined _OPENMP
  integer     :: ig, ir
+#endif
  !
  allocate(rho_tw_rs(fft_size))
  allocate(WF_symm_i(fft_size,n_spinor))

@@ -48,7 +48,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use vec_operate,    ONLY:v_is_zero,c2a
- use R_lattice,      ONLY:b,d3q_factor,RL_vol,nqibz,nqbz,qp_states_k,&
+ use R_lattice,      ONLY:d3q_factor,RL_vol,nqibz,nqbz,qp_states_k,&
 &                         qindx_X,qindx_B,qindx_S,qindx_C,qindx_free,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
@@ -71,7 +71,10 @@ subroutine bz_samp_indexes(k,Xk,q)
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,iqs,iks
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3)
  logical :: connected_grids,user_defined_qpts,gamma_point_only,&
-&           Xk_impose_minus_q_local,bse_setup_scatt
+&           Xk_impose_minus_q_local
+#if defined _ELPH
+ logical :: bse_setup_scatt
+#endif
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
  !
  call section('*','Transferred momenta grid')

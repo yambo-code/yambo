@@ -31,10 +31,13 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use stderr,        ONLY:intc
- use electrons,     ONLY:n_bands,nel,n_spin,n_spinor,n_sp_pol
+ use electrons,     ONLY:nel,n_spin,n_spinor,n_sp_pol
  use R_lattice,     ONLY:nkibz
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,&
-&                        fftw_plan,fft_g_table,fft_size
+&                        fft_g_table,fft_size
+#if defined _FFTW
+ use FFT_m,         ONLY:fftw_plan
+#endif
  use wave_func,     ONLY:wf_nc_k,wf_igk,WF_buffer,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
@@ -42,12 +45,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
 &                        io_fragmented, io_netcdf_support, RD_CL,DUMP,IO_and_Messaging_switch
 #if defined _SC
+ use electrons,     ONLY:n_bands
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
  use global_XC,     ONLY:WF_kind,WF_xc_functional,&
 &                        WF_perturbation,global_XC_string,SE_NONE
  use xc_functionals,ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL
 #endif
+ !
  implicit none
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
@@ -63,7 +68,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  character(2)     ::wf_space_here
  character(schlen)::wf_title
- integer          ::i1,ikibz,ib,ib1,ib2,i2,ic,is,ig,igfft,wf_size,ib_grp,&
+#if defined _SC
+ integer          ::wf_size
+#endif
+ integer          ::i1,ikibz,ib,ib1,ib2,i2,ic,is,ig,igfft,ib_grp,&
 &                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c

@@ -59,7 +59,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  use electrons,     ONLY:levels,E_reset,n_sp_pol,E_duplicate,&
 &                            BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,BZ_RIM_tot_nkpts
  use D_lattice,     ONLY:input_Tel_is_negative
- use R_lattice,     ONLY:bz_samp,nXkibz
+ use R_lattice,     ONLY:bz_samp
  use parser_m,      ONLY:parser
  use global_XC,     ONLY:setup_global_XC,MORE_SCISSOR,MORE_SCIS_AND_STRE,MORE_STRETCH,&
 &                            K_kind,K_xc_functional,MORE_NONE,G_kind,G_xc_functional,&

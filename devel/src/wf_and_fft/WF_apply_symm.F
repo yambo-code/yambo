@@ -38,7 +38,9 @@ subroutine WF_apply_symm(isc,WF_symm)
  complex(SP), intent(out) :: WF_symm(fft_size,n_spinor)
  !
  integer     :: i_wf(n_spinor)
+#if defined _OPENMP
  integer     :: i, isp
+#endif
  !
  i_wf(1)=WF%index(isc(1),isc(2),isc(4))
 #if defined _MPI

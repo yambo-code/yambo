@@ -41,8 +41,11 @@ subroutine FREQUENCIES_Green_Function(iqp,W,E,Spectral_Function)
  !
  ! Work Space
  !
+#if defined _ELPH
  integer :: iw,n_small_freqs
- real(SP):: wide_range(2),Eo,small_step,large_step,running_step
+ real(SP):: wide_range(2),small_step,large_step,running_step
+#endif
+ real(SP):: Eo
  !
  W%dr=QP_G_dr
  if (allocated(QP_G_zoom_er).and..not.Spectral_Function) then

@@ -52,8 +52,8 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
  ! Work Space
  !
  real(SP), allocatable :: Vali(:,:),Valo(:,:,:,:)
- integer  :: i1,ik,iband,i_spin,ikbz,order(qp%nk),k_near(n_neigh),nk_interpolated,&
-&            nk_exact,i_err,ik_ref,ib_ref,N_val_to_int
+ integer  :: i1,ik,iband,i_spin,nk_interpolated,&
+&            nk_exact,ik_ref,ib_ref,N_val_to_int
  !
  logical, external :: QP_check_if_corrected
  !

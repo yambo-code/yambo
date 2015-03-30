@@ -44,7 +44,7 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
  !
  ! Work Space
  !
- integer :: i1,i2,is
+ integer :: i1,is
  real(SP):: v(3),k_distance_loc
  real(SP):: k_rotated(3,nsym)
  logical :: local_flag

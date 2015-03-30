@@ -41,14 +41,13 @@ subroutine rim()
  !
  type(PP_indexes)::px
  integer   :: iq
- real(SP)  :: em1_anis(3),G_sph_radii,anisotropy 
+ real(SP)  :: em1_anis(3),G_sph_radii
  !
  ! Random generator
  !
  real(SP)  :: first_neighbour(26,3)
  integer   :: N_out,N_in,N_out_G,rep_factor,inn1,inn2,inn3,ic
  real(SP)  :: v1(3),v2(3),qr(RIM_n_rand_pts,3),v1_norm(2)
- real(DP)  :: rr
  character(12)      :: ch(3)
  integer            :: iseed(8)
  real(DP), external :: dlaran

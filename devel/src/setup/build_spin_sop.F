@@ -25,8 +25,8 @@ subroutine build_spin_sop()
  !
  use pars,           ONLY:SP,pi,cI,cONE,cZERO
  use matrix_operate, ONLY:m3det
- use D_lattice,      ONLY:dl_sop,spin_sop,nsym,i_time_rev,sop_inv
- use electrons,      ONLY:n_spin,n_sp_pol,n_spinor
+ use D_lattice,      ONLY:dl_sop,spin_sop,nsym,i_time_rev
+ use electrons,      ONLY:n_spin,n_sp_pol
  !
  implicit none
  !

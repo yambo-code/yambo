@@ -64,7 +64,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !
  integer :: ikbz,iv,ic,ik,ikp,i_sp,i_star,&
 &           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp
- real(SP):: E_eh,f_eh
+ real(SP):: E_eh,f_eh,f_e,f_h
  integer, allocatable :: i_T_at_k(:)
  !
  if (FILL_the_groups) call section('+','Transition Groups build-up')
@@ -198,9 +198,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !
  ! REPORT
  !
- if (FILL_the_groups) then
-   call msg('r','[BSK] Transition groups (total)',BS_nT_grps)
- endif
+ if (FILL_the_groups) call msg('r','[BSK] Transition groups (total)',BS_nT_grps)
  !
  ! CLEAN UP
  !
@@ -212,31 +210,27 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      !
      T_is_ok=.TRUE.
      !
-     E_eh=Ken%E(ic,ik,i_sp)-Ken%E(iv,ikp,i_sp)
-     f_eh=(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik,i_sp))/spin_occ
+     E_eh= Ken%E(ic,ik ,i_sp)-Ken%E(iv,ikp,i_sp)
+     f_eh=(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik ,i_sp))/spin_occ
      !
-     ! A 5% fractional occupation swiches on the particular
-     ! treatment of finite temp. BSE 
-     !
+     ! A 0.001 % fractional occupation swiches on the particular treatment of finite temp. BSE 
      if ( abs(abs(f_eh)-1._SP)> filled_tresh) BS_not_const_eh_f=.TRUE.
      !
+     ! The negative energy transitions are included in the anti-resonant part
+     if ( E_eh<0._SP ) T_is_ok=.FALSE.
+     !
+     ! Small energies transitions are included only via the Drude model
      if (abs(E_eh)<1.E-5) then
        if(all((/ic==Ken%bf,iv==Ken%bf,ik==Ken%kf,i_sp==Ken%sf,&
 &              real(Wd)/=0.,aimag(Wd)/=0./))) BS_drude_f_eh=f_eh
        T_is_ok=.FALSE.
      endif
      !
-     ! Same ordering procedure of the Xo case (see X_eh_setup.F)
-     !
-     if (abs(f_eh)*spin_occ*spin_occ<epsilon(1._SP) .or. f_eh<0._SP ) T_is_ok=.FALSE.
-     !
-     ! Additional (?) condition for spin-resolved calculations
-     !
-     if (n_spin==2.and. (Ken%f(iv,ikp,i_sp)<=filled_tresh &
-&       .or.abs(spin_occ-Ken%f(ic,ik,i_sp))<=filled_tresh) ) T_is_ok=.FALSE.
-     !
-     ! The e/h occ must be 1. in the T=0 case as the spin factor (spin_occ)
-     ! would erronously increase the e-e scattering
+     ! If I've included in valence states that are almost empty
+     ! or in conduction states that are almost full, those are neglected
+     f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
+     f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
+     if ( (f_e<=filled_tresh) .or. (f_h<=filled_tresh) ) T_is_ok=.FALSE.
      !
      if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0.,&
 &              abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0./))) T_is_ok=.FALSE.

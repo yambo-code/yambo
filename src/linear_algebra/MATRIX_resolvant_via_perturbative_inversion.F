@@ -40,7 +40,7 @@ integer function MATRIX_resolvant_via_perturbative_inversion(N,W,C,f,V)
  !
  real(SP),parameter       :: perc_treshold=0.01
  integer     ::BSS_inv_iter_max=51
- integer     ::it,i1
+ integer     ::it
  complex(SP) ::A_nm1(N),A_n(N),delta_f,fo
  !
  MATRIX_resolvant_via_perturbative_inversion=0

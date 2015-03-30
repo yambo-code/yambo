@@ -31,7 +31,7 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
  use memory_m,         ONLY:mem_est
  use electrons,        ONLY:levels,E_reset
  use D_lattice,        ONLY:dl_sop,n_atoms_species,Z_species,atom_pos,nsym,alat
- use R_lattice,        ONLY:g_vec,rl_sop,bz_samp,bz_samp_reset,nXkbz
+ use R_lattice,        ONLY:g_vec,rl_sop,bz_samp,bz_samp_reset
  use wave_func,        ONLY:wf_nc_k,wf_igk
  use com,              ONLY:core_io_path
  use IO_m,             ONLY:io_control,OP_RD_CL,NONE,DUMP,io_connect,io_disconnect,&
@@ -43,7 +43,7 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
  !
  ! WorkSpace
  !
- integer           :: ID,i_io,i_err,i1,i2,is
+ integer           :: ID,i_io,i1,i2,is
  integer, external :: io_DB1
  character(lchlen) :: core_io_path_save
  !

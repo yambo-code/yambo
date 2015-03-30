@@ -24,7 +24,7 @@
 subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
 &                  C1,L1,L3,IPOS)
  !
- use pars,    ONLY:SP,LP,lchlen
+ use pars,    ONLY:SP,LP
 #if defined _NETCDF_IO
  use pars,    ONLY:nf90_SP
  use netcdf
@@ -46,7 +46,6 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
  ! 
  ! Work Space
  !
- character(lchlen) :: ch
  integer :: var_dim(10),j1
  !
  if (.not.io_netcdf_support(ID)) goto 1

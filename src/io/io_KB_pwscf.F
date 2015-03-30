@@ -24,16 +24,14 @@
 integer function io_KB_pwscf(ID)
  !
  use pars,             ONLY:SP,IP,schlen
- use electrons,        ONLY:n_spinor
- use wave_func,        ONLY:wf_ncx
  use stderr,           ONLY:intc
  use memory_m,         ONLY:mem_est
  use matrix_operate,   ONLY:mat_c2r,mat_r2c
  use D_lattice,        ONLY:n_atomic_species,atom_pos,n_atoms_species, &
 &                           n_atoms_species_max
- use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_mode, &
+ use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
 &                           io_elemental,io_bulk,io_header,io_fragmented,&
-&                           read_is_on,write_is_on,io_extension,io_fragment
+&                           read_is_on,write_is_on,io_fragment
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_pwscf
@@ -44,7 +42,7 @@ integer function io_KB_pwscf(ID)
  ! 
  ! Work Space
  !
- integer :: ik,i_dir,i_spinor,i_type
+ integer :: ik
  !
  !
  ik=maxval(io_sec(ID,:))-1

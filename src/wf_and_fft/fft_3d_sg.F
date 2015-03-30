@@ -58,7 +58,9 @@ subroutine fft_3d(c,n,fft_sign)
  integer     :: i1,ln(3),ipos
  integer     :: i_sign
  real(DP), allocatable :: zi(:,:,:,:,:)
+#if defined _OPENMP
  integer     :: i, j, k
+#endif
  !
 #if defined _TIMING
  call timing('FFT',OPR='start')

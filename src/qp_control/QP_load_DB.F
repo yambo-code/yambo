@@ -48,7 +48,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  ! Work Space
  !
  integer,parameter:: n_pieces=20,max_n_of_dbs=10
- character(schlen):: ch,db_piece(n_pieces)
+ character(schlen):: db_piece(n_pieces)
  type(QP_t)       :: qp_from_dbs(max_n_of_dbs)
  character(lchlen):: qp_msg,qp_db_name,dummy_db_name
  integer          :: i1,i_sp,n_qp_db,i2

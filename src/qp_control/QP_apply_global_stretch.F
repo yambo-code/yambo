@@ -135,7 +135,7 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
      !
      ! Work Space
      !
-     integer  :: i1,i2,i3,iref,ik_r
+     integer  :: i1,iref
      real(SP) :: delta,rref,M_factor_local
      logical  :: QP_check_if_corrected
      !
@@ -179,12 +179,12 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
            if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=E%E_VBM
          endif
          !
-         do i3=1,n_of_coeff-1
-           M_factor_local=M_factors_free(iref+1+i3)
+         do i1=1,n_of_coeff-1
+           M_factor_local=M_factors_free(iref+1+i1)
            if (what=='E') M_factor_local=M_factor_local-1.
            if (what=='W'.and.E%Eo(ib,ik,i_spin)<rref.and.E%Eo(ib,ik,i_spin)> 1.E-5) cycle
            if (what=='W'.and.E%Eo(ib,ik,i_spin)>rref.and.E%Eo(ib,ik,i_spin)<=1.E-5) cycle
-           delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i3
+           delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i1
          enddo
          !
          if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=E%E_CBm
@@ -192,12 +192,12 @@ subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
          !
          if (DB_corrected(ib,ik,i_spin)/=1.or.apply_anyway) then
            delta=delta+M_factors_base(iref+1)
-           do i3=1,n_of_coeff-1
-             M_factor_local=M_factors_base(iref+1+i3)
+           do i1=1,n_of_coeff-1
+             M_factor_local=M_factors_base(iref+1+i1)
              if (what=='E') M_factor_local=M_factor_local-1.
              if (what=='W'.and.E%Eo(ib,ik,i_spin)<rref.and.E%Eo(ib,ik,i_spin)> 1.E-5) cycle
              if (what=='W'.and.E%Eo(ib,ik,i_spin)>rref.and.E%Eo(ib,ik,i_spin)<=1.E-5) cycle
-             delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i3
+             delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i1
            enddo
          endif
          !

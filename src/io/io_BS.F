@@ -28,13 +28,11 @@ integer function io_BS(iq,X,ID)
  use stderr,        ONLY:intc
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use parallel_m,    ONLY:myid
- use BS,            ONLY:BS_mat,&
-&                        BS_blk,n_BS_blks,&
+ use BS,            ONLY:BS_blk,n_BS_blks,&
 &                        BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
-&                        io_elemental,io_bulk,io_restart_point,&
-&                        read_is_on,write_is_on,io_header,io_mode,&
-&                        VERIFY,io_fragmented,Fragmented_IO,&
+&                        io_elemental,io_bulk,&
+&                        read_is_on,write_is_on,io_header,io_mode,VERIFY,io_fragmented,&
 &                        io_fragment,IO_NOT_ALLOWED,io_BS_K,RD_CL,io_action,RD_CL_IF_END
  implicit none
  type(X_t):: X 
@@ -42,11 +40,10 @@ integer function io_BS(iq,X,ID)
  !
  ! Work Space
  !
- integer             ::ik12(2),i_block,i1,BS_k_and_row_restart(2)
+ integer             ::i_block,i1
  character(schlen)   ::ch,db_name
  character(lchlen)   ::local_description(100)
  real(SP),allocatable::BS_mat_disk(:,:,:)
- logical             ::db_is_large,load_DB_once_for_all
  !
  if (.not.io_BS_K) then
    io_BS=IO_NOT_ALLOWED

@@ -62,7 +62,6 @@ module LIVE_t
    !
    subroutine GET_user_WALL_time( )
      integer           :: i_pos(3)
-     character(schlen) :: temp_ch
      i_pos=(/index(trim(USER_wall_time_string),"d"),index(trim(USER_wall_time_string),"h"),index(trim(USER_wall_time_string),"m")/) 
      if (i_pos(3)/=0) then
        if (i_pos(2)/=0) then
@@ -87,7 +86,6 @@ module LIVE_t
    end subroutine
    !
    character(lchlen) function date_and_time_string(dt_in,dt_out,skip_host)
-     use parallel_m,  ONLY:ncpu
      integer,optional    ::dt_in(6),dt_out(6)
      logical,optional    ::skip_host
      integer      :: dz(8)
@@ -302,7 +300,6 @@ module LIVE_t
    end subroutine
    !
    subroutine live_timing_activate(name,steps)
-     use stderr,     ONLY : write_to_log
      implicit none
      character(*)      :: name
      ! 

@@ -164,7 +164,6 @@ module functions
    function h2ht(is,os,E,F)
      !
      use electrons, ONLY:levels
-     use drivers,   ONLY:Finite_Tel
      integer      ::is(3),os(3),h2ht
      type(levels) ::E
      real(SP) :: F

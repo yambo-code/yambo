@@ -67,7 +67,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! Work Space
  !
  type(X_t)   :: X_tddft,X_oscillators
- integer     :: iq,bands_to_correct(2),Max_G_m_G,n_T_steps
+ integer     :: iq,Max_G_m_G
+ !integer     :: bands_to_correct(2)
  integer, external :: eval_G_minus_G
  !
  call section('*','Response Functions in Transition space')

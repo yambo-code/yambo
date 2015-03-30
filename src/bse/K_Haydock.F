@@ -35,7 +35,7 @@ subroutine K_Haydock(iq,W)
 &                         io_BSS_Haydock, BS_K_Coupling,&
 &                         Haydock_terminator, BSE_mode,Haydock_v0_mod,BS_Blocks_symmetrize_K,&
 &                         BS_HAYVEC_free,BS_HAYVEC_alloc, BS_T_grp,BS_nT_grps,&
-&                         Haydock_vector,BS_BLK, N_BS_BLKS, Haydock_parallel_mask,Haydock_parallel_group_comm
+&                         Haydock_vector,Haydock_parallel_mask,Haydock_parallel_group_comm
  use interfaces,     ONLY:K_multiply_by_V,K_dot_product
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
@@ -65,7 +65,7 @@ subroutine K_Haydock(iq,W)
  !
  ! Work Space
  !
- integer            ::it,it_on_disk,i1,ierr,i_g,I_TP,I_TK,I_B
+ integer            ::it,it_on_disk,i_g
  integer, parameter ::Max_iterations=1000
  type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:)
  complex(SP),allocatable :: Cf(:)
@@ -89,7 +89,7 @@ subroutine K_Haydock(iq,W)
  !
  ! I/O
  !
- integer           :: ID,io_err
+ !integer           :: ID,io_err
  !
  call PARALLEL_Haydock_VEC_COMMs('assign')
  !
@@ -191,8 +191,7 @@ subroutine K_Haydock(iq,W)
  !endif
  !
  !
- if (io_err>0) call error('K_Haydock: restart of Haydock temporary&
-      & disabled') 
+ ! if (io_err>0) call error('K_Haydock: restart of Haydock temporary disabled') 
  !
  ! if (io_err>0) then 
  !   !

@@ -32,9 +32,11 @@ subroutine eval_Gradient(f,f_gradient)
  ! \sum f'(G) exp(iGr)       => FFT^-1
  !
  use pars,          ONLY:SP,DP,cI
- use FFT_m,         ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
+ use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
+#if defined _FFTW
+ use FFT_m,         ONLY:fftw_plan
+#endif
  use R_lattice,     ONLY:g_vec
- use D_lattice,     ONLY:alat
  use wave_func,     ONLY:wf_ng
  !
  implicit none

@@ -142,16 +142,19 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        ic=0
        do iqbz=1,nqbz
          i_q_mem=PAR_Q_index(iqbz)
+         !
          if (.not.PAR_IND_Q%element_1D(iqbz)) then
-           ic=ic+1
+           ic=ic+N_plasma_poles_global
            cycle
          endif
+         !
          do i_J=1,N_plasma_poles_global
            ic=ic+1
            if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
            i_J_mem  =PAR_Plasma_index(i_J)
            GW_NEQ_collisions(i_qp_mem)%v3_r(i_J_mem,1,i_q_mem)=GW_NEQ_collisions(1)%v_r(ic)
          enddo
+         !
        enddo
      endif
      !

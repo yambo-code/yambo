@@ -200,7 +200,6 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,RT_scatt_tresh,'EE')/&
 &                     real(RIM_EE_Nk_table(ik_rim,ik_m_q))
            !
-           !
            if(abs(P_pl_abs)<1.E-7) cycle
            !
            f0_kmq           = RT_E_occupations_reference(i_np,ik_m_q_rim)/spin_occ

@@ -31,7 +31,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  use LOGO,          ONLY:code_version,code_revision
  use com,           ONLY:warning
  use stderr,        ONLY:string_split
- use D_lattice,     ONLY:Tel,a,alat,input_Tel_is_negative,Bose_Temp
+ use D_lattice,     ONLY:Tel,alat,input_Tel_is_negative,Bose_Temp
  use electrons,     ONLY:n_sp_pol,n_spinor
  use parallel_m,    ONLY:CPU_structure
  use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt,cut_description
@@ -55,12 +55,12 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  ! Work Space
  !
  integer             :: i1,nqibz_disk,nkibz_disk,R_LATT_vec(4),p_structure,&
-&                       R_LATT_vec_disk(4),MODE,MENU,SPIN_vec_disk(2),VAR_SZ
+&                       R_LATT_vec_disk(4),MODE,MENU,SPIN_vec_disk(2)
  real(SP),allocatable:: l_pt(:,:)
  real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),&
 &                       save_Tel(2)
  logical             :: WARN,xc_kind_force,l_frag
- character(schlen)   :: xc_string_kinds(10),DB_gauge
+ character(schlen)   :: xc_string_kinds(10)
  !
  io_header=0
  !

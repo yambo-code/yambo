@@ -41,7 +41,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  !
  integer, parameter :: n_dl_pts=24 ! NO EVEN NUMBERS HERE !
  real(SP),parameter :: plot_factor=1.2
- character(schlen)  :: ch,of_name(4)
+ character(schlen)  :: of_name(4)
  real(SP):: pl_xy_pt(n_dl_pts**2,3),v_xy(n_dl_pts**2,2),&
 &           pl_yz_pt(n_dl_pts**2,3),v_yz(n_dl_pts**2,2),&
 &           pl_xz_pt(n_dl_pts**2,3),v_xz(n_dl_pts**2,2),&

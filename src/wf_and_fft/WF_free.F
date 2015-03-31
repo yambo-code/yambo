@@ -26,7 +26,10 @@ subroutine WF_free(WF)
  use wave_func,ONLY:WAVEs,QUIET_free
  use memory_m, ONLY:mem_est
  use FFT_m,    ONLY:fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
-&                    fft_rot_r,fft_rot_r_inv,fftw_plan,fft_multiplier
+&                    fft_rot_r,fft_rot_r_inv,fft_multiplier
+#if defined _FFTW
+ use FFT_m,    ONLY:fftw_plan
+#endif
  type(WAVEs)      ::WF
  !
  if (.not.associated(WF%c)) return

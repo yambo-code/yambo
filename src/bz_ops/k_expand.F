@@ -64,7 +64,7 @@ subroutine k_expand(k)
  use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:rlu_v_is_zero,c2a,k2bz
  use D_lattice,      ONLY:nsym
- use R_lattice,      ONLY:b,rl_sop,bz_samp
+ use R_lattice,      ONLY:rl_sop,bz_samp
  use zeros,          ONLY:k_rlu_zero
  !
  implicit none

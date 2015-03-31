@@ -28,7 +28,7 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  use pars,           ONLY:SP,schlen
  use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:c2a,k2bz
- use R_lattice,      ONLY:b,rl_sop,bz_samp
+ use R_lattice,      ONLY:rl_sop,bz_samp
  implicit none
  type(bz_samp)::k
  character(1) ::units

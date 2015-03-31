@@ -23,9 +23,8 @@
 !
 subroutine setup(en,Xen,Ken,k,Xk)
  !
- use drivers,        ONLY:l_sc_run
  use pars,           ONLY:SP,pi,schlen
- use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,n_sp_pol,&
+ use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,&
 &                         BZ_RIM_nbands,RIM_is_symmetry_expanded,BZ_RIM_tot_nkpts
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
 &                         atoms_spatial_invertion,i_space_inv,input_Tel_is_negative,&
@@ -40,6 +39,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use vec_operate,    ONLY:cross_product,c2a
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
 #if defined _SC
+ use drivers,        ONLY:l_sc_run
+ use electrons,      ONLY:n_sp_pol
  use SC,             ONLY:load_SC_components,found_SC_DB
  use global_XC,      ONLY:G_kind,G_xc_functional,X_kind,&
 &                         X_xc_functional,setup_global_XC,MORE_NONE,K_kind,K_xc_functional,loaded_WF_xc_string,&
@@ -53,8 +54,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Work Space
  !
- real(SP)          :: rv(3),m(3,3),Tel_SAVE
- integer           :: i1,i2,i3,is,ia,i_err,nbf_m_SAVE(2)
+ real(SP)          :: rv(3),Tel_SAVE
+ integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2)
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch1,dumb_ch2
  integer, external :: k_lattice,RIM_grid_consistency_check

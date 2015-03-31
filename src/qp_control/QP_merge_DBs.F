@@ -36,7 +36,7 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,qp,plan_EWZ)
  !
  ! Work Space
  !
- integer  ::i_db,i1,i2,n_states_merged,nk_merged,nb_merged
+ integer  ::i_db,i1,i2,n_states_merged
  logical  ::l_QP_db
  integer, allocatable :: dummy_table(:,:)
  !

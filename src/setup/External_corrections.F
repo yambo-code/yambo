@@ -23,17 +23,18 @@
 !
 subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !
- use drivers,       ONLY:l_optics,l_chi,l_em1s,l_em1d,l_acfdt,l_real_time,l_ppa,&
-&                        l_cohsex,l_bss,l_gw0,l_elph_corr,l_bse
+ use drivers,       ONLY:l_optics,l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_bss,l_gw0,l_bse
  use X_m,           ONLY:X_t
  use electrons,     ONLY:levels,n_bands
  use R_lattice,     ONLY:bz_samp
  use BS,            ONLY:BS_bands
  use QP_CTL_m,      ONLY:QP_apply
 #if defined _RT
+ use drivers,       ONLY:l_cohsex,l_real_time
  use RT_CTL,        ONLY:RT_apply
 #endif
 #if defined _ELPH
+ use drivers,       ONLY:l_elph_corr
  use ELPH,          ONLY:E_k_p_q,elph_nb
 #endif
 #if defined _SURF
@@ -48,7 +49,10 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !
  ! Work Space
  !
- logical       ::l_apply_QP_corrections,l_apply_RT_corrections,l_dynamical,VERBOSE
+#if defined _RT
+ logical       ::l_apply_RT_corrections
+#endif
+ logical       ::l_apply_QP_corrections,l_dynamical,VERBOSE
  integer       ::X_kind,QP_bands(2)
  !
  call section('*','External corrections')

@@ -26,7 +26,7 @@ logical function stop_now(DO_IT_NOW)
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use electrons,      ONLY:levels,E_reset
- use com,            ONLY:repfile,file_exists
+ use com,            ONLY:file_exists
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_reset
  use it_m,           ONLY:it_reset

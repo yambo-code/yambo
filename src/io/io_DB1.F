@@ -54,9 +54,6 @@ integer function io_DB1(E,k,ID)
  type(bz_samp) :: k
  integer       :: ID,code_version_local(3),code_revision_local
  !
- ! Work Space
- !
- character(schlen) :: string
  !
  io_DB1 =io_connect(desc="db1",type=0,ID=ID)
  if (io_DB1/=0) goto 1

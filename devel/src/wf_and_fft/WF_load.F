@@ -45,12 +45,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
 &                        io_fragmented, io_netcdf_support, RD_CL,DUMP,IO_and_Messaging_switch
 #if defined _SC
- use electrons,     ONLY:n_bands
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
  use global_XC,     ONLY:WF_kind,WF_xc_functional,&
 &                        WF_perturbation,global_XC_string,SE_NONE
- use xc_functionals,ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL
 #endif
  !
  implicit none

@@ -25,7 +25,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_ppa,l_elel_corr,l_elph_corr,l_cohsex,l_elphoton_corr
+ use drivers,       ONLY:l_ppa,l_elel_corr,l_cohsex
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,&
@@ -35,6 +35,12 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_apply
+#if defined _ELPH
+ use drivers,       ONLY:l_elph_corr
+#endif
+#if defined _QED
+ use drivers,       ONLY:l_elphoton_corr
+#endif
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q

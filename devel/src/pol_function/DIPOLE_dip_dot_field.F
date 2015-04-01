@@ -51,11 +51,12 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  ! Work Space
  !
  integer                   :: ik,ik_bz,ic,iv,is,i_spin,ik_mem,ik_bz_mem,i_star,iv_max,ic_min,&
-&                             nb_alloc,i1
+&                             nb_alloc
  real(SP)                  :: field_dir_rot(3)
  complex(SP)               :: dipole(3)
  logical                   :: t_rev
 #if defined _KERR
+ integer                   :: i1
  real(SP)                  :: dipole_dir(3),dipole_dir_rot(3)
 #endif
  !

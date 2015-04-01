@@ -9933,7 +9933,7 @@ if ! test x"$enable_3d_fft" = "xno" ; then FFT3D_CPP="-D_USE_3D_FFT" ; fi
 #
 HAVE_FFT="no"
 save_ldflags="$LDFLAGS"
-EXTERNAL_LIB=
+try_libs=
 
 #
 # F90 module flag
@@ -9972,7 +9972,7 @@ elif test x"$with_fft_libs" != "x" ; then
   #
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT Library using $with_fft_libs" >&5
 $as_echo_n "checking for FFT Library using $with_fft_libs... " >&6; }
-  EXTERNAL_LIB=$with_fft_libs
+  try_libs=$with_fft_libs
   #
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT" >&5
@@ -9982,31 +9982,43 @@ fi
 #
 # check for FFTW
 #
+testprog="      program main
+
+    integer :: i
+    call dfftw_destroy_plan(i)
+
+      end"
+testprog_omp="      program main
+
+    integer :: i
+    call dfftw_init_threads(i)
+    call dfftw_plan_with_nthreads(i)
+    call dfftw_destroy_plan(i)
+
+      end"
+#
 if test -d "$try_libdir" && test -d "$try_incdir" ; then
    #
-   if test x"$enable_open_mp" = "xyes"; then
-       EXTERNAL_LIB="-lfftw3 -lfftw3_omp"
+   if test x"$enable_open_mp" = "xyes" && test -e "$try_libdir/libfftw3_omp.a" ; then
+       try_libs="-lfftw3 -lfftw3_omp"
    else
-       EXTERNAL_LIB="-lfftw3"
+       try_libs="-lfftw3"
    fi
    #
 fi
 #
-if ! test x"$EXTERNAL_LIB" = "x" ; then
-
-  for try_libs in "$EXTERNAL_LIB" ; do
-    save_libs=$LIBS
-    save_fcflags=$FCFLAGS
-    if test x"$try_libdir" != "x" ; then FFT_PATH="-L$try_libdir" ; fi
-    if test x"$try_incdir" != "x" ; then FCFLAGS="$FCFLAGS $IFLAG$try_incdir" ; fi
-    #
-    if test "$try_libs"; then :
+if ! test x"$try_libs" = "x" ; then
+  #
+  save_libs=$LIBS
+  save_fcflags=$FCFLAGS
+  if test x"$try_libdir" != "x" ; then FFT_PATH="-L$try_libdir" ; fi
+  if test x"$try_incdir" != "x" ; then FCFLAGS="$FCFLAGS $IFLAG$try_incdir" ; fi
+  #
+  if test x"$enable_open_mp" = "xyes" ; then FCFLAGS="$FCFLAGS $OMPFLAGS" ; fi
   LIBS="${FFT_PATH} ${try_libs}"
-fi
-    cat > conftest.$ac_ext <<_ACEOF
-      program main
-      call dfftw_destroy_plan(1)
-      end
+  #
+  cat > conftest.$ac_ext <<_ACEOF
+$testprog
 _ACEOF
 if ac_fn_fc_try_link "$LINENO"; then :
   HAVE_FFTW="yes";
@@ -10015,19 +10027,29 @@ else
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-    LIBS=$save_libs
-    FCFLAGS=$save_fcflags
-    if test "$HAVE_FFTW" = "yes" ; then
-      break;
-    fi
-  done
+  cat > conftest.$ac_ext <<_ACEOF
+$testprog_omp
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  HAVE_FFTW_OMP="yes";
+else
+  HAVE_FFTW_OMP="no";
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  #
+  LIBS=$save_libs
+  FCFLAGS=$save_fcflags
+  #
   if test "$HAVE_FFTW" = "yes" ; then
     FFT_CPP="-D_FFTW"
+    if test "$HAVE_FFTW_OMP" = "yes" ; then FFT_CPP="-D_FFTW -D_FFTW_OMP" ; fi
+    #
     if test "$try_libs" = "-lfftw3" ; then
       FFT_DESCRIPTION="FFTW (v3) Fast Fourier transform";
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: FFTW3" >&5
 $as_echo "FFTW3" >&6; }
-    elif test "$try_libs" = "-lfftw3 -lfftw3_omp" ; then
+    elif test "$try_libs" = "-lfftw3 -lfftw3_omp" && test "$HAVE_FFTW_OMP" = "yes" ; then
       FFT_DESCRIPTION="FFTW_OMP (v3) Fast Fourier transform";
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: FFTW3_OMP" >&5
 $as_echo "FFTW3_OMP" >&6; }
@@ -10055,10 +10077,10 @@ fi
 # check for ESSL FFT
 #
 if test -d "$try_libdir" && test -d "$try_incdir" ; then
-   EXTERNAL_LIB="-L$try_libdir -lessl"
+   try_libs="-L$try_libdir -lessl"
 fi
 #
-if ! test x"$EXTERNAL_LIB" = "x" && ! test "$HAVE_FFT" = "yes" ; then
+if ! test x"$try_libs" = "x" && ! test "$HAVE_FFT" = "yes" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: FFTW no" >&5
 $as_echo "FFTW no" >&6; }
   #
@@ -10067,7 +10089,7 @@ $as_echo "FFTW no" >&6; }
   save_libs=$LIBS
   save_ldflags=$LDFLAGS
   save_fcflags=$FCFLAGS
-  LIBS="$FFT_PATH $EXTERNAL_LIB"
+  LIBS="$FFT_PATH $try_libs"
   if test x"$try_incdir" != "x" ; then FCFLAGS="$FCFLAGS $IFLAG$try_incdir" ; fi
   #
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dcft in $LIBS" >&5
@@ -10096,7 +10118,7 @@ $as_echo "$HAVE_ESSL" >&6; }
 $as_echo_n "checking for FFT... " >&6; }
     FFT_CPP="-D_FFTQE $FFT3D_CPP -D_ESSL"
     FFT_DESCRIPTION="ESSL Fast Fourier transform (FFTQE)";
-    FFT_LIBS="${FFT_PATH} $EXTERNAL_LIB"
+    FFT_LIBS="${FFT_PATH} $try_libs"
     HAVE_FFT=yes
     compile_fftqe=yes
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: ESSL FFT" >&5

@@ -62,8 +62,8 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,use_trans_gauge)
  ! Work Space
  !
  integer                      :: ik,icfft,ivfft,ic,iv, ik_grid, iq, ikpq
- integer                      :: i_spin, err, ifail, ir, num_shifted_grid, ig
- complex(SP)                  :: rho(2), ctmp
+ integer                      :: i_spin, err, ifail, ir, num_shifted_grid
+ complex(SP)                  :: rho(2)
  real(SP)                     :: Ev_m_Ec
  type(PP_indexes)             :: px
  !

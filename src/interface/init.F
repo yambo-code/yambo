@@ -93,7 +93,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  integer           :: io_err,io_WF_err,io_X_err(4),io_ID,io_BS_err,io_KB_abinit_err,io_KB_pwscf_err,&
-&                     io_BS_Fxc_err,io_QINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G,iq
+&                     io_BS_Fxc_err,io_QINDX_err
+#if defined _SC
+ integer           :: io_COLLISIONS_err,io_SC_E_err,io_SC_V_err
+#endif
+#if defined _RT
+ integer           :: io_G,io_J_and_P
+#endif
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
 &                     io_COL_CUT
@@ -1276,7 +1282,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      use LIVE_t, ONLY:USER_wall_time_string,GET_user_WALL_time
      use stderr, ONLY:string_split
      use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,&
-&                     V_real_time,V_all,rstatus
+&                     V_real_time,V_all
      implicit none
      integer     :: init_
      character(*):: rstr

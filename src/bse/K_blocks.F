@@ -48,7 +48,7 @@ subroutine K_blocks( )
  !
  ! Work Space
  !
- integer    :: i_T,j_T,i_loop,tot_size,N_Ts_total(1),i_block,block_size
+ integer    :: i_T,j_T,i_loop,tot_size,N_Ts_total(1),i_block
  !
  call section('=','CPU-dependent Block structure')
  !                 =============================

@@ -34,11 +34,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
  use FFT_m,          ONLY:fft_size
  use X_m,            ONLY:Dipole_Energy_treshold
  use wave_func,      ONLY:WF
-#if defined _OPENMP
- use wrapper,        ONLY:Vstar_dot_V_omp
-#else
- use wrapper,        ONLY:Vstar_dot_V
-#endif
+ use wrapper_omp,    ONLY:Vstar_dot_V_omp
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -138,11 +134,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
          if(OUTPUT_dim==3) Hk(i_dir,:,:,:)=Hk_vec_tmp(i_dir,:,:,:)
        endif 
        !
-#if defined _OPENMP
        VALUE_tmp(i_dir)=VALUE_tmp(i_dir)-cI*Vstar_dot_V_omp(SC_bands2,Hk(i_dir,:,:,1),G(:,:,ik))
-#else
-       VALUE_tmp(i_dir)=VALUE_tmp(i_dir)-cI*Vstar_dot_V(SC_bands2,Hk(i_dir,:,:,1),G(:,:,ik))
-#endif
        !
      enddo
      !

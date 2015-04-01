@@ -37,8 +37,8 @@ subroutine Dipole_check_shifted_grids( Xk_shift, Xk, ifail, num_shifted_grid )
  !
  ! Work Space
  !
- real(SP)         :: q_init(3), q_mod(3), qtemp(3), ca(3,3)
- real(SP)         :: a(3), b(3), c(3), x(3), y(3), z(3), q_long_tmp(3,3)
+ real(SP)         :: q_init(3), q_mod(3), qtemp(3)
+ real(SP)         :: q_long_tmp(3,3)
  integer          :: i_grid_k, iq, ik
  !
  if(ifail>0) return

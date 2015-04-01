@@ -30,9 +30,9 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
  use pars,          ONLY:SP,pi
  use R_lattice,     ONLY:b,g_vec,bz_samp
  use vec_operate,   ONLY:iku_v_norm,v_norm,c2a
- use wave_func,     ONLY:wf,wf_ng
+ use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
- use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_n_l_comp,pp_kbs,&
+ use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_kbs,&
 &                        pp_kb,pp_kbd,pp_table,pp_n_l_max
  !
  implicit none
@@ -48,7 +48,7 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
  real(SP)    :: Ygrad(2,3)
  !
  integer     :: ig,i1,is,ia,pp_spin
- integer     :: im,im_min,im_max,il,i_pp,j2p1
+ integer     :: im,im_min,im_max,il,i_pp!,j2p1
  complex(SP) :: e_iGR
  real(SP)    :: KpG_cc(3),G_cc(3)
  real(SP)    :: KpG_norm,G_dot_Rat,sf

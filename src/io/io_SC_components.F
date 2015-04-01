@@ -30,11 +30,11 @@ integer function io_SC_components(what,E_sc,ID)
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,rho_convergence,E_convergence,&
 &                         SC_R,V_xc_sc,l_sc_pot_is_local,H_nl_sc,&
-&                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
+&                         V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,close_is_on,&
-&                         manage_RD_WR_CL_IF_END,variable_is_found,io_SC,IO_NOT_ALLOWED,io_unit,&
-&                         IO_write,io_fragment
+&                         manage_RD_WR_CL_IF_END,variable_is_found,io_SC,IO_NOT_ALLOWED,&
+&                         io_fragment
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use matrix_operate, ONLY:mat_c2r,mat_r2c

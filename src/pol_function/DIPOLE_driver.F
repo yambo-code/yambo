@@ -35,7 +35,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,RD_CL_IF_END,&
 &                         IO_and_Messaging_switch,io_DIP
  use wave_func,      ONLY:wf_ng,WF
- use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,master_cpu,PAR_COM_k_for_P,ncpu
+ use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,master_cpu,PAR_COM_k_for_P,ncpu,PAR_COM_q_for_Xo
 #if defined _SC      
  use X_m,            ONLY:P_square
 #endif
@@ -189,10 +189,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! If the calculation of the dipoles is very short the I/O is switched off
    !
-   if (is_section_time_short()) then
+#if !defined _YPP_RT
+   if (is_section_time_short(COMM=PAR_COM_q_for_Xo%COMM)) then
      io_DIP=.FALSE.
      call warning('DIPOLEs I/O switched-off to prevent communication problems')
    endif
+#endif
    !
    if (master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)

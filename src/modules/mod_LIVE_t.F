@@ -64,12 +64,17 @@ module LIVE_t
  !
  contains
    !
-   logical function is_section_time_short( )
+   logical function is_section_time_short(COMM)
      use parallel_m, ONLY:PP_redux_wait,ncpu
-     integer            :: i_c
+     integer, optional :: COMM
+     integer           :: i_c
      is_section_time_short=.FALSE.
      if (ncpu==1) return
-     call PP_redux_wait(cput_sec)
+     if (present(COMM)) then
+       call PP_redux_wait(cput_sec,COMM)
+     else
+       call PP_redux_wait(cput_sec)
+     endif
      do i_c=1,ncpu
        if (cput_sec(i_c,2)-cput_sec(i_c,1)<SHORT_time) is_section_time_short=.TRUE.
      enddo

@@ -30,12 +30,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        Time_unit,I_unit,Angle_unit,V_parallel,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
-&                        X_en_comp,global_gauge
+&                        X_en_comp
  use com,           ONLY:grid_path
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,GW_terminator_E,GW_terminator_Kind,&
-&                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
-&                        SC_E_threshold,QP_dSc_delta,QP_G_Zoom_treshold,QP_QED_ng
+&                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,&
+&                        QP_dSc_delta,QP_G_Zoom_treshold
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
@@ -50,7 +50,14 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use functions,     ONLY:bose_E_cut
+#if defined _QED
+ use QP_m,          ONLY:QP_QED_ng
+#endif
+#if defined _KERR || defined _SC
+ use X_m,           ONLY:global_gauge
+#endif
 #if defined _SC
+ use QP_m,          ONLY:SC_band_mixing,SC_E_threshold
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,SC_up_W_iters,&
 &                        SC_rho_threshold,SC_cycle_mixing,OEP_approx
  use collision,     ONLY:COLLISIONS_cutoff

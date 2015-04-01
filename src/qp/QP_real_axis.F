@@ -36,9 +36,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
-&                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
-&                        PAR_COM_QP_A2A,n_WF_bands_to_load,PAR_Q_index,PAR_nQ,PAR_nQP,&
-&                        PAR_nG_bands,PAR_nQ_bz,myid
+&                        PAR_IND_Q,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
+&                        n_WF_bands_to_load,PAR_Q_index,PAR_nQP,&
+&                        PAR_nG_bands,PAR_nQ_bz
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
  use collision,     ONLY:ggwinfo,collision_reset
  use wave_func,     ONLY:WF

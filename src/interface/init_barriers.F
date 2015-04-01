@@ -28,7 +28,7 @@ subroutine init_barriers()
  use D_lattice,  ONLY:i_time_rev,i_space_inv
  use R_lattice,  ONLY:Xk_grid_is_uniform
  use BS,         ONLY:BSS_mode
- use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor
+ use electrons,  ONLY:n_spin,n_met_bands,n_full_bands
  use QP_m,       ONLY:QP_solver
  use it_m,       ONLY:switch_off_runlevel
  implicit none

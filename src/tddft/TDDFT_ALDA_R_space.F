@@ -40,7 +40,6 @@ function TDDFT_ALDA_R_space(ic,ik,iv,is,mode)
  use pars,           ONLY:SP,pi
  use FFT_m,          ONLY:fft_size
  use xc_functionals, ONLY:F_xc
- use D_lattice,      ONLY:nsym,i_time_rev
  use wrapper_omp,    ONLY:V_dot_V_omp
  use electrons,      ONLY:n_spinor
 #if defined _TIMING

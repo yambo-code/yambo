@@ -26,7 +26,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi
- use drivers,       ONLY:l_sc_run,l_sc_exx,l_gw0,l_cohsex,l_real_time
+ use drivers,       ONLY:l_sc_run,l_gw0,l_cohsex,l_real_time !,l_sc_exx
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
@@ -38,6 +38,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
 #if defined _SC
+ use drivers,       ONLY:l_sc_exx
  use SC,            ONLY:it_now
 #endif
 #if defined _TIMING

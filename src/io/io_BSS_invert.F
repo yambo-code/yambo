@@ -28,7 +28,7 @@ integer function io_BSS_invert(iq,n_,IO_dim,inv_err,eps,W_disk,ID)
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_uses_RIM,BSS_dr,&
-&                        BSS_damp_reference,BSE_mode,BSS_inversion_PERT_FULL_ratio
+&                        BSS_damp_reference,BSS_inversion_PERT_FULL_ratio
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,read_is_on,write_is_on

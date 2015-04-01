@@ -27,15 +27,15 @@ subroutine X_s(iq,X,Xw,W_range)
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
- use parallel_m,    ONLY:PP_redux_wait,PAR_COM_INV_INDEX,PAR_COM_INV,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_COM_INV_INDEX,&
 &                        PP_indexes,PP_indexes_reset,PAR_IND_INV_ID,PAR_COM_q_for_Xo
  use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message,MATRIX_driver
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_mat,X_fxc
+ use X_m,           ONLY:X_t,X_mat!,X_fxc
  use matrix_operate,ONLY:INV,USE_SVD
- use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_n_mem_freqs,&
+ use TDDFT,         ONLY:FXC_n_g_corr,FXC,& !FXC_n_mem_freqs,&
 &                        FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,io_BS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE
 #if defined _TIMING
@@ -55,7 +55,7 @@ subroutine X_s(iq,X,Xw,W_range)
  !
  ! Fxc I/O (for the BS based kernel)
  !
- integer           ::ioFxc_err,ID,FXC_w_ref
+ !integer           ::ioFxc_err,ID,FXC_w_ref
  !
  ! Setup 
  !

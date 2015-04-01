@@ -35,8 +35,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use com,           ONLY:msg,error
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_run,l_sc_srpa
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
-&                        PAR_IND_Q,PAR_COM_QP_A2A,PAR_IND_Q_ID,PAR_IND_QP_ID,&
-&                        PAR_COM_QP_A2A,PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
+&                        PAR_IND_Q,PAR_IND_Q_ID,PAR_IND_QP_ID,&
+&                        PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
@@ -55,6 +55,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use timing_m,      ONLY:timing
 #endif
 #if defined _SC
+ use parallel_m,    ONLY:PAR_COM_QP_A2A
  use SC,            ONLY:it_now,it_to_start
 #endif
  !

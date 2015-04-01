@@ -27,7 +27,7 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collision,     ONLY:V_kind,COLLISIONS_cutoff,COLLISIONS_element,COLLISIONS_IO_status
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
-&                        io_bulk,write_is_on,io_disconnect,io_restart_point,&
+&                        io_bulk,write_is_on,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX,SE_GW_NEQ
@@ -55,7 +55,6 @@ integer function io_COLLISIONS(i_qp,ID,COLL)
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
  integer               :: V_kind_disk,i_desc,VAR_size,i_qp_loop,io_err
  character(lchlen)     :: V_kind_string,X_string
- character(schlen)     :: desc
  !
 #if defined _TIMING
  call timing('io_COLLISIONS',OPR='start')

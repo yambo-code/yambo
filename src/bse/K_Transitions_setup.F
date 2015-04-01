@@ -49,7 +49,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
 &                       BS_not_const_eh_f,BS_drude_f_eh,BS_Blocks_and_Transitions_alloc,&
 &                       BSE_mode,BS_T_grp,BS_nT_grps
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_all,PAR_IND_T_ordered,PAR_IND_T_groups
- use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
+ use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
  !

@@ -23,20 +23,24 @@
 !
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
- use drivers,        ONLY:l_optics,l_real_time,l_sc_run
- use LIVE_t,         ONLY:what_is_running
+ use drivers,        ONLY:l_optics
  use interfaces,     ONLY:WF_load
  use pars,           ONLY:SP
- use com,            ONLY:warning,error,secnm,grid_path
+ use com,            ONLY:warning,error,grid_path
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
-&                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
+&                         Vnl_commutator_warning,Dipole_uses_shifted_grids
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,RD_CL_IF_END,&
 &                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng,WF
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,master_cpu,PAR_COM_k_for_P,ncpu
-#if defined _SC      
+#if defined _SC || defined _KERR
+ use X_m,            ONLY:DIP_P
+#endif
+#if defined _SC
+ use com,            ONLY:secnm
+ use drivers,        ONLY:l_real_time,l_sc_run 
  use X_m,            ONLY:P_square
 #endif
 #if defined _KERR
@@ -52,14 +56,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Work Space
  !
- integer           :: ic,iv,is,ik
- logical           :: use_trans_gauge,l_evaluating_em1s
+ integer           :: ik
+ logical           :: use_trans_gauge
  !
  ! I/O
  !
  integer           :: ID,io_err(2)
  integer, external :: io_DIPOLES
-#if defined _SC 
+#if defined _SC
+ logical           :: l_evaluating_em1s 
  integer, external :: io_P_and_P2
 #endif
  !

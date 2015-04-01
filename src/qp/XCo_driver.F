@@ -37,9 +37,9 @@ subroutine XCo_driver(E,k,Xk,q)
 &                        report_Vnlxc,report_Sc,report_dSc
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:WF
- use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction,WF_exx_screening
+ use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening
 #if defined _SC
- use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,SC_SRPA
+ use global_XC,     ONLY:WF_kind,SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,SC_SRPA
 #endif
  !
  implicit none

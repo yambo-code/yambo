@@ -35,7 +35,7 @@ subroutine XCo_local(E,Xk)
  use xc_functionals,ONLY:V_xc,xc_string,XC_potential_driver,magn,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_exx_fraction,WF_exx_screening
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
- use parallel_m,    ONLY:PAR_IND_QP,PP_redux_wait,PAR_IND_WF_linear 
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear 
 #if defined _RT
  use parallel_m,    ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k 
  use matrix_operate,ONLY:UP_matrix_index,matrix_index
@@ -48,12 +48,16 @@ subroutine XCo_local(E,Xk)
 #endif
  !
  implicit none
+ !
  type(levels) ::E       
- type(bz_samp)::k,Xk,q
+ type(bz_samp)::Xk
  !
  ! Work Space
  !
- integer     ::i1,nb,ifft,iwf,iwfp,iwf_sp1,iwfp_sp1,iwf_sp2,iwfp_sp2,ib,ibp,ik,i_sp
+#if defined _SC
+ integer     ::nb
+#endif
+ integer     ::i1,ifft,iwf,iwfp,iwf_sp1,iwfp_sp1,iwf_sp2,iwfp_sp2,ib,ibp,ik,i_sp
  complex(SP) ::c_ws(fft_size,n_spin)
  !
  ! Spin support (collinear and not collinear)

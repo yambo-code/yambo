@@ -242,6 +242,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! CLEAN (2)
  !
  if (io_RESPONSE) call X_alloc('X')
+ !
  call X_alloc('DIP_q_dot_iR')
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free(WF)
  !

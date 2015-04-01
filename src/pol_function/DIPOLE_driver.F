@@ -24,7 +24,7 @@
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  use drivers,        ONLY:l_optics,l_real_time,l_sc_run
- use LIVE_t,         ONLY:what_is_running
+ use LIVE_t,         ONLY:what_is_running,is_section_time_short
  use interfaces,     ONLY:WF_load
  use pars,           ONLY:SP
  use com,            ONLY:warning,error,secnm,grid_path
@@ -33,7 +33,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
 &                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,RD_CL_IF_END,&
-&                         IO_and_Messaging_switch
+&                         IO_and_Messaging_switch,io_DIP
  use wave_func,      ONLY:wf_ng,WF
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,master_cpu,PAR_COM_k_for_P,ncpu
 #if defined _SC      
@@ -186,6 +186,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    ! Free any loaded WFs
    !
    call WF_free(WF)
+   !
+   ! If the calculation of the dipoles is very short the I/O is switched off
+   !
+   if (is_section_time_short()) then
+     io_DIP=.FALSE.
+     call warning('DIPOLEs I/O switched-off to prevent communication problems')
+   endif
    !
    if (master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)

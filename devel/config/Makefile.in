@@ -52,7 +52,7 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
            src/external_c/.objects Makefile driver/version.h \
            sbin/objects_debug.sh driver/editor.h lib/local/.objects
 TARGETS  = all yambo interfaces ypp ydb
-UTILS    = changelog
+UTILS    = changelog get_extlibs
 CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_qed_rt \
            ypp_ph ypp_sc ypp_rt ypp_magnetic  
@@ -110,6 +110,8 @@ libs:
 	DIR2GO="lib" ; $(mklib_ext); fi
 	@if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
 	DIR2GO="lib" ; $(mklib_ext); fi
+get_extlibs:
+	@cd lib/archive; make -f Makefile.loc all;
 yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)

@@ -202,6 +202,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'NLogCPUs',     '[PARALLEL] Live-timing CPU`s (0 for all)',n_log_CPUs,verb_level=V_parallel)
 #endif
  !
+ ! I/O
+ !
+ call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,WF,W,SC,BS)',&
+&                         DBs_IO_control_string,verb_level=V_io)
+ !
  ! S_xc
  !
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
@@ -321,11 +326,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
  call it('f',defs,'QPExpand',   '[F GW] The QP corrections are expanded all over the BZ',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
- !
- ! I/O
- !
- call it(defs,'DBsIOoff', '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,WF,W,SC,BS)',&
-&                         DBs_IO_control_string,verb_level=V_io)
  !
  ! GPL_EXCLUDE_END
  !

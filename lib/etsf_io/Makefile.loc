@@ -32,7 +32,7 @@ configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	        ./configure \
 	        --prefix=$(INSTALL_DIR) \
-	        --with-netcdf-incs="-I$(includedir)" \
+	        --with-netcdf-incs="-I$(includedir) $(netcdf_idir)" \
 	        --with-netcdf-libs="$(libpath) $(lnetcdf)" \
 	        FC="$(f90)" \
 	        F77="$(f77)" \

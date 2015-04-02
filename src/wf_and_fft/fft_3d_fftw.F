@@ -63,7 +63,7 @@ subroutine fft_3d(c,n,fft_sign,fftw_plan)
  if (fftw_plan==0) then
    if (fft_sign>0) i_sign=+1
    if (fft_sign<0) i_sign=-1
-#if defined _OPENMP
+#if defined _OPENMP && defined _FFTW_OMP
    call dfftw_init_threads(iret)
    call dfftw_plan_with_nthreads(n_threads_now)
 #endif

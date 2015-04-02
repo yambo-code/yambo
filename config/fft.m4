@@ -45,7 +45,7 @@ if ! test x"$enable_3d_fft" = "xno" ; then FFT3D_CPP="-D_USE_3D_FFT" ; fi
 #
 HAVE_FFT="no"
 save_ldflags="$LDFLAGS"
-EXTERNAL_LIB=
+try_libs=
 
 #
 # F90 module flag
@@ -81,7 +81,7 @@ elif test x"$with_fft_libs" != "x" ; then
   # directly provided lib
   #
   AC_MSG_CHECKING([for FFT Library using $with_fft_libs])
-  EXTERNAL_LIB=$with_fft_libs
+  try_libs=$with_fft_libs
   #
 else
   AC_MSG_CHECKING([for FFT])
@@ -90,39 +90,51 @@ fi
 #
 # check for FFTW
 #
+testprog="AC_LANG_PROGRAM([],[
+    integer :: i
+    call dfftw_destroy_plan(i)
+])"
+testprog_omp="AC_LANG_PROGRAM([],[
+    integer :: i
+    call dfftw_init_threads(i)  
+    call dfftw_plan_with_nthreads(i)
+    call dfftw_destroy_plan(i)
+])"
+#
 if test -d "$try_libdir" && test -d "$try_incdir" ; then
    #
-   if test x"$enable_open_mp" = "xyes"; then
-       EXTERNAL_LIB="-lfftw3 -lfftw3_omp"
+   if test x"$enable_open_mp" = "xyes" && test -e "$try_libdir/libfftw3_omp.a" ; then
+       try_libs="-lfftw3 -lfftw3_omp"
    else
-       EXTERNAL_LIB="-lfftw3"
+       try_libs="-lfftw3"
    fi
    #
 fi
 #
-if ! test x"$EXTERNAL_LIB" = "x" ; then
-
-  for try_libs in "$EXTERNAL_LIB" ; do      
-    save_libs=$LIBS
-    save_fcflags=$FCFLAGS
-    if test x"$try_libdir" != "x" ; then FFT_PATH="-L$try_libdir" ; fi
-    if test x"$try_incdir" != "x" ; then FCFLAGS="$FCFLAGS $IFLAG$try_incdir" ; fi
-    #
-    AS_IF([test "$try_libs"], [LIBS="${FFT_PATH} ${try_libs}"])
-    AC_LINK_IFELSE([AC_LANG_CALL([], [dfftw_destroy_plan(1)])],
-       [HAVE_FFTW="yes";],[HAVE_FFTW="no";])
-    LIBS=$save_libs
-    FCFLAGS=$save_fcflags
-    if test "$HAVE_FFTW" = "yes" ; then
-      break;
-    fi
-  done
+if ! test x"$try_libs" = "x" ; then
+  #
+  save_libs=$LIBS
+  save_fcflags=$FCFLAGS
+  if test x"$try_libdir" != "x" ; then FFT_PATH="-L$try_libdir" ; fi
+  if test x"$try_incdir" != "x" ; then FCFLAGS="$FCFLAGS $IFLAG$try_incdir" ; fi
+  #
+  if test x"$enable_open_mp" = "xyes" ; then FCFLAGS="$FCFLAGS $OMPFLAGS" ; fi
+  LIBS="${FFT_PATH} ${try_libs}"
+  #
+  AC_LINK_IFELSE($testprog,     [HAVE_FFTW="yes";],    [HAVE_FFTW="no";])
+  AC_LINK_IFELSE($testprog_omp, [HAVE_FFTW_OMP="yes";],[HAVE_FFTW_OMP="no";])
+  # 
+  LIBS=$save_libs
+  FCFLAGS=$save_fcflags
+  #
   if test "$HAVE_FFTW" = "yes" ; then
     FFT_CPP="-D_FFTW"
+    if test "$HAVE_FFTW_OMP" = "yes" ; then FFT_CPP="-D_FFTW -D_FFTW_OMP" ; fi
+    #
     if test "$try_libs" = "-lfftw3" ; then
       FFT_DESCRIPTION="FFTW (v3) Fast Fourier transform";
       AC_MSG_RESULT(FFTW3)
-    elif test "$try_libs" = "-lfftw3 -lfftw3_omp" ; then
+    elif test "$try_libs" = "-lfftw3 -lfftw3_omp" && test "$HAVE_FFTW_OMP" = "yes" ; then
       FFT_DESCRIPTION="FFTW_OMP (v3) Fast Fourier transform";
       AC_MSG_RESULT(FFTW3_OMP)
     else 
@@ -148,10 +160,10 @@ fi
 # check for ESSL FFT
 #
 if test -d "$try_libdir" && test -d "$try_incdir" ; then
-   EXTERNAL_LIB="-L$try_libdir -lessl"
+   try_libs="-L$try_libdir -lessl"
 fi
 #
-if ! test x"$EXTERNAL_LIB" = "x" && ! test "$HAVE_FFT" = "yes" ; then
+if ! test x"$try_libs" = "x" && ! test "$HAVE_FFT" = "yes" ; then
   AC_MSG_RESULT(FFTW no)
   # 
   if ! test x"$try_libdir" = "x" ; then FFT_PATH="-L$try_libdir" ; fi
@@ -159,7 +171,7 @@ if ! test x"$EXTERNAL_LIB" = "x" && ! test "$HAVE_FFT" = "yes" ; then
   save_libs=$LIBS
   save_ldflags=$LDFLAGS
   save_fcflags=$FCFLAGS
-  LIBS="$FFT_PATH $EXTERNAL_LIB"
+  LIBS="$FFT_PATH $try_libs"
   if test x"$try_incdir" != "x" ; then FCFLAGS="$FCFLAGS $IFLAG$try_incdir" ; fi
   #
   AC_MSG_CHECKING([for dcft in $LIBS])
@@ -174,7 +186,7 @@ if ! test x"$EXTERNAL_LIB" = "x" && ! test "$HAVE_FFT" = "yes" ; then
     AC_MSG_CHECKING([for FFT])
     FFT_CPP="-D_FFTQE $FFT3D_CPP -D_ESSL"
     FFT_DESCRIPTION="ESSL Fast Fourier transform (FFTQE)";
-    FFT_LIBS="${FFT_PATH} $EXTERNAL_LIB"
+    FFT_LIBS="${FFT_PATH} $try_libs"
     HAVE_FFT=yes
     compile_fftqe=yes
     AC_MSG_RESULT(ESSL FFT)

@@ -58,7 +58,27 @@ module LIVE_t
  logical           :: log_line_to_dump
  character(lchlen) :: log_line
  !
+ ! Definition of a time short enough to mess up I/O and MPI communications
+ !
+ real(SP), parameter :: SHORT_time= 60. ! seconds
+ !
  contains
+   !
+   logical function is_section_time_short(COMM)
+     use parallel_m, ONLY:PP_redux_wait,ncpu
+     integer, optional :: COMM
+     integer           :: i_c
+     is_section_time_short=.FALSE.
+     if (ncpu==1) return
+     if (present(COMM)) then
+       call PP_redux_wait(cput_sec,COMM)
+     else
+       call PP_redux_wait(cput_sec)
+     endif
+     do i_c=1,ncpu
+       if (cput_sec(i_c,2)-cput_sec(i_c,1)<SHORT_time) is_section_time_short=.TRUE.
+     enddo
+   end function
    !
    subroutine GET_user_WALL_time( )
      integer           :: i_pos(3)

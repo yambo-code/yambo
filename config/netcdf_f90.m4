@@ -216,7 +216,7 @@ if test "x$netcdf" = "xyes"; then
     if test -d "$try_libdir" ; then try_hdf5_flags="-L$try_libdir $try_hdf5_flags" ; fi
     if test x"$with_hdf5_libs" != "x" ; then try_hdf5_flags="$with_hdf5_libs" ; fi
     #
-    HDF5_FLAGS="-L./lib $NCLIBS $try_hdf5_flags"
+    HDF5_FLAGS="$try_hdf5_flags"
     #
     FCFLAGS_="$netcdf_idir"
     if test -d "$try_incdir" ; then FCFLAGS_="$netcdf_idir $IFLAG$try_incdir" ; fi
@@ -234,7 +234,7 @@ if test "x$netcdf" = "xyes"; then
          call h5open_f(cmode)]),
          [hdf5=yes], [hdf5=no])
       if test "x$hdf5" = xyes; then
-        NCLIBS="$NCLIBS $HDF5_FLAGS"
+        NCLIBS="$NCLIBS $HDF5_FLAGS $ldflag"
         netcdf_idir="$FCFLAGS_"
         AC_MSG_RESULT([yes])
         #

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, AF
+! Authors (see AUTHORS file for details): AM, (AF)
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,7 +31,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use IO_m,          ONLY:io_RESPONSE
  use pars,          ONLY:SP
  use wrapper,       ONLY:V_by_V_plus_V
- use collision,     ONLY:ggwinfo,collision_reset
+ use collision,     ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use stderr,        ONLY:intc
@@ -99,13 +99,16 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    if (l_em1s) call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
+   !
    call DIPOLE_driver(Xen, Xk, X, X%q0)
    call X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
+   !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
    !
    if (l_em1s) call IO_and_Messaging_switch("+io_out",PAR_COM_Q_INDEX%my_CHAIN==1)
    !
  endif
+ 
  !
  ! WF load
  !=========
@@ -178,32 +181,25 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  endif
  if (half_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
  !
- ! Mem est of Xo_residual (to be done here and not in the omp parallel)
+ ! Mem est of Xo_residual 
  !------------------------
- call mem_est("Xo_WS",(/X%ng**2 *n_threads_X/))
+ call mem_est("Xo_WS",(/X%ng**2/))
  !
  ! Timing
  !========
  ! 
 #if defined _SC 
  if (l_sc_run.and..not.l_eval_collisions) then
-   call live_timing('Xo @it'//trim(intc(it_now)),coarse_grid_N/n_threads_X)
+   call live_timing('Xo @it'//trim(intc(it_now)),coarse_grid_N)
  else
-   call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_X)
+   call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N)
  endif
 #else
- call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N/n_threads_X)
+ call live_timing('Xo@q['//trim(intc(iq))//'] ',coarse_grid_N)
 #endif
  !
- ! OpenMP setup
- !==============
  !
-!$omp parallel default(shared), &
-!$omp &        private( isc, i_cg, Drude_pole,GreenF,n_poles, i_bg, Xo_residual, &
-!$omp &                 ikbz,iv,ic,i_spin,ik,is,ikpbz,ikp,isp, eh_occ, ik_bz_mem, &
-!$omp &                 rhotw_save, isave, ig1,ig2, iw)
- !
- call OPENMP_update(master_thread) 
+ call OPENMP_update(master_thread)
  !
  ! prepare the scattering module
  !
@@ -216,12 +212,12 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !-----------------
  isc%ngrho=X%ng
  if (iq==1) allocate(rhotw_save(X%ng))
- allocate(isc%rhotw(X%ng))
  allocate(Xo_residual(X%ng,X%ng))
+ allocate(isc%rhotw(X%ng))
+ call scatterBamp_alloc(isc)
  !
  isave=0
  !
-!$omp do
  do i_cg = 1,coarse_grid_N
    !
    Drude_pole=iq==1.and.abs(coarse_grid_Pt(i_cg))<1.E-5
@@ -295,20 +291,24 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      if (X_terminator) then
        !
        if ( HEAD_QP_cpu ) then
+         !$omp parallel do default(shared), private(ig1,ig2)
          do ig1=1,X%ng
            do ig2=1,X%ng
                eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
            enddo
          enddo
+         !$omp end parallel do
        endif
        ! 
      endif
      !
      ! Filling the upper triangular part of the residual here ! 
      !-------------^^^^^---------------------------------------
+     !$omp parallel do default(shared), private(ig2)
      do ig2=1,X%ng
        call V_by_V_plus_V(ig2,isc%rhotw(ig2),conjg(isc%rhotw(:ig2)),Xo_residual(:ig2,ig2))
      enddo
+     !$omp end parallel do
      !
    enddo loop_bare_grid
    !
@@ -319,31 +319,34 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      endif
      GreenF(iw)=eh_occ*GreenF(iw)
      !
-!$omp critical
+     !$omp parallel default(shared)
+     !$omp do private(ig2)
      do ig2=1,X%ng
        call V_by_V_plus_V(ig2,GreenF(iw),Xo_residual(:ig2,ig2),Xo(:ig2,ig2,iw))
      enddo
+     !$omp end do
      if (.not.half_X_mat_only ) then 
+       !$omp do private(ig2)
        do ig2=1,X%ng
          call V_by_V_plus_V(X%ng-ig2,GreenF(iw),conjg(Xo_residual(ig2,ig2+1:)),Xo(ig2+1:,ig2,iw))
        enddo
+       !$omp end do
      endif
-!$omp end critical
+     !$omp end parallel 
      !
    enddo
    !
    call live_timing(steps=1)
    !
  enddo 
-!$omp end do
  !
- ! Cleaning the omp region
+ ! Cleaning workspace
  !-------------------------
  !
  if (iq==1) deallocate(rhotw_save)
  deallocate(isc%rhotw,Xo_residual)
+ call scatterBamp_free(isc)
  !
-!$omp end parallel
  !
  call live_timing()
  !
@@ -367,27 +370,27 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  if (half_X_mat_only) then
    !
-!$omp parallel default(shared), private(ig2,ig1)
+   !$omp parallel default(shared), private(ig2,ig1)
    if (i_space_inv==0) then
-!$omp do
+     !$omp do
      do ig2=1,X%ng
        do ig1=ig2+1,X%ng
          Xo(ig1,ig2,:)=conjg(Xo(ig2,ig1,:))
        enddo
      enddo
-!$omp end do
+     !$omp end do
    endif
    !
    if (i_space_inv==1) then
-!$omp do
+     !$omp do
      do ig2=1,X%ng
        do ig1=ig2+1,X%ng
          Xo(ig1,ig2,:)=Xo(ig2,ig1,:)
        enddo
      enddo
-!$omp end do
+     !$omp end do
    endif
-!$omp end parallel
+   !$omp end parallel
    !
  endif
  !

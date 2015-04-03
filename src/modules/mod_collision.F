@@ -23,7 +23,7 @@
 !
 module collision
  !
- use pars, ONLY :SP,LP,schlen
+ use pars, ONLY :DP,SP,LP,schlen
  !
  implicit none
  !
@@ -45,6 +45,11 @@ module collision
    integer :: ngrho,iqref
    complex(SP), pointer :: gamp(:,:) => null()
    complex(SP), pointer :: rhotw(:)  => null()
+   !
+   ! scatter bamp workspace
+   complex(DP), pointer :: rho_tw_rs(:) => null()
+   complex(SP), pointer :: WF_symm_i(:,:) => null()
+   complex(SP), pointer :: WF_symm_o(:,:) => null()
    !
  end type ggwinfo
  !
@@ -98,8 +103,31 @@ module collision
      if(.not.init_only_) then
        if(associated(ggw%gamp))  deallocate(ggw%gamp)
        if(associated(ggw%rhotw)) deallocate(ggw%rhotw)
+       if(associated(ggw%rho_tw_rs)) deallocate(ggw%rho_tw_rs)
+       if(associated(ggw%WF_symm_i)) deallocate(ggw%WF_symm_i)
+       if(associated(ggw%WF_symm_o)) deallocate(ggw%WF_symm_o)
      endif
      nullify(ggw%gamp,ggw%rhotw)
+     nullify(ggw%rho_tw_rs,ggw%WF_symm_i,ggw%WF_symm_o)
+   end subroutine
+   !
+   subroutine scatterBamp_alloc(ggw)
+     use electrons,      ONLY:n_spinor
+     use FFT_m,          ONLY:fft_size
+     implicit none
+     type(ggwinfo)::ggw
+     allocate(ggw%rho_tw_rs(fft_size))
+     allocate(ggw%WF_symm_i(fft_size,n_spinor))
+     allocate(ggw%WF_symm_o(fft_size,n_spinor))
+   end subroutine
+   !
+   subroutine scatterBamp_free(ggw)
+     implicit none
+     type(ggwinfo)::ggw
+     if(associated(ggw%rho_tw_rs)) deallocate(ggw%rho_tw_rs)
+     if(associated(ggw%WF_symm_i)) deallocate(ggw%WF_symm_i)
+     if(associated(ggw%WF_symm_o)) deallocate(ggw%WF_symm_o)
+     nullify(ggw%rho_tw_rs,ggw%WF_symm_i,ggw%WF_symm_o)
    end subroutine
    !
 end module collision

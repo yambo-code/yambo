@@ -225,7 +225,11 @@ subroutine QP_of(qp,en,QPdb_read_err,k)
    !
    call set_real_printed_length()
    !
+   ! GPL_EXCLUDE_START
+   !
    call QP_Green_DOS(qp,k)
+   !
+   ! GPL_EXCLUDE_END
    !
  endif
  !

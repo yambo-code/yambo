@@ -216,8 +216,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      ! A 0.001 % fractional occupation swiches on the particular treatment of finite temp. BSE 
      if ( abs(abs(f_eh)-1._SP)> filled_tresh) BS_not_const_eh_f=.TRUE.
      !
-     ! The negative energy transitions are included in the anti-resonant part
-     if ( E_eh<0._SP ) T_is_ok=.FALSE.
+     ! f_eh<0 transitions are included in the anti-resonant part
+     ! f_eh=0 transitions give no contribution to absorption and are not considered
+     if ( f_eh<=0._SP ) T_is_ok=.FALSE.
      !
      ! Small energies transitions are included only via the Drude model
      if (abs(E_eh)<1.E-5) then

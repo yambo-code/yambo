@@ -93,6 +93,8 @@ module vec_operate
      !
      ! Rotates v_in of theta in the xy plane
      !
+     use pars,     ONLY:rZERO,rONE
+     !
      real(SP)          :: v_in(3),t
      real(SP), optional:: v_out(3)
      !
@@ -102,7 +104,7 @@ module vec_operate
      ! M = ( sin(t)  cos(t)  0 )
      !     (   0       0     1 )
      !
-     M=reshape((/cos(t),-sin(t),0.,sin(t),cos(t),0.,0.,0.,1./),(/3,3/))
+     M=reshape((/cos(t),-sin(t),rZERO,sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
      v_loc=matmul(M,v_in)
      if (     present(v_out)) v_out=v_loc
      if (.not.present(v_out)) v_in =v_loc

@@ -285,7 +285,7 @@ contains
     integer                       :: g_lim(6), gtotmax, ig_wf, ng_vec_old, ig, ic, ik
     real(SP)                      :: g_vec_new(3)
     real(SP),    allocatable      :: g_vec_tmp(:,:),G_mod(:)
-    integer(SP), allocatable      :: wf_igk_tmp(:,:),G_mod_indx(:)
+    integer,     allocatable      :: wf_igk_tmp(:,:),G_mod_indx(:)
     logical                       :: gamma_only,l_new
     character(len=15)             :: format1
     !

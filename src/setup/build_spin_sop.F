@@ -66,11 +66,11 @@ subroutine build_spin_sop()
    tmp_sop= tmp_sop*m3det(tmp_sop)
    !
    !           "Tait–Bryan angles"
-   if (tmp_sop(3,1)==-1._SP) then
+   if (abs(tmp_sop(3,1)+1._SP)<1.E-5_SP) then
      alpha=0._SP
      beta= pi/2._SP
      delta=atan2(tmp_sop(1,2),tmp_sop(1,3))
-   elseif (tmp_sop(3,1)==+1.) then
+   elseif (abs(tmp_sop(3,1)-1._SP)<1.E-5_SP) then
      alpha=0._SP
      beta=-pi/2._SP
      delta=atan2(-tmp_sop(1,2),-tmp_sop(1,3))

@@ -11239,7 +11239,7 @@ NETCDF_loc_str="-"
 if test "$compile_netcdf" = "yes" ; then NETCDF_loc_str="X"; fi
 
 HDF5_str="-"
-if test "$hdf5" = "yes" ; then HDF5_str="X"; fi
+if test "$enable_netcdf_hdf5" = "yes" ; then HDF5_str="X"; fi
 
 LIBXC_str="-"
 if test "$acx_libxc_ok" = "yes" ; then LIBXC_str="X"; fi

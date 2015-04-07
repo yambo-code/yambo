@@ -47,6 +47,7 @@ subroutine K_correlation_collisions(iB,BLK,Xk,q)
  use BS,            ONLY:WF_phase,BS_block,BS_bands,BS_res_K_corr,&
 &                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp
  use electrons,     ONLY:n_sp_pol
+ use collision,     ONLY:scatterBamp_alloc,scatterBamp_free
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -78,6 +79,8 @@ subroutine K_correlation_collisions(iB,BLK,Xk,q)
  !
  ! Table allocation
  !------------------
+ !
+ call scatterBamp_alloc(K_CORR_collision)
  !
  allocate(BLK%O_table(nsym,BS_bands(2),BS_bands(2),n_sp_pol))
  call mem_est("BS_blk_"//trim(intc(iB))//"_O_table",(/size (BLK%O_table)/),(/IP/))
@@ -174,6 +177,8 @@ subroutine K_correlation_collisions(iB,BLK,Xk,q)
    enddo
    !
  enddo
+ !
+ call scatterBamp_free(K_CORR_collision)
  !
 #if defined _TIMING
  call timing('T_space CORR Osc.',OPR='stop')

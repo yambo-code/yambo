@@ -105,7 +105,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    if (allocated(fft_rot_r_inv)) deallocate(fft_rot_r_inv)
    allocate(fft_rot_r_inv(fft_size))
    !
-   !Remeber
+   !Remember
    !-------
    ! 
    ! r_j= (I_i-1)/Ni a(j,i) = at(j,i) (i-1)/Ni

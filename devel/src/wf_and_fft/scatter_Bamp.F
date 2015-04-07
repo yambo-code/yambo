@@ -49,8 +49,6 @@ subroutine scatterBamp(isc)
  !
  type(ggwinfo)::isc
  !
- ! Work Space
- !
  integer     :: qs,iGo
 #if defined _FFTQE && !defined _USE_3D_FFT || defined _OPENMP
  integer     :: ig, ir

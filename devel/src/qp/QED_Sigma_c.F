@@ -31,7 +31,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,g_vec,RL_vol,RIM_n_rand_pts
  use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_table,QP_Sc,QP_dSc_steps,QP_QED_ng,QP_nb
  use vec_operate,         ONLY:v_norm
- use collision,           ONLY:ggwinfo,collision_reset
+ use collision,           ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
  use wave_func,           ONLY:WF
  use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
  use functions,           ONLY:Fermi_fnc,bose_f 
@@ -97,6 +97,9 @@ subroutine QED_Sigma_c(E,k,q,qp)
  call WF_load(WF,QP_QED_ng,maxval(qindx_S(:,:,2)),(/1,max(QP_nb,QP_n_G_bands(2))/),&
 &             (/1,k%nibz/),space='R',title='-[Photon-El]Sigma_c/R space')
  !
+ call scatterBamp_alloc(isc)
+ ! isc_grad_k and isc_grad_p need not to be scatterBamp-allcoated
+ ! since scatterBamp_using_the_gradient allocates its own workspace
  allocate(isc%rhotw(QP_QED_ng),isc_grad_k%rhotw(3*QP_QED_ng),isc_grad_p%rhotw(3*QP_QED_ng))
  isc%ngrho       =QP_QED_ng
  isc_grad_k%ngrho=QP_QED_ng
@@ -241,6 +244,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  ! Clean-UP
  !
  deallocate(isc%rhotw,isc_grad_k%rhotw,isc_grad_p%rhotw)
+ call scatterBamp_free(isc)
  !
 #if defined _TIMING
  call timing('GW (Lamb)',OPR='stop')

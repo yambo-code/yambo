@@ -35,7 +35,8 @@ subroutine COLLISIONS_Fock(E,k,q)
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
-&                        Fock_collisions,nFock_collisions,COLLISIONS_IO_status
+&                        Fock_collisions,nFock_collisions,COLLISIONS_IO_status,&
+&                        scatterBamp_alloc
  use QP_m,          ONLY:QP_ng_Sx,QP_table,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
  use SC,            ONLY:SC_bands,B_mat_index
@@ -87,6 +88,8 @@ subroutine COLLISIONS_Fock(E,k,q)
  !
  ! Allocation
  !
+ call scatterBamp_alloc(isc)
+ call scatterBamp_alloc(iscp)
  allocate(isc%gamp(N_g_vecs,1),isc%rhotw(N_g_vecs),iscp%rhotw(N_g_vecs))
  call mem_est("ISC-GAMP",(/3*N_g_vecs/),errors=(/alloc_err/))
  !

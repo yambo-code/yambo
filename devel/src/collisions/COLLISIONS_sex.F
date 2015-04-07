@@ -37,7 +37,7 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
 &                        COLLISIONS_element,SEX_collisions,nSEX_collisions,&
-&                        COLLISIONS_IO_status
+&                        COLLISIONS_IO_status,scatterBamp_alloc
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -122,6 +122,8 @@ subroutine COLLISIONS_sex(X,Xk,E,k,q,Xw)
  allocate(EM1s(N_g_vecs,N_g_vecs),stat=alloc_err)
  call mem_est("EM1s",(/size(EM1s)/),errors=(/alloc_err/))
  !
+ call scatterBamp_alloc(isc)
+ call scatterBamp_alloc(iscp)
  allocate(isc%gamp(N_g_vecs,N_g_vecs),isc%rhotw(N_g_vecs),iscp%rhotw(N_g_vecs),stat=alloc_err)
  call mem_est("ISC-GAMP",(/N_g_vecs**2+2*N_g_vecs/),errors=(/alloc_err/))
  !

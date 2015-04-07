@@ -42,7 +42,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  use R_lattice,       ONLY:bz_samp,g_rot,qindx_S,nkibz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
  use QP_m,            ONLY:QP_ng_Sx
- use collision,       ONLY:ggwinfo,collision_reset 
+ use collision,       ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
  use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
@@ -72,6 +72,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  call collision_reset(isc)
  call PP_indexes_reset(px)
  !
+ call scatterBamp_alloc(isc)
  allocate(isc%gamp(QP_ng_Sx,1),isc%rhotw(QP_ng_Sx),local_u(fft_size),u(fft_size),&
       &u_rs(fft_size),rhotw_rs(fft_size))
  !
@@ -127,6 +128,8 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  !
  call live_timing()
  deallocate(isc%gamp,isc%rhotw,local_u,u,u_rs,rhotw_rs)
+ call scatterBamp_free(isc)
+ !
  call collision_reset(isc)
  call PP_indexes_reset(px)
  !

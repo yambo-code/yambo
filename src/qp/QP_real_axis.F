@@ -40,7 +40,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
 &                        n_WF_bands_to_load,PAR_Q_index,PAR_nQP,&
 &                        PAR_nG_bands,PAR_nQ_bz
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
- use collision,     ONLY:ggwinfo,collision_reset
+ use collision,     ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
  use wave_func,     ONLY:WF
  use IO_m,          ONLY:io_control,REP,VERIFY,DUMP,NONE,RD,RD_CL,OP_RD,&
 &                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END,OP_RD_CL,io_RESPONSE,io_SCREEN
@@ -287,6 +287,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  call X_alloc('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))
  !
+ call scatterBamp_alloc(scattering_main)
+ call scatterBamp_alloc(scattering_prime)
  allocate(scattering_main%gamp(X%ng,X%ng),scattering_main%rhotw(X%ng),scattering_prime%rhotw(X%ng),stat=i_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*X%ng/),errors=(/i_err/))
  !
@@ -512,6 +514,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  ! CLEAN
  !
+ call scatterBamp_free(scattering_main)
+ call scatterBamp_free(scattering_prime)
  deallocate(scattering_main%gamp,scattering_main%rhotw,scattering_prime%rhotw)
  call mem_est("ISC-GAMP")
  !

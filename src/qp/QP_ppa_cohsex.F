@@ -37,7 +37,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_IND_Q_ID,PAR_IND_QP_ID,&
 &                        PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
- use collision,     ONLY:ggwinfo,collision_reset
+ use collision,     ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
 &                        io_RESPONSE
@@ -191,6 +191,8 @@ endif
    endif
  endif
  !
+ call scatterBamp_alloc(isc)
+ call scatterBamp_alloc(iscp)
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(isc%ngrho),iscp%rhotw(isc%ngrho),stat=alloc_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*isc%ngrho/),errors=(/alloc_err/))
  !
@@ -360,7 +362,7 @@ endif
          dc(1) = sp_dummy
          !
          ! Bug spotted by D.V. (April 2014). HEAD_QP_cpu is defined differently when
-         ! the _SC flag is used or not. The point is that in SE calculations HEAD_QP_cpu is used
+         ! the _SC flag is used. The point is that in SE calculations HEAD_QP_cpu is used
          ! in cases where no band loops are done (like here). In _SC instead 
          ! it is needed for a different purpose. This is why I use PAR_COM_QP_A2A%CPU_id in this case.
          !
@@ -516,6 +518,8 @@ endif
  !
  ! CLEAN
  !
+ call scatterBamp_free(isc)
+ call scatterBamp_free(iscp)
  deallocate(isc%gamp,isc%rhotw,iscp%rhotw,dc)
  if(l_ppa) then
    deallocate(W_)

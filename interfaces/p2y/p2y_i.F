@@ -183,7 +183,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if(verboseIO) then
    call msg('s','== DB2 (wavefunctions)  ... done ==')
  else
-   call msg('l','done ==')
+   call msg('l',' done ==')
  endif
  !
 #if defined _P2Y_V50
@@ -192,7 +192,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if(verboseIO) then
    call msg('s','== DB3 (PseudoPotential) ... done ==')
  else
-   call msg('l','done ==')
+   call msg('l',' done ==')
  endif
 #else
  call msg('s','Vnl support only with PWscf v5.0 or later.')

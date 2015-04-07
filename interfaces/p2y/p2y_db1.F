@@ -39,7 +39,7 @@ subroutine p2y_db1(en,k)
  call msg('s','Header/K-points/Energies...')
  !
  call get_dimensions(en,k)
- call msg("l","done")
+ call msg("l"," done")
  !
  !---------------------------------------------------------------------*
  !    Read cell data                                                   *
@@ -48,7 +48,7 @@ subroutine p2y_db1(en,k)
  call msg('s','Cell data...')
  !
  call get_cell
- call msg("l","done")
+ call msg("l"," done")
  !
  !---------------------------------------------------------------------*
  !    Read atomic data                                                 *
@@ -57,7 +57,7 @@ subroutine p2y_db1(en,k)
  call msg('s','Atomic data...')
  !
  call get_atoms
- call msg("l","done")
+ call msg("l"," done")
  !
  !---------------------------------------------------------------------*
  !    Read symmetries                                                  *
@@ -84,7 +84,7 @@ subroutine p2y_db1(en,k)
  !
  call get_k_points(k)
  !
- call msg('l','done')
+ call msg('l',' done')
  !
  !---------------------------------------------------------------------*
  !    Read miscellaneous data                                          *
@@ -102,7 +102,7 @@ subroutine p2y_db1(en,k)
    !
    call get_R_vectors
    !
-   call msg('l','done')
+   call msg('l',' done')
    !
    !---------------------------------------------------------------------*
    !    Read igk arrays                                                  *
@@ -111,7 +111,7 @@ subroutine p2y_db1(en,k)
    !
    call get_IGK(k)
    !
-   call msg('l','done')
+   call msg('l',' done')
    !
  else
    !
@@ -136,7 +136,7 @@ subroutine p2y_db1(en,k)
  !
  call get_energies(en,k)
  !
- call msg('l','done')
+ call msg('l',' done')
  !
  !---------------------------------------------------------------------*
  !    Report                                                           *

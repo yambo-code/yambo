@@ -27,6 +27,7 @@ subroutine K_exchange_collisions(divide_by_qpg,iq,Xk,i_T)
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
  use BS,             ONLY:BS_T_grp,K_EXCH_collision,BS_oscillators_alloc
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
+ use collision,      ONLY:scatterBamp_alloc,scatterBamp_free
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -51,6 +52,7 @@ subroutine K_exchange_collisions(divide_by_qpg,iq,Xk,i_T)
  !
  ! Allocate
  !
+ call scatterBamp_alloc(K_EXCH_collision)
  call BS_oscillators_alloc(.TRUE.,i_T,.FALSE.,0)
  !
  T_loop: do i_T_el=1,BS_T_grp(i_T)%size
@@ -116,6 +118,8 @@ subroutine K_exchange_collisions(divide_by_qpg,iq,Xk,i_T)
    endif
    !
  enddo T_loop
+ !
+ call scatterBamp_free(K_EXCH_collision)
  !
 #if defined _TIMING
  call timing('T_space EXX Osc.',OPR='stop')

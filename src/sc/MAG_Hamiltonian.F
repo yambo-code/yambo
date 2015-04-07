@@ -142,7 +142,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
      endif
      if(MAG_landau) then
        if(any(a(3,:2)>epsilon(1.))) then
-         MAG_theta=atan(v_norm((/a(3,1),a(3,2),0./))/a(3,3)) 
+         MAG_theta=atan(v_norm((/a(3,1),a(3,2),0._SP/))/a(3,3)) 
          if(a(3,1)/=0) MAG_psi= atan( a(3,2) / a(3,1) )
          if(a(3,1)<0.) MAG_psi= MAG_psi+pi
          if(a(3,1)==0 .and. a(3,2)>0.) MAG_psi=pi/2.

@@ -1,6 +1,8 @@
 ! 
-! Copyright (C) 2000-2009 A. Marini, D. Sangalli and the YAMBO team
+!        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -135,7 +137,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
              x_med(i1) = x_med(i1)**(1./power)
            enddo
            !
-           call msg('o '//output_fname,'',(/real(ib),real(ik),real(i_spin),&
+           call msg('o '//output_fname,'',(/real(ib,SP),real(ik,SP),real(i_spin,SP),&
 &             real(x_med(1)),real(x_med(2)),real(x_med(3))/),INDENT=-2,USE_TABS=.true.)
          endif
          !
@@ -167,7 +169,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
            z_med     = z_med**(1./power)
            AB_dev    = (1.-6.41**2*rperp_med**(-2.))  ! 5.92 (8,0)  6.41 (5,5)  10.36  (14,0)
            !
-           call msg('o '//output_fname,'',(/real(ib),real(ik),real(i_spin),&
+           call msg('o '//output_fname,'',(/real(ib,SP),real(ik,SP),real(i_spin,SP),&
 &                   real(rperp_med),real(z_med),real(phi_med),real(AB_dev)/),INDENT=-2,USE_TABS=.true.)
          endif
          ! 2)  2D
@@ -187,10 +189,9 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
              norm=cdotc(fft_dim(1)*fft_dim(2),wf_tmp_2d(:,:,ir3+1),1,wf_tmp_2d(:,:,ir3+1),1)
 #endif
              rperp_med=rperp_med+rperp_med_2d(nband_tot,1,ir3+1)
-             rperp_med_2d(ib-nband_pos(1)+1,i_spin,ir3+1)=&
-&                     rperp_med_2d(ib-nband_pos(1)+1,i_spin,ir3+1)/norm
-             if (ib==nband_pos(2))  call msg('o '//output_fname,'',(/real(x(1+ir3*fft_dim(1)*fft_dim(2),3)),&
-&                             real(rperp_med_2d(:,1,ir3+1)),real(rperp_med) /),INDENT=-2,USE_TABS=.true.)
+             rperp_med_2d(ib-nband_pos(1)+1,i_spin,ir3+1)=rperp_med_2d(ib-nband_pos(1)+1,i_spin,ir3+1)/norm
+             if (ib==nband_pos(2))  call msg('o '//output_fname,'',(/real(x(1+ir3*fft_dim(1)*fft_dim(2),3),SP),&
+&                                            real(rperp_med_2d(:,1,ir3+1)),real(rperp_med) /),INDENT=-2,USE_TABS=.true.)
           
            enddo
          endif
@@ -218,7 +219,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
          r_med=r_med**(1./power)
        endif
        !
-       if(l_spherical) call msg('o '//output_fname,'',(/real(ib),real(ik),real(i_spin),&
+       if(l_spherical) call msg('o '//output_fname,'',(/real(ib,SP),real(ik,SP),real(i_spin,SP),&
 &           real(r_med),real(theta_med),real(psi_med)/),INDENT=-2,USE_TABS=.true.)
        !
        call live_timing(steps=1)

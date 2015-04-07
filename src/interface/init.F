@@ -555,7 +555,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! GPL_EXCLUDE_END
    !
-   !
    ! ALDA/LRC Tddft
    if (l_alda_fxc) call initactivate(1,'FxcGRLc')
    if (l_lrc_fxc)  call initactivate(1,'LRC_alpha LRC_beta')
@@ -1410,7 +1409,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! Approximation used for the BSE/LLR kernel
          !
-         if ( trim(rstr_piece(i1)) == 'kernel' )  then
+         if ( i3==2 .and. trim(rstr_piece(i1)) == 'kernel' )  then
            !
            ! if the optics option is not present define defaults
            ! since kernel does not correspond to a runlevel, set 

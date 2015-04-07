@@ -27,7 +27,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- !use drivers,        ONLY:l_bs_fxc
  use X_m,            ONLY:X_t,X_epsilon,X_drude_term
  use BS,             ONLY:BS_not_const_eh_f,BSS_mode,BSS_n_descs,BSE_mode
 #if defined _SC

@@ -216,7 +216,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  endif
  !
  !
- if (.not.BSS_write_eig_2_db) call error('Diago database does not contain excitonic wfs')
+ if (.not.BSS_write_eig_2_db) call error(&
+&   'Diagonalization database does not contain excitonic eigenstates. Re-run yambo using the WRbsWF flag in the input file.')
  !
  ! Sort energies to find degenerate states
  !========================================

@@ -25,7 +25,7 @@ integer function io_DB1(E,k,ID)
  !
  use pars,             ONLY:SP,IP,schlen
  use units,            ONLY:HA2EV
- use com,              ONLY:error
+ use com,              ONLY:error,msg
  use memory_m,         ONLY:mem_est
  use LOGO,             ONLY:code_version,code_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
@@ -36,7 +36,8 @@ integer function io_DB1(E,k,ID)
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
 &                           qp_states_k,nXkibz,ng_closed
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng,wf_nb_io
- use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
+ use LIVE_t,           ONLY:live_timing_is_on
+ use IO_m,             ONLY:io_connect, io_disconnect, io_sec,variable_is_found, &
 &                           io_elemental, io_status, io_bulk,read_is_on,&
 &                           serial_number,io_serial_number,io_code_revision,&
 &                           DUMP,io_mode,write_is_on,io_code_version,ver_is_gt_or_eq
@@ -52,11 +53,13 @@ integer function io_DB1(E,k,ID)
  !
  type(levels)  :: E
  type(bz_samp) :: k
- integer       :: ID,code_version_local(3),code_revision_local
- !
+ integer       :: ID,code_version_local(3),code_revision_local,var_err
  !
  io_DB1 =io_connect(desc="db1",type=0,ID=ID)
  if (io_DB1/=0) goto 1
+ !
+ var_err= variable_is_found(ID,"EXX_FRACTION")
+ if ( var_err < 0 ) call compatibility_message( )
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -149,9 +152,7 @@ integer function io_DB1(E,k,ID)
    !
    ! Check for old databases not compatible with libxc
    !
-   if (.not.ver_is_gt_or_eq(ID,(/3,2,2/))) &
-&     call error(" WF databases too old. Please regenerate them with a newer Yambo release")
-   !
+   if (.not.ver_is_gt_or_eq(ID,(/3,2,2/))) call compatibility_message( )
    !
    ! Wavefunction G-vector components
    !---------------------------------
@@ -182,15 +183,19 @@ integer function io_DB1(E,k,ID)
    !
    ! Hybrids stuff
    !	
-   if (ver_is_gt_or_eq(ID,revision=2962)) then
-       call io_elemental(ID, VAR="EXX_FRACTION",VAR_SZ=1,MENU=0)
-       call io_elemental(ID,R0=GS_exx_FRACTION,   CHECK=.true.,OP=(/"=="/),&
-&                                  VAR=' Exact exchange fraction in XC   :')
-   endif
-   if (ver_is_gt_or_eq(ID,revision=3997)) then
-       call io_elemental(ID, VAR="EXX_SCREENING",VAR_SZ=1,MENU=0)
-       call io_elemental(ID,R0=GS_exx_SCREENING,   CHECK=.true.,OP=(/"=="/),&
-&                                  VAR=' Exact exchange screening in XC  :')
+   if (var_err==1) then
+     !
+     if (ver_is_gt_or_eq(ID,revision=2962)) then
+         call io_elemental(ID, VAR="EXX_FRACTION",VAR_SZ=1,MENU=0)
+         call io_elemental(ID,R0=GS_exx_FRACTION,   CHECK=.true.,OP=(/"=="/),&
+&                             VAR=' Exact exchange fraction in XC   :')
+     endif
+     if (ver_is_gt_or_eq(ID,revision=3997)) then
+         call io_elemental(ID, VAR="EXX_SCREENING",VAR_SZ=1,MENU=0)
+         call io_elemental(ID,R0=GS_exx_SCREENING,   CHECK=.true.,OP=(/"=="/),&
+&                                VAR=' Exact exchange screening in XC  :')
+     endif
+     !
    endif
    if (ver_is_gt_or_eq(ID,revision=1240).and.ver_is_gt_or_eq(ID,(/3,2,5/))) then
      call io_elemental(ID, VAR="mag_syms",VAR_SZ=1,MENU=0)
@@ -317,4 +322,23 @@ integer function io_DB1(E,k,ID)
  !
 1 call io_disconnect(ID=ID)
  !
+ contains
+   !
+   subroutine compatibility_message( )
+     !
+     live_timing_is_on=.FALSE.
+     !
+     if (var_err<0) then
+       call msg("s","No NETCDF support. It is not possible to verify if the present database is compatible")
+       call msg("s","with the current Yambo version. Re-create the DB1 databases with the NETCDF support and try again")
+     else if (var_err==1) then
+       call msg("s","The present DB1 database is NOT compatible with the current Yambo version." )
+       call msg("s","Re-create the DB1 databases with a more recent version of the code")
+     endif
+     call msg("s"," ")
+     !
+     call error("I/O failed.")
+     !
+   end subroutine
+   !
 end function io_DB1

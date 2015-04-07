@@ -123,15 +123,22 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    section_title="Bethe-Salpeter Kernel -> xc-kernel"
  else
    if (BS_K_is_ALDA) then
-     section_title="TDDFT Kernel (Res. COR"
+     section_title="TDDFT Kernel"
    else
-     section_title="Bethe-Salpeter Kernel ("
+     section_title="Bethe-Salpeter"
    endif
-   if (BS_res_K_corr)     section_title=trim(section_title)//" Res. COR"
-   if (BS_res_K_exchange) section_title=trim(section_title)//" Res. EXX"
-   if (BS_cpl_K_corr)     section_title=trim(section_title)//" Cpl. COR"
-   if (BS_cpl_K_exchange) section_title=trim(section_title)//" Cpl. EXX"
-   section_title=trim(section_title)//")"
+   !
+   if (BS_res_K_corr.or.BS_res_K_exchange)     section_title=trim(section_title)//" (Resonant"
+   if (BS_res_K_corr.or.BS_K_is_ALDA)          section_title=trim(section_title)//" CORRRELATION"
+   if (BS_res_K_exchange)                      section_title=trim(section_title)//" EXCHANGE"
+   if (BS_res_K_corr.or.BS_res_K_exchange)     section_title=trim(section_title)//")"
+   !
+   if (BS_cpl_K_corr.or.BS_cpl_K_exchange)     section_title=trim(section_title)//" (Coupling"
+   if (BS_cpl_K_corr.or.(BS_K_is_ALDA.and.BS_cpl_K_exchange))&
+&                                              section_title=trim(section_title)//" CORRRELATION"
+   if (BS_cpl_K_exchange)                      section_title=trim(section_title)//" EXCHANGE"
+   if (BS_cpl_K_corr.or.BS_cpl_K_exchange)     section_title=trim(section_title)//")"
+   !
  endif
  !
  call section('=',trim(section_title))

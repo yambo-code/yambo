@@ -394,8 +394,10 @@ module com
      !
      live_timing_is_on=.FALSE.
      !
-     call msg('nr',string_pack('[ERROR] STOP signal received while in :',trim(secnm)))
-     call LIVE_message(string_pack('[ERROR] STOP signal received while in :',trim(secnm)),"nn","","%s")
+     if (len_trim(secnm)>0) then
+       call msg('nr',string_pack('[ERROR] STOP signal received while in :',trim(secnm)))
+       call LIVE_message(string_pack('[ERROR] STOP signal received while in :',trim(secnm)),"nn","","%s")
+     endif
      call msg('nr',string_pack('[ERROR] ',trim(mesg)))
      call LIVE_message(string_pack('[ERROR] ',trim(mesg)),"n","","%s")
      call LIVE_message("","n","","%s")

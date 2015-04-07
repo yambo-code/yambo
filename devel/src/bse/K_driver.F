@@ -66,9 +66,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Work Space
  !
- type(X_t)   :: X_tddft,X_oscillators
- integer     :: iq,Max_G_m_G
- !integer     :: bands_to_correct(2)
+ type(X_t)         :: X_tddft,X_oscillators
+ integer           :: iq,Max_G_m_G
  integer, external :: eval_G_minus_G
  !
  call section('*','Response Functions in Transition space')
@@ -99,20 +98,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  endif
  !
 #endif
- !
- ! If using ALDA enough bands must be loaded to be able to calculate the density
- !          ================================
- !bands_to_correct=BS_bands
- !
- !if (l_alda_fxc) then 
- !  !
- !  bands_to_correct=(/1,BS_bands(2)/)
- !  !
- !  ! ... and the QP corrections
- !  !             ==============
- !  call QP_apply(bands_to_correct,Ken,Xk,"K",msg_fmt='s')
- !  !
- !endif
  !
  ! GPL_EXCLUDE_START
  !

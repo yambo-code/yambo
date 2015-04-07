@@ -23,7 +23,7 @@
 !
 subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !
- use drivers,       ONLY:l_optics,l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_bss,l_gw0,l_bse
+ use drivers,       ONLY:l_optics,l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_bss,l_gw0,l_bse,l_alda_fxc
  use X_m,           ONLY:X_t
  use electrons,     ONLY:levels,n_bands
  use R_lattice,     ONLY:bz_samp
@@ -53,7 +53,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  logical       ::l_apply_RT_corrections
 #endif
  logical       ::l_apply_QP_corrections,l_dynamical,VERBOSE
- integer       ::X_kind,QP_bands(2)
+ integer       ::X_kind,bands_to_correct(2)
  !
  call section('*','External corrections')
  !
@@ -85,6 +85,12 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !
  ! 2) BSE
  ! ========
+ bands_to_correct=BS_bands
+ !
+ ! If using ALDA enough bands must be loaded to be able to calculate the density
+ !          ================================
+ if (l_alda_fxc) bands_to_correct=(/1,BS_bands(2)/)
+ !
  l_apply_QP_corrections=(l_optics.and.l_bse.and..not.l_ppa).or.l_bss
  if (l_apply_QP_corrections) call QP_apply(BS_bands,Ken,Xk,"K",msg_fmt='s')
 #if defined _RT
@@ -94,15 +100,15 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !
  ! 3) Green's Function used to compute QP corrections
  ! ====================================================
- QP_bands=(/1,n_bands/)
- if (l_gw0)                  call QP_apply(QP_bands,en,k,"G",msg_fmt='s')
+ bands_to_correct=(/1,n_bands/)
+ if (l_gw0)                  call QP_apply(bands_to_correct,en,k,"G",msg_fmt='s')
 #if defined _ELPH
  !    Green's Function (k+q levels loaded for the _ELPH)
  if (l_gw0.and.l_elph_corr) call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt='s')
 #endif
 #if defined _RT
  l_apply_RT_corrections=l_cohsex
- if (l_apply_RT_corrections) call RT_apply(QP_bands,en,Xk,what="G",VERBOSE=VERBOSE)
+ if (l_apply_RT_corrections) call RT_apply(bands_to_correct,en,Xk,what="G",VERBOSE=VERBOSE)
 #endif
  !
 end subroutine

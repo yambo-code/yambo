@@ -33,9 +33,9 @@ subroutine X_s(iq,X,Xw,W_range)
  use frequency,     ONLY:w_samp
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message,MATRIX_driver
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_mat!,X_fxc
+ use X_m,           ONLY:X_t,X_mat
  use matrix_operate,ONLY:INV,USE_SVD
- use TDDFT,         ONLY:FXC_n_g_corr,FXC,& !FXC_n_mem_freqs,&
+ use TDDFT,         ONLY:FXC_n_g_corr,FXC,&
 &                        FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,io_BS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE
 #if defined _TIMING

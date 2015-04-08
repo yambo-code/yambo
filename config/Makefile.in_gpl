@@ -92,7 +92,7 @@ libs:
 	DIR2GO="lib" ; $(mklib); fi
 	@if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
 	DIR2GO="lib" ; $(mklib); fi
-	LIBS2DO="local" ; DIR2GO="lib" ; $(mklib) 
+	@LIBS2DO="local" ; DIR2GO="lib" ; $(mklib) 
 	@if test "$(do_iotk)" = yes ; then LIBS2DO="iotk" ; \
 	DIR2GO="lib" ; $(mklib_ext); fi
 	@if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf" ; \

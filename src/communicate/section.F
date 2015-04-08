@@ -29,7 +29,7 @@ subroutine section(mode,name)
  !      = p     : increase level only in this section
  !      = #     : increase level #
  !
- use pars,       ONLY:lchlen,schlen,SP
+ use pars,       ONLY:lchlen,schlen,SP,DP
  use it_m,       ONLY:ofiles_append
  use stderr,     ONLY:string_pack
  use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&
@@ -49,7 +49,7 @@ subroutine section(mode,name)
  !
  character(lchlen)::ch,chp
  integer      :: i1,isec_save(5)
- real(SP)     :: cput_here(ncpu)
+ real(DP)     :: cput_here(ncpu)
  !
  ! Final Timing Strings
  !
@@ -91,7 +91,7 @@ subroutine section(mode,name)
    call PP_redux_wait(cput_here)
    min_time=time_string(minval(cput_here))
    max_time=time_string(maxval(cput_here))
-   average_time =time_string(sum(cput_here)/real(ncpu))
+   average_time =time_string(sum(cput_here)/real(ncpu,DP))
    if (all((/len_trim(min_time)>0,len_trim(max_time)>0,len_trim(average_time)>0/))) then
      write (ch,'(6a)') 'CpuTiming [Min/Max/Average]: ',trim(min_time),&
 &    '/',trim(max_time),'/',trim(average_time)
@@ -155,7 +155,7 @@ subroutine section(mode,name)
    !
    min_time=time_string(minval(cput_here))
    max_time=time_string(maxval(cput_here))
-   average_time =time_string(sum(cput_here)/real(ncpu))
+   average_time =time_string(sum(cput_here)/real(ncpu,DP))
    !
    if (all((/trim(min_time)/='',trim(max_time)/='',trim(average_time)/=''/))) then
      !

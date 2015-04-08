@@ -23,7 +23,7 @@
 !
 integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
  !
- use pars,                ONLY:schlen,lchlen
+ use pars,                ONLY:schlen,lchlen,SP
  use IO_m,                ONLY:mk_dir,cp_file,io_control,OP_APP_WR_CL,IO_write,IO_read
  use com,                 ONLY:file_exists
  use LOGO,                ONLY:pickup_a_random
@@ -295,14 +295,14 @@ integer function ydb_i(lnstr,instr,lstrings,desc,vers,runlevels,fname,iif)
      l_empty_id=.true.
    endif
    !
-   if (check_for_word("in")>0)  i_random=pickup_a_random(10000000.)
-   if (check_for_word("out")>0) o_random=pickup_a_random(10000000.)
+   if (check_for_word("in")>0)  i_random=pickup_a_random(10000000._SP)
+   if (check_for_word("out")>0) o_random=pickup_a_random(10000000._SP)
    if (l_empty_id.and.i_ref==0) then
      call LIVE_message('Provide a reference run') 
      return
    endif
    !
-   if (l_empty_id) o_random=pickup_a_random(10000000.)
+   if (l_empty_id) o_random=pickup_a_random(10000000._SP)
    !
    l_overwrite=.FALSE.
    !

@@ -150,7 +150,6 @@ module LIVE_t
      ! cput_seg = Segment CPUT
      ! cput_sec = Section CPUT
      !
-     !use openmp,     ONLY:n_threads_now
      use parallel_m, ONLY:myid,ncpu
      implicit none
      logical, optional :: INIT,INIT_SEG,SEG,INIT_SEC,SEC,FIN

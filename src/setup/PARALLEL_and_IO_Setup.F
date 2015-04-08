@@ -54,7 +54,9 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! CPU structure
  !===============
  !
- if (ncpu>1.or.n_threads>1) then
+ n_max_threads=maxval((/n_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP/))
+ !
+ if (ncpu>1.or.n_max_threads>1) then
    !
    do i_s=0,n_CPU_str_max
      if (len_trim(PARALLEL_message(i_s))==0) cycle
@@ -70,8 +72,6 @@ subroutine PARALLEL_and_IO_Setup(en,k)
    call msg ('r','* CPU             :',ncpu)
    !
  endif
- !
- n_max_threads=maxval((/n_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP/))
  !
  call msg('r', '* THREADS    (max):',n_max_threads)
  call msg('r', '* THREADS TOT(max):',n_max_threads*ncpu)

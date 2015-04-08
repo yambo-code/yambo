@@ -45,10 +45,10 @@ module LIVE_t
  integer             :: steps_done
  integer             :: hashes_now
  integer             :: hashes_done
- real(SP),allocatable:: cput_seg(:,:)
- real(SP),allocatable:: cput_sec(:,:)
- real(SP),allocatable:: cput_tot(:,:)
- real(SP)            :: cput_save
+ real(DP),allocatable:: cput_seg(:,:)
+ real(DP),allocatable:: cput_sec(:,:)
+ real(DP),allocatable:: cput_tot(:,:)
+ real(DP)            :: cput_save
  character(schlen)   :: timing_name
  character(schlen)   :: USER_wall_time_string=" "
  integer             :: USER_wall_time(3)=0 ! Days, Hours, Minutes
@@ -168,7 +168,8 @@ module LIVE_t
 #if defined _BLUEGENE
      cput_tot(myid+1,1)=(cput_now-cput_tot(myid+1,2))
 #else
-     cput_tot(myid+1,1)=(cput_now-cput_tot(myid+1,2))/real(n_threads_now,SP)
+     !cput_tot(myid+1,1)=(cput_now-cput_tot(myid+1,2))/real(n_threads_now,SP)
+     cput_tot(myid+1,1)=(cput_now-cput_tot(myid+1,2))
 #endif
      !
      if (present(INIT_SEC)) cput_sec(myid+1,:)=(/0.d0,cput_now/)
@@ -178,8 +179,10 @@ module LIVE_t
      if (present(SEC)) cput_sec(myid+1,1)=(cput_now-cput_sec(myid+1,2))
      if (present(SEG)) cput_seg(myid+1,1)=(cput_now-cput_seg(myid+1,2))
 #else
-     if (present(SEC)) cput_sec(myid+1,1)=(cput_now-cput_sec(myid+1,2))/real(n_threads_now,SP)
-     if (present(SEG)) cput_seg(myid+1,1)=(cput_now-cput_seg(myid+1,2))/real(n_threads_now,SP)
+     !if (present(SEC)) cput_sec(myid+1,1)=(cput_now-cput_sec(myid+1,2))/real(n_threads_now,SP)
+     !if (present(SEG)) cput_seg(myid+1,1)=(cput_now-cput_seg(myid+1,2))/real(n_threads_now,SP)
+     if (present(SEC)) cput_sec(myid+1,1)=(cput_now-cput_sec(myid+1,2))
+     if (present(SEG)) cput_seg(myid+1,1)=(cput_now-cput_seg(myid+1,2))
 #endif
      !
      if (present(FIN)) deallocate(cput_seg,cput_sec,cput_tot)
@@ -188,11 +191,11 @@ module LIVE_t
    !
    character(schlen) function time_string(tcpu)
      implicit none
-     real(SP) tcpu
+     real(DP) tcpu
      ! 
      ! Work Space
      !
-     real(SP) ltcpu
+     real(DP) ltcpu
      integer:: d,h,m,s
      integer, parameter :: st=1
      ltcpu=abs(tcpu)
@@ -346,8 +349,8 @@ module LIVE_t
      ! Work Space
      !
      character(schlen)  :: xtch,etch
-     real(SP),parameter :: rts=5.
-     real(SP) :: lts
+     real(DP),parameter :: rts=5.
+     real(DP) :: lts
      logical  :: time_report
      !
      time_report=.false.
@@ -364,7 +367,7 @@ module LIVE_t
      if (time_report) cput_save=cput_seg(myid+1,1)
      !
      if (time_report) then
-       lts=cput_seg(myid+1,1)*real(time_steps)/real(steps_done)
+       lts=cput_seg(myid+1,1)*real(time_steps,DP)/real(steps_done,DP)
        xtch=time_string(lts)
        if (len_trim(xtch)==0) xtch='--'
        call live_timing_update(trim(xtch),trim(etch))
@@ -436,17 +439,23 @@ module LIVE_t
    subroutine cti(tcpu)
      implicit none
      real(DP) tcpu
-#if defined _irix
+#if defined _OPENMP
+     real(DP), external :: qe_cclock
+     tcpu=qe_cclock()      
+#else
+#  if defined _irix
      external cclock
      call cclock(tcpu)      
-#endif 
-#if defined _linux || defined _apple
+#  endif 
+#  if defined _linux || defined _apple
      call cpu_time(tcpu)  ! standard fortran 95 function
-#endif
-#if defined _ibm || defined _aix || defined _ppc_linux
+#  endif
+#  if defined _ibm || defined _aix || defined _ppc_linux
      integer :: mclock
      tcpu = mclock()*0.01d0
+#  endif
 #endif
+   ! 
    end subroutine
    !
 end module 

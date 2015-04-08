@@ -46,7 +46,6 @@ module memory_m
    subroutine mem_est(what,elements_size,elements_kind,errors,quiet,overall_report)
      use drivers,      ONLY:infile_editing
      use com,          ONLY:msg,error,warning
-     !use parallel_m,   ONLY:master_cpu
      use units,        ONLY:Gigabyte
      character(*)         :: what
      integer,optional     :: elements_size(:)

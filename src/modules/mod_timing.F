@@ -284,7 +284,6 @@ MODULE timing_m
    END SUBROUTINE clock_start
    !
    SUBROUTINE clock_stop(obj)
-     !use openmp, ONLY:n_threads_now
      use LIVE_t, ONLY:cti
      IMPLICIT NONE
      TYPE(clock),           INTENT(inout) :: obj    

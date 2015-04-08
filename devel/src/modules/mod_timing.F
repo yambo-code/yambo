@@ -43,7 +43,7 @@ MODULE timing_m
    INTEGER                     :: call_number       ! number of runs for this clock
    REAL(DP)                    :: start             ! last start
    REAL(DP)                    :: stop              ! last stop 
-   REAL(SP)                    :: total_time        ! total time up to now
+   REAL(DP)                    :: total_time        ! total time up to now
    LOGICAL                     :: running           ! true if clock is counting
    LOGICAL                     :: alloc 
  END TYPE clock
@@ -293,10 +293,9 @@ MODULE timing_m
            CALL error('clock_stop:  Clock '//TRIM(obj%name)//'NOT running')
      call cti(obj%stop)
 #if defined _BLUEGENE
-     obj%total_time = obj%total_time + (real(obj%stop,SP) - real(obj%start,SP))
+     obj%total_time = obj%total_time + real(obj%stop-obj%start,DP)
 #else
-     !obj%total_time = obj%total_time + (real(obj%stop,SP) - real(obj%start,SP))/real(n_threads_now)
-     obj%total_time = obj%total_time + (real(obj%stop,SP) - real(obj%start,SP))
+     obj%total_time = obj%total_time + real(obj%stop-obj%start,DP)
 #endif
      obj%running = .FALSE.
    END SUBROUTINE clock_stop
@@ -323,8 +322,8 @@ MODULE timing_m
      CHARACTER(lchlen)                  :: local_ch
      INTEGER                            :: nhour,nmin
      INTEGER                            :: call_number
-     REAL(SP)                           :: total_time
-     REAL(SP)                           :: nsec
+     REAL(DP)                           :: total_time
+     REAL(DP)                           :: nsec
      !
      form_="sec"
      IF ( PRESENT(form) ) form_ = TRIM(form)
@@ -342,10 +341,10 @@ MODULE timing_m
      IF ( TRIM(str) == 'mp_' .OR. TRIM(str) == 'para_' ) THEN
        !
        CALL PP_redux_wait( total_time )
-       total_time = total_time / REAL( ncpu, SP )
+       total_time = total_time / REAL( ncpu, DP )
        !
        CALL PP_redux_wait( (/call_number/) )
-       call_number = NINT ( call_number / REAL( ncpu, SP ) )
+       call_number = NINT ( call_number / REAL( ncpu, DP ) )
        !
      ENDIF
      !
@@ -371,15 +370,15 @@ MODULE timing_m
            IF (nhour > 0) THEN
              WRITE(local_ch,'(a20," : ",3x,i2,"h",i2,"m CPU (", &
                    &  i8," calls,",f8.3," s avg)")') TRIM(obj%name), nhour, nmin, &
-                   call_number , total_time / REAL( call_number, SP )
+                   call_number , total_time / REAL( call_number, DP )
            ELSEIF (nmin > 0) THEN
              WRITE (local_ch, '(a20," : ",i2,"m",f5.2,"s CPU (", &
                    &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nmin, nsec, &
-                        call_number , total_time / REAL( call_number, SP )
+                        call_number , total_time / REAL( call_number, DP )
            ELSE
              WRITE (local_ch, '(a20," : ",3x,f5.2,"s CPU (", &
                    &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nsec, &
-                        call_number , total_time / REAL( call_number, SP )
+                        call_number , total_time / REAL( call_number, DP )
            ENDIF
            if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
            call msg('r',local_ch(:100))
@@ -393,7 +392,7 @@ MODULE timing_m
          ELSE
            WRITE (local_ch, '(a20," :",f9.2,"s CPU (", i8," calls,",f8.3," s avg)")')  &
                         TRIM(obj%name) , total_time , call_number ,   &
-                        total_time / REAL( call_number, SP )
+                        total_time / REAL( call_number, DP )
          ENDIF
          if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
          call msg('r',local_ch(:100))
@@ -418,9 +417,9 @@ MODULE timing_m
      !
      ! recovering over pools may create deadlocks
      !
-     total_time  = internal_list%clock(1)%total_time
+     total_time = real(internal_list%clock(1)%total_time,SP)
      !
-     ch='             [Time-Profile]: '//trim(real2ch(internal_list%clock(1)%total_time))//'s'
+     ch='             [Time-Profile]: '//trim(real2ch(total_time))//'s'
      call msg('rn',ch(:100))
      if (ncpu>1) call LIVE_message(message=ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
      !

@@ -122,7 +122,7 @@ subroutine MAG_common_build_A(build)
        ! The AB effect is implemented only with a flux in the a(3,:) direction
        ! Anyway I'm not sure that this is right if a(3,:) is not perpendicular
        ! to the plane defined by a(1,:) and a(2,:)
-       r_mod=v_norm((/x(ir,1),x(ir,2),0./))
+       r_mod=v_norm((/x(ir,1),x(ir,2),0._SP/))
        ! Now build up the vector potential         
        if(MAG_landau) then
          if(r_mod<=MAG_radius .or. MAG_radius==0) then

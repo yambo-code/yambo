@@ -193,13 +193,19 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
          if(MAG_landau) M_tot(i1,ik)=M_tot(i1,ik)+M(i1)
        enddo
        !
-       if(angular_dir(1)) call msg('o Lx','',(/real(ib),real(ik),real(i_spin),real(L(1)),aimag(L(1))/),INDENT=-2,USE_TABS=.true.)
-       if(angular_dir(2)) call msg('o Ly','',(/real(ib),real(ik),real(i_spin),real(L(2)),aimag(L(2))/),INDENT=-2,USE_TABS=.true.)
-       if(angular_dir(3)) call msg('o Lz','',(/real(ib),real(ik),real(i_spin),real(L(3)),aimag(L(3))/),INDENT=-2,USE_TABS=.true.)
+       if(angular_dir(1)) call msg('o Lx','',(/real(ib,SP),real(ik,SP),real(i_spin,SP),&
+&                                              real(L(1)),aimag(L(1))/),INDENT=-2,USE_TABS=.true.)
+       if(angular_dir(2)) call msg('o Ly','',(/real(ib,SP),real(ik,SP),real(i_spin,SP),&
+&                                              real(L(2)),aimag(L(2))/),INDENT=-2,USE_TABS=.true.)
+       if(angular_dir(3)) call msg('o Lz','',(/real(ib,SP),real(ik,SP),real(i_spin,SP),&
+&                                              real(L(3)),aimag(L(3))/),INDENT=-2,USE_TABS=.true.)
        if(MAG_landau) then
-         if(angular_dir(1)) call msg('o Mx','',(/real(ib),real(ik),real(i_spin),real(M(1)),aimag(M(1))/),INDENT=-2,USE_TABS=.true.)
-         if(angular_dir(2)) call msg('o My','',(/real(ib),real(ik),real(i_spin),real(M(2)),aimag(M(2))/),INDENT=-2,USE_TABS=.true.)
-         if(angular_dir(3)) call msg('o Mz','',(/real(ib),real(ik),real(i_spin),real(M(3)),aimag(M(3))/),INDENT=-2,USE_TABS=.true.)
+         if(angular_dir(1)) call msg('o Mx','',(/real(ib,SP),real(ik,SP),real(i_spin,SP),&
+&                                                real(M(1)),aimag(M(1))/),INDENT=-2,USE_TABS=.true.)
+         if(angular_dir(2)) call msg('o My','',(/real(ib,SP),real(ik,SP),real(i_spin,SP),&
+&                                                real(M(2)),aimag(M(2))/),INDENT=-2,USE_TABS=.true.)
+         if(angular_dir(3)) call msg('o Mz','',(/real(ib,SP),real(ik,SP),real(i_spin,SP),&
+&                                                real(M(3)),aimag(M(3))/),INDENT=-2,USE_TABS=.true.)
        endif
        !
        call live_timing(steps=1)
@@ -213,13 +219,13 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
      if(MAG_landau) M_tot(i1,nkpt_tot+1)=M_tot(i1,nkpt_tot+1)+M_tot(i1,ik)
    enddo
    !
-   if(angular_dir(1)) call msg('o Lx','#',(/real(ik),L_tot(1,ik)/),INDENT=-2,USE_TABS=.true.)
-   if(angular_dir(2)) call msg('o Ly','#',(/real(ik),L_tot(2,ik)/),INDENT=-2,USE_TABS=.true.)
-   if(angular_dir(3)) call msg('o Lz','#',(/real(ik),L_tot(3,ik)/),INDENT=-2,USE_TABS=.true.)
+   if(angular_dir(1)) call msg('o Lx','#',(/real(ik,SP),L_tot(1,ik)/),INDENT=-2,USE_TABS=.true.)
+   if(angular_dir(2)) call msg('o Ly','#',(/real(ik,SP),L_tot(2,ik)/),INDENT=-2,USE_TABS=.true.)
+   if(angular_dir(3)) call msg('o Lz','#',(/real(ik,SP),L_tot(3,ik)/),INDENT=-2,USE_TABS=.true.)
    if(MAG_landau) then
-     if(angular_dir(1)) call msg('o Mx','#',(/real(ik),M_tot(1,ik)/),INDENT=-2,USE_TABS=.true.)
-     if(angular_dir(2)) call msg('o My','#',(/real(ik),M_tot(2,ik)/),INDENT=-2,USE_TABS=.true.)
-     if(angular_dir(3)) call msg('o Mz','#',(/real(ik),M_tot(3,ik)/),INDENT=-2,USE_TABS=.true.)
+     if(angular_dir(1)) call msg('o Mx','#',(/real(ik,SP),M_tot(1,ik)/),INDENT=-2,USE_TABS=.true.)
+     if(angular_dir(2)) call msg('o My','#',(/real(ik,SP),M_tot(2,ik)/),INDENT=-2,USE_TABS=.true.)
+     if(angular_dir(3)) call msg('o Mz','#',(/real(ik,SP),M_tot(3,ik)/),INDENT=-2,USE_TABS=.true.)
    endif
    !
    call WF_derivative_free()

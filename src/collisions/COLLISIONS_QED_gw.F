@@ -33,7 +33,7 @@ subroutine COLLISIONS_QED_gw(E,k,q)
  use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q,PAR_Q_index,PAR_RL_index,&
 &                        PAR_nQP,PAR_nQ,PAR_QP_index,PAR_G_bands_index,PAR_IND_G_b
  use collision,     ONLY:ggwinfo,collision_reset,nGW_QED_collisions,&
-&                        COLLISIONS_IO_status,GW_QED_collisions
+&                        COLLISIONS_IO_status,GW_QED_collisions,scatterBamp_alloc
  use QP_m,          ONLY:QP_table,QP_n_states,QP_QED_ng,QP_n_G_bands,QP_nb
  use R_lattice,     ONLY:qindx_S,bz_samp
  use SC,            ONLY:SC_bands
@@ -81,6 +81,8 @@ subroutine COLLISIONS_QED_gw(E,k,q)
  !
  ! Allocation again
  !
+ call scatterBamp_alloc(isc)
+ call scatterBamp_alloc(isc_grad)
  allocate(isc%rhotw(QP_QED_ng),isc_grad%rhotw(3*QP_QED_ng))
  isc%ngrho =QP_QED_ng
  isc_grad%ngrho=QP_QED_ng

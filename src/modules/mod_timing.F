@@ -284,7 +284,7 @@ MODULE timing_m
    END SUBROUTINE clock_start
    !
    SUBROUTINE clock_stop(obj)
-     use openmp, ONLY:n_threads_now
+     !use openmp, ONLY:n_threads_now
      use LIVE_t, ONLY:cti
      IMPLICIT NONE
      TYPE(clock),           INTENT(inout) :: obj    
@@ -295,7 +295,8 @@ MODULE timing_m
 #if defined _BLUEGENE
      obj%total_time = obj%total_time + (real(obj%stop,SP) - real(obj%start,SP))
 #else
-     obj%total_time = obj%total_time + (real(obj%stop,SP) - real(obj%start,SP))/real(n_threads_now)
+     !obj%total_time = obj%total_time + (real(obj%stop,SP) - real(obj%start,SP))/real(n_threads_now)
+     obj%total_time = obj%total_time + (real(obj%stop,SP) - real(obj%start,SP))
 #endif
      obj%running = .FALSE.
    END SUBROUTINE clock_stop
@@ -419,7 +420,7 @@ MODULE timing_m
      !
      total_time  = internal_list%clock(1)%total_time
      !
-     ch='            [Time-Profile]: '//trim(real2ch(internal_list%clock(1)%total_time))//'s'
+     ch='             [Time-Profile]: '//trim(real2ch(internal_list%clock(1)%total_time))//'s'
      call msg('rn',ch(:100))
      if (ncpu>1) call LIVE_message(message=ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
      !

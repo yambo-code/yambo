@@ -46,7 +46,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use frequency,       ONLY:w_samp
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
  use QP_m,            ONLY:QP_ng_Sx
- use collision,       ONLY:ggwinfo,collision_reset 
+ use collision,       ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
  use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
@@ -99,6 +99,8 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(isc%ngrho),local_u(fft_size),u(X%ng),&
       &u_rs(fft_size),rhotw_rs(fft_size),Vcoh(X%ng),stat=alloc_err)
  call mem_est("ISC-GAMP",(/X%ng**2+isc%ngrho/),errors=(/alloc_err/))
+ !
+ call scatterBamp_alloc(isc)
  !
  isc%qs=1
  !call scatterGamp(isc,'c') !???
@@ -184,6 +186,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
    end do
  end do
  deallocate(isc%gamp,isc%rhotw,local_u,u,u_rs,rhotw_rs)
+ call scatterBamp_free(isc)
  !
  ! COH applied to the WF: FFT,then multiply by WFs and add to SX
  !

@@ -100,7 +100,7 @@ subroutine X_s(iq,X,Xw,W_range)
    !
    tddftk=(0.,0.) 
    !
-   ! If the freqs remaining are not anough for all the cpu's or
+   ! If the freqs remaining are not enough for all the cpu's or
    ! Fxc needs the SVD procedure use the SLK
    !
    if (FXC_SVD_digits>0) INV_MODE=USE_SVD

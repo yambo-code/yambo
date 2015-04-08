@@ -116,7 +116,7 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
  ! =============== SERIAL SECTION ===============
  !
  !
- ! ####> SVD INVERTION (Using Singular Value decomposition)
+ ! ####> SVD INVERSION (Using Singular Value decomposition)
  !
  if (idriver==USE_SVD.and.lib_in_use==USE_LK) then
    allocate(r_WK(5*M_size),SV(M_size),U(M_size,M_size),VH(M_size,M_size))
@@ -158,7 +158,7 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
    !
  endif
  !
- ! ###> SERIAL INVERTION (standard LK)
+ ! ###> SERIAL INVERSION (standard LK)
  !
  if (idriver==INV.and.lib_in_use==USE_LK) then
    allocate(ipvt(M_size))
@@ -192,9 +192,9 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
    !
  endif
  !
- ! ###> SERIAL DIAGONALIZATION (Non Hermitian Matrices)
+ ! ###> SERIAL DIAGONALIZATION (Non-Hermitian Matrices)
  !
- !   The right eigenvector v(j) of A satisfies
+ !  The right eigenvector v(j) of A satisfies
  !                   A * v(j) = lambda(j) * v(j)
  !  where lambda(j) is its eigenvalue.
  !  The left eigenvector u(j) of A satisfies

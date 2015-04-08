@@ -37,7 +37,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
 &                        PAR_IND_Bp_mat,PAR_nQP,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
  use collision,     ONLY:ggwinfo,collision_reset,COLLISIONS_parallel_SC_structure,&
 &                        COLLISIONS_element,nGW_NEQ_collisions,GW_NEQ_collisions,&
-&                        COLLISIONS_IO_status
+&                        COLLISIONS_IO_status,scatterBamp_alloc
  use plasma,        ONLY:EH_gas
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -124,6 +124,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  allocate(EM1s(X%ng,X%ng),stat=alloc_err)
  call mem_est("EM1s",(/size(EM1s)/),errors=(/alloc_err/))
  !
+ call scatterBamp_alloc(isc)
+ call scatterBamp_alloc(iscp)
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(isc%ngrho),iscp%rhotw(isc%ngrho),stat=alloc_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*isc%ngrho/),errors=(/alloc_err/))
  !

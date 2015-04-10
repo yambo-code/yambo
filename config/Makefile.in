@@ -51,7 +51,7 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
            sbin/objects_debug.sh driver/editor.h lib/local/.objects
-TARGETS  = all yambo interfaces ypp ydb
+TARGETS  = yambo interfaces ypp ydb
 UTILS    = changelog get_extlibs
 CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_qed_rt \
@@ -201,6 +201,7 @@ clean_extlibs:
 # Functions
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ targets;echo;\
+ do echo  " [stable] all";\
  for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
  for target in $(BROKEN); do echo " [broken] $$target" ; done;echo;\

@@ -96,9 +96,6 @@ integer function io_X(X,Xw,ID)
    !
    if (.not.ver_is_gt_or_eq(ID,revision=308)) then
      io_X=IO_OUTDATED_DB
-#if defined _TIMING
-     if (io_RESPONSE) call timing('io_X',OPR='stop')
-#endif
      goto 1
    endif
    !

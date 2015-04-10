@@ -159,27 +159,20 @@ module LIVE_t
      call cti(cput_now)
      if (present(INIT)) then
        allocate(cput_seg(ncpu,2),cput_sec(ncpu,2),cput_tot(ncpu,2))
-       cput_seg=0.d0
-       cput_sec=0.d0
-       cput_tot=0.d0
+       cput_seg=0._DP
+       cput_seg(myid+1,2)=cput_now
+       cput_sec=0._DP
+       cput_sec(myid+1,2)=cput_now
+       cput_tot=0._DP
        cput_tot(myid+1,2)=cput_now
      endif
-#if defined _BLUEGENE
      cput_tot(myid+1,1)=(cput_now-cput_tot(myid+1,2))
-#else
-     cput_tot(myid+1,1)=(cput_now-cput_tot(myid+1,2))
-#endif
      !
      if (present(INIT_SEC)) cput_sec(myid+1,:)=(/0.d0,cput_now/)
      if (present(INIT_SEG)) cput_seg(myid+1,:)=(/0.d0,cput_now/)
      !
-#if defined _BLUEGENE
      if (present(SEC)) cput_sec(myid+1,1)=(cput_now-cput_sec(myid+1,2))
      if (present(SEG)) cput_seg(myid+1,1)=(cput_now-cput_seg(myid+1,2))
-#else
-     if (present(SEC)) cput_sec(myid+1,1)=(cput_now-cput_sec(myid+1,2))
-     if (present(SEG)) cput_seg(myid+1,1)=(cput_now-cput_seg(myid+1,2))
-#endif
      !
      if (present(FIN)) deallocate(cput_seg,cput_sec,cput_tot)
      !

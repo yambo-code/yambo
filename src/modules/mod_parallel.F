@@ -325,8 +325,11 @@ module parallel_m
  !
  interface PP_redux_wait
    module procedure l1share,i1share,i18share,i2share,i3share,&
-&                   r0share,r1share,r2share,r3share,d0share,d1share,d2share,&
+&                   r0share,r1share,r2share,r3share,&
 &                   c0share,c1share,c2share,c3share,c4share,ch0share,PARALLEL_wait
+#if ! defined _DOUBLE
+   module procedure d0share,d1share,d2share
+#endif
  end interface PP_redux_wait
  !
  interface pp_bcast

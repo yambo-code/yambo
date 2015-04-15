@@ -168,6 +168,15 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
    enddo
  endif
  !
+ ! If the system is metallic VBM and CBm are set to zero,
+ ! i.e. equal to the Fermi level, so that stretching corrections
+ ! are applied properly
+ !
+ if(any(Nbf_/=Nbm_)) then
+   E%E_VBM=0._SP
+   E%E_CBm=0._SP
+ endif
+ !
  if(n_sp_pol==1) E%E_dir_gap(1)=E_g_dir_(1,1)
  if(n_sp_pol==2) E%E_dir_gap(1:2)=E_g_dir_(2:3,1)
  !

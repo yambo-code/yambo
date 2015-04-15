@@ -59,7 +59,7 @@ integer function io_DB1(E,k,ID)
  if (io_DB1/=0) goto 1
  !
  var_err= variable_is_found(ID,"EXX_FRACTION")
- if ( var_err < 0 ) call compatibility_message( )
+ if ( read_is_on(ID) .and.  var_err < 0 ) call compatibility_message( )
  !
  if (any((/io_sec(ID,:)==1/))) then
    !

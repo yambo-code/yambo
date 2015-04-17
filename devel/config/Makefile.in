@@ -201,7 +201,7 @@ clean_extlibs:
 # Functions
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ targets;echo;\
- do echo  " [stable] all";\
+ echo  " [stable] all";\
  for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
  for target in $(BROKEN); do echo " [broken] $$target" ; done;echo;\

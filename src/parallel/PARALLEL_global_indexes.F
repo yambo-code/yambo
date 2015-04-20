@@ -32,7 +32,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        MPI_comm,PAR_DIPk_ibz_index,PAR_DIPk_nibz,COMM_copy,n_WF_bands_to_load,&
 &                        PAR_n_Bp_mat_elements,PAR_Bp_mat_index,PAR_Plasma_index,&
 &                        PAR_BS_T_grps_index,PAR_BS_nT_col_grps,PAR_Kk_nibz,PAR_nG_bands,PAR_G_bands_index,&
-&                        PAR_Q_bz_index,PAR_nQ_bz,PAR_nRL,PAR_RL_index
+&                        PAR_Q_bz_index,PAR_nQ_bz,PAR_nRL,PAR_RL_index,PARALLEL_CPU_used
  use parallel_m,    ONLY:& ! LOGICALS
 &                        l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
 &                        HEAD_QP_cpu,HEAD_k_cpu
@@ -227,7 +227,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  PAR_COM_WORLD%CPU_id=myid
  PAR_COM_WORLD%n_CPU =ncpu
  !
- if (PARALLEL_n_structures_active==0.and.ncpu>1) call error('Please provide a CPU structure in the input file')
+ if ( (PARALLEL_n_structures_active==0.or.product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))/=ncpu) .and. ncpu>1) then
+   call error('Please provide a CPU structure for the '//trim(ENVIRONMENT)//' ENVIRONMENT in the input file')
+ endif
  !
  !======================================================
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum") then

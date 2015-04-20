@@ -26,6 +26,7 @@ module LOGO
  implicit none
  !
  integer      :: code_version(3)
+ integer      :: GPL_code_revision
  integer      :: code_revision
  !
  integer                     :: n_logo_lines
@@ -82,7 +83,7 @@ module LOGO
      ! GPL_INCLUDE_START
 !     comment(1)='GPL Version '//&
 !&                trim(intc(code_version(1)))//'.'//trim(intc(code_version(2)))//&
-!&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_revision))
+!&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(GPL_code_revision))
      ! GPL_INCLUDE_END
      !
      MPI_string="Serial"

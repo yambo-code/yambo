@@ -31,8 +31,11 @@ if ( $#argv > 1 ) goto HELP
 #
 # Get current version & revision
 #
+set dir=`svn info | grep 'URL'`
 set dummy=`svn info -r HEAD | grep 'Revision'`
 set revision_HEAD=`echo $dummy | $awk '{gsub("Revision: ","");print $0}'`
+echo $dir
+exit 0
 #
 set dummy=`cat include/version.inc | grep 'code_version(1)'`
 set version_old=`echo $dummy | $awk '{gsub("code_version\\(1\\)=","");print $0}'`
@@ -42,6 +45,8 @@ set dummy=`cat include/version.inc | grep 'code_version(3)'`
 set sub_old=`echo $dummy | $awk '{gsub("code_version\\(3\\)=","");print $0}'`
 set dummy=`cat include/version.inc | grep 'code_revision'`
 set revision_old=`echo $dummy | $awk '{gsub("code_revision=","");print $0}'`
+set dummy=`cat include/version.inc | grep 'GPL_code_revision'`
+set GPL_revision_old=`echo $dummy | $awk '{gsub("GPL_code_revision=","");print $0}'`
 #
 # Increase counters
 #

@@ -27,7 +27,7 @@ integer function io_DB1(E,k,ID)
  use units,            ONLY:HA2EV
  use com,              ONLY:error,msg
  use memory_m,         ONLY:mem_est
- use LOGO,             ONLY:code_version,code_revision
+ use LOGO,             ONLY:code_version,code_revision,code_GPL_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
 &                           n_spinor
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, input_GS_Tel, dl_sop, &
@@ -59,13 +59,13 @@ integer function io_DB1(E,k,ID)
  if (io_DB1/=0) goto 1
  !
  var_err= variable_is_found(ID,"EXX_FRACTION")
- if ( var_err < 0 ) call compatibility_message( )
+ if ( read_is_on(ID) .and.  var_err < 0 ) call compatibility_message( )
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
    ! Dimensions
    !
-   call io_elemental(ID, VAR="DIMENSIONS",VAR_SZ=17)
+   call io_elemental(ID, VAR="DIMENSIONS",VAR_SZ=18)
    !
    ! Meaning of DIMENSIONS tag in ioDB1 file:
    !
@@ -85,7 +85,6 @@ integer function io_DB1(E,k,ID)
    ! 16 XC kind                 GS_xc_KIND
    ! 17 XC functional           GS_xc_FUNCTIONAL 
    ! 
-   !
    ! Added dimensions: (still in SEC=1)
    !
    !------------ 3.0.3 ------------------
@@ -96,6 +95,8 @@ integer function io_DB1(E,k,ID)
    !------------ ?.?.? ------------------
    !    EXX fraction            GS_exx_FRACTION
    !    EXX screening           GS_exx_SCREENING 
+   !------------ r. 4351 ----------------
+   !    code_GPL_revision
    !
    ! ONLY DB1 can define the serial_number 
    !
@@ -108,10 +109,8 @@ integer function io_DB1(E,k,ID)
    if (write_is_on(ID)) code_version_local=code_version
    call io_elemental(ID,DB_I1=io_code_version(ID,:),I1=code_version_local)
    !
-   if (ver_is_gt_or_eq(ID,(/3,0,16/))) then
-     if (write_is_on(ID)) code_revision_local=code_revision
-     call io_elemental(ID,DB_I0=io_code_revision(ID),I0=code_revision_local)
-   endif
+   if (write_is_on(ID)) code_revision_local=code_revision
+   call io_elemental(ID,DB_I0=io_code_revision(ID,1),I0=code_revision_local)
    ! 
    call io_elemental(ID,I0=E%nb,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' Bands                           :')
@@ -201,7 +200,15 @@ integer function io_DB1(E,k,ID)
      call io_elemental(ID, VAR="mag_syms",VAR_SZ=1,MENU=0)
      call io_elemental(ID, L0=mag_syms,VAR=' Magnetic symmetries             : ')
    endif
-   call io_elemental(ID, VAR="",VAR_SZ=0)
+   !
+   if (ver_is_gt_or_eq(ID,revision=4351)) then
+     call io_elemental(ID, VAR="GPL_REVISION",VAR_SZ=1,MENU=0)
+     if (write_is_on(ID)) code_revision_local=code_GPL_revision
+     call io_elemental(ID,DB_I0=io_code_revision(ID,2),I0=code_revision_local)
+     call io_elemental(ID, VAR="",VAR_SZ=0)
+   else
+     io_code_revision(ID,2)=code_GPL_revision
+   endif
    !
    ! Exporting E%nb/k%nibz when in DUMP
    !

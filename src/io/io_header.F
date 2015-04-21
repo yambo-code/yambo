@@ -90,15 +90,17 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  call io_elemental(ID,DB_I1=io_code_version(ID,:),I1=code_version)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- if (ver_is_gt_or_eq(ID,revision=4350)) then
-   call io_elemental(ID,VAR="HEAD_REVISION",VAR_SZ=2,MENU=0)
-   call io_elemental(ID,DB_I1=io_code_revision(ID,:),I1=(/code_revision,code_GPL_revision/))
- else
-   call io_elemental(ID,VAR="HEAD_REVISION",VAR_SZ=1,MENU=0)
-   call io_elemental(ID,DB_I0=io_code_revision(ID,1),I0=code_revision)
-   if (read_is_on(ID)) io_code_revision(ID,2)=code_GPL_revision
- endif
+ call io_elemental(ID,VAR="HEAD_REVISION",VAR_SZ=1,MENU=0)
+ call io_elemental(ID,DB_I0=io_code_revision(ID,1),I0=code_revision)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ !
+ if (ver_is_gt_or_eq(ID,revision=4350)) then
+   call io_elemental(ID,VAR="HEAD_GPL_REVISION",VAR_SZ=1,MENU=0)
+   call io_elemental(ID,DB_I0=io_code_revision(ID,2),I0=code_GPL_revision)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ else
+   io_code_revision(ID,2)=code_GPL_revision
+ endif
  !
  call io_elemental(ID,VAR="SERIAL_NUMBER",VAR_SZ=1,MENU=0)
  call io_elemental(ID,DB_I0=io_serial_number(ID),I0=serial_number)

@@ -52,7 +52,7 @@ subroutine bz_samp_indexes(k,Xk,q)
 &                         qindx_X,qindx_B,qindx_S,qindx_C,qindx_free,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
-&                         q_sstar,coll_scattering,Xk_impose_minus_q
+&                         q_sstar,coll_scattering,Xk_impose_minus_q,q_source
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
 #if defined _ELPH
@@ -160,7 +160,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      allocate(q%pt(q%nibz,3))
      if (Xk_impose_minus_q) q_pt=-q_pt
      q%pt=q_pt(:q%nibz,:)
-     call msg('rsn','[RL indx] Q-grid: User defined / from ndb.kindx .')
+     call msg('rsn','[RL indx] Q-grid:'//trim(q_source))
      user_defined_qpts=.true.
    endif
    !

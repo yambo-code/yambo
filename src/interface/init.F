@@ -238,8 +238,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (init==0.and.ncpu>1) call mk_dir(trim(com_path)//"/LOG")
  endif
  !
- X(3)%ib=(/1,en%nb/)
- !
  ! Exporting DB1 informations to variables to be
  ! proposed in the input file.
  !
@@ -809,8 +807,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep NEsteps NETime COHsteps DipoleEtresh')
    if (l_elel_scatt .or. l_elph_scatt) call initactivate(1,'LifeInterpKIND LifeInterpSteps LifeInterpT')
-   if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes')
-   !if (l_elph_corr) call initactivate(1,'UseDebyeE')
+   if (l_elph_corr) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'PlasmaPerc EERimPerc')
    call initactivate(1,'BGR RTIrredux RTskipImposeN RTeeImposeE InducedField IOtime')
    call initactivate(1,'RTpumpEhEn RTpumpEhWd RTpumpNel')
@@ -838,7 +835,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SURF
  if (lras.or.lreels) then
-!   call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',& ! Head only
     call X_activate('Xd',(/'BndsRn',&
 &                 'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &                 'DrudeW','EhEngy'/))

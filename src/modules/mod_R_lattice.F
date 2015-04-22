@@ -49,6 +49,7 @@ module R_lattice
  real(SP) :: b(3,3)
  real(SP) :: q0_def_norm, q0_shift_norm
  real(SP),allocatable :: q_norm(:)
+ character(schlen)    :: q_source="User defined / from ndb.kindx."
  type bz_samp
    integer           :: nibz,nbz
    integer,  pointer :: nstar(:)     => null()  ! n° of points in the star

@@ -26,7 +26,7 @@ pkgname_libxc=libxc-y2.0.3
 #
 # URL's
 #
-url_iotk=http://qe-forge.org/gf/download/frsrelease/157/773/iotk-y1.2.1.tar.gz
+url_iotk=http://qe-forge.org/gf/download/frsrelease/157/785/iotk-y1.2.1.tar.gz
 url_netcdf=http://qe-forge.org/gf/download/frsrelease/157/775/netcdf-y4.1.3.tar.gz
 url_etsf_io=http://qe-forge.org/gf/download/frsrelease/157/612/etsf_io-1.0.4.tar.gz
 url_libxc=http://qe-forge.org/gf/download/frsrelease/157/774/libxc-y2.0.3.tar.gz

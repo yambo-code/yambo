@@ -93,7 +93,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
          !
          if (l_plan_todo_EWZI(1)) then
            if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
-           en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+qp%E(ib_ref)-qp%E_bare(ib_ref)
+           en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+real(qp%E(ib_ref))-qp%E_bare(ib_ref)
            DB_corrected(iband,ik,i_spin)=1
            en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+1
          endif

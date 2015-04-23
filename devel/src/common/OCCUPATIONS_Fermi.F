@@ -287,17 +287,17 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
      ! simlarly summed. Note that nel_theo=nel for metals
      !
      real(DP) :: nel_theo
-     nel_acc=0.d0
-     nel_theo=0.d0
+     nel_acc=0._DP
+     nel_theo=0._DP
      do i1=1,n_total_states
        ib=index( index_E_sorted(i1) , 1)
        ik=index( index_E_sorted(i1) , 2)
        is=index( index_E_sorted(i1) , 3)
        if (ib<=n_b_full_guess) nel_theo=nel_theo+spin_occ*K%weights(ik)
-       nel_acc=nel_acc+spin_occ*Fermi_fnc(E_sorted(i1)-Ef,tTel)*K%weights(ik)
+       nel_acc=nel_acc+real(spin_occ*Fermi_fnc(E_sorted(i1)-Ef,tTel)*K%weights(ik),DP)
      enddo
      if (n_b_full_guess==0) nel_theo=nel
-     N_of_el_diff=nel_acc-nel_theo
+     N_of_el_diff=real(nel_acc-nel_theo,SP)
    end subroutine
    !
 end subroutine

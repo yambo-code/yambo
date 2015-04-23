@@ -169,18 +169,17 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        if (what=="fill") then
          !
-         RT%delta_GAMMA(i_RT)=  Hole_lifetime+Elec_lifetime
-         !
+         f_occ=(RT%f_bare(i_RT)+RT%delta_f(i_RT))/spin_occ
          if(l_elel_scatt.or.l_elph_scatt) then
+           RT%delta_GAMMA(i_RT)=  Hole_lifetime+Elec_lifetime
            Hole_lifetime=Hole_lifetime+REF_lifetime(i_b,i_k_RT,1)+REF_lifetime(i_b,i_k_RT,3)+REF_lifetime(i_b,i_k_RT,5)
            Elec_lifetime=Elec_lifetime+REF_lifetime(i_b,i_k_RT,2)+REF_lifetime(i_b,i_k_RT,4)+REF_lifetime(i_b,i_k_RT,6)
-         endif
-         f_occ=(RT%f_bare(i_RT)+RT%delta_f(i_RT))/spin_occ
-         !
-         if(f_occ>0.) then
-           RT%NEQ_Lifetime(i_RT)=  (Hole_lifetime+Elec_lifetime) - Hole_lifetime / f_occ
-         else
-           RT%NEQ_Lifetime(i_RT)=  (Hole_lifetime+Elec_lifetime)
+           !
+           if(f_occ>0.) then
+             RT%NEQ_Lifetime(i_RT)=  (Hole_lifetime+Elec_lifetime) - Hole_lifetime / f_occ
+           else
+             RT%NEQ_Lifetime(i_RT)=  (Hole_lifetime+Elec_lifetime)
+           endif
          endif
          !
        endif

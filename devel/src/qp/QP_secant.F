@@ -251,7 +251,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
          ! The convergence criteria is dQP_raxis= 0.
          !
          if (QP_solver_state(i1)>0) dQP_raxis(i1,QP_solver_state(i1))=&
-&            ( qp%E_bare(i1)+real(QP_Sc(i1,1))+QP_Vnl_xc(i1)-QP_Vxc(i1) )-&
+&            ( qp%E_bare(i1)+real(QP_Sc(i1,1)+QP_Vnl_xc(i1)-QP_Vxc(i1)) )-&
 &            Eqp_raxis(i1,QP_solver_state(i1))
        enddo
      endif

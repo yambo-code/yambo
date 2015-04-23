@@ -32,6 +32,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  use LIVE_t,         ONLY:live_timing
  use com,            ONLY:msg,of_open_close,error
  use YPP,            ONLY:output_fname
+ use wrapper,        ONLY:Vstar_dot_V
  use stderr,         ONLY:intc
  use magnetic,       ONLY:load_cc,free_cc,x
  use interfaces,     ONLY:WF_load
@@ -62,12 +63,6 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  complex(SP),allocatable  :: x_tmp(:,:)
  complex(SP),allocatable  :: rperp_tmp(:),z_tmp(:),phi_tmp(:)
  integer                  :: ir,ir3,i1
- !
-#if defined _DOUBLE
- complex(SP):: zdotc
-#else
- complex(SP):: cdotc
-#endif
  !
  if(.not.any((/l_cartesian,l_cylindrical,l_spherical/)) ) return
  !
@@ -129,11 +124,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
          if(l_3d) then
            do i1=1,3
              x_tmp(:,i1)=x(:,i1)**power*WF%c(:,ifft)
-#if defined _DOUBLE
-             x_med(i1) = zdotc(fft_size,WF%c(:,ifft),1,x_tmp(:,i1),1)
-#else
-             x_med(i1) = cdotc(fft_size,WF%c(:,ifft),1,x_tmp(:,i1),1)
-#endif
+             x_med(i1) = Vstar_dot_V(fft_size,WF%c(:,ifft),x_tmp(:,i1))
              x_med(i1) = x_med(i1)**(1./power)
            enddo
            !
@@ -156,15 +147,9 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
              if ( x(ir,1)> 0 ) phi_tmp(ir)=(0.5*pi+atan(x(ir,2)/x(ir,1)))*WF%c(ir,ifft)
              if ( x(ir,1)< 0 ) phi_tmp(ir)=(1.5*pi+atan(x(ir,2)/x(ir,1)))*WF%c(ir,ifft)
            enddo
-#if defined _DOUBLE
-           rperp_med = zdotc(fft_size,WF%c(:,ifft),1,rperp_tmp(:),1)
-           z_med     = zdotc(fft_size,WF%c(:,ifft),1,    z_tmp(:),1)
-           phi_med   = zdotc(fft_size,WF%c(:,ifft),1,  phi_tmp(:),1)
-#else
-           rperp_med = cdotc(fft_size,WF%c(:,ifft),1,rperp_tmp(:),1)
-           z_med     = cdotc(fft_size,WF%c(:,ifft),1,    z_tmp(:),1)
-           phi_med   = cdotc(fft_size,WF%c(:,ifft),1,  phi_tmp(:),1)
-#endif
+           rperp_med = Vstar_dot_V(fft_size,WF%c(:,ifft),rperp_tmp(:))
+           z_med     = Vstar_dot_V(fft_size,WF%c(:,ifft),    z_tmp(:))
+           phi_med   = Vstar_dot_V(fft_size,WF%c(:,ifft),  phi_tmp(:))
            rperp_med = rperp_med**(1./power)
            z_med     = z_med**(1./power)
            AB_dev    = (1.-6.41**2*rperp_med**(-2.))  ! 5.92 (8,0)  6.41 (5,5)  10.36  (14,0)
@@ -179,15 +164,9 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
 &                                   (/fft_dim(1),fft_dim(2),fft_dim(3)/))
            rperp_med=(0.,0.)
            do ir3 = 0, fft_dim(3)-1         ! z 
-#if defined _DOUBLE
              rperp_med_2d(ib-nband_pos(1)+1,i_spin,ir3+1) =&
-&                zdotc(fft_dim(1)*fft_dim(2),wf_tmp_2d(:,:,ir3+1),1,rperp_tmp_2d(:,:,ir3+1),1)
-             norm=zdotc(fft_dim(1)*fft_dim(2),wf_tmp_2d(:,:,ir3+1),1,wf_tmp_2d(:,:,ir3+1),1)
-#else
-             rperp_med_2d(ib-nband_pos(1)+1,i_spin,ir3+1) =&
-                 cdotc(fft_dim(1)*fft_dim(2),wf_tmp_2d(:,:,ir3+1),1,rperp_tmp_2d(:,:,ir3+1),1)
-             norm=cdotc(fft_dim(1)*fft_dim(2),wf_tmp_2d(:,:,ir3+1),1,wf_tmp_2d(:,:,ir3+1),1)
-#endif
+&                Vstar_dot_V(fft_dim(1)*fft_dim(2),wf_tmp_2d(:,:,ir3+1),rperp_tmp_2d(:,:,ir3+1))
+             norm=Vstar_dot_V(fft_dim(1)*fft_dim(2),wf_tmp_2d(:,:,ir3+1),wf_tmp_2d(:,:,ir3+1))
              rperp_med=rperp_med+rperp_med_2d(nband_tot,1,ir3+1)
              rperp_med_2d(ib-nband_pos(1)+1,i_spin,ir3+1)=rperp_med_2d(ib-nband_pos(1)+1,i_spin,ir3+1)/norm
              if (ib==nband_pos(2))  call msg('o '//output_fname,'',(/real(x(1+ir3*fft_dim(1)*fft_dim(2),3),SP),&
@@ -207,15 +186,9 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
            if ( x(ir,1)> 0 ) psi_tmp(ir)=(0.5*pi+atan(x(ir,2)/x(ir,1)))*WF%c(ir,ifft)
            if ( x(ir,1)< 0 ) psi_tmp(ir)=(1.5*pi+atan(x(ir,2)/x(ir,1)))*WF%c(ir,ifft)
          enddo
-#if defined _DOUBLE
-         r_med = zdotc(fft_size,WF%c(:,ifft),1,rperp_tmp(:),1)
-         theta_med = zdotc(fft_size,WF%c(:,ifft),1,theta_tmp(:),1)
-         psi_med   = zdotc(fft_size,WF%c(:,ifft),1,  psi_tmp(:),1)
-#else
-         rperp_med = cdotc(fft_size,WF%c(:,ifft),1,rperp_tmp(:),1)
-         theta_med = cdotc(fft_size,WF%c(:,ifft),1,theta_tmp(:),1)
-         psi_med   = cdotc(fft_size,WF%c(:,ifft),1,  psi_tmp(:),1)
-#endif
+         r_med = Vstar_dot_V(fft_size,WF%c(:,ifft),rperp_tmp(:))
+         theta_med = Vstar_dot_V(fft_size,WF%c(:,ifft),theta_tmp(:))
+         psi_med   = Vstar_dot_V(fft_size,WF%c(:,ifft),  psi_tmp(:))
          r_med=r_med**(1./power)
        endif
        !

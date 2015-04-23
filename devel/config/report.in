@@ -12,24 +12,27 @@
 # 
 # - PARALLEL SUPPORT -
 #
-# [@MPI_str@] MPI 
+# [@MPI_str@] MPI (@OPENMPI_str@)
 # [@OPENMP_str@] OpenMP 
-# [@OPENMPI_str@] OpenMPI
 # [@BGQ_str@] Blue-Gene specific procedures
 # 
-# - INTERFACES -
+# - LIBRARIES (E=external library; I=internal library; -=not used;) -
 #
-# [@PW_str@] QE (@PW_VER@) support
-# [@ETSF_str@] ETSF I/O support
+#  I/O
+# [ @PW_str@ ] IOTK   : @IOTK_LIBS@ (QE @PW_VER@)
+# [ @ETSF_str@ ] ETSF_IO: @ETSF_LIBS@
+# [ @NETCDF_str@ ] NETCDF : @NETCDF_LIBS@ @NETCDF_LF_str@
+# [ @HDF5_str@ ] HDF5   : @HDF5_LIBS@ @HDF5_support@
 #
-# - LIBRARIES -
-#
+#  MATH 
 # [FFT] @FFT_DESCRIPTION@
-# [ @SLK_str@ ] SCALAPACK
-# [@NETCDF_str@@HDF5_str@@NETCDF_LF_str@] NETCDF/HDF5/Large Files 
-# [ @LIBXC_str@ ] LibXC (external)
-# [@BLAS_str@@LAPACK_str@ ] BLAS/LAPACK (built-in)
-# [@IOTK_loc_str@@NETCDF_loc_str@@ETSF_loc_str@] IOTK/NETCDF/ETSF_IO (built-in)
+# [ @BLAS_str@ ] BLAS     : @BLAS_LIBS@
+# [ @LAPACK_str@ ] LAPACK   : @LAPACK_LIBS@
+# [ @SLK_str@ ] SCALAPACK: @SCALAPACK_LIBS@
+#
+#  OTHER
+# [ @LIBXC_str@ ] LibXC      : @LIBS_LIBXC@
+# [ @MPI_LIB_str@ ] MPI library: @MPILIBS@
 #
 # - COMPILERS, MAKE and EDITOR -
 #

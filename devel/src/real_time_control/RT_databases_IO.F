@@ -62,7 +62,7 @@ subroutine RT_databases_IO(E,it)
  !
  ! Occupations
  !
- if ((l_elel_scatt.or.l_elph_scatt).and.io_CARRIERs.and.RT_do_IO('CARRIERS')) then
+ if (io_CARRIERs.and.RT_do_IO('CARRIERS')) then
    !
    call RT_carriers_object(RT_carriers,WHAT='fill')
    !

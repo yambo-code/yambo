@@ -28,7 +28,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! (03/05/12: LDA OK, GGA OK => EXTENSIVE TESTS NEEDED) 
  ! (21/11/13: for HYB_GGA the GGA part calculated => TO TEST) 
  !
- use pars,           ONLY:SP,DP,PI,RZERO
+ use pars,           ONLY:SP,DP,pi,RZERO
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol, alat
  use com,            ONLY:msg,warning,error
@@ -140,7 +140,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    !
    do is1 = 1,n_spin
      call eval_Gradient(spin_rho_SP(:,is1),drho(:,is1,:))
-     forall (i1=1:fft_size) drho(:,is1,i1) = drho(:,is1,i1)*real(fft_size,DP)/real(DL_vol,DP)*2._SP*PI/alat(:)
+     forall (i1=1:fft_size) drho(:,is1,i1) = drho(:,is1,i1)*fft_size/DL_vol*2._SP*pi/alat(:)
    end do
    !
    do i1 = 1,fft_size
@@ -167,7 +167,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if (FUNCTIONAL == XC_LDA_C_KP) then ! Special case, XC_LDA_C_KP not available from libxc
    forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi/spin_rho_SP(i1,1)/DL_vol)**(1._DP/3._DP)
    call xc_rpa_kp(rspts,tmp_exc)
-   E_xc = tmp_exc 
+   E_xc = real(tmp_exc,SP) 
    return
  end if
  !
@@ -179,19 +179,19 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      select case(ORDER)
        case(0)
          call xc_f90_lda_exc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_exc(1))
-         E_xc = E_xc + tmp_exc    
+         E_xc = E_xc + real(tmp_exc,SP)    
        case(1)
          call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_vxc(1,1))
-         forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + tmp_vxc(i2,i1)         
+         forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(tmp_vxc(i2,i1),SP)         
        case(2) 
          call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_dvxc(1))
-         F_xc = F_xc + tmp_dvxc
+         F_xc = F_xc + real(tmp_dvxc,SP)
      end select
    elseif (fnctl(ixc)%family==XC_FAMILY_GGA.or.fnctl(ixc)%family==XC_FAMILY_HYB_GGA) then
      select case(ORDER)
        case(0)
          call xc_f90_gga_exc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_exc(1))
-         E_xc = E_xc + tmp_exc    
+         E_xc = E_xc + real(tmp_exc,SP)    
        case(1)
          call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_vxc(1,1), vsigma(1,1))
          ! In the presence of spin vsigma(2,:)=vsigma_updw(2,:)+vsigma_dwup(2,:)=2.*vsigma_updw(2,:)

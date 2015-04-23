@@ -89,7 +89,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,RES_tresh
 #endif
  use parallel_m,           ONLY:n_log_CPUs
+#if defined _OPENMP
  use openmp,               ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
+#endif
  use IO_m,                 ONLY:DBs_IO_control_string
  !
  implicit none
@@ -224,8 +226,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze,"BRS" Berger-Reining-Sottile)', &
 &                          GW_terminator_Kind)
  call it(defs,'GTermEn',  '[GW] GW terminator energy (only for kind="BG")',GW_terminator_E,E_unit,verb_level=V_qp)
- call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
- call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
+ call it('f',defs,'NewtDchk',  '[GW] Test dSc/dw convergence',verb_level=V_qp)
+ call it('f',defs,'ExtendOut', '[GW] Print all variables in the output file',verb_level=V_qp)
+ call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_qp)
  !
  ! Xs Xd Xp
  !
@@ -330,8 +333,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! GPL_EXCLUDE_END
  !
  ! GPL_EXCLUDE_START SC_IGNORE
- !
- call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_qp)
  !
  ! Real Time dynamics
  !

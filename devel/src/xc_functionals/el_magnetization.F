@@ -69,21 +69,21 @@ subroutine el_magnetization(en,Xk)
        ! mx
        !
        cv(:,1)=cv(:,1)+Xk%weights(i2)*(&
-&              en%f(i1,i2,1)*conjg(WF%c(:,ifft_up))*WF%c(:,ifft_dn)&
-&             +en%f(i1,i2,1)*conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_up) )
+&              en%f(i1,i2,1)*real(conjg(WF%c(:,ifft_up))*WF%c(:,ifft_dn))&
+&             +en%f(i1,i2,1)*real(conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_up)) )
        !
        ! my
        !
-       cv(:,2)=cv(:,2)+Xk%weights(i2)*(0._SP,-1._SP)*(&
-&              en%f(i1,i2,1)*conjg(WF%c(:,ifft_up))*WF%c(:,ifft_dn)&
-&             -en%f(i1,i2,1)*conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_up) )
+       cv(:,2)=cv(:,2)+Xk%weights(i2)*(&
+&              en%f(i1,i2,1)*aimag(conjg(WF%c(:,ifft_up))*WF%c(:,ifft_dn))&
+&             -en%f(i1,i2,1)*aimag(conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_up)) )
      endif
      !
      ! mz
      !
      cv(:,3)=cv(:,3)+Xk%weights(i2)*(&
-&            en%f(i1,i2,1)*conjg(WF%c(:,ifft_up))*WF%c(:,ifft_up)&
-&           -en%f(i1,i2,n_sp_pol)*conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_dn) )
+&            en%f(i1,i2,1)       *real(conjg(WF%c(:,ifft_up))*WF%c(:,ifft_up))&
+&           -en%f(i1,i2,n_sp_pol)*real(conjg(WF%c(:,ifft_dn))*WF%c(:,ifft_dn)) )
      !
    enddo
  enddo

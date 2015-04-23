@@ -36,6 +36,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
 &                         MAG_gauge,load_cc,free_cc,x
  use FFT_m,          ONLY:fft_size
  use D_lattice,      ONLY:a
+ use wrapper,        ONLY:Vstar_dot_V
  use interfaces,     ONLY:WF_load
  use wave_func,      ONLY:WF,wf_x,wf_y,wf_z,WF_derivative_free
  use SC,             ONLY:load_SC_components
@@ -60,12 +61,6 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  integer                  :: ifft,ib,ik,i_spin,i1
  character(lchlen)        :: fname(6)
  character(schlen)        :: titles(5)
- !
-#if defined _DOUBLE
- complex(SP):: zdotc
-#else
- complex(SP):: cdotc
-#endif
  !
  nkpt_tot  = nkpt_angular(2)-nkpt_angular(1)+1
  nband_tot = nband_angular(2)-nband_angular(1)+1
@@ -182,13 +177,8 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
        !
        do i1=1,3
          if(.not.angular_dir(i1)) cycle
-#if defined _DOUBLE
-         L(i1) = zdotc(fft_size,WF%c(:,ifft),1,L_tmp(i1,:),1)
-         if(MAG_landau) M(i1) = zdotc(fft_size,WF%c(:,ifft),1,M_tmp(i1,:),1)
-#else
-         L(i1) = cdotc(fft_size,WF%c(:,ifft),1,L_tmp(i1,:),1)
-         if(MAG_landau) M(i1) = cdotc(fft_size,WF%c(:,ifft),1,M_tmp(i1,:),1)
-#endif
+         L(i1) = Vstar_dot_V(fft_size,WF%c(:,ifft),L_tmp(i1,:))
+         if(MAG_landau) M(i1) = Vstar_dot_V(fft_size,WF%c(:,ifft),M_tmp(i1,:))
          L_tot(i1,ik)=L_tot(i1,ik)+L(i1)
          if(MAG_landau) M_tot(i1,ik)=M_tot(i1,ik)+M(i1)
        enddo

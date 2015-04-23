@@ -62,7 +62,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
  character(schlen)            :: live_t_string
  logical                      :: l_eval_DIP_P,l_eval_DIP_P2
  integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min,i_spin,E_i_spin,pp_spin,&
-&                                alloc_err,wf_dim,n_LT_steps,ik_mem,ig
+&                                alloc_err,wf_dim,n_LT_steps,ik_mem
+#if defined _OPENMP
+ integer                      :: ig
+#endif
  complex(SP), allocatable     :: wf_xyz(:,:),kbv(:,:,:)
  complex(SP)                  :: rho(4),tmp(3)
  real(SP)                     :: Ev_m_Ec

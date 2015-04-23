@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
+subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  !
  use drivers,        ONLY:l_elel_corr,l_rt_carriers_in_use
  use pars,           ONLY:schlen,SP
- use stderr,         ONLY:string_split,real2ch
+ use stderr,         ONLY:string_split,real2ch,intc
  use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,n_sp_pol
@@ -44,7 +44,7 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
  type(bz_samp):: K
  character(*),optional :: what ! X,K,G
  integer,     optional :: IO_com
- logical ,    optional :: COM_done
+ logical ,    optional :: VERBOSE
  real(SP),    optional :: Time
  logical ,    optional :: keep_RT_carriers
  !
@@ -58,6 +58,8 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
  character(3)          :: what_
  logical               :: l_E,l_f,l_elel_corr_save,is_def
  real(SP), allocatable :: r_dummy(:,:,:)
+ !
+ l_Time=0._SP
  !
  if (present(what)) then
    !
@@ -99,8 +101,9 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
      endif
    enddo
    !
-   l_Time=l_Time*FS2AUT
-   if (trim(T_unit)=='ps') then
+   if (trim(T_unit)=='fs') then
+     l_Time=l_Time*FS2AUT
+   elseif (trim(T_unit)=='ps') then
      l_Time=l_Time*PS2AUT
    endif
    !
@@ -124,10 +127,7 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
  ! I/O Time
  !==========
  !
- l_Time=0.
- if (present(Time)) then
-   l_Time=Time
- endif
+ if (present(Time)) l_Time=Time
  !
  l_elel_corr_save=l_elel_corr
  nkibz_save      =nkibz
@@ -142,8 +142,7 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
  endif
  io_err=io_RT_components(trim(db_name),ID)
  !
- if (io_err<0) call error ('Carriers database '//trim(db_name)//' not found')
- !
+ if (io_err< 0) call error ('Carriers database '//trim(db_name)//' not found')
  if (io_err==0) l_rt_carriers_in_use=.TRUE.
  !
  ! CARRIERS I/O (II)
@@ -157,6 +156,9 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
  if(NE_i_time>0) then
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID)
    io_err=io_RT_components(trim(db_name),ID)
+   !
+   if (io_err< 0) call error ('Carriers database '//trim(db_name)//' section'//trim(intc(NE_i_time))//'not found')
+   !
  endif
  !
  ! Interpolation
@@ -216,9 +218,9 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
  nkibz      =nkibz_save
  l_elel_corr=l_elel_corr_save
  !
- if (present(COM_done)) then
+ if (present(VERBOSE)) then
    !
-   if (.not.COM_done) then
+   if (VERBOSE) then
      !
      call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(l_Time/FS2AUT))//' fs')
      !
@@ -233,8 +235,6 @@ subroutine RT_apply(bands,E,K,what,COM_done,IO_com,Time,keep_RT_carriers)
      call msg('rn',  '[RT] N full bands, N metallic bands                          : ', (/E%nbf,E%nbm/)) 
      !
      call REPORT_OCCUPATIONS(E)
-     !
-     COM_done=.TRUE.
      !
    endif
    !

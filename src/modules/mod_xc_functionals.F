@@ -105,7 +105,7 @@ module xc_functionals
      integer func(2)
      !
      if (yamboID==XC_NOT_AVAILABLE) then
-       func(which) = XC_NOT_AVAILABLE
+       XC_libxcID = XC_NOT_AVAILABLE
        return
      end if
      !

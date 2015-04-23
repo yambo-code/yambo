@@ -63,7 +63,6 @@ NCFLAGS=""
 NCLIBS=""
 IFLAG=""
 compile_netcdf="no"
-NETCDF_FLAGS=""
 enable_hdf5=""
 
 
@@ -139,6 +138,8 @@ if test "x$enable_netcdf" = "xyes" ; then
       AC_MSG_RESULT([no])
     fi
     #
+    NETCDF_LIBS="-L$try_libdir $NCLIBS"
+    #
   elif test x"$with_netcdf_libs" != "x" ; then
     #
     # directly provided lib
@@ -150,6 +151,8 @@ if test "x$enable_netcdf" = "xyes" ; then
     netcdf=yes
     NCLIBS="$with_netcdf_libs"
     AC_MSG_RESULT(yes)
+    #
+    NETCDF_LIBS=$NCLIBS
     #
   else
     #
@@ -170,6 +173,8 @@ if test "x$enable_netcdf" = "xyes" ; then
     netcdf=yes
     AC_MSG_RESULT(Internal)
     #
+    NETCDF_LIBS=$NCLIBS
+    # 
   fi
   #
   # Large File Support
@@ -238,6 +243,12 @@ if test "x$netcdf" = "xyes"; then
         netcdf_idir="$FCFLAGS_"
         AC_MSG_RESULT([yes])
         #
+        if test x"$with_hdf5_libs" != "x" ; then
+          HDF5_LIBS="$HDF5_FLAGS"
+        else
+          HDF5_LIBS="-L$try_libdir $HDF5_FLAGS"
+        fi
+        #
         break
       fi
     done
@@ -255,6 +266,9 @@ if test x"$netcdf" = "xyes" && test x"hdf5" = "xyes" && test x"$enable_netcdf_hd
     dnetcdf="${dnetcdf} -D_HDF5_IO"
 fi
 
+AC_SUBST(NCLIBS)
+AC_SUBST(NETCDF_LIBS)
+AC_SUBST(HDF5_LIBS)
 AC_SUBST(NCLIBS)
 AC_SUBST(NCFLAGS)
 AC_SUBST(netcdf)

@@ -233,7 +233,7 @@ integer function io_QP_and_GF(what,qp,ID)
          qp_DATA_disk(1,i1,1)=real(qp%E(i1))
          qp_DATA_disk(1,i1,2)=aimag(qp%E(i1))
          qp_DATA_disk(2,i1,1)=qp%E_bare(i1)
-         qp_DATA_disk(2,i1,2)=0.
+         qp_DATA_disk(2,i1,2)=0._SP
          qp_DATA_disk(3,i1,1)=real(qp%Z(i1))
          qp_DATA_disk(3,i1,2)=aimag(qp%Z(i1))
        enddo
@@ -248,7 +248,7 @@ integer function io_QP_and_GF(what,qp,ID)
        call mem_est("qp_Z qp_E qp_E_bare",(/qp%n_states,qp%n_states,qp%n_states/))
        do i1=1,qp%n_states
          qp%E(i1) =cmplx(qp_DATA_disk(1,i1,1),qp_DATA_disk(1,i1,2),SP)
-         qp%E_bare(i1)=cmplx(qp_DATA_disk(2,i1,1),qp_DATA_disk(2,i1,2),SP)
+         qp%E_bare(i1)=qp_DATA_disk(2,i1,1)
          qp%Z(i1) =cmplx(qp_DATA_disk(3,i1,1),qp_DATA_disk(3,i1,2),SP)
        enddo
      endif

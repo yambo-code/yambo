@@ -23,7 +23,7 @@
 !
 subroutine crystal_lattice()
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP
  use D_lattice,      ONLY:a,alat,lattice
  use vec_operate   , ONLY:v_norm
  use matrix_operate, ONLY:m3inv
@@ -35,7 +35,7 @@ subroutine crystal_lattice()
  integer, parameter :: n_lattices=4,n_rep=3
  real(SP)           :: test_a(3,3,n_lattices),a_test_m1(3,3),&
 &                      a_m1(3,3),coeff(3),v(3)
- character(schlen)  :: lattice_name(n_lattices)
+ character(7)       :: lattice_name(n_lattices)
  integer            :: i_l,i,j,k
  logical            :: lattice_test_failed(n_lattices)
  !
@@ -96,4 +96,3 @@ subroutine crystal_lattice()
  endif
  !
 end subroutine
-

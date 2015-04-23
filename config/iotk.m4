@@ -72,8 +72,7 @@ if test "x$enable_iotk" = "xyes" ; then
       compile_p2y="yes"
       compile_iotk="no"
       iotk_idir="$IFLAG$try_incdir"
-      IOTK_LIBS="-liotk"
-      cp "$try_libdir/libiotk.a" lib/
+      IOTK_LIBS="$try_libdir/libiotk.a"
       AC_MSG_RESULT([yes])
     else
       AC_MSG_RESULT([no])

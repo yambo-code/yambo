@@ -74,7 +74,7 @@ subroutine REPORT_Occupations(E)
  ! [2] Indirect Gaps (min/max)
  !
  if(all(Nbf==Nbm)) then
-   prefix_=                               'Indirect Gaps      [ev]:'
+   prefix_=                               'Indirect Gaps      [ev]'
    call msg('r',prefix_//':',E_g_ind(1,:)*HA2EV)
  endif
  !

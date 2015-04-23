@@ -152,11 +152,11 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
        do i_n=1,3
          if ( (Aw-Amp_Peak*.25*i_n)*(Awp1-Amp_Peak*.25*i_n)<0. ) then
            if (abs(QP_G_info(iqp,i_n,1)-1000.)<1.E-5) then
-             QP_G_info(iqp,i_n,1)=qp%GreenF_W(iqp,iw)
+             QP_G_info(iqp,i_n,1)=real(qp%GreenF_W(iqp,iw))
              cycle
            endif
            if (abs(QP_G_info(iqp,i_n,2)-1000.)<1.E-5) then
-             QP_G_info(iqp,i_n,2)=qp%GreenF_W(iqp,iw)
+             QP_G_info(iqp,i_n,2)=real(qp%GreenF_W(iqp,iw))
              cycle
            endif
          endif

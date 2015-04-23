@@ -226,7 +226,7 @@ subroutine XCo_driver(E,k,Xk,q)
        i_s=spin(QP_table(i_qp,:))
        !
        if (ib==ibp) then
-         E_dummy%E(ib,ikp,i_s)=E%E(ib,ikp,i_s)+QP_Vnl_xc(i_qp)-QP_Vxc(i_qp)
+         E_dummy%E(ib,ikp,i_s)=E%E(ib,ikp,i_s)+real(QP_Vnl_xc(i_qp)-QP_Vxc(i_qp),SP)
          qp%E(i_qp)           =E_dummy%E(ib,ikp,i_s)
          qp%E_bare(i_qp)      =E%E(ib,ikp,i_s)
        endif

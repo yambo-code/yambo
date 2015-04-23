@@ -98,9 +98,9 @@ subroutine QP_state_table_setup(en)
    QP_r_limits(:,3:4)=QP_r_limits(:,3:4)/HA2EV
    e_rng_lines=e_rng_lines-2
    do i1=1,e_rng_lines,1
-     v=QP_r_limits(i1,:2)
+     v=int(QP_r_limits(i1,:2))
      call i_check(v,en%nk)
-     QP_r_limits(i1,:2)=v
+     QP_r_limits(i1,:2)=real(v,SP)
    enddo
    !
    ! Non null %QPerange/%QPkrange fields
@@ -111,8 +111,8 @@ subroutine QP_state_table_setup(en)
      !
      QP_k_nk=0
      QP_e_nk=0
-     if (k_rng_lines>0) QP_k_nk=maxval(QP_i_limits(:,1:2))
-     if (e_rng_lines>0) QP_e_nk=maxval(QP_r_limits(:,1:2))
+     if (k_rng_lines>0) QP_k_nk=    maxval(QP_i_limits(:,1:2))
+     if (e_rng_lines>0) QP_e_nk=int(maxval(QP_r_limits(:,1:2)))
      if (max(QP_k_nk,QP_e_nk)>0) QP_nk=max(QP_k_nk,QP_e_nk)
      !
      ! QP_nb setup

@@ -66,8 +66,6 @@ subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
    !
    if (.not. present(n_elements) .or..not. present(ROLE) ) call error(' Missing args in call: n_elements or ROLE')
    !
-   call PARALLEL_get_user_structure(ENVIRONMENT,.TRUE.)
-   !
    allocate(role_cpu(size(ROLE)))
    !
    do ir = 1, n_elements
@@ -101,7 +99,6 @@ subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
  !
  if (present(ENVIRONMENT)) return
 #endif
-
  !
  ! init
  !

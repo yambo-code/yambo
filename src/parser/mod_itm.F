@@ -120,7 +120,8 @@ module it_m
  character(schlen) :: it_verbose_Cvars(maxc1vars)
  integer           :: n_verbose_Chvars,it_verbose_Chlevel(maxchvars),&
 &                     it_verbose_Chtable(maxchvars)
- character(schlen) :: it_verbose_Chvars(maxchvars),it_verbose_Chdefs(maxchvars)
+ character(schlen) :: it_verbose_Chvars(maxchvars)
+ character(lchlen) :: it_verbose_Chdefs(maxchvars)
  integer           :: n_verbose_Fvars,it_verbose_Flevel(maxflags),&
 &                     it_verbose_Ftable(maxflags)
  character(schlen) :: it_verbose_Fvars(maxflags)

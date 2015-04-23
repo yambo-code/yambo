@@ -95,7 +95,7 @@ module com
      ! 
      ! Work Space
      !
-     character(schlen)::ch(2)
+     character(lchlen)::ch(2)
      character(lchlen)::folder,jobstr_
      !
      get_name=" "

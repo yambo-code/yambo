@@ -47,12 +47,12 @@ logical function stop_now(DO_IT_NOW)
  real(SP)          ::CPU_t
  integer, external ::init
  !
- CPU_t=abs( cput_tot(myid+1,1) )
+ CPU_t=abs( real(cput_tot(myid+1,1),SP) )
  !
  days=int(CPU_t/86400.d0)
- CPU_t=CPU_t-days*86400.d0
+ CPU_t=CPU_t-real(days*86400.d0,SP)
  hours=int(CPU_t/3600.d0)
- CPU_t=CPU_t-hours*3600.d0
+ CPU_t=CPU_t-real(hours*3600.d0,SP)
  minutes=int(CPU_t/60.d0)
  !
  call it_reset(0)

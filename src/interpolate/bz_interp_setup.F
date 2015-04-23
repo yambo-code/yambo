@@ -117,6 +117,8 @@ subroutine bz_interp_setup(Xk)
  allocate(lattice_vectors(3,n_vec),lattice_vec_mod(n_vec))
  call mem_est("lattice_vectors lattice_vec_mod",(/3*n_vec,n_vec/),(/SP,SP/))
  !
+ istart=1
+ iend=1
  nshells=1
  lattice_vectors(:,nshells)=all_vec(:,1)
  lattice_vec_mod(nshells)  =all_vec_mod(1)

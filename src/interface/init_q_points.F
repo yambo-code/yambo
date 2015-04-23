@@ -63,7 +63,7 @@ subroutine init_q_points(l_WRITE)
      nqibz=0
      do while(get_e_p_q_point(nqibz+1,q_pt_db)==0) 
        nqibz=nqibz+1
-       if (i1==2) q_pt(nqibz,:)=-q_pt_db
+       if (i1==2) q_pt(nqibz,:)=-real(q_pt_db,SP)
      enddo
      if (i1==1.and..not.allocated(q_pt)) then
        allocate(q_pt(nqibz,3))

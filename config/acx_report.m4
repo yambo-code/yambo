@@ -32,54 +32,70 @@ Red_str="-"
 if test "$enable_debug" = "yes" ; then Red_str="X"; fi
 
 MPI_str="-"
-if test "$mpibuild" = "yes" ; then MPI_str="X"; fi
+if test "$mpibuild" = "yes" ; then
+  MPI_str="X"
+  OPENMPI_str="not open-mpi kind"
+  if test "$enable_openmpi" = "yes" ; then OPENMPI_str="open-mpi kind";  fi
+fi
 
 NETCDF_str="-"
-if test "$netcdf" = "yes" ; then NETCDF_str="X"; fi
-NETCDF_loc_str="-"
-if test "$compile_netcdf" = "yes" ; then NETCDF_loc_str="X"; fi
+if test "$netcdf" = "yes" ; then
+  if test "$compile_netcdf" = "yes" ; then
+    NETCDF_str="I"
+  else
+    NETCDF_str="E"
+  fi
+  NETCDF_LF_str="(No large files support)"
+  if test "$enable_netcdf_LFS" = "yes"; then NETCDF_LF_str="(With large files support)"; fi
+fi
 
 HDF5_str="-"
-if test "$hdf5" = "yes" ; then HDF5_str="X"; fi
+if test "$hdf5" = "yes" ; then
+  HDF5_str="E"
+  HDF5_support="(No specific HDF5-IO support)"
+  if test "$enable_netcdf_hdf5" = "yes"; then HDF5_support="(With specific HDF5-IO support)" ; fi
+fi
 
 LIBXC_str="-"
-if test "$acx_libxc_ok" = "yes" ; then LIBXC_str="X"; fi
+if test "$acx_libxc_ok" = "yes" ; then
+  LIBXC_str="E"
+else
+  LIBXC_str="I"
+fi
 
-NETCDF_LF_str="-"
-if test "$enable_netcdf_LFS" = "yes" &&  test "$netcdf" = "yes" ; then NETCDF_LF_str="X"; fi
 
 TIME_profile_str="-"
 if test "$enable_time_profile" = "yes" ; then TIME_profile_str="X"; fi
 
 PW_str="-"
-if test "$compile_p2y" = "yes" ; then PW_str="X"; fi
+if test "$compile_p2y" = "yes" ; then
+  PW_str="E"
+  if test "$compile_iotk" = "yes" ; then PW_str="I"; fi
+fi
 
 OPENMP_str="-"
 if test "$enable_open_mp" = "yes" ; then OPENMP_str="X"; fi
 
 ETSF_str="-"
-if test "$compile_e2y" = "yes" ; then ETSF_str="X"; fi
+if test "$compile_e2y" = "yes" ; then
+  ETSF_str="E"
+  if test "$compile_etsf" = "yes" ; then ETSF_str="I"; fi
+fi
 
-ETSF_loc_str="-"
-if test "$compile_etsf" = "yes" ; then ETSF_loc_str="X"; fi
+LAPACK_str="E"
+if test "$compile_lapack" = "yes" ; then LAPACK_str="I"; fi
 
-IOTK_loc_str="-"
-if test "$compile_iotk" = "yes" ; then IOTK_loc_str="X"; fi
-
-LAPACK_str="-"
-if test "$compile_lapack" = "yes" ; then LAPACK_str="X"; fi
-
-BLAS_str="-"
-if test "$compile_blas" = "yes" ; then BLAS_str="X"; fi
+BLAS_str="E"
+if test "$compile_blas" = "yes" ; then BLAS_str="I"; fi
 
 SLK_str="-"
-if test "$enable_scalapack" = "yes" ; then SLK_str="X"; fi
+if test "$enable_scalapack" = "yes" ; then SLK_str="E"; fi
 
 BGQ_str="-"
 if test "$enable_bluegene" = "yes" ; then BGQ_str="X"; fi
 
-OPENMPI_str="-"
-if test "$enable_openmpi" = "yes" ; then OPENMPI_str="X"; fi
+MPI_LIB_str="-"
+if test "$enable_mpi_libs" = "yes" ; then MPI_LIB_str="E"; fi
 
 if test "$exec_prefix" = "NONE" ; then exec_prefix="$srcdir_path"; fi
 
@@ -88,14 +104,13 @@ AC_SUBST(exec_prefix)
 AC_SUBST(DP_str)
 AC_SUBST(Red_str)
 AC_SUBST(MPI_str)
+AC_SUBST(MPI_LIB_str)
 AC_SUBST(HDF5_str)
+AC_SUBST(HDF5_support)
 AC_SUBST(NETCDF_str)
-AC_SUBST(NETCDF_loc_str)
 AC_SUBST(LIBXC_str)
 AC_SUBST(NETCDF_LF_str)
-AC_SUBST(IOTK_loc_str)
 AC_SUBST(ETSF_str)
-AC_SUBST(ETSF_loc_str)
 AC_SUBST(PW_str)
 AC_SUBST(BLAS_str)
 AC_SUBST(LAPACK_str)

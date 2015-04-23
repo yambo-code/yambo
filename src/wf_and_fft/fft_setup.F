@@ -46,7 +46,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  integer  :: i1,i2,i3,i4,iv(3),ln(3),is,space_inv(3,3)
  real(SP) :: v1(3),M1(3,3),M2(3,3)
  !
- space_inv=reshape((/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./),(/3,3/))
+ space_inv=reshape((/-1, 0, 0, 0,-1, 0, 0, 0,-1/),(/3,3/))
  !
  if (.not.ONLY_SIZE) then
    if (allocated(fft_g_table)) then

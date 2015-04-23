@@ -64,7 +64,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! Work Space
  !
- character(2)     ::wf_space_here
+ character(1)     ::wf_space_here
  character(schlen)::wf_title
 #if defined _SC
  integer          ::wf_size
@@ -336,7 +336,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
            endif
          enddo
          if (WF%space=='G'.or.WF%space=='C'.or.WF%space=='B') then
-           WF%c(:,WF%N)=wf_DP(:)
+           WF%c(:,WF%N)=cmplx(wf_DP(:))
            cycle
          endif
          !
@@ -348,7 +348,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          !
          call fft_3d(wf_DP,fft_dim,+2)
 #endif
-         WF%c(:,WF%N)=wf_DP(:)*fft_norm
+         WF%c(:,WF%N)=cmplx(wf_DP(:))*fft_norm
          !
        enddo
      enddo

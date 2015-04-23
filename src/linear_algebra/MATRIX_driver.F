@@ -25,7 +25,7 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
  !
  use pars,          ONLY:SP
  use matrix_operate,ONLY:blacs_t,INV,DIAGO,USE_LK,USE_SVD,USE_SLK,min_cpu_block_size
- use wrapper,       ONLY:M_by_M
+ use wrapper,       ONLY:M_by_M,SV_decomposition,LU_factorization,LU_inversion,M_eigenvalues
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_INV,PAR_COM_DIAGO,mpi_comm_world
  !
  implicit none
@@ -121,22 +121,14 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
  if (idriver==USE_SVD.and.lib_in_use==USE_LK) then
    allocate(r_WK(5*M_size),SV(M_size),U(M_size,M_size),VH(M_size,M_size))
    allocate(work(1))
-#if defined _DOUBLE
-   call ZGESVD('S','A',M_size,M_size,M,M_size,SV,U,M_size,VH,M_size,work,-1,r_WK,ifail)
-#else
-   call CGESVD('S','A',M_size,M_size,M,M_size,SV,U,M_size,VH,M_size,work,-1,r_WK,ifail)
-#endif
+   call SV_decomposition(M_size,M,SV,U,VH,work,-1,r_WK,ifail)
    !
    if(ifail/=0) call report_diago_error('GESVD (SVD)','workspace failed')
    !
    lwork=int(real(work(1)))
    deallocate(work)
    allocate(work(lwork))
-#if defined _DOUBLE
-   call ZGESVD('S','A',M_size,M_size,M,M_size,SV,U,M_size,VH,M_size,work,lwork,r_WK,ifail)
-#else
-   call CGESVD('S','A',M_size,M_size,M,M_size,SV,U,M_size,VH,M_size,work,lwork,r_WK,ifail)
-#endif
+   call SV_decomposition(M_size,M,SV,U,VH,work,lwork,r_WK,ifail)
    !
    if(ifail/=0) call report_diago_error('GESVD (SVD)','failed')
    !
@@ -162,28 +154,16 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
  !
  if (idriver==INV.and.lib_in_use==USE_LK) then
    allocate(ipvt(M_size))
-#if defined _DOUBLE
-   call zgetrf(M_size,M_size,M,M_size,ipvt,ifail)
-#else
-   call cgetrf(M_size,M_size,M,M_size,ipvt,ifail)
-#endif
+   call LU_factorization(M_size,M,ipvt,ifail)
    !
    if(ifail.ne.0) call report_diago_error('GETRF (SI)','workspace failed')
    !
    allocate(work(1))
-#if defined _DOUBLE
-   call zgetri(M_size,M,M_size,ipvt,work,-1,ifail)
-#else
-   call cgetri(M_size,M,M_size,ipvt,work,-1,ifail)
-#endif
+   call LU_inversion(M_size,M,ipvt,work,-1,ifail)
    lwork=int(real(work(1)))
    deallocate(work)
    allocate(work(lwork))
-#if defined _DOUBLE
-   call zgetri(M_size,M,M_size,ipvt,work,lwork,ifail)
-#else
-   call cgetri(M_size,M,M_size,ipvt,work,lwork,ifail)
-#endif
+   call LU_inversion(M_size,M,ipvt,work,lwork,ifail)
    !
    if(ifail.ne.0) call report_diago_error('GETRF (SI)','failed')
    !
@@ -204,28 +184,16 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
  if (idriver==DIAGO.and.lib_in_use==USE_LK.and.present(E_cmpl)) then
    !
    allocate(work(1),rwk(2*M_size))
-#if defined _DOUBLE
-   call ZGEEV('V','V',M_size,M,M_size,E_cmpl,V_left,M_size,&
-&             V_right,M_size,work,-1,rwk,ifail)
-#else
-   call CGEEV('V','V',M_size,M,M_size,E_cmpl,V_left,M_size,&
-&             V_right,M_size,work,-1,rwk,ifail)
-#endif
+   call M_eigenvalues(M_size,M,E_cmpl,V_left,V_right,work,-1,rwk,ifail)
    !
-   if(ifail.ne.0) call report_diago_error('GEEV (SD)','workspace failed')
+   if(ifail.ne.0) call report_diago_error('M_eigenvalues Hermitian (SD)','workspace failed')
    !
-   lwork=real(work(1))
+   lwork=int(real(work(1)))
    deallocate(work)
    allocate(work(lwork))
-#if defined _DOUBLE
-   call ZGEEV('V','V',M_size,M,M_size,E_cmpl,V_left,M_size,&
-&             V_right,M_size,work,lwork,rwk,ifail)
-#else
-   call CGEEV('V','V',M_size,M,M_size,E_cmpl,V_left,M_size,&
-&             V_right,M_size,work,lwork,rwk,ifail)
-#endif
+   call M_eigenvalues(M_size,M,E_cmpl,V_left,V_right,work,lwork,rwk,ifail)
    !
-   if(ifail.ne.0) call report_diago_error('EEV (SD)','failed')
+   if(ifail.ne.0) call report_diago_error('M_eigenvalues Hermitian (SD)','failed')
    !
    deallocate(work,rwk)
    return
@@ -236,24 +204,16 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
  if (idriver==DIAGO.and.lib_in_use==USE_LK) then
    !
    allocate(work(1),rwk(max(1,3*M_size-2)))
-#if defined _DOUBLE
-   call ZHEEV('V','U',M_size,M,M_size,E_real,work,-1,rwk,ifail)
-#else
-   call CHEEV('V','U',M_size,M,M_size,E_real,work,-1,rwk,ifail)
-#endif
+   call M_eigenvalues(M_size,M,E_real,work,-1,rwk,ifail)
    !
-   if(ifail.ne.0) call report_diago_error('HEEV (SD)','workspace failed')
+   if(ifail.ne.0) call report_diago_error('M_eigenvalues (SD)','workspace failed')
    !
-   lwork=real(work(1))
+   lwork=int(real(work(1)))
    deallocate(work)
    allocate(work(lwork))
-#if defined _DOUBLE
-   call ZHEEV('V','U',M_size,M,M_size,E_real,work,lwork,rwk,ifail)
-#else
-   call CHEEV('V','U',M_size,M,M_size,E_real,work,lwork,rwk,ifail)
-#endif
+   call M_eigenvalues(M_size,M,E_real,work,lwork,rwk,ifail)
    !
-   if(ifail.ne.0) call report_diago_error('HEEV (SD)','failed')
+   if(ifail.ne.0) call report_diago_error('M_eigenvalues (SD)','failed')
    !
    deallocate(work,rwk)
    return

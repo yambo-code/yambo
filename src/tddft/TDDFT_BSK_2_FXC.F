@@ -266,8 +266,8 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
      complex(SP), intent(in):: E1,E2
      real(SP), intent(in)   :: T
      real(SP)               :: Fb2x1
-     if (abs(real(E1-E2))<T) Fb2x1=1./2./T
-     if (abs(real(E1-E2))>T) Fb2x1=1./(E1-E2)
+     if (abs(real(E1-E2))<T) Fb2x1=1._SP/(2._SP*T)
+     if (abs(real(E1-E2))>T) Fb2x1=1._SP/real(E1-E2)
    end function
    !
    pure function Fb2x2(E1,E2,T)

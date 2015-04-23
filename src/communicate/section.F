@@ -47,6 +47,7 @@ subroutine section(mode,name)
  ! 
  ! Work Space
  !
+ character(schlen)::chs
  character(lchlen)::ch,chp
  integer      :: i1,isec_save(5)
  real(DP)     :: cput_here(ncpu)
@@ -117,12 +118,12 @@ subroutine section(mode,name)
  write (secnm,'(a,i2.2)') '[',isec(1)
  do i1=2,5
   if (isec(i1)/=0) then
-   write (ch,'(2a,i2.2)') trim(secnm),'.',isec(i1)
-   secnm=ch
+   write (chs,'(2a,i2.2)') trim(secnm),'.',isec(i1)
+   secnm=chs
   endif
  enddo
- write (ch,'(3a)') trim(secnm),'] ',trim(name)
- secnm=ch
+ write (chs,'(3a)') trim(secnm),'] ',trim(name)
+ secnm=chs
  call msg('nrs',trim(secnm))
  call msg('rn',repeat('=',len_trim(secnm)))
  !

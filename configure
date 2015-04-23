@@ -1509,8 +1509,8 @@ Optional Packages:
   --with-lapack-libs=<libs>     Use LAPACK libraries <libs>
   --with-mpi-libs=<lib>         Use MPI library <lib>
   --with-fft-libs=<libs>        Link to FFT libraries
-  --with-fft-path=<path>        Path to the FFTW install directory
-  --with-fft-libdir=<path>      Path to the FFTW lib directory
+  --with-fft-path=<path>        Path to the FFT install directory
+  --with-fft-libdir=<path>      Path to the FFT lib directory
   --with-fft-includedir=<path>  Path to the FFT include directory
   --with-fftsg-fac=<val>        Change default Goedecker FFT cache factor
   --with-blacs-libs=<libs>      Use BLACS libraries <libs>

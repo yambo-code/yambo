@@ -52,7 +52,7 @@ CFGFILES = config/setup config/Makefile config/report  \
            src/external_c/.objects Makefile driver/version.h \
            sbin/objects_debug.sh driver/editor.h lib/local/.objects
 TARGETS  = yambo interfaces ypp
-UTILS    = changelog
+UTILS    = changelog get_extlibs
 CLEANS   = clean clean_all
 INTERFCS = a2y p2y e2y 
 #
@@ -99,9 +99,14 @@ libs:
 	DIR2GO="lib" ; $(mklib_ext); fi
 	@if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
 	DIR2GO="lib" ; $(mklib_ext); fi
+get_extlibs:
+	@cd lib/archive; $(make) -f Makefile.loc all;
 yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
+#
+# PROJECTS #
+# 
 yambo_kerr: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_KERR"; $(mksrc)
 	@X2DO="yambo_kerr"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_KERR";$(mkx)
@@ -117,6 +122,9 @@ yambo_ph: libs
 ypp_ph: libs
 	@LIBS2DO="$(YPPLIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
+#
+# Interfaces & ypp #
+#
 interfaces: libs
 	@LIBS2DO="$(2YLIBS)" ; $(mksrc)
 	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
@@ -171,7 +179,7 @@ define mklibxc
   echo ">>>[Making libxc]<<<" ; \
   cd $(libdir)/libxc ; $(make) -s VPATH=$(libdir)/libxc  || exit "$$?" ; \
   echo ">>>[Installing libxc]<<<" ; \
-  make -s install ; \
+  $(make) -s install ; \
   cd ../../; \
   fi
 endef
@@ -219,20 +227,20 @@ define objects_clean
  fi
 endef
 define lib_ext_clean
- @cd $(libdir)/libxc;   make -s -f Makefile.loc clean > /dev/null ; cd ../..
- @cd $(libdir)/iotk;    make -s -f Makefile.loc clean > /dev/null ; cd ../..
- @cd $(libdir)/netcdf;  make -s -f Makefile.loc clean > /dev/null ; cd ../..
- @cd $(libdir)/etsf_io; make -s -f Makefile.loc clean > /dev/null ; cd ../..
+ @cd $(libdir)/libxc;   $(make) -s -f Makefile.loc clean > /dev/null ; cd ../..
+ @cd $(libdir)/iotk;    $(make) -s -f Makefile.loc clean > /dev/null ; cd ../..
+ @cd $(libdir)/netcdf;  $(make) -s -f Makefile.loc clean > /dev/null ; cd ../..
+ @cd $(libdir)/etsf_io; $(make) -s -f Makefile.loc clean > /dev/null ; cd ../..
  echo "[CLEAN] Libs EXT ... done" 
 endef
 define lib_ext_distclean
- @cd $(libdir)/archive; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *gz *stamp ; cd ../..
+ @cd $(libdir)/archive; $(make) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *gz *stamp ; cd ../..
  @cd $(libdir)/install; ( if test -r make_iotk.inc ; then rm -f make_iotk.inc ; fi) ; cd ../..
  find . -name 'xc*.h' -type f -print | xargs rm -f
- @cd $(libdir)/libxc;   make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
- @cd $(libdir)/iotk;    make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
- @cd $(libdir)/netcdf;  make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
- @cd $(libdir)/etsf_io; make -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ @cd $(libdir)/libxc;   $(make) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ @cd $(libdir)/iotk;    $(make) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ @cd $(libdir)/netcdf;  $(make) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
+ @cd $(libdir)/etsf_io; $(make) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile ; cd ../..
  echo "[CLEAN] Libs EXT ... done" 
 endef
 define lib_mod_clean

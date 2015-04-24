@@ -47,6 +47,10 @@ subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
  include 'mpif.h'
 #endif
  !
+#if !defined _BLUEGENE
+ if (present(ROLE)) return
+#endif
+ !
  if (ncpu==1) then
    INTRA_CHAIN(1)%n_CPU=1
    INTER_CHAIN(1)%n_CPU=1

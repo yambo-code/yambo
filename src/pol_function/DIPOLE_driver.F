@@ -27,7 +27,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use LIVE_t,         ONLY:is_section_time_short
  use interfaces,     ONLY:WF_load
  use pars,           ONLY:SP
- use com,            ONLY:warning,error,grid_path
+ use com,            ONLY:warning,grid_path
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
@@ -199,7 +199,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if !defined _YPP_RT
    if (is_section_time_short(COMM=PAR_COM_q_for_Xo%COMM)) then
      io_DIP=.FALSE.
-     call warning('DIPOLEs I/O switched-off to prevent communication problems')
+     call warning('DIPOLEs I/O switched-off to prevent MPI communication problems')
    endif
 #endif
    !

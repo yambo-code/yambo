@@ -332,6 +332,7 @@ module parallel_m
  !
  ! WorkSpace
  !
+ integer            :: i_PAR_structure
  integer            :: i_err
  integer, private   :: local_type
  !

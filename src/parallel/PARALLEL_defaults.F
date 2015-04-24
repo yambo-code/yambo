@@ -25,7 +25,7 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
  !
  use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used,N_basis,&
 &                        PARALLEL_CPU_role,ncpu,QP_range,n_bands,n_c_bands,n_v_bands,Q_range,&
-&                        EH_range,K_range,CPU_structure
+&                        EH_range,K_range,CPU_structure,i_PAR_structure
  use interfaces,    ONLY:PARALLEL_live_message
  use com,           ONLY:error
  use stderr,        ONLY:intc
@@ -36,7 +36,7 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
  !
  ! Work Space
  ! 
- integer :: N_fields,CPU_s(4),i_c,NC,i_f
+ integer :: N_fields,CPU_s(4),i_c,NC
  !
  if (ncpu==1) return
  !
@@ -51,6 +51,8 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
  call PARALLEL_live_message('CPU structure provided for the '//trim(ENVIRONMENT)//' ENVIRONMENT is incomplete. Switching to defaults')
  !
  call DEFAULT_action("define")
+ !
+ if (product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))/=ncpu) call error('Impossible to define an appropriate parallel structure')
  !
  contains
    !
@@ -98,57 +100,78 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
      if (what=="define") then
        select case(ENVIRONMENT)
          case("Response_G_space_Zero_Momentum")
-           PARALLEL_CPU_role(1)="c"
-           PARALLEL_CPU_used(1)=assign_cpu(n_c_bands(2)-n_c_bands(1)+1)
-           PARALLEL_CPU_role(2)="v"
-           PARALLEL_CPU_used(2)=assign_cpu(n_v_bands(2)-n_v_bands(1)+1)
-           PARALLEL_CPU_role(3)="k"
-           PARALLEL_CPU_used(3)=assign_cpu(K_range)
-           CPU_structure(1)%CPU_string =trim(intc( PARALLEL_CPU_used(1) ))//"."//&
-&                                       trim(intc( PARALLEL_CPU_used(2) ))//"."//trim(intc( PARALLEL_CPU_used(3) ))
-           CPU_structure(1)%ROLE_string="c.v.k"
-           PARALLEL_n_structures_active=3
+           CPU_structure(i_PAR_structure)%ROLE(1)="c"
+           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(n_c_bands(2)-n_c_bands(1)+1)
+           CPU_structure(i_PAR_structure)%ROLE(2)="v"
+           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(n_v_bands(2)-n_v_bands(1)+1)
+           CPU_structure(i_PAR_structure)%ROLE(3)="k"
+           CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(K_range)
+           CPU_structure(i_PAR_structure)%N_chains=3
          case("Response_G_space_Finite_Momentum","Response_G_space") 
-           PARALLEL_CPU_role(1)="c"
-           PARALLEL_CPU_used(1)=assign_cpu(n_c_bands(2)-n_c_bands(1)+1)
-           PARALLEL_CPU_role(2)="v"
-           PARALLEL_CPU_used(2)=assign_cpu(n_v_bands(2)-n_v_bands(1)+1)
-           PARALLEL_CPU_role(3)="k"
-           PARALLEL_CPU_used(3)=assign_cpu(K_range)
-           PARALLEL_CPU_role(4)="q"
-           PARALLEL_CPU_used(4)=assign_cpu(Q_range(2)-Q_range(1)+1)
-           if (ENVIRONMENT=="Response_G_space_Finite_Momentum") i_f=2
-           if (ENVIRONMENT=="Response_G_space")                 i_f=3
-           CPU_structure(i_f)%CPU_string =trim(intc( PARALLEL_CPU_used(1) ))//"."//&
-&                                         trim(intc( PARALLEL_CPU_used(2) ))//"."//trim(intc( PARALLEL_CPU_used(3) ))//"."//&
-&                                         trim(intc( PARALLEL_CPU_used(4) ))
-           CPU_structure(i_f)%ROLE_string="c.v.k.q"
-           PARALLEL_n_structures_active=4
+           CPU_structure(i_PAR_structure)%ROLE(1)="c"
+           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(n_c_bands(2)-n_c_bands(1)+1)
+           CPU_structure(i_PAR_structure)%ROLE(2)="v"
+           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(n_v_bands(2)-n_v_bands(1)+1)
+           CPU_structure(i_PAR_structure)%ROLE(3)="k"
+           CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(K_range)
+           CPU_structure(i_PAR_structure)%ROLE(4)="q"
+           CPU_structure(i_PAR_structure)%CPU(4)=assign_cpu(Q_range(2)-Q_range(1)+1)
+           CPU_structure(i_PAR_structure)%N_chains=4
 #if defined _SC
          case("Real_Time") 
-           call error("Impossible to define a default PARALLEL structure")
+           CPU_structure(i_PAR_structure)%ROLE(1)="k"
+           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(K_range)
+           CPU_structure(i_PAR_structure)%ROLE(2)="b"
+           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(n_bands(2)-n_bands(1)+1)
+           CPU_structure(i_PAR_structure)%ROLE(3)="q"
+           CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(Q_range)
+           CPU_structure(i_PAR_structure)%N_chains=3
 #endif
          case("Self_Energy") 
-           PARALLEL_CPU_role(1)="b"
-           PARALLEL_CPU_used(1)=assign_cpu(n_bands(2)-n_bands(1)+1)
-           PARALLEL_CPU_role(2)="qp"
-           PARALLEL_CPU_used(2)=assign_cpu(QP_range)
-           PARALLEL_CPU_role(3)="q"
-           PARALLEL_CPU_used(3)=assign_cpu(Q_range(2))
-           CPU_structure(5)%CPU_string =trim(intc( PARALLEL_CPU_used(1) ))//"."//&
-&                                       trim(intc( PARALLEL_CPU_used(2) ))//"."//trim(intc( PARALLEL_CPU_used(3) ))
-           CPU_structure(5)%ROLE_string="b.qp.q"
-           PARALLEL_n_structures_active=3
+           CPU_structure(i_PAR_structure)%ROLE(1)="b"
+           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(n_bands(2)-n_bands(1)+1)
+           CPU_structure(i_PAR_structure)%ROLE(2)="qp"
+           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(QP_range)
+           CPU_structure(i_PAR_structure)%ROLE(3)="q"
+           CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(Q_range(2))
+           CPU_structure(i_PAR_structure)%N_chains=3
          case("Response_T_space") 
-           PARALLEL_CPU_role(1)="k"
-           PARALLEL_CPU_used(1)=assign_cpu(K_range)
-           PARALLEL_CPU_role(2)="eh"
-           PARALLEL_CPU_used(2)=assign_cpu(EH_range)
-           CPU_structure(4)%CPU_string =trim(intc( PARALLEL_CPU_used(1) ))//"."//&
-&                                       trim(intc( PARALLEL_CPU_used(2) ))
-           CPU_structure(4)%ROLE_string="k.eh"
-           PARALLEL_n_structures_active=2
+           CPU_structure(i_PAR_structure)%ROLE(1)="k"
+           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(K_range)
+           CPU_structure(i_PAR_structure)%ROLE(2)="eh"
+           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(EH_range)
+           CPU_structure(i_PAR_structure)%N_chains=2
        end select
+       !
+       call PARALLEL_clean_up_the_structure(PARALLEL_n_structures_active)
+       !
+       select case(PARALLEL_n_structures_active)
+         case (1)
+           CPU_structure(i_PAR_structure)%CPU_string =trim(intc( PARALLEL_CPU_used(1) ))
+           CPU_structure(i_PAR_structure)%ROLE_string=trim(CPU_structure(i_PAR_structure)%ROLE(1))
+         case (2)
+           CPU_structure(i_PAR_structure)%CPU_string =trim(intc( PARALLEL_CPU_used(1) ))//"."//&
+&                                                     trim(intc( PARALLEL_CPU_used(2) ))
+           CPU_structure(i_PAR_structure)%ROLE_string=trim(CPU_structure(i_PAR_structure)%ROLE(1))//"."//&
+&                                                     trim(CPU_structure(i_PAR_structure)%ROLE(2))
+         case (3)
+           CPU_structure(i_PAR_structure)%CPU_string =trim(intc( PARALLEL_CPU_used(1) ))//"."//&
+&                                                     trim(intc( PARALLEL_CPU_used(2) ))//"."//&
+&                                                     trim(intc( PARALLEL_CPU_used(3) ))
+           CPU_structure(i_PAR_structure)%ROLE_string=trim(CPU_structure(i_PAR_structure)%ROLE(1))//"."//&
+&                                                     trim(CPU_structure(i_PAR_structure)%ROLE(2))//"."//&
+&                                                     trim(CPU_structure(i_PAR_structure)%ROLE(3))
+         case (4)
+           CPU_structure(i_PAR_structure)%CPU_string =trim(intc( PARALLEL_CPU_used(1) ))//"."//&
+&                                                     trim(intc( PARALLEL_CPU_used(2) ))//"."//&
+&                                                     trim(intc( PARALLEL_CPU_used(3) ))//"."//&
+&                                                     trim(intc( PARALLEL_CPU_used(4) ))
+           CPU_structure(i_PAR_structure)%ROLE_string=trim(CPU_structure(i_PAR_structure)%ROLE(1))//"."//&
+&                                                     trim(CPU_structure(i_PAR_structure)%ROLE(2))//"."//&
+&                                                     trim(CPU_structure(i_PAR_structure)%ROLE(3))//"."//&
+&                                                     trim(CPU_structure(i_PAR_structure)%ROLE(4))
+       end select
+       !
      endif
      !
    end subroutine
@@ -156,7 +179,7 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
    integer function assign_cpu(I_range)
      integer :: I_range
      assign_cpu=1
-     do while (assign_cpu*N_basis<=NC.and.assign_cpu*N_basis<I_range) 
+     do while (assign_cpu*N_basis<=NC.and.assign_cpu*N_basis<=I_range) 
        assign_cpu=assign_cpu*N_basis
      enddo
      NC=NC/assign_cpu

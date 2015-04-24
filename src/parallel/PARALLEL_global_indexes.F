@@ -247,8 +247,12 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
      Q_range=(/max(X%iq(1),2),X%iq(2)/)
      n_c_bands= (/E%nbf+1,X%ib(2)/)
      n_v_bands= (/X%ib(1),E%nbm/)
+#if defined _SC
    case("Real_Time") 
      K_range=Xk%nibz
+     Q_range=(/1,q%nbz/)
+     n_bands=(/1,(SC_bands(2)-SC_bands(1)+1)**2/)
+#endif
    case("Self_Energy") 
      QP_range=QP_n_states
      Q_range=(/1,q%nibz/)
@@ -605,7 +609,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! "RT"="k.b.q.qp"
    !  
    !   "k.b" -> QP (k,n,n')  
-   !   "q"   -> q 
+   !   "q"   -> q (BZ)
    !   "qp"  -> Plasma (J)
    !
    ! e-e correlation (HF and COHSEX)
@@ -625,7 +629,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    ! "RT"="k.b.q.qp" 
    !  
    !   "k.b" -> QP (k,n,n')  
-   !   "q"   -> q 
+   !   "q"   -> q (BZ)
    !   "qp"  -> Bp_mat (m,m')
    !
    ! e-photon correlation 

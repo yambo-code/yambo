@@ -41,6 +41,7 @@ subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
  logical     ::chain_activate(MAX_N_OF_CHAINS)
 #if defined _BLUEGENE
  integer, allocatable :: role_cpu(:)
+ integer     ::ir,i
 #endif
  !
 #if defined _MPI

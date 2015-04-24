@@ -26,9 +26,9 @@ AC_DEFUN([AC_HAVE_FFT],[
 AC_ARG_WITH(fft_libs,AC_HELP_STRING([--with-fft-libs=<libs>],
             [Link to FFT libraries],[32]),[],[])
 AC_ARG_WITH(fft_path,AC_HELP_STRING([--with-fft-path=<path>],
-            [Path to the FFTW install directory],[32]),[],[])
+            [Path to the FFT install directory],[32]),[],[])
 AC_ARG_WITH(fft_libdir,AC_HELP_STRING([--with-fft-libdir=<path>],
-            [Path to the FFTW lib directory],[32]),[],[])
+            [Path to the FFT lib directory],[32]),[],[])
 AC_ARG_WITH(fft_includedir,AC_HELP_STRING([--with-fft-includedir=<path>],
             [Path to the FFT include directory],[32]),[],[])
 #

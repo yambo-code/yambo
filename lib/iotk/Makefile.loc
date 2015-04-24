@@ -23,7 +23,7 @@ all: package-ready-stamp
 
 uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
-	cp Makefile.loc Makefile ; make $(TARBALL) ; fi )
+	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
 	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
 	test -d $(INSTALL_DIR) || mkdir $(INSTALL_DIR)
 	touch uncompress-stamp
@@ -42,7 +42,8 @@ configure-stamp: uncompress-stamp
 	        if test -x ./configure ; then ./configure  \
 	           FC="$(f90)" \
 	           IOTK_SAFEST="yes" \
-	           IOTK_MAX_RANK=4; \
+	           IOTK_MAX_RANK=4 \
+		   MAKE=$(make); \
 	        fi ) ; \
 	fi
 	touch configure-stamp
@@ -50,7 +51,7 @@ configure-stamp: uncompress-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp 
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(MAKE) loclib_only ; $(MAKE) iotk.x ) ; fi
+	( cd $(PACKAGE);  $(make) loclib_only ; $(make) iotk.x ) ; fi
 	#
 	if test -d ./lib      ; then rm -rf ./lib      ; fi    ; mkdir ./lib ;
 	if test -d ./bin      ; then rm -rf ./bin      ; fi    ; mkdir ./bin ;
@@ -70,7 +71,7 @@ package-ready-stamp: uncompress-stamp configure-stamp
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(MAKE) -s clean ) ; fi
+	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
 	@- rm -rf ./lib ./bin ./include  package-ready-stamp configure-stamp
 
 clean_all: clean

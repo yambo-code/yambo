@@ -124,7 +124,7 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
            CPU_structure(i_PAR_structure)%ROLE(2)="b"
            CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(n_bands(2)-n_bands(1)+1)
            CPU_structure(i_PAR_structure)%ROLE(3)="q"
-           CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(Q_range)
+           CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(Q_range(2))
            CPU_structure(i_PAR_structure)%N_chains=3
 #endif
          case("Self_Energy") 

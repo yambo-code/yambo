@@ -684,7 +684,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
 #if defined _QED
    if (l_elphoton_corr) then
-     call initactivate(1,'FFTGvecs QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
+     call initactivate(1,'FFTGvecs RandQpts QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
      if (trim(QP_solver)=="g") then
        call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
      else

@@ -263,6 +263,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #endif
      if (l_HF_and_locXC)  n_bands=(/1,max(E%nbm,QP_nb)/)
      if (l_gw0.or.l_life) n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
+     if (.not.l_HF_and_locXC) n_bands(1)=QP_n_G_bands(1)
 #if defined _SC
      if (l_eval_collisions.or.l_sc_run)  n_bands=SC_bands
 #endif
@@ -848,15 +849,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !   "q"   -> q 
    !   "qp"  -> QP (k,n,n')  
    !   "b"   -> m and PAR_IND_Bp_mat (this second is for the COLLISIONS case)
-   !
-   if (l_HF_and_locXC)  n_bands=(/1,max(E%nbm,QP_nb)/)
-   if (l_gw0.or.l_life) n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
-#if defined _SC
-   if (l_eval_collisions.or.l_sc_run)  n_bands=SC_bands
-#endif
-#if defined _ELPH
-   if (l_elph_corr)                    n_bands=(/1,QP_PH_n_G_bands/)
-#endif
    !
    ! WF bands to load
    !

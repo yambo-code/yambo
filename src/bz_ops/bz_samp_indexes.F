@@ -410,9 +410,9 @@ subroutine bz_samp_indexes(k,Xk,q)
      ! using Gamma point only definition
      !
      if (force_gamma_only) then
-       if (allocated(k_pt)) deallocate(k_pt)
-       if (allocated(q_pt)) deallocate(q_pt)
-       if (allocated(q_norm)) deallocate(q_norm)
+       if (allocated(k_pt))    deallocate(k_pt)
+       if (allocated(q_pt))    deallocate(q_pt)
+       if (allocated(q_norm))  deallocate(q_norm)
        if (allocated(q_sstar)) deallocate(q_sstar)
        if (associated(q%pt)) then
          deallocate(q%pt)      
@@ -436,10 +436,13 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
      if (.not.allocated(q_pt)) then
        allocate(q_pt(q%nibz,3))
-       allocate(k_pt(k%nibz,3))
        q_pt=q%pt
+       call mem_est("q_pt",(/q%nibz*3/),(/SP/))
+     endif
+     if (.not.allocated(k_pt)) then
+       allocate(k_pt(k%nibz,3))
        k_pt=k%pt
-       call mem_est("q_pt k_pt",(/q%nibz*3,k%nibz*3/),(/SP,SP/))
+       call mem_est("q_pt",(/k%nibz*3/),(/SP/))
      endif
      if (.not.allocated(q_norm)) then
        allocate(q_norm(q%nibz))

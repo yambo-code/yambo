@@ -128,7 +128,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
    !
    do iw=1,Xw%n_freqs
      if (ordering=="t" )  GreenF(iw)=Z_*(1./(Xw%p(iw)-pole)-1./(conjg(Xw%p(iw))+pole))
-     if (ordering=="c" )  GreenF(iw)=Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+conjg(pole)))
+     if (ordering=="c" )  GreenF(iw)=Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+conjg(pole)))  ! Davide: the conjg of the pole seems wrong
      if (ordering=="r" )  GreenF(iw)=Z_/    (Xw%p(iw)-pole)
      if (ordering=="a" )  GreenF(iw)=                      -Z_/(conjg(Xw%p(iw))+pole)
      if (ordering=="ca" ) GreenF(iw)=                      -Z_/(Xw%p(iw)+pole)

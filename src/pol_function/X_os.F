@@ -108,7 +108,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    if (l_em1s) call IO_and_Messaging_switch("+io_out",PAR_COM_Q_INDEX%my_CHAIN==1)
    !
  endif
- 
  !
  ! WF load
  !=========

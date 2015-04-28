@@ -181,10 +181,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Global Logicals
  !
- Fragmented_IO_save=index(INSTR,'dbfrag')>0.or.ncpu>1.or.index(INSTR,'fragnb')>0
+ Fragmented_IO_save=.not.index(INSTR,'nodbfr')>0.or.ncpu>1.or.index(INSTR,'fragnb')>0
  !
- ! Logical Setup (mainly for interfaces and ypp. As far as yambo is concerned this call is done
- ! in init.F)
+ ! Logical Setup (mainly for interfaces and ypp. As far as yambo is concerned this call is done in init.F)
  !
  call SET_logicals()
  !

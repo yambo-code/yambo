@@ -137,17 +137,17 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    !
  endif
  !
- ! Make db2 database
- !             
- call msg('s','== DB2 (wavefunctions)  ... ')
- !
  ! Wavefunction blocks
  !
  wf_nb_io_groups=1
  wf_nb_io=n_bands
 #if !defined _P2Y_EXPORT
- call wf_splitter
+ call WF_splitter()
 #endif
+ !
+ ! Make db2 database
+ !             
+ call msg('s','== DB2 (wavefunctions)  ... ')
  !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))

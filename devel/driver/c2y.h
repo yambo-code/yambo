@@ -41,7 +41,7 @@
   {"nompi", "N","Skip MPI initialization",0,0,0,0,0},
   {"ifile", "F","CPMD file name/prefix",0,0,1,0,0}, 
   {"odir",  "O","Output directory",0,0,1,0,0}, 
-  {"dbfrag","S","DataBases fragmentation",0,0,0,0,0},
+  {"nodbfr","U","Do not fragment the DataBases (only for serial runs)",0,0,0,0,0},
   {"alat_f","a","Lattice constants rescaling factor",0,1,0,0,0},
   {"dupl",  "d","States duplication (artificial spin polarization)",0,0,0,0,0},
   {"notr",  "t","Force use of spatial Inv. instead of Time Rev.",0,0,0,0,0},

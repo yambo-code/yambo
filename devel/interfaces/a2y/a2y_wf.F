@@ -81,7 +81,7 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  !
  ! Number of records for each k-point
  !
- number_of_records_each_k=n_atomic_species*pp_n_l_times_proj_max*2+1+wf_nb_io
+ number_of_records_each_k=n_atomic_species*pp_n_l_times_proj_max*2+1+n_bands
  !
  if (ikibz==1.and.ib_grp==1) then
    open(unit=11,file=KSS_file_name,form='unformatted')
@@ -158,8 +158,8 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    !
    if (n_sp_pol==2.and..not.artificial_spin_pol) then
      ! 
-     ! BIG PROBLEM WITH ABINIT: abinit uses a different ordering
-     ! of the k-points/spins. This makes the I/O very complicate.
+     ! Abinit uses a different ordering of the k-points/spins.
+     ! This makes the I/O complicate.
      !
      if (i_spin==1) then
        !

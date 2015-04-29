@@ -29,7 +29,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  use drivers,       ONLY:l_life,l_em1s
  use IO_m,          ONLY:io_RESPONSE
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,cZERO
  use wrapper,       ONLY:V_by_V_plus_V
  use collision,     ONLY:ggwinfo,collision_reset,scatterBamp_alloc,scatterBamp_free
  use LIVE_t,        ONLY:live_timing
@@ -79,9 +79,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Defaults & Setups
  !===================
- Xo  = cmplx(0.,0.,SP)
- GreenF  = cmplx(0.,0.,SP)
- drude_GreenF = cmplx(0.,0.,SP)
+ Xo           = cZERO
+ GreenF       = cZERO
+ drude_GreenF = cZERO
  !
  ! Logicals to use bare or RIM GF (no poles accumulation)
  !=======================================================
@@ -108,7 +108,6 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    if (l_em1s) call IO_and_Messaging_switch("+io_out",PAR_COM_Q_INDEX%my_CHAIN==1)
    !
  endif
- 
  !
  ! WF load
  !=========
@@ -128,7 +127,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    call mem_est("X_poles_tab",(/size(X_poles_tab)/))
    !
    if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual)
-   if (force_bare_X_G)      call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP)
+   if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP)
    !
    minmax_ehe=0._SP
    !
@@ -220,17 +219,12 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  do i_cg = 1,coarse_grid_N
    !
-   Drude_pole=iq==1.and.abs(coarse_grid_Pt(i_cg))<1.E-5
-   !
-   if (Drude_pole) then
-     GreenF=drude_GreenF/real(bare_grid_N(i_cg))
-   else
-     if (force_bare_X_G) call X_bare_RIM_GreenF(iq,X_poles_tab(i_cg,:),Xw,Xen,Xk,GreenF,X%ordering)
-   endif
-   !
    n_poles = sum(bare_grid_N(1:i_cg-1))
    !
-   Xo_residual(:,:) = 0.0_SP
+   ! 1) First compute the residual
+   !================================
+   !
+   Xo_residual(:,:) = cZERO
    !
    loop_bare_grid: do i_bg = 1,bare_grid_N(i_cg)
      !
@@ -306,18 +300,31 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
      !-------------^^^^^---------------------------------------
      !$omp parallel do default(shared), private(ig2)
      do ig2=1,X%ng
-       call V_by_V_plus_V(ig2,isc%rhotw(ig2),conjg(isc%rhotw(:ig2)),Xo_residual(:ig2,ig2))
+       call V_by_V_plus_V(ig2,eh_occ*isc%rhotw(ig2),conjg(isc%rhotw(:ig2)),Xo_residual(:ig2,ig2))
      enddo
      !$omp end parallel do
      !
    enddo loop_bare_grid
    !
-   do iw=1,Xw%n_freqs
-     !
-     if (.not.force_bare_X_G.and..not.Drude_pole) then
+   ! 2) Then the frequency dependent term
+   !=======================================
+   !
+   Drude_pole=iq==1.and.abs(coarse_grid_Pt(i_cg))<1.E-5
+   !
+   if (Drude_pole) then
+     GreenF=drude_GreenF/real(bare_grid_N(i_cg))
+   else if(force_bare_X_G) then
+     call X_bare_RIM_GreenF(iq,X_poles_tab(i_cg,:),Xw,Xen,Xk,GreenF,X%ordering)
+   else
+     do iw=1,Xw%n_freqs
        GreenF(iw) = X_simple_GreenF(Xw%p(iw),coarse_grid_Pt(i_cg),X%ordering)
-     endif
-     GreenF(iw)=eh_occ*GreenF(iw)
+     enddo
+   endif
+   !
+   ! 3) Finally multiply residual and frequency dependent term
+   !===========================================================
+   !
+   do iw=1,Xw%n_freqs
      !
      !$omp parallel default(shared)
      !$omp do private(ig2)

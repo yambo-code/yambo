@@ -24,7 +24,7 @@
 module IO_m
  !
  use pars,       ONLY:SP,lchlen,schlen
- use LOGO,       ONLY:code_version,code_revision
+ use LOGO,       ONLY:code_version,code_revision,code_GPL_revision
  use parallel_m, ONLY:myid
  use com,        ONLY:error
 #if defined _NETCDF_IO
@@ -97,7 +97,7 @@ module IO_m
  integer :: io_unit(max_io_units)
  integer :: io_restart_point(max_io_units)
  integer :: io_code_version(max_io_units,3)
- integer :: io_code_revision(max_io_units)
+ integer :: io_code_revision(max_io_units,2) ! devel,GPL
  integer :: io_serial_number(max_io_units)
  integer :: io_netcdf_var(max_io_units)
  logical :: io_fragmented(max_io_units)
@@ -568,7 +568,7 @@ module IO_m
      io_rec_pos(ID)=1
      io_restart_point(ID)=1
      io_code_version(ID,:)=code_version
-     io_code_revision(ID)=code_revision
+     io_code_revision(ID,:)=(/code_revision,code_GPL_revision/)
      io_serial_number(ID)=serial_number
      io_resetable(ID)=.true.
      io_netcdf_support(ID)=.false.

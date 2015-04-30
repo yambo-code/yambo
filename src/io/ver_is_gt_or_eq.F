@@ -34,7 +34,7 @@ logical function ver_is_gt_or_eq(ID,version,revision)
  ver_is_gt_or_eq=.false.
  !
  if (ID>0) version2comp =io_code_version(ID,:)
- if (ID>0) revision2comp=io_code_revision(ID)
+ if (ID>0) revision2comp=io_code_revision(ID,1)
  if (ID<0) version2comp =code_version
  if (ID<0) revision2comp=code_revision
  !

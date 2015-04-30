@@ -31,8 +31,12 @@ if ( $#argv > 1 ) goto HELP
 #
 # Get current version & revision
 #
+set dir=`svn info | grep 'URL'| grep 'yambo-devel' |wc -l`
 set dummy=`svn info -r HEAD | grep 'Revision'`
 set revision_HEAD=`echo $dummy | $awk '{gsub("Revision: ","");print $0}'`
+#
+set gpl="yes"
+if ( "$dir" == "1" ) set gpl="no"
 #
 set dummy=`cat include/version.inc | grep 'code_version(1)'`
 set version_old=`echo $dummy | $awk '{gsub("code_version\\(1\\)=","");print $0}'`
@@ -42,6 +46,8 @@ set dummy=`cat include/version.inc | grep 'code_version(3)'`
 set sub_old=`echo $dummy | $awk '{gsub("code_version\\(3\\)=","");print $0}'`
 set dummy=`cat include/version.inc | grep 'code_revision'`
 set revision_old=`echo $dummy | $awk '{gsub("code_revision=","");print $0}'`
+set dummy=`cat include/version.inc | grep 'code_GPL_revision'`
+set GPL_revision_old=`echo $dummy | $awk '{gsub("code_GPL_revision=","");print $0}'`
 #
 # Increase counters
 #
@@ -78,7 +84,13 @@ echo
 echo 'code_version(1)='$version_new  >  include/version.inc
 echo 'code_version(2)='$patch_new    >> include/version.inc
 echo 'code_version(3)='$sub_new      >> include/version.inc
-echo 'code_revision='$revision_new >> include/version.inc
+if ( "$gpl" == "yes" ) then
+ echo 'code_revision='$revision_old >> include/version.inc
+ echo 'code_GPL_revision='$revision_new >> include/version.inc
+else
+ echo 'code_revision='$revision_new >> include/version.inc
+ echo 'code_GPL_revision='$GPL_revision_old >> include/version.inc
+endif
 #
 # Prepare new configure script
 #

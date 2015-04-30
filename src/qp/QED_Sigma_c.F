@@ -78,6 +78,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  ! RIM 
  !=====
  if (RIM_n_rand_pts==0) RIM_n_rand_pts=1000000
+ !
  call k_ibz2bz(q,'i',.TRUE.)
  allocate(q_weight(nqbz))
  call rim_spherical(nqbz,q%ptbz,q_weight,(3.*RL_vol/nqbz/4./pi)**(1./3.),1,.FALSE.)
@@ -98,8 +99,10 @@ subroutine QED_Sigma_c(E,k,q,qp)
 &             (/1,k%nibz/),space='R',title='-[Photon-El]Sigma_c/R space')
  !
  call scatterBamp_alloc(isc)
- ! isc_grad_k and isc_grad_p need not to be scatterBamp-allcoated
+ !
+ ! isc_grad_k and isc_grad_p need not to be scatterBamp-allocated
  ! since scatterBamp_using_the_gradient allocates its own workspace
+ !
  allocate(isc%rhotw(QP_QED_ng),isc_grad_k%rhotw(3*QP_QED_ng),isc_grad_p%rhotw(3*QP_QED_ng))
  isc%ngrho       =QP_QED_ng
  isc_grad_k%ngrho=QP_QED_ng

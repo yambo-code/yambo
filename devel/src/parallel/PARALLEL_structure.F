@@ -48,6 +48,10 @@ subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
  include 'mpif.h'
 #endif
  !
+#if !defined _BLUEGENE
+ if (present(ROLE)) return
+#endif
+ !
  if (ncpu==1) then
    INTRA_CHAIN(1)%n_CPU=1
    INTER_CHAIN(1)%n_CPU=1
@@ -66,8 +70,6 @@ subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
  if ( present(ENVIRONMENT) ) then
    !
    if (.not. present(n_elements) .or..not. present(ROLE) ) call error(' Missing args in call: n_elements or ROLE')
-   !
-   call PARALLEL_get_user_structure(ENVIRONMENT,.TRUE.)
    !
    allocate(role_cpu(size(ROLE)))
    !
@@ -102,7 +104,6 @@ subroutine PARALLEL_structure(ENVIRONMENT,n_elements,ROLE)
  !
  if (present(ENVIRONMENT)) return
 #endif
-
  !
  ! init
  !

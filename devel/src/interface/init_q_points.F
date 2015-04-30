@@ -31,7 +31,7 @@ subroutine init_q_points(l_WRITE)
  use pars,        ONLY:SP,schlen,DP
  use memory_m,    ONLY:mem_est
  use it_m,        ONLY:nflines,flines,infile,infile_verbosity,V_kpt,V_all
- use R_lattice,   ONLY:nqibz,q_pt,bz_samp,bz_samp_reset
+ use R_lattice,   ONLY:nqibz,q_pt,bz_samp,bz_samp_reset,q_source
  use vec_operate, ONLY:c2a
  implicit none
  !
@@ -58,13 +58,14 @@ subroutine init_q_points(l_WRITE)
    flines(nflines+1)='%'
    nflines=nflines+1
  else if (get_e_p_q_point(1,q_pt_db)==0) then
+   q_source="Electron-Phonon databases"
    do i1=1,2
      nqibz=0
      do while(get_e_p_q_point(nqibz+1,q_pt_db)==0) 
        nqibz=nqibz+1
        if (i1==2) q_pt(nqibz,:)=-real(q_pt_db,SP)
      enddo
-     if (i1==1) then
+     if (i1==1.and..not.allocated(q_pt)) then
        allocate(q_pt(nqibz,3))
        call mem_est("q_pt",(/nqibz*3/),(/SP/))  
      endif

@@ -52,7 +52,7 @@ subroutine bz_samp_indexes(k,Xk,q)
 &                         qindx_X,qindx_B,qindx_S,qindx_C,qindx_free,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
-&                         q_sstar,coll_scattering,Xk_impose_minus_q
+&                         q_sstar,coll_scattering,Xk_impose_minus_q,q_source
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
 #if defined _ELPH
@@ -160,7 +160,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      allocate(q%pt(q%nibz,3))
      if (Xk_impose_minus_q) q_pt=-q_pt
      q%pt=q_pt(:q%nibz,:)
-     call msg('rsn','[RL indx] Q-grid: User defined / from ndb.kindx .')
+     call msg('rsn','[RL indx] Q-grid:'//trim(q_source))
      user_defined_qpts=.true.
    endif
    !
@@ -410,9 +410,9 @@ subroutine bz_samp_indexes(k,Xk,q)
      ! using Gamma point only definition
      !
      if (force_gamma_only) then
-       if (allocated(k_pt)) deallocate(k_pt)
-       if (allocated(q_pt)) deallocate(q_pt)
-       if (allocated(q_norm)) deallocate(q_norm)
+       if (allocated(k_pt))    deallocate(k_pt)
+       if (allocated(q_pt))    deallocate(q_pt)
+       if (allocated(q_norm))  deallocate(q_norm)
        if (allocated(q_sstar)) deallocate(q_sstar)
        if (associated(q%pt)) then
          deallocate(q%pt)      
@@ -436,10 +436,13 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
      if (.not.allocated(q_pt)) then
        allocate(q_pt(q%nibz,3))
-       allocate(k_pt(k%nibz,3))
        q_pt=q%pt
+       call mem_est("q_pt",(/q%nibz*3/),(/SP/))
+     endif
+     if (.not.allocated(k_pt)) then
+       allocate(k_pt(k%nibz,3))
        k_pt=k%pt
-       call mem_est("q_pt k_pt",(/q%nibz*3,k%nibz*3/),(/SP,SP/))
+       call mem_est("q_pt",(/k%nibz*3/),(/SP/))
      endif
      if (.not.allocated(q_norm)) then
        allocate(q_norm(q%nibz))

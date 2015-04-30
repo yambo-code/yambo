@@ -25,7 +25,7 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  !
  use pars,         ONLY:schlen
  use parallel_m,   ONLY:CPU_structure,n_CPU_str_max,PARALLEL_CPU_role,PARALLEL_CPU_used,&
-&                       PARALLEL_n_structures_active,ncpu
+&                       PARALLEL_n_structures_active,ncpu,i_PAR_structure
  use stderr,       ONLY:string_split
  use com,          ONLY:error
  !
@@ -36,11 +36,11 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  !
  ! Work Space
  !
- integer          ::i_s,i_selected,i_c,n_structures,n_eh,n_t
+ integer          ::i_s,i_c,n_structures,n_eh,n_t
  logical          ::q_found,k_found
  character(schlen)::c_strings(10),r_strings(10),CPU_string_,ROLE_string_
  !
- i_selected=-1
+ i_PAR_structure=-1
  !
  q_found   =.FALSE.
  k_found   =.FALSE.
@@ -53,9 +53,9 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
    endif
    !
    if (trim(CPU_structure(i_s)%Long_Description)==ENVIRONMENT) then
-     i_selected=i_s
-     CPU_string_=CPU_structure(i_selected)%CPU_string
-     ROLE_string_=CPU_structure(i_selected)%ROLE_string
+     i_PAR_structure=i_s
+     CPU_string_=CPU_structure(i_PAR_structure)%CPU_string
+     ROLE_string_=CPU_structure(i_PAR_structure)%ROLE_string
    endif
    !
  enddo
@@ -70,56 +70,47 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
    if (ROLE_string_(i_c:i_c)==",") ROLE_string_(i_c:i_c)=" "
  enddo
  !
- call string_split(CPU_string_,c_strings,n_non_empty_strings=CPU_structure(i_selected)%N_chains)
+ call string_split(CPU_string_,c_strings,n_non_empty_strings=CPU_structure(i_PAR_structure)%N_chains)
  call string_split(ROLE_string_,r_strings)
  !
  n_structures=0
  n_eh=1
  n_t=1
  !
- do i_c=1,CPU_structure(i_selected)%N_chains
+ do i_c=1,CPU_structure(i_PAR_structure)%N_chains
    !
-   read(c_strings(i_c),'(i3)') CPU_structure(i_selected)%CPU(i_c)
-   read(r_strings(i_c),'(a )') CPU_structure(i_selected)%ROLE(i_c)
-   !
-   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="v" ) cycle
-   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="c" ) cycle
-   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="b" ) cycle
-   if (CPU_structure(i_selected)%CPU(i_c)==1.and.trim(CPU_structure(i_selected)%ROLE(i_c))=="qp") cycle
-   if (trim(CPU_structure(i_selected)%ROLE(i_c))=="eh") then
-     n_eh=CPU_structure(i_selected)%CPU(i_c)
-     if (CPU_structure(i_selected)%CPU(i_c)==1) cycle
-   endif
-   if (trim(CPU_structure(i_selected)%ROLE(i_c))=="t") then
-     n_t=CPU_structure(i_selected)%CPU(i_c)
-     if (CPU_structure(i_selected)%CPU(i_c)==1) cycle
-   endif
-   !
-   n_structures=n_structures+1
-   !
-   PARALLEL_CPU_used(n_structures)=CPU_structure(i_selected)%CPU(i_c)
-   PARALLEL_CPU_role(n_structures)=CPU_structure(i_selected)%ROLE(i_c)
-   !
-   if (trim(PARALLEL_CPU_role(n_structures))=="k" ) k_found=.TRUE.
-   if (trim(PARALLEL_CPU_role(n_structures))=="q" ) q_found=.TRUE.
-   !
-   PARALLEL_CPU_used(n_structures)=2**(log(real(PARALLEL_CPU_used(n_structures)))/log(2.))
+   read(c_strings(i_c),'(i3)') CPU_structure(i_PAR_structure)%CPU(i_c)
+   read(r_strings(i_c),'(a )') CPU_structure(i_PAR_structure)%ROLE(i_c)
+   if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="eh") n_eh=CPU_structure(i_PAR_structure)%CPU(i_c)
+   if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="t" ) n_t=CPU_structure(i_PAR_structure)%CPU(i_c)
+   if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="k") k_found=.TRUE.
+   if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="q") q_found=.TRUE.
    !
  enddo
+ !
+ call PARALLEL_clean_up_the_structure( n_structures )
  !
  if (n_eh<n_t) call error('"eh" CPU`s cannot be smaller than "t" CPU`s.')
  !
  if (ncpu==1) then
-   CPU_structure(i_selected)%nCPU_diagonalization=1
-   CPU_structure(i_selected)%nCPU_inversion=1
+   CPU_structure(i_PAR_structure)%nCPU_diagonalization=1
+   CPU_structure(i_PAR_structure)%nCPU_inversion=1
  endif
  !
- if (CPU_structure(i_selected)%nCPU_diagonalization/=1.and.CPU_structure(i_selected)%nCPU_diagonalization/=ncpu) then
-   CPU_structure(i_selected)%nCPU_diagonalization=ncpu
+ if (CPU_structure(i_PAR_structure)%nCPU_diagonalization/=1.and.CPU_structure(i_PAR_structure)%nCPU_diagonalization/=ncpu) then
+#if defined _SCALAPACK 
+   CPU_structure(i_PAR_structure)%nCPU_diagonalization=1
+#else
+   CPU_structure(i_PAR_structure)%nCPU_diagonalization=ncpu
+#endif
  endif
  !
- if (CPU_structure(i_selected)%nCPU_inversion/=1.and.CPU_structure(i_selected)%nCPU_inversion/=ncpu) then
-   CPU_structure(i_selected)%nCPU_inversion=ncpu
+ if (CPU_structure(i_PAR_structure)%nCPU_inversion/=1.and.CPU_structure(i_PAR_structure)%nCPU_inversion/=ncpu) then
+#if defined _SCALAPACK 
+   CPU_structure(i_PAR_structure)%nCPU_inversion=1
+#else
+   CPU_structure(i_PAR_structure)%nCPU_inversion=ncpu
+#endif
  endif
  !
  ! The two top fields ("q" and "k") must be defined anyway. But only these two!
@@ -138,7 +129,7 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  !
  if (ncpu==1) n_structures=0
  !
- CPU_structure(i_selected)%N_chains=n_structures
+ CPU_structure(i_PAR_structure)%N_chains=n_structures
  !
  if (RUNNING_ENVIRONMENT) PARALLEL_n_structures_active=n_structures
  !

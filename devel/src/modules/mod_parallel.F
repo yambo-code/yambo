@@ -33,6 +33,7 @@ module parallel_m
  integer            :: mpi_comm_world=0
 #endif
  !
+ integer            :: N_basis  = 2
  integer            :: myid
  integer            :: ncpu
  integer            :: n_nodes  = 1
@@ -279,7 +280,32 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_A2A
  !
+ ! ... linear response & BSK
+ type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
+ type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
+ type(MPI_comm),SAVE :: PAR_COM_q_for_Xo
+ type(MPI_comm),SAVE :: PAR_COM_k_for_P
+ !
+ ! ... BSK
+ type(MPI_comm),SAVE :: PAR_COM_eh_A2A
+ type(MPI_comm),SAVE :: PAR_COM_eh_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_T_INDEX
+ !
+ ! ... density
+ type(MPI_comm),SAVE :: PAR_COM_density
+ !
+ ! ... and dimensions (used for automatic cpu distribution)
+ !=========================================================
+ integer            :: K_range
+ integer            :: EH_range
+ integer            :: QP_range
+ integer            :: Q_range(2)
+ integer            :: n_bands(2)
+ integer            :: n_c_bands(2)
+ integer            :: n_v_bands(2)
+ !
  ! ... and derived variables
+ !==========================
  integer            :: PAR_nPlasma
  integer,allocatable:: PAR_Plasma_index(:)
  integer            :: PAR_nQP
@@ -304,22 +330,9 @@ module parallel_m
  integer            :: PAR_nG_bands 
  integer,allocatable:: PAR_G_bands_index(:)
  !
- ! ... linear response & BSK
- type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
- type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
- type(MPI_comm),SAVE :: PAR_COM_q_for_Xo
- type(MPI_comm),SAVE :: PAR_COM_k_for_P
- !
- ! ... BSK
- type(MPI_comm),SAVE :: PAR_COM_eh_A2A
- type(MPI_comm),SAVE :: PAR_COM_eh_INDEX
- type(MPI_comm),SAVE :: PAR_COM_T_INDEX
- !
- ! ... density
- type(MPI_comm),SAVE :: PAR_COM_density
- !
  ! WorkSpace
  !
+ integer            :: i_PAR_structure
  integer            :: i_err
  integer, private   :: local_type
  !

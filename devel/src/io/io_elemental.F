@@ -114,9 +114,24 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        if (MENU==1) call msg(msg_where,trim(ch))
      endif
    else
+     !
+     ! GPL_EXCLUDE_START
+     !
      write (ch,'(a,i6.6,2a,3(a,i2.2),a,i4.4,a)')  '- S/N ',io_serial_number(ID),' ',&
 &          repeat('-',26),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
-&          '.',io_code_version(ID,3),' r.',io_code_revision(ID),' -'
+&          '.',io_code_version(ID,3),' r.',io_code_revision(ID,1),' -'
+     !
+     ! GPL_EXCLUDE_START
+     !
+     !
+     ! GPL_EXCLUDE_END
+     !
+     ! GPL_INCLUDE_START
+!     write (ch,'(a,i6.6,2a,3(a,i2.2),a,i4.4,a)')  '- S/N ',io_serial_number(ID),' ',&
+!&          repeat('-',26),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
+!&          '.',io_code_version(ID,3),' r.',io_code_revision(ID,2),' -'
+     ! GPL_INCLUDE_END
+     !
      if (.not.present(MENU)) call msg(msg_where,trim(ch))
      if (present(MENU)) then
        if (MENU==1) call msg(msg_where,trim(ch))

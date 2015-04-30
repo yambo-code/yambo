@@ -92,7 +92,6 @@ subroutine p2y_db1(en,k)
  !
  call get_more
  !
- !
  if(.not.force_noWFs) then
    !---------------------------------------------------------------------*
    !    Read G-vectors                                                   *

@@ -86,7 +86,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use ras_module,           ONLY:locfac, loctype
 #endif
 #if defined _ELPH 
- use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,RES_tresh
+ use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
+&                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
  use parallel_m,           ONLY:n_log_CPUs
 #if defined _OPENMP
@@ -484,6 +485,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _ELPH 
  call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
  call it(defs,'ElPhModes', '[ELPH] Phonon modes included',elph_branches)
+ call it(defs,'FANdEtresh','[ELPH] Energy treshold for Fan denominator',FAN_deltaE_treshold,verb_level=V_qp,unit=E_unit)
+ call it(defs,'DWdEtresh', '[ELPH] Energy treshold for DW denominator',DW_deltaE_treshold,verb_level=V_qp,unit=E_unit)
  !
  ! GPL_EXCLUDE_START
  !

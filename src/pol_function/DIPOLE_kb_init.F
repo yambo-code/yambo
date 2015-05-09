@@ -184,8 +184,8 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
      endif
      !
      if(j>real(l,SP).and.i_spinor==1) spinor_factor= sqrt(real((l+m+1),SP)/real(2*l+1,SP))
-     if(j>real(l,SP).and.i_spinor==2) spinor_factor= sqrt(real((l-m+1),SP)/real(2*l+1,SP))
-     if(j<real(l,SP).and.i_spinor==1) spinor_factor= sqrt(real((l-m  ),SP)/real(2*l+1,SP))
+     if(j>real(l,SP).and.i_spinor==2) spinor_factor= sqrt(real((l-m-1),SP)/real(2*l+1,SP))
+     if(j<real(l,SP).and.i_spinor==1) spinor_factor= sqrt(real((l-m+2),SP)/real(2*l+1,SP))
      if(j<real(l,SP).and.i_spinor==2) spinor_factor=-sqrt(real((l+m  ),SP)/real(2*l+1,SP))
      !
    end function

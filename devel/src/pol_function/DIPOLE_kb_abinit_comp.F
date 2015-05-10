@@ -48,7 +48,7 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
  real(SP)    :: Ygrad(2,3)
  !
  integer     :: ig,i1,is,ia,pp_spin
- integer     :: im,im_min,im_max,il,i_pp!,j2p1
+ integer     :: im,il,i_pp
  complex(SP) :: e_iGR
  real(SP)    :: KpG_cc(3),G_cc(3)
  real(SP)    :: KpG_norm,G_dot_Rat,sf
@@ -70,21 +70,16 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
          !
          il      = pp_table(1,is,i_pp)
          if(il==0) cycle
-         !j2p1 = pp_table(2,is,i_pp)+1
          pp_spin = pp_table(3,is,i_pp)
          if(pp_spin==0) cycle
          if(pp_spin> 1) cycle
          !
-         im_min=1              !1+spin_m_table(1+i_spin,il,j2p1,is)
-         im_max=2*(il-1)+1     !spin_m_table(1,il,j2p1,is)+spin_m_table(1+i_spin,il,j2p1,is)
          sf=sqrt(4._SP*pi/(2._SP*real(il-1,SP)+1._SP))
          !
-         do im = im_min,im_max
+         do im = 1,2*(il-1)+1
            !
            kb_Ylm(1)=Ylm(il,im)
            kb_Ylm(2:4)=dYlm(1,il,im)*Ygrad(1,:)+dYlm(2,il,im)*Ygrad(2,:)
-           !
-           !sf=pp_factor(im,il,j2p1,is,i_spin)
            !
            i1=i1+1
            kbv(ig,i1,1)=kb_Ylm(1)*pp_kbs(is,i_pp)*pp_kb(ig,is,i_pp,i_spin)*e_iGR*sf
@@ -97,7 +92,7 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
    enddo
  enddo
  !
- !kbv=conjg(kbv)
+ !kbv=conjg(kbv)      ! To be checked if I need this for Kerr
  !
  return
  !

@@ -212,6 +212,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      !
      E_eh= Ken%E(ic,ik ,i_sp)-Ken%E(iv,ikp,i_sp)
      f_eh=(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik ,i_sp))/spin_occ
+     ! 
+     f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
+     f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
      !
      ! A 0.001 % fractional occupation swiches on the particular treatment of finite temp. BSE 
      if ( abs(abs(f_eh)-1._SP)> filled_tresh) BS_not_const_eh_f=.TRUE.
@@ -221,16 +224,15 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
      if ( f_eh<=0._SP ) T_is_ok=.FALSE.
      !
      ! Small energies transitions are included only via the Drude model
+     ! Remember that the Drude terms wants the f_e*f_h occupation factor
      if (abs(E_eh)<1.E-5) then
        if(all((/ic==Ken%bf,iv==Ken%bf,ik==Ken%kf,i_sp==Ken%sf,&
-&              real(Wd)/=0.,aimag(Wd)/=0./))) BS_drude_f_eh=f_eh
+&              real(Wd)/=0.,aimag(Wd)/=0./))) BS_drude_f_eh=f_e*f_h
        T_is_ok=.FALSE.
      endif
      !
      ! If I've included in valence states that are almost empty
      ! or in conduction states that are almost full, those are neglected
-     f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
-     f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
      if ( (f_e<=filled_tresh) .or. (f_h<=filled_tresh) ) T_is_ok=.FALSE.
      !
      if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0.,&

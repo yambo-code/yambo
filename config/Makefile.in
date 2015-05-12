@@ -63,7 +63,8 @@ INTERFCS = a2y p2y e2y c2y
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate linear_algebra common io stop_and_restart wf_and_fft 
+BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate linear_algebra common io \
+               interface stop_and_restart wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface \
                tddft pol_function qp acfdt bse
@@ -83,7 +84,7 @@ E2YLIBS      = external_c parallel modules parser communicate linear_algebra com
 #
 # YPP
 #
-YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface interpolate pol_function bse
+YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface interpolate tddft pol_function bse
 YPPSCLIBS    = $(YPPLIBS) sc
 YPPRTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
                interpolate pol_function bse sc real_time

@@ -36,7 +36,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
 &                              PAR_IND_B_mat,PAR_IND_B_mat_ID,PAR_IND_WF_k
  use D_lattice,           ONLY:alat
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,PP_free,  &
-&                              pp_kbv_dim,spin_m_table,pp_factor
+&                              pp_kbv_dim,pp_factor
  use R_lattice,           ONLY:g_vec,bz_samp
  use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P,Dipole_Energy_treshold
  use IO_m,                ONLY:io_control,RD_CL,RD
@@ -351,7 +351,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
    if (allocated(pp_n_l_comp))  deallocate(pp_n_l_comp)
    if (allocated(pp_table))     deallocate(pp_table)
    if (allocated(pp_factor))    deallocate(pp_factor)
-   if (allocated(spin_m_table)) deallocate(spin_m_table)
    call PP_free()
    call mem_est("KBV") 
  else if (io_Vnl_err==0) then

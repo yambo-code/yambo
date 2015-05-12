@@ -34,7 +34,7 @@ subroutine Dipole_kb_pwscf_comp(ik,i_spin,Xk,kbv)
  use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
  use pseudo,        ONLY:pp_n_l_max,pp_n_l_times_proj_max,pp_table, &
 &                        pp_kbs,pp_kb,pp_kbd,pp_kbv_dim,   &
-&                        spin_m_table,pp_factor
+&                        pp_factor
  !
  implicit none
  !
@@ -48,8 +48,8 @@ subroutine Dipole_kb_pwscf_comp(ik,i_spin,Xk,kbv)
  complex(SP) :: kb_Ylm(4)
  real(SP)    :: Ygrad(2,3)
  !
- integer     :: ic,ig,i1,is,ia!,pp_spin
- integer     :: im,im_min,im_max,il,i_pp,j2p1
+ integer     :: ic,ig,i1,is,ia
+ integer     :: im,il,i_pp,j2p1
  complex(SP) :: e_iGR
  real(SP)    :: KpG_cc(3),G_cc(3)
  real(SP)    :: KpG_norm,G_dot_Rat,sf
@@ -74,15 +74,8 @@ subroutine Dipole_kb_pwscf_comp(ik,i_spin,Xk,kbv)
          il      = pp_table(1,is,i_pp)
          if(il==0) cycle
          j2p1    = pp_table(2,is,i_pp)+1
-         !pp_spin = pp_table(3,is,i_pp)
-         !if(pp_spin==0) cycle
-         !if(pp_spin> 1) cycle
          !
-         im_min=1+spin_m_table(1+i_spin,il,j2p1,is)
-         im_max=spin_m_table(1,il,j2p1,is)+spin_m_table(1+i_spin,il,j2p1,is)
-         !sf=sqrt(4._SP*pi/(2._SP*(il-1._SP)+1._SP))
-         !
-         do im = im_min,im_max
+         do im = 1,2*(il-1)+1
            !
            sf=pp_factor(im,il,j2p1,is,i_spin)
            !

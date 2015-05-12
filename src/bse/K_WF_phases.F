@@ -83,6 +83,7 @@ subroutine K_WF_phases(Xk)
          !
          if (.not.PAR_IND_WF_linear%element_2D(i_b,i_k)) cycle
          !
+         n_phases=n_phases+1
          WF_phase(i_k,i_s,i_b,:)=1._SP
          !
        enddo

@@ -66,8 +66,13 @@ if ( "$argv[1]" == "s" ) @ sub_new ++
 if ( "$argv[1]" != "save" ) then
   @ revision_new ++ 
   echo 
-  echo "v."$version_old"."$patch_old"."$sub_old " r."$revision_old " => " \
-       "v."$version_new"."$patch_new"."$sub_new " r."$revision_new
+  if ( "$gpl" == "yes" ) then
+    echo "v."$version_old"."$patch_old"."$sub_old " r."$GPL_revision_old " => " \
+         "v."$version_new"."$patch_new"."$sub_new " r."$revision_new
+  else
+    echo "v."$version_old"."$patch_old"."$sub_old " r."$revision_old " => " \
+         "v."$version_new"."$patch_new"."$sub_new " r."$revision_new
+  endif
   echo 
 else
  set source_dir="yambo-"$version_new"."$patch_new"."$sub_new
@@ -77,8 +82,6 @@ endif
 #
 echo -n "Confirm ?"
 if ($< =~ [Yy]*) then
-#
-echo
 #
 # Version strings
 echo 'code_version(1)='$version_new  >  include/version.inc
@@ -94,6 +97,19 @@ endif
 #
 # Prepare new configure script
 #
+if ( "$gpl" == "yes" ) then
+cat << EOF > ss.awk
+{
+ gsub("$version_old\\\.$patch_old\\\.$sub_old r\\\.$GPL_revision_old",
+      "$version_new.$patch_new.$sub_new r.$revision_new",\$0)
+ gsub("SVERSION=\"$version_old\"","SVERSION=\"$version_new\"",\$0)
+ gsub("SPATCHLEVEL=\"$patch_old\"","SPATCHLEVEL=\"$patch_new\"",\$0)
+ gsub("SSUBLEVEL=\"$sub_old\"","SSUBLEVEL=\"$sub_new\"",\$0)
+ gsub("SREVISION=\"$GPL_revision_old\"","SREVISION=\"$revision_new\"",\$0)
+ print \$0 > "NEW"
+}
+EOF
+else
 cat << EOF > ss.awk
 {
  gsub("$version_old\\\.$patch_old\\\.$sub_old r\\\.$revision_old",
@@ -105,6 +121,7 @@ cat << EOF > ss.awk
  print \$0 > "NEW"
 }
 EOF
+endif
 #
 # Version Update
 #

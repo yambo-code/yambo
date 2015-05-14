@@ -529,6 +529,8 @@ subroutine electrons_driver(Xk,Xen,Xq)
    v2plot=(el_cur(:,1)*current_dir(1)+el_cur(:,2)*current_dir(2)+&
 &          el_cur(:,3)*current_dir(3))*AU2nAmpere/v_norm(current_dir)
    !
+   v2plot=v2plot/abs(maxval( v2plot ))
+   !
    call msg("s",'Current integrals (x,y,z) [nAmpere]:',&
 &               (/Sum(el_cur(:,1)),Sum(el_cur(:,2)),Sum(el_cur(:,3))/)*AU2nAmpere)
    !

@@ -53,7 +53,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        setup_k_plus_q_levels,f_k_plus_q,elph_nDBs_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
 &                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK,ph_qpt,&
-&                        elph_branches,E_k_plus_q,QP_DW,QP_OMS_Fan
+&                        elph_branches,E_k_plus_q,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold,DW_deltaE_treshold
  use interfaces,    ONLY:PARALLEL_global_indexes
  use functions,     ONLY:Fermi_fnc_derivative
 #if defined _TIMING
@@ -354,7 +354,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          ! Skip modes @ Gamma (1st point is always gamma, either with random
          ! or uniform grids, as it is needed to evaluate the DW factor) 
          !
-         if (abs(ph_E)<epsilon(1._SP)) cycle
+         if (abs(ph_E)<FAN_deltaE_treshold) cycle
          !
          ! In the SE expression I have the m.e. 
          !
@@ -429,7 +429,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          ! which does not allow zero-energy transitions between the
          ! perturbed stated and itself
          !
-         if (abs(delta_E_at_gamma)<epsilon(1._SP)) cycle
+         if (abs(delta_E_at_gamma)<DW_deltaE_treshold) cycle
          !
          ! (b) Debye Waller Term
          !

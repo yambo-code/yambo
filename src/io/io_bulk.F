@@ -133,7 +133,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
  if (present(L3)) then
    if (write_is_on(ID)) then
      if (present(IPOS)) then
-       call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),R3,IPOS))
+       call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),L3,IPOS))
      else
        call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
 &                       L3,(/io_rec_pos(ID)/)))

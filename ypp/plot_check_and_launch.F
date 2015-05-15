@@ -24,7 +24,8 @@
 subroutine plot_check_and_launch(check_only)
  !
  use pars,        ONLY:SP
- use YPP,         ONLY:p_format,p_dir,plot_dim,use_gnuplot,use_xcrysden,use_cube 
+ use YPP,         ONLY:p_format,p_dir,plot_dim,use_gnuplot,use_xcrysden,use_cube,&
+&                      plot_is_1D,plot_is_2D,plot_is_3D
  use com,         ONLY:warning
  use D_lattice,   ONLY:a
  use vec_operate, ONLY:v_is_zero
@@ -35,8 +36,7 @@ subroutine plot_check_and_launch(check_only)
  ! Work Space
  !
  real(SP):: dp(3)
- logical :: use_1d(3),use_2d(3),use_3d,&
-&           switch_to_gnuplot,switch_to_xcrysden
+ logical :: switch_to_gnuplot,switch_to_xcrysden
  !
  ! Dot products to check orthogonality issues
  !
@@ -52,42 +52,42 @@ subroutine plot_check_and_launch(check_only)
  !
  if (.not.use_gnuplot.and..not.use_xcrysden.and..not.use_cube) use_gnuplot=.true.
  !
- use_1d(1) =p_dir(:1)=='1'
- use_1d(2) =p_dir(:1)=='2'
- use_1d(3) =p_dir(:1)=='3'
- use_2d(1) =p_dir(:2)=='12'.or.p_dir(:2)=='21'
- use_2d(2) =p_dir(:2)=='13'.or.p_dir(:2)=='31'
- use_2d(3) =p_dir(:2)=='23'.or.p_dir(:2)=='32'
- use_3d    =p_dir=='123'
+ plot_is_1D(1) =p_dir(:1)=='1'
+ plot_is_1D(2) =p_dir(:1)=='2'
+ plot_is_1D(3) =p_dir(:1)=='3'
+ plot_is_2D(1) =p_dir(:2)=='12'.or.p_dir(:2)=='21'
+ plot_is_2D(2) =p_dir(:2)=='13'.or.p_dir(:2)=='31'
+ plot_is_2D(3) =p_dir(:2)=='23'.or.p_dir(:2)=='32'
+ plot_is_3D    =p_dir=='123'
  !
- if (use_3d) then
+ if (plot_is_3D) then
    plot_dim=3
-   use_1d=.false.
-   use_2d=.false.
+   plot_is_1D=.false.
+   plot_is_2D=.false.
    if (.not.v_is_zero(dp).and.use_gnuplot) then
      if (check_only) call warning('Cannot average along non orthogonal directions')
      switch_to_xcrysden=.true.
    endif
- else if (any(use_2d)) then
+ else if (any(plot_is_2D)) then
    plot_dim=2
-   use_1d=.false.
-   use_3d=.false.
-   if (use_2d(1).and..not.v_is_zero((/0._SP,dp(2),dp(3)/)).and.use_gnuplot) then
+   plot_is_1D=.false.
+   plot_is_3D=.false.
+   if (plot_is_2D(1).and..not.v_is_zero((/0._SP,dp(2),dp(3)/)).and.use_gnuplot) then
      call warning('Cannot average along non orthogonal direction')
      switch_to_xcrysden=.true.
    endif
-   if (use_2d(2).and..not.v_is_zero((/dp(1),0._SP,dp(3)/)).and.use_gnuplot) then
+   if (plot_is_2D(2).and..not.v_is_zero((/dp(1),0._SP,dp(3)/)).and.use_gnuplot) then
      call warning('Cannot average along non orthogonal direction')
      switch_to_xcrysden=.true.
    endif
-   if (use_2d(3).and..not.v_is_zero((/dp(1),dp(2),0._SP/)).and.use_gnuplot) then
+   if (plot_is_2D(3).and..not.v_is_zero((/dp(1),dp(2),0._SP/)).and.use_gnuplot) then
      call warning('Cannot average along non orthogonal direction')
      switch_to_xcrysden=.true.
    endif
- else if (any(use_1d)) then
+ else if (any(plot_is_1D)) then
    plot_dim=1
-   use_2d=.false.
-   use_3d=.false.
+   plot_is_2D=.false.
+   plot_is_3D=.false.
  else
    plot_dim=3
    p_dir='123'
@@ -106,11 +106,11 @@ subroutine plot_check_and_launch(check_only)
  !
  if (check_only) return
  !
- if (use_gnuplot)  call plot_gnuplot(use_1d,use_2d,.FALSE.)
- if (use_cube)     call plot_cube()
+ if (use_gnuplot)   call plot_gnuplot(.FALSE.)
+ if (use_cube)      call plot_cube()
  if (use_xcrysden) then
-   if (plot_dim==2) call plot_gnuplot(use_1d,use_2d,.TRUE.)
-   call plot_xcrysden(use_2d)
+   if (plot_dim==2) call plot_gnuplot(.TRUE.)
+   call plot_xcrysden()
  endif
  !
 end subroutine

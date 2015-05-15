@@ -214,7 +214,8 @@ subroutine ypp_init_load(defs)
  call it(defs,'Format', 'Output format [(c)ube/(g)nuplot/(x)crysden]',p_format)
  call it(defs,'Direction', '[rlu] [1/2/3] for 1d or [12/13/23] for 2d [123] for 3D',p_dir)
  call it(defs,'MagDir', 'Magnetization component',mag_dir)
- call it(defs,'CurrentDir', '[cc] Carthesian direction to average the current',current_dir)
+ call it(defs,'CurrentDir', '[cc] Carthesian direction (used to average in 2D/3D plots or to plot in 1D)',current_dir)
+ call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')
 #if defined _YPP_SC
  call it(defs,'PotValue',  'REal/IMaginary part of the mean potential',V_value)
 #endif

@@ -21,19 +21,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine plot_xcrysden(use_2d)
+subroutine plot_xcrysden()
  !
  use pars,        ONLY:SP,schlen
  use units,       ONLY:BO2ANG
  use LOGO,        ONLY:code_version
  use com,         ONLY:msg
  use YPP,         ONLY:nr,v2plot,ncell,v2plot2D,r_hole,plot_dim,l_free_hole,&
-&                      l_norm_to_one,WF_multiplier,l_exc_wf,plot_title,output_string
+&                      l_norm_to_one,WF_multiplier,l_exc_wf,plot_title,output_string,plot_is_2D
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species,a,atom_pos,Z_species,n_atoms
  use LIVE_t,      ONLY:live_timing
  !
  implicit none
- logical  :: use_2d(3)
  !
  ! Work Space...
  !
@@ -90,12 +89,12 @@ subroutine plot_xcrysden(use_2d)
  select case(plot_dim)
    !
    case(2)
-     if (use_2d(1)) nr2plot=(/nr(1)+1,nr(2)+1/)
-     if (use_2d(2)) nr2plot=(/nr(1)+1,nr(3)+1/)
-     if (use_2d(3)) nr2plot=(/nr(2)+1,nr(3)+1/)
-     if (use_2d(1)) dir2plot=(/1,2/)
-     if (use_2d(2)) dir2plot=(/1,3/)
-     if (use_2d(3)) dir2plot=(/2,3/)
+     if (plot_is_2D(1)) nr2plot=(/nr(1)+1,nr(2)+1/)
+     if (plot_is_2D(2)) nr2plot=(/nr(1)+1,nr(3)+1/)
+     if (plot_is_2D(3)) nr2plot=(/nr(2)+1,nr(3)+1/)
+     if (plot_is_2D(1)) dir2plot=(/1,2/)
+     if (plot_is_2D(2)) dir2plot=(/1,3/)
+     if (plot_is_2D(3)) dir2plot=(/2,3/)
      !
      call msg(output_string,'BEGIN_BLOCK_DATAGRID_2D')
      call msg(output_string,'Generated with YPP',code_version)
@@ -108,19 +107,19 @@ subroutine plot_xcrysden(use_2d)
      !
      ! Origin of the datagrid
      !
-     if (use_2d(1)) call msg(output_string,'',ncell(3)*a_angs(3,:)/2)
-     if (use_2d(2)) call msg(output_string,'',ncell(2)*a_angs(2,:)/2) 
-     if (use_2d(3)) call msg(output_string,'',ncell(1)*a_angs(1,:)/2)
+     if (plot_is_2D(1)) call msg(output_string,'',ncell(3)*a_angs(3,:)/2)
+     if (plot_is_2D(2)) call msg(output_string,'',ncell(2)*a_angs(2,:)/2) 
+     if (plot_is_2D(3)) call msg(output_string,'',ncell(1)*a_angs(1,:)/2)
      !
      ! First spanning vector of the datagrid
      !
-     if (use_2d(1).or.use_2d(2)) call msg(output_string,'',ncell(1)*a_angs(1,:))
-     if (use_2d(3)) call msg(output_string,'',ncell(2)*a_angs(2,:))
+     if (plot_is_2D(1).or.plot_is_2D(2)) call msg(output_string,'',ncell(1)*a_angs(1,:))
+     if (plot_is_2D(3)) call msg(output_string,'',ncell(2)*a_angs(2,:))
      !
      !second spanning vector of the datagrid
      !
-     if (use_2d(1))call msg(output_string,'',ncell(2)*a_angs(2,:))
-     if (use_2d(2).or.use_2d(3)) call msg(output_string,'',ncell(3)*a_angs(3,:))
+     if (plot_is_2D(1))call msg(output_string,'',ncell(2)*a_angs(2,:))
+     if (plot_is_2D(2).or.plot_is_2D(3)) call msg(output_string,'',ncell(3)*a_angs(3,:))
      !
      do i2=1,nr2plot(2) 
        do i1=1,nr2plot(1)

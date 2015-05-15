@@ -73,6 +73,9 @@ module YPP
  logical      ::use_gnuplot
  logical      ::use_xcrysden
  logical      ::use_cube
+ logical      ::plot_is_1D(3)
+ logical      ::plot_is_2D(3)
+ logical      ::plot_is_3D
  character(1) ::p_format     
  character(1) ::mag_dir     
  character(3) ::p_dir        

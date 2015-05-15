@@ -21,17 +21,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine plot_gnuplot(use_1d,use_2d,eval_only)
+subroutine plot_gnuplot(eval_only)
  !
  use pars,        ONLY:SP,schlen
  use units,       ONLY:BO2ANG
  use com,         ONLY:msg
  use YPP,         ONLY:nr,v2plot,r_hole,v2plot2D,l_norm_to_one,WF_multiplier,plot_dim,&
-&                      plot_title,output_string,l_wavefunction,l_current,use_xcrysden
+&                      plot_title,output_string,l_wavefunction,l_current,use_xcrysden,&
+&                      plot_is_1D,plot_is_2D
  use LIVE_t,      ONLY:live_timing
  !
  implicit none
- logical    :: use_1d(3),use_2d(3),eval_only
+ logical    :: eval_only
  ! 
  ! Work Space...
  !
@@ -62,9 +63,9 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
    case(1)
      !
      do i1=1,3 
-       if (use_1d(i1)) nr2plot=nr(i1)
-       if (use_1d(i1)) dir2plot=i1
-       if (use_1d(i1)) call msg(output_string,"#",(/titles(1),titles(4)/),INDENT=0,USE_TABS=.true.)
+       if (plot_is_1D(i1)) nr2plot=nr(i1)
+       if (plot_is_1D(i1)) dir2plot=i1
+       if (plot_is_1D(i1)) call msg(output_string,"#",(/titles(1),titles(4)/),INDENT=0,USE_TABS=.true.)
      enddo
      call msg(output_string,'#')
      allocate(v2plot2D(nr2plot(1),1))
@@ -74,9 +75,9 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
        do i2 = 0,nr(2)-1
          do i3 = 0,nr(3)-1
            ir = 1 + i1 + i2*nr(1) + i3*nr(1)*nr(2)
-           if (use_1d(1)) v2plot2D(i1+1,1)=v2plot2D(i1+1,1)+v2plot(ir)
-           if (use_1d(2)) v2plot2D(i2+1,1)=v2plot2D(i2+1,1)+v2plot(ir)
-           if (use_1d(3)) v2plot2D(i3+1,1)=v2plot2D(i3+1,1)+v2plot(ir)
+           if (plot_is_1D(1)) v2plot2D(i1+1,1)=v2plot2D(i1+1,1)+v2plot(ir)
+           if (plot_is_1D(2)) v2plot2D(i2+1,1)=v2plot2D(i2+1,1)+v2plot(ir)
+           if (plot_is_1D(3)) v2plot2D(i3+1,1)=v2plot2D(i3+1,1)+v2plot(ir)
          enddo
        enddo
        call live_timing(steps=1)
@@ -104,17 +105,17 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
    case(2)
      !
      if (.not.use_xcrysden) then
-       if (use_2d(1)) nr2plot=(/nr(1),nr(2)/)
-       if (use_2d(2)) nr2plot=(/nr(1),nr(3)/)
-       if (use_2d(3)) nr2plot=(/nr(2),nr(3)/)
+       if (plot_is_2D(1)) nr2plot=(/nr(1),nr(2)/)
+       if (plot_is_2D(2)) nr2plot=(/nr(1),nr(3)/)
+       if (plot_is_2D(3)) nr2plot=(/nr(2),nr(3)/)
      else
-       if (use_2d(1)) nr2plot=(/nr(1)+1,nr(2)+1/)
-       if (use_2d(2)) nr2plot=(/nr(1)+1,nr(3)+1/)
-       if (use_2d(3)) nr2plot=(/nr(2)+1,nr(3)+1/)
+       if (plot_is_2D(1)) nr2plot=(/nr(1)+1,nr(2)+1/)
+       if (plot_is_2D(2)) nr2plot=(/nr(1)+1,nr(3)+1/)
+       if (plot_is_2D(3)) nr2plot=(/nr(2)+1,nr(3)+1/)
      endif
-     if (use_2d(1)) dir2plot=(/1,2/)
-     if (use_2d(2)) dir2plot=(/1,3/)
-     if (use_2d(3)) dir2plot=(/2,3/)
+     if (plot_is_2D(1)) dir2plot=(/1,2/)
+     if (plot_is_2D(2)) dir2plot=(/1,3/)
+     if (plot_is_2D(3)) dir2plot=(/2,3/)
      allocate(v2plot2D(nr2plot(1),nr2plot(2)))
      v2plot2D=0.
      ir=0
@@ -122,9 +123,9 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
        do i2 = 0,nr(2)-1
          do i3 = 0,nr(3)-1
            ir = 1 + i1 + i2*nr(1) + i3*nr(1)*nr(2)
-           if (use_2d(1)) v2plot2D(i1+1,i2+1)=v2plot2D(i1+1,i2+1)+v2plot(ir)
-           if (use_2d(2)) v2plot2D(i1+1,i3+1)=v2plot2D(i1+1,i3+1)+v2plot(ir)
-           if (use_2d(3)) v2plot2D(i2+1,i3+1)=v2plot2D(i2+1,i3+1)+v2plot(ir)
+           if (plot_is_2D(1)) v2plot2D(i1+1,i2+1)=v2plot2D(i1+1,i2+1)+v2plot(ir)
+           if (plot_is_2D(2)) v2plot2D(i1+1,i3+1)=v2plot2D(i1+1,i3+1)+v2plot(ir)
+           if (plot_is_2D(3)) v2plot2D(i2+1,i3+1)=v2plot2D(i2+1,i3+1)+v2plot(ir)
          enddo
        enddo
        call live_timing(steps=1)
@@ -140,11 +141,11 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
      v2plot2D=v2plot2D*WF_multiplier
      !
      if (.not.eval_only) then
-       if (use_2d(1)) call msg(output_string,"#",&
+       if (plot_is_2D(1)) call msg(output_string,"#",&
 &                             (/titles(1),titles(2),titles(4)/),INDENT=0,USE_TABS=.true.)
-       if (use_2d(2)) call msg(output_string,"#",&
+       if (plot_is_2D(2)) call msg(output_string,"#",&
 &                             (/titles(1),titles(3),titles(4)/),INDENT=0,USE_TABS=.true.)
-       if (use_2d(3)) call msg(output_string,"#",&
+       if (plot_is_2D(3)) call msg(output_string,"#",&
 &                             (/titles(2),titles(3),titles(4)/),INDENT=0,USE_TABS=.true.)
        call msg(output_string,"#")
        do i1=0,nr2plot(1)-1

@@ -68,7 +68,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  integer                 :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
 &                           isp,iv,ic,iw,isave(4),n_poles,i_cg,i_bg,alloc_err
- logical                 :: force_bare_X_G,Drude_pole
+ logical                 :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                :: minmax_ehe(2,PAR_COM_q_for_Xo%n_CPU),eh_occ
  type(ggwinfo)           :: isc
  complex(SP)             :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
@@ -86,6 +86,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  ! Logicals to use bare or RIM GF (no poles accumulation)
  !=======================================================
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM.or.associated(Xen%GreenF)
+ !
+ skip_WF_load= (iq==1.and.X%ng==1)
  !
  !  Optical strengths
  !=====================
@@ -111,7 +113,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! WF load
  !=========
- call WF_load(WF,X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+ if(.not.skip_WF_load) call WF_load(WF,X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
 #if defined _TIMING
  call timing('Xo (procedure)',OPR='start')
@@ -260,19 +262,21 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
        isc%os = (/iv,ik,1,i_spin/)
        isc%qs = (/1,1,1/)
        ik_bz_mem=PAR_Xk_bz_index(ikbz)
-       if (any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/))) then
-         call scatterBamp(isc)
-         rhotw_save=isc%rhotw
-         isave=(/iv,ic,ik,i_spin/)
-       endif
-       do ig1=1,X%ng
-         ig2=g_rot(sop_inv(is),ig1)
-         isc%rhotw(ig1)=rhotw_save(ig2)
-       enddo
-       if (is>nsym/(i_time_rev+1)) then
+       if (.not. skip_WF_load) then
+         if (any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/))) then
+           call scatterBamp(isc)
+           rhotw_save=isc%rhotw
+           isave=(/iv,ic,ik,i_spin/)
+         endif
          do ig1=1,X%ng
-           isc%rhotw(ig1)=conjg(isc%rhotw(ig1))
+           ig2=g_rot(sop_inv(is),ig1)
+           isc%rhotw(ig1)=rhotw_save(ig2)
          enddo
+         if (is>nsym/(i_time_rev+1)) then
+           do ig1=1,X%ng
+             isc%rhotw(ig1)=conjg(isc%rhotw(ig1))
+           enddo
+         endif
        endif
        isc%rhotw(1)=-conjg(DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin))
      else

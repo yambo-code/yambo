@@ -54,11 +54,11 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  !
  ! DEFAULT TRESHOLD
  !
- real(SP), parameter :: default_treshold=1.E-6
+ real(SP), parameter :: default_treshold=1.E-5
  !
  ! Work Space
  ! 
- integer ::i1,i2,i3,dncg,ipos(npts,2),icycle,itresh
+ integer ::i_cg,i_bg,i_bg_loc,i_bg_ref,dncg,ipos(npts,2),icycle,itresh
  real(SP)::tresh,df
  logical ::lcycle
  character(schlen)   :: ch
@@ -76,82 +76,86 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
    coarse_grid_N=npts
    bare_grid_N=1
    coarse_grid_Pt=bg_pt
-   forall ( i1=1:npts) ordered_grid_index(i1)=i1
-   forall ( i1=1:npts) coarse_grid_index(i1)=i1
+   forall ( i_bg=1:npts) ordered_grid_index(i_bg)=i_bg
+   forall ( i_bg=1:npts) coarse_grid_index(i_bg)=i_bg
    return
  endif
  !
  allocate(bg_diffs(npts-1),bg_sorted(npts),bg_sorted_x(npts))
  bg_sorted=bg_pt
  call sort(bg_sorted,indx=bg_sorted_x)
- do i1=1,npts-1
-   bg_diffs(i1)=bg_sorted(i1+1)-bg_sorted(i1)
+ do i_bg=1,npts-1
+   bg_diffs(i_bg)=bg_sorted(i_bg+1)-bg_sorted(i_bg)
  enddo
  !
  call sort(bg_diffs)
  !
  tresh=default_treshold
  if (cg_percentual<0.) tresh=minval(bg_diffs)+&
-&                      abs(cg_percentual)/100.*(maxval(bg_diffs)-minval(bg_diffs))
+&                      abs(cg_percentual)/100._SP*(maxval(bg_diffs)-minval(bg_diffs))
  icycle=0
  coarse_grid_N=-1
  lcycle=.true.
  do while(lcycle)
    icycle=icycle+1
-   i2=1
-   ipos(1,1)=i2
+   i_cg=1
+   i_bg_ref=1
+   ipos(1,1)=i_cg
    ipos(bg_sorted_x(1),2)=1
-   do i1=2,npts
-     df=bg_sorted(i1)-bg_sorted(i1-1)
-     if (df>tresh) i2=i2+1
-     ipos(i1,1)=i2
-     ipos(bg_sorted_x(i1),2)=i1
+   do i_bg=2,npts
+     df=bg_sorted(i_bg)-bg_sorted(i_bg_ref)
+     if (df>tresh) then
+       i_cg=i_cg+1
+       i_bg_ref=i_bg
+     endif
+     ipos(i_bg,1)=i_cg
+     ipos(bg_sorted_x(i_bg),2)=i_bg
    enddo
-   if (icycle==1) dncg=i2
-   if (cg_percentual>0.) coarse_grid_N=max(int(cg_percentual*real(dncg)/100.),1)
-   if (i2<=coarse_grid_N.or.cg_percentual==100.) lcycle=.false.
+   if (icycle==1) dncg=i_cg
+   if (cg_percentual>0._SP) coarse_grid_N=max(int(cg_percentual*real(dncg,SP)/100._SP),1)
+   if (i_cg<=coarse_grid_N.or.cg_percentual==100._SP) lcycle=.false.
    if (icycle==1) then
      itresh=npts-coarse_grid_N
      tresh=bg_diffs(max(itresh,1))
      cycle
    endif
-   itresh=min(itresh+i2-coarse_grid_N,npts-1)
+   itresh=min(itresh+i_cg-coarse_grid_N,npts-1)
    tresh=bg_diffs(max(itresh,1))
  enddo
- coarse_grid_N=i2
+ coarse_grid_N=i_cg
  !
  allocate(ordered_grid_index(npts),coarse_grid_index(npts),bare_grid_N(coarse_grid_N),coarse_grid_Pt(coarse_grid_N))
  call mem_est("RGi CGi BGn CGp",(/npts,npts,coarse_grid_N,coarse_grid_N/),(/IP,IP,IP,SP/))
  !
  ordered_grid_index=ipos(:,2)
  !
- i2=1
- coarse_grid_Pt=0.
+ i_cg=1
+ coarse_grid_Pt=0._SP
  bare_grid_N=0
- do i1=1,npts
-   if (ipos(i1,1)/=i2) then
-     coarse_grid_Pt(i2)=coarse_grid_Pt(i2)/real(bare_grid_N(i2))
-     i2=i2+1
+ do i_bg=1,npts
+   if (ipos(i_bg,1)/=i_cg) then
+     coarse_grid_Pt(i_cg)=coarse_grid_Pt(i_cg)/real(bare_grid_N(i_cg))
+     i_cg=i_cg+1
    endif
-   coarse_grid_Pt(i2)=coarse_grid_Pt(i2)+bg_sorted(i1)
-   bare_grid_N(i2)=bare_grid_N(i2)+1
+   coarse_grid_Pt(i_cg)=coarse_grid_Pt(i_cg)+bg_sorted(i_bg)
+   bare_grid_N(i_cg)=bare_grid_N(i_cg)+1
  enddo
  coarse_grid_Pt(coarse_grid_N)=coarse_grid_Pt(coarse_grid_N)/real(bare_grid_N(coarse_grid_N))
  !
- i3=0
+ i_bg=0
  allocate(i_vec(npts))
- do i1=1,coarse_grid_N
-   do i2=1,bare_grid_N(i1)
-     i3=i3+1
-     i_vec(i3)=i1
+ do i_cg=1,coarse_grid_N
+   do i_bg_loc=1,bare_grid_N(i_cg)
+     i_bg=i_bg+1
+     i_vec(i_bg)=i_cg
    enddo
  enddo
- forall(i1=1:npts) coarse_grid_index(i1)=i_vec( ordered_grid_index(i1) )
+ forall(i_bg=1:npts) coarse_grid_index(i_bg)=i_vec( ordered_grid_index(i_bg) )
  deallocate(i_vec)
  !
  if(.not.trim(title)=='COLL') then
    write (ch,'(3a)') '[',title,'-CG] R(p) Tot o/o(of R)  :'
-   call msg('rs',trim(ch),(/coarse_grid_N,npts,int(real(coarse_grid_N)/real(dncg)*100.)/))
+   call msg('rs',trim(ch),(/coarse_grid_N,npts,int(real(coarse_grid_N)/real(dncg)*100._SP)/))
  endif
  !
  deallocate(bg_diffs,bg_sorted,bg_sorted_x)

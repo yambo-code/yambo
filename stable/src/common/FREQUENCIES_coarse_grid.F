@@ -57,7 +57,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  !
  ! DEFAULT TRESHOLD
  !
- real(SP), parameter :: default_treshold=1.E-6
+ real(SP), parameter :: default_treshold=1.E-5
  !
  ! Work Space
  ! 
@@ -102,10 +102,15 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual)
  do while(lcycle)
    icycle=icycle+1
    i2=1
+   i3=1
    ipos(1,1)=i2
    ipos(bg_sorted_x(1),2)=1
    do i1=2,npts
-     df=bg_sorted(i1)-bg_sorted(i1-1)
+     df=bg_sorted(i1)-bg_sorted(i3)
+     if (df>tresh) then
+       i2=i2+1
+       i3=i1
+     endif
      if (df>tresh) i2=i2+1
      ipos(i1,1)=i2
      ipos(bg_sorted_x(i1),2)=i1

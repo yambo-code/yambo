@@ -34,26 +34,26 @@ subroutine K_eps_interpolate(nW,W,err,i_epsilon)
  ! Work Space...
  !
  integer, parameter :: order_max=3,n_pts_max=5
- integer    ::iw,iw_fit,n_pts,order,i1
- real(SP)   ::r_fit_pt(n_pts_max),EPS,Dy(n_pts_max),Dx(n_pts_max),Pol_coeff(order_max+1)
+ integer    ::iw,iw_fit,n_pts,order,i1,fit_pt(n_pts_max)
+ real(SP)   ::EPS,Dy(n_pts_max),Dx(n_pts_max),Pol_coeff(order_max+1)
  !
  w_loop: do iw=1,nW
    if (err(iw)/=0) then
      n_pts=0
-     r_fit_pt=0.
+     fit_pt=0
      do iw_fit=iw-1,1,-1
        if (err(iw_fit)/=0) cycle
        n_pts=n_pts+1
-       r_fit_pt(n_pts)=iw_fit
+       fit_pt(n_pts)=iw_fit
        if (n_pts==n_pts_max/2) exit
      enddo
      do iw_fit=iw+1,nW
        if (err(iw_fit)/=0) cycle
        n_pts=n_pts+1
-       r_fit_pt(n_pts)=iw_fit
+       fit_pt(n_pts)=iw_fit
        if (n_pts==n_pts_max) exit
      enddo
-     call sort(r_fit_pt(:n_pts))
+     call sort(fit_pt(:n_pts))
      !
      do i1=1,2
        order=order_max
@@ -64,9 +64,9 @@ subroutine K_eps_interpolate(nW,W,err,i_epsilon)
        Dy=0._SP
        Pol_coeff=0._SP
        do iw_fit=1,n_pts
-         Dx(iw_fit)=W( int(r_fit_pt(iw_fit)) )-W(iw)
-         if (i1==1) Dy(iw_fit)=aimag(X_epsilon(i_epsilon, int(r_fit_pt(iw_fit)) ))
-         if (i1==2) Dy(iw_fit)=real(X_epsilon(i_epsilon, int(r_fit_pt(iw_fit)) ))
+         Dx(iw_fit)=W( fit_pt(iw_fit) )-W(iw)
+         if (i1==1) Dy(iw_fit)=aimag( X_epsilon(i_epsilon,fit_pt(iw_fit)) )
+         if (i1==2) Dy(iw_fit)= real( X_epsilon(i_epsilon,fit_pt(iw_fit)) )
        enddo
        call pol_fit(n_pts,Dx(:n_pts),Dy(:n_pts),order,Pol_coeff(:order+1),EPS,0.d0)
        !

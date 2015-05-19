@@ -85,11 +85,11 @@ subroutine bz_samp_indexes(k,Xk,q)
  call parser('MinusQ',Xk_impose_minus_q_local)
  if (Xk_impose_minus_q_local.or.l_setup) Xk_impose_minus_q=Xk_impose_minus_q_local 
  !
- if (.not.bse_scattering ) bse_scattering=l_bse
+ if (.not.bse_scattering ) bse_scattering =l_bse
  if (.not.coll_scattering) coll_scattering=l_elel_scatt
 #if defined _ELPH
  call parser('BSEscatt',bse_setup_scatt)
- if (.not.bse_scattering ) bse_scattering=elph_use_q_grid.or.bse_setup_scatt
+ if (.not.bse_scattering ) bse_scattering =elph_use_q_grid.or.bse_setup_scatt
 #endif
  !
  q%description='q'
@@ -125,14 +125,16 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! of K-pts
  !
  if (abs(m3det(k_b_m1))>1.E-7) then
+   !
    call m3inv(M=k_b_m1)
    !
-   if (Xk_impose_minus_q)      call define_q_map(-Xk%ptbz(:,:),-Xk%ptbz(1,:))
-   if (.not.Xk_impose_minus_q) call define_q_map(Xk%ptbz(:,:),Xk%ptbz(1,:))
+   if (     Xk_impose_minus_q) call define_q_map(-Xk%ptbz(:,:),-Xk%ptbz(1,:))
+   if (.not.Xk_impose_minus_q) call define_q_map( Xk%ptbz(:,:), Xk%ptbz(1,:))
    !
    ! THE GRID IS UNIFORM IF ALL THE Q_MAP IS FILLED
    !
    Xk_grid_is_uniform=all(q_map/=0)
+   !
  else
    Xk_grid_is_uniform=.false.
  endif

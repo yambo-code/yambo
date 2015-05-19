@@ -24,7 +24,12 @@
 module vec_operate
  !
  use pars,      ONLY:SP,pi,zero_dfl
+ !
  implicit none
+ !
+ interface sort
+   module procedure r_sort,i_sort
+ end interface
  !
  contains
    ! 
@@ -226,7 +231,7 @@ module vec_operate
      !
    end function rlu_v_norm
    !
-   subroutine sort(arrin,arrout,indx,indx_m1)                             
+   subroutine r_sort(arrin,arrout,indx,indx_m1)                             
      !
      ! Sort real(dt) values from arrin into array 
      ! arrout and give permutations in indx, indx_m1.
@@ -241,8 +246,8 @@ module vec_operate
      !
      ! local variables
      !
-     integer j, i,n, ir, l, indxt
-     real(SP)  q
+     integer  :: j, i,n, ir, l, indxt
+     real(SP) :: q
      integer, allocatable:: l_indx(:)
      real(SP),allocatable:: l_arrout(:)
      !
@@ -275,7 +280,7 @@ module vec_operate
        ir=ir-1
        if (ir.eq.1)then
          l_indx(1)=indxt
-         goto 3
+         go to 3
        endif
      endif
      i=l
@@ -304,36 +309,85 @@ module vec_operate
      if (present(indx)) indx=l_indx
      if (present(indx_m1)) forall( i=1:n) indx_m1(l_indx(i))=i
      deallocate(l_indx,l_arrout)
-   end subroutine sort
+   end subroutine r_sort
    !
-   subroutine i_sort(arrin,arrout,indx)                             
+   subroutine i_sort(arrin,arrout,indx,indx_m1)                             
+     !
+     ! Sort integer values from arrin into array 
+     ! arrout and give permutations in indx, indx_m1.
+     ! Content of indx is destroyed.
+     ! indx_m1: j went to   position indx_m1(j)
+     ! indx   : i came from position indx(i) 
+     !
      integer           ::  arrin(:)
+     integer,  optional::  arrout(:)
      integer,  optional::  indx(:)
-     real(SP), optional::  arrout(:)
+     integer,  optional::  indx_m1(:)
      !
-     integer :: n
+     ! local variables
      !
-     real(SP), allocatable :: l_arrin(:)
-     real(SP), allocatable :: l_arrout(:)
+     integer  :: j, i,n, ir, l, indxt, q
+     integer, allocatable:: l_indx(:)
+     integer, allocatable:: l_arrout(:)
      !
      n=size(arrin)
+     allocate(l_indx(n),l_arrout(n))
      !
-     allocate(l_arrin(n),l_arrout(n))
-     !
-     l_arrin=real(arrin)
-     if(present(arrout)) then
-       l_arrout=real(arrout)
-       if(     present(indx)) call sort(l_arrin,arrout=l_arrout,indx=indx)
-       if(.not.present(indx)) call sort(l_arrin,arrout=l_arrout)
-       arrout=int(l_arrout)
-     else
-       if(     present(indx)) call sort(l_arrin,indx=indx)
-       if(.not.present(indx)) call sort(l_arrin)
-       arrin=int(l_arrin)
+     if(n.eq.1) then
+       l_arrout(1) = arrin(1)
+       l_indx(1) = 1
+       if (     present(arrout)) arrout=l_arrout
+       if (.not.present(arrout)) arrin =l_arrout
+       if (     present(indx)  ) indx  =l_indx
+       deallocate(l_indx,l_arrout)
+       return
      endif
-     !
-     return
-     !
+     do j=1,n
+       l_indx(j)=j
+     enddo
+     l=n/2+1
+     ir=n
+  1  continue
+     if (l.gt.1)then
+       l=l-1
+       indxt=l_indx(l)
+       q=arrin(indxt)
+     else
+       indxt=l_indx(ir)
+       q=arrin(indxt)
+       l_indx(ir)=l_indx(1)
+       ir=ir-1
+       if (ir.eq.1)then
+         l_indx(1)=indxt
+         go to 3
+       endif
+     endif
+     i=l
+     j=l+l
+  2  if (j.le.ir)then
+      if (j.lt.ir) then
+        if (arrin(l_indx(j)).lt.arrin(l_indx(j+1)))j=j+1
+      endif
+      if (q.lt.arrin(l_indx(j))) then
+        l_indx(i)=l_indx(j)
+        i=j
+        j=j+j
+      else
+        j=ir+1
+      endif
+      go to 2
+     endif
+     l_indx(i)=indxt
+     go to 1
+  3  continue
+     do i=1,n
+       l_arrout(i) = arrin(l_indx(i))
+     enddo
+     if (     present(arrout) ) arrout=l_arrout
+     if (.not.present(arrout) ) arrin =l_arrout
+     if (     present(indx)   ) indx  =l_indx
+     if (     present(indx_m1)) forall( i=1:n) indx_m1(l_indx(i))=i
+     deallocate(l_indx,l_arrout)
    end subroutine i_sort
    !
    subroutine degeneration_finder(E,n,first_deg_el,deg_elmnts,deg_grps,&

@@ -728,10 +728,10 @@ contains
 #endif
 #if defined _P2Y_V50
    call qexml_read_exx(exx_fraction=pw_exx_fraction, screening_parameter=pw_screening_parameter,& 
-& 			exx_is_active=pw_exx_is_active,ierr=ierr)
+&                      exx_is_active=pw_exx_is_active,ierr=ierr)
    if (pw_exx_is_active) then 
-	GS_exx_FRACTION = pw_exx_fraction
-	GS_exx_SCREENING= pw_screening_parameter
+      GS_exx_FRACTION = pw_exx_fraction
+      GS_exx_SCREENING= pw_screening_parameter
    endif
 #endif
  end subroutine get_xc

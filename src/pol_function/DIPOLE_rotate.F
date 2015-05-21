@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_rotate(SC_R,Xen,Xk,X)
+subroutine Dipole_rotate(SC_R,Xen,Xk,X,rot_direction)
  !
  ! This routine update dipoles according to eq. 13
  ! of ref. PRB 59, 7486 (1999)
@@ -44,37 +44,26 @@ subroutine Dipole_rotate(SC_R,Xen,Xk,X)
  complex(SP),   intent(in) :: SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
  type(X_t),     intent(inout) :: X
  !
+ integer,       intent(in) :: rot_direction
+ !
  ! Work Space
  !
  integer  :: ik,id
  !
- if(.not.l_sc_run) &
-&   call warning(" Optical matrix elements updated according to the new WF")
+ if(.not.l_sc_run) call warning(" Optical matrix elements updated with WFs rotation. Neglecting diagonal terms of DIP_iR")
  !
  do ik=1,Xen%nk
    !
    do id=1,3
-#if defined _SC
+     !
      DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1) =transpose(DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1))
-     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),DIP_P (id,1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),1)
+     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),DIP_P (id,1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),rot_direction)
      DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1) =transpose(DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1))
-#endif
+     !
      DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1)=transpose(DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1))
-     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),1)
+     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),rot_direction)
      DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1)=transpose(DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1))
-   enddo
-   !
-   call DIPOLE_dip_dot_field(Xen,Xk,X,X%q0)
-   !
-   do id=1,3
-#if defined _SC
-     DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1) =transpose(DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1))
-     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),DIP_P (id,1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),-1)
-     DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1) =transpose(DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1))
-#endif
-     DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1)=transpose(DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1))
-     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),-1)
-     DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1)=transpose(DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1))
+     !
    enddo
    !
  enddo

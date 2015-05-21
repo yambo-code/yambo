@@ -26,6 +26,7 @@ integer function io_SC_components(what,E_sc,ID)
  ! what can be E WF V J_and_P G
  !
  use pars,           ONLY:SP,lchlen
+ use drivers,        ONLY:l_sc_run
  use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,rho_convergence,E_convergence,&
@@ -152,12 +153,20 @@ integer function io_SC_components(what,E_sc,ID)
      !
      bands_to_load=size(E_sc%E,1)
      !
-     ! Make a copy of Kohn-Sham Energies in E_sc%Eo
+     ! Make a copy of Kohn-Sham Energies in E_sc%Eo / E_sc%E_dip
      !
-     if(.not.associated(E_sc%Eo)) then
-       allocate(E_sc%Eo(E_sc%nb,E_sc%nk,n_sp_pol))
-       call mem_est("E-Eo",(/size(E_sc%Eo)/),(/SP/))
-       E_sc%Eo=E_sc%E
+     if(l_sc_run) then
+       if(.not.associated(E_sc%Eo)) then
+         allocate(E_sc%Eo(E_sc%nb,E_sc%nk,n_sp_pol))
+         call mem_est("E-Eo",(/size(E_sc%Eo)/),(/SP/))
+         E_sc%Eo=E_sc%E
+       endif
+     else
+       if(.not.associated(E_sc%E_dip)) then
+         allocate(E_sc%E_dip(E_sc%nb,E_sc%nk,n_sp_pol))
+         call mem_est("E-Eo",(/size(E_sc%E_dip)/),(/SP/))
+         E_sc%E_dip=E_sc%E
+       endif
      endif
      !
      if (bands_to_load>SC_bands(2)) then

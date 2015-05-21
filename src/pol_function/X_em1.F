@@ -166,7 +166,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (WF_buffered_IO) then
      !
-     call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
+     call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER')
      !
    endif
    !

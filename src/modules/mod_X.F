@@ -46,6 +46,7 @@ module X_m
  ! Warning about non-local commutator
  !
  logical                  :: Vnl_commutator_warning
+ logical                  :: l_rotate_dipoles
  !
  ! Dipole M.E.
  !

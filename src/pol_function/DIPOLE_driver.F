@@ -23,14 +23,14 @@
 !
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
- use drivers,        ONLY:l_optics
+ use drivers,        ONLY:l_optics,l_sc_run
  use LIVE_t,         ONLY:is_section_time_short
  use interfaces,     ONLY:WF_load
  use pars,           ONLY:SP
  use com,            ONLY:warning,grid_path
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
+ use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,l_rotate_dipoles,&
 &                         Vnl_commutator_warning,Dipole_uses_shifted_grids
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,RD_CL_IF_END,&
 &                         IO_and_Messaging_switch,io_DIP
@@ -42,7 +42,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #endif
 #if defined _SC
  use com,            ONLY:secnm
- use drivers,        ONLY:l_real_time,l_sc_run 
+ use drivers,        ONLY:l_real_time
  use X_m,            ONLY:P_square
 #endif
 #if defined _KERR
@@ -165,7 +165,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    ! there will be other WF_load calls using the present WF distribution. 
    !
    call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
-&               force_WFo=.true.,keep_states_to_load=.TRUE.)
+&               force_WFo=(l_sc_run.or.l_rotate_dipoles),keep_states_to_load=.TRUE.)
    !
    use_trans_gauge = .true.
    !

@@ -76,6 +76,7 @@ module electrons
    integer,pointer :: QP_corrected(:,:,:)  => null()
    real(SP),   pointer :: E(:,:,:)         => null()
    real(SP),   pointer :: Eo(:,:,:)        => null()
+   real(SP),   pointer :: E_dip(:,:,:)     => null()
    real(SP),   pointer :: f(:,:,:)         => null()
    real(SP),   pointer :: fo(:,:,:)        => null()
    real(SP),   pointer :: W(:,:,:)         => null()
@@ -136,9 +137,11 @@ module electrons
      Eo%f=0.
      !
      ! This line is beacause in _RT calculations the actual first size of %Eo may differ
-     ! from %nb as it is limited by SC_bands
+     ! from %nb as it is limited by SC_bands. To be checked after implementatio of E_dip
      !
      BOUNDS(1)=size(Ei%Eo,1)
+     BOUNDS(2)=BOUNDS(1)
+     if (associated(Ei%E_dip)) BOUNDS(2)=size(Ei%E_dip,1)
      !
      if (naive) then
        Eo%f(:,:,:)=Ei%f(:,:,:)
@@ -148,20 +151,25 @@ module electrons
          call mem_est("E-Eo",(/size(Eo%Eo)/),(/SP/))
          Eo%Eo(:BOUNDS(1),:,:)=Ei%Eo(:BOUNDS(1),:,:)
        endif
+       if (associated(Ei%E_dip)) then
+         allocate(Eo%E_dip(BOUNDS(2),Eo%nk,n_sp_pol))
+         call mem_est("E-E_dip",(/size(Eo%E_dip)/),(/SP/))
+         Eo%E_dip(:BOUNDS(2),:,:)=Ei%E_dip(:BOUNDS(2),:,:)
+       endif
        if (associated(Ei%fo)) then
-         allocate(Eo%fo(BOUNDS(1),Eo%nk,n_sp_pol))
+         allocate(Eo%fo(BOUNDS(2),Eo%nk,n_sp_pol))
          call mem_est("E-fo",(/size(Eo%fo)/),(/SP/))
-         Eo%fo(:BOUNDS(1),:,:)=Ei%fo(:BOUNDS(1),:,:)
+         Eo%fo(:BOUNDS(2),:,:)=Ei%fo(:BOUNDS(2),:,:)
        endif
        if (associated(Ei%W)) then
-         allocate(Eo%W(BOUNDS(1),Eo%nk,n_sp_pol))
+         allocate(Eo%W(BOUNDS(2),Eo%nk,n_sp_pol))
          call mem_est("E-W",(/size(Eo%W)/),(/SP/))
-         Eo%W(:BOUNDS(1),:,:)=Ei%W(:BOUNDS(1),:,:)
+         Eo%W(:BOUNDS(2),:,:)=Ei%W(:BOUNDS(2),:,:)
        endif
        if (associated(Ei%Z)) then
-         allocate(Eo%Z(BOUNDS(1),Eo%nk,n_sp_pol))
+         allocate(Eo%Z(BOUNDS(2),Eo%nk,n_sp_pol))
          call mem_est("E-Z",(/size(Eo%Z)/))
-         Eo%Z(:BOUNDS(1),:,:)=Ei%Z(:BOUNDS(1),:,:)
+         Eo%Z(:BOUNDS(2),:,:)=Ei%Z(:BOUNDS(2),:,:)
        endif
        if (associated(Ei%QP_corrected)) then
          BOUNDS(1)=size(Ei%QP_corrected,1)
@@ -205,6 +213,7 @@ module electrons
      E%GreenF_is_causal=.FALSE. 
      if(associated(E%E))              deallocate(E%E)
      if(associated(E%Eo))             deallocate(E%Eo)
+     if(associated(E%E_dip))          deallocate(E%E_dip)
      if(associated(E%Z))              deallocate(E%Z)
      if(associated(E%W))              deallocate(E%W)
      if(associated(E%f))              deallocate(E%f)
@@ -212,8 +221,8 @@ module electrons
      if(associated(E%QP_corrected))   deallocate(E%QP_corrected)
      if(associated(E%GreenF))         deallocate(E%GreenF)
      if(associated(E%GreenF_W))       deallocate(E%GreenF_W)
-     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%fo,E%QP_corrected,E%GreenF,E%GreenF_W)
-     call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
+     nullify(E%E,E%Eo,E%E_dip,E%Z,E%W,E%f,E%fo,E%QP_corrected,E%GreenF,E%GreenF_W)
+     call mem_est("E-E E-Eo E-E_dip E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
      !
      call E_RIM_components_reset(E,.FALSE.)
      !

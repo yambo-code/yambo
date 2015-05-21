@@ -39,7 +39,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use vec_operate,    ONLY:cross_product,c2a
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
 #if defined _SC
+ use wave_func,      ONLY:WF_buffered_IO 
  use drivers,        ONLY:l_sc_run
+ use X_m,            ONLY:l_rotate_dipoles
  use electrons,      ONLY:n_sp_pol
  use SC,             ONLY:load_SC_components,found_SC_DB
  use global_XC,      ONLY:G_kind,G_xc_functional,X_kind,&
@@ -284,6 +286,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call load_SC_components('E',E=Xen,COM_=NONE,MODE_=DUMP,ik=0,&
 &                         kind=X_kind,xc_functional=X_xc_functional,perturbation=X_perturbation)
  if (found_SC_DB) call setup_global_XC('X',X_kind,MORE_NONE,X_xc_functional,X_perturbation)
+ if (found_SC_DB.and.WF_buffered_IO) then
+   call warning(' SC WFs and WF_buffered not supported. Turning off buffering')
+   WF_buffered_IO=.false.
+ endif
 #endif
  !
  ! Negative Temperature indicates that such Temperature is held
@@ -348,16 +354,25 @@ subroutine setup(en,Xen,Ken,k,Xk)
    if (found_SC_DB) then
      call setup_global_XC('WF',WF_kind,MORE_NONE,WF_xc_functional,WF_perturbation)
      call warning(trim(loaded_WF_xc_string)//' wavefunctions found. Bands check at loading time.')
+     l_rotate_dipoles=.false.
    endif
    !
  endif
  !
- ! Copy Ho eigenvalues in Xen%Eo
+ ! Copy Ho eigenvalues in Xen%Eo for dipoles
  !
- if (.not.associated(Xen%Eo).and.found_SC_DB) then
-   allocate(Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
-   call mem_est("XenE-Eo",(/size(Xen%Eo)/),(/SP/))
-   Xen%Eo(:,:,:)=en%Eo(:,:en%nk,:)
+ if (l_sc_run) then
+   if (.not.associated(Xen%Eo).and.found_SC_DB) then
+     allocate(Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
+     call mem_est("XenE-Eo",(/size(Xen%Eo)/),(/SP/))
+     Xen%Eo(:,:,:)=en%Eo(:,:en%nk,:)
+   endif
+ else
+   if (.not.associated(Xen%E_dip).and.found_SC_DB) then
+     allocate(Xen%E_dip(Xen%nb,Xen%nk,n_sp_pol))
+     call mem_est("XenE-Eo",(/size(Xen%E_dip)/),(/SP/))
+     Xen%E_dip(:,:,:)=en%E_dip(:,:en%nk,:)
+   endif
  endif
  !
 #endif

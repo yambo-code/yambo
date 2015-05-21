@@ -38,18 +38,19 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,PP_free,  &
 &                              pp_kbv_dim,pp_factor
  use R_lattice,           ONLY:g_vec,bz_samp
- use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P,Dipole_Energy_treshold
+ use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P,&
+&                              Dipole_Energy_treshold,l_rotate_dipoles
  use IO_m,                ONLY:io_control,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf_ng,WF
  use wrapper,             ONLY:M_by_V
- use com,                 ONLY:error,msg
+ use com,                 ONLY:error,msg,warning
 #if defined _KERR
  use X_m,                 ONLY:global_gauge
 #endif
 #if defined _SC
  use drivers,             ONLY:l_sc_run
- use SC,                  ONLY:B_mat_index
+ use SC,                  ONLY:B_mat_index,SC_R
 #endif
  !
  implicit none
@@ -96,7 +97,19 @@ subroutine Dipole_transverse(Xen,Xk,X)
    ic_min=X%ib(1)
  endif
  !
- if (associated(Xen%Eo)) call msg('rns','[X] Using Kohn-Sham energies for the dipoles ')
+#if defined _SC
+ !
+ if (l_rotate_dipoles) then
+   if (.not.associated(Xen%E_dip)) call error('Bare dipoles energies not associated')
+   if (associated(Xen%E_dip)) call msg('rns','[X] Using Kohn-Sham energies for the dipoles')
+ else
+   if (associated(Xen%Eo)   ) call msg('rns','[X] Using energies without QP corrections for the dipoles')
+   if (associated(Xen%E_dip)) call warning(' Missing non-local Hamiltonian contributions different from Vnl')
+ endif
+ !
+#else
+ if (associated(Xen%Eo)   ) call msg('rns','[X] Using energies without QP corrections for the dipoles')
+#endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -213,8 +226,12 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          rho(:)=(0._SP,0._SP)
          !
-         Ev_m_Ec=Xen%E(iv,ik,E_i_spin)-Xen%E(ic,ik,E_i_spin)
-         if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,E_i_spin)-Xen%Eo(ic,ik,E_i_spin)
+         if(l_rotate_dipoles) then
+           Ev_m_Ec=Xen%E_dip(iv,ik,E_i_spin)-Xen%E_dip(ic,ik,E_i_spin)
+         else
+           Ev_m_Ec=Xen%E(iv,ik,E_i_spin)-Xen%E(ic,ik,E_i_spin)
+           if (associated(Xen%Eo) ) Ev_m_Ec=Xen%Eo(iv,ik,E_i_spin)-Xen%Eo(ic,ik,E_i_spin)
+         endif
          !
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/)).or.&
 &            abs(Ev_m_Ec)<=Dipole_Energy_treshold.and..not.l_real_time) then
@@ -404,5 +421,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
    endif
    !
  enddo
+ !
+#if defined _SC
+ if(.not.l_sc_run.and.l_rotate_dipoles) call DIPOLE_rotate(SC_R,Xen,Xk,X)
+#endif
  !
 end subroutine Dipole_transverse

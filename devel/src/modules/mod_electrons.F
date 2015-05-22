@@ -62,6 +62,7 @@ module electrons
    integer         :: nk
    integer         :: nbf
    integer         :: nbm
+   integer         :: nbc(2)       ! Number of bands with NEQ carriers for yambo_rt
    integer         :: bf
    integer         :: kf
    integer         :: sf
@@ -78,6 +79,7 @@ module electrons
    real(SP),   pointer :: Eo(:,:,:)        => null()
    real(SP),   pointer :: E_dip(:,:,:)     => null()
    real(SP),   pointer :: f(:,:,:)         => null()
+   real(SP),   pointer :: df(:,:,:)        => null()
    real(SP),   pointer :: fo(:,:,:)        => null()
    real(SP),   pointer :: W(:,:,:)         => null()
    complex(SP),pointer :: Z(:,:,:)         => null()
@@ -94,6 +96,7 @@ module electrons
    real(SP),   pointer :: E_RIM(:,:,:)        => null()
    real(SP),   pointer :: W_RIM(:,:,:)        => null()
    real(SP),   pointer :: f_RIM(:,:,:)        => null()
+   real(SP),   pointer :: df_RIM(:,:,:)       => null()
    !
  end type levels
  ! 
@@ -107,6 +110,7 @@ module electrons
  integer ,allocatable :: BZ_RIM_nkpt(:)
  integer ,allocatable :: BZ_RIM_table(:,:)
  real(SP),allocatable :: BZ_RIM_ipol_weight(:)
+ real(SP),allocatable :: BZ_RIM_kpts(:,:)
  !
  contains
    !
@@ -123,6 +127,7 @@ module electrons
        Eo%nk=Ei%nk
        Eo%nbf=Ei%nbf
        Eo%nbm=Ei%nbm
+       Eo%nbc=Ei%nbc
        Eo%bf=Ei%bf
        Eo%kf=Ei%kf
        Eo%sf=Ei%sf
@@ -133,8 +138,8 @@ module electrons
      endif
      allocate(Eo%E(Eo%nb,Eo%nk,n_sp_pol),Eo%f(Eo%nb,Eo%nk,n_sp_pol))
      call mem_est("E-E E-f",(/size(Eo%E),size(Eo%f)/),(/SP,SP/))
-     Eo%E=0.
-     Eo%f=0.
+     Eo%E=0._SP
+     Eo%f=0._SP
      !
      ! This line is beacause in _RT calculations the actual first size of %Eo may differ
      ! from %nb as it is limited by SC_bands. To be checked after implementatio of E_dip
@@ -192,6 +197,11 @@ module electrons
        Eo%E_RIM=Ei%E_RIM
        Eo%W_RIM=Ei%W_RIM
        Eo%f_RIM=Ei%f_RIM
+       if(associated(Ei%df_RIM)) then
+         allocate(Eo%df_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
+         call mem_est("df_RIM",(/size(Eo%df_RIM)/),(/SP/))
+         Eo%df_RIM=Ei%df_RIM
+       endif
      endif
      !
    end subroutine
@@ -199,14 +209,15 @@ module electrons
    subroutine E_reset(E)
      use memory_m, ONLY:mem_est
      type(levels)::E
-     E%E_dir_gap=0.
-     E%E_Fermi=0.
-     E%E_VBM=0.
-     E%E_CBm=0.
+     E%E_dir_gap=0._SP
+     E%E_Fermi=0._SP
+     E%E_VBM=0._SP
+     E%E_CBm=0._SP
      E%nb=0
      E%nk=0
      E%nbf=0 
      E%nbm=0
+     E%nbc=0
      E%bf=0
      E%kf=0 
      E%GreenF_n_E_steps=0 
@@ -235,12 +246,13 @@ module electrons
      type(levels)::E
      logical     ::FULL_RESET
      !
-     if(associated(E%E_RIM))      deallocate(E%E_RIM)
-     if(associated(E%W_RIM))      deallocate(E%W_RIM)
-     if(associated(E%f_RIM))      deallocate(E%f_RIM)
+     if(associated(E%E_RIM) )      deallocate(E%E_RIM )
+     if(associated(E%W_RIM) )      deallocate(E%W_RIM )
+     if(associated(E%f_RIM) )      deallocate(E%f_RIM )
+     if(associated(E%df_RIM))      deallocate(E%df_RIM)
      !
-     nullify(E%E_RIM,E%W_RIM,E%f_RIM)
-     call mem_est("E_RIM W_RIM f_RIM")
+     nullify(E%E_RIM,E%W_RIM,E%f_RIM,E%df_RIM)
+     call mem_est("E_RIM W_RIM f_RIM df_RIM")
      !
      if (.not.FULL_RESET) return
      !
@@ -251,6 +263,7 @@ module electrons
      if(allocated(BZ_RIM_nkpt))        deallocate(BZ_RIM_nkpt)
      if(allocated(BZ_RIM_table))       deallocate(BZ_RIM_table)
      if(allocated(BZ_RIM_ipol_weight)) deallocate(BZ_RIM_ipol_weight)
+     if(allocated(BZ_RIM_kpts))        deallocate(BZ_RIM_kpts)
      !
    end subroutine
    !

@@ -645,7 +645,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_em1s) then
    call init_QP_ctl_switch('X')
    call initactivate(1,'ShiftedPath')
-   call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
+   call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','DmRnge','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
    call initactivate(1,'XTermKind'//'Xs')
    call initactivate(1,'XTermEn'//'Xs')
@@ -1215,12 +1215,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      ! q0 renormalization
      !
-     BSS_q0(:)=BSS_q0(:)*q0_def_norm/v_norm(BSS_q0)
+     BSS_q0(:) = BSS_q0(:)*q0_def_norm/v_norm( BSS_q0)
      X(1)%q0(:)=X(1)%q0(:)*q0_def_norm/v_norm(X(1)%q0)
      X(2)%q0(:)=X(2)%q0(:)*q0_def_norm/v_norm(X(2)%q0)
      X(3)%q0(:)=X(3)%q0(:)*q0_def_norm/v_norm(X(3)%q0)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
-     if (l_em1s) Xw(2)%dr=0.001/HA2EV
+     !if (l_em1s) Xw(2)%dr=0.001/HA2EV
      !
      if (len_trim(BSE_mode)==0) BSE_mode="causal"
      !

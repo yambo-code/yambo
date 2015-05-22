@@ -71,7 +71,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  logical                 :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                :: minmax_ehe(2,PAR_COM_q_for_Xo%n_CPU),eh_occ
  type(ggwinfo)           :: isc
- complex(SP)             :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
+ complex(SP)             :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),pole
  complex(SP),allocatable :: rhotw_save(:),Xo_residual(:,:)
  complex(SP),allocatable :: eet_factor(:,:)
  integer,    external    :: X_eh_setup
@@ -103,7 +103,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
    !
    call DIPOLE_driver(Xen, Xk, X, X%q0)
-   call X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
+   call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF,X%ordering)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
    !
@@ -320,8 +320,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    else if(force_bare_X_G) then
      call X_bare_RIM_GreenF(iq,X_poles_tab(i_cg,:),Xw,Xen,Xk,GreenF,X%ordering)
    else
+     pole=cmplx(coarse_grid_Pt(i_cg),0._SP)
      do iw=1,Xw%n_freqs
-       GreenF(iw) = X_simple_GreenF(Xw%p(iw),coarse_grid_Pt(i_cg),X%ordering)
+       GreenF(iw) = X_simple_GreenF(Xw%p(iw),pole,X%ordering)
      enddo
    endif
    !

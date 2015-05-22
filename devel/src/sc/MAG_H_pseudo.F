@@ -23,7 +23,7 @@
 !
 subroutine MAG_H_pseudo(Xk,Xen)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,cZERO
  use electrons,     ONLY:levels,n_spin,n_spinor,n_sp_pol
  use wrapper,       ONLY:V_dot_V
  use X_m,           ONLY:X_t
@@ -48,13 +48,13 @@ subroutine MAG_H_pseudo(Xk,Xen)
  !
  type(X_t)     :: X
  !
- complex(SP),allocatable :: kbv(:,:,:),kbv_ks_space(:,:)
- complex(SP)             :: H_pseudo(SC_bands(2),SC_bands(2))
- complex(SP)             :: H_pseudo_tot(SC_bands(2),SC_bands(2),Xk%nibz,n_spin)
+ complex(SP),allocatable :: kbv(:,:,:,:),kbv_ks_space(:,:)
+ complex(SP)             :: H_pseudo(SC_bands(2),SC_bands(2)), &
+&                           H_pseudo_tot(SC_bands(2),SC_bands(2),Xk%nibz,n_spin)
  !
  ! Dummies
- integer                 :: i1,ib,ibp,ik,i_spin,iwf,iwfp,ifft,is,ia,il,im,pp_spin,i_pp
- integer                 :: alloc_err
+ integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf(n_spinor),&
+&                           ifft,is,ia,il,im,pp_spin,i_pp,alloc_err
  !
  ! I / O
  integer                 :: ID,io_KB_err,io_err(3),io_KB_pwscf_err,io_KB_abinit_err,io_Vnl_err
@@ -71,16 +71,16 @@ subroutine MAG_H_pseudo(Xk,Xen)
  !
  call fft_setup(0,1,.true.)  ! fft_size
  !
- allocate(kbv(wf_ng,pp_kbv_dim,4),stat=alloc_err)
+ allocate(kbv(wf_ng,pp_kbv_dim,4,n_spinor),stat=alloc_err)
  call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
  !
- allocate(new_pp(fft_size,pp_kbv_dim),old_pp(fft_size,pp_kbv_dim))
- call mem_est('new_pp old_pp',(/fft_size,fft_size,fft_size,fft_size/))
+ allocate(new_pp(fft_size,pp_kbv_dim,n_spinor),old_pp(fft_size,pp_kbv_dim,n_spinor))
+ call mem_est('new_pp old_pp',(/size(new_pp),size(old_pp)/))
  !
- allocate(kbv_ks_space(SC_bands(2),2))
- call mem_est('kbv_ks_space',(/2*SC_bands(2)/))
+ allocate(kbv_ks_space(SC_bands(1):SC_bands(2),2))
+ call mem_est('kbv_ks_space',(/size(kbv_ks_space)/))
  !
- H_pseudo_tot=(0._SP,0._SP)
+ H_pseudo_tot=cZERO
  !
  call live_timing('MAG-pseudo',Xk%nibz)        
  !
@@ -100,30 +100,32 @@ subroutine MAG_H_pseudo(Xk,Xen)
      io_KB_abinit_err=io_KB_abinit(ID)
    endif
    !
-   do i_spin=1,n_spin
+   do i_sp_pol=1,n_sp_pol
      !  
      ! Pseudo(k+G,k+G',i1) = kbv^*(k+G,i1,1) kbv(k+G',i1,1)
      ! i1 runs over atomic_species, atoms_per_specie , l_per_atom, m=-l,-l+1,...,l-1,sl
-     pp_spin=i_spin
-     if (io_KB_abinit_err==0.and.n_spinor==2) pp_spin=1
-     if (io_KB_pwscf_err ==0.and.n_sp_pol==2) pp_spin=1
-     if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,pp_spin,Xk,kbv)
-     if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,pp_spin,Xk,kbv)
+     if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
+     if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
      ! 
      call MAG_pseudo_nl(kbv)
      !
      do i1=1,pp_kbv_dim
        !     
-       do ib=1,SC_bands(2)
+       kbv_ks_space=cZERO
+       !
+       do ib=SC_bands(1),SC_bands(2)
          !
-         iwf=WF%index(ib,ik,i_spin)
-         !
-         kbv_ks_space(ib,1)=V_dot_V(fft_size,WF%c(:,iwf),new_pp(:,i1))
-         kbv_ks_space(ib,2)=V_dot_V(fft_size,WF%c(:,iwf),old_pp(:,i1))
-         !
-         do ibp=1,ib
+         do i_spinor=1,n_spinor
            !
-           iwfp=WF%index(ibp,ik,i_spin)
+           i_spin=i_sp_pol+i_spinor-1
+           iwf(i_spinor)=WF%index(ib,ik,i_spin)
+           !
+           kbv_ks_space(ib,1)=kbv_ks_space(ib,1)+V_dot_V(fft_size,WF%c(:,iwf(i_spinor)),new_pp(:,i1,i_spinor))
+           kbv_ks_space(ib,2)=kbv_ks_space(ib,2)+V_dot_V(fft_size,WF%c(:,iwf(i_spinor)),old_pp(:,i1,i_spinor))
+           !
+         enddo
+         !
+         do ibp=SC_bands(1),ib
            !
            H_pseudo(ibp,ib)=conjg(kbv_ks_space(ibp,1))*kbv_ks_space(ib,1)-conjg(kbv_ks_space(ibp,2))*kbv_ks_space(ib,2)
            if(ib/=ibp) H_pseudo(ib,ibp)=conjg(H_pseudo(ibp,ib))
@@ -131,11 +133,11 @@ subroutine MAG_H_pseudo(Xk,Xen)
          enddo   ! ibp
        enddo   ! ib
        !
-       H_pseudo_tot(:,:,ik,i_spin)=H_pseudo_tot(:,:,ik,i_spin)+H_pseudo(:,:)
+       H_pseudo_tot(:,:,ik,i_sp_pol)=H_pseudo_tot(:,:,ik,i_sp_pol)+H_pseudo(:,:)
        !
      enddo   ! i1
      !
-   enddo   ! i_spin
+   enddo   ! i_sp_pol
    !
    call live_timing(steps=1)
    !

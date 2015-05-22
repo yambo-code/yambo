@@ -98,13 +98,13 @@ module X_output
      !
      if (iq==1.and.ig==1) then
        message(1) = '# Absorption @ Q('//trim(intc(iq))//') [q->0 direction] :'
-       message(2) = '# Reflectivity @ Q('//trim(intc(iq))//') [q->0 direction] :'
-       message(3) = '# EELS @ Q('//trim(intc(iq))//')  [q->0 direction]:'
-       message(4) = '# Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//') [q->0 direction]'
-       message(5) = '# F_xc @ Q('//trim(intc(iq))//')  [q->0 direction]:'
-       message(6) = '# Off-diagonal Absorption @ Q('//trim(intc(iq))//') [q->0 direction] :'
-       message(7) = '# Off-diagonal Polarizability @ Q('//trim(intc(iq))//') [q->0 direction] :'
-       message(8) = '# moke parameters @ Q('//trim(intc(iq))//') [q->0 direction] :'
+       message(2) = '# EELS @ Q('//trim(intc(iq))//')  [q->0 direction]:'
+       message(3) = '# Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//') [q->0 direction]'
+       message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [q->0 direction]:'
+       message(5) = '# Off-diagonal Absorption @ Q('//trim(intc(iq))//') [q->0 direction] :'
+       message(6) = '# Off-diagonal Polarizability @ Q('//trim(intc(iq))//') [q->0 direction] :'
+       message(7) = '# moke parameters @ Q('//trim(intc(iq))//') [q->0 direction] :'
+       message(8) = '# Reflectivity @ Q('//trim(intc(iq))//') [q->0 direction] :'
      else  if (iq/=1.and.ig==1) then
        message(1) = '# Absorption @ Q('//trim(intc(iq))//') [iku] :'
        message(2) = '# EELS @ Q('//trim(intc(iq))//')  [iku]:'
@@ -117,13 +117,13 @@ module X_output
        message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [iku]:'
      endif
      call msg("o eps_q",trim(message(1)),Q_plus_G_pt,INDENT=0)
-     call msg("o refl_q",trim(message(1)),Q_plus_G_pt,INDENT=0)
      call msg("o eel_q",trim(message(2)),Q_plus_G_pt,INDENT=0)
      call msg("o alpha",trim(message(3)),Q_plus_G_pt,INDENT=0)
      call msg("o fxc",trim(message(4)),Q_plus_G_pt,INDENT=0)
      call msg("o off",trim(message(5)),Q_plus_G_pt,INDENT=0)
      call msg("o beta",trim(message(6)),Q_plus_G_pt,INDENT=0)
      call msg("o moke",trim(message(7)),Q_plus_G_pt,INDENT=0)
+     call msg("o refl_q",trim(message(8)),Q_plus_G_pt,INDENT=0)
      call msg('o eps refl eel fxc alpha off moke','#')    
      !
    end subroutine

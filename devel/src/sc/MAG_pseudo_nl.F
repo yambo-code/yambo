@@ -25,12 +25,14 @@ subroutine MAG_pseudo_nl(kbv)
  !
  use pars,          ONLY:SP,DP
  use units,         ONLY:SPEED_OF_LIGHT,Au2Tesla
+ use electrons,     ONLY:n_spinor
  use wave_func,     ONLY:wf_ng
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos
  use memory_m,      ONLY:mem_est
+ use com,           ONLY:warning
  use magnetic,      ONLY:Bz,x,load_cc,free_cc,new_pp,old_pp,phase_trick,&
 &                        MAG_radius,n_loops
  !
@@ -40,7 +42,7 @@ subroutine MAG_pseudo_nl(kbv)
  !
  ! Work Space
  !
- complex(SP)             :: kbv(wf_ng,pp_kbv_dim,4)
+ complex(SP)             :: kbv(wf_ng,pp_kbv_dim,4,n_spinor)
  complex(DP)             :: kbv_DP(fft_size)
  complex(SP)             :: gauge_factor(fft_size)
  real(SP)                :: int_A_dl(fft_size),r_atom_pos(fft_size),r_x(fft_size)
@@ -48,7 +50,9 @@ subroutine MAG_pseudo_nl(kbv)
  real(SP)                :: Phi_over_Phio
  !
  ! Dummies
- integer                 :: i1,is,ia,il,im,i_pp,pp_spin
+ integer                 :: i1,is,ia,il,im,i_pp,pp_spin,i_spinor
+ !
+ if (n_spinor>1) call warning('new kb implementation to be tested for the case n_spinor>1')
  !
  call load_cc(.true.,.true.)
  !
@@ -77,35 +81,37 @@ subroutine MAG_pseudo_nl(kbv)
        if(phase_trick.and.n_loops>0.and.MAG_radius==0.) Phi_over_Phio=-n_loops
        gauge_factor(:)=gauge_factor(:)*cmplx(  cos_delta_phi(:) , sin_delta_phi(:)   )**Phi_over_Phio
      endif
-     ! 
      !
-     do i_pp = 1, pp_n_l_times_proj_max
-       il = pp_table(1,is,i_pp)
-       pp_spin = pp_table(3,is,i_pp)
-       if(pp_spin>1) cycle
-       !
-       do im = 1,2*(il-1)+1
+     do i_spinor=1,n_spinor
+       ! 
+       do i_pp = 1, pp_n_l_times_proj_max
+         il = pp_table(1,is,i_pp)
+         pp_spin = pp_table(3,is,i_pp)   ! neglect the so-term for abinit KB
+         if(pp_spin>1) cycle
          !
-         i1=i1+1
-         !
-         kbv_DP=(0._DP,0._DP)
-         kbv_DP(fft_g_table(1:wf_ng,1))=conjg(kbv(1:wf_ng,i1,1))*fft_norm
-         !
-         ! Here I need to fourier tranform kbv(G,i1,1)
+         do im = 1,2*(il-1)+1
+           !
+           i1=i1+2-i_spinor
+           !
+           kbv_DP=(0._DP,0._DP)
+           kbv_DP(fft_g_table(1:wf_ng,1))=conjg(kbv(1:wf_ng,i1,1,i_spinor))*fft_norm
+           !
+           ! Here I need to fourier tranform kbv(G,i1,1)
 #if defined _FFTW
-         fftw_plan = 0
-         call fft_3d(kbv_DP,fft_dim,1,fftw_plan)
+           fftw_plan = 0
+           call fft_3d(kbv_DP,fft_dim,1,fftw_plan)
 #else
-         call fft_3d(kbv_DP,fft_dim,1)
+           call fft_3d(kbv_DP,fft_dim,1)
 #endif
-         !
-         old_pp(:,i1)=conjg(kbv_DP(:))
-         new_pp(:,i1)=conjg(kbv_DP(:))*gauge_factor(:)
-         !       
-       enddo   ! im
-     enddo   ! i_pp
+           !
+           old_pp(:,i1,i_spinor)=conjg(kbv_DP(:))
+           new_pp(:,i1,i_spinor)=conjg(kbv_DP(:))*gauge_factor(:)
+           !       
+         enddo   ! im
+       enddo   ! i_pp
+     enddo   ! i_spinor
    enddo   ! ia
- enddo   ! is
+ enddo  ! is
  !
  call free_cc()
  !

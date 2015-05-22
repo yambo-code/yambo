@@ -28,6 +28,7 @@
 subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
  !
  use pars,          ONLY:SP,pi
+ use electrons,     ONLY:n_spinor
  use R_lattice,     ONLY:b,g_vec,bz_samp
  use vec_operate,   ONLY:iku_v_norm,v_norm,c2a
  use wave_func,     ONLY:wf_ng
@@ -38,7 +39,7 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
  implicit none
  !
  type(bz_samp) :: Xk
- complex(SP)   :: kbv(wf_ng,pp_kbv_dim,4)
+ complex(SP)   :: kbv(wf_ng,pp_kbv_dim,4,n_spinor)
  integer       :: ik,i_spin
  ! 
  ! Work Space
@@ -82,8 +83,8 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
            kb_Ylm(2:4)=dYlm(1,il,im)*Ygrad(1,:)+dYlm(2,il,im)*Ygrad(2,:)
            !
            i1=i1+1
-           kbv(ig,i1,1)=kb_Ylm(1)*pp_kbs(is,i_pp)*pp_kb(ig,is,i_pp,i_spin)*e_iGR*sf
-           kbv(ig,i1,2:4)=(kb_Ylm(1)*KpG_cc(:)/KpG_norm*pp_kbd(ig,is,i_pp,i_spin)+ &
+           kbv(ig,i1,1  ,1)=kb_Ylm(1)*pp_kbs(is,i_pp)*pp_kb(ig,is,i_pp,i_spin)*e_iGR*sf
+           kbv(ig,i1,2:4,1)=(kb_Ylm(1)*KpG_cc(:)/KpG_norm*pp_kbd(ig,is,i_pp,i_spin)+ &
 &                                 kb_Ylm(2:4)*pp_kb(ig,is,i_pp,i_spin))*e_iGR*sf
            !
          enddo
@@ -91,6 +92,8 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
      enddo
    enddo
  enddo
+ !
+ if (n_spinor==2) kbv(:,:,:,2)=kbv(:,:,:,1)
  !
  !kbv=conjg(kbv)      ! To be checked if I need this for Kerr
  !

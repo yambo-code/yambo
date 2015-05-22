@@ -185,8 +185,13 @@ if ! test x"$try_libs" = "x" && ! test "$HAVE_FFT" = "yes" ; then
   #
   if test "$HAVE_ESSL" = "yes" ; then
     AC_MSG_CHECKING([for FFT])
+    if ! test x"$enable_3d_fft" = "xno" ; then 
+      FFT3D_CPP="-D_USE_3D_FFT"
+      FFT_DESCRIPTION="(FFT ESSL (FFTQE) with 3D support)";
+    else
+      FFT_DESCRIPTION="(FFT ESSL (FFTQE))";
+    fi
     FFT_CPP="-D_FFTQE $FFT3D_CPP -D_ESSL"
-    FFT_DESCRIPTION="(FFT ESSL (FFTQE) )";
     FFT_str="E"
     FFT_LIBS="${FFT_PATH} $try_libs"
     HAVE_FFT=yes

@@ -25,7 +25,7 @@
 # [ @HDF5_str@ ] HDF5   : @HDF5_LIBS@ @HDF5_support@
 #
 #  MATH 
-# [FFT] @FFT_DESCRIPTION@
+# [ @FFT_str@ ] FFT      : @FFT_LIBS@ @FFT_DESCRIPTION@
 # [ @BLAS_str@ ] BLAS     : @BLAS_LIBS@
 # [ @LAPACK_str@ ] LAPACK   : @LAPACK_LIBS@
 # [ @SLK_str@ ] SCALAPACK: @SCALAPACK_LIBS@

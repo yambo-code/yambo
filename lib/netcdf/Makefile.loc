@@ -35,8 +35,11 @@ configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	      ./configure $(AUXFLAGS) \
 	      CC="$(cc)" \
+	      CFLAGS="$(cflags)" \
 	      CXX="$(cc)" \
 	      FC="$(f90)" \
+	      FCFLAGS="$(f77flags)" \
+	      FFLAGS="$(f77flags)" \
 	      CPPFLAGS="$(netcdf_aux)" \
 	      F90="$(f90)" \
 	      F77="$(f77)" \

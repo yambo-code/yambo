@@ -26,7 +26,7 @@ integer function io_RIM_E_and_k(E,Xk,ID)
  use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_max_filling,&
 &                         BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol,BZ_RIM_ipol_weight,&
-&                         RIM_is_symmetry_expanded,BZ_ASSOCIATED_nkpts
+&                         RIM_is_symmetry_expanded,BZ_ASSOCIATED_nkpts,BZ_RIM_kpts
  use R_lattice,      ONLY:nXkbz,bz_samp
  use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
@@ -67,11 +67,11 @@ integer function io_RIM_E_and_k(E,Xk,ID)
    allocate(E%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
    allocate(E%W_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
    allocate(E%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
-   if (.not.RIM_is_symmetry_expanded) allocate(Xk%ptbz_RIM(BZ_RIM_tot_nkpts,3))
+   allocate(BZ_RIM_kpts(BZ_RIM_tot_nkpts,3))
    allocate(BZ_RIM_nkpt(BZ_ASSOCIATED_nkpts),BZ_RIM_table(BZ_ASSOCIATED_nkpts,BZ_RIM_max_filling))
    allocate(BZ_RIM_ipol_weight(BZ_RIM_max_filling))
    call mem_est("E_RIM W_RIM f_RIM k_RIM BZ_RIM_nkpt BZ_RIM_table",&
-&               (/size(E%E_RIM),size(E%W_RIM),size(E%f_RIM),size(Xk%ptbz_RIM),size(BZ_RIM_nkpt),&
+&               (/size(E%E_RIM),size(E%W_RIM),size(E%f_RIM),size(BZ_RIM_kpts),size(BZ_RIM_nkpt),&
 &                 size(BZ_RIM_table)/),(/SP,SP,SP,SP,IP,IP/))
  endif
  !
@@ -82,9 +82,9 @@ integer function io_RIM_E_and_k(E,Xk,ID)
  !
  ! Kpts
  !
- if (ver_is_gt_or_eq(ID,revision=3784).and. .not.RIM_is_symmetry_expanded)  then
-   call io_bulk(ID, VAR="RIM_KPTS", VAR_SZ=shape(Xk%ptbz_RIM) ) 
-   call io_bulk(ID, R2=Xk%ptbz_RIM )
+ if (ver_is_gt_or_eq(ID,revision=3784))  then
+   call io_bulk(ID, VAR="RIM_KPTS", VAR_SZ=shape(BZ_RIM_kpts) ) 
+   call io_bulk(ID, R2=BZ_RIM_kpts )
  endif
  !
  ! RIM Block filling

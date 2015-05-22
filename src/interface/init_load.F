@@ -581,12 +581,14 @@ subroutine init_load(defs,en,q,k,X,Xw)
    !
    subroutine Xload(X,wv)
      !
+     use units, ONLY:HA2EV
+     !
      type(X_t):: X
      type(w_samp):: wv
      ! 
      ! Work Space
      ! 
-     integer           ::i1
+     integer           ::i1,V_damp,V_iq
      integer,parameter ::n_des=14
      character(8)      ::nms(n_des),sfx
      character(40)     ::des(n_des)
@@ -620,9 +622,17 @@ subroutine init_load(defs,en,q,k,X,Xw)
        write (nms(i1),'(2a)')  lch2(1:6),trim(sfx)
      enddo
      !
+     V_damp=0
+     V_iq  =0
+     if (X%whoami==2) then
+       V_damp=V_resp 
+       wv%dr=0.001/HA2EV
+     endif
+     if (X%whoami==3) V_iq  =V_resp 
+     !
      call it(defs,nms( 1),des( 1),X%ordering,verb_level=V_resp)
      call it(defs,nms( 2),des( 2),wv%er,E_unit,verb_level=0) 
-     call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=0)
+     call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=V_damp)
      call it(defs,nms( 4),des( 4),X%cg_percentual,verb_level=V_resp)
      call it(defs,nms( 5),des( 5),wv%n_freqs,verb_level=0)
      call it(defs,nms( 6),des( 6),wv%per_memstps,verb_level=V_resp)
@@ -631,12 +641,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,nms( 9),des( 9),X%ehe,E_unit,verb_level=V_resp)
      call it(defs,nms(10),des(10),X%ppaE,E_unit,verb_level=0)
      call it(defs,nms(11),des(11),X%ng,G_unit,verb_level=0) 
-     if (X%whoami==3) then
-       call it(defs,nms(12),des(12),X%iq,verb_level=0)
-     else
-       call it(defs,nms(12),des(12),X%iq,verb_level=V_resp)
-     endif
-     call it(defs,nms(13),des(13),X%ib,verb_level=0)
+     call it(defs,nms(12),des(12),X%iq,verb_level=V_iq)
+       call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)
      !
    end subroutine

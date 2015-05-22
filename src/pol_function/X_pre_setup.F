@@ -23,11 +23,13 @@
 !
 subroutine X_pre_setup(Xen,X)
  !
- use X_m,           ONLY:X_t,use_X_RIM,X_RIM_nkpts
+ use X_m,           ONLY:X_t,use_X_RIM,use_X_drude,X_RIM_nkpts
  use electrons,     ONLY:levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts
- use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_gw0,l_cohsex
+ use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_gw0,l_cohsex,l_rt_carriers_in_use
+ use com,           ONLY:warning
  use R_lattice,     ONLY:nqibz
  use TDDFT,         ONLY:FXC_n_g_corr
+ !
  implicit none
  !
  type(X_t)    :: X 
@@ -54,12 +56,16 @@ subroutine X_pre_setup(Xen,X)
  if (X%ib(1)<0.or.X%ib(1)>Xen%nbm.or.X%ib(2)<X%ib(1)) X%ib(1)=1
  if (X%ib(2)>Xen%nb.or.X%ib(2)<Xen%nbf)               X%ib(2)=Xen%nb
  !
+ use_X_Drude=.not.(real(X%Wd)==0..and.aimag(X%Wd)==0.)
+ !
  ! Here I set up the RIM flag to (for example) skip the coarse 
  ! grid generator in the Xo calculation
  !
  use_X_RIM=BZ_RIM_nbands/=0.and.X%ib(1)<BZ_RIM_nbands.and.(.not.l_bs_fxc)
  !
  if (use_X_RIM) X_RIM_nkpts=BZ_RIM_tot_nkpts
+ !
+ if (use_X_RIM .and. use_X_Drude) call warning('Both double grid and Drude model active')
  !
  ! CHO checks
  !
@@ -81,11 +87,11 @@ subroutine X_pre_setup(Xen,X)
  ! "resonant" or "antiresonant" par of X (in the many body language) include
  ! negative poles as well. Only the sum of the two is meaningful, then.
  !
- if (Finite_Tel) X%ordering="c"
+ if (Finite_Tel .or. l_rt_carriers_in_use) X%ordering="c"
  !
  ! Transfer the GF's ordering 
  !
- if ( associated(Xen%GreenF).and.Xen%GreenF_is_causal      ) X%ordering='c'
+ if ( associated(Xen%GreenF).and.     Xen%GreenF_is_causal ) X%ordering='c'
  if ( associated(Xen%GreenF).and..not.Xen%GreenF_is_causal ) X%ordering='t'
  !
 end subroutine

@@ -72,6 +72,7 @@ integer function io_RT_components(what,ID)
  call timing('io_RT_components',OPR='start')
 #endif
  !
+ !
  l_carriers   =what=="carriers"
  l_THETA      =what=="THETA"
  l_J_and_P    =what=="J_and_P"
@@ -87,6 +88,7 @@ integer function io_RT_components(what,ID)
    l_carriers=.TRUE.
    db_type=-2
  endif
+ !
  if (l_REF) db_name="RT_reference_components"
  !
  ! When the db.scV is used for single non-SC shot the number

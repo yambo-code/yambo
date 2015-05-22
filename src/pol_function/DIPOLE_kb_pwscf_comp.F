@@ -25,9 +25,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_kb_pwscf_comp(ik,i_spin,Xk,kbv)
+subroutine Dipole_kb_pwscf_comp(ik,Xk,kbv)
  !
  use pars,          ONLY:SP,pi
+ use electrons,     ONLY:n_spinor
  use R_lattice,     ONLY:b,g_vec,bz_samp
  use vec_operate,   ONLY:iku_v_norm,v_norm,c2a
  use wave_func,     ONLY:wf_ng,wf_igk,wf_nc_k
@@ -39,8 +40,8 @@ subroutine Dipole_kb_pwscf_comp(ik,i_spin,Xk,kbv)
  implicit none
  !
  type(bz_samp) :: Xk
- complex(SP)   :: kbv(wf_ng,pp_kbv_dim,4)
- integer       :: ik,i_spin
+ complex(SP)   :: kbv(wf_ng,pp_kbv_dim,4,n_spinor)
+ integer       :: ik,i_spinor
  ! 
  ! Work Space
  !
@@ -64,30 +65,32 @@ subroutine Dipole_kb_pwscf_comp(ik,i_spin,Xk,kbv)
    KpG_norm=v_norm(KpG_cc)
    if(KpG_norm<1.E-5) cycle
    call DIPOLE_kb_Ylm(Ylm,dYlm,Ygrad,pp_n_l_max,KpG_cc)
-   i1=0
-   do is = 1,n_atomic_species
-     do ia = 1,n_atoms_species(is)
-       G_dot_Rat = dot_product(G_cc,atom_pos(:,ia,is))
-       e_iGR = cmplx(cos(G_dot_Rat),sin(G_dot_Rat))
-       do i_pp=1,pp_n_l_times_proj_max
-         !
-         il      = pp_table(1,is,i_pp)
-         if(il==0) cycle
-         j2p1    = pp_table(2,is,i_pp)+1
-         !
-         do im = 1,2*(il-1)+1
+   do i_spinor=1,n_spinor
+     i1=0
+     do is = 1,n_atomic_species
+       do ia = 1,n_atoms_species(is)
+         G_dot_Rat = dot_product(G_cc,atom_pos(:,ia,is))
+         e_iGR = cmplx(cos(G_dot_Rat),sin(G_dot_Rat))
+         do i_pp=1,pp_n_l_times_proj_max
            !
-           sf=pp_factor(im,il,j2p1,is,i_spin)
+           il      = pp_table(1,is,i_pp)
+           if(il==0) cycle
+           j2p1    = pp_table(2,is,i_pp)+1
            !
-           kb_Ylm(1)=Ylm(il,im)                                              ! To be checked why
-           kb_Ylm(2:4)=dYlm(1,il,im)*Ygrad(1,:)+dYlm(2,il,im)*Ygrad(2,:)     ! I need conjg here and 
-           kb_Ylm=conjg(kb_Ylm)                                              ! not in abinit
-           !                                                               
-           i1=i1+1
-           kbv(ig,i1,1)=kb_Ylm(1)*pp_kb(ic,is,i_pp,1)*pp_kbs(is,i_pp)*e_iGR*sf
-           kbv(ig,i1,2:4)=(kb_Ylm(1)*KpG_cc(:)/KpG_norm*pp_kbd(ic,is,i_pp,1) +  &
-&                              kb_Ylm(2:4)*pp_kb(ic,is,i_pp,1) )*e_iGR*sf
-           !
+           do im = 1,2*(il-1)+1
+             !
+             sf=pp_factor(im,il,j2p1,is,i_spinor)
+             !
+             kb_Ylm(1)=Ylm(il,im)                                              ! To be checked why
+             kb_Ylm(2:4)=dYlm(1,il,im)*Ygrad(1,:)+dYlm(2,il,im)*Ygrad(2,:)     ! I need conjg here and 
+             kb_Ylm=conjg(kb_Ylm)                                              ! not in abinit
+             !                                                               
+             i1=i1+1
+             kbv(ig,i1,1  ,i_spinor)=kb_Ylm(1)*pp_kb(ic,is,i_pp,1)*pp_kbs(is,i_pp)*e_iGR*sf
+             kbv(ig,i1,2:4,i_spinor)=(kb_Ylm(1)*KpG_cc(:)/KpG_norm*pp_kbd(ic,is,i_pp,1) +  &
+&                                     kb_Ylm(2:4)*pp_kb(ic,is,i_pp,1) )*e_iGR*sf
+             !
+           enddo
          enddo
        enddo
      enddo

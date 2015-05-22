@@ -128,7 +128,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  X_drude_term=cmplx(0.,0.,SP)
  !
  !...Drude
- call X_Drude(1,Ken,Xk,W_bss,X_oscillators,drude_GreenF,'c')
+ call X_Drude(1,Ken,Xk,W_bss,X_oscillators%Wd,drude_GreenF,'c')
  !
  ! WF distribution
  !=================

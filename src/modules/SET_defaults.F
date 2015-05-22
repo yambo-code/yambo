@@ -31,7 +31,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,Chi_mode,&
+&                      alpha_dim,use_X_RIM,use_X_Drude,X_RIM_nkpts,Dipole_bands_ordered,Chi_mode,&
 &                      eval_alpha,Vnl_commutator_warning,Dipole_uses_shifted_grids,&
 &                      q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,&
 &                      X_terminator,X_en_comp,global_gauge,l_rotate_dipoles
@@ -376,6 +376,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Dipole_Energy_treshold=1.E-5_SP/HA2EV
  Dipole_uses_shifted_grids=.FALSE.
  use_X_RIM=.FALSE.
+ use_X_Drude=.FALSE.
  eps_2_alpha=1._SP
  alpha_dim='adim'
  global_gauge='length'

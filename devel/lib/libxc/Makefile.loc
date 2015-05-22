@@ -32,7 +32,9 @@ configure-stamp: uncompress-stamp
 	        ./configure \
 	        --prefix=$(INSTALL_DIR) \
 	        CC="$(cc)" \
+	        CFLAGS="$(cflags)" \
 	        FC="$(f90)" \
+	        FCFLAGS="$(f77flags)" \
 		FCCPP="$(fccpp)" ); \
 	fi
 	touch configure-stamp

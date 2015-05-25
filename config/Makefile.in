@@ -66,15 +66,15 @@ INTERFCS = a2y p2y e2y c2y
 BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate linear_algebra common io \
                interface stop_and_restart wf_and_fft 
 
-MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface \
+MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup \
                tddft pol_function qp acfdt bse
 
 PJ_SURFLIBS  = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_control surf \
-               setup interface tddft pol_function qp acfdt bse
+               setup tddft pol_function qp acfdt bse
 
 PJ_SCLIBS    = $(MAIN_LIBS) collisions sc
 
-PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
+PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
                interpolate tddft pol_function qp acfdt bse collisions sc real_time
 #
 # Interfaces

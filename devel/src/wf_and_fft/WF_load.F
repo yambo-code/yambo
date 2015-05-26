@@ -277,6 +277,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    !
  endif
  !
+ ACTION_=RD_CL_IF_END
+ if (use_direct_access) ACTION_=RD_CL
+ !
  WF%N=0
  do ikibz=1,nkibz
    !
@@ -302,8 +305,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          endif
        endif
        !
-       ACTION_=RD_CL_IF_END
-       if (use_direct_access) ACTION_=RD_CL
        call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
        !
        io_err=io_WF(ID,wf_disk)

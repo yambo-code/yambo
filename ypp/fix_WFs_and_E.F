@@ -60,7 +60,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  integer               :: ACTION_,ID
  integer               :: ierr,io_err
  !
- integer               :: ng_vec_save,ng_vec_new
+ integer               :: ng_vec_save,ng_vec_new,wf_nb_io_save
  integer               :: wf_ng_save,wf_ng_new
  integer               :: wf_ncx_save,wf_ncx_new
  integer               :: wf_nc_k_save(k_save%nibz),wf_nc_k_new(k%nibz)
@@ -73,7 +73,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  ! Dummies
  !
  integer               :: is,ik,ik_save
- integer               :: ib,ib_grp,i_wf,i_spin
+ integer               :: ib,ib_grp,ib_disk,i_wf,i_spin
  integer               :: ic,ic_rot,ig,ig_rot
  !
  ! External functions
@@ -113,9 +113,10 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  call map_energies(E,E_new,k,kpoints_map)
  !
- ! For some reason ioDB1 changes the value of ng_closed
+ ! For some reason ioDB1 changes the value of ng_closed and of wf_nb_io
  ! This is a work-around to this problem
  ng_closed_save=ng_closed
+ wf_nb_io_save=wf_nb_io
  !
  call msg('s',':: I/O...')
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
@@ -123,7 +124,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  call msg('l','done')
  !
  ng_closed=ng_closed_save
- ! 
+ wf_nb_io=wf_nb_io_save
+ !
  call section('=',"Wavefunctions")
  !===============================
  !
@@ -192,17 +194,18 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
          !
          do ib=nb1,nb2
+           ib_disk=ib-nb1+1
            do i_spin=1,n_spin
              i_wf=WF%index(ib,ik_save,i_spin)
-             wf_disk(1,ib,:wf_nc_k_new(ik),i_spin)=  real(WF%c(:wf_nc_k_save(ik_save),i_wf))
-             wf_disk(2,ib,:wf_nc_k_new(ik),i_spin)= aimag(WF%c(:wf_nc_k_save(ik_save),i_wf))
+             wf_disk(1,ib_disk,:wf_nc_k_new(ik),i_spin)=  real(WF%c(:wf_nc_k_save(ik_save),i_wf))
+             wf_disk(2,ib_disk,:wf_nc_k_new(ik),i_spin)= aimag(WF%c(:wf_nc_k_save(ik_save),i_wf))
            enddo
          enddo
          !
          nkibz=k%nibz
          wf_ncx=wf_ncx_new
          core_io_path=more_io_path
-         call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
+         call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
          io_err=io_WF(ID,wf=wf_disk)
          !
        enddo
@@ -252,6 +255,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        !
        do ib=nb1,nb2
          !
+         ib_disk=ib-nb1+1
+         !
          wf_tmp=(0._SP,0._SP)
          !
          do i_spin=1,n_spin
@@ -265,15 +270,15 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          forall(ic=1:wf_nc_k_new(ik)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
          if ( S_contains_TR(is) ) wf_tmp=conjg(wf_tmp)
          !
-         wf_disk(1,ib,1:wf_ncx_new,:)= real(wf_tmp(:wf_ncx_new,:))
-         wf_disk(2,ib,1:wf_ncx_new,:)= aimag(wf_tmp(:wf_ncx_new,:))
+         wf_disk(1,ib_disk,1:wf_ncx_new,:)= real(wf_tmp(:wf_ncx_new,:))
+         wf_disk(2,ib_disk,1:wf_ncx_new,:)= aimag(wf_tmp(:wf_ncx_new,:))
          !
        enddo
        !
        nkibz=k%nibz
        wf_ncx=wf_ncx_new
        core_io_path=more_io_path
-       call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
+       call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
        io_err=io_WF(ID,wf=wf_disk)
        !
      enddo
@@ -317,17 +322,18 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
        !
        do ib=nb1,nb2
+         ib_disk=ib-nb1+1
          do i_spin=1,n_spin
            i_wf=WF%index(ib,ik_save,i_spin)
-           wf_disk(1,ib,1:wf_ncx_new,i_spin)= real(WF%c(1:wf_ncx_new,i_wf))
-           wf_disk(2,ib,1:wf_ncx_new,i_spin)= aimag(WF%c(1:wf_ncx_new,i_wf))
+           wf_disk(1,ib_disk,1:wf_ncx_new,i_spin)= real(WF%c(1:wf_ncx_new,i_wf))
+           wf_disk(2,ib_disk,1:wf_ncx_new,i_spin)= aimag(WF%c(1:wf_ncx_new,i_wf))
          enddo
        enddo
        !
        nkibz=k%nibz
        wf_ncx=wf_ncx_new
        core_io_path=more_io_path
-       call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,1/),ID=ID)
+       call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
        io_err=io_WF(ID,wf=wf_disk)
        !
      enddo

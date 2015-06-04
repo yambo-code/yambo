@@ -39,7 +39,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  !
  logical              :: l_check
  integer              :: i_k,i_t,n_GRP,i_g,it_ref,i_counter
- real(SP),allocatable :: GRP_data(:)
+ integer, allocatable :: GRP_data(:)
  integer, allocatable :: GRP_index(:)
  !
  ! E/h pairs (k resolved)
@@ -93,7 +93,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  !
  ! ALL k are diveded in BS_nT_grps groups of transitions and each CPU takes PAR_BS_nT_grps of them
  !
- GRP_data(:)=real(BS_T_grp_1st_el(:))
+ GRP_data(:)=BS_T_grp_1st_el(:)
  !
  call sort(GRP_data,indx=GRP_index)
  !

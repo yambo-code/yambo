@@ -68,10 +68,10 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  integer                 :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
 &                           isp,iv,ic,iw,isave(4),n_poles,i_cg,i_bg,alloc_err
- logical                 :: force_bare_X_G,Drude_pole
+ logical                 :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                :: minmax_ehe(2,PAR_COM_q_for_Xo%n_CPU),eh_occ
  type(ggwinfo)           :: isc
- complex(SP)             :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
+ complex(SP)             :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),pole
  complex(SP),allocatable :: rhotw_save(:),Xo_residual(:,:)
  complex(SP),allocatable :: eet_factor(:,:)
  integer,    external    :: X_eh_setup
@@ -87,6 +87,8 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !=======================================================
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM.or.associated(Xen%GreenF)
  !
+ skip_WF_load= (iq==1.and.X%ng==1)
+ !
  !  Optical strengths
  !=====================
  if (iq==1) then
@@ -101,7 +103,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
    !
    call DIPOLE_driver(Xen, Xk, X, X%q0)
-   call X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,X%ordering)
+   call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF,X%ordering)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
    !
@@ -111,7 +113,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  !
  ! WF load
  !=========
- call WF_load(WF,X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+ if(.not.skip_WF_load) call WF_load(WF,X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
 #if defined _TIMING
  call timing('Xo (procedure)',OPR='start')
@@ -260,19 +262,21 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
        isc%os = (/iv,ik,1,i_spin/)
        isc%qs = (/1,1,1/)
        ik_bz_mem=PAR_Xk_bz_index(ikbz)
-       if (any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/))) then
-         call scatterBamp(isc)
-         rhotw_save=isc%rhotw
-         isave=(/iv,ic,ik,i_spin/)
-       endif
-       do ig1=1,X%ng
-         ig2=g_rot(sop_inv(is),ig1)
-         isc%rhotw(ig1)=rhotw_save(ig2)
-       enddo
-       if (is>nsym/(i_time_rev+1)) then
+       if (.not. skip_WF_load) then
+         if (any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/))) then
+           call scatterBamp(isc)
+           rhotw_save=isc%rhotw
+           isave=(/iv,ic,ik,i_spin/)
+         endif
          do ig1=1,X%ng
-           isc%rhotw(ig1)=conjg(isc%rhotw(ig1))
+           ig2=g_rot(sop_inv(is),ig1)
+           isc%rhotw(ig1)=rhotw_save(ig2)
          enddo
+         if (is>nsym/(i_time_rev+1)) then
+           do ig1=1,X%ng
+             isc%rhotw(ig1)=conjg(isc%rhotw(ig1))
+           enddo
+         endif
        endif
        isc%rhotw(1)=-conjg(DIP_q_dot_iR(ic,iv,ik_bz_mem,i_spin))
      else
@@ -316,8 +320,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    else if(force_bare_X_G) then
      call X_bare_RIM_GreenF(iq,X_poles_tab(i_cg,:),Xw,Xen,Xk,GreenF,X%ordering)
    else
+     pole=cmplx(coarse_grid_Pt(i_cg),0._SP)
      do iw=1,Xw%n_freqs
-       GreenF(iw) = X_simple_GreenF(Xw%p(iw),coarse_grid_Pt(i_cg),X%ordering)
+       GreenF(iw) = X_simple_GreenF(Xw%p(iw),pole,X%ordering)
      enddo
    endif
    !

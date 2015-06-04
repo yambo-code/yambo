@@ -33,7 +33,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  use com,                 ONLY:msg,error,warning
  use YPP,                 ONLY:BZ_RIM_nkpts,RIM_DB1_paths,MAX_RIM_DBs,n_RIM_DBs
  use electrons,           ONLY:levels,default_nel,n_bands,BZ_ASSOCIATED_nkpts,&
-&                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
+&                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_kpts,&
 &                              BZ_RIM_tot_nkpts,n_sp_pol,BZ_RIM_max_filling,&
 &                              BZ_RIM_ipol_weight,E_reset,RIM_is_symmetry_expanded
  use LIVE_t,              ONLY:live_timing
@@ -308,27 +308,15 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  BZ_RIM_ipol_weight = 1.0_SP
  !
  allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
+ allocate(BZ_RIM_kpts(BZ_RIM_tot_nkpts,3))
  !
  if (RIM_is_symmetry_expanded) then
    !
-   allocate(Xk%pt_RIM(BZ_RIM_tot_nkpts,3))
    !
    Xen%E_RIM(:,:,:)=RIM_E(i_db_merge)%E(:,:,:)
-   Xk%pt_RIM(:,:)  =RIM_k(i_db_merge)%pt(:,:)
+   BZ_RIM_kpts(:,:)=RIM_k(i_db_merge)%pt(:,:)
    !
  else
-   !
-   ! Presently all the points in the RIM DB are associated to points in
-   ! the IBZ of the small grid looking for the nearest of the rotated.
-   ! Thus the kpts in Xk%ptbz_RIM contains all the Xk%ptbz plus
-   ! the associated points in the RIM. Thus if Xk%ptbz is in the IBZ
-   ! it has a cloud of points (Xk%ptbz_RIM) otherwise it has only
-   ! no points associated
-   ! One should rotate the cloud from the ibz and associate it to the
-   ! rotated point out of the ibz. I started the implementation in the
-   ! k_random.F_project which is now inside my repository
-   !
-   allocate(Xk%ptbz_RIM(BZ_RIM_tot_nkpts,3))
    !
    call live_timing('RIM re-ordering and distribution',Xk%nbz,SERIAL=.true.)
    !                ===============
@@ -338,10 +326,10 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
        i1=i1+1
        if (ik_RIM==1) then
          Xen%E_RIM(:,i1,:)=Xen%E(:BZ_RIM_nbands,BZ_RIM_table(ik_bz,1),:)+Xen%E_fermi
-         Xk%ptbz_RIM(i1,:)=Xk%ptbz(ik_bz,:)
+         BZ_RIM_kpts(i1,:)=Xk%ptbz(ik_bz,:)
        else
          Xen%E_RIM(:,i1,:)=RIM_E(i_db_merge)%E(:,BZ_RIM_table(ik_bz,ik_RIM)-1,:)
-         Xk%ptbz_RIM(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_RIM) ),RIM_k(i_db_merge)%pt(BZ_RIM_table(ik_bz,ik_RIM)-1,:))
+         BZ_RIM_kpts(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_RIM) ),RIM_k(i_db_merge)%pt(BZ_RIM_table(ik_bz,ik_RIM)-1,:))
        endif
        BZ_RIM_table(ik_bz,ik_RIM)=ik_RIM+sum(BZ_RIM_nkpt(:ik_bz-1))
      enddo
@@ -361,8 +349,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  deallocate(BZ_RIM_nkpt,BZ_RIM_table,Xen%E_RIM,BZ_RIM_ipol_weight)
  if(allocated(BZ_SYM_table)) deallocate(BZ_SYM_table)
- if(associated(Xk%ptbz_RIM)) deallocate(Xk%ptbz_RIM)
- if(associated(Xk%pt_RIM))   deallocate(Xk%pt_RIM)
+ if(allocated(BZ_RIM_kpts))  deallocate(BZ_RIM_kpts)
  call k_ibz2bz(Xk,'d',.false.) 
  call k_ibz2bz(RIM_k(i_db_merge),'d',.false.) 
  !

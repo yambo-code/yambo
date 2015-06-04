@@ -35,16 +35,17 @@ configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	      ./configure $(AUXFLAGS) \
 	      CC="$(cc)" \
+	      CFLAGS="$(cflags)" \
 	      CXX="$(cc)" \
 	      FC="$(f90)" \
-              CPPFLAGS="$(netcdf_aux)" \
+	      FCFLAGS="$(f77flags)" \
+	      FFLAGS="$(f77flags)" \
+	      CPPFLAGS="$(netcdf_aux)" \
 	      F90="$(f90)" \
 	      F77="$(f77)" \
 	      INSTALL_DIR="$(INSTALL_DIR)" ); \
 	fi
 	touch configure-stamp
-#	      CPP="$(cpp)" 
-#             CPPFLAGS="$(cppflags) $(netcdf_aux)" 
 
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \

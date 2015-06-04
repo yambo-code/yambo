@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM,DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -21,31 +21,31 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
+subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF,drude_ordering)
  !
  use pars,          ONLY:SP,cZERO,schlen
  use units,         ONLY:HA2EV
  use com,           ONLY:msg
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ
- use R_lattice,     ONLY:bz_samp,q_norm 
+ use R_lattice,     ONLY:bz_samp,q_norm
  use D_lattice,     ONLY:DL_vol
- use X_m,           ONLY:X_t,iw_ref
+ use X_m,           ONLY:X_t,iw_ref,use_X_RIM
  use com,           ONLY:warning
  !
  implicit none
  !
- type(levels)         :: Xen
- type(bz_samp)        :: Xk
- type(X_t)            :: X
- type(w_samp)         :: Xw
+ type(levels) ,intent(in)   :: Xen
+ type(bz_samp),intent(in)   :: Xk
+ type(w_samp) ,intent(in)   :: Xw
  !
- integer              :: iq
- complex(SP)          :: drude_GreenF(Xw%n_freqs)
- character(1)         :: drude_ordering
+ integer      ,intent(in)   :: iq
+ complex(SP)  ,intent(inout):: Wd
+ complex(SP)  ,intent(out)  :: drude_GreenF(Xw%n_freqs)
+ character(1) ,intent(in)   :: drude_ordering
  !
- real(SP)             :: drude_factor
- logical              :: Drude_term
+ real(SP)             :: drude_factor,f_e,f_h
+ logical              :: Drude_term(4)
  integer              :: iw
  !
  drude_GreenF = cZERO
@@ -56,32 +56,46 @@ subroutine X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
  !  . Metallic system 
  !  . Optical response @ q = Gamma
  !
- Drude_term=all((/real(X%Wd)>0.,aimag(X%Wd)>0.,Xen%kf>0,Xen%nbf/=Xen%nbm,iq==1/))
  !
- if(.not.Drude_term .and. iq==1) then
-   if(Xen%nbf==Xen%nbm.and.all((/real(X%Wd)>0.,aimag(X%Wd)>0./)) ) then
-     call warning(' System is not a metal. Drude term not included')
-     X%Wd=(0._SP,0._SP)
-   endif
-   if(Xen%nbf/=Xen%nbm) then
-     if(real(X%Wd)>0. .and. aimag(X%Wd)>0.)   call warning(' Too low ElecTemp. Drude term not included.')
-     if(real(X%Wd)==0. .or. aimag(X%Wd)==0.)  call warning(' The system is a metal but Drude term not included.')
-   endif
+ Drude_term(1) = real(Wd)>0._SP .and. aimag(Wd)>0._SP
+ Drude_term(2) = Xen%nbf/=Xen%nbm
+ Drude_term(3) = Xen%kf>0        
+ Drude_term(4) = (iq==1)
+ !
+ ! Checks
+ !
+ if (.not.Drude_term(4)) then
+   call warning(' Not q=0. I should not be here!')
+   return
  endif
  !
- if(.not.Drude_term) return
+ if (.not.Drude_term(1).and. all((/Drude_term(2:3)/)) .and..not.use_X_RIM ) then
+   call warning(' The system is a metal but Drude term not included.')
+ endif
  !
- call msg('nrs','[X/K] Drude contribution @[ev]:',(/real(X%Wd),aimag(X%Wd)/)*HA2EV)
+ if(      Drude_term(1) .and. .not.Drude_term(2) ) then
+   call warning(' System is not a metal. Drude term not included')
+   Wd=(0._SP,0._SP)
+ endif
+ !
+ if(      Drude_term(1) .and.      Drude_term(2) .and. .not.Drude_term(3) ) then
+   call warning(' Too low ElecTemp. Drude term not included.')
+   Wd=(0._SP,0._SP)
+ endif
+ !
+ if(.not.all(Drude_term)) return
+ !
+ call msg('nrs','[X/K] Drude contribution @[ev]:',(/real(Wd),aimag(Wd)/)*HA2EV)
  !
  ! drude_factor is the eh_occ factor calculated in the Xo loop
  ! evaluated at the fermi state
  !
- drude_factor=Xen%f(Xen%bf,Xen%kf,Xen%sf)*&
-&             (spin_occ-Xen%f(Xen%bf,Xen%kf,Xen%sf))/ &
-&             (spin_occ*real(Xk%nbz)*DL_vol)
+ f_e=          Xen%f(Xen%bf,Xen%kf,Xen%sf) 
+ f_h=(spin_occ-Xen%f(Xen%bf,Xen%kf,Xen%sf))
+ drude_factor=f_e*f_h/(real(Xk%nbz,SP)*DL_vol*spin_occ)
  !
  do iw=1,Xw%n_freqs
-   drude_GreenF(iw)=Jellium_drude(real(Xw%p(iw)),X%Wd,q_norm(1))/drude_factor
+   drude_GreenF(iw)=Jellium_drude(real(Xw%p(iw)),Wd,q_norm(1))/drude_factor
  enddo
  !
  if(drude_ordering/='c') return
@@ -125,6 +139,5 @@ subroutine X_Drude(iq,Xen,Xk,Xw,X,drude_GreenF,drude_ordering)
    endif
    !
   end function Jellium_drude
-  !
   !
 end subroutine

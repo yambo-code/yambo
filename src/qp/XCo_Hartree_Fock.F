@@ -100,7 +100,7 @@ if(.not.l_sc_run .and. .not.l_real_time) then
    !
    if ((l_gw0.or.l_cohsex).and.WF_buffered_IO) then
      !
-     call WF_load(WF_buffer,0,1,(/1,n_WF_bands_to_load/),(/1,k%nibz/),space='B',title='-BUFFER',force_WFo=.true.)
+     call WF_load(WF_buffer,0,1,(/1,n_WF_bands_to_load/),(/1,k%nibz/),space='B',title='-BUFFER')
      !
    endif
    !

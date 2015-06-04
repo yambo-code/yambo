@@ -28,7 +28,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
- use electrons,      ONLY:n_sp_pol,spin_occ,levels
+ use electrons,      ONLY:n_sp_pol,spin_occ,levels,BZ_RIM_kpts
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands
  use real_time,      ONLY:RT_t,REF_lifetime,E_E_Hole_lifetime,E_E_Electron_lifetime,   &
@@ -69,11 +69,11 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
      do i_k=1,K%nibz
        if(     l_RT_uses_E_RIM) then
-         RT%kpt(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)= K%ptbz_RIM(RIM_ibz_coo(i_k,1):RIM_ibz_coo(i_k,2),:)
+         RT%kpt(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)    = BZ_RIM_kpts(RIM_ibz_coo(i_k,1):RIM_ibz_coo(i_k,2),:)
          RT%k_weight(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2)) = K%weights(i_k)/real(RT_Nk_ibz(i_k),SP)        
        endif
        if(.not.l_RT_uses_E_RIM) then
-         RT%kpt(i_k,:)= K%pt(i_k,:)
+         RT%kpt(i_k,:)    = K%pt(i_k,:)
          RT%k_weight(i_k) = K%weights(i_k)
        endif
      enddo

@@ -91,7 +91,7 @@ subroutine PP_PWscf_driver(k)
    do ibeta=1,atoms%pseudo(itype)%nbeta
      pp_n_l_max=(max(pp_n_l_max,atoms%pseudo(itype)%lbeta(ibeta)+1))
      pp_table(1,itype,ibeta) = atoms%pseudo(itype)%lbeta(ibeta)+1               ! l+1
-     pp_table(2,itype,ibeta) = 0                    
+     pp_table(2,itype,ibeta) = 0
      if(atoms%pseudo(itype)%psp_has_so) &
 &      pp_table(2,itype,ibeta) = nint(2._SP*atoms%pseudo(itype)%jbeta(ibeta))   ! 2j
    enddo

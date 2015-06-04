@@ -23,18 +23,18 @@
 !
 subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
  !
- use pars,       ONLY:SP
- ! GPL_EXCLUDE_START
-#if defined _ELPH
- use units,      ONLY:pi
-#endif
- ! GPL_EXCLUDE_END
+ use pars,       ONLY:SP,cZERO,cONE
  use X_m,        ONLY:use_X_RIM
  use BS,         ONLY:BSS_uses_RIM
  use electrons,  ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,spin_occ,BZ_RIM_nbands,&
                       BZ_RIM_ipol_weight
  use R_lattice,  ONLY:qindx_X,bz_samp
  use frequency,  ONLY:w_samp
+ ! GPL_EXCLUDE_START
+#if defined _ELPH
+ use units,      ONLY:pi
+#endif
+ ! GPL_EXCLUDE_END
  !
  implicit none
  integer      :: iq,transitions(4)
@@ -47,8 +47,10 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
  !Work Space
  !
  integer      ::i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ik,ikp
- real(SP)     ::ffac,f0fac,W_,s_ffac
+ real(SP)     ::ffac,cg_ffac,f_e,f_h,weight1,weight2,W_
  complex(SP)  ::Z_,pole
+ complex(SP),external      ::X_simple_GreenF
+ !
  ! GPL_EXCLUDE_START
 #if defined _ELPH
  complex(SP), allocatable  ::Green_F_convoluted(:)
@@ -56,7 +58,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
 #endif
  ! GPL_EXCLUDE_END
  !
- GreenF  = cmplx(0.,0.,SP)
+ GreenF  = cZERO
  !
  ! Transitions
  !
@@ -87,23 +89,23 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
    !
    Green_F_convoluted=Green_F_convoluted/pi**2.
    !
-   GreenF=(0.,0.)
+   GreenF=cZERO
    !
    ! Resonant Part
    !
    if (trim(ordering)=='r'.or.trim(ordering)=='t'.or.trim(ordering)=='c') then
      call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
-&                        GreenF,            Xw%p,                          Xw%n_freqs, cmplx(0.,0.,SP))
+&                        GreenF,            Xw%p,                          Xw%n_freqs, cZERO)
    endif
    !
    if (trim(ordering)=='c'.or.trim(ordering)=='ca') then
      call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
-&                        GreenF,            -Xw%p,                      Xw%n_freqs, cmplx(0.,0.,SP))
+&                        GreenF,           -Xw%p,                          Xw%n_freqs, cZERO)
    endif
    !
    if (trim(ordering)=='t'.or.trim(ordering)=='a') then
      call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
-&                        GreenF,            -conjg(Xw%p),               Xw%n_freqs, cmplx(0.,0.,SP))
+&                        GreenF,     -conjg(Xw%p),                         Xw%n_freqs, cZERO)
    endif
    !
    deallocate(Green_F_convoluted)
@@ -115,8 +117,8 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
 #endif
  ! GPL_EXCLUDE_END
  !
- W_=0.
- Z_=(1.,0.)
+ W_=0._SP
+ Z_=cONE
  if (associated(Xen%W)) W_=abs(Xen%W(ic,ik,i_spin))+abs(Xen%W(iv,ikp,i_spin))
  if (associated(Xen%Z)) Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
  !
@@ -124,14 +126,10 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
    !
    ! Using QP corrected states
    !
-   pole=Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin)-(0.,1.)*W_
+   pole=cmplx(Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin),-W_)
    !
    do iw=1,Xw%n_freqs
-     if (ordering=="t" )  GreenF(iw)=Z_*(1./(Xw%p(iw)-pole)-1./(conjg(Xw%p(iw))+pole))
-     if (ordering=="c" )  GreenF(iw)=Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+conjg(pole)))  ! Davide: the conjg of the pole seems wrong
-     if (ordering=="r" )  GreenF(iw)=Z_/    (Xw%p(iw)-pole)
-     if (ordering=="a" )  GreenF(iw)=                      -Z_/(conjg(Xw%p(iw))+pole)
-     if (ordering=="ca" ) GreenF(iw)=                      -Z_/(Xw%p(iw)+pole)
+     GreenF(iw)=X_simple_GreenF(Xw%p(iw),pole,ordering)*Z_
    enddo
    !
    return
@@ -140,65 +138,44 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
  !
  ! In the X_o loop the GreenF is multiplied by 
  !
- !  f0fac/spin_occ/real(Xk%nbz)/DL_vol
+ !  cg_ffac/spin_occ/real(Xk%nbz)/DL_vol
  !
  ! so that I have to divide/multiply to correctly renormalize 
  !
- f0fac=Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))
+ ! X_os.F
+ if( iq/=1  .or. .not.(ordering=="sr".or.ordering=="sa") ) then
+   f_e =          Xen%f(iv,ikp,i_spin)
+   f_h = spin_occ-Xen%f(ic,ik ,i_spin) 
+   cg_ffac = f_e*f_h          
+ endif
  !
- if (iq==1) then
+ ! K_inversion.F
+ if( iq==1 .and.      (ordering=="sr".or.ordering=="sa") ) cg_ffac = spin_occ**2._SP  
+ !
+ do i1=1,BZ_RIM_nkpt(ikbz)
    !
-   do i1=1,BZ_RIM_nkpt(ikbz)
-     ! 
-     ik_rand=BZ_RIM_table(ikbz,i1) 
+   ik_rand = BZ_RIM_table(ikbz,i1)
+   !
+   f_h     = spin_occ-Xen%f_RIM(ic,ik_rand,i_spin)
+   weight1 = BZ_RIM_ipol_weight(i1)/real(BZ_RIM_nkpt(ikbz),SP)
+   !
+   do i2=1,BZ_RIM_nkpt(ikpbz)
      !
-     pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ik_rand,i_spin)-(0.,1.)*W_
+     ikp_rand=BZ_RIM_table(ikpbz,i2) 
      !
-     s_ffac=real(Z_)*Xen%f_RIM(iv,ik_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))*&
-&           BZ_RIM_ipol_weight(i1)/real(BZ_RIM_nkpt(ikbz))
-     ! 
-     ffac=s_ffac/f0fac
+     f_e     = Xen%f_RIM(iv,ikp_rand,i_spin)
+     weight2 = BZ_RIM_ipol_weight(i2)/real(BZ_RIM_nkpt(ikpbz),SP)
+     !
+     ffac=real(Z_)*f_e*f_h*weight1*weight2/cg_ffac
+     !
+     pole=cmplx(Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ikp_rand,i_spin),W_)
      !
      do iw=1,Xw%n_freqs
-       !
-       if (ordering=="t" ) GreenF(iw)=GreenF(iw)+ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
-       if (ordering=="c" ) GreenF(iw)=GreenF(iw)+ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
-       if (ordering=="r" ) GreenF(iw)=GreenF(iw)+ffac/(Xw%p(iw)-pole)
-       if (ordering=="a" ) GreenF(iw)=GreenF(iw)-ffac/(conjg(Xw%p(iw))+pole)
-       if (ordering=="ca") GreenF(iw)=GreenF(iw)-ffac/(Xw%p(iw)+pole)
-       if (ordering=="sr") GreenF(iw)=GreenF(iw)+s_ffac/(Xw%p(iw)-pole)/spin_occ**2.
-       if (ordering=="sa") GreenF(iw)=GreenF(iw)-s_ffac/(Xw%p(iw)+pole)/spin_occ**2.
+       GreenF(iw)=GreenF(iw)+X_simple_GreenF(Xw%p(iw),pole,ordering)*ffac
      enddo
      !
    enddo
    !
- else
-   !
-   do i1=1,BZ_RIM_nkpt(ikbz)
-     ik_rand=BZ_RIM_table(ikbz,i1) 
-     !
-     do i2=1,BZ_RIM_nkpt(ikpbz)
-       ikp_rand=BZ_RIM_table(ikpbz,i2) 
-       !
-       pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ikp_rand,i_spin)+(0.,1.)*W_
-       !
-       ffac=real(Z_)*Xen%f_RIM(iv,ikp_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))*&
-&         BZ_RIM_ipol_weight(i1)*BZ_RIM_ipol_weight(i2)/real(BZ_RIM_nkpt(ikbz))/real(BZ_RIM_nkpt(ikpbz))/f0fac
-       !
-       do iw=1,Xw%n_freqs
-         if (ordering=="t" ) GreenF(iw)=GreenF(iw)+&
-&                             ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
-         if (ordering=="c" ) GreenF(iw)=GreenF(iw)+&
-&                             ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
-         if (ordering=="r" ) GreenF(iw)=GreenF(iw)+ffac/(Xw%p(iw)-pole)
-         if (ordering=="a" ) GreenF(iw)=GreenF(iw)-ffac/(conjg(Xw%p(iw))+pole)
-         if (ordering=="ca") GreenF(iw)=GreenF(iw)-ffac/(Xw%p(iw)+pole)
-       enddo
-       !
-     enddo
-     !
-   enddo
-   !
- endif
+ enddo
  !
 end subroutine

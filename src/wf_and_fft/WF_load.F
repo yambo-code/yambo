@@ -73,7 +73,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
- logical          ::loaded_bounds_ok,use_direct_access,free_and_alloc,buffer_is_ok,clean_up_states
+ logical          ::loaded_bounds_ok,use_direct_access,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
@@ -98,6 +98,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  s_to_load=(/1,n_spin/)
  if (present(title)) wf_title=title
  if (present(spins_to_load)) s_to_load=spins_to_load
+ !
+ force_WFo_=.false.
+ if(present(force_WFo)) force_WFo_=force_WFo
  !
  ! [1]: check that loaded bounds are larger(equal) then bounds 
  !      asked now
@@ -134,7 +137,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    endif
    !
  endif
- !
  !
  ! [2]: Check FFT size
  !
@@ -213,7 +215,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (found_SC_DB.and.compatible_SC_DB) then
    !
-   if(allocated(states_to_load).and..not.present(force_WFo)) then
+   if(allocated(states_to_load).and..not.force_WFo_) then
      deallocate(states_to_load)
      call warning(' [WF] WF-distribution turned off, not compatible with SC wave functions')
    endif
@@ -274,6 +276,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    !
  endif
  !
+ ACTION_=RD_CL_IF_END
+ if (use_direct_access) ACTION_=RD_CL
+ !
  WF%N=0
  do ikibz=1,nkibz
    !
@@ -299,8 +304,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          endif
        endif
        !
-       ACTION_=RD_CL_IF_END
-       if (use_direct_access) ACTION_=RD_CL
        call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
        !
        io_err=io_WF(ID,wf_disk)
@@ -401,7 +404,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! Rotate in the SC basis
  !========================
  !
- if (found_SC_DB.and..not.present(force_WFo)) then
+ if (found_SC_DB.and..not.force_WFo_) then
    !
    call load_SC_components('WF',COM_=NONE,MODE_=DUMP,kind=WF_kind,xc_functional=WF_xc_functional,&
 &                          perturbation=WF_perturbation)

@@ -3376,6 +3376,7 @@ subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
     !
     CALL iotk_scan_end(u, 'PP_SPIN_ORB')
     !
+    !
   endif
   !
   call iotk_close_read(u, ierr=ierr_)

@@ -66,7 +66,7 @@ module magnetic
  real(SP),    allocatable :: x(:,:)
  real(SP)                 :: cell_center(3)
  !
- complex(SP), allocatable :: new_pp(:,:),old_pp(:,:)
+ complex(SP), allocatable :: new_pp(:,:,:),old_pp(:,:,:)
  !
  contains
    !

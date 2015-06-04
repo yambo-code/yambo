@@ -527,6 +527,8 @@ subroutine electrons_driver(Xk,Xen,Xq)
    !
    call el_density_and_current(Xen,Xk,J=el_cur)
    !
+   v2plot=v2plot/abs(maxval( v2plot ))
+   !
    call msg("s",'Current integrals (x,y,z) [nAmpere]:',&
 &               (/Sum(el_cur(:,1)),Sum(el_cur(:,2)),Sum(el_cur(:,3))/)*AU2nAmpere)
    !

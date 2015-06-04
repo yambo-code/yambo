@@ -93,7 +93,9 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
     call make_star(lattice_vectors(:,i1),nsym,int_sop,nstar,star_vec) 
     do ik=1,Nk
       if(Nk==Xk%nibz) call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
-      if(Nk> Xk%nibz) call c2a(v_in=Xk%pt_RIM(ik,:),v_out=v,mode='ki2a')
+      ! Implementation to be finished. Here I canno use BZ_RIM_kpts
+      ! bacuse also extra points in the BZ are included ...
+      !if(Nk> Xk%nibz) call c2a(v_in=Xk%pt_RIM(ik,:),v_out=v,mode='ki2a')
       do i2=1,nstar
         star_1(i1,ik)=star_1(i1,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,i2)))
       enddo

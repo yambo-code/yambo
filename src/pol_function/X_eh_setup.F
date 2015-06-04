@@ -24,12 +24,15 @@
 integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  use pars,          ONLY:SP
- use X_m,           ONLY:X_t,X_poles,X_poles_tab
+ use com,           ONLY:warning
+ use X_m,           ONLY:X_t,X_poles,X_poles_tab,use_X_RIM,use_X_Drude
  use R_lattice,     ONLY:qindx_X,bz_samp
  use electrons,     ONLY:levels,n_sp_pol,spin_occ
  use frequency,     ONLY:ordered_grid_index
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,PAR_IND_VAL_BANDS_X
+ !
  implicit none
+ !
  type(levels)  ::Xen 
  type(bz_samp) ::Xk
  type(X_t)     ::X
@@ -38,36 +41,39 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  ! Work Space
  !
- integer :: i1,i2,ik,ikp,iv,ic,Nb,Nt,i_sp,i_pole
- logical :: MPI_logicals_on
+ integer :: i1,i2,ik,ikp,iv,ic,Nv,Nc,i_sp,i_pole
+ logical :: MPI_logicals_on,call_warning
  real(SP):: E_eh,f_eh
  real(SP), allocatable :: poles(:)
  !
- Nb=Xen%nbm-X%ib(1)+1
- Nt=X%ib(2)-Xen%nbf
+ Nv=Xen%nbm-X%ib(1)+1
+ Nc=X%ib(2)-Xen%nbf
  !
- allocate(poles(Xk%nbz*Nb*Nt*n_sp_pol))
+ allocate(poles(Xk%nbz*Nv*Nc*n_sp_pol))
  !
  MPI_logicals_on=associated(PAR_IND_Xk_bz%element_1D)
+ !
+ call_warning=.false.
  !
  ! Note that in metals not all the elements are defined
  !
  poles=0._SP 
  !
  X_eh_setup=0
+ !
  do i1=1,Xk%nbz
    !
    if (MPI_logicals_on) then
      if (.not.PAR_IND_Xk_bz%element_1D(i1)) cycle 
    endif
    !
-   do iv=X%ib(1),Xen%nbm
+   do iv=X%ib(1),X%ib(1)+Nv-1
      !
      if (MPI_logicals_on) then
        if (.not.PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)) cycle 
      endif
      !
-     do ic=Xen%nbf+1,X%ib(2)
+     do ic=X%ib(2)-Nc+1,X%ib(2)
        do i_sp=1,n_sp_pol
          !
          if (MPI_logicals_on) then
@@ -101,13 +107,14 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          !   both transitions 1->3 , 2->4 are resonant but 2->4 has negative energy
          !
          f_eh=Xen%f(iv,ikp,i_sp)*(spin_occ-Xen%f(ic,ik,i_sp))
-         if (abs(f_eh)<epsilon(1.)) cycle
+         if (abs(f_eh)<epsilon(1._SP)) cycle
          !
-         ! Drude "transition"
+         ! Low energy "transition". 
+         ! If I add a Drude term just the poles inside K_f are considered
          !
-         if (abs(E_eh)<1.E-5) then
-           if(any((/ic/=Xen%bf,iv/=Xen%bf,ik/=Xen%kf,i_sp/=Xen%sf/)) ) cycle
-           if(real(X%Wd)==0..and.aimag(X%Wd)==0.) cycle
+         if (abs(E_eh)<1.E-5_SP) then
+           if ( .not.(use_X_RIM.or.use_X_drude) ) call_warning=.true.
+           if ( any((/ic/=Xen%bf,iv/=Xen%bf,ik/=Xen%kf,i_sp/=Xen%sf/)) .and. use_X_drude ) cycle
          endif
          !
          if (any((/abs(E_eh)<X%ehe(1),abs(E_eh)>X%ehe(2).and.X%ehe(2)>0./))) cycle
@@ -122,6 +129,8 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
      enddo
    enddo
  enddo
+ !
+ if(call_warning.and.iq>0) call warning ('Low energy transitions may be not properly described')
  !
  minmax_ehe=(/max(minval(poles(:X_eh_setup))-0.1_SP,0._SP),maxval(poles(:X_eh_setup))+0.1_SP/)
  !

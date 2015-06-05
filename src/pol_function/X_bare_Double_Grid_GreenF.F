@@ -142,14 +142,16 @@ subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
  !
  ! so that I have to divide/multiply to correctly renormalize 
  !
- ! X_os.F
+ ! From X_os.F
+ !
  if( iq/=1  .or. .not.(ordering=="sr".or.ordering=="sa") ) then
    f_e =          Xen%f(iv,ikp,i_spin)
    f_h = spin_occ-Xen%f(ic,ik ,i_spin) 
    cg_ffac = f_e*f_h          
  endif
  !
- ! K_inversion.F
+ ! From K_inversion.F
+ !
  if( iq==1 .and.      (ordering=="sr".or.ordering=="sa") ) cg_ffac = spin_occ**2._SP  
  !
  do i1=1,BZ_DbGd_nkpt(ikbz)

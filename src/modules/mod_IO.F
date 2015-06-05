@@ -451,8 +451,7 @@ module IO_m
        endif
        if (io_netcdf_support(ID)) then
 #if defined _NETCDF_IO
-         call netcdf_call(nf90_open(trim(io_file(ID)),&
-&                         nf90_nowrite,io_unit(ID)))
+         call netcdf_call(nf90_open(trim(io_file(ID)),nf90_nowrite,io_unit(ID)))
 #else
          io_connect=IO_NO_DATABASE
          if (present(no_full_RESET)) then
@@ -643,43 +642,6 @@ module IO_m
      !
    end function file_is_present
    !
-   subroutine synchronize_db(desc,subfolder)
-     !
-     use com,        ONLY:all_locations,file_exists,jobstr,core_io_path,more_io_path,&
-&                         num_of_alternative_locations
-     !
-     character(*), intent(in):: desc
-     character(*), optional  :: subfolder
-     integer                 :: io_err
-     !
-     ! Work Space
-     !
-     integer            :: i_f
-     logical            :: db_found_in_location(num_of_alternative_locations),CORE_2_MORE,MORE_2_CORE
-     character(lchlen)  :: possible_locations(num_of_alternative_locations)
-     character(schlen)  :: subfolder_
-     !
-     subfolder_=' '
-     if (present(subfolder)) subfolder_=subfolder
-     !
-     possible_locations=all_locations(desc,subfolder_,.TRUE.)
-     !
-     do i_f=1,num_of_alternative_locations
-       db_found_in_location(i_f)=file_exists(trim( possible_locations(i_f) ) ) 
-     enddo
-     !
-     do i_f=1,4
-       MORE_2_CORE= db_found_in_location(i_f).and..not.db_found_in_location(i_f+4)
-       CORE_2_MORE= .not.db_found_in_location(i_f).and.db_found_in_location(i_f+4)
-       if (CORE_2_MORE.and.len_trim(jobstr)>0) call mk_dir(trim(more_io_path)//"/"//trim(jobstr)) 
-       if (MORE_2_CORE.and.len_trim(jobstr)>0) call mk_dir(trim(core_io_path)//"/"//trim(jobstr))
-       !
-       if (MORE_2_CORE) call cp_file(trim(possible_locations(i_f)),trim(possible_locations(i_f+4)),io_err)
-       if (CORE_2_MORE) call cp_file(trim(possible_locations(i_f+4)),trim(possible_locations(i_f)),io_err)
-     enddo
-     !
-   end subroutine synchronize_db
-   !
    logical function file_is_open(filename,ID)
      character(*)      :: filename
      integer, optional :: ID
@@ -735,32 +697,6 @@ module IO_m
      if (nf90_inq_varid(io_unit(ID),var_name,var_ID)==nf90_NoErr) variable_is_found=1  
      if (nf90_inq_varid(io_unit(ID),var_name,var_ID)/=nf90_NoErr) variable_is_found=0  
 #endif
-   end function
-   !
-   logical function fragment_exists(ID)
-     !
-     use com,       ONLY:file_exists,all_locations,num_of_alternative_locations
-     !
-     implicit none
-     !
-     integer                :: ID
-     !
-     ! Work Space
-     !
-     character(lchlen) :: fragment_filenames(num_of_alternative_locations)
-     integer           :: i_f
-     !
-     fragment_filenames=all_locations(trim(io_extension(ID)),trim(io_folder(ID)),io_netcdf_support(ID))
-     !
-     fragment_exists=.FALSE.
-     !
-     do i_f=1,num_of_alternative_locations
-       if (file_exists(trim(fragment_filenames(i_f)))) then
-         fragment_exists=.TRUE.
-         return
-       endif
-     enddo
-     !
    end function
    !
 end module IO_m

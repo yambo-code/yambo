@@ -232,7 +232,10 @@ subroutine K_inversion(iq,W,E,k,q)
  !
 #endif
  !
- call live_timing('Green`s function',BS_K_dim)
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/BS_K_dim/))
+ !
+ call live_timing('Green`s function',px%n_of_elements(myid+1))
  !
  do i1=1,BS_K_dim
    !
@@ -241,6 +244,8 @@ subroutine K_inversion(iq,W,E,k,q)
    iv    =BSS_eh_table(i1,2)
    ic    =BSS_eh_table(i1,3)
    i_sp  =spin(BSS_eh_table(i1,:))
+   !
+   if (.not.px%element_1D(i1)) cycle
    !
    if (.not.BSS_uses_DbGd) then
      !
@@ -321,7 +326,16 @@ subroutine K_inversion(iq,W,E,k,q)
    call live_timing(steps=1)
    !
  enddo
- X_epsilon(3,:)=(1.+X_epsilon(3,:))/real(ncpu,SP)
+ !
+ call live_timing( )
+ !
+ call PP_redux_wait(X_epsilon)
+ call PP_redux_wait(Lo(:,:,1))
+ if (IO_dim==2) call PP_redux_wait(Lo(:,:,2))
+ !
+ X_epsilon(3,:)=(1.+X_epsilon(3,:))
+ !
+ X_epsilon=X_epsilon/real(ncpu,SP)
  !
  ! Perturbative Invertion
  !========================

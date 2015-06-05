@@ -30,18 +30,26 @@ integer function io_Double_Grid(E,Xk,ID)
  use R_lattice,      ONLY:nXkbz,bz_samp
  use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
-&                         io_bulk,io_header,ver_is_gt_or_eq
+&                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on
  implicit none
  !
  type(levels) :: E
  type(bz_samp):: Xk
  integer      :: ID 
  !
- io_Double_Grid=io_connect(desc='Double_Grid',type=2,ID=ID)
- if (io_Double_Grid/=0) then
+ ! Work Space
+ !
+ logical :: l_DG_format
+ !
+ if (file_is_present('Double_Grid').or.write_is_on(ID)) then
+   io_Double_Grid=io_connect(desc='Double_Grid',type=2,ID=ID)
+   l_DG_format=.TRUE.
+ else
    io_Double_Grid=io_connect(desc='RIM_E_and_k',type=2,ID=ID)
-   if (io_Double_Grid/=0) goto 1
+   l_DG_format=.FALSE.
  endif
+ !
+ if (io_Double_Grid/=0) goto 1
  !
  io_Double_Grid=io_header(ID)
  !
@@ -81,17 +89,17 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Eigenvalues
  !
- if (ver_is_gt_or_eq(ID,revision=4441)) then
-   call io_bulk(ID, VAR="RIM_EIGENVALUES", VAR_SZ=shape(E%E_DbGd) ) 
- else
+ if (ver_is_gt_or_eq(ID,revision=4441).and.l_DG_format) then
    call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%E_DbGd) ) 
+ else
+   call io_bulk(ID, VAR="RIM_EIGENVALUES", VAR_SZ=shape(E%E_DbGd) ) 
  endif
  call io_bulk(ID, R3=E%E_DbGd )
  !
  ! Kpts
  !
  if (ver_is_gt_or_eq(ID,revision=3784))  then
-   if (ver_is_gt_or_eq(ID,revision=4441)) then
+   if (ver_is_gt_or_eq(ID,revision=4441).and.l_DG_format) then
      call io_bulk(ID, VAR="KPTS", VAR_SZ=shape(BZ_DbGd_kpts) ) 
    else
      call io_bulk(ID, VAR="RIM_KPTS", VAR_SZ=shape(BZ_DbGd_kpts) ) 
@@ -101,7 +109,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Block filling
  !
- if (ver_is_gt_or_eq(ID,revision=4441)) then
+ if (ver_is_gt_or_eq(ID,revision=4441).and.l_DG_format) then
    call io_bulk(ID, VAR="BLOCK_FILLING", VAR_SZ=shape(BZ_DbGd_nkpt) ) 
  else
    call io_bulk(ID, VAR="RIM_BLOCK_FILLING", VAR_SZ=shape(BZ_DbGd_nkpt) ) 
@@ -110,7 +118,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Block table
  !
- if (ver_is_gt_or_eq(ID,revision=4441)) then
+ if (ver_is_gt_or_eq(ID,revision=4441).and.l_DG_format) then
    call io_bulk(ID, VAR="BLOCK_TABLE", VAR_SZ=shape(BZ_DbGd_table) ) 
  else
    call io_bulk(ID, VAR="RIM_BLOCK_TABLE", VAR_SZ=shape(BZ_DbGd_table) ) 
@@ -121,7 +129,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (ver_is_gt_or_eq(ID,revision=1300)) then
    !
-   if (ver_is_gt_or_eq(ID,revision=4441)) then
+   if (ver_is_gt_or_eq(ID,revision=4441).and.l_DG_format) then
      call io_bulk(ID, VAR="INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_ipol_weight) ) 
    else
      call io_bulk(ID, VAR="RIM_INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_ipol_weight) ) 

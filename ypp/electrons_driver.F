@@ -157,7 +157,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! WFs
  !=====
  !
- flag=.not.l_dos
+ flag=.not.l_dos.and..not.l_bands
  !===
 #if defined _YPP_MAGNETIC
  if (flag) flag=.not.any((/l_angular_momentum,l_position/))
@@ -209,8 +209,15 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !======================
  !
  if(l_bands.or.l_RT_occ_Bands.or.l_RT_life_Bands) then
-   if ( i_time_rev==1) call error('Bands interpolation does not work with T-rev symmetry')
+   !
+   if ( (l_RT_occ_Bands.or.l_RT_life_Bands).and.i_time_rev==1 ) then
+     call error('Bands interpolation does not work with T-rev symmetry')
+   endif
+   !
    call electrons_bands(Xk,Xen,nb_to_load)
+   !
+   return
+   !
  endif
  !
  ! GPL_EXCLUDE_START

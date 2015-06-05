@@ -160,7 +160,7 @@ subroutine bz_interp_setup(Xk)
 ! do i1=1,n_vec
 !   write(*,*) 'lvec(',i1,') = ',lattice_vectors(:,i1),' mod ',lattice_vec_mod(i1)
 ! enddo
- call msg('sr','[Interp] Number of shells for interpolation : ',nshells)
+ call msg('sr','[INTERPOLATION] Number of shells: ',nshells)
  !
  all_vec(1:3,1:nshells)=lattice_vectors(1:3,1:nshells)
  !

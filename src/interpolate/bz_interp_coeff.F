@@ -124,7 +124,7 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
   call CGETRF(Nkm1,Nkm1,h_mat,Nkm1,ipiv,info)
 #endif
   !
-  if(info/=0) call error("[Interp] Error in factorization ")
+  if(info/=0) call error("[INTERPOLATION] Error in factorization ")
   !
 #if defined _DOUBLE
   call  ZGETRS('N',Nkm1,nvalues,h_mat,Nkm1,ipiv,delta,Nkm1,info)
@@ -132,7 +132,7 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
   call  CGETRS('N',Nkm1,nvalues,h_mat,Nkm1,ipiv,delta,Nkm1,info)
 #endif
   !
-  if(info/=0) call error("[Interp] Error in -getrs")
+  if(info/=0) call error("[INTERPOLATION] Error in -getrs")
   !
   engre=cZERO
   !
@@ -202,7 +202,7 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
     ave_err=ave_err/real(nvalues*Nk)
     rel_ave_err=rel_ave_err/real(nvalues*Nk)
     !
-    write(dump_ch,'(a,3es16.8)') '[Interp err] Max, Avg, Avg_rel = ',max_err,ave_err,rel_ave_err
+    write(dump_ch,'(a,3es16.8)') '[INTERPOLATION] Errors: Max, Avg, Avg_rel = ',max_err,ave_err,rel_ave_err
     call msg('s',dump_ch)
     !
     deallocate (new_VALUEs)

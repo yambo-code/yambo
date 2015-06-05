@@ -29,6 +29,6 @@ objs = mod_YPP.o  ypp_i.o ypp_init.o ypp_init_load.o \
        WANNIER_driver.o bxsf_read.o double_k_grid.o symmetries_driver.o \
        fix_symmetries.o k_build_map.o fix_WFs_Gshells.o fix_WFs_and_E.o fix_PPs.o \
        $(ELPH_objects) $(RT_objects) $(SC_objects) \
-       k_RIM_grid_consistency_check.o k_random.o k_map_fine_to_coarse.o \
+       k_DbGd_grid_consistency_check.o k_random.o k_map_fine_to_coarse.o \
        $(magnetic_objects) $(SURF_objects)
 

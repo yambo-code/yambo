@@ -91,26 +91,26 @@ module electrons
    complex(SP),pointer :: GreenF_W(:,:,:,:)   => null()
    complex(SP),pointer :: GreenF(:,:,:,:)     => null()
    ! 
-   ! Fine energy grid
+   ! Double energy and k-points grid
    !   
-   real(SP),   pointer :: E_RIM(:,:,:)        => null()
-   real(SP),   pointer :: W_RIM(:,:,:)        => null()
-   real(SP),   pointer :: f_RIM(:,:,:)        => null()
-   real(SP),   pointer :: df_RIM(:,:,:)       => null()
+   real(SP),   pointer :: E_DbGd(:,:,:)        => null()
+   real(SP),   pointer :: W_DbGd(:,:,:)        => null()
+   real(SP),   pointer :: f_DbGd(:,:,:)        => null()
+   real(SP),   pointer :: df_DbGd(:,:,:)       => null()
    !
  end type levels
  ! 
  ! Fine energy grid Tables
  !   
- integer  :: BZ_RIM_max_filling = 1
- integer  :: BZ_RIM_tot_nkpts
+ integer  :: BZ_DbGd_max_filling = 1
+ integer  :: BZ_DbGd_tot_nkpts
  integer  :: BZ_ASSOCIATED_nkpts
- integer  :: BZ_RIM_nbands
- logical  :: RIM_is_symmetry_expanded=.FALSE.
- integer ,allocatable :: BZ_RIM_nkpt(:)
- integer ,allocatable :: BZ_RIM_table(:,:)
- real(SP),allocatable :: BZ_RIM_ipol_weight(:)
- real(SP),allocatable :: BZ_RIM_kpts(:,:)
+ integer  :: BZ_DbGd_nbands
+ logical  :: DbGd_is_symmetry_expanded=.FALSE.
+ integer ,allocatable :: BZ_DbGd_nkpt(:)
+ integer ,allocatable :: BZ_DbGd_table(:,:)
+ real(SP),allocatable :: BZ_DbGd_ipol_weight(:)
+ real(SP),allocatable :: BZ_DbGd_kpts(:,:)
  !
  contains
    !
@@ -187,20 +187,20 @@ module electrons
        Eo%E(:,:,:)=Ei%E(:,:Eo%nk,:)
      endif
      !
-     ! E RIM
+     ! E Double Grid
      !
-     if (BZ_RIM_nbands/=0.and.Ei%nk==Eo%nk) then
-       allocate(Eo%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
-       allocate(Eo%W_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
-       allocate(Eo%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
-       call mem_est("E_RIM W_RIM f_RIM",(/size(Eo%E_RIM),size(Eo%W_RIM),size(Eo%f_RIM)/),(/SP,SP,SP/))
-       Eo%E_RIM=Ei%E_RIM
-       Eo%W_RIM=Ei%W_RIM
-       Eo%f_RIM=Ei%f_RIM
-       if(associated(Ei%df_RIM)) then
-         allocate(Eo%df_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
-         call mem_est("df_RIM",(/size(Eo%df_RIM)/),(/SP/))
-         Eo%df_RIM=Ei%df_RIM
+     if (BZ_DbGd_nbands/=0.and.Ei%nk==Eo%nk) then
+       allocate(Eo%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+       allocate(Eo%W_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+       allocate(Eo%f_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+       call mem_est("E_DbGd W_DbGd f_DbGd",(/size(Eo%E_DbGd),size(Eo%W_DbGd),size(Eo%f_DbGd)/),(/SP,SP,SP/))
+       Eo%E_DbGd=Ei%E_DbGd
+       Eo%W_DbGd=Ei%W_DbGd
+       Eo%f_DbGd=Ei%f_DbGd
+       if(associated(Ei%df_DbGd)) then
+         allocate(Eo%df_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+         call mem_est("df_DbGd",(/size(Eo%df_DbGd)/),(/SP/))
+         Eo%df_DbGd=Ei%df_DbGd
        endif
      endif
      !
@@ -235,35 +235,35 @@ module electrons
      nullify(E%E,E%Eo,E%E_dip,E%Z,E%W,E%f,E%fo,E%QP_corrected,E%GreenF,E%GreenF_W)
      call mem_est("E-E E-Eo E-E_dip E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
      !
-     call E_RIM_components_reset(E,.FALSE.)
+     call E_DbGd_components_reset(E,.FALSE.)
      !
    end subroutine
    !
-   subroutine E_RIM_components_reset(E,FULL_RESET)
+   subroutine E_DbGd_components_reset(E,FULL_RESET)
      !
      use memory_m, ONLY:mem_est
      !
      type(levels)::E
      logical     ::FULL_RESET
      !
-     if(associated(E%E_RIM) )      deallocate(E%E_RIM )
-     if(associated(E%W_RIM) )      deallocate(E%W_RIM )
-     if(associated(E%f_RIM) )      deallocate(E%f_RIM )
-     if(associated(E%df_RIM))      deallocate(E%df_RIM)
+     if(associated(E%E_DbGd) )      deallocate(E%E_DbGd )
+     if(associated(E%W_DbGd) )      deallocate(E%W_DbGd )
+     if(associated(E%f_DbGd) )      deallocate(E%f_DbGd )
+     if(associated(E%df_DbGd))      deallocate(E%df_DbGd)
      !
-     nullify(E%E_RIM,E%W_RIM,E%f_RIM,E%df_RIM)
-     call mem_est("E_RIM W_RIM f_RIM df_RIM")
+     nullify(E%E_DbGd,E%W_DbGd,E%f_DbGd,E%df_DbGd)
+     call mem_est("E_DbGd W_DbGd f_DbGd df_DbGd")
      !
      if (.not.FULL_RESET) return
      !
-     BZ_RIM_tot_nkpts=0
+     BZ_DbGd_tot_nkpts=0
      BZ_ASSOCIATED_nkpts=0
-     BZ_RIM_nbands=0
+     BZ_DbGd_nbands=0
      !
-     if(allocated(BZ_RIM_nkpt))        deallocate(BZ_RIM_nkpt)
-     if(allocated(BZ_RIM_table))       deallocate(BZ_RIM_table)
-     if(allocated(BZ_RIM_ipol_weight)) deallocate(BZ_RIM_ipol_weight)
-     if(allocated(BZ_RIM_kpts))        deallocate(BZ_RIM_kpts)
+     if(allocated(BZ_DbGd_nkpt))        deallocate(BZ_DbGd_nkpt)
+     if(allocated(BZ_DbGd_table))       deallocate(BZ_DbGd_table)
+     if(allocated(BZ_DbGd_ipol_weight)) deallocate(BZ_DbGd_ipol_weight)
+     if(allocated(BZ_DbGd_kpts))        deallocate(BZ_DbGd_kpts)
      !
    end subroutine
    !

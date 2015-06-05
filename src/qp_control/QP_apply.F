@@ -57,7 +57,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
 &                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
  use com,           ONLY:msg,depth
  use electrons,     ONLY:levels,E_reset,n_sp_pol,E_duplicate,&
-&                            BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,BZ_RIM_tot_nkpts
+&                            BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
  use D_lattice,     ONLY:input_Tel_is_negative
  use R_lattice,     ONLY:bz_samp
  use parser_m,      ONLY:parser
@@ -89,7 +89,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  character(11)    ::spin_ch(2)
  logical          ::is_def(4),GFs_from_DB,W_def(2)
  integer          ::Eid
- integer, allocatable :: RIM_k_done(:)
+ integer, allocatable :: DbGd_k_done(:)
  integer, external    :: QP_load_DB
  !
  ! Resets
@@ -236,29 +236,29 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! Extend the QP corrections to the RIM energies
  !
- if (associated(en%E_RIM).and.associated(en%Eo)) then
+ if (associated(en%E_DbGd).and.associated(en%Eo)) then
    !
-   allocate(RIM_k_done(BZ_RIM_tot_nkpts))
-   RIM_k_done=0
+   allocate(DbGd_k_done(BZ_DbGd_tot_nkpts))
+   DbGd_k_done=0
    !
    do ik_bz=1,k%nbz
      !
      ik_ibz=k%sstar(ik_bz,1)
      !
-     do i1=1,BZ_RIM_nkpt(ik_bz)
-       ik_r=BZ_RIM_table(ik_bz,i1)
+     do i1=1,BZ_DbGd_nkpt(ik_bz)
+       ik_r=BZ_DbGd_table(ik_bz,i1)
        !
-       if (RIM_k_done(ik_r)==1) cycle
+       if (DbGd_k_done(ik_r)==1) cycle
        !
-       forall (ib=1:BZ_RIM_nbands,i_spin=1:n_sp_pol) &
-&                                        en%E_RIM(ib,ik_r,i_spin)=en%E_RIM(ib,ik_r,i_spin)+&
+       forall (ib=1:BZ_DbGd_nbands,i_spin=1:n_sp_pol) &
+&                                        en%E_DbGd(ib,ik_r,i_spin)=en%E_DbGd(ib,ik_r,i_spin)+&
 &                                        en%E(ib,ik_ibz,i_spin)-en%Eo(ib,ik_ibz,i_spin)
-       RIM_k_done(ik_r)=1
+       DbGd_k_done(ik_r)=1
      enddo
      !
    enddo
    !
-   deallocate(RIM_k_done)
+   deallocate(DbGd_k_done)
    !
  endif
  !
@@ -267,7 +267,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! X/K -> Fermi Level Update
  !
- if ((Eid<3.and.associated(en%Eo).and..not.associated(en%GreenF)).or.associated(en%E_RIM)) then
+ if ((Eid<3.and.associated(en%Eo).and..not.associated(en%GreenF)).or.associated(en%E_DbGd)) then
    !
    if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
    !
@@ -283,7 +283,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! G -> Fermi Level Update... but using the levels cooresponding to
  ! the K-points of the X grid !
  !
- if (Eid==3.and.associated(en%Eo).and..not.associated(en%GreenF).and..not.associated(en%E_RIM)) then
+ if (Eid==3.and.associated(en%Eo).and..not.associated(en%GreenF).and..not.associated(en%E_DbGd)) then
    !
    call E_duplicate(en,Fermi_en)
    !

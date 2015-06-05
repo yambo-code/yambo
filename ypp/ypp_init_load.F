@@ -135,9 +135,9 @@ subroutine ypp_init_load(defs)
  !
  ! OCCUPATIONS
  !
- call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit(1))
- call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit(1))
- call it('f',defs,'OCCgroup','NEGF If RIM is used group occupations')
+ call it(defs,'OCCdT','[NEGF] Occupations time step',OCC_deltaT,unit=Time_unit(1))
+ call it(defs,'OCCTime','[NEGF] Occupations loading time',OCC_T_range,unit=Time_unit(1))
+ call it('f',defs,'OCCgroup','[NEGF] Double grid states occupations are grouped')
  !
  ! TRANSIENT ABSORPTION
  !
@@ -267,11 +267,11 @@ subroutine ypp_init_load(defs)
  !
 #endif
  !
- !BZ E RIM
+ !BZ E Double Grid
  !
- call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
+ call it(defs,'BZ_DbGd_Nk','BZ Random Integration points',BZ_DbGd_nkpts)
  call it('f',defs,'SkipCheck' , 'Skip internal consistency check on k-point grids')
- call it('f',defs,'noBZExpand' , 'Keep the RIM k-points in the IBZ without using the symmetries')
+ call it('f',defs,'noBZExpand' , 'Keep the Double Grid k-points in the IBZ without using the symmetries')
  !
  ! Wannier bands
  !

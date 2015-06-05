@@ -22,11 +22,11 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_limited,&
-&                              V_MATRIX,PV_MATRIX,G,k,en,TRANS,RIM,nK_mem)
+&                              V_MATRIX,PV_MATRIX,G,k,en,TRANS,Double_Grid,nK_mem)
  !
  use pars,           ONLY:SP,cI
  use SC,             ONLY:SC_bands,SC_nbands
- use real_time,      ONLY:RIM_ibz_coo,RT_Nk_ibz,RT_nk,RT_ibz_coo,l_RT_uses_E_RIM
+ use real_time,      ONLY:DbGd_ibz_coo,RT_Nk_ibz,RT_nk,RT_ibz_coo,l_RT_uses_E_DbGd
  use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_n_states
@@ -55,12 +55,12 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
  complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
  real(SP),        optional, intent(in) :: O_REAL(fft_size,n_spin)
  logical,         optional, intent(in) :: TRANS
- character(6),    optional, intent(in) :: RIM
+ character(6),    optional, intent(in) :: Double_Grid
  !
  ! Work Space
  !
  integer     :: ib,ibp,ik,SC_bands2,ik_ibz,iE_rim,OUTPUT_dim,i_dir
- real(SP)    :: deltaE,deltaE_RIM
+ real(SP)    :: deltaE,deltaE_DbGd
  complex(SP) :: Hk(3,SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),n_sp_pol),VALUE_tmp(3), &
 &               Hk_tmp(SC_bands(2),SC_bands(2),n_sp_pol),                                    &
 &               Hk_vec_tmp(3,SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),n_sp_pol)
@@ -72,9 +72,9 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
  !
  l_rim_energy=.false.
  l_rim_dipole=.false.
- if(present(RIM).and.l_RT_uses_E_RIM) then
-   if(trim(RIM)=='ENERGY') l_rim_energy=.true.
-   if(trim(RIM)=='DIPOLE') l_rim_dipole=.true.
+ if(present(Double_Grid).and.l_RT_uses_E_DbGd) then
+   if(trim(Double_Grid)=='ENERGY') l_rim_energy=.true.
+   if(trim(Double_Grid)=='DIPOLE') l_rim_dipole=.true.
  endif
  !
  OUTPUT_dim=0
@@ -106,24 +106,24 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
      do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
        !
        if(l_rim_energy) then
-         iE_rim=ik-RT_ibz_coo(ik_ibz,1)+RIM_ibz_coo(ik_ibz,1)
+         iE_rim=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
          do ib=SC_bands(1),SC_bands(2)
-           Hk(1,ib,ib,:)=Hk_tmp(ib,ib,:)-en%E(ib,ik_ibz,:)+en%E_RIM(ib,iE_rim,:)
+           Hk(1,ib,ib,:)=Hk_tmp(ib,ib,:)-en%E(ib,ik_ibz,:)+en%E_DbGd(ib,iE_rim,:)
            do ibp=ib+1,SC_bands(2)
              Hk(1,ib,ibp,:)=Hk_tmp(ib,ibp,:)
              Hk(1,ibp,ib,:)=Hk_tmp(ibp,ib,:)
            enddo
          enddo
        else if(l_rim_dipole) then
-         iE_rim=ik-RT_ibz_coo(ik_ibz,1)+RIM_ibz_coo(ik_ibz,1)
+         iE_rim=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
          do ib=SC_bands(1),SC_bands(2)
            Hk(i_dir,ib,ib,:)=Hk_vec_tmp(i_dir,ib,ib,:)
            do ibp=ib+1,SC_bands(2)
              deltaE    =en%E(ib,ik_ibz,1)    -en%E(ibp,ik_ibz,1)
-             deltaE_RIM=en%E_RIM(ib,iE_rim,1)-en%E_RIM(ibp,iE_rim,1)
-             if(abs(deltaE)>Dipole_Energy_treshold .and. abs(deltaE_RIM)>Dipole_Energy_treshold) then
-               Hk(i_dir,ib,ibp,:)=Hk_vec_tmp(i_dir,ib,ibp,:)*deltaE/deltaE_RIM
-               Hk(i_dir,ibp,ib,:)=Hk_vec_tmp(i_dir,ibp,ib,:)*deltaE/deltaE_RIM
+             deltaE_DbGd=en%E_DbGd(ib,iE_rim,1)-en%E_DbGd(ibp,iE_rim,1)
+             if(abs(deltaE)>Dipole_Energy_treshold .and. abs(deltaE_DbGd)>Dipole_Energy_treshold) then
+               Hk(i_dir,ib,ibp,:)=Hk_vec_tmp(i_dir,ib,ibp,:)*deltaE/deltaE_DbGd
+               Hk(i_dir,ibp,ib,:)=Hk_vec_tmp(i_dir,ibp,ib,:)*deltaE/deltaE_DbGd
              else
                Hk(i_dir,ibp,ib,:)=Hk_vec_tmp(i_dir,ibp,ib,:)
              endif

@@ -27,7 +27,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,interp_grid, &
 &                         l_RT_occ_Bands,l_RT_life_Bands,l_bands
- use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_tot_Nkpts
+ use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_Nkpts
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use com,            ONLY:msg,of_open_close,error
  use vec_operate,    ONLY:c2a,v_norm
@@ -40,7 +40,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  use stderr,         ONLY:real2ch
  use units,          ONLY:FS2AUT
  use rt_ctl,         ONLY:OCC_T_range,OCC_deltaT,RT_carriers_object
- use real_time,      ONLY:RIM_ibz_coo,RT_delta0_occupations,REF_lifetime,&
+ use real_time,      ONLY:DbGd_ibz_coo,RT_delta0_occupations,REF_lifetime,&
 &                         RT_Nk,RT_ibz_coo,RT_Nk_ibz,RT_carriers
 #endif
  !
@@ -86,7 +86,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
 #if defined _YPP_RT
    if(all(interp_grid>0).or.BANDS_steps<=0) call error(" Interpolation of occupations/lifetimes only on a band circuit")
    !n_T_steps=RT_IO_carriers_setup(Xen,Xk)
-   !call RT_IO_check_RIM(Xk,Xen)
+   !call RT_IO_check_Double_Grid(Xk,Xen)
    !call RT_carriers_object(RT_carriers,Xen,Xk,WHAT='allocate')
    if(l_RT_life_Bands) n_T_steps=1
    Nk=RT_Nk
@@ -94,7 +94,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    !
  else
    !
-   if(BZ_RIM_tot_Nkpts> 0) call error(" Interpolation and RIM implemented only in the _RT project")
+   if(BZ_DbGd_tot_Nkpts> 0) call error(" Interpolation and Double_Grid implemented only in the _RT project")
    if(l_nearest_neig_interp) call error(" NNInterp implemented only for occupations and lifetimes")
    Nk=Xk%nibz
    !
@@ -135,7 +135,6 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    enddo
    !
    max_dist=maxval(distances)
-   !
    !
    do ik=1,USER_K%nibz-1
      int_distances(ik)=maxval((/nint(BANDS_steps*distances(ik)/max_dist),1/))
@@ -186,14 +185,14 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  allocate(bands_grid(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Nk))
  do is=1,n_sp_pol
 #if defined _YPP_RT
-   if(BZ_RIM_tot_Nkpts>0) then
+   if(BZ_DbGd_tot_Nkpts>0) then
      do ik=1,Xk%nibz
        bands_grid(BANDS_range(1):BANDS_range(2),is,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2))= &
-&         Xen%E_RIM(BANDS_range(1):BANDS_range(2),RIM_ibz_coo(ik,1):RIM_ibz_coo(ik,2),is)
+&         Xen%E_DbGd(BANDS_range(1):BANDS_range(2),DbGd_ibz_coo(ik,1):DbGd_ibz_coo(ik,2),is)
      enddo
    endif
 #endif
-   if(BZ_RIM_tot_Nkpts==0) bands_grid(BANDS_range(1):BANDS_range(2),is,1:Nk)=Xen%E(BANDS_range(1):BANDS_range(2),1:Nk,is)
+   if(BZ_DbGd_tot_Nkpts==0) bands_grid(BANDS_range(1):BANDS_range(2),is,1:Nk)=Xen%E(BANDS_range(1):BANDS_range(2),1:Nk,is)
  enddo
  call eval_interpolation_coeff(R2D=bands_grid,k=Xk,Nk=Nk,ID=ID_interp)
  deallocate(bands_grid)

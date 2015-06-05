@@ -8,4 +8,4 @@ objs = O_driver.o O_eels.o \
        DIPOLE_transverse.o DIPOLE_shifted_grids.o DIPOLE_check_shifted_grids.o  \
        X_drude.o  X_pre_setup.o X_simple_GreenF.o X_eh_setup.o X_em1.o X_os.o X_s.o \
        $(ELPH_objects) $(SC_objects) \
-       X_delta_part.o X_bare_RIM_GreenF.o O_select_q_and_G.o
+       X_delta_part.o X_bare_Double_Grid_GreenF.o O_select_q_and_G.o

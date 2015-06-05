@@ -242,7 +242,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  N_path_pts=0
  alat_used_for_output=alat(1)
  !
- !BZ RIM
+ ! BZ RIM
  !
  gamma_radius=0.
  !
@@ -600,9 +600,9 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (l_bzrim)    call initactivate(1,"BZ_RIM_Nk cooOut OutputAlat GammaRadius")
+ if (l_bzrim)    call initactivate(1,"BZ_DbGd_Nk cooOut OutputAlat GammaRadius")
  !
- if (l_map_kpts) call initactivate(1,"BZ_RIM_Nk SkipCheck noBZExpand NoWeights")
+ if (l_map_kpts) call initactivate(1,"BZ_DbGd_Nk SkipCheck noBZExpand NoWeights")
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call init_QP_ctl_switch('G')
@@ -709,8 +709,8 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
 #endif
  !
  if (l_map_kpts) then
-   n_RIM_DBs=parse_character_arrays(RIM_DB1_paths,MAX_RIM_DBs,"RIM_DB1_paths",.TRUE.)
-   if (infile_editing) i1=parse_character_arrays(RIM_DB1_paths,n_RIM_DBs,"RIM_DB1_paths",.FALSE.)
+   n_DbGd_DBs=parse_character_arrays(DbGd_DB1_paths,MAX_DbGd_DBs,"DbGd_DB1_paths",.TRUE.)
+   if (infile_editing) i1=parse_character_arrays(DbGd_DB1_paths,n_DbGd_DBs,"DbGd_DB1_paths",.FALSE.)
  endif
  !
 contains

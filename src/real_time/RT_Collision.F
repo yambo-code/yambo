@@ -42,8 +42,8 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,SC_nbands
  use QP_m,           ONLY:QP_nk
- use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_RIM,REF_V_xc_sc,&
-&                         RIM_ibz_coo,rho_reference,RT_Vnl_xc,&
+ use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc,&
+&                         DbGd_ibz_coo,rho_reference,RT_Vnl_xc,&
 &                         l_RT_RWA,eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_nk
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
@@ -64,7 +64,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! Work Space
  !
- integer          :: ik,ik_RT,ik_RIM,ib,ibp
+ integer          :: ik,ik_RT,ik_DbGd,ib,ibp
  real(SP)         :: delta_rho(fft_size)
  !
 #if defined _TIMING
@@ -135,10 +135,10 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
      ! Ho+Sigma[eq]= E^{QP} 
      !
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       ik_RIM=ik_RT-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+       ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
        do ib=SC_bands(1),SC_bands(2)
-         if(     l_RT_uses_E_RIM) Ho_plus_sigma(ib,ib,ik_RT,1)=E%E_RIM(ib,ik_RIM,1)
-         if(.not.l_RT_uses_E_RIM) Ho_plus_sigma(ib,ib,ik_RT,1)=E%E(ib,ik,1)
+         if(     l_RT_uses_E_DbGd) Ho_plus_sigma(ib,ib,ik_RT,1)=E%E_DbGd(ib,ik_DbGd,1)
+         if(.not.l_RT_uses_E_DbGd) Ho_plus_sigma(ib,ib,ik_RT,1)=E%E(ib,ik,1)
        enddo
      enddo
      !
@@ -194,13 +194,13 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      !
-     ik_RIM=ik_RT-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+     ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
      !
      H_nl_sc=cZERO
      !
      ! The gauge field
      !=================
-     if (l_NE_with_fields) call RT_apply_field(ik,ik_RIM,E,H_nl_sc,A_input)
+     if (l_NE_with_fields) call RT_apply_field(ik,ik_DbGd,E,H_nl_sc,A_input)
      !
      forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) &
 &           Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp,1)

@@ -168,7 +168,7 @@ module BS
  real(SP) :: BSS_inversion_PERT_FULL_ratio = 1.
  logical  :: BSS_write_eig_2_db
  logical  :: Haydock_terminator
- logical  :: BSS_uses_RIM
+ logical  :: BSS_uses_DbGd
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_uses_partial_diago

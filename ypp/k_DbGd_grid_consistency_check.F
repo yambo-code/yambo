@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function k_RIM_grid_consistency_check(k,E,k_RIM,E_RIM)
+integer function k_DbGd_grid_consistency_check(k,E,k_DbGd,E_DbGd)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
@@ -29,26 +29,26 @@ integer function k_RIM_grid_consistency_check(k,E,k_RIM,E_RIM)
  use vec_operate,    ONLY:v_is_zero
  implicit none
  !
- type(bz_samp), intent(in)    :: k,k_RIM
+ type(bz_samp), intent(in)    :: k,k_DbGd
  type(levels),  intent(in)    :: E
- type(levels),  intent(inout) :: E_RIM
+ type(levels),  intent(inout) :: E_DbGd
  !
  ! Work Space
  !
- integer :: ik,ik_RIM,nb
+ integer :: ik,ik_DbGd,nb
  real(SP):: shifts(2)
  !
- k_RIM_grid_consistency_check=-1
+ k_DbGd_grid_consistency_check=-1
  !
- nb=min(E%nb,E_RIM%nb)
+ nb=min(E%nb,E_DbGd%nb)
  !
  ik_loop: do ik=1,E%nk
-   do ik_RIM=1,E_RIM%nk
+   do ik_DbGd=1,E_DbGd%nk
      !
-     if (v_is_zero(k_RIM%pt(ik_RIM,:)-k%pt(ik,:))) then
+     if (v_is_zero(k_DbGd%pt(ik_DbGd,:)-k%pt(ik,:))) then
        !
-       shifts(1)=E%E(1,ik,1)-E_RIM%E(1,ik_RIM,1)
-       shifts(2)=E%E(nb,ik,1)-E_RIM%E(nb,ik_RIM,1)
+       shifts(1)=E%E(1,ik,1)-E_DbGd%E(1,ik_DbGd,1)
+       shifts(2)=E%E(nb,ik,1)-E_DbGd%E(nb,ik_DbGd,1)
        !
        exit  ik_loop
        !
@@ -57,13 +57,13 @@ integer function k_RIM_grid_consistency_check(k,E,k_RIM,E_RIM)
    enddo
  enddo ik_loop
  !
- if (abs(shifts(1)-shifts(2))>max(0.01*abs(shifts(1)),1.E-5) .or. ik_RIM==E_RIM%nk+1 ) return
+ if (abs(shifts(1)-shifts(2))>max(0.01*abs(shifts(1)),1.E-5) .or. ik_DbGd==E_DbGd%nk+1 ) return
  !
- k_RIM_grid_consistency_check=ik_RIM
+ k_DbGd_grid_consistency_check=ik_DbGd
  !
  ! Here I add E_Fermi as OCCUPATIONS_Fermi in ypp has been
- ! called without the RIM loaded so the Fermi level has not been applied to E_RIM.
+ ! called without the DbGd loaded so the Fermi level has not been applied to E_DbGd.
  !
- E_RIM%E(:,:,:)=E_RIM%E(:,:,:)+(shifts(1)+shifts(2))/2.+E%E_Fermi
+ E_DbGd%E(:,:,:)=E_DbGd%E(:,:,:)+(shifts(1)+shifts(2))/2.+E%E_Fermi
  !
 end function

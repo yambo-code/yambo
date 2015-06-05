@@ -26,7 +26,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  ! WARNING ! Changes here must be updated in io_QP_and_GF as well.
  !
  use units,         ONLY:HA2EV
- use X_m,           ONLY:X_t,use_X_RIM
+ use X_m,           ONLY:X_t,use_X_DbGd
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&
 &                        COHSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver,&
@@ -37,7 +37,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &                        l_HF_and_locXC
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:BZ_RIM_tot_nkpts
+ use electrons,     ONLY:BZ_DbGd_tot_nkpts
  use IO_m,          ONLY:ver_is_gt_or_eq
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr 
@@ -134,12 +134,12 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    endif
    if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
      qp%n_descs=qp%n_descs+1
-                    qp%description(qp%n_descs)=' X BZ energy RIM        : no'
-     if (use_X_RIM) qp%description(qp%n_descs)=' X BZ energy RIM        : yes'
+                    qp%description(qp%n_descs)=' X BZ energy Double Grid: no'
+     if (use_X_DbGd) qp%description(qp%n_descs)=' X BZ energy Double Grid: yes'
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
-&          string_pack('(a,',gen_fmt( (/BZ_RIM_tot_nkpts/) ),')'))) &
-&          ' X BZ RIM points        :',BZ_RIM_tot_nkpts
+&          string_pack('(a,',gen_fmt( (/BZ_DbGd_tot_nkpts/) ),')'))) &
+&          ' X BZ Double Grid points:',BZ_DbGd_tot_nkpts
    endif
  endif
  !

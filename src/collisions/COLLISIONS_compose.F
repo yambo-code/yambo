@@ -33,8 +33,8 @@ subroutine COLLISIONS_compose(G_hf_input,G_xc_input)
  use electrons,        ONLY:spin,n_sp_pol
  use parallel_m,       ONLY:PAR_QP_index,PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
 #if defined _RT
- use real_time,        ONLY:RT_nk,RT_ibz_coo,RIM_bz_coo,RT_Nk_ibz,RT_Vnl_xc,&
-&                           l_RT_uses_E_RIM
+ use real_time,        ONLY:RT_nk,RT_ibz_coo,DbGd_bz_coo,RT_Nk_ibz,RT_Vnl_xc,&
+&                           l_RT_uses_E_DbGd
 #endif
  !
  implicit none

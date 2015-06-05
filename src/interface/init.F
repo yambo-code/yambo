@@ -105,7 +105,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                     io_COL_CUT
  logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
  !
- integer, external :: io_RIM_E_and_k
+ integer, external :: io_Double_Grid
  !
 #if defined _SC || defined _RT
  integer, external :: io_SC_components,io_RT_components
@@ -285,7 +285,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! E_rim
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=io_RIM_E_and_k(en,k,io_ID) 
+ io_err=io_Double_Grid(en,k,io_ID) 
  !
  ! xxvxc
  !

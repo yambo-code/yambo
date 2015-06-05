@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
+subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
  !
  use pars,       ONLY:SP,cZERO,cONE
- use X_m,        ONLY:use_X_RIM
- use BS,         ONLY:BSS_uses_RIM
- use electrons,  ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,spin_occ,BZ_RIM_nbands,&
-                      BZ_RIM_ipol_weight
+ use X_m,        ONLY:use_X_DbGd
+ use BS,         ONLY:BSS_uses_DbGd
+ use electrons,  ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,spin_occ,BZ_DbGd_nbands,&
+                      BZ_DbGd_ipol_weight
  use R_lattice,  ONLY:qindx_X,bz_samp
  use frequency,  ONLY:w_samp
  ! GPL_EXCLUDE_START
@@ -122,7 +122,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
  if (associated(Xen%W)) W_=abs(Xen%W(ic,ik,i_spin))+abs(Xen%W(iv,ikp,i_spin))
  if (associated(Xen%Z)) Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
  !
- if ((.not.use_X_RIM.or.ic>BZ_RIM_nbands).and.(.not.BSS_uses_RIM)) then
+ if ((.not.use_X_DbGd.or.ic>BZ_DbGd_nbands).and.(.not.BSS_uses_DbGd)) then
    !
    ! Using QP corrected states
    !
@@ -152,23 +152,23 @@ subroutine X_bare_RIM_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
  ! K_inversion.F
  if( iq==1 .and.      (ordering=="sr".or.ordering=="sa") ) cg_ffac = spin_occ**2._SP  
  !
- do i1=1,BZ_RIM_nkpt(ikbz)
+ do i1=1,BZ_DbGd_nkpt(ikbz)
    !
-   ik_rand = BZ_RIM_table(ikbz,i1)
+   ik_rand = BZ_DbGd_table(ikbz,i1)
    !
-   f_h     = spin_occ-Xen%f_RIM(ic,ik_rand,i_spin)
-   weight1 = BZ_RIM_ipol_weight(i1)/real(BZ_RIM_nkpt(ikbz),SP)
+   f_h     = spin_occ-Xen%f_DbGd(ic,ik_rand,i_spin)
+   weight1 = BZ_DbGd_ipol_weight(i1)/real(BZ_DbGd_nkpt(ikbz),SP)
    !
-   do i2=1,BZ_RIM_nkpt(ikpbz)
+   do i2=1,BZ_DbGd_nkpt(ikpbz)
      !
-     ikp_rand=BZ_RIM_table(ikpbz,i2) 
+     ikp_rand=BZ_DbGd_table(ikpbz,i2) 
      !
-     f_e     = Xen%f_RIM(iv,ikp_rand,i_spin)
-     weight2 = BZ_RIM_ipol_weight(i2)/real(BZ_RIM_nkpt(ikpbz),SP)
+     f_e     = Xen%f_DbGd(iv,ikp_rand,i_spin)
+     weight2 = BZ_DbGd_ipol_weight(i2)/real(BZ_DbGd_nkpt(ikpbz),SP)
      !
      ffac=real(Z_)*f_e*f_h*weight1*weight2/cg_ffac
      !
-     pole=cmplx(Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ikp_rand,i_spin),W_)
+     pole=cmplx(Xen%E_DbGd(ic,ik_rand,i_spin)-Xen%E_DbGd(iv,ikp_rand,i_spin),W_)
      !
      do iw=1,Xw%n_freqs
        GreenF(iw)=GreenF(iw)+X_simple_GreenF(Xw%p(iw),pole,ordering)*ffac

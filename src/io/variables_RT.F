@@ -26,17 +26,17 @@ integer function variables_RT(ID,local_description,what)
  use pars,           ONLY:lchlen,SP
  use units,          ONLY:FS2AUT,AU2KWCMm2,HA2EV
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr
- use electrons,      ONLY:BZ_RIM_tot_nkpts
+ use electrons,      ONLY:BZ_DbGd_tot_nkpts
  use stderr,         ONLY:intc
  use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_G_steps,RT_IO_steps_DB, &
 &                         RT_description,n_RT_descriptions
- use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,NE_steps,NE_time,              &
-&                         Integrator_name, &
-&                         RAD_LifeTime,Phase_LifeTime,              &
+ use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,NE_steps,NE_time, &
+&                         Integrator_name,               &
+&                         RAD_LifeTime,Phase_LifeTime,   &
 &                         l_RT_induced_field,G_MEM_steps,&
-&                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN,&
-&                         l_RT_uses_E_RIM,N_Gr_descs,RT_life_interp_steps,&
-&                         RT_life_interp_KIND,l_NE_simulate_Irredux,RIM_EE_percent,l_RT_impose_E
+&                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN, &
+&                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_interp_steps,&
+&                         RT_life_interp_KIND,l_NE_simulate_Irredux,DbGd_EE_percent,l_RT_impose_E
  use ELPH,           ONLY:ph_modes,elph_branches
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
@@ -226,20 +226,24 @@ integer function variables_RT(ID,local_description,what)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    enddo
    !
-   ! RIM
+   ! Double Grid
    !======================
-   call io_elemental(ID,VAR="RIM_support",VAR_SZ=3,MENU=0) 
+   if (ver_is_gt_or_eq(ID,revision=4441)) then
+     call io_elemental(ID,VAR="Double_Grid_support",VAR_SZ=3,MENU=0) 
+   else
+     call io_elemental(ID,VAR="RIM_support",VAR_SZ=3,MENU=0) 
+   endif
    i_desc=i_desc+1
-   call io_elemental(ID,L0=l_RT_uses_E_RIM,&
-&    VAR=' [RIM] Random Energies support   :',  CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,L0=l_RT_uses_E_DbGd,&
+&    VAR=' [DbGd] Double Grid support      :',  CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,I0=BZ_RIM_tot_nkpts,&
-&    VAR=' [RIM] Random k-point            :',  CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,I0=BZ_DbGd_tot_nkpts,&
+&    VAR=' [DbGd] Number of k-points       :',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,R0=RIM_EE_percent,&
-&    VAR=' [RIM] Used for e-e         [o/o]:',  CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,R0=DbGd_EE_percent,&
+&    VAR=' [DbGd] Used for e-e        [o/o]:',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !

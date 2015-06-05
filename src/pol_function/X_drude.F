@@ -30,7 +30,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF,drude_ordering)
  use electrons,     ONLY:levels,spin_occ
  use R_lattice,     ONLY:bz_samp,q_norm
  use D_lattice,     ONLY:DL_vol
- use X_m,           ONLY:X_t,iw_ref,use_X_RIM
+ use X_m,           ONLY:X_t,iw_ref,use_X_DbGd
  use com,           ONLY:warning
  !
  implicit none
@@ -69,7 +69,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF,drude_ordering)
    return
  endif
  !
- if (.not.Drude_term(1).and. all((/Drude_term(2:3)/)) .and..not.use_X_RIM ) then
+ if (.not.Drude_term(1).and. all((/Drude_term(2:3)/)) .and..not.use_X_DbGd ) then
    call warning(' The system is a metal but Drude term not included.')
  endif
  !

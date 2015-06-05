@@ -135,15 +135,15 @@ module YPP
  character(schlen) :: seed_name
  character(schlen) :: what_to_write
  !
- ! BZ RIM
+ ! BZ Double Grid
  !
- integer, parameter :: MAX_RIM_DBs=20
- integer  :: n_RIM_DBs
- integer  :: BZ_RIM_nkpts
+ integer, parameter :: MAX_DbGd_DBs=20
+ integer  :: n_DbGd_DBs
+ integer  :: BZ_DbGd_nkpts
  logical  :: l_bzrim
  logical  :: l_map_kpts
  real(SP) :: Gamma_radius
- character(lchlen) :: RIM_DB1_paths(MAX_RIM_DBs,1)
+ character(lchlen) :: DbGd_DB1_paths(MAX_DbGd_DBs,1)
  !
  ! QP databases
  !

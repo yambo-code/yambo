@@ -393,7 +393,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
  endif
  !
- !if (BSS_uses_RIM) then
+ !if (BSS_uses_DbGd) then
  !  allocate(BS_mat_diagonal(BS_K_dim))
  !  call mem_est('BS_mat_diagonal',(/size(BS_mat_diagonal)/))
  !endif

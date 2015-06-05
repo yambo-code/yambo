@@ -28,7 +28,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use com,            ONLY:msg,warning
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:string_remove
- use electrons,      ONLY:levels,n_sp_pol,BZ_RIM_nbands,n_spin
+ use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
  use BS,             ONLY:BS_bands,BS_q,&
@@ -37,7 +37,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,BS_anti_res,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSS_damp_reference,BSE_mode,&
-&                         BSS_uses_RIM,BSS_q0,BS_Blocks_and_Transitions_free
+&                         BSS_uses_DbGd,BSS_q0,BS_Blocks_and_Transitions_free
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_causal,FXC_n_g_corr
  use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
@@ -170,9 +170,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  W_bss%dr=BSS_dr
  W_bss%damp_reference=BSS_damp_reference
  !
- ! RIM support
- !=============
- BSS_uses_RIM = (BZ_RIM_nbands>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
+ ! Double Grid support
+ !=====================
+ BSS_uses_DbGd = (BZ_DbGd_nbands>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
  !
  ! Frequencies 
  !=============

@@ -28,14 +28,14 @@ subroutine K_inversion(iq,W,E,k,q)
  use stderr,         ONLY:intc,real2ch
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_H_dim,&
 &                         BSE_mode,BSS_eh_table,BSS_eh_E,BSS_inversion_mode,&
-&                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BSS_eh_f,&
+&                         BSS_uses_DbGd,BSS_er,BSS_dr,BSS_n_freqs,BSS_eh_f,&
 &                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z,BS_mat_diagonal,&
 &                         BS_mat_free,BSS_inversion_PERT_FULL_ratio
 #if defined _ELPH
  use BS,             ONLY:BSS_uses_GreenF,BS_bands
 #endif
  use memory_m,       ONLY:mem_est
- use electrons,      ONLY:spin_occ,levels,BZ_RIM_tot_nkpts,spin
+ use electrons,      ONLY:spin_occ,levels,BZ_DbGd_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_merge,W_duplicate
  use R_lattice,      ONLY:d3k_factor,q_norm,bz_samp
  use com,            ONLY:isec,msg,warning
@@ -173,7 +173,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  call K_stored_in_a_BIG_matrix(iq)
  !
- if (BSS_uses_RIM) then
+ if (BSS_uses_DbGd) then
    !
    forall(i1=1:BS_K_dim) BS_mat(i1,i1)=(0.,0.)
    if (index(BSE_mode,'coupling')>0) then
@@ -242,7 +242,7 @@ subroutine K_inversion(iq,W,E,k,q)
    ic    =BSS_eh_table(i1,3)
    i_sp  =spin(BSS_eh_table(i1,:))
    !
-   if (.not.BSS_uses_RIM) then
+   if (.not.BSS_uses_DbGd) then
      !
      QP_width=0.
      QP_Z=(1.,0.)
@@ -253,20 +253,20 @@ subroutine K_inversion(iq,W,E,k,q)
      !
      if (associated(E%GreenF)) then
        !
-       ! No RIM but GFs
-       !================
-       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"r")
+       ! No Double Grid but GFs
+       !=======================
+       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"r")
        !
        if (trim(BSE_mode)=='causal') then
-         call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"ca")
+         call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"ca")
        else if (index(BSE_mode,'coupling')>0) then
-         call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"ca")
+         call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"ca")
        endif
        !
      else
        !
-       ! No RIM No GFs
-       !===============
+       ! No Double Grid No GFs
+       !=======================
        Lo(i1,:,1)=QP_Z*BSS_eh_f(i1)/(W%p(:)-BSS_eh_E(i1)-(0.,1.)*QP_width)
        if (trim(BSE_mode)=='causal') then
          Lo(i1,:,2)=-QP_Z*BSS_eh_f(i1)/(W%p(:)+BSS_eh_E(i1)-(0.,1.)*QP_width)
@@ -278,16 +278,16 @@ subroutine K_inversion(iq,W,E,k,q)
      !
    else
      !
-     ! Energy RIM 
-     !============
-     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"sr")
+     ! Energy Double Grid 
+     !====================
+     call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,1),"sr")
      Lo(i1,:,1)=Lo(i1,:,1)*BSS_eh_f(i1)
      !
      if (trim(BSE_mode)=='causal') then
-       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"sa")
+       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1,:,2),"sa")
        Lo(i1,:,2)=Lo(i1,:,2)*BSS_eh_f(i1)
      else if (index(BSE_mode,'coupling')>0) then
-       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"sa")
+       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W,E,k,Lo(i1+BS_K_dim,:,1),"sa")
        Lo(i1+BS_K_dim,:,1)=Lo(i1+BS_K_dim,:,2)*BSS_eh_f(i1)
      endif
      !
@@ -301,19 +301,19 @@ subroutine K_inversion(iq,W,E,k,q)
      X_epsilon(3,:)=X_epsilon(3,:)-conjg(BSS_rhoq0(i1+BS_K_dim))*BSS_rhoq0(i1+BS_K_dim)*Lo(i1+BS_K_dim,:,1)*Co
    endif
    !
-   ! When the RIM is used the Kernel diagonal is included as a rigid shift
+   ! When the Double Grid is used the Kernel diagonal is included as a rigid shift
    !=======================================================================
-   if (BSS_uses_RIM) then
+   if (BSS_uses_DbGd) then
      forall(iw=1:W%n_freqs) W_shifted%p(iw)=W%p(iw)-BS_mat_diagonal(i1)
-     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,1),"sr")
+     call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,1),"sr")
      Lo(i1,:,1)=Lo(i1,:,1)*BSS_eh_f(i1)
      if (trim(BSE_mode)=='causal') then
        forall(iw=1:W%n_freqs) W_shifted%p(iw)=W%p(iw)+conjg(BS_mat_diagonal(i1))
-       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,2),"sa")
+       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1,:,2),"sa")
        Lo(i1,:,2)=Lo(i1,:,2)*BSS_eh_f(i1)
      endif
      if (index(BSE_mode,'coupling')>0) then
-       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1+BS_K_dim,:,1),"sa")
+       call X_bare_Double_Grid_GreenF(1,(/ik_bz,iv,ic,i_sp/),W_shifted,E,k,Lo(i1+BS_K_dim,:,1),"sa")
        Lo(i1+BS_K_dim,:,1)=Lo(i1+BS_K_dim,:,2)*BSS_eh_f(i1)
      endif
    endif
@@ -479,7 +479,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  BSS_n_descs=BSS_n_descs+2
  BSS_description(BSS_n_descs-1)=' '
- BSS_description(BSS_n_descs)=' BSS|BZ RIM points              :'//intc(BZ_RIM_tot_nkpts)
+ BSS_description(BSS_n_descs)=' BSS|BZ Double Grid points      :'//intc(BZ_DbGd_tot_nkpts)
  BSS_n_descs=BSS_n_descs+1
  BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//&
 &                             trim(real2ch(real(nw_conv)/real(W%n_freqs)*100._SP))

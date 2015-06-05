@@ -27,7 +27,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands
- use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
+ use real_time,      ONLY:DbGd_ibz_coo,l_RT_uses_E_DbGd,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
 &                         RT_E_occupations,RT_H_occupations,REF_lifetime,&
 &                         l_initial_equilibrium,RT_delta0_occupations,&
 &                         l_RT_impose_E,RT_E_occupations_reference,&
@@ -94,7 +94,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
-       iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+       iE_rim=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
        !
        if(l_initial_equilibrium) then
          f_E=RT_E_occupations_reference(ib,ik_rim)
@@ -109,8 +109,8 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
        Hole_fac=Hole_lifetime(ib,ik_rim)    *f_H-REF_lifetime(ib,ik_rim,iref  )*df
        Elec_fac=Electron_lifetime(ib,ik_rim)*f_E+REF_lifetime(ib,ik_rim,iref+1)*df
        !
-       if(.not.l_RT_uses_E_RIM) En=E%E(ib,ik,1)
-       if(     l_RT_uses_E_RIM) En=E%E_RIM(ib,iE_rim,1) 
+       if(.not.l_RT_uses_E_DbGd) En=E%E(ib,ik,1)
+       if(     l_RT_uses_E_DbGd) En=E%E_DbGd(ib,iE_rim,1) 
        !
        if (ib<=E%nbf) then
          !

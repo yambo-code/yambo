@@ -32,19 +32,19 @@ subroutine RT_initialize(E,k,q)
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
- use electrons,      ONLY:nel,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,RIM_is_symmetry_expanded
+ use electrons,      ONLY:nel,levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
  use rt_ctl,         ONLY:RT_IO_JPO_steps,RT_IO_time,RT_IO_steps_DB, &
 &                         RT_IO_G_steps,RT_IO_output_steps,RT_carriers_object
  use real_time,      ONLY:RT_step,l_NE_with_fields, &
 &                         NE_steps,NE_tot_time,RT_carriers,   &
 &                         l_NE_simulate_Irredux,l_RT_induced_field,                   &
 &                         RT_is_dephased,RAD_LifeTime,       &
-&                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,RIM_ibz_coo, &
+&                         Phase_LifeTime,NE_MEM_treshold,G_MEM_steps,Gr_kind,DbGd_ibz_coo, &
 &                         l_RT_CCA_Kernel,Life_MEM_steps,    &
-&                         l_RT_uses_E_RIM,RIM_bz_coo,RT_life_interp_steps,&
+&                         l_RT_uses_E_DbGd,DbGd_bz_coo,RT_life_interp_steps,&
 &                         RT_life_interp_KIND,l_NE_dynamics,l_RT_impose_N_dN,I_MEM_steps,Integrator_name,&
-&                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,RIM_EE_scatt_table,&
-&                         RIM_EE_Nk_table,l_RT_impose_E,RIM_EE_percent,RIM_EE_Nk_table,&
+&                         l_RT_EULER,l_RT_RK2,l_RT_RWA,l_RT_INTERPOLATE,l_RT_EXP,DbGd_EE_scatt_table,&
+&                         DbGd_EE_Nk_table,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,&
 &                         l_BGR,l_RT_HEUN,eval_DENSITY,eval_HARTREE,eval_DFT,&
 &                         RT_nk,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz
  use IO_m,           ONLY:io_COLLs
@@ -257,29 +257,29 @@ subroutine RT_initialize(E,k,q)
  !
  ! RIM support
  !=============
- l_RT_uses_E_RIM=BZ_RIM_tot_nkpts>0.and.BZ_RIM_nbands>=SC_bands(2).and..not.RIM_is_symmetry_expanded
+ l_RT_uses_E_DbGd=BZ_DbGd_tot_nkpts>0.and.BZ_DbGd_nbands>=SC_bands(2).and..not.DbGd_is_symmetry_expanded
  !
  ! Number of K-points
  !====================
- allocate(RIM_ibz_coo(k%nibz,2))
- allocate(RIM_bz_coo(k%nbz,2))
+ allocate(DbGd_ibz_coo(k%nibz,2))
+ allocate(DbGd_bz_coo(k%nbz,2))
  allocate(RT_ibz_coo(k%nibz,2))
  allocate(RT_Nk_ibz(k%nibz))
- if (l_RT_uses_E_RIM) then
+ if (l_RT_uses_E_DbGd) then
    RT_nk=RT_k_grid(E,k,q)
  else
    RT_nk=k%nibz
    RT_Nk_ibz=1
-   RIM_EE_percent=0.
+   DbGd_EE_percent=0.
    allocate(RT_all2ibz(k%nibz))
    if(l_elel_scatt) then
-     allocate(RIM_EE_scatt_table(k%nibz,q%nbz))
-     allocate(RIM_EE_Nk_table(k%nibz,k%nibz))
-     RIM_EE_scatt_table=.true.
-     RIM_EE_Nk_table=1
+     allocate(DbGd_EE_scatt_table(k%nibz,q%nbz))
+     allocate(DbGd_EE_Nk_table(k%nibz,k%nibz))
+     DbGd_EE_scatt_table=.true.
+     DbGd_EE_Nk_table=1
    endif
    do ik=1,k%nibz
-     RIM_ibz_coo(ik,:)=ik
+     DbGd_ibz_coo(ik,:)=ik
      RT_ibz_coo(ik,:)=ik
      RT_all2ibz(ik)=ik
    enddo
@@ -374,13 +374,13 @@ subroutine RT_initialize(E,k,q)
  endif
  !
  call msg( 'nr','---RIM---')
- call msg( 'r', 'Energy RIM support           :',l_RT_uses_E_RIM)
- if (l_RT_uses_E_RIM) then
-   call msg( 'r', 'K-points            (TOTAL):',BZ_RIM_tot_nkpts)
+ call msg( 'r', 'Energy RIM support           :',l_RT_uses_E_DbGd)
+ if (l_RT_uses_E_DbGd) then
+   call msg( 'r', 'K-points            (TOTAL):',BZ_DbGd_tot_nkpts)
    call msg( 'r', '                     (USED):',RT_nk)
    if (l_elel_scatt) then
-     call msg( 'r', 'Percentual used in e-e[o/o]:',RIM_EE_percent)
-     call msg( 'r', 'Max e-e scattering states  :',maxval(RIM_EE_Nk_table))
+     call msg( 'r', 'Percentual used in e-e[o/o]:',DbGd_EE_percent)
+     call msg( 'r', 'Max e-e scattering states  :',maxval(DbGd_EE_Nk_table))
    endif
  endif
  !

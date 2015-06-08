@@ -568,7 +568,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    !
    call init_QP_ctl_switch('X')
-   call initactivate(1,'ShiftedPath Qdirection QShiftOrder')
+   call initactivate(1,'DipoleCov ShiftedPath Qdirection QShiftOrder')
    !
 #if defined _SC
    call initactivate(1,'Gauge')

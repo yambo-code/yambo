@@ -478,6 +478,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'DipoleEtresh',   '[Xd] Treshold in the definition of R=P/deltaE',Dipole_Energy_treshold,&
 &                                                                               verb_level=V_resp,unit=E_unit)
  !
+ call it('f',defs,'DipoleCov',  '[X] Use covariant dipoles',verb_level=V_resp)
+ !
  ! GPL_EXCLUDE_END
  !
  ! El-Ph

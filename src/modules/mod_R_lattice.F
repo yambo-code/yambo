@@ -64,6 +64,17 @@ module R_lattice
    character(1)      :: units
  end type bz_samp
  !
+ type bz_map
+   integer, allocatable :: k_map_inv(:,:)
+   integer, allocatable :: k_map_dir(:,:,:)
+   integer      :: g0_plus_idx(3,2)
+   integer      :: g0_minus_idx(3,2)
+   integer      :: max_kdir(3)
+   integer      :: g_idx(-3:3,-3:3,-3:3) 
+   real(SP)     :: g0_length(3,2)
+   real(SP)     :: q_step(3)
+ end type bz_map 
+ !
  ! Q/K sampling shadow tables
  !
  real(SP),allocatable :: k_pt(:,:)
@@ -118,6 +129,14 @@ module R_lattice
  real(SP)                :: cyl_vr_save
  real(SP)                :: cyl_vz_save
  real(SP)                :: cyl_zz_save
+ !
+ ! BZ map by direction
+ !
+ type(bz_map) :: k_map
+ !
+ ! Shift by a G-vector associated to each symmtry to respect the periodic gauge
+ ! 
+ integer, allocatable :: symm_shift(:,:)
  !
  interface
    !

@@ -37,13 +37,20 @@ module YPP
  logical  :: l_shifted_grid
  logical  :: l_high_sym_pts
  integer  :: n_path_pts
- real(SP) :: Kgw_1(3)
- real(SP) :: q_shift(3,3)
  real(SP) :: alat_used_for_output
  character(schlen) :: coo_in
  character(schlen) :: coo_out
  character(schlen) :: PtsPath
  character(23), parameter :: output_string="o exc den mag wf curr V"
+ !
+ ! USER-defined points
+ !
+ integer  :: n_u_k_pts,n_u_q_pts,n_u_interp_pts
+ !
+ real(SP) :: U_k_pts(10,3)
+ real(SP) :: U_q_pts(10,3)
+ real(SP) :: U_q_shifts(3,3)
+ real(SP) :: U_interp_pts(10,3)
  ! 
  ! DOS
  !

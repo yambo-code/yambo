@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_init(use_for_QP,Energy_range)
+subroutine init_QP(use_for_QP,Energy_range)
  !
  ! QP_state -> input file
  !
  use QP_m,      ONLY: QP_nk,QP_nb,QP_state
  use drivers,   ONLY: infile_editing
- use it_m,      ONLY: nflines,flines,infile,QP_flines,nQP_flines
+ use it_m,      ONLY: nflines,flines,infile,ADDITIONAL_flines,nADDITIONAL_flines
  implicit none
  !
  logical :: use_for_QP,Energy_range
@@ -68,12 +68,12 @@ subroutine QP_init(use_for_QP,Energy_range)
  !
  ! Write (eventually) to input file
  !
- QP_flines=" "
+ ADDITIONAL_flines=" "
  !
  if (infile_editing) open(unit=12,file=trim(infile),position='append')
  do i1=nflines_save+1,nflines
-   nQP_flines=nQP_flines+1
-   QP_flines(nQP_flines)=flines(i1)
+   nADDITIONAL_flines=nADDITIONAL_flines+1
+   ADDITIONAL_flines(nADDITIONAL_flines)=flines(i1)
    if (infile_editing) write (12,'(a)') trim(flines(i1))
  enddo 
  if (infile_editing) close(12)

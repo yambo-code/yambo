@@ -907,7 +907,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
    endif
    !
-   call QP_init(.TRUE.,.TRUE.)
+   call init_QP(.TRUE.,.TRUE.)
    !
    ! I use it to propose the value in the input file ...
    !

@@ -150,8 +150,7 @@ subroutine ypp_init_load(defs)
  ! BANDS
  !
  call it(defs,'BANDS_steps', 'Number of divisions',BANDS_steps) 
- call it(defs,'BKpts','Bands circuit',Kgw_1)
- call it(defs,'INTERPGrid', 'Interpolation Grid',interp_grid)
+ call it(defs,'INTERPGrid', 'Interpolation BZ Grid',interp_grid)
  call it(defs,'ShellFac','The bigger it is a higher number of shells is used',lpfac)
 #if defined _YPP_RT
  call it('f',defs,'NNInterp','Use nearest neigbor interpolation scheme')
@@ -168,11 +167,6 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'cooIn','Points coordinates (in) cc/rlu/iku/alat',coo_in)
  call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku/alat',coo_out)
- call it(defs,'GWKpts','GW K-point grid',Kgw_1)
- call it(defs,'Qpts',  'Q-point grid',   Kgw_1)
- call it(defs,'KShift1','K-grid shift vector[1] ',q_shift(1,:))
- call it(defs,'KShift2','K-grid shift vector[2] ',q_shift(2,:))
- call it(defs,'KShift3','K-grid shift vector[3] ',q_shift(3,:))
  !
  ! GPL_EXCLUDE_START 
  !
@@ -204,7 +198,7 @@ subroutine ypp_init_load(defs)
 #if defined _YPP_MAGNETIC
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')
 #endif
- !
+ ! 
  ! PLOT
  !
  ! p_dir: plot cut in the a1,a2,a3 basis

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CA, DS
+! Authors (see AUTHORS file for details): CA, DS, AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -66,7 +66,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  integer               :: i1,i2,ic,is,ID_interp,ik,ikbz,ib,Nk
  integer,  allocatable :: int_distances(:)
  character(3)          :: message,spin_ch
- character(schlen)     :: file_name_bands(n_sp_pol),file_name_grid(n_sp_pol)
+ character(schlen)     :: file_name_bands(2,n_sp_pol),file_name_grid(n_sp_pol)
  character(schlen), allocatable :: headings(:)
  !
  call section('*','Interpolation tool')
@@ -224,7 +224,6 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  !
  call reset_interpolation(ID_interp)
  !
- !
 #if defined _YPP_RT
  !
  Max_occ=0.
@@ -346,13 +345,13 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  !
  if (l_bands) then
    !
-   allocate(values(5+BANDS_range(2)-BANDS_range(1)+1),headings(5+BANDS_range(2)-BANDS_range(1)+1))
+   allocate(values(4+BANDS_range(2)-BANDS_range(1)+1),headings(4+BANDS_range(2)-BANDS_range(1)+1))
    !
-   headings(1)="Step"
-   headings(2:5)=(/" kx  "," ky  "," kz  "," |k| "/)
+   headings(1)=" |k| "
    do ib=BANDS_range(1),BANDS_range(2)
-     headings(5+ib-BANDS_range(1)+1)=' b'//intc(ib)
+     headings(1+ib-BANDS_range(1)+1)=' b'//intc(ib)
    enddo
+   headings(2+BANDS_range(2)-BANDS_range(1)+1:4+BANDS_range(2)-BANDS_range(1)+1)=(/" kx  "," ky  "," kz  "/)
    !
    file_name_bands= " "
    file_name_grid = " "
@@ -361,15 +360,19 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    do is=1,n_sp_pol
      if (n_sp_pol>1.and.is==1) spin_ch="_spin-up"
      if (n_sp_pol>1.and.is==2) spin_ch="_spin-dn"
-     if(BANDS_steps> 0)     file_name_bands(is)="bands_interpolated"//trim(spin_ch)
-     if(all(interp_grid>0)) file_name_grid(is) ="grid"//trim(spin_ch)
+     file_name_bands(2,is)="bands_built_in"//trim(spin_ch)
+     if(BANDS_steps> 0)     file_name_bands(1,is)="bands_interpolated"//trim(spin_ch)
+     if(all(interp_grid>0)) file_name_grid(is)   ="grid"//trim(spin_ch)
      call of_open_close(file_name_grid(is),'ot')
-     call of_open_close(file_name_bands(is),'ot')
+     call of_open_close(file_name_bands(1,is),'ot')
+     call of_open_close(file_name_bands(2,is),'ot')
    enddo
    !
    do is=1,n_sp_pol
-     call msg('o '//file_name_bands(is),"#",headings,INDENT=0,USE_TABS=.true.)
-     call msg('o '//file_name_bands(is),"#")
+     call msg('o '//file_name_bands(1,is),"#",headings,INDENT=0,USE_TABS=.true.)
+     call msg('o '//file_name_bands(1,is),"#")
+     call msg('o '//file_name_bands(2,is),"#",headings,INDENT=0,USE_TABS=.true.)
+     call msg('o '//file_name_bands(2,is),"#")
    enddo
    !
    call msg('o path',"#"," ",INDENT=0)
@@ -378,41 +381,41 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    !
    if(BANDS_steps> 0) then
      !
-     values(5)=0.
+     values(1)=0.
      !
      do ik=1,USER_K%nibz-1
        !
-       if (ik>1) values(5)=values(5)+iku_v_norm(USER_K%pt(ik,:)-USER_K%pt(ik-1,:))
+       if (ik>1) values(1)=values(1)+iku_v_norm(USER_K%pt(ik,:)-USER_K%pt(ik-1,:))
        !
        do ikbz=1,Xk%nbz
          !
          v=Xk%ptbz(ikbz,:)-USER_K%pt(ik,:)
          !
-         if (abs(v_norm(v)-dot_product(v,circuit_versor(ik,:)))<1.E-5) then
-           write (100,'(3i6,10f10.6)') ik,ikbz,Xk%sstar(ikbz,1),Xk%ptbz(ikbz,:),values(5)+iku_v_norm(v),Xen%E(4:5,Xk%sstar(ikbz,1),1)*HA2EV
+         if (abs(v_norm(v)-dot_product(v,circuit_versor(ik,:)))<1.E-5.and.dot_product(v,circuit_versor(ik,:))>0.) then
+           !
+           do is=1,n_sp_pol
+             values(2:2+BANDS_range(2)-BANDS_range(1))=Xen%E(BANDS_range(1):BANDS_range(2),Xk%sstar(ikbz,1),is)*HA2EV
+             values(2+BANDS_range(2)-BANDS_range(1)+1:4+BANDS_range(2)-BANDS_range(1)+1)=Xk%ptbz(ikbz,:)
+             call msg('o '//file_name_bands(2,is),' ',(/values(1)+iku_v_norm(v),values(2:)/),INDENT=0,USE_TABS=.true.)
+           enddo
+           !
+           !write (100,'(3i6,10f10.6)') ik,ikbz,Xk%sstar(ikbz,1),Xk%ptbz(ikbz,:),values(5)+iku_v_norm(v),Xen%E(4:5,Xk%sstar(ikbz,1),1)*HA2EV
+           !
          endif
-         !
-         !values(5)=iku_v_norm(CIRCUIT_K%pt(ik,:)-CIRCUIT_K%pt(ik-1,:))
-         do is=1,n_sp_pol
-           !values(5+1:4+BANDS_range(2)-BANDS_range(1)+1)=bands_circuit(BANDS_range(1):BANDS_range(2),is,ik)*HA2EV
-           !call msg('o '//file_name_bands(is),' ',values,INDENT=0,USE_TABS=.true.)
-         enddo
         !
        enddo
      enddo
-     stop
      !
-     values(5)=0.
+     values(1)=0.
      !
      do ik=1,CIRCUIT_K%nibz
        !
        call k_transform(CIRCUIT_K%pt(ik,:),"iku")
-       values(1)=real(ik,SP)
-       values(2:4)=CIRCUIT_K%pt(ik,:)
-       if (ik>1) values(5)=values(5)+iku_v_norm(CIRCUIT_K%pt(ik,:)-CIRCUIT_K%pt(ik-1,:))
+       if (ik>1) values(1)=values(1)+iku_v_norm(CIRCUIT_K%pt(ik,:)-CIRCUIT_K%pt(ik-1,:))
        do is=1,n_sp_pol
-         values(5+1:4+BANDS_range(2)-BANDS_range(1)+1)=bands_circuit(BANDS_range(1):BANDS_range(2),is,ik)*HA2EV
-         call msg('o '//file_name_bands(is),' ',values,INDENT=0,USE_TABS=.true.)
+         values(2:3+BANDS_range(2)-BANDS_range(1))=bands_circuit(BANDS_range(1):BANDS_range(2),is,ik)*HA2EV
+         values(2+BANDS_range(2)-BANDS_range(1)+1:4+BANDS_range(2)-BANDS_range(1)+1)=CIRCUIT_K%pt(ik,:)
+         call msg('o '//file_name_bands(1,is),' ',values,INDENT=0,USE_TABS=.true.)
        enddo
        !
      enddo
@@ -423,13 +426,23 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    !
    if(all(interp_grid>0)) then
      !
+     headings(1)  =  " ik  "
+     headings(2:4)=(/" kx  "," ky  "," kz  "/)
+     do ib=BANDS_range(1),BANDS_range(2)
+       headings(4+ib-BANDS_range(1)+1)=' b'//intc(ib)
+     enddo
+     !
+     do is=1,n_sp_pol
+       call msg('o '//file_name_grid(is),"#",headings,INDENT=0,USE_TABS=.true.)
+     enddo
+     !
      do ikbz=1,INTERP_K%nbz
-       !
-       values(1)=real(ik,SP)
        call k_transform(INTERP_K%ptbz(ikbz,:),"iku")
        values(2:4)=INTERP_K%ptbz(ikbz,:)
        !
        ik=INTERP_K%sstar(ikbz,1)
+       !
+       values(1)=real(ik,SP)
        !
        do is=1,n_sp_pol
          values(4+1:4+BANDS_range(2)-BANDS_range(1)+1)=bands_grid(BANDS_range(1):BANDS_range(2),is,ik)*HA2EV
@@ -443,7 +456,8 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    endif
    !
    do is=1,n_sp_pol
-     call of_open_close(file_name_bands(is))
+     call of_open_close(file_name_bands(1,is))
+     call of_open_close(file_name_bands(2,is))
      call of_open_close(file_name_grid(is))
    enddo
    !

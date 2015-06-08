@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_digits,fill)
+subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_digits,fill,det)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,cONE
  use matrix_operate,ONLY:blacs_t,INV,DIAGO,USE_LK,USE_SVD,USE_SLK,min_cpu_block_size
  use wrapper,       ONLY:M_by_M,SV_decomposition,LU_factorization,LU_inversion,M_eigenvalues
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_INV,PAR_COM_DIAGO,mpi_comm_world
@@ -39,6 +39,7 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
  real(SP),     optional :: E_real(:)
  integer,      optional :: lib_in
  integer,      optional :: fill
+ complex(SP),  optional :: det
  integer,      optional :: SVD_digits 
  !
  !Work Spaces ...
@@ -157,6 +158,16 @@ subroutine MATRIX_driver(idriver,M,lib_in,blt,V_left,V_right,E_real,E_cmpl,SVD_d
    call LU_factorization(M_size,M,ipvt,ifail)
    !
    if(ifail.ne.0) call report_diago_error('GETRF (SI)','workspace failed')
+   !
+   ! Evaluate determinant if required
+   !
+   if(present(det)) then
+     det=cONE
+     do i1=1,M_size
+       det=det*M(i1,i1)
+       if(ipvt(i1).ne.i1) det=-det
+     enddo
+   endif
    !
    allocate(work(1))
    call LU_inversion(M_size,M,ipvt,work,-1,ifail)

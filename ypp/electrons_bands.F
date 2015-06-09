@@ -29,7 +29,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
 &                         l_RT_occ_Bands,l_RT_life_Bands,l_bands
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_Nkpts
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
- use com,            ONLY:msg,of_open_close,error
+ use com,            ONLY:msg,of_open_close,error,warning
  use vec_operate,    ONLY:c2a,v_norm,iku_v_norm
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
@@ -48,7 +48,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  !
  type(bz_samp), intent(inout) :: Xk
  type(levels),  intent(in)    :: Xen
- integer,       intent(in)    :: BANDS_range(2)
+ integer,       intent(inout) :: BANDS_range(2)
  !
  ! Work Space
  !
@@ -73,8 +73,10 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  !=====================================
  !
  if(any(BANDS_range<=0)) call error(" Wrong bands range")
- !
- call k_ibz2bz(Xk,'iku',.TRUE.)
+ if(any(BANDS_range>20)) then
+  BANDS_range=(/minval(BANDS_range),20/)
+  call warning("Bands range reduced")
+ endif
  !
  !Input file parsing
  !
@@ -183,8 +185,12 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  ! 
  call QP_apply(BANDS_range,Xen,Xk,'G',msg_fmt='s')
  !
- ! Interpolation: Initial setup
+ ! IBZ => BZ
+ ! need to be done here as QP_apply cleans the %ptbz allocation
  !
+ call k_ibz2bz(Xk,'iku',.TRUE.)
+ !
+ ! Interpolation: Initial setup
  !
  call bz_interp_setup(Xk)
  !

@@ -213,11 +213,15 @@ integer function io_QP_and_GF(what,qp,ID)
    !
    if (.not.associated(qp%k))  allocate(qp%k(qp%nk,3))
    if (.not.associated(qp%wk)) allocate(qp%wk(qp%nk ))
+   !
    call io_bulk(ID,R2=qp%k)
+   !
    ! Davide: tmp code, to be fixed
+   !
    qp%wk=0._SP
    if (read_is_on(ID)) then
      do i1=1,qp%nk
+       if (.not.any(qp%table(:,3)==i1)) qp%k(i1,:)=0._SP
        qp%k(i1,:)=qp%k(i1,:)/db_alat(:)*alat(:)
      enddo
    endif

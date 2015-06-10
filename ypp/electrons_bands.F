@@ -66,7 +66,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  integer               :: i1,i2,ic,is,ID_interp,ik,ikbz,ib,Nk
  integer,  allocatable :: int_distances(:)
  character(3)          :: message,spin_ch
- character(schlen)     :: file_name_bands(2,n_sp_pol),file_name_grid(n_sp_pol)
+ character(schlen)     :: file_name_bands(2,n_sp_pol),file_name_grid(n_sp_pol),file_name_rt
  character(schlen), allocatable :: headings(:)
  !
  call section('*','Interpolation tool')
@@ -485,22 +485,22 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
      !
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
      !
-     if (l_RT_occ_Bands ) file_name(1)="YPP-RT_occ_bands_iT"//intc(i_T)
-     if (l_RT_life_Bands) file_name(1)="YPP-RT_REF_LIFE_bands"
+     if (l_RT_occ_Bands ) file_name_rt="YPP-RT_occ_bands_iT"//intc(i_T)
+     if (l_RT_life_Bands) file_name_rt="YPP-RT_REF_LIFE_bands"
      !
-     call of_open_close(file_name(1),'ot')
+     call of_open_close(file_name_rt,'ot')
      !
-     call msg('o '//file_name(1)," "," ",INDENT=0)
-     call msg('o '//file_name(1),"#",' t= '//trim(real2ch( io_Time/FS2AUT )),INDENT=0)
+     call msg('o '//file_name_rt," "," ",INDENT=0)
+     call msg('o '//file_name_rt,"#",' t= '//trim(real2ch( io_Time/FS2AUT )),INDENT=0)
      !
      do ib=BANDS_range(1),BANDS_range(2)
        !
-       call msg('o '//file_name(1),"#"," ",INDENT=0)
+       call msg('o '//file_name_rt,"#"," ",INDENT=0)
        !
        headings(2)=' b'//intc(ib) 
        !
-       call msg('o '//file_name(1),"#",headings,INDENT=0,USE_TABS=.true.)
-       call msg('o '//file_name(1),"#"," ",INDENT=0)
+       call msg('o '//file_name_rt,"#",headings,INDENT=0,USE_TABS=.true.)
+       call msg('o '//file_name_rt,"#"," ",INDENT=0)
        !
        do ik=1,CIRCUIT_K%nibz
          !
@@ -508,13 +508,13 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
          values(2)=bands_circuit(ib,1,ik)*HA2EV
          if(l_RT_occ_Bands)  values(3)=fit_on_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
          if(l_RT_life_Bands) values(3)=fit_on_circuit(ib,1,ik,i_T)*HA2EV*1000.
-         call msg('o '//file_name(1),' ',values,INDENT=0,USE_TABS=.true.)
+         call msg('o '//file_name_rt,' ',values,INDENT=0,USE_TABS=.true.)
          !
        enddo
        !
      enddo
      !
-     call of_open_close(file_name(1))
+     call of_open_close(file_name_rt)
      !
    enddo
    !

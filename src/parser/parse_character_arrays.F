@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function parse_character_arrays(CH_v,N,VAR_NAME,READ_it)
+integer function parse_character_arrays(CH_v,N,VAR_NAME,VAR_DESC,READ_it)
  !
  use pars,      ONLY:lchlen
  use parser_m,  ONLY:parser
@@ -29,7 +29,7 @@ integer function parse_character_arrays(CH_v,N,VAR_NAME,READ_it)
  !
  implicit none
  !
- character(*)      :: VAR_NAME
+ character(*)      :: VAR_NAME,VAR_DESC
  integer           :: N
  character(lchlen) :: CH_v(N,1)
  logical           :: READ_it
@@ -52,7 +52,7 @@ integer function parse_character_arrays(CH_v,N,VAR_NAME,READ_it)
    parse_character_arrays=i_pointer-1
  else
    nflines_save=nflines
-   write (flines(nflines+1),'(a,t30,a)') '%RIM_DB1_paths','# Paths to the SAVE folders with the RIM DB1'
+   write (flines(nflines+1),'(a,t30,a)') '%'//trim(VAR_NAME),'#'//VAR_DESC
    nflines=nflines+1
    do i1=1,N
      flines(nflines+1)='"'//trim(CH_v(i1,1))//'"'

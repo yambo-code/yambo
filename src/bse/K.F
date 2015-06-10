@@ -50,7 +50,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
-&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP
+&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP,&
+&                       deliver_IO_error_message
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use wrapper_omp,   ONLY:V_dot_V_omp,Vstar_dot_V_omp,M_by_V_omp
@@ -205,7 +206,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=XID)
    io_X_err=io_X(X,Xw,XID) 
    !
-   if (io_X_err<0) call warning('BS section skipped. PP/Em1s DB does not fit/exist')
+   if (io_X_err<0) then
+     call deliver_IO_error_message(io_X_err,'PP/Em1s')
+     call warning('BS section skipped. Switching to IP.')
+   endif
    !
    ! X%ng is set to BS_n_g_W to VERIFY if there are enough bands.
    ! From now on it is used to keep track of the actual sixe of W in the DB

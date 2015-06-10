@@ -719,8 +719,9 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  endif
  !
  if (l_map_kpts) then
-   n_DbGd_DBs=parse_character_arrays(DbGd_DB1_paths,MAX_DbGd_DBs,"DbGd_DB1_paths",.TRUE.)
-   if (infile_editing) i1=parse_character_arrays(DbGd_DB1_paths,n_DbGd_DBs,"DbGd_DB1_paths",.FALSE.)
+   n_DbGd_DBs=parse_character_arrays(DbGd_DB1_paths,MAX_DbGd_DBs,"DbGd_DB1_paths"," ",.TRUE.)
+   if (infile_editing) i1=parse_character_arrays(DbGd_DB1_paths,n_DbGd_DBs,&
+&                                                "DbGd_DB1_paths","Paths to the SAVE folders with the Double Grid DB1",.FALSE.)
  endif
  !
 contains

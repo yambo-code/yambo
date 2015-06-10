@@ -32,7 +32,7 @@ subroutine V_qp_basis_to_H(ik,V,H)
  use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
 #endif
 #if defined _RT
- use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k
+ use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,HEAD_QP_cpu
 #endif
  implicit none
  !
@@ -47,7 +47,7 @@ subroutine V_qp_basis_to_H(ik,V,H)
  ! Fill ...
  !
 #if defined _RT
- if (.not.PAR_IND_WF_k%element_1D(ik)) return
+ if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_QP_cpu) return
 #endif
  !
  do i1=1,QP_n_states

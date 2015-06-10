@@ -36,14 +36,14 @@ subroutine RT_apply_field(ik,ik_DbGd,En,H_nl_sc,A_input)
  use parallel_m,     ONLY:PAR_Xk_ibz_index
  !
  implicit none
- integer,     intent(in)       :: ik,ik_DbGd
- type(levels),  intent(in)     :: En
- complex(SP), intent(inout)    :: H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol)
+ integer,           intent(in) :: ik,ik_DbGd
+ type(levels),      intent(in) :: En
+ complex(SP),    intent(inout) :: H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol)
  type(gauge_field), intent(in) :: A_input
  ! 
  ! Work Space
  !
- integer     :: i1,i2,is
+ integer     :: i1,i2
  complex(SP) :: A_dot_J,E_dot_P,A_vec_pot(3),E_vec_pot(3),POL(3),CURR(3),deltaE,deltaE_DbGd
  !
  if(trim(global_gauge)=='velocity') then
@@ -77,7 +77,6 @@ subroutine RT_apply_field(ik,ik_DbGd,En,H_nl_sc,A_input)
    enddo
    !
    ! Correction to the pseudo should be included here ... <nk|V(r,r')[exp(iA*(r-r'))-1]|n'k>
-
    !
  else  
    !

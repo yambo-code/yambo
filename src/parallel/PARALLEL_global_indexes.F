@@ -565,18 +565,27 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    !
    !.........................................................................
    ! WFs & QPs
-   !.........................................................................
+   !......................................................................... 
    !
-   ! 0  0     0  0     <- qp
+   ! QP "head"
+   !
+   HEAD_QP_cpu=PAR_COM_G_b_A2A%CPU_id==0
+   !
+   ! 0  0     0  0     <- qp (<- defined on the basis of k,b)
    ! x0 x0    x0 x0    <- q
    !
    ! QP_cpu corresponds to x marked CPU's. This flag is used when isolated QP loops are performed.
    !
+   ! K "head"
+   !
    HEAD_k_cpu=PAR_COM_Xk_ibz_A2A%CPU_id==0
-   HEAD_QP_cpu=PAR_COM_G_b_A2A%CPU_id==0
    !
    ! oooo  oooo  oooo  oooo  <- k
    ! Xo Xo Xo Xo Xo Xo Xo Xo <- b
+   !
+   ! NOTE: HEAD_k_cpu=.TRUE. => HEAD_QP_cpu=.TRUE.
+   !  
+   ! but HEAD_QP_cpu=.TRUE. defines a larger set of CPU's.
    !
    ! Not all CPU's (o) load the WFs. Only X
    !

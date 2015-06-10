@@ -54,8 +54,8 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  !
  type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K
  real(SP)              :: real_ctl,v(3),max_dist
- real(SP), allocatable :: distances(:),values(:)
- real(SP), allocatable :: bands_grid(:,:,:),bands_circuit(:,:,:),circuit_versor(:,:)
+ real(SP), allocatable :: distances(:),values(:),bands_grid(:,:,:),&
+&                         bands_circuit(:,:,:),circuit_versor(:,:)
 #if defined _YPP_RT
  real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:)
  real(SP)              :: io_Time,Nel,Nhole,Real_Nhole,Real_Nel,Max_occ
@@ -397,7 +397,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
          !
          v=Xk%ptbz(ikbz,:)-USER_K%pt(ik,:)
          !
-         if (abs(v_norm(v)-dot_product(v,circuit_versor(ik,:)))<1.E-5.and.dot_product(v,circuit_versor(ik,:))>0.) then
+         if (abs(v_norm(v)-dot_product(v,circuit_versor(ik,:)))<1.E-5) then
            !
            do is=1,n_sp_pol
              values(2:2+BANDS_range(2)-BANDS_range(1))=Xen%E(BANDS_range(1):BANDS_range(2),Xk%sstar(ikbz,1),is)*HA2EV
@@ -405,7 +405,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
              call msg('o '//file_name_bands(2,is),' ',(/values(1)+iku_v_norm(v),values(2:)/),INDENT=0,USE_TABS=.true.)
            enddo
            !
-           !write (100,'(3i6,10f10.6)') ik,ikbz,Xk%sstar(ikbz,1),Xk%ptbz(ikbz,:),values(5)+iku_v_norm(v),Xen%E(4:5,Xk%sstar(ikbz,1),1)*HA2EV
+           !write (100,'(3f10.6,i6)') values(1)+iku_v_norm(v),Xen%E(4:5,Xk%sstar(ikbz,1),1)*HA2EV,Xk%sstar(ikbz,1)
            !
          endif
         !

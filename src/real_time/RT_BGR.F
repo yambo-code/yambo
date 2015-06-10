@@ -58,13 +58,13 @@ subroutine RT_BGR(dG,E,k)
  real(SP)     :: deltaE
  integer      :: ib,ik,ik_ref,ik_RT,i_qp,ibp,I_dir(2),ik_ibz,ik_DbGd,i_sp
  !
-#if defined _TIMING
- call timing('RT BGR',OPR='start')
-#endif
- !
  BGR_Hartree    =0.
  BGR_V_xc       =0.
  BGR_Self_Energy=0.
+ !
+#if defined _TIMING
+ call timing('RT BGR',OPR='start')
+#endif
  !
  if (l_initial_equilibrium) then
    call E_reset(E_reference)

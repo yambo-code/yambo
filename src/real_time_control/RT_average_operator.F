@@ -91,9 +91,6 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
  !
  do ik_ibz=1,k%nibz
    ! 
-   !if (k%nibz/=nK_mem) then
-   !  if (.not.PAR_IND_Xk_ibz%element_1D(ik_ibz)) cycle   
-   !endif
    if (.not.PAR_IND_Xk_ibz%element_1D(ik_ibz)) cycle   
    !
    Hk=(0._SP,0._SP)

@@ -71,7 +71,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  ! B : Polarization
  !
  call RT_average_operator(V_VALUE=RT_P_tmp, V_MATRIX=cI*DIP_iR,&
-&                         G=G_input,k=k,en=E,TRANS=.TRUE.,RIM='DIPOLE',nK_mem=PAR_Xk_nibz)
+&                         G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  RT_P    =RT_P_tmp/DL_vol
  !
  ! B': Polarization as an integral of the density

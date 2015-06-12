@@ -24,7 +24,7 @@
 subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_limited,&
 &                              V_MATRIX,PV_MATRIX,G,k,en,TRANS,RIM,nK_mem)
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP,cI,cZERO
  use SC,             ONLY:SC_bands,SC_nbands
  use real_time,      ONLY:RIM_ibz_coo,RT_Nk_ibz,RT_nk,RT_ibz_coo,l_RT_uses_E_RIM
  use com,            ONLY:error
@@ -86,8 +86,8 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
  if (OUTPUT_dim==0) call error('RT_average_operator: not a valid call')
  !
  SC_bands2=SC_nbands**2
- if (OUTPUT_dim==1) O_VALUE=(0._SP,0._SP)
- if (OUTPUT_dim==3) V_VALUE=(0._SP,0._SP)
+ if (OUTPUT_dim==1) O_VALUE=cZERO
+ if (OUTPUT_dim==3) V_VALUE=cZERO
  !
  do ik_ibz=1,k%nibz
    ! 
@@ -96,8 +96,8 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
    !endif
    if (.not.PAR_IND_Xk_ibz%element_1D(ik_ibz)) cycle   
    !
-   Hk=(0._SP,0._SP)
-   VALUE_tmp=(0._SP,0._SP)
+   Hk       =cZERO
+   VALUE_tmp=cZERO
    !
    call make_Hk_matrix(ik_ibz)
    !
@@ -201,7 +201,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
      !========================
      if (OUTPUT_dim==1) then
        !
-       Hk_tmp=(0._SP,0._SP)
+       Hk_tmp=cZERO
        !
        if (present(O_MATRIX).or.present(O_MATRIX_limited)) then
          do ib=SC_bands(1),SC_bands(2)
@@ -231,14 +231,14 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_lim
      !========================
      if (OUTPUT_dim==3) then
        !
-       Hk_vec_tmp=(0._SP,0._SP)
+       Hk_vec_tmp=cZERO
        !
        do ib=SC_bands(1),SC_bands(2)
          do ibp=SC_bands(1),SC_bands(2)
            !
            do i_spin=1,n_sp_pol
              !
-             V3=(0._SP,0._SP)
+             V3=cZERO
              !
              do i_star=1,k%nstar(ik)
                 !

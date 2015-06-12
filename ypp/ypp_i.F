@@ -33,6 +33,9 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use com,                 ONLY:msg,write_to_report
  use it_m,                ONLY:it_reset,infile
  use wave_func,           ONLY:io_WF
+ use interfaces,          ONLY:PARALLEL_global_indexes
+ use LIVE_t,              ONLY:live_timing_is_on
+ use stderr,              ONLY:write_to_log
  use YPP
  implicit none
  !
@@ -77,6 +80,8 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Switch off report file support
  !
  write_to_report=.FALSE.
+ live_timing_is_on=myid==0
+ write_to_log=myid==0
  !
  ! DB1
  !
@@ -161,6 +166,8 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !============
  !
  call setup(en,Xen,Ken,k,Xk)
+ !
+ call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.)
  !
  ! Specific SECTIONS
  !===================

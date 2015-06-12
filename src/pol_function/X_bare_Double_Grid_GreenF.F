@@ -168,6 +168,11 @@ subroutine X_bare_Double_Grid_GreenF(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
      f_e     = Xen%f_DbGd(iv,ikp_rand,i_spin)
      weight2 = BZ_DbGd_ipol_weight(i2)/real(BZ_DbGd_nkpt(ikpbz),SP)
      !
+     if (iq==1) then
+      weight2=1._SP
+      if (i1/=i2) cycle
+     endif
+     !
      ffac=real(Z_)*f_e*f_h*weight1*weight2/cg_ffac
      !
      pole=cmplx(Xen%E_DbGd(ic,ik_rand,i_spin)-Xen%E_DbGd(iv,ikp_rand,i_spin),W_)

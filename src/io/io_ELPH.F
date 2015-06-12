@@ -32,8 +32,7 @@ integer function io_ELPH(ID,what)
 &                         QP_PH_n_G_bands,W_debye,elph_DW,elph_nDBs,&
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,ph_kpt_bz,elph_nDBs_used,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
-&                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz,E_k_p_q,&
-&                         FAN_deltaE_treshold,DW_deltaE_treshold
+&                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz,E_k_p_q
  use stderr,         ONLY:intc
  use units,          ONLY:HA2EV
  use electrons,      ONLY:E_reset
@@ -108,23 +107,7 @@ integer function io_ELPH(ID,what)
      call io_elemental(ID,I0=QP_n_states,VAR=' QP tot states          :')
    endif
    !
-   if (ver_is_gt_or_eq(ID,revision=4400)) then
-     !
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !
-     call io_elemental(ID,VAR="Energy_Thresholds",VAR_SZ=2,MENU=0)
-     !
-     call io_elemental(ID,VAR=" Energy treshold   [FAN]:",&
-&                      R0=FAN_deltaE_treshold,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV)
-     !
-     call io_elemental(ID,VAR="                    [DW]:",&
-&                      R0=DW_deltaE_treshold,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV)
-     !
-   else
-     !
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-     !
-   endif
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    if (io_mode(ID)==DUMP.or.write_is_on(ID)) then
      QP_PH_n_G_bands=elph_nb

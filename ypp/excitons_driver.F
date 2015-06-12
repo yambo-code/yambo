@@ -30,7 +30,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use FFT_m,         ONLY:fft_dim
  use D_lattice,     ONLY:a,alat
  use wave_func,     ONLY:WF,WF_symm,wf_ng
- use R_lattice,     ONLY:nXkibz,bz_samp,q_norm,bare_qpg
+ use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
 &                        excitons_sort_and_report,l_amplitude,l_free_hole,&
@@ -41,10 +41,9 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 #if defined _YPP_RT
  use YPP,           ONLY:l_RT_abs
 #endif
- use interfaces,    ONLY:PARALLEL_global_indexes
  use QP_CTL_m,      ONLY:QP_apply
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
- use BS,            ONLY:BS_K_dim,BS_bands,BS_q,BSS_q0,&
+ use BS,            ONLY:BS_K_dim,BS_bands,BS_q,&
 &                        BSS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
 &                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db,&
 &                        BSS_n_descs,BSS_description,io_BSS_diago
@@ -97,8 +96,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !... I/0
  !
  integer           ::io_err,io_ID
- integer, external ::io_BS,io_DIPOLES
- type(X_t)         ::Xbsk,Xdip
+ integer, external ::io_BS
+ type(X_t)         ::Xbsk
  !
  !... Energies and Residulas
  !
@@ -117,7 +116,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !... Variables needed to the report of eigenvectors
  !
  logical          :: l_weight_with_dipoles,l_flag
- complex(SP)      :: dip_factor,Wd
+ complex(SP)      :: dip_factor
  real(SP), allocatable ::A_weight(:)
  !
  ! Here I read information from the BS database
@@ -200,7 +199,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !call Dipole_driver(Xen,Xk,Xdip,BSS_q0)
    !deallocate(q_norm,bare_qpg)
  endif
- !
  !
  ! Create the anti-resonant part of the eh_table
  !

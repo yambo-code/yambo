@@ -41,7 +41,8 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  use IO_m,          ONLY:ver_is_gt_or_eq
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr 
- use ELPH,          ONLY:QP_PH_n_G_bands,elph_branches,elph_nDBs_used
+ use ELPH,          ONLY:QP_PH_n_G_bands,elph_branches,elph_nDBs_used,&
+&                        FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
 #if defined _QED
  use QP_m,          ONLY:QP_QED_ng
@@ -241,6 +242,17 @@ subroutine QP_descriptions(qp,X,Xw,Update)
        write (qp%description(qp%n_descs),trim(&
 &            string_pack('(a,',gen_fmt( i_v=(/elph_nDBs_used/) ),')'))) &
 &            ' El-Ph momenta used     :',elph_nDBs_used
+     endif
+     !
+     if (ver_is_gt_or_eq(-1,revision=4400)) then
+       qp%n_descs=qp%n_descs+1
+       write (qp%description(qp%n_descs),trim(&
+&            string_pack('(a,',gen_fmt( r_v=(/FAN_deltaE_treshold*HA2EV /) ),')')))&
+&            ' Energy treshold   [FAN]:',FAN_deltaE_treshold*HA2EV
+       qp%n_descs=qp%n_descs+1
+       write (qp%description(qp%n_descs),trim(&
+&            string_pack('(a,',gen_fmt( r_v=(/DW_deltaE_treshold*HA2EV /) ),')')))&
+&            ' Energy treshold    [DW]:',DW_deltaE_treshold*HA2EV
      endif
      !
    endif

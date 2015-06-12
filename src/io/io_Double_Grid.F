@@ -30,7 +30,8 @@ integer function io_Double_Grid(E,Xk,ID)
  use R_lattice,      ONLY:nXkbz,bz_samp
  use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
-&                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on
+&                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on,&
+&                         IO_OUTDATED_DB
  implicit none
  !
  type(levels) :: E
@@ -39,36 +40,49 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Work Space
  !
- logical :: l_DG_format
+ integer :: DG_format
+ !
+ io_Double_Grid=-1
  !
  if (file_is_present('Double_Grid').or.write_is_on(ID)) then
    io_Double_Grid=io_connect(desc='Double_Grid',type=2,ID=ID)
-   l_DG_format=.TRUE.
- else
+   DG_format=3
+ endif
+ if (file_is_present('RIM_E_and_k').and.io_Double_Grid<0) then
    io_Double_Grid=io_connect(desc='RIM_E_and_k',type=2,ID=ID)
-   l_DG_format=.FALSE.
+   DG_format=2
+ endif
+ if (file_is_present('E_RIM').and.io_Double_Grid<0) then
+   io_Double_Grid=io_connect(desc='E_RIM',type=2,ID=ID)
+   DG_format=1
  endif
  !
  if (io_Double_Grid/=0) goto 1
  !
  io_Double_Grid=io_header(ID)
  !
- if (ver_is_gt_or_eq(ID,revision=3560)) then
-   call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=1)
- else if (ver_is_gt_or_eq(ID,revision=2740)) then
-   call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=1)
- else
+ if (.not.ver_is_gt_or_eq(ID,revision=3560)) io_Double_Grid=IO_OUTDATED_DB
+ !
+ if (io_Double_Grid/=0) goto 1
+ !
+ if (DG_format==1) then
    call io_elemental(ID,VAR="PARS",VAR_SZ=3,MENU=1)
+ else
+   call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=1)
  endif
+ !
  call io_elemental(ID,I0=BZ_DbGd_nbands,    VAR=' Bands                           :')
  call io_elemental(ID,I0=BZ_DbGd_tot_nkpts, VAR=' Total number of points          :')
- if (ver_is_gt_or_eq(ID,revision=3560)) then
+ ! 
+ if (DG_format==3) then
    call io_elemental(ID,I0=BZ_ASSOCIATED_nkpts, VAR=' BZ ASSOCIATED k-points          :')
  else
    BZ_ASSOCIATED_nkpts=nXkbz
  endif
+ !
  call io_elemental(ID,I0=BZ_DbGd_max_filling,VAR=' BZ Blocks max filling           :')
- if (ver_is_gt_or_eq(ID,revision=2740)) then
+ !
+ if (DG_format==3) then
    call io_elemental(ID,L0=DbGd_is_symmetry_expanded,VAR=' Points expanded in the BZ       :')
  else
    DbGd_is_symmetry_expanded=.TRUE.
@@ -89,7 +103,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Eigenvalues
  !
- if (ver_is_gt_or_eq(ID,revision=4441).and.l_DG_format) then
+ if (DG_format==3) then
    call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%E_DbGd) ) 
  else
    call io_bulk(ID, VAR="RIM_EIGENVALUES", VAR_SZ=shape(E%E_DbGd) ) 
@@ -98,8 +112,8 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Kpts
  !
- if (ver_is_gt_or_eq(ID,revision=3784))  then
-   if (ver_is_gt_or_eq(ID,revision=4441).and.l_DG_format) then
+ if (DG_format>1) then
+   if (DG_format==3) then
      call io_bulk(ID, VAR="KPTS", VAR_SZ=shape(BZ_DbGd_kpts) ) 
    else
      call io_bulk(ID, VAR="RIM_KPTS", VAR_SZ=shape(BZ_DbGd_kpts) ) 
@@ -109,7 +123,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Block filling
  !
- if (ver_is_gt_or_eq(ID,revision=4441).and.l_DG_format) then
+ if (DG_format==3) then
    call io_bulk(ID, VAR="BLOCK_FILLING", VAR_SZ=shape(BZ_DbGd_nkpt) ) 
  else
    call io_bulk(ID, VAR="RIM_BLOCK_FILLING", VAR_SZ=shape(BZ_DbGd_nkpt) ) 
@@ -118,7 +132,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Block table
  !
- if (ver_is_gt_or_eq(ID,revision=4441).and.l_DG_format) then
+ if (DG_format==3) then
    call io_bulk(ID, VAR="BLOCK_TABLE", VAR_SZ=shape(BZ_DbGd_table) ) 
  else
    call io_bulk(ID, VAR="RIM_BLOCK_TABLE", VAR_SZ=shape(BZ_DbGd_table) ) 
@@ -127,21 +141,13 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Double grid interpolation weights of each element in table
  !
- if (ver_is_gt_or_eq(ID,revision=1300)) then
-   !
-   if (ver_is_gt_or_eq(ID,revision=4441).and.l_DG_format) then
-     call io_bulk(ID, VAR="INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_ipol_weight) ) 
-   else
-     call io_bulk(ID, VAR="RIM_INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_ipol_weight) ) 
-   endif
-   !
-   call io_bulk(ID, R1=BZ_DbGd_ipol_weight)
-   !
+ if (DG_format==3) then
+   call io_bulk(ID, VAR="INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_ipol_weight) ) 
  else
-   !
-   BZ_DbGd_ipol_weight=1._SP
-   !
+   call io_bulk(ID, VAR="RIM_INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_ipol_weight) ) 
  endif
+ !
+ call io_bulk(ID, R1=BZ_DbGd_ipol_weight)
  !
 1 call io_disconnect(ID=ID)
  !

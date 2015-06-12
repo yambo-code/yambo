@@ -62,7 +62,6 @@ module electrons
    integer         :: nk
    integer         :: nbf
    integer         :: nbm
-   integer         :: nbc(2)       ! Number of bands with NEQ carriers for yambo_rt
    integer         :: bf
    integer         :: kf
    integer         :: sf
@@ -96,7 +95,6 @@ module electrons
    real(SP),   pointer :: E_DbGd(:,:,:)        => null()
    real(SP),   pointer :: W_DbGd(:,:,:)        => null()
    real(SP),   pointer :: f_DbGd(:,:,:)        => null()
-   real(SP),   pointer :: df_DbGd(:,:,:)       => null()
    !
  end type levels
  ! 
@@ -127,7 +125,6 @@ module electrons
        Eo%nk=Ei%nk
        Eo%nbf=Ei%nbf
        Eo%nbm=Ei%nbm
-       Eo%nbc=Ei%nbc
        Eo%bf=Ei%bf
        Eo%kf=Ei%kf
        Eo%sf=Ei%sf
@@ -197,11 +194,6 @@ module electrons
        Eo%E_DbGd=Ei%E_DbGd
        Eo%W_DbGd=Ei%W_DbGd
        Eo%f_DbGd=Ei%f_DbGd
-       if(associated(Ei%df_DbGd)) then
-         allocate(Eo%df_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-         call mem_est("df_DbGd",(/size(Eo%df_DbGd)/),(/SP/))
-         Eo%df_DbGd=Ei%df_DbGd
-       endif
      endif
      !
    end subroutine
@@ -217,7 +209,6 @@ module electrons
      E%nk=0
      E%nbf=0 
      E%nbm=0
-     E%nbc=0
      E%bf=0
      E%kf=0 
      E%GreenF_n_E_steps=0 
@@ -249,10 +240,9 @@ module electrons
      if(associated(E%E_DbGd) )      deallocate(E%E_DbGd )
      if(associated(E%W_DbGd) )      deallocate(E%W_DbGd )
      if(associated(E%f_DbGd) )      deallocate(E%f_DbGd )
-     if(associated(E%df_DbGd))      deallocate(E%df_DbGd)
      !
-     nullify(E%E_DbGd,E%W_DbGd,E%f_DbGd,E%df_DbGd)
-     call mem_est("E_DbGd W_DbGd f_DbGd df_DbGd")
+     nullify(E%E_DbGd,E%W_DbGd,E%f_DbGd)
+     call mem_est("E_DbGd W_DbGd f_DbGd")
      !
      if (.not.FULL_RESET) return
      !

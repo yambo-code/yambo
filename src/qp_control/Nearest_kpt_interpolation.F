@@ -34,7 +34,7 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  use com,            ONLY:msg
  use vec_operate,    ONLY:sort
  use electrons,      ONLY:n_sp_pol
- use R_lattice,      ONLY:k_the_nearest
+ use R_lattice,      ONLY:k_the_nearest,nkibz
  !
  implicit none
  !
@@ -54,6 +54,10 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
 &            nk_interpolated,i_state,i_val
  !
  write_message=.true.
+ !
+#if defined _RT
+ write_message=Nko==nkibz
+#endif
  !
 #if defined _YPP_RT
  write_message=(what=="RT0")

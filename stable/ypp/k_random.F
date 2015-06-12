@@ -68,6 +68,8 @@ subroutine k_random(Xk,Xen)
  integer, external :: ioDB1_selective_scan,ioE_RIM
  real(SP)          :: dl_sop_save(3,3,48)
  !
+ integer, allocatable :: TMP_map(:)
+ !
  ! Saves 2 check
  !
  a_save=a
@@ -231,29 +233,40 @@ subroutine k_random(Xk,Xen)
  BZ_RIM_tot_nkpts=RIM_k%nibz
  if (add_X_grid) BZ_RIM_tot_nkpts=BZ_RIM_tot_nkpts+Xk%nibz
  !
- allocate(BZ_RIM_nkpt(Xk%nbz))
+ allocate(BZ_RIM_nkpt(Xk%nbz),TMP_map(RIM_k%nbz))
+ TMP_map=0
  BZ_RIM_nkpt=0
  !
- call live_timing('BZ RIM Tables',RIM_k%nbz*2,SERIAL=.true.)
- do while(.not.allocated(BZ_RIM_table)) 
-   if (maxval(BZ_RIM_nkpt)>0) then
-     if (add_X_grid)      allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)+1))
-     if (.not.add_X_grid) allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)))
-     BZ_RIM_table=0
-   endif
-   BZ_RIM_nkpt=0
-   do i1=1,RIM_k%nbz
-     !
-     ikbz=k_the_nearest(RIM_k%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
-     BZ_RIM_nkpt(ikbz)=BZ_RIM_nkpt(ikbz)+1
-     !
-     if (allocated(BZ_RIM_table)) BZ_RIM_table(ikbz,BZ_RIM_nkpt(ikbz))=RIM_k%sstar(i1,1)
-     !      
-     call live_timing(steps=1)
-     !
-   enddo
+ call live_timing('BZ RIM Tables',RIM_k%nbz,SERIAL=.true.)
+ !
+ do i1=1,RIM_k%nbz
+   !
+   ikbz=k_the_nearest(RIM_k%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
+   TMP_map(i1)=ikbz
+   BZ_RIM_nkpt(ikbz)=BZ_RIM_nkpt(ikbz)+1
+   !      
+   call live_timing(steps=1)
+   !
  enddo
+ !
  call live_timing()
+ !
+ if (add_X_grid)      allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)+1))
+ if (.not.add_X_grid) allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)))
+ !
+ BZ_RIM_table=0
+ BZ_RIM_nkpt=0
+ !
+ do i1=1,RIM_k%nbz
+   !
+   ikbz=TMP_map(i1)
+   BZ_RIM_nkpt(ikbz)=BZ_RIM_nkpt(ikbz)+1
+   !
+   BZ_RIM_table(ikbz,BZ_RIM_nkpt(ikbz))=RIM_k%sstar(i1,1)
+   !      
+ enddo
+ !
+ deallocate(TMP_map)
  !
  BZ_RIM_max_filling=maxval(BZ_RIM_nkpt)
  if (add_X_grid) BZ_RIM_max_filling=BZ_RIM_max_filling+1

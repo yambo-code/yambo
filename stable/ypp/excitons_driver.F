@@ -298,7 +298,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
        !
      enddo
      !
-     if(l_weight_with_dipoles.and.norm2(A_weight)>0._SP) A_weight=A_weight/norm2(A_weight)
+     if(l_weight_with_dipoles.and.v_norm(A_weight)>0._SP) A_weight=A_weight/v_norm(A_weight)
      !
      call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,A_weight=A_weight,verbose=i_lambda==1)
      !

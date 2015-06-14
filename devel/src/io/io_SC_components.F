@@ -29,13 +29,13 @@ integer function io_SC_components(what,E_sc,ID)
  use drivers,        ONLY:l_sc_run
  use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc
- use SC,             ONLY:SC_bands,rho_convergence,E_convergence,&
+ use SC,             ONLY:SC_bands,rho_convergence,magn_convergence,E_convergence,&
 &                         SC_R,V_xc_sc,l_sc_pot_is_local,H_nl_sc,&
 &                         V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,close_is_on,&
 &                         manage_RD_WR_CL_IF_END,variable_is_found,io_SC,IO_NOT_ALLOWED,&
-&                         io_fragment
+&                         io_fragment,ver_is_gt_or_eq
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use matrix_operate, ONLY:mat_c2r,mat_r2c
@@ -55,7 +55,7 @@ integer function io_SC_components(what,E_sc,ID)
  character(lchlen)     :: local_description(100)
  !
  real(SP), allocatable :: TMP_matrix(:,:,:),E_disk(:,:,:)
- integer               :: ik,bands_to_load,ib,i_spin
+ integer               :: ik,bands_to_load,ib,i_spin,VAR_SIZE
  logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_T_EL
  !
  if (.not.io_SC) then
@@ -112,8 +112,11 @@ integer function io_SC_components(what,E_sc,ID)
    !
    if(any((/l_E,l_V,l_WF,l_MP/))) then
      !
-     call io_elemental(ID,VAR="RHOCONV_ECONV",VAR_SZ=2,MENU=0) 
+     VAR_SIZE=2
+     if (ver_is_gt_or_eq(ID,revision=4464)) VAR_SIZE=3
+     call io_elemental(ID,VAR="RHOCONV_ECONV",VAR_SZ=VAR_SIZE,MENU=0) 
      call io_elemental(ID,R0=rho_convergence)
+     if (ver_is_gt_or_eq(ID,revision=4464)) call io_elemental(ID,R0=magn_convergence)
      call io_elemental(ID,R0=E_convergence)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !

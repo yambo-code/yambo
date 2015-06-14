@@ -65,7 +65,7 @@ subroutine MAG_common_build_A(build)
  !
  ! Work space
  integer   :: ir,ir1,ir2,ir3
- real(SP)  :: radius, r_mod, B_loops
+ real(SP)  :: r_mod, B_loops
  !
  !
  ! Allocation 
@@ -81,9 +81,12 @@ subroutine MAG_common_build_A(build)
  By=MAG_B*sin(MAG_theta)*sin(MAG_psi)
  Bz=MAG_B*cos(MAG_theta)
  !
- if(allocated(x)) call free_cc()
- call load_cc(.false.,.true.)
+ call fft_setup(0,1,.true.)
  call module_alloc()
+ !
+ if(MAG_landau .and. phase_trick) call MAG_A_phase(n_loops)
+ !
+ if(.not.MAG_landau) return
  !
  ! Set the gauge factors:
  !=======================
@@ -108,8 +111,8 @@ subroutine MAG_common_build_A(build)
    gauge_factors(2,2)=0         ! Ax for By ~  z <--
  endif
  !
- if(phase_trick) call MAG_A_phase(n_loops)
- call fft_setup(0,1,.true.)
+ if(allocated(x)) call free_cc()
+ call load_cc(.false.,.true.)
  !
  ! A(r) Build-Up
  ! Ax , Ay , Az   
@@ -124,39 +127,37 @@ subroutine MAG_common_build_A(build)
        ! to the plane defined by a(1,:) and a(2,:)
        r_mod=v_norm((/x(ir,1),x(ir,2),0._SP/))
        ! Now build up the vector potential         
-       if(MAG_landau) then
-         if(r_mod<=MAG_radius .or. MAG_radius==0) then
-           if(Bx/=0.) then
-             A_magn_z(ir)= 0.5*Bx*x(ir,2)*gauge_factors(1,1)
-             A_magn_y(ir)=-0.5*Bx*x(ir,3)*gauge_factors(2,1)
-           endif
-           if(By/=0.) then
-             A_magn_z(ir)=A_magn_z(ir)-0.5*By*x(ir,1)*gauge_factors(1,2)
-             A_magn_x(ir)= 0.5*By*x(ir,3)*gauge_factors(2,2)
-           endif
-           if(Bz/=0.) then
-             A_magn_x(ir)=A_magn_x(ir)-0.5*Bz*x(ir,2)*gauge_factors(1,3)
-             A_magn_y(ir)=A_magn_y(ir)+0.5*Bz*x(ir,1)*gauge_factors(2,3)
-           endif
-         else
-           ir_table(ir)=.false.
-           if(Bx/=0.) then
-             A_magn_z(ir)= 0.5*Bx*MAG_radius**2*x(ir,2)/r_mod**2
-             A_magn_y(ir)=-0.5*Bx*MAG_radius**2*x(ir,3)/r_mod**2
-           endif
-           if(By/=0.) then
-             A_magn_z(ir)=A_magn_z(ir)-0.5*By*MAG_radius**2*x(ir,1)/r_mod**2
-             A_magn_x(ir)= 0.5*By*MAG_radius**2*x(ir,3)/r_mod**2
-           endif
-           if(Bz/=0.) then
-             A_magn_x(ir)=A_magn_x(ir)-0.5*Bz*MAG_radius**2*x(ir,2)/r_mod**2
-             A_magn_y(ir)=A_magn_y(ir)+0.5*Bz*MAG_radius**2*x(ir,1)/r_mod**2
-           endif
+       if(r_mod<=MAG_radius .or. MAG_radius==0) then
+         if(Bx/=0.) then
+           A_magn_z(ir)= 0.5*Bx*x(ir,2)*gauge_factors(1,1)
+           A_magn_y(ir)=-0.5*Bx*x(ir,3)*gauge_factors(2,1)
          endif
-         if(phase_trick .and. r_mod>phase_radius.and.Bz/=0.) then
-           A_magn_x(ir)=A_magn_x(ir)+SPEED_OF_LIGHT*n_loops*x(ir,2)/r_mod**2
-           A_magn_y(ir)=A_magn_y(ir)-SPEED_OF_LIGHT*n_loops*x(ir,1)/r_mod**2
+         if(By/=0.) then
+           A_magn_z(ir)=A_magn_z(ir)-0.5*By*x(ir,1)*gauge_factors(1,2)
+           A_magn_x(ir)= 0.5*By*x(ir,3)*gauge_factors(2,2)
          endif
+         if(Bz/=0.) then
+           A_magn_x(ir)=A_magn_x(ir)-0.5*Bz*x(ir,2)*gauge_factors(1,3)
+           A_magn_y(ir)=A_magn_y(ir)+0.5*Bz*x(ir,1)*gauge_factors(2,3)
+         endif
+       else
+         ir_table(ir)=.false.
+         if(Bx/=0.) then
+           A_magn_z(ir)= 0.5*Bx*MAG_radius**2*x(ir,2)/r_mod**2
+           A_magn_y(ir)=-0.5*Bx*MAG_radius**2*x(ir,3)/r_mod**2
+         endif
+         if(By/=0.) then
+           A_magn_z(ir)=A_magn_z(ir)-0.5*By*MAG_radius**2*x(ir,1)/r_mod**2
+           A_magn_x(ir)= 0.5*By*MAG_radius**2*x(ir,3)/r_mod**2
+         endif
+         if(Bz/=0.) then
+           A_magn_x(ir)=A_magn_x(ir)-0.5*Bz*MAG_radius**2*x(ir,2)/r_mod**2
+           A_magn_y(ir)=A_magn_y(ir)+0.5*Bz*MAG_radius**2*x(ir,1)/r_mod**2
+         endif
+       endif
+       if(phase_trick .and. r_mod>phase_radius.and.Bz/=0.) then
+         A_magn_x(ir)=A_magn_x(ir)+SPEED_OF_LIGHT*n_loops*x(ir,2)/r_mod**2
+         A_magn_y(ir)=A_magn_y(ir)-SPEED_OF_LIGHT*n_loops*x(ir,1)/r_mod**2
        endif
      enddo
    enddo

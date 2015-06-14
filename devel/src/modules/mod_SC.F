@@ -39,6 +39,7 @@ module SC
  integer           :: n_SC_descriptions = 0
  real(SP)          :: E_bare_Ef
  real(SP)          :: rho_convergence
+ real(SP)          :: magn_convergence
  real(SP)          :: E_convergence
  real(SP)          :: SC_rho_threshold
  real(SP)          :: SC_cycle_mixing
@@ -159,6 +160,7 @@ module SC
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
+     !
      implicit none
      !
      type(levels) :: E
@@ -176,18 +178,16 @@ module SC
      call mem_est("rho",(/fft_size/),(/SP/))
      !
      if(n_spin>1) then
-       allocate(magn_n(fft_size,3))
-       call mem_est("magn",(/fft_size*3/),(/SP/))
-       !
        allocate(magn(fft_size,3))
-       call mem_est("magn",(/fft_size*3/),(/SP/))
+       allocate(magn_n(fft_size,3))
+       call mem_est("magn",(/2*fft_size*3/),(/SP/))
      endif
      !
      allocate(V_xc_sc(fft_size,n_spin))
-     call mem_est('V_xc_sc',(/fft_size*n_spin/),(/SP/))
+     call mem_est('V_xc_sc',(/size(V_xc_sc)/),(/SP/))
      !
      allocate(V_xc(fft_size,n_spin))
-     call mem_est('V_xc',(/fft_size*n_spin/),(/SP/))
+     call mem_est('V_xc',(/size(V_xc)/),(/SP/))
      !
      allocate(V_hartree_sc(fft_size,n_spin))
      call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
@@ -231,7 +231,7 @@ module SC
      endif
      !
      if(allocated(magn_n)) then
-       deallocate(magn_n)
+       deallocate(magn,magn_n)
        call mem_est("magn")
      endif
      !

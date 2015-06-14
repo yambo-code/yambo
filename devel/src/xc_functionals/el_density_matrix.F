@@ -26,7 +26,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  ! Electronic density matrix (meaning including the off-diagonal elements of the
  ! lesser Green function)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,cI
  use com,           ONLY:error
  use electrons,     ONLY:levels,n_spinor
  use R_lattice,     ONLY:bz_samp
@@ -60,13 +60,14 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
    do ik=1,Xk%nibz
      do ib1=lowest_band,SC_bands(1)-1
        !
-        if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
+       if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
+       !
        i_wf1=WF%index(ib1,ik,1)
        f_occ=en%f(ib1,ik,1)
-       rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,i_wf1))**2.)
+       rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,i_wf1))**2)
        if(n_spinor>1) then
          i_wf1=WF%index(ib1,ik,2)
-         rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,i_wf1))**2.)
+         rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,i_wf1))**2)
        endif
        !
      enddo
@@ -86,8 +87,8 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
        !
        f_occ=0._SP
        do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-         if (ib1==ib2) f_occ=f_occ-(0._SP,1._SP)*G_lesser(ib1,ib2,ik_RT)
-         if (ib1/=ib2) f_occ=f_occ-(0._SP,2._SP)*G_lesser(ib1,ib2,ik_RT)
+         if (ib1==ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT)
+         if (ib1/=ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT)*2._SP
        enddo
        f_occ=f_occ/real(RT_Nk_ibz(ik),SP)
        !

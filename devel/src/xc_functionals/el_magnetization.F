@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine el_magnetization(en,Xk)
+subroutine el_magnetization(en,Xk,magn)
  !
  ! Electronic magnetization for electronic Spinors
  !
@@ -36,24 +36,24 @@ subroutine el_magnetization(en,Xk)
  use D_lattice,      ONLY:nsym,dl_sop,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:WF
- use xc_functionals, ONLY:magn
- !
  use electrons,      ONLY:Total_magn
  use matrix_operate, ONLY:m3det
  !
  implicit none
- type(levels) ::en
- type(bz_samp)::Xk
+ !
+ type(levels), intent(in ) ::en
+ type(bz_samp),intent(in ) ::Xk
+ real(SP),     intent(out) ::magn(fft_size,3)
  !
  ! Work Space
  !
  integer :: i1,i2,ifft_up,ifft_dn
  real(SP):: cv(fft_size,3),tmp_sop(3,3)
  !
- magn=0.
- cv=0.
+ magn=0._SP
+ cv=0._SP
  !
- Total_magn=0.
+ Total_magn=0._SP
  !
  if (n_spin==1) return
  !
@@ -64,6 +64,7 @@ subroutine el_magnetization(en,Xk)
      ifft_dn=WF%index(i1,i2,2)
      !
      if (ifft_up==0 .or. ifft_dn==0) cycle
+     !
      if (n_spinor==2) then
        !
        ! mx

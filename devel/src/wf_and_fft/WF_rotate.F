@@ -32,11 +32,13 @@ subroutine WF_rotate(ik,WFo,wf_size)
  !
  ! Extended only to collinear case
  !
+ use pars,           ONLY:cZERO
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
- use electrons,      ONLY:n_sp_pol
+ use electrons,      ONLY:n_sp_pol,n_spinor
  use pars,           ONLY:SP
  use wave_func,      ONLY:WAVEs,WF
  use SC,             ONLY:SC_R,SC_bands
+ !
  implicit none
  !
  integer     :: ik,wf_size,ig
@@ -44,29 +46,48 @@ subroutine WF_rotate(ik,WFo,wf_size)
  !
  ! Work Space
  !
- integer     :: ib,ibp,ifft,ifftp,i_spin
- complex(SP) :: WS_wf(wf_size,SC_bands(2))
+ integer     :: ib,ibp,i_wf(n_spinor),i_wfp(n_spinor),i_spin,i_sp_pol,i_spinor
+ complex(SP) :: WS_wf(wf_size,n_spinor,SC_bands(2))
  !
- do i_spin=1,n_sp_pol
-   WS_wf=(0.,0.)
+ do i_sp_pol=1,n_sp_pol
    !
-   do ib  = 1,SC_bands(2)
-     ifft = WFo%index(ib,ik,i_spin)
+   WS_wf=cZERO
+   !
+   do ib = 1,SC_bands(2)
+     !
+     do i_spinor=1,n_spinor
+       i_spin=i_sp_pol+i_spinor-1
+       i_wf(i_spinor) = WFo%index(ib,ik,i_spin)
+     enddo
+     !
+     if (any(i_wf(:)==0)) cycle
+     !
      do ibp = 1,SC_bands(2)
-       ifftp = WFo%index(ibp,ik,i_spin)
        !
-       if (ifft==0.or.ifftp==0) cycle
-       !
-       call V_by_V_plus_V_omp(wf_size,SC_R(ibp,ib,ik,i_spin),WFo%c(:,ifftp),WS_wf(:,ib))
-       !
+       do i_spinor=1,n_spinor
+         i_spin=i_sp_pol+i_spinor-1
+         i_wfp(i_spinor) = WFo%index(ibp,ik,i_spin)
+         !
+         if (i_wfp(i_spinor)==0) cycle
+         !
+         call V_by_V_plus_V_omp(wf_size,SC_R(ibp,ib,ik,i_sp_pol),WFo%c(:,i_wfp(i_spinor)),WS_wf(:,i_spinor,ib))
+         !
+       end do
      end do
-   end do
+     !
+   enddo
    !
 !$omp parallel default(shared), private(ig,ib)
    do ib=1,SC_bands(2)
 !$omp do
-     do ig=1,wf_size
-        WF%c(ig,WF%index(ib,ik,i_spin))=WS_wf(ig,ib)
+     !
+     do i_spinor=1,n_spinor
+       i_spin=i_sp_pol+i_spinor-1
+       i_wf(i_spinor) = WF%index(ib,ik,i_spin)
+       !
+       do ig=1,wf_size
+         WF%c(ig,i_wf(i_spinor))=WS_wf(ig,i_spinor,ib)
+       enddo
      enddo
 !$omp end do
    enddo

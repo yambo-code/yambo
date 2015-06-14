@@ -36,14 +36,14 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  use pars,           ONLY:SP,cONE,cZERO
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
- use electrons,      ONLY:levels,n_spinor
+ use electrons,      ONLY:levels,n_spinor,n_spin
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,SC_nbands
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,magn_n,V_xc_sc,SC_nbands
  use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_RIM,REF_V_xc_sc,&
-&                         RIM_ibz_coo,rho_reference,RT_Vnl_xc,&
+&                         RIM_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,&
 &                         l_RT_RWA,eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_nk
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
@@ -65,7 +65,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  ! Work Space
  !
  integer          :: ik,ik_RT,ik_RIM,ib,ibp
- real(SP)         :: delta_rho(fft_size)
+ real(SP)         :: delta_rho(fft_size),delta_magn(fft_size,3)
  !
 #if defined _TIMING
  call timing('RT Collision',OPR='start')
@@ -84,6 +84,10 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    call el_density_matrix(dG_in,E,k,delta_rho,SC_bands(1))
    !
    rho_n=rho_reference+delta_rho
+   if(n_spin>1) then
+     call el_magnetization_matrix(dG_in,E,k,delta_magn,SC_bands(1))
+     magn_n=magn_reference+delta_magn
+   endif
    !
  endif
  !

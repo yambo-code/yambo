@@ -24,9 +24,9 @@
 subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  use pars,           ONLY:SP,cZERO
- use electrons,      ONLY:levels,n_sp_pol,spin
+ use electrons,      ONLY:levels,n_sp_pol,spin,n_spin
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
- use SC,             ONLY:Ho,E_bare,V_hartree_sc,rho_n,V_xc_sc
+ use SC,             ONLY:Ho,E_bare,V_hartree_sc,rho_n,magn_n,V_xc_sc
  use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
  use wave_func,      ONLY:WF
@@ -34,6 +34,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  use xc_functionals, ONLY:V_xc
  use interfaces,     ONLY:el_density_and_current
 #if defined _RT
+ use drivers,        ONLY:l_real_time
  use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,G_lesser,RT_ibz_coo
 #endif
 #if defined _MAGNETIC
@@ -57,18 +58,19 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  ! Note that G_lesser here is the non-interacting one (occupations on the diagonal) only
  !
- call el_density_matrix(G_lesser,E,Xk,rho_n,1)
- !call el_magnetization_matrix(G_lesser,E,Xk,magn_n,1)
- !
-#else
- !
- call el_density_and_current(E,Xk,rho=rho_n)
- !call el_magnetization(E,Xk,magn_n)
- V_xc_sc=V_xc 
- !
+ if(l_real_time) then
+   call el_density_matrix(G_lesser,E,Xk,rho_n,1)
+   if(n_spin>1) call el_magnetization_matrix(G_lesser,E,Xk,magn_n,1)
+ else
 #endif
- !
- call XCo_local(E,k)
+   !
+   call el_density_and_current(E,Xk,rho=rho_n)
+   if(n_spin>1) call el_magnetization(E,Xk,magn_n)
+   V_xc_sc=V_xc
+   !
+#if defined _RT
+ endif
+#endif
  !
  ! The Ho = -nabla**2. + V_ext is deduced from the input energies en0:
  !
@@ -87,15 +89,19 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  ! If we are using yambo_magnetic now Ho already
  ! contains H_magnetic
  !
- if (.not.l_sc_magnetic) Ho=(0._SP,0._SP)
+ if (.not.l_sc_magnetic) Ho=cZERO
  !
 #else
  !
- Ho=(0._SP,0._SP)
+ Ho=cZERO
  !
 #endif
- !
+ ! 
+ ! V_hartree
  call V_Hartree(rho_n,V_hartree_sc)
+ !
+ ! QP_Vxc
+ call XCo_local(E,k)
  !
  do ik=1,QP_nk
    !
@@ -110,7 +116,9 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
    enddo
    !
 #if defined _RT
-   if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+   if(l_real_time) then
+     if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+   endif
 #endif
    !
    ! ... then remove Vh[rho_0] 
@@ -130,8 +138,10 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  ! Save the reference xc and Hartree potentials 
  !==============================================
  !
- REF_V_xc_sc=V_xc
- REF_V_hartree_sc=V_hartree_sc
+ if(l_real_time) then
+   REF_V_xc_sc=V_xc
+   REF_V_hartree_sc=V_hartree_sc
+ endif
  !
 #endif
  !

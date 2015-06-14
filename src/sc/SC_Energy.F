@@ -31,7 +31,7 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_sp_pol,n_spin,nel
  use parallel_m,     ONLY:master_cpu
- use xc_functionals, ONLY:V_xc,E_xc,XC_potential_driver
+ use xc_functionals, ONLY:V_xc,E_xc,XC_potential_driver,magn
  use FFT_m,          ONLY:fft_size
  use SC,             ONLY:l_sc_pot_is_local,V_hartree_sc,SC_kind,SC_xc_functional,E_bare_Ef
  !
@@ -40,15 +40,15 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  type(levels) ::E
  type(bz_samp)::k
  real(SP)     ::E_total,E_Hartree,E_xc_
- real(SP)     ::rho(fft_size,n_spin)
+ real(SP)     ::rho(fft_size)
  !
  ! Work Space
  !
  integer      :: ib,ik,i_spin
  !
- E_total=0.
- E_Hartree=0.
- E_xc_=0.
+ E_total=  0._SP
+ E_Hartree=0._SP
+ E_xc_=    0._SP
  !
  if (.not.l_sc_is_libDFT .and. .not.l_sc_hartree .and. .not.l_sc_pot_is_local) return
  !
@@ -70,18 +70,22 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  !
  E_total=(E%E_Fermi+E_bare_Ef)*nel
  !
+ ! Bands energy
+ !
  do i_spin=1,n_sp_pol
    do ik=1,k%nibz
      do ib=1,E%nbm
        E_total=E_total+E%E(ib,ik,i_spin)*E%f(ib,ik,i_spin)*k%weights(ik)
      enddo
    enddo
-   !
-   E_total=E_total-real_V_dot_V(fft_size,rho,V_xc(:,i_spin))
-   !
  enddo
  !
- ! E_total =  \sum_v E_v -E_Hartree +E_xc -\int rho(r) V_xc(r)
+ ! DAVIDE (11/06/2015): to be fixed with spin, the term -\int magn(r) B_xc(r) is missing
+ do i_spin=1,n_spin
+   E_total=E_total-real_V_dot_V(fft_size,rho,V_xc(:,i_spin))
+ enddo
+ !
+ ! E_total =  \sum_v E_v -E_Hartree +E_xc -\int rho(r) V_xc(r) -\int magn(r) B_xc(r)
  !
  E_total=E_total-E_Hartree+E_xc_
  !

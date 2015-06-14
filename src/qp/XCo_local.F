@@ -26,7 +26,6 @@ subroutine XCo_local(E,Xk)
  ! Local V_xc
  !
  use pars,          ONLY:SP,pi
- use drivers,       ONLY:l_real_time
  use electrons,     ONLY:levels,n_spin,n_spinor,spin
  use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table
  use R_lattice,     ONLY:bz_samp
@@ -42,6 +41,7 @@ subroutine XCo_local(E,Xk)
  use SC,            ONLY:SC_bands
 #endif
 #if defined _SC
+ use drivers,       ONLY:l_real_time,l_sc_run
  use com,           ONLY:error
  use IO_m,          ONLY:REP,VERIFY
  use SC,            ONLY:load_SC_components,V_xc_sc,V_hartree_sc,SC_fft_size,compatible_SC_DB
@@ -54,7 +54,7 @@ subroutine XCo_local(E,Xk)
  !
  ! Work Space
  !
-#if defined _SC
+#if defined _RT
  integer     ::nb
 #endif
  integer     ::i1,ifft,iwf,iwfp,iwf_sp1,iwfp_sp1,iwf_sp2,iwfp_sp2,ib,ibp,ik,i_sp
@@ -62,7 +62,6 @@ subroutine XCo_local(E,Xk)
  !
  ! Spin support (collinear and not collinear)
  !
- logical     :: l_call_the_driver
  complex(SP), allocatable :: V_xc_mat(:,:,:)
  !
  ! Allocation 
@@ -80,16 +79,17 @@ subroutine XCo_local(E,Xk)
    !
 #endif
    !
-   l_call_the_driver=.TRUE.
-   !
 #if defined _RT
-   call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1)
-   l_call_the_driver=.FALSE.
+   if (l_real_time) then
+     call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1)
+   else
 #endif
-   if (l_call_the_driver) then
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,&
 &         exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
+#if defined _RT
    endif
+#endif
+   !
    !
 #if defined _SC
  else
@@ -115,6 +115,7 @@ subroutine XCo_local(E,Xk)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
      !
+#if defined _RT
      if (l_real_time) then
        !
        if(ib>ibp) then
@@ -122,16 +123,17 @@ subroutine XCo_local(E,Xk)
          cycle
        endif
        !
-#if defined _RT
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
-#endif
        !
      else
+#endif
        !
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
        !
+#if defined _RT
      endif
+#endif
      !
      ! <iwf|V_xc|iwfp>
      !
@@ -170,14 +172,16 @@ subroutine XCo_local(E,Xk)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
      !
-     if (l_real_time) then
 #if defined _RT
+     if (l_real_time) then
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle
-#endif
      else
+#endif
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+#if defined _RT
      endif
+#endif
      !
      if (n_spinor==1) then
        !
@@ -212,12 +216,13 @@ subroutine XCo_local(E,Xk)
  !
  ! Clean
  !
-#if !defined _SC
- if(n_spin>1) deallocate(magn)
+#if defined _SC
+ if(.not.(l_sc_run.or.l_real_time)) then
 #endif
- ! 
-#if !defined _SC
- deallocate(V_xc)
+   deallocate(V_xc)
+   if(n_spin>1) deallocate(magn)
+#if defined _SC
+ endif
 #endif
  !
  call PP_redux_wait(QP_Vxc)

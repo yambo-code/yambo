@@ -30,7 +30,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !  PSI^I = spinor
  !  Sigma_Pauli=the 3 Pauli matrices
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cI
  use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
@@ -54,32 +54,56 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !
  ! Work Space
  !
- integer :: ib1,ib2,ik,i1,i2,ifft1,ifft2
- real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ
+ integer :: ib1,ib2,ik,isym,ifft,ifft1(n_spin),ifft2(n_spin)
+ real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ(n_sp_pol)
  !
- magn=0.
- cv=0.
+ magn=0._SP
+ cv=  0._SP
  !
- Total_magn=0.
+ Total_magn=0._SP
  !
  if (n_spin==1) return
  !
- if (n_spinor==1) call error("Preently not implemented")
+ if(lowest_band<SC_bands(1)-1) then
+   !
+   do ik=1,Xk%nibz
+     do ib1=lowest_band,SC_bands(1)-1
+       !
+       if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
+       !
+       ifft1(:)=WF%index(ib1,ik,:)
+       !
+       f_occ(:)=en%f(ib1,ik,:)
+       !
+       if (any(ifft1(:)==0)) cycle
+       !
+       if (n_spinor==2) then
+         !
+         ! mx
+         !
+         cv(:,1)=cv(:,1)+Xk%weights(ik)*(&
+&                f_occ(1)*real(conjg(WF%c(:,ifft1(1)))*WF%c(:,ifft1(2)))&
+&               +f_occ(1)*real(conjg(WF%c(:,ifft1(2)))*WF%c(:,ifft1(1))) )
+         !
+         ! my
+         !
+         cv(:,2)=cv(:,2)+Xk%weights(ik)*(&
+&                f_occ(1)*aimag(conjg(WF%c(:,ifft1(1)))*WF%c(:,ifft1(2)))&
+&               +f_occ(1)*aimag(conjg(WF%c(:,ifft1(2)))*WF%c(:,ifft1(1))) )
+       endif
+       !
+       ! mz
+       !
+       cv(:,3)=cv(:,3)+Xk%weights(ik)*(&
+&              f_occ(1)       *real(conjg(WF%c(:,ifft1(1)))*WF%c(:,ifft1(1)))&
+&             -f_occ(n_sp_pol)*real(conjg(WF%c(:,ifft1(2)))*WF%c(:,ifft1(2))) )
+       !
+     enddo
+   enddo
+   !
+ endif
  !
  do ik=1,Xk%nibz
-   !
-   do ib1=lowest_band,SC_bands(1)-1
-     !
-     if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
-     ifft1=WF%index(ib1,ik,1)
-     f_occ=en%f(ib1,ik,1)
-     !cv(:,:)=cv(:,:)+ ??
-     if(n_spinor>1) then
-       ifft1=WF%index(ib1,ik,2)
-       !cv(:,:)=cv(:,:)+ ??
-     endif
-     !
-   enddo
    !
    if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
    !      
@@ -89,18 +113,32 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
        !
        if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-SC_bands(1)+1,ib2-SC_bands(1)+1)-1 )) cycle
        !
-       if (ib1==ib2) f_occ=-(0._SP,1._SP)*G_lesser(ib1,ib2,ik)
-       if (ib1/=ib2) f_occ=-(0._SP,2._SP)*G_lesser(ib1,ib2,ik)
+       ifft1(:)=WF%index(ib1,ik,:)
+       ifft2(:)=WF%index(ib2,ik,:)
        !
-       ifft1=WF%index(ib1,ik,1)
-       ifft2=WF%index(ib2,ik,1)
-       !cv(:,:)=cv(:,:)+ ??
+       if (ib1==ib2) f_occ(1)=-cI*G_lesser(ib1,ib2,ik)
+       if (ib1/=ib2) f_occ(1)=-cI*G_lesser(ib1,ib2,ik)*2._SP
        !
-       if(n_spinor>1) then
-         ifft1=WF%index(ib1,ik,2)
-         ifft2=WF%index(ib2,ik,2)
-         !cv(:,:)=cv(:,:)+ ??
+       if (n_spinor==2) then
+         !
+         ! mx
+         !
+         cv(:,1)=cv(:,1)+Xk%weights(ik)*(&
+&                f_occ(1)*real(conjg(WF%c(:,ifft1(1)))*WF%c(:,ifft2(2)))&
+&               +f_occ(1)*real(conjg(WF%c(:,ifft1(2)))*WF%c(:,ifft2(1))) )
+         !
+         ! my
+         !
+         cv(:,2)=cv(:,2)+Xk%weights(ik)*(&
+&                f_occ(1)*aimag(conjg(WF%c(:,ifft1(1)))*WF%c(:,ifft2(2)))&
+&               -f_occ(1)*aimag(conjg(WF%c(:,ifft1(2)))*WF%c(:,ifft2(1))) )
        endif
+       !
+       ! mz
+       !
+       cv(:,3)=cv(:,3)+Xk%weights(ik)*(&
+&              f_occ(1)       *real(conjg(WF%c(:,ifft1(1))*WF%c(:,ifft2(1))))&
+&             -f_occ(n_sp_pol)*real(conjg(WF%c(:,ifft1(2))*WF%c(:,ifft2(2)))) )
        !
      enddo
    enddo
@@ -111,22 +149,22 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !
  ! Symmetrization
  !
- do i1=1,nsym
+ do isym=1,nsym
    ! The magnetization, like the spin, is a pseudo-vector:
    ! i.e. is invariant under spatial invertion but changes under T-rev
    if (n_spinor==2) then
-     tmp_sop(:,:)=dl_sop(:,:,i1)*m3det(dl_sop(:,:,i1))
-     if( i1> nsym/(1+i_time_rev) ) tmp_sop(:,:)=-tmp_sop(:,:)
-     forall(i2=1:fft_size) magn(i2,:)=magn(i2,:)+ &
-&                            matmul(tmp_sop,real( cv(fft_rot_r(i1,i2),:)/real(nsym) ))
+     tmp_sop(:,:)=dl_sop(:,:,isym)*m3det(dl_sop(:,:,isym))
+     if( isym> nsym/(1+i_time_rev) ) tmp_sop(:,:)=-tmp_sop(:,:)
+     forall(ifft=1:fft_size) magn(ifft,:)=magn(ifft,:)+ &
+&                            matmul(tmp_sop,real( cv(fft_rot_r(isym,ifft),:)/real(nsym) ))
    else
-     magn(:,3)=magn(:,3)+real(cv(fft_rot_r(i1,:),3)/real(nsym))
+     magn(:,3)=magn(:,3)+real(cv(fft_rot_r(isym,:),3)/real(nsym))
    endif
    !
  enddo
  !
- do i1=1,fft_size
-   Total_magn(:)=Total_magn(:)+magn(i1,:)
+ do ifft=1,fft_size
+   Total_magn(:)=Total_magn(:)+magn(ifft,:)
  enddo
  !
 end subroutine

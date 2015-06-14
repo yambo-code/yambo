@@ -24,7 +24,7 @@
 subroutine SC_start_and_restart(X,E,Xk)
  !
  use pars,           ONLY:schlen
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels,n_sp_pol,n_spin
  use parser_m,       ONLY:parser 
  use com,            ONLY:msg,warning
  use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_use_collisions,&
@@ -37,7 +37,7 @@ subroutine SC_start_and_restart(X,E,Xk)
 &                         l_oep_iterative,SC_up_W_iters,rho_convergence,E_convergence, &
 &                         SC_rho_threshold,SC_iterations,l_SC_cycle,SC_cycle_mixing,   &
 &                         WF_G_max,WF_Go_indx,SC_fft_size,E_bare_Ef,l_oep_EWeight,     &
-&                         l_Mean_Potential,l_SC_nl_mix
+&                         l_Mean_Potential,l_SC_nl_mix,magn_convergence
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
@@ -125,8 +125,9 @@ subroutine SC_start_and_restart(X,E,Xk)
  if (l_SC_RESTART) then
    !
    call msg('nr','[SC] Found   accuracy on density      :',rho_convergence)
+   call msg('nr','[SC] Found   accuracy on magnetization:',magn_convergence)
    call msg('rn','[SC]                  on energies [ev]:',E_convergence*HA2EV)
-   l_SC_cycle=.not.(E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold)
+   l_SC_cycle=.not.(E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold.and.magn_convergence<SC_rho_threshold)
    !
    ! Even if the accuracy on DB is not small enough with 0 iterations
    ! I can skip the SC cycle
@@ -162,6 +163,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  if (l_SC_cycle) then
    call msg('r' ,'[SC] N (N-1) order mixing             :',SC_cycle_mixing)
    call msg('r' ,'[SC] Imposed accuracy on density      :',SC_rho_threshold)
+   if(n_spin>1) call msg('r' ,'[SC]                  on magnetization:',SC_rho_threshold)
    call msg('rn','[SC]                  on energies [ev]:',SC_E_threshold*HA2EV)
  endif
  if (l_sc_exx) then

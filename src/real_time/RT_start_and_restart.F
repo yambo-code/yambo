@@ -42,11 +42,11 @@ subroutine RT_start_and_restart(E,k,q,X)
  use drivers,        ONLY:l_sc_ip,l_elph_scatt,l_elel_scatt
  use com,            ONLY:msg
  use QP_m,           ONLY:QP_nk,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
- use electrons,      ONLY:levels,n_sp_pol,spin_occ
+ use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp
  use rt_ctl,         ONLY:ID,RT_IO_G_steps,it_start
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
-&                         G_lesser_reference,rho_reference,  &
+&                         G_lesser_reference,rho_reference,magn_reference,  &
 &                         l_NE_with_fields,XC0_and_HARTREE0,RT_ibz_coo,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,&
@@ -54,10 +54,9 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
 &                         RIM_ibz_coo,RT_eh_en,G_MEM_steps,MEM_index
  use fields,         ONLY:A_vecpot,A_vecpot_previous
- use SC,             ONLY:SC_bands,H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,Ho,it_now
+ use SC,             ONLY:SC_bands,H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho,it_now
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
- use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use parallel_m,     ONLY:PP_redux_wait
@@ -84,18 +83,20 @@ subroutine RT_start_and_restart(E,k,q,X)
  G_lesser          =cZERO
  dG_lesser         =cZERO
  rho_reference     =rZERO
+ magn_reference    =rZERO
  V_xc_sc           =rZERO
  V_hartree_sc      =rZERO
  H_nl_sc           =cZERO
+ XC0_and_HARTREE0  =cZERO
  !
  ! Set to zero occupations
  !
- RT_E_occupations=rzero
- RT_H_occupations=rzero
+ RT_E_occupations          =rzero
+ RT_H_occupations          =rzero
  RT_E_occupations_reference=rzero
  RT_H_occupations_reference=rzero
- RT_delta0_occupations=rzero
- RT_delta_occupations=rzero
+ RT_delta0_occupations     =rzero
+ RT_delta_occupations      =rzero
  !
  ! Set to zero current and fields
  !
@@ -139,8 +140,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Reference Hartree and XC
  !==========================
- XC0_and_HARTREE0=(0._SP,0._SP)
- !
  do ik=1,QP_nk
    !
    call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),WF,'def') 
@@ -157,6 +156,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Reference density
  !====================
  rho_reference=rho_n
+ if(n_spin>1) magn_reference=magn_n
  !
  !
  ! Perform a first I/O to check which DBs are present. 
@@ -257,7 +257,10 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
-   if (.not.l_sc_ip) call el_density_matrix(G_lesser_reference,E,k,rho_reference,1)
+   if (.not.l_sc_ip) then
+     call el_density_matrix(G_lesser_reference,E,k,rho_reference,1)
+     if(n_spin>1) call el_magnetization_matrix(G_lesser_reference,E,k,magn_reference,1)
+   endif
    !
    ! Last thing to do is to update the planned time sampling time (if needed)
    !

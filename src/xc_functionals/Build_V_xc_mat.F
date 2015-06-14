@@ -23,10 +23,11 @@
 !
 subroutine Build_V_xc_mat(V_xc,V_xc_mat)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cZERO,cI
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:n_spin,n_spinor
  use xc_functionals, ONLY:magn
+ use vec_operate,    ONLY:v_norm
  !
  implicit none
  !
@@ -48,7 +49,7 @@ subroutine Build_V_xc_mat(V_xc,V_xc_mat)
  !
  ! Magnetization, V_xc + and -
  !
- V_xc_mat=(0._SP,0._SP)
+ V_xc_mat=cZERO
  !
  if (n_spinor==1) then
    !
@@ -57,11 +58,11 @@ subroutine Build_V_xc_mat(V_xc,V_xc_mat)
    !
  else if (n_spinor==2) then
    !
-   magn_versor=0.
+   magn_versor=0._SP
    do ifft=1,fft_size
-     mod_mag=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
-     if(mod_mag==0) magn_versor(ifft,:)=0.
-     if(mod_mag/=0) magn_versor(ifft,:)=magn(ifft,:)/mod_mag
+     mod_mag=v_norm(magn(ifft,:))
+     if(mod_mag==0._SP) magn_versor(ifft,:)=0._SP
+     if(mod_mag/=0._SP) magn_versor(ifft,:)=magn(ifft,:)/mod_mag
    enddo
    !
    ! Vxc^+=(Vxc_up+Vxc_down)/2
@@ -72,8 +73,8 @@ subroutine Build_V_xc_mat(V_xc,V_xc_mat)
    V_xc_mat(:,1,1)= (vxc_plus(:)+vxc_minus(:)*magn_versor(:,3))
    V_xc_mat(:,2,2)= (vxc_plus(:)-vxc_minus(:)*magn_versor(:,3))
    !
-   V_xc_mat(:,1,2)= vxc_minus(:)*(magn_versor(:,1)-(0.,1.)*magn_versor(:,2))
-   V_xc_mat(:,2,1)= vxc_minus(:)*(magn_versor(:,1)+(0.,1.)*magn_versor(:,2))
+   V_xc_mat(:,1,2)= vxc_minus(:)*(magn_versor(:,1)-cI*magn_versor(:,2))
+   V_xc_mat(:,2,1)= vxc_minus(:)*(magn_versor(:,1)+cI*magn_versor(:,2))
    !
  endif
  !

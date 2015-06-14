@@ -72,9 +72,8 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
  l_rho     =present(rho)
  l_J       =present(J)
  l_si      =.false.
- if (present(force_spatial_inversion)) then
-   l_si=force_spatial_inversion
- endif
+ if (present(force_spatial_inversion)) l_si=force_spatial_inversion
+ !
  if (l_rho) then
    rho       =0._SP
    rho_no_sym=0._SP
@@ -95,9 +94,9 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
      !
      do i_spin_wf=1,n_spin
        !
+       if (size(WF%index,1)<ib)        cycle
+       if (size(WF%index,2)<ik)        cycle
        if (size(WF%index,3)<i_spin_wf) cycle
-       if (size(WF%index,1)<ib) cycle
-       if (size(WF%index,2)<ik) cycle
        !
        ifft=WF%index(ib,ik,i_spin_wf)
        if (n_sp_pol==2) i_spin_E=i_spin_wf
@@ -131,14 +130,10 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
    enddo
  enddo bands_loop
  !
- if (l_rho) then
-   call PP_redux_wait(rho_no_sym,COMM=PAR_COM_density%COMM)
- endif
- if (l_J) then
-   call PP_redux_wait(J_no_sym,COMM=PAR_COM_density%COMM)
- endif
+ if (l_rho) call PP_redux_wait(rho_no_sym,COMM=PAR_COM_density%COMM)
+ if ( l_J ) call PP_redux_wait(J_no_sym  ,COMM=PAR_COM_density%COMM)
  !
- ! Simmetrization
+ ! Symmetrization
  !
  rho_syms=nsym/(i_time_rev+1)
  !
@@ -149,7 +144,7 @@ subroutine el_density_and_current(E,k,rho,J,force_spatial_inversion)
      rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(i_s,:)),SP)/real(nsym,SP)
    enddo
    if (mag_syms)      return
-   if (.not.l_si) rho(:)=(1+i_time_rev)*rho(:)
+   if (.not.l_si) rho(:)=(1+i_time_rev)*     rho(:)
    if (     l_si) rho(:)=   i_time_rev *real(rho(fft_rot_r_inv(:)),SP)+rho(:)
  endif
  !

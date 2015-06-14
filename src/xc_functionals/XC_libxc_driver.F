@@ -39,7 +39,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use electrons,      ONLY:levels,n_spin,n_spinor
  use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:real_V_dot_V
- use xc_functionals, ONLY:E_xc,F_xc,V_xc,magn,xc_setup_hyb,&
+ use xc_functionals, ONLY:E_xc,F_xc,magn,V_xc,xc_setup_hyb,&
 &                         xc_string,XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use interfaces,     ONLY:el_density_and_current
@@ -102,12 +102,11 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
 #if defined _RT
  if (l_real_time) then
    rho=rho_n
-   if(n_spin> 1) magn=0._SP
-   !if(n_spin> 1) magn=magn_n
+   if(n_spin> 1) magn=magn_n
  else
 #endif
    call el_density_and_current(en,Xk,rho=rho)
-   if(n_spin> 1) call el_magnetization(en,Xk)
+   if(n_spin> 1) call el_magnetization(en,Xk,magn)
 #if defined _RT
  endif
 #endif

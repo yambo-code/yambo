@@ -195,8 +195,6 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
        if (.not.l_plan_todo_EWZI(5)) l_plan_todo_EWZI(5)=any((/trim(db_piece(i1))=="uei",trim(db_piece(i1))=="ueI",&
 &                                                              trim(db_piece(i1))=="UeI",trim(db_piece(i1))=="Uei"/))
        !
-       if (.not.any(l_plan_todo_EWZI(4:5))) l_plan_todo_EWZI(4)=.TRUE.
-       !
      else if (GFs_DB) then
        if (.not.GFs_from_DB) GFs_from_DB=any((/trim(db_piece(i1))=="G",trim(db_piece(i1))=="g"/))
      endif

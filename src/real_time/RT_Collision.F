@@ -36,7 +36,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  use pars,           ONLY:SP,cONE,cZERO
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
- use electrons,      ONLY:levels,n_spinor
+ use electrons,      ONLY:levels,n_spinor,n_spin
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp

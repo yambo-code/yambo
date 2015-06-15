@@ -235,6 +235,60 @@ module vec_operate
      !
    end function rlu_v_norm
    !
+   pure function k_periodic_idx(idx,k_map)
+    use R_lattice,      ONLY:bz_map
+    implicit none
+    type(bz_map)  , intent(in) :: k_map
+    integer,        intent(in) :: idx(3)
+    integer                    :: k_periodic_idx(3)
+    !
+    k_periodic_idx(:)=modulo(idx(:)-1,k_map%max_kdir(:)) + 1
+    !
+   end function
+   !
+   integer function get_neighboar(step,ik,k_map)
+     use R_lattice,      ONLY:bz_map
+     implicit none
+     !
+     integer,       intent(in) :: step(3)
+     integer,       intent(in) :: ik
+     type(bz_map),  intent(in) :: k_map
+     !
+     ! Workspace
+     !
+     integer :: idx(3)
+     !
+     if(all(step(:)==0)) then
+       get_neighboar=ik
+       return 
+     endif
+     !
+     idx=k_map%k_map_inv(ik,:)
+     idx(:)=idx(:)+step(:)
+     idx=k_periodic_idx(idx,k_map)
+     get_neighboar=k_map%k_map_dir(idx(1),idx(2),idx(3))
+     !
+   end function get_neighboar
+   !
+   subroutine get_id_perpendicular(id1,id2,id3)
+     implicit none
+     integer, intent(in)  :: id1
+     integer, intent(out) :: id2,id3
+     !
+     if(id1==1) then
+       id2=2
+       id3=3
+     elseif(id1==2) then
+       id2=1
+       id3=3
+     elseif(id1==3) then
+       id2=1
+       id3=2
+     endif
+     !
+   end subroutine get_id_perpendicular
+   !
+   !
    subroutine r_sort(arrin,arrout,indx,indx_m1)                             
      !
      ! Sort real(dt) values from arrin into array 

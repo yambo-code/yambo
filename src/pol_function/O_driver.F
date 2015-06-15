@@ -36,7 +36,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use electrons,     ONLY:levels,BZ_DbGd_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_fxc,&
+ use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_fxc,Dipole_covariant,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_q_for_Xo
@@ -47,6 +47,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
 &                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load
+ use parser_m,     ONLY:parser
  !
  implicit none
  type(levels)  :: Xen
@@ -63,6 +64,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  integer,external :: O_select_q_and_G
  !
  call section('*','Optics')
+ !
+ call parser('DipoleCov',Dipole_covariant)
  !
  ! Basical Checks
  !

@@ -31,7 +31,8 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  use electrons,      ONLY:levels,n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR,Dipole_bands_ordered
+ use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR,Dipole_bands_ordered,   &
+&                         DIP_cov,Dipole_covariant
  use vec_operate,    ONLY:v_norm
 #if defined _KERR
  use pars,           ONLY:pi
@@ -121,7 +122,11 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
            if(trim(global_gauge)=='velocity') dipole = DIP_P(:,ic,iv,ik_mem,i_spin)
            if(trim(global_gauge)=='length'  ) dipole = DIP_iR(:,ic,iv,ik_mem,i_spin)
 #else
-           dipole = DIP_iR(:,ic,iv,ik_mem,i_spin)
+           if(Dipole_covariant) then
+             dipole = DIP_cov(:,ic,iv,ik_mem,i_spin)
+           else
+             dipole = DIP_iR(:,ic,iv,ik_mem,i_spin)
+           endif
 #endif
            !
          endif

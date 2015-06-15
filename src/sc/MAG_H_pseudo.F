@@ -50,7 +50,7 @@ subroutine MAG_H_pseudo(Xk,Xen)
  !
  complex(SP),allocatable :: kbv(:,:,:,:),kbv_ks_space(:,:)
  complex(SP)             :: H_pseudo(SC_bands(2),SC_bands(2)), &
-&                           H_pseudo_tot(SC_bands(2),SC_bands(2),Xk%nibz,n_spin)
+&                           H_pseudo_tot(SC_bands(2),SC_bands(2),Xk%nibz,n_sp_pol)
  !
  ! Dummies
  integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf(n_spinor),&

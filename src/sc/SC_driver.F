@@ -23,16 +23,16 @@
 !
 subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,cZERO
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_cohsex,l_use_collisions,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
- use SC,             ONLY:SC_bands,SC_iterations,rho_n,SC_rho_threshold,it_now,E_convergence, &
-&                         rho_convergence,SC_R,V_xc_sc,l_sc_pot_is_local,H_nl_sc,H_rotate,l_Mean_Potential,&
+ use SC,             ONLY:SC_bands,SC_iterations,rho_n,magn_n,SC_rho_threshold,it_now,E_convergence, &
+&                         rho_convergence,magn_convergence,SC_R,V_xc_sc,l_sc_pot_is_local,H_nl_sc,H_rotate,&
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
-&                         WF_G_max,WF_Go_indx,l_SC_RESTART,&
+&                         WF_G_max,WF_Go_indx,l_SC_RESTART,l_Mean_Potential,&
 &                         l_NSC_shot,l_TF_precond,V_mean,SC_up_W_iters,l_SC_nl_mix,SC_QP_setup,it_to_start
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use memory_m,       ONLY:mem_est
@@ -49,12 +49,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,ncpu
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,io_COLLs,io_RESPONSE,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
- use vec_operate,    ONLY:degeneration_finder
+ use vec_operate,    ONLY:degeneration_finder,v_norm
  use LIVE_t,         ONLY:live_timing
  use collision,      ONLY:Fock_collisions,SEX_collisions
-#if defined _MAGNETIC
- use electrons,       ONLY:Total_magn
-#endif
+ use electrons,      ONLY:Total_magn
  !
  implicit none
  type(levels) ::E
@@ -68,8 +66,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  real(SP)                 :: spread(SC_bands(2),k%nibz,n_sp_pol),&
 &                            E_previous(SC_bands(2),k%nibz,n_sp_pol),dE(SC_bands(2),k%nibz,n_sp_pol),&
 &                            E_conv(n_sp_pol),E_total,E_tot_Hartree,E_tot_xc,max_overlap(SC_bands(2),k%nibz,n_sp_pol)
- real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:)
- real(SP),    allocatable :: delta_rho(:)
+ real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:),magn_nm1(:,:)
+ real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: H_nl_nm1(:,:,:,:)
  !
  type(WAVEs)              :: WFo
@@ -78,7 +76,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin,i_io,io_X_err
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
- character(schlen)        :: dumb_ch
+ character(schlen)        :: dumb_ch,dumb_ch2
  integer, external        :: io_SC_components,X_em1
  logical, external        :: stop_now
  !
@@ -174,7 +172,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  if (l_SC_RESTART) then
    !
-   if ((1.-SC_cycle_mixing)>1.E-5) call &
+   if ((1._SP-SC_cycle_mixing)>1.E-5) call &
 &    warning('Short splitted runs with fractional mixing may give different results')
    !
    ! RESTART
@@ -188,18 +186,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    ! ... rho_n and V_hartree_sc
    !
    call el_density_and_current(E,k,rho=rho_n)
+   if (n_spin>1) call el_magnetization(E,k,magn_n)
    call V_Hartree(rho_n,V_hartree_sc)
-   !
-#if defined _MAGNETIC
-   !
-   ! and spin density
-   !
-   if (n_sp_pol>1) call el_magnetization(E,k)
-   !
-#endif
    !
    V_xc_nm1 = V_xc_sc
    rho_nm1  = rho_n
+   if(n_spin>1) magn_nm1  = magn_n
    !
    it_to_start=it_now+1
    !
@@ -215,8 +207,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    it_to_start=1
    it_now=0
    !
-   V_xc_sc  =0.
-   V_xc_nm1 =0.
+   V_xc_sc  =0._SP
+   V_xc_nm1 =0._SP
    !
  endif
  !
@@ -242,13 +234,22 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    if (it>1) then
      !
      if (.not.l_TF_precond) then 
-       rho_n = SC_cycle_mixing*rho_n + (1.-SC_cycle_mixing)*rho_nm1
+       rho_n = SC_cycle_mixing*rho_n + (1._SP-SC_cycle_mixing)*rho_nm1
+       if(n_spin>1) magn_n= SC_cycle_mixing*magn_n+ (1._SP-SC_cycle_mixing)*magn_nm1
      else
-       delta_rho=rho_n-rho_nm1
-       !
+       delta_rho =rho_n -rho_nm1
        call SC_precondition(delta_rho)
+       rho_n =rho_nm1 +SC_cycle_mixing*delta_rho
        !
-       rho_n=rho_nm1+SC_cycle_mixing*delta_rho
+       if(n_spin>1) then
+         delta_magn=magn_n-magn_nm1
+         if (n_spinor==2) then
+           call SC_precondition(delta_magn(i1,1))
+           call SC_precondition(delta_magn(i1,2))
+         endif
+         call SC_precondition(delta_magn(i1,3))
+         magn_n=magn_nm1+SC_cycle_mixing*delta_magn
+       endif
      endif
      !
      call V_Hartree(rho_n,V_hartree_sc)
@@ -274,12 +275,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        if(n_spinor==1) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WFo,'def')
        if(n_spinor==2) then
          call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo,'def')
-         call V_real_space_to_H(ik,V_xc_sc,H_nl_sc,WFo,'xc ')
+         call V_real_space_to_H(ik,V_xc_sc     ,H_nl_sc,WFo,'xc ')
        endif
        !
      else
        !
-       H_nl_sc=(0.,0.)
+       H_nl_sc=cZERO
        !
        ! Add Sigma_x and, eventually, Sigma_c (COHSEX)
        !
@@ -375,8 +376,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !=============
      !
      rho_nm1 = rho_n 
+     if(n_spin>1) magn_nm1 = magn_n 
      !
      call el_density_and_current(E,k,rho=rho_n)
+     if(n_spin>1) call el_magnetization(E,k,magn_n)
      !
      ! Update dipoles and recalcolate the dielectric constant
      ! ======================================================
@@ -412,12 +415,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      call SC_Energy(E_total,E_tot_Hartree,E_tot_xc,E,k,rho_n)
      !
-#if defined _MAGNETIC
-     ! New spin density 
-     !===================
-     !
-     if(n_sp_pol>1) call el_magnetization(E,k)
-#endif
      ! Convergences
      !==============
      !
@@ -432,26 +429,54 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        E_convergence=max(E_convergence,maxval(E_conv))
      enddo
      !
-     rho_convergence = 0.
+     rho_convergence = 0._SP
      do ir=1,fft_size
        rho_convergence = rho_convergence + abs(rho_n(ir)-rho_nm1(ir))/nel
      enddo
      !
-     dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
-&            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HA2EV))
-     if (l_sc_pot_is_local) dumb_ch=trim(dumb_ch)//'  E_tot(Ha)= '//trim(real2ch(E_total))
-#if defined _MAGNETIC
-     if(n_sp_pol>1) dumb_ch=trim(dumb_ch)//'  (Mz='//trim(real2ch(Total_magn(3)))//')'
-#endif
+     magn_convergence = 0._SP
+     if(n_spin>1) then
+       do ir=1,fft_size
+         if (n_sp_pol==2) magn_convergence = abs(magn_n(ir,3)-magn_nm1(ir,3))/nel
+         if (n_spinor==2) magn_convergence = v_norm(magn_n(ir,:)-magn_nm1(ir,:))/nel
+       enddo
+     endif
+     !
+     if(it_now==it_to_start) dumb_ch ='[SC] Iteration;'
+     dumb_ch2='            '//trim(intc(it_now))//' ;'
+     if (l_sc_pot_is_local) then
+       if(it==1) dumb_ch= trim(dumb_ch) //'  E_tot(Ha) ;'
+       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(E_total))//' ; '
+     endif
+     if (n_spin==2) then
+       if(n_sp_pol==2) dumb_ch=trim(dumb_ch)//'  Mz  [muB] ;'
+       if(n_spinor==2) dumb_ch=trim(dumb_ch)//'  |M| [muB] ;'
+       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(v_norm(Total_magn(:))))//' ;'
+     endif
+     if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//' Acc.  E(ev)  -  rho(%)'
+     dumb_ch2=trim(dumb_ch2)//'    '//trim(real2ch(E_convergence*HA2EV)) &
+&                      //' - '//trim(real2ch(rho_convergence))//'%'
+     if (n_spin==2) then
+       if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//'     -  magn(%)    '
+       dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(magn_convergence))//'%'
+     endif
      !
      if (.not.log_as_a_file.or.it_now==1) then
-       call LIVE_message(dumb_ch,"n","","%s")
+       if(it_now==it_to_start) call LIVE_message(dumb_ch ,"n","","%s")
+       call LIVE_message(dumb_ch2,"n","","%s")
      else
        if (l_sc_pot_is_local) then
-         if (.not.log_as_a_file) call LIVE_message(dumb_ch,"r","","%s")
-         if (log_as_a_file) call LIVE_message(dumb_ch,"n","","%s")
+         if (.not.log_as_a_file) then
+           if(it_now==1) call LIVE_message(dumb_ch ,"r","","%s")
+           call LIVE_message(dumb_ch2,"r","","%s")
+         endif
+         if (     log_as_a_file) then
+           if(it_now==1) call LIVE_message(dumb_ch ,"n","","%s")
+           call LIVE_message(dumb_ch2,"n","","%s")
+         endif
        else
-         call LIVE_message(dumb_ch,"n","","%s")
+         if(it_now==1) call LIVE_message(dumb_ch ,"n","","%s")
+         call LIVE_message(dumb_ch2,"n","","%s")
        endif
      endif
      !
@@ -488,7 +513,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
    enddo
    !
-   if ( (E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold) .or.&
+   if ( (E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold.and.magn_convergence<SC_rho_threshold) .or.&
 &       stop_now(.FALSE.) ) exit
    !
  end do
@@ -498,7 +523,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Hartree and xc Energy 
  !=======================
  !
- call SC_Energy(E_total,E_tot_Hartree,E_tot_xc,E,k,rho_n)
+ call SC_Energy(E_total,E_tot_Hartree,E_tot_xc,E,k,rho_n,magn_n)
  !
  if (l_SC_cycle) then
    !
@@ -506,12 +531,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    call msg('nr','[SC] Iterations               :',it_now)
    call msg('r' ,'[SC] Accuracy on density      :',rho_convergence)
+   if(n_spin>1) call msg('r' ,'[SC] Accuracy on magnetization:',magn_convergence)
    call msg('r' ,'[SC]          on energies [ev]:',E_convergence*HA2EV)
-   if (l_sc_pot_is_local)      call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]:',E_total*(/1.,2./))
+   if (l_sc_pot_is_local)      call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]:',E_total*(/1._SP,2._SP/))
    if(.not.l_sc_pot_is_local)  call msg('r','')
    if (l_sc_hartree.or.l_sc_is_libDFT) &
-&                         call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1.,2./))
-   if (l_sc_is_libDFT) call msg('rn','[SC] xc Energy               [Ha/Ry]:',E_tot_xc*(/1.,2./))
+&                         call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1._SP,2._SP/))
+   if (l_sc_is_libDFT) call msg('rn','[SC] xc Energy               [Ha/Ry]:',E_tot_xc*(/1._SP,2._SP/))
    !
  else
    call msg('r','')
@@ -537,6 +563,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      allocate(rho_nm1(fft_size))
      call mem_est("rho_nm1",(/fft_size/),(/SP/))
      !
+     if(n_spin>1) then
+       allocate(magn_nm1(fft_size,3))
+       call mem_est("magn_nm1",(/fft_size*3/),(/SP/))
+     endif
+     !
      allocate(E_xc(fft_size))
      call mem_est("E_xc",(/fft_size/),(/SP/))
      !
@@ -546,6 +577,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if (l_TF_precond) then
        allocate(delta_rho(fft_size))
        call mem_est("delta_rho",(/fft_size/),(/SP/))
+       if(n_spin>1) then
+         allocate(delta_magn(fft_size,3))
+         call mem_est("delta_magn",(/fft_size*3/),(/SP/))
+       endif
      endif
      !
      if (l_Mean_Potential) then
@@ -572,14 +607,25 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      deallocate(rho_nm1)
      call mem_est("rho_nm1")
      !
+     if(n_spin>1) then
+       deallocate(magn_nm1)
+       call mem_est("magn_nm1")
+     endif
+     !
      deallocate(E_xc)
      call mem_est("E_xc")
      !
      deallocate(V_xc_nm1)
      call mem_est("V_xc_nm1")
      !
-     if (l_TF_precond) deallocate(delta_rho)
-     call mem_est("delta_rho")
+     if (l_TF_precond) then
+       deallocate(delta_rho)
+       call mem_est("delta_rho")
+       if(n_spin>1) then
+         deallocate(delta_magn)
+         call mem_est("delta_magn")
+       endif
+     endif
      !
      if (l_Mean_Potential) then
        deallocate(V_mean)
@@ -681,15 +727,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      do ik=1,k%nibz
        call REPORT_Energies(E%E(:SC_bands(2),:,:),k,Xk,SC_bands(2),(/ik,ik/),'E  ',.TRUE.)
-#if defined _MAGNETIC
        call REPORT_Energies(E%f(:SC_bands(2),:,:)/HA2EV,k,Xk,SC_bands(2),(/ik,ik/),'occ',.FALSE.)
-#else
        call REPORT_Energies(E_bare,k,Xk,SC_bands(2),(/ik,ik/),'E_o',.FALSE.)
        call REPORT_Energies(dE,k,Xk,SC_bands(2),(/ik,ik/),'d_E',.FALSE.)
        call REPORT_Energies(spread,k,Xk,SC_bands(2),(/ik,ik/),'Spr',.FALSE.)
        call REPORT_Energies(max_overlap/HA2EV,k,Xk,SC_bands(2),(/ik,ik/),'MxO',.FALSE.)
        call REPORT_Energies(real(b_of_max_proj)/HA2EV,k,Xk,SC_bands(2),(/ik,ik/),'Bnd',.FALSE.)
-#endif
      enddo
      !
    end subroutine SC_report

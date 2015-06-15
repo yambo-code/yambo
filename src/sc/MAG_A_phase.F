@@ -33,6 +33,7 @@ subroutine MAG_A_phase()
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:default_nel,n_sp_pol
  use interfaces,     ONLY:WF_load
+ use wrapper,        ONLY:Vstar_dot_V
  !
  implicit none
  !
@@ -64,11 +65,7 @@ subroutine MAG_A_phase()
  !
  iwf=WF%index(ib_ref,ik_ref,is_ref)
  wf_r2(:)=r2_cyl(:)*WF%c(:,iwf)
-#if defined _DOUBLE
- r2_ref=real(zdotc(fft_size, WF%c(:,iwf),1,wf_r2,1))
-#else
- r2_ref=real(cdotc(fft_size, WF%c(:,iwf),1,wf_r2,1))
-#endif
+ r2_ref=real(Vstar_dot_V(fft_size,WF%c(:,iwf),wf_r2))
  !
  n_loops=int(r2_ref*Bz/(2*SPEED_OF_LIGHT)+0.5)
  !

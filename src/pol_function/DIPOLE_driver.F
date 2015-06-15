@@ -29,9 +29,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use pars,           ONLY:SP
  use com,            ONLY:warning,grid_path
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp
- use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,l_rotate_dipoles,&
-&                         Vnl_commutator_warning,Dipole_uses_shifted_grids
+ use R_lattice,      ONLY:bz_samp,k_map
+ use X_m,            ONLY:X_alloc,X_t,DIP_iR,Dipole_bands_ordered,Dipole_covariant,&
+&                         DIP_cov,l_rotate_dipoles,Vnl_commutator_warning,         &
+&                         Dipole_uses_shifted_grids,DIP_P,DIP_S
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,RD_CL_IF_END,&
 &                         IO_and_Messaging_switch,io_DIP
  use wave_func,      ONLY:wf_ng,WF
@@ -58,13 +59,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Work Space
  !
- integer           :: ik
+ integer           :: ik,bands_to_load(2)
  logical           :: use_trans_gauge
  !
  ! I/O
  !
- integer           :: ID,io_err(2)
- integer, external :: io_DIPOLES
+ integer           :: ID,io_err(3)
+ integer, external :: io_DIPOLES,io_Overlaps
 #if defined _SC
  logical           :: l_evaluating_em1s 
  integer, external :: io_P_and_P2
@@ -115,7 +116,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
  endif
  !
- io_err(2)=0
+ io_err(2:3)=0
  !
 #if defined _SC 
  !
@@ -125,6 +126,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  endif
  !
 #endif
+ !
+ if(Dipole_covariant) then
+    call k_map_nearest_by_dir(Xk,k_map)
+    call X_alloc('DIP_cov',(/3,X%ib(2),X%ib(2),PAR_DIPk_nibz/))
+    DIP_cov=(0._SP,0._SP)
+    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
+    io_err(3)=io_Overlaps(X,Xen,ID)
+ endif
  !
  if (any(io_err/=0)) then
    !
@@ -158,13 +167,22 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      P_square=(0._SP,0._SP)
    endif
 #endif
+   !
+   bands_to_load=X%ib
+   !
+   if (Dipole_covariant) then
+     bands_to_load(1)=1
+     ! Notice that DIP_S is defined in the BZ       
+     call X_alloc('DIP_S',(/X%ib(2),X%ib(2),3,Xk%nbz/))
+     DIP_S=(0._SP,0._SP)
+   endif
    !   
    ! WF load 
    !
    ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
    ! there will be other WF_load calls using the present WF distribution. 
    !
-   call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
+   call WF_load(WF,0,1,bands_to_load,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
 &               force_WFo=(l_sc_run.or.l_rotate_dipoles),keep_states_to_load=.TRUE.)
    !
    use_trans_gauge = .true.
@@ -188,7 +206,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! GPL_EXCLUDE_END 
    !
-   if (use_trans_gauge) call DIPOLE_transverse(Xen,Xk,X)
+   if (use_trans_gauge)  call DIPOLE_transverse(Xen,Xk,X)
+   !
+   if (Dipole_covariant) call DIPOLE_overlaps(Xen,Xk,X)
    !
    ! Free any loaded WFs
    !
@@ -212,6 +232,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        io_err(2)=io_P_and_P2(X,Xen,ID)
      endif
 #endif
+     if(Dipole_covariant) then
+       call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+       io_err(3)=io_Overlaps(X,Xen,ID)
+     endif
    endif
    !
    do ik=1,Xk%nibz
@@ -231,6 +255,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    endif
 #endif
    !
+   if(Dipole_covariant) then
+     call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
+     io_err(3)=io_Overlaps(X,Xen,ID)
+   endif
+   !
  end if
  !
  ! I/O privilegies: RESTORE to previous values
@@ -248,6 +277,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    Vnl_commutator_warning=.TRUE.
  endif
  !
+ if(Dipole_covariant) call DIPOLE_build_covariants(Xen,Xk,X)
+ !
  call DIPOLE_dip_dot_field(Xen,Xk,X,field_dir)
  !
  ! Clean up
@@ -257,5 +288,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  call X_alloc('DIP_P') 
  call X_alloc('P_square') 
 #endif
+ if(Dipole_covariant) call X_alloc('DIP_S DIP_cov')
  !
 end subroutine

@@ -99,12 +99,6 @@ subroutine RT_apply_field(ik,ik_DbGd,En,H_nl_sc,A_input)
        ! Note that (iR)_cv = DIP_iR (:,iv,ic,:,:)
        !
        POL(:)=cI*DIP_iR(:,i2,i1,PAR_Xk_ibz_index(ik),1)
-       if(l_RT_uses_E_DbGd) then
-         deltaE=En%E(i1,ik,1)-En%E(i2,ik,1)
-         deltaE_DbGd=En%E_DbGd(i1,ik_DbGd,1)-En%E_DbGd(i2,ik_DbGd,1)
-         if(abs(deltaE)>Dipole_Energy_treshold .and. abs(deltaE_DbGd)>Dipole_Energy_treshold) &
-&          POL(:)=POL(:)*deltaE/deltaE_DbGd
-       endif
        E_dot_P=sum(E_vec_pot(1:3)*POL(1:3))
        H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)-      E_dot_P
        H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)-conjg(E_dot_P)

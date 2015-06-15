@@ -40,14 +40,14 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,SC_nbands,it_now
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,magn_n,V_xc_sc,SC_nbands
  use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc,&
-&                         DbGd_ibz_coo,rho_reference,RT_Vnl_xc,&
+&                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,&
 &                         l_RT_RWA,eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_nk
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu,myid
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
 #if defined _TIMING
@@ -65,7 +65,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  ! Work Space
  !
  integer          :: ik,ik_RT,ik_DbGd,ib,ibp
- real(SP)         :: delta_rho(fft_size)
+ real(SP)         :: delta_rho(fft_size),delta_magn(fft_size,3)
  !
 #if defined _TIMING
  call timing('RT Collision',OPR='start')
@@ -84,6 +84,10 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    call el_density_matrix(dG_in,E,k,delta_rho,SC_bands(1))
    !
    rho_n=rho_reference+delta_rho
+   if(n_spin>1) then
+     call el_magnetization_matrix(dG_in,E,k,delta_magn,SC_bands(1))
+     magn_n=magn_reference+delta_magn
+   endif
    !
  endif
  !

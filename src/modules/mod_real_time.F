@@ -250,6 +250,7 @@ module real_time
  !---------
  !
  real(SP),    allocatable :: rho_reference(:)    ! reference density from all bands 
+ real(SP),    allocatable :: magn_reference(:,:) ! reference magnetization from all bands 
  !
  ! Integrators
  !
@@ -566,6 +567,11 @@ module real_time
      allocate(rho_reference(fft_size))
      call mem_est("rho_reference",(/fft_size/),(/SP/))
      !
+     if(n_spin>1) then
+       allocate(magn_reference(fft_size,3))
+       call mem_est("magn_reference",(/fft_size*3/),(/SP/))
+     endif
+     !
      ! Reference energies
      !
      allocate(E_bare(1:SC_bands(2),QP_nk,n_sp_pol))
@@ -706,6 +712,11 @@ module real_time
      if(allocated(rho_reference)) then
        deallocate(rho_reference)
        call mem_est("rho_reference")
+     endif
+     !
+     if(allocated(magn_reference)) then
+       deallocate(magn_reference)
+       call mem_est("magn_reference")
      endif
      !
      deallocate(E_bare)

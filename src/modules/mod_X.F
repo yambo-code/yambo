@@ -51,11 +51,14 @@ module X_m
  ! Dipole M.E.
  !
  logical                  :: Dipole_bands_ordered
+ logical                  :: Dipole_covariant
  logical                  :: Dipole_uses_shifted_grids
  real(SP)                 :: Dipole_Energy_treshold
  complex(SP), allocatable :: DIP_q_dot_iR(:,:,:,:)
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_S(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_cov(:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
  !
  ! Absorption & Polarizability
@@ -147,6 +150,14 @@ module X_m
          if (allocated(DIP_P)) return
          allocate(DIP_P(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
          call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+       case('DIP_cov')
+         if (allocated(DIP_cov)) return
+         allocate(DIP_cov(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
+         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+       case('DIP_S')
+         if (allocated(DIP_S)) return
+         allocate(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
+         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
        case('DIP_q_dot_iR')
          if (allocated(DIP_q_dot_iR)) return
          allocate(DIP_q_dot_iR(d(1),d(2),d(3),n_sp_pol),stat=err)
@@ -175,6 +186,12 @@ module X_m
        case('DIP_P')
          if (.not.allocated(DIP_P)) return
          deallocate(DIP_P)
+       case('DIP_S')
+         if (.not.allocated(DIP_S)) return
+         deallocate(DIP_S)
+       case('DIP_cov')
+         if (.not.allocated(DIP_cov)) return
+         deallocate(DIP_cov)
        case('DIP_q_dot_iR')
          if (.not.allocated(DIP_q_dot_iR)) return
          deallocate(DIP_q_dot_iR)

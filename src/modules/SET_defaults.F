@@ -51,7 +51,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
-&                     cutoff_presets
+&                     cutoff_presets,k_map
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,&
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn
@@ -244,6 +244,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  bse_scattering=.FALSE.
  Xk_grid_is_uniform=.TRUE.
  q0_def_norm=1.E-5
+ k_map%g0_minus_idx  =-1
+ k_map%g0_plus_idx   =-1
+ k_map%q_step  =-1
+ k_map%max_kdir= 0
  !
  ! RIM
  !

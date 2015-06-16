@@ -82,12 +82,14 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  G_lesser          =cZERO
  dG_lesser         =cZERO
- rho_reference     =rZERO
- magn_reference    =rZERO
  V_xc_sc           =rZERO
  V_hartree_sc      =rZERO
  H_nl_sc           =cZERO
+ V_xc_sc           =rZERO
+ V_hartree_sc      =rZERO
  XC0_and_HARTREE0  =cZERO
+ rho_reference     =rZERO
+ if(n_spin>1) magn_reference    =rZERO
  !
  ! Set to zero occupations
  !
@@ -149,9 +151,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  enddo
  !
  call PP_redux_wait(XC0_and_HARTREE0)
- !
- V_xc_sc=(0._SP)
- V_hartree_sc=(0._SP)
  !
  ! Reference density
  !====================

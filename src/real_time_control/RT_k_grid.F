@@ -24,25 +24,25 @@
 integer function RT_k_grid(E,k,q)
  !
  !       K(BZ)                                                    K(IBZ)
- !               E_RIM(RIM_bz_coo(ikbz,:)=RIM_ibz_coo(ik,:))
- !        ____                                                     ____
- !ikbz1  | 1  | RIM_bz_coo(ikbz1,:) = RIM_ibz_coo(ik1,:)      ik1 | 1  | RT_ibz_coo(ik1,:)     
- !       |____|                     <----------------------       |____|   
- !        ____                                                     ____
- !ikbz2  | 2  | RIM_bz_coo(ikbz2,:) = 1                       ik2 | 2  | RT_ibz_coo(ik2,:)     
- !       |____|                                             /     |____|   
- !        ____                                             /
- !ikbz3  | 3  | RIM_bz_coo(ikbz3,:) = RIM_ibz_coo(ik2,:)  /            
- !       |____|                      <-------------------/        
+ !               E_DbGd(DbGd_bz_coo(ikbz,:)=DbGd_ibz_coo(ik,:))
+ !        ____                                                       ____
+ !ikbz1  | 1  | DbGd_bz_coo(ikbz1,:) = DbGd_ibz_coo(ik1,:)      ik1 | 1  | RT_ibz_coo(ik1,:)     
+ !       |____|                       <----------------------       |____|   
+ !        ____                                                       ____
+ !ikbz2  | 2  | DbGd_bz_coo(ikbz2,:) = 1                        ik2 | 2  | RT_ibz_coo(ik2,:)     
+ !       |____|                                               /     |____|   
+ !        ____                                               /
+ !ikbz3  | 3  | DbGd_bz_coo(ikbz3,:) = DbGd_ibz_coo(ik2,:)  /            
+ !       |____|                        <-------------------/        
  ! 
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
  use LIVE_t,         ONLY:what_is_running
- use electrons,      ONLY:levels,BZ_RIM_nkpt
- use real_time,      ONLY:RIM_bz_coo,RIM_ibz_coo,RIM_EE_scatt_table,&
-&                         RIM_EE_percent,RIM_EE_Nk_table,RT_ibz_coo,&
+ use electrons,      ONLY:levels,BZ_DbGd_nkpt
+ use real_time,      ONLY:DbGd_bz_coo,DbGd_ibz_coo,DbGd_EE_scatt_table,&
+&                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
 &                         RT_all2ibz,RT_Nk_ibz
  use R_lattice,      ONLY:bz_samp
  !
@@ -62,24 +62,24 @@ integer function RT_k_grid(E,k,q)
  !
  RT_k_grid=0
  !
- if (.not.allocated(BZ_RIM_nkpt)) return
+ if (.not.allocated(BZ_DbGd_nkpt)) return
  !
- if (.not.allocated(RIM_ibz_coo)) then
-   allocate(RIM_ibz_coo(k%nibz,2))
-   allocate(RIM_bz_coo(k%nbz,2))
+ if (.not.allocated(DbGd_ibz_coo)) then
+   allocate(DbGd_ibz_coo(k%nibz,2))
+   allocate(DbGd_bz_coo(k%nbz,2))
    allocate(RT_ibz_coo(k%nibz,2))
    allocate(RT_Nk_ibz(k%nibz))
  endif
  !
  do ik=1,k%nibz
    ik_bz=1+sum(k%nstar(:ik-1))
-   RIM_ibz_coo(ik,:)=(/sum(BZ_RIM_nkpt(:ik_bz-1))+1,sum(BZ_RIM_nkpt(:ik_bz))/)
-   RT_ibz_coo(ik,:)=(/RT_k_grid+1,RT_k_grid+BZ_RIM_nkpt(ik_bz)/)
-   RT_k_grid=RT_k_grid+BZ_RIM_nkpt(ik_bz)
-   RT_Nk_ibz(ik)=BZ_RIM_nkpt(ik_bz)
+   DbGd_ibz_coo(ik,:)=(/sum(BZ_DbGd_nkpt(:ik_bz-1))+1,sum(BZ_DbGd_nkpt(:ik_bz))/)
+   RT_ibz_coo(ik,:)=(/RT_k_grid+1,RT_k_grid+BZ_DbGd_nkpt(ik_bz)/)
+   RT_k_grid=RT_k_grid+BZ_DbGd_nkpt(ik_bz)
+   RT_Nk_ibz(ik)=BZ_DbGd_nkpt(ik_bz)
  enddo
  do ik=1,k%nbz
-   RIM_bz_coo(ik,:)=(/sum(BZ_RIM_nkpt(:ik-1))+1,sum(BZ_RIM_nkpt(:ik))/)
+   DbGd_bz_coo(ik,:)=(/sum(BZ_DbGd_nkpt(:ik-1))+1,sum(BZ_DbGd_nkpt(:ik))/)
  enddo
  allocate(RT_all2ibz(RT_k_grid))
  do ik=1,k%nibz
@@ -90,14 +90,14 @@ integer function RT_k_grid(E,k,q)
  !
  if( l_elel_scatt .and. (index(what_is_running,'YPP')==0) ) then
    !
-   if(.not.allocated(RIM_EE_scatt_table)) then
-     allocate(RIM_EE_scatt_table(RT_k_grid,RT_k_grid))
-     allocate(RIM_EE_Nk_table(RT_k_grid,k%nibz))
+   if(.not.allocated(DbGd_EE_scatt_table)) then
+     allocate(DbGd_EE_scatt_table(RT_k_grid,RT_k_grid))
+     allocate(DbGd_EE_Nk_table(RT_k_grid,k%nibz))
    endif
    !
    l_check=.false.
-   RIM_EE_scatt_table=.false.
-   RIM_EE_Nk_table=0
+   DbGd_EE_scatt_table=.false.
+   DbGd_EE_Nk_table=0
    !
    do iqbz=1,q%nbz
      do ik=1,k%nibz
@@ -115,7 +115,7 @@ integer function RT_k_grid(E,k,q)
        l_check(ik,ik_m_q)=.true.
        l_check(ik_m_q,ik)=.true.
        !
-       N_pts=max(1,int(real(Nk_m_q_rim)*RIM_EE_percent/100._SP))
+       N_pts=max(1,int(real(Nk_m_q_rim)*DbGd_EE_percent/100._SP))
        N_loops=max(1, (Nk_rim*N_pts-1)/(Nk_m_q_rim) )
        !
        i_loops=1
@@ -131,11 +131,11 @@ integer function RT_k_grid(E,k,q)
                i_loops=i_loops+1
              endif
              !
-             RIM_EE_scatt_table(ik_m_q_rim,ik_rim)=.true.
-             RIM_EE_Nk_table(ik_rim,ik_m_q)=RIM_EE_Nk_table(ik_rim,ik_m_q)+1
+             DbGd_EE_scatt_table(ik_m_q_rim,ik_rim)=.true.
+             DbGd_EE_Nk_table(ik_rim,ik_m_q)=DbGd_EE_Nk_table(ik_rim,ik_m_q)+1
              !
-             RIM_EE_scatt_table(ik_rim,ik_m_q_rim)=.true.
-             RIM_EE_Nk_table(ik_m_q_rim,ik)=RIM_EE_Nk_table(ik_m_q_rim,ik)+1
+             DbGd_EE_scatt_table(ik_rim,ik_m_q_rim)=.true.
+             DbGd_EE_Nk_table(ik_m_q_rim,ik)=DbGd_EE_Nk_table(ik_m_q_rim,ik)+1
              !
            enddo
            !

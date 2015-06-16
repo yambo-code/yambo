@@ -35,7 +35,7 @@ subroutine V_real_space_to_H(ik,V,H,WF,V_kind)
  use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
 #endif
 #if defined _RT
- use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k
+ use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,HEAD_QP_cpu
 #endif
  implicit none
  !
@@ -48,30 +48,30 @@ subroutine V_real_space_to_H(ik,V,H,WF,V_kind)
  !
  ! Work Space
  !
- integer    :: i1,ib,ibp,ifft,ifftp
+ integer    :: i_qp,ib,ibp,ifft,ifftp
  complex(SP):: c_ws(fft_size,n_spin)
  !
 #if defined _RT
- if (.not.PAR_IND_WF_k%element_1D(ik)) return
+ if (.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu) return
 #endif
  !
  if(V_kind=="xc ") call Build_V_xc_mat(V,V_mat)
  !
  ! Fill ...
  !
- do i1=1,QP_n_states
+ do i_qp=1,QP_n_states
    !
-   if (QP_table(i1,3)/=ik) cycle
+   if (QP_table(i_qp,3)/=ik) cycle
    !
-   ib =QP_table(i1,1)
-   ibp=QP_table(i1,2)
-   i_spin=spin(qp_table(i1,:))
+   ib =QP_table(i_qp,1)
+   ibp=QP_table(i_qp,2)
+   i_spin=spin(qp_table(i_qp,:))
    !
    if (ib>ibp) cycle
    !
    if (.not.HEAD_QP_cpu) cycle
 #if defined _SC && !defined _RT
-   if (.not.PAR_IND_QP%element_1D(i1)) cycle
+   if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
 #endif
 #if defined _RT
    if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-SC_bands(1)+1,ibp-SC_bands(1)+1)-1 )) cycle

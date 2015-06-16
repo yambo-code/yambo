@@ -34,6 +34,7 @@ integer function io_ELPH(ID,what)
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
 &                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz,E_k_p_q
  use stderr,         ONLY:intc
+ use units,          ONLY:HA2EV
  use electrons,      ONLY:E_reset
  use R_lattice,      ONLY:nkbz,nqibz
  use D_lattice,      ONLY:n_atoms_species

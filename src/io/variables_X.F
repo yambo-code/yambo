@@ -25,7 +25,7 @@ integer function variables_X(ID,local_description,X)
  !
  use pars,          ONLY:schlen,lchlen,SP
  use units,         ONLY:HA2EV
- use X_m,           ONLY:X_t,use_X_RIM,X_RIM_nkpts,n_X_descs
+ use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,n_X_descs
  use IO_m,          ONLY:io_elemental,io_status,ver_is_gt_or_eq,read_is_on
  implicit none
  !
@@ -126,11 +126,11 @@ integer function variables_X(ID,local_description,X)
  !
  if (ver_is_gt_or_eq(ID,(/3,0,1/))) then
    call io_elemental(ID,&
-&       VAR=" BZ energy RIM          :",L0=use_X_RIM,WARN=.true.,OP=(/"=="/),&
+&       VAR=" BZ energy Double Grid  :",L0=use_X_DbGd,WARN=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
    i_local_desc=i_local_desc+1
    call io_elemental(ID,&
-&       VAR=" BZ energy RIM points   :",I0=X_RIM_nkpts,WARN=.true.,OP=(/"=="/),&
+&       VAR=" BZ energy DbGd points  :",I0=X_DbGd_nkpts,WARN=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  endif
  !

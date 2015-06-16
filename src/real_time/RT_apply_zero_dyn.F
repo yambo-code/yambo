@@ -26,7 +26,7 @@ subroutine RT_apply_zero_dyn(ik,E,dT,dTp,G_new_k,G_old_k)
  use pars,           ONLY:SP,cI
  use SC,             ONLY:RT_ibz_coo,SC_bands,RT_all2ibz
  use electrons,      ONLY:levels
- use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,REF_lifetime
+ use real_time,      ONLY:DbGd_ibz_coo,l_RT_uses_E_DbGd,REF_lifetime
  !
  implicit none
  !
@@ -39,23 +39,23 @@ subroutine RT_apply_zero_dyn(ik,E,dT,dTp,G_new_k,G_old_k)
  !
  ! Work space
  !
- integer  :: i_n,i_np,ik_RIM,ik_ibz
+ integer  :: i_n,i_np,ik_DbGd,ik_ibz
  real(SP) :: deltaE,sumGAMMA,alpha,dec_exp
  complex(SP) :: phase
  !
  ik_ibz=RT_all2ibz(ik)
- ik_RIM=ik-RT_ibz_coo(ik_ibz,1)+RIM_ibz_coo(ik_ibz,1)
+ ik_DbGd=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
  !
  do i_n=SC_bands(1),SC_bands(2)
    do i_np=i_n+1,SC_bands(2)
      sumGAMMA=0._SP
-     if (     l_RT_uses_E_RIM) then
-       deltaE=E%E_RIM(i_n,ik_RIM,1)-E%E_RIM(i_np,ik_RIM,1)
-       if(associated(E%W_RIM)) sumGAMMA=(abs(E%W_RIM(i_n,ik_RIM,1))+abs(E%W_RIM(i_np,ik_RIM,1)))/2._SP
+     if (     l_RT_uses_E_DbGd) then
+       deltaE=E%E_DbGd(i_n,ik_DbGd,1)-E%E_DbGd(i_np,ik_DbGd,1)
+       if(associated(E%W_DbGd)) sumGAMMA=(abs(E%W_DbGd(i_n,ik_DbGd,1))+abs(E%W_DbGd(i_np,ik_DbGd,1)))/2._SP
      endif
-     if (.not.l_RT_uses_E_RIM) then
+     if (.not.l_RT_uses_E_DbGd) then
        deltaE=E%E(i_n,ik,1)-E%E(i_np,ik,1)
-       if(associated(E%W_RIM)) sumGAMMA=(abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik,1)))/2._SP
+       if(associated(E%W_DbGd)) sumGAMMA=(abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik,1)))/2._SP
      endif
      !
      if(dTp>0._SP) then

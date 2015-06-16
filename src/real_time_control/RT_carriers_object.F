@@ -28,12 +28,12 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
- use electrons,      ONLY:n_sp_pol,spin_occ,levels,BZ_RIM_kpts
+ use electrons,      ONLY:n_sp_pol,spin_occ,levels,BZ_DbGd_kpts
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands
  use real_time,      ONLY:RT_t,REF_lifetime,E_E_Hole_lifetime,E_E_Electron_lifetime,   &
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Ho_abs_lifetime, &
-&                         E_P_El_abs_lifetime,l_RT_uses_E_rim,RT_ibz_coo,RIM_ibz_coo,  &
+&                         E_P_El_abs_lifetime,l_RT_uses_E_DbGd,RT_ibz_coo,DbGd_ibz_coo,  &
 &                         RT_nk,RT_all2ibz,RT_delta0_occupations,RT_Nk_ibz,&
 &                         BGR_Hartree,BGR_V_xc,BGR_Self_Energy,RT_obj_alloc,RT_obj_free
  use IO_m,           ONLY:io_bulk
@@ -48,7 +48,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  integer,       intent(in)   ,optional :: DB_id
  character(*),  intent(in)   ,optional :: WHAT
  !
- integer  :: i_RT,i_b,i_k,i_k_RIM,i_k_RT,i_spin
+ integer  :: i_RT,i_b,i_k,i_k_DbGd,i_k_RT,i_spin
  real(SP) :: Hole_lifetime,Elec_lifetime,f_occ
  !
  select case(WHAT)
@@ -68,11 +68,11 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      if (allocated(REF_lifetime)) RT%GAMMA_bare=0.
      !
      do i_k=1,K%nibz
-       if(     l_RT_uses_E_RIM) then
-         RT%kpt(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)    = BZ_RIM_kpts(RIM_ibz_coo(i_k,1):RIM_ibz_coo(i_k,2),:)
+       if(     l_RT_uses_E_DbGd) then
+         RT%kpt(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)    = BZ_DbGd_kpts(DbGd_ibz_coo(i_k,1):DbGd_ibz_coo(i_k,2),:)
          RT%k_weight(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2)) = K%weights(i_k)/real(RT_Nk_ibz(i_k),SP)        
        endif
-       if(.not.l_RT_uses_E_RIM) then
+       if(.not.l_RT_uses_E_DbGd) then
          RT%kpt(i_k,:)    = K%pt(i_k,:)
          RT%k_weight(i_k) = K%weights(i_k)
        endif
@@ -87,11 +87,11 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        i_k_RT =RT%table(i_RT,3)
        i_spin =RT%table(i_RT,4)
        !
-       i_k_RIM=i_k_RT+RIM_ibz_coo(i_k,1)-RT_ibz_coo(i_k,1)
+       i_k_DbGd=i_k_RT+DbGd_ibz_coo(i_k,1)-RT_ibz_coo(i_k,1)
        !
-       if(l_RT_uses_E_RIM) then
-         RT%E_bare(i_RT)=E%E_RIM(i_b,i_k_RIM,i_spin)
-         RT%f_bare(i_RT)=E%f_RIM(i_b,i_k_RIM,i_spin)
+       if(l_RT_uses_E_DbGd) then
+         RT%E_bare(i_RT)=E%E_DbGd(i_b,i_k_DbGd,i_spin)
+         RT%f_bare(i_RT)=E%f_DbGd(i_b,i_k_DbGd,i_spin)
        else
          RT%E_bare(i_RT)=E%E(i_b,i_k,i_spin)
          RT%f_bare(i_RT)=E%f(i_b,i_k,i_spin)

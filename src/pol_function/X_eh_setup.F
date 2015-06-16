@@ -25,7 +25,7 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  use pars,          ONLY:SP
  use com,           ONLY:warning
- use X_m,           ONLY:X_t,X_poles,X_poles_tab,use_X_RIM,use_X_Drude
+ use X_m,           ONLY:X_t,X_poles,X_poles_tab,use_X_DbGd,use_X_Drude
  use R_lattice,     ONLY:qindx_X,bz_samp
  use electrons,     ONLY:levels,n_sp_pol,spin_occ
  use frequency,     ONLY:ordered_grid_index
@@ -113,7 +113,7 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          ! If I add a Drude term just the poles inside K_f are considered
          !
          if (abs(E_eh)<1.E-5_SP) then
-           if ( .not.(use_X_RIM.or.use_X_drude) ) call_warning=.true.
+           if ( .not.(use_X_DbGd.or.use_X_drude) ) call_warning=.true.
            if ( any((/ic/=Xen%bf,iv/=Xen%bf,ik/=Xen%kf,i_sp/=Xen%sf/)) .and. use_X_drude ) cycle
          endif
          !

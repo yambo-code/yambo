@@ -28,14 +28,14 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  use stderr,         ONLY:string_split,real2ch,intc
  use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_nkpts,BZ_DbGd_kpts,BZ_DbGd_nbands
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_ctl_db
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control
  use units,          ONLY:FS2AUT,PS2AUT,HA2EV
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free
  use rt_ctl,         ONLY:RT_IO_JPO_steps
- use com,            ONLY:error,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists
+ use com,            ONLY:warning,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists
  !
  implicit none
  !
@@ -50,16 +50,17 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  !
  ! Work space
  !
- integer               :: I_id,i1,io_err,ID,i2,nb(2),ik,nkibz_save,i_j
- real(SP)              :: l_Time,df_Max,dE_Max,N_carriers
+ integer               :: I_id,i1,io_err,ID,i2,nb(2),ik,nkibz_save,i_j,BZ_DbGd_tot_nkpts_save
+ real(SP)              :: l_Time,df_Max,dE_Max,N_carriers(2)
  integer,parameter     :: n_pieces=10
  integer, external     :: io_RT_components
  character(schlen)     :: db_piece(n_pieces),db_name,T_unit
  character(3)          :: what_
- logical               :: l_E,l_f,l_elel_corr_save,is_def
- real(SP), allocatable :: r_dummy(:,:,:)
+ logical               :: l_E,l_f,l_elel_corr_save,is_def,l_DbGd
  !
  l_Time=0._SP
+ !
+ l_DbGd=BZ_DbGd_tot_nkpts>0
  !
  if (present(what)) then
    !
@@ -129,8 +130,9 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  !
  if (present(Time)) l_Time=Time
  !
- l_elel_corr_save=l_elel_corr
- nkibz_save      =nkibz
+ l_elel_corr_save      =l_elel_corr
+ nkibz_save            =nkibz
+ BZ_DbGd_tot_nkpts_save=BZ_DbGd_tot_nkpts
  ! 
  ! CARRIERS I/O (I)
  !====================
@@ -142,7 +144,14 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  endif
  io_err=io_RT_components(trim(db_name),ID)
  !
- if (io_err< 0) call error ('Carriers database '//trim(db_name)//' not found')
+ BZ_DbGd_tot_nkpts=BZ_DbGd_tot_nkpts_save
+ nkibz            =nkibz_save
+ l_elel_corr      =l_elel_corr_save
+ !
+ if (io_err< 0) then
+   call warning ('Carriers database '//trim(db_name)//' not found')
+   return
+ endif
  if (io_err==0) l_rt_carriers_in_use=.TRUE.
  !
  ! CARRIERS I/O (II)
@@ -157,7 +166,11 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID)
    io_err=io_RT_components(trim(db_name),ID)
    !
-   if (io_err< 0) call error ('Carriers database '//trim(db_name)//' section'//trim(intc(NE_i_time))//'not found')
+   if (io_err< 0) then 
+     call warning('Carriers database '//trim(db_name)//' section'//trim(intc(NE_i_time))//'not found')
+     l_rt_carriers_in_use=.FALSE.
+     return
+   endif
    !
  endif
  !
@@ -167,56 +180,51 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
  nb(1)=max(bands(1),RT_carriers%nb(1))
  nb(2)=min(bands(2),RT_carriers%nb(2))
  !
+ N_carriers=0._SP
+ !
  if (l_f) then
-   !
-   allocate(r_dummy(RT_carriers%nb(1):RT_carriers%nb(2),K%nibz,n_sp_pol))
-   call Nearest_kpt_interpolation(RT_carriers%nk,K%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
-&                                 RT_carriers%kpt,K%pt,RT_carriers%k_weight,K%weights,RT_carriers%delta_f,r_dummy,&
-&                                 what_,.TRUE.)
-   !
-   df_Max=maxval(abs(r_dummy))
-   N_carriers=0._SP
-   do ik=1,K%nibz
-     N_carriers=N_carriers+sum(abs(r_dummy(:,ik,:)))*K%weights(ik)/2._SP
-   enddo
-   !
-   E%nbm=max(RT_carriers%nb(2)  ,E%nbm)
-   E%nbf=min(RT_carriers%nb(1)-1,E%nbf)
    !
    allocate(E%fo(E%nb,E%nk,n_sp_pol))
    call mem_est("E-fo",(/size(E%fo)/),(/SP/))
    !
-   E%fo( nb(1):nb(2),:,:)=E%f(nb(1):nb(2),:,:)
-   E%f ( nb(1):nb(2),:,:)=E%f(nb(1):nb(2),:,:)+r_dummy(nb(1):nb(2),:,:)
+   call Interpolate_and_transfer("df",RT_carriers%delta_f,K%pt,E%nk)
    !
-   deallocate(r_dummy)
+   if (l_DbGd) call Interpolate_and_transfer("df",RT_carriers%delta_f,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
    !
  endif
  !
  if (l_E) then
    !
-   allocate(r_dummy(RT_carriers%nb(1):RT_carriers%nb(2),K%nibz,n_sp_pol))
-   call Nearest_kpt_interpolation(RT_carriers%nk,K%nibz,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
-&                                 RT_carriers%kpt,K%pt,RT_carriers%k_weight,K%weights,RT_carriers%delta_E,r_dummy,&
-&                                 what_,.TRUE.)
-   !
-   dE_Max=maxval(abs(r_dummy))
-   !
    allocate(E%Eo(E%nb,E%nk,n_sp_pol))
-   call mem_est("E-Eo",(/size(E%fo)/),(/SP/))
+   call mem_est("E-Eo",(/size(E%Eo)/),(/SP/))
    !
-   E%Eo( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)
+   call Interpolate_and_transfer("dE",RT_carriers%delta_E,K%pt,E%nk)
    !
-   E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+r_dummy(nb(1):nb(2),:,:)
-   !
-   deallocate(r_dummy)
+   if (l_DbGd) call Interpolate_and_transfer("dE",RT_carriers%delta_E,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
    !
  endif
  !
- if (.not.present(keep_RT_carriers)) call RT_obj_free(RT_carriers)
+ !DEBUG>
+ !do i1=1,E%nk
+ !  do i2=1,E%nb
+ !    write (100,*) E%E(i2,i1,1)*HA2EV,E%f(i2,i1,1),E%f(i2,i1,1)-E%fo(i2,i1,1)
+ !  enddo
+ !enddo
+ !if (l_DbGd) then
+ !  do i1=1,BZ_DbGd_tot_nkpts
+ !    do i2=1,BZ_DbGd_nbands
+ !      write (200,*) E%E_DbGd(i2,i1,1)*HA2EV,E%f_DbGd(i2,i1,1)
+ !    enddo
+ !  enddo
+ !endif
+ !DEBUG<
  !
- nkibz      =nkibz_save
- l_elel_corr=l_elel_corr_save
+ ! Metallic and Insulating bands update
+ !
+ E%nbm=max(RT_carriers%nb(2)  ,E%nbm)
+ E%nbf=min(RT_carriers%nb(1)-1,E%nbf)
+ !
+ if (.not.present(keep_RT_carriers)) call RT_obj_free(RT_carriers)
  !
  if (present(VERBOSE)) then
    !
@@ -224,15 +232,22 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
      !
      call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(l_Time/FS2AUT))//' fs')
      !
-     call msg('nr','Updated Carrier components')
-     call msg('rn','==========================')
-     call msg('r','[RT] Reference Time                                      [fs]: ',l_Time/FS2AUT)
-     call msg('r',  '[RT] Bands range                                             : ', (/nb(1),nb(2)/)) 
-     if (l_f) call msg('r',  '[RT] Max change in occupations / N of carriers per cell      : ',&
-&                            (/df_Max,N_carriers/)) 
-     if (l_E) call msg('r',  '[RT] Max change in energt levels                         [ev]: ',&
-&                            dE_Max*HA2EV) 
-     call msg('rn',  '[RT] N full bands, N metallic bands                          : ', (/E%nbf,E%nbm/)) 
+     call msg('nr',   'Updated Carrier components')
+     call msg('rn',   '==========================')
+     call msg('r',    '[RT] Reference Time           [fs]: ',l_Time/FS2AUT)
+     call msg('r',    '[RT] Bands range                  : ', (/nb(1),nb(2)/)) 
+     !
+     if (l_f) then
+       call msg('r',  '[RT] Maximum occupations change   : ',df_Max)
+       call msg('r',  '[RT] N of carriers                : ',N_carriers(1))
+       if (l_DbGd) call msg('r',  '[RT]                 (Double Grid): ',N_carriers(2))
+     endif
+     !
+     if (l_E) then
+       call msg('r',  '[RT] Max energy levels change [ev]: ',dE_Max*HA2EV)
+     endif
+     !
+     call msg('rn',  '[RT] Full and metallic bands       : ', (/E%nbf,E%nbm/)) 
      !
      call REPORT_OCCUPATIONS(E)
      !
@@ -240,4 +255,55 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_com,Time,keep_RT_carriers)
    !
  endif
  !
+ contains
+  !
+  subroutine Interpolate_and_transfer(OBJ,V_in,K_in,NK)
+    !
+    character(*) :: OBJ
+    integer      :: NK
+    real(SP)     :: V_in(RT_carriers%nstates),K_in(NK,3)
+    !
+    ! ws
+    !
+    integer      :: i_carr,nb_DbGd
+    real(SP)     :: K_weights(NK),V_out(RT_carriers%nb(1):RT_carriers%nb(2),NK,n_sp_pol)
+    !
+    if (NK/=E%nk) K_weights=1._SP/real(BZ_DbGd_tot_nkpts,SP)
+    if (NK==E%nk) K_weights(:)=K%weights(:)
+    !
+    call Nearest_kpt_interpolation(RT_carriers%nk,NK,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
+&                                  RT_carriers%kpt,K_in,RT_carriers%k_weight,K_weights,V_in,V_out,&
+&                                  what_,.TRUE.)
+    !
+    if (OBJ=="df".and.NK==E%nk) then
+      E%fo=E%f
+      E%f ( nb(1):nb(2),:,:)=E%f(nb(1):nb(2),:,:)+V_out(nb(1):nb(2),:,:)
+      df_Max=maxval(abs(V_out))
+    endif
+    !
+    nb_DbGd=min(nb(2),BZ_DbGd_nbands)
+    !
+    if (OBJ=="df".and.NK/=E%nk) then
+      E%f_DbGd( nb(1):nb_DbGd,:,:)=E%f_DbGd(nb(1):nb_DbGd,:,:)+V_out(nb(1):nb_DbGd,:,:)
+    endif
+    !
+    if (OBJ=="dE".and.NK==E%nk) then
+      E%Eo=E%E
+      E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+V_out(nb(1):nb(2),:,:)
+      dE_Max=maxval(abs(V_out))
+    endif
+    !
+    if (OBJ=="dE".and.NK/=E%nk) then
+      E%E_DbGd( nb(1):nb_DbGd,:,:)=E%E_DbGd(nb(1):nb_DbGd,:,:)+V_out(nb(1):nb_DbGd,:,:)
+    endif
+    !
+    i_carr=1
+    if (NK/=E%nk) i_carr=2
+    !
+    do ik=1,NK
+      N_carriers(i_carr)=N_carriers(i_carr)+sum(abs(V_out(:,ik,:)))*K_weights(ik)/2._SP
+    enddo
+    !
+  end subroutine
+  !
 end subroutine

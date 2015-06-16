@@ -31,11 +31,13 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg,error,warning
- use YPP,                 ONLY:BZ_RIM_nkpts,RIM_DB1_paths,MAX_RIM_DBs,n_RIM_DBs
+ use YPP,                 ONLY:BZ_DbGd_nkpts,DbGd_DB1_paths,MAX_DbGd_DBs,n_DbGd_DBs
  use electrons,           ONLY:levels,default_nel,n_bands,BZ_ASSOCIATED_nkpts,&
-&                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_kpts,&
-&                              BZ_RIM_tot_nkpts,n_sp_pol,BZ_RIM_max_filling,&
-&                              BZ_RIM_ipol_weight,E_reset,RIM_is_symmetry_expanded
+&                              BZ_DbGd_nbands,BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_kpts,&
+&                              BZ_DbGd_tot_nkpts,n_sp_pol,BZ_DbGd_max_filling,&
+&                              BZ_DbGd_ipol_weight,E_reset,DbGd_is_symmetry_expanded
+ use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use interfaces,          ONLY:PARALLEL_index
  use LIVE_t,              ONLY:live_timing
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  !
@@ -46,30 +48,30 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Work Space
  !
- real(SP)     ::rand_k(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
+ real(SP)     ::rand_k(BZ_DbGd_nkpts+1,3),a_save(3,3),alat_save(3),&
 &               gap(2),tmp_zero(3)
- integer      ::i1,ik_near,ik_near_ibz,is_near,i2,RIM_nk,ik_bz,ik_RIM
+ integer      ::i1,ik_near,ik_near_ibz,is_near,DbGd_nk,ik_bz,ik_DbGd
  logical      ::No_Weight,l_skip_check,l_flag
  integer,  allocatable :: BZ_SYM_table(:,:)
  real(SP), allocatable :: rand_E(:,:,:)
  !
  ! BZ DB1 I/O
  !
- type(levels)      :: RIM_E(MAX_RIM_DBs)
- type(bz_samp)     :: RIM_k(MAX_RIM_DBs)
- integer           :: ID
- integer           :: i_err(MAX_RIM_DBs),nsym_save,nsym_RIM_DB
- integer           :: i_time_rev_save,i_time_rev_DB
- integer           :: i_db,i_db_merge,ik_ref(2)
- real(SP)          :: dl_sop_save(3,3,48)
+ type(levels)         :: DbGd_E(MAX_DbGd_DBs)
+ type(bz_samp)        :: DbGd_k(MAX_DbGd_DBs)
+ integer              :: ID,i_err(MAX_DbGd_DBs),nsym_save,nsym_DbGd_DB,i_time_rev_save,&
+&                        i_time_rev_DB,i_db,i_db_merge,ik_ref(2)
+ real(SP)             :: dl_sop_save(3,3,48)
+ integer, allocatable :: TMP_map(:,:)
+ type(PP_indexes)     :: px
  !
  ! Functions
  !
- integer, external :: k_RIM_grid_consistency_check
- integer, external :: io_DB1_selective_scan,io_RIM_E_and_k
+ integer, external :: k_DbGd_grid_consistency_check
+ integer, external :: io_DB1_selective_scan,io_Double_Grid
  !
- if (n_RIM_DBs==0) then
-   call msg("s",'RIM: no database secified. Nothing to do.')
+ if (n_DbGd_DBs==0) then
+   call msg("s",'DbGd: no database secified. Nothing to do.')
    return
  endif
  !
@@ -84,36 +86,36 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  ! DB1 reloading
  !
  i_err=0
- if (n_RIM_DBs>0) then
-   do i_db=1,n_RIM_DBs
-     i_err(i_db)=io_DB1_selective_scan(RIM_E(i_db),RIM_k(i_db),trim(RIM_DB1_paths(i_db,1)),'all')
-     if (i_err(i_db)/=0) call msg("s",'RIM database NOT FOUND @'//trim(RIM_DB1_paths(i_db,1)))
-     if (i_err(i_db)==0) call msg("s",'RIM database FOUND @'//trim(RIM_DB1_paths(i_db,1)))
+ if (n_DbGd_DBs>0) then
+   do i_db=1,n_DbGd_DBs
+     i_err(i_db)=io_DB1_selective_scan(DbGd_E(i_db),DbGd_k(i_db),trim(DbGd_DB1_paths(i_db,1)),'all')
+     if (i_err(i_db)/=0) call msg("s",'DbGd database NOT FOUND @'//trim(DbGd_DB1_paths(i_db,1)))
+     if (i_err(i_db)==0) call msg("s",'DbGd database FOUND @'//trim(DbGd_DB1_paths(i_db,1)))
      !
      ! DB1 checks
      !
      if (i_err(i_db)==0.and.any(a/=a_save))  then
-       call msg("s",':: RIM DB1 DL structure does not fit')
+       call msg("s",':: DbGd DB1 DL structure does not fit')
        i_err(i_db)=-1
      endif
      if (i_err(i_db)==0.and.any(alat/=alat_save))  then
-       call msg("s",':: RIM DB1 alat does not fit.')
+       call msg("s",':: DbGd DB1 alat does not fit.')
        i_err(i_db)=-1
      endif
      !
    enddo
    !
-   if (any((/i_err(:n_RIM_DBs)/=0/))) call error(" One or more RIM databases have not been found")
+   if (any((/i_err(:n_DbGd_DBs)/=0/))) call error(" One or more DbGd databases have not been found")
    !
  endif
  !
  ! Now that I have the finer grid of Kpts I redefine the zeros for the kpts
  !
- do i_db=1,n_RIM_DBs
-   if(.not. trim(RIM_DB1_paths(i_db,1))=="." ) then
-     call define_zeros(vector_=RIM_k(i_db)%pt, zero_=tmp_zero)
+ do i_db=1,n_DbGd_DBs
+   if(.not. trim(DbGd_DB1_paths(i_db,1))=="." ) then
+     call define_zeros(vector_=DbGd_k(i_db)%pt, zero_=tmp_zero)
      k_iku_zero=min(k_iku_zero,tmp_zero)
-     call define_zeros(vector_=RIM_k(i_db)%pt, zero_=tmp_zero,RLU=.TRUE.)
+     call define_zeros(vector_=DbGd_k(i_db)%pt, zero_=tmp_zero,RLU=.TRUE.)
      k_rlu_zero=min(k_rlu_zero,tmp_zero)
    endif
  enddo
@@ -122,7 +124,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  if (allocated(dl_sop)) then
    deallocate(dl_sop)
-   nsym_RIM_DB=nsym
+   nsym_DbGd_DB=nsym
    nsym       =nsym_save
    i_time_rev_DB=i_time_rev
    i_time_rev   =i_time_rev_save
@@ -134,68 +136,68 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  call parser('SkipCheck',l_skip_check)
  call parser('noBZExpand',l_flag)
  !
- RIM_is_symmetry_expanded=.not.l_flag
+ DbGd_is_symmetry_expanded=.not.l_flag
  !
- call section('*','BZ RIM DB(s)')
+ call section('*','BZ Double Grid DB(s)')
  !
  call msg('s',':: Electrons             :',default_nel)
  call msg('s',':: Temperature       [ev]:',input_GS_Tel)
  call msg('s',':: Lattice factors [a.u.]:',alat)
- do i_db=1,n_RIM_DBs
-   if (i_db==1) call msg('s',':: K points        [DB #'//trim(intc(i_db))//']:',RIM_E(i_db)%nk)
-   if (i_db> 1) call msg('s','::                 [DB #'//trim(intc(i_db))//']:',RIM_E(i_db)%nk)
+ do i_db=1,n_DbGd_DBs
+   if (i_db==1) call msg('s',':: K points        [DB #'//trim(intc(i_db))//']:',DbGd_E(i_db)%nk)
+   if (i_db> 1) call msg('s','::                 [DB #'//trim(intc(i_db))//']:',DbGd_E(i_db)%nk)
  enddo
  !
- ! Mergering of ALL RIM_E(:) => RIM_E(n_RIM_DBs+1)
+ ! Mergering of ALL DbGd_E(:) => DbGd_E(n_DbGd_DBs+1)
  !
  i_db_merge=1
  !
- if (n_RIM_DBs>1) then
-   i_db_merge=n_RIM_DBs+1
-   call bz_samp_reset(RIM_k(i_db_merge))
-   call E_reset(RIM_E(i_db_merge))
-   RIM_E(i_db_merge)%nk=sum(RIM_E(:n_RIM_DBs)%nk)
-   RIM_E(i_db_merge)%nb=RIM_E(1)%nb
-   RIM_k(i_db_merge)%nibz=sum(RIM_E(:n_RIM_DBs)%nk)
-   allocate(RIM_E(i_db_merge)%E(RIM_E(i_db_merge)%nb,RIM_E(i_db_merge)%nk,n_sp_pol))
-   allocate(RIM_k(i_db_merge)%pt(RIM_E(i_db_merge)%nk,3))
-   do i_db=1,n_RIM_DBs
+ if (n_DbGd_DBs>1) then
+   i_db_merge=n_DbGd_DBs+1
+   call bz_samp_reset(DbGd_k(i_db_merge))
+   call E_reset(DbGd_E(i_db_merge))
+   DbGd_E(i_db_merge)%nk=sum(DbGd_E(:n_DbGd_DBs)%nk)
+   DbGd_E(i_db_merge)%nb=DbGd_E(1)%nb
+   DbGd_k(i_db_merge)%nibz=sum(DbGd_E(:n_DbGd_DBs)%nk)
+   allocate(DbGd_E(i_db_merge)%E(DbGd_E(i_db_merge)%nb,DbGd_E(i_db_merge)%nk,n_sp_pol))
+   allocate(DbGd_k(i_db_merge)%pt(DbGd_E(i_db_merge)%nk,3))
+   do i_db=1,n_DbGd_DBs
      if (i_db==1) ik_ref(1)=0
-     if (i_db> 1) ik_ref(1)=sum(RIM_E(1:i_db-1)%nk)
-     do i1=1,RIM_E(i_db)%nk
-       RIM_E(i_db_merge)%E(:,i1+ik_ref(1),:)= RIM_E(i_db)%E(:,i1,:)
-       RIM_k(i_db_merge)%pt(i1+ik_ref(1),:)= RIM_k(i_db)%pt(i1,:)
+     if (i_db> 1) ik_ref(1)=sum(DbGd_E(1:i_db-1)%nk)
+     do i1=1,DbGd_E(i_db)%nk
+       DbGd_E(i_db_merge)%E(:,i1+ik_ref(1),:)= DbGd_E(i_db)%E(:,i1,:)
+       DbGd_k(i_db_merge)%pt(i1+ik_ref(1),:)= DbGd_k(i_db)%pt(i1,:)
      enddo
    enddo
  endif
  !
- ! Use of less (only BZ_RIM_nkpts, read from input) k-points
+ ! Use of less (only BZ_DbGd_nkpts, read from input) k-points
  !
- if (BZ_RIM_nkpts<nkibz.and.BZ_RIM_nkpts>0) then
-   nkibz   =BZ_RIM_nkpts
-   RIM_E(i_db_merge)%nk=nkibz
-   RIM_k(i_db_merge)%nibz=nkibz
-   allocate(rand_E(RIM_E(i_db_merge)%nb,nkibz,n_sp_pol))
-   rand_E(:,:,:)=RIM_E(i_db_merge)%E(:,:nkibz,:)
-   rand_k(:nkibz,:)=RIM_k(i_db_merge)%pt(:nkibz,:)
-   deallocate(RIM_E(i_db_merge)%E,RIM_k(i_db_merge)%pt)
-   allocate(RIM_E(i_db_merge)%E(RIM_E(i_db_merge)%nb,nkibz,n_sp_pol),RIM_k(i_db_merge)%pt(nkibz,3))
-   RIM_E(i_db_merge)%E(:,:,:)=rand_E(:,:,:)
-   RIM_k(i_db_merge)%pt(:,:)=rand_k(:,:)
+ if (BZ_DbGd_nkpts<nkibz.and.BZ_DbGd_nkpts>0) then
+   nkibz   =BZ_DbGd_nkpts
+   DbGd_E(i_db_merge)%nk=nkibz
+   DbGd_k(i_db_merge)%nibz=nkibz
+   allocate(rand_E(DbGd_E(i_db_merge)%nb,nkibz,n_sp_pol))
+   rand_E(:,:,:)=DbGd_E(i_db_merge)%E(:,:nkibz,:)
+   rand_k(:nkibz,:)=DbGd_k(i_db_merge)%pt(:nkibz,:)
+   deallocate(DbGd_E(i_db_merge)%E,DbGd_k(i_db_merge)%pt)
+   allocate(DbGd_E(i_db_merge)%E(DbGd_E(i_db_merge)%nb,nkibz,n_sp_pol),DbGd_k(i_db_merge)%pt(nkibz,3))
+   DbGd_E(i_db_merge)%E(:,:,:)=rand_E(:,:,:)
+   DbGd_k(i_db_merge)%pt(:,:)=rand_k(:,:)
    deallocate(rand_E)
  endif
  !
- gap(1)=minval(RIM_E(i_db_merge)%E(Xen%nbf+1,:,1))-maxval(RIM_E(i_db_merge)%E(Xen%nbf,:,1)) 
+ gap(1)=minval(DbGd_E(i_db_merge)%E(Xen%nbf+1,:,1))-maxval(DbGd_E(i_db_merge)%E(Xen%nbf,:,1)) 
  gap(2)=10000.
  do i1=1,nkibz
-   if (RIM_E(i_db_merge)%E(Xen%nbf+1,i1,1)-RIM_E(i_db_merge)%E(Xen%nbf,i1,1)<gap(2)) then
-     gap(2)=RIM_E(i_db_merge)%E(Xen%nbf+1,i1,1)-RIM_E(i_db_merge)%E(Xen%nbf,i1,1)
+   if (DbGd_E(i_db_merge)%E(Xen%nbf+1,i1,1)-DbGd_E(i_db_merge)%E(Xen%nbf,i1,1)<gap(2)) then
+     gap(2)=DbGd_E(i_db_merge)%E(Xen%nbf+1,i1,1)-DbGd_E(i_db_merge)%E(Xen%nbf,i1,1)
    endif
  enddo
  !
- call msg('s','::              [imposed]:',BZ_RIM_nkpts)
+ call msg('s','::              [imposed]:',BZ_DbGd_nkpts)
  call msg('s',':: Bands                 :',n_bands)
- call msg('s',':: Symmetries            :',nsym_RIM_DB)
+ call msg('s',':: Symmetries            :',nsym_DbGd_DB)
  if(i_time_rev_DB==1)&
 &   call msg('s',':: Time reversal included ')
  if(i_time_rev_DB==0)&
@@ -209,37 +211,40 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  ! k-points
  !
  call section('+','Internal consistency check ...')
- ik_ref(2)=k_RIM_grid_consistency_check(Xk,Xen,RIM_k(i_db_merge),RIM_E(i_db_merge))
+ ik_ref(2)=k_DbGd_grid_consistency_check(Xk,Xen,DbGd_k(i_db_merge),DbGd_E(i_db_merge))
  !
  if (ik_ref(2)>0) then
-   call msg('l','passed @ RIM k-point #'//trim(intc(ik_ref(2)))) 
+   call msg('l','passed @ Double Grid k-point #'//trim(intc(ik_ref(2)))) 
  else 
    call msg('l','failed') 
-   if (     l_skip_check) call warning("Internal check failed. A consistent X grid k-point was not found among the RIM list")
-   if (.not.l_skip_check) call error("Internal check failed. A consistent X grid k-point was not found among the RIM list")
+   if (l_skip_check) then
+     call error("Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
+   else
+     call warning("Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
+   endif
  endif
  !
- BZ_RIM_nbands=RIM_E(i_db_merge)%nb
+ BZ_DbGd_nbands=DbGd_E(i_db_merge)%nb
  !
- RIM_nk=RIM_k(i_db_merge)%nibz
- BZ_RIM_tot_nkpts=RIM_k(i_db_merge)%nibz+Xk%nbz
+ DbGd_nk=DbGd_k(i_db_merge)%nibz
+ BZ_DbGd_tot_nkpts=DbGd_k(i_db_merge)%nibz+Xk%nbz
  BZ_ASSOCIATED_nkpts=Xk%nbz
  !
- if(ik_ref(2)>0) BZ_RIM_tot_nkpts=BZ_RIM_tot_nkpts-1
+ if(ik_ref(2)>0) BZ_DbGd_tot_nkpts=BZ_DbGd_tot_nkpts-1
  !
- if (RIM_is_symmetry_expanded) then
+ if (DbGd_is_symmetry_expanded) then
    !
-   call section('+','BZ RIM K-points expansion ...')
+   call section('+','BZ Double Grid K-points expansion ...')
    !
-   ! RIM_k (IBZ->BZ)
+   ! DbGd_k (IBZ->BZ)
    !
-   call k_ibz2bz(RIM_k(i_db_merge),'i',.true.)
+   call k_ibz2bz(DbGd_k(i_db_merge),'i',.true.)
    !
-   call msg('l','found '//trim(intc(RIM_k(i_db_merge)%nbz))//' ('//trim(intc(RIM_k(i_db_merge)%nibz))//') points in the BZ (IBZ)')
+   call msg('l','found '//trim(intc(DbGd_k(i_db_merge)%nbz))//' ('//trim(intc(DbGd_k(i_db_merge)%nibz))//') points in the BZ (IBZ)')
    !
-   RIM_nk=RIM_k(i_db_merge)%nbz
+   DbGd_nk=DbGd_k(i_db_merge)%nbz
    !
-   BZ_RIM_tot_nkpts=RIM_k(i_db_merge)%nibz
+   BZ_DbGd_tot_nkpts=DbGd_k(i_db_merge)%nibz
    !
  endif
  !
@@ -250,88 +255,122 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! The -1 is for the reference k that should not be added
  !
- allocate(BZ_RIM_nkpt(Xk%nbz))
- BZ_RIM_nkpt=1
+ allocate(BZ_DbGd_nkpt(Xk%nbz),TMP_map(DbGd_nk,2))
+ BZ_DbGd_nkpt=1
+ TMP_map=0
  !
- call live_timing('BZ RIM Tables',RIM_nk*2,SERIAL=.true.)
- !                ===============
- do i2=1,2
-   if (i2==2) then
-     !
-     allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)))
-     BZ_RIM_table=0
-     do i1=1,Xk%nbz
-       BZ_RIM_table(i1,1)=Xk%sstar(i1,1)
-     enddo
-     !
-     if (.not.RIM_is_symmetry_expanded) then
-       allocate(BZ_SYM_table(Xk%nbz,maxval(BZ_RIM_nkpt)))
-       BZ_SYM_table=0
-       BZ_SYM_table(1:Xk%nbz,1)=1
-     endif
-     !
+ ! Par Proc
+ !
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/DbGd_nk/))
+ call PP_redux_wait
+ !
+ call live_timing('BZ Double Grid Map',px%n_of_elements(myid+1))
+ !                ============
+ do i1=1,DbGd_nk
+   !
+   if (.not.px%element_1D(i1)) cycle
+   !
+   if (i1==ik_ref(2)) then
+     call live_timing(steps=1)
+     cycle
    endif
    !
-   BZ_RIM_nkpt=1
+   if (DbGd_is_symmetry_expanded) then
+     ik_near=k_the_nearest(DbGd_k(i_db_merge)%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
+     TMP_map(i1,1)=ik_near
+   else
+     ik_near_ibz = k_the_nearest(DbGd_k(i_db_merge)%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is_near)
+     TMP_map(i1,1)=ik_near_ibz
+     TMP_map(i1,2)=is_near
+   endif
    !
-   do i1=1,RIM_nk
-     !
-     if (i1==ik_ref(2)) then
-       call live_timing(steps=1)
-       cycle
-     endif
-     !
-     if (RIM_is_symmetry_expanded) then
-       ik_near=k_the_nearest(RIM_k(i_db_merge)%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
-       BZ_RIM_nkpt(ik_near)=BZ_RIM_nkpt(ik_near)+1
-       if (allocated(BZ_RIM_table)) BZ_RIM_table(ik_near,BZ_RIM_nkpt(ik_near))=RIM_k(i_db_merge)%sstar(i1,1)
-     else
-       ik_near_ibz = k_the_nearest(RIM_k(i_db_merge)%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is_near)
-       ik_near     = Xk%k_table(ik_near_ibz,1)
-       BZ_RIM_nkpt(ik_near)=BZ_RIM_nkpt(ik_near)+1
-       if (allocated(BZ_SYM_table)) BZ_SYM_table(ik_near,BZ_RIM_nkpt(ik_near))=is_near
-       if (allocated(BZ_RIM_table)) BZ_RIM_table(ik_near,BZ_RIM_nkpt(ik_near))=i1+1
-     endif
-     !
-     call live_timing(steps=1)
-     !
-   enddo
+   call live_timing(steps=1)
+   !
  enddo
- call live_timing()
  !
- BZ_RIM_max_filling=maxval(BZ_RIM_nkpt)
- call msg('s',':: Blocks filling range  :',(/minval(BZ_RIM_nkpt),BZ_RIM_max_filling/))
+ call PP_redux_wait(TMP_map)
  !
- ! RIM double grid interpolation weights, not used here, but must be defined.
+ ! Number of points in each zone
  !
- allocate(BZ_RIM_ipol_weight(BZ_RIM_max_filling))
- BZ_RIM_ipol_weight = 1.0_SP
+ BZ_DbGd_nkpt=1
+ do i1=1,DbGd_nk
+   if (i1==ik_ref(2)) cycle
+   ik_near=TMP_map(i1,1)
+   if (.not.DbGd_is_symmetry_expanded) then
+     ik_near_ibz = TMP_map(i1,1)
+     ik_near     = Xk%k_table(ik_near_ibz,1)
+   endif
+   BZ_DbGd_nkpt(ik_near)=BZ_DbGd_nkpt(ik_near)+1
+ enddo
  !
- allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
- allocate(BZ_RIM_kpts(BZ_RIM_tot_nkpts,3))
+ ! Tables
  !
- if (RIM_is_symmetry_expanded) then
+ allocate(BZ_DbGd_table(Xk%nbz,maxval(BZ_DbGd_nkpt)))
+ BZ_DbGd_table=0
+ do i1=1,Xk%nbz
+   BZ_DbGd_table(i1,1)=Xk%sstar(i1,1)
+ enddo
+ if (.not.DbGd_is_symmetry_expanded) then
+   allocate(BZ_SYM_table(Xk%nbz,maxval(BZ_DbGd_nkpt)))
+   BZ_SYM_table=0
+   BZ_SYM_table(1:Xk%nbz,1)=1
+ endif
+ !
+ BZ_DbGd_nkpt=1
+ do i1=1,DbGd_nk
+   if (i1==ik_ref(2)) cycle
+   ik_near=TMP_map(i1,1)
+   if (.not.DbGd_is_symmetry_expanded) then
+     ik_near_ibz = TMP_map(i1,1)
+     ik_near     = Xk%k_table(ik_near_ibz,1)
+   endif
+   BZ_DbGd_nkpt(ik_near)=BZ_DbGd_nkpt(ik_near)+1 
+   !
+   if (DbGd_is_symmetry_expanded) then
+     BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near))=DbGd_k(i_db_merge)%sstar(i1,1)
+   else
+     BZ_SYM_table(ik_near,BZ_DbGd_nkpt(ik_near))=TMP_map(i1,2)
+     BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near))=i1+1
+   endif
+   !
+ enddo
+ !
+ deallocate(TMP_map)
+ !
+ BZ_DbGd_max_filling=maxval(BZ_DbGd_nkpt)
+ call msg('s',':: Blocks filling range  :',(/minval(BZ_DbGd_nkpt),BZ_DbGd_max_filling/))
+ !
+ ! DbGd double grid interpolation weights, not used here, but must be defined.
+ !
+ allocate(BZ_DbGd_ipol_weight(BZ_DbGd_max_filling))
+ BZ_DbGd_ipol_weight = 1.0_SP
+ !
+ allocate(Xen%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+ allocate(BZ_DbGd_kpts(BZ_DbGd_tot_nkpts,3))
+ !
+ if (DbGd_is_symmetry_expanded) then
    !
    !
-   Xen%E_RIM(:,:,:)=RIM_E(i_db_merge)%E(:,:,:)
-   BZ_RIM_kpts(:,:)=RIM_k(i_db_merge)%pt(:,:)
+   Xen%E_DbGd(:,:,:)=DbGd_E(i_db_merge)%E(:,:,:)
+   BZ_DbGd_kpts(:,:)=DbGd_k(i_db_merge)%pt(:,:)
    !
  else
    !
-   call live_timing('RIM re-ordering and distribution',Xk%nbz,SERIAL=.true.)
+   call live_timing('DbGd re-ordering and distribution',Xk%nbz,SERIAL=.true.)
    !                ===============
    i1=0
    do ik_bz=1,Xk%nbz
-     do ik_RIM=1,BZ_RIM_nkpt(ik_bz)
+     do ik_DbGd=1,BZ_DbGd_nkpt(ik_bz)
        i1=i1+1
-       if (ik_RIM==1) then
-         Xen%E_RIM(:,i1,:)=Xen%E(:BZ_RIM_nbands,BZ_RIM_table(ik_bz,1),:)+Xen%E_fermi
-         BZ_RIM_kpts(i1,:)=Xk%ptbz(ik_bz,:)
+       if (ik_DbGd==1) then
+         Xen%E_DbGd(:,i1,:)=Xen%E(:BZ_DbGd_nbands,BZ_DbGd_table(ik_bz,1),:)+Xen%E_fermi
+         BZ_DbGd_kpts(i1,:)=Xk%ptbz(ik_bz,:)
        else
-         Xen%E_RIM(:,i1,:)=RIM_E(i_db_merge)%E(:,BZ_RIM_table(ik_bz,ik_RIM)-1,:)
-         BZ_RIM_kpts(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_RIM) ),RIM_k(i_db_merge)%pt(BZ_RIM_table(ik_bz,ik_RIM)-1,:))
+         Xen%E_DbGd(:,i1,:)=DbGd_E(i_db_merge)%E(:,BZ_DbGd_table(ik_bz,ik_DbGd)-1,:)
+         BZ_DbGd_kpts(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_DbGd) ),DbGd_k(i_db_merge)%pt(BZ_DbGd_table(ik_bz,ik_DbGd)-1,:))
        endif
-       BZ_RIM_table(ik_bz,ik_RIM)=ik_RIM+sum(BZ_RIM_nkpt(:ik_bz-1))
+       BZ_DbGd_table(ik_bz,ik_DbGd)=ik_DbGd+sum(BZ_DbGd_nkpt(:ik_bz-1))
      enddo
      call live_timing(steps=1)
    enddo
@@ -343,15 +382,15 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  ! Final I/O
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=LOG,ID=ID)
- i_err=io_RIM_E_and_k(Xen,Xk,ID)
+ i_err=io_Double_Grid(Xen,Xk,ID)
  !
  ! CLEAN
  !
- deallocate(BZ_RIM_nkpt,BZ_RIM_table,Xen%E_RIM,BZ_RIM_ipol_weight)
+ deallocate(BZ_DbGd_nkpt,BZ_DbGd_table,Xen%E_DbGd,BZ_DbGd_ipol_weight)
  if(allocated(BZ_SYM_table)) deallocate(BZ_SYM_table)
- if(allocated(BZ_RIM_kpts))  deallocate(BZ_RIM_kpts)
+ if(allocated(BZ_DbGd_kpts))  deallocate(BZ_DbGd_kpts)
  call k_ibz2bz(Xk,'d',.false.) 
- call k_ibz2bz(RIM_k(i_db_merge),'d',.false.) 
+ call k_ibz2bz(DbGd_k(i_db_merge),'d',.false.) 
  !
  !
 end subroutine

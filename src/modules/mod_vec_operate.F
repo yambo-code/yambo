@@ -122,7 +122,7 @@ module vec_operate
      ! mode = 'k/ri2a' 'k/ra2i' (iku <-> rlu)
      ! mode = 'k/ri2c' 'k/rc2i' (cc  <-> iku)
      !
-     use D_lattice,      ONLY:alat
+     use D_lattice,      ONLY:alat,a
      use R_lattice,      ONLY:b
      use matrix_operate, ONLY:m3inv
      real(SP)          :: v_in(3)
@@ -135,8 +135,13 @@ module vec_operate
      !
      ! Define local unit cell vectors
      !
-     a_here=b
-     if (present(b_in)) a_here=b_in
+     if (index(mode,'r')/=0) then
+       a_here=a
+       if (present(b_in)) a_here=b_in
+     else
+       a_here=b
+       if (present(b_in)) a_here=b_in
+     endif
      !
      ! Scale factor if input vector is in iku
      !
@@ -176,8 +181,7 @@ module vec_operate
      ! 
      ! Work Space
      ! 
-     real(SP):: b_here(3,3)
-     real(SP):: p(3),q(3),u(3),dist
+     real(SP):: b_here(3,3),p(3),q(3),u(3),dist
      integer :: i1,i2,i3
      integer,parameter :: ni=2
      !

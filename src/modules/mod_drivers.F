@@ -111,5 +111,4 @@ module drivers
  logical :: l_oep_ceda
  logical :: l_oep_slater
  !
- !
 end module drivers

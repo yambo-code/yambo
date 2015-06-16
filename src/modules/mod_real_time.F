@@ -133,12 +133,12 @@ module real_time
  !
  ! Relaxation and Dissipation 
  !----------------------------
- logical                  :: l_RT_uses_E_RIM
- logical,     allocatable :: RIM_EE_scatt_table(:,:)  
- integer,     allocatable :: RIM_EE_Nk_table(:,:)  
- integer,     allocatable :: RIM_ibz_coo(:,:)
- integer,     allocatable :: RIM_bz_coo(:,:)  
- real(SP)                 :: RIM_EE_percent 
+ logical                  :: l_RT_uses_E_DbGd
+ logical,     allocatable :: DbGd_EE_scatt_table(:,:)  
+ integer,     allocatable :: DbGd_EE_Nk_table(:,:)  
+ integer,     allocatable :: DbGd_ibz_coo(:,:)
+ integer,     allocatable :: DbGd_bz_coo(:,:)  
+ real(SP)                 :: DbGd_EE_percent 
  !
  ! ELPH kernel...
  !----------------
@@ -324,7 +324,7 @@ module real_time
  interface
    !
    subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,O_MATRIX_limited,&
-&                                 V_MATRIX,PV_MATRIX,G,k,en,TRANS,RIM,nK_mem)
+&                                 V_MATRIX,PV_MATRIX,G,k,en,TRANS,Double_Grid,nK_mem)
      use pars,       ONLY:SP
      use SC,         ONLY:SC_bands
      use R_lattice,  ONLY:bz_samp
@@ -344,7 +344,7 @@ module real_time
      complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
      real(SP),        optional, intent(in) :: O_REAL(fft_size,n_spin)
      logical,         optional, intent(in) :: TRANS
-     character(6),    optional, intent(in) :: RIM
+     character(6),    optional, intent(in) :: Double_Grid
    end subroutine RT_average_operator
    !
    subroutine RT_update(G_input,SC_R,it,E,k,X,up_Gref,up_DIP,an_QP)
@@ -590,8 +590,8 @@ module real_time
      !
      call SC_free()
      !
-     deallocate(RIM_ibz_coo,RIM_bz_coo,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz)
-     if(allocated(RIM_EE_scatt_table)) deallocate(RIM_EE_scatt_table)
+     deallocate(DbGd_ibz_coo,DbGd_bz_coo,RT_ibz_coo,RT_all2ibz,RT_Nk_ibz)
+     if(allocated(DbGd_EE_scatt_table)) deallocate(DbGd_EE_scatt_table)
      !
      if(allocated(E_xc)) then
        deallocate(E_xc)

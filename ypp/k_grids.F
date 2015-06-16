@@ -30,8 +30,10 @@ subroutine k_grids(en,k,Xk,q)
  use com,                 ONLY:msg,warning
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:c2a,rlu_v_is_zero,v_is_zero,v_norm
- use YPP,                 ONLY:coo_in,coo_out,q_shift,l_k_grid,l_q_grid,&
-&                              l_shifted_grid,l_high_sym_pts,K_transform
+ use YPP,                 ONLY:coo_in,coo_out,l_k_grid,l_q_grid,&
+&                              l_shifted_grid,l_high_sym_pts,K_transform,&
+&                              n_u_k_pts,n_u_q_pts,&
+&                              U_k_pts,U_q_pts,U_q_shifts
  use LIVE_t,              ONLY:live_timing_is_on
  use zeros,               ONLY:k_iku_zero
  use stderr,              ONLY:set_real_printed_length
@@ -43,9 +45,8 @@ subroutine k_grids(en,k,Xk,q)
  ! Work Space
  !
  type(bz_samp)::USER_K,Final_K,Q_user
- real(SP)     ::real_ctl,v(3),ka(3),q0(3)
- integer      ::i1,i2,is,ik
- real(SP):: kout(Xk%nibz,3),k_plus_q(Xk%nibz,3)
+ real(SP)     ::real_ctl,v(3),ka(3),q0(3),kout(Xk%nibz,3),k_plus_q(Xk%nibz,3)
+ integer      ::i1,i2,is,ik,iq
  integer,  allocatable :: int_ctl(:)
  real(SP), allocatable :: BZ_weights(:)
  character(schlen)     :: ch
@@ -146,12 +147,11 @@ subroutine k_grids(en,k,Xk,q)
    !
    real_ctl=0.
    USER_K%nibz=1
-   gw_main_loop: do while(real_ctl/=999.)
+   gw_main_loop: do ik=1,n_u_k_pts
+     !
      if (associated(USER_K%pt)) deallocate(USER_K%pt)
      allocate(USER_K%pt(USER_K%nibz,3))
-     USER_K%pt(USER_K%nibz,:)=(/0.,0.,999./)
-     call parser('GWKpts',USER_K%pt)
-     real_ctl=USER_K%pt(USER_K%nibz,3)
+     USER_K%pt(USER_K%nibz,:)=U_k_pts(ik,:)
      !
      ! Transform the user_k_points in iku
      !
@@ -211,27 +211,24 @@ subroutine k_grids(en,k,Xk,q)
    !
    real_ctl=0.
    Q_user%nibz=1
-   q_main_loop: do while(real_ctl/=999.)
+   q_main_loop: do iq=1,n_u_q_pts
+     !
      if (associated(Q_user%pt)) deallocate(Q_user%pt)
      allocate(Q_user%pt(Q_user%nibz,3))
-     Q_user%pt(Q_user%nibz,:)=(/0.,0.,999./)
-     call parser('Qpts',Q_user%pt)
-     real_ctl=Q_user%pt(Q_user%nibz,3)
-     if (real_ctl/=999.) then
-       !
-       do i1=1,q%nbz
-         v=q%ptbz(i1,:)
-         if (trim(coo_in)=="cc")  call c2a(v_in=q%ptbz(i1,:),v_out=v,mode="ki2c")
-         if (trim(coo_in)=="rlu") call c2a(v_in=q%ptbz(i1,:),v_out=v,mode="ki2a")
-         if (v_is_zero(v(:)-Q_user%pt(Q_user%nibz,:),zero_=k_iku_zero).and..not.Force_User_points) then
-           call warning(' Point already in the grid. Listing internal Q-points.')
-           exit q_main_loop
-         endif
-       enddo
-       !
-       Q_user%nibz=Q_user%nibz+1
-       !
-     endif
+     Q_user%pt(Q_user%nibz,:)=U_q_pts(iq,:)
+     !
+     do i1=1,q%nbz
+       v=q%ptbz(i1,:)
+       if (trim(coo_in)=="cc")  call c2a(v_in=q%ptbz(i1,:),v_out=v,mode="ki2c")
+       if (trim(coo_in)=="rlu") call c2a(v_in=q%ptbz(i1,:),v_out=v,mode="ki2a")
+       if (v_is_zero(v(:)-Q_user%pt(Q_user%nibz,:),zero_=k_iku_zero).and..not.Force_User_points) then
+         call warning(' Point already in the grid. Listing internal Q-points.')
+         cycle q_main_loop
+       endif
+     enddo
+     !
+     Q_user%nibz=Q_user%nibz+1
+     !
    enddo q_main_loop
    Q_user%nibz=Q_user%nibz-1
    !
@@ -273,11 +270,7 @@ subroutine k_grids(en,k,Xk,q)
   call section('=',"== Shifted grids generator ==")
    !================================================
    !
-   call parser('KShift1',q_shift(1,:))
-   call parser('KShift2',q_shift(2,:))
-   call parser('KShift3',q_shift(3,:))
-   !
-   if(any(abs(q_shift)/=0.)) then
+   if(any(abs(U_q_shifts)/=0.)) then
      !
      kout(:,:) = Xk%pt(:,:)
      !
@@ -290,16 +283,16 @@ subroutine k_grids(en,k,Xk,q)
      i2=0
      do i1=1,3
        !
-       if (v_norm(q_shift(i1,:))>1.E-4.or.v_norm(q_shift(i1,:))<1.E-6) then
-         q0 = q_shift(i1,:)*1.E-4/v_norm(q_shift(i1,:))
+       if (v_norm(U_q_shifts(i1,:))>1.E-4.or.v_norm(U_q_shifts(i1,:))<1.E-6) then
+         q0 = U_q_shifts(i1,:)*1.E-4/v_norm(U_q_shifts(i1,:))
          call msg("s","Renormalizing shift to :",v_norm(q0))
        else 
-         q0 = q_shift(i1,:)
+         q0 = U_q_shifts(i1,:)
        endif
        !
        i2 = i2 + 1
        !
-       ! Convert q_shift[iku] to coo_in
+       ! Convert U_q_shifts[iku] to coo_in
        !
        call K_transform(q0,trim(coo_in))
        !

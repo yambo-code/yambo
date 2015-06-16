@@ -38,7 +38,7 @@ subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
  use com,            ONLY:error
  use parallel_m,     ONLY:PP_redux_wait
  use BS,             ONLY:BS_nT_grps,Haydock_vector, &
-&                         BSS_uses_RIM,BS_blk,n_BS_blks, BS_T_grp,&
+&                         BSS_uses_DbGd,BS_blk,n_BS_blks, BS_T_grp,&
 &                         Haydock_parallel_mask,Haydock_parallel_group_comm
  use wrapper,        ONLY:M_by_V
  !
@@ -62,7 +62,7 @@ subroutine K_multiply_by_V(iter,Vi,Vo,iter_par,call_kind)
  ! Messaging
  !
  if (l_inv) call error('K_multiply_by_V: Inv temporary disabled.') 
- if (BSS_uses_RIM)  call error('K_multiply_by_V: BSS with RIM temporary disabled')
+ if (BSS_uses_DbGd)  call error('K_multiply_by_V: BSS with Double Grid temporary disabled')
  if( (.not.l_inv) .and. (.not.l_Hay) ) call error('K_multiply_by_V: not a valid call.')
  !
  alpha=cONE

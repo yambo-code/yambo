@@ -40,6 +40,7 @@ module BS
  logical :: BS_cpl_K_corr
  logical :: BS_K_is_ALDA
  logical :: BS_not_const_eh_f
+ logical :: BS_K_has_been_calculated_loaded=.FALSE.
  character(schlen) :: BSE_mode
  character(schlen) :: BSK_mode
  character(schlen) :: BS_res_mode
@@ -168,7 +169,7 @@ module BS
  real(SP) :: BSS_inversion_PERT_FULL_ratio = 1.
  logical  :: BSS_write_eig_2_db
  logical  :: Haydock_terminator
- logical  :: BSS_uses_RIM
+ logical  :: BSS_uses_DbGd
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_uses_partial_diago

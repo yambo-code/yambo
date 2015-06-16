@@ -65,7 +65,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  ! Work Space
  !
- logical          ::l_QP_init
+ logical          ::l_init_QP
  type(initdefs)   ::defs
  integer          ::i1,i2
  character(schlen)::rstr_piece(60) 
@@ -236,13 +236,11 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  coo_in="rlu"
  coo_out="rlu"
- Kgw_1=0.
- q_shift= 0.0_SP
  PtsPath= ' '
  N_path_pts=0
  alat_used_for_output=alat(1)
  !
- !BZ RIM
+ ! BZ RIM
  !
  gamma_radius=0.
  !
@@ -326,7 +324,11 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  ! Dump internally the input file
  !
- if (file_exists(trim(infile))) call infile_dump()
+ if (file_exists(trim(infile))) then
+   !
+   call infile_dump()
+   !
+ endif
  !
  ! RunLevels on
  !
@@ -536,9 +538,6 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  if (l_bz_grids) then
    call initactivate(1,"cooIn cooOut")
-   if (l_k_grid) call initactivate(1,"GWKpts")
-   if (l_q_grid) call initactivate(1,"Qpts")
-   if (l_shifted_grid) call initactivate(1,"KShift1 KShift2 KShift3")
    if (l_high_sym_pts) then
      call initactivate(1,"PtsPath NPtsPath")
      call initactivate(-1,"NoWeights ForceUserPts ListPts ExpandPts cooIn")
@@ -547,7 +546,7 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
    endif
  endif
  !
- if (l_bands) call initactivate(1,"cooIn BKpts BANDS_steps INTERPGrid ShellFac NormN NelFac")
+ if (l_bands) call initactivate(1,"cooIn BANDS_steps INTERPGrid ShellFac NormN NelFac")
  !	   
  l_bzrim     =runlevel_is_on('bzrim')
  !
@@ -600,9 +599,9 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (l_bzrim)    call initactivate(1,"BZ_RIM_Nk cooOut OutputAlat GammaRadius")
+ if (l_bzrim)    call initactivate(1,"BZ_DbGd_Nk cooOut OutputAlat GammaRadius")
  !
- if (l_map_kpts) call initactivate(1,"BZ_RIM_Nk SkipCheck noBZExpand NoWeights")
+ if (l_map_kpts) call initactivate(1,"BZ_DbGd_Nk SkipCheck noBZExpand NoWeights")
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call init_QP_ctl_switch('G')
@@ -679,6 +678,8 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
 #endif
  !
+ ! Check for existing QP control fields to be proposed in the new input files
+ !
  call QP_state_table_setup(E)
  !
  if (infile_editing) then
@@ -690,27 +691,37 @@ subroutine ypp_init(E,instr,lnstr,FINALIZE)
  !
  if (l_QP_DBs_create_and_modify.or.l_QP_DBs_merge) call QP_DBs_initialize()
  !
- l_QP_init=(l_plot.and.l_sp_wf).or.l_bands
+ l_init_QP=(l_plot.and.l_sp_wf).or.l_bands
 #if defined _YPP_ELPH
- if (.not.l_QP_init) l_QP_init=l_electrons.and.l_eliashberg
+ if (.not.l_init_QP) l_init_QP=l_electrons.and.l_eliashberg
 #endif
 #if defined _YPP_SC
- if (.not.l_QP_init) l_QP_init=l_electrons.and.l_mean_potential
+ if (.not.l_init_QP) l_init_QP=l_electrons.and.l_mean_potential
 #endif
 #if defined _YPP_MAGNETIC
- if (.not.l_QP_init) l_QP_init=l_angular_momentum.or.l_position
+ if (.not.l_init_QP) l_init_QP=l_angular_momentum.or.l_position
 #endif
  !
 #if defined _YPP_RT
- if (.not.l_QP_init) l_QP_init=l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_dos.or.l_RT_occ_bands.or.l_RT_life_Bands
- if (l_QP_init) call QP_init(.FALSE.,.TRUE.)
+ if (.not.l_init_QP) l_init_QP=l_RT_occ_Plot.or.l_RT_occ_Fit.or.l_RT_dos.or.l_RT_occ_bands.or.l_RT_life_Bands
+ if (l_init_QP) call init_QP(.FALSE.,.TRUE.)
 #else
- if (l_QP_init) call QP_init(.FALSE.,.FALSE.)
+ if (l_init_QP) call init_QP(.FALSE.,.FALSE.)
 #endif
  !
+ ! Check and fill all possible vectorial USER fields
+ ! 
+ if (l_bands) call USER_vector_handle("BKpts")
+ if (l_bz_grids) then
+   if (l_k_grid) call USER_vector_handle("GWKpts")
+   if (l_q_grid) call USER_vector_handle("Qpts")
+   if (l_shifted_grid) call USER_vector_handle("KShift")
+ endif
+ !
  if (l_map_kpts) then
-   n_RIM_DBs=parse_character_arrays(RIM_DB1_paths,MAX_RIM_DBs,"RIM_DB1_paths",.TRUE.)
-   if (infile_editing) i1=parse_character_arrays(RIM_DB1_paths,n_RIM_DBs,"RIM_DB1_paths",.FALSE.)
+   n_DbGd_DBs=parse_character_arrays(DbGd_DB1_paths,MAX_DbGd_DBs,"DbGd_DB1_paths"," ",.TRUE.)
+   if (infile_editing) i1=parse_character_arrays(DbGd_DB1_paths,n_DbGd_DBs,&
+&                                                "DbGd_DB1_paths","Paths to the SAVE folders with the Double Grid DB1",.FALSE.)
  endif
  !
 contains
@@ -724,6 +735,71 @@ contains
    if (mode=='GameOver') initmode=3
    if (mode=='parserload') initmode=4
    call ypp_init_load(defs)
+   !
+ end subroutine
+ !
+ subroutine USER_vector_handle(field)
+   !
+   use parser_m,       ONLY:parser
+   use it_m,           ONLY:nflines,flines,nADDITIONAL_flines,ADDITIONAL_flines
+   !
+   character(*):: field
+   !
+   integer     :: n_points,i_p,nflines_save
+   real(SP)    :: real_ctl,real_v(10,3)
+   character(schlen) :: comment
+   !
+   real_ctl=0._SP
+   real_v(:,3)=999._SP
+   call parser(field,real_v)
+   !
+   do i_p=1,10
+     if (real_v(i_p,3)==999._SP) exit
+   enddo
+   !
+   n_points=i_p-1
+   !
+   if (n_points==0) then
+     n_points=1
+     real_v(1,:)=0.
+   endif
+   !
+   ADDITIONAL_flines = " "
+   nADDITIONAL_flines= 0
+   !
+   nflines_save=nflines
+   if (field=="GWKpts") then
+     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# K points list'
+     n_u_k_pts=n_points
+     U_k_pts(:n_u_k_pts,:)=real_v(:n_u_k_pts,:)
+   else if (field=="BKpts") then
+     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# K points of the bands circuit'
+     n_u_interp_pts=n_points
+     U_interp_pts(:n_u_interp_pts,:)=real_v(:n_u_interp_pts,:)
+   else if (field=="Qpts") then
+     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# Q points list'
+     n_u_q_pts=n_points
+     U_q_pts(:n_u_q_pts,:)=real_v(:n_u_q_pts,:)
+   else if (field=="KShift") then
+     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# K-grid shifts (max 3)'
+     U_q_shifts(:,:)=real_v(:n_points,:)
+   endif
+   !
+   nflines=nflines+1
+   do i_p=1,n_points
+     write (flines(nflines+1),'(4(f7.5,1x,a))') real_v(i_p,1),'|', real_v(i_p,2),'|', real_v(i_p,3),'|'
+     nflines=nflines+1
+   enddo
+   write (flines(nflines+1),'(a)') '%'
+   nflines=nflines+1
+   !
+   if (infile_editing) open(unit=12,file=trim(infile),position='append')
+   do i1=nflines_save+1,nflines
+     nADDITIONAL_flines=nADDITIONAL_flines+1
+     ADDITIONAL_flines(nADDITIONAL_flines)=flines(i1)
+     if (infile_editing) write (12,'(a)') trim(flines(i1))
+   enddo 
+   if (infile_editing) close(12)
    !
  end subroutine
  !

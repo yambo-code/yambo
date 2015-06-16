@@ -42,15 +42,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use com,          ONLY:warning,error,msg
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
- use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W_is_diagonal,&
+ use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W_is_diagonal,BS_mat_free,&
 &                       BS_res_K_exchange,BS_n_g_W,BS_Block_size,&
 &                       O_ng,BS_n_g_exch,BS_identifier,BS_LiveTiming_steps,&
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,BSS_q0,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
-&                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp
+&                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
+&                       BS_K_has_been_calculated_loaded
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
-&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP
+&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP,&
+&                       deliver_IO_error_message
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use wrapper_omp,   ONLY:V_dot_V_omp,Vstar_dot_V_omp,M_by_V_omp
@@ -205,7 +207,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=XID)
    io_X_err=io_X(X,Xw,XID) 
    !
-   if (io_X_err<0) call warning('BS section skipped. PP/Em1s DB does not fit/exist')
+   if (io_X_err<0) then
+     call deliver_IO_error_message(io_X_err,'PP/Em1s')
+     call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
+     n_BS_blks=0
+     call BS_mat_free()
+   endif
    !
    ! X%ng is set to BS_n_g_W to VERIFY if there are enough bands.
    ! From now on it is used to keep track of the actual sixe of W in the DB
@@ -393,7 +400,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
  endif
  !
- !if (BSS_uses_RIM) then
+ !if (BSS_uses_DbGd) then
  !  allocate(BS_mat_diagonal(BS_K_dim))
  !  call mem_est('BS_mat_diagonal',(/size(BS_mat_diagonal)/))
  !endif
@@ -581,6 +588,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  !if(allocated(BS_mat_diagonal)) deallocate(BS_mat_diagonal)
  !
+ BS_K_has_been_calculated_loaded=.TRUE.
+ !
  ! GLOBAL CLEANING 
  !=================
  !
@@ -611,11 +620,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    deallocate(F_xc)
  endif
  !
+1 continue
+ !
  call WF_free(WF)
  call collision_reset(K_CORR_collision)
  call collision_reset(K_EXCH_collision)
- !
-1 continue
  !
 #if defined _TIMING
  call timing('X T_space Kernel',OPR='stop')

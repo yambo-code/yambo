@@ -45,7 +45,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t,X_poles,DIP_q_dot_iR,current_iq,X_poles_tab,&
-&                        self_detect_E_range,half_X_mat_only,use_X_RIM,&
+&                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&
 &                        X_terminator
  use IO_m,          ONLY:IO_and_Messaging_switch
 #if defined _SC 
@@ -83,9 +83,9 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
  GreenF       = cZERO
  drude_GreenF = cZERO
  !
- ! Logicals to use bare or RIM GF (no poles accumulation)
+ ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================
- force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM.or.associated(Xen%GreenF)
+ force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_DbGd.or.associated(Xen%GreenF)
  !
  skip_WF_load= (iq==1.and.X%ng==1)
  !
@@ -318,7 +318,7 @@ subroutine X_os(Xo,iq,Xen,Xk,Xw,X)
    if (Drude_pole) then
      GreenF=drude_GreenF/real(bare_grid_N(i_cg))
    else if(force_bare_X_G) then
-     call X_bare_RIM_GreenF(iq,X_poles_tab(i_cg,:),Xw,Xen,Xk,GreenF,X%ordering)
+     call X_bare_Double_Grid_GreenF(iq,X_poles_tab(i_cg,:),Xw,Xen,Xk,GreenF,X%ordering)
    else
      pole=cmplx(coarse_grid_Pt(i_cg),0._SP)
      do iw=1,Xw%n_freqs

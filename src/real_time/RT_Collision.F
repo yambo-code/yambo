@@ -42,8 +42,8 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,magn_n,V_xc_sc,SC_nbands
  use QP_m,           ONLY:QP_nk
- use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_RIM,REF_V_xc_sc,&
-&                         RIM_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,&
+ use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc,&
+&                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,&
 &                         l_RT_RWA,eval_DENSITY,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_nk
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
@@ -64,7 +64,7 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !
  ! Work Space
  !
- integer          :: ik,ik_RT,ik_RIM,ib,ibp
+ integer          :: ik,ik_RT,ik_DbGd,ib,ibp
  real(SP)         :: delta_rho(fft_size),delta_magn(fft_size,3)
  !
 #if defined _TIMING
@@ -133,16 +133,16 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    do ik=1,QP_nk 
      !
-     if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_k_cpu  .or. .not.HEAD_QP_cpu) cycle
+     if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_k_cpu ) cycle
      !
      ! DAVIDE:
      ! Ho+Sigma[eq]= E^{QP} 
      !
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       ik_RIM=ik_RT-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+       ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
        do ib=SC_bands(1),SC_bands(2)
-         if(     l_RT_uses_E_RIM) Ho_plus_sigma(ib,ib,ik_RT,1)=E%E_RIM(ib,ik_RIM,1)
-         if(.not.l_RT_uses_E_RIM) Ho_plus_sigma(ib,ib,ik_RT,1)=E%E(ib,ik,1)
+         if(     l_RT_uses_E_DbGd) Ho_plus_sigma(ib,ib,ik_RT,1)=E%E_DbGd(ib,ik_DbGd,1)
+         if(.not.l_RT_uses_E_DbGd) Ho_plus_sigma(ib,ib,ik_RT,1)=E%E(ib,ik,1)
        enddo
      enddo
      !
@@ -158,17 +158,19 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
  !===========
  do ik=1,QP_nk 
    !
-   if (.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu) cycle
-   !
    H_nl_sc=cZERO
    !
    ! Hartree and local XC potentials 
    !=================================
+   !
    if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+   !
    if (n_spinor==2) then
      if(eval_HARTREE) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WF,'def')
      if(eval_DFT)     call V_real_space_to_H(ik,V_xc_sc     ,H_nl_sc,WF,'xc ')
    endif
+   !
+   if (.not.PAR_IND_WF_k%element_1D(ik).or. .not.HEAD_QP_cpu) cycle
    !
    do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      if (l_RT_RWA) then
@@ -179,6 +181,8 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
 &                             cONE,H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1),&
 &                             Ho_plus_sigma(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_RT,1))
      endif
+     !
+     if (.not.HEAD_k_cpu) cycle
      !
      ! Non-local XC potentials (like COHSEX)
      !=======================================
@@ -198,13 +202,13 @@ subroutine RT_Collision(dG_in,A_input,E,k,q,Time)
    !
    do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      !
-     ik_RIM=ik_RT-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
+     ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
      !
      H_nl_sc=cZERO
      !
      ! The gauge field
      !=================
-     if (l_NE_with_fields) call RT_apply_field(ik,ik_RIM,E,H_nl_sc,A_input)
+     if (l_NE_with_fields) call RT_apply_field(ik,ik_DbGd,E,H_nl_sc,A_input)
      !
      forall(ib=SC_bands(1):SC_bands(2),ibp=SC_bands(1):SC_bands(2)) &
 &           Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp,1)

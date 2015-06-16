@@ -38,7 +38,7 @@ subroutine RT_BGR(dG,E,k)
  use wave_func,      ONLY:WF
  use real_time,      ONLY:G_lesser_reference,l_initial_equilibrium,REF_V_xc_sc,BGR,&
 &                         REF_V_hartree_sc,REF_Vnl_xc,BGR_Hartree,BGR_V_xc,BGR_Self_Energy,&
-&                         l_RT_uses_E_RIM,RIM_ibz_coo,E_reference,RT_nk,RT_ibz_coo,&
+&                         l_RT_uses_E_DbGd,DbGd_ibz_coo,E_reference,RT_nk,RT_ibz_coo,&
 &                         eval_HARTREE,eval_DFT,RT_ibz_coo,RT_all2ibz,l_BGR,RT_Vnl_xc
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -56,15 +56,15 @@ subroutine RT_BGR(dG,E,k)
  complex(SP)  :: G_hf(SC_bands(2),SC_bands(2),nkibz),G_cohsex(SC_bands(2),SC_bands(2),nkibz),&
 &                H(SC_bands(2),SC_bands(2),n_sp_pol)
  real(SP)     :: deltaE
- integer      :: ib,ik,ik_ref,ik_RT,i_qp,ibp,I_dir(2),ik_ibz,ik_RIM,i_sp
- !
-#if defined _TIMING
- call timing('RT BGR',OPR='start')
-#endif
+ integer      :: ib,ik,ik_ref,ik_RT,i_qp,ibp,I_dir(2),ik_ibz,ik_DbGd,i_sp
  !
  BGR_Hartree    =0.
  BGR_V_xc       =0.
  BGR_Self_Energy=0.
+ !
+#if defined _TIMING
+ call timing('RT BGR',OPR='start')
+#endif
  !
  if (l_initial_equilibrium) then
    call E_reset(E_reference)
@@ -185,14 +185,14 @@ subroutine RT_BGR(dG,E,k)
      do ik=1,RT_nk
        !
        ik_ibz=RT_all2ibz(ik)
-       ik_RIM=ik-RT_ibz_coo(ik_ibz,1)+RIM_ibz_coo(ik_ibz,1)
+       ik_DbGd=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
        !
        do ib=SC_bands(1),SC_bands(2)
          !
          deltaE=BGR_Hartree(ib,ik_ibz,1)+BGR_V_xc(ib,ik_ibz,1)+BGR_Self_Energy(ib,ik_ibz,1)
          !
-         if (     l_RT_uses_E_RIM) E%E_RIM(ib,ik_RIM,1)=E_reference%E_RIM(ib,ik_RIM,1)+deltaE
-         if (.not.l_RT_uses_E_RIM) E%E(ib,ik_ibz,1)=E_reference%E(ib,ik_ibz,1)+deltaE
+         if (     l_RT_uses_E_DbGd) E%E_DbGd(ib,ik_DbGd,1)=E_reference%E_DbGd(ib,ik_DbGd,1)+deltaE
+         if (.not.l_RT_uses_E_DbGd) E%E(ib,ik_ibz,1)=E_reference%E(ib,ik_ibz,1)+deltaE
          !
        enddo
        !

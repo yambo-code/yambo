@@ -49,10 +49,10 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         G_lesser_reference,rho_reference,magn_reference,  &
 &                         l_NE_with_fields,XC0_and_HARTREE0,RT_ibz_coo,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,&
-&                         Gr_kind,Gr_description,l_RT_uses_E_RIM,N_Gr_descs,&
+&                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
-&                         RIM_ibz_coo,RT_eh_en,G_MEM_steps,MEM_index
+&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,MEM_index
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,H_nl_sc,V_hartree_sc,E_bare,V_xc_sc,rho_n,magn_n,Ho,it_now
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
@@ -106,10 +106,10 @@ subroutine RT_start_and_restart(E,k,q,X)
  do ib=SC_bands(1),SC_bands(2)
    do ik=1,k%nibz
      do ik_RT_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       ik_E_rim=ik_RT_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
-       if (l_RT_uses_E_RIM) then
-         G_lesser(ib,ib,ik_RT_rim,1) =cI*E%f_RIM(ib,ik_E_rim,1)
-         if(associated(E%W)) E%W_RIM(ib,ik_E_rim,1)=E%W(ib,ik,1)
+       ik_E_rim=ik_RT_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+       if (l_RT_uses_E_DbGd) then
+         G_lesser(ib,ib,ik_RT_rim,1) =cI*E%f_DbGd(ib,ik_E_rim,1)
+         if(associated(E%W)) E%W_DbGd(ib,ik_E_rim,1)=E%W(ib,ik,1)
        else
          G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
        endif
@@ -314,9 +314,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  !================
  if( all(RT_eh_en(:)==0._SP) ) then
    ! Case A: was not defined in input
-   if (l_RT_uses_E_rim) then
-     RT_eh_en(1)=minval(E%E_RIM(SC_bands(1):SC_bands(2),:,:)) 
-     RT_eh_en(2)=maxval(E%E_RIM(SC_bands(1):SC_bands(2),:,:)) 
+   if (l_RT_uses_E_DbGd) then
+     RT_eh_en(1)=minval(E%E_DbGd(SC_bands(1):SC_bands(2),:,:)) 
+     RT_eh_en(2)=maxval(E%E_DbGd(SC_bands(1):SC_bands(2),:,:)) 
    else
      RT_eh_en(1)=minval(E%E(SC_bands(1):SC_bands(2),:,:)) 
      RT_eh_en(2)=maxval(E%E(SC_bands(1):SC_bands(2),:,:)) 

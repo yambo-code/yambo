@@ -30,7 +30,7 @@ subroutine k_random
  use parser_m,            ONLY:parser
  use com,                 ONLY:msg,of_open_close,error,warning
  use vec_operate,         ONLY:v_norm,c2a,k2bz,v_is_zero
- use YPP,                 ONLY:BZ_RIM_nkpts,gamma_radius,K_transform
+ use YPP,                 ONLY:BZ_DbGd_nkpts,gamma_radius,K_transform
  use electrons,           ONLY:levels,E_reset
  use LIVE_t,              ONLY:live_timing
  !
@@ -38,7 +38,7 @@ subroutine k_random
  !
  ! Work Space
  !
- real(SP)     ::rand_k(BZ_RIM_nkpts+1,3)
+ real(SP)     ::rand_k(BZ_DbGd_nkpts+1,3)
  integer      ::i1
  character(lchlen) :: k_rand_fname
  character(schlen) :: dump
@@ -63,7 +63,7 @@ subroutine k_random
  !
  call section('*',"== Random k-points generator ==")
  !
- call live_timing('Random k-points',BZ_RIM_nkpts,SERIAL=.true.)
+ call live_timing('Random k-points',BZ_DbGd_nkpts,SERIAL=.true.)
  !
  call set_real_printed_length(f_length=20,g_length=20)
  !
@@ -77,7 +77,7 @@ subroutine k_random
  !
  k_counter=0
  !
- do while ( k_counter < BZ_RIM_nkpts )
+ do while ( k_counter < BZ_DbGd_nkpts )
    !
    if (impose_gamma_radius) then
      !

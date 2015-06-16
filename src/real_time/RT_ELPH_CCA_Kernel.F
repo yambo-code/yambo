@@ -28,7 +28,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
  use SC,             ONLY:SC_bands,B_mat_index
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         l_RT_uses_E_RIM,RIM_ibz_coo,RT_occupations_locked,&
+&                         l_RT_uses_E_DbGd,DbGd_ibz_coo,RT_occupations_locked,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_delta_occupations,l_initial_equilibrium,q_weight_RT,&
 &                         RT_eh_en,RT_scatt_tresh,RT_ibz_coo,RT_Nk_ibz
@@ -76,7 +76,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
      if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n_shift,i_np_shift) ) ) cycle
      i_b_mat_mem=PAR_B_mat_index(i_n_shift,i_np_shift)
      !
-     if (.not. l_RT_uses_E_RIM) then
+     if (.not. l_RT_uses_E_DbGd) then
        !
        if(E%E(i_np_shift,ik_m_q,1)<RT_eh_en(1) .or. E%E(i_np_shift,ik_m_q,1)>RT_eh_en(2)) cycle
        if(E%E(i_n_shift ,ik    ,1)<RT_eh_en(1) .or. E%E(i_n_shift ,ik    ,1)>RT_eh_en(2)) cycle
@@ -101,16 +101,16 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
          !
          if (RT_occupations_locked(i_np_shift,ip_rim)) cycle
          !
-         if (l_RT_uses_E_RIM) then
+         if (l_RT_uses_E_DbGd) then
            !
-           i1=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
-           i2=ip_rim-RT_ibz_coo(ik_m_q,1)+RIM_ibz_coo(ik_m_q,1)
+           i1=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+           i2=ip_rim-RT_ibz_coo(ik_m_q,1)+DbGd_ibz_coo(ik_m_q,1)
            !
-           if(E%E_RIM(i_np_shift,i2,1)<RT_eh_en(1) .or. E%E_RIM(i_np_shift,i2,1)>RT_eh_en(2)) cycle
-           if(E%E_RIM(i_n_shift ,i1,1)<RT_eh_en(1) .or. E%E_RIM(i_n_shift ,i1,1)>RT_eh_en(2)) cycle
+           if(E%E_DbGd(i_np_shift,i2,1)<RT_eh_en(1) .or. E%E_DbGd(i_np_shift,i2,1)>RT_eh_en(2)) cycle
+           if(E%E_DbGd(i_n_shift ,i1,1)<RT_eh_en(1) .or. E%E_DbGd(i_n_shift ,i1,1)>RT_eh_en(2)) cycle
            !
-           DELTA_E=    E%E_RIM(i_n_shift,i1,1) -    E%E_RIM(i_np_shift,i2,1)
-           DELTA_W=abs(E%W_RIM(i_n_shift,i1,1))+abs(E%W_RIM(i_np_shift,i2,1))
+           DELTA_E=    E%E_DbGd(i_n_shift,i1,1) -    E%E_DbGd(i_np_shift,i2,1)
+           DELTA_W=abs(E%W_DbGd(i_n_shift,i1,1))+abs(E%W_DbGd(i_np_shift,i2,1))
            !
          endif
          !

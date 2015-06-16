@@ -33,11 +33,11 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use stderr,        ONLY:intc,set_real_printed_length
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,BZ_RIM_tot_nkpts
+ use electrons,     ONLY:levels,BZ_DbGd_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_fxc,Dipole_covariant,&
-&                        use_X_RIM,eval_alpha,eps_2_alpha,O_eels
+&                        use_X_DbGd,eval_alpha,eps_2_alpha,O_eels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_q_for_Xo
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -184,11 +184,11 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      call msg('o fxc','#')
    endif
    !
-   ! BZ RIM
+   ! BZ Double Grid
    !
-   if (use_X_RIM) then
+   if (use_X_DbGd) then
      call msg('o eps_q eel_q fxc alpha','#')
-     call msg('o eps_q eel_q fxc alpha','# BZ Energy RIM points :',BZ_RIM_tot_nkpts,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','# BZ Energy DbGd points:',BZ_DbGd_tot_nkpts,INDENT=0)
    endif
    !
    if (iq==1) call PP_redux_wait

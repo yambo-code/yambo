@@ -33,7 +33,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  use rt_ctl,         ONLY:RT_do_IO
  use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations,RT_nk,RT_Nk_ibz,RT_ibz_coo,&
 &                         XC0_and_HARTREE0,REF_V_xc_sc,RT_average_operator,           &
-&                         RIM_ibz_coo,l_RT_uses_E_RIM,   &
+&                         DbGd_ibz_coo,l_RT_uses_E_DbGd,   &
 &                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,&
 &                         RT_H_occupations,G_lesser_reference,RT_Vnl_xc
  use electrons,      ONLY:levels
@@ -85,7 +85,7 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  !  
  ! dE_ion = - i Tr {Ho dG^<} - dEkin
  !
- call RT_average_operator(O_VALUE=dE_ion,O_MATRIX=Ho,G=dG_lesser,en=en,k=k,RIM='ENERGY',nK_mem=k%nibz)
+ call RT_average_operator(O_VALUE=dE_ion,O_MATRIX=Ho,G=dG_lesser,en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
  !
  dE_ion = dE_ion - dE_kin
  !
@@ -156,9 +156,9 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    do ib=SC_bands(1),SC_bands(2)
      VALUE_tmp=(0._SP,0._SP)
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       if (l_RT_uses_E_RIM) then
-         iE_rim=ik_rim-RT_ibz_coo(ik,1)+RIM_ibz_coo(ik,1)
-         Energy=en%E_RIM(ib,iE_rim,1)
+       if (l_RT_uses_E_DbGd) then
+         iE_rim=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+         Energy=en%E_DbGd(ib,iE_rim,1)
        else
          Energy=en%E(ib,ik,1)
        endif

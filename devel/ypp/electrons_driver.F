@@ -37,7 +37,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_RT_dos,l_RT_occ_Bands,l_RT_life_Bands,&
-&                         l_bands,l_current,current_dir
+&                         l_bands,l_current,current_dir,plot_is_1D
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -157,7 +157,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! WFs
  !=====
  !
- flag=.not.l_dos
+ flag=.not.l_dos.and..not.l_bands
  !===
 #if defined _YPP_MAGNETIC
  if (flag) flag=.not.any((/l_angular_momentum,l_position/))
@@ -209,8 +209,15 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !======================
  !
  if(l_bands.or.l_RT_occ_Bands.or.l_RT_life_Bands) then
-   if ( i_time_rev==1) call error('Bands interpolation does not work with T-rev symmetry')
+   !
+   if ( (l_RT_occ_Bands.or.l_RT_life_Bands).and.i_time_rev==1 ) then
+     call error('Bands interpolation does not work with T-rev symmetry')
+   endif
+   !
    call electrons_bands(Xk,Xen,nb_to_load)
+   !
+   return
+   !
  endif
  !
  ! GPL_EXCLUDE_START
@@ -526,30 +533,43 @@ subroutine electrons_driver(Xk,Xen,Xq)
    allocate(el_cur(fft_size,3))
    !
    call el_density_and_current(Xen,Xk,J=el_cur)
-   v2plot=(el_cur(:,1)*current_dir(1)+el_cur(:,2)*current_dir(2)+&
-&          el_cur(:,3)*current_dir(3))*AU2nAmpere/v_norm(current_dir)
    !
    v2plot=v2plot/abs(maxval( v2plot ))
    !
    call msg("s",'Current integrals (x,y,z) [nAmpere]:',&
 &               (/Sum(el_cur(:,1)),Sum(el_cur(:,2)),Sum(el_cur(:,3))/)*AU2nAmpere)
    !
-   l_norm_to_one=.false.
+   l_norm_to_one=.true.
    !
    ch_ws(1)='current_'//trim(intc(plot_dim))
    if (use_cube) output_fname=trim(ch_ws(1))//'d.cube'
    if (use_xcrysden) output_fname=trim(ch_ws(1))//'d.xsf'
    if (use_gnuplot)  output_fname=trim(ch_ws(1))//'d'
    !
-   if (use_cube) then 
-     call of_open_close(trim(output_fname),'o')
-   else
+   if (.not.use_cube) then 
      call of_open_close(trim(output_fname),'ot')
-     call msg('o den',"#")
+     call msg('o current',"#")
    endif
    !
-   plot_title='current'
-   call plot_check_and_launch(.false.)
+   if (any(plot_is_1D)) then
+     !
+     call plot_and_project_1D(el_cur,current_dir)
+     !
+     call of_open_close(trim(output_fname))
+     !
+   else
+     !
+     v2plot=(el_cur(:,1)*current_dir(1)+el_cur(:,2)*current_dir(2)+&
+&            el_cur(:,3)*current_dir(3))*AU2nAmpere
+     !
+     if (use_cube) then 
+       call of_open_close(trim(output_fname),'o')
+     endif
+     !
+     plot_title='current'
+     call plot_check_and_launch(.false.)
+     !
+   endif
    !
    call of_open_close(trim(output_fname))
    !

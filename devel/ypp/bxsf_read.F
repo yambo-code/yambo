@@ -28,9 +28,9 @@ subroutine bxsf_read(Xk,Xen)
  use R_lattice,           ONLY:bz_samp,b,k_grid,k_the_nearest
  use parser_m,            ONLY:parser
  use YPP,                 ONLY:wannier_bands, ord_dgrid_ipol
- use electrons,           ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,&
-                               BZ_RIM_max_filling,BZ_RIM_nbands, &
-                               BZ_RIM_tot_nkpts,BZ_RIM_ipol_weight,n_spin
+ use electrons,           ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,&
+                               BZ_DbGd_max_filling,BZ_DbGd_nbands, &
+                               BZ_DbGd_tot_nkpts,BZ_DbGd_ipol_weight,n_spin
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:file_exists,msg,error
  use vec_operate,         ONLY:c2a,rlu_k2bz,k2bz,v_is_zero
@@ -43,13 +43,13 @@ subroutine bxsf_read(Xk,Xen)
  ! Work Space
  ! 
  character(lchlen) :: filename
- type(bz_samp) :: RIM_k
+ type(bz_samp) :: DbGd_k
  !
  integer :: readunit, ii, readband, iband, ikpt, kx, ky, kz,ID,i_err, ikbz, bxsf_bands
  integer :: nearest_to_g
  integer :: nbands,vband ! total number of bands, highest valence
  integer :: ndim ! total number of dimensions, iterator on dimensions
- integer, external :: io_RIM_E_and_k
+ integer, external :: io_Double_Grid
  integer, external :: double_k_grid
  integer :: err_dgrid
  real(SP) :: readene,deltaE
@@ -190,55 +190,54 @@ subroutine bxsf_read(Xk,Xen)
  call k_ibz2bz(Xk,'i',.true.)
  !
  !
- !============== prepare RIM_k
- ! RIM_k are in reciproc unit cell, not Brillouin zone
- RIM_k%nbz=size(kpoints, 1)
- RIM_k%nibz=RIM_k%nbz
- allocate(RIM_k%ptbz(RIM_k%nbz,3))
- allocate(RIM_k%weights(RIM_k%nibz))
- RIM_k%ptbz = 0_SP
- RIM_k%weights = 1_SP
+ !============== prepare DbGd_k
+ ! DbGd_k are in reciproc unit cell, not Brillouin zone
+ DbGd_k%nbz=size(kpoints, 1)
+ DbGd_k%nibz=DbGd_k%nbz
+ allocate(DbGd_k%ptbz(DbGd_k%nbz,3))
+ allocate(DbGd_k%weights(DbGd_k%nibz))
+ DbGd_k%ptbz = 0_SP
+ DbGd_k%weights = 1_SP
  ! map read kpoints to BZ 
- do ii=1,RIM_k%nbz
-   call rlu_k2bz(v_out=RIM_k%ptbz(ii,:),v_in=kpoints(ii,:))
+ do ii=1,DbGd_k%nbz
+   call rlu_k2bz(v_out=DbGd_k%ptbz(ii,:),v_in=kpoints(ii,:))
  enddo
  !
  ! conversion kpoints from reciprocal coord to internal (cartesian-like) coord 
- do ii=1,RIM_k%nbz
-   call c2a(v_in=RIM_k%ptbz(ii,:),mode='ka2i')
+ do ii=1,DbGd_k%nbz
+   call c2a(v_in=DbGd_k%ptbz(ii,:),mode='ka2i')
  enddo !
  ! map kpoints (in iku) to BZ
- do ii=1,RIM_k%nbz
-   call k2bz(v_in=RIM_k%ptbz(ii,:))
+ do ii=1,DbGd_k%nbz
+   call k2bz(v_in=DbGd_k%ptbz(ii,:))
  enddo
  !
- 
- allocate(BZ_RIM_nkpt(Xk%nbz))
- BZ_RIM_nkpt = 0
- BZ_RIM_nbands=nbands
- BZ_RIM_tot_nkpts=RIM_k%nbz
+ allocate(BZ_DbGd_nkpt(Xk%nbz))
+ BZ_DbGd_nkpt = 0
+ BZ_DbGd_nbands=nbands
+ BZ_DbGd_tot_nkpts=DbGd_k%nbz
  !
  if (ord_dgrid_ipol .eq. 0) then
    !
    call section('*','Find nearest K-points in BZ')
    ! 
-   call live_timing('BZ RIM Tables',RIM_k%nbz*2,SERIAL=.true.)  
+   call live_timing('BZ DbGd_k Tables',DbGd_k%nbz*2,SERIAL=.true.)  
    ! 
-   ! have to go twice through all elements as BZ_RIM_table cannot be
+   ! have to go twice through all elements as BZ_DbGd_k cannot be
    ! allocated without knowing the number of maximum elements. 
    !
-   do while(.not.allocated(BZ_RIM_table)) 
-     if (maxval(BZ_RIM_nkpt)>0) then
-       allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)))
-       BZ_RIM_table=0
+   do while(.not.allocated(BZ_DbGd_table)) 
+     if (maxval(BZ_DbGd_nkpt)>0) then
+       allocate(BZ_DbGd_table(Xk%nbz,maxval(BZ_DbGd_nkpt)))
+       BZ_DbGd_table=0
      endif
-     BZ_RIM_nkpt=0
-     do ii=1,RIM_k%nbz
+     BZ_DbGd_nkpt=0
+     do ii=1,DbGd_k%nbz
        !
-       ikbz=k_the_nearest(RIM_k%ptbz(ii,:),Xk%ptbz(:,:),Xk%nbz)
-       BZ_RIM_nkpt(ikbz)=BZ_RIM_nkpt(ikbz)+1
+       ikbz=k_the_nearest(DbGd_k%ptbz(ii,:),Xk%ptbz(:,:),Xk%nbz)
+       BZ_DbGd_nkpt(ikbz)=BZ_DbGd_nkpt(ikbz)+1
        !
-       if (allocated(BZ_RIM_table)) BZ_RIM_table(ikbz,BZ_RIM_nkpt(ikbz))= ii !RIM_k%sstar(i1,1)
+       if (allocated(BZ_DbGd_table)) BZ_DbGd_table(ikbz,BZ_DbGd_nkpt(ikbz))= ii !DbGd_k%sstar(i1,1)
        !   
        call live_timing(steps=1)
        !
@@ -246,51 +245,51 @@ subroutine bxsf_read(Xk,Xen)
    enddo
    call live_timing()
    ! 
-   BZ_RIM_max_filling=maxval(BZ_RIM_nkpt)
-   allocate(BZ_RIM_ipol_weight(BZ_RIM_max_filling))
-   BZ_RIM_ipol_weight = 1.0_SP
+   BZ_DbGd_max_filling=maxval(BZ_DbGd_nkpt)
+   allocate(BZ_DbGd_ipol_weight(BZ_DbGd_max_filling))
+   BZ_DbGd_ipol_weight = 1.0_SP
  else
    call section('*','Employ double grid method' )
    call msg('s',':: Perform polynomial interpolation of order :',ord_dgrid_ipol)
-   ! fill RIM_table according to double grid technique
+   ! fill DbGd_k according to double grid technique
    err_dgrid=double_k_grid(Xk,nkpoints,ord_dgrid_ipol)
    if(err_dgrid.ne.0) then
      call msg("s",':: ERROR while preparing double grid. Error:',err_dgrid) 
      return
    endif
-   BZ_RIM_max_filling=maxval(BZ_RIM_nkpt)
+   BZ_DbGd_max_filling=maxval(BZ_DbGd_nkpt)
  endif
  !
  !     
- call msg('s',':: Blocks filling range :',(/minval(BZ_RIM_nkpt),BZ_RIM_max_filling/))
- if(minval(BZ_RIM_nkpt) .ne. BZ_RIM_max_filling) then
-   call msg('s',':: RIM blocks are not filled uniformly.')
+ call msg('s',':: Blocks filling range :',(/minval(BZ_DbGd_nkpt),BZ_DbGd_max_filling/))
+ if(minval(BZ_DbGd_nkpt) .ne. BZ_DbGd_max_filling) then
+   call msg('s',':: DbGd_k blocks are not filled uniformly.')
    if(ord_dgrid_ipol.gt.0)then
      call msg('s',':: Error: For double grid must be filled uniformely.')
      return
    endif
  endif
  !
- call section('*','Create & write BZ_RIM')
+ call section('*','Create & write BZ_DbGd')
  !
- allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
- Xen%E_RIM(:,:RIM_k%nbz,1)=ene(:,:RIM_k%nbz)/HA2EV+Xen%E_Fermi
+ allocate(Xen%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_spin))
+ Xen%E_DbGd(:,:DbGd_k%nbz,1)=ene(:,:DbGd_k%nbz)/HA2EV+Xen%E_Fermi
  ! align last (partly) filled band at gamma.
- nearest_to_g=k_the_nearest(RIM_k%ptbz(1,:),Xk%ptbz(:,:),Xk%nbz) 
- if(sum((RIM_k%ptbz(1,:)-Xk%ptbz(nearest_to_g,:))**2).gt. epsilon(1._SP)) then
+ nearest_to_g=k_the_nearest(DbGd_k%ptbz(1,:),Xk%ptbz(:,:),Xk%nbz) 
+ if(sum((DbGd_k%ptbz(1,:)-Xk%ptbz(nearest_to_g,:))**2).gt. epsilon(1._SP)) then
     call msg('s',':: Gamma is not part of your kgrid.')
     call msg('s',':: Probably you use a shifted grid. You should not!')
-    call msg('s',':: Gamma :',RIM_k%ptbz(1,:))
+    call msg('s',':: Gamma :',DbGd_k%ptbz(1,:))
     call msg('s',':: Nearest to Gamma :',Xk%ptbz(nearest_to_g,:))
  end if 
  !
  vband=minloc(Xen%f(:,nearest_to_g,1),1)-1
  call msg('s',':: Internal and wannier bands to align (at Gamma):',(/vband,vband+wannier_bands(1)-1/))
  deltaE=ene(vband,1)/HA2EV-Xen%E(vband,nearest_to_g,1)
- Xen%E_RIM(:,:RIM_k%nbz,1)=Xen%E_RIM(:,:RIM_k%nbz,1)-deltaE
+ Xen%E_DbGd(:,:DbGd_k%nbz,1)=Xen%E_DbGd(:,:DbGd_k%nbz,1)-deltaE
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=NONE,ID=ID)
- i_err=io_RIM_E_and_k(Xen,Xk,ID)
+ i_err=io_Double_Grid(Xen,Xk,ID)
  !
  ! clean up
  ! 
@@ -301,6 +300,6 @@ subroutine bxsf_read(Xk,Xen)
  deallocate(nkpoints_gengrid)
  deallocate(startkpoint)
  deallocate(recip_lattice)
- deallocate(BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_ipol_weight)
+ deallocate(BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_ipol_weight)
  !
 end subroutine

@@ -40,8 +40,8 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
-&                        BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spinor,n_spin,&
-&                        E_RIM_components_reset
+&                        BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_spinor,n_spin,&
+&                        E_DbGd_components_reset
  use R_lattice,     ONLY:bz_samp
  use com,           ONLY:msg,error,warning
  use stderr,        ONLY:real2ch
@@ -58,7 +58,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  integer :: i1,is,ib,ik,i_trials(2),n_b_full_guess,i_Ef(2),n_total_states,group_size
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
- real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),Efdist,nel_RIM
+ real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),Efdist,nel_DbGd
  logical :: Fermi_is_converged
  real(SP),parameter :: Tel_step=0.0001/HA2EV
  real(SP),parameter :: nel_diff_zero=1.E-5
@@ -122,11 +122,11 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  Fermi_is_converged=.false.
  !
  ! BUG-fix [Andrea 1/6/2012]: when the system is semiconductive it may happen the
- ! Efermi falls below or above the CBM/VBM of the RIM energy levels. To avoid this
+ ! Efermi falls below or above the CBM/VBM of the Double Grid energy levels. To avoid this
  ! a very small temperature is imposed forcing the Fermi level to fall within the
  ! gap.
  !
- if (BZ_RIM_nbands>0) Tel=Tel_step
+ if (BZ_DbGd_nbands>0) Tel=Tel_step
  !
  do while (.not.Fermi_is_converged)
    !
@@ -226,25 +226,25 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  E%E(:,:,:)=E%E(:,:,:)-E%E_Fermi
  !
- ! If %E_RIM is associated I simply extend the %E occupations to %E_RIM
+ ! If %E_DbGd is associated I simply extend the %E occupations to %E_DbGd
  !
- if (BZ_RIM_nbands>0.and.associated(E%E_RIM)) then
+ if (BZ_DbGd_nbands>0.and.associated(E%E_DbGd)) then
    ! 
-   nel_RIM=0._SP 
+   nel_DbGd=0._SP 
    ! 
-   E%E_RIM(:,:,:)=E%E_RIM(:,:,:)-E%E_Fermi
-   do ik=1,BZ_RIM_tot_nkpts
-     do ib=1,BZ_RIM_nbands
+   E%E_DbGd(:,:,:)=E%E_DbGd(:,:,:)-E%E_Fermi
+   do ik=1,BZ_DbGd_tot_nkpts
+     do ib=1,BZ_DbGd_nbands
        do is=1,n_sp_pol
-         E%f_RIM(ib,ik,is)=spin_occ*Fermi_fnc(E%E_RIM(ib,ik,is),Tel)
-         nel_RIM=nel_RIM+E%f_RIM(ib,ik,is)/real(BZ_RIM_tot_nkpts)
+         E%f_DbGd(ib,ik,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik,is),Tel)
+         nel_DbGd=nel_DbGd+E%f_DbGd(ib,ik,is)/real(BZ_DbGd_tot_nkpts)
        enddo
      enddo
    enddo
    !
-   if (abs(nel-nel_RIM)>0.01*nel) then
-     call warning('RIM grid produces  '//trim(real2ch(nel_RIM))//' e-. It has been, therefore, switched off')
-     call E_RIM_components_reset(E,.TRUE.)
+   if (abs(nel-nel_DbGd)>0.01*nel) then
+     call warning('Double grid produces  '//trim(real2ch(nel_DbGd))//' e-. It has been, therefore, switched off')
+     call E_DbGd_components_reset(E,.TRUE.)
    endif
    !
  endif

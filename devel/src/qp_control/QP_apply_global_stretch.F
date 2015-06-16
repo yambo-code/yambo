@@ -21,8 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
-&                                  DB_corrected,apply_anyway)
+subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,DB_corrected,&
+&                                  apply_anyway)
  !
  ! Here I apply the strecth for both QP_ctl_from_DB (respecting the 
  ! qp_done array) and QP_ctl_add (everywhere)

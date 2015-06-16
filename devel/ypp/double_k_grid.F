@@ -25,8 +25,8 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  !
  use pars,                ONLY:SP
  use R_lattice,           ONLY:bz_samp,k_grid
- use electrons,           ONLY:BZ_RIM_table,BZ_RIM_nkpt,&
-                               BZ_RIM_ipol_weight
+ use electrons,           ONLY:BZ_DbGd_table,BZ_DbGd_nkpt,&
+                               BZ_DbGd_ipol_weight
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a
@@ -102,23 +102,26 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  end do
  !
  ! bring (internal) coarse grid to interval [0,1)
+ !
  allocate(kpts_c(product(nkpoint_c), 3))
  kpts_c=0
  ! conversion kpoints to reciprocal coord 
+ !
  do ii=1,Xk%nbz
    call c2a(v_in=Xk%ptbz(ii,:),v_out=kpts_c(ii,:),mode='ki2a')
  enddo
  where(kpts_c .lt. 0.0) kpts_c = kpts_c + 1.0
  !
- ! prepare RIM quantities
- allocate(BZ_RIM_table(Xk%nbz, npts_around_coarse))
- BZ_RIM_table = 0
- allocate(BZ_RIM_ipol_weight(npts_around_coarse))
- BZ_RIM_ipol_weight = 0.0_SP
+ ! prepare Double Grid quantities
+ !
+ allocate(BZ_DbGd_table(Xk%nbz, npts_around_coarse))
+ BZ_DbGd_table = 0
+ allocate(BZ_DbGd_ipol_weight(npts_around_coarse))
+ BZ_DbGd_ipol_weight = 0.0_SP
  !
  !---------------------- SAMPLE POINTS (KNOTS) -----------------------------
  ! find kpoints of fine grid that correspond to those of coarse grid
- call live_timing('BZ RIM Tables',Xk%nbz*npts_around_coarse,SERIAL=.true.) 
+ call live_timing('BZ Double Grid Tables',Xk%nbz*npts_around_coarse,SERIAL=.true.) 
  !
  do ii_c = 1,Xk%nbz !size(kpts_c,1)
    ! indices of coarse points 
@@ -159,7 +162,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
                nz_period = (modulo(intvz-1, nkpoint_c(3)))* nstep_f(3) + nz
                ! 
                ii = ii + 1
-               BZ_RIM_table(ii_c,ii) = sub2ind(nkpoint_f, nx_period, ny_period, nz_period)
+               BZ_DbGd_table(ii_c,ii) = sub2ind(nkpoint_f, nx_period, ny_period, nz_period)
                call live_timing(steps=1)
              end do
            end do
@@ -168,7 +171,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
      end do
    end do
    
-   BZ_RIM_nkpt(ii_c)=ii
+   BZ_DbGd_nkpt(ii_c)=ii
  end do
  !
  call live_timing()  
@@ -178,7 +181,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  ! (ie. to coarse point around which fine points are sampled)
  ! choose intervals such that starting point is the first point on grid.  
  !
- call live_timing('BZ RIM ipol weights',npts_around_coarse,SERIAL=.true.) 
+ call live_timing('BZ Double Grid ipol weights',npts_around_coarse,SERIAL=.true.) 
  pt_ipol = 1 - iintervls(1)  
  ii = 0
  do intvx = 1, nintervls 
@@ -212,7 +215,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
                       intvz, pt_ipol, real(nz-1)/nstep_f(3))
              !
              ii = ii + 1
-             BZ_RIM_ipol_weight(ii) = product(tmp_ipol_weight)
+             BZ_DbGd_ipol_weight(ii) = product(tmp_ipol_weight)
              !   
              call live_timing(steps=1)
              !
@@ -227,7 +230,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  ! later in construction of GreenF every contribution will be divided by npts_around_coarse,
  ! which is not wanted for dgrid here, has to be cured beforehand. 
  !
- BZ_RIM_ipol_weight = BZ_RIM_ipol_weight/product(nstep_f)*real(npts_around_coarse)
+ BZ_DbGd_ipol_weight = BZ_DbGd_ipol_weight/product(nstep_f)*real(npts_around_coarse)
  !
  ! everything is ok 
  !

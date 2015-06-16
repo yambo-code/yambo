@@ -35,7 +35,7 @@ subroutine bz_interp_setup(Xk)
  use matrix_operate, ONLY:m3inv
  use com,            ONLY:msg
 #if defined _RT
- use real_time,      ONLY:RIM_BZ_coo
+ use real_time,      ONLY:DbGd_BZ_coo
 #endif
  !
  implicit none
@@ -57,8 +57,8 @@ subroutine bz_interp_setup(Xk)
  metric=matmul(a,transpose(a))
  !
 #if defined _RT
-! if(.not.associated(Xk%pt_RIM)) sphere_radius=(lpfac*Xk%nbz              *3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
-! if(     associated(Xk%pt_RIM)) sphere_radius=(lpfac*RIM_bz_coo(Xk%nbz,2)*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
+! if(.not.associated(Xk%pt_DbGd)) sphere_radius=(lpfac*Xk%nbz               *3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
+! if(     associated(Xk%pt_DbGd)) sphere_radius=(lpfac*DbGd_bz_coo(Xk%nbz,2)*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
 #else
  sphere_radius=(lpfac*Xk%nbz*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
 #endif
@@ -160,7 +160,7 @@ subroutine bz_interp_setup(Xk)
 ! do i1=1,n_vec
 !   write(*,*) 'lvec(',i1,') = ',lattice_vectors(:,i1),' mod ',lattice_vec_mod(i1)
 ! enddo
- call msg('sr','[Interp] Number of shells for interpolation : ',nshells)
+ call msg('sr','[INTERPOLATION] Number of shells: ',nshells)
  !
  all_vec(1:3,1:nshells)=lattice_vectors(1:3,1:nshells)
  !

@@ -138,7 +138,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    !
  endif
  !
- !
  ! [2]: Check FFT size
  !
  if (loaded_bounds_ok) then

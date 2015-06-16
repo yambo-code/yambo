@@ -34,7 +34,7 @@ subroutine RT_occupations_FIT(E,k,T_fit,Ef_fit,Occupations)
  use vec_operate,    ONLY:sort
  use functions,      ONLY:Fermi_fnc_fit
  use SC,             ONLY:SC_bands
- use real_time,      ONLY:RIM_ibz_coo,l_RT_uses_E_RIM,RT_nk,RT_ibz_coo,RT_carriers
+ use real_time,      ONLY:DbGd_ibz_coo,l_RT_uses_E_DbGd,RT_nk,RT_ibz_coo,RT_carriers
  !
  implicit none
  !
@@ -67,17 +67,17 @@ subroutine RT_occupations_FIT(E,k,T_fit,Ef_fit,Occupations)
    if (i_b<SC_bands(1)) cycle
    if (i_b>SC_bands(2)) cycle
    !
-   do i_k_rim=0,RIM_ibz_coo(i_k,2)-RIM_ibz_coo(i_k,1)
+   do i_k_rim=0,DbGd_ibz_coo(i_k,2)-DbGd_ibz_coo(i_k,1)
      i_k_RT=RT_ibz_coo(i_k,1)+i_k_rim
-     i_k_Erim =RIM_ibz_coo(i_k,1)+i_k_rim
+     i_k_Erim =DbGd_ibz_coo(i_k,1)+i_k_rim
      if (i_k_RT>RT_nk) cycle
      i_RT=i_RT+1
      !
      ! Prepare eps,f(eps) for the report
      !
      RT_occ(i_RT)=Occupations(i_b ,i_k_RT)
-     if(     l_RT_uses_E_RIM) RT_E(i_RT)=E%E_RIM(i_b,i_k_Erim,1)
-     if(.not.l_RT_uses_E_RIM) RT_E(i_RT)=E%E(i_b,i_k_Erim,1)
+     if(     l_RT_uses_E_DbGd) RT_E(i_RT)=E%E_DbGd(i_b,i_k_Erim,1)
+     if(.not.l_RT_uses_E_DbGd) RT_E(i_RT)=E%E(i_b,i_k_Erim,1)
      !
      ! DEBUG <
      ! write(*,*) i_RT,i_k_RT,i_k,i_b,RT_E(i_RT),RT_occ(i_RT)

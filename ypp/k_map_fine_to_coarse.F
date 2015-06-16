@@ -368,7 +368,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
          BZ_DbGd_kpts(i1,:)=Xk%ptbz(ik_bz,:)
        else
          Xen%E_DbGd(:,i1,:)=DbGd_E(i_db_merge)%E(:,BZ_DbGd_table(ik_bz,ik_DbGd)-1,:)
-         BZ_DbGd_kpts(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_DbGd) ),DbGd_k(i_db_merge)%pt(BZ_DbGd_table(ik_bz,ik_DbGd)-1,:))
+         BZ_DbGd_kpts(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_DbGd) ), &
+&                                  DbGd_k(i_db_merge)%pt(BZ_DbGd_table(ik_bz,ik_DbGd)-1,:) )
        endif
        BZ_DbGd_table(ik_bz,ik_DbGd)=ik_DbGd+sum(BZ_DbGd_nkpt(:ik_bz-1))
      enddo

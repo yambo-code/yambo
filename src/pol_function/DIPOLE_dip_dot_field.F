@@ -122,11 +122,23 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
            if(trim(global_gauge)=='velocity') dipole = DIP_P(:,ic,iv,ik_mem,i_spin)
            if(trim(global_gauge)=='length'  ) dipole = DIP_iR(:,ic,iv,ik_mem,i_spin)
 #else
+           !
+           ! GPL_EXCLUDE_START
+           !
            if(Dipole_covariant) then
              dipole = DIP_cov(:,ic,iv,ik_mem,i_spin)
            else
+           !
+           ! GPL_EXCLUDE_END
+           !
              dipole = DIP_iR(:,ic,iv,ik_mem,i_spin)
+           !
+           ! GPL_EXCLUDE_START
+           !
            endif
+           !
+           ! GPL_EXCLUDE_END
+           !
 #endif
            !
          endif

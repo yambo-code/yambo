@@ -38,7 +38,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
  ! Work Space
  !
  integer :: nindxs,i1,i2,i3,i4,d2,ic,average_steps,tot_steps,myid_loop,ncpu_loop,local_comm,&
-&           i_range(2)
+&           i_range(2),increment,missing_cpus
  logical :: SERIAL
  integer,allocatable :: i_done(:),lowlim(:)
  !
@@ -74,19 +74,22 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,MASK)
    i_done=1
    i_done(:lowlim(1))=0
    average_steps=(uplim(1)-lowlim(1)+1)/ncpu_loop
+   missing_cpus=(uplim(1)-lowlim(1)+1)-average_steps*ncpu_loop
    do i1=1,ncpu_loop
      if (i1==myid_loop+1) then
-       i_range=(/lowlim(1)+average_steps*(i1-1),lowlim(1)+average_steps*i1-1/)
-       px%element_1D(i_range(1):i_range(2))=.TRUE.
        px%n_of_elements(myid_loop+1)=average_steps
+       i_range=(/lowlim(1)+average_steps*(i1-1),lowlim(1)+average_steps*i1-1/)
+       if(myid_loop+1<=missing_cpus) then
+         i_range(1)=i_range(1)+myid_loop
+         i_range(2)=i_range(2)+myid_loop+1
+         px%n_of_elements(myid_loop+1)=px%n_of_elements(myid_loop+1)+1
+       else
+         i_range(1)=i_range(1)+missing_cpus
+         i_range(2)=i_range(2)+missing_cpus
+       endif
+       px%element_1D(i_range(1):i_range(2))=.TRUE.
        i_done(i_range(1):i_range(2))=i_done(i_range(1):i_range(2))-1
      endif
-   enddo
-   !
-   do i1=lowlim(1)+average_steps*ncpu_loop+myid_loop,uplim(1),ncpu_loop
-     px%element_1D(i1)=.TRUE.
-     px%n_of_elements(myid_loop+1)=px%n_of_elements(myid_loop+1)+1
-     i_done(i1)=i_done(i1)-1
    enddo
    !
    if (.not.SERIAL) call PP_redux_wait(i_done,p_prod,COMM=local_comm)

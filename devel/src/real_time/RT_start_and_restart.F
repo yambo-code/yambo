@@ -82,6 +82,10 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  G_lesser          =cZERO
  dG_lesser         =cZERO
+ rho_reference     =rZERO
+ if (n_spin>1) then
+   magn_reference  =rZERO
+ endif
  V_xc_sc           =rZERO
  V_hartree_sc      =rZERO
  H_nl_sc           =cZERO

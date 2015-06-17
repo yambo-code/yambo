@@ -127,6 +127,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
 #endif
  !
+ !GPL EXCLUDE START
+ !
  if(Dipole_covariant) then
     call k_map_nearest_by_dir(Xk,k_map)
     call X_alloc('DIP_cov',(/3,X%ib(2),X%ib(2),PAR_DIPk_nibz/))
@@ -134,6 +136,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
     io_err(3)=io_Overlaps(X,Xen,ID)
  endif
+ !
+ !GPL EXCLUDE END
  !
  if (any(io_err/=0)) then
    !
@@ -170,12 +174,16 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    bands_to_load=X%ib
    !
+   ! GPL_EXCLUDE_START
+   !
    if (Dipole_covariant) then
      bands_to_load(1)=1
      ! Notice that DIP_S is defined in the BZ       
      call X_alloc('DIP_S',(/X%ib(2),X%ib(2),3,Xk%nbz/))
      DIP_S=(0._SP,0._SP)
    endif
+   !
+   ! GPL_EXCLUDE_END
    !   
    ! WF load 
    !
@@ -208,7 +216,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    if (use_trans_gauge)  call DIPOLE_transverse(Xen,Xk,X)
    !
+   ! GPL_EXCLUDE_START
+   !
    if (Dipole_covariant) call DIPOLE_overlaps(Xen,Xk,X)
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Free any loaded WFs
    !
@@ -232,10 +244,38 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        io_err(2)=io_P_and_P2(X,Xen,ID)
      endif
 #endif
+   !
+   ! GPL_EXCLUDE_START
+   !
+   if (Dipole_covariant) call DIPOLE_overlaps(Xen,Xk,X)
+   !
+   ! GPL_EXCLUDE_END
+   !
+   ! Free any loaded WFs
+   !
+   call WF_free(WF)
+   !
+   ! If the calculation of the dipoles is very short the I/O is switched off
+   !
+#if !defined _YPP_RT
+   if (is_section_time_short(COMM=PAR_COM_q_for_Xo%COMM)) then
+     io_DIP=.FALSE.
+     call warning('DIPOLEs I/O switched-off to prevent MPI communication problems')
+   endif
+#endif
+   !
+   if (master_cpu) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+     !
+     ! GPL_EXCLUDE_START
+     !
      if(Dipole_covariant) then
        call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
        io_err(3)=io_Overlaps(X,Xen,ID)
      endif
+     !
+     ! GPL_EXCLUDE_END
+     !
    endif
    !
    do ik=1,Xk%nibz
@@ -255,10 +295,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    endif
 #endif
    !
+   ! GPL_EXCLUDE_START
+   !
    if(Dipole_covariant) then
      call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
      io_err(3)=io_Overlaps(X,Xen,ID)
    endif
+   !
+   ! GPL_EXCLUDE_END
    !
  end if
  !
@@ -277,7 +321,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    Vnl_commutator_warning=.TRUE.
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
  if(Dipole_covariant) call DIPOLE_build_covariants(Xen,Xk,X)
+ !
+ ! GPL_EXCLUDE_END
  !
  call DIPOLE_dip_dot_field(Xen,Xk,X,field_dir)
  !
@@ -288,6 +336,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  call X_alloc('DIP_P') 
  call X_alloc('P_square') 
 #endif
+ !
+ ! GPL_EXCLUDE_START
+ !
  if(Dipole_covariant) call X_alloc('DIP_S DIP_cov')
+ !
+ ! GPL_EXCLUDE_END
  !
 end subroutine

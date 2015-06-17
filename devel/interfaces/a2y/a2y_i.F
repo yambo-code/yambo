@@ -118,7 +118,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! GPL_INCLUDE_START
  !
- !if(n_spin>1) call WF_splitter()
+ !if(n_spin==1) call WF_splitter()
  !
  ! GPL_INCLUDE_END
  !

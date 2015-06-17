@@ -52,7 +52,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  allocate(BS_nT_grps_at_k(nXkibz))
  call mem_est("BS_nT_grps_at_k",(/nXkibz/),(/IP/))
  !
- n_GRP=2*nXkibz*PAR_COM_eh_INDEX%n_CPU*PAR_COM_Xk_ibz_INDEX%n_CPU
+ n_GRP=nXkibz*PAR_COM_eh_INDEX%n_CPU*PAR_COM_Xk_ibz_INDEX%n_CPU
  !
  allocate(BS_T_grp_1st_el(n_GRP),GRP_data(n_GRP),GRP_index(n_GRP))
  call mem_est("BS_T_grp_1st_el",(/n_GRP/),(/IP/))
@@ -83,7 +83,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
      !
      BS_T_grp_1st_el(i_counter)=i_t+sum(BS_nT_at_k(:i_k-1))
      !
-     i_counter=i_counter+2*PAR_COM_eh_INDEX%n_CPU*PAR_COM_Xk_ibz_INDEX%n_CPU
+     i_counter=i_counter+PAR_COM_eh_INDEX%n_CPU*PAR_COM_Xk_ibz_INDEX%n_CPU
      !
    enddo
  enddo
@@ -137,7 +137,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
      !
      do i_g=1,BS_nT_grps
        if (BS_T_grp_1st_el(i_g)==it_ref) then
-         PAR_IND_T_groups%element_1D(i_g)=.TRUE.
+         PAR_IND_T_groups%element_1D(i_g)=.true.
          PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)=&
 &                                         PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1)+1
          PAR_BS_T_grps_index(i_g)=PAR_BS_nT_col_grps

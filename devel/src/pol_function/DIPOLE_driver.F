@@ -244,28 +244,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        io_err(2)=io_P_and_P2(X,Xen,ID)
      endif
 #endif
-   !
-   ! GPL_EXCLUDE_START
-   !
-   if (Dipole_covariant) call DIPOLE_overlaps(Xen,Xk,X)
-   !
-   ! GPL_EXCLUDE_END
-   !
-   ! Free any loaded WFs
-   !
-   call WF_free(WF)
-   !
-   ! If the calculation of the dipoles is very short the I/O is switched off
-   !
-#if !defined _YPP_RT
-   if (is_section_time_short(COMM=PAR_COM_q_for_Xo%COMM)) then
-     io_DIP=.FALSE.
-     call warning('DIPOLEs I/O switched-off to prevent MPI communication problems')
-   endif
-#endif
-   !
-   if (master_cpu) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
      !
      ! GPL_EXCLUDE_START
      !

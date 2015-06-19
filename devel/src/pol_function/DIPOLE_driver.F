@@ -127,7 +127,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
 #endif
  !
- !GPL EXCLUDE START
+ !GPL_EXCLUDE_START
  !
  if(Dipole_covariant) then
     call k_map_nearest_by_dir(Xk,k_map)
@@ -137,7 +137,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
     io_err(3)=io_Overlaps(X,Xen,ID)
  endif
  !
- !GPL EXCLUDE END
+ !GPL_EXCLUDE_END
  !
  if (any(io_err/=0)) then
    !

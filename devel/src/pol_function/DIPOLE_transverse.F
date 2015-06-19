@@ -215,11 +215,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
          do i_spinor=1,n_spinor
            !
            i_spin=i_sp_pol+i_spinor-1
-           ivfft(i_spin)=WF%index(iv,ik,i_spin)
-           icfft(i_spin)=WF%index(ic,ik,i_spin)
+           ivfft(i_spinor)=WF%index(iv,ik,i_spin)
+           icfft(i_spinor)=WF%index(ic,ik,i_spin)
            !
-           if (ivfft(i_spin)==0) call error(" Error in parallel wf distribution (Dipole iv)")
-           if (icfft(i_spin)==0) call error(" Error in parallel wf distribution (Dipole ic)")
+           if (ivfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole iv)")
+           if (icfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole ic)")
            !
          enddo
          !

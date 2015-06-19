@@ -60,6 +60,8 @@ INTERFCS = a2y p2y e2y
 #
 BASIC_LIBS   = external_c modules parallel xc_functionals parser communicate linear_algebra common io \
                interface stop_and_restart wf_and_fft 
+BASIC_SURF_LIBS   = external_c modules surf_modules parallel xc_functionals parser communicate linear_algebra common io \
+                    interface stop_and_restart wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface \
                tddft pol_function qp bse
@@ -76,8 +78,8 @@ YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface interpola
 # PROJECTS
 #
 PROJECTS = yambo_surf ypp_surf yambo_kerr yambo_ph ypp_ph
-PJ_SURFLIBS   = $(BASIC_LIBS) surf_modules coulomb bz_ops qp_control surf setup interface tddft pol_function qp bse
-YPPSURFLIBS   = $(BASIC_LIBS) surf_modules bz_ops qp_control setup interface interpolate surf tddft pol_function bse
+PJ_SURFLIBS   = $(BASIC_SURF_LIBS) coulomb bz_ops qp_control surf setup interface tddft pol_function qp bse
+YPPSURFLIBS   = $(BASIC_SURF_LIBS) bz_ops qp_control setup interface interpolate surf tddft pol_function bse
 EXE      = $(TARGETS) $(PROJECTS)
 #
 nothing: 

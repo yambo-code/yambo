@@ -88,7 +88,7 @@ YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface interpola
 YPPSCLIBS    = $(YPPLIBS) sc
 YPPRTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
                interpolate pol_function bse sc real_time
-YPPSURFLIBS  = $(BASIC_LIBS) surf_modules bz_ops qp_control setup interface interpolate surf pol_function bse
+YPPSURFLIBS  = $(BASIC_LIBS) surf_modules bz_ops qp_control setup interface interpolate surf tddft pol_function bse
 YDBLIBS      = $(BASIC_LIBS) 
 
 nothing: 

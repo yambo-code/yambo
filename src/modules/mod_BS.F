@@ -283,36 +283,35 @@ module BS
      integer      :: iT,nT
      type(levels) :: E
      !
+     if(iT==0) then
+       nT=sum(BS_T_grp(:)%size)
+       call mem_est("BS_T_grp_dipoles_R_N",(/nT/))
+       if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_A_N",(/nT/))
+       if(l_kerr) then
+         call mem_est("BS_T_grp_dipoles_R_N",(/nT/))
+         if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_A_N",(/nT/))
+       endif
+       call mem_est("BS_T_grp_table_N",(/nT/),(/IP/))
+       call mem_est("BS_T_grp_E_N",(/nT/),(/SP/))
+       call mem_est("BS_T_grp_f_N",(/nT/),(/SP/))
+       if (associated(E%Z)) call mem_est("BS_T_grp_Z_N",(/nT/))
+       if (associated(E%W)) call mem_est("BS_T_grp_W_N",(/nT/),(/SP/))
+       return
+     endif
+     !
      nT=BS_T_grp(iT)%size
      !
      allocate(BS_T_grp(iT)%dipoles_R(nT))
-     call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(iT)),(/nT/))
-     if (BS_K_coupling) then
-       allocate(BS_T_grp(iT)%dipoles_A(nT))
-       call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(iT)),(/nT/))
-     endif
+     if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A(nT))
      if(l_kerr) then
        allocate(BS_T_grp(iT)%dipoles_R_kerr(nT))
-       call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(iT)),(/nT/))
-       if (BS_K_coupling) then
-         allocate(BS_T_grp(iT)%dipoles_A_kerr(nT))
-         call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(iT)),(/nT/))
-       endif
+       if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_kerr(nT))
      endif
      allocate(BS_T_grp(iT)%table(nT,4))
-     call mem_est("BS_T_grp_table_N"//trim(intc(iT)),(/nT/),(/IP/))
      allocate(BS_T_grp(iT)%E(nT))
-     call mem_est("BS_T_grp_E_N"//trim(intc(iT)),(/nT/),(/SP/))
      allocate(BS_T_grp(iT)%f(nT))
-     call mem_est("BS_T_grp_f_N"//trim(intc(iT)),(/nT/),(/SP/))
-     if (associated(E%Z)) then
-       allocate(BS_T_grp(iT)%Z(nT))
-       call mem_est("BS_T_grp_Z_N"//trim(intc(iT)),(/nT/))
-     endif
-     if (associated(E%W)) then
-       allocate(BS_T_grp(iT)%W(nT))
-       call mem_est("BS_T_grp_W_N"//trim(intc(iT)),(/nT/),(/SP/))
-     endif
+     if (associated(E%Z)) allocate(BS_T_grp(iT)%Z(nT))
+     if (associated(E%W)) allocate(BS_T_grp(iT)%W(nT))
      !
    end subroutine
    !
@@ -388,35 +387,30 @@ module BS
        if (.not.allocated(BS_T_grp(i_g)%table)) cycle
        !
        deallocate(BS_T_grp(i_g)%dipoles_R)
-       call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(i_g)))
-       if (BS_K_coupling) then
-         deallocate(BS_T_grp(i_g)%dipoles_A)
-         call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(i_g)))
-       endif
+       if (BS_K_coupling) deallocate(BS_T_grp(i_g)%dipoles_A)
        if(l_kerr) then
          deallocate(BS_T_grp(i_g)%dipoles_R_kerr)
-         call mem_est("BS_T_grp_dipoles_R_N"//trim(intc(i_g)))
-         if (BS_K_coupling) then
-           deallocate(BS_T_grp(i_g)%dipoles_A_kerr)
-           call mem_est("BS_T_grp_dipoles_A_N"//trim(intc(i_g)))
-         endif
+         if (BS_K_coupling) deallocate(BS_T_grp(i_g)%dipoles_A_kerr)
        endif
        deallocate(BS_T_grp(i_g)%table)
-       call mem_est("BS_T_grp_table_N"//trim(intc(i_g)))
        deallocate(BS_T_grp(i_g)%E)
-       call mem_est("BS_T_grp_E_N"//trim(intc(i_g)))
        deallocate(BS_T_grp(i_g)%f)
-       call mem_est("BS_T_grp_f_N"//trim(intc(i_g)))
-       if (allocated(BS_T_grp(i_g)%Z)) then
-         deallocate(BS_T_grp(i_g)%Z)
-         call mem_est("BS_T_grp_Z_N"//trim(intc(i_g)))
-       endif
-       if (allocated(BS_T_grp(i_g)%W)) then
-         deallocate(BS_T_grp(i_g)%W)
-         call mem_est("BS_T_grp_W_N"//trim(intc(i_g)))
-       endif
+       if (allocated(BS_T_grp(i_g)%Z)) deallocate(BS_T_grp(i_g)%Z)
+       if (allocated(BS_T_grp(i_g)%W)) deallocate(BS_T_grp(i_g)%W)
        !
      enddo
+     !
+     call mem_est("BS_T_grp_dipoles_R_N")
+     call mem_est("BS_T_grp_dipoles_A_N")
+     if(l_kerr) then
+       call mem_est("BS_T_grp_dipoles_R_N")
+       if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_A_N")
+     endif
+     call mem_est("BS_T_grp_table_N")
+     call mem_est("BS_T_grp_E_N")
+     call mem_est("BS_T_grp_f_N")
+     call mem_est("BS_T_grp_Z_N")
+     call mem_est("BS_T_grp_W_N")
      !
    end subroutine
    !

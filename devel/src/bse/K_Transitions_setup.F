@@ -99,6 +99,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Wd,FILL_the_groups)
  !
  do i_loop=1,n_loops
    !
+   if(i_loop==2) call BS_Blocks_and_Transitions_alloc(Ken,0)
+   !
    i_T_at_k=0
    BS_K_dim=0
    i_T_group_now=0

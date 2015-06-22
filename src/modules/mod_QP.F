@@ -179,22 +179,24 @@ module QP_m
      nullify(qp%table,qp%k,qp%wk,qp%E,qp%Z,qp%E_bare,qp%S_total,qp%GreenF,qp%GreenF_W)
    end subroutine
    !
-   subroutine QP_states_simmetrize(en,vec_2_sim,state_is_2do)
+   subroutine QP_states_simmetrize(en,V_real,V_complex,state_is_2do)
      !
      use pars,          ONLY:SP
      use units,         ONLY:HA2EV
      use vec_operate,   ONLY:sort,degeneration_finder
      use electrons,     ONLY:levels
      !
-     real(SP), optional  ::vec_2_sim(QP_n_states)
-     logical,  optional  ::state_is_2do(QP_n_states)
+     real(SP),   optional ::V_real(QP_n_states)
+     complex(SP),optional ::V_complex(QP_n_states)
+     logical,    optional ::state_is_2do(QP_n_states)
      type(levels) ::en
      !
      ! Work Space
      !
-     real(SP) ::Eo_sorted(QP_n_states),sym_value
-     integer  ::Eo_sorted_index(QP_n_states),i1,inx,i2,&
-&               first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp
+     real(SP)    ::Eo_sorted(QP_n_states),r_sum
+     complex(SP) ::c_sum
+     integer     ::Eo_sorted_index(QP_n_states),i1,inx,i2,&
+&                  first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp
      !
      ! Degenerate bands average.
      ! The PW gkkp m.e. are not symmetrized and, consequently,
@@ -211,7 +213,8 @@ module QP_m
      !
      do i1=1,n_deg_grp
        !
-       sym_value=0.
+       r_sum=0._SP
+       c_sum=(0._SP,0._SP)
        !
        do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
          !
@@ -221,8 +224,11 @@ module QP_m
            if (i2>first_el(i1)) state_is_2do(inx)=.FALSE.
          endif
          !
-         if (present(vec_2_sim)) then
-           sym_value=sym_value+vec_2_sim(inx)/real( n_of_el(i1) )
+         if (present(V_real)) then
+           r_sum=r_sum+V_real(inx)/real( n_of_el(i1) )
+         endif
+         if (present(V_complex)) then
+           c_sum=c_sum+V_complex(inx)/real( n_of_el(i1) )
          endif
          !
        enddo
@@ -231,8 +237,11 @@ module QP_m
          !
          inx   =Eo_sorted_index(i2)
          !
-         if (present(vec_2_sim)) then
-           vec_2_sim(inx)=sym_value
+         if (present(V_real)) then
+           V_real(inx)=r_sum
+         endif
+         if (present(V_complex)) then
+           V_complex(inx)=c_sum
          endif
          !
        enddo

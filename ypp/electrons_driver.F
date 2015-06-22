@@ -28,7 +28,6 @@ subroutine electrons_driver(Xk,Xen,Xq)
  Use stderr,         ONLY:intc
  use wave_func,      ONLY:WF,wf_ng
  use FFT_m,          ONLY:fft_size,fft_dim
- use vec_operate,    ONLY:v_norm
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:i_time_rev
  use com,            ONLY:error
@@ -37,7 +36,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_RT_dos,l_RT_occ_Bands,l_RT_life_Bands,&
-&                         l_bands,l_current,current_dir,plot_is_1D
+&                         l_bands,l_current,current_dir,plot_is_1D,BANDS_steps
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
@@ -210,7 +209,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  if(l_bands.or.l_RT_occ_Bands.or.l_RT_life_Bands) then
    !
-   if ( i_time_rev==1 ) call error(' Bands interpolation does not work with T-rev symmetry')
+   if ( i_time_rev==1 .and. BANDS_steps>0 ) call error(' Bands interpolation does not work with T-rev symmetry')
    !
    call electrons_bands(Xk,Xen,nb_to_load)
    !

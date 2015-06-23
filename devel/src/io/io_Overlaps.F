@@ -30,7 +30,7 @@ integer function io_Overlaps(X,Xen,ID)
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_fragmented,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
-&                        IO_NOT_ALLOWED,io_DIP,io_fragment
+&                        IO_NOT_ALLOWED,io_DIP,io_fragment,frag_DIP
  use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Xk_nbz,PAR_IND_Xk_bz
  !
  implicit none
@@ -49,6 +49,8 @@ integer function io_Overlaps(X,Xen,ID)
    io_Overlaps=IO_NOT_ALLOWED
    goto 1
  endif
+ !
+ if(write_is_on(ID)) io_fragmented(ID)=frag_DIP
  !
  io_Overlaps=io_connect(desc='Overlaps',type=2,ID=ID)
  if (io_Overlaps/=0) goto 1
@@ -81,7 +83,7 @@ integer function io_Overlaps(X,Xen,ID)
      ! Fragmentation
      !
      io_extension(ID)='Overlaps'
-     if (io_fragmented(ID)) call io_fragment(ID,i_fragment=ik)
+     call io_fragment(ID,i_fragment=ik)
      !
      do ixyz=1,3
        !

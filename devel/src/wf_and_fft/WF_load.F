@@ -286,7 +286,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      !
      if (.not.buffer_is_ok) then
        !
-       ! Use fragmentation ot NETCDF support to reduce the I/O
+       ! Use fragmentation or NETCDF support to reduce the I/O
        ! to the k-pts and bands needed only
        !
        if (io_fragmented(ID).or.io_netcdf_support(ID)) then

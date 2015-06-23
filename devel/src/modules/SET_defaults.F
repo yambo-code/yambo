@@ -64,8 +64,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
- use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,&
-&                     Fragmented_IO_save 
+ use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,frag_WF
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,BSE_mode,&
@@ -179,11 +178,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
    n_alt_jobstr=i1-1
  enddo
  !
- ! Global Logicals
+ ! WFs fragmentation, this is for the interfaces
  !
- Fragmented_IO_save=.not.index(INSTR,'nodbfr')>0.or.ncpu>1.or.index(INSTR,'fragnb')>0
+ frag_WF = (.not.index(INSTR,'nodbfr')>0 .or. index(INSTR,'fragnb')>0)
  !
- ! Logical Setup (mainly for interfaces and ypp. As far as yambo is concerned this call is done in init.F)
+ ! Logical Setup (Mainly for interfaces and ypp. As far as yambo is concerned this call is done in init.F)
  !
  call SET_logicals()
  !

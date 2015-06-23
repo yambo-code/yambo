@@ -30,7 +30,7 @@ integer function io_P_and_P2(X,Xen,ID)
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_fragmented,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
-&                        IO_NOT_ALLOWED,io_DIP,io_fragment
+&                        IO_NOT_ALLOWED,io_DIP,io_fragment,frag_DIP
  use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_nibz,PAR_IND_Xk_ibz
  !
  implicit none
@@ -49,6 +49,8 @@ integer function io_P_and_P2(X,Xen,ID)
    io_P_and_P2=IO_NOT_ALLOWED
    goto 1
  endif
+ !
+ if(write_is_on(ID)) io_fragmented(ID)=frag_DIP
  !
  io_P_and_P2=io_connect(desc='P_and_P2',type=2,ID=ID)
  if (io_P_and_P2/=0) goto 1
@@ -84,7 +86,7 @@ integer function io_P_and_P2(X,Xen,ID)
      ! Fragmentation
      !
      io_extension(ID)='P_and_P2'
-     if (io_fragmented(ID)) call io_fragment(ID,i_fragment=ik)
+     call io_fragment(ID,i_fragment=ik)
      !
      do i_spin=1,n_sp_pol
        !

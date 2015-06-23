@@ -50,14 +50,14 @@ integer function io_Overlaps(X,Xen,ID)
    goto 1
  endif
  !
- if(write_is_on(ID)) io_fragmented(ID)=frag_DIP
- !
  io_Overlaps=io_connect(desc='Overlaps',type=2,ID=ID)
  if (io_Overlaps/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
+   if(write_is_on(ID)) io_fragmented(ID)=frag_DIP
    io_Overlaps=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.)
+   if(read_is_on(ID) ) frag_DIP=io_fragmented(ID)
    if (io_Overlaps/=0) goto 1
    !
    io_Overlaps=variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)

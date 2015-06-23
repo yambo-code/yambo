@@ -103,6 +103,7 @@ integer function io_SC_components(what,E_sc,ID)
      else
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
      endif
+     if (read_is_on(ID) ) frag_SC=io_fragmented(ID)
    endif
    !
    if (io_SC_components/=0) goto 1
